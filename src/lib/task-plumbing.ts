@@ -45,14 +45,18 @@ export function stripTaskInstruction(text: string): string {
   return text.slice(0, at).trimEnd();
 }
 
+/** The one engine-injected part a reader acts on: which skill was invoked. */
+const SHOWN_SYNTHETIC = 'skill-invocation';
+
 /**
- * The row as the transcript draws it: a `synthetic` part is not drawn, a text
+ * The row as the transcript draws it: a `synthetic` part is not drawn (but
+ * for a skill invocation, which keeps its notice row), a text
  * part loses the plumbing its side carries, and one left with nothing to show
  * is not drawn either. Returns the same item when nothing changed.
  */
 export function withoutTaskPlumbing(item: TimelineItem): TimelineItem | null {
   const { part } = item;
-  if (part.type === 'synthetic') return null;
+  if (part.type === 'synthetic') return part.description === SHOWN_SYNTHETIC ? item : null;
   if (part.type !== 'text' || item.role === 'system') return item;
   const text = item.role === 'user' ? stripTaskInstruction(part.text) : stripTaskMarkers(part.text);
   if (text === part.text) return item;

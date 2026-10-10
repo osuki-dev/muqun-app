@@ -12,6 +12,12 @@ import type { ServerReachability } from './server-reachability';
 import { FINISHED_TASKS_SHOWN, type ServerTasksIndex } from './server-tasks-state';
 import { isTerminalTaskState, type TaskState, type TaskView } from './task-ledger';
 
+/**
+ * A computer card's inner side padding. Home's phone dock pads its content by
+ * the same amount, so the dock's lines start where the cards' rows do.
+ */
+export const HOME_CARD_INSET = 12;
+
 /** Computers that get a task socket while Home or the Tasks sheet is up. */
 export const MAX_TASK_SUBSCRIPTIONS = 4;
 

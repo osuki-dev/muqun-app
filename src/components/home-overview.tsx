@@ -78,7 +78,11 @@ import {
 } from '@/components/home-computer-cards';
 import { HomeRecentChips } from '@/components/home-recent-chips';
 import { filterHomeRecent, homeRecentFilterIds } from '@/lib/home-continue';
-import { openTaskWork, taskSubscriptionServerIds } from '@/lib/home-computer-cards';
+import {
+  HOME_CARD_INSET,
+  openTaskWork,
+  taskSubscriptionServerIds,
+} from '@/lib/home-computer-cards';
 import { hasTaskLedger } from '@/lib/task-ledger';
 import {
   HomeContinueSearch,
@@ -876,8 +880,9 @@ export function HomeOverview({
         targetPulse={composerPulse}
         bottomInset={padLaunch ? 0 : insets.bottom}
         topInset={insets.top}
-        // On the phone it floats in the page's gutter, edge to edge with the cards.
-        floatingGutter={isPad ? undefined : padGeometry.gutter}
+        // On the phone it floats in the page's gutter, edge to edge with the
+        // cards and padded like them.
+        floating={isPad ? undefined : { margin: padGeometry.gutter, inset: HOME_CARD_INSET }}
         onDockHeight={setDockHeight}
         onOpenAgent={commands.openAgent}
       />
