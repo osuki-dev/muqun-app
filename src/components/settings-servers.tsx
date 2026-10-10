@@ -41,6 +41,7 @@ import { normalizeGatewayUrl } from '@/lib/pairing';
 import { resolveConnectionStatus, type ConnectionStatus } from '@/lib/server-reachability';
 import { useAppSettings, type ServerCardPanes } from '@/stores/app-settings';
 import { useServerAgents } from '@/stores/server-agents';
+import { retryHomeRefresh } from '@/lib/home-refresh-schedule';
 import { useServerChannels } from '@/stores/server-channels';
 import { useServerReachability } from '@/stores/server-reachability';
 import type { ServerAgentsSnapshot } from '@/lib/server-agents';
@@ -84,6 +85,11 @@ export function SettingsServers({ initialOpenId }: { initialOpenId?: string } = 
   // panels rather than a list of servers, and only one of them can ever be the
   // one in use anyway.
   const [openId, setOpenId] = useState<string | null>(initialOpenId ?? null);
+  // Opening a computer's settings is the reader asking about it: Home stops
+  // waiting out its backoff and asks again.
+  useEffect(() => {
+    if (openId) retryHomeRefresh(openId);
+  }, [openId]);
 
   // The same question the home screen asks, asked the same way: only of the
   // server the app is already configured for, because every other record's
