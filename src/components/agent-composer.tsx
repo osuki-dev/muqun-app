@@ -652,8 +652,8 @@ export const AgentComposer = memo(function AgentComposer({
   }, [contextUsage, contextLimit, cost, t]);
 
   const modelDisplayName = useMemo(
-    () => modelName || formatModelName(selectedModel),
-    [modelName, selectedModel]
+    () => modelName || formatModelName(selectedModel, t`Model`),
+    [modelName, selectedModel, t]
   );
 
   const inputRef = useRef<TextInput>(null);

@@ -113,11 +113,25 @@ export function homeSessionParams(input: {
   agentsDiscovered: boolean;
   /** Models this server already refused (`unsupportedModelRefs`), when its sessions are known. */
   refused?: ReadonlySet<string>;
+  /**
+   * False until the catalog has answered (or when its read failed): the
+   * remembered pick is then sent and shown as stored, since there is nothing
+   * to check it against yet and dropping it would let the host pick.
+   */
+  catalogRead?: boolean;
 }): {
   params: { mode?: string; model?: ModelRef; agentId?: string };
   shown: { mode?: string; model?: ModelRef };
 } {
   const { picked, catalogDefaults, models, modes } = input;
+  const agent = input.agentsDiscovered && input.agentId ? { agentId: input.agentId } : {};
+  if (input.catalogRead === false) {
+    const stored = {
+      ...(picked.mode ? { mode: picked.mode } : {}),
+      ...(picked.model ? { model: picked.model } : {}),
+    };
+    return { params: { ...stored, ...agent }, shown: stored };
+  }
   const mode = catalogModeId(picked.mode, modes);
   const modeModel = modes.find((entry) => entry.id === mode)?.model;
   const model = catalogModelRef(picked.model, models) ?? catalogModelRef(modeModel, models);
@@ -139,7 +153,7 @@ export function homeSessionParams(input: {
     params: {
       ...(mode ? { mode } : {}),
       ...(shownModel ? { model: shownModel } : {}),
-      ...(input.agentsDiscovered && input.agentId ? { agentId: input.agentId } : {}),
+      ...agent,
     },
     shown: {
       ...(shownMode ? { mode: shownMode } : {}),

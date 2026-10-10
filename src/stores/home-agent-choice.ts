@@ -71,8 +71,13 @@ type HomeAgentChoiceState = {
   modelChoice: Record<string, RememberedAgentChoice>;
   choose: (serverId: string, key: string) => void;
   chooseModel: (serverId: string, agentId: string | undefined, model: ModelRef) => void;
-  /** A mode that names its own model brings it: the model pick is dropped. */
-  chooseMode: (serverId: string, agentId: string | undefined, mode: string) => void;
+  /** `bringsModel`: the mode names its own model, which then replaces the model pick. */
+  chooseMode: (
+    serverId: string,
+    agentId: string | undefined,
+    mode: string,
+    bringsModel: boolean
+  ) => void;
   /** Set (or, with a blank answer, clear) a computer's folder from a picker answer. */
   chooseFolder: (serverId: string, directory: string) => void;
   recordTerminal: (serverId: string, profiles: AgentProfile[]) => void;
@@ -121,8 +126,14 @@ export const useHomeAgentChoice = create<HomeAgentChoiceState>((set, get) => ({
     set({ modelChoice });
     save(MODELS_KEY, modelChoice);
   },
-  chooseMode(serverId, agentId, mode) {
-    const modelChoice = { ...get().modelChoice, [homeModelChoiceKey(serverId, agentId)]: { mode } };
+  chooseMode(serverId, agentId, mode, bringsModel) {
+    const key = homeModelChoiceKey(serverId, agentId);
+    const current = get().modelChoice;
+    // Only a mode that names its own model replaces the model pick.
+    const modelChoice = {
+      ...current,
+      [key]: bringsModel ? { mode } : { ...current[key], mode },
+    };
     set({ modelChoice });
     save(MODELS_KEY, modelChoice);
   },
