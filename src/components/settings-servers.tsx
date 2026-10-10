@@ -916,7 +916,11 @@ function PairedDevices({ server }: { server: GatewayRecord }) {
         <View key={device.id} style={styles.deviceRow}>
           <View style={styles.flexOne}>
             <Text variant="caption" numberOfLines={1}>
-              {device.current ? t`${device.name} (this device)` : device.name}
+              {device.current
+                ? t`${device.name} (this device)`
+                : device.kind === 'gateway'
+                  ? t`${device.name} (gateway)`
+                  : device.name}
             </Text>
             <Text variant="caption" color={theme.colors.textSubtle}>
               {lastSeen(device.last_seen_unix_ms, nowMs)}
