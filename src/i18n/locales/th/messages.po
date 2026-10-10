@@ -1304,6 +1304,10 @@ msgstr "โหมดสี"
 msgid "Command"
 msgstr "คำสั่ง"
 
+#: src/components/simfarm-preview.tsx
+msgid "Command copied"
+msgstr "คัดลอกคำสั่งแล้ว"
+
 #: src/i18n/labels.ts
 msgid "Command mode"
 msgstr "โหมดคำสั่ง"
@@ -1662,6 +1666,7 @@ msgid "Copied to clipboard"
 msgstr "คัดลอกไปยังคลิปบอร์ดแล้ว"
 
 #: src/app/explore.tsx
+#: src/components/simfarm-preview.tsx
 msgid "Copies it, ready to paste into a terminal"
 msgstr "คัดลอกให้พร้อมวางในเทอร์มินัล"
 
@@ -3797,6 +3802,7 @@ msgstr "ยังไม่มีงานในเซสชันนี้"
 msgid "No tasks yet"
 msgstr "ยังไม่มีงาน"
 
+#: src/components/guide-command.tsx
 #: src/hooks/use-home-commands.ts
 msgid "No terminal session is available on this computer."
 msgstr "คอมพิวเตอร์นี้ไม่มีเซสชันเทอร์มินัลที่พร้อมใช้งาน"

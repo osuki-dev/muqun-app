@@ -6,16 +6,26 @@
  * command, then check again.
  */
 
+import type { ConnectionStatus } from './server-reachability';
+
 export type GuideCommandAction = 'run' | 'copy';
 
-/** Run only where a pane can be opened right now; copy everywhere else. */
+/**
+ * Run only where a pane can be opened right now: the computer is `live` (not
+ * reconnecting, refused or unknown), its gateway has not said its terminal
+ * plane is unsupported (the New terminal tile's rule), and its terminal
+ * backend is not down. Copy everywhere else.
+ */
 export function guideCommandAction(computer: {
-  /** The computer answers now, by the same evidence Home's cards use. */
-  reachable: boolean;
-  /** It has a terminal backend the app can open a pane on. */
-  terminal: boolean;
+  status: ConnectionStatus;
+  /** The gateway's terminal plane, when it said anything about one. */
+  terminalPlane?: { supported: boolean };
+  /** The terminal backend is known to be down (the backend-down screen). */
+  terminalDown?: boolean;
 }): GuideCommandAction {
-  return computer.reachable && computer.terminal ? 'run' : 'copy';
+  const terminal =
+    (!computer.terminalPlane || computer.terminalPlane.supported) && !computer.terminalDown;
+  return computer.status === 'live' && terminal ? 'run' : 'copy';
 }
 
 /**
@@ -27,3 +37,8 @@ export function guideCommandAction(computer: {
 export function guideCommandLines(command: string): string[] {
   return command.split(/\r?\n/).filter((line) => line.trim().length > 0);
 }
+
+/** How long to wait for a new pane's shell to draw its prompt before typing anyway. */
+export const SHELL_READY_TIMEOUT_MS = 3000;
+/** How often a new pane is read while waiting for its prompt. */
+export const SHELL_READY_POLL_MS = 150;

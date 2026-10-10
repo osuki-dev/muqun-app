@@ -1304,6 +1304,10 @@ msgstr "Chế độ màu"
 msgid "Command"
 msgstr "Lệnh"
 
+#: src/components/simfarm-preview.tsx
+msgid "Command copied"
+msgstr "Đã sao chép lệnh"
+
 #: src/i18n/labels.ts
 msgid "Command mode"
 msgstr "Chế độ lệnh"
@@ -1662,6 +1666,7 @@ msgid "Copied to clipboard"
 msgstr "Đã sao chép vào bảng nhớ tạm"
 
 #: src/app/explore.tsx
+#: src/components/simfarm-preview.tsx
 msgid "Copies it, ready to paste into a terminal"
 msgstr "Sao chép lệnh, sẵn sàng dán vào terminal"
 
@@ -1837,7 +1842,7 @@ msgstr "Không thể chuyển phiên này"
 
 #: src/components/guide-command.tsx
 msgid "Could not open a terminal on this computer."
-msgstr "Không mở được cửa sổ dòng lệnh trên máy này."
+msgstr "Không mở được cửa sổ dòng lệnh trên máy này"
 
 #: src/hooks/use-home-commands.ts
 msgid "Could not open destination"
@@ -3797,6 +3802,7 @@ msgstr "Chưa có tác vụ nào trong phiên này"
 msgid "No tasks yet"
 msgstr "Chưa có tác vụ nào"
 
+#: src/components/guide-command.tsx
 #: src/hooks/use-home-commands.ts
 msgid "No terminal session is available on this computer."
 msgstr "Máy tính này không có phiên terminal khả dụng"

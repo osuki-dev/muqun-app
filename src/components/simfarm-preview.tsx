@@ -380,6 +380,11 @@ function RunCommand() {
       command={SIMFARM_RUN_COMMAND}
       testID="simfarm-run-command"
       copyLabel={t`Copy the command that starts simfarm`}
+      copiedLabel={t`Command copied`}
+      copyHint={t`Copies it, ready to paste into a terminal`}
+      // Two lines, not one shrunk to fit: it wraps at the widths this is read
+      // at -- a phone and a Pad's narrower column.
+      numberOfLines={2}
     />
   );
 }

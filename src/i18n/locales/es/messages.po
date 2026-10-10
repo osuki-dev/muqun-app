@@ -1304,6 +1304,10 @@ msgstr "Modo de color"
 msgid "Command"
 msgstr "Comando"
 
+#: src/components/simfarm-preview.tsx
+msgid "Command copied"
+msgstr "Comando copiado"
+
 #: src/i18n/labels.ts
 msgid "Command mode"
 msgstr "Modo de comando"
@@ -1662,6 +1666,7 @@ msgid "Copied to clipboard"
 msgstr "Copiado al portapapeles"
 
 #: src/app/explore.tsx
+#: src/components/simfarm-preview.tsx
 msgid "Copies it, ready to paste into a terminal"
 msgstr "Lo copia, listo para pegar en un terminal"
 
@@ -1837,7 +1842,7 @@ msgstr "No se pudo mover esta sesión"
 
 #: src/components/guide-command.tsx
 msgid "Could not open a terminal on this computer."
-msgstr "No se pudo abrir una terminal en este ordenador."
+msgstr "No se pudo abrir una terminal en este ordenador"
 
 #: src/hooks/use-home-commands.ts
 msgid "Could not open destination"
@@ -3797,6 +3802,7 @@ msgstr "Todavía no hay tareas en esta sesión"
 msgid "No tasks yet"
 msgstr "Aún no hay tareas"
 
+#: src/components/guide-command.tsx
 #: src/hooks/use-home-commands.ts
 msgid "No terminal session is available on this computer."
 msgstr "No hay ninguna sesión de terminal disponible en este ordenador"
