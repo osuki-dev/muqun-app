@@ -6674,6 +6674,11 @@ function entitySignature(entities: HerdrEntity[]): string {
         // Without it here, the poll that is supposed to carry the fresh
         // command to the render is the one thing that throws it away first.
         field(entity, 'foreground_command'),
+        // A pane's own size, which the canvas fits its drawing to: without it
+        // a resize (tmux `resize-window`, a re-split) was "no news" and the
+        // old width stayed on screen until the pane was opened again.
+        numberField(entity, 'width'),
+        numberField(entity, 'height'),
         field(entity, 'workspace_id'),
         field(entity, 'tab_id'),
         field(entity, 'pane_id'),
