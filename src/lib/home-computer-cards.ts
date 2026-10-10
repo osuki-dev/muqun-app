@@ -32,8 +32,14 @@ export function taskSubscriptionServerIds(input: {
   selectedId?: string;
   hasLedger: (serverId: string) => boolean;
   isDemo?: (serverId: string) => boolean;
+  /**
+   * Home's own check says it is down. Not followed (no socket retrying
+   * against it while Home is up) until it answers again, which puts it back.
+   * The selected computer is always followed: its workspace holds it.
+   */
+  isOffline?: (serverId: string) => boolean;
 }): string[] {
-  const { servers, selectedId, hasLedger, isDemo = () => false } = input;
+  const { servers, selectedId, hasLedger, isDemo = () => false, isOffline = () => false } = input;
   const ordered = [
     ...servers.filter((server) => server.serverId === selectedId),
     ...servers.filter((server) => server.serverId !== selectedId),
@@ -42,7 +48,8 @@ export function taskSubscriptionServerIds(input: {
   for (const server of ordered) {
     if (ids.includes(server.serverId) || isDemo(server.serverId)) continue;
     if (!hasLedger(server.serverId)) continue;
-    if (server.sshTunnel && server.serverId !== selectedId) continue;
+    if (server.serverId !== selectedId && (server.sshTunnel || isOffline(server.serverId)))
+      continue;
     ids.push(server.serverId);
   }
   return ids;
@@ -377,6 +384,11 @@ export function buildComputerCards(input: {
   /** The phone's clock, for what counts as recently finished. */
   nowMs: number;
   limits?: CardLimits;
+  /**
+   * The computers whose ledgers are followed; absent, all of them. Any other
+   * card sorts as idle: its rows are old news, not something needing the reader.
+   */
+  followed?: ReadonlySet<string>;
 }): ComputerCard[] {
   const all = input.servers.map((server, order): ComputerCard & { order: number } => {
     const entry = input.index[server.serverId];
@@ -409,13 +421,15 @@ export function buildComputerCards(input: {
     const activity: CardActivity =
       input.reachability(server.serverId) === 'offline'
         ? 'offline'
-        : waiting
-          ? 'needs-you'
-          : working
-            ? 'working'
-            : open.length > 0
-              ? 'paused'
-              : 'idle';
+        : input.followed && !input.followed.has(server.serverId)
+          ? 'idle'
+          : waiting
+            ? 'needs-you'
+            : working
+              ? 'working'
+              : open.length > 0
+                ? 'paused'
+                : 'idle';
     return {
       order,
       serverId: server.serverId,
