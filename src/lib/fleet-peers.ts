@@ -93,26 +93,62 @@ async function expectOk(response: Response, what: string): Promise<Response> {
   return response;
 }
 
-/** What `GET /api/peers` says, or `null` when the computer did not answer. */
-export async function fetchFleetPeers(endpoint: FleetEndpoint): Promise<FleetPeers | null> {
+/**
+ * How a `GET /api/peers` went: the answer, or why there is none -- an HTTP
+ * status (a refusal included), no answer at all, or a body that was not one.
+ */
+export type FleetPeersFetch =
+  | { ok: true; peers: FleetPeers }
+  | { ok: false; reason: 'http'; status: number }
+  | { ok: false; reason: 'network' }
+  | { ok: false; reason: 'parse' };
+
+/** The computer no longer accepts this phone: what the phone knew of its links is void. */
+export function refusesPhone(result: FleetPeersFetch): boolean {
+  return !result.ok && result.reason === 'http' && (result.status === 401 || result.status === 403);
+}
+
+export async function fetchFleetPeers(endpoint: FleetEndpoint): Promise<FleetPeersFetch> {
+  let response: Response;
   try {
-    const response = await endpointRequest(endpoint, '/api/peers', 'GET');
-    return response.ok ? parseFleetPeers(await response.json()) : null;
-  } catch {
-    return null;
+    response = await endpointRequest(endpoint, '/api/peers', 'GET');
+  } catch (error) {
+    // The encrypted transport turns a plaintext refusal into an error that
+    // still carries the status.
+    const status = (error as { status?: unknown } | null)?.status;
+    return typeof status === 'number'
+      ? { ok: false, reason: 'http', status }
+      : { ok: false, reason: 'network' };
   }
+  if (!response.ok) return { ok: false, reason: 'http', status: response.status };
+  const peers = parseFleetPeers(await response.json().catch(() => null));
+  return peers ? { ok: true, peers } : { ok: false, reason: 'parse' };
+}
+
+/**
+ * What `POST /api/pair/pending` takes for another computer: its name, and its
+ * server id, so the device record made for it can be revoked when that
+ * computer's link goes (an older gateway ignores the field).
+ */
+export function pairingCodeBody(
+  deviceName: string,
+  serverId: string
+): { device_name: string; kind: 'gateway'; server_id: string } {
+  return { device_name: deviceName.trim(), kind: 'gateway', server_id: serverId };
 }
 
 /** A pairing code on this computer for another one (`kind: gateway`). */
 export async function mintPairingCode(
   endpoint: FleetEndpoint,
-  deviceName: string
+  forComputer: { name: string; serverId: string }
 ): Promise<{ requestId: string; code: string }> {
   const response = await expectOk(
-    await endpointRequest(endpoint, '/api/pair/pending', 'POST', {
-      device_name: deviceName,
-      kind: 'gateway',
-    }),
+    await endpointRequest(
+      endpoint,
+      '/api/pair/pending',
+      'POST',
+      pairingCodeBody(forComputer.name, forComputer.serverId)
+    ),
     'Mint pairing code'
   );
   const rec = asRecord(await response.json());
@@ -187,6 +223,126 @@ export async function setAcceptDelegations(
     'Fleet settings'
   );
   return asRecord(await response.json())?.accept_delegations !== false;
+}
+
+/**
+ * The server id of the computer a mirror runs on: the one the mirror names,
+ * else the one a linked computer lists under that link id, else the link id.
+ * Link ids are minted per link, so any computer's list will do.
+ */
+export function peerServerIdOf(
+  byServer: Readonly<Record<string, FleetPeers>>,
+  binding: { peerId: string; peerServerId?: string }
+): string {
+  if (binding.peerServerId) return binding.peerServerId;
+  for (const answer of Object.values(byServer)) {
+    const peer = answer.peers.find((entry) => entry.peerId === binding.peerId);
+    if (peer) return peer.serverId;
+  }
+  return binding.peerId;
+}
+
+/** A computer the phone unpaired, until every other computer has let it go. */
+export type Tombstone = { serverId: string; buriedAtMs: number };
+
+/** How long an unpaired computer is chased on the others, and how many are. */
+export const TOMBSTONE_MAX_AGE_MS = 30 * 24 * 60 * 60_000;
+export const MAX_TOMBSTONES = 32;
+
+/** The tombstones still worth chasing: none older than a month, the newest 32. */
+export function keptTombstones(entries: readonly Tombstone[], nowMs: number): Tombstone[] {
+  return entries
+    .filter((entry) => nowMs - entry.buriedAtMs < TOMBSTONE_MAX_AGE_MS)
+    .sort((a, b) => b.buriedAtMs - a.buriedAtMs)
+    .slice(0, MAX_TOMBSTONES);
+}
+
+/**
+ * The tombstones a run may let go: none unless every linkable computer
+ * answered (a silent one may still hold any), and of those, every one whose
+ * cleanup did not fail somewhere this run.
+ */
+export function settledTombstones(
+  computers: readonly FleetComputer[],
+  tombstones: readonly string[],
+  failed: ReadonlySet<string>
+): string[] {
+  if (computers.some((computer) => !computer.peers)) return [];
+  return tombstones.filter((serverId) => !failed.has(serverId));
+}
+
+/** A paired device that is another computer, with the server id it gave (newer gateways). */
+export type PairedGateway = { deviceId: string; serverId: string };
+
+/** A gateway that lists and revokes its paired devices (`GET`/`DELETE /api/pairings`). */
+export const DEVICE_REVOCATION_CAPABILITY = 'device_revocation';
+
+/**
+ * `GET /api/pairings`: the other computers' logins here; `'no-route'` for a
+ * 404, which `pairingsAnswer` judges; `null` when it did not answer.
+ */
+export async function fetchPairedGateways(
+  endpoint: FleetEndpoint
+): Promise<PairedGateway[] | 'no-route' | null> {
+  try {
+    const response = await endpointRequest(endpoint, '/api/pairings', 'GET');
+    if (response.status === 404) return 'no-route';
+    if (!response.ok) return null;
+    const devices = asRecord(await response.json())?.devices;
+    if (!Array.isArray(devices)) return null;
+    return devices.flatMap((entry): PairedGateway[] => {
+      const rec = asRecord(entry);
+      const deviceId = asString(rec?.id);
+      const serverId = asString(rec?.server_id);
+      return rec?.kind === 'gateway' && deviceId && serverId ? [{ deviceId, serverId }] : [];
+    });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * What a pairings read means for the cleanup: the logins, or nothing to
+ * revoke when the 404 came from a gateway that says (in this run's
+ * `/api/capabilities`) it has no such list. A 404 from anything else -- a
+ * proxy in front of a gateway that has the list -- is no answer: retried.
+ */
+export function pairingsAnswer(
+  listed: PairedGateway[] | 'no-route' | null,
+  capabilities: readonly string[] | null
+): PairedGateway[] | null {
+  if (listed !== 'no-route') return listed;
+  return capabilities !== null && !capabilities.includes(DEVICE_REVOCATION_CAPABILITY) ? [] : null;
+}
+
+/** Revoke one paired device; one already gone is revoked. */
+export async function revokePairing(endpoint: FleetEndpoint, deviceId: string): Promise<void> {
+  const response = await endpointRequest(
+    endpoint,
+    `/api/pairings/${encodeURIComponent(deviceId)}`,
+    'DELETE'
+  );
+  if (response.status !== 404) await expectOk(response, 'Revoke pairing');
+}
+
+/**
+ * Every peer row, on a computer that answered, of a computer the phone has
+ * unpaired: each one is deleted there (§5.3, "disappears everywhere").
+ */
+export function planTombstoneUnlinks(
+  computers: readonly FleetComputer[],
+  tombstones: readonly string[]
+): { from: string; peerId: string; serverId: string }[] {
+  const gone = new Set(tombstones);
+  const steps: { from: string; peerId: string; serverId: string }[] = [];
+  for (const from of computers) {
+    for (const peer of from.peers?.peers ?? []) {
+      if (gone.has(peer.serverId)) {
+        steps.push({ from: from.serverId, peerId: peer.peerId, serverId: peer.serverId });
+      }
+    }
+  }
+  return steps;
 }
 
 /** What one computer said, as the reconciler saw it this run. */

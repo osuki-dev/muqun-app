@@ -14,6 +14,7 @@ import {
   taskRowVisual,
   taskRowTitle,
   heldCardOrder,
+  openTaskWork,
   type TaskRowIcon,
   type TaskRowTone,
 } from '../home-computer-cards';
@@ -483,8 +484,93 @@ describe('taskRowVisual: the rules the state table carries', () => {
       plain,
       { line: { kind: 'exit', code: 2 }, actions: ['open', 'acknowledge'] },
     ],
+    [
+      'a working mirror whose computer went quiet says so, and still takes Mark done',
+      task('t', 'working', 1, {
+        binding: { kind: 'peer', peerId: 'srv-mini', remoteTaskId: 'r' },
+        progress: 'running tests',
+        peerReachable: false,
+        peerLastSeenMs: 40,
+      }),
+      { ...plain, canComplete: true },
+      { line: { kind: 'unreachable', lastSeenMs: 40 }, actions: ['open', 'cancel', 'markDone'] },
+    ],
+    [
+      'a dispatching mirror whose computer never answered takes Mark done',
+      task('t', 'dispatching', 1, {
+        binding: { kind: 'peer', peerId: 'srv-mini', remoteTaskId: '' },
+        peerReachable: false,
+      }),
+      { ...plain, canComplete: true },
+      { line: { kind: 'unreachable' }, actions: ['open', 'cancel', 'markDone'] },
+    ],
+    [
+      "a reachable mirror shows its computer's own progress",
+      task('t', 'working', 1, {
+        binding: { kind: 'peer', peerId: 'srv-mini', remoteTaskId: 'r' },
+        progress: 'running tests',
+        peerReachable: true,
+      }),
+      plain,
+      { line: { kind: 'progress', text: 'running tests' } },
+    ],
   ] as const)('%s', (_name, input, opts, expected) => {
     expect(taskRowVisual(input, opts)).toMatchObject(expected);
+  });
+});
+
+describe('openTaskWork on a mirror', () => {
+  const mirror = task('m', 'working', 1, {
+    binding: { kind: 'peer', peerId: 'peer-1', remoteTaskId: 'r' },
+  });
+  const there = task('r', 'working', 1, {
+    binding: { kind: 'agent_session', agentId: 'opencode', asid: 'ses_9' },
+  });
+  const known = async (): Promise<TaskView | null> => there;
+  test.each([
+    [
+      'opens the session on the computer that runs it',
+      known,
+      'srv-mini',
+      [['agent', 'srv-mini', 'ses_9']],
+    ],
+    [
+      'without a mapping, the link id is taken as the computer',
+      known,
+      undefined,
+      [['agent', 'peer-1', 'ses_9']],
+    ],
+    [
+      'opens that computer when its task there cannot be read',
+      async (): Promise<TaskView | null> => null,
+      'srv-mini',
+      [['server', 'srv-mini']],
+    ],
+    ['does nothing without a resolver', undefined, 'srv-mini', []],
+  ] as const)('%s', async (_name, resolveTask, mapped, expected) => {
+    const opened: string[][] = [];
+    const asked: string[] = [];
+    openTaskWork(
+      {
+        openAgent: (serverId, asid) => opened.push(['agent', serverId, asid ?? '']),
+        openServer: (serverId) => opened.push(['server', serverId]),
+        ...(resolveTask
+          ? {
+              resolveTask: (serverId: string, taskId: string) => {
+                asked.push(`${serverId}/${taskId}`);
+                return resolveTask();
+              },
+            }
+          : {}),
+        ...(mapped ? { peerServerId: () => mapped } : {}),
+      },
+      'srv-coding',
+      mirror
+    );
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(opened).toEqual(expected.map((entry) => [...entry]));
+    if (resolveTask) expect(asked).toEqual([`${mapped ?? 'peer-1'}/r`]);
   });
 });
 

@@ -350,6 +350,10 @@ msgstr "{total, plural, other {# 个子任务}}"
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, other {# 个子任务}}（{waiting, plural, other {# 个等待中}}）"
 
+#: src/components/task-row.tsx
+msgid "→ {name}"
+msgstr "→ {name}"
+
 #. placeholder {0}: card.nowTotal - card.now.length
 #: src/components/home-computer-cards.tsx
 msgid "+{0} more"
@@ -641,6 +645,10 @@ msgstr "还有 {rest} 个"
 #: src/components/settings-server-capabilities.tsx
 msgid "Android builds"
 msgstr "Android 构建"
+
+#: src/components/task-row.tsx
+msgid "another computer"
+msgstr "另一台电脑"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -2668,6 +2676,10 @@ msgstr "总结目前为止的对话，腾出上下文空间"
 msgid "Frequent"
 msgstr "常用"
 
+#: src/components/task-row.tsx
+msgid "from {requester}"
+msgstr "来自 {requester}"
+
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "前置摄像头。将二维码朝向屏幕"
@@ -3976,6 +3988,10 @@ msgstr "打开 {0}"
 #: src/components/new-task-action.tsx
 msgid "Open {agentName} Agent on {label}"
 msgstr "在 {label} 上打开 {agentName} 代理"
+
+#: src/components/task-row.tsx
+msgid "Open {mirrorName} on this phone first"
+msgstr "请先在这台手机上打开 {mirrorName}"
 
 #: src/components/new-task-action.tsx
 msgid "Open {name} Agent on {label}"
@@ -6207,6 +6223,7 @@ msgstr "这台电脑已经取消配对"
 msgid "This computer is not answering. Check the computer connection, then try again."
 msgstr "这台电脑没有响应。请检查与电脑的连接，然后重试"
 
+#: src/components/settings-fleet-peers.tsx
 #: src/lib/network-error.ts
 msgid "This computer no longer recognises this device. Pair it again to reconnect."
 msgstr "这台电脑已经不认识本设备了。请重新配对以恢复连接"
@@ -6581,8 +6598,13 @@ msgid "Unpairing…"
 msgstr "正在取消配对…"
 
 #: src/components/file-mention-panel.tsx
+#: src/components/task-row.tsx
 msgid "Unreachable"
 msgstr "无法连接"
+
+#: src/components/task-row.tsx
+msgid "Unreachable · last seen {ago}"
+msgstr "无法连接 · 上次在线 {ago}"
 
 #: src/components/diff-rows.tsx
 msgid "Unstaged"

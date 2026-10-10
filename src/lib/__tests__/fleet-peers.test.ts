@@ -7,6 +7,9 @@ import {
   parseFleetPeers,
   planFleetLinks,
   planRenames,
+  pairingsAnswer,
+  planTombstoneUnlinks,
+  settledTombstones,
   type FleetComputer,
   type FleetPeers,
 } from '../fleet-peers';
@@ -118,6 +121,26 @@ describe('planFleetLinks: every ordered pair that should be linked and is not', 
       ],
     ],
     ['one computer has nothing to link', [computer('coding', peers(true))], {}, []],
+    [
+      'a peer with the same name but another server id does not count as linked',
+      [
+        computer('coding', {
+          acceptDelegations: true,
+          peers: [
+            {
+              peerId: 'peer-old',
+              serverId: 'srv-old',
+              name: 'mini',
+              url: 'http://x',
+              reachable: false,
+            },
+          ],
+        }),
+        computer('mini', peers(true, [['coding', true]])),
+      ],
+      {},
+      [{ from: 'coding', to: 'mini' }],
+    ],
   ] as const)('%s', (_name, computers, failures, expected) => {
     expect(planFleetLinks(computers, failures, NOW)).toEqual([...expected]);
   });
@@ -191,5 +214,77 @@ describe('linkLines: the one line Settings shows per computer', () => {
       linked: [...expected.linked],
       cannotReach: [...expected.cannotReach],
     });
+  });
+});
+
+describe('planTombstoneUnlinks: an unpaired computer is taken off every computer that answered', () => {
+  test.each([
+    [
+      'each row of it is deleted where it is held',
+      [
+        computer(
+          'coding',
+          peers(true, [
+            ['gone', true],
+            ['mini', true],
+          ])
+        ),
+        computer('mini', peers(true, [['gone', false]])),
+      ],
+      ['gone'],
+      [
+        { from: 'coding', peerId: 'peer-gone', serverId: 'gone' },
+        { from: 'mini', peerId: 'peer-gone', serverId: 'gone' },
+      ],
+    ],
+    [
+      'a computer that did not answer is left for the next run',
+      [computer('coding', null)],
+      ['gone'],
+      [],
+    ],
+    [
+      'nothing unpaired, nothing to delete',
+      [computer('coding', peers(true, [['mini', true]]))],
+      [],
+      [],
+    ],
+  ] as const)('%s', (_name, computers, tombstones, expected) => {
+    expect(planTombstoneUnlinks(computers, tombstones)).toEqual([...expected]);
+  });
+});
+
+describe('settledTombstones: an unpaired computer is let go only when every computer has', () => {
+  const answered = [computer('coding', peers(true)), computer('mini', peers(true))];
+  test.each([
+    ['all clear lets every one go', answered, [], ['gone', 'old']],
+    ['a failed cleanup keeps that one', answered, ['old'], ['gone']],
+    [
+      'a silent computer keeps them all',
+      [computer('coding', peers(true)), computer('mini', null)],
+      [],
+      [],
+    ],
+  ] as const)('%s', (_name, computers, failed, released) => {
+    expect(settledTombstones(computers, ['gone', 'old'], new Set(failed))).toEqual([...released]);
+  });
+});
+
+describe('pairingsAnswer: a 404 means nothing to revoke only when the gateway says so', () => {
+  const login = { deviceId: 'd1', serverId: 'gone' };
+  test.each([
+    ['a list is the list', [login], null, [login]],
+    ['a 404 from a gateway without the list: nothing to revoke', 'no-route', ['fleet_peers'], []],
+    [
+      'a 404 where the gateway has the list (a proxy): retried',
+      'no-route',
+      ['device_revocation'],
+      null,
+    ],
+    ['a 404 with no capabilities this run: retried', 'no-route', null, null],
+  ] as const)('%s', (_name, listed, capabilities, expected) => {
+    expect(pairingsAnswer(typeof listed === 'string' ? listed : [...listed], capabilities)).toEqual(
+      expected === null ? null : [...expected]
+    );
   });
 });

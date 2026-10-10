@@ -51,9 +51,26 @@ export type TaskBinding =
       shellPid?: number;
       /** Set for a terminal agent the task started; absent for a command. */
       agentId?: string;
+    }
+  | {
+      /**
+       * A mirror of work another of the reader's computers runs (`fleet_peers`).
+       * `peerId` is the mirroring gateway's own id for that link; `peerServerId`
+       * is the other computer's server id when the gateway says it.
+       */
+      kind: 'peer';
+      peerId: string;
+      /** Empty while the computer over there has not said which task it opened. */
+      remoteTaskId: string;
+      peerServerId?: string;
+      /** What the mirroring gateway calls that computer: a fallback name (§10.13). */
+      peerName?: string;
     };
 
-export type TaskOrigin = 'device' | 'agent' | 'mcp';
+export type TaskOrigin = 'device' | 'agent' | 'mcp' | 'peer';
+
+/** Who opened a task: a device of the reader's, another computer, or an assistant. */
+export type RequesterKind = 'device' | 'gateway' | 'assistant';
 
 /** A task's direct children, counted by the gateway when it was read. */
 export interface TaskChildren {
@@ -87,8 +104,12 @@ export interface TaskView {
    * Gateway Task 20.
    */
   title?: string;
-  /** The device that opened it, for `origin: device`. */
-  requestedBy?: { id: string; name: string };
+  /** Who opened it: the device for `origin: device`, the computer for `origin: peer`. */
+  requestedBy?: { id: string; name: string; kind?: RequesterKind; serverId?: string };
+  /** A mirror only: whether its computer answered lately (§10.12). */
+  peerReachable?: boolean;
+  /** A mirror only: when its computer last answered. */
+  peerLastSeenMs?: number;
   children?: TaskChildren;
   /**
    * This device's clock when the reader settled the task here (Mark done,
@@ -128,12 +149,27 @@ function parseBinding(value: unknown): TaskBinding {
         ...(agentId ? { agentId } : {}),
       };
     }
+  } else if (rec.kind === 'peer') {
+    const peerId = asString(rec.peer_id);
+    const peerServerId = asString(rec.peer_server_id);
+    const peerName = asString(rec.peer_name)?.trim();
+    if (peerId) {
+      return {
+        kind: 'peer',
+        peerId,
+        remoteTaskId: asString(rec.remote_task_id) ?? '',
+        ...(peerServerId ? { peerServerId } : {}),
+        ...(peerName ? { peerName } : {}),
+      };
+    }
   }
   return { kind: 'none' };
 }
 
 function parseOrigin(value: unknown): TaskOrigin | undefined {
-  return value === 'device' || value === 'agent' || value === 'mcp' ? value : undefined;
+  return value === 'device' || value === 'agent' || value === 'mcp' || value === 'peer'
+    ? value
+    : undefined;
 }
 
 function parseChildren(value: unknown): TaskChildren | undefined {
@@ -148,11 +184,18 @@ function parseChildren(value: unknown): TaskChildren | undefined {
   };
 }
 
-function parseRequester(value: unknown): { id: string; name: string } | undefined {
+function parseRequester(value: unknown): TaskView['requestedBy'] {
   const rec = asRecord(value);
   const id = asString(rec?.id);
   if (!rec || !id) return undefined;
-  return { id, name: asString(rec.name) ?? '' };
+  const kind = rec.kind;
+  const serverId = asString(rec.server_id);
+  return {
+    id,
+    name: asString(rec.name) ?? '',
+    ...(kind === 'device' || kind === 'gateway' || kind === 'assistant' ? { kind } : {}),
+    ...(serverId ? { serverId } : {}),
+  };
 }
 
 /** A task as the gateway spells it (snake_case); null for a state this build cannot name. */
@@ -171,6 +214,7 @@ export function parseTaskView(value: unknown): TaskView | null {
   const title = asString(rec.title)?.trim();
   const requestedBy = parseRequester(rec.requested_by);
   const children = parseChildren(rec.children);
+  const peerLastSeenMs = asFiniteNumber(rec.peer_last_seen_ms);
   return {
     taskId,
     state,
@@ -187,6 +231,8 @@ export function parseTaskView(value: unknown): TaskView | null {
     ...(title ? { title } : {}),
     ...(requestedBy ? { requestedBy } : {}),
     ...(children ? { children } : {}),
+    ...(typeof rec.peer_reachable === 'boolean' ? { peerReachable: rec.peer_reachable } : {}),
+    ...(peerLastSeenMs !== undefined ? { peerLastSeenMs } : {}),
   };
 }
 
@@ -203,18 +249,20 @@ export function hasTaskLedgerCreate(capabilities: readonly string[] | undefined)
 }
 
 /**
- * Whether the reader can say a task is done: one this device's owner opened,
- * stopped without saying it finished (`idle_unconfirmed`) or asking
- * (`waiting`), on a gateway that takes the confirmation.
+ * Whether the reader can say a task is done, on a gateway that takes the
+ * confirmation: one this device's owner opened, stopped without saying it
+ * finished (`idle_unconfirmed`) or asking (`waiting`); or a mirror of work on
+ * another computer in any open state -- that computer may have gone quiet,
+ * and the reader decides (§10.11). Settling a mirror settles only the mirror.
  */
 export function canMarkTaskDone(
   task: TaskView,
   capabilities: readonly string[] | undefined
 ): boolean {
+  if (capabilities?.includes(TASK_LEDGER_COMPLETE_CAPABILITY) !== true) return false;
+  if (task.binding.kind === 'peer') return !isTerminalTaskState(task.state);
   return (
-    capabilities?.includes(TASK_LEDGER_COMPLETE_CAPABILITY) === true &&
-    task.origin === 'device' &&
-    (task.state === 'idle_unconfirmed' || task.state === 'waiting')
+    task.origin === 'device' && (task.state === 'idle_unconfirmed' || task.state === 'waiting')
   );
 }
 
@@ -378,6 +426,28 @@ export function isMentionsRefusal(error: unknown): boolean {
   } catch {
     return false;
   }
+}
+
+/**
+ * `GET /api/tasks/{id}`: one task as its computer has it now, or `null` when
+ * that computer does not know it or did not answer.
+ */
+export async function fetchTaskView(
+  taskId: string,
+  endpoint?: TaskEndpoint
+): Promise<TaskView | null> {
+  const path = `/api/tasks/${encodeURIComponent(taskId)}`;
+  const parse = (value: unknown) => parseTaskView(asRecord(value)?.task ?? value);
+  if (endpoint) {
+    try {
+      const response = await endpointRequest(endpoint, path, 'GET');
+      return response.ok ? parse(await response.json()) : null;
+    } catch {
+      return null;
+    }
+  }
+  const { readJson } = await import('./agent-session');
+  return readJson<TaskView | null>(path, parse, null);
 }
 
 async function endpointRequest(

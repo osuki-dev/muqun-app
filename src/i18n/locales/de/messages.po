@@ -350,6 +350,10 @@ msgstr "{total, plural, one {# Unteraufgabe} other {# Unteraufgaben}}"
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, one {# Unteraufgabe} other {# Unteraufgaben}} ({waiting, plural, one {# wartet} other {# warten}})"
 
+#: src/components/task-row.tsx
+msgid "→ {name}"
+msgstr "→ {name}"
+
 #. placeholder {0}: card.nowTotal - card.now.length
 #: src/components/home-computer-cards.tsx
 msgid "+{0} more"
@@ -641,6 +645,10 @@ msgstr "und {rest} weitere"
 #: src/components/settings-server-capabilities.tsx
 msgid "Android builds"
 msgstr "Android-Builds"
+
+#: src/components/task-row.tsx
+msgid "another computer"
+msgstr "einem anderen Computer"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -2668,6 +2676,10 @@ msgstr "Schafft Kontext frei, indem die bisherige Unterhaltung zusammengefasst w
 msgid "Frequent"
 msgstr "Häufig verwendet"
 
+#: src/components/task-row.tsx
+msgid "from {requester}"
+msgstr "von {requester}"
+
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "Frontkamera. Halte den QR-Code vor den Bildschirm"
@@ -3976,6 +3988,10 @@ msgstr "{0} öffnen"
 #: src/components/new-task-action.tsx
 msgid "Open {agentName} Agent on {label}"
 msgstr "{agentName}-Agent auf {label} öffnen"
+
+#: src/components/task-row.tsx
+msgid "Open {mirrorName} on this phone first"
+msgstr "Öffne {mirrorName} zuerst auf diesem Telefon"
 
 #: src/components/new-task-action.tsx
 msgid "Open {name} Agent on {label}"
@@ -6207,6 +6223,7 @@ msgstr "Dieser Computer ist nicht mehr gekoppelt"
 msgid "This computer is not answering. Check the computer connection, then try again."
 msgstr "Dieser Computer antwortet nicht. Prüfe die Verbindung zum Computer und versuche es dann erneut"
 
+#: src/components/settings-fleet-peers.tsx
 #: src/lib/network-error.ts
 msgid "This computer no longer recognises this device. Pair it again to reconnect."
 msgstr "Dieser Computer kennt dieses Gerät nicht mehr. Koppel es erneut, um die Verbindung wiederherzustellen"
@@ -6581,8 +6598,13 @@ msgid "Unpairing…"
 msgstr "Wird entkoppelt …"
 
 #: src/components/file-mention-panel.tsx
+#: src/components/task-row.tsx
 msgid "Unreachable"
 msgstr "Nicht erreichbar"
+
+#: src/components/task-row.tsx
+msgid "Unreachable · last seen {ago}"
+msgstr "Nicht erreichbar · zuletzt gesehen {ago}"
 
 #: src/components/diff-rows.tsx
 msgid "Unstaged"
