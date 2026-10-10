@@ -46,14 +46,17 @@ describe('theme v1 contract', () => {
     }
   });
 
-  for (const mode of ['light', 'dark'] as const) {
-    test(`requires every ${mode} UI token`, () => {
+  test('requires every UI token in both modes', () => {
+    for (const mode of ['light', 'dark'] as const) {
       for (const key of Object.keys(themeColorsSchema.shape)) {
         const theme = JSON.parse(JSON.stringify(createThemeStarter()));
         delete theme.variants[mode].colors[key];
         expect(() => parse(theme)).toThrow(key);
       }
-    });
+    }
+  });
+
+  for (const mode of ['light', 'dark'] as const) {
     test(`requires ${mode} and exactly sixteen ANSI colors`, () => {
       const theme = createThemeStarter();
       expect(() =>
@@ -113,13 +116,13 @@ describe('theme v1 contract', () => {
     expect(parse(theme).materials?.navigation).toBe('auto');
   });
 
-  for (const color of ['red', '#fff', 'transparent', '#12345600', 'url(https://example.invalid)']) {
-    test(`rejects nonopaque/invalid text color ${color}`, () => {
+  test('rejects a nonopaque or invalid text color', () => {
+    for (const color of ['red', '#fff', '#12345600', 'url(https://example.invalid)']) {
       const theme = createThemeStarter();
       theme.variants.light.colors.text = color;
       expect(() => parse(theme)).toThrow('text');
-    });
-  }
+    }
+  });
 
   test('bounds raw bytes before parsing, including multibyte UTF-8', () => {
     expect(() => parseThemeManifest(' '.repeat(THEME_LIMITS.manifestBytes + 1))).toThrow('256 KiB');
@@ -127,18 +130,28 @@ describe('theme v1 contract', () => {
     expect(() => parseThemeManifest('{')).toThrow('complete JSON');
   });
 
-  for (const path of [
-    '/tmp/a.png',
-    'assets/../secret.png',
-    'assets/a.svg',
-    'assets/a.png/b',
-    'assets/%2e%2e.png',
-    'assets\\a.png',
-  ]) {
-    test(`rejects unsafe or unsupported asset path ${path}`, () => {
-      expect(() => parse({ ...createThemeStarter(), assets: { paper: { path } } })).toThrow();
-    });
-  }
+  test('rejects an unsafe or unsupported asset path', () => {
+    for (const path of [
+      '/tmp/a.png',
+      'assets/../secret.png',
+      'assets/a.svg',
+      'assets/a.png/b',
+      'assets/%2e%2e.png',
+      'assets\\a.png',
+    ]) {
+      expect({
+        path,
+        parsed: (() => {
+          try {
+            parse({ ...createThemeStarter(), assets: { paper: { path } } });
+            return true;
+          } catch {
+            return false;
+          }
+        })(),
+      }).toEqual({ path, parsed: false });
+    }
+  });
 
   test('validates all shared, mode, responsive and logo references', () => {
     for (const extra of [

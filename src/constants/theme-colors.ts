@@ -53,9 +53,9 @@ import type { Colors } from '@osuki-dev/ui';
  * background, it reads as a different material -- which is what the glass
  * fallback looked like before this.
  *
- * Every pair below is pinned with its measured ratio in
- * `__tests__/theme-light-levels.test.ts`; change a value here and that test
- * names the pair that moved.
+ * The ladder order, the raised-fill step and the 4.5:1 ink bar are held in
+ * `__tests__/theme-light-levels.test.ts`; a change that breaks one names the
+ * pair that missed.
  */
 export const lightColors: Partial<Colors> = {
   background: '#F7F3EC',
