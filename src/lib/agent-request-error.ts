@@ -43,14 +43,28 @@ const NO_RESPONSE = ['network request failed', 'network error', 'timed out', 'ti
 
 /**
  * A native exception relayed as a message: its first line is a Java class
- * name (`java.lang.RuntimeException: Cronet failed: ...`,
- * `javax.net.ssl.SSLHandshakeException: ...`). Thrown on the way out, so no
- * computer answered.
+ * name (`java.lang.RuntimeException: Cronet failed: ...`).
  */
 const NATIVE_EXCEPTION = /^(?:[a-z][\w$]*\.)+[A-Z][\w$]*(?:Exception|Error)\b/;
 
-/** A transport error code on the thrown object itself (`ECONNREFUSED`, `ERR_NETWORK`). */
-const TRANSPORT_CODE = /^(?:E[A-Z]{3,}|ERR_[A-Z_]+)$/;
+/**
+ * What makes a native exception a transport failure -- no computer answered --
+ * read off its first line: the network stack's own words, never a file or a
+ * permission (`FileNotFoundException`, `EACCES`), which say their own thing.
+ */
+const TRANSPORT_WORDS =
+  /network|timeout|timed ?out|connect|socket|unknownhost|cronet|net::err_|sslhandshake/i;
+
+/** A transport error code on the thrown object itself. */
+const TRANSPORT_CODES = new Set([
+  'ECONNREFUSED',
+  'ECONNRESET',
+  'ECONNABORTED',
+  'ETIMEDOUT',
+  'ENETUNREACH',
+  'EHOSTUNREACH',
+  'ERR_NETWORK',
+]);
 
 /** Whether a request that got no HTTP status failed in the transport, by the error's shape. */
 function transportFailure(err: unknown, raw: string): boolean {
@@ -59,8 +73,9 @@ function transportFailure(err: unknown, raw: string): boolean {
     code?: unknown;
   };
   if (shape.name === 'NetworkError' || shape.name === 'AbortError') return true;
-  if (typeof shape.code === 'string' && TRANSPORT_CODE.test(shape.code)) return true;
-  if (NATIVE_EXCEPTION.test(raw.trimStart())) return true;
+  if (typeof shape.code === 'string' && TRANSPORT_CODES.has(shape.code)) return true;
+  const first = raw.trimStart().split(/\r?\n/)[0] ?? '';
+  if (NATIVE_EXCEPTION.test(first)) return TRANSPORT_WORDS.test(first);
   const lower = raw.toLowerCase();
   return NO_RESPONSE.some((needle) => lower.includes(needle));
 }
@@ -71,7 +86,8 @@ function transportFailure(err: unknown, raw: string): boolean {
  * goes to the debug log.
  */
 function oneLine(raw: string): string {
-  const first = raw.split(/\r?\n|\s+at\s+[\w$.]+\(/)[0] ?? '';
+  // A stack trace starts on its own line; a sentence may say "at foo(" itself.
+  const first = raw.trimStart().split(/\r?\n/)[0] ?? '';
   const line = bound(first);
   if (line !== raw.trim()) console.debug('Agent request failed:', raw);
   return line;
