@@ -551,7 +551,16 @@ export type TaskRowLine =
   | { kind: 'error'; text: string }
   | { kind: 'state' };
 
-export type TaskRowIcon = 'send' | 'loader' | 'help' | 'pause' | 'check' | 'x' | 'ban';
+/** The glyph a row's state is drawn with (`TASK_GLYPHS`, icon slots `task.<state>`). */
+export type TaskRowIcon =
+  | 'sent'
+  | 'starting'
+  | 'working'
+  | 'waiting'
+  | 'paused'
+  | 'done'
+  | 'failed'
+  | 'cancelled';
 export type TaskRowTone = 'textMuted' | 'primary' | 'warning' | 'success' | 'danger';
 export type TaskRowAction = 'open' | 'cancel' | 'markDone' | 'acknowledge';
 
@@ -585,7 +594,7 @@ export function taskRowVisual(
 ): TaskRowVisual {
   if (task.state === 'sent') {
     return {
-      icon: 'send',
+      icon: 'sent',
       tone: 'textMuted',
       spins: false,
       line: { kind: 'sent' },
@@ -608,16 +617,16 @@ export function taskRowVisual(
     case 'queued':
     case 'dispatching':
       return {
-        icon: 'loader',
+        icon: 'starting',
         tone: 'textMuted',
-        spins: true,
+        spins: false,
         line: { kind: 'starting' },
         clock: 'elapsed',
         actions: live,
       };
     case 'working':
       return {
-        icon: 'loader',
+        icon: 'working',
         tone: 'primary',
         spins: true,
         // A progress line that says nothing (a TUI rule the gateway read off the
@@ -631,7 +640,7 @@ export function taskRowVisual(
       };
     case 'waiting':
       return {
-        icon: 'help',
+        icon: 'waiting',
         tone: 'warning',
         spins: false,
         line: said ? { kind: 'waiting', text: said } : { kind: 'waiting' },
@@ -641,7 +650,7 @@ export function taskRowVisual(
       };
     case 'idle_unconfirmed':
       return {
-        icon: 'pause',
+        icon: 'paused',
         tone: 'textMuted',
         spins: false,
         line: said ? { kind: 'paused', text: said } : { kind: 'paused' },
@@ -650,7 +659,7 @@ export function taskRowVisual(
       };
     case 'done':
       return {
-        icon: 'check',
+        icon: 'done',
         tone: 'success',
         spins: false,
         line: ended,
@@ -659,7 +668,7 @@ export function taskRowVisual(
       };
     case 'failed':
       return {
-        icon: 'x',
+        icon: 'failed',
         tone: 'danger',
         spins: false,
         line: said ? { kind: 'error', text: said } : ended,
@@ -668,7 +677,7 @@ export function taskRowVisual(
       };
     case 'cancelled':
       return {
-        icon: 'ban',
+        icon: 'cancelled',
         tone: 'textMuted',
         spins: false,
         line: { kind: 'state' },

@@ -54,6 +54,7 @@ test('an icon entry still needs a real asset id', () => {
   expect(() => parseThemeManifest(withIcons({ 'chrome.back': {} }))).toThrow();
 });
 
+const GLYPHS = 'src/components/icons/task-state-glyphs.tsx';
 /** Which file draws each advertised glyph. Both guards below read this one. */
 const CONSUMERS: Record<(typeof THEME_ICONS)[number], string> = {
   'chrome.scan': 'src/components/home-overview.tsx',
@@ -63,6 +64,14 @@ const CONSUMERS: Record<(typeof THEME_ICONS)[number], string> = {
   'chrome.attach': 'src/components/composer-attachment-button.tsx',
   'chrome.create': 'src/components/agent-header-morph.tsx',
   'home.arrow': 'src/components/server-agent-rows.tsx',
+  'task.sent': GLYPHS,
+  'task.starting': GLYPHS,
+  'task.working': GLYPHS,
+  'task.waiting': GLYPHS,
+  'task.paused': GLYPHS,
+  'task.done': GLYPHS,
+  'task.failed': GLYPHS,
+  'task.cancelled': GLYPHS,
 };
 
 test('every advertised glyph is drawn by a real consumer', () => {
