@@ -347,6 +347,37 @@ describe('a screen-owning pane replaces rather than accumulates (card #795, defe
     expect(foldPaneRead('', 'row 0\nrow 1', 'frame', 240, true)).toBe('row 0\nrow 1');
   });
 
+  // Captured history (`'capturedPage'`): older than the window by construction.
+  test('a captured page goes above the screen frame and stays there through a repaint', () => {
+    const frame = 'screen a1\nscreen a2\nscreen a3';
+    const page = 'old 1\nold 2\nold 3\nold 4';
+    const paged = foldPaneRead(frame, page, 'capturedPage', 240, true, 3);
+    expect(paged).toBe(`${page}\n${frame}`);
+    const repaint = 'screen b1\nscreen b2\nscreen b3';
+    expect(foldPaneRead(paged, repaint, 'frame', 240, true, 3)).toBe(`${page}\n${repaint}`);
+  });
+
+  test('a restarted first captured page the window already holds adds nothing', () => {
+    const frame = 'screen 1\nscreen 2\nscreen 3';
+    const first = 'old 5\nold 6\nold 7\nold 8';
+    const second = 'old 1\nold 2\nold 3\nold 4';
+    const held = foldPaneRead(
+      foldPaneRead(frame, first, 'capturedPage', 240, true, 3),
+      second,
+      'capturedPage',
+      240,
+      true,
+      3
+    );
+    expect(held).toBe(`${second}\n${first}\n${frame}`);
+    expect(foldPaneRead(held, first, 'capturedPage', 240, true, 3)).toBe(held);
+  });
+
+  test("a captured page's has_more is the answer to whether there is more", () => {
+    expect(hasEarlierAfterPage('a\nb', 240, 2000, null, 0, null, true)).toBe(true);
+    expect(hasEarlierAfterPage('a\nb', 240, 2000, null, 0, null, false)).toBe(false);
+  });
+
   test('a pane that does not own the screen is completely unaffected (default false)', () => {
     // The governing rule: nothing about a working pane may change. Omitting
     // the parameter must be indistinguishable from before it existed.
