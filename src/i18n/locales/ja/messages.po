@@ -6675,6 +6675,10 @@ msgstr "ペアリングを解除"
 msgid "Unpair {label}"
 msgstr "{label} のペアリングを解除"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "Unpair needs a newer gateway on {thisLabel}"
+msgstr "ペアリング解除には {thisLabel} のゲートウェイを新しくする必要があります"
+
 #: src/components/settings-servers.tsx
 msgid "Unpair this computer"
 msgstr "このコンピュータのペアリングを解除"

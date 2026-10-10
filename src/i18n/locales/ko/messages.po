@@ -6675,6 +6675,10 @@ msgstr "페어링 해제"
 msgid "Unpair {label}"
 msgstr "{label} 페어링 해제"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "Unpair needs a newer gateway on {thisLabel}"
+msgstr "페어링 해제하려면 {thisLabel}의 게이트웨이를 최신으로 업데이트해야 합니다"
+
 #: src/components/settings-servers.tsx
 msgid "Unpair this computer"
 msgstr "이 컴퓨터 페어링 해제"

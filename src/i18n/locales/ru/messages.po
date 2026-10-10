@@ -6675,6 +6675,10 @@ msgstr "Отвязать"
 msgid "Unpair {label}"
 msgstr "Отвязать {label}"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "Unpair needs a newer gateway on {thisLabel}"
+msgstr "Для отвязки на {thisLabel} нужен более новый шлюз"
+
 #: src/components/settings-servers.tsx
 msgid "Unpair this computer"
 msgstr "Отвязать этот компьютер"

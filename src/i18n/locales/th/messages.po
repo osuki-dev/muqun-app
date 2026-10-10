@@ -6675,6 +6675,10 @@ msgstr "เลิกจับคู่"
 msgid "Unpair {label}"
 msgstr "เลิกจับคู่ {label}"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "Unpair needs a newer gateway on {thisLabel}"
+msgstr "การยกเลิกการจับคู่ต้องใช้เกตเวย์ที่ใหม่กว่าบน {thisLabel}"
+
 #: src/components/settings-servers.tsx
 msgid "Unpair this computer"
 msgstr "เลิกจับคู่คอมพิวเตอร์นี้"

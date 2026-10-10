@@ -72,7 +72,7 @@ function FleetPeersBody({ server }: { server: GatewayRecord }) {
     url: record.url,
     peers: byServer[record.serverId] ?? null,
   }));
-  const { stillLinked, stillListedBy } = unpairLines(server.serverId, unpairs);
+  const { stillLinked, stillListedBy, needsNewerGateway } = unpairLines(server.serverId, unpairs);
   const thisLabel = server.label;
   const { linked, noWork, revoked, cannotReach, sameName } = linkLines(
     server.serverId,
@@ -142,6 +142,7 @@ function FleetPeersBody({ server }: { server: GatewayRecord }) {
           />
           {linked.length > 0 ||
           stillLinked.length > 0 ||
+          needsNewerGateway ||
           stillListedBy.length > 0 ||
           revoked.length > 0 ||
           cannotReach.length > 0 ||
@@ -161,6 +162,14 @@ function FleetPeersBody({ server }: { server: GatewayRecord }) {
                   {t`Still linked to ${gone}; will unlink when it is reachable`}
                 </Text>
               ))}
+              {needsNewerGateway ? (
+                <Text
+                  testID="fleet-peers-needs-newer-gateway"
+                  variant="caption"
+                  color={theme.colors.warning}>
+                  {t`Unpair needs a newer gateway on ${thisLabel}`}
+                </Text>
+              ) : null}
               {stillListedBy.map((gone) => (
                 <Text
                   key={`still-listed-${gone}`}

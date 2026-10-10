@@ -63,8 +63,13 @@ function load(): UnpairRecord[] {
               typeof item.failures === 'number'
           )
         );
-        const { progress: _held, ...rest } = entry;
-        return Object.keys(progress).length ? { ...rest, progress } : rest;
+        const { progress: _held, names, ...rest } = entry;
+        const kept = Array.isArray(names) ? names.filter((name) => typeof name === 'string') : [];
+        return {
+          ...rest,
+          ...(Object.keys(progress).length ? { progress } : {}),
+          ...(kept.length ? { names: kept } : {}),
+        };
       });
   } catch {
     return [];

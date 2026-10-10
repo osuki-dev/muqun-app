@@ -6675,6 +6675,10 @@ msgstr "Dissocier"
 msgid "Unpair {label}"
 msgstr "Désappairer {label}"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "Unpair needs a newer gateway on {thisLabel}"
+msgstr "Pour dissocier, {thisLabel} doit avoir une passerelle plus récente"
+
 #: src/components/settings-servers.tsx
 msgid "Unpair this computer"
 msgstr "Désappairer cet ordinateur"
