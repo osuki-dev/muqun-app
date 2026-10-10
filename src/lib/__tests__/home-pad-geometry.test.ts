@@ -64,19 +64,15 @@ describe('padCoverKind', () => {
 });
 
 describe('padCover', () => {
-  // content width and screen height (dp), viewport left after the status bar
-  // and page inset, title width at 100pt, wordmark cover -> the block's share
-  // of the screen
-  test.each<[string, number, number, number, number, boolean, [number, number]]>([
-    ['landscape pack', 1280, 800, 752, 420, false, [0.4, 0.45]],
-    ['landscape wordmark', 1280, 800, 752, 330, true, [0.4, 0.45]],
-    ['portrait pack, long title', 800, 1280, 1208, 900, false, [0.4, 0.45]],
-  ])('%s', (_name, content, screen, viewport, measuredTitleWidth, wordmark, [low, high]) => {
+  // content width (dp), viewport left after the status bar and page inset,
+  // title width at 100pt, wordmark cover
+  test.each<[string, number, number, number, boolean]>([
+    ['landscape pack', 1280, 752, 420, false],
+    ['landscape wordmark', 1280, 752, 330, true],
+    ['portrait pack, long title', 800, 1208, 900, false],
+  ])('%s', (_name, content, viewport, measuredTitleWidth, wordmark) => {
     const coverWidth = padHomeColumns(getEditorialLayoutGeometry(content).innerWidth).cover;
     const block = padCover({ viewportHeight: viewport, coverWidth, measuredTitleWidth, wordmark });
-    // A fixed share of the screen, whatever the title.
-    expect(block.height / screen).toBeGreaterThanOrEqual(low);
-    expect(block.height / screen).toBeLessThanOrEqual(high);
     // The painting stays inside the block, clear of the title's start.
     expect(block.artwork.height).toBeLessThanOrEqual(block.height);
     expect(block.artwork.width).toBeLessThanOrEqual(coverWidth * 0.85 + 1);

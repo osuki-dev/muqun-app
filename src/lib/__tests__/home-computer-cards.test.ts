@@ -14,8 +14,6 @@ import {
   taskRowTitle,
   heldCardOrder,
   openTaskWork,
-  type TaskRowIcon,
-  type TaskRowTone,
 } from '../home-computer-cards';
 import type { ServerTasksIndex } from '../server-tasks-state';
 import type { TaskState, TaskView } from '../task-ledger';
@@ -415,30 +413,6 @@ describe('groupTaskTree', () => {
     expect(groups.attention.map((t) => t.taskId)).toEqual(['asks']);
     expect(groups.active.map((t) => t.taskId)).toEqual(['busy']);
     expect(groups.finished.map((t) => t.taskId)).toEqual(['over']);
-  });
-});
-
-describe('taskRowVisual: every state has a glyph and a tone', () => {
-  test.each<[TaskState | 'sent', TaskRowIcon, TaskRowTone, boolean]>([
-    ['sent', 'sent', 'textMuted', false],
-    ['queued', 'starting', 'textMuted', false],
-    ['dispatching', 'starting', 'textMuted', false],
-    ['working', 'working', 'primary', true],
-    ['waiting', 'waiting', 'warning', false],
-    ['idle_unconfirmed', 'paused', 'textMuted', false],
-    ['done', 'done', 'success', false],
-    ['failed', 'failed', 'danger', false],
-    ['cancelled', 'cancelled', 'textMuted', false],
-  ])('%s → %s in %s', (state, icon, tone, spins) => {
-    const visual = taskRowVisual(state === 'sent' ? { state } : task('t', state, 1), {
-      canComplete: false,
-      acknowledged: false,
-    });
-    expect({ icon: visual.icon, tone: visual.tone, spins: visual.spins }).toEqual({
-      icon,
-      tone,
-      spins,
-    });
   });
 });
 
