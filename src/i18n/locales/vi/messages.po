@@ -434,6 +434,10 @@ msgstr "Đã tạo một terminal. Mở để kiểm tra việc khởi động; 
 msgid "About"
 msgstr "Giới thiệu"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "Accept work from other computers"
+msgstr "Nhận việc từ máy tính khác"
+
 #: src/components/task-row.tsx
 msgid "Acknowledge"
 msgstr "Đánh dấu đã xem"
@@ -533,6 +537,10 @@ msgstr "Ngăn tác tử mở ở"
 #: src/components/settings-servers.tsx
 msgid "Agents"
 msgstr "Tác tử"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Agents on your other computers can hand part of a task to this one."
+msgstr "Tác tử trên các máy tính khác của bạn có thể giao một phần tác vụ cho máy này."
 
 #: src/components/app-drawer-content.tsx
 msgid "AI coding assistant"
@@ -1013,6 +1021,10 @@ msgstr "Đã hủy"
 msgctxt "task state"
 msgid "Cancelled"
 msgstr "Đã hủy"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Cannot reach {quietNames}"
+msgstr "Không kết nối được {quietNames}"
 
 #: src/components/settings-server-capabilities.tsx
 msgid "Capabilities"
@@ -1708,6 +1720,10 @@ msgstr "Không thể hủy tác vụ"
 #: src/components/agent-workbench.tsx
 msgid "Could not change delivery"
 msgstr "Không thể đổi cách gửi"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Could not change this setting"
+msgstr "Không thể thay đổi cài đặt này"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not compact"
@@ -3209,6 +3225,10 @@ msgstr "Cấp {depth}"
 msgid "Light"
 msgstr "Sáng"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "Linked with: {linkedNames}"
+msgstr "Đã liên kết với: {linkedNames}"
+
 #: src/app/commands.tsx
 msgid "List branches"
 msgstr "Liệt kê các nhánh"
@@ -3302,6 +3322,10 @@ msgstr "Máy"
 #: src/components/launch-intro.tsx
 msgid "Make it yours"
 msgstr "Biến nó thành của bạn"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Make sure the computer is reachable, then try again."
+msgstr "Hãy đảm bảo máy tính có thể kết nối, rồi thử lại."
 
 #: src/components/home-overview.tsx
 msgid "Manage"
@@ -4139,6 +4163,10 @@ msgstr "Mở terminal của tác tử này"
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
 msgstr "Tùy chọn cho {0}"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Other computers"
+msgstr "Máy tính khác"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/tool-call-code-rows.tsx

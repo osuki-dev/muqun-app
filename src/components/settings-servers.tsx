@@ -20,11 +20,13 @@ import {
   SettingsNavRow,
   SettingsSeparator,
 } from '@/components/settings-chrome';
+import { FleetPeersSection } from '@/components/settings-fleet-peers';
 import { McpTokens } from '@/components/settings-mcp-tokens';
 import { ServerCapabilities } from '@/components/settings-server-capabilities';
 import { SettingsSegmented } from '@/components/settings-segmented';
 import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
 import { StatusDot } from '@/components/status-dot';
+import { reconcileFleet } from '@/hooks/use-fleet-link';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { GatewayStorageError } from '@/components/gateway-storage-error';
@@ -97,6 +99,8 @@ export function SettingsServers({ initialOpenId }: { initialOpenId?: string } = 
   // `stores/server-reachability.ts`.
   useFocusEffect(
     useCallback(() => {
+      // Opening Settings › Computers is a reconciler trigger (spec §4.1).
+      void reconcileFleet({ reason: 'settings' });
       if (!record || record.serverId === DEMO_SERVER_ID || record.sshTunnel) return;
       void refreshReachability({
         serverId: record.serverId,
@@ -428,6 +432,7 @@ function ServerRow({
           {current ? (
             <>
               <HomeAgentNavRow serverId={server.serverId} />
+              <FleetPeersSection server={server} />
               <PairedDevices server={server} />
               <ServerCapabilities serverId={server.serverId} />
               <McpTokens serverId={server.serverId} />
@@ -435,6 +440,7 @@ function ServerRow({
           ) : (
             <>
               <HomeAgentNavRow serverId={server.serverId} />
+              <FleetPeersSection server={server} />
               <PressableScale
                 accessibilityRole="button"
                 accessibilityLabel={t`Use ${server.label}`}
