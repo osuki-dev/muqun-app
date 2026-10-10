@@ -17,6 +17,7 @@ import {
   planRenames,
   planTombstoneUnlinks,
   renamePeer,
+  pairingsAnswer,
   revokePairing,
   settledTombstones,
   unlinkPeer,
@@ -206,7 +207,11 @@ async function buryUnpaired(
   for (const record of records) {
     if (!stillPaired(record.serverId)) continue;
     const endpoint = recordEndpoint(record);
-    const logins = await fetchPairedGateways(endpoint);
+    const listed = await fetchPairedGateways(endpoint);
+    const logins = pairingsAnswer(
+      listed,
+      listed === 'no-route' ? await fetchCapabilities(endpoint) : null
+    );
     if (logins === null) {
       for (const id of tombstones) failed.add(id);
       continue;
