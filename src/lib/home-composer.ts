@@ -17,6 +17,7 @@ import {
   type RememberedAgentChoice,
 } from '@/lib/agent-session-defaults';
 import type { GatewayRecord } from '@/lib/gateway-storage';
+import { keepKeys } from '@/lib/keep-keys';
 import type { AgentReadiness } from '@/lib/home-agent-readiness';
 import type { ServerReachability } from '@/lib/server-reachability';
 
@@ -150,6 +151,15 @@ export function homeSessionParams(input: {
 /** Where a dock pick of mode and model is remembered: one computer's one agent. */
 export function homeModelChoiceKey(serverId: string, agentId: string | undefined): string {
   return `${serverId}\u0000${agentId ?? ''}`;
+}
+
+/** The dock picks of the computers in `serverIds` only (the rest were unpaired). */
+export function keepHomeModelChoices<T>(
+  choices: Record<string, T>,
+  serverIds: readonly string[]
+): Record<string, T> {
+  const kept = new Set(serverIds);
+  return keepKeys(choices, (key) => kept.has(key.slice(0, key.indexOf('\u0000'))));
 }
 
 /** The persisted `{ [homeModelChoiceKey]: { model?, mode? } }`, dropping anything malformed. */
