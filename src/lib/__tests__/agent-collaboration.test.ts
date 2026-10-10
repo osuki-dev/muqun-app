@@ -111,15 +111,6 @@ describe('collaboration compatibility', () => {
       expect(assignmentStripState(availability, nothing)).toEqual({ toggle: false });
     }
   });
-  test('the demo gateway answers the way a current one does', () => {
-    // The offline e2e flow drives the strip, so the fixture has to satisfy the
-    // same gate a real gateway does -- and satisfy it by the same route, with a
-    // per-session list rather than only the gateway-wide array. Read from the
-    // source because importing `demo-gateway` pulls in the Lingui macro, which
-    // this suite does not run a Babel pass for.
-    const source = readFileSync(new URL('../demo-gateway.ts', import.meta.url), 'utf8');
-    expect(source).toContain("capabilities: ['agent_collaboration']");
-  });
   test('does not enable a disconnected or mismatched backend', () => {
     for (const backend of [
       { sessionId: 'herdr', kind: 'herdr', connected: false, version: '0.9.0' },

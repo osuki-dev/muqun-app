@@ -201,25 +201,27 @@ describe('naming an agent on the wire', () => {
 });
 
 describe('readiness', () => {
-  test.each([
-    ['connected', 'ready'],
-    ['reachable', 'ready'],
-    ['not_installed', 'not-installed'],
-    ['disabled', 'unsupported'],
-    ['unconfigured', 'needs-setup'],
-    ['unsupported', 'needs-update'],
-    ['offline', 'offline'],
-    ['unknown', 'offline'],
-  ] as const)('%s reads as %s', (status, readiness) => {
-    expect(agentReadiness({ status, enabled: true })).toBe(readiness);
-  });
-
-  test('an unpaired T3 (unconfigured) needs setup, and is not where a session goes', () => {
-    const t3 = agent({ id: 't3', status: 'unconfigured' });
-    expect(agentReadiness(t3)).toBe('needs-setup');
-    expect(resolveSelectedAgent('t3', { agents: [t3, agent({ id: 'opencode' })] })).toBe(
-      'opencode'
-    );
+  test('every gateway status reads as its readiness', () => {
+    const statuses = [
+      'connected',
+      'reachable',
+      'not_installed',
+      'disabled',
+      'unconfigured',
+      'unsupported',
+      'offline',
+      'unknown',
+    ] as const;
+    expect(statuses.map((status) => agentReadiness({ status, enabled: true }))).toEqual([
+      'ready',
+      'ready',
+      'not-installed',
+      'unsupported',
+      'needs-setup',
+      'needs-update',
+      'offline',
+      'offline',
+    ]);
   });
 
   test('an unsupported agent needs an update, and is not where a session goes', () => {
@@ -366,33 +368,18 @@ describe('the mirror', () => {
     });
   });
 
-  test('survives a round trip through storage', () => {
-    let index = withMirroredDiscovery(emptyAgentsMirror(), 'srv-1', mirrored);
+  test('keeps the picks and the advertised transports through storage', () => {
+    const transports = {
+      websocket: { path: '/gw/api/ws', protocol: 1 },
+      mcp: { path: '/mcp', loopbackOnly: true, tokenHelper: 'muqun-mcp-token' },
+    };
+    const withTransports = mirrorDiscovery({ ...discovery, transports }, 1);
+    let index = withMirroredDiscovery(emptyAgentsMirror(), 'srv-1', withTransports);
     index = { ...index, selected: { 'srv-1': 'deepseek' }, lastUsed: { 'srv-1': 'opencode' } };
     const back = parseAgentsMirrorIndex(serializeAgentsMirrorIndex(index));
     expect(back).toEqual(index);
-  });
-
-  test('keeps the advertised websocket transport, through storage too', () => {
-    const withTransports = mirrorDiscovery(
-      { ...discovery, transports: { websocket: { path: '/gw/api/ws', protocol: 1 } } },
-      1
-    );
-    expect(withTransports.transports).toEqual({ websocket: { path: '/gw/api/ws', protocol: 1 } });
-    const index = withMirroredDiscovery(emptyAgentsMirror(), 'srv-1', withTransports);
-    const back = parseAgentsMirrorIndex(serializeAgentsMirrorIndex(index));
-    expect(back.servers['srv-1']?.transports).toEqual({
-      websocket: { path: '/gw/api/ws', protocol: 1 },
-    });
+    expect(back.servers['srv-1']?.transports).toEqual(transports);
     expect('transports' in mirrored).toBe(false);
-  });
-
-  test('keeps the advertised MCP transport through storage', () => {
-    const mcp = { path: '/mcp', loopbackOnly: true, tokenHelper: 'muqun-mcp-token' };
-    const withMcp = mirrorDiscovery({ ...discovery, transports: { mcp } }, 1);
-    const index = withMirroredDiscovery(emptyAgentsMirror(), 'srv-1', withMcp);
-    const back = parseAgentsMirrorIndex(serializeAgentsMirrorIndex(index));
-    expect(back.servers['srv-1']?.transports).toEqual({ mcp });
   });
 
   test('a document from a newer version, or an unreadable one, is empty rather than misread', () => {

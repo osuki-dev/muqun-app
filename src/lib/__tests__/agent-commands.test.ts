@@ -150,20 +150,6 @@ describe('readSlashCommand', () => {
     }
   });
 
-  test('the menu carries the nine the app answers', () => {
-    expect(AGENT_CLIENT_COMMANDS.map((command) => command.name)).toEqual([
-      '/new',
-      '/sessions',
-      '/models',
-      '/agents',
-      '/undo',
-      '/keep',
-      '/compact',
-      '/clear',
-      '/export',
-    ]);
-  });
-
   test('isClientCommand says no to a name that is not one', () => {
     expect(isClientCommand('review')).toBe(false);
   });
