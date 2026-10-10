@@ -64,7 +64,22 @@ type HomeTaskCardsState = {
    */
   retryFailedSend: (() => void) | null;
   setRetryFailedSend: (retry: (() => void) | null) => void;
+  /** The row whose work is being opened (`taskOpeningKey`): it shows a loading state. */
+  opening: string | null;
+  setOpening: (key: string | null) => void;
 };
+
+export function taskOpeningKey(serverId: string, taskId: string): string {
+  return `${serverId}\u0000${taskId}`;
+}
+
+/** The row `key` shows its loading state until `open` settles (unless another row took over). */
+export function showOpeningWhile(key: string, open: Promise<void>): void {
+  useHomeTaskCards.getState().setOpening(key);
+  void open.then(() => {
+    if (useHomeTaskCards.getState().opening === key) useHomeTaskCards.getState().setOpening(null);
+  });
+}
 
 export const useHomeTaskCards = create<HomeTaskCardsState>((set, get) => ({
   dismissed: loadDismissed(),
@@ -72,6 +87,10 @@ export const useHomeTaskCards = create<HomeTaskCardsState>((set, get) => ({
   retryFailedSend: null,
   setRetryFailedSend(retry) {
     set({ retryFailedSend: retry });
+  },
+  opening: null,
+  setOpening(key) {
+    set({ opening: key });
   },
   acknowledge(serverId, taskId) {
     const key = dismissedKey(serverId, taskId);

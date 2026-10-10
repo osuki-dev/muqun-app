@@ -7,7 +7,7 @@ import { useWindowDimensions } from 'react-native';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useLatestRef, useLazyRef } from '@/hooks/use-render-refs';
 import { loadRecordSessions } from '@/lib/gateway-client';
-import { getAgentSessionSnapshot } from '@/lib/agent-session';
+import { agentSessionListed } from '@/lib/agent-session';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import type { TaskView } from '@/lib/task-ledger';
 import { checkAgentServer } from '@/lib/home-agent-readiness';
@@ -145,14 +145,8 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
       agentSessionKnown: async (target) => {
         if (!target.asid) return true;
         const asid = target.asid;
-        const outcome = await awaitSessionListed(
-          () =>
-            getAgentSessionSnapshot(target.sessionId, asid).then(
-              () => [asid],
-              (failure: unknown) =>
-                failure instanceof Error && /: 404\b/.test(failure.message) ? [] : null
-            ),
-          asid
+        const outcome = await awaitSessionListed((remainingMs) =>
+          agentSessionListed(target.sessionId, asid, remainingMs)
         );
         return outcome !== 'gone';
       },

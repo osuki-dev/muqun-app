@@ -10,7 +10,7 @@ import {
   XCircle,
 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   cancelAnimation,
   useAnimatedStyle,
@@ -57,7 +57,7 @@ import { canMarkTaskDone, type TaskView } from '@/lib/task-ledger';
 import { useFleetPeers } from '@/stores/fleet-peers';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { dismissTaskNotices } from '@/stores/in-app-notifications';
-import { useHomeTaskCards } from '@/stores/home-task-cards';
+import { taskOpeningKey, useHomeTaskCards } from '@/stores/home-task-cards';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { plural } from '@lingui/core/macro';
 
@@ -584,6 +584,10 @@ export function TaskRow({
   const { visual, line, mirror, fromText, trailingAge } = row;
   const ownTitle = taskRowTitle(task);
   const title = ownTitle || whereName(task) || line.text;
+  // Its work is being opened: the tap took, the wait is the computer's.
+  const opening = useHomeTaskCards(
+    (cards) => cards.opening === taskOpeningKey(serverId, task.taskId)
+  );
   return (
     <Animated.View
       entering={fadeIn('micro')}
@@ -604,12 +608,17 @@ export function TaskRow({
         ]
           .filter(Boolean)
           .join(', ')}
+        accessibilityState={{ busy: opening }}
         {...row.menuProps}
         onPress={row.open}
         style={styles.row}>
         <View style={styles.titleLine}>
           <View style={styles.icon}>
-            <TaskStateIcon visual={visual} />
+            {opening ? (
+              <ActivityIndicator size="small" color={theme.colors.textMuted} />
+            ) : (
+              <TaskStateIcon visual={visual} />
+            )}
           </View>
           <RowMarkdown text={title} ink={theme.colors.text} kind="title" />
           {mirror && ownTitle ? (

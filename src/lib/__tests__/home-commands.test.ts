@@ -775,18 +775,32 @@ describe('new terminal with no backend running', () => {
 });
 
 describe('awaitSessionListed: a session opened before its computer lists it', () => {
-  const noSleep = () => Promise.resolve();
+  // A clock the sleeps and the reads move: the wait is wall clock, reads included.
   test.each([
-    ['listed on the third read: opened then', [[], [], ['a']], 'ready'],
-    ['never listed while the computer answers: gone', [[], [], [], [], []], 'gone'],
-    ['no read answered: opened anyway', [null, null, null, null, null], 'unknown'],
-  ] as const)('%s', async (_name, answers, expected) => {
+    ['listed on the third read: opened then', [false, false, true], 0, 'ready'],
+    ['never listed while the computer answers: gone', [false], 0, 'gone'],
+    ['no read answered: opened anyway', [null], 0, 'unknown'],
+    // Reads that each take 3 s: two fit in 5 s, and the wait ends there.
+    ['slow reads still end at the deadline', [null], 3_000, 'unknown'],
+  ] as const)('%s', async (_name, answers, readMs, expected) => {
+    let clock = 0;
     let reads = 0;
     const outcome = await awaitSessionListed(
-      () => Promise.resolve(answers[Math.min(reads++, answers.length - 1)] ?? null),
-      'a',
-      { timeoutMs: 2_000, intervalMs: 500, sleep: noSleep }
+      (remainingMs) => {
+        clock += Math.min(readMs, remainingMs);
+        return Promise.resolve(answers[Math.min(reads++, answers.length - 1)] ?? null);
+      },
+      {
+        timeoutMs: 5_000,
+        intervalMs: 500,
+        now: () => clock,
+        sleep: (ms) => {
+          clock += ms;
+          return Promise.resolve();
+        },
+      }
     );
     expect(outcome).toBe(expected);
+    expect(clock).toBeLessThanOrEqual(5_000);
   });
 });

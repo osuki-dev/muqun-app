@@ -175,27 +175,34 @@ export type HomeCommandPorts = {
 };
 
 /**
- * Wait, within `timeoutMs`, until `read` lists `asid`: `ready` once it does;
- * `gone` when the computer kept answering without it to the end; `unknown`
- * when no read answered (the caller opens anyway and lets the screen say).
+ * Wait until the session is on its computer, within `timeoutMs` of wall
+ * clock, reads included: `read(remainingMs)` answers `true` (listed), `false`
+ * (the computer says there is no such session) or `null` (no answer), and
+ * must give up within the time it is handed. `ready` once listed; `gone` when
+ * the computer kept answering without it to the end; `unknown` when no read
+ * answered (the caller opens anyway and lets the screen say).
  */
 export async function awaitSessionListed(
-  read: () => Promise<readonly string[] | null>,
-  asid: string,
-  options: { timeoutMs?: number; intervalMs?: number; sleep?: (ms: number) => Promise<void> } = {}
+  read: (remainingMs: number) => Promise<boolean | null>,
+  options: {
+    timeoutMs?: number;
+    intervalMs?: number;
+    sleep?: (ms: number) => Promise<void>;
+    now?: () => number;
+  } = {}
 ): Promise<'ready' | 'gone' | 'unknown'> {
   const timeoutMs = options.timeoutMs ?? 5_000;
   const intervalMs = options.intervalMs ?? 500;
+  const now = options.now ?? Date.now;
   const sleep =
     options.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
+  const deadline = now() + timeoutMs;
   let answered = false;
-  for (let waited = 0; ; waited += intervalMs) {
-    const listed = await read().catch(() => null);
-    if (listed) {
-      if (listed.includes(asid)) return 'ready';
-      answered = true;
-    }
-    if (waited + intervalMs > timeoutMs) return answered ? 'gone' : 'unknown';
+  for (;;) {
+    const listed = await read(Math.max(1, deadline - now())).catch(() => null);
+    if (listed === true) return 'ready';
+    if (listed === false) answered = true;
+    if (deadline - now() < intervalMs) return answered ? 'gone' : 'unknown';
     await sleep(intervalMs);
   }
 }
