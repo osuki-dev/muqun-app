@@ -105,6 +105,11 @@ msgstr "{0, plural, one {Frage} other {Fragen}}"
 
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
+msgid "{0} (gateway)"
+msgstr "{0} (Gateway)"
+
+#. placeholder {0}: device.name
+#: src/components/settings-servers.tsx
 msgid "{0} (this device)"
 msgstr "{0} (dieses Gerät)"
 
@@ -286,6 +291,10 @@ msgstr "{done} von {0} erledigt"
 #: src/components/settings-fleet-peers.tsx
 msgid "{from} still lists an older {name}. Remove that entry on {from}."
 msgstr "{from} führt noch einen älteren Eintrag für {name}. Entferne diesen Eintrag auf {from}"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "{gone} still lists {thisLabel}; remove it on {gone}'s Manage screen"
+msgstr "{gone} führt {thisLabel} noch; entferne es im Verwaltungsbildschirm von {gone}"
 
 #: src/components/home-launch-actions.tsx
 msgid "{hidden} more"
@@ -3279,6 +3288,14 @@ msgstr "Ebene {depth}"
 msgid "Light"
 msgstr "Hell"
 
+#: src/components/file-mention-panel.tsx
+msgid "Link revoked · re-linking…"
+msgstr "Verbindung widerrufen · wird neu verbunden…"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Link to {name} was revoked · re-linking…"
+msgstr "Die Verbindung zu {name} wurde widerrufen · wird neu verbunden…"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "Linked with: {linkedNames}"
 msgstr "Verbunden mit: {linkedNames}"
@@ -5701,6 +5718,10 @@ msgstr "Laufenden Agenten in Echtzeit steuern"
 #: src/components/tool-call-code-rows.tsx
 msgid "Still arriving"
 msgstr "Wird noch übertragen"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Still linked to {gone}; will unlink when it is reachable"
+msgstr "Noch mit {gone} verbunden; wird getrennt, sobald es erreichbar ist"
 
 #: src/components/pane-chat-blocks.tsx
 msgid "Still running…"

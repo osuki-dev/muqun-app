@@ -105,6 +105,11 @@ msgstr "{0, plural, one {Pergunta} other {Perguntas}}"
 
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
+msgid "{0} (gateway)"
+msgstr "{0} (gateway)"
+
+#. placeholder {0}: device.name
+#: src/components/settings-servers.tsx
 msgid "{0} (this device)"
 msgstr "{0} (este dispositivo)"
 
@@ -286,6 +291,10 @@ msgstr "{done} de {0} concluídas"
 #: src/components/settings-fleet-peers.tsx
 msgid "{from} still lists an older {name}. Remove that entry on {from}."
 msgstr "{from} ainda tem uma entrada antiga de {name}. Remova essa entrada em {from}"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "{gone} still lists {thisLabel}; remove it on {gone}'s Manage screen"
+msgstr "{gone} ainda lista {thisLabel}; remova-o no ecrã Gerir de {gone}"
 
 #: src/components/home-launch-actions.tsx
 msgid "{hidden} more"
@@ -3279,6 +3288,14 @@ msgstr "Nível {depth}"
 msgid "Light"
 msgstr "Claro"
 
+#: src/components/file-mention-panel.tsx
+msgid "Link revoked · re-linking…"
+msgstr "Ligação revogada · a ligar novamente…"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Link to {name} was revoked · re-linking…"
+msgstr "A ligação a {name} foi revogada · a ligar novamente…"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "Linked with: {linkedNames}"
 msgstr "Ligado a: {linkedNames}"
@@ -5701,6 +5718,10 @@ msgstr "Intervir em tempo real no agente em execução"
 #: src/components/tool-call-code-rows.tsx
 msgid "Still arriving"
 msgstr "Ainda chegando"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Still linked to {gone}; will unlink when it is reachable"
+msgstr "Ainda ligado a {gone}; será desligado quando estiver acessível"
 
 #: src/components/pane-chat-blocks.tsx
 msgid "Still running…"

@@ -79,6 +79,8 @@ export interface MentionComputer {
   reachable: boolean;
   /** The computer this composer already sends to. */
   current: boolean;
+  /** The other computer revoked the link; the reconciler is linking it again. */
+  revoked?: boolean;
 }
 
 /**

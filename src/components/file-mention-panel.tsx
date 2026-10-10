@@ -153,11 +153,18 @@ function ComputerMentionRow({
     : computer.reachable
       ? theme.colors.text
       : theme.colors.textDisabled;
-  const caption = computer.current ? t`Current` : computer.reachable ? null : t`Unreachable`;
+  const caption = computer.current
+    ? t`Current`
+    : computer.revoked
+      ? t`Link revoked · re-linking…`
+      : computer.reachable
+        ? null
+        : t`Unreachable`;
+  const label = t`Mention ${computer.name}`;
   return (
     <PressableScale
       accessibilityRole="button"
-      accessibilityLabel={t`Mention ${computer.name}`}
+      accessibilityLabel={caption ? `${label}, ${caption}` : label}
       accessibilityState={{ disabled: !computer.reachable }}
       testID={`computer-mention-${computer.serverId}`}
       disabled={!computer.reachable}

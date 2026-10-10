@@ -105,6 +105,11 @@ msgstr "{0, plural, other {질문}}"
 
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
+msgid "{0} (gateway)"
+msgstr "{0} (게이트웨이)"
+
+#. placeholder {0}: device.name
+#: src/components/settings-servers.tsx
 msgid "{0} (this device)"
 msgstr "{0} (이 기기)"
 
@@ -286,6 +291,10 @@ msgstr "{0}개 중 {done}개 완료"
 #: src/components/settings-fleet-peers.tsx
 msgid "{from} still lists an older {name}. Remove that entry on {from}."
 msgstr "{from}에 이전 {name} 항목이 아직 남아 있습니다. {from}에서 그 항목을 삭제하세요"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "{gone} still lists {thisLabel}; remove it on {gone}'s Manage screen"
+msgstr "{gone}에 아직 {thisLabel}이(가) 있습니다. {gone}의 관리 화면에서 삭제하세요"
 
 #: src/components/home-launch-actions.tsx
 msgid "{hidden} more"
@@ -3279,6 +3288,14 @@ msgstr "깊이 {depth}"
 msgid "Light"
 msgstr "라이트"
 
+#: src/components/file-mention-panel.tsx
+msgid "Link revoked · re-linking…"
+msgstr "연결이 해제됨 · 다시 연결하는 중…"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Link to {name} was revoked · re-linking…"
+msgstr "{name}와(과)의 연결이 해제되었습니다 · 다시 연결하는 중…"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "Linked with: {linkedNames}"
 msgstr "연결됨: {linkedNames}"
@@ -5701,6 +5718,10 @@ msgstr "실행 중인 에이전트에 실시간 개입"
 #: src/components/tool-call-code-rows.tsx
 msgid "Still arriving"
 msgstr "수신 중"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Still linked to {gone}; will unlink when it is reachable"
+msgstr "아직 {gone}와(과) 연결되어 있습니다. 연결되면 해제합니다"
 
 #: src/components/pane-chat-blocks.tsx
 msgid "Still running…"
