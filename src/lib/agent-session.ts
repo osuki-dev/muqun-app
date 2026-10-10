@@ -425,6 +425,38 @@ export async function agentSessionListed(
   }
 }
 
+/**
+ * A session's snapshot from the computer it runs on, whatever this device has
+ * selected; `null` when it did not answer.
+ */
+export async function readAgentSessionAt(
+  endpoint: {
+    url: string;
+    token: string;
+    deviceId?: string;
+    transportKey?: string;
+    transport?: string;
+  },
+  sessionId: string | undefined,
+  asid: string
+): Promise<AgentSessionSnapshot | null> {
+  try {
+    const base = endpoint.url.replace(/\/$/, '');
+    const res = await gatewayEndpointFetch(
+      endpoint as GatewayEndpoint,
+      `${base}${sessionRoute(asid, '', sessionId, true)}`,
+      {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${endpoint.token}` },
+      }
+    );
+    if (!res.ok) return null;
+    return parseAgentSessionSnapshot(envelopeData(await res.json()));
+  } catch {
+    return null;
+  }
+}
+
 export async function getAgentSessionSnapshot(
   sessionId: string | undefined,
   asid: string

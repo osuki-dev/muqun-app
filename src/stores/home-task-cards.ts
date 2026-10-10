@@ -18,6 +18,8 @@ const DISMISSED_KEY = 'muqun.home.acknowledged-tasks.v1';
 /** Enough for months of finished work; the oldest acknowledgement goes first. */
 const MAX_DISMISSED = 500;
 export { PENDING_DISPATCH_TTL_MS } from '@/lib/home-computer-cards';
+/** How many failed Sent rows are kept, holding their drafts, at most. */
+export const MAX_FAILED_ROWS = 10;
 
 function openStore(): KeyValueStore {
   try {
@@ -64,6 +66,8 @@ type HomeTaskCardsState = {
   failed: (id: string, reason: string, resend: PendingResend) => void;
   /** It went to a session directly: the row stands for it until its task appears. */
   bound: (id: string, asid: string) => void;
+  /** Its session's agent replied: the row reads like a task in that state. */
+  replied: (id: string, state: 'working' | 'done' | 'failed', atMs: number) => void;
   /**
    * What a tap on a row does, from the dock that sent it: a failed one is
    * sent again exactly as it was, a bound one opens its session. `null` while
@@ -133,15 +137,30 @@ export const useHomeTaskCards = create<HomeTaskCardsState>((set, get) => ({
     set((state) => ({ pending: state.pending.filter((item) => item.id !== id) }));
   },
   failed(id, reason, resend) {
-    set((state) => ({
-      pending: state.pending.map((item) =>
+    set((state) => {
+      const pending = state.pending.map((item) =>
         item.id === id ? { ...item, failed: true as const, reason, resend } : item
-      ),
-    }));
+      );
+      // A failed row stays until acted on; past the cap the oldest goes first.
+      const failed = pending.filter((item) => item.failed).sort((a, b) => a.atMs - b.atMs);
+      const over = new Set(
+        failed.slice(0, Math.max(0, failed.length - MAX_FAILED_ROWS)).map((item) => item.id)
+      );
+      return { pending: over.size ? pending.filter((item) => !over.has(item.id)) : pending };
+    });
   },
   bound(id, asid) {
     set((state) => ({
       pending: state.pending.map((item) => (item.id === id ? { ...item, asid } : item)),
+    }));
+  },
+  replied(id, reply, atMs) {
+    set((state) => ({
+      pending: state.pending.map((item) =>
+        item.id === id && item.reply?.state !== reply
+          ? { ...item, reply: { state: reply, atMs } }
+          : item
+      ),
     }));
   },
 }));

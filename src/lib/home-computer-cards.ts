@@ -95,18 +95,52 @@ export const PENDING_DISPATCH_TTL_MS = 2 * 60_000;
 /**
  * Whether a Sent row is still shown. A plain one goes when it outlives
  * PENDING_DISPATCH_TTL_MS. A failed one holds a draft and stays until it is
- * sent again or dismissed. One that went to its session stays too, saying no
- * reply came yet, until that session's task appears or it is dismissed.
+ * sent again or dismissed. One that went to its session stays too, until that
+ * session's task appears or it is dismissed -- and once its session finished,
+ * for RECENT_FINISHED_MS, as a finished task does.
  */
 export function pendingShown(item: PendingDispatch, nowMs: number): boolean {
-  return (
-    item.failed === true || item.asid !== undefined || nowMs - item.atMs < PENDING_DISPATCH_TTL_MS
-  );
+  if (item.failed === true) return true;
+  if (item.asid !== undefined) {
+    const ended = item.reply?.state === 'done' || item.reply?.state === 'failed';
+    return !ended || nowMs - (item.reply?.atMs ?? item.atMs) <= RECENT_FINISHED_MS;
+  }
+  return nowMs - item.atMs < PENDING_DISPATCH_TTL_MS;
 }
 
-/** Whether a Sent row is work the computer is doing: sent, not failed, and recent. */
+/**
+ * Whether a Sent row is work the computer is doing: its session is working
+ * on it, or it was sent recently and nothing said otherwise.
+ */
 export function pendingWorking(item: PendingDispatch, nowMs: number): boolean {
-  return item.failed !== true && nowMs - item.atMs < PENDING_DISPATCH_TTL_MS;
+  if (item.failed === true) return false;
+  if (item.reply) return item.reply.state === 'working';
+  return nowMs - item.atMs < PENDING_DISPATCH_TTL_MS;
+}
+
+/** What a bound row's session says: no reply yet, or the reply's run state. */
+export type BoundSessionState = 'waiting' | 'working' | 'done' | 'failed';
+
+/**
+ * A bound row's session, read: `waiting` until the agent's first reply after
+ * the prompt (a session Home made carries nothing before it), then the run
+ * state the session reports.
+ */
+export function boundSessionState(snapshot: {
+  info: { status: string } | null;
+  timeline: readonly { role: string }[];
+}): BoundSessionState {
+  if (!snapshot.timeline.some((item) => item.role === 'assistant')) return 'waiting';
+  switch (snapshot.info?.status) {
+    case 'busy':
+    case 'retry':
+      return 'working';
+    case 'failed':
+    case 'interrupted':
+      return 'failed';
+    default:
+      return 'done';
+  }
 }
 
 /** A goal the dock sent that the computer has not reported back yet. */
@@ -128,6 +162,8 @@ export type PendingDispatch = {
    * files): the row stands for that session until its task appears.
    */
   asid?: string;
+  /** What that session said once the agent replied, and when it was read. */
+  reply?: { state: Exclude<BoundSessionState, 'waiting'>; atMs: number };
 };
 
 export type CardActivity = 'needs-you' | 'working' | 'paused' | 'idle' | 'offline';

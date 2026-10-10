@@ -8,8 +8,11 @@ import {
   groupTaskTree,
   PENDING_CLOCK_SKEW_MS,
   PENDING_DISPATCH_TTL_MS,
+  boundSessionState,
   pendingShown,
   pendingWorking,
+  RECENT_FINISHED_MS,
+  type BoundSessionState,
   type PendingDispatch,
   taskResultLine,
   taskRollup,
@@ -436,6 +439,22 @@ describe('work that outlives its root', () => {
 });
 
 describe('the Sent row', () => {
+  test("a bound row waits for the agent's first reply, then follows the session's run", () => {
+    const said = (status: string, roles: string[]) => ({
+      info: { status },
+      timeline: roles.map((role) => ({ role })),
+    });
+    const cases: [ReturnType<typeof said>, BoundSessionState][] = [
+      [said('busy', ['user']), 'waiting'],
+      [said('busy', ['user', 'assistant']), 'working'],
+      [said('idle', ['user', 'assistant']), 'done'],
+      [said('failed', ['user', 'assistant']), 'failed'],
+    ];
+    expect(cases.map(([snapshot]) => boundSessionState(snapshot))).toEqual(
+      cases.map(([, state]) => state)
+    );
+  });
+
   test('a plain one goes after two minutes; a failed or session-bound one stays until acted on', () => {
     const at = 1_000;
     const later = at + PENDING_DISPATCH_TTL_MS;
@@ -448,6 +467,16 @@ describe('the Sent row', () => {
       // Sent to its session and no task yet: shown ("no reply yet"), no longer work.
       [{ ...sent, asid: 'as-1' }, at + 1, true, true],
       [{ ...sent, asid: 'as-1' }, later, true, false],
+      // The agent replied: the row follows its session's run, however long.
+      [{ ...sent, asid: 'as-1', reply: { state: 'working', atMs: at } }, later, true, true],
+      [{ ...sent, asid: 'as-1', reply: { state: 'done', atMs: at } }, later, true, false],
+      // A finished one goes as a finished task does.
+      [
+        { ...sent, asid: 'as-1', reply: { state: 'done', atMs: at } },
+        at + RECENT_FINISHED_MS + 1,
+        false,
+        false,
+      ],
     ];
     expect(
       cases.map(([item, now]) => [pendingShown(item, now), pendingWorking(item, now)])

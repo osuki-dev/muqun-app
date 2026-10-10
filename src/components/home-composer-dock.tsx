@@ -4,7 +4,7 @@ import { useThemeTokens, useToast } from '@osuki-dev/ui';
 import { useIsFocused, useRouter } from 'expo-router';
 import { ArrowRight } from 'lucide-react-native';
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { AppState, StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -23,7 +23,7 @@ import { useAgentFeatures, useAgentsDiscoveryRefresh } from '@/hooks/use-agent-f
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useStableHandler } from '@/hooks/use-render-refs';
 import { META_SEPARATOR } from '@/lib/home-continue-row';
-import { goalTitle, type PendingDispatch } from '@/lib/home-computer-cards';
+import { boundSessionState, goalTitle, type PendingDispatch } from '@/lib/home-computer-cards';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { reachabilityDescription } from '@/i18n/labels';
 import type { AgentClientCommandId } from '@/lib/agent-commands';
@@ -36,6 +36,7 @@ import {
   listAgentSessions,
   invokeAgentSkill,
   normalizeAgentId,
+  readAgentSessionAt,
   sendAgentCommand,
   sendAgentPrompt,
   switchAgentMode,
@@ -44,7 +45,7 @@ import {
   type ModelRef,
   selectableModes,
 } from '@/lib/agent-session';
-import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
+import { recoverWith, settleAfter, settleAfterAsync } from '@/lib/compiler-safe-control-flow';
 import { checkAgentServer } from '@/lib/home-agent-readiness';
 import {
   HOME_AGENT_SESSION_ID,
@@ -916,7 +917,7 @@ export function HomeComposerDock({
     // it; the files staged in the field for the computer the bar names stay.
     const before = useGatewayConnectionStore.getState().record?.serverId;
     retrySwitchBegins();
-    void settleAfter(
+    void settleAfterAsync(
       async () => {
         const sent = await sendWithFiles(resend.text, resend.attachments, {
           serverId: item.serverId,
@@ -924,15 +925,58 @@ export function HomeComposerDock({
           ...(resend.folder ? { folder: resend.folder } : {}),
         });
         if (sent) clearDraftRef.current?.(resend.text);
-        if (before && before !== item.serverId) {
-          if (!selectRecordNow(before)) await selectRecord(before);
-        }
       },
-      () => {
+      // Back to where the bar was, however the retry ended -- a throw too.
+      async () => {
+        if (before && before !== item.serverId && !selectRecordNow(before)) {
+          await selectRecord(before).catch(() => false);
+        }
         retrySwitchEnds();
       }
-    );
+    ).catch((failure: unknown) => console.warn('Home could not retry a send:', failure));
   });
+  // A row bound to its session reads that session from its own computer until
+  // the agent replied and its run ended: then it reads like a task in that
+  // state. Only while the app is in front, and only rows still waiting or
+  // working.
+  const followedBound = useHomeTaskCards((state) =>
+    state.pending
+      .filter(
+        (item) =>
+          item.asid !== undefined &&
+          !item.failed &&
+          item.reply?.state !== 'done' &&
+          item.reply?.state !== 'failed'
+      )
+      .map((item) => item.id)
+      .join(',')
+  );
+  useEffect(() => {
+    if (!followedBound) return;
+    const read = () => {
+      if (AppState.currentState !== 'active') return;
+      for (const item of useHomeTaskCards.getState().pending) {
+        if (!item.asid || item.failed || item.reply?.state === 'done') continue;
+        if (item.reply?.state === 'failed') continue;
+        const record = useGatewayConnectionStore
+          .getState()
+          .records.find((entry) => entry.serverId === item.serverId);
+        if (!record) continue;
+        const asid = item.asid;
+        void readAgentSessionAt(recordEndpoint(record), HOME_AGENT_SESSION_ID, asid).then(
+          (snapshot) => {
+            if (!snapshot) return;
+            const state = boundSessionState(snapshot);
+            if (state !== 'waiting')
+              useHomeTaskCards.getState().replied(item.id, state, Date.now());
+          }
+        );
+      }
+    };
+    read();
+    const timer = setInterval(read, BOUND_SESSION_READ_MS);
+    return () => clearInterval(timer);
+  }, [followedBound]);
   const openRow = useStableHandler((item: PendingDispatch) => {
     if (item.asid) void onOpenAgent(item.serverId, item.asid, undefined, HOME_AGENT_SESSION_ID);
   });
@@ -1137,6 +1181,9 @@ export function HomeComposerDock({
     />
   );
 }
+
+/** How often a row bound to its session reads that session, while it waits or works. */
+const BOUND_SESSION_READ_MS = 5_000;
 
 /** Failed rows' retries under way: their switch of the selection holds the staged files. */
 let retrySwitches = 0;
