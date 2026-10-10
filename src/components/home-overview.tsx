@@ -876,6 +876,8 @@ export function HomeOverview({
         targetPulse={composerPulse}
         bottomInset={padLaunch ? 0 : insets.bottom}
         topInset={insets.top}
+        // On the phone it floats in the page's gutter, edge to edge with the cards.
+        floatingGutter={isPad ? undefined : padGeometry.gutter}
         onDockHeight={setDockHeight}
         onOpenAgent={commands.openAgent}
       />

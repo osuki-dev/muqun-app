@@ -13,7 +13,11 @@ const styleBlock = (source: string, name: string) => {
 describe('workspace chrome follows the appearance profile', () => {
   test('surfaces and generic controls consume tokens without profile-ID branches or remounts', () => {
     const seams = {
-      'agent-composer': ['profile.chrome.control', 'shape="sheet"', 'shape="popover"'],
+      'agent-composer': [
+        'profile.chrome.control',
+        "shape={floating ? 'card' : 'sheet'}",
+        'shape="popover"',
+      ],
       'ssh-terminal-workspace': ['profile.radius.pill', 'shape="composerDock"'],
       'ssh-host-list': ['profile.radius.pill'],
       'ssh-host-row': ['profile.chrome.noticeCard'],
@@ -54,7 +58,7 @@ describe('workspace chrome follows the appearance profile', () => {
   test('docks and inbox plates have no fixed local radius', () => {
     const composer = read('agent-composer');
     const ssh = read('ssh-terminal-workspace');
-    expect(composer).toContain('shape="sheet"');
+    expect(composer).toContain("shape={floating ? 'card' : 'sheet'}");
     expect(ssh).toContain('shape="composerDock"');
     for (const name of ['composerDock', 'inboxCard', 'inboxRow']) {
       expect(styleBlock(composer, name)).not.toContain('Radius:');

@@ -111,6 +111,7 @@ export function HomeComposerDock({
   targetPulse = 0,
   bottomInset = 0,
   topInset = 0,
+  floatingGutter,
   onDockHeight,
   onOpenAgent,
 }: {
@@ -123,6 +124,8 @@ export function HomeComposerDock({
   targetPulse?: number;
   bottomInset?: number;
   topInset?: number;
+  /** See `AgentComposer`'s `floatingGutter`. */
+  floatingGutter?: number;
   onDockHeight?: (height: number) => void;
   onOpenAgent: (
     serverId: string,
@@ -907,6 +910,7 @@ export function HomeComposerDock({
       }
       bottomInset={bottomInset}
       topInset={topInset}
+      floatingGutter={floatingGutter}
       onDockHeight={onDockHeight}
       onSend={sendPrompt}
       onAbort={async () => {}}

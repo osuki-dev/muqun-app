@@ -9,7 +9,12 @@ import { SettingsToggleRow } from '@/components/settings-chrome';
 import { SettingsSegmented } from '@/components/settings-segmented';
 import { FontedTextInput } from '@/components/fonted-text-input';
 import { PressableScale } from '@/components/pressable-scale';
-import { SheetScene, SheetSceneFooter, SheetSceneRow } from '@/components/sheet-scene';
+import {
+  SheetScene,
+  SheetSceneFooter,
+  SheetSceneRow,
+  sheetSceneStyles,
+} from '@/components/sheet-scene';
 import { voiceRecorderAvailable } from '@/lib/voice-recorder-capability';
 import { APP_LOCALES, LOCALE_LABELS, type AppLocale } from '@/i18n/locale';
 import { useInterfaceFontFamily } from '@/hooks/use-user-fonts';
@@ -28,7 +33,7 @@ export default function SettingsVoiceScreen() {
     void loadVoiceSettings();
   }, []);
   return (
-    <SheetScene title={t`Voice to text`} testID="settings-voice-sheet">
+    <SheetScene fitsContent title={t`Voice to text`} testID="settings-voice-sheet">
       {ready ? <VoiceSettingsForm /> : <Text>{t`Loading…`}</Text>}
     </SheetScene>
   );
@@ -93,6 +98,8 @@ function VoiceSettingsForm() {
   }
   return (
     <ScrollView
+      nestedScrollEnabled
+      style={sheetSceneStyles.fitScroller}
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="on-drag"
       showsVerticalScrollIndicator={false}>
@@ -250,7 +257,7 @@ function VoiceSettingsForm() {
           </Text>
         ) : null}
       </View>
-      <SheetSceneFooter bottomInset={insets.bottom} />
+      <SheetSceneFooter bottomInset={insets.bottom} contentSized />
     </ScrollView>
   );
 }

@@ -6,7 +6,7 @@ import { ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { SettingsCard, SettingsNavRow } from '@/components/settings-chrome';
-import { SheetScene, SheetSceneFooter } from '@/components/sheet-scene';
+import { SheetScene, SheetSceneFooter, sheetSceneStyles } from '@/components/sheet-scene';
 import { FEEDBACK_URL, PRIVACY_POLICY_URL, SOURCE_URL, SUPPORT_GUIDE_URL } from '@/constants/links';
 import { feedback } from '@/lib/feedback';
 
@@ -61,8 +61,12 @@ export default function SettingsAboutScreen() {
   }
 
   return (
-    <SheetScene testID="settings-about-sheet" title={t`About`}>
-      <ScrollView contentInsetAdjustmentBehavior="never" showsVerticalScrollIndicator={false}>
+    <SheetScene fitsContent testID="settings-about-sheet" title={t`About`}>
+      <ScrollView
+        nestedScrollEnabled
+        style={sheetSceneStyles.fitScroller}
+        contentInsetAdjustmentBehavior="never"
+        showsVerticalScrollIndicator={false}>
         <SettingsCard flush>
           {/* First in the group, and above "report a bug" on purpose:
                         a reader who cannot work something out should meet the
@@ -98,7 +102,7 @@ export default function SettingsAboutScreen() {
             onPress={() => void openPrivacyPolicy()}
           />
         </SettingsCard>
-        <SheetSceneFooter bottomInset={insets.bottom} />
+        <SheetSceneFooter bottomInset={insets.bottom} contentSized />
       </ScrollView>
     </SheetScene>
   );
