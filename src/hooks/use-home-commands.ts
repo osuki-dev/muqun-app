@@ -7,6 +7,7 @@ import { useWindowDimensions } from 'react-native';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useLatestRef, useLazyRef } from '@/hooks/use-render-refs';
 import { loadRecordSessions } from '@/lib/gateway-client';
+import { getAgentSessionSnapshot } from '@/lib/agent-session';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import type { TaskView } from '@/lib/task-ledger';
 import { checkAgentServer } from '@/lib/home-agent-readiness';
@@ -15,6 +16,7 @@ import {
   type HomeAgentEntry,
   type HomeCommand,
   agentOpensInPlace,
+  awaitSessionListed,
   createHomeCommandController,
   embeddedResumeRoute,
   isHomeSshTargetAvailable,
@@ -136,6 +138,23 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
         const state = useGatewayConnectionStore.getState();
         const target = state.records.find((item) => item.serverId === serverId);
         return checkAgentServer(target, agentId);
+      },
+      // A session tapped the moment its task appeared may not be on its
+      // computer yet: wait for it (5 s at most) rather than open an empty
+      // screen; a computer that keeps saying it has no such session means gone.
+      agentSessionKnown: async (target) => {
+        if (!target.asid) return true;
+        const asid = target.asid;
+        const outcome = await awaitSessionListed(
+          () =>
+            getAgentSessionSnapshot(target.sessionId, asid).then(
+              () => [asid],
+              (failure: unknown) =>
+                failure instanceof Error && /: 404\b/.test(failure.message) ? [] : null
+            ),
+          asid
+        );
+        return outcome !== 'gone';
       },
       validateTarget: async (target) => {
         switch (target.kind) {

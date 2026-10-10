@@ -181,6 +181,24 @@ export function homeSendModelGate(input: {
   return input.catalogFailed ? 'failed' : 'wait';
 }
 
+/**
+ * The computer the dock sends to: the one the reader picked (in the target
+ * picker, by tapping a card, or kept while work elsewhere was opened), else
+ * the selected one, else the only one. Opening a task on another computer
+ * selects that computer for its screen; the dock keeps the one it had,
+ * because Home pins it first (A4 D3).
+ */
+export function homeDockTargetId(input: {
+  serverIds: readonly string[];
+  pickedId?: string | null;
+  selectedId?: string;
+}): string | undefined {
+  const { serverIds, pickedId, selectedId } = input;
+  if (pickedId && serverIds.includes(pickedId)) return pickedId;
+  if (selectedId && serverIds.includes(selectedId)) return selectedId;
+  return serverIds.length === 1 ? serverIds[0] : undefined;
+}
+
 /** Where a dock pick of mode and model is remembered: one computer's one agent. */
 export function homeModelChoiceKey(serverId: string, agentId: string | undefined): string {
   return `${serverId}\u0000${agentId ?? ''}`;
