@@ -1304,6 +1304,10 @@ msgstr "Цветовой режим"
 msgid "Command"
 msgstr "Команда"
 
+#: src/components/simfarm-preview.tsx
+msgid "Command copied"
+msgstr "Команда скопирована"
+
 #: src/i18n/labels.ts
 msgid "Command mode"
 msgstr "Командный режим"
@@ -1662,6 +1666,7 @@ msgid "Copied to clipboard"
 msgstr "Скопировано в буфер обмена"
 
 #: src/app/explore.tsx
+#: src/components/simfarm-preview.tsx
 msgid "Copies it, ready to paste into a terminal"
 msgstr "Копирует её, чтобы вставить в терминал"
 
@@ -1837,7 +1842,7 @@ msgstr "Не удалось переместить эту сессию"
 
 #: src/components/guide-command.tsx
 msgid "Could not open a terminal on this computer."
-msgstr "Не удалось открыть терминал на этом компьютере."
+msgstr "Не удалось открыть терминал на этом компьютере"
 
 #: src/hooks/use-home-commands.ts
 msgid "Could not open destination"
@@ -3797,6 +3802,7 @@ msgstr "В этой сессии пока нет задач"
 msgid "No tasks yet"
 msgstr "Задач пока нет"
 
+#: src/components/guide-command.tsx
 #: src/hooks/use-home-commands.ts
 msgid "No terminal session is available on this computer."
 msgstr "На этом компьютере нет доступного сеанса терминала"

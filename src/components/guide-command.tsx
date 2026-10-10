@@ -3,7 +3,7 @@ import { useThemeTokens } from '@osuki-dev/ui';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter, type Href } from 'expo-router';
 import { Check, Copy, Play } from 'lucide-react-native';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -15,49 +15,73 @@ import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
 import { feedback } from '@/lib/feedback';
-import { createWorkspace, loadRecordSessions, sendBoundPaneText } from '@/lib/gateway-client';
-import { guideCommandAction, guideCommandLines } from '@/lib/guide-command';
+import {
+  createWorkspace,
+  loadRecordSessions,
+  readPaneTail,
+  sendBoundPaneText,
+} from '@/lib/gateway-client';
+import {
+  guideCommandAction,
+  guideCommandLines,
+  SHELL_READY_POLL_MS,
+  SHELL_READY_TIMEOUT_MS,
+} from '@/lib/guide-command';
+import { useConnectionStatuses } from '@/hooks/use-home-reachability';
 import { describeGatewayFailure } from '@/lib/network-error';
-import { reachabilityOfStatus, resolveConnectionStatus } from '@/lib/server-reachability';
 import { resolveSessionId, sessionChoices } from '@/lib/session-switcher';
 import { useAgents } from '@/stores/agents';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { usePanelPickerStore } from '@/stores/panel-picker';
-import { useServerChannels } from '@/stores/server-channels';
-import { useServerReachability } from '@/stores/server-reachability';
 import { useServerSession } from '@/stores/server-session';
 
 const COPIED_HOLD_MS = 2000;
+
+/**
+ * Until a new pane's shell has drawn its prompt (its output is not blank), or
+ * `SHELL_READY_TIMEOUT_MS` has passed: a line typed before the shell reads
+ * input is echoed once by the terminal and again by the shell.
+ */
+async function waitForShell(
+  sessionId: string,
+  paneId: string,
+  isCurrent: () => boolean
+): Promise<void> {
+  const deadline = Date.now() + SHELL_READY_TIMEOUT_MS;
+  while (Date.now() < deadline && isCurrent()) {
+    const tail = await readPaneTail(sessionId, paneId, 'text', 5).catch(() => null);
+    if (tail?.output.trim()) return;
+    await new Promise((resolve) => setTimeout(resolve, SHELL_READY_POLL_MS));
+  }
+}
 /** The guide's primary button height, as `agent-guide-sheet.tsx` draws its own. */
 export const GUIDE_ACTION_HEIGHT = 48;
 
 /**
- * Whether a guide's command can be run for the reader on `serverId` right now:
- * the computer answers (Home's own evidence) and its gateway has a terminal
- * plane to open a pane on. A sheet reads this to decide which action leads.
+ * Whether a guide's command can be run for the reader on `serverId` right now
+ * (`guideCommandAction`): its status from the one resolver Home and Settings
+ * read (`useConnectionStatuses`, with its freshness clock), and its terminal
+ * plane. `terminalDown`: the caller knows the backend is down. A sheet reads
+ * this to decide which action leads.
  */
-export function useGuideCommandRuns(serverId: string | undefined): boolean {
-  const probe = useServerReachability((state) => (serverId ? state.probes[serverId] : undefined));
-  const socket = useServerChannels((state) => (serverId ? state.sockets[serverId] : undefined));
-  const stream = useServerChannels((state) => (serverId ? state.streams[serverId] : undefined));
+export function useGuideCommandRuns(serverId: string | undefined, terminalDown = false): boolean {
   const selectedId = useGatewayConnectionStore((state) => state.record?.serverId);
+  const known = useGatewayConnectionStore((state) =>
+    serverId ? state.records.some((record) => record.serverId === serverId) : false
+  );
+  const ids = useMemo(() => (serverId ? [serverId] : []), [serverId]);
+  const status = useConnectionStatuses(ids, selectedId)[serverId ?? ''] ?? 'unknown';
   const terminalPlane = useAgents((state) =>
     serverId ? state.index.servers[serverId]?.terminal : undefined
   );
-  if (!serverId) return false;
-  const reachable =
-    reachabilityOfStatus(
-      resolveConnectionStatus({
-        serverId,
-        probe,
-        channels: { socket, stream },
-        selected: serverId === selectedId,
-      })
-    ) === 'live';
-  // The New terminal tile's rule: a gateway that says its terminal plane is
-  // unsupported has none; one that did not say keeps it.
-  const terminal = !terminalPlane || terminalPlane.supported;
-  return guideCommandAction({ reachable, terminal }) === 'run';
+  if (!serverId || !known) return false;
+  return (
+    guideCommandAction({
+      status,
+      ...(terminalPlane ? { terminalPlane } : {}),
+      terminalDown,
+    }) === 'run'
+  );
 }
 
 /**
@@ -77,6 +101,10 @@ export function GuideCommand({
   command,
   testID = 'guide-command',
   copyLabel,
+  copiedLabel,
+  copyHint,
+  numberOfLines,
+  terminalDown = false,
 }: {
   /** The computer the guide is about; the command runs there and nowhere else. */
   serverId: string | undefined;
@@ -84,6 +112,14 @@ export function GuideCommand({
   testID?: string;
   /** The copy row's spoken label, when the guide has its own words for it. */
   copyLabel?: string;
+  /** What the row says once copied, when the guide has its own words. */
+  copiedLabel?: string;
+  /** The copy row's spoken hint. */
+  copyHint?: string;
+  /** A cap on the command's lines, for a guide that wraps rather than shrinks. */
+  numberOfLines?: number;
+  /** The computer's terminal backend is known to be down: no Run. */
+  terminalDown?: boolean;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -94,7 +130,7 @@ export function GuideCommand({
   const { records, selectRecord } = useGatewayRecord();
   const chooseSession = useServerSession((state) => state.chooseSession);
   const choosePanel = usePanelPickerStore((state) => state.choosePanel);
-  const runs = useGuideCommandRuns(serverId);
+  const runs = useGuideCommandRuns(serverId, terminalDown);
   const computer = records.find((record) => record.serverId === serverId);
   const computerLabel = computer?.label ?? '';
 
@@ -117,10 +153,33 @@ export function GuideCommand({
     copyTimer.current = setTimeout(() => setCopied(false), COPIED_HOLD_MS);
   };
 
+  // A run that outlives the guide (the reader closed it) must not navigate.
+  const mounted = useRef(true);
+  useEffect(
+    () => () => {
+      mounted.current = false;
+    },
+    []
+  );
+
+  const openPane = (sessionId: string, paneId: string) => {
+    if (!mounted.current || !serverId) return;
+    chooseSession({ serverId, sessionId });
+    choosePanel({ serverId, paneId });
+    router.push({
+      pathname: '/servers/[serverId]',
+      params: { serverId, sessionId, paneId },
+    } as Href);
+  };
+
   const run = () => {
     if (running || !computer || !serverId) return;
     setRunning(true);
     setError(null);
+    const isCurrent = () => mounted.current;
+    // Errors the reader reads are worded here, never a thrown sentence.
+    const unavailable = t`Could not open a terminal on this computer.`;
+    const noSession = t`No terminal session is available on this computer.`;
     void settleAfter(
       () =>
         recoverWith(
@@ -128,36 +187,57 @@ export function GuideCommand({
             // The new-terminal path: the computer selected, its terminal
             // session (the one last used there, else the first), a new pane.
             if (useGatewayConnectionStore.getState().record?.serverId !== serverId) {
-              if (!(await selectRecord(serverId))) throw new Error('Computer unavailable');
+              if (!(await selectRecord(serverId))) {
+                if (mounted.current) setError(unavailable);
+                return;
+              }
             }
             const choices = sessionChoices((await loadRecordSessions(computer)).sessions);
-            if (choices.length === 0) throw new Error('No terminal session');
+            if (choices.length === 0) {
+              if (mounted.current) setError(noSession);
+              return;
+            }
             const sessionId = resolveSessionId(
               choices,
               useServerSession.getState().byServer[serverId]
             );
             const created = await createWorkspace(sessionId, { focus: false });
-            if (!created.paneId) throw new Error('No pane');
-            for (const line of guideCommandLines(command)) {
-              await sendBoundPaneText(computer, sessionId, created.paneId, line, true, () => true);
+            if (!created.paneId) {
+              if (mounted.current) setError(unavailable);
+              return;
             }
-            void feedback('success');
-            chooseSession({ serverId, sessionId });
-            choosePanel({ serverId, paneId: created.paneId });
-            router.push({
-              pathname: '/servers/[serverId]',
-              params: { serverId, sessionId, paneId: created.paneId },
-            } as Href);
+            // The pane exists: whatever happens while typing, the reader is
+            // shown it.
+            await recoverWith(
+              async () => {
+                await waitForShell(sessionId, created.paneId, isCurrent);
+                for (const line of guideCommandLines(command)) {
+                  await sendBoundPaneText(
+                    computer,
+                    sessionId,
+                    created.paneId,
+                    line,
+                    true,
+                    isCurrent
+                  );
+                }
+                void feedback('success');
+              },
+              () => {
+                void feedback('warning');
+                if (mounted.current) setError(unavailable);
+              }
+            );
+            openPane(sessionId, created.paneId);
           },
           (failure) => {
             void feedback('warning');
-            setError(
-              describeGatewayFailure(failure, t`Could not open a terminal on this computer.`)
-                .message
-            );
+            if (mounted.current) setError(describeGatewayFailure(failure, unavailable).message);
           }
         ),
-      () => setRunning(false)
+      () => {
+        if (mounted.current) setRunning(false);
+      }
     );
   };
 
@@ -188,7 +268,10 @@ export function GuideCommand({
       <PressableScale
         testID={`${testID}-copy`}
         accessibilityRole="button"
-        accessibilityLabel={copied ? t`Copied` : (copyLabel ?? t`Copy the command`)}
+        accessibilityLabel={
+          copied ? (copiedLabel ?? t`Copied`) : (copyLabel ?? t`Copy the command`)
+        }
+        {...(copyHint ? { accessibilityHint: copyHint } : {})}
         onPress={() => void copy()}
         style={[
           styles.command,
@@ -203,6 +286,7 @@ export function GuideCommand({
         </Text>
         <Text
           selectable
+          {...(numberOfLines ? { numberOfLines } : {})}
           variant="bodySmall"
           color={theme.colors.text}
           style={{ ...styles.commandText, fontFamily: mono }}>

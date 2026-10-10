@@ -185,6 +185,15 @@
               "mimeType": "application/vnd.muqun.theme"
             }
           ]
+        },
+        {
+          "action": "VIEW",
+          "category": ["DEFAULT", "BROWSABLE"],
+          "data": [
+            {
+              "scheme": "muqun"
+            }
+          ]
         }
       ]
     },

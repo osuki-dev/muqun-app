@@ -1,15 +1,26 @@
 import { describe, expect, test } from 'bun:test';
 
-import { guideCommandAction, guideCommandLines } from '../guide-command';
+import { guideCommandAction, guideCommandLines, type GuideCommandAction } from '../guide-command';
+import type { ConnectionStatus } from '../server-reachability';
 
 describe('guideCommandAction: Run only where a pane can open now', () => {
-  test.each([
-    ['reachable with a terminal', true, true, 'run'],
-    ['reachable without a terminal', true, false, 'copy'],
-    ['unreachable with a terminal', false, true, 'copy'],
-    ['unreachable without a terminal', false, false, 'copy'],
-  ] as const)('%s', (_name, reachable, terminal, expected) => {
-    expect(guideCommandAction({ reachable, terminal })).toBe(expected);
+  test.each<
+    [string, ConnectionStatus, { supported: boolean } | undefined, boolean, GuideCommandAction]
+  >([
+    ['live, the gateway said nothing about its terminal', 'live', undefined, false, 'run'],
+    ['live, but its terminal plane is unsupported', 'live', { supported: false }, false, 'copy'],
+    ['live, but its terminal backend is down', 'live', { supported: true }, true, 'copy'],
+    ['reconnecting is not answering yet', 'reconnecting', undefined, false, 'copy'],
+    ['a refused pairing cannot open a pane', 'unauthorized', undefined, false, 'copy'],
+    ['nobody asked recently', 'unknown', undefined, false, 'copy'],
+  ])('%s', (_name, status, terminalPlane, terminalDown, expected) => {
+    expect(
+      guideCommandAction({
+        status,
+        ...(terminalPlane ? { terminalPlane } : {}),
+        terminalDown,
+      })
+    ).toBe(expected);
   });
 });
 

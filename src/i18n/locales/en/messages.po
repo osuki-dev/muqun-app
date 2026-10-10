@@ -1304,6 +1304,10 @@ msgstr "Colour mode"
 msgid "Command"
 msgstr "Command"
 
+#: src/components/simfarm-preview.tsx
+msgid "Command copied"
+msgstr "Command copied"
+
 #: src/i18n/labels.ts
 msgid "Command mode"
 msgstr "Command mode"
@@ -1662,6 +1666,7 @@ msgid "Copied to clipboard"
 msgstr "Copied to clipboard"
 
 #: src/app/explore.tsx
+#: src/components/simfarm-preview.tsx
 msgid "Copies it, ready to paste into a terminal"
 msgstr "Copies it, ready to paste into a terminal"
 
@@ -3797,6 +3802,7 @@ msgstr "No tasks in this session yet"
 msgid "No tasks yet"
 msgstr "No tasks yet"
 
+#: src/components/guide-command.tsx
 #: src/hooks/use-home-commands.ts
 msgid "No terminal session is available on this computer."
 msgstr "No terminal session is available on this computer"

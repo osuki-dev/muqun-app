@@ -1,4 +1,5 @@
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
+import { GuideCommand } from '@/components/guide-command';
 import { ComposerAttachmentButton } from '@/components/composer-attachment-button';
 import { TerminalNotice, terminalNoticeStyles } from '@/components/terminal-notice';
 import { NoticeDeck } from '@/components/notice-deck';
@@ -5489,6 +5490,7 @@ export function ServerTerminalWorkspace({
                       </View>
                     ) : backendState.kind === 'down' ? (
                       <TerminalBackendDown
+                        serverId={serverId}
                         state={backendState}
                         retrying={connection.phase === 'connecting'}
                         onRetry={retryBackend}
@@ -6352,11 +6354,13 @@ function TerminalKeyButton({
  * backend started on the host is picked up without it.
  */
 function TerminalBackendDown({
+  serverId,
   state,
   retrying,
   onRetry,
   onBack,
 }: {
+  serverId: string;
   state: Extract<TerminalBackendState, { kind: 'down' }>;
   retrying: boolean;
   onRetry: () => void;
@@ -6365,7 +6369,6 @@ function TerminalBackendDown({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
-  const mono = useMonoFontFamily();
   const copy = terminalBackendCopy(state.backend);
   return (
     <View style={styles.missingTargetState} testID="terminal-backend-down">
@@ -6379,17 +6382,16 @@ function TerminalBackendDown({
         {copy.hint}
       </Text>
       {copy.command ? (
-        <Text
-          selectable
-          variant="bodySmall"
-          color={theme.colors.text}
-          testID="terminal-backend-down-command"
-          style={[
-            styles.backendDownCommand,
-            { fontFamily: mono, backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-          ]}>
-          {copy.command}
-        </Text>
+        // The shared guide row: the command to copy. Run is never offered
+        // here -- the terminal it would open a pane in is the one that is down.
+        <View style={styles.backendDownCommand}>
+          <GuideCommand
+            serverId={serverId}
+            command={copy.command}
+            terminalDown
+            testID="terminal-backend-down-command"
+          />
+        </View>
       ) : null}
       {state.backends.map((backend) => (
         <View
@@ -6776,12 +6778,7 @@ const styles = StyleSheet.create({
   backendDownText: {
     textAlign: 'center',
   },
-  backendDownCommand: {
-    borderRadius: appChrome.radius.control,
-    overflow: 'hidden',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
+  backendDownCommand: { alignSelf: 'stretch' },
   backendDownActions: {
     alignItems: 'center',
     flexDirection: 'row',

@@ -1304,6 +1304,10 @@ msgstr "色彩模式"
 msgid "Command"
 msgstr "指令"
 
+#: src/components/simfarm-preview.tsx
+msgid "Command copied"
+msgstr "已複製指令"
+
 #: src/i18n/labels.ts
 msgid "Command mode"
 msgstr "命令模式"
@@ -1662,6 +1666,7 @@ msgid "Copied to clipboard"
 msgstr "已複製到剪貼簿"
 
 #: src/app/explore.tsx
+#: src/components/simfarm-preview.tsx
 msgid "Copies it, ready to paste into a terminal"
 msgstr "複製指令，可直接貼到終端機"
 
@@ -1837,7 +1842,7 @@ msgstr "無法移動此會話"
 
 #: src/components/guide-command.tsx
 msgid "Could not open a terminal on this computer."
-msgstr "無法在這台電腦上開啟終端機。"
+msgstr "無法在這台電腦上開啟終端機"
 
 #: src/hooks/use-home-commands.ts
 msgid "Could not open destination"
@@ -3797,6 +3802,7 @@ msgstr "此工作階段還沒有任務"
 msgid "No tasks yet"
 msgstr "尚無任務"
 
+#: src/components/guide-command.tsx
 #: src/hooks/use-home-commands.ts
 msgid "No terminal session is available on this computer."
 msgstr "此電腦沒有可用的終端機工作階段"
