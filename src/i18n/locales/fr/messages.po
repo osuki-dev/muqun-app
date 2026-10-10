@@ -1304,10 +1304,6 @@ msgstr "Mode couleur"
 msgid "Command"
 msgstr "Commande"
 
-#: src/components/simfarm-preview.tsx
-msgid "Command copied"
-msgstr "Commande copiée"
-
 #: src/i18n/labels.ts
 msgid "Command mode"
 msgstr "Mode commande"
@@ -1648,10 +1644,10 @@ msgstr "Commandes"
 msgid "Conversational help and open-ended project questions."
 msgstr "Aide conversationnelle et questions ouvertes sur le projet"
 
-#: src/components/agent-guide-sheet.tsx
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
+#: src/components/guide-command.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Copied"
 msgstr "Copié"
@@ -1666,7 +1662,6 @@ msgid "Copied to clipboard"
 msgstr "Copié dans le presse-papiers"
 
 #: src/app/explore.tsx
-#: src/components/simfarm-preview.tsx
 msgid "Copies it, ready to paste into a terminal"
 msgstr "La copie, prête à coller dans un terminal"
 
@@ -1696,7 +1691,7 @@ msgstr "Copier le chemin"
 msgid "Copy public key"
 msgstr "Copier la clé publique"
 
-#: src/components/agent-guide-sheet.tsx
+#: src/components/guide-command.tsx
 msgid "Copy the command"
 msgstr "Copier la commande"
 
@@ -1839,6 +1834,10 @@ msgstr "Impossible de marquer la tâche comme terminée"
 #: src/components/agent-workbench.tsx
 msgid "Could not move this session"
 msgstr "Impossible de déplacer cette session"
+
+#: src/components/guide-command.tsx
+msgid "Could not open a terminal on this computer."
+msgstr "Impossible d’ouvrir un terminal sur cet ordinateur."
 
 #: src/hooks/use-home-commands.ts
 msgid "Could not open destination"
@@ -4934,6 +4933,10 @@ msgstr "Exécuter en arrière-plan"
 #: src/components/agent-guide-sheet.tsx
 msgid "Run it under systemd or tmux to keep it up after you log out."
 msgstr "Lance-le sous systemd ou tmux pour qu’il survive à la déconnexion"
+
+#: src/components/guide-command.tsx
+msgid "Run on {computerLabel}"
+msgstr "Exécuter sur {computerLabel}"
 
 #: src/i18n/labels.ts
 msgid "Run relevant tests"

@@ -2,6 +2,7 @@ import { PAD_LAYOUT_MIN_WIDTH } from '@/lib/responsive-layout';
 import { useRootRouteName } from '@/hooks/use-root-route-name';
 import { useStore } from 'zustand';
 import { createAgentTranscriptStore } from '@/stores/agent-transcript';
+import { GuideCommand } from '@/components/guide-command';
 import { useFleetPeers } from '@/stores/fleet-peers';
 import type { MentionComputer } from '@/lib/composer-mentions';
 import { useToolCallDetailStore } from '@/stores/tool-call-detail';
@@ -627,12 +628,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * one -- the setup step for an agent that is running but needs setup.
    */
   const guideStatus = activeAgentEntry?.readiness ?? 'offline';
-  const startAdvice = [
-    _(agentGuideStart(agentGuide, guideStatus)),
-    agentGuideCommand(agentGuide, guideStatus),
-  ]
-    .filter(Boolean)
-    .join('\n');
+  const startSentence = _(agentGuideStart(agentGuide, guideStatus));
+  const startCommand = agentGuideCommand(agentGuide, guideStatus);
+  const startAdvice = [startSentence, startCommand].filter(Boolean).join('\n');
   const offlineFallback = t`${agentName} is offline`;
   /** What each kind of failed request says, in this agent's name. */
   const agentErrorSentences = useMemo<AgentErrorSentences>(
@@ -4814,8 +4812,17 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                     variant="caption"
                     color={theme.colors.textMuted}
                     style={styles.emptySubtitle}>
-                    {startAdvice}
+                    {startSentence}
                   </Text>
+                  {startCommand ? (
+                    <View style={styles.emptyCommand}>
+                      <GuideCommand
+                        serverId={serverId}
+                        command={startCommand}
+                        testID="agent-offline-cmd"
+                      />
+                    </View>
+                  ) : null}
                   <PressableScale
                     testID="agent-offline-retry-btn"
                     onPress={async () => {
@@ -5409,6 +5416,7 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 16,
   },
+  emptyCommand: { alignSelf: 'stretch' },
   emptySubtitle: {
     fontSize: AGENT_TYPE.meta.size,
     textAlign: 'center',

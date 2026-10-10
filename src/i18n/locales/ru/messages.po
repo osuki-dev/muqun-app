@@ -1304,10 +1304,6 @@ msgstr "Цветовой режим"
 msgid "Command"
 msgstr "Команда"
 
-#: src/components/simfarm-preview.tsx
-msgid "Command copied"
-msgstr "Команда скопирована"
-
 #: src/i18n/labels.ts
 msgid "Command mode"
 msgstr "Командный режим"
@@ -1648,10 +1644,10 @@ msgstr "Управление"
 msgid "Conversational help and open-ended project questions."
 msgstr "Помощь в формате диалога и открытые вопросы о проекте"
 
-#: src/components/agent-guide-sheet.tsx
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
+#: src/components/guide-command.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Copied"
 msgstr "Скопировано"
@@ -1666,7 +1662,6 @@ msgid "Copied to clipboard"
 msgstr "Скопировано в буфер обмена"
 
 #: src/app/explore.tsx
-#: src/components/simfarm-preview.tsx
 msgid "Copies it, ready to paste into a terminal"
 msgstr "Копирует её, чтобы вставить в терминал"
 
@@ -1696,7 +1691,7 @@ msgstr "Копировать путь"
 msgid "Copy public key"
 msgstr "Копировать открытый ключ"
 
-#: src/components/agent-guide-sheet.tsx
+#: src/components/guide-command.tsx
 msgid "Copy the command"
 msgstr "Скопировать команду"
 
@@ -1839,6 +1834,10 @@ msgstr "Не удалось отметить задачу выполненной
 #: src/components/agent-workbench.tsx
 msgid "Could not move this session"
 msgstr "Не удалось переместить эту сессию"
+
+#: src/components/guide-command.tsx
+msgid "Could not open a terminal on this computer."
+msgstr "Не удалось открыть терминал на этом компьютере."
 
 #: src/hooks/use-home-commands.ts
 msgid "Could not open destination"
@@ -4934,6 +4933,10 @@ msgstr "Выполнить в фоне"
 #: src/components/agent-guide-sheet.tsx
 msgid "Run it under systemd or tmux to keep it up after you log out."
 msgstr "Запустите его под systemd или tmux, чтобы он пережил выход из системы"
+
+#: src/components/guide-command.tsx
+msgid "Run on {computerLabel}"
+msgstr "Запустить на {computerLabel}"
 
 #: src/i18n/labels.ts
 msgid "Run relevant tests"

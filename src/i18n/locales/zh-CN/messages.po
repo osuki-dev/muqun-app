@@ -1304,10 +1304,6 @@ msgstr "色彩模式"
 msgid "Command"
 msgstr "命令"
 
-#: src/components/simfarm-preview.tsx
-msgid "Command copied"
-msgstr "已复制命令"
-
 #: src/i18n/labels.ts
 msgid "Command mode"
 msgstr "命令模式"
@@ -1648,10 +1644,10 @@ msgstr "控制"
 msgid "Conversational help and open-ended project questions."
 msgstr "对话式帮助，以及关于项目的开放式问题"
 
-#: src/components/agent-guide-sheet.tsx
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
+#: src/components/guide-command.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Copied"
 msgstr "已复制"
@@ -1666,7 +1662,6 @@ msgid "Copied to clipboard"
 msgstr "已复制到剪贴板"
 
 #: src/app/explore.tsx
-#: src/components/simfarm-preview.tsx
 msgid "Copies it, ready to paste into a terminal"
 msgstr "复制命令，可直接粘贴到终端"
 
@@ -1696,7 +1691,7 @@ msgstr "复制路径"
 msgid "Copy public key"
 msgstr "复制公钥"
 
-#: src/components/agent-guide-sheet.tsx
+#: src/components/guide-command.tsx
 msgid "Copy the command"
 msgstr "复制命令"
 
@@ -1839,6 +1834,10 @@ msgstr "无法确认任务完成"
 #: src/components/agent-workbench.tsx
 msgid "Could not move this session"
 msgstr "无法移动此会话"
+
+#: src/components/guide-command.tsx
+msgid "Could not open a terminal on this computer."
+msgstr "无法在这台电脑上打开终端。"
 
 #: src/hooks/use-home-commands.ts
 msgid "Could not open destination"
@@ -4934,6 +4933,10 @@ msgstr "转入后台运行"
 #: src/components/agent-guide-sheet.tsx
 msgid "Run it under systemd or tmux to keep it up after you log out."
 msgstr "用 systemd 或 tmux 运行，退出登录后它才会继续跑"
+
+#: src/components/guide-command.tsx
+msgid "Run on {computerLabel}"
+msgstr "在 {computerLabel} 上运行"
 
 #: src/i18n/labels.ts
 msgid "Run relevant tests"

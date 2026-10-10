@@ -1,12 +1,12 @@
 import { Input } from '@/components/themed-input';
+import { GuideCommand } from '@/components/guide-command';
+import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Spinner, useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { Button } from '@/components/themed-button';
-import * as Clipboard from 'expo-clipboard';
-import { Check, Copy as CopyIcon, Lock, MonitorSmartphone, X } from 'lucide-react-native';
+import { Lock, MonitorSmartphone, X } from 'lucide-react-native';
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
@@ -15,8 +15,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassChrome } from '@/components/glass-chrome';
 import { PressableScale } from '@/components/pressable-scale';
 import { SimfarmStage } from '@/components/simfarm-stage';
-import { feedback } from '@/lib/feedback';
-import { COPIED_HOLD_MS } from '@/lib/pairing-scan';
 import { SIMFARM_DEFAULT_PORT, SIMFARM_RUN_COMMAND, simfarmSocketUrl } from '@/lib/simfarm';
 import { probeSimfarm, type SimfarmProbe } from '@/lib/simfarm-client';
 import { warmSimfarm } from '@/lib/simfarm-stream';
@@ -372,56 +370,17 @@ function PreviewNotice({
  * with no shared clipboard can still read it off and type it.
  */
 function RunCommand() {
-  const surfaceBackground = useSurfaceBackground();
-  const theme = useThemeTokens();
   const { t } = useLingui();
-  const mono = useMonoFontFamily();
-  const [copied, setCopied] = useState(false);
-  const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // The hold is a timer on a component that can leave with the screen before it
-  // fires, and a `setCopied` after that is a warning in the log at best.
-  useEffect(() => {
-    return () => {
-      if (resetTimer.current) clearTimeout(resetTimer.current);
-    };
-  }, []);
-
+  // The machine with no simfarm is the one this preview asks: the computer
+  // the app is pointed at.
+  const serverId = useGatewayConnectionStore((state) => state.record?.serverId);
   return (
-    <PressableScale
-      accessibilityRole="button"
-      accessibilityHint={t`Copies it, ready to paste into a terminal`}
-      accessibilityLabel={copied ? t`Command copied` : t`Copy the command that starts simfarm`}
+    <GuideCommand
+      serverId={serverId}
+      command={SIMFARM_RUN_COMMAND}
       testID="simfarm-run-command"
-      onPress={() => {
-        void (async () => {
-          await Clipboard.setStringAsync(SIMFARM_RUN_COMMAND);
-          void feedback('success');
-          setCopied(true);
-          if (resetTimer.current) clearTimeout(resetTimer.current);
-          resetTimer.current = setTimeout(() => setCopied(false), COPIED_HOLD_MS);
-        })();
-      }}
-      style={[
-        styles.commandRow,
-        { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-      ]}>
-      {/* Two lines, not one shrunk to fit: the command wraps at the widths this
-          is read at -- a phone and a Pad's narrower column -- and a
-          command scaled down until it fits is a command nobody can read off the
-          screen. */}
-      <Text
-        selectable
-        numberOfLines={2}
-        style={[styles.command, { color: theme.colors.textMuted, fontFamily: mono }]}>
-        {SIMFARM_RUN_COMMAND}
-      </Text>
-      {copied ? (
-        <Check size={16} color={theme.colors.primary} strokeWidth={2} />
-      ) : (
-        <CopyIcon size={16} color={theme.colors.textMuted} strokeWidth={2} />
-      )}
-    </PressableScale>
+      copyLabel={t`Copy the command that starts simfarm`}
+    />
   );
 }
 
@@ -481,33 +440,6 @@ const styles = StyleSheet.create({
   },
   modalPad: { paddingHorizontal: 24 },
   embeddedPad: { paddingHorizontal: 12, paddingBottom: 12 },
-  commandRow: {
-    alignSelf: 'stretch',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginTop: 4,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-  },
-  command: {
-    flex: 1,
-    // Not the design system's `label` role, which is 11pt uppercase with
-    // tracking: a shell command that has been upper-cased is a shell command
-    // that does not run. This is the one string here that has to be reproduced
-    // character for character, so it gets a monospace face and no transform.
-    //
-    // Which monospace face is the reader's to decide, so the family is merged
-    // in from `useMonoFontFamily()` at the render site rather than written out
-    // here. It used to be `Platform.OS === 'ios' ? 'ui-monospace' :
-    // 'monospace'`, and this line -- the one string on the screen the reader
-    // is being asked to retype into a terminal -- was the one the reader's own
-    // mono choice never reached.
-    fontSize: 12,
-    lineHeight: 17,
-  },
   // Wraps rather than overflows: the narrowest host is the Pad column, where
   // the label, the field and the button do not always fit on one line.
   portRow: {

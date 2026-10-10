@@ -1304,10 +1304,6 @@ msgstr "Chế độ màu"
 msgid "Command"
 msgstr "Lệnh"
 
-#: src/components/simfarm-preview.tsx
-msgid "Command copied"
-msgstr "Đã sao chép lệnh"
-
 #: src/i18n/labels.ts
 msgid "Command mode"
 msgstr "Chế độ lệnh"
@@ -1648,10 +1644,10 @@ msgstr "Điều khiển"
 msgid "Conversational help and open-ended project questions."
 msgstr "Trợ giúp dạng hội thoại và các câu hỏi mở về dự án"
 
-#: src/components/agent-guide-sheet.tsx
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
+#: src/components/guide-command.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Copied"
 msgstr "Đã sao chép"
@@ -1666,7 +1662,6 @@ msgid "Copied to clipboard"
 msgstr "Đã sao chép vào bảng nhớ tạm"
 
 #: src/app/explore.tsx
-#: src/components/simfarm-preview.tsx
 msgid "Copies it, ready to paste into a terminal"
 msgstr "Sao chép lệnh, sẵn sàng dán vào terminal"
 
@@ -1696,7 +1691,7 @@ msgstr "Sao chép đường dẫn"
 msgid "Copy public key"
 msgstr "Sao chép khóa công khai"
 
-#: src/components/agent-guide-sheet.tsx
+#: src/components/guide-command.tsx
 msgid "Copy the command"
 msgstr "Sao chép lệnh"
 
@@ -1839,6 +1834,10 @@ msgstr "Không thể đánh dấu tác vụ đã xong"
 #: src/components/agent-workbench.tsx
 msgid "Could not move this session"
 msgstr "Không thể chuyển phiên này"
+
+#: src/components/guide-command.tsx
+msgid "Could not open a terminal on this computer."
+msgstr "Không mở được cửa sổ dòng lệnh trên máy này."
 
 #: src/hooks/use-home-commands.ts
 msgid "Could not open destination"
@@ -4934,6 +4933,10 @@ msgstr "Chạy nền"
 #: src/components/agent-guide-sheet.tsx
 msgid "Run it under systemd or tmux to keep it up after you log out."
 msgstr "Chạy dưới systemd hoặc tmux để nó tiếp tục sau khi bạn đăng xuất"
+
+#: src/components/guide-command.tsx
+msgid "Run on {computerLabel}"
+msgstr "Chạy trên {computerLabel}"
 
 #: src/i18n/labels.ts
 msgid "Run relevant tests"
