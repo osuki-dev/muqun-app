@@ -38,6 +38,7 @@ import {
   taskRollup,
   taskRowVisual,
   taskRowTitle,
+  type PendingDispatch,
   type TaskRowVisual,
 } from '@/lib/home-computer-cards';
 import {
@@ -759,25 +760,23 @@ function SubTaskRow({
 }
 
 /** A goal the dock sent, before the computer has said it has it. */
-export function SentTaskRow({
-  goal,
-  computer,
-  attachmentFailed = false,
-}: {
-  goal: string;
-  computer: string;
-  /** Its attachments could not be sent (the draft is still in the dock). */
-  attachmentFailed?: boolean;
-}) {
+export function SentTaskRow({ item, computer }: { item: PendingDispatch; computer: string }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   const rowLine = useTaskRowLine(undefined);
-  const retry = useHomeTaskCards((state) => state.retryFailedSend);
+  const actions = useHomeTaskCards((state) => state.rowActions);
   const visual = taskRowVisual({ state: 'sent' }, { canComplete: false, acknowledged: true });
-  const line = attachmentFailed
-    ? lineView(t`Attachment could not be sent`, theme.colors.danger, t`tap to retry`)
+  // A failed send says so and why; a tap sends exactly that again. One that
+  // went to its session opens it.
+  const failed = item.failed === true && item.resend !== undefined;
+  const line = failed
+    ? lineView(
+        t`Could not send`,
+        theme.colors.danger,
+        [item.reason, t`tap to retry`].filter(Boolean).join(META_SEPARATOR)
+      )
     : rowLine(null, visual, computer);
-  const retryable = attachmentFailed && retry !== null;
+  const press = !actions ? null : failed ? actions.retry : item.asid ? actions.open : null;
   return (
     <Animated.View
       testID="home-card-pending"
@@ -787,16 +786,16 @@ export function SentTaskRow({
       layout={listLayout()}
       style={styles.row}>
       <Pressable
-        disabled={!retryable}
-        onPress={() => retry?.()}
-        accessibilityRole={retryable ? 'button' : undefined}
-        accessibilityLabel={retryable ? t`Attachment could not be sent. Tap to retry.` : undefined}
+        disabled={!press}
+        onPress={() => press?.(item)}
+        accessibilityRole={press ? 'button' : undefined}
+        accessibilityLabel={failed ? t`Could not send. Tap to retry` : undefined}
         style={styles.sentBody}>
         <View style={styles.titleLine}>
           <View style={styles.icon}>
             <TaskStateIcon visual={visual} />
           </View>
-          <RowMarkdown text={goalTitle(goal)} ink={theme.colors.text} kind="title" />
+          <RowMarkdown text={goalTitle(item.goal)} ink={theme.colors.text} kind="title" />
         </View>
         <View style={styles.line}>
           <TaskRowLineText line={line} />

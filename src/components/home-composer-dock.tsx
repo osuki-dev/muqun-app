@@ -23,7 +23,7 @@ import { useAgentFeatures, useAgentsDiscoveryRefresh } from '@/hooks/use-agent-f
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useStableHandler } from '@/hooks/use-render-refs';
 import { META_SEPARATOR } from '@/lib/home-continue-row';
-import { goalTitle } from '@/lib/home-computer-cards';
+import { goalTitle, type PendingDispatch } from '@/lib/home-computer-cards';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { reachabilityDescription } from '@/i18n/labels';
 import type { AgentClientCommandId } from '@/lib/agent-commands';
@@ -58,6 +58,7 @@ import {
   homeSessionParams,
   homeSessionReuse,
   resolveHomeComposerTarget,
+  type HomeSessionParams,
   type HomeStartedSession,
 } from '@/lib/home-composer';
 import type { HomeCommandResult } from '@/lib/home-commands';
@@ -439,14 +440,6 @@ export function HomeComposerDock({
   const inFlightRef = useRef(false);
   /** The composer's own draft, for a command that failed after it was cleared. */
   const injectDraftRef = useRef<DraftInjector | null>(null);
-  // A failed attachment send keeps its draft in the field; a tap on the row it
-  // left sends that draft again.
-  const submitDraftRef = useRef<(() => void) | null>(null);
-  useEffect(() => {
-    const { setRetryFailedSend } = useHomeTaskCards.getState();
-    setRetryFailedSend(() => submitDraftRef.current?.());
-    return () => setRetryFailedSend(null);
-  }, []);
 
   /**
    * Never a session without a model on an agent that takes one, whatever
@@ -475,7 +468,14 @@ export function HomeComposerDock({
   }
 
   /** The computer Send goes to, selected; or `null` with the reason shown. */
-  async function sendTarget(): Promise<string | null> {
+  async function sendTarget(fixed?: string): Promise<string | null> {
+    if (fixed) {
+      // A retry goes where the failed send was going, whatever the bar names now.
+      if (useGatewayConnectionStore.getState().record?.serverId === fixed) return fixed;
+      if (selectRecordNow(fixed) || (await selectRecord(fixed))) return fixed;
+      setError(t`Computer unavailable.`);
+      return null;
+    }
     if (target.kind === 'offline') {
       openTargetPicker();
       return null;
@@ -501,7 +501,9 @@ export function HomeComposerDock({
    */
   async function startSession(
     act: (asid: string) => Promise<void>,
-    sent?: { goal: string; attachments: boolean }
+    sent?: { goal: string; attachments: string[] },
+    /** A failed row's send again: its computer, agent and folder, gated when it first went. */
+    again?: { serverId: string; params: HomeSessionParams; folder?: string }
   ): Promise<boolean> {
     if (inFlightRef.current) return false;
     inFlightRef.current = true;
@@ -510,12 +512,13 @@ export function HomeComposerDock({
     return settleAfter(
       async () => {
         setError(null);
-        const serverId = await sendTarget();
+        const serverId = await sendTarget(again?.serverId);
         if (!serverId) return false;
         if (sent) pendingId = useHomeTaskCards.getState().dispatched(serverId, sent.goal);
-        const params = sessionParams;
+        const params = again ? again.params : sessionParams;
+        const sendFolder = again ? again.folder : folder;
         // A retry reuses the session only where it would have made it.
-        const key = `${serverId}\u0000${params.agentId ?? ''}\u0000${folder ?? ''}`;
+        const key = `${serverId}\u0000${params.agentId ?? ''}\u0000${sendFolder ?? ''}`;
         // The selection moved while this was in flight: the session and its
         // prompt would go to a computer the bar no longer names.
         const owns = () => useGatewayConnectionStore.getState().record?.serverId === serverId;
@@ -535,12 +538,13 @@ export function HomeComposerDock({
                 await switchAgentModel(HOME_AGENT_SESSION_ID, asid, plan.switchModel);
               started = { ...plan.started, params };
             } else {
-              // A command or a skill creates the session too: the same gate as Send.
-              if (heldByModelGate()) return false;
+              // A command or a skill creates the session too: the same gate as
+              // Send. A failed row's send passed it when it first went.
+              if (!again && heldByModelGate()) return false;
               creating = true;
               const created = await createAgentSession(HOME_AGENT_SESSION_ID, {
                 ...params,
-                ...(folder ? { directory: folder } : {}),
+                ...(sendFolder ? { directory: sendFolder } : {}),
               });
               creating = false;
               markAgentUsed(serverId, created.agent_id);
@@ -561,8 +565,15 @@ export function HomeComposerDock({
             startedRef.current = null;
             // Its first snapshot may predate the prompt: no welcome card for it.
             markPromptedSession(serverId, started.asid);
-            // A goal stays on Home: the session is in Recent, the row was the feedback.
-            if (sent) return true;
+            // A goal stays on Home. Sent straight to its session, its row stands
+            // for that session until the session's task appears on the card.
+            if (sent) {
+              if (pendingId) {
+                useHomeTaskCards.getState().bound(pendingId, started.asid);
+                keepRow = true;
+              }
+              return true;
+            }
             void onOpenAgent(
               serverId,
               started.asid,
@@ -574,6 +585,18 @@ export function HomeComposerDock({
           },
           async (failure) => {
             console.warn('Home could not start a session:', failure);
+            // The row stays, says why, and keeps exactly what went, so a tap
+            // sends it again; the draft, files included, stays in the field.
+            // Marked before any guide opens, so its files are held across that.
+            if (sent && pendingId) {
+              useHomeTaskCards.getState().failed(pendingId, describeFailure(failure), {
+                text: sent.goal,
+                attachments: sent.attachments,
+                params,
+                ...(sendFolder ? { folder: sendFolder } : {}),
+              });
+              keepRow = true;
+            }
             if (creating) {
               const record = useGatewayConnectionStore
                 .getState()
@@ -587,12 +610,6 @@ export function HomeComposerDock({
                 router.push({ pathname: '/agent-guide', params: guide });
                 return false;
               }
-            }
-            // The row stays and says so; the draft, attachments included, is
-            // still in the field, and a tap on the row sends it again.
-            if (sent?.attachments && pendingId) {
-              useHomeTaskCards.getState().attachmentFailed(pendingId);
-              keepRow = true;
             }
             setError(describeFailure(failure));
             return false;
@@ -844,20 +861,25 @@ export function HomeComposerDock({
     if (ledgerCreate && !attachments?.length && !startedRef.current) {
       return dispatchTask(text, () => openLedgerTask(text));
     }
-    const send = () =>
-      startSession(
-        (asid) =>
-          sendAgentPrompt(HOME_AGENT_SESSION_ID, asid, {
-            text,
-            ...(attachments ? { attachments } : {}),
-          }),
-        { goal: text, attachments: (attachments?.length ?? 0) > 0 }
-      );
     // Attachments cannot be put back once the field lets them go, so a send
     // with files is answered for real: a failure leaves text and files where
-    // they are.
-    if (attachments?.length) return send();
-    return dispatchTask(text, send);
+    // they are, and the row keeps them to send again.
+    if (attachments?.length) return sendWithFiles(text, attachments);
+    return dispatchTask(text, () =>
+      startSession((asid) => sendAgentPrompt(HOME_AGENT_SESSION_ID, asid, { text }))
+    );
+  }
+  /** A goal with files, to a session; `again` sends a failed row's payload as it was. */
+  function sendWithFiles(
+    text: string,
+    attachments: string[],
+    again?: { serverId: string; params: HomeSessionParams; folder?: string }
+  ): Promise<boolean> {
+    return startSession(
+      (asid) => sendAgentPrompt(HOME_AGENT_SESSION_ID, asid, { text, attachments }),
+      { goal: text, attachments },
+      again
+    );
   }
   // The composer empties the field as it hands a command over, so a command
   // that did not run puts its line back.
@@ -883,6 +905,29 @@ export function HomeComposerDock({
       });
     return accepted;
   }
+  /** Empties the field if it still holds what a failed row just sent. */
+  const clearDraftRef = useRef<((text: string) => void) | null>(null);
+  // What a tap on a Sent row does: a failed send goes again exactly as it was,
+  // to the computer it was for; one bound to its session opens it.
+  const retryRow = useStableHandler((item: PendingDispatch) => {
+    const resend = item.resend;
+    if (!resend) return;
+    void sendWithFiles(resend.text, resend.attachments, {
+      serverId: item.serverId,
+      params: resend.params,
+      ...(resend.folder ? { folder: resend.folder } : {}),
+    }).then((sent) => {
+      if (sent) clearDraftRef.current?.(resend.text);
+    });
+  });
+  const openRow = useStableHandler((item: PendingDispatch) => {
+    if (item.asid) void onOpenAgent(item.serverId, item.asid, undefined, HOME_AGENT_SESSION_ID);
+  });
+  useEffect(() => {
+    const { setRowActions } = useHomeTaskCards.getState();
+    setRowActions({ retry: retryRow, open: openRow });
+    return () => setRowActions(null);
+  }, [retryRow, openRow]);
   function clientCommand(name: AgentClientCommandId) {
     if (name === 'models') openModelSheet();
   }
@@ -1074,9 +1119,20 @@ export function HomeComposerDock({
       onInvokeSkill={invokeSkill}
       onClientCommand={clientCommand}
       injectDraftRef={injectDraftRef}
-      submitDraftRef={submitDraftRef}
+      clearDraftRef={clearDraftRef}
+      holdAttachmentsAcrossBlur={failedRowHoldsFiles}
     />
   );
+}
+
+/**
+ * Files a failed send still holds stay staged when Home loses focus -- to the
+ * setup guide the dock opened, or anywhere else -- until they are sent.
+ */
+function failedRowHoldsFiles(): boolean {
+  return useHomeTaskCards
+    .getState()
+    .pending.some((item) => item.failed === true && (item.resend?.attachments.length ?? 0) > 0);
 }
 
 const styles = StyleSheet.create({

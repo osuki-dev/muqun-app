@@ -463,8 +463,13 @@ export interface AgentComposerProps {
    * since); answers whether it did.
    */
   injectDraftRef?: React.MutableRefObject<DraftInjector | null>;
-  /** Sends what the field holds, attachments included, as the Send button does. */
-  submitDraftRef?: React.MutableRefObject<(() => void) | null>;
+  /**
+   * Empties the field, files included, if it still holds `text` -- what a
+   * send from elsewhere (Home's failed row) just delivered.
+   */
+  clearDraftRef?: React.MutableRefObject<((text: string) => void) | null>;
+  /** See `useAttachmentUploads`' `holdAcrossBlur`. */
+  holdAttachmentsAcrossBlur?: () => boolean;
   /**
    * The dock's height, whenever it changes.
    *
@@ -575,7 +580,8 @@ export const AgentComposer = memo(function AgentComposer({
   onSetInboxDelivery,
   onPressTokens,
   injectDraftRef,
-  submitDraftRef,
+  clearDraftRef,
+  holdAttachmentsAcrossBlur,
   onDockHeight,
   accessory,
   bar,
@@ -667,7 +673,7 @@ export const AgentComposer = memo(function AgentComposer({
   const chromeGlass = withAlpha(theme.colors.text, appChrome.opacity.chromeControl);
 
   const record = useGatewayConnectionStore((state) => state.record);
-  const attachmentUploads = useAttachmentUploads(record);
+  const attachmentUploads = useAttachmentUploads(record, undefined, holdAttachmentsAcrossBlur);
 
   // Staged image preview, the same viewer the terminal dock uses: only images
   // can open full screen, so the tapped chip's position is resolved within
@@ -1047,12 +1053,16 @@ export const AgentComposer = memo(function AgentComposer({
   ]);
 
   useEffect(() => {
-    if (!submitDraftRef) return;
-    submitDraftRef.current = () => void handleSend();
-    return () => {
-      submitDraftRef.current = null;
+    if (!clearDraftRef) return;
+    clearDraftRef.current = (sent) => {
+      if (readText().trim() !== sent.trim()) return;
+      setText('');
+      attachmentUploads.clearAttachments();
     };
-  }, [submitDraftRef, handleSend]);
+    return () => {
+      clearDraftRef.current = null;
+    };
+  }, [clearDraftRef, readText, attachmentUploads]);
 
   /**
    * What can be done to one queued prompt.

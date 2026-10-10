@@ -822,14 +822,6 @@ msgstr "ファイルを添付"
 msgid "Attachment"
 msgstr "添付ファイル"
 
-#: src/components/task-row.tsx
-msgid "Attachment could not be sent"
-msgstr "添付ファイルを送信できませんでした"
-
-#: src/components/task-row.tsx
-msgid "Attachment could not be sent. Tap to retry."
-msgstr "添付ファイルを送信できませんでした。タップして再試行してください。"
-
 #: src/components/session-artifacts.tsx
 msgid "Audio"
 msgstr "音声"
@@ -2057,6 +2049,7 @@ msgstr "音声設定を保存できません。もう一度お試しください
 
 #: src/components/home-composer-dock.tsx
 #: src/components/ssh-terminal-workspace.tsx
+#: src/components/task-row.tsx
 msgid "Could not send"
 msgstr "送信できませんでした"
 
@@ -2075,6 +2068,10 @@ msgstr "キーを送信できませんでした"
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "ショートカットを送信できませんでした"
+
+#: src/components/task-row.tsx
+msgid "Could not send. Tap to retry"
+msgstr "送信できませんでした。タップして再試行"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not stage the rollback"

@@ -822,14 +822,6 @@ msgstr "Attach a file"
 msgid "Attachment"
 msgstr "Attachment"
 
-#: src/components/task-row.tsx
-msgid "Attachment could not be sent"
-msgstr "Attachment could not be sent"
-
-#: src/components/task-row.tsx
-msgid "Attachment could not be sent. Tap to retry."
-msgstr "Attachment could not be sent. Tap to retry"
-
 #: src/components/session-artifacts.tsx
 msgid "Audio"
 msgstr "Audio"
@@ -2057,6 +2049,7 @@ msgstr "Could not save voice settings. Please try again"
 
 #: src/components/home-composer-dock.tsx
 #: src/components/ssh-terminal-workspace.tsx
+#: src/components/task-row.tsx
 msgid "Could not send"
 msgstr "Could not send"
 
@@ -2075,6 +2068,10 @@ msgstr "Could not send key"
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "Could not send shortcut"
+
+#: src/components/task-row.tsx
+msgid "Could not send. Tap to retry"
+msgstr "Could not send. Tap to retry"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not stage the rollback"

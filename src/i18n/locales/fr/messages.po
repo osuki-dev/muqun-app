@@ -822,14 +822,6 @@ msgstr "Joindre un fichier"
 msgid "Attachment"
 msgstr "Pièce jointe"
 
-#: src/components/task-row.tsx
-msgid "Attachment could not be sent"
-msgstr "La pièce jointe n’a pas pu être envoyée"
-
-#: src/components/task-row.tsx
-msgid "Attachment could not be sent. Tap to retry."
-msgstr "La pièce jointe n’a pas pu être envoyée. Touchez pour réessayer."
-
 #: src/components/session-artifacts.tsx
 msgid "Audio"
 msgstr "Audio"
@@ -2057,6 +2049,7 @@ msgstr "Impossible d’enregistrer les paramètres vocaux. Réessayez"
 
 #: src/components/home-composer-dock.tsx
 #: src/components/ssh-terminal-workspace.tsx
+#: src/components/task-row.tsx
 msgid "Could not send"
 msgstr "Envoi impossible"
 
@@ -2075,6 +2068,10 @@ msgstr "Impossible d’envoyer la touche"
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "Impossible d’envoyer le raccourci"
+
+#: src/components/task-row.tsx
+msgid "Could not send. Tap to retry"
+msgstr "Envoi impossible. Touchez pour réessayer"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not stage the rollback"

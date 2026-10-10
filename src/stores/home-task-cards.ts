@@ -1,7 +1,7 @@
 import { createMMKV } from 'react-native-mmkv';
 import { create } from 'zustand';
 
-import { dismissedKey, type PendingDispatch } from '@/lib/home-computer-cards';
+import { dismissedKey, type PendingDispatch, type PendingResend } from '@/lib/home-computer-cards';
 
 type KeyValueStore = {
   getString: (key: string) => string | undefined;
@@ -56,14 +56,20 @@ type HomeTaskCardsState = {
   dispatched: (serverId: string, goal: string) => string;
   /** The send failed, or the task came back with the answer. */
   settle: (id: string) => void;
-  /** The goal's attachments could not be sent: the row stays and says so. */
-  attachmentFailed: (id: string) => void;
+  /** The send failed: the row stays, says why, and keeps what to send again. */
+  failed: (id: string, reason: string, resend: PendingResend) => void;
+  /** It went to a session directly: the row stands for it until its task appears. */
+  bound: (id: string, asid: string) => void;
   /**
-   * What a tap on a failed row does: the dock sends the draft it kept
-   * (text and attachments) again. `null` while no dock is mounted.
+   * What a tap on a row does, from the dock that sent it: a failed one is
+   * sent again exactly as it was, a bound one opens its session. `null` while
+   * no dock is mounted.
    */
-  retryFailedSend: (() => void) | null;
-  setRetryFailedSend: (retry: (() => void) | null) => void;
+  rowActions: {
+    retry: (item: PendingDispatch) => void;
+    open: (item: PendingDispatch) => void;
+  } | null;
+  setRowActions: (actions: HomeTaskCardsState['rowActions']) => void;
   /** The row whose work is being opened (`taskOpeningKey`): it shows a loading state. */
   opening: string | null;
   setOpening: (key: string | null) => void;
@@ -84,9 +90,9 @@ export function showOpeningWhile(key: string, open: Promise<void>): void {
 export const useHomeTaskCards = create<HomeTaskCardsState>((set, get) => ({
   dismissed: loadDismissed(),
   pending: [],
-  retryFailedSend: null,
-  setRetryFailedSend(retry) {
-    set({ retryFailedSend: retry });
+  rowActions: null,
+  setRowActions(actions) {
+    set({ rowActions: actions });
   },
   opening: null,
   setOpening(key) {
@@ -112,7 +118,7 @@ export const useHomeTaskCards = create<HomeTaskCardsState>((set, get) => ({
         ...state.pending.filter(
           (item) =>
             now - item.atMs < PENDING_DISPATCH_TTL_MS &&
-            !(item.attachmentFailed && item.serverId === serverId && item.goal === goal)
+            !(item.failed && item.serverId === serverId && item.goal === goal)
         ),
         { id, serverId, goal, atMs: now },
       ],
@@ -122,11 +128,16 @@ export const useHomeTaskCards = create<HomeTaskCardsState>((set, get) => ({
   settle(id) {
     set((state) => ({ pending: state.pending.filter((item) => item.id !== id) }));
   },
-  attachmentFailed(id) {
+  failed(id, reason, resend) {
     set((state) => ({
       pending: state.pending.map((item) =>
-        item.id === id ? { ...item, attachmentFailed: true as const } : item
+        item.id === id ? { ...item, failed: true as const, reason, resend } : item
       ),
+    }));
+  },
+  bound(id, asid) {
+    set((state) => ({
+      pending: state.pending.map((item) => (item.id === id ? { ...item, asid } : item)),
     }));
   },
 }));
