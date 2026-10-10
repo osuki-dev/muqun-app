@@ -9,8 +9,11 @@
  * - **Answering, task socket open:** every {@link HOME_CONTINUE_LIVE_REFRESH_MS}.
  *   The socket already tells the app when work changes; the poll only keeps the
  *   statuses and the "Seen" ages honest.
- * - **Not answering:** backs off from 30 s, doubling, to
- *   {@link HOME_CONTINUE_BACKOFF_MAX_MS}. The app coming back to the
+ * - **Not answering, or its reads failing:** backs off from 30 s, doubling, to
+ *   {@link HOME_CONTINUE_BACKOFF_MAX_MS}. A computer that was not answering
+ *   when its read failed is asked at once when it answers again; one whose
+ *   reads fail while it answers `/health` (its Herdr down, say) keeps backing
+ *   off. The app coming back to the
  *   foreground, the network changing, or the reader opening that computer's
  *   card or settings asks again at once ({@link retryHomeRefresh}).
  *
@@ -29,7 +32,12 @@ export const HOME_CONTINUE_BACKOFF_MAX_MS = 5 * 60_000;
  */
 const DUE_SLACK_MS = 1_000;
 
-export type HomeRefreshAttempt = { atMs: number; failures: number };
+export type HomeRefreshAttempt = {
+  atMs: number;
+  failures: number;
+  /** Whether the computer was answering when the last read failed. */
+  liveAtFailure?: boolean;
+};
 
 /** How long after an attempt the computer is due again. */
 export function homeRefreshDelay(failures: number, socketLive: boolean): number {
@@ -39,12 +47,18 @@ export function homeRefreshDelay(failures: number, socketLive: boolean): number 
   return socketLive ? HOME_CONTINUE_LIVE_REFRESH_MS : HOME_CONTINUE_REFRESH_MS;
 }
 
+/**
+ * Whether a computer is due now. `live`: it is answering now; a failing
+ * computer that was not answering when it failed is then due at once.
+ */
 export function homeRefreshDue(
   attempt: HomeRefreshAttempt | undefined,
   nowMs: number,
-  socketLive: boolean
+  socketLive: boolean,
+  live = false
 ): boolean {
   if (!attempt) return true;
+  if (attempt.failures > 0 && live && attempt.liveAtFailure === false) return true;
   return nowMs - attempt.atMs >= homeRefreshDelay(attempt.failures, socketLive) - DUE_SLACK_MS;
 }
 
@@ -60,11 +74,19 @@ export function startHomeRefresh(serverId: string, atMs: number): void {
   attempts.set(serverId, { atMs, failures: attempts.get(serverId)?.failures ?? 0 });
 }
 
-/** How the refresh started by {@link startHomeRefresh} ended. */
-export function endHomeRefresh(serverId: string, ok: boolean): void {
+/**
+ * How the refresh started by {@link startHomeRefresh} ended; `live`, whether
+ * the computer was answering when it did.
+ */
+export function endHomeRefresh(serverId: string, ok: boolean, live: boolean): void {
   const attempt = attempts.get(serverId);
   if (!attempt) return;
-  attempts.set(serverId, { atMs: attempt.atMs, failures: ok ? 0 : attempt.failures + 1 });
+  attempts.set(
+    serverId,
+    ok
+      ? { atMs: attempt.atMs, failures: 0 }
+      : { atMs: attempt.atMs, failures: attempt.failures + 1, liveAtFailure: live }
+  );
 }
 
 /**

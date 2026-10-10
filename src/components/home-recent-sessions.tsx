@@ -234,15 +234,17 @@ export function useHomeRecentEntries({
           const nowMs = Date.now();
           const sockets = useServerChannels.getState().sockets;
           // Only the computers that are due: an answering one on its cadence,
-          // a failing one on its backoff -- unless it is answering again --
-          // and one known to be down not at all.
+          // a failing one on its backoff -- unless it was down when it failed
+          // and is answering again -- and one known to be down not at all.
           const reachability = readReachability();
           const due = servers.filter((server) => {
             if (isDemoRecord(server) || reachability[server.serverId] === 'offline') return false;
-            const attempt = homeRefreshAttempt(server.serverId);
-            if (attempt && attempt.failures > 0 && reachability[server.serverId] === 'live')
-              return true;
-            return homeRefreshDue(attempt, nowMs, sockets[server.serverId] === 'open');
+            return homeRefreshDue(
+              homeRefreshAttempt(server.serverId),
+              nowMs,
+              sockets[server.serverId] === 'open',
+              reachability[server.serverId] === 'live'
+            );
           });
           await refreshHomeGateways({
             records: due,
@@ -256,7 +258,7 @@ export function useHomeRecentEntries({
               );
               if (ok === undefined) return;
               if (!ok) forgetHomeSessionChoices(record.serverId);
-              endHomeRefresh(record.serverId, ok);
+              endHomeRefresh(record.serverId, ok, readReachability()[record.serverId] === 'live');
             },
           });
         });
