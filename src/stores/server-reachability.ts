@@ -9,6 +9,7 @@ import { useServerCapabilities } from '@/stores/server-capabilities';
 import {
   needsReachabilityProbe,
   prewarmGate,
+  reachabilityFromProbe,
   REACHABILITY_TIMEOUT_MS,
   statusRefusesPairing,
   type ReachabilityProbe,
@@ -113,7 +114,10 @@ export const useServerReachability = create<ServerReachabilityState>((set, get) 
     if (!options?.force && !needsReachabilityProbe(get().probes[serverId])) return;
 
     const previous = get().probes[serverId];
-    if (previous) {
+    // The flag only matters to an answer that has gone stale: a fresh one
+    // speaks for itself while the re-check is out, so marking it would replace
+    // the map for every subscriber and change nothing anyone shows.
+    if (previous && reachabilityFromProbe(previous, Date.now(), false) === 'unknown') {
       set((state) => ({
         probes: { ...state.probes, [serverId]: { ...previous, rechecking: true } },
       }));

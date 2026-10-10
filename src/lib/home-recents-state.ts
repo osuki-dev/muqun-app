@@ -25,6 +25,13 @@ export type HomeRecentsState = {
   hydrated: boolean;
   /** Newest explicit visit first; capped by `MAX_HOME_RECENTS`. */
   entries: HomeRecentEntry[];
+  /**
+   * When each remembered session's status was last confirmed unchanged, by
+   * entry key. Memory only and outside `entries`: a confirmation that changes
+   * nothing but the time is neither a list rewrite nor a keychain write. The
+   * "Seen" age reads the newer of this and the stored observation.
+   */
+  seenAtMs: Readonly<Record<string, number>>;
   hydrate: () => Promise<void>;
   /** Records a user-selected destination. Token/output activity never calls this. */
   visit: (
@@ -217,12 +224,16 @@ export function createHomeRecentsState(
       }
       const current = before[index];
       const previous = current?.sessionObservation;
-      if (
-        !current ||
-        (previous && previous.observedAtMs > normalized.sessionObservation.observedAtMs) ||
-        (previous?.status === normalized.sessionObservation.status &&
-          previous.observedAtMs === normalized.sessionObservation.observedAtMs)
-      ) {
+      const observedAtMs = normalized.sessionObservation.observedAtMs;
+      if (!current || (previous && previous.observedAtMs > observedAtMs)) {
+        await hydrate();
+        return;
+      }
+      if (previous?.status === normalized.sessionObservation.status) {
+        const seen = get().seenAtMs;
+        if (observedAtMs > Math.max(previous.observedAtMs, seen[normalized.key] ?? 0)) {
+          set({ seenAtMs: { ...seen, [normalized.key]: observedAtMs } });
+        }
         await hydrate();
         return;
       }
@@ -322,6 +333,7 @@ export function createHomeRecentsState(
     return {
       hydrated: false,
       entries: [],
+      seenAtMs: {},
       hydrate,
       visit,
       touch,

@@ -123,10 +123,9 @@ import {
   type HomeServerListLayout,
 } from '@/lib/responsive-layout';
 import { serverIdsNeedingAddress } from '@/lib/server-address';
-import type { ServerAgent, ServerAgentsSnapshot } from '@/lib/server-agents';
+import type { ServerAgent } from '@/lib/server-agents';
 import {
   REACHABILITY_TICK_MS,
-  resolveServerReachability,
   serversToProbe,
   type ActiveServerConnection,
   type ServerReachability,
@@ -139,6 +138,8 @@ import type { HomeServerEntry } from '@/lib/home-commands';
 import { GatewayStorageError } from '@/components/gateway-storage-error';
 import { useServerAgents } from '@/stores/server-agents';
 import { retryHomeRefresh } from '@/lib/home-refresh-schedule';
+import { useHomeReachability } from '@/hooks/use-home-reachability';
+import { useMinuteNow } from '@/hooks/use-minute-now';
 import { useHomeRecentsStore } from '@/stores/home-recents';
 import { useHomeAgentChoice } from '@/stores/home-agent-choice';
 import { useHomeAttention } from '@/stores/home-attention';
@@ -368,25 +369,23 @@ export function HomeOverview({
   // `homeServerListLayout` for why room, not server count alone, decides it.
   const metrics = homeServerListLayout(width, records.length);
 
-  // The mirror holds all panes; the shared Home model applies the reader's
-  // agent-only filter without changing what is persisted.
-  const agentsByServer = useServerAgents((state) => state.byServer);
   const hydrateServerAgents = useServerAgents((state) => state.hydrate);
   const keepServerAgents = useServerAgents((state) => state.keepOnly);
 
-  const probes = useServerReachability((state) => state.probes);
   const refreshReachabilityMany = useServerReachability((state) => state.refreshMany);
   const refreshReachability = useServerReachability((state) => state.refresh);
   const keepReachability = useServerReachability((state) => state.keepOnly);
 
-  // One instant every Home projection resolves probe freshness against,
-  // advanced by the focus tick below rather than read during render: a render
-  // nothing else caused never came, so a probe's window used to run out
-  // unnoticed. A standalone Home has no active connection override.
-  const [nowMs, setNowMs] = useState(() => Date.now());
-  // The live channels (agent socket, terminal stream) are evidence too.
-  const channelSockets = useServerChannels((state) => state.sockets);
-  const channelStreams = useServerChannels((state) => state.streams);
+  // Whether each computer is answering, from its probe and its live channels
+  // (agent socket, terminal stream). Home re-renders only when one of those
+  // answers moves; `nowMs` is the instant probe freshness was last resolved
+  // against, and it advances exactly when some probe goes stale -- not on a
+  // tick. A standalone Home has no active connection override.
+  const recordIds = useMemo(() => records.map((server) => server.serverId), [records]);
+  const { reachabilityByServer: padReachabilityByServer, nowMs } = useHomeReachability(
+    recordIds,
+    activeConnection
+  );
 
   // Which servers have been opened on this device, and when. Already stored for
   // the "while you were away" digest; the probe order is its second reader, and
@@ -402,8 +401,7 @@ export function HomeOverview({
   // A boolean, so task frames do not re-render all of Home.
   const hasComputerCards = useHasComputerCards({
     servers: cardServers,
-    activeConnection,
-    nowMs,
+    reachabilityByServer: padReachabilityByServer,
   });
   // Needs you stays mounted while empty; the Pad cover asks whether it has a row.
   const hasAttention = useHasHomeAttention({ servers: records, taskServerIds });
@@ -426,26 +424,6 @@ export function HomeOverview({
     const timer = setTimeout(() => setEntering(false), ENTRY_BUDGET_MS);
     return () => clearTimeout(timer);
   }, [entering, loading]);
-  const padReachabilityByServer = useMemo(
-    () =>
-      Object.fromEntries(
-        records.map((server) => [
-          server.serverId,
-          resolveServerReachability(
-            server.serverId,
-            probes[server.serverId],
-            activeConnection,
-            nowMs,
-            {
-              socket: channelSockets[server.serverId],
-              stream: channelStreams[server.serverId],
-            }
-          ),
-        ])
-      ),
-    [activeConnection, channelSockets, channelStreams, nowMs, probes, records]
-  );
-
   useEffect(() => {
     void hydrateServerAgents();
   }, [hydrateServerAgents]);
@@ -550,9 +528,7 @@ export function HomeOverview({
   useFocusEffect(
     useCallback(() => {
       if (!appActive) return;
-      setNowMs(Date.now());
       const timer = setInterval(() => {
-        setNowMs(Date.now());
         const selected = useGatewayConnectionStore.getState().record;
         if (!selected || isDemoRecord(selected) || selected.sshTunnel) return;
         // An open task socket already says the computer is answering; a
@@ -1634,14 +1610,7 @@ export function HomeOverview({
               metrics={metrics}
               selected={server.serverId === record?.serverId}
               showAddress={addressNeeded.has(server.serverId)}
-              reachability={resolveServerReachability(
-                server.serverId,
-                probes[server.serverId],
-                activeConnection,
-                nowMs,
-                { socket: channelSockets[server.serverId], stream: channelStreams[server.serverId] }
-              )}
-              agents={agentsByServer[server.serverId]}
+              reachability={padReachabilityByServer[server.serverId] ?? 'unknown'}
               onOpen={() => openServer(server.serverId)}
               onOpenAgent={(agent) => openServer(server.serverId, agent.paneId)}
             />
@@ -1697,7 +1666,6 @@ export function HomeOverview({
                 <SshHostRow
                   key={host.id}
                   record={host}
-                  nowMs={nowMs}
                   showAddress={false}
                   onOpen={() => openSshHost(host)}
                 />
@@ -1791,7 +1759,6 @@ function ServerCard({
   selected,
   showAddress,
   reachability,
-  agents,
   onOpen,
   onOpenAgent,
 }: {
@@ -1806,8 +1773,6 @@ function ServerCard({
    */
   showAddress: boolean;
   reachability: ServerReachability;
-  /** Undefined when the setting is off, or the server has never been opened. */
-  agents: ServerAgentsSnapshot | undefined;
   onOpen: () => void;
   onOpenAgent: (agent: ServerAgent) => void;
 }) {
@@ -1820,12 +1785,13 @@ function ServerCard({
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
 
-  // Read at render because freshness is relative to *now*, not to whenever the
-  // last state change happened: a card sitting untouched has to keep telling the
-  // truth about a snapshot ageing under it. The alternative is a ticking clock
-  // in state, which re-renders the whole list to change one label.
-  // oxlint-disable-next-line react/purity -- deliberate: see above.
-  const nowMs = Date.now();
+  // The card's own mirror, read here rather than handed down: a pass that only
+  // re-confirms the panes moves `checkedAtMs`, and that re-renders this card,
+  // not the screen. Undefined when the server has never been opened.
+  const agents = useServerAgents((state) => state.byServer[server.serverId]);
+  // Freshness is relative to now: a card sitting untouched keeps telling the
+  // truth about a snapshot ageing under it, a minute at a time.
+  const nowMs = useMinuteNow();
   const statusColor = reachability === 'live' ? theme.colors.success : theme.colors.textSubtle;
 
   return (

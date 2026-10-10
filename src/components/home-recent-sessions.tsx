@@ -20,6 +20,7 @@ import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLatestReader } from '@/hooks/use-render-refs';
+import { useMinuteNow } from '@/hooks/use-minute-now';
 import {
   HOME_CONTINUE_REFRESH_MS,
   refreshHomeContinue,
@@ -53,6 +54,9 @@ import {
   homeContinueCommand,
   homeContinueEntries,
   homeContinueKind,
+  homeContinueObservationNow,
+  type HomeContinueObservation,
+  type HomeContinueObservationView,
   homeContinueTarget,
   shouldShowHomeContinueOverflow,
   type HomeContinueEntry,
@@ -68,7 +72,7 @@ import {
   taskRowVisual,
 } from '@/lib/home-computer-cards';
 import type { ActiveServerConnection, ServerReachability } from '@/lib/server-reachability';
-import { useServerAgents } from '@/stores/server-agents';
+import { selectServerAgentsContent, useServerAgents } from '@/stores/server-agents';
 import { useAppSettings } from '@/stores/app-settings';
 import type { SshHostRecord } from '@/lib/ssh-hosts';
 import { useHomeRecentsStore } from '@/stores/home-recents';
@@ -164,8 +168,8 @@ export function useHomeRecentEntries({
   const entries = useHomeRecentsStore((state) => state.entries);
   const hydrated = useHomeRecentsStore((state) => state.hydrated);
   const goneSessions = useGoneAgentSessions((state) => state.keys);
-  const [observationNowMs, setObservationNowMs] = useState(Date.now);
-  const snapshots = useServerAgents((state) => state.byServer);
+  // Rows, not ages: a pass that only re-confirms the panes leaves this alone.
+  const snapshots = useServerAgents(selectServerAgentsContent);
   const paneMode = useAppSettings((state) => state.serverCardPanes);
   const targetId = selectedServerId ?? activeConnection?.serverId;
   const agentSessions = useHomeAgentSessions((state) =>
@@ -261,7 +265,6 @@ export function useHomeRecentEntries({
           },
           () => {
             pending = false;
-            if (isCurrent()) setObservationNowMs(Date.now());
             if (again) {
               again = false;
               void refresh();
@@ -292,7 +295,6 @@ export function useHomeRecentEntries({
     recents: entries,
     reachabilityByServer,
     paneMode,
-    nowMs: observationNowMs,
     gatewaySessions: agentSessions,
     goneSessions,
   });
@@ -420,6 +422,32 @@ export function HomeRecentSessions({
   );
 }
 
+/**
+ * A row's observation against the minute clock, with the newest "still the
+ * same" its sources hold. Only this row re-renders when a pass re-confirms it.
+ */
+function useObservationNow(
+  observation: HomeContinueObservation | undefined
+): HomeContinueObservationView | undefined {
+  const nowMs = useMinuteNow();
+  const seen = observation?.seen;
+  const panesAtMs = useServerAgents((state) =>
+    seen?.panesOf ? state.byServer[seen.panesOf]?.checkedAtMs : undefined
+  );
+  const recentAtMs = useHomeRecentsStore((state) =>
+    seen?.recentKey ? state.seenAtMs[seen.recentKey] : undefined
+  );
+  const listedAtMs = useHomeAgentSessions((state) =>
+    seen?.listedBy ? state.seenAtMs[seen.listedBy] : undefined
+  );
+  if (!observation) return undefined;
+  return homeContinueObservationNow(
+    observation,
+    Math.max(panesAtMs ?? 0, recentAtMs ?? 0, listedAtMs ?? 0),
+    nowMs
+  );
+}
+
 function RecentSessionRow({
   entry,
   number,
@@ -532,7 +560,7 @@ function RecentSessionRow({
           }) || kind
         : entry.title || kind;
   const path = terminal ? terminalRowPath(title, cwd) : cwd ? homePathLabel(cwd) : undefined;
-  const observation = entry.observation;
+  const observation = useObservationNow(entry.observation);
   const taskState = task?.state;
   const status = taskState ?? observation?.status;
   const sessionStatus =

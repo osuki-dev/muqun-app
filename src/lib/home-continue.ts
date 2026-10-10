@@ -23,21 +23,76 @@ import type { ServerReachability } from './server-reachability';
 
 type HomeContinueAge = NonNullable<HomeServerModel['age']>;
 
+/**
+ * Where a newer confirmation of an observation lands without the Continue list
+ * being rebuilt: a pass that only says "still the same" moves a timestamp in
+ * one of these, and only the row that shows the age reads it.
+ */
+export type HomeContinueSeen = {
+  /** The computer whose pane mirror (`server-agents`) confirmed it. */
+  panesOf?: string;
+  /** The remembered recent (`home-recents` `seenAtMs`). */
+  recentKey?: string;
+  /** The computer whose agent-session list (`home-agent-sessions`) confirmed it. */
+  listedBy?: string;
+};
+
+/**
+ * The gateway's last word on a row, as of when the list was built. How old it
+ * is -- and so whether its status may still be shown -- is the row's to work
+ * out against the clock: see {@link homeContinueObservationNow}.
+ */
 export type HomeContinueObservation =
   | {
       kind: 'gateway-agent';
-      /** Present only while the shared Home model considers the mirrored status current. */
       status?: ServerAgent['status'];
-      age: HomeContinueAge;
-      stale: boolean;
+      observedAtMs: number;
+      seen: HomeContinueSeen;
     }
   | {
       kind: 'agent-session';
-      /** Present only while the Gateway's observation remains current and not known offline. */
+      status?: HomeSessionObservation['status'];
+      observedAtMs: number;
+      seen: HomeContinueSeen;
+    };
+
+/** An observation as the row shows it: its age, and its status only while current. */
+export type HomeContinueObservationView =
+  | { kind: 'gateway-agent'; status?: ServerAgent['status']; age: HomeContinueAge; stale: boolean }
+  | {
+      kind: 'agent-session';
       status?: HomeSessionObservation['status'];
       age: HomeContinueAge;
       stale: boolean;
     };
+
+/**
+ * What a row says about its observation now. `confirmedAtMs` is the newest
+ * "still the same" from the row's {@link HomeContinueSeen} sources.
+ */
+export function homeContinueObservationNow(
+  observation: HomeContinueObservation,
+  confirmedAtMs: number,
+  nowMs: number
+): HomeContinueObservationView {
+  const atMs = Math.max(observation.observedAtMs, confirmedAtMs);
+  const stale = nowMs - atMs > SERVER_AGENTS_STALE_AFTER_MS;
+  const age = observationAgeParts(atMs, nowMs);
+  if (observation.kind === 'gateway-agent') {
+    return {
+      kind: observation.kind,
+      age,
+      stale,
+      ...(!stale && observation.status ? { status: observation.status } : {}),
+    };
+  }
+  return {
+    kind: observation.kind,
+    age,
+    stale,
+    ...(!stale && observation.status ? { status: observation.status } : {}),
+  };
+}
 
 export type HomeContinueEntry = {
   key: string;
@@ -213,7 +268,6 @@ export function homeContinueEntries({
   recents,
   reachabilityByServer,
   paneMode,
-  nowMs,
   gatewaySessions,
   goneSessions,
 }: {
@@ -223,7 +277,6 @@ export function homeContinueEntries({
   recents: readonly HomeRecentEntry[];
   reachabilityByServer: Readonly<Record<string, ServerReachability | undefined>>;
   paneMode: HomeServerPaneMode;
-  nowMs: number;
   /** The selected gateway's agent sessions; an offline or unpaired one contributes nothing. */
   gatewaySessions?: GatewayAgentSessionsSnapshot;
   /** Sessions the gateway answered gone for (`goneSessionKey`); they are neither recents nor new rows. */
@@ -245,12 +298,15 @@ export function homeContinueEntries({
   );
   for (const serverId of serverIds) {
     if (reachabilityByServer[serverId] === 'offline') continue;
+    // Read as of the snapshot itself, so the row keeps the status it reported;
+    // whether that is still current is the row's to say (`homeContinueObservationNow`).
+    const snapshot = snapshots[serverId];
     const model = homeServerModel({
       serverId,
-      snapshot: snapshots[serverId],
+      snapshot,
       reachability: reachabilityByServer[serverId] ?? 'unknown',
       paneMode,
-      nowMs,
+      nowMs: snapshot?.checkedAtMs ?? 0,
     });
     for (const { key, agent, spokenCaption } of model.rows) {
       const visited = recents.find(
@@ -266,11 +322,11 @@ export function homeContinueEntries({
         atMs: visited?.atMs ?? 0,
         ...(agent.agentLabel ? { agentLabel: agent.agentLabel } : {}),
         observation:
-          agent.hasAgent && model.age
+          agent.hasAgent && model.snapshot
             ? {
                 kind: 'gateway-agent',
-                age: model.age,
-                stale: model.stale,
+                observedAtMs: model.snapshot.checkedAtMs,
+                seen: { panesOf: serverId },
                 ...(spokenCaption?.kind === 'status' ? { status: spokenCaption.status } : {}),
               }
             : undefined,
@@ -309,11 +365,12 @@ export function homeContinueEntries({
       atMs: reported ? Math.max(entry.atMs, reported.updatedMs) : entry.atMs,
       observation:
         target.kind === 'agent-session' && sessionObservation
-          ? openCodeObservation(
-              sessionObservation,
-              reachabilityByServer[target.serverId] ?? 'unknown',
-              nowMs
-            )
+          ? {
+              kind: 'agent-session',
+              status: sessionObservation.status,
+              observedAtMs: sessionObservation.observedAtMs,
+              seen: { recentKey: entry.key, ...(reported ? { listedBy: target.serverId } : {}) },
+            }
           : undefined,
       destination: {
         type: 'recent',
@@ -325,7 +382,6 @@ export function homeContinueEntries({
     });
   }
   if (listed) {
-    const reachability = reachabilityByServer[listed.serverId] ?? 'unknown';
     for (const session of unclaimed.values()) {
       const target: HomeAgentSessionTarget = {
         kind: 'agent-session',
@@ -339,11 +395,12 @@ export function homeContinueEntries({
         key: homeTargetKey(target),
         title: reportedTitle(session),
         atMs: session.updatedMs,
-        observation: openCodeObservation(
-          { status: session.status, observedAtMs: listed.observedAtMs },
-          reachability,
-          nowMs
-        ),
+        observation: {
+          kind: 'agent-session',
+          status: session.status,
+          observedAtMs: listed.observedAtMs,
+          seen: { listedBy: listed.serverId },
+        },
         destination: { type: 'agent-session', target },
       });
     }
@@ -389,20 +446,6 @@ export function supersededTerminalRecent(
 /** A generated placeholder title is no title; the row then falls back to its caption. */
 function reportedTitle(session: GatewayAgentSession): string {
   return hasRealSessionTitle(session) ? session.title.trim() : '';
-}
-
-function openCodeObservation(
-  observation: HomeSessionObservation,
-  reachability: ServerReachability,
-  nowMs: number
-): HomeContinueObservation {
-  const stale = nowMs - observation.observedAtMs > SERVER_AGENTS_STALE_AFTER_MS;
-  return {
-    kind: 'agent-session',
-    age: observationAgeParts(observation.observedAtMs, nowMs),
-    stale,
-    ...(!stale && reachability !== 'offline' ? { status: observation.status } : {}),
-  };
 }
 
 function observationAgeParts(observedAtMs: number, nowMs: number): HomeContinueAge {
