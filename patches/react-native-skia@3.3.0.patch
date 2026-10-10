@@ -1,12 +1,14 @@
-react-native-skia 3.0.8 (Android): avoid the optional Vulkan render-to-single-sampled
+react-native-skia 3.3.0 (Android): avoid the optional Vulkan render-to-single-sampled
 path on Adreno, which can crash in vkCreateFramebuffer. Ordinary MSAA remains
-enabled. Remove when the upstream driver/Dawn workaround is available.
+enabled. Re-created for 3.3.0 on 2026-10-10: upstream still requests the feature
+unconditionally. Remove when the upstream driver/Dawn workaround is available.
 Tracking: https://github.com/wcandillon/react-native-skia/issues/4148
 
 diff --git a/cpp/rnskia/RNDawnUtils.h b/cpp/rnskia/RNDawnUtils.h
+index 560cd85d96d9efcf5276e9723e6bd98c21dd797b..3c2070640cf8c5eeac04875309cca21165b8a56c 100644
 --- a/cpp/rnskia/RNDawnUtils.h
 +++ b/cpp/rnskia/RNDawnUtils.h
-@@ -285,7 +285,6 @@ createDawnBackendContext(dawn::native::Instance *instance) {
+@@ -301,7 +301,6 @@ createDawnBackendContext(dawn::native::Instance *instance) {
  
    // Primary device features — request everything Skia/Graphite can use
    std::vector<wgpu::FeatureName> features = {
@@ -14,10 +16,10 @@ diff --git a/cpp/rnskia/RNDawnUtils.h b/cpp/rnskia/RNDawnUtils.h
        wgpu::FeatureName::TransientAttachments,
        wgpu::FeatureName::Unorm16TextureFormats,
        wgpu::FeatureName::DualSourceBlending,
-@@ -329,6 +328,14 @@ createDawnBackendContext(dawn::native::Instance *instance) {
-       wgpu::FeatureName::OpaqueYCbCrAndroidForExternalTexture,
+@@ -349,6 +348,14 @@ createDawnBackendContext(dawn::native::Instance *instance) {
  #endif
    };
+ 
 +  // Adreno 830 Vulkan crashes in vkCreateFramebuffer with this optional
 +  // render-to-single-sampled path. Keep ordinary multisample attachments
 +  // (and anti-aliasing) on Adreno until the driver/Dawn path is fixed.
@@ -26,6 +28,6 @@ diff --git a/cpp/rnskia/RNDawnUtils.h b/cpp/rnskia/RNDawnUtils.h
 +    features.push_back(wgpu::FeatureName::MSAARenderToSingleSampled);
 +  }
 +
- 
    wgpu::Device device = requestDevice(matchedAdapter, features, true);
    SkASSERT(device);
+ 

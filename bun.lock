@@ -73,7 +73,7 @@
         "react-native-reanimated": "4.7.1",
         "react-native-safe-area-context": "~5.10.1",
         "react-native-screens": "4.28.0",
-        "react-native-skia": "3.0.8",
+        "react-native-skia": "3.3.0",
         "react-native-svg": "15.15.5",
         "react-native-video": "7.0.0-beta.12",
         "react-native-vision-camera": "^5.2.3",
@@ -105,7 +105,7 @@
     "react-native-enriched-markdown",
   ],
   "patchedDependencies": {
-    "react-native-skia@3.0.8": "patches/react-native-skia@3.0.8.patch",
+    "react-native-skia@3.3.0": "patches/react-native-skia@3.3.0.patch",
     "react-native-nitro-sound@0.2.20": "patches/react-native-nitro-sound@0.2.20.patch",
     "react-native-enriched-markdown@1.1.1": "patches/react-native-enriched-markdown@1.1.1.patch",
   },
@@ -1655,13 +1655,13 @@
 
     "react-native-screens": ["react-native-screens@4.28.0", "", { "dependencies": { "react-freeze": "^1.0.0", "warn-once": "^0.1.0" }, "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-0/79Z8RCibuaAHti+DJ2Dq0m6UFWh4+p1bH58K3cjiQ7IDWs5kU9tCAj4lXcJMHHonbF2mIE2BeaPSEvOpIiFg=="],
 
-    "react-native-skia": ["react-native-skia@3.0.8", "", { "dependencies": { "canvaskit-wasm": "0.41.0", "react-native-skia-graphite-android": "154.1.0", "react-native-skia-graphite-apple-ios": "154.1.0", "react-native-skia-graphite-apple-macos": "154.1.0", "react-reconciler": "0.31.0" }, "peerDependencies": { "react": ">=19.0", "react-native": ">=0.78", "react-native-reanimated": ">=4.0.0", "react-native-worklets": ">=0.7.0" }, "optionalPeers": ["react-native", "react-native-reanimated", "react-native-worklets"], "bin": { "setup-skia-web": "scripts/setup-canvaskit.js" } }, "sha512-HMLu4QOHmbNpibj/Rfe1moB7195Qjid9e0up57Rx0V4cxWp29PAv2WNqvtqPxi/SpVqLyb8fCC2hIdh0siapIQ=="],
+    "react-native-skia": ["react-native-skia@3.3.0", "", { "dependencies": { "canvaskit-wasm": "0.41.0", "react-native-skia-graphite-android": "154.2.0", "react-native-skia-graphite-apple-ios": "154.2.0", "react-native-skia-graphite-apple-macos": "154.2.0", "react-native-webgpu-dawn": "154.2.0", "react-reconciler": "0.31.0" }, "peerDependencies": { "react": ">=19.0", "react-native": ">=0.78", "react-native-reanimated": ">=4.0.0", "react-native-worklets": ">=0.7.0" }, "optionalPeers": ["react-native", "react-native-reanimated", "react-native-worklets"], "bin": { "setup-skia-web": "scripts/setup-canvaskit.js" } }, "sha512-Gm+ALnvgHJY7+9dXeUw5naM8cOsml2KCIiK4bhOB2hNdUiQ+BNJ95BTT2h3Za7Cg0wt3Umh3S+GCZmWpefakyA=="],
 
-    "react-native-skia-graphite-android": ["react-native-skia-graphite-android@154.1.0", "", {}, "sha512-6J+OWRxUoiFXlhaC3+Cym6luvReH+ohYJA8IJ/IvkW8fUokcDsJvT3lKtASMdACg1TDGKJTHWhUbPMWe8wtZgw=="],
+    "react-native-skia-graphite-android": ["react-native-skia-graphite-android@154.2.0", "", {}, "sha512-TFocXr/tzMaiUdkQc7IWUkQQsCyn0RKygQO0sCaCwBzBVGKcsQgJpA13z+w4PAUvJLXo23b2lmewAeZbQz/bWg=="],
 
-    "react-native-skia-graphite-apple-ios": ["react-native-skia-graphite-apple-ios@154.1.0", "", {}, "sha512-tyG1LuojhZyqqMeuD3NKiiWWQu3pE5M523u9reGTRMQ8zhxrEFWZU/HFn0cuZAa6JtvQJQFJ1wQtY4PwR0O52A=="],
+    "react-native-skia-graphite-apple-ios": ["react-native-skia-graphite-apple-ios@154.2.0", "", {}, "sha512-vTlG4htWXuUXD2ORkf1qj8FY+FNUlt8Hk+CjvVF2ADx1a5NS9MM9oa1dTnszU++IZdkA3oj3zKrApeD/TRZm4Q=="],
 
-    "react-native-skia-graphite-apple-macos": ["react-native-skia-graphite-apple-macos@154.1.0", "", {}, "sha512-pdnOPvSfrmDMXekIS9+LDzNRpCVRtCKpip5t93aWCvBRk3DvDStNJVOcJg9sDi/x/cSdOQce+2BGY5Wymtj8/A=="],
+    "react-native-skia-graphite-apple-macos": ["react-native-skia-graphite-apple-macos@154.2.0", "", {}, "sha512-70VSIe+Z8sUZ+Ty/JMthGN4Dl1gGeRP9lAaaDUvH/XucVJ3zG6sWMyVttbUxTrSvog0zoo+ETUTHu8XVuOxdvA=="],
 
     "react-native-svg": ["react-native-svg@15.15.5", "", { "dependencies": { "css-select": "^5.1.0", "css-tree": "^1.1.3" }, "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-L4go5jA+GWutdJ/JucuN20cjAbMg1HmMtAP+wZ+3JLCf6Jd0bhXQHxciRP/AQm/FlrIEZwkMcHNZP+FXAiic0w=="],
 
@@ -1672,6 +1672,8 @@
     "react-native-vision-camera-barcode-scanner": ["react-native-vision-camera-barcode-scanner@5.2.3", "", { "peerDependencies": { "react": "*", "react-native": "*", "react-native-nitro-image": "*", "react-native-nitro-modules": "*", "react-native-vision-camera": "*" }, "optionalPeers": ["react-native-nitro-modules"] }, "sha512-p8SyswRlr9Ty5gFcQ1qM8gmU8hKbHyRLyu9TKFMD7oUXsZDF93NKGvcr4Qdr16Z+AIj3HYA/fW1NgoeY+L353g=="],
 
     "react-native-web": ["react-native-web@0.21.4", "", { "dependencies": { "@babel/runtime": "^7.18.6", "@react-native/normalize-colors": "^0.74.1", "fbjs": "^3.0.4", "inline-style-prefixer": "^7.0.1", "memoize-one": "^6.0.0", "nullthrows": "^1.1.1", "postcss-value-parser": "^4.2.0", "styleq": "^0.1.3" }, "peerDependencies": { "react": "^18.0.0 || ^19.0.0", "react-dom": "^18.0.0 || ^19.0.0" } }, "sha512-77B6KlalB4osNIck91TNFixPkYPsTbuNEvw8P7IV+4v4/5wZSBRKZnw0Zhx6YjuauDTz71gc8IW+fVhcBMjr5A=="],
+
+    "react-native-webgpu-dawn": ["react-native-webgpu-dawn@154.2.0", "", {}, "sha512-SyRBmQ+4XYHEcm/qJH8kdeeHeBHipXIAUzSgoELQVGKPX4lEFUkoG/6qdYOXdfNe10p3fIbon/pYt59BBl8TDQ=="],
 
     "react-native-webview": ["react-native-webview@14.0.1", "", { "dependencies": { "escape-string-regexp": "^4.0.0", "invariant": "2.2.4" }, "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-lBUuvFk459Mo+5vUNqwzGvn+I8rDJE6zvOulG2hWWudeEOJfWTsQwOfuYnRu+27djUIXrESFfC+EQE3PGu+FWA=="],
 
