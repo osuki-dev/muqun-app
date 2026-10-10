@@ -540,7 +540,7 @@ msgstr "Tác tử"
 
 #: src/components/settings-fleet-peers.tsx
 msgid "Agents on your other computers can hand part of a task to this one."
-msgstr "Tác tử trên các máy tính khác của bạn có thể giao một phần tác vụ cho máy này."
+msgstr "Tác tử trên các máy tính khác của bạn có thể giao một phần tác vụ cho máy này"
 
 #: src/components/app-drawer-content.tsx
 msgid "AI coding assistant"
@@ -3325,7 +3325,7 @@ msgstr "Biến nó thành của bạn"
 
 #: src/components/settings-fleet-peers.tsx
 msgid "Make sure the computer is reachable, then try again."
-msgstr "Hãy đảm bảo máy tính có thể kết nối, rồi thử lại."
+msgstr "Hãy đảm bảo máy tính có thể kết nối, rồi thử lại"
 
 #: src/components/home-overview.tsx
 msgid "Manage"

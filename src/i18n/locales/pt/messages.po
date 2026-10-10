@@ -540,7 +540,7 @@ msgstr "Agentes"
 
 #: src/components/settings-fleet-peers.tsx
 msgid "Agents on your other computers can hand part of a task to this one."
-msgstr "Agentes nos seus outros computadores podem passar parte de uma tarefa para este."
+msgstr "Agentes nos seus outros computadores podem passar parte de uma tarefa para este"
 
 #: src/components/app-drawer-content.tsx
 msgid "AI coding assistant"
@@ -3325,7 +3325,7 @@ msgstr "Torne-a sua"
 
 #: src/components/settings-fleet-peers.tsx
 msgid "Make sure the computer is reachable, then try again."
-msgstr "Verifique se o computador está acessível e tente novamente."
+msgstr "Verifique se o computador está acessível e tente novamente"
 
 #: src/components/home-overview.tsx
 msgid "Manage"
