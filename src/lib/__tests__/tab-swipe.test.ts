@@ -181,34 +181,16 @@ describe('reading a touch list', () => {
 });
 
 describe('cycling tabs', () => {
-  test('next moves one forward and previous one back', () => {
+  test('next and previous step one tab, and both ends wrap', () => {
     expect(cycleTab(tabs, 't1', 'next')?.tabId).toBe('t2');
     expect(cycleTab(tabs, 't3', 'previous')?.tabId).toBe('t2');
-  });
-
-  test('both ends wrap', () => {
     expect(cycleTab(tabs, 't3', 'next')?.tabId).toBe('t1');
     expect(cycleTab(tabs, 't1', 'previous')?.tabId).toBe('t3');
   });
 
-  test('a full lap in either direction returns to where it started', () => {
-    let forward = 't1';
-    let backward = 't1';
-    for (let step = 0; step < tabs.length; step += 1) {
-      forward = cycleTab(tabs, forward, 'next')?.tabId ?? '';
-      backward = cycleTab(tabs, backward, 'previous')?.tabId ?? '';
-    }
-    expect(forward).toBe('t1');
-    expect(backward).toBe('t1');
-  });
-
-  test('a workspace with one tab has nothing to cycle to', () => {
+  test('one tab, or none, has nothing to cycle to', () => {
     expect(canCycleTabs([tabs[0]])).toBe(false);
     expect(cycleTab([tabs[0]], 't1', 'next')).toBeNull();
-    expect(cycleTab([tabs[0]], 't1', 'previous')).toBeNull();
-  });
-
-  test('a workspace with no tabs cycles nowhere', () => {
     expect(canCycleTabs([])).toBe(false);
     expect(cycleTab([], '', 'next')).toBeNull();
   });

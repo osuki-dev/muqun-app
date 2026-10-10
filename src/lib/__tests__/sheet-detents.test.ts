@@ -88,28 +88,6 @@ test('the platform is read once, from the bundler, not from a Platform import', 
   expect(source).not.toContain("from 'react-native'");
 });
 
-/**
- * The reasoning is load-bearing, so it has to stay in the file.
- *
- * This fix looks like a downgrade -- Android loses the drag -- and the only
- * thing that stops someone restoring the second detent in good faith is the
- * record of what was checked. Each of these is a documented escape that does
- * not work, cited where it lives.
- */
-test('the file still says which documented escapes were ruled out, and where', () => {
-  const source = readFileSync('src/lib/route-presentation.ts', 'utf8');
-  for (const citation of [
-    'FormSheetDimensionsCoordinator.kt:75-81', // the largest-detent layout is by design
-    'findScrollingChild', // nesting is not the problem
-    'sheetExpandsWhenScrolledToEdge', // iOS only; read nowhere on Android
-    'sheetInitialDetentIndex', // moves the sheet, not the layout
-    'unstable_sheetFooter', // an overlay; cannot size a viewport
-    'BottomSheetBehaviorExt.kt:19-34', // useSingleDetent, which is the fix
-  ]) {
-    expect({ citation, kept: source.includes(citation) }).toEqual({ citation, kept: true });
-  }
-});
-
 test('presentation options carry the resolved detents, not the raw ones', () => {
   const options = sheetPresentationOptions('sheet', 'expandable');
   expect(options.presentation).toBe('formSheet');

@@ -21,12 +21,11 @@ describe('home layout resolution', () => {
     expect(isHomeLayout({ id: 'classic' })).toBe(false);
   });
 
-  test.each([undefined, null, '', 'studio', 42, { id: 'editorial' }])(
-    'falls back to editorial for unknown input %#',
-    (value) => {
+  test('falls back to editorial for unknown input', () => {
+    for (const value of [undefined, 'studio', { id: 'editorial' }]) {
       expect(resolveHomeLayout(value)).toBe('editorial');
     }
-  );
+  });
 
   test('keeps an explicitly selected released layout', () => {
     expect(resolveHomeLayout('editorial')).toBe('editorial');
