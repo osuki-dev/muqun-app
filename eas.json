@@ -15,28 +15,23 @@
         "simulator": false
       }
     },
-    "preview": {
-      "bun": "1.4.2",
-      "distribution": "internal",
-      "env": { "HOT_UPDATER_CHANNEL": "preview" },
-      "android": {
-        "buildType": "apk"
-      },
-      "ios": {
-        "simulator": false
-      }
-    },
     "testflight": {
-      "extends": "preview",
+      "extends": "production",
       "distribution": "store",
       "ios": {
         "resourceClass": "m-medium",
         "autoIncrement": "buildNumber"
+      },
+      "environment": "preview",
+      "env": {
+        "HOT_UPDATER_CHANNEL": "preview"
       }
     },
     "production": {
       "bun": "1.4.2",
-      "env": { "HOT_UPDATER_CHANNEL": "production" },
+      "env": {
+        "HOT_UPDATER_CHANNEL": "production"
+      },
       "ios": {
         "resourceClass": "m-medium",
         "autoIncrement": "buildNumber"
@@ -44,7 +39,8 @@
       "android": {
         "buildType": "app-bundle",
         "autoIncrement": "versionCode"
-      }
+      },
+      "environment": "production"
     },
     "play-preview": {
       "extends": "production",
@@ -59,26 +55,20 @@
         "credentialsSource": "remote",
         "buildType": "app-bundle"
       }
-    },
-    "production-apk": {
-      "extends": "production",
-      "distribution": "internal",
-      "environment": "production",
-      "android": {
-        "credentialsSource": "remote",
-        "buildType": "apk"
-      }
     }
   },
   "submit": {
     "play-preview": {
       "android": {
         "track": "internal",
-        "releaseStatus": "draft"
+        "releaseStatus": "completed"
       }
     },
     "testflight": {
-      "ios": {}
+      "ios": {
+        "ascAppId": "6793419283",
+        "appleTeamId": "452NUF9UZZ"
+      }
     },
     "production": {
       "ios": {

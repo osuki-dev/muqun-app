@@ -1,8 +1,8 @@
 import { expect, test } from 'bun:test';
-import { playPreviewEnvironment } from '../../scripts/play-preview-env';
+import { storeReleaseEnvironment } from '../../scripts/store-release-env';
 
 test('native packaging receives public OTA settings without provider or signing credentials', () => {
-  const env = playPreviewEnvironment(
+  const env = storeReleaseEnvironment(
     {
       PATH: '/usr/bin',
       EXPO_TOKEN: 'expo-session-only',
@@ -17,7 +17,8 @@ test('native packaging receives public OTA settings without provider or signing 
     {
       EXPO_PUBLIC_HOT_UPDATER_API_KEY: 'public-client-credential',
       HOT_UPDATER_CLOUDFLARE_API_TOKEN: 'local-provider-secret',
-    }
+    },
+    'preview'
   );
   expect(env).toEqual({
     PATH: '/usr/bin',
@@ -33,9 +34,10 @@ test('native packaging receives public OTA settings without provider or signing 
 
 test('an explicit public client credential takes precedence over local configuration', () => {
   expect(
-    playPreviewEnvironment(
+    storeReleaseEnvironment(
       { EXPO_PUBLIC_HOT_UPDATER_API_KEY: 'explicit-client' },
-      { EXPO_PUBLIC_HOT_UPDATER_API_KEY: 'local-client' }
+      { EXPO_PUBLIC_HOT_UPDATER_API_KEY: 'local-client' },
+      'production'
     ).EXPO_PUBLIC_HOT_UPDATER_API_KEY
   ).toBe('explicit-client');
 });

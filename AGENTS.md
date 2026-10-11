@@ -24,26 +24,24 @@ a PR claiming the change is ready.
   push a release tag unless the user requested a release.
 - Every GitHub Release must include human-written release notes: user-visible
   changes, fixes, compatibility requirements (App/Gateway/Herdr), and upgrade
-  instructions. Commit them at `release-notes/vX.Y.Z.md` before tagging. An APK
+  instructions. Commit them at `release-notes/vX.Y.Z.md` before tagging. A binary
   attachment or an automatically generated commit list is not sufficient.
 - Android and iOS signing credentials are managed in Expo. The team's current
   workflow builds locally with EAS `--local` and uses EAS Submit for submission.
-  GitHub CI should run the same local APK build on its runner using the
-  `production-apk` profile and existing Expo-managed credentials. `EXPO_TOKEN`
-  authenticates CI; it is not a replacement signing key.
+  Android releases use AAB only; iOS releases use IPA. See `infrastructure/store-release.md`
+  for the explicit preview/production commands. `EXPO_TOKEN` authenticates EAS;
+  it is not a replacement signing key.
 - Preserve `dev.osuki.muqun`, the Expo project, and the existing Android
   keystore. Never generate or rotate a keystore to make CI pass. Missing
   credentials are a configuration problem to report, not permission to create
   new signing identity. Never commit or print private signing credentials.
-- APK and Play builds share the package name and must not become separate
-  apps. Cross-channel in-place upgrades additionally require the same signing
-  certificate and increasing versionCode. Verify the actual Play App Signing
-  certificate against the APK certificate before claiming this works; an
-  upload key is not necessarily Google's distribution signing key.
-- Run `.github/workflows/android-apk.yml` on version tags. Attach the APK and
-  its SHA-256 checksum to the matching GitHub Release, built from that exact
-  tag. A manual run without a tag is build-only. Do not submit to Play or
-  publish a release as an incidental part of developing a feature.
+- Validate the exact AAB through Play internal testing, then promote the tested
+  production-channel binary in Play Console. Moving tracks never changes the
+  embedded Hot Updater channel. Keep increasing versionCodes and the existing
+  Play signing identity. An upload key is not Google's distribution signing key.
+- There is no separate APK release or tag-triggered binary build. APKs generated
+  from an AAB for emulator checks are temporary test artifacts, not distributions.
+  Do not submit to stores or publish a release incidentally while developing a feature.
 
 ## Installing behind a proxy
 
