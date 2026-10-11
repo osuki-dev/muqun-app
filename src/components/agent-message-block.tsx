@@ -66,6 +66,7 @@ import {
 } from '@/lib/gateway-client';
 import { fadeIn, timing } from '@/lib/motion';
 import { plainFromMarkdown } from '@/lib/markdown-text';
+import { normalizeAssistantMarkdown } from '@/lib/assistant-markdown';
 import {
   escapeMarkdownText,
   messageImageResolver,
@@ -635,12 +636,14 @@ const AgentDiffBlock = memo(function AgentDiffBlock({
  */
 const MessageTextPart = memo(function MessageTextPart({
   text: written,
+  role,
   markdownStyle,
   imageAssets,
   audioSessionId,
   onPreviewImage,
 }: {
   text: string;
+  role: TimelineItem['role'];
   markdownStyle: MarkdownStyle;
   /** The gateway's resolution of the images this text embeds by host path. */
   imageAssets?: readonly MessageImageAsset[];
@@ -655,11 +658,15 @@ const MessageTextPart = memo(function MessageTextPart({
   // is never changed.
   const text = useMemo(
     () =>
-      rewriteMessageImages(written, messageImageResolver(images.uris, images.pending), (alt) => {
-        const label = alt.trim() ? t`Image unavailable: ${alt.trim()}` : t`Image unavailable`;
-        return `*${escapeMarkdownText(label)}*`;
-      }),
-    [written, images, t]
+      rewriteMessageImages(
+        role === 'assistant' ? normalizeAssistantMarkdown(written) : written,
+        messageImageResolver(images.uris, images.pending),
+        (alt) => {
+          const label = alt.trim() ? t`Image unavailable: ${alt.trim()}` : t`Image unavailable`;
+          return `*${escapeMarkdownText(label)}*`;
+        }
+      ),
+    [written, role, images, t]
   );
   const segments = useMemo(
     () => splitDiffFences(text).filter((seg) => seg.kind === 'diff' || seg.text.trim().length > 0),
@@ -859,6 +866,7 @@ function renderTimelinePart(
         <MessageTextPart
           key={item.id}
           text={part.text}
+          role={item.role}
           markdownStyle={options.markdownStyle}
           audioSessionId={options.actions.audioSessionId}
           {...(item.image_assets ? { imageAssets: item.image_assets } : {})}
