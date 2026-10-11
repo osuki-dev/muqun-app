@@ -350,10 +350,13 @@ describe('which computers get a card', () => {
     task(id, 'done', at, extra);
   test.each([
     ['finished just now', [done('f', NOW - 60_000)], new Set<string>(), true],
-    ['finished an hour ago', [done('f', NOW - 3_600_000)], new Set<string>(), false],
+    ['finished an hour ago', [done('f', NOW - 3_600_000)], new Set<string>(), true],
+    ['finished just under a day ago', [done('f', NOW - 86_400_000 + 1)], new Set<string>(), true],
+    ['finished exactly a day ago', [done('f', NOW - 86_400_000)], new Set<string>(), true],
+    ['finished over a day ago', [done('f', NOW - 86_400_000 - 1)], new Set<string>(), false],
     [
       'finished long ago, settled here just now',
-      [done('f', NOW - 3_600_000, { settledAtMs: NOW })],
+      [done('f', NOW - 2 * 86_400_000, { settledAtMs: NOW })],
       new Set<string>(),
       true,
     ],
@@ -509,7 +512,8 @@ describe('the Sent row', () => {
       // The agent replied: the row follows its session's run, however long.
       [{ ...sent, asid: 'as-1', reply: { state: 'working', atMs: at } }, later, true, true],
       [{ ...sent, asid: 'as-1', reply: { state: 'done', atMs: at } }, later, true, false],
-      // A finished one goes as a finished task does.
+      // A finished one stays through the full day, as a finished task does.
+      [{ ...sent, asid: 'as-1', reply: { state: 'done', atMs: at } }, at + 86_400_000, true, false],
       [
         { ...sent, asid: 'as-1', reply: { state: 'done', atMs: at } },
         at + RECENT_FINISHED_MS + 1,
