@@ -1621,3 +1621,112 @@ describe('a foreground the app has not filled yet', () => {
     }
   }, 20000);
 });
+
+describe('stable wait capture recovery', () => {
+  const stalled = (captures: number) =>
+    new NativeCommandError({
+      code: 'COMMAND_FAILED',
+      details: { reason: 'wait_stable_timeout', captureStalled: true, captures },
+    });
+  const run = async (
+    commands: string,
+    invoke: (args: string[]) => Promise<Record<string, unknown>>
+  ) => {
+    const base = await mkdtemp(path.join(tmpdir(), 'e2e-stable-capture-'));
+    try {
+      await writeFile(path.join(base, 'probe.ad'), commands);
+      const runner = new NativeRunner(suite, base, '/unused', invoke, {});
+      await runner.runSection('probe.ad', {});
+    } finally {
+      await rm(base, { recursive: true, force: true });
+    }
+  };
+
+  for (const captures of [0, 1, 3]) {
+    test(`reacquires a stable verdict after a stalled capture with ${captures} earlier trees`, async () => {
+      const calls: string[][] = [];
+      let waits = 0;
+      await run('open dev.osuki.muqun --relaunch\nwait stable 400 5000\n', async (args) => {
+        calls.push(args);
+        if (args[0] === 'wait' && ++waits === 1) throw stalled(captures);
+        return { waitedMs: 451, captures: 2, nodeCount: 14 };
+      });
+      expect(calls).toEqual([
+        ['open', 'dev.osuki.muqun', '--relaunch'],
+        ['wait', 'stable', '400', '5000'],
+        ['wait', 'stable', '400', '5000'],
+      ]);
+    });
+  }
+
+  test('the second stalled capture fails without a third attempt', async () => {
+    let attempts = 0;
+    const second = stalled(2);
+    const result = await run('wait stable 400 5000\n', async () => {
+      attempts++;
+      throw attempts === 1 ? stalled(3) : second;
+    }).catch((error) => error);
+    expect(result).toBe(second);
+    expect(attempts).toBe(2);
+  });
+
+  test('ordinary instability and unrelated errors fail without retry', async () => {
+    for (const error of [
+      new NativeCommandError({
+        code: 'COMMAND_FAILED',
+        details: { reason: 'wait_stable_timeout', captures: 8 },
+      }),
+      new NativeCommandError({
+        code: 'COMMAND_FAILED',
+        details: { reason: 'wait_stable_timeout', captureStalled: false, captures: 3 },
+      }),
+      new NativeCommandError({
+        code: 'COMMAND_FAILED',
+        details: { reason: 'predicate_failed', captureStalled: true },
+      }),
+      new NativeCommandError({
+        code: 'INVALID_ARGS',
+        details: { reason: 'wait_stable_timeout', captureStalled: true },
+      }),
+      new Error('captureStalled'),
+    ]) {
+      let attempts = 0;
+      const result = await run('wait stable 400 5000\n', async () => {
+        attempts++;
+        throw error;
+      }).catch((failure) => failure);
+      expect(result).toBe(error);
+      expect(attempts).toBe(1);
+    }
+  });
+
+  test('a stable verdict does not bypass the following assertion', async () => {
+    let waits = 0;
+    await expect(
+      run('wait stable 400 5000\nis visible id="required"\n', async (args) => {
+        if (args[0] === 'wait') {
+          if (++waits === 1) throw stalled(3);
+          return { waitedMs: 451, captures: 2, nodeCount: 14 };
+        }
+        return { pass: false };
+      })
+    ).rejects.toThrow();
+    expect(waits).toBe(2);
+  });
+
+  test('capture recovery never repeats a mutation or another observation command', async () => {
+    for (const command of ['press id="done"', 'snapshot', 'wait id="done" 5000']) {
+      let attempts = 0;
+      const error = stalled(3);
+      const result = await run(`${command}\n`, async (args) => {
+        // A mutation's normal foreground guard is allowed to inspect first.
+        if (command.startsWith('press') && args[0] === 'snapshot')
+          return { nodes: [{ ...node, type: 'Button', identifier: 'done' }] };
+        attempts++;
+        throw error;
+      }).catch((failure) => failure);
+      expect(result).toBe(error);
+      expect(attempts).toBe(1);
+    }
+  });
+});

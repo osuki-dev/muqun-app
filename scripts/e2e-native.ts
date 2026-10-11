@@ -1023,17 +1023,17 @@ export class NativeRunner {
               result = await this.invoke(retry);
             }
           } else {
-            // Right after a relaunch the accessibility backend can stall before
-            // it has read a single tree: agent-device reports `captureStalled`
-            // with zero captures and calls it retriable. The app is up (the
-            // failure screenshot shows it); only the capture is. One more try
-            // before it counts as the flow's failure.
-            const detail = error instanceof NativeCommandError ? error.details.details : undefined;
+            // A capture can stall after earlier trees were read, leaving no
+            // stable verdict. Retry only this read once; prior capture count
+            // does not prove stability. Ordinary UI instability still fails,
+            // and a second stalled capture propagates without another retry.
+            const detail = error instanceof NativeCommandError ? error.details : undefined;
             if (
               args[0] !== 'wait' ||
               args[1] !== 'stable' ||
-              detail?.captureStalled !== true ||
-              (typeof detail.captures === 'number' && detail.captures > 0)
+              detail?.code !== 'COMMAND_FAILED' ||
+              detail.details?.reason !== 'wait_stable_timeout' ||
+              detail.details.captureStalled !== true
             )
               throw error;
             result = await this.invoke(args);
