@@ -948,6 +948,7 @@ describe('native end-to-end gate', () => {
     'settings-alerts-sheet',
     'settings-storage-sheet',
     'settings-about-sheet',
+    'settings-update-notes-sheet',
   ])('%s Back ignores an exposed underlying navigation button', async (identifier) => {
     const directory = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-catalogue-'));
     try {

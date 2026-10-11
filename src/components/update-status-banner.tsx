@@ -2,18 +2,23 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
+import { useRouter } from 'expo-router';
+import { measuredUpdateProgress } from '@/lib/update-progress-shader';
 import { useAppUpdateStore } from '@/lib/app-updates';
 import { Check, Download, X } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
+import { UpdateDownloadProgress } from '@/components/update-download-progress';
+import { openUpdateDetails, useUpdateDetails } from '@/stores/update-details';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useNotificationSurfaceStyle } from '@/components/notification-surface';
 import { PressableScale } from '@/components/pressable-scale';
-import { fadeInDown, fadeOutUp, timing } from '@/lib/motion';
+import { fadeIn, fadeInDown, fadeOutUp } from '@/lib/motion';
 
 export function UpdateStatusBanner() {
+  const router = useRouter();
   const notificationSurfaceStyle = useNotificationSurfaceStyle();
   const surfaceBackground = useSurfaceBackground();
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
@@ -29,24 +34,17 @@ export function UpdateStatusBanner() {
   const theme = useThemeTokens();
   const phase = useAppUpdateStore((state) => state.phase);
   const downloadedProgress = useAppUpdateStore((state) => state.progress);
-  const progress = useSharedValue(0);
+  const releaseNotes = useAppUpdateStore((state) => state.releaseNotes);
   const [noticeDismissed, setNoticeDismissed] = useState(false);
-  const visible = phase === 'downloading' || (phase === 'ready' && !noticeDismissed);
+  const detailsOpen = useUpdateDetails((state) => state.notes !== null || state.bundled);
+  const visible =
+    !detailsOpen && (phase === 'downloading' || (phase === 'ready' && !noticeDismissed));
 
   useEffect(() => {
     if (phase !== 'ready') return;
     const timer = setTimeout(() => setNoticeDismissed(true), 6000);
     return () => clearTimeout(timer);
   }, [phase]);
-
-  // Interpolate measured progress only; timing() respects reduced motion.
-  useEffect(() => {
-    progress.set(withTiming(downloadedProgress, timing('short')));
-  }, [downloadedProgress, progress]);
-
-  const progressStyle = useAnimatedStyle(() => ({
-    transform: [{ scaleX: progress.get() }],
-  }));
 
   if (!visible) return null;
 
@@ -70,24 +68,44 @@ export function UpdateStatusBanner() {
         ]}>
         <View
           style={[styles.icon, { backgroundColor: surfaceBackground(theme.colors.primarySubtle) }]}>
-          {ready ? (
-            <Check size={15} color={theme.colors.primary} strokeWidth={2.4} />
-          ) : (
-            <Download size={15} color={theme.colors.primary} strokeWidth={2.2} />
-          )}
+          <Animated.View key={ready ? 'ready' : 'downloading'} entering={fadeIn('short')}>
+            {ready ? (
+              <Check size={15} color={theme.colors.primary} strokeWidth={2.4} />
+            ) : (
+              <Download size={15} color={theme.colors.primary} strokeWidth={2.2} />
+            )}
+          </Animated.View>
         </View>
         <View style={styles.content}>
-          <Text variant="caption" numberOfLines={2}>
-            {label}
-          </Text>
-          <View
-            style={[
-              styles.track,
-              { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
-            ]}>
-            <Animated.View
-              style={[styles.progress, { backgroundColor: theme.colors.primary }, progressStyle]}
-            />
+          <View style={styles.labelRow}>
+            <Text variant="caption" weight="regular" numberOfLines={2}>
+              {label}
+            </Text>
+            {releaseNotes ? (
+              <PressableScale
+                testID="update-release-notes"
+                accessibilityRole="button"
+                accessibilityLabel={t`What's new`}
+                onPress={() => {
+                  openUpdateDetails(releaseNotes, phase);
+                  router.push('/settings-update-notes');
+                }}
+                style={styles.notesLink}>
+                <Text variant="caption" weight="regular" color={theme.colors.primary}>
+                  {t`What's new`}
+                </Text>
+              </PressableScale>
+            ) : null}
+          </View>
+          <View style={styles.progressRow}>
+            <View style={styles.progressTrack}>
+              <UpdateDownloadProgress value={downloadedProgress} downloading={!ready} />
+            </View>
+            {ready || downloadedProgress > 0 ? (
+              <Text variant="caption" weight="regular" color={theme.colors.textMuted}>
+                {Math.floor(measuredUpdateProgress(downloadedProgress) * 100)}%
+              </Text>
+            ) : null}
           </View>
         </View>
         {ready ? (
@@ -144,15 +162,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  track: {
-    height: 3,
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  progress: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 2,
-    transformOrigin: 'left center',
-  },
+  labelRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', columnGap: 10 },
+  notesLink: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' },
+  progressRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  progressTrack: { flex: 1 },
 });

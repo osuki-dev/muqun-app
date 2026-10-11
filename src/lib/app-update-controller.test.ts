@@ -35,6 +35,41 @@ function fixture(check: UpdateClient['checkForUpdate']) {
 }
 
 describe('OTA staging lifecycle', () => {
+  test('actual server notes survive measured progress and staging, without creating version text', async () => {
+    const f = fixture(async () => ({
+      message: '  ## Fixed\n- Restore drafts\n',
+      updateBundle: async () => {
+        f.emit(0.42);
+        return true;
+      },
+    }));
+    await f.controller.check();
+    expect(f.states.slice(1)).toEqual([
+      { phase: 'downloading', progress: 0, releaseNotes: '## Fixed\n- Restore drafts' },
+      { phase: 'downloading', progress: 0.42, releaseNotes: '## Fixed\n- Restore drafts' },
+      { phase: 'ready', progress: 1, releaseNotes: '## Fixed\n- Restore drafts' },
+    ]);
+  });
+  test('failed staging and a later empty response remove stale release metadata', async () => {
+    let first = true;
+    const f = fixture(async () => {
+      if (!first) return null;
+      first = false;
+      return { message: 'Unstaged change', updateBundle: async () => false };
+    });
+    await f.controller.check();
+    expect(f.states.at(-1)).toEqual({ phase: 'failed', progress: 0 });
+    f.advance(60_000);
+    await f.controller.check();
+    expect(f.states.at(-1)).toEqual({ phase: 'idle', progress: 0 });
+  });
+  test('missing and blank server notes never fabricate release contents', async () => {
+    for (const message of [undefined, null, ' \n ']) {
+      const f = fixture(async () => ({ message, updateBundle: async () => true }));
+      await f.controller.check();
+      expect(f.states.at(-1)).toEqual({ phase: 'ready', progress: 1 });
+    }
+  });
   test('same-artifact release adoption stays quiet and permits later checks', async () => {
     let checks = 0;
     const f = fixture(async () => {

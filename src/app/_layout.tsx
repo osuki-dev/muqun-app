@@ -46,7 +46,6 @@ import { UpdateStatusBanner } from '@/components/update-status-banner';
 import { checkForAppUpdate } from '@/lib/app-updates';
 import { InAppNotificationHost } from '@/components/in-app-notification-host';
 import { useNotificationSurfaceStyle } from '@/components/notification-surface';
-import { WhatsNewCard } from '@/components/whats-new-card';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useLaunchImageSync } from '@/hooks/use-launch-image-sync';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
@@ -481,6 +480,10 @@ function RootContent() {
                 />
                 <Stack.Screen name="settings-about" options={sheetRouteOptions('settings-about')} />
                 <Stack.Screen
+                  name="settings-update-notes"
+                  options={sheetRouteOptions('settings-update-notes')}
+                />
+                <Stack.Screen
                   name="settings-terminal"
                   options={sheetRouteOptions('settings-terminal')}
                 />
@@ -587,7 +590,6 @@ function RootContent() {
             </AppLockGate>
             <SshConnectPromptGate />
             <UpdateStatusBanner />
-            <WhatsNewCard />
           </ReskinSurface>
         </ReskinTransitionProvider>
         {/* Outside the re-skin surface so a transition never photographs it. */}

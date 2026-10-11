@@ -31,16 +31,7 @@ function createClient(): HotUpdaterInstance | null {
 }
 
 const client = createClient();
-// Capture at launch: the SDK's selected ID can change when a later download is staged.
-function hasDownloadedLaunch() {
-  try {
-    return client !== null && client.getBundleId() !== client.getMinBundleId();
-  } catch {
-    return false;
-  }
-}
-export const isOtaLaunch = hasDownloadedLaunch();
 const controller = createAppUpdateController(client, (snapshot) =>
-  useAppUpdateStore.setState(snapshot)
+  useAppUpdateStore.setState(snapshot, true)
 );
 export const checkForAppUpdate = controller.check;
