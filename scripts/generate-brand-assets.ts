@@ -1,6 +1,7 @@
 /**
  * Rebuild launcher exports from the checked-in masters. Requires ImageMagick 7.
  * Run: bun scripts/generate-brand-assets.ts
+ * Limit exports to named styles: bun scripts/generate-brand-assets.ts Mint Sakura
  * Creative edits use imagegen; this step only sizes, composites and encodes assets.
  * No generated-image cache, network service or untracked source is required.
  */
@@ -11,6 +12,10 @@ import { fileURLToPath } from 'node:url';
 type IconSpec = { id: string; directory: string; light: string; dark: string };
 const root = fileURLToPath(new URL('../', import.meta.url));
 const specs: IconSpec[] = JSON.parse(readFileSync(`${root}assets/icons/catalog.json`, 'utf8'));
+const selectedIds = new Set(process.argv.slice(2));
+for (const id of selectedIds) {
+  if (!specs.some((spec) => spec.id === id)) throw new Error(`Unknown icon style: ${id}`);
+}
 const encode = [
   '-strip',
   '-depth',
@@ -26,6 +31,7 @@ function magick(args: string[]) {
 }
 
 for (const spec of specs) {
+  if (selectedIds.size > 0 && !selectedIds.has(spec.id)) continue;
   const folder = `assets/icons/${spec.directory}`;
   if (spec.directory === 'classic') continue; // Preserve the original artwork and its native identifier.
   const master = `${folder}/mark.png`;
@@ -89,6 +95,11 @@ for (const spec of specs) {
       `${folder}/preview-${mode}.png`,
     ]);
   }
+}
+// A targeted export must not touch shared assets or another style's checked-in output.
+if (selectedIds.size > 0) {
+  console.log(`Launcher assets regenerated: ${[...selectedIds].join(', ')}.`);
+  process.exit(0);
 }
 for (const [mode, filename] of [
   ['light', 'icon.png'],

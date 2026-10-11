@@ -34,5 +34,17 @@
     "directory": "arcade",
     "light": "#EEE8FF",
     "dark": "#17112B"
+  },
+  {
+    "id": "Mint",
+    "directory": "mint",
+    "light": "#EFFAF7",
+    "dark": "#102B2B"
+  },
+  {
+    "id": "Sakura",
+    "directory": "sakura",
+    "light": "#F6F0FF",
+    "dark": "#261B37"
   }
 ]
