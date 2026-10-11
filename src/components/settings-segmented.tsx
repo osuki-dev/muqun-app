@@ -69,7 +69,7 @@ export function SettingsSegmented({
   testID?: string;
   /** @default 'sentence' */
   textCase?: SegmentedCase;
-  /** Uses the existing label weight unless the caller explicitly overrides it. */
+  /** Override sentence-case labels; uppercase labels keep the kit typography. */
   labelWeight?: TextProps['weight'];
 }) {
   const theme = useThemeTokens();
@@ -170,7 +170,7 @@ export function SettingsSegmented({
             // state in a test identifier, without changing spoken labels.
             testID={`settings-selection:${option.value === value ? 'on' : 'off'}:${testID ?? 'segment'}-${option.value}`}
             style={[styles.trigger, { borderRadius: profile.chrome.segmentedOption }]}>
-            {textCase === 'sentence' || labelWeight !== undefined ? (
+            {textCase === 'sentence' ? (
               // The kit's own label style, with its `textTransform` turned off.
               //
               // This used to be React Native's `Text`, carrying the kit's font
@@ -192,7 +192,7 @@ export function SettingsSegmented({
               // face is the reader's in every script.
               <Text
                 variant="label"
-                transform={textCase === 'sentence' ? 'none' : 'uppercase'}
+                transform="none"
                 weight={labelWeight ?? 'semibold'}
                 numberOfLines={1}
                 maxFontSizeMultiplier={1.18}
