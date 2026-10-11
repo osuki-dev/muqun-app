@@ -25,6 +25,7 @@ import { ThemeIcon } from '@/components/theme-icon';
 import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
 import { timing } from '@/lib/motion';
+import { composerLongPress } from '@/lib/composer-long-press';
 import { FontedTextInput, type FontedTextInputProps } from '@/components/fonted-text-input';
 
 /**
@@ -288,6 +289,8 @@ export function ComposerSendButton({
   const armedValue = useSharedValue(armed ? 1 : 0);
   const sendingValue = useSharedValue(sending ? 1 : 0);
   const voiceHold = useSharedValue(0);
+  const readLongPress = useLatestReader(onLongPress);
+  const [handleLongPress] = useState(() => composerLongPress(readLongPress));
   const reduced = useReducedMotion();
   useEffect(() => {
     if (!onLongPress) voiceHold.set(0);
@@ -336,7 +339,7 @@ export function ComposerSendButton({
       }}
       disabled={disabled && !onLongPress}
       onPress={disabled ? undefined : onPress}
-      onLongPress={onLongPress}
+      onLongPress={handleLongPress}
       delayLongPress={VOICE_HOLD_MS}
       onPressIn={() => {
         if (!onLongPress) return;
