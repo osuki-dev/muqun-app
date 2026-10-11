@@ -6237,10 +6237,6 @@ msgstr "테마 URL"
 msgid "Theme, {0}"
 msgstr "테마, {0}"
 
-#: src/components/theme-browse-sheet.tsx
-msgid "Themes published at muqun.dev. Nothing downloads until you open one."
-msgstr "muqun.dev에 공개된 테마입니다. 열기 전까지는 아무것도 내려받지 않습니다"
-
 #: src/components/agent-workbench.tsx
 msgid "There is no rollback waiting to be applied."
 msgstr "적용을 기다리는 롤백이 없습니다"

@@ -6237,10 +6237,6 @@ msgstr "URL del tema"
 msgid "Theme, {0}"
 msgstr "Tema, {0}"
 
-#: src/components/theme-browse-sheet.tsx
-msgid "Themes published at muqun.dev. Nothing downloads until you open one."
-msgstr "Temas publicados en muqun.dev. No se descarga nada hasta que abras uno"
-
 #: src/components/agent-workbench.tsx
 msgid "There is no rollback waiting to be applied."
 msgstr "No hay ninguna reversión esperando a aplicarse"

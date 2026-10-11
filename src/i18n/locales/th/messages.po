@@ -6237,10 +6237,6 @@ msgstr "URL ของธีม"
 msgid "Theme, {0}"
 msgstr "ธีม {0}"
 
-#: src/components/theme-browse-sheet.tsx
-msgid "Themes published at muqun.dev. Nothing downloads until you open one."
-msgstr "ธีมที่เผยแพร่บน muqun.dev จะไม่มีการดาวน์โหลดจนกว่าคุณจะเปิดธีม"
-
 #: src/components/agent-workbench.tsx
 msgid "There is no rollback waiting to be applied."
 msgstr "ไม่มีการย้อนกลับที่รอนำไปใช้"

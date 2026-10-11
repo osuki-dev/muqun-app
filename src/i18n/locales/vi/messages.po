@@ -6237,10 +6237,6 @@ msgstr "URL giao diện"
 msgid "Theme, {0}"
 msgstr "Chủ đề, {0}"
 
-#: src/components/theme-browse-sheet.tsx
-msgid "Themes published at muqun.dev. Nothing downloads until you open one."
-msgstr "Giao diện được công bố tại muqun.dev. Không tải gì cho đến khi bạn mở một giao diện"
-
 #: src/components/agent-workbench.tsx
 msgid "There is no rollback waiting to be applied."
 msgstr "Không có thao tác hoàn tác nào đang chờ áp dụng"

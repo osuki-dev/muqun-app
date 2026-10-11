@@ -6237,10 +6237,6 @@ msgstr "主題網址"
 msgid "Theme, {0}"
 msgstr "主題，{0}"
 
-#: src/components/theme-browse-sheet.tsx
-msgid "Themes published at muqun.dev. Nothing downloads until you open one."
-msgstr "來自 muqun.dev 的已發布佈景主題。開啟前不會下載任何內容"
-
 #: src/components/agent-workbench.tsx
 msgid "There is no rollback waiting to be applied."
 msgstr "沒有等待套用的回溯"
