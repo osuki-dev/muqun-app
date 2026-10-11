@@ -586,7 +586,7 @@ describe('taskRowVisual: two rules no other row pins', () => {
 
   test('an idle agent is never shown as done (idle is not done)', () => {
     const idle = visualOf('idle_unconfirmed');
-    expect([idle.icon, idle.tone]).toEqual(['paused', 'textMuted']);
+    expect(idle.tone).toBe('textMuted');
   });
 });
 

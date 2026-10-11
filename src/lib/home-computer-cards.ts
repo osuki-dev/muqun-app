@@ -728,34 +728,27 @@ export type TaskRowLine =
   /** A failed mirror, worded from the gateway's `reason` code, never its text. */
   | { kind: 'mirrorFailed'; reason: string };
 
-/**
- * The glyph a row's state is drawn with: `TaskStateGlyph` in
- * `icons/task-state-glyphs.tsx`, through the icon slots `task.<state>`.
- */
-export type TaskRowIcon =
-  | 'sent'
-  | 'starting'
-  | 'working'
-  | 'waiting'
-  | 'paused'
-  | 'done'
-  | 'failed'
-  | 'cancelled';
 export type TaskRowTone = 'textMuted' | 'primary' | 'warning' | 'success' | 'danger';
 export type TaskRowAction = 'open' | 'cancel' | 'markDone' | 'acknowledge';
 
-/** Everything a row shows for its state: one icon, one tone, one line, its actions. */
+/**
+ * Everything a row shows for its state: one tone, one line, its actions. No
+ * glyph: the state word on the second line is the only state marker
+ * (home-dispatch-ux §11).
+ */
 export type TaskRowVisual = {
-  icon: TaskRowIcon;
   tone: TaskRowTone;
-  /** Only the working icon moves, and only while the reader allows motion. */
+  /**
+   * Only working moves: a small spinner right after the state word, while the
+   * reader allows motion.
+   */
   spins: boolean;
   line: TaskRowLine;
   /** The right-hand time: how long open work has run, or how long ago it ended. */
   clock: 'elapsed' | 'ago' | 'none';
   /**
    * The row needs the reader: it pulses once on arrival and is marked by its
-   * glyph and state word only, never a persistent bar (home-dispatch-ux §10).
+   * state word only, never a persistent bar (home-dispatch-ux §10).
    */
   needsYou?: true;
   actions: TaskRowAction[];
@@ -801,7 +794,6 @@ function taskStateVisual(
 ): TaskRowVisual {
   if (task.state === 'sent') {
     return {
-      icon: 'sent',
       tone: 'textMuted',
       spins: false,
       line: { kind: 'sent' },
@@ -824,7 +816,6 @@ function taskStateVisual(
     case 'queued':
     case 'dispatching':
       return {
-        icon: 'starting',
         tone: 'textMuted',
         spins: false,
         line: { kind: 'starting' },
@@ -835,7 +826,6 @@ function taskStateVisual(
       };
     case 'working':
       return {
-        icon: 'working',
         tone: 'primary',
         spins: true,
         // A progress line that says nothing (a TUI rule the gateway read off the
@@ -850,7 +840,6 @@ function taskStateVisual(
       };
     case 'waiting':
       return {
-        icon: 'waiting',
         tone: 'warning',
         spins: false,
         line: said ? { kind: 'waiting', text: said } : { kind: 'waiting' },
@@ -860,7 +849,6 @@ function taskStateVisual(
       };
     case 'idle_unconfirmed':
       return {
-        icon: 'paused',
         tone: 'textMuted',
         spins: false,
         line: said ? { kind: 'paused', text: said } : { kind: 'paused' },
@@ -869,7 +857,6 @@ function taskStateVisual(
       };
     case 'done':
       return {
-        icon: 'done',
         tone: 'success',
         spins: false,
         line: ended,
@@ -878,7 +865,6 @@ function taskStateVisual(
       };
     case 'failed':
       return {
-        icon: 'failed',
         tone: 'danger',
         spins: false,
         line: said ? { kind: 'error', text: said } : ended,
@@ -887,7 +873,6 @@ function taskStateVisual(
       };
     case 'cancelled':
       return {
-        icon: 'cancelled',
         tone: 'textMuted',
         spins: false,
         line: { kind: 'state' },
