@@ -1,6 +1,4 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Check, Copy, Maximize, X } from 'lucide-react-native';
 import { Linking, StyleSheet, View } from 'react-native';
 import { useIsFocused, useLocalSearchParams, useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
@@ -12,7 +10,6 @@ import { copyDiagram } from '@/lib/copy-diagram';
 
 export default function DiagramViewerScreen() {
   const { t } = useLingui();
-  const theme = useThemeTokens();
   const router = useRouter();
   const focused = useIsFocused();
   const appActive = useAppActive();
@@ -24,12 +21,6 @@ export default function DiagramViewerScreen() {
       <DiagramViewer
         active={focused && appActive}
         source={source}
-        toolbarIcons={{
-          close: <X size={20} color={theme.colors.text} />,
-          fit: <Maximize size={20} color={theme.colors.text} />,
-          copy: <Copy size={18} color={theme.colors.text} />,
-          success: <Check size={18} color={theme.colors.text} />,
-        }}
         labels={{
           close: t`Close`,
           fit: t`Fit diagram`,
