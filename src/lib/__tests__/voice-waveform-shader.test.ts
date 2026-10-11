@@ -100,6 +100,10 @@ function mountWaveform(reduced: boolean, compiled: boolean) {
   let listener: ((state: string) => void) | undefined;
   let removed = false;
   let frames = 0;
+  let tick:
+    | ((frame: { timeSinceFirstFrame: number; timeSincePreviousFrame: number | null }) => void)
+    | undefined;
+  let readUniforms: (() => { time: number }) | undefined;
   const { transformSync } = nodeRequire('@babel/core') as {
     transformSync: (source: string, options: Record<string, unknown>) => { code: string };
   };
@@ -164,9 +168,13 @@ function mountWaveform(reduced: boolean, compiled: boolean) {
               value = next;
             },
           }),
-          useDerivedValue: (read: () => unknown) => ({ get: read }),
-          useFrameCallback: () => {
+          useDerivedValue: (read: () => { time: number }) => {
+            readUniforms = read;
+            return { get: read };
+          },
+          useFrameCallback: (callback: typeof tick) => {
             frames++;
+            tick = callback;
             return {
               setActive: (active: boolean) => {
                 activity.push(active);
@@ -190,6 +198,11 @@ function mountWaveform(reduced: boolean, compiled: boolean) {
     change: (state: string) => listener?.(state),
     unmount: () => cleanups.forEach((cleanup) => cleanup()),
     removed: () => removed,
+    tick: (elapsed: number, previous: number | null) => {
+      if (activity.at(-1))
+        tick?.({ timeSinceFirstFrame: elapsed, timeSincePreviousFrame: previous });
+    },
+    time: () => readUniforms?.().time,
   };
 }
 
@@ -216,4 +229,22 @@ test('reduced motion never starts a frame; shader failure mounts only native bar
   expect(fallback.frames).toBe(0);
   expect(fallback.activity).toEqual([]);
   fallback.unmount();
+});
+
+test('the production clock resumes immediately when Reanimated resets elapsed frame time', () => {
+  const mounted = mountWaveform(false, true);
+  mounted.tick(0, null);
+  mounted.tick(5000, 16);
+  expect(mounted.time()).toBe(5);
+  mounted.change('background');
+  mounted.change('active');
+  // FrameCallbackRegistryUI resets startTime on deactivate and delivers these
+  // values on every reactivation, including after reduced motion is disabled.
+  mounted.tick(0, null);
+  expect(mounted.time()).toBe(0);
+  mounted.tick(16, 16);
+  expect(mounted.time()).toBe(0); // Still throttles updates to at most 30 fps.
+  mounted.tick(100, 16);
+  expect(mounted.time()).toBe(0.1);
+  mounted.unmount();
 });
