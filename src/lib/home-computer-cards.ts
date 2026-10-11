@@ -188,8 +188,38 @@ export function cardLimits(computers: number): CardLimits {
 }
 
 /** Acknowledged tasks are remembered by computer and task id. */
-export function dismissedKey(serverId: string, taskId: string): string {
-  return `${serverId}\n${taskId}`;
+/**
+ * The key an acknowledgement is kept under: one finish of one task, not the
+ * task. A task the gateway reopened (`reopenCount`) finishes again under a
+ * new key, so its new finish shows until acknowledged in turn.
+ */
+export function dismissedKey(
+  serverId: string,
+  task: { taskId: string; reopenCount?: number }
+): string {
+  return `${serverId}\n${task.taskId}\n${task.reopenCount ?? 0}`;
+}
+
+/**
+ * The acknowledgements still held, given what the ledgers say now: one whose
+ * task is back at work is let go, so the task's next finish shows -- the rule
+ * for a gateway that does not count reopens, where the state change is the
+ * only sign. A task not in view keeps its acknowledgements. Returns the same
+ * array when nothing is let go.
+ */
+export function acknowledgementsHeld(
+  dismissed: readonly string[],
+  index: Readonly<Record<string, { tasks?: readonly TaskView[] } | undefined>>
+): readonly string[] {
+  const working = new Set<string>();
+  for (const [serverId, entry] of Object.entries(index)) {
+    for (const task of entry?.tasks ?? []) {
+      if (!isTerminalTaskState(task.state)) working.add(`${serverId}\n${task.taskId}\n`);
+    }
+  }
+  if (working.size === 0) return dismissed;
+  const held = dismissed.filter((key) => !working.has(key.slice(0, key.lastIndexOf('\n') + 1)));
+  return held.length === dismissed.length ? dismissed : held;
 }
 
 function newest(a: TaskView, b: TaskView): number {
@@ -487,7 +517,7 @@ export function buildComputerCards(input: {
         .map((row) => row.task)
     ).filter(
       (task) =>
-        !input.dismissed.has(dismissedKey(server.serverId, task.taskId)) &&
+        !input.dismissed.has(dismissedKey(server.serverId, task)) &&
         // A row the reader just settled counts from that moment, so an old
         // paused task marked done does not vanish until the gateway answers
         // with its own fresh time.

@@ -119,6 +119,14 @@ export interface TaskView {
   reason?: string;
   children?: TaskChildren;
   /**
+   * How many times a finished task went back to work because the reader kept
+   * talking in its session or pane (Gateway Task 33), and when it last did.
+   * Never shown: a finish is acknowledged per `reopenCount`, so a reopened
+   * task's next finish is news again.
+   */
+  reopenCount?: number;
+  reopenedMs?: number;
+  /**
    * This device's clock when the reader settled the task here (Mark done,
    * Cancel), before the gateway answered. Local only; never on the wire.
    */
@@ -222,6 +230,8 @@ export function parseTaskView(value: unknown): TaskView | null {
   const requestedBy = parseRequester(rec.requested_by);
   const children = parseChildren(rec.children);
   const peerLastSeenMs = asFiniteNumber(rec.peer_last_seen_ms);
+  const reopenCount = asFiniteNumber(rec.reopen_count);
+  const reopenedMs = asFiniteNumber(rec.reopened_ms);
   return {
     taskId,
     state,
@@ -241,6 +251,8 @@ export function parseTaskView(value: unknown): TaskView | null {
     ...(typeof rec.peer_reachable === 'boolean' ? { peerReachable: rec.peer_reachable } : {}),
     ...(peerLastSeenMs !== undefined ? { peerLastSeenMs } : {}),
     ...(typeof rec.reason === 'string' && rec.reason ? { reason: rec.reason } : {}),
+    ...(reopenCount !== undefined && reopenCount > 0 ? { reopenCount } : {}),
+    ...(reopenedMs !== undefined ? { reopenedMs } : {}),
   };
 }
 

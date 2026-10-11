@@ -4,6 +4,7 @@ import {
   buildComputerCards,
   buildTaskTree,
   cardLimits,
+  acknowledgementsHeld,
   dismissedKey,
   groupTaskTree,
   PENDING_CLOCK_SKEW_MS,
@@ -277,7 +278,7 @@ describe('buildComputerCards', () => {
       servers: [{ serverId: 'a' }, { serverId: 'b' }],
       index: index({ a: tasks }),
       reachability: () => 'live',
-      dismissed: new Set([dismissedKey('a', 'f1')]),
+      dismissed: new Set([dismissedKey('a', { taskId: 'f1' })]),
       nowMs: NOW,
     });
     // b has no work and no card, so a's is the only one and gets the room.
@@ -356,7 +357,25 @@ describe('which computers get a card', () => {
       new Set<string>(),
       true,
     ],
-    ['finished, acknowledged', [done('f', NOW)], new Set([dismissedKey('a', 'f')]), false],
+    [
+      'finished, acknowledged',
+      [done('f', NOW)],
+      new Set([dismissedKey('a', { taskId: 'f' })]),
+      false,
+    ],
+    // Acknowledged once, reopened and finished again: the new finish is news.
+    [
+      'finished again after a reopen',
+      [done('f', NOW, { reopenCount: 1 })],
+      new Set([dismissedKey('a', { taskId: 'f' })]),
+      true,
+    ],
+    [
+      'the second finish acknowledged on its own',
+      [done('f', NOW, { reopenCount: 1 })],
+      new Set([dismissedKey('a', { taskId: 'f', reopenCount: 1 })]),
+      false,
+    ],
     ['no ledger (nothing read)', undefined, new Set<string>(), false],
   ] as const)('%s', (_name, tasks, dismissed, shown) => {
     const cards = buildComputerCards({
@@ -367,6 +386,23 @@ describe('which computers get a card', () => {
       nowMs: NOW,
     });
     expect(cards.length > 0).toBe(shown);
+  });
+
+  test('an acknowledgement goes when its task is back at work, and only then', () => {
+    const acked = [
+      dismissedKey('a', { taskId: 'w' }),
+      dismissedKey('a', { taskId: 'c' }),
+      dismissedKey('a', { taskId: 'gone' }),
+    ];
+    const ledgers = index({
+      a: [task('w', 'working', NOW), task('c', 'cancelled', NOW)],
+    });
+    // Back at work (an older gateway's only sign): let go. Cancelled, or not
+    // in view: kept.
+    expect(acknowledgementsHeld(acked, ledgers)).toEqual([acked[1], acked[2]]);
+    // Nothing back at work: the same list, untouched.
+    const quiet = index({ a: [task('c', 'cancelled', NOW)] });
+    expect(acknowledgementsHeld(acked, quiet)).toBe(acked);
   });
 
   test('repeated cancelled attempts at one goal show once; acknowledging it takes the group', () => {
@@ -387,7 +423,10 @@ describe('which computers get a card', () => {
         limits: { now: 5, finished: 5 },
       })[0]?.finished.map((t) => t.taskId) ?? [];
     expect(finishedIds(new Set())).toEqual(['untitled-2', 'untitled-1', 'new']);
-    expect(finishedIds(new Set([dismissedKey('a', 'new')]))).toEqual(['untitled-2', 'untitled-1']);
+    expect(finishedIds(new Set([dismissedKey('a', { taskId: 'new' })]))).toEqual([
+      'untitled-2',
+      'untitled-1',
+    ]);
   });
 });
 
