@@ -67,6 +67,8 @@ export interface TerminalComposerProps {
   leading?: ReactNode;
   /** Noninteractive artwork; clipped by the field and hidden during dictation. */
   fieldBackground?: ReactNode;
+  /** An already resolved fill for a field without an enclosing material plate. */
+  fieldBackgroundColor?: string;
   /** Noninteractive Home artwork allowed to extend above the clipped field. */
   fieldDecoration?: ReactNode;
   /** Moves tall-field text down by borrowing its bottom padding, not adding height. */
@@ -91,6 +93,7 @@ export function TerminalComposer({
   voiceContext,
   leading,
   fieldBackground,
+  fieldBackgroundColor,
   fieldDecoration,
   fieldTextTopInset = 0,
   onVoiceActiveChange,
@@ -210,7 +213,7 @@ export function TerminalComposer({
         style={[
           composerStyles.fieldShell,
           { borderRadius: profile.chrome.composerField },
-          { backgroundColor: surfaceBackground(chromeGlassQuiet) },
+          { backgroundColor: fieldBackgroundColor ?? surfaceBackground(chromeGlassQuiet) },
         ]}>
         {!voiceActive ? fieldBackground : null}
         {/* Keep the draft mounted so recording inherits this exact field height. */}
