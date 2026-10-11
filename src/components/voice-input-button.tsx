@@ -13,13 +13,7 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useReducedMotion,
-  useSharedValue,
-  withTiming,
-  type SharedValue,
-} from 'react-native-reanimated';
+import Animated, { useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { Text } from '@/components/text';
 import { PressableScale } from '@/components/pressable-scale';
 import { useResolvedLocale } from '@/i18n/provider';
@@ -27,6 +21,7 @@ import { useLatestReader } from '@/hooks/use-render-refs';
 import { DURATION, fadeIn, fadeOut, timing } from '@/lib/motion';
 import { VoiceInputError } from '@/lib/voice-input-session';
 import { VoiceMeterHistory, VOICE_METER_SAMPLES } from '@/lib/voice-meter-history';
+import { VoiceRecordingWaveform } from '@/components/voice-recording-waveform';
 import { voiceRecorderAvailable } from '@/lib/voice-recorder-capability';
 import { VoiceInputSession, type VoiceState } from '@/lib/voice-input';
 import {
@@ -43,23 +38,6 @@ import {
 
 const enter = fadeIn('short');
 const exit = fadeOut('short');
-const METER_INDICES = Array.from({ length: VOICE_METER_SAMPLES }, (_, index) => index);
-
-function MeterBar({ history, index }: { history: SharedValue<number[]>; index: number }) {
-  const theme = useThemeTokens();
-  const reduced = useReducedMotion();
-  const motion = useAnimatedStyle(() => {
-    const amplitude = history.get()[index] ?? 0;
-    return {
-      opacity: 0.25 + amplitude * 0.75,
-      transform: [{ scaleY: reduced ? 0.12 : 0.08 + amplitude * 0.92 }],
-    };
-  });
-  return (
-    <Animated.View style={[styles.meterBar, { backgroundColor: theme.colors.primary }, motion]} />
-  );
-}
-
 function LiveTranscript({ text }: { text: string }) {
   const theme = useThemeTokens();
   const scroll = useRef<ScrollView>(null);
@@ -205,13 +183,6 @@ function VoiceRecording({
       <Spinner size="sm" color={theme.colors.primary} />
     )
   ) : null;
-  const waveform = (
-    <View testID="voice-recording-meter" style={styles.meter} pointerEvents="none">
-      {METER_INDICES.map((index) => (
-        <MeterBar key={index} index={index} history={history} />
-      ))}
-    </View>
-  );
   const cancel = (
     <PressableScale
       accessibilityRole="button"
@@ -293,7 +264,9 @@ function VoiceRecording({
             </ScrollView>
           ) : (
             <>
-              {state === 'recording' && result === null && waveform}
+              {state === 'recording' && result === null && (
+                <VoiceRecordingWaveform history={history} />
+              )}
               {!!(result || partial) && <LiveTranscript text={result ?? partial} />}
             </>
           )}
@@ -409,16 +382,6 @@ const styles = StyleSheet.create({
   liveTranscript: { flex: 1, maxHeight: '100%' },
   liveText: { fontSize: 14, lineHeight: 20 },
   detail: { fontSize: 12, lineHeight: 17 },
-  meter: {
-    flex: 1,
-    height: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 3,
-    overflow: 'hidden',
-  },
-  meterBar: { flex: 1, maxWidth: 4, height: 20, borderRadius: 2 },
   actions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   action: {
     minHeight: 40,
