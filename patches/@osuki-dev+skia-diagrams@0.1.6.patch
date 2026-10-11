@@ -1,0 +1,151 @@
+@osuki-dev/skia-diagrams 0.1.6: allow the host to supply toolbar glyphs.
+The bundled viewer uses font characters for close, fit, copy-source and success.
+Muqun supplies its existing themed Lucide icons without changing button layout,
+accessibility labels, callbacks, zoom values, format labels or auto-hide behavior.
+The dependency stays independent of the host icon library and old callers keep
+its original glyphs. Source, JavaScript and declarations expose the same API.
+Remove when an upstream release exposes equivalent toolbar icon customization.
+
+diff --git a/src/react/index.tsx b/src/react/index.tsx
+--- a/src/react/index.tsx
++++ b/src/react/index.tsx
+@@ -1146,6 +1146,8 @@
+     svg: string;
+     png: string;
+   }>;
++  /** Host glyphs replace only icon content; controls retain their behavior and labels. */
++  toolbarIcons?: Partial<Record<"close" | "fit" | "copy" | "success", ReactNode>>;
+   /** Idle delay before hiding controls. Set to 0 to keep them visible. */
+   toolbarAutoHideMs?: number;
+   execution?: DiagramExecutionState;
+@@ -1502,7 +1504,9 @@
+             testID="diagram-close"
+             onPress={props.onClose}
+           >
+-            <Text style={{ color: theme.nodeText, fontSize: 24, fontWeight: "400" }}>×</Text>
++            {props.toolbarIcons?.close ?? (
++              <Text style={{ color: theme.nodeText, fontSize: 24, fontWeight: "400" }}>×</Text>
++            )}
+           </Pressable>
+           {result.status === "ready"
+             ? [
+@@ -1530,16 +1534,18 @@
+                     savedY.set(0);
+                   }}
+                 >
+-                  <Text
+-                    numberOfLines={1}
+-                    style={{
+-                      color: theme.nodeText,
+-                      fontSize: label === "Fit" ? 22 : 14,
+-                      fontWeight: "500",
+-                    }}
+-                  >
+-                    {label === "Fit" ? "⤢" : label}
+-                  </Text>
++                  {(label === "Fit" ? props.toolbarIcons?.fit : undefined) ?? (
++                    <Text
++                      numberOfLines={1}
++                      style={{
++                        color: theme.nodeText,
++                        fontSize: label === "Fit" ? 22 : 14,
++                        fontWeight: "500",
++                      }}
++                    >
++                      {label === "Fit" ? "⤢" : label}
++                    </Text>
++                  )}
+                 </Pressable>
+               ))
+             : null}
+@@ -1550,9 +1556,11 @@
+               accessibilityLabel={props.labels?.copy ?? "Copy source"}
+               onPress={props.onCopySource}
+             >
+-              <Text numberOfLines={1} style={{ color: theme.nodeText, fontSize: 14 }}>
+-                {"</>"}
+-              </Text>
++              {props.toolbarIcons?.copy ?? (
++                <Text numberOfLines={1} style={{ color: theme.nodeText, fontSize: 14 }}>
++                  {"</>"}
++                </Text>
++              )}
+             </Pressable>
+           ) : null}
+           {result.status === "ready" && props.onExport ? (
+@@ -1567,9 +1575,11 @@
+                   void exportDiagram("svg");
+                 }}
+               >
+-                <Text numberOfLines={1} style={{ color: theme.nodeText, fontSize: 14 }}>
+-                  {exported === "svg" ? "✓" : "SVG"}
+-                </Text>
++                {(exported === "svg" ? props.toolbarIcons?.success : undefined) ?? (
++                  <Text numberOfLines={1} style={{ color: theme.nodeText, fontSize: 14 }}>
++                    {exported === "svg" ? "✓" : "SVG"}
++                  </Text>
++                )}
+               </Pressable>
+               <Pressable
+                 style={controlStyle}
+@@ -1581,9 +1591,11 @@
+                   void exportDiagram("png");
+                 }}
+               >
+-                <Text numberOfLines={1} style={{ color: theme.nodeText, fontSize: 14 }}>
+-                  {exported === "png" ? "✓" : "PNG"}
+-                </Text>
++                {(exported === "png" ? props.toolbarIcons?.success : undefined) ?? (
++                  <Text numberOfLines={1} style={{ color: theme.nodeText, fontSize: 14 }}>
++                    {exported === "png" ? "✓" : "PNG"}
++                  </Text>
++                )}
+               </Pressable>
+             </>
+           ) : null}
+diff --git a/lib/react/index.d.ts b/lib/react/index.d.ts
+--- a/lib/react/index.d.ts
++++ b/lib/react/index.d.ts
+@@ -92,6 +92,8 @@
+         svg: string;
+         png: string;
+     }>;
++    /** Host glyphs replace only icon content; controls retain their behavior and labels. */
++    toolbarIcons?: Partial<Record<"close" | "fit" | "copy" | "success", ReactNode>>;
+     /** Idle delay before hiding controls. Set to 0 to keep them visible. */
+     toolbarAutoHideMs?: number;
+     execution?: DiagramExecutionState;
+diff --git a/lib/react/index.js b/lib/react/index.js
+--- a/lib/react/index.js
++++ b/lib/react/index.js
+@@ -868,7 +868,7 @@
+                         backgroundColor: theme.nodeFill,
+                         borderWidth: theme.controlBorderWidth ?? StyleSheet.hairlineWidth,
+                         borderColor: theme.gridStroke ?? theme.clusterStroke,
+-                    }, contentContainerStyle: { flexDirection: "row", gap: 2, padding: 4 }, children: [_jsx(Pressable, { style: controlStyle, accessibilityRole: "button", accessibilityLabel: props.labels?.close ?? "Close diagram", testID: "diagram-close", onPress: props.onClose, children: _jsx(Text, { style: { color: theme.nodeText, fontSize: 24, fontWeight: "400" }, children: "\u00D7" }) }), result.status === "ready"
++                    }, contentContainerStyle: { flexDirection: "row", gap: 2, padding: 4 }, children: [_jsx(Pressable, { style: controlStyle, accessibilityRole: "button", accessibilityLabel: props.labels?.close ?? "Close diagram", testID: "diagram-close", onPress: props.onClose, children: (props.toolbarIcons?.close ?? _jsx(Text, { style: { color: theme.nodeText, fontSize: 24, fontWeight: "400" }, children: "\u00D7" })) }), result.status === "ready"
+                             ? [
+                                 ["Fit", fit],
+                                 ["100%", 1],
+@@ -881,16 +881,16 @@
+                                     y.set(withTiming(0, { duration: 260, reduceMotion: motionMode }));
+                                     savedX.set(0);
+                                     savedY.set(0);
+-                                }, children: _jsx(Text, { numberOfLines: 1, style: {
++                                }, children: ((label === "Fit" ? props.toolbarIcons?.fit : undefined) ?? _jsx(Text, { numberOfLines: 1, style: {
+                                         color: theme.nodeText,
+                                         fontSize: label === "Fit" ? 22 : 14,
+                                         fontWeight: "500",
+-                                    }, children: label === "Fit" ? "⤢" : label }) }, label)))
+-                            : null, props.onCopySource ? (_jsx(Pressable, { style: controlStyle, accessibilityRole: "button", accessibilityLabel: props.labels?.copy ?? "Copy source", onPress: props.onCopySource, children: _jsx(Text, { numberOfLines: 1, style: { color: theme.nodeText, fontSize: 14 }, children: "</>" }) })) : null, result.status === "ready" && props.onExport ? (_jsxs(_Fragment, { children: [_jsx(Pressable, { style: controlStyle, accessibilityRole: "button", accessibilityLabel: props.labels?.svg ?? "Export SVG", disabled: exporting, testID: "diagram-svg", onPress: () => {
++                                    }, children: label === "Fit" ? "\u2922" : label })) }, label)))
++                            : null, props.onCopySource ? (_jsx(Pressable, { style: controlStyle, accessibilityRole: "button", accessibilityLabel: props.labels?.copy ?? "Copy source", onPress: props.onCopySource, children: (props.toolbarIcons?.copy ?? _jsx(Text, { numberOfLines: 1, style: { color: theme.nodeText, fontSize: 14 }, children: "</>" })) })) : null, result.status === "ready" && props.onExport ? (_jsxs(_Fragment, { children: [_jsx(Pressable, { style: controlStyle, accessibilityRole: "button", accessibilityLabel: props.labels?.svg ?? "Export SVG", disabled: exporting, testID: "diagram-svg", onPress: () => {
+                                         void exportDiagram("svg");
+-                                    }, children: _jsx(Text, { numberOfLines: 1, style: { color: theme.nodeText, fontSize: 14 }, children: exported === "svg" ? "✓" : "SVG" }) }), _jsx(Pressable, { style: controlStyle, accessibilityRole: "button", accessibilityLabel: props.labels?.png ?? "Export PNG", disabled: exporting, testID: "diagram-png", onPress: () => {
++                                    }, children: ((exported === "svg" ? props.toolbarIcons?.success : undefined) ?? _jsx(Text, { numberOfLines: 1, style: { color: theme.nodeText, fontSize: 14 }, children: exported === "svg" ? "\u2713" : "SVG" })) }), _jsx(Pressable, { style: controlStyle, accessibilityRole: "button", accessibilityLabel: props.labels?.png ?? "Export PNG", disabled: exporting, testID: "diagram-png", onPress: () => {
+                                         void exportDiagram("png");
+-                                    }, children: _jsx(Text, { numberOfLines: 1, style: { color: theme.nodeText, fontSize: 14 }, children: exported === "png" ? "✓" : "PNG" }) })] })) : null] }) }), exportError ? (_jsx(Text, { accessibilityRole: "alert", style: { color: theme.nodeText }, children: exportError })) : null, result.status === "ready" ? (_jsx(View, { ref: viewportRef, collapsable: false, testID: "diagram-viewer-viewport", style: { flex: 1 }, 
++                                    }, children: ((exported === "png" ? props.toolbarIcons?.success : undefined) ?? _jsx(Text, { numberOfLines: 1, style: { color: theme.nodeText, fontSize: 14 }, children: exported === "png" ? "\u2713" : "PNG" })) })] })) : null] }) }), exportError ? (_jsx(Text, { accessibilityRole: "alert", style: { color: theme.nodeText }, children: exportError })) : null, result.status === "ready" ? (_jsx(View, { ref: viewportRef, collapsable: false, testID: "diagram-viewer-viewport", style: { flex: 1 }, 
+                 // Skia 3/Fabric explicitly rejects Canvas.onLayout. Measure the RN
+                 // container instead; its flex child Canvas fills exactly this area.
+                 onLayout: (event) => {
