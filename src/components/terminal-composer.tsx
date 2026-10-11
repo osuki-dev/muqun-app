@@ -112,7 +112,9 @@ export function TerminalComposer({
     contentReveal.set(0);
     contentReveal.set(withTiming(1, timing('short')));
   }, [voiceActive, contentReveal]);
-  const contentRevealStyle = useAnimatedStyle(() => ({ opacity: contentReveal.get() }));
+  const contentRevealStyle = useAnimatedStyle(() => ({
+    opacity: voiceActive ? 0 : contentReveal.get(),
+  }));
   const profile = useAppearanceProfile();
   const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
@@ -181,15 +183,21 @@ export function TerminalComposer({
       exiting={exiting}
       layout={layout}
       style={[
-        composerStyles.composer,
-        contentRevealStyle,
-        compact && composerStyles.compactComposer,
-        (expanded || voice.panel) && composerStyles.expandedComposer,
-        voice.panel && { maxHeight: undefined },
+        composerStyles.fieldShell,
         { borderRadius: profile.chrome.composerField },
         { backgroundColor: surfaceBackground(chromeGlassQuiet) },
       ]}>
-      {voice.panel ?? (
+      {/* Keep the draft mounted so recording inherits this exact field height. */}
+      <Animated.View
+        pointerEvents={voiceActive ? 'none' : 'auto'}
+        accessibilityElementsHidden={voiceActive}
+        importantForAccessibility={voiceActive ? 'no-hide-descendants' : 'auto'}
+        style={[
+          composerStyles.composer,
+          contentRevealStyle,
+          compact && composerStyles.compactComposer,
+          expanded && composerStyles.expandedComposer,
+        ]}>
         <>
           {!expanded && leading}
           <FontedTextInput
@@ -230,6 +238,11 @@ export function TerminalComposer({
             {controls}
           </View>
         </>
+      </Animated.View>
+      {voice.panel && (
+        <View collapsable={false} style={StyleSheet.absoluteFill}>
+          {voice.panel}
+        </View>
       )}
     </Animated.View>
   );
@@ -396,6 +409,7 @@ const ONE_LINE_FIELD = 40;
 
 /** Shared with the gateway's paperclip, which sits in the same row at the same size. */
 export const composerStyles = StyleSheet.create({
+  fieldShell: { borderCurve: 'continuous', overflow: 'hidden' },
   composer: {
     minHeight: 50,
     maxHeight: 150,

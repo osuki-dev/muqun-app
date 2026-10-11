@@ -11,6 +11,7 @@ import {
   ScrollView,
   StyleSheet,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -23,8 +24,9 @@ import { Text } from '@/components/text';
 import { PressableScale } from '@/components/pressable-scale';
 import { useResolvedLocale } from '@/i18n/provider';
 import { useLatestReader } from '@/hooks/use-render-refs';
-import { DURATION, fadeIn, timing } from '@/lib/motion';
+import { DURATION, fadeIn, fadeOut, timing } from '@/lib/motion';
 import { VoiceInputError } from '@/lib/voice-input-session';
+import { VoiceMeterHistory, VOICE_METER_SAMPLES } from '@/lib/voice-meter-history';
 import { voiceRecorderAvailable } from '@/lib/voice-recorder-capability';
 import { VoiceInputSession, type VoiceState } from '@/lib/voice-input';
 import {
@@ -40,29 +42,19 @@ import {
 } from '@/stores/voice-input';
 
 const enter = fadeIn('short');
-const BAR_WEIGHTS = [0.3, 0.55, 0.8, 0.45, 1, 0.7, 0.95, 0.6, 0.85, 0.4, 0.65, 0.35];
+const exit = fadeOut('short');
+const METER_INDICES = Array.from({ length: VOICE_METER_SAMPLES }, (_, index) => index);
 
-function MeterBar({
-  level,
-  weight,
-  active,
-}: {
-  level: SharedValue<number>;
-  weight: number;
-  active: boolean;
-}) {
+function MeterBar({ history, index }: { history: SharedValue<number[]>; index: number }) {
   const theme = useThemeTokens();
   const reduced = useReducedMotion();
-  const motion = useAnimatedStyle(() => ({
-    transform: [
-      {
-        scaleY:
-          active && !reduced
-            ? 0.15 + Math.sqrt(Math.max(0, Math.min(1, level.get()))) * weight * 0.85
-            : 0.25,
-      },
-    ],
-  }));
+  const motion = useAnimatedStyle(() => {
+    const amplitude = history.get()[index] ?? 0;
+    return {
+      opacity: 0.25 + amplitude * 0.75,
+      transform: [{ scaleY: reduced ? 0.12 : 0.08 + amplitude * 0.92 }],
+    };
+  });
   return (
     <Animated.View style={[styles.meterBar, { backgroundColor: theme.colors.primary }, motion]} />
   );
@@ -88,7 +80,11 @@ function LiveTranscript({ text }: { text: string }) {
       onContentSizeChange={() => {
         if (following.current) scroll.current?.scrollToEnd({ animated: false });
       }}>
-      <Text testID="voice-live-transcript" color={theme.colors.text} style={styles.liveText}>
+      <Text
+        testID="voice-live-transcript"
+        weight="regular"
+        color={theme.colors.text}
+        style={styles.liveText}>
         {text}
       </Text>
     </ScrollView>
@@ -116,7 +112,11 @@ function VoiceRecording({
   const [error, setError] = useState('');
   const [result, setResult] = useState<string | null>(null);
   const [partial, setPartial] = useState('');
-  const level = useSharedValue(0);
+  const { fontScale } = useWindowDimensions();
+  const [height, setHeight] = useState(0);
+  const compact = height < 96 * fontScale;
+  const [meter] = useState(() => new VoiceMeterHistory());
+  const history = useSharedValue(Array<number>(VOICE_METER_SAMPLES).fill(0));
   const latest = useLatestReader({ onText, onClose });
   const [session] = useState(
     () =>
@@ -125,7 +125,8 @@ function VoiceRecording({
         language,
         setState,
         (value, duration) => {
-          level.set(withTiming(value, timing('button')));
+          const samples = meter.push(value, duration);
+          if (samples) history.set(reduced ? samples : withTiming(samples, timing('button')));
           setSeconds(Math.floor(duration));
         },
         (text) => {
@@ -191,88 +192,114 @@ function VoiceRecording({
         ? 'idle'
         : state;
   const busy = state !== 'recording' || result !== null;
-  return (
-    <Animated.View entering={enter} testID="voice-inline-panel" style={styles.recording}>
-      <View style={styles.header}>
-        <Text style={styles.status} color={theme.colors.text} accessibilityLiveRegion="polite">
-          {status}
+  const elapsed = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+  const indicator = error ? (
+    <RotateCcw size={18} color={theme.colors.danger} />
+  ) : result !== null ? (
+    <Check size={20} color={theme.colors.success} />
+  ) : state === 'processing' || state === 'starting' ? (
+    reduced ? (
+      <Text color={theme.colors.textMuted}>···</Text>
+    ) : (
+      <Spinner size="sm" color={theme.colors.primary} />
+    )
+  ) : null;
+  const waveform = (
+    <View testID="voice-recording-meter" style={styles.meter} pointerEvents="none">
+      {METER_INDICES.map((index) => (
+        <MeterBar key={index} index={index} history={history} />
+      ))}
+    </View>
+  );
+  const cancel = (
+    <PressableScale
+      accessibilityRole="button"
+      accessibilityLabel={t`Cancel`}
+      testID="voice-recording-cancel"
+      onPress={() => {
+        void session.cancel();
+        onClose();
+      }}
+      style={[styles.action, compact && styles.iconAction]}>
+      <X size={18} color={theme.colors.textMuted} />
+      {!compact && <Text weight="regular" color={theme.colors.textMuted}>{t`Cancel`}</Text>}
+    </PressableScale>
+  );
+  const stop = (
+    <PressableScale
+      accessibilityRole="button"
+      accessibilityLabel={error ? t`Try again` : t`Stop and transcribe`}
+      accessibilityState={{ busy: busy && !error && result === null }}
+      testID="voice-recording-stop"
+      disabled={busy && !error}
+      onPress={() => {
+        if (error) onRetry();
+        else void session.finish();
+      }}
+      style={[styles.action, compact && styles.iconAction, { opacity: busy && !error ? 0.45 : 1 }]}>
+      {error ? (
+        <RotateCcw size={18} color={theme.colors.primary} />
+      ) : (
+        <Square size={16} color={theme.colors.primary} />
+      )}
+      {!compact && (
+        <Text weight="regular" color={theme.colors.primary}>
+          {error ? t`Try again` : t`Stop and transcribe`}
         </Text>
-        <Text
-          color={theme.colors.textMuted}
-          style={
-            styles.elapsed
-          }>{`${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')} / 2:00`}</Text>
-      </View>
-      <Animated.View
-        key={visualState}
-        entering={enter}
-        testID={`voice-visual-${visualState}`}
-        style={styles.readout}>
-        {error ? (
-          <RotateCcw size={22} color={theme.colors.danger} />
-        ) : result !== null ? (
-          <Animated.View entering={enter}>
-            <Check size={24} color={theme.colors.success} />
-          </Animated.View>
-        ) : state === 'processing' || state === 'starting' ? (
-          reduced ? (
-            <Text color={theme.colors.textMuted}>···</Text>
-          ) : (
-            <Spinner size="sm" color={theme.colors.primary} />
-          )
-        ) : (
-          <View testID="voice-recording-meter" style={styles.meter}>
-            {BAR_WEIGHTS.map((weight, index) => (
-              <MeterBar key={index} weight={weight} level={level} active={state === 'recording'} />
-            ))}
-          </View>
-        )}
-        <View style={styles.readoutText}>
-          {error ? (
-            <Text color={theme.colors.danger} style={styles.detail}>
-              {error}
-            </Text>
-          ) : result || partial ? (
-            <LiveTranscript text={result ?? partial} />
-          ) : (
-            <Text
-              color={theme.colors.textMuted}
-              style={styles.detail}>{t`Audio is sent to your configured speech service`}</Text>
-          )}
+      )}
+    </PressableScale>
+  );
+  return (
+    <Animated.View
+      entering={enter}
+      exiting={exit}
+      testID="voice-inline-panel"
+      onLayout={(event) => setHeight(event.nativeEvent.layout.height)}
+      style={[styles.recording, compact && styles.compactRecording]}>
+      {compact && cancel}
+      <View style={styles.body}>
+        <View style={styles.header}>
+          {compact && indicator}
+          <Text
+            numberOfLines={1}
+            weight="regular"
+            style={styles.status}
+            color={theme.colors.text}
+            accessibilityLiveRegion="polite">
+            {status}
+          </Text>
+          <Text weight="regular" color={theme.colors.textMuted} style={styles.elapsed}>
+            {elapsed}
+          </Text>
         </View>
-      </Animated.View>
-      <View style={styles.actions}>
-        <PressableScale
-          accessibilityRole="button"
-          accessibilityLabel={t`Cancel`}
-          testID="voice-recording-cancel"
-          onPress={() => {
-            void session.cancel();
-            onClose();
-          }}
-          style={styles.action}>
-          <X size={18} color={theme.colors.textMuted} />
-          <Text color={theme.colors.textMuted}>{t`Cancel`}</Text>
-        </PressableScale>
-        <PressableScale
-          accessibilityRole="button"
-          accessibilityLabel={error ? t`Try again` : t`Stop and transcribe`}
-          accessibilityState={{ busy: busy && !error && result === null }}
-          testID="voice-recording-stop"
-          disabled={busy && !error}
-          onPress={() => {
-            if (error) onRetry();
-            else void session.finish();
-          }}
-          style={[styles.action, { opacity: busy && !error ? 0.45 : 1 }]}>
+        <Animated.View
+          key={visualState}
+          entering={enter}
+          testID={`voice-visual-${visualState}`}
+          style={styles.readout}>
+          {!compact && indicator}
           {error ? (
-            <RotateCcw size={18} color={theme.colors.primary} />
+            <ScrollView style={styles.readoutText} nestedScrollEnabled>
+              <Text weight="regular" color={theme.colors.danger} style={styles.detail}>
+                {error}
+              </Text>
+            </ScrollView>
           ) : (
-            <Square size={16} color={theme.colors.primary} />
+            <>
+              {state === 'recording' && result === null && waveform}
+              {!!(result || partial) && <LiveTranscript text={result ?? partial} />}
+            </>
           )}
-          <Text color={theme.colors.primary}>{error ? t`Try again` : t`Stop and transcribe`}</Text>
-        </PressableScale>
+        </Animated.View>
       </View>
+      {compact ? (
+        stop
+      ) : (
+        <View style={styles.actions}>
+          {cancel}
+          {stop}
+        </View>
+      )}
     </Animated.View>
   );
 }
@@ -350,23 +377,47 @@ export function VoiceInputPanel({
 }
 
 const styles = StyleSheet.create({
-  recording: { width: '100%', paddingHorizontal: 12, paddingTop: 10, minHeight: 118, gap: 6 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  status: { fontSize: 14, lineHeight: 20, flexShrink: 1 },
+  recording: { flex: 1, paddingHorizontal: 12, paddingTop: 8, overflow: 'hidden' },
+  compactRecording: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 0,
+    paddingHorizontal: 2,
+  },
+  body: { flex: 1, minHeight: 0, minWidth: 0, alignSelf: 'stretch' },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  status: { fontSize: 14, lineHeight: 20, flex: 1 },
   elapsed: { fontSize: 12, fontVariant: ['tabular-nums'] },
-  readout: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 38 },
-  readoutText: { flex: 1 },
-  liveTranscript: { maxHeight: 68 },
-  liveText: { fontSize: 15, lineHeight: 22 },
-  detail: { fontSize: 13, lineHeight: 19 },
-  meter: { height: 32, flexDirection: 'row', alignItems: 'center', gap: 3 },
-  meterBar: { width: 3, height: 30, borderRadius: 2 },
-  actions: { flexDirection: 'row', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' },
+  readout: {
+    flex: 1,
+    minHeight: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    overflow: 'hidden',
+  },
+  readoutText: { flex: 1, maxHeight: '100%' },
+  liveTranscript: { flex: 1, maxHeight: '100%' },
+  liveText: { fontSize: 14, lineHeight: 20 },
+  detail: { fontSize: 12, lineHeight: 17 },
+  meter: {
+    flex: 1,
+    height: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 3,
+    overflow: 'hidden',
+  },
+  meterBar: { flex: 1, maxWidth: 4, height: 20, borderRadius: 2 },
+  actions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   action: {
-    minHeight: 44,
+    minHeight: 40,
+    flexShrink: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     paddingHorizontal: 4,
   },
+  iconAction: { width: 40, justifyContent: 'center' },
 });
