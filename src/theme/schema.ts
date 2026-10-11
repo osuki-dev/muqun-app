@@ -256,6 +256,7 @@ export const THEME_SLOTS = [
   'shell.wallpaper',
   'home.wallpaper',
   'home.artwork',
+  'home.composer.background',
   'navigation.background',
   'composer.background',
   'actions.background',

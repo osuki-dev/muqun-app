@@ -16,6 +16,7 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import type { HomeLaunchController } from '@/components/home-launch-actions';
 import type { DockAutoHide } from '@/hooks/use-dock-auto-hide';
 import { HomeComposerOptions } from '@/components/home-composer-options';
+import { HomeComposerBackground } from '@/components/home-composer-background';
 import { PressableScale } from '@/components/pressable-scale';
 import { composerStyles } from '@/components/terminal-composer';
 import { Text } from '@/components/text';
@@ -1096,6 +1097,7 @@ export function HomeComposerDock({
   return (
     <AgentComposer
       accessory={bar}
+      fieldBackground={<HomeComposerBackground />}
       toolbarLeading={parameterButton}
       hideParameterRow
       flushField

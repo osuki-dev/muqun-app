@@ -65,6 +65,8 @@ export interface TerminalComposerProps {
   voiceContext?: string;
   /** A control in front of the field: the gateway's paperclip. */
   leading?: ReactNode;
+  /** Noninteractive artwork; clipped by the field and hidden during dictation. */
+  fieldBackground?: ReactNode;
   inputRef?: Ref<TextInput>;
   /** The field's own props: value, placeholder, editability, test id. */
   inputProps: FontedTextInputProps;
@@ -83,6 +85,7 @@ export interface TerminalComposerProps {
 export function TerminalComposer({
   voiceContext,
   leading,
+  fieldBackground,
   inputRef,
   inputProps,
   send,
@@ -188,6 +191,7 @@ export function TerminalComposer({
         { borderRadius: profile.chrome.composerField },
         { backgroundColor: surfaceBackground(chromeGlassQuiet) },
       ]}>
+      {!voiceActive ? fieldBackground : null}
       {/* Keep the draft mounted so recording inherits this exact field height. */}
       <Animated.View
         pointerEvents={voiceActive ? 'none' : 'auto'}

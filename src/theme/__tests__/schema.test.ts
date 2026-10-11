@@ -162,6 +162,7 @@ describe('theme v1 contract', () => {
       // The artwork is an ordinary slot, so it is held to the ordinary rule: an
       // asset it names has to be one the pack declares.
       { decoration: { 'home.artwork': { asset: 'missing', fit: 'contain' } } },
+      { decoration: { 'home.composer.background': { asset: 'missing' } } },
     ]) {
       expect(() =>
         parse({
@@ -171,6 +172,34 @@ describe('theme v1 contract', () => {
         })
       ).toThrow('Unknown asset');
     }
+  });
+
+  test('Home field artwork is independent and resolves mode and device overrides', () => {
+    const manifest = parse({
+      ...createThemeStarter(),
+      assets: { paper: { path: 'assets/paper.png' }, frame: { path: 'assets/frame.png' } },
+      decoration: { 'composer.background': { asset: 'paper' } },
+      variantDecorations: {
+        dark: {
+          'home.composer.background': {
+            asset: 'frame',
+            fit: 'contain',
+            compact: { asset: 'frame', fit: 'contain', opacity: 0.2 },
+            regular: null,
+          },
+        },
+      },
+    });
+    expect(resolveThemeImage(manifest, 'home.composer.background', 'light', 'compact')).toBeNull();
+    expect(resolveThemeImage(manifest, 'home.composer.background', 'dark', 'compact')).toEqual({
+      asset: 'frame',
+      fit: 'contain',
+      opacity: 0.2,
+    });
+    expect(resolveThemeImage(manifest, 'home.composer.background', 'dark', 'regular')).toBeNull();
+    expect(resolveThemeImage(manifest, 'composer.background', 'light', 'compact')).toEqual({
+      asset: 'paper',
+    });
   });
 
   describe('the Home artwork', () => {
