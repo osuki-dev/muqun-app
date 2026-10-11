@@ -1,9 +1,23 @@
-import { useEffect, useState, type ReactNode } from 'react';
-import { DiagramProvider } from '@osuki-dev/skia-diagrams/react';
+import { createElement, useEffect, useState, type ReactNode } from 'react';
+import {
+  DiagramProvider,
+  type DiagramExpandIconProps,
+  type DiagramViewerIconProps,
+} from '@osuki-dev/skia-diagrams/react';
+import { Check, Copy, Maximize, X } from 'lucide-react-native';
 import { Skia, type SkTypefaceFontProvider } from 'react-native-skia';
 import { useDiagramTheme } from '@/hooks/use-diagram-theme';
 import { useAppSettings } from '@/stores/app-settings';
 import { slotFontFamily, userFontUri, type FontSlot } from '@/theme/user-fonts';
+
+function renderDiagramExpandIcon({ color, size }: DiagramExpandIconProps) {
+  return createElement(Maximize, { color, size });
+}
+
+function renderDiagramViewerIcon({ action, color, size }: DiagramViewerIconProps) {
+  const Icon = { close: X, fit: Maximize, copy: Copy, success: Check }[action];
+  return createElement(Icon, { color, size });
+}
 
 async function loadDiagramFonts(interfaceFont: FontSlot, monoFont: FontSlot) {
   const provider = Skia.TypefaceFontProvider.Make();
@@ -62,7 +76,11 @@ export function AppDiagramProvider({ children }: { children: ReactNode }) {
       ? fonts.provider
       : undefined;
   return (
-    <DiagramProvider theme={theme} fontProvider={provider}>
+    <DiagramProvider
+      theme={theme}
+      fontProvider={provider}
+      renderExpandIcon={renderDiagramExpandIcon}
+      renderViewerIcon={renderDiagramViewerIcon}>
       {children}
     </DiagramProvider>
   );
