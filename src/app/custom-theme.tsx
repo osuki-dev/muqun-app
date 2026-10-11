@@ -9,7 +9,14 @@ import { useEffect, useState } from 'react';
 import { ScrollView, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { CustomThemeLibrary, type ThemePrimaryAction } from '@/components/custom-theme-library';
+import {
+  CustomThemeLibrary,
+  type ThemePrimaryAction,
+  type ThemeStatus,
+} from '@/components/custom-theme-library';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
+import { ThemeImportProgress } from '@/components/theme-import-progress';
+import { appChrome } from '@/constants/appearance';
 import { ScreenHeader } from '@/components/screen-header';
 import { ThemeArtwork } from '@/components/theme-artwork';
 import { CandidateThemeProvider } from '@/components/theme-candidate';
@@ -125,6 +132,15 @@ function CustomThemeScene({
    * the button is what it has always been: Done, which closes.
    */
   const [primary, setPrimary] = useState<ThemePrimaryAction | null>(null);
+  /**
+   * What the apply is doing, shown over the screen just above the button
+   * rather than above the theme: drawn in the scroll it pushed the preview and
+   * the sliders down the moment Apply was tapped. It takes no room, so nothing
+   * on the screen moves; a successful apply closes the screen anyway.
+   */
+  const [status, setStatus] = useState<ThemeStatus | null>(null);
+  const [footerHeight, setFooterHeight] = useState(0);
+  const profile = useAppearanceProfile();
   return (
     // Opacity audit: floor -- the screen's opaque base, exempt from the slider.
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -146,6 +162,7 @@ function CustomThemeScene({
               ownsPreparedAssets={false}
               onClosePreview={close}
               onPrimaryActionChange={setPrimary}
+              onStatusChange={setStatus}
             />
           ) : (
             <Text>{t`Not found`}</Text>
@@ -159,8 +176,38 @@ function CustomThemeScene({
           middle of the page with content on both sides of it. It keeps the
           `custom-theme-done` id through the change of label: it is still the
           same control, the one that ends the visit. */}
+      {status ? (
+        <View
+          pointerEvents="box-none"
+          style={{ position: 'absolute', left: 20, right: 20, bottom: footerHeight + 8 }}>
+          <View style={{ width: '100%', maxWidth: 1120, alignSelf: 'center' }}>
+            <View
+              testID={status.kind === 'installing' ? undefined : 'theme-status-message'}
+              style={{
+                padding: 12,
+                borderRadius: profile.chrome.surface,
+                backgroundColor: background(theme.colors.surfaceRaised),
+                boxShadow: appChrome.shadow.controlTray,
+              }}>
+              {status.kind === 'installing' ? (
+                <ThemeImportProgress testID="theme-install-progress" label={t`Installing images`} />
+              ) : (
+                <Text
+                  selectable
+                  {...(status.kind === 'error'
+                    ? { accessibilityRole: 'alert' as const }
+                    : { accessibilityLiveRegion: 'polite' as const })}
+                  color={status.kind === 'error' ? theme.colors.danger : theme.colors.text}>
+                  {status.text}
+                </Text>
+              )}
+            </View>
+          </View>
+        </View>
+      ) : null}
       {candidate ? (
         <View
+          onLayout={(event) => setFooterHeight(event.nativeEvent.layout.height)}
           style={{
             paddingHorizontal: 20,
             paddingTop: 12,
