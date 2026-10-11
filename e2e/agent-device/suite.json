@@ -336,8 +336,17 @@
       { "include": "subflows/open-voice-settings" },
       { "run": "flows/voice-recording.ad#clear" }
     ],
+    "subflows/select-voice-mode": [
+      { "run": "flows/voice-recording.ad#mode-ready" },
+      {
+        "when": { "target": { "id": "settings-selection:off:voice-service-mode-${VOICE_MODE}" } },
+        "steps": [{ "run": "flows/voice-recording.ad#select-mode" }]
+      },
+      { "run": "flows/voice-recording.ad#confirm-mode" }
+    ],
     "flows/voice-recording": [
       { "include": "subflows/open-voice-settings" },
+      { "include": "subflows/select-voice-mode", "env": { "VOICE_MODE": "file" } },
       { "run": "flows/voice-recording.ad#configure" },
       { "include": "subflows/open-demo" },
       { "run": "flows/voice-recording.ad#record" },
@@ -348,6 +357,7 @@
     ],
     "flows/voice-realtime": [
       { "include": "subflows/open-voice-settings" },
+      { "include": "subflows/select-voice-mode", "env": { "VOICE_MODE": "realtime" } },
       { "run": "flows/voice-realtime.ad#configure" },
       { "include": "subflows/open-demo" },
       { "run": "flows/voice-realtime.ad#disconnected" }
