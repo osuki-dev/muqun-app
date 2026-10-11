@@ -20,6 +20,7 @@ const consumers = {
   'home.wallpaper': 'src/components/home-overview.tsx',
   'navigation.background': 'src/components/glass-chrome.tsx',
   'composer.background': 'src/components/glass-chrome.tsx',
+  'home.composer.background': 'src/components/home-composer-background.tsx',
   'actions.background': 'src/components/glass-chrome.tsx',
   'cards.decoration': 'src/components/settings-chrome.tsx',
   'buttons.primary.background': 'src/components/themed-button.tsx',
@@ -47,6 +48,18 @@ test('every supported artwork slot has a named runtime consumer', () => {
         expect(source).toContain(slot);
       }
     }
+  }
+});
+
+test('Home input artwork is supplied by the Home dock rather than shared composer chrome', () => {
+  const home = readFileSync('src/components/home-composer-dock.tsx', 'utf8');
+  expect(home).toContain('fieldBackground={<HomeComposerBackground />}');
+  // Shared composers accept a layer from their caller; opening a terminal must
+  // not opt it into Home-only artwork or replace its existing chrome slot.
+  for (const file of ['agent-composer', 'terminal-composer', 'glass-chrome']) {
+    const source = readFileSync(`src/components/${file}.tsx`, 'utf8');
+    expect(source).not.toContain('HomeComposerBackground');
+    expect(source).not.toContain('home.composer.background');
   }
 });
 
