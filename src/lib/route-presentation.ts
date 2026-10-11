@@ -527,8 +527,8 @@ export function sheetRouteOptions(
     sheetRouteContent[route] ?? 'short'
   );
   // Screens 4.28 has no native sheet-width prop. Its contentStyle does reach
-  // ScreenContentWrapper, including fitToContents: auto side margins center
-  // that wrapper even with the library's absolute start/end constraints.
+  // ScreenContentWrapper. fitToContents sets absolute start/end: 0, which
+  // override alignSelf in Yoga; clear those insets before centering the cap.
   // UIKit already presents a centered card; Android needs the content cap.
   const centeredSettings = platform === 'android' && isPad && route.startsWith('settings-');
   const cornerRadius = profile?.chrome.sheet ?? appChrome.radius.sheet;
@@ -545,7 +545,8 @@ export function sheetRouteOptions(
             width: '100%',
             maxWidth: 640,
             alignSelf: 'center',
-            marginHorizontal: 'auto',
+            start: 'auto',
+            end: 'auto',
             borderTopLeftRadius: cornerRadius,
             borderTopRightRadius: cornerRadius,
             overflow: 'hidden',

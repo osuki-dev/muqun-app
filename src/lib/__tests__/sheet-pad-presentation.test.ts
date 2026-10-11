@@ -96,7 +96,10 @@ test('Android Pad settings constrain the whole sheet content without changing na
       width: '100%',
       maxWidth: 640,
       alignSelf: 'center',
-      marginHorizontal: 'auto',
+      // Screens gives fitToContents an absolute wrapper with start/end: 0.
+      // Explicit auto insets let Yoga use alignSelf instead of pinning left.
+      start: 'auto',
+      end: 'auto',
       backgroundColor: 'transparent',
       overflow: 'hidden',
     });
