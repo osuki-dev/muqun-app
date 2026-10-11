@@ -14,6 +14,7 @@ import { join, resolve } from 'node:path';
 import * as nodeUtil from 'node:util';
 import { readHotUpdaterAppConfig } from './hot-updater-app-config';
 import { playPreviewEnvironment } from './play-preview-env';
+import { summarizeBuildFailure } from './build-failure-summary';
 
 // Available in SDK 57's required Node 22+, ahead of the repository's Node type definitions.
 const { parseEnv } = nodeUtil as typeof nodeUtil & {
@@ -63,7 +64,10 @@ try {
     );
     console.log(`Play preview AAB and native fingerprint: ${artifacts}`);
   } else {
-    console.error(`EAS local build failed (exit ${status}); private job logs were not exposed.`);
+    const failure = summarizeBuildFailure(readFileSync(join(privateDir, 'build.log'), 'utf8'));
+    console.error(
+      `EAS local build failed (exit ${status}, ${failure.phase}, ${failure.category}).`
+    );
   }
 } finally {
   closeSync(log);

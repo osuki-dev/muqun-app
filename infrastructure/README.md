@@ -154,7 +154,17 @@ the fingerprint generated inside that exact native build. Preserve this fingerpr
 for subsequent OTA releases. Raw EAS logs can contain app signing credentials on
 failure, so the wrapper captures them privately and deletes them with the temporary
 build workspace after success or failure. It never prints the job payload. A failed
-build reports its exit status; investigate the relevant build stage privately.
+build reports only its exit status and fixed phase/error-category labels, never
+arbitrary log lines.
+
+Before handing off a Play preview AAB, verify its JAR signature with `jarsigner
+-verify` and compare the certificate SHA-256 from `keytool -printcert -jarfile`
+against an existing signed release AAB. Use official bundletool's `dump manifest`
+to verify package ID, increased versionCode, `com.hotupdater.CHANNEL=preview`,
+`com.hotupdater.FINGERPRINT_HASH` matching the archived `fingerprint.json`, and
+the configured public key. Confirm no `expo.modules.updates.*` metadata remains.
+These checks prove the upload artifact's identity; they do not prove Google's
+Play App Signing distribution certificate matches a separately installed APK.
 
 ## Acceptance before enabling for users
 
