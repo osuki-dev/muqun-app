@@ -141,6 +141,9 @@ is visible "id=theme-browse"
 wait stable 400 5000
 is visible "id=theme-tab"
 is visible "id=\"settings-selection:on:theme-tab-mine\""
+# New imports append to the existing library. The suite preserves installed
+# themes, so the fixture may be below the first screen on a reused QA device.
+scroll down --until "id=theme-row-my-theme"
 is visible "id=theme-row-my-theme"
 
 # section builtin-tab
