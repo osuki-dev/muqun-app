@@ -416,6 +416,8 @@ export interface AgentComposerProps {
   canPickMode?: boolean;
   /** Whether the session's agent takes attachments. Absent means yes. */
   canAttach?: boolean;
+  /** Home uploads to its selected computer, not a temporarily connected neighbor. */
+  attachmentTargetId?: string;
   /** Replaces the field's own invitation, e.g. to say why attaching is off. */
   placeholder?: string;
   /** What a session chip leads with; see `lib/agent-session-chip.ts`. */
@@ -570,6 +572,7 @@ export const AgentComposer = memo(function AgentComposer({
   onOpenModeSheet,
   canPickMode = true,
   canAttach = true,
+  attachmentTargetId,
   placeholder,
   sessionLead,
   onOpenDiffSheet,
@@ -950,6 +953,11 @@ export const AgentComposer = memo(function AgentComposer({
   const chooseAttachmentSource = useCallback(
     (source: AttachmentSource) => {
       setAttachmentMenuOpen(false);
+      if (
+        attachmentTargetId !== undefined &&
+        useGatewayConnectionStore.getState().record?.serverId !== attachmentTargetId
+      )
+        return;
       const picker = attachmentUploads.capturePicker();
       if (!picker.isCurrent()) return;
       void pickAttachments(source)
@@ -963,7 +971,7 @@ export const AgentComposer = memo(function AgentComposer({
           });
         });
     },
-    [attachmentUploads, showToast, t]
+    [attachmentUploads, attachmentTargetId, showToast, t]
   );
 
   const readText = useLatestReader(text);
@@ -1030,6 +1038,15 @@ export const AgentComposer = memo(function AgentComposer({
             });
             return;
           }
+          // Switching computers during an upload must not dispatch old host
+          // paths to the replacement destination, or silently drop the files.
+          if (
+            attachmentTargetId !== undefined &&
+            (paths.length === 0 ||
+              record?.serverId !== attachmentTargetId ||
+              useGatewayConnectionStore.getState().record !== record)
+          )
+            return;
           uploadedFilePaths = paths;
         }
         const accepted = await onSend(
@@ -1050,6 +1067,8 @@ export const AgentComposer = memo(function AgentComposer({
   }, [
     text,
     attachmentUploads,
+    attachmentTargetId,
+    record,
     sending,
     onSend,
     showToast,
@@ -1964,7 +1983,12 @@ export const AgentComposer = memo(function AgentComposer({
                             attachmentMenuOpen ? t`Close the attachment menu` : t`Attach a file`
                           }
                           expanded={attachmentMenuOpen}
-                          disabled={sending || disabled}
+                          disabled={
+                            sending ||
+                            disabled ||
+                            (attachmentTargetId !== undefined &&
+                              record?.serverId !== attachmentTargetId)
+                          }
                           onPress={() => setAttachmentMenuOpen((open) => !open)}
                           size={16}
                           color={attachmentMenuOpen ? theme.colors.primary : chromeText}

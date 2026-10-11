@@ -417,9 +417,13 @@ export async function fetchTaskDefaultCwd(endpoint?: TaskEndpoint): Promise<stri
  * answer does not say which task it opened; the caller words that.
  */
 export async function createLedgerTask(
-  request: LedgerTaskRequest
+  request: LedgerTaskRequest,
+  isCurrent?: () => boolean
 ): Promise<CreatedLedgerTask | null> {
   const { postLedgerTask } = await import('./gateway-client');
+  // The client reads the currently selected connection for each post. Loading
+  // it, and a mentions-refusal response, both give that selection time to move.
+  if (isCurrent && !isCurrent()) return null;
   try {
     return parseCreatedLedgerTask(await postLedgerTask(ledgerTaskBody(request)));
   } catch (error) {
@@ -427,6 +431,7 @@ export async function createLedgerTask(
     // mentions still gets the task, once, without them.
     if (!request.mentions?.length || !isMentionsRefusal(error)) throw error;
     const { mentions: _dropped, ...withoutMentions } = request;
+    if (isCurrent && !isCurrent()) return null;
     return parseCreatedLedgerTask(await postLedgerTask(ledgerTaskBody(withoutMentions)));
   }
 }

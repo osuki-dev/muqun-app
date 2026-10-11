@@ -41,6 +41,7 @@ import {
   useSheetSceneInputStyle,
 } from '@/components/sheet-scene';
 import { LADDER } from '@/components/settings-chrome';
+import { terminalPromptWithAttachments } from '@/lib/agent-spawn';
 import {
   agentSpawnRequest,
   canSpawnAgent,
@@ -231,7 +232,7 @@ export function NewTaskSheet({
             const paths = await uploads.awaitUploads();
             if (!mounted.current || useGatewayConnectionStore.getState().record !== owner) return;
             if (paths === null) rethrow(new Error(t`Could not add a file`));
-            const firstPrompt = [prompt.trim(), ...paths].filter(Boolean).join(' ');
+            const firstPrompt = terminalPromptWithAttachments(prompt, paths);
             const spawned = await spawnAgent(
               sessionId,
               agentSpawnRequest({ agent, cwd, tabId, prompt: firstPrompt })

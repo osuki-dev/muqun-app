@@ -2812,10 +2812,6 @@ msgstr "Go to your computers"
 msgid "Goal continuation"
 msgstr "Goal continuation"
 
-#: src/components/home-composer-dock.tsx
-msgid "Goal for {agentName} · no attachments in a terminal"
-msgstr "Goal for {agentName} · no attachments in a terminal"
-
 #: src/app/commands.tsx
 msgid "Group"
 msgstr "Group"

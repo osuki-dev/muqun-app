@@ -2812,10 +2812,6 @@ msgstr "前往你的电脑"
 msgid "Goal continuation"
 msgstr "目标续接"
 
-#: src/components/home-composer-dock.tsx
-msgid "Goal for {agentName} · no attachments in a terminal"
-msgstr "给 {agentName} 的目标 · 终端中不能附加文件"
-
 #: src/app/commands.tsx
 msgid "Group"
 msgstr "分组"
