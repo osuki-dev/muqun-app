@@ -18,7 +18,7 @@
     "preview": {
       "bun": "1.4.2",
       "distribution": "internal",
-      "channel": "preview",
+      "env": { "HOT_UPDATER_CHANNEL": "preview" },
       "android": {
         "buildType": "apk"
       },
@@ -36,7 +36,7 @@
     },
     "production": {
       "bun": "1.4.2",
-      "channel": "production",
+      "env": { "HOT_UPDATER_CHANNEL": "production" },
       "ios": {
         "resourceClass": "m-medium",
         "autoIncrement": "buildNumber"
