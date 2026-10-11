@@ -43,6 +43,7 @@ import { AppLockGate } from '@/components/app-lock-gate';
 import { HugSlackProvider } from '@/components/text';
 import { SshConnectPromptGate } from '@/components/ssh-connect-prompt-gate';
 import { UpdateStatusBanner } from '@/components/update-status-banner';
+import { checkForAppUpdate } from '@/lib/app-updates';
 import { InAppNotificationHost } from '@/components/in-app-notification-host';
 import { useNotificationSurfaceStyle } from '@/components/notification-surface';
 import { WhatsNewCard } from '@/components/whats-new-card';
@@ -154,6 +155,13 @@ const ReleaseProfilerControl =
     : null;
 
 export default function RootLayout() {
+  useEffect(() => {
+    void checkForAppUpdate();
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void checkForAppUpdate();
+    });
+    return () => subscription.remove();
+  }, []);
   /**
    * The settings are read and the reader's fonts are registered before this
    * returns true, and the router below does not mount until it does.

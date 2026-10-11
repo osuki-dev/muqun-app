@@ -823,10 +823,6 @@ msgstr "添付ファイル"
 msgid "Audio"
 msgstr "音声"
 
-#: src/components/voice-input-button.tsx
-msgid "Audio is sent to your configured speech service"
-msgstr "音声は設定した音声サービスに送信されます"
-
 #: src/components/audio-asset-preview.tsx
 msgid "Audio preview supports files up to {ceiling}."
 msgstr "音声プレビューは {ceiling} までのファイルに対応しています"
@@ -2296,6 +2292,7 @@ msgstr "切断しました"
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/task-row.tsx
+#: src/components/update-status-banner.tsx
 msgid "Dismiss"
 msgstr "閉じる"
 
@@ -4825,10 +4822,6 @@ msgstr "必須です"
 msgid "Requires iOS 16.1 or later."
 msgstr "iOS 16.1 以降が必要です"
 
-#: src/components/update-status-banner.tsx
-msgid "Restart Muqun to finish updating"
-msgstr "更新を完了するには牧群を再起動してください"
-
 #: src/app/commands.tsx
 msgid "Restore hidden default commands"
 msgstr "非表示にした標準コマンドを元に戻す"
@@ -6716,8 +6709,8 @@ msgid "Update Muqun Gateway on this host to use {agentName}."
 msgstr "{agentName} を使うには、このホストの Muqun Gateway をアップデートしてください"
 
 #: src/components/update-status-banner.tsx
-msgid "Update ready · restarting…"
-msgstr "更新の準備完了 · 再起動中…"
+msgid "Update ready · applies on next launch"
+msgstr "更新の準備ができました · 次回起動時に適用"
 
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"

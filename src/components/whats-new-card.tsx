@@ -7,7 +7,7 @@ import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import * as SecureStore from 'expo-secure-store';
-import * as Updates from 'expo-updates';
+import { isOtaLaunch } from '@/lib/app-updates';
 import { Check, Sparkles, X } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -23,7 +23,7 @@ import { recoverWith } from '@/lib/compiler-safe-control-flow';
 const SEEN_KEY = 'muqun.seen-notes.v1';
 
 // A stable fingerprint of the notes themselves. Keying on this rather than on
-// Updates.updateId means the card shows only when the changelog actually
+// an update ID means the card shows only when the changelog actually
 // changes -- rapid same-notes OTAs during iteration don't re-nag the user.
 // The English source text, deliberately: a fingerprint over the *rendered*
 // notes would re-show the card to anyone who switches language.
@@ -45,7 +45,7 @@ export function WhatsNewCard() {
   useEffect(() => {
     let active = true;
     async function check() {
-      if (!Updates.isEnabled || Updates.isEmbeddedLaunch) return;
+      if (!isOtaLaunch) return;
       if (RELEASE_NOTES.items.length === 0) return;
       return recoverWith(
         async () => {
