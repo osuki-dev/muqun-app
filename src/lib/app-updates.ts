@@ -11,8 +11,8 @@ function createClient(): HotUpdaterInstance | null {
   const settings = Constants.expoConfig?.extra?.hotUpdater;
   if (__DEV__ || Platform.OS === 'web' || settings?.enabled !== true) return null;
   if (typeof settings.clientApiKey !== 'string' || !settings.clientApiKey) return null;
-  if (!TurboModuleRegistry.get('HotUpdater')) return null;
   try {
+    if (!TurboModuleRegistry.get('HotUpdater')) return null;
     // Keep web, Expo Go and binaries predating this native module launchable.
     const { HotUpdater } =
       // oxlint-disable-next-line typescript/no-require-imports -- the SDK enforces its native module at import time

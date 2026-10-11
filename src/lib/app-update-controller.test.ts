@@ -35,6 +35,64 @@ function fixture(check: UpdateClient['checkForUpdate']) {
 }
 
 describe('OTA staging lifecycle', () => {
+  test('same-artifact release adoption stays quiet and permits later checks', async () => {
+    let checks = 0;
+    const f = fixture(async () => {
+      checks++;
+      return { transitionKind: 'ADOPT_RELEASE', updateBundle: async () => true };
+    });
+    await f.controller.check();
+    expect(f.states).toEqual([
+      { phase: 'checking', progress: 0 },
+      { phase: 'idle', progress: 0 },
+    ]);
+    f.advance(15 * 60_000);
+    await f.controller.check();
+    expect(checks).toBe(2);
+  });
+  test('a rollback to the embedded artifact is staged for the next launch', async () => {
+    const f = fixture(async () => ({
+      transitionKind: 'USE_BUILTIN',
+      updateBundle: async () => true,
+    }));
+    await f.controller.check();
+    expect(f.states.at(-1)).toEqual({ phase: 'ready', progress: 1 });
+  });
+  test('native listener registration failure is contained and can retry', async () => {
+    const states: UpdateSnapshot[] = [];
+    let attempts = 0;
+    let now = 0;
+    const controller = createAppUpdateController(
+      {
+        checkForUpdate: async () => null,
+        addListener: () => {
+          attempts++;
+          throw new Error('native module unavailable');
+        },
+      },
+      (state) => states.push(state),
+      () => now
+    );
+    await controller.check();
+    expect(states.at(-1)?.phase).toBe('failed');
+    now = 60_000;
+    await controller.check();
+    expect(attempts).toBe(2);
+  });
+  test('native listener cleanup failure does not reject or discard a staged bundle', async () => {
+    const states: UpdateSnapshot[] = [];
+    const controller = createAppUpdateController(
+      {
+        checkForUpdate: async () => ({ updateBundle: async () => true }),
+        addListener: () => () => {
+          throw new Error('native module torn down');
+        },
+      },
+      (state) => states.push(state)
+    );
+    await controller.check();
+    expect(states.at(-1)).toEqual({ phase: 'ready', progress: 1 });
+  });
   test('disabled client performs no work', async () => {
     const states: UpdateSnapshot[] = [];
     await createAppUpdateController(null, (state) => states.push(state)).check();

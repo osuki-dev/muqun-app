@@ -823,10 +823,6 @@ msgstr "Archivo adjunto"
 msgid "Audio"
 msgstr "Audio"
 
-#: src/components/voice-input-button.tsx
-msgid "Audio is sent to your configured speech service"
-msgstr "El audio se envía al servicio de voz configurado"
-
 #: src/components/audio-asset-preview.tsx
 msgid "Audio preview supports files up to {ceiling}."
 msgstr "La vista previa de audio admite archivos de hasta {ceiling}"
@@ -2296,6 +2292,7 @@ msgstr "Desconectado"
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/task-row.tsx
+#: src/components/update-status-banner.tsx
 msgid "Dismiss"
 msgstr "Descartar"
 
@@ -4825,10 +4822,6 @@ msgstr "Obligatorio"
 msgid "Requires iOS 16.1 or later."
 msgstr "Requiere iOS 16.1 o posterior"
 
-#: src/components/update-status-banner.tsx
-msgid "Restart Muqun to finish updating"
-msgstr "Reinicia Muqun para terminar de actualizar"
-
 #: src/app/commands.tsx
 msgid "Restore hidden default commands"
 msgstr "Restaurar los comandos predeterminados ocultos"
@@ -6716,8 +6709,8 @@ msgid "Update Muqun Gateway on this host to use {agentName}."
 msgstr "Actualiza Muqun Gateway en este host para usar {agentName}"
 
 #: src/components/update-status-banner.tsx
-msgid "Update ready · restarting…"
-msgstr "Actualización lista · reiniciando…"
+msgid "Update ready · applies on next launch"
+msgstr "Actualización lista · se aplicará al volver a abrir"
 
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"

@@ -31,6 +31,10 @@ reduced-motion-aware timing. A download reaching 100% is not sufficient: the
 download helper must confirm successful staging before the banner says ready.
 Neither normal nor forced server updates restart an active session. The user
 restarts Muqun when convenient, or the next cold launch applies the bundle.
+The ready notice can be dismissed and hides after six seconds without clearing
+the staged update. Its copy explicitly says the update applies on the next launch.
+Adopting a new release for the already-running artifact is silent and retains
+normal periodic checks; it does not display a misleading restart notice.
 Checks and download failures leave the current app usable; request details and
 credentials are not logged. There is no extra settings page or analytics plugin.
 
