@@ -18,6 +18,7 @@ import type { DockAutoHide } from '@/hooks/use-dock-auto-hide';
 import { HomeComposerOptions } from '@/components/home-composer-options';
 import {
   HomeComposerBackground,
+  useHomeComposerBackgroundOutset,
   HomeComposerDecoration,
   useHomeComposerDecorationOverhang,
 } from '@/components/home-composer-background';
@@ -167,6 +168,7 @@ export function HomeComposerDock({
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
   const decorationOverhang = useHomeComposerDecorationOverhang();
+  const backgroundOutset = useHomeComposerBackgroundOutset();
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [optionsVisible, setOptionsVisible] = useState(false);
   const background = useSurfaceBackground();
@@ -1116,6 +1118,7 @@ export function HomeComposerDock({
     <AgentComposer
       accessory={bar}
       fieldBackground={<HomeComposerBackground />}
+      fieldBackgroundOutset={backgroundOutset ?? undefined}
       fieldBackgroundColor={homeComposerFieldFill(
         theme.colors.surface,
         theme.colors.text,

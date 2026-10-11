@@ -1,3 +1,4 @@
+import type { HomeComposerOutset } from '@/theme/home-composer-outset';
 import { useVoiceInputTrigger } from '@/components/voice-input-button';
 import { useLingui } from '@lingui/react/macro';
 import { useLatestReader } from '@/hooks/use-render-refs';
@@ -69,6 +70,8 @@ export interface TerminalComposerProps {
   fieldBackground?: ReactNode;
   /** An already resolved fill for a field without an enclosing material plate. */
   fieldBackgroundColor?: string;
+  /** Optional bounded artwork overflow; the field and its controls remain clipped. */
+  fieldBackgroundOutset?: HomeComposerOutset;
   /** Noninteractive Home artwork allowed to extend above the clipped field. */
   fieldDecoration?: ReactNode;
   /** Moves tall-field text down by borrowing its bottom padding, not adding height. */
@@ -94,6 +97,7 @@ export function TerminalComposer({
   leading,
   fieldBackground,
   fieldBackgroundColor,
+  fieldBackgroundOutset,
   fieldDecoration,
   fieldTextTopInset = 0,
   onVoiceActiveChange,
@@ -184,6 +188,8 @@ export function TerminalComposer({
           Math.min(fieldTextTopInset, typeof bottomPadding === 'number' ? bottomPadding : 10)
         )
       : 0;
+  const outsideBackground = !voiceActive && fieldBackground && fieldBackgroundOutset;
+  const backgroundColor = fieldBackgroundColor ?? surfaceBackground(chromeGlassQuiet);
   const controls = (
     <>
       <ComposerSendButton
@@ -208,14 +214,46 @@ export function TerminalComposer({
       exiting={exiting}
       layout={layout}
       style={composerStyles.fieldOuter}>
+      {outsideBackground ? (
+        <>
+          <View
+            pointerEvents="none"
+            accessible={false}
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                backgroundColor,
+                borderRadius: profile.chrome.composerField,
+                borderCurve: 'continuous',
+              },
+            ]}
+          />
+          <View
+            testID="composer-field-background-outset"
+            pointerEvents="none"
+            accessible={false}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: -outsideBackground.left,
+              right: -outsideBackground.right,
+              bottom: -outsideBackground.bottom,
+              overflow: 'hidden',
+            }}>
+            {fieldBackground}
+          </View>
+        </>
+      ) : null}
       <View
         testID="composer-field-shell"
         style={[
           composerStyles.fieldShell,
           { borderRadius: profile.chrome.composerField },
-          { backgroundColor: fieldBackgroundColor ?? surfaceBackground(chromeGlassQuiet) },
+          { backgroundColor: outsideBackground ? 'transparent' : backgroundColor },
         ]}>
-        {!voiceActive ? fieldBackground : null}
+        {!voiceActive && !outsideBackground ? fieldBackground : null}
         {/* Keep the draft mounted so recording inherits this exact field height. */}
         <Animated.View
           pointerEvents={voiceActive ? 'none' : 'auto'}

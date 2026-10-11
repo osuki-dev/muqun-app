@@ -166,6 +166,14 @@ const imageSchema = z.strictObject({
   asset: identifier,
   fit: z.enum(['cover', 'contain', 'tile']).optional(),
   opacity: z.number().min(0).max(1).optional(),
+  // Only home.composer.background consumes this bounded, noninteractive envelope.
+  outset: z
+    .strictObject({
+      left: z.number().min(0).max(12).optional(),
+      right: z.number().min(0).max(12).optional(),
+      bottom: z.number().min(0).max(8).optional(),
+    })
+    .optional(),
   focalPoint: z
     .strictObject({ x: z.number().min(0).max(1), y: z.number().min(0).max(1) })
     .optional(),

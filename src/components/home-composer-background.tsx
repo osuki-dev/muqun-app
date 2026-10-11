@@ -4,10 +4,27 @@ import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { ThemeArtworkLayer, useHasThemeArtwork } from '@/components/theme-artwork';
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import { resolveThemeImage } from '@/theme/resolve';
+import { resolveHomeComposerOutset } from '@/theme/home-composer-outset';
 
 /** Optional Home-only decoration; the field owns clipping and voice visibility. */
 export function HomeComposerBackground() {
   return <HomeComposerArtwork slot="home.composer.background" />;
+}
+
+/** Omitted, zero or unrenderable artwork keeps the original clipped field. */
+export function useHomeComposerBackgroundOutset() {
+  const { theme, assets } = useEffectiveCustomTheme();
+  const { resolvedMode } = useThemeMode();
+  const { width } = useWindowDimensions();
+  const artwork = theme
+    ? resolveThemeImage(
+        theme.manifest,
+        'home.composer.background',
+        resolvedMode,
+        width >= 768 ? 'regular' : 'compact'
+      )
+    : null;
+  return resolveHomeComposerOutset(artwork, assets);
 }
 
 /** The dock may reserve this much scroll clearance without enlarging the field. */
