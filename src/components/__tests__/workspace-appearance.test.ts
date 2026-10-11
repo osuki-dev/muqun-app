@@ -15,7 +15,7 @@ describe('workspace chrome follows the appearance profile', () => {
     const seams = {
       'agent-composer': [
         'profile.chrome.control',
-        "shape={bar ? 'none' : 'sheet'}",
+        "shape={flushField ? 'composerField' : bar ? 'none' : 'sheet'}",
         'shape="popover"',
       ],
       'ssh-terminal-workspace': ['profile.radius.pill', 'shape="composerDock"'],
@@ -58,7 +58,12 @@ describe('workspace chrome follows the appearance profile', () => {
   test('docks and inbox plates have no fixed local radius', () => {
     const composer = read('agent-composer');
     const ssh = read('ssh-terminal-workspace');
-    expect(composer).toContain("shape={bar ? 'none' : 'sheet'}");
+    expect(composer).toContain("shape={flushField ? 'composerField' : bar ? 'none' : 'sheet'}");
+    // Only Home opts into a flush field; ordinary session docks retain their
+    // sheet/bar roles, and the shared field uses the very same profile radius.
+    expect(composer).toContain('flushField = false');
+    expect(/<AgentComposer[\s\S]*?\n\s+flushField\n/.test(read('home-composer-dock'))).toBe(true);
+    expect(read('terminal-composer')).toContain('borderRadius: profile.chrome.composerField');
     expect(ssh).toContain('shape="composerDock"');
     for (const name of ['composerDock', 'inboxCard', 'inboxRow']) {
       expect(styleBlock(composer, name)).not.toContain('Radius:');

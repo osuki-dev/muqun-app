@@ -310,7 +310,7 @@ export function HomeEditorialLayout({
     pad
   );
   // The dock's slot at the foot of the Pad work column grows by the keyboard
-  // as it rises (the dock rides it up), so the cards above end at the dock's
+  // as it rises (the dock rides it up), so the launch pane above ends at the dock's
   // new top and nothing else on the page moves; a floating or hardware
   // keyboard (no inset) changes nothing.
   const { height: keyboardOffset } = useReanimatedKeyboardAnimation();
@@ -589,26 +589,14 @@ export function HomeEditorialLayout({
                   {launches}
                 </Animated.View>
               ) : null}
-              {hasRecent ? (
-                <Animated.View
-                  testID="home-pad-continue"
-                  entering={rise(3)}
-                  style={styles.padSection}>
-                  {recentHeading ? (
-                    <View style={styles.padWorkTitle}>{recentHeading}</View>
-                  ) : (
-                    <Text
-                      variant="heading"
-                      accessibilityRole="header"
-                      color={theme.colors.text}
-                      style={[styles.padWorkTitle, scenePlate]}>
-                      {t`Recent`}
-                    </Text>
-                  )}
-                  {recent}
-                </Animated.View>
-              ) : null}
             </KeyboardAwareScrollView>
+            {/* In flow under the launch pane, sized to the measured dock: the column
+                ends where the dock begins, so no row can sit under it. */}
+            {hasSlot(padComposer) ? (
+              <Animated.View testID="home-pad-composer" style={padComposerStyle}>
+                {padComposer}
+              </Animated.View>
+            ) : null}
           </View>
           <View testID="home-pad-work-column" style={styles.padWorkColumn}>
             <Animated.ScrollView
@@ -665,14 +653,26 @@ export function HomeEditorialLayout({
                   ) : null}
                 </Animated.View>
               ) : null}
+              {hasRecent ? (
+                <Animated.View
+                  testID="home-pad-continue"
+                  entering={rise(3)}
+                  style={styles.padSection}>
+                  {recentHeading ? (
+                    <View style={styles.padWorkTitle}>{recentHeading}</View>
+                  ) : (
+                    <Text
+                      variant="heading"
+                      accessibilityRole="header"
+                      color={theme.colors.text}
+                      style={[styles.padWorkTitle, scenePlate]}>
+                      {t`Recent`}
+                    </Text>
+                  )}
+                  {recent}
+                </Animated.View>
+              ) : null}
             </Animated.ScrollView>
-            {/* In flow under the work, sized to the measured dock: the column
-                ends where the dock begins, so no row can sit under it. */}
-            {hasSlot(padComposer) ? (
-              <Animated.View testID="home-pad-composer" style={padComposerStyle}>
-                {padComposer}
-              </Animated.View>
-            ) : null}
           </View>
         </View>
       </View>
