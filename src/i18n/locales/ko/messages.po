@@ -522,8 +522,8 @@ msgid "Add commands and custom key combinations."
 msgstr "명령과 사용자 지정 조합 키를 추가합니다"
 
 #: src/components/session-map.tsx
-msgid "Add machine"
-msgstr "머신 추가"
+msgid "Add computer"
+msgstr "컴퓨터 추가"
 
 #: src/app/explore.tsx
 msgid "Add one first"
@@ -1407,6 +1407,7 @@ msgstr "컴퓨터를 사용할 수 없습니다"
 #: src/components/file-mention-panel.tsx
 #: src/components/home-editorial-layout.tsx
 #: src/components/home-overview.tsx
+#: src/components/session-map.tsx
 msgid "Computers"
 msgstr "컴퓨터"
 
@@ -2136,8 +2137,8 @@ msgid "Current agent"
 msgstr "현재 에이전트"
 
 #: src/components/session-map.tsx
-msgid "Current machine"
-msgstr "현재 머신"
+msgid "Current computer"
+msgstr "현재 컴퓨터"
 
 #: src/i18n/labels.ts
 msgid "Current path"
@@ -3364,10 +3365,6 @@ msgstr "시뮬레이터를 찾는 중"
 msgid "Mac mini · Office"
 msgstr "Mac mini · 사무실"
 
-#: src/components/session-map.tsx
-msgid "Machines"
-msgstr "머신"
-
 #: src/components/launch-intro.tsx
 msgid "Make it yours"
 msgstr "나만의 스타일로"
@@ -3380,13 +3377,13 @@ msgstr "컴퓨터에 연결할 수 있는지 확인한 후 다시 시도하세�
 msgid "Manage"
 msgstr "관리"
 
+#: src/components/session-map.tsx
+msgid "Manage computers"
+msgstr "컴퓨터 관리"
+
 #: src/components/home-connections.tsx
 msgid "Manage connections"
 msgstr "연결 관리"
-
-#: src/components/session-map.tsx
-msgid "Manage machines"
-msgstr "머신 관리"
 
 #: src/components/home-overview.tsx
 msgid "Manage SSH hosts"

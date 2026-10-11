@@ -522,7 +522,7 @@ msgid "Add commands and custom key combinations."
 msgstr "Добавьте команды и свои сочетания клавиш"
 
 #: src/components/session-map.tsx
-msgid "Add machine"
+msgid "Add computer"
 msgstr "Добавить компьютер"
 
 #: src/app/explore.tsx
@@ -1407,6 +1407,7 @@ msgstr "Компьютер недоступен"
 #: src/components/file-mention-panel.tsx
 #: src/components/home-editorial-layout.tsx
 #: src/components/home-overview.tsx
+#: src/components/session-map.tsx
 msgid "Computers"
 msgstr "Компьютеры"
 
@@ -2136,7 +2137,7 @@ msgid "Current agent"
 msgstr "Текущий агент"
 
 #: src/components/session-map.tsx
-msgid "Current machine"
+msgid "Current computer"
 msgstr "Текущий компьютер"
 
 #: src/i18n/labels.ts
@@ -3364,10 +3365,6 @@ msgstr "Ищем симулятор"
 msgid "Mac mini · Office"
 msgstr "Mac mini · Офис"
 
-#: src/components/session-map.tsx
-msgid "Machines"
-msgstr "Компьютеры"
-
 #: src/components/launch-intro.tsx
 msgid "Make it yours"
 msgstr "Сделайте его своим"
@@ -3380,13 +3377,13 @@ msgstr "Убедитесь, что компьютер доступен, и по�
 msgid "Manage"
 msgstr "Управлять"
 
+#: src/components/session-map.tsx
+msgid "Manage computers"
+msgstr "Управление компьютерами"
+
 #: src/components/home-connections.tsx
 msgid "Manage connections"
 msgstr "Управление подключениями"
-
-#: src/components/session-map.tsx
-msgid "Manage machines"
-msgstr "Управление компьютерами"
 
 #: src/components/home-overview.tsx
 msgid "Manage SSH hosts"

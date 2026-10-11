@@ -522,8 +522,8 @@ msgid "Add commands and custom key combinations."
 msgstr "新增指令與自訂組合鍵"
 
 #: src/components/session-map.tsx
-msgid "Add machine"
-msgstr "新增機器"
+msgid "Add computer"
+msgstr "新增電腦"
 
 #: src/app/explore.tsx
 msgid "Add one first"
@@ -1407,6 +1407,7 @@ msgstr "電腦無法使用"
 #: src/components/file-mention-panel.tsx
 #: src/components/home-editorial-layout.tsx
 #: src/components/home-overview.tsx
+#: src/components/session-map.tsx
 msgid "Computers"
 msgstr "電腦"
 
@@ -2136,8 +2137,8 @@ msgid "Current agent"
 msgstr "目前的 Agent"
 
 #: src/components/session-map.tsx
-msgid "Current machine"
-msgstr "目前機器"
+msgid "Current computer"
+msgstr "目前電腦"
 
 #: src/i18n/labels.ts
 msgid "Current path"
@@ -3364,10 +3365,6 @@ msgstr "正在尋找模擬器"
 msgid "Mac mini · Office"
 msgstr "Mac mini · 辦公室"
 
-#: src/components/session-map.tsx
-msgid "Machines"
-msgstr "機器"
-
 #: src/components/launch-intro.tsx
 msgid "Make it yours"
 msgstr "打造你的專屬風格"
@@ -3380,13 +3377,13 @@ msgstr "請確認這台電腦可以連線，然後再試一次"
 msgid "Manage"
 msgstr "管理"
 
+#: src/components/session-map.tsx
+msgid "Manage computers"
+msgstr "管理電腦"
+
 #: src/components/home-connections.tsx
 msgid "Manage connections"
 msgstr "管理連線"
-
-#: src/components/session-map.tsx
-msgid "Manage machines"
-msgstr "管理機器"
 
 #: src/components/home-overview.tsx
 msgid "Manage SSH hosts"

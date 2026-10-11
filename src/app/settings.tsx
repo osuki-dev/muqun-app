@@ -20,7 +20,7 @@ import {
   Bell,
   Terminal,
   ChevronRight,
-  Server,
+  Monitor,
   Mic,
   Settings2,
 } from 'lucide-react-native';
@@ -66,7 +66,7 @@ const ROWS = [
   { route: '/settings-terminal', icon: Terminal },
   { route: '/settings-voice', icon: Mic },
   { route: '/settings-alerts', icon: Bell },
-  { route: '/settings-servers', icon: Server },
+  { route: '/settings-servers', icon: Monitor },
   { route: '/settings-storage', icon: HardDrive },
   { route: '/settings-about', icon: Info },
 ] as const;

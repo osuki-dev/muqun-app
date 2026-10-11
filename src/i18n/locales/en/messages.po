@@ -522,8 +522,8 @@ msgid "Add commands and custom key combinations."
 msgstr "Add commands and custom key combinations"
 
 #: src/components/session-map.tsx
-msgid "Add machine"
-msgstr "Add machine"
+msgid "Add computer"
+msgstr "Add computer"
 
 #: src/app/explore.tsx
 msgid "Add one first"
@@ -1407,6 +1407,7 @@ msgstr "Computer unavailable"
 #: src/components/file-mention-panel.tsx
 #: src/components/home-editorial-layout.tsx
 #: src/components/home-overview.tsx
+#: src/components/session-map.tsx
 msgid "Computers"
 msgstr "Computers"
 
@@ -2136,8 +2137,8 @@ msgid "Current agent"
 msgstr "Current agent"
 
 #: src/components/session-map.tsx
-msgid "Current machine"
-msgstr "Current machine"
+msgid "Current computer"
+msgstr "Current computer"
 
 #: src/i18n/labels.ts
 msgid "Current path"
@@ -3364,10 +3365,6 @@ msgstr "Looking for a simulator"
 msgid "Mac mini · Office"
 msgstr "Mac mini · Office"
 
-#: src/components/session-map.tsx
-msgid "Machines"
-msgstr "Machines"
-
 #: src/components/launch-intro.tsx
 msgid "Make it yours"
 msgstr "Make it yours"
@@ -3380,13 +3377,13 @@ msgstr "Make sure the computer is reachable, then try again"
 msgid "Manage"
 msgstr "Manage"
 
+#: src/components/session-map.tsx
+msgid "Manage computers"
+msgstr "Manage computers"
+
 #: src/components/home-connections.tsx
 msgid "Manage connections"
 msgstr "Manage connections"
-
-#: src/components/session-map.tsx
-msgid "Manage machines"
-msgstr "Manage machines"
 
 #: src/components/home-overview.tsx
 msgid "Manage SSH hosts"

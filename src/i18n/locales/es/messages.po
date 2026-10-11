@@ -522,8 +522,8 @@ msgid "Add commands and custom key combinations."
 msgstr "Agrega comandos y combinaciones de teclas personalizadas"
 
 #: src/components/session-map.tsx
-msgid "Add machine"
-msgstr "Añadir equipo"
+msgid "Add computer"
+msgstr "Añadir ordenador"
 
 #: src/app/explore.tsx
 msgid "Add one first"
@@ -1407,6 +1407,7 @@ msgstr "Ordenador no disponible"
 #: src/components/file-mention-panel.tsx
 #: src/components/home-editorial-layout.tsx
 #: src/components/home-overview.tsx
+#: src/components/session-map.tsx
 msgid "Computers"
 msgstr "Ordenadores"
 
@@ -2136,8 +2137,8 @@ msgid "Current agent"
 msgstr "Agente actual"
 
 #: src/components/session-map.tsx
-msgid "Current machine"
-msgstr "Equipo actual"
+msgid "Current computer"
+msgstr "Ordenador actual"
 
 #: src/i18n/labels.ts
 msgid "Current path"
@@ -3364,10 +3365,6 @@ msgstr "Buscando un simulador"
 msgid "Mac mini · Office"
 msgstr "Mac mini · Oficina"
 
-#: src/components/session-map.tsx
-msgid "Machines"
-msgstr "Equipos"
-
 #: src/components/launch-intro.tsx
 msgid "Make it yours"
 msgstr "Hazla tuya"
@@ -3380,13 +3377,13 @@ msgstr "Asegúrate de que el ordenador esté accesible e inténtalo de nuevo"
 msgid "Manage"
 msgstr "Gestionar"
 
+#: src/components/session-map.tsx
+msgid "Manage computers"
+msgstr "Gestionar ordenadores"
+
 #: src/components/home-connections.tsx
 msgid "Manage connections"
 msgstr "Gestionar conexiones"
-
-#: src/components/session-map.tsx
-msgid "Manage machines"
-msgstr "Gestionar equipos"
 
 #: src/components/home-overview.tsx
 msgid "Manage SSH hosts"

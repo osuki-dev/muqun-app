@@ -1,7 +1,7 @@
 import { useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useThemeTokens } from '@osuki-dev/ui';
-import { ChevronRight, Server, SquareTerminal } from 'lucide-react-native';
+import { ChevronRight, Monitor, SquareTerminal } from 'lucide-react-native';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { PressableScale } from '@/components/pressable-scale';
@@ -212,7 +212,7 @@ function GatewayConnectionRow({
           backgroundColor: background(theme.colors.surface),
         },
       ]}>
-      <Server size={21} color={theme.colors.primary} />
+      <Monitor size={21} color={theme.colors.primary} />
       <View style={styles.copy}>
         <Text weight="semibold" variant="bodySmall" numberOfLines={2}>
           {server.label}
