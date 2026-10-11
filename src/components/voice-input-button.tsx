@@ -170,6 +170,7 @@ function VoiceRecording({
         ? 'idle'
         : state;
   const recording = visualState === 'recording';
+  const pending = !error && result === null && !recording;
   const busy = state !== 'recording' || result !== null;
   const elapsed = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
   const indicator = error ? (
@@ -228,57 +229,96 @@ function VoiceRecording({
       testID="voice-inline-panel"
       onLayout={(event) => setHeight(event.nativeEvent.layout.height)}
       style={[styles.recording, compact && styles.compactRecording]}>
-      {compact && cancel}
-      <View style={[styles.body, recording && compact && styles.compactRecordingBody]}>
-        <View style={[styles.header, recording && styles.recordingHeader]}>
-          {compact && indicator}
-          {!recording && (
-            <Text
-              numberOfLines={1}
-              weight="regular"
-              style={styles.status}
-              color={theme.colors.text}
-              accessibilityLiveRegion="polite">
-              {status}
-            </Text>
-          )}
-          <Text
-            weight="regular"
-            color={theme.colors.textMuted}
-            style={styles.elapsed}
-            accessibilityLabel={recording ? `${status} ${elapsed}` : undefined}>
-            {elapsed}
-          </Text>
-        </View>
-        <Animated.View
-          key={visualState}
-          entering={enter}
-          testID={`voice-visual-${visualState}`}
-          style={styles.readout}>
-          {!compact && indicator}
-          {error ? (
-            <ScrollView style={styles.readoutText} nestedScrollEnabled>
-              <Text weight="regular" color={theme.colors.danger} style={styles.detail}>
-                {error}
+      {pending ? (
+        <>
+          <Animated.View
+            key={visualState}
+            entering={enter}
+            testID={`voice-visual-${visualState}`}
+            style={[styles.pending, compact && styles.compactPending]}>
+            <View testID="voice-processing-status" style={styles.pendingStatus}>
+              {indicator}
+              <Text
+                weight="regular"
+                style={styles.pendingLabel}
+                color={theme.colors.text}
+                accessibilityLiveRegion="polite">
+                {status}
               </Text>
-            </ScrollView>
-          ) : (
-            <>
-              {state === 'recording' && result === null && (
-                <VoiceRecordingWaveform history={history} />
-              )}
-              {!!(result || partial) && <LiveTranscript text={result ?? partial} />}
-            </>
-          )}
-        </Animated.View>
-      </View>
-      {compact ? (
-        stop
+            </View>
+            {!!partial && (
+              <Text
+                testID="voice-live-transcript"
+                numberOfLines={compact ? 1 : 2}
+                weight="regular"
+                color={theme.colors.textMuted}
+                style={styles.pendingTranscript}>
+                {partial}
+              </Text>
+            )}
+          </Animated.View>
+          <View
+            pointerEvents="box-none"
+            style={[styles.pendingActions, compact && styles.compactPendingActions]}>
+            {cancel}
+            {stop}
+          </View>
+        </>
       ) : (
-        <View style={styles.actions}>
-          {cancel}
-          {stop}
-        </View>
+        <>
+          {compact && cancel}
+          <View style={[styles.body, recording && compact && styles.compactRecordingBody]}>
+            <View style={[styles.header, recording && styles.recordingHeader]}>
+              {compact && indicator}
+              {!recording && (
+                <Text
+                  numberOfLines={1}
+                  weight="regular"
+                  style={styles.status}
+                  color={theme.colors.text}
+                  accessibilityLiveRegion="polite">
+                  {status}
+                </Text>
+              )}
+              <Text
+                weight="regular"
+                color={theme.colors.textMuted}
+                style={styles.elapsed}
+                accessibilityLabel={recording ? `${status} ${elapsed}` : undefined}>
+                {elapsed}
+              </Text>
+            </View>
+            <Animated.View
+              key={visualState}
+              entering={enter}
+              testID={`voice-visual-${visualState}`}
+              style={styles.readout}>
+              {!compact && indicator}
+              {error ? (
+                <ScrollView style={styles.readoutText} nestedScrollEnabled>
+                  <Text weight="regular" color={theme.colors.danger} style={styles.detail}>
+                    {error}
+                  </Text>
+                </ScrollView>
+              ) : (
+                <>
+                  {state === 'recording' && result === null && (
+                    <VoiceRecordingWaveform history={history} />
+                  )}
+                  {!!(result || partial) && <LiveTranscript text={result ?? partial} />}
+                </>
+              )}
+            </Animated.View>
+          </View>
+          {compact ? (
+            stop
+          ) : (
+            <View style={styles.actions}>
+              {cancel}
+              {stop}
+            </View>
+          )}
+        </>
       )}
     </Animated.View>
   );
@@ -366,6 +406,31 @@ const styles = StyleSheet.create({
   },
   body: { flex: 1, minHeight: 0, minWidth: 0, alignSelf: 'stretch' },
   compactRecordingBody: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  // Equal insets center the loading group in the original composer rectangle,
+  // independently of the timer/header and the different action-label widths.
+  pending: {
+    ...StyleSheet.absoluteFill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 40,
+    gap: 8,
+  },
+  compactPending: { paddingHorizontal: 48, paddingVertical: 4, gap: 4 },
+  pendingStatus: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  pendingLabel: { fontSize: 14, lineHeight: 20, flexShrink: 1 },
+  pendingTranscript: { fontSize: 12, lineHeight: 17, textAlign: 'center', flexShrink: 1 },
+  pendingActions: {
+    position: 'absolute',
+    left: 12,
+    right: 12,
+    bottom: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  compactPendingActions: { top: 0, left: 2, right: 2 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   recordingHeader: { justifyContent: 'flex-end' },
   status: { fontSize: 14, lineHeight: 20, flex: 1 },
