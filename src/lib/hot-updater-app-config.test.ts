@@ -12,6 +12,26 @@ mkdirSync(join(root, 'keys'));
 afterAll(() => rmSync(root, { recursive: true, force: true }));
 
 describe('OTA native configuration boundary', () => {
+  test('native packaging does not load provider credentials from the local deployment file', () => {
+    writeFileSync(
+      join(root, '.env.hotupdater'),
+      'HOT_UPDATER_CLOUDFLARE_API_TOKEN=must-not-enter-native-build\n'
+    );
+    const configPath = fileURLToPath(new URL('../../hot-updater.config.ts', import.meta.url));
+    const script = `delete process.env.HOT_UPDATER_CLOUDFLARE_API_TOKEN;
+      const {default: config} = await import(${JSON.stringify(configPath)});
+      let deploymentBlocked = false;
+      try { config({}); } catch { deploymentBlocked = true; }
+      console.log(JSON.stringify({ loaded: !!process.env.HOT_UPDATER_CLOUDFLARE_API_TOKEN, deploymentBlocked }));`;
+    const result = spawnSync(process.execPath, ['--eval', script], {
+      cwd: root,
+      env: { ...process.env, HOT_UPDATER_NATIVE_BUILD: '1' },
+      encoding: 'utf8',
+    });
+    rmSync(join(root, '.env.hotupdater'));
+    expect(result.status).toBe(0);
+    expect(JSON.parse(result.stdout)).toEqual({ loaded: false, deploymentBlocked: true });
+  });
   test('CLI config retains signing and a usable default path with a blank environment value', () => {
     const configPath = fileURLToPath(new URL('../../hot-updater.config.ts', import.meta.url));
     const script = `const { default: config } = await import(${JSON.stringify(configPath)});

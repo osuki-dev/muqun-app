@@ -46,6 +46,20 @@
         "autoIncrement": "versionCode"
       }
     },
+    "play-preview": {
+      "extends": "production",
+      "distribution": "store",
+      "environment": "preview",
+      "env": {
+        "EXPO_PUBLIC_HOT_UPDATER_ENABLED": "1",
+        "HOT_UPDATER_CHANNEL": "preview",
+        "HOT_UPDATER_NATIVE_BUILD": "1"
+      },
+      "android": {
+        "credentialsSource": "remote",
+        "buildType": "app-bundle"
+      }
+    },
     "production-apk": {
       "extends": "production",
       "distribution": "internal",
@@ -57,6 +71,12 @@
     }
   },
   "submit": {
+    "play-preview": {
+      "android": {
+        "track": "internal",
+        "releaseStatus": "draft"
+      }
+    },
     "testflight": {
       "ios": {}
     },

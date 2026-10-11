@@ -4,7 +4,10 @@ import { defineConfig } from 'hot-updater';
 import { apiKeys, insights, remoteConfig } from 'hot-updater/plugins';
 import { existsSync } from 'node:fs';
 
-if (existsSync('.env.hotupdater')) process.loadEnvFile('.env.hotupdater');
+// Native packaging needs the public trust anchor only, never provider or signer secrets.
+if (process.env.HOT_UPDATER_NATIVE_BUILD !== '1' && existsSync('.env.hotupdater')) {
+  process.loadEnvFile('.env.hotupdater');
+}
 
 const accountId = process.env.HOT_UPDATER_CLOUDFLARE_ACCOUNT_ID;
 const databaseId = process.env.HOT_UPDATER_CLOUDFLARE_D1_DATABASE_ID;

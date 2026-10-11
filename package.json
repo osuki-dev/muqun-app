@@ -11,6 +11,7 @@
     "build:android": "eas build --platform android --profile preview",
     "build:android:local": "NODE_USE_ENV_PROXY=1 NODE_ENV=production _JAVA_OPTIONS='-Xmx4g -XX:MaxMetaspaceSize=2g' EAS_LOCAL_BUILD_ARTIFACTS_DIR=\"$PWD/dist/eas-builds\" eas build --platform android --profile preview --local",
     "build:android:production": "eas build --platform android --profile production",
+    "build:android:play-preview:local": "bun scripts/build-play-preview.ts",
     "build:android:production:local": "NODE_USE_ENV_PROXY=1 EAS_LOCAL_BUILD_ARTIFACTS_DIR=\"$PWD/dist/eas-builds\" eas build --platform android --profile production --local",
     "build:android:production-apk:local": "NODE_USE_ENV_PROXY=1 EAS_LOCAL_BUILD_WORKINGDIR=$(mktemp -d \"${TMPDIR:-/tmp}/muqun-eas-production.XXXXXX\") EAS_LOCAL_BUILD_ARTIFACTS_DIR=\"$PWD/dist/eas-builds\" eas build --platform android --profile production-apk --local",
     "release:android:local": "NODE_USE_ENV_PROXY=1 _JAVA_OPTIONS='-Xmx6g -XX:MaxMetaspaceSize=2g' EAS_LOCAL_BUILD_WORKINGDIR=$(mktemp -d \"${TMPDIR:-/tmp}/muqun-eas-android.XXXXXX\") EAS_LOCAL_BUILD_ARTIFACTS_DIR=\"$PWD/dist/eas-builds\" eas build --platform android --profile production --local && p=$(ls -t dist/eas-builds/*.aab | head -1) && echo \"Submitting $p\" && eas submit --platform android --profile production --path \"$p\"",

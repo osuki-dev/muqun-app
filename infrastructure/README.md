@@ -131,6 +131,31 @@ Use one platform at a time and stop after a failure. Never run `eas update` for
 this branch. Older Expo Updates installations retain their old update mechanism
 until they install the new binary; keep any legacy release operations separate.
 
+## Play preview package
+
+`bun run build:android:play-preview:local` produces a signed store AAB with Hot
+Updater explicitly enabled on the `preview` channel. It inherits production's
+remote EAS signing credentials and versionCode increment; the application ID and
+Expo project stay unchanged. It does not upload, submit, tag or publish anything.
+The build uses `--freeze-credentials` and fails rather than generating new signing credentials.
+The corresponding submit profile targets an internal-track draft only if an
+operator separately chooses to submit it.
+
+The wrapper accepts the registered public `EXPO_PUBLIC_HOT_UPDATER_API_KEY` from
+the environment or ignored `.env.hotupdater`. It validates the committed public
+trust anchor before starting and excludes provider credentials and the private OTA
+signer from the child environment. `HOT_UPDATER_NATIVE_BUILD=1` prevents the config
+loader from importing deployment credentials during native packaging. The private
+signer is needed only when publishing signed OTA artifacts, not when building a
+native application that verifies them.
+
+Artifacts land under `dist/eas-builds/play-preview-<timestamp>/`, together with
+the fingerprint generated inside that exact native build. Preserve this fingerprint
+for subsequent OTA releases. Raw EAS logs can contain app signing credentials on
+failure, so the wrapper captures them privately and deletes them with the temporary
+build workspace after success or failure. It never prints the job payload. A failed
+build reports its exit status; investigate the relevant build stage privately.
+
 ## Acceptance before enabling for users
 
 1. Run TypeScript, lint, format, unit tests and the complete native E2E suite.
