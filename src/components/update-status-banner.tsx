@@ -3,13 +3,14 @@ import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useAppUpdateStore } from '@/lib/app-updates';
-import { Check, Download } from 'lucide-react-native';
-import { useEffect } from 'react';
+import { Check, Download, X } from 'lucide-react-native';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useNotificationSurfaceStyle } from '@/components/notification-surface';
+import { PressableScale } from '@/components/pressable-scale';
 import { fadeInDown, fadeOutUp, timing } from '@/lib/motion';
 
 export function UpdateStatusBanner() {
@@ -29,7 +30,14 @@ export function UpdateStatusBanner() {
   const phase = useAppUpdateStore((state) => state.phase);
   const downloadedProgress = useAppUpdateStore((state) => state.progress);
   const progress = useSharedValue(0);
-  const visible = phase === 'downloading' || phase === 'ready';
+  const [noticeDismissed, setNoticeDismissed] = useState(false);
+  const visible = phase === 'downloading' || (phase === 'ready' && !noticeDismissed);
+
+  useEffect(() => {
+    if (phase !== 'ready') return;
+    const timer = setTimeout(() => setNoticeDismissed(true), 6000);
+    return () => clearTimeout(timer);
+  }, [phase]);
 
   // Interpolate measured progress only; timing() respects reduced motion.
   useEffect(() => {
@@ -43,10 +51,10 @@ export function UpdateStatusBanner() {
   if (!visible) return null;
 
   const ready = phase === 'ready';
-  const label = ready ? t`Restart Muqun to finish updating` : t`Updating Muqun…`;
+  const label = ready ? t`Update ready · applies on next launch` : t`Updating Muqun…`;
 
   return (
-    <SafeAreaView edges={['top']} pointerEvents="none" style={styles.overlay}>
+    <SafeAreaView edges={['top']} pointerEvents="box-none" style={styles.overlay}>
       <Animated.View
         // Timed rather than sprung: the design system is explicitly "no spring,
         // no bounce", and this banner sits under the status bar where an
@@ -69,7 +77,7 @@ export function UpdateStatusBanner() {
           )}
         </View>
         <View style={styles.content}>
-          <Text variant="caption" numberOfLines={1} style={styles.label}>
+          <Text variant="caption" numberOfLines={2}>
             {label}
           </Text>
           <View
@@ -82,6 +90,17 @@ export function UpdateStatusBanner() {
             />
           </View>
         </View>
+        {ready ? (
+          <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel={t`Dismiss`}
+            hitSlop={10}
+            pressedScale={0.9}
+            onPress={() => setNoticeDismissed(true)}
+            style={styles.dismiss}>
+            <X size={16} color={theme.colors.textMuted} />
+          </PressableScale>
+        ) : null}
       </Animated.View>
     </SafeAreaView>
   );
@@ -119,8 +138,11 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingRight: 10,
   },
-  label: {
-    fontWeight: '600',
+  dismiss: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   track: {
     height: 3,

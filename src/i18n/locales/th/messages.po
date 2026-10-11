@@ -823,10 +823,6 @@ msgstr "ไฟล์แนบ"
 msgid "Audio"
 msgstr "เสียง"
 
-#: src/components/voice-input-button.tsx
-msgid "Audio is sent to your configured speech service"
-msgstr "เสียงจะถูกส่งไปยังบริการเสียงที่คุณตั้งค่าไว้"
-
 #: src/components/audio-asset-preview.tsx
 msgid "Audio preview supports files up to {ceiling}."
 msgstr "ตัวอย่างเสียงรองรับไฟล์ขนาดไม่เกิน {ceiling}"
@@ -2296,6 +2292,7 @@ msgstr "ตัดการเชื่อมต่อแล้ว"
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/task-row.tsx
+#: src/components/update-status-banner.tsx
 msgid "Dismiss"
 msgstr "ปิด"
 
@@ -4825,10 +4822,6 @@ msgstr "จำเป็น"
 msgid "Requires iOS 16.1 or later."
 msgstr "ต้องใช้ iOS 16.1 ขึ้นไป"
 
-#: src/components/update-status-banner.tsx
-msgid "Restart Muqun to finish updating"
-msgstr "เริ่ม Muqun ใหม่เพื่ออัปเดตให้เสร็จ"
-
 #: src/app/commands.tsx
 msgid "Restore hidden default commands"
 msgstr "คืนค่าคำสั่งเริ่มต้นที่ซ่อนอยู่"
@@ -6716,8 +6709,8 @@ msgid "Update Muqun Gateway on this host to use {agentName}."
 msgstr "อัปเดต Muqun Gateway บนโฮสต์นี้เพื่อใช้ {agentName}"
 
 #: src/components/update-status-banner.tsx
-msgid "Update ready · restarting…"
-msgstr "อัปเดตพร้อมแล้ว · กำลังเริ่มใหม่…"
+msgid "Update ready · applies on next launch"
+msgstr "อัปเดตพร้อมแล้ว · จะใช้เมื่อเปิดแอปครั้งถัดไป"
 
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"

@@ -823,10 +823,6 @@ msgstr "첨부 파일"
 msgid "Audio"
 msgstr "오디오"
 
-#: src/components/voice-input-button.tsx
-msgid "Audio is sent to your configured speech service"
-msgstr "오디오는 설정한 음성 서비스로 전송됩니다"
-
 #: src/components/audio-asset-preview.tsx
 msgid "Audio preview supports files up to {ceiling}."
 msgstr "오디오 미리보기는 최대 {ceiling} 파일을 지원합니다"
@@ -2296,6 +2292,7 @@ msgstr "연결이 끊겼습니다"
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/task-row.tsx
+#: src/components/update-status-banner.tsx
 msgid "Dismiss"
 msgstr "닫기"
 
@@ -4825,10 +4822,6 @@ msgstr "필수입니다"
 msgid "Requires iOS 16.1 or later."
 msgstr "iOS 16.1 이상이 필요합니다"
 
-#: src/components/update-status-banner.tsx
-msgid "Restart Muqun to finish updating"
-msgstr "업데이트를 마치려면 Muqun을 다시 실행하세요"
-
 #: src/app/commands.tsx
 msgid "Restore hidden default commands"
 msgstr "숨긴 기본 명령 복원"
@@ -6716,8 +6709,8 @@ msgid "Update Muqun Gateway on this host to use {agentName}."
 msgstr "{agentName}을(를) 사용하려면 이 호스트의 Muqun Gateway를 업데이트하세요"
 
 #: src/components/update-status-banner.tsx
-msgid "Update ready · restarting…"
-msgstr "업데이트 준비 완료 · 다시 실행 중…"
+msgid "Update ready · applies on next launch"
+msgstr "업데이트 준비 완료 · 다음 실행 시 적용"
 
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"
