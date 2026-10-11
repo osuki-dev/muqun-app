@@ -492,6 +492,7 @@ export interface AgentComposerProps {
   toolbarLeading?: React.ReactNode;
   /** Optional decoration inside the draft field, behind text and controls. */
   fieldBackground?: React.ReactNode;
+  fieldBackgroundColor?: string;
   fieldDecoration?: React.ReactNode;
   fieldDecorationOverhang?: number;
   hideFieldDecoration?: boolean;
@@ -604,6 +605,7 @@ export const AgentComposer = memo(function AgentComposer({
   accessory,
   toolbarLeading,
   fieldBackground,
+  fieldBackgroundColor,
   fieldDecoration,
   fieldDecorationOverhang = 0,
   hideFieldDecoration = false,
@@ -2016,6 +2018,7 @@ export const AgentComposer = memo(function AgentComposer({
             <View onLayout={(event) => setInputRowHeight(event.nativeEvent.layout.height)}>
               <TerminalComposer
                 fieldBackground={fieldBackground}
+                fieldBackgroundColor={fieldBackgroundColor}
                 fieldDecoration={decorationHidden ? undefined : fieldDecoration}
                 fieldTextTopInset={fieldTextTopInset}
                 onVoiceActiveChange={setVoiceActive}

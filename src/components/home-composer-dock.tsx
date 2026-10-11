@@ -30,7 +30,8 @@ import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useStableHandler } from '@/hooks/use-render-refs';
 import { META_SEPARATOR } from '@/lib/home-continue-row';
 import { boundSessionState, goalTitle, type PendingDispatch } from '@/lib/home-computer-cards';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
+import { homeComposerFieldFill } from '@/theme/home-composer-field';
 import type { AgentClientCommandId } from '@/lib/agent-commands';
 import { classifyAgentRequestError } from '@/lib/agent-request-error';
 import { unsupportedModelRefs } from '@/lib/agent-session-defaults';
@@ -169,6 +170,7 @@ export function HomeComposerDock({
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [optionsVisible, setOptionsVisible] = useState(false);
   const background = useSurfaceBackground();
+  const backgroundOpacity = useSurfaceBackgroundOpacity();
   const router = useRouter();
   const { showToast } = useToast();
   const { servers, chosen, openTargetPicker } = controller;
@@ -1114,6 +1116,11 @@ export function HomeComposerDock({
     <AgentComposer
       accessory={bar}
       fieldBackground={<HomeComposerBackground />}
+      fieldBackgroundColor={homeComposerFieldFill(
+        theme.colors.surface,
+        theme.colors.text,
+        backgroundOpacity
+      )}
       fieldDecoration={decorationOverhang > 0 ? <HomeComposerDecoration /> : undefined}
       fieldDecorationOverhang={decorationOverhang}
       hideFieldDecoration={optionsOpen || optionsVisible || Boolean(error)}
