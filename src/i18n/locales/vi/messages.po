@@ -2812,10 +2812,6 @@ msgstr "Đến các máy tính của bạn"
 msgid "Goal continuation"
 msgstr "Tiếp tục mục tiêu"
 
-#: src/components/home-composer-dock.tsx
-msgid "Goal for {agentName} · no attachments in a terminal"
-msgstr "Mục tiêu cho {agentName} · không đính kèm trong terminal"
-
 #: src/app/commands.tsx
 msgid "Group"
 msgstr "Nhóm"

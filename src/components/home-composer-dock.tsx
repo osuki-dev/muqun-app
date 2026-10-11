@@ -65,7 +65,7 @@ import {
 import type { HomeCommandResult } from '@/lib/home-commands';
 import { markPromptedSession } from '@/lib/prompted-agent-sessions';
 import { loadTerminalCatalog, useTerminalAgentCatalog } from '@/hooks/use-terminal-agent-catalog';
-import { agentSpawnRequest } from '@/lib/agent-spawn';
+import { agentSpawnRequest, terminalPromptWithAttachments } from '@/lib/agent-spawn';
 import { loadSessions, spawnAgent } from '@/lib/gateway-client';
 import { homeAgentOptions, resolveHomeAgent } from '@/lib/home-agent-choice';
 import { describeGatewayFailure } from '@/lib/network-error';
@@ -647,17 +647,20 @@ export function HomeComposerDock({
             }
             pendingId = useHomeTaskCards.getState().dispatched(serverId, text);
             const mentions = await mentionsIn(text, serverId);
-            const created = await createLedgerTask({
-              goal: text,
-              ...(mentions.length ? { mentions } : {}),
-              ...(params.agentId ? { agentId: params.agentId } : {}),
-              ...(folder ? { cwd: folder } : {}),
-              ...(params.mode ? { mode: params.mode } : {}),
-              ...(params.model ? { model: ledgerModelId(params.model) } : {}),
-              // Applied at session creation by a gateway that takes it (Gateway
-              // Task 15); an older one ignores it, and the switch below sets it.
-              ...(params.model?.variant ? { variant: params.model.variant } : {}),
-            });
+            const created = await createLedgerTask(
+              {
+                goal: text,
+                ...(mentions.length ? { mentions } : {}),
+                ...(params.agentId ? { agentId: params.agentId } : {}),
+                ...(folder ? { cwd: folder } : {}),
+                ...(params.mode ? { mode: params.mode } : {}),
+                ...(params.model ? { model: ledgerModelId(params.model) } : {}),
+                // Applied at session creation by a gateway that takes it (Gateway
+                // Task 15); an older one ignores it, and the switch below sets it.
+                ...(params.model?.variant ? { variant: params.model.variant } : {}),
+              },
+              owns
+            );
             if (!created) {
               setError(t`Could not start the task.`);
               return false;
@@ -773,12 +776,19 @@ export function HomeComposerDock({
             pendingId = useHomeTaskCards.getState().dispatched(serverId, text);
             if (viaLedger) {
               const mentions = await mentionsIn(text, serverId);
-              const created = await createLedgerTask({
-                goal: text,
-                ...(mentions.length ? { mentions } : {}),
-                agentId: kind,
-                ...(cwd ? { cwd } : {}),
-              });
+              if (!owns()) {
+                setError(t`Computer unavailable.`);
+                return false;
+              }
+              const created = await createLedgerTask(
+                {
+                  goal: text,
+                  ...(mentions.length ? { mentions } : {}),
+                  agentId: kind,
+                  ...(cwd ? { cwd } : {}),
+                },
+                owns
+              );
               if (!created) {
                 setError(t`Could not start the task.`);
                 return false;
@@ -805,10 +815,18 @@ export function HomeComposerDock({
               setError(t`This computer has no session to start an agent in.`);
               return false;
             }
-            await spawnAgent(
+            const spawned = await spawnAgent(
               sessionId,
               agentSpawnRequest({ agent: kind, prompt: text, ...(cwd ? { cwd } : {}) })
             );
+            if (
+              spawned.agentStarted === false ||
+              spawned.promptSubmitted === false ||
+              spawned.failure
+            ) {
+              setError(t`Could not start the task.`);
+              return false;
+            }
             return true;
           },
           (failure) => {
@@ -860,11 +878,13 @@ export function HomeComposerDock({
           terminalAgent.agentKind,
           terminalAgent.name,
           terminalAgent.confirmed,
-          text,
+          terminalPromptWithAttachments(text, attachments ?? []),
           ledgerPane,
           folder
         );
-      return dispatchTask(text, start);
+      // Optimistic dispatch can restore text only. Keep a file-bearing draft
+      // staged until the gateway actually accepts the complete first prompt.
+      return attachments?.length ? start() : dispatchTask(text, start);
     }
     if (heldByModelGate()) return Promise.resolve(false);
     // Attachments ride on a prompt to a session; the ledger route takes text
@@ -1104,10 +1124,8 @@ export function HomeComposerDock({
       selectedModel={selectedModel}
       modelName={modelName}
       canPickMode={canPickMode && !terminalAgent}
-      canAttach={features.attachments && !terminalAgent}
-      placeholder={
-        terminalAgent ? t`Goal for ${agentName} · no attachments in a terminal` : undefined
-      }
+      canAttach={Boolean(terminalAgent) || features.attachments}
+      attachmentTargetId={targetId}
       bottomInset={bottomInset}
       topInset={topInset}
       bar={edgeBar}

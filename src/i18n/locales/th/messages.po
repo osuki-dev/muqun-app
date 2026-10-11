@@ -2812,10 +2812,6 @@ msgstr "ไปยังคอมพิวเตอร์ของคุณ"
 msgid "Goal continuation"
 msgstr "ดำเนินเป้าหมายต่อ"
 
-#: src/components/home-composer-dock.tsx
-msgid "Goal for {agentName} · no attachments in a terminal"
-msgstr "เป้าหมายสำหรับ {agentName} · แนบไฟล์ในเทอร์มินัลไม่ได้"
-
 #: src/app/commands.tsx
 msgid "Group"
 msgstr "กลุ่ม"

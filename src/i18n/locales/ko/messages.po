@@ -2812,10 +2812,6 @@ msgstr "컴퓨터 목록으로"
 msgid "Goal continuation"
 msgstr "목표 이어가기"
 
-#: src/components/home-composer-dock.tsx
-msgid "Goal for {agentName} · no attachments in a terminal"
-msgstr "{agentName}에게 줄 목표 · 터미널에서는 첨부 불가"
-
 #: src/app/commands.tsx
 msgid "Group"
 msgstr "그룹"

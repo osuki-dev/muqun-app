@@ -9,12 +9,29 @@ import {
   agentIsInterruptible,
   agentProfilesFromResponse,
   agentSpawnRequest,
+  terminalPromptWithAttachments,
   canSpawnAgent,
   gatewaySupportsAgentSpawn,
   normalizeCwd,
   recentCwdsFromResponse,
   spawnedAgentFromResponse,
 } from '../agent-spawn';
+
+describe('terminal first prompts with uploaded files', () => {
+  test('keeps every host path in order, including attachment-only tasks', () => {
+    const paths = ['/home/ryu/uploads/a.webp', '/home/ryu/uploads/b.pdf'];
+    expect(terminalPromptWithAttachments('  Read these  ', paths)).toBe(
+      'Read these /home/ryu/uploads/a.webp /home/ryu/uploads/b.pdf'
+    );
+    expect(terminalPromptWithAttachments('', paths)).toBe(paths.join(' '));
+  });
+
+  test('the existing spawn envelope preserves file paths as prompt text', () => {
+    const prompt = terminalPromptWithAttachments('Read this', ['/home/a b/uploads/photo.webp']);
+    expect(agentSpawnRequest({ agent: 'codex', prompt })).toEqual({ agent: 'codex', prompt });
+    expect(terminalPromptWithAttachments('  Hello  ', [])).toBe('Hello');
+  });
+});
 
 describe('the capability gate', () => {
   test('a gateway that declares it can spawn is offered the entries', () => {
