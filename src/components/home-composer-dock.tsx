@@ -167,6 +167,7 @@ export function HomeComposerDock({
   const profile = useAppearanceProfile();
   const decorationOverhang = useHomeComposerDecorationOverhang();
   const [optionsOpen, setOptionsOpen] = useState(false);
+  const [optionsVisible, setOptionsVisible] = useState(false);
   const background = useSurfaceBackground();
   const router = useRouter();
   const { showToast } = useToast();
@@ -1027,12 +1028,19 @@ export function HomeComposerDock({
           variant="caption"
           color={theme.colors.danger}
           accessibilityLiveRegion="polite"
-          style={styles.error}>
+          style={[
+            styles.error,
+            {
+              backgroundColor: background(theme.colors.surface),
+              borderRadius: profile.chrome.noticeBanner,
+            },
+          ]}>
           {error}
         </Text>
       ) : null}
       <HomeComposerOptions
         open={optionsOpen}
+        onVisibilityChange={setOptionsVisible}
         computer={targetServer ? computerLabel : t`No computer online`}
         agent={agentName}
         folder={folderLabel}
@@ -1108,7 +1116,7 @@ export function HomeComposerDock({
       fieldBackground={<HomeComposerBackground />}
       fieldDecoration={decorationOverhang > 0 ? <HomeComposerDecoration /> : undefined}
       fieldDecorationOverhang={decorationOverhang}
-      hideFieldDecoration={optionsOpen}
+      hideFieldDecoration={optionsOpen || optionsVisible || Boolean(error)}
       fieldTextTopInset={6}
       toolbarLeading={parameterButton}
       hideParameterRow
@@ -1193,5 +1201,5 @@ function holdStagedFiles(reason: 'blur' | 'switch'): boolean {
 }
 
 const styles = StyleSheet.create({
-  error: { paddingHorizontal: 4, width: '100%' },
+  error: { padding: 8, marginBottom: 4, width: '100%' },
 });

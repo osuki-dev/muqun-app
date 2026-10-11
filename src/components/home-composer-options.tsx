@@ -4,15 +4,19 @@ import { ChevronDown, ChevronRight } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { PressableScale } from '@/components/pressable-scale';
 import { Text } from '@/components/text';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { timing } from '@/lib/motion';
 import type { ModeInfo } from '@/lib/agent-session';
 
 /** The choices behind Home's single toolbar control; draft ownership stays in the composer. */
 export function HomeComposerOptions({
   open,
+  onVisibilityChange,
   computer,
   agent,
   folder,
@@ -27,6 +31,7 @@ export function HomeComposerOptions({
   onMode,
 }: {
   open: boolean;
+  onVisibilityChange: (visible: boolean) => void;
   computer: string;
   agent: string;
   folder: string;
@@ -42,6 +47,8 @@ export function HomeComposerOptions({
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
+  const background = useSurfaceBackground();
   const { height } = useWindowDimensions();
   const [showModes, setShowModes] = useState(false);
   const [contentHeight, setContentHeight] = useState(0);
@@ -50,10 +57,16 @@ export function HomeComposerOptions({
   useEffect(() => {
     // Keep the content mounted inside its own shrinking viewport. An exiting
     // child outlives its Yoga layout and can otherwise draw behind the field.
-    visibleHeight.set(withTiming(open ? contentHeight : 0, timing('dropdown')));
+    if (open) onVisibilityChange(true);
+    visibleHeight.set(
+      withTiming(open ? contentHeight : 0, timing('dropdown'), (finished) => {
+        // A cancelled close must not reveal artwork beneath a reopened list.
+        if (finished && !open) scheduleOnRN(onVisibilityChange, false);
+      })
+    );
     opacity.set(withTiming(open ? 1 : 0, timing('micro')));
     if (!open) setShowModes(false);
-  }, [open, contentHeight, visibleHeight, opacity]);
+  }, [open, contentHeight, visibleHeight, opacity, onVisibilityChange]);
   const revealStyle = useAnimatedStyle(() => ({
     height: visibleHeight.get(),
     opacity: opacity.get(),
@@ -81,7 +94,14 @@ export function HomeComposerOptions({
       pointerEvents={open ? 'auto' : 'none'}
       accessibilityElementsHidden={!open}
       importantForAccessibility={open ? 'auto' : 'no-hide-descendants'}
-      style={[styles.viewport, revealStyle]}>
+      style={[
+        styles.viewport,
+        {
+          backgroundColor: background(theme.colors.surface),
+          borderRadius: profile.chrome.popover,
+        },
+        revealStyle,
+      ]}>
       <View
         style={styles.content}
         onLayout={(event) => setContentHeight(event.nativeEvent.layout.height)}>
