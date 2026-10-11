@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 
 import {
   isFullscreenSheetRoute,
+  isCenteredSettingsSheetRoute,
   sheetPresentationFor,
   sheetRouteKinds,
   sheetRouteOptions,
@@ -82,7 +83,7 @@ test('on a Pad non-settings pickers keep their existing form-sheet options', () 
   }
 });
 
-test('Android Pad settings constrain the whole sheet content without changing native detents', () => {
+test('Android Pad settings leave the host transparent and full-width without changing detents', () => {
   const routes = Object.keys(sheetRouteKinds).filter(
     (route) => route.startsWith('settings-') && sheetRouteKinds[route] === 'picker'
   );
@@ -92,22 +93,24 @@ test('Android Pad settings constrain the whole sheet content without changing na
     expect(pad.presentation).toBe('formSheet');
     expect(pad.sheetAllowedDetents).toEqual(phone.sheetAllowedDetents);
     expect(pad.sheetGrabberVisible).toBe(true);
-    expect(pad.contentStyle).toMatchObject({
-      width: '100%',
-      maxWidth: 640,
-      alignSelf: 'center',
-      // Screens gives fitToContents an absolute wrapper with start/end: 0.
-      // Explicit auto insets let Yoga use alignSelf instead of pinning left.
-      start: 'auto',
-      end: 'auto',
-      backgroundColor: 'transparent',
-      overflow: 'hidden',
-    });
+    expect(pad.contentStyle).toEqual({ backgroundColor: 'transparent' });
+    expect(isCenteredSettingsSheetRoute(route, true, 'android')).toBe(true);
     expect(pad.sheetElevation).toBe(0);
     expect(phone.contentStyle).toEqual({ backgroundColor: 'transparent' });
     expect(sheetRouteOptions(route, undefined, false, true, 'ios')).toEqual(phone);
     expect(sheetRouteOptions(route, undefined, true, true, 'android').animation).toBe('none');
   }
+});
+
+test('only Android Pad settings pickers get a centered card and interactive side gutters', () => {
+  for (const route of Object.keys(sheetRoutePresentations)) {
+    expect(isCenteredSettingsSheetRoute(route, true, 'android')).toBe(
+      route.startsWith('settings-') && sheetRouteKinds[route] === 'picker'
+    );
+    expect(isCenteredSettingsSheetRoute(route, false, 'android')).toBe(false);
+    expect(isCenteredSettingsSheetRoute(route, true, 'ios')).toBe(false);
+  }
+  expect(isCenteredSettingsSheetRoute('settings-unknown', true, 'android')).toBe(false);
 });
 
 test('the Android width cap does not narrow full-screen catalogues or other pickers', () => {
