@@ -7,7 +7,6 @@ export type VoiceServiceConfig = {
   apiKey: string;
   model: string;
   language: AppLocale | 'auto' | null;
-  autoInsert: boolean;
 };
 
 export function normalizeVoiceConfig(
@@ -15,7 +14,6 @@ export function normalizeVoiceConfig(
   apiKey: string,
   model: string,
   language: unknown = null,
-  autoInsert: unknown = true,
   mode: unknown = 'file'
 ): VoiceServiceConfig | null {
   try {
@@ -37,7 +35,6 @@ export function normalizeVoiceConfig(
       model: model.trim(),
       language:
         language === 'auto' ? 'auto' : (APP_LOCALES.find((locale) => locale === language) ?? null),
-      autoInsert: autoInsert !== false,
     };
   } catch {
     return null;
@@ -55,13 +52,12 @@ export function parseVoiceConfig(value: unknown): VoiceServiceConfig | null {
     typeof value.model === 'string'
     ? normalizeVoiceConfig(
         // Older configurations stored a base URL; new ones store the exact endpoint.
-        'version' in value && (value.version === 2 || value.version === 3)
+        'version' in value && (value.version === 2 || value.version === 3 || value.version === 4)
           ? value.url
           : `${value.url.replace(/\/+$/, '').replace(/\/audio\/transcriptions$/, '')}/audio/transcriptions`,
         value.apiKey,
         value.model,
         'language' in value ? value.language : null,
-        'autoInsert' in value ? value.autoInsert : true,
         'mode' in value ? value.mode : 'file'
       )
     : null;

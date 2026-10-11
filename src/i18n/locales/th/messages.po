@@ -542,6 +542,7 @@ msgstr "เพิ่มแล้ว"
 msgid "After recording"
 msgstr "หลังบันทึกเสียง"
 
+#: src/components/home-composer-options.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Agent"
 msgstr "เอเจนต์"
@@ -780,10 +781,6 @@ msgstr "กำลังสอบถาม Gateway เกี่ยวกับร
 #: src/components/server-terminal-workspace.tsx
 msgid "Assign this to an assistant"
 msgstr "มอบหมายงานนี้ให้ผู้ช่วย"
-
-#: src/components/home-composer-dock.tsx
-msgid "Assigned to {computerLabel}, {agentName}"
-msgstr "มอบหมายให้ {computerLabel}, {agentName}"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Assigning a task is unavailable"
@@ -1156,13 +1153,13 @@ msgstr "เลือกผู้ช่วย"
 msgid "Choose an SSH host."
 msgstr "เลือกโฮสต์ SSH"
 
-#: src/components/home-composer-dock.tsx
-msgid "Choose another computer"
-msgstr "เลือกคอมพิวเตอร์เครื่องอื่น"
-
 #: src/components/server-terminal-workspace.tsx
 msgid "Choose another terminal"
 msgstr "เลือกเทอร์มินัลอื่น"
+
+#: src/components/home-composer-dock.tsx
+msgid "Choose computer, agent, folder, mode and model"
+msgstr "เลือกคอมพิวเตอร์ เอเจนต์ โฟลเดอร์ โหมด และโมเดล"
 
 #: src/components/attachment-menu.tsx
 msgid "Choose files"
@@ -1175,14 +1172,6 @@ msgstr "เลือกสไตล์หน้าแรกและส่วน
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
 msgstr "เลือกโปรเจกต์"
-
-#: src/components/home-composer-dock.tsx
-msgid "Choose the agent Home starts on this computer"
-msgstr "เลือกเอเจนต์ที่หน้าแรกจะเริ่มบนคอมพิวเตอร์เครื่องนี้"
-
-#: src/components/home-composer-dock.tsx
-msgid "Choose the folder this computer starts work in"
-msgstr "เลือกโฟลเดอร์ที่คอมพิวเตอร์เครื่องนี้จะเริ่มงาน"
 
 #: src/components/changes-sheet.tsx
 msgid "Choose which changes to show"
@@ -1387,6 +1376,7 @@ msgstr "เสร็จสิ้น"
 #: src/app/artifacts.tsx
 #: src/app/panels.tsx
 #: src/components/app-drawer.tsx
+#: src/components/home-composer-options.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer"
 msgstr "คอมพิวเตอร์"
@@ -1419,10 +1409,6 @@ msgstr "คอมพิวเตอร์ไม่พร้อมใช้งา
 #: src/components/home-overview.tsx
 msgid "Computers"
 msgstr "คอมพิวเตอร์"
-
-#: src/app/settings-voice.tsx
-msgid "Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe."
-msgstr "ตั้งค่าบริการเสียง แล้วกดส่งค้างไว้เพื่อบันทึก แตะภาพเคลื่อนไหวเพื่อหยุดและแปลงเป็นข้อความ"
 
 #: src/components/task-row.tsx
 msgid "Confirm cancel"
@@ -2466,10 +2452,6 @@ msgstr "ป้อน URL WSS สำหรับเรียลไทม์ที
 msgid "Enter the {PAIRING_CODE_CHARACTER_COUNT}-character code."
 msgstr "ป้อนรหัส {PAIRING_CODE_CHARACTER_COUNT} ตัวอักษร"
 
-#: src/app/settings-voice.tsx
-msgid "Enter the full transcription endpoint. Muqun uses this URL as entered with an OpenAI-compatible request. Your API key is stored securely on this device."
-msgstr "ป้อน URL ของบริการถอดเสียงแบบเต็ม Muqun จะส่งคำขอที่เข้ากันได้กับ OpenAI ไปยัง URL ที่ป้อนโดยไม่แก้ไข คีย์ API ของคุณจะถูกเก็บไว้อย่างปลอดภัยบนอุปกรณ์นี้"
-
 #: src/app/explore.tsx
 msgid "Enter the Gateway's address instead."
 msgstr "ป้อนที่อยู่ Gateway แทน"
@@ -2668,13 +2650,13 @@ msgstr "แก้ไขเทอร์มินัลที่ค้างอย
 msgid "Fold the tool steps away"
 msgstr "ซ่อนขั้นตอนการใช้เครื่องมือ"
 
+#: src/components/home-composer-options.tsx
+msgid "Folder"
+msgstr "โฟลเดอร์"
+
 #: src/components/agent-workspace-sheet.tsx
 msgid "Folder is missing"
 msgstr "ไม่พบโฟลเดอร์"
-
-#: src/components/home-composer-dock.tsx
-msgid "Folder: {folderLabel}"
-msgstr "โฟลเดอร์: {folderLabel}"
 
 #: src/components/agent-workspace-sheet.tsx
 msgid "Folders"
@@ -2889,6 +2871,10 @@ msgstr "ซ่อนรายการคอมพิวเตอร์"
 msgid "Hide the simulator"
 msgstr "ซ่อนเครื่องจำลอง"
 
+#: src/app/settings-voice.tsx
+msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
+msgstr "กดปุ่มส่งค้างไว้เพื่อพูด หยุดบันทึกเพื่อเพิ่มข้อความลงในฉบับร่าง จากนั้นแก้ไขและส่ง"
+
 #: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Home"
@@ -2898,10 +2884,6 @@ msgstr "หน้าแรก"
 #: src/components/settings-servers.tsx
 msgid "Home agent"
 msgstr "เอเจนต์ของหน้าแรก"
-
-#: src/components/home-composer-dock.tsx
-msgid "Home agent: {agentName}"
-msgstr "เอเจนต์ของหน้าแรก: {agentName}"
 
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Home effects · development only"
@@ -3034,14 +3016,6 @@ msgstr "แทรก {0} {1}"
 #: src/i18n/labels.ts
 msgid "Insert mode"
 msgstr "โหมดแทรก"
-
-#: src/app/settings-voice.tsx
-msgid "Insert recognized text into the draft without sending. Turn off to review first."
-msgstr "แทรกข้อความที่รู้จำลงในฉบับร่างโดยไม่ส่ง ปิดเพื่อตรวจสอบก่อน"
-
-#: src/app/settings-voice.tsx
-msgid "Insert text automatically"
-msgstr "แทรกข้อความอัตโนมัติ"
 
 #: src/i18n/labels.ts
 msgid "Install a package"
@@ -3315,6 +3289,10 @@ msgstr "แสดงทุกพาเนล ไม่ว่าจะมีเ�
 msgid "List only the panes running a recognised agent."
 msgstr "แสดงเฉพาะพาเนลที่กำลังเรียกใช้เอเจนต์ที่รู้จัก"
 
+#: src/components/voice-input-button.tsx
+msgid "Listening…"
+msgstr "กำลังฟัง…"
+
 #: src/components/settings-alerts.tsx
 msgid "Live Activity"
 msgstr "กิจกรรมสด"
@@ -3452,6 +3430,10 @@ msgstr "คัดลอกข้อความไปยังคลิปบอ
 msgid "Message not sent"
 msgstr "ยังไม่ได้ส่งข้อความ"
 
+#: src/components/home-composer-options.tsx
+msgid "Mode"
+msgstr "โหมด"
+
 #. placeholder {0}: part.mode
 #: src/components/agent-message-block.tsx
 msgid "Mode · {0}"
@@ -3468,6 +3450,7 @@ msgstr "โหมด · {0} → {1}"
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/home-composer-dock.tsx
+#: src/components/home-composer-options.tsx
 msgid "Model"
 msgstr "โมเดล"
 
@@ -4005,6 +3988,7 @@ msgstr "ยังไม่มี — คำตอบ “อนุญาตเส
 msgid "Off"
 msgstr "ปิด"
 
+#: src/components/home-composer-options.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Offline"
@@ -4211,6 +4195,10 @@ msgstr "เปิดรายละเอียดการเรียกใช
 #: src/components/session-map.tsx
 msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
 msgstr "เปิดพื้นที่ทำงาน {0} {panelCount, plural, other {กำลังทำงาน # รายการ}} กดค้างเพื่อปิด"
+
+#: src/app/settings-voice.tsx
+msgid "OpenAI requires an API key and model. Compatible services may provide their own defaults. Your API key is stored securely on this device."
+msgstr "OpenAI ต้องใช้คีย์ API และโมเดล บริการที่รองรับอาจมีค่าเริ่มต้นของตัวเอง คีย์ API ของคุณจะถูกจัดเก็บอย่างปลอดภัยบนอุปกรณ์นี้"
 
 #: src/components/launch-intro.tsx
 msgid "OpenCode, DeepSeek and T3 Code side by side, each with its own tile, sessions and workbench."
@@ -4714,10 +4702,6 @@ msgid "RECONNECTING…"
 msgstr "กำลังเชื่อมต่อใหม่…"
 
 #: src/components/voice-input-button.tsx
-msgid "Record again"
-msgstr "บันทึกเสียงใหม่"
-
-#: src/components/voice-input-button.tsx
 msgid "Recording failed."
 msgstr "บันทึกเสียงไม่สำเร็จ"
 
@@ -4842,10 +4826,6 @@ msgstr "ต้องยืนยันเมื่อเปิดแอปแล
 #: src/components/ssh-host-form.tsx
 msgid "Required."
 msgstr "จำเป็น"
-
-#: src/app/settings-voice.tsx
-msgid "Requires an OpenAI Realtime-compatible WebSocket endpoint and a live transcription model. Text appears as you speak; tap to stop and finish. Other streaming protocols are not supported."
-msgstr "ต้องใช้ WebSocket ที่รองรับ OpenAI Realtime และโมเดลถอดเสียงสด ข้อความจะแสดงขณะพูด แตะเพื่อหยุดและเสร็จสิ้น ยังไม่รองรับโปรโตคอลสตรีมมิงอื่น"
 
 #: src/components/settings-alerts.tsx
 msgid "Requires iOS 16.1 or later."
@@ -5248,10 +5228,6 @@ msgstr "ส่งข้อความ"
 #: src/components/server-terminal-workspace.tsx
 msgid "Send this task to {assignmentLabel}"
 msgstr "ส่งงานนี้ให้ {assignmentLabel}"
-
-#: src/components/home-composer-dock.tsx
-msgid "Send to {computerLabel}"
-msgstr "ส่งไปยัง {computerLabel}"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
@@ -5776,6 +5752,10 @@ msgstr "หยุดแล้ว"
 msgid "Storage"
 msgstr "พื้นที่จัดเก็บ"
 
+#: src/app/settings-voice.tsx
+msgid "Streams speech while you talk. Requires an OpenAI Realtime-compatible transcription endpoint."
+msgstr "สตรีมเสียงขณะที่คุณพูด ต้องใช้ปลายทางการถอดเสียงที่รองรับ OpenAI Realtime"
+
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 msgid "Subagent"
@@ -5922,6 +5902,10 @@ msgstr "งานสำหรับ {assignmentLabel}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for a new {0}"
 msgstr "งานสำหรับ {0} ใหม่"
+
+#: src/components/home-composer-dock.tsx
+msgid "Task options"
+msgstr "ตัวเลือกงาน"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-tasks-sheet.tsx
@@ -6517,10 +6501,6 @@ msgid "Transcribing…"
 msgstr "กำลังถอดเสียง…"
 
 #: src/components/voice-input-button.tsx
-msgid "Transcript"
-msgstr "ข้อความที่ถอดเสียง"
-
-#: src/components/voice-input-button.tsx
 msgid "Transcription failed. Check your speech service and try again."
 msgstr "ถอดเสียงไม่สำเร็จ ตรวจสอบบริการเสียงแล้วลองอีกครั้ง"
 
@@ -6799,10 +6779,6 @@ msgstr "ใช้รหัสผ่านอุปกรณ์"
 msgid "Use system font"
 msgstr "ใช้ฟอนต์ระบบ"
 
-#: src/components/voice-input-button.tsx
-msgid "Use text"
-msgstr "แทรกข้อความ"
-
 #: src/components/session-map.tsx
 msgid "Use the {name} session, {kind}"
 msgstr "ใช้เซสชัน {name} {kind}"
@@ -6855,7 +6831,6 @@ msgstr "แสดงการใช้บริบทปัจจุบันเ
 #: src/app/settings-voice.tsx
 #: src/app/settings.tsx
 #: src/components/terminal-composer.tsx
-#: src/components/voice-input-button.tsx
 msgid "Voice to text"
 msgstr "เสียงเป็นข้อความ"
 

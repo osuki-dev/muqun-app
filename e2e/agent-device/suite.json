@@ -340,7 +340,11 @@
       { "include": "subflows/open-voice-settings" },
       { "run": "flows/voice-recording.ad#configure" },
       { "include": "subflows/open-demo" },
-      { "run": "flows/voice-recording.ad#record" }
+      { "run": "flows/voice-recording.ad#record" },
+      {
+        "when": { "env": "PLATFORM", "equals": "android" },
+        "steps": [{ "run": "flows/voice-recording.ad#back" }]
+      }
     ],
     "flows/voice-realtime": [
       { "include": "subflows/open-voice-settings" },

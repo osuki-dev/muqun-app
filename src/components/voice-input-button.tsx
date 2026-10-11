@@ -1,30 +1,72 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { Spinner, useThemeTokens } from '@osuki-dev/ui';
+import { useIsFocused } from 'expo-router';
+import { Check, RotateCcw, Square, X } from 'lucide-react-native';
+import { useEffect, useRef, useState } from 'react';
+import {
+  AppState,
+  BackHandler,
+  Keyboard,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withTiming,
+  type SharedValue,
+} from 'react-native-reanimated';
 import { Text } from '@/components/text';
+import { PressableScale } from '@/components/pressable-scale';
 import { useResolvedLocale } from '@/i18n/provider';
-import { withAlpha } from '@/lib/color';
-import { FontedTextInput } from '@/components/fonted-text-input';
-import { useInterfaceFontFamily } from '@/hooks/use-user-fonts';
+import { useLatestReader } from '@/hooks/use-render-refs';
+import { DURATION, fadeIn, timing } from '@/lib/motion';
+import { VoiceInputError } from '@/lib/voice-input-session';
+import { voiceRecorderAvailable } from '@/lib/voice-recorder-capability';
+import { VoiceInputSession, type VoiceState } from '@/lib/voice-input';
 import {
   loadVoiceSettings,
   useVoiceSettings,
   type VoiceServiceConfig,
 } from '@/stores/voice-settings';
-import { SheetHandle } from '@/components/sheet-route-frame';
-import { SheetFrame } from '@/components/sheet-ground';
-import { DURATION, timing } from '@/lib/motion';
-import { useVoiceInput, clearVoiceInput } from '@/stores/voice-input';
-import { useRouter } from 'expo-router';
-import { VoiceRecordingVisual } from '@/components/voice-recording-visual';
-import { Check, RotateCcw, X } from 'lucide-react-native';
-import { useEffect, useRef, useState } from 'react';
-import { AppState, Keyboard, Platform, ScrollView, StyleSheet, View } from 'react-native';
-import { useSharedValue, withTiming } from 'react-native-reanimated';
-import { PressableScale } from '@/components/pressable-scale';
-import { useLatestReader } from '@/hooks/use-render-refs';
-import { VoiceInputError } from '@/lib/voice-input-session';
-import { voiceRecorderAvailable } from '@/lib/voice-recorder-capability';
-import { VoiceInputSession, type VoiceState } from '@/lib/voice-input';
+import {
+  useVoiceInput,
+  clearVoiceInput,
+  claimVoiceInput,
+  deliverVoiceInput,
+} from '@/stores/voice-input';
+
+const enter = fadeIn('short');
+const BAR_WEIGHTS = [0.3, 0.55, 0.8, 0.45, 1, 0.7, 0.95, 0.6, 0.85, 0.4, 0.65, 0.35];
+
+function MeterBar({
+  level,
+  weight,
+  active,
+}: {
+  level: SharedValue<number>;
+  weight: number;
+  active: boolean;
+}) {
+  const theme = useThemeTokens();
+  const reduced = useReducedMotion();
+  const motion = useAnimatedStyle(() => ({
+    transform: [
+      {
+        scaleY:
+          active && !reduced
+            ? 0.15 + Math.sqrt(Math.max(0, Math.min(1, level.get()))) * weight * 0.85
+            : 0.25,
+      },
+    ],
+  }));
+  return (
+    <Animated.View style={[styles.meterBar, { backgroundColor: theme.colors.primary }, motion]} />
+  );
+}
 
 function LiveTranscript({ text }: { text: string }) {
   const theme = useThemeTokens();
@@ -68,6 +110,7 @@ function VoiceRecording({
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const reduced = useReducedMotion();
   const [state, setState] = useState<VoiceState>('starting');
   const [seconds, setSeconds] = useState(0);
   const [error, setError] = useState('');
@@ -80,19 +123,14 @@ function VoiceRecording({
       new VoiceInputSession(
         config,
         language,
-        (next) => {
-          setState(next);
-        },
+        setState,
         (value, duration) => {
           level.set(withTiming(value, timing('button')));
           setSeconds(Math.floor(duration));
         },
         (text) => {
-          if (text.trim()) {
-            setResult(text.trim());
-          } else {
-            setError(t`No speech detected. Please try again.`);
-          }
+          if (text.trim()) setResult(text.trim());
+          else setError(t`No speech detected. Please try again.`);
         },
         (failure) =>
           setError(
@@ -115,22 +153,37 @@ function VoiceRecording({
     void session.start();
     const listener = AppState.addEventListener('change', (next) => {
       if (next === 'background') {
-        session.cancel();
+        void session.cancel();
         latest().onClose();
       }
     });
+    const back = BackHandler.addEventListener('hardwareBackPress', () => {
+      void session.cancel();
+      latest().onClose();
+      return true;
+    });
     return () => {
       listener.remove();
-      session.cancel();
+      back.remove();
+      void session.cancel();
     };
   }, [session, latest]);
-  // Give the completed visual one transition before delivering the draft. A
-  // cancelled/unmounted sheet must never insert a late transcript.
+  // The confirmation belongs to this recording attempt. Unmounting/cancelling
+  // clears it, and the owner also checks identity before touching the draft.
   useEffect(() => {
     if (result === null || error) return;
-    const timeout = setTimeout(() => latest().onText(result), DURATION.long);
+    const timeout = setTimeout(() => latest().onText(result), reduced ? 0 : DURATION.long);
     return () => clearTimeout(timeout);
-  }, [result, error, latest]);
+  }, [result, error, latest, reduced]);
+  const status = error
+    ? t`Try again`
+    : result !== null
+      ? t`Done`
+      : state === 'starting'
+        ? t`Preparing microphone…`
+        : state === 'processing'
+          ? t`Transcribing…`
+          : t`Listening…`;
   const visualState = error
     ? 'error'
     : result !== null
@@ -140,66 +193,92 @@ function VoiceRecording({
         : state;
   const busy = state !== 'recording' || result !== null;
   return (
-    <View style={styles.recording}>
-      <PressableScale
-        accessibilityRole="button"
-        accessibilityLabel={
-          error
-            ? t`Try again`
-            : result !== null
-              ? t`Done`
-              : state === 'starting'
-                ? t`Preparing microphone…`
-                : state === 'processing'
-                  ? t`Transcribing…`
-                  : t`Stop and transcribe`
-        }
-        accessibilityState={{
-          busy: state === 'starting' || (state === 'processing' && !error && result === null),
-        }}
-        testID="voice-recording-stop"
-        disabled={busy && !error}
-        onPress={() => {
-          if (error) onRetry();
-          else void session.finish();
-        }}
-        style={styles.stage}>
-        <VoiceRecordingVisual level={level} state={visualState} />
-        <View pointerEvents="none" style={styles.visualReadout}>
-          {error ? (
-            <RotateCcw size={22} color={theme.colors.danger} strokeWidth={1.5} />
-          ) : result !== null ? (
-            <Check size={24} color={theme.colors.success} strokeWidth={1.5} />
+    <Animated.View entering={enter} testID="voice-inline-panel" style={styles.recording}>
+      <View style={styles.header}>
+        <Text style={styles.status} color={theme.colors.text} accessibilityLiveRegion="polite">
+          {status}
+        </Text>
+        <Text
+          color={theme.colors.textMuted}
+          style={
+            styles.elapsed
+          }>{`${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')} / 2:00`}</Text>
+      </View>
+      <Animated.View
+        key={visualState}
+        entering={enter}
+        testID={`voice-visual-${visualState}`}
+        style={styles.readout}>
+        {error ? (
+          <RotateCcw size={22} color={theme.colors.danger} />
+        ) : result !== null ? (
+          <Animated.View entering={enter}>
+            <Check size={24} color={theme.colors.success} />
+          </Animated.View>
+        ) : state === 'processing' || state === 'starting' ? (
+          reduced ? (
+            <Text color={theme.colors.textMuted}>···</Text>
           ) : (
-            <>
-              <Text color={theme.colors.textMuted} style={styles.elapsed}>
-                {`${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`}
-              </Text>
-              <Text color={theme.colors.textSubtle} style={styles.limit}>
-                / 2:00
-              </Text>
-            </>
+            <Spinner size="sm" color={theme.colors.primary} />
+          )
+        ) : (
+          <View testID="voice-recording-meter" style={styles.meter}>
+            {BAR_WEIGHTS.map((weight, index) => (
+              <MeterBar key={index} weight={weight} level={level} active={state === 'recording'} />
+            ))}
+          </View>
+        )}
+        <View style={styles.readoutText}>
+          {error ? (
+            <Text color={theme.colors.danger} style={styles.detail}>
+              {error}
+            </Text>
+          ) : result || partial ? (
+            <LiveTranscript text={result ?? partial} />
+          ) : (
+            <Text
+              color={theme.colors.textMuted}
+              style={styles.detail}>{t`Audio is sent to your configured speech service`}</Text>
           )}
         </View>
-      </PressableScale>
-      {config.mode === 'realtime' && !!partial && !error && (
-        <LiveTranscript text={result ?? partial} />
-      )}
-      {!!error && (
-        <Text
-          accessibilityLiveRegion="polite"
-          color={theme.colors.textMuted}
-          style={styles.statusDetail}>
-          {error}
-        </Text>
-      )}
-      <Text color={theme.colors.textSubtle} style={styles.privacy}>
-        {t`Audio is sent to your configured speech service`}
-      </Text>
-    </View>
+      </Animated.View>
+      <View style={styles.actions}>
+        <PressableScale
+          accessibilityRole="button"
+          accessibilityLabel={t`Cancel`}
+          testID="voice-recording-cancel"
+          onPress={() => {
+            void session.cancel();
+            onClose();
+          }}
+          style={styles.action}>
+          <X size={18} color={theme.colors.textMuted} />
+          <Text color={theme.colors.textMuted}>{t`Cancel`}</Text>
+        </PressableScale>
+        <PressableScale
+          accessibilityRole="button"
+          accessibilityLabel={error ? t`Try again` : t`Stop and transcribe`}
+          accessibilityState={{ busy: busy && !error && result === null }}
+          testID="voice-recording-stop"
+          disabled={busy && !error}
+          onPress={() => {
+            if (error) onRetry();
+            else void session.finish();
+          }}
+          style={[styles.action, { opacity: busy && !error ? 0.45 : 1 }]}>
+          {error ? (
+            <RotateCcw size={18} color={theme.colors.primary} />
+          ) : (
+            <Square size={16} color={theme.colors.primary} />
+          )}
+          <Text color={theme.colors.primary}>{error ? t`Try again` : t`Stop and transcribe`}</Text>
+        </PressableScale>
+      </View>
+    </Animated.View>
   );
 }
 
+/** One inline recorder, owned by the exact composer/context that started it. */
 export function useVoiceInputTrigger({
   context,
   onText,
@@ -209,20 +288,42 @@ export function useVoiceInputTrigger({
   onText: (text: string) => void;
   disabled: boolean;
 }) {
-  const router = useRouter();
+  const focused = useIsFocused();
   const [owner] = useState(() => ({}));
   const enabled = useVoiceSettings((state) => state.config !== null);
-  const read = useLatestReader(onText);
+  const request = useVoiceInput((state) => state.request);
+  const read = useLatestReader({ onText, context, disabled, focused });
   useEffect(() => {
     if (Platform.OS !== 'web') void loadVoiceSettings();
   }, []);
   useEffect(() => () => clearVoiceInput(owner), [owner, context]);
-  if (!context || disabled || !voiceRecorderAvailable() || !enabled) return undefined;
-  return () => {
-    if (!useVoiceSettings.getState().config || useVoiceInput.getState().request) return;
-    Keyboard.dismiss();
-    useVoiceInput.setState({ request: { owner, deliver: (text) => read()(text) } });
-    router.push('/voice-input');
+  useEffect(() => {
+    if (!focused || disabled || !enabled) clearVoiceInput(owner);
+  }, [focused, disabled, enabled, owner]);
+  const allowed = !!context && focused && !disabled && voiceRecorderAvailable() && enabled;
+  const current =
+    allowed && request?.owner === owner && request.context === context ? request : null;
+  return {
+    open:
+      allowed && !request
+        ? () => {
+            if (!useVoiceSettings.getState().config) return;
+            if (
+              claimVoiceInput(owner, context, (text) => {
+                const latest = read();
+                if (latest.context === context && !latest.disabled && latest.focused)
+                  latest.onText(text);
+              })
+            )
+              Keyboard.dismiss();
+          }
+        : undefined,
+    panel: current ? (
+      <VoiceInputPanel
+        onText={(text) => deliverVoiceInput(current, text)}
+        onClose={() => clearVoiceInput(owner)}
+      />
+    ) : null,
   };
 }
 
@@ -233,143 +334,40 @@ export function VoiceInputPanel({
   onText: (text: string) => void;
   onClose: () => void;
 }) {
-  const { t } = useLingui();
-  const theme = useThemeTokens();
   const appLocale = useResolvedLocale();
   const [attempt, setAttempt] = useState(0);
-  const [transcript, setTranscript] = useState<string | null>(null);
   const [config] = useState(() => useVoiceSettings.getState().config);
-  const fontFamily = useInterfaceFontFamily() ?? undefined;
   if (!config) return null;
-  const retry = () => {
-    setTranscript(null);
-    setAttempt((value) => value + 1);
-  };
   return (
-    <ScrollView
-      nestedScrollEnabled
-      keyboardShouldPersistTaps="handled"
-      showsVerticalScrollIndicator={false}>
-      <SheetFrame overdrawBottom={40} frosted>
-        <View style={styles.content}>
-          <SheetHandle />
-          <View style={styles.panelHeader}>
-            <Text variant="label">{t`Voice to text`}</Text>
-            <PressableScale
-              accessibilityRole="button"
-              accessibilityLabel={t`Cancel`}
-              testID="voice-recording-cancel"
-              onPress={onClose}
-              style={styles.mic}>
-              <X size={22} color={theme.colors.textMuted} />
-            </PressableScale>
-          </View>
-          {transcript !== null ? (
-            <View style={styles.review}>
-              <Text variant="label">{t`Transcript`}</Text>
-              <FontedTextInput
-                accessibilityLabel={t`Transcript`}
-                multiline
-                scrollEnabled
-                value={transcript}
-                onChangeText={setTranscript}
-                style={[
-                  styles.transcript,
-                  {
-                    color: theme.colors.text,
-                    backgroundColor: withAlpha(theme.colors.surface, 0.98),
-                    fontFamily,
-                  },
-                ]}
-                selectionColor={theme.colors.primary}
-              />
-              <View style={styles.reviewActions}>
-                <PressableScale accessibilityRole="button" onPress={retry} style={styles.action}>
-                  <Text color={theme.colors.text}>{t`Record again`}</Text>
-                </PressableScale>
-                <PressableScale
-                  accessibilityRole="button"
-                  disabled={!transcript.trim()}
-                  onPress={() => {
-                    onText(transcript.trim());
-                    onClose();
-                  }}
-                  style={[
-                    styles.action,
-                    {
-                      backgroundColor: theme.colors.primary,
-                      opacity: transcript.trim() ? 1 : 0.45,
-                    },
-                  ]}>
-                  <Text color={theme.colors.onPrimary}>{t`Use text`}</Text>
-                </PressableScale>
-              </View>
-            </View>
-          ) : (
-            <VoiceRecording
-              key={attempt}
-              config={config}
-              language={config.language ?? appLocale}
-              onText={(text) => {
-                if (config.autoInsert) {
-                  onText(text);
-                  onClose();
-                } else {
-                  setTranscript(text);
-                }
-              }}
-              onClose={onClose}
-              onRetry={retry}
-            />
-          )}
-        </View>
-      </SheetFrame>
-    </ScrollView>
+    <VoiceRecording
+      key={attempt}
+      config={config}
+      language={config.language ?? appLocale}
+      onText={onText}
+      onClose={onClose}
+      onRetry={() => setAttempt((value) => value + 1)}
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  liveTranscript: { width: '100%', maxWidth: 560, maxHeight: 160 },
-  liveText: { fontSize: 18, lineHeight: 28, textAlign: 'center', paddingVertical: 8 },
-  mic: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  content: { alignItems: 'center', paddingTop: 12, paddingBottom: 24 },
-  panelHeader: {
-    width: '100%',
-    maxWidth: 640,
-    paddingLeft: 24,
-    paddingRight: 12,
+  recording: { width: '100%', paddingHorizontal: 12, paddingTop: 10, minHeight: 118, gap: 6 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  status: { fontSize: 14, lineHeight: 20, flexShrink: 1 },
+  elapsed: { fontSize: 12, fontVariant: ['tabular-nums'] },
+  readout: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 38 },
+  readoutText: { flex: 1 },
+  liveTranscript: { maxHeight: 68 },
+  liveText: { fontSize: 15, lineHeight: 22 },
+  detail: { fontSize: 13, lineHeight: 19 },
+  meter: { height: 32, flexDirection: 'row', alignItems: 'center', gap: 3 },
+  meterBar: { width: 3, height: 30, borderRadius: 2 },
+  actions: { flexDirection: 'row', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' },
+  action: {
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 6,
+    paddingHorizontal: 4,
   },
-  review: { width: '100%', maxWidth: 640, paddingHorizontal: 20, paddingTop: 48, gap: 16 },
-  transcript: {
-    minHeight: 120,
-    maxHeight: 200,
-    borderRadius: 16,
-    padding: 16,
-    fontSize: 17,
-    lineHeight: 25,
-    textAlignVertical: 'top',
-  },
-  reviewActions: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', gap: 12 },
-  action: { paddingHorizontal: 18, paddingVertical: 12, borderRadius: 18, minHeight: 44 },
-  recording: {
-    width: '100%',
-    alignItems: 'center',
-    gap: 20,
-    paddingHorizontal: 24,
-    paddingBottom: 8,
-  },
-  stage: { width: 280, height: 260, alignItems: 'center', justifyContent: 'center' },
-  visualReadout: {
-    ...StyleSheet.absoluteFill,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 2,
-  },
-  elapsed: { fontSize: 19, lineHeight: 25, fontVariant: ['tabular-nums'] },
-  limit: { fontSize: 11, lineHeight: 15, fontVariant: ['tabular-nums'] },
-  statusDetail: { textAlign: 'center' },
-  privacy: { maxWidth: 320, textAlign: 'center' },
 });

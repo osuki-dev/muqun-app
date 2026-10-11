@@ -18,15 +18,17 @@ back --system
 
 # section record
 wait "id=\"composer-send\"" 10000
-# An empty draft can record, but an ordinary tap must not open the voice sheet.
+# An empty draft can record, but an ordinary tap must not start recording.
 press "id=\"composer-send\""
 is hidden "id=\"voice-recording-stop\""
 longpress "id=\"composer-send\"" 700
 wait "id=\"voice-visual-recording\"" 15000
 is visible "id=\"voice-recording-stop\""
-wait "id=\"voice-recording-logo\"" 10000
+wait "id=\"voice-inline-panel\"" 10000
+is hidden "id=\"terminal-composer-input\""
+wait "id=\"voice-recording-meter\"" 10000
 screenshot "shots/voice-recording.png"
-# The animation itself stops recording. The isolated invalid service fails safely.
+# The inline stop action finishes recording. The isolated invalid service fails safely.
 press "id=\"voice-recording-stop\""
 wait "label=\"Try again\"" 20000
 is visible "id=\"voice-visual-error\""
@@ -42,6 +44,14 @@ wait "id=\"voice-visual-recording\"" 15000
 press "id=\"voice-recording-cancel\""
 wait "id=\"terminal-composer-input\"" 10000
 is visible "id=\"terminal-composer-input\" value=\"Keep this voice recording draft\""
+
+# section back
+# Android Back cancels the inline recording without leaving this composer.
+longpress "id=\"composer-send\"" 700
+wait "id=\"voice-visual-recording\"" 15000
+back --system
+wait "id=\"terminal-composer-input\" value=\"Keep this voice recording draft\"" 10000
+is hidden "id=\"voice-inline-panel\""
 
 # section clear
 wait "id=\"settings-voice-sheet\"" 10000
