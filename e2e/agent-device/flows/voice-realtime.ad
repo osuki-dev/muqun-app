@@ -22,5 +22,6 @@ wait "label=\"Realtime transcription disconnected. Check your connection and spe
 is visible "id=\"voice-recording-stop\" label=\"Try again\""
 screenshot "shots/voice-realtime-disconnected.png"
 press "id=\"voice-recording-cancel\""
+wait absent "id=\"voice-inline-panel\"" 10000
 wait "id=\"terminal-composer-input\" value=\"Keep this realtime draft\"" 10000
 is hidden "id=\"voice-recording-stop\""

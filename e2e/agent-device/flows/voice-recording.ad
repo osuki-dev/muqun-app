@@ -35,6 +35,8 @@ is visible "id=\"voice-visual-error\""
 screenshot "shots/voice-error.png"
 is visible "id=\"voice-recording-stop\""
 press "id=\"voice-recording-cancel\""
+# The mounted draft returns before the voice panel's exit animation completes.
+wait absent "id=\"voice-inline-panel\"" 10000
 wait "id=\"terminal-composer-input\"" 10000
 is hidden "id=\"voice-recording-stop\""
 # A populated draft survives holding Send and cancelling; it is never sent.
@@ -42,6 +44,7 @@ fill "id=\"terminal-composer-input\"" "Keep this voice recording draft"
 longpress "id=\"composer-send\"" 700
 wait "id=\"voice-visual-recording\"" 15000
 press "id=\"voice-recording-cancel\""
+wait absent "id=\"voice-inline-panel\"" 10000
 wait "id=\"terminal-composer-input\"" 10000
 is visible "id=\"terminal-composer-input\" value=\"Keep this voice recording draft\""
 
@@ -50,6 +53,7 @@ is visible "id=\"terminal-composer-input\" value=\"Keep this voice recording dra
 longpress "id=\"composer-send\"" 700
 wait "id=\"voice-visual-recording\"" 15000
 back --system
+wait absent "id=\"voice-inline-panel\"" 10000
 wait "id=\"terminal-composer-input\" value=\"Keep this voice recording draft\"" 10000
 is hidden "id=\"voice-inline-panel\""
 
