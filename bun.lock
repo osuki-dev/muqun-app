@@ -105,7 +105,6 @@
     "react-native-enriched-markdown",
   ],
   "patchedDependencies": {
-    "@osuki-dev/skia-diagrams@0.1.6": "patches/@osuki-dev+skia-diagrams@0.1.6.patch",
     "react-native-skia@3.3.0": "patches/react-native-skia@3.3.0.patch",
     "react-native-nitro-sound@0.2.20": "patches/react-native-nitro-sound@0.2.20.patch",
     "react-native-enriched-markdown@1.1.1": "patches/react-native-enriched-markdown@1.1.1.patch",
