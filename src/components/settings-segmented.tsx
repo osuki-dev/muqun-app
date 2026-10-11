@@ -21,7 +21,7 @@
  * `Tabs` changes.
  */
 import { Tabs, useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { Text, type TextProps } from '@/components/text';
 import { useEffect, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -61,6 +61,7 @@ export function SettingsSegmented({
   onChange,
   testID,
   textCase = 'sentence',
+  labelWeight,
 }: {
   options: SegmentedOption[];
   value: string;
@@ -68,6 +69,8 @@ export function SettingsSegmented({
   testID?: string;
   /** @default 'sentence' */
   textCase?: SegmentedCase;
+  /** Uses the existing label weight unless the caller explicitly overrides it. */
+  labelWeight?: TextProps['weight'];
 }) {
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
@@ -167,7 +170,7 @@ export function SettingsSegmented({
             // state in a test identifier, without changing spoken labels.
             testID={`settings-selection:${option.value === value ? 'on' : 'off'}:${testID ?? 'segment'}-${option.value}`}
             style={[styles.trigger, { borderRadius: profile.chrome.segmentedOption }]}>
-            {textCase === 'sentence' ? (
+            {textCase === 'sentence' || labelWeight !== undefined ? (
               // The kit's own label style, with its `textTransform` turned off.
               //
               // This used to be React Native's `Text`, carrying the kit's font
@@ -189,8 +192,8 @@ export function SettingsSegmented({
               // face is the reader's in every script.
               <Text
                 variant="label"
-                transform="none"
-                weight="semibold"
+                transform={textCase === 'sentence' ? 'none' : 'uppercase'}
+                weight={labelWeight ?? 'semibold'}
                 numberOfLines={1}
                 maxFontSizeMultiplier={1.18}
                 color={option.value === value ? theme.colors.text : theme.colors.textMuted}
