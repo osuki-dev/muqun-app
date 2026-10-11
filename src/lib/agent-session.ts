@@ -1386,7 +1386,7 @@ export function openAgentSessionStream(options: {
       // per-stream key to it, so a recording of an earlier stream can never
       // answer a later one. Null on a cleartext pairing, which is every pairing
       // whose gateway does not encrypt the transport.
-      const sealed = encryptedEventStreamRequest(url);
+      const sealed = await encryptedEventStreamRequest(url);
       const ending = await connectAgentStream({
         url,
         seal: sealed ? { ...sealed, crypto: streamRecordCrypto } : null,

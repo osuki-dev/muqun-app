@@ -90,3 +90,15 @@ The shared `VirtualKeyboard` emits characters or validated named keys; Gateway a
 SSH workspaces own dispatch. Contextual combinations and nvim actions share one
 shortcut strip. See [Terminal soft keyboard](docs/terminal-soft-keyboard.md) for
 modifier state, exact sequence semantics and device validation.
+
+## Encrypted transport negotiation
+
+Paired traffic negotiates envelope v2 through an authenticated, read-only `/health`
+probe (`transport_versions`), followed by an authenticated read-only v2 proof.
+A device-only minimum-version pin is persisted after that proof and before
+application operations are sent. The existing token, key family, HKDF, and transport marker stay
+unchanged. V2 authenticates `muqun-transport-v2\n<timestamp_ms>\n<existing AAD>`;
+responses must match the request version. Pinned credentials never fall back to
+v1. SSE/WebSocket opening envelopes use the same negotiation; stream records and
+pairing bootstrap remain compatible. See `gateway-transport.ts` and
+`transport-negotiation.ts` for the protocol and upgrade boundaries.
