@@ -168,11 +168,10 @@ export const GATEWAY_INSTALL_COMMAND = 'curl -fsSL https://muqun.dev/gateway.sh 
  * `muqun-feedback` turns its Feedback button into a 404 -- for a paying user,
  * on the one screen they reach when something is already wrong.
  *
- * This constant is JavaScript, not native config, and `runtimeVersion` follows
- * `appVersion`, so an `eas update --channel production` on the 1.3.0 runtime
- * moves every one of those installs onto this address. Ship that bundle first,
- * give it time to reach people, and only then delete the old repository.
- * Deleting it before that is the one ordering that cannot be undone.
+ * New binaries use Hot Updater; they cannot deliver an update to old binaries
+ * that shipped a different native update loader. Keep the old tracker reachable
+ * until those users have upgraded through their store. Do not retire it merely
+ * because this constant changed in a newer release.
  *
  * ── AND THIS REPOSITORY HAS TO BE PUBLIC FIRST ──────────────────────────────
  * Same reason, other direction: while `muqun-app` is private the Feedback
