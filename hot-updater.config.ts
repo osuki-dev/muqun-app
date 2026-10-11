@@ -53,7 +53,8 @@ export default defineConfig((options) => {
     plugins: [apiKeys(), insights(), remoteConfig()],
     signing: {
       enabled: true,
-      privateKeyPath: process.env.HOT_UPDATER_SIGNING_PRIVATE_KEY_PATH ?? './keys/private-key.pem',
+      privateKeyPath:
+        process.env.HOT_UPDATER_SIGNING_PRIVATE_KEY_PATH?.trim() || './keys/private-key.pem',
     },
   };
 });
