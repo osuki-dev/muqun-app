@@ -499,6 +499,8 @@ export interface AgentComposerProps {
   hideParameterRow?: boolean;
   /** Home's field reaches the dock edges; safe-area space remains outside the surface. */
   flushField?: boolean;
+  /** Space outside Home's surface, in addition to the current bottom safe area. */
+  outerInsets?: { horizontal: number; bottom: number };
   /** Cancels inline dictation when the dispatch destination changes. */
   voiceContext?: string;
   /**
@@ -608,6 +610,7 @@ export const AgentComposer = memo(function AgentComposer({
   fieldTextTopInset,
   hideParameterRow = false,
   flushField = false,
+  outerInsets,
   voiceContext,
   bar,
   compact = false,
@@ -1232,6 +1235,7 @@ export const AgentComposer = memo(function AgentComposer({
   const { height: windowHeight } = useWindowDimensions();
   const keyboardHeight = useKeyboardState((state) => state.height);
   const safeAreaFoot = flushField && keyboardHeight === 0 ? bottomInset : 0;
+  const dockFoot = safeAreaFoot + (outerInsets?.bottom ?? 0);
   const [surfaceHeight, setSurfaceHeight] = useState(0);
   const [voiceActive, setVoiceActive] = useState(false);
   const decorationHidden =
@@ -1243,7 +1247,7 @@ export const AgentComposer = memo(function AgentComposer({
     Boolean(mentionTrigger);
   const decorationClearance =
     fieldDecoration && !decorationHidden && !voiceActive ? fieldDecorationOverhang : 0;
-  const dockHeight = surfaceHeight + safeAreaFoot;
+  const dockHeight = surfaceHeight + dockFoot;
   const reportDockHeight = useEffectEvent((height: number) => onDockHeight?.(height));
   useEffect(() => {
     if (surfaceHeight > 0) reportDockHeight(dockHeight + decorationClearance);
@@ -1290,11 +1294,16 @@ export const AgentComposer = memo(function AgentComposer({
       ? Math.max(theme.spacing.sm, keyboardHeight > 0 ? 0 : bottomInset)
       : Math.max(10, bottomInset + 6);
   /** From the dock's foot to the field's, which the anchored menu has to clear too. */
-  const dockBottomPadding = innerBottomPadding + safeAreaFoot;
+  const dockBottomPadding = innerBottomPadding + dockFoot;
 
   return (
     <Animated.View
-      style={[styles.dockOuter, composerKeyboardStyle, { paddingBottom: safeAreaFoot }]}>
+      style={[
+        styles.dockOuter,
+        composerKeyboardStyle,
+        outerInsets && { left: outerInsets.horizontal, right: outerInsets.horizontal },
+        { paddingBottom: dockFoot },
+      ]}>
       {bar ? null : (
         <EdgeFade edge="bottom" color={theme.colors.background} style={styles.composerFade} />
       )}

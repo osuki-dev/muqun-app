@@ -943,8 +943,8 @@ export function HomeOverview({
       targetPulse={composerPulse}
       bottomInset={padLaunch ? 0 : insets.bottom}
       topInset={insets.top}
-      // On the phone, a bar edge to edge at the foot whose field runs from
-      // gutter to gutter, the cards' own edges.
+      outerInsets={isPad ? undefined : { horizontal: 12, bottom: 8 }}
+      // Phone Home has a small gutter outside the field and its shadow.
       // On the Pad cover, the same bar as wide as the work column, its rows
       // padded like the cards' rows, and a field with room for a paragraph.
       // A Pad too narrow for the cover (portrait, large text) keeps the
