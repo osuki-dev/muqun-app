@@ -1,12 +1,13 @@
 /** OTA staging never reloads a live terminal. Native startup owns activation and rollback. */
 export type UpdatePhase = 'idle' | 'checking' | 'downloading' | 'ready' | 'failed';
-export type UpdateSnapshot = { phase: UpdatePhase; progress: number };
+export type UpdateSnapshot = { phase: UpdatePhase; progress: number; releaseNotes?: string };
 export interface UpdateClient {
   checkForUpdate(options: {
     updateStrategy: 'fingerprint';
     onError: (error: unknown) => void;
   }): Promise<{
     readonly transitionKind?: 'INSTALL' | 'ADOPT_RELEASE' | 'USE_BUILTIN';
+    readonly message?: string | null;
     updateBundle(): Promise<boolean>;
   } | null>;
   addListener(event: 'onProgress', listener: (event: { progress: number }) => void): () => void;
@@ -20,17 +21,21 @@ export function createAppUpdateController(
   let phase: UpdatePhase = 'idle';
   let pending: Promise<void> | null = null;
   let nextCheckAt = 0;
+  let releaseNotes: string | undefined;
+  const publishProgress = (progress: number) =>
+    publish({ phase, progress, ...(releaseNotes ? { releaseNotes } : {}) });
 
   async function run() {
     if (!client) return;
     phase = 'checking';
-    publish({ phase, progress: 0 });
+    releaseNotes = undefined;
+    publishProgress(0);
     let checkFailed = false;
     let unsubscribe: (() => void) | undefined;
     try {
       unsubscribe = client.addListener('onProgress', ({ progress }) => {
         if (phase !== 'downloading' || !Number.isFinite(progress)) return;
-        publish({ phase, progress: Math.max(0, Math.min(1, progress)) });
+        publishProgress(Math.max(0, Math.min(1, progress)));
       });
       const update = await client.checkForUpdate({
         updateStrategy: 'fingerprint',
@@ -41,12 +46,13 @@ export function createAppUpdateController(
       if (checkFailed) throw new Error('Update check failed');
       if (!update) {
         phase = 'idle';
-        publish({ phase, progress: 0 });
+        publishProgress(0);
         return;
       }
+      releaseNotes = update.message?.trim() || undefined;
       if (update.transitionKind !== 'ADOPT_RELEASE') {
         phase = 'downloading';
-        publish({ phase, progress: 0 });
+        publishProgress(0);
       }
       const staged = await update.updateBundle();
       if (!staged) throw new Error('Update staging failed');
@@ -54,15 +60,16 @@ export function createAppUpdateController(
         // A release can adopt the already-running artifact. No restart is
         // needed, and later checks must still discover actual bundle changes.
         phase = 'idle';
-        publish({ phase, progress: 0 });
+        publishProgress(0);
         return;
       }
       phase = 'ready';
-      publish({ phase, progress: 1 });
+      publishProgress(1);
     } catch {
       // No request URLs, response bodies, headers or credentials in logs/UI.
       phase = 'failed';
-      publish({ phase, progress: 0 });
+      releaseNotes = undefined;
+      publishProgress(0);
     } finally {
       try {
         unsubscribe?.();

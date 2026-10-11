@@ -2,22 +2,14 @@ import { msg } from '@lingui/core/macro';
 import type { MessageDescriptor } from '@lingui/core';
 
 /**
- * User-facing notes for the current bundle, shown once after an over-the-air
- * update applies. The `eas update --message` text lives server-side and is not
- * delivered in the client manifest, so the changelog has to ride inside the
- * bundle. Bump `RELEASE_NOTES` every time you ship an OTA worth announcing;
- * leave `items` empty to suppress the card for a silent fix.
+ * User-facing notes bundled with this native release, available manually in
+ * About. OTA downloads display their own actual Hot Updater server message;
+ * these notes must never stand in for an unknown OTA changelog.
  *
  * `msg` descriptors rather than strings, so the card reads in the active
- * locale. The seen-fingerprint in `whats-new-card` keys on the English source
- * text, which is the one form that does not change when the phone's language
- * does.
+ * locale.
  *
- * These are the 3.1.0 notes. `whats-new-card` returns early on
- * `Updates.isEmbeddedLaunch`, so a fresh store install shows nothing, and they
- * first appear on the first bundle update published on top of the 3.1.0 binary,
- * which is the honest place for them: the store listing has already said all of
- * this to anyone updating.
+ * These are the 3.1.0 notes. They do not automatically open at startup.
  */
 export const RELEASE_NOTES: { title: MessageDescriptor; items: MessageDescriptor[] } = {
   title: msg`What's new`,

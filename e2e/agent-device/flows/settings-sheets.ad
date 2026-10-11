@@ -42,3 +42,11 @@ screenshot "shots/settings-storage.png"
 
 # section shot-about
 screenshot "shots/settings-about.png"
+press "id=\"settings-release-notes-row\""
+wait "id=\"settings-update-notes-sheet\"" 10000
+is visible "label=\"What's new\""
+is visible "id=\"bundled-release-notes\""
+is visible "id=\"bundled-release-note-0\""
+screenshot "shots/settings-update-notes.png"
+back --system
+wait "id=\"settings-about-sheet\"" 10000
