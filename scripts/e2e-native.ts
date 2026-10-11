@@ -96,6 +96,8 @@ type Node = {
   value?: string;
   selected?: boolean;
   checked?: boolean;
+  /** Android's native snapshot visibility; iOS may omit it. */
+  visibleToUser?: boolean;
   bundleId?: string;
   rect?: { x: number; y: number; width: number; height: number };
 };
