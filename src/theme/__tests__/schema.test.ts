@@ -163,6 +163,7 @@ describe('theme v1 contract', () => {
       // asset it names has to be one the pack declares.
       { decoration: { 'home.artwork': { asset: 'missing', fit: 'contain' } } },
       { decoration: { 'home.composer.background': { asset: 'missing' } } },
+      { decoration: { 'home.composer.decoration': { asset: 'missing' } } },
     ]) {
       expect(() =>
         parse({
@@ -174,33 +175,41 @@ describe('theme v1 contract', () => {
     }
   });
 
-  test('Home field artwork is independent and resolves mode and device overrides', () => {
-    const manifest = parse({
-      ...createThemeStarter(),
-      assets: { paper: { path: 'assets/paper.png' }, frame: { path: 'assets/frame.png' } },
-      decoration: { 'composer.background': { asset: 'paper' } },
-      variantDecorations: {
-        dark: {
-          'home.composer.background': {
-            asset: 'frame',
-            fit: 'contain',
-            compact: { asset: 'frame', fit: 'contain', opacity: 0.2 },
-            regular: null,
+  test.each(['home.composer.background', 'home.composer.decoration'] as const)(
+    '%s is independent and resolves mode and device overrides',
+    (slot) => {
+      const manifest = parse({
+        ...createThemeStarter(),
+        assets: { paper: { path: 'assets/paper.png' }, frame: { path: 'assets/frame.png' } },
+        decoration: {
+          'composer.background': { asset: 'paper' },
+          [slot === 'home.composer.background'
+            ? 'home.composer.decoration'
+            : 'home.composer.background']: { asset: 'paper' },
+        },
+        variantDecorations: {
+          dark: {
+            [slot]: {
+              asset: 'frame',
+              fit: 'contain',
+              compact: { asset: 'frame', fit: 'contain', opacity: 0.2 },
+              regular: null,
+            },
           },
         },
-      },
-    });
-    expect(resolveThemeImage(manifest, 'home.composer.background', 'light', 'compact')).toBeNull();
-    expect(resolveThemeImage(manifest, 'home.composer.background', 'dark', 'compact')).toEqual({
-      asset: 'frame',
-      fit: 'contain',
-      opacity: 0.2,
-    });
-    expect(resolveThemeImage(manifest, 'home.composer.background', 'dark', 'regular')).toBeNull();
-    expect(resolveThemeImage(manifest, 'composer.background', 'light', 'compact')).toEqual({
-      asset: 'paper',
-    });
-  });
+      });
+      expect(resolveThemeImage(manifest, slot, 'light', 'compact')).toBeNull();
+      expect(resolveThemeImage(manifest, slot, 'dark', 'compact')).toEqual({
+        asset: 'frame',
+        fit: 'contain',
+        opacity: 0.2,
+      });
+      expect(resolveThemeImage(manifest, slot, 'dark', 'regular')).toBeNull();
+      expect(resolveThemeImage(manifest, 'composer.background', 'light', 'compact')).toEqual({
+        asset: 'paper',
+      });
+    }
+  );
 
   describe('the Home artwork', () => {
     const withArtwork = (extra: Record<string, unknown>) =>

@@ -21,6 +21,7 @@ const consumers = {
   'navigation.background': 'src/components/glass-chrome.tsx',
   'composer.background': 'src/components/glass-chrome.tsx',
   'home.composer.background': 'src/components/home-composer-background.tsx',
+  'home.composer.decoration': 'src/components/home-composer-background.tsx',
   'actions.background': 'src/components/glass-chrome.tsx',
   'cards.decoration': 'src/components/settings-chrome.tsx',
   'buttons.primary.background': 'src/components/themed-button.tsx',
@@ -60,6 +61,7 @@ test('Home input artwork is supplied by the Home dock rather than shared compose
     const source = readFileSync(`src/components/${file}.tsx`, 'utf8');
     expect(source).not.toContain('HomeComposerBackground');
     expect(source).not.toContain('home.composer.background');
+    expect(source).not.toContain('home.composer.decoration');
   }
 });
 
