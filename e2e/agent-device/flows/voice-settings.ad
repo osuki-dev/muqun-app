@@ -6,7 +6,10 @@ is hidden "label=\"Insert text automatically\""
 scroll down --until "id=\"voice-service-url\""
 fill "id=\"voice-service-url\"" "http://example.invalid/v1"
 keyboard enter
-# API key and model remain empty: URL-only configuration must save.
+# Compatible services still accept an empty model/key, even though the fresh OpenAI form supplies a model.
+scroll down --until "id=\"voice-service-model\""
+fill "id=\"voice-service-model\"" ""
+keyboard enter
 scroll down --until "id=\"voice-settings-save\""
 press "id=\"voice-settings-save\""
 scroll down --until "label=\"Enter a valid HTTPS API URL. API key and model are optional\""
@@ -49,6 +52,27 @@ wait "id=\"settings-selection:on:voice-service-mode-realtime\"" 5000
 scroll down --until "id=\"voice-settings-clear\""
 press "id=\"voice-settings-clear\""
 wait "label=\"Voice to text disabled\"" 5000
+# Official OpenAI requires real field values, not its model placeholder.
+scroll up --until "id=\"voice-service-url\""
+wait "id=\"voice-service-url\" value=\"https://api.openai.com/v1/audio/transcriptions\"" 5000
+scroll down --until "id=\"voice-service-model\""
+wait "id=\"voice-service-model\" value=\"gpt-4o-mini-transcribe\"" 5000
+scroll down --until "id=\"voice-settings-save\""
+press "id=\"voice-settings-save\""
+scroll up --until "label=\"Required\""
+wait "label=\"Required\"" 5000
+is visible "id=\"settings-voice-sheet\""
+scroll down --until "id=\"voice-service-key\""
+fill "id=\"voice-service-key\"" "qa-unsaved-placeholder"
+keyboard enter
+scroll down --until "id=\"voice-service-model\""
+fill "id=\"voice-service-model\"" ""
+keyboard enter
+scroll down --until "id=\"voice-settings-save\""
+press "id=\"voice-settings-save\""
+scroll up --until "label=\"Required\""
+wait "label=\"Required\"" 5000
+is visible "id=\"settings-voice-sheet\""
 screenshot "shots/voice-settings.png"
 
 # section close

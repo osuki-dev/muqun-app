@@ -9,6 +9,49 @@ export type VoiceServiceConfig = {
   language: AppLocale | 'auto' | null;
 };
 
+export const VOICE_DEFAULTS = {
+  file: { url: 'https://api.openai.com/v1/audio/transcriptions', model: 'gpt-4o-mini-transcribe' },
+  realtime: {
+    url: 'wss://api.openai.com/v1/realtime?intent=transcription',
+    model: 'gpt-live-transcribe',
+  },
+} as const;
+
+export function isOpenAiVoiceEndpoint(url: string): boolean {
+  try {
+    return new URL(url.trim()).hostname === 'api.openai.com';
+  } catch {
+    return false;
+  }
+}
+
+/** Only the official service has requirements we can validate locally. */
+export function missingVoiceCredentials(
+  config: Pick<VoiceServiceConfig, 'url' | 'apiKey' | 'model'>
+): ('apiKey' | 'model')[] {
+  if (!isOpenAiVoiceEndpoint(config.url)) return [];
+  const missing: ('apiKey' | 'model')[] = [];
+  if (!config.apiKey.trim()) missing.push('apiKey');
+  if (!config.model.trim()) missing.push('model');
+  return missing;
+}
+
+/** Follow the built-in preset only; never rewrite a custom endpoint or model. */
+export function voiceDraftForMode(
+  draft: { url: string; model: string },
+  from: VoiceMode,
+  to: VoiceMode
+) {
+  if (draft.url.trim() && draft.url !== VOICE_DEFAULTS[from].url) return draft;
+  return {
+    url: VOICE_DEFAULTS[to].url,
+    model:
+      !draft.model.trim() || draft.model === VOICE_DEFAULTS[from].model
+        ? VOICE_DEFAULTS[to].model
+        : draft.model,
+  };
+}
+
 export function normalizeVoiceConfig(
   url: string,
   apiKey: string,

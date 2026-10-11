@@ -4823,6 +4823,7 @@ msgstr "Запрос не удался"
 msgid "Required on launch and after 30 seconds in the background."
 msgstr "Требуется при запуске и после 30 секунд в фоне"
 
+#: src/app/settings-voice.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Required."
 msgstr "Обязательно"
