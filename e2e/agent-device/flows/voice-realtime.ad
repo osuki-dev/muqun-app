@@ -17,7 +17,7 @@ back --system
 wait "id=\"terminal-composer-input\"" 10000
 fill "id=\"terminal-composer-input\"" "Keep this realtime draft"
 longpress "id=\"composer-send\"" 700
-wait "id=\"voice-visual-error\"" 20000
+wait "id=\"voice-visual-error\"" 20000 --allow-microphone-prompt
 wait "label=\"Realtime transcription disconnected. Check your connection and speech service, then try again\"" 5000
 is visible "id=\"voice-recording-stop\" label=\"Try again\""
 screenshot "shots/voice-realtime-disconnected.png"

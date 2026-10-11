@@ -770,6 +770,69 @@ export class NativeRunner {
       if (!active || !line.trim() || line.trim().startsWith('#') || line.startsWith('context '))
         continue;
       const args = tokenize(line).map((arg) => interpolate(arg, env));
+      if (args.includes('--allow-microphone-prompt')) {
+        args.splice(args.indexOf('--allow-microphone-prompt'), 1);
+        if (args[0] !== 'wait' || !/^id="voice-visual-(?:recording|error)"$/.test(args[1] ?? ''))
+          throw new Error('Microphone prompt handling requires an explicit voice-state wait');
+        const timeout = Number(args[2] ?? 15000);
+        if (!Number.isFinite(timeout) || timeout <= 0)
+          throw new Error('Microphone prompt wait requires a positive timeout');
+        const deadline = Date.now() + timeout;
+        let accepted = false;
+        let arrived = false;
+        while (Date.now() < deadline) {
+          const capture = await this.readCapture();
+          const status = await this.invoke(['alert', 'get']);
+          if (status.kind !== 'alertStatus' || status.alert === undefined)
+            throw new Error('Invalid microphone alert status');
+          const alert = status.alert as {
+            title?: string;
+            message?: string;
+            source?: string;
+            packageName?: string;
+            buttons?: string[];
+          } | null;
+          if (alert) {
+            const copy = `${alert.title ?? ''} ${alert.message ?? ''}`;
+            if (
+              accepted ||
+              !/\bMuqun\b/i.test(copy) ||
+              !/microphone|record audio/i.test(copy) ||
+              /camera|location|notifications?|contacts/i.test(copy) ||
+              (capture.androidSnapshot &&
+                (alert.source !== 'permission' ||
+                  !/^com\.(?:google\.)?android\.permissioncontroller$/.test(
+                    alert.packageName ?? ''
+                  ))) ||
+              !alert.buttons?.some((button) =>
+                /^(?:while using the app|only this time|allow|ok)$/i.test(button)
+              )
+            )
+              throw new Error('Unexpected alert during the explicit microphone request');
+            await this.invoke(['alert', 'accept']);
+            accepted = true;
+            await this.invoke(['wait', 'stable', '300', '5000']);
+            const after = await this.invoke(['alert', 'get']);
+            if (after.kind !== 'alertStatus' || after.alert !== null)
+              throw new Error('Microphone permission alert did not dismiss');
+          } else if (
+            snapshotNodes(capture).some(
+              (node) => exactSelectorMatches(node, args[1]) && node.visibleToUser !== false
+            )
+          ) {
+            // Retain the native state assertion after the permission branch.
+            await this.invoke(args);
+            arrived = true;
+            break;
+          }
+          if (Date.now() >= deadline)
+            throw new Error(`Voice state did not arrive after microphone request: ${args[1]}`);
+          await new Promise((resolve) => setTimeout(resolve, 200));
+        }
+        if (!arrived)
+          throw new Error(`Voice state did not arrive after microphone request: ${args[1]}`);
+        continue;
+      }
       // Visibility means at least one visible exact match, not unique identity.
       // Native is visible uses readUnique and mistakes duplicate headings for
       // absence; exists + visible=true uses the identical visibility predicate.
