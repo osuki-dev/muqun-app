@@ -449,8 +449,8 @@ function settlesPending(tasks: readonly TaskView[], item: PendingDispatch): bool
   );
 }
 
-/** How long a finished task, not yet acknowledged, keeps its computer's card on Home. */
-export const RECENT_FINISHED_MS = 30 * 60_000;
+/** Keep unacknowledged finished tasks on Home for 24 hours, including the boundary. */
+export const RECENT_FINISHED_MS = 24 * 60 * 60_000;
 
 /**
  * Repeated cancelled attempts at one goal say one thing: only the newest of
