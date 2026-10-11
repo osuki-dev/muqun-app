@@ -1,8 +1,10 @@
 import { afterAll, describe, expect, test } from 'bun:test';
 import { generateKeyPairSync } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { readHotUpdaterAppConfig } from '../../scripts/hot-updater-app-config';
 
 const root = mkdtempSync(join(tmpdir(), 'muqun-ota-config-'));
@@ -10,6 +12,23 @@ mkdirSync(join(root, 'keys'));
 afterAll(() => rmSync(root, { recursive: true, force: true }));
 
 describe('OTA native configuration boundary', () => {
+  test('CLI config retains signing and a usable default path with a blank environment value', () => {
+    const configPath = fileURLToPath(new URL('../../hot-updater.config.ts', import.meta.url));
+    const script = `const { default: config } = await import(${JSON.stringify(configPath)});
+      console.log(JSON.stringify(config(null).signing));`;
+    for (const value of ['', '   ', '/private/real-signer.pem']) {
+      const result = spawnSync(process.execPath, ['--eval', script], {
+        cwd: root,
+        env: { ...process.env, HOT_UPDATER_SIGNING_PRIVATE_KEY_PATH: value },
+        encoding: 'utf8',
+      });
+      expect(result.status).toBe(0);
+      expect(JSON.parse(result.stdout)).toEqual({
+        enabled: true,
+        privateKeyPath: value.trim() || './keys/private-key.pem',
+      });
+    }
+  });
   test('unconfigured builds are explicitly disabled and carry no client key', () => {
     expect(readHotUpdaterAppConfig({}, root)).toEqual({
       enabled: false,
