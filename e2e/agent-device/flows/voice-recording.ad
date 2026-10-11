@@ -1,5 +1,16 @@
 # A configured service enables native recording; cancel never uploads audio.
 
+# An interrupted earlier flow may leave either transcription mode selected.
+# section mode-ready
+wait "id=\"settings-voice-sheet\"" 10000
+scroll up --until "id=\"voice-service-mode\""
+
+# section select-mode
+press "id=\"settings-selection:off:voice-service-mode-${VOICE_MODE}\""
+
+# section confirm-mode
+wait "id=\"settings-selection:on:voice-service-mode-${VOICE_MODE}\"" 5000
+
 # section configure
 wait "id=\"settings-voice-sheet\"" 10000
 scroll down --until "id=\"voice-service-url\""
