@@ -191,6 +191,7 @@ function VoiceRecording({
       : state === 'starting'
         ? 'idle'
         : state;
+  const recording = visualState === 'recording';
   const busy = state !== 'recording' || result !== null;
   const elapsed = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
   const indicator = error ? (
@@ -257,18 +258,24 @@ function VoiceRecording({
       onLayout={(event) => setHeight(event.nativeEvent.layout.height)}
       style={[styles.recording, compact && styles.compactRecording]}>
       {compact && cancel}
-      <View style={styles.body}>
-        <View style={styles.header}>
+      <View style={[styles.body, recording && compact && styles.compactRecordingBody]}>
+        <View style={[styles.header, recording && styles.recordingHeader]}>
           {compact && indicator}
+          {!recording && (
+            <Text
+              numberOfLines={1}
+              weight="regular"
+              style={styles.status}
+              color={theme.colors.text}
+              accessibilityLiveRegion="polite">
+              {status}
+            </Text>
+          )}
           <Text
-            numberOfLines={1}
             weight="regular"
-            style={styles.status}
-            color={theme.colors.text}
-            accessibilityLiveRegion="polite">
-            {status}
-          </Text>
-          <Text weight="regular" color={theme.colors.textMuted} style={styles.elapsed}>
+            color={theme.colors.textMuted}
+            style={styles.elapsed}
+            accessibilityLabel={recording ? `${status} ${elapsed}` : undefined}>
             {elapsed}
           </Text>
         </View>
@@ -385,7 +392,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   body: { flex: 1, minHeight: 0, minWidth: 0, alignSelf: 'stretch' },
+  compactRecordingBody: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  recordingHeader: { justifyContent: 'flex-end' },
   status: { fontSize: 14, lineHeight: 20, flex: 1 },
   elapsed: { fontSize: 12, fontVariant: ['tabular-nums'] },
   readout: {
