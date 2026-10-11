@@ -1,8 +1,7 @@
-import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, useToast } from '@osuki-dev/ui';
 import { useIsFocused, useRouter } from 'expo-router';
-import { ArrowRight } from 'lucide-react-native';
+import { SlidersHorizontal } from 'lucide-react-native';
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { AppState, StyleSheet, View } from 'react-native';
 import Animated, {
@@ -16,7 +15,9 @@ import { AgentComposer, type DraftInjector } from '@/components/agent-composer';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import type { HomeLaunchController } from '@/components/home-launch-actions';
 import type { DockAutoHide } from '@/hooks/use-dock-auto-hide';
-import { TextSegment, useSegmentHitSlop, useSegmentRowLead } from '@/components/text-segment';
+import { HomeComposerOptions } from '@/components/home-composer-options';
+import { PressableScale } from '@/components/pressable-scale';
+import { composerStyles } from '@/components/terminal-composer';
 import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useAgentFeatures, useAgentsDiscoveryRefresh } from '@/hooks/use-agent-features';
@@ -25,7 +26,6 @@ import { useStableHandler } from '@/hooks/use-render-refs';
 import { META_SEPARATOR } from '@/lib/home-continue-row';
 import { boundSessionState, goalTitle, type PendingDispatch } from '@/lib/home-computer-cards';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { reachabilityDescription } from '@/i18n/labels';
 import type { AgentClientCommandId } from '@/lib/agent-commands';
 import { classifyAgentRequestError } from '@/lib/agent-request-error';
 import { unsupportedModelRefs } from '@/lib/agent-session-defaults';
@@ -100,8 +100,8 @@ const NO_SKILLS: AgentCatalog['skills'] = [];
  * `AgentComposer` is hosted whole -- text, attachments, voice, `@` files, `/`
  * commands, the mode and model pills -- in the pre-session state the agent
  * screen shows for a new session: no `activeAsid`, the target computer's
- * catalog behind the pills. The assignment bar rides on top of it and says
- * where Send goes; tapping it opens the target picker.
+ * catalog behind its choices. A single toolbar icon reveals the computer,
+ * agent, workspace, mode and model without shortening the draft field.
  *
  * The target computer is the selected gateway record (one connection at a
  * time), so the catalog, the attachment uploads and the file mentions all go
@@ -155,11 +155,9 @@ export function HomeComposerDock({
   ) => Promise<HomeCommandResult>;
 }) {
   const { t } = useLingui();
-  const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
-  const segmentRowLead = useSegmentRowLead();
-  const segmentHitSlop = useSegmentHitSlop();
+  const [optionsOpen, setOptionsOpen] = useState(false);
   const background = useSurfaceBackground();
   const router = useRouter();
   const { showToast } = useToast();
@@ -842,6 +840,19 @@ export function HomeComposerDock({
     return Promise.resolve(true);
   }
 
+  /** A goal with files, to a session; `again` sends a failed row's payload as it was. */
+  function sendWithFiles(
+    text: string,
+    attachments: string[],
+    again?: { serverId: string; params: HomeSessionParams; folder?: string }
+  ): Promise<boolean> {
+    return startSession(
+      (asid) => sendAgentPrompt(HOME_AGENT_SESSION_ID, asid, { text, attachments }),
+      { goal: text, attachments },
+      again
+    );
+  }
+
   function sendPrompt(text: string, attachments?: string[]): Promise<boolean> {
     if (terminalAgent) {
       const start = () =>
@@ -868,18 +879,6 @@ export function HomeComposerDock({
     if (attachments?.length) return sendWithFiles(text, attachments);
     return dispatchTask(text, () =>
       startSession((asid) => sendAgentPrompt(HOME_AGENT_SESSION_ID, asid, { text }))
-    );
-  }
-  /** A goal with files, to a session; `again` sends a failed row's payload as it was. */
-  function sendWithFiles(
-    text: string,
-    attachments: string[],
-    again?: { serverId: string; params: HomeSessionParams; folder?: string }
-  ): Promise<boolean> {
-    return startSession(
-      (asid) => sendAgentPrompt(HOME_AGENT_SESSION_ID, asid, { text, attachments }),
-      { goal: text, attachments },
-      again
     );
   }
   // The composer empties the field as it hands a command over, so a command
@@ -991,13 +990,8 @@ export function HomeComposerDock({
 
   if (servers.length === 0) return null;
 
-  // With one computer paired there is nothing to choose between: the bar
-  // reads `agent · folder`. The computer stays named while it is offline or
-  // has no agent to name, so the bar never goes quiet about where Send goes.
-  const showComputer = servers.length > 1 || !ready || !agentName;
-
   const bar = (
-    <View style={[styles.accessory, { paddingBottom: theme.spacing.xs, rowGap: theme.spacing.xs }]}>
+    <View>
       {error ? (
         <Text
           testID="home-composer-error"
@@ -1008,136 +1002,91 @@ export function HomeComposerDock({
           {error}
         </Text>
       ) : null}
-      <View style={[styles.segments, segmentRowLead]}>
-        {showComputer ? (
-          <TextSegment
-            testID="home-composer-target"
-            accessibilityRole="button"
-            accessibilityLabel={
-              targetServer
-                ? agentName
-                  ? t`Assigned to ${computerLabel}, ${agentName}`
-                  : t`Send to ${computerLabel}`
-                : t`No computer online`
-            }
-            accessibilityHint={t`Choose another computer`}
-            hitSlop={segmentHitSlop.first}
-            onPress={openTargetPicker}
-            style={{ borderRadius: profile.chrome.navigationPill }}>
-            <Animated.View
-              pointerEvents="none"
-              style={[
-                StyleSheet.absoluteFill,
-                {
-                  borderRadius: profile.chrome.navigationPill,
-                  backgroundColor: background(theme.colors.primarySubtle),
-                },
-                flashStyle,
-              ]}
-            />
-            {targetServer ? (
-              <>
-                <ThemeIcon
-                  name="home.arrow"
-                  direction="right"
-                  fallback={ArrowRight}
-                  size={14}
-                  color={ready ? theme.colors.primary : theme.colors.textMuted}
-                />
-                <Text
-                  variant="bodySmall"
-                  weight="semibold"
-                  numberOfLines={1}
-                  color={ready ? theme.colors.text : theme.colors.textMuted}
-                  style={styles.barLabel}>
-                  {computerLabel}
-                </Text>
-                {target.kind === 'offline' ? (
-                  <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
-                    {_(reachabilityDescription.offline)}
-                  </Text>
-                ) : null}
-              </>
-            ) : (
-              <Text variant="bodySmall" color={theme.colors.textMuted} numberOfLines={1}>
-                {t`No computer online`}
-              </Text>
-            )}
-          </TextSegment>
-        ) : null}
-        {targetServer && agentName ? (
-          <TextSegment
-            testID="home-composer-agent"
-            accessibilityRole="button"
-            accessibilityLabel={t`Home agent: ${agentName}`}
-            accessibilityHint={t`Choose the agent Home starts on this computer`}
-            hitSlop={segmentHitSlop.first}
-            onPress={() =>
-              router.push({ pathname: '/home-agent', params: { serverId: targetServer.serverId } })
-            }
-            style={[styles.agentSegment, { borderRadius: profile.chrome.navigationPill }]}>
-            {showComputer ? null : (
-              <ThemeIcon
-                name="home.arrow"
-                direction="right"
-                fallback={ArrowRight}
-                size={14}
-                color={theme.colors.primary}
-              />
-            )}
-            {/* The accent alone marks the agent; the computer is the line's
-                one weighted word, and the separators stay muted. */}
-            <Text
-              variant="bodySmall"
-              numberOfLines={1}
-              color={ready ? theme.colors.primary : theme.colors.textMuted}
-              style={styles.barLabel}>
-              {showComputer ? <Text color={theme.colors.textMuted}>{'· '}</Text> : null}
-              {agentName}
-            </Text>
-          </TextSegment>
-        ) : null}
-        {targetServer ? (
-          <TextSegment
-            testID="home-composer-folder"
-            accessibilityRole="button"
-            accessibilityLabel={t`Folder: ${folderLabel}`}
-            accessibilityHint={t`Choose the folder this computer starts work in`}
-            hitSlop={segmentHitSlop.first}
-            // The picker lists the selected computer's folders, so it opens only
-            // once the bar's computer is the one selected.
-            disabled={!ready || !selected}
-            onPress={() =>
-              router.push({
-                pathname: '/agent-workspace',
-                params: {
-                  owner: 'home',
-                  serverId: targetServer.serverId,
-                  sessionId: HOME_AGENT_SESSION_ID,
-                  ...(agentId ? { agentId } : {}),
-                },
-              })
-            }
-            style={[styles.folderSegment, { borderRadius: profile.chrome.navigationPill }]}>
-            <Text
-              variant="bodySmall"
-              numberOfLines={1}
-              // A long name keeps both ends: the start says which, the end
-              // tells siblings (`app-web`, `app-ios`) apart.
-              ellipsizeMode="middle"
-              color={ready && selected ? theme.colors.textMuted : theme.colors.textSubtle}
-              style={styles.barLabel}>
-              {`· ${folderLabel}`}
-            </Text>
-          </TextSegment>
-        ) : null}
-      </View>
+      <HomeComposerOptions
+        open={optionsOpen}
+        computer={targetServer ? computerLabel : t`No computer online`}
+        agent={agentName}
+        folder={folderLabel}
+        model={modelName}
+        mode={shown.mode ?? 'build'}
+        modes={modes}
+        offline={!ready}
+        onComputer={openTargetPicker}
+        onAgent={
+          targetServer
+            ? () =>
+                router.push({
+                  pathname: '/home-agent',
+                  params: { serverId: targetServer.serverId },
+                })
+            : undefined
+        }
+        onFolder={
+          targetServer && ready && selected
+            ? () =>
+                router.push({
+                  pathname: '/agent-workspace',
+                  params: {
+                    owner: 'home',
+                    serverId: targetServer.serverId,
+                    sessionId: HOME_AGENT_SESSION_ID,
+                    ...(agentId ? { agentId } : {}),
+                  },
+                })
+            : undefined
+        }
+        onModel={features.modelSelection && !terminalAgent ? openModelSheet : undefined}
+        onMode={canPickMode && !terminalAgent ? selectMode : undefined}
+      />
     </View>
+  );
+  const parameterButton = (
+    <PressableScale
+      testID="home-composer-parameters"
+      accessibilityRole="button"
+      accessibilityLabel={t`Task options`}
+      accessibilityHint={t`Choose computer, agent, folder, mode and model`}
+      accessibilityState={{ expanded: optionsOpen }}
+      onPress={() => setOptionsOpen((open) => !open)}
+      style={[
+        composerStyles.button,
+        { borderRadius: profile.chrome.roundControl },
+        optionsOpen && { backgroundColor: background(theme.colors.primarySubtle) },
+      ]}>
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            borderRadius: profile.chrome.roundControl,
+            backgroundColor: background(theme.colors.primarySubtle),
+          },
+          flashStyle,
+        ]}
+      />
+      <ThemeIcon
+        name="chrome.parameters"
+        fallback={SlidersHorizontal}
+        size={18}
+        color={optionsOpen ? theme.colors.primary : theme.colors.textMuted}
+      />
+    </PressableScale>
   );
 
   return (
     <AgentComposer
       accessory={bar}
+      toolbarLeading={parameterButton}
+      hideParameterRow
+      flushField
+      voiceContext={JSON.stringify([
+        HOME_AGENT_SESSION_ID,
+        targetId,
+        agentId,
+        folder ?? defaultCwd,
+        shown.mode,
+        selectedModel,
+      ])}
       mentionComputers={mentionComputers}
       inputTestID="home-composer-input"
       sendTestID="home-composer-send"
@@ -1162,10 +1111,13 @@ export function HomeComposerDock({
       bottomInset={bottomInset}
       topInset={topInset}
       bar={edgeBar}
-      fieldLines={fieldLines}
+      fieldLines={Math.max(3, fieldLines ?? 3) + 1}
       compact
       autoHide={autoHide}
-      onFieldFocus={onFieldFocus}
+      onFieldFocus={(focused) => {
+        if (focused) setOptionsOpen(false);
+        onFieldFocus?.(focused);
+      }}
       onDockHeight={onDockHeight}
       onSend={sendPrompt}
       onAbort={async () => {}}
@@ -1208,19 +1160,5 @@ function holdStagedFiles(reason: 'blur' | 'switch'): boolean {
 }
 
 const styles = StyleSheet.create({
-  // The dock's first row: its glass and gutter are the composer's own.
-  accessory: {
-    columnGap: 0,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-  },
-  // One line: computer, agent and folder share it, each shrinking to an
-  // ellipsis rather than pushing the next onto a row of its own.
-  segments: { width: '100%', minWidth: 0, flexDirection: 'row', alignItems: 'center' },
-  agentSegment: { flexShrink: 1 },
-  // Capped, so a long name gives way before the computer and agent do.
-  folderSegment: { maxWidth: '50%' },
-  barLabel: { minWidth: 0, flexShrink: 1 },
   error: { paddingHorizontal: 4, width: '100%' },
 });

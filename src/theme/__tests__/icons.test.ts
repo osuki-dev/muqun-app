@@ -58,6 +58,7 @@ test('an icon entry still needs a real asset id', () => {
 const CONSUMERS: Record<(typeof THEME_ICONS)[number], string> = {
   'chrome.scan': 'src/components/home-overview.tsx',
   'chrome.settings': 'src/components/home-overview.tsx',
+  'chrome.parameters': 'src/components/home-composer-dock.tsx',
   'chrome.back': 'src/components/nav-header.tsx',
   'chrome.send': 'src/components/terminal-composer.tsx',
   'chrome.attach': 'src/components/composer-attachment-button.tsx',

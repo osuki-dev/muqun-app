@@ -195,6 +195,7 @@ export const THEME_ICONS = [
   'chrome.create',
   'chrome.scan',
   'chrome.settings',
+  'chrome.parameters',
   'home.arrow',
 ] as const;
 export type ThemeIconName = (typeof THEME_ICONS)[number];

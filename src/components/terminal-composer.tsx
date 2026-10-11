@@ -424,6 +424,7 @@ export const composerStyles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   expandedLeading: {
+    flexDirection: 'row',
     flex: 1,
     alignItems: 'flex-start',
   },

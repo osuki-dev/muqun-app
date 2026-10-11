@@ -486,6 +486,13 @@ export interface AgentComposerProps {
    * is about to go, before there is a session to say so -- is the one caller.
    */
   accessory?: React.ReactNode;
+  /** Home consolidates its choices in one control beside the attachment button. */
+  toolbarLeading?: React.ReactNode;
+  hideParameterRow?: boolean;
+  /** Home's field reaches the dock edges; safe-area space remains outside the surface. */
+  flushField?: boolean;
+  /** Cancels inline dictation when the dispatch destination changes. */
+  voiceContext?: string;
   /**
    * The phone Home's bar: edge to edge at the foot of the screen, with the
    * safe area inside it, the cards' corner (`chrome.surface`) on its top
@@ -584,6 +591,10 @@ export const AgentComposer = memo(function AgentComposer({
   holdStagedAttachments,
   onDockHeight,
   accessory,
+  toolbarLeading,
+  hideParameterRow = false,
+  flushField = false,
+  voiceContext,
   bar,
   compact = false,
   fieldLines,
@@ -1190,7 +1201,13 @@ export const AgentComposer = memo(function AgentComposer({
    */
   const { height: windowHeight } = useWindowDimensions();
   const keyboardHeight = useKeyboardState((state) => state.height);
-  const [dockHeight, setDockHeight] = useState(0);
+  const safeAreaFoot = flushField && keyboardHeight === 0 ? bottomInset : 0;
+  const [surfaceHeight, setSurfaceHeight] = useState(0);
+  const dockHeight = surfaceHeight + safeAreaFoot;
+  const reportDockHeight = useEffectEvent((height: number) => onDockHeight?.(height));
+  useEffect(() => {
+    if (surfaceHeight > 0) reportDockHeight(dockHeight);
+  }, [surfaceHeight, dockHeight]);
   const [inputRowHeight, setInputRowHeight] = useState(0);
   const popupMaxHeight = Math.max(
     POPUP_MIN_HEIGHT,
@@ -1225,17 +1242,19 @@ export const AgentComposer = memo(function AgentComposer({
     }
   };
   /** What sits under the field inside the glass. */
-  // The bar carries the safe area inside it, except over the keyboard.
-  // Home's bar is as tight as the profile's rhythm allows: its foot is the safe
-  // area alone (the smallest step where there is none, or over the keyboard).
-  const innerBottomPadding = bar
-    ? Math.max(theme.spacing.sm, keyboardHeight > 0 ? 0 : bottomInset)
-    : Math.max(10, bottomInset + 6);
+  // Session docks carry the safe area inside their material. Home's single
+  // field keeps it outside, so the safe area cannot reintroduce a white rim.
+  const innerBottomPadding = flushField
+    ? 0
+    : bar
+      ? Math.max(theme.spacing.sm, keyboardHeight > 0 ? 0 : bottomInset)
+      : Math.max(10, bottomInset + 6);
   /** From the dock's foot to the field's, which the anchored menu has to clear too. */
-  const dockBottomPadding = innerBottomPadding;
+  const dockBottomPadding = innerBottomPadding + safeAreaFoot;
 
   return (
-    <Animated.View style={[styles.dockOuter, composerKeyboardStyle]}>
+    <Animated.View
+      style={[styles.dockOuter, composerKeyboardStyle, { paddingBottom: safeAreaFoot }]}>
       {bar ? null : (
         <EdgeFade edge="bottom" color={theme.colors.background} style={styles.composerFade} />
       )}
@@ -1453,8 +1472,7 @@ export const AgentComposer = memo(function AgentComposer({
       <View
         onLayout={(event) => {
           const { height } = event.nativeEvent.layout;
-          setDockHeight(height);
-          onDockHeight?.(height);
+          setSurfaceHeight(height);
         }}
         // The bar's upward shadow sits on this wrapper, not on the material:
         // the material clips to its shape (`overflow: hidden`), and Android
@@ -1468,7 +1486,7 @@ export const AgentComposer = memo(function AgentComposer({
         }>
         <GlassChrome
           surface="composer"
-          shape={bar ? 'none' : 'sheet'}
+          shape={flushField ? 'composerField' : bar ? 'none' : 'sheet'}
           style={[
             styles.composerDock,
             bar && {
@@ -1490,6 +1508,7 @@ export const AgentComposer = memo(function AgentComposer({
               // Above row 1, the same step as under the field.
               compact && { paddingTop: theme.spacing.sm },
               bar && { paddingHorizontal: bar.inset },
+              flushField && { paddingHorizontal: 0, paddingTop: 0 },
             ]}>
             {accessory}
             {/* Row 1: roots only. Tapping the current root opens its tree. */}
@@ -1548,7 +1567,7 @@ export const AgentComposer = memo(function AgentComposer({
             fade says there is more, and the content's own right padding keeps
             the last chip whole under it.
           */}
-            {compact ? (
+            {hideParameterRow ? null : compact ? (
               // The quiet line: caption type in the subtle tone, under row 1's
               // body-size primary line, then the compact gap to the field.
               // One step more to the field than between the two text rows:
@@ -1933,19 +1952,26 @@ export const AgentComposer = memo(function AgentComposer({
                 spans={spans}
                 compact={compact}
                 minLines={fieldLines}
-                voiceContext={`${sessionId}:${activeAsid ?? 'new'}`}
+                voiceContext={voiceContext ?? `${sessionId}:${activeAsid ?? 'new'}`}
                 inputRef={inputRef}
                 leading={
-                  canAttach ? (
-                    <ComposerAttachmentButton
-                      testID="agent-composer-attach"
-                      label={attachmentMenuOpen ? t`Close the attachment menu` : t`Attach a file`}
-                      expanded={attachmentMenuOpen}
-                      disabled={sending || disabled}
-                      onPress={() => setAttachmentMenuOpen((open) => !open)}
-                      size={16}
-                      color={attachmentMenuOpen ? theme.colors.primary : chromeText}
-                    />
+                  canAttach || toolbarLeading ? (
+                    <>
+                      {canAttach ? (
+                        <ComposerAttachmentButton
+                          testID="agent-composer-attach"
+                          label={
+                            attachmentMenuOpen ? t`Close the attachment menu` : t`Attach a file`
+                          }
+                          expanded={attachmentMenuOpen}
+                          disabled={sending || disabled}
+                          onPress={() => setAttachmentMenuOpen((open) => !open)}
+                          size={16}
+                          color={attachmentMenuOpen ? theme.colors.primary : chromeText}
+                        />
+                      ) : null}
+                      {toolbarLeading}
+                    </>
                   ) : undefined
                 }
                 inputProps={{
