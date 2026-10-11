@@ -977,6 +977,8 @@ msgstr "เบราว์เซอร์"
 msgid "Build"
 msgstr "สร้าง (Build)"
 
+#: src/app/settings-about.tsx
+#: src/app/settings-update-notes.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Built-in"
 msgstr "มีมาให้ในแอป"
@@ -2312,10 +2314,6 @@ msgstr "ปิดธีมนี้"
 #: src/components/away-digest-card.tsx
 msgid "Dismiss what happened while you were away"
 msgstr "ปิดสรุปเหตุการณ์ขณะที่คุณไม่อยู่"
-
-#: src/components/whats-new-card.tsx
-msgid "Dismiss what's new"
-msgstr "ปิดข่าวสารล่าสุด"
 
 #: src/app/custom-theme.tsx
 #: src/components/asset-viewer.tsx
@@ -4822,6 +4820,18 @@ msgstr "จำเป็น"
 msgid "Requires iOS 16.1 or later."
 msgstr "ต้องใช้ iOS 16.1 ขึ้นไป"
 
+#: src/app/settings-about.tsx
+#: src/app/settings-update-notes.tsx
+#: src/components/update-status-banner.tsx
+msgid "Restart Muqun to finish updating"
+msgstr "เริ่ม Muqun ใหม่เพื่ออัปเดตให้เสร็จสมบูรณ์"
+
+#: src/app/settings-about.tsx
+#: src/app/settings-update-notes.tsx
+#: src/components/update-status-banner.tsx
+msgid "Restarting Muqun…"
+msgstr "กำลังเริ่ม Muqun ใหม่…"
+
 #: src/app/commands.tsx
 msgid "Restore hidden default commands"
 msgstr "คืนค่าคำสั่งเริ่มต้นที่ซ่อนอยู่"
@@ -6708,15 +6718,13 @@ msgstr "อัปเดต Muqun Gateway บนคอมพิวเตอร์
 msgid "Update Muqun Gateway on this host to use {agentName}."
 msgstr "อัปเดต Muqun Gateway บนโฮสต์นี้เพื่อใช้ {agentName}"
 
-#: src/components/update-status-banner.tsx
-msgid "Update ready · applies on next launch"
-msgstr "อัปเดตพร้อมแล้ว · จะใช้เมื่อเปิดแอปครั้งถัดไป"
-
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"
 msgstr "อัปเดตแอปเพื่อนำเข้าลิงก์ธีมสาธารณะ คุณยังนำเข้าไฟล์ได้"
 
+#: src/components/asset-viewer.tsx
 #: src/components/inline-file-link.tsx
+#: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-file-actions.tsx
 msgid "Update the Gateway to open or save this file."
 msgstr "อัปเดต Gateway เพื่อเปิดหรือบันทึกไฟล์นี้"
@@ -6733,6 +6741,8 @@ msgstr "อัปเดต Gateway เพื่อดูตัวอย่าง
 msgid "Updates when you reopen"
 msgstr "อัปเดตเมื่อเปิดใหม่"
 
+#: src/app/settings-about.tsx
+#: src/app/settings-update-notes.tsx
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
 msgstr "กำลังอัปเดต Muqun…"
@@ -6866,6 +6876,9 @@ msgstr "สิ่งที่หน้าแรกเริ่มเมื่อ
 msgid "What is running"
 msgstr "สิ่งที่กำลังทำงาน"
 
+#: src/app/settings-about.tsx
+#: src/app/settings-update-notes.tsx
+#: src/components/update-status-banner.tsx
 #: src/lib/release-notes.ts
 msgid "What's new"
 msgstr "มีอะไรใหม่"

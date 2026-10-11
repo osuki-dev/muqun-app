@@ -90,11 +90,13 @@ export default function SettingsAboutScreen() {
               label={t`What's new`}
               detail={
                 releaseNotes
-                  ? updatePhase === 'ready'
-                    ? t`Update ready · applies on next launch`
-                    : updatePhase === 'downloading'
-                      ? t`Updating Muqun…`
-                      : undefined
+                  ? updatePhase === 'restarting'
+                    ? t`Restarting Muqun…`
+                    : updatePhase === 'restart-failed'
+                      ? t`Restart Muqun to finish updating`
+                      : updatePhase === 'downloading'
+                        ? t`Updating Muqun…`
+                        : undefined
                   : nativeApplicationVersion
                     ? `${t`Built-in`} · ${nativeApplicationVersion}`
                     : t`Built-in`

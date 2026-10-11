@@ -977,6 +977,8 @@ msgstr "Trình duyệt"
 msgid "Build"
 msgstr "Xây dựng"
 
+#: src/app/settings-about.tsx
+#: src/app/settings-update-notes.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Built-in"
 msgstr "Có sẵn"
@@ -2312,10 +2314,6 @@ msgstr "Bỏ qua chủ đề này"
 #: src/components/away-digest-card.tsx
 msgid "Dismiss what happened while you were away"
 msgstr "Bỏ qua những gì đã xảy ra khi bạn vắng mặt"
-
-#: src/components/whats-new-card.tsx
-msgid "Dismiss what's new"
-msgstr "Bỏ qua có gì mới"
 
 #: src/app/custom-theme.tsx
 #: src/components/asset-viewer.tsx
@@ -4822,6 +4820,18 @@ msgstr "Bắt buộc"
 msgid "Requires iOS 16.1 or later."
 msgstr "Yêu cầu iOS 16.1 trở lên"
 
+#: src/app/settings-about.tsx
+#: src/app/settings-update-notes.tsx
+#: src/components/update-status-banner.tsx
+msgid "Restart Muqun to finish updating"
+msgstr "Khởi động lại Muqun để hoàn tất cập nhật"
+
+#: src/app/settings-about.tsx
+#: src/app/settings-update-notes.tsx
+#: src/components/update-status-banner.tsx
+msgid "Restarting Muqun…"
+msgstr "Đang khởi động lại Muqun…"
+
 #: src/app/commands.tsx
 msgid "Restore hidden default commands"
 msgstr "Khôi phục các lệnh mặc định đã ẩn"
@@ -6708,15 +6718,13 @@ msgstr "Cập nhật Muqun Gateway trên máy tính rồi khởi động lại �
 msgid "Update Muqun Gateway on this host to use {agentName}."
 msgstr "Cập nhật Muqun Gateway trên máy chủ này để dùng {agentName}"
 
-#: src/components/update-status-banner.tsx
-msgid "Update ready · applies on next launch"
-msgstr "Bản cập nhật đã sẵn sàng · áp dụng ở lần mở tiếp theo"
-
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"
 msgstr "Cập nhật ứng dụng để nhập giao diện từ liên kết công khai. Bạn vẫn có thể nhập từ tệp"
 
+#: src/components/asset-viewer.tsx
 #: src/components/inline-file-link.tsx
+#: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-file-actions.tsx
 msgid "Update the Gateway to open or save this file."
 msgstr "Cập nhật Gateway để mở hoặc lưu tệp này"
@@ -6733,6 +6741,8 @@ msgstr "Cập nhật Gateway để xem trước video"
 msgid "Updates when you reopen"
 msgstr "Cập nhật khi bạn mở lại"
 
+#: src/app/settings-about.tsx
+#: src/app/settings-update-notes.tsx
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
 msgstr "Đang cập nhật Muqun…"
@@ -6866,6 +6876,9 @@ msgstr "Thứ Trang chủ khởi động khi bạn gửi từ đây"
 msgid "What is running"
 msgstr "Những gì đang chạy"
 
+#: src/app/settings-about.tsx
+#: src/app/settings-update-notes.tsx
+#: src/components/update-status-banner.tsx
 #: src/lib/release-notes.ts
 msgid "What's new"
 msgstr "Có gì mới"

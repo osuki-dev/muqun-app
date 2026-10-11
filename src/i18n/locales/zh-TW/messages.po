@@ -977,6 +977,8 @@ msgstr "瀏覽器"
 msgid "Build"
 msgstr "構建 (Build)"
 
+#: src/app/settings-about.tsx
+#: src/app/settings-update-notes.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Built-in"
 msgstr "內建"
@@ -2312,10 +2314,6 @@ msgstr "關閉這個主題"
 #: src/components/away-digest-card.tsx
 msgid "Dismiss what happened while you were away"
 msgstr "關閉離開期間的摘要"
-
-#: src/components/whats-new-card.tsx
-msgid "Dismiss what's new"
-msgstr "關閉新功能卡片"
 
 #: src/app/custom-theme.tsx
 #: src/components/asset-viewer.tsx
@@ -4822,6 +4820,18 @@ msgstr "必填"
 msgid "Requires iOS 16.1 or later."
 msgstr "需要 iOS 16.1 或以上版本"
 
+#: src/app/settings-about.tsx
+#: src/app/settings-update-notes.tsx
+#: src/components/update-status-banner.tsx
+msgid "Restart Muqun to finish updating"
+msgstr "請重新啟動 Muqun 以完成更新"
+
+#: src/app/settings-about.tsx
+#: src/app/settings-update-notes.tsx
+#: src/components/update-status-banner.tsx
+msgid "Restarting Muqun…"
+msgstr "正在重新啟動 Muqun…"
+
 #: src/app/commands.tsx
 msgid "Restore hidden default commands"
 msgstr "還原隱藏的預設指令"
@@ -6708,15 +6718,13 @@ msgstr "請更新電腦上的 Muqun Gateway 並重新啟動，才能把任務交
 msgid "Update Muqun Gateway on this host to use {agentName}."
 msgstr "請更新此主機上的 Muqun Gateway 以使用 {agentName}"
 
-#: src/components/update-status-banner.tsx
-msgid "Update ready · applies on next launch"
-msgstr "更新已就緒 · 下次啟動時生效"
-
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"
 msgstr "更新 App 後即可從公開連結匯入主題，你仍然可以從檔案匯入"
 
+#: src/components/asset-viewer.tsx
 #: src/components/inline-file-link.tsx
+#: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-file-actions.tsx
 msgid "Update the Gateway to open or save this file."
 msgstr "請更新 Gateway 後開啟或儲存此檔案"
@@ -6733,6 +6741,8 @@ msgstr "更新 Gateway 後即可預覽影片輸出"
 msgid "Updates when you reopen"
 msgstr "重新開啟時更新"
 
+#: src/app/settings-about.tsx
+#: src/app/settings-update-notes.tsx
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
 msgstr "正在更新牧群…"
@@ -6866,6 +6876,9 @@ msgstr "從這裡傳送時主畫面啟動的代理程式"
 msgid "What is running"
 msgstr "正在執行的項目"
 
+#: src/app/settings-about.tsx
+#: src/app/settings-update-notes.tsx
+#: src/components/update-status-banner.tsx
 #: src/lib/release-notes.ts
 msgid "What's new"
 msgstr "新功能"

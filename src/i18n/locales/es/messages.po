@@ -977,6 +977,8 @@ msgstr "Navegador"
 msgid "Build"
 msgstr "Construir"
 
+#: src/app/settings-about.tsx
+#: src/app/settings-update-notes.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Built-in"
 msgstr "Integrados"
@@ -2312,10 +2314,6 @@ msgstr "Descartar este tema"
 #: src/components/away-digest-card.tsx
 msgid "Dismiss what happened while you were away"
 msgstr "Descartar lo que pasó mientras no estabas"
-
-#: src/components/whats-new-card.tsx
-msgid "Dismiss what's new"
-msgstr "Descartar las novedades"
 
 #: src/app/custom-theme.tsx
 #: src/components/asset-viewer.tsx
@@ -4822,6 +4820,18 @@ msgstr "Obligatorio"
 msgid "Requires iOS 16.1 or later."
 msgstr "Requiere iOS 16.1 o posterior"
 
+#: src/app/settings-about.tsx
+#: src/app/settings-update-notes.tsx
+#: src/components/update-status-banner.tsx
+msgid "Restart Muqun to finish updating"
+msgstr "Reinicia Muqun para finalizar la actualización"
+
+#: src/app/settings-about.tsx
+#: src/app/settings-update-notes.tsx
+#: src/components/update-status-banner.tsx
+msgid "Restarting Muqun…"
+msgstr "Reiniciando Muqun…"
+
 #: src/app/commands.tsx
 msgid "Restore hidden default commands"
 msgstr "Restaurar los comandos predeterminados ocultos"
@@ -6708,15 +6718,13 @@ msgstr "Actualiza Muqun Gateway en el ordenador y reinícialo para asignar una t
 msgid "Update Muqun Gateway on this host to use {agentName}."
 msgstr "Actualiza Muqun Gateway en este host para usar {agentName}"
 
-#: src/components/update-status-banner.tsx
-msgid "Update ready · applies on next launch"
-msgstr "Actualización lista · se aplicará al volver a abrir"
-
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"
 msgstr "Actualiza la app para importar temas desde enlaces públicos. Aún puedes importar un archivo"
 
+#: src/components/asset-viewer.tsx
 #: src/components/inline-file-link.tsx
+#: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-file-actions.tsx
 msgid "Update the Gateway to open or save this file."
 msgstr "Actualiza el Gateway para abrir o guardar este archivo"
@@ -6733,6 +6741,8 @@ msgstr "Actualiza el Gateway para previsualizar vídeos"
 msgid "Updates when you reopen"
 msgstr "Se actualiza al volver a abrir"
 
+#: src/app/settings-about.tsx
+#: src/app/settings-update-notes.tsx
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
 msgstr "Actualizando Muqun…"
@@ -6866,6 +6876,9 @@ msgstr "Lo que Inicio inicia cuando envías desde aquí"
 msgid "What is running"
 msgstr "Qué se está ejecutando"
 
+#: src/app/settings-about.tsx
+#: src/app/settings-update-notes.tsx
+#: src/components/update-status-banner.tsx
 #: src/lib/release-notes.ts
 msgid "What's new"
 msgstr "Novedades"
