@@ -1534,22 +1534,23 @@ export const AgentComposer = memo(function AgentComposer({
           }
         }>
         <ComposerSurface
-          allowDecoration={flushField && Boolean(fieldDecoration)}
+          flushField={flushField}
           surface="composer"
           shape={flushField ? 'composerField' : bar ? 'none' : 'sheet'}
           style={[
             styles.composerDock,
-            bar && {
-              borderTopLeftRadius: profile.chrome.surface,
-              borderTopRightRadius: profile.chrome.surface,
-              borderTopWidth: StyleSheet.hairlineWidth,
-              borderTopColor: theme.colors.border,
-              // The material draws a hairline on every side on a translucent
-              // pack; the bar's only edge is its top.
-              borderLeftColor: 'transparent',
-              borderRightColor: 'transparent',
-              borderBottomColor: 'transparent',
-            },
+            bar &&
+              !flushField && {
+                borderTopLeftRadius: profile.chrome.surface,
+                borderTopRightRadius: profile.chrome.surface,
+                borderTopWidth: StyleSheet.hairlineWidth,
+                borderTopColor: theme.colors.border,
+                // The material draws a hairline on every side on a translucent
+                // pack; the bar's only edge is its top.
+                borderLeftColor: 'transparent',
+                borderRightColor: 'transparent',
+                borderBottomColor: 'transparent',
+              },
           ]}>
           <View
             style={[
@@ -2086,29 +2087,20 @@ export const AgentComposer = memo(function AgentComposer({
   );
 });
 
-/** Keep Home artwork outside the material's clipping without changing its touch surface. */
+/** Home owns one painted field; session docks retain their enclosing glass material. */
 function ComposerSurface({
-  allowDecoration,
+  flushField,
   children,
   style,
   ...props
-}: React.ComponentProps<typeof GlassChrome> & { allowDecoration: boolean }) {
-  if (!allowDecoration)
+}: React.ComponentProps<typeof GlassChrome> & { flushField: boolean }) {
+  if (!flushField)
     return (
       <GlassChrome {...props} style={style}>
         {children}
       </GlassChrome>
     );
-  return (
-    <View style={[style, styles.decoratedSurface]}>
-      <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-        <GlassChrome {...props} style={StyleSheet.absoluteFill}>
-          {null}
-        </GlassChrome>
-      </View>
-      {children}
-    </View>
-  );
+  return <View style={[style, styles.flushSurface]}>{children}</View>;
 }
 
 /**
@@ -2217,11 +2209,8 @@ const EMPTY_INBOX: readonly InboxItem[] = Object.freeze([]);
 const NO_HIDDEN_COMMANDS: readonly AgentClientCommandId[] = Object.freeze([]);
 
 const styles = StyleSheet.create({
-  decoratedSurface: {
+  flushSurface: {
     overflow: 'visible',
-    // GlassChrome's constant hairline was previously part of content layout.
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'transparent',
   },
   dockOuter: {
     position: 'absolute',
