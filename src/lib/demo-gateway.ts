@@ -1173,18 +1173,9 @@ export function demoAssetText(assetId: string): string {
  * demo mode never makes a request.
  *
  * `Image.resolveAssetSource` rather than `Asset.fromModule(...).uri`, because
- * the latter has never produced a loadable URI in an Android release build.
- * With `expo-updates` installed, the `Asset` constructor looks the module's
- * hash up in the embedded asset map and, when that answer starts with
- * `file:///android_res/`, overwrites `uri` with it and clears `localUri`
- * (`expo-asset/build/Asset.js`). `expo-image` then sees a `file:` scheme,
- * treats the URI as a filesystem path (`SourceMap.kt`, `isLocalFileUri`), and
- * logs `FileNotFoundException` -- `/android_res/...` is a resource-table name,
- * not a file, and `enableShrinkResourcesInReleaseBuilds` has renamed the
- * packaged file to something like `res/W3.png` anyway. `downloadAsync()` is no
- * escape: the same file then sets `localUri = uri` and `downloaded = true` for
- * any Android image module, so the call returns immediately over the same
- * broken path.
+ * Android release assets may be drawable resources rather than files. A
+ * `file:///android_res/...` URI is not a filesystem path, and resource shrinking
+ * may rename the packaged file independently of its resource-table entry.
  *
  * The resolver instead yields the bare drawable identifier
  * (`resourceIdentifierWithoutScale`), which `expo-image` resolves through

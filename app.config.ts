@@ -16,6 +16,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           ...(ota.publicKeyPath ? { publicKeyPath: ota.publicKeyPath } : {}),
         },
       ],
+      './plugins/with-hot-updater-cleanup',
     ],
     extra: {
       ...config.extra,
