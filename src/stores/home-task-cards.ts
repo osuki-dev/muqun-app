@@ -1,7 +1,12 @@
 import { createMMKV } from 'react-native-mmkv';
 import { create } from 'zustand';
 
+import type { ServerTasksIndex } from '@/lib/server-tasks-state';
+import type { TaskView } from '@/lib/task-ledger';
+import { useServerTasksStore } from '@/stores/server-tasks';
+
 import {
+  acknowledgementsHeld,
   dismissedKey,
   pendingShown,
   type PendingDispatch,
@@ -44,11 +49,25 @@ function store(): KeyValueStore {
 function loadDismissed(): string[] {
   try {
     const parsed = JSON.parse(store().getString(DISMISSED_KEY) ?? '[]') as unknown;
-    return Array.isArray(parsed) ? parsed.filter((key) => typeof key === 'string') : [];
+    if (!Array.isArray(parsed)) return [];
+    // Kept before acknowledgements were per finish: they stand for the first.
+    return parsed
+      .filter((key): key is string => typeof key === 'string')
+      .map((key) => (key.split('\n').length === 2 ? `${key}\n0` : key));
   } catch {
     return [];
   }
 }
+
+function saveDismissed(dismissed: readonly string[]): void {
+  loadedDismissed = dismissed;
+  try {
+    store().set(DISMISSED_KEY, JSON.stringify(dismissed));
+  } catch {
+    // Kept for this launch.
+  }
+}
+let loadedDismissed: readonly string[] = [];
 
 let nextPendingId = 0;
 
@@ -57,7 +76,10 @@ type HomeTaskCardsState = {
   dismissed: readonly string[];
   /** Goals the dock sent that no task has answered yet. In memory only. */
   pending: readonly PendingDispatch[];
-  acknowledge: (serverId: string, taskId: string) => void;
+  /** This finish of this task was seen: off the card until it finishes again. */
+  acknowledge: (serverId: string, task: Pick<TaskView, 'taskId' | 'reopenCount'>) => void;
+  /** Let go of acknowledgements whose task went back to work. */
+  followLedgers: (index: ServerTasksIndex) => void;
   /** The dock sent a goal; the card shows it until the task frame lands. */
   dispatched: (serverId: string, goal: string) => string;
   /** The send failed, or the task came back with the answer. */
@@ -96,7 +118,7 @@ export function showOpeningWhile(key: string, open: Promise<void>): void {
 }
 
 export const useHomeTaskCards = create<HomeTaskCardsState>((set, get) => ({
-  dismissed: loadDismissed(),
+  dismissed: (loadedDismissed = loadDismissed()),
   pending: [],
   rowActions: null,
   setRowActions(actions) {
@@ -106,16 +128,17 @@ export const useHomeTaskCards = create<HomeTaskCardsState>((set, get) => ({
   setOpening(key) {
     set({ opening: key });
   },
-  acknowledge(serverId, taskId) {
-    const key = dismissedKey(serverId, taskId);
+  acknowledge(serverId, task) {
+    const key = dismissedKey(serverId, task);
     if (get().dismissed.includes(key)) return;
-    const dismissed = [...get().dismissed, key].slice(-MAX_DISMISSED);
+    saveDismissed([...get().dismissed, key].slice(-MAX_DISMISSED));
+    set({ dismissed: loadedDismissed });
+  },
+  followLedgers(index) {
+    const dismissed = acknowledgementsHeld(get().dismissed, index);
+    if (dismissed === get().dismissed) return;
+    saveDismissed(dismissed);
     set({ dismissed });
-    try {
-      store().set(DISMISSED_KEY, JSON.stringify(dismissed));
-    } catch {
-      // Kept for this launch.
-    }
   },
   dispatched(serverId, goal) {
     const id = `dispatch-${++nextPendingId}`;
@@ -164,3 +187,11 @@ export const useHomeTaskCards = create<HomeTaskCardsState>((set, get) => ({
     }));
   },
 }));
+
+// A task the ledger shows back at work loses its acknowledgement, so its next
+// finish shows on the card (a gateway that counts reopens says so in the key
+// too; one that does not, only by the state change).
+useHomeTaskCards.getState().followLedgers(useServerTasksStore.getState().index);
+useServerTasksStore.subscribe((state, previous) => {
+  if (state.index !== previous.index) useHomeTaskCards.getState().followLedgers(state.index);
+});

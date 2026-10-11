@@ -382,27 +382,34 @@ function ComputerCardView({
 
       {followed ? (
         <View style={styles.block}>
-          {urgentNow.map(nowRow)}
-          {card.pending.map((item) => (
-            <SentTaskRow key={item.id} item={item} computer={server.label} nowMs={nowMs} />
-          ))}
-          {restNow.map(nowRow)}
-          {card.nowTotal > card.now.length ? (
-            <Text key="more" variant="caption" color={theme.colors.textMuted}>
-              {t`+${card.nowTotal - card.now.length} more`}
-            </Text>
-          ) : null}
-          {card.finished.map((task) => (
-            <TaskRow
-              key={task.taskId}
-              task={task}
-              serverId={server.serverId}
-              discovery={discovery}
-              nowMs={nowMs}
-              onOpen={(finished) => onOpenTask(finished)}
-              onOpenTree={(finished) => onOpenTask(finished, true)}
-            />
-          ))}
+          {/* One keyed list, not one per section: a task moving between Now
+              and Just finished (it finished, or it was reopened) is the same
+              row element, moved by its layout transition, never re-created. */}
+          {[
+            ...urgentNow.map(nowRow),
+            ...card.pending.map((item) => (
+              <SentTaskRow key={item.id} item={item} computer={server.label} nowMs={nowMs} />
+            )),
+            ...restNow.map(nowRow),
+            ...(card.nowTotal > card.now.length
+              ? [
+                  <Text key="more" variant="caption" color={theme.colors.textMuted}>
+                    {t`+${card.nowTotal - card.now.length} more`}
+                  </Text>,
+                ]
+              : []),
+            ...card.finished.map((task) => (
+              <TaskRow
+                key={task.taskId}
+                task={task}
+                serverId={server.serverId}
+                discovery={discovery}
+                nowMs={nowMs}
+                onOpen={(finished) => onOpenTask(finished)}
+                onOpenTree={(finished) => onOpenTask(finished, true)}
+              />
+            )),
+          ]}
         </View>
       ) : (
         <View style={styles.block}>

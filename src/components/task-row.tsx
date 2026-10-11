@@ -427,7 +427,7 @@ function useTaskRowModel({
   const rowLine = useTaskRowLine(discovery);
   const capabilities = useServerCapabilities((state) => state.byServer[serverId]);
   const acknowledged = useHomeTaskCards((cards) =>
-    cards.dismissed.includes(dismissedKey(serverId, task.taskId))
+    cards.dismissed.includes(dismissedKey(serverId, task))
   );
   const acknowledge = useHomeTaskCards((cards) => cards.acknowledge);
   const act = useTaskAction(serverId);
@@ -518,7 +518,7 @@ function useTaskRowModel({
             Icon: Check,
             testID: `task-row-acknowledge-${task.taskId}`,
             onPress: run(() => {
-              acknowledge(serverId, task.taskId);
+              acknowledge(serverId, task);
               dismissTaskNotices(task);
             }),
           };
