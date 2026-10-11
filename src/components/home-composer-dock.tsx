@@ -126,6 +126,7 @@ export function HomeComposerDock({
   targetPulse = 0,
   bottomInset = 0,
   topInset = 0,
+  outerInsets,
   edgeBar,
   fieldLines,
   autoHide,
@@ -142,6 +143,8 @@ export function HomeComposerDock({
   targetPulse?: number;
   bottomInset?: number;
   topInset?: number;
+  /** Phone-only space outside the field; Pad keeps its column geometry. */
+  outerInsets?: { horizontal: number; bottom: number };
   /** See `AgentComposer`'s `bar`. */
   edgeBar?: { inset: number };
   /** See `AgentComposer`'s `fieldLines`. */
@@ -1139,6 +1142,7 @@ export function HomeComposerDock({
       attachmentTargetId={targetId}
       bottomInset={bottomInset}
       topInset={topInset}
+      outerInsets={outerInsets}
       bar={edgeBar}
       fieldLines={Math.max(3, fieldLines ?? 3) + 1}
       compact
