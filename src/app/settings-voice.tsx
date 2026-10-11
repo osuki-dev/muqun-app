@@ -125,6 +125,7 @@ function VoiceSettingsForm() {
         <Text variant="caption" color={theme.colors.textMuted}>{t`Transcription mode`}</Text>
         <SettingsSegmented
           testID="voice-service-mode"
+          labelWeight="regular"
           value={mode}
           options={[
             { value: 'file', label: t`After recording` },
@@ -146,7 +147,7 @@ function VoiceSettingsForm() {
             {t`Streams speech while you talk. Requires an OpenAI Realtime-compatible transcription endpoint.`}
           </Text>
         )}
-        <View style={styles.language}>
+        <View>
           <SheetSceneRow
             title={t`Recognition language`}
             caption={
@@ -276,6 +277,5 @@ function VoiceSettingsForm() {
 
 const styles = StyleSheet.create({
   form: { paddingTop: 8, gap: 14, width: '100%', maxWidth: 640, alignSelf: 'center' },
-  language: { marginHorizontal: -20 },
   actions: { gap: 4, paddingTop: 6 },
 });
