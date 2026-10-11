@@ -4823,6 +4823,7 @@ msgstr "요청에 실패했습니다"
 msgid "Required on launch and after 30 seconds in the background."
 msgstr "앱을 실행할 때와 백그라운드에서 30초가 지난 뒤에 인증을 요구합니다"
 
+#: src/app/settings-voice.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Required."
 msgstr "필수입니다"

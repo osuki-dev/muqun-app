@@ -4823,6 +4823,7 @@ msgstr "Yêu cầu thất bại"
 msgid "Required on launch and after 30 seconds in the background."
 msgstr "Yêu cầu khi khởi động và sau 30 giây ở nền"
 
+#: src/app/settings-voice.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Required."
 msgstr "Bắt buộc"

@@ -1,7 +1,7 @@
 import { useLingui } from '@lingui/react/macro';
 import { resolveFontStyle, useThemeTokens, type ResolvedFontStyle } from '@osuki-dev/ui';
 import { useRouter } from 'expo-router';
-import { Text } from '@/components/text';
+import { Text, type TextProps } from '@/components/text';
 import { Search, X } from 'lucide-react-native';
 import { useEffect, useRef, type ReactNode } from 'react';
 import {
@@ -861,6 +861,7 @@ export function useSheetSceneInputStyle(): StyleProp<TextStyle> {
  */
 export function SheetSceneAction({
   label,
+  labelWeight = 'bold',
   onPress,
   disabled = false,
   busy = false,
@@ -869,6 +870,7 @@ export function SheetSceneAction({
   testID,
 }: {
   label: string;
+  labelWeight?: TextProps['weight'];
   onPress: () => void;
   disabled?: boolean;
   busy?: boolean;
@@ -901,7 +903,7 @@ export function SheetSceneAction({
         },
       ]}>
       {busy ? <ActivityIndicator size="small" color={colors.onPrimary} /> : leading}
-      <Text variant="bodySmall" weight="bold" color={labelColor}>
+      <Text variant="bodySmall" weight={labelWeight} color={labelColor}>
         {label}
       </Text>
     </PressableScale>
@@ -911,12 +913,14 @@ export function SheetSceneAction({
 /** A secondary action: a line of text under the primary one, never a button. */
 export function SheetSceneQuietAction({
   label,
+  labelWeight = 'semibold',
   onPress,
   tone = 'muted',
   disabled = false,
   testID,
 }: {
   label: string;
+  labelWeight?: TextProps['weight'];
   onPress: () => void;
   /** `danger` for the one that throws something away. */
   tone?: 'muted' | 'danger';
@@ -934,7 +938,7 @@ export function SheetSceneQuietAction({
       style={styles.quietAction}>
       <Text
         variant="caption"
-        weight="semibold"
+        weight={labelWeight}
         color={tone === 'danger' ? colors.danger : colors.textMuted}>
         {label}
       </Text>

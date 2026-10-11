@@ -7,16 +7,22 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/text';
 import { SettingsSegmented } from '@/components/settings-segmented';
 import { FontedTextInput } from '@/components/fonted-text-input';
-import { PressableScale } from '@/components/pressable-scale';
 import {
   SheetScene,
+  SheetSceneAction,
+  SheetSceneQuietAction,
   SheetSceneField,
   SheetSceneFooter,
   SheetSceneRow,
   sheetSceneStyles,
   useSheetSceneInputStyle,
 } from '@/components/sheet-scene';
-import { useAppearanceProfile } from '@/components/appearance-profile-provider';
+import {
+  VOICE_DEFAULTS,
+  isOpenAiVoiceEndpoint,
+  missingVoiceCredentials,
+  voiceDraftForMode,
+} from '@/lib/voice-service-config';
 import { voiceRecorderAvailable } from '@/lib/voice-recorder-capability';
 import { APP_LOCALES, LOCALE_LABELS, type AppLocale } from '@/i18n/locale';
 import {
@@ -26,11 +32,6 @@ import {
   useVoiceSettings,
   type VoiceMode,
 } from '@/stores/voice-settings';
-
-const VOICE_ENDPOINTS = {
-  file: 'https://api.openai.com/v1/audio/transcriptions',
-  realtime: 'wss://api.openai.com/v1/realtime?intent=transcription',
-} as const;
 
 export default function SettingsVoiceScreen() {
   const { t } = useLingui();
@@ -50,19 +51,22 @@ function VoiceSettingsForm() {
   const navigation = useNavigation();
   const theme = useThemeTokens();
   const field = useSheetSceneInputStyle();
-  const profile = useAppearanceProfile();
   const insets = useSafeAreaInsets();
   const config = useVoiceSettings((state) => state.config);
   const loadError = useVoiceSettings((state) => state.loadError);
-  const [url, setUrl] = useState(config?.url ?? VOICE_ENDPOINTS.file);
+  const [url, setUrl] = useState(config?.url ?? VOICE_DEFAULTS.file.url);
   const [apiKey, setApiKey] = useState(config?.apiKey ?? '');
-  const [model, setModel] = useState(config?.model ?? '');
+  const [model, setModel] = useState(config?.model ?? VOICE_DEFAULTS.file.model);
   const [language, setLanguage] = useState<AppLocale | 'auto' | null>(config?.language ?? null);
   const [mode, setMode] = useState<VoiceMode>(config?.mode ?? 'file');
   const [choosingLanguage, setChoosingLanguage] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
+  const [attemptedSave, setAttemptedSave] = useState(false);
+  const official = isOpenAiVoiceEndpoint(url);
+  const missing = missingVoiceCredentials({ url, apiKey, model });
   async function save(clear = false) {
+    setAttemptedSave(!clear);
     const next = clear ? null : normalizeVoiceConfig(url, apiKey, model, language, mode);
     if (!clear && !next) {
       setMessage(
@@ -70,6 +74,10 @@ function VoiceSettingsForm() {
           ? t`Enter a valid WSS realtime URL. API key and model are optional.`
           : t`Enter a valid HTTPS API URL. API key and model are optional.`
       );
+      return;
+    }
+    if (!clear && missing.length) {
+      setMessage('');
       return;
     }
     setBusy(true);
@@ -82,9 +90,9 @@ function VoiceSettingsForm() {
       setBusy(false);
       return;
     }
-    setUrl(next?.url ?? '');
+    setUrl(next?.url ?? VOICE_DEFAULTS.file.url);
     setApiKey(next?.apiKey ?? '');
-    setModel(next?.model ?? '');
+    setModel(next?.model ?? VOICE_DEFAULTS.file.model);
     setLanguage(next?.language ?? null);
     setMode(next?.mode ?? 'file');
     setBusy(false);
@@ -124,7 +132,10 @@ function VoiceSettingsForm() {
           ]}
           onChange={(value) => {
             if (!busy && (value === 'file' || value === 'realtime')) {
-              if (!url || url === VOICE_ENDPOINTS[mode]) setUrl(VOICE_ENDPOINTS[value]);
+              const draft = voiceDraftForMode({ url, model }, mode, value);
+              setUrl(draft.url);
+              setModel(draft.model);
+              setAttemptedSave(false);
               setMode(value);
               setMessage('');
             }
@@ -191,15 +202,17 @@ function VoiceSettingsForm() {
             autoCapitalize="none"
             autoCorrect={false}
             keyboardType="url"
-            placeholder={VOICE_ENDPOINTS[mode]}
+            placeholder={VOICE_DEFAULTS[mode].url}
             placeholderTextColor={theme.colors.textSubtle}
             style={field}
           />
         </SheetSceneField>
-        <SheetSceneField label={t`API key (optional)`}>
+        <SheetSceneField
+          label={official ? t`API key` : t`API key (optional)`}
+          error={attemptedSave && missing.includes('apiKey') ? t`Required.` : undefined}>
           <FontedTextInput
             testID="voice-service-key"
-            accessibilityLabel={t`API key`}
+            accessibilityLabel={official ? t`API key` : t`API key (optional)`}
             value={apiKey}
             onChangeText={setApiKey}
             editable={!busy}
@@ -211,7 +224,9 @@ function VoiceSettingsForm() {
             style={field}
           />
         </SheetSceneField>
-        <SheetSceneField label={t`Model (optional)`}>
+        <SheetSceneField
+          label={official ? t`Model` : t`Model (optional)`}
+          error={attemptedSave && missing.includes('model') ? t`Required.` : undefined}>
           <FontedTextInput
             testID="voice-service-model"
             accessibilityLabel={t`Model`}
@@ -220,7 +235,7 @@ function VoiceSettingsForm() {
             editable={!busy}
             autoCapitalize="none"
             autoCorrect={false}
-            placeholder={mode === 'realtime' ? 'gpt-live-transcribe' : 'gpt-4o-mini-transcribe'}
+            placeholder={VOICE_DEFAULTS[mode].model}
             placeholderTextColor={theme.colors.textSubtle}
             style={field}
           />
@@ -231,27 +246,22 @@ function VoiceSettingsForm() {
             theme.colors.textMuted
           }>{t`OpenAI requires an API key and model. Compatible services may provide their own defaults. Your API key is stored securely on this device.`}</Text>
         <View style={styles.actions}>
-          <PressableScale
-            accessibilityRole="button"
-            disabled={busy}
+          <SheetSceneAction
+            label={t`Save`}
+            labelWeight="regular"
             testID="voice-settings-save"
-            accessibilityLabel={t`Save`}
+            busy={busy}
             onPress={() => void save()}
-            style={[
-              styles.button,
-              { backgroundColor: theme.colors.primary, borderRadius: profile.chrome.control },
-            ]}>
-            <Text variant="bodySmall" color={theme.colors.onPrimary}>{t`Save`}</Text>
-          </PressableScale>
-          <PressableScale
-            accessibilityRole="button"
-            disabled={busy || (!config && !loadError)}
-            testID="voice-settings-clear"
-            accessibilityLabel={t`Clear configuration`}
-            onPress={() => void save(true)}
-            style={styles.button}>
-            <Text variant="bodySmall" color={theme.colors.textMuted}>{t`Clear configuration`}</Text>
-          </PressableScale>
+          />
+          {(config || loadError) && (
+            <SheetSceneQuietAction
+              label={t`Clear configuration`}
+              labelWeight="regular"
+              testID="voice-settings-clear"
+              disabled={busy}
+              onPress={() => void save(true)}
+            />
+          )}
         </View>
         {message || loadError ? (
           <Text accessibilityLiveRegion="polite" color={theme.colors.textMuted}>
@@ -268,5 +278,4 @@ const styles = StyleSheet.create({
   form: { paddingTop: 8, gap: 14, width: '100%', maxWidth: 640, alignSelf: 'center' },
   language: { marginHorizontal: -20 },
   actions: { gap: 4, paddingTop: 6 },
-  button: { paddingHorizontal: 18, paddingVertical: 12, minHeight: 44, alignItems: 'center' },
 });

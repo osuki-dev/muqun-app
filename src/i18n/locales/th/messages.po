@@ -4823,6 +4823,7 @@ msgstr "คำขอไม่สำเร็จ"
 msgid "Required on launch and after 30 seconds in the background."
 msgstr "ต้องยืนยันเมื่อเปิดแอปและหลังอยู่เบื้องหลัง 30 วินาที"
 
+#: src/app/settings-voice.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Required."
 msgstr "จำเป็น"

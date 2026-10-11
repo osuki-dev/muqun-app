@@ -4823,6 +4823,7 @@ msgstr "請求失敗"
 msgid "Required on launch and after 30 seconds in the background."
 msgstr "啟動時，以及在背景超過 30 秒後都會要求驗證"
 
+#: src/app/settings-voice.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Required."
 msgstr "必填"
