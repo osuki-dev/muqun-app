@@ -24,12 +24,12 @@ function recordingRuntime(config: VoiceServiceConfig, language: string): VoiceRe
   const audioOwner = {};
   const file = new File(Paths.cache, `dictation-${Date.now()}.m4a`);
   return {
-    async start(signal, onMeter) {
+    async start(signal, onMeter, _onFailure, requestPermission) {
       if (signal.aborted) throw new Error('Operation cancelled.');
       await prepareRecordingAudio(audioOwner);
       if (Platform.OS === 'android') {
-        const permission = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.RECORD_AUDIO
+        const permission = await requestPermission(() =>
+          PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO)
         );
         if (signal.aborted) throw new Error('Operation cancelled.');
         if (permission !== PermissionsAndroid.RESULTS.GRANTED) {
@@ -119,7 +119,8 @@ export class VoiceInputSession extends VoiceRecordingSession {
     onMeter: ConstructorParameters<typeof VoiceRecordingSession>[2],
     onText: ConstructorParameters<typeof VoiceRecordingSession>[3],
     onError: ConstructorParameters<typeof VoiceRecordingSession>[4],
-    onPartial: (text: string) => void = () => {}
+    onPartial: (text: string) => void = () => {},
+    lifecycle?: ConstructorParameters<typeof VoiceRecordingSession>[5]
   ) {
     super(
       config.mode === 'realtime'
@@ -128,7 +129,8 @@ export class VoiceInputSession extends VoiceRecordingSession {
       onState,
       onMeter,
       onText,
-      onError
+      onError,
+      lifecycle
     );
   }
 }

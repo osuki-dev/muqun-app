@@ -146,16 +146,15 @@ function VoiceRecording({
                       : t`Transcription failed. Check your speech service and try again.`
               : t`Recording failed.`
           ),
-        setPartial
+        setPartial,
+        { appState: () => AppState.currentState, onBackground: () => latest().onClose() }
       )
   );
   useEffect(() => {
+    session.setAppState(AppState.currentState);
     void session.start();
     const listener = AppState.addEventListener('change', (next) => {
-      if (next === 'background') {
-        void session.cancel();
-        latest().onClose();
-      }
+      session.setAppState(next);
     });
     const back = BackHandler.addEventListener('hardwareBackPress', () => {
       void session.cancel();

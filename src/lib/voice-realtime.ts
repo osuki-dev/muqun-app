@@ -39,12 +39,12 @@ export function realtimeRecordingRuntime(
     if (signal?.aborted) throw new Error('Operation cancelled.');
   };
   return {
-    async start(abort, onMeter, onFailure) {
+    async start(abort, onMeter, onFailure, requestPermission) {
       signal = abort;
       checkAbort();
       audio = captureModule();
       await prepareRecordingAudio(owner);
-      const permission = await audio.requestRecordingPermissionsAsync();
+      const permission = await requestPermission(() => audio!.requestRecordingPermissionsAsync());
       checkAbort();
       if (!permission.granted) throw new VoiceInputError('permission');
       const Socket = WebSocket as unknown as new (
