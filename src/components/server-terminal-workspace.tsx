@@ -5757,10 +5757,13 @@ export function ServerTerminalWorkspace({
                   <Animated.View style={styles.terminalSwipeArea}>
                     {targetUnavailable ? (
                       <View style={styles.missingTargetState}>
-                        <Text variant="heading">
+                        <Text variant="heading" style={styles.unavailableText}>
                           <Trans>Terminal unavailable</Trans>
                         </Text>
-                        <Text variant="bodySmall" color={theme.colors.textMuted}>
+                        <Text
+                          variant="bodySmall"
+                          color={theme.colors.textMuted}
+                          style={styles.unavailableText}>
                           <Trans>
                             This terminal was removed. Choose another terminal to continue.
                           </Trans>
@@ -6669,10 +6672,10 @@ function TerminalBackendDown({
       <Text variant="heading">
         <Trans>Terminal unavailable</Trans>
       </Text>
-      <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.backendDownText}>
+      <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.unavailableText}>
         {copy.reason}
       </Text>
-      <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.backendDownText}>
+      <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.unavailableText}>
         {copy.hint}
       </Text>
       {copy.command ? (
@@ -7074,7 +7077,7 @@ const styles = StyleSheet.create({
     gap: 10,
     padding: 24,
   },
-  backendDownText: {
+  unavailableText: {
     textAlign: 'center',
   },
   backendDownCommand: { alignSelf: 'stretch' },

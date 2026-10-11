@@ -118,6 +118,7 @@ import {
   useHomeLaunchController,
 } from '@/components/home-launch-actions';
 import { HomeComposerDock } from '@/components/home-composer-dock';
+import { HomeScrollViewport } from '@/components/home-scroll-viewport';
 import { SshHostRow } from '@/components/ssh-host-row';
 import { StatusDot } from '@/components/status-dot';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
@@ -1039,7 +1040,9 @@ export function HomeOverview({
           reachabilityByServer={padReachabilityByServer}
           onChange={setHasComputerCards}
         />
-        <KeyboardAwareScrollView
+        <HomeScrollViewport
+          dockHeight={dock && !padLaunch ? dockHeight : 0}
+          dockOffset={isPad ? undefined : pageDockHide.dock.offset}
           ref={overviewScroll}
           keyboardShouldPersistTaps="handled"
           // The wide Pad cover holds the dock inside this page, and the dock
@@ -1359,7 +1362,7 @@ export function HomeOverview({
               }
             />
           </View>
-        </KeyboardAwareScrollView>
+        </HomeScrollViewport>
         {padLaunch ? null : dock}
         {devAmbientControls}
       </View>
@@ -1526,7 +1529,9 @@ export function HomeOverview({
         </SafeAreaView>
       </Animated.View>
 
-      <KeyboardAwareScrollView
+      <HomeScrollViewport
+        dockHeight={dock ? dockHeight : 0}
+        dockOffset={pageDockHide.dock.offset}
         ref={overviewScroll}
         onContentSizeChange={restoreScroll}
         onLayout={(event) =>
@@ -1878,7 +1883,7 @@ export function HomeOverview({
         </Animated.View>
 
         {!loading ? <View style={[styles.spacerBelow, isPad && styles.padSpacer]} /> : null}
-      </KeyboardAwareScrollView>
+      </HomeScrollViewport>
       {dock}
       {devAmbientControls}
     </View>
