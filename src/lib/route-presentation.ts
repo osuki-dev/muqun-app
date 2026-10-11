@@ -526,12 +526,7 @@ export function sheetRouteOptions(
     sheetRouteDetents[route] ?? 'full',
     sheetRouteContent[route] ?? 'short'
   );
-  // Screens 4.28 has no native sheet-width prop. Its contentStyle does reach
-  // ScreenContentWrapper. fitToContents sets absolute start/end: 0, which
-  // override alignSelf in Yoga; clear those insets before centering the cap.
-  // UIKit already presents a centered card; Android needs the content cap.
-  const centeredSettings = platform === 'android' && isPad && route.startsWith('settings-');
-  const cornerRadius = profile?.chrome.sheet ?? appChrome.radius.sheet;
+  const centeredSettings = isCenteredSettingsSheetRoute(route, isPad, platform);
   return {
     ...options,
     ...(profile ? { sheetCornerRadius: profile.chrome.sheet } : {}),
@@ -540,22 +535,29 @@ export function sheetRouteOptions(
           // The transparent native host still spans the window. Its full-width
           // elevation would outline invisible side gutters rather than the card.
           sheetElevation: 0,
-          contentStyle: {
-            backgroundColor: 'transparent',
-            width: '100%',
-            maxWidth: 640,
-            alignSelf: 'center',
-            start: 'auto',
-            end: 'auto',
-            borderTopLeftRadius: cornerRadius,
-            borderTopRightRadius: cornerRadius,
-            overflow: 'hidden',
-          },
+          // Keep the content host full-width so SheetRouteFrame can receive
+          // side-gutter taps. The frame caps and clips only its painted child.
         }
       : {}),
     // Duration alone does not disable native Android transitions.
     ...(reduceMotion ? { animation: 'none', animationDuration: 0 } : {}),
   };
+}
+
+export const PAD_SETTINGS_SHEET_WIDTH = 640;
+
+/** UIKit already owns its card and outside dismissal; Android needs both. */
+export function isCenteredSettingsSheetRoute(
+  route: string,
+  isPad: boolean,
+  platform: string | undefined = process.env.EXPO_OS
+): boolean {
+  return (
+    platform === 'android' &&
+    isPad &&
+    route.startsWith('settings-') &&
+    sheetRouteKinds[route] === 'picker'
+  );
 }
 
 /**

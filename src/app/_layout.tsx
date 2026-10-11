@@ -3,12 +3,13 @@ import { AppDiagramProvider } from '@/components/app-diagram-provider';
 import { RouteScene } from '@/components/route-scene';
 import {
   isFullscreenSheetRoute,
+  isCenteredSettingsSheetRoute,
   sheetPresentationOptions,
   sheetRouteOptions as resolveSheetRouteOptions,
   sheetRoutePresentations,
 } from '@/lib/route-presentation';
 import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
-import { SheetFullscreenProvider } from '@/components/sheet-route-frame';
+import { SheetFullscreenProvider, SheetRouteFrame } from '@/components/sheet-route-frame';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as Device from 'expo-device';
 import * as ScreenOrientation from 'expo-screen-orientation';
@@ -379,7 +380,13 @@ function RootContent() {
               <Stack
                 screenLayout={({ children, options, route }) =>
                   options.presentation === 'formSheet' ? (
-                    <>{children}</>
+                    isCenteredSettingsSheetRoute(route.name, isPad) ? (
+                      <SheetRouteFrame detents={options.sheetAllowedDetents}>
+                        {children}
+                      </SheetRouteFrame>
+                    ) : (
+                      <>{children}</>
+                    )
                   ) : (
                     <RouteScene
                       modal={options.presentation === 'fullScreenModal'}
