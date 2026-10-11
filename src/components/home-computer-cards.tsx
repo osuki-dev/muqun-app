@@ -352,7 +352,6 @@ function ComputerCardView({
         styles.fill,
         {
           backgroundColor: background(theme.colors.surface),
-          borderColor: theme.colors.border,
           borderRadius: profile.chrome.surface,
         },
       ]}>
@@ -437,7 +436,6 @@ const styles = StyleSheet.create({
   card: {
     minWidth: 0,
     overflow: 'hidden',
-    borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: HOME_CARD_INSET,
     paddingTop: 4,
   },
