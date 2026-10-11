@@ -5154,6 +5154,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
       {/* Floating Glass Composer at Bottom */}
       <AgentComposer
+        voiceContext={visible ? JSON.stringify([serverId, sessionId, activeAsid ?? 'new']) : ''}
         mentionComputers={mentionComputers}
         disabled={isOffline}
         agentName={agentName}
