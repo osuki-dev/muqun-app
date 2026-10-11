@@ -37,7 +37,12 @@ export default defineConfig((options) => {
         'app.config.ts',
         'scripts/hot-updater-app-config.ts',
         'plugins/**/*.{js,cjs}',
-        'modules/theme-transport/**/*.{swift,kt,podspec,gradle,json,xml}',
+        // Extra-source globs bypass SDK build-output ignores. Name source roots
+        // explicitly so a native build cannot add generated XML/JSON to the hash.
+        'modules/theme-transport/*.json',
+        'modules/theme-transport/ios/**/*.{swift,podspec}',
+        'modules/theme-transport/android/*.gradle',
+        'modules/theme-transport/android/src/**/*.{kt,java,xml}',
         'patches/*.patch',
       ],
     },
