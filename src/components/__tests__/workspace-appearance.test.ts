@@ -87,7 +87,7 @@ describe('workspace chrome follows the appearance profile', () => {
     expect(options).toContain("pointerEvents={open ? 'auto' : 'none'}");
     expect(options).toContain('accessibilityElementsHidden={!open}');
     expect(options).toContain("open ? contentHeight : 0, timing('dropdown')");
-    expect(options).toContain('if (finished && !open) scheduleOnRN(onVisibilityChange, false)');
+    expect(options).toContain('if (finished && !open) scheduleOnRN(finishCollapse)');
     // An exiting child can outlive the collapsed Yoga viewport and paint under
     // the input. Keep this mounted content inside the animated clipping parent.
     expect(options).not.toContain('exiting=');

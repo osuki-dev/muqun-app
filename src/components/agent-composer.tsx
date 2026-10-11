@@ -1973,7 +1973,9 @@ export const AgentComposer = memo(function AgentComposer({
             {attachmentUploads.attachments.length > 0 ? (
               <Animated.View
                 entering={fadeIn('micro')}
-                exiting={flushField ? fadeOut('short') : fadeOutDown('short')}
+                // Home restores field artwork on removal; do not leave a native
+                // exit view painting across that field's newly raised position.
+                exiting={flushField ? undefined : fadeOutDown('short')}
                 style={[
                   styles.stripWrapper,
                   flushField && {
