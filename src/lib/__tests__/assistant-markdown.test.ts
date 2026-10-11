@@ -14,7 +14,7 @@ function nodesOfType(node: Node, type: string): Node[] {
 describe('assistant Chinese strong display tolerance', () => {
   test('the paired session fixture renders all nine intended strong spans', async () => {
     const source = readFileSync(
-      new URL('./fixtures/chinese-assistant-response.md', import.meta.url),
+      new URL('./fixtures/chinese-assistant-response.txt', import.meta.url),
       'utf8'
     );
     const display = normalizeAssistantMarkdown(source);
