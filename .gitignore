@@ -129,3 +129,12 @@ example
 # locally, pushed with `eas metadata:push`. Store data, not source.
 /store.config.json
 /shots
+
+# OTA deployment credentials and generated infrastructure.
+.env.hotupdater
+.env.hotupdater.*
+!/.env.hotupdater.example
+/infrastructure/hot-updater/
+/fingerprint.json
+/keys/*
+!/keys/hot-updater-public.pem
