@@ -1329,7 +1329,9 @@ describe('native end-to-end gate', () => {
           expect(calls.filter((args) => args[0] === 'alert' && args[1] === 'accept')).toHaveLength(
             firstUse ? 1 : 0
           );
-          expect(calls).toContainEqual(['wait', 'id="voice-visual-recording"', '3000']);
+          expect(calls.filter((args) => args[0] === 'wait' && args[1] !== 'stable')).toEqual([
+            ['wait', 'id="voice-visual-recording"', '3000'],
+          ]);
         }
     } finally {
       await rm(base, { recursive: true });
