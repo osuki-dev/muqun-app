@@ -2,6 +2,7 @@
 
 # section verify
 wait "id=\"settings-voice-sheet\"" 10000
+is hidden "label=\"Insert text automatically\""
 scroll down --until "id=\"voice-service-url\""
 fill "id=\"voice-service-url\"" "http://example.invalid/v1"
 keyboard enter

@@ -6,7 +6,7 @@ import { Spinner, useThemeTokens } from '@osuki-dev/ui';
 import { Mic, Send } from 'lucide-react-native';
 import { Canvas, Group, Path, Skia } from 'react-native-skia';
 import { scheduleOnRN } from 'react-native-worklets';
-import { useEffect, useState, type ComponentProps, type ReactNode, type Ref } from 'react';
+import { useEffect, useRef, useState, type ComponentProps, type ReactNode, type Ref } from 'react';
 import { StyleSheet, TextInput, View, useWindowDimensions, type TextStyle } from 'react-native';
 import Animated, {
   Easing,
@@ -94,7 +94,7 @@ export function TerminalComposer({
 }: TerminalComposerProps) {
   const readInput = useLatestReader(inputProps);
   const { t } = useLingui();
-  const openVoice = useVoiceInputTrigger({
+  const voice = useVoiceInputTrigger({
     context: voiceContext,
     disabled: send.sending || inputProps.editable === false,
     onText: (transcript) => {
@@ -103,6 +103,16 @@ export function TerminalComposer({
       current.onChangeText?.(value + (value && !/\s$/.test(value) ? ' ' : '') + transcript);
     },
   });
+  const voiceActive = voice.panel !== null;
+  const contentReveal = useSharedValue(1);
+  const previousVoiceActive = useRef(voiceActive);
+  useEffect(() => {
+    if (previousVoiceActive.current === voiceActive) return;
+    previousVoiceActive.current = voiceActive;
+    contentReveal.set(0);
+    contentReveal.set(withTiming(1, timing('short')));
+  }, [voiceActive, contentReveal]);
+  const contentRevealStyle = useAnimatedStyle(() => ({ opacity: contentReveal.get() }));
   const profile = useAppearanceProfile();
   const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
@@ -156,7 +166,7 @@ export function TerminalComposer({
         disabled={send.disabled}
         onPress={send.onPress}
         testID={send.testID}
-        onLongPress={openVoice}
+        onLongPress={voice.open}
         longPressLabel={t`Voice to text`}
         armedFill={theme.colors.primary}
         restText={theme.colors.textMuted}
@@ -172,48 +182,55 @@ export function TerminalComposer({
       layout={layout}
       style={[
         composerStyles.composer,
+        contentRevealStyle,
         compact && composerStyles.compactComposer,
-        expanded && composerStyles.expandedComposer,
+        (expanded || voice.panel) && composerStyles.expandedComposer,
+        voice.panel && { maxHeight: undefined },
         { borderRadius: profile.chrome.composerField },
         { backgroundColor: surfaceBackground(chromeGlassQuiet) },
       ]}>
-      {!expanded && leading}
-      <FontedTextInput
-        ref={inputRef}
-        multiline
-        autoCorrect={false}
-        placeholderTextColor={placeholderText}
-        selectionColor={theme.colors.primary}
-        {...inputProps}
-        spans={spans}
-        textBreakStrategy={inputProps.textBreakStrategy ?? 'simple'}
-        onContentSizeChange={(event) => {
-          // Keep the expanded layout until the draft clears. Collapsing as soon
-          // as wider text fits would oscillate between the two widths.
-          if (
-            hasText &&
-            event.nativeEvent.contentSize.height > lineHeight * fontScale * 1.5 + verticalPadding
-          )
-            setWrapped(true);
-          inputProps.onContentSizeChange?.(event);
-        }}
-        // The family sits ahead of `inputProps.style` so a caller may still
-        // override it -- the agent composer does, with the interface face.
-        style={[
-          composerStyles.input,
-          !leading && composerStyles.inputWithoutLeading,
-          fieldFont,
-          inputProps.style,
-          minLines !== undefined && { minHeight: minLines * lineHeight + verticalPadding },
-          expanded && composerStyles.expandedInput,
-        ]}
-      />
-      <View
-        testID={expanded ? 'composer-expanded-actions' : undefined}
-        style={expanded ? composerStyles.expandedActions : composerStyles.compactActions}>
-        {expanded && <View style={composerStyles.expandedLeading}>{leading}</View>}
-        {controls}
-      </View>
+      {voice.panel ?? (
+        <>
+          {!expanded && leading}
+          <FontedTextInput
+            ref={inputRef}
+            multiline
+            autoCorrect={false}
+            placeholderTextColor={placeholderText}
+            selectionColor={theme.colors.primary}
+            {...inputProps}
+            spans={spans}
+            textBreakStrategy={inputProps.textBreakStrategy ?? 'simple'}
+            onContentSizeChange={(event) => {
+              // Keep the expanded layout until the draft clears. Collapsing as soon
+              // as wider text fits would oscillate between the two widths.
+              if (
+                hasText &&
+                event.nativeEvent.contentSize.height >
+                  lineHeight * fontScale * 1.5 + verticalPadding
+              )
+                setWrapped(true);
+              inputProps.onContentSizeChange?.(event);
+            }}
+            // The family sits ahead of `inputProps.style` so a caller may still
+            // override it -- the agent composer does, with the interface face.
+            style={[
+              composerStyles.input,
+              !leading && composerStyles.inputWithoutLeading,
+              fieldFont,
+              inputProps.style,
+              minLines !== undefined && { minHeight: minLines * lineHeight + verticalPadding },
+              expanded && composerStyles.expandedInput,
+            ]}
+          />
+          <View
+            testID={expanded ? 'composer-expanded-actions' : undefined}
+            style={expanded ? composerStyles.expandedActions : composerStyles.compactActions}>
+            {expanded && <View style={composerStyles.expandedLeading}>{leading}</View>}
+            {controls}
+          </View>
+        </>
+      )}
     </Animated.View>
   );
 }
@@ -424,8 +441,8 @@ export const composerStyles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   expandedLeading: {
-    flexDirection: 'row',
     flex: 1,
+    flexDirection: 'row',
     alignItems: 'flex-start',
   },
   button: {

@@ -542,6 +542,7 @@ msgstr "Ajouté"
 msgid "After recording"
 msgstr "Après enregistrement"
 
+#: src/components/home-composer-options.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Agent"
 msgstr "Agent"
@@ -780,10 +781,6 @@ msgstr "Vérification du code auprès du Gateway"
 #: src/components/server-terminal-workspace.tsx
 msgid "Assign this to an assistant"
 msgstr "Confier ceci à un assistant"
-
-#: src/components/home-composer-dock.tsx
-msgid "Assigned to {computerLabel}, {agentName}"
-msgstr "Attribué à {computerLabel}, {agentName}"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Assigning a task is unavailable"
@@ -1156,13 +1153,13 @@ msgstr "Choisir un assistant"
 msgid "Choose an SSH host."
 msgstr "Choisissez un hôte SSH"
 
-#: src/components/home-composer-dock.tsx
-msgid "Choose another computer"
-msgstr "Choisir un autre ordinateur"
-
 #: src/components/server-terminal-workspace.tsx
 msgid "Choose another terminal"
 msgstr "Choisir un autre terminal"
+
+#: src/components/home-composer-dock.tsx
+msgid "Choose computer, agent, folder, mode and model"
+msgstr "Choisir l’ordinateur, l’agent, le dossier, le mode et le modèle"
 
 #: src/components/attachment-menu.tsx
 msgid "Choose files"
@@ -1175,14 +1172,6 @@ msgstr "Choisissez l’accueil et le style de l’interface. Les couleurs resten
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
 msgstr "Choisir un projet"
-
-#: src/components/home-composer-dock.tsx
-msgid "Choose the agent Home starts on this computer"
-msgstr "Choisir l’agent que l’accueil lance sur cet ordinateur"
-
-#: src/components/home-composer-dock.tsx
-msgid "Choose the folder this computer starts work in"
-msgstr "Choisir le dossier dans lequel cet ordinateur lance le travail"
 
 #: src/components/changes-sheet.tsx
 msgid "Choose which changes to show"
@@ -1387,6 +1376,7 @@ msgstr "Terminé"
 #: src/app/artifacts.tsx
 #: src/app/panels.tsx
 #: src/components/app-drawer.tsx
+#: src/components/home-composer-options.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer"
 msgstr "Ordinateur"
@@ -1419,10 +1409,6 @@ msgstr "Ordinateur indisponible"
 #: src/components/home-overview.tsx
 msgid "Computers"
 msgstr "Ordinateurs"
-
-#: src/app/settings-voice.tsx
-msgid "Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe."
-msgstr "Configurez votre service vocal, puis maintenez Envoyer pour enregistrer. Touchez l’animation pour arrêter et transcrire"
 
 #: src/components/task-row.tsx
 msgid "Confirm cancel"
@@ -2466,10 +2452,6 @@ msgstr "Saisissez une URL WSS valide pour le temps réel. La clé API et le mod�
 msgid "Enter the {PAIRING_CODE_CHARACTER_COUNT}-character code."
 msgstr "Saisissez le code de {PAIRING_CODE_CHARACTER_COUNT} caractères"
 
-#: src/app/settings-voice.tsx
-msgid "Enter the full transcription endpoint. Muqun uses this URL as entered with an OpenAI-compatible request. Your API key is stored securely on this device."
-msgstr "Saisissez l’URL complète du service de transcription. Muqun envoie une requête compatible OpenAI à cette URL sans la modifier. Votre clé API est stockée de manière sécurisée sur cet appareil"
-
 #: src/app/explore.tsx
 msgid "Enter the Gateway's address instead."
 msgstr "Saisissez plutôt l'adresse du Gateway"
@@ -2668,13 +2650,13 @@ msgstr "Corrections pour les terminaux qui restaient sur leur logo de chargement
 msgid "Fold the tool steps away"
 msgstr "Replier les étapes d’outils"
 
+#: src/components/home-composer-options.tsx
+msgid "Folder"
+msgstr "Dossier"
+
 #: src/components/agent-workspace-sheet.tsx
 msgid "Folder is missing"
 msgstr "Dossier introuvable"
-
-#: src/components/home-composer-dock.tsx
-msgid "Folder: {folderLabel}"
-msgstr "Dossier : {folderLabel}"
 
 #: src/components/agent-workspace-sheet.tsx
 msgid "Folders"
@@ -2889,6 +2871,10 @@ msgstr "Masquer la liste des ordinateurs"
 msgid "Hide the simulator"
 msgstr "Masquer le simulateur"
 
+#: src/app/settings-voice.tsx
+msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
+msgstr "Maintenez le bouton Envoyer pour parler. Arrêtez l’enregistrement pour ajouter le texte au brouillon, puis modifiez-le et envoyez-le"
+
 #: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Home"
@@ -2898,10 +2884,6 @@ msgstr "Accueil"
 #: src/components/settings-servers.tsx
 msgid "Home agent"
 msgstr "Agent de l’accueil"
-
-#: src/components/home-composer-dock.tsx
-msgid "Home agent: {agentName}"
-msgstr "Agent de l’accueil : {agentName}"
 
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Home effects · development only"
@@ -3034,14 +3016,6 @@ msgstr "Insérer {0} {1}"
 #: src/i18n/labels.ts
 msgid "Insert mode"
 msgstr "Mode insertion"
-
-#: src/app/settings-voice.tsx
-msgid "Insert recognized text into the draft without sending. Turn off to review first."
-msgstr "Insère le texte reconnu dans le brouillon sans l’envoyer. Désactivez pour le vérifier d’abord"
-
-#: src/app/settings-voice.tsx
-msgid "Insert text automatically"
-msgstr "Insérer le texte automatiquement"
 
 #: src/i18n/labels.ts
 msgid "Install a package"
@@ -3315,6 +3289,10 @@ msgstr "Répertorie tous les panneaux, avec ou sans agent"
 msgid "List only the panes running a recognised agent."
 msgstr "Répertorie uniquement les panneaux exécutant un agent reconnu"
 
+#: src/components/voice-input-button.tsx
+msgid "Listening…"
+msgstr "À l’écoute…"
+
 #: src/components/settings-alerts.tsx
 msgid "Live Activity"
 msgstr "Activité en direct"
@@ -3452,6 +3430,10 @@ msgstr "Message copié dans le presse-papiers"
 msgid "Message not sent"
 msgstr "Message non envoyé"
 
+#: src/components/home-composer-options.tsx
+msgid "Mode"
+msgstr "Mode"
+
 #. placeholder {0}: part.mode
 #: src/components/agent-message-block.tsx
 msgid "Mode · {0}"
@@ -3468,6 +3450,7 @@ msgstr "Mode · {0} → {1}"
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/home-composer-dock.tsx
+#: src/components/home-composer-options.tsx
 msgid "Model"
 msgstr "Modèle"
 
@@ -4005,6 +3988,7 @@ msgstr "Rien pour l’instant — une réponse « Toujours autoriser » atterrit
 msgid "Off"
 msgstr "Désactivé"
 
+#: src/components/home-composer-options.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Offline"
@@ -4211,6 +4195,10 @@ msgstr "Ouvrir les détails de l’appel d’outil"
 #: src/components/session-map.tsx
 msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
 msgstr "Ouvrir l'espace de travail {0}, {panelCount, plural, one {# actif} other {# actifs}}. Appui long pour fermer"
+
+#: src/app/settings-voice.tsx
+msgid "OpenAI requires an API key and model. Compatible services may provide their own defaults. Your API key is stored securely on this device."
+msgstr "OpenAI nécessite une clé API et un modèle. Les services compatibles peuvent fournir leurs propres valeurs par défaut. Votre clé API est stockée de manière sécurisée sur cet appareil"
 
 #: src/components/launch-intro.tsx
 msgid "OpenCode, DeepSeek and T3 Code side by side, each with its own tile, sessions and workbench."
@@ -4714,10 +4702,6 @@ msgid "RECONNECTING…"
 msgstr "RECONNEXION…"
 
 #: src/components/voice-input-button.tsx
-msgid "Record again"
-msgstr "Réenregistrer"
-
-#: src/components/voice-input-button.tsx
 msgid "Recording failed."
 msgstr "Échec de l’enregistrement"
 
@@ -4842,10 +4826,6 @@ msgstr "Requis au lancement et après 30 secondes en arrière-plan"
 #: src/components/ssh-host-form.tsx
 msgid "Required."
 msgstr "Obligatoire"
-
-#: src/app/settings-voice.tsx
-msgid "Requires an OpenAI Realtime-compatible WebSocket endpoint and a live transcription model. Text appears as you speak; tap to stop and finish. Other streaming protocols are not supported."
-msgstr "Nécessite un point de terminaison WebSocket compatible avec OpenAI Realtime et un modèle de transcription en direct. Le texte apparaît pendant que vous parlez ; touchez pour arrêter et terminer. Les autres protocoles de streaming ne sont pas pris en charge"
 
 #: src/components/settings-alerts.tsx
 msgid "Requires iOS 16.1 or later."
@@ -5248,10 +5228,6 @@ msgstr "Envoyer le texte"
 #: src/components/server-terminal-workspace.tsx
 msgid "Send this task to {assignmentLabel}"
 msgstr "Envoyer cette tâche à {assignmentLabel}"
-
-#: src/components/home-composer-dock.tsx
-msgid "Send to {computerLabel}"
-msgstr "Envoyer à {computerLabel}"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
@@ -5776,6 +5752,10 @@ msgstr "Arrêté"
 msgid "Storage"
 msgstr "Stockage"
 
+#: src/app/settings-voice.tsx
+msgid "Streams speech while you talk. Requires an OpenAI Realtime-compatible transcription endpoint."
+msgstr "Transmet l’audio pendant que vous parlez. Nécessite un point de terminaison de transcription compatible avec OpenAI Realtime"
+
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 msgid "Subagent"
@@ -5922,6 +5902,10 @@ msgstr "Tâche pour {assignmentLabel}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for a new {0}"
 msgstr "Tâche pour un nouvel {0}"
+
+#: src/components/home-composer-dock.tsx
+msgid "Task options"
+msgstr "Options de la tâche"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-tasks-sheet.tsx
@@ -6517,10 +6501,6 @@ msgid "Transcribing…"
 msgstr "Transcription…"
 
 #: src/components/voice-input-button.tsx
-msgid "Transcript"
-msgstr "Transcription"
-
-#: src/components/voice-input-button.tsx
 msgid "Transcription failed. Check your speech service and try again."
 msgstr "La transcription a échoué. Vérifiez votre service vocal et réessayez"
 
@@ -6799,10 +6779,6 @@ msgstr "Utiliser le code de l’appareil"
 msgid "Use system font"
 msgstr "Utiliser la police système"
 
-#: src/components/voice-input-button.tsx
-msgid "Use text"
-msgstr "Insérer le texte"
-
 #: src/components/session-map.tsx
 msgid "Use the {name} session, {kind}"
 msgstr "Utiliser la session {name}, {kind}"
@@ -6855,7 +6831,6 @@ msgstr "Visualise l’utilisation actuelle du contexte sous forme de grille colo
 #: src/app/settings-voice.tsx
 #: src/app/settings.tsx
 #: src/components/terminal-composer.tsx
-#: src/components/voice-input-button.tsx
 msgid "Voice to text"
 msgstr "Voix en texte"
 

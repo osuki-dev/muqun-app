@@ -30,7 +30,7 @@ export function loadVoiceSettings() {
 export async function saveVoiceSettings(config: VoiceServiceConfig | null) {
   await loadVoiceSettings();
   if (config) {
-    await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify({ ...config, version: 3 }), {
+    await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify({ ...config, version: 4 }), {
       keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
     });
   } else {

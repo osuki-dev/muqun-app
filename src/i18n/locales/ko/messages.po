@@ -542,6 +542,7 @@ msgstr "추가됨"
 msgid "After recording"
 msgstr "녹음 후 변환"
 
+#: src/components/home-composer-options.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Agent"
 msgstr "에이전트"
@@ -780,10 +781,6 @@ msgstr "Gateway에 해당 코드를 확인하는 중입니다"
 #: src/components/server-terminal-workspace.tsx
 msgid "Assign this to an assistant"
 msgstr "어시스턴트에게 맡기기"
-
-#: src/components/home-composer-dock.tsx
-msgid "Assigned to {computerLabel}, {agentName}"
-msgstr "할당 대상: {computerLabel}, {agentName}"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Assigning a task is unavailable"
@@ -1156,13 +1153,13 @@ msgstr "어시스턴트 선택"
 msgid "Choose an SSH host."
 msgstr "SSH 호스트를 선택하세요"
 
-#: src/components/home-composer-dock.tsx
-msgid "Choose another computer"
-msgstr "다른 컴퓨터 선택"
-
 #: src/components/server-terminal-workspace.tsx
 msgid "Choose another terminal"
 msgstr "다른 터미널 선택"
+
+#: src/components/home-composer-dock.tsx
+msgid "Choose computer, agent, folder, mode and model"
+msgstr "컴퓨터, 에이전트, 폴더, 모드 및 모델 선택"
 
 #: src/components/attachment-menu.tsx
 msgid "Choose files"
@@ -1175,14 +1172,6 @@ msgstr "홈과 앱 인터페이스 스타일을 선택하세요. 색상은 테�
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
 msgstr "프로젝트 선택"
-
-#: src/components/home-composer-dock.tsx
-msgid "Choose the agent Home starts on this computer"
-msgstr "홈이 이 컴퓨터에서 시작할 에이전트를 선택합니다"
-
-#: src/components/home-composer-dock.tsx
-msgid "Choose the folder this computer starts work in"
-msgstr "이 컴퓨터에서 작업을 시작할 폴더를 선택합니다"
 
 #: src/components/changes-sheet.tsx
 msgid "Choose which changes to show"
@@ -1387,6 +1376,7 @@ msgstr "완료됨"
 #: src/app/artifacts.tsx
 #: src/app/panels.tsx
 #: src/components/app-drawer.tsx
+#: src/components/home-composer-options.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer"
 msgstr "컴퓨터"
@@ -1419,10 +1409,6 @@ msgstr "컴퓨터를 사용할 수 없습니다"
 #: src/components/home-overview.tsx
 msgid "Computers"
 msgstr "컴퓨터"
-
-#: src/app/settings-voice.tsx
-msgid "Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe."
-msgstr "음성 서비스를 설정한 후 보내기를 길게 눌러 녹음하세요. 애니메이션을 탭하면 녹음을 멈추고 텍스트로 변환합니다"
 
 #: src/components/task-row.tsx
 msgid "Confirm cancel"
@@ -2466,10 +2452,6 @@ msgstr "유효한 WSS 실시간 URL을 입력하세요. API 키와 모델은 선
 msgid "Enter the {PAIRING_CODE_CHARACTER_COUNT}-character code."
 msgstr "{PAIRING_CODE_CHARACTER_COUNT}자리 코드를 입력하세요"
 
-#: src/app/settings-voice.tsx
-msgid "Enter the full transcription endpoint. Muqun uses this URL as entered with an OpenAI-compatible request. Your API key is stored securely on this device."
-msgstr "전체 음성 변환 엔드포인트를 입력하세요. Muqun은 입력한 URL로 OpenAI 호환 요청을 보냅니다. API 키는 이 기기에 안전하게 저장됩니다"
-
 #: src/app/explore.tsx
 msgid "Enter the Gateway's address instead."
 msgstr "대신 Gateway 주소를 입력하세요"
@@ -2668,13 +2650,13 @@ msgstr "터미널이 로딩 로고에서 멈추거나, 전체 화면 프로그�
 msgid "Fold the tool steps away"
 msgstr "도구 단계 접기"
 
+#: src/components/home-composer-options.tsx
+msgid "Folder"
+msgstr "폴더"
+
 #: src/components/agent-workspace-sheet.tsx
 msgid "Folder is missing"
 msgstr "폴더가 없습니다"
-
-#: src/components/home-composer-dock.tsx
-msgid "Folder: {folderLabel}"
-msgstr "폴더: {folderLabel}"
 
 #: src/components/agent-workspace-sheet.tsx
 msgid "Folders"
@@ -2889,6 +2871,10 @@ msgstr "컴퓨터 목록 숨기기"
 msgid "Hide the simulator"
 msgstr "시뮬레이터 숨기기"
 
+#: src/app/settings-voice.tsx
+msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
+msgstr "전송 버튼을 길게 눌러 말하세요. 녹음을 중지하면 텍스트가 초안에 추가되며, 수정한 뒤 전송할 수 있습니다"
+
 #: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Home"
@@ -2898,10 +2884,6 @@ msgstr "홈"
 #: src/components/settings-servers.tsx
 msgid "Home agent"
 msgstr "홈 에이전트"
-
-#: src/components/home-composer-dock.tsx
-msgid "Home agent: {agentName}"
-msgstr "홈 에이전트: {agentName}"
 
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Home effects · development only"
@@ -3034,14 +3016,6 @@ msgstr "{0} {1} 삽입"
 #: src/i18n/labels.ts
 msgid "Insert mode"
 msgstr "입력 모드"
-
-#: src/app/settings-voice.tsx
-msgid "Insert recognized text into the draft without sending. Turn off to review first."
-msgstr "인식한 텍스트를 보내지 않고 초안에 삽입합니다. 먼저 확인하려면 끄세요"
-
-#: src/app/settings-voice.tsx
-msgid "Insert text automatically"
-msgstr "텍스트 자동 삽입"
 
 #: src/i18n/labels.ts
 msgid "Install a package"
@@ -3315,6 +3289,10 @@ msgstr "에이전트 유무와 관계없이 모든 패널을 나열합니다"
 msgid "List only the panes running a recognised agent."
 msgstr "인식된 에이전트가 실행 중인 패널만 나열합니다"
 
+#: src/components/voice-input-button.tsx
+msgid "Listening…"
+msgstr "듣는 중…"
+
 #: src/components/settings-alerts.tsx
 msgid "Live Activity"
 msgstr "실시간 액티비티"
@@ -3452,6 +3430,10 @@ msgstr "메시지가 클립보드에 복사되었습니다"
 msgid "Message not sent"
 msgstr "메시지를 보내지 못했습니다"
 
+#: src/components/home-composer-options.tsx
+msgid "Mode"
+msgstr "모드"
+
 #. placeholder {0}: part.mode
 #: src/components/agent-message-block.tsx
 msgid "Mode · {0}"
@@ -3468,6 +3450,7 @@ msgstr "모드 · {0} → {1}"
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/home-composer-dock.tsx
+#: src/components/home-composer-options.tsx
 msgid "Model"
 msgstr "모델"
 
@@ -4005,6 +3988,7 @@ msgstr "아직 없습니다 — “항상 허용” 응답이 이 프로젝트�
 msgid "Off"
 msgstr "꺼짐"
 
+#: src/components/home-composer-options.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Offline"
@@ -4211,6 +4195,10 @@ msgstr "도구 호출 세부 정보 열기"
 #: src/components/session-map.tsx
 msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
 msgstr "작업 공간 {0} 열기, {panelCount, plural, one {# 실행 중} other {# 실행 중}}. 길게 눌러 닫기"
+
+#: src/app/settings-voice.tsx
+msgid "OpenAI requires an API key and model. Compatible services may provide their own defaults. Your API key is stored securely on this device."
+msgstr "OpenAI에는 API 키와 모델이 필요합니다. 호환 서비스는 자체 기본값을 제공할 수 있습니다. API 키는 이 기기에 안전하게 저장됩니다"
 
 #: src/components/launch-intro.tsx
 msgid "OpenCode, DeepSeek and T3 Code side by side, each with its own tile, sessions and workbench."
@@ -4714,10 +4702,6 @@ msgid "RECONNECTING…"
 msgstr "다시 연결 중…"
 
 #: src/components/voice-input-button.tsx
-msgid "Record again"
-msgstr "다시 녹음"
-
-#: src/components/voice-input-button.tsx
 msgid "Recording failed."
 msgstr "녹음하지 못했습니다"
 
@@ -4842,10 +4826,6 @@ msgstr "앱을 실행할 때와 백그라운드에서 30초가 지난 뒤에 인
 #: src/components/ssh-host-form.tsx
 msgid "Required."
 msgstr "필수입니다"
-
-#: src/app/settings-voice.tsx
-msgid "Requires an OpenAI Realtime-compatible WebSocket endpoint and a live transcription model. Text appears as you speak; tap to stop and finish. Other streaming protocols are not supported."
-msgstr "OpenAI Realtime 호환 WebSocket 엔드포인트와 실시간 변환 모델이 필요합니다. 말하는 동안 텍스트가 표시되며, 탭하면 중지하고 완료합니다. 다른 스트리밍 프로토콜은 지원하지 않습니다"
 
 #: src/components/settings-alerts.tsx
 msgid "Requires iOS 16.1 or later."
@@ -5248,10 +5228,6 @@ msgstr "텍스트 보내기"
 #: src/components/server-terminal-workspace.tsx
 msgid "Send this task to {assignmentLabel}"
 msgstr "이 작업을 {assignmentLabel}(으)로 보내기"
-
-#: src/components/home-composer-dock.tsx
-msgid "Send to {computerLabel}"
-msgstr "{computerLabel}(으)로 보내기"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
@@ -5776,6 +5752,10 @@ msgstr "중지됨"
 msgid "Storage"
 msgstr "저장 공간"
 
+#: src/app/settings-voice.tsx
+msgid "Streams speech while you talk. Requires an OpenAI Realtime-compatible transcription endpoint."
+msgstr "말하는 동안 음성을 스트리밍합니다. OpenAI Realtime과 호환되는 음성 텍스트 변환 엔드포인트가 필요합니다"
+
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 msgid "Subagent"
@@ -5922,6 +5902,10 @@ msgstr "{assignmentLabel}에게 줄 작업"
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for a new {0}"
 msgstr "새 {0}에게 줄 작업"
+
+#: src/components/home-composer-dock.tsx
+msgid "Task options"
+msgstr "작업 설정"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-tasks-sheet.tsx
@@ -6517,10 +6501,6 @@ msgid "Transcribing…"
 msgstr "텍스트 변환 중…"
 
 #: src/components/voice-input-button.tsx
-msgid "Transcript"
-msgstr "인식 결과"
-
-#: src/components/voice-input-button.tsx
 msgid "Transcription failed. Check your speech service and try again."
 msgstr "음성 인식에 실패했습니다. 음성 서비스를 확인하고 다시 시도하세요"
 
@@ -6799,10 +6779,6 @@ msgstr "기기 암호 사용"
 msgid "Use system font"
 msgstr "시스템 글꼴 사용"
 
-#: src/components/voice-input-button.tsx
-msgid "Use text"
-msgstr "텍스트 삽입"
-
 #: src/components/session-map.tsx
 msgid "Use the {name} session, {kind}"
 msgstr "{name} 세션 사용, {kind}"
@@ -6855,7 +6831,6 @@ msgstr "현재 컨텍스트 사용량을 색상 격자로 보여 줍니다"
 #: src/app/settings-voice.tsx
 #: src/app/settings.tsx
 #: src/components/terminal-composer.tsx
-#: src/components/voice-input-button.tsx
 msgid "Voice to text"
 msgstr "음성을 텍스트로"
 
