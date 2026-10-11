@@ -67,6 +67,11 @@ export interface TerminalComposerProps {
   leading?: ReactNode;
   /** Noninteractive artwork; clipped by the field and hidden during dictation. */
   fieldBackground?: ReactNode;
+  /** Noninteractive Home artwork allowed to extend above the clipped field. */
+  fieldDecoration?: ReactNode;
+  /** Moves tall-field text down by borrowing its bottom padding, not adding height. */
+  fieldTextTopInset?: number;
+  onVoiceActiveChange?: (active: boolean) => void;
   inputRef?: Ref<TextInput>;
   /** The field's own props: value, placeholder, editability, test id. */
   inputProps: FontedTextInputProps;
@@ -86,6 +91,9 @@ export function TerminalComposer({
   voiceContext,
   leading,
   fieldBackground,
+  fieldDecoration,
+  fieldTextTopInset = 0,
+  onVoiceActiveChange,
   inputRef,
   inputProps,
   send,
@@ -108,6 +116,9 @@ export function TerminalComposer({
     },
   });
   const voiceActive = voice.panel !== null;
+  useEffect(() => {
+    onVoiceActiveChange?.(voiceActive);
+  }, [voiceActive, onVoiceActiveChange]);
   const contentReveal = useSharedValue(1);
   const previousVoiceActive = useRef(voiceActive);
   useEffect(() => {
@@ -163,6 +174,13 @@ export function TerminalComposer({
   const verticalPadding =
     (typeof topPadding === 'number' ? topPadding : 10) +
     (typeof bottomPadding === 'number' ? bottomPadding : 10);
+  const textInset =
+    (minLines ?? 1) > 1
+      ? Math.max(
+          0,
+          Math.min(fieldTextTopInset, typeof bottomPadding === 'number' ? bottomPadding : 10)
+        )
+      : 0;
   const controls = (
     <>
       <ComposerSendButton
@@ -186,69 +204,89 @@ export function TerminalComposer({
       entering={entering}
       exiting={exiting}
       layout={layout}
-      style={[
-        composerStyles.fieldShell,
-        { borderRadius: profile.chrome.composerField },
-        { backgroundColor: surfaceBackground(chromeGlassQuiet) },
-      ]}>
-      {!voiceActive ? fieldBackground : null}
-      {/* Keep the draft mounted so recording inherits this exact field height. */}
-      <Animated.View
-        pointerEvents={voiceActive ? 'none' : 'auto'}
-        accessibilityElementsHidden={voiceActive}
-        importantForAccessibility={voiceActive ? 'no-hide-descendants' : 'auto'}
+      style={composerStyles.fieldOuter}>
+      <View
+        testID="composer-field-shell"
         style={[
-          composerStyles.composer,
-          contentRevealStyle,
-          compact && composerStyles.compactComposer,
-          expanded && composerStyles.expandedComposer,
+          composerStyles.fieldShell,
+          { borderRadius: profile.chrome.composerField },
+          { backgroundColor: surfaceBackground(chromeGlassQuiet) },
         ]}>
-        <>
-          {!expanded && leading}
-          <FontedTextInput
-            ref={inputRef}
-            multiline
-            autoCorrect={false}
-            placeholderTextColor={placeholderText}
-            selectionColor={theme.colors.primary}
-            {...inputProps}
-            spans={spans}
-            textBreakStrategy={inputProps.textBreakStrategy ?? 'simple'}
-            onContentSizeChange={(event) => {
-              // Keep the expanded layout until the draft clears. Collapsing as soon
-              // as wider text fits would oscillate between the two widths.
-              if (
-                hasText &&
-                event.nativeEvent.contentSize.height >
-                  lineHeight * fontScale * 1.5 + verticalPadding
-              )
-                setWrapped(true);
-              inputProps.onContentSizeChange?.(event);
-            }}
-            // The family sits ahead of `inputProps.style` so a caller may still
-            // override it -- the agent composer does, with the interface face.
-            style={[
-              composerStyles.input,
-              !leading && composerStyles.inputWithoutLeading,
-              fieldFont,
-              inputProps.style,
-              minLines !== undefined && { minHeight: minLines * lineHeight + verticalPadding },
-              expanded && composerStyles.expandedInput,
-            ]}
-          />
-          <View
-            testID={expanded ? 'composer-expanded-actions' : undefined}
-            style={expanded ? composerStyles.expandedActions : composerStyles.compactActions}>
-            {expanded && <View style={composerStyles.expandedLeading}>{leading}</View>}
-            {controls}
+        {!voiceActive ? fieldBackground : null}
+        {/* Keep the draft mounted so recording inherits this exact field height. */}
+        <Animated.View
+          pointerEvents={voiceActive ? 'none' : 'auto'}
+          accessibilityElementsHidden={voiceActive}
+          importantForAccessibility={voiceActive ? 'no-hide-descendants' : 'auto'}
+          style={[
+            composerStyles.composer,
+            contentRevealStyle,
+            compact && composerStyles.compactComposer,
+            expanded && composerStyles.expandedComposer,
+          ]}>
+          <>
+            {!expanded && leading}
+            <FontedTextInput
+              ref={inputRef}
+              multiline
+              autoCorrect={false}
+              placeholderTextColor={placeholderText}
+              selectionColor={theme.colors.primary}
+              {...inputProps}
+              spans={spans}
+              textBreakStrategy={inputProps.textBreakStrategy ?? 'simple'}
+              onContentSizeChange={(event) => {
+                // Keep the expanded layout until the draft clears. Collapsing as soon
+                // as wider text fits would oscillate between the two widths.
+                if (
+                  hasText &&
+                  event.nativeEvent.contentSize.height >
+                    lineHeight * fontScale * 1.5 + verticalPadding
+                )
+                  setWrapped(true);
+                inputProps.onContentSizeChange?.(event);
+              }}
+              // The family sits ahead of `inputProps.style` so a caller may still
+              // override it -- the agent composer does, with the interface face.
+              style={[
+                composerStyles.input,
+                !leading && composerStyles.inputWithoutLeading,
+                fieldFont,
+                inputProps.style,
+                textInset > 0 && {
+                  paddingTop: (typeof topPadding === 'number' ? topPadding : 10) + textInset,
+                  paddingBottom:
+                    (typeof bottomPadding === 'number' ? bottomPadding : 10) - textInset,
+                },
+                minLines !== undefined && { minHeight: minLines * lineHeight + verticalPadding },
+                expanded && composerStyles.expandedInput,
+              ]}
+            />
+            <View
+              testID={expanded ? 'composer-expanded-actions' : undefined}
+              style={expanded ? composerStyles.expandedActions : composerStyles.compactActions}>
+              {expanded && <View style={composerStyles.expandedLeading}>{leading}</View>}
+              {controls}
+            </View>
+          </>
+        </Animated.View>
+        {voice.panel && (
+          <View collapsable={false} style={StyleSheet.absoluteFill}>
+            {voice.panel}
           </View>
-        </>
-      </Animated.View>
-      {voice.panel && (
-        <View collapsable={false} style={StyleSheet.absoluteFill}>
-          {voice.panel}
+        )}
+      </View>
+      {!voiceActive && fieldDecoration ? (
+        <View
+          testID="composer-field-decoration"
+          pointerEvents="none"
+          accessible={false}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          style={StyleSheet.absoluteFill}>
+          {fieldDecoration}
         </View>
-      )}
+      ) : null}
     </Animated.View>
   );
 }
@@ -416,6 +454,7 @@ const ONE_LINE_FIELD = 40;
 
 /** Shared with the gateway's paperclip, which sits in the same row at the same size. */
 export const composerStyles = StyleSheet.create({
+  fieldOuter: { overflow: 'visible' },
   fieldShell: { borderCurve: 'continuous', overflow: 'hidden' },
   composer: {
     minHeight: 50,

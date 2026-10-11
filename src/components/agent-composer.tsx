@@ -492,6 +492,10 @@ export interface AgentComposerProps {
   toolbarLeading?: React.ReactNode;
   /** Optional decoration inside the draft field, behind text and controls. */
   fieldBackground?: React.ReactNode;
+  fieldDecoration?: React.ReactNode;
+  fieldDecorationOverhang?: number;
+  hideFieldDecoration?: boolean;
+  fieldTextTopInset?: number;
   hideParameterRow?: boolean;
   /** Home's field reaches the dock edges; safe-area space remains outside the surface. */
   flushField?: boolean;
@@ -598,6 +602,10 @@ export const AgentComposer = memo(function AgentComposer({
   accessory,
   toolbarLeading,
   fieldBackground,
+  fieldDecoration,
+  fieldDecorationOverhang = 0,
+  hideFieldDecoration = false,
+  fieldTextTopInset,
   hideParameterRow = false,
   flushField = false,
   voiceContext,
@@ -1225,11 +1233,21 @@ export const AgentComposer = memo(function AgentComposer({
   const keyboardHeight = useKeyboardState((state) => state.height);
   const safeAreaFoot = flushField && keyboardHeight === 0 ? bottomInset : 0;
   const [surfaceHeight, setSurfaceHeight] = useState(0);
+  const [voiceActive, setVoiceActive] = useState(false);
+  const decorationHidden =
+    hideFieldDecoration ||
+    attachmentMenuOpen ||
+    modeMenuOpen ||
+    inboxOpen ||
+    slashPopup.open ||
+    Boolean(mentionTrigger);
+  const decorationClearance =
+    fieldDecoration && !decorationHidden && !voiceActive ? fieldDecorationOverhang : 0;
   const dockHeight = surfaceHeight + safeAreaFoot;
   const reportDockHeight = useEffectEvent((height: number) => onDockHeight?.(height));
   useEffect(() => {
-    if (surfaceHeight > 0) reportDockHeight(dockHeight);
-  }, [surfaceHeight, dockHeight]);
+    if (surfaceHeight > 0) reportDockHeight(dockHeight + decorationClearance);
+  }, [surfaceHeight, dockHeight, decorationClearance]);
   const [inputRowHeight, setInputRowHeight] = useState(0);
   const popupMaxHeight = Math.max(
     POPUP_MIN_HEIGHT,
@@ -1506,7 +1524,8 @@ export const AgentComposer = memo(function AgentComposer({
             boxShadow: appChrome.shadow.composerDock,
           }
         }>
-        <GlassChrome
+        <ComposerSurface
+          allowDecoration={flushField && Boolean(fieldDecoration)}
           surface="composer"
           shape={flushField ? 'composerField' : bar ? 'none' : 'sheet'}
           style={[
@@ -1972,6 +1991,9 @@ export const AgentComposer = memo(function AgentComposer({
             <View onLayout={(event) => setInputRowHeight(event.nativeEvent.layout.height)}>
               <TerminalComposer
                 fieldBackground={fieldBackground}
+                fieldDecoration={decorationHidden ? undefined : fieldDecoration}
+                fieldTextTopInset={fieldTextTopInset}
+                onVoiceActiveChange={setVoiceActive}
                 spans={spans}
                 compact={compact}
                 minLines={fieldLines}
@@ -2042,7 +2064,7 @@ export const AgentComposer = memo(function AgentComposer({
               />
             </View>
           </View>
-        </GlassChrome>
+        </ComposerSurface>
       </View>
       {previewIndex >= 0 ? (
         <ImagePreviewModal
@@ -2054,6 +2076,31 @@ export const AgentComposer = memo(function AgentComposer({
     </Animated.View>
   );
 });
+
+/** Keep Home artwork outside the material's clipping without changing its touch surface. */
+function ComposerSurface({
+  allowDecoration,
+  children,
+  style,
+  ...props
+}: React.ComponentProps<typeof GlassChrome> & { allowDecoration: boolean }) {
+  if (!allowDecoration)
+    return (
+      <GlassChrome {...props} style={style}>
+        {children}
+      </GlassChrome>
+    );
+  return (
+    <View style={[style, styles.decoratedSurface]}>
+      <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+        <GlassChrome {...props} style={StyleSheet.absoluteFill}>
+          {null}
+        </GlassChrome>
+      </View>
+      {children}
+    </View>
+  );
+}
 
 /**
  * "Compacting context…", while it is happening.
@@ -2161,6 +2208,12 @@ const EMPTY_INBOX: readonly InboxItem[] = Object.freeze([]);
 const NO_HIDDEN_COMMANDS: readonly AgentClientCommandId[] = Object.freeze([]);
 
 const styles = StyleSheet.create({
+  decoratedSurface: {
+    overflow: 'visible',
+    // GlassChrome's constant hairline was previously part of content layout.
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'transparent',
+  },
   dockOuter: {
     position: 'absolute',
     left: 0,

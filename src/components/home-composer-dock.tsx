@@ -16,7 +16,11 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import type { HomeLaunchController } from '@/components/home-launch-actions';
 import type { DockAutoHide } from '@/hooks/use-dock-auto-hide';
 import { HomeComposerOptions } from '@/components/home-composer-options';
-import { HomeComposerBackground } from '@/components/home-composer-background';
+import {
+  HomeComposerBackground,
+  HomeComposerDecoration,
+  useHomeComposerDecorationOverhang,
+} from '@/components/home-composer-background';
 import { PressableScale } from '@/components/pressable-scale';
 import { composerStyles } from '@/components/terminal-composer';
 import { Text } from '@/components/text';
@@ -158,6 +162,7 @@ export function HomeComposerDock({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
+  const decorationOverhang = useHomeComposerDecorationOverhang();
   const [optionsOpen, setOptionsOpen] = useState(false);
   const background = useSurfaceBackground();
   const router = useRouter();
@@ -1098,6 +1103,10 @@ export function HomeComposerDock({
     <AgentComposer
       accessory={bar}
       fieldBackground={<HomeComposerBackground />}
+      fieldDecoration={decorationOverhang > 0 ? <HomeComposerDecoration /> : undefined}
+      fieldDecorationOverhang={decorationOverhang}
+      hideFieldDecoration={optionsOpen}
+      fieldTextTopInset={6}
       toolbarLeading={parameterButton}
       hideParameterRow
       flushField
