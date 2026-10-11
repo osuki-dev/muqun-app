@@ -1269,6 +1269,115 @@ describe('native end-to-end gate', () => {
       expect(calls.filter((args) => args[0] === 'scroll')).toHaveLength(initiallyOffscreen ? 1 : 0);
     }
   });
+  test('explicit voice waits handle a late microphone prompt and already-authorized recording', async () => {
+    const base = await mkdtemp(path.join(tmpdir(), 'muqun-voice-permission-'));
+    await writeFile(
+      path.join(base, 'voice.ad'),
+      'wait "id=\\"voice-visual-recording\\"" 3000 --allow-microphone-prompt\n'
+    );
+    try {
+      for (const platform of ['android', 'ios'])
+        for (const firstUse of [false, true]) {
+          let captures = 0;
+          let accepted = false;
+          const calls: string[][] = [];
+          const runner = new NativeRunner(
+            suite,
+            base,
+            '/unused',
+            async (args) => {
+              calls.push(args);
+              if (args[0] === 'snapshot') {
+                captures++;
+                return {
+                  nodes:
+                    !firstUse || accepted
+                      ? [{ ...node, identifier: 'voice-visual-recording' }]
+                      : [node],
+                  ...(platform === 'android' ? { androidSnapshot: {} } : {}),
+                };
+              }
+              if (args[0] === 'alert' && args[1] === 'accept') {
+                accepted = true;
+                return {};
+              }
+              if (args[0] === 'alert')
+                return {
+                  kind: 'alertStatus',
+                  alert:
+                    firstUse && !accepted && captures > 1
+                      ? {
+                          title:
+                            platform === 'android'
+                              ? 'Allow Muqun to record audio?'
+                              : '“Muqun” Would Like to Access the Microphone',
+                          source: 'permission',
+                          packageName: 'com.android.permissioncontroller',
+                          buttons:
+                            platform === 'android'
+                              ? ['While using the app', 'Don’t allow']
+                              : ['Don’t Allow', 'OK'],
+                        }
+                      : null,
+                };
+              return {};
+            },
+            {}
+          );
+          await runner.runSection('voice.ad', { PLATFORM: platform });
+          expect(accepted).toBe(firstUse);
+          expect(calls.filter((args) => args[0] === 'alert' && args[1] === 'accept')).toHaveLength(
+            firstUse ? 1 : 0
+          );
+          expect(calls).toContainEqual(['wait', 'id="voice-visual-recording"', '3000']);
+        }
+    } finally {
+      await rm(base, { recursive: true });
+    }
+  });
+  test('voice permission opt-in rejects other apps, permissions, and untrusted Android surfaces', async () => {
+    const base = await mkdtemp(path.join(tmpdir(), 'muqun-voice-permission-deny-'));
+    await writeFile(
+      path.join(base, 'voice.ad'),
+      'wait "id=\\"voice-visual-error\\"" 3000 --allow-microphone-prompt\n'
+    );
+    try {
+      for (const [title, packageName] of [
+        ['Allow AnotherApp to record audio?', 'com.android.permissioncontroller'],
+        ['Allow Muqun to take pictures and record video?', 'com.android.permissioncontroller'],
+        ['Allow Muqun to access location?', 'com.android.permissioncontroller'],
+        ['Allow Muqun to send notifications?', 'com.android.permissioncontroller'],
+        ['Allow Muqun to record audio?', 'untrusted.dialog'],
+      ]) {
+        let accepted = false;
+        const runner = new NativeRunner(
+          suite,
+          base,
+          '/unused',
+          async (args) => {
+            if (args[0] === 'snapshot') return { nodes: [], androidSnapshot: {} };
+            if (args[1] === 'accept') accepted = true;
+            return {
+              kind: 'alertStatus',
+              alert: {
+                title,
+                packageName,
+                source: 'permission',
+                buttons: ['While using the app', 'Don’t allow'],
+              },
+            };
+          },
+          {}
+        );
+        await expect(runner.runSection('voice.ad', { PLATFORM: 'android' })).rejects.toThrow(
+          'Unexpected alert'
+        );
+        expect(accepted).toBe(false);
+      }
+    } finally {
+      await rm(base, { recursive: true });
+    }
+  });
   test('reports failures with escaped evidence', () => {
     const report = junit([{ name: 'a&b', seconds: 1, error: '<failed>' }]);
     expect(report).toContain('failures="1"');
