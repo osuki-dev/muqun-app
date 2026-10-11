@@ -977,6 +977,8 @@ msgstr "ブラウザー"
 msgid "Build"
 msgstr "ビルド (Build)"
 
+#: src/app/settings-about.tsx
+#: src/app/settings-update-notes.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Built-in"
 msgstr "標準"
@@ -2312,10 +2314,6 @@ msgstr "このテーマを閉じる"
 #: src/components/away-digest-card.tsx
 msgid "Dismiss what happened while you were away"
 msgstr "離席中の変化を閉じる"
-
-#: src/components/whats-new-card.tsx
-msgid "Dismiss what's new"
-msgstr "新着情報を閉じる"
 
 #: src/app/custom-theme.tsx
 #: src/components/asset-viewer.tsx
@@ -4822,6 +4820,18 @@ msgstr "必須です"
 msgid "Requires iOS 16.1 or later."
 msgstr "iOS 16.1 以降が必要です"
 
+#: src/app/settings-about.tsx
+#: src/app/settings-update-notes.tsx
+#: src/components/update-status-banner.tsx
+msgid "Restart Muqun to finish updating"
+msgstr "更新を完了するには Muqun を再起動してください"
+
+#: src/app/settings-about.tsx
+#: src/app/settings-update-notes.tsx
+#: src/components/update-status-banner.tsx
+msgid "Restarting Muqun…"
+msgstr "Muqun を再起動しています…"
+
 #: src/app/commands.tsx
 msgid "Restore hidden default commands"
 msgstr "非表示にした標準コマンドを元に戻す"
@@ -6708,15 +6718,13 @@ msgstr "他のアシスタントにタスクを任せるには、コンピュー
 msgid "Update Muqun Gateway on this host to use {agentName}."
 msgstr "{agentName} を使うには、このホストの Muqun Gateway をアップデートしてください"
 
-#: src/components/update-status-banner.tsx
-msgid "Update ready · applies on next launch"
-msgstr "更新の準備ができました · 次回起動時に適用"
-
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"
 msgstr "公開リンクからテーマをインポートするにはアプリを更新してください。ファイルからのインポートは引き続き利用できます"
 
+#: src/components/asset-viewer.tsx
 #: src/components/inline-file-link.tsx
+#: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-file-actions.tsx
 msgid "Update the Gateway to open or save this file."
 msgstr "このファイルを開くか保存するには、Gateway を更新してください"
@@ -6733,6 +6741,8 @@ msgstr "動画出力をプレビューするには Gateway を更新してくだ
 msgid "Updates when you reopen"
 msgstr "開き直すと更新されます"
 
+#: src/app/settings-about.tsx
+#: src/app/settings-update-notes.tsx
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
 msgstr "牧群（ぼくぐん）を更新中…"
@@ -6866,6 +6876,9 @@ msgstr "ここから送信したときにホームが起動するもの"
 msgid "What is running"
 msgstr "実行中のもの"
 
+#: src/app/settings-about.tsx
+#: src/app/settings-update-notes.tsx
+#: src/components/update-status-banner.tsx
 #: src/lib/release-notes.ts
 msgid "What's new"
 msgstr "新着情報"

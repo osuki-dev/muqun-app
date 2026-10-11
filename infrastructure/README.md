@@ -28,11 +28,16 @@ are coalesced. A staged bundle stops further checks for this process.
 
 The existing update banner interpolates measured download progress with the app's
 reduced-motion-aware timing. A download reaching 100% is not sufficient: the
-download helper must confirm successful staging before the banner says ready.
-Neither normal nor forced server updates restart an active session. The user
-restarts Muqun when convenient, or the next cold launch applies the bundle.
-The ready notice can be dismissed and hides after six seconds without clearing
-the staged update. Its copy explicitly says the update applies on the next launch.
+download helper must confirm successful native verification and staging before
+the app restarts automatically. The banner shows the actual release notes as
+Markdown and changes to restarting while invoking the SDK's default reload:
+a process restart on Android and a React reload on iOS. A failed restart keeps
+the verified bundle staged and reports that the user can restart Muqun manually;
+it never automatically retries or starts another download in that process.
+This immediate restart can interrupt the current screen and unsent in-memory
+draft; no new draft persistence or operation-waiting layer is introduced.
+Installations running the previous next-launch behavior still need one launch
+to adopt this updated behavior.
 Adopting a new release for the already-running artifact is silent and retains
 normal periodic checks; it does not display a misleading restart notice.
 Checks and download failures leave the current app usable; request details and
@@ -174,9 +179,9 @@ Play App Signing distribution certificate matches a separately installed APK.
 2. Build Release APK and IPA with the test channel, registered client key,
    public trust anchor and fingerprint. Keep existing app signing identities.
 3. Confirm cold launch and normal terminal use with the server offline; bring it
-   online and confirm a background check never replaces the live screen/draft.
+   online and confirm checks and failed downloads leave the live screen usable.
 4. Publish a compatible test bundle with a visible text and asset change. Verify
-   download, next-launch activation and unchanged pairing/session data.
+   verified download, automatic restart and unchanged persisted pairing/session data.
 5. Interrupt a download and retry; reject a tampered/wrongly signed artifact and
    a mismatched native fingerprint. The previously working app must remain usable.
 6. Test a deliberately failing startup bundle on dedicated QA and verify native

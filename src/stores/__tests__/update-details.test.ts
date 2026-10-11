@@ -34,12 +34,12 @@ test('bundled release notes are a distinct explicit selection, never an OTA fall
   });
 });
 
-test('the notes snapshot preserves next-launch status rather than claiming installation', () => {
-  openUpdateDetails('Pending release', 'ready');
+test('the notes snapshot preserves restart status without claiming completion', () => {
+  openUpdateDetails('Pending release', 'restarting');
   expect(useUpdateDetails.getState()).toEqual({
     notes: 'Pending release',
     bundled: false,
-    phase: 'ready',
+    phase: 'restarting',
   });
   closeUpdateDetails();
   expect(useUpdateDetails.getState().phase).toBeNull();

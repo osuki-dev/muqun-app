@@ -977,6 +977,8 @@ msgstr "浏览器"
 msgid "Build"
 msgstr "构建 (Build)"
 
+#: src/app/settings-about.tsx
+#: src/app/settings-update-notes.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Built-in"
 msgstr "内置"
@@ -2312,10 +2314,6 @@ msgstr "关闭这个主题"
 #: src/components/away-digest-card.tsx
 msgid "Dismiss what happened while you were away"
 msgstr "关闭离开期间的摘要"
-
-#: src/components/whats-new-card.tsx
-msgid "Dismiss what's new"
-msgstr "关闭新功能卡片"
 
 #: src/app/custom-theme.tsx
 #: src/components/asset-viewer.tsx
@@ -4822,6 +4820,18 @@ msgstr "必填"
 msgid "Requires iOS 16.1 or later."
 msgstr "需要 iOS 16.1 或更高版本"
 
+#: src/app/settings-about.tsx
+#: src/app/settings-update-notes.tsx
+#: src/components/update-status-banner.tsx
+msgid "Restart Muqun to finish updating"
+msgstr "请重启 Muqun 以完成更新"
+
+#: src/app/settings-about.tsx
+#: src/app/settings-update-notes.tsx
+#: src/components/update-status-banner.tsx
+msgid "Restarting Muqun…"
+msgstr "正在重启 Muqun…"
+
 #: src/app/commands.tsx
 msgid "Restore hidden default commands"
 msgstr "恢复隐藏的默认命令"
@@ -6708,15 +6718,13 @@ msgstr "请更新电脑上的 Muqun Gateway 并重启，才能把任务交给其
 msgid "Update Muqun Gateway on this host to use {agentName}."
 msgstr "请更新此主机上的 Muqun Gateway 以使用 {agentName}"
 
-#: src/components/update-status-banner.tsx
-msgid "Update ready · applies on next launch"
-msgstr "更新已就绪 · 下次启动时生效"
-
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"
 msgstr "更新 App 后即可从公开链接导入主题，你仍然可以从文件导入"
 
+#: src/components/asset-viewer.tsx
 #: src/components/inline-file-link.tsx
+#: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-file-actions.tsx
 msgid "Update the Gateway to open or save this file."
 msgstr "请更新 Gateway 后打开或保存此文件"
@@ -6733,6 +6741,8 @@ msgstr "更新 Gateway 后即可预览视频输出"
 msgid "Updates when you reopen"
 msgstr "重新打开时更新"
 
+#: src/app/settings-about.tsx
+#: src/app/settings-update-notes.tsx
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
 msgstr "正在更新牧群…"
@@ -6866,6 +6876,9 @@ msgstr "从这里发送时主页启动的智能体"
 msgid "What is running"
 msgstr "正在运行的项目"
 
+#: src/app/settings-about.tsx
+#: src/app/settings-update-notes.tsx
+#: src/components/update-status-banner.tsx
 #: src/lib/release-notes.ts
 msgid "What's new"
 msgstr "新功能"

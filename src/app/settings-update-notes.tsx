@@ -21,11 +21,13 @@ export default function SettingsUpdateNotesScreen() {
           ? nativeApplicationVersion
             ? `${t`Built-in`} · ${nativeApplicationVersion}`
             : t`Built-in`
-          : selection.phase === 'ready'
-            ? t`Update ready · applies on next launch`
-            : selection.phase === 'downloading'
-              ? t`Updating Muqun…`
-              : undefined
+          : selection.phase === 'restarting'
+            ? t`Restarting Muqun…`
+            : selection.phase === 'restart-failed'
+              ? t`Restart Muqun to finish updating`
+              : selection.phase === 'downloading'
+                ? t`Updating Muqun…`
+                : undefined
       }>
       <ScrollView
         nestedScrollEnabled
