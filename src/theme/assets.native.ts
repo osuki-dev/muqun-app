@@ -35,8 +35,8 @@ function collectThemeAssetGarbage(): void {
         entry.delete();
     }
   } catch {
-    // Cleanup failure must not undo a durable theme selection. The quota still
-    // counts unreclaimed bytes, and the next library change retries collection.
+    // Cleanup failure must not undo a durable theme selection. Unreclaimed
+    // bytes still occupy disk, and the next library change retries collection.
   }
 }
 
@@ -185,7 +185,7 @@ async function prepareAssetStream(
         throwIfThemeAborted(options.signal);
         if (disposed || disposalRequested) throw new Error('Theme preview is no longer available');
         if (installing) throw new Error('Theme installation is already in progress');
-        // Reclaim abandoned owned files before quota planning, not only after a
+        // Reclaim abandoned owned files before install planning, not only after a
         // failed attempt. Other previews and queued installs remain protected.
         collectThemeAssetGarbage();
         installing = true;
@@ -202,8 +202,7 @@ async function prepareAssetStream(
             const needed = new Set(
               planThemeAssetInstall(
                 inventory,
-                [...staged.values()].map((file) => ({ name: file.name, bytes: file.size })),
-                policy
+                [...staged.values()].map((file) => ({ name: file.name, bytes: file.size }))
               )
             );
             releaseReservation ??= lifecycle.reserve(
