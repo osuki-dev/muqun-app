@@ -56,7 +56,7 @@ still needs an actual release-build rollback test; unit tests do not establish i
 Use Bun 1.4.2 and the committed lockfile:
 
 ```sh
-NODE_USE_ENV_PROXY=1 bun install --frozen-lockfile
+bun install --frozen-lockfile
 bun run update:prepare
 ```
 

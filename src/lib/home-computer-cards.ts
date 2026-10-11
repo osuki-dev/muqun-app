@@ -12,7 +12,12 @@ import type { HomeSessionParams } from '@/lib/home-composer';
 import type { ServerReachability } from './server-reachability';
 import { stripTaskMarkers, taskMarkerPayload } from './task-plumbing';
 import { FINISHED_TASKS_SHOWN, type ServerTasksIndex } from './server-tasks-state';
-import { isTerminalTaskState, type TaskState, type TaskView } from './task-ledger';
+import {
+  isRemoteCommandTask,
+  isTerminalTaskState,
+  type TaskState,
+  type TaskView,
+} from './task-ledger';
 
 /**
  * A computer card's inner side padding. Home's phone dock pads its content by
@@ -505,7 +510,9 @@ export function buildComputerCards(input: {
 }): ComputerCard[] {
   const all = input.servers.map((server, order): ComputerCard & { order: number } => {
     const entry = input.index[server.serverId];
-    const tasks = entry?.tasks ?? [];
+    // The receiving computer's temporary exec is already represented by its
+    // originating conversation. Keep the ledger; omit this duplicate Home row.
+    const tasks = (entry?.tasks ?? []).filter((task) => !isRemoteCommandTask(task));
     const tree = buildTaskTree(tasks);
     // A root stays in Now while any work it started is still open, even after
     // the root itself finished: a delegating turn can end before its

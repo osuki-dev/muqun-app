@@ -56,7 +56,7 @@ function fixture(buildStatus = 0, artifactCount = 1, submitStatus = 0) {
     join(root, 'bin/eas'),
     `#!/bin/sh
 printf '%s\\n' "$*" >> calls
-printf '%s\\n' "$HOT_UPDATER_CHANNEL:$EXPO_PUBLIC_HOT_UPDATER_ENABLED:$NODE_USE_ENV_PROXY:$HOT_UPDATER_CLOUDFLARE_API_TOKEN" >> environment
+printf '%s\\n' "$HOT_UPDATER_CHANNEL:$EXPO_PUBLIC_HOT_UPDATER_ENABLED:$HOT_UPDATER_CLOUDFLARE_API_TOKEN" >> environment
 if [ "$1" = build ]; then
   printf '%s' "$EAS_LOCAL_BUILD_WORKINGDIR" > private-work
   printf '%s\\n' 'PRIVATE_SIGNING_PAYLOAD_DO_NOT_PRINT'
@@ -134,7 +134,7 @@ test('release submits only the new isolated artifact, preserves fingerprint, and
   );
   expect(existsSync(join(root, 'dist/eas-builds', folder ?? '', 'fingerprint.json'))).toBe(true);
   expect(existsSync(readFileSync(join(root, 'private-work'), 'utf8'))).toBe(false);
-  expect(readFileSync(join(root, 'environment'), 'utf8')).toBe('preview:1:1:\npreview:1:1:\n');
+  expect(readFileSync(join(root, 'environment'), 'utf8')).toBe('preview:1:\npreview:1:\n');
   expect(JSON.stringify([...output, ...errors])).not.toContain('PRIVATE_SIGNING_PAYLOAD');
 });
 
@@ -165,7 +165,7 @@ test('build-only never uploads and production selects the production channel', (
     runStoreCommand({ action: 'build', platform: 'android', channel: 'production' }, root, env)
   ).toBe(0);
   expect(readFileSync(join(root, 'calls'), 'utf8').trim().split('\n')).toHaveLength(1);
-  expect(readFileSync(join(root, 'environment'), 'utf8')).toBe('production:1:1:\n');
+  expect(readFileSync(join(root, 'environment'), 'utf8')).toBe('production:1:\n');
 });
 
 test('iOS local builds fail before touching credentials, files, or EAS on Linux', () => {

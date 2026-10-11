@@ -260,6 +260,11 @@ export function isTerminalTaskState(state: TaskState): boolean {
   return state === 'done' || state === 'failed' || state === 'cancelled';
 }
 
+/** Remote exec is a tool call in the originating conversation, not a new session. */
+export function isRemoteCommandTask(task: TaskView): boolean {
+  return task.kind === 'command' && task.origin === 'peer';
+}
+
 export function hasTaskLedger(capabilities: readonly string[] | undefined): boolean {
   return capabilities?.includes(TASK_LEDGER_CAPABILITY) === true;
 }

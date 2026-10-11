@@ -12,7 +12,6 @@ export function storeReleaseEnvironment(
   );
   return {
     ...env,
-    NODE_USE_ENV_PROXY: '1',
     NODE_ENV: 'production',
     HOT_UPDATER_NATIVE_BUILD: '1',
     HOT_UPDATER_CHANNEL: channel,
