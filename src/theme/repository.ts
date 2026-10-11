@@ -280,6 +280,9 @@ export class ThemeRepository {
         ...this.state,
         themes: this.state.themes.map((theme) => (theme.id === existing.id ? replaced : theme)),
       });
+      // The installation keeps its id, but its compiled appearance is now stale.
+      // Invalidate only after persistence succeeds so a failed import changes nothing.
+      this.compiled.delete(existing.id);
       return cloneThemeData(replaced);
     }
     if (this.state.themes.length >= MAX_THEMES)
