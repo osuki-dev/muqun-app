@@ -1,4 +1,5 @@
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
+import { AudioPlaybackError } from '@/lib/audio-playback-session';
 import { GuideCommand } from '@/components/guide-command';
 import { ComposerAttachmentButton } from '@/components/composer-attachment-button';
 import { TerminalNotice, terminalNoticeStyles } from '@/components/terminal-notice';
@@ -4941,6 +4942,8 @@ export function ServerTerminalWorkspace({
             );
             if (!asset) rethrow(new Error(t`This file is not among the session artifacts.`));
             const bytes = await readAssetBytes(asset, {
+              // Theme archives are downloadable files, not Gateway previews.
+              download: true,
               signal: request.signal,
               maxBytes: THEME_LIMITS.packageBytes,
               onProgress: (received, total) => {
@@ -4969,7 +4972,10 @@ export function ServerTerminalWorkspace({
               setThemeDrop({
                 phase: 'failed',
                 name,
-                message: describeGatewayFailure(failure, t`Could not open this theme.`).message,
+                message:
+                  failure instanceof AudioPlaybackError
+                    ? t`Update the Gateway to open or save this file.`
+                    : describeGatewayFailure(failure, t`Could not open this theme.`).message,
               });
           }
         },

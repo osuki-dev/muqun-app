@@ -1,4 +1,5 @@
 import * as Clipboard from 'expo-clipboard';
+import { AudioPlaybackError } from '@/lib/audio-playback-session';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
@@ -295,6 +296,8 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
       async () => {
         try {
           const bytes = await readAssetBytes(asset, {
+            // Theme archives are downloadable files, not Gateway previews.
+            download: true,
             signal: request.signal,
             maxBytes: THEME_LIMITS.packageBytes,
             onProgress: (done, total) => {
@@ -310,7 +313,11 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
           // A read this screen itself cancelled is not a failure to report: there is
           // no longer a screen to report it on.
           if (mounted.current && !request.isCanceled)
-            setError(describeGatewayFailure(failure, t`Could not open this theme.`).message);
+            setError(
+              failure instanceof AudioPlaybackError
+                ? t`Update the Gateway to open or save this file.`
+                : describeGatewayFailure(failure, t`Could not open this theme.`).message
+            );
         }
       },
       () => {
