@@ -30,6 +30,7 @@ import Animated, {
 import { Text } from '@/components/text';
 import { homeScrollFadeOpacity } from '@/lib/home-scroll-fade';
 import { useLaunchHandoff } from '@/stores/launch-handoff';
+import { launchEntryProgress } from '@/lib/launch-handoff';
 import { useHomeScenePlate } from '@/hooks/use-home-scene-plate';
 import { useInterfaceFontFamily } from '@/hooks/use-user-fonts';
 import { USER_FONT_MAX_NATIVE_WEIGHT } from '@/theme/interface-font-registry';
@@ -333,14 +334,19 @@ export function HomeEditorialLayout({
   const rise = (slot: number) =>
     sectionEntering ? entryRise(slot, HOME_SECTION_COUNT) : undefined;
   const revealing = useLaunchHandoff((state) => state.revealing);
+  const launchSettled = useLaunchHandoff((state) => state.settled);
   // Under the launch snap, Home's entrance rides the snap's own progress, so
   // it starts on the frame the first tile leaves and is complete with the
   // last; under the cross-fade it keeps its own clock.
   const revealDriver = useLaunchHandoff((state) => state.driver);
   const markRevealReady = useLaunchHandoff((state) => state.markReady);
-  const entryProgress = useSharedValue(revealing || reducedMotion ? 1 : 0);
+  const entryProgress = useSharedValue(launchSettled || revealing || reducedMotion ? 1 : 0);
   const timelineEnd = useSharedValue(0);
   useEffect(() => {
+    if (launchSettled) {
+      entryProgress.set(1);
+      return;
+    }
     if (revealing && revealDriver) {
       // Laid out and waiting: the snap may start.
       markRevealReady();
@@ -350,15 +356,14 @@ export function HomeEditorialLayout({
       entryProgress.set(withTiming(1, { duration: reducedMotion ? 0 : 520 }));
     }
     return () => cancelAnimation(entryProgress);
-  }, [revealing, revealDriver, reducedMotion, entryProgress, markRevealReady]);
+  }, [launchSettled, revealing, revealDriver, reducedMotion, entryProgress, markRevealReady]);
   useAnimatedReaction(
-    () => (revealDriver ? revealDriver.get() : -1),
+    () => launchEntryProgress(revealDriver ? revealDriver.get() : -1, launchSettled),
     (progress) => {
       if (progress < 0) return;
       // Ease-out: three quarters in by the middle of the sweep, so what shows
       // through the gaps is Home arriving rather than a page already there.
-      const t = Math.min(1, Math.max(0, progress));
-      entryProgress.set(1 - (1 - t) * (1 - t));
+      entryProgress.set(progress);
     }
   );
   const titleStage = useScrollStage(
