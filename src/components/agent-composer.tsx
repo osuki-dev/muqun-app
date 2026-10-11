@@ -490,6 +490,8 @@ export interface AgentComposerProps {
   accessory?: React.ReactNode;
   /** Home consolidates its choices in one control beside the attachment button. */
   toolbarLeading?: React.ReactNode;
+  /** Optional decoration inside the draft field, behind text and controls. */
+  fieldBackground?: React.ReactNode;
   hideParameterRow?: boolean;
   /** Home's field reaches the dock edges; safe-area space remains outside the surface. */
   flushField?: boolean;
@@ -595,6 +597,7 @@ export const AgentComposer = memo(function AgentComposer({
   onDockHeight,
   accessory,
   toolbarLeading,
+  fieldBackground,
   hideParameterRow = false,
   flushField = false,
   voiceContext,
@@ -1968,6 +1971,7 @@ export const AgentComposer = memo(function AgentComposer({
             {/* TerminalComposer reused for agent prompt */}
             <View onLayout={(event) => setInputRowHeight(event.nativeEvent.layout.height)}>
               <TerminalComposer
+                fieldBackground={fieldBackground}
                 spans={spans}
                 compact={compact}
                 minLines={fieldLines}
