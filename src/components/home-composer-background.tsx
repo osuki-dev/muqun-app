@@ -1,23 +1,34 @@
-import { useThemeTokens } from '@osuki-dev/ui';
-import { StyleSheet, View } from 'react-native';
+import { useThemeMode } from '@osuki-dev/ui';
+import { useWindowDimensions } from 'react-native';
 
-import { useHasThemeArtwork } from '@/components/theme-artwork';
-import { ThemedSurfaceArtwork } from '@/components/themed-surface';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { ThemeArtworkLayer } from '@/components/theme-artwork';
+import { useEffectiveCustomTheme } from '@/components/theme-candidate';
+import { resolveThemeImage } from '@/theme/resolve';
 
 /** Optional Home-only decoration; the field owns clipping and voice visibility. */
 export function HomeComposerBackground() {
-  const theme = useThemeTokens();
-  const background = useSurfaceBackground();
-  const hasArtwork = useHasThemeArtwork('home.composer.background');
-  if (!hasArtwork) return null;
+  const { theme, assets } = useEffectiveCustomTheme();
+  const { resolvedMode } = useThemeMode();
+  const { width } = useWindowDimensions();
+  if (!theme || !assets) return null;
+  const artwork = resolveThemeImage(
+    theme.manifest,
+    'home.composer.background',
+    resolvedMode,
+    width >= 768 ? 'regular' : 'compact'
+  );
+  if (!artwork) return null;
   return (
-    <View
-      pointerEvents="none"
-      accessible={false}
-      importantForAccessibility="no-hide-descendants"
-      style={[StyleSheet.absoluteFill, { backgroundColor: background(theme.colors.surface) }]}>
-      <ThemedSurfaceArtwork slot="home.composer.background" baseColor={theme.colors.surface} />
-    </View>
+    <ThemeArtworkLayer
+      manifest={theme.manifest}
+      assets={assets}
+      slot="home.composer.background"
+      mode={resolvedMode}
+      // Frames and edge characters need their authored strength. Authors reserve
+      // transparent space for text/controls; generic surface contrast caps do not
+      // apply to this opt-in layer. An unspecified strength remains quiet.
+      opacityLimit={artwork.opacity ?? 0.18}
+      effectsEnabled={false}
+    />
   );
 }
