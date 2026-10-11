@@ -2,7 +2,8 @@ import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { useNavigation } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Keyboard, ScrollView, StyleSheet, View } from 'react-native';
+import { Keyboard, StyleSheet, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/text';
 import { SettingsSegmented } from '@/components/settings-segmented';
@@ -104,7 +105,7 @@ function VoiceSettingsForm() {
     }
   }
   return (
-    <ScrollView
+    <KeyboardAwareScrollView
       nestedScrollEnabled
       style={sheetSceneStyles.scroller}
       keyboardShouldPersistTaps="handled"
@@ -271,7 +272,7 @@ function VoiceSettingsForm() {
         ) : null}
       </View>
       <SheetSceneFooter bottomInset={insets.bottom} />
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }
 
