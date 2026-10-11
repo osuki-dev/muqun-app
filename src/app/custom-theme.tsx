@@ -3,10 +3,11 @@ import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 
 import { Button } from '@/components/themed-button';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
+import { sheetFrostAlpha, surfaceBackgroundFill } from '@/theme/surface-background';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ScrollView, useWindowDimensions, View } from 'react-native';
+import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -17,6 +18,8 @@ import {
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { ThemeImportProgress } from '@/components/theme-import-progress';
 import { appChrome } from '@/constants/appearance';
+import { fadeIn, fadeOut } from '@/lib/motion';
+import Animated from 'react-native-reanimated';
 import { ScreenHeader } from '@/components/screen-header';
 import { ThemeArtwork } from '@/components/theme-artwork';
 import { CandidateThemeProvider } from '@/components/theme-candidate';
@@ -141,6 +144,7 @@ function CustomThemeScene({
   const [status, setStatus] = useState<ThemeStatus | null>(null);
   const [footerHeight, setFooterHeight] = useState(0);
   const profile = useAppearanceProfile();
+  const surfaceOpacity = useSurfaceBackgroundOpacity();
   return (
     // Opacity audit: floor -- the screen's opaque base, exempt from the slider.
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -179,15 +183,33 @@ function CustomThemeScene({
       {status ? (
         <View
           pointerEvents="box-none"
-          style={{ position: 'absolute', left: 20, right: 20, bottom: footerHeight + 8 }}>
+          style={{
+            position: 'absolute',
+            left: 20,
+            right: 20,
+            bottom: footerHeight + theme.spacing.sm,
+          }}>
           <View style={{ width: '100%', maxWidth: 1120, alignSelf: 'center' }}>
-            <View
+            {/* The plate and its words arrive and leave together: the label's own
+                fade must never outlive the plate behind it. */}
+            <Animated.View
+              entering={fadeIn('micro')}
+              exiting={fadeOut('micro')}
               testID={status.kind === 'installing' ? undefined : 'theme-status-message'}
               style={{
-                padding: 12,
-                borderRadius: profile.chrome.surface,
-                backgroundColor: background(theme.colors.surfaceRaised),
-                boxShadow: appChrome.shadow.controlTray,
+                paddingHorizontal: theme.spacing.md,
+                paddingVertical: theme.spacing.sm,
+                borderRadius: profile.chrome.noticeCard,
+                borderCurve: 'continuous',
+                borderWidth: StyleSheet.hairlineWidth,
+                borderColor: theme.colors.border,
+                // A plate over live content: the theme's own opacity, never
+                // thinner than the floor a sheet keeps for reading.
+                backgroundColor: surfaceBackgroundFill(
+                  theme.colors.surfaceRaised,
+                  sheetFrostAlpha(surfaceOpacity)
+                ),
+                boxShadow: appChrome.shadow.notice,
               }}>
               {status.kind === 'installing' ? (
                 <ThemeImportProgress testID="theme-install-progress" label={t`Installing images`} />
@@ -201,7 +223,7 @@ function CustomThemeScene({
                   {status.text}
                 </Text>
               )}
-            </View>
+            </Animated.View>
           </View>
         </View>
       ) : null}
