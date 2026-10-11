@@ -42,7 +42,9 @@ function GlowingWaveform({ history }: { history: SharedValue<number[]> }) {
   const size = useSharedValue({ width: 1, height: 20 });
   const clock = useSharedValue(0);
   const lastPaint = useSharedValue(-1000);
-  const frame = useFrameCallback(({ timeSinceFirstFrame }) => {
+  const frame = useFrameCallback(({ timeSinceFirstFrame, timeSincePreviousFrame }) => {
+    // Reanimated resets elapsed time whenever a stopped callback is activated.
+    if (timeSincePreviousFrame === null) lastPaint.set(-1000);
     if (timeSinceFirstFrame - lastPaint.get() < 1000 / 30) return;
     lastPaint.set(timeSinceFirstFrame);
     clock.set(timeSinceFirstFrame / 1000);
