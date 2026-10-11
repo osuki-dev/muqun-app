@@ -3069,6 +3069,7 @@ msgid "Installed"
 msgstr "已安装"
 
 #: src/app/+not-found.tsx
+#: src/app/custom-theme.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Installing images"
 msgstr "正在安装图片"

@@ -3069,6 +3069,7 @@ msgid "Installed"
 msgstr "설치됨"
 
 #: src/app/+not-found.tsx
+#: src/app/custom-theme.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Installing images"
 msgstr "이미지 설치 중"
