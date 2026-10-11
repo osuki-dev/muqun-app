@@ -1,3 +1,4 @@
+import type { HomeComposerOutset } from '@/theme/home-composer-outset';
 import { ComposerAttachmentButton } from '@/components/composer-attachment-button';
 import { memo, useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import {
@@ -493,6 +494,8 @@ export interface AgentComposerProps {
   /** Optional decoration inside the draft field, behind text and controls. */
   fieldBackground?: React.ReactNode;
   fieldBackgroundColor?: string;
+  /** Optional bounded artwork overflow; the field and its controls remain clipped. */
+  fieldBackgroundOutset?: HomeComposerOutset;
   fieldDecoration?: React.ReactNode;
   fieldDecorationOverhang?: number;
   hideFieldDecoration?: boolean;
@@ -606,6 +609,7 @@ export const AgentComposer = memo(function AgentComposer({
   toolbarLeading,
   fieldBackground,
   fieldBackgroundColor,
+  fieldBackgroundOutset,
   fieldDecoration,
   fieldDecorationOverhang = 0,
   hideFieldDecoration = false,
@@ -1531,8 +1535,12 @@ export const AgentComposer = memo(function AgentComposer({
         // clips an outset shadow with it.
         style={
           bar && {
-            borderTopLeftRadius: profile.chrome.surface,
-            borderTopRightRadius: profile.chrome.surface,
+            ...(flushField
+              ? { borderRadius: profile.chrome.composerField }
+              : {
+                  borderTopLeftRadius: profile.chrome.surface,
+                  borderTopRightRadius: profile.chrome.surface,
+                }),
             boxShadow: appChrome.shadow.composerDock,
           }
         }>
@@ -2019,6 +2027,7 @@ export const AgentComposer = memo(function AgentComposer({
               <TerminalComposer
                 fieldBackground={fieldBackground}
                 fieldBackgroundColor={fieldBackgroundColor}
+                fieldBackgroundOutset={fieldBackgroundOutset}
                 fieldDecoration={decorationHidden ? undefined : fieldDecoration}
                 fieldTextTopInset={fieldTextTopInset}
                 onVoiceActiveChange={setVoiceActive}
