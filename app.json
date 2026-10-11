@@ -7,12 +7,6 @@
     "icon": "./assets/icons/classic/icon.png",
     "scheme": "muqun",
     "userInterfaceStyle": "automatic",
-    "updates": {
-      "url": "https://u.expo.dev/cfb630f8-bd76-4d3b-9d16-76c6bc4f6fcf"
-    },
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
     "locales": {
       "en": "./native-locales/en.json",
       "zh-TW": "./native-locales/zh-TW.json",

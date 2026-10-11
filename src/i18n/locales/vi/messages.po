@@ -823,10 +823,6 @@ msgstr "Tệp đính kèm"
 msgid "Audio"
 msgstr "Âm thanh"
 
-#: src/components/voice-input-button.tsx
-msgid "Audio is sent to your configured speech service"
-msgstr "Âm thanh được gửi đến dịch vụ giọng nói bạn đã cấu hình"
-
 #: src/components/audio-asset-preview.tsx
 msgid "Audio preview supports files up to {ceiling}."
 msgstr "Xem trước âm thanh hỗ trợ tệp tối đa {ceiling}"
@@ -2296,6 +2292,7 @@ msgstr "Đã ngắt kết nối"
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/task-row.tsx
+#: src/components/update-status-banner.tsx
 msgid "Dismiss"
 msgstr "Bỏ qua"
 
@@ -4825,10 +4822,6 @@ msgstr "Bắt buộc"
 msgid "Requires iOS 16.1 or later."
 msgstr "Yêu cầu iOS 16.1 trở lên"
 
-#: src/components/update-status-banner.tsx
-msgid "Restart Muqun to finish updating"
-msgstr "Khởi động lại Muqun để hoàn tất cập nhật"
-
 #: src/app/commands.tsx
 msgid "Restore hidden default commands"
 msgstr "Khôi phục các lệnh mặc định đã ẩn"
@@ -6716,8 +6709,8 @@ msgid "Update Muqun Gateway on this host to use {agentName}."
 msgstr "Cập nhật Muqun Gateway trên máy chủ này để dùng {agentName}"
 
 #: src/components/update-status-banner.tsx
-msgid "Update ready · restarting…"
-msgstr "Bản cập nhật đã sẵn sàng · đang khởi động lại…"
+msgid "Update ready · applies on next launch"
+msgstr "Bản cập nhật đã sẵn sàng · áp dụng ở lần mở tiếp theo"
 
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"

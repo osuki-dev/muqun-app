@@ -23,9 +23,10 @@
     "credentials:ios": "eas credentials --platform ios",
     "credentials:android": "eas credentials --platform android",
     "credentials:android:configure": "eas credentials:configure-build --platform android",
-    "update:preview": "eas update --channel preview --environment preview",
-    "update:production": "eas update --channel production --environment production",
-    "update:republish": "eas update:republish",
+    "update:preview": "bun scripts/deploy-hot-update.ts preview",
+    "update:production": "bun scripts/deploy-hot-update.ts production",
+    "update:prepare": "bun scripts/prepare-hot-updater-infra.ts",
+    "update:doctor": "hot-updater doctor --json",
     "ios": "expo run:ios",
     "web": "expo start --web",
     "mock:gateway": "bun scripts/mock-gateway.ts",
@@ -48,6 +49,7 @@
     "@formatjs/intl-getcanonicallocales": "^3.2.12",
     "@formatjs/intl-locale": "^5.3.12",
     "@formatjs/intl-pluralrules": "^6.3.15",
+    "@hot-updater/react-native": "1.0.0",
     "@legendapp/list": "^3.6.0",
     "@lingui/core": "^6.9.1",
     "@lingui/react": "^6.9.1",
@@ -88,7 +90,6 @@
     "expo-status-bar": "~57.0.1",
     "expo-symbols": "~57.0.3",
     "expo-system-ui": "~57.0.4",
-    "expo-updates": "~57.0.25",
     "expo-web-browser": "~57.0.3",
     "expo-widgets": "~57.0.23",
     "fflate": "0.8.3",
@@ -124,6 +125,9 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@expo/fingerprint": "0.20.13",
+    "@hot-updater/cloudflare": "1.0.0",
+    "@hot-updater/expo": "1.0.0",
     "@lingui/babel-plugin-lingui-macro": "^6.9.1",
     "@lingui/cli": "^6.9.1",
     "@lingui/format-po": "^6.9.1",
@@ -131,6 +135,7 @@
     "@react-native-community/cli": "^20.2.0",
     "@types/react": "~19.3.0",
     "eslint-plugin-lingui": "^0.16.0",
+    "hot-updater": "1.0.0",
     "oxc-parser": "^0.153.0",
     "oxfmt": "^0.72.0",
     "oxlint": "^1.87.0",
@@ -140,6 +145,7 @@
   "overrides": {
     "react-native-screens": "4.28.0"
   },
+  "packageManager": "bun@1.4.2",
   "enriched-markdown": {
     "enableMath": true
   },

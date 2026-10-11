@@ -56,7 +56,6 @@ diff --git a/android/src/main/java/com/swmansion/enriched/markdown/spans/LineHei
  
      val leading = lineHeight - ((-fm.ascent) + fm.descent)
      if (leading <= 0) return
-
 diff --git a/android/src/main/java/com/swmansion/enriched/markdown/EnrichedMarkdown.kt b/android/src/main/java/com/swmansion/enriched/markdown/EnrichedMarkdown.kt
 --- a/android/src/main/java/com/swmansion/enriched/markdown/EnrichedMarkdown.kt
 +++ b/android/src/main/java/com/swmansion/enriched/markdown/EnrichedMarkdown.kt
@@ -114,7 +113,6 @@ diff --git a/android/src/main/java/com/swmansion/enriched/markdown/EnrichedMarkd
    }
  
    companion object {
-
 diff --git a/android/src/test/java/com/swmansion/enriched/markdown/EnrichedMarkdownLifecycleTest.kt b/android/src/test/java/com/swmansion/enriched/markdown/EnrichedMarkdownLifecycleTest.kt
 new file mode 100644
 --- /dev/null
