@@ -9,6 +9,7 @@ import { Text } from '@/components/text';
 import { SettingsSegmented } from '@/components/settings-segmented';
 import { FontedTextInput } from '@/components/fonted-text-input';
 import {
+  SHEET_LADDER,
   SheetScene,
   SheetSceneAction,
   SheetSceneQuietAction,
@@ -107,6 +108,7 @@ function VoiceSettingsForm() {
   return (
     <KeyboardAwareScrollView
       nestedScrollEnabled
+      bottomOffset={SHEET_LADDER.section}
       style={sheetSceneStyles.scroller}
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="on-drag"
