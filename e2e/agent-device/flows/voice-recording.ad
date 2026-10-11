@@ -27,6 +27,8 @@ is visible "id=\"voice-recording-stop\""
 wait "id=\"voice-inline-panel\"" 10000
 is hidden "id=\"terminal-composer-input\""
 wait "id=\"voice-recording-meter\"" 10000
+# Supported native Skia must render the shader, not only the fallback waveform.
+is visible "id=\"voice-recording-glow\""
 screenshot "shots/voice-recording.png"
 # The inline stop action finishes recording. The isolated invalid service fails safely.
 press "id=\"voice-recording-stop\""
