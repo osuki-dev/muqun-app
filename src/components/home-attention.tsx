@@ -7,13 +7,7 @@ import { LayoutAnimationConfig } from 'react-native-reanimated';
 
 import { useTaskIndexFor } from '@/components/use-task-index';
 import { PressableScale } from '@/components/pressable-scale';
-import {
-  ArrivalPulse,
-  RowMarkdown,
-  TaskRowLineText,
-  TaskStateIcon,
-  useTaskRowLine,
-} from '@/components/task-row';
+import { ArrivalPulse, RowMarkdown, TaskRowLineText, useTaskRowLine } from '@/components/task-row';
 import { useMinuteNow } from '@/hooks/use-minute-now';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { Text } from '@/components/text';
@@ -217,11 +211,6 @@ function WaitingTaskRow({
       ]}>
       {/* A row arriving here pulses once (skipped on a remount), and leaves no mark. */}
       <ArrivalPulse />
-      {opening ? (
-        <ActivityIndicator size="small" color={theme.colors.textMuted} />
-      ) : (
-        <TaskStateIcon visual={visual} size={20} />
-      )}
       <View style={styles.copy}>
         {/* A row, as on the card: the title's `flex: 1` is a width, not a height. */}
         <View style={styles.titleLine}>
@@ -234,10 +223,19 @@ function WaitingTaskRow({
               {`${computer}${META_SEPARATOR}`}
             </Text>
           ) : null}
-          <TaskRowLineText line={line} />
+          <TaskRowLineText line={line} spins={visual.spins} />
         </View>
       </View>
-      <ThemeIcon name="home.arrow" fallback={ChevronRight} size={16} color={theme.colors.primary} />
+      {opening ? (
+        <ActivityIndicator size="small" color={theme.colors.textMuted} />
+      ) : (
+        <ThemeIcon
+          name="home.arrow"
+          fallback={ChevronRight}
+          size={16}
+          color={theme.colors.primary}
+        />
+      )}
     </PressableScale>
   );
 }

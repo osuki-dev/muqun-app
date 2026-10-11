@@ -23,7 +23,6 @@ import Animated, {
 
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { AgentMark } from '@/components/agent-mark';
-import { TaskStateGlyph } from '@/components/icons/task-state-glyphs';
 import { BoundedMarkdown } from '@/components/bounded-markdown';
 import { PressableScale } from '@/components/pressable-scale';
 import { Text } from '@/components/text';
@@ -43,15 +42,8 @@ import {
   type PendingDispatch,
   type TaskRowVisual,
 } from '@/lib/home-computer-cards';
-import {
-  fadeIn,
-  fadeOut,
-  listLayout,
-  PULSE_ONCE_MS,
-  pulseOnce,
-  travelTiming,
-  zoomIn,
-} from '@/lib/motion';
+import { fadeIn, fadeOut, listLayout, PULSE_ONCE_MS, pulseOnce, travelTiming } from '@/lib/motion';
+import Svg, { Path } from 'react-native-svg';
 import { isDemoRecord } from '@/lib/demo-gateway';
 import { peerServerIdOf } from '@/lib/fleet-peers';
 import { META_SEPARATOR } from '@/lib/home-continue-row';
@@ -68,47 +60,46 @@ import { plural } from '@lingui/core/macro';
 const MARKDOWN_SYNTAX = /[`*_[\\<]/;
 
 /**
- * A row's state icon from the one table (`taskRowVisual`). Only the working
- * icon turns -- one turn per `TRAVEL_PERIOD`, linear, the app's loop for a
- * wait with no length -- and it holds still when the reader asks for less
- * motion. A check or a cross arrives once (`zoomIn` on `short`); any other new
- * state fades in on `micro`. Every transition honours reduce-motion.
+ * The working row's only motion: a small arc right after its state word, one
+ * turn per `TRAVEL_PERIOD`, linear -- the app's loop for a wait with no length
+ * -- in the state's tone, at the caption's height. Still when the reader asks
+ * for less motion. Never a leading icon, never on another state
+ * (home-dispatch-ux §11).
  */
-export function TaskStateIcon({ visual, size = 16 }: { visual: TaskRowVisual; size?: number }) {
-  const theme = useThemeTokens();
+function WorkingSpinner({ color }: { color: string }) {
   const reduceMotion = useReducedMotion();
   const turn = useSharedValue(0);
-  const spins = visual.spins && !reduceMotion;
   useEffect(() => {
     cancelAnimation(turn);
     turn.set(0);
-    if (!spins) return;
+    if (reduceMotion) return;
     turn.set(withRepeat(withTiming(1, travelTiming()), -1));
     // Unmounting does not stop an endless `withRepeat`; a row that leaves
-    // while spinning must not leave its loop running on the UI thread.
+    // while working must not leave its loop running on the UI thread.
     return () => cancelAnimation(turn);
-  }, [spins, turn]);
+  }, [reduceMotion, turn]);
   const spinStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${turn.get() * 360}deg` }] }));
-  // The rotation lives on an inner view that exists only while spinning, so a
-  // check or cross never arrives at the spinner's last angle.
-  const glyph = (
-    <TaskStateGlyph
-      state={visual.icon}
-      size={size}
-      color={theme.colors[visual.tone]}
-      strokeWidth={2.2}
-    />
-  );
   return (
     <Animated.View
-      key={visual.icon}
-      entering={
-        visual.icon === 'done' || visual.icon === 'failed' ? zoomIn('short') : fadeIn('micro')
-      }>
-      {visual.spins ? <Animated.View style={spinStyle}>{glyph}</Animated.View> : glyph}
+      testID="task-row-working-spinner"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={[styles.spinner, spinStyle]}>
+      <Svg width={SPINNER_SIZE} height={SPINNER_SIZE} viewBox="0 0 24 24">
+        <Path
+          d="M12 3.4a8.6 8.6 0 1 1-8.6 8.6"
+          fill="none"
+          stroke={color}
+          strokeWidth={2.6}
+          strokeLinecap="round"
+        />
+      </Svg>
     </Animated.View>
   );
 }
+
+/** The inline spinner's size: the caption's cap height, so the line does not grow. */
+const SPINNER_SIZE = 11;
 
 /**
  * The server id of the computer a mirror runs on, as this phone knows it:
@@ -255,9 +246,9 @@ export function useTaskRowLine(discovery: MirroredServerDiscovery | undefined) {
       case 'starting':
         return lineView('', muted, agent ? t`Starting ${agent}…` : stateWord);
       case 'progress':
-        return lineView('', muted, line.text);
+        return lineView(stateWord, tone, line.text);
       case 'agent':
-        return lineView('', muted, agent || stateWord);
+        return lineView(stateWord, tone, agent);
       case 'waiting':
         return lineView(_(taskStateWord.waiting), tone, line.text ?? '');
       case 'paused':
@@ -304,14 +295,32 @@ export function ArrivalPulse() {
   );
 }
 
-/** A row's second line drawn: the state word in its tone, the detail muted. */
-export function TaskRowLineText({ line, testID }: { line: TaskRowLineView; testID?: string }) {
+/**
+ * A row's second line drawn: the state word in its tone -- the row's only state
+ * marker -- with a working row's spinner right after it, then the detail muted.
+ */
+export function TaskRowLineText({
+  line,
+  testID,
+  spins = false,
+}: {
+  line: TaskRowLineView;
+  testID?: string;
+  /** The row is working: its spinner sits between the word and the separator. */
+  spins?: boolean;
+}) {
   const theme = useThemeTokens();
   return (
     <>
       {line.word ? (
         <Text variant="caption" color={line.color} numberOfLines={1} style={styles.word}>
-          {line.detail ? line.word + META_SEPARATOR : line.word}
+          {line.detail && !spins ? line.word + META_SEPARATOR : line.word}
+        </Text>
+      ) : null}
+      {spins && line.word ? <WorkingSpinner color={line.color} /> : null}
+      {spins && line.word && line.detail ? (
+        <Text variant="caption" color={line.color}>
+          {META_SEPARATOR}
         </Text>
       ) : null}
       {line.detail ? (
@@ -616,13 +625,6 @@ export function TaskRow({
         onPress={row.open}
         style={styles.row}>
         <View style={styles.titleLine}>
-          <View style={styles.icon}>
-            {opening ? (
-              <ActivityIndicator size="small" color={theme.colors.textMuted} />
-            ) : (
-              <TaskStateIcon visual={visual} />
-            )}
-          </View>
           <RowMarkdown text={title} ink={theme.colors.text} kind="title" />
           {mirror && ownTitle ? (
             <Text
@@ -633,7 +635,9 @@ export function TaskRow({
               {whereName(task)}
             </Text>
           ) : null}
-          {trailingAge ? (
+          {opening ? (
+            <ActivityIndicator size="small" color={theme.colors.textMuted} />
+          ) : trailingAge ? (
             <Text variant="caption" color={theme.colors.textSubtle}>
               {trailingAge}
             </Text>
@@ -649,7 +653,11 @@ export function TaskRow({
               {fromText + META_SEPARATOR}
             </Text>
           ) : null}
-          <TaskRowLineText testID={`task-row-line-${task.taskId}`} line={line} />
+          <TaskRowLineText
+            testID={`task-row-line-${task.taskId}`}
+            line={line}
+            spins={visual.spins}
+          />
           {rollupText ? (
             <Text variant="caption" numberOfLines={1}>
               {onOpenTree ? (
@@ -728,7 +736,6 @@ function SubTaskRow({
         {...row.menuProps}
         onPress={row.open}
         style={styles.child}>
-        <TaskStateIcon visual={visual} size={12} />
         <WhereMark task={task} discovery={discovery} />
         {mirror ? (
           <Text
@@ -742,7 +749,7 @@ function SubTaskRow({
           </Text>
         ) : null}
         <RowMarkdown text={title} ink={theme.colors.textMuted} kind="line" />
-        <TaskRowLineText line={line} />
+        <TaskRowLineText line={line} spins={visual.spins} />
         {trailingAge ? (
           <Text variant="caption" color={theme.colors.textSubtle}>
             {trailingAge}
@@ -822,13 +829,10 @@ export function SentTaskRow({
         accessibilityLabel={failed ? t`Could not send. Tap to retry` : undefined}
         style={[styles.sentBody, styles.grow]}>
         <View style={styles.titleLine}>
-          <View style={styles.icon}>
-            <TaskStateIcon visual={visual} />
-          </View>
           <RowMarkdown text={goalTitle(item.goal)} ink={theme.colors.text} kind="title" />
         </View>
         <View style={styles.line}>
-          <TaskRowLineText line={line} />
+          <TaskRowLineText line={line} spins={visual.spins} />
         </View>
       </Pressable>
       {dismissible ? (
@@ -846,16 +850,21 @@ export function SentTaskRow({
   );
 }
 
+/** One level of indent for a sub-task under its root. */
+const SUBTASK_INDENT = 16;
+
 const styles = StyleSheet.create({
   row: { paddingVertical: 4, gap: 2 },
   sentBody: { gap: 2 },
   sentRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 4 },
   dismiss: { minHeight: 28, justifyContent: 'center', paddingHorizontal: 4 },
   titleLine: { minHeight: 28, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  icon: { width: 16, alignItems: 'center' },
   grow: { flex: 1, minWidth: 0 },
-  line: { paddingLeft: 24, flexDirection: 'row', alignItems: 'center' },
-  nested: { paddingLeft: 24 },
+  // The second line starts under the title: there is no glyph column to clear.
+  line: { flexDirection: 'row', alignItems: 'center' },
+  // A sub-task keeps its own one level of indent, and nothing more.
+  nested: { paddingLeft: SUBTASK_INDENT },
+  spinner: { marginLeft: 4, width: SPINNER_SIZE, height: SPINNER_SIZE },
   word: { flexShrink: 0, maxWidth: '60%' },
   // The arrival pulse: a wash over the whole row that fades back to nothing.
   pulse: { ...StyleSheet.absoluteFill, opacity: 0 },
@@ -864,7 +873,7 @@ const styles = StyleSheet.create({
   peerName: { flexShrink: 0, maxWidth: '40%' },
   child: {
     minHeight: 28,
-    paddingLeft: 24,
+    paddingLeft: SUBTASK_INDENT,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
