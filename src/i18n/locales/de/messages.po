@@ -522,8 +522,8 @@ msgid "Add commands and custom key combinations."
 msgstr "Befehle und eigene Tastenkombinationen hinzufügen"
 
 #: src/components/session-map.tsx
-msgid "Add machine"
-msgstr "Rechner hinzufügen"
+msgid "Add computer"
+msgstr "Computer hinzufügen"
 
 #: src/app/explore.tsx
 msgid "Add one first"
@@ -1407,6 +1407,7 @@ msgstr "Computer nicht erreichbar"
 #: src/components/file-mention-panel.tsx
 #: src/components/home-editorial-layout.tsx
 #: src/components/home-overview.tsx
+#: src/components/session-map.tsx
 msgid "Computers"
 msgstr "Computer"
 
@@ -2136,8 +2137,8 @@ msgid "Current agent"
 msgstr "Aktueller Agent"
 
 #: src/components/session-map.tsx
-msgid "Current machine"
-msgstr "Aktueller Rechner"
+msgid "Current computer"
+msgstr "Aktueller Computer"
 
 #: src/i18n/labels.ts
 msgid "Current path"
@@ -3364,10 +3365,6 @@ msgstr "Simulator wird gesucht"
 msgid "Mac mini · Office"
 msgstr "Mac mini · Büro"
 
-#: src/components/session-map.tsx
-msgid "Machines"
-msgstr "Rechner"
-
 #: src/components/launch-intro.tsx
 msgid "Make it yours"
 msgstr "Mach es zu deinem"
@@ -3380,13 +3377,13 @@ msgstr "Stelle sicher, dass der Computer erreichbar ist, und versuche es erneut"
 msgid "Manage"
 msgstr "Verwalten"
 
+#: src/components/session-map.tsx
+msgid "Manage computers"
+msgstr "Computer verwalten"
+
 #: src/components/home-connections.tsx
 msgid "Manage connections"
 msgstr "Verbindungen verwalten"
-
-#: src/components/session-map.tsx
-msgid "Manage machines"
-msgstr "Rechner verwalten"
 
 #: src/components/home-overview.tsx
 msgid "Manage SSH hosts"

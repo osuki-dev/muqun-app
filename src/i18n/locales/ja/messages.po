@@ -522,8 +522,8 @@ msgid "Add commands and custom key combinations."
 msgstr "コマンドやカスタムのキー組み合わせを追加します"
 
 #: src/components/session-map.tsx
-msgid "Add machine"
-msgstr "マシンを追加"
+msgid "Add computer"
+msgstr "コンピュータを追加"
 
 #: src/app/explore.tsx
 msgid "Add one first"
@@ -1407,6 +1407,7 @@ msgstr "コンピュータを利用できません"
 #: src/components/file-mention-panel.tsx
 #: src/components/home-editorial-layout.tsx
 #: src/components/home-overview.tsx
+#: src/components/session-map.tsx
 msgid "Computers"
 msgstr "コンピュータ"
 
@@ -2136,8 +2137,8 @@ msgid "Current agent"
 msgstr "現在のエージェント"
 
 #: src/components/session-map.tsx
-msgid "Current machine"
-msgstr "現在のマシン"
+msgid "Current computer"
+msgstr "現在のコンピュータ"
 
 #: src/i18n/labels.ts
 msgid "Current path"
@@ -3364,10 +3365,6 @@ msgstr "シミュレータを探しています"
 msgid "Mac mini · Office"
 msgstr "Mac mini · オフィス"
 
-#: src/components/session-map.tsx
-msgid "Machines"
-msgstr "マシン"
-
 #: src/components/launch-intro.tsx
 msgid "Make it yours"
 msgstr "自分好みに"
@@ -3380,13 +3377,13 @@ msgstr "コンピュータに接続できることを確認してから、もう
 msgid "Manage"
 msgstr "管理"
 
+#: src/components/session-map.tsx
+msgid "Manage computers"
+msgstr "コンピュータを管理"
+
 #: src/components/home-connections.tsx
 msgid "Manage connections"
 msgstr "接続を管理"
-
-#: src/components/session-map.tsx
-msgid "Manage machines"
-msgstr "マシンを管理"
 
 #: src/components/home-overview.tsx
 msgid "Manage SSH hosts"

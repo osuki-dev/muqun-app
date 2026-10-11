@@ -24,7 +24,7 @@ import {
   ChevronRight,
   Play,
   ScanLine,
-  Server,
+  Monitor,
   Settings,
   SquareTerminal,
 } from 'lucide-react-native';
@@ -2049,7 +2049,7 @@ function ServerCard({
                 // difference between the two tiles is the fill, not the ink: a
                 // grey glyph beside rows of accent-coloured ones read as a
                 // machine that was switched off, and this one is online.
-                <Server size={19} color={theme.colors.primary} strokeWidth={2} />
+                <Monitor size={19} color={theme.colors.primary} strokeWidth={2} />
               )}
             </View>
 
@@ -2215,7 +2215,7 @@ function EmptyState({
                 style={[styles.corner, corner.style, { borderColor: theme.colors.borderStrong }]}
               />
             ))}
-            <Server size={26} color={theme.colors.textMuted} strokeWidth={1.8} />
+            <Monitor size={26} color={theme.colors.textMuted} strokeWidth={1.8} />
           </View>
         )}
         <View style={[styles.emptyCopy, isPad && styles.padEmptyCopy]}>

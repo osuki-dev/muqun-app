@@ -522,8 +522,8 @@ msgid "Add commands and custom key combinations."
 msgstr "เพิ่มคำสั่งและชุดปุ่มลัดที่กำหนดเอง"
 
 #: src/components/session-map.tsx
-msgid "Add machine"
-msgstr "เพิ่มเครื่อง"
+msgid "Add computer"
+msgstr "เพิ่มคอมพิวเตอร์"
 
 #: src/app/explore.tsx
 msgid "Add one first"
@@ -1407,6 +1407,7 @@ msgstr "คอมพิวเตอร์ไม่พร้อมใช้งา
 #: src/components/file-mention-panel.tsx
 #: src/components/home-editorial-layout.tsx
 #: src/components/home-overview.tsx
+#: src/components/session-map.tsx
 msgid "Computers"
 msgstr "คอมพิวเตอร์"
 
@@ -2136,8 +2137,8 @@ msgid "Current agent"
 msgstr "เอเจนต์ปัจจุบัน"
 
 #: src/components/session-map.tsx
-msgid "Current machine"
-msgstr "เครื่องปัจจุบัน"
+msgid "Current computer"
+msgstr "คอมพิวเตอร์ปัจจุบัน"
 
 #: src/i18n/labels.ts
 msgid "Current path"
@@ -3364,10 +3365,6 @@ msgstr "กำลังค้นหาเครื่องจำลอง"
 msgid "Mac mini · Office"
 msgstr "Mac mini · สำนักงาน"
 
-#: src/components/session-map.tsx
-msgid "Machines"
-msgstr "เครื่อง"
-
 #: src/components/launch-intro.tsx
 msgid "Make it yours"
 msgstr "ทำให้เป็นของคุณ"
@@ -3380,13 +3377,13 @@ msgstr "ตรวจสอบว่าเข้าถึงคอมพิวเ
 msgid "Manage"
 msgstr "จัดการ"
 
+#: src/components/session-map.tsx
+msgid "Manage computers"
+msgstr "จัดการคอมพิวเตอร์"
+
 #: src/components/home-connections.tsx
 msgid "Manage connections"
 msgstr "จัดการการเชื่อมต่อ"
-
-#: src/components/session-map.tsx
-msgid "Manage machines"
-msgstr "จัดการเครื่อง"
 
 #: src/components/home-overview.tsx
 msgid "Manage SSH hosts"

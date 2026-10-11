@@ -1,7 +1,7 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
-import { Server } from 'lucide-react-native';
+import { Monitor } from 'lucide-react-native';
 import { useLayoutEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { LayoutAnimationConfig } from 'react-native-reanimated';
@@ -363,7 +363,7 @@ function ComputerCardView({
         accessibilityHint={t`Sends your next goal here.`}
         onPress={onSelect}
         style={styles.header}>
-        <Server size={18} color={theme.colors.primary} />
+        <Monitor size={18} color={theme.colors.primary} />
         <View style={styles.headerCopy}>
           <Text variant="bodySmall" weight="semibold" numberOfLines={1}>
             {server.label}

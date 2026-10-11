@@ -522,8 +522,8 @@ msgid "Add commands and custom key combinations."
 msgstr "Thêm lệnh và tổ hợp phím tùy chỉnh"
 
 #: src/components/session-map.tsx
-msgid "Add machine"
-msgstr "Thêm máy"
+msgid "Add computer"
+msgstr "Thêm máy tính"
 
 #: src/app/explore.tsx
 msgid "Add one first"
@@ -1407,6 +1407,7 @@ msgstr "Máy tính không khả dụng"
 #: src/components/file-mention-panel.tsx
 #: src/components/home-editorial-layout.tsx
 #: src/components/home-overview.tsx
+#: src/components/session-map.tsx
 msgid "Computers"
 msgstr "Máy tính"
 
@@ -2136,8 +2137,8 @@ msgid "Current agent"
 msgstr "Agent hiện tại"
 
 #: src/components/session-map.tsx
-msgid "Current machine"
-msgstr "Máy hiện tại"
+msgid "Current computer"
+msgstr "Máy tính hiện tại"
 
 #: src/i18n/labels.ts
 msgid "Current path"
@@ -3364,10 +3365,6 @@ msgstr "Đang tìm trình giả lập"
 msgid "Mac mini · Office"
 msgstr "Mac mini · Văn phòng"
 
-#: src/components/session-map.tsx
-msgid "Machines"
-msgstr "Máy"
-
 #: src/components/launch-intro.tsx
 msgid "Make it yours"
 msgstr "Biến nó thành của bạn"
@@ -3380,13 +3377,13 @@ msgstr "Hãy đảm bảo máy tính có thể kết nối, rồi thử lại"
 msgid "Manage"
 msgstr "Quản lý"
 
+#: src/components/session-map.tsx
+msgid "Manage computers"
+msgstr "Quản lý máy tính"
+
 #: src/components/home-connections.tsx
 msgid "Manage connections"
 msgstr "Quản lý kết nối"
-
-#: src/components/session-map.tsx
-msgid "Manage machines"
-msgstr "Quản lý máy"
 
 #: src/components/home-overview.tsx
 msgid "Manage SSH hosts"
