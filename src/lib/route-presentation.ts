@@ -509,7 +509,8 @@ export function sheetRouteOptions(
    * Whether the window is a Pad (`responsiveWorkspaceLayout(width).mode`). A
    * work surface is full-screen there; see `sheetRouteKinds`.
    */
-  isPad = false
+  isPad = false,
+  platform: string | undefined = process.env.EXPO_OS
 ): NativeStackNavigationOptions {
   if (isFullscreenSheetRoute(route, isPad))
     return {
@@ -521,9 +522,32 @@ export function sheetRouteOptions(
     sheetRouteDetents[route] ?? 'full',
     sheetRouteContent[route] ?? 'short'
   );
+  // Screens 4.28 has no native sheet-width prop. Its contentStyle does reach
+  // ScreenContentWrapper, including fitToContents: auto side margins center
+  // that wrapper even with the library's absolute start/end constraints.
+  // UIKit already presents a centered card; Android needs the content cap.
+  const centeredSettings = platform === 'android' && isPad && route.startsWith('settings-');
+  const cornerRadius = profile?.chrome.sheet ?? appChrome.radius.sheet;
   return {
     ...options,
     ...(profile ? { sheetCornerRadius: profile.chrome.sheet } : {}),
+    ...(centeredSettings
+      ? {
+          // The transparent native host still spans the window. Its full-width
+          // elevation would outline invisible side gutters rather than the card.
+          sheetElevation: 0,
+          contentStyle: {
+            backgroundColor: 'transparent',
+            width: '100%',
+            maxWidth: 640,
+            alignSelf: 'center',
+            marginHorizontal: 'auto',
+            borderTopLeftRadius: cornerRadius,
+            borderTopRightRadius: cornerRadius,
+            overflow: 'hidden',
+          },
+        }
+      : {}),
     // Duration alone does not disable native Android transitions.
     ...(reduceMotion ? { animation: 'none', animationDuration: 0 } : {}),
   };

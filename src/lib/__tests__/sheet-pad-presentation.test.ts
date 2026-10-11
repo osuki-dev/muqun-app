@@ -71,15 +71,52 @@ test('on a Pad a work surface is a fullScreenModal with no grabber and no detent
   }
 });
 
-test('on a Pad a picker is still the form sheet it was', () => {
+test('on a Pad non-settings pickers keep their existing form-sheet options', () => {
   for (const [route, kind] of Object.entries(sheetRouteKinds)) {
-    if (kind !== 'picker') continue;
+    if (kind !== 'picker' || route.startsWith('settings-')) continue;
     expect({ route, options: sheetRouteOptions(route, undefined, false, true) }).toEqual({
       route,
       options: sheetRouteOptions(route),
     });
     expect(sheetRouteOptions(route, undefined, false, true).presentation).toBe('formSheet');
   }
+});
+
+test('Android Pad settings constrain the whole sheet content without changing native detents', () => {
+  const routes = Object.keys(sheetRouteKinds).filter(
+    (route) => route.startsWith('settings-') && sheetRouteKinds[route] === 'picker'
+  );
+  for (const route of routes) {
+    const phone = sheetRouteOptions(route, undefined, false, false, 'android');
+    const pad = sheetRouteOptions(route, undefined, false, true, 'android');
+    expect(pad.presentation).toBe('formSheet');
+    expect(pad.sheetAllowedDetents).toEqual(phone.sheetAllowedDetents);
+    expect(pad.sheetGrabberVisible).toBe(true);
+    expect(pad.contentStyle).toMatchObject({
+      width: '100%',
+      maxWidth: 640,
+      alignSelf: 'center',
+      marginHorizontal: 'auto',
+      backgroundColor: 'transparent',
+      overflow: 'hidden',
+    });
+    expect(pad.sheetElevation).toBe(0);
+    expect(phone.contentStyle).toEqual({ backgroundColor: 'transparent' });
+    expect(sheetRouteOptions(route, undefined, false, true, 'ios')).toEqual(phone);
+    expect(sheetRouteOptions(route, undefined, true, true, 'android').animation).toBe('none');
+  }
+});
+
+test('the Android width cap does not narrow full-screen catalogues or other pickers', () => {
+  expect(
+    sheetRouteOptions('settings-theme-browse', undefined, false, true, 'android').presentation
+  ).toBe('fullScreenModal');
+  expect(
+    sheetRouteOptions('settings-theme-browse', undefined, false, true, 'android').contentStyle
+  ).toBeUndefined();
+  expect(sheetRouteOptions('agent-model', undefined, false, true, 'android').contentStyle).toEqual({
+    backgroundColor: 'transparent',
+  });
 });
 
 test('the two full-screen routes are full-screen everywhere and draw no sheet close', () => {
