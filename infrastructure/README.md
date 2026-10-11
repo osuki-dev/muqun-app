@@ -27,7 +27,11 @@ failure, fifteen minutes after a successful no-update check. Concurrent requests
 are coalesced. A staged bundle stops further checks for this process.
 
 The existing update banner interpolates measured download progress with the app's
-reduced-motion-aware timing. A download reaching 100% is not sufficient: the
+reduced-motion-aware timing. Transfer sizes come from the native progress event's
+current file counters, whether an archive or individual/diff artifacts are being
+downloaded. Unknown totals stay omitted, and byte counts are never inferred from
+the SDK's overall percentage, which also includes verification stages.
+A download reaching 100% is not sufficient: the
 download helper must confirm successful native verification and staging before
 the app restarts automatically. The banner shows the actual release notes as
 Markdown and changes to restarting while invoking the SDK's default reload:
