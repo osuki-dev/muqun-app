@@ -3,6 +3,12 @@
 # section seek
 scroll down --pixels 160 --duration-ms 300
 
+# section seek-group
+# A first Settings snapshot may precede its rows. Let the entrance settle,
+# then recheck before a short swipe can activate an already-visible row.
+wait stable 400 5000
+scroll down --pixels 160 --duration-ms 300 --unless-visible id=settings-${SETTINGS_GROUP}-row
+
 # section press
 press "${TARGET}"
 

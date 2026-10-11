@@ -25,8 +25,8 @@ back --system
 wait "id=\"video-playback-toggle\" label=\"Play\"" 10000
 is visible "id=\"inline-video-output\""
 screenshot "shots/inline-video-fullscreen-returned.png"
-# The six-second clip can reach its end during native evidence capture.
-# Seek within the paused video before testing resume so Pause stays observable.
+# Seek within the paused video before testing resume, independently of the
+# playback position reached while native evidence was captured.
 press "id=\"audio-playback-position\""
 press "id=\"video-playback-toggle\" label=\"Play\""
 wait "id=\"video-playback-toggle\" label=\"Pause\"" 10000
