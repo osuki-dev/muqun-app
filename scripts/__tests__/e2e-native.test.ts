@@ -1226,6 +1226,49 @@ describe('native end-to-end gate', () => {
       ])
     ).rejects.toThrow('Missing program');
   });
+  test('settings group seeking rechecks arriving rows before swiping but still finds offscreen rows', async () => {
+    const base = path.resolve(fileURLToPath(new URL('../../e2e/agent-device/', import.meta.url)));
+    const settingsSuite = JSON.parse(
+      await readFile(path.join(base, 'suite.json'), 'utf8')
+    ) as Suite;
+    const seek = settingsSuite.programs['subflows/open-settings-sheet'][0];
+    for (const initiallyOffscreen of [false, true]) {
+      let settled = false;
+      let scrolled = false;
+      const calls: string[][] = [];
+      const runner = new NativeRunner(
+        settingsSuite,
+        base,
+        '/unused',
+        async (args) => {
+          calls.push(args);
+          if (args[0] === 'wait') settled = true;
+          if (args[0] === 'scroll') scrolled = true;
+          if (args[0] === 'snapshot') {
+            const arrived = settled && (!initiallyOffscreen || scrolled);
+            return {
+              nodes: [
+                {
+                  ...node,
+                  type: 'Button',
+                  identifier: arrived ? 'settings-terminal-row' : 'settings-header',
+                },
+              ],
+              androidSnapshot: {},
+            };
+          }
+          if (args[0] === 'alert') return { kind: 'alertStatus', alert: null };
+          return { pass: true };
+        },
+        {}
+      );
+      await runner.run([seek], { SETTINGS_GROUP: 'terminal' });
+      expect(settled).toBe(true);
+      expect(scrolled).toBe(initiallyOffscreen);
+      expect(calls.filter((args) => args[0] === 'press')).toHaveLength(0);
+      expect(calls.filter((args) => args[0] === 'scroll')).toHaveLength(initiallyOffscreen ? 1 : 0);
+    }
+  });
   test('reports failures with escaped evidence', () => {
     const report = junit([{ name: 'a&b', seconds: 1, error: '<failed>' }]);
     expect(report).toContain('failures="1"');

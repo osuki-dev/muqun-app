@@ -9157,7 +9157,7 @@
         },
         "mode": "scroll",
         "timeout": 15000,
-        "run": "flows/settings-sheets.ad#seek",
+        "run": "flows/settings-sheets.ad#seek-group",
         "direction": "down"
       },
       {
