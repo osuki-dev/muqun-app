@@ -185,5 +185,6 @@
   "trustedDependencies": [
     "react-native-skia",
     "react-native-enriched-markdown"
-  ]
+  ],
+  "packageManager": "bun@1.4.2"
 }
