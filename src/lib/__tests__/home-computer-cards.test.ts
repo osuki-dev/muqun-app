@@ -215,6 +215,55 @@ describe('roll-up, result and title', () => {
 });
 
 describe('buildComputerCards', () => {
+  test.each(['queued', 'working', 'waiting', 'done', 'failed', 'cancelled'] as const)(
+    'remote exec %s stays in its originating conversation, not the receiving card',
+    (state) => {
+      const parent = task('parent', 'working', NOW, {
+        origin: 'device',
+        binding: { kind: 'agent_session', agentId: 'opencode', asid: 'origin-session' },
+      });
+      const mirror = task('mirror', state, NOW, {
+        kind: 'command',
+        origin: 'agent',
+        parentTaskId: parent.taskId,
+        binding: { kind: 'peer', peerId: 'mini', remoteTaskId: 'command' },
+      });
+      const remote = task('command', state, NOW, {
+        kind: 'command',
+        origin: 'peer',
+        binding: { kind: 'pane', paneId: 'scratch', sessionId: 'default' },
+      });
+      const ledger = index({ source: [parent, mirror], mini: [remote] });
+      const cards = buildComputerCards({
+        servers: [{ serverId: 'source' }, { serverId: 'mini' }],
+        index: ledger,
+        reachability: () => 'live',
+        dismissed: new Set(),
+        nowMs: NOW,
+      });
+      expect(cards.map((card) => card.serverId)).toEqual(['source']);
+      expect(cards[0]!.now[0]!.task).toEqual(parent);
+      expect(buildTaskTree(ledger.source!.tasks)[0]!.children).toEqual([mirror]);
+      expect(ledger.mini!.tasks).toEqual([remote]);
+    }
+  );
+
+  test('ordinary commands and actual remote agents still have their own card', () => {
+    const tasks = [
+      task('device-command', 'done', NOW, { kind: 'command', origin: 'device' }),
+      task('legacy-command', 'done', NOW, { kind: 'command' }),
+      task('remote-agent', 'done', NOW, { kind: 'delegation', origin: 'peer' }),
+    ];
+    const [card] = buildComputerCards({
+      servers: [{ serverId: 'mini' }],
+      index: index({ mini: tasks }),
+      reachability: () => 'live',
+      dismissed: new Set(),
+      nowMs: NOW,
+    });
+    expect(card!.finished).toHaveLength(3);
+  });
+
   const servers = [
     { serverId: 'idle' },
     { serverId: 'busy' },

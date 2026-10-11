@@ -23,7 +23,6 @@ test('native packaging receives public OTA settings without provider or signing 
   expect(env).toEqual({
     PATH: '/usr/bin',
     EXPO_TOKEN: 'expo-session-only',
-    NODE_USE_ENV_PROXY: '1',
     NODE_ENV: 'production',
     HOT_UPDATER_NATIVE_BUILD: '1',
     HOT_UPDATER_CHANNEL: 'preview',
@@ -40,4 +39,11 @@ test('an explicit public client credential takes precedence over local configura
       'production'
     ).EXPO_PUBLIC_HOT_UPDATER_API_KEY
   ).toBe('explicit-client');
+});
+
+test('native packaging preserves caller network settings without imposing defaults', () => {
+  expect(storeReleaseEnvironment({}, {}, 'preview').NODE_USE_ENV_PROXY).toBeUndefined();
+  expect(
+    storeReleaseEnvironment({ NODE_USE_ENV_PROXY: '0' }, {}, 'preview').NODE_USE_ENV_PROXY
+  ).toBe('0');
 });

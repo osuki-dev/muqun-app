@@ -12,9 +12,9 @@
  *     copied into `ios/vendor/`.
  *
  * Only after *both* land does it write `ios/vendor/.stamp`. If the second
- * download fails -- a proxy the tool cannot see, an interrupted transfer, a
- * full disk, a flaky CDN -- the first one has already been unzipped, and the
- * tree is left with the framework and none of the sources.
+ * download fails -- an interrupted transfer, a full disk, or a CDN failure --
+ * the first one has already been unzipped, and the tree is left with the
+ * framework and none of the sources.
  *
  * That half-vendored tree is the trap. The podspec decides whether to compile
  * math by testing one thing:
@@ -159,11 +159,7 @@ function report(missing: string[], setting: MathSetting, manifest: RatexManifest
     '',
     '  Fix it by re-running the vendor step:',
     '',
-    '    NODE_USE_ENV_PROXY=1 node node_modules/react-native-enriched-markdown/postinstall.mjs',
-    '',
-    '  NODE_USE_ENV_PROXY=1 is not optional behind a proxy: that script downloads',
-    "  with Node's fetch, which ignores http_proxy/https_proxy unless it is set.",
-    '  See AGENTS.md, "Installing behind a proxy".',
+    '    node node_modules/react-native-enriched-markdown/postinstall.mjs',
     '',
     '  If you do not need LaTeX math on iOS, turn it off instead and the',
     '  download stops being required:',

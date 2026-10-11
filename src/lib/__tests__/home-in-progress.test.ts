@@ -20,6 +20,19 @@ function index(byServer: Record<string, TaskView[]>): ServerTasksIndex {
 }
 
 describe('homeWaitingTasks', () => {
+  test('a remote command does not duplicate or suppress its originating waiting row', () => {
+    const remote = { ...task('remote', 'waiting', 1), origin: 'peer' as const };
+    const mirror = task('mirror', 'waiting', 2, {
+      kind: 'peer',
+      peerId: 'mini',
+      remoteTaskId: remote.taskId,
+    });
+    const tasks = index({ source: [mirror], mini: [remote] });
+    expect(homeWaitingTasks(tasks, ['source', 'mini'])).toEqual([
+      { serverId: 'source', task: mirror },
+    ]);
+  });
+
   test('waiting tasks only, newest first', () => {
     const tasks = index({
       a: [task('w1', 'waiting', 1), task('run', 'working', 9), task('w2', 'waiting', 4)],

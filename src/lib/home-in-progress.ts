@@ -7,7 +7,7 @@
  */
 
 import type { ServerTasksIndex } from './server-tasks-state';
-import { isTerminalTaskState, type TaskView } from './task-ledger';
+import { isRemoteCommandTask, isTerminalTaskState, type TaskView } from './task-ledger';
 
 export type HomeTaskRow = { serverId: string; task: TaskView };
 
@@ -46,7 +46,11 @@ export function homeWaitingTasks(
   const listed = new Set(pending.map((target) => `${target.serverId}\n${target.asid}`));
   const fresh = new Set(serverIds);
   const rows: HomeTaskRow[] = [];
-  for (const row of rowsWhere(index, serverIds, (task) => task.state === 'waiting')) {
+  for (const row of rowsWhere(
+    index,
+    serverIds,
+    (task) => task.state === 'waiting' && !isRemoteCommandTask(task)
+  )) {
     const { binding } = row.task;
     if (binding.kind === 'agent_session' && listed.has(`${row.serverId}\n${binding.asid}`)) {
       continue;
@@ -62,7 +66,10 @@ export function homeWaitingTasks(
       const held =
         fresh.has(there) &&
         index[there]?.tasks.some(
-          (task) => task.taskId === binding.remoteTaskId && task.state === 'waiting'
+          (task) =>
+            task.taskId === binding.remoteTaskId &&
+            task.state === 'waiting' &&
+            !isRemoteCommandTask(task)
         ) === true;
       if (held) continue;
     }
