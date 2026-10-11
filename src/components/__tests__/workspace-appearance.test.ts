@@ -79,6 +79,41 @@ describe('workspace chrome follows the appearance profile', () => {
     expect(source).toContain('onPress={onPress}');
   });
 
+  test('Home options retain their own surface inside the animated clipping viewport', () => {
+    const options = read('home-composer-options');
+    expect(options).toContain('backgroundColor: background(theme.colors.surface)');
+    expect(options).toContain('borderRadius: profile.chrome.popover');
+    expect(options).toContain("viewport: { overflow: 'hidden' }");
+    expect(options).toContain("pointerEvents={open ? 'auto' : 'none'}");
+    expect(options).toContain('accessibilityElementsHidden={!open}');
+    expect(options).toContain("open ? contentHeight : 0, timing('dropdown')");
+    expect(options).toContain('if (finished && !open) scheduleOnRN(onVisibilityChange, false)');
+    // An exiting child can outlive the collapsed Yoga viewport and paint under
+    // the input. Keep this mounted content inside the animated clipping parent.
+    expect(options).not.toContain('exiting=');
+    expect(options).not.toContain('{open &&');
+  });
+
+  test('Home notices own their surfaces without restoring a plate around the field', () => {
+    const composer = read('agent-composer');
+    const home = read('home-composer-dock');
+    expect(styleBlock(composer, 'flushSurface')).toContain("overflow: 'visible'");
+    expect(styleBlock(composer, 'flushSurface')).not.toContain('background');
+    expect(styleBlock(composer, 'flushSurface')).not.toContain('border');
+    for (const name of ['stripWrapper', 'uploadWait']) {
+      expect(
+        new RegExp(
+          `styles.${name},\\s*flushField && \\{\\s*backgroundColor: surfaceBackground\\(theme.colors.surface\\),\\s*borderRadius: profile.chrome.noticeBanner`
+        ).test(composer)
+      ).toBe(true);
+    }
+    expect(home).toContain('backgroundColor: background(theme.colors.surface)');
+    expect(home).toContain('hideFieldDecoration={optionsOpen || optionsVisible || Boolean(error)}');
+    expect(composer).toContain(
+      'hideFieldDecoration ||\n    attachmentUploads.attachments.length > 0'
+    );
+  });
+
   test('existing transcript and update surfaces retain their shared geometry owners', () => {
     const message = read('agent-message-block');
     expect(message).toContain('style={[styles.toolGroupHeader, plate]}');

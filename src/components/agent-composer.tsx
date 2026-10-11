@@ -1240,6 +1240,7 @@ export const AgentComposer = memo(function AgentComposer({
   const [voiceActive, setVoiceActive] = useState(false);
   const decorationHidden =
     hideFieldDecoration ||
+    attachmentUploads.attachments.length > 0 ||
     attachmentMenuOpen ||
     modeMenuOpen ||
     inboxOpen ||
@@ -1972,8 +1973,14 @@ export const AgentComposer = memo(function AgentComposer({
             {attachmentUploads.attachments.length > 0 ? (
               <Animated.View
                 entering={fadeIn('micro')}
-                exiting={fadeOutDown('short')}
-                style={styles.stripWrapper}>
+                exiting={flushField ? fadeOut('short') : fadeOutDown('short')}
+                style={[
+                  styles.stripWrapper,
+                  flushField && {
+                    backgroundColor: surfaceBackground(theme.colors.surface),
+                    borderRadius: profile.chrome.noticeBanner,
+                  },
+                ]}>
                 <AttachmentStrip
                   attachments={attachmentUploads.attachments}
                   onRemove={attachmentUploads.removeAttachment}
@@ -1989,7 +1996,13 @@ export const AgentComposer = memo(function AgentComposer({
               <Animated.View
                 entering={fadeIn('micro')}
                 exiting={fadeOut('micro')}
-                style={styles.uploadWait}>
+                style={[
+                  styles.uploadWait,
+                  flushField && {
+                    backgroundColor: surfaceBackground(theme.colors.surface),
+                    borderRadius: profile.chrome.noticeBanner,
+                  },
+                ]}>
                 <Spinner size="sm" color={theme.colors.textMuted} />
                 <Text variant="caption" color={theme.colors.textMuted}>
                   <Trans>Waiting for uploads to finish…</Trans>
