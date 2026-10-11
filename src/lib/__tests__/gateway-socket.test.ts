@@ -99,7 +99,7 @@ interface Harness {
 function harness(
   options: {
     sealed?: boolean;
-    prepare?: () => GatewaySocketUpgrade | null;
+    prepare?: () => GatewaySocketUpgrade | null | Promise<GatewaySocketUpgrade | null>;
     checkAuthorization?: () => Promise<SocketAuthorization>;
   } = {}
 ) {
@@ -767,4 +767,32 @@ describe('unauthorized', () => {
     await Promise.resolve();
     expect(h.socket.state).toBe('open');
   });
+});
+
+test('a negotiated socket upgrade does not open after the app backgrounds', async () => {
+  let resolve!: (value: GatewaySocketUpgrade) => void;
+  const ready = new Promise<GatewaySocketUpgrade>((yes) => {
+    resolve = yes;
+  });
+  const h = harness({ prepare: () => ready });
+  h.socket.watch('ses_1', recorder().listener);
+  expect(h.transports).toHaveLength(0);
+  h.appState.set(false);
+  resolve({ url: 'ws://gateway.test/api/ws', headers: {}, seal: null });
+  await ready;
+  await Promise.resolve();
+  expect(h.transports).toHaveLength(0);
+  expect(h.socket.state).toBe('paused');
+});
+
+test('an asynchronous negotiated upgrade opens once ready', async () => {
+  const h = harness({
+    prepare: async () => ({ url: 'ws://gateway.test/api/ws', headers: {}, seal: null }),
+  });
+  h.socket.watch('ses_1', recorder().listener);
+  expect(h.transports).toHaveLength(0);
+  await Promise.resolve();
+  expect(h.transports).toHaveLength(1);
+  h.latest().deliver(hello());
+  expect(h.socket.state).toBe('open');
 });

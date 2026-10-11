@@ -94,7 +94,7 @@ export interface GatewaySocketListener {
 }
 
 export interface GatewaySocketOptions {
-  prepare: () => GatewaySocketUpgrade | null;
+  prepare: () => GatewaySocketUpgrade | null | Promise<GatewaySocketUpgrade | null>;
   open: (url: string, headers: Record<string, string>) => GatewaySocketTransport;
   crypto: SocketFrameCrypto;
   appState?: GatewaySocketAppState;
@@ -214,6 +214,7 @@ export class GatewaySocket {
   /** Reference counts; `*` is `subscribe_all`, `#tasks` the task listeners. */
   private readonly wanted = new Map<string, number>();
   private connection: Connection | null = null;
+  private preparation = 0;
   private currentState: GatewaySocketState = 'idle';
   private attempts = 0;
   private failures = 0;
@@ -483,10 +484,30 @@ export class GatewaySocket {
       this.setState('paused');
       return;
     }
-    let upgrade: GatewaySocketUpgrade | null;
+    const preparation = this.preparation;
+    try {
+      const upgrade = this.options.prepare();
+      if (upgrade instanceof Promise) {
+        this.setState('connecting');
+        void upgrade.then(
+          (ready) => {
+            if (this.preparation === preparation) this.openPrepared(ready);
+          },
+          () => {
+            if (this.preparation === preparation) this.unavailable();
+          }
+        );
+      } else {
+        this.openPrepared(upgrade);
+      }
+    } catch {
+      this.unavailable();
+    }
+  }
+
+  private openPrepared(upgrade: GatewaySocketUpgrade | null): void {
     let transport: GatewaySocketTransport;
     try {
-      upgrade = this.options.prepare();
       if (!upgrade) throw new Error('No gateway to open a socket against.');
       transport = this.options.open(upgrade.url, upgrade.headers);
     } catch {
@@ -729,6 +750,7 @@ export class GatewaySocket {
 
   /** Close the current connection, if any, without anything reacting to it. */
   private drop(): void {
+    this.preparation++;
     this.clearTimers();
     const connection = this.connection;
     this.connection = null;

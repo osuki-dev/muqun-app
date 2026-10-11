@@ -79,7 +79,7 @@ export const socketFrameCrypto: SocketFrameCrypto = {
  * envelope nonce and binds the frame keys to it. Null when the shared client
  * is pointed at another server, at the demo, or at nothing.
  */
-function prepareUpgrade(serverId: string): GatewaySocketUpgrade | null {
+async function prepareUpgrade(serverId: string): Promise<GatewaySocketUpgrade | null> {
   if (isDemoActive()) return null;
   if (!isGatewayConfigured() || configuredGatewayServerId() !== serverId) {
     return prepareStoredUpgrade(serverId);
@@ -92,7 +92,7 @@ function prepareUpgrade(serverId: string): GatewaySocketUpgrade | null {
   if (!/^wss?:\/\//i.test(url)) return null;
   // The AAD is path-only, so sealing against the http spelling is the same
   // request the gateway sees.
-  const sealed = encryptedEventStreamRequest(httpUrl);
+  const sealed = await encryptedEventStreamRequest(httpUrl);
   if (!sealed) return { url, headers: gatewayAuthHeaders(), seal: null };
   return {
     url,
@@ -113,7 +113,7 @@ function prepareUpgrade(serverId: string): GatewaySocketUpgrade | null {
  * the gateway's on the SSH host, and from here that is the phone's own
  * loopback -- nor for the demo.
  */
-function prepareStoredUpgrade(serverId: string): GatewaySocketUpgrade | null {
+async function prepareStoredUpgrade(serverId: string): Promise<GatewaySocketUpgrade | null> {
   const record = directRecord(serverId);
   if (!record) return null;
   const path = gatewaySocketPath(mirroredDiscoveryFor(serverId)?.transports);
@@ -128,7 +128,7 @@ function prepareStoredUpgrade(serverId: string): GatewaySocketUpgrade | null {
     ...(record.transportKey ? { transportKey: record.transportKey } : {}),
     ...(record.transport ? { transport: record.transport } : {}),
   };
-  const sealed = encryptedEventStreamRequest(httpUrl, endpoint);
+  const sealed = await encryptedEventStreamRequest(httpUrl, endpoint);
   if (!sealed) {
     return {
       url,

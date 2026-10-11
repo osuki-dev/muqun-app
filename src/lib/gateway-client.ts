@@ -1,3 +1,5 @@
+import * as TransportSecureStore from 'expo-secure-store';
+import { TransportNegotiation, type TransportVersion } from './transport-negotiation';
 import { AudioPlaybackError } from '@/lib/audio-playback-session';
 import { File, Paths } from 'expo-file-system';
 import { fetch as nitroFetch, Response as NitroResponse } from 'react-native-nitro-fetch';
@@ -55,7 +57,11 @@ import {
   normalizeGatewayEntity,
   type GatewayEntity,
 } from './gateway-entities';
-import { GatewayTransportRefusalError, retryReplayedRead } from './gateway-refusal';
+import {
+  GatewayTransportRefusalError,
+  retryReplayedRead,
+  classifyTransportRefusal,
+} from './gateway-refusal';
 import {
   decodeSealedBody,
   ENVELOPE_ACCEPT_ENCODINGS,
@@ -391,13 +397,59 @@ async function encryptedGatewayFetch(
   );
 }
 
+const transportNegotiation = new TransportNegotiation();
+
+function transportPinIdentity(deviceId: string, transportKey: string): string {
+  return `muqun.transport-min.${QuickCrypto.createHash('sha256')
+    .update(JSON.stringify([deviceId, transportKey]))
+    .digest('hex')}`;
+}
+
+async function negotiatedTransportVersion(
+  endpoint: GatewayEndpoint,
+  timeoutMs = REQUEST_TIMEOUT_MS,
+  isCurrent: () => boolean = () => true
+): Promise<TransportVersion> {
+  if (!endpoint.deviceId || !endpoint.transportKey)
+    throw new Error('Missing Gateway encryption credentials.');
+  const identity = transportPinIdentity(endpoint.deviceId, endpoint.transportKey);
+  const started = Date.now();
+  return transportNegotiation.version(identity, {
+    requiresV2: (error) =>
+      error instanceof GatewayTransportRefusalError &&
+      error.status === 426 &&
+      classifyTransportRefusal(error.status, error.body).code === 'transport_version_required',
+    readPin: (key) => TransportSecureStore.getItemAsync(key),
+    writePin: (key) =>
+      TransportSecureStore.setItemAsync(key, '2', {
+        keychainAccessible: TransportSecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+      }),
+    probe: async (version) => {
+      assertDeliveryCurrent(isCurrent);
+      const response = await sendEncryptedGatewayRequest(
+        `${endpoint.url.replace(/\/$/, '')}/health`,
+        { method: 'GET' },
+        Math.max(1, timeoutMs - (Date.now() - started)),
+        endpoint,
+        isCurrent,
+        version
+      );
+      if (!response.ok)
+        throw new Error(`Gateway transport negotiation failed: HTTP ${response.status}`);
+      return response.json();
+    },
+  });
+}
+
 async function sendEncryptedGatewayRequest(
   input: RequestInfo | URL,
   init: RequestInit = {},
   timeoutMs = REQUEST_TIMEOUT_MS,
   endpoint?: GatewayEndpoint,
-  isCurrent: () => boolean = () => true
+  isCurrent: () => boolean = () => true,
+  negotiatedVersion?: TransportVersion
 ): Promise<Response> {
+  const requestStarted = Date.now();
   const token = endpoint ? endpoint.token : currentToken;
   const deviceId = endpoint ? endpoint.deviceId : currentDeviceId;
   const transportKey = endpoint ? endpoint.transportKey : currentTransportKey;
@@ -419,7 +471,15 @@ async function sendEncryptedGatewayRequest(
     body: base64Url(serialized.bytes),
   };
   const material = transportKeyMaterial(transportKey);
-  const envelope = encryptJson(material, 'request', aad, plaintext);
+  const version =
+    negotiatedVersion ??
+    (await negotiatedTransportVersion(
+      endpoint ?? { url: currentBaseUrl, token, deviceId, transportKey },
+      timeoutMs,
+      isCurrent
+    ));
+  assertDeliveryCurrent(isCurrent);
+  const envelope = encryptJson(material, 'request', aad, plaintext, version);
   const envelopeJson = JSON.stringify(envelope);
   const bodylessMethod = method === 'GET' || method === 'HEAD';
   const outerHeaders = { ...headers };
@@ -428,28 +488,33 @@ async function sendEncryptedGatewayRequest(
       delete outerHeaders[name];
     }
   }
-  const response = await fetchWithin(timeoutMs, 'Timed out waiting for the server.', input, {
-    ...init,
-    method,
-    headers: {
-      ...outerHeaders,
-      'Content-Type': 'application/json',
-      'X-Muqun-Transport': '1',
-      'X-Muqun-Device': deviceId,
-      // Compression cannot happen outside the envelope -- the body on the wire
-      // is ciphertext, and ciphertext does not compress -- so it is offered
-      // for the inside of it. A gateway that has never heard of this header
-      // answers exactly as it always did. Deliberately not `Accept-Encoding`:
-      // Cronet and NSURLSession own that one and decompress transparently, and
-      // setting it by hand is how an app ends up holding a body the platform
-      // has stopped decoding for it.
-      [ENVELOPE_ACCEPT_HEADER]: ENVELOPE_ACCEPT_ENCODINGS,
-      ...(bodylessMethod
-        ? { 'X-Muqun-Envelope': base64Url(QuickCrypto.Buffer.from(envelopeJson, 'utf8')) }
-        : {}),
-    },
-    body: bodylessMethod ? undefined : envelopeJson,
-  });
+  const response = await fetchWithin(
+    Math.max(1, timeoutMs - (Date.now() - requestStarted)),
+    'Timed out waiting for the server.',
+    input,
+    {
+      ...init,
+      method,
+      headers: {
+        ...outerHeaders,
+        'Content-Type': 'application/json',
+        'X-Muqun-Transport': '1',
+        'X-Muqun-Device': deviceId,
+        // Compression cannot happen outside the envelope -- the body on the wire
+        // is ciphertext, and ciphertext does not compress -- so it is offered
+        // for the inside of it. A gateway that has never heard of this header
+        // answers exactly as it always did. Deliberately not `Accept-Encoding`:
+        // Cronet and NSURLSession own that one and decompress transparently, and
+        // setting it by hand is how an app ends up holding a body the platform
+        // has stopped decoding for it.
+        [ENVELOPE_ACCEPT_HEADER]: ENVELOPE_ACCEPT_ENCODINGS,
+        ...(bodylessMethod
+          ? { 'X-Muqun-Envelope': base64Url(QuickCrypto.Buffer.from(envelopeJson, 'utf8')) }
+          : {}),
+      },
+      body: bodylessMethod ? undefined : envelopeJson,
+    }
+  );
   if (response.headers.get('x-muqun-transport') !== '1') {
     // Not a mystery, and not a transport fault. The gateway's middleware seals
     // a response only once the request has authenticated, so every refusal on
@@ -466,7 +531,8 @@ async function sendEncryptedGatewayRequest(
     material,
     'response',
     `${aad}\n${envelope.nonce}`,
-    sealed
+    sealed,
+    version
   );
   if (
     !Number.isInteger(payload.status) ||
@@ -577,6 +643,7 @@ export interface HealthResponse {
   apiMajor?: number;
   minimumCompatibleApiVersion?: string;
   legacyUnversionedApi?: boolean;
+  transport_versions?: number[];
   capabilities?: string[];
   serverId: string;
   label: string;
@@ -2321,11 +2388,11 @@ export interface EncryptedStreamRequest {
  * stream that never ends cannot ride the one-envelope response path. Answers
  * null when the connected gateway does not use the encrypted transport.
  */
-export function encryptedEventStreamRequest(
+export async function encryptedEventStreamRequest(
   url: string,
   /** Another paired computer's stored credentials; the selected one's when omitted. */
   endpoint?: GatewayEndpoint
-): EncryptedStreamRequest | null {
+): Promise<EncryptedStreamRequest | null> {
   const token = endpoint ? endpoint.token : currentToken;
   const deviceId = endpoint ? endpoint.deviceId : currentDeviceId;
   const transportKey = endpoint ? endpoint.transportKey : currentTransportKey;
@@ -2333,13 +2400,16 @@ export function encryptedEventStreamRequest(
   if (!token || !deviceId || !transportKey || transport !== GATEWAY_TRANSPORT) {
     return null;
   }
+  const version = await negotiatedTransportVersion(
+    endpoint ?? { url: currentBaseUrl, token, deviceId, transportKey }
+  );
   const aad = requestAad(url, 'GET');
   const material = transportKeyMaterial(transportKey);
   const plaintext: EncryptedRequestPayload = {
     token,
     body: base64Url(QuickCrypto.Buffer.alloc(0)),
   };
-  const envelope = encryptJson(material, 'request', aad, plaintext);
+  const envelope = encryptJson(material, 'request', aad, plaintext, version);
   return {
     headers: {
       'X-Muqun-Transport': '1',

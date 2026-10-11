@@ -215,17 +215,20 @@ export function usePaneEvents(
       // Sealed fresh for every attempt: the gateway replay-caches the request
       // envelope's nonce, and the per-stream key is bound to it, so a
       // reconnect can never be answered by a recording of the last stream.
-      const sealed = gatewayUsesEncryptedTransport(token) ? encryptedEventStreamRequest(url) : null;
-      const decryptor = sealed
-        ? new EncryptedEventStreamDecryptor({
-            crypto: streamRecordCrypto,
-            material: sealed.material,
-            requestAad: sealed.requestAad,
-            requestNonce: sealed.requestNonce,
-          })
-        : null;
-
       try {
+        const sealed = gatewayUsesEncryptedTransport(token)
+          ? await encryptedEventStreamRequest(url)
+          : null;
+        const decryptor = sealed
+          ? new EncryptedEventStreamDecryptor({
+              crypto: streamRecordCrypto,
+              material: sealed.material,
+              requestAad: sealed.requestAad,
+              requestNonce: sealed.requestNonce,
+            })
+          : null;
+
+        if (attempt.signal.aborted) return;
         const response = await nitroFetch(url, {
           headers: {
             // Read at connect time rather than captured once: the stream is
