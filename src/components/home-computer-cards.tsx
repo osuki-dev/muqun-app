@@ -77,8 +77,10 @@ export type CardTaskTarget = { serverId: string; task: TaskView; tree?: boolean 
 function useCardInputs(nowMs: number) {
   const dismissedList = useHomeTaskCards((state) => state.dismissed);
   const pendingAll = useHomeTaskCards((state) => state.pending);
+  const hiddenList = useHomeTaskCards((state) => state.hidden);
   return {
     dismissed: new Set(dismissedList),
+    hidden: new Set(hiddenList),
     // A Sent row no task ever answered goes, unless it holds a draft or a session.
     pending: pendingAll.filter((item) => pendingShown(item, nowMs)),
   };
@@ -134,6 +136,7 @@ export function hasComputerCardsAt({
       panesByServer: useServerAgents.getState().byServer,
       reachability: (serverId) => reachabilityByServer[serverId],
       dismissed: new Set(cards.dismissed),
+      hidden: new Set(cards.hidden),
       pending: cards.pending.filter((item) => pendingShown(item, nowMs)),
       nowMs,
     }).length > 0
@@ -165,6 +168,8 @@ export function ComputerCardsPresence({
     useShallow((state) => state.pending.filter((item) => pendingShown(item, nowMs)))
   );
   const dismissed = new Set(dismissedList);
+  const hiddenList = useHomeTaskCards((state) => state.hidden);
+  const hidden = new Set(hiddenList);
   const panesByServer = useServerAgents((state) => state.byServer);
   const hasCards = useServerTasksStore(
     (state) =>
@@ -174,6 +179,7 @@ export function ComputerCardsPresence({
         panesByServer,
         reachability: (serverId) => reachabilityByServer[serverId],
         dismissed,
+        hidden,
         pending,
         nowMs,
       }).length > 0
@@ -248,6 +254,7 @@ export function HomeComputerCards({
     reachability: (serverId) => reachability[serverId],
     followed: new Set(followedIds),
     dismissed: inputs.dismissed,
+    hidden: inputs.hidden,
     pending: inputs.pending,
     nowMs,
   });

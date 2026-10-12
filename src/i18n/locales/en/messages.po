@@ -13,6 +13,18 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#: src/components/task-row.tsx
+msgid "Confirm removal"
+msgstr "Confirm removal"
+
+#: src/components/task-row.tsx
+msgid "Remove from Home"
+msgstr "Remove from Home"
+
+#: src/components/task-row.tsx
+msgid "The task and its history remain available."
+msgstr "The task and its history remain available"
+
 #: src/components/pane-chat-blocks.tsx
 msgid "… truncated"
 msgstr "… truncated"

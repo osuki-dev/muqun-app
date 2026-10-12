@@ -13,6 +13,18 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#: src/components/task-row.tsx
+msgid "Confirm removal"
+msgstr "Xác nhận xóa"
+
+#: src/components/task-row.tsx
+msgid "Remove from Home"
+msgstr "Xóa khỏi trang chủ"
+
+#: src/components/task-row.tsx
+msgid "The task and its history remain available."
+msgstr "Tác vụ và lịch sử vẫn được giữ lại"
+
 #: src/components/pane-chat-blocks.tsx
 msgid "… truncated"
 msgstr "… đã cắt bớt"

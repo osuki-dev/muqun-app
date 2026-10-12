@@ -6,6 +6,7 @@ import {
   cardLimits,
   acknowledgementsHeld,
   dismissedKey,
+  hiddenTaskKey,
   groupTaskTree,
   PENDING_CLOCK_SKEW_MS,
   PENDING_DISPATCH_TTL_MS,
@@ -221,6 +222,48 @@ describe('roll-up, result and title', () => {
 });
 
 describe('buildComputerCards', () => {
+  test('removing an assignment from Home retains its history and hides later activity only there', () => {
+    const removed = task('assignment', 'working', NOW, {
+      binding: { kind: 'agent_session', agentId: 'codex', asid: 'retained-session' },
+    });
+    const child = task('child', 'working', NOW, { parentTaskId: removed.taskId });
+    const grandchild = task('grandchild', 'waiting', NOW, { parentTaskId: child.taskId });
+    const next = task('new-assignment', 'working', NOW);
+    const ledger = index({ coding: [removed, child, grandchild, next], other: [removed] });
+    const input = {
+      servers: [{ serverId: 'coding' }, { serverId: 'other' }],
+      index: ledger,
+      reachability: () => undefined,
+      dismissed: new Set<string>(),
+      hidden: new Set([hiddenTaskKey('coding', removed.taskId)]),
+      nowMs: NOW,
+    };
+    expect(
+      buildComputerCards(input).map((card) => [
+        card.serverId,
+        card.now.map((row) => row.task.taskId),
+      ])
+    ).toEqual([
+      ['coding', [next.taskId]],
+      ['other', [removed.taskId]],
+    ]);
+    expect(buildTaskTree(ledger.coding!.tasks)).toHaveLength(2);
+    expect(ledger.coding!.tasks).toEqual([removed, child, grandchild, next]);
+    expect(taskRowDestination(removed)).toEqual({
+      kind: 'session',
+      agentId: 'codex',
+      asid: 'retained-session',
+    });
+    for (const state of ['done', 'failed', 'working'] as const) {
+      expect(
+        buildComputerCards({
+          ...input,
+          index: index({ coding: [{ ...removed, state, reopenCount: 1 }] }),
+        })
+      ).toEqual([]);
+    }
+  });
+
   test('Gateway-confirmed pane closures disappear from Home without losing history', () => {
     const closed = [
       'the pane closed',

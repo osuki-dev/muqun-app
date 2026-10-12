@@ -13,6 +13,18 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
+#: src/components/task-row.tsx
+msgid "Confirm removal"
+msgstr "ยืนยันการนำออก"
+
+#: src/components/task-row.tsx
+msgid "Remove from Home"
+msgstr "นำออกจากหน้าหลัก"
+
+#: src/components/task-row.tsx
+msgid "The task and its history remain available."
+msgstr "งานและประวัติยังคงอยู่"
+
 #: src/components/pane-chat-blocks.tsx
 msgid "… truncated"
 msgstr "… ตัดข้อความบางส่วนแล้ว"

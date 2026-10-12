@@ -7,6 +7,7 @@ import {
   CircleCheck,
   ExternalLink,
   SquareTerminal,
+  Trash2,
   X,
   XCircle,
 } from 'lucide-react-native';
@@ -422,12 +423,14 @@ function useTaskRowModel({
   discovery,
   nowMs,
   onOpen,
+  inComputerCard = false,
 }: {
   task: TaskView;
   serverId: string;
   discovery: MirroredServerDiscovery | undefined;
   nowMs: number;
   onOpen: (task: TaskView) => void;
+  inComputerCard?: boolean;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -440,6 +443,7 @@ function useTaskRowModel({
     cards.dismissed.includes(dismissedKey(serverId, task))
   );
   const acknowledge = useHomeTaskCards((cards) => cards.acknowledge);
+  const hide = useHomeTaskCards((cards) => cards.hide);
   const act = useTaskAction(serverId);
   const peerName = usePeerName();
   const pairedHere = useIsPairedHere();
@@ -535,6 +539,21 @@ function useTaskRowModel({
           };
       }
     });
+  if (inComputerCard) {
+    menuItems.push({
+      id: 'remove-home',
+      label: t`Remove from Home`,
+      Icon: Trash2,
+      tone: 'danger',
+      confirm: {
+        label: t`Confirm removal`,
+        detail: t`The task and its history remain available.`,
+        persist: true,
+      },
+      testID: `task-row-remove-home-${task.taskId}`,
+      onPress: run(() => hide(serverId, task)),
+    });
+  }
   const toggleMenu = () => {
     setMenuError(null);
     setMenuOpen((shown) => !shown);
@@ -597,7 +616,7 @@ export function TaskRow({
   const theme = useThemeTokens();
   const whereName = useTaskWhereName(discovery);
   const rollupText = useRollupText()(task);
-  const row = useTaskRowModel({ task, serverId, discovery, nowMs, onOpen });
+  const row = useTaskRowModel({ task, serverId, discovery, nowMs, onOpen, inComputerCard });
   const { visual, line, mirror, fromText, trailingAge } = row;
   const ownTitle = taskRowTitle(task);
   const title = ownTitle || whereName(task) || line.text;
@@ -705,6 +724,7 @@ export function TaskRow({
           discovery={discovery}
           nowMs={nowMs}
           onOpen={onOpen}
+          inComputerCard={inComputerCard}
         />
       ))}
     </Animated.View>
@@ -724,16 +744,18 @@ function SubTaskRow({
   discovery,
   nowMs,
   onOpen,
+  inComputerCard,
 }: {
   task: TaskView;
   serverId: string;
   discovery: MirroredServerDiscovery | undefined;
   nowMs: number;
   onOpen: (task: TaskView) => void;
+  inComputerCard: boolean;
 }) {
   const theme = useThemeTokens();
   const whereName = useTaskWhereName(discovery);
-  const row = useTaskRowModel({ task, serverId, discovery, nowMs, onOpen });
+  const row = useTaskRowModel({ task, serverId, discovery, nowMs, onOpen, inComputerCard });
   const { visual, line, mirror, mirrorName, trailingAge } = row;
   const title = taskRowTitle(task);
   return (
