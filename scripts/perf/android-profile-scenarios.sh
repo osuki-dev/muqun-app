@@ -111,12 +111,6 @@ theme_switch() {
   quiet ad press 'label="Go back"'
   settle
 }
-workbench() {
-  quiet ad press 'label="Workbench"'
-  settle
-  quiet ad press 'label="Demo workspace, Online"'
-  settle
-}
 typing() {
   quiet ad press 'label="Send a message"'
   quiet ad type "Please summarise the failing tests and suggest a fix" --delay-ms 60
@@ -141,7 +135,6 @@ record switch-panes switch_panes
 record files-sheet files_sheet
 record settings-scroll settings_scroll
 record theme-switch theme_switch
-record workbench workbench
 record typing typing
 
 for trace in "$out"/*.json; do
