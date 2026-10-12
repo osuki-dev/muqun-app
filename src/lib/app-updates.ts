@@ -3,11 +3,16 @@ import Constants from 'expo-constants';
 import { Platform, TurboModuleRegistry } from 'react-native';
 import { create } from 'zustand';
 
-import { createAppUpdateController, type UpdateSnapshot } from './app-update-controller';
+import {
+  createAppUpdateController,
+  runningAppReleaseId,
+  type UpdateClient,
+  type UpdateSnapshot,
+} from './app-update-controller';
 
 export const useAppUpdateStore = create<UpdateSnapshot>(() => ({ phase: 'idle', progress: 0 }));
 
-function createClient(): HotUpdaterInstance | null {
+function createClient(): UpdateClient | null {
   const settings = Constants.expoConfig?.extra?.hotUpdater;
   if (__DEV__ || Platform.OS === 'web' || settings?.enabled !== true) return null;
   if (typeof settings.clientApiKey !== 'string' || !settings.clientApiKey) return null;
@@ -17,7 +22,7 @@ function createClient(): HotUpdaterInstance | null {
     const { HotUpdater } =
       // oxlint-disable-next-line typescript/no-require-imports -- the SDK enforces its native module at import time
       require('@hot-updater/react-native') as typeof import('@hot-updater/react-native');
-    return HotUpdater.init({
+    const instance: HotUpdaterInstance = HotUpdater.init({
       baseURL: 'https://updates.muqun.dev',
       requestHeaders: { 'x-api-key': settings.clientApiKey },
       requestTimeout: 5000,
@@ -25,6 +30,17 @@ function createClient(): HotUpdaterInstance | null {
         /* Checks report failure through the controller; never block launch. */
       },
     });
+    return {
+      checkForUpdate: instance.checkForUpdate,
+      addListener: instance.addListener,
+      reload: instance.reload,
+      getRunningReleaseId: async () =>
+        runningAppReleaseId(
+          await instance.getActiveUpdateState(),
+          instance.getManifest().bundleId,
+          instance.getChannel()
+        ),
+    };
   } catch {
     return null;
   }
@@ -35,3 +51,6 @@ const controller = createAppUpdateController(client, (snapshot) =>
   useAppUpdateStore.setState(snapshot, true)
 );
 export const checkForAppUpdate = controller.check;
+
+export const updateAppNow = controller.updateNow;
+export const deferAppUpdate = controller.defer;
