@@ -815,6 +815,38 @@ describe('taskRowVisual: two rules no other row pins', () => {
     expect(states.filter((state) => visualOf(state).spins)).toEqual(['working']);
   });
 
+  test('remembered work keeps progress and actions without live animation', () => {
+    const input = task('t', 'working', 1, { progress: 'Still checking' });
+    const live = taskRowVisual(input, { canComplete: true, acknowledged: false });
+    const cached = taskRowVisual(input, {
+      canComplete: true,
+      acknowledged: false,
+      statusCurrent: false,
+    });
+    expect(live.spins).toBe(true);
+    expect(cached).toMatchObject({
+      spins: false,
+      line: live.line,
+      clock: live.clock,
+      actions: live.actions,
+      tone: live.tone,
+    });
+  });
+
+  test('remembered waiting state keeps its actions without a fresh arrival pulse', () => {
+    const input = task('t', 'waiting', 1);
+    const live = taskRowVisual(input, { canComplete: false, acknowledged: false });
+    const cached = taskRowVisual(input, {
+      canComplete: false,
+      acknowledged: false,
+      statusCurrent: false,
+    });
+    expect(live.needsYou).toBe(true);
+    expect(cached.needsYou).toBeUndefined();
+    expect(cached.line).toEqual(live.line);
+    expect(cached.actions).toEqual(live.actions);
+  });
+
   test('an idle agent is never shown as done (idle is not done)', () => {
     const idle = visualOf('idle_unconfirmed');
     expect(idle.tone).toBe('textMuted');

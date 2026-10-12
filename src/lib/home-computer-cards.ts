@@ -853,9 +853,13 @@ export type TaskRowVisual = {
  */
 export function taskRowVisual(
   task: TaskView | { state: 'sent' },
-  opts: { canComplete: boolean; acknowledged: boolean }
+  opts: { canComplete: boolean; acknowledged: boolean; statusCurrent?: boolean }
 ): TaskRowVisual {
-  const visual = taskStateVisual(task, opts);
+  const reportedVisual = taskStateVisual(task, opts);
+  const visual =
+    opts.statusCurrent === false
+      ? { ...reportedVisual, spins: false, needsYou: undefined }
+      : reportedVisual;
   if (task.state === 'sent' || task.binding.kind !== 'peer') return visual;
   // A failed mirror says why in the app's words: from its reason, or, for a
   // create the other computer refused (no reason, and no task over there to

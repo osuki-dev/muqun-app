@@ -3480,6 +3480,7 @@ msgid "Message copied to clipboard"
 msgstr "消息已复制到剪贴板"
 
 #: src/components/agent-workbench.tsx
+#: src/components/server-terminal-workspace.tsx
 msgid "Message not sent"
 msgstr "消息未发送"
 
@@ -3656,6 +3657,9 @@ msgstr "需要你处理"
 msgid "Needs your attention"
 msgstr "需要你处理"
 
+#: src/components/home-recent-sessions.tsx
+#: src/components/server-agent-rows.tsx
+#: src/components/task-row.tsx
 #: src/lib/notifications.ts
 msgid "Needs your input"
 msgstr "需要你的输入"
@@ -6127,6 +6131,10 @@ msgstr "代理已经不再等待了"
 msgid "The agent is offline"
 msgstr "Agent 已离线"
 
+#: src/lib/network-error.ts
+msgid "The agent is waiting for an answer. Use the question's controls or the terminal keyboard to respond. Your message has not been sent."
+msgstr "Agent 正在等待回答。请使用问题中的控件或终端键盘回复。你的消息尚未发送"
+
 #: src/components/agent-context-sheet.tsx
 msgid "The agent stops asking; irreversibly destructive commands stay blocked"
 msgstr "代理将不再询问；不可逆的破坏性命令仍会被拦截"
@@ -6895,6 +6903,10 @@ msgstr "使用 {0}"
 #: src/lib/local-authentication.ts
 msgid "Use device passcode"
 msgstr "使用设备密码"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Use Shift+Left on the terminal keyboard to answer the pending question."
+msgstr "请在终端键盘上使用 Shift+左箭头回答待处理的问题"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Use system font"

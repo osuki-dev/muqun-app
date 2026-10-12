@@ -3480,6 +3480,7 @@ msgid "Message copied to clipboard"
 msgstr "Message copié dans le presse-papiers"
 
 #: src/components/agent-workbench.tsx
+#: src/components/server-terminal-workspace.tsx
 msgid "Message not sent"
 msgstr "Message non envoyé"
 
@@ -3656,6 +3657,9 @@ msgstr "Requiert votre action"
 msgid "Needs your attention"
 msgstr "Votre intervention est requise"
 
+#: src/components/home-recent-sessions.tsx
+#: src/components/server-agent-rows.tsx
+#: src/components/task-row.tsx
 #: src/lib/notifications.ts
 msgid "Needs your input"
 msgstr "Attend votre réponse"
@@ -6127,6 +6131,10 @@ msgstr "L’agent n’attend plus"
 msgid "The agent is offline"
 msgstr "L'agent est hors ligne"
 
+#: src/lib/network-error.ts
+msgid "The agent is waiting for an answer. Use the question's controls or the terminal keyboard to respond. Your message has not been sent."
+msgstr "L’agent attend une réponse. Utilisez les commandes de la question ou le clavier du terminal pour répondre. Votre message n’a pas été envoyé"
+
 #: src/components/agent-context-sheet.tsx
 msgid "The agent stops asking; irreversibly destructive commands stay blocked"
 msgstr "L’agent cesse de demander ; les commandes destructrices irréversibles restent bloquées"
@@ -6895,6 +6903,10 @@ msgstr "Utiliser {0}"
 #: src/lib/local-authentication.ts
 msgid "Use device passcode"
 msgstr "Utiliser le code de l’appareil"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Use Shift+Left on the terminal keyboard to answer the pending question."
+msgstr "Utilisez Maj+Gauche sur le clavier du terminal pour répondre à la question en attente"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Use system font"

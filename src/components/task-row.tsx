@@ -56,6 +56,8 @@ import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { dismissTaskNotices } from '@/stores/in-app-notifications';
 import { taskOpeningKey, useHomeTaskCards } from '@/stores/home-task-cards';
 import { useServerCapabilities } from '@/stores/server-capabilities';
+import { useServerAgents } from '@/stores/server-agents';
+import { terminalPendingUserInput } from '@/lib/terminal-input-attention';
 import { plural } from '@lingui/core/macro';
 
 /** Inline markup worth the markdown renderer: code, emphasis, links, escapes, html. */
@@ -424,6 +426,7 @@ function useTaskRowModel({
   nowMs,
   onOpen,
   inComputerCard = false,
+  statusCurrent = true,
 }: {
   task: TaskView;
   serverId: string;
@@ -431,6 +434,7 @@ function useTaskRowModel({
   nowMs: number;
   onOpen: (task: TaskView) => void;
   inComputerCard?: boolean;
+  statusCurrent?: boolean;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -454,6 +458,7 @@ function useTaskRowModel({
   const visual = taskRowVisual(task, {
     canComplete: canMarkTaskDone(task, capabilities),
     acknowledged,
+    statusCurrent,
   });
   // Live mirrors require pairing there. Finished command output is saved
   // here and remains readable without a pairing to its receiving computer.
@@ -604,6 +609,7 @@ export function TaskRow({
   subTasks,
   nested = false,
   inComputerCard = false,
+  statusCurrent = true,
   onOpen,
   onOpenTree,
 }: {
@@ -616,6 +622,8 @@ export function TaskRow({
   nested?: boolean;
   /** Home gives each task a little room and places its tree link below the summary. */
   inComputerCard?: boolean;
+  /** Preserve remembered task state, but animate only a current observation. */
+  statusCurrent?: boolean;
   onOpen: (task: TaskView) => void;
   /** The Tasks list on this task's tree; absent where that list is already shown. */
   onOpenTree?: (task: TaskView) => void;
@@ -623,7 +631,30 @@ export function TaskRow({
   const theme = useThemeTokens();
   const whereName = useTaskWhereName(discovery);
   const rollupText = useRollupText()(task);
-  const row = useTaskRowModel({ task, serverId, discovery, nowMs, onOpen, inComputerCard });
+  const row = useTaskRowModel({
+    task,
+    serverId,
+    discovery,
+    nowMs,
+    onOpen,
+    inComputerCard,
+    statusCurrent,
+  });
+  const pendingUserInput = useServerAgents((state) =>
+    statusCurrent &&
+    task.state === 'working' &&
+    task.binding.kind === 'pane' &&
+    Boolean(task.binding.agentId)
+      ? terminalPendingUserInput(
+          state.byServer[serverId],
+          task.binding.sessionId,
+          task.binding.paneId,
+          nowMs,
+          task.binding.shellPid
+        )
+      : false
+  );
+  const { t } = useLingui();
   const { visual, line, mirror, fromText, trailingAge } = row;
   const ownTitle = taskRowTitle(task);
   const title = ownTitle || whereName(task) || line.text;
@@ -664,6 +695,7 @@ export function TaskRow({
           mirror && ownTitle ? whereName(task) : '',
           fromText,
           line.text,
+          pendingUserInput ? t`Needs your input` : '',
           trailingAge,
           rollupText,
         ]
@@ -713,6 +745,14 @@ export function TaskRow({
           />
           {inComputerCard ? null : rollup}
         </Animated.View>
+        {pendingUserInput ? (
+          <Text
+            testID={`task-row-input-${task.taskId}`}
+            variant="caption"
+            color={theme.colors.warning}>
+            {t`Needs your input`}
+          </Text>
+        ) : null}
         {inComputerCard && rollup ? <View style={styles.cardMetadata}>{rollup}</View> : null}
       </PressableScale>
       {row.menuShown ? (
@@ -732,6 +772,7 @@ export function TaskRow({
           nowMs={nowMs}
           onOpen={onOpen}
           inComputerCard={inComputerCard}
+          statusCurrent={statusCurrent}
         />
       ))}
     </Animated.View>
@@ -752,6 +793,7 @@ function SubTaskRow({
   nowMs,
   onOpen,
   inComputerCard,
+  statusCurrent,
 }: {
   task: TaskView;
   serverId: string;
@@ -759,10 +801,19 @@ function SubTaskRow({
   nowMs: number;
   onOpen: (task: TaskView) => void;
   inComputerCard: boolean;
+  statusCurrent: boolean;
 }) {
   const theme = useThemeTokens();
   const whereName = useTaskWhereName(discovery);
-  const row = useTaskRowModel({ task, serverId, discovery, nowMs, onOpen, inComputerCard });
+  const row = useTaskRowModel({
+    task,
+    serverId,
+    discovery,
+    nowMs,
+    onOpen,
+    inComputerCard,
+    statusCurrent,
+  });
   const { visual, line, mirror, mirrorName, trailingAge } = row;
   const title = taskRowTitle(task);
   return (

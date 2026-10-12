@@ -146,6 +146,14 @@ export function describeGatewayFailure(
   const status = Number(raw.match(/^HTTP (\d+):/)?.[1] ?? 0);
   const normalized = raw.toLowerCase();
 
+  if (apiCode === 'agent_blocked') {
+    return {
+      kind: 'request',
+      message: t`The agent is waiting for an answer. Use the question's controls or the terminal keyboard to respond. Your message has not been sent.`,
+      retryable: false,
+      needsPairing: false,
+    };
+  }
   if (apiCode && PAIRING_ERROR_CODES.has(apiCode)) {
     return {
       kind: 'request',

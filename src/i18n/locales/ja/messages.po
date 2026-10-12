@@ -3480,6 +3480,7 @@ msgid "Message copied to clipboard"
 msgstr "メッセージをクリップボードにコピーしました"
 
 #: src/components/agent-workbench.tsx
+#: src/components/server-terminal-workspace.tsx
 msgid "Message not sent"
 msgstr "メッセージを送信できませんでした"
 
@@ -3656,6 +3657,9 @@ msgstr "対応が必要"
 msgid "Needs your attention"
 msgstr "対応が必要です"
 
+#: src/components/home-recent-sessions.tsx
+#: src/components/server-agent-rows.tsx
+#: src/components/task-row.tsx
 #: src/lib/notifications.ts
 msgid "Needs your input"
 msgstr "入力が必要です"
@@ -6127,6 +6131,10 @@ msgstr "エージェントはもう待っていません"
 msgid "The agent is offline"
 msgstr "エージェントはオフラインです"
 
+#: src/lib/network-error.ts
+msgid "The agent is waiting for an answer. Use the question's controls or the terminal keyboard to respond. Your message has not been sent."
+msgstr "エージェントが回答を待っています。質問の操作項目またはターミナルのキーボードで回答してください。メッセージは送信されていません"
+
 #: src/components/agent-context-sheet.tsx
 msgid "The agent stops asking; irreversibly destructive commands stay blocked"
 msgstr "エージェントは確認しなくなりますが、取り返しのつかない破壊的なコマンドは引き続きブロックされます"
@@ -6895,6 +6903,10 @@ msgstr "{0} を使用"
 #: src/lib/local-authentication.ts
 msgid "Use device passcode"
 msgstr "デバイスのパスコードを使用"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Use Shift+Left on the terminal keyboard to answer the pending question."
+msgstr "ターミナルのキーボードで Shift+左矢印を押して、保留中の質問に回答してください"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Use system font"

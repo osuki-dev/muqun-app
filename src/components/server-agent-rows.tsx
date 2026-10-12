@@ -169,12 +169,17 @@ export function ServerAgentRows({
             : row.caption?.kind === 'location'
               ? row.caption.text
               : undefined;
-        const visibleCaption = showStatusCaption || !compactLabels ? caption : undefined;
+        const visibleCaption = row.pendingUserInput
+          ? [status, t`Needs your input`].join(' · ')
+          : showStatusCaption || !compactLabels
+            ? caption
+            : undefined;
         // Compact rails remove the visual status word, not its meaning. A
         // screen reader cannot infer Working or Done from the dot's colour, so
         // recognised agents keep their current status in the spoken label.
-        const spokenCaption =
-          row.spokenCaption?.kind === 'status'
+        const spokenCaption = row.pendingUserInput
+          ? visibleCaption
+          : row.spokenCaption?.kind === 'status'
             ? status
             : row.spokenCaption?.kind === 'location'
               ? row.spokenCaption.text

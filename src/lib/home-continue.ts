@@ -45,6 +45,7 @@ export type HomeContinueObservation =
   | {
       kind: 'gateway-agent';
       status?: ServerAgent['status'];
+      pendingUserInput?: boolean;
       observedAtMs: number;
       seen: HomeContinueSeen;
     }
@@ -57,7 +58,13 @@ export type HomeContinueObservation =
 
 /** An observation as the row shows it: its age, and its status only while current. */
 export type HomeContinueObservationView =
-  | { kind: 'gateway-agent'; status?: ServerAgent['status']; age: HomeContinueAge; stale: boolean }
+  | {
+      kind: 'gateway-agent';
+      status?: ServerAgent['status'];
+      pendingUserInput?: boolean;
+      age: HomeContinueAge;
+      stale: boolean;
+    }
   | {
       kind: 'agent-session';
       status?: HomeSessionObservation['status'];
@@ -83,6 +90,7 @@ export function homeContinueObservationNow(
       age,
       stale,
       ...(!stale && observation.status ? { status: observation.status } : {}),
+      ...(!stale && observation.pendingUserInput === true ? { pendingUserInput: true } : {}),
     };
   }
   return {
@@ -308,7 +316,7 @@ export function homeContinueEntries({
       paneMode,
       nowMs: snapshot?.checkedAtMs ?? 0,
     });
-    for (const { key, agent, spokenCaption } of model.rows) {
+    for (const { key, agent, spokenCaption, pendingUserInput } of model.rows) {
       const visited = recents.find(
         ({ target }) =>
           target.kind === 'gateway-terminal' &&
@@ -328,6 +336,7 @@ export function homeContinueEntries({
                 observedAtMs: model.snapshot.checkedAtMs,
                 seen: { panesOf: serverId },
                 ...(spokenCaption?.kind === 'status' ? { status: spokenCaption.status } : {}),
+                ...(pendingUserInput ? { pendingUserInput: true } : {}),
               }
             : undefined,
         destination: { type: 'pane', serverId, paneId: agent.paneId, cwd: agent.cwd },

@@ -223,7 +223,7 @@ export async function warmConfiguredWorkspace(
       serverId,
       sessionId: snapshot.sessionId,
       checkedAtMs: requestedAtMs,
-      agents: mirroredServerPanes(snapshot.panes, snapshot.agents),
+      agents: mirroredServerPanes(snapshot.panes, snapshot.agents, snapshot.health?.capabilities),
     });
     const firstPane = await firstPaneScreen(snapshot);
     if (!isCurrent()) return;
