@@ -404,6 +404,14 @@ msgstr "<1 phút"
 msgid "0 speed pauses motion. Theme default restores the theme."
 msgstr "Tốc độ 0 tạm dừng chuyển động. Mặc định chủ đề khôi phục hiệu ứng"
 
+#: src/components/settings-storage.tsx
+msgid "10 days"
+msgstr "10 ngày"
+
+#: src/components/settings-storage.tsx
+msgid "30 days"
+msgstr "30 ngày"
+
 #. placeholder {0}: Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))
 #: src/components/settings-font-sheet.tsx
 msgid "A .ttf or .otf up to {0} MB."
@@ -873,6 +881,10 @@ msgstr "Tự động nhận diện"
 msgid "Automatic"
 msgstr "Tự động"
 
+#: src/components/settings-storage.tsx
+msgid "Automatic cache cleanup"
+msgstr "Tự động dọn bộ nhớ đệm"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Autonomous software engineering: edits files, runs commands, tests."
 msgstr "Kỹ thuật phần mềm tự chủ: sửa tệp, chạy lệnh, kiểm thử"
@@ -1250,6 +1262,10 @@ msgstr "Đang xóa bộ nhớ đệm"
 #: src/components/settings-storage.tsx
 msgid "Clearing…"
 msgstr "Đang xóa…"
+
+#: src/components/settings-storage.tsx
+msgid "Clears cache when due after opening Muqun. Saved themes are kept."
+msgstr "Dọn bộ nhớ đệm sau khi mở Muqun khi đến hạn. Các chủ đề đã lưu được giữ lại"
 
 #: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
@@ -4050,6 +4066,7 @@ msgstr "Không có gì thay đổi"
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
 msgstr "Chưa có gì — câu trả lời “Luôn cho phép” sẽ nằm ở đây, cho dự án này"
 
+#: src/components/settings-storage.tsx
 #: src/components/toggle.tsx
 msgid "Off"
 msgstr "Tắt"

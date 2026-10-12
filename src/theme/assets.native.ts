@@ -1,3 +1,4 @@
+import { protectCacheDirectory, releaseCacheDirectory } from '@/lib/cache-cleanup';
 import { throwIfThemeAborted } from '@/theme/abort';
 import { Directory, File, Paths } from 'expo-file-system';
 import { Image } from 'expo-image';
@@ -122,7 +123,14 @@ async function prepareAssetStream(
     Paths.cache,
     `theme-stage-${QuickCrypto.randomBytes(12).toString('hex')}`
   );
-  stage.create();
+  await protectCacheDirectory(stage.name);
+  try {
+    throwIfThemeAborted(options.signal);
+    stage.create();
+  } catch (error) {
+    releaseCacheDirectory(stage.name);
+    throw error;
+  }
   const staged = new Map<string, File>();
   let disposed = false;
   let installing = false;
@@ -142,6 +150,7 @@ async function prepareAssetStream(
     } catch {
       /* Cache eviction can reclaim abandoned staging. */
     }
+    releaseCacheDirectory(stage.name);
     collectThemeAssetGarbage();
   };
   try {

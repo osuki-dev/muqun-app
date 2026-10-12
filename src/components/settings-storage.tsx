@@ -1,4 +1,4 @@
-import { CACHE_PROCESS_STARTED_AT } from '@/lib/cache-cleanup';
+import { clearCache, scheduleAutomaticCacheCleanup } from '@/lib/cache-cleanup';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 /**
  * How much room Muqun's cache is taking, and the two buttons that give some of
@@ -12,7 +12,7 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
  * the SSH hosts and keys, the installed theme assets and the update bundle all
  * live somewhere else, and a cache button that could touch any of them would be
  * a data-loss bug wearing a utility's clothes. `planCacheDeletions` re-checks
- * every URI against the cache root before this component deletes anything.
+ * every URI against the cache root before the shared action deletes anything.
  *
  * The second action is the one exception to that sentence, and it is an
  * exception only in what it reports. Installed theme images are the one thing
@@ -33,7 +33,6 @@ import { plural } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Spinner, useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
-import { Image } from 'expo-image';
 import { Directory, Paths } from 'expo-file-system';
 import { useFocusEffect } from 'expo-router';
 import { ChevronRight, FileClock, Images, Palette, Trash2 } from 'lucide-react-native';
@@ -44,6 +43,7 @@ import Animated from 'react-native-reanimated';
 import { PressableScale } from '@/components/pressable-scale';
 import {
   LADDER,
+  SettingsBlock,
   SettingsInfoRow,
   SettingsNavRow,
   SettingsCard,
@@ -55,8 +55,10 @@ import {
   clearableCacheBytes,
   formatCacheSize,
   measureCache,
-  planCacheDeletions,
 } from '@/lib/cache-storage';
+import { SettingsSegmented } from '@/components/settings-segmented';
+import { useAppSettings } from '@/stores/app-settings';
+import { isCacheCleanupIntervalDays } from '@/lib/cache-cleanup-policy';
 import { feedback } from '@/lib/feedback';
 import { fadeIn, listLayout } from '@/lib/motion';
 import { useRenderTally } from '@/lib/render-tally';
@@ -136,34 +138,6 @@ async function readThemeAssets(): Promise<ThemeAssetFile[]> {
   return files;
 }
 
-/**
- * Delete what `planCacheDeletions` names, one entry per idle slot, and say
- * whether any of it failed.
- *
- * The cache-clearing step `SettingsStorage` runs, moved out of the component
- * unchanged: a loop inside a `try` is something React Compiler cannot lower,
- * and it declined to compile the whole screen for it.
- */
-async function deletePlannedCacheEntries(): Promise<boolean> {
-  let failed = false;
-  try {
-    const { root, entries } = await readCacheRoot();
-    const items = new Map(Paths.cache.list().map((item) => [item.uri, item]));
-    for (const entry of planCacheDeletions(entries, root, CACHE_PROCESS_STARTED_AT)) {
-      await whenIdle(100);
-      try {
-        const item = items.get(entry.uri);
-        if (item?.exists) item.delete();
-      } catch {
-        failed = true;
-      }
-    }
-  } catch {
-    failed = true;
-  }
-  return failed;
-}
-
 // Only the action slot moves; the capacity rows and sheet ground stay mounted.
 const actionFade = fadeIn('short').withInitialValues({ opacity: 0.65 });
 const actionLayout = listLayout('short');
@@ -195,6 +169,9 @@ export function SettingsStorage() {
   // theme changes it, and so does applying one from the sheet two sections up.
   // Both change what this row is allowed to offer, and the row has to say so
   // without being left and re-entered.
+  const cleanupIntervalDays = useAppSettings((state) => state.cacheCleanupIntervalDays);
+  const updateSettings = useAppSettings((state) => state.update);
+
   const themes = useThemeLibrary((state) => state.library.themes);
   const selection = useThemeLibrary((state) => state.library.selection);
 
@@ -253,6 +230,7 @@ export function SettingsStorage() {
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
+      const cancelAutomaticCleanup = scheduleAutomaticCacheCleanup(() => void measureAll());
       const handle = requestIdleCallback(
         () => {
           if (!cancelled) void measureAll();
@@ -261,6 +239,7 @@ export function SettingsStorage() {
       );
       return () => {
         cancelled = true;
+        cancelAutomaticCleanup();
         cancelIdleCallback(handle);
       };
     }, [measureAll])
@@ -272,7 +251,8 @@ export function SettingsStorage() {
    * The images go through `expo-image`'s own API: Glide and SDWebImage keep a
    * journal beside their entries, and a directory deleted out from under either
    * of them is a cache that crashes rather than a cache that is empty. Every
-   * other directory is deleted by path, each in its own `try` -- one refusal
+   * reclaimable directory is deleted by path, unless a producer still owns it.
+   * Each deletion has its own `try` -- one refusal
    * (a file the OS has open, a permission that changed) must not leave the rest
    * of the cache untouched and the reader with no idea which half went.
    */
@@ -280,22 +260,7 @@ export function SettingsStorage() {
     if (clearing) return;
     setClearing(true);
     setIncomplete(false);
-    let failed = false;
-
-    // The image cache API answers `false` rather than throwing when it declines --
-    // on Android they need a current activity and return `false` without one --
-    // so the result is checked as well as the throw. A silent `false` is
-    // exactly the case that would otherwise report a cleared cache and leave
-    // the number where it was.
-    try {
-      if (!(await Image.clearDiskCache())) failed = true;
-    } catch {
-      failed = true;
-    }
-    // Clearing storage reclaims disk bytes. Keep decoded images used by the
-    // visible theme and icons; the image library manages their memory lifetime.
-
-    if (await deletePlannedCacheEntries()) failed = true;
+    const failed = !(await clearCache());
 
     // Keep the last measured capacities and the busy control until the fresh
     // totals arrive, rather than flashing every row through "Calculating…".
@@ -377,6 +342,31 @@ export function SettingsStorage() {
 
   return (
     <SettingsCard flush>
+      <SettingsBlock
+        label={t`Automatic cache cleanup`}
+        caption={
+          <Text variant="caption" color={theme.colors.textMuted}>
+            <Trans>Clears cache when due after opening Muqun. Saved themes are kept.</Trans>
+          </Text>
+        }>
+        <SettingsSegmented
+          testID="settings-cache-cleanup-interval"
+          options={[
+            { label: t`Off`, value: '0' },
+            { label: t`10 days`, value: '10' },
+            { label: t`30 days`, value: '30' },
+          ]}
+          value={String(cleanupIntervalDays)}
+          onChange={(value) => {
+            const days = Number(value);
+            if (!isCacheCleanupIntervalDays(days) || days === cleanupIntervalDays) return;
+            void updateSettings({
+              cacheCleanupIntervalDays: days,
+              cacheCleanupEnabledAt: days > 0 ? Date.now() : 0,
+            }).catch(() => void feedback('warning'));
+          }}
+        />
+      </SettingsBlock>
       <SettingsInfoRow
         icon={Images}
         label={t`Images`}
