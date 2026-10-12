@@ -1,7 +1,7 @@
 import { useLingui } from '@lingui/react/macro';
-import { Spinner, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
 import { useIsFocused } from 'expo-router';
-import { Check, RotateCcw, Square, X } from 'lucide-react-native';
+import { RotateCcw, Square, X } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import {
   AppState,
@@ -18,7 +18,7 @@ import { Text } from '@/components/text';
 import { PressableScale } from '@/components/pressable-scale';
 import { useResolvedLocale } from '@/i18n/provider';
 import { useLatestReader } from '@/hooks/use-render-refs';
-import { DURATION, fadeIn, fadeOut, timing } from '@/lib/motion';
+import { fadeIn, fadeOut, timing } from '@/lib/motion';
 import { VoiceInputError } from '@/lib/voice-input-session';
 import { VoiceMeterHistory, VOICE_METER_SAMPLES } from '@/lib/voice-meter-history';
 import { VoiceRecordingWaveform } from '@/components/voice-recording-waveform';
@@ -88,7 +88,6 @@ function VoiceRecording({
   const [state, setState] = useState<VoiceState>('starting');
   const [seconds, setSeconds] = useState(0);
   const [error, setError] = useState('');
-  const [result, setResult] = useState<string | null>(null);
   const [partial, setPartial] = useState('');
   const { fontScale } = useWindowDimensions();
   const [height, setHeight] = useState(0);
@@ -108,7 +107,7 @@ function VoiceRecording({
           setSeconds(Math.floor(duration));
         },
         (text) => {
-          if (text.trim()) setResult(text.trim());
+          if (text.trim()) latest().onText(text.trim());
           else setError(t`No speech detected. Please try again.`);
         },
         (failure) =>
@@ -146,79 +145,47 @@ function VoiceRecording({
       void session.cancel();
     };
   }, [session, latest]);
-  // The confirmation belongs to this recording attempt. Unmounting/cancelling
-  // clears it, and the owner also checks identity before touching the draft.
-  useEffect(() => {
-    if (result === null || error) return;
-    const timeout = setTimeout(() => latest().onText(result), reduced ? 0 : DURATION.long);
-    return () => clearTimeout(timeout);
-  }, [result, error, latest, reduced]);
   const status = error
     ? t`Try again`
-    : result !== null
-      ? t`Done`
-      : state === 'starting'
-        ? t`Preparing microphone…`
-        : state === 'processing'
-          ? t`Transcribing…`
-          : t`Listening…`;
-  const visualState = error
-    ? 'error'
-    : result !== null
-      ? 'success'
-      : state === 'starting'
-        ? 'idle'
-        : state;
-  const recording = visualState === 'recording';
-  const pending = !error && result === null && !recording;
-  const busy = state !== 'recording' || result !== null;
+    : state === 'starting'
+      ? t`Preparing microphone…`
+      : state === 'processing'
+        ? t`Transcribing…`
+        : t`Listening…`;
+  const recording = !error && state === 'recording';
+  const busy = state !== 'recording';
   const elapsed = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
-  const indicator = error ? (
-    <RotateCcw size={18} color={theme.colors.danger} />
-  ) : result !== null ? (
-    <Check size={20} color={theme.colors.success} />
-  ) : state === 'processing' || state === 'starting' ? (
-    reduced ? (
-      <Text color={theme.colors.textMuted}>···</Text>
-    ) : (
-      <Spinner size="sm" color={theme.colors.primary} />
-    )
-  ) : null;
   const cancel = (
     <PressableScale
       accessibilityRole="button"
       accessibilityLabel={t`Cancel`}
       testID="voice-recording-cancel"
+      hitSlop={4}
       onPress={() => {
         void session.cancel();
         onClose();
       }}
-      style={[styles.action, compact && styles.iconAction]}>
+      style={styles.action}>
       <X size={18} color={theme.colors.textMuted} />
-      {!compact && <Text weight="regular" color={theme.colors.textMuted}>{t`Cancel`}</Text>}
     </PressableScale>
   );
   const stop = (
     <PressableScale
       accessibilityRole="button"
       accessibilityLabel={error ? t`Try again` : t`Stop and transcribe`}
-      accessibilityState={{ busy: busy && !error && result === null }}
+      accessibilityState={{ busy: busy && !error }}
       testID="voice-recording-stop"
+      hitSlop={4}
       disabled={busy && !error}
       onPress={() => {
         if (error) onRetry();
         else void session.finish();
       }}
-      style={[styles.action, compact && styles.iconAction, { opacity: busy && !error ? 0.45 : 1 }]}>
+      style={[styles.action, { opacity: busy && !error ? 0.45 : 1 }]}>
       {error ? (
         <RotateCcw size={18} color={theme.colors.primary} />
       ) : (
         <Square size={16} color={theme.colors.primary} />
-      )}
-      {!compact && (
-        <Text weight="regular" color={theme.colors.primary}>
-          {error ? t`Try again` : t`Stop and transcribe`}
-        </Text>
       )}
     </PressableScale>
   );
@@ -229,34 +196,52 @@ function VoiceRecording({
       testID="voice-inline-panel"
       onLayout={(event) => setHeight(event.nativeEvent.layout.height)}
       style={[styles.recording, compact && styles.compactRecording]}>
-      {pending ? (
+      {!error ? (
         <>
-          <Animated.View
-            key={visualState}
-            entering={enter}
-            testID={`voice-visual-${visualState}`}
+          {recording && (
+            <Text
+              weight="regular"
+              color={theme.colors.textMuted}
+              style={[styles.elapsed, styles.timer, compact ? styles.compactTimer : {}]}
+              accessibilityLabel={`${status} ${elapsed}`}>
+              {elapsed}
+            </Text>
+          )}
+          <View
+            testID={`voice-visual-${state === 'starting' ? 'idle' : state}`}
+            accessible={!recording}
+            accessibilityLabel={!recording ? status : undefined}
+            accessibilityLiveRegion={!recording ? 'polite' : undefined}
             style={[styles.pending, compact && styles.compactPending]}>
-            <View testID="voice-processing-status" style={styles.pendingStatus}>
-              {indicator}
+            <VoiceRecordingWaveform history={history} processing={!recording} compact={compact} />
+            {!recording && !compact && !!partial && (
               <Text
+                testID="voice-processing-status"
                 weight="regular"
                 style={styles.pendingLabel}
-                color={theme.colors.text}
-                accessibilityLiveRegion="polite">
-                {status}
-              </Text>
-            </View>
-            {!!partial && (
-              <Text
-                testID="voice-live-transcript"
-                numberOfLines={compact ? 1 : 2}
-                weight="regular"
+                numberOfLines={1}
                 color={theme.colors.textMuted}
-                style={styles.pendingTranscript}>
+                accessibilityLiveRegion="polite">
                 {partial}
               </Text>
             )}
-          </Animated.View>
+            {recording &&
+              !!partial &&
+              (compact ? (
+                <Text
+                  testID="voice-live-transcript"
+                  numberOfLines={1}
+                  weight="regular"
+                  color={theme.colors.text}
+                  style={styles.pendingTranscript}>
+                  {partial}
+                </Text>
+              ) : (
+                <View style={styles.transcriptArea}>
+                  <LiveTranscript text={partial} />
+                </View>
+              ))}
+          </View>
           <View
             pointerEvents="box-none"
             style={[styles.pendingActions, compact && styles.compactPendingActions]}>
@@ -267,47 +252,24 @@ function VoiceRecording({
       ) : (
         <>
           {compact && cancel}
-          <View style={[styles.body, recording && compact && styles.compactRecordingBody]}>
-            <View style={[styles.header, recording && styles.recordingHeader]}>
-              {compact && indicator}
-              {!recording && (
-                <Text
-                  numberOfLines={1}
-                  weight="regular"
-                  style={styles.status}
-                  color={theme.colors.text}
-                  accessibilityLiveRegion="polite">
-                  {status}
-                </Text>
-              )}
+          <View style={styles.body}>
+            <View style={styles.header}>
               <Text
+                numberOfLines={1}
                 weight="regular"
-                color={theme.colors.textMuted}
-                style={styles.elapsed}
-                accessibilityLabel={recording ? `${status} ${elapsed}` : undefined}>
-                {elapsed}
+                style={styles.status}
+                color={theme.colors.text}
+                accessibilityLiveRegion="polite">
+                {status}
               </Text>
             </View>
-            <Animated.View
-              key={visualState}
-              entering={enter}
-              testID={`voice-visual-${visualState}`}
-              style={styles.readout}>
-              {!compact && indicator}
-              {error ? (
-                <ScrollView style={styles.readoutText} nestedScrollEnabled>
-                  <Text weight="regular" color={theme.colors.danger} style={styles.detail}>
-                    {error}
-                  </Text>
-                </ScrollView>
-              ) : (
-                <>
-                  {state === 'recording' && result === null && (
-                    <VoiceRecordingWaveform history={history} />
-                  )}
-                  {!!(result || partial) && <LiveTranscript text={result ?? partial} />}
-                </>
-              )}
+            <Animated.View entering={enter} testID="voice-visual-error" style={styles.readout}>
+              {!compact && <RotateCcw size={18} color={theme.colors.danger} />}
+              <ScrollView style={styles.readoutText} nestedScrollEnabled>
+                <Text weight="regular" color={theme.colors.danger} style={styles.detail}>
+                  {error}
+                </Text>
+              </ScrollView>
             </Animated.View>
           </View>
           {compact ? (
@@ -405,9 +367,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   body: { flex: 1, minHeight: 0, minWidth: 0, alignSelf: 'stretch' },
-  compactRecordingBody: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   // Equal insets center the loading group in the original composer rectangle,
-  // independently of the timer/header and the different action-label widths.
+  // independently of the timer/header and the action buttons.
   pending: {
     ...StyleSheet.absoluteFill,
     alignItems: 'center',
@@ -417,8 +378,16 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   compactPending: { paddingHorizontal: 48, paddingVertical: 4, gap: 4 },
-  pendingStatus: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  pendingLabel: { fontSize: 14, lineHeight: 20, flexShrink: 1 },
+  pendingLabel: {
+    position: 'absolute',
+    top: '50%',
+    marginTop: 22,
+    left: 48,
+    right: 48,
+    fontSize: 12,
+    lineHeight: 17,
+    textAlign: 'center',
+  },
   pendingTranscript: { fontSize: 12, lineHeight: 17, textAlign: 'center', flexShrink: 1 },
   pendingActions: {
     position: 'absolute',
@@ -432,9 +401,11 @@ const styles = StyleSheet.create({
   },
   compactPendingActions: { top: 0, left: 2, right: 2 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  recordingHeader: { justifyContent: 'flex-end' },
   status: { fontSize: 14, lineHeight: 20, flex: 1 },
   elapsed: { fontSize: 12, fontVariant: ['tabular-nums'] },
+  timer: { position: 'absolute', top: 8, right: 16 },
+  compactTimer: { top: 0, right: 46, fontSize: 10 },
+  transcriptArea: { alignSelf: 'stretch', height: 36, flexShrink: 1 },
   readout: {
     flex: 1,
     minHeight: 0,
@@ -449,12 +420,13 @@ const styles = StyleSheet.create({
   detail: { fontSize: 12, lineHeight: 17 },
   actions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   action: {
+    width: 40,
     minHeight: 40,
     flexShrink: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
     paddingHorizontal: 4,
   },
-  iconAction: { width: 40, justifyContent: 'center' },
 });

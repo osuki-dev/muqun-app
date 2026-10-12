@@ -8,6 +8,7 @@ import Animated, {
   useFrameCallback,
   useReducedMotion,
   useSharedValue,
+  withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
 import { VOICE_METER_SAMPLES } from '@/lib/voice-meter-history';
@@ -36,11 +37,21 @@ function MeterBar({ history, index }: { history: SharedValue<number[]>; index: n
   return <Animated.View style={[styles.bar, { backgroundColor: theme.colors.primary }, motion]} />;
 }
 
-function GlowingWaveform({ history }: { history: SharedValue<number[]> }) {
+type WaveformProps = {
+  history: SharedValue<number[]>;
+  processing?: boolean;
+  compact?: boolean;
+};
+
+function GlowingWaveform({ history, processing = false }: WaveformProps) {
   const theme = useThemeTokens();
   const reduced = useReducedMotion();
-  const size = useSharedValue({ width: 1, height: 20 });
+  const size = useSharedValue({ width: 1, height: 56 });
   const clock = useSharedValue(0);
+  const transition = useSharedValue(processing ? 1 : 0);
+  useEffect(() => {
+    transition.set(withTiming(processing ? 1 : 0, { duration: reduced ? 0 : 280 }));
+  }, [processing, reduced, transition]);
   const lastPaint = useSharedValue(-1000);
   const frame = useFrameCallback(({ timeSinceFirstFrame, timeSincePreviousFrame }) => {
     // Reanimated resets elapsed time whenever a stopped callback is activated.
@@ -58,15 +69,21 @@ function GlowingWaveform({ history }: { history: SharedValue<number[]> }) {
       frame.setActive(false);
     };
   }, [frame, reduced]);
-  const tint = Array.from(Skia.Color(theme.colors.primary)).slice(0, 3);
+  const color = Array.from(Skia.Color(theme.colors.primary));
+  const tint = color.slice(0, 3);
+  const tintOpacity = color[3] ?? 1;
   const highlight = tint.map((channel) => channel * 0.65 + 0.35);
   const uniforms = useDerivedValue(() => ({
     size: [size.get().width, size.get().height],
     time: reduced ? 0 : clock.get(),
     motion: reduced ? 0 : 1,
+    processing: transition.get(),
+    // The recorder smooths history once; another timing here would chase
+    // every intermediate frame and make the waveform lag behind speech.
     amplitudes: history.get(),
     tint,
     highlight,
+    tintOpacity,
   }));
   return (
     <View
@@ -83,16 +100,22 @@ function GlowingWaveform({ history }: { history: SharedValue<number[]> }) {
   );
 }
 
-/** Mounted only for recording; no Canvas/frame callback exists in fallback or other states. */
-export function VoiceRecordingWaveform({ history }: { history: SharedValue<number[]> }) {
+/** Keep mounted across recording/processing so the same Canvas morphs in place. */
+export function VoiceRecordingWaveform({
+  history,
+  processing = false,
+  compact = false,
+}: WaveformProps) {
   return (
     <View
       testID="voice-recording-meter"
-      style={styles.meter}
+      style={[styles.meter, { height: compact ? 24 : 56 }]}
       pointerEvents="none"
       accessible={false}>
       {effect ? (
-        <GlowingWaveform history={history} />
+        <GlowingWaveform history={history} processing={processing} />
+      ) : processing ? (
+        <QuietProcessingIndicator />
       ) : (
         indices.map((index) => <MeterBar key={index} index={index} history={history} />)
       )}
@@ -100,16 +123,22 @@ export function VoiceRecordingWaveform({ history }: { history: SharedValue<numbe
   );
 }
 
+function QuietProcessingIndicator() {
+  const theme = useThemeTokens();
+  return <View style={[styles.quietRing, { borderColor: theme.colors.primary }]} />;
+}
+
 const styles = StyleSheet.create({
   fill: { flex: 1, height: '100%' },
   meter: {
-    flex: 1,
-    height: 20,
+    width: '100%',
+    flexShrink: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     gap: 3,
     overflow: 'hidden',
   },
+  quietRing: { width: 16, height: 16, borderWidth: 2, borderRadius: 8, opacity: 0.6 },
   bar: { flex: 1, maxWidth: 4, height: 20, borderRadius: 2 },
 });

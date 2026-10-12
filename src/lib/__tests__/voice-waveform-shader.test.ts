@@ -18,17 +18,27 @@ const diagnostics: string[] = [];
 const effect = kit.RuntimeEffect.Make(VOICE_WAVEFORM_SKSL, (message) => diagnostics.push(message));
 afterAll(() => effect?.delete());
 
-function render(samples: number[], time = 0, motion = 1, tint = [0.1, 0.4, 0.8]) {
+function render(
+  samples: number[],
+  time = 0,
+  motion = 1,
+  tint = [0.1, 0.4, 0.8],
+  processing = 0,
+  height = 56,
+  tintOpacity = 1
+) {
   if (!effect) throw new Error(diagnostics.join('\n'));
-  const surface = kit.MakeSurface(240, 20)!;
+  const surface = kit.MakeSurface(240, height)!;
   const shader = effect.makeShader([
     240,
-    20,
+    height,
     time,
     motion,
+    processing,
     ...samples,
     ...tint,
     ...tint.map((x) => x * 0.65 + 0.35),
+    tintOpacity,
   ]);
   const paint = new kit.Paint();
   try {
@@ -37,7 +47,7 @@ function render(samples: number[], time = 0, motion = 1, tint = [0.1, 0.4, 0.8])
     surface.getCanvas().drawPaint(paint);
     const pixels = surface.getCanvas().readPixels(0, 0, {
       width: 240,
-      height: 20,
+      height,
       colorType: kit.ColorType.RGBA_8888,
       alphaType: kit.AlphaType.Premul,
       colorSpace: kit.ColorSpace.SRGB,
@@ -59,37 +69,143 @@ const pixel = (pixels: Uint8Array, x: number, y: number) =>
 test('the real Skia compiler accepts every declared waveform uniform', () => {
   expect(diagnostics).toEqual([]);
   expect(effect).not.toBeNull();
-  expect(effect!.getUniformFloatCount()).toBe(34);
+  expect(effect!.getUniformFloatCount()).toBe(36);
   expect(
     Array.from({ length: effect!.getUniformCount() }, (_, index) => effect!.getUniformName(index))
-  ).toEqual(['size', 'time', 'motion', 'amplitudes', 'tint', 'highlight']);
+  ).toEqual([
+    'size',
+    'time',
+    'motion',
+    'processing',
+    'amplitudes',
+    'tint',
+    'highlight',
+    'tintOpacity',
+  ]);
 });
 
-test('only measured speech increases bar height; silence glints without tall peaks', () => {
-  const quiet = render(silent, 2);
-  const loud = render(speech, 2);
-  expect(pixel(loud, 125, 3)[3]).toBeGreaterThan(pixel(quiet, 125, 3)[3]! + 50);
-  expect(pixel(quiet, 125, 3)[3]).toBeLessThan(10);
-  expect(pixel(quiet, 125, 10)[3]).toBeGreaterThan(pixel(render(silent), 125, 10)[3]!);
-});
-
-test('reduced motion freezes the light sweep even if clock time changes', () => {
-  expect(render(speech, 0, 0)).toEqual(render(speech, 2, 0));
-  expect(pixel(render(speech, 2, 0), 125, 3)[3]).toBeLessThan(10);
-});
-
-test('bloom preserves themed color and bounded premultiplied transparency', () => {
-  const red = pixel(render(speech, 2, 1, [0.8, 0.1, 0.2]), 125, 10);
-  const blue = pixel(render(speech, 2, 1, [0.1, 0.2, 0.8]), 125, 10);
-  expect(red[0]).toBeGreaterThan(red[2]!);
-  expect(blue[2]).toBeGreaterThan(blue[0]!);
-  const pixels = render(speech, 2);
-  for (let offset = 0; offset < pixels.length; offset += 4) {
-    expect(pixels[offset]).toBeLessThanOrEqual(pixels[offset + 3]!);
-    expect(pixels[offset + 1]).toBeLessThanOrEqual(pixels[offset + 3]!);
-    expect(pixels[offset + 2]).toBeLessThanOrEqual(pixels[offset + 3]!);
+test('theme primary opacity scales every premultiplied channel, including zero', () => {
+  for (const processing of [0, 1]) {
+    const opaque = render(speech, 1, 1, undefined, processing);
+    const translucent = render(speech, 1, 1, undefined, processing, 56, 0.3);
+    const transparent = render(speech, 1, 1, undefined, processing, 56, 0);
+    expect(transparent.every((channel) => channel === 0)).toBe(true);
+    for (let offset = 0; offset < opaque.length; offset++) {
+      expect(Math.abs(translucent[offset]! - opaque[offset]! * 0.3)).toBeLessThanOrEqual(1);
+    }
   }
-  expect(pixel(pixels, 125, 0)[3]).toBeLessThan(10);
+});
+
+function verticalEnergy(pixels: Uint8Array, height = 56) {
+  let energy = 0;
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < 240; x++)
+      energy += pixel(pixels, x, y)[3]! * Math.abs(y + 0.5 - height / 2);
+  return energy;
+}
+
+test('silence breathes gently and measured speech creates larger continuous waves', () => {
+  const quiet = render(silent, 0);
+  expect(quiet).not.toEqual(render(silent, 0.7));
+  const loud = render(
+    silent.map(() => 1),
+    0
+  );
+  expect(verticalEnergy(loud)).toBeGreaterThan(verticalEnergy(quiet) * 3);
+  for (let x = 8; x < 232; x++) {
+    let visible = false;
+    for (let y = 24; y <= 32; y++) visible ||= pixel(quiet, x, y)[3]! > 5;
+    expect(visible).toBe(true);
+  }
+});
+
+test('reduced motion freezes both recording and processing when time changes', () => {
+  for (const processing of [0, 0.5, 1])
+    expect(render(speech, 0, 0, undefined, processing)).toEqual(
+      render(speech, 2, 0, undefined, processing)
+    );
+});
+
+test('processing contracts into a centered transparent orbit at both supported heights', () => {
+  for (const height of [24, 56]) {
+    const pixels = render(speech, 0.7, 1, undefined, 1, height);
+    let left = 240,
+      right = 0,
+      top = height,
+      bottom = 0;
+    for (let y = 0; y < height; y++)
+      for (let x = 0; x < 240; x++) {
+        if (pixel(pixels, x, y)[3]! < 5) continue;
+        left = Math.min(left, x);
+        right = Math.max(right, x);
+        top = Math.min(top, y);
+        bottom = Math.max(bottom, y);
+      }
+    expect(Math.abs((left + right + 1) / 2 - 120)).toBeLessThanOrEqual(1);
+    expect(Math.abs((top + bottom + 1) / 2 - height / 2)).toBeLessThanOrEqual(1);
+    expect(right - left).toBeLessThan(30);
+    expect(top).toBeGreaterThan(0);
+    expect(bottom).toBeLessThan(height - 1);
+    expect(pixel(pixels, 120, Math.floor(height / 2))[3]).toBe(0);
+    expect(pixels).not.toEqual(render(speech, 1.4, 1, undefined, 1, height));
+  }
+});
+
+test('theme color and premultiplied transparency remain intact through the morph', () => {
+  for (const processing of [0, 0.5, 1]) {
+    const pixels = render(
+      silent.map(() => 1),
+      2,
+      1,
+      [0.8, 0.1, 0.2],
+      processing
+    );
+    let colored = 0;
+    for (let offset = 0; offset < pixels.length; offset += 4) {
+      const alpha = pixels[offset + 3]!;
+      expect(pixels[offset]).toBeLessThanOrEqual(alpha);
+      expect(pixels[offset + 1]).toBeLessThanOrEqual(alpha);
+      expect(pixels[offset + 2]).toBeLessThanOrEqual(alpha);
+      if (alpha > 20) {
+        expect(pixels[offset]).toBeGreaterThan(pixels[offset + 2]!);
+        colored++;
+      }
+    }
+    expect(colored).toBeGreaterThan(10);
+    expect(pixel(pixels, 120, 0)[3]).toBe(0);
+    expect(pixel(pixels, 0, 28)[3]).toBe(0);
+  }
+});
+
+test('compact and normal waves preserve light and dark theme ink without painting a plate', () => {
+  for (const height of [24, 56]) {
+    for (const tint of [
+      [0.08, 0.3, 0.6],
+      [0.65, 0.8, 0.95],
+    ]) {
+      const pixels = render(
+        silent.map(() => 0.8),
+        1.4,
+        1,
+        tint,
+        0,
+        height
+      );
+      let painted = 0;
+      for (let offset = 0; offset < pixels.length; offset += 4) {
+        if (pixels[offset + 3]! > 30) {
+          expect(pixels[offset + 2]).toBeGreaterThan(pixels[offset]!);
+          painted++;
+        }
+      }
+      expect(painted).toBeGreaterThan(200);
+      expect(painted).toBeLessThan((240 * height) / 2);
+      for (let x = 0; x < 240; x++) {
+        expect(pixel(pixels, x, 0)[3]).toBe(0);
+        expect(pixel(pixels, x, height - 1)[3]).toBe(0);
+      }
+    }
+  }
 });
 
 // Execute the production component's effect with isolated native/hook boundaries.
@@ -126,7 +242,8 @@ function mountWaveform(reduced: boolean, compiled: boolean) {
       if (name === 'react')
         return {
           useEffect: (effect: () => () => void) => {
-            cleanups.push(effect());
+            const cleanup = effect();
+            if (cleanup) cleanups.push(cleanup);
           },
         };
       if (name === '@osuki-dev/ui')
@@ -162,6 +279,7 @@ function mountWaveform(reduced: boolean, compiled: boolean) {
           __esModule: true,
           default: { View: 'AnimatedView' },
           useReducedMotion: () => reduced,
+          withTiming: (value: number) => value,
           useSharedValue: (value: unknown) => ({
             get: () => value,
             set: (next: unknown) => {
