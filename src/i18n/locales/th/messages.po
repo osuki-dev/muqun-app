@@ -1197,6 +1197,10 @@ msgstr "เลือกการเปลี่ยนแปลงที่จะ
 msgid "Choose which simulator to show"
 msgstr "เลือกเครื่องจำลองที่จะแสดง"
 
+#: src/components/changes-worktree-picker.tsx
+msgid "Choose worktree"
+msgstr "เลือกเวิร์กทรี"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Classic"
@@ -1833,6 +1837,10 @@ msgstr "เก็บไว้ไม่ได้"
 msgid "Could not list this computer's agents."
 msgstr "แสดงรายการเอเจนต์ของคอมพิวเตอร์นี้ไม่ได้"
 
+#: src/components/changes-worktree-picker.tsx
+msgid "Could not list worktrees. Refresh to try again."
+msgstr "ไม่สามารถแสดงรายการเวิร์กทรีได้ รีเฟรชเพื่อลองอีกครั้ง"
+
 #: src/components/settings-mcp-tokens.tsx
 msgid "Could not load agent access"
 msgstr "โหลดสิทธิ์เข้าถึงของเอเจนต์ไม่ได้"
@@ -2157,6 +2165,10 @@ msgstr "ปัจจุบัน"
 #: src/components/agent-command-delivery-picker.tsx
 msgid "Current agent"
 msgstr "เอเจนต์ปัจจุบัน"
+
+#: src/components/changes-worktree-picker.tsx
+msgid "Current checkout"
+msgstr "เช็กเอาต์ปัจจุบัน"
 
 #: src/components/session-map.tsx
 msgid "Current computer"
@@ -4764,6 +4776,7 @@ msgid "Refresh terminal history"
 msgstr "รีเฟรชประวัติเทอร์มินัล"
 
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/changes-worktree-picker.tsx
 msgid "Refresh worktrees"
 msgstr "รีเฟรชเวิร์กทรี"
 
@@ -6901,6 +6914,10 @@ msgstr "เวอร์ชัน {version}{0}"
 msgid "View file changes"
 msgstr "ดูการเปลี่ยนแปลงของไฟล์"
 
+#: src/components/changes-worktree-picker.tsx
+msgid "Viewing another checkout. Changes are read-only."
+msgstr "กำลังดูเช็กเอาต์อื่น การเปลี่ยนแปลงเป็นแบบอ่านอย่างเดียว"
+
 #: src/i18n/labels.ts
 msgid "Visual mode"
 msgstr "โหมดเลือกข้อความ"
@@ -6995,6 +7012,7 @@ msgid "Workspaces"
 msgstr "พื้นที่ทำงาน"
 
 #: src/components/changes-sheet.tsx
+#: src/components/changes-worktree-picker.tsx
 msgid "Worktree {name}"
 msgstr "เวิร์กทรี {name}"
 

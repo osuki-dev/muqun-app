@@ -91,6 +91,21 @@ SSH workspaces own dispatch. Contextual combinations and nvim actions share one
 shortcut strip. See [Terminal soft keyboard](docs/terminal-soft-keyboard.md) for
 modifier state, exact sequence semantics and device validation.
 
+## Linked checkout changes
+
+The terminal Changes route passes the explicit `git_worktrees` capability to
+`GitDiffView`. Its inventory comes from the pane's authenticated `git/worktrees`
+route, with canonical `current` and `worktrees` (`path`, `branch`, `head`,
+`detached`). The App validates the response and offers only inventory entries.
+Selected reads add `worktree` to `git/status` and `git/diff`; Gateway revalidates
+Git membership and common-directory identity on every read.
+
+Other checkouts use the existing paged Changes adapter, without Discard, Lazygit
+or default-branch comparison. Changing the checkout remounts `ChangesSheet` to
+drop prior listings and patches. A removed selection fails explicitly until
+the reader chooses again; refreshing the inventory never silently changes it.
+Agent-session runtime-managed worktree context remains a separate contract.
+
 ## Encrypted transport negotiation
 
 Paired traffic negotiates envelope v2 through an authenticated, read-only `/health`

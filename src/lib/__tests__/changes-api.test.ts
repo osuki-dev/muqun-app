@@ -185,6 +185,44 @@ describe('agentChangesApi', () => {
 });
 
 describe('paneChangesApi', () => {
+  test('other checkouts use only selected read routes even when pane_vcs_files exists', async () => {
+    const calls: Call[] = [];
+    const client = paneClient(FILES, calls);
+    const status = client.status;
+    client.status = async (...args) => {
+      calls.push(['selected-status', ...args]);
+      return status(...args);
+    };
+    const api = paneChangesApi(
+      { sessionId: 's', paneId: '%1', vcsFiles: true, worktree: '/linked checkout' },
+      client
+    );
+    expect(api.discard).toBeUndefined();
+    const listing = await api.listing('working');
+    expect(listing.source).toBe('paged');
+    expect(calls[0]).toEqual(['selected-status', 's', '%1', undefined, '/linked checkout']);
+    await api.page?.(listing.changes[0], 40);
+    expect(calls.at(-1)?.[4]).toMatchObject({ worktree: '/linked checkout', from: 40 });
+    expect(calls.some((call) => call[0] === 'files')).toBe(false);
+    expect((await api.listing('branch')).reason).toBe('no_default_branch');
+    await expect(api.file({ mode: 'working', path: 'src/a.ts', context: 3 })).rejects.toThrow(
+      'read-only'
+    );
+  });
+  test('a refused selected checkout never falls back to the pane checkout', async () => {
+    const calls: Call[] = [];
+    const api = paneChangesApi(
+      { sessionId: 's', paneId: '%1', vcsFiles: true, worktree: '/removed' },
+      {
+        ...paneClient(FILES, calls),
+        status: async () => {
+          throw new Error('HTTP 403 invalid_worktree');
+        },
+      }
+    );
+    await expect(api.listing('working')).rejects.toThrow('invalid_worktree');
+    expect(calls).toEqual([]);
+  });
   test('lists through the pane …/vcs/files, fetches one patch, and discards, all for this pane', async () => {
     const calls: Call[] = [];
     const api = paneChangesApi(

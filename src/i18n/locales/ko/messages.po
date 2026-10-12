@@ -1197,6 +1197,10 @@ msgstr "표시할 변경 사항 선택"
 msgid "Choose which simulator to show"
 msgstr "표시할 시뮬레이터 선택"
 
+#: src/components/changes-worktree-picker.tsx
+msgid "Choose worktree"
+msgstr "작업 트리 선택"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Classic"
@@ -1833,6 +1837,10 @@ msgstr "유지할 수 없습니다"
 msgid "Could not list this computer's agents."
 msgstr "이 컴퓨터의 에이전트 목록을 가져오지 못했습니다"
 
+#: src/components/changes-worktree-picker.tsx
+msgid "Could not list worktrees. Refresh to try again."
+msgstr "작업 트리를 불러올 수 없습니다. 새로고침하여 다시 시도하세요"
+
 #: src/components/settings-mcp-tokens.tsx
 msgid "Could not load agent access"
 msgstr "에이전트 접근 권한을 불러오지 못했습니다"
@@ -2157,6 +2165,10 @@ msgstr "사용 중"
 #: src/components/agent-command-delivery-picker.tsx
 msgid "Current agent"
 msgstr "현재 에이전트"
+
+#: src/components/changes-worktree-picker.tsx
+msgid "Current checkout"
+msgstr "현재 체크아웃"
 
 #: src/components/session-map.tsx
 msgid "Current computer"
@@ -4764,6 +4776,7 @@ msgid "Refresh terminal history"
 msgstr "터미널 기록 새로고침"
 
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/changes-worktree-picker.tsx
 msgid "Refresh worktrees"
 msgstr "워크트리 새로고침"
 
@@ -6901,6 +6914,10 @@ msgstr "버전 {version}{0}"
 msgid "View file changes"
 msgstr "파일 변경 사항 보기"
 
+#: src/components/changes-worktree-picker.tsx
+msgid "Viewing another checkout. Changes are read-only."
+msgstr "다른 체크아웃을 보고 있습니다. 변경 사항은 읽기 전용입니다"
+
 #: src/i18n/labels.ts
 msgid "Visual mode"
 msgstr "비주얼 모드"
@@ -6995,6 +7012,7 @@ msgid "Workspaces"
 msgstr "워크스페이스"
 
 #: src/components/changes-sheet.tsx
+#: src/components/changes-worktree-picker.tsx
 msgid "Worktree {name}"
 msgstr "워크트리 {name}"
 

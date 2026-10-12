@@ -1297,6 +1297,7 @@ export function demoHealth() {
       'agent_collaboration',
       PANE_CONTEXT_CAPABILITY,
       GIT_DIFF_CAPABILITY,
+      'git_worktrees',
       'pane_lazygit',
       'agent_audio_assets',
     ],
@@ -1828,9 +1829,56 @@ export function demoPaneContext(paneId: string): Record<string, unknown> {
   });
 }
 
+const DEMO_LINKED_WORKTREE = '/Users/demo/code/muqun-worktrees/linked-checkout';
+
+export function demoGitWorktrees(paneId: string): Record<string, unknown> {
+  return demoContentEnvelope({
+    current: paneId === DEMO_GIT_PANE ? DEMO_GIT_REPO.toplevel : null,
+    worktrees:
+      paneId === DEMO_GIT_PANE
+        ? [
+            {
+              path: DEMO_GIT_REPO.toplevel,
+              branch: DEMO_GIT_REPO.branch,
+              head: DEMO_GIT_REPO.head,
+              detached: false,
+            },
+            {
+              path: DEMO_LINKED_WORKTREE,
+              branch: 'feat/linked-checkout',
+              head: DEMO_GIT_REPO.head,
+              detached: false,
+            },
+          ]
+        : [],
+  });
+}
+
 /** `GET …/panes/{pane_id}/git/status`. */
-export function demoGitStatus(paneId: string): Record<string, unknown> {
+export function demoGitStatus(paneId: string, worktree?: string): Record<string, unknown> {
   const inRepo = paneId === DEMO_GIT_PANE;
+  if (inRepo && worktree === DEMO_LINKED_WORKTREE) {
+    return demoContentEnvelope({
+      repo: {
+        ...DEMO_GIT_REPO,
+        toplevel: worktree,
+        branch: 'feat/linked-checkout',
+        changed_files: 1,
+      },
+      truncated: false,
+      files: [
+        {
+          path: 'linked-worktree.txt',
+          status: 'untracked',
+          staged: false,
+          unstaged: true,
+          binary: false,
+          added: 1,
+          removed: 0,
+        },
+      ],
+    });
+  }
   return demoContentEnvelope({
     session_id: SESSION_ID,
     pane_id: paneId,
@@ -1845,8 +1893,25 @@ export function demoGitDiff(
   paneId: string,
   path: string,
   from: number,
-  lines: number
+  lines: number,
+  worktree?: string
 ): Record<string, unknown> {
+  if (
+    paneId === DEMO_GIT_PANE &&
+    worktree === DEMO_LINKED_WORKTREE &&
+    path === 'linked-worktree.txt'
+  ) {
+    return demoContentEnvelope({
+      path,
+      binary: false,
+      from: 0,
+      end: 5,
+      total_lines: 5,
+      truncated: false,
+      patch:
+        'diff --git a/linked-worktree.txt b/linked-worktree.txt\n--- /dev/null\n+++ b/linked-worktree.txt\n@@ -0,0 +1 @@\n+Written in the linked checkout.\n',
+    });
+  }
   if (paneId !== DEMO_GIT_PANE) {
     return demoContentEnvelope({
       session_id: SESSION_ID,
