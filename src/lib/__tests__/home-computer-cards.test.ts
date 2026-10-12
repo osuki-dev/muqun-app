@@ -20,6 +20,7 @@ import {
   taskSubscriptionServerIds,
   taskRowVisual,
   taskRowTitle,
+  taskRowDestination,
   heldCardOrder,
   openTaskWork,
 } from '../home-computer-cards';
@@ -786,6 +787,7 @@ describe('openTaskWork on a mirror', () => {
     const asked: string[] = [];
     openTaskWork(
       {
+        openTaskResult: (serverId, task) => opened.push(['result', serverId, task.taskId]),
         openAgent: (serverId, asid) => opened.push(['agent', serverId, asid ?? '']),
         openServer: (serverId) => opened.push(['server', serverId]),
         ...(resolveTask
@@ -805,6 +807,78 @@ describe('openTaskWork on a mirror', () => {
     await Promise.resolve();
     expect(opened).toEqual(expected.map((entry) => [...entry]));
     if (resolveTask) expect(asked).toEqual([`${mapped ?? 'peer-1'}/r`]);
+  });
+});
+
+describe('command task destinations', () => {
+  test.each(['done', 'failed', 'cancelled'] as const)(
+    '%s opens the local saved result even when the peer is offline',
+    async (state) => {
+      const finished = task('command', state, 1, {
+        kind: 'command',
+        summary: 'saved output\nlast line',
+        peerReachable: false,
+        binding: { kind: 'peer', peerId: 'offline-peer', remoteTaskId: 'remote-command' },
+      });
+      const opened: [string, TaskView][] = [];
+      await openTaskWork(
+        {
+          openTaskResult: (serverId, result) => opened.push([serverId, result]),
+          openAgent: () => {
+            throw new Error('a finished command must not open an agent');
+          },
+          openServer: () => {
+            throw new Error('a finished command must not open a computer or stale pane');
+          },
+          resolveTask: () => {
+            throw new Error('the saved result must not require a peer read');
+          },
+        },
+        'source',
+        finished
+      );
+      expect(opened).toEqual([['source', finished]]);
+    }
+  );
+
+  test('a receiver command with a closed or reused pane opens its saved result', async () => {
+    const finished = task('command', 'done', 1, {
+      kind: 'command',
+      origin: 'peer',
+      exitCode: 0,
+      binding: { kind: 'pane', paneId: 'reused', sessionId: 'temporary', shellPid: 123 },
+    });
+    const opened: TaskView[] = [];
+    await openTaskWork(
+      {
+        openTaskResult: (_serverId, result) => opened.push(result),
+        openServer: () => {
+          throw new Error('the old pane binding is history');
+        },
+        openAgent: () => {
+          throw new Error('the command has no agent');
+        },
+      },
+      'receiver',
+      finished
+    );
+    expect(opened).toEqual([finished]);
+  });
+
+  test('open commands and agent delegations retain their original destinations', () => {
+    const pane = { kind: 'pane', paneId: 'live', sessionId: 'session' } as const;
+    expect(taskRowDestination(task('c', 'working', 1, { kind: 'command', binding: pane }))).toEqual(
+      pane
+    );
+    for (const state of ['working', 'done'] as const) {
+      expect(
+        taskRowDestination(
+          task('agent', state, 1, {
+            binding: { kind: 'agent_session', agentId: 'codex', asid: 'original' },
+          })
+        )
+      ).toEqual({ kind: 'session', agentId: 'codex', asid: 'original' });
+    }
   });
 });
 

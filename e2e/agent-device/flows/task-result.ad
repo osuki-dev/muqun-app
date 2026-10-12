@@ -1,0 +1,36 @@
+# Saved command tails are read without following a dead peer or reused pane.
+
+# section open
+open "muqun://server-tasks?serverId=muqun-demo"
+wait stable 400 5000
+
+# section peer
+press "${TARGET}"
+
+# section output
+is visible "${TARGET}"
+
+# section exit
+is visible "${TARGET}"
+
+# section return
+press "${TARGET}"
+
+# section pane
+press "${TARGET}"
+
+# section unavailable-open
+open "muqun://server-tasks?serverId=muqun-demo&result=missing-command"
+wait stable 400 5000
+
+# section unavailable
+is visible "${TARGET}"
+
+# section list
+is visible "${TARGET}"
+
+# section close
+back --system
+
+# section closed
+is hidden "${TARGET}"

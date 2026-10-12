@@ -7,7 +7,6 @@ import { useWindowDimensions } from 'react-native';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useLatestRef, useLazyRef } from '@/hooks/use-render-refs';
 import { loadRecordSessions } from '@/lib/gateway-client';
-import { agentSessionListed } from '@/lib/agent-session';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import type { TaskView } from '@/lib/task-ledger';
 import { checkAgentServer } from '@/lib/home-agent-readiness';
@@ -16,7 +15,6 @@ import {
   type HomeAgentEntry,
   type HomeCommand,
   agentOpensInPlace,
-  awaitSessionListed,
   createHomeCommandController,
   embeddedResumeRoute,
   isHomeSshTargetAvailable,
@@ -39,6 +37,7 @@ import { homeAgentHref } from '@/lib/pad-detail';
 import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
 import { homeWorkspaceHandoffStore } from '@/lib/home-workspace-handoff';
+import { useServerTasksStore } from '@/stores/server-tasks';
 
 /**
  * Adapter for the existing Home server open path.
@@ -65,6 +64,7 @@ export type HomeCommandOptions = {
 };
 
 export type HomeCommands = {
+  openTaskResult: (serverId: string, task: TaskView) => void;
   dispatch: (command: HomeCommand) => Promise<HomeCommandResult>;
   resumeServer: (target: HomeServerEntry) => Promise<HomeCommandResult>;
   resumeTarget: (target: HomeTarget) => Promise<HomeCommandResult>;
@@ -138,17 +138,6 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
         const state = useGatewayConnectionStore.getState();
         const target = state.records.find((item) => item.serverId === serverId);
         return checkAgentServer(target, agentId);
-      },
-      // A session tapped the moment its task appeared may not be on its
-      // computer yet: wait for it (5 s at most) rather than open an empty
-      // screen; a computer that keeps saying it has no such session means gone.
-      agentSessionKnown: async (target) => {
-        if (!target.asid) return true;
-        const asid = target.asid;
-        const outcome = await awaitSessionListed((remainingMs) =>
-          agentSessionListed(target.sessionId, asid, remainingMs)
-        );
-        return outcome !== 'gone';
       },
       validateTarget: async (target) => {
         switch (target.kind) {
@@ -351,8 +340,17 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
   );
   const pairGateway = useCallback(() => dispatch({ type: 'pair-gateway' }), [dispatch]);
   const manageConnections = useCallback(() => dispatch({ type: 'manage-connections' }), [dispatch]);
+  const openTaskResult = useCallback(
+    (serverId: string, task: TaskView) => {
+      // Keep the local mirror's output; reading it never requires the peer.
+      useServerTasksStore.getState().upsert(serverId, task);
+      router.push({ pathname: '/server-tasks', params: { serverId, result: task.taskId } });
+    },
+    [router]
+  );
 
   return {
+    openTaskResult,
     dispatch,
     resumeServer,
     resumeTarget,

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from '
 import { AppState } from 'react-native';
 import { useLingui } from '@lingui/react/macro';
 
-import { isDemoActive, isDemoRecord } from '@/lib/demo-gateway';
+import { demoTasks, DEMO_SERVER_ID, isDemoActive, isDemoRecord } from '@/lib/demo-gateway';
 import { configuredGatewayServerId } from '@/lib/gateway-client';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { WS_EVENTS_CAPABILITY, type GatewaySocketState } from '@/lib/gateway-socket';
@@ -62,6 +62,9 @@ export async function resolveTask(serverId: string, taskId: string): Promise<Tas
     .getState()
     .index[serverId]?.tasks.find((task) => task.taskId === taskId);
   if (known) return known;
+  if (isDemoActive() && serverId === DEMO_SERVER_ID) {
+    return demoTasks().find((task) => task.taskId === taskId) ?? null;
+  }
   const route = taskRouteFor(serverId);
   if (!route) return null;
   return fetchTaskView(taskId, route.kind === 'endpoint' ? route.endpoint : undefined);
@@ -126,6 +129,12 @@ export function useServerTasks(serverId: string | null): ServerTasks {
   const requestRef = useRef(0);
 
   const refresh = useCallback(async () => {
+    if (isDemoActive() && serverId === DEMO_SERVER_ID) {
+      replace(serverId, demoTasks(), Date.now());
+      setError(null);
+      setLoading(false);
+      return;
+    }
     // The selected computer is asked through the shared client; any other one
     // through its own stored address, so its tasks are filed under its own id.
     // A computer reached only through an SSH tunnel is not asked from here.

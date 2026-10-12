@@ -38,6 +38,7 @@ import {
   taskRollup,
   taskRowVisual,
   taskRowTitle,
+  taskRowDestination,
   pendingWorking,
   type PendingDispatch,
   type TaskRowVisual,
@@ -450,11 +451,12 @@ function useTaskRowModel({
     canComplete: canMarkTaskDone(task, capabilities),
     acknowledged,
   });
-  // A mirror of work on another computer is named, and opened there -- or,
-  // when this phone is not paired there, says so and does not open.
+  // Live mirrors require pairing there. Finished command output is saved
+  // here and remains readable without a pairing to its receiving computer.
   const mirror = task.binding.kind === 'peer' ? task.binding : null;
   const mirrorName = mirror ? peerName(mirror) : '';
-  const unpaired = mirror !== null && !pairedHere(mirror);
+  const unpaired =
+    taskRowDestination(task).kind !== 'result' && mirror !== null && !pairedHere(mirror);
   const line: TaskRowLineView = unpaired
     ? lineView('', theme.colors.textMuted, t`Open ${mirrorName} on this phone first`)
     : rowLine(task, visual, '', nowMs);

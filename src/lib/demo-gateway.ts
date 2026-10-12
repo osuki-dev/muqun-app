@@ -12,6 +12,7 @@ import type { SessionAsset } from '@/lib/gateway-client';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import type { AgentSessionInfo, AgentSessionSnapshot, TimelineItem } from '@/lib/agent-protocol';
 import { DEMO_PAIRING_SERVER_ID } from '@/lib/pairing';
+import { parseTaskList, type TaskView } from '@/lib/task-ledger';
 import {
   buildDemoTerminalRows,
   demoTerminalRange,
@@ -114,6 +115,46 @@ export function isDemoActive(): boolean {
 
 export function isDemoRecord(record: GatewayRecord | null): boolean {
   return record?.serverId === DEMO_SERVER_ID;
+}
+
+/** Saved command tails whose remote or reused terminal bindings must never open. */
+export function demoTasks(): TaskView[] {
+  return (
+    parseTaskList({
+      tasks: [
+        {
+          task_id: 'demo-command-peer',
+          kind: 'command',
+          origin: 'peer',
+          state: 'done',
+          goal: 'date -u',
+          title: i18n._(msg`Command`),
+          summary: '2030-04-12 08:30:00 UTC',
+          exit_code: 0,
+          updated_ms: 1,
+          peer_reachable: false,
+          binding: {
+            kind: 'peer',
+            peer_id: 'demo-offline-peer',
+            remote_task_id: 'closed-command',
+          },
+        },
+        {
+          task_id: 'demo-command-pane',
+          kind: 'command',
+          origin: 'peer',
+          state: 'done',
+          goal: 'date -u',
+          title: i18n._(msg`Command`),
+          summary: '2030-04-12 08:31:00 UTC',
+          exit_code: 0,
+          updated_ms: 0,
+          // pane-1 exists in the demo but belongs to another shell now.
+          binding: { kind: 'pane', session_id: SESSION_ID, pane_id: 'pane-1', shell_pid: -1 },
+        },
+      ],
+    }) ?? []
+  );
 }
 
 /** Native E2E fixture for the recursive session-tree sheet; never used by live gateways. */

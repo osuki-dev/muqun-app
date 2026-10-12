@@ -2,9 +2,10 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 
 import { ServerTasksSheet } from '@/components/server-tasks-sheet';
+import { TaskResultSheet } from '@/components/task-result-sheet';
 import { useHomeCommands } from '@/hooks/use-home-commands';
 import { taskRouteFor, useServerTasks } from '@/hooks/use-server-tasks';
-import { openTaskWork } from '@/lib/home-computer-cards';
+import { openTaskWork, taskRowDestination } from '@/lib/home-computer-cards';
 import { dismissTaskNotices } from '@/stores/in-app-notifications';
 import { showOpeningWhile, taskOpeningKey } from '@/stores/home-task-cards';
 import { fetchTaskList } from '@/lib/task-ledger';
@@ -16,9 +17,10 @@ import { useServerTasksStore } from '@/stores/server-tasks';
  * `muqun://server-tasks`.
  * - `?serverId=` names the computer (Home's cards); the selected one when absent.
  * - `?root=` lists only that task and the work it started.
+ * - `?result=` reads a finished command's saved output on this computer.
  */
 export default function ServerTasksScreen() {
-  const params = useLocalSearchParams<{ serverId?: string; root?: string }>();
+  const params = useLocalSearchParams<{ serverId?: string; root?: string; result?: string }>();
   const router = useRouter();
   // The sheet closes first, so the session or pane opens where Home would
   // open it; the command must not wait on this route staying focused.
@@ -29,6 +31,7 @@ export default function ServerTasksScreen() {
   const record = records.find((entry) => entry.serverId === serverId) ?? selected;
   const tasks = useServerTasks(serverId);
   const root = typeof params.root === 'string' && params.root ? params.root : undefined;
+  const result = typeof params.result === 'string' && params.result ? params.result : undefined;
   const upsert = useServerTasksStore((state) => state.upsert);
 
   // The whole tree under the root, which may reach past the page the list read.
@@ -50,6 +53,22 @@ export default function ServerTasksScreen() {
     };
   }, [root, serverId, upsert]);
 
+  if (result && serverId) {
+    return (
+      <TaskResultSheet
+        key={`${serverId}/${result}`}
+        serverId={serverId}
+        taskId={result}
+        initialTask={tasks.tasks.find((task) => task.taskId === result)}
+        onBack={() => router.setParams({ result: '' })}
+        onOpenParent={(parent) => {
+          router.back();
+          void openTaskWork(commands, serverId, parent);
+        }}
+      />
+    );
+  }
+
   return (
     <ServerTasksSheet
       serverId={serverId}
@@ -58,10 +77,15 @@ export default function ServerTasksScreen() {
       rootTaskId={root}
       onOpen={(task) => {
         if (!serverId) return;
+        dismissTaskNotices(task);
+        if (taskRowDestination(task).kind === 'result') {
+          // Inspect the saved output in this sheet, without stacking another.
+          router.setParams({ result: task.taskId });
+          return;
+        }
         // Every row opens something (its session, its pane, or its
         // computer), so the sheet always makes way for it.
         router.back();
-        dismissTaskNotices(task);
         showOpeningWhile(
           taskOpeningKey(serverId, task.taskId),
           openTaskWork(commands, serverId, task)
