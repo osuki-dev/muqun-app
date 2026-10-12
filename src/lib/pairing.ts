@@ -1,6 +1,6 @@
 export interface PairingOffer {
   url: string;
-  /** Present for QR offers; resolved from the authenticated pairing flow for manual URLs. */
+  /** Present for QR offers; resolved from the pairing request for manual URLs. */
   serverId?: string;
   /** QR bootstrap secret. Absent when the Gateway owner disables encryption. */
   transportKey?: string;
@@ -18,7 +18,7 @@ export interface ResolvedPairingOffer extends PairingOffer {
   serverId: string;
   /** QR offers pin the advertised URL; manual offers preserve the address the user entered. */
   verifyAdvertisedUrl: boolean;
-  /** Manual pairing requires a sealed claim; legacy keyless QR pairing does not. */
+  /** Require a sealed claim unless the Gateway explicitly reports transport encryption disabled. */
   transportRequired: boolean;
 }
 
@@ -102,6 +102,18 @@ export function validateGatewayUrl(value: string): string {
   return parsed.toString().replace(/\/$/, '');
 }
 
+/** Validate an HTTP(S) pairing target and an optional QR bootstrap key. */
+export function validatePairingTransport(value: string, transportKey?: string): string {
+  const url = validateGatewayUrl(value);
+  if (transportKey !== undefined) {
+    // A canonical unpadded base64url encoding of exactly 32 bytes.
+    if (!/^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$/.test(transportKey)) {
+      throw new Error('Pairing QR contains an invalid encryption key.');
+    }
+  }
+  return url;
+}
+
 export function normalizePairingCode(value: string): string {
   const characters = value
     .trim()
@@ -152,11 +164,9 @@ export function normalizeGatewayUrl(value: string): string {
 /**
  * Validate the untrusted claim before it is persisted as a gateway record.
  *
- * A manually entered address has no QR bootstrap key. It therefore requires
- * the code-sealed response and encrypted transport fields by policy; accepting
- * a token-only payload here would turn a stripped response into a silent
- * downgrade. A keyless QR remains the explicit legacy escape hatch because
- * the owner chose Disabled mode before presenting that QR.
+ * A token-only payload is allowed only when the Gateway's request response
+ * explicitly reports transport encryption disabled. An absent policy keeps
+ * the encrypted-claim default; it does not authenticate a keyless HTTP exchange.
  */
 export function validateClaimedPairing(
   offer: ResolvedPairingOffer,

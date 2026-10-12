@@ -161,7 +161,7 @@ import {
 } from './demo-gateway';
 import type { GatewayRecord } from './gateway-storage';
 import { withSessionAvailability } from './session-switcher';
-import type { PairingPayload } from './pairing';
+import { validatePairingTransport, type PairingPayload } from './pairing';
 import {
   CODE_PAIRING_CLAIM_AAD,
   GATEWAY_TRANSPORT,
@@ -2452,8 +2452,9 @@ function looksLikeEncryptedEnvelope(value: unknown): value is EncryptedEnvelope 
  * is worth sealing (see `codePairingMaterial` and `CODE_PAIRING_CLAIM_AAD`).
  * The request that carries the code stays in the clear either way. Response
  * sealing prevents an accidental plaintext credential response, but it does
- * not make manual pairing over untrusted HTTP resistant to observation: that
- * requires HTTPS, a private encrypted network, or a future PAKE protocol.
+ * not conceal the submitted code. Manual pairing supports HTTP and HTTPS,
+ * including LAN and Tailscale addresses, without inferring network protection
+ * from a hostname or IP range.
  */
 async function pairingRequest<T>(
   gatewayUrl: string,
@@ -2463,14 +2464,22 @@ async function pairingRequest<T>(
   codeMaterial?: Uint8Array,
   requireCodeEncryption = false
 ): Promise<T> {
+  const pairingUrl = validatePairingTransport(gatewayUrl, transportKey);
   const aad = `POST ${path}`;
   const material = transportKey ? pairingKeyMaterial(transportKey) : null;
   const requestEnvelope = material ? encryptJson(material, 'pairing-request', aad, body) : null;
-  const response = await gatewayFetch(`${gatewayUrl}${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(requestEnvelope ?? body),
-  });
+  const response = await fetchWithin(
+    REQUEST_TIMEOUT_MS,
+    'Timed out waiting for the server.',
+    `${pairingUrl}${path}`,
+    {
+      method: 'POST',
+      headers: { ...activeLocaleHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestEnvelope ?? body),
+      credentials: 'omit',
+      redirect: 'error',
+    }
+  );
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}: ${await response.text()}`);
   }
