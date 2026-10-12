@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "id": "cover-courier",
   "name": "Cover Courier",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "author": "Muqun",
   "license": "CC0-1.0",
   "description": "Layered manga courier artwork over ivory or midnight railway paper. Transparent character art, quiet city wallpaper, and readable work surfaces.",
@@ -124,7 +124,7 @@
   "assets": {
     "preview": {
       "path": "assets/preview.webp",
-      "sha256": "da3de10314212732fd888edb7108d874ed4f1b766207c18940b0abf66d96d09c"
+      "sha256": "3c53f4ab016e6f86712fd90ccdbe82581de99ec3c649ebfd87c002d683949f6d"
     },
     "paper-light": {
       "path": "assets/paper-light.webp"

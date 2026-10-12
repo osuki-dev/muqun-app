@@ -158,19 +158,16 @@ export function SettingsThemeSheet({ onClose }: { onClose: () => void }) {
 }
 
 /**
- * The built-in default theme, while the reader has no theme of their own.
+ * The built-in default theme, available alongside the reader's own themes.
  *
- * It is worn while nothing is installed and no pack has been picked
- * (`ThemeRepository.activeInstalled`). Choosing it clears the pick, which is
- * how a reader who tried a colour pack gets back to it. Once a theme is
- * installed it cannot be worn at all, so it is not offered. It is never in the
- * reader's own tab: it is not theirs to remove, and it is not counted.
+ * Choosing it clears the pick (`ThemeRepository.activeInstalled`) and keeps
+ * installed themes, so the reader can return to the default after trying any
+ * pack. It is never in the reader's own tab: it is not theirs to remove, and
+ * it is not counted.
  */
 function BuiltinThemeRow({ onSelect }: { onSelect: () => void }) {
   const { t } = useLingui();
-  const theme = useThemeLibrary((state) =>
-    state.library.themes.length === 0 ? state.defaultTheme : null
-  );
+  const theme = useThemeLibrary((state) => state.defaultTheme);
   const selected = useThemeLibrary(
     (state) => state.active?.installationId === BUILTIN_THEME_INSTALLATION_ID
   );

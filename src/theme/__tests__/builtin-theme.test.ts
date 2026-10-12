@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { isMeasurableHeroUri } from '@/lib/launch-hero-edge';
+import { resolveHomeArtworkAsset } from '@/theme/home-artwork';
 import { isRenderableThemeAsset, registerBundledThemeAssets } from '@/theme/renderable-asset';
 import {
   BUILTIN_THEME_INSTALLATION_ID,
@@ -55,6 +56,20 @@ test('with no theme of their own the reader wears the built-in one', () => {
   });
 });
 
+test('the bundled default resolves Home artwork in phone and Pad, light and dark', () => {
+  const assets = Object.fromEntries(
+    Object.keys(manifest.assets ?? {}).map((id) => [id, `file:///bundle/${id}.webp`])
+  );
+  for (const mode of ['light', 'dark'] as const) {
+    for (const width of ['compact', 'regular'] as const) {
+      const resolution = resolveHomeArtworkAsset({ manifest, assets, mode, width });
+      expect(resolution?.source).toBe(assets[`courier-${mode}`]);
+      expect(resolution?.resolved.slot).toBe('home.artwork');
+      expect(resolution?.resolved.image.opacity).toBe(1);
+    }
+  }
+});
+
 test("a picked colour pack is the reader's own choice and outranks the built-in theme", () => {
   const repository = setup();
   repository.apply({ kind: 'builtin', id: 'dracula' });
@@ -70,12 +85,10 @@ test("a picked colour pack is the reader's own choice and outranks the built-in 
   expect(repository.active()?.installationId).toBe(BUILTIN_THEME_INSTALLATION_ID);
 });
 
-test('one theme of their own takes over, and removing the last brings the built-in back', () => {
+test('installing keeps the default, applying takes over, and removing brings it back', () => {
   const repository = setup();
   const installed = repository.save(mine('first'));
-  // Installed but not applied, with nothing picked: the selection decides,
-  // which is the app's own palette, not the built-in theme.
-  expect(repository.active()).toBeNull();
+  expect(repository.active()?.installationId).toBe(BUILTIN_THEME_INSTALLATION_ID);
   repository.apply({ kind: 'custom', id: installed.id });
   expect(repository.active()?.installationId).toBe(installed.id);
   expect(repository.activeInstalled()?.id).toBe(installed.id);
@@ -84,6 +97,37 @@ test('one theme of their own takes over, and removing the last brings the built-
   expect(repository.snapshot().themes).toEqual([]);
   expect(repository.snapshot().selection).toBeNull();
   expect(repository.active()?.installationId).toBe(BUILTIN_THEME_INSTALLATION_ID);
+});
+
+test('returning to the default preserves installed themes, preferences and undo', () => {
+  const repository = setup();
+  const installed = repository.save(mine('kept'));
+  repository.setSurfaceBackgroundOpacity(installed.id, 0.8);
+  repository.setHomeArtwork(installed.id, 'hidden');
+  repository.apply({ kind: 'custom', id: installed.id });
+  const before = repository.snapshot().themes;
+
+  repository.resetToDefault();
+  expect(repository.snapshot().themes).toEqual(before);
+  expect(repository.snapshot().selection).toBeNull();
+  expect(repository.active()?.installationId).toBe(BUILTIN_THEME_INSTALLATION_ID);
+
+  repository.undo();
+  expect(repository.active()?.installationId).toBe(installed.id);
+  expect(repository.activeInstalled()?.surfaceBackgroundOpacity).toBe(0.8);
+  expect(repository.activeInstalled()?.homeArtwork).toBe('hidden');
+});
+
+test('unapplied installed themes keep the default after hydration', () => {
+  let value: string | undefined;
+  const storage = { read: () => value, write: (next: string) => void (value = next) };
+  const first = new ThemeRepository(storage, () => 'abc', undefined, undefined, builtin());
+  first.hydrate();
+  first.save(mine('saved'));
+  const second = new ThemeRepository(storage, () => 'def', undefined, undefined, builtin());
+  second.hydrate();
+  expect(second.snapshot().themes).toHaveLength(1);
+  expect(second.active()?.installationId).toBe(BUILTIN_THEME_INSTALLATION_ID);
 });
 
 test('removing the last theme keeps a colour pack the reader picked', () => {
