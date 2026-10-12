@@ -23,6 +23,11 @@ const result = spawnSync(
 );
 if (result.error) throw result.error;
 if (result.status !== 0) process.exit(result.status ?? 1);
+// Keep Hot Updater's runtime/templates pinned; use the operator-requested latest Wrangler CLI.
+const workerPackagePath = `${directory}/worker/package.json`;
+const workerPackage = JSON.parse(readFileSync(workerPackagePath, 'utf8'));
+workerPackage.devDependencies.wrangler = 'latest';
+writeFileSync(workerPackagePath, `${JSON.stringify(workerPackage, null, 2)}\n`);
 const path = `${directory}/worker/wrangler.json`;
 const config = JSON.parse(readFileSync(path, 'utf8'));
 config.name = 'muqun-updates';
