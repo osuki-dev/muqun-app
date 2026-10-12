@@ -50,6 +50,8 @@ export function localizedReleaseNotes() {
             // Notes are immutable: a concurrent publisher cannot replace reviewed content.
             if (existing && existing.markdown !== markdown)
               throw new Error('OTA release notes already exist with different content');
+            // Hot Updater 1.0.0 create() synchronously stages the row; the
+            // enclosing transaction promise resolves only after commit.
             if (!existing) tx.create('notes', { release_id: releaseId, locale, markdown });
           }
         });
