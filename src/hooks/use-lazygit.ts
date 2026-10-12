@@ -7,28 +7,31 @@ import { launchPaneLazygit, paneLazygitAvailable } from '@/lib/gateway-client';
 import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
 import { usePanelPickerStore } from '@/stores/panel-picker';
 
-/** One capability-gated launch path for both terminal sheets. */
+/** Capability-gated launch from the Git workspace into its selected checkout. */
 export function useLazygit({
   enabled,
   sessionId,
   paneId,
   serverId,
+  worktree,
 }: {
   enabled: boolean;
   sessionId: string;
   paneId: string;
   serverId?: string;
+  /** Only send when the Gateway advertises pane_lazygit_worktree. */
+  worktree?: string;
 }) {
   const { t } = useLingui();
   const router = useRouter();
   const [availableFor, setAvailableFor] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const launching = useRef(false);
-  const key = `${serverId}:${sessionId}:${paneId}`;
+  const key = JSON.stringify([serverId, sessionId, paneId, worktree]);
   useEffect(() => {
     if (!enabled || !serverId || !paneId || !sessionId) return;
     let cancelled = false;
-    void paneLazygitAvailable(sessionId, paneId).then(
+    void paneLazygitAvailable(sessionId, paneId, worktree).then(
       (available) => {
         if (!cancelled) setAvailableFor(available ? key : null);
       },
@@ -39,7 +42,7 @@ export function useLazygit({
     return () => {
       cancelled = true;
     };
-  }, [enabled, key, paneId, serverId, sessionId]);
+  }, [enabled, key, paneId, serverId, sessionId, worktree]);
   const available = enabled && availableFor === key;
 
   async function open() {
@@ -57,7 +60,7 @@ export function useLazygit({
       () =>
         recoverWith(
           async () => {
-            const target = await launchPaneLazygit(sessionId, paneId);
+            const target = await launchPaneLazygit(sessionId, paneId, worktree);
             if (target.started) select(target.paneId);
             else
               Alert.alert(

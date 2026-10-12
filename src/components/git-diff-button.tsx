@@ -83,7 +83,7 @@ export function GitDiffButton({
   return (
     <PressableScale
       accessibilityRole="button"
-      accessibilityLabel={t`Open changes`}
+      accessibilityLabel={t`Open Git`}
       feedback="selection"
       pressedScale={0.9}
       disabled={disabled}
@@ -105,6 +105,7 @@ export function GitDiffButton({
             paneId,
             serverId,
             canLazygit: capabilities?.includes('pane_lazygit') ? '1' : '0',
+            canLazygitWorktree: capabilities?.includes('pane_lazygit_worktree') ? '1' : '0',
             vcsFiles: gatewaySupportsPaneVcsFiles(capabilities) ? '1' : '0',
             worktrees: gatewaySupportsGitWorktrees(capabilities) ? '1' : '0',
           },

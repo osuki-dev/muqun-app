@@ -2078,11 +2078,15 @@ function paneEnvelopeData(json: unknown): unknown {
 }
 
 /** Optional `pane_lazygit`: observe before offering the host's Git TUI. */
-export async function paneLazygitAvailable(sessionId: string, paneId: string): Promise<boolean> {
+export async function paneLazygitAvailable(
+  sessionId: string,
+  paneId: string,
+  worktree?: string
+): Promise<boolean> {
   if (isDemoActive()) return Boolean(paneId);
   const response = await gatewayFetch(
     gatewayUrl(
-      `/api/sessions/${encodeURIComponent(sessionId)}/panes/${encodeURIComponent(paneId)}/lazygit`
+      `/api/sessions/${encodeURIComponent(sessionId)}/panes/${encodeURIComponent(paneId)}/lazygit${worktree ? `?worktree=${encodeURIComponent(worktree)}` : ''}`
     ),
     { headers: gatewayAuthHeaders() }
   );
@@ -2095,15 +2099,16 @@ export async function paneLazygitAvailable(sessionId: string, paneId: string): P
 
 export async function launchPaneLazygit(
   sessionId: string,
-  paneId: string
+  paneId: string,
+  worktree?: string
 ): Promise<{
   paneId: string;
   started: boolean;
 }> {
-  if (isDemoActive()) return { paneId: demoLaunchLazygit(), started: true };
+  if (isDemoActive()) return { paneId: demoLaunchLazygit(worktree), started: true };
   const response = await gatewayFetch(
     gatewayUrl(
-      `/api/sessions/${encodeURIComponent(sessionId)}/panes/${encodeURIComponent(paneId)}/lazygit`
+      `/api/sessions/${encodeURIComponent(sessionId)}/panes/${encodeURIComponent(paneId)}/lazygit${worktree ? `?worktree=${encodeURIComponent(worktree)}` : ''}`
     ),
     { method: 'POST', headers: gatewayAuthHeaders() }
   );

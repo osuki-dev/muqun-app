@@ -7128,3 +7128,23 @@ msgstr "Ваше сообщение"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "Ваши привязанные компьютеры"
+
+#: src/components/git-diff-button.tsx
+msgid "Open Git"
+msgstr "Открыть Git"
+
+#: src/components/git-diff-view.tsx
+msgid "Opening Lazygit…"
+msgstr "Открываем Lazygit…"
+
+#: src/components/git-diff-view.tsx
+msgid "Update the Gateway to open Lazygit in another worktree."
+msgstr "Обновите Gateway, чтобы открыть Lazygit в другом рабочем дереве"
+
+#: src/components/git-diff-view.tsx
+msgid "Git"
+msgstr "Git"
+
+#: src/components/changes-worktree-list.tsx
+msgid "The selected worktree is no longer available. Choose another checkout."
+msgstr "Выбранное рабочее дерево больше недоступно. Выберите другую рабочую копию"

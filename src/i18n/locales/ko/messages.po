@@ -7128,3 +7128,23 @@ msgstr "내 메시지"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "페어링된 컴퓨터"
+
+#: src/components/git-diff-button.tsx
+msgid "Open Git"
+msgstr "Git 열기"
+
+#: src/components/git-diff-view.tsx
+msgid "Opening Lazygit…"
+msgstr "Lazygit 여는 중…"
+
+#: src/components/git-diff-view.tsx
+msgid "Update the Gateway to open Lazygit in another worktree."
+msgstr "다른 워크트리에서 Lazygit을 열려면 Gateway를 업데이트하세요"
+
+#: src/components/git-diff-view.tsx
+msgid "Git"
+msgstr "Git"
+
+#: src/components/changes-worktree-list.tsx
+msgid "The selected worktree is no longer available. Choose another checkout."
+msgstr "선택한 워크트리를 더 이상 사용할 수 없습니다. 다른 체크아웃을 선택하세요"

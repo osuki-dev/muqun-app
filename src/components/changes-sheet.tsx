@@ -65,6 +65,7 @@ import { describeGatewayFailure } from '@/lib/network-error';
  */
 export interface ChangesSheetProps {
   testID: string;
+  title?: string;
   /** Memoised by the caller: a new adapter is a new source, and reloads. */
   api: ChangesApi;
   /** A file to open and land on once the uncommitted listing has it. */
@@ -73,6 +74,10 @@ export interface ChangesSheetProps {
   worktree?: ChangesWorktreeContext;
   headingActions?: ReactNode;
   checkoutControl?: ReactNode;
+  /** Repository views pinned above the change list. */
+  navigation?: ReactNode;
+  /** Linked checkout list; the Git state survives a repository tab switch. */
+  overview?: ReactNode;
 }
 
 /** One file's fetched patch, per scope and path (`lazy` listings). */
@@ -250,11 +255,14 @@ function ancestorsOf(path: string): string[] {
 
 export const ChangesSheet = memo(function ChangesSheet({
   testID,
+  title,
   api,
   targetPath,
   worktree,
   headingActions,
   checkoutControl,
+  navigation,
+  overview,
 }: ChangesSheetProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -795,7 +803,7 @@ export const ChangesSheet = memo(function ChangesSheet({
   return (
     <SheetScene
       testID={testID}
-      title={t`Changes`}
+      title={title ?? t`Changes`}
       // The caption line is always there, so the list under it never jumps.
       caption={loading && lastCaption ? lastCaption : summary}
       detail={
@@ -810,31 +818,36 @@ export const ChangesSheet = memo(function ChangesSheet({
       headingTrailing={
         <View style={styles.trailing}>
           {headingActions}
-          <PressableScale
-            testID="agent-changes-scope"
-            accessibilityRole="button"
-            accessibilityLabel={t`Choose which changes to show`}
-            accessibilityState={{ expanded: scopeMenuOpen, disabled: !base }}
-            disabled={!base}
-            onPress={() => setScopeMenuOpen((open) => !open)}
-            style={styles.scope}>
-            <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
-              {scopeLabel}
-            </Text>
-            {base ? <ScopeChevron size={14} color={theme.colors.textMuted} /> : null}
-          </PressableScale>
-          <SheetSceneQuietControl
-            testID="changes-refresh"
-            accessibilityLabel={t`Refresh changes`}
-            busy={loading}
-            onPress={refresh}>
-            <RefreshCw size={17} color={theme.colors.textMuted} />
-          </SheetSceneQuietControl>
+          {!overview ? (
+            <>
+              <PressableScale
+                testID="agent-changes-scope"
+                accessibilityRole="button"
+                accessibilityLabel={t`Choose which changes to show`}
+                accessibilityState={{ expanded: scopeMenuOpen, disabled: !base }}
+                disabled={!base}
+                onPress={() => setScopeMenuOpen((open) => !open)}
+                style={styles.scope}>
+                <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
+                  {scopeLabel}
+                </Text>
+                {base ? <ScopeChevron size={14} color={theme.colors.textMuted} /> : null}
+              </PressableScale>
+              <SheetSceneQuietControl
+                testID="changes-refresh"
+                accessibilityLabel={t`Refresh changes`}
+                busy={loading}
+                onPress={refresh}>
+                <RefreshCw size={17} color={theme.colors.textMuted} />
+              </SheetSceneQuietControl>
+            </>
+          ) : null}
         </View>
       }
       header={
         <>
-          {scopeMenuOpen && base ? (
+          {navigation}
+          {!overview && scopeMenuOpen && base ? (
             <AgentActionMenu
               testID="agent-changes-scope-menu"
               surface="ground"
@@ -894,58 +907,60 @@ export const ChangesSheet = memo(function ChangesSheet({
         error states are drawn inside `DiffRowList` -- or the native form sheet
         finds no scroll view and sizes itself to its contents.
       */}
-      <View style={styles.body}>
-        <DiffRowList
-          rows={rows}
-          colors={colors}
-          // The gutter stays opaque, not through the artwork-opacity slider:
-          // it is pinned over code panning sideways under it, and a
-          // see-through column shows that code behind the line numbers.
-          // Opacity audit: legibility -- the gutter sits over moving code and
-          // must hide it whatever the slider says.
-          gutterFill={theme.colors.surface}
-          headerFill={surfaceBackground(theme.colors.surface)}
-          surfaceFill="transparent"
-          // One list of changes against `HEAD`, not a staged/unstaged split.
-          showSide={false}
-          onToggleFile={toggleFile}
-          onShowMore={showMore}
-          listRef={listRef}
-          tree={treeHandlers}
-          fallback={
-            empty === 'loading' ? (
-              <ActivityIndicator size="small" color={theme.colors.textMuted} />
-            ) : error ? (
-              <>
+      {overview ?? (
+        <View style={styles.body}>
+          <DiffRowList
+            rows={rows}
+            colors={colors}
+            // The gutter stays opaque, not through the artwork-opacity slider:
+            // it is pinned over code panning sideways under it, and a
+            // see-through column shows that code behind the line numbers.
+            // Opacity audit: legibility -- the gutter sits over moving code and
+            // must hide it whatever the slider says.
+            gutterFill={theme.colors.surface}
+            headerFill={surfaceBackground(theme.colors.surface)}
+            surfaceFill="transparent"
+            // One list of changes against `HEAD`, not a staged/unstaged split.
+            showSide={false}
+            onToggleFile={toggleFile}
+            onShowMore={showMore}
+            listRef={listRef}
+            tree={treeHandlers}
+            fallback={
+              empty === 'loading' ? (
+                <ActivityIndicator size="small" color={theme.colors.textMuted} />
+              ) : error ? (
+                <>
+                  <Text
+                    testID="changes-error"
+                    variant="bodySmall"
+                    color={theme.colors.textMuted}
+                    style={styles.emptyText}>
+                    {error}
+                  </Text>
+                  <PressableScale
+                    accessibilityRole="button"
+                    accessibilityLabel={t`Try again`}
+                    onPress={retry}
+                    style={styles.retry}>
+                    <Text variant="caption" color={theme.colors.primary}>
+                      <Trans>Try again</Trans>
+                    </Text>
+                  </PressableScale>
+                </>
+              ) : (
                 <Text
-                  testID="changes-error"
+                  testID="agent-vcs-diff-empty"
                   variant="bodySmall"
                   color={theme.colors.textMuted}
                   style={styles.emptyText}>
-                  {error}
+                  {emptyText}
                 </Text>
-                <PressableScale
-                  accessibilityRole="button"
-                  accessibilityLabel={t`Try again`}
-                  onPress={retry}
-                  style={styles.retry}>
-                  <Text variant="caption" color={theme.colors.primary}>
-                    <Trans>Try again</Trans>
-                  </Text>
-                </PressableScale>
-              </>
-            ) : (
-              <Text
-                testID="agent-vcs-diff-empty"
-                variant="bodySmall"
-                color={theme.colors.textMuted}
-                style={styles.emptyText}>
-                {emptyText}
-              </Text>
-            )
-          }
-        />
-      </View>
+              )
+            }
+          />
+        </View>
+      )}
     </SheetScene>
   );
 });

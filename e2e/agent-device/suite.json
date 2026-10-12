@@ -40,8 +40,8 @@
       "platforms": ["ios", "android"]
     },
     {
-      "name": "lazygit-quick-actions",
-      "program": "flows/lazygit-quick-actions",
+      "name": "git-single-entry",
+      "program": "flows/git-single-entry",
       "tags": ["full", "terminal", "files"],
       "platforms": ["ios", "android"]
     },
@@ -297,7 +297,7 @@
       },
       {
         "target": {
-          "text": "linked-checkout · feat/linked-checkout(?:\\\\n|\\n)/Users/demo/code/muqun-worktrees/linked-checkout"
+          "id": "changes-worktree-%2FUsers%2Fdemo%2Fcode%2Fmuqun-worktrees%2Flinked-checkout"
         },
         "mode": "press",
         "run": "flows/git-worktrees.ad#press"
@@ -319,8 +319,8 @@
       },
       {
         "target": { "text": "Open Lazygit" },
-        "mode": "hidden",
-        "run": "flows/git-worktrees.ad#hidden"
+        "mode": "visible",
+        "run": "flows/git-worktrees.ad#visible"
       },
       {
         "target": { "text": "Refresh changes" },
@@ -338,7 +338,7 @@
         "run": "flows/git-worktrees.ad#press"
       },
       {
-        "target": { "text": "Current checkout" },
+        "target": { "id": "changes-worktree-current" },
         "mode": "press",
         "run": "flows/git-worktrees.ad#press"
       },
@@ -1347,9 +1347,10 @@
         ]
       }
     ],
-    "flows/lazygit-quick-actions": [
+    "flows/git-single-entry": [
       { "include": "subflows/open-demo" },
       { "run": "flows/lazygit.ad#quick-actions" },
+      { "run": "flows/lazygit.ad#changes" },
       { "run": "flows/lazygit.ad#verify" },
       { "run": "flows/lazygit.ad#close" }
     ],
@@ -2076,7 +2077,7 @@
       },
       {
         "target": {
-          "text": "Open changes"
+          "text": "Open Git"
         },
         "mode": "press",
         "run": "flows/git-diff.ad#s1"
@@ -2206,7 +2207,7 @@
       },
       {
         "target": {
-          "text": "Changes"
+          "text": "Git"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -2217,7 +2218,7 @@
       },
       {
         "target": {
-          "text": "Open changes"
+          "text": "Open Git"
         },
         "mode": "visible",
         "timeout": 8000,

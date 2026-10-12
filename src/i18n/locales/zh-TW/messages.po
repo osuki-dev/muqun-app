@@ -7128,3 +7128,23 @@ msgstr "你的訊息"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "你已配對的電腦"
+
+#: src/components/git-diff-button.tsx
+msgid "Open Git"
+msgstr "開啟 Git"
+
+#: src/components/git-diff-view.tsx
+msgid "Opening Lazygit…"
+msgstr "正在開啟 Lazygit…"
+
+#: src/components/git-diff-view.tsx
+msgid "Update the Gateway to open Lazygit in another worktree."
+msgstr "更新 Gateway 後即可在其他工作樹中開啟 Lazygit"
+
+#: src/components/git-diff-view.tsx
+msgid "Git"
+msgstr "Git"
+
+#: src/components/changes-worktree-list.tsx
+msgid "The selected worktree is no longer available. Choose another checkout."
+msgstr "所選工作樹已無法使用，請選擇其他檢出目錄"

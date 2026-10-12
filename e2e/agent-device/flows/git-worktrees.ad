@@ -1,7 +1,7 @@
-# Offline read-only linked-checkout browsing; no real pane or checkout moves.
+# Offline linked-checkout browsing and Git TUI availability; no real checkout moves.
 
 # section open
-open "muqun://git-diff?sessionId=default&paneId=pane-1&worktrees=1"
+open "muqun://git-diff?sessionId=default&paneId=pane-1&worktrees=1&serverId=muqun-demo&canLazygit=1&canLazygitWorktree=1"
 wait stable 400 8000
 
 # section visible
