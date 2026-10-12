@@ -538,6 +538,10 @@ msgctxt "git file status"
 msgid "Added"
 msgstr "추가됨"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Advanced agent access"
+msgstr "고급 에이전트 접근 설정"
+
 #: src/app/settings-voice.tsx
 msgid "After recording"
 msgstr "녹음 후 변환"
@@ -546,6 +550,10 @@ msgstr "녹음 후 변환"
 #: src/components/new-task-sheet.tsx
 msgid "Agent"
 msgstr "에이전트"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Agent access"
+msgstr "에이전트 접근 권한"
 
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
@@ -673,8 +681,8 @@ msgid "and {rest} more"
 msgstr "외 {rest}개"
 
 #: src/components/settings-server-capabilities.tsx
-msgid "Android builds"
-msgstr "Android 빌드"
+#~ msgid "Android builds"
+#~ msgstr "Android 빌드"
 
 #: src/components/task-row.tsx
 msgid "another computer"
@@ -743,6 +751,7 @@ msgid "Apply theme"
 msgstr "테마 적용"
 
 #: src/components/terminal-theme-drop.tsx
+#: src/components/update-status-banner.tsx
 msgid "Applying…"
 msgstr "적용 중…"
 
@@ -1092,6 +1101,10 @@ msgstr "다시 확인"
 msgid "Check device authentication settings and try again."
 msgstr "기기 인증 설정을 확인한 뒤 다시 시도하세요"
 
+#: src/components/home-composer-dock.tsx
+msgid "Check status"
+msgstr "상태 확인"
+
 #: src/hooks/use-lazygit.ts
 msgid "Check that lazygit is installed on this computer and this pane is in a Git repository."
 msgstr "이 컴퓨터에 lazygit이 설치되어 있고 이 창이 Git 저장소 안에 있는지 확인하세요"
@@ -1104,6 +1117,10 @@ msgstr "다시 보내기 전에 도우미를 확인하세요. 이미 요청을 �
 msgid "Check the repository URL, branch and theme file"
 msgstr "저장소 URL, 브랜치와 테마 파일을 확인하세요"
 
+#: src/components/home-composer-dock.tsx
+msgid "Check this computer's tasks. This request has not been sent again."
+msgstr "이 컴퓨터의 작업을 확인하세요. 이 요청은 다시 전송되지 않았습니다"
+
 #: src/components/theme-browse-sheet.tsx
 msgid "Check your connection and try again."
 msgstr "연결을 확인하고 다시 시도하세요"
@@ -1112,6 +1129,7 @@ msgstr "연결을 확인하고 다시 시도하세요"
 msgid "Checking system authentication…"
 msgstr "시스템 인증 확인 중…"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/settings-font-sheet.tsx
 msgid "Checking…"
@@ -1317,6 +1335,8 @@ msgid "Colour mode"
 msgstr "색상 모드"
 
 #: src/app/commands.tsx
+#: src/components/task-result-sheet.tsx
+#: src/lib/demo-gateway.ts
 msgid "Command"
 msgstr "명령"
 
@@ -1813,6 +1833,10 @@ msgstr "유지할 수 없습니다"
 msgid "Could not list this computer's agents."
 msgstr "이 컴퓨터의 에이전트 목록을 가져오지 못했습니다"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Could not load agent access"
+msgstr "에이전트 접근 권한을 불러오지 못했습니다"
+
 #: src/components/settings-server-capabilities.tsx
 msgid "Could not load capabilities"
 msgstr "기능을 불러올 수 없습니다"
@@ -1843,8 +1867,8 @@ msgid "Could not load this file's changes."
 msgstr "이 파일의 변경 사항을 불러오지 못했습니다"
 
 #: src/components/settings-mcp-tokens.tsx
-msgid "Could not load tokens"
-msgstr "토큰을 불러올 수 없습니다"
+#~ msgid "Could not load tokens"
+#~ msgstr "토큰을 불러올 수 없습니다"
 
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
@@ -2207,6 +2231,7 @@ msgstr "전송 모드: 대기열. 탭하여 실시간 개입(Steer)으로 전환
 msgid "Delivery mode: Steer (real-time). Tap to switch to Queue."
 msgstr "전송 모드: 실시간 개입(Steer). 탭하여 대기열로 전환"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Delivery not confirmed"
 msgstr "전달이 확인되지 않음"
@@ -2294,7 +2319,6 @@ msgstr "연결이 끊겼습니다"
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/task-row.tsx
-#: src/components/update-status-banner.tsx
 msgid "Dismiss"
 msgstr "닫기"
 
@@ -2319,7 +2343,6 @@ msgstr "자리를 비운 사이의 변화 닫기"
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/open-web-service-sheet.tsx
-#: src/components/voice-input-button.tsx
 #: src/i18n/labels.ts
 msgid "Done"
 msgstr "완료"
@@ -2489,6 +2512,7 @@ msgstr "변경된 모든 파일을 줄 수 합계와 함께 하나의 폴더 트
 msgid "Every screen in the app."
 msgstr "앱의 모든 화면"
 
+#: src/components/task-result-sheet.tsx
 #: src/components/task-row.tsx
 msgid "exit {code}"
 msgstr "종료 {code}"
@@ -3069,8 +3093,8 @@ msgid "Interrupt what this agent is doing."
 msgstr "이 에이전트가 하고 있는 작업을 중단합니다"
 
 #: src/components/settings-server-capabilities.tsx
-msgid "iOS builds"
-msgstr "iOS 빌드"
+#~ msgid "iOS builds"
+#~ msgstr "iOS 빌드"
 
 #: src/lib/local-authentication.ts
 msgid "iris recognition"
@@ -3217,6 +3241,10 @@ msgstr "마지막 확인: 방금"
 #: src/components/settings-mcp-tokens.tsx
 msgid "Last used {when}"
 msgstr "마지막 사용 {when}"
+
+#: src/components/update-status-banner.tsx
+msgid "Later"
+msgstr "나중에"
 
 #: src/components/agent-workbench.tsx
 #: src/components/skia-terminal.tsx
@@ -3372,6 +3400,10 @@ msgstr "컴퓨터에 연결할 수 있는지 확인한 후 다시 시도하세�
 msgid "Manage"
 msgstr "관리"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Manage access granted to coding agents through MCP. Revoking access stops that agent from using this computer's tools."
+msgstr "MCP를 통해 코딩 에이전트에 부여된 접근 권한을 관리합니다. 권한을 취소하면 해당 에이전트는 이 컴퓨터의 도구를 사용할 수 없습니다"
+
 #: src/components/session-map.tsx
 msgid "Manage computers"
 msgstr "컴퓨터 관리"
@@ -3397,8 +3429,8 @@ msgid "Mascot"
 msgstr "마스코트"
 
 #: src/components/settings-mcp-tokens.tsx
-msgid "MCP tokens"
-msgstr "MCP 토큰"
+#~ msgid "MCP tokens"
+#~ msgstr "MCP 토큰"
 
 #. placeholder {0}: computer.name
 #. placeholder {0}: hit.path
@@ -3672,6 +3704,10 @@ msgstr "다음 알림"
 msgid "Next session"
 msgstr "다음 세션"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "No agent access grants"
+msgstr "에이전트에 부여된 접근 권한이 없습니다"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
 msgstr "실행 중인 에이전트 없음"
@@ -3691,6 +3727,10 @@ msgstr "스캔할 카메라가 없습니다"
 #: src/components/pairing-camera.tsx
 msgid "No camera was found on this device."
 msgstr "이 기기에서 카메라를 찾지 못했습니다"
+
+#: src/components/update-status-banner.tsx
+msgid "No changelog was provided for this update."
+msgstr "이 업데이트에는 변경 내역이 제공되지 않았습니다"
 
 #: src/components/change-tree-rows.tsx
 #: src/components/changes-sheet.tsx
@@ -3762,6 +3802,7 @@ msgstr "이 호스트에는 모델이 없습니다"
 msgid "No other assistants in this session yet."
 msgstr "이 세션에 아직 다른 어시스턴트가 없습니다"
 
+#: src/components/task-result-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
 msgid "No output"
 msgstr "출력 없음"
@@ -3860,8 +3901,8 @@ msgid "No themes match “{0}”."
 msgstr "“{0}”와 일치하는 테마가 없습니다"
 
 #: src/components/settings-mcp-tokens.tsx
-msgid "No tokens"
-msgstr "토큰 없음"
+#~ msgid "No tokens"
+#~ msgstr "토큰 없음"
 
 #: src/components/agent-context-sheet.tsx
 msgid "no window reported for this model"
@@ -4118,6 +4159,7 @@ msgid "Open on-screen keyboard"
 msgstr "화면 키보드 열기"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/task-result-sheet.tsx
 msgid "Open parent"
 msgstr "상위 세션 열기"
 
@@ -4240,6 +4282,7 @@ msgid "Other computers"
 msgstr "다른 컴퓨터"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/task-result-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
 msgid "Output"
 msgstr "출력"
@@ -4695,6 +4738,7 @@ msgstr "녹음하지 못했습니다"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "새로고침"
@@ -4707,9 +4751,17 @@ msgstr "변경 사항 새로 고침"
 msgid "Refresh files"
 msgstr "파일 새로 고침"
 
+#: src/lib/terminal-history-pull.ts
+msgid "Refresh history to load the current snapshot."
+msgstr "현재 스냅샷을 불러오려면 기록을 새로고침하세요"
+
 #: src/components/collaboration-notice.tsx
 msgid "Refresh output"
 msgstr "출력 새로 고침"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Refresh terminal history"
+msgstr "터미널 기록 새로고침"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "Refresh worktrees"
@@ -4845,6 +4897,7 @@ msgstr "숨긴 기본 항목 복원"
 #: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
+#: src/components/update-status-banner.tsx
 #: src/hooks/use-home-commands.ts
 msgid "Retry"
 msgstr "재시도"
@@ -5011,8 +5064,8 @@ msgid "Running"
 msgstr "실행 중"
 
 #: src/components/settings-server-capabilities.tsx
-msgid "Rust"
-msgstr "Rust"
+#~ msgid "Rust"
+#~ msgstr "Rust"
 
 #: src/app/settings-voice.tsx
 #: src/components/agent-sessions-sheet.tsx
@@ -5763,8 +5816,8 @@ msgid "Submit"
 msgstr "제출"
 
 #: src/components/settings-server-capabilities.tsx
-msgid "Suitable for"
-msgstr "적합한 작업"
+#~ msgid "Suitable for"
+#~ msgstr "적합한 작업"
 
 #: src/i18n/labels.ts
 msgid "Summarise progress"
@@ -5891,6 +5944,10 @@ msgstr "탭하여 다시 시도"
 msgid "Tap to retry"
 msgstr "눌러서 다시 시도"
 
+#: src/components/home-composer-dock.tsx
+msgid "Task accepted. Send status could not be saved."
+msgstr "작업이 접수되었지만 전송 상태를 저장하지 못했습니다"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for {assignmentLabel}"
 msgstr "{assignmentLabel}에게 줄 작업"
@@ -5908,6 +5965,7 @@ msgstr "작업 설정"
 #: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-todo-block.tsx
 #: src/components/server-tasks-sheet.tsx
+#: src/components/task-result-sheet.tsx
 msgid "Tasks"
 msgstr "작업"
 
@@ -5952,6 +6010,10 @@ msgstr "터미널 명령"
 #: src/app/commands.tsx
 msgid "Terminal commands and key combinations"
 msgstr "터미널 명령과 키 조합"
+
+#: src/lib/terminal-history-pull.ts
+msgid "Terminal history changed"
+msgstr "터미널 기록이 변경되었습니다"
 
 #: src/components/settings-terminal.tsx
 msgid "Terminal key row"
@@ -6103,6 +6165,10 @@ msgstr "키를 읽을 수 없습니다({0}). 키와 암호 문구를 확인하�
 #: src/components/session-map.tsx
 msgid "The new terminal was created, but could not open it."
 msgstr "새 터미널이 생성되었지만 열 수 없습니다"
+
+#: src/components/home-composer-dock.tsx
+msgid "The previous send could not be checked."
+msgstr "이전 전송 상태를 확인하지 못했습니다"
 
 #: src/components/launch-intro.tsx
 msgid "The question comes to you"
@@ -6435,6 +6501,10 @@ msgstr "이 테마에는 이미지가 포함되어 있어 적용 전에 이미�
 msgid "This tool call is no longer available."
 msgstr "이 도구 호출은 더 이상 사용할 수 없습니다"
 
+#: src/components/update-status-banner.tsx
+msgid "This update is required to continue using Muqun. Read what's new, then update when you're ready."
+msgstr "Muqun을 계속 사용하려면 이 업데이트가 필요합니다. 변경 내용을 읽고 준비가 되면 업데이트하세요"
+
 #: src/components/session-map.tsx
 msgid "This workspace has no groups yet."
 msgstr "이 작업 공간에는 아직 그룹이 없습니다"
@@ -6461,8 +6531,8 @@ msgid "Today"
 msgstr "오늘"
 
 #: src/components/settings-mcp-tokens.tsx
-msgid "Tokens coding agents use to reach this computer."
-msgstr "코딩 에이전트가 이 컴퓨터에 접속할 때 사용하는 토큰입니다"
+#~ msgid "Tokens coding agents use to reach this computer."
+#~ msgstr "코딩 에이전트가 이 컴퓨터에 접속할 때 사용하는 토큰입니다"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -6583,6 +6653,7 @@ msgid "Type on the simulator"
 msgstr "시뮬레이터에 입력"
 
 #: src/components/settings-server-capabilities.tsx
+#: src/components/task-result-sheet.tsx
 msgid "Unavailable"
 msgstr "사용할 수 없음"
 
@@ -6702,8 +6773,17 @@ msgid "Up arrow"
 msgstr "위쪽 화살표"
 
 #: src/components/theme-browse-sheet.tsx
+#: src/components/update-status-banner.tsx
 msgid "Update"
 msgstr "업데이트"
+
+#: src/components/update-status-banner.tsx
+msgid "Update available"
+msgstr "업데이트가 있습니다"
+
+#: src/components/update-status-banner.tsx
+msgid "Update download failed. Try again."
+msgstr "업데이트 다운로드에 실패했습니다. 다시 시도하세요"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Herdr on the computer to 0.9.0 or newer, then restart the session, to assign a task to another assistant"
@@ -6717,6 +6797,10 @@ msgstr "다른 어시스턴트에게 작업을 맡기려면 컴퓨터의 Muqun G
 #: src/components/new-task-action.tsx
 msgid "Update Muqun Gateway on this host to use {agentName}."
 msgstr "{agentName}을(를) 사용하려면 이 호스트의 Muqun Gateway를 업데이트하세요"
+
+#: src/components/update-status-banner.tsx
+msgid "Update now"
+msgstr "지금 업데이트"
 
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"
@@ -6861,8 +6945,8 @@ msgid "Waiting to send"
 msgstr "전송 대기 중"
 
 #: src/components/settings-server-capabilities.tsx
-msgid "Web"
-msgstr "웹"
+#~ msgid "Web"
+#~ msgstr "웹"
 
 #: src/components/agent-workbench.tsx
 msgid "Welcome to {agentName}"

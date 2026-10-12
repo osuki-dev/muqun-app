@@ -538,6 +538,10 @@ msgctxt "git file status"
 msgid "Added"
 msgstr "Đã thêm"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Advanced agent access"
+msgstr "Quyền truy cập nâng cao của tác nhân"
+
 #: src/app/settings-voice.tsx
 msgid "After recording"
 msgstr "Sau khi ghi âm"
@@ -546,6 +550,10 @@ msgstr "Sau khi ghi âm"
 #: src/components/new-task-sheet.tsx
 msgid "Agent"
 msgstr "Tác nhân"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Agent access"
+msgstr "Quyền truy cập của tác nhân"
 
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
@@ -673,8 +681,8 @@ msgid "and {rest} more"
 msgstr "và {rest} nữa"
 
 #: src/components/settings-server-capabilities.tsx
-msgid "Android builds"
-msgstr "Bản dựng Android"
+#~ msgid "Android builds"
+#~ msgstr "Bản dựng Android"
 
 #: src/components/task-row.tsx
 msgid "another computer"
@@ -743,6 +751,7 @@ msgid "Apply theme"
 msgstr "Áp dụng giao diện"
 
 #: src/components/terminal-theme-drop.tsx
+#: src/components/update-status-banner.tsx
 msgid "Applying…"
 msgstr "Đang áp dụng…"
 
@@ -1092,6 +1101,10 @@ msgstr "Kiểm tra lại"
 msgid "Check device authentication settings and try again."
 msgstr "Hãy kiểm tra cài đặt xác thực của thiết bị và thử lại"
 
+#: src/components/home-composer-dock.tsx
+msgid "Check status"
+msgstr "Kiểm tra trạng thái"
+
 #: src/hooks/use-lazygit.ts
 msgid "Check that lazygit is installed on this computer and this pane is in a Git repository."
 msgstr "Hãy kiểm tra lazygit đã được cài trên máy tính này và pane này nằm trong một kho Git"
@@ -1104,6 +1117,10 @@ msgstr "Kiểm tra trợ lý trước khi gửi lại; trợ lý có thể đã 
 msgid "Check the repository URL, branch and theme file"
 msgstr "Kiểm tra URL kho mã, nhánh và tệp giao diện"
 
+#: src/components/home-composer-dock.tsx
+msgid "Check this computer's tasks. This request has not been sent again."
+msgstr "Hãy kiểm tra các tác vụ trên máy tính này. Yêu cầu này chưa được gửi lại"
+
 #: src/components/theme-browse-sheet.tsx
 msgid "Check your connection and try again."
 msgstr "Kiểm tra kết nối và thử lại"
@@ -1112,6 +1129,7 @@ msgstr "Kiểm tra kết nối và thử lại"
 msgid "Checking system authentication…"
 msgstr "Đang kiểm tra xác thực hệ thống…"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/settings-font-sheet.tsx
 msgid "Checking…"
@@ -1317,6 +1335,8 @@ msgid "Colour mode"
 msgstr "Chế độ màu"
 
 #: src/app/commands.tsx
+#: src/components/task-result-sheet.tsx
+#: src/lib/demo-gateway.ts
 msgid "Command"
 msgstr "Lệnh"
 
@@ -1813,6 +1833,10 @@ msgstr "Không thể giữ lại"
 msgid "Could not list this computer's agents."
 msgstr "Không thể liệt kê các tác tử của máy tính này"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Could not load agent access"
+msgstr "Không tải được quyền truy cập của tác nhân"
+
 #: src/components/settings-server-capabilities.tsx
 msgid "Could not load capabilities"
 msgstr "Không tải được khả năng"
@@ -1843,8 +1867,8 @@ msgid "Could not load this file's changes."
 msgstr "Không thể tải thay đổi của tệp này"
 
 #: src/components/settings-mcp-tokens.tsx
-msgid "Could not load tokens"
-msgstr "Không tải được token"
+#~ msgid "Could not load tokens"
+#~ msgstr "Không tải được token"
 
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
@@ -2207,6 +2231,7 @@ msgstr "Chế độ gửi: Xếp hàng. Chạm để chuyển sang Can thiệp (
 msgid "Delivery mode: Steer (real-time). Tap to switch to Queue."
 msgstr "Chế độ gửi: Can thiệp trực tiếp (Steer). Chạm để chuyển sang Xếp hàng"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Delivery not confirmed"
 msgstr "Chưa xác nhận được việc gửi"
@@ -2294,7 +2319,6 @@ msgstr "Đã ngắt kết nối"
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/task-row.tsx
-#: src/components/update-status-banner.tsx
 msgid "Dismiss"
 msgstr "Bỏ qua"
 
@@ -2319,7 +2343,6 @@ msgstr "Bỏ qua những gì đã xảy ra khi bạn vắng mặt"
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/open-web-service-sheet.tsx
-#: src/components/voice-input-button.tsx
 #: src/i18n/labels.ts
 msgid "Done"
 msgstr "Xong"
@@ -2489,6 +2512,7 @@ msgstr "Mọi tệp đã thay đổi trong một cây thư mục kèm tổng s�
 msgid "Every screen in the app."
 msgstr "Mọi màn hình trong ứng dụng"
 
+#: src/components/task-result-sheet.tsx
 #: src/components/task-row.tsx
 msgid "exit {code}"
 msgstr "thoát {code}"
@@ -3069,8 +3093,8 @@ msgid "Interrupt what this agent is doing."
 msgstr "Ngắt việc tác tử này đang làm"
 
 #: src/components/settings-server-capabilities.tsx
-msgid "iOS builds"
-msgstr "Bản dựng iOS"
+#~ msgid "iOS builds"
+#~ msgstr "Bản dựng iOS"
 
 #: src/lib/local-authentication.ts
 msgid "iris recognition"
@@ -3217,6 +3241,10 @@ msgstr "Thấy lần cuối vừa xong"
 #: src/components/settings-mcp-tokens.tsx
 msgid "Last used {when}"
 msgstr "Dùng lần cuối {when}"
+
+#: src/components/update-status-banner.tsx
+msgid "Later"
+msgstr "Để sau"
 
 #: src/components/agent-workbench.tsx
 #: src/components/skia-terminal.tsx
@@ -3372,6 +3400,10 @@ msgstr "Hãy đảm bảo máy tính có thể kết nối, rồi thử lại"
 msgid "Manage"
 msgstr "Quản lý"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Manage access granted to coding agents through MCP. Revoking access stops that agent from using this computer's tools."
+msgstr "Quản lý quyền truy cập được cấp cho các tác nhân lập trình qua MCP. Thu hồi quyền truy cập sẽ ngăn tác nhân đó sử dụng các công cụ của máy tính này"
+
 #: src/components/session-map.tsx
 msgid "Manage computers"
 msgstr "Quản lý máy tính"
@@ -3397,8 +3429,8 @@ msgid "Mascot"
 msgstr "Linh vật"
 
 #: src/components/settings-mcp-tokens.tsx
-msgid "MCP tokens"
-msgstr "Token MCP"
+#~ msgid "MCP tokens"
+#~ msgstr "Token MCP"
 
 #. placeholder {0}: computer.name
 #. placeholder {0}: hit.path
@@ -3672,6 +3704,10 @@ msgstr "Thông báo tiếp theo"
 msgid "Next session"
 msgstr "Phiên tiếp theo"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "No agent access grants"
+msgstr "Chưa cấp quyền truy cập cho tác nhân nào"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
 msgstr "Không có tác tử nào đang chạy"
@@ -3691,6 +3727,10 @@ msgstr "Không có camera để quét"
 #: src/components/pairing-camera.tsx
 msgid "No camera was found on this device."
 msgstr "Không tìm thấy camera trên thiết bị này"
+
+#: src/components/update-status-banner.tsx
+msgid "No changelog was provided for this update."
+msgstr "Bản cập nhật này không có nhật ký thay đổi"
 
 #: src/components/change-tree-rows.tsx
 #: src/components/changes-sheet.tsx
@@ -3762,6 +3802,7 @@ msgstr "Không có mô hình trên máy chủ này"
 msgid "No other assistants in this session yet."
 msgstr "Phiên này chưa có trợ lý nào khác"
 
+#: src/components/task-result-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
 msgid "No output"
 msgstr "Không có đầu ra"
@@ -3860,8 +3901,8 @@ msgid "No themes match “{0}”."
 msgstr "Không có chủ đề nào khớp “{0}”"
 
 #: src/components/settings-mcp-tokens.tsx
-msgid "No tokens"
-msgstr "Không có token"
+#~ msgid "No tokens"
+#~ msgstr "Không có token"
 
 #: src/components/agent-context-sheet.tsx
 msgid "no window reported for this model"
@@ -4118,6 +4159,7 @@ msgid "Open on-screen keyboard"
 msgstr "Mở bàn phím trên màn hình"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/task-result-sheet.tsx
 msgid "Open parent"
 msgstr "Mở phiên cha"
 
@@ -4240,6 +4282,7 @@ msgid "Other computers"
 msgstr "Máy tính khác"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/task-result-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
 msgid "Output"
 msgstr "Đầu ra"
@@ -4695,6 +4738,7 @@ msgstr "Ghi âm thất bại"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "Làm mới"
@@ -4707,9 +4751,17 @@ msgstr "Làm mới thay đổi"
 msgid "Refresh files"
 msgstr "Làm mới tệp"
 
+#: src/lib/terminal-history-pull.ts
+msgid "Refresh history to load the current snapshot."
+msgstr "Làm mới lịch sử để tải ảnh chụp hiện tại"
+
 #: src/components/collaboration-notice.tsx
 msgid "Refresh output"
 msgstr "Làm mới đầu ra"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Refresh terminal history"
+msgstr "Làm mới lịch sử terminal"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "Refresh worktrees"
@@ -4845,6 +4897,7 @@ msgstr "Khôi phục mặc định đã ẩn"
 #: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
+#: src/components/update-status-banner.tsx
 #: src/hooks/use-home-commands.ts
 msgid "Retry"
 msgstr "Thử lại"
@@ -5011,8 +5064,8 @@ msgid "Running"
 msgstr "Đang chạy"
 
 #: src/components/settings-server-capabilities.tsx
-msgid "Rust"
-msgstr "Rust"
+#~ msgid "Rust"
+#~ msgstr "Rust"
 
 #: src/app/settings-voice.tsx
 #: src/components/agent-sessions-sheet.tsx
@@ -5763,8 +5816,8 @@ msgid "Submit"
 msgstr "Gửi"
 
 #: src/components/settings-server-capabilities.tsx
-msgid "Suitable for"
-msgstr "Phù hợp cho"
+#~ msgid "Suitable for"
+#~ msgstr "Phù hợp cho"
 
 #: src/i18n/labels.ts
 msgid "Summarise progress"
@@ -5891,6 +5944,10 @@ msgstr "chạm để thử lại"
 msgid "Tap to retry"
 msgstr "Nhấn để thử lại"
 
+#: src/components/home-composer-dock.tsx
+msgid "Task accepted. Send status could not be saved."
+msgstr "Tác vụ đã được tiếp nhận. Không thể lưu trạng thái gửi"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for {assignmentLabel}"
 msgstr "Tác vụ cho {assignmentLabel}"
@@ -5908,6 +5965,7 @@ msgstr "Tùy chọn tác vụ"
 #: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-todo-block.tsx
 #: src/components/server-tasks-sheet.tsx
+#: src/components/task-result-sheet.tsx
 msgid "Tasks"
 msgstr "Nhiệm vụ"
 
@@ -5952,6 +6010,10 @@ msgstr "Lệnh terminal"
 #: src/app/commands.tsx
 msgid "Terminal commands and key combinations"
 msgstr "Lệnh terminal và tổ hợp phím"
+
+#: src/lib/terminal-history-pull.ts
+msgid "Terminal history changed"
+msgstr "Lịch sử terminal đã thay đổi"
 
 #: src/components/settings-terminal.tsx
 msgid "Terminal key row"
@@ -6103,6 +6165,10 @@ msgstr "Không thể đọc khóa ({0}). Hãy kiểm tra khóa và cụm mật k
 #: src/components/session-map.tsx
 msgid "The new terminal was created, but could not open it."
 msgstr "Terminal mới đã được tạo nhưng không thể mở"
+
+#: src/components/home-composer-dock.tsx
+msgid "The previous send could not be checked."
+msgstr "Không thể kiểm tra lần gửi trước"
 
 #: src/components/launch-intro.tsx
 msgid "The question comes to you"
@@ -6435,6 +6501,10 @@ msgstr "Giao diện này chứa hình ảnh cần được cài đặt trước 
 msgid "This tool call is no longer available."
 msgstr "Lệnh gọi công cụ này không còn khả dụng"
 
+#: src/components/update-status-banner.tsx
+msgid "This update is required to continue using Muqun. Read what's new, then update when you're ready."
+msgstr "Bạn cần cài bản cập nhật này để tiếp tục sử dụng Muqun. Hãy đọc các thay đổi rồi cập nhật khi sẵn sàng"
+
 #: src/components/session-map.tsx
 msgid "This workspace has no groups yet."
 msgstr "Không gian làm việc này chưa có nhóm nào"
@@ -6461,8 +6531,8 @@ msgid "Today"
 msgstr "Hôm nay"
 
 #: src/components/settings-mcp-tokens.tsx
-msgid "Tokens coding agents use to reach this computer."
-msgstr "Token mà các tác tử lập trình dùng để kết nối tới máy tính này"
+#~ msgid "Tokens coding agents use to reach this computer."
+#~ msgstr "Token mà các tác tử lập trình dùng để kết nối tới máy tính này"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -6583,6 +6653,7 @@ msgid "Type on the simulator"
 msgstr "Gõ trên trình giả lập"
 
 #: src/components/settings-server-capabilities.tsx
+#: src/components/task-result-sheet.tsx
 msgid "Unavailable"
 msgstr "Không khả dụng"
 
@@ -6702,8 +6773,17 @@ msgid "Up arrow"
 msgstr "Mũi tên lên"
 
 #: src/components/theme-browse-sheet.tsx
+#: src/components/update-status-banner.tsx
 msgid "Update"
 msgstr "Cập nhật"
+
+#: src/components/update-status-banner.tsx
+msgid "Update available"
+msgstr "Có bản cập nhật"
+
+#: src/components/update-status-banner.tsx
+msgid "Update download failed. Try again."
+msgstr "Không tải được bản cập nhật. Hãy thử lại"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Herdr on the computer to 0.9.0 or newer, then restart the session, to assign a task to another assistant"
@@ -6717,6 +6797,10 @@ msgstr "Cập nhật Muqun Gateway trên máy tính rồi khởi động lại �
 #: src/components/new-task-action.tsx
 msgid "Update Muqun Gateway on this host to use {agentName}."
 msgstr "Cập nhật Muqun Gateway trên máy chủ này để dùng {agentName}"
+
+#: src/components/update-status-banner.tsx
+msgid "Update now"
+msgstr "Cập nhật ngay"
 
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"
@@ -6861,8 +6945,8 @@ msgid "Waiting to send"
 msgstr "Chờ gửi"
 
 #: src/components/settings-server-capabilities.tsx
-msgid "Web"
-msgstr "Web"
+#~ msgid "Web"
+#~ msgstr "Web"
 
 #: src/components/agent-workbench.tsx
 msgid "Welcome to {agentName}"
