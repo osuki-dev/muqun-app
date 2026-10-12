@@ -314,6 +314,12 @@ function RootContent() {
   const profile = useAppearanceProfile();
   const notificationSurfaceStyle = useNotificationSurfaceStyle();
   const pageOptions = profileNavigationOptions(profile, reduceMotion);
+  // Home and the conversation use the native transition without a second
+  // reveal. Clear the inherited Classic duration so native timing also wins.
+  const conversationPageOptions: ReturnType<typeof profileNavigationOptions> = {
+    animation: reduceMotion ? 'none' : 'default',
+    animationDuration: reduceMotion ? 0 : undefined,
+  };
   const modalOptions = profileNavigationOptions(profile, reduceMotion, true);
   // A Pad is a window width, not a device: the same test the workspace uses to
   // draw its rail. On a Pad the sheets that are work surfaces open full-screen
@@ -420,7 +426,7 @@ function RootContent() {
                               ? 'terminal'
                               : 'plain'
                       }
-                      animated={route.name !== 'index'}>
+                      animated={route.name !== 'index' && route.name !== 'agent'}>
                       {/* A sheet a Pad shows full-screen draws its own close
                           button: there is no grabber to drag. */}
                       <SheetFullscreenProvider value={isFullscreenSheetRoute(route.name, isPad)}>
@@ -444,14 +450,14 @@ function RootContent() {
                 <Stack.Screen
                   name="index"
                   options={{
-                    ...pageOptions,
+                    ...conversationPageOptions,
                   }}
                 />
                 {/* Native options change in place; sheets retain their measurement contract. */}
                 <Stack.Screen
                   name="agent"
                   options={{
-                    ...pageOptions,
+                    ...conversationPageOptions,
                   }}
                 />
                 <Stack.Screen
