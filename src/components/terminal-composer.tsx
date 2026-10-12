@@ -201,9 +201,9 @@ export function TerminalComposer({
         testID={send.testID}
         onLongPress={voice.open}
         longPressLabel={t`Voice to text`}
-        armedFill={theme.colors.primary}
+        armedFill={theme.colors.primarySubtle}
         restText={theme.colors.textMuted}
-        activeText={theme.colors.onPrimary}
+        activeText={theme.colors.primary}
       />
     </>
   );
@@ -337,9 +337,10 @@ export function TerminalComposer({
  * whether there is anything to send, whether a send is in flight, and -- by the
  * fill -- how much attention it wants.
  *
- * The fill rides the button token. The glyph and the spinner cross-fade rather
- * than swap, because a spinner appearing exactly where an arrow was, on the
- * same frame, reads as the arrow having broken.
+ * The armed state uses the same quiet tint as the other composer controls;
+ * the theme's primary ink carries its emphasis. The glyph and the spinner
+ * cross-fade rather than swap, because a spinner appearing exactly where an
+ * arrow was, on the same frame, reads as the arrow having broken.
  */
 export function ComposerSendButton({
   accessibilityLabel,
@@ -379,7 +380,7 @@ export function ComposerSendButton({
     if (!onLongPress) voiceHold.set(0);
   }, [onLongPress, voiceHold]);
   useEffect(() => {
-    armedValue.value = withTiming(armed ? 1 : 0, timing('button'));
+    armedValue.set(withTiming(armed ? 1 : 0, timing('button')));
   }, [armed, armedValue]);
   // The spinner exists only while a send is in flight and while it fades out.
   // An indeterminate spinner left mounted at opacity 0 still animates on the
@@ -395,15 +396,15 @@ export function ComposerSendButton({
   }, [sending, sendingValue]);
 
   const fillStyle = useAnimatedStyle(() => ({
-    opacity: Math.max(armedValue.value, sendingValue.value),
+    opacity: Math.max(armedValue.get(), sendingValue.get()),
   }));
   const restGlyphStyle = useAnimatedStyle(() => ({
-    opacity: (1 - armedValue.value) * (1 - sendingValue.value) * (1 - voiceHold.get()),
+    opacity: (1 - armedValue.get()) * (1 - sendingValue.get()) * (1 - voiceHold.get()),
   }));
   const armedGlyphStyle = useAnimatedStyle(() => ({
-    opacity: armedValue.value * (1 - sendingValue.value) * (1 - voiceHold.get()),
+    opacity: armedValue.get() * (1 - sendingValue.get()) * (1 - voiceHold.get()),
   }));
-  const spinnerStyle = useAnimatedStyle(() => ({ opacity: sendingValue.value }));
+  const spinnerStyle = useAnimatedStyle(() => ({ opacity: sendingValue.get() }));
   const micStyle = useAnimatedStyle(() => ({
     opacity: voiceHold.get(),
     transform: [{ scale: 0.85 + voiceHold.get() * 0.15 }],
@@ -413,6 +414,7 @@ export function ComposerSendButton({
     <PressableScale
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ disabled: disabled && !onLongPress, busy: sending }}
       testID={testID}
       accessibilityActions={
         onLongPress ? [{ name: 'longpress', label: longPressLabel }] : undefined
@@ -447,11 +449,8 @@ export function ComposerSendButton({
           { backgroundColor: surfaceBackground(armedFill) },
           fillStyle,
         ]}>
-        {/* Rides the armed fill rather than the rest state: the artwork is what
-            the primary colour becomes, so it appears and fades with it instead
-            of sitting under a disarmed button. `ThemedSurfaceArtwork` clamps its
-            own opacity against the glyph colours, so a busy image cannot take
-            the arrow with it. */}
+        {/* Keep authored button artwork on the armed plane, with the actual
+            tint as its contrast base and the existing background opacity. */}
         <ThemedSurfaceArtwork slot="buttons.primary.background" baseColor={armedFill} />
       </Animated.View>
       <Animated.View style={[StyleSheet.absoluteFill, composerStyles.buttonGlyph, restGlyphStyle]}>
@@ -465,13 +464,13 @@ export function ComposerSendButton({
           <Animated.View
             pointerEvents="none"
             style={[StyleSheet.absoluteFill, composerStyles.buttonGlyph, micStyle]}>
-            <Mic size={18} color={armed ? activeText : armedFill} />
+            <Mic size={18} color={activeText} />
           </Animated.View>
           <Canvas pointerEvents="none" style={StyleSheet.absoluteFill}>
             <Group origin={{ x: 20, y: 20 }} transform={[{ rotate: -Math.PI / 2 }]}>
               <Path
                 path={voiceHoldRing}
-                color={armed ? activeText : armedFill}
+                color={activeText}
                 style="stroke"
                 strokeWidth={1.5}
                 strokeCap="round"
