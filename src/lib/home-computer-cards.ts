@@ -10,6 +10,12 @@
 
 import type { HomeSessionParams } from '@/lib/home-composer';
 import type { ServerReachability } from './server-reachability';
+import {
+  isServerAgentsStale,
+  MAX_SERVER_AGENTS,
+  type ServerAgentsIndex,
+  type ServerAgentsSnapshot,
+} from './server-agents';
 import { stripTaskMarkers, taskMarkerPayload } from './task-plumbing';
 import { FINISHED_TASKS_SHOWN, type ServerTasksIndex } from './server-tasks-state';
 import {
@@ -483,6 +489,39 @@ const ACTIVITY_RANK: Record<CardActivity, number> = {
   offline: 4,
 };
 
+/** Home omits a gone terminal; its task and saved result remain in the ledger. */
+function hasClosedTaskPane(
+  task: TaskView,
+  serverId: string,
+  snapshot: ServerAgentsSnapshot | undefined,
+  nowMs: number
+): boolean {
+  const binding = task.binding;
+  if (binding.kind !== 'pane') return false;
+  // These are Gateway follower failure reasons, optionally followed by the
+  // last screen line. Do not interpret arbitrary output mentioning a closure.
+  if (
+    task.state === 'failed' &&
+    (task.summary === 'pane closed' ||
+      task.summary === 'the pane closed' ||
+      task.summary?.startsWith('the pane closed: '))
+  )
+    return true;
+  // Only a newer, complete observation of this exact session proves absence.
+  // An old, capped, legacy or differently scoped mirror is not such proof.
+  if (
+    !snapshot ||
+    snapshot.serverId !== serverId ||
+    snapshot.sessionId !== binding.sessionId ||
+    isServerAgentsStale(snapshot, nowMs) ||
+    snapshot.checkedAtMs < (task.receivedAtMs ?? task.updatedMs) ||
+    snapshot.agents.length >= MAX_SERVER_AGENTS ||
+    snapshot.agents.some((pane) => !pane.paneId)
+  )
+    return false;
+  return !snapshot.agents.some((pane) => pane.paneId === binding.paneId);
+}
+
 /**
  * The cards of the computers that have work, sorted needs-you → working →
  * paused → idle (the reader's own order within each).
@@ -507,12 +546,24 @@ export function buildComputerCards(input: {
    * card sorts as idle: its rows are old news, not something needing the reader.
    */
   followed?: ReadonlySet<string>;
+  /** Confirmed pane inventories; absence without one never hides a task. */
+  panesByServer?: ServerAgentsIndex;
 }): ComputerCard[] {
   const all = input.servers.map((server, order): ComputerCard & { order: number } => {
     const entry = input.index[server.serverId];
     // The receiving computer's temporary exec is already represented by its
     // originating conversation. Keep the ledger; omit this duplicate Home row.
-    const tasks = (entry?.tasks ?? []).filter((task) => !isRemoteCommandTask(task));
+    const ledgerTasks = entry?.tasks ?? [];
+    const tasks = ledgerTasks.filter(
+      (task) =>
+        !isRemoteCommandTask(task) &&
+        !hasClosedTaskPane(
+          task,
+          server.serverId,
+          input.panesByServer?.[server.serverId],
+          input.nowMs
+        )
+    );
     const tree = buildTaskTree(tasks);
     // A root stays in Now while any work it started is still open, even after
     // the root itself finished: a delegating turn can end before its
@@ -532,7 +583,7 @@ export function buildComputerCards(input: {
           RECENT_FINISHED_MS
     );
     const pending = (input.pending ?? []).filter(
-      (item) => item.serverId === server.serverId && !settlesPending(tasks, item)
+      (item) => item.serverId === server.serverId && !settlesPending(ledgerTasks, item)
     );
     // The same predicates Now uses, so work known only from the gateway's
     // child counts moves the card as well as listing it.

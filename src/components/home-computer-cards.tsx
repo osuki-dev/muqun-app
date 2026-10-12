@@ -44,6 +44,7 @@ import { PENDING_DISPATCH_TTL_MS, useHomeTaskCards } from '@/stores/home-task-ca
 import { useServerReachability } from '@/stores/server-reachability';
 import { useHomeSortHold } from '@/stores/home-sort-hold';
 import { useServerTasksStore } from '@/stores/server-tasks';
+import { useServerAgents } from '@/stores/server-agents';
 
 /**
  * Keeps the ledgers of these computers live while Home is up: a list read on
@@ -130,6 +131,7 @@ export function hasComputerCardsAt({
     buildComputerCards({
       servers,
       index: useServerTasksStore.getState().index,
+      panesByServer: useServerAgents.getState().byServer,
       reachability: (serverId) => reachabilityByServer[serverId],
       dismissed: new Set(cards.dismissed),
       pending: cards.pending.filter((item) => pendingShown(item, nowMs)),
@@ -163,11 +165,13 @@ export function ComputerCardsPresence({
     useShallow((state) => state.pending.filter((item) => pendingShown(item, nowMs)))
   );
   const dismissed = new Set(dismissedList);
+  const panesByServer = useServerAgents((state) => state.byServer);
   const hasCards = useServerTasksStore(
     (state) =>
       buildComputerCards({
         servers,
         index: state.index,
+        panesByServer,
         reachability: (serverId) => reachabilityByServer[serverId],
         dismissed,
         pending,
@@ -228,6 +232,7 @@ export function HomeComputerCards({
   const probeNowMs = useServerReachability((state) => state.freshnessNowMs);
   const nowMs = useMinuteNow(probeNowMs);
   const inputs = useCardInputs(nowMs);
+  const panesByServer = useServerAgents((state) => state.byServer);
   // The same fold Home's presence check uses, so a card and the section agree;
   // it moves only when a computer goes live, offline or unknown.
   const reachability = useHomeReachability(serverIds, activeConnection);
@@ -239,6 +244,7 @@ export function HomeComputerCards({
   const sorted = buildComputerCards({
     servers,
     index,
+    panesByServer,
     reachability: (serverId) => reachability[serverId],
     followed: new Set(followedIds),
     dismissed: inputs.dismissed,
