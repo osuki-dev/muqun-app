@@ -1,37 +1,54 @@
 import { VOICE_METER_SAMPLES } from './voice-meter-history';
 
-/** Single-pass capsule/bloom shader. Time changes light, never recorded amplitude. */
+/** Transparent continuous ribbons; measured energy shapes them, time only adds breath. */
 export const VOICE_WAVEFORM_SKSL = `
 uniform float2 size;
 uniform float time;
 uniform float motion;
+uniform float processing;
 uniform float amplitudes[${VOICE_METER_SAMPLES}];
 uniform float3 tint;
 uniform float3 highlight;
+uniform float tintOpacity;
+
+float sampleAt(float position) {
+  float value = 0.0;
+  ${Array.from({ length: VOICE_METER_SAMPLES }, (_, index) => `value += amplitudes[${index}] * max(0.0, 1.0 - abs(position - ${index}.0));`).join('\n  ')}
+  return clamp(value, 0.0, 1.0);
+}
 
 half4 main(float2 coord) {
   float width = max(size.x, 1.0);
   float height = max(size.y, 1.0);
-  float lane = width / ${VOICE_METER_SAMPLES}.0;
-  int index = int(clamp(floor(coord.x / lane), 0.0, ${VOICE_METER_SAMPLES - 1}.0));
-  float amplitude = 0.0;
-  ${Array.from({ length: VOICE_METER_SAMPLES }, (_, index) => `if (index == ${index}) amplitude = amplitudes[${index}];`).join('\n  ')}
-  amplitude = clamp(amplitude, 0.0, 1.0);
-  float radius = min(1.5, lane * 0.23);
-  float extent = amplitude * max(0.0, height * 0.5 - radius - 2.0) * motion;
-  float2 p = float2(coord.x - (float(index) + 0.5) * lane,
-    max(abs(coord.y - height * 0.5) - extent, 0.0));
-  float distance = length(p) - radius;
-  float ink = 1.0 - smoothstep(-0.5, 0.6, distance);
-  float bloom = exp(-max(distance, 0.0) / (1.3 + amplitude * 0.8));
+  float phase = time * motion;
+  float progress = clamp(processing, 0.0, 1.0);
+  float2 center = float2(width, height) * 0.5;
+  float spread = mix(width, min(width, height * 1.5), progress);
+  float x = (coord.x - center.x) / spread + 0.5;
+  float boundedX = clamp(x, 0.0, 1.0);
+  float envelope = pow(max(0.0, sin(boundedX * 3.14159265)), 0.8);
+  // Interpolated samples avoid the hard steps of a discrete meter. The recent
+  // sample gives the whole ribbon an immediate response to a new syllable.
+  float energy = mix(sampleAt(boundedX * ${VOICE_METER_SAMPLES - 1}.0), amplitudes[${VOICE_METER_SAMPLES - 1}], 0.35);
+  float breath = 0.8 + 0.4 * sin(phase * 1.8);
+  float amplitude = (breath + energy * height * 0.30) * envelope;
+  float y = coord.y - center.y;
+  float waveA = sin(x * 12.56637 - phase * 2.6) * amplitude;
+  float waveB = sin(x * 12.56637 - phase * 2.6 + 1.15) * amplitude * 0.72;
+  float waveC = sin(x * 9.42478 - phase * 2.0 - 1.2) * amplitude * 0.45;
+  float inkA = 1.0 - smoothstep(0.45, 1.5, abs(y - waveA));
+  float inkB = 1.0 - smoothstep(0.3, 1.25, abs(y - waveB));
+  float inkC = 1.0 - smoothstep(0.2, 1.15, abs(y - waveC));
+  float edge = smoothstep(0.0, 0.09, boundedX) * smoothstep(0.0, 0.09, 1.0 - boundedX);
+  float wave = (inkA * 0.72 + inkB * 0.28 + inkC * 0.16) * edge * (1.0 - progress);
 
-  // The slow glint is recording activity, separate from measured bar height.
-  // It remains restrained on a silent microphone and freezes in reduced motion.
-  float sweep = fract(time * 0.22 * motion) * 1.5 - 0.25;
-  float glint = exp(-pow((coord.x / width - sweep) / 0.16, 2.0));
-  float edge = smoothstep(0.0, 2.0, coord.y) * smoothstep(0.0, 2.0, height - coord.y);
-  float halo = bloom * (0.045 + amplitude * 0.15 + glint * 0.055);
-  float alpha = clamp(ink * (0.38 + amplitude * 0.48 + glint * 0.12) + halo, 0.0, 1.0) * edge;
-  float3 color = mix(tint, highlight, glint * (0.18 + amplitude * 0.22));
+  float2 p = coord - center;
+  float angle = atan(p.y, p.x);
+  float radius = min(height * 0.28, 12.0);
+  float orbitRadius = radius + sin(angle * 3.0 - phase * 2.2) * 0.65;
+  float ring = 1.0 - smoothstep(0.45, 1.5, abs(length(p) - orbitRadius));
+  float orbit = 0.35 + 0.55 * pow(0.5 + 0.5 * cos(angle - phase * 3.0), 2.0);
+  float alpha = clamp(wave + ring * orbit * progress, 0.0, 0.95) * clamp(tintOpacity, 0.0, 1.0);
+  float3 color = mix(tint, highlight, inkB * 0.12 * (1.0 - progress));
   return half4(color * alpha, alpha);
 }`;
