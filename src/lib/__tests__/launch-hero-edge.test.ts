@@ -445,9 +445,8 @@ describe('encodeHeroEdge and decodeHeroEdge', () => {
 /**
  * The shader is the one consumer of every field above, and it cannot be
  * imported here: it compiles SkSL at module scope and Skia does not load
- * outside the app. So the contract between the two is read out of the source,
- * the way `motion-tokens.test.ts` reads durations -- a renamed uniform is
- * otherwise a launch that draws nothing and a test suite that still passes.
+ * outside the app. Check the contract across both languages so a renamed
+ * uniform cannot silently leave the launch blank.
  */
 describe('the shape the shader is given', () => {
   const source = readFileSync(join(SRC, 'lib', 'ink-bloom-shader.ts'), 'utf8');

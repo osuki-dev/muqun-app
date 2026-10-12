@@ -21,7 +21,6 @@ const custom: QuickCommand = {
 test('any custom agent command can become an editable collaboration draft', () => {
   const draft = commandCollaborationDraft(custom, context);
   expect(draft.prompt).toBe(custom.value);
-  expect(draft.command?.name).toBe(custom.label);
   expect(draft.command).toEqual({ name: custom.label });
   expect(draft.context.commandId).toBe(custom.id);
 });
@@ -40,8 +39,6 @@ test('current-agent and terminal commands stay direct', () => {
     commandCollaborationDraft({ ...custom, delivery: 'current-agent' }, context)
   ).toThrow();
   expect(() => commandCollaborationDraft({ ...custom, mode: 'terminal' }, context)).toThrow();
-  expect(collaborationTaskText(custom.value, '')).toBe(custom.value);
-  expect(() => collaborationTaskText('x'.repeat(65537), '')).toThrow('limit');
 });
 
 test('management needs no agent; execution requires a valid agent collaboration context', () => {

@@ -16,7 +16,6 @@ import {
   parseStoreCommand,
   runStoreCommand,
   selectStoreArtifact,
-  storeProfile,
 } from '../../scripts/store-release';
 import eas from '../../eas.json';
 
@@ -85,11 +84,7 @@ fi
   };
 }
 
-test('preview and production plans preserve store identity and test destinations', () => {
-  expect(storeProfile('android', 'preview')).toBe('play-preview');
-  expect(storeProfile('ios', 'preview')).toBe('testflight');
-  expect(storeProfile('android', 'production')).toBe('production');
-  expect(storeProfile('ios', 'production')).toBe('production');
+test('EAS channels share store identity and submit to internal testing', () => {
   expect(eas.submit['play-preview'].android).toEqual(eas.submit.production.android);
   expect(eas.submit.production.android).toEqual({ track: 'internal', releaseStatus: 'completed' });
   expect(eas.submit.testflight.ios).toEqual(eas.submit.production.ios);

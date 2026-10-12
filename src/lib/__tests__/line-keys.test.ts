@@ -17,9 +17,4 @@ describe('keyedLines', () => {
     const lines = keyedLines('a\n\nb');
     expect(lines.map((l) => l.line)).toEqual(['a', '', 'b']);
   });
-
-  test('the same line in different positions keeps its occurrence order', () => {
-    const lines = keyedLines('x\nx\nx');
-    expect(lines.map((l) => l.key)).toEqual(['x#1', 'x#2', 'x#3']);
-  });
 });

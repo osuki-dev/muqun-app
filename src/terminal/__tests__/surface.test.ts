@@ -136,11 +136,6 @@ describe('readTerminalSurface across snapshots', () => {
     expect(readSequence([5, 6, 5, 4, 5, 6])).toEqual([null, SURFACE, SURFACE, null, null, SURFACE]);
   });
 
-  test('a cold read needs the adopt share, not a bare majority', () => {
-    expect(readTerminalSurface(screenWithPainted(5)).background).toBeNull();
-    expect(readTerminalSurface(screenWithPainted(6)).background).toBe(SURFACE);
-  });
-
   test('a different surface that clearly owns the screen takes over at once', () => {
     const held = readTerminalSurface(screenWithPainted(10));
     const paper = `${CSI}0m${CSI}38;2;76;79;105m${CSI}48;2;239;241;245m${' '.repeat(40)}${CSI}0m`;

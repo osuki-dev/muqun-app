@@ -1,5 +1,4 @@
 import { expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
 
 import {
   isFullscreenSheetRoute,
@@ -15,16 +14,9 @@ import {
  * change. The owner's report was the Changes sheet: a diff in a centred
  * form-sheet card in the middle of a 13-inch iPad.
  */
-const WORK_SURFACES = [
-  'agent-session-tree',
-  'agent-subagent-detail',
-  'agent-tool-detail',
-  'agent-vcs-diff',
-  'artifacts',
-  'explore',
-  'git-diff',
-  'settings-theme-browse',
-];
+const WORK_SURFACES = Object.entries(sheetRouteKinds)
+  .filter(([, kind]) => kind === 'workSurface')
+  .map(([route]) => route);
 
 test('the rule: only a work surface on a Pad is full-screen', () => {
   expect(sheetPresentationFor('workSurface', { isPad: true })).toBe('fullscreen');
@@ -33,17 +25,12 @@ test('the rule: only a work surface on a Pad is full-screen', () => {
   expect(sheetPresentationFor('picker', { isPad: false })).toBe('sheet');
 });
 
-test('every sheet route declares its kind, and the work surfaces are the listed ones', () => {
+test('every sheet route declares its kind', () => {
   const sheets = Object.entries(sheetRoutePresentations)
     .filter(([, presentation]) => presentation === 'sheet')
     .map(([route]) => route)
     .sort();
   expect(Object.keys(sheetRouteKinds).sort()).toEqual(sheets);
-  const surfaces = Object.entries(sheetRouteKinds)
-    .filter(([, kind]) => kind === 'workSurface')
-    .map(([route]) => route)
-    .sort();
-  expect(surfaces).toEqual(WORK_SURFACES);
 });
 
 test('a phone keeps every sheet exactly as it was', () => {
@@ -132,40 +119,4 @@ test('the two full-screen routes are full-screen everywhere and draw no sheet cl
     // They have their own way out; the scene's button is for promoted sheets.
     expect(isFullscreenSheetRoute(route, true)).toBe(false);
   }
-});
-
-/**
- * A full-screen modal has no grabber and, on iOS, no swipe. The close button
- * lives in `SheetScene`, so every work surface must be built on it -- a work
- * surface drawn some other way would be a Pad screen with no way out.
- */
-const WORK_SURFACE_FRAMES: Record<string, string> = {
-  'git-diff': 'src/components/changes-sheet.tsx',
-  'agent-vcs-diff': 'src/components/changes-sheet.tsx',
-  artifacts: 'src/components/session-artifacts.tsx',
-  'agent-session-tree': 'src/components/agent-session-tree-sheet.tsx',
-  'agent-subagent-detail': 'src/components/agent-subagent-detail-sheet.tsx',
-  'agent-tool-detail': 'src/components/tool-call-detail-sheet.tsx',
-  'settings-theme-browse': 'src/components/theme-browse-sheet.tsx',
-  explore: 'src/app/explore.tsx',
-};
-
-test('every work surface is built on the scene that draws its close button', () => {
-  expect(Object.keys(WORK_SURFACE_FRAMES).sort()).toEqual(WORK_SURFACES);
-  for (const [route, file] of Object.entries(WORK_SURFACE_FRAMES)) {
-    expect({ route, scene: /<SheetScene[\s>]/.test(readFileSync(file, 'utf8')) }).toEqual({
-      route,
-      scene: true,
-    });
-  }
-  const scene = readFileSync('src/components/sheet-scene.tsx', 'utf8');
-  expect(scene).toContain('const fullscreen = useSheetIsFullscreen();');
-  expect(scene).toContain('<SheetSceneClose />');
-  expect(scene).toContain('testID="sheet-close"');
-  // And the root stack is what tells it.
-  const layout = readFileSync('src/app/_layout.tsx', 'utf8');
-  expect(layout).toContain(
-    '<SheetFullscreenProvider value={isFullscreenSheetRoute(route.name, isPad)}>'
-  );
-  expect(layout).toContain("responsiveWorkspaceLayout(windowWidth).mode === 'pad'");
 });

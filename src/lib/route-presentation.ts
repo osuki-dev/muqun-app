@@ -34,9 +34,7 @@ export type SheetDetents = 'full' | 'expandable' | 'fitToContents' | readonly nu
  * sheets that are work surfaces are shown full-screen (`sheetRouteKinds`), and
  * `SheetScene` draws them the close button a full-screen route needs.
  *
- * The entries on `fullscreen` are not sheets and never were. Each one
- * says why here, because this table is the allowlist
- * `sheet-scene-contract.test.ts` holds the app to.
+ * Fullscreen entries document why their content needs the whole screen.
  */
 export const sheetRoutePresentations: Readonly<Record<string, SheetPresentation>> = {
   // The diagram canvas owns pan/pinch gestures and provides its own close control.

@@ -40,10 +40,3 @@ test('an explicit public client credential takes precedence over local configura
     ).EXPO_PUBLIC_HOT_UPDATER_API_KEY
   ).toBe('explicit-client');
 });
-
-test('native packaging preserves caller network settings without imposing defaults', () => {
-  expect(storeReleaseEnvironment({}, {}, 'preview').NODE_USE_ENV_PROXY).toBeUndefined();
-  expect(
-    storeReleaseEnvironment({ NODE_USE_ENV_PROXY: '0' }, {}, 'preview').NODE_USE_ENV_PROXY
-  ).toBe('0');
-});

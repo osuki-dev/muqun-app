@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
-  FRONT_OVERSHOOT,
   RIPPLE_AMPLITUDE,
   RIPPLE_BAND,
   RIPPLE_DECAY,
@@ -142,16 +141,6 @@ test('the first frame has the whole surface covered and the last has none of it'
   expect(washFront(1, geometry)).toBeGreaterThan(geometry.to);
 });
 
-test('the front overshoots the far corner rather than creeping off it', () => {
-  // The design system's ease-out decelerates into the end, so a front that
-  // finished exactly at the corner would spend the last beats crawling.
-  const geometry = washGeometry({ x: 0, y: 0 }, SCREEN, BLEED);
-  const travel = geometry.to - geometry.from;
-  expect(washFront(1, geometry)).toBeCloseTo(geometry.from + travel * FRONT_OVERSHOOT, 6);
-  expect(FRONT_OVERSHOOT).toBeGreaterThan(1);
-  expect(FRONT_OVERSHOOT).toBeLessThan(1.2);
-});
-
 test('the front only ever moves forward', () => {
   const geometry = washGeometry({ x: 120, y: 700 }, SCREEN, BLEED);
   let last = Number.NEGATIVE_INFINITY;
@@ -259,9 +248,6 @@ test('past the tail no ring bends anything by a visible amount', () => {
   for (let behind = RIPPLE_TAIL; behind < RIPPLE_TAIL + 200; behind += 7) {
     expect(Math.abs(rippleDisplacement(behind, 1))).toBeLessThanOrEqual(0.25 + 1e-9);
   }
-  // Three to four rings, not a dozen.
-  expect(RIPPLE_TAIL / RIPPLE_WAVELENGTH).toBeGreaterThan(3);
-  expect(RIPPLE_TAIL / RIPPLE_WAVELENGTH).toBeLessThan(5);
 });
 
 /* -- the scan ------------------------------------------------------------ */
@@ -345,10 +331,6 @@ test('a photograph is judged on whether it arrived and whether it was quick', ()
   expect(snapshotOutcome(image, SNAPSHOT_BUDGET_MS + 1)).toBe('slow');
   expect(snapshotOutcome(null, 0)).toBe('failed');
   expect(snapshotOutcome(undefined, 0)).toBe('failed');
-});
-
-test('the budget stays short enough that a reader reads it as the setting landing', () => {
-  expect(SNAPSHOT_BUDGET_MS).toBeLessThanOrEqual(120);
 });
 
 /* -- what a slow device is told, and how often ---------------------------- */

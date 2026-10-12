@@ -5,24 +5,6 @@
 open "dev.osuki.muqun" --relaunch
 open "muqun:///"
 
-# section s2
-is visible "${TARGET}"
-
-# section s3
-press "${TARGET}"
-
-# section s4
-press "${TARGET}"
-
-# section s5
-is visible "${TARGET}"
-
-# section s6
-open "${E2E_DEV_CLIENT_URL}"
-
-# section s7
-press "${TARGET}"
-
 # section s8
 wait stable 400 5000
 

@@ -4,9 +4,45 @@ import {
   normalizeGatewayUrl,
   normalizePairingCode,
   validateClaimedPairing,
+  validateGatewayUrl,
+  validateServerId,
   type PairingPayload,
   type ResolvedPairingOffer,
 } from '../pairing';
+import { isSafeExternalLink } from '../safe-link';
+
+test('untrusted output can open only HTTP links', () => {
+  for (const value of ['http://example.com', 'https://example.com/a?b=c']) {
+    expect(isSafeExternalLink(value)).toBe(true);
+  }
+  for (const value of [
+    'intent://scan/#Intent;scheme=zxing;package=com.example;end',
+    'javascript:alert(1)',
+    'file:///etc/passwd',
+    'muqun://pair?u=http%3A%2F%2Fevil',
+    'not a url',
+    '',
+  ]) {
+    expect(isSafeExternalLink(value)).toBe(false);
+  }
+});
+
+test('gateway addresses reject credentials, unsupported schemes, queries and fragments', () => {
+  for (const value of [
+    'ftp://100.64.0.1/file',
+    'http://user:password@100.64.0.1:7347',
+    'http://100.64.0.1:7347?token=secret',
+    'http://100.64.0.1:7347/#fragment',
+  ]) {
+    expect(() => validateGatewayUrl(value)).toThrow();
+  }
+});
+
+test('server identities reject paths and malformed identifiers', () => {
+  for (const value of ['', '../other-server', 'server id', 'x'.repeat(81)]) {
+    expect(() => validateServerId(value)).toThrow();
+  }
+});
 
 const token = 't'.repeat(43);
 const transportKey = 'k'.repeat(43);

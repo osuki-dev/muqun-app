@@ -1,9 +1,6 @@
 // The pane window and where it ends.
 //
-// These assertions existed only in `scripts/test-terminal.ts`, which nothing
-// runs: the gate is `bun test src/terminal`. That is how a pagination
-// regression reached a device with every check green (card #627), so the rules
-// live here now, where the gate can see them.
+// Pagination and tail-follow behavior run in the regular terminal test suite.
 //
 // Two questions are pinned. `mergeTerminalWindow` is how a poll at the initial
 // limit folds into a window the reader has already paged wider -- get it wrong

@@ -63,9 +63,7 @@ import type { InstalledTheme } from '@/theme/repository';
  * So it stays full-screen, and the way out is drawn rather than gestured:
  * `ScreenHeader`'s back arrow (`Go back`) at the top, and the pinned button at
  * the foot that is Done until there is a theme to apply. Neither scrolls away.
- * `sheetRoutePresentations` carries this route as `fullscreen` and
- * `sheet-scene-contract.test.ts` holds that list to two entries, so this is an
- * allowlisted exception with a reason rather than a route nobody converted.
+ * `sheetRoutePresentations` keeps this preview fullscreen.
  */
 export default function CustomThemeScreen() {
   const { draft } = useLocalSearchParams<{ draft?: string }>();

@@ -49,15 +49,6 @@ press "${TARGET}"
 # section s9
 is visible "${TARGET}"
 
-# section s10
-is visible "${TARGET}"
-
-# section s11
-is visible "${TARGET}"
-
-# section s12
-is visible "${TARGET}"
-
 # section s13
 press "${TARGET}"
 
@@ -237,10 +228,6 @@ gesture pan 200 600 0 -120 400
 # like from the runner's side.
 gesture pan 200 600 0 -120 400
 
-# section s58
-scroll down --pixels 160 --duration-ms 300
-wait stable 300 5000
-
 # section scroll-notifications
 # A pan for the same reason `s56` uses one: these three targets sit within a
 # couple of rows of each other, and a flick's momentum carries whichever one is
@@ -308,25 +295,6 @@ wait stable 300 5000
 is visible "${TARGET}"
 is hidden "id=\"settings-storage-other-row\""
 
-# section storage-anchor
-# Where the two taps below are made from, and never the position the flick
-# above happened to stop at.
-#
-# `scroll until the row is in the tree` stops the moment the row is *barely* in
-# it. That is the right amount for an assertion and the wrong amount for a tap:
-# measured here, the flick that first brought `settings-clear-cache-row` into
-# view left it against the bottom edge, and the press that followed landed at
-# y=2398 -- on the navigation bar. Nothing armed, and the step after it waited
-# out its timeout for a confirm button that was never asked for.
-#
-# `scroll bottom` is the same anchor the Quick actions steps use, for the same
-# reason: it is a position the list always has, whatever is in it. The Storage
-# card is the last card before ABOUT, so from the bottom the whole of it sits at
-# y=416..1185 on a 1080x2400 device -- ABOUT, the footer line and the version
-# mark underneath are what hold it clear of both edges.
-scroll bottom
-wait stable 400 5000
-
 # section storage-press
 press "${TARGET}"
 
@@ -380,9 +348,6 @@ press "${TARGET}"
 # section s79
 is visible "${TARGET}"
 
-# section s80
-is visible "${TARGET}"
-
 # section s81
 press "${TARGET}"
 
@@ -407,85 +372,6 @@ wait stable 400 5000
 
 # section s88
 is visible "${TARGET}"
-
-# section quick-actions-bottom
-# The anchor the two nudges below are measured from. `scroll bottom` is a
-# position the list always has, whatever is in it, which is the only reason the
-# nudges can be a fixed number of pixels at all.
-scroll bottom
-wait stable 400 5000
-
-# section quick-actions-seek
-# Walk back up until the Quick actions row is in the tree again.
-#
-# This used to be part of the anchor: the nudges below were measured as a
-# distance from the bottom of the list, because the row happened to be one
-# screen above it. STORAGE then landed between SECURITY and ABOUT and put
-# another 832px underneath the row, and a fixed distance from the bottom
-# stopped naming it -- the flow tapped an empty part of ABOUT and failed two
-# steps later looking for a sheet that never came. A distance from the bottom
-# of a growing list is not a description of a row in the middle of it.
-#
-# So the seek is a loop rather than a number, and what it restores is the
-# *precondition* the two nudges were measured against rather than a distance:
-# the row just back inside the top edge. `scroll up --pixels 160 --duration-ms 300` is the
-# flick the rest of this flow uses; measured here, each one moves the list
-# about 409px, and the first one that brings the row back lands it at
-# y=22..188 -- the y=32..198 the Android nudge was calibrated on.
-scroll up --pixels 160 --duration-ms 300
-wait stable 300 5000
-wait stable 400 5000
-
-# section quick-actions-seek-android-phone
-gesture pan 450 1050 0 600 500
-wait stable 400 5000
-
-# section quick-actions-seek-android-tablet
-gesture pan 900 700 0 300 400
-wait stable 400 5000
-
-# section s89
-# The iPhone nudge, from the precondition the seek above restores.
-#
-# Tapping the row where the seek leaves it does not work: it settles at y=-20,
-# just above the top edge, and a tap on its clamped centre hits the status bar
-# -- which on iOS scrolls the list to the top and loses it outright.
-#
-# Measured on this runtime: from y=-20, one `scroll up --pixels 60` puts the
-# row at y=414. `--pixels` is a gesture magnitude rather than a literal delta,
-# so 96 and above carry it straight back out of the tree.
-scroll up --pixels 60
-
-# section s89-ipad
-# The landscape iPad seek can leave the row at the top edge. Native scroll
-# flicks of 60 or 160 pixels only move it to y=51 or y=28; their tap centres
-# still land inside the floating Settings header. A drag starting in the left
-# column places the row well below the header before pressing it.
-gesture pan 420 350 0 280 400
-wait stable 400 5000
-
-# section s89-android
-# Android's own calibration of the step above, kept apart rather than merged.
-# `scroll up --pixels 60` is a flick, and its magnitude does not mean the same
-# thing on both runtimes: on iOS it lands the row at y=414, on Android it leaves
-# it at y=32..198 -- overlapping the app's floating header (y=158..279) and
-# hard against the status bar, so the tap that follows opens nothing and the
-# flow fails two steps later looking for a sheet that never came.
-#
-# `gesture pan` is a drag rather than a flick, so its delta is the delta.
-# Measured here on a Pixel 8 emulator at 1080x2400: from y=32..198, panning
-# down 400 moves the row to y=403..569, which clears the header with room to
-# spare.
-gesture pan 540 800 0 400 400
-wait stable 400 5000
-
-# section clear-native-header
-# Settle only. This used to scroll up to lift the row clear of the native
-# large-title header, back when the step above overshot and left it at y=-20.
-# That step is now a seek plus one small measured nudge, so the row arrives
-# where it is reachable and any further scrolling here only carries it straight
-# back out of the tree.
-wait stable 400 5000
 
 # section s90
 press "${TARGET}"

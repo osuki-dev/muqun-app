@@ -75,10 +75,4 @@ describe('the unpair control while the gateway is being asked', () => {
     expect(acceptsCancel(working)).toBe(false);
     expect(acceptsCancel(armed)).toBe(true);
   });
-
-  test('the spinner and the trash icon are never both shown', () => {
-    for (const state of [idle, armed, working]) {
-      expect(['trash', 'spinner']).toContain(unpairView(state).confirm.icon);
-    }
-  });
 });

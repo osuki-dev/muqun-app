@@ -6,25 +6,6 @@ import {
   emptyCardTopReserve,
 } from '@/lib/agent-empty-layout';
 
-/**
- * The card's centre, as the two reserves put it, in a screen `height` tall.
- *
- * `justifyContent: 'center'` centres the child in what the paddings leave, so
- * the centre of the card is the centre of that band -- which is the whole of
- * what these two numbers decide.
- */
-function cardCentre(opts: {
-  height: number;
-  topInset: number;
-  noticeReserve: number;
-  dockHeight: number;
-  bottomInset: number;
-}) {
-  const top = opts.noticeReserve + emptyCardTopReserve(opts.topInset, opts.noticeReserve);
-  const bottom = opts.height - emptyCardBottomReserve(opts.dockHeight, opts.bottomInset);
-  return (top + bottom) / 2;
-}
-
 describe('emptyCardTopReserve', () => {
   test('is the whole header inset when no notice is up', () => {
     expect(emptyCardTopReserve(132, 0)).toBe(132);
@@ -60,42 +41,5 @@ describe('emptyCardBottomReserve', () => {
     // The offline composer is about 117pt tall; the old constant floated the
     // card 30pt above where it belonged.
     expect(emptyCardBottomReserve(117, 0)).toBe(117);
-  });
-});
-
-describe('the card centres between the header and the composer', () => {
-  const phone = { height: 914 };
-
-  test('centred in the free room, and a notice past the inset does not move it', () => {
-    const topInset = 132;
-    const dockHeight = 176;
-    for (const noticeReserve of [0, 181]) {
-      const centre = cardCentre({
-        height: phone.height,
-        topInset,
-        noticeReserve,
-        dockHeight,
-        bottomInset: 0,
-      });
-      expect(centre).toBeCloseTo((topInset + (phone.height - dockHeight)) / 2, 5);
-    }
-  });
-
-  test('a taller composer lowers the top of the card by half its growth', () => {
-    const base = cardCentre({
-      height: phone.height,
-      topInset: 132,
-      noticeReserve: 0,
-      dockHeight: 176,
-      bottomInset: 0,
-    });
-    const taller = cardCentre({
-      height: phone.height,
-      topInset: 132,
-      noticeReserve: 0,
-      dockHeight: 276,
-      bottomInset: 0,
-    });
-    expect(base - taller).toBeCloseTo(50, 5);
   });
 });

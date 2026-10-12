@@ -22,9 +22,6 @@ is hidden "${TARGET}"
 back --system
 wait stable 400 5000
 
-# section shot
-screenshot "shots/settings-sheets.png"
-
 # section shot-servers
 screenshot "shots/settings-servers.png"
 

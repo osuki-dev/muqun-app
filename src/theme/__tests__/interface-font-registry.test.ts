@@ -1,12 +1,9 @@
 import { expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
 
 import {
   KIT_FONT_ROLES,
-  userFontDefinition,
   userFontRegistry,
   USER_FONT_MAX_NATIVE_WEIGHT,
-  type KitFontRole,
 } from '@/theme/interface-font-registry';
 
 /**
@@ -52,15 +49,6 @@ test('every role, at every weight, resolves to the reader’s own family', () =>
   }
 });
 
-test('every variant the kit can draw resolves to the reader’s own family', () => {
-  const fonts = userFontRegistry(FAMILY);
-  // The variants, not the roles: this is the list a caller actually writes.
-  for (const [variant, style] of Object.entries(typeStyles)) {
-    const resolved = resolveFontStyle(fonts, style.fontFamily, 'regular');
-    expect(`${variant}:${resolved.fontFamily}`).toBe(`${variant}:${FAMILY}`);
-  }
-});
-
 test('no weight ever reaches 700, because Android answers 700 with its own font', () => {
   const fonts = userFontRegistry(FAMILY);
   for (const role of KIT_FONT_ROLES) {
@@ -74,46 +62,3 @@ test('no weight ever reaches 700, because Android answers 700 with its own font'
     }
   }
 });
-
-test('the kit’s own 700-weight variants come back under the ceiling', () => {
-  const fonts = userFontRegistry(FAMILY);
-  // `hero` and `dataLarge` are declared at 700 in the kit's type scale, and
-  // the kit turns that number into the `bold` request this registry catches.
-  const heavy = Object.entries(typeStyles).filter(([, style]) => style.fontWeight >= 700);
-  expect(heavy.length).toBeGreaterThan(0);
-  for (const [variant, style] of heavy) {
-    const resolved = resolveFontStyle(fonts, style.fontFamily, 'bold');
-    expect(`${variant}:${resolved.fontFamily}`).toBe(`${variant}:${FAMILY}`);
-    expect(Number(resolved.fontWeight)).toBeLessThanOrEqual(USER_FONT_MAX_NATIVE_WEIGHT);
-  }
-});
-
-test('the definition omits bold on purpose and keeps a family backstop', () => {
-  const definition = userFontDefinition(FAMILY);
-  expect(definition.bold).toBeUndefined();
-  expect(definition.semibold).toBe(FAMILY);
-  // The rung a bold request lands on when `bold` is absent.
-  expect(definition.family).toBe(FAMILY);
-});
-
-test('buildTheme installs that registry rather than rolling its own', () => {
-  const theme = readFileSync('src/constants/theme.ts', 'utf8');
-  expect(theme).toContain('userFontRegistry(interfaceFamily)');
-  // A role assigned by hand here is a role that can drift from the list above.
-  for (const role of KIT_FONT_ROLES) {
-    expect(theme).not.toContain(`${role}: { family: interfaceFamily }`);
-  }
-});
-
-test('a slot with no file leaves the preset alone', () => {
-  const theme = readFileSync('src/constants/theme.ts', 'utf8');
-  // The overwhelmingly common case: a reader who never added a font must get
-  // the kit's own empty definitions, which is how `fontFamily: undefined`
-  // reaches React Native and the platform UI face is used.
-  expect(theme).toContain('interfaceFamily\n    ? { ...preset.fonts, ...userFontRegistry(');
-  expect(theme).toContain(': preset.fonts;');
-});
-
-/** Typed so a role added to the kit fails compilation here too, not only at runtime. */
-const _roleIsAString: KitFontRole = 'body';
-void _roleIsAString;

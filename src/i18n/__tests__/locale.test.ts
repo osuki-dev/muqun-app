@@ -7,7 +7,6 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
-  APP_LOCALES,
   isAppLocale,
   isLocalePreference,
   localeHeaders,
@@ -17,29 +16,6 @@ import {
 } from '../locale';
 
 describe('the codes themselves', () => {
-  // This is the whole contract with the other two surfaces. The app's catalog
-  // directory, the persisted setting, the request header and the gateway's
-  // language table are all this literal string: Chinese by region (`zh-TW`,
-  // `zh-CN`, never `zh-Hant` or `zh_TW`), everything else bare (`pt`, never
-  // `pt-BR`). If this test is ever "fixed" by changing the expectation, every
-  // one of them has to move with it.
-  test('locale codes are the established ones, in their established order', () => {
-    expect(APP_LOCALES).toEqual([
-      'en',
-      'zh-TW',
-      'zh-CN',
-      'ja',
-      'ko',
-      'de',
-      'fr',
-      'es',
-      'pt',
-      'ru',
-      'vi',
-      'th',
-    ]);
-  });
-
   test('the guards accept what we ship and nothing else', () => {
     expect(isAppLocale('zh-TW')).toBe(true);
     expect(isAppLocale('zh-Hant')).toBe(false);

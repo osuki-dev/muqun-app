@@ -2,10 +2,8 @@
  * The app's `Text`: the design system's, plus the one thing a reader's own
  * font file makes it need.
  *
- * Every reader-facing string in this app goes through here rather than through
- * `@osuki-dev/ui` directly, and
- * `src/components/__tests__/interface-font-reach.test.ts` is what keeps it that
- * way. There is exactly one behaviour added, and this is what it is for.
+ * Reader-facing strings use this wrapper around `@osuki-dev/ui` to apply the
+ * selected interface font.
  *
  * ## The bug
  *

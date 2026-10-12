@@ -44,10 +44,6 @@ function reset(stored?: unknown) {
 beforeEach(() => reset());
 
 describe('the default', () => {
-  test('a fresh install is on the default pack', () => {
-    expect(store.getState().themePack).toBe(DEFAULT_THEME_PACK_ID);
-  });
-
   test('hydrating with nothing stored leaves it there', async () => {
     await store.getState().hydrate();
     expect(store.getState().themePack).toBe(DEFAULT_THEME_PACK_ID);

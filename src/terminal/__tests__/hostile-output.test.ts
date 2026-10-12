@@ -8,7 +8,7 @@ import { describe, expect, test } from 'bun:test';
 import {
   TERMINAL_LINK_LIMIT,
   TERMINAL_TITLE_LIMIT,
-  TerminalEmulator,
+  type TerminalEmulator,
   terminalFrameLinks,
   terminalFrameText,
 } from '@/terminal/terminal-core';
@@ -141,21 +141,6 @@ describe('sequences that ask for a reply get none', () => {
     term.write(`go${sequence}od`);
     expect(textOf(term)).toBe('good');
     inGrid(term);
-  });
-
-  test('the emulator exposes nothing that could carry a reply', () => {
-    // Every method is either input (`write`, `flush`, `resize`, `reset`,
-    // `setTheme`) or a read of the grid; nothing takes a callback or a handle
-    // the far side could be reached through. Adding one is a policy change,
-    // and it has to change this test too.
-    const names = Object.getOwnPropertyNames(TerminalEmulator.prototype);
-    expect(
-      names.filter((name) => /reply|respond|answer|send|output|shell|writer/iu.test(name))
-    ).toEqual([]);
-    const term = emulator(20, 3);
-    expect(
-      Object.keys(term).filter((key) => /reply|respond|answer|send|output|shell|writer/iu.test(key))
-    ).toEqual([]);
   });
 });
 

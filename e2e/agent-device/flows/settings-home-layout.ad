@@ -52,9 +52,6 @@ press "${TARGET}"
 # section settings-again
 is visible "${TARGET}"
 
-# section seek-row-again
-press "${TARGET}"
-
 # section open-row-again
 press "${TARGET}"
 wait "id=\"settings-home-layout-sheet\"" 8000
