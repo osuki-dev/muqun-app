@@ -1208,7 +1208,7 @@ msgstr "Angezeigte Änderungen wählen"
 msgid "Choose which simulator to show"
 msgstr "Auswählen, welcher Simulator gezeigt wird"
 
-#: src/components/changes-worktree-picker.tsx
+#: src/components/git-diff-view.tsx
 msgid "Choose worktree"
 msgstr "Worktree auswählen"
 
@@ -1874,7 +1874,7 @@ msgstr "Konnte nicht beibehalten werden"
 msgid "Could not list this computer's agents."
 msgstr "Die Agents dieses Computers konnten nicht aufgelistet werden"
 
-#: src/components/changes-worktree-picker.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "Could not list worktrees. Refresh to try again."
 msgstr "Worktrees konnten nicht aufgelistet werden. Zum Wiederholen aktualisieren"
 
@@ -2199,7 +2199,8 @@ msgstr "Aktuell"
 msgid "Current agent"
 msgstr "Aktueller Agent"
 
-#: src/components/changes-worktree-picker.tsx
+#: src/components/changes-worktree-list.tsx
+#: src/components/git-diff-view.tsx
 msgid "Current checkout"
 msgstr "Aktueller Checkout"
 
@@ -2323,6 +2324,7 @@ msgid "detached at {head}"
 msgstr "losgelöst bei {head}"
 
 #: src/components/changes-sheet.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "Detached at {head}"
 msgstr "Losgelöst bei {head}"
 
@@ -2864,6 +2866,10 @@ msgstr "Wird erzeugt…"
 msgid "Get started"
 msgstr "Los geht's"
 
+#: src/components/git-diff-view.tsx
+msgid "Git"
+msgstr "Git"
+
 #: src/i18n/labels.ts
 msgid "Git status"
 msgstr "Git-Status"
@@ -3307,10 +3313,6 @@ msgstr "Später"
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "Neueste"
-
-#: src/app/commands.tsx
-msgid "Lazygit"
-msgstr "Lazygit"
 
 #: src/hooks/use-lazygit.ts
 msgid "Lazygit startup could not be confirmed"
@@ -3803,6 +3805,7 @@ msgid "no commits yet"
 msgstr "noch keine Commits"
 
 #: src/components/changes-sheet.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "No commits yet"
 msgstr "Noch keine Commits"
 
@@ -3966,6 +3969,7 @@ msgid "No worktrees yet. Make one below to work on a branch without disturbing t
 msgstr "Noch keine Worktrees. Erstelle unten einen, um an einem Branch zu arbeiten, ohne diesen Checkout zu stören"
 
 #: src/components/changes-sheet.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "Not a git repository"
 msgstr "Kein Git-Repository"
 
@@ -4168,13 +4172,13 @@ msgstr "Anhang öffnen"
 msgid "Open background tasks"
 msgstr "Hintergrundaufgaben öffnen"
 
-#: src/components/git-diff-button.tsx
-msgid "Open changes"
-msgstr "Änderungen öffnen"
-
 #: src/components/artifacts-button.tsx
 msgid "Open files"
 msgstr "Dateiliste öffnen"
+
+#: src/components/git-diff-button.tsx
+msgid "Open Git"
+msgstr "Git öffnen"
 
 #: src/components/agent-tool-card.tsx
 msgid "Open image"
@@ -4201,7 +4205,6 @@ msgstr "Im Browser öffnen – über den SSH-Tunnel nicht verfügbar"
 msgid "Open installation guide"
 msgstr "Installationsanleitung öffnen"
 
-#: src/app/commands.tsx
 #: src/components/git-diff-view.tsx
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
@@ -4295,6 +4298,10 @@ msgstr "OpenCode, DeepSeek und T3 Code nebeneinander, jeder mit eigener Kachel, 
 #: src/app/+not-found.tsx
 msgid "Opening"
 msgstr "Wird geöffnet"
+
+#: src/components/git-diff-view.tsx
+msgid "Opening Lazygit…"
+msgstr "Lazygit wird geöffnet…"
 
 #: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
@@ -4830,7 +4837,7 @@ msgid "Refresh terminal history"
 msgstr "Terminalverlauf aktualisieren"
 
 #: src/components/agent-worktree-sheet.tsx
-#: src/components/changes-worktree-picker.tsx
+#: src/components/git-diff-view.tsx
 msgid "Refresh worktrees"
 msgstr "Worktrees aktualisieren"
 
@@ -6249,6 +6256,10 @@ msgstr "Das echte Terminal"
 msgid "The screen hit an error. Try again — your computers stay paired."
 msgstr "Auf diesem Bildschirm ist ein Fehler aufgetreten. Versuche es erneut — deine Computer bleiben gekoppelt"
 
+#: src/components/changes-worktree-list.tsx
+msgid "The selected worktree is no longer available. Choose another checkout."
+msgstr "Der ausgewählte Worktree ist nicht mehr verfügbar. Wähle einen anderen Checkout"
+
 #: src/components/ssh-host-form.tsx
 msgid "The server asks its own questions when you connect, a password or a one-time code, and nothing is stored on this device."
 msgstr "Der Server stellt beim Verbinden seine eigenen Fragen, ein Passwort oder einen Einmalcode, und auf diesem Gerät wird nichts gespeichert"
@@ -6877,6 +6888,10 @@ msgstr "Jetzt aktualisieren"
 msgid "Update the app to import public theme links. You can still import a file"
 msgstr "Aktualisiere die App, um öffentliche Theme-Links zu importieren. Dateien kannst du weiterhin importieren"
 
+#: src/components/git-diff-view.tsx
+msgid "Update the Gateway to open Lazygit in another worktree."
+msgstr "Aktualisiere das Gateway, um Lazygit in einem anderen Worktree zu öffnen"
+
 #: src/components/asset-viewer.tsx
 #: src/components/inline-file-link.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -6974,7 +6989,7 @@ msgstr "Version {version}{0}"
 msgid "View file changes"
 msgstr "Dateiänderungen anzeigen"
 
-#: src/components/changes-worktree-picker.tsx
+#: src/components/git-diff-view.tsx
 msgid "Viewing another checkout. Changes are read-only."
 msgstr "Ein anderer Checkout wird angezeigt. Änderungen sind schreibgeschützt"
 
@@ -7066,7 +7081,7 @@ msgid "Workspaces"
 msgstr "Workspaces"
 
 #: src/components/changes-sheet.tsx
-#: src/components/changes-worktree-picker.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "Worktree {name}"
 msgstr "Worktree namens {name}"
 
@@ -7145,23 +7160,3 @@ msgstr "Deine Nachricht"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "Deine gekoppelten Computer"
-
-#: src/components/git-diff-button.tsx
-msgid "Open Git"
-msgstr "Git öffnen"
-
-#: src/components/git-diff-view.tsx
-msgid "Opening Lazygit…"
-msgstr "Lazygit wird geöffnet…"
-
-#: src/components/git-diff-view.tsx
-msgid "Update the Gateway to open Lazygit in another worktree."
-msgstr "Aktualisiere das Gateway, um Lazygit in einem anderen Worktree zu öffnen"
-
-#: src/components/git-diff-view.tsx
-msgid "Git"
-msgstr "Git"
-
-#: src/components/changes-worktree-list.tsx
-msgid "The selected worktree is no longer available. Choose another checkout."
-msgstr "Der ausgewählte Worktree ist nicht mehr verfügbar. Wähle einen anderen Checkout"

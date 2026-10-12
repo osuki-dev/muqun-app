@@ -1208,7 +1208,7 @@ msgstr "เลือกการเปลี่ยนแปลงที่จะ
 msgid "Choose which simulator to show"
 msgstr "เลือกเครื่องจำลองที่จะแสดง"
 
-#: src/components/changes-worktree-picker.tsx
+#: src/components/git-diff-view.tsx
 msgid "Choose worktree"
 msgstr "เลือกเวิร์กทรี"
 
@@ -1874,7 +1874,7 @@ msgstr "เก็บไว้ไม่ได้"
 msgid "Could not list this computer's agents."
 msgstr "แสดงรายการเอเจนต์ของคอมพิวเตอร์นี้ไม่ได้"
 
-#: src/components/changes-worktree-picker.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "Could not list worktrees. Refresh to try again."
 msgstr "ไม่สามารถแสดงรายการเวิร์กทรีได้ รีเฟรชเพื่อลองอีกครั้ง"
 
@@ -2199,7 +2199,8 @@ msgstr "ปัจจุบัน"
 msgid "Current agent"
 msgstr "เอเจนต์ปัจจุบัน"
 
-#: src/components/changes-worktree-picker.tsx
+#: src/components/changes-worktree-list.tsx
+#: src/components/git-diff-view.tsx
 msgid "Current checkout"
 msgstr "เช็กเอาต์ปัจจุบัน"
 
@@ -2323,6 +2324,7 @@ msgid "detached at {head}"
 msgstr "แยกออกที่ {head}"
 
 #: src/components/changes-sheet.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "Detached at {head}"
 msgstr "แยกออกที่ {head}"
 
@@ -2864,6 +2866,10 @@ msgstr "กำลังสร้าง…"
 msgid "Get started"
 msgstr "เริ่มต้นใช้งาน"
 
+#: src/components/git-diff-view.tsx
+msgid "Git"
+msgstr "Git"
+
 #: src/i18n/labels.ts
 msgid "Git status"
 msgstr "สถานะ Git"
@@ -3307,10 +3313,6 @@ msgstr "ภายหลัง"
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "ล่าสุด"
-
-#: src/app/commands.tsx
-msgid "Lazygit"
-msgstr "Lazygit"
 
 #: src/hooks/use-lazygit.ts
 msgid "Lazygit startup could not be confirmed"
@@ -3803,6 +3805,7 @@ msgid "no commits yet"
 msgstr "ยังไม่มีคอมมิต"
 
 #: src/components/changes-sheet.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "No commits yet"
 msgstr "ยังไม่มีคอมมิต"
 
@@ -3966,6 +3969,7 @@ msgid "No worktrees yet. Make one below to work on a branch without disturbing t
 msgstr "ยังไม่มีเวิร์กทรี สร้างสักอันด้านล่างเพื่อทำงานบนสาขาโดยไม่รบกวนสำเนานี้"
 
 #: src/components/changes-sheet.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "Not a git repository"
 msgstr "ไม่ใช่ที่เก็บโค้ด Git"
 
@@ -4168,13 +4172,13 @@ msgstr "เปิดไฟล์แนบ"
 msgid "Open background tasks"
 msgstr "เปิดงานเบื้องหลัง"
 
-#: src/components/git-diff-button.tsx
-msgid "Open changes"
-msgstr "เปิดการเปลี่ยนแปลง"
-
 #: src/components/artifacts-button.tsx
 msgid "Open files"
 msgstr "เปิดไฟล์"
+
+#: src/components/git-diff-button.tsx
+msgid "Open Git"
+msgstr "เปิด Git"
 
 #: src/components/agent-tool-card.tsx
 msgid "Open image"
@@ -4201,7 +4205,6 @@ msgstr "เปิดในเบราว์เซอร์ ไม่พร้�
 msgid "Open installation guide"
 msgstr "เปิดคู่มือการติดตั้ง"
 
-#: src/app/commands.tsx
 #: src/components/git-diff-view.tsx
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
@@ -4295,6 +4298,10 @@ msgstr "OpenCode, DeepSeek และ T3 Code อยู่เคียงข้�
 #: src/app/+not-found.tsx
 msgid "Opening"
 msgstr "กำลังเปิด"
+
+#: src/components/git-diff-view.tsx
+msgid "Opening Lazygit…"
+msgstr "กำลังเปิด Lazygit…"
 
 #: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
@@ -4830,7 +4837,7 @@ msgid "Refresh terminal history"
 msgstr "รีเฟรชประวัติเทอร์มินัล"
 
 #: src/components/agent-worktree-sheet.tsx
-#: src/components/changes-worktree-picker.tsx
+#: src/components/git-diff-view.tsx
 msgid "Refresh worktrees"
 msgstr "รีเฟรชเวิร์กทรี"
 
@@ -6249,6 +6256,10 @@ msgstr "เทอร์มินัลจริง"
 msgid "The screen hit an error. Try again — your computers stay paired."
 msgstr "หน้าจอเกิดข้อผิดพลาด ลองอีกครั้ง คอมพิวเตอร์ของคุณยังจับคู่อยู่"
 
+#: src/components/changes-worktree-list.tsx
+msgid "The selected worktree is no longer available. Choose another checkout."
+msgstr "worktree ที่เลือกไม่พร้อมใช้งานแล้ว เลือก checkout อื่น"
+
 #: src/components/ssh-host-form.tsx
 msgid "The server asks its own questions when you connect, a password or a one-time code, and nothing is stored on this device."
 msgstr "เซิร์ฟเวอร์จะถามเมื่อคุณเชื่อมต่อ เช่น รหัสผ่านหรือรหัสใช้ครั้งเดียว และจะไม่เก็บข้อมูลไว้บนอุปกรณ์นี้"
@@ -6877,6 +6888,10 @@ msgstr "อัปเดตตอนนี้"
 msgid "Update the app to import public theme links. You can still import a file"
 msgstr "อัปเดตแอปเพื่อนำเข้าลิงก์ธีมสาธารณะ คุณยังนำเข้าไฟล์ได้"
 
+#: src/components/git-diff-view.tsx
+msgid "Update the Gateway to open Lazygit in another worktree."
+msgstr "อัปเดต Gateway เพื่อเปิด Lazygit ใน worktree อื่น"
+
 #: src/components/asset-viewer.tsx
 #: src/components/inline-file-link.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -6974,7 +6989,7 @@ msgstr "เวอร์ชัน {version}{0}"
 msgid "View file changes"
 msgstr "ดูการเปลี่ยนแปลงของไฟล์"
 
-#: src/components/changes-worktree-picker.tsx
+#: src/components/git-diff-view.tsx
 msgid "Viewing another checkout. Changes are read-only."
 msgstr "กำลังดูเช็กเอาต์อื่น การเปลี่ยนแปลงเป็นแบบอ่านอย่างเดียว"
 
@@ -7066,7 +7081,7 @@ msgid "Workspaces"
 msgstr "พื้นที่ทำงาน"
 
 #: src/components/changes-sheet.tsx
-#: src/components/changes-worktree-picker.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "Worktree {name}"
 msgstr "เวิร์กทรี {name}"
 
@@ -7145,23 +7160,3 @@ msgstr "ข้อความของคุณ"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "คอมพิวเตอร์ที่คุณจับคู่ไว้"
-
-#: src/components/git-diff-button.tsx
-msgid "Open Git"
-msgstr "เปิด Git"
-
-#: src/components/git-diff-view.tsx
-msgid "Opening Lazygit…"
-msgstr "กำลังเปิด Lazygit…"
-
-#: src/components/git-diff-view.tsx
-msgid "Update the Gateway to open Lazygit in another worktree."
-msgstr "อัปเดต Gateway เพื่อเปิด Lazygit ใน worktree อื่น"
-
-#: src/components/git-diff-view.tsx
-msgid "Git"
-msgstr "Git"
-
-#: src/components/changes-worktree-list.tsx
-msgid "The selected worktree is no longer available. Choose another checkout."
-msgstr "worktree ที่เลือกไม่พร้อมใช้งานแล้ว เลือก checkout อื่น"

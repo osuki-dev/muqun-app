@@ -1208,7 +1208,7 @@ msgstr "Chọn thay đổi cần hiển thị"
 msgid "Choose which simulator to show"
 msgstr "Chọn trình giả lập để hiển thị"
 
-#: src/components/changes-worktree-picker.tsx
+#: src/components/git-diff-view.tsx
 msgid "Choose worktree"
 msgstr "Chọn cây làm việc"
 
@@ -1874,7 +1874,7 @@ msgstr "Không thể giữ lại"
 msgid "Could not list this computer's agents."
 msgstr "Không thể liệt kê các tác tử của máy tính này"
 
-#: src/components/changes-worktree-picker.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "Could not list worktrees. Refresh to try again."
 msgstr "Không thể liệt kê cây làm việc. Hãy làm mới để thử lại"
 
@@ -2199,7 +2199,8 @@ msgstr "Đang dùng"
 msgid "Current agent"
 msgstr "Agent hiện tại"
 
-#: src/components/changes-worktree-picker.tsx
+#: src/components/changes-worktree-list.tsx
+#: src/components/git-diff-view.tsx
 msgid "Current checkout"
 msgstr "Bản làm việc hiện tại"
 
@@ -2323,6 +2324,7 @@ msgid "detached at {head}"
 msgstr "tách rời tại {head}"
 
 #: src/components/changes-sheet.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "Detached at {head}"
 msgstr "Tách rời tại {head}"
 
@@ -2864,6 +2866,10 @@ msgstr "Đang tạo…"
 msgid "Get started"
 msgstr "Bắt đầu"
 
+#: src/components/git-diff-view.tsx
+msgid "Git"
+msgstr "Git"
+
 #: src/i18n/labels.ts
 msgid "Git status"
 msgstr "Trạng thái Git"
@@ -3307,10 +3313,6 @@ msgstr "Để sau"
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "Mới nhất"
-
-#: src/app/commands.tsx
-msgid "Lazygit"
-msgstr "Lazygit"
 
 #: src/hooks/use-lazygit.ts
 msgid "Lazygit startup could not be confirmed"
@@ -3803,6 +3805,7 @@ msgid "no commits yet"
 msgstr "chưa có commit nào"
 
 #: src/components/changes-sheet.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "No commits yet"
 msgstr "Chưa có commit nào"
 
@@ -3966,6 +3969,7 @@ msgid "No worktrees yet. Make one below to work on a branch without disturbing t
 msgstr "Chưa có worktree nào. Tạo một cái bên dưới để làm việc trên một nhánh mà không đụng tới bản checkout này"
 
 #: src/components/changes-sheet.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "Not a git repository"
 msgstr "Không phải kho mã Git"
 
@@ -4168,13 +4172,13 @@ msgstr "Mở tệp đính kèm"
 msgid "Open background tasks"
 msgstr "Mở tác vụ nền"
 
-#: src/components/git-diff-button.tsx
-msgid "Open changes"
-msgstr "Mở thay đổi"
-
 #: src/components/artifacts-button.tsx
 msgid "Open files"
 msgstr "Mở danh sách tệp"
+
+#: src/components/git-diff-button.tsx
+msgid "Open Git"
+msgstr "Mở Git"
 
 #: src/components/agent-tool-card.tsx
 msgid "Open image"
@@ -4201,7 +4205,6 @@ msgstr "Mở trong trình duyệt của bạn, không khả dụng qua đường
 msgid "Open installation guide"
 msgstr "Mở hướng dẫn cài đặt"
 
-#: src/app/commands.tsx
 #: src/components/git-diff-view.tsx
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
@@ -4295,6 +4298,10 @@ msgstr "OpenCode, DeepSeek và T3 Code cạnh nhau, mỗi tác nhân có ô kh�
 #: src/app/+not-found.tsx
 msgid "Opening"
 msgstr "Đang mở"
+
+#: src/components/git-diff-view.tsx
+msgid "Opening Lazygit…"
+msgstr "Đang mở Lazygit…"
 
 #: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
@@ -4830,7 +4837,7 @@ msgid "Refresh terminal history"
 msgstr "Làm mới lịch sử terminal"
 
 #: src/components/agent-worktree-sheet.tsx
-#: src/components/changes-worktree-picker.tsx
+#: src/components/git-diff-view.tsx
 msgid "Refresh worktrees"
 msgstr "Làm mới worktree"
 
@@ -6249,6 +6256,10 @@ msgstr "Terminal thật sự"
 msgid "The screen hit an error. Try again — your computers stay paired."
 msgstr "Màn hình gặp lỗi. Hãy thử lại — các máy tính của bạn vẫn được ghép nối"
 
+#: src/components/changes-worktree-list.tsx
+msgid "The selected worktree is no longer available. Choose another checkout."
+msgstr "Cây làm việc đã chọn không còn khả dụng. Hãy chọn một bản làm việc khác"
+
 #: src/components/ssh-host-form.tsx
 msgid "The server asks its own questions when you connect, a password or a one-time code, and nothing is stored on this device."
 msgstr "Máy chủ tự đặt câu hỏi khi bạn kết nối, một mật khẩu hoặc mã dùng một lần, và không có gì được lưu trên thiết bị này"
@@ -6877,6 +6888,10 @@ msgstr "Cập nhật ngay"
 msgid "Update the app to import public theme links. You can still import a file"
 msgstr "Cập nhật ứng dụng để nhập giao diện từ liên kết công khai. Bạn vẫn có thể nhập từ tệp"
 
+#: src/components/git-diff-view.tsx
+msgid "Update the Gateway to open Lazygit in another worktree."
+msgstr "Cập nhật Gateway để mở Lazygit trong cây làm việc khác"
+
 #: src/components/asset-viewer.tsx
 #: src/components/inline-file-link.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -6974,7 +6989,7 @@ msgstr "Phiên bản {version}{0}"
 msgid "View file changes"
 msgstr "Xem các thay đổi tệp"
 
-#: src/components/changes-worktree-picker.tsx
+#: src/components/git-diff-view.tsx
 msgid "Viewing another checkout. Changes are read-only."
 msgstr "Đang xem bản làm việc khác. Các thay đổi chỉ có thể đọc"
 
@@ -7066,7 +7081,7 @@ msgid "Workspaces"
 msgstr "Không gian làm việc"
 
 #: src/components/changes-sheet.tsx
-#: src/components/changes-worktree-picker.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "Worktree {name}"
 msgstr "Worktree tên {name}"
 
@@ -7145,23 +7160,3 @@ msgstr "Tin nhắn của bạn"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "Các máy tính đã ghép nối của bạn"
-
-#: src/components/git-diff-button.tsx
-msgid "Open Git"
-msgstr "Mở Git"
-
-#: src/components/git-diff-view.tsx
-msgid "Opening Lazygit…"
-msgstr "Đang mở Lazygit…"
-
-#: src/components/git-diff-view.tsx
-msgid "Update the Gateway to open Lazygit in another worktree."
-msgstr "Cập nhật Gateway để mở Lazygit trong cây làm việc khác"
-
-#: src/components/git-diff-view.tsx
-msgid "Git"
-msgstr "Git"
-
-#: src/components/changes-worktree-list.tsx
-msgid "The selected worktree is no longer available. Choose another checkout."
-msgstr "Cây làm việc đã chọn không còn khả dụng. Hãy chọn một bản làm việc khác"

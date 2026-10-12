@@ -1208,7 +1208,7 @@ msgstr "표시할 변경 사항 선택"
 msgid "Choose which simulator to show"
 msgstr "표시할 시뮬레이터 선택"
 
-#: src/components/changes-worktree-picker.tsx
+#: src/components/git-diff-view.tsx
 msgid "Choose worktree"
 msgstr "작업 트리 선택"
 
@@ -1874,7 +1874,7 @@ msgstr "유지할 수 없습니다"
 msgid "Could not list this computer's agents."
 msgstr "이 컴퓨터의 에이전트 목록을 가져오지 못했습니다"
 
-#: src/components/changes-worktree-picker.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "Could not list worktrees. Refresh to try again."
 msgstr "작업 트리를 불러올 수 없습니다. 새로고침하여 다시 시도하세요"
 
@@ -2199,7 +2199,8 @@ msgstr "사용 중"
 msgid "Current agent"
 msgstr "현재 에이전트"
 
-#: src/components/changes-worktree-picker.tsx
+#: src/components/changes-worktree-list.tsx
+#: src/components/git-diff-view.tsx
 msgid "Current checkout"
 msgstr "현재 체크아웃"
 
@@ -2323,6 +2324,7 @@ msgid "detached at {head}"
 msgstr "{head}에서 분리됨"
 
 #: src/components/changes-sheet.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "Detached at {head}"
 msgstr "{head}에서 분리됨"
 
@@ -2864,6 +2866,10 @@ msgstr "생성 중…"
 msgid "Get started"
 msgstr "시작하기"
 
+#: src/components/git-diff-view.tsx
+msgid "Git"
+msgstr "Git"
+
 #: src/i18n/labels.ts
 msgid "Git status"
 msgstr "Git 상태"
@@ -3307,10 +3313,6 @@ msgstr "나중에"
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "최신"
-
-#: src/app/commands.tsx
-msgid "Lazygit"
-msgstr "Lazygit"
 
 #: src/hooks/use-lazygit.ts
 msgid "Lazygit startup could not be confirmed"
@@ -3803,6 +3805,7 @@ msgid "no commits yet"
 msgstr "아직 커밋 없음"
 
 #: src/components/changes-sheet.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "No commits yet"
 msgstr "아직 커밋 없음"
 
@@ -3966,6 +3969,7 @@ msgid "No worktrees yet. Make one below to work on a branch without disturbing t
 msgstr "아직 워크트리가 없습니다. 아래에서 하나 만들면 이 체크아웃을 건드리지 않고 브랜치에서 작업할 수 있습니다"
 
 #: src/components/changes-sheet.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "Not a git repository"
 msgstr "Git 저장소가 아닙니다"
 
@@ -4168,13 +4172,13 @@ msgstr "첨부 파일 열기"
 msgid "Open background tasks"
 msgstr "백그라운드 작업 열기"
 
-#: src/components/git-diff-button.tsx
-msgid "Open changes"
-msgstr "변경 사항 열기"
-
 #: src/components/artifacts-button.tsx
 msgid "Open files"
 msgstr "파일 목록 열기"
+
+#: src/components/git-diff-button.tsx
+msgid "Open Git"
+msgstr "Git 열기"
 
 #: src/components/agent-tool-card.tsx
 msgid "Open image"
@@ -4201,7 +4205,6 @@ msgstr "브라우저에서 열기, SSH 터널에서는 사용할 수 없음"
 msgid "Open installation guide"
 msgstr "설치 가이드 열기"
 
-#: src/app/commands.tsx
 #: src/components/git-diff-view.tsx
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
@@ -4295,6 +4298,10 @@ msgstr "OpenCode, DeepSeek, T3 Code를 나란히 사용하세요. 각자 전용 
 #: src/app/+not-found.tsx
 msgid "Opening"
 msgstr "여는 중"
+
+#: src/components/git-diff-view.tsx
+msgid "Opening Lazygit…"
+msgstr "Lazygit 여는 중…"
 
 #: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
@@ -4830,7 +4837,7 @@ msgid "Refresh terminal history"
 msgstr "터미널 기록 새로고침"
 
 #: src/components/agent-worktree-sheet.tsx
-#: src/components/changes-worktree-picker.tsx
+#: src/components/git-diff-view.tsx
 msgid "Refresh worktrees"
 msgstr "워크트리 새로고침"
 
@@ -6249,6 +6256,10 @@ msgstr "진짜 터미널"
 msgid "The screen hit an error. Try again — your computers stay paired."
 msgstr "이 화면에서 오류가 발생했습니다. 다시 시도하세요. 페어링된 컴퓨터는 그대로 유지됩니다"
 
+#: src/components/changes-worktree-list.tsx
+msgid "The selected worktree is no longer available. Choose another checkout."
+msgstr "선택한 워크트리를 더 이상 사용할 수 없습니다. 다른 체크아웃을 선택하세요"
+
 #: src/components/ssh-host-form.tsx
 msgid "The server asks its own questions when you connect, a password or a one-time code, and nothing is stored on this device."
 msgstr "연결할 때 서버가 비밀번호나 일회용 코드 등을 직접 묻습니다. 이 기기에는 아무것도 저장되지 않습니다"
@@ -6877,6 +6888,10 @@ msgstr "지금 업데이트"
 msgid "Update the app to import public theme links. You can still import a file"
 msgstr "공개 링크로 테마를 가져오려면 앱을 업데이트하세요. 파일 가져오기는 계속 사용할 수 있습니다"
 
+#: src/components/git-diff-view.tsx
+msgid "Update the Gateway to open Lazygit in another worktree."
+msgstr "다른 워크트리에서 Lazygit을 열려면 Gateway를 업데이트하세요"
+
 #: src/components/asset-viewer.tsx
 #: src/components/inline-file-link.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -6974,7 +6989,7 @@ msgstr "버전 {version}{0}"
 msgid "View file changes"
 msgstr "파일 변경 사항 보기"
 
-#: src/components/changes-worktree-picker.tsx
+#: src/components/git-diff-view.tsx
 msgid "Viewing another checkout. Changes are read-only."
 msgstr "다른 체크아웃을 보고 있습니다. 변경 사항은 읽기 전용입니다"
 
@@ -7066,7 +7081,7 @@ msgid "Workspaces"
 msgstr "워크스페이스"
 
 #: src/components/changes-sheet.tsx
-#: src/components/changes-worktree-picker.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "Worktree {name}"
 msgstr "워크트리 {name}"
 
@@ -7145,23 +7160,3 @@ msgstr "내 메시지"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "페어링된 컴퓨터"
-
-#: src/components/git-diff-button.tsx
-msgid "Open Git"
-msgstr "Git 열기"
-
-#: src/components/git-diff-view.tsx
-msgid "Opening Lazygit…"
-msgstr "Lazygit 여는 중…"
-
-#: src/components/git-diff-view.tsx
-msgid "Update the Gateway to open Lazygit in another worktree."
-msgstr "다른 워크트리에서 Lazygit을 열려면 Gateway를 업데이트하세요"
-
-#: src/components/git-diff-view.tsx
-msgid "Git"
-msgstr "Git"
-
-#: src/components/changes-worktree-list.tsx
-msgid "The selected worktree is no longer available. Choose another checkout."
-msgstr "선택한 워크트리를 더 이상 사용할 수 없습니다. 다른 체크아웃을 선택하세요"
