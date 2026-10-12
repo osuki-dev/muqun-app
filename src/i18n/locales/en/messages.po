@@ -3480,6 +3480,7 @@ msgid "Message copied to clipboard"
 msgstr "Message copied to clipboard"
 
 #: src/components/agent-workbench.tsx
+#: src/components/server-terminal-workspace.tsx
 msgid "Message not sent"
 msgstr "Message not sent"
 
@@ -3656,6 +3657,9 @@ msgstr "Needs you"
 msgid "Needs your attention"
 msgstr "Needs your attention"
 
+#: src/components/home-recent-sessions.tsx
+#: src/components/server-agent-rows.tsx
+#: src/components/task-row.tsx
 #: src/lib/notifications.ts
 msgid "Needs your input"
 msgstr "Needs your input"
@@ -6127,6 +6131,10 @@ msgstr "The agent is no longer waiting"
 msgid "The agent is offline"
 msgstr "The agent is offline"
 
+#: src/lib/network-error.ts
+msgid "The agent is waiting for an answer. Use the question's controls or the terminal keyboard to respond. Your message has not been sent."
+msgstr "The agent is waiting for an answer. Use the question's controls or the terminal keyboard to respond. Your message has not been sent"
+
 #: src/components/agent-context-sheet.tsx
 msgid "The agent stops asking; irreversibly destructive commands stay blocked"
 msgstr "The agent stops asking; irreversibly destructive commands stay blocked"
@@ -6895,6 +6903,10 @@ msgstr "Use {0}"
 #: src/lib/local-authentication.ts
 msgid "Use device passcode"
 msgstr "Use device passcode"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Use Shift+Left on the terminal keyboard to answer the pending question."
+msgstr "Use Shift+Left on the terminal keyboard to answer the pending question"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Use system font"

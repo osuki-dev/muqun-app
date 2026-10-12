@@ -231,6 +231,7 @@ export function useHomeRecentEntries({
           servesSnapshot: snapshotServesAgents({
             capabilities: useServerCapabilities.getState().byServer[record.serverId],
           }),
+          capabilities: useServerCapabilities.getState().byServer[record.serverId],
         });
         // The panes read failing while the list answered is the session the
         // cached choice names having gone: ask `/api/sessions` again next pass.
@@ -598,13 +599,17 @@ function RecentSessionRow({
     !taskState && observation?.kind === 'agent-session' && observation.status
       ? agentSessionStatusPresentation(observation.status)
       : undefined;
-  const statusLabel = taskState
+  const stateLabel = taskState
     ? _(taskStateWord[taskState])
     : status
       ? sessionStatus
         ? _(agentSessionStatusWord[sessionStatus.word])
         : _(agentStatusWord[status] ?? agentStatusWord.unknown)
       : undefined;
+  const statusLabel =
+    observation?.kind === 'gateway-agent' && observation.pendingUserInput
+      ? [stateLabel, t`Needs your input`].filter(Boolean).join(META_SEPARATOR)
+      : stateLabel;
   // The task's tone is the one its card and Needs you row wear.
   const statusTone = task
     ? taskRowVisual(task, { canComplete: false, acknowledged: false }).tone

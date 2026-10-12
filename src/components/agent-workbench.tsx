@@ -2855,6 +2855,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           variant: 'danger',
           title: t`Message not sent`,
           message: agentErrorRef.current(err),
+          durationMs: 6000,
         });
         return false;
       }

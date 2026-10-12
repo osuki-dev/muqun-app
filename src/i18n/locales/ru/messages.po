@@ -3480,6 +3480,7 @@ msgid "Message copied to clipboard"
 msgstr "Сообщение скопировано в буфер обмена"
 
 #: src/components/agent-workbench.tsx
+#: src/components/server-terminal-workspace.tsx
 msgid "Message not sent"
 msgstr "Сообщение не отправлено"
 
@@ -3656,6 +3657,9 @@ msgstr "Нужны вы"
 msgid "Needs your attention"
 msgstr "Требуется ваше внимание"
 
+#: src/components/home-recent-sessions.tsx
+#: src/components/server-agent-rows.tsx
+#: src/components/task-row.tsx
 #: src/lib/notifications.ts
 msgid "Needs your input"
 msgstr "Нужен ваш ответ"
@@ -6127,6 +6131,10 @@ msgstr "Агент больше не ждёт"
 msgid "The agent is offline"
 msgstr "Агент не в сети"
 
+#: src/lib/network-error.ts
+msgid "The agent is waiting for an answer. Use the question's controls or the terminal keyboard to respond. Your message has not been sent."
+msgstr "Агент ждёт ответа. Ответьте с помощью элементов вопроса или клавиатуры терминала. Ваше сообщение не отправлено"
+
 #: src/components/agent-context-sheet.tsx
 msgid "The agent stops asking; irreversibly destructive commands stay blocked"
 msgstr "Агент перестанет спрашивать; необратимо разрушительные команды по-прежнему блокируются"
@@ -6895,6 +6903,10 @@ msgstr "Использовать {0}"
 #: src/lib/local-authentication.ts
 msgid "Use device passcode"
 msgstr "Использовать код-пароль устройства"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Use Shift+Left on the terminal keyboard to answer the pending question."
+msgstr "Нажмите Shift+Стрелка влево на клавиатуре терминала, чтобы ответить на ожидающий вопрос"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Use system font"

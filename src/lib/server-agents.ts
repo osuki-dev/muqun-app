@@ -63,6 +63,12 @@ export type ServerAgent = {
    * already accepts for the rest of this mirror.
    */
   hasAgent: boolean;
+  /** Optional native ordinary-question attention, independent of run status. */
+  pendingUserInput?: boolean;
+  /** Opaque identity of the native agent instance, when the Gateway supplies it. */
+  instanceId?: string;
+  /** Shell incarnation reported with the native agent observation. */
+  shellPid?: number;
   /** Gateway-reported agent identity, never inferred from a pane title. */
   agentLabel?: string;
   /**
@@ -152,6 +158,10 @@ export const MAX_MIRRORED_SERVERS = 24;
  */
 export const SERVER_AGENTS_STALE_AFTER_MS = 5 * 60 * 1000;
 
+function positivePid(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0 && value <= 0xffffffff;
+}
+
 export function normalizeServerAgents(snapshot: ServerAgentsSnapshot): ServerAgentsSnapshot {
   return {
     serverId: snapshot.serverId,
@@ -162,6 +172,9 @@ export function normalizeServerAgents(snapshot: ServerAgentsSnapshot): ServerAge
       name: agent.name.slice(0, MAX_AGENT_NAME_LENGTH),
       status: agent.status,
       hasAgent: agent.hasAgent,
+      ...(agent.pendingUserInput === true ? { pendingUserInput: true } : {}),
+      ...(agent.instanceId ? { instanceId: agent.instanceId } : {}),
+      ...(positivePid(agent.shellPid) ? { shellPid: agent.shellPid } : {}),
       ...(agent.agentLabel
         ? { agentLabel: agent.agentLabel.slice(0, MAX_AGENT_LABEL_LENGTH) }
         : {}),
@@ -197,7 +210,8 @@ export function normalizeServerAgents(snapshot: ServerAgentsSnapshot): ServerAge
  */
 export function mirroredServerAgents(
   agents: readonly GatewayEntity[],
-  panes: readonly GatewayEntity[]
+  panes: readonly GatewayEntity[],
+  capabilities?: readonly string[]
 ): ServerAgent[] {
   const paneById = new Map(panes.map((pane) => [pane.id, pane]));
   return agents.map((agent) => {
@@ -209,6 +223,14 @@ export function mirroredServerAgents(
       name: panelTitle(pane, agent),
       status: asAgentStatus(agent.status),
       hasAgent: true,
+      ...(typeof agent.raw.instance_id === 'string' && agent.raw.instance_id
+        ? { instanceId: agent.raw.instance_id }
+        : {}),
+      ...(positivePid(agent.raw.shell_pid) ? { shellPid: agent.raw.shell_pid as number } : {}),
+      ...(capabilities?.includes('terminal_pending_user_input') &&
+      agent.raw.pending_user_input === true
+        ? { pendingUserInput: true }
+        : {}),
       ...(agentLabel ? { agentLabel } : {}),
       // What makes an agent on the home screen a link rather than a label: the
       // list has no session of its own to resolve a name against, so the pane
@@ -245,7 +267,8 @@ export function mirroredServerAgents(
  */
 export function mirroredServerPanes(
   panes: readonly GatewayEntity[],
-  agents: readonly GatewayEntity[]
+  agents: readonly GatewayEntity[],
+  capabilities?: readonly string[]
 ): ServerAgent[] {
   const agentByPaneId = new Map(
     agents.flatMap((agent) => {
@@ -262,6 +285,14 @@ export function mirroredServerPanes(
         name: panelTitle(pane, agent),
         status: asAgentStatus(agent.status),
         hasAgent: true,
+        ...(typeof agent.raw.instance_id === 'string' && agent.raw.instance_id
+          ? { instanceId: agent.raw.instance_id }
+          : {}),
+        ...(positivePid(agent.raw.shell_pid) ? { shellPid: agent.raw.shell_pid as number } : {}),
+        ...(capabilities?.includes('terminal_pending_user_input') &&
+        agent.raw.pending_user_input === true
+          ? { pendingUserInput: true }
+          : {}),
         ...(agentLabel ? { agentLabel } : {}),
         paneId: pane.id,
       };
@@ -300,6 +331,9 @@ export function sameServerAgents(
       // passes, so it is a change worth writing even though nothing else about
       // the row moved.
       agent.hasAgent === other.hasAgent &&
+      agent.pendingUserInput === other.pendingUserInput &&
+      agent.shellPid === other.shellPid &&
+      agent.instanceId === other.instanceId &&
       agent.agentLabel === other.agentLabel &&
       // An agent that moved to another pane is a change worth writing: the row
       // is a deep link, and a stale pane id sends the tap to the wrong panel.
@@ -485,6 +519,11 @@ function parseSnapshot(value: unknown): ServerAgentsSnapshot | null {
           // field's own doc comment on `ServerAgent` for why `true` is the
           // correct default rather than a guess.
           hasAgent: typeof agent.hasAgent === 'boolean' ? agent.hasAgent : true,
+          ...(agent.pendingUserInput === true ? { pendingUserInput: true } : {}),
+          ...(typeof agent.instanceId === 'string' && agent.instanceId
+            ? { instanceId: agent.instanceId }
+            : {}),
+          ...(positivePid(agent.shellPid) ? { shellPid: agent.shellPid as number } : {}),
           ...(typeof agent.agentLabel === 'string' && agent.agentLabel
             ? { agentLabel: agent.agentLabel }
             : {}),

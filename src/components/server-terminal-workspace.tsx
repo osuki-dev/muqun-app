@@ -1871,7 +1871,7 @@ export function ServerTerminalWorkspace({
                   serverId,
                   sessionId,
                   checkedAtMs: Date.now(),
-                  agents: mirroredServerPanes(next.panes, next.agents),
+                  agents: mirroredServerPanes(next.panes, next.agents, next.health?.capabilities),
                 });
               }
               const nextSnapshotGeneration = snapshotGenerationRef.current + 1;
@@ -4846,7 +4846,12 @@ export function ServerTerminalWorkspace({
           },
           (failure) => {
             if (isCurrentSend()) {
-              setError(describeGatewayFailure(failure, t`Could not send input.`).message);
+              showToast({
+                variant: 'danger',
+                title: t`Message not sent`,
+                message: describeGatewayFailure(failure, t`Could not send input.`).message,
+                durationMs: 6000,
+              });
             }
           }
         );
@@ -5378,6 +5383,15 @@ export function ServerTerminalWorkspace({
       />
     ) : null;
 
+  const pendingQuestionHint =
+    data.health?.capabilities?.includes('terminal_pending_user_input') &&
+    (selectedAgent?.status === 'working' || selectedAgent?.status === 'idle') &&
+    selectedAgent?.raw.pending_user_input === true ? (
+      <Text testID="terminal-pending-question-hint" variant="caption" color={theme.colors.warning}>
+        {t`Use Shift+Left on the terminal keyboard to answer the pending question.`}
+      </Text>
+    ) : null;
+
   const composerField = (
     <TerminalComposer
       voiceContext={`${serverId}:${data.sessionId}:${selection.paneId}`}
@@ -5546,6 +5560,7 @@ export function ServerTerminalWorkspace({
           <AttachmentMenu onSelect={chooseAttachmentSource} textColor={chromeText} />
         </View>
       ) : null}
+      {dock.composer ? pendingQuestionHint : null}
       {dock.composer ? composerField : null}
     </>
   );
@@ -6447,6 +6462,7 @@ export function ServerTerminalWorkspace({
                 places, and it accounts for the approval, the keyboard and the
                 editor alike. */}
                       {assignmentBar}
+                      {dock.composer ? pendingQuestionHint : null}
                       {dock.composer ? composerField : null}
                     </Animated.View>
                   </GlassChrome>

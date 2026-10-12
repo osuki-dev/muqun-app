@@ -41,6 +41,7 @@ export async function refreshHomeContinue({
   repairAgent,
   recordAgentSessions,
   servesSnapshot = false,
+  capabilities,
   agentSessionLimit = HOME_CONTINUE_GATEWAY_SESSION_LIMIT,
 }: {
   serverId: string;
@@ -60,6 +61,7 @@ export async function refreshHomeContinue({
   recordAgentSessions?: (snapshot: GatewayAgentSessionsSnapshot) => void;
   /** The gateway announces `session_snapshot`: its `/snapshot` carries the real agents. */
   servesSnapshot?: boolean;
+  capabilities?: readonly string[];
   agentSessionLimit?: number;
 }) {
   const repair = async (target: HomeTarget, agentId: string) => {
@@ -93,7 +95,7 @@ export async function refreshHomeContinue({
         serverId,
         sessionId,
         checkedAtMs: Date.now(),
-        agents: mirroredServerPanes(panes, agents),
+        agents: mirroredServerPanes(panes, agents, capabilities),
       });
     })(),
     ...(remembered.length > 0 || recordAgentSessions

@@ -3480,6 +3480,7 @@ msgid "Message copied to clipboard"
 msgstr "메시지가 클립보드에 복사되었습니다"
 
 #: src/components/agent-workbench.tsx
+#: src/components/server-terminal-workspace.tsx
 msgid "Message not sent"
 msgstr "메시지를 보내지 못했습니다"
 
@@ -3656,6 +3657,9 @@ msgstr "확인 필요"
 msgid "Needs your attention"
 msgstr "확인이 필요함"
 
+#: src/components/home-recent-sessions.tsx
+#: src/components/server-agent-rows.tsx
+#: src/components/task-row.tsx
 #: src/lib/notifications.ts
 msgid "Needs your input"
 msgstr "입력이 필요합니다"
@@ -6127,6 +6131,10 @@ msgstr "에이전트가 더 이상 기다리지 않습니다"
 msgid "The agent is offline"
 msgstr "에이전트가 오프라인입니다"
 
+#: src/lib/network-error.ts
+msgid "The agent is waiting for an answer. Use the question's controls or the terminal keyboard to respond. Your message has not been sent."
+msgstr "에이전트가 답변을 기다리고 있습니다. 질문의 버튼이나 터미널 키보드로 답변하세요. 메시지가 전송되지 않았습니다"
+
 #: src/components/agent-context-sheet.tsx
 msgid "The agent stops asking; irreversibly destructive commands stay blocked"
 msgstr "에이전트가 더 이상 묻지 않습니다. 되돌릴 수 없는 파괴적인 명령은 계속 차단됩니다"
@@ -6895,6 +6903,10 @@ msgstr "{0} 사용"
 #: src/lib/local-authentication.ts
 msgid "Use device passcode"
 msgstr "기기 암호 사용"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Use Shift+Left on the terminal keyboard to answer the pending question."
+msgstr "터미널 키보드에서 Shift+왼쪽 화살표를 눌러 대기 중인 질문에 답하세요"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Use system font"

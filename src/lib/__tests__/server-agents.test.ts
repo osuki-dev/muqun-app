@@ -55,6 +55,39 @@ function entity(
 }
 
 describe('mirroredServerAgents', () => {
+  test('native ordinary-question attention requires its capability and an exact true fact', () => {
+    const agent = entity('agent-1', 'Codex', {
+      status: 'working',
+      raw: {
+        pane_id: 'pane-1',
+        instance_id: 'instance-1',
+        shell_pid: 4242,
+        pending_user_input: true,
+      },
+    });
+    expect(mirroredServerAgents([agent], [])[0].pendingUserInput).toBeUndefined();
+    const [pending] = mirroredServerAgents([agent], [], ['terminal_pending_user_input']);
+    expect(pending).toMatchObject({
+      status: 'working',
+      pendingUserInput: true,
+      instanceId: 'instance-1',
+      shellPid: 4242,
+    });
+    const pane = entity('pane-1', 'Codex');
+    expect(mirroredServerPanes([pane], [agent], ['terminal_pending_user_input'])[0]).toMatchObject({
+      pendingUserInput: true,
+      status: 'working',
+    });
+    agent.raw.pending_user_input = 'true';
+    expect(
+      mirroredServerAgents([agent], [], ['terminal_pending_user_input'])[0].pendingUserInput
+    ).toBeUndefined();
+    for (const shellPid of [0, -1, 1.5, 0x100000000, '4242']) {
+      agent.raw.shell_pid = shellPid;
+      expect(mirroredServerAgents([agent], [])[0].shellPid).toBeUndefined();
+    }
+  });
+
   // The bug this exists to stop: rename a panel on the server screen, go back
   // to the home screen, and the row still says what the agent was called when
   // it started. A rename sets the pane's label; the agents endpoint never

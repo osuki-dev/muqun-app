@@ -57,6 +57,21 @@ const NOT_FOUND = new Error(
 const NETWORK = new Error('Network request failed');
 const UNAUTHORIZED = new Error('HTTP 401: {"error":{"code":"invalid_token","message":"nope"}}');
 
+test('a blocked agent explains how to respond without suggesting a retry', () => {
+  const failure = describeGatewayFailure(
+    new Error(
+      'HTTP 400: {"error":{"code":"agent_blocked","message":"agent.prompt: agent w1:p1 is blocked and requires interactive input"}}'
+    )
+  );
+  expect(failure).toEqual({
+    kind: 'request',
+    message:
+      "The agent is waiting for an answer. Use the question's controls or the terminal keyboard to respond. Your message has not been sent.",
+    retryable: false,
+    needsPairing: false,
+  });
+});
+
 type Read = { output: string; read: unknown };
 const tailRead: Read = { output: 'tail', read: { output: 'tail' } };
 const rangeRead = (start: number): Read => ({
