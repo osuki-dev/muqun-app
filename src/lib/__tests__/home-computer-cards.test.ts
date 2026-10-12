@@ -25,6 +25,11 @@ import {
   openTaskWork,
 } from '../home-computer-cards';
 import type { ServerTasksIndex } from '../server-tasks-state';
+import {
+  MAX_SERVER_AGENTS,
+  SERVER_AGENTS_STALE_AFTER_MS,
+  type ServerAgentsSnapshot,
+} from '../server-agents';
 import type { TaskState, TaskView } from '../task-ledger';
 
 function task(
@@ -216,6 +221,135 @@ describe('roll-up, result and title', () => {
 });
 
 describe('buildComputerCards', () => {
+  test('Gateway-confirmed pane closures disappear from Home without losing history', () => {
+    const closed = [
+      'the pane closed',
+      'the pane closed: notes.md does not exist',
+      'pane closed',
+    ].map((summary, position) =>
+      task(`closed-${position}`, 'failed', NOW, {
+        summary,
+        origin: 'device',
+        binding: { kind: 'pane', sessionId: 'coding', paneId: `gone-${position}` },
+      })
+    );
+    const origin = task('origin', 'done', NOW, {
+      binding: { kind: 'agent_session', agentId: 'codex', asid: 'sending-session' },
+    });
+    const ledger = index({ coding: [...closed, origin] });
+    const cards = buildComputerCards({
+      servers: [{ serverId: 'coding' }],
+      index: ledger,
+      reachability: () => 'live',
+      dismissed: new Set(),
+      pending: [{ id: 'send', serverId: 'coding', goal: closed[0]!.goal, atMs: NOW }],
+      nowMs: NOW,
+    });
+    expect(cards[0]!.finished).toEqual([origin]);
+    expect(cards[0]!.pending).toEqual([]);
+    expect(ledger.coding!.tasks).toEqual([...closed, origin]);
+    expect(taskRowDestination(origin)).toEqual({
+      kind: 'session',
+      agentId: 'codex',
+      asid: 'sending-session',
+    });
+    expect(buildTaskTree(ledger.coding!.tasks)).toHaveLength(4);
+  });
+
+  test('only a fresh complete inventory for the task session proves a pane gone', () => {
+    const bound = task('bound', 'working', NOW - 1, {
+      receivedAtMs: NOW - 1,
+      binding: { kind: 'pane', sessionId: 'routing', paneId: 'terminal' },
+    });
+    const complete: ServerAgentsSnapshot = {
+      serverId: 'coding',
+      sessionId: 'routing',
+      checkedAtMs: NOW,
+      agents: [],
+    };
+    const listedPane = {
+      id: 'terminal',
+      paneId: 'terminal',
+      name: 'Codex',
+      status: 'unknown' as const,
+      hasAgent: true,
+    };
+    const cases: [string, ServerAgentsSnapshot | undefined, boolean][] = [
+      ['confirmed gone', complete, false],
+      ['live pane', { ...complete, agents: [listedPane] }, true],
+      ['loading inventory', undefined, true],
+      ['legacy session scope', { ...complete, sessionId: undefined }, true],
+      ['another session', { ...complete, sessionId: 'other' }, true],
+      ['another computer', { ...complete, serverId: 'other' }, true],
+      [
+        'stale inventory',
+        { ...complete, checkedAtMs: NOW - SERVER_AGENTS_STALE_AFTER_MS - 1 },
+        true,
+      ],
+      ['before the task', { ...complete, checkedAtMs: NOW - 2 }, true],
+      [
+        'capped inventory',
+        {
+          ...complete,
+          agents: Array.from({ length: MAX_SERVER_AGENTS }, (_, i) => ({
+            ...listedPane,
+            paneId: `other-${i}`,
+          })),
+        },
+        true,
+      ],
+      [
+        'partial legacy rows',
+        { ...complete, agents: [{ ...listedPane, paneId: undefined }] },
+        true,
+      ],
+    ];
+    for (const [name, snapshot, shown] of cases) {
+      const cards = buildComputerCards({
+        servers: [{ serverId: 'coding' }],
+        index: index({ coding: [bound] }),
+        panesByServer: snapshot ? { coding: snapshot } : {},
+        reachability: () => undefined,
+        dismissed: new Set(),
+        nowMs: NOW,
+      });
+      expect({
+        name,
+        shown: cards.some((card) => card.now.some((row) => row.task === bound)),
+      }).toEqual({ name, shown });
+    }
+  });
+
+  test('completed pane tasks and orphan children use the same Home filter', () => {
+    const root = task('root', 'working', NOW - 1, {
+      binding: { kind: 'pane', sessionId: 'routing', paneId: 'gone' },
+    });
+    const child = task('child', 'working', NOW - 1, {
+      parentTaskId: root.taskId,
+      binding: { kind: 'agent_session', agentId: 'codex', asid: 'child-session' },
+    });
+    const finished = task('finished', 'done', NOW - 1, {
+      kind: 'command',
+      summary: 'saved command output',
+      binding: { kind: 'pane', sessionId: 'routing', paneId: 'gone-too' },
+    });
+    const ledger = index({ coding: [root, child, finished] });
+    const cards = buildComputerCards({
+      servers: [{ serverId: 'coding' }],
+      index: ledger,
+      panesByServer: {
+        coding: { serverId: 'coding', sessionId: 'routing', checkedAtMs: NOW, agents: [] },
+      },
+      reachability: () => 'live',
+      dismissed: new Set(),
+      nowMs: NOW,
+    });
+    expect(cards[0]!.now.map((row) => row.task)).toEqual([child]);
+    expect(cards[0]!.finished).toEqual([]);
+    expect(ledger.coding!.tasks).toEqual([root, child, finished]);
+    expect(taskRowDestination(finished)).toEqual({ kind: 'result' });
+  });
+
   test.each(['queued', 'working', 'waiting', 'done', 'failed', 'cancelled'] as const)(
     'remote exec %s stays in its originating conversation, not the receiving card',
     (state) => {
