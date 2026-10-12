@@ -81,7 +81,6 @@ import { useLingui } from '@lingui/react/macro';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import {
   Check,
-  GitBranch,
   Globe,
   MonitorSmartphone,
   PanelsTopLeft,
@@ -115,7 +114,6 @@ import {
 } from '@/lib/gateway-client';
 import { describeGatewayFailure } from '@/lib/network-error';
 import { quickActionAvailability } from '@/lib/quick-actions';
-import { useLazygit } from '@/hooks/use-lazygit';
 import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
 import { slashArgumentRequired } from '@/lib/slash-argument';
 import { SIMFARM_DEFAULT_PORT, simfarmSocketUrl } from '@/lib/simfarm';
@@ -210,7 +208,6 @@ export default function QuickCommandsScreen() {
      * server -- the one place the rows are missing.
      */
     canSpawn?: string;
-    canLazygit?: string;
     /**
      * Whether this connection is one where opening a plain URL is honest.
      *
@@ -234,12 +231,6 @@ export default function QuickCommandsScreen() {
   );
   const mode: QuickCommandMode = params.mode === 'agent' ? 'agent' : 'terminal';
   const manageOnly = params.manage === '1';
-  const lazygit = useLazygit({
-    enabled: !manageOnly && params.canLazygit === '1',
-    sessionId: params.sessionId,
-    paneId: params.paneId,
-    serverId: params.serverId,
-  });
   const agentDelivery = useAgentCommandDelivery({
     ...params,
     enabled: mode === 'agent' && !manageOnly,
@@ -426,7 +417,7 @@ export default function QuickCommandsScreen() {
    */
   async function create(focus: boolean) {
     const serverId = params.serverId;
-    if (!available.canCreate || creating || lazygit.busy || !serverId) return;
+    if (!available.canCreate || creating || !serverId) return;
     setCreating(focus ? 'tab' : 'panel');
     setError(null);
     return recoverWith(
@@ -663,25 +654,15 @@ export default function QuickCommandsScreen() {
               measure needs anyway. A connection that offers neither
               machine-scoped tile draws the two it has at half width apiece,
               which reads as the row it is rather than as a row with holes. */}
-          {available.hasTiles || lazygit.available ? (
+          {available.hasTiles ? (
             <View style={styles.tiles}>
-              {lazygit.available ? (
-                <ActionTile
-                  icon={GitBranch}
-                  label={t`Lazygit`}
-                  accessibilityLabel={t`Open Lazygit`}
-                  busy={lazygit.busy}
-                  disabled={creating !== null || lazygit.busy}
-                  onPress={() => void lazygit.open()}
-                />
-              ) : null}
               {available.canCreate ? (
                 <ActionTile
                   icon={SquareTerminal}
                   label={t`Terminal`}
                   accessibilityLabel={t`New terminal`}
                   busy={creating === 'panel'}
-                  disabled={creating !== null || lazygit.busy}
+                  disabled={creating !== null}
                   onPress={() => void create(false)}
                 />
               ) : null}
@@ -691,7 +672,7 @@ export default function QuickCommandsScreen() {
                   label={t`Group`}
                   accessibilityLabel={t`New group`}
                   busy={creating === 'tab'}
-                  disabled={creating !== null || lazygit.busy}
+                  disabled={creating !== null}
                   onPress={() => void create(true)}
                 />
               ) : null}
@@ -813,7 +794,7 @@ export default function QuickCommandsScreen() {
                 name={t`New task`}
                 detail={t`Start an agent and send it the first thing to do.`}
                 detailColor={theme.colors.textMuted}
-                disabled={creating !== null || lazygit.busy}
+                disabled={creating !== null}
                 onPress={startTask}
               />
             </SettingsCard>

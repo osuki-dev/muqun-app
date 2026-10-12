@@ -7128,3 +7128,23 @@ msgstr "Tin nhắn của bạn"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "Các máy tính đã ghép nối của bạn"
+
+#: src/components/git-diff-button.tsx
+msgid "Open Git"
+msgstr "Mở Git"
+
+#: src/components/git-diff-view.tsx
+msgid "Opening Lazygit…"
+msgstr "Đang mở Lazygit…"
+
+#: src/components/git-diff-view.tsx
+msgid "Update the Gateway to open Lazygit in another worktree."
+msgstr "Cập nhật Gateway để mở Lazygit trong cây làm việc khác"
+
+#: src/components/git-diff-view.tsx
+msgid "Git"
+msgstr "Git"
+
+#: src/components/changes-worktree-list.tsx
+msgid "The selected worktree is no longer available. Choose another checkout."
+msgstr "Cây làm việc đã chọn không còn khả dụng. Hãy chọn một bản làm việc khác"

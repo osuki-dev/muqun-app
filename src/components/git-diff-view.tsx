@@ -1,12 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
-import { GitBranch } from 'lucide-react-native';
-import { SheetSceneQuietControl } from '@/components/sheet-scene';
+import { ChevronDown, ChevronUp, RefreshCw } from 'lucide-react-native';
+import {
+  SheetSceneQuietAction,
+  SheetSceneQuietControl,
+  SHEET_LADDER,
+} from '@/components/sheet-scene';
+import { PressableScale } from '@/components/pressable-scale';
+import { Text } from '@/components/text';
 import { useLazygit } from '@/hooks/use-lazygit';
 
 import { ChangesSheet } from '@/components/changes-sheet';
-import { ChangesWorktreePicker } from '@/components/changes-worktree-picker';
+import { ChangesWorktreeList } from '@/components/changes-worktree-list';
 import type { GitWorktreeInventory } from '@/lib/git-worktrees';
 import {
   discardPaneVcsFile,
@@ -19,9 +26,9 @@ import {
 import { paneChangesApi, type PaneChangesClient } from '@/lib/changes-api';
 
 /**
- * What this pane has changed: the one Changes sheet (`changes-sheet.tsx`),
- * asked of the pane's routes -- the same title, caption, scope menu, tree,
- * patches and discard as an agent session's.
+ * One Git workspace for this pane: a checkout context, native changes preview,
+ * and the installed Git TUI. Linked checkout selection affects this reader
+ * and the Git TUI target; it never changes the original terminal directory.
  *
  * With `pane_vcs_files`, `…/panes/{pid}/vcs/files` lists the files and a
  * file's patch is fetched when it is opened, and one file's uncommitted
@@ -48,6 +55,7 @@ export function GitDiffView({
   vcsFiles,
   serverId,
   canLazygit = false,
+  canLazygitWorktree = false,
   worktreesSupported = false,
 }: {
   sessionId: string;
@@ -56,10 +64,12 @@ export function GitDiffView({
   vcsFiles: boolean;
   serverId?: string;
   canLazygit?: boolean;
+  canLazygitWorktree?: boolean;
   worktreesSupported?: boolean;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const [worktreesOpen, setWorktreesOpen] = useState(false);
   const [worktree, setWorktree] = useState<string | undefined>();
   const [inventory, setInventory] = useState<GitWorktreeInventory | null>(null);
   const [inventoryLoading, setInventoryLoading] = useState(false);
@@ -89,39 +99,121 @@ export function GitDiffView({
       controller.abort();
     };
   }, [sessionId, paneId, worktreesSupported, revision]);
-  const lazygit = useLazygit({ enabled: canLazygit && !worktree, sessionId, paneId, serverId });
+  const lazygit = useLazygit({
+    enabled: canLazygit && (!worktree || canLazygitWorktree),
+    sessionId,
+    paneId,
+    serverId,
+    worktree,
+  });
   const api = useMemo(
     () => paneChangesApi({ sessionId, paneId, vcsFiles, worktree }, PANE_CLIENT),
     [paneId, sessionId, vcsFiles, worktree]
   );
+  const path = worktree ?? inventory?.current;
+  const WorktreeChevron = worktreesOpen ? ChevronUp : ChevronDown;
+  const checkoutControl = worktreesSupported ? (
+    <View style={styles.checkout}>
+      <PressableScale
+        testID="changes-worktree-picker"
+        accessibilityRole="button"
+        accessibilityLabel={t`Choose worktree`}
+        accessibilityState={{ expanded: worktreesOpen }}
+        onPress={() => {
+          setWorktreesOpen((open) => !open);
+          if (!worktreesOpen) setRevision((previous) => previous + 1);
+        }}
+        style={styles.checkoutPicker}>
+        <Text
+          variant="caption"
+          color={theme.colors.textMuted}
+          numberOfLines={1}
+          ellipsizeMode="middle"
+          style={styles.checkoutPath}>
+          {path ?? t`Current checkout`}
+        </Text>
+        <WorktreeChevron size={14} color={theme.colors.textMuted} />
+      </PressableScale>
+      {worktree ? (
+        <Text variant="caption" color={theme.colors.textMuted}>
+          {t`Viewing another checkout. Changes are read-only.`}
+        </Text>
+      ) : null}
+    </View>
+  ) : undefined;
+  const header = (
+    <View style={styles.navigation}>
+      {!worktreesOpen && lazygit.available ? (
+        <SheetSceneQuietAction
+          testID="changes-lazygit"
+          label={lazygit.busy ? t`Opening Lazygit…` : t`Open Lazygit`}
+          disabled={lazygit.busy}
+          onPress={() => void lazygit.open()}
+        />
+      ) : !worktreesOpen && worktree && canLazygit && !canLazygitWorktree ? (
+        <View style={styles.checkout}>
+          <SheetSceneQuietAction
+            testID="changes-lazygit"
+            label={t`Open Lazygit`}
+            disabled
+            onPress={() => void lazygit.open()}
+          />
+          <Text variant="caption" color={theme.colors.textMuted}>
+            {t`Update the Gateway to open Lazygit in another worktree.`}
+          </Text>
+        </View>
+      ) : null}
+    </View>
+  );
+  const overview =
+    worktreesOpen && worktreesSupported ? (
+      <ChangesWorktreeList
+        inventory={inventory}
+        selected={worktree}
+        loading={inventoryLoading}
+        error={inventoryError}
+        onSelect={(next) => {
+          setWorktree(next);
+          setWorktreesOpen(false);
+        }}
+      />
+    ) : undefined;
   return (
     <ChangesSheet
       key={`${sessionId}:${paneId}:${worktree ?? ''}`}
       testID="git-diff-view"
-      checkoutControl={
-        worktreesSupported ? (
-          <ChangesWorktreePicker
-            inventory={inventory}
-            selected={worktree}
-            loading={inventoryLoading}
-            error={inventoryError}
-            onRefresh={() => setRevision((previous) => previous + 1)}
-            onSelect={setWorktree}
-          />
-        ) : undefined
-      }
+      title={t`Git`}
+      checkoutControl={checkoutControl}
       api={api}
+      navigation={header}
+      overview={overview}
       headingActions={
-        lazygit.available ? (
+        overview ? (
           <SheetSceneQuietControl
-            testID="changes-lazygit"
-            accessibilityLabel={t`Open Lazygit`}
-            busy={lazygit.busy}
-            onPress={() => void lazygit.open()}>
-            <GitBranch size={17} color={theme.colors.textMuted} />
+            testID="changes-worktrees-refresh"
+            accessibilityLabel={t`Refresh worktrees`}
+            busy={inventoryLoading}
+            onPress={() => setRevision((previous) => previous + 1)}>
+            <RefreshCw size={17} color={theme.colors.textMuted} />
           </SheetSceneQuietControl>
         ) : undefined
       }
     />
   );
 }
+
+const styles = StyleSheet.create({
+  navigation: {
+    gap: SHEET_LADDER.gap,
+    paddingHorizontal: SHEET_LADDER.gutter,
+    paddingBottom: SHEET_LADDER.gap,
+  },
+  checkout: { gap: SHEET_LADDER.tight },
+  checkoutPicker: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SHEET_LADDER.gap,
+    minHeight: 44,
+  },
+  checkoutPath: { flexShrink: 1, minWidth: 0 },
+});

@@ -83,9 +83,11 @@ export const demoRecord: GatewayRecord = {
 
 let active = false;
 let demoLazygit = false;
+let demoLazygitCwd = '~/code/muqun';
 
-export function demoLaunchLazygit(): string {
+export function demoLaunchLazygit(worktree?: string): string {
   demoLazygit = true;
+  demoLazygitCwd = worktree ?? '~/code/muqun';
   return 'pane-lazygit';
 }
 let demoAssistant: { kind: string; prompt: string; startedAt: number; instanceId: string } | null =
@@ -1299,6 +1301,7 @@ export function demoHealth() {
       GIT_DIFF_CAPABILITY,
       'git_worktrees',
       'pane_lazygit',
+      'pane_lazygit_worktree',
       'agent_audio_assets',
     ],
     // The per-session capability list a current gateway answers with. The demo
@@ -1349,7 +1352,7 @@ export function demoPanes(): GatewayEntity[] {
               workspace_id: 'ws-1',
               label: 'lazygit',
               foreground_command: 'lazygit',
-              cwd: '~/code/muqun',
+              cwd: demoLazygitCwd,
             },
           ]
         : []),

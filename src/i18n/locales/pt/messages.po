@@ -7128,3 +7128,23 @@ msgstr "Sua mensagem"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "Os seus computadores emparelhados"
+
+#: src/components/git-diff-button.tsx
+msgid "Open Git"
+msgstr "Abrir Git"
+
+#: src/components/git-diff-view.tsx
+msgid "Opening Lazygit…"
+msgstr "Abrindo Lazygit…"
+
+#: src/components/git-diff-view.tsx
+msgid "Update the Gateway to open Lazygit in another worktree."
+msgstr "Atualize o Gateway para abrir o Lazygit em outro worktree"
+
+#: src/components/git-diff-view.tsx
+msgid "Git"
+msgstr "Git"
+
+#: src/components/changes-worktree-list.tsx
+msgid "The selected worktree is no longer available. Choose another checkout."
+msgstr "O worktree selecionado não está mais disponível. Escolha outro checkout"

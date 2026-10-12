@@ -3,12 +3,12 @@
 # section quick-actions
 wait "role=button text=\"Open quick actions\"" 15000
 press "role=button text=\"Open quick actions\""
-wait "role=button label=\"Open Lazygit\"" 15000
-press "role=button label=\"Open Lazygit\""
+is hidden "role=button label=\"Open Lazygit\""
+back --system
 
 # section changes
-wait "role=button text=\"Open changes\"" 15000
-press "role=button text=\"Open changes\""
+wait "role=button text=\"Open Git\"" 15000
+press "role=button text=\"Open Git\""
 wait "id=changes-lazygit" 15000
 press "id=changes-lazygit"
 

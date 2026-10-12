@@ -27,6 +27,7 @@ export default function GitDiffScreen() {
     worktrees?: string;
     serverId?: string;
     canLazygit?: string;
+    canLazygitWorktree?: string;
   }>();
 
   return (
@@ -38,6 +39,7 @@ export default function GitDiffScreen() {
       worktreesSupported={params.worktrees === '1'}
       serverId={params.serverId}
       canLazygit={params.canLazygit === '1'}
+      canLazygitWorktree={params.canLazygitWorktree === '1'}
     />
   );
 }
