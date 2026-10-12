@@ -303,7 +303,7 @@
         "run": "flows/git-worktrees.ad#press"
       },
       {
-        "target": { "text": "Viewing another checkout. Changes are read-only." },
+        "target": { "text": "Viewing another checkout\\. Changes are read-only" },
         "mode": "visible",
         "run": "flows/git-worktrees.ad#visible"
       },
