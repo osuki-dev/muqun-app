@@ -15,7 +15,7 @@
         "@lingui/react": "^6.9.1",
         "@osuki-dev/react-native-splash": "0.4.0",
         "@osuki-dev/react-native-ssh": "0.3.0",
-        "@osuki-dev/skia-diagrams": "file:vendor/skia-diagrams-9bc8003.tgz",
+        "@osuki-dev/skia-diagrams": "0.2.0",
         "@osuki-dev/ui": "^1.1.0",
         "expo": "~57.0.27",
         "expo-alternate-app-icons": "^8.0.0",
@@ -595,7 +595,7 @@
 
     "@osuki-dev/react-native-ssh": ["@osuki-dev/react-native-ssh@0.3.0", "", { "peerDependencies": { "react": "*", "react-native": "*", "react-native-nitro-modules": "*" } }, "sha512-2dCbyddwoMMYfTkCyjMbREVw8sjFI2gpEOeIojoB+BDzww4YmBalIjiZLh2aD1Uf1Nxk919d2wG+1hcs71yOaQ=="],
 
-    "@osuki-dev/skia-diagrams": ["@osuki-dev/skia-diagrams@vendor/skia-diagrams-9bc8003.tgz", { "dependencies": { "@dagrejs/dagre": "^3.1.1", "@mermaid-js/parser": "2.0.1", "js-yaml": "5.4.3" }, "peerDependencies": { "react": ">=19", "react-native": ">=0.83", "react-native-gesture-handler": ">=3.3", "react-native-reanimated": ">=4", "react-native-skia": ">=3.3.0" }, "optionalPeers": ["react", "react-native", "react-native-gesture-handler", "react-native-reanimated", "react-native-skia"] }, "sha512-5Y9jcRXbt3tH4t7N7TspBiuo+FHBxeE3g3Uc4+8eAwvQHG8s1ysS4ZH0+3228WbWYIOotug7erxaq80lwAe8RA=="],
+    "@osuki-dev/skia-diagrams": ["@osuki-dev/skia-diagrams@0.2.0", "", { "dependencies": { "@dagrejs/dagre": "^3.1.1", "@mermaid-js/parser": "2.0.1", "js-yaml": "5.4.3" }, "peerDependencies": { "react": ">=19", "react-native": ">=0.83", "react-native-gesture-handler": ">=3.3", "react-native-reanimated": ">=4", "react-native-skia": ">=3.3.0" }, "optionalPeers": ["react", "react-native", "react-native-gesture-handler", "react-native-reanimated", "react-native-skia"] }, "sha512-I9aqXAQutYDpG0Vim54lulsVKKlAxvN9KTMWZKNPGVXLqY5Th3BO/qYUYGeSpnW6v10jKlfkipDjwb9ltLIKOQ=="],
 
     "@osuki-dev/ui": ["@osuki-dev/ui@1.1.0", "", { "peerDependencies": { "@expo/ui": ">=57.0.4", "expo-font": ">=57.0.0", "expo-image": ">=56.0.0", "expo-router": ">=57.0.4", "lucide-react-native": "^0.487.0 || ^1.0.0", "react": ">=19.2.3", "react-native": ">=0.85.0", "react-native-keyboard-controller": ">=1.21.6", "react-native-reanimated": ">=4.3.1", "react-native-safe-area-context": ">=5.7.0", "react-native-svg": ">=15.15.4" } }, "sha512-CYKS7fAeJAoc14YOpSnUvsUmRp3TIZ4SJuOHYRdmRM7StIt9AF11Q5MFZENpfv73cQ+PIM+QD6dzNHzefNpWnQ=="],
 
