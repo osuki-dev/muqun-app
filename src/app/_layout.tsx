@@ -508,10 +508,6 @@ function RootContent() {
                 />
                 <Stack.Screen name="settings-about" options={sheetRouteOptions('settings-about')} />
                 <Stack.Screen
-                  name="settings-update-notes"
-                  options={sheetRouteOptions('settings-update-notes')}
-                />
-                <Stack.Screen
                   name="settings-terminal"
                   options={sheetRouteOptions('settings-terminal')}
                 />
