@@ -45,6 +45,7 @@ import { useServerReachability } from '@/stores/server-reachability';
 import { useHomeSortHold } from '@/stores/home-sort-hold';
 import { useServerTasksStore } from '@/stores/server-tasks';
 import { useServerAgents } from '@/stores/server-agents';
+import { useServerChannels } from '@/stores/server-channels';
 
 /**
  * Keeps the ledgers of these computers live while Home is up: a list read on
@@ -331,12 +332,17 @@ function ComputerCardView({
   const profile = useAppearanceProfile();
   const background = useSurfaceBackground();
   const discovery = useAgents((state) => state.index.servers[server.serverId]);
+  // A followed ledger can retain a list while its socket is reconnecting or
+  // unavailable. Keep that history, but do not animate its remembered status
+  // as current activity merely because a health probe or terminal stream is up.
+  const taskChannelLive = useServerChannels((state) => state.sockets[server.serverId] === 'open');
+  const statusCurrent = followed && taskChannelLive;
   // A card says its computer's connection only when something is wrong with
   // it; a reachable computer is just its name (§3a).
   const statusColor =
     status === 'unauthorized'
       ? theme.colors.warning
-      : status === 'offline'
+      : status === 'offline' || status === 'reconnecting'
         ? theme.colors.textSubtle
         : null;
   // Sent goals sit among the open work by the same urgency (after working,
@@ -351,6 +357,7 @@ function ComputerCardView({
       task={row.task}
       subTasks={row.children}
       inComputerCard
+      statusCurrent={statusCurrent}
       serverId={server.serverId}
       discovery={discovery}
       nowMs={nowMs}
@@ -395,6 +402,14 @@ function ComputerCardView({
 
       {followed ? (
         <View style={styles.block}>
+          {!statusCurrent && card.now.length + card.finished.length > 0 ? (
+            <Text
+              testID={`home-card-cached-${server.serverId}`}
+              variant="caption"
+              color={theme.colors.textMuted}>
+              {t`Last known activity`}
+            </Text>
+          ) : null}
           {/* One keyed list, not one per section: a task moving between Now
               and Just finished (it finished, or it was reopened) is the same
               row element, moved by its layout transition, never re-created. */}
@@ -416,6 +431,7 @@ function ComputerCardView({
                 key={task.taskId}
                 task={task}
                 inComputerCard
+                statusCurrent={statusCurrent}
                 serverId={server.serverId}
                 discovery={discovery}
                 nowMs={nowMs}

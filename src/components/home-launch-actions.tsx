@@ -42,8 +42,12 @@ import { useAgents } from '@/stores/agents';
 import { useHomeAgentPicker } from '@/stores/home-agent-picker';
 import { PRESS, timing } from '@/lib/motion';
 import type { GatewayRecord } from '@/lib/gateway-storage';
-import { agentLaunchCaption, reachabilityDescription } from '@/i18n/labels';
-import type { ServerReachability } from '@/lib/server-reachability';
+import { agentLaunchCaption, connectionStatusDescription } from '@/i18n/labels';
+import {
+  reachabilityOfStatus,
+  type ConnectionStatus,
+  type ServerReachability,
+} from '@/lib/server-reachability';
 import { useHomeTargetPicker } from '@/stores/home-target-picker';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
@@ -57,11 +61,13 @@ const DOCK_ROW_HEIGHT = 56;
 export function useHomeLaunchController({
   servers,
   selectedServerId,
+  connectionStatuses,
   reachabilityByServer,
   onPair,
 }: {
   servers: readonly GatewayRecord[];
   selectedServerId?: string;
+  connectionStatuses: Readonly<Record<string, ConnectionStatus | undefined>>;
   reachabilityByServer: Readonly<Record<string, ServerReachability | undefined>>;
   onPair: () => Promise<unknown>;
 }) {
@@ -88,10 +94,8 @@ export function useHomeLaunchController({
     ...(selectedServerId ? { selectedId: selectedServerId } : {}),
   });
   const chosen = servers.find((server) => server.serverId === chosenTargetId);
-  const chosenReachability = chosen
-    ? (reachabilityByServer[chosen.serverId] ?? 'unknown')
-    : undefined;
-  const chosenOffline = chosenReachability === 'offline';
+  const chosenConnection = chosen ? (connectionStatuses[chosen.serverId] ?? 'unknown') : undefined;
+  const chosenOffline = reachabilityOfStatus(chosenConnection ?? 'unknown') === 'offline';
 
   useEffect(() => {
     if (pickerRequestId === null || pickerCompletedRequestId !== pickerRequestId) return;
@@ -154,6 +158,7 @@ export function useHomeLaunchController({
     pinTarget,
     chosen,
     chosenOffline,
+    chosenConnection,
     launchOnChosen,
     openTargetPicker,
     opening,
@@ -285,7 +290,7 @@ export function HomeLaunchActions({
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
   const router = useRouter();
-  const { chosen, chosenOffline, launchOnChosen, opening, run } = controller;
+  const { chosen, chosenOffline, chosenConnection, launchOnChosen, opening, run } = controller;
   const [availableWidth, setAvailableWidth] = useState(0);
 
   // The row is a projection of what the chosen gateway said about itself; a
@@ -500,13 +505,16 @@ export function HomeLaunchActions({
       testID="home-launch-actions"
       onLayout={(event) => setAvailableWidth(event.nativeEvent.layout.width)}
       style={styles.root}>
-      {chosenOffline ? (
+      {chosen &&
+      chosenConnection &&
+      chosenConnection !== 'live' &&
+      chosenConnection !== 'unknown' ? (
         <Text
           testID="home-launch-unavailable"
           accessibilityLiveRegion="polite"
           variant="caption"
           color={theme.colors.textMuted}>
-          {_(reachabilityDescription.offline)}
+          {`${chosen.label} · ${_(connectionStatusDescription[chosenConnection])}`}
         </Text>
       ) : null}
       {onDemo ? (

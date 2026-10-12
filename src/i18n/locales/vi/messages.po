@@ -3255,6 +3255,10 @@ msgstr "Kết nối lần cuối vừa xong"
 msgid "Last folder"
 msgstr "Thư mục lần cuối"
 
+#: src/components/home-computer-cards.tsx
+msgid "Last known activity"
+msgstr "Hoạt động được ghi nhận gần nhất"
+
 #: src/components/task-row.tsx
 msgid "last seen {ago}"
 msgstr "thấy lần cuối {ago}"

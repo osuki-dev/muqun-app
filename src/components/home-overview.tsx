@@ -143,6 +143,7 @@ import {
 import { serverIdsNeedingAddress } from '@/lib/server-address';
 import type { ServerAgent } from '@/lib/server-agents';
 import {
+  reachabilityOfStatus,
   REACHABILITY_TICK_MS,
   serversToProbe,
   type ActiveServerConnection,
@@ -157,7 +158,7 @@ import type { HomeServerEntry } from '@/lib/home-commands';
 import { GatewayStorageError } from '@/components/gateway-storage-error';
 import { useServerAgents } from '@/stores/server-agents';
 import { retryHomeRefresh } from '@/lib/home-refresh-schedule';
-import { useHomeReachability } from '@/hooks/use-home-reachability';
+import { useConnectionStatuses } from '@/hooks/use-home-reachability';
 import { useMinuteNow } from '@/hooks/use-minute-now';
 import { useHomeRecentsStore } from '@/stores/home-recents';
 import { useHomeAgentChoice } from '@/stores/home-agent-choice';
@@ -255,7 +256,17 @@ export function HomeOverview({
   const { record, records, loading, hydrationError, retryHydration, selectRecord, enterDemo } =
     useGatewayRecord();
   const recordIds = useMemo(() => records.map((server) => server.serverId), [records]);
-  const padReachabilityByServer = useHomeReachability(recordIds, activeConnection);
+  const connectionStatuses = useConnectionStatuses(recordIds, record?.serverId, activeConnection);
+  const padReachabilityByServer = useMemo(
+    () =>
+      Object.fromEntries(
+        recordIds.map((serverId) => [
+          serverId,
+          reachabilityOfStatus(connectionStatuses[serverId] ?? 'unknown'),
+        ])
+      ),
+    [connectionStatuses, recordIds]
+  );
   // The ledgers Home keeps live: every computer that keeps one and answers,
   // the selected one first, each over its own task-only socket while Home is
   // mounted (see `taskSubscriptionServerIds`). One Home's check says is down
@@ -802,6 +813,7 @@ export function HomeOverview({
   const launchController = useHomeLaunchController({
     servers: records,
     selectedServerId: record?.serverId,
+    connectionStatuses,
     reachabilityByServer: padReachabilityByServer,
     onPair: commands.pairGateway,
   });

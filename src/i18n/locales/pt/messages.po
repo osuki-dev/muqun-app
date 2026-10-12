@@ -3255,6 +3255,10 @@ msgstr "Conectado agora mesmo"
 msgid "Last folder"
 msgstr "Última pasta"
 
+#: src/components/home-computer-cards.tsx
+msgid "Last known activity"
+msgstr "Última atividade conhecida"
+
 #: src/components/task-row.tsx
 msgid "last seen {ago}"
 msgstr "visto por último {ago}"
