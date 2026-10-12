@@ -64,21 +64,23 @@ export function localizedReleaseNotes() {
             path: '/release-notes/:releaseId',
             access: 'client',
             handler: async (request, params) => {
+              // Missing notes must not survive publication in a shared cache.
+              const headers = { 'Cache-Control': 'private, no-store' };
               const locale = new URL(request.url).searchParams.get('locale');
               if (
                 !locale ||
                 !otaNotesLocale(locale) ||
                 !OTA_RELEASE_ID.test(params.releaseId ?? '')
               )
-                return new Response(null, { status: 400 });
+                return new Response(null, { status: 400, headers });
               const release = await core.getRelease(params.releaseId);
               // Disabled releases stay out of the catalog; known IDs can be read
               // through client authentication for verification before enablement.
-              if (!release) return new Response(null, { status: 404 });
+              if (!release) return new Response(null, { status: 404, headers });
               const note = await get(params.releaseId, locale);
               return note
-                ? Response.json(note, { headers: { 'Cache-Control': 'private, no-store' } })
-                : new Response(null, { status: 404 });
+                ? Response.json(note, { headers })
+                : new Response(null, { status: 404, headers });
             },
           },
         ],
