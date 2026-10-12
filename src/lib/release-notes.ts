@@ -3,7 +3,8 @@ import type { MessageDescriptor } from '@lingui/core';
 
 /**
  * User-facing notes bundled with this native release, available manually in
- * About. OTA downloads display their own actual Hot Updater server message;
+ * About. OTA downloads display their own localized server Markdown, with the
+ * English Hot Updater catalog message as a fallback;
  * these notes must never stand in for an unknown OTA changelog.
  *
  * `msg` descriptors rather than strings, so the card reads in the active

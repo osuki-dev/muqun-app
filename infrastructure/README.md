@@ -47,6 +47,15 @@ normal periodic checks; it does not display a misleading restart notice.
 Checks and download failures leave the current app usable; request details and
 credentials are not logged. There is no extra settings page or analytics plugin.
 
+Before presenting the consent prompt (including mandatory updates), the app asks
+`GET /release-notes/<release-id>?locale=<active-ui-locale>` with its existing
+public client API key. The server returns one Markdown note: exact locale, then
+language, then English. It never sends a translation map or changes the shared
+catalog for a locale. A missing endpoint or network failure retains the catalog's
+English `message`. The existing Markdown preview, measured progress and verified
+restart behavior remain the same. Notes are retained for the current update
+prompt, including download/restart retries; locale selection occurs at discovery.
+
 Hot Updater's native loader verifies the new bundle's first render and recovers
 to the last stable/embedded bundle after a failed startup. This upstream behavior
 still needs an actual release-build rollback test; unit tests do not establish it.
@@ -65,6 +74,15 @@ client-credential helper, setup instructions and deployment journal into ignored
 `infrastructure/hot-updater/`. It chooses Worker name `muqun-updates`, disables
 `workers.dev`, and adds the custom domain route `updates.muqun.dev`. It performs no
 remote operation. Re-running preserves the scaffold's resource IDs and journal.
+
+The preparation command then selects the committed
+[`ota-notes/worker.ts`](ota-notes/worker.ts) entry point, adds the same
+`localized_release_notes` plugin to the generated tooling server and CLI, and
+copies its additive migration as `0002_localized_release_notes.sql`. Wrangler
+bundles this source using the pinned root dependencies rather than deploying
+the upstream prebuilt Worker. Apply both migrations before deploying this Worker
+and before publishing any release with localized notes. Its client route uses
+the existing API-key authentication; no administrative routes are exposed.
 
 Follow its `COMMON.md`, `SETUP.md` and `ENVIRONMENT.md` in order. Verify existing
 resources before creation and after ambiguous failures. Use a private R2 bucket
@@ -129,16 +147,47 @@ enabled/signed app configuration, matching channel and an existing release
 fingerprint before invoking Hot Updater:
 
 ```sh
-bun run update:preview android
-bun run update:preview ios
+bun run update:preview android release-notes/ota-notes.json
+bun run update:preview ios release-notes/ota-notes.json
 # After review and native compatibility verification:
-bun run update:production android
-bun run update:production ios
+bun run update:production android release-notes/ota-notes.json
+bun run update:production ios release-notes/ota-notes.json
 ```
 
 Use one platform at a time and stop after a failure. Never run `eas update` for
 this branch. Older Expo Updates installations retain their old update mechanism
 until they install the new binary; keep any legacy release operations separate.
+
+The notes file is a reviewed JSON object mapping locale tags to Markdown strings.
+English (`en`) is required; other locales are optional. For example:
+
+```json
+{
+  "en": "## Fixed\n- Restored drafts after reconnecting.",
+  "en-GB": "## Fixed\n- Restored drafts after reconnecting."
+}
+```
+
+Validation occurs before any build or remote mutation: 1–32 unique locales,
+nonempty Markdown, and at most 16,000 characters per note. Locale tags are stored
+case-insensitively. The wrapper deploys **disabled** with the English catalog
+message, reads the pinned CLI's exact single-platform commit receipt, and checks
+that release's disabled state, channel, platform and native fingerprint. It then
+uploads immutable `(release_id, locale)` rows with provider-backed server tooling,
+reads every translation back through the authenticated Worker endpoint, and
+enables only the expected release revision. A known disabled release's notes can
+be read with the client key for this check; it is still absent from the release
+catalog. A missing or outdated Worker endpoint leaves publication disabled.
+Provider credentials remain on the deployment machine; the app receives only
+its public client key and one resolved note. Captured build/provider output stays
+in a private temporary file and is deleted after the command finishes.
+
+A notes upload/readback failure does not enable the release. There is no automatic
+retry, latest-release lookup or automatic cleanup of ambiguous writes. If a deploy
+receipt or enablement response is lost, inspect the exact release and catalog
+before any retry. Replacing published notes requires a new release; direct CLI or
+console enablement bypasses this wrapper's notes gate and must not be used for
+the localized publishing workflow.
 
 ## Play preview package
 

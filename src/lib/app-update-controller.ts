@@ -77,6 +77,7 @@ export interface UpdateClient {
     onError: (error: unknown) => void;
   }): Promise<AvailableUpdate | null>;
   getRunningReleaseId?(): Promise<string | null>;
+  getReleaseNotes?(releaseId: string): Promise<string | null>;
   addListener(event: 'onProgress', listener: (event: UpdateProgress) => void): () => void;
   reload(): Promise<void>;
 }
@@ -90,9 +91,10 @@ export function createAppUpdateController(
   let pending: Promise<void> | null = null;
   let nextCheckAt = 0;
   let update: AvailableUpdate | null = null;
+  let localizedNotes: string | null = null;
   let bytes: Pick<UpdateSnapshot, 'downloadedBytes' | 'totalBytes'> = {};
   const publishProgress = (progress: number) => {
-    const releaseNotes = update?.message?.trim();
+    const releaseNotes = localizedNotes ?? update?.message?.trim();
     publish({
       phase,
       progress,
@@ -130,9 +132,18 @@ export function createAppUpdateController(
         }
         if (runningReleaseId === update.id) update = null;
       }
+      localizedNotes = null;
+      if (update && client.getReleaseNotes) {
+        try {
+          localizedNotes = await client.getReleaseNotes(update.id);
+        } catch {
+          // Missing translations retain the release catalog's English message.
+        }
+      }
       phase = update ? 'available' : 'idle';
     } catch {
       update = null;
+      localizedNotes = null;
       phase = 'failed';
     }
     publishProgress(0);
@@ -159,6 +170,7 @@ export function createAppUpdateController(
           // The selected release uses the already-running artifact. Adoption
           // still requires consent, but it needs neither transfer nor restart.
           update = null;
+          localizedNotes = null;
           phase = 'idle';
           bytes = {};
           publishProgress(0);
