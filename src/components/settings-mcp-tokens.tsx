@@ -1,5 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, useToast } from '@osuki-dev/ui';
+import { ChevronDown, ChevronRight, KeyRound } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -29,7 +30,34 @@ type Load = { status: 'loading' } | { status: 'error' } | { status: 'ready'; tok
 export function McpTokens({ serverId }: { serverId: string }) {
   const mcp = useServerCapabilities((state) => hasMcpServer(state.byServer[serverId]));
   if (!mcp) return null;
-  return <McpTokensSection />;
+  return <AgentAccess key={serverId} />;
+}
+
+function AgentAccess() {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
+  const [open, setOpen] = useState(false);
+  const Chevron = open ? ChevronDown : ChevronRight;
+
+  return (
+    <View style={styles.section}>
+      <PressableScale
+        testID="mcp-tokens-advanced"
+        accessibilityRole="button"
+        accessibilityLabel={t`Advanced agent access`}
+        accessibilityState={{ expanded: open }}
+        onPress={() => setOpen((current) => !current)}
+        style={[styles.advanced, { paddingVertical: profile.settingsRowPaddingVertical }]}>
+        <KeyRound size={16} color={theme.colors.textMuted} />
+        <Text variant="caption" color={theme.colors.textMuted} style={styles.copy}>
+          {t`Advanced agent access`}
+        </Text>
+        <Chevron size={16} color={theme.colors.textMuted} />
+      </PressableScale>
+      {open ? <McpTokensSection /> : null}
+    </View>
+  );
 }
 
 function McpTokensSection() {
@@ -62,7 +90,10 @@ function McpTokensSection() {
 
   return (
     <View testID="mcp-tokens" style={styles.section}>
-      <SettingsSection title={t`MCP tokens`}>
+      <Text variant="caption" color={theme.colors.textMuted} style={styles.explanation}>
+        {t`Manage access granted to coding agents through MCP. Revoking access stops that agent from using this computer's tools.`}
+      </Text>
+      <SettingsSection title={t`Agent access`}>
         {load.status === 'loading' ? (
           <View testID="mcp-tokens-loading" style={styles.note}>
             <Skeleton variant="text" width="55%" height={16} />
@@ -71,22 +102,19 @@ function McpTokensSection() {
         ) : load.status === 'error' ? (
           <View testID="mcp-tokens-error" style={styles.note}>
             <Text variant="caption" color={theme.colors.textMuted}>
-              {t`Could not load tokens`}
+              {t`Could not load agent access`}
             </Text>
           </View>
         ) : load.tokens.length === 0 ? (
           <View testID="mcp-tokens-empty" style={styles.note}>
             <Text variant="caption" color={theme.colors.textMuted}>
-              {t`No tokens`}
+              {t`No agent access grants`}
             </Text>
           </View>
         ) : (
           <TokenRows tokens={load.tokens} onRevoked={removeToken} />
         )}
       </SettingsSection>
-      <Text variant="caption" color={theme.colors.textSubtle}>
-        {t`Tokens coding agents use to reach this computer.`}
-      </Text>
     </View>
   );
 }
@@ -221,6 +249,13 @@ function TokenRows({ tokens, onRevoked }: { tokens: McpToken[]; onRevoked: (id: 
 
 const styles = StyleSheet.create({
   section: { gap: LADDER.gap },
+  advanced: {
+    paddingHorizontal: LADDER.gutter,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: LADDER.gap,
+  },
+  explanation: { paddingHorizontal: LADDER.gutter },
   note: { padding: LADDER.gutter, gap: LADDER.snug },
   row: {
     paddingHorizontal: LADDER.gutter,

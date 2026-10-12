@@ -1,10 +1,18 @@
 import { useLingui } from '@lingui/react/macro';
-import { Tag, useThemeTokens } from '@osuki-dev/ui';
-import { Bot, Cpu, Hammer, SquareTerminal, Target, TriangleAlert } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
+import { useThemeTokens } from '@osuki-dev/ui';
+import {
+  Bot,
+  Cpu,
+  Hammer,
+  SquareTerminal,
+  TriangleAlert,
+  type LucideIcon,
+} from 'lucide-react-native';
+import { useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { LADDER, SettingsInfoRow, SettingsSection } from '@/components/settings-chrome';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
+import { LADDER, SettingsSection } from '@/components/settings-chrome';
 import { StatusDot } from '@/components/status-dot';
 import { Text } from '@/components/text';
 import { Skeleton } from '@/components/themed-skeleton';
@@ -18,7 +26,7 @@ type Load =
 
 /**
  * What this computer can do for the reader's agents, as its gateway reports it:
- * system, the work it suits, toolchains, agents and terminal backends.
+ * system, detected toolchains, agents and terminal backends.
  *
  * Absent entirely on a gateway without `fleet`: an older gateway would 404 here,
  * and a section that can only ever say "could not load" is worse than none.
@@ -54,12 +62,12 @@ function CapabilitiesSection() {
         {load.status === 'loading' ? (
           <CapabilitiesSkeleton />
         ) : load.status === 'error' ? (
-          <SettingsInfoRow
+          <CapabilityGroup
             icon={TriangleAlert}
             label={t`Could not load capabilities`}
-            detail={t`Try again once the computer responds.`}
-            testID="server-capabilities-error"
-          />
+            testID="server-capabilities-error">
+            <Text variant="caption">{t`Try again once the computer responds.`}</Text>
+          </CapabilityGroup>
         ) : (
           <CapabilityRows manifest={load.manifest} />
         )}
@@ -81,25 +89,6 @@ function CapabilitiesSkeleton() {
 function CapabilityRows({ manifest }: { manifest: FleetManifest }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
-
-  // A map rather than a lookup of wire words: an id the app has no sentence for
-  // is shown as the gateway wrote it.
-  function suitableLabel(id: string): string {
-    switch (id) {
-      case 'ios-build':
-        return t`iOS builds`;
-      case 'android-build':
-        return t`Android builds`;
-      case 'web':
-        return t`Web`;
-      case 'rust':
-        return t`Rust`;
-      case 'terminal':
-        return t`Terminal`;
-      default:
-        return id;
-    }
-  }
 
   function agentStatus(status: string): string {
     switch (status) {
@@ -130,102 +119,119 @@ function CapabilityRows({ manifest }: { manifest: FleetManifest }) {
   return (
     <>
       {system ? (
-        <SettingsInfoRow
-          icon={Cpu}
-          label={t`System`}
-          detail={system}
-          testID="server-capabilities-system"
-        />
-      ) : null}
-      {manifest.suitableFor.length > 0 ? (
-        <SettingsInfoRow
-          icon={Target}
-          label={t`Suitable for`}
-          testID="server-capabilities-suitable"
-          detail={
-            <View style={styles.chips}>
-              {manifest.suitableFor.map((id) => (
-                <Tag key={id}>{suitableLabel(id)}</Tag>
-              ))}
-            </View>
-          }
-        />
+        <CapabilityGroup icon={Cpu} label={t`System`} testID="server-capabilities-system">
+          <Text variant="caption" color={theme.colors.textMuted}>
+            {system}
+          </Text>
+        </CapabilityGroup>
       ) : null}
       {manifest.toolchains.length > 0 ? (
-        <SettingsInfoRow
+        <CapabilityGroup
           icon={Hammer}
           label={t`Toolchains`}
-          testID="server-capabilities-toolchains"
-          detail={
-            <View style={styles.chips}>
-              {manifest.toolchains.map((toolchain) => (
-                <Tag key={toolchain.id}>
-                  {toolchain.version ? `${toolchain.id} ${toolchain.version}` : toolchain.id}
-                </Tag>
-              ))}
-            </View>
-          }
-        />
+          testID="server-capabilities-toolchains">
+          <View style={styles.lines}>
+            {manifest.toolchains.map((toolchain) => (
+              <View key={toolchain.id} style={styles.line}>
+                <Text variant="caption" style={styles.lineText}>
+                  {toolchain.id}
+                </Text>
+                {toolchain.version ? (
+                  <Text variant="caption" color={theme.colors.textMuted} style={styles.valueText}>
+                    {toolchain.version}
+                  </Text>
+                ) : null}
+              </View>
+            ))}
+          </View>
+        </CapabilityGroup>
       ) : null}
       {manifest.agents.length > 0 ? (
-        <SettingsInfoRow
-          icon={Bot}
-          label={t`Agents`}
-          testID="server-capabilities-agents"
-          detail={
-            <View style={styles.lines}>
-              {manifest.agents.map((agent) => {
-                const up = agent.status === 'connected' || agent.status === 'reachable';
-                return (
-                  <View key={agent.id} style={styles.line}>
-                    <StatusDot
-                      color={
-                        agent.status === 'connected'
-                          ? theme.colors.success
-                          : theme.colors.textSubtle
-                      }
-                      filled={up}
-                    />
-                    <Text variant="caption" color={theme.colors.textMuted} style={styles.lineText}>
-                      {`${agent.name} · ${agentStatus(agent.status)}`}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
-          }
-        />
-      ) : null}
-      {manifest.terminal.length > 0 ? (
-        <SettingsInfoRow
-          icon={SquareTerminal}
-          label={t`Terminal`}
-          testID="server-capabilities-terminal"
-          detail={
-            <View style={styles.lines}>
-              {manifest.terminal.map((backend) => (
-                <View key={backend.sessionId} style={styles.line}>
+        <CapabilityGroup icon={Bot} label={t`Agents`} testID="server-capabilities-agents">
+          <View style={styles.lines}>
+            {manifest.agents.map((agent) => {
+              const up = agent.status === 'connected' || agent.status === 'reachable';
+              return (
+                <View key={agent.id} style={styles.line}>
                   <StatusDot
-                    color={backend.connected ? theme.colors.success : theme.colors.textSubtle}
-                    filled={backend.connected}
+                    color={
+                      agent.status === 'connected' ? theme.colors.success : theme.colors.textSubtle
+                    }
+                    filled={up}
                   />
-                  <Text variant="caption" color={theme.colors.textMuted} style={styles.lineText}>
-                    {`${backend.kind} · ${backendStatus(backend.connected)}`}
+                  <Text variant="caption" style={styles.lineText}>
+                    {agent.name}
+                  </Text>
+                  <Text variant="caption" color={theme.colors.textMuted} style={styles.valueText}>
+                    {agentStatus(agent.status)}
                   </Text>
                 </View>
-              ))}
-            </View>
-          }
-        />
+              );
+            })}
+          </View>
+        </CapabilityGroup>
+      ) : null}
+      {manifest.terminal.length > 0 ? (
+        <CapabilityGroup
+          icon={SquareTerminal}
+          label={t`Terminal`}
+          testID="server-capabilities-terminal">
+          <View style={styles.lines}>
+            {manifest.terminal.map((backend) => (
+              <View key={backend.sessionId} style={styles.line}>
+                <StatusDot
+                  color={backend.connected ? theme.colors.success : theme.colors.textSubtle}
+                  filled={backend.connected}
+                />
+                <Text variant="caption" style={styles.lineText}>
+                  {backend.kind}
+                </Text>
+                <Text variant="caption" color={theme.colors.textMuted} style={styles.valueText}>
+                  {backendStatus(backend.connected)}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </CapabilityGroup>
       ) : null}
     </>
   );
 }
 
+function CapabilityGroup({
+  icon: Icon,
+  label,
+  testID,
+  children,
+}: {
+  icon: LucideIcon;
+  label: string;
+  testID: string;
+  children: ReactNode;
+}) {
+  const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
+  return (
+    <View
+      testID={testID}
+      style={[styles.group, { paddingVertical: profile.settingsRowPaddingVertical }]}>
+      <View style={styles.heading}>
+        <Icon size={16} color={theme.colors.textMuted} />
+        <Text variant="bodySmall" style={styles.lineText}>
+          {label}
+        </Text>
+      </View>
+      {children}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   skeleton: { padding: LADDER.gutter, gap: LADDER.snug },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: LADDER.gap, paddingTop: 2 },
-  lines: { gap: LADDER.tight },
-  line: { flexDirection: 'row', alignItems: 'center', gap: LADDER.gap },
-  lineText: { flexShrink: 1 },
+  group: { paddingHorizontal: LADDER.gutter, gap: LADDER.gap },
+  heading: { flexDirection: 'row', alignItems: 'center', gap: LADDER.gap },
+  lines: { gap: LADDER.gap },
+  line: { flexDirection: 'row', alignItems: 'flex-start', gap: LADDER.gap },
+  lineText: { flex: 1, minWidth: 0 },
+  valueText: { flexShrink: 1, maxWidth: '55%', textAlign: 'right' },
 });
