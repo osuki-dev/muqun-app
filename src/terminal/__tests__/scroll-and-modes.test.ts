@@ -34,17 +34,6 @@ describe('DECSTBM — scroll region', () => {
     term.write('Z');
     expect(textOf(term)).toBe('a\nb\nc\ndZ');
   });
-
-  // DEVIATION: origin mode (DECOM, CSI ?6h) is not implemented — CUP is always
-  // absolute. With origin mode on, "CSI 1;1H" should be relative to the scroll
-  // region's top-left, so X below would land on row 1, not row 0. Skipped rather
-  // than fixed because nothing in our output path emits DECOM and adding it would
-  // touch every cursor-positioning branch.
-  test.skip('DECOM makes CUP relative to the scroll region', () => {
-    const term = emulator(10, 6);
-    term.write(`${CSI}?6h${CSI}2;4r${CSI}1;1HX`);
-    expect(lineText(term.frame(), 1)[0]).toBe('X');
-  });
 });
 
 describe('SU / SD — scroll up and down', () => {

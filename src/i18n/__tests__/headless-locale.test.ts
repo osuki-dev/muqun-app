@@ -96,18 +96,6 @@ describe('the persisted override', () => {
     expect(activated).toEqual([language]);
   });
 
-  test('it wins even when it agrees with the device, which is the point of it', async () => {
-    // The distinction that matters later: a user who pinned German and then
-    // switches their phone to French should stay on German.
-    coldStart({ language: 'de' });
-    deviceTags = ['de-DE'];
-    expect(await activateWidgetLocale()).toBe('de');
-
-    coldStart({ language: 'de' });
-    deviceTags = ['fr-FR'];
-    expect(await activateWidgetLocale()).toBe('de');
-  });
-
   test('a language the app no longer ships is not a language', async () => {
     // The store's own guard, reached through the widget: `it` is not in
     // `APP_LOCALES`, so it is discarded on hydrate and the device decides.

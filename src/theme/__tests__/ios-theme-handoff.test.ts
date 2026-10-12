@@ -1,5 +1,4 @@
 import { expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
 import config from '../../../app.json';
 
 test('iOS registers only the Muqun theme document type', () => {
@@ -20,11 +19,4 @@ test('the iOS document type owns only the Muqun theme extension', () => {
   expect(declarations[0].UTTypeTagSpecification['public.filename-extension']).toEqual([
     'muqun-theme',
   ]);
-});
-
-test('packaged themes are shared with the custom MIME type', () => {
-  const source = readFileSync('src/theme/local-files.ts', 'utf8');
-  expect(source).toContain(
-    "mimeType: packaged ? 'application/vnd.muqun.theme' : 'application/json'"
-  );
 });

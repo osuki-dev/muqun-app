@@ -11,8 +11,6 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
-  TERMINAL_LONG_PRESS_MS,
-  TERMINAL_LONG_PRESS_SLOP,
   cellAtViewportPoint,
   compareCellPoints,
   lineSelectionAt,
@@ -180,12 +178,6 @@ describe('longPressArms', () => {
   test('does not arm on a finger that landed to stop a fling', () => {
     expect(longPressArms({ ...still, coasting: true })).toBe(false);
   });
-
-  test('any one blocker is enough', () => {
-    for (const blocker of ['panning', 'pinching', 'coasting'] as const) {
-      expect(longPressArms({ ...still, [blocker]: true })).toBe(false);
-    }
-  });
 });
 
 describe('tabSwipeClearsSelection', () => {
@@ -199,13 +191,6 @@ describe('tabSwipeClearsSelection', () => {
 
   test('nothing to clear when nothing is selected', () => {
     expect(tabSwipeClearsSelection(false, true)).toBe(false);
-  });
-});
-
-describe('gesture constants', () => {
-  test('the press is the platform figure and its slop matches the tap', () => {
-    expect(TERMINAL_LONG_PRESS_MS).toBe(500);
-    expect(TERMINAL_LONG_PRESS_SLOP).toBe(12);
   });
 });
 

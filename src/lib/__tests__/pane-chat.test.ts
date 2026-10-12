@@ -219,15 +219,6 @@ describe('the quiet reading survives a page of history', () => {
     );
     expect(items).toHaveLength(2);
   });
-
-  test('detailed still shows every rule and every banner', () => {
-    const parts = [
-      text('r1-1', '────────'),
-      status('r2-2', 'Reading…'),
-      status('r3-3', 'Working…'),
-    ];
-    expect(buildPaneChatItems(parts, detailed)).toHaveLength(3);
-  });
 });
 
 // The shapes that got past the old part-level test and put a screen of

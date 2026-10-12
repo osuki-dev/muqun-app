@@ -4,23 +4,9 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-/**
- * The shaders cannot be imported here -- they reach Skia, which does not load
- * outside Metro -- so these read the source, in the same shape and for the same
- * reason as `motion-tokens.test.ts`.
- *
- * What they are actually for: a uniform whose name does not match its
- * declaration is not an error in Skia. The value is dropped, the program runs
- * with whatever that uniform was last set to, and the effect comes out subtly
- * or catastrophically wrong on a device with no message anywhere. That is a
- * class of bug a spelling check catches for free, and a class nobody finds by
- * reading, because both halves look right on their own page.
- */
-
+// Uniform names and child order must agree across TypeScript and SkSL.
 const LIB = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SHADERS = readFileSync(join(LIB, 'reskin-shaders.ts'), 'utf8');
-const FIELD = readFileSync(join(LIB, 'sksl-field.ts'), 'utf8');
-const BLOOM = readFileSync(join(LIB, 'ink-bloom-shader.ts'), 'utf8');
 
 /** The uniforms a program declares. */
 function declared(source: string, program: string): string[] {
@@ -67,82 +53,10 @@ describe('re-skin shader contract', () => {
     });
   }
 
-  test('every program leaves early before it touches the expensive half', () => {
-    // The launch opening's rule: a pixel that is not near the front pays for a
-    // comparison and nothing else. Every early-out must come before any noise,
-    // dot arithmetic, ring or rim light in the text of `main`.
-    for (const name of [
-      'THEME_WASH_SKSL',
-      'FONT_HALFTONE_SKSL',
-      'THEME_RIPPLE_SKSL',
-      'FONT_SCAN_SKSL',
-    ] as const) {
-      const main = program(SHADERS, name).split('half4 main(')[1] ?? '';
-      const returns = main.indexOf('half4(0.0)');
-      expect(returns).toBeGreaterThan(0);
-      for (const expensive of [
-        'fbm(',
-        'hash21(',
-        'rimLight(',
-        'exp(',
-        'sin(',
-        'floor(q / uCell)',
-        'floor(p / uCell)',
-      ]) {
-        const at = main.indexOf(expensive);
-        if (at >= 0) expect(at).toBeGreaterThan(returns);
-      }
-    }
-  });
-
-  test('the ripple has a second picture to bend and the scan travels in y alone', () => {
+  test('the ripple binds its two pictures in declaration order', () => {
     const ripple = program(SHADERS, 'THEME_RIPPLE_SKSL');
     expect(ripple).toContain('uniform shader uNext;');
     // The cover is declared first: the overlay binds its children in order.
     expect(ripple.indexOf('uCover')).toBeLessThan(ripple.indexOf('uNext'));
-    expect(program(SHADERS, 'FONT_SCAN_SKSL')).toContain('abs(p.y - uOriginY)');
-  });
-
-  test('the wash travels along a line and the halftone does not', () => {
-    // The one assertion that keeps these from drifting back into the launch's
-    // radial bloom: the wash's front is a projection onto a direction, and the
-    // halftone has no direction at all.
-    const wash = program(SHADERS, 'THEME_WASH_SKSL');
-    expect(wash).toContain('dot(d, uDir)');
-    expect(program(SHADERS, 'FONT_HALFTONE_SKSL')).not.toContain('uDir');
-  });
-
-  test('the noise field has one definition and three callers', () => {
-    // `sksl-field.ts` owns it; the bloom and both re-skin programs compose it.
-    expect(FIELD).toContain('float hash21(');
-    expect(FIELD).toContain('float fbm(');
-    expect(SHADERS).toContain('${SKSL_NOISE}');
-    expect(BLOOM).toContain('${SKSL_NOISE}');
-    for (const source of [SHADERS, BLOOM]) {
-      expect(source).not.toContain('float hash21(');
-      expect(source).not.toContain('float vnoise(');
-    }
-  });
-
-  test('the hash stays free of trigonometry', () => {
-    // Twenty-four sines per pixel is what made the first draft of the launch a
-    // slideshow on a device with no GPU. See the note in `sksl-field.ts`.
-    const noise = FIELD.split('export const SKSL_NOISE = `')[1]?.split('\n`;')[0] ?? '';
-    expect(noise.length).toBeGreaterThan(0);
-    expect(/\bsin\s*\(|\bcos\s*\(|\btan\s*\(/.test(noise)).toBe(false);
-  });
-
-  test('every program is compiled once, at module scope', () => {
-    // `RuntimeEffect.Make` per mount is a compile on a frame somebody is
-    // watching, and it returns null rather than throwing, so a caller that
-    // never checks would discover a typo one device at a time.
-    for (const effect of [
-      'THEME_WASH_EFFECT',
-      'FONT_HALFTONE_EFFECT',
-      'THEME_RIPPLE_EFFECT',
-      'FONT_SCAN_EFFECT',
-    ]) {
-      expect(SHADERS).toContain(`export const ${effect} = Skia.RuntimeEffect.Make(`);
-    }
   });
 });

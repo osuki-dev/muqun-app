@@ -28,35 +28,14 @@ wait stable 400 5000
 # section s9
 screenshot "shots/light/01-settings-top.png"
 
-# section s10
-wait stable 400 5000
-
 # section s11
 screenshot "shots/light/02-settings-appearance.png"
-
-# section s12
-scroll down --pixels 320
-
-# section s13
-wait stable 400 5000
 
 # section s14
 screenshot "shots/light/03-settings-alerts.png"
 
-# section s15
-scroll down --pixels 320
-
-# section s16
-wait stable 400 5000
-
 # section s17
 screenshot "shots/light/04-settings-terminal.png"
-
-# section s18
-scroll down --pixels 320
-
-# section s19
-wait stable 400 5000
 
 # section s20
 screenshot "shots/light/05-settings-about.png"

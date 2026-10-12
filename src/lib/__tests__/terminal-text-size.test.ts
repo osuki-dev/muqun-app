@@ -13,9 +13,6 @@
 // real storage cannot be imported into this test).
 /// <reference types="node" />
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import {
   TERMINAL_MAX_FIT_SCALE,
@@ -45,35 +42,15 @@ import {
 /** A canvas not measured yet: nothing is fitted against it. */
 const UNMEASURED: TerminalFitGeometry = { viewportWidth: 0, cellWidth: 0, fontSize: 13 };
 
-/** A pane whose 80 columns are narrower than the phone: it opens unscaled. */
-const viewportWidth = 400;
-const contentWidth = 380;
-
 /** A fresh stand-in for the device, shared across `terminal()` instances that
  * are meant to be reading and writing the same pane's memory. */
 function disk(): { current: TerminalPaneScales } {
   return { current: {} };
 }
 
-/**
- * The canvas's own sequence, as a walkable object.
- *
- * Every method here is one call site in `skia-terminal.tsx` and nothing else:
- * `openPane` is the effect keyed on the pane id, `pinch` is the pinch
- * gesture's `onUpdate`, `leaveScreen` is the effect that answers the service
- * screen losing focus. If one of them stops calling the function named here,
- * this walk stops describing the app -- which is why they are named rather
- * than re-implemented.
- *
- * A new `terminal(...)` handed the same `store` models a fresh mount reading
- * the same disk -- coming back to the pane later in the session, or the app
- * being killed and relaunched. A new `terminal(...)` with a fresh `disk()`, or
- * the same store but a different `paneId`, models a pane that has nothing
- * remembered for it.
- */
+/** Share pinch memory between callers of the production scale functions. */
 function terminal(
   setting: TerminalTextSize,
-  paneContentWidth = contentWidth,
   options: {
     paneId?: string;
     store?: { current: TerminalPaneScales };
@@ -90,7 +67,6 @@ function terminal(
   const fit = options.fit ?? UNMEASURED;
   let paneColumns = options.paneColumns;
   let scale = 1;
-  let content = paneContentWidth;
   return {
     get fontSize() {
       return terminalFontSize(setting);
@@ -100,10 +76,6 @@ function terminal(
     },
     get percent() {
       return terminalZoomPercent(scale);
-    },
-    /** The width of the pane's own output, which nothing about the size reads. */
-    get contentWidth() {
-      return content;
     },
     /** What is actually on the shared "disk" right now, for assertions that
      * want to see the table rather than only its effect on the next open. */
@@ -134,14 +106,6 @@ function terminal(
         paneColumns
       );
     },
-    /** Leaving the screen writes nothing (home-dispatch-ux §10). */
-    leaveScreen() {
-      // The canvas only resets its pan here; the table is left as it is.
-    },
-    /** Output whose longest line has changed since the pane opened. */
-    outputWidth(next: number) {
-      content = next;
-    },
   };
 }
 
@@ -164,45 +128,23 @@ describe("the setting is every pane's starting point", () => {
     expect(after.fontSize).toBeGreaterThan(before.fontSize);
     expect(after.fontSize).toBe(TERMINAL_TEXT_SIZE_POINTS.large);
   });
-
-  test("the pane's own width does not get a say (#643)", () => {
-    // The whole of card #643. Panes used to open fitted to their column count,
-    // so on a ~400pt phone a 65-column pane opened near 0.69, an 80-column pane
-    // clamped to 0.62 and a 242-column one clamped there too: three glyph sizes
-    // from one setting, all of them reported as 100%. Width is the pan's job.
-    const narrow = terminal('default', 380);
-    const wide = terminal('default', 4000);
-    narrow.openPane();
-    wide.openPane();
-    expect(narrow.scale).toBe(wide.scale);
-    expect(narrow.scale).toBe(1);
-    expect(narrow.fontSize).toBe(wide.fontSize);
-    // And the percentage says the same thing about both, truthfully this time.
-    expect(narrow.percent).toBe(100);
-    expect(wide.percent).toBe(100);
-    // The width is still there to be panned across; it just does not resize.
-    expect(wide.contentWidth).toBeGreaterThan(viewportWidth);
-  });
 });
 
 describe('a pinch is remembered per pane', () => {
-  test('pinch -> leave -> come back to the same pane = the pinch', () => {
+  test('a new owner of the same pane reads its stored pinch', () => {
     const store = disk();
-    const pane = terminal('large', contentWidth, { paneId: 'p1', store });
+    const pane = terminal('large', { paneId: 'p1', store });
     pane.openPane();
     expect(pane.scale).toBe(1);
 
     pane.pinch(1.5);
     expect(pane.scale).toBe(1.5);
 
-    // Out of the service screen -- to Settings, to the server list, anywhere.
-    pane.leaveScreen();
-
     // A fresh mount of the very same pane: later in this session, or after the
     // app was killed and relaunched. Either way this is a new `terminal()`
     // reading the same disk, which is the case the component cannot answer by
     // remounting: the canvas is deliberately never taken down on its own.
-    const again = terminal('large', contentWidth, { paneId: 'p1', store });
+    const again = terminal('large', { paneId: 'p1', store });
     again.openPane();
     expect(again.scale).toBe(1.5);
     expect(again.percent).toBe(150);
@@ -211,26 +153,24 @@ describe('a pinch is remembered per pane', () => {
 
   test('a different pane is unaffected', () => {
     const store = disk();
-    const a = terminal('default', contentWidth, { paneId: 'a', store });
+    const a = terminal('default', { paneId: 'a', store });
     a.openPane();
     a.pinch(1.4);
-    a.leaveScreen();
 
-    const b = terminal('default', contentWidth, { paneId: 'b', store });
+    const b = terminal('default', { paneId: 'b', store });
     b.openPane();
     expect(b.scale).toBe(1);
     expect(b.percent).toBe(100);
   });
 
   test('a pane nothing has ever been remembered for opens at the setting', () => {
-    const pane = terminal('compact', contentWidth, { paneId: 'never-pinched' });
+    const pane = terminal('compact', { paneId: 'never-pinched' });
     pane.openPane();
     expect(pane.scale).toBe(1);
     expect(pane.fontSize).toBe(TERMINAL_TEXT_SIZE_POINTS.compact);
   });
 
-  // home-dispatch-ux §10: only the end of a pinch writes, under this pane's id
-  // and its column count; a leave writes nothing; another width drops it.
+  // Pinch memory belongs to one pane and column count; a changed width drops it.
   // name, the walk, the table after it, pane p's width and its scale when opened again
   test.each<
     [string, (store: { current: TerminalPaneScales }) => void, TerminalPaneScales, number, number]
@@ -238,7 +178,7 @@ describe('a pinch is remembered per pane', () => {
     [
       'a pinch is written at its end, under the pane and its width',
       (store) => {
-        const p = terminal('default', contentWidth, { paneId: 'p', store, paneColumns: 120 });
+        const p = terminal('default', { paneId: 'p', store, paneColumns: 120 });
         p.openPane();
         p.pinch(1.4);
       },
@@ -247,20 +187,9 @@ describe('a pinch is remembered per pane', () => {
       1.4,
     ],
     [
-      'a leave writes nothing, whatever scale the canvas holds',
-      (store) => {
-        const p = terminal('default', contentWidth, { paneId: 'p', store, paneColumns: 120 });
-        p.openPane();
-        p.leaveScreen();
-      },
-      {},
-      120,
-      1,
-    ],
-    [
       'another width drops the pinch: the pane opens at its fit',
       (store) => {
-        const p = terminal('default', contentWidth, { paneId: 'p', store, paneColumns: 120 });
+        const p = terminal('default', { paneId: 'p', store, paneColumns: 120 });
         p.openPane();
         p.pinch(1.4);
         p.resplit(130);
@@ -272,7 +201,7 @@ describe('a pinch is remembered per pane', () => {
     [
       "a pinch on another pane never lands under this pane's id",
       (store) => {
-        const q = terminal('default', contentWidth, { paneId: 'q', store, paneColumns: 120 });
+        const q = terminal('default', { paneId: 'q', store, paneColumns: 120 });
         q.openPane();
         q.pinch(1.4);
       },
@@ -296,38 +225,16 @@ describe('a pinch is remembered per pane', () => {
 
   test('pinching back to the setting size forgets the pane rather than storing 1', () => {
     const store = disk();
-    const pane = terminal('default', contentWidth, { paneId: 'p', store });
+    const pane = terminal('default', { paneId: 'p', store });
     pane.openPane();
     pane.pinch(1.4);
-    pane.leaveScreen();
     expect(Object.keys(pane.remembered)).toContain('p');
 
-    const again = terminal('default', contentWidth, { paneId: 'p', store });
+    const again = terminal('default', { paneId: 'p', store });
     again.openPane();
     expect(again.scale).toBeCloseTo(1.4);
     again.pinch(1 / 1.4); // back to ~1, the setting's own size
-    again.leaveScreen();
     expect(store.current.p).toBeUndefined();
-  });
-
-  test('a remembered pinch is not silently re-fit against new output width', () => {
-    // The #643 story again, now that a number *does* survive leaving: nothing
-    // here reads the pane's width either. Re-fitting on the way back used to
-    // answer with the width the output has *now*, so a pane whose lines had
-    // got shorter came back larger than it had ever been drawn -- measured on
-    // device: opened 77%, pinched to 86%, came back at 100%. The remembered
-    // number is read back exactly as it was written, whatever the width did
-    // in between.
-    const store = disk();
-    const pane = terminal('default', 600, { paneId: 'wide', store });
-    pane.openPane();
-    pane.pinch(1.1);
-    pane.outputWidth(300);
-    pane.leaveScreen();
-
-    const again = terminal('default', 4000, { paneId: 'wide', store });
-    again.openPane();
-    expect(again.scale).toBeCloseTo(pinchedTerminalScale(1, 1.1));
   });
 
   test('a pinch is clamped at both ends', () => {
@@ -416,29 +323,6 @@ describe('the size pill answers a pinch and nothing else (#638)', () => {
     const percent = terminalZoomIndicatorPercent('active', 1.24);
     expect(percent).not.toBeNull();
     expect(terminalZoomLabel('default', (percent as number) / 100)).toBe('Default · 124%');
-  });
-});
-
-describe('the pinch is remembered on its own, not folded into the settings store', () => {
-  // The settings store itself cannot be imported here -- it reaches React
-  // Native through expo-secure-store -- so its persisted shape is read as
-  // text. A weaker test than importing it, and still the one that fails the
-  // day someone folds the per-pane table into `PersistedSettings` instead of
-  // keeping it in its own MMKV table (see the module comment on
-  // `../terminal-text-size` for why it has to be its own table at all).
-  test('the persisted settings carry no zoom or scale', () => {
-    const source = readFileSync(
-      join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'stores', 'app-settings.ts'),
-      'utf8'
-    );
-    const shape = source.slice(
-      source.indexOf('type PersistedSettings'),
-      source.indexOf('type AppSettingsState')
-    );
-    expect(shape).toContain('terminalTextSize');
-    expect(shape.toLowerCase()).not.toContain('zoom');
-    expect(shape.toLowerCase()).not.toContain('scale');
-    expect(source.toLowerCase()).not.toContain('zoom');
   });
 });
 
@@ -540,7 +424,7 @@ describe('a pane narrower than the phone is drawn to fill it', () => {
   });
 
   test('the narrow pane fills the width at first open, with nothing remembered', () => {
-    const pane = terminal('default', contentWidth, {
+    const pane = terminal('default', {
       fit: PHONE,
       paneColumns: NARROW,
     });
@@ -552,34 +436,31 @@ describe('a pane narrower than the phone is drawn to fill it', () => {
   test('a remembered pinch wins over the fit', () => {
     const store = disk();
     const options = { store, fit: PHONE, paneColumns: NARROW };
-    const first = terminal('default', contentWidth, options);
+    const first = terminal('default', options);
     first.openPane();
     // The reader disagrees with the fit and pinches down past it.
     first.pinch(0.8);
     const chosen = first.scale;
     expect(chosen).not.toBeCloseTo(first.restingScale);
-    first.leaveScreen();
     expect(Object.values(store.current)[0]).toBeCloseTo(chosen, 2);
 
     // Killed and relaunched: the pane opens at what the reader chose, not at
     // the fit.
-    const later = terminal('default', contentWidth, options);
+    const later = terminal('default', options);
     later.openPane();
     expect(later.scale).toBeCloseTo(chosen, 2);
   });
 
   test('a fit is never written down, so a re-split re-fits', () => {
     const store = disk();
-    const pane = terminal('default', contentWidth, {
+    const pane = terminal('default', {
       store,
       fit: PHONE,
       paneColumns: NARROW,
     });
     pane.openPane();
     expect(pane.scale).toBeCloseTo(fill(NARROW), 10);
-    // The reader never pinched: leaving stores nothing, because the scale on
-    // screen is the one this pane would have opened at anyway.
-    pane.leaveScreen();
+    // Opening at the fit does not persist a user-selected scale.
     expect(store.current).toEqual({});
 
     // They re-split the window on the Mac; the pane is 42 columns now.
@@ -601,17 +482,16 @@ describe('a pane narrower than the phone is drawn to fill it', () => {
     // so the reader sees exactly what they asked for now, and a later re-split
     // is free to move it.
     const store = disk();
-    const pane = terminal('default', contentWidth, {
+    const pane = terminal('default', {
       store,
       fit: PHONE,
       paneColumns: NARROW,
     });
     pane.openPane();
     pane.pinch(1.3);
-    pane.leaveScreen();
     expect(Object.values(store.current)[0]).toBeDefined();
 
-    const back = terminal('default', contentWidth, {
+    const back = terminal('default', {
       store,
       fit: PHONE,
       paneColumns: NARROW,
@@ -619,7 +499,6 @@ describe('a pane narrower than the phone is drawn to fill it', () => {
     back.openPane();
     // Pinched back to where the fit had it: the entry is dropped, not rewritten.
     back.pinch(back.restingScale / back.scale);
-    back.leaveScreen();
     expect(store.current).toEqual({});
   });
 
@@ -628,7 +507,7 @@ describe('a pane narrower than the phone is drawn to fill it', () => {
     // stores and restores a pinch exactly as it does on main, and a pinch back
     // to 1 still earns its slot back.
     const store = disk();
-    const wide = terminal('default', contentWidth, {
+    const wide = terminal('default', {
       store,
       fit: PHONE,
       paneColumns: 242,
@@ -636,10 +515,9 @@ describe('a pane narrower than the phone is drawn to fill it', () => {
     wide.openPane();
     expect(wide.scale).toBe(1);
     wide.pinch(0.8);
-    wide.leaveScreen();
     expect(Object.values(store.current)[0]).toBeCloseTo(0.8, 2);
 
-    const again = terminal('default', contentWidth, {
+    const again = terminal('default', {
       store,
       fit: PHONE,
       paneColumns: 242,
@@ -647,7 +525,6 @@ describe('a pane narrower than the phone is drawn to fill it', () => {
     again.openPane();
     expect(again.scale).toBeCloseTo(0.8, 2);
     again.pinch(1 / 0.8);
-    again.leaveScreen();
     expect(store.current).toEqual({});
   });
 

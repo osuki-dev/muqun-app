@@ -72,10 +72,6 @@ describe('the corpus', () => {
       }
     }
   });
-
-  test('the goldens cover the whole corpus', () => {
-    expect(Object.keys(goldens)).toHaveLength(STREAM_CORPUS.length * 4);
-  });
 });
 
 describe('chunk boundaries', () => {

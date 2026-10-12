@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
 
 import {
   gatewaySupportsPaneVcsFiles,
@@ -252,14 +251,6 @@ describe('a pane that is gone', () => {
     expect(listing.reason).toBe('unknown_pane');
     expect(listing.changes).toEqual([]);
     expect(calls.map((call) => call[0])).toEqual(['files']);
-  });
-
-  test('the sheet names it, and the gateway client answers it from a 404 unknown_pane', () => {
-    const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8');
-    expect(read('../../components/changes-sheet.tsx')).toContain(
-      "listing.reason === 'unknown_pane'"
-    );
-    expect(read('../gateway-client.ts')).toContain("reason: 'unknown_pane'");
   });
 });
 

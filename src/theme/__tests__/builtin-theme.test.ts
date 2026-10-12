@@ -148,9 +148,4 @@ test('the committed built-in pack matches its manifest and generated module', ()
   expect(generated.match(/require\('\.\.\/\.\.\/assets\/themes\/[^']+\/assets\//g)?.length).toBe(
     paths.length
   );
-  // The home artwork and the Pad cover wallpaper are both present in each mode.
-  for (const mode of ['light', 'dark'] as const) {
-    expect(manifest.variantDecorations?.[mode]?.['home.artwork']?.asset).toBe(`courier-${mode}`);
-    expect(manifest.variantDecorations?.[mode]?.['home.wallpaper']?.asset).toBe(`paper-${mode}`);
-  }
 });

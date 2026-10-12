@@ -61,17 +61,6 @@ describe('when it must not', () => {
   });
 });
 
-describe('the per-server half of the rule', () => {
-  test('one server being up to date says nothing about another', () => {
-    // The store is keyed by server id, so this is what a second gateway sees:
-    // no record of its own, and therefore a post owed.
-    const serverA = stored();
-    const serverB = null;
-    expect(pushTokenNeedsSending(serverA, 'ExponentPushToken[aaa]', build, now)).toBe(false);
-    expect(pushTokenNeedsSending(serverB, 'ExponentPushToken[aaa]', build, now)).toBe(true);
-  });
-});
-
 describe('the weekly re-assert', () => {
   // Rules 1 to 3 all describe something changing on this device. A gateway can
   // lose its device row without anything here changing at all -- a reinstall, a

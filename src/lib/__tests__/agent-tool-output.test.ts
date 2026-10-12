@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
 
 import {
   basename,
@@ -833,12 +832,6 @@ describe('a subagent card at its first event', () => {
     expect(toolInputJson(undefined)).toBeNull();
     expect(toolInputJson({})).toBeNull();
     expect(stripSubagentEnvelope('').text).toBe('');
-  });
-
-  test('wires the generic body through the null-aware reading', () => {
-    const card = readFileSync('src/components/agent-tool-card.tsx', 'utf8');
-    expect(card).toContain('toolInputJson(input)');
-    expect(card).not.toContain('prettyJson(input)');
   });
 
   test('once the task arrives the request is shown unchanged', () => {

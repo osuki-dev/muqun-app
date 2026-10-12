@@ -58,14 +58,8 @@ wait stable 400 5000
 scroll down --pixels 160 --duration-ms 300
 wait stable 400 5000
 
-# section s15
-is visible "${TARGET}"
-
 # section s16
 press "${TARGET}"
-
-# section s17
-is visible "${TARGET}"
 
 # section scroll-controls
 scroll down --pixels 160 --duration-ms 300

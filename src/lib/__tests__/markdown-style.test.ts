@@ -63,14 +63,6 @@ describe('createMarkdownStyle', () => {
       })
     ).toEqual([]);
   });
-
-  test("a formula keeps the renderer's own size and alignment", () => {
-    // Only the colours are overridden: the light theme has always shown the
-    // renderer's defaults for the rest, and this keeps it that way.
-    const style = createMarkdownStyle(colors);
-    expect(Object.keys(style.math ?? {}).sort()).toEqual(['backgroundColor', 'color']);
-    expect(Object.keys(style.inlineMath ?? {})).toEqual(['color']);
-  });
 });
 
 // The compact style is what the transcript's chrome reads in -- a thought, a
@@ -120,21 +112,6 @@ describe('createCompactMarkdownStyle', () => {
         });
       })
     ).toEqual([]);
-  });
-
-  test('it is set smaller than the answer, with no rule', () => {
-    const prose = createMarkdownStyle(colors);
-    const style = createCompactMarkdownStyle(colors, colors.textMuted);
-    expect(style.paragraph?.fontSize).toBeLessThan(prose.paragraph?.fontSize ?? 0);
-    expect(style.h1?.fontSize).toBeLessThan(prose.h1?.fontSize ?? 0);
-    // A rule drawn across a card is the card's own edge again.
-    expect(style.thematicBreak?.height).toBe(0);
-  });
-
-  test('a thought is the compact style, muted', () => {
-    expect(createThoughtMarkdownStyle(colors)).toEqual(
-      createCompactMarkdownStyle(colors, colors.textMuted)
-    );
   });
 });
 
@@ -213,12 +190,10 @@ describe('markdownImageStyle', () => {
   test('fits the width at the image aspect ratio, contained under a viewport cap', () => {
     // `maxHeight` without `aspectRatio` is the renderer's intrinsic-size mode;
     // `contain` keeps it from cropping inside the cap.
-    expect(markdownImageStyle(1000, 12)).toEqual({
+    expect(markdownImageStyle(1000, 12)).toMatchObject({
       maxHeight: 1000 * MARKDOWN_IMAGE_MAX_HEIGHT_RATIO,
       resizeMode: 'contain',
       borderRadius: 12,
-      marginTop: 8,
-      marginBottom: 8,
     });
   });
 

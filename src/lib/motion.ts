@@ -382,11 +382,7 @@ export const INSTANT: WithTimingConfig = {
  * velocity being absorbed. The design system's sentence is honoured on the
  * screen, which is where it is about.
  *
- * It lives here, as a function that applies the spring itself, so that no
- * screen ever writes one: `motion-tokens.test.ts` scans every other file in
- * `src/**` for the primitive and exempts this one alone -- then reads the
- * damping ratio back out of the source below to check the exemption is still
- * the bounce-free thing it was granted for.
+ * Keep the spring configuration here so screens share the same damping.
  */
 export const SETTLE: WithSpringConfig = {
   // Critically damped: fastest approach with zero overshoot. Not negotiable --

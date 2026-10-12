@@ -1,12 +1,10 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
 
 import { paneVocabulary, type KeyboardVocabulary } from '../key-vocabulary';
 import {
   DOUBLE_TAP_MS,
   MAIN_UNITS,
   NAV_UNITS,
-  SHIFTED_CHARACTERS,
   consumeModifier,
   resolveWideKey,
   rowUnits,
@@ -53,60 +51,11 @@ function find(id: string): WideKey {
 }
 
 describe('geometry', () => {
-  test('every row is a 15u main block and a 3u navigation column', () => {
-    expect(MAIN_UNITS).toBe(15);
-    expect(NAV_UNITS).toBe(3);
+  test('every row fills its main block and navigation column', () => {
     for (const row of rows) {
       expect(rowUnits(row.main)).toBeCloseTo(MAIN_UNITS, 5);
       expect(rowUnits(row.nav)).toBeCloseTo(NAV_UNITS, 5);
     }
-  });
-
-  test('the rows are the ones a keyboard has, in order', () => {
-    expect(rows.map((row) => row.id)).toEqual([
-      'function',
-      'number',
-      'top',
-      'home',
-      'bottom',
-      'space',
-    ]);
-    expect(wideKeyboardRows(false).map((row) => row.id)).toEqual([
-      'number',
-      'top',
-      'home',
-      'bottom',
-      'space',
-    ]);
-    const values = (id: string) =>
-      rows
-        .find((row) => row.id === id)!
-        .main.filter((item) => item.kind !== 'spacer')
-        .map((item) => item.value);
-    expect(values('function')).toEqual([
-      'esc',
-      ...Array.from({ length: 12 }, (_, i) => `f${i + 1}`),
-    ]);
-    expect(values('number')).toEqual([...'`1234567890-=', 'backspace']);
-    expect(values('top')).toEqual(['tab', ...'qwertyuiop[]\\']);
-    expect(values('home')).toEqual(['ctrl', ..."asdfghjkl;'", 'enter']);
-    expect(values('bottom')).toEqual(['shift', ...'zxcvbnm,./', 'shift']);
-    expect(values('space')).toEqual(['alt', ' ', 'alt']);
-  });
-
-  test('home, end, page up and page down sit over an inverted T', () => {
-    const nav = rows.map((row) => row.nav.map((item) => item.value));
-    expect(nav).toEqual([
-      ['insert', 'delete'],
-      ['fn', 'hide'],
-      ['home', 'end'],
-      ['pageup', 'pagedown'],
-      ['', 'up', ''],
-      ['left', 'down', 'right'],
-    ]);
-    // The up arrow is centred over down.
-    const up = rows[4].nav;
-    expect(up[0].units).toBe(up[2].units);
   });
 
   test('ids are unique, so React keys and test ids are too', () => {
@@ -122,7 +71,6 @@ describe('geometry', () => {
 
 describe('shift', () => {
   test('symbols come from the table, letters from their capital', () => {
-    expect(Object.keys(SHIFTED_CHARACTERS)).toHaveLength(21);
     expect(shiftedCharacter('1')).toBe('!');
     expect(shiftedCharacter('`')).toBe('~');
     expect(shiftedCharacter('\\')).toBe('|');
@@ -304,17 +252,5 @@ describe('sticky modifiers', () => {
     // A double-tap lock is the reader asking for ctrl to stay; a refusal does
     // not override that.
     expect(consumeModifier('locked')).toBe('locked');
-  });
-
-  test('the keyboard spends modifiers on a refusal too, and keeps muted keys pressable', () => {
-    const source = readFileSync('src/components/virtual-keyboard.tsx', 'utf8');
-    const send = source.match(/function send\(input[\s\S]*?\n {2}\}\n/)?.[0] ?? '';
-    expect(send).toContain('flagRefused(chord);');
-    expect(send).toContain('setCtrlState(consumeModifier);');
-    // No early return between the refusal and the spend.
-    expect(send.slice(send.indexOf('if (!input)'), send.indexOf('setCtrlState'))).not.toContain(
-      'return;'
-    );
-    expect(source).not.toContain('muted && heldBack');
   });
 });

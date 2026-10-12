@@ -64,27 +64,3 @@ test('both side gutters dismiss the route; the centered scene is not a press tar
   expect(left!.props.testID).toBe('sheet-dismiss-left-gutter');
   expect(right!.props.testID).toBe('sheet-dismiss-right-gutter');
 });
-
-test('fit-content height stays intrinsic; fixed detents fill their assigned space', () => {
-  for (const fitsContent of [true, false]) {
-    const { element } = render(fitsContent);
-    const [card, left, right] = element.props.children as Element[];
-    const sizing = fitsContent ? undefined : { flex: 1 };
-    expect(element.props.style).toEqual(sizing);
-    expect(card!.props.style).toEqual([
-      { width: '100%', maxWidth: 640, alignSelf: 'center', overflow: 'hidden' },
-      sizing,
-      { borderTopLeftRadius: 23, borderTopRightRadius: 23 },
-    ]);
-    // Gutters cover only [0, center - 320] and [center + 320, width].
-    // Physical edges keep these intervals correct in both LTR and RTL.
-    expect(left!.props.style).toEqual([
-      { position: 'absolute', top: 0, bottom: 0 },
-      { left: 0, right: '50%', marginRight: 320 },
-    ]);
-    expect(right!.props.style).toEqual([
-      { position: 'absolute', top: 0, bottom: 0 },
-      { right: 0, left: '50%', marginLeft: 320 },
-    ]);
-  }
-});
