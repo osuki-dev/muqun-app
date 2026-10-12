@@ -13,18 +13,6 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: src/components/task-row.tsx
-msgid "Confirm removal"
-msgstr "确认移除"
-
-#: src/components/task-row.tsx
-msgid "Remove from Home"
-msgstr "从首页移除"
-
-#: src/components/task-row.tsx
-msgid "The task and its history remain available."
-msgstr "任务及其历史记录仍然保留"
-
 #: src/components/pane-chat-blocks.tsx
 msgid "… truncated"
 msgstr "…已截断"
@@ -42,6 +30,10 @@ msgstr "“{args}”未发送：技能不接受参数"
 #: src/components/agent-sessions-sheet.tsx
 msgid "“{title}” and any subagent sessions under it are removed from the host. This cannot be undone."
 msgstr "“{title}”及其下的子代理会话都会从主机移除，且无法撤销"
+
+#: src/components/home-recent-sessions.tsx
+msgid "“{title}” and its conversation history will be deleted in {provider} on {computer}. The service may also delete its subagent sessions. This cannot be undone."
+msgstr "将删除{computer}上{provider}中的“{title}”及其对话记录。服务也可能删除其子代理会话。此操作无法撤销"
 
 #: src/lib/demo-gateway.ts
 msgid "[instructions]"
@@ -495,6 +487,7 @@ msgstr "操作这个终端，或给它发一条命令"
 msgid "Act on this terminal, or send its agent a prompt"
 msgstr "操作这个终端，或给它的 Agent 下一条指令"
 
+#: src/components/home-recent-sessions.tsx
 #: src/components/task-row.tsx
 msgid "Actions"
 msgstr "操作"
@@ -691,10 +684,6 @@ msgstr "始终允许"
 #: src/components/agent-revert-plate.tsx
 msgid "and {rest} more"
 msgstr "还有 {rest} 个"
-
-#: src/components/settings-server-capabilities.tsx
-#~ msgid "Android builds"
-#~ msgstr "Android 构建"
 
 #: src/components/task-row.tsx
 msgid "another computer"
@@ -998,8 +987,6 @@ msgstr "浏览器"
 msgid "Build"
 msgstr "构建 (Build)"
 
-#: src/app/settings-about.tsx
-#: src/app/settings-update-notes.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Built-in"
 msgstr "内置"
@@ -1277,6 +1264,11 @@ msgstr "关闭效果面板"
 msgid "Close file"
 msgstr "关闭文件"
 
+#: src/components/home-recent-sessions.tsx
+#: src/components/task-row.tsx
+msgid "Close menu"
+msgstr "收起"
+
 #: src/app/new-task.tsx
 msgid "Close new task"
 msgstr "关闭新任务"
@@ -1308,6 +1300,10 @@ msgstr "关闭菜单"
 #: src/components/simfarm-stage.tsx
 msgid "Close the simulator"
 msgstr "关闭模拟器"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Close this terminal on its computer. Safe terminal closing from Home is not supported yet."
+msgstr "请在对应电脑上关闭此终端。首页暂不支持安全关闭远程终端"
 
 #: src/components/session-artifacts.tsx
 msgid "Code"
@@ -1411,6 +1407,7 @@ msgstr "已完成"
 #: src/app/panels.tsx
 #: src/components/app-drawer.tsx
 #: src/components/home-composer-options.tsx
+#: src/components/home-recent-sessions.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer"
 msgstr "电脑"
@@ -1453,9 +1450,17 @@ msgstr "确认取消"
 msgid "Confirm clear cache"
 msgstr "确认清除缓存"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Confirm delete"
+msgstr "确认删除"
+
 #: src/app/explore.tsx
 msgid "Confirm pairing"
 msgstr "确认配对"
+
+#: src/components/task-row.tsx
+msgid "Confirm removal"
+msgstr "确认移除"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm remove unused themes"
@@ -1812,6 +1817,10 @@ msgstr "无法创建该工作树"
 msgid "Could not delete"
 msgstr "无法删除"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Could not delete this session. Reconnect to its computer and refresh Home before trying again."
+msgstr "无法删除此会话。请重新连接对应电脑并刷新首页后重试"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not detach"
 msgstr "无法转入后台"
@@ -1885,10 +1894,6 @@ msgstr "无法加载会话"
 #: src/components/changes-sheet.tsx
 msgid "Could not load this file's changes."
 msgstr "无法加载此文件的更改"
-
-#: src/components/settings-mcp-tokens.tsx
-#~ msgid "Could not load tokens"
-#~ msgstr "无法加载令牌"
 
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
@@ -2238,6 +2243,10 @@ msgstr "删除 {discardName}？"
 msgid "Delete {name}"
 msgstr "删除 {name}"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Delete session"
+msgstr "删除会话"
+
 #: src/i18n/labels.ts
 msgid "Delete this line"
 msgstr "删除这一行"
@@ -2246,6 +2255,10 @@ msgstr "删除这一行"
 msgctxt "git file status"
 msgid "Deleted"
 msgstr "删除"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Deleting session…"
+msgstr "正在删除会话…"
 
 #: src/components/agent-composer.tsx
 msgid "Delivery mode: Queue. Tap to switch to Steer."
@@ -2263,6 +2276,10 @@ msgstr "发送未确认"
 #: src/components/theme-browse-sheet.tsx
 msgid "Demo catalogue. Leave the demo to download themes."
 msgstr "演示主题目录。退出演示后即可下载主题"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Demo sessions cannot be deleted. Open a paired computer to manage its sessions."
+msgstr "演示会话无法删除。请打开已配对的电脑以管理其会话"
 
 #: src/lib/demo-ssh.ts
 msgid "Demo shell"
@@ -3116,10 +3133,6 @@ msgstr "中断进程"
 msgid "Interrupt what this agent is doing."
 msgstr "中断这个代理正在做的事"
 
-#: src/components/settings-server-capabilities.tsx
-#~ msgid "iOS builds"
-#~ msgstr "iOS 构建"
-
 #: src/lib/local-authentication.ts
 msgid "iris recognition"
 msgstr "虹膜识别"
@@ -3451,10 +3464,6 @@ msgstr "标记已查看"
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "吉祥物"
-
-#: src/components/settings-mcp-tokens.tsx
-#~ msgid "MCP tokens"
-#~ msgstr "MCP 令牌"
 
 #. placeholder {0}: computer.name
 #. placeholder {0}: hit.path
@@ -3924,10 +3933,6 @@ msgstr "还没有已发布的主题"
 msgid "No themes match “{0}”."
 msgstr "没有匹配“{0}”的主题"
 
-#: src/components/settings-mcp-tokens.tsx
-#~ msgid "No tokens"
-#~ msgstr "没有令牌"
-
 #: src/components/agent-context-sheet.tsx
 msgid "no window reported for this model"
 msgstr "该模型未提供上下文窗口"
@@ -4079,6 +4084,10 @@ msgstr "在线"
 #: src/i18n/labels.ts
 msgid "ONLINE"
 msgstr "在线"
+
+#: src/components/task-row.tsx
+msgid "Only this Home row is hidden. The task and its history remain available. Running work is not stopped."
+msgstr "仅隐藏此首页条目。任务及其历史记录仍然保留，正在运行的工作不会停止"
 
 #: src/components/home-connections.tsx
 #: src/components/in-app-notification-host.tsx
@@ -4338,6 +4347,10 @@ msgstr "在下方配对一台"
 #: src/components/server-terminal-workspace.tsx
 msgid "Pair this computer again"
 msgstr "重新配对这台电脑"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Pair this computer again before deleting its sessions."
+msgstr "请重新配对此电脑，再删除其会话"
 
 #: src/lib/network-error.ts
 msgid "Pair this computer again."
@@ -4779,6 +4792,10 @@ msgstr "刷新文件"
 msgid "Refresh history to load the current snapshot."
 msgstr "刷新历史记录以加载当前快照"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Refresh Home to identify this session’s provider before deleting it."
+msgstr "请刷新首页，确认此会话所属服务后再删除"
+
 #: src/components/collaboration-notice.tsx
 msgid "Refresh output"
 msgstr "刷新输出"
@@ -4814,6 +4831,10 @@ msgstr "仍然移除"
 #: src/components/collaboration-notice.tsx
 msgid "Remove from history?"
 msgstr "从历史移除？"
+
+#: src/components/task-row.tsx
+msgid "Remove from Home"
+msgstr "从首页移除"
 
 #: src/components/ssh-host-form.tsx
 msgid "Remove host"
@@ -4897,14 +4918,10 @@ msgstr "必填"
 msgid "Requires iOS 16.1 or later."
 msgstr "需要 iOS 16.1 或更高版本"
 
-#: src/app/settings-about.tsx
-#: src/app/settings-update-notes.tsx
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
 msgstr "请重启 Muqun 以完成更新"
 
-#: src/app/settings-about.tsx
-#: src/app/settings-update-notes.tsx
 #: src/components/update-status-banner.tsx
 msgid "Restarting Muqun…"
 msgstr "正在重启 Muqun…"
@@ -5087,10 +5104,6 @@ msgstr "在你的电脑上运行 Gateway，然后扫描它打印出的二维码�
 #: src/i18n/labels.ts
 msgid "Running"
 msgstr "运行中"
-
-#: src/components/settings-server-capabilities.tsx
-#~ msgid "Rust"
-#~ msgstr "Rust"
 
 #: src/app/settings-voice.tsx
 #: src/components/agent-sessions-sheet.tsx
@@ -5840,10 +5853,6 @@ msgstr "子代理"
 msgid "Submit"
 msgstr "提交"
 
-#: src/components/settings-server-capabilities.tsx
-#~ msgid "Suitable for"
-#~ msgstr "适合"
-
 #: src/i18n/labels.ts
 msgid "Summarise progress"
 msgstr "总结进度"
@@ -6466,6 +6475,10 @@ msgstr "此项为必填"
 msgid "This project"
 msgstr "本项目"
 
+#: src/components/home-recent-sessions.tsx
+msgid "This provider cannot delete sessions. Open the session to stop a running turn or manage it on its computer."
+msgstr "此服务不支持删除会话。请打开会话停止正在运行的任务，或在对应电脑上管理它"
+
 #: src/app/explore.tsx
 msgid "This QR code is not valid."
 msgstr "这个二维码无效"
@@ -6485,6 +6498,10 @@ msgstr "本次会话"
 #: src/components/agent-workbench.tsx
 msgid "This session has no message to roll back to."
 msgstr "这个会话还没有可以回滚到的消息"
+
+#: src/components/home-recent-sessions.tsx
+msgid "This session is no longer available in this service. Refresh Home before trying again."
+msgstr "此会话在对应服务中已不可用。请刷新首页后重试"
 
 #: src/components/agent-workbench.tsx
 msgid "This session no longer exists"
@@ -6554,10 +6571,6 @@ msgstr "已超时"
 #: src/i18n/labels.ts
 msgid "Today"
 msgstr "今天"
-
-#: src/components/settings-mcp-tokens.tsx
-#~ msgid "Tokens coding agents use to reach this computer."
-#~ msgstr "编程智能体用来访问这台电脑的令牌"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -6810,6 +6823,10 @@ msgstr "有可用更新"
 msgid "Update download failed. Try again."
 msgstr "更新下载失败，请重试"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Update Gateway on this computer, then reconnect to enable deleting sessions from Home."
+msgstr "请更新此电脑上的 Gateway，再重新连接，即可从首页删除会话"
+
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Herdr on the computer to 0.9.0 or newer, then restart the session, to assign a task to another assistant"
 msgstr "请将电脑上的 Herdr 更新到 0.9.0 或更高版本并重启会话，才能把任务交给其他助手"
@@ -6850,8 +6867,6 @@ msgstr "更新 Gateway 后即可预览视频输出"
 msgid "Updates when you reopen"
 msgstr "重新打开时更新"
 
-#: src/app/settings-about.tsx
-#: src/app/settings-update-notes.tsx
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
 msgstr "正在更新牧群…"
@@ -6973,10 +6988,6 @@ msgstr "正在等待你的回答"
 msgid "Waiting to send"
 msgstr "等待发送"
 
-#: src/components/settings-server-capabilities.tsx
-#~ msgid "Web"
-#~ msgstr "网页"
-
 #: src/components/agent-workbench.tsx
 msgid "Welcome to {agentName}"
 msgstr "欢迎使用 {agentName}"
@@ -6989,8 +7000,6 @@ msgstr "从这里发送时主页启动的智能体"
 msgid "What is running"
 msgstr "正在运行的项目"
 
-#: src/app/settings-about.tsx
-#: src/app/settings-update-notes.tsx
 #: src/components/update-status-banner.tsx
 #: src/lib/release-notes.ts
 msgid "What's new"

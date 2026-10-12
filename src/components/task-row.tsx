@@ -489,8 +489,8 @@ function useTaskRowModel({
     action();
   };
   const menuItems: AgentActionMenuItem[] = visual.actions
-    // Nothing to open from here for a computer this phone is not paired with.
-    .filter((action) => !(unpaired && action === 'open'))
+    // Home already opens the task when its row is tapped.
+    .filter((action) => !((unpaired || inComputerCard) && action === 'open'))
     .map((action): AgentActionMenuItem => {
       switch (action) {
         case 'open':
@@ -547,11 +547,18 @@ function useTaskRowModel({
       tone: 'danger',
       confirm: {
         label: t`Confirm removal`,
-        detail: t`The task and its history remain available.`,
+        detail: t`Only this Home row is hidden. The task and its history remain available. Running work is not stopped.`,
         persist: true,
       },
       testID: `task-row-remove-home-${task.taskId}`,
       onPress: run(() => hide(serverId, task)),
+    });
+    menuItems.push({
+      id: 'close-menu',
+      label: t`Close menu`,
+      Icon: X,
+      onPress: () => setMenuOpen(false),
+      testID: `task-row-close-menu-${task.taskId}`,
     });
   }
   const toggleMenu = () => {

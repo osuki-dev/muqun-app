@@ -113,7 +113,15 @@ export async function refreshHomeContinue({
               const sessions = gatewayAgentSessions(list, agentSessionLimit);
               recordAgentSessions({ serverId, sessionId, observedAtMs, sessions });
             }
-            const byAsid = new Map(list.map((info) => [info.asid, info]));
+            const sessionKey = (agentId: string, asid: string) => JSON.stringify([agentId, asid]);
+            const byOwner = new Map(
+              list.map((info) => [sessionKey(info.agent_id, info.asid), info])
+            );
+            const sessionFor = (target: Extract<HomeTarget, { kind: 'agent-session' }>) => {
+              if (target.agentId) return byOwner.get(sessionKey(target.agentId, target.asid));
+              const matches = [...byOwner.values()].filter((info) => info.asid === target.asid);
+              return matches.length === 1 ? matches[0] : undefined;
+            };
             // A remembered session the merged list did not carry -- older than
             // its newest page, or behind an adapter that scopes an unscoped
             // list to one folder -- is read in its own folder, as it used to
@@ -121,7 +129,7 @@ export async function refreshHomeContinue({
             // the per-folder reads this replaced.
             const unlisted = new Map<string, { sessionId: string; directory: string }>();
             for (const { target } of remembered) {
-              if (target.kind === 'agent-session' && !byAsid.has(target.asid))
+              if (target.kind === 'agent-session' && !sessionFor(target))
                 unlisted.set(JSON.stringify([target.sessionId, target.directory]), target);
             }
             await Promise.all(
@@ -135,13 +143,16 @@ export async function refreshHomeContinue({
                 const found = await read(
                   `/api/sessions/${encodeURIComponent(folder.sessionId)}/agent-sessions?${scoped}`
                 ).then(listedSessions, () => []);
-                for (const info of found) if (!byAsid.has(info.asid)) byAsid.set(info.asid, info);
+                for (const info of found) {
+                  const key = sessionKey(info.agent_id, info.asid);
+                  if (!byOwner.has(key)) byOwner.set(key, info);
+                }
               })
             );
             for (const { target } of remembered) {
               if (!isCurrent()) return;
               if (target.kind !== 'agent-session') continue;
-              const info = byAsid.get(target.asid);
+              const info = sessionFor(target);
               if (!info || info.parent_id || info.deleted) continue;
               if (hasRealSessionTitle(info)) await updateTitle(target, info.title);
               if (isCurrent()) await observe(target, { status: info.status, observedAtMs });

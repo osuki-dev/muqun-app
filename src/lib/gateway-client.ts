@@ -2694,6 +2694,25 @@ export async function readGatewayRecordJson(record: GatewayRecord, path: string)
   });
 }
 
+/** Delete on the named computer, without repointing the active terminal or retrying the write. */
+export async function deleteGatewayRecordJson(record: GatewayRecord, path: string): Promise<void> {
+  if (!path.startsWith('/api/') || path.includes('://'))
+    throw new Error('Invalid Gateway delete path');
+  if (isDemoRecord(record)) throw new Error('Demo sessions cannot be closed remotely.');
+  const captured = { ...record, sshTunnel: record.sshTunnel ? { ...record.sshTunnel } : undefined };
+  await withRecordBaseUrl(captured, async (baseUrl) => {
+    const response = await gatewayEndpointFetch(
+      { ...captured, url: baseUrl },
+      `${baseUrl}${path}`,
+      {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${captured.token}`, ...activeLocaleHeaders() },
+      }
+    );
+    if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+  });
+}
+
 /** Inspect a saved machine without switching the active terminal's credentials. */
 export async function loadRecordSessions(record: GatewayRecord): Promise<SessionsResponse> {
   if (isDemoRecord(record)) return demoSessions() as SessionsResponse;

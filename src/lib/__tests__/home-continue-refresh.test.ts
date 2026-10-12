@@ -13,6 +13,39 @@ const entries: HomeRecentEntry[] = [
   { key: 'chosen', target, title: 'Original', atMs: 1 },
   { key: 'other', target: { ...target, serverId: 'other' }, title: 'Other', atMs: 1 },
 ];
+
+test('a refresh cannot retag or overwrite a conversation from another provider with the same ID', async () => {
+  const titles: string[] = [];
+  const repaired: string[] = [];
+  await refreshHomeContinue({
+    serverId: 'chosen',
+    sessionId: 'dev',
+    entries: [
+      { key: 'owned', target: { ...target, agentId: 't3' }, title: 'Original', atMs: 1 },
+      { key: 'legacy', target, title: 'Unknown owner', atMs: 1 },
+    ],
+    read: async (path) =>
+      path.includes('agent-sessions')
+        ? {
+            data: [
+              { asid: 'agent-1', agent_id: 't3', title: 'T3 conversation' },
+              { asid: 'agent-1', agent_id: 'opencode', title: 'OpenCode conversation' },
+            ],
+          }
+        : { items: [] },
+    isCurrent: () => true,
+    recordPanes: async () => {},
+    observe: async () => {},
+    updateTitle: async (target, title) => {
+      titles.push(title);
+    },
+    repairAgent: async (target, agentId) => {
+      repaired.push(agentId);
+    },
+  });
+  expect(titles).toEqual(['T3 conversation']);
+  expect(repaired).toEqual([]);
+});
 function setup(read: (path: string) => Promise<unknown>, isCurrent = () => true) {
   const writes: unknown[] = [];
   return {

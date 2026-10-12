@@ -13,18 +13,6 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: src/components/task-row.tsx
-msgid "Confirm removal"
-msgstr "Confirmar remoção"
-
-#: src/components/task-row.tsx
-msgid "Remove from Home"
-msgstr "Remover do início"
-
-#: src/components/task-row.tsx
-msgid "The task and its history remain available."
-msgstr "A tarefa e seu histórico continuam disponíveis"
-
 #: src/components/pane-chat-blocks.tsx
 msgid "… truncated"
 msgstr "… truncado"
@@ -42,6 +30,10 @@ msgstr "“{args}” não foi enviado: uma habilidade não aceita argumentos"
 #: src/components/agent-sessions-sheet.tsx
 msgid "“{title}” and any subagent sessions under it are removed from the host. This cannot be undone."
 msgstr "“{title}” e as sessões de subagente abaixo dela são removidas do host. Isso não pode ser desfeito"
+
+#: src/components/home-recent-sessions.tsx
+msgid "“{title}” and its conversation history will be deleted in {provider} on {computer}. The service may also delete its subagent sessions. This cannot be undone."
+msgstr "“{title}” e o seu histórico de conversa serão eliminados de {provider} em {computer}. O serviço também pode eliminar as sessões dos seus subagentes. Esta ação não pode ser anulada"
 
 #: src/lib/demo-gateway.ts
 msgid "[instructions]"
@@ -495,6 +487,7 @@ msgstr "Age sobre este terminal, ou envia-lhe um comando"
 msgid "Act on this terminal, or send its agent a prompt"
 msgstr "Age sobre este terminal, ou envia uma instrução ao seu agente"
 
+#: src/components/home-recent-sessions.tsx
 #: src/components/task-row.tsx
 msgid "Actions"
 msgstr "Ações"
@@ -691,10 +684,6 @@ msgstr "Sempre permitido"
 #: src/components/agent-revert-plate.tsx
 msgid "and {rest} more"
 msgstr "e mais {rest}"
-
-#: src/components/settings-server-capabilities.tsx
-#~ msgid "Android builds"
-#~ msgstr "Compilações Android"
 
 #: src/components/task-row.tsx
 msgid "another computer"
@@ -998,8 +987,6 @@ msgstr "Navegador"
 msgid "Build"
 msgstr "Construir"
 
-#: src/app/settings-about.tsx
-#: src/app/settings-update-notes.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Built-in"
 msgstr "Integrados"
@@ -1277,6 +1264,11 @@ msgstr "Fechar efeitos"
 msgid "Close file"
 msgstr "Fechar o ficheiro"
 
+#: src/components/home-recent-sessions.tsx
+#: src/components/task-row.tsx
+msgid "Close menu"
+msgstr "Fechar menu"
+
 #: src/app/new-task.tsx
 msgid "Close new task"
 msgstr "Fechar a nova tarefa"
@@ -1308,6 +1300,10 @@ msgstr "Fechar o menu"
 #: src/components/simfarm-stage.tsx
 msgid "Close the simulator"
 msgstr "Fechar o simulador"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Close this terminal on its computer. Safe terminal closing from Home is not supported yet."
+msgstr "Feche este terminal no computador correspondente. O fecho seguro de terminais a partir do Início ainda não é suportado"
 
 #: src/components/session-artifacts.tsx
 msgid "Code"
@@ -1411,6 +1407,7 @@ msgstr "Concluído"
 #: src/app/panels.tsx
 #: src/components/app-drawer.tsx
 #: src/components/home-composer-options.tsx
+#: src/components/home-recent-sessions.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer"
 msgstr "Computador"
@@ -1453,9 +1450,17 @@ msgstr "Confirmar cancelamento"
 msgid "Confirm clear cache"
 msgstr "Confirmar a limpeza da cache"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Confirm delete"
+msgstr "Confirmar eliminação"
+
 #: src/app/explore.tsx
 msgid "Confirm pairing"
 msgstr "Confirmar o emparelhamento"
+
+#: src/components/task-row.tsx
+msgid "Confirm removal"
+msgstr "Confirmar remoção"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm remove unused themes"
@@ -1812,6 +1817,10 @@ msgstr "Não foi possível criar esse worktree"
 msgid "Could not delete"
 msgstr "Não foi possível excluir"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Could not delete this session. Reconnect to its computer and refresh Home before trying again."
+msgstr "Não foi possível eliminar esta sessão. Volte a ligar ao computador correspondente e atualize o Início antes de tentar novamente"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not detach"
 msgstr "Não foi possível desanexar"
@@ -1885,10 +1894,6 @@ msgstr "Não foi possível carregar a sessão"
 #: src/components/changes-sheet.tsx
 msgid "Could not load this file's changes."
 msgstr "Não foi possível carregar as alterações deste arquivo"
-
-#: src/components/settings-mcp-tokens.tsx
-#~ msgid "Could not load tokens"
-#~ msgstr "Não foi possível carregar os tokens"
 
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
@@ -2238,6 +2243,10 @@ msgstr "Excluir {discardName}?"
 msgid "Delete {name}"
 msgstr "Eliminar {name}"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Delete session"
+msgstr "Eliminar sessão"
+
 #: src/i18n/labels.ts
 msgid "Delete this line"
 msgstr "Eliminar esta linha"
@@ -2246,6 +2255,10 @@ msgstr "Eliminar esta linha"
 msgctxt "git file status"
 msgid "Deleted"
 msgstr "Excluído"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Deleting session…"
+msgstr "A eliminar sessão…"
 
 #: src/components/agent-composer.tsx
 msgid "Delivery mode: Queue. Tap to switch to Steer."
@@ -2263,6 +2276,10 @@ msgstr "Entrega não confirmada"
 #: src/components/theme-browse-sheet.tsx
 msgid "Demo catalogue. Leave the demo to download themes."
 msgstr "Catálogo de demonstração. Saia da demonstração para baixar temas"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Demo sessions cannot be deleted. Open a paired computer to manage its sessions."
+msgstr "As sessões de demonstração não podem ser eliminadas. Abra um computador emparelhado para gerir as suas sessões"
 
 #: src/lib/demo-ssh.ts
 msgid "Demo shell"
@@ -3116,10 +3133,6 @@ msgstr "Interromper o processo"
 msgid "Interrupt what this agent is doing."
 msgstr "Interrompe o que este agente está a fazer"
 
-#: src/components/settings-server-capabilities.tsx
-#~ msgid "iOS builds"
-#~ msgstr "Compilações iOS"
-
 #: src/lib/local-authentication.ts
 msgid "iris recognition"
 msgstr "reconhecimento da íris"
@@ -3451,10 +3464,6 @@ msgstr "Marcar como revisado"
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "Mascote"
-
-#: src/components/settings-mcp-tokens.tsx
-#~ msgid "MCP tokens"
-#~ msgstr "Tokens MCP"
 
 #. placeholder {0}: computer.name
 #. placeholder {0}: hit.path
@@ -3924,10 +3933,6 @@ msgstr "Ainda não há temas publicados"
 msgid "No themes match “{0}”."
 msgstr "Nenhum tema corresponde a “{0}”"
 
-#: src/components/settings-mcp-tokens.tsx
-#~ msgid "No tokens"
-#~ msgstr "Nenhum token"
-
 #: src/components/agent-context-sheet.tsx
 msgid "no window reported for this model"
 msgstr "nenhuma janela indicada para este modelo"
@@ -4079,6 +4084,10 @@ msgstr "Online, a responder"
 #: src/i18n/labels.ts
 msgid "ONLINE"
 msgstr "ONLINE"
+
+#: src/components/task-row.tsx
+msgid "Only this Home row is hidden. The task and its history remain available. Running work is not stopped."
+msgstr "Apenas esta linha do Início é ocultada. A tarefa e o seu histórico continuam disponíveis. O trabalho em curso não é interrompido"
 
 #: src/components/home-connections.tsx
 #: src/components/in-app-notification-host.tsx
@@ -4338,6 +4347,10 @@ msgstr "Emparelhe um abaixo"
 #: src/components/server-terminal-workspace.tsx
 msgid "Pair this computer again"
 msgstr "Emparelhar novamente este computador"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Pair this computer again before deleting its sessions."
+msgstr "Volte a emparelhar este computador antes de eliminar as suas sessões"
 
 #: src/lib/network-error.ts
 msgid "Pair this computer again."
@@ -4779,6 +4792,10 @@ msgstr "Atualizar os ficheiros"
 msgid "Refresh history to load the current snapshot."
 msgstr "Atualize o histórico para carregar o estado atual"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Refresh Home to identify this session’s provider before deleting it."
+msgstr "Atualize o Início para identificar o fornecedor desta sessão antes de a eliminar"
+
 #: src/components/collaboration-notice.tsx
 msgid "Refresh output"
 msgstr "Atualizar saída"
@@ -4814,6 +4831,10 @@ msgstr "Remover mesmo assim"
 #: src/components/collaboration-notice.tsx
 msgid "Remove from history?"
 msgstr "Remover do histórico?"
+
+#: src/components/task-row.tsx
+msgid "Remove from Home"
+msgstr "Remover do início"
 
 #: src/components/ssh-host-form.tsx
 msgid "Remove host"
@@ -4897,14 +4918,10 @@ msgstr "Obrigatório"
 msgid "Requires iOS 16.1 or later."
 msgstr "Requer iOS 16.1 ou posterior"
 
-#: src/app/settings-about.tsx
-#: src/app/settings-update-notes.tsx
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
 msgstr "Reinicie o Muqun para concluir a atualização"
 
-#: src/app/settings-about.tsx
-#: src/app/settings-update-notes.tsx
 #: src/components/update-status-banner.tsx
 msgid "Restarting Muqun…"
 msgstr "Reiniciando o Muqun…"
@@ -5087,10 +5104,6 @@ msgstr "Execute o Gateway no seu computador e leia o código QR que ele mostra. 
 #: src/i18n/labels.ts
 msgid "Running"
 msgstr "Em execução"
-
-#: src/components/settings-server-capabilities.tsx
-#~ msgid "Rust"
-#~ msgstr "Rust"
 
 #: src/app/settings-voice.tsx
 #: src/components/agent-sessions-sheet.tsx
@@ -5840,10 +5853,6 @@ msgstr "Subagente"
 msgid "Submit"
 msgstr "Enviar"
 
-#: src/components/settings-server-capabilities.tsx
-#~ msgid "Suitable for"
-#~ msgstr "Adequado para"
-
 #: src/i18n/labels.ts
 msgid "Summarise progress"
 msgstr "Resumir o progresso"
@@ -6466,6 +6475,10 @@ msgstr "Este campo é obrigatório"
 msgid "This project"
 msgstr "Este projeto"
 
+#: src/components/home-recent-sessions.tsx
+msgid "This provider cannot delete sessions. Open the session to stop a running turn or manage it on its computer."
+msgstr "Este fornecedor não pode eliminar sessões. Abra a sessão para interromper o turno em curso ou faça a gestão no computador correspondente"
+
 #: src/app/explore.tsx
 msgid "This QR code is not valid."
 msgstr "Este código QR não é válido"
@@ -6485,6 +6498,10 @@ msgstr "Esta sessão"
 #: src/components/agent-workbench.tsx
 msgid "This session has no message to roll back to."
 msgstr "Esta sessão não tem nenhuma mensagem para a qual voltar"
+
+#: src/components/home-recent-sessions.tsx
+msgid "This session is no longer available in this service. Refresh Home before trying again."
+msgstr "Esta sessão já não está disponível neste serviço. Atualize o Início antes de tentar novamente"
 
 #: src/components/agent-workbench.tsx
 msgid "This session no longer exists"
@@ -6554,10 +6571,6 @@ msgstr "tempo esgotado"
 #: src/i18n/labels.ts
 msgid "Today"
 msgstr "Hoje"
-
-#: src/components/settings-mcp-tokens.tsx
-#~ msgid "Tokens coding agents use to reach this computer."
-#~ msgstr "Tokens que os agentes de programação usam para aceder a este computador"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -6810,6 +6823,10 @@ msgstr "Atualização disponível"
 msgid "Update download failed. Try again."
 msgstr "Falha ao baixar a atualização. Tente novamente"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Update Gateway on this computer, then reconnect to enable deleting sessions from Home."
+msgstr "Atualize o Gateway neste computador e volte a ligar para poder eliminar sessões a partir do Início"
+
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Herdr on the computer to 0.9.0 or newer, then restart the session, to assign a task to another assistant"
 msgstr "Atualize o Herdr no computador para 0.9.0 ou mais recente e reinicie a sessão para atribuir uma tarefa a outro assistente"
@@ -6850,8 +6867,6 @@ msgstr "Atualize o Gateway para visualizar vídeos"
 msgid "Updates when you reopen"
 msgstr "Atualiza ao reabrir"
 
-#: src/app/settings-about.tsx
-#: src/app/settings-update-notes.tsx
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
 msgstr "A atualizar o Muqun…"
@@ -6973,10 +6988,6 @@ msgstr "À espera da tua resposta"
 msgid "Waiting to send"
 msgstr "À espera de envio"
 
-#: src/components/settings-server-capabilities.tsx
-#~ msgid "Web"
-#~ msgstr "Web"
-
 #: src/components/agent-workbench.tsx
 msgid "Welcome to {agentName}"
 msgstr "Boas-vindas ao {agentName}"
@@ -6989,8 +7000,6 @@ msgstr "O que o Início inicia quando envias daqui"
 msgid "What is running"
 msgstr "O que está a correr"
 
-#: src/app/settings-about.tsx
-#: src/app/settings-update-notes.tsx
 #: src/components/update-status-banner.tsx
 #: src/lib/release-notes.ts
 msgid "What's new"
