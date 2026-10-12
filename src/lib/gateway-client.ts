@@ -3254,6 +3254,8 @@ export function parseCapturedHistoryPage(value: unknown): CapturedHistoryPage | 
     hasMore: data.has_more === true,
     nextBefore: typeof data.next_before === 'string' && data.next_before ? data.next_before : null,
     captureEpoch: data.capture_epoch ?? null,
+    snapshotId: typeof data.snapshot_id === 'string' ? data.snapshot_id : null,
+    generation: typeof data.generation === 'string' ? data.generation : null,
     availability: data.availability === 'not_captured' ? 'not_captured' : 'captured',
   };
 }

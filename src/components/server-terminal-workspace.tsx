@@ -144,6 +144,7 @@ import { usePaneEvents } from '@/hooks/use-pane-events';
 import { layoutNeedsRefresh, type PaneLayout } from '@/lib/pane-event-names';
 import {
   useLatestRef,
+  useLatestReader,
   useLazyRef,
   useResetSignal,
   useStableHandler,
@@ -214,12 +215,16 @@ import {
   backendPagesHistory,
   canOfferHistoryPull,
   historyExhaustedNotice,
+  historyRefreshNotice,
   historyPullUsesRange,
   tailPageFoundNothing,
   historyPullBlockedAfter,
   historyPullNotice,
   pullEarlierPage,
   capturedProbeDue,
+  capturedProbeState,
+  capturedReprobeDelay,
+  capturedTraversalNeedsRefresh,
   PANE_CAPTURED_HISTORY_CAPABILITY,
   type CapturedCursor,
   type HistoryPullNotice,
@@ -354,6 +359,8 @@ import {
 import { parseTerminalSnapshot, terminalFrameText } from '@/terminal/terminal-core';
 import {
   foldPaneRead,
+  foldPaneWindow,
+  type PaneReadWindow,
   forgetPaneReadSettling,
   hasEarlierAfterPage,
   hasEarlierTerminalOutput,
@@ -491,6 +498,9 @@ const MAX_RECONNECT_DELAY_MS = 8_000;
 /** One pane's captured-history state, filed with its window (`PaneWindow.captured`). */
 type CapturedPaneState = {
   generation: number;
+  rows: number;
+  refreshRequired: boolean;
+  empty: boolean;
   cursor: CapturedCursor | null;
   off: boolean;
   exhausted: boolean;
@@ -745,6 +755,7 @@ function usePaneWindowHandoff(
   paneSwitched: boolean,
   {
     output,
+    capturedRows,
     paneId,
     outputShape,
     paneCacheRef,
@@ -762,6 +773,7 @@ function usePaneWindowHandoff(
     setPaneRevision,
   }: {
     output: string;
+    capturedRows: number;
     paneId: string;
     outputShape: string;
     paneCacheRef: { current: PaneCache };
@@ -773,8 +785,8 @@ function usePaneWindowHandoff(
     earlierOutputRowsRef: { readonly current: number };
     rangeUnsupportedRef: { readonly current: boolean };
     lastReadRef: { readonly current: unknown };
-    capturedHereRef: { readonly current: unknown };
-    setOutput: (value: string) => void;
+    capturedHereRef: { readonly current: CapturedPaneState | null };
+    setOutput: (value: string, capturedRows?: number) => void;
     setCanLoadEarlierOutput: (value: boolean) => void;
     setPaneRevision: (value: number) => void;
   }
@@ -817,7 +829,20 @@ function usePaneWindowHandoff(
             earlierRows: earlierOutputRowsRef.current,
             rangeUnsupported: rangeUnsupportedRef.current,
             lastRead: lastReadRef.current,
-            captured: capturedHereRef.current,
+            captured: capturedHereRef.current
+              ? { ...capturedHereRef.current, rows: capturedRows }
+              : capturedRows > 0
+                ? {
+                    generation: -1,
+                    rows: capturedRows,
+                    cursor: null,
+                    refreshRequired: false,
+                    empty: false,
+                    off: false,
+                    exhausted: false,
+                    open: false,
+                  }
+                : undefined,
           }
         : null;
     const remembered = held ? rememberPaneWindow(cache, leaving, held) : cache;
@@ -829,7 +854,10 @@ function usePaneWindowHandoff(
     const restored = recallPaneWindow(remembered, paneId, outputShape);
     paneCacheRef.current = remembered;
     paneWindowOwnerRef.current = paneId;
-    setOutput(restored?.output ?? '');
+    setOutput(
+      restored?.output ?? '',
+      (restored?.captured as CapturedPaneState | undefined)?.rows ?? 0
+    );
     setCanLoadEarlierOutput(restored?.canLoadEarlier ?? false);
     setPaneRevision(restored?.revision ?? -1);
   }
@@ -1189,7 +1217,14 @@ export function ServerTerminalWorkspace({
   // frame after it. The poll below corrects or confirms whatever this paints,
   // exactly as it does for `data`.
   const [warmSeed] = useState(() => warmPaneSeed(serverId));
-  const [output, setOutput] = useState(warmSeed.output);
+  const [outputWindow, setOutputWindow] = useState<PaneReadWindow>(() => ({
+    output: warmSeed.output,
+    capturedRows: 0,
+  }));
+  const output = outputWindow.output;
+  const setOutput = (value: string, capturedRows = 0) =>
+    setOutputWindow({ output: value, capturedRows });
+  const readOutputWindow = useLatestReader(outputWindow);
   const [draft, setDraft] = useState('');
   // Where the caret is in the draft, which is half of what decides whether an
   // `@` mention is open. Tracked rather than assumed, so moving the caret back
@@ -1379,7 +1414,10 @@ export function ServerTerminalWorkspace({
   const gonePanesRef = useRef(new Map<string, number>());
   const [goneVersion, setGoneVersion] = useState(0);
   const capturedCursorRef = useRef<CapturedCursor | null>(null);
+  const paneScreenRowsRef = useRef(0);
   const capturedOffRef = useRef(false);
+  const capturedRefreshRequiredRef = useRef(false);
+  const capturedRefreshApprovedRef = useRef(false);
   // Whether the captured history has rows above the window to give: asked
   // once when the pane opens (`capturedProbe` bumps ask again), and again
   // while output grows on a pane that had none yet. The pull is offered on its
@@ -1403,11 +1441,15 @@ export function ServerTerminalWorkspace({
   const capturedGenerationRef = useRef(0);
   // The last probe found the capture empty: worth asking again as output grows.
   const capturedEmptyRef = useRef(false);
+  const [capturedEmptyProbe, setCapturedEmptyProbe] = useState<{ output: string } | null>(null);
   const offerCaptured = (paneId: string | null | undefined, open: boolean) => {
     setCapturedOpen(open);
     if (!paneId || activePaneRef.current !== paneId) return;
     capturedHereRef.current = {
       generation: capturedGenerationRef.current,
+      rows: 0, // The window transition files the rendered provenance with this state.
+      refreshRequired: capturedRefreshRequiredRef.current,
+      empty: capturedEmptyRef.current,
       cursor: capturedCursorRef.current,
       off: capturedOffRef.current,
       exhausted: capturedExhaustedRef.current,
@@ -1419,6 +1461,10 @@ export function ServerTerminalWorkspace({
     capturedGenerationRef.current += 1;
     capturedHereRef.current = null;
     capturedCursorRef.current = null;
+    capturedRefreshRequiredRef.current = false;
+    capturedRefreshApprovedRef.current = false;
+    capturedEmptyRef.current = false;
+    setCapturedEmptyProbe(null);
     capturedOffRef.current = false;
     capturedExhaustedRef.current = false;
     setCapturedOpen(false);
@@ -2484,16 +2530,22 @@ export function ServerTerminalWorkspace({
     void recordServerCapabilities(record.serverId, data.health.capabilities);
   }, [data.health, record, recordServerCapabilities, selectedServer]);
 
+  // The pane's viewport height separates the served historical prefix from
+  // its mutable screen. A missing metric keeps ordinary reads on their fallback.
+  const selectedPaneScreenRows = terminalViewportRows(selectedPane?.raw.scroll) ?? 0;
+  const capturedViewportReady = selectedPaneScreenRows > 0;
   // Does the open pane have captured rows above the window? One row is asked
-  // for: `not_captured` (a shell with its own scrollback) turns the captured
-  // source off for the pane; no rows yet leaves it to be asked again.
+  // for: both `not_captured` and an empty capture can precede the first sample.
+  // Keep the native-scrollback fallback and probe again after output advances.
   useEffect(() => {
     const paneId = selection.paneId;
     const sessionId = data.sessionId;
     if (!ready || !servesCapturedHistory || !paneId || !sessionId) return;
     // Once per pane and per ask: a pull already under way, or a history
     // already given in full, knows more than this would.
-    const key = `${paneId}\u0000${capturedProbe}`;
+    // Boundary discovery is a new ask even when the first probe already saw
+    // rows. Otherwise an early successful probe could leave history hidden.
+    const key = `${paneId}\u0000${capturedProbe}\u0000${capturedViewportReady}`;
     if (
       !capturedProbeDue({
         off: capturedOffRef.current,
@@ -2507,29 +2559,57 @@ export function ServerTerminalWorkspace({
     capturedProbedKeyRef.current = key;
     let current = true;
     capturedProbedAtRef.current = Date.now();
+    const probedOutput = readOutputWindow().output;
     void readPaneHistory(sessionId, paneId, null, 1).then((answer) => {
       if (!current || activePaneRef.current !== paneId) return;
       // A pull landed meanwhile: its answer stands.
-      if (capturedExhaustedRef.current || capturedCursorRef.current) return;
-      if (answer.ok && answer.page.availability === 'not_captured') capturedOffRef.current = true;
-      const rows = answer.ok ? answer.page.rows.length : 0;
+      if (
+        loadingEarlierOutputRef.current ||
+        capturedExhaustedRef.current ||
+        capturedCursorRef.current ||
+        capturedRefreshRequiredRef.current
+      )
+        return;
+      const probe = capturedProbeState(answer);
+      capturedOffRef.current = probe.off;
       // Empty, or no answer: worth asking again as output grows.
-      capturedEmptyRef.current =
-        !answer.ok || (answer.page.availability === 'captured' && rows === 0);
+      capturedEmptyRef.current = probe.empty;
+      setCapturedEmptyProbe(capturedEmptyRef.current ? { output: probedOutput } : null);
       // A window already at its cap has no room for more above it.
-      offerCaptured(paneId, rows > 0 && outputLineLimitRef.current < MAX_PANE_OUTPUT_LINES);
+      offerCaptured(
+        paneId,
+        probe.hasRows &&
+          paneScreenRowsRef.current > 0 &&
+          outputLineLimitRef.current < MAX_PANE_OUTPUT_LINES
+      );
     });
     return () => {
       current = false;
     };
-  }, [capturedProbe, data.sessionId, ready, selection.paneId, servesCapturedHistory]);
+  }, [
+    capturedProbe,
+    data.sessionId,
+    ready,
+    selection.paneId,
+    servesCapturedHistory,
+    capturedViewportReady,
+    readOutputWindow,
+  ]);
   // A pane with nothing captured yet gains rows as its output scrolls: ask
   // again, at most every CAPTURED_REPROBE_MS, while output keeps coming.
   useEffect(() => {
-    if (capturedOpen || !capturedEmptyRef.current || !servesCapturedHistory) return;
-    if (Date.now() - capturedProbedAtRef.current < CAPTURED_REPROBE_MS) return;
-    setCapturedProbe((probe) => probe + 1);
-  }, [output, capturedOpen, servesCapturedHistory]);
+    if (capturedOpen || !servesCapturedHistory) return;
+    const remaining = capturedReprobeDelay(
+      capturedEmptyProbe?.output ?? null,
+      output,
+      capturedProbedAtRef.current,
+      Date.now(),
+      CAPTURED_REPROBE_MS
+    );
+    if (remaining === null) return;
+    const timer = setTimeout(() => setCapturedProbe((probe) => probe + 1), remaining);
+    return () => clearTimeout(timer);
+  }, [output, capturedOpen, capturedEmptyProbe, servesCapturedHistory]);
 
   // Whether this pane is an editor, which is what "is this a full-screen
   // program" means until `alternate_on` is plumbed through -- see
@@ -2630,13 +2710,6 @@ export function ServerTerminalWorkspace({
    * is a question about what the reader is driving.
    */
   const paneOwnsScreenRef = useRef(false);
-  const paneScreenRowsRef = useRef(0);
-  // The pane's own viewport, off the scroll metric every pane entity carries.
-  // This is what separates the ring-buffer history in the served window from
-  // the live screen at its tail: a full-screen program repaints exactly its
-  // viewport, so the last `viewport_rows` rows are the screen. 0 (unknown)
-  // keeps the terminal on its old arithmetic.
-  const selectedPaneScreenRows = terminalViewportRows(selectedPane?.raw.scroll) ?? 0;
   // Whether the pane's program has taken the whole screen, which is a different
   // question from whether it is an editor and has to be asked separately.
   // `alternate_on` is 1 for an agent as well as for nvim, so this is true of
@@ -3144,6 +3217,7 @@ export function ServerTerminalWorkspace({
     rangeUnsupportedRef,
     lastReadRef,
     capturedHereRef,
+    capturedRows: outputWindow.capturedRows,
     setOutput,
     setCanLoadEarlierOutput,
     setPaneRevision,
@@ -3189,14 +3263,18 @@ export function ServerTerminalWorkspace({
     capturedHereRef.current = captured ?? null;
     capturedCursorRef.current = captured?.cursor ?? null;
     capturedOffRef.current = captured?.off ?? false;
+    capturedRefreshRequiredRef.current = captured?.refreshRequired ?? false;
+    capturedRefreshApprovedRef.current = false;
+    capturedEmptyRef.current = captured?.empty ?? false;
+    setCapturedEmptyProbe(captured?.empty ? { output: restored?.output ?? '' } : null);
     capturedExhaustedRef.current = captured?.exhausted ?? false;
     setCapturedOpen(captured?.open ?? false);
     if (!captured) setCapturedProbe((probe) => probe + 1);
     loadingEarlierOutputRef.current = false;
     setLoadingEarlierOutput(false);
-    setHistoryNotice(null);
-    historyPullBlockedRef.current = false;
-    setHistoryPullBlocked(false);
+    setHistoryNotice(captured?.refreshRequired ? historyRefreshNotice() : null);
+    historyPullBlockedRef.current = captured?.refreshRequired ?? false;
+    setHistoryPullBlocked(historyPullBlockedRef.current);
     setHistoryRevision(0);
     // The revision the restored window was folded to, so the refresh that
     // follows is a reconciliation rather than a repeat, and an event merely
@@ -3480,7 +3558,7 @@ export function ServerTerminalWorkspace({
       // the top of `src/terminal/history.ts`. Cards #675 (a screen replacing a
       // window), #712 (a length taken for authority) and #721 (a refresh
       // replacing a window it is not as deep as) all died here.
-      setOutput((current) => {
+      setOutputWindow((current) => {
         // A screen-owning pane's read is the whole of its current screen, not
         // a tail of a growing log, so it replaces rather than folds against
         // the placement heuristics built for the latter (card #795, defect 2
@@ -3489,7 +3567,7 @@ export function ServerTerminalWorkspace({
         // paired with the pane's height so only the rows the program drew are
         // drawn; see `paneOwnsScreenRef`. Refs rather than the render-time
         // values because this updater is built once.
-        return foldPaneRead(
+        return foldPaneWindow(
           current,
           value,
           origin,
@@ -3597,6 +3675,7 @@ export function ServerTerminalWorkspace({
       activePaneRef.current === requestPaneId &&
       outputRequestIdRef.current === requestId;
 
+    const refreshApproved = capturedRefreshApprovedRef.current;
     loadingEarlierOutputRef.current = true;
     setLoadingEarlierOutput(true);
     setHistoryNotice(null);
@@ -3649,7 +3728,7 @@ export function ServerTerminalWorkspace({
               // The gateway's captured history first, where it serves it and
               // this pane has not turned out uncaptured; a shell pane answers
               // `not_captured` and the range/tail reads below serve it as before.
-              ...(servesCapturedHistory && !capturedOffRef.current
+              ...(servesCapturedHistory && !capturedOffRef.current && paneScreenRowsRef.current > 0
                 ? {
                     captured: {
                       cursor: capturedCursorRef.current,
@@ -3688,10 +3767,41 @@ export function ServerTerminalWorkspace({
             // later one: every page after it goes straight to the tail.
             if (outcome.rangeUnsupported) rangeUnsupportedRef.current = true;
             const captured = outcome.captured;
+            const heldWindow = readOutputWindow();
+            const heldHistoricalRows =
+              captured?.kind === 'page' && paneScreenRowsRef.current > 0
+                ? Math.max(
+                    heldWindow.capturedRows,
+                    terminalOutputLineCount(heldWindow.output) - paneScreenRowsRef.current
+                  )
+                : heldWindow.capturedRows;
+            if (capturedTraversalNeedsRefresh(captured, heldHistoricalRows, refreshApproved)) {
+              // A new first page has no coordinates relative to the old prefix.
+              // Preserve the held text and scroll anchor until the reader refreshes.
+              capturedRefreshRequiredRef.current = true;
+              capturedEmptyRef.current = false;
+              setCapturedEmptyProbe(null);
+              offerCaptured(requestPaneId, false);
+              historyPullBlockedRef.current = true;
+              setHistoryPullBlocked(true);
+              setHistoryNotice(historyRefreshNotice());
+              return;
+            }
             if (captured?.kind === 'notCaptured') {
-              capturedOffRef.current = true;
+              if (refreshApproved && outcome.kind === 'page') {
+                capturedRefreshRequiredRef.current = false;
+                capturedRefreshApprovedRef.current = false;
+              }
+              capturedCursorRef.current = null;
+              capturedEmptyRef.current = true;
+              capturedProbedAtRef.current = Date.now();
+              setCapturedEmptyProbe({ output: readOutputWindow().output });
               offerCaptured(requestPaneId, false);
             } else if (captured?.kind === 'page') {
+              capturedRefreshRequiredRef.current = false;
+              capturedRefreshApprovedRef.current = false;
+              capturedEmptyRef.current = false;
+              setCapturedEmptyProbe(null);
               capturedCursorRef.current = captured.cursor;
               // The last page, or a window at its cap: a page more would be
               // trimmed away as it landed, so the pull is not offered again.
@@ -3733,14 +3843,15 @@ export function ServerTerminalWorkspace({
             // its own `'rangePage'` origin rather than `'page'`: the two may look
             // alike at this call site, but only a genuine range read may be believed
             // with zero overlap. See the origin's own doc in `history.ts`.
-            setOutput((current) => {
-              const next = foldPaneRead(
+            setOutputWindow((current) => {
+              const next = foldPaneWindow(
                 current,
                 value,
                 origin,
                 nextLimit,
                 paneOwnsScreenRef.current,
-                paneScreenRowsRef.current
+                paneScreenRowsRef.current,
+                captured?.reset
               );
               return next;
             });
@@ -3800,12 +3911,13 @@ export function ServerTerminalWorkspace({
     serverId,
     servesCapturedHistory,
     terminalPlane,
+    readOutputWindow,
   ]);
 
   // A pull's notice is news about one gesture, not a state of the pane: it
   // leaves on its own, and a Retry pressed in the meantime replaces it.
   useEffect(() => {
-    if (!historyNotice) return;
+    if (!historyNotice || historyNotice.dismissMs === 0) return;
     const timer = setTimeout(() => setHistoryNotice(null), historyNotice.dismissMs);
     return () => clearTimeout(timer);
   }, [historyNotice]);
@@ -3825,7 +3937,12 @@ export function ServerTerminalWorkspace({
   }, [connection.phase]);
 
   const retryEarlierOutput = useCallback(() => {
-    // The one explicit way through a closed gate: the reader asked.
+    // Refresh is explicit: start without a cursor and replace only the prefix.
+    if (capturedRefreshRequiredRef.current) {
+      capturedRefreshApprovedRef.current = true;
+      capturedCursorRef.current = null;
+      capturedExhaustedRef.current = false;
+    }
     setHistoryNotice(null);
     historyPullBlockedRef.current = false;
     setHistoryPullBlocked(false);
@@ -4188,6 +4305,14 @@ export function ServerTerminalWorkspace({
         },
         onPaneOutput: (paneId: string, revision: number, text: string) => {
           if (paneId !== watchedPaneRef.current) {
+            const captured = paneCacheRef.current.entries.find((entry) => entry.paneId === paneId)
+              ?.captured as CapturedPaneState | undefined;
+            if (captured?.rows) {
+              // Keep the captured provenance filed with this snapshot. The next
+              // selected read reconciles its live segment using foldPaneWindow.
+              paneCacheRef.current = notePaneRevision(paneCacheRef.current, paneId, revision);
+              return;
+            }
             // For the short interval after a switch the stream is still
             // inlining the pane just left -- the one pane other than the
             // selected one whose text is ever on the wire (see
@@ -6784,12 +6909,16 @@ function HistoryPullNoticeView({
         </View>
         {notice.retry ? (
           <PressableScale
-            accessibilityLabel={t`Retry loading earlier output`}
+            accessibilityLabel={
+              notice.kind === 'refresh'
+                ? t`Refresh terminal history`
+                : t`Retry loading earlier output`
+            }
             onPress={onRetry}
             style={terminalNoticeStyles.action}
             hitSlop={8}>
             <Text variant="caption" color={theme.colors.primary}>
-              <Trans>Retry</Trans>
+              {notice.kind === 'refresh' ? <Trans>Refresh</Trans> : <Trans>Retry</Trans>}
             </Text>
           </PressableScale>
         ) : null}

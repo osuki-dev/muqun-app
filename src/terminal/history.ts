@@ -19,7 +19,7 @@
  * | HTTP refresh (`'refresh'`) | window *or* screen -- see below | place | the tail it re-sends |
  * | HTTP pagination (`'page'`) | a window read at a wider limit | place, may deepen | depth, when it actually reaches deeper |
  * | HTTP range page (`'rangePage'`) | a disjoint absolute span, `[start, end)` | place, may prepend | the exact span it was asked for |
- * | captured history page (`'capturedPage'`) | rows the gateway kept of output it served, oldest first, never the live screen | prepend only | the rows it hands over, nothing else |
+ * | captured history page (`'capturedPage'`) | rows the gateway kept of output it served, oldest first, never the live screen | prepend within one pinned traversal; explicitly refresh its prefix through `foldPaneWindow` | its pinned traversal, separate from mutable output |
  * | SSE inline frame (`'frame'`) | the raw screen alone | place, may never deepen | the tail it re-sends |
  * | agent/chat parts | a spliceable stream, not a rectangle | extend | its own seam ({@link mergeTerminalWindow}) |
  *
@@ -606,6 +606,62 @@ export function foldPaneRead(
   } catch {
     return trimTerminalWindow(incoming, maximumLines);
   }
+}
+
+/** Captured provenance belongs to a pane window, not to matching row text. */
+export interface PaneReadWindow {
+  output: string;
+  capturedRows: number;
+}
+
+/**
+ * Fold pinned pages separately from mutable output. A cursor-less traversal
+ * replaces only the captured prefix after an explicit refresh. Pages in the
+ * same traversal are disjoint, even when every line has identical text.
+ */
+export function foldPaneWindow(
+  current: PaneReadWindow,
+  latestOutput: string,
+  origin: PaneReadOrigin,
+  maximumLines: number,
+  ownsScreen = false,
+  screenRows = 0,
+  capturedReset = false
+): PaneReadWindow {
+  if (current.capturedRows > 0 && screenRows <= 0 && origin !== 'capturedPage' && !capturedReset) {
+    // Topology can briefly omit the viewport metric. Preserve the snapshot
+    // until the boundary returns rather than mixing an unclassified read in.
+    return current;
+  }
+  const held = current.output ? terminalLines(current.output) : [];
+  const prefix = held.slice(0, current.capturedRows);
+  const live = held.slice(current.capturedRows).join('\n');
+  let nextPrefix = capturedReset ? [] : prefix;
+  let nextLive = live;
+  if (origin === 'capturedPage') {
+    const rows = latestOutput ? terminalLines(latestOutput) : [];
+    nextPrefix = [...rows, ...(capturedReset ? [] : prefix)];
+    // A captured page excludes the live viewport. The pane's own height is
+    // its boundary; older accumulated App rows belong to the snapshot being
+    // explicitly replaced, not to the mutable screen below this prefix.
+    nextLive = altScreenFrame(live, screenRows);
+  } else {
+    const viewportOnly = current.capturedRows > 0 && !capturedReset && latestOutput !== '';
+    nextLive = foldPaneRead(
+      viewportOnly ? '' : live,
+      viewportOnly ? altScreenFrame(latestOutput, screenRows) : latestOutput,
+      origin,
+      maximumLines,
+      ownsScreen,
+      screenRows
+    );
+  }
+  const liveRows = nextLive ? terminalLines(nextLive) : [];
+  const rows = [...nextPrefix, ...liveRows].slice(-Math.max(1, maximumLines));
+  return {
+    output: rows.join('\n'),
+    capturedRows: Math.max(0, rows.length - liveRows.length),
+  };
 }
 
 /**
