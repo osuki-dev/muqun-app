@@ -2,6 +2,10 @@
 export type UpdatePhase =
   | 'idle'
   | 'checking'
+  | 'available'
+  | 'deferred'
+  | 'download-failed'
+  | 'applying'
   | 'downloading'
   | 'restarting'
   | 'restart-failed'
@@ -10,13 +14,15 @@ export type UpdateSnapshot = {
   phase: UpdatePhase;
   progress: number;
   releaseNotes?: string;
+  releaseId?: string;
+  required?: boolean;
   downloadedBytes?: number;
   totalBytes?: number;
 };
 export type UpdateProgress = {
   progress: number;
   details?: {
-    files: { status: string; downloadedBytes?: number; totalBytes?: number }[];
+    files: readonly { status: string; downloadedBytes?: number; totalBytes?: number }[];
   };
 };
 
@@ -42,15 +48,35 @@ function downloadBytes(
       : {}),
   };
 }
+export interface AvailableUpdate {
+  readonly id: string;
+  readonly shouldForceUpdate: boolean;
+  readonly transitionKind?: 'INSTALL' | 'ADOPT_RELEASE' | 'USE_BUILTIN';
+  readonly message?: string | null;
+  updateBundle(): Promise<boolean>;
+}
+/** The selected release can name a staged update; match the launched artifact. */
+export function runningAppReleaseId(
+  state: {
+    activeSelection: { bundleId: string; releaseId: string | null; channel: string } | null;
+    stableSelection: { bundleId: string; releaseId: string | null; channel: string } | null;
+  },
+  launchedBundleId: string,
+  channel: string
+): string | null {
+  return (
+    [state.activeSelection, state.stableSelection].find(
+      (selection) => selection?.bundleId === launchedBundleId && selection.channel === channel
+    )?.releaseId ?? null
+  );
+}
+
 export interface UpdateClient {
   checkForUpdate(options: {
     updateStrategy: 'fingerprint';
     onError: (error: unknown) => void;
-  }): Promise<{
-    readonly transitionKind?: 'INSTALL' | 'ADOPT_RELEASE' | 'USE_BUILTIN';
-    readonly message?: string | null;
-    updateBundle(): Promise<boolean>;
-  } | null>;
+  }): Promise<AvailableUpdate | null>;
+  getRunningReleaseId?(): Promise<string | null>;
   addListener(event: 'onProgress', listener: (event: UpdateProgress) => void): () => void;
   reload(): Promise<void>;
 }
@@ -63,88 +89,132 @@ export function createAppUpdateController(
   let phase: UpdatePhase = 'idle';
   let pending: Promise<void> | null = null;
   let nextCheckAt = 0;
-  let releaseNotes: string | undefined;
+  let update: AvailableUpdate | null = null;
   let bytes: Pick<UpdateSnapshot, 'downloadedBytes' | 'totalBytes'> = {};
-  const publishProgress = (progress: number) =>
-    publish({ phase, progress, ...(releaseNotes ? { releaseNotes } : {}), ...bytes });
+  const publishProgress = (progress: number) => {
+    const releaseNotes = update?.message?.trim();
+    publish({
+      phase,
+      progress,
+      ...(update ? { releaseId: update.id, required: update.shouldForceUpdate } : {}),
+      ...(releaseNotes ? { releaseNotes } : {}),
+      ...bytes,
+    });
+  };
 
-  async function run() {
+  async function discover() {
     if (!client) return;
     phase = 'checking';
-    releaseNotes = undefined;
-    bytes = {};
     publishProgress(0);
     let checkFailed = false;
-    let unsubscribe: (() => void) | undefined;
     try {
-      unsubscribe = client.addListener('onProgress', (event) => {
-        const { progress } = event;
-        if (phase !== 'downloading' || !Number.isFinite(progress)) return;
-        bytes = downloadBytes(event);
-        publishProgress(Math.max(0, Math.min(1, progress)));
-      });
-      const update = await client.checkForUpdate({
+      // This SDK method only resolves the release catalog. Artifact resolution,
+      // staging and selection commits live in updateBundle(), below consent.
+      update = await client.checkForUpdate({
         updateStrategy: 'fingerprint',
         onError: () => {
           checkFailed = true;
         },
       });
       if (checkFailed) throw new Error('Update check failed');
-      if (!update) {
-        phase = 'idle';
-        publishProgress(0);
-        return;
+      if (update?.transitionKind === 'ADOPT_RELEASE' && client.getRunningReleaseId) {
+        // Catalog receipts contain the selection context from before install.
+        // Launching that release changes the context, so the SDK can offer a
+        // metadata-only adoption for the exact release already running. It is
+        // not another update and must never ask to download itself again.
+        let runningReleaseId: string | null = null;
+        try {
+          runningReleaseId = await client.getRunningReleaseId();
+        } catch {
+          // Unknown running identity must not hide a legitimate update.
+        }
+        if (runningReleaseId === update.id) update = null;
       }
-      releaseNotes = update.message?.trim() || undefined;
-      if (update.transitionKind !== 'ADOPT_RELEASE') {
-        phase = 'downloading';
+      phase = update ? 'available' : 'idle';
+    } catch {
+      update = null;
+      phase = 'failed';
+    }
+    publishProgress(0);
+    nextCheckAt = now() + (phase === 'failed' ? 60_000 : 15 * 60_000);
+  }
+
+  async function apply() {
+    if (!client || !update) return;
+    const restartOnly = phase === 'restart-failed';
+    let unsubscribe: (() => void) | undefined;
+    try {
+      if (!restartOnly) {
+        phase = update.transitionKind === 'ADOPT_RELEASE' ? 'applying' : 'downloading';
+        bytes = {};
         publishProgress(0);
-      }
-      const staged = await update.updateBundle();
-      if (!staged) throw new Error('Update staging failed');
-      if (update.transitionKind === 'ADOPT_RELEASE') {
-        // A release can adopt the already-running artifact. No restart is
-        // needed, and later checks must still discover actual bundle changes.
-        phase = 'idle';
-        publishProgress(0);
-        return;
+        unsubscribe = client.addListener('onProgress', (event) => {
+          if (phase !== 'downloading' || !Number.isFinite(event.progress)) return;
+          bytes = downloadBytes(event);
+          publishProgress(Math.max(0, Math.min(1, event.progress)));
+        });
+        const staged = await update.updateBundle();
+        if (!staged) throw new Error('Update staging failed');
+        if (update.transitionKind === 'ADOPT_RELEASE') {
+          // The selected release uses the already-running artifact. Adoption
+          // still requires consent, but it needs neither transfer nor restart.
+          update = null;
+          phase = 'idle';
+          bytes = {};
+          publishProgress(0);
+          nextCheckAt = now() + 15 * 60_000;
+          return;
+        }
       }
       phase = 'restarting';
       publishProgress(1);
       await client.reload();
     } catch {
-      // No request URLs, response bodies, headers or credentials in logs/UI.
-      if (phase === 'restarting') {
-        // The verified bundle remains staged. Do not loop on a failed native
-        // restart; a later user-initiated launch can still activate it.
-        phase = 'restart-failed';
-        publishProgress(1);
-      } else {
-        phase = 'failed';
-        releaseNotes = undefined;
-        bytes = {};
-        publishProgress(0);
-      }
+      // Preserve the actual notes for reading and explicit retry. Never expose
+      // request URLs, headers, credentials or native error payloads.
+      phase = phase === 'restarting' ? 'restart-failed' : 'download-failed';
+      publishProgress(phase === 'restart-failed' ? 1 : 0);
     } finally {
       try {
         unsubscribe?.();
       } catch {
-        // A native teardown race cannot turn successful staging into a failure
-        // or reject the launch/foreground callback's intentionally detached promise.
+        // Native teardown cannot reject the detached UI action.
       }
-      nextCheckAt = now() + (phase === 'failed' ? 60_000 : 15 * 60_000);
     }
+  }
+
+  function run(operation: () => Promise<void>) {
+    if (pending) return pending;
+    pending = operation().finally(() => {
+      pending = null;
+    });
+    return pending;
   }
 
   return {
     check() {
-      if (!client || phase === 'restarting' || phase === 'restart-failed' || now() < nextCheckAt)
-        return Promise.resolve();
       if (pending) return pending;
-      pending = run().finally(() => {
-        pending = null;
-      });
-      return pending;
+      // A prompt, dismissal or transfer survives foreground events for this
+      // app session. Those events must never consent or replace readable notes.
+      if (!client || update || phase === 'restarting' || now() < nextCheckAt)
+        return Promise.resolve();
+      return run(discover);
+    },
+    updateNow() {
+      if (pending) return pending;
+      if (!update || !['available', 'download-failed', 'restart-failed'].includes(phase))
+        return Promise.resolve();
+      return run(apply);
+    },
+    defer() {
+      if (
+        !update ||
+        update.shouldForceUpdate ||
+        !['available', 'download-failed', 'restart-failed'].includes(phase)
+      )
+        return;
+      phase = 'deferred';
+      publishProgress(0);
     },
   };
 }

@@ -1,12 +1,26 @@
 import { describe, expect, test } from 'bun:test';
 import {
   createAppUpdateController,
+  runningAppReleaseId,
+  type AvailableUpdate,
   type UpdateClient,
   type UpdateProgress,
   type UpdateSnapshot,
 } from './app-update-controller';
 
-function fixture(check: UpdateClient['checkForUpdate']) {
+const release = (overrides: Partial<AvailableUpdate> = {}): AvailableUpdate => ({
+  id: 'release-1',
+  shouldForceUpdate: false,
+  message: '## Fixed\n- Restore drafts',
+  updateBundle: async () => true,
+  ...overrides,
+});
+
+function fixture(
+  check: UpdateClient['checkForUpdate'],
+  reload = async () => {},
+  runningReleaseId: string | null = null
+) {
   const states: UpdateSnapshot[] = [];
   let listener = (_event: UpdateProgress) => {};
   let removed = 0;
@@ -15,8 +29,10 @@ function fixture(check: UpdateClient['checkForUpdate']) {
   const controller = createAppUpdateController(
     {
       checkForUpdate: check,
+      getRunningReleaseId: async () => runningReleaseId,
       reload: async () => {
         reloads++;
+        await reload();
       },
       addListener: (_name, callback) => {
         listener = callback;
@@ -31,8 +47,7 @@ function fixture(check: UpdateClient['checkForUpdate']) {
   return {
     controller,
     states,
-    emit: (progress: number) => listener({ progress }),
-    emitEvent: (event: UpdateProgress) => listener(event),
+    emit: (event: UpdateProgress) => listener(event),
     removed: () => removed,
     reloads: () => reloads,
     advance: (ms: number) => {
@@ -41,295 +56,446 @@ function fixture(check: UpdateClient['checkForUpdate']) {
   };
 }
 
-describe('OTA staging lifecycle', () => {
-  test('reports native archive bytes, replaces fallback plans and omits unknown totals', async () => {
-    const f = fixture(async () => ({
-      updateBundle: async () => {
-        f.emitEvent({
-          progress: 0.4,
-          details: { files: [{ status: 'downloading', downloadedBytes: 200, totalBytes: 1000 }] },
-        });
-        expect(f.states.at(-1)).toEqual({
-          phase: 'downloading',
-          progress: 0.4,
-          downloadedBytes: 200,
-          totalBytes: 1000,
-        });
-        f.emitEvent({
-          progress: 0.5,
-          details: {
-            files: [
-              { status: 'downloaded', downloadedBytes: 100, totalBytes: 100 },
-              { status: 'downloading', downloadedBytes: 20 },
-              { status: 'pending' },
-            ],
+const metadata = {
+  releaseId: 'release-1',
+  required: false,
+  releaseNotes: '## Fixed\n- Restore drafts',
+};
+
+describe('OTA update consent lifecycle', () => {
+  test.each([false, true])(
+    'discovery never downloads or restarts (required=%s)',
+    async (required) => {
+      let downloads = 0;
+      let checks = 0;
+      const f = fixture(async () => {
+        checks++;
+        return release({
+          shouldForceUpdate: required,
+          updateBundle: async () => {
+            downloads++;
+            return true;
           },
         });
-        expect(f.states.at(-1)).toEqual({
-          phase: 'downloading',
-          progress: 0.5,
-          downloadedBytes: 120,
-        });
-        f.emitEvent({
-          progress: 0.6,
-          details: {
-            files: [
-              { status: 'downloaded', downloadedBytes: 100, totalBytes: 100 },
-              { status: 'downloading', downloadedBytes: 50, totalBytes: 200 },
-            ],
-          },
-        });
-        expect(f.states.at(-1)).toEqual({
-          phase: 'downloading',
-          progress: 0.6,
-          downloadedBytes: 150,
-          totalBytes: 300,
-        });
-        return true;
-      },
-    }));
-    await f.controller.check();
-    expect(f.states.at(-1)?.downloadedBytes).toBe(150);
-  });
-  test('missing or invalid native counters never fabricate download size', async () => {
-    const f = fixture(async () => ({
-      updateBundle: async () => {
-        for (const files of [
-          [],
-          [{ status: 'downloaded' }],
-          [{ status: 'downloading', downloadedBytes: NaN, totalBytes: Infinity }],
-          [{ status: 'downloading', downloadedBytes: -1, totalBytes: -1 }],
-          [
-            {
-              status: 'downloading',
-              downloadedBytes: Number.MAX_SAFE_INTEGER + 1,
-              totalBytes: Number.MAX_SAFE_INTEGER + 1,
-            },
-          ],
-        ]) {
-          f.emitEvent({ progress: 0.5, details: { files } });
-          expect(f.states.at(-1)).toEqual({ phase: 'downloading', progress: 0.5 });
-        }
-        return false;
-      },
-    }));
-    await f.controller.check();
-  });
-  test('download progress alone cannot restart before native verification succeeds', async () => {
-    let finish = (_verified: boolean) => {};
-    const f = fixture(async () => ({
-      updateBundle: () =>
-        new Promise<boolean>((resolve) => {
-          finish = resolve;
-        }),
-    }));
-    const pending = f.controller.check();
-    await Promise.resolve();
-    f.emit(1);
-    expect(f.states.at(-1)?.phase).toBe('downloading');
-    expect(f.reloads()).toBe(0);
-    finish(true);
-    await pending;
-    expect(f.reloads()).toBe(1);
-    expect(f.states.at(-1)?.phase).toBe('restarting');
-  });
-  test('native restart failure preserves verified notes without retrying or redownloading', async () => {
-    const states: UpdateSnapshot[] = [];
-    let reloads = 0;
-    let checks = 0;
-    let now = 0;
-    const controller = createAppUpdateController(
-      {
-        checkForUpdate: async () => {
-          checks++;
-          return { message: '## Updated', updateBundle: async () => true };
-        },
-        addListener: () => () => {},
-        reload: async () => {
-          reloads++;
-          throw new Error('native restart unavailable');
-        },
-      },
-      (state) => states.push(state),
-      () => now
-    );
-    await controller.check();
-    expect(states.at(-1)).toEqual({
-      phase: 'restart-failed',
-      progress: 1,
-      releaseNotes: '## Updated',
-    });
-    now = 3_600_000;
-    await controller.check();
-    expect(checks).toBe(1);
-    expect(reloads).toBe(1);
-  });
-  test('actual server notes survive measured progress and staging, without creating version text', async () => {
-    const f = fixture(async () => ({
-      message: '  ## Fixed\n- Restore drafts\n',
-      updateBundle: async () => {
-        f.emit(0.42);
-        return true;
-      },
-    }));
-    await f.controller.check();
-    expect(f.states.slice(1)).toEqual([
-      { phase: 'downloading', progress: 0, releaseNotes: '## Fixed\n- Restore drafts' },
-      { phase: 'downloading', progress: 0.42, releaseNotes: '## Fixed\n- Restore drafts' },
-      { phase: 'restarting', progress: 1, releaseNotes: '## Fixed\n- Restore drafts' },
-    ]);
-  });
-  test('failed staging and a later empty response remove stale release metadata', async () => {
-    let first = true;
-    const f = fixture(async () => {
-      if (!first) return null;
-      first = false;
-      return { message: 'Unstaged change', updateBundle: async () => false };
-    });
-    await f.controller.check();
-    expect(f.states.at(-1)).toEqual({ phase: 'failed', progress: 0 });
-    f.advance(60_000);
-    await f.controller.check();
-    expect(f.states.at(-1)).toEqual({ phase: 'idle', progress: 0 });
-  });
-  test('missing and blank server notes never fabricate release contents', async () => {
-    for (const message of [undefined, null, ' \n ']) {
-      const f = fixture(async () => ({ message, updateBundle: async () => true }));
+      });
       await f.controller.check();
-      expect(f.states.at(-1)).toEqual({ phase: 'restarting', progress: 1 });
+      expect(f.states.at(-1)).toEqual({ ...metadata, required, phase: 'available', progress: 0 });
+      f.advance(3_600_000);
+      await f.controller.check();
+      expect(checks).toBe(1);
+      expect(downloads).toBe(0);
+      expect(f.reloads()).toBe(0);
+      expect(f.removed()).toBe(0);
+      f.controller.defer();
+      expect(f.states.at(-1)?.phase).toBe(required ? 'available' : 'deferred');
+      await f.controller.check();
+      expect(checks).toBe(1);
+      if (required) {
+        await f.controller.updateNow();
+        expect(downloads).toBe(1);
+        expect(f.reloads()).toBe(1);
+      } else {
+        // Dismissal is a session decision, including when the prompt remounts.
+        await f.controller.updateNow();
+        expect(downloads).toBe(0);
+      }
     }
-  });
-  test('same-artifact release adoption stays quiet and permits later checks', async () => {
+  );
+
+  test('same installed adoption stays idle, but a later new release still prompts and applies', async () => {
+    let applications = 0;
     let checks = 0;
-    const f = fixture(async () => {
-      checks++;
-      return { transitionKind: 'ADOPT_RELEASE', updateBundle: async () => true };
-    });
+    let releaseId = 'release-1';
+    const f = fixture(
+      async () => {
+        checks++;
+        return release({
+          id: releaseId,
+          transitionKind: releaseId === 'release-1' ? 'ADOPT_RELEASE' : 'INSTALL',
+          updateBundle: async () => {
+            applications++;
+            return true;
+          },
+        });
+      },
+      async () => {},
+      'release-1'
+    );
     await f.controller.check();
     expect(f.states).toEqual([
       { phase: 'checking', progress: 0 },
       { phase: 'idle', progress: 0 },
     ]);
+    await f.controller.updateNow();
     f.advance(15 * 60_000);
     await f.controller.check();
     expect(checks).toBe(2);
+    expect(applications).toBe(0);
+    expect(f.reloads()).toBe(0);
+    releaseId = 'release-2';
+    f.advance(15 * 60_000);
+    await f.controller.check();
+    expect(f.states.at(-1)?.phase).toBe('available');
+    expect(f.states.at(-1)?.releaseId).toBe('release-2');
+    await f.controller.updateNow();
+    expect(applications).toBe(1);
+    expect(f.reloads()).toBe(1);
+  });
+
+  test.each(['ADOPT_RELEASE', 'INSTALL', 'USE_BUILTIN'] as const)(
+    'a different release %s still waits for consent',
+    async (transitionKind) => {
+      let applications = 0;
+      const f = fixture(
+        async () =>
+          release({
+            transitionKind,
+            updateBundle: async () => {
+              applications++;
+              return true;
+            },
+          }),
+        async () => {},
+        'older-release'
+      );
+      await f.controller.check();
+      expect(f.states.at(-1)?.phase).toBe('available');
+      expect(applications).toBe(0);
+      await f.controller.updateNow();
+      expect(applications).toBe(1);
+      expect(f.states.at(-1)?.phase).toBe(
+        transitionKind === 'ADOPT_RELEASE' ? 'idle' : 'restarting'
+      );
+    }
+  );
+
+  test('consenting to a real adoption publishes Applying before awaiting native commit', async () => {
+    let finish = (_applied: boolean) => {};
+    const f = fixture(
+      async () =>
+        release({
+          id: 'different-release',
+          transitionKind: 'ADOPT_RELEASE',
+          updateBundle: () =>
+            new Promise<boolean>((resolve) => {
+              finish = resolve;
+            }),
+        }),
+      async () => {},
+      'release-1'
+    );
+    await f.controller.check();
+    const applying = f.controller.updateNow();
+    expect(f.states.at(-1)?.phase).toBe('applying');
+    expect(f.controller.updateNow()).toBe(applying);
+    finish(true);
+    await applying;
+    expect(f.states.at(-1)?.phase).toBe('idle');
     expect(f.reloads()).toBe(0);
   });
-  test('a verified rollback to the embedded artifact restarts immediately', async () => {
-    const f = fixture(async () => ({
-      transitionKind: 'USE_BUILTIN',
-      updateBundle: async () => true,
-    }));
-    await f.controller.check();
-    expect(f.states.at(-1)).toEqual({ phase: 'restarting', progress: 1 });
-  });
-  test('native listener registration failure is contained and can retry', async () => {
+
+  test('running identity read failure leaves adoption available and actionable', async () => {
     const states: UpdateSnapshot[] = [];
-    let attempts = 0;
-    let now = 0;
+    let applications = 0;
     const controller = createAppUpdateController(
       {
-        checkForUpdate: async () => null,
-        reload: async () => {},
-        addListener: () => {
-          attempts++;
-          throw new Error('native module unavailable');
+        checkForUpdate: async () =>
+          release({
+            transitionKind: 'ADOPT_RELEASE',
+            updateBundle: async () => {
+              applications++;
+              return true;
+            },
+          }),
+        getRunningReleaseId: async () => {
+          throw new Error('native identity unavailable');
         },
-      },
-      (state) => states.push(state),
-      () => now
-    );
-    await controller.check();
-    expect(states.at(-1)?.phase).toBe('failed');
-    now = 60_000;
-    await controller.check();
-    expect(attempts).toBe(2);
-  });
-  test('native listener cleanup failure does not reject or discard a staged bundle', async () => {
-    const states: UpdateSnapshot[] = [];
-    const controller = createAppUpdateController(
-      {
-        checkForUpdate: async () => ({ updateBundle: async () => true }),
+        addListener: () => () => {},
         reload: async () => {},
-        addListener: () => () => {
-          throw new Error('native module torn down');
-        },
       },
       (state) => states.push(state)
     );
     await controller.check();
-    expect(states.at(-1)).toEqual({ phase: 'restarting', progress: 1 });
+    expect(states.at(-1)?.phase).toBe('available');
+    await controller.updateNow();
+    expect(applications).toBe(1);
+    expect(states.at(-1)?.phase).toBe('idle');
   });
-  test('disabled client performs no work', async () => {
-    const states: UpdateSnapshot[] = [];
-    await createAppUpdateController(null, (state) => states.push(state)).check();
-    expect(states).toEqual([]);
-  });
-  test('deduplicates concurrent checks, publishes real progress, and restarts exactly once', async () => {
-    let finish = (_staged: boolean) => {};
+
+  test('deduplicates metadata checks and consent actions, and restarts only after verification', async () => {
+    let resolveCheck = (_update: AvailableUpdate) => {};
+    let finishDownload = (_verified: boolean) => {};
     let checks = 0;
-    const f = fixture(async () => {
+    const f = fixture(() => {
       checks++;
-      return {
-        updateBundle: () =>
-          new Promise<boolean>((resolve) => {
-            finish = resolve;
-          }),
-      };
+      return new Promise((resolve) => {
+        resolveCheck = resolve;
+      });
     });
-    const first = f.controller.check();
-    expect(f.controller.check()).toBe(first);
-    await Promise.resolve();
-    f.emit(0.42);
-    expect(f.states.at(-1)).toEqual({ phase: 'downloading', progress: 0.42 });
-    f.emit(Number.NaN);
-    expect(f.states.at(-1)?.progress).toBe(0.42);
-    finish(true);
-    await first;
-    expect(f.states.at(-1)).toEqual({ phase: 'restarting', progress: 1 });
+    const checking = f.controller.check();
+    expect(f.controller.check()).toBe(checking);
+    expect(f.controller.updateNow()).toBe(checking);
+    resolveCheck(
+      release({
+        updateBundle: () =>
+          new Promise((resolve) => {
+            finishDownload = resolve;
+          }),
+      })
+    );
+    await checking;
+    const downloading = f.controller.updateNow();
+    expect(f.controller.updateNow()).toBe(downloading);
+    expect(f.controller.check()).toBe(downloading);
+    f.controller.defer();
+    f.emit({ progress: 1 });
+    expect(f.states.at(-1)?.phase).toBe('downloading');
+    expect(f.reloads()).toBe(0);
+    f.emit({ progress: NaN });
+    expect(f.states.at(-1)?.progress).toBe(1);
+    finishDownload(true);
+    await downloading;
+    expect(f.reloads()).toBe(1);
+    expect(f.removed()).toBe(1);
+    expect(f.states.at(-1)).toEqual({ ...metadata, phase: 'restarting', progress: 1 });
     f.advance(3_600_000);
     await f.controller.check();
+    await f.controller.updateNow();
     expect(checks).toBe(1);
-    expect(f.removed()).toBe(1);
     expect(f.reloads()).toBe(1);
   });
-  test.each(['reject', 'callback', 'false'] as const)(
-    'failed %s path retries only after cooldown',
+
+  test('uses measured bytes, replaces fallback plans and never guesses transfer size', async () => {
+    const f = fixture(async () =>
+      release({
+        updateBundle: async () => {
+          for (const [event, bytes] of [
+            [
+              {
+                progress: 0.4,
+                details: {
+                  files: [{ status: 'downloading', downloadedBytes: 200, totalBytes: 1000 }],
+                },
+              },
+              { downloadedBytes: 200, totalBytes: 1000 },
+            ],
+            [
+              {
+                progress: 0.5,
+                details: {
+                  files: [
+                    { status: 'downloaded', downloadedBytes: 100, totalBytes: 100 },
+                    { status: 'downloading', downloadedBytes: 20 },
+                    { status: 'pending' },
+                  ],
+                },
+              },
+              { downloadedBytes: 120 },
+            ],
+            [
+              {
+                progress: 0.6,
+                details: {
+                  files: [
+                    { status: 'downloaded', downloadedBytes: 100, totalBytes: 100 },
+                    { status: 'downloading', downloadedBytes: 50, totalBytes: 200 },
+                  ],
+                },
+              },
+              { downloadedBytes: 150, totalBytes: 300 },
+            ],
+            [
+              {
+                progress: 0.7,
+                details: {
+                  files: [{ status: 'downloading', downloadedBytes: NaN, totalBytes: Infinity }],
+                },
+              },
+              {},
+            ],
+            [
+              {
+                progress: 0.8,
+                details: {
+                  files: [{ status: 'downloading', downloadedBytes: -1, totalBytes: -1 }],
+                },
+              },
+              {},
+            ],
+            [{ progress: 0.9 }, {}],
+          ] as const) {
+            f.emit(event);
+            expect(f.states.at(-1)).toEqual({
+              ...metadata,
+              phase: 'downloading',
+              progress: event.progress,
+              ...bytes,
+            });
+          }
+          return true;
+        },
+      })
+    );
+    await f.controller.check();
+    expect(f.states.at(-1)?.totalBytes).toBeUndefined();
+    await f.controller.updateNow();
+  });
+
+  test.each(['false', 'reject'] as const)(
+    'download %s keeps notes readable and only retries after another click',
     async (failure) => {
+      let attempts = 0;
+      const f = fixture(async () =>
+        release({
+          shouldForceUpdate: true,
+          updateBundle: async () => {
+            attempts++;
+            if (attempts > 1) return true;
+            if (failure === 'reject') throw new Error('offline');
+            return false;
+          },
+        })
+      );
+      await f.controller.check();
+      await f.controller.updateNow();
+      expect(f.states.at(-1)).toEqual({
+        ...metadata,
+        required: true,
+        phase: 'download-failed',
+        progress: 0,
+      });
+      f.controller.defer();
+      f.advance(3_600_000);
+      await f.controller.check();
+      expect(attempts).toBe(1);
+      expect(f.reloads()).toBe(0);
+      await f.controller.updateNow();
+      expect(attempts).toBe(2);
+      expect(f.reloads()).toBe(1);
+    }
+  );
+
+  test('restart retry reuses the verified artifact and requires another click', async () => {
+    let downloads = 0;
+    let attempts = 0;
+    const f = fixture(
+      async () =>
+        release({
+          updateBundle: async () => {
+            downloads++;
+            return true;
+          },
+        }),
+      async () => {
+        attempts++;
+        if (attempts === 1) throw new Error('native restart unavailable');
+      }
+    );
+    await f.controller.check();
+    await f.controller.updateNow();
+    expect(f.states.at(-1)).toEqual({ ...metadata, phase: 'restart-failed', progress: 1 });
+    await f.controller.check();
+    expect(f.reloads()).toBe(1);
+    await f.controller.updateNow();
+    expect(f.reloads()).toBe(2);
+    expect(downloads).toBe(1);
+  });
+
+  test.each(['ADOPT_RELEASE', 'USE_BUILTIN'] as const)(
+    '%s still requires consent',
+    async (transitionKind) => {
+      let applications = 0;
+      const f = fixture(async () =>
+        release({
+          transitionKind,
+          shouldForceUpdate: transitionKind === 'USE_BUILTIN',
+          updateBundle: async () => {
+            applications++;
+            return true;
+          },
+        })
+      );
+      await f.controller.check();
+      expect(applications).toBe(0);
+      await f.controller.updateNow();
+      expect(applications).toBe(1);
+      expect(f.reloads()).toBe(transitionKind === 'ADOPT_RELEASE' ? 0 : 1);
+      if (transitionKind === 'ADOPT_RELEASE') {
+        expect(f.states.some((state) => state.phase === 'downloading')).toBe(false);
+        expect(f.states.at(-1)).toEqual({ phase: 'idle', progress: 0 });
+      }
+    }
+  );
+
+  test.each(['reject', 'callback', 'empty'] as const)(
+    'metadata %s failure/absence never locks the app and observes check cooldown',
+    async (result) => {
       let checks = 0;
       const f = fixture(async ({ onError }) => {
         checks++;
-        if (failure === 'reject') throw new Error('offline');
-        if (failure === 'callback') {
-          onError(new Error('offline'));
-          return null;
-        }
-        return { updateBundle: async () => false };
+        if (result === 'reject') throw new Error('offline');
+        if (result === 'callback') onError(new Error('offline'));
+        return null;
       });
       await f.controller.check();
-      expect(f.states.at(-1)?.phase).toBe('failed');
-      expect(f.reloads()).toBe(0);
+      expect(f.states.at(-1)).toEqual({
+        phase: result === 'empty' ? 'idle' : 'failed',
+        progress: 0,
+      });
       await f.controller.check();
       expect(checks).toBe(1);
-      f.advance(60_000);
+      f.advance(result === 'empty' ? 15 * 60_000 : 60_000);
       await f.controller.check();
       expect(checks).toBe(2);
-      expect(f.removed()).toBe(2);
+      expect(f.reloads()).toBe(0);
     }
   );
-  test('no update is distinct from failure and checks at most every fifteen minutes', async () => {
-    let checks = 0;
-    const f = fixture(async () => {
-      checks++;
-      return null;
-    });
-    await f.controller.check();
-    expect(f.states.at(-1)?.phase).toBe('idle');
-    f.advance(60_000);
-    await f.controller.check();
-    expect(checks).toBe(1);
-    f.advance(14 * 60_000);
-    await f.controller.check();
-    expect(checks).toBe(2);
+
+  test('missing notes stay absent; native listener errors stay contained', async () => {
+    const states: UpdateSnapshot[] = [];
+    const controller = createAppUpdateController(
+      {
+        checkForUpdate: async () => release({ message: ' \n ' }),
+        reload: async () => {},
+        addListener: () => {
+          throw new Error('native unavailable');
+        },
+      },
+      (snapshot) => states.push(snapshot)
+    );
+    await controller.check();
+    expect(states.at(-1)?.releaseNotes).toBeUndefined();
+    await controller.updateNow();
+    expect(states.at(-1)?.phase).toBe('download-failed');
+  });
+
+  test('disabled client performs no work', async () => {
+    const states: UpdateSnapshot[] = [];
+    const controller = createAppUpdateController(null, (state) => states.push(state));
+    await controller.check();
+    await controller.updateNow();
+    controller.defer();
+    expect(states).toEqual([]);
+  });
+});
+
+describe('running release identity', () => {
+  test('uses launched artifact identity instead of a staged future selection', () => {
+    const state = {
+      activeSelection: {
+        bundleId: 'future-artifact',
+        releaseId: 'future-release',
+        channel: 'preview',
+      },
+      stableSelection: {
+        bundleId: 'running-artifact',
+        releaseId: 'running-release',
+        channel: 'preview',
+      },
+    };
+    expect(runningAppReleaseId(state, 'running-artifact', 'preview')).toBe('running-release');
+    expect(runningAppReleaseId(state, 'future-artifact', 'preview')).toBe('future-release');
+    expect(runningAppReleaseId(state, 'unknown-artifact', 'preview')).toBeNull();
+    expect(runningAppReleaseId(state, 'running-artifact', 'production')).toBeNull();
   });
 });

@@ -138,3 +138,5 @@ example
 /fingerprint.json
 /keys/*
 !/keys/hot-updater-public.pem
+# hot-updater
+.hot-updater/output
