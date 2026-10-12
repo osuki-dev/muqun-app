@@ -955,7 +955,7 @@ export class NativeRunner {
               node.identifier === 'theme-browse-list' ||
               (env.PLATFORM === 'android' &&
                 (node.identifier === 'theme-tab' ||
-                  /^settings-(servers|appearance|terminal|alerts|storage|about|update-notes)-sheet$/.test(
+                  /^settings-(servers|appearance|terminal|alerts|storage|about)-sheet$/.test(
                     node.identifier ?? ''
                   ) ||
                   node.label === 'Quick action settings'))

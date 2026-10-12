@@ -1,16 +1,7 @@
 import { useLingui } from '@lingui/react/macro';
-import { useRouter } from 'expo-router';
-import { nativeApplicationVersion } from 'expo-application';
 import { useToast } from '@osuki-dev/ui';
 import { openBrowserAsync, WebBrowserPresentationStyle } from 'expo-web-browser';
-import {
-  BookOpen,
-  ChevronRight,
-  Code,
-  ExternalLink,
-  MessageSquare,
-  ShieldCheck,
-} from 'lucide-react-native';
+import { BookOpen, Code, ExternalLink, MessageSquare, ShieldCheck } from 'lucide-react-native';
 import { ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -18,17 +9,11 @@ import { SettingsCard, SettingsNavRow } from '@/components/settings-chrome';
 import { SheetScene, SheetSceneFooter, sheetSceneStyles } from '@/components/sheet-scene';
 import { FEEDBACK_URL, PRIVACY_POLICY_URL, SOURCE_URL, SUPPORT_GUIDE_URL } from '@/constants/links';
 import { feedback } from '@/lib/feedback';
-import { useAppUpdateStore } from '@/lib/app-updates';
-import { RELEASE_NOTES } from '@/lib/release-notes';
-import { openBundledReleaseNotes, openUpdateDetails } from '@/stores/update-details';
 
 export default function SettingsAboutScreen() {
-  const router = useRouter();
   const { t } = useLingui();
   const { showToast } = useToast();
   const insets = useSafeAreaInsets();
-  const releaseNotes = useAppUpdateStore((state) => state.releaseNotes);
-  const updatePhase = useAppUpdateStore((state) => state.phase);
 
   /**
    * The manual, and the one row on this page that can fail in the reader's hand.
@@ -83,32 +68,6 @@ export default function SettingsAboutScreen() {
         contentInsetAdjustmentBehavior="never"
         showsVerticalScrollIndicator={false}>
         <SettingsCard flush>
-          {releaseNotes || RELEASE_NOTES.items.length > 0 ? (
-            <SettingsNavRow
-              icon={BookOpen}
-              trailing={ChevronRight}
-              label={t`What's new`}
-              detail={
-                releaseNotes
-                  ? updatePhase === 'restarting'
-                    ? t`Restarting Muqun…`
-                    : updatePhase === 'restart-failed'
-                      ? t`Restart Muqun to finish updating`
-                      : updatePhase === 'downloading'
-                        ? t`Updating Muqun…`
-                        : undefined
-                  : nativeApplicationVersion
-                    ? `${t`Built-in`} · ${nativeApplicationVersion}`
-                    : t`Built-in`
-              }
-              testID="settings-release-notes-row"
-              onPress={() => {
-                if (releaseNotes) openUpdateDetails(releaseNotes, updatePhase);
-                else openBundledReleaseNotes();
-                router.push('/settings-update-notes');
-              }}
-            />
-          ) : null}
           {/* First in the group, and above "report a bug" on purpose:
                         a reader who cannot work something out should meet the
                         manual before they meet the issue tracker. It carries a
