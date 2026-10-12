@@ -228,7 +228,7 @@ describe('localized OTA notes publication', () => {
         locale: resolved,
         markdown: notes[resolved as keyof typeof notes],
       });
-      expect(response.headers.get('cache-control')).toContain('no-store');
+      expect(response.headers.get('cache-control')).toBe('private, no-store');
     }
     expect((await f.server.core.getRelease(f.release.id))?.message).toBe(notes.en);
     expect((await f.request('../en')).status).toBe(400);
@@ -262,6 +262,36 @@ describe('localized OTA notes publication', () => {
       f.api.publish(f.release.id, f.release.revision, { ...notes, zh: 'replacement' })
     ).rejects.toThrow('different content');
     expect((await f.api.get(f.release.id, 'zh'))?.markdown).toBe(notes.zh);
+  });
+
+  test('never caches missing notes, invalid input or rejected client credentials', async () => {
+    const f = await fixture();
+    const requests = [
+      { path: `/release-notes/${f.release.id}?locale=en`, status: 404, key: clientKey },
+      {
+        path: '/release-notes/00000000-0000-7000-8000-000000000000?locale=en',
+        status: 404,
+        key: clientKey,
+      },
+      { path: `/release-notes/${f.release.id}`, status: 400, key: clientKey },
+      {
+        path: `/release-notes/${f.release.id}?locale=invalid_locale`,
+        status: 400,
+        key: clientKey,
+      },
+      { path: '/release-notes/invalid?locale=en', status: 400, key: clientKey },
+      { path: `/release-notes/${f.release.id}?locale=en`, status: 401, key: 'wrong-key' },
+      { path: `/release-notes/${f.release.id}?locale=en`, status: 401, key: null },
+    ];
+    for (const { path, status, key } of requests) {
+      const response = await f.server.handlers.client(
+        new Request(`https://example.test${path}`, {
+          headers: key ? { 'x-api-key': key } : {},
+        })
+      );
+      expect(response.status).toBe(status);
+      expect(response.headers.get('cache-control')).toBe('private, no-store');
+    }
   });
 
   test('rejects wrong platform or fingerprint before uploading notes', async () => {
