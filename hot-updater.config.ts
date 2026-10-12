@@ -3,6 +3,7 @@ import { expo } from '@hot-updater/expo';
 import { defineConfig } from 'hot-updater';
 import { apiKeys, insights, remoteConfig } from 'hot-updater/plugins';
 import { existsSync } from 'node:fs';
+import { localizedReleaseNotes } from './infrastructure/ota-notes/plugin';
 
 // Native packaging needs the public trust anchor only, never provider or signer secrets.
 if (process.env.HOT_UPDATER_NATIVE_BUILD !== '1' && existsSync('.env.hotupdater')) {
@@ -58,7 +59,7 @@ export default defineConfig((options) => {
       bucketName: bucketName ?? '',
       credentials: { accessKeyId: accessKeyId ?? '', secretAccessKey: secretAccessKey ?? '' },
     }),
-    plugins: [apiKeys(), insights(), remoteConfig()],
+    plugins: [apiKeys(), insights(), remoteConfig(), localizedReleaseNotes()],
     signing: {
       enabled: true,
       privateKeyPath:

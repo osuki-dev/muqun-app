@@ -77,8 +77,8 @@ and private signing-key path in `.env.hotupdater`. The scripts explicitly select
 the channel and enable OTA; stale channel settings in that file cannot redirect them.
 
 ```sh
-bun run update:preview android
-bun run update:preview ios
+bun run update:preview android release-notes/ota-notes.json
+bun run update:preview ios release-notes/ota-notes.json
 bun run update:production android
 bun run update:production ios
 ```

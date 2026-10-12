@@ -19,7 +19,8 @@ const release = (overrides: Partial<AvailableUpdate> = {}): AvailableUpdate => (
 function fixture(
   check: UpdateClient['checkForUpdate'],
   reload = async () => {},
-  runningReleaseId: string | null = null
+  runningReleaseId: string | null = null,
+  getReleaseNotes?: UpdateClient['getReleaseNotes']
 ) {
   const states: UpdateSnapshot[] = [];
   let listener = (_event: UpdateProgress) => {};
@@ -30,6 +31,7 @@ function fixture(
     {
       checkForUpdate: check,
       getRunningReleaseId: async () => runningReleaseId,
+      getReleaseNotes,
       reload: async () => {
         reloads++;
         await reload();
@@ -63,6 +65,72 @@ const metadata = {
 };
 
 describe('OTA update consent lifecycle', () => {
+  test.each([false, true])(
+    'localized notes load before consent, including required=%s',
+    async (required) => {
+      let resolveNotes: (notes: string) => void = () => {};
+      const notes = new Promise<string>((resolve) => {
+        resolveNotes = resolve;
+      });
+      let downloads = 0;
+      const f = fixture(
+        async () =>
+          release({
+            shouldForceUpdate: required,
+            updateBundle: async () => {
+              downloads++;
+              return true;
+            },
+          }),
+        async () => {},
+        null,
+        async (releaseId) => {
+          expect(releaseId).toBe('release-1');
+          return notes;
+        }
+      );
+      const checking = f.controller.check();
+      await Promise.resolve();
+      expect(f.states.at(-1)?.phase).toBe('checking');
+      const prematureConsent = f.controller.updateNow();
+      // updateNow joins the pending check; it must not grant consent.
+      resolveNotes('## 修正\n- 還原草稿');
+      await checking;
+      await prematureConsent;
+      expect(f.states.at(-1)).toEqual({
+        ...metadata,
+        required,
+        phase: 'available',
+        progress: 0,
+        releaseNotes: '## 修正\n- 還原草稿',
+      });
+      expect(downloads).toBe(0);
+      await f.controller.updateNow();
+      expect(downloads).toBe(1);
+      expect(f.states.at(-1)?.releaseNotes).toBe('## 修正\n- 還原草稿');
+      expect(f.reloads()).toBe(1);
+    }
+  );
+
+  test.each(['missing', 'offline'])(
+    'notes %s keeps the catalog message and consent usable',
+    async (failure) => {
+      const f = fixture(
+        async () => release(),
+        async () => {},
+        null,
+        async () => {
+          if (failure === 'offline') throw new Error('offline');
+          return null;
+        }
+      );
+      await f.controller.check();
+      expect(f.states.at(-1)).toEqual({ ...metadata, phase: 'available', progress: 0 });
+      await f.controller.updateNow();
+      expect(f.reloads()).toBe(1);
+    }
+  );
+
   test.each([false, true])(
     'discovery never downloads or restarts (required=%s)',
     async (required) => {
