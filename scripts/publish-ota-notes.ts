@@ -1,6 +1,60 @@
 import type { HotUpdaterCoreApi } from '@hot-updater/plugin-core';
-import { stripVTControlCharacters } from 'node:util';
+import { appendFileSync, rmSync } from 'node:fs';
+import { join } from 'node:path';
+import { inspect, stripVTControlCharacters } from 'node:util';
 import { OTA_RELEASE_ID, type OtaReleaseNote } from '../src/lib/ota-release-notes';
+
+/** Native archives store independent platform fingerprints; never accept a root hash. */
+export function nativeOtaFingerprintHash(input: unknown, platform: 'android' | 'ios'): string {
+  if (
+    !input ||
+    typeof input !== 'object' ||
+    Array.isArray(input) ||
+    !Object.hasOwn(input, platform)
+  )
+    throw new Error('Missing native release fingerprint for the selected platform');
+  const selected: unknown = (input as Record<string, unknown>)[platform];
+  if (!selected || typeof selected !== 'object' || Array.isArray(selected))
+    throw new Error('Invalid native release fingerprint for the selected platform');
+  const { sources, hash } = selected as Record<string, unknown>;
+  if (!Array.isArray(sources) || typeof hash !== 'string' || !/^[a-f0-9]{32,128}$/i.test(hash))
+    throw new Error('Invalid native release fingerprint for the selected platform');
+  return hash;
+}
+
+/** Arbitrary provider diagnostics belong only in the operator's private log. */
+export function recordOtaPublicationFailure(logPath: string, phase: string, error: unknown) {
+  try {
+    appendFileSync(logPath, `\nOTA failure during ${phase}:\n${inspect(error)}\n`, { mode: 0o600 });
+  } catch {
+    // A logging error must not expose or replace the original provider failure.
+  }
+}
+
+/** Cleanup must not reject outside the safe reporting boundary or delete failed-run evidence. */
+export async function finishOtaPublication(
+  workspace: string,
+  succeeded: boolean,
+  cleanup: readonly (() => Promise<unknown>)[]
+): Promise<boolean> {
+  for (const operation of cleanup) {
+    try {
+      await operation();
+    } catch (error) {
+      succeeded = false;
+      recordOtaPublicationFailure(join(workspace, 'deploy.log'), 'server cleanup', error);
+    }
+  }
+  if (succeeded) {
+    try {
+      rmSync(workspace, { recursive: true, force: true });
+    } catch (error) {
+      succeeded = false;
+      recordOtaPublicationFailure(join(workspace, 'deploy.log'), 'private log cleanup', error);
+    }
+  }
+  return succeeded;
+}
 
 /** The pinned 1.0.0 CLI prints a full commit receipt; never infer a latest release. */
 export function deployedOtaReleaseId(output: string): string {

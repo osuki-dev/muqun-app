@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {
   createEngineDatabase,
   createMemoryAdapter,
@@ -11,7 +13,13 @@ import { createHotUpdater } from '@hot-updater/server';
 import { apiKeys } from '@hot-updater/server/plugins';
 import { localizedReleaseNotes } from '../../infrastructure/ota-notes/plugin';
 import { parseOtaNotesManifest } from '../../infrastructure/ota-notes/manifest';
-import { deployedOtaReleaseId, publishOtaNotesAndEnable } from '../../scripts/publish-ota-notes';
+import {
+  deployedOtaReleaseId,
+  finishOtaPublication,
+  nativeOtaFingerprintHash,
+  publishOtaNotesAndEnable,
+  recordOtaPublicationFailure,
+} from '../../scripts/publish-ota-notes';
 import {
   fetchOtaReleaseNote,
   fetchOtaReleaseNotes,
@@ -32,7 +40,10 @@ const target = {
   fingerprintHash: 'native-hash',
 } as const;
 
-async function fixture() {
+async function fixture(
+  fingerprintHash: string = target.fingerprintHash,
+  platform: 'android' | 'ios' = 'android'
+) {
   const auth = apiKeys();
   const plugin = localizedReleaseNotes();
   const adapter = createMemoryAdapter();
@@ -52,7 +63,7 @@ async function fixture() {
     {
       bundle: {
         id: artifactId,
-        platform: 'android',
+        platform,
         gitCommitHash: null,
         manifestStorageUri: 'r2://test/manifest',
         manifestFileHash: 'a'.repeat(64),
@@ -61,7 +72,7 @@ async function fixture() {
       release: {
         channel: target.channel,
         enabled: false,
-        fingerprintHash: target.fingerprintHash,
+        fingerprintHash,
         message: notes.en,
         shouldForceUpdate: true,
         targetAppVersion: null,
@@ -87,6 +98,90 @@ async function fixture() {
 }
 
 describe('localized OTA notes publication', () => {
+  test('uses only the selected platform hash from a real native archive structure', async () => {
+    const archive = {
+      android: { sources: [{ type: 'dir', filePath: 'android' }], hash: 'a'.repeat(40) },
+      ios: { sources: [{ type: 'dir', filePath: 'ios' }], hash: 'b'.repeat(40) },
+    };
+    for (const platform of ['android', 'ios'] as const) {
+      const hash = nativeOtaFingerprintHash(archive, platform);
+      expect(hash).toBe(archive[platform].hash);
+      const f = await fixture(hash, platform);
+      const wrongHash = archive[platform === 'ios' ? 'android' : 'ios'].hash;
+      await expect(
+        publishOtaNotesAndEnable(f.server.core, f.api, f.release.id, notes, {
+          ...target,
+          platform,
+          fingerprintHash: wrongHash,
+        })
+      ).rejects.toThrow('exact disabled release');
+      expect(await f.api.get(f.release.id, 'en')).toBeNull();
+      await publishOtaNotesAndEnable(f.server.core, f.api, f.release.id, notes, {
+        ...target,
+        platform,
+        fingerprintHash: hash,
+      });
+      expect((await f.server.core.getRelease(f.release.id))?.enabled).toBe(true);
+    }
+  });
+
+  test('rejects missing or malformed selected platform fingerprints without root or other-platform fallback', () => {
+    for (const archive of [
+      null,
+      [],
+      { hash: 'a'.repeat(40), sources: [] },
+      { ios: { hash: 'a'.repeat(40), sources: [] } },
+      { android: null },
+      { android: [] },
+      { android: { sources: {}, hash: 'a'.repeat(40) } },
+      ...['', ' ', 'not-a-hash', ` ${'a'.repeat(40)}`, 'a'.repeat(129), 1].map((hash) => ({
+        android: { sources: [], hash },
+      })),
+    ])
+      expect(() => nativeOtaFingerprintHash(archive, 'android')).toThrow();
+  });
+
+  test('retains private failed-run evidence and contains cleanup exceptions', async () => {
+    const workspace = mkdtempSync(join(tmpdir(), 'muqun-ota-log-test-'));
+    const logPath = join(workspace, 'deploy.log');
+    try {
+      writeFileSync(logPath, 'private CLI output', { mode: 0o600 });
+      recordOtaPublicationFailure(
+        logPath,
+        'disabled deployment',
+        new Error('private provider details')
+      );
+      let disposed = false;
+      expect(
+        await finishOtaPublication(workspace, false, [
+          async () => {
+            throw new Error('private flush details');
+          },
+          async () => {
+            disposed = true;
+          },
+        ])
+      ).toBe(false);
+      expect(disposed).toBe(true);
+      expect(statSync(workspace).mode & 0o777).toBe(0o700);
+      expect(statSync(logPath).mode & 0o777).toBe(0o600);
+      expect(readFileSync(logPath, 'utf8')).toContain('private provider details');
+      expect(readFileSync(logPath, 'utf8')).toContain('private flush details');
+      expect(
+        await finishOtaPublication(workspace, true, [
+          async () => {
+            throw new Error('cleanup failed after enablement');
+          },
+        ])
+      ).toBe(false);
+      expect(existsSync(logPath)).toBe(true);
+      expect(await finishOtaPublication(workspace, true, [async () => {}])).toBe(true);
+      expect(existsSync(workspace)).toBe(false);
+    } finally {
+      rmSync(workspace, { recursive: true, force: true });
+    }
+  });
+
   test('validates the complete local manifest before publishing', () => {
     expect(parseOtaNotesManifest({ en: ' notes ', 'zh-TW': ' 筆記 ' })).toEqual({
       en: 'notes',

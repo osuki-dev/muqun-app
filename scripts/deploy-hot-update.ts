@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { closeSync, existsSync, mkdtempSync, openSync, readFileSync, rmSync } from 'node:fs';
+import { closeSync, existsSync, mkdtempSync, openSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { d1Database, r2Storage } from '@hot-updater/cloudflare';
@@ -8,7 +8,13 @@ import { apiKeys, insights, remoteConfig } from '@hot-updater/server/plugins';
 import { localizedReleaseNotes } from '../infrastructure/ota-notes/plugin';
 import { parseOtaNotesManifest } from '../infrastructure/ota-notes/manifest';
 import { fetchOtaReleaseNote } from '../src/lib/ota-release-notes';
-import { deployedOtaReleaseId, publishOtaNotesAndEnable } from './publish-ota-notes';
+import {
+  deployedOtaReleaseId,
+  finishOtaPublication,
+  nativeOtaFingerprintHash,
+  publishOtaNotesAndEnable,
+  recordOtaPublicationFailure,
+} from './publish-ota-notes';
 import { readHotUpdaterAppConfig } from './hot-updater-app-config';
 
 if (existsSync('.env.hotupdater')) process.loadEnvFile('.env.hotupdater');
@@ -27,6 +33,7 @@ if (
 }
 // Validate every translation before invoking the CLI or touching remote state.
 const notes = parseOtaNotesManifest(JSON.parse(readFileSync(notesPath, 'utf8')));
+const selectedPlatform = platform === 'ios' ? 'ios' : 'android';
 const required = [
   'HOT_UPDATER_CLOUDFLARE_ACCOUNT_ID',
   'HOT_UPDATER_CLOUDFLARE_D1_DATABASE_ID',
@@ -47,14 +54,7 @@ readHotUpdaterAppConfig(process.env, process.cwd());
 if (!existsSync('fingerprint.json'))
   throw new Error('Missing fingerprint.json from the corresponding native release build');
 const fingerprint: unknown = JSON.parse(readFileSync('fingerprint.json', 'utf8'));
-if (
-  !fingerprint ||
-  typeof fingerprint !== 'object' ||
-  !('hash' in fingerprint) ||
-  typeof fingerprint.hash !== 'string' ||
-  !fingerprint.hash
-)
-  throw new Error('Invalid native release fingerprint');
+const fingerprintHash = nativeOtaFingerprintHash(fingerprint, selectedPlatform);
 const server = createHotUpdater({
   database: d1Database({
     accountId: process.env.HOT_UPDATER_CLOUDFLARE_ACCOUNT_ID ?? '',
@@ -73,14 +73,16 @@ const server = createHotUpdater({
 });
 // Build/provider output can contain secrets. Capture privately, expose only the receipt.
 const workspace = mkdtempSync(join(tmpdir(), 'muqun-ota-'));
+const logPath = join(workspace, 'deploy.log');
+closeSync(openSync(logPath, 'wx', 0o600));
 let releaseId: string | null = null;
 let phase = 'schema preflight';
+let succeeded = false;
 try {
   await server.core.ready();
   phase = 'disabled deployment';
   console.log('Building and deploying a disabled OTA release.');
-  const logPath = join(workspace, 'deploy.log');
-  const log = openSync(logPath, 'wx', 0o600);
+  const log = openSync(logPath, 'a', 0o600);
   let result;
   try {
     // No auto-regeneration: native changes must be reviewed and built before OTA.
@@ -103,7 +105,9 @@ try {
   } finally {
     closeSync(log);
   }
-  if (result.error || result.status !== 0) throw new Error('Disabled deployment failed');
+  if (result.error) throw result.error;
+  if (result.status !== 0)
+    throw new Error(`Disabled deployment failed (exit ${result.status ?? 'unknown'})`);
   releaseId = deployedOtaReleaseId(readFileSync(logPath, 'utf8'));
   console.log(`Disabled OTA release: ${releaseId}`);
   phase = 'notes verification and guarded enablement';
@@ -118,18 +122,27 @@ try {
     notes,
     {
       channel: channel ?? '',
-      platform: platform === 'ios' ? 'ios' : 'android',
-      fingerprintHash: fingerprint.hash,
+      platform: selectedPlatform,
+      fingerprintHash,
     }
   );
   console.log(`Enabled OTA release with verified notes: ${releaseId}`);
-} catch {
+  succeeded = true;
+} catch (error) {
+  recordOtaPublicationFailure(logPath, phase, error);
   console.error(
     `OTA publication failed during ${phase}. No automatic retry was attempted.${releaseId ? ` Inspect release ${releaseId} before retrying.` : ' Inspect deployment state before retrying.'}`
   );
   process.exitCode = 1;
 } finally {
-  rmSync(workspace, { recursive: true, force: true });
-  await server.flush();
-  await server.database.dispose?.();
+  const completed = await finishOtaPublication(workspace, succeeded, [
+    () => server.flush(),
+    async () => server.database.dispose?.(),
+  ]);
+  if (!completed) {
+    console.error(
+      `Private OTA diagnostics retained at ${logPath}. Inspect the exact release before retrying.`
+    );
+    process.exitCode = 1;
+  }
 }

@@ -138,6 +138,9 @@ commit, channel and public-key digest. It is deliberately ignored here because
 a local disabled prebuild is not a released compatibility baseline. Restore that
 exact file into the OTA checkout before deploying; never regenerate it simply
 to bypass a mismatch. A native change requires a new binary first.
+The archived file stores `ios` and `android` objects, each with `sources` and
+`hash`. Publication validates and compares only the selected platform's hash;
+the other platform's fingerprint and any root-level hash cannot substitute for it.
 
 ## Deploy only after native acceptance
 
@@ -180,7 +183,10 @@ be read with the client key for this check; it is still absent from the release
 catalog. A missing or outdated Worker endpoint leaves publication disabled.
 Provider credentials remain on the deployment machine; the app receives only
 its public client key and one resolved note. Captured build/provider output stays
-in a private temporary file and is deleted after the command finishes.
+in a private temporary file (mode `0600`, inside a `0700` directory). Successful
+runs delete it. Failed runs, including provider cleanup failures, retain the log
+and print only its path and fixed failure labels, so the operator can inspect
+the cause privately. Never paste these logs into shared reports or commit them.
 
 A notes upload/readback failure does not enable the release. There is no automatic
 retry, latest-release lookup or automatic cleanup of ambiguous writes. If a deploy
