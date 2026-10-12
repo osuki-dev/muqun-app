@@ -440,14 +440,14 @@ const styles = StyleSheet.create({
     paddingTop: 4,
   },
   header: {
-    minHeight: 52,
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    paddingVertical: 8,
+    paddingTop: 8,
   },
   headerCopy: { flexShrink: 1, minWidth: 0, gap: 2 },
   statusLine: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  block: { gap: 2, paddingBottom: 8 },
+  block: { paddingBottom: 8 },
   fill: { flexGrow: 1 },
 });

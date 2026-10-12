@@ -2,7 +2,7 @@ import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, useToast } from '@osuki-dev/ui';
 import { useIsFocused, useRouter } from 'expo-router';
 import { SlidersHorizontal } from 'lucide-react-native';
-import { useEffect, useEffectEvent, useRef, useState } from 'react';
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { AppState, StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -28,11 +28,10 @@ import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useAgentFeatures, useAgentsDiscoveryRefresh } from '@/hooks/use-agent-features';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
-import { useStableHandler } from '@/hooks/use-render-refs';
+import { useLatestReader, useStableHandler } from '@/hooks/use-render-refs';
 import { META_SEPARATOR } from '@/lib/home-continue-row';
 import { boundSessionState, goalTitle, type PendingDispatch } from '@/lib/home-computer-cards';
-import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
-import { homeComposerFieldFill } from '@/theme/home-composer-field';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import type { AgentClientCommandId } from '@/lib/agent-commands';
 import { classifyAgentRequestError } from '@/lib/agent-request-error';
 import { unsupportedModelRefs } from '@/lib/agent-session-defaults';
@@ -52,7 +51,12 @@ import {
   type ModelRef,
   selectableModes,
 } from '@/lib/agent-session';
-import { recoverWith, settleAfter, settleAfterAsync } from '@/lib/compiler-safe-control-flow';
+import {
+  recoverWith,
+  recoverWithSync,
+  settleAfter,
+  settleAfterAsync,
+} from '@/lib/compiler-safe-control-flow';
 import { checkAgentServer } from '@/lib/home-agent-readiness';
 import {
   HOME_AGENT_SESSION_ID,
@@ -77,11 +81,18 @@ import { loadSessions, spawnAgent } from '@/lib/gateway-client';
 import { homeAgentOptions, resolveHomeAgent } from '@/lib/home-agent-choice';
 import { describeGatewayFailure } from '@/lib/network-error';
 import {
-  createLedgerTask,
   hasTaskLedgerCreate,
   TASK_DEFAULTS_CAPABILITY,
   TASK_LEDGER_PANE_CAPABILITY,
+  type LedgerTaskRequest,
 } from '@/lib/task-ledger';
+import {
+  createHomeLedgerTask,
+  forgetHomeLedgerTask,
+  loadUnconfirmedHomeTasks,
+  reconcileHomeLedgerTask,
+  taskForHomeDelivery,
+} from '@/lib/home-ledger-delivery';
 import { useHomeAgentChoice } from '@/stores/home-agent-choice';
 import { useHomeTaskCards } from '@/stores/home-task-cards';
 import { useServerCapabilities } from '@/stores/server-capabilities';
@@ -171,13 +182,21 @@ export function HomeComposerDock({
   const backgroundOutset = useHomeComposerBackgroundOutset();
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [optionsVisible, setOptionsVisible] = useState(false);
+  const [optionsHeightAnimating, setOptionsHeightAnimating] = useState(false);
   const background = useSurfaceBackground();
-  const backgroundOpacity = useSurfaceBackgroundOpacity();
   const router = useRouter();
   const { showToast } = useToast();
   const { servers, chosen, openTargetPicker } = controller;
   const { record, selectRecord, selectRecordNow } = useGatewayRecord();
   const [error, setError] = useState<string | null>(null);
+  const [unknownDelivery, setUnknownDelivery] = useState<{
+    serverId: string;
+    deviceId?: string;
+    clientRef: string;
+    goal: string;
+    pendingId?: string;
+  } | null>(null);
+  const [checkingDelivery, setCheckingDelivery] = useState(false);
 
   // The assignment bar lights up for a moment whenever the target is set by
   // hand, so the change is seen, not inferred.
@@ -198,6 +217,63 @@ export function HomeComposerDock({
   const targetId = targetServer?.serverId;
   const ready = target.kind === 'ready';
   const selected = Boolean(targetId) && record?.serverId === targetId;
+  const readDeliveryScope = useLatestReader({ serverId: targetId, deviceId: record?.deviceId });
+  const isCurrentDeliveryScope = useCallback(
+    (scope: { serverId: string; deviceId?: string }): boolean => {
+      const shown = readDeliveryScope();
+      const current = useGatewayConnectionStore.getState().record;
+      return (
+        shown.serverId === scope.serverId &&
+        shown.deviceId === scope.deviceId &&
+        current?.serverId === scope.serverId &&
+        current.deviceId === scope.deviceId
+      );
+    },
+    [readDeliveryScope]
+  );
+
+  useEffect(() => {
+    if (!unknownDelivery) return;
+    const reconcile = () => {
+      if (!isCurrentDeliveryScope(unknownDelivery)) return;
+      const tasks = useServerTasksStore.getState().index[unknownDelivery.serverId]?.tasks ?? [];
+      if (!taskForHomeDelivery(tasks, unknownDelivery.clientRef, unknownDelivery.deviceId)) return;
+      if (unknownDelivery.pendingId) useHomeTaskCards.getState().settle(unknownDelivery.pendingId);
+      void recoverWith(
+        async () => {
+          forgetHomeLedgerTask(unknownDelivery, unknownDelivery.clientRef);
+          const next = loadUnconfirmedHomeTasks(unknownDelivery)[0];
+          setUnknownDelivery(next ? { ...unknownDelivery, ...next, pendingId: undefined } : null);
+        },
+        () => setError(t`The previous send could not be checked.`)
+      );
+    };
+    reconcile();
+    return useServerTasksStore.subscribe(reconcile);
+  }, [unknownDelivery, t, isCurrentDeliveryScope]);
+  const visibleUnknownDelivery =
+    unknownDelivery?.serverId === targetId && unknownDelivery?.deviceId === record?.deviceId
+      ? unknownDelivery
+      : null;
+  useEffect(() => {
+    if (!record || record.serverId !== targetId) {
+      setUnknownDelivery(null);
+      return;
+    }
+    void recoverWith(
+      async () => {
+        const first = loadUnconfirmedHomeTasks(record)[0];
+        setUnknownDelivery((previous) =>
+          first
+            ? previous?.clientRef === first.clientRef
+              ? previous
+              : { serverId: record.serverId, deviceId: record.deviceId, ...first }
+            : null
+        );
+      },
+      () => setError(t`The previous send could not be checked.`)
+    );
+  }, [record, targetId, t]);
 
   // `@` offers the target and the computers it has linked -- the ones it can
   // hand work to -- each by the name the target knows it by, when it can
@@ -642,10 +718,96 @@ export function HomeComposerDock({
    * from the first frame. The card holds a "Sent" row until the answer lands.
    * Home stays put: the row is the feedback, and tapping it opens the session.
    */
+
+  async function sendHomeLedger(
+    serverId: string,
+    request: LedgerTaskRequest,
+    owns: () => boolean,
+    pendingId: string
+  ) {
+    const owner = useGatewayConnectionStore.getState().record;
+    if (!owns() || owner?.serverId !== serverId) throw new Error(t`Computer unavailable.`);
+    const deviceId = owner?.deviceId;
+    const delivery = await createHomeLedgerTask({
+      serverId,
+      deviceId,
+      ...(owner && !owner.sshTunnel ? { endpoint: recordEndpoint(owner) } : {}),
+      request,
+      isCurrent: () => owns() && sameComputer(useGatewayConnectionStore.getState().record, owner),
+      knownTasks: () => useServerTasksStore.getState().index[serverId]?.tasks ?? [],
+    });
+    if (delivery.kind === 'rejected') throw delivery.failure;
+    if (delivery.kind === 'unknown') {
+      if (isCurrentDeliveryScope({ serverId, deviceId })) {
+        if (unknownDelivery?.pendingId)
+          useHomeTaskCards.getState().settle(unknownDelivery.pendingId);
+        setUnknownDelivery({
+          serverId,
+          deviceId,
+          clientRef: delivery.clientRef,
+          pendingId,
+          goal: request.goal,
+        });
+      }
+      return null;
+    }
+    if (isCurrentDeliveryScope({ serverId, deviceId })) {
+      const next = recoverWithSync(
+        () => loadUnconfirmedHomeTasks({ serverId, deviceId })[0],
+        () => {
+          setError(t`Task accepted. Send status could not be saved.`);
+          return undefined;
+        }
+      );
+      setUnknownDelivery(next ? { serverId, deviceId, ...next } : null);
+    }
+    useServerTasksStore.getState().upsert(serverId, delivery.created.task);
+    return delivery.created;
+  }
+
+  const checkDelivery = useStableHandler(async () => {
+    if (!unknownDelivery || checkingDelivery || !isCurrentDeliveryScope(unknownDelivery)) return;
+    setCheckingDelivery(true);
+    await settleAfter(
+      () =>
+        recoverWith(
+          async () => {
+            const owner = useGatewayConnectionStore.getState().record;
+            if (
+              owner?.serverId !== unknownDelivery.serverId ||
+              owner.deviceId !== unknownDelivery.deviceId
+            )
+              return;
+            const created = await reconcileHomeLedgerTask({
+              ...unknownDelivery,
+              ...(!owner.sshTunnel ? { endpoint: recordEndpoint(owner) } : {}),
+              isCurrent: () => sameComputer(useGatewayConnectionStore.getState().record, owner),
+              knownTasks: () =>
+                useServerTasksStore.getState().index[unknownDelivery.serverId]?.tasks ?? [],
+            });
+            if (created)
+              useServerTasksStore.getState().upsert(unknownDelivery.serverId, created.task);
+            else if (isCurrentDeliveryScope(unknownDelivery))
+              showToast({
+                variant: 'info',
+                title: t`Delivery not confirmed`,
+                message: t`Check this computer's tasks. This request has not been sent again.`,
+              });
+          },
+          () => {
+            if (isCurrentDeliveryScope(unknownDelivery))
+              setError(t`The previous send could not be checked.`);
+          }
+        ),
+      () => setCheckingDelivery(false)
+    );
+  });
+
   async function openLedgerTask(text: string): Promise<boolean> {
     if (inFlightRef.current) return false;
     inFlightRef.current = true;
     let pendingId: string | null = null;
+    let keepRow = false;
     return settleAfter(
       async () => {
         setError(null);
@@ -661,7 +823,8 @@ export function HomeComposerDock({
             }
             pendingId = useHomeTaskCards.getState().dispatched(serverId, text);
             const mentions = await mentionsIn(text, serverId);
-            const created = await createLedgerTask(
+            const created = await sendHomeLedger(
+              serverId,
               {
                 goal: text,
                 ...(mentions.length ? { mentions } : {}),
@@ -673,23 +836,25 @@ export function HomeComposerDock({
                 // Task 15); an older one ignores it, and the switch below sets it.
                 ...(params.model?.variant ? { variant: params.model.variant } : {}),
               },
-              owns
+              owns,
+              pendingId
             );
             if (!created) {
-              setError(t`Could not start the task.`);
-              return false;
+              keepRow = true;
+              // Acceptance is unknown: keep its Sent row and never restore a
+              // draft labelled "not sent" that invites another creation.
+              return true;
             }
             const { task, asid } = created;
-            useServerTasksStore.getState().upsert(serverId, task);
-            // The gateway answers 200 for a task whose session failed while it
-            // was being opened; the draft stays and the reason is said here.
+            // A failed accepted task stays in the ledger; its failure is not a
+            // send rejection and must not invite a second creation.
             if (task.state === 'failed') {
               setError(task.summary ?? t`Could not start the task.`);
-              return false;
+              return true;
             }
             if (!asid) {
-              setError(t`Could not start the task.`);
-              return false;
+              // A queued accepted task can report its session in a later frame.
+              return true;
             }
             if (task.binding.kind === 'agent_session')
               markAgentUsed(serverId, task.binding.agentId);
@@ -726,7 +891,7 @@ export function HomeComposerDock({
         );
       },
       () => {
-        if (pendingId) useHomeTaskCards.getState().settle(pendingId);
+        if (pendingId && !keepRow) useHomeTaskCards.getState().settle(pendingId);
         inFlightRef.current = false;
       }
     );
@@ -751,6 +916,7 @@ export function HomeComposerDock({
     if (inFlightRef.current) return false;
     inFlightRef.current = true;
     let pendingId: string | null = null;
+    let keepRow = false;
     return settleAfter(
       async () => {
         setError(null);
@@ -794,26 +960,26 @@ export function HomeComposerDock({
                 setError(t`Computer unavailable.`);
                 return false;
               }
-              const created = await createLedgerTask(
+              const created = await sendHomeLedger(
+                serverId,
                 {
                   goal: text,
                   ...(mentions.length ? { mentions } : {}),
                   agentId: kind,
                   ...(cwd ? { cwd } : {}),
                 },
-                owns
+                owns,
+                pendingId
               );
               if (!created) {
-                setError(t`Could not start the task.`);
-                return false;
+                keepRow = true;
+                return true;
               }
               const { task, paneId } = created;
-              useServerTasksStore.getState().upsert(serverId, task);
-              // A 200 whose task already failed: the agent did not start or
-              // the goal was not typed. The draft stays and the reason is said.
+              // The accepted task owns its failure or a still-pending binding.
               if (task.state === 'failed' || !paneId) {
-                setError(task.summary ?? t`Could not start the task.`);
-                return false;
+                if (task.state === 'failed') setError(task.summary ?? t`Could not start the task.`);
+                return true;
               }
               return true;
             }
@@ -850,7 +1016,7 @@ export function HomeComposerDock({
         );
       },
       () => {
-        if (pendingId) useHomeTaskCards.getState().settle(pendingId);
+        if (pendingId && !keepRow) useHomeTaskCards.getState().settle(pendingId);
         inFlightRef.current = false;
       }
     );
@@ -1026,6 +1192,23 @@ export function HomeComposerDock({
 
   const bar = (
     <View>
+      {visibleUnknownDelivery ? (
+        <PressableScale
+          testID="home-composer-check-delivery"
+          accessibilityRole="button"
+          accessibilityLabel={t`Check status`}
+          disabled={checkingDelivery}
+          onPress={() => void checkDelivery()}
+          style={styles.error}>
+          <Text variant="caption" color={theme.colors.text} accessibilityLiveRegion="polite">
+            {[
+              t`Delivery not confirmed`,
+              goalTitle(visibleUnknownDelivery.goal),
+              checkingDelivery ? t`Checking…` : t`Check status`,
+            ].join(META_SEPARATOR)}
+          </Text>
+        </PressableScale>
+      ) : null}
       {error ? (
         <Text
           testID="home-composer-error"
@@ -1045,6 +1228,7 @@ export function HomeComposerDock({
       <HomeComposerOptions
         open={optionsOpen}
         onVisibilityChange={setOptionsVisible}
+        onHeightAnimationChange={setOptionsHeightAnimating}
         computer={targetServer ? computerLabel : t`No computer online`}
         agent={agentName}
         folder={folderLabel}
@@ -1117,16 +1301,15 @@ export function HomeComposerDock({
   return (
     <AgentComposer
       accessory={bar}
+      accessoryHeightAnimating={optionsHeightAnimating || optionsOpen !== optionsVisible}
       fieldBackground={<HomeComposerBackground />}
       fieldBackgroundOutset={backgroundOutset ?? undefined}
-      fieldBackgroundColor={homeComposerFieldFill(
-        theme.colors.surface,
-        theme.colors.text,
-        backgroundOpacity
-      )}
+      fieldBackgroundColor={background(theme.colors.surface)}
       fieldDecoration={decorationOverhang > 0 ? <HomeComposerDecoration /> : undefined}
       fieldDecorationOverhang={decorationOverhang}
-      hideFieldDecoration={optionsOpen || optionsVisible || Boolean(error)}
+      hideFieldDecoration={
+        optionsOpen || optionsVisible || Boolean(error) || Boolean(visibleUnknownDelivery)
+      }
       fieldTextTopInset={6}
       toolbarLeading={parameterButton}
       hideParameterRow

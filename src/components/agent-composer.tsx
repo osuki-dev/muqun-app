@@ -489,6 +489,8 @@ export interface AgentComposerProps {
    * is about to go, before there is a session to say so -- is the one caller.
    */
   accessory?: React.ReactNode;
+  /** Keep accessory animation frames out of the parent's scroll layout; report the settled size. */
+  accessoryHeightAnimating?: boolean;
   /** Home consolidates its choices in one control beside the attachment button. */
   toolbarLeading?: React.ReactNode;
   /** Optional decoration inside the draft field, behind text and controls. */
@@ -606,6 +608,7 @@ export const AgentComposer = memo(function AgentComposer({
   holdStagedAttachments,
   onDockHeight,
   accessory,
+  accessoryHeightAnimating = false,
   toolbarLeading,
   fieldBackground,
   fieldBackgroundColor,
@@ -1256,9 +1259,13 @@ export const AgentComposer = memo(function AgentComposer({
     fieldDecoration && !decorationHidden && !voiceActive ? fieldDecorationOverhang : 0;
   const dockHeight = surfaceHeight + dockFoot;
   const reportDockHeight = useEffectEvent((height: number) => onDockHeight?.(height));
+  // Local height still bounds popups. Forwarding each animated accessory frame
+  // to Home also changes its scroll padding and clipping, feeding the reveal
+  // through another React/layout pass. Publish the latest height once it lands.
   useEffect(() => {
-    if (surfaceHeight > 0) reportDockHeight(dockHeight + decorationClearance);
-  }, [surfaceHeight, dockHeight, decorationClearance]);
+    if (surfaceHeight > 0 && !accessoryHeightAnimating)
+      reportDockHeight(dockHeight + decorationClearance);
+  }, [surfaceHeight, dockHeight, decorationClearance, accessoryHeightAnimating]);
   const [inputRowHeight, setInputRowHeight] = useState(0);
   const popupMaxHeight = Math.max(
     POPUP_MIN_HEIGHT,

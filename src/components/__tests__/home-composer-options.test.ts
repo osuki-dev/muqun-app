@@ -17,9 +17,13 @@ walk(source.program, (node) => {
   }
 });
 
-function transition(open: boolean) {
+function transition(
+  open: boolean,
+  options: { initialHeight?: number; synchronous?: boolean } = {}
+) {
   const visibility: boolean[] = [];
   const heights: number[] = [];
+  const animating: boolean[] = [];
   const pending: (() => void)[] = [];
   let latestOpen = open;
   let complete: ((finished: boolean) => void) | undefined;
@@ -28,12 +32,17 @@ function transition(open: boolean) {
     contentHeight: 240,
     readOpen: () => latestOpen,
     onVisibilityChange: (visible: boolean) => visibility.push(visible),
-    visibleHeight: { set: (height: number) => heights.push(height) },
+    onHeightAnimationChange: (value: boolean) => animating.push(value),
+    visibleHeight: {
+      get: () => options.initialHeight ?? (open ? 0 : 240),
+      set: (height: number) => heights.push(height),
+    },
     opacity: { set: () => {} },
     setShowModes: () => {},
     timing: (token: string) => token,
     withTiming: (value: number, _config: unknown, callback?: typeof complete) => {
       if (callback) complete = callback;
+      if (options.synchronous) callback?.(true);
       return value;
     },
     scheduleOnRN: (callback: () => void) => pending.push(callback),
@@ -41,6 +50,7 @@ function transition(open: boolean) {
   return {
     visibility,
     heights,
+    animating,
     finish: (finished: boolean) => complete?.(finished),
     flush: () => pending.splice(0).forEach((callback) => callback()),
     setOpen: (value: boolean) => {
@@ -55,7 +65,9 @@ test('Home decoration stays hidden until options finish collapsing', () => {
   expect(opening.visibility).toEqual([true]);
   expect(opening.heights).toEqual([240]);
   opening.finish(true);
+  opening.flush();
   expect(opening.visibility).toEqual([true]);
+  expect(opening.animating).toEqual([true, false]);
 
   const closing = transition(false);
   expect(closing.heights).toEqual([0]);
@@ -63,6 +75,7 @@ test('Home decoration stays hidden until options finish collapsing', () => {
   closing.finish(true);
   closing.flush();
   expect(closing.visibility).toEqual([false]);
+  expect(closing.animating).toEqual([true, false]);
 });
 
 test('a cancelled collapse does not expose decoration under reopened options', () => {
@@ -70,6 +83,7 @@ test('a cancelled collapse does not expose decoration under reopened options', (
   closing.finish(false);
   closing.flush();
   expect(closing.visibility).toEqual([]);
+  expect(closing.animating).toEqual([true]);
 });
 
 test('a queued UI completion cannot reveal decoration after a reopen render', () => {
@@ -78,6 +92,7 @@ test('a queued UI completion cannot reveal decoration after a reopen render', ()
   closing.setOpen(true);
   closing.flush();
   expect(closing.visibility).toEqual([]);
+  expect(closing.animating).toEqual([true]);
 });
 
 test('a queued old close cannot finish a newer close or an unmounted panel', () => {
@@ -89,4 +104,28 @@ test('a queued old close cannot finish a newer close or an unmounted panel', () 
   closing.setOpen(false);
   closing.flush();
   expect(closing.visibility).toEqual([]);
+  expect(closing.animating).toEqual([true]);
+});
+
+test('a queued opening completion cannot finish a newly closing transition', () => {
+  const opening = transition(true);
+  opening.finish(true);
+  opening.setOpen(false);
+  opening.flush();
+  expect(opening.animating).toEqual([true]);
+});
+
+test('an already collapsed or fully open panel never holds dock reporting', () => {
+  expect(transition(false, { initialHeight: 0 }).animating).toEqual([false]);
+  expect(transition(true, { initialHeight: 240 }).animating).toEqual([false]);
+});
+
+test('instant animation completion releases reporting without a timer', () => {
+  const opening = transition(true, { synchronous: true });
+  opening.flush();
+  expect(opening.animating).toEqual([true, false]);
+  const closing = transition(false, { synchronous: true });
+  closing.flush();
+  expect(closing.animating).toEqual([true, false]);
+  expect(closing.visibility).toEqual([false]);
 });
