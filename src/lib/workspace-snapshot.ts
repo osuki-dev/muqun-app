@@ -210,30 +210,26 @@ export async function warmConfiguredWorkspace(
   knownHealth?: HealthResponse | null
 ): Promise<void> {
   if (!serverId || !isCurrent() || warmWorkspace(serverId)) return;
+  const requestedAtMs = Date.now();
   try {
     const result = await loadWorkspaceSnapshot(preference, knownHealth, isCurrent);
     if (!result || !isCurrent()) return;
+    // A terminal that completed its own load while this read was pending wins.
+    if (warmWorkspace(serverId)) return;
     const { snapshot } = result;
+    // Home can display the inventory now. Its rows must not wait for the
+    // terminal's optional first screen, which can be a slower extra request.
+    void useServerAgents.getState().record({
+      serverId,
+      sessionId: snapshot.sessionId,
+      checkedAtMs: requestedAtMs,
+      agents: mirroredServerPanes(snapshot.panes, snapshot.agents),
+    });
     const firstPane = await firstPaneScreen(snapshot);
     if (!isCurrent()) return;
     // A terminal mounted during this prefetch may already have fresher data.
     if (warmWorkspace(serverId)) return;
     rememberWarmWorkspace(serverId, { ...snapshot, firstPane });
-    // And the card Home draws for this server. Its rows were written only by
-    // the terminal screen, so a pane closed elsewhere stayed on Home until the
-    // reader went into the server and came back -- even across a pull to
-    // refresh, which asked the gateway whether it was up and never what it was
-    // running. The warm has just read exactly that list; it costs no request
-    // to hand it over. (A demo record never gets here: every caller returns
-    // before the warm for one.)
-    {
-      void useServerAgents.getState().record({
-        serverId,
-        sessionId: snapshot.sessionId,
-        checkedAtMs: Date.now(),
-        agents: mirroredServerPanes(snapshot.panes, snapshot.agents),
-      });
-    }
   } catch {
     // Deliberately silent: see above.
   }
