@@ -571,9 +571,15 @@
         "run": "flows/home-continue-search.ad#assert-hidden"
       },
       { "run": "flows/home-continue-search.ad#session-menu" },
-      { "run": "flows/home-continue-search.ad#arm-delete" },
       {
-        "target": { "text": "Confirm delete" },
+        "target": { "id": "home-recent-delete" },
+        "mode": "hidden",
+        "run": "flows/home-continue-search.ad#assert-hidden"
+      },
+      {
+        "target": {
+          "text": "Update Gateway on this computer, then reconnect to enable deleting sessions from Home"
+        },
         "mode": "visible",
         "run": "flows/home-continue-search.ad#assert-visible"
       },
