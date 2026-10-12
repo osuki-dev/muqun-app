@@ -9,6 +9,7 @@ import { PressableScale } from '@/components/pressable-scale';
 import { LADDER, SettingsSection } from '@/components/settings-chrome';
 import { Text } from '@/components/text';
 import { Skeleton } from '@/components/themed-skeleton';
+import { useMinuteNow } from '@/hooks/use-minute-now';
 import { useRelativeTime } from '@/hooks/use-relative-time';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
@@ -126,6 +127,7 @@ function TokenRows({ tokens, onRevoked }: { tokens: McpToken[]; onRevoked: (id: 
   const surfaceBackground = useSurfaceBackground();
   const { showToast } = useToast();
   const relative = useRelativeTime();
+  const nowMs = useMinuteNow();
   const [revoking, setRevoking] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<string | null>(null);
 
@@ -185,12 +187,6 @@ function TokenRows({ tokens, onRevoked }: { tokens: McpToken[]; onRevoked: (id: 
       }
     );
   }
-
-  // Read at render because both captions are relative to *now* and an open row
-  // has to keep telling the truth about a timestamp ageing under it. Same call
-  // and reason as `PairedDevices`.
-  // oxlint-disable-next-line react/purity -- deliberate: see above.
-  const nowMs = Date.now();
 
   return (
     <>
