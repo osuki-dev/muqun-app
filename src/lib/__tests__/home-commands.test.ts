@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
-  awaitSessionListed,
   consumeNewAgentIntent,
   createHomeCommandController,
   isHomeSshTargetAvailable,
@@ -55,6 +54,42 @@ function ports(overrides: Partial<HomeCommandPorts> = {}) {
 }
 
 describe('home command boundary', () => {
+  test('opens a created task session while its destination snapshot is still loading', async () => {
+    const snapshot = deferred<void>();
+    let snapshotLoaded = false;
+    const adapter = ports({
+      prepareNewAgent: () => {
+        throw new Error('Opening an existing session must not prepare another agent');
+      },
+      loadTerminalSelection: () => {
+        throw new Error('An agent session does not need a terminal selection');
+      },
+      navigate: (destination) => {
+        adapter.navigations.push(destination);
+        // The mounted destination owns this slow read, independently of Home.
+        void snapshot.promise.then(() => {
+          snapshotLoaded = true;
+        });
+      },
+    });
+    const controller = createHomeCommandController(adapter);
+    const target = {
+      kind: 'agent-session' as const,
+      serverId: 'server-a',
+      asid: 'created-task-session',
+      agentId: 'opencode',
+    };
+
+    const result = await controller.dispatch({ type: 'open-agent', target });
+
+    expect(result.status).toBe('dispatched');
+    expect(adapter.navigations).toEqual([{ type: 'agent', target, intent: 'existing' }]);
+    expect(snapshotLoaded).toBe(false);
+    snapshot.resolve();
+    await snapshot.promise;
+    expect(snapshotLoaded).toBe(true);
+  });
+
   test('a stale request failure does not surface over the newer destination', async () => {
     const load = deferred<Awaited<ReturnType<HomeCommandPorts['loadTerminalSelection']>>>();
     const adapter = ports({ loadTerminalSelection: () => load.promise });
@@ -771,36 +806,5 @@ describe('new terminal with no backend running', () => {
     expect(result.status).toBe('unavailable');
     if (result.status === 'unavailable') expect(result.backendDown).toEqual(backendDown);
     expect(adapter.navigations).toEqual([]);
-  });
-});
-
-describe('awaitSessionListed: a session opened before its computer lists it', () => {
-  // A clock the sleeps and the reads move: the wait is wall clock, reads included.
-  test.each([
-    ['listed on the third read: opened then', [false, false, true], 0, 'ready'],
-    ['never listed while the computer answers: gone', [false], 0, 'gone'],
-    ['no read answered: opened anyway', [null], 0, 'unknown'],
-    // Reads that each take 3 s: two fit in 5 s, and the wait ends there.
-    ['slow reads still end at the deadline', [null], 3_000, 'unknown'],
-  ] as const)('%s', async (_name, answers, readMs, expected) => {
-    let clock = 0;
-    let reads = 0;
-    const outcome = await awaitSessionListed(
-      (remainingMs) => {
-        clock += Math.min(readMs, remainingMs);
-        return Promise.resolve(answers[Math.min(reads++, answers.length - 1)] ?? null);
-      },
-      {
-        timeoutMs: 5_000,
-        intervalMs: 500,
-        now: () => clock,
-        sleep: (ms) => {
-          clock += ms;
-          return Promise.resolve();
-        },
-      }
-    );
-    expect(outcome).toBe(expected);
-    expect(clock).toBeLessThanOrEqual(5_000);
   });
 });

@@ -580,11 +580,9 @@ export function buildComputerCards(input: {
 }
 
 /**
- * What a task row opens: the thing the task runs in. A session-bound task
- * opens its agent session, a pane-bound one its pane -- a failed one too, so
- * the reader sees why (a pane that is gone leaves the computer's screen with
- * the error on the row). A mirror opens the task on the computer that runs
- * it. A task not bound yet opens its computer.
+ * Finished commands open their saved result on the originating computer:
+ * their temporary pane may be closed or its id reused. Other tasks open
+ * their session, pane, or the computer that runs a mirror.
  */
 export function taskRowDestination(
   task: TaskView
@@ -592,7 +590,9 @@ export function taskRowDestination(
   | { kind: 'session'; asid: string; agentId: string }
   | { kind: 'pane'; paneId: string; sessionId: string }
   | { kind: 'peer'; serverId: string; remoteTaskId: string }
+  | { kind: 'result' }
   | { kind: 'computer' } {
+  if (task.kind === 'command' && isTerminalTaskState(task.state)) return { kind: 'result' };
   const binding = task.binding;
   if (binding.kind === 'agent_session') {
     return { kind: 'session', asid: binding.asid, agentId: binding.agentId };
@@ -655,8 +655,10 @@ export function sessionLedgerTask(
   return found;
 }
 
-/** The two ways into a computer's work, as Home's commands open them. */
+/** The destinations for a task's work or saved result. */
 export type TaskOpeners = {
+  /** Read a finished command's saved output without opening its old binding. */
+  openTaskResult: (serverId: string, task: TaskView) => unknown;
   openAgent: (
     serverId: string,
     asid?: string,
@@ -672,8 +674,8 @@ export type TaskOpeners = {
 };
 
 /**
- * Open what a task runs in, on its own computer -- for a mirror, on the
- * computer that runs it. A mirror whose task there cannot be read (not
+ * Read a finished command's saved result, otherwise open what it runs in.
+ * A live mirror opens on the computer that runs it. If its task cannot be read (not
  * known yet, or that computer is quiet) opens that computer, which says
  * itself whether it can be reached; a tap never does nothing. Settles when
  * the open has (the row shows a loading state until then); never rejects.
@@ -689,6 +691,9 @@ export async function openTaskWork(
       () => undefined,
       () => undefined
     );
+  if (destination.kind === 'result') {
+    return settled(commands.openTaskResult(serverId, task));
+  }
   if (destination.kind === 'peer') {
     const resolve = commands.resolveTask;
     if (!resolve || task.binding.kind !== 'peer') return;

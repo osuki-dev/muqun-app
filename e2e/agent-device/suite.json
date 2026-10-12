@@ -94,6 +94,12 @@
       "platforms": ["ios", "android"]
     },
     {
+      "name": "task-result",
+      "program": "flows/task-result",
+      "tags": ["full", "workspace", "agents"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "agent-tool-detail",
       "program": "flows/agent-tool-detail",
       "tags": ["full", "agents"],
@@ -8161,6 +8167,77 @@
       { "include": "subflows/open-demo" },
       {
         "run": "flows/personal-workspace.ad"
+      }
+    ],
+    "flows/task-result": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/task-result.ad#open" },
+      {
+        "target": { "id": "task-row-demo-command-peer" },
+        "mode": "press",
+        "run": "flows/task-result.ad#peer"
+      },
+      {
+        "target": { "text": "2030-04-12 08:30:00 UTC" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/task-result.ad#output"
+      },
+      {
+        "target": { "text": "exit 0" },
+        "mode": "visible",
+        "run": "flows/task-result.ad#exit"
+      },
+      {
+        "target": { "id": "task-result-tasks" },
+        "mode": "press",
+        "run": "flows/task-result.ad#return"
+      },
+      {
+        "target": { "id": "task-row-demo-command-pane" },
+        "mode": "press",
+        "run": "flows/task-result.ad#pane"
+      },
+      {
+        "target": { "text": "2030-04-12 08:31:00 UTC" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/task-result.ad#output"
+      },
+      {
+        "target": { "id": "task-result-tasks" },
+        "mode": "press",
+        "run": "flows/task-result.ad#return"
+      },
+      { "run": "flows/task-result.ad#close" },
+      {
+        "target": { "id": "task-row-demo-command-peer" },
+        "mode": "hidden",
+        "run": "flows/task-result.ad#closed"
+      },
+      { "run": "flows/task-result.ad#unavailable-open" },
+      {
+        "target": { "id": "task-result-unavailable" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/task-result.ad#unavailable"
+      },
+      {
+        "target": { "id": "task-result-tasks" },
+        "mode": "press",
+        "run": "flows/task-result.ad#return"
+      },
+      {
+        "target": { "id": "task-row-demo-command-peer" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/task-result.ad#list"
+      },
+      { "run": "flows/task-result.ad#close" },
+      {
+        "target": { "id": "task-row-demo-command-peer" },
+        "mode": "hidden",
+        "run": "flows/task-result.ad#closed"
       }
     ],
     "flows/agent-session-tree": [
