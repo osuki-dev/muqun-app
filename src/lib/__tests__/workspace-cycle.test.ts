@@ -8,14 +8,12 @@ import { describe, expect, test } from 'bun:test';
 
 import {
   canCycleWorkspaces,
-  cycleWorkspace,
   cycleWorkspaceFrom,
   recallWorkspaceSelection,
   rememberWorkspaceSelection,
   swipeDirection,
   SWIPE_DISTANCE,
   SWIPE_VELOCITY,
-  workspacePosition,
   workspaceSwitchDirection,
   type WorkspaceMemory,
 } from '../workspace-cycle';
@@ -28,23 +26,14 @@ const workspaces = [
 ];
 
 describe('cycling', () => {
-  test('next and previous step one workspace, and both ends wrap', () => {
-    expect(cycleWorkspace(workspaces, 'wE', 'next')?.workspaceId).toBe('wG');
-    expect(cycleWorkspace(workspaces, 'wM', 'previous')?.workspaceId).toBe('wG');
-    expect(cycleWorkspace(workspaces, 'wN', 'next')?.workspaceId).toBe('wE');
-    expect(cycleWorkspace(workspaces, 'wE', 'previous')?.workspaceId).toBe('wN');
-  });
-
   test('one workspace, or none, has nothing to cycle to', () => {
     expect(canCycleWorkspaces([workspaces[0]])).toBe(false);
-    expect(cycleWorkspace([workspaces[0]], 'wE', 'next')).toBeNull();
     expect(canCycleWorkspaces([])).toBe(false);
-    expect(cycleWorkspace([], '', 'next')).toBeNull();
   });
 
   test('a workspace that no longer exists lands on an end rather than nowhere', () => {
-    expect(cycleWorkspace(workspaces, 'gone', 'next')?.workspaceId).toBe('wE');
-    expect(cycleWorkspace(workspaces, 'gone', 'previous')?.workspaceId).toBe('wN');
+    expect(cycleWorkspaceFrom(workspaces, 'gone', null, 'next')?.workspaceId).toBe('wE');
+    expect(cycleWorkspaceFrom(workspaces, 'gone', null, 'previous')?.workspaceId).toBe('wN');
   });
 });
 
@@ -96,21 +85,6 @@ describe('cycling during a burst', () => {
 
   test('a lone workspace still offers nothing, pending or not', () => {
     expect(cycleWorkspaceFrom([workspaces[0]], 'wE', 'wE', 'next')).toBeNull();
-  });
-});
-
-describe('position indicator', () => {
-  test('the current position is the one drawn before any swipe', () => {
-    expect(workspacePosition(workspaces, 'wN')).toEqual({
-      workspaceId: 'wN',
-      title: '.osuki',
-      position: 4,
-      total: 4,
-    });
-  });
-
-  test('an unknown workspace has no position', () => {
-    expect(workspacePosition(workspaces, 'gone')).toBeNull();
   });
 });
 

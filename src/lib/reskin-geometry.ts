@@ -386,21 +386,6 @@ export function rippleDepth(progress: number): number {
   return 1 - t * t * (3 - 2 * t);
 }
 
-/**
- * How far a ring bends the picture at a distance behind the front, in points
- * along the radius. The program computes the same thing per pixel; this is
- * the copy the tests can read.
- */
-export function rippleDisplacement(behind: number, depth: number): number {
-  if (!(behind > 0)) return 0;
-  return (
-    RIPPLE_AMPLITUDE *
-    depth *
-    Math.exp(-RIPPLE_DECAY * behind) *
-    Math.sin((2 * Math.PI * behind) / RIPPLE_WAVELENGTH)
-  );
-}
-
 /* -------------------------------------------------------------------------- */
 /* The scan: two bands re-encode the page from the tapped row                 */
 /* -------------------------------------------------------------------------- */
@@ -417,23 +402,6 @@ export function scanReach(origin: ReskinPoint, size: ReskinSize): number {
 export function scanFront(progress: number, reach: number): number {
   'worklet';
   return reach * FRONT_OVERSHOOT * progress;
-}
-
-/** One band, as the rows its leading and trailing edges sit on. */
-export type ScanBand = { lead: number; trail: number };
-
-/**
- * Where the two bands are: one travelling up from the tapped row and one
- * travelling down. A trailing edge never crosses back over the row, which is
- * what makes the first frames one band opening rather than two arriving.
- */
-export function scanBands(front: number, originY: number): { up: ScanBand; down: ScanBand } {
-  const reach = Math.max(0, front);
-  const tail = Math.max(0, reach - SCAN_BAND);
-  return {
-    up: { lead: originY - reach, trail: originY - tail },
-    down: { lead: originY + reach, trail: originY + tail },
-  };
 }
 
 /** What the app is going to do about a re-skin. */

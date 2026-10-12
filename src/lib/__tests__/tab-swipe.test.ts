@@ -14,7 +14,6 @@ import { describe, expect, test } from 'bun:test';
 import {
   canCycleTabs,
   classifyTwoFingerGesture,
-  cycleTab,
   cycleTabFrom,
   recallTabPane,
   rememberTabPane,
@@ -181,23 +180,14 @@ describe('reading a touch list', () => {
 });
 
 describe('cycling tabs', () => {
-  test('next and previous step one tab, and both ends wrap', () => {
-    expect(cycleTab(tabs, 't1', 'next')?.tabId).toBe('t2');
-    expect(cycleTab(tabs, 't3', 'previous')?.tabId).toBe('t2');
-    expect(cycleTab(tabs, 't3', 'next')?.tabId).toBe('t1');
-    expect(cycleTab(tabs, 't1', 'previous')?.tabId).toBe('t3');
-  });
-
   test('one tab, or none, has nothing to cycle to', () => {
     expect(canCycleTabs([tabs[0]])).toBe(false);
-    expect(cycleTab([tabs[0]], 't1', 'next')).toBeNull();
     expect(canCycleTabs([])).toBe(false);
-    expect(cycleTab([], '', 'next')).toBeNull();
   });
 
   test('a tab that no longer exists lands on an end rather than nowhere', () => {
-    expect(cycleTab(tabs, 'closed', 'next')?.tabId).toBe('t1');
-    expect(cycleTab(tabs, 'closed', 'previous')?.tabId).toBe('t3');
+    expect(cycleTabFrom(tabs, 'closed', null, 'next')?.tabId).toBe('t1');
+    expect(cycleTabFrom(tabs, 'closed', null, 'previous')?.tabId).toBe('t3');
   });
 });
 
