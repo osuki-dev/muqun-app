@@ -24,15 +24,18 @@ export default function GitDiffScreen() {
     sessionId: string;
     paneId?: string;
     vcsFiles?: string;
+    worktrees?: string;
     serverId?: string;
     canLazygit?: string;
   }>();
 
   return (
     <GitDiffView
+      key={`${params.serverId}:${params.sessionId}:${params.paneId}`}
       sessionId={params.sessionId || 'default'}
       paneId={params.paneId || ''}
       vcsFiles={params.vcsFiles === '1'}
+      worktreesSupported={params.worktrees === '1'}
       serverId={params.serverId}
       canLazygit={params.canLazygit === '1'}
     />

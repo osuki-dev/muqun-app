@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { GitBranch } from 'lucide-react-native';
@@ -6,12 +6,15 @@ import { SheetSceneQuietControl } from '@/components/sheet-scene';
 import { useLazygit } from '@/hooks/use-lazygit';
 
 import { ChangesSheet } from '@/components/changes-sheet';
+import { ChangesWorktreePicker } from '@/components/changes-worktree-picker';
+import type { GitWorktreeInventory } from '@/lib/git-worktrees';
 import {
   discardPaneVcsFile,
   getPaneVcsFile,
   getPaneVcsFiles,
   loadGitFileDiff,
   loadGitStatus,
+  loadGitWorktrees,
 } from '@/lib/gateway-client';
 import { paneChangesApi, type PaneChangesClient } from '@/lib/changes-api';
 
@@ -45,6 +48,7 @@ export function GitDiffView({
   vcsFiles,
   serverId,
   canLazygit = false,
+  worktreesSupported = false,
 }: {
   sessionId: string;
   paneId: string;
@@ -52,17 +56,60 @@ export function GitDiffView({
   vcsFiles: boolean;
   serverId?: string;
   canLazygit?: boolean;
+  worktreesSupported?: boolean;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
-  const lazygit = useLazygit({ enabled: canLazygit, sessionId, paneId, serverId });
+  const [worktree, setWorktree] = useState<string | undefined>();
+  const [inventory, setInventory] = useState<GitWorktreeInventory | null>(null);
+  const [inventoryLoading, setInventoryLoading] = useState(false);
+  const [inventoryError, setInventoryError] = useState(false);
+  const [revision, setRevision] = useState(0);
+  useEffect(() => {
+    if (!worktreesSupported) return;
+    const controller = new AbortController();
+    let active = true;
+    setInventoryLoading(true);
+    void loadGitWorktrees(sessionId, paneId, controller.signal)
+      .then((next) => {
+        if (!active) return;
+        setInventory(next);
+        setInventoryError(false);
+        // A removed selection stays selected until the reader chooses again;
+        // its read routes fail explicitly rather than showing another checkout.
+      })
+      .catch(() => {
+        if (active) setInventoryError(true);
+      })
+      .finally(() => {
+        if (active) setInventoryLoading(false);
+      });
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [sessionId, paneId, worktreesSupported, revision]);
+  const lazygit = useLazygit({ enabled: canLazygit && !worktree, sessionId, paneId, serverId });
   const api = useMemo(
-    () => paneChangesApi({ sessionId, paneId, vcsFiles }, PANE_CLIENT),
-    [paneId, sessionId, vcsFiles]
+    () => paneChangesApi({ sessionId, paneId, vcsFiles, worktree }, PANE_CLIENT),
+    [paneId, sessionId, vcsFiles, worktree]
   );
   return (
     <ChangesSheet
+      key={`${sessionId}:${paneId}:${worktree ?? ''}`}
       testID="git-diff-view"
+      checkoutControl={
+        worktreesSupported ? (
+          <ChangesWorktreePicker
+            inventory={inventory}
+            selected={worktree}
+            loading={inventoryLoading}
+            error={inventoryError}
+            onRefresh={() => setRevision((previous) => previous + 1)}
+            onSelect={setWorktree}
+          />
+        ) : undefined
+      }
       api={api}
       headingActions={
         lazygit.available ? (

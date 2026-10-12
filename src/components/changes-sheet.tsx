@@ -72,6 +72,7 @@ export interface ChangesSheetProps {
   /** Verified checkout context, not a branch or an inferred workspace label. */
   worktree?: ChangesWorktreeContext;
   headingActions?: ReactNode;
+  checkoutControl?: ReactNode;
 }
 
 /** One file's fetched patch, per scope and path (`lazy` listings). */
@@ -253,6 +254,7 @@ export const ChangesSheet = memo(function ChangesSheet({
   targetPath,
   worktree,
   headingActions,
+  checkoutControl,
 }: ChangesSheetProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -797,8 +799,9 @@ export const ChangesSheet = memo(function ChangesSheet({
       // The caption line is always there, so the list under it never jumps.
       caption={loading && lastCaption ? lastCaption : summary}
       detail={
-        worktree || repo ? (
+        checkoutControl || worktree || repo ? (
           <View style={{ gap: 4 }}>
+            {checkoutControl}
             {worktree ? <ChangesWorktreeLine worktree={worktree} /> : null}
             {repo ? <ChangesRepoLine repo={repo} /> : null}
           </View>

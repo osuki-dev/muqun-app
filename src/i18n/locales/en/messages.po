@@ -1197,6 +1197,10 @@ msgstr "Choose which changes to show"
 msgid "Choose which simulator to show"
 msgstr "Choose which simulator to show"
 
+#: src/components/changes-worktree-picker.tsx
+msgid "Choose worktree"
+msgstr "Choose worktree"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Classic"
@@ -1833,6 +1837,10 @@ msgstr "Could not keep it"
 msgid "Could not list this computer's agents."
 msgstr "Could not list this computer's agents"
 
+#: src/components/changes-worktree-picker.tsx
+msgid "Could not list worktrees. Refresh to try again."
+msgstr "Could not list worktrees. Refresh to try again"
+
 #: src/components/settings-mcp-tokens.tsx
 msgid "Could not load agent access"
 msgstr "Could not load agent access"
@@ -2157,6 +2165,10 @@ msgstr "Current"
 #: src/components/agent-command-delivery-picker.tsx
 msgid "Current agent"
 msgstr "Current agent"
+
+#: src/components/changes-worktree-picker.tsx
+msgid "Current checkout"
+msgstr "Current checkout"
 
 #: src/components/session-map.tsx
 msgid "Current computer"
@@ -4764,6 +4776,7 @@ msgid "Refresh terminal history"
 msgstr "Refresh terminal history"
 
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/changes-worktree-picker.tsx
 msgid "Refresh worktrees"
 msgstr "Refresh worktrees"
 
@@ -6901,6 +6914,10 @@ msgstr "Version {version}{0}"
 msgid "View file changes"
 msgstr "View file changes"
 
+#: src/components/changes-worktree-picker.tsx
+msgid "Viewing another checkout. Changes are read-only."
+msgstr "Viewing another checkout. Changes are read-only"
+
 #: src/i18n/labels.ts
 msgid "Visual mode"
 msgstr "Visual mode"
@@ -6995,6 +7012,7 @@ msgid "Workspaces"
 msgstr "Workspaces"
 
 #: src/components/changes-sheet.tsx
+#: src/components/changes-worktree-picker.tsx
 msgid "Worktree {name}"
 msgstr "Worktree {name}"
 

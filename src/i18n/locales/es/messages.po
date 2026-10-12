@@ -1197,6 +1197,10 @@ msgstr "Elegir qué cambios mostrar"
 msgid "Choose which simulator to show"
 msgstr "Elegir qué simulador se muestra"
 
+#: src/components/changes-worktree-picker.tsx
+msgid "Choose worktree"
+msgstr "Elegir árbol de trabajo"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Classic"
@@ -1833,6 +1837,10 @@ msgstr "No se pudo conservar"
 msgid "Could not list this computer's agents."
 msgstr "No se pudieron listar los agentes de este ordenador"
 
+#: src/components/changes-worktree-picker.tsx
+msgid "Could not list worktrees. Refresh to try again."
+msgstr "No se pudieron listar los árboles de trabajo. Actualiza para reintentar"
+
 #: src/components/settings-mcp-tokens.tsx
 msgid "Could not load agent access"
 msgstr "No se pudo cargar el acceso de los agentes"
@@ -2157,6 +2165,10 @@ msgstr "Actual"
 #: src/components/agent-command-delivery-picker.tsx
 msgid "Current agent"
 msgstr "Agente actual"
+
+#: src/components/changes-worktree-picker.tsx
+msgid "Current checkout"
+msgstr "Checkout actual"
 
 #: src/components/session-map.tsx
 msgid "Current computer"
@@ -4764,6 +4776,7 @@ msgid "Refresh terminal history"
 msgstr "Actualizar el historial del terminal"
 
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/changes-worktree-picker.tsx
 msgid "Refresh worktrees"
 msgstr "Actualizar worktrees"
 
@@ -6901,6 +6914,10 @@ msgstr "Versión {version}{0}"
 msgid "View file changes"
 msgstr "Ver cambios de archivos"
 
+#: src/components/changes-worktree-picker.tsx
+msgid "Viewing another checkout. Changes are read-only."
+msgstr "Se muestra otro checkout. Los cambios son de solo lectura"
+
 #: src/i18n/labels.ts
 msgid "Visual mode"
 msgstr "Modo visual"
@@ -6995,6 +7012,7 @@ msgid "Workspaces"
 msgstr "Espacios de trabajo"
 
 #: src/components/changes-sheet.tsx
+#: src/components/changes-worktree-picker.tsx
 msgid "Worktree {name}"
 msgstr "Worktree llamado {name}"
 

@@ -12,6 +12,7 @@ import { KEY_ROW_HEIGHT } from '@/constants/key-row';
 import { useGitRepoStatus } from '@/hooks/use-git-repo-status';
 import { gatewaySupportsPaneVcsFiles } from '@/lib/agent-protocol';
 import { badgeCount } from '@/lib/git-diff';
+import { gatewaySupportsGitWorktrees } from '@/lib/git-worktrees';
 
 /**
  * The way into what the pane has changed.
@@ -105,6 +106,7 @@ export function GitDiffButton({
             serverId,
             canLazygit: capabilities?.includes('pane_lazygit') ? '1' : '0',
             vcsFiles: gatewaySupportsPaneVcsFiles(capabilities) ? '1' : '0',
+            worktrees: gatewaySupportsGitWorktrees(capabilities) ? '1' : '0',
           },
         } as unknown as Href);
       }}

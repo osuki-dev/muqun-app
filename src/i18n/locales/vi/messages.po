@@ -1197,6 +1197,10 @@ msgstr "Chọn thay đổi cần hiển thị"
 msgid "Choose which simulator to show"
 msgstr "Chọn trình giả lập để hiển thị"
 
+#: src/components/changes-worktree-picker.tsx
+msgid "Choose worktree"
+msgstr "Chọn cây làm việc"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Classic"
@@ -1833,6 +1837,10 @@ msgstr "Không thể giữ lại"
 msgid "Could not list this computer's agents."
 msgstr "Không thể liệt kê các tác tử của máy tính này"
 
+#: src/components/changes-worktree-picker.tsx
+msgid "Could not list worktrees. Refresh to try again."
+msgstr "Không thể liệt kê cây làm việc. Hãy làm mới để thử lại"
+
 #: src/components/settings-mcp-tokens.tsx
 msgid "Could not load agent access"
 msgstr "Không tải được quyền truy cập của tác nhân"
@@ -2157,6 +2165,10 @@ msgstr "Đang dùng"
 #: src/components/agent-command-delivery-picker.tsx
 msgid "Current agent"
 msgstr "Agent hiện tại"
+
+#: src/components/changes-worktree-picker.tsx
+msgid "Current checkout"
+msgstr "Bản làm việc hiện tại"
 
 #: src/components/session-map.tsx
 msgid "Current computer"
@@ -4764,6 +4776,7 @@ msgid "Refresh terminal history"
 msgstr "Làm mới lịch sử terminal"
 
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/changes-worktree-picker.tsx
 msgid "Refresh worktrees"
 msgstr "Làm mới worktree"
 
@@ -6901,6 +6914,10 @@ msgstr "Phiên bản {version}{0}"
 msgid "View file changes"
 msgstr "Xem các thay đổi tệp"
 
+#: src/components/changes-worktree-picker.tsx
+msgid "Viewing another checkout. Changes are read-only."
+msgstr "Đang xem bản làm việc khác. Các thay đổi chỉ có thể đọc"
+
 #: src/i18n/labels.ts
 msgid "Visual mode"
 msgstr "Chế độ visual"
@@ -6995,6 +7012,7 @@ msgid "Workspaces"
 msgstr "Không gian làm việc"
 
 #: src/components/changes-sheet.tsx
+#: src/components/changes-worktree-picker.tsx
 msgid "Worktree {name}"
 msgstr "Worktree tên {name}"
 

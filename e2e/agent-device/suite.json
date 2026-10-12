@@ -160,6 +160,12 @@
       "platforms": ["ios", "android"]
     },
     {
+      "name": "git-worktrees",
+      "program": "flows/git-worktrees",
+      "tags": ["full", "files", "terminal"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "settings",
       "program": "flows/settings",
       "tags": ["full", "settings"],
@@ -281,6 +287,71 @@
     }
   ],
   "programs": {
+    "flows/git-worktrees": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/git-worktrees.ad#open" },
+      {
+        "target": { "text": "Choose worktree" },
+        "mode": "press",
+        "run": "flows/git-worktrees.ad#press"
+      },
+      {
+        "target": { "text": "linked-checkout · feat/linked-checkout" },
+        "mode": "press",
+        "run": "flows/git-worktrees.ad#press"
+      },
+      {
+        "target": { "text": "Viewing another checkout. Changes are read-only." },
+        "mode": "visible",
+        "run": "flows/git-worktrees.ad#visible"
+      },
+      {
+        "target": { "text": "linked-worktree.txt" },
+        "mode": "visible",
+        "run": "flows/git-worktrees.ad#visible"
+      },
+      {
+        "target": { "text": "Written in the linked checkout." },
+        "mode": "visible",
+        "run": "flows/git-worktrees.ad#visible"
+      },
+      {
+        "target": { "text": "Open Lazygit" },
+        "mode": "hidden",
+        "run": "flows/git-worktrees.ad#hidden"
+      },
+      {
+        "target": { "text": "Refresh changes" },
+        "mode": "press",
+        "run": "flows/git-worktrees.ad#press"
+      },
+      {
+        "target": { "text": "linked-worktree.txt" },
+        "mode": "visible",
+        "run": "flows/git-worktrees.ad#visible"
+      },
+      {
+        "target": { "text": "Choose worktree" },
+        "mode": "press",
+        "run": "flows/git-worktrees.ad#press"
+      },
+      {
+        "target": { "text": "Current checkout" },
+        "mode": "press",
+        "run": "flows/git-worktrees.ad#press"
+      },
+      {
+        "target": { "text": "linked-worktree.txt" },
+        "mode": "hidden",
+        "run": "flows/git-worktrees.ad#hidden"
+      },
+      {
+        "target": { "text": "Choose worktree" },
+        "mode": "visible",
+        "run": "flows/git-worktrees.ad#visible"
+      },
+      { "run": "flows/git-worktrees.ad#close" }
+    ],
     "flows/inline-video": [
       {
         "include": "subflows/open-demo"

@@ -10,6 +10,18 @@ requests are welcome.
 
 Download the official app from [muqun.dev](https://muqun.dev).
 
+## Linked checkout changes
+
+In a terminal pane's Changes sheet, choose a worktree to view modifications in
+another linked checkout of the same Git repository. This requires a Gateway
+advertising `git_worktrees`; older Gateways keep the current-checkout view.
+
+Other checkouts show staged, unstaged and untracked changes against their own
+`HEAD`, with patches loaded per file. They are read-only: browsing never moves
+the terminal, checks out a branch or offers Discard. Return to Current checkout
+to restore the pane's usual Changes controls. The separate agent-session Changes
+sheet does not yet provide this selector.
+
 ## Voice to text
 
 On iOS and Android, open Settings > Voice to text and choose a transcription mode:

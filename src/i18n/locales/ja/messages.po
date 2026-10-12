@@ -1197,6 +1197,10 @@ msgstr "表示する変更を選択"
 msgid "Choose which simulator to show"
 msgstr "表示するシミュレータを選ぶ"
 
+#: src/components/changes-worktree-picker.tsx
+msgid "Choose worktree"
+msgstr "ワークツリーを選択"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Classic"
@@ -1833,6 +1837,10 @@ msgstr "保持できませんでした"
 msgid "Could not list this computer's agents."
 msgstr "このコンピュータのエージェント一覧を取得できませんでした"
 
+#: src/components/changes-worktree-picker.tsx
+msgid "Could not list worktrees. Refresh to try again."
+msgstr "ワークツリーを取得できませんでした。更新して再試行してください"
+
 #: src/components/settings-mcp-tokens.tsx
 msgid "Could not load agent access"
 msgstr "エージェントのアクセス権を読み込めませんでした"
@@ -2157,6 +2165,10 @@ msgstr "使用中"
 #: src/components/agent-command-delivery-picker.tsx
 msgid "Current agent"
 msgstr "現在のエージェント"
+
+#: src/components/changes-worktree-picker.tsx
+msgid "Current checkout"
+msgstr "現在のチェックアウト"
 
 #: src/components/session-map.tsx
 msgid "Current computer"
@@ -4764,6 +4776,7 @@ msgid "Refresh terminal history"
 msgstr "ターミナル履歴を更新"
 
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/changes-worktree-picker.tsx
 msgid "Refresh worktrees"
 msgstr "ワークツリーを更新"
 
@@ -6901,6 +6914,10 @@ msgstr "バージョン {version}{0}"
 msgid "View file changes"
 msgstr "ファイルの変更を表示"
 
+#: src/components/changes-worktree-picker.tsx
+msgid "Viewing another checkout. Changes are read-only."
+msgstr "別のチェックアウトを表示中です。変更は読み取り専用です"
+
 #: src/i18n/labels.ts
 msgid "Visual mode"
 msgstr "ビジュアルモード"
@@ -6995,6 +7012,7 @@ msgid "Workspaces"
 msgstr "ワークスペース"
 
 #: src/components/changes-sheet.tsx
+#: src/components/changes-worktree-picker.tsx
 msgid "Worktree {name}"
 msgstr "ワークツリー {name}"
 

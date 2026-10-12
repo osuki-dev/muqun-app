@@ -1,3 +1,4 @@
+import { parseGitWorktrees, type GitWorktreeInventory } from './git-worktrees';
 import * as TransportSecureStore from 'expo-secure-store';
 import { TransportNegotiation, type TransportVersion } from './transport-negotiation';
 import { AudioPlaybackError } from '@/lib/audio-playback-session';
@@ -136,6 +137,7 @@ import {
   demoAgents,
   demoGitDiff,
   demoGitStatus,
+  demoGitWorktrees,
   demoSendAgentText,
   demoAssetContentUri,
   demoAudioBytes,
@@ -1941,6 +1943,29 @@ export async function loadPaneContext(
   return paneContextFromResponse(await response.json());
 }
 
+/** Only Git-linked checkouts of this pane's authorized repository are offered. */
+export async function loadGitWorktrees(
+  sessionId: string,
+  paneId: string,
+  signal?: AbortSignal
+): Promise<GitWorktreeInventory> {
+  if (isDemoActive()) {
+    const inventory = parseGitWorktrees(demoGitWorktrees(paneId));
+    if (!inventory) throw new Error('Invalid worktree inventory');
+    return inventory;
+  }
+  const response = await gatewayFetch(
+    gatewayUrl(
+      `/api/sessions/${encodeURIComponent(sessionId)}/panes/${encodeURIComponent(paneId)}/git/worktrees`
+    ),
+    { headers: gatewayAuthHeaders(), signal }
+  );
+  if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+  const inventory = parseGitWorktrees(await response.json());
+  if (!inventory) throw new Error('Invalid worktree inventory');
+  return inventory;
+}
+
 /**
  * Which files in this pane's checkout have changed, and by how much.
  *
@@ -1956,15 +1981,16 @@ export async function loadPaneContext(
 export async function loadGitStatus(
   sessionId: string,
   paneId: string,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  worktree?: string
 ): Promise<GitStatus> {
-  if (isDemoActive()) return gitStatusFromResponse(demoGitStatus(paneId));
+  if (isDemoActive()) return gitStatusFromResponse(demoGitStatus(paneId, worktree));
 
   const response = await gatewayFetch(
     gatewayUrl(
       `/api/sessions/${encodeURIComponent(sessionId)}/panes/${encodeURIComponent(
         paneId
-      )}/git/status`
+      )}/git/status${worktree ? `?worktree=${encodeURIComponent(worktree)}` : ''}`
     ),
     { headers: gatewayAuthHeaders(), signal }
   );
@@ -1996,6 +2022,7 @@ export async function loadGitFileDiff(
     oldPath?: string | null;
     /** Absent: working tree against HEAD. `true`: index against HEAD. `false`: working tree against index. */
     staged?: boolean;
+    worktree?: string;
   } = {},
   signal?: AbortSignal
 ): Promise<GitFilePatchPage> {
@@ -2007,7 +2034,7 @@ export async function loadGitFileDiff(
   const context = Math.max(0, Math.min(25, Math.round(options.context ?? DIFF_CONTEXT_LINES)));
 
   if (isDemoActive()) {
-    return gitDiffPageFromResponse(demoGitDiff(paneId, path, from, lines), path);
+    return gitDiffPageFromResponse(demoGitDiff(paneId, path, from, lines, options.worktree), path);
   }
 
   // Assembled by hand rather than through URLSearchParams, whose React Native
@@ -2023,6 +2050,7 @@ export async function loadGitFileDiff(
   // reader is shown a thousand added lines where one line actually changed.
   if (options.oldPath) query.push(`old_path=${encodeURIComponent(options.oldPath)}`);
   if (options.staged !== undefined) query.push(`staged=${options.staged ? 'true' : 'false'}`);
+  if (options.worktree) query.push(`worktree=${encodeURIComponent(options.worktree)}`);
   const response = await gatewayFetch(
     gatewayUrl(
       `/api/sessions/${encodeURIComponent(sessionId)}/panes/${encodeURIComponent(

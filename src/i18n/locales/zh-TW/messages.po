@@ -1197,6 +1197,10 @@ msgstr "選擇要顯示的變更"
 msgid "Choose which simulator to show"
 msgstr "選擇要顯示的模擬器"
 
+#: src/components/changes-worktree-picker.tsx
+msgid "Choose worktree"
+msgstr "選擇工作樹"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Classic"
@@ -1833,6 +1837,10 @@ msgstr "無法保留"
 msgid "Could not list this computer's agents."
 msgstr "無法取得這台電腦的代理程式清單"
 
+#: src/components/changes-worktree-picker.tsx
+msgid "Could not list worktrees. Refresh to try again."
+msgstr "無法列出工作樹。請重新整理後再試"
+
 #: src/components/settings-mcp-tokens.tsx
 msgid "Could not load agent access"
 msgstr "無法載入智能體存取權限"
@@ -2157,6 +2165,10 @@ msgstr "目前"
 #: src/components/agent-command-delivery-picker.tsx
 msgid "Current agent"
 msgstr "目前的 Agent"
+
+#: src/components/changes-worktree-picker.tsx
+msgid "Current checkout"
+msgstr "目前檢出目錄"
 
 #: src/components/session-map.tsx
 msgid "Current computer"
@@ -4764,6 +4776,7 @@ msgid "Refresh terminal history"
 msgstr "重新整理終端機歷史記錄"
 
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/changes-worktree-picker.tsx
 msgid "Refresh worktrees"
 msgstr "重新整理工作樹"
 
@@ -6901,6 +6914,10 @@ msgstr "版本 {version}{0}"
 msgid "View file changes"
 msgstr "查看檔案變更"
 
+#: src/components/changes-worktree-picker.tsx
+msgid "Viewing another checkout. Changes are read-only."
+msgstr "正在檢視其他檢出目錄。變更僅供檢視"
+
 #: src/i18n/labels.ts
 msgid "Visual mode"
 msgstr "選取模式"
@@ -6995,6 +7012,7 @@ msgid "Workspaces"
 msgstr "工作區"
 
 #: src/components/changes-sheet.tsx
+#: src/components/changes-worktree-picker.tsx
 msgid "Worktree {name}"
 msgstr "工作樹 {name}"
 
