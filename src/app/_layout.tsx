@@ -333,23 +333,14 @@ function RootContent() {
   const profile = useAppearanceProfile();
   const notificationSurfaceStyle = useNotificationSurfaceStyle();
   const pageOptions = profileNavigationOptions(profile, reduceMotion);
-  // Home and the conversation use the native transition without a second
-  // reveal. Clear the inherited Classic duration so native timing also wins.
-  const conversationPageOptions: ReturnType<typeof profileNavigationOptions> = {
-    animation: reduceMotion ? 'none' : 'default',
-    animationDuration: reduceMotion ? 0 : undefined,
-  };
-  const modalOptions = profileNavigationOptions(profile, reduceMotion, true);
   // A Pad is a window width, not a device: the same test the workspace uses to
   // draw its rail. On a Pad the sheets that are work surfaces open full-screen
-  // (`sheetRouteKinds`) and take the modal transition the full-screen routes
-  // already have; phones never cross the threshold, so nothing changes there.
+  // (`sheetRouteKinds`) with their native default transition; phones never
+  // cross the threshold, so nothing changes there.
   const { width: windowWidth } = useWindowDimensions();
   const isPad = responsiveWorkspaceLayout(windowWidth).mode === 'pad';
-  const sheetRouteOptions = (route: string) => {
-    const options = resolveSheetRouteOptions(route, profile, reduceMotion, isPad);
-    return options.presentation === 'fullScreenModal' ? { ...options, ...modalOptions } : options;
-  };
+  const sheetRouteOptions = (route: string) =>
+    resolveSheetRouteOptions(route, profile, reduceMotion, isPad);
   const { resolvedMode } = useThemeMode();
   const { colors } = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
@@ -434,18 +425,7 @@ function RootContent() {
                       <>{children}</>
                     )
                   ) : (
-                    <RouteScene
-                      modal={options.presentation === 'fullScreenModal'}
-                      sceneType={
-                        options.presentation === 'fullScreenModal'
-                          ? 'modal'
-                          : route.name === 'agent'
-                            ? 'agent'
-                            : route.name.startsWith('servers') || route.name.startsWith('ssh')
-                              ? 'terminal'
-                              : 'plain'
-                      }
-                      animated={route.name !== 'index' && route.name !== 'agent'}>
+                    <RouteScene modal={options.presentation === 'fullScreenModal'}>
                       {/* A sheet a Pad shows full-screen draws its own close
                           button: there is no grabber to drag. */}
                       <SheetFullscreenProvider value={isFullscreenSheetRoute(route.name, isPad)}>
@@ -469,14 +449,14 @@ function RootContent() {
                 <Stack.Screen
                   name="index"
                   options={{
-                    ...conversationPageOptions,
+                    ...pageOptions,
                   }}
                 />
                 {/* Native options change in place; sheets retain their measurement contract. */}
                 <Stack.Screen
                   name="agent"
                   options={{
-                    ...conversationPageOptions,
+                    ...pageOptions,
                   }}
                 />
                 <Stack.Screen
@@ -552,7 +532,7 @@ function RootContent() {
                   name="custom-theme"
                   options={{
                     ...sheetPresentationOptions(sheetRoutePresentations['custom-theme']),
-                    ...modalOptions,
+                    ...pageOptions,
                   }}
                 />
                 <Stack.Screen
@@ -583,13 +563,16 @@ function RootContent() {
                   name="simfarm"
                   options={{
                     ...sheetPresentationOptions(sheetRoutePresentations['simfarm']),
-                    ...modalOptions,
+                    ...pageOptions,
                   }}
                 />
                 <Stack.Screen name="explore" options={sheetRouteOptions('explore')} />
                 <Stack.Screen
                   name="diagram-viewer"
-                  options={sheetPresentationOptions(sheetRoutePresentations['diagram-viewer'])}
+                  options={{
+                    ...sheetPresentationOptions(sheetRoutePresentations['diagram-viewer']),
+                    ...pageOptions,
+                  }}
                 />
                 {/*
               The agent surface's pickers. They were `<Modal transparent>`

@@ -54,6 +54,8 @@ test('on a Pad a work surface is a fullScreenModal with no grabber and no detent
     expect(options.sheetAllowedDetents).toBeUndefined();
     // Not swipeable on iOS: the scene's close button is the way out.
     expect(options.gestureEnabled).toBe(false);
+    expect(options.animation).toBe('default');
+    expect(options.animationDuration).toBeUndefined();
     expect(isFullscreenSheetRoute(route, true)).toBe(true);
     expect(sheetRouteOptions(route, undefined, true, true).animation).toBe('none');
   }
@@ -112,9 +114,13 @@ test('the Android width cap does not narrow full-screen catalogues or other pick
   });
 });
 
-test('the two full-screen routes are full-screen everywhere and draw no sheet close', () => {
-  for (const route of ['custom-theme', 'simfarm']) {
+test('explicit full-screen routes retain native motion and draw no sheet close', () => {
+  for (const route of ['custom-theme', 'simfarm', 'diagram-viewer']) {
     expect(sheetRoutePresentations[route]).toBe('fullscreen');
+    expect(sheetRouteOptions(route).animation).toBe('default');
+    expect(sheetRouteOptions(route).animationDuration).toBeUndefined();
+    expect(sheetRouteOptions(route, undefined, true).animation).toBe('none');
+    expect(sheetRouteOptions(route, undefined, true).animationDuration).toBe(0);
     expect(sheetRouteOptions(route, undefined, false, true)).toEqual(sheetRouteOptions(route));
     // They have their own way out; the scene's button is for promoted sheets.
     expect(isFullscreenSheetRoute(route, true)).toBe(false);

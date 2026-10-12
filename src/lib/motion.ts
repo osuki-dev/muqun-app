@@ -122,18 +122,6 @@ export const STAGGER = {
  */
 export const ENTRY_BUDGET_MS = 400;
 
-/** Muqun navigation: fluid cyber-mechanical transitions, depth reveals, and responsive header arrival. */
-export const NAVIGATION_MOTION = {
-  pageMs: 240,
-  pageScale: 1.04,
-  depthScale: 0.975,
-  terminalScale: 0.985,
-  agentScale: 0.97,
-  headerMs: 180,
-  headerDistance: 4,
-  modalMs: 260,
-} as const;
-
 /**
  * The two re-skin transitions, which are longer than anything else the app
  * animates and are allowed to be.
@@ -145,10 +133,9 @@ export const NAVIGATION_MOTION = {
  * happened. At 400 ms a front crossing a phone is moving fast enough to read
  * as a wipe; the extra beats are what make it a wash.
  *
- * They are the app's own numbers for the same reason `NAVIGATION_MOTION`'s
- * are, and they are here rather than at the call site for the same reason
- * too: the two transitions are one family and retuning them should be one
- * edit. The reduced-motion fallback is not here because it has a token --
+ * They are the app's own numbers: the two transitions are one family and
+ * retuning them should be one edit. The reduced-motion fallback is not here
+ * because it has a token --
  * `DURATION.short` -- and a dissolve with no travel in it is exactly what that
  * token is for.
  *
@@ -539,63 +526,3 @@ export const listLayout = (duration: DurationToken | PresetToken | number = 'sho
   LinearTransition.duration(resolveDuration(duration))
     .easing(EASE_OUT)
     .reduceMotion(ReduceMotion.System);
-
-/**
- * Route scene archetypes for targeted cyber-mechanical navigation:
- * - 'terminal': preserves text grid geometry with micro optical depth (scale 0.985 -> 1.0, opacity 0.3 -> 1.0)
- * - 'agent': neural telemetry aperture reveal (scale 0.97 -> 1.0, translateY 4 -> 0, opacity 0.2 -> 1.0)
- * - 'modal': cassette tray upward dock (translateY 16 -> 0, opacity 0.2 -> 1.0)
- * - 'plain': crisp optical aperture focus (scale 0.975 -> 1.0, opacity 0.25 -> 1.0)
- */
-export type RouteSceneType = 'terminal' | 'agent' | 'modal' | 'plain';
-
-export const routeSceneEnter = (sceneType: RouteSceneType | number = 'plain', delay = 0) => {
-  const resolvedType: RouteSceneType = typeof sceneType === 'number' ? 'plain' : sceneType;
-  const resolvedDelay = typeof sceneType === 'number' ? sceneType : delay;
-
-  if (resolvedType === 'terminal') {
-    return ZoomIn.duration(NAVIGATION_MOTION.pageMs)
-      .delay(resolvedDelay)
-      .easing(EASE_OUT)
-      .reduceMotion(ReduceMotion.System)
-      .withInitialValues({
-        transform: [{ scale: NAVIGATION_MOTION.terminalScale }],
-      });
-  }
-
-  if (resolvedType === 'agent') {
-    return FadeInDown.duration(NAVIGATION_MOTION.pageMs)
-      .delay(resolvedDelay)
-      .easing(EASE_OUT)
-      .reduceMotion(ReduceMotion.System)
-      .withInitialValues({
-        opacity: 0.2,
-        transform: [{ translateY: 4 }],
-      });
-  }
-
-  if (resolvedType === 'modal') {
-    return FadeInDown.duration(NAVIGATION_MOTION.modalMs)
-      .delay(resolvedDelay)
-      .easing(EASE_OUT)
-      .reduceMotion(ReduceMotion.System)
-      .withInitialValues({
-        opacity: 0.2,
-        transform: [{ translateY: 16 }],
-      });
-  }
-
-  return ZoomIn.duration(NAVIGATION_MOTION.pageMs)
-    .delay(resolvedDelay)
-    .easing(EASE_OUT)
-    .reduceMotion(ReduceMotion.System)
-    .withInitialValues({
-      transform: [{ scale: NAVIGATION_MOTION.depthScale }],
-    });
-};
-
-/**
- * Modal scene entrance layout animation for fullScreenModal tools.
- * Elegant upward slide with the design system ease-out.
- */
-export const modalSceneEnter = (delay = 0) => routeSceneEnter('modal', delay);
