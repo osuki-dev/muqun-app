@@ -41,12 +41,9 @@ fill id="home-continue-search" "no-such-demo-session"
 wait stable 300 5000
 
 # section session-menu
-# Search leaves exactly one demo row; these interactions never confirm deletion.
+# Search leaves exactly one demo row. The unsaved Demo computer has no recorded
+# delete capability, so its menu must offer dismissal without a destructive action.
 longpress id="home-recent-open" 700
-wait stable 300 5000
-
-# section arm-delete
-press id="home-recent-delete"
 wait stable 300 5000
 
 # section close-menu
