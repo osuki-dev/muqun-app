@@ -1208,7 +1208,7 @@ msgstr "选择要显示的更改"
 msgid "Choose which simulator to show"
 msgstr "选择要显示的模拟器"
 
-#: src/components/changes-worktree-picker.tsx
+#: src/components/git-diff-view.tsx
 msgid "Choose worktree"
 msgstr "选择工作树"
 
@@ -1874,7 +1874,7 @@ msgstr "无法保留"
 msgid "Could not list this computer's agents."
 msgstr "无法获取这台电脑的代理列表"
 
-#: src/components/changes-worktree-picker.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "Could not list worktrees. Refresh to try again."
 msgstr "无法列出工作树。请刷新重试"
 
@@ -2199,7 +2199,8 @@ msgstr "当前"
 msgid "Current agent"
 msgstr "当前 Agent"
 
-#: src/components/changes-worktree-picker.tsx
+#: src/components/changes-worktree-list.tsx
+#: src/components/git-diff-view.tsx
 msgid "Current checkout"
 msgstr "当前检出目录"
 
@@ -2323,6 +2324,7 @@ msgid "detached at {head}"
 msgstr "分离于 {head}"
 
 #: src/components/changes-sheet.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "Detached at {head}"
 msgstr "分离于 {head}"
 
@@ -2864,6 +2866,10 @@ msgstr "生成中…"
 msgid "Get started"
 msgstr "开始使用"
 
+#: src/components/git-diff-view.tsx
+msgid "Git"
+msgstr "Git"
+
 #: src/i18n/labels.ts
 msgid "Git status"
 msgstr "Git 状态"
@@ -3307,10 +3313,6 @@ msgstr "稍后"
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "最新"
-
-#: src/app/commands.tsx
-msgid "Lazygit"
-msgstr "Lazygit"
 
 #: src/hooks/use-lazygit.ts
 msgid "Lazygit startup could not be confirmed"
@@ -3803,6 +3805,7 @@ msgid "no commits yet"
 msgstr "尚无提交"
 
 #: src/components/changes-sheet.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "No commits yet"
 msgstr "尚无提交"
 
@@ -3966,6 +3969,7 @@ msgid "No worktrees yet. Make one below to work on a branch without disturbing t
 msgstr "还没有工作树。在下面创建一个，就能在某个分支上工作而不打扰这份检出"
 
 #: src/components/changes-sheet.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "Not a git repository"
 msgstr "不是 Git 仓库"
 
@@ -4168,13 +4172,13 @@ msgstr "打开附件"
 msgid "Open background tasks"
 msgstr "打开后台任务"
 
-#: src/components/git-diff-button.tsx
-msgid "Open changes"
-msgstr "打开改动"
-
 #: src/components/artifacts-button.tsx
 msgid "Open files"
 msgstr "打开文件列表"
+
+#: src/components/git-diff-button.tsx
+msgid "Open Git"
+msgstr "打开 Git"
 
 #: src/components/agent-tool-card.tsx
 msgid "Open image"
@@ -4201,7 +4205,6 @@ msgstr "在浏览器中打开，通过 SSH 隧道时不可用"
 msgid "Open installation guide"
 msgstr "打开安装指南"
 
-#: src/app/commands.tsx
 #: src/components/git-diff-view.tsx
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
@@ -4295,6 +4298,10 @@ msgstr "OpenCode、DeepSeek 和 T3 Code 并排登场，各有自己的启动磁�
 #: src/app/+not-found.tsx
 msgid "Opening"
 msgstr "正在打开"
+
+#: src/components/git-diff-view.tsx
+msgid "Opening Lazygit…"
+msgstr "正在打开 Lazygit…"
 
 #: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
@@ -4830,7 +4837,7 @@ msgid "Refresh terminal history"
 msgstr "刷新终端历史记录"
 
 #: src/components/agent-worktree-sheet.tsx
-#: src/components/changes-worktree-picker.tsx
+#: src/components/git-diff-view.tsx
 msgid "Refresh worktrees"
 msgstr "刷新工作树"
 
@@ -6249,6 +6256,10 @@ msgstr "真正的终端"
 msgid "The screen hit an error. Try again — your computers stay paired."
 msgstr "这个页面出错了。请重试 — 你配对的电脑不受影响"
 
+#: src/components/changes-worktree-list.tsx
+msgid "The selected worktree is no longer available. Choose another checkout."
+msgstr "所选工作树已不可用，请选择其他检出目录"
+
 #: src/components/ssh-host-form.tsx
 msgid "The server asks its own questions when you connect, a password or a one-time code, and nothing is stored on this device."
 msgstr "连接时由服务器自行提问，例如密码或一次性验证码，本设备不会保存任何内容"
@@ -6877,6 +6888,10 @@ msgstr "立即更新"
 msgid "Update the app to import public theme links. You can still import a file"
 msgstr "更新 App 后即可从公开链接导入主题，你仍然可以从文件导入"
 
+#: src/components/git-diff-view.tsx
+msgid "Update the Gateway to open Lazygit in another worktree."
+msgstr "更新 Gateway 后即可在其他工作树中打开 Lazygit"
+
 #: src/components/asset-viewer.tsx
 #: src/components/inline-file-link.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -6974,7 +6989,7 @@ msgstr "版本 {version}{0}"
 msgid "View file changes"
 msgstr "查看文件变更"
 
-#: src/components/changes-worktree-picker.tsx
+#: src/components/git-diff-view.tsx
 msgid "Viewing another checkout. Changes are read-only."
 msgstr "正在查看其他检出目录。更改仅供查看"
 
@@ -7066,7 +7081,7 @@ msgid "Workspaces"
 msgstr "工作区"
 
 #: src/components/changes-sheet.tsx
-#: src/components/changes-worktree-picker.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "Worktree {name}"
 msgstr "工作树 {name}"
 
@@ -7145,23 +7160,3 @@ msgstr "你的消息"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "你已配对的电脑"
-
-#: src/components/git-diff-button.tsx
-msgid "Open Git"
-msgstr "打开 Git"
-
-#: src/components/git-diff-view.tsx
-msgid "Opening Lazygit…"
-msgstr "正在打开 Lazygit…"
-
-#: src/components/git-diff-view.tsx
-msgid "Update the Gateway to open Lazygit in another worktree."
-msgstr "更新 Gateway 后即可在其他工作树中打开 Lazygit"
-
-#: src/components/git-diff-view.tsx
-msgid "Git"
-msgstr "Git"
-
-#: src/components/changes-worktree-list.tsx
-msgid "The selected worktree is no longer available. Choose another checkout."
-msgstr "所选工作树已不可用，请选择其他检出目录"
