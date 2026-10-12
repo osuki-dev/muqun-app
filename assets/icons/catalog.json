@@ -38,13 +38,13 @@
   {
     "id": "Mint",
     "directory": "mint",
-    "light": "#EFFAF7",
-    "dark": "#102B2B"
+    "light": "#F2F5ED",
+    "dark": "#10332E"
   },
   {
     "id": "Sakura",
     "directory": "sakura",
-    "light": "#F6F0FF",
-    "dark": "#261B37"
+    "light": "#FAF1EC",
+    "dark": "#2D193B"
   }
 ]
