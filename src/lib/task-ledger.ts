@@ -86,6 +86,8 @@ export interface TaskView {
   state: TaskState;
   kind: TaskKind;
   goal: string;
+  /** The requester's stable reference; correlation alone does not imply idempotency. */
+  clientRef?: string;
   /** One line: the agent's last message, a command's tail, or why it failed. */
   summary?: string;
   /** What a working task is doing right now, one short line (Gateway Task 17). */
@@ -221,6 +223,7 @@ export function parseTaskView(value: unknown): TaskView | null {
   const state = parseState(rec.state);
   if (!taskId || !state) return null;
   const summary = asString(rec.summary);
+  const clientRef = asString(rec.client_ref);
   const progress = asString(rec.progress)?.trim().slice(0, 120);
   const exitCode = asFiniteNumber(rec.exit_code);
   const parentTaskId = asString(rec.parent_task_id);
@@ -237,6 +240,7 @@ export function parseTaskView(value: unknown): TaskView | null {
     state,
     kind: rec.kind === 'command' ? 'command' : 'delegation',
     goal: asString(rec.goal) ?? '',
+    ...(clientRef ? { clientRef } : {}),
     ...(summary ? { summary } : {}),
     ...(progress ? { progress } : {}),
     ...(exitCode !== undefined ? { exitCode } : {}),
@@ -294,6 +298,7 @@ export function canMarkTaskDone(
 /** What `POST /api/tasks` takes. `model` is a catalog id or `provider_id/model_id`. */
 export interface LedgerTaskRequest {
   goal: string;
+  clientRef?: string;
   agentId?: string;
   cwd?: string;
   mode?: string;
@@ -311,6 +316,7 @@ export interface LedgerTaskRequest {
 export function ledgerTaskBody(request: LedgerTaskRequest): Record<string, string | string[]> {
   return {
     goal: request.goal,
+    ...(request.clientRef ? { client_ref: request.clientRef } : {}),
     ...(request.agentId ? { agent_id: request.agentId } : {}),
     ...(request.cwd ? { cwd: request.cwd } : {}),
     ...(request.mode ? { mode: request.mode } : {}),
@@ -322,6 +328,84 @@ export function ledgerTaskBody(request: LedgerTaskRequest): Record<string, strin
 }
 
 export type CreatedLedgerTask = { task: TaskView; asid?: string; paneId?: string };
+
+export type LedgerTaskDelivery =
+  | { kind: 'accepted'; created: CreatedLedgerTask }
+  | { kind: 'rejected'; failure: unknown }
+  | { kind: 'unknown'; clientRef: string };
+
+/** Only a definite HTTP rejection allows another creation. A 5xx may follow acceptance. */
+export function isLedgerTaskRejection(failure: unknown): boolean {
+  const message = failure instanceof Error ? failure.message : '';
+  const match = message.match(/^Open task: (\d{3}) (.*)$/s);
+  const status = Number(match?.[1]);
+  if (status < 400 || status >= 500 || status === 408 || !match) return false;
+  try {
+    const code = asString(asRecord(asRecord(JSON.parse(match[2] ?? ''))?.error)?.code);
+    return [
+      'invalid_request',
+      'invalid_directory',
+      'directory_not_found',
+      'not_a_directory',
+      'invalid_mentions',
+      'invalid_attachment',
+      'attachments_unsupported',
+      'terminal_unknown',
+      'unknown_model',
+      'unknown_variant',
+      'invalid_agent',
+      'delegations_disabled',
+    ].includes(code ?? '');
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * A lost creation reply is reconciled by reads, never a second POST. Gateways
+ * may echo client_ref without enforcing uniqueness, so an empty list is not
+ * evidence that a still-running creation was rejected.
+ */
+export async function deliverLedgerTask(io: {
+  previousRef?: string;
+  newRef: () => string;
+  remember: (clientRef: string) => void;
+  forget: (clientRef: string) => void;
+  create: (clientRef: string) => Promise<CreatedLedgerTask | null>;
+  find: (clientRef: string) => Promise<CreatedLedgerTask | null>;
+}): Promise<LedgerTaskDelivery> {
+  const clientRef = io.previousRef ?? io.newRef();
+  const forget = () => {
+    try {
+      io.forget(clientRef);
+    } catch {
+      // Cleanup failure leaves a conservative reference. It cannot undo known acceptance.
+    }
+  };
+  if (!io.previousRef) {
+    // Persist before mutating: a restart must not turn uncertainty into a new send.
+    io.remember(clientRef);
+    try {
+      const created = await io.create(clientRef);
+      if (created) {
+        forget();
+        return { kind: 'accepted', created };
+      }
+    } catch (failure) {
+      if (isLedgerTaskRejection(failure)) {
+        forget();
+        return { kind: 'rejected', failure };
+      }
+    }
+  }
+  // A failed reconciliation read cannot make a possibly accepted POST a rejection.
+  const created = await io.find(clientRef).catch(() => null);
+  if (created) {
+    forget();
+    return { kind: 'accepted', created };
+  }
+  return { kind: 'unknown', clientRef };
+}
 
 /**
  * The answer to `POST /api/tasks`: the task, flattened, plus the session or,
