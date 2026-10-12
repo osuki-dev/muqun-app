@@ -992,7 +992,11 @@ export function HomeEditorialLayout({
             columnGap: geometry.gap,
           },
         ]}>
+        {/* Retain the sections' native coordinate parent: artwork gains its
+            measured height during entry, and flattened ancestors can leave a
+            child's entering animation at the pre-artwork window origin. */}
         <View
+          collapsable={false}
           style={[
             styles.main,
             geometry.mode === 'two-column' ? { width: geometry.mainWidth } : styles.fullWidth,
