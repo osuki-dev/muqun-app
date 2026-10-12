@@ -53,13 +53,6 @@ export type TerminalTextSize = 'compact' | 'default' | 'large';
 // re-tuned scale reaches the pinch logic without a second table to forget.
 export const TERMINAL_TEXT_SIZE_POINTS: Record<TerminalTextSize, number> = TERMINAL_TEXT_SIZES;
 
-/** What the pinch indicator calls each size, matching the settings row. */
-export const TERMINAL_TEXT_SIZE_NAMES: Record<TerminalTextSize, string> = {
-  compact: 'Compact',
-  default: 'Default',
-  large: 'Large',
-};
-
 /**
  * How far out a pinch may zoom.
  *
@@ -454,28 +447,6 @@ export function terminalZoomPercent(scale: number): number {
  * pill simply stayed on screen.
  */
 export type TerminalPinchPhase = 'idle' | 'began' | 'active';
-
-/**
- * What the size pill should read, or `null` for "not shown".
- *
- * The whole rule in one place, so the answer cannot drift from the phase: only
- * an active pinch says anything. A worklet -- the pinch's reaction reads it on
- * the UI thread, once per frame.
- */
-export function terminalZoomIndicatorPercent(
-  phase: TerminalPinchPhase,
-  scale: number
-): number | null {
-  'worklet';
-  if (phase !== 'active') return null;
-  return terminalZoomPercent(scale);
-}
-
-/** "Large · 124%" -- the transient pinch indicator's whole text. */
-export function terminalZoomLabel(size: TerminalTextSize, scale: number): string {
-  const name = TERMINAL_TEXT_SIZE_NAMES[size] ?? TERMINAL_TEXT_SIZE_NAMES.default;
-  return `${name} · ${terminalZoomPercent(scale)}%`;
-}
 
 /** Where a pane should be sitting when it opens, in the pane's own cells. */
 export interface TerminalOpenViewInput {

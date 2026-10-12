@@ -1,15 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
-  RIPPLE_AMPLITUDE,
   RIPPLE_BAND,
-  RIPPLE_DECAY,
   RIPPLE_FRONT_SHARE,
   RIPPLE_SETTLE_FROM,
   RIPPLE_SNAPSHOT_BUDGET_MS,
-  RIPPLE_TAIL,
-  RIPPLE_THIRD_RING,
-  RIPPLE_WAVELENGTH,
   SCAN_BAND,
   SNAPSHOT_BUDGET_MS,
   SNAPSHOT_STRIKES,
@@ -23,10 +18,8 @@ import {
   reskinBlocksTouches,
   resolveOrigin,
   rippleDepth,
-  rippleDisplacement,
   rippleFront,
   rippleReach,
-  scanBands,
   scanFront,
   scanReach,
   selectReskinPlay,
@@ -226,30 +219,6 @@ test('the water is at full depth while the front leaves and flat at the end', ()
   }
 });
 
-test('nothing bends ahead of the front or once the water is flat', () => {
-  expect(rippleDisplacement(-10, 1)).toBe(0);
-  expect(rippleDisplacement(0, 1)).toBe(0);
-  expect(rippleDisplacement(RIPPLE_WAVELENGTH / 4, 0)).toBe(0);
-});
-
-test('the rings bend by about the amplitude at the first crest and fade by the third', () => {
-  const crest = (n: number) => rippleDisplacement(RIPPLE_WAVELENGTH * (n + 0.25), 1);
-  expect(crest(0)).toBeGreaterThan(RIPPLE_AMPLITUDE * 0.8);
-  expect(crest(0)).toBeLessThanOrEqual(RIPPLE_AMPLITUDE);
-  expect(crest(1)).toBeLessThan(crest(0));
-  // The third crest is the faint one, by construction of the decay.
-  expect(crest(2) / RIPPLE_AMPLITUDE).toBeCloseTo(RIPPLE_THIRD_RING, 6);
-  // Troughs bend the other way: a ring, not a bump.
-  expect(rippleDisplacement(RIPPLE_WAVELENGTH * 0.75, 1)).toBeLessThan(0);
-});
-
-test('past the tail no ring bends anything by a visible amount', () => {
-  expect(RIPPLE_AMPLITUDE * Math.exp(-RIPPLE_DECAY * RIPPLE_TAIL)).toBeCloseTo(0.25, 6);
-  for (let behind = RIPPLE_TAIL; behind < RIPPLE_TAIL + 200; behind += 7) {
-    expect(Math.abs(rippleDisplacement(behind, 1))).toBeLessThanOrEqual(0.25 + 1e-9);
-  }
-});
-
 /* -- the scan ------------------------------------------------------------ */
 
 test('the scan reaches past the further end of the screen by a whole band', () => {
@@ -258,22 +227,6 @@ test('the scan reaches past the further end of the screen by a whole band', () =
   const reach = scanReach({ x: 200, y: 430 }, SCREEN);
   expect(scanFront(0, reach)).toBe(0);
   expect(scanFront(1, reach)).toBeGreaterThan(reach);
-});
-
-test('the scan opens as one band at the row and splits into two', () => {
-  const opening = scanBands(40, 430);
-  expect(opening.up).toEqual({ lead: 390, trail: 430 });
-  expect(opening.down).toEqual({ lead: 470, trail: 430 });
-  const apart = scanBands(300, 430);
-  expect(apart.up).toEqual({ lead: 130, trail: 130 + SCAN_BAND });
-  expect(apart.down).toEqual({ lead: 730, trail: 730 - SCAN_BAND });
-});
-
-test('by the end both bands have left the screen', () => {
-  const origin = { x: 200, y: 300 };
-  const { up, down } = scanBands(scanFront(1, scanReach(origin, SCREEN)), origin.y);
-  expect(up.trail).toBeLessThan(0);
-  expect(down.trail).toBeGreaterThan(SCREEN.height);
 });
 
 /* -- which transition runs, if any --------------------------------------- */

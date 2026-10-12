@@ -31,8 +31,6 @@ import {
   terminalPhoneGrid,
   terminalScaleOnPaneOpen,
   terminalScaleOnPinchEnd,
-  terminalZoomIndicatorPercent,
-  terminalZoomLabel,
   terminalZoomPercent,
   type TerminalFitGeometry,
   type TerminalPaneScales,
@@ -282,47 +280,6 @@ describe('a pinch is remembered per pane', () => {
     expect(terminalZoomPercent(1.25)).toBe(125);
     expect(terminalZoomPercent(0.8)).toBe(80);
     expect(terminalZoomPercent(TERMINAL_MIN_SCALE)).toBe(62);
-  });
-
-  test('the indicator names the setting and the zoom', () => {
-    expect(terminalZoomLabel('large', 1.24)).toBe('Large · 124%');
-    expect(terminalZoomLabel('compact', 1)).toBe('Compact · 100%');
-    expect(terminalZoomLabel('default', 0.62)).toBe('Default · 62%');
-  });
-});
-
-describe('the size pill answers a pinch and nothing else (#638)', () => {
-  test('a recogniser that has only begun is not a zoom', () => {
-    // The whole of card #638. Android's pinch recogniser `begin()`s on the
-    // first pointer of ANY drag -- one finger, scrolling -- and only
-    // `activate()`s once the span between two fingers has actually moved. The
-    // pill used to be driven by the first of those, so a plain scroll put
-    // "Default · 100%" on screen; and because a scroll is a stream of
-    // begin/end pairs closer together than the pill's 900 ms hold, the hide
-    // was re-armed before it could fire and the pill never left at all.
-    expect(terminalZoomIndicatorPercent('began', 1)).toBeNull();
-    // Not even once the scale has moved: `began` means "watching", and the
-    // scroll that follows a pinch is still a scroll.
-    expect(terminalZoomIndicatorPercent('began', 1.25)).toBeNull();
-  });
-
-  test('a hand that is not on the glass is not a zoom', () => {
-    expect(terminalZoomIndicatorPercent('idle', 1)).toBeNull();
-    expect(terminalZoomIndicatorPercent('idle', 1.25)).toBeNull();
-  });
-
-  test('an active pinch reads the percentage, including at the resting size', () => {
-    // 100% is a real answer and not a sentinel: the first frame of a pinch, and
-    // any pinch that returns to where it started, both legitimately read it.
-    expect(terminalZoomIndicatorPercent('active', 1)).toBe(100);
-    expect(terminalZoomIndicatorPercent('active', 1.25)).toBe(125);
-    expect(terminalZoomIndicatorPercent('active', TERMINAL_MIN_SCALE)).toBe(62);
-  });
-
-  test('the label is built from the percentage the pill was handed', () => {
-    const percent = terminalZoomIndicatorPercent('active', 1.24);
-    expect(percent).not.toBeNull();
-    expect(terminalZoomLabel('default', (percent as number) / 100)).toBe('Default · 124%');
   });
 });
 
