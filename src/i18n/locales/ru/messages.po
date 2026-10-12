@@ -3255,6 +3255,10 @@ msgstr "Последнее подключение только что"
 msgid "Last folder"
 msgstr "Последняя папка"
 
+#: src/components/home-computer-cards.tsx
+msgid "Last known activity"
+msgstr "Последняя известная активность"
+
 #: src/components/task-row.tsx
 msgid "last seen {ago}"
 msgstr "в последний раз {ago}"

@@ -3255,6 +3255,10 @@ msgstr "剛剛連接過"
 msgid "Last folder"
 msgstr "上次的資料夾"
 
+#: src/components/home-computer-cards.tsx
+msgid "Last known activity"
+msgstr "上次記錄的活動"
+
 #: src/components/task-row.tsx
 msgid "last seen {ago}"
 msgstr "上次連線 {ago}"

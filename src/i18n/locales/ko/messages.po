@@ -3255,6 +3255,10 @@ msgstr "마지막 연결: 방금"
 msgid "Last folder"
 msgstr "마지막 폴더"
 
+#: src/components/home-computer-cards.tsx
+msgid "Last known activity"
+msgstr "마지막으로 확인한 활동"
+
 #: src/components/task-row.tsx
 msgid "last seen {ago}"
 msgstr "마지막 확인 {ago}"
