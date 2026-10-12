@@ -280,27 +280,19 @@
           },
           {
             "name": "Mint",
-            "ios": {
-              "light": "./assets/icons/mint/icon.png",
-              "dark": "./assets/icons/mint/icon-dark.png",
-              "tinted": "./assets/icons/classic/icon-tinted.png"
-            },
+            "ios": "./assets/icons/mint/icon.png",
             "android": {
               "foregroundImage": "./assets/icons/mint/android-foreground.png",
-              "backgroundColor": "#F2F5ED",
+              "backgroundColor": "#0C101E",
               "monochromeImage": "./assets/icons/monochrome.png"
             }
           },
           {
             "name": "Sakura",
-            "ios": {
-              "light": "./assets/icons/sakura/icon.png",
-              "dark": "./assets/icons/sakura/icon-dark.png",
-              "tinted": "./assets/icons/classic/icon-tinted.png"
-            },
+            "ios": "./assets/icons/sakura/icon.png",
             "android": {
               "foregroundImage": "./assets/icons/sakura/android-foreground.png",
-              "backgroundColor": "#FAF1EC",
+              "backgroundColor": "#090B27",
               "monochromeImage": "./assets/icons/monochrome.png"
             }
           }

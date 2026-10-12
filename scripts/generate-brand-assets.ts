@@ -9,7 +9,13 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-type IconSpec = { id: string; directory: string; light: string; dark: string };
+type IconSpec = {
+  id: string;
+  directory: string;
+  light: string;
+  dark: string;
+  fullBleed?: boolean;
+};
 const root = fileURLToPath(new URL('../', import.meta.url));
 const specs: IconSpec[] = JSON.parse(readFileSync(`${root}assets/icons/catalog.json`, 'utf8'));
 const selectedIds = new Set(process.argv.slice(2));
@@ -33,7 +39,8 @@ function magick(args: string[]) {
 for (const spec of specs) {
   if (selectedIds.size > 0 && !selectedIds.has(spec.id)) continue;
   const folder = `assets/icons/${spec.directory}`;
-  if (spec.directory === 'classic') continue; // Preserve the original artwork and its native identifier.
+  // Preserve original Classic artwork and imagegen-prepared full-bleed icon canvases.
+  if (spec.directory === 'classic' || spec.fullBleed) continue;
   const master = `${folder}/mark.png`;
   for (const [filename, background] of [
     ['icon.png', spec.light],
