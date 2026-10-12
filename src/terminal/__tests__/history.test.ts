@@ -14,6 +14,7 @@ import {
   applyTerminalFrame,
   collapseScreenGaps,
   foldPaneRead,
+  foldPaneWindow,
   hasEarlierAfterPage,
   hasEarlierTerminalOutput,
   mergeTerminalWindow,
@@ -26,6 +27,78 @@ import {
 } from '../history';
 
 const MAXIMUM = 2_000;
+
+describe('a captured prefix has separate provenance from mutable output', () => {
+  const rows = (start: number, end: number) =>
+    Array.from({ length: end - start }, (_, index) => `unique row ${start + index}`).join('\n');
+
+  test('a new snapshot replaces the captured prefix without reordering or clearing live output', () => {
+    let held = { output: rows(200, 203), capturedRows: 0 };
+    held = foldPaneWindow(held, rows(100, 200), 'capturedPage', 1_000, true, 3, true);
+    held = foldPaneWindow(held, rows(0, 100), 'capturedPage', 1_000, true, 3);
+    held = foldPaneWindow(held, rows(300, 303), 'frame', 1_000, true, 3);
+    expect(held.output).toBe(`${rows(0, 200)}\n${rows(300, 303)}`);
+    const refreshed = foldPaneWindow(held, rows(200, 300), 'capturedPage', 1_000, true, 3, true);
+    expect(refreshed).toEqual({ output: rows(200, 303), capturedRows: 100 });
+    expect(foldPaneWindow(refreshed, rows(100, 200), 'capturedPage', 1_000, true, 3).output).toBe(
+      rows(100, 303)
+    );
+  });
+
+  test('identical captured rows on separate pinned pages are not deduplicated by text', () => {
+    let held = { output: 'live prompt', capturedRows: 0 };
+    held = foldPaneWindow(held, 'same\nsame', 'capturedPage', 20, false, 0, true);
+    held = foldPaneWindow(held, 'same\nsame', 'capturedPage', 20);
+    expect(held).toEqual({ output: 'same\nsame\nsame\nsame\nlive prompt', capturedRows: 4 });
+    expect(foldPaneWindow(held, 'live prompt edited', 'frame', 20, false, 1).output).toBe(
+      'same\nsame\nsame\nsame\nlive prompt edited'
+    );
+  });
+
+  test('a viewport matching the captured prefix cannot overwrite it', () => {
+    const held = { output: 'old A\nold B\nlive A\nlive B', capturedRows: 2 };
+    expect(foldPaneWindow(held, 'old A\nold B', 'frame', 20, true, 2)).toEqual({
+      output: 'old A\nold B\nold A\nold B',
+      capturedRows: 2,
+    });
+  });
+
+  test('window trimming updates provenance and empty refreshed history leaves live intact', () => {
+    const held = foldPaneWindow(
+      { output: 'live 1\nlive 2', capturedRows: 0 },
+      'old 1\nold 2\nold 3',
+      'capturedPage',
+      4,
+      false,
+      0,
+      true
+    );
+    expect(held).toEqual({ output: 'old 2\nold 3\nlive 1\nlive 2', capturedRows: 2 });
+    expect(foldPaneWindow(held, 'live 1\nlive 2', 'page', 4, false, 0, true)).toEqual({
+      output: 'live 1\nlive 2',
+      capturedRows: 0,
+    });
+  });
+
+  test('first capture on a printing pane replaces accumulated history, and later reads supply only its live viewport', () => {
+    const held = { output: 'history 0\nhistory 1\nhistory 2\nlive prompt', capturedRows: 0 };
+    const captured = foldPaneWindow(
+      held,
+      'history 1\nhistory 2',
+      'capturedPage',
+      40,
+      false,
+      1,
+      true
+    );
+    expect(captured).toEqual({ output: 'history 1\nhistory 2\nlive prompt', capturedRows: 2 });
+    expect(
+      foldPaneWindow(captured, 'history 2\nhistory 3\nnew live prompt', 'refresh', 40, false, 1)
+    ).toEqual({ output: 'history 1\nhistory 2\nnew live prompt', capturedRows: 2 });
+    expect(foldPaneWindow(captured, '', 'frame', 40, false, 1)).toEqual(captured);
+    expect(foldPaneWindow(captured, 'unclassified read', 'frame', 40)).toBe(captured);
+  });
+});
 
 function lines(count: number): string {
   return Array.from({ length: count }, (_, index) => String(index)).join('\n');

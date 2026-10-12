@@ -11,7 +11,7 @@ export interface EarlierPullRead {
 /**
  * Whether to ask a pane's captured history whether it has rows: once per ask,
  * and never once a pull knows more -- a cursor in hand, or the last page
- * given -- or the pane turned out not to be captured.
+ * given. An empty/not_captured answer is reprobable after output advances.
  */
 export function capturedProbeDue(pane: {
   off: boolean;
@@ -33,6 +33,8 @@ export interface CapturedHistoryPage {
   nextBefore: string | null;
   captureEpoch: unknown;
   availability: 'captured' | 'not_captured';
+  snapshotId?: string | null;
+  generation?: string | null;
 }
 
 /** A captured-history read: the page, or the status the gateway answered with (`null`: no answer). */
@@ -40,18 +42,55 @@ export type CapturedHistoryRead =
   | { ok: true; page: CapturedHistoryPage }
   | { ok: false; status: number | null; error: unknown };
 
+/** `not_captured` may mean eligible but not sampled yet on older gateways. */
+export function capturedProbeState(answer: CapturedHistoryRead): {
+  off: false;
+  empty: boolean;
+  hasRows: boolean;
+} {
+  const hasRows =
+    answer.ok && answer.page.availability === 'captured' && answer.page.rows.length > 0;
+  return { off: false, empty: !hasRows, hasRows };
+}
+
+/** Reprobe once output advances, including while the empty probe was in flight. */
+export function capturedReprobeDelay(
+  probedOutput: string | null,
+  output: string,
+  probedAt: number,
+  now: number,
+  intervalMs: number
+): number | null {
+  if (probedOutput === null || probedOutput === output) return null;
+  return Math.max(0, intervalMs - (now - probedAt));
+}
+
 /**
  * Where the next captured page starts: the cursor the last page handed over,
  * and the capture it came from. Per pane, in memory only.
  */
-export type CapturedCursor = { before: string; epoch: unknown };
+export type CapturedCursor = {
+  before: string;
+  epoch: unknown;
+  snapshotId?: string | null;
+  generation?: string | null;
+};
 
 /** What a pull learned about the pane's captured history, for the caller to keep. */
 export type CapturedOutcome =
   /** A page landed; `cursor` is where the next one starts (null: from the top again). */
-  | { kind: 'page'; cursor: CapturedCursor | null; hasMore: boolean }
-  /** This pane is not captured (a shell with native scrollback): not asked again. */
-  | { kind: 'notCaptured' };
+  | { kind: 'page'; cursor: CapturedCursor | null; hasMore: boolean; reset: boolean }
+  /** No capture yet, or native scrollback: fallback now, probe again after output. */
+  | { kind: 'notCaptured'; reset: boolean };
+
+/** New traversals cannot replace the reader's held snapshot implicitly. */
+export function capturedTraversalNeedsRefresh(
+  captured: CapturedOutcome | undefined,
+  heldCapturedRows: number,
+  approved: boolean
+): boolean {
+  return captured?.reset === true && heldCapturedRows > 0 && !approved;
+}
 
 export type EarlierPullOutcome =
   /** A page landed. `origin` says which read it came from. */
@@ -142,7 +181,7 @@ export async function pullEarlierPage({
   if (captured) {
     const outcome = await pullCapturedPage(captured.read, captured.cursor);
     if (outcome.kind !== 'notCaptured') return outcome;
-    notCaptured = { kind: 'notCaptured' };
+    notCaptured = outcome;
   }
   const outcome = await pullServedPage({ page, readRange, readTail, servedStart });
   return notCaptured ? { ...outcome, captured: notCaptured } : outcome;
@@ -161,18 +200,19 @@ function capturedFailure(read: Extract<CapturedHistoryRead, { ok: false }>): Gat
  *   gateway restarted) starts over without one.
  * - A page with rows is the page (`'capturedPage'`). A pane the gateway does
  *   not capture (`not_captured`), or a first page that is empty and has no
- *   more, is `notCaptured`: the caller remembers it and the pull goes on to the
+ *   more, is `notCaptured`: the caller can probe again and the pull goes on to the
  *   range/tail reads, which serve that pane already.
  * - An empty page after pages, or `has_more: false` with nothing: the history
  *   is exhausted (`refused`, the existing notice).
  * - `410` (the cursor is gone) starts over once without the cursor -- rows
- *   already held are dropped by the fold; a second `410` running is `failed`.
+ *   already held stay until the caller explicitly refreshes the captured segment;
+ *   a second `410` running is `failed`.
  * - `400`/`409`/`413`/`404`: `refused`. `503` and no answer: `failed`.
  */
 async function pullCapturedPage(
   read: (before: string | null) => Promise<CapturedHistoryRead>,
   cursor: CapturedCursor | null
-): Promise<EarlierPullOutcome | { kind: 'notCaptured' }> {
+): Promise<EarlierPullOutcome | Extract<CapturedOutcome, { kind: 'notCaptured' }>> {
   let answer = await read(cursor?.before ?? null);
   let first = cursor === null;
   if (!answer.ok && answer.status === 410) {
@@ -182,7 +222,18 @@ async function pullCapturedPage(
       return { kind: 'failed', failure: capturedFailure(answer), rangeUnsupported: false };
     }
   }
-  if (answer.ok && !first && cursor && answer.page.captureEpoch !== cursor.epoch) {
+  if (
+    answer.ok &&
+    !first &&
+    cursor &&
+    (answer.page.captureEpoch !== cursor.epoch ||
+      (cursor.snapshotId != null &&
+        answer.page.snapshotId != null &&
+        answer.page.snapshotId !== cursor.snapshotId) ||
+      (cursor.generation != null &&
+        answer.page.generation != null &&
+        answer.page.generation !== cursor.generation))
+  ) {
     // Another capture: the cursor means nothing in it. Start over.
     first = true;
     answer = await read(null);
@@ -199,7 +250,7 @@ async function pullCapturedPage(
   }
   const { page } = answer;
   if (page.availability === 'not_captured' || (first && page.rows.length === 0 && !page.hasMore)) {
-    return { kind: 'notCaptured' };
+    return { kind: 'notCaptured', reset: true };
   }
   if (page.rows.length === 0) {
     return {
@@ -215,8 +266,16 @@ async function pullCapturedPage(
     rangeUnsupported: false,
     captured: {
       kind: 'page',
-      cursor: page.nextBefore ? { before: page.nextBefore, epoch: page.captureEpoch } : null,
+      cursor: page.nextBefore
+        ? {
+            before: page.nextBefore,
+            epoch: page.captureEpoch,
+            snapshotId: page.snapshotId,
+            generation: page.generation,
+          }
+        : null,
       hasMore: page.hasMore && page.nextBefore !== null,
+      reset: first,
     },
   };
 }
@@ -342,11 +401,22 @@ export function historyExhaustedNotice(): HistoryPullNotice {
   };
 }
 
+/** A restarted traversal cannot be merged into the snapshot the reader holds. */
+export function historyRefreshNotice(): HistoryPullNotice {
+  return {
+    kind: 'refresh',
+    title: t`Terminal history changed`,
+    caption: t`Refresh history to load the current snapshot.`,
+    retry: true,
+    dismissMs: 0,
+  };
+}
+
 /** What the terminal's notice slot says about a pull that did not land a page. */
 export interface HistoryPullNotice {
-  kind: 'failed' | 'exhausted';
+  kind: 'failed' | 'exhausted' | 'refresh';
   title: string;
-  /** The gateway's own reason, under the title. Never the title: it is not the app's sentence. */
+  /** The gateway's reason or the action needed, under the title. */
   caption: string | null;
   /** A Retry that can work: never offered when pairing again is the remedy. */
   retry: boolean;

@@ -1,4 +1,19 @@
 import { describe, expect, mock, test } from 'bun:test';
+import { runInNewContext } from 'node:vm';
+import {
+  declaration,
+  productionSource,
+  transpile,
+  walk,
+} from '../../test-support/production-source';
+import { foldPaneWindow } from '../../terminal/history';
+import type { CapturedHistoryRead } from '../terminal-history-pull';
+import {
+  emptyPaneCache,
+  rememberPaneWindow,
+  recallPaneWindow,
+  paneWindowWorthFiling,
+} from '../pane-cache';
 
 // The Lingui macro is compiled away in the app; here it reads as the source text.
 const interpolate = (strings: TemplateStringsArray, ...values: unknown[]) =>
@@ -17,8 +32,12 @@ const { parseTerminalDiscovery } = await import('../agent-protocol');
 const {
   backendPagesHistory,
   capturedProbeDue,
+  capturedProbeState,
+  capturedReprobeDelay,
+  capturedTraversalNeedsRefresh,
   canOfferHistoryPull,
   historyExhaustedNotice,
+  historyRefreshNotice,
   historyPullUsesRange,
   tailPageFoundNothing,
   historyPullBlockedAfter,
@@ -477,4 +496,275 @@ test('the captured history is asked once, and never after a pull knows more', ()
     [{ ...pane, off: true }, false],
   ];
   expect(cases.map(([state]) => capturedProbeDue(state))).toEqual(cases.map(([, due]) => due));
+});
+
+describe('captured traversal recovery', () => {
+  const page = (
+    rows: string[],
+    snapshotId = 'new',
+    generation = 'generation',
+    captureEpoch = 'epoch'
+  ) => ({
+    ok: true as const,
+    page: {
+      rows,
+      hasMore: true,
+      nextBefore: 'next',
+      snapshotId,
+      generation,
+      captureEpoch,
+      availability: 'captured' as const,
+    },
+  });
+  const pull = (read: (before: string | null) => Promise<CapturedHistoryRead>) =>
+    pullEarlierPage({
+      page: null,
+      readRange: scripted([]).read,
+      readTail: scripted([]).read,
+      servedStart,
+      captured: {
+        cursor: { before: 'expired', epoch: 'epoch', snapshotId: 'old', generation: 'generation' },
+        read,
+      },
+    });
+
+  test('410 preserves the held snapshot until refresh; fresh rows then replace only its prefix', async () => {
+    const asked: (string | null)[] = [];
+    const outcome = await pull(async (before) => {
+      asked.push(before);
+      return before
+        ? { ok: false, status: 410, error: new Error('HTTP 410: expired') }
+        : page(['old 7', 'old 8', 'old 9', 'old 10']);
+    });
+    expect(asked).toEqual(['expired', null]);
+    expect(outcome.kind).toBe('page');
+    if (outcome.kind !== 'page' || outcome.captured?.kind !== 'page')
+      throw new Error('expected captured page');
+    let held = foldPaneWindow(
+      { output: 'live A\nlive B', capturedRows: 0 },
+      'old 1\nold 2\nold 3\nold 4\nold 5\nold 6\nold 7\nold 8',
+      'capturedPage',
+      40,
+      true,
+      2,
+      true
+    );
+    const beforeRefresh = held;
+    expect(capturedTraversalNeedsRefresh(outcome.captured, held.capturedRows, false)).toBe(true);
+    expect(historyRefreshNotice()).toMatchObject({ kind: 'refresh', retry: true, dismissMs: 0 });
+    held = foldPaneWindow(held, 'live C\nlive D', 'frame', 40, true, 2);
+    expect(held.output).toBe(
+      `${beforeRefresh.output.split('\n').slice(0, 8).join('\n')}\nlive C\nlive D`
+    );
+    expect(capturedTraversalNeedsRefresh(outcome.captured, held.capturedRows, true)).toBe(false);
+    const refreshed = foldPaneWindow(
+      held,
+      outcome.fetched.output,
+      outcome.origin,
+      40,
+      true,
+      2,
+      outcome.captured.reset
+    );
+    expect(refreshed.output).toBe('old 7\nold 8\nold 9\nold 10\nlive C\nlive D');
+  });
+
+  test.each(['snapshotId', 'generation', 'captureEpoch'] as const)(
+    '%s changes restart without merging the mismatched page',
+    async (field) => {
+      const asked: (string | null)[] = [];
+      const answer = page(['wrong page'], 'old');
+      answer.page[field] = 'changed';
+      const outcome = await pull(async (before) => {
+        asked.push(before);
+        return before ? answer : page(['current first page']);
+      });
+      expect(asked).toEqual(['expired', null]);
+      expect(outcome).toMatchObject({
+        kind: 'page',
+        fetched: { output: 'current first page' },
+        captured: {
+          reset: true,
+          cursor: { snapshotId: 'new', generation: 'generation', epoch: 'epoch' },
+        },
+      });
+    }
+  );
+
+  test('an unseeded first probe stays eligible, and later sampling enables captured pagination', async () => {
+    const unseeded = {
+      ok: true as const,
+      page: { ...page([]).page, availability: 'not_captured' as const },
+    };
+    const probe = capturedProbeState(unseeded);
+    expect(probe).toEqual({ off: false, empty: true, hasRows: false });
+    expect(
+      capturedProbeDue({ ...probe, exhausted: false, cursor: null, askedAlready: false })
+    ).toBe(true);
+    expect(capturedProbeState(page(['sampled row']))).toEqual({
+      off: false,
+      empty: false,
+      hasRows: true,
+    });
+    const outcome = await pullEarlierPage({
+      page: null,
+      readRange: scripted([]).read,
+      readTail: scripted([tailRead]).read,
+      servedStart,
+      captured: { cursor: null, read: async () => unseeded },
+    });
+    expect(outcome).toMatchObject({
+      kind: 'page',
+      origin: 'page',
+      captured: { kind: 'notCaptured', reset: true },
+    });
+    // A native-scrollback shell still receives the ordinary tail fallback.
+    expect(outcome.kind === 'page' && outcome.fetched).toBe(tailRead);
+  });
+
+  test('history parsing retains snapshot identity and accepts legacy pages without it', () => {
+    const parse = runInNewContext(
+      transpile(
+        `${declaration('src/lib/gateway-client.ts', 'parseCapturedHistoryPage')}\nparseCapturedHistoryPage`
+      )
+    ) as (value: unknown) => unknown;
+    expect(
+      parse({
+        rows: ['row'],
+        has_more: true,
+        next_before: 'cursor',
+        capture_epoch: 'epoch',
+        snapshot_id: 'snapshot',
+        generation: 'generation',
+      })
+    ).toMatchObject({ captureEpoch: 'epoch', snapshotId: 'snapshot', generation: 'generation' });
+    expect(parse({ rows: ['legacy'], has_more: false })).toMatchObject({
+      rows: ['legacy'],
+      snapshotId: null,
+      generation: null,
+      captureEpoch: null,
+    });
+  });
+
+  test('output advancing before an empty probe finishes schedules a throttled retry without idle polling', () => {
+    expect(capturedReprobeDelay('first frame', 'sampled frame', 1_000, 11_000, 30_000)).toBe(
+      20_000
+    );
+    expect(capturedReprobeDelay('first frame', 'sampled frame', 1_000, 31_000, 30_000)).toBe(0);
+    expect(
+      capturedReprobeDelay('sampled frame', 'sampled frame', 31_000, 61_000, 30_000)
+    ).toBeNull();
+    expect(capturedReprobeDelay(null, 'sampled frame', 1_000, 31_000, 30_000)).toBeNull();
+  });
+
+  test('rows discovered before the viewport boundary are offered once when the boundary arrives', async () => {
+    const source = productionSource('src/components/server-terminal-workspace.tsx');
+    let effectSource = '';
+    walk(source.program, (node) => {
+      if (
+        node.type !== 'CallExpression' ||
+        node.callee.type !== 'Identifier' ||
+        node.callee.name !== 'useEffect'
+      )
+        return;
+      const callback = node.arguments[0];
+      if (callback?.type !== 'ArrowFunctionExpression') return;
+      const code = source.code(callback);
+      if (code.includes('const probedOutput = readOutputWindow().output;')) effectSource = code;
+    });
+    if (!effectSource) throw new Error('Missing captured probe effect');
+    let reads = 0;
+    const offers: boolean[] = [];
+    const viewport = { current: 0 };
+    const globals = {
+      selection: { paneId: 'pane' },
+      data: { sessionId: 'session' },
+      ready: true,
+      servesCapturedHistory: true,
+      capturedProbe: 0,
+      capturedViewportReady: false,
+      capturedOffRef: { current: false },
+      capturedExhaustedRef: { current: false },
+      capturedCursorRef: { current: null },
+      capturedProbedKeyRef: { current: '' },
+      capturedProbedAtRef: { current: 0 },
+      activePaneRef: { current: 'pane' },
+      loadingEarlierOutputRef: { current: false },
+      capturedRefreshRequiredRef: { current: false },
+      capturedEmptyRef: { current: false },
+      paneScreenRowsRef: viewport,
+      outputLineLimitRef: { current: 240 },
+      MAX_PANE_OUTPUT_LINES: 2_000,
+      capturedProbeDue,
+      capturedProbeState,
+      readOutputWindow: () => ({ output: 'live viewport', capturedRows: 0 }),
+      readPaneHistory: async () => {
+        reads += 1;
+        return page(['captured row']);
+      },
+      setCapturedEmptyProbe: () => {},
+      offerCaptured: (_pane: string, open: boolean) => offers.push(open),
+    };
+    const effect = runInNewContext(transpile(effectSource), globals) as () =>
+      | (() => void)
+      | undefined;
+    const cleanup = effect();
+    await Promise.resolve();
+    expect(offers).toEqual([false]);
+    expect(reads).toBe(1);
+    cleanup?.();
+    viewport.current = 24;
+    globals.capturedViewportReady = true;
+    effect();
+    await Promise.resolve();
+    expect(offers).toEqual([false, true]);
+    expect(reads).toBe(2);
+    effect();
+    await Promise.resolve();
+    expect(reads).toBe(2);
+  });
+
+  test('pane handoff retains prefix provenance even when a reconnect discarded its cursor state', () => {
+    const handoff = runInNewContext(
+      transpile(
+        `${declaration('src/components/server-terminal-workspace.tsx', 'usePaneWindowHandoff')}\nusePaneWindowHandoff`
+      ),
+      {
+        rememberPaneWindow,
+        recallPaneWindow,
+        paneWindowWorthFiling,
+      }
+    ) as (switched: boolean, input: Record<string, unknown>) => void;
+    const cache = { current: emptyPaneCache };
+    const owner = { current: 'previous-pane' };
+    const restored: { output: string; capturedRows: number }[] = [];
+    const input = {
+      output: 'captured row\nlive row',
+      capturedRows: 1,
+      paneId: 'next-pane',
+      outputShape: 'ansi:main',
+      paneCacheRef: cache,
+      paneWindowOwnerRef: owner,
+      heldShapeRef: { current: 'ansi:main' },
+      outputLineLimitRef: { current: 240 },
+      paneRevisionRef: { current: 1 },
+      canLoadEarlierOutputRef: { current: true },
+      earlierOutputRowsRef: { current: 2 },
+      rangeUnsupportedRef: { current: false },
+      lastReadRef: { current: null },
+      capturedHereRef: { current: null },
+      setOutput: (output: string, capturedRows = 0) => restored.push({ output, capturedRows }),
+      setCanLoadEarlierOutput: () => {},
+      setPaneRevision: () => {},
+    };
+    handoff(true, input);
+    handoff(true, { ...input, output: 'next live', capturedRows: 0, paneId: 'previous-pane' });
+    expect(restored).toEqual([
+      { output: '', capturedRows: 0 },
+      { output: 'captured row\nlive row', capturedRows: 1 },
+    ]);
+    expect(
+      cache.current.entries.find((entry) => entry.paneId === 'previous-pane')?.captured
+    ).toMatchObject({ rows: 1, generation: -1, cursor: null });
+  });
 });
