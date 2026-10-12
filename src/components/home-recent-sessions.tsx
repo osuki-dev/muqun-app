@@ -1,7 +1,7 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
-import { ChevronRight, X } from 'lucide-react-native';
+import { ChevronRight, Trash2, X } from 'lucide-react-native';
 import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   AppState,
@@ -14,12 +14,13 @@ import {
 import { useFocusEffect } from 'expo-router';
 
 import { AgentMark } from '@/components/agent-mark';
+import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { FontedTextInput } from '@/components/fonted-text-input';
 import { PressableScale } from '@/components/pressable-scale';
 import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { useLatestReader } from '@/hooks/use-render-refs';
+import { useLatestReader, useStableHandler } from '@/hooks/use-render-refs';
 import { useMinuteNow } from '@/hooks/use-minute-now';
 import {
   HOME_CONTINUE_REFRESH_MS,
@@ -39,7 +40,11 @@ import { snapshotServesAgents } from '@/lib/session-snapshot';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useServerChannels } from '@/stores/server-channels';
 import { useAppActive } from '@/hooks/use-app-active';
-import { loadRecordSessions, readGatewayRecordJson } from '@/lib/gateway-client';
+import {
+  deleteGatewayRecordJson,
+  loadRecordSessions,
+  readGatewayRecordJson,
+} from '@/lib/gateway-client';
 import { resolveSessionId, sessionChoices, type SessionChoice } from '@/lib/session-switcher';
 import { useServerSession } from '@/stores/server-session';
 import { isDemoRecord } from '@/lib/demo-gateway';
@@ -77,6 +82,17 @@ import { useAppSettings } from '@/stores/app-settings';
 import type { SshHostRecord } from '@/lib/ssh-hosts';
 import { useHomeRecentsStore } from '@/stores/home-recents';
 import { useGoneAgentSessions } from '@/stores/gone-agent-sessions';
+import { useGatewayConnectionStore } from '@/stores/gateway-connection';
+import { describeGatewayFailure } from '@/lib/network-error';
+import { agentRequestErrorDetail, classifyAgentRequestError } from '@/lib/agent-request-error';
+import { homeTargetAgentId } from '@/lib/home-recents';
+import {
+  deleteHomeSession,
+  homeSessionDeleteTarget,
+  HomeSessionDeleteUnavailableError,
+  AGENT_SESSION_DELETE_SCOPED_CAPABILITY,
+  type HomeDeletableTarget,
+} from '@/lib/home-session-delete';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
 import { homeProviderTextColor, searchedHomeContinueEntries } from '@/lib/home-continue-search';
@@ -481,6 +497,17 @@ function RecentSessionRow({
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
+  const [menu, setMenu] = useState<{
+    record?: GatewayRecord;
+    target?: HomeDeletableTarget;
+    canDelete: boolean;
+    title: string;
+    computer: string;
+    provider: string;
+  } | null>(null);
+  const [menuError, setMenuError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const deletingRef = useRef(false);
   const target = homeContinueTarget(entry.destination);
   const selected =
     target?.kind === 'agent-session'
@@ -606,85 +633,248 @@ function RecentSessionRow({
     maxChars: metaChars,
   });
   const surface = selected ? theme.colors.primarySubtle : theme.colors.surface;
+  const toggleMenu = () => {
+    if (deletingRef.current) return;
+    setMenuError(null);
+    if (menu) {
+      setMenu(null);
+      return;
+    }
+    const capturedTarget = homeSessionDeleteTarget(entry);
+    const record = servers.find((server) => server.serverId === capturedTarget?.serverId);
+    const canDelete = Boolean(
+      record &&
+      (isDemoRecord(record) ||
+        useServerCapabilities
+          .getState()
+          .byServer[record.serverId]?.includes(AGENT_SESSION_DELETE_SCOPED_CAPABILITY))
+    );
+    setMenu({
+      target: capturedTarget,
+      canDelete,
+      title,
+      computer: computer ?? t`Computer`,
+      provider: agentName,
+      record: record
+        ? { ...record, sshTunnel: record.sshTunnel ? { ...record.sshTunnel } : undefined }
+        : undefined,
+    });
+    if (!capturedTarget) {
+      setMenuError(
+        rowKind.kind === 'agent'
+          ? t`Refresh Home to identify this session’s provider before deleting it.`
+          : t`Close this terminal on its computer. Safe terminal closing from Home is not supported yet.`
+      );
+    } else if (!canDelete) {
+      setMenuError(
+        t`Update Gateway on this computer, then reconnect to enable deleting sessions from Home.`
+      );
+    }
+  };
+  const deleteSession = useStableHandler(() => {
+    if (deletingRef.current) return;
+    const captured = menu;
+    if (!captured?.target || !captured.record || isDemoRecord(captured.record)) {
+      setMenuError(
+        t`Demo sessions cannot be deleted. Open a paired computer to manage its sessions.`
+      );
+      return;
+    }
+    const record = captured.record;
+    if (
+      !useGatewayConnectionStore
+        .getState()
+        .records.some((saved) => saved.serverId === record.serverId)
+    ) {
+      setMenuError(t`Pair this computer again before deleting its sessions.`);
+      return;
+    }
+    deletingRef.current = true;
+    setDeleting(true);
+    setMenuError(null);
+    void deleteHomeSession({
+      target: captured.target,
+      capabilities: useServerCapabilities.getState().byServer[record.serverId],
+      remove: (path) => deleteGatewayRecordJson(record, path),
+      forget: async (deleted) => {
+        useGoneAgentSessions
+          .getState()
+          .markGone(deleted.serverId, deleted.asid, homeTargetAgentId(deleted));
+        const snapshot = useHomeAgentSessions.getState().byServer[deleted.serverId];
+        if (snapshot) {
+          useHomeAgentSessions.getState().record({
+            ...snapshot,
+            sessions: snapshot.sessions.filter(
+              (session) =>
+                session.asid !== deleted.asid || session.agentId !== homeTargetAgentId(deleted)
+            ),
+          });
+        }
+        const recent = useHomeRecentsStore
+          .getState()
+          .entries.find(
+            (entry) =>
+              entry.target.kind === 'agent-session' &&
+              entry.target.serverId === deleted.serverId &&
+              entry.target.asid === deleted.asid
+          );
+        if (
+          recent &&
+          homeTargetAgentId(recent.target.kind === 'agent-session' ? recent.target : undefined) ===
+            homeTargetAgentId(deleted)
+        ) {
+          await useHomeRecentsStore.getState().remove(deleted);
+        }
+        forgetHomeSessionChoices(deleted.serverId);
+        retryHomeRefresh();
+      },
+    }).then(
+      () => {
+        deletingRef.current = false;
+        setDeleting(false);
+        setMenu(null);
+      },
+      (failure: unknown) => {
+        deletingRef.current = false;
+        setDeleting(false);
+        setMenuError(
+          failure instanceof HomeSessionDeleteUnavailableError
+            ? failure.reason === 'provider'
+              ? t`Refresh Home to identify this session’s provider before deleting it.`
+              : t`Update Gateway on this computer, then reconnect to enable deleting sessions from Home.`
+            : classifyAgentRequestError(failure).kind === 'unsupported'
+              ? t`This provider cannot delete sessions. Open the session to stop a running turn or manage it on its computer.`
+              : agentRequestErrorDetail(failure).status === 404
+                ? t`This session is no longer available in this service. Refresh Home before trying again.`
+                : ['auth', 'network', 'timeout', 'backend'].includes(
+                      describeGatewayFailure(failure).kind
+                    )
+                  ? describeGatewayFailure(failure).message
+                  : t`Could not delete this session. Reconnect to its computer and refresh Home before trying again.`
+        );
+      }
+    );
+  });
+  const menuItems: AgentActionMenuItem[] = [];
+  if (menu?.canDelete) {
+    const { title, provider, computer } = menu;
+    menuItems.push({
+      id: 'delete',
+      label: deleting ? t`Deleting session…` : t`Delete session`,
+      Icon: Trash2,
+      tone: 'danger',
+      disabled: deleting,
+      confirm: {
+        label: t`Confirm delete`,
+        detail: t`“${title}” and its conversation history will be deleted in ${provider} on ${computer}. The service may also delete its subagent sessions. This cannot be undone.`,
+        persist: true,
+      },
+      onPress: deleteSession,
+      testID: 'home-recent-delete',
+    });
+  }
+  menuItems.push({
+    id: 'close-menu',
+    label: t`Close menu`,
+    Icon: X,
+    disabled: deleting,
+    onPress: () => setMenu(null),
+    testID: 'home-recent-close-menu',
+  });
   return (
-    <PressableScale
-      testID="home-recent-open"
-      accessibilityRole="button"
-      accessibilityLabel={[title, ...meta.map((part) => part.text)].join(', ')}
-      accessibilityHint={cwd}
-      accessibilityState={{ selected }}
-      onPress={onOpen}
-      style={[
-        styles.row,
-        hasSeparator && {
-          borderBottomColor: theme.colors.border,
-          borderBottomWidth: StyleSheet.hairlineWidth,
-        },
-        {
-          backgroundColor: background(surface),
-        },
-      ]}>
-      <View style={styles.open}>
-        {compact ? null : (
-          <Text
-            variant="heading"
-            color={theme.colors.primary}
-            style={pad ? styles.number : styles.phoneNumber}>
-            {String(number).padStart(2, '0')}
-          </Text>
-        )}
-        <View style={styles.copy}>
-          <View style={styles.titleLine}>
-            {agentKind ? (
-              <View style={styles.titleMark}>
-                <AgentMark kind={agentKind} size={14} color={theme.colors.primary} />
-              </View>
-            ) : null}
+    <View>
+      <PressableScale
+        testID="home-recent-open"
+        accessibilityRole="button"
+        accessibilityLabel={[title, ...meta.map((part) => part.text)].join(', ')}
+        accessibilityHint={cwd}
+        accessibilityState={{ selected }}
+        onPress={onOpen}
+        onLongPress={toggleMenu}
+        accessibilityActions={[{ name: 'longpress', label: t`Actions` }]}
+        onAccessibilityAction={(event) => {
+          if (event.nativeEvent.actionName === 'longpress') toggleMenu();
+        }}
+        style={[
+          styles.row,
+          hasSeparator && {
+            borderBottomColor: theme.colors.border,
+            borderBottomWidth: StyleSheet.hairlineWidth,
+          },
+          {
+            backgroundColor: background(surface),
+          },
+        ]}>
+        <View style={styles.open}>
+          {compact ? null : (
             <Text
-              variant="bodySmall"
-              weight="semibold"
-              numberOfLines={terminal || taskTitle ? 1 : 2}
-              style={styles.title}>
-              {title}
+              variant="heading"
+              color={theme.colors.primary}
+              style={pad ? styles.number : styles.phoneNumber}>
+              {String(number).padStart(2, '0')}
+            </Text>
+          )}
+          <View style={styles.copy}>
+            <View style={styles.titleLine}>
+              {agentKind ? (
+                <View style={styles.titleMark}>
+                  <AgentMark kind={agentKind} size={14} color={theme.colors.primary} />
+                </View>
+              ) : null}
+              <Text
+                variant="bodySmall"
+                weight="semibold"
+                numberOfLines={terminal || taskTitle ? 1 : 2}
+                style={styles.title}>
+                {title}
+              </Text>
+            </View>
+            <Text
+              testID="home-recent-meta"
+              variant="caption"
+              color={theme.colors.textMuted}
+              numberOfLines={1}>
+              {meta.map((part, index) => (
+                <Fragment key={part.role}>
+                  {index > 0 ? META_SEPARATOR : null}
+                  {part.role === 'status' && status ? (
+                    <Text variant="caption" color={theme.colors[statusTone]}>
+                      {`\u25CF ${part.text}`}
+                    </Text>
+                  ) : part.role === 'kind' && providerInk ? (
+                    <Text
+                      variant="caption"
+                      color={homeProviderTextColor(providerInk, theme.colors, surface)}>
+                      {part.text}
+                    </Text>
+                  ) : part.role === 'path' ? (
+                    <Text variant="caption" color={theme.colors.textSubtle}>
+                      {part.text}
+                    </Text>
+                  ) : (
+                    part.text
+                  )}
+                </Fragment>
+              ))}
             </Text>
           </View>
-          <Text
-            testID="home-recent-meta"
-            variant="caption"
-            color={theme.colors.textMuted}
-            numberOfLines={1}>
-            {meta.map((part, index) => (
-              <Fragment key={part.role}>
-                {index > 0 ? META_SEPARATOR : null}
-                {part.role === 'status' && status ? (
-                  <Text variant="caption" color={theme.colors[statusTone]}>
-                    {`\u25CF ${part.text}`}
-                  </Text>
-                ) : part.role === 'kind' && providerInk ? (
-                  <Text
-                    variant="caption"
-                    color={homeProviderTextColor(providerInk, theme.colors, surface)}>
-                    {part.text}
-                  </Text>
-                ) : part.role === 'path' ? (
-                  <Text variant="caption" color={theme.colors.textSubtle}>
-                    {part.text}
-                  </Text>
-                ) : (
-                  part.text
-                )}
-              </Fragment>
-            ))}
-          </Text>
+          <ThemeIcon
+            name="home.arrow"
+            fallback={ChevronRight}
+            size={16}
+            color={theme.colors.primary}
+          />
         </View>
-        <ThemeIcon
-          name="home.arrow"
-          fallback={ChevronRight}
-          size={16}
-          color={theme.colors.primary}
+      </PressableScale>
+      {menu ? (
+        <AgentActionMenu
+          testID="home-recent-actions"
+          surface="ground"
+          items={menuItems}
+          error={menuError}
         />
-      </View>
-    </PressableScale>
+      ) : null}
+    </View>
   );
 }
 

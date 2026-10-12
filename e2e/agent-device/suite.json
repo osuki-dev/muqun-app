@@ -553,6 +553,41 @@
         "mode": "hidden",
         "run": "flows/home-continue-search.ad#assert-hidden"
       },
+      { "run": "flows/home-continue-search.ad#session-menu" },
+      {
+        "target": { "id": "home-recent-actions" },
+        "mode": "visible",
+        "run": "flows/home-continue-search.ad#assert-visible"
+      },
+      {
+        "target": { "text": "Open" },
+        "mode": "hidden",
+        "run": "flows/home-continue-search.ad#assert-hidden"
+      },
+      { "run": "flows/home-continue-search.ad#session-menu" },
+      {
+        "target": { "id": "home-recent-actions" },
+        "mode": "hidden",
+        "run": "flows/home-continue-search.ad#assert-hidden"
+      },
+      { "run": "flows/home-continue-search.ad#session-menu" },
+      { "run": "flows/home-continue-search.ad#arm-delete" },
+      {
+        "target": { "text": "Confirm delete" },
+        "mode": "visible",
+        "run": "flows/home-continue-search.ad#assert-visible"
+      },
+      { "run": "flows/home-continue-search.ad#close-menu" },
+      {
+        "target": { "id": "home-recent-actions" },
+        "mode": "hidden",
+        "run": "flows/home-continue-search.ad#assert-hidden"
+      },
+      {
+        "target": { "text": "Demo search hidden leaf" },
+        "mode": "visible",
+        "run": "flows/home-continue-search.ad#assert-visible"
+      },
       { "run": "flows/home-continue-search.ad#no-match" },
       {
         "target": { "id": "home-continue-no-matches" },

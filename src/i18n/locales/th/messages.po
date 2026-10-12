@@ -13,18 +13,6 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: src/components/task-row.tsx
-msgid "Confirm removal"
-msgstr "ยืนยันการนำออก"
-
-#: src/components/task-row.tsx
-msgid "Remove from Home"
-msgstr "นำออกจากหน้าหลัก"
-
-#: src/components/task-row.tsx
-msgid "The task and its history remain available."
-msgstr "งานและประวัติยังคงอยู่"
-
 #: src/components/pane-chat-blocks.tsx
 msgid "… truncated"
 msgstr "… ตัดข้อความบางส่วนแล้ว"
@@ -42,6 +30,10 @@ msgstr "ไม่ได้ส่ง “{args}” เพราะสกิลไ�
 #: src/components/agent-sessions-sheet.tsx
 msgid "“{title}” and any subagent sessions under it are removed from the host. This cannot be undone."
 msgstr "“{title}” และเซสชันของซับเอเจนต์ที่อยู่ข้างใต้จะถูกลบออกจากโฮสต์ และย้อนกลับไม่ได้"
+
+#: src/components/home-recent-sessions.tsx
+msgid "“{title}” and its conversation history will be deleted in {provider} on {computer}. The service may also delete its subagent sessions. This cannot be undone."
+msgstr "“{title}” และประวัติการสนทนาจะถูกลบใน {provider} บน {computer} บริการอาจลบเซสชันของเอเจนต์ย่อยด้วย การดำเนินการนี้ย้อนกลับไม่ได้"
 
 #: src/lib/demo-gateway.ts
 msgid "[instructions]"
@@ -495,6 +487,7 @@ msgstr "สั่งงานเทอร์มินัลนี้ หรื�
 msgid "Act on this terminal, or send its agent a prompt"
 msgstr "สั่งงานเทอร์มินัลนี้ หรือส่งคำสั่งให้เอเจนต์ของมัน"
 
+#: src/components/home-recent-sessions.tsx
 #: src/components/task-row.tsx
 msgid "Actions"
 msgstr "การทำงาน"
@@ -691,10 +684,6 @@ msgstr "อนุญาตเสมอ"
 #: src/components/agent-revert-plate.tsx
 msgid "and {rest} more"
 msgstr "และอีก {rest}"
-
-#: src/components/settings-server-capabilities.tsx
-#~ msgid "Android builds"
-#~ msgstr "บิลด์ Android"
 
 #: src/components/task-row.tsx
 msgid "another computer"
@@ -998,8 +987,6 @@ msgstr "เบราว์เซอร์"
 msgid "Build"
 msgstr "สร้าง (Build)"
 
-#: src/app/settings-about.tsx
-#: src/app/settings-update-notes.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Built-in"
 msgstr "มีมาให้ในแอป"
@@ -1277,6 +1264,11 @@ msgstr "ปิดเอฟเฟกต์"
 msgid "Close file"
 msgstr "ปิดไฟล์"
 
+#: src/components/home-recent-sessions.tsx
+#: src/components/task-row.tsx
+msgid "Close menu"
+msgstr "ปิดเมนู"
+
 #: src/app/new-task.tsx
 msgid "Close new task"
 msgstr "ปิดงานใหม่"
@@ -1308,6 +1300,10 @@ msgstr "ปิดเมนู"
 #: src/components/simfarm-stage.tsx
 msgid "Close the simulator"
 msgstr "ปิดเครื่องจำลอง"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Close this terminal on its computer. Safe terminal closing from Home is not supported yet."
+msgstr "ปิดเทอร์มินัลนี้บนคอมพิวเตอร์ที่เกี่ยวข้อง ยังไม่รองรับการปิดเทอร์มินัลอย่างปลอดภัยจากหน้าหลัก"
 
 #: src/components/session-artifacts.tsx
 msgid "Code"
@@ -1411,6 +1407,7 @@ msgstr "เสร็จสิ้น"
 #: src/app/panels.tsx
 #: src/components/app-drawer.tsx
 #: src/components/home-composer-options.tsx
+#: src/components/home-recent-sessions.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer"
 msgstr "คอมพิวเตอร์"
@@ -1453,9 +1450,17 @@ msgstr "ยืนยันการยกเลิก"
 msgid "Confirm clear cache"
 msgstr "ยืนยันการล้างแคช"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Confirm delete"
+msgstr "ยืนยันการลบ"
+
 #: src/app/explore.tsx
 msgid "Confirm pairing"
 msgstr "ยืนยันการจับคู่"
+
+#: src/components/task-row.tsx
+msgid "Confirm removal"
+msgstr "ยืนยันการนำออก"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm remove unused themes"
@@ -1812,6 +1817,10 @@ msgstr "สร้างเวิร์กทรีนั้นไม่ได้
 msgid "Could not delete"
 msgstr "ลบไม่ได้"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Could not delete this session. Reconnect to its computer and refresh Home before trying again."
+msgstr "ลบเซสชันนี้ไม่ได้ เชื่อมต่อกับคอมพิวเตอร์ที่เกี่ยวข้องอีกครั้งและรีเฟรชหน้าหลักก่อนลองใหม่"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not detach"
 msgstr "ย้ายไปเบื้องหลังไม่สำเร็จ"
@@ -1885,10 +1894,6 @@ msgstr "โหลดเซสชันไม่สำเร็จ"
 #: src/components/changes-sheet.tsx
 msgid "Could not load this file's changes."
 msgstr "ไม่สามารถโหลดการเปลี่ยนแปลงของไฟล์นี้"
-
-#: src/components/settings-mcp-tokens.tsx
-#~ msgid "Could not load tokens"
-#~ msgstr "โหลดโทเค็นไม่ได้"
 
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
@@ -2238,6 +2243,10 @@ msgstr "ลบ {discardName} ใช่ไหม"
 msgid "Delete {name}"
 msgstr "ลบ {name}"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Delete session"
+msgstr "ลบเซสชัน"
+
 #: src/i18n/labels.ts
 msgid "Delete this line"
 msgstr "ลบบรรทัดนี้"
@@ -2246,6 +2255,10 @@ msgstr "ลบบรรทัดนี้"
 msgctxt "git file status"
 msgid "Deleted"
 msgstr "ลบแล้ว"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Deleting session…"
+msgstr "กำลังลบเซสชัน…"
 
 #: src/components/agent-composer.tsx
 msgid "Delivery mode: Queue. Tap to switch to Steer."
@@ -2263,6 +2276,10 @@ msgstr "ยังไม่ยืนยันการส่ง"
 #: src/components/theme-browse-sheet.tsx
 msgid "Demo catalogue. Leave the demo to download themes."
 msgstr "แค็ตตาล็อกสาธิต ออกจากการสาธิตเพื่อดาวน์โหลดธีม"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Demo sessions cannot be deleted. Open a paired computer to manage its sessions."
+msgstr "ลบเซสชันสาธิตไม่ได้ เปิดคอมพิวเตอร์ที่จับคู่แล้วเพื่อจัดการเซสชัน"
 
 #: src/lib/demo-ssh.ts
 msgid "Demo shell"
@@ -3116,10 +3133,6 @@ msgstr "ขัดจังหวะกระบวนการ"
 msgid "Interrupt what this agent is doing."
 msgstr "ขัดจังหวะสิ่งที่เอเจนต์นี้กำลังทำ"
 
-#: src/components/settings-server-capabilities.tsx
-#~ msgid "iOS builds"
-#~ msgstr "บิลด์ iOS"
-
 #: src/lib/local-authentication.ts
 msgid "iris recognition"
 msgstr "การจดจำม่านตา"
@@ -3451,10 +3464,6 @@ msgstr "ทำเครื่องหมายว่าตรวจแล้ว
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "มาสคอต"
-
-#: src/components/settings-mcp-tokens.tsx
-#~ msgid "MCP tokens"
-#~ msgstr "โทเค็น MCP"
 
 #. placeholder {0}: computer.name
 #. placeholder {0}: hit.path
@@ -3924,10 +3933,6 @@ msgstr "ยังไม่มีธีมที่เผยแพร่"
 msgid "No themes match “{0}”."
 msgstr "ไม่มีธีมที่ตรงกับ “{0}”"
 
-#: src/components/settings-mcp-tokens.tsx
-#~ msgid "No tokens"
-#~ msgstr "ไม่มีโทเค็น"
-
 #: src/components/agent-context-sheet.tsx
 msgid "no window reported for this model"
 msgstr "ไม่มีการระบุขนาดหน้าต่างของโมเดลนี้"
@@ -4079,6 +4084,10 @@ msgstr "ออนไลน์"
 #: src/i18n/labels.ts
 msgid "ONLINE"
 msgstr "ออนไลน์"
+
+#: src/components/task-row.tsx
+msgid "Only this Home row is hidden. The task and its history remain available. Running work is not stopped."
+msgstr "ซ่อนเฉพาะรายการนี้จากหน้าหลัก งานและประวัติยังคงเข้าถึงได้ งานที่กำลังทำจะไม่หยุด"
 
 #: src/components/home-connections.tsx
 #: src/components/in-app-notification-host.tsx
@@ -4338,6 +4347,10 @@ msgstr "จับคู่ได้ที่ด้านล่าง"
 #: src/components/server-terminal-workspace.tsx
 msgid "Pair this computer again"
 msgstr "จับคู่คอมพิวเตอร์นี้อีกครั้ง"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Pair this computer again before deleting its sessions."
+msgstr "จับคู่คอมพิวเตอร์นี้อีกครั้งก่อนลบเซสชันของเครื่อง"
 
 #: src/lib/network-error.ts
 msgid "Pair this computer again."
@@ -4779,6 +4792,10 @@ msgstr "รีเฟรชไฟล์"
 msgid "Refresh history to load the current snapshot."
 msgstr "รีเฟรชประวัติเพื่อโหลดสแนปช็อตปัจจุบัน"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Refresh Home to identify this session’s provider before deleting it."
+msgstr "รีเฟรชหน้าหลักเพื่อระบุผู้ให้บริการของเซสชันนี้ก่อนลบ"
+
 #: src/components/collaboration-notice.tsx
 msgid "Refresh output"
 msgstr "รีเฟรชเอาต์พุต"
@@ -4814,6 +4831,10 @@ msgstr "ลบอยู่ดี"
 #: src/components/collaboration-notice.tsx
 msgid "Remove from history?"
 msgstr "ลบออกจากประวัติหรือไม่?"
+
+#: src/components/task-row.tsx
+msgid "Remove from Home"
+msgstr "นำออกจากหน้าหลัก"
 
 #: src/components/ssh-host-form.tsx
 msgid "Remove host"
@@ -4897,14 +4918,10 @@ msgstr "จำเป็น"
 msgid "Requires iOS 16.1 or later."
 msgstr "ต้องใช้ iOS 16.1 ขึ้นไป"
 
-#: src/app/settings-about.tsx
-#: src/app/settings-update-notes.tsx
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
 msgstr "เริ่ม Muqun ใหม่เพื่ออัปเดตให้เสร็จสมบูรณ์"
 
-#: src/app/settings-about.tsx
-#: src/app/settings-update-notes.tsx
 #: src/components/update-status-banner.tsx
 msgid "Restarting Muqun…"
 msgstr "กำลังเริ่ม Muqun ใหม่…"
@@ -5087,10 +5104,6 @@ msgstr "เรียกใช้ Gateway บนเครื่องของค
 #: src/i18n/labels.ts
 msgid "Running"
 msgstr "กำลังทำงาน"
-
-#: src/components/settings-server-capabilities.tsx
-#~ msgid "Rust"
-#~ msgstr "Rust"
 
 #: src/app/settings-voice.tsx
 #: src/components/agent-sessions-sheet.tsx
@@ -5840,10 +5853,6 @@ msgstr "เอเจนต์ย่อย"
 msgid "Submit"
 msgstr "ส่ง"
 
-#: src/components/settings-server-capabilities.tsx
-#~ msgid "Suitable for"
-#~ msgstr "เหมาะสำหรับ"
-
 #: src/i18n/labels.ts
 msgid "Summarise progress"
 msgstr "สรุปความคืบหน้า"
@@ -6466,6 +6475,10 @@ msgstr "ต้องกรอกช่องนี้"
 msgid "This project"
 msgstr "โปรเจกต์นี้"
 
+#: src/components/home-recent-sessions.tsx
+msgid "This provider cannot delete sessions. Open the session to stop a running turn or manage it on its computer."
+msgstr "ผู้ให้บริการนี้ไม่รองรับการลบเซสชัน เปิดเซสชันเพื่อหยุดรอบที่กำลังทำงาน หรือจัดการบนคอมพิวเตอร์ที่เกี่ยวข้อง"
+
 #: src/app/explore.tsx
 msgid "This QR code is not valid."
 msgstr "QR นี้ไม่ถูกต้อง"
@@ -6485,6 +6498,10 @@ msgstr "เซสชันนี้"
 #: src/components/agent-workbench.tsx
 msgid "This session has no message to roll back to."
 msgstr "เซสชันนี้ไม่มีข้อความให้ย้อนกลับไป"
+
+#: src/components/home-recent-sessions.tsx
+msgid "This session is no longer available in this service. Refresh Home before trying again."
+msgstr "เซสชันนี้ไม่พร้อมใช้งานในบริการดังกล่าวแล้ว รีเฟรชหน้าหลักก่อนลองใหม่"
 
 #: src/components/agent-workbench.tsx
 msgid "This session no longer exists"
@@ -6554,10 +6571,6 @@ msgstr "หมดเวลา"
 #: src/i18n/labels.ts
 msgid "Today"
 msgstr "วันนี้"
-
-#: src/components/settings-mcp-tokens.tsx
-#~ msgid "Tokens coding agents use to reach this computer."
-#~ msgstr "โทเคนที่เอเจนต์เขียนโค้ดใช้เชื่อมต่อกับคอมพิวเตอร์เครื่องนี้"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -6810,6 +6823,10 @@ msgstr "มีอัปเดตพร้อมใช้งาน"
 msgid "Update download failed. Try again."
 msgstr "ดาวน์โหลดอัปเดตไม่สำเร็จ โปรดลองอีกครั้ง"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Update Gateway on this computer, then reconnect to enable deleting sessions from Home."
+msgstr "อัปเดต Gateway บนคอมพิวเตอร์นี้แล้วเชื่อมต่ออีกครั้งเพื่อเปิดใช้การลบเซสชันจากหน้าหลัก"
+
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Herdr on the computer to 0.9.0 or newer, then restart the session, to assign a task to another assistant"
 msgstr "อัปเดต Herdr บนคอมพิวเตอร์เป็น 0.9.0 ขึ้นไป แล้วเริ่มเซสชันใหม่เพื่อมอบหมายงานให้ผู้ช่วยอื่น"
@@ -6850,8 +6867,6 @@ msgstr "อัปเดต Gateway เพื่อดูตัวอย่าง
 msgid "Updates when you reopen"
 msgstr "อัปเดตเมื่อเปิดใหม่"
 
-#: src/app/settings-about.tsx
-#: src/app/settings-update-notes.tsx
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
 msgstr "กำลังอัปเดต Muqun…"
@@ -6973,10 +6988,6 @@ msgstr "กำลังรอคำตอบของคุณ"
 msgid "Waiting to send"
 msgstr "รอส่ง"
 
-#: src/components/settings-server-capabilities.tsx
-#~ msgid "Web"
-#~ msgstr "เว็บ"
-
 #: src/components/agent-workbench.tsx
 msgid "Welcome to {agentName}"
 msgstr "ยินดีต้อนรับสู่ {agentName}"
@@ -6989,8 +7000,6 @@ msgstr "สิ่งที่หน้าแรกเริ่มเมื่อ
 msgid "What is running"
 msgstr "สิ่งที่กำลังทำงาน"
 
-#: src/app/settings-about.tsx
-#: src/app/settings-update-notes.tsx
 #: src/components/update-status-banner.tsx
 #: src/lib/release-notes.ts
 msgid "What's new"

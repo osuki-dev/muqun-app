@@ -35,6 +35,7 @@ export interface AgentActionMenuItem {
   /** `danger` for the one that throws something away. */
   tone?: 'default' | 'danger';
   onPress: () => void;
+  disabled?: boolean;
   /**
    * Ask twice, in the row, before `onPress` runs. For the item that throws
    * something away: the first tap arms it and says what is lost, the second
@@ -96,6 +97,7 @@ export const AgentActionMenu = memo(function AgentActionMenu({
               detail={item.confirm.detail}
               Icon={item.Icon}
               persist={item.confirm.persist === true}
+              disabled={item.disabled}
               onConfirm={item.onPress}
             />
           );
@@ -109,6 +111,7 @@ export const AgentActionMenu = memo(function AgentActionMenu({
             accessibilityRole="button"
             accessibilityLabel={item.label}
             onPress={item.onPress}
+            disabled={item.disabled}
             style={styles.option}>
             {item.Icon ? (
               <View style={styles.optionIcon}>

@@ -2,7 +2,6 @@ import { hasRealSessionTitle, type AgentSessionInfo } from './agent-protocol';
 import type { HomeCommand } from './home-commands';
 import {
   homeTargetAgentId,
-  homeTargetKey,
   type HomeRecentEntry,
   type HomeSessionObservation,
   type HomeTarget,
@@ -112,8 +111,8 @@ export type HomeContinueEntry = {
 type HomeAgentSessionTarget = Extract<HomeTarget, { kind: 'agent-session' }>;
 
 /** The identity a gone agent session is remembered by: one gateway's one session. */
-export function goneSessionKey(serverId: string, asid: string): string {
-  return JSON.stringify([serverId, asid]);
+export function goneSessionKey(serverId: string, asid: string, agentId?: string): string {
+  return JSON.stringify(agentId ? [serverId, asid, agentId] : [serverId, asid]);
 }
 
 /** How many of the gateway's most recently updated agent sessions Continue merges in. */
@@ -283,8 +282,9 @@ export function homeContinueEntries({
   goneSessions?: ReadonlySet<string>;
 }): HomeContinueEntry[] {
   const rows: HomeContinueEntry[] = [];
-  const isGone = (serverId: string, asid: string) =>
-    goneSessions?.has(goneSessionKey(serverId, asid)) === true;
+  const isGone = (serverId: string, asid: string, agentId: string) =>
+    goneSessions?.has(goneSessionKey(serverId, asid)) === true ||
+    goneSessions?.has(goneSessionKey(serverId, asid, agentId)) === true;
   const listed =
     gatewaySessions &&
     serverIds.includes(gatewaySessions.serverId) &&
@@ -293,8 +293,8 @@ export function homeContinueEntries({
       : undefined;
   const unclaimed = new Map(
     listed?.sessions
-      .filter((session) => !isGone(listed.serverId, session.asid))
-      .map((session) => [session.asid, session])
+      .filter((session) => !isGone(listed.serverId, session.asid, session.agentId))
+      .map((session) => [goneSessionKey(listed.serverId, session.asid, session.agentId), session])
   );
   for (const serverId of serverIds) {
     if (reachabilityByServer[serverId] === 'offline') continue;
@@ -343,17 +343,28 @@ export function homeContinueEntries({
     )
       continue;
     if (target.kind !== 'ssh-host' && reachabilityByServer[target.serverId] === 'offline') continue;
-    if (target.kind === 'agent-session' && isGone(target.serverId, target.asid)) continue;
+    if (
+      target.kind === 'agent-session' &&
+      isGone(target.serverId, target.asid, homeTargetAgentId(target))
+    )
+      continue;
     if (
       target.kind === 'gateway-terminal' &&
       supersededTerminalRecent(target, snapshots[target.serverId], paneMode)
     )
       continue;
-    const reported =
+    const matching =
       listed && target.kind === 'agent-session' && target.serverId === listed.serverId
-        ? unclaimed.get(target.asid)
-        : undefined;
-    if (reported) unclaimed.delete(reported.asid);
+        ? [...unclaimed.values()].filter(
+            (session) =>
+              session.asid === target.asid &&
+              (!target.agentId || session.agentId === homeTargetAgentId(target))
+          )
+        : [];
+    // A legacy recent without a provider may be repaired only by one unambiguous owner.
+    const reported = matching.length === 1 ? matching[0] : undefined;
+    if (reported && listed)
+      unclaimed.delete(goneSessionKey(listed.serverId, reported.asid, reported.agentId));
     const stored = entry.sessionObservation;
     const sessionObservation =
       reported && listed && (!stored || stored.observedAtMs <= listed.observedAtMs)
@@ -392,7 +403,7 @@ export function homeContinueEntries({
         agentId: session.agentId,
       };
       rows.push({
-        key: homeTargetKey(target),
+        key: goneSessionKey(listed.serverId, session.asid, session.agentId),
         title: reportedTitle(session),
         atMs: session.updatedMs,
         observation: {

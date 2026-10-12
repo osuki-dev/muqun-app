@@ -13,18 +13,6 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: src/components/task-row.tsx
-msgid "Confirm removal"
-msgstr "제거 확인"
-
-#: src/components/task-row.tsx
-msgid "Remove from Home"
-msgstr "홈에서 제거"
-
-#: src/components/task-row.tsx
-msgid "The task and its history remain available."
-msgstr "작업과 기록은 계속 이용할 수 있습니다"
-
 #: src/components/pane-chat-blocks.tsx
 msgid "… truncated"
 msgstr "…이후 생략"
@@ -42,6 +30,10 @@ msgstr "“{args}”은(는) 전송되지 않았습니다. 스킬은 인자를 �
 #: src/components/agent-sessions-sheet.tsx
 msgid "“{title}” and any subagent sessions under it are removed from the host. This cannot be undone."
 msgstr "“{title}”과(와) 그 아래의 서브에이전트 세션이 호스트에서 제거됩니다. 되돌릴 수 없습니다"
+
+#: src/components/home-recent-sessions.tsx
+msgid "“{title}” and its conversation history will be deleted in {provider} on {computer}. The service may also delete its subagent sessions. This cannot be undone."
+msgstr "{computer}의 {provider}에서 “{title}” 및 해당 대화 기록이 삭제됩니다. 서비스가 하위 에이전트 세션도 삭제할 수 있습니다. 이 작업은 되돌릴 수 없습니다"
 
 #: src/lib/demo-gateway.ts
 msgid "[instructions]"
@@ -495,6 +487,7 @@ msgstr "이 터미널을 조작하거나 명령을 보내기"
 msgid "Act on this terminal, or send its agent a prompt"
 msgstr "이 터미널을 조작하거나 에이전트에게 지시 보내기"
 
+#: src/components/home-recent-sessions.tsx
 #: src/components/task-row.tsx
 msgid "Actions"
 msgstr "작업"
@@ -691,10 +684,6 @@ msgstr "항상 허용"
 #: src/components/agent-revert-plate.tsx
 msgid "and {rest} more"
 msgstr "외 {rest}개"
-
-#: src/components/settings-server-capabilities.tsx
-#~ msgid "Android builds"
-#~ msgstr "Android 빌드"
 
 #: src/components/task-row.tsx
 msgid "another computer"
@@ -998,8 +987,6 @@ msgstr "브라우저"
 msgid "Build"
 msgstr "빌드 (Build)"
 
-#: src/app/settings-about.tsx
-#: src/app/settings-update-notes.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Built-in"
 msgstr "기본 제공"
@@ -1277,6 +1264,11 @@ msgstr "효과 닫기"
 msgid "Close file"
 msgstr "파일 닫기"
 
+#: src/components/home-recent-sessions.tsx
+#: src/components/task-row.tsx
+msgid "Close menu"
+msgstr "메뉴 닫기"
+
 #: src/app/new-task.tsx
 msgid "Close new task"
 msgstr "새 작업 닫기"
@@ -1308,6 +1300,10 @@ msgstr "메뉴 닫기"
 #: src/components/simfarm-stage.tsx
 msgid "Close the simulator"
 msgstr "시뮬레이터 닫기"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Close this terminal on its computer. Safe terminal closing from Home is not supported yet."
+msgstr "해당 컴퓨터에서 이 터미널을 닫으세요. 홈에서 터미널을 안전하게 닫는 기능은 아직 지원되지 않습니다"
 
 #: src/components/session-artifacts.tsx
 msgid "Code"
@@ -1411,6 +1407,7 @@ msgstr "완료됨"
 #: src/app/panels.tsx
 #: src/components/app-drawer.tsx
 #: src/components/home-composer-options.tsx
+#: src/components/home-recent-sessions.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer"
 msgstr "컴퓨터"
@@ -1453,9 +1450,17 @@ msgstr "취소 확인"
 msgid "Confirm clear cache"
 msgstr "캐시 비우기 확인"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Confirm delete"
+msgstr "삭제 확인"
+
 #: src/app/explore.tsx
 msgid "Confirm pairing"
 msgstr "페어링 확인"
+
+#: src/components/task-row.tsx
+msgid "Confirm removal"
+msgstr "제거 확인"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm remove unused themes"
@@ -1812,6 +1817,10 @@ msgstr "워크트리를 생성할 수 없습니다"
 msgid "Could not delete"
 msgstr "삭제할 수 없습니다"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Could not delete this session. Reconnect to its computer and refresh Home before trying again."
+msgstr "이 세션을 삭제할 수 없습니다. 해당 컴퓨터에 다시 연결하고 홈을 새로 고친 후 다시 시도하세요"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not detach"
 msgstr "분리하지 못했습니다"
@@ -1885,10 +1894,6 @@ msgstr "세션을 불러오지 못했습니다"
 #: src/components/changes-sheet.tsx
 msgid "Could not load this file's changes."
 msgstr "이 파일의 변경 사항을 불러오지 못했습니다"
-
-#: src/components/settings-mcp-tokens.tsx
-#~ msgid "Could not load tokens"
-#~ msgstr "토큰을 불러올 수 없습니다"
 
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
@@ -2238,6 +2243,10 @@ msgstr "{discardName}을(를) 삭제할까요?"
 msgid "Delete {name}"
 msgstr "{name} 삭제"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Delete session"
+msgstr "세션 삭제"
+
 #: src/i18n/labels.ts
 msgid "Delete this line"
 msgstr "이 줄 삭제"
@@ -2246,6 +2255,10 @@ msgstr "이 줄 삭제"
 msgctxt "git file status"
 msgid "Deleted"
 msgstr "삭제됨"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Deleting session…"
+msgstr "세션을 삭제하는 중…"
 
 #: src/components/agent-composer.tsx
 msgid "Delivery mode: Queue. Tap to switch to Steer."
@@ -2263,6 +2276,10 @@ msgstr "전달이 확인되지 않음"
 #: src/components/theme-browse-sheet.tsx
 msgid "Demo catalogue. Leave the demo to download themes."
 msgstr "데모 목록입니다. 테마를 다운로드하려면 데모를 종료하세요"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Demo sessions cannot be deleted. Open a paired computer to manage its sessions."
+msgstr "데모 세션은 삭제할 수 없습니다. 페어링된 컴퓨터를 열어 세션을 관리하세요"
 
 #: src/lib/demo-ssh.ts
 msgid "Demo shell"
@@ -3116,10 +3133,6 @@ msgstr "프로세스 중단"
 msgid "Interrupt what this agent is doing."
 msgstr "이 에이전트가 하고 있는 작업을 중단합니다"
 
-#: src/components/settings-server-capabilities.tsx
-#~ msgid "iOS builds"
-#~ msgstr "iOS 빌드"
-
 #: src/lib/local-authentication.ts
 msgid "iris recognition"
 msgstr "홍채 인식"
@@ -3451,10 +3464,6 @@ msgstr "확인 완료로 표시"
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "마스코트"
-
-#: src/components/settings-mcp-tokens.tsx
-#~ msgid "MCP tokens"
-#~ msgstr "MCP 토큰"
 
 #. placeholder {0}: computer.name
 #. placeholder {0}: hit.path
@@ -3924,10 +3933,6 @@ msgstr "아직 공개된 테마가 없습니다"
 msgid "No themes match “{0}”."
 msgstr "“{0}”와 일치하는 테마가 없습니다"
 
-#: src/components/settings-mcp-tokens.tsx
-#~ msgid "No tokens"
-#~ msgstr "토큰 없음"
-
 #: src/components/agent-context-sheet.tsx
 msgid "no window reported for this model"
 msgstr "이 모델의 창 크기가 보고되지 않았습니다"
@@ -4079,6 +4084,10 @@ msgstr "온라인 상태"
 #: src/i18n/labels.ts
 msgid "ONLINE"
 msgstr "온라인"
+
+#: src/components/task-row.tsx
+msgid "Only this Home row is hidden. The task and its history remain available. Running work is not stopped."
+msgstr "홈의 이 항목만 숨깁니다. 작업과 해당 기록은 계속 사용할 수 있습니다. 실행 중인 작업은 중지되지 않습니다"
 
 #: src/components/home-connections.tsx
 #: src/components/in-app-notification-host.tsx
@@ -4338,6 +4347,10 @@ msgstr "아래에서 페어링하세요"
 #: src/components/server-terminal-workspace.tsx
 msgid "Pair this computer again"
 msgstr "이 컴퓨터를 다시 페어링"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Pair this computer again before deleting its sessions."
+msgstr "이 컴퓨터를 다시 페어링한 후 세션을 삭제하세요"
 
 #: src/lib/network-error.ts
 msgid "Pair this computer again."
@@ -4779,6 +4792,10 @@ msgstr "파일 새로 고침"
 msgid "Refresh history to load the current snapshot."
 msgstr "현재 스냅샷을 불러오려면 기록을 새로고침하세요"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Refresh Home to identify this session’s provider before deleting it."
+msgstr "홈을 새로 고쳐 이 세션의 제공업체를 확인한 후 삭제하세요"
+
 #: src/components/collaboration-notice.tsx
 msgid "Refresh output"
 msgstr "출력 새로 고침"
@@ -4814,6 +4831,10 @@ msgstr "그래도 제거"
 #: src/components/collaboration-notice.tsx
 msgid "Remove from history?"
 msgstr "기록에서 삭제할까요?"
+
+#: src/components/task-row.tsx
+msgid "Remove from Home"
+msgstr "홈에서 제거"
 
 #: src/components/ssh-host-form.tsx
 msgid "Remove host"
@@ -4897,14 +4918,10 @@ msgstr "필수입니다"
 msgid "Requires iOS 16.1 or later."
 msgstr "iOS 16.1 이상이 필요합니다"
 
-#: src/app/settings-about.tsx
-#: src/app/settings-update-notes.tsx
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
 msgstr "업데이트를 완료하려면 Muqun을 다시 시작하세요"
 
-#: src/app/settings-about.tsx
-#: src/app/settings-update-notes.tsx
 #: src/components/update-status-banner.tsx
 msgid "Restarting Muqun…"
 msgstr "Muqun을 다시 시작하는 중…"
@@ -5087,10 +5104,6 @@ msgstr "내 컴퓨터에서 Gateway를 실행하고 화면에 출력된 QR 코�
 #: src/i18n/labels.ts
 msgid "Running"
 msgstr "실행 중"
-
-#: src/components/settings-server-capabilities.tsx
-#~ msgid "Rust"
-#~ msgstr "Rust"
 
 #: src/app/settings-voice.tsx
 #: src/components/agent-sessions-sheet.tsx
@@ -5840,10 +5853,6 @@ msgstr "서브에이전트"
 msgid "Submit"
 msgstr "제출"
 
-#: src/components/settings-server-capabilities.tsx
-#~ msgid "Suitable for"
-#~ msgstr "적합한 작업"
-
 #: src/i18n/labels.ts
 msgid "Summarise progress"
 msgstr "진행 상황 요약"
@@ -6466,6 +6475,10 @@ msgstr "이 항목은 필수입니다"
 msgid "This project"
 msgstr "이 프로젝트"
 
+#: src/components/home-recent-sessions.tsx
+msgid "This provider cannot delete sessions. Open the session to stop a running turn or manage it on its computer."
+msgstr "이 제공업체는 세션을 삭제할 수 없습니다. 세션을 열어 실행 중인 턴을 중지하거나 해당 컴퓨터에서 관리하세요"
+
 #: src/app/explore.tsx
 msgid "This QR code is not valid."
 msgstr "이 QR 코드는 올바르지 않습니다"
@@ -6485,6 +6498,10 @@ msgstr "이 세션"
 #: src/components/agent-workbench.tsx
 msgid "This session has no message to roll back to."
 msgstr "이 세션에는 되돌아갈 메시지가 없습니다"
+
+#: src/components/home-recent-sessions.tsx
+msgid "This session is no longer available in this service. Refresh Home before trying again."
+msgstr "이 세션은 해당 서비스에서 더 이상 사용할 수 없습니다. 홈을 새로 고친 후 다시 시도하세요"
 
 #: src/components/agent-workbench.tsx
 msgid "This session no longer exists"
@@ -6554,10 +6571,6 @@ msgstr "시간 초과"
 #: src/i18n/labels.ts
 msgid "Today"
 msgstr "오늘"
-
-#: src/components/settings-mcp-tokens.tsx
-#~ msgid "Tokens coding agents use to reach this computer."
-#~ msgstr "코딩 에이전트가 이 컴퓨터에 접속할 때 사용하는 토큰입니다"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -6810,6 +6823,10 @@ msgstr "업데이트가 있습니다"
 msgid "Update download failed. Try again."
 msgstr "업데이트 다운로드에 실패했습니다. 다시 시도하세요"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Update Gateway on this computer, then reconnect to enable deleting sessions from Home."
+msgstr "이 컴퓨터의 Gateway를 업데이트하고 다시 연결하면 홈에서 세션을 삭제할 수 있습니다"
+
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Herdr on the computer to 0.9.0 or newer, then restart the session, to assign a task to another assistant"
 msgstr "다른 어시스턴트에게 작업을 맡기려면 컴퓨터의 Herdr를 0.9.0 이상으로 업데이트한 뒤 세션을 다시 시작하세요"
@@ -6850,8 +6867,6 @@ msgstr "동영상 출력을 미리 보려면 Gateway를 업데이트하세요"
 msgid "Updates when you reopen"
 msgstr "다시 열면 업데이트됩니다"
 
-#: src/app/settings-about.tsx
-#: src/app/settings-update-notes.tsx
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
 msgstr "Muqun 업데이트 중…"
@@ -6973,10 +6988,6 @@ msgstr "답변을 기다리는 중"
 msgid "Waiting to send"
 msgstr "전송 대기 중"
 
-#: src/components/settings-server-capabilities.tsx
-#~ msgid "Web"
-#~ msgstr "웹"
-
 #: src/components/agent-workbench.tsx
 msgid "Welcome to {agentName}"
 msgstr "{agentName}에 오신 것을 환영합니다"
@@ -6989,8 +7000,6 @@ msgstr "여기에서 보낼 때 홈이 시작하는 것"
 msgid "What is running"
 msgstr "실행 중인 것"
 
-#: src/app/settings-about.tsx
-#: src/app/settings-update-notes.tsx
 #: src/components/update-status-banner.tsx
 #: src/lib/release-notes.ts
 msgid "What's new"
