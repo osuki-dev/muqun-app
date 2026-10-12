@@ -9,6 +9,7 @@ import { ComposerSendGuard } from '@/lib/composer-send-guard';
 import { Spinner, useThemeMode, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { resolvePanelPick } from '@/lib/resolve-panel-pick';
+import { paneChipRevealOffset } from '@/lib/pane-chip-reveal';
 import {
   type Href,
   useFocusEffect,
@@ -3972,16 +3973,9 @@ export function ServerTerminalWorkspace({
   const revealActivePaneChip = useCallback(() => {
     const layout = paneChipLayouts.current[selection.paneId];
     const viewport = paneStripViewportRef.current;
-    if (!layout || viewport <= 0) return;
     const offset = paneStripOffsetRef.current;
-    const left = layout.x - PANE_CHIP_REVEAL_MARGIN;
-    const right = layout.x + layout.width + PANE_CHIP_REVEAL_MARGIN;
-    if (left >= offset && right <= offset + viewport) return;
-    // Centred rather than nudged to the nearest edge: arriving here usually
-    // means a swipe several panes along, and the neighbours on both sides are
-    // what say where in the strip the pane sits. `scrollTo` clamps the far end
-    // itself, so only the near end needs guarding.
-    const target = Math.max(0, layout.x + layout.width / 2 - viewport / 2);
+    const target = paneChipRevealOffset(layout, viewport, offset, PANE_CHIP_REVEAL_MARGIN);
+    if (target === null) return;
     paneStripRef.current?.scrollTo({ x: target, animated: true });
   }, [selection.paneId]);
 
