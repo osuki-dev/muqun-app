@@ -38,13 +38,15 @@
   {
     "id": "Mint",
     "directory": "mint",
-    "light": "#F2F5ED",
-    "dark": "#10332E"
+    "light": "#0C101E",
+    "dark": "#0C101E",
+    "fullBleed": true
   },
   {
     "id": "Sakura",
     "directory": "sakura",
-    "light": "#FAF1EC",
-    "dark": "#2D193B"
+    "light": "#090B27",
+    "dark": "#090B27",
+    "fullBleed": true
   }
 ]
