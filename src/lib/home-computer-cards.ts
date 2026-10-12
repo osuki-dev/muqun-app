@@ -211,6 +211,30 @@ export function dismissedKey(
   return `${serverId}\n${task.taskId}\n${task.reopenCount ?? 0}`;
 }
 
+/** A Home-only removal belongs to the assignment, including later activity. */
+export function hiddenTaskKey(serverId: string, taskId: string): string {
+  return `${serverId}\n${taskId}`;
+}
+
+function hiddenTask(
+  task: TaskView,
+  serverId: string,
+  hidden: ReadonlySet<string> | undefined,
+  byId: ReadonlyMap<string, TaskView>
+): boolean {
+  if (!hidden?.size) return false;
+  let current: TaskView | undefined = task;
+  const seen = new Set<string>();
+  while (current && !seen.has(current.taskId)) {
+    if (hidden.has(hiddenTaskKey(serverId, current.taskId))) return true;
+    seen.add(current.taskId);
+    const parentId: string | undefined = current.parentTaskId;
+    if (parentId && hidden.has(hiddenTaskKey(serverId, parentId))) return true;
+    current = parentId ? byId.get(parentId) : undefined;
+  }
+  return false;
+}
+
 /**
  * The acknowledgements still held, given what the ledgers say now: one whose
  * task is back at work is let go, so the task's next finish shows -- the rule
@@ -537,6 +561,8 @@ export function buildComputerCards(input: {
   index: ServerTasksIndex;
   reachability: (serverId: string) => ServerReachability | undefined;
   dismissed: ReadonlySet<string>;
+  /** Assignments removed locally from Home; the ledger remains untouched. */
+  hidden?: ReadonlySet<string>;
   pending?: readonly PendingDispatch[];
   /** The phone's clock, for what counts as recently finished. */
   nowMs: number;
@@ -554,9 +580,11 @@ export function buildComputerCards(input: {
     // The receiving computer's temporary exec is already represented by its
     // originating conversation. Keep the ledger; omit this duplicate Home row.
     const ledgerTasks = entry?.tasks ?? [];
+    const byId = new Map(ledgerTasks.map((task) => [task.taskId, task]));
     const tasks = ledgerTasks.filter(
       (task) =>
         !isRemoteCommandTask(task) &&
+        !hiddenTask(task, server.serverId, input.hidden, byId) &&
         !hasClosedTaskPane(
           task,
           server.serverId,

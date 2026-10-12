@@ -13,6 +13,18 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#: src/components/task-row.tsx
+msgid "Confirm removal"
+msgstr "確認移除"
+
+#: src/components/task-row.tsx
+msgid "Remove from Home"
+msgstr "從首頁移除"
+
+#: src/components/task-row.tsx
+msgid "The task and its history remain available."
+msgstr "任務及其歷史紀錄仍然保留"
+
 #: src/components/pane-chat-blocks.tsx
 msgid "… truncated"
 msgstr "…已截斷"

@@ -8,6 +8,7 @@ import { useServerTasksStore } from '@/stores/server-tasks';
 import {
   acknowledgementsHeld,
   dismissedKey,
+  hiddenTaskKey,
   pendingShown,
   type PendingDispatch,
   type PendingResend,
@@ -20,8 +21,11 @@ type KeyValueStore = {
 
 const STORE_ID = 'muqun.home';
 const DISMISSED_KEY = 'muqun.home.acknowledged-tasks.v1';
+const HIDDEN_KEY = 'muqun.home.hidden-tasks.v1';
 /** Enough for months of finished work; the oldest acknowledgement goes first. */
 const MAX_DISMISSED = 500;
+/** Bound local removals independently of per-finish acknowledgements. */
+const MAX_HIDDEN = 500;
 export { PENDING_DISPATCH_TTL_MS } from '@/lib/home-computer-cards';
 /** How many failed Sent rows are kept, holding their drafts, at most. */
 export const MAX_FAILED_ROWS = 10;
@@ -69,11 +73,25 @@ function saveDismissed(dismissed: readonly string[]): void {
 }
 let loadedDismissed: readonly string[] = [];
 
+function loadHidden(): string[] {
+  try {
+    const parsed: unknown = JSON.parse(store().getString(HIDDEN_KEY) ?? '[]');
+    return Array.isArray(parsed)
+      ? parsed.filter((key): key is string => typeof key === 'string').slice(-MAX_HIDDEN)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
 let nextPendingId = 0;
 
 type HomeTaskCardsState = {
   /** Finished tasks the reader acknowledged: off the card, still in the Tasks sheet. */
   dismissed: readonly string[];
+  /** Removed from Home only; retained offline and across task state changes. */
+  hidden: readonly string[];
+  hide: (serverId: string, task: Pick<TaskView, 'taskId'>) => void;
   /** Goals the dock sent that no task has answered yet. In memory only. */
   pending: readonly PendingDispatch[];
   /** This finish of this task was seen: off the card until it finishes again. */
@@ -119,6 +137,18 @@ export function showOpeningWhile(key: string, open: Promise<void>): void {
 
 export const useHomeTaskCards = create<HomeTaskCardsState>((set, get) => ({
   dismissed: (loadedDismissed = loadDismissed()),
+  hidden: loadHidden(),
+  hide(serverId, task) {
+    const key = hiddenTaskKey(serverId, task.taskId);
+    if (get().hidden.includes(key)) return;
+    const hidden = [...get().hidden, key].slice(-MAX_HIDDEN);
+    try {
+      store().set(HIDDEN_KEY, JSON.stringify(hidden));
+    } catch {
+      // Keep the removal for this launch when storage is unavailable.
+    }
+    set({ hidden });
+  },
   pending: [],
   rowActions: null,
   setRowActions(actions) {

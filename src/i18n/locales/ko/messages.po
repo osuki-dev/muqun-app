@@ -13,6 +13,18 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#: src/components/task-row.tsx
+msgid "Confirm removal"
+msgstr "제거 확인"
+
+#: src/components/task-row.tsx
+msgid "Remove from Home"
+msgstr "홈에서 제거"
+
+#: src/components/task-row.tsx
+msgid "The task and its history remain available."
+msgstr "작업과 기록은 계속 이용할 수 있습니다"
+
 #: src/components/pane-chat-blocks.tsx
 msgid "… truncated"
 msgstr "…이후 생략"
