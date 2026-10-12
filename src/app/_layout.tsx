@@ -58,6 +58,12 @@ import { useGatewayPushRegistration, useNotificationObserver } from '@/lib/notif
 import { startNetworkReactions } from '@/lib/gateway-socket-runtime';
 import { useSshTunnelsStore } from '@/stores/ssh-tunnels';
 import { useThemeFileOpen } from '@/hooks/use-theme-file-open';
+import { useGatewayConnectionStore } from '@/stores/gateway-connection';
+import { useHomeRecentsStore } from '@/stores/home-recents';
+import { useServerAgents } from '@/stores/server-agents';
+import { useServerCapabilities } from '@/stores/server-capabilities';
+import { useServerLastViewed } from '@/stores/server-last-viewed';
+import { useSshHostsStore } from '@/stores/ssh-hosts';
 
 /**
  * One library warning, silenced, because LogBox answers it by covering the
@@ -155,6 +161,21 @@ const ReleaseProfilerControl =
     : null;
 
 export default function RootLayout() {
+  useEffect(() => {
+    // Local reads can overlap font registration and the native launch screen.
+    // Both Home compositions consume these same stores; their effects join the
+    // existing hydration flights. Home network owners still mount inside the lock
+    // gate, after the configured record's credentials have been read.
+    void Promise.allSettled([
+      useGatewayConnectionStore.getState().hydrate(),
+      useHomeRecentsStore.getState().hydrate(),
+      useServerAgents.getState().hydrate(),
+      useServerCapabilities.getState().hydrate(),
+      useServerLastViewed.getState().hydrate(),
+      useSshHostsStore.getState().hydrate(),
+    ]);
+  }, []);
+
   useEffect(() => {
     void checkForAppUpdate();
     const subscription = AppState.addEventListener('change', (state) => {
