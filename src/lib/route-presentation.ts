@@ -476,7 +476,7 @@ export function sheetPresentationOptions(
   if (presentation === 'fullscreen')
     return {
       presentation: 'fullScreenModal',
-      animation: 'slide_from_bottom',
+      animation: 'default',
       gestureEnabled: false,
     };
   return {
@@ -494,10 +494,8 @@ export function sheetPresentationOptions(
 /**
  * The options for a sheet route, both halves read from the tables above.
  *
- * The two `fullscreen` routes keep their explicit
- * `sheetPresentationOptions(sheetRoutePresentations[...])` call in
- * `_layout.tsx`, because each of them also overrides the animation duration --
- * and because the contract test greps for exactly that spelling.
+ * Explicit full-screen routes and Pad work surfaces keep their native
+ * presentation and gesture policy with the default navigation animation.
  */
 export function sheetRouteOptions(
   route: string,

@@ -22,19 +22,13 @@ test('released home layouts resolve to stable profiles and unknown layouts use t
 
 test('profile motion preserves native defaults, reduced motion, and gestures', () => {
   for (const profile of Object.values(appearanceProfiles)) {
-    for (const modal of [false, true]) {
-      const options = profileNavigationOptions(profile, false, modal);
-      if (profile.id === 'editorial') {
-        expect(options).toEqual({ animation: 'default' });
-      } else {
-        expect(options.animationDuration).toBeLessThanOrEqual(260);
-      }
-      expect('gestureEnabled' in options).toBe(false);
-      expect(profileNavigationOptions(profile, true, modal)).toEqual({
-        animation: 'none',
-        animationDuration: 0,
-      });
-    }
+    const options = profileNavigationOptions(profile, false);
+    expect(options).toEqual({ animation: 'default' });
+    expect('gestureEnabled' in options).toBe(false);
+    expect(profileNavigationOptions(profile, true)).toEqual({
+      animation: 'none',
+      animationDuration: 0,
+    });
     for (const [route, presentation] of Object.entries(sheetRoutePresentations)) {
       if (presentation !== 'sheet') continue;
       const baseline = sheetRouteOptions(route);

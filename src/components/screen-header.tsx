@@ -9,7 +9,6 @@ import { EdgeFade } from '@/components/edge-fade';
 import { SHELL_WALLPAPER_FALLBACK, useHasThemeArtwork } from '@/components/theme-artwork';
 import { withAlpha } from '@/lib/color';
 import Animated from 'react-native-reanimated';
-import { useNavigationArrival } from '@/hooks/use-navigation-arrival';
 import {
   NAV_HEADER_CONTROL_SIZE,
   NavHeaderBackButton,
@@ -68,7 +67,6 @@ export function ScreenHeader({
   const theme = useThemeTokens();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const arrivalStyle = useNavigationArrival();
   // The plane below is there to stop scrolled labels showing through the
   // controls' material, and on a flat ground it can be the ground itself. On a
   // pack's wallpaper an opaque plane is a band of plain colour across the top
@@ -122,7 +120,6 @@ export function ScreenHeader({
             alignSelf: 'center',
             paddingHorizontal: navHeaderBarStyle.paddingHorizontal,
           },
-          arrivalStyle,
         ]}>
         <NavHeaderBackButton
           accessibilityLabel={t`Go back`}
