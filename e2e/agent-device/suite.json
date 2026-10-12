@@ -296,7 +296,9 @@
         "run": "flows/git-worktrees.ad#press"
       },
       {
-        "target": { "text": "linked-checkout · feat/linked-checkout" },
+        "target": {
+          "text": "linked-checkout · feat/linked-checkout(?:\\\\n|\\n)/Users/demo/code/muqun-worktrees/linked-checkout"
+        },
         "mode": "press",
         "run": "flows/git-worktrees.ad#press"
       },
