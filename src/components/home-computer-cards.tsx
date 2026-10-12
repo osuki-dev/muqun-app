@@ -343,6 +343,7 @@ function ComputerCardView({
       key={row.task.taskId}
       task={row.task}
       subTasks={row.children}
+      inComputerCard
       serverId={server.serverId}
       discovery={discovery}
       nowMs={nowMs}
@@ -407,6 +408,7 @@ function ComputerCardView({
               <TaskRow
                 key={task.taskId}
                 task={task}
+                inComputerCard
                 serverId={server.serverId}
                 discovery={discovery}
                 nowMs={nowMs}
@@ -443,17 +445,16 @@ const styles = StyleSheet.create({
     minWidth: 0,
     overflow: 'hidden',
     paddingHorizontal: HOME_CARD_INSET,
-    paddingTop: 4,
+    paddingTop: 8,
   },
   header: {
     minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    paddingTop: 8,
   },
   headerCopy: { flexShrink: 1, minWidth: 0, gap: 2 },
   statusLine: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  block: { paddingBottom: 8 },
+  block: { gap: 4, paddingBottom: 8 },
   fill: { flexGrow: 1 },
 });

@@ -577,6 +577,7 @@ export function TaskRow({
   nowMs,
   subTasks,
   nested = false,
+  inComputerCard = false,
   onOpen,
   onOpenTree,
 }: {
@@ -587,6 +588,8 @@ export function TaskRow({
   /** Its open sub-tasks, one level under it. */
   subTasks?: readonly TaskView[];
   nested?: boolean;
+  /** Home gives each task a little room and places its tree link below the summary. */
+  inComputerCard?: boolean;
   onOpen: (task: TaskView) => void;
   /** The Tasks list on this task's tree; absent where that list is already shown. */
   onOpenTree?: (task: TaskView) => void;
@@ -602,6 +605,24 @@ export function TaskRow({
   const opening = useHomeTaskCards(
     (cards) => cards.opening === taskOpeningKey(serverId, task.taskId)
   );
+  const rollup = rollupText ? (
+    <Text variant="caption" numberOfLines={1}>
+      {onOpenTree ? (
+        <Text
+          testID={`task-row-subtasks-${task.taskId}`}
+          variant="caption"
+          color={theme.colors.primary}
+          accessibilityRole="link"
+          onPress={() => onOpenTree(task)}>
+          {(inComputerCard ? '' : META_SEPARATOR) + rollupText}
+        </Text>
+      ) : (
+        <Text variant="caption" color={theme.colors.textMuted}>
+          {(inComputerCard ? '' : META_SEPARATOR) + rollupText}
+        </Text>
+      )}
+    </Text>
+  ) : null;
   return (
     <Animated.View
       entering={fadeIn('micro')}
@@ -625,8 +646,8 @@ export function TaskRow({
         accessibilityState={{ busy: opening }}
         {...row.menuProps}
         onPress={row.open}
-        style={styles.row}>
-        <View style={styles.titleLine}>
+        style={[styles.row, inComputerCard ? styles.cardRow : undefined]}>
+        <View style={[styles.titleLine, inComputerCard ? styles.cardTitleLine : undefined]}>
           <RowMarkdown text={title} ink={theme.colors.text} kind="title" />
           {mirror && ownTitle ? (
             <Text
@@ -640,7 +661,11 @@ export function TaskRow({
           {opening ? (
             <ActivityIndicator size="small" color={theme.colors.textMuted} />
           ) : trailingAge ? (
-            <Text variant="caption" color={theme.colors.textSubtle}>
+            <Text
+              variant="caption"
+              color={theme.colors.textSubtle}
+              numberOfLines={1}
+              style={inComputerCard ? styles.cardAge : undefined}>
               {trailingAge}
             </Text>
           ) : null}
@@ -660,25 +685,9 @@ export function TaskRow({
             line={line}
             spins={visual.spins}
           />
-          {rollupText ? (
-            <Text variant="caption" numberOfLines={1}>
-              {onOpenTree ? (
-                <Text
-                  testID={`task-row-subtasks-${task.taskId}`}
-                  variant="caption"
-                  color={theme.colors.primary}
-                  accessibilityRole="link"
-                  onPress={() => onOpenTree(task)}>
-                  {META_SEPARATOR + rollupText}
-                </Text>
-              ) : (
-                <Text variant="caption" color={theme.colors.textMuted}>
-                  {META_SEPARATOR + rollupText}
-                </Text>
-              )}
-            </Text>
-          ) : null}
+          {inComputerCard ? null : rollup}
         </Animated.View>
+        {inComputerCard && rollup ? <View style={styles.cardMetadata}>{rollup}</View> : null}
       </PressableScale>
       {row.menuShown ? (
         <AgentActionMenu
@@ -857,6 +866,10 @@ const SUBTASK_INDENT = 16;
 
 const styles = StyleSheet.create({
   row: { paddingVertical: 4, gap: 2 },
+  cardRow: { paddingVertical: 8, gap: 3 },
+  cardTitleLine: { minHeight: 24, alignItems: 'baseline' },
+  cardAge: { flexShrink: 0 },
+  cardMetadata: { paddingTop: 2 },
   sentBody: { gap: 2 },
   sentRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 4 },
   dismiss: { minHeight: 28, justifyContent: 'center', paddingHorizontal: 4 },
