@@ -1345,7 +1345,7 @@ export function HomeComposerDock({
       topInset={topInset}
       outerInsets={outerInsets}
       bar={edgeBar}
-      fieldLines={Math.max(3, fieldLines ?? 3) + 1}
+      fieldLines={Math.max(3, fieldLines ?? 3)}
       compact
       autoHide={autoHide}
       onFieldFocus={(focused) => {
