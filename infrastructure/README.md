@@ -83,6 +83,10 @@ bundles this source using the pinned root dependencies rather than deploying
 the upstream prebuilt Worker. Apply both migrations before deploying this Worker
 and before publishing any release with localized notes. Its client route uses
 the existing API-key authentication; no administrative routes are exposed.
+The generated Worker package uses the latest Wrangler CLI, invoked with
+`bunx wrangler`; Hot Updater and its adapters remain pinned at `1.0.0`. If the
+scaffold already has older Wrangler dependencies installed, rerun `bun install`
+after preparation before checking the CLI version or starting local validation.
 
 Follow its `COMMON.md`, `SETUP.md` and `ENVIRONMENT.md` in order. Verify existing
 resources before creation and after ambiguous failures. Use a private R2 bucket
