@@ -380,7 +380,7 @@ export class ThemeRepository {
     return this.snapshot();
   }
 
-  /** Back to the implicit default: the built-in theme while nothing else is installed. */
+  /** Back to the implicit default without removing the reader's installed themes. */
   resetToDefault(): ThemeLibrary {
     if (this.state.selection === null) return this.snapshot();
     this.commit({ ...this.state, previous: this.state.selection, selection: null });
@@ -422,14 +422,14 @@ export class ThemeRepository {
    * The installation the app is wearing.
    *
    * The owner's rule: the built-in theme shows exactly while the reader has
-   * chosen nothing of their own -- no installed theme, and no colour pack
-   * picked (the selection is still the implicit default). A picked pack or an
-   * installed theme wins; removing every theme with nothing picked, or
-   * `resetToDefault`, brings the built-in one back. It is not in `themes`, so it
+   * chosen nothing of their own (the selection is still the implicit default).
+   * A picked colour pack or custom theme wins; installing a theme without
+   * applying it keeps the current choice. `resetToDefault` brings the built-in
+   * one back while preserving installed themes. It is not in `themes`, so it
    * is never counted, listed under the reader's own, or removable.
    */
   activeInstalled(): InstalledTheme | null {
-    if (this.state.themes.length === 0 && this.state.selection === null) return this.builtin;
+    if (this.state.selection === null) return this.builtin;
     if (this.state.selection?.kind !== 'custom') return null;
     const id = this.state.selection.id;
     const theme = this.state.themes.find((theme) => theme.id === id);
