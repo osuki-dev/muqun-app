@@ -1061,6 +1061,76 @@
       },
       {
         "target": {
+          "id": "settings-selection:(on|off):settings-cache-cleanup-interval-10"
+        },
+        "mode": "scroll",
+        "direction": "up",
+        "timeout": 30000,
+        "run": "flows/settings.ad#storage-seek"
+      },
+      {
+        "target": {
+          "id": "settings-selection:(on|off):settings-cache-cleanup-interval-10"
+        },
+        "mode": "press",
+        "run": "flows/settings.ad#storage-press"
+      },
+      {
+        "target": {
+          "id": "settings-selection:on:settings-cache-cleanup-interval-10"
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#storage-visible"
+      },
+      {
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "storage"
+        }
+      },
+      {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "storage"
+        }
+      },
+      {
+        "target": {
+          "id": "settings-selection:on:settings-cache-cleanup-interval-10"
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#storage-visible"
+      },
+      {
+        "target": {
+          "id": "settings-selection:off:settings-cache-cleanup-interval-30"
+        },
+        "mode": "press",
+        "run": "flows/settings.ad#storage-press"
+      },
+      {
+        "target": {
+          "id": "settings-selection:on:settings-cache-cleanup-interval-30"
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#storage-visible"
+      },
+      {
+        "target": {
+          "id": "settings-selection:off:settings-cache-cleanup-interval-0"
+        },
+        "mode": "press",
+        "run": "flows/settings.ad#storage-press"
+      },
+      {
+        "target": {
+          "id": "settings-selection:on:settings-cache-cleanup-interval-0"
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#storage-visible"
+      },
+      {
+        "target": {
           "id": "settings-remove-themes-row"
         },
         "mode": "scroll",

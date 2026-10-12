@@ -404,6 +404,14 @@ msgstr "<1 min"
 msgid "0 speed pauses motion. Theme default restores the theme."
 msgstr "La velocidad 0 pausa el movimiento. Predeterminado del tema restaura el tema"
 
+#: src/components/settings-storage.tsx
+msgid "10 days"
+msgstr "10 días"
+
+#: src/components/settings-storage.tsx
+msgid "30 days"
+msgstr "30 días"
+
 #. placeholder {0}: Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))
 #: src/components/settings-font-sheet.tsx
 msgid "A .ttf or .otf up to {0} MB."
@@ -873,6 +881,10 @@ msgstr "Detectar automáticamente"
 msgid "Automatic"
 msgstr "Automático"
 
+#: src/components/settings-storage.tsx
+msgid "Automatic cache cleanup"
+msgstr "Limpieza automática de caché"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Autonomous software engineering: edits files, runs commands, tests."
 msgstr "Ingeniería de software autónoma: edita archivos, ejecuta comandos y prueba"
@@ -1250,6 +1262,10 @@ msgstr "Vaciando la caché"
 #: src/components/settings-storage.tsx
 msgid "Clearing…"
 msgstr "Vaciando…"
+
+#: src/components/settings-storage.tsx
+msgid "Clears cache when due after opening Muqun. Saved themes are kept."
+msgstr "Borra la caché al abrir Muqun cuando vence el intervalo. Los temas guardados se conservan"
 
 #: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
@@ -4050,6 +4066,7 @@ msgstr "No se cambió nada"
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
 msgstr "Nada todavía: una respuesta «Permitir siempre» aparece aquí, para este proyecto"
 
+#: src/components/settings-storage.tsx
 #: src/components/toggle.tsx
 msgid "Off"
 msgstr "Desactivado"

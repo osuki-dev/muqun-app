@@ -55,6 +55,38 @@ function reset(stored?: unknown) {
 
 beforeEach(() => reset());
 
+describe('automatic cache cleanup persistence', () => {
+  test('defaults off and preserves the interval and baseline across a restart', async () => {
+    await store.getState().hydrate();
+    expect(store.getState().cacheCleanupIntervalDays).toBe(0);
+    await store.getState().update({
+      cacheCleanupIntervalDays: 10,
+      cacheCleanupEnabledAt: 1_000,
+      cacheCleanupLastSuccessAt: 2_000,
+    });
+    await store.getState().update({ hapticsEnabled: false });
+    reset(JSON.parse(vault[STORAGE_KEY]));
+    await store.getState().hydrate();
+    expect(store.getState().cacheCleanupIntervalDays).toBe(10);
+    expect(store.getState().cacheCleanupEnabledAt).toBe(1_000);
+    expect(store.getState().cacheCleanupLastSuccessAt).toBe(2_000);
+  });
+
+  test('malformed cleanup fields fall back without discarding other settings', async () => {
+    reset({
+      cacheCleanupIntervalDays: '10',
+      cacheCleanupEnabledAt: -1,
+      cacheCleanupLastSuccessAt: 'yesterday',
+      hapticsEnabled: false,
+    });
+    await store.getState().hydrate();
+    expect(store.getState().cacheCleanupIntervalDays).toBe(0);
+    expect(store.getState().cacheCleanupEnabledAt).toBe(0);
+    expect(store.getState().cacheCleanupLastSuccessAt).toBe(0);
+    expect(store.getState().hapticsEnabled).toBe(false);
+  });
+});
+
 describe('home layout persistence', () => {
   test('theme effects default on and a saved disable survives hydration and theme changes', async () => {
     await store.getState().hydrate();

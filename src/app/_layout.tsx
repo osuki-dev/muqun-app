@@ -1,4 +1,5 @@
-import { cleanupPreviousMediaCache } from '@/lib/cache-cleanup';
+import { cleanupPreviousMediaCache, scheduleAutomaticCacheCleanup } from '@/lib/cache-cleanup';
+import { useAppSettings } from '@/stores/app-settings';
 import { AppDiagramProvider } from '@/components/app-diagram-provider';
 import { RouteScene } from '@/components/route-scene';
 import {
@@ -204,6 +205,24 @@ export default function RootLayout() {
 
   useEffect(() => {
     void cleanupPreviousMediaCache();
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    let cancelCleanup: (() => void) | undefined;
+    void useAppSettings
+      .getState()
+      .hydrate()
+      .then(() => {
+        if (!cancelled) cancelCleanup = scheduleAutomaticCacheCleanup(undefined, 5000);
+      })
+      .catch(() => {
+        // Optional maintenance must never make a settings read failure fatal.
+      });
+    return () => {
+      cancelled = true;
+      cancelCleanup?.();
+    };
   }, []);
 
   // A network change reopens the gateway sockets and re-asks the selected

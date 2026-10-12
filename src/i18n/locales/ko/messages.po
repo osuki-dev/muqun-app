@@ -404,6 +404,14 @@ msgstr "1분 미만"
 msgid "0 speed pauses motion. Theme default restores the theme."
 msgstr "속도 0은 움직임을 일시 중지합니다. 테마 기본값을 선택하면 복원됩니다"
 
+#: src/components/settings-storage.tsx
+msgid "10 days"
+msgstr "10일"
+
+#: src/components/settings-storage.tsx
+msgid "30 days"
+msgstr "30일"
+
 #. placeholder {0}: Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))
 #: src/components/settings-font-sheet.tsx
 msgid "A .ttf or .otf up to {0} MB."
@@ -873,6 +881,10 @@ msgstr "자동 감지"
 msgid "Automatic"
 msgstr "자동"
 
+#: src/components/settings-storage.tsx
+msgid "Automatic cache cleanup"
+msgstr "자동 캐시 정리"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Autonomous software engineering: edits files, runs commands, tests."
 msgstr "자율 소프트웨어 엔지니어링: 파일 편집, 명령 실행, 테스트"
@@ -1250,6 +1262,10 @@ msgstr "캐시를 비우는 중"
 #: src/components/settings-storage.tsx
 msgid "Clearing…"
 msgstr "비우는 중…"
+
+#: src/components/settings-storage.tsx
+msgid "Clears cache when due after opening Muqun. Saved themes are kept."
+msgstr "설정한 기간이 지나면 Muqun을 연 후 캐시를 정리합니다. 저장된 테마는 유지됩니다"
 
 #: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
@@ -4050,6 +4066,7 @@ msgstr "아무것도 변경되지 않았습니다"
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
 msgstr "아직 없습니다 — “항상 허용” 응답이 이 프로젝트의 규칙으로 여기에 쌓입니다"
 
+#: src/components/settings-storage.tsx
 #: src/components/toggle.tsx
 msgid "Off"
 msgstr "꺼짐"
