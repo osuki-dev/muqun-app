@@ -1293,6 +1293,7 @@ msgstr "Borra la caché al abrir Muqun cuando vence el intervalo. Los temas guar
 
 #: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
+#: src/i18n/labels.ts
 msgid "Close"
 msgstr "Cerrar"
 
@@ -1440,8 +1441,8 @@ msgid "Compared with {base}"
 msgstr "Comparado con {base}"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/agent-tool-card.tsx
 #: src/components/tool-call-detail-sheet.tsx
+#: src/i18n/labels.ts
 msgid "Completed"
 msgstr "Completado"
 
@@ -2686,8 +2687,8 @@ msgstr "Exportar colores"
 msgid "Export theme"
 msgstr "Exportar tema"
 
-#: src/components/agent-tool-card.tsx
 #: src/components/tool-call-detail-sheet.tsx
+#: src/i18n/labels.ts
 msgid "Failed"
 msgstr "Falló"
 
@@ -2800,6 +2801,10 @@ msgstr "Seguir el idioma de la app"
 #: src/components/settings-language-sheet.tsx
 msgid "Follow the language your phone is set to"
 msgstr "Seguir el idioma del teléfono"
+
+#: src/i18n/labels.ts
+msgid "Follow up"
+msgstr "Dar seguimiento"
 
 #: src/components/settings-language-sheet.tsx
 msgid "Following your phone"
@@ -3206,6 +3211,10 @@ msgstr "Instalando…"
 msgid "Intensity"
 msgstr "Intensidad"
 
+#: src/i18n/labels.ts
+msgid "Interacted"
+msgstr "Interacción realizada"
+
 #: src/components/settings-font-sheet.tsx
 msgid "Interface"
 msgstr "Interfaz"
@@ -3438,6 +3447,10 @@ msgstr "Enlazado con: {linkedNames}"
 #: src/app/computer-map.tsx
 msgid "List"
 msgstr "Lista"
+
+#: src/i18n/labels.ts
+msgid "List agents"
+msgstr "Listar agentes"
 
 #: src/app/commands.tsx
 msgid "List branches"
@@ -3740,6 +3753,7 @@ msgid "Name it, then enter the code shown by the Gateway."
 msgstr "Ponle un nombre y luego introduce el código que muestra el Gateway"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/i18n/labels.ts
 msgid "Needs input"
 msgstr "Necesita una respuesta"
 
@@ -5131,6 +5145,10 @@ msgstr "Restaurar los comandos predeterminados ocultos"
 msgid "Restore hidden defaults"
 msgstr "Restaurar predeterminados ocultos"
 
+#: src/i18n/labels.ts
+msgid "Resume"
+msgstr "Reanudar"
+
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
@@ -5499,6 +5517,10 @@ msgstr "Seleccionar modelo: {modelDisplayName}"
 #: src/components/custom-theme-library.tsx
 msgid "Selected"
 msgstr "Seleccionado"
+
+#: src/i18n/labels.ts
+msgid "Send"
+msgstr "Enviar"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -5898,6 +5920,10 @@ msgstr "Preparado y sin preparar"
 msgid "stale · {age}"
 msgstr "desactualizado · {age}"
 
+#: src/i18n/labels.ts
+msgid "Start"
+msgstr "Iniciar"
+
 #: src/components/agent-guide-sheet.tsx
 msgid "Start {agentName}"
 msgstr "Iniciar {agentName}"
@@ -5952,6 +5978,10 @@ msgstr "Inicia el agente en el ordenador y vuelve a comprobar"
 msgid "Start the OpenCode service on the computer, then check again."
 msgstr "Inicia el servicio de OpenCode en el ordenador y vuelve a comprobar"
 
+#: src/i18n/labels.ts
+msgid "Started"
+msgstr "Iniciado"
+
 #: src/components/pane-history-sheet.tsx
 msgid "Started {started}"
 msgstr "Inicio: {started}"
@@ -5960,7 +5990,7 @@ msgstr "Inicio: {started}"
 msgid "Started with a clean context."
 msgstr "Iniciada con el contexto limpio"
 
-#: src/components/agent-tool-card.tsx
+#: src/i18n/labels.ts
 msgid "Starting"
 msgstr "Iniciando"
 
@@ -6058,7 +6088,6 @@ msgid "Stop this command"
 msgstr "Detener este comando"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/agent-tool-card.tsx
 #: src/components/agent-workbench.tsx
 #: src/i18n/labels.ts
 msgid "Stopped"
@@ -6982,9 +7011,9 @@ msgid "Type on the simulator"
 msgstr "Escribir en el simulador"
 
 #: src/app/pane-history.tsx
-#: src/components/agent-tool-card.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/task-result-sheet.tsx
+#: src/i18n/labels.ts
 msgid "Unavailable"
 msgstr "No disponible"
 
@@ -7265,6 +7294,10 @@ msgstr "Voz a texto"
 msgid "Voice to text disabled"
 msgstr "Voz a texto desactivada"
 
+#: src/i18n/labels.ts
+msgid "Wait"
+msgstr "Esperar"
+
 #: src/components/agent-workbench.tsx
 msgid "Wait for the turn to end before choosing a model."
 msgstr "Espera a que termine el turno antes de elegir un modelo"
@@ -7319,7 +7352,6 @@ msgstr "Novedades"
 msgid "While you were away"
 msgstr "Mientras no estabas"
 
-#: src/components/agent-tool-card.tsx
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
 msgid "Working"

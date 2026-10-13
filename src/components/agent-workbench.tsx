@@ -4196,14 +4196,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * started it returns long before the child is finished, and `agent.status.changed`
    * for the child arrives on the same list this is read from.
    */
-  const childStatuses = useMemo(() => {
-    const statuses: Record<string, AgentRunStatus> = {};
+  const childSessions = useMemo(() => {
+    const sessions: Record<string, AgentSessionInfo> = {};
     // Out of the fetched tree, not out of the session list: the list is roots
     // only, so a subagent is never in it and this map would always be empty.
     for (const children of Object.values(childrenByParent)) {
-      for (const child of children) statuses[child.asid] = child.status;
+      for (const child of children) sessions[child.asid] = child;
     }
-    return statuses;
+    return sessions;
   }, [childrenByParent]);
 
   /**
@@ -4233,7 +4233,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       ...(canRunInBackground ? { onOpenBackgroundTray: openBackgroundTray } : {}),
       onOpenFullDiff: openDiffSheet,
       onOpenToolDetail: openToolDetail,
-      childStatuses,
+      childSessions,
     }),
     [
       activeAsid,
@@ -4243,7 +4243,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       openBackgroundTray,
       openDiffSheet,
       openToolDetail,
-      childStatuses,
+      childSessions,
       openSubagentDetail,
     ]
   );

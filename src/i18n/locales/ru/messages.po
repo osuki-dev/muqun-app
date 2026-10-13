@@ -1293,6 +1293,7 @@ msgstr "Очищает кеш после открытия Muqun, когда ис
 
 #: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
+#: src/i18n/labels.ts
 msgid "Close"
 msgstr "Закрыть"
 
@@ -1440,8 +1441,8 @@ msgid "Compared with {base}"
 msgstr "По сравнению с {base}"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/agent-tool-card.tsx
 #: src/components/tool-call-detail-sheet.tsx
+#: src/i18n/labels.ts
 msgid "Completed"
 msgstr "Выполнено"
 
@@ -2686,8 +2687,8 @@ msgstr "Экспортировать цвета"
 msgid "Export theme"
 msgstr "Экспортировать тему"
 
-#: src/components/agent-tool-card.tsx
 #: src/components/tool-call-detail-sheet.tsx
+#: src/i18n/labels.ts
 msgid "Failed"
 msgstr "Ошибка"
 
@@ -2800,6 +2801,10 @@ msgstr "Использовать язык приложения"
 #: src/components/settings-language-sheet.tsx
 msgid "Follow the language your phone is set to"
 msgstr "Следовать языку телефона"
+
+#: src/i18n/labels.ts
+msgid "Follow up"
+msgstr "Продолжить обсуждение"
 
 #: src/components/settings-language-sheet.tsx
 msgid "Following your phone"
@@ -3206,6 +3211,10 @@ msgstr "Установка…"
 msgid "Intensity"
 msgstr "Интенсивность"
 
+#: src/i18n/labels.ts
+msgid "Interacted"
+msgstr "Взаимодействие выполнено"
+
 #: src/components/settings-font-sheet.tsx
 msgid "Interface"
 msgstr "Интерфейс"
@@ -3438,6 +3447,10 @@ msgstr "Связан с: {linkedNames}"
 #: src/app/computer-map.tsx
 msgid "List"
 msgstr "Список"
+
+#: src/i18n/labels.ts
+msgid "List agents"
+msgstr "Список агентов"
 
 #: src/app/commands.tsx
 msgid "List branches"
@@ -3740,6 +3753,7 @@ msgid "Name it, then enter the code shown by the Gateway."
 msgstr "Назовите его, затем введите код, который показывает Gateway"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/i18n/labels.ts
 msgid "Needs input"
 msgstr "Требуется ввод"
 
@@ -5131,6 +5145,10 @@ msgstr "Восстановить скрытые команды по умолча
 msgid "Restore hidden defaults"
 msgstr "Восстановить скрытые значения по умолчанию"
 
+#: src/i18n/labels.ts
+msgid "Resume"
+msgstr "Возобновить"
+
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
@@ -5499,6 +5517,10 @@ msgstr "Выбрать модель: {modelDisplayName}"
 #: src/components/custom-theme-library.tsx
 msgid "Selected"
 msgstr "Выбрано"
+
+#: src/i18n/labels.ts
+msgid "Send"
+msgstr "Отправить"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -5898,6 +5920,10 @@ msgstr "В индексе и не в индексе"
 msgid "stale · {age}"
 msgstr "устарело · {age}"
 
+#: src/i18n/labels.ts
+msgid "Start"
+msgstr "Запустить"
+
 #: src/components/agent-guide-sheet.tsx
 msgid "Start {agentName}"
 msgstr "Запустить {agentName}"
@@ -5952,6 +5978,10 @@ msgstr "Запустите агента на компьютере и прове�
 msgid "Start the OpenCode service on the computer, then check again."
 msgstr "Запустите службу OpenCode на компьютере и проверьте снова"
 
+#: src/i18n/labels.ts
+msgid "Started"
+msgstr "Запущен"
+
 #: src/components/pane-history-sheet.tsx
 msgid "Started {started}"
 msgstr "Начало: {started}"
@@ -5960,7 +5990,7 @@ msgstr "Начало: {started}"
 msgid "Started with a clean context."
 msgstr "Начата с чистым контекстом"
 
-#: src/components/agent-tool-card.tsx
+#: src/i18n/labels.ts
 msgid "Starting"
 msgstr "Запуск"
 
@@ -6058,7 +6088,6 @@ msgid "Stop this command"
 msgstr "Остановить эту команду"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/agent-tool-card.tsx
 #: src/components/agent-workbench.tsx
 #: src/i18n/labels.ts
 msgid "Stopped"
@@ -6982,9 +7011,9 @@ msgid "Type on the simulator"
 msgstr "Ввод на симуляторе"
 
 #: src/app/pane-history.tsx
-#: src/components/agent-tool-card.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/task-result-sheet.tsx
+#: src/i18n/labels.ts
 msgid "Unavailable"
 msgstr "Недоступно"
 
@@ -7265,6 +7294,10 @@ msgstr "Голос в текст"
 msgid "Voice to text disabled"
 msgstr "Преобразование голоса в текст отключено"
 
+#: src/i18n/labels.ts
+msgid "Wait"
+msgstr "Ожидать"
+
 #: src/components/agent-workbench.tsx
 msgid "Wait for the turn to end before choosing a model."
 msgstr "Дождитесь завершения хода, прежде чем выбирать модель"
@@ -7319,7 +7352,6 @@ msgstr "Что нового"
 msgid "While you were away"
 msgstr "Пока вас не было"
 
-#: src/components/agent-tool-card.tsx
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
 msgid "Working"

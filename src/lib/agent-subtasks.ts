@@ -1,5 +1,6 @@
 import { isBusyStatus, type AgentDomainEvent, type AgentSessionInfo } from './agent-protocol';
 import { activeFirstSessionChildren } from './agent-session-tree';
+import { subagentSessionState } from './agent-subagent-presentation';
 
 /**
  * The open session's subtasks: every session below it by `parent_id`, at any
@@ -85,8 +86,9 @@ export function subtaskSummary(
   let running = 0;
   let blocked = 0;
   for (const { session } of descendants) {
-    if (isSubtaskBlocked(blocks, session.asid) || session.runtime?.status === 'blocked') blocked++;
-    else if (isBusyStatus(session.status)) running++;
+    const state = subagentSessionState(session);
+    if (isSubtaskBlocked(blocks, session.asid) || state === 'blocked') blocked++;
+    else if (state === 'working' || state === 'starting' || state === 'retrying') running++;
   }
   const kind: SubtaskSummaryKind = blocked > 0 ? 'blocked' : running > 0 ? 'running' : 'idle';
   return { total: descendants.length, running, blocked, kind };

@@ -1293,6 +1293,7 @@ msgstr "설정한 기간이 지나면 Muqun을 연 후 캐시를 정리합니다
 
 #: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
+#: src/i18n/labels.ts
 msgid "Close"
 msgstr "닫기"
 
@@ -1440,8 +1441,8 @@ msgid "Compared with {base}"
 msgstr "{base}와(과) 비교"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/agent-tool-card.tsx
 #: src/components/tool-call-detail-sheet.tsx
+#: src/i18n/labels.ts
 msgid "Completed"
 msgstr "완료됨"
 
@@ -2686,8 +2687,8 @@ msgstr "색상 내보내기"
 msgid "Export theme"
 msgstr "테마 내보내기"
 
-#: src/components/agent-tool-card.tsx
 #: src/components/tool-call-detail-sheet.tsx
+#: src/i18n/labels.ts
 msgid "Failed"
 msgstr "실패"
 
@@ -2800,6 +2801,10 @@ msgstr "앱 언어 따르기"
 #: src/components/settings-language-sheet.tsx
 msgid "Follow the language your phone is set to"
 msgstr "휴대폰 언어를 따르기"
+
+#: src/i18n/labels.ts
+msgid "Follow up"
+msgstr "후속 요청"
 
 #: src/components/settings-language-sheet.tsx
 msgid "Following your phone"
@@ -3206,6 +3211,10 @@ msgstr "설치 중…"
 msgid "Intensity"
 msgstr "강도"
 
+#: src/i18n/labels.ts
+msgid "Interacted"
+msgstr "대화함"
+
 #: src/components/settings-font-sheet.tsx
 msgid "Interface"
 msgstr "인터페이스"
@@ -3438,6 +3447,10 @@ msgstr "연결됨: {linkedNames}"
 #: src/app/computer-map.tsx
 msgid "List"
 msgstr "목록"
+
+#: src/i18n/labels.ts
+msgid "List agents"
+msgstr "에이전트 목록"
 
 #: src/app/commands.tsx
 msgid "List branches"
@@ -3740,6 +3753,7 @@ msgid "Name it, then enter the code shown by the Gateway."
 msgstr "이름을 지정한 뒤 Gateway에 표시된 코드를 입력하세요"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/i18n/labels.ts
 msgid "Needs input"
 msgstr "입력 필요"
 
@@ -5131,6 +5145,10 @@ msgstr "숨긴 기본 명령 복원"
 msgid "Restore hidden defaults"
 msgstr "숨긴 기본 항목 복원"
 
+#: src/i18n/labels.ts
+msgid "Resume"
+msgstr "재개"
+
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
@@ -5499,6 +5517,10 @@ msgstr "모델 선택: {modelDisplayName}"
 #: src/components/custom-theme-library.tsx
 msgid "Selected"
 msgstr "선택됨"
+
+#: src/i18n/labels.ts
+msgid "Send"
+msgstr "보내기"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -5898,6 +5920,10 @@ msgstr "스테이징됨 및 안 됨"
 msgid "stale · {age}"
 msgstr "오래됨 · {age}"
 
+#: src/i18n/labels.ts
+msgid "Start"
+msgstr "시작"
+
 #: src/components/agent-guide-sheet.tsx
 msgid "Start {agentName}"
 msgstr "{agentName} 시작"
@@ -5952,6 +5978,10 @@ msgstr "컴퓨터에서 에이전트를 시작한 뒤 다시 확인하세요"
 msgid "Start the OpenCode service on the computer, then check again."
 msgstr "컴퓨터에서 OpenCode 서비스를 시작한 뒤 다시 확인하세요"
 
+#: src/i18n/labels.ts
+msgid "Started"
+msgstr "시작됨"
+
 #: src/components/pane-history-sheet.tsx
 msgid "Started {started}"
 msgstr "시작: {started}"
@@ -5960,7 +5990,7 @@ msgstr "시작: {started}"
 msgid "Started with a clean context."
 msgstr "빈 컨텍스트로 시작했습니다"
 
-#: src/components/agent-tool-card.tsx
+#: src/i18n/labels.ts
 msgid "Starting"
 msgstr "시작 중"
 
@@ -6058,7 +6088,6 @@ msgid "Stop this command"
 msgstr "이 명령 중지"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/agent-tool-card.tsx
 #: src/components/agent-workbench.tsx
 #: src/i18n/labels.ts
 msgid "Stopped"
@@ -6982,9 +7011,9 @@ msgid "Type on the simulator"
 msgstr "시뮬레이터에 입력"
 
 #: src/app/pane-history.tsx
-#: src/components/agent-tool-card.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/task-result-sheet.tsx
+#: src/i18n/labels.ts
 msgid "Unavailable"
 msgstr "사용할 수 없음"
 
@@ -7265,6 +7294,10 @@ msgstr "음성을 텍스트로"
 msgid "Voice to text disabled"
 msgstr "음성 텍스트 변환 비활성화됨"
 
+#: src/i18n/labels.ts
+msgid "Wait"
+msgstr "대기"
+
 #: src/components/agent-workbench.tsx
 msgid "Wait for the turn to end before choosing a model."
 msgstr "턴이 끝난 후 모델을 선택하세요"
@@ -7319,7 +7352,6 @@ msgstr "새로운 기능"
 msgid "While you were away"
 msgstr "자리를 비운 사이"
 
-#: src/components/agent-tool-card.tsx
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
 msgid "Working"
