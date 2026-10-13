@@ -303,9 +303,7 @@ export function createMarkdownStyle(colors: Colors, fonts?: MarkdownFonts): Mark
     table: {
       ...base,
       borderColor: border,
-      // A hairline disappears on the emulator and the cells read as one blob;
-      // a full pixel keeps the grid visible at every density.
-      borderWidth: 1,
+      borderWidth: StyleSheet.hairlineWidth,
       borderRadius: appAppearanceConfig.radius.sm,
       // Headers carry the theme accent; body rows keep neutral reading surfaces.
       headerBackgroundColor: colors.primarySubtle,
