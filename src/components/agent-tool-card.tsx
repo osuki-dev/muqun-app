@@ -65,7 +65,6 @@ import {
   splitUrl,
   stripReadLineNumbers,
   stripSubagentEnvelope,
-  subagentStatusFromMetadata,
   textFromContent,
   toolArgumentLine,
   toolInputJson,
@@ -73,13 +72,10 @@ import {
   type ToolKind,
   type ToolQuestion,
 } from '@/lib/agent-tool-output';
-import {
-  isBusyStatus,
-  toolDurationMs,
-  type AgentRunStatus,
-  type ToolPart,
-} from '@/lib/agent-session';
+import { toolDurationMs, type AgentSessionInfo, type ToolPart } from '@/lib/agent-session';
 import { AGENT_TYPE } from '@/constants/agent-type';
+import { subagentPresentation } from '@/lib/agent-subagent-presentation';
+import { subagentActionWord, subagentStateWord } from '@/i18n/labels';
 
 /**
  * One tool call, drawn as what it actually is.
@@ -103,8 +99,8 @@ export interface AgentToolCardProps {
   audioSessionId?: string;
   part: ToolPart;
   markdownStyle: MarkdownStyle;
-  /** The live status of the session a subagent started, if it is being watched. */
-  childStatus?: AgentRunStatus;
+  /** The observed identity and state of this exact child session. */
+  childSession?: AgentSessionInfo;
   onOpenChildSession?: (asid: string) => void;
   /** `POST …/background`, offered while a foreground tool is still running. */
   onRunInBackground?: () => void;
@@ -384,7 +380,7 @@ const PatchBody = memo(function PatchBody({
 export const AgentToolCard = memo(function AgentToolCard({
   audioSessionId,
   part,
-  childStatus,
+  childSession,
   onOpenChildSession,
   onRunInBackground,
   onOpenBackgroundTray,
@@ -393,7 +389,7 @@ export const AgentToolCard = memo(function AgentToolCard({
   onOpenFullDiff,
   onOpenDetail,
 }: AgentToolCardProps) {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   const theme = useThemeTokens();
   // Read from the theme here, not from a prop: the timeline's memoised cells
   // skip re-renders the list cannot see, and a style handed down through
@@ -500,6 +496,13 @@ export const AgentToolCard = memo(function AgentToolCard({
     () => (kind === 'subagent' ? stripSubagentEnvelope(outputText) : null),
     [kind, outputText]
   );
+  const child = useMemo(
+    () =>
+      kind === 'subagent' ? subagentPresentation(part, childSession, subagent?.state) : undefined,
+    [kind, part, childSession, subagent?.state]
+  );
+  const childWorking =
+    child?.state === 'working' || child?.state === 'starting' || child?.state === 'retrying';
   const questions = useMemo(
     () => (kind === 'question' ? parseToolQuestions(part.input) : []),
     [kind, part.input]
@@ -590,22 +593,14 @@ export const AgentToolCard = memo(function AgentToolCard({
         nodes.push(<Chip key="provider" text={provider} color={theme.colors.textMuted} />);
       }
     }
-    if (kind === 'subagent') {
-      const status = subagentStatusFromMetadata(part.metadata) ?? subagent?.state;
-      if (status) {
-        const labels: Record<string, string> = {
-          starting: t`Starting`,
-          working: t`Working`,
-          completed: t`Completed`,
-          failed: t`Failed`,
-          interrupted: t`Stopped`,
-          shutdown: t`Stopped`,
-          notFound: t`Unavailable`,
-        };
-        nodes.push(
-          <Chip key="sub" text={labels[status] ?? status} color={theme.colors.textMuted} />
-        );
-      }
+    if (child?.state) {
+      nodes.push(
+        <Chip
+          key="sub"
+          text={i18n._(subagentStateWord[child.state])}
+          color={theme.colors.textMuted}
+        />
+      );
     }
     return nodes.length > 0 ? nodes : null;
   }, [
@@ -619,7 +614,8 @@ export const AgentToolCard = memo(function AgentToolCard({
     newString,
     oldString,
     writeContent,
-    subagent,
+    child,
+    i18n,
     theme.colors.textMuted,
     t,
   ]);
@@ -687,11 +683,11 @@ export const AgentToolCard = memo(function AgentToolCard({
           <StatusDot
             size={7}
             filled
-            pulse={isBusyStatus(childStatus)}
+            pulse={childWorking}
             color={
-              childStatus === 'failed'
+              child?.state === 'failed'
                 ? theme.colors.danger
-                : isBusyStatus(childStatus)
+                : childWorking || child?.state === 'blocked'
                   ? theme.colors.warning
                   : theme.colors.textMuted
             }
@@ -714,7 +710,8 @@ export const AgentToolCard = memo(function AgentToolCard({
     onOpenChildSession,
     handleOpenTray,
     handleOpenChild,
-    childStatus,
+    child,
+    childWorking,
     colors,
     theme.colors,
     profile.chrome.control,
@@ -731,8 +728,10 @@ export const AgentToolCard = memo(function AgentToolCard({
       return { headerTitle: basename(target) || target, headerCaption: dirname(caption) };
     }
     if (kind === 'subagent') {
-      const agent = typeof input?.agent === 'string' ? input.agent : undefined;
-      return { headerTitle: agent ? `${agent} · ${target}` : target, headerCaption: '' };
+      return {
+        headerTitle: child?.title || part.title || target,
+        headerCaption: child?.caption ?? '',
+      };
     }
     if (kind === 'skill') {
       // `metadata.name` is the skill; `input.id` is the file it lives in. The
@@ -753,7 +752,7 @@ export const AgentToolCard = memo(function AgentToolCard({
       return { headerTitle: part.title ?? target, headerCaption: '' };
     }
     return { headerTitle: part.title ?? target, headerCaption: caption };
-  }, [kind, target, caption, part.title, part.metadata, input]);
+  }, [kind, target, caption, part.title, part.metadata, child]);
 
   // ---- body --------------------------------------------------------------
 
@@ -831,7 +830,7 @@ export const AgentToolCard = memo(function AgentToolCard({
   return (
     <EmbeddedTerminalToolBlock
       testID={`agent-tool-${part.id}`}
-      toolName={part.name}
+      toolName={child?.action ? i18n._(subagentActionWord[child.action]) : part.name}
       kind={kind}
       title={headerTitle}
       caption={headerCaption}

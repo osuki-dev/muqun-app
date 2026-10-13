@@ -1293,6 +1293,7 @@ msgstr "到期後開啟 Muqun 時清理快取，保留已儲存的主題"
 
 #: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
+#: src/i18n/labels.ts
 msgid "Close"
 msgstr "關閉"
 
@@ -1440,8 +1441,8 @@ msgid "Compared with {base}"
 msgstr "與 {base} 比較"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/agent-tool-card.tsx
 #: src/components/tool-call-detail-sheet.tsx
+#: src/i18n/labels.ts
 msgid "Completed"
 msgstr "已完成"
 
@@ -2686,8 +2687,8 @@ msgstr "匯出色彩"
 msgid "Export theme"
 msgstr "匯出主題"
 
-#: src/components/agent-tool-card.tsx
 #: src/components/tool-call-detail-sheet.tsx
+#: src/i18n/labels.ts
 msgid "Failed"
 msgstr "失敗"
 
@@ -2800,6 +2801,10 @@ msgstr "跟隨 App 語言"
 #: src/components/settings-language-sheet.tsx
 msgid "Follow the language your phone is set to"
 msgstr "跟隨手機的語言"
+
+#: src/i18n/labels.ts
+msgid "Follow up"
+msgstr "跟進"
 
 #: src/components/settings-language-sheet.tsx
 msgid "Following your phone"
@@ -3206,6 +3211,10 @@ msgstr "安裝中…"
 msgid "Intensity"
 msgstr "強度"
 
+#: src/i18n/labels.ts
+msgid "Interacted"
+msgstr "已互動"
+
 #: src/components/settings-font-sheet.tsx
 msgid "Interface"
 msgstr "介面"
@@ -3438,6 +3447,10 @@ msgstr "已連結：{linkedNames}"
 #: src/app/computer-map.tsx
 msgid "List"
 msgstr "清單"
+
+#: src/i18n/labels.ts
+msgid "List agents"
+msgstr "列出智慧體"
 
 #: src/app/commands.tsx
 msgid "List branches"
@@ -3740,6 +3753,7 @@ msgid "Name it, then enter the code shown by the Gateway."
 msgstr "為它命名，然後輸入 Gateway 顯示的代碼"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/i18n/labels.ts
 msgid "Needs input"
 msgstr "需要輸入"
 
@@ -5131,6 +5145,10 @@ msgstr "還原隱藏的預設指令"
 msgid "Restore hidden defaults"
 msgstr "還原隱藏的預設"
 
+#: src/i18n/labels.ts
+msgid "Resume"
+msgstr "恢復"
+
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
@@ -5499,6 +5517,10 @@ msgstr "選擇模型：{modelDisplayName}"
 #: src/components/custom-theme-library.tsx
 msgid "Selected"
 msgstr "已選取"
+
+#: src/i18n/labels.ts
+msgid "Send"
+msgstr "傳送"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -5898,6 +5920,10 @@ msgstr "已暫存和未暫存"
 msgid "stale · {age}"
 msgstr "資料過舊 · {age}"
 
+#: src/i18n/labels.ts
+msgid "Start"
+msgstr "啟動"
+
 #: src/components/agent-guide-sheet.tsx
 msgid "Start {agentName}"
 msgstr "啟動 {agentName}"
@@ -5952,6 +5978,10 @@ msgstr "請在電腦上啟動代理程式，然後重新檢查"
 msgid "Start the OpenCode service on the computer, then check again."
 msgstr "請在電腦上啟動 OpenCode 服務，然後重新檢查"
 
+#: src/i18n/labels.ts
+msgid "Started"
+msgstr "已啟動"
+
 #: src/components/pane-history-sheet.tsx
 msgid "Started {started}"
 msgstr "開始於 {started}"
@@ -5960,7 +5990,7 @@ msgstr "開始於 {started}"
 msgid "Started with a clean context."
 msgstr "已以全新的上下文開始"
 
-#: src/components/agent-tool-card.tsx
+#: src/i18n/labels.ts
 msgid "Starting"
 msgstr "正在啟動"
 
@@ -6058,7 +6088,6 @@ msgid "Stop this command"
 msgstr "停止這條命令"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/agent-tool-card.tsx
 #: src/components/agent-workbench.tsx
 #: src/i18n/labels.ts
 msgid "Stopped"
@@ -6982,9 +7011,9 @@ msgid "Type on the simulator"
 msgstr "在模擬器上輸入"
 
 #: src/app/pane-history.tsx
-#: src/components/agent-tool-card.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/task-result-sheet.tsx
+#: src/i18n/labels.ts
 msgid "Unavailable"
 msgstr "無法使用"
 
@@ -7265,6 +7294,10 @@ msgstr "語音轉文字"
 msgid "Voice to text disabled"
 msgstr "已關閉語音轉文字"
 
+#: src/i18n/labels.ts
+msgid "Wait"
+msgstr "等待"
+
 #: src/components/agent-workbench.tsx
 msgid "Wait for the turn to end before choosing a model."
 msgstr "請等待本輪結束後再選擇模型"
@@ -7319,7 +7352,6 @@ msgstr "新功能"
 msgid "While you were away"
 msgstr "離開期間"
 
-#: src/components/agent-tool-card.tsx
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
 msgid "Working"

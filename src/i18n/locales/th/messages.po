@@ -1293,6 +1293,7 @@ msgstr "ล้างแคชเมื่อเปิด Muqun หลังค�
 
 #: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
+#: src/i18n/labels.ts
 msgid "Close"
 msgstr "ปิด"
 
@@ -1440,8 +1441,8 @@ msgid "Compared with {base}"
 msgstr "เทียบกับ {base}"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/agent-tool-card.tsx
 #: src/components/tool-call-detail-sheet.tsx
+#: src/i18n/labels.ts
 msgid "Completed"
 msgstr "เสร็จสิ้น"
 
@@ -2686,8 +2687,8 @@ msgstr "ส่งออกสี"
 msgid "Export theme"
 msgstr "ส่งออกธีม"
 
-#: src/components/agent-tool-card.tsx
 #: src/components/tool-call-detail-sheet.tsx
+#: src/i18n/labels.ts
 msgid "Failed"
 msgstr "ล้มเหลว"
 
@@ -2800,6 +2801,10 @@ msgstr "ตามภาษาของแอป"
 #: src/components/settings-language-sheet.tsx
 msgid "Follow the language your phone is set to"
 msgstr "ตามภาษาของเครื่อง"
+
+#: src/i18n/labels.ts
+msgid "Follow up"
+msgstr "ติดตามต่อ"
 
 #: src/components/settings-language-sheet.tsx
 msgid "Following your phone"
@@ -3206,6 +3211,10 @@ msgstr "กำลังติดตั้ง…"
 msgid "Intensity"
 msgstr "ความเข้ม"
 
+#: src/i18n/labels.ts
+msgid "Interacted"
+msgstr "โต้ตอบแล้ว"
+
 #: src/components/settings-font-sheet.tsx
 msgid "Interface"
 msgstr "ส่วนติดต่อผู้ใช้"
@@ -3438,6 +3447,10 @@ msgstr "เชื่อมกับ: {linkedNames}"
 #: src/app/computer-map.tsx
 msgid "List"
 msgstr "รายการ"
+
+#: src/i18n/labels.ts
+msgid "List agents"
+msgstr "แสดงรายการเอเจนต์"
 
 #: src/app/commands.tsx
 msgid "List branches"
@@ -3740,6 +3753,7 @@ msgid "Name it, then enter the code shown by the Gateway."
 msgstr "ตั้งชื่อแล้วป้อนรหัสที่ Gateway แสดง"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/i18n/labels.ts
 msgid "Needs input"
 msgstr "ต้องการคำตอบ"
 
@@ -5131,6 +5145,10 @@ msgstr "คืนค่าคำสั่งเริ่มต้นที่ซ
 msgid "Restore hidden defaults"
 msgstr "คืนค่ารายการเริ่มต้นที่ซ่อนอยู่"
 
+#: src/i18n/labels.ts
+msgid "Resume"
+msgstr "ดำเนินการต่อ"
+
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
@@ -5499,6 +5517,10 @@ msgstr "เลือกโมเดล: {modelDisplayName}"
 #: src/components/custom-theme-library.tsx
 msgid "Selected"
 msgstr "เลือกแล้ว"
+
+#: src/i18n/labels.ts
+msgid "Send"
+msgstr "ส่ง"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -5898,6 +5920,10 @@ msgstr "เตรียมคอมมิตแล้วและยังไม
 msgid "stale · {age}"
 msgstr "ข้อมูลเก่า · {age}"
 
+#: src/i18n/labels.ts
+msgid "Start"
+msgstr "เริ่ม"
+
 #: src/components/agent-guide-sheet.tsx
 msgid "Start {agentName}"
 msgstr "เริ่ม {agentName}"
@@ -5952,6 +5978,10 @@ msgstr "เริ่มเอเจนต์บนคอมพิวเตอร
 msgid "Start the OpenCode service on the computer, then check again."
 msgstr "เริ่มบริการ OpenCode บนคอมพิวเตอร์ แล้วตรวจสอบอีกครั้ง"
 
+#: src/i18n/labels.ts
+msgid "Started"
+msgstr "เริ่มแล้ว"
+
 #: src/components/pane-history-sheet.tsx
 msgid "Started {started}"
 msgstr "เริ่มเมื่อ {started}"
@@ -5960,7 +5990,7 @@ msgstr "เริ่มเมื่อ {started}"
 msgid "Started with a clean context."
 msgstr "เริ่มต้นด้วยบริบทที่ว่างเปล่า"
 
-#: src/components/agent-tool-card.tsx
+#: src/i18n/labels.ts
 msgid "Starting"
 msgstr "กำลังเริ่ม"
 
@@ -6058,7 +6088,6 @@ msgid "Stop this command"
 msgstr "หยุดคำสั่งนี้"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/agent-tool-card.tsx
 #: src/components/agent-workbench.tsx
 #: src/i18n/labels.ts
 msgid "Stopped"
@@ -6982,9 +7011,9 @@ msgid "Type on the simulator"
 msgstr "พิมพ์บนเครื่องจำลอง"
 
 #: src/app/pane-history.tsx
-#: src/components/agent-tool-card.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/task-result-sheet.tsx
+#: src/i18n/labels.ts
 msgid "Unavailable"
 msgstr "ไม่พร้อมใช้งาน"
 
@@ -7265,6 +7294,10 @@ msgstr "เสียงเป็นข้อความ"
 msgid "Voice to text disabled"
 msgstr "ปิดการแปลงเสียงเป็นข้อความแล้ว"
 
+#: src/i18n/labels.ts
+msgid "Wait"
+msgstr "รอ"
+
 #: src/components/agent-workbench.tsx
 msgid "Wait for the turn to end before choosing a model."
 msgstr "รอให้จบรอบก่อนเลือกโมเดล"
@@ -7319,7 +7352,6 @@ msgstr "มีอะไรใหม่"
 msgid "While you were away"
 msgstr "ขณะที่คุณไม่อยู่"
 
-#: src/components/agent-tool-card.tsx
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
 msgid "Working"

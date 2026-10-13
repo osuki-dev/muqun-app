@@ -140,6 +140,34 @@ export const agentStatusWord: Record<string, MessageDescriptor> = {
   unknown: msg`Unknown`,
 };
 
+/** Historical collaboration operations and observed child state are separate facts. */
+export const subagentActionWord = {
+  start: msg`Start`,
+  send: msg`Send`,
+  resume: msg`Resume`,
+  wait: msg`Wait`,
+  close: msg`Close`,
+  interrupt: msg`Interrupt`,
+  followup: msg`Follow up`,
+  list: msg`List agents`,
+  started: msg`Started`,
+  interacted: msg`Interacted`,
+  completed: msg`Completed`,
+  interrupted: msg`Stopped`,
+};
+export const subagentStateWord = {
+  starting: msg`Starting`,
+  working: msg`Working`,
+  idle: msg`Idle`,
+  completed: msg`Completed`,
+  failed: msg`Failed`,
+  stopped: msg`Stopped`,
+  blocked: msg`Needs input`,
+  unknown: msg`Status unknown`,
+  retrying: msg`Retrying…`,
+  unavailable: msg`Unavailable`,
+};
+
 /**
  * What a permission is asking for, said as a phrase rather than a wire key.
  *

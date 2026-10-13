@@ -1293,6 +1293,7 @@ msgstr "設定した間隔が経過すると、Muqunを開いた後にキャッ�
 
 #: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
+#: src/i18n/labels.ts
 msgid "Close"
 msgstr "閉じる"
 
@@ -1440,8 +1441,8 @@ msgid "Compared with {base}"
 msgstr "{base} と比較"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/agent-tool-card.tsx
 #: src/components/tool-call-detail-sheet.tsx
+#: src/i18n/labels.ts
 msgid "Completed"
 msgstr "完了"
 
@@ -2686,8 +2687,8 @@ msgstr "色をエクスポート"
 msgid "Export theme"
 msgstr "テーマをエクスポート"
 
-#: src/components/agent-tool-card.tsx
 #: src/components/tool-call-detail-sheet.tsx
+#: src/i18n/labels.ts
 msgid "Failed"
 msgstr "失敗"
 
@@ -2800,6 +2801,10 @@ msgstr "アプリの言語に従う"
 #: src/components/settings-language-sheet.tsx
 msgid "Follow the language your phone is set to"
 msgstr "端末の言語に従う"
+
+#: src/i18n/labels.ts
+msgid "Follow up"
+msgstr "追加の指示"
 
 #: src/components/settings-language-sheet.tsx
 msgid "Following your phone"
@@ -3206,6 +3211,10 @@ msgstr "インストール中…"
 msgid "Intensity"
 msgstr "強度"
 
+#: src/i18n/labels.ts
+msgid "Interacted"
+msgstr "やり取り済み"
+
 #: src/components/settings-font-sheet.tsx
 msgid "Interface"
 msgstr "インターフェース"
@@ -3438,6 +3447,10 @@ msgstr "連携先: {linkedNames}"
 #: src/app/computer-map.tsx
 msgid "List"
 msgstr "リスト"
+
+#: src/i18n/labels.ts
+msgid "List agents"
+msgstr "エージェント一覧"
 
 #: src/app/commands.tsx
 msgid "List branches"
@@ -3740,6 +3753,7 @@ msgid "Name it, then enter the code shown by the Gateway."
 msgstr "名前を付けて、Gateway に表示されたコードを入力してください"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/i18n/labels.ts
 msgid "Needs input"
 msgstr "入力が必要"
 
@@ -5131,6 +5145,10 @@ msgstr "非表示にした標準コマンドを元に戻す"
 msgid "Restore hidden defaults"
 msgstr "非表示の標準を元に戻す"
 
+#: src/i18n/labels.ts
+msgid "Resume"
+msgstr "再開"
+
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
@@ -5499,6 +5517,10 @@ msgstr "モデルを選択: {modelDisplayName}"
 #: src/components/custom-theme-library.tsx
 msgid "Selected"
 msgstr "選択中"
+
+#: src/i18n/labels.ts
+msgid "Send"
+msgstr "送信"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -5898,6 +5920,10 @@ msgstr "ステージ済みと未ステージ"
 msgid "stale · {age}"
 msgstr "古い情報 · {age}"
 
+#: src/i18n/labels.ts
+msgid "Start"
+msgstr "開始"
+
 #: src/components/agent-guide-sheet.tsx
 msgid "Start {agentName}"
 msgstr "{agentName} を起動"
@@ -5952,6 +5978,10 @@ msgstr "コンピュータでエージェントを起動してから、もう一
 msgid "Start the OpenCode service on the computer, then check again."
 msgstr "コンピュータで OpenCode サービスを起動してから、もう一度確認してください"
 
+#: src/i18n/labels.ts
+msgid "Started"
+msgstr "開始済み"
+
 #: src/components/pane-history-sheet.tsx
 msgid "Started {started}"
 msgstr "開始日時：{started}"
@@ -5960,7 +5990,7 @@ msgstr "開始日時：{started}"
 msgid "Started with a clean context."
 msgstr "まっさらなコンテキストで開始しました"
 
-#: src/components/agent-tool-card.tsx
+#: src/i18n/labels.ts
 msgid "Starting"
 msgstr "起動中"
 
@@ -6058,7 +6088,6 @@ msgid "Stop this command"
 msgstr "このコマンドを停止"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/agent-tool-card.tsx
 #: src/components/agent-workbench.tsx
 #: src/i18n/labels.ts
 msgid "Stopped"
@@ -6982,9 +7011,9 @@ msgid "Type on the simulator"
 msgstr "シミュレータに入力する"
 
 #: src/app/pane-history.tsx
-#: src/components/agent-tool-card.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/task-result-sheet.tsx
+#: src/i18n/labels.ts
 msgid "Unavailable"
 msgstr "利用不可"
 
@@ -7265,6 +7294,10 @@ msgstr "音声を文字に変換"
 msgid "Voice to text disabled"
 msgstr "音声の文字変換は無効です"
 
+#: src/i18n/labels.ts
+msgid "Wait"
+msgstr "待機"
+
 #: src/components/agent-workbench.tsx
 msgid "Wait for the turn to end before choosing a model."
 msgstr "ターンが終了してからモデルを選択してください"
@@ -7319,7 +7352,6 @@ msgstr "新着情報"
 msgid "While you were away"
 msgstr "離席中の変化"
 
-#: src/components/agent-tool-card.tsx
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
 msgid "Working"

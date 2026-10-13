@@ -30,6 +30,8 @@ import {
   type AgentSessionSnapshot,
 } from '@/lib/agent-session';
 import { contextTokenTotal, formatModelName } from '@/lib/agent-protocol';
+import { subagentSessionState } from '@/lib/agent-subagent-presentation';
+import { subagentStateWord } from '@/i18n/labels';
 import { createAgentTranscriptStore } from '@/stores/agent-transcript';
 import { useAgentSheetBridge } from '@/stores/agent-sheet-bridge';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
@@ -61,7 +63,7 @@ export function AgentSubagentDetailSheet({
   fallbackInfo?: AgentSessionInfo;
   onOpenChild: (asid: string) => void;
 }) {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   const { colors } = useThemeTokens();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -175,6 +177,11 @@ export function AgentSubagentDetailSheet({
       caption={title}
       header={
         <View style={styles.metadata}>
+          {info ? (
+            <Text testID="agent-subagent-detail-status" variant="caption" color={colors.textMuted}>
+              {i18n._(subagentStateWord[subagentSessionState(info)])}
+            </Text>
+          ) : null}
           {info?.agent_name || info?.agent_role ? (
             <Text variant="caption" color={colors.textMuted}>
               {[info.agent_name, info.agent_role].filter(Boolean).join(' · ')}

@@ -1293,6 +1293,7 @@ msgstr "Dọn bộ nhớ đệm sau khi mở Muqun khi đến hạn. Các chủ 
 
 #: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
+#: src/i18n/labels.ts
 msgid "Close"
 msgstr "Đóng"
 
@@ -1440,8 +1441,8 @@ msgid "Compared with {base}"
 msgstr "So với {base}"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/agent-tool-card.tsx
 #: src/components/tool-call-detail-sheet.tsx
+#: src/i18n/labels.ts
 msgid "Completed"
 msgstr "Đã hoàn tất"
 
@@ -2686,8 +2687,8 @@ msgstr "Xuất màu sắc"
 msgid "Export theme"
 msgstr "Xuất giao diện"
 
-#: src/components/agent-tool-card.tsx
 #: src/components/tool-call-detail-sheet.tsx
+#: src/i18n/labels.ts
 msgid "Failed"
 msgstr "Thất bại"
 
@@ -2800,6 +2801,10 @@ msgstr "Theo ngôn ngữ ứng dụng"
 #: src/components/settings-language-sheet.tsx
 msgid "Follow the language your phone is set to"
 msgstr "Theo ngôn ngữ của điện thoại"
+
+#: src/i18n/labels.ts
+msgid "Follow up"
+msgstr "Theo dõi tiếp"
 
 #: src/components/settings-language-sheet.tsx
 msgid "Following your phone"
@@ -3206,6 +3211,10 @@ msgstr "Đang cài đặt…"
 msgid "Intensity"
 msgstr "Cường độ"
 
+#: src/i18n/labels.ts
+msgid "Interacted"
+msgstr "Đã tương tác"
+
 #: src/components/settings-font-sheet.tsx
 msgid "Interface"
 msgstr "Giao diện"
@@ -3438,6 +3447,10 @@ msgstr "Đã liên kết với: {linkedNames}"
 #: src/app/computer-map.tsx
 msgid "List"
 msgstr "Danh sách"
+
+#: src/i18n/labels.ts
+msgid "List agents"
+msgstr "Liệt kê tác nhân"
 
 #: src/app/commands.tsx
 msgid "List branches"
@@ -3740,6 +3753,7 @@ msgid "Name it, then enter the code shown by the Gateway."
 msgstr "Đặt tên cho nó, rồi nhập mã mà Gateway hiển thị"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/i18n/labels.ts
 msgid "Needs input"
 msgstr "Cần trả lời"
 
@@ -5131,6 +5145,10 @@ msgstr "Khôi phục các lệnh mặc định đã ẩn"
 msgid "Restore hidden defaults"
 msgstr "Khôi phục mặc định đã ẩn"
 
+#: src/i18n/labels.ts
+msgid "Resume"
+msgstr "Tiếp tục"
+
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
@@ -5499,6 +5517,10 @@ msgstr "Chọn mô hình: {modelDisplayName}"
 #: src/components/custom-theme-library.tsx
 msgid "Selected"
 msgstr "Đã chọn"
+
+#: src/i18n/labels.ts
+msgid "Send"
+msgstr "Gửi"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -5898,6 +5920,10 @@ msgstr "Đã staged và chưa staged"
 msgid "stale · {age}"
 msgstr "cũ · {age}"
 
+#: src/i18n/labels.ts
+msgid "Start"
+msgstr "Bắt đầu"
+
 #: src/components/agent-guide-sheet.tsx
 msgid "Start {agentName}"
 msgstr "Khởi động {agentName}"
@@ -5952,6 +5978,10 @@ msgstr "Hãy khởi động tác tử trên máy tính rồi kiểm tra lại"
 msgid "Start the OpenCode service on the computer, then check again."
 msgstr "Hãy khởi động dịch vụ OpenCode trên máy tính rồi kiểm tra lại"
 
+#: src/i18n/labels.ts
+msgid "Started"
+msgstr "Đã bắt đầu"
+
 #: src/components/pane-history-sheet.tsx
 msgid "Started {started}"
 msgstr "Bắt đầu: {started}"
@@ -5960,7 +5990,7 @@ msgstr "Bắt đầu: {started}"
 msgid "Started with a clean context."
 msgstr "Đã bắt đầu với ngữ cảnh trống"
 
-#: src/components/agent-tool-card.tsx
+#: src/i18n/labels.ts
 msgid "Starting"
 msgstr "Đang khởi động"
 
@@ -6058,7 +6088,6 @@ msgid "Stop this command"
 msgstr "Dừng lệnh này"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/agent-tool-card.tsx
 #: src/components/agent-workbench.tsx
 #: src/i18n/labels.ts
 msgid "Stopped"
@@ -6982,9 +7011,9 @@ msgid "Type on the simulator"
 msgstr "Gõ trên trình giả lập"
 
 #: src/app/pane-history.tsx
-#: src/components/agent-tool-card.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/task-result-sheet.tsx
+#: src/i18n/labels.ts
 msgid "Unavailable"
 msgstr "Không khả dụng"
 
@@ -7265,6 +7294,10 @@ msgstr "Giọng nói thành văn bản"
 msgid "Voice to text disabled"
 msgstr "Đã tắt chuyển giọng nói thành văn bản"
 
+#: src/i18n/labels.ts
+msgid "Wait"
+msgstr "Chờ"
+
 #: src/components/agent-workbench.tsx
 msgid "Wait for the turn to end before choosing a model."
 msgstr "Đợi lượt kết thúc trước khi chọn mô hình"
@@ -7319,7 +7352,6 @@ msgstr "Có gì mới"
 msgid "While you were away"
 msgstr "Khi bạn vắng mặt"
 
-#: src/components/agent-tool-card.tsx
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
 msgid "Working"

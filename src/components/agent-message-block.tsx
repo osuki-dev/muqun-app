@@ -74,7 +74,7 @@ import { countMarked, diffRowsForFence } from '@/lib/agent-diff-rows';
 import {
   formatModelName,
   type AgentPart,
-  type AgentRunStatus,
+  type AgentSessionInfo,
   type PermissionDecision,
   type TimelineItem,
   type ToolPart,
@@ -299,7 +299,7 @@ export interface AgentToolActions {
   /** The virtualised changes viewer, for a patch too big to draw in a cell. */
   onOpenFullDiff?: (path?: string) => void;
   /** Live status per child session, from that session's own status events. */
-  childStatuses?: Readonly<Record<string, AgentRunStatus>>;
+  childSessions?: Readonly<Record<string, AgentSessionInfo>>;
   /** The whole call in the tool detail sheet. */
   onOpenToolDetail?: (part: ToolPart) => void;
 }
@@ -850,8 +850,8 @@ const ToolPartCard = memo(function ToolPartCard({
     () => (runInBackground ? () => runInBackground(part.id) : undefined),
     [runInBackground, part.id]
   );
-  const childStatus = part.child_session_id
-    ? actions.childStatuses?.[part.child_session_id]
+  const childSession = part.child_session_id
+    ? actions.childSessions?.[part.child_session_id]
     : undefined;
   const openToolDetail = actions.onOpenToolDetail;
   const handleOpenDetail = useMemo(
@@ -878,7 +878,7 @@ const ToolPartCard = memo(function ToolPartCard({
         audioSessionId={actions.audioSessionId}
         part={part}
         markdownStyle={markdownStyle}
-        {...(childStatus ? { childStatus } : {})}
+        {...(childSession ? { childSession } : {})}
         {...(actions.onOpenChildSession ? { onOpenChildSession: actions.onOpenChildSession } : {})}
         {...(handleRunInBackground ? { onRunInBackground: handleRunInBackground } : {})}
         {...(actions.onOpenBackgroundTray
