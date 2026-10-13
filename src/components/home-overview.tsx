@@ -102,7 +102,8 @@ import {
 import { homeContinueSearchEnabled } from '@/lib/home-continue-search';
 import { demoContinueSearchEntries } from '@/lib/demo-recents';
 import { useScreenVisible } from '@/hooks/use-screen-visible';
-import { claimHomeFirstEntry } from '@/lib/home-first-entry';
+import { claimHomeFirstEntry, hasHomeComposerRevealed } from '@/lib/home-first-entry';
+import { useLaunchHandoff } from '@/stores/launch-handoff';
 import {
   nextRestingInset,
   PAD_DOCK_FIELD_LINES,
@@ -402,6 +403,10 @@ export function HomeOverview({
   const restoredScroll = useRef<React.ComponentRef<typeof KeyboardAwareScrollView>>(null);
   const savedScrollY = useRef(0);
   const [composerPulse, setComposerPulse] = useState(0);
+  const [composerRevealed, setComposerRevealed] = useState(hasHomeComposerRevealed);
+  const [initialProbeSettled, setInitialProbeSettled] = useState(false);
+  const [viewportReady, setViewportReady] = useState(false);
+  const launchSettled = useLaunchHandoff((state) => state.settled);
   // The phone dock floats over the page; the page's foot clears it.
   const [dockHeight, setDockHeight] = useState(0);
   const [dockClipHeight, setDockClipHeight] = useState(0);
@@ -436,6 +441,7 @@ export function HomeOverview({
   // `homeServerListLayout` for why room, not server count alone, decides it.
   const metrics = homeServerListLayout(width, records.length);
 
+  const serverAgentsHydrated = useServerAgents((state) => state.hydrated);
   const hydrateServerAgents = useServerAgents((state) => state.hydrate);
   const keepServerAgents = useServerAgents((state) => state.keepOnly);
 
@@ -577,14 +583,54 @@ export function HomeOverview({
       // The initial focus runs under LaunchOverlay: hydrate cached home data
       // and establish reachability without holding the splash for the network.
       // Re-entry and foreground resume reuse fresh results and refresh stale ones.
+      const finishInitialProbe = () => {
+        if (current) setInitialProbeSettled(true);
+      };
       void refreshReachabilityMany(probeTargets, {
         shouldContinue: () => current && AppState.currentState === 'active',
-      });
+      }).then(finishInitialProbe, finishInitialProbe);
       return () => {
         current = false;
       };
     }, [appActive, loading, hydrationError, probeTargets, refreshReachabilityMany])
   );
+
+  // The computers arrive first. Reuse their bounded initial probe (including
+  // offline/failure), cached rows and native viewport layout, then let that
+  // committed page paint before revealing the measured dock. This gate never
+  // closes on a refresh, reconnect or return; an empty inventory needs no probe.
+  const initialComputersReady =
+    !loading &&
+    (Boolean(hydrationError) ||
+      (serverAgentsHydrated && (records.length === 0 || initialProbeSettled)));
+  useEffect(() => {
+    if (
+      composerRevealed ||
+      !initialComputersReady ||
+      !viewportReady ||
+      (records.length > 0 && !hydrationError && dockHeight === 0) ||
+      !launchSettled ||
+      !isFocused ||
+      !appActive
+    )
+      return;
+    let frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => {
+        setComposerRevealed(true);
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [
+    composerRevealed,
+    initialComputersReady,
+    viewportReady,
+    records.length,
+    hydrationError,
+    dockHeight,
+    launchSettled,
+    isFocused,
+    appActive,
+  ]);
 
   // While Home is on screen: re-read freshness every tick, and ask the
   // selected computer again. The store's own limit (one probe per server per
@@ -971,6 +1017,7 @@ export function HomeOverview({
     ) : undefined;
   const dock = showDock ? (
     <HomeComposerDock
+      revealed={composerRevealed}
       controller={launchController}
       reachabilityByServer={padReachabilityByServer}
       targetPulse={composerPulse}
@@ -1127,9 +1174,11 @@ export function HomeOverview({
           // keyboard.
           bottomOffset={dock && !padLaunch ? dockHeight : undefined}
           onContentSizeChange={restoreScroll}
-          onLayout={(event) =>
-            pageDockHide.settle({ viewportHeight: event.nativeEvent.layout.height })
-          }
+          onLayout={(event) => {
+            pageDockHide.settle({ viewportHeight: event.nativeEvent.layout.height });
+            if (event.nativeEvent.layout.height > 0 && event.nativeEvent.layout.width > 0)
+              setViewportReady(true);
+          }}
           onScrollBeginDrag={() => {
             sortHoldScroll.onScrollBeginDrag();
             pageDockHide.beginDrag();
@@ -1615,9 +1664,11 @@ export function HomeOverview({
         dockOffset={pageDockHide.dock.offset}
         ref={overviewScroll}
         onContentSizeChange={restoreScroll}
-        onLayout={(event) =>
-          pageDockHide.settle({ viewportHeight: event.nativeEvent.layout.height })
-        }
+        onLayout={(event) => {
+          pageDockHide.settle({ viewportHeight: event.nativeEvent.layout.height });
+          if (event.nativeEvent.layout.height > 0 && event.nativeEvent.layout.width > 0)
+            setViewportReady(true);
+        }}
         onScrollBeginDrag={() => {
           sortHoldScroll.onScrollBeginDrag();
           pageDockHide.beginDrag();

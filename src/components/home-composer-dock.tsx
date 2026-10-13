@@ -110,6 +110,7 @@ import type { ServerReachability } from '@/lib/server-reachability';
 import { useAgents } from '@/stores/agents';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useHomeComposerSheet } from '@/stores/home-composer-sheet';
+import { markHomeComposerRevealed } from '@/lib/home-first-entry';
 
 const FLASH_IN_MS = 120;
 const FLASH_OUT_MS = 600;
@@ -139,6 +140,7 @@ const REFUSAL_SESSIONS_READ = 30;
 const MENTIONS_READ_TIMEOUT_MS = 2_000;
 
 export function HomeComposerDock({
+  revealed,
   controller,
   reachabilityByServer,
   targetPulse = 0,
@@ -152,6 +154,7 @@ export function HomeComposerDock({
   onDockHeight,
   onOpenAgent,
 }: {
+  revealed: boolean;
   controller: HomeLaunchController;
   reachabilityByServer: Readonly<Record<string, ServerReachability | undefined>>;
   /**
@@ -181,6 +184,9 @@ export function HomeComposerDock({
   ) => Promise<HomeCommandResult>;
 }) {
   const { t } = useLingui();
+  useEffect(() => {
+    if (revealed) markHomeComposerRevealed();
+  }, [revealed]);
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
   const decorationOverhang = useHomeComposerDecorationOverhang();
@@ -1349,6 +1355,7 @@ export function HomeComposerDock({
 
   return (
     <AgentComposer
+      revealed={revealed}
       accessory={bar}
       accessoryHeightAnimating={optionsHeightAnimating || optionsOpen !== optionsVisible}
       fieldBackground={
