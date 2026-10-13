@@ -2428,6 +2428,14 @@ msgstr "Herunterladen"
 msgid "Download and preview"
 msgstr "Herunterladen und Vorschau"
 
+#: src/components/update-status-banner.tsx
+msgid "Download size: about {estimate}"
+msgstr "Downloadgröße: etwa {estimate}"
+
+#: src/components/update-status-banner.tsx
+msgid "Download size: unavailable"
+msgstr "Downloadgröße: nicht verfügbar"
+
 #: src/components/settings-font-sheet.tsx
 msgid "Downloading"
 msgstr "Wird heruntergeladen"
@@ -2795,6 +2803,10 @@ msgstr "von {requester}"
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "Frontkamera. Halte den QR-Code vor den Bildschirm"
+
+#: src/components/update-status-banner.tsx
+msgid "Full package: {fullPackage}"
+msgstr "Vollständiges Paket: {fullPackage}"
 
 #: src/components/video-asset-preview.tsx
 msgid "Fullscreen"
@@ -5632,6 +5644,10 @@ msgstr "Simulator-Bedienelemente"
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Size"
 msgstr "Größe"
+
+#: src/components/update-status-banner.tsx
+msgid "Size covers update files. File reuse or fallback can change the download."
+msgstr "Die Größe umfasst die Updatedateien. Wiederverwendung oder Ersatzdownloads können sie ändern"
 
 #. placeholder {0}: part.name ?? part.skill
 #: src/components/agent-message-block.tsx

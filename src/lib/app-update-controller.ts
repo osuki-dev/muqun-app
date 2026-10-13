@@ -1,3 +1,5 @@
+import type { OtaDownloadSize } from './ota-download-size';
+
 /** Only a successfully verified native update can trigger the automatic restart. */
 export type UpdatePhase =
   | 'idle'
@@ -18,6 +20,8 @@ export type UpdateSnapshot = {
   required?: boolean;
   downloadedBytes?: number;
   totalBytes?: number;
+  downloadSize?: OtaDownloadSize;
+  transitionKind?: AvailableUpdate['transitionKind'];
 };
 export type UpdateProgress = {
   progress: number;
@@ -78,6 +82,7 @@ export interface UpdateClient {
   }): Promise<AvailableUpdate | null>;
   getRunningReleaseId?(): Promise<string | null>;
   getReleaseNotes?(releaseId: string): Promise<string | null>;
+  getDownloadSize?(releaseId: string): Promise<OtaDownloadSize | null>;
   addListener(event: 'onProgress', listener: (event: UpdateProgress) => void): () => void;
   reload(): Promise<void>;
 }
@@ -93,6 +98,7 @@ export function createAppUpdateController(
   let update: AvailableUpdate | null = null;
   let deferredPhase: UpdatePhase = 'available';
   let localizedNotes: string | null = null;
+  let downloadSize: OtaDownloadSize | null = null;
   let bytes: Pick<UpdateSnapshot, 'downloadedBytes' | 'totalBytes'> = {};
   const publishProgress = (progress: number) => {
     const releaseNotes = localizedNotes ?? update?.message?.trim();
@@ -100,7 +106,9 @@ export function createAppUpdateController(
       phase,
       progress,
       ...(update ? { releaseId: update.id, required: update.shouldForceUpdate } : {}),
+      ...(update?.transitionKind ? { transitionKind: update.transitionKind } : {}),
       ...(releaseNotes ? { releaseNotes } : {}),
+      ...(downloadSize ? { downloadSize } : {}),
       ...bytes,
     });
   };
@@ -111,8 +119,8 @@ export function createAppUpdateController(
     publishProgress(0);
     let checkFailed = false;
     try {
-      // This SDK method only resolves the release catalog. Artifact resolution,
-      // staging and selection commits live in updateBundle(), below consent.
+      // SDK discovery and our optional size lookup read metadata only.
+      // Staging and selection commits live in updateBundle(), below consent.
       update = await client.checkForUpdate({
         updateStrategy: 'fingerprint',
         onError: () => {
@@ -134,17 +142,26 @@ export function createAppUpdateController(
         if (runningReleaseId === update.id) update = null;
       }
       localizedNotes = null;
-      if (update && client.getReleaseNotes) {
-        try {
-          localizedNotes = await client.getReleaseNotes(update.id);
-        } catch {
-          // Missing translations retain the release catalog's English message.
-        }
+      downloadSize = null;
+      if (update) {
+        const releaseId = update.id;
+        const [notes, size] = await Promise.allSettled([
+          Promise.resolve().then(() => client.getReleaseNotes?.(releaseId)),
+          Promise.resolve().then(() =>
+            update?.transitionKind !== 'ADOPT_RELEASE' && update?.transitionKind !== 'USE_BUILTIN'
+              ? client.getDownloadSize?.(releaseId)
+              : null
+          ),
+        ]);
+        // Missing metadata must not hide the update or catalog's English notes.
+        localizedNotes = notes.status === 'fulfilled' ? (notes.value ?? null) : null;
+        downloadSize = size.status === 'fulfilled' ? (size.value ?? null) : null;
       }
       phase = update ? 'available' : 'idle';
     } catch {
       update = null;
       localizedNotes = null;
+      downloadSize = null;
       phase = 'failed';
     }
     publishProgress(0);
@@ -172,6 +189,7 @@ export function createAppUpdateController(
           // still requires consent, but it needs neither transfer nor restart.
           update = null;
           localizedNotes = null;
+          downloadSize = null;
           phase = 'idle';
           bytes = {};
           publishProgress(0);
@@ -228,6 +246,7 @@ export function createAppUpdateController(
         }
         update = null;
         localizedNotes = null;
+        downloadSize = null;
         bytes = {};
         phase = 'idle';
       }

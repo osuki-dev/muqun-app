@@ -13,15 +13,16 @@ type WorkerEnvironment = {
 };
 
 function createServer(env: WorkerEnvironment) {
+  const storage = r2Storage({
+    bucket: env.BUCKET,
+    bucketName: env.BUCKET_NAME,
+    accountId: env.ACCOUNT_ID,
+    credentials: { accessKeyId: env.R2_ACCESS_KEY_ID, secretAccessKey: env.R2_SECRET_ACCESS_KEY },
+  });
   return createHotUpdater({
     database: d1Database(env.DB),
-    storage: r2Storage({
-      bucket: env.BUCKET,
-      bucketName: env.BUCKET_NAME,
-      accountId: env.ACCOUNT_ID,
-      credentials: { accessKeyId: env.R2_ACCESS_KEY_ID, secretAccessKey: env.R2_SECRET_ACCESS_KEY },
-    }),
-    plugins: [apiKeys(), insights(), remoteConfig(), localizedReleaseNotes()],
+    storage,
+    plugins: [apiKeys(), insights(), remoteConfig(), localizedReleaseNotes(storage)],
   });
 }
 const servers = new WeakMap<WorkerEnvironment, ReturnType<typeof createServer>>();

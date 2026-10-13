@@ -37,6 +37,8 @@ export function UpdateStatusBanner() {
   const releaseNotes = useAppUpdateStore((state) => state.releaseNotes);
   const downloadedBytes = useAppUpdateStore((state) => state.downloadedBytes);
   const totalBytes = useAppUpdateStore((state) => state.totalBytes);
+  const downloadSize = useAppUpdateStore((state) => state.downloadSize);
+  const transitionKind = useAppUpdateStore((state) => state.transitionKind);
   const required = useAppUpdateStore((state) => state.required);
   const releaseId = useAppUpdateStore((state) => state.releaseId);
   const downloading = phase === 'downloading';
@@ -63,6 +65,11 @@ export function UpdateStatusBanner() {
   const transferred =
     downloadedBytes === undefined ? undefined : formatAssetSize(downloadedBytes) || '0 B';
   const total = totalBytes === undefined ? undefined : formatAssetSize(totalBytes) || '0 B';
+  const estimate =
+    downloadSize?.estimatedBytes == null
+      ? undefined
+      : formatAssetSize(downloadSize.estimatedBytes) || '0 B';
+  const fullPackage = downloadSize?.fullBytes ? formatAssetSize(downloadSize.fullBytes) : undefined;
 
   return (
     <Modal
@@ -140,6 +147,26 @@ export function UpdateStatusBanner() {
               <Text variant="caption" color={theme.colors.textMuted} style={styles.identifier}>
                 {t`Update`} · {releaseId.slice(0, 8)}
               </Text>
+            ) : null}
+            {actionable &&
+            !restartFailed &&
+            transitionKind !== 'ADOPT_RELEASE' &&
+            transitionKind !== 'USE_BUILTIN' ? (
+              <View testID="update-download-size" style={styles.identifier}>
+                <Text variant="bodySmall" color={theme.colors.textMuted}>
+                  {estimate ? t`Download size: about ${estimate}` : t`Download size: unavailable`}
+                </Text>
+                {fullPackage ? (
+                  <Text variant="caption" color={theme.colors.textMuted}>
+                    {t`Full package: ${fullPackage}`}
+                  </Text>
+                ) : null}
+                {estimate || fullPackage ? (
+                  <Text variant="caption" color={theme.colors.textMuted}>
+                    {t`Size covers update files. File reuse or fallback can change the download.`}
+                  </Text>
+                ) : null}
+              </View>
             ) : null}
             {required ? (
               <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.identifier}>

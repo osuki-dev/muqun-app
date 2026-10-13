@@ -1,4 +1,5 @@
-import { definePlugin, defineTable } from '@hot-updater/plugin-core';
+import { definePlugin, defineTable, type StorageAdapter } from '@hot-updater/plugin-core';
+import { estimateOtaDownloadSize } from './download-size';
 import {
   OTA_RELEASE_ID,
   otaNotesFallbacks,
@@ -7,7 +8,7 @@ import {
 } from '../../src/lib/ota-release-notes';
 import { parseOtaNotesManifest } from './manifest';
 
-export function localizedReleaseNotes() {
+export function localizedReleaseNotes(storage?: Pick<StorageAdapter, 'get'>) {
   return definePlugin({
     id: 'localized_release_notes',
     schemaVersion: '1',
@@ -56,9 +57,81 @@ export function localizedReleaseNotes() {
           }
         });
       }
+      async function readManifest(storageUri: string): Promise<unknown> {
+        const response = (await storage?.get?.({ storageUri }))?.response;
+        if (!response?.ok || !response.body) return null;
+        const reader = response.body.getReader();
+        const chunks: Uint8Array[] = [];
+        let length = 0;
+        try {
+          for (;;) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            length += value.byteLength;
+            if (length > 2 * 1024 * 1024) return null;
+            chunks.push(value);
+          }
+          const bytes = new Uint8Array(length);
+          let offset = 0;
+          for (const chunk of chunks) {
+            bytes.set(chunk, offset);
+            offset += chunk.byteLength;
+          }
+          return JSON.parse(new TextDecoder().decode(bytes)) as unknown;
+        } catch {
+          return null;
+        } finally {
+          await reader.cancel();
+          reader.releaseLock();
+        }
+      }
       return {
         api: { get, publish },
         endpoints: [
+          {
+            method: 'GET',
+            path: '/release-download-size/:releaseId',
+            access: 'client',
+            handler: async (request, params) => {
+              const headers = { 'Cache-Control': 'private, no-store' };
+              const fromBundleId = new URL(request.url).searchParams.get('fromBundleId');
+              const releaseId = params.releaseId ?? '';
+              if (
+                !fromBundleId ||
+                !OTA_RELEASE_ID.test(fromBundleId) ||
+                !OTA_RELEASE_ID.test(releaseId)
+              )
+                return new Response(null, { status: 400, headers });
+              try {
+                const release = await core.getRelease(releaseId);
+                if (!release?.enabled || !release.bundle_id)
+                  return new Response(null, { status: 404, headers });
+                const [target, base] = await Promise.all([
+                  core.getBundle(release.bundle_id),
+                  core.getBundle(fromBundleId),
+                ]);
+                if (!target || (base && base.bundle.platform !== target.bundle.platform))
+                  return new Response(null, { status: 404, headers });
+                // Resolve the SDK's optional patch plan, but return no signed URLs or storage URIs.
+                const [artifact, targetManifest, baseManifest] = await Promise.all([
+                  core.getArtifactInfo(release.bundle_id, fromBundleId, 1),
+                  readManifest(target.bundle.manifest_storage_uri),
+                  base ? readManifest(base.bundle.manifest_storage_uri) : Promise.resolve(null),
+                ]);
+                if (!artifact) return new Response(null, { status: 404, headers });
+                const size = estimateOtaDownloadSize(
+                  targetManifest,
+                  release.bundle_id,
+                  baseManifest,
+                  fromBundleId,
+                  artifact
+                );
+                return Response.json({ releaseId, fromBundleId, ...size }, { headers });
+              } catch {
+                return new Response(null, { status: 503, headers });
+              }
+            },
+          },
           {
             method: 'GET',
             path: '/release-notes/:releaseId',
