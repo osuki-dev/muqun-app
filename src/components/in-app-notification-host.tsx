@@ -86,6 +86,7 @@ const DRAG_SLOP = 6;
 export function InAppNotificationHost() {
   const profile = useAppearanceProfile();
   const notificationSurfaceStyle = useNotificationSurfaceStyle();
+  const backPageClipStyle = useNotificationSurfaceStyle(false);
   const insets = useSafeAreaInsets();
   const surfaceBackground = useSurfaceBackground();
   const surfaceOpacity = useSurfaceBackgroundOpacity();
@@ -371,6 +372,8 @@ export function InAppNotificationHost() {
               importantForAccessibility="no-hide-descendants"
               style={[
                 styles.backPage,
+                // A taller card or its shadow must follow the deck's rounded clip.
+                backPageClipStyle,
                 backSizeStyle,
                 {
                   transform: [{ translateY: depth * 6 }, { scaleX: 1 - depth * 0.035 }],
