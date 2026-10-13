@@ -99,6 +99,26 @@ describe('captured segments contract', () => {
     expect(pages[1]!.segments[0]!.id).toBe('old');
   });
 
+  test('a snapshot near the raw text budget keeps its oldest rows without counting page separators twice', () => {
+    const rows = Array.from({ length: 5000 }, () => 'x'.repeat(419));
+    let pages: CapturedSegmentsPage[] = [];
+    for (let end = rows.length; end > 0; end -= request.limit) {
+      const start = Math.max(0, end - request.limit);
+      const page = parse(
+        wire([segment('old', rows.slice(start, end))], start ? String(start) : null)
+      );
+      const next = pages.length ? appendCapturedSegmentsPage(pages, page, String(end)) : [page];
+      expect(next).not.toBeNull();
+      pages = next!;
+    }
+    expect(pages.reduce((total, page) => total + page.rowCount, 0)).toBe(5000);
+    expect(pages.reduce((total, page) => total + page.byteCount, 0)).toBe(2_095_000);
+    // The per-page wire budget still includes a separator for each row.
+    expect(
+      parseCapturedSegmentsPage(wire([segment('old', ['x'.repeat(256 * 1024)])]), request)
+    ).toBeNull();
+  });
+
   test('malformed pages are refused whole, including legacy rows, wrong identity, and invalid row counts', () => {
     const good = wire([segment('old', ['row'])]);
     for (const bad of [

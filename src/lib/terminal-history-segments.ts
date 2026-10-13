@@ -21,6 +21,7 @@ export interface CapturedSegmentsPage {
   limit: number;
   segments: CapturedHistorySegment[];
   rowCount: number;
+  /** Raw UTF-8 row text, matching the Gateway's retained snapshot budget. */
   byteCount: number;
   hasMore: boolean;
   nextBefore: string | null;
@@ -87,8 +88,9 @@ export function parseCapturedSegmentsPage(
       return null;
     ids.add(segment.segment_id);
     rowCount += segment.rows.length;
-    byteCount += segment.rows.reduce((total, row) => total + encoder.encode(row).length + 1, 0);
-    if (rowCount > request.limit || byteCount > 256 * 1024) return null;
+    byteCount += segment.rows.reduce((total, row) => total + encoder.encode(row).length, 0);
+    // Only the page budget includes a separator per row; retained text does not.
+    if (rowCount > request.limit || byteCount + rowCount > 256 * 1024) return null;
     segments.push({
       id: segment.segment_id,
       startedAtMs: segment.started_at_ms,
