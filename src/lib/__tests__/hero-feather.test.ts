@@ -14,10 +14,12 @@ import {
   containedImageRect,
   coveredImageRect,
   editorialArtworkRect,
+  homeCoverArtworkRect,
   heroFeatherGeometry,
   HOME_HERO_FEATHER,
   MAX_FEATHER_FRACTION,
 } from '@/lib/hero-feather';
+import { homeCoverArtworkHeight } from '@/lib/responsive-layout';
 
 /** The compact band: full phone width, `HOME_HERO_MAX_HEIGHT.compact` tall. */
 const BAND = { width: 360, height: 180 };
@@ -134,6 +136,29 @@ describe('the Editorial cover rectangle', () => {
   test('invalid dimensions safely fill the container', () => {
     expect(coveredImageRect(BAND)).toEqual({ x: 0, y: 0, width: 360, height: 180 });
   });
+});
+
+test('Classic cover scenes fill the column while authored contain and cutouts keep the whole image', () => {
+  const square = { width: 1024, height: 1024 };
+  const portrait = { width: 1024, height: 1536 };
+  const focalPoint = { x: 0.6, y: 0 };
+  for (const width of [320, 390, 680]) {
+    const box = { width, height: homeCoverArtworkHeight(width) };
+    const scene = homeCoverArtworkRect(box, square, 'cover', focalPoint);
+    expect(scene.width).toBe(width);
+    expect(scene.y).toBe(0);
+    // The shared cover proportion shows the upper 90% of a square scene:
+    // the sky and the centrally authored face survive on phone and Pad.
+    expect(box.height / scene.height).toBeCloseTo(0.9);
+    expect(homeCoverArtworkRect(box, portrait, 'contain', focalPoint)).toEqual(
+      containedImageRect(box, portrait, focalPoint)
+    );
+    expect(homeCoverArtworkRect(box, portrait, 'cover', focalPoint, true)).toEqual(
+      containedImageRect(box, portrait, focalPoint)
+    );
+  }
+  expect(homeCoverArtworkHeight(1280)).toBe(640);
+  expect(homeCoverArtworkHeight(Number.NaN)).toBe(0);
 });
 
 describe('the feather', () => {

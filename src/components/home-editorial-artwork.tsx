@@ -14,11 +14,14 @@ import Animated from 'react-native-reanimated';
 
 import { useSharedSkiaImage } from '@/lib/skia-image-cache';
 import { useLaunchHomeArtwork } from '@/hooks/use-launch-home-artwork';
-import { artworkVisibleTop, editorialArtworkRect } from '@/lib/hero-feather';
+import {
+  artworkVisibleTop,
+  editorialArtworkRect,
+  HOME_COVER_BOTTOM_FEATHER_START,
+} from '@/lib/hero-feather';
 import { fadeIn, listLayout } from '@/lib/motion';
+import { homeCoverArtworkHeight } from '@/lib/responsive-layout';
 import type { ResolvedHomeArtworkAsset } from '@/theme/home-artwork';
-
-const BOTTOM_FEATHER_START = 0.68;
 
 /**
  * Editorial-only cover art: full bleed at the top, transparent only at the
@@ -69,7 +72,7 @@ function HomeEditorialArtworkImage({
   const height = fill
     ? filledHeight
     : cover
-      ? Math.min(640, width * 0.9)
+      ? homeCoverArtworkHeight(width)
       : Math.min(280, width / 2);
   const box = useMemo(() => (width > 0 && height > 0 ? { width, height } : null), [width, height]);
   const [failed, setFailed] = useState(false);
@@ -155,7 +158,7 @@ function HomeEditorialArtworkImage({
                   start={vec(0, 0)}
                   end={vec(0, box.height)}
                   colors={['white', 'white', 'transparent']}
-                  positions={[0, BOTTOM_FEATHER_START, 1]}
+                  positions={[0, HOME_COVER_BOTTOM_FEATHER_START, 1]}
                 />
               </Rect>
             }>
