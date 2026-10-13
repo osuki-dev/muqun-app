@@ -8,7 +8,9 @@ wait stable 400 5000
 is visible "${TARGET}"
 
 # section scroll
-scroll down --pixels 300
+# Cover most of the visible list on every pass, independent of device density.
+# The manifest checks the exact leaf before each gesture and keeps a fixed budget.
+scroll down 0.7
 
 # section open-detail
 press "${TARGET}"

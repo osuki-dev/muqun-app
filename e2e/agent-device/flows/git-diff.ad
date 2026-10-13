@@ -26,7 +26,9 @@ wait stable 400 15000
 screenshot "shots/21-changes-expanded.png"
 
 # section s12
-scroll down --pixels 900
+# Progress by the visible viewport rather than a small physical-pixel distance.
+# The manifest still stops only when the actual Show more row is visible.
+scroll down 0.75
 
 # section s12-ipad
 # Start inside the diff's own scroll viewport rather than at the generic
