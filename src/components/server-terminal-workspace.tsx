@@ -185,7 +185,6 @@ import {
   readPaneOutput,
   readPaneRange,
   readPaneHistory,
-  readPaneHistorySegments,
   readPaneTail,
   resolveAssetById,
   resolveAssetByPath,
@@ -2549,7 +2548,8 @@ export function ServerTerminalWorkspace({
     const sessionId = data.sessionId;
     if (
       !ready ||
-      (!servesCapturedHistory && !servesSegmentedHistory) ||
+      !servesCapturedHistory ||
+      servesSegmentedHistory ||
       !paneId ||
       !sessionId ||
       !record
@@ -2562,9 +2562,9 @@ export function ServerTerminalWorkspace({
     const key = `${paneId}\u0000${capturedProbe}\u0000${capturedViewportReady}\u0000${servesSegmentedHistory}`;
     if (
       !capturedProbeDue({
-        off: !servesSegmentedHistory && capturedOffRef.current,
-        exhausted: !servesSegmentedHistory && capturedExhaustedRef.current,
-        cursor: servesSegmentedHistory ? null : capturedCursorRef.current,
+        off: capturedOffRef.current,
+        exhausted: capturedExhaustedRef.current,
+        cursor: capturedCursorRef.current,
         askedAlready: capturedProbedKeyRef.current === key,
       })
     ) {
@@ -2574,24 +2574,15 @@ export function ServerTerminalWorkspace({
     let current = true;
     capturedProbedAtRef.current = Date.now();
     const probedOutput = readOutputWindow().output;
-    // Availability only: this 1-row cursor is never used by the 240-row reader.
-    const probeRead = servesSegmentedHistory
-      ? readPaneHistorySegments(record, sessionId, paneId, null, 1).then((answer) => ({
-          off: false as const,
-          empty: answer.ok && answer.page.rowCount === 0,
-          // A failed probe must still offer a reader that can explain/retry the failure.
-          hasRows: !answer.ok || answer.page.rowCount > 0,
-        }))
-      : readPaneHistory(sessionId, paneId, null, 1).then(capturedProbeState);
+    const probeRead = readPaneHistory(sessionId, paneId, null, 1).then(capturedProbeState);
     void probeRead.then((probe) => {
       if (!current || activePaneRef.current !== paneId) return;
       // A pull landed meanwhile: its answer stands.
       if (
-        !servesSegmentedHistory &&
-        (loadingEarlierOutputRef.current ||
-          capturedExhaustedRef.current ||
-          capturedCursorRef.current ||
-          capturedRefreshRequiredRef.current)
+        loadingEarlierOutputRef.current ||
+        capturedExhaustedRef.current ||
+        capturedCursorRef.current ||
+        capturedRefreshRequiredRef.current
       )
         return;
       capturedOffRef.current = probe.off;
@@ -2602,8 +2593,8 @@ export function ServerTerminalWorkspace({
       offerCaptured(
         paneId,
         probe.hasRows &&
-          (servesSegmentedHistory ||
-            (paneScreenRowsRef.current > 0 && outputLineLimitRef.current < MAX_PANE_OUTPUT_LINES))
+          paneScreenRowsRef.current > 0 &&
+          outputLineLimitRef.current < MAX_PANE_OUTPUT_LINES
       );
     });
     return () => {
@@ -2623,7 +2614,7 @@ export function ServerTerminalWorkspace({
   // A pane with nothing captured yet gains rows as its output scrolls: ask
   // again, at most every CAPTURED_REPROBE_MS, while output keeps coming.
   useEffect(() => {
-    if (capturedOpen || (!servesCapturedHistory && !servesSegmentedHistory)) return;
+    if (capturedOpen || !servesCapturedHistory || servesSegmentedHistory) return;
     const remaining = capturedReprobeDelay(
       capturedEmptyProbe?.output ?? null,
       output,
@@ -3681,19 +3672,6 @@ export function ServerTerminalWorkspace({
 
   const loadEarlierOutput = useCallback(async () => {
     const requestPaneId = selection.paneId;
-    if (
-      servesSegmentedHistory &&
-      capturedOpen &&
-      requestPaneId &&
-      ready &&
-      connection.phase === 'connected'
-    ) {
-      router.push({
-        pathname: '/pane-history',
-        params: { serverId, sessionId: data.sessionId, paneId: requestPaneId },
-      });
-      return;
-    }
     const currentLimit = outputLineLimitRef.current;
     if (
       !ready ||
@@ -3952,8 +3930,6 @@ export function ServerTerminalWorkspace({
     serverId,
     servesCapturedHistory,
     servesSegmentedHistory,
-    capturedOpen,
-    router,
     terminalPlane,
     readOutputWindow,
   ]);
@@ -4994,6 +4970,11 @@ export function ServerTerminalWorkspace({
         // cannot spawn gets a sheet with neither New task nor Stop in it.
         canSpawn: gatewaySupportsAgentSpawn(data.health?.capabilities) ? '1' : '',
         canLazygit: data.health?.capabilities?.includes('pane_lazygit') ? '1' : '',
+        canSavedHistory: data.health?.capabilities?.includes(
+          PANE_CAPTURED_HISTORY_SEGMENTS_CAPABILITY
+        )
+          ? '1'
+          : '',
         // Whether opening a plain URL on this machine is honest. The demo is
         // excluded before the transport is even consulted: its record points
         // at an address that does not exist, so every port on it is a page
@@ -6095,15 +6076,14 @@ export function ServerTerminalWorkspace({
                           // `false` here, but a screen-owning pane must never be
                           // able to arm this gesture on the strength of a metric
                           // alone).
-                          // Captured history is the exception: the gateway kept what
-                          // an alternate-screen pane drew, so the pull is offered on
-                          // its account while it has more to give.
+                          // Legacy continuous capture can also extend this window.
+                          // Segmented snapshots belong to the explicit history reader,
+                          // never to a pull that promises more output in this terminal.
                           canLoadEarlier={canOfferHistoryPull({
                             canLoadEarlier:
-                              ((servesCapturedHistory || servesSegmentedHistory) && capturedOpen) ||
+                              (servesCapturedHistory && !servesSegmentedHistory && capturedOpen) ||
                               (!fullScreenPane && canLoadEarlierOutput),
-                            blocked:
-                              servesSegmentedHistory && capturedOpen ? false : historyPullBlocked,
+                            blocked: historyPullBlocked,
                           })}
                           historyRevision={historyRevision}
                           loadingEarlier={loadingEarlierOutput}
