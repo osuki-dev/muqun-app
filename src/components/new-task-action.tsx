@@ -31,7 +31,7 @@ import {
   type AgentReadiness,
 } from '@/lib/home-agent-readiness';
 import type { HomeAgentEntry } from '@/lib/agent-discovery';
-import { MAX_AGENT_TILES, agentDisplayName, projectLaunchAgents } from '@/lib/home-launch-model';
+import { agentDisplayName, projectLaunchAgents } from '@/lib/home-launch-model';
 import { useAgents } from '@/stores/agents';
 import { INSTANT, SHEEN_MOTION, fadeIn, fadeOut, listLayout } from '@/lib/motion';
 
@@ -76,14 +76,12 @@ export function NewTaskAction({
     if (hasAgentSessions && server) void refreshAgentServerDiscovery(server);
   }, [hasAgentSessions, server]);
 
-  // What the card offers is what the gateway lists. One agent keeps the one
-  // button this card always had; two or three get a button each; more fall
-  // back to the one button and its menu.
+  // Every offered agent keeps a named button; the row wraps as discovery grows.
   const mirrored = useAgents((state) => state.index.servers[serverId]);
   const lastUsedAgentId = useAgents((state) => state.index.lastUsed[serverId]);
   const offered = projectLaunchAgents(mirrored, lastUsedAgentId);
   const soleAgentId = offered.length === 1 ? offered[0]?.id : undefined;
-  const agentRow = offered.length > 1 && offered.length <= MAX_AGENT_TILES;
+  const agentRow = offered.length > 1;
   const agentName = agentDisplayName([...offered], soleAgentId ?? agentChoice.selected);
   const agentKind = (offered.length === 1 ? offered[0]?.kind : undefined) ?? 'opencode';
 
