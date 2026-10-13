@@ -38,7 +38,7 @@ export function ComposerAttachmentButton({
         composerStyles.button,
         { borderRadius: profile.chrome.roundControl },
         expanded && { backgroundColor: background(theme.colors.primarySubtle) },
-        disabled && { opacity: 0.5 },
+        disabled && composerStyles.disabledButton,
       ]}>
       <ThemeIcon name="chrome.attach" fallback={Paperclip} size={size} color={color} />
     </PressableScale>

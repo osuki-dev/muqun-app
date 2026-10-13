@@ -420,8 +420,8 @@ const styles = StyleSheet.create({
   detail: { fontSize: 12, lineHeight: 17 },
   actions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   action: {
-    width: 40,
-    minHeight: 40,
+    width: 44,
+    minHeight: 44,
     flexShrink: 1,
     flexDirection: 'row',
     alignItems: 'center',
