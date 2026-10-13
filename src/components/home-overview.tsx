@@ -1109,7 +1109,7 @@ export function HomeOverview({
       <HomeRecentSessions
         compact={classicLayout}
         pad={isPad}
-        limit={3}
+        limit={5}
         moreLabel="show-all"
         linkStyle={padLaunch ? PAD_WORK_LINK : undefined}
         selectedServerId={launchController.chosen?.serverId}

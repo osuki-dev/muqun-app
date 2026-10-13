@@ -533,9 +533,9 @@ describe('buildComputerCards', () => {
     expect(card!.finished.map((done) => done.taskId)).toEqual(['f2', 'f3']);
   });
 
-  test('one computer gets more room', () => {
+  test('one computer gets more finished rows', () => {
     expect(cardLimits(1)).toEqual({ now: 5, finished: 3 });
-    expect(cardLimits(3)).toEqual({ now: 3, finished: 2 });
+    expect(cardLimits(3)).toEqual({ now: 5, finished: 2 });
   });
 
   test('a sent goal shows until a task with that goal arrives', () => {
