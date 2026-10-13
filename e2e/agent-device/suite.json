@@ -2,6 +2,12 @@
   "version": 1,
   "flows": [
     {
+      "name": "agent-transcript-streaming",
+      "program": "flows/agent-transcript-streaming",
+      "tags": ["full", "agents"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "pdf-preview",
       "program": "flows/pdf-preview",
       "tags": ["full", "files"],
@@ -311,6 +317,10 @@
     }
   ],
   "programs": {
+    "flows/agent-transcript-streaming": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/agent-transcript-streaming.ad" }
+    ],
     "flows/pdf-preview": [{ "include": "subflows/open-demo" }, { "run": "flows/pdf-preview.ad" }],
     "flows/computer-map": [
       { "include": "subflows/launch-home" },

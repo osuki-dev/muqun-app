@@ -442,21 +442,21 @@ export const AgentCompactionRow = memo(function AgentCompactionRow({
  * fences would otherwise degrade to plain code; here they are rendered by the
  * same red/green patch rows the `diff` timeline part uses.
  */
-function splitDiffFences(markdown: string): { kind: 'md' | 'diff'; text: string }[] {
-  const segments: { kind: 'md' | 'diff'; text: string }[] = [];
+function splitDiffFences(markdown: string): { kind: 'md' | 'diff'; text: string; start: number }[] {
+  const segments: { kind: 'md' | 'diff'; text: string; start: number }[] = [];
   const fence = /```diff\s*\n([\s\S]*?)```/g;
   let last = 0;
   let match: RegExpExecArray | null;
   while ((match = fence.exec(markdown)) !== null) {
     if (match.index > last) {
-      segments.push({ kind: 'md', text: markdown.slice(last, match.index) });
+      segments.push({ kind: 'md', text: markdown.slice(last, match.index), start: last });
     }
-    segments.push({ kind: 'diff', text: match[1] });
+    segments.push({ kind: 'diff', text: match[1], start: match.index });
     last = match.index + match[0].length;
   }
-  if (segments.length === 0) return [{ kind: 'md', text: markdown }];
+  if (segments.length === 0) return [{ kind: 'md', text: markdown, start: 0 }];
   if (last < markdown.length) {
-    segments.push({ kind: 'md', text: markdown.slice(last) });
+    segments.push({ kind: 'md', text: markdown.slice(last), start: last });
   }
   return segments;
 }
@@ -586,6 +586,7 @@ const MessageTextPart = memo(function MessageTextPart({
   imageAssets,
   audioSessionId,
   onPreviewImage,
+  streaming = false,
 }: {
   text: string;
   role: TimelineItem['role'];
@@ -594,6 +595,7 @@ const MessageTextPart = memo(function MessageTextPart({
   imageAssets?: readonly MessageImageAsset[];
   audioSessionId?: string;
   onPreviewImage?: (uri: string) => void;
+  streaming?: boolean;
 }) {
   const { t } = useLingui();
   const images = useMessageImages(imageAssets);
@@ -656,6 +658,7 @@ const MessageTextPart = memo(function MessageTextPart({
             markdownStyle={markdownStyle}
             containerStyle={styles.markdownContainer}
             latexMath
+            streaming={streaming}
             {...(images.headers ? { imageRequestHeaders: images.headers } : {})}
             {...(onPreviewImage ? { onImagePress: onPreviewImage } : {})}
           />
@@ -701,16 +704,15 @@ const MessageTextPart = memo(function MessageTextPart({
     );
   };
 
-  if (segments.length === 1 && segments[0].kind === 'md') {
-    return renderMarkdown('body', text);
-  }
+  // Keep the same parent and offset keys when a streamed diff fence closes.
+  // Reparenting the preceding Markdown would discard its native measurement.
   return (
     <View style={styles.markdownSegments}>
-      {segments.map((seg, segIdx) =>
+      {segments.map((seg) =>
         seg.kind === 'md' ? (
-          renderMarkdown(`md-${segIdx}`, seg.text)
+          <Fragment key={seg.start}>{renderMarkdown(`md:${seg.start}`, seg.text)}</Fragment>
         ) : (
-          <InlinePatch key={`diff-${segIdx}`} patch={seg.text} />
+          <InlinePatch key={seg.start} patch={seg.text} />
         )
       )}
     </View>
@@ -751,6 +753,7 @@ function renderTimelinePart(
     prevItem?: TimelineItem;
     actions: AgentToolActions;
     readOnly: boolean;
+    streaming?: boolean;
   }
 ): ReactNode {
   const part = item.part;
@@ -814,6 +817,7 @@ function renderTimelinePart(
           role={item.role}
           markdownStyle={options.markdownStyle}
           audioSessionId={options.actions.audioSessionId}
+          streaming={options.streaming}
           {...(item.image_assets ? { imageAssets: item.image_assets } : {})}
           {...(options.actions.onPreviewImage
             ? { onPreviewImage: options.actions.onPreviewImage }
@@ -1273,12 +1277,15 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
   group,
   showReasoning,
   reasoningLive = false,
+  streamingItemId,
   actions = NO_TOOL_ACTIONS,
   readOnly = false,
 }: {
   group: TimelineRenderGroup;
   showReasoning: boolean;
   reasoningLive?: boolean;
+  /** Exact live part identity; earlier text in the same message stays settled. */
+  streamingItemId?: string;
   markdownStyle: MarkdownStyle;
   actions?: AgentToolActions;
   /** Historical/peek surfaces show content without permission controls. */
@@ -1365,6 +1372,7 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
       prevItem: previousItemAt(entries, sourceIndex) ?? group.prevItem,
       actions,
       readOnly,
+      streaming: entry.item.id === streamingItemId,
     });
     if (drawn === null) return;
     if (STANDALONE_PART_TYPES.has(entry.item.part.type)) {

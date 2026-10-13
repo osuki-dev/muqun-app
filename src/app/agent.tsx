@@ -17,6 +17,8 @@ import {
 import { DETAIL_HEADER_HEIGHT, DetailHeader } from '@/components/detail-header';
 import { SHELL_WALLPAPER_FALLBACK, ThemeArtwork } from '@/components/theme-artwork';
 import { AgentWorkbench } from '@/components/agent-workbench';
+import { DemoStreamingTranscript } from '@/components/demo-streaming-transcript';
+import { DEMO_STREAMING_ASID, isDemoActive } from '@/lib/demo-gateway';
 import AppDrawer from '@/components/app-drawer';
 import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
 import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
@@ -81,6 +83,7 @@ export default function AgentScreen() {
    * server (the drawer, a deep link), the selected one is the one meant.
    */
   const { record, selectRecord } = useGatewayRecord();
+  const demoStreaming = params.asid === DEMO_STREAMING_ASID && isDemoActive();
   const wantedServer = typeof params.server === 'string' && params.server ? params.server : null;
   const serverReady = !wantedServer || record?.serverId === wantedServer;
   // The workbench has no terminal screen beneath it when opened from Home.
@@ -98,12 +101,12 @@ export default function AgentScreen() {
   }, [wantedServer, serverReady, selectRecord]);
   const redirectServerId = padAgentRedirectParams(params).serverId ?? record?.serverId;
   useEffect(() => {
-    if (!isPad || !redirectServerId) return;
+    if (!isPad || !redirectServerId || demoStreaming) return;
     router.replace({
       pathname: '/servers/[serverId]',
       params: { ...padAgentRedirectParams(params), serverId: redirectServerId },
     } as Href);
-  }, [isPad, params, redirectServerId, router]);
+  }, [isPad, params, redirectServerId, router, demoStreaming]);
   const sessionRunning = useAgentSessionState((s) => s.running);
   const sessionTitle = useAgentSessionState((s) => s.title);
   const activeDirectory = useAgentSessionState((s) => s.directory);
@@ -142,6 +145,8 @@ export default function AgentScreen() {
    */
   // react-doctor-disable-next-line react-hooks-js/todo -- lingui t macro; the lingui babel plugin compiles the template away before the compiler sees it
   const openSessionsLabel = t`Sessions: ${sessionTitle ?? ''}`;
+
+  if (demoStreaming) return <DemoStreamingTranscript />;
 
   // On Pad the workspace shell owns agent detail; this route only forwards.
   if (isPad)

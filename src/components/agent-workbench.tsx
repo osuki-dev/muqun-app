@@ -69,7 +69,12 @@ import { GlassChrome } from '@/components/glass-chrome';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import { withAlpha } from '@/lib/color';
 import { DURATION, fadeIn, fadeInDown, fadeOut, fadeOutUp, riseIn, timing } from '@/lib/motion';
 import { emptyCardBottomReserve, emptyCardTopReserve } from '@/lib/agent-empty-layout';
@@ -959,6 +964,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     so exactly one view subscribes. See `lib/transcript-follow.ts`.
   */
   const follow = useMemo(() => createTranscriptFollow(), []);
+  const reducedMotion = useReducedMotion();
+  const maintainTranscriptEnd = useMemo(() => ({ animated: !reducedMotion }), [reducedMotion]);
 
   // Attachment image preview. The shared lightbox, not a second copy of it:
   // `ImagePreviewModal` already owns pinch, drag-to-dismiss and the paging.
@@ -5452,7 +5459,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             of someone who has scrolled up, which is also why there is no manual
             `scrollToEnd` on a stream tick.
           */
-              maintainScrollAtEnd={true}
+              maintainScrollAtEnd={maintainTranscriptEnd}
               maintainScrollAtEndThreshold={0.1}
               onScroll={handleTimelineScroll}
               /*
