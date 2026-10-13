@@ -4,12 +4,6 @@ import { useIsFocused, useRouter } from 'expo-router';
 import { SlidersHorizontal } from 'lucide-react-native';
 import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { AppState, StyleSheet, View } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
 
 import { AgentComposer, type DraftInjector } from '@/components/agent-composer';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -116,9 +110,6 @@ import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useHomeComposerSheet } from '@/stores/home-composer-sheet';
 import { markHomeComposerRevealed } from '@/lib/home-first-entry';
 
-const FLASH_IN_MS = 120;
-const FLASH_OUT_MS = 600;
-
 const NO_COMMANDS: AgentCatalog['commands'] = [];
 const NO_SKILLS: AgentCatalog['skills'] = [];
 
@@ -163,7 +154,7 @@ export function HomeComposerDock({
   reachabilityByServer: Readonly<Record<string, ServerReachability | undefined>>;
   /**
    * Bumped when Home sets the target from outside the dock (a tap on a
-   * computer row); each bump flashes the assignment bar.
+   * computer row); each bump plays the composer's choice transition.
    */
   targetPulse?: number;
   bottomInset?: number;
@@ -217,20 +208,11 @@ export function HomeComposerDock({
   } | null>(null);
   const [checkingDelivery, setCheckingDelivery] = useState(false);
 
-  // The assignment bar lights up for a moment whenever the target is set by
-  // hand, so the change is seen, not inferred.
-  const flash = useSharedValue(0);
+  // The composer marks an externally selected target with its choice transition.
   useEffect(() => {
     if (targetPulse === 0) return;
     playTransition('choice');
-    flash.set(
-      withSequence(
-        withTiming(1, { duration: FLASH_IN_MS }),
-        withTiming(0, { duration: FLASH_OUT_MS })
-      )
-    );
-  }, [targetPulse, flash, playTransition]);
-  const flashStyle = useAnimatedStyle(() => ({ opacity: flash.get() }));
+  }, [targetPulse, playTransition]);
 
   const target = resolveHomeComposerTarget({ servers, chosen, reachabilityByServer });
   const targetServer = target.kind === 'none' ? undefined : target.server;
@@ -1338,22 +1320,7 @@ export function HomeComposerDock({
         playTransition(optionsOpen ? 'choice' : 'options');
         setOptionsOpen((open) => !open);
       }}
-      style={[
-        composerStyles.button,
-        { borderRadius: profile.chrome.roundControl },
-        optionsOpen && { backgroundColor: background(theme.colors.primarySubtle) },
-      ]}>
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          StyleSheet.absoluteFill,
-          {
-            borderRadius: profile.chrome.roundControl,
-            backgroundColor: background(theme.colors.primarySubtle),
-          },
-          flashStyle,
-        ]}
-      />
+      style={[composerStyles.button, { borderRadius: profile.chrome.roundControl }]}>
       <ThemeIcon
         name="chrome.parameters"
         fallback={SlidersHorizontal}
