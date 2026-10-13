@@ -2416,10 +2416,6 @@ msgstr "下载并预览"
 msgid "Download size: {fullPackage}"
 msgstr "下载大小：{fullPackage}"
 
-#: src/components/update-status-banner.tsx
-msgid "Download size: about {estimate}"
-msgstr "下载大小：约 {estimate}"
-
 #: src/components/settings-font-sheet.tsx
 msgid "Downloading"
 msgstr "正在下载"
@@ -2773,8 +2769,8 @@ msgid "Front camera. Hold the QR up to the screen"
 msgstr "前置摄像头。将二维码朝向屏幕"
 
 #: src/components/update-status-banner.tsx
-msgid "Full package: {fullPackage}"
-msgstr "完整更新包：{fullPackage}"
+msgid "Full package size. File reuse may reduce the download."
+msgstr "完整更新包的大小，文件复用可能减少实际下载量"
 
 #: src/components/video-asset-preview.tsx
 msgid "Fullscreen"
@@ -5586,10 +5582,6 @@ msgstr "模拟器控件"
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Size"
 msgstr "大小"
-
-#: src/components/update-status-banner.tsx
-msgid "Size covers update files. File reuse or fallback can change the download."
-msgstr "大小仅包含更新文件，文件复用或回退可能改变实际下载量"
 
 #. placeholder {0}: part.name ?? part.skill
 #: src/components/agent-message-block.tsx
