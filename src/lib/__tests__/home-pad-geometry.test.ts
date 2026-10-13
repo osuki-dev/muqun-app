@@ -3,8 +3,11 @@ import { EDITORIAL_PAD_MAX_WIDTH, getEditorialLayoutGeometry } from '@/lib/home-
 import {
   PAD_COVER_TITLE_LINE_HEIGHT,
   PAD_WORDMARK_DESCENDER,
+  PAD_LAUNCH_GAP,
+  PAD_LAUNCH_BOTTOM_SPACE,
   padCardColumns,
   padCover,
+  padCoverAvailableHeight,
   padCoverKind,
   padHomeColumns,
   nextRestingInset,
@@ -113,6 +116,48 @@ describe('nextRestingInset: the Pad page is sized from a no-keyboard inset only'
     expect(
       nextRestingInset(resting, { inset, width, height, keyboardVisible, fieldFocused }).inset
     ).toBe(expected);
+  });
+});
+
+describe('Pad launch controls take space before the cover', () => {
+  const viewportHeight = 752;
+  const columnHeight = viewportHeight - 12 - 44 - 16;
+  const cover = { viewportHeight, coverWidth: 664, measuredTitleWidth: 620, wordmark: false };
+
+  test.each([160, 208, 248])('all three launch rows clear a %p dp composer', (composerHeight) => {
+    // Four agents plus New terminal: three 56dp rows and two 8dp gaps.
+    const launchesHeight = 3 * 56 + 2 * 8;
+    const availableHeight = padCoverAvailableHeight(columnHeight, composerHeight, launchesHeight);
+    const block = padCover({ ...cover, availableHeight });
+    const lastControlBottom = block.height + PAD_LAUNCH_GAP + launchesHeight;
+    expect(lastControlBottom + PAD_LAUNCH_BOTTOM_SPACE).toBeLessThanOrEqual(
+      columnHeight - composerHeight
+    );
+    expect(block.artwork.height).toBeLessThanOrEqual(block.height);
+  });
+
+  test('more discovered agents or taller labels reserve their actual measured height', () => {
+    const short = padCoverAvailableHeight(columnHeight, 208, 184)!;
+    const tall = padCoverAvailableHeight(columnHeight, 208, 264)!;
+    expect(short - tall).toBe(80);
+  });
+
+  test('a spacious portrait keeps the preferred cover instead of stretching artwork', () => {
+    const availableHeight = padCoverAvailableHeight(1136, 208, 184);
+    expect(padCover({ ...cover, viewportHeight: 1208, availableHeight }).height).toBe(
+      Math.round(1208 * 0.45)
+    );
+  });
+
+  test('an unmeasured column keeps its first frame; very short windows never go negative', () => {
+    expect(padCoverAvailableHeight(0, 208, 184)).toBeUndefined();
+    expect(padCoverAvailableHeight(columnHeight, 208, 0)).toBeUndefined();
+    const availableHeight = padCoverAvailableHeight(300, 208, 184);
+    expect(availableHeight).toBe(0);
+    const block = padCover({ ...cover, availableHeight });
+    expect(block.height).toBe(0);
+    expect(block.titleSize).toBe(0);
+    expect(block.artwork).toEqual({ width: 0, height: 0 });
   });
 });
 
