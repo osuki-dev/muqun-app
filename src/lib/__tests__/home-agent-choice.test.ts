@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import type { MirroredServerDiscovery } from '../agent-discovery';
 import {
   catalogRetryDelay,
+  homeAgentNeedsTerminalLabel,
   homeAgentOptions,
   parseHomeAgentChoices,
   resolveHomeAgent,
@@ -42,6 +43,7 @@ describe('homeAgentOptions', () => {
       terminalAgentKey('codex'),
       terminalAgentKey('claude'),
       terminalAgentKey('amp'),
+      terminalAgentKey('opencode'),
     ]);
     expect(options.find((option) => option.key === 'terminal:claude')?.name).toBe('Claude Code');
   });
@@ -63,7 +65,12 @@ describe('resolveHomeAgent', () => {
 
   test('the reader’s choice while the computer still offers it', () => {
     expect(resolveHomeAgent(options, 'terminal:codex')?.key).toBe('terminal:codex');
-    expect(resolveHomeAgent(options, 'terminal:claude')?.key).toBe('session:opencode');
+    expect(resolveHomeAgent(options, 'terminal:claude')).toMatchObject({
+      key: 'terminal:claude',
+      kind: 'terminal',
+      ready: false,
+      confirmed: false,
+    });
   });
 
   test('none ready: the first listed', () => {
@@ -95,9 +102,37 @@ describe('a stored terminal agent before the catalog is read', () => {
     expect(agent?.kind === 'terminal' && agent.confirmed).toBe(false);
   });
 
-  test('once the catalog is read and lacks it, the first ready agent takes over', () => {
-    expect(resolveHomeAgent(sessionsOnly, 'terminal:codex', true)?.key).toBe('session:opencode');
+  test('an unavailable stored terminal choice never dispatches to a different agent', () => {
+    expect(resolveHomeAgent(sessionsOnly, 'terminal:codex', true)).toMatchObject({
+      key: 'terminal:codex',
+      kind: 'terminal',
+      ready: false,
+      confirmed: false,
+    });
   });
+});
+
+test('native discovery preserves terminal Codex for every service availability state', () => {
+  for (const status of ['connected', 'unconfigured', 'disabled', 'unsupported', 'offline']) {
+    const options = homeAgentOptions(
+      discovery([{ id: 'codex', kind: 'codex', name: 'Codex', status }]),
+      [{ kind: 'codex', command: 'codex', available: true }]
+    );
+    expect(options.map((option) => option.key)).toEqual(
+      status === 'disabled' ? ['terminal:codex'] : ['session:codex', 'terminal:codex']
+    );
+    const selected = resolveHomeAgent(options, 'terminal:codex');
+    expect(selected).toMatchObject({ kind: 'terminal', ready: true, confirmed: true });
+    expect(homeAgentNeedsTerminalLabel(selected, options)).toBe(status !== 'disabled');
+    expect(homeAgentNeedsTerminalLabel(options[0], options)).toBe(false);
+  }
+});
+
+test('a standalone terminal agent does not need a duplicate-provider suffix', () => {
+  const options = homeAgentOptions(fleet, [{ kind: 'codex', command: 'codex', available: true }]);
+  expect(homeAgentNeedsTerminalLabel(resolveHomeAgent(options, 'terminal:codex'), options)).toBe(
+    false
+  );
 });
 
 describe('catalogRetryDelay', () => {

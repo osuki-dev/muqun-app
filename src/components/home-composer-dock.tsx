@@ -83,7 +83,11 @@ import { markPromptedSession } from '@/lib/prompted-agent-sessions';
 import { loadTerminalCatalog, useTerminalAgentCatalog } from '@/hooks/use-terminal-agent-catalog';
 import { agentSpawnRequest, terminalPromptWithAttachments } from '@/lib/agent-spawn';
 import { loadSessions, spawnAgent } from '@/lib/gateway-client';
-import { homeAgentOptions, resolveHomeAgent } from '@/lib/home-agent-choice';
+import {
+  homeAgentNeedsTerminalLabel,
+  homeAgentOptions,
+  resolveHomeAgent,
+} from '@/lib/home-agent-choice';
 import { describeGatewayFailure } from '@/lib/network-error';
 import {
   hasTaskLedgerCreate,
@@ -363,11 +367,8 @@ export function HomeComposerDock({
   const chosenAgentKey = useHomeAgentChoice((state) =>
     targetId ? state.byServer[targetId] : undefined
   );
-  const agent = resolveHomeAgent(
-    homeAgentOptions(discovery, terminalCatalog),
-    chosenAgentKey,
-    terminalCatalog !== undefined
-  );
+  const agentOptions = homeAgentOptions(discovery, terminalCatalog);
+  const agent = resolveHomeAgent(agentOptions, chosenAgentKey, terminalCatalog !== undefined);
   const terminalAgent = agent?.kind === 'terminal' ? agent : null;
   // Where the goal runs on this computer: the folder last picked here, if
   // any. Sent as `cwd` (ledger, spawn) or `directory` (session).
@@ -392,7 +393,10 @@ export function HomeComposerDock({
     last: t`Last folder`,
     home: t`Home folder`,
   });
-  const agentName = agent?.name ?? '';
+  const providerName = agent?.name ?? '';
+  const agentName = homeAgentNeedsTerminalLabel(agent, agentOptions)
+    ? t`${providerName} (terminal)`
+    : providerName;
   const agentLabel = agentName || computerLabel;
   // A gateway that opens ledger tasks gets the goal as one: Home's cards then
   // see the work, and the work it delegates, live.

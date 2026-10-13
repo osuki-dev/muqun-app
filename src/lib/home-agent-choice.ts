@@ -3,7 +3,7 @@
  * choice, per computer, or -- with nothing chosen -- the first agent that
  * computer says is ready.
  *
- * Two kinds of agent can be chosen. A session agent (OpenCode, DeepSeek, T3:
+ * Two kinds of agent can be chosen. A session agent (OpenCode, DeepSeek, T3, Codex:
  * the gateway's agent plane, from discovery) gets an agent session, as Home
  * always did. A terminal agent (Codex, Claude Code: a CLI the gateway finds on
  * `PATH`, from `GET /api/agents/catalog`) is started in a pane with the goal
@@ -42,8 +42,8 @@ export type HomeAgentOption =
       name: string;
       ready: boolean;
       /**
-       * False while the computer's catalog has not been read: the stored
-       * choice is shown by name, and Send reads the catalog before starting.
+       * False until the computer's catalog confirms availability: the stored
+       * choice is shown by name, and Send rechecks before starting.
        */
       confirmed: boolean;
     };
@@ -72,8 +72,8 @@ export function terminalAgentKey(kind: string): string {
 /**
  * Everything the computer offers, in its own order: the session agents
  * discovery lists, then the terminal agents its catalog found installed. A
- * terminal kind that is also a session agent (OpenCode's TUI) is left out --
- * the session is the better way to drive it from a phone.
+ * terminal kind can also have a session adapter: these are separate destinations,
+ * so discovery must not remove an installed terminal choice.
  */
 export function homeAgentOptions(
   discovery: MirroredServerDiscovery | null | undefined,
@@ -91,16 +91,10 @@ export function homeAgentOptions(
         caption: launchAgentCaption(agent),
       }))
     : [FALLBACK];
-  const sessionKinds = new Set(
-    sessions.flatMap((option) => [
-      option.agentKind.toLowerCase(),
-      option.key.slice(8).toLowerCase(),
-    ])
-  );
   const terminals: HomeAgentOption[] = [];
   for (const profile of terminal ?? []) {
     const kind = profile.kind.trim();
-    if (!kind || !profile.available || sessionKinds.has(kind.toLowerCase())) continue;
+    if (!kind || !profile.available) continue;
     terminals.push({
       key: terminalAgentKey(kind),
       kind: 'terminal',
@@ -119,9 +113,21 @@ export function homeAgentOptions(
   return [...sessions, ...terminals];
 }
 
+/** Only duplicate provider names need a terminal suffix in the chooser and dock. */
+export function homeAgentNeedsTerminalLabel(
+  option: HomeAgentOption | null,
+  options: readonly HomeAgentOption[]
+): boolean {
+  return Boolean(
+    option?.kind === 'terminal' &&
+    options.some((entry) => entry.kind === 'session' && entry.agentKind === option.agentKind)
+  );
+}
+
 /**
  * The agent Send uses: the stored choice while the computer still offers it;
- * otherwise the first ready agent; otherwise the first listed one.
+ * an unavailable terminal choice stays selected and must be rechecked before
+ * sending. With no choice, use the first ready agent, then the first listed one.
  */
 export function resolveHomeAgent(
   options: readonly HomeAgentOption[],
@@ -132,16 +138,16 @@ export function resolveHomeAgent(
   if (chosenKey) {
     const chosen = options.find((option) => option.key === chosenKey);
     if (chosen) return chosen;
-    // A terminal agent cannot be confirmed until the catalog is read; until
-    // then it is still the reader's choice, never silently another agent.
+    // A missing terminal entry stays the reader's choice. Send rechecks the
+    // catalog instead of silently dispatching to a different provider or plane.
     const kind = chosenKey.startsWith('terminal:') ? chosenKey.slice(9) : '';
-    if (kind && !terminalCatalogKnown) {
+    if (kind) {
       return {
         key: chosenKey,
         kind: 'terminal',
         agentKind: kind,
         name: agentBrandName(kind),
-        ready: true,
+        ready: !terminalCatalogKnown,
         confirmed: false,
       };
     }

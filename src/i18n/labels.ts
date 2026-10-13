@@ -450,6 +450,11 @@ export type AgentGuideCopy = {
  * more useful to say.
  */
 export const agentGuideCopy: Record<string, AgentGuideCopy> = {
+  codex: {
+    start: msg`Run muqun-gateway agent setup codex on the computer for setup instructions. Gateway starts its own Codex connection using the host's existing configuration and sign-in.`,
+    command: 'muqun-gateway agent setup codex',
+    installUrl: 'https://developers.openai.com/codex/cli/',
+  },
   opencode: {
     start: msg`Start the OpenCode service on the computer, then check again.`,
     command: 'opencode service start',
