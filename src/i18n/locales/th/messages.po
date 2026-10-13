@@ -191,10 +191,6 @@ msgstr "{0} นาที"
 msgid "{0}m ago"
 msgstr "{0} นาทีที่แล้ว"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "{agentId} service"
-msgstr "บริการ {agentId}"
-
 #: src/components/agent-workbench.tsx
 msgid "{agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone."
 msgstr "{agentName} แสดงตัวอย่างการย้อนกลับไม่ได้ การดำเนินการนี้จะลบข้อความนี้และทุกอย่างหลังจากนั้นทั้งรอบ และเลิกทำไม่ได้"
@@ -551,10 +547,6 @@ msgctxt "git file status"
 msgid "Added"
 msgstr "เพิ่มแล้ว"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Advanced agent access"
-msgstr "การเข้าถึงขั้นสูงของเอเจนต์"
-
 #: src/app/settings-voice.tsx
 msgid "After recording"
 msgstr "หลังบันทึกเสียง"
@@ -563,10 +555,6 @@ msgstr "หลังบันทึกเสียง"
 #: src/components/new-task-sheet.tsx
 msgid "Agent"
 msgstr "เอเจนต์"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Agent access"
-msgstr "การเข้าถึงของเอเจนต์"
 
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
@@ -1496,10 +1484,6 @@ msgstr "ยืนยันการลบ {0}"
 msgid "Confirm revoke {0}"
 msgstr "ยืนยันการเพิกถอน {0}"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Confirm revoke {title}"
-msgstr "ยืนยันการเพิกถอน {title}"
-
 #: src/components/settings-alerts.tsx
 msgid "Confirm taps, pairing, and gateway events."
 msgstr "ยืนยันการแตะ การจับคู่ และเหตุการณ์จาก Gateway"
@@ -1886,10 +1870,6 @@ msgstr "แสดงรายการเอเจนต์ของคอมพ
 msgid "Could not list worktrees. Refresh to try again."
 msgstr "ไม่สามารถแสดงรายการเวิร์กทรีได้ รีเฟรชเพื่อลองอีกครั้ง"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Could not load agent access"
-msgstr "โหลดสิทธิ์เข้าถึงของเอเจนต์ไม่ได้"
-
 #: src/components/settings-server-capabilities.tsx
 msgid "Could not load capabilities"
 msgstr "โหลดความสามารถไม่ได้"
@@ -2060,10 +2040,6 @@ msgstr "เพิกถอนไม่ได้"
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
 msgstr "เพิกถอนอุปกรณ์ไม่ได้"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Could not revoke token"
-msgstr "เพิกถอนโทเค็นไม่ได้"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not run that"
@@ -2617,27 +2593,11 @@ msgstr "ขยายงาน"
 msgid "Expand tool call"
 msgstr "ขยายการเรียกใช้เครื่องมือ"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Expired"
-msgstr "หมดอายุแล้ว"
-
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
 #: src/app/explore.tsx
 msgid "Expires in {0}:{1}"
 msgstr "หมดอายุใน {0}:{1}"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Expires in {days}d"
-msgstr "หมดอายุใน {days} วัน"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Expires in {hours}h"
-msgstr "หมดอายุใน {hours} ชม"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Expires in {minutes}m"
-msgstr "หมดอายุใน {minutes} นาที"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Explore"
@@ -3321,10 +3281,6 @@ msgstr "พบล่าสุด {minutes} นาทีที่แล้ว"
 msgid "Last seen just now"
 msgstr "พบล่าสุดเมื่อสักครู่"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Last used {when}"
-msgstr "ใช้ล่าสุด {when}"
-
 #: src/components/update-status-banner.tsx
 msgid "Later"
 msgstr "ภายหลัง"
@@ -3478,10 +3434,6 @@ msgstr "ตรวจสอบว่าเข้าถึงคอมพิวเ
 #: src/components/home-overview.tsx
 msgid "Manage"
 msgstr "จัดการ"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Manage access granted to coding agents through MCP. Revoking access stops that agent from using this computer's tools."
-msgstr "จัดการสิทธิ์เข้าถึงที่ให้แก่เอเจนต์เขียนโค้ดผ่าน MCP เมื่อเพิกถอนสิทธิ์ เอเจนต์นั้นจะใช้เครื่องมือของคอมพิวเตอร์เครื่องนี้ไม่ได้"
 
 #: src/components/session-map.tsx
 msgid "Manage computers"
@@ -3711,17 +3663,9 @@ msgstr "ต้องการคำตอบจากคุณ"
 msgid "Never connected"
 msgstr "ยังไม่เคยเชื่อมต่อ"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Never expires"
-msgstr "ไม่มีวันหมดอายุ"
-
 #: src/components/settings-servers.tsx
 msgid "Never seen"
 msgstr "ยังไม่เคยพบ"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Never used"
-msgstr "ยังไม่เคยใช้"
 
 #: src/app/commands.tsx
 msgid "New group"
@@ -3782,10 +3726,6 @@ msgstr "การแจ้งเตือนถัดไป"
 #: src/components/agent-title-pill.tsx
 msgid "Next session"
 msgstr "เซสชันถัดไป"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "No agent access grants"
-msgstr "ยังไม่มีการให้สิทธิ์เข้าถึงแก่เอเจนต์"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
@@ -4449,10 +4389,6 @@ msgstr "จับคู่ไม่สำเร็จ"
 msgid "Palette (up to 4)"
 msgstr "ชุดสี (สูงสุด 4 สี)"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Pane {paneId}"
-msgstr "เพน {paneId}"
-
 #: src/components/settings-servers.tsx
 msgid "Panes on computer cards"
 msgstr "พาเนลบนการ์ดคอมพิวเตอร์"
@@ -5083,7 +5019,6 @@ msgid "Reviewing the changes and checking the tests…"
 msgstr "กำลังตรวจทานการเปลี่ยนแปลงและตรวจสอบการทดสอบ…"
 
 #: src/components/agent-context-sheet.tsx
-#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke"
 msgstr "เพิกถอน"
@@ -5095,11 +5030,6 @@ msgstr "เพิกถอน"
 msgid "Revoke {0}"
 msgstr "เพิกถอน {0}"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Revoke {title}"
-msgstr "เพิกถอน {title}"
-
-#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoking…"
 msgstr "กำลังเพิกถอน…"
@@ -6705,7 +6635,6 @@ msgstr "เชื่อถือ"
 msgid "Try again"
 msgstr "ลองอีกครั้ง"
 
-#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/settings-servers.tsx
 msgid "Try again once the computer responds."

@@ -191,10 +191,6 @@ msgstr "{0} Min"
 msgid "{0}m ago"
 msgstr "vor {0} Min"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "{agentId} service"
-msgstr "{agentId}-Dienst"
-
 #: src/components/agent-workbench.tsx
 msgid "{agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone."
 msgstr "{agentName} kann einen Rollback nicht vorab anzeigen. Dies entfernt die Nachricht und alles danach, den ganzen Durchgang, und lässt sich nicht rückgängig machen"
@@ -551,10 +547,6 @@ msgctxt "git file status"
 msgid "Added"
 msgstr "Hinzugefügt"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Advanced agent access"
-msgstr "Erweiterter Agentenzugriff"
-
 #: src/app/settings-voice.tsx
 msgid "After recording"
 msgstr "Nach der Aufnahme"
@@ -563,10 +555,6 @@ msgstr "Nach der Aufnahme"
 #: src/components/new-task-sheet.tsx
 msgid "Agent"
 msgstr "Agent"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Agent access"
-msgstr "Agentenzugriff"
 
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
@@ -1496,10 +1484,6 @@ msgstr "Entfernen von {0} bestätigen"
 msgid "Confirm revoke {0}"
 msgstr "Widerruf von {0} bestätigen"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Confirm revoke {title}"
-msgstr "Widerruf von {title} bestätigen"
-
 #: src/components/settings-alerts.tsx
 msgid "Confirm taps, pairing, and gateway events."
 msgstr "Bestätigt Tippen, Kopplungen und Gateway-Ereignisse"
@@ -1886,10 +1870,6 @@ msgstr "Die Agents dieses Computers konnten nicht aufgelistet werden"
 msgid "Could not list worktrees. Refresh to try again."
 msgstr "Worktrees konnten nicht aufgelistet werden. Zum Wiederholen aktualisieren"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Could not load agent access"
-msgstr "Agentenzugriff konnte nicht geladen werden"
-
 #: src/components/settings-server-capabilities.tsx
 msgid "Could not load capabilities"
 msgstr "Funktionen konnten nicht geladen werden"
@@ -2060,10 +2040,6 @@ msgstr "Konnte nicht widerrufen werden"
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
 msgstr "Gerät konnte nicht widerrufen werden"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Could not revoke token"
-msgstr "Token konnte nicht widerrufen werden"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not run that"
@@ -2617,27 +2593,11 @@ msgstr "Aufgaben ausklappen"
 msgid "Expand tool call"
 msgstr "Toolaufruf erweitern"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Expired"
-msgstr "Abgelaufen"
-
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
 #: src/app/explore.tsx
 msgid "Expires in {0}:{1}"
 msgstr "Läuft in {0}:{1} ab"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Expires in {days}d"
-msgstr "Läuft in {days} T ab"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Expires in {hours}h"
-msgstr "Läuft in {hours} Std. ab"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Expires in {minutes}m"
-msgstr "Läuft in {minutes} Min. ab"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Explore"
@@ -3321,10 +3281,6 @@ msgstr "Zuletzt gesehen vor {minutes} Min"
 msgid "Last seen just now"
 msgstr "Zuletzt gesehen: gerade eben"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Last used {when}"
-msgstr "Zuletzt verwendet {when}"
-
 #: src/components/update-status-banner.tsx
 msgid "Later"
 msgstr "Später"
@@ -3478,10 +3434,6 @@ msgstr "Stelle sicher, dass der Computer erreichbar ist, und versuche es erneut"
 #: src/components/home-overview.tsx
 msgid "Manage"
 msgstr "Verwalten"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Manage access granted to coding agents through MCP. Revoking access stops that agent from using this computer's tools."
-msgstr "Verwalte den Zugriff, den du Coding-Agenten über MCP gewährt hast. Wenn du den Zugriff widerrufst, kann dieser Agent die Werkzeuge dieses Computers nicht mehr verwenden"
 
 #: src/components/session-map.tsx
 msgid "Manage computers"
@@ -3711,17 +3663,9 @@ msgstr "Braucht deine Eingabe"
 msgid "Never connected"
 msgstr "Nie verbunden"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Never expires"
-msgstr "Läuft nie ab"
-
 #: src/components/settings-servers.tsx
 msgid "Never seen"
 msgstr "Nie gesehen"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Never used"
-msgstr "Nie verwendet"
 
 #: src/app/commands.tsx
 msgid "New group"
@@ -3782,10 +3726,6 @@ msgstr "Nächste Benachrichtigung"
 #: src/components/agent-title-pill.tsx
 msgid "Next session"
 msgstr "Nächste Sitzung"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "No agent access grants"
-msgstr "Keine Zugriffsberechtigungen für Agenten"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
@@ -4449,10 +4389,6 @@ msgstr "Kopplung fehlgeschlagen"
 msgid "Palette (up to 4)"
 msgstr "Palette (bis zu 4)"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Pane {paneId}"
-msgstr "Pane {paneId}"
-
 #: src/components/settings-servers.tsx
 msgid "Panes on computer cards"
 msgstr "Panels auf Computer-Karten"
@@ -5083,7 +5019,6 @@ msgid "Reviewing the changes and checking the tests…"
 msgstr "Änderungen und Tests werden geprüft…"
 
 #: src/components/agent-context-sheet.tsx
-#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke"
 msgstr "Widerrufen"
@@ -5095,11 +5030,6 @@ msgstr "Widerrufen"
 msgid "Revoke {0}"
 msgstr "{0} widerrufen"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Revoke {title}"
-msgstr "{title} widerrufen"
-
-#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoking…"
 msgstr "Wird widerrufen…"
@@ -6705,7 +6635,6 @@ msgstr "Vertrauen"
 msgid "Try again"
 msgstr "Erneut versuchen"
 
-#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/settings-servers.tsx
 msgid "Try again once the computer responds."

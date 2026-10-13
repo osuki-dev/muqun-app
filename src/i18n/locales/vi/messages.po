@@ -191,10 +191,6 @@ msgstr "{0} phút"
 msgid "{0}m ago"
 msgstr "{0} phút trước"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "{agentId} service"
-msgstr "Dịch vụ {agentId}"
-
 #: src/components/agent-workbench.tsx
 msgid "{agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone."
 msgstr "{agentName} không thể xem trước thao tác hoàn tác. Thao tác này xoá tin nhắn và mọi thứ sau nó, tức cả lượt, và không thể khôi phục"
@@ -551,10 +547,6 @@ msgctxt "git file status"
 msgid "Added"
 msgstr "Đã thêm"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Advanced agent access"
-msgstr "Quyền truy cập nâng cao của tác nhân"
-
 #: src/app/settings-voice.tsx
 msgid "After recording"
 msgstr "Sau khi ghi âm"
@@ -563,10 +555,6 @@ msgstr "Sau khi ghi âm"
 #: src/components/new-task-sheet.tsx
 msgid "Agent"
 msgstr "Tác nhân"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Agent access"
-msgstr "Quyền truy cập của tác nhân"
 
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
@@ -1496,10 +1484,6 @@ msgstr "Xác nhận gỡ {0}"
 msgid "Confirm revoke {0}"
 msgstr "Xác nhận thu hồi {0}"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Confirm revoke {title}"
-msgstr "Xác nhận thu hồi {title}"
-
 #: src/components/settings-alerts.tsx
 msgid "Confirm taps, pairing, and gateway events."
 msgstr "Phản hồi khi chạm, ghép nối và các sự kiện của gateway"
@@ -1886,10 +1870,6 @@ msgstr "Không thể liệt kê các tác tử của máy tính này"
 msgid "Could not list worktrees. Refresh to try again."
 msgstr "Không thể liệt kê cây làm việc. Hãy làm mới để thử lại"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Could not load agent access"
-msgstr "Không tải được quyền truy cập của tác nhân"
-
 #: src/components/settings-server-capabilities.tsx
 msgid "Could not load capabilities"
 msgstr "Không tải được khả năng"
@@ -2060,10 +2040,6 @@ msgstr "Không thể thu hồi"
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
 msgstr "Không thể thu hồi thiết bị"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Could not revoke token"
-msgstr "Không thu hồi được token"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not run that"
@@ -2617,27 +2593,11 @@ msgstr "Mở rộng nhiệm vụ"
 msgid "Expand tool call"
 msgstr "Mở rộng lệnh gọi công cụ"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Expired"
-msgstr "Đã hết hạn"
-
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
 #: src/app/explore.tsx
 msgid "Expires in {0}:{1}"
 msgstr "Hết hạn sau {0}:{1}"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Expires in {days}d"
-msgstr "Hết hạn sau {days} ngày"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Expires in {hours}h"
-msgstr "Hết hạn sau {hours} giờ"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Expires in {minutes}m"
-msgstr "Hết hạn sau {minutes} phút"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Explore"
@@ -3321,10 +3281,6 @@ msgstr "Thấy lần cuối {minutes} phút trước"
 msgid "Last seen just now"
 msgstr "Thấy lần cuối vừa xong"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Last used {when}"
-msgstr "Dùng lần cuối {when}"
-
 #: src/components/update-status-banner.tsx
 msgid "Later"
 msgstr "Để sau"
@@ -3478,10 +3434,6 @@ msgstr "Hãy đảm bảo máy tính có thể kết nối, rồi thử lại"
 #: src/components/home-overview.tsx
 msgid "Manage"
 msgstr "Quản lý"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Manage access granted to coding agents through MCP. Revoking access stops that agent from using this computer's tools."
-msgstr "Quản lý quyền truy cập được cấp cho các tác nhân lập trình qua MCP. Thu hồi quyền truy cập sẽ ngăn tác nhân đó sử dụng các công cụ của máy tính này"
 
 #: src/components/session-map.tsx
 msgid "Manage computers"
@@ -3711,17 +3663,9 @@ msgstr "Cần bạn trả lời"
 msgid "Never connected"
 msgstr "Chưa từng kết nối"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Never expires"
-msgstr "Không bao giờ hết hạn"
-
 #: src/components/settings-servers.tsx
 msgid "Never seen"
 msgstr "Chưa từng thấy"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Never used"
-msgstr "Chưa từng dùng"
 
 #: src/app/commands.tsx
 msgid "New group"
@@ -3782,10 +3726,6 @@ msgstr "Thông báo tiếp theo"
 #: src/components/agent-title-pill.tsx
 msgid "Next session"
 msgstr "Phiên tiếp theo"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "No agent access grants"
-msgstr "Chưa cấp quyền truy cập cho tác nhân nào"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
@@ -4449,10 +4389,6 @@ msgstr "Ghép nối thất bại"
 msgid "Palette (up to 4)"
 msgstr "Bảng màu (tối đa 4)"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Pane {paneId}"
-msgstr "Pane {paneId}"
-
 #: src/components/settings-servers.tsx
 msgid "Panes on computer cards"
 msgstr "Ngăn trên thẻ máy tính"
@@ -5083,7 +5019,6 @@ msgid "Reviewing the changes and checking the tests…"
 msgstr "Đang rà soát thay đổi và kiểm tra kiểm thử…"
 
 #: src/components/agent-context-sheet.tsx
-#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke"
 msgstr "Thu hồi"
@@ -5095,11 +5030,6 @@ msgstr "Thu hồi"
 msgid "Revoke {0}"
 msgstr "Thu hồi {0}"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Revoke {title}"
-msgstr "Thu hồi {title}"
-
-#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoking…"
 msgstr "Đang thu hồi…"
@@ -6705,7 +6635,6 @@ msgstr "Tin cậy"
 msgid "Try again"
 msgstr "Thử lại"
 
-#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/settings-servers.tsx
 msgid "Try again once the computer responds."

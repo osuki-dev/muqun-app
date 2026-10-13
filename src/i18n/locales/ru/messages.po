@@ -191,10 +191,6 @@ msgstr "{0} мин"
 msgid "{0}m ago"
 msgstr "{0} мин. назад"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "{agentId} service"
-msgstr "Служба {agentId}"
-
 #: src/components/agent-workbench.tsx
 msgid "{agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone."
 msgstr "{agentName} не может показать откат заранее. Будет удалено это сообщение и всё после него — весь ход, и это нельзя отменить"
@@ -551,10 +547,6 @@ msgctxt "git file status"
 msgid "Added"
 msgstr "Добавлен"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Advanced agent access"
-msgstr "Расширенный доступ агентов"
-
 #: src/app/settings-voice.tsx
 msgid "After recording"
 msgstr "После записи"
@@ -563,10 +555,6 @@ msgstr "После записи"
 #: src/components/new-task-sheet.tsx
 msgid "Agent"
 msgstr "Агент"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Agent access"
-msgstr "Доступ агентов"
 
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
@@ -1496,10 +1484,6 @@ msgstr "Подтвердить удаление {0}"
 msgid "Confirm revoke {0}"
 msgstr "Подтвердить отзыв {0}"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Confirm revoke {title}"
-msgstr "Подтвердить отзыв {title}"
-
 #: src/components/settings-alerts.tsx
 msgid "Confirm taps, pairing, and gateway events."
 msgstr "Подтверждает нажатия, привязку и события Gateway"
@@ -1886,10 +1870,6 @@ msgstr "Не удалось получить список агентов это�
 msgid "Could not list worktrees. Refresh to try again."
 msgstr "Не удалось получить список рабочих деревьев. Обновите и повторите попытку"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Could not load agent access"
-msgstr "Не удалось загрузить права доступа агентов"
-
 #: src/components/settings-server-capabilities.tsx
 msgid "Could not load capabilities"
 msgstr "Не удалось загрузить возможности"
@@ -2060,10 +2040,6 @@ msgstr "Не удалось отозвать"
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
 msgstr "Не удалось отозвать устройство"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Could not revoke token"
-msgstr "Не удалось отозвать токен"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not run that"
@@ -2617,27 +2593,11 @@ msgstr "Развернуть задачи"
 msgid "Expand tool call"
 msgstr "Развернуть вызов инструмента"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Expired"
-msgstr "Срок истёк"
-
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
 #: src/app/explore.tsx
 msgid "Expires in {0}:{1}"
 msgstr "Истекает через {0}:{1}"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Expires in {days}d"
-msgstr "Истекает через {days} д"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Expires in {hours}h"
-msgstr "Истекает через {hours} ч"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Expires in {minutes}m"
-msgstr "Истекает через {minutes} мин"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Explore"
@@ -3321,10 +3281,6 @@ msgstr "Последний раз в сети {minutes} мин. назад"
 msgid "Last seen just now"
 msgstr "В сети только что"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Last used {when}"
-msgstr "Последнее использование {when}"
-
 #: src/components/update-status-banner.tsx
 msgid "Later"
 msgstr "Позже"
@@ -3478,10 +3434,6 @@ msgstr "Убедитесь, что компьютер доступен, и по�
 #: src/components/home-overview.tsx
 msgid "Manage"
 msgstr "Управлять"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Manage access granted to coding agents through MCP. Revoking access stops that agent from using this computer's tools."
-msgstr "Управляйте доступом, предоставленным агентам программирования через MCP. После отзыва доступа этот агент не сможет использовать инструменты этого компьютера"
 
 #: src/components/session-map.tsx
 msgid "Manage computers"
@@ -3711,17 +3663,9 @@ msgstr "Нужен ваш ответ"
 msgid "Never connected"
 msgstr "Ни разу не подключался"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Never expires"
-msgstr "Бессрочный"
-
 #: src/components/settings-servers.tsx
 msgid "Never seen"
 msgstr "Ни разу не был в сети"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Never used"
-msgstr "Не использовался"
 
 #: src/app/commands.tsx
 msgid "New group"
@@ -3782,10 +3726,6 @@ msgstr "Следующее уведомление"
 #: src/components/agent-title-pill.tsx
 msgid "Next session"
 msgstr "Следующая сессия"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "No agent access grants"
-msgstr "Агентам не предоставлены права доступа"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
@@ -4449,10 +4389,6 @@ msgstr "Привязка не удалась"
 msgid "Palette (up to 4)"
 msgstr "Палитра (до 4)"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Pane {paneId}"
-msgstr "Панель {paneId}"
-
 #: src/components/settings-servers.tsx
 msgid "Panes on computer cards"
 msgstr "Панели на карточках компьютеров"
@@ -5083,7 +5019,6 @@ msgid "Reviewing the changes and checking the tests…"
 msgstr "Проверяем изменения и тесты…"
 
 #: src/components/agent-context-sheet.tsx
-#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke"
 msgstr "Отозвать"
@@ -5095,11 +5030,6 @@ msgstr "Отозвать"
 msgid "Revoke {0}"
 msgstr "Отозвать {0}"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Revoke {title}"
-msgstr "Отозвать {title}"
-
-#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoking…"
 msgstr "Отзываем…"
@@ -6705,7 +6635,6 @@ msgstr "Доверять"
 msgid "Try again"
 msgstr "Попробовать ещё раз"
 
-#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/settings-servers.tsx
 msgid "Try again once the computer responds."
