@@ -38,7 +38,7 @@ function swap(events: string[], overrides: Partial<Parameters<typeof runReskinSw
 test('retains resources through the covered commit and first painted frame', async () => {
   const events: string[] = [];
   await swap(events);
-  expect(events).toEqual(['prepared', 'covered', 'applied', 'painted', 'reveal', 'released']);
+  expect(events).toEqual(['covered', 'prepared', 'applied', 'painted', 'reveal', 'released']);
 });
 
 test('a dismissed or superseded preparation never applies its theme', async () => {
@@ -54,10 +54,11 @@ test('a dismissed or superseded preparation never applies its theme', async () =
     },
     current: () => current,
   });
+  await Promise.resolve();
   current = false;
   ready.resolve();
   await pending;
-  expect(events).toEqual(['released']);
+  expect(events).toEqual(['covered', 'released']);
 });
 
 test('supersession during capture does not commit the stale selection', async () => {
@@ -69,7 +70,7 @@ test('supersession during capture does not commit the stale selection', async ()
       current = false;
     },
   });
-  expect(events).toEqual(['prepared', 'released']);
+  expect(events).toEqual([]);
 });
 
 test('apply failure releases prepared assets without revealing a half-applied theme', async () => {
@@ -81,5 +82,20 @@ test('apply failure releases prepared assets without revealing a half-applied th
       },
     })
   ).rejects.toThrow('save failed');
-  expect(events).toEqual(['prepared', 'covered', 'released']);
+  expect(events).toEqual(['covered', 'prepared', 'released']);
+});
+
+test('holds the cover while the new renderers are pending', async () => {
+  const events: string[] = [];
+  const drawn = deferred();
+  const applied = deferred();
+  const pending = swap(events, {
+    apply: () => applied.resolve(),
+    painted: () => drawn.promise,
+  });
+  await applied.promise;
+  expect(events).toEqual(['covered', 'prepared']);
+  drawn.resolve();
+  await pending;
+  expect(events).toEqual(['covered', 'prepared', 'reveal', 'released']);
 });
