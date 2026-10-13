@@ -207,6 +207,25 @@ export const AgentFormCard = memo(function AgentFormCard({
     switch (field.type) {
       case 'string': {
         const currentVal = (values[field.key] as string) ?? '';
+        const input = (
+          <FontedTextInput
+            value={field.options?.some((option) => option.value === currentVal) ? '' : currentVal}
+            onChangeText={(text) => setValue(field.key, text)}
+            placeholder={field.placeholder ?? t`Type here…`}
+            placeholderTextColor={theme.colors.textSubtle}
+            onFocus={onFieldFocus}
+            style={[
+              styles.textInput,
+              { borderRadius: profile.chrome.control },
+              inputFont,
+              {
+                color: theme.colors.text,
+                borderColor: theme.colors.border,
+                backgroundColor: surfaceBackground(withAlpha(theme.colors.surface, 0.5)),
+              },
+            ]}
+          />
+        );
         if (field.options && field.options.length > 0) {
           return (
             <View key={field.key} style={styles.fieldRow}>
@@ -218,9 +237,12 @@ export const AgentFormCard = memo(function AgentFormCard({
                   return (
                     <PressableScale
                       key={opt.value}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected }}
                       onPress={() => setValue(field.key, opt.value)}
                       style={[
                         styles.optionPill,
+                        opt.description ? styles.optionWithDescription : null,
                         { borderRadius: profile.chrome.control },
                         {
                           backgroundColor: selected
@@ -230,15 +252,23 @@ export const AgentFormCard = memo(function AgentFormCard({
                         },
                       ]}>
                       {selected ? <Check size={12} color={theme.colors.primary} /> : null}
-                      <Text
-                        variant="caption"
-                        color={selected ? theme.colors.primary : theme.colors.text}>
-                        {plainFromMarkdown(opt.label)}
-                      </Text>
+                      <View style={styles.optionCopy}>
+                        <Text
+                          variant="caption"
+                          color={selected ? theme.colors.primary : theme.colors.text}>
+                          {plainFromMarkdown(opt.label)}
+                        </Text>
+                        {opt.description ? (
+                          <Text variant="caption" color={theme.colors.textSubtle}>
+                            {plainFromMarkdown(opt.description)}
+                          </Text>
+                        ) : null}
+                      </View>
                     </PressableScale>
                   );
                 })}
               </View>
+              {field.custom === true ? input : null}
               <FieldProblem fieldKey={field.key} />
             </View>
           );
@@ -248,23 +278,7 @@ export const AgentFormCard = memo(function AgentFormCard({
           <View key={field.key} style={styles.fieldRow}>
             <FieldTitle field={field} />
             <FieldDescription field={field} />
-            <FontedTextInput
-              value={currentVal}
-              onChangeText={(text) => setValue(field.key, text)}
-              placeholder={field.placeholder ?? t`Type here…`}
-              placeholderTextColor={theme.colors.textSubtle}
-              onFocus={onFieldFocus}
-              style={[
-                styles.textInput,
-                { borderRadius: profile.chrome.control },
-                inputFont,
-                {
-                  color: theme.colors.text,
-                  borderColor: theme.colors.border,
-                  backgroundColor: surfaceBackground(withAlpha(theme.colors.surface, 0.5)),
-                },
-              ]}
-            />
+            {input}
             <FieldProblem fieldKey={field.key} />
           </View>
         );
@@ -325,6 +339,8 @@ export const AgentFormCard = memo(function AgentFormCard({
                 return (
                   <PressableScale
                     key={opt.value}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: selected }}
                     onPress={() => {
                       if (selected) {
                         setValue(
@@ -337,6 +353,7 @@ export const AgentFormCard = memo(function AgentFormCard({
                     }}
                     style={[
                       styles.optionPill,
+                      opt.description ? styles.optionWithDescription : null,
                       { borderRadius: profile.chrome.control },
                       {
                         backgroundColor: selected
@@ -346,11 +363,18 @@ export const AgentFormCard = memo(function AgentFormCard({
                       },
                     ]}>
                     {selected ? <Check size={12} color={theme.colors.primary} /> : null}
-                    <Text
-                      variant="caption"
-                      color={selected ? theme.colors.primary : theme.colors.text}>
-                      {plainFromMarkdown(opt.label)}
-                    </Text>
+                    <View style={styles.optionCopy}>
+                      <Text
+                        variant="caption"
+                        color={selected ? theme.colors.primary : theme.colors.text}>
+                        {plainFromMarkdown(opt.label)}
+                      </Text>
+                      {opt.description ? (
+                        <Text variant="caption" color={theme.colors.textSubtle}>
+                          {plainFromMarkdown(opt.description)}
+                        </Text>
+                      ) : null}
+                    </View>
                   </PressableScale>
                 );
               })}
@@ -535,11 +559,20 @@ const styles = StyleSheet.create({
   },
   optionPill: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     paddingVertical: 5,
     paddingHorizontal: 9,
     borderWidth: StyleSheet.hairlineWidth,
     gap: 4,
+    maxWidth: '100%',
+  },
+  optionWithDescription: {
+    width: '100%',
+  },
+  optionCopy: {
+    flexShrink: 1,
+    minWidth: 0,
+    gap: 2,
   },
   externalBtn: {
     flexDirection: 'row',

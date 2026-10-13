@@ -1415,6 +1415,7 @@ const QuestionBody = memo(function QuestionBody({
                     key={option.label}
                     style={[
                       styles.optionPill,
+                      option.description ? styles.optionWithDescription : null,
                       {
                         borderRadius: profile.chrome.control,
                         borderColor: chosen ? colors.accent : colors.border,
@@ -1422,22 +1423,23 @@ const QuestionBody = memo(function QuestionBody({
                       },
                     ]}>
                     {chosen ? <Check size={11} color={colors.accent} /> : null}
-                    <Text
-                      variant="caption"
-                      weight={chosen ? 'semibold' : 'regular'}
-                      color={chosen ? colors.accent : theme.colors.text}
-                      style={styles.optionLabel}>
-                      {plainFromMarkdown(option.label)}
-                    </Text>
-                    {option.description ? (
+                    <View style={styles.optionCopy}>
                       <Text
                         variant="caption"
-                        numberOfLines={1}
-                        color={theme.colors.textSubtle}
-                        style={styles.optionDescription}>
-                        {plainFromMarkdown(option.description)}
+                        weight={chosen ? 'semibold' : 'regular'}
+                        color={chosen ? colors.accent : theme.colors.text}
+                        style={styles.optionLabel}>
+                        {plainFromMarkdown(option.label)}
                       </Text>
-                    ) : null}
+                      {option.description ? (
+                        <Text
+                          variant="caption"
+                          color={theme.colors.textSubtle}
+                          style={styles.optionDescription}>
+                          {plainFromMarkdown(option.description)}
+                        </Text>
+                      ) : null}
+                    </View>
                   </View>
                 );
               })}
@@ -1713,13 +1715,21 @@ const styles = StyleSheet.create({
   /** The same pill the form card offers, with nothing left to press. */
   optionPill: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 4,
     paddingVertical: 3,
     paddingHorizontal: 8,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
     maxWidth: '100%',
+  },
+  optionWithDescription: {
+    width: '100%',
+  },
+  optionCopy: {
+    flexShrink: 1,
+    minWidth: 0,
+    gap: 2,
   },
   optionLabel: {
     fontSize: AGENT_TYPE.micro.size,
