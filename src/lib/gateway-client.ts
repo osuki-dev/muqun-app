@@ -9,7 +9,6 @@ import { assertDeliveryCurrent, deliverPasteAndEnter } from './bound-delivery';
 
 import {
   configure,
-  deleteApiDevicesPushToken,
   deleteApiSessionsBySessionIdPanesByPaneId,
   deleteApiSessionsBySessionIdTabsByTabId,
   deleteApiPairingsByDeviceId,
@@ -29,7 +28,6 @@ import {
   patchApiSessionsBySessionIdPanesByPaneId,
   patchApiSessionsBySessionIdTabsByTabId,
   patchApiSessionsBySessionIdWorkspacesByWorkspaceId,
-  postApiDevicesPushToken,
   postApiNotificationsTest,
   postApiSessionsBySessionIdAgentsByTargetFocus,
   postApiSessionsBySessionIdAgentsByTargetSend,
@@ -3573,13 +3571,49 @@ export async function revokeOwnGatewayPairing(record: GatewayRecord): Promise<vo
   });
 }
 
-export async function registerDevicePushToken(data: DevicePushTokenRegistration): Promise<void> {
-  if (isDemoActive()) return;
-  await postApiDevicesPushToken(data);
+async function writeDevicePushToken(
+  record: GatewayRecord,
+  method: 'POST' | 'DELETE',
+  data: DevicePushTokenRegistration | { token: string }
+): Promise<void> {
+  if (isDemoRecord(record)) return;
+  const captured = { ...record, sshTunnel: record.sshTunnel ? { ...record.sshTunnel } : undefined };
+  await withRecordBaseUrl(captured, async (baseUrl) => {
+    const endpoint = { ...captured, url: baseUrl };
+    const url = `${baseUrl}/api/devices/push-token`;
+    const init = {
+      method,
+      headers: {
+        ...activeLocaleHeaders(),
+        Authorization: `Bearer ${captured.token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    };
+    // Explicit legacy HTTP and SSH keep their own credentials, even if the
+    // shared client changes to an encrypted computer while token lookup waits.
+    const response =
+      captured.transport === GATEWAY_TRANSPORT
+        ? await encryptedGatewayFetch(url, init, REQUEST_TIMEOUT_MS, endpoint)
+        : await fetchWithin(REQUEST_TIMEOUT_MS, 'Timed out waiting for the server.', url, init);
+    if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+    const answer = (await response.json()) as { ok?: unknown } | null;
+    if (answer?.ok !== true) throw new Error('HTTP 502: unreadable push registration receipt');
+  });
 }
 
-export async function unregisterDevicePushToken(token: string): Promise<void> {
-  await deleteApiDevicesPushToken({ token });
+export async function registerDevicePushToken(
+  record: GatewayRecord,
+  data: DevicePushTokenRegistration
+): Promise<void> {
+  await writeDevicePushToken(record, 'POST', data);
+}
+
+export async function unregisterDevicePushToken(
+  record: GatewayRecord,
+  token: string
+): Promise<void> {
+  await writeDevicePushToken(record, 'DELETE', { token });
 }
 
 export async function sendTestNotification(data: TestNotificationRequest = {}): Promise<void> {
