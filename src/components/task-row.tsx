@@ -58,6 +58,8 @@ import { taskOpeningKey, useHomeTaskCards } from '@/stores/home-task-cards';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useServerAgents } from '@/stores/server-agents';
 import { terminalPendingUserInput } from '@/lib/terminal-input-attention';
+import { taskAttentionDestination } from '@/lib/task-attention';
+import { useHomeAttention } from '@/stores/home-attention';
 import { plural } from '@lingui/core/macro';
 
 /** Inline markup worth the markdown renderer: code, emphasis, links, escapes, html. */
@@ -413,12 +415,62 @@ function useRequesterName() {
   };
 }
 
-/**
- * What one task row shows and does, shared by the full row and the child row
- * under its parent: the state visual, the line (or, for a mirror whose
- * computer this phone is not paired with, why it does not open), the clock,
- * the open guard and the long-press menu of the state's actions.
- */
+/** Share the same waiting-row interaction across both Home layouts and their summary. */
+export function useWaitingTaskDetail(task: TaskView, serverId: string, nowMs: number) {
+  const panes = useServerAgents((state) => state.byServer[serverId]);
+  const requests = useHomeAttention((state) => state.byTarget);
+  const destination = taskAttentionDestination({ task, serverId, panes, requests, nowMs });
+  const [expanded, setExpanded] = useState(false);
+  return {
+    enabled: destination === 'waiting-detail',
+    shown: destination === 'waiting-detail' && expanded,
+    toggle: () => setExpanded((shown) => !shown),
+    close: () => setExpanded(false),
+  };
+}
+
+/** The full recorded reason stays readable even when the session has moved on. */
+export function WaitingTaskDetail({
+  task,
+  onOpen,
+  onClose,
+  openDisabled = false,
+}: {
+  task: TaskView;
+  onOpen: () => void;
+  onClose: () => void;
+  openDisabled?: boolean;
+}) {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  return (
+    <View testID={`task-row-waiting-detail-${task.taskId}`} style={styles.waitingDetail}>
+      <Text variant="bodySmall" weight="semibold">{t`Reported blocker`}</Text>
+      <Text variant="bodySmall" selectable>
+        {task.summary?.trim() || t`No reason was recorded.`}
+      </Text>
+      <Text variant="caption" color={theme.colors.textMuted}>
+        {t`The task was recorded as waiting. Open its session to check the current state.`}
+      </Text>
+      <AgentActionMenu
+        surface="ground"
+        items={[
+          {
+            id: 'open',
+            label: t`Open`,
+            Icon: ExternalLink,
+            onPress: onOpen,
+            disabled: openDisabled,
+            testID: `task-row-waiting-open-${task.taskId}`,
+          },
+          { id: 'close', label: t`Close`, Icon: X, onPress: onClose },
+        ]}
+      />
+    </View>
+  );
+}
+
+/** Shared row state, work navigation and the existing long-press actions. */
 function useTaskRowModel({
   task,
   serverId,
@@ -452,6 +504,7 @@ function useTaskRowModel({
   const peerName = usePeerName();
   const pairedHere = useIsPairedHere();
   const requesterName = useRequesterName();
+  const waitingDetail = useWaitingTaskDetail(task, serverId, nowMs);
   const [menuOpen, setMenuOpen] = useState(false);
   // What the last action from the menu could not do, said in the menu.
   const [menuError, setMenuError] = useState<string | null>(null);
@@ -585,6 +638,9 @@ function useTaskRowModel({
     mirrorName,
     fromText,
     open,
+    press: waitingDetail.enabled ? waitingDetail.toggle : open,
+    waitingDetail,
+    unpaired,
     trailingAge,
     menuItems,
     menuShown: menuOpen && menuItems.length > 0,
@@ -596,7 +652,8 @@ function useTaskRowModel({
 /**
  * One task: its state icon, the goal as typed, its age, and the line saying
  * what became of it, all from `taskRowVisual`. Tapping opens the session or
- * pane it runs in -- for a mirror, on the computer that runs it; a long press
+ * pane it runs in, or expands a recorded waiting reason when no request is
+ * observed. For a mirror, work opens on the computer that runs it; a long press
  * lists what the reader can do with it (Open, Cancel, Mark done,
  * Acknowledge); the sub-task count opens the work under it. The same row on
  * Home's cards and in the Tasks list.
@@ -701,9 +758,12 @@ export function TaskRow({
         ]
           .filter(Boolean)
           .join(', ')}
-        accessibilityState={{ busy: opening }}
+        accessibilityState={{
+          busy: opening,
+          ...(row.waitingDetail.enabled ? { expanded: row.waitingDetail.shown } : {}),
+        }}
         {...row.menuProps}
-        onPress={row.open}
+        onPress={row.press}
         style={[styles.row, inComputerCard ? styles.cardRow : undefined]}>
         <View style={[styles.titleLine, inComputerCard ? styles.cardTitleLine : undefined]}>
           <RowMarkdown text={title} ink={theme.colors.text} kind="title" />
@@ -755,6 +815,14 @@ export function TaskRow({
         ) : null}
         {inComputerCard && rollup ? <View style={styles.cardMetadata}>{rollup}</View> : null}
       </PressableScale>
+      {row.waitingDetail.shown ? (
+        <WaitingTaskDetail
+          task={task}
+          onOpen={row.open}
+          onClose={row.waitingDetail.close}
+          openDisabled={row.unpaired}
+        />
+      ) : null}
       {row.menuShown ? (
         <AgentActionMenu
           testID={`task-row-menu-${task.taskId}`}
@@ -821,11 +889,14 @@ function SubTaskRow({
       <PressableScale
         testID={`task-row-${task.taskId}`}
         accessibilityRole="button"
+        accessibilityState={
+          row.waitingDetail.enabled ? { expanded: row.waitingDetail.shown } : undefined
+        }
         accessibilityLabel={[whereName(task), title, line.text, trailingAge]
           .filter(Boolean)
           .join(', ')}
         {...row.menuProps}
-        onPress={row.open}
+        onPress={row.press}
         style={styles.child}>
         <WhereMark task={task} discovery={discovery} />
         {mirror ? (
@@ -847,6 +918,14 @@ function SubTaskRow({
           </Text>
         ) : null}
       </PressableScale>
+      {row.waitingDetail.shown ? (
+        <WaitingTaskDetail
+          task={task}
+          onOpen={row.open}
+          onClose={row.waitingDetail.close}
+          openDisabled={row.unpaired}
+        />
+      ) : null}
       {row.menuShown ? (
         <AgentActionMenu
           testID={`task-row-menu-${task.taskId}`}
@@ -945,6 +1024,7 @@ export function SentTaskRow({
 const SUBTASK_INDENT = 16;
 
 const styles = StyleSheet.create({
+  waitingDetail: { paddingHorizontal: 8, paddingVertical: 8, gap: 8 },
   row: { paddingVertical: 4, gap: 2 },
   cardRow: { paddingVertical: 8, gap: 3 },
   cardTitleLine: { minHeight: 24, alignItems: 'baseline' },

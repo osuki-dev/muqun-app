@@ -7,7 +7,14 @@ import { LayoutAnimationConfig } from 'react-native-reanimated';
 
 import { useTaskIndexFor } from '@/components/use-task-index';
 import { PressableScale } from '@/components/pressable-scale';
-import { ArrivalPulse, RowMarkdown, TaskRowLineText, useTaskRowLine } from '@/components/task-row';
+import {
+  ArrivalPulse,
+  RowMarkdown,
+  TaskRowLineText,
+  useTaskRowLine,
+  useWaitingTaskDetail,
+  WaitingTaskDetail,
+} from '@/components/task-row';
 import { useMinuteNow } from '@/hooks/use-minute-now';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { Text } from '@/components/text';
@@ -167,7 +174,7 @@ export function HomeAttention({
   );
 }
 
-/** A ledger task in `waiting`: the agent asked something only the reader can answer. */
+/** A waiting ledger entry may record a blocker without an outstanding request. */
 function WaitingTaskRow({
   row,
   servers,
@@ -187,6 +194,7 @@ function WaitingTaskRow({
   const visual = taskRowVisual(task, { canComplete: false, acknowledged: true });
   // The shared minute clock: a quiet mirror's line says when it was last seen.
   const nowMs = useMinuteNow();
+  const waitingDetail = useWaitingTaskDetail(task, row.serverId, nowMs);
   const line = useTaskRowLine(discovery)(task, visual, '', nowMs);
   const title = taskRowTitle(task) || line.text;
   const computer = homeContinueComputerLabel(servers, row.serverId);
@@ -195,48 +203,56 @@ function WaitingTaskRow({
     (cards) => cards.opening === taskOpeningKey(row.serverId, task.taskId)
   );
   return (
-    <PressableScale
-      testID={`home-attention-task-${task.taskId}`}
-      accessibilityRole="button"
-      accessibilityLabel={`${title}, ${meta}`}
-      accessibilityState={{ busy: opening }}
-      onPress={onOpen}
-      style={[
-        styles.row,
-        {
-          backgroundColor: background(theme.colors.surface),
-          borderColor: theme.colors.borderStrong,
-          borderRadius: profile.chrome.noticeCard,
-        },
-      ]}>
-      {/* A row arriving here pulses once (skipped on a remount), and leaves no mark. */}
-      <ArrivalPulse />
-      <View style={styles.copy}>
-        {/* A row, as on the card: the title's `flex: 1` is a width, not a height. */}
-        <View style={styles.titleLine}>
-          <RowMarkdown text={title} ink={theme.colors.text} kind="title" />
+    <View>
+      <PressableScale
+        testID={`home-attention-task-${task.taskId}`}
+        accessibilityRole="button"
+        accessibilityLabel={`${title}, ${meta}`}
+        accessibilityState={{
+          busy: opening,
+          ...(waitingDetail.enabled ? { expanded: waitingDetail.shown } : {}),
+        }}
+        onPress={waitingDetail.enabled ? waitingDetail.toggle : onOpen}
+        style={[
+          styles.row,
+          {
+            backgroundColor: background(theme.colors.surface),
+            borderColor: theme.colors.borderStrong,
+            borderRadius: profile.chrome.noticeCard,
+          },
+        ]}>
+        {/* A row arriving here pulses once (skipped on a remount), and leaves no mark. */}
+        <ArrivalPulse />
+        <View style={styles.copy}>
+          {/* A row, as on the card: the title's `flex: 1` is a width, not a height. */}
+          <View style={styles.titleLine}>
+            <RowMarkdown text={title} ink={theme.colors.text} kind="title" />
+          </View>
+          <View style={styles.metaLine}>
+            {/* The computer's label is the reader's own text, never markdown. */}
+            {computer ? (
+              <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
+                {`${computer}${META_SEPARATOR}`}
+              </Text>
+            ) : null}
+            <TaskRowLineText line={line} spins={visual.spins} />
+          </View>
         </View>
-        <View style={styles.metaLine}>
-          {/* The computer's label is the reader's own text, never markdown. */}
-          {computer ? (
-            <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
-              {`${computer}${META_SEPARATOR}`}
-            </Text>
-          ) : null}
-          <TaskRowLineText line={line} spins={visual.spins} />
-        </View>
-      </View>
-      {opening ? (
-        <ActivityIndicator size="small" color={theme.colors.textMuted} />
-      ) : (
-        <ThemeIcon
-          name="home.arrow"
-          fallback={ChevronRight}
-          size={16}
-          color={theme.colors.primary}
-        />
-      )}
-    </PressableScale>
+        {opening ? (
+          <ActivityIndicator size="small" color={theme.colors.textMuted} />
+        ) : (
+          <ThemeIcon
+            name="home.arrow"
+            fallback={ChevronRight}
+            size={16}
+            color={theme.colors.primary}
+          />
+        )}
+      </PressableScale>
+      {waitingDetail.shown ? (
+        <WaitingTaskDetail task={task} onOpen={onOpen} onClose={waitingDetail.close} />
+      ) : null}
+    </View>
   );
 }
 
