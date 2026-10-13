@@ -18,6 +18,7 @@ type Node = {
     pointerEvents?: string;
     onPress?: () => void;
     onAccessibilityAction?: (event: { nativeEvent: { actionName: string } }) => void;
+    onContentSizeChange?: (width: number, height: number) => void;
   };
 };
 const require = createRequire(import.meta.url);
@@ -51,7 +52,12 @@ function style(value: unknown): Record<string, unknown> {
 }
 
 /** Isolate only native boundaries; exercise the real card tree and queue actions. */
-function fixture(count: number, profileId: 'classic' | 'editorial' = 'classic', dark = false) {
+function fixture(
+  count: number,
+  profileId: 'classic' | 'editorial' = 'classic',
+  dark = false,
+  height = 844
+) {
   let cursor = 0;
   const state: unknown[] = [];
   let items: notices.InAppNotice[] = Array.from({ length: count }, (_, index) => ({
@@ -96,13 +102,25 @@ function fixture(count: number, profileId: 'classic' | 'editorial' = 'classic', 
       }),
     }
   );
-  const gesture = new Proxy({}, { get: () => () => gesture });
+  const gestureCalls: Record<string, unknown[]> = {};
+  const gesture = new Proxy(
+    {},
+    {
+      get:
+        (_target, key) =>
+        (...args: unknown[]) => {
+          gestureCalls[String(key)] = args;
+          return gesture;
+        },
+    }
+  );
   const exports: Record<string, unknown> = {};
   runInNewContext(code, {
     exports,
     require: (name: string) => {
       if (name === 'react/jsx-runtime' || name.startsWith('@babel/runtime/')) return require(name);
-      if (name === 'react') return { useState, useEffect: () => {} };
+      if (name === 'react')
+        return { useState, useEffect: () => {}, useMemo: (read: () => unknown) => read() };
       if (name === '@lingui/react/macro')
         return {
           useLingui: () => ({
@@ -121,13 +139,23 @@ function fixture(count: number, profileId: 'classic' | 'editorial' = 'classic', 
       if (name === 'react-native')
         return {
           View: 'View',
+          ScrollView: 'ScrollView',
+          useWindowDimensions: () => ({ width: 390, height }),
           StyleSheet: { create: (value: unknown) => value, hairlineWidth: 1 },
           AppState: { currentState: 'active' },
         };
       if (name === 'react-native-safe-area-context')
-        return { useSafeAreaInsets: () => ({ top: 20 }) };
+        return { useSafeAreaInsets: () => ({ top: 20, bottom: 20 }) };
       if (name === 'react-native-gesture-handler')
-        return { Gesture: { Pan: () => gesture }, GestureDetector: 'GestureDetector' };
+        return {
+          Gesture: {
+            Pan: () => {
+              for (const key of Object.keys(gestureCalls)) delete gestureCalls[key];
+              return gesture;
+            },
+          },
+          GestureDetector: 'GestureDetector',
+        };
       if (name === 'react-native-reanimated')
         return {
           __esModule: true,
@@ -154,6 +182,8 @@ function fixture(count: number, profileId: 'classic' | 'editorial' = 'classic', 
       if (name === '@/theme/surface-background')
         return { surfaceBackgroundFill: (color: string) => color };
       if (name === '@/hooks/use-user-fonts') return { useMonoFontFamily: () => 'monospace' };
+      if (name === '@/hooks/use-render-refs')
+        return { useStableHandler: (handler: unknown) => handler };
       if (name === '@/components/text') return { Text: 'Text' };
       if (name === '@/components/nav-header') return { NAV_HEADER_CONTROL_SIZE: 32 };
       if (name === '@/components/appearance-profile-provider')
@@ -188,7 +218,7 @@ function fixture(count: number, profileId: 'classic' | 'editorial' = 'classic', 
     cursor = 0;
     return (exports.InAppNotificationHost as () => Node)();
   };
-  return { render, opened, items: () => items };
+  return { render, opened, items: () => items, gestureCalls };
 }
 
 function byId(tree: Node, id: string) {
@@ -264,4 +294,22 @@ test('the accessible dismiss action still removes only the current card', () => 
   expect(scope.items()).toHaveLength(4);
   expect(scope.opened).toEqual([]);
   expect(scope.items()[0]!.id).toBe('notice-1');
+});
+
+test('multiline notifications keep actions outside a bounded scroller and give vertical drags to the text', () => {
+  const scope = fixture(5, 'classic', false, 320);
+  const body = Array.from({ length: 80 }, (_, line) => String(line)).join('\n');
+  scope.items()[0]!.body = body;
+  const card = byId(scope.render(), 'in-app-notification');
+  const content = byId(card, 'in-app-notification-content');
+  expect(content?.type).toBe('ScrollView');
+  expect(text(content)).toContain(body);
+  expect(style(content.props.style).maxHeight).toBeLessThanOrEqual(144);
+  expect(byId(content, 'in-app-notification-open')).toBeUndefined();
+  expect(byId(card, 'in-app-notification-open')).toBeDefined();
+  content.props.onContentSizeChange!(362, 1500);
+  scope.render();
+  expect(scope.gestureCalls.activeOffsetY).toBeUndefined();
+  expect(scope.gestureCalls.failOffsetY).toEqual([[-6, 6]]);
+  expect(scope.gestureCalls.activeOffsetX).toEqual([[-6, 6]]);
 });
