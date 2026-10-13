@@ -408,6 +408,10 @@ msgstr "10 дней"
 msgid "30 days"
 msgstr "30 дней"
 
+#: src/app/computer-map.tsx
+msgid "3D is unavailable on this device. All connection details are available below."
+msgstr "3D недоступно на этом устройстве. Все сведения о соединениях доступны ниже"
+
 #. placeholder {0}: Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))
 #: src/components/settings-font-sheet.tsx
 msgid "A .ttf or .otf up to {0} MB."
@@ -1438,6 +1442,10 @@ msgstr "Выполнено"
 msgid "Computer"
 msgstr "Компьютер"
 
+#: src/app/computer-map.tsx
+msgid "Computer details"
+msgstr "Сведения о компьютере"
+
 #: src/app/explore.tsx
 #: src/components/settings-servers.tsx
 msgid "Computer name"
@@ -1451,6 +1459,10 @@ msgstr "Компьютер не найден"
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer offline"
 msgstr "Компьютер не в сети"
+
+#: src/app/computer-map.tsx
+msgid "Computer status below describes reachability from this device."
+msgstr "Состояние компьютеров ниже показывает их доступность с этого устройства"
 
 #: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -1565,11 +1577,20 @@ msgstr "Подключаемся к {address}"
 msgid "Connecting…"
 msgstr "Подключение…"
 
+#: src/app/computer-map.tsx
+#: src/components/settings-servers.tsx
+msgid "Connection map"
+msgstr "Карта соединений"
+
 #: src/components/home-editorial-layout.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "Подключения"
+
+#: src/app/computer-map.tsx
+msgid "Connections from this app and last-known links between paired computers."
+msgstr "Соединения этого приложения и последние известные связи между сопряжёнными компьютерами"
 
 #: src/components/agent-composer.tsx
 msgid "Contains subagent sessions"
@@ -1897,6 +1918,10 @@ msgstr "Не удалось получить список рабочих дер�
 #: src/components/settings-server-capabilities.tsx
 msgid "Could not load capabilities"
 msgstr "Не удалось загрузить возможности"
+
+#: src/app/computer-map.tsx
+msgid "Could not load computers. Open Computers to try again."
+msgstr "Не удалось загрузить компьютеры. Откройте «Компьютеры» и повторите попытку"
 
 #: src/components/session-artifacts.tsx
 msgid "Could not load files."
@@ -2474,6 +2499,10 @@ msgstr "Загрузка…"
 #: src/lib/demo-gateway.ts
 msgid "Draft the notes for the next build"
 msgstr "Набросать заметки к следующей сборке"
+
+#: src/app/computer-map.tsx
+msgid "Drag to orbit. Pinch to zoom. Tap a computer to select it. Solid lines show app connections; dashed arrows show last-known peer reports. Positions are illustrative."
+msgstr "Перетаскивайте для вращения, сводите и разводите пальцы для масштабирования. Нажмите на компьютер, чтобы выбрать его. Сплошные линии — соединения приложения, пунктирные стрелки — последние сведения о связях компьютеров. Расположение условное"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -3293,6 +3322,14 @@ msgstr "Последняя папка"
 msgid "Last known activity"
 msgstr "Последняя известная активность"
 
+#: src/app/computer-map.tsx
+msgid "Last reported: accepting work from other computers."
+msgstr "Последнее сообщение: принимает работу от других компьютеров"
+
+#: src/app/computer-map.tsx
+msgid "Last reported: not accepting work from other computers. This does not mean offline."
+msgstr "Последнее сообщение: не принимает работу от других компьютеров. Это не означает, что он не в сети"
+
 #: src/components/task-row.tsx
 msgid "last seen {ago}"
 msgstr "в последний раз {ago}"
@@ -3312,6 +3349,10 @@ msgstr "Последний раз в сети {minutes} мин. назад"
 #: src/components/settings-servers.tsx
 msgid "Last seen just now"
 msgstr "В сети только что"
+
+#: src/app/computer-map.tsx
+msgid "Last-known peer reports are separate from this app’s connection. They may have changed since the Gateway was read."
+msgstr "Последние сведения о связях компьютеров не относятся к соединению этого приложения. Они могли измениться после чтения данных Gateway"
 
 #: src/components/update-status-banner.tsx
 msgid "Later"
@@ -3364,6 +3405,10 @@ msgstr "Связь с {name} отозвана · восстанавливает�
 msgid "Linked with: {linkedNames}"
 msgstr "Связан с: {linkedNames}"
 
+#: src/app/computer-map.tsx
+msgid "List"
+msgstr "Список"
+
 #: src/app/commands.tsx
 msgid "List branches"
 msgstr "Список веток"
@@ -3401,12 +3446,18 @@ msgstr "Загрузка"
 msgid "Loading commands"
 msgstr "Загружаем команды"
 
+#: src/app/computer-map.tsx
 #: src/app/servers/[serverId].tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading computers"
 msgstr "Загружаем компьютеры"
+
+#: src/app/computer-map.tsx
+#: src/components/computer-map/gpu-map.native.tsx
+msgid "Loading map…"
+msgstr "Загрузка карты…"
 
 #: src/components/settings-servers.tsx
 msgid "Loading paired devices…"
@@ -3475,6 +3526,10 @@ msgstr "Управление подключениями"
 #: src/components/home-overview.tsx
 msgid "Manage SSH hosts"
 msgstr "Управлять SSH-хостами"
+
+#: src/app/computer-map.tsx
+msgid "Map"
+msgstr "Карта"
 
 #: src/components/task-row.tsx
 msgid "Mark done"
@@ -3815,6 +3870,7 @@ msgstr "Нет компьютеров в сети"
 msgid "No computer to start a task on."
 msgstr "Нет компьютера, на котором можно запустить задачу"
 
+#: src/app/computer-map.tsx
 #: src/components/settings-servers.tsx
 msgid "No computers paired yet"
 msgstr "Пока нет привязанных компьютеров"
@@ -3834,6 +3890,10 @@ msgstr "Ещё нет Gateway?"
 #: src/components/tool-call-code-rows.tsx
 msgid "No input"
 msgstr "Нет входных данных"
+
+#: src/app/computer-map.tsx
+msgid "No links in the last peer report."
+msgstr "В последнем отчёте о связях компьютеров нет соединений"
 
 #: src/components/task-row.tsx
 msgid "No longer linked with {computer}"
@@ -3881,6 +3941,10 @@ msgstr "Нет вывода"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "No password or key is saved for this host."
 msgstr "Для этого хоста не сохранён ни пароль, ни ключ"
+
+#: src/app/computer-map.tsx
+msgid "No peer report available. This Gateway may be offline or may not support peer reports."
+msgstr "Отчёт о связях компьютеров недоступен. Возможно, Gateway не в сети или не поддерживает такие отчёты"
 
 #: src/components/custom-theme-library.tsx
 msgid "No personal themes yet. Import one, or browse the published themes."
@@ -4427,6 +4491,10 @@ msgstr "Код привязки"
 msgid "Pairing code expired. Scan again for a new code."
 msgstr "Код привязки истёк. Отсканируйте снова, чтобы получить новый"
 
+#: src/app/computer-map.tsx
+msgid "Pairing expired"
+msgstr "Срок сопряжения истёк"
+
 #: src/i18n/labels.ts
 msgid "PAIRING EXPIRED"
 msgstr "ПРИВЯЗКА ИСТЕКЛА"
@@ -4823,6 +4891,10 @@ msgstr "ПЕРЕПОДКЛЮЧЕНИЕ…"
 msgid "Recording failed."
 msgstr "Ошибка записи"
 
+#: src/app/computer-map.tsx
+msgid "Reduced motion is on. Use the connection list below."
+msgstr "Включено уменьшение движения. Используйте список соединений ниже"
+
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/pane-history-sheet.tsx
@@ -4960,6 +5032,14 @@ msgstr "Сообщить об ошибке или идее"
 msgid "Reported blocker"
 msgstr "Указанное препятствие"
 
+#: src/app/computer-map.tsx
+msgid "Reported reachable"
+msgstr "Сообщено о доступности"
+
+#: src/app/computer-map.tsx
+msgid "Reported unreachable"
+msgstr "Сообщено о недоступности"
+
 #: src/lib/network-error.ts
 msgid "Request failed."
 msgstr "Запрос не удался"
@@ -4980,6 +5060,10 @@ msgstr "Обязательно"
 #: src/components/settings-alerts.tsx
 msgid "Requires iOS 16.1 or later."
 msgstr "Требуется iOS 16.1 или новее"
+
+#: src/app/computer-map.tsx
+msgid "Reset view"
+msgstr "Сбросить вид"
 
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
@@ -5318,6 +5402,10 @@ msgstr "Искать по всему проекту"
 msgid "Security"
 msgstr "Безопасность"
 
+#: src/components/settings-servers.tsx
+msgid "See this app’s connections and last-known computer links."
+msgstr "Просмотреть соединения приложения и последние известные связи компьютеров"
+
 #. placeholder {0}: age.value
 #: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
@@ -5353,6 +5441,7 @@ msgstr "Выбрать всё"
 msgid "Select model: {modelDisplayName}"
 msgstr "Выбрать модель: {modelDisplayName}"
 
+#: src/app/computer-map.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Selected"
 msgstr "Выбрано"
@@ -5691,6 +5780,10 @@ msgstr "Некоторые файлы удалить не удалось · {cle
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "Некоторые файлы не загрузились"
+
+#: src/app/computer-map.tsx
+msgid "Some older peer records have no computer identity and cannot be placed on the map."
+msgstr "В некоторых старых записях нет идентификатора компьютера, поэтому их нельзя разместить на карте"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Some theme colors need more contrast"
@@ -6285,6 +6378,14 @@ msgstr "Значок на вашем главном экране. Android зак
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "Не удалось прочитать ключ ({0}). Проверьте ключ и его парольную фразу"
 
+#: src/app/computer-map.tsx
+msgid "The latest peer read failed. Any retained reports below may be out of date."
+msgstr "Последнее чтение связей компьютеров не удалось. Сохранённые ниже отчёты могут быть устаревшими"
+
+#: src/app/computer-map.tsx
+msgid "The map shows up to 12 computers and 36 peer links. All paired computers remain in the list."
+msgstr "На карте показано до 12 компьютеров и 36 связей. Все сопряжённые компьютеры остаются в списке"
+
 #: src/components/session-map.tsx
 msgid "The new terminal was created, but could not open it."
 msgstr "Новый терминал создан, но открыть его не удалось"
@@ -6419,6 +6520,10 @@ msgstr "Думает…"
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
 msgstr "Этот агент не предлагал такой ответ"
+
+#: src/app/computer-map.tsx
+msgid "This app"
+msgstr "Это приложение"
 
 #: src/components/changes-sheet.tsx
 msgid "This cannot be undone."
