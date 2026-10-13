@@ -294,6 +294,7 @@ export function HomeOverview({
   const [refreshing, setRefreshing] = useState(false);
   const profile = useAppearanceProfile();
   const homeLayout = profile.id;
+  const classicLayout = homeLayout === 'classic' && !isPad;
   const [editorialWidth, setEditorialWidth] = useState(0);
   const [editorialArtworkTop, setEditorialArtworkTop] = useState<{
     source: string;
@@ -880,6 +881,7 @@ export function HomeOverview({
   });
 
   const availableRecentEntries = useHomeRecentEntries({
+    connectionShortcutsElsewhere: classicLayout,
     servers: records,
     hosts: sshRows,
     selectedServerId: launchController.chosen?.serverId,
@@ -986,7 +988,6 @@ export function HomeOverview({
   // computer cards -- built once here; a layout only decides where they go.
   // Classic keeps its own look on the phone; a Pad always takes the editorial
   // spread, and so does any layout added later.
-  const classicLayout = homeLayout === 'classic' && !isPad;
   // Same width and predicate the layout resolves for itself: the Pad cover
   // spread lists eight Continue rows in its work column; other layouts keep theirs.
   // On the Pad the page's height does not follow the keyboard: the bottom
@@ -1102,14 +1103,14 @@ export function HomeOverview({
         }}
       />
     ) : undefined;
-  // Both layouts expose the same sessions and row actions. Only their framing
-  // differs: Classic keeps compact cards; Editorial keeps its numbered rows.
+  // Classic keeps pane shortcuts in its connection cards; its remaining
+  // Recent sessions stay compact. Editorial uses the combined numbered list.
   const recentSection =
     !loading && !hydrationError && recentEntries.length > 0 ? (
       <HomeRecentSessions
         compact={classicLayout}
         pad={isPad}
-        limit={5}
+        limit={classicLayout ? 3 : 5}
         moreLabel="show-all"
         linkStyle={padLaunch ? PAD_WORK_LINK : undefined}
         selectedServerId={launchController.chosen?.serverId}
@@ -2329,6 +2330,7 @@ function ServerCard({
             that card with a gap under its name separating it from nothing. */}
         <ServerAgentRows
           serverId={server.serverId}
+          initialLimit={3}
           style={{ marginTop: metrics.listGap }}
           snapshot={agents}
           reachability={reachability}

@@ -176,12 +176,14 @@ export function useHomeRecentEntries({
   reachabilityByServer,
   activeConnection,
   selectedServerId,
+  connectionShortcutsElsewhere = false,
 }: {
   servers: readonly GatewayRecord[];
   hosts: readonly SshHostRecord[];
   reachabilityByServer: Readonly<Record<string, ServerReachability | undefined>>;
   activeConnection?: ActiveServerConnection;
   selectedServerId?: string;
+  connectionShortcutsElsewhere?: boolean;
 }) {
   const entries = useHomeRecentsStore((state) => state.entries);
   const hydrated = useHomeRecentsStore((state) => state.hydrated);
@@ -320,6 +322,7 @@ export function useHomeRecentEntries({
     paneMode,
     gatewaySessions: agentSessions,
     goneSessions,
+    connectionShortcutsElsewhere,
   });
   return available;
 }

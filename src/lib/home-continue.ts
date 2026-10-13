@@ -277,6 +277,7 @@ export function homeContinueEntries({
   paneMode,
   gatewaySessions,
   goneSessions,
+  connectionShortcutsElsewhere = false,
 }: {
   serverIds: readonly string[];
   hostIds: readonly string[];
@@ -288,6 +289,8 @@ export function homeContinueEntries({
   gatewaySessions?: GatewayAgentSessionsSnapshot;
   /** Sessions the gateway answered gone for (`goneSessionKey`); they are neither recents nor new rows. */
   goneSessions?: ReadonlySet<string>;
+  /** Classic already lists pane inventory and saved SSH hosts in its connection cards. */
+  connectionShortcutsElsewhere?: boolean;
 }): HomeContinueEntry[] {
   const rows: HomeContinueEntry[] = [];
   const isGone = (serverId: string, asid: string, agentId: string) =>
@@ -305,6 +308,7 @@ export function homeContinueEntries({
       .map((session) => [goneSessionKey(listed.serverId, session.asid, session.agentId), session])
   );
   for (const serverId of serverIds) {
+    if (connectionShortcutsElsewhere) continue;
     if (reachabilityByServer[serverId] === 'offline') continue;
     // Read as of the snapshot itself, so the row keeps the status it reported;
     // whether that is still current is the row's to say (`homeContinueObservationNow`).
@@ -345,6 +349,12 @@ export function homeContinueEntries({
   }
   for (const entry of recents) {
     const target = entry.target;
+    if (
+      connectionShortcutsElsewhere &&
+      target.kind === 'ssh-host' &&
+      hostIds.includes(target.hostId)
+    )
+      continue;
     if (
       target.kind === 'ssh-host'
         ? !hostIds.includes(target.hostId)
