@@ -41,3 +41,19 @@ test('broken renderers cannot indefinitely retain the old screen', async () => {
   done();
   expect(await waitForThemeRender()).toBe(true);
 });
+
+test('a stale route cleanup cannot settle its replacement renderer', async () => {
+  const oldRoute = beginThemeRender('route');
+  const newRoute = beginThemeRender('route');
+  oldRoute();
+  expect(await waitForThemeRender(1)).toBe(false);
+  newRoute();
+  expect(await waitForThemeRender()).toBe(true);
+});
+
+test('leaving a focused route releases its pending renderer', async () => {
+  const blur = beginThemeRender('focused-wallpaper');
+  const waiting = waitForThemeRender();
+  blur();
+  expect(await waiting).toBe(true);
+});

@@ -1,19 +1,24 @@
 /** Mounted theme renderers report native display/draw completion, independently of prefetch. */
-const pending = new Set<string>();
+const pending = new Map<string, symbol>();
 const listeners = new Set<() => void>();
 
 export function beginThemeRender(key: string): () => void {
-  pending.add(key);
+  const generation = Symbol(key);
+  pending.set(key, generation);
   let settled = false;
   return () => {
     if (settled) return;
     settled = true;
+    if (pending.get(key) !== generation) return;
     pending.delete(key);
     for (const listener of listeners) listener();
   };
 }
 
-/** Failed or unmounted renderers settle too; a broken image cannot trap the old screen. */
+/**
+ * Only focused, opted-in route renderers register. Failure, blur or unmount
+ * settles them. The deadline is fixed per wait, never extended by new arrivals.
+ */
 export function waitForThemeRender(timeoutMs = 5000): Promise<boolean> {
   if (pending.size === 0) return Promise.resolve(true);
   return new Promise((resolve) => {

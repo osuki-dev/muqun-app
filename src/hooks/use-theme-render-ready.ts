@@ -1,5 +1,6 @@
 import { useEffect, useId, useLayoutEffect, useRef, type RefObject } from 'react';
 import { Skia, type CanvasRef } from 'react-native-skia';
+import { useIsFocused } from 'expo-router';
 
 import { beginThemeRender } from '@/lib/theme-render-readiness';
 
@@ -25,10 +26,17 @@ async function canvasDrawn(canvas: CanvasRef | null): Promise<boolean> {
 
 export function useThemeRenderReady(source: string | undefined, ready: boolean) {
   const id = useId();
+  const focused = useIsFocused();
   useLayoutEffect(() => {
-    if (!source || ready) return;
+    if (!source || ready || !focused) return;
     return beginThemeRender(id);
-  }, [id, source, ready]);
+  }, [id, source, ready, focused]);
+}
+
+/** Only explicit route backgrounds opt in; decoration and hidden drawers never wait. */
+export function ThemeRenderReadiness({ source, ready }: { source: string; ready: boolean }) {
+  useThemeRenderReady(source, ready);
+  return null;
 }
 
 /** Acknowledges a changed canvas once, never on its animation frames. */
