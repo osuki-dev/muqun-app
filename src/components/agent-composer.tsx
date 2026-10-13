@@ -342,6 +342,9 @@ export interface AgentComposerProps {
   running: boolean;
   /** Ordinary prompt delivery only; request reply controls are independent. */
   canSendWhileRunning?: boolean;
+  /** Queue support is independent of steering into the current turn. */
+  canQueueWhileRunning?: boolean;
+  canMentionFiles?: boolean;
   /** A session observed elsewhere keeps its draft, but cannot send through this runtime. */
   interactionBlockedReason?: string;
   /** A Gateway-staged choice, distinct from the session model. */
@@ -567,6 +570,8 @@ export interface AgentComposerProps {
 export const AgentComposer = memo(function AgentComposer({
   running,
   canSendWhileRunning = true,
+  canQueueWhileRunning = true,
+  canMentionFiles = true,
   interactionBlockedReason,
   nextTurnModelName,
   nextTurnModelTemporary = false,
@@ -704,7 +709,8 @@ export const AgentComposer = memo(function AgentComposer({
   const [sending, setSending] = useState(false);
   const promptAllowed =
     !interactionBlockedReason && canSendAgentPrompt(running, canSendWhileRunning);
-  const [deliveryMode, setDeliveryMode] = useState<'steer' | 'queue'>('steer');
+  const [requestedDeliveryMode, setDeliveryMode] = useState<'steer' | 'queue'>('steer');
+  const deliveryMode = canQueueWhileRunning ? requestedDeliveryMode : 'steer';
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
   const [inboxOpen, setInboxOpen] = useState(false);
@@ -847,6 +853,7 @@ export const AgentComposer = memo(function AgentComposer({
           hasDiffs: Boolean(hasDiffs),
           running,
           canSendWhileRunning,
+          canQueueWhileRunning,
         })
       ),
     [
@@ -862,6 +869,7 @@ export const AgentComposer = memo(function AgentComposer({
       hasDiffs,
       running,
       canSendWhileRunning,
+      canQueueWhileRunning,
     ]
   );
 
@@ -880,7 +888,7 @@ export const AgentComposer = memo(function AgentComposer({
   const mentionQuery = mentionTrigger?.query ?? null;
 
   useEffect(() => {
-    if (mentionQuery === null) {
+    if (mentionQuery === null || !canMentionFiles) {
       setMentionHits([]);
       return;
     }
@@ -895,7 +903,7 @@ export const AgentComposer = memo(function AgentComposer({
     return () => {
       active = false;
     };
-  }, [mentionQuery, sessionId, activeAsid]);
+  }, [mentionQuery, sessionId, activeAsid, canMentionFiles]);
 
   // Which words of the draft are mentions: every computer this composer
   // offers (typed by hand or picked) and the file paths picked in this draft.
@@ -1539,10 +1547,11 @@ export const AgentComposer = memo(function AgentComposer({
       ) : null}
 
       {/* File mention (@) floating list */}
-      {mentionTrigger && (offeredComputers.length > 0 || mentionHits.length > 0) ? (
+      {mentionTrigger &&
+      (offeredComputers.length > 0 || (canMentionFiles && mentionHits.length > 0)) ? (
         <View style={styles.composerFloatingContent}>
           <FileMentionPanel
-            hits={mentionHits}
+            hits={canMentionFiles ? mentionHits : []}
             computers={offeredComputers}
             onSelectComputer={chooseComputer}
             query={mentionTrigger.query}

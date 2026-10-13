@@ -590,6 +590,8 @@ export type FormField =
   | (FormFieldBase & { type: 'unknown'; raw_type: string });
 
 export interface FormRequest {
+  /** An optional answer while the agent continues working. Absent means blocking. */
+  nonblocking?: boolean;
   id: string;
   asid: string;
   title: string;
@@ -724,6 +726,7 @@ export function parseFormRequest(value: unknown): FormRequest | null {
     id,
     asid: pickString(rec, ['asid', 'session_id', 'sessionID']) ?? '',
     title: asString(rec.title) ?? '',
+    ...(rec.nonblocking === true ? { nonblocking: true } : {}),
     fields,
   };
 }

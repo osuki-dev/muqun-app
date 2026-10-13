@@ -8,6 +8,8 @@ import {
 import { useGatewayGeneration } from '@/stores/gateway-connection-generation';
 import {
   canSendAgentPrompt,
+  canReplyAgentForm,
+  hasBlockingAgentForm,
   confirmedAgentModel,
   stagedAgentModelFor,
   type StagedAgentModel,
@@ -2860,11 +2862,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     attachments?: string[],
     delivery?: 'steer' | 'queue'
   ): Promise<boolean> => {
+    const running = isBusyStatus(sessionInfo?.status);
     if (
       !canInteractNatively ||
-      !canSendAgentPrompt(isBusyStatus(sessionInfo?.status), agentFeatures.inbox)
+      !canSendAgentPrompt(
+        running,
+        agentFeatures.inbox,
+        agentFeatures.extra.promptSteering === true,
+        delivery
+      )
     )
       return false;
+    const promptDelivery = running ? (delivery ?? 'steer') : undefined;
     const sourceAsid = activeAsidRef.current;
     const stagedChoice = sourceAsid ? stagedModels[sourceAsid] : undefined;
     let directory = activeDirectoryRef.current ?? sessionInfo?.directory;
@@ -2943,7 +2952,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     // inside the create above, so closures below read this narrowed copy.
     const promptAsid = currentAsid;
 
-    const isQueued = isBusyStatus(sessionInfo?.status) && delivery === 'queue';
+    const isQueued = promptDelivery === 'queue';
 
     // Optimistically add user text item.
     //
@@ -2987,12 +2996,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         await sendAgentPrompt(sessionId, promptAsid, {
           text,
           attachments,
-          delivery,
+          delivery: promptDelivery,
         });
         if (!ownsRoute() || activeAsidRef.current !== promptAsid) return false;
-        // Acceptance consumes staging, but only session metadata can confirm
-        // the resulting model and effort (the runtime can normalize either).
-        if (stagedChoice) {
+        // Starting a new turn consumes staging; steering the current turn does not.
+        // Session metadata confirms the resulting model and effort.
+        if (stagedChoice && !running) {
           setStagedModels((previous) => {
             if (previous[promptAsid] !== stagedChoice) return previous;
             const next = { ...previous };
@@ -3210,8 +3219,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
   const handleFormSubmit = useCallback(
     async (formId: string, answers: Record<string, unknown>) => {
-      if (!nativeAgentInteraction(readRuntime())) return;
-      if (!activeAsid) return;
+      const request = forms.find((form) => form.id === formId);
+      if (!request || !canReplyAgentForm(request, readRuntime())) return;
+      if (!activeAsid || activeAsidRef.current !== activeAsid) return;
+      const ownsReply = () =>
+        activeAsidRef.current === activeAsid &&
+        useGatewayConnectionStore.getState().record?.serverId === serverId;
+      if (!ownsReply()) return;
       try {
         await replyAgentForm(sessionId, activeAsid, formId, answers);
       } catch (err) {
@@ -3223,9 +3237,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         });
         return;
       }
-      setForms((prev) => prev.filter((f) => f.id !== formId));
+      if (ownsReply()) setForms((prev) => prev.filter((f) => f.id !== formId));
     },
-    [readRuntime, activeAsid, sessionId, showToast, t]
+    [readRuntime, activeAsid, forms, serverId, sessionId, showToast, t]
   );
 
   const handleCreateNewSession = useCallback(
@@ -4452,8 +4466,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     ]
   );
 
+  const replyableForms = useMemo(
+    () => forms.filter((form) => canReplyAgentForm(form, runtime)),
+    [forms, runtime]
+  );
   const listFooter = useMemo(() => {
-    const hasFormsOrPerms = footerPermissions.length > 0 || forms.length > 0;
+    const hasFormsOrPerms = footerPermissions.length > 0 || replyableForms.length > 0;
     if (!hasFormsOrPerms && !isRunning && !statusNotice && !externalRuntime) return null;
     /*
       A turn blocked on a question is still `running`, and the footer said
@@ -4461,7 +4479,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       not thinking; it is waiting, and saying so is what tells them the next
       move is theirs.
      */
-    const waitingOnReader = forms.length > 0;
+    const waitingOnReader = hasBlockingAgentForm(replyableForms);
     return (
       <View style={styles.footerContainer}>
         {externalRuntime ? (
@@ -4574,7 +4592,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             onDecision={(dec) => handlePermissionDecision(p.id, dec)}
           />
         ))}
-        {forms.map((f) => (
+        {replyableForms.map((f) => (
           <AgentFormCard
             key={f.id}
             request={f}
@@ -4586,7 +4604,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     );
   }, [
     footerPermissions,
-    forms,
+    replyableForms,
     isRunning,
     statusNotice,
     externalRuntime,
@@ -5457,7 +5475,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               ? t`Continue in the linked terminal. Your draft stays here.`
               : t`Live control is unavailable for this saved history. Your draft stays here.`
         }
-        canSendWhileRunning={agentFeatures.inbox}
+        canSendWhileRunning={agentFeatures.inbox || agentFeatures.extra.promptSteering === true}
+        canQueueWhileRunning={agentFeatures.inbox}
+        canMentionFiles={agentFeatures.extra.fileMentions !== false}
         nextTurnModelName={nextTurnModelName}
         nextTurnModelTemporary={
           agentFeatures.extra.modelSelectionPersistence === 'gateway_until_turn_start'

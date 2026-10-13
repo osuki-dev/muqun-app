@@ -119,7 +119,9 @@ export function applySubtaskBlockEvent(
     case 'agent.permission.pending':
       return withId(event.request.id);
     case 'agent.form.pending':
-      return withId(event.request.id);
+      return event.request.nonblocking === true
+        ? without(event.request.id)
+        : withId(event.request.id);
     case 'agent.permission.resolved':
       return without(event.request_id);
     case 'agent.form.resolved':
