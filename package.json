@@ -35,11 +35,11 @@
     "i18n:check": "lingui check sync && lingui check missing"
   },
   "dependencies": {
-    "@expo/ui": "~57.0.22",
+    "@expo/ui": "~57.0.23",
     "@formatjs/intl-getcanonicallocales": "^3.2.12",
     "@formatjs/intl-locale": "^5.3.12",
     "@formatjs/intl-pluralrules": "^6.3.15",
-    "@hot-updater/react-native": "1.0.0",
+    "@hot-updater/react-native": "1.0.1",
     "@legendapp/list": "^3.6.0",
     "@lingui/core": "^6.9.1",
     "@lingui/react": "^6.9.1",
@@ -47,7 +47,7 @@
     "@osuki-dev/react-native-ssh": "0.3.0",
     "@osuki-dev/skia-diagrams": "0.2.0",
     "@osuki-dev/ui": "^1.1.0",
-    "expo": "~57.0.27",
+    "expo": "~57.0.28",
     "expo-alternate-app-icons": "^8.0.0",
     "expo-application": "~57.0.3",
     "expo-asset": "~57.0.19",
@@ -72,16 +72,16 @@
     "expo-navigation-bar": "~57.0.3",
     "expo-network": "~57.0.2",
     "expo-notifications": "~57.0.22",
-    "expo-router": "~57.0.25",
+    "expo-router": "~57.0.26",
     "expo-screen-capture": "~57.0.4",
-    "expo-screen-orientation": "~57.0.2",
+    "expo-screen-orientation": "~57.0.3",
     "expo-secure-store": "^57.0.4",
-    "expo-sharing": "~57.0.22",
+    "expo-sharing": "~57.0.23",
     "expo-status-bar": "~57.0.1",
     "expo-symbols": "~57.0.3",
     "expo-system-ui": "~57.0.4",
     "expo-web-browser": "~57.0.3",
-    "expo-widgets": "~57.0.23",
+    "expo-widgets": "~57.0.24",
     "fflate": "0.8.3",
     "lucide-react-native": "1.55.0",
     "react": "19.3.0",
@@ -90,7 +90,7 @@
     "react-native-android-widget": "^0.22.1",
     "react-native-enriched-markdown": "1.1.1",
     "react-native-gesture-handler": "~3.3.0",
-    "react-native-keyboard-controller": "1.22.6",
+    "react-native-keyboard-controller": "1.22.7",
     "react-native-mmkv": "^4.3.2",
     "react-native-nitro-fetch": "1.8.0",
     "react-native-nitro-image": "^0.15.2",
@@ -102,8 +102,8 @@
     "react-native-quick-crypto": "^1.1.8",
     "react-native-reanimated": "4.7.1",
     "react-native-safe-area-context": "~5.10.1",
-    "react-native-screens": "4.28.0",
-    "react-native-skia": "3.3.0",
+    "react-native-screens": "4.29.0",
+    "react-native-skia": "3.4.1",
     "react-native-svg": "15.15.5",
     "react-native-video": "7.0.0-beta.12",
     "react-native-vision-camera": "^5.2.3",
@@ -111,15 +111,15 @@
     "react-native-web": "~0.21.4",
     "react-native-webview": "14.0.1",
     "react-native-worklets": "0.13.0",
-    "zod": "4.6.5",
+    "zod": "4.6.7",
     "zustand": "^5.0.15"
   },
   "devDependencies": {
-    "@expo/fingerprint": "0.20.13",
-    "@hot-updater/cloudflare": "1.0.0",
-    "@hot-updater/expo": "1.0.0",
-    "@hot-updater/plugin-core": "1.0.0",
-    "@hot-updater/server": "1.0.0",
+    "@expo/fingerprint": "0.20.14",
+    "@hot-updater/cloudflare": "1.0.1",
+    "@hot-updater/expo": "1.0.1",
+    "@hot-updater/plugin-core": "1.0.1",
+    "@hot-updater/server": "1.0.1",
     "@lingui/babel-plugin-lingui-macro": "^6.9.1",
     "@lingui/cli": "^6.9.1",
     "@lingui/format-po": "^6.9.1",
@@ -127,7 +127,7 @@
     "@react-native-community/cli": "^20.2.0",
     "@types/react": "~19.3.0",
     "eslint-plugin-lingui": "^0.16.0",
-    "hot-updater": "1.0.0",
+    "hot-updater": "1.0.1",
     "oxc-parser": "^0.153.0",
     "oxfmt": "^0.72.0",
     "oxlint": "^1.87.0",
@@ -135,7 +135,7 @@
     "typescript": "7.0.2"
   },
   "overrides": {
-    "react-native-screens": "4.28.0"
+    "react-native-screens": "4.29.0"
   },
   "packageManager": "bun@1.4.2",
   "enriched-markdown": {
@@ -178,7 +178,7 @@
   "patchedDependencies": {
     "react-native-enriched-markdown@1.1.1": "patches/react-native-enriched-markdown@1.1.1.patch",
     "react-native-nitro-sound@0.2.20": "patches/react-native-nitro-sound@0.2.20.patch",
-    "react-native-skia@3.3.0": "patches/react-native-skia@3.3.0.patch"
+    "react-native-skia@3.4.1": "patches/react-native-skia@3.4.1.patch"
   },
   "trustedDependencies": [
     "react-native-skia",
