@@ -1,3 +1,10 @@
+import { useGatewayGeneration } from '@/stores/gateway-connection-generation';
+import {
+  canSendAgentPrompt,
+  confirmedAgentModel,
+  stagedAgentModelFor,
+  type StagedAgentModel,
+} from '@/lib/agent-runtime-controls';
 import { PAD_LAYOUT_MIN_WIDTH } from '@/lib/responsive-layout';
 import { useRootRouteName } from '@/hooks/use-root-route-name';
 import { useStore } from 'zustand';
@@ -920,6 +927,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   // viewer the artifacts list uses rather than in a second one.
   const [openToolAsset, setOpenToolAsset] = useState<SessionAsset | null>(null);
 
+  const gatewayGeneration = useGatewayGeneration((state) => state.byServer[serverId]);
+  const [stagedModels, setStagedModels] = useState<Record<string, StagedAgentModel>>({});
+  const nextTurnModel = stagedAgentModelFor(
+    activeAsid ? stagedModels[activeAsid] : undefined,
+    serverId,
+    activeAsid,
+    gatewayGeneration
+  );
+  const stagesNextTurnModel = agentFeatures.extra.modelSelectionScope === 'next_turn';
   const [selectedModel, setSelectedModel] = useState<ModelRef | undefined>(undefined);
   /**
    * The agent the session runs, and whether the *reader* chose it.
@@ -2066,6 +2082,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
           // The transcript takes it only when it is the transcript's own.
           if (!forActiveSession) break;
+          if (isBusyStatus(event.status)) {
+            // An observed turn consumes the staged choice, including turns
+            // started by another client. The model itself still comes from
+            // session metadata, never this status notification.
+            setStagedModels((previous) => {
+              const asid = event.asid || activeAsid;
+              if (!asid || !previous[asid]) return previous;
+              const next = { ...previous };
+              delete next[asid];
+              return next;
+            });
+          }
           // The status the engine reports is the status shown -- `failed`
           // keeps its error, `interrupted` says so, and nothing here forces
           // idle on the way past.
@@ -2543,8 +2571,28 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         applyModel();
         return;
       }
+      if (stagesNextTurnModel && isBusyStatus(sessionInfo?.status)) {
+        showToast({
+          variant: 'info',
+          title: t`The agent is still running`,
+          message: t`Wait for the turn to end before choosing a model.`,
+        });
+        return;
+      }
+      const generation = useGatewayGeneration.getState().byServer[serverId];
       void switchAgentModel(sessionId, activeAsid, model)
-        .then(applyModel)
+        .then(() => {
+          if (!ownsWorkbench(owner)) return;
+          if (stagesNextTurnModel) {
+            if (useGatewayGeneration.getState().byServer[serverId] !== generation) return;
+            setStagedModels((previous) => ({
+              ...previous,
+              [activeAsid]: { serverId, asid: activeAsid, gatewayGeneration: generation, model },
+            }));
+          } else {
+            applyModel();
+          }
+        })
         .catch((err) => {
           if (!ownsWorkbench(owner)) return;
           showToast({
@@ -2557,6 +2605,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     [
       applySelectedModel,
       sessionId,
+      serverId,
+      stagesNextTurnModel,
+      sessionInfo?.status,
       activeAsid,
       activeAgentId,
       captureWorkbenchOwner,
@@ -2746,7 +2797,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     attachments?: string[],
     delivery?: 'steer' | 'queue'
   ): Promise<boolean> => {
+    if (!canSendAgentPrompt(isBusyStatus(sessionInfo?.status), agentFeatures.inbox)) return false;
     const sourceAsid = activeAsidRef.current;
+    const stagedChoice = sourceAsid ? stagedModels[sourceAsid] : undefined;
     let directory = activeDirectoryRef.current ?? sessionInfo?.directory;
     let requestOwner = captureWorkbenchOwner(sourceAsid, directory);
     const ownsRoute = () =>
@@ -2870,6 +2923,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           delivery,
         });
         if (!ownsRoute() || activeAsidRef.current !== promptAsid) return false;
+        // Acceptance consumes staging, but only session metadata can confirm
+        // the resulting model and effort (the runtime can normalize either).
+        if (stagedChoice) {
+          setStagedModels((previous) => {
+            if (previous[promptAsid] !== stagedChoice) return previous;
+            const next = { ...previous };
+            delete next[promptAsid];
+            return next;
+          });
+        }
         return true;
       },
       (err) => {
@@ -2879,7 +2942,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         // no business sitting in the transcript, and the draft comes back so the
         // reader can try again rather than retype it.
         setTimeline((prev) => prev.filter((item) => item.id !== tempUserItem.id));
-        setSessionInfo((prev) => (prev ? { ...prev, status: 'idle' } : prev));
+        // A refusal can mean the runtime is still busy. Wait for source status.
+        void loadSnapshot('silent');
         showToast({
           variant: 'danger',
           title: t`Message not sent`,
@@ -4607,13 +4671,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     availableAgents.find((entry) => entry.id === activeAgent)?.model,
     catalogModels
   );
-  const activeModelRef = manualModelOverride
-    ? selectedModel
-    : (activeAgentModel ??
-      selectedModel ??
-      currentSession?.model ??
-      sessionInfo?.model ??
-      undefined);
+  const activeModelRef =
+    stagesNextTurnModel && activeAsid
+      ? confirmedAgentModel(activeAsid, sessionInfo, currentSession)
+      : manualModelOverride
+        ? selectedModel
+        : (activeAgentModel ??
+          selectedModel ??
+          currentSession?.model ??
+          sessionInfo?.model ??
+          undefined);
   const activeModelInfo = useMemo(() => {
     if (!activeModelRef?.model_id) return undefined;
     return catalogModels.find(
@@ -4625,6 +4692,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
   /** The catalogue's name for it, which is the one the reader chose from. */
   const activeModelName = formatModelName(activeModelRef, '', activeModelInfo?.name);
+  const nextTurnModelInfo = nextTurnModel
+    ? catalogModels.find(
+        (model) =>
+          model.id === nextTurnModel.model_id && model.provider_id === nextTurnModel.provider_id
+      )
+    : undefined;
+  const nextTurnModelName = nextTurnModel
+    ? formatModelName(nextTurnModel, '', nextTurnModelInfo?.name)
+    : undefined;
 
   /**
    * The window the context gauge measures against.
@@ -5211,6 +5287,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         disabled={isOffline}
         agentName={agentName}
         running={isRunning}
+        canSendWhileRunning={agentFeatures.inbox}
+        nextTurnModelName={nextTurnModelName}
+        nextTurnModelTemporary={
+          agentFeatures.extra.modelSelectionPersistence === 'gateway_until_turn_start'
+        }
         sessionStrip={rootStrip.nodes}
         selectedRootAsid={rootStrip.selectedRootAsid}
         onOpenSessionTree={openSessionTree}
