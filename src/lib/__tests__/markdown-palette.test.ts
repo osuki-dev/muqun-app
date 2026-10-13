@@ -48,4 +48,21 @@ describe('markdownPaletteKey', () => {
       })
     );
   });
+  it('changes for accent-only and geometry changes without changing body ink or code fill', () => {
+    for (const override of [
+      { table: { headerBackgroundColor: '#a62f1b22', borderColor: '#a62f1b', borderRadius: 2 } },
+      { link: { color: '#a62f1b' } },
+      { blockquote: { borderColor: '#a62f1b' } },
+      { codeBlock: { ...lightStyle.codeBlock, borderRadius: 2 } },
+    ]) {
+      expect(markdownPaletteKey({ ...lightStyle, ...override })).not.toBe(
+        markdownPaletteKey(lightStyle)
+      );
+    }
+  });
+  it('does not remount text when viewport-dependent image sizing changes', () => {
+    expect(markdownPaletteKey({ ...lightStyle, image: { maxHeight: 400, borderRadius: 8 } })).toBe(
+      markdownPaletteKey({ ...lightStyle, image: { maxHeight: 200, borderRadius: 8 } })
+    );
+  });
 });

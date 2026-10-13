@@ -13,6 +13,7 @@ import type { Colors } from '@osuki-dev/ui';
 import { StyleSheet } from 'react-native';
 import type { MarkdownStyle } from 'react-native-enriched-markdown';
 
+import { appAppearanceConfig } from '@/constants/appearance';
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { TRANSCRIPT_GRID } from '@/constants/transcript-grid';
 import { withAlpha } from '@/lib/color';
@@ -184,7 +185,7 @@ export function createMarkdownStyle(colors: Colors, fonts?: MarkdownFonts): Mark
   const border = colors.border;
   const codeBackground = colors.surfaceRaised;
   const quoteBackground = colors.primarySubtle;
-  const link = colors.info;
+  const link = colors.primary;
   const mono = codeFamily(fonts);
   /**
    * Every prose block is built from this, which is why the family goes on it
@@ -233,6 +234,8 @@ export function createMarkdownStyle(colors: Colors, fonts?: MarkdownFonts): Mark
     h6: { ...base, color: muted, fontWeight: '600', marginTop: 6, marginBottom: 4 },
     strong: { color: text },
     em: { color: text },
+    strikethrough: { color: text },
+    underline: { color: text },
     link: { color: link, underline: false },
     list: {
       ...base,
@@ -252,6 +255,13 @@ export function createMarkdownStyle(colors: Colors, fonts?: MarkdownFonts): Mark
       borderWidth: TRANSCRIPT_GRID.ruleWidth,
       gapWidth: TRANSCRIPT_GRID.textOrigin - TRANSCRIPT_GRID.inset - TRANSCRIPT_GRID.ruleWidth,
       backgroundColor: quoteBackground,
+      admonitions: {
+        note: { color: colors.info, backgroundColor: quoteBackground },
+        tip: { color: colors.success, backgroundColor: quoteBackground },
+        important: { color: colors.primary, backgroundColor: quoteBackground },
+        warning: { color: colors.warning, backgroundColor: quoteBackground },
+        caution: { color: colors.danger, backgroundColor: colors.dangerSubtle },
+      },
     },
     // Inline code is the body ink in the monospace face and nothing more: no
     // chip, no border. Models backtick file names, numbers and half their
@@ -272,7 +282,7 @@ export function createMarkdownStyle(colors: Colors, fonts?: MarkdownFonts): Mark
       backgroundColor: codeBackground,
       borderColor: border,
       borderWidth: StyleSheet.hairlineWidth,
-      borderRadius: 14,
+      borderRadius: appAppearanceConfig.radius.sm,
       padding: 12,
       marginTop: 4,
       marginBottom: 12,
@@ -296,11 +306,12 @@ export function createMarkdownStyle(colors: Colors, fonts?: MarkdownFonts): Mark
       // A hairline disappears on the emulator and the cells read as one blob;
       // a full pixel keeps the grid visible at every density.
       borderWidth: 1,
-      borderRadius: 10,
-      headerBackgroundColor: codeBackground,
-      headerTextColor: text,
-      rowEvenBackgroundColor: codeBackground,
-      rowOddBackgroundColor: colors.surface,
+      borderRadius: appAppearanceConfig.radius.sm,
+      // Headers carry the theme accent; body rows keep neutral reading surfaces.
+      headerBackgroundColor: colors.primarySubtle,
+      headerTextColor: colors.primary,
+      rowEvenBackgroundColor: colors.surface,
+      rowOddBackgroundColor: codeBackground,
       cellPaddingHorizontal: 12,
       cellPaddingVertical: 8,
       // A wide table scrolls, and it scrolls to the edge of the screen rather

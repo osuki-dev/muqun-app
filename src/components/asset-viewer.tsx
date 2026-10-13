@@ -9,21 +9,14 @@ import { Skeleton } from '@/components/themed-skeleton';
 import { Check, Copy, Download, X } from 'lucide-react-native';
 import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  Linking,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Linking, Modal, ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useMarkdownFonts } from '@/hooks/use-user-fonts';
-import { createMarkdownStyle, markdownImageStyle } from '@/lib/markdown-style';
+import { useMarkdownStyle } from '@/hooks/use-markdown-style';
+import { markdownPaletteKey } from '@/lib/markdown-palette';
+import type { createMarkdownStyle } from '@/lib/markdown-style';
 import { ImagePreviewModal } from '@/components/image-preview-modal';
 import { VideoAssetPreview } from '@/components/video-asset-preview';
 import { AudioAssetPreview } from '@/components/audio-asset-preview';
@@ -197,15 +190,7 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
 
   const theme = useThemeTokens();
   const insets = useSafeAreaInsets();
-  const markdownFonts = useMarkdownFonts();
-  const { height: viewportHeight } = useWindowDimensions();
-  const markdownStyle = useMemo(() => {
-    const base = createMarkdownStyle(theme.colors, markdownFonts);
-    return {
-      ...base,
-      image: markdownImageStyle(viewportHeight, base.codeBlock?.borderRadius ?? 0),
-    };
-  }, [theme.colors, markdownFonts, viewportHeight]);
+  const markdownStyle = useMarkdownStyle();
   const [content, setContent] = useState<string | null>(null);
   /**
    * Which body this file gets. `too-large` is the one ceiling left, and it is
@@ -806,6 +791,7 @@ function AssetBody({
             that last part is not a detail. Static content, so the streaming
             guidance for commonmark does not apply here. */}
         <EnrichedMarkdownText
+          key={markdownPaletteKey(markdownStyle)}
           flavor="github"
           markdown={source}
           markdownStyle={markdownStyle}

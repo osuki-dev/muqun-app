@@ -1,9 +1,31 @@
-import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useMemo } from 'react';
+import { useWindowDimensions } from 'react-native';
+import { useMarkdownFonts } from '@/hooks/use-user-fonts';
 import { useThemeTokens } from '@osuki-dev/ui';
 import type { MarkdownStyle } from 'react-native-enriched-markdown';
 
-import { createCompactMarkdownStyle, createRowMarkdownStyle } from '@/lib/markdown-style';
+import {
+  createCompactMarkdownStyle,
+  createMarkdownStyle,
+  createRowMarkdownStyle,
+  markdownImageStyle,
+} from '@/lib/markdown-style';
+
+/** Shared document and transcript styling, including the active layout's inner corners. */
+export function useMarkdownStyle(): MarkdownStyle {
+  const theme = useThemeTokens();
+  const fonts = useMarkdownFonts();
+  const { height } = useWindowDimensions();
+  return useMemo(() => {
+    const base = createMarkdownStyle(theme.colors, fonts);
+    return {
+      ...base,
+      codeBlock: { ...base.codeBlock, borderRadius: theme.radius.sm },
+      table: { ...base.table, borderRadius: theme.radius.sm },
+      image: markdownImageStyle(height, theme.radius.sm),
+    };
+  }, [theme.colors, theme.radius.sm, fonts, height]);
+}
 
 /**
  * The ink a compact markdown block is set in, named rather than passed as a
@@ -26,22 +48,26 @@ export type MarkdownTone = 'body' | 'muted' | 'danger';
  */
 export function useCompactMarkdownStyle(tone: MarkdownTone = 'muted'): MarkdownStyle {
   const theme = useThemeTokens();
-  const profile = useAppearanceProfile();
+  const fonts = useMarkdownFonts();
   return useMemo(() => {
     const colors = theme.colors;
     const ink =
       tone === 'body' ? colors.text : tone === 'danger' ? colors.danger : colors.textMuted;
-    const base = createCompactMarkdownStyle(colors, ink);
+    const base = createCompactMarkdownStyle(colors, ink, fonts);
     return {
       ...base,
-      codeBlock: { ...base.codeBlock, borderRadius: profile.chrome.surface },
-      table: { ...base.table, borderRadius: profile.chrome.surface },
+      codeBlock: { ...base.codeBlock, borderRadius: theme.radius.sm },
+      table: { ...base.table, borderRadius: theme.radius.sm },
     };
-  }, [theme.colors, tone, profile.chrome.surface]);
+  }, [theme.colors, tone, theme.radius.sm, fonts]);
 }
 
 /** A task row's title or second line, in `ink` (a theme token's colour). */
 export function useRowMarkdownStyle(ink: string, kind: 'title' | 'line'): MarkdownStyle {
   const theme = useThemeTokens();
-  return useMemo(() => createRowMarkdownStyle(theme.colors, ink, kind), [theme.colors, ink, kind]);
+  const fonts = useMarkdownFonts();
+  return useMemo(
+    () => createRowMarkdownStyle(theme.colors, ink, kind, fonts),
+    [theme.colors, ink, kind, fonts]
+  );
 }

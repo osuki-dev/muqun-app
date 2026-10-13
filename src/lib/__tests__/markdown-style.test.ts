@@ -49,6 +49,26 @@ function failingPalettes(check: (colors: Colors) => boolean): string[] {
 const colors = THEME_PACKS[0].dark.colors;
 
 describe('createMarkdownStyle', () => {
+  test('table headers and interactive accents follow the active palette', () => {
+    expect(
+      failingPalettes((palette) => {
+        const style = createMarkdownStyle(palette);
+        return (
+          style.table?.headerBackgroundColor === palette.primarySubtle &&
+          style.table?.headerTextColor === palette.primary &&
+          style.table?.color === palette.text &&
+          style.table?.rowEvenBackgroundColor === palette.surface &&
+          style.table?.rowOddBackgroundColor === palette.surfaceRaised &&
+          style.table?.borderColor === palette.border &&
+          style.link?.color === palette.primary &&
+          style.list?.bulletColor === palette.primary &&
+          style.taskList?.checkedColor === palette.primary &&
+          style.blockquote?.admonitions?.warning?.color === palette.warning
+        );
+      })
+    ).toEqual([]);
+  });
+
   test('a formula sits on the code-block fill, in body ink, in every palette', () => {
     expect(
       failingPalettes((palette) => {
@@ -106,7 +126,7 @@ describe('createCompactMarkdownStyle', () => {
             style.math?.backgroundColor === palette.surfaceRaised &&
             // The one ink a tone does not take over: a link that went muted
             // with the paragraph would stop looking like a link.
-            style.link?.color === palette.info &&
+            style.link?.color === palette.primary &&
             style.link?.color === prose.link?.color
           );
         });
