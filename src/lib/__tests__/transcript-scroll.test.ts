@@ -4,6 +4,7 @@ import {
   NEAR_BOTTOM_PX,
   distanceFromBottom,
   isAtBottom,
+  showJumpToLatest,
   TRANSCRIPT_START,
   unseenBelow,
 } from '../transcript-scroll';
@@ -52,5 +53,17 @@ describe('unseenBelow', () => {
 
   test('nothing from the start mark of an empty transcript', () => {
     expect(unseenBelow(TRANSCRIPT_START, { rows: 0, seq: 0 })).toBe(0);
+  });
+});
+
+describe('showJumpToLatest', () => {
+  test('offers a return from history with or without unread output', () => {
+    expect(showJumpToLatest(false, 0)).toBe(true);
+    expect(showJumpToLatest(false, 3)).toBe(true);
+  });
+
+  test('hides at the latest message only when no unread output remains', () => {
+    expect(showJumpToLatest(true, 0)).toBe(false);
+    expect(showJumpToLatest(true, 1)).toBe(true);
   });
 });

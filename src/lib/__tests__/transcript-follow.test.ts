@@ -16,10 +16,32 @@ describe('createTranscriptFollow', () => {
     expect(follow.getSnapshot()).toEqual({ atBottom: true, unseen: 0, visible: false });
   });
 
-  test('scrolling away is not by itself a reason to show the way back', () => {
+  test('scrolling away offers the way back without waiting for new output', () => {
     const follow = createTranscriptFollow();
     follow.setGeometry(AWAY);
-    expect(follow.getSnapshot()).toEqual({ atBottom: false, unseen: 0, visible: false });
+    expect(follow.getSnapshot()).toEqual({ atBottom: false, unseen: 0, visible: true });
+  });
+
+  test('an idle transcript clears at the threshold and offers the way back again on another drag', () => {
+    const follow = createTranscriptFollow();
+    follow.setMark({ rows: 10, seq: 10 });
+    follow.setGeometry(at(4079));
+    expect(follow.getSnapshot().visible).toBe(true);
+    follow.setGeometry(at(4080));
+    expect(follow.getSnapshot()).toEqual({ atBottom: true, unseen: 0, visible: false });
+    follow.setGeometry(AWAY);
+    expect(follow.getSnapshot()).toEqual({ atBottom: false, unseen: 0, visible: true });
+    follow.setGeometry(BOTTOM);
+    expect(follow.getSnapshot().visible).toBe(false);
+  });
+
+  test('short content and overscroll do not leave a button over the latest message', () => {
+    const follow = createTranscriptFollow();
+    follow.setGeometry(AWAY);
+    follow.setGeometry({ offset: 0, viewport: 800, content: 300 });
+    expect(follow.getSnapshot().visible).toBe(false);
+    follow.setGeometry(at(4300));
+    expect(follow.getSnapshot().visible).toBe(false);
   });
 
   test('rows landing under the reader are counted and offered', () => {
