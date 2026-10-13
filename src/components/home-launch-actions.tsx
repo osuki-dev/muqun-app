@@ -31,6 +31,7 @@ import { isDemoRecord } from '@/lib/demo-gateway';
 import { refreshAgentServerDiscovery } from '@/lib/home-agent-readiness';
 import {
   buildLaunchModel,
+  groupLaunchCells,
   LAUNCH_GRID_GAP,
   launchGridCellStyle,
   launchRowLayout,
@@ -272,7 +273,7 @@ export function HomeLaunchActions({
   /** Existing destinations live in the Pad's persistent navigation. */
   newOnly?: boolean;
   /**
-   * The wide Pad cover uses the same agent mosaic with compact utilities.
+   * The wide Pad cover uses the same agent grid with compact utilities.
    */
   dock?: boolean;
   onNewAgent: (serverId: string, directory?: string, agentId?: string) => Promise<unknown>;
@@ -308,6 +309,7 @@ export function HomeLaunchActions({
     width: availableWidth,
     agentCount: agentEntries.length,
     utilityCount: utilityEntries.length,
+    grid: grid || dock,
   });
 
   // Fresh on focus and on Continue's own cadence, for the chosen gateway only,
@@ -334,13 +336,16 @@ export function HomeLaunchActions({
     entry: LaunchEntry,
     cell?: { width?: number; compact: boolean; featured?: boolean }
   ) {
+    const utilityCompact = dock || (cell?.compact ?? false);
     const common = {
       testID: entry.testID,
       marker: entry.marker,
       ...(cell ? { width: cell.width } : {}),
-      rowHeight: DOCK_ROW_HEIGHT,
+      rowHeight:
+        entry.kind !== 'agent' && !utilityCompact
+          ? DOCK_ROW_HEIGHT * 2 + LAUNCH_GRID_GAP
+          : DOCK_ROW_HEIGHT,
     };
-    const utilityCompact = dock || (cell?.compact ?? false);
     switch (entry.kind) {
       case 'agent': {
         if (!cell?.featured) {
@@ -378,13 +383,19 @@ export function HomeLaunchActions({
             />
           );
         }
-        const ink = entry.primary ? theme.colors.onPrimary : theme.colors.primary;
+        const ready = entry.caption === 'new-session';
+        const filled = entry.primary && ready;
+        const ink = filled
+          ? theme.colors.onPrimary
+          : ready
+            ? theme.colors.primary
+            : theme.colors.textMuted;
         return (
           <LaunchTile
             key={entry.key}
             {...common}
             aliasTestID={entry.aliasTestID}
-            primary={entry.primary}
+            primary={filled}
             rowHeight={DOCK_ROW_HEIGHT * 2 + LAUNCH_GRID_GAP}
             title={entry.name}
             caption={_(agentLaunchCaption[entry.caption])}
@@ -499,26 +510,55 @@ export function HomeLaunchActions({
         }
         style={styles.grid}>
         {availableWidth > 0 ? (
-          <>
-            {layout.agentRows.map((row) => (
-              <View key={row[0]!.indices[0]} style={styles.gridRow}>
-                {row.map((cell) => (
-                  <View key={cell.indices[0]} style={{ width: cell.width, gap: LAUNCH_GRID_GAP }}>
-                    {cell.indices.map((index) =>
-                      renderEntry(agentEntries[index]!, { compact: false, featured: cell.featured })
-                    )}
-                  </View>
-                ))}
-              </View>
-            ))}
-            {utilityEntries.length ? (
-              <View style={styles.gridRow}>
-                {utilityEntries.map((entry) =>
-                  renderEntry(entry, { width: layout.utilityWidth, compact: true })
-                )}
-              </View>
-            ) : null}
-          </>
+          layout.mode === 'scroll' ? (
+            <Animated.ScrollView
+              horizontal
+              nestedScrollEnabled
+              directionalLockEnabled
+              showsHorizontalScrollIndicator={false}
+              testID="home-launch-actions-scroll"
+              contentContainerStyle={styles.scrollRow}>
+              {layout.agentRows[0]?.map((cell) => (
+                <View
+                  key={agentEntries[cell.indices[0]!]!.key}
+                  style={{ width: cell.width, gap: LAUNCH_GRID_GAP }}>
+                  {cell.indices.map((index) =>
+                    renderEntry(agentEntries[index]!, { compact: false, featured: cell.featured })
+                  )}
+                </View>
+              ))}
+              {groupLaunchCells(utilityEntries).map((cell) => (
+                <View key={cell.key} style={{ width: layout.utilityWidth, gap: LAUNCH_GRID_GAP }}>
+                  {cell.entries.map((entry) =>
+                    renderEntry(entry, { compact: entry.layout === 'compact' })
+                  )}
+                </View>
+              ))}
+            </Animated.ScrollView>
+          ) : (
+            <>
+              {layout.agentRows.map((row) => (
+                <View key={agentEntries[row[0]!.indices[0]!]!.key} style={styles.gridRow}>
+                  {row.map((cell) => (
+                    <View
+                      key={agentEntries[cell.indices[0]!]!.key}
+                      style={{ width: cell.width, gap: LAUNCH_GRID_GAP }}>
+                      {cell.indices.map((index) =>
+                        renderEntry(agentEntries[index]!, { compact: false })
+                      )}
+                    </View>
+                  ))}
+                </View>
+              ))}
+              {utilityEntries.length ? (
+                <View style={styles.gridRow}>
+                  {utilityEntries.map((entry) =>
+                    renderEntry(entry, { width: layout.utilityWidth, compact: true })
+                  )}
+                </View>
+              ) : null}
+            </>
+          )
         ) : null}
       </View>
       {opening ? <Text variant="caption" color={theme.colors.textMuted}>{t`Opening…`}</Text> : null}
@@ -776,6 +816,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   demoLabel: { minWidth: 0, flexShrink: 1 },
+  scrollRow: { flexDirection: 'row', gap: LAUNCH_GRID_GAP },
   grid: { gap: LAUNCH_GRID_GAP, minWidth: 0 },
   gridRow: { flexDirection: 'row', flexWrap: 'wrap', gap: LAUNCH_GRID_GAP, minWidth: 0 },
   tile: {

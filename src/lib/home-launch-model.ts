@@ -92,8 +92,7 @@ export function launchAgentTestID(agentId: string): string {
  * agent switched off (a choice made on the host, not a fault). One that still
  * needs setup keeps its tile, which opens the guide, in the gateway's own order with the last-used agent first.
  *
- * The "More agents" sheet reads the same list, so the two can never disagree
- * about what an agent is called or whether it is ready.
+ * Every offered agent gets a tile; no separate overflow picker hides entries.
  */
 export function projectLaunchAgents(
   discovery: MirroredServerDiscovery | null | undefined,
@@ -275,6 +274,7 @@ export const LAUNCH_GRID_GAP = 8;
 
 export type LaunchMosaicCell = { indices: number[]; width: number; featured: boolean };
 export type LaunchRowLayout = {
+  mode: 'scroll' | 'grid';
   agentRows: LaunchMosaicCell[][];
   utilityWidth: number;
 };
@@ -297,44 +297,59 @@ function columnWidth(width: number, columns: number): number {
   return Math.max(0, Math.floor((width - LAUNCH_GRID_GAP * (columns - 1)) / columns));
 }
 
-/** Every discovered agent stays visible; narrow odd counts use a lead and a stacked pair. */
+/**
+ * Phones keep a horizontal strip, with consecutive agent pairs sharing a column.
+ * Pad callers opt into a grid; four tiles fit once each has at least 136 points.
+ * Width alone never turns a landscape phone into a tall static grid.
+ */
 export function launchRowLayout({
   width,
   agentCount,
   utilityCount,
+  grid = false,
 }: {
   width: number;
   agentCount: number;
   utilityCount: number;
+  grid?: boolean;
 }): LaunchRowLayout {
   const measured = Number.isFinite(width) ? Math.max(0, width) : 0;
   const agentRows: LaunchMosaicCell[][] = [];
-  const maxColumns = measured >= 640 ? 3 : 2;
-  let next = 0;
-  if (agentCount >= 3 && (agentCount === 3 || (maxColumns === 2 && agentCount % 2 === 1))) {
-    const cellWidth = columnWidth(measured, 2);
-    agentRows.push([
-      { indices: [0], width: cellWidth, featured: true },
-      { indices: [1, 2], width: cellWidth, featured: false },
-    ]);
-    next = 3;
-  }
-  const remaining = agentCount - next;
-  const rows = Math.ceil(remaining / maxColumns);
-  for (let row = 0; row < rows; row++) {
-    // Distribute the remainder across rows instead of leaving an orphan tile.
-    const columns = Math.ceil((agentCount - next) / (rows - row));
+  if (!grid) {
+    // A partial next column makes the horizontal continuation visible. Keep
+    // columns readable on small phones and bounded on landscape phones.
+    const width =
+      measured > 0
+        ? Math.min(measured, Math.max(160, Math.min(220, Math.floor(measured * 0.58))))
+        : 0;
     const cells: LaunchMosaicCell[] = [];
-    for (let column = 0; column < columns; column++) {
-      cells.push({ indices: [next++], width: columnWidth(measured, columns), featured: false });
+    for (let index = 0; index < agentCount; index += 2) {
+      const paired = index + 1 < agentCount;
+      cells.push({ indices: paired ? [index, index + 1] : [index], width, featured: !paired });
+    }
+    if (cells.length) agentRows.push(cells);
+    return { mode: 'scroll', agentRows, utilityWidth: width };
+  }
+
+  const maxColumns = Math.max(
+    1,
+    Math.min(4, Math.floor((measured + LAUNCH_GRID_GAP) / (136 + LAUNCH_GRID_GAP)))
+  );
+  const columns = Math.min(agentCount, maxColumns);
+  for (let index = 0; index < agentCount; index += columns) {
+    const cells: LaunchMosaicCell[] = [];
+    for (let offset = 0; offset < columns && index + offset < agentCount; offset++) {
+      cells.push({
+        indices: [index + offset],
+        width: columnWidth(measured, columns),
+        featured: false,
+      });
     }
     agentRows.push(cells);
   }
   return {
+    mode: 'grid',
     agentRows,
-    utilityWidth: columnWidth(
-      measured,
-      Math.max(1, Math.min(utilityCount, measured >= 640 ? 4 : 2))
-    ),
+    utilityWidth: columnWidth(measured, Math.max(1, Math.min(utilityCount, maxColumns))),
   };
 }
