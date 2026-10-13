@@ -449,6 +449,8 @@ export function HomeEditorialLayout({
       measuredTitleWidth:
         titleMeasurement && titleMeasurement.title === titleKey ? titleMeasurement.width : 0,
       wordmark,
+      foreground: artworkForeground,
+      hasTitle: Boolean(coverTitle),
     });
     // What follows a section that grows or goes moves with it. Instant under
     // reduce-motion (`listLayout`).
@@ -552,7 +554,9 @@ export function HomeEditorialLayout({
                   style={[styles.coverScene, { height: coverBlock.height }]}>
                   {titleMeasure}
                   {coverTitle ? (
-                    <Animated.View onLayout={titleStage.onLayout} style={titleStage.style}>
+                    <Animated.View
+                      onLayout={titleStage.onLayout}
+                      style={[titleStage.style, { zIndex: coverBlock.titleZIndex }]}>
                       <Text
                         accessibilityRole="header"
                         color={theme.colors.text}
@@ -564,12 +568,9 @@ export function HomeEditorialLayout({
                       </Text>
                     </Animated.View>
                   ) : null}
-                  {/* The figure stands on the block's foot at the right and
-                      rises over the title, as the phone cover's drawing
-                      overlaps its title; nothing is drawn over it. Its frame
-                      takes the new size at once, with the painting's new
-                      crop: an animated frame would show the old crop
-                      overflowing it until the canvas re-measures. */}
+                  {/* Scenes sit behind the title; portraits retain foreground
+                      depth within the title-safe geometry. The frame snaps so
+                      an old crop cannot overflow while the canvas re-measures. */}
                   <Animated.View
                     onLayout={artworkStage.onLayout}
                     pointerEvents="none"

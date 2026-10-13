@@ -98,9 +98,10 @@ export const PAD_COVER_SHARE = 0.45;
  *   and measured fit the cover has always used), and never taller than its
  *   share of the block: 40% of it over a painting, the whole block (with the
  *   descender) for the wordmark.
- * - `artwork`: the painting at its own proportion in the full block,
- *   standing on the block's foot at the right, as wide as 85% of the column
- *   at most, so the title's start stays clear at its left.
+ * - `artwork`: the painting at its own proportion, standing on the block's
+ *   foot at the right. Portraits beside long titles leave most of the type
+ *   clear while still overlapping its lower edge. Short-title portraits keep
+ *   their original frame; scenic rectangles stay behind the title.
  *
  * `measuredTitleWidth` is the title's width at 100pt, 0 until measured.
  */
@@ -109,12 +110,22 @@ export function padCover({
   coverWidth,
   measuredTitleWidth,
   wordmark,
+  foreground = true,
+  hasTitle = true,
 }: {
   viewportHeight: number;
   coverWidth: number;
   measuredTitleWidth: number;
   wordmark: boolean;
-}): { height: number; titleSize: number; artwork: { width: number; height: number } } {
+  /** Scenic backgrounds sit behind type; cutout portraits may overlap its lower edge. */
+  foreground?: boolean;
+  hasTitle?: boolean;
+}): {
+  height: number;
+  titleSize: number;
+  titleZIndex: number;
+  artwork: { width: number; height: number };
+} {
   const height = Math.round(viewportHeight * PAD_COVER_SHARE);
   const byWidth =
     measuredTitleWidth > 0
@@ -123,10 +134,21 @@ export function padCover({
   const byHeight = wordmark
     ? height / (PAD_COVER_TITLE_LINE_HEIGHT + PAD_WORDMARK_DESCENDER)
     : (height * 0.4) / PAD_COVER_TITLE_LINE_HEIGHT;
-  const artworkHeight = Math.min(height, coverWidth * 0.85 * COVER_ARTWORK_RATIO);
+  const titleSize = Math.max(0, Math.min(byWidth, byHeight));
+  const naturalArtworkHeight = Math.min(height, coverWidth * 0.85 * COVER_ARTWORK_RATIO);
+  const naturalArtworkWidth = naturalArtworkHeight / COVER_ARTWORK_RATIO;
+  const titleWidth = measuredTitleWidth > 0 ? (titleSize * measuredTitleWidth) / 100 : coverWidth;
+  // A short title ends before the portrait's centre and keeps the authored
+  // side-by-side composition. Long titles may pass behind a silhouette, but
+  // most of every letter must remain above it, even for wide heads or ears.
+  const sharesTitle =
+    !wordmark && hasTitle && foreground && titleWidth > coverWidth - naturalArtworkWidth / 2;
+  const clearTitleHeight = sharesTitle ? titleSize * PAD_COVER_TITLE_LINE_HEIGHT * 0.78 : 0;
+  const artworkHeight = Math.min(naturalArtworkHeight, Math.max(0, height - clearTitleHeight));
   return {
     height,
-    titleSize: Math.max(0, Math.min(byWidth, byHeight)),
+    titleSize,
+    titleZIndex: foreground ? 0 : 2,
     artwork: {
       width: Math.round(artworkHeight / COVER_ARTWORK_RATIO),
       height: Math.round(artworkHeight),
