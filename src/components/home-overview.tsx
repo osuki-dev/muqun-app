@@ -1764,6 +1764,14 @@ export function HomeOverview({
                 styles.brandBlock,
                 expandedBrandStyle,
                 { minHeight: metrics.brand.minHeight, gap: metrics.brand.gap },
+                // Full-bleed scenes begin at the status bar. Keep their title
+                // in the toolbar's quiet left area rather than on the subject
+                // below it. The existing flow reservation still positions cards.
+                classicScene && {
+                  transform: [{ translateY: insets.top - barHeight }],
+                  paddingRight:
+                    (hasPairedServer ? 1 : 3) * (HEADER_BUTTON_SIZE + HEADER_BUTTON_GAP),
+                },
               ]}>
               {/* The mark alone, on the page. The rounded tile it used to sit in
               gave a shape the mark already has, and cost it 30% of its own
