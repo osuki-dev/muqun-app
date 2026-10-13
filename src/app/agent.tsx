@@ -18,7 +18,7 @@ import { DETAIL_HEADER_HEIGHT, DetailHeader } from '@/components/detail-header';
 import { SHELL_WALLPAPER_FALLBACK, ThemeArtwork } from '@/components/theme-artwork';
 import { AgentWorkbench } from '@/components/agent-workbench';
 import { DemoStreamingTranscript } from '@/components/demo-streaming-transcript';
-import { DEMO_STREAMING_ASID, isDemoActive } from '@/lib/demo-gateway';
+import { DEMO_STREAMING_ASID, isDemoRecord } from '@/lib/demo-gateway';
 import AppDrawer from '@/components/app-drawer';
 import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
 import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
@@ -83,7 +83,7 @@ export default function AgentScreen() {
    * server (the drawer, a deep link), the selected one is the one meant.
    */
   const { record, selectRecord } = useGatewayRecord();
-  const demoStreaming = params.asid === DEMO_STREAMING_ASID && isDemoActive();
+  const demoStreaming = params.asid === DEMO_STREAMING_ASID && isDemoRecord(record);
   const wantedServer = typeof params.server === 'string' && params.server ? params.server : null;
   const serverReady = !wantedServer || record?.serverId === wantedServer;
   // The workbench has no terminal screen beneath it when opened from Home.
