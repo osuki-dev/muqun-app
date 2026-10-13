@@ -409,8 +409,8 @@ msgid "30 days"
 msgstr "30 ngày"
 
 #: src/app/computer-map.tsx
-msgid "3D is unavailable on this device. All connection details are available below."
-msgstr "Thiết bị này không hỗ trợ chế độ 3D. Bạn có thể xem mọi chi tiết kết nối bên dưới"
+msgid "3D unavailable. Connections are listed below."
+msgstr "Không hỗ trợ 3D. Các kết nối được liệt kê bên dưới"
 
 #. placeholder {0}: Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))
 #: src/components/settings-font-sheet.tsx
@@ -478,6 +478,10 @@ msgstr "Giới thiệu"
 #: src/components/settings-fleet-peers.tsx
 msgid "Accept work from other computers"
 msgstr "Nhận việc từ máy tính khác"
+
+#: src/app/computer-map.tsx
+msgid "Accepting work"
+msgstr "Nhận công việc"
 
 #: src/components/task-row.tsx
 msgid "Acknowledge"
@@ -1460,10 +1464,6 @@ msgstr "Không tìm thấy máy tính"
 msgid "Computer offline"
 msgstr "Máy tính ngoại tuyến"
 
-#: src/app/computer-map.tsx
-msgid "Computer status below describes reachability from this device."
-msgstr "Trạng thái máy tính bên dưới cho biết khả năng kết nối từ thiết bị này"
-
 #: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-server-tasks.ts
@@ -1587,10 +1587,6 @@ msgstr "Sơ đồ kết nối"
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "Kết nối"
-
-#: src/app/computer-map.tsx
-msgid "Connections from this app and last-known links between paired computers."
-msgstr "Các kết nối của ứng dụng này và những liên kết gần nhất được biết giữa các máy tính đã ghép đôi"
 
 #: src/components/agent-composer.tsx
 msgid "Contains subagent sessions"
@@ -2078,6 +2074,10 @@ msgstr "Không đọc được tệp này"
 msgid "Could not read voice settings. Save your configuration again."
 msgstr "Không thể đọc cài đặt giọng nói. Hãy lưu lại cấu hình"
 
+#: src/app/computer-map.tsx
+msgid "Could not refresh. This report may be outdated."
+msgstr "Không thể làm mới. Báo cáo này có thể đã cũ"
+
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
 msgstr "Không thể gỡ host"
@@ -2501,8 +2501,8 @@ msgid "Draft the notes for the next build"
 msgstr "Soạn ghi chú cho bản dựng tiếp theo"
 
 #: src/app/computer-map.tsx
-msgid "Drag to orbit. Pinch to zoom. Tap a computer to select it. Solid lines show app connections; dashed arrows show last-known peer reports. Positions are illustrative."
-msgstr "Kéo để xoay, chụm hai ngón để thu phóng. Chạm vào máy tính để chọn. Đường liền biểu thị kết nối của ứng dụng; mũi tên nét đứt biểu thị liên kết được báo cáo gần nhất. Vị trí chỉ mang tính minh họa"
+msgid "Drag to rotate · Pinch to zoom · Tap to select"
+msgstr "Kéo để xoay · Chụm hai ngón để thu phóng · Chạm để chọn"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -3323,12 +3323,8 @@ msgid "Last known activity"
 msgstr "Hoạt động được ghi nhận gần nhất"
 
 #: src/app/computer-map.tsx
-msgid "Last reported: accepting work from other computers."
-msgstr "Báo cáo gần nhất: nhận công việc từ máy tính khác"
-
-#: src/app/computer-map.tsx
-msgid "Last reported: not accepting work from other computers. This does not mean offline."
-msgstr "Báo cáo gần nhất: không nhận công việc từ máy tính khác. Điều này không có nghĩa là ngoại tuyến"
+msgid "Last reported by this computer"
+msgstr "Báo cáo gần nhất của máy tính này"
 
 #: src/components/task-row.tsx
 msgid "last seen {ago}"
@@ -3349,10 +3345,6 @@ msgstr "Thấy lần cuối {minutes} phút trước"
 #: src/components/settings-servers.tsx
 msgid "Last seen just now"
 msgstr "Thấy lần cuối vừa xong"
-
-#: src/app/computer-map.tsx
-msgid "Last-known peer reports are separate from this app’s connection. They may have changed since the Gateway was read."
-msgstr "Báo cáo liên kết giữa các máy tính tách biệt với kết nối của ứng dụng này. Trạng thái có thể đã thay đổi từ lần đọc Gateway"
 
 #: src/components/update-status-banner.tsx
 msgid "Later"
@@ -3392,6 +3384,10 @@ msgstr "Cấp {depth}"
 #: src/components/settings-appearance.tsx
 msgid "Light"
 msgstr "Sáng"
+
+#: src/app/computer-map.tsx
+msgid "Lines: this app. Dashed arrows: last reported computer links."
+msgstr "Đường: ứng dụng này. Mũi tên nét đứt: liên kết máy tính được báo cáo gần nhất"
 
 #: src/components/file-mention-panel.tsx
 msgid "Link revoked · re-linking…"
@@ -3891,10 +3887,6 @@ msgstr "Chưa có Gateway?"
 msgid "No input"
 msgstr "Không có đầu vào"
 
-#: src/app/computer-map.tsx
-msgid "No links in the last peer report."
-msgstr "Không có liên kết trong báo cáo máy tính gần nhất"
-
 #: src/components/task-row.tsx
 msgid "No longer linked with {computer}"
 msgstr "Không còn liên kết với {computer}"
@@ -3943,8 +3935,8 @@ msgid "No password or key is saved for this host."
 msgstr "Chưa lưu mật khẩu hay khóa nào cho host này"
 
 #: src/app/computer-map.tsx
-msgid "No peer report available. This Gateway may be offline or may not support peer reports."
-msgstr "Chưa có báo cáo liên kết máy tính. Gateway này có thể đang ngoại tuyến hoặc không hỗ trợ báo cáo này"
+msgid "No peer report available."
+msgstr "Chưa có báo cáo liên kết máy tính"
 
 #: src/components/custom-theme-library.tsx
 msgid "No personal themes yet. Import one, or browse the published themes."
@@ -3970,6 +3962,10 @@ msgstr "Không có dự án nào khớp “{0}”"
 #: src/components/task-row.tsx
 msgid "No reason was recorded."
 msgstr "Chưa ghi lại lý do"
+
+#: src/app/computer-map.tsx
+msgid "No reported links."
+msgstr "Chưa có liên kết nào được báo cáo"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "No sessions in this project yet. Start one from the + button."
@@ -4042,6 +4038,10 @@ msgstr "Chưa có worktree nào. Tạo một cái bên dưới để làm việc
 #: src/components/changes-worktree-list.tsx
 msgid "Not a git repository"
 msgstr "Không phải kho mã Git"
+
+#: src/app/computer-map.tsx
+msgid "Not accepting work"
+msgstr "Không nhận công việc"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -4892,8 +4892,8 @@ msgid "Recording failed."
 msgstr "Ghi âm thất bại"
 
 #: src/app/computer-map.tsx
-msgid "Reduced motion is on. Use the connection list below."
-msgstr "Đang bật giảm chuyển động. Hãy dùng danh sách kết nối bên dưới"
+msgid "Reduced motion: list view."
+msgstr "Giảm chuyển động: chế độ danh sách"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -5402,10 +5402,6 @@ msgstr "Tìm trong toàn bộ dự án"
 msgid "Security"
 msgstr "Bảo mật"
 
-#: src/components/settings-servers.tsx
-msgid "See this app’s connections and last-known computer links."
-msgstr "Xem kết nối của ứng dụng này và các liên kết máy tính gần nhất được biết"
-
 #. placeholder {0}: age.value
 #: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
@@ -5773,6 +5769,10 @@ msgstr "Đã bắt đầu kỹ năng"
 msgid "Skip intro"
 msgstr "Bỏ qua phần giới thiệu"
 
+#: src/app/computer-map.tsx
+msgid "Some connections are omitted from the map."
+msgstr "Một số kết nối không được hiển thị trên sơ đồ"
+
 #: src/components/settings-storage.tsx
 msgid "Some files could not be removed · {clearable}"
 msgstr "Không thể xóa một số tệp · {clearable}"
@@ -5780,10 +5780,6 @@ msgstr "Không thể xóa một số tệp · {clearable}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "Một số tệp không tải lên được"
-
-#: src/app/computer-map.tsx
-msgid "Some older peer records have no computer identity and cannot be placed on the map."
-msgstr "Một số bản ghi liên kết cũ không có mã định danh máy tính nên không thể hiển thị trên sơ đồ"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Some theme colors need more contrast"
@@ -6377,14 +6373,6 @@ msgstr "Biểu tượng trên màn hình chính của bạn. Android sẽ đóng
 #: src/components/ssh-host-form.tsx
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "Không thể đọc khóa ({0}). Hãy kiểm tra khóa và cụm mật khẩu của nó"
-
-#: src/app/computer-map.tsx
-msgid "The latest peer read failed. Any retained reports below may be out of date."
-msgstr "Lần đọc liên kết máy tính gần nhất thất bại. Các báo cáo được giữ lại bên dưới có thể đã cũ"
-
-#: src/app/computer-map.tsx
-msgid "The map shows up to 12 computers and 36 peer links. All paired computers remain in the list."
-msgstr "Sơ đồ hiển thị tối đa 12 máy tính và 36 liên kết. Mọi máy tính đã ghép đôi vẫn nằm trong danh sách"
 
 #: src/components/session-map.tsx
 msgid "The new terminal was created, but could not open it."

@@ -82,11 +82,7 @@ export default function ComputerMapScreen() {
   }, [active, focused, record?.serverId, records, refresh]);
 
   return (
-    <SheetScene
-      testID="computer-map-screen"
-      title={t`Connection map`}
-      caption={t`Connections from this app and last-known links between paired computers.`}
-      captionLines={0}>
+    <SheetScene testID="computer-map-screen" title={t`Connection map`}>
       <ScrollView contentContainerStyle={styles.content}>
         <SettingsSegmented
           testID="computer-map-mode"
@@ -123,9 +119,12 @@ export default function ComputerMapScreen() {
           <>
             <Text
               variant="caption"
+              color={colors.textMuted}>{t`Drag to rotate · Pinch to zoom · Tap to select`}</Text>
+            <Text
+              variant="caption"
               color={
                 colors.textMuted
-              }>{t`Drag to orbit. Pinch to zoom. Tap a computer to select it. Solid lines show app connections; dashed arrows show last-known peer reports. Positions are illustrative.`}</Text>
+              }>{t`Lines: this app. Dashed arrows: last reported computer links.`}</Text>
             <SettingsChoiceRow
               label={t`Reset view`}
               accessibilityLabel={t`Reset view`}
@@ -136,16 +135,14 @@ export default function ComputerMapScreen() {
         ) : view === 'map' && records.length > 0 ? (
           <Text testID="computer-map-fallback" variant="caption" color={colors.textMuted}>
             {reducedMotion
-              ? t`Reduced motion is on. Use the connection list below.`
-              : t`3D is unavailable on this device. All connection details are available below.`}
+              ? t`Reduced motion: list view.`
+              : t`3D unavailable. Connections are listed below.`}
           </Text>
         ) : null}
-        {graph.omittedComputers || graph.omittedPeerEdges ? (
+        {showGpu && (graph.omittedComputers || graph.omittedPeerEdges) ? (
           <Text
             variant="caption"
-            color={
-              colors.textMuted
-            }>{t`The map shows up to 12 computers and 36 peer links. All paired computers remain in the list.`}</Text>
+            color={colors.textMuted}>{t`Some connections are omitted from the map.`}</Text>
         ) : null}
         {selectedServer ? (
           <View
@@ -159,27 +156,21 @@ export default function ComputerMapScreen() {
             </Text>
             <Text
               variant="caption"
-              color={
-                colors.textMuted
-              }>{t`Last-known peer reports are separate from this app’s connection. They may have changed since the Gateway was read.`}</Text>
-            {selectedPeerRead !== undefined && selectedPeerRead !== 'ok' ? (
+              color={colors.textMuted}>{t`Last reported by this computer`}</Text>
+            {selectedPeers && selectedPeerRead !== undefined && selectedPeerRead !== 'ok' ? (
               <Text
                 variant="caption"
-                color={
-                  colors.warning
-                }>{t`The latest peer read failed. Any retained reports below may be out of date.`}</Text>
+                color={colors.warning}>{t`Could not refresh. This report may be outdated.`}</Text>
             ) : null}
             {!selectedPeers ? (
-              <Text variant="caption">{t`No peer report available. This Gateway may be offline or may not support peer reports.`}</Text>
+              <Text variant="caption">{t`No peer report available.`}</Text>
             ) : (
               <>
                 <Text variant="caption">
-                  {selectedPeers.acceptDelegations
-                    ? t`Last reported: accepting work from other computers.`
-                    : t`Last reported: not accepting work from other computers. This does not mean offline.`}
+                  {selectedPeers.acceptDelegations ? t`Accepting work` : t`Not accepting work`}
                 </Text>
-                {selectedPeers.peers.length === 0 ? (
-                  <Text variant="caption">{t`No links in the last peer report.`}</Text>
+                {selectedPeers.peers.length === 0 && !selectedPeers.unidentified?.length ? (
+                  <Text variant="caption">{t`No reported links.`}</Text>
                 ) : (
                   selectedPeers.peers.map((peer) => (
                     <Text key={peer.peerId} variant="caption">
@@ -195,9 +186,6 @@ export default function ComputerMapScreen() {
                     </Text>
                   ))
                 )}
-                {selectedPeers.unidentified?.length ? (
-                  <Text variant="caption">{t`Some older peer records have no computer identity and cannot be placed on the map.`}</Text>
-                ) : null}
               </>
             )}
             <SettingsChoiceRow
@@ -217,7 +205,6 @@ export default function ComputerMapScreen() {
           label={t`This app`}
           accessibilityLabel={t`This app`}
           value=""
-          detail={t`Computer status below describes reachability from this device.`}
           onPress={() => setSelectedId(APP_NODE_ID)}
         />
         {records.map((server) => (

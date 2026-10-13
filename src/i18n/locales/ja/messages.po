@@ -409,8 +409,8 @@ msgid "30 days"
 msgstr "30日"
 
 #: src/app/computer-map.tsx
-msgid "3D is unavailable on this device. All connection details are available below."
-msgstr "このデバイスでは 3D を利用できません。接続の詳細はすべて下で確認できます"
+msgid "3D unavailable. Connections are listed below."
+msgstr "3D は利用できません。接続は下に表示されます"
 
 #. placeholder {0}: Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))
 #: src/components/settings-font-sheet.tsx
@@ -478,6 +478,10 @@ msgstr "アプリについて"
 #: src/components/settings-fleet-peers.tsx
 msgid "Accept work from other computers"
 msgstr "ほかのコンピュータからの作業を受け付ける"
+
+#: src/app/computer-map.tsx
+msgid "Accepting work"
+msgstr "作業を受け付け中"
 
 #: src/components/task-row.tsx
 msgid "Acknowledge"
@@ -1460,10 +1464,6 @@ msgstr "コンピュータが見つかりません"
 msgid "Computer offline"
 msgstr "コンピュータはオフライン"
 
-#: src/app/computer-map.tsx
-msgid "Computer status below describes reachability from this device."
-msgstr "下の状態は、このデバイスから各コンピュータに接続できるかを示します"
-
 #: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-server-tasks.ts
@@ -1587,10 +1587,6 @@ msgstr "接続マップ"
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "接続"
-
-#: src/app/computer-map.tsx
-msgid "Connections from this app and last-known links between paired computers."
-msgstr "このアプリの接続と、ペアリング済みコンピュータ間の最後に確認された接続"
 
 #: src/components/agent-composer.tsx
 msgid "Contains subagent sessions"
@@ -2078,6 +2074,10 @@ msgstr "このファイルを読み込めませんでした"
 msgid "Could not read voice settings. Save your configuration again."
 msgstr "音声設定を読み込めません。設定を保存し直してください"
 
+#: src/app/computer-map.tsx
+msgid "Could not refresh. This report may be outdated."
+msgstr "更新できませんでした。この報告は古い可能性があります"
+
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
 msgstr "ホストを削除できませんでした"
@@ -2501,8 +2501,8 @@ msgid "Draft the notes for the next build"
 msgstr "次のビルドのリリースノートを下書きします"
 
 #: src/app/computer-map.tsx
-msgid "Drag to orbit. Pinch to zoom. Tap a computer to select it. Solid lines show app connections; dashed arrows show last-known peer reports. Positions are illustrative."
-msgstr "ドラッグで回転、ピンチで拡大縮小、タップでコンピュータを選択します。実線はアプリの接続、破線の矢印は前回報告されたコンピュータ間の接続です。配置は模式的なものです"
+msgid "Drag to rotate · Pinch to zoom · Tap to select"
+msgstr "ドラッグで回転 · ピンチで拡大縮小 · タップで選択"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -3323,12 +3323,8 @@ msgid "Last known activity"
 msgstr "最後に確認したアクティビティ"
 
 #: src/app/computer-map.tsx
-msgid "Last reported: accepting work from other computers."
-msgstr "前回の報告：他のコンピュータからの作業を受け付けています"
-
-#: src/app/computer-map.tsx
-msgid "Last reported: not accepting work from other computers. This does not mean offline."
-msgstr "前回の報告：他のコンピュータからの作業を受け付けていません。オフラインという意味ではありません"
+msgid "Last reported by this computer"
+msgstr "このコンピュータの前回の報告"
 
 #: src/components/task-row.tsx
 msgid "last seen {ago}"
@@ -3349,10 +3345,6 @@ msgstr "最終確認: {minutes}分前"
 #: src/components/settings-servers.tsx
 msgid "Last seen just now"
 msgstr "最終確認: たった今"
-
-#: src/app/computer-map.tsx
-msgid "Last-known peer reports are separate from this app’s connection. They may have changed since the Gateway was read."
-msgstr "前回報告されたコンピュータ間の接続は、このアプリの接続とは別の情報です。Gateway の読み取り後に状態が変わっている場合があります"
 
 #: src/components/update-status-banner.tsx
 msgid "Later"
@@ -3392,6 +3384,10 @@ msgstr "階層 {depth}"
 #: src/components/settings-appearance.tsx
 msgid "Light"
 msgstr "ライト"
+
+#: src/app/computer-map.tsx
+msgid "Lines: this app. Dashed arrows: last reported computer links."
+msgstr "線：このアプリ。破線の矢印：前回報告されたコンピュータ間の接続"
 
 #: src/components/file-mention-panel.tsx
 msgid "Link revoked · re-linking…"
@@ -3891,10 +3887,6 @@ msgstr "Gateway がまだありませんか？"
 msgid "No input"
 msgstr "入力なし"
 
-#: src/app/computer-map.tsx
-msgid "No links in the last peer report."
-msgstr "前回のコンピュータ間接続の報告にリンクはありません"
-
 #: src/components/task-row.tsx
 msgid "No longer linked with {computer}"
 msgstr "{computer} とのリンクは解除されました"
@@ -3943,8 +3935,8 @@ msgid "No password or key is saved for this host."
 msgstr "このホストにはパスワードも鍵も保存されていません"
 
 #: src/app/computer-map.tsx
-msgid "No peer report available. This Gateway may be offline or may not support peer reports."
-msgstr "コンピュータ間接続の報告はありません。Gateway がオフラインか、報告に対応していない可能性があります"
+msgid "No peer report available."
+msgstr "コンピュータ間接続の報告はありません"
 
 #: src/components/custom-theme-library.tsx
 msgid "No personal themes yet. Import one, or browse the published themes."
@@ -3970,6 +3962,10 @@ msgstr "「{0}」に一致するプロジェクトはありません"
 #: src/components/task-row.tsx
 msgid "No reason was recorded."
 msgstr "理由は記録されていません"
+
+#: src/app/computer-map.tsx
+msgid "No reported links."
+msgstr "報告された接続はありません"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "No sessions in this project yet. Start one from the + button."
@@ -4042,6 +4038,10 @@ msgstr "ワークツリーはまだありません。下で作成すると、こ
 #: src/components/changes-worktree-list.tsx
 msgid "Not a git repository"
 msgstr "Git リポジトリではありません"
+
+#: src/app/computer-map.tsx
+msgid "Not accepting work"
+msgstr "作業の受け付け停止中"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -4892,8 +4892,8 @@ msgid "Recording failed."
 msgstr "録音に失敗しました"
 
 #: src/app/computer-map.tsx
-msgid "Reduced motion is on. Use the connection list below."
-msgstr "視差効果を減らす設定が有効です。下の接続リストを使用してください"
+msgid "Reduced motion: list view."
+msgstr "視差効果を減らす：リスト表示"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -5402,10 +5402,6 @@ msgstr "プロジェクト全体を検索"
 msgid "Security"
 msgstr "セキュリティ"
 
-#: src/components/settings-servers.tsx
-msgid "See this app’s connections and last-known computer links."
-msgstr "このアプリの接続と、最後に確認されたコンピュータ間の接続を表示"
-
 #. placeholder {0}: age.value
 #: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
@@ -5773,6 +5769,10 @@ msgstr "スキルを開始しました"
 msgid "Skip intro"
 msgstr "紹介をスキップ"
 
+#: src/app/computer-map.tsx
+msgid "Some connections are omitted from the map."
+msgstr "一部の接続はマップから省略されています"
+
 #: src/components/settings-storage.tsx
 msgid "Some files could not be removed · {clearable}"
 msgstr "一部のファイルを削除できませんでした · {clearable}"
@@ -5780,10 +5780,6 @@ msgstr "一部のファイルを削除できませんでした · {clearable}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "一部のファイルをアップロードできませんでした"
-
-#: src/app/computer-map.tsx
-msgid "Some older peer records have no computer identity and cannot be placed on the map."
-msgstr "一部の古い接続記録にはコンピュータの識別情報がないため、マップに表示できません"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Some theme colors need more contrast"
@@ -6377,14 +6373,6 @@ msgstr "ホーム画面に表示されるアイコンです。Android では適�
 #: src/components/ssh-host-form.tsx
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "鍵を読み取れませんでした（{0}）。鍵とパスフレーズを確認してください"
-
-#: src/app/computer-map.tsx
-msgid "The latest peer read failed. Any retained reports below may be out of date."
-msgstr "最新のコンピュータ間接続の読み取りに失敗しました。下に残っている報告は古い可能性があります"
-
-#: src/app/computer-map.tsx
-msgid "The map shows up to 12 computers and 36 peer links. All paired computers remain in the list."
-msgstr "マップには最大 12 台のコンピュータと 36 本のコンピュータ間リンクを表示します。ペアリング済みの全コンピュータはリストに表示されます"
 
 #: src/components/session-map.tsx
 msgid "The new terminal was created, but could not open it."

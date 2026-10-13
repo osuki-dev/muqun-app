@@ -409,8 +409,8 @@ msgid "30 days"
 msgstr "30 วัน"
 
 #: src/app/computer-map.tsx
-msgid "3D is unavailable on this device. All connection details are available below."
-msgstr "อุปกรณ์นี้ไม่รองรับมุมมอง 3D ดูรายละเอียดการเชื่อมต่อทั้งหมดได้ด้านล่าง"
+msgid "3D unavailable. Connections are listed below."
+msgstr "ไม่รองรับ 3D การเชื่อมต่อแสดงอยู่ด้านล่าง"
 
 #. placeholder {0}: Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))
 #: src/components/settings-font-sheet.tsx
@@ -478,6 +478,10 @@ msgstr "เกี่ยวกับ"
 #: src/components/settings-fleet-peers.tsx
 msgid "Accept work from other computers"
 msgstr "รับงานจากคอมพิวเตอร์เครื่องอื่น"
+
+#: src/app/computer-map.tsx
+msgid "Accepting work"
+msgstr "รับงาน"
 
 #: src/components/task-row.tsx
 msgid "Acknowledge"
@@ -1460,10 +1464,6 @@ msgstr "ไม่พบคอมพิวเตอร์"
 msgid "Computer offline"
 msgstr "คอมพิวเตอร์ออฟไลน์"
 
-#: src/app/computer-map.tsx
-msgid "Computer status below describes reachability from this device."
-msgstr "สถานะคอมพิวเตอร์ด้านล่างแสดงว่าสามารถเชื่อมต่อจากอุปกรณ์นี้ได้หรือไม่"
-
 #: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-server-tasks.ts
@@ -1587,10 +1587,6 @@ msgstr "แผนผังการเชื่อมต่อ"
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "การเชื่อมต่อ"
-
-#: src/app/computer-map.tsx
-msgid "Connections from this app and last-known links between paired computers."
-msgstr "การเชื่อมต่อของแอปนี้และลิงก์ล่าสุดที่ทราบระหว่างคอมพิวเตอร์ที่จับคู่แล้ว"
 
 #: src/components/agent-composer.tsx
 msgid "Contains subagent sessions"
@@ -2078,6 +2074,10 @@ msgstr "อ่านไฟล์นี้ไม่ได้"
 msgid "Could not read voice settings. Save your configuration again."
 msgstr "ไม่สามารถอ่านการตั้งค่าเสียงได้ โปรดบันทึกการตั้งค่าอีกครั้ง"
 
+#: src/app/computer-map.tsx
+msgid "Could not refresh. This report may be outdated."
+msgstr "รีเฟรชไม่ได้ รายงานนี้อาจล้าสมัย"
+
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
 msgstr "ลบโฮสต์ไม่ได้"
@@ -2501,8 +2501,8 @@ msgid "Draft the notes for the next build"
 msgstr "ร่างบันทึกสำหรับบิลด์ถัดไป"
 
 #: src/app/computer-map.tsx
-msgid "Drag to orbit. Pinch to zoom. Tap a computer to select it. Solid lines show app connections; dashed arrows show last-known peer reports. Positions are illustrative."
-msgstr "ลากเพื่อหมุน ใช้สองนิ้วเพื่อซูม แตะคอมพิวเตอร์เพื่อเลือก เส้นทึบแสดงการเชื่อมต่อของแอป ลูกศรเส้นประแสดงลิงก์ระหว่างคอมพิวเตอร์ที่รายงานล่าสุด ตำแหน่งเป็นเพียงภาพประกอบ"
+msgid "Drag to rotate · Pinch to zoom · Tap to select"
+msgstr "ลากเพื่อหมุน · ใช้สองนิ้วเพื่อซูม · แตะเพื่อเลือก"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -3323,12 +3323,8 @@ msgid "Last known activity"
 msgstr "กิจกรรมล่าสุดที่ทราบ"
 
 #: src/app/computer-map.tsx
-msgid "Last reported: accepting work from other computers."
-msgstr "รายงานล่าสุด: รับงานจากคอมพิวเตอร์เครื่องอื่น"
-
-#: src/app/computer-map.tsx
-msgid "Last reported: not accepting work from other computers. This does not mean offline."
-msgstr "รายงานล่าสุด: ไม่รับงานจากคอมพิวเตอร์เครื่องอื่น ซึ่งไม่ได้หมายความว่าออฟไลน์"
+msgid "Last reported by this computer"
+msgstr "รายงานล่าสุดจากคอมพิวเตอร์นี้"
 
 #: src/components/task-row.tsx
 msgid "last seen {ago}"
@@ -3349,10 +3345,6 @@ msgstr "พบล่าสุด {minutes} นาทีที่แล้ว"
 #: src/components/settings-servers.tsx
 msgid "Last seen just now"
 msgstr "พบล่าสุดเมื่อสักครู่"
-
-#: src/app/computer-map.tsx
-msgid "Last-known peer reports are separate from this app’s connection. They may have changed since the Gateway was read."
-msgstr "รายงานลิงก์ระหว่างคอมพิวเตอร์ล่าสุดแยกจากการเชื่อมต่อของแอปนี้ สถานะอาจเปลี่ยนไปนับจากที่อ่านข้อมูล Gateway"
 
 #: src/components/update-status-banner.tsx
 msgid "Later"
@@ -3392,6 +3384,10 @@ msgstr "ระดับ {depth}"
 #: src/components/settings-appearance.tsx
 msgid "Light"
 msgstr "สว่าง"
+
+#: src/app/computer-map.tsx
+msgid "Lines: this app. Dashed arrows: last reported computer links."
+msgstr "เส้น: แอปนี้ ลูกศรเส้นประ: ลิงก์ระหว่างคอมพิวเตอร์ที่รายงานล่าสุด"
 
 #: src/components/file-mention-panel.tsx
 msgid "Link revoked · re-linking…"
@@ -3891,10 +3887,6 @@ msgstr "ยังไม่มี Gateway ใช่ไหม?"
 msgid "No input"
 msgstr "ไม่มีอินพุต"
 
-#: src/app/computer-map.tsx
-msgid "No links in the last peer report."
-msgstr "ไม่มีลิงก์ในรายงานการเชื่อมต่อระหว่างคอมพิวเตอร์ล่าสุด"
-
 #: src/components/task-row.tsx
 msgid "No longer linked with {computer}"
 msgstr "ไม่ได้เชื่อมโยงกับ {computer} แล้ว"
@@ -3943,8 +3935,8 @@ msgid "No password or key is saved for this host."
 msgstr "ไม่มีรหัสผ่านหรือคีย์ที่บันทึกไว้สำหรับโฮสต์นี้"
 
 #: src/app/computer-map.tsx
-msgid "No peer report available. This Gateway may be offline or may not support peer reports."
-msgstr "ไม่มีรายงานลิงก์ระหว่างคอมพิวเตอร์ Gateway นี้อาจออฟไลน์หรือไม่รองรับรายงานดังกล่าว"
+msgid "No peer report available."
+msgstr "ไม่มีรายงานลิงก์ระหว่างคอมพิวเตอร์"
 
 #: src/components/custom-theme-library.tsx
 msgid "No personal themes yet. Import one, or browse the published themes."
@@ -3970,6 +3962,10 @@ msgstr "ไม่มีโปรเจกต์ที่ตรงกับ “{0
 #: src/components/task-row.tsx
 msgid "No reason was recorded."
 msgstr "ไม่ได้บันทึกเหตุผลไว้"
+
+#: src/app/computer-map.tsx
+msgid "No reported links."
+msgstr "ไม่มีลิงก์ที่รายงาน"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "No sessions in this project yet. Start one from the + button."
@@ -4042,6 +4038,10 @@ msgstr "ยังไม่มีเวิร์กทรี สร้างส�
 #: src/components/changes-worktree-list.tsx
 msgid "Not a git repository"
 msgstr "ไม่ใช่ที่เก็บโค้ด Git"
+
+#: src/app/computer-map.tsx
+msgid "Not accepting work"
+msgstr "ไม่รับงาน"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -4892,8 +4892,8 @@ msgid "Recording failed."
 msgstr "บันทึกเสียงไม่สำเร็จ"
 
 #: src/app/computer-map.tsx
-msgid "Reduced motion is on. Use the connection list below."
-msgstr "เปิดการลดการเคลื่อนไหวอยู่ โปรดใช้รายการการเชื่อมต่อด้านล่าง"
+msgid "Reduced motion: list view."
+msgstr "ลดการเคลื่อนไหว: มุมมองรายการ"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -5402,10 +5402,6 @@ msgstr "ค้นหาทั้งโปรเจกต์"
 msgid "Security"
 msgstr "ความปลอดภัย"
 
-#: src/components/settings-servers.tsx
-msgid "See this app’s connections and last-known computer links."
-msgstr "ดูการเชื่อมต่อของแอปนี้และลิงก์ล่าสุดที่ทราบระหว่างคอมพิวเตอร์"
-
 #. placeholder {0}: age.value
 #: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
@@ -5773,6 +5769,10 @@ msgstr "เริ่มสกิลแล้ว"
 msgid "Skip intro"
 msgstr "ข้ามคำแนะนำ"
 
+#: src/app/computer-map.tsx
+msgid "Some connections are omitted from the map."
+msgstr "การเชื่อมต่อบางรายการไม่แสดงบนแผนผัง"
+
 #: src/components/settings-storage.tsx
 msgid "Some files could not be removed · {clearable}"
 msgstr "ลบไฟล์บางรายการไม่ได้ · {clearable}"
@@ -5780,10 +5780,6 @@ msgstr "ลบไฟล์บางรายการไม่ได้ · {clea
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "ไฟล์บางรายการอัปโหลดไม่สำเร็จ"
-
-#: src/app/computer-map.tsx
-msgid "Some older peer records have no computer identity and cannot be placed on the map."
-msgstr "บันทึกลิงก์เก่าบางรายการไม่มีตัวระบุคอมพิวเตอร์ จึงแสดงบนแผนผังไม่ได้"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Some theme colors need more contrast"
@@ -6377,14 +6373,6 @@ msgstr "ไอคอนบนหน้าจอหลักของคุณ An
 #: src/components/ssh-host-form.tsx
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "อ่านคีย์ไม่ได้ ({0}) ตรวจสอบคีย์และวลีรหัสผ่าน"
-
-#: src/app/computer-map.tsx
-msgid "The latest peer read failed. Any retained reports below may be out of date."
-msgstr "อ่านลิงก์ระหว่างคอมพิวเตอร์ครั้งล่าสุดไม่สำเร็จ รายงานที่เก็บไว้ด้านล่างอาจล้าสมัย"
-
-#: src/app/computer-map.tsx
-msgid "The map shows up to 12 computers and 36 peer links. All paired computers remain in the list."
-msgstr "แผนผังแสดงคอมพิวเตอร์ได้สูงสุด 12 เครื่องและลิงก์ 36 รายการ คอมพิวเตอร์ที่จับคู่ทั้งหมดจะยังอยู่ในรายการ"
 
 #: src/components/session-map.tsx
 msgid "The new terminal was created, but could not open it."
