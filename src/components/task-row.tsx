@@ -57,8 +57,7 @@ import { dismissTaskNotices } from '@/stores/in-app-notifications';
 import { taskOpeningKey, useHomeTaskCards } from '@/stores/home-task-cards';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useServerAgents } from '@/stores/server-agents';
-import { terminalPendingUserInput } from '@/lib/terminal-input-attention';
-import { taskAttentionDestination } from '@/lib/task-attention';
+import { taskAttentionView } from '@/lib/task-attention';
 import { useHomeAttention } from '@/stores/home-attention';
 import { plural } from '@lingui/core/macro';
 
@@ -415,59 +414,22 @@ function useRequesterName() {
   };
 }
 
-/** Share the same waiting-row interaction across both Home layouts and their summary. */
-export function useWaitingTaskDetail(task: TaskView, serverId: string, nowMs: number) {
+/** Share confirmed attention and quiet recorded blockers across task rows. */
+export function useTaskAttentionView(
+  task: TaskView,
+  serverId: string,
+  nowMs: number,
+  statusCurrent = true
+) {
   const panes = useServerAgents((state) => state.byServer[serverId]);
   const requests = useHomeAttention((state) => state.byTarget);
-  const destination = taskAttentionDestination({ task, serverId, panes, requests, nowMs });
-  const [expanded, setExpanded] = useState(false);
-  return {
-    enabled: destination === 'waiting-detail',
-    shown: destination === 'waiting-detail' && expanded,
-    toggle: () => setExpanded((shown) => !shown),
-    close: () => setExpanded(false),
-  };
-}
-
-/** The full recorded reason stays readable even when the session has moved on. */
-export function WaitingTaskDetail({
-  task,
-  onOpen,
-  onClose,
-  openDisabled = false,
-}: {
-  task: TaskView;
-  onOpen: () => void;
-  onClose: () => void;
-  openDisabled?: boolean;
-}) {
-  const { t } = useLingui();
-  const theme = useThemeTokens();
-  return (
-    <View testID={`task-row-waiting-detail-${task.taskId}`} style={styles.waitingDetail}>
-      <Text variant="bodySmall" weight="semibold">{t`Reported blocker`}</Text>
-      <Text variant="bodySmall" selectable>
-        {task.summary?.trim() || t`No reason was recorded.`}
-      </Text>
-      <Text variant="caption" color={theme.colors.textMuted}>
-        {t`The task was recorded as waiting. Open its session to check the current state.`}
-      </Text>
-      <AgentActionMenu
-        surface="ground"
-        items={[
-          {
-            id: 'open',
-            label: t`Open`,
-            Icon: ExternalLink,
-            onPress: onOpen,
-            disabled: openDisabled,
-            testID: `task-row-waiting-open-${task.taskId}`,
-          },
-          { id: 'close', label: t`Close`, Icon: X, onPress: onClose },
-        ]}
-      />
-    </View>
-  );
+  return taskAttentionView({
+    task,
+    serverId,
+    panes: statusCurrent ? panes : undefined,
+    requests: statusCurrent ? requests : {},
+    nowMs,
+  });
 }
 
 /** Shared row state, work navigation and the existing long-press actions. */
@@ -504,11 +466,11 @@ function useTaskRowModel({
   const peerName = usePeerName();
   const pairedHere = useIsPairedHere();
   const requesterName = useRequesterName();
-  const waitingDetail = useWaitingTaskDetail(task, serverId, nowMs);
+  const displayTask = useTaskAttentionView(task, serverId, nowMs, statusCurrent);
   const [menuOpen, setMenuOpen] = useState(false);
   // What the last action from the menu could not do, said in the menu.
   const [menuError, setMenuError] = useState<string | null>(null);
-  const visual = taskRowVisual(task, {
+  const visual = taskRowVisual(displayTask, {
     canComplete: canMarkTaskDone(task, capabilities),
     acknowledged,
     statusCurrent,
@@ -521,7 +483,7 @@ function useTaskRowModel({
     taskRowDestination(task).kind !== 'result' && mirror !== null && !pairedHere(mirror);
   const line: TaskRowLineView = unpaired
     ? lineView('', theme.colors.textMuted, t`Open ${mirrorName} on this phone first`)
-    : rowLine(task, visual, '', nowMs);
+    : rowLine(displayTask, visual, '', nowMs);
   const requester = requesterName(task.requestedBy);
   const fromText = requester ? t`from ${requester}` : '';
   const open = () => {
@@ -638,8 +600,7 @@ function useTaskRowModel({
     mirrorName,
     fromText,
     open,
-    press: waitingDetail.enabled ? waitingDetail.toggle : open,
-    waitingDetail,
+    press: open,
     unpaired,
     trailingAge,
     menuItems,
@@ -697,21 +658,6 @@ export function TaskRow({
     inComputerCard,
     statusCurrent,
   });
-  const pendingUserInput = useServerAgents((state) =>
-    statusCurrent &&
-    task.state === 'working' &&
-    task.binding.kind === 'pane' &&
-    Boolean(task.binding.agentId)
-      ? terminalPendingUserInput(
-          state.byServer[serverId],
-          task.binding.sessionId,
-          task.binding.paneId,
-          nowMs,
-          task.binding.shellPid
-        )
-      : false
-  );
-  const { t } = useLingui();
   const { visual, line, mirror, fromText, trailingAge } = row;
   const ownTitle = taskRowTitle(task);
   const title = ownTitle || whereName(task) || line.text;
@@ -752,7 +698,6 @@ export function TaskRow({
           mirror && ownTitle ? whereName(task) : '',
           fromText,
           line.text,
-          pendingUserInput ? t`Needs your input` : '',
           trailingAge,
           rollupText,
         ]
@@ -760,7 +705,6 @@ export function TaskRow({
           .join(', ')}
         accessibilityState={{
           busy: opening,
-          ...(row.waitingDetail.enabled ? { expanded: row.waitingDetail.shown } : {}),
         }}
         {...row.menuProps}
         onPress={row.press}
@@ -805,24 +749,8 @@ export function TaskRow({
           />
           {inComputerCard ? null : rollup}
         </Animated.View>
-        {pendingUserInput ? (
-          <Text
-            testID={`task-row-input-${task.taskId}`}
-            variant="caption"
-            color={theme.colors.warning}>
-            {t`Needs your input`}
-          </Text>
-        ) : null}
         {inComputerCard && rollup ? <View style={styles.cardMetadata}>{rollup}</View> : null}
       </PressableScale>
-      {row.waitingDetail.shown ? (
-        <WaitingTaskDetail
-          task={task}
-          onOpen={row.open}
-          onClose={row.waitingDetail.close}
-          openDisabled={row.unpaired}
-        />
-      ) : null}
       {row.menuShown ? (
         <AgentActionMenu
           testID={`task-row-menu-${task.taskId}`}
@@ -889,9 +817,6 @@ function SubTaskRow({
       <PressableScale
         testID={`task-row-${task.taskId}`}
         accessibilityRole="button"
-        accessibilityState={
-          row.waitingDetail.enabled ? { expanded: row.waitingDetail.shown } : undefined
-        }
         accessibilityLabel={[whereName(task), title, line.text, trailingAge]
           .filter(Boolean)
           .join(', ')}
@@ -918,14 +843,6 @@ function SubTaskRow({
           </Text>
         ) : null}
       </PressableScale>
-      {row.waitingDetail.shown ? (
-        <WaitingTaskDetail
-          task={task}
-          onOpen={row.open}
-          onClose={row.waitingDetail.close}
-          openDisabled={row.unpaired}
-        />
-      ) : null}
       {row.menuShown ? (
         <AgentActionMenu
           testID={`task-row-menu-${task.taskId}`}
@@ -1024,7 +941,6 @@ export function SentTaskRow({
 const SUBTASK_INDENT = 16;
 
 const styles = StyleSheet.create({
-  waitingDetail: { paddingHorizontal: 8, paddingVertical: 8, gap: 8 },
   row: { paddingVertical: 4, gap: 2 },
   cardRow: { paddingVertical: 8, gap: 3 },
   cardTitleLine: { minHeight: 24, alignItems: 'baseline' },

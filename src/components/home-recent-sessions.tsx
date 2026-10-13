@@ -54,6 +54,8 @@ import { findAgent } from '@/lib/agent-discovery';
 import { agentDisplayName } from '@/lib/home-launch-model';
 import { useAgents } from '@/stores/agents';
 import { useHomeAgentSessions } from '@/stores/home-agent-sessions';
+import { useHomeAttention } from '@/stores/home-attention';
+import { taskAttentionView } from '@/lib/task-attention';
 import {
   agentSessionStatusPresentation,
   homeContinueCommand,
@@ -593,7 +595,13 @@ function RecentSessionRow({
         : entry.title || kind;
   const path = terminal ? terminalRowPath(title, cwd) : cwd ? homePathLabel(cwd) : undefined;
   const observation = useObservationNow(entry.observation);
-  const taskState = task?.state;
+  const requests = useHomeAttention((state) => state.byTarget);
+  const nowMs = useMinuteNow();
+  const displayTask =
+    task && target?.kind === 'agent-session'
+      ? taskAttentionView({ task, serverId: target.serverId, requests, nowMs })
+      : undefined;
+  const taskState = displayTask?.state;
   const status = taskState ?? observation?.status;
   const sessionStatus =
     !taskState && observation?.kind === 'agent-session' && observation.status
@@ -611,8 +619,8 @@ function RecentSessionRow({
       ? [stateLabel, t`Needs your input`].filter(Boolean).join(META_SEPARATOR)
       : stateLabel;
   // The task's tone is the one its card and Needs you row wear.
-  const statusTone = task
-    ? taskRowVisual(task, { canComplete: false, acknowledged: false }).tone
+  const statusTone = displayTask
+    ? taskRowVisual(displayTask, { canComplete: false, acknowledged: false }).tone
     : sessionStatus
       ? sessionStatus.tone
       : agentStatusTone(observation?.status);

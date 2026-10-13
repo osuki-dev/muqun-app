@@ -451,11 +451,30 @@ describe('buildComputerCards', () => {
 
   test('sorted needs-you, working, paused, idle; offline gets no card', () => {
     const cards = buildComputerCards({
+      requests: {
+        request: {
+          target: {
+            kind: 'agent-session',
+            serverId: 'asks',
+            asid: 'session',
+            sessionId: 'session',
+            directory: '/work',
+          },
+          requestIds: ['request'],
+          observedAt: NOW,
+        },
+      },
       servers: [...servers, { serverId: 'paused' }],
       index: index({
         idle: [task('d', 'done', 1)],
         busy: [task('w', 'working', 2)],
-        asks: [task('r', 'working', 3), task('c', 'waiting', 4, { parentTaskId: 'r' })],
+        asks: [
+          task('r', 'working', 3),
+          task('c', 'waiting', 4, {
+            parentTaskId: 'r',
+            binding: { kind: 'agent_session', agentId: 'agent', asid: 'session' },
+          }),
+        ],
         off: [task('w2', 'working', 5)],
         paused: [task('p', 'idle_unconfirmed', 6)],
       }),
@@ -690,7 +709,7 @@ describe('work that outlives its root', () => {
     });
     expect(card!.now.map((row) => row.task.taskId)).toEqual(['root']);
     expect(card!.finished).toEqual([]);
-    expect(card!.activity).toBe('needs-you');
+    expect(card!.activity).toBe('paused');
   });
 
   test('an open child known only from the count makes the card working', () => {

@@ -19,6 +19,9 @@ import type { ServerTasks } from '@/hooks/use-server-tasks';
 import { buildTaskTree, groupTaskTree } from '@/lib/home-computer-cards';
 import type { TaskView } from '@/lib/task-ledger';
 import { useAgents } from '@/stores/agents';
+import { useServerAgents } from '@/stores/server-agents';
+import { useHomeAttention } from '@/stores/home-attention';
+import { taskHasPendingInput } from '@/lib/task-attention';
 
 type Item =
   | { type: 'heading'; key: string; title: string; first: boolean }
@@ -54,6 +57,8 @@ export function ServerTasksSheet({
   const theme = useThemeTokens();
   const insets = useSafeAreaInsets();
   const discovery = useAgents((agents) => (serverId ? agents.index.servers[serverId] : undefined));
+  const panes = useServerAgents((agents) => (serverId ? agents.byServer[serverId] : undefined));
+  const requests = useHomeAttention((attention) => attention.byTarget);
   // Ages are relative to now: a tick keeps a sheet left open from saying
   // "just now" for a task that changed minutes ago.
   const [nowMs, setNowMs] = useState(() => Date.now());
@@ -68,7 +73,15 @@ export function ServerTasksSheet({
   const childrenOf = new Map(shownTree.map((row) => [row.task.taskId, row.children]));
   // A root goes where its most urgent work is: a waiting sub-task puts its
   // root under Needs you, open sub-work keeps a finished root In progress.
-  const groups = groupTaskTree(shownTree);
+  const groups = groupTaskTree(shownTree, (task) =>
+    taskHasPendingInput({
+      task,
+      serverId: serverId ?? '',
+      panes: state.live ? panes : undefined,
+      requests: state.live ? requests : {},
+      nowMs,
+    })
+  );
   const items: Item[] = [];
   const sections: [string, string, TaskView[]][] = [
     ['attention', t`Needs you`, groups.attention],
