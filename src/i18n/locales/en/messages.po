@@ -296,10 +296,6 @@ msgstr "{from} still lists an older {name}. Remove that entry on {from}"
 msgid "{gone} still lists {thisLabel}; remove it on {gone}'s Manage screen"
 msgstr "{gone} still lists {thisLabel}; remove it on {gone}'s Manage screen"
 
-#: src/components/home-launch-actions.tsx
-msgid "{hidden} more"
-msgstr "{hidden} more"
-
 #: src/components/bounded-markdown.tsx
 msgid "{hiddenKb} KB not shown"
 msgstr "{hiddenKb} KB not shown"
@@ -332,6 +328,10 @@ msgstr "{messages, plural, one {# message} other {# messages}}"
 msgid "{modifierKeys} combinations need the program in this terminal to enable extended keys"
 msgstr "{modifierKeys} combinations need the program in this terminal to enable extended keys"
 
+#: src/components/home-agent-sheet.tsx
+msgid "{name} (terminal)"
+msgstr "{name} (terminal)"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "{name} does not take work from other computers."
 msgstr "{name} does not take work from other computers"
@@ -355,6 +355,10 @@ msgstr "{name} was not found. Tap for installation instructions"
 #: src/components/session-map.tsx
 msgid "{panelCount, plural, one {# running} other {# running}}"
 msgstr "{panelCount, plural, one {# running} other {# running}}"
+
+#: src/components/home-composer-dock.tsx
+msgid "{providerName} (terminal)"
+msgstr "{providerName} (terminal)"
 
 #: src/components/row-action-menu.tsx
 msgid "{removeLabel}: {label}"
@@ -382,11 +386,6 @@ msgstr "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural,
 #: src/components/task-row.tsx
 msgid "→ {name}"
 msgstr "→ {name}"
-
-#. placeholder {0}: card.nowTotal - card.now.length
-#: src/components/home-computer-cards.tsx
-msgid "+{0} more"
-msgstr "+{0} more"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
@@ -580,6 +579,7 @@ msgid "Agent panes open in"
 msgstr "Agent panes open in"
 
 #: src/components/app-drawer-content.tsx
+#: src/components/new-task-action.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/settings-servers.tsx
 msgid "Agents"
@@ -894,6 +894,7 @@ msgid "Available modes"
 msgstr "Available modes"
 
 #: src/components/launch-intro.tsx
+#: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back"
@@ -907,6 +908,7 @@ msgstr "Back one word"
 msgid "Back to computers"
 msgstr "Back to computers"
 
+#: src/components/pad-server-rail.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Back to Home"
 msgstr "Back to Home"
@@ -963,6 +965,10 @@ msgstr "Blocked"
 msgid "Blocked by agent safety"
 msgstr "Blocked by agent safety"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Branch"
+msgstr "Branch"
+
 #: src/components/changes-sheet.tsx
 msgid "Branch {branch}"
 msgstr "Branch {branch}"
@@ -1007,6 +1013,10 @@ msgstr "Built-in"
 #: src/components/agent-context-sheet.tsx
 msgid "Cache read"
 msgstr "Cache read"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Cache write"
+msgstr "Cache write"
 
 #: src/components/settings-storage.tsx
 msgid "Calculating…"
@@ -1096,6 +1106,7 @@ msgctxt "git file status"
 msgid "Changed"
 msgstr "Changed"
 
+#: src/components/agent-message-block.tsx
 #: src/components/changes-sheet.tsx
 msgid "Changes"
 msgstr "Changes"
@@ -1286,7 +1297,6 @@ msgstr "Clears cache when due after opening Muqun. Saved themes are kept"
 
 #: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
-#: src/components/task-row.tsx
 msgid "Close"
 msgstr "Close"
 
@@ -1394,6 +1404,7 @@ msgstr "Command copied"
 msgid "Command mode"
 msgstr "Command mode"
 
+#: src/components/agent-context-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Commit"
 msgstr "Commit"
@@ -1432,6 +1443,8 @@ msgstr "Compaction failed — tap to dismiss"
 msgid "Compared with {base}"
 msgstr "Compared with {base}"
 
+#: src/components/agent-session-tree-sheet.tsx
+#: src/components/agent-tool-card.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Completed"
 msgstr "Completed"
@@ -1619,6 +1632,10 @@ msgstr "Context used"
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "Continue"
+
+#: src/components/agent-workbench.tsx
+msgid "Continue in the linked terminal. Your draft stays here."
+msgstr "Continue in the linked terminal. Your draft stays here"
 
 #: src/i18n/labels.ts
 msgid "Continue task"
@@ -1968,9 +1985,14 @@ msgstr "Could not open a terminal on this computer"
 msgid "Could not open destination"
 msgstr "Could not open destination"
 
+#: src/components/agent-workbench.tsx
 #: src/components/inline-file-link.tsx
 msgid "Could not open file"
 msgstr "Could not open file"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not open terminal"
+msgstr "Could not open terminal"
 
 #: src/hooks/use-theme-file-open.ts
 msgid "Could not open that theme"
@@ -2660,6 +2682,7 @@ msgstr "Export colours"
 msgid "Export theme"
 msgstr "Export theme"
 
+#: src/components/agent-tool-card.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Failed"
 msgstr "Failed"
@@ -2907,6 +2930,10 @@ msgstr "Get started"
 msgid "Git"
 msgstr "Git"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Git snapshot"
+msgstr "Git snapshot"
+
 #: src/i18n/labels.ts
 msgid "Git status"
 msgstr "Git status"
@@ -2991,7 +3018,6 @@ msgstr "Hide the simulator"
 msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
 msgstr "Hold Send to speak. Stop to add the text to your draft, then edit and send"
 
-#: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Home"
 msgstr "Home"
@@ -3425,6 +3451,10 @@ msgstr "Listening…"
 msgid "Live Activity"
 msgstr "Live Activity"
 
+#: src/components/agent-workbench.tsx
+msgid "Live control is unavailable for this saved history. Your draft stays here."
+msgstr "Live control is unavailable for this saved history. Your draft stays here"
+
 #: src/components/list-load-more-footer.tsx
 msgid "Load more"
 msgstr "Load more"
@@ -3616,10 +3646,6 @@ msgstr "Monospace"
 msgid "More actions"
 msgstr "More actions"
 
-#: src/components/home-launch-actions.tsx
-msgid "More agents"
-msgstr "More agents"
-
 #: src/components/virtual-keyboard.tsx
 msgid "More symbols"
 msgstr "More symbols"
@@ -3639,7 +3665,6 @@ msgstr "Move to worktree"
 
 #: src/components/app-drawer-content.tsx
 #: src/components/in-app-notification-host.tsx
-#: src/components/pad-server-rail.tsx
 msgid "Muqun"
 msgstr "Muqun"
 
@@ -3706,6 +3731,10 @@ msgstr "Name"
 msgid "Name it, then enter the code shown by the Gateway."
 msgstr "Name it, then enter the code shown by the Gateway"
 
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Needs input"
+msgstr "Needs input"
+
 #: src/i18n/labels.ts
 msgid "Needs setup"
 msgstr "Needs setup"
@@ -3730,7 +3759,6 @@ msgstr "Needs your attention"
 #: src/components/home-recent-sessions.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/server-agent-rows.tsx
-#: src/components/task-row.tsx
 #: src/lib/notifications.ts
 msgid "Needs your input"
 msgstr "Needs your input"
@@ -3811,6 +3839,14 @@ msgstr "Next notification"
 #: src/components/agent-title-pill.tsx
 msgid "Next session"
 msgstr "Next session"
+
+#: src/components/agent-composer.tsx
+msgid "Next turn: {nextTurnModelName}"
+msgstr "Next turn: {nextTurnModelName}"
+
+#: src/components/agent-composer.tsx
+msgid "Next turn: {nextTurnModelName}. Staged until the next turn or Gateway restart."
+msgstr "Next turn: {nextTurnModelName}. Staged until the next turn or Gateway restart"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
@@ -3959,10 +3995,6 @@ msgstr "No projects here yet. Type a path above to open one"
 msgid "No projects match “{0}”."
 msgstr "No projects match “{0}”"
 
-#: src/components/task-row.tsx
-msgid "No reason was recorded."
-msgstr "No reason was recorded"
-
 #: src/app/computer-map.tsx
 msgid "No reported links."
 msgstr "No reported links"
@@ -4047,6 +4079,10 @@ msgstr "Not accepting work"
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "Not available"
+
+#: src/components/home-agent-sheet.tsx
+msgid "Not available on this computer"
+msgstr "Not available on this computer"
 
 #: src/components/settings-server-capabilities.tsx
 msgid "Not configured"
@@ -4239,6 +4275,7 @@ msgid "Open as file"
 msgstr "Open as file"
 
 #: src/components/agent-message-block.tsx
+#: src/components/pane-chat-blocks.tsx
 msgid "Open attachment"
 msgstr "Open attachment"
 
@@ -4323,6 +4360,7 @@ msgstr "Open SSH host {0}"
 msgid "Open T3 Code on the computer (or run t3 service install), then check again."
 msgstr "Open T3 Code on the computer (or run t3 service install), then check again"
 
+#: src/components/agent-runtime-notice.tsx
 #: src/components/collaboration-notice.tsx
 #: src/hooks/use-lazygit.ts
 msgid "Open terminal"
@@ -4911,6 +4949,10 @@ msgstr "Refresh changes"
 msgid "Refresh files"
 msgstr "Refresh files"
 
+#: src/components/agent-runtime-notice.tsx
+msgid "Refresh history"
+msgstr "Refresh history"
+
 #: src/lib/terminal-history-pull.ts
 msgid "Refresh history to load the current snapshot."
 msgstr "Refresh history to load the current snapshot"
@@ -4935,6 +4977,10 @@ msgstr "Refresh to see new saved output"
 #: src/components/git-diff-view.tsx
 msgid "Refresh worktrees"
 msgstr "Refresh worktrees"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Refreshing history…"
+msgstr "Refreshing history…"
 
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
@@ -5027,10 +5073,6 @@ msgstr "Replay audio"
 #: src/app/settings-about.tsx
 msgid "Report a bug or request a feature"
 msgstr "Report a bug or request a feature"
-
-#: src/components/task-row.tsx
-msgid "Reported blocker"
-msgstr "Reported blocker"
 
 #: src/app/computer-map.tsx
 msgid "Reported reachable"
@@ -5230,6 +5272,10 @@ msgstr "Run in background"
 msgid "Run it under systemd or tmux to keep it up after you log out."
 msgstr "Run it under systemd or tmux to keep it up after you log out"
 
+#: src/i18n/labels.ts
+msgid "Run muqun-gateway agent setup codex on the computer for setup instructions. Gateway starts its own Codex connection using the host's existing configuration and sign-in."
+msgstr "Run muqun-gateway agent setup codex on the computer for setup instructions. Gateway starts its own Codex connection using the host's existing configuration and sign-in"
+
 #: src/components/guide-command.tsx
 msgid "Run on {computerLabel}"
 msgstr "Run on {computerLabel}"
@@ -5310,6 +5356,10 @@ msgstr "Saved"
 #: src/app/commands.tsx
 msgid "Saved commands"
 msgstr "Saved commands"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Saved history · Live status unavailable"
+msgstr "Saved history · Live status unavailable"
 
 #: src/components/pane-history-sheet.tsx
 msgid "Saved observations"
@@ -5523,7 +5573,6 @@ msgstr "Session unavailable"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/home-launch-actions.tsx
-#: src/components/home-recent-sessions.tsx
 #: src/components/session-map.tsx
 msgid "Sessions"
 msgstr "Sessions"
@@ -5625,10 +5674,6 @@ msgstr "Show {0}"
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "Show agents and their status on the home screen. Updates while Muqun is open"
 
-#: src/components/home-recent-sessions.tsx
-msgid "Show all"
-msgstr "Show all"
-
 #: src/components/theme-appearance-settings.tsx
 msgid "Show artwork on Home"
 msgstr "Show artwork on Home"
@@ -5653,13 +5698,18 @@ msgstr "Show Home logo"
 msgid "Show Home text"
 msgstr "Show Home text"
 
+#: src/components/home-computer-cards.tsx
 #: src/components/home-recent-sessions.tsx
+#: src/components/server-agent-rows.tsx
 msgid "Show less"
 msgstr "Show less"
 
 #: src/components/agent-tool-card.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/diff-rows.tsx
+#: src/components/home-computer-cards.tsx
+#: src/components/home-recent-sessions.tsx
+#: src/components/server-agent-rows.tsx
 msgid "Show more"
 msgstr "Show more"
 
@@ -5902,6 +5952,10 @@ msgstr "Started {started}"
 msgid "Started with a clean context."
 msgstr "Started with a clean context"
 
+#: src/components/agent-tool-card.tsx
+msgid "Starting"
+msgstr "Starting"
+
 #: src/i18n/labels.ts
 msgctxt "task state"
 msgid "Starting"
@@ -5996,6 +6050,7 @@ msgid "Stop this command"
 msgstr "Stop this command"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/agent-tool-card.tsx
 #: src/components/agent-workbench.tsx
 #: src/i18n/labels.ts
 msgid "Stopped"
@@ -6194,6 +6249,30 @@ msgstr "Temporary files"
 msgid "Terminal"
 msgstr "Terminal"
 
+#: src/components/agent-runtime-notice.tsx
+msgid "Terminal · Completed"
+msgstr "Terminal · Completed"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Terminal · Idle"
+msgstr "Terminal · Idle"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Terminal · Needs input"
+msgstr "Terminal · Needs input"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Terminal · Starting"
+msgstr "Terminal · Starting"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Terminal · Status unavailable"
+msgstr "Terminal · Status unavailable"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Terminal · Working"
+msgstr "Terminal · Working"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Terminal background opacity"
 msgstr "Terminal background opacity"
@@ -6223,6 +6302,7 @@ msgstr "Terminal key row"
 msgid "Terminal resized"
 msgstr "Terminal resized"
 
+#: src/components/agent-workbench.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-home-commands.ts
 msgid "Terminal unavailable"
@@ -6296,6 +6376,10 @@ msgstr "The agent is no longer waiting"
 #: src/components/agent-composer.tsx
 msgid "The agent is offline"
 msgstr "The agent is offline"
+
+#: src/components/agent-workbench.tsx
+msgid "The agent is still running"
+msgstr "The agent is still running"
 
 #: src/lib/network-error.ts
 msgid "The agent is waiting for an answer. Use the question's controls or the terminal keyboard to respond. Your message has not been sent."
@@ -6374,6 +6458,10 @@ msgstr "The icon on your home screen. Android closes the app to apply it"
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "The key could not be read ({0}). Check the key and its passphrase"
 
+#: src/components/agent-workbench.tsx
+msgid "The linked agent is no longer in that terminal."
+msgstr "The linked agent is no longer in that terminal"
+
 #: src/components/session-map.tsx
 msgid "The new terminal was created, but could not open it."
 msgstr "The new terminal was created, but could not open it"
@@ -6433,10 +6521,6 @@ msgstr "The speech service returned an invalid transcript"
 #: src/app/commands.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale"
-
-#: src/components/task-row.tsx
-msgid "The task was recorded as waiting. Open its session to check the current state."
-msgstr "The task was recorded as waiting. Open its session to check the current state"
 
 #: src/components/guide-command.tsx
 msgid "The terminal opened, but the command could not be typed."
@@ -6504,6 +6588,10 @@ msgstr "There is no rollback waiting to be applied"
 #: src/components/agent-workbench.tsx
 msgid "Thinking…"
 msgstr "Thinking…"
+
+#: src/components/agent-composer.tsx
+msgid "This agent accepts messages after its turn ends. Your draft stays here."
+msgstr "This agent accepts messages after its turn ends. Your draft stays here"
 
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
@@ -6819,6 +6907,7 @@ msgstr "Trust"
 
 #: src/app/new-task.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/agent-workbench.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/audio-asset-preview.tsx
@@ -6885,6 +6974,7 @@ msgid "Type on the simulator"
 msgstr "Type on the simulator"
 
 #: src/app/pane-history.tsx
+#: src/components/agent-tool-card.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/task-result-sheet.tsx
 msgid "Unavailable"
@@ -7167,9 +7257,17 @@ msgstr "Voice to text"
 msgid "Voice to text disabled"
 msgstr "Voice to text disabled"
 
+#: src/components/agent-workbench.tsx
+msgid "Wait for the turn to end before choosing a model."
+msgstr "Wait for the turn to end before choosing a model"
+
 #: src/components/skia-terminal.web.tsx
 msgid "Waiting for output…"
 msgstr "Waiting for output…"
+
+#: src/components/agent-composer.tsx
+msgid "Waiting for the current turn to end"
+msgstr "Waiting for the current turn to end"
 
 #: src/lib/network-error.ts
 msgid "Waiting for the network."
@@ -7213,6 +7311,7 @@ msgstr "What's new"
 msgid "While you were away"
 msgstr "While you were away"
 
+#: src/components/agent-tool-card.tsx
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
 msgid "Working"
@@ -7297,7 +7396,6 @@ msgstr "You"
 
 #: src/components/app-drawer-content.tsx
 #: src/components/home-overview.tsx
-#: src/components/pad-server-rail.tsx
 msgid "Your agents, anywhere."
 msgstr "Your agents, anywhere"
 

@@ -296,10 +296,6 @@ msgstr "{from} に古い {name} の項目が残っています。{from} でそ�
 msgid "{gone} still lists {thisLabel}; remove it on {gone}'s Manage screen"
 msgstr "{gone} にはまだ {thisLabel} が登録されています。{gone} の管理画面で削除してください"
 
-#: src/components/home-launch-actions.tsx
-msgid "{hidden} more"
-msgstr "他 {hidden} 件"
-
 #: src/components/bounded-markdown.tsx
 msgid "{hiddenKb} KB not shown"
 msgstr "{hiddenKb} KB は非表示"
@@ -332,6 +328,10 @@ msgstr "{messages, plural, other {# 件のメッセージ}}"
 msgid "{modifierKeys} combinations need the program in this terminal to enable extended keys"
 msgstr "{modifierKeys} の組み合わせを使うには、このターミナルのプログラムが拡張キーを有効にする必要があります"
 
+#: src/components/home-agent-sheet.tsx
+msgid "{name} (terminal)"
+msgstr "{name}（ターミナル）"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "{name} does not take work from other computers."
 msgstr "{name} は他のコンピューターからの作業を受け付けません"
@@ -355,6 +355,10 @@ msgstr "{name} が見つかりませんでした。タップしてインスト�
 #: src/components/session-map.tsx
 msgid "{panelCount, plural, one {# running} other {# running}}"
 msgstr "{panelCount, plural, one {# 実行中} other {# 実行中}}"
+
+#: src/components/home-composer-dock.tsx
+msgid "{providerName} (terminal)"
+msgstr "{providerName}（ターミナル）"
 
 #: src/components/row-action-menu.tsx
 msgid "{removeLabel}: {label}"
@@ -382,11 +386,6 @@ msgstr "{total, plural, other {サブタスク # 件}}（{waiting, plural, other
 #: src/components/task-row.tsx
 msgid "→ {name}"
 msgstr "→ {name}"
-
-#. placeholder {0}: card.nowTotal - card.now.length
-#: src/components/home-computer-cards.tsx
-msgid "+{0} more"
-msgstr "他 {0} 件"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
@@ -580,6 +579,7 @@ msgid "Agent panes open in"
 msgstr "エージェントのパネルの初期表示"
 
 #: src/components/app-drawer-content.tsx
+#: src/components/new-task-action.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/settings-servers.tsx
 msgid "Agents"
@@ -894,6 +894,7 @@ msgid "Available modes"
 msgstr "利用できるモード"
 
 #: src/components/launch-intro.tsx
+#: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back"
@@ -907,6 +908,7 @@ msgstr "1 単語戻る"
 msgid "Back to computers"
 msgstr "コンピュータ一覧に戻る"
 
+#: src/components/pad-server-rail.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Back to Home"
 msgstr "ホームに戻る"
@@ -963,6 +965,10 @@ msgstr "応答待ち"
 msgid "Blocked by agent safety"
 msgstr "エージェントの安全機能がブロックしました"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Branch"
+msgstr "ブランチ"
+
 #: src/components/changes-sheet.tsx
 msgid "Branch {branch}"
 msgstr "ブランチ {branch}"
@@ -1007,6 +1013,10 @@ msgstr "標準"
 #: src/components/agent-context-sheet.tsx
 msgid "Cache read"
 msgstr "キャッシュ読み取り"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Cache write"
+msgstr "キャッシュ書き込み"
 
 #: src/components/settings-storage.tsx
 msgid "Calculating…"
@@ -1096,6 +1106,7 @@ msgctxt "git file status"
 msgid "Changed"
 msgstr "変更"
 
+#: src/components/agent-message-block.tsx
 #: src/components/changes-sheet.tsx
 msgid "Changes"
 msgstr "変更点"
@@ -1286,7 +1297,6 @@ msgstr "設定した間隔が経過すると、Muqunを開いた後にキャッ�
 
 #: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
-#: src/components/task-row.tsx
 msgid "Close"
 msgstr "閉じる"
 
@@ -1394,6 +1404,7 @@ msgstr "コマンドをコピーしました"
 msgid "Command mode"
 msgstr "コマンドモード"
 
+#: src/components/agent-context-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Commit"
 msgstr "コミット"
@@ -1432,6 +1443,8 @@ msgstr "圧縮に失敗しました — タップで閉じる"
 msgid "Compared with {base}"
 msgstr "{base} と比較"
 
+#: src/components/agent-session-tree-sheet.tsx
+#: src/components/agent-tool-card.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Completed"
 msgstr "完了"
@@ -1619,6 +1632,10 @@ msgstr "コンテキスト使用量"
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "続行"
+
+#: src/components/agent-workbench.tsx
+msgid "Continue in the linked terminal. Your draft stays here."
+msgstr "リンク先のターミナルで続けてください。下書きはここに残ります"
 
 #: src/i18n/labels.ts
 msgid "Continue task"
@@ -1968,9 +1985,14 @@ msgstr "このコンピュータでターミナルを開けませんでした"
 msgid "Could not open destination"
 msgstr "目的地を開けませんでした"
 
+#: src/components/agent-workbench.tsx
 #: src/components/inline-file-link.tsx
 msgid "Could not open file"
 msgstr "ファイルを開けませんでした"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not open terminal"
+msgstr "ターミナルを開けませんでした"
 
 #: src/hooks/use-theme-file-open.ts
 msgid "Could not open that theme"
@@ -2660,6 +2682,7 @@ msgstr "色をエクスポート"
 msgid "Export theme"
 msgstr "テーマをエクスポート"
 
+#: src/components/agent-tool-card.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Failed"
 msgstr "失敗"
@@ -2907,6 +2930,10 @@ msgstr "はじめる"
 msgid "Git"
 msgstr "Git"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Git snapshot"
+msgstr "Git スナップショット"
+
 #: src/i18n/labels.ts
 msgid "Git status"
 msgstr "Git ステータス"
@@ -2991,7 +3018,6 @@ msgstr "シミュレータを隠す"
 msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
 msgstr "送信ボタンを長押しして話します。録音を停止するとテキストが下書きに追加され、編集してから送信できます"
 
-#: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Home"
 msgstr "ホーム"
@@ -3425,6 +3451,10 @@ msgstr "聞き取り中…"
 msgid "Live Activity"
 msgstr "ライブアクティビティ"
 
+#: src/components/agent-workbench.tsx
+msgid "Live control is unavailable for this saved history. Your draft stays here."
+msgstr "この保存済み履歴ではリアルタイム操作はできません。下書きはここに残ります"
+
 #: src/components/list-load-more-footer.tsx
 msgid "Load more"
 msgstr "さらに読み込む"
@@ -3616,10 +3646,6 @@ msgstr "等幅"
 msgid "More actions"
 msgstr "その他の操作"
 
-#: src/components/home-launch-actions.tsx
-msgid "More agents"
-msgstr "その他のエージェント"
-
 #: src/components/virtual-keyboard.tsx
 msgid "More symbols"
 msgstr "その他の記号"
@@ -3639,7 +3665,6 @@ msgstr "ワークツリーへ移動"
 
 #: src/components/app-drawer-content.tsx
 #: src/components/in-app-notification-host.tsx
-#: src/components/pad-server-rail.tsx
 msgid "Muqun"
 msgstr "牧群"
 
@@ -3706,6 +3731,10 @@ msgstr "名前"
 msgid "Name it, then enter the code shown by the Gateway."
 msgstr "名前を付けて、Gateway に表示されたコードを入力してください"
 
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Needs input"
+msgstr "入力が必要"
+
 #: src/i18n/labels.ts
 msgid "Needs setup"
 msgstr "要セットアップ"
@@ -3730,7 +3759,6 @@ msgstr "対応が必要です"
 #: src/components/home-recent-sessions.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/server-agent-rows.tsx
-#: src/components/task-row.tsx
 #: src/lib/notifications.ts
 msgid "Needs your input"
 msgstr "入力が必要です"
@@ -3811,6 +3839,14 @@ msgstr "次の通知"
 #: src/components/agent-title-pill.tsx
 msgid "Next session"
 msgstr "次のセッション"
+
+#: src/components/agent-composer.tsx
+msgid "Next turn: {nextTurnModelName}"
+msgstr "次のターン：{nextTurnModelName}"
+
+#: src/components/agent-composer.tsx
+msgid "Next turn: {nextTurnModelName}. Staged until the next turn or Gateway restart."
+msgstr "次のターン：{nextTurnModelName}。次のターンまたは Gateway の再起動まで仮設定を保持します"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
@@ -3959,10 +3995,6 @@ msgstr "まだプロジェクトがありません。上にパスを入力して
 msgid "No projects match “{0}”."
 msgstr "「{0}」に一致するプロジェクトはありません"
 
-#: src/components/task-row.tsx
-msgid "No reason was recorded."
-msgstr "理由は記録されていません"
-
 #: src/app/computer-map.tsx
 msgid "No reported links."
 msgstr "報告された接続はありません"
@@ -4047,6 +4079,10 @@ msgstr "作業の受け付け停止中"
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "利用できません"
+
+#: src/components/home-agent-sheet.tsx
+msgid "Not available on this computer"
+msgstr "このコンピュータでは利用できません"
 
 #: src/components/settings-server-capabilities.tsx
 msgid "Not configured"
@@ -4239,6 +4275,7 @@ msgid "Open as file"
 msgstr "ファイルとして開く"
 
 #: src/components/agent-message-block.tsx
+#: src/components/pane-chat-blocks.tsx
 msgid "Open attachment"
 msgstr "添付ファイルを開く"
 
@@ -4323,6 +4360,7 @@ msgstr "SSH ホスト {0} を開く"
 msgid "Open T3 Code on the computer (or run t3 service install), then check again."
 msgstr "コンピュータで T3 Code を開いて（または t3 service install を実行して）から、もう一度確認してください"
 
+#: src/components/agent-runtime-notice.tsx
 #: src/components/collaboration-notice.tsx
 #: src/hooks/use-lazygit.ts
 msgid "Open terminal"
@@ -4911,6 +4949,10 @@ msgstr "変更点を再読み込み"
 msgid "Refresh files"
 msgstr "ファイルを再読み込み"
 
+#: src/components/agent-runtime-notice.tsx
+msgid "Refresh history"
+msgstr "履歴を更新"
+
 #: src/lib/terminal-history-pull.ts
 msgid "Refresh history to load the current snapshot."
 msgstr "現在のスナップショットを読み込むには履歴を更新してください"
@@ -4935,6 +4977,10 @@ msgstr "更新すると、新しく保存された出力が表示されます"
 #: src/components/git-diff-view.tsx
 msgid "Refresh worktrees"
 msgstr "ワークツリーを更新"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Refreshing history…"
+msgstr "履歴を更新中…"
 
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
@@ -5027,10 +5073,6 @@ msgstr "音声をもう一度再生"
 #: src/app/settings-about.tsx
 msgid "Report a bug or request a feature"
 msgstr "不具合の報告・機能のリクエスト"
-
-#: src/components/task-row.tsx
-msgid "Reported blocker"
-msgstr "報告された障害"
 
 #: src/app/computer-map.tsx
 msgid "Reported reachable"
@@ -5230,6 +5272,10 @@ msgstr "バックグラウンドで実行"
 msgid "Run it under systemd or tmux to keep it up after you log out."
 msgstr "ログアウト後も動かし続けるには systemd か tmux の下で実行してください"
 
+#: src/i18n/labels.ts
+msgid "Run muqun-gateway agent setup codex on the computer for setup instructions. Gateway starts its own Codex connection using the host's existing configuration and sign-in."
+msgstr "設定手順を確認するには、コンピュータで muqun-gateway agent setup codex を実行してください。Gateway はホストの既存の設定とログイン情報を使って、独自の Codex 接続を開始します"
+
 #: src/components/guide-command.tsx
 msgid "Run on {computerLabel}"
 msgstr "{computerLabel} で実行"
@@ -5310,6 +5356,10 @@ msgstr "保存済み"
 #: src/app/commands.tsx
 msgid "Saved commands"
 msgstr "保存したコマンド"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Saved history · Live status unavailable"
+msgstr "保存済み履歴 · 現在の状態は取得できません"
 
 #: src/components/pane-history-sheet.tsx
 msgid "Saved observations"
@@ -5523,7 +5573,6 @@ msgstr "セッションを利用できません"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/home-launch-actions.tsx
-#: src/components/home-recent-sessions.tsx
 #: src/components/session-map.tsx
 msgid "Sessions"
 msgstr "セッション"
@@ -5625,10 +5674,6 @@ msgstr "{0} を表示"
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "ホーム画面にエージェントとその状態を表示します。牧群（ぼくぐん）を開いている間は更新され続けます"
 
-#: src/components/home-recent-sessions.tsx
-msgid "Show all"
-msgstr "すべて表示"
-
 #: src/components/theme-appearance-settings.tsx
 msgid "Show artwork on Home"
 msgstr "ホームにアートワークを表示"
@@ -5653,13 +5698,18 @@ msgstr "ホームのロゴを表示"
 msgid "Show Home text"
 msgstr "ホームのテキストを表示"
 
+#: src/components/home-computer-cards.tsx
 #: src/components/home-recent-sessions.tsx
+#: src/components/server-agent-rows.tsx
 msgid "Show less"
 msgstr "表示を減らす"
 
 #: src/components/agent-tool-card.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/diff-rows.tsx
+#: src/components/home-computer-cards.tsx
+#: src/components/home-recent-sessions.tsx
+#: src/components/server-agent-rows.tsx
 msgid "Show more"
 msgstr "さらに表示"
 
@@ -5902,6 +5952,10 @@ msgstr "開始日時：{started}"
 msgid "Started with a clean context."
 msgstr "まっさらなコンテキストで開始しました"
 
+#: src/components/agent-tool-card.tsx
+msgid "Starting"
+msgstr "起動中"
+
 #: src/i18n/labels.ts
 msgctxt "task state"
 msgid "Starting"
@@ -5996,6 +6050,7 @@ msgid "Stop this command"
 msgstr "このコマンドを停止"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/agent-tool-card.tsx
 #: src/components/agent-workbench.tsx
 #: src/i18n/labels.ts
 msgid "Stopped"
@@ -6194,6 +6249,30 @@ msgstr "一時ファイル"
 msgid "Terminal"
 msgstr "ターミナル"
 
+#: src/components/agent-runtime-notice.tsx
+msgid "Terminal · Completed"
+msgstr "ターミナル · 完了"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Terminal · Idle"
+msgstr "ターミナル · 待機"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Terminal · Needs input"
+msgstr "ターミナル · 入力が必要"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Terminal · Starting"
+msgstr "ターミナル · 起動中"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Terminal · Status unavailable"
+msgstr "ターミナル · 状態を取得できません"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Terminal · Working"
+msgstr "ターミナル · 作業中"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Terminal background opacity"
 msgstr "ターミナルの背景の不透明度"
@@ -6223,6 +6302,7 @@ msgstr "ターミナルキー行"
 msgid "Terminal resized"
 msgstr "ターミナルのサイズ変更"
 
+#: src/components/agent-workbench.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-home-commands.ts
 msgid "Terminal unavailable"
@@ -6296,6 +6376,10 @@ msgstr "エージェントはもう待っていません"
 #: src/components/agent-composer.tsx
 msgid "The agent is offline"
 msgstr "エージェントはオフラインです"
+
+#: src/components/agent-workbench.tsx
+msgid "The agent is still running"
+msgstr "エージェントはまだ実行中です"
 
 #: src/lib/network-error.ts
 msgid "The agent is waiting for an answer. Use the question's controls or the terminal keyboard to respond. Your message has not been sent."
@@ -6374,6 +6458,10 @@ msgstr "ホーム画面に表示されるアイコンです。Android では適�
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "鍵を読み取れませんでした（{0}）。鍵とパスフレーズを確認してください"
 
+#: src/components/agent-workbench.tsx
+msgid "The linked agent is no longer in that terminal."
+msgstr "リンクされたエージェントはそのターミナルにいません"
+
 #: src/components/session-map.tsx
 msgid "The new terminal was created, but could not open it."
 msgstr "新しいターミナルは作成されましたが、開けませんでした"
@@ -6433,10 +6521,6 @@ msgstr "音声サービスから無効な文字起こしが返されました"
 #: src/app/commands.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "SSH トンネルが運ぶのは Gateway のポートだけで、他のポートは通しません。そのためここからはシミュレータにもブラウザーにも届きません。ローカルネットワークか Tailscale で接続してください"
-
-#: src/components/task-row.tsx
-msgid "The task was recorded as waiting. Open its session to check the current state."
-msgstr "タスクは待機中として記録されています。セッションを開いて現在の状態を確認してください"
 
 #: src/components/guide-command.tsx
 msgid "The terminal opened, but the command could not be typed."
@@ -6504,6 +6588,10 @@ msgstr "適用待ちのロールバックはありません"
 #: src/components/agent-workbench.tsx
 msgid "Thinking…"
 msgstr "思考中…"
+
+#: src/components/agent-composer.tsx
+msgid "This agent accepts messages after its turn ends. Your draft stays here."
+msgstr "このエージェントはターン終了後にメッセージを受け付けます。下書きはここに残ります"
 
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
@@ -6819,6 +6907,7 @@ msgstr "信頼する"
 
 #: src/app/new-task.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/agent-workbench.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/audio-asset-preview.tsx
@@ -6885,6 +6974,7 @@ msgid "Type on the simulator"
 msgstr "シミュレータに入力する"
 
 #: src/app/pane-history.tsx
+#: src/components/agent-tool-card.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/task-result-sheet.tsx
 msgid "Unavailable"
@@ -7167,9 +7257,17 @@ msgstr "音声を文字に変換"
 msgid "Voice to text disabled"
 msgstr "音声の文字変換は無効です"
 
+#: src/components/agent-workbench.tsx
+msgid "Wait for the turn to end before choosing a model."
+msgstr "ターンが終了してからモデルを選択してください"
+
 #: src/components/skia-terminal.web.tsx
 msgid "Waiting for output…"
 msgstr "出力を待っています…"
+
+#: src/components/agent-composer.tsx
+msgid "Waiting for the current turn to end"
+msgstr "現在のターンの終了を待っています"
 
 #: src/lib/network-error.ts
 msgid "Waiting for the network."
@@ -7213,6 +7311,7 @@ msgstr "新着情報"
 msgid "While you were away"
 msgstr "離席中の変化"
 
+#: src/components/agent-tool-card.tsx
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
 msgid "Working"
@@ -7297,7 +7396,6 @@ msgstr "あなた"
 
 #: src/components/app-drawer-content.tsx
 #: src/components/home-overview.tsx
-#: src/components/pad-server-rail.tsx
 msgid "Your agents, anywhere."
 msgstr "どこでも、エージェントと"
 

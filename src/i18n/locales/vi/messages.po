@@ -296,10 +296,6 @@ msgstr "{from} vẫn còn một mục {name} cũ. Hãy xóa mục đó trên {fr
 msgid "{gone} still lists {thisLabel}; remove it on {gone}'s Manage screen"
 msgstr "{gone} vẫn còn {thisLabel}; hãy xóa trên màn hình Quản lý của {gone}"
 
-#: src/components/home-launch-actions.tsx
-msgid "{hidden} more"
-msgstr "thêm {hidden}"
-
 #: src/components/bounded-markdown.tsx
 msgid "{hiddenKb} KB not shown"
 msgstr "{hiddenKb} KB không hiển thị"
@@ -332,6 +328,10 @@ msgstr "{messages, plural, other {# tin nhắn}}"
 msgid "{modifierKeys} combinations need the program in this terminal to enable extended keys"
 msgstr "Tổ hợp {modifierKeys} cần chương trình trong terminal này bật phím mở rộng"
 
+#: src/components/home-agent-sheet.tsx
+msgid "{name} (terminal)"
+msgstr "{name} (trong terminal)"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "{name} does not take work from other computers."
 msgstr "{name} không nhận việc từ các máy tính khác"
@@ -355,6 +355,10 @@ msgstr "Không tìm thấy {name}. Chạm để xem hướng dẫn cài đặt"
 #: src/components/session-map.tsx
 msgid "{panelCount, plural, one {# running} other {# running}}"
 msgstr "{panelCount, plural, other {# đang chạy}}"
+
+#: src/components/home-composer-dock.tsx
+msgid "{providerName} (terminal)"
+msgstr "{providerName} (trong terminal)"
 
 #: src/components/row-action-menu.tsx
 msgid "{removeLabel}: {label}"
@@ -382,11 +386,6 @@ msgstr "{total, plural, other {# nhiệm vụ con}} ({waiting, plural, other {# 
 #: src/components/task-row.tsx
 msgid "→ {name}"
 msgstr "→ {name}"
-
-#. placeholder {0}: card.nowTotal - card.now.length
-#: src/components/home-computer-cards.tsx
-msgid "+{0} more"
-msgstr "+{0} nữa"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
@@ -580,6 +579,7 @@ msgid "Agent panes open in"
 msgstr "Ngăn tác tử mở ở"
 
 #: src/components/app-drawer-content.tsx
+#: src/components/new-task-action.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/settings-servers.tsx
 msgid "Agents"
@@ -894,6 +894,7 @@ msgid "Available modes"
 msgstr "Các chế độ có sẵn"
 
 #: src/components/launch-intro.tsx
+#: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back"
@@ -907,6 +908,7 @@ msgstr "Lùi một từ"
 msgid "Back to computers"
 msgstr "Về danh sách máy tính"
 
+#: src/components/pad-server-rail.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Back to Home"
 msgstr "Về Trang chủ"
@@ -963,6 +965,10 @@ msgstr "Đang chờ"
 msgid "Blocked by agent safety"
 msgstr "Bị chặn bởi tính năng an toàn của agent"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Branch"
+msgstr "Nhánh"
+
 #: src/components/changes-sheet.tsx
 msgid "Branch {branch}"
 msgstr "Nhánh {branch}"
@@ -1007,6 +1013,10 @@ msgstr "Có sẵn"
 #: src/components/agent-context-sheet.tsx
 msgid "Cache read"
 msgstr "Đọc bộ nhớ đệm"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Cache write"
+msgstr "Ghi bộ nhớ đệm"
 
 #: src/components/settings-storage.tsx
 msgid "Calculating…"
@@ -1096,6 +1106,7 @@ msgctxt "git file status"
 msgid "Changed"
 msgstr "Đã thay đổi"
 
+#: src/components/agent-message-block.tsx
 #: src/components/changes-sheet.tsx
 msgid "Changes"
 msgstr "Thay đổi"
@@ -1286,7 +1297,6 @@ msgstr "Dọn bộ nhớ đệm sau khi mở Muqun khi đến hạn. Các chủ 
 
 #: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
-#: src/components/task-row.tsx
 msgid "Close"
 msgstr "Đóng"
 
@@ -1394,6 +1404,7 @@ msgstr "Đã sao chép lệnh"
 msgid "Command mode"
 msgstr "Chế độ lệnh"
 
+#: src/components/agent-context-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Commit"
 msgstr "Commit"
@@ -1432,6 +1443,8 @@ msgstr "Nén thất bại — chạm để bỏ qua"
 msgid "Compared with {base}"
 msgstr "So với {base}"
 
+#: src/components/agent-session-tree-sheet.tsx
+#: src/components/agent-tool-card.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Completed"
 msgstr "Đã hoàn tất"
@@ -1619,6 +1632,10 @@ msgstr "Ngữ cảnh đã dùng"
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "Tiếp tục"
+
+#: src/components/agent-workbench.tsx
+msgid "Continue in the linked terminal. Your draft stays here."
+msgstr "Tiếp tục trong terminal được liên kết. Bản nháp của bạn vẫn ở đây"
 
 #: src/i18n/labels.ts
 msgid "Continue task"
@@ -1968,9 +1985,14 @@ msgstr "Không mở được cửa sổ dòng lệnh trên máy này"
 msgid "Could not open destination"
 msgstr "Không thể mở đích đến"
 
+#: src/components/agent-workbench.tsx
 #: src/components/inline-file-link.tsx
 msgid "Could not open file"
 msgstr "Không thể mở tệp"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not open terminal"
+msgstr "Không thể mở terminal"
 
 #: src/hooks/use-theme-file-open.ts
 msgid "Could not open that theme"
@@ -2660,6 +2682,7 @@ msgstr "Xuất màu sắc"
 msgid "Export theme"
 msgstr "Xuất giao diện"
 
+#: src/components/agent-tool-card.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Failed"
 msgstr "Thất bại"
@@ -2907,6 +2930,10 @@ msgstr "Bắt đầu"
 msgid "Git"
 msgstr "Git"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Git snapshot"
+msgstr "Ảnh chụp trạng thái Git"
+
 #: src/i18n/labels.ts
 msgid "Git status"
 msgstr "Trạng thái Git"
@@ -2991,7 +3018,6 @@ msgstr "Ẩn trình giả lập"
 msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
 msgstr "Nhấn giữ nút Gửi để nói. Dừng ghi âm để thêm văn bản vào bản nháp, sau đó chỉnh sửa và gửi"
 
-#: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Home"
 msgstr "Trang chủ"
@@ -3425,6 +3451,10 @@ msgstr "Đang nghe…"
 msgid "Live Activity"
 msgstr "Live Activity"
 
+#: src/components/agent-workbench.tsx
+msgid "Live control is unavailable for this saved history. Your draft stays here."
+msgstr "Không thể điều khiển trực tiếp lịch sử đã lưu này. Bản nháp của bạn vẫn ở đây"
+
 #: src/components/list-load-more-footer.tsx
 msgid "Load more"
 msgstr "Tải thêm"
@@ -3616,10 +3646,6 @@ msgstr "Đơn cách"
 msgid "More actions"
 msgstr "Thao tác khác"
 
-#: src/components/home-launch-actions.tsx
-msgid "More agents"
-msgstr "Thêm tác tử"
-
 #: src/components/virtual-keyboard.tsx
 msgid "More symbols"
 msgstr "Thêm ký hiệu"
@@ -3639,7 +3665,6 @@ msgstr "Chuyển sang worktree"
 
 #: src/components/app-drawer-content.tsx
 #: src/components/in-app-notification-host.tsx
-#: src/components/pad-server-rail.tsx
 msgid "Muqun"
 msgstr "Muqun"
 
@@ -3706,6 +3731,10 @@ msgstr "Tên"
 msgid "Name it, then enter the code shown by the Gateway."
 msgstr "Đặt tên cho nó, rồi nhập mã mà Gateway hiển thị"
 
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Needs input"
+msgstr "Cần trả lời"
+
 #: src/i18n/labels.ts
 msgid "Needs setup"
 msgstr "Cần thiết lập"
@@ -3730,7 +3759,6 @@ msgstr "Cần bạn xử lý"
 #: src/components/home-recent-sessions.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/server-agent-rows.tsx
-#: src/components/task-row.tsx
 #: src/lib/notifications.ts
 msgid "Needs your input"
 msgstr "Cần bạn trả lời"
@@ -3811,6 +3839,14 @@ msgstr "Thông báo tiếp theo"
 #: src/components/agent-title-pill.tsx
 msgid "Next session"
 msgstr "Phiên tiếp theo"
+
+#: src/components/agent-composer.tsx
+msgid "Next turn: {nextTurnModelName}"
+msgstr "Lượt tiếp theo: {nextTurnModelName}"
+
+#: src/components/agent-composer.tsx
+msgid "Next turn: {nextTurnModelName}. Staged until the next turn or Gateway restart."
+msgstr "Lượt tiếp theo: {nextTurnModelName}. Lựa chọn được lưu tạm đến lượt tiếp theo hoặc khi Gateway khởi động lại"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
@@ -3959,10 +3995,6 @@ msgstr "Chưa có dự án nào ở đây. Nhập đường dẫn ở trên đ�
 msgid "No projects match “{0}”."
 msgstr "Không có dự án nào khớp “{0}”"
 
-#: src/components/task-row.tsx
-msgid "No reason was recorded."
-msgstr "Chưa ghi lại lý do"
-
 #: src/app/computer-map.tsx
 msgid "No reported links."
 msgstr "Chưa có liên kết nào được báo cáo"
@@ -4047,6 +4079,10 @@ msgstr "Không nhận công việc"
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "Không khả dụng"
+
+#: src/components/home-agent-sheet.tsx
+msgid "Not available on this computer"
+msgstr "Không khả dụng trên máy tính này"
 
 #: src/components/settings-server-capabilities.tsx
 msgid "Not configured"
@@ -4239,6 +4275,7 @@ msgid "Open as file"
 msgstr "Mở dưới dạng tệp"
 
 #: src/components/agent-message-block.tsx
+#: src/components/pane-chat-blocks.tsx
 msgid "Open attachment"
 msgstr "Mở tệp đính kèm"
 
@@ -4323,6 +4360,7 @@ msgstr "Mở host SSH {0}"
 msgid "Open T3 Code on the computer (or run t3 service install), then check again."
 msgstr "Hãy mở T3 Code trên máy tính (hoặc chạy t3 service install) rồi kiểm tra lại"
 
+#: src/components/agent-runtime-notice.tsx
 #: src/components/collaboration-notice.tsx
 #: src/hooks/use-lazygit.ts
 msgid "Open terminal"
@@ -4911,6 +4949,10 @@ msgstr "Làm mới thay đổi"
 msgid "Refresh files"
 msgstr "Làm mới tệp"
 
+#: src/components/agent-runtime-notice.tsx
+msgid "Refresh history"
+msgstr "Làm mới lịch sử"
+
 #: src/lib/terminal-history-pull.ts
 msgid "Refresh history to load the current snapshot."
 msgstr "Làm mới lịch sử để tải ảnh chụp hiện tại"
@@ -4935,6 +4977,10 @@ msgstr "Làm mới để xem đầu ra mới được lưu"
 #: src/components/git-diff-view.tsx
 msgid "Refresh worktrees"
 msgstr "Làm mới worktree"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Refreshing history…"
+msgstr "Đang làm mới lịch sử…"
 
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
@@ -5027,10 +5073,6 @@ msgstr "Phát lại âm thanh"
 #: src/app/settings-about.tsx
 msgid "Report a bug or request a feature"
 msgstr "Báo lỗi hoặc đề xuất tính năng"
-
-#: src/components/task-row.tsx
-msgid "Reported blocker"
-msgstr "Trở ngại được báo cáo"
 
 #: src/app/computer-map.tsx
 msgid "Reported reachable"
@@ -5230,6 +5272,10 @@ msgstr "Chạy nền"
 msgid "Run it under systemd or tmux to keep it up after you log out."
 msgstr "Chạy dưới systemd hoặc tmux để nó tiếp tục sau khi bạn đăng xuất"
 
+#: src/i18n/labels.ts
+msgid "Run muqun-gateway agent setup codex on the computer for setup instructions. Gateway starts its own Codex connection using the host's existing configuration and sign-in."
+msgstr "Chạy muqun-gateway agent setup codex trên máy tính để xem hướng dẫn thiết lập. Gateway khởi tạo kết nối Codex riêng bằng cấu hình và thông tin đăng nhập hiện có trên máy chủ"
+
 #: src/components/guide-command.tsx
 msgid "Run on {computerLabel}"
 msgstr "Chạy trên {computerLabel}"
@@ -5310,6 +5356,10 @@ msgstr "Đã lưu"
 #: src/app/commands.tsx
 msgid "Saved commands"
 msgstr "Lệnh đã lưu"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Saved history · Live status unavailable"
+msgstr "Lịch sử đã lưu · Không có trạng thái trực tiếp"
 
 #: src/components/pane-history-sheet.tsx
 msgid "Saved observations"
@@ -5523,7 +5573,6 @@ msgstr "Phiên không khả dụng"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/home-launch-actions.tsx
-#: src/components/home-recent-sessions.tsx
 #: src/components/session-map.tsx
 msgid "Sessions"
 msgstr "Phiên"
@@ -5625,10 +5674,6 @@ msgstr "Hiện {0}"
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "Hiện các tác tử và trạng thái của chúng trên màn hình chính. Cập nhật khi Muqun đang mở"
 
-#: src/components/home-recent-sessions.tsx
-msgid "Show all"
-msgstr "Hiện tất cả"
-
 #: src/components/theme-appearance-settings.tsx
 msgid "Show artwork on Home"
 msgstr "Hiển thị hình ảnh trên Trang chủ"
@@ -5653,13 +5698,18 @@ msgstr "Hiển thị logo trên trang chủ"
 msgid "Show Home text"
 msgstr "Hiển thị chữ trên trang chủ"
 
+#: src/components/home-computer-cards.tsx
 #: src/components/home-recent-sessions.tsx
+#: src/components/server-agent-rows.tsx
 msgid "Show less"
 msgstr "Hiện ít hơn"
 
 #: src/components/agent-tool-card.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/diff-rows.tsx
+#: src/components/home-computer-cards.tsx
+#: src/components/home-recent-sessions.tsx
+#: src/components/server-agent-rows.tsx
 msgid "Show more"
 msgstr "Hiện thêm"
 
@@ -5902,6 +5952,10 @@ msgstr "Bắt đầu: {started}"
 msgid "Started with a clean context."
 msgstr "Đã bắt đầu với ngữ cảnh trống"
 
+#: src/components/agent-tool-card.tsx
+msgid "Starting"
+msgstr "Đang khởi động"
+
 #: src/i18n/labels.ts
 msgctxt "task state"
 msgid "Starting"
@@ -5996,6 +6050,7 @@ msgid "Stop this command"
 msgstr "Dừng lệnh này"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/agent-tool-card.tsx
 #: src/components/agent-workbench.tsx
 #: src/i18n/labels.ts
 msgid "Stopped"
@@ -6194,6 +6249,30 @@ msgstr "Tệp tạm"
 msgid "Terminal"
 msgstr "Terminal"
 
+#: src/components/agent-runtime-notice.tsx
+msgid "Terminal · Completed"
+msgstr "Terminal · Đã hoàn thành"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Terminal · Idle"
+msgstr "Terminal · Rảnh"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Terminal · Needs input"
+msgstr "Terminal · Cần trả lời"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Terminal · Starting"
+msgstr "Terminal · Đang khởi động"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Terminal · Status unavailable"
+msgstr "Terminal · Không có thông tin trạng thái"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Terminal · Working"
+msgstr "Terminal · Đang làm việc"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Terminal background opacity"
 msgstr "Độ mờ đục của nền terminal"
@@ -6223,6 +6302,7 @@ msgstr "Hàng phím terminal"
 msgid "Terminal resized"
 msgstr "Đã đổi kích thước terminal"
 
+#: src/components/agent-workbench.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-home-commands.ts
 msgid "Terminal unavailable"
@@ -6296,6 +6376,10 @@ msgstr "Tác tử không còn chờ nữa"
 #: src/components/agent-composer.tsx
 msgid "The agent is offline"
 msgstr "Tác nhân đang ngoại tuyến"
+
+#: src/components/agent-workbench.tsx
+msgid "The agent is still running"
+msgstr "Tác tử vẫn đang chạy"
 
 #: src/lib/network-error.ts
 msgid "The agent is waiting for an answer. Use the question's controls or the terminal keyboard to respond. Your message has not been sent."
@@ -6374,6 +6458,10 @@ msgstr "Biểu tượng trên màn hình chính của bạn. Android sẽ đóng
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "Không thể đọc khóa ({0}). Hãy kiểm tra khóa và cụm mật khẩu của nó"
 
+#: src/components/agent-workbench.tsx
+msgid "The linked agent is no longer in that terminal."
+msgstr "Tác tử được liên kết không còn ở terminal đó"
+
 #: src/components/session-map.tsx
 msgid "The new terminal was created, but could not open it."
 msgstr "Terminal mới đã được tạo nhưng không thể mở"
@@ -6433,10 +6521,6 @@ msgstr "Dịch vụ giọng nói trả về bản phiên âm không hợp lệ"
 #: src/app/commands.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "Đường hầm SSH chỉ mang cổng của Gateway và không cổng nào khác, nên không thể kết nối đến trình giả lập và trình duyệt từ đây. Hãy kết nối qua mạng cục bộ hoặc Tailscale"
-
-#: src/components/task-row.tsx
-msgid "The task was recorded as waiting. Open its session to check the current state."
-msgstr "Tác vụ được ghi nhận là đang chờ. Mở phiên của tác vụ để kiểm tra trạng thái hiện tại"
 
 #: src/components/guide-command.tsx
 msgid "The terminal opened, but the command could not be typed."
@@ -6504,6 +6588,10 @@ msgstr "Không có thao tác hoàn tác nào đang chờ áp dụng"
 #: src/components/agent-workbench.tsx
 msgid "Thinking…"
 msgstr "Đang suy nghĩ…"
+
+#: src/components/agent-composer.tsx
+msgid "This agent accepts messages after its turn ends. Your draft stays here."
+msgstr "Tác tử này nhận tin nhắn sau khi kết thúc lượt. Bản nháp của bạn vẫn ở đây"
 
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
@@ -6819,6 +6907,7 @@ msgstr "Tin cậy"
 
 #: src/app/new-task.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/agent-workbench.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/audio-asset-preview.tsx
@@ -6885,6 +6974,7 @@ msgid "Type on the simulator"
 msgstr "Gõ trên trình giả lập"
 
 #: src/app/pane-history.tsx
+#: src/components/agent-tool-card.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/task-result-sheet.tsx
 msgid "Unavailable"
@@ -7167,9 +7257,17 @@ msgstr "Giọng nói thành văn bản"
 msgid "Voice to text disabled"
 msgstr "Đã tắt chuyển giọng nói thành văn bản"
 
+#: src/components/agent-workbench.tsx
+msgid "Wait for the turn to end before choosing a model."
+msgstr "Đợi lượt kết thúc trước khi chọn mô hình"
+
 #: src/components/skia-terminal.web.tsx
 msgid "Waiting for output…"
 msgstr "Đang chờ đầu ra…"
+
+#: src/components/agent-composer.tsx
+msgid "Waiting for the current turn to end"
+msgstr "Đang đợi lượt hiện tại kết thúc"
 
 #: src/lib/network-error.ts
 msgid "Waiting for the network."
@@ -7213,6 +7311,7 @@ msgstr "Có gì mới"
 msgid "While you were away"
 msgstr "Khi bạn vắng mặt"
 
+#: src/components/agent-tool-card.tsx
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
 msgid "Working"
@@ -7297,7 +7396,6 @@ msgstr "Bạn"
 
 #: src/components/app-drawer-content.tsx
 #: src/components/home-overview.tsx
-#: src/components/pad-server-rail.tsx
 msgid "Your agents, anywhere."
 msgstr "Các tác tử của bạn, ở bất cứ đâu"
 
