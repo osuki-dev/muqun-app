@@ -267,7 +267,7 @@ export function HomeLaunchActions({
   controller: HomeLaunchController;
   /**
    * The Pad's embedded Home: every agent in a row of its own and the
-   * utilities in compact tiles under it, with no sideways scroll.
+   * utilities in compact tiles under it. Classic keeps the agents in a rail.
    */
   grid?: boolean;
   /** Existing destinations live in the Pad's persistent navigation. */
@@ -286,6 +286,7 @@ export function HomeLaunchActions({
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
   const { chosen, chosenOffline, chosenConnection, launchOnChosen, opening, run } = controller;
   const [availableWidth, setAvailableWidth] = useState(0);
 
@@ -537,19 +538,37 @@ export function HomeLaunchActions({
             </Animated.ScrollView>
           ) : (
             <>
-              {layout.agentRows.map((row) => (
-                <View key={agentEntries[row[0]!.indices[0]!]!.key} style={styles.gridRow}>
-                  {row.map((cell) => (
-                    <View
-                      key={agentEntries[cell.indices[0]!]!.key}
-                      style={{ width: cell.width, gap: LAUNCH_GRID_GAP }}>
+              {profile.id === 'classic' && agentEntries.length > 0 ? (
+                <Animated.ScrollView
+                  horizontal
+                  nestedScrollEnabled
+                  directionalLockEnabled
+                  showsHorizontalScrollIndicator={false}
+                  testID="home-launch-agents-scroll"
+                  contentContainerStyle={styles.scrollRow}>
+                  {layout.agentRows.flat().map((cell) => (
+                    <View key={agentEntries[cell.indices[0]!]!.key} style={{ width: cell.width }}>
                       {cell.indices.map((index) =>
                         renderEntry(agentEntries[index]!, { compact: false })
                       )}
                     </View>
                   ))}
-                </View>
-              ))}
+                </Animated.ScrollView>
+              ) : (
+                layout.agentRows.map((row) => (
+                  <View key={agentEntries[row[0]!.indices[0]!]!.key} style={styles.gridRow}>
+                    {row.map((cell) => (
+                      <View
+                        key={agentEntries[cell.indices[0]!]!.key}
+                        style={{ width: cell.width, gap: LAUNCH_GRID_GAP }}>
+                        {cell.indices.map((index) =>
+                          renderEntry(agentEntries[index]!, { compact: false })
+                        )}
+                      </View>
+                    ))}
+                  </View>
+                ))
+              )}
               {utilityEntries.length ? (
                 <View style={styles.gridRow}>
                   {utilityEntries.map((entry) =>
