@@ -2,6 +2,7 @@ import {
   AlphaType,
   ColorType,
   Canvas,
+  useCanvasRef,
   Image as SkiaImage,
   LinearGradient,
   Mask,
@@ -13,6 +14,7 @@ import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { useHomeArtworkForeground } from '@/hooks/use-home-artwork-foreground';
+import { useSkiaDrawReady, useThemeRenderReady } from '@/hooks/use-theme-render-ready';
 import { useSharedSkiaImage } from '@/lib/skia-image-cache';
 import { useLaunchHomeArtwork } from '@/hooks/use-launch-home-artwork';
 import {
@@ -88,6 +90,9 @@ function HomeEditorialArtworkImage({
       : Math.min(280, width / 2);
   const box = useMemo(() => (width > 0 && height > 0 ? { width, height } : null), [width, height]);
   const [failed, setFailed] = useState(false);
+  const canvas = useCanvasRef();
+  const [drawn, setDrawn] = useState(false);
+  useThemeRenderReady(resolution.source, failed || drawn);
   const onError = useCallback(() => {
     setFailed(true);
     onAvailabilityChange?.(false);
@@ -110,6 +115,7 @@ function HomeEditorialArtworkImage({
         : null,
     [box, focalPoint, image, fit, fullBleed, foreground]
   );
+  useSkiaDrawReady(canvas, imageRect, Boolean(image && imageRect && box), () => setDrawn(true));
   const visibleTop = useMemo(() => {
     if (!cover || !image) return 0;
     const pixels = image.readPixels(0, 0, {
@@ -165,7 +171,7 @@ function HomeEditorialArtworkImage({
       onLayout={onLayout}
       style={[styles.root, fill ? styles.fill : { height }]}>
       {image && imageRect && box ? (
-        <Canvas style={StyleSheet.absoluteFill}>
+        <Canvas ref={canvas} style={StyleSheet.absoluteFill}>
           <Mask
             mode="alpha"
             mask={

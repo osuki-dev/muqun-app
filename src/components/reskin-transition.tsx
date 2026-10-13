@@ -9,6 +9,7 @@ import {
   Skia,
   TileMode,
   makeImageFromView,
+  useCanvasRef,
   type SkImage,
 } from 'react-native-skia';
 import {
@@ -84,6 +85,8 @@ import {
 } from '@/lib/reskin-shaders';
 import { recoverWith, rethrow, settleAfter } from '@/lib/compiler-safe-control-flow';
 import { runReskinSwap } from '@/lib/reskin-swap';
+import { createCoverReadiness, waitForThemeRender } from '@/lib/theme-render-readiness';
+import { useSkiaDrawReady } from '@/hooks/use-theme-render-ready';
 import { colorVector } from '@/lib/ink-bloom-shader';
 
 /**
@@ -165,6 +168,7 @@ type ActiveRun = {
   id: number;
   preparing?: boolean;
   initiator?: string;
+  coverReady?: (surface: string, ready: boolean) => void;
   play: Exclude<ReskinPlay, 'none'>;
   /** A fraction of each surface -- see `resolveOrigin`. */
   origin: ReskinPoint;
@@ -334,9 +338,23 @@ async function photographSurfaces(
   }
   const shots = bySurface(
     entries.map(([key]) => key),
-    raced
+    keepCompleted ? raced.map(uploadCover) : raced
   );
   return { shots: shots.size > 0 ? shots : null, ms: elapsed, outcome };
+}
+
+/** Share the cover's upload with its on-screen and readiness canvases. */
+function uploadCover(image: SkImage | null): SkImage | null {
+  if (!image) return null;
+  try {
+    const texture = image.makeTextureImage();
+    if (texture !== image) image.dispose();
+    return texture;
+  } catch {
+    // A renderer failure takes the bounded live-screen fallback.
+    image.dispose();
+    return null;
+  }
 }
 
 /**
@@ -637,21 +655,38 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
                   current: stillWanted,
                   prepare: options.prepare,
                   cover: async () => {
-                    // A completed, slow capture is still the old screen. Discarding it
-                    // after paying its cost was what produced the blank-paper fallback.
+                    // Capture before preparing assets. The old screen stays live
+                    // until every cover has submitted its image to Skia.
                     const taken = await photographSurfaces(
                       entries,
                       strikes,
                       stillWanted,
-                      budget ?? 260,
+                      3000,
                       true
                     );
                     if (taken.shots && stillWanted()) {
+                      const cover = createCoverReadiness(taken.shots.keys());
                       updateActive((current) =>
                         current?.id === id
-                          ? { ...current, shots: taken.shots ?? new Map() }
+                          ? {
+                              ...current,
+                              shots: taken.shots ?? new Map(),
+                              coverReady: cover.complete,
+                            }
                           : current
                       );
+                      const ready = await cover.promise;
+                      trace(`theme cover draw ${ready ? 'ready' : 'failed or timed out'}`);
+                      if (!ready && stillWanted()) {
+                        // Unmount failed covers before applying. A late GPU upload
+                        // must not bring the old screen back over the new one.
+                        updateActive((current) =>
+                          current?.id === id
+                            ? { ...current, shots: new Map(), coverReady: undefined }
+                            : current
+                        );
+                        release(taken.shots.values());
+                      }
                       await painted();
                     } else if (taken.shots) release(taken.shots.values());
                   },
@@ -662,7 +697,12 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
                     );
                     await apply();
                   },
-                  painted,
+                  painted: async () => {
+                    await painted();
+                    const ready = await waitForThemeRender();
+                    trace(`theme renderers ${ready ? 'ready' : 'timed out'}`);
+                    await painted();
+                  },
                   reveal: () => {
                     updateActive((current) =>
                       current?.id === id ? { ...current, swapping: false } : current
@@ -908,7 +948,8 @@ export function ReskinSurface({ id, children }: { id: string; children: ReactNod
       context ? (
         <ReskinOverlay
           image={image}
-          key={active.id}
+          onReady={(ready) => active.coverReady?.(id, ready)}
+          key={`${active.id}:${image ? 'captured' : 'live'}`}
           next={active.next.get(id) ?? null}
           progress={context.progress}
           run={active}
@@ -944,6 +985,7 @@ export function ReskinSurface({ id, children }: { id: string; children: ReactNod
  */
 function ReskinOverlay({
   image,
+  onReady,
   next,
   progress,
   run,
@@ -951,6 +993,7 @@ function ReskinOverlay({
   veil,
 }: {
   image: SkImage | null;
+  onReady: (ready: boolean) => void;
   next: SkImage | null;
   progress: SharedValue<number>;
   run: ActiveRun;
@@ -977,6 +1020,7 @@ function ReskinOverlay({
       {run.play === 'ripple' ? (
         <RippleOverlay
           image={image}
+          onReady={onReady}
           next={next}
           origin={origin}
           progress={progress}
@@ -986,11 +1030,18 @@ function ReskinOverlay({
       ) : !image ? null : run.play === 'scan' ? (
         <ScanOverlay image={image} origin={origin} progress={progress} run={run} size={size} />
       ) : run.play === 'wash' ? (
-        <WashOverlay image={image} origin={origin} progress={progress} run={run} size={size} />
+        <WashOverlay
+          image={image}
+          onReady={onReady}
+          origin={origin}
+          progress={progress}
+          run={run}
+          size={size}
+        />
       ) : run.play === 'halftone' ? (
         <HalftoneOverlay image={image} origin={origin} progress={progress} run={run} size={size} />
       ) : (
-        <CrossfadeOverlay image={image} progress={progress} size={size} />
+        <CrossfadeOverlay image={image} onReady={onReady} progress={progress} size={size} />
       )}
     </Animated.View>
   );
@@ -998,17 +1049,21 @@ function ReskinOverlay({
 
 function WashOverlay({
   image,
+  onReady,
   origin,
   progress,
   run,
   size,
 }: {
   image: SkImage;
+  onReady: (ready: boolean) => void;
   origin: ReskinPoint;
   progress: SharedValue<number>;
   run: ActiveRun;
   size: ReskinSize;
 }) {
+  const canvas = useCanvasRef();
+  useSkiaDrawReady(canvas, image, true, onReady);
   const geometry: WashGeometry = useMemo(
     () => washGeometry(origin, size, WASH_BLEED),
     [origin, size]
@@ -1035,7 +1090,7 @@ function WashOverlay({
   if (!THEME_WASH_EFFECT) return null;
   return (
     <Animated.View style={[styles.overlay, style]}>
-      <Canvas style={styles.overlay}>
+      <Canvas ref={canvas} style={styles.overlay}>
         <Fill>
           <Shader source={THEME_WASH_EFFECT} uniforms={uniforms}>
             <ImageShader
@@ -1104,6 +1159,7 @@ function HalftoneOverlay({
  */
 function RippleOverlay({
   image,
+  onReady,
   next,
   origin,
   progress,
@@ -1111,12 +1167,15 @@ function RippleOverlay({
   size,
 }: {
   image: SkImage | null;
+  onReady: (ready: boolean) => void;
   next: SkImage | null;
   origin: ReskinPoint;
   progress: SharedValue<number>;
   run: ActiveRun;
   size: ReskinSize;
 }) {
+  const canvas = useCanvasRef();
+  useSkiaDrawReady(canvas, image, image !== null, onReady);
   const reach = useMemo(() => rippleReach(origin, size), [origin, size]);
   const live = image === null || (!run.swapping && next === null);
 
@@ -1133,7 +1192,7 @@ function RippleOverlay({
   const rect = { x: 0, y: 0, width: size.width, height: size.height };
   if (!THEME_RIPPLE_EFFECT) return null;
   return (
-    <Canvas style={styles.overlay}>
+    <Canvas ref={canvas} style={styles.overlay}>
       <Fill>
         <Shader source={THEME_RIPPLE_EFFECT} uniforms={uniforms}>
           {image ? (
@@ -1203,17 +1262,21 @@ function ScanOverlay({
  */
 function CrossfadeOverlay({
   image,
+  onReady,
   progress,
   size,
 }: {
   image: SkImage;
+  onReady: (ready: boolean) => void;
   progress: SharedValue<number>;
   size: ReskinSize;
 }) {
+  const canvas = useCanvasRef();
+  useSkiaDrawReady(canvas, image, true, onReady);
   const style = useAnimatedStyle(() => ({ opacity: 1 - progress.value }));
   return (
     <Animated.View style={[styles.overlay, style]}>
-      <Canvas style={styles.overlay}>
+      <Canvas ref={canvas} style={styles.overlay}>
         <SkiaImage fit="cover" height={size.height} image={image} width={size.width} x={0} y={0} />
       </Canvas>
     </Animated.View>

@@ -8,6 +8,7 @@ import { resolveThemeImage } from '@/theme/resolve';
 import type { ThemeManifest, ThemeSlot } from '@/theme/schema';
 import { SkiaAmbientEffect } from '@/components/skia-ambient-effect';
 import { isRenderableThemeAsset } from '@/theme/renderable-asset';
+import { useThemeRenderReady } from '@/hooks/use-theme-render-ready';
 
 /**
  * What a shell surface paints when the pack has no `shell.wallpaper` of its own.
@@ -99,9 +100,14 @@ export function ThemeArtworkLayer({
 }) {
   const { width } = useWindowDimensions();
   const [failed, setFailed] = useState<string | null>(null);
+  const [displayed, setDisplayed] = useState<string | null>(null);
   const size = viewport ?? (width >= 768 ? 'regular' : 'compact');
   const image = resolveThemeImage(manifest, slot, mode, size, true, fallbackSlot);
   const uri = image ? assets[image.asset] : undefined;
+  useThemeRenderReady(
+    !banner && !viewport && isRenderableThemeAsset(uri) ? uri : undefined,
+    failed === uri || displayed === uri
+  );
   if (!image || !isRenderableThemeAsset(uri) || failed === uri) return null;
   const style = [StyleSheet.absoluteFill, { opacity: Math.min(image.opacity ?? 1, opacityLimit) }];
   return (
@@ -119,6 +125,7 @@ export function ThemeArtworkLayer({
           accessible={false}
           style={style}
           onError={() => setFailed(uri)}
+          onLoad={() => setDisplayed(uri)}
         />
       ) : (
         <Image
@@ -134,6 +141,7 @@ export function ThemeArtworkLayer({
           accessible={false}
           style={style}
           onError={() => setFailed(uri)}
+          onDisplay={() => setDisplayed(uri)}
         />
       )}
       {effectsEnabled &&

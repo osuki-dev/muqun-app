@@ -2,6 +2,7 @@ import {
   AlphaType,
   Blur,
   Canvas,
+  useCanvasRef,
   ColorType,
   LinearGradient,
   Mask,
@@ -20,6 +21,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { useSharedSkiaImage } from '@/lib/skia-image-cache';
+import { useSkiaDrawReady, useThemeRenderReady } from '@/hooks/use-theme-render-ready';
 import {
   HOME_COVER_BOTTOM_FEATHER_START,
   homeCoverArtworkRect,
@@ -156,6 +158,9 @@ function HomeArtworkImage({
     opacity: interpolate(scrollY.value, [0, band], [1, 0], Extrapolation.CLAMP),
   }));
   const [failed, setFailed] = useState<string | null>(null);
+  const canvas = useCanvasRef();
+  const [drawn, setDrawn] = useState(false);
+  useThemeRenderReady(source, failed === source || drawn);
   // The hero's own box, measured rather than assumed. The band's height is
   // known up front but its width is the content column's, which carries the
   // screen's gutter and its pad max-width -- and the feather is computed in the
@@ -235,6 +240,9 @@ function HomeArtworkImage({
     );
   }, [cover, box, intrinsic, coverForeground, resolved.image]);
   const imageRect = coverRect ?? geometry?.image;
+  useSkiaDrawReady(canvas, imageRect, Boolean(image && geometry && imageRect && box), () =>
+    setDrawn(true)
+  );
   useLaunchHomeArtwork({
     view,
     source,
@@ -268,7 +276,7 @@ function HomeArtworkImage({
       */}
       <Animated.View style={[StyleSheet.absoluteFill, scrollStyle]}>
         {image && geometry && imageRect && box ? (
-          <Canvas style={StyleSheet.absoluteFill}>
+          <Canvas ref={canvas} style={StyleSheet.absoluteFill}>
             <Mask
               mode="alpha"
               mask={

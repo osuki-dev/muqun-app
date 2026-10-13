@@ -16,9 +16,9 @@ export async function runReskinSwap({
 }) {
   let release: void | (() => void) = undefined;
   try {
-    release = await prepare?.();
-    if (!current()) return;
     await cover();
+    if (!current()) return;
+    release = await prepare?.();
     if (!current()) return;
     await apply();
     await painted();
