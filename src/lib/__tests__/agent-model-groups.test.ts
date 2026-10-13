@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'bun:test';
+import { parseAgentCatalog } from '../agent-protocol';
 
-import { groupModelsByProvider, hasFreeModel } from '../agent-model-groups';
+import {
+  groupModelsByProvider,
+  hasFreeModel,
+  hasMultipleModelProviders,
+} from '../agent-model-groups';
 
 const m = (id: string, provider_id: string) => ({ id, provider_id });
 
@@ -51,5 +56,42 @@ describe('hasFreeModel', () => {
       ])
     ).toBe(true);
     expect(hasFreeModel([m('big-free', 'p')])).toBe(true);
+  });
+});
+
+describe('hasMultipleModelProviders', () => {
+  test('empty and single-provider catalogs need no rail', () => {
+    expect(hasMultipleModelProviders([], [])).toBe(false);
+    expect(hasMultipleModelProviders([], [{ id: 'one' }])).toBe(false);
+    expect(hasMultipleModelProviders([m('a', 'one'), m('b', 'one')], [{ id: 'one' }])).toBe(false);
+  });
+
+  test('provider-nested API models count as their normalized provider once', () => {
+    const catalog = parseAgentCatalog({
+      providers: [{ id: 'host-provider', models: [{ id: 'model-a' }, { id: 'model-b' }] }],
+    });
+    expect(catalog.models).toHaveLength(2);
+    expect(hasMultipleModelProviders(catalog.models, catalog.providers)).toBe(false);
+  });
+
+  test('flat catalogs and additional unlisted model providers are counted', () => {
+    expect(hasMultipleModelProviders([m('a', 'one')], [])).toBe(false);
+    expect(hasMultipleModelProviders([m('a', 'one'), m('b', 'two')], [])).toBe(true);
+    expect(hasMultipleModelProviders([m('a', 'two')], [{ id: 'one' }])).toBe(true);
+  });
+
+  test('provider metadata is deduplicated and unavailable providers remain choices', () => {
+    expect(hasMultipleModelProviders([], [{ id: 'one' }, { id: 'one' }])).toBe(false);
+    expect(
+      hasMultipleModelProviders([m('a', 'one')], [{ id: 'one' }, { id: 'two', available: false }])
+    ).toBe(true);
+  });
+
+  test('a filtered result with one provider does not change the catalog layout', () => {
+    const models = [m('target', 'one'), m('another', 'two')];
+    const providers = [{ id: 'one' }, { id: 'two' }];
+    const matches = models.filter((model) => model.id.includes('target'));
+    expect(groupModelsByProvider(matches, providers)).toHaveLength(1);
+    expect(hasMultipleModelProviders(models, providers)).toBe(true);
   });
 });
