@@ -39,6 +39,16 @@ const config = getDefaultConfig(__dirname);
 const previousResolveRequest = config.resolver.resolveRequest;
 
 config.resolver.resolveRequest = (context, moduleName, platform) => {
+  // RNWebGPU uses Fiber's standard reconciler, not its Expo GL native Canvas.
+  if (moduleName === '@react-three/fiber') {
+    return {
+      type: 'sourceFile',
+      filePath: require.resolve('@react-three/fiber/dist/react-three-fiber.esm.js'),
+    };
+  }
+  if (moduleName === 'three' || moduleName === 'three/webgpu') {
+    return { type: 'sourceFile', filePath: require.resolve('three/webgpu') };
+  }
   if (moduleName.startsWith('@expo-google-fonts/material-symbols')) {
     return { type: 'empty' };
   }

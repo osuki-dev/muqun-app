@@ -1,0 +1,10 @@
+# Dedicated unpaired QA only. Exercises the entry, accessible fallback and close.
+wait "id=\"computer-map-screen\"" 10000
+is visible "label=\"This app\""
+press "label=\"List\""
+is visible "label=\"This app\""
+press "label=\"Map\""
+is visible "id=\"computer-map-screen\""
+screenshot "shots/computer-map.png"
+back --system
+wait "id=\"settings-servers-sheet\"" 10000
