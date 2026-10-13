@@ -88,7 +88,15 @@ import {
   isImageAttachment,
   type AttachmentSource,
 } from '@/lib/attachments';
-import { DURATION, fadeIn, fadeOut, fadeOutDown, listLayout, timing } from '@/lib/motion';
+import {
+  DURATION,
+  RISE_DISTANCE,
+  fadeIn,
+  fadeOut,
+  fadeOutDown,
+  listLayout,
+  timing,
+} from '@/lib/motion';
 import { appChrome } from '@/constants/appearance';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { withAlpha } from '@/lib/color';
@@ -536,6 +544,8 @@ export interface AgentComposerProps {
   autoHide?: DockAutoHide;
   /** Told when the field gains or loses focus (the Pad cover keeps its left column still). */
   onFieldFocus?: (focused: boolean) => void;
+  /** Home measures the mounted dock before revealing it after its computers. */
+  revealed?: boolean;
   /**
    * The field's and Send's test ids. Home hosts this same dock beside a Pad
    * workspace whose own composers keep the defaults, so it names its own.
@@ -627,6 +637,7 @@ export const AgentComposer = memo(function AgentComposer({
   fieldLines,
   autoHide,
   onFieldFocus,
+  revealed = true,
   inputTestID = 'agent-composer-input',
   sendTestID,
 }: AgentComposerProps) {
@@ -1229,8 +1240,21 @@ export const AgentComposer = memo(function AgentComposer({
   }, [selectedRootAsid]);
 
   const { height: keyboardOffset } = useReanimatedKeyboardAnimation();
+  const revealProgress = useSharedValue(revealed ? 1 : 0);
+  useEffect(() => {
+    const target = revealed ? 1 : 0;
+    if (revealProgress.get() !== target) revealProgress.set(withTiming(target, timing('short')));
+  }, [revealed, revealProgress]);
   const composerKeyboardStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: keyboardOffset.get() + (autoHide?.offset.get() ?? 0) }],
+    opacity: revealProgress.get(),
+    transform: [
+      {
+        translateY:
+          keyboardOffset.get() +
+          (autoHide?.offset.get() ?? 0) +
+          (1 - revealProgress.get()) * RISE_DISTANCE,
+      },
+    ],
   }));
 
   /**
@@ -1315,6 +1339,9 @@ export const AgentComposer = memo(function AgentComposer({
 
   return (
     <Animated.View
+      pointerEvents={revealed ? 'auto' : 'none'}
+      accessibilityElementsHidden={!revealed}
+      importantForAccessibility={revealed ? 'auto' : 'no-hide-descendants'}
       style={[
         styles.dockOuter,
         composerKeyboardStyle,

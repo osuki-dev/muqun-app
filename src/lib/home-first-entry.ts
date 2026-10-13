@@ -16,3 +16,15 @@ export function claimHomeFirstEntry(nowMs: number = Date.now()): boolean {
   if (firstMountMs === null) firstMountMs = nowMs;
   return nowMs - firstMountMs < FIRST_ENTRY_WINDOW_MS;
 }
+
+// Unlike the section entry window, the dock waits for computer readiness.
+// Remember its reveal across the Pad owner handoff and subsequent Home mounts.
+let composerRevealed = false;
+
+export function hasHomeComposerRevealed(): boolean {
+  return composerRevealed;
+}
+
+export function markHomeComposerRevealed(): void {
+  composerRevealed = true;
+}
