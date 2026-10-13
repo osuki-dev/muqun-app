@@ -38,6 +38,7 @@ export function UpdateStatusBanner() {
   const downloadedBytes = useAppUpdateStore((state) => state.downloadedBytes);
   const totalBytes = useAppUpdateStore((state) => state.totalBytes);
   const downloadSize = useAppUpdateStore((state) => state.downloadSize);
+  const downloadSizeStatus = useAppUpdateStore((state) => state.downloadSizeStatus);
   const transitionKind = useAppUpdateStore((state) => state.transitionKind);
   const required = useAppUpdateStore((state) => state.required);
   const releaseId = useAppUpdateStore((state) => state.releaseId);
@@ -154,9 +155,15 @@ export function UpdateStatusBanner() {
             transitionKind !== 'USE_BUILTIN' ? (
               <View testID="update-download-size" style={styles.identifier}>
                 <Text variant="bodySmall" color={theme.colors.textMuted}>
-                  {estimate ? t`Download size: about ${estimate}` : t`Download size: unavailable`}
+                  {downloadSizeStatus === 'checking'
+                    ? t`Checking download size…`
+                    : downloadSizeStatus === 'failed'
+                      ? t`Could not check download size. Try again.`
+                      : estimate
+                        ? t`Download size: about ${estimate}`
+                        : t`Download size: ${fullPackage}`}
                 </Text>
-                {fullPackage ? (
+                {estimate && fullPackage ? (
                   <Text variant="caption" color={theme.colors.textMuted}>
                     {t`Full package: ${fullPackage}`}
                   </Text>
@@ -198,13 +205,23 @@ export function UpdateStatusBanner() {
               <PressableScale
                 testID="update-now"
                 accessibilityRole="button"
-                accessibilityLabel={downloadFailed || restartFailed ? t`Retry` : t`Update now`}
+                accessibilityLabel={
+                  downloadSizeStatus
+                    ? t`Retry size check`
+                    : downloadFailed || restartFailed
+                      ? t`Retry`
+                      : t`Update now`
+                }
                 onPress={() => {
                   void updateAppNow();
                 }}
                 style={[styles.action, { backgroundColor: theme.colors.primarySubtle }]}>
                 <Text variant="bodySmall" color={theme.colors.primary}>
-                  {downloadFailed || restartFailed ? t`Retry` : t`Update now`}
+                  {downloadSizeStatus
+                    ? t`Retry size check`
+                    : downloadFailed || restartFailed
+                      ? t`Retry`
+                      : t`Update now`}
                 </Text>
               </PressableScale>
             </View>

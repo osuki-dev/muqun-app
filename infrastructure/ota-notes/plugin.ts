@@ -104,13 +104,14 @@ export function localizedReleaseNotes(storage?: Pick<StorageAdapter, 'get'>) {
                 return new Response(null, { status: 400, headers });
               try {
                 const release = await core.getRelease(releaseId);
-                if (!release?.enabled || !release.bundle_id)
-                  return new Response(null, { status: 404, headers });
+                if (!release?.enabled) return new Response(null, { status: 404, headers });
+                if (!release.bundle_id) return new Response(null, { status: 503, headers });
                 const [target, base] = await Promise.all([
                   core.getBundle(release.bundle_id),
                   core.getBundle(fromBundleId),
                 ]);
-                if (!target || (base && base.bundle.platform !== target.bundle.platform))
+                if (!target) return new Response(null, { status: 503, headers });
+                if (base && base.bundle.platform !== target.bundle.platform)
                   return new Response(null, { status: 404, headers });
                 // Resolve the SDK's optional patch plan, but return no signed URLs or storage URIs.
                 const [artifact, targetManifest, baseManifest] = await Promise.all([
@@ -118,7 +119,7 @@ export function localizedReleaseNotes(storage?: Pick<StorageAdapter, 'get'>) {
                   readManifest(target.bundle.manifest_storage_uri),
                   base ? readManifest(base.bundle.manifest_storage_uri) : Promise.resolve(null),
                 ]);
-                if (!artifact) return new Response(null, { status: 404, headers });
+                if (!artifact) return new Response(null, { status: 503, headers });
                 const size = estimateOtaDownloadSize(
                   targetManifest,
                   release.bundle_id,
@@ -126,6 +127,7 @@ export function localizedReleaseNotes(storage?: Pick<StorageAdapter, 'get'>) {
                   fromBundleId,
                   artifact
                 );
+                if (!size) return new Response(null, { status: 503, headers });
                 return Response.json({ releaseId, fromBundleId, ...size }, { headers });
               } catch {
                 return new Response(null, { status: 503, headers });

@@ -119,9 +119,41 @@ describe('OTA update consent lifecycle', () => {
       await f.controller.check();
       expect(f.states.at(-1)?.phase).toBe('available');
       expect(f.states.at(-1)?.downloadSize).toBeUndefined();
+      expect(f.states.at(-1)?.downloadSizeStatus).toBe(
+        transitionKind === 'INSTALL' ? 'failed' : undefined
+      );
       expect(calls).toBe(transitionKind === 'INSTALL' ? 1 : 0);
       await f.controller.updateNow();
     }
+  });
+  test('failed size lookup retries only metadata and requires fresh consent after success', async () => {
+    let reads = 0;
+    let downloads = 0;
+    const f = fixture(
+      async () =>
+        release({
+          updateBundle: async () => {
+            downloads++;
+            return true;
+          },
+        }),
+      async () => {},
+      null,
+      undefined,
+      async () => {
+        reads++;
+        return reads === 1 ? null : { estimatedBytes: null, fullBytes: 6000 };
+      }
+    );
+    await f.controller.check();
+    expect(f.states.at(-1)?.downloadSizeStatus).toBe('failed');
+    await f.controller.updateNow();
+    expect(f.states.at(-1)?.downloadSize).toEqual({ estimatedBytes: null, fullBytes: 6000 });
+    expect(f.states.at(-1)?.downloadSizeStatus).toBeUndefined();
+    expect(f.states.some((state) => state.downloadSizeStatus === 'checking')).toBe(true);
+    expect(downloads).toBe(0);
+    await f.controller.updateNow();
+    expect(downloads).toBe(1);
   });
   test.each([false, true])(
     'localized notes load before consent, including required=%s',

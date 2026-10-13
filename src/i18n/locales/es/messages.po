@@ -1136,6 +1136,10 @@ msgstr "Comprueba las tareas de este ordenador. Esta solicitud no se ha enviado 
 msgid "Check your connection and try again."
 msgstr "Comprueba tu conexión e inténtalo de nuevo"
 
+#: src/components/update-status-banner.tsx
+msgid "Checking download size…"
+msgstr "Comprobando el tamaño de descarga…"
+
 #: src/components/settings-security.tsx
 msgid "Checking system authentication…"
 msgstr "Verificando la autenticación del sistema…"
@@ -1805,6 +1809,10 @@ msgstr "No se pudo cambiar la entrega"
 msgid "Could not change this setting"
 msgstr "No se pudo cambiar este ajuste"
 
+#: src/components/update-status-banner.tsx
+msgid "Could not check download size. Try again."
+msgstr "No se pudo comprobar el tamaño de descarga. Inténtalo de nuevo"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not compact"
 msgstr "No se pudo compactar"
@@ -2429,12 +2437,12 @@ msgid "Download and preview"
 msgstr "Descargar y previsualizar"
 
 #: src/components/update-status-banner.tsx
-msgid "Download size: about {estimate}"
-msgstr "Tamaño de descarga: unos {estimate}"
+msgid "Download size: {fullPackage}"
+msgstr "Tamaño de descarga: {fullPackage}"
 
 #: src/components/update-status-banner.tsx
-msgid "Download size: unavailable"
-msgstr "Tamaño de descarga: no disponible"
+msgid "Download size: about {estimate}"
+msgstr "Tamaño de descarga: unos {estimate}"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Downloading"
@@ -4999,6 +5007,10 @@ msgstr "Reintentar dibujar el terminal"
 #: src/components/server-terminal-workspace.tsx
 msgid "Retry loading earlier output"
 msgstr "Reintentar cargar la salida anterior"
+
+#: src/components/update-status-banner.tsx
+msgid "Retry size check"
+msgstr "Reintentar comprobación"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Retry the ones marked in red, or remove them, then send again."

@@ -1,7 +1,7 @@
 import { OTA_RELEASE_ID } from './ota-release-notes';
 
 /** File payload bytes only; native reuse, fallback, manifests and retries can change transfer. */
-export type OtaDownloadSize = { estimatedBytes: number | null; fullBytes: number | null };
+export type OtaDownloadSize = { estimatedBytes: number | null; fullBytes: number };
 
 export function otaByteSize(value: unknown): value is number {
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
@@ -29,12 +29,12 @@ export async function fetchOtaDownloadSize(
       size.releaseId !== releaseId ||
       size.fromBundleId !== fromBundleId ||
       !(size.estimatedBytes === null || otaByteSize(size.estimatedBytes)) ||
-      !(size.fullBytes === null || (otaByteSize(size.fullBytes) && size.fullBytes > 0))
+      !(otaByteSize(size.fullBytes) && size.fullBytes > 0)
     )
       return null;
     return { estimatedBytes: size.estimatedBytes, fullBytes: size.fullBytes };
   } catch {
-    // Size metadata is optional; it must never prevent reading or accepting an update.
+    // The controller exposes metadata failure and a read-only retry before consent.
     return null;
   } finally {
     clearTimeout(timeout);

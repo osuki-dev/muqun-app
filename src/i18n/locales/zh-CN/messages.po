@@ -1136,6 +1136,10 @@ msgstr "请查看这台电脑的任务。此请求没有再次发送"
 msgid "Check your connection and try again."
 msgstr "请检查网络连接后重试"
 
+#: src/components/update-status-banner.tsx
+msgid "Checking download size…"
+msgstr "正在检查下载大小…"
+
 #: src/components/settings-security.tsx
 msgid "Checking system authentication…"
 msgstr "正在检查系统验证…"
@@ -1805,6 +1809,10 @@ msgstr "无法更改发送方式"
 msgid "Could not change this setting"
 msgstr "无法更改此设置"
 
+#: src/components/update-status-banner.tsx
+msgid "Could not check download size. Try again."
+msgstr "无法检查下载大小，请重试"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not compact"
 msgstr "无法压缩"
@@ -2429,12 +2437,12 @@ msgid "Download and preview"
 msgstr "下载并预览"
 
 #: src/components/update-status-banner.tsx
-msgid "Download size: about {estimate}"
-msgstr "下载大小：约 {estimate}"
+msgid "Download size: {fullPackage}"
+msgstr "下载大小：{fullPackage}"
 
 #: src/components/update-status-banner.tsx
-msgid "Download size: unavailable"
-msgstr "下载大小：暂不可用"
+msgid "Download size: about {estimate}"
+msgstr "下载大小：约 {estimate}"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Downloading"
@@ -4999,6 +5007,10 @@ msgstr "重新绘制终端"
 #: src/components/server-terminal-workspace.tsx
 msgid "Retry loading earlier output"
 msgstr "重试加载更早的输出"
+
+#: src/components/update-status-banner.tsx
+msgid "Retry size check"
+msgstr "重试大小检查"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Retry the ones marked in red, or remove them, then send again."

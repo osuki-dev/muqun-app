@@ -1136,6 +1136,10 @@ msgstr "このコンピューターのタスクを確認してください。こ
 msgid "Check your connection and try again."
 msgstr "接続を確認してもう一度お試しください"
 
+#: src/components/update-status-banner.tsx
+msgid "Checking download size…"
+msgstr "ダウンロードサイズを確認中…"
+
 #: src/components/settings-security.tsx
 msgid "Checking system authentication…"
 msgstr "システム認証を確認中…"
@@ -1805,6 +1809,10 @@ msgstr "配信方法を変更できませんでした"
 msgid "Could not change this setting"
 msgstr "この設定を変更できませんでした"
 
+#: src/components/update-status-banner.tsx
+msgid "Could not check download size. Try again."
+msgstr "ダウンロードサイズを確認できませんでした。もう一度お試しください"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not compact"
 msgstr "圧縮できませんでした"
@@ -2429,12 +2437,12 @@ msgid "Download and preview"
 msgstr "ダウンロードしてプレビュー"
 
 #: src/components/update-status-banner.tsx
-msgid "Download size: about {estimate}"
-msgstr "ダウンロードサイズ：約 {estimate}"
+msgid "Download size: {fullPackage}"
+msgstr "ダウンロードサイズ：{fullPackage}"
 
 #: src/components/update-status-banner.tsx
-msgid "Download size: unavailable"
-msgstr "ダウンロードサイズ：不明"
+msgid "Download size: about {estimate}"
+msgstr "ダウンロードサイズ：約 {estimate}"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Downloading"
@@ -4999,6 +5007,10 @@ msgstr "ターミナルの描画をやり直す"
 #: src/components/server-terminal-workspace.tsx
 msgid "Retry loading earlier output"
 msgstr "以前の出力の読み込みをやり直す"
+
+#: src/components/update-status-banner.tsx
+msgid "Retry size check"
+msgstr "サイズ確認を再試行"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Retry the ones marked in red, or remove them, then send again."
