@@ -254,6 +254,7 @@ const KNOWN_AGENT_NAMES: Readonly<Record<string, string>> = {
   opencode: 'OpenCode',
   deepseek: 'DeepSeek',
   t3: 'T3 Code',
+  codex: 'Codex',
 };
 
 /**
