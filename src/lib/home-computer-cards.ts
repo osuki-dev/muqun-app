@@ -194,9 +194,9 @@ export type ComputerCard = {
 
 export type CardLimits = { now: number; finished: number };
 
-/** One computer gets the room; several share it. */
+/** Show five current tasks per computer; one computer gets an extra finished row. */
 export function cardLimits(computers: number): CardLimits {
-  return computers === 1 ? { now: 5, finished: 3 } : { now: 3, finished: 2 };
+  return { now: 5, finished: computers === 1 ? 3 : 2 };
 }
 
 /** Acknowledged tasks are remembered by computer and task id. */
