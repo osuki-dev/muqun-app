@@ -2416,10 +2416,6 @@ msgstr "ดาวน์โหลดและดูตัวอย่าง"
 msgid "Download size: {fullPackage}"
 msgstr "ขนาดดาวน์โหลด: {fullPackage}"
 
-#: src/components/update-status-banner.tsx
-msgid "Download size: about {estimate}"
-msgstr "ขนาดดาวน์โหลด: ประมาณ {estimate}"
-
 #: src/components/settings-font-sheet.tsx
 msgid "Downloading"
 msgstr "กำลังดาวน์โหลด"
@@ -2773,8 +2769,8 @@ msgid "Front camera. Hold the QR up to the screen"
 msgstr "กล้องหน้า ถือ QR หันเข้าหาหน้าจอ"
 
 #: src/components/update-status-banner.tsx
-msgid "Full package: {fullPackage}"
-msgstr "แพ็กเกจเต็ม: {fullPackage}"
+msgid "Full package size. File reuse may reduce the download."
+msgstr "ขนาดแพ็กเกจเต็ม การใช้ไฟล์เดิมอาจลดขนาดดาวน์โหลด"
 
 #: src/components/video-asset-preview.tsx
 msgid "Fullscreen"
@@ -5586,10 +5582,6 @@ msgstr "ตัวควบคุมเครื่องจำลอง"
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Size"
 msgstr "ขนาด"
-
-#: src/components/update-status-banner.tsx
-msgid "Size covers update files. File reuse or fallback can change the download."
-msgstr "ขนาดนี้รวมเฉพาะไฟล์อัปเดต การใช้ไฟล์เดิมหรือการดาวน์โหลดสำรองอาจทำให้ขนาดเปลี่ยนไป"
 
 #. placeholder {0}: part.name ?? part.skill
 #: src/components/agent-message-block.tsx

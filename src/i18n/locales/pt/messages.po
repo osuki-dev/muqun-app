@@ -2416,10 +2416,6 @@ msgstr "Baixar e visualizar"
 msgid "Download size: {fullPackage}"
 msgstr "Tamanho do download: {fullPackage}"
 
-#: src/components/update-status-banner.tsx
-msgid "Download size: about {estimate}"
-msgstr "Tamanho do download: cerca de {estimate}"
-
 #: src/components/settings-font-sheet.tsx
 msgid "Downloading"
 msgstr "A transferir"
@@ -2773,8 +2769,8 @@ msgid "Front camera. Hold the QR up to the screen"
 msgstr "Câmara frontal. Aponte o código QR ao ecrã"
 
 #: src/components/update-status-banner.tsx
-msgid "Full package: {fullPackage}"
-msgstr "Pacote completo: {fullPackage}"
+msgid "Full package size. File reuse may reduce the download."
+msgstr "Tamanho do pacote completo. Reutilizar arquivos pode reduzir o download"
 
 #: src/components/video-asset-preview.tsx
 msgid "Fullscreen"
@@ -5586,10 +5582,6 @@ msgstr "Controlos do simulador"
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Size"
 msgstr "Tamanho"
-
-#: src/components/update-status-banner.tsx
-msgid "Size covers update files. File reuse or fallback can change the download."
-msgstr "O tamanho inclui os arquivos de atualização. A reutilização ou um download alternativo podem alterá-lo"
 
 #. placeholder {0}: part.name ?? part.skill
 #: src/components/agent-message-block.tsx

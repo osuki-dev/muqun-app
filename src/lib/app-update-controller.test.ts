@@ -68,8 +68,8 @@ const metadata = {
 
 describe('OTA update consent lifecycle', () => {
   test('size metadata settles before consent without becoming measured progress', async () => {
-    let resolveSize: (size: { estimatedBytes: number; fullBytes: number }) => void = () => {};
-    const size = new Promise<{ estimatedBytes: number; fullBytes: number }>((resolve) => {
+    let resolveSize: (size: { fullBytes: number }) => void = () => {};
+    const size = new Promise<{ fullBytes: number }>((resolve) => {
       resolveSize = resolve;
     });
     let downloads = 0;
@@ -89,10 +89,10 @@ describe('OTA update consent lifecycle', () => {
     const checking = f.controller.check();
     await Promise.resolve();
     const prematureConsent = f.controller.updateNow();
-    resolveSize({ estimatedBytes: 200, fullBytes: 1000 });
+    resolveSize({ fullBytes: 1000 });
     await checking;
     await prematureConsent;
-    expect(f.states.at(-1)?.downloadSize).toEqual({ estimatedBytes: 200, fullBytes: 1000 });
+    expect(f.states.at(-1)?.downloadSize).toEqual({ fullBytes: 1000 });
     expect(f.states.at(-1)?.totalBytes).toBeUndefined();
     expect(downloads).toBe(0);
     f.controller.defer();
@@ -142,13 +142,13 @@ describe('OTA update consent lifecycle', () => {
       undefined,
       async () => {
         reads++;
-        return reads === 1 ? null : { estimatedBytes: null, fullBytes: 6000 };
+        return reads === 1 ? null : { fullBytes: 6000 };
       }
     );
     await f.controller.check();
     expect(f.states.at(-1)?.downloadSizeStatus).toBe('failed');
     await f.controller.updateNow();
-    expect(f.states.at(-1)?.downloadSize).toEqual({ estimatedBytes: null, fullBytes: 6000 });
+    expect(f.states.at(-1)?.downloadSize).toEqual({ fullBytes: 6000 });
     expect(f.states.at(-1)?.downloadSizeStatus).toBeUndefined();
     expect(f.states.some((state) => state.downloadSizeStatus === 'checking')).toBe(true);
     expect(downloads).toBe(0);
