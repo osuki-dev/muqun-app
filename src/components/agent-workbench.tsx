@@ -1,4 +1,5 @@
 import { AgentRuntimeNotice } from '@/components/agent-runtime-notice';
+import { createQuestionDrafts } from '@/lib/agent-question-drafts';
 import {
   matchesRuntimeTerminal,
   nativeAgentInteraction,
@@ -967,6 +968,19 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const [openToolAsset, setOpenToolAsset] = useState<SessionAsset | null>(null);
 
   const gatewayGeneration = useGatewayGeneration((state) => state.byServer[serverId]);
+  const questionDraftOwner = JSON.stringify([serverId, sessionId, activeAsid, gatewayGeneration]);
+  const [questionDrafts] = useState(createQuestionDrafts);
+  useEffect(() => {
+    questionDrafts.enter(questionDraftOwner);
+  }, [questionDrafts, questionDraftOwner]);
+  const handleQuestionDraftChange = useCallback(
+    (request: FormRequest, field: string, value: unknown) => {
+      if (activeAsidRef.current !== activeAsid || !canReplyAgentForm(request, readRuntime()))
+        return;
+      questionDrafts.edit(questionDraftOwner, request, field, value);
+    },
+    [activeAsid, readRuntime, questionDrafts, questionDraftOwner]
+  );
   const [stagedModels, setStagedModels] = useState<Record<string, StagedAgentModel>>({});
   const nextTurnModel = stagedAgentModelFor(
     activeAsid ? stagedModels[activeAsid] : undefined,
@@ -2317,9 +2331,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           );
           break;
 
-        case 'agent.form.resolved':
+        case 'agent.form.resolved': {
+          if (!forActiveSession || activeAsidRef.current !== activeAsid) break;
+          const draft = questionDrafts.resolve(questionDraftOwner, event.form_id, event.reason);
+          if (draft) injectDraftRef.current?.(draft, { expiredQuestionOwner: questionDraftOwner });
           setForms((prev) => prev.filter((f) => f.id !== event.form_id));
           break;
+        }
 
         case 'agent.revert.changed':
           // A subagent's own rollback is not the plate above this composer.
@@ -2370,6 +2388,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       setTimeline,
       activeAsid,
       loadSnapshot,
+      questionDrafts,
+      questionDraftOwner,
       readRuntime,
       refreshSessions,
       refreshContext,
@@ -3264,9 +3284,22 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         });
         return;
       }
-      if (ownsReply()) setForms((prev) => prev.filter((f) => f.id !== formId));
+      if (ownsReply()) {
+        questionDrafts.resolve(questionDraftOwner, formId, 'answered');
+        setForms((prev) => prev.filter((f) => f.id !== formId));
+      }
     },
-    [readRuntime, activeAsid, forms, serverId, sessionId, showToast, t]
+    [
+      readRuntime,
+      activeAsid,
+      forms,
+      serverId,
+      sessionId,
+      showToast,
+      t,
+      questionDrafts,
+      questionDraftOwner,
+    ]
   );
 
   const handleCreateNewSession = useCallback(
@@ -4696,6 +4729,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             key={f.id}
             request={f}
             onSubmit={(answers) => handleFormSubmit(f.id, answers)}
+            onDraftChange={(field, value) => handleQuestionDraftChange(f, field, value)}
             onFieldFocus={scrollFooterAboveKeyboard}
           />
         ))}
@@ -4704,6 +4738,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   }, [
     footerPermissions,
     replyableForms,
+    handleQuestionDraftChange,
     isRunning,
     statusNotice,
     externalRuntime,
@@ -5640,6 +5675,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         onSetInboxDelivery={handleSetInboxDelivery}
         onPressTokens={openContextSheet}
         injectDraftRef={injectDraftRef}
+        draftOwnerKey={questionDraftOwner}
       />
 
       {/*

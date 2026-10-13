@@ -1,4 +1,5 @@
 import { assetFromLocalPdf } from '@/lib/session-assets';
+import { useQuestionComposerDraft } from '@/hooks/use-question-composer-draft';
 import { AssetViewer } from '@/components/asset-viewer';
 import type { HomeComposerOutset } from '@/theme/home-composer-outset';
 import { ComposerAttachmentButton } from '@/components/composer-attachment-button';
@@ -336,7 +337,10 @@ const SessionChip = memo(function SessionChip({
 });
 
 /** See `AgentComposerProps.injectDraftRef`. */
-export type DraftInjector = (text: string, options?: { ifEmpty?: boolean }) => boolean;
+export type DraftInjector = (
+  text: string,
+  options?: { ifEmpty?: boolean; expiredQuestionOwner?: string }
+) => boolean;
 
 export interface AgentComposerProps {
   running: boolean;
@@ -487,6 +491,7 @@ export interface AgentComposerProps {
    * since); answers whether it did.
    */
   injectDraftRef?: React.MutableRefObject<DraftInjector | null>;
+  draftOwnerKey?: string;
   /**
    * Empties the field, files included, if it still holds `text` -- what a
    * send from elsewhere (Home's failed row) just delivered.
@@ -634,6 +639,7 @@ export const AgentComposer = memo(function AgentComposer({
   onSetInboxDelivery,
   onPressTokens,
   injectDraftRef,
+  draftOwnerKey,
   clearDraftRef,
   holdStagedAttachments,
   onDockHeight,
@@ -689,7 +695,7 @@ export const AgentComposer = memo(function AgentComposer({
    * out would let the mono family underneath stand.
    */
   const interfaceFontFamily = useInterfaceFontFamily() ?? undefined;
-  const [text, setText] = useState('');
+  const { text, setText, appendAnswer } = useQuestionComposerDraft(draftOwnerKey ?? 'shared');
   /**
    * One answer to "what is this agent called", for the chip strip and the
    * action row alike. The catalogue's name when the host publishes one, the id
@@ -988,7 +994,7 @@ export const AgentComposer = memo(function AgentComposer({
       setFileTokens((current) => (current.includes(hit.path) ? current : [...current, hit.path]));
       setMentionHits([]);
     },
-    [text, mentionTrigger]
+    [text, mentionTrigger, setText]
   );
   const chooseComputer = (computer: MentionComputer) => {
     if (!mentionTrigger || !computer.reachable) return;
@@ -1044,13 +1050,18 @@ export const AgentComposer = memo(function AgentComposer({
   useEffect(() => {
     if (injectDraftRef) {
       injectDraftRef.current = (draftText, options) => {
+        if (options?.expiredQuestionOwner) {
+          if (options.expiredQuestionOwner !== draftOwnerKey) return false;
+          appendAnswer(draftText);
+          return true;
+        }
         if (options?.ifEmpty && readText().trim()) return false;
         setText(draftText);
         setTimeout(() => inputRef.current?.focus(), 50);
         return true;
       };
     }
-  }, [injectDraftRef, readText]);
+  }, [injectDraftRef, readText, draftOwnerKey, appendAnswer, setText]);
 
   const handleSend = useCallback(async () => {
     const trimmed = text.trim();
@@ -1133,6 +1144,7 @@ export const AgentComposer = memo(function AgentComposer({
     );
   }, [
     text,
+    setText,
     attachmentUploads,
     attachmentTargetId,
     record,
@@ -1162,7 +1174,7 @@ export const AgentComposer = memo(function AgentComposer({
     return () => {
       clearDraftRef.current = null;
     };
-  }, [clearDraftRef, readText, attachmentUploads]);
+  }, [clearDraftRef, readText, attachmentUploads, setText]);
 
   /**
    * What can be done to one queued prompt.
