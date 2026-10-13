@@ -1136,6 +1136,10 @@ msgstr "ตรวจสอบงานบนคอมพิวเตอร์เ
 msgid "Check your connection and try again."
 msgstr "ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง"
 
+#: src/components/update-status-banner.tsx
+msgid "Checking download size…"
+msgstr "กำลังตรวจสอบขนาดดาวน์โหลด…"
+
 #: src/components/settings-security.tsx
 msgid "Checking system authentication…"
 msgstr "กำลังตรวจสอบการยืนยันตัวตนของระบบ…"
@@ -1805,6 +1809,10 @@ msgstr "เปลี่ยนวิธีส่งไม่ได้"
 msgid "Could not change this setting"
 msgstr "เปลี่ยนการตั้งค่านี้ไม่ได้"
 
+#: src/components/update-status-banner.tsx
+msgid "Could not check download size. Try again."
+msgstr "ตรวจสอบขนาดดาวน์โหลดไม่ได้ โปรดลองอีกครั้ง"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not compact"
 msgstr "บีบอัดไม่ได้"
@@ -2429,12 +2437,12 @@ msgid "Download and preview"
 msgstr "ดาวน์โหลดและดูตัวอย่าง"
 
 #: src/components/update-status-banner.tsx
-msgid "Download size: about {estimate}"
-msgstr "ขนาดดาวน์โหลด: ประมาณ {estimate}"
+msgid "Download size: {fullPackage}"
+msgstr "ขนาดดาวน์โหลด: {fullPackage}"
 
 #: src/components/update-status-banner.tsx
-msgid "Download size: unavailable"
-msgstr "ขนาดดาวน์โหลด: ไม่พร้อมใช้งาน"
+msgid "Download size: about {estimate}"
+msgstr "ขนาดดาวน์โหลด: ประมาณ {estimate}"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Downloading"
@@ -4999,6 +5007,10 @@ msgstr "ลองแสดงเทอร์มินัลอีกครั้
 #: src/components/server-terminal-workspace.tsx
 msgid "Retry loading earlier output"
 msgstr "ลองโหลดเอาต์พุตก่อนหน้าอีกครั้ง"
+
+#: src/components/update-status-banner.tsx
+msgid "Retry size check"
+msgstr "ตรวจสอบขนาดอีกครั้ง"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Retry the ones marked in red, or remove them, then send again."

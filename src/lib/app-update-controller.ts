@@ -21,6 +21,7 @@ export type UpdateSnapshot = {
   downloadedBytes?: number;
   totalBytes?: number;
   downloadSize?: OtaDownloadSize;
+  downloadSizeStatus?: 'checking' | 'failed';
   transitionKind?: AvailableUpdate['transitionKind'];
 };
 export type UpdateProgress = {
@@ -99,6 +100,7 @@ export function createAppUpdateController(
   let deferredPhase: UpdatePhase = 'available';
   let localizedNotes: string | null = null;
   let downloadSize: OtaDownloadSize | null = null;
+  let downloadSizeStatus: UpdateSnapshot['downloadSizeStatus'];
   let bytes: Pick<UpdateSnapshot, 'downloadedBytes' | 'totalBytes'> = {};
   const publishProgress = (progress: number) => {
     const releaseNotes = localizedNotes ?? update?.message?.trim();
@@ -109,6 +111,7 @@ export function createAppUpdateController(
       ...(update?.transitionKind ? { transitionKind: update.transitionKind } : {}),
       ...(releaseNotes ? { releaseNotes } : {}),
       ...(downloadSize ? { downloadSize } : {}),
+      ...(downloadSizeStatus ? { downloadSizeStatus } : {}),
       ...bytes,
     });
   };
@@ -143,8 +146,13 @@ export function createAppUpdateController(
       }
       localizedNotes = null;
       downloadSize = null;
+      downloadSizeStatus = undefined;
       if (update) {
         const releaseId = update.id;
+        const needsSize =
+          client.getDownloadSize &&
+          update.transitionKind !== 'ADOPT_RELEASE' &&
+          update.transitionKind !== 'USE_BUILTIN';
         const [notes, size] = await Promise.allSettled([
           Promise.resolve().then(() => client.getReleaseNotes?.(releaseId)),
           Promise.resolve().then(() =>
@@ -156,12 +164,14 @@ export function createAppUpdateController(
         // Missing metadata must not hide the update or catalog's English notes.
         localizedNotes = notes.status === 'fulfilled' ? (notes.value ?? null) : null;
         downloadSize = size.status === 'fulfilled' ? (size.value ?? null) : null;
+        if (needsSize && !downloadSize) downloadSizeStatus = 'failed';
       }
       phase = update ? 'available' : 'idle';
     } catch {
       update = null;
       localizedNotes = null;
       downloadSize = null;
+      downloadSizeStatus = undefined;
       phase = 'failed';
     }
     publishProgress(0);
@@ -190,6 +200,7 @@ export function createAppUpdateController(
           update = null;
           localizedNotes = null;
           downloadSize = null;
+          downloadSizeStatus = undefined;
           phase = 'idle';
           bytes = {};
           publishProgress(0);
@@ -247,6 +258,7 @@ export function createAppUpdateController(
         update = null;
         localizedNotes = null;
         downloadSize = null;
+        downloadSizeStatus = undefined;
         bytes = {};
         phase = 'idle';
       }
@@ -257,6 +269,22 @@ export function createAppUpdateController(
       if (pending) return pending;
       if (!update || !['available', 'download-failed', 'restart-failed'].includes(phase))
         return Promise.resolve();
+      if (downloadSizeStatus === 'failed') {
+        const releaseId = update.id;
+        // This click retries metadata only. Once the size is readable, a new
+        // explicit Update now click is required to start the download.
+        return run(async () => {
+          downloadSizeStatus = 'checking';
+          publishProgress(0);
+          try {
+            downloadSize = (await client?.getDownloadSize?.(releaseId)) ?? null;
+          } catch {
+            downloadSize = null;
+          }
+          downloadSizeStatus = downloadSize ? undefined : 'failed';
+          publishProgress(0);
+        });
+      }
       return run(apply);
     },
     defer() {

@@ -87,17 +87,18 @@ describe('pre-consent OTA download size', () => {
     ).toEqual({ estimatedBytes: null, fullBytes: 5000 });
     expect(
       estimateOtaDownloadSize(manifest(targetId, true), baseId, null, baseId, artifact)
-    ).toEqual({ estimatedBytes: null, fullBytes: null });
+    ).toBeNull();
     const invalid = manifest(targetId, true);
     invalid.assets['index.bundle'].downloadByteSize = Infinity;
     expect(estimateOtaDownloadSize(invalid, targetId, manifest(baseId), baseId, artifact)).toEqual({
-      estimatedBytes: null,
-      fullBytes: null,
+      estimatedBytes: 300,
+      fullBytes: 5000,
     });
     const noArchive = { ...artifact, archiveUrl: undefined };
     expect(
       estimateOtaDownloadSize(manifest(targetId, true), targetId, null, baseId, noArchive)
-    ).toEqual({ estimatedBytes: null, fullBytes: null });
+    ).toEqual({ estimatedBytes: null, fullBytes: 6000 });
+    expect(estimateOtaDownloadSize(invalid, targetId, null, baseId, noArchive)).toBeNull();
   });
 
   test('client binds metadata to the requested release/base and contains failures', async () => {
@@ -121,6 +122,7 @@ describe('pre-consent OTA download size', () => {
       { ...valid, fromBundleId: targetId },
       { ...valid, estimatedBytes: -1 },
       { ...valid, fullBytes: 0 },
+      { ...valid, fullBytes: null },
       { ...valid, estimatedBytes: Number.MAX_SAFE_INTEGER + 1 },
       { ...valid, privateUri: 'r2://private' },
     ]) {
@@ -230,6 +232,15 @@ describe('pre-consent OTA download size', () => {
       estimatedBytes: null,
       fullBytes: 5000,
     });
+    const noSizes = manifest(targetId, true);
+    noSizes.assets['index.bundle'].downloadByteSize = -1;
+    noSizes.archive.downloadByteSize = -1;
+    objects.set('r2://test/bundles/0199aabb-ccdd-7a00-8000-001122334466/manifest.json', noSizes);
+    expect((await request(baseId)).status).toBe(503);
+    objects.set(
+      'r2://test/bundles/0199aabb-ccdd-7a00-8000-001122334466/manifest.json',
+      manifest(targetId, true)
+    );
     const release = await server.core.getRelease(releaseId);
     if (!release) throw new Error('Missing release');
     await server.core.updateReleasePolicy({

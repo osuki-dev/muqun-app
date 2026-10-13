@@ -1136,6 +1136,10 @@ msgstr "이 컴퓨터의 작업을 확인하세요. 이 요청은 다시 전송�
 msgid "Check your connection and try again."
 msgstr "연결을 확인하고 다시 시도하세요"
 
+#: src/components/update-status-banner.tsx
+msgid "Checking download size…"
+msgstr "다운로드 크기 확인 중…"
+
 #: src/components/settings-security.tsx
 msgid "Checking system authentication…"
 msgstr "시스템 인증 확인 중…"
@@ -1805,6 +1809,10 @@ msgstr "전달 방식을 바꿀 수 없습니다"
 msgid "Could not change this setting"
 msgstr "이 설정을 변경할 수 없습니다"
 
+#: src/components/update-status-banner.tsx
+msgid "Could not check download size. Try again."
+msgstr "다운로드 크기를 확인하지 못했습니다. 다시 시도하세요"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not compact"
 msgstr "압축하지 못했습니다"
@@ -2429,12 +2437,12 @@ msgid "Download and preview"
 msgstr "다운로드 후 미리 보기"
 
 #: src/components/update-status-banner.tsx
-msgid "Download size: about {estimate}"
-msgstr "다운로드 크기: 약 {estimate}"
+msgid "Download size: {fullPackage}"
+msgstr "다운로드 크기: {fullPackage}"
 
 #: src/components/update-status-banner.tsx
-msgid "Download size: unavailable"
-msgstr "다운로드 크기: 확인할 수 없음"
+msgid "Download size: about {estimate}"
+msgstr "다운로드 크기: 약 {estimate}"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Downloading"
@@ -4999,6 +5007,10 @@ msgstr "터미널 다시 그리기"
 #: src/components/server-terminal-workspace.tsx
 msgid "Retry loading earlier output"
 msgstr "이전 출력 다시 불러오기"
+
+#: src/components/update-status-banner.tsx
+msgid "Retry size check"
+msgstr "크기 확인 다시 시도"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Retry the ones marked in red, or remove them, then send again."

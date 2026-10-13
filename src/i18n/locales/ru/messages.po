@@ -1136,6 +1136,10 @@ msgstr "Проверьте задачи на этом компьютере. Эт
 msgid "Check your connection and try again."
 msgstr "Проверьте подключение и попробуйте ещё раз"
 
+#: src/components/update-status-banner.tsx
+msgid "Checking download size…"
+msgstr "Проверка размера загрузки…"
+
 #: src/components/settings-security.tsx
 msgid "Checking system authentication…"
 msgstr "Проверяем системную аутентификацию…"
@@ -1805,6 +1809,10 @@ msgstr "Не удалось изменить доставку"
 msgid "Could not change this setting"
 msgstr "Не удалось изменить этот параметр"
 
+#: src/components/update-status-banner.tsx
+msgid "Could not check download size. Try again."
+msgstr "Не удалось проверить размер загрузки. Повторите попытку"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not compact"
 msgstr "Не удалось сжать"
@@ -2429,12 +2437,12 @@ msgid "Download and preview"
 msgstr "Скачать и просмотреть"
 
 #: src/components/update-status-banner.tsx
-msgid "Download size: about {estimate}"
-msgstr "Размер загрузки: около {estimate}"
+msgid "Download size: {fullPackage}"
+msgstr "Размер загрузки: {fullPackage}"
 
 #: src/components/update-status-banner.tsx
-msgid "Download size: unavailable"
-msgstr "Размер загрузки: недоступен"
+msgid "Download size: about {estimate}"
+msgstr "Размер загрузки: около {estimate}"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Downloading"
@@ -4999,6 +5007,10 @@ msgstr "Отрисовать терминал заново"
 #: src/components/server-terminal-workspace.tsx
 msgid "Retry loading earlier output"
 msgstr "Повторить загрузку предыдущего вывода"
+
+#: src/components/update-status-banner.tsx
+msgid "Retry size check"
+msgstr "Повторить проверку размера"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Retry the ones marked in red, or remove them, then send again."

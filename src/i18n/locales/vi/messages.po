@@ -1136,6 +1136,10 @@ msgstr "Hãy kiểm tra các tác vụ trên máy tính này. Yêu cầu này ch
 msgid "Check your connection and try again."
 msgstr "Kiểm tra kết nối và thử lại"
 
+#: src/components/update-status-banner.tsx
+msgid "Checking download size…"
+msgstr "Đang kiểm tra dung lượng tải xuống…"
+
 #: src/components/settings-security.tsx
 msgid "Checking system authentication…"
 msgstr "Đang kiểm tra xác thực hệ thống…"
@@ -1805,6 +1809,10 @@ msgstr "Không thể đổi cách gửi"
 msgid "Could not change this setting"
 msgstr "Không thể thay đổi cài đặt này"
 
+#: src/components/update-status-banner.tsx
+msgid "Could not check download size. Try again."
+msgstr "Không thể kiểm tra dung lượng tải xuống. Hãy thử lại"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not compact"
 msgstr "Không thể nén"
@@ -2429,12 +2437,12 @@ msgid "Download and preview"
 msgstr "Tải xuống và xem trước"
 
 #: src/components/update-status-banner.tsx
-msgid "Download size: about {estimate}"
-msgstr "Dung lượng tải xuống: khoảng {estimate}"
+msgid "Download size: {fullPackage}"
+msgstr "Dung lượng tải xuống: {fullPackage}"
 
 #: src/components/update-status-banner.tsx
-msgid "Download size: unavailable"
-msgstr "Dung lượng tải xuống: chưa có"
+msgid "Download size: about {estimate}"
+msgstr "Dung lượng tải xuống: khoảng {estimate}"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Downloading"
@@ -4999,6 +5007,10 @@ msgstr "Thử vẽ lại terminal"
 #: src/components/server-terminal-workspace.tsx
 msgid "Retry loading earlier output"
 msgstr "Thử tải lại đầu ra trước đó"
+
+#: src/components/update-status-banner.tsx
+msgid "Retry size check"
+msgstr "Kiểm tra lại dung lượng"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Retry the ones marked in red, or remove them, then send again."

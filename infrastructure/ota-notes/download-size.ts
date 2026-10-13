@@ -7,7 +7,7 @@ function record(value: unknown): Record<string, unknown> | null {
     : null;
 }
 
-type ManifestAsset = { fileHash: string; byteSize: number; downloadByteSize: number };
+type ManifestAsset = { fileHash: string; byteSize: number | null; downloadByteSize: number | null };
 type SizeManifest = {
   assets: Record<string, ManifestAsset>;
   archive: { downloadByteSize: number; tarByteSize: number } | null;
@@ -21,18 +21,12 @@ function sizeManifest(payload: unknown, bundleId: string): SizeManifest | null {
   const parsed: Record<string, ManifestAsset> = {};
   for (const [path, value] of Object.entries(assets)) {
     const asset = record(value);
-    if (
-      !asset ||
-      typeof asset.fileHash !== 'string' ||
-      !/^[0-9a-f]{64}$/i.test(asset.fileHash) ||
-      !otaByteSize(asset.byteSize) ||
-      !otaByteSize(asset.downloadByteSize)
-    )
+    if (!asset || typeof asset.fileHash !== 'string' || !/^[0-9a-f]{64}$/i.test(asset.fileHash))
       return null;
     parsed[path] = {
       fileHash: asset.fileHash,
-      byteSize: asset.byteSize,
-      downloadByteSize: asset.downloadByteSize,
+      byteSize: otaByteSize(asset.byteSize) ? asset.byteSize : null,
+      downloadByteSize: otaByteSize(asset.downloadByteSize) ? asset.downloadByteSize : null,
     };
   }
   const archive = record(manifest.archive);
@@ -58,12 +52,24 @@ export function estimateOtaDownloadSize(
   basePayload: unknown,
   fromBundleId: string,
   artifact: ArtifactInfo
-): OtaDownloadSize {
+): OtaDownloadSize | null {
   const target = sizeManifest(targetPayload, targetBundleId);
   const base = sizeManifest(basePayload, fromBundleId);
   const archive = artifact.archiveUrl ? target?.archive : null;
-  const fullBytes = archive?.downloadByteSize ?? null;
-  if (!target || !base) return { estimatedBytes: null, fullBytes };
+  if (!target) return null;
+  // The full archive is one transport. Without it, count each original file
+  // payload once, using downloadByteSize rather than decompressed byteSize.
+  let originalBytes: number | null = 0;
+  for (const [path, asset] of Object.entries(target.assets)) {
+    if (!otaByteSize(asset.downloadByteSize) || !artifact.assets[path]) {
+      originalBytes = null;
+      break;
+    }
+    originalBytes += asset.downloadByteSize;
+  }
+  const fullBytes = archive?.downloadByteSize ?? originalBytes;
+  if (!otaByteSize(fullBytes) || fullBytes <= 0) return null;
+  if (!base) return { estimatedBytes: null, fullBytes };
   const downloads = Object.entries(target.assets).filter(
     ([path, asset]) => base.assets[path]?.fileHash !== asset.fileHash
   );
@@ -76,13 +82,19 @@ export function estimateOtaDownloadSize(
       patch?.baseBundleId === fromBundleId && patch.baseFileHash === base.assets[path]?.fileHash;
     const patchBytes = usesPatch ? patch.byteSize : null;
     if (usesPatch && !otaByteSize(patchBytes)) return { estimatedBytes: null, fullBytes };
-    estimatedBytes += otaByteSize(patchBytes) ? patchBytes : asset.downloadByteSize;
+    if (!otaByteSize(patchBytes) && !otaByteSize(asset.downloadByteSize))
+      return { estimatedBytes: null, fullBytes };
+    estimatedBytes += otaByteSize(patchBytes) ? patchBytes : (asset.downloadByteSize ?? 0);
     hasPatch ||= usesPatch;
   }
   if (!otaByteSize(estimatedBytes)) return { estimatedBytes: null, fullBytes };
-  if (archive && downloads.length >= 2) {
+  if (
+    archive &&
+    downloads.length >= 2 &&
+    Object.values(target.assets).every((asset) => otaByteSize(asset.byteSize))
+  ) {
     const logicalBytes = Object.values(target.assets).reduce(
-      (sum, asset) => sum + asset.byteSize,
+      (sum, asset) => sum + (asset.byteSize ?? 0),
       0
     );
     const framedLimit = estimatedBytes + archive.tarByteSize - logicalBytes;
