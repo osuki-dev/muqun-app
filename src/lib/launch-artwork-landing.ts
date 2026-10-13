@@ -1,7 +1,7 @@
 import { containedImageRect, type FeatherRect, type FeatherSize } from './hero-feather';
 import type { LaunchArtworkRect } from './launch-artwork-rect';
 
-/** Fit the whole launch image into Home's visible artwork, not its square splash box. */
+/** Matching images land in Home; independent launch figures dissolve where they started. */
 export function launchArtworkLanding({
   box,
   intrinsic,
@@ -20,6 +20,8 @@ export function launchArtworkLanding({
   const fallback = { centre, scale: 1, exact: false };
   if (
     !home ||
+    source === undefined ||
+    home.source !== source ||
     !intrinsic ||
     ![box.width, box.height, intrinsic.width, intrinsic.height].every(
       (value) => Number.isFinite(value) && value > 0
@@ -41,8 +43,6 @@ export function launchArtworkLanding({
     scale: Math.min(width / drawing.width, height / drawing.height),
     exact:
       !home.cropped &&
-      source !== undefined &&
-      home.source === source &&
       home.intrinsicWidth === intrinsic.width &&
       home.intrinsicHeight === intrinsic.height &&
       left === home.x &&
