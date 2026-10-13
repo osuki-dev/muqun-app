@@ -732,6 +732,13 @@
       { "run": "flows/home-continue-search.ad#hidden-match" },
       {
         "target": { "text": "Demo search hidden leaf" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 15000,
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": { "text": "Demo search hidden leaf" },
         "mode": "visible",
         "run": "flows/home-continue-search.ad#assert-visible"
       },
@@ -778,10 +785,24 @@
       },
       {
         "target": { "text": "Demo search hidden leaf" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 15000,
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": { "text": "Demo search hidden leaf" },
         "mode": "visible",
         "run": "flows/home-continue-search.ad#assert-visible"
       },
       { "run": "flows/home-continue-search.ad#no-match" },
+      {
+        "target": { "id": "home-continue-no-matches" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 15000,
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
       {
         "target": { "id": "home-continue-no-matches" },
         "mode": "visible",
@@ -792,6 +813,13 @@
         "target": { "id": "home-continue-no-matches" },
         "mode": "hidden",
         "run": "flows/home-continue-search.ad#assert-hidden"
+      },
+      {
+        "target": { "text": "Demo search leaf 1" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 15000,
+        "run": "flows/settings-home-layout.ad#seek-down"
       },
       {
         "target": { "text": "Demo search leaf 1" },
@@ -806,6 +834,13 @@
       { "run": "flows/home-continue-search.ad#whitespace" },
       {
         "target": { "text": "Demo search leaf 1" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 15000,
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": { "text": "Demo search leaf 1" },
         "mode": "visible",
         "run": "flows/home-continue-search.ad#assert-visible"
       },
@@ -817,16 +852,37 @@
       { "run": "flows/home-continue-search.ad#provider" },
       {
         "target": { "text": "Demo search leaf 1" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 15000,
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": { "text": "Demo search leaf 1" },
         "mode": "visible",
         "run": "flows/home-continue-search.ad#assert-visible"
       },
       { "run": "flows/home-continue-search.ad#directory" },
       {
         "target": { "text": "Demo search leaf 1" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 15000,
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": { "text": "Demo search leaf 1" },
         "mode": "visible",
         "run": "flows/home-continue-search.ad#assert-visible"
       },
       { "run": "flows/home-continue-search.ad#hidden-match" },
+      {
+        "target": { "text": "Demo search hidden leaf.*" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 15000,
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
       {
         "target": { "text": "Demo search hidden leaf.*" },
         "mode": "press",

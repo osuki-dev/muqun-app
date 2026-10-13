@@ -38,10 +38,12 @@ wait stable 300 5000
 
 # section hidden-match
 fill id="home-continue-search" "  HIDDEN   LEAF  "
+keyboard dismiss
 wait stable 300 5000
 
 # section no-match
 fill id="home-continue-search" "no-such-demo-session"
+keyboard dismiss
 wait stable 300 5000
 
 # section session-menu
@@ -56,19 +58,23 @@ wait stable 300 5000
 
 # section clear
 press id="home-continue-search-clear"
+keyboard dismiss
 wait stable 300 5000
 
 # section whitespace
 # The native CLI rejects whitespace-only fill; hidden-match covers trimmed spaces.
 fill id="home-continue-search" ""
+keyboard dismiss
 wait stable 300 5000
 
 # section provider
 fill id="home-continue-search" "OPENCODE"
+keyboard dismiss
 wait stable 300 5000
 
 # section directory
 fill id="home-continue-search" "/DEMO/MUQUN"
+keyboard dismiss
 wait stable 300 5000
 
 # section open-hidden-match
