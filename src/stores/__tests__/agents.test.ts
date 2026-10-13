@@ -1,24 +1,5 @@
-import * as bunTest from 'bun:test';
-
-const { beforeEach, describe, expect, test } = bunTest;
-const { module: mockModule } = (
-  bunTest as unknown as { mock: { module: (id: string, factory: () => unknown) => void } }
-).mock;
-
-/**
- * A map stands in for MMKV, the same fake `agent-model-memory.test.ts`
- * registers. Writable from the test, so a document a previous launch left
- * behind can be handed to the store and read back.
- */
-const stored = new Map<string, string>();
-mockModule('react-native-mmkv', () => ({
-  createMMKV: () => ({
-    getString: (key: string) => stored.get(key),
-    set: (key: string, value: string) => {
-      stored.set(key, value);
-    },
-  }),
-}));
+import { beforeEach, describe, expect, test } from 'bun:test';
+import { agentsStorage as stored } from '../../test-support/agents-storage';
 
 const { parseGatewayDiscovery } = await import('@/lib/agent-protocol');
 const { agentFeaturesOn, homeAgentsFor, offersAgentChoiceOn, selectedAgentOn, useAgents } =
