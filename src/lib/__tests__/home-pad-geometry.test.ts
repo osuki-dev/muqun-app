@@ -115,3 +115,44 @@ describe('nextRestingInset: the Pad page is sized from a no-keyboard inset only'
     ).toBe(expected);
   });
 });
+
+describe('Pad artwork and title depth', () => {
+  const landscape = { viewportHeight: 752, coverWidth: 664, wordmark: false };
+
+  test('a scenic rectangle cannot cover any part of the title', () => {
+    const scene = padCover({ ...landscape, measuredTitleWidth: 620, foreground: false });
+    expect(scene.titleZIndex).toBeGreaterThan(1);
+    // Retain the picture's full existing drawing band; no new crop or scaling.
+    expect(scene.artwork.height).toBe(scene.height);
+  });
+
+  test('long portrait titles keep most of every letter clear while retaining foreground depth', () => {
+    for (const measuredTitleWidth of [600, 900, 1200]) {
+      const portrait = padCover({ ...landscape, measuredTitleWidth, foreground: true });
+      const lineHeight = portrait.titleSize * PAD_COVER_TITLE_LINE_HEIGHT;
+      const artworkTop = portrait.height - portrait.artwork.height;
+      expect(portrait.titleZIndex).toBeLessThan(1);
+      expect(artworkTop).toBeGreaterThanOrEqual(lineHeight * 0.75);
+      expect(artworkTop).toBeLessThan(lineHeight);
+    }
+  });
+
+  test('a short title beside a portrait keeps its existing size and position', () => {
+    const portrait = padCover({ ...landscape, measuredTitleWidth: 300, foreground: true });
+    expect(portrait.artwork.height).toBe(portrait.height);
+    expect(portrait.artwork.width).toBe(Math.round(portrait.height / 0.9));
+    expect(portrait.titleZIndex).toBe(0);
+  });
+
+  test('an unmeasured title starts safe, but a cover with no title needs no clearance', () => {
+    const first = padCover({ ...landscape, measuredTitleWidth: 0, foreground: true });
+    const untitled = padCover({
+      ...landscape,
+      measuredTitleWidth: 0,
+      foreground: true,
+      hasTitle: false,
+    });
+    expect(first.artwork.height).toBeLessThan(first.height);
+    expect(untitled.artwork.height).toBe(untitled.height);
+  });
+});
