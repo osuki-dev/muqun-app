@@ -8,10 +8,11 @@ export type OtaArtifactTarget = {
   channel: string;
 };
 
-/** Associates the public SDK check event with only the check currently in flight. */
+/** Associates public SDK events with the latest successful install check. */
 export function createOtaUpdateMetadata(hookTimeoutMs = 5000) {
   let receive: ((event: UpdateCheckResult) => void) | null = null;
   let target: OtaArtifactTarget | null = null;
+  let generation = 0;
   const plugin = {
     id: 'muqunUpdateMetadata',
     setup: () => ({
@@ -30,6 +31,8 @@ export function createOtaUpdateMetadata(hookTimeoutMs = 5000) {
       channel: string
     ): Promise<AvailableUpdate | null> {
       target = null;
+      const checkGeneration = ++generation;
+      let successfulInstall = false;
       let expectedReleaseId: string | null = null;
       const observed = new Map<
         string,
@@ -39,12 +42,32 @@ export function createOtaUpdateMetadata(hookTimeoutMs = 5000) {
       const event = new Promise<UpdateCheckResult | null>((resolve) => {
         resolveEvent = resolve;
       });
+      const associate = (checked: UpdateCheckResult) => {
+        if (
+          checkGeneration !== generation ||
+          checked.status !== 'UPDATE_AVAILABLE' ||
+          checked.transitionKind !== 'INSTALL' ||
+          checked.toReleaseId !== expectedReleaseId ||
+          !expectedReleaseId ||
+          checked.fromBundleId !== fromBundleId ||
+          checked.channel !== channel
+        )
+          return;
+        target = {
+          releaseId: expectedReleaseId,
+          fromBundleId,
+          toBundleId: checked.toBundleId,
+          channel,
+        };
+        resolveEvent(checked);
+      };
       // Init dispatches check hooks after its asynchronous launch report. Wait
       // for that hook, without allowing a missing hook to block discovery.
       let timeout: ReturnType<typeof setTimeout> | undefined;
       receive = (checked) => {
         if (
           checked.status !== 'UPDATE_AVAILABLE' ||
+          checkGeneration !== generation ||
           checked.transitionKind !== 'INSTALL' ||
           checked.fromBundleId !== fromBundleId ||
           checked.channel !== channel ||
@@ -52,7 +75,7 @@ export function createOtaUpdateMetadata(hookTimeoutMs = 5000) {
         )
           return;
         observed.set(checked.toReleaseId, checked);
-        if (checked.toReleaseId === expectedReleaseId) resolveEvent(checked);
+        associate(checked);
       };
       try {
         const update = await operation();
@@ -63,25 +86,20 @@ export function createOtaUpdateMetadata(hookTimeoutMs = 5000) {
         )
           return update;
         expectedReleaseId = update.id;
+        successfulInstall = true;
         timeout = setTimeout(() => resolveEvent(null), hookTimeoutMs);
-        const checked = observed.get(update.id) ?? (await event);
-        if (
-          checked?.status === 'UPDATE_AVAILABLE' &&
-          checked.transitionKind === 'INSTALL' &&
-          checked.toReleaseId === update.id &&
-          checked.fromBundleId === fromBundleId &&
-          checked.channel === channel
-        ) {
-          target = {
-            releaseId: update.id,
-            fromBundleId,
-            toBundleId: checked.toBundleId,
-            channel,
-          };
-        }
+        const checked = observed.get(update.id);
+        if (checked) associate(checked);
+        else await event;
         return update;
       } finally {
-        receive = null;
+        // A launch hook can arrive after the bounded discovery wait. Keep the
+        // successful check's exact identity so a metadata-only retry recovers.
+        // The next check replaces this receiver and invalidates its generation.
+        if (checkGeneration === generation && !successfulInstall) {
+          receive = null;
+          target = null;
+        }
         clearTimeout(timeout);
       }
     },

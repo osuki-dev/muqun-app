@@ -90,9 +90,34 @@ describe('public SDK update-check association', () => {
         changed === event
       );
     }
-    // A late event outside an active check cannot recreate a cleared mapping.
+    // A successful check still accepts its exact hook after discovery timed out.
+    hook(event);
+    expect(metadata.getTarget(releaseId, fromBundleId, 'production')?.toBundleId).toBe(toBundleId);
+  });
+
+  test('a timed-out check recovers from its late hook, then a new check invalidates it', async () => {
+    const metadata = createOtaUpdateMetadata(1);
+    const hook = metadata.plugin.setup().hooks.onUpdateCheck;
+    await metadata.check(async () => update, fromBundleId, 'production');
+    expect(metadata.getTarget(releaseId, fromBundleId, 'production')).toBeNull();
+    hook(event);
+    expect(metadata.getTarget(releaseId, fromBundleId, 'production')?.toBundleId).toBe(toBundleId);
+    await metadata.check(async () => ({ ...update, id: toBundleId }), fromBundleId, 'production');
     hook(event);
     expect(metadata.getTarget(releaseId, fromBundleId, 'production')).toBeNull();
+    expect(metadata.getTarget(toBundleId, fromBundleId, 'production')).toBeNull();
+    await expect(
+      metadata.check(
+        async () => {
+          hook({ ...event, toReleaseId: toBundleId });
+          throw new Error('check failed after hook');
+        },
+        fromBundleId,
+        'production'
+      )
+    ).rejects.toThrow('check failed after hook');
+    hook({ ...event, toReleaseId: toBundleId });
+    expect(metadata.getTarget(toBundleId, fromBundleId, 'production')).toBeNull();
   });
 
   test('unchanged, errors, built-in rollback and adoption never retain an install target', async () => {
