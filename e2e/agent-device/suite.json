@@ -646,23 +646,23 @@
         "run": "flows/home-continue-search.ad#assert-hidden"
       },
       {
-        "target": { "text": "Show all" },
+        "target": { "id": "home-recent-sessions-more" },
         "mode": "scroll",
         "direction": "down",
         "run": "flows/settings-home-layout.ad#seek-down"
       },
       {
-        "target": { "text": "Show all" },
+        "target": { "id": "home-recent-sessions-more" },
         "mode": "visible",
         "run": "flows/home-continue-search.ad#assert-visible"
       },
       {
-        "target": { "text": "Demo search leaf 4" },
+        "target": { "text": "Demo search leaf 6" },
         "mode": "hidden",
         "run": "flows/home-continue-search.ad#assert-hidden"
       },
       {
-        "target": { "text": "Show all" },
+        "target": { "id": "home-recent-sessions-more" },
         "mode": "press",
         "run": "flows/home-continue-search.ad#press"
       },
@@ -701,7 +701,7 @@
         "run": "flows/home-continue-search.ad#assert-visible"
       },
       {
-        "target": { "text": "Demo search leaf 4" },
+        "target": { "text": "Demo search leaf 6" },
         "mode": "hidden",
         "run": "flows/home-continue-search.ad#assert-hidden"
       },

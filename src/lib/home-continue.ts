@@ -247,18 +247,22 @@ export function homeContinueCommand(destination: HomeContinueEntry['destination'
   return { type: 'resume-target', target: destination.target };
 }
 
-/** The first screenful is generous; expansion is only useful after it. */
-export const HOME_CONTINUE_INITIAL_LIMIT = 10;
+/** Home previews five sessions before expanding the same list in place. */
+export const HOME_CONTINUE_INITIAL_LIMIT = 5;
 
 export function visibleHomeContinueEntries(
   entries: readonly HomeContinueEntry[],
-  expanded: boolean
+  expanded: boolean,
+  limit = HOME_CONTINUE_INITIAL_LIMIT
 ): readonly HomeContinueEntry[] {
-  return expanded ? entries : entries.slice(0, HOME_CONTINUE_INITIAL_LIMIT);
+  return expanded ? entries : entries.slice(0, limit);
 }
 
-export function shouldShowHomeContinueOverflow(entries: readonly HomeContinueEntry[]): boolean {
-  return entries.length > HOME_CONTINUE_INITIAL_LIMIT;
+export function shouldShowHomeContinueOverflow(
+  entries: readonly HomeContinueEntry[],
+  limit = HOME_CONTINUE_INITIAL_LIMIT
+): boolean {
+  return entries.length > limit;
 }
 
 /**

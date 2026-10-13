@@ -220,7 +220,12 @@ export function NewTaskAction({
 
   if (agentRow) {
     return (
-      <Animated.View layout={listLayout()} entering={fadeIn()} exiting={fadeOut()}>
+      <Animated.View
+        layout={listLayout()}
+        entering={fadeIn()}
+        exiting={fadeOut()}
+        style={styles.group}>
+        <Text variant="caption" color={theme.colors.textMuted}>{t`Agents`}</Text>
         <View style={styles.agentRow}>
           {offered.map((agent) => (
             <AgentRowButton
@@ -257,7 +262,12 @@ export function NewTaskAction({
     if (!hasChecked) return null;
     return (
       <>
-        <Animated.View layout={listLayout()} entering={fadeIn()} exiting={fadeOut()}>
+        <Animated.View
+          layout={listLayout()}
+          entering={fadeIn()}
+          exiting={fadeOut()}
+          style={styles.group}>
+          <Text variant="caption" color={theme.colors.textMuted}>{t`Agents`}</Text>
           <PressableScale
             testID="server-opencode-offline-action"
             accessibilityRole="button"
@@ -299,6 +309,9 @@ export function NewTaskAction({
                 <AgentMark kind={agentKind} size={16} color={theme.colors.warning} />
                 <View style={[styles.offlineDot, { backgroundColor: theme.colors.warning }]} />
               </View>
+              <Text variant="bodySmall" color={theme.colors.warning}>
+                {agentName}
+              </Text>
             </View>
           </PressableScale>
         </Animated.View>
@@ -307,17 +320,25 @@ export function NewTaskAction({
   }
 
   // react-doctor-disable-next-line react-hooks-js/todo -- lingui t macro; the lingui babel plugin compiles the template away
-  const openAgentLabel = t`Open ${agentName} Agent on ${label}`;
+  const openAgentLabel = agentChoice.offersChoice
+    ? t`Agents`
+    : t`Open ${agentName} Agent on ${label}`;
   const readyLabel = t`${agentName} ready`;
   const actionLabel = showAnnouncement ? `${readyLabel}. ${openAgentLabel}` : openAgentLabel;
 
   return (
-    <Animated.View layout={listLayout()} entering={fadeIn()} exiting={fadeOut()}>
+    <Animated.View
+      layout={listLayout()}
+      entering={fadeIn()}
+      exiting={fadeOut()}
+      style={styles.group}>
+      <Text variant="caption" color={theme.colors.textMuted}>{t`Agents`}</Text>
       <View style={styles.actionRow}>
         <PressableScale
           testID="server-opencode-action"
           accessibilityRole="button"
           accessibilityLabel={actionLabel}
+          accessibilityState={agentChoice.offersChoice ? { expanded: agentMenuOpen } : undefined}
           onPress={handlePress}
           style={styles.button}>
           <View
@@ -341,6 +362,9 @@ export function NewTaskAction({
             <Animated.View style={glyphStyle}>
               <AgentMark kind={agentKind} size={16} color={theme.colors.primary} />
             </Animated.View>
+            <Text variant="bodySmall" color={theme.colors.primary}>
+              {agentChoice.offersChoice ? t`Agents` : agentName}
+            </Text>
           </View>
         </PressableScale>
         {agentMenuOpen ? (
@@ -428,32 +452,38 @@ function AgentRowButton({
             <View style={[styles.offlineDot, { backgroundColor: theme.colors.warning }]} />
           </View>
         )}
+        <Text variant="bodySmall" color={ready ? theme.colors.primary : theme.colors.warning}>
+          {name}
+        </Text>
       </View>
     </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
+  group: { gap: 6, marginTop: 12, alignSelf: 'stretch' },
   agentRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
-    gap: 2,
+    gap: 6,
   },
   actionRow: {
-    width: 44,
     flexDirection: 'column',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 4,
   },
   button: {
-    width: 44,
-    height: 44,
+    minHeight: 44,
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
     alignItems: 'center',
     justifyContent: 'center',
   },
   buttonFace: {
-    width: 36,
-    height: 36,
+    minHeight: 36,
+    paddingHorizontal: 10,
+    gap: 8,
     borderRadius: 10,
     borderCurve: 'continuous',
     alignItems: 'center',
@@ -484,15 +514,10 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   announcementLane: {
-    width: 44,
-    maxWidth: 44,
+    maxWidth: 180,
   },
   agentMenu: {
-    position: 'absolute',
-    top: 48,
-    right: 0,
-    zIndex: 10,
-    minWidth: 180,
+    alignSelf: 'stretch',
   },
   announcementText: {
     letterSpacing: 0.2,

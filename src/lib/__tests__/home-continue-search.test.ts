@@ -47,7 +47,7 @@ test('search reaches collapsed rows by title, directory and provider without rer
 });
 
 test('clear and whitespace restore the exact collapsed or expanded ordering', () => {
-  expect(searchedHomeContinueEntries(entries, '', false, undefined)).toEqual(entries.slice(0, 10));
+  expect(searchedHomeContinueEntries(entries, '', false, undefined)).toEqual(entries.slice(0, 5));
   expect(searchedHomeContinueEntries(entries, '\n  \t', false, 8)).toEqual(entries.slice(0, 8));
   expect(searchedHomeContinueEntries(entries, '', true, 4)).toBe(entries);
   expect(searchedHomeContinueEntries(entries, 'not a session', false, 4)).toEqual([]);
