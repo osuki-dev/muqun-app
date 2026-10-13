@@ -108,6 +108,12 @@ describe('the key', () => {
   });
 
   describe('what is never deduplicated', () => {
+    test('independently cancellable reads cannot share another owner’s abort', () => {
+      const first = new AbortController();
+      const second = new AbortController();
+      expect(dedupeKey('https://gw/h', { signal: first.signal }, 8000)).toBeNull();
+      expect(dedupeKey('https://gw/h', { signal: second.signal }, 8000)).toBeNull();
+    });
     test('anything that is not a GET', () => {
       // Two sends, spawns or approvals are two instructions. Collapsing them
       // would lose work with nothing on screen to say so.
