@@ -2,21 +2,23 @@ import { expect, test } from 'bun:test';
 import { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
+import * as particles from '../release-intro-particles';
 
 const require = createRequire(import.meta.url);
 type Element = { type: unknown; props: { children?: unknown; [key: string]: unknown } };
 type Component = (props: Record<string, unknown>) => Element | null;
+type Shared = { get: () => unknown; set: (next: unknown) => void };
+type Animation = { shared: Shared; duration: number; value: number };
 
-/** Run the production ownership boundaries with native modules isolated. */
-function artFixture({ reduced = false, reader = false, compileFails = false } = {}) {
+/** Exercise the real ownership and transition effects with native modules isolated. */
+function artFixture({ reduced = false, reader = false } = {}) {
   let active = true;
   let cursor = 0;
   let values: unknown[] = [];
   const effects: (() => void | (() => void))[] = [];
   const listeners = new Map<string, (value: boolean) => void>();
-  const frames: boolean[] = [];
-  let compiles = 0;
-  let disposals = 0;
+  const animations: Animation[] = [];
+  const cancelled: Shared[] = [];
   const { transformSync } = require('@babel/core');
   const source = readFileSync(
     new URL('../../components/release-intro-art.tsx', import.meta.url),
@@ -48,24 +50,28 @@ function artFixture({ reduced = false, reader = false, compileFails = false } = 
           },
           useEffect: (effect: () => void | (() => void), deps: unknown[]) => {
             const slot = cursor++;
-            const previous = values[slot] as { deps: unknown[] } | undefined;
+            const previous = values[slot] as { deps: unknown[]; cleanup?: () => void } | undefined;
             if (!previous || deps.some((value, index) => !Object.is(value, previous.deps[index]))) {
-              effects.push(effect);
-              values[slot] = { deps };
+              const next = { deps, cleanup: undefined as (() => void) | undefined };
+              effects.push(() => {
+                previous?.cleanup?.();
+                next.cleanup = effect() || undefined;
+                return next.cleanup;
+              });
+              values[slot] = next;
             }
           },
         };
       if (name === '@osuki-dev/ui')
-        return { useThemeTokens: () => ({ colors: { primary: '#3366cc', text: '#222222' } }) };
+        return { useThemeTokens: () => ({ colors: { primary: '#3366cc' } }) };
       if (name === 'lucide-react-native')
         return { Workflow: 'Workflow', GitFork: 'GitFork', Layers3: 'Layers3' };
       if (name === '@/hooks/use-app-active') return { useAppActive: () => active };
-      if (name === '@/lib/motion') return { timing: () => ({}) };
-      if (name === '@/lib/release-intro-shader') return { RELEASE_INTRO_SKSL: 'shader' };
+      if (name === '@/lib/release-intro-particles') return particles;
       if (name === 'react-native')
         return {
           View: 'View',
-          StyleSheet: { create: (value: unknown) => value, absoluteFill: {}, hairlineWidth: 1 },
+          StyleSheet: { create: (value: unknown) => value, absoluteFill: {} },
           AccessibilityInfo: {
             isScreenReaderEnabled: async () => reader,
             isReduceMotionEnabled: async () => reduced,
@@ -75,30 +81,36 @@ function artFixture({ reduced = false, reader = false, compileFails = false } = 
             },
           },
         };
-      if (name === 'react-native-skia')
-        return {
-          Canvas: 'Canvas',
-          Fill: 'Fill',
-          Shader: 'Shader',
-          Skia: {
-            Color: () => [0.2, 0.4, 0.8, 1],
-            RuntimeEffect: {
-              Make: () => {
-                compiles++;
-                if (compileFails) throw new Error('unavailable');
-                return { dispose: () => disposals++ };
-              },
-            },
-          },
-        };
+      if (name === 'react-native-worklets') return { scheduleOnUI: (run: () => void) => run() };
+      if (name === 'react-native-skia') return { Canvas: 'Canvas', Points: 'Points' };
       if (name === 'react-native-reanimated')
         return {
+          Easing: { linear: 'linear' },
+          ReduceMotion: { Never: 'never' },
           useReducedMotion: () => reduced,
-          useSharedValue: (value: unknown) => ({ get: () => value, set: () => {} }),
-          useDerivedValue: (read: () => unknown) => ({ get: read }),
-          useFrameCallback: () => ({ setActive: (value: boolean) => frames.push(value) }),
-          withTiming: (value: number) => value,
-          cancelAnimation: () => {},
+          useSharedValue: (initial: unknown) => {
+            const slot = cursor++;
+            if (!(slot in values)) {
+              let value = initial;
+              const shared: Shared = {
+                get: () => value,
+                set: (next) => {
+                  if (next && typeof next === 'object' && 'duration' in next) {
+                    animations.push({ shared, ...(next as Omit<Animation, 'shared'>) });
+                  } else value = next;
+                },
+              };
+              values[slot] = shared;
+            }
+            return values[slot];
+          },
+          useDerivedValue: (read: () => unknown) => {
+            const slot = cursor++;
+            if (!(slot in values)) values[slot] = { get: read };
+            return values[slot];
+          },
+          withTiming: (value: number, config: { duration: number }) => ({ value, ...config }),
+          cancelAnimation: (shared: Shared) => cancelled.push(shared),
         };
       throw new Error(name);
     },
@@ -109,79 +121,80 @@ function artFixture({ reduced = false, reader = false, compileFails = false } = 
     return component(props);
   };
   const parentState: unknown[] = [];
-  const gpu = (visible = true) => {
-    const tree = render(exports.ReleaseIntroArt as Component, { scene: 1, visible }, parentState)!;
+  const fieldState: unknown[] = [];
+  const owner = (scene = 0, visible = true) => {
+    const tree = render(exports.ReleaseIntroArt as Component, { scene, visible }, parentState)!;
     return (tree.props.children as Element[]).find(
       (child) => child && typeof child.type === 'function'
     );
   };
   return {
-    gpu,
-    render,
-    frames,
+    owner,
+    field: (scene = 0) => {
+      const element = owner(scene)!;
+      render(element.type as Component, element.props, fieldState);
+      return fieldState[3] as { get: () => particles.IntroPoint[] };
+    },
+    animations,
+    cancelled,
     listeners,
     flush: () => effects.splice(0).map((effect) => effect()),
     background: () => {
       active = false;
     },
-    compiles: () => compiles,
-    disposals: () => disposals,
   };
 }
 
-test('production art waits for accessibility, unmounts on exit/background and responds to live settings', async () => {
+test('accessibility resolves before particles mount; live reduced motion shows a stable final motif', async () => {
   const scope = artFixture();
-  expect(scope.gpu()).toBeUndefined();
+  expect(scope.owner()).toBeUndefined();
   const cleanup = scope.flush();
   await Promise.resolve();
-  expect(scope.gpu()).toBeDefined();
-  expect(scope.gpu(false)).toBeUndefined();
+  scope.field();
+  scope.flush();
+  expect(scope.animations).toHaveLength(1);
   scope.listeners.get('reduceMotionChanged')!(true);
-  expect(scope.gpu()).toBeUndefined();
+  const positions = scope.field();
+  scope.flush();
+  expect(positions.get()).toEqual(particles.introParticlePositions({ scene: 0, from: null }, 1));
+  expect(scope.animations).toHaveLength(1);
   scope.listeners.get('reduceMotionChanged')!(false);
+  scope.field();
+  scope.flush();
+  expect(scope.animations).toHaveLength(2);
+  expect(positions.get()).toEqual(particles.introParticlePositions({ scene: 0, from: null }, 0));
   scope.listeners.get('screenReaderChanged')!(true);
-  expect(scope.gpu()).toBeUndefined();
-  scope.listeners.get('screenReaderChanged')!(false);
-  expect(scope.gpu()).toBeDefined();
+  scope.field();
+  scope.flush();
+  expect(positions.get()).toEqual(particles.introParticlePositions({ scene: 0, from: null }, 1));
+  expect(scope.owner(0, false)).toBeUndefined();
   scope.background();
-  expect(scope.gpu()).toBeUndefined();
+  expect(scope.owner()).toBeUndefined();
   cleanup.forEach((effect) => effect?.());
   expect(scope.listeners.size).toBe(0);
-  expect(scope.compiles()).toBe(0);
 });
 
-test('production GPU owner stops its clock and releases its compiled effect on removal', async () => {
+test('first entry and forward/back transitions animate from actual positions and cancel on removal', async () => {
   const scope = artFixture();
-  scope.gpu();
+  scope.owner();
   scope.flush();
   await Promise.resolve();
-  const owner = scope.gpu()!;
+  const positions = scope.field();
   scope.flush();
-  const state: unknown[] = [];
-  expect(scope.render(owner.type as Component, owner.props, state)).toBeNull();
-  const ownerCleanup = scope.flush();
-  expect(scope.compiles()).toBe(1);
-  const field = scope.render(owner.type as Component, owner.props, state)!;
-  scope.render(field.type as Component, field.props, []);
-  const fieldCleanup = scope.flush();
-  expect(scope.frames).toEqual([true]);
-  fieldCleanup.forEach((effect) => effect?.());
-  ownerCleanup.forEach((effect) => effect?.());
-  expect(scope.frames).toEqual([true, false]);
-  expect(scope.compiles()).toBe(1);
-  expect(scope.disposals()).toBe(1);
-});
-
-test('a shader compile failure preserves the native emblem without starting a clock', async () => {
-  const scope = artFixture({ compileFails: true });
-  scope.gpu();
+  expect(scope.animations[0]!.duration).toBe(particles.RELEASE_INTRO_FORMATION_MS);
+  expect(positions.get()).toEqual(particles.introParticlePositions({ scene: 0, from: null }, 0));
+  scope.animations[0]!.shared.set(0.45);
+  const interrupted = positions.get();
+  scope.field(1);
   scope.flush();
-  await Promise.resolve();
-  const owner = scope.gpu()!;
-  scope.flush();
-  const state: unknown[] = [];
-  scope.render(owner.type as Component, owner.props, state);
-  scope.flush();
-  expect(scope.render(owner.type as Component, owner.props, state)).toBeNull();
-  expect(scope.frames).toEqual([]);
+  expect(positions.get()).toEqual(interrupted);
+  scope.animations[1]!.shared.set(0.5);
+  const backFrom = positions.get();
+  scope.field(0);
+  const cleanup = scope.flush();
+  expect(positions.get()).toEqual(backFrom);
+  expect(scope.animations).toHaveLength(3);
+  const cancellations = scope.cancelled.length;
+  cleanup.forEach((effect) => effect?.());
+  expect(scope.cancelled.length).toBe(cancellations + 1);
 });
