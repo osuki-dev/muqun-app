@@ -39,6 +39,7 @@ import {
   EDITORIAL_MAX_WIDTH,
   EDITORIAL_PAD_MAX_WIDTH,
   getEditorialLayoutGeometry,
+  editorialScenePlacement,
 } from '@/lib/home-editorial-layout';
 import { entryRise, listLayout, resolveDuration, riseIn } from '@/lib/motion';
 import {
@@ -73,6 +74,10 @@ export type HomeEditorialLayoutProps = {
   artwork?: ReactNode;
   /** Rendered offset to visible foreground; preserves transparent source pixels. */
   artworkTopInset?: number;
+  /** Transparent portraits may overlap the title; scenic covers sit behind it. */
+  artworkForeground?: boolean;
+  /** Safe-area space above the phone composition, available to scenic artwork only. */
+  topInset?: number;
   /** Scroll position drives reversible cover fades and pull-down stretch. */
   scrollY?: SharedValue<number>;
   cover?: boolean;
@@ -251,6 +256,8 @@ export function HomeEditorialLayout({
   artwork,
   scrollY,
   artworkTopInset = 0,
+  artworkForeground = true,
+  topInset = 0,
   cover = false,
   coverTitle,
   headerAction,
@@ -687,6 +694,12 @@ export function HomeEditorialLayout({
         ? Math.min(coverWidth * 0.48, ((coverWidth - 4) * 100) / titleMeasurement.width)
         : coverWidth * 0.3;
     const titleHeight = titleFontSize * 1.08;
+    const fullBleedScene = !pad && !split && !artworkForeground;
+    const scenePlacement = editorialScenePlacement(
+      coverTitle ? titleHeight : 0,
+      topInset + styles.root.paddingTop,
+      artworkTopInset
+    );
     return (
       <View
         key="cover"
@@ -727,7 +740,9 @@ export function HomeEditorialLayout({
                 </View>
               ) : null}
               {coverTitle ? (
-                <Animated.View onLayout={titleStage.onLayout} style={titleStage.style}>
+                <Animated.View
+                  onLayout={titleStage.onLayout}
+                  style={[titleStage.style, fullBleedScene && { zIndex: 2 }]}>
                   <Text
                     accessibilityRole="header"
                     color={theme.colors.text}
@@ -750,7 +765,13 @@ export function HomeEditorialLayout({
                 pointerEvents="none"
                 style={[
                   {
-                    marginTop: coverTitle ? -titleHeight * 0.35 - artworkTopInset : 0,
+                    marginTop: fullBleedScene
+                      ? scenePlacement.marginTop
+                      : coverTitle
+                        ? -titleHeight * 0.35 - artworkTopInset
+                        : 0,
+                    // Keep the launch tiles and reading sections at their existing positions.
+                    marginBottom: fullBleedScene ? scenePlacement.marginBottom : 0,
                     marginHorizontal: split ? 0 : -geometry.gutter,
                     zIndex: 1,
                   },

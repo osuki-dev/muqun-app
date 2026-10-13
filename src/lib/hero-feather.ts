@@ -169,6 +169,27 @@ export function homeCoverArtworkRect(
     : containedImageRect(container, intrinsic, focalPoint);
 }
 
+/**
+ * Scenic phone covers fill the page width, including authored contain scenes.
+ * Give contain its natural height instead of shrinking it into the short cover
+ * band. The existing bottom mask clips the foot; the subject is never widened
+ * or cropped at the sides to conceal a layout gutter.
+ */
+export function homeCoverSceneRect(
+  container: FeatherSize,
+  intrinsic: FeatherSize,
+  fit: string | undefined,
+  focalPoint?: { x: number; y: number }
+): FeatherRect {
+  if (fit === 'cover') return coveredImageRect(container, intrinsic, focalPoint);
+  const width = positive(container.width);
+  const sourceWidth = positive(intrinsic.width);
+  const sourceHeight = positive(intrinsic.height);
+  if (!width || !sourceWidth || !sourceHeight)
+    return { x: 0, y: 0, width, height: positive(container.height) };
+  return { x: 0, y: 0, width, height: (width * sourceHeight) / sourceWidth };
+}
+
 /** Foreground portraits retain their top edge; only wallpaper may crop above it. */
 export function editorialArtworkRect(
   container: FeatherSize,

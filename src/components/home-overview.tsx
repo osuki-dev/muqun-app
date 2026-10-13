@@ -298,6 +298,17 @@ export function HomeOverview({
     source: string;
     top: number;
   } | null>(null);
+  const [artworkForeground, setArtworkForeground] = useState<{
+    source: string;
+    foreground: boolean;
+  } | null>(null);
+  const reportArtworkForeground = useCallback((source: string, foreground: boolean) => {
+    setArtworkForeground((current) =>
+      current?.source === source && current.foreground === foreground
+        ? current
+        : { source, foreground }
+    );
+  }, []);
   const reportEditorialArtworkTop = useCallback((source: string, top: number) => {
     setEditorialArtworkTop((current) =>
       current?.source === source && current.top === top ? current : { source, top }
@@ -920,6 +931,11 @@ export function HomeOverview({
   // optional chain in a conditional's test.
   const editorialArtworkTopCurrent =
     editorialArtworkTop?.source === editorialArtworkResolution?.source;
+  const editorialArtworkSource = editorialArtworkResolution?.source;
+  const editorialArtworkForeground =
+    artworkForeground === null ||
+    artworkForeground.source !== editorialArtworkSource ||
+    artworkForeground.foreground;
   // Every layout gets the same dispatch surface -- the dock, Needs you and the
   // computer cards -- built once here; a layout only decides where they go.
   // Classic keeps its own look on the phone; a Pad always takes the editorial
@@ -1156,6 +1172,8 @@ export function HomeOverview({
               viewportHeight={editorialViewportHeight}
               scrollY={scrollY}
               cover={coverHeader}
+              artworkForeground={editorialArtworkForeground}
+              topInset={insets.top}
               coverTitle={showsEditorialBrand ? (identity.name ?? undefined) : undefined}
               pad={isPad}
               typographicCover={themeLibraryHydrated && !customTheme}
@@ -1188,6 +1206,8 @@ export function HomeOverview({
                 hasEditorialArtwork && editorialArtworkResolution ? (
                   <HomeEditorialArtwork
                     cover={coverHeader}
+                    fullBleed={coverHeader && !isPad}
+                    onForegroundChange={reportArtworkForeground}
                     // The Pad cover block sizes the painting; elsewhere it keeps its own proportion.
                     fill={padLaunch && coverHeader}
                     resolution={editorialArtworkResolution}
@@ -1412,6 +1432,12 @@ export function HomeOverview({
   const classicBrandBlockHeight = identity.showBrand
     ? classicBrandHeight || metrics.brand.minHeight
     : 0;
+  const classicArtworkSource = classicArtwork?.source;
+  const classicScene =
+    classicCover &&
+    artworkForeground !== null &&
+    artworkForeground.source === classicArtworkSource &&
+    !artworkForeground.foreground;
   // Large or wrapped wordmarks stand above the painting instead of covering
   // its subject. Ordinary type shares the theme's quiet header sky.
   const classicCoverTop =
@@ -1641,11 +1667,17 @@ export function HomeOverview({
         {classicCover && classicArtwork ? (
           <View
             pointerEvents="none"
-            style={{ position: 'absolute', top: classicCoverTop, left: 0, right: 0 }}>
+            style={{
+              position: 'absolute',
+              top: classicScene ? 0 : classicCoverTop,
+              left: 0,
+              right: 0,
+            }}>
             <HomeArtwork
               resolution={classicArtwork}
               scrollY={scrollY}
               cover
+              onForegroundChange={reportArtworkForeground}
               maxHeight={classicCoverHeight}
               onAvailabilityChange={(available) => {
                 if (!available) setFailedClassicArtworkSource(classicArtwork.source);
