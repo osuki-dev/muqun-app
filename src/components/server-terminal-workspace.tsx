@@ -185,6 +185,7 @@ import {
   readPaneOutput,
   readPaneRange,
   readPaneHistory,
+  readPaneHistorySegments,
   readPaneTail,
   resolveAssetById,
   resolveAssetByPath,
@@ -230,6 +231,7 @@ import {
   type CapturedCursor,
   type HistoryPullNotice,
 } from '@/lib/terminal-history-pull';
+import { PANE_CAPTURED_HISTORY_SEGMENTS_CAPABILITY } from '@/lib/terminal-history-segments';
 import { DEMO_SERVER_ID, demoRecord, isDemoRecord } from '@/lib/demo-gateway';
 import type { HomeServerEntry } from '@/lib/home-commands';
 import { demoSshHost } from '@/lib/demo-ssh';
@@ -2526,6 +2528,10 @@ export function ServerTerminalWorkspace({
   const servesCapturedHistory = useServerCapabilities(
     (state) => state.byServer[serverId]?.includes(PANE_CAPTURED_HISTORY_CAPABILITY) === true
   );
+  const servesSegmentedHistory = useServerCapabilities(
+    (state) =>
+      state.byServer[serverId]?.includes(PANE_CAPTURED_HISTORY_SEGMENTS_CAPABILITY) === true
+  );
   useEffect(() => {
     if (!selectedServer || !record || isDemoRecord(record) || !data.health) return;
     void recordServerCapabilities(record.serverId, data.health.capabilities);
@@ -2541,17 +2547,24 @@ export function ServerTerminalWorkspace({
   useEffect(() => {
     const paneId = selection.paneId;
     const sessionId = data.sessionId;
-    if (!ready || !servesCapturedHistory || !paneId || !sessionId) return;
+    if (
+      !ready ||
+      (!servesCapturedHistory && !servesSegmentedHistory) ||
+      !paneId ||
+      !sessionId ||
+      !record
+    )
+      return;
     // Once per pane and per ask: a pull already under way, or a history
     // already given in full, knows more than this would.
     // Boundary discovery is a new ask even when the first probe already saw
     // rows. Otherwise an early successful probe could leave history hidden.
-    const key = `${paneId}\u0000${capturedProbe}\u0000${capturedViewportReady}`;
+    const key = `${paneId}\u0000${capturedProbe}\u0000${capturedViewportReady}\u0000${servesSegmentedHistory}`;
     if (
       !capturedProbeDue({
-        off: capturedOffRef.current,
-        exhausted: capturedExhaustedRef.current,
-        cursor: capturedCursorRef.current,
+        off: !servesSegmentedHistory && capturedOffRef.current,
+        exhausted: !servesSegmentedHistory && capturedExhaustedRef.current,
+        cursor: servesSegmentedHistory ? null : capturedCursorRef.current,
         askedAlready: capturedProbedKeyRef.current === key,
       })
     ) {
@@ -2561,17 +2574,26 @@ export function ServerTerminalWorkspace({
     let current = true;
     capturedProbedAtRef.current = Date.now();
     const probedOutput = readOutputWindow().output;
-    void readPaneHistory(sessionId, paneId, null, 1).then((answer) => {
+    // Availability only: this 1-row cursor is never used by the 240-row reader.
+    const probeRead = servesSegmentedHistory
+      ? readPaneHistorySegments(record, sessionId, paneId, null, 1).then((answer) => ({
+          off: false as const,
+          empty: answer.ok && answer.page.rowCount === 0,
+          // A failed probe must still offer a reader that can explain/retry the failure.
+          hasRows: !answer.ok || answer.page.rowCount > 0,
+        }))
+      : readPaneHistory(sessionId, paneId, null, 1).then(capturedProbeState);
+    void probeRead.then((probe) => {
       if (!current || activePaneRef.current !== paneId) return;
       // A pull landed meanwhile: its answer stands.
       if (
-        loadingEarlierOutputRef.current ||
-        capturedExhaustedRef.current ||
-        capturedCursorRef.current ||
-        capturedRefreshRequiredRef.current
+        !servesSegmentedHistory &&
+        (loadingEarlierOutputRef.current ||
+          capturedExhaustedRef.current ||
+          capturedCursorRef.current ||
+          capturedRefreshRequiredRef.current)
       )
         return;
-      const probe = capturedProbeState(answer);
       capturedOffRef.current = probe.off;
       // Empty, or no answer: worth asking again as output grows.
       capturedEmptyRef.current = probe.empty;
@@ -2580,8 +2602,8 @@ export function ServerTerminalWorkspace({
       offerCaptured(
         paneId,
         probe.hasRows &&
-          paneScreenRowsRef.current > 0 &&
-          outputLineLimitRef.current < MAX_PANE_OUTPUT_LINES
+          (servesSegmentedHistory ||
+            (paneScreenRowsRef.current > 0 && outputLineLimitRef.current < MAX_PANE_OUTPUT_LINES))
       );
     });
     return () => {
@@ -2593,13 +2615,15 @@ export function ServerTerminalWorkspace({
     ready,
     selection.paneId,
     servesCapturedHistory,
+    servesSegmentedHistory,
     capturedViewportReady,
     readOutputWindow,
+    record,
   ]);
   // A pane with nothing captured yet gains rows as its output scrolls: ask
   // again, at most every CAPTURED_REPROBE_MS, while output keeps coming.
   useEffect(() => {
-    if (capturedOpen || !servesCapturedHistory) return;
+    if (capturedOpen || (!servesCapturedHistory && !servesSegmentedHistory)) return;
     const remaining = capturedReprobeDelay(
       capturedEmptyProbe?.output ?? null,
       output,
@@ -2610,7 +2634,7 @@ export function ServerTerminalWorkspace({
     if (remaining === null) return;
     const timer = setTimeout(() => setCapturedProbe((probe) => probe + 1), remaining);
     return () => clearTimeout(timer);
-  }, [output, capturedOpen, capturedEmptyProbe, servesCapturedHistory]);
+  }, [output, capturedOpen, capturedEmptyProbe, servesCapturedHistory, servesSegmentedHistory]);
 
   // Whether this pane is an editor, which is what "is this a full-screen
   // program" means until `alternate_on` is plumbed through -- see
@@ -3657,6 +3681,19 @@ export function ServerTerminalWorkspace({
 
   const loadEarlierOutput = useCallback(async () => {
     const requestPaneId = selection.paneId;
+    if (
+      servesSegmentedHistory &&
+      capturedOpen &&
+      requestPaneId &&
+      ready &&
+      connection.phase === 'connected'
+    ) {
+      router.push({
+        pathname: '/pane-history',
+        params: { serverId, sessionId: data.sessionId, paneId: requestPaneId },
+      });
+      return;
+    }
     const currentLimit = outputLineLimitRef.current;
     if (
       !ready ||
@@ -3729,7 +3766,10 @@ export function ServerTerminalWorkspace({
               // The gateway's captured history first, where it serves it and
               // this pane has not turned out uncaptured; a shell pane answers
               // `not_captured` and the range/tail reads below serve it as before.
-              ...(servesCapturedHistory && !capturedOffRef.current && paneScreenRowsRef.current > 0
+              ...(servesCapturedHistory &&
+              !servesSegmentedHistory &&
+              !capturedOffRef.current &&
+              paneScreenRowsRef.current > 0
                 ? {
                     captured: {
                       cursor: capturedCursorRef.current,
@@ -3911,6 +3951,9 @@ export function ServerTerminalWorkspace({
     selection.paneId,
     serverId,
     servesCapturedHistory,
+    servesSegmentedHistory,
+    capturedOpen,
+    router,
     terminalPlane,
     readOutputWindow,
   ]);
@@ -6057,9 +6100,10 @@ export function ServerTerminalWorkspace({
                           // its account while it has more to give.
                           canLoadEarlier={canOfferHistoryPull({
                             canLoadEarlier:
-                              (servesCapturedHistory && capturedOpen) ||
+                              ((servesCapturedHistory || servesSegmentedHistory) && capturedOpen) ||
                               (!fullScreenPane && canLoadEarlierOutput),
-                            blocked: historyPullBlocked,
+                            blocked:
+                              servesSegmentedHistory && capturedOpen ? false : historyPullBlocked,
                           })}
                           historyRevision={historyRevision}
                           loadingEarlier={loadingEarlierOutput}
