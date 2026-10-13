@@ -1,3 +1,4 @@
+import { agentSnapshotRefreshQuery } from './agent-session-runtime';
 import { fetch as nitroFetch } from 'react-native-nitro-fetch';
 import { agentSessionListQuery, type ListAgentSessionsQuery } from './agent-session-list-query';
 import {
@@ -489,9 +490,11 @@ export async function readAgentSessionAt(
 
 export async function getAgentSessionSnapshot(
   sessionId: string | undefined,
-  asid: string
+  asid: string,
+  options?: { refresh?: boolean; capabilities?: readonly string[] }
 ): Promise<AgentSessionSnapshot> {
-  const res = await gatewayFetch(gatewayUrl(sessionRoute(asid, '', sessionId, true)), {
+  const query = agentSnapshotRefreshQuery(options?.refresh === true, options?.capabilities);
+  const res = await gatewayFetch(gatewayUrl(sessionRoute(asid, '', sessionId, true) + query), {
     method: 'GET',
     headers: gatewayAuthHeaders(),
   });
