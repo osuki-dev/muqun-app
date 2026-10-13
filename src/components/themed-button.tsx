@@ -168,7 +168,7 @@ export function Button(props: ButtonProps) {
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       {...rest}>
-      {active && assets && opacityLimit > 0 ? (
+      {hasImage && active && assets && opacityLimit > 0 ? (
         <View
           pointerEvents="none"
           accessible={false}
