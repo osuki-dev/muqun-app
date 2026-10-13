@@ -45,7 +45,10 @@ import { entryRise, listLayout, resolveDuration, riseIn } from '@/lib/motion';
 import {
   PAD_COLUMN_GAP,
   PAD_COVER_TITLE_LINE_HEIGHT,
+  PAD_LAUNCH_GAP,
+  PAD_LAUNCH_BOTTOM_SPACE,
   padCover,
+  padCoverAvailableHeight,
   padCoverKind,
   padHomeColumns,
   padLaunchLayoutEnabled,
@@ -296,6 +299,8 @@ export function HomeEditorialLayout({
   // The Pad work column's headings take the same plate as the phone's sections.
   const scenePlate = useHomeScenePlate();
   const [measuredWidth, setMeasuredWidth] = useState(0);
+  const [padColumnHeight, setPadColumnHeight] = useState(0);
+  const [padLaunchesHeight, setPadLaunchesHeight] = useState(0);
   // Whether the Pad lower band (cards or connections) was already showing
   // when Home mounted: one that arrives later (the first card) waits for the
   // cover to finish shrinking, or it would land over the tiles still moving
@@ -430,8 +435,8 @@ export function HomeEditorialLayout({
 
   if (padLaunchLayout) {
     // Two columns (design §8 Pad, revised). The left one is the cover block --
-    // the pack's title and painting, or the app's wordmark, at a fixed share
-    // of the page with nothing over it -- then the tiles and Recent, in one
+    // the pack's title and painting, or the app's wordmark, capped to leave
+    // room for the measured launch controls -- then the tiles in one
     // scroll. The right one is the work: Needs you and the computer cards in a
     // scroll of their own, and the dock fixed at its foot. The page itself
     // does not scroll.
@@ -451,6 +456,11 @@ export function HomeEditorialLayout({
       wordmark,
       foreground: artworkForeground,
       hasTitle: Boolean(coverTitle),
+      availableHeight: padCoverAvailableHeight(
+        padColumnHeight,
+        padComposerHeight,
+        hasSlot(launches) ? padLaunchesHeight : 0
+      ),
     });
     // What follows a section that grows or goes moves with it. Instant under
     // reduce-motion (`listLayout`).
@@ -515,7 +525,9 @@ export function HomeEditorialLayout({
             {hasHeaderAction ? <View style={styles.headerAction}>{headerAction}</View> : null}
           </View>
         ) : null}
-        <View style={styles.padColumns}>
+        <View
+          style={styles.padColumns}
+          onLayout={(event) => setPadColumnHeight(event.nativeEvent.layout.height)}>
           <View testID="home-pad-cover-column" style={{ width: columns.cover }}>
             {/* Keyboard-aware on its own: the page's view only lifts fields
                 whose nearest scroll view it is, and Recent's search is here. */}
@@ -591,9 +603,10 @@ export function HomeEditorialLayout({
               {hasSlot(launches) ? (
                 <Animated.View
                   testID="home-pad-launch-dock"
+                  onLayout={(event) => setPadLaunchesHeight(event.nativeEvent.layout.height)}
                   entering={rise(0)}
                   layout={coverLayout}
-                  style={styles.padSection}>
+                  style={styles.padLaunchSection}>
                   {launches}
                 </Animated.View>
               ) : null}
@@ -1113,7 +1126,8 @@ const styles = StyleSheet.create({
   padColumns: { flex: 1, minHeight: 0, flexDirection: 'row', gap: PAD_COLUMN_GAP },
   padWorkColumn: { flex: 1, minWidth: 0 },
   padScroll: { flex: 1 },
-  padCoverContent: { paddingBottom: 24 },
+  padCoverContent: { paddingBottom: PAD_LAUNCH_BOTTOM_SPACE },
+  padLaunchSection: { marginTop: PAD_LAUNCH_GAP },
   padSection: { marginTop: 16 },
   padWorkContent: { paddingBottom: 24 },
   padWorkSections: { gap: 32 },

@@ -17,6 +17,23 @@ export const PAD_DOCK_FIELD_LINES = 3;
 /** The gap between the two Pad columns, and between two cards in the grid. */
 export const PAD_COLUMN_GAP = 24;
 export const PAD_CARD_GAP = 12;
+export const PAD_LAUNCH_GAP = 16;
+export const PAD_LAUNCH_BOTTOM_SPACE = 24;
+
+/** Reserve the measured controls before giving the cover its preferred height.
+ * Column height excludes the toolbar and stays fixed while the keyboard rises.
+ */
+export function padCoverAvailableHeight(
+  columnHeight: number,
+  composerHeight: number,
+  launchesHeight: number
+): number | undefined {
+  if (columnHeight <= 0 || launchesHeight <= 0) return undefined;
+  return Math.max(
+    0,
+    columnHeight - composerHeight - launchesHeight - PAD_LAUNCH_GAP - PAD_LAUNCH_BOTTOM_SPACE
+  );
+}
 
 /** Narrower than this a card's rows wrap their titles to stubs; it takes the column alone. */
 const PAD_CARD_MIN_WIDTH = 320;
@@ -91,8 +108,8 @@ export const PAD_COVER_SHARE = 0.45;
 
 /**
  * The Pad cover block at the top of the left column: the pack's title and
- * painting, or the app's wordmark, always at `PAD_COVER_SHARE` of the
- * viewport -- the work sits in the other column, so nothing makes it smaller.
+ * painting, or the app's wordmark, prefers `PAD_COVER_SHARE` of the viewport.
+ * The measured launch controls and composer take priority when space is tight.
  *
  * - `titleSize`: the cover title as wide as the column allows (the 38% cap
  *   and measured fit the cover has always used), and never taller than its
@@ -112,6 +129,7 @@ export function padCover({
   wordmark,
   foreground = true,
   hasTitle = true,
+  availableHeight,
 }: {
   viewportHeight: number;
   coverWidth: number;
@@ -120,13 +138,16 @@ export function padCover({
   /** Scenic backgrounds sit behind type; cutout portraits may overlap its lower edge. */
   foreground?: boolean;
   hasTitle?: boolean;
+  /** Space left after the toolbar, measured launch controls, and composer. */
+  availableHeight?: number;
 }): {
   height: number;
   titleSize: number;
   titleZIndex: number;
   artwork: { width: number; height: number };
 } {
-  const height = Math.round(viewportHeight * PAD_COVER_SHARE);
+  const preferredHeight = Math.round(viewportHeight * PAD_COVER_SHARE);
+  const height = Math.min(preferredHeight, Math.max(0, availableHeight ?? preferredHeight));
   const byWidth =
     measuredTitleWidth > 0
       ? Math.min(coverWidth * 0.38, ((coverWidth - 4) * 100) / measuredTitleWidth)
