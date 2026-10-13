@@ -6646,10 +6646,6 @@ msgstr "Quá nhiều thay đổi để liệt kê. Đây là phần đầu, khô
 msgid "Tool call"
 msgstr "Lệnh gọi công cụ"
 
-#: src/components/settings-server-capabilities.tsx
-msgid "Toolchains"
-msgstr "Toolchain"
-
 #: src/components/changes-sheet.tsx
 msgid "tracking {upstream}"
 msgstr "theo dõi {upstream}"

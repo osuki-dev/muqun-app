@@ -6646,10 +6646,6 @@ msgstr "Слишком много изменений для списка. Это
 msgid "Tool call"
 msgstr "Вызов инструмента"
 
-#: src/components/settings-server-capabilities.tsx
-msgid "Toolchains"
-msgstr "Инструментарии"
-
 #: src/components/changes-sheet.tsx
 msgid "tracking {upstream}"
 msgstr "отслеживает {upstream}"

@@ -6646,10 +6646,6 @@ msgstr "變更太多，無法全部列出。這只是開頭，不是全部"
 msgid "Tool call"
 msgstr "工具呼叫"
 
-#: src/components/settings-server-capabilities.tsx
-msgid "Toolchains"
-msgstr "工具鏈"
-
 #: src/components/changes-sheet.tsx
 msgid "tracking {upstream}"
 msgstr "追蹤 {upstream}"

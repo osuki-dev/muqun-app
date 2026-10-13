@@ -6646,10 +6646,6 @@ msgstr "변경 사항이 너무 많아 모두 나열할 수 없습니다. 전체
 msgid "Tool call"
 msgstr "도구 호출"
 
-#: src/components/settings-server-capabilities.tsx
-msgid "Toolchains"
-msgstr "툴체인"
-
 #: src/components/changes-sheet.tsx
 msgid "tracking {upstream}"
 msgstr "{upstream} 추적"
