@@ -56,8 +56,12 @@ function fixture(buildStatus = 0, artifactCount = 1, submitStatus = 0) {
     `#!/bin/sh
 printf '%s\\n' "$*" >> calls
 printf '%s\\n' "$HOT_UPDATER_CHANNEL:$EXPO_PUBLIC_HOT_UPDATER_ENABLED:$HOT_UPDATER_CLOUDFLARE_API_TOKEN" >> environment
+printf '%s\\n' "$EXPO_PUBLIC_HOT_UPDATER_API_KEY:$HOT_UPDATER_SIGNING_PRIVATE_KEY_PATH:$AWS_SECRET_ACCESS_KEY" >> app-config-environment
+printf '%s\\n' "$_JAVA_OPTIONS" >> java-options
 if [ "$1" = build ]; then
   printf '%s' "$EAS_LOCAL_BUILD_WORKINGDIR" > private-work
+  printf '%s' "$TMPDIR" > build-tmpdir
+  if [ "$3" = android ] && [ ! -d "$TMPDIR" ]; then exit 98; fi
   printf '%s\\n' 'PRIVATE_SIGNING_PAYLOAD_DO_NOT_PRINT'
   if [ '${buildStatus}' != 0 ]; then exit '${buildStatus}'; fi
   /bin/mkdir -p "$EAS_LOCAL_BUILD_WORKINGDIR/build"
@@ -68,6 +72,7 @@ if [ "$1" = build ]; then
   if [ '${artifactCount}' = 2 ]; then printf artifact > "$EAS_LOCAL_BUILD_ARTIFACTS_DIR/second.$extension"; fi
 fi
 if [ "$1" = submit ]; then
+  if [ -z "$EXPO_PUBLIC_HOT_UPDATER_API_KEY" ]; then exit 99; fi
   printf '%s\\n' 'PRIVATE_SUBMISSION_PAYLOAD_DO_NOT_PRINT'
   exit '${submitStatus}'
 fi
@@ -172,7 +177,7 @@ test('iOS local builds fail before touching credentials, files, or EAS on Linux'
   expect(existsSync(join(root, 'dist'))).toBe(false);
 });
 
-test('explicit iOS submission uses only the requested IPA without reading build credentials', () => {
+test('explicit iOS submission accepts an inherited public key without a local environment file', () => {
   const { root, env } = fixture();
   rmSync(join(root, '.env.hotupdater'));
   const artifact = join(root, 'selected.ipa');
@@ -181,13 +186,55 @@ test('explicit iOS submission uses only the requested IPA without reading build 
     runStoreCommand(
       { action: 'submit', platform: 'ios', channel: 'preview', path: artifact },
       root,
-      env,
+      { ...env, EXPO_PUBLIC_HOT_UPDATER_API_KEY: 'inherited-client' },
       'linux'
     )
   ).toBe(0);
   expect(readFileSync(join(root, 'calls'), 'utf8').trim()).toBe(
     `submit --platform ios --profile testflight --path ${artifact} --non-interactive --wait`
   );
+  expect(readFileSync(join(root, 'app-config-environment'), 'utf8')).toBe('inherited-client::\n');
+});
+
+test('explicit submission loads the local public app-config key without provider or signing secrets', () => {
+  const { root, env } = fixture();
+  writeFileSync(
+    join(root, '.env.hotupdater'),
+    'EXPO_PUBLIC_HOT_UPDATER_API_KEY=local-client\nHOT_UPDATER_SIGNING_PRIVATE_KEY_PATH=/private/key.pem\nAWS_SECRET_ACCESS_KEY=local-secret\n'
+  );
+  writeFileSync(join(root, 'selected.aab'), 'verified-aab');
+  expect(
+    runStoreCommand(
+      { action: 'submit', platform: 'android', channel: 'production', path: 'selected.aab' },
+      root,
+      { ...env, AWS_SECRET_ACCESS_KEY: 'inherited-secret' }
+    )
+  ).toBe(0);
+  expect(readFileSync(join(root, 'calls'), 'utf8').trim().split('\n')).toHaveLength(1);
+  expect(readFileSync(join(root, 'app-config-environment'), 'utf8')).toBe('local-client::\n');
+  expect(existsSync(join(root, 'dist'))).toBe(false);
+});
+
+test('Android builds isolate Java temporary files, preserve caller options, and clean up', () => {
+  const { root, env } = fixture();
+  const callerOptions =
+    '-Xmx3g -Dfile.encoding=UTF-8 -Djava.io.tmpdir=/old -Dorg.gradle.daemon=true';
+  expect(
+    runStoreCommand({ action: 'release', platform: 'android', channel: 'preview' }, root, {
+      ...env,
+      TMPDIR: '/old',
+      _JAVA_OPTIONS: callerOptions,
+    })
+  ).toBe(0);
+  const temporaryDir = readFileSync(join(root, 'build-tmpdir'), 'utf8');
+  expect(temporaryDir.startsWith(join(root, 'dist/cache/muqun-store-release-'))).toBe(true);
+  const options = readFileSync(join(root, 'java-options'), 'utf8').trim().split('\n');
+  expect(options).toEqual([
+    `${callerOptions} -Djava.io.tmpdir="${temporaryDir}" -Dorg.gradle.daemon=false`,
+    callerOptions,
+  ]);
+  expect(existsSync(temporaryDir)).toBe(false);
+  expect(readdirSync(join(root, 'dist/cache'))).toEqual([]);
 });
 
 test('explicit missing/empty/wrong-platform files and symlink artifacts never reach EAS', () => {

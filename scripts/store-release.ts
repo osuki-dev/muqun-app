@@ -98,18 +98,32 @@ export function runStoreCommand(
     parseEnv(content: string): Record<string, string>;
   };
   const envFile = join(projectRoot, '.env.hotupdater');
-  const local =
-    command.action !== 'submit' && existsSync(envFile)
-      ? parseEnv(readFileSync(envFile, 'utf8'))
-      : {};
+  // EAS Submit also evaluates app.config; only allowlisted public settings leave this file.
+  const local = existsSync(envFile) ? parseEnv(readFileSync(envFile, 'utf8')) : {};
   const env = storeReleaseEnvironment(inherited, local, command.channel);
   if (command.action !== 'submit') readHotUpdaterAppConfig(env, projectRoot);
   const profile = storeProfile(command.platform, command.channel);
-  const privateDir = mkdtempSync(join(tmpdir(), 'muqun-store-release-'));
+  const androidBuild = command.action !== 'submit' && command.platform === 'android';
+  const temporaryRoot = androidBuild ? resolve(projectRoot, 'dist/cache') : tmpdir();
+  mkdirSync(temporaryRoot, { recursive: true });
+  const privateDir = mkdtempSync(join(temporaryRoot, 'muqun-store-release-'));
   const logPath = join(privateDir, 'eas.log');
   const log = openSync(logPath, 'wx', 0o600);
   try {
     if (command.action !== 'submit') {
+      const buildEnv = {
+        ...env,
+        TMPDIR: env.TMPDIR,
+        _JAVA_OPTIONS: env._JAVA_OPTIONS || '-Xmx6g -XX:MaxMetaspaceSize=2g',
+      };
+      if (androidBuild) {
+        const javaTemporaryDir = join(privateDir, 'tmp');
+        mkdirSync(javaTemporaryDir);
+        buildEnv.TMPDIR = javaTemporaryDir;
+        // Java ignores TMPDIR. Append overrides without discarding caller JVM options;
+        // avoid reusing a Gradle daemon whose temporary directory belongs to an older run.
+        buildEnv._JAVA_OPTIONS += ` -Djava.io.tmpdir="${javaTemporaryDir}" -Dorg.gradle.daemon=false`;
+      }
       const artifactsRoot = join(projectRoot, 'dist/eas-builds');
       mkdirSync(artifactsRoot, { recursive: true });
       const artifacts = mkdtempSync(join(artifactsRoot, `${command.platform}-${command.channel}-`));
@@ -129,8 +143,7 @@ export function runStoreCommand(
         {
           cwd: projectRoot,
           env: {
-            ...env,
-            _JAVA_OPTIONS: env._JAVA_OPTIONS || '-Xmx6g -XX:MaxMetaspaceSize=2g',
+            ...buildEnv,
             EAS_LOCAL_BUILD_WORKINGDIR: join(privateDir, 'work'),
             EAS_LOCAL_BUILD_SKIP_CLEANUP: '1',
             EAS_LOCAL_BUILD_ARTIFACTS_DIR: artifacts,
