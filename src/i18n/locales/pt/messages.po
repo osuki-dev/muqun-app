@@ -409,8 +409,8 @@ msgid "30 days"
 msgstr "30 dias"
 
 #: src/app/computer-map.tsx
-msgid "3D is unavailable on this device. All connection details are available below."
-msgstr "A visualização 3D não está disponível neste dispositivo. Todos os detalhes das ligações estão abaixo"
+msgid "3D unavailable. Connections are listed below."
+msgstr "3D indisponível. As ligações estão listadas abaixo"
 
 #. placeholder {0}: Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))
 #: src/components/settings-font-sheet.tsx
@@ -478,6 +478,10 @@ msgstr "Acerca"
 #: src/components/settings-fleet-peers.tsx
 msgid "Accept work from other computers"
 msgstr "Aceitar trabalho de outros computadores"
+
+#: src/app/computer-map.tsx
+msgid "Accepting work"
+msgstr "Aceita trabalho"
 
 #: src/components/task-row.tsx
 msgid "Acknowledge"
@@ -1460,10 +1464,6 @@ msgstr "Computador não encontrado"
 msgid "Computer offline"
 msgstr "Computador offline"
 
-#: src/app/computer-map.tsx
-msgid "Computer status below describes reachability from this device."
-msgstr "O estado dos computadores abaixo indica se estão acessíveis a partir deste dispositivo"
-
 #: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-server-tasks.ts
@@ -1587,10 +1587,6 @@ msgstr "Mapa de ligações"
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "Conexões"
-
-#: src/app/computer-map.tsx
-msgid "Connections from this app and last-known links between paired computers."
-msgstr "Ligações desta aplicação e últimas ligações conhecidas entre computadores emparelhados"
 
 #: src/components/agent-composer.tsx
 msgid "Contains subagent sessions"
@@ -2078,6 +2074,10 @@ msgstr "Não foi possível ler este arquivo"
 msgid "Could not read voice settings. Save your configuration again."
 msgstr "Não foi possível ler as configurações de voz. Salve a configuração novamente"
 
+#: src/app/computer-map.tsx
+msgid "Could not refresh. This report may be outdated."
+msgstr "Não foi possível atualizar. Este relatório pode estar desatualizado"
+
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
 msgstr "Não foi possível remover o host"
@@ -2501,8 +2501,8 @@ msgid "Draft the notes for the next build"
 msgstr "Redija as notas da próxima versão"
 
 #: src/app/computer-map.tsx
-msgid "Drag to orbit. Pinch to zoom. Tap a computer to select it. Solid lines show app connections; dashed arrows show last-known peer reports. Positions are illustrative."
-msgstr "Arraste para rodar e use dois dedos para ampliar. Toque num computador para o selecionar. As linhas contínuas mostram ligações da aplicação; as setas tracejadas, as últimas ligações comunicadas. As posições são ilustrativas"
+msgid "Drag to rotate · Pinch to zoom · Tap to select"
+msgstr "Arraste para rodar · Use dois dedos para ampliar · Toque para selecionar"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -3323,12 +3323,8 @@ msgid "Last known activity"
 msgstr "Última atividade conhecida"
 
 #: src/app/computer-map.tsx
-msgid "Last reported: accepting work from other computers."
-msgstr "Último estado comunicado: aceita trabalho de outros computadores"
-
-#: src/app/computer-map.tsx
-msgid "Last reported: not accepting work from other computers. This does not mean offline."
-msgstr "Último estado comunicado: não aceita trabalho de outros computadores. Isto não significa que esteja offline"
+msgid "Last reported by this computer"
+msgstr "Último relatório deste computador"
 
 #: src/components/task-row.tsx
 msgid "last seen {ago}"
@@ -3349,10 +3345,6 @@ msgstr "Visto há {minutes} min"
 #: src/components/settings-servers.tsx
 msgid "Last seen just now"
 msgstr "Visto agora mesmo"
-
-#: src/app/computer-map.tsx
-msgid "Last-known peer reports are separate from this app’s connection. They may have changed since the Gateway was read."
-msgstr "As últimas ligações comunicadas entre computadores são independentes da ligação desta aplicação. Podem ter mudado desde a consulta ao Gateway"
 
 #: src/components/update-status-banner.tsx
 msgid "Later"
@@ -3392,6 +3384,10 @@ msgstr "Nível {depth}"
 #: src/components/settings-appearance.tsx
 msgid "Light"
 msgstr "Claro"
+
+#: src/app/computer-map.tsx
+msgid "Lines: this app. Dashed arrows: last reported computer links."
+msgstr "Linhas: esta aplicação. Setas tracejadas: últimas ligações comunicadas entre computadores"
 
 #: src/components/file-mention-panel.tsx
 msgid "Link revoked · re-linking…"
@@ -3891,10 +3887,6 @@ msgstr "Ainda não tem um Gateway?"
 msgid "No input"
 msgstr "Sem entrada"
 
-#: src/app/computer-map.tsx
-msgid "No links in the last peer report."
-msgstr "Sem ligações no último relatório entre computadores"
-
 #: src/components/task-row.tsx
 msgid "No longer linked with {computer}"
 msgstr "Já não está ligado a {computer}"
@@ -3943,8 +3935,8 @@ msgid "No password or key is saved for this host."
 msgstr "Não há senha nem chave guardada para este host"
 
 #: src/app/computer-map.tsx
-msgid "No peer report available. This Gateway may be offline or may not support peer reports."
-msgstr "Nenhum relatório de ligações disponível. Este Gateway pode estar offline ou não suportar estes relatórios"
+msgid "No peer report available."
+msgstr "Nenhum relatório de ligações disponível"
 
 #: src/components/custom-theme-library.tsx
 msgid "No personal themes yet. Import one, or browse the published themes."
@@ -3970,6 +3962,10 @@ msgstr "Nenhum projeto corresponde a “{0}”"
 #: src/components/task-row.tsx
 msgid "No reason was recorded."
 msgstr "Nenhum motivo foi registrado"
+
+#: src/app/computer-map.tsx
+msgid "No reported links."
+msgstr "Nenhuma ligação comunicada"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "No sessions in this project yet. Start one from the + button."
@@ -4042,6 +4038,10 @@ msgstr "Ainda não há worktrees. Cria um abaixo para trabalhar num ramo sem mex
 #: src/components/changes-worktree-list.tsx
 msgid "Not a git repository"
 msgstr "Não é um repositório Git"
+
+#: src/app/computer-map.tsx
+msgid "Not accepting work"
+msgstr "Não aceita trabalho"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -4892,8 +4892,8 @@ msgid "Recording failed."
 msgstr "Falha na gravação"
 
 #: src/app/computer-map.tsx
-msgid "Reduced motion is on. Use the connection list below."
-msgstr "A redução de movimento está ativada. Utilize a lista de ligações abaixo"
+msgid "Reduced motion: list view."
+msgstr "Movimento reduzido: vista de lista"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -5402,10 +5402,6 @@ msgstr "Procurar em todo o projeto"
 msgid "Security"
 msgstr "Segurança"
 
-#: src/components/settings-servers.tsx
-msgid "See this app’s connections and last-known computer links."
-msgstr "Ver as ligações desta aplicação e as últimas ligações conhecidas entre computadores"
-
 #. placeholder {0}: age.value
 #: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
@@ -5773,6 +5769,10 @@ msgstr "Habilidade iniciada"
 msgid "Skip intro"
 msgstr "Saltar a introdução"
 
+#: src/app/computer-map.tsx
+msgid "Some connections are omitted from the map."
+msgstr "Algumas ligações foram omitidas do mapa"
+
 #: src/components/settings-storage.tsx
 msgid "Some files could not be removed · {clearable}"
 msgstr "Não foi possível remover alguns ficheiros · {clearable}"
@@ -5780,10 +5780,6 @@ msgstr "Não foi possível remover alguns ficheiros · {clearable}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "Alguns ficheiros não foram carregados"
-
-#: src/app/computer-map.tsx
-msgid "Some older peer records have no computer identity and cannot be placed on the map."
-msgstr "Alguns registos antigos não têm identificador de computador e não podem ser colocados no mapa"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Some theme colors need more contrast"
@@ -6377,14 +6373,6 @@ msgstr "O ícone na sua tela inicial. O Android fecha o app para aplicá-lo"
 #: src/components/ssh-host-form.tsx
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "Não foi possível ler a chave ({0}). Verifique a chave e a frase-senha"
-
-#: src/app/computer-map.tsx
-msgid "The latest peer read failed. Any retained reports below may be out of date."
-msgstr "A última consulta de ligações falhou. Os relatórios guardados abaixo podem estar desatualizados"
-
-#: src/app/computer-map.tsx
-msgid "The map shows up to 12 computers and 36 peer links. All paired computers remain in the list."
-msgstr "O mapa mostra até 12 computadores e 36 ligações. Todos os computadores emparelhados continuam na lista"
 
 #: src/components/session-map.tsx
 msgid "The new terminal was created, but could not open it."

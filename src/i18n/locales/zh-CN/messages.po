@@ -409,8 +409,8 @@ msgid "30 days"
 msgstr "30 天"
 
 #: src/app/computer-map.tsx
-msgid "3D is unavailable on this device. All connection details are available below."
-msgstr "此设备无法显示 3D。所有连接详情均可在下方查看"
+msgid "3D unavailable. Connections are listed below."
+msgstr "无法显示 3D。连接已列于下方"
 
 #. placeholder {0}: Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))
 #: src/components/settings-font-sheet.tsx
@@ -478,6 +478,10 @@ msgstr "关于"
 #: src/components/settings-fleet-peers.tsx
 msgid "Accept work from other computers"
 msgstr "接受其他电脑的任务"
+
+#: src/app/computer-map.tsx
+msgid "Accepting work"
+msgstr "接受工作"
 
 #: src/components/task-row.tsx
 msgid "Acknowledge"
@@ -1460,10 +1464,6 @@ msgstr "找不到电脑"
 msgid "Computer offline"
 msgstr "电脑离线"
 
-#: src/app/computer-map.tsx
-msgid "Computer status below describes reachability from this device."
-msgstr "下方电脑状态表示此设备能否连接到该电脑"
-
 #: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-server-tasks.ts
@@ -1587,10 +1587,6 @@ msgstr "连接图"
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "连接"
-
-#: src/app/computer-map.tsx
-msgid "Connections from this app and last-known links between paired computers."
-msgstr "显示此应用的连接，以及已配对电脑之间最后已知的连接"
 
 #: src/components/agent-composer.tsx
 msgid "Contains subagent sessions"
@@ -2078,6 +2074,10 @@ msgstr "无法读取此文件"
 msgid "Could not read voice settings. Save your configuration again."
 msgstr "无法读取语音设置，请重新保存配置"
 
+#: src/app/computer-map.tsx
+msgid "Could not refresh. This report may be outdated."
+msgstr "刷新失败。此报告可能已过期"
+
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
 msgstr "无法移除主机"
@@ -2501,8 +2501,8 @@ msgid "Draft the notes for the next build"
 msgstr "草拟下一个版本的发布说明"
 
 #: src/app/computer-map.tsx
-msgid "Drag to orbit. Pinch to zoom. Tap a computer to select it. Solid lines show app connections; dashed arrows show last-known peer reports. Positions are illustrative."
-msgstr "拖动旋转，双指缩放，轻点电脑进行选择。实线表示应用连接，虚线箭头表示上次报告的电脑间连接。位置仅作示意"
+msgid "Drag to rotate · Pinch to zoom · Tap to select"
+msgstr "拖动旋转 · 双指缩放 · 轻点选择"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -3323,12 +3323,8 @@ msgid "Last known activity"
 msgstr "上次记录的活动"
 
 #: src/app/computer-map.tsx
-msgid "Last reported: accepting work from other computers."
-msgstr "上次报告：接受其他电脑分派的工作"
-
-#: src/app/computer-map.tsx
-msgid "Last reported: not accepting work from other computers. This does not mean offline."
-msgstr "上次报告：不接受其他电脑分派的工作。这不代表离线"
+msgid "Last reported by this computer"
+msgstr "此电脑上次报告"
 
 #: src/components/task-row.tsx
 msgid "last seen {ago}"
@@ -3349,10 +3345,6 @@ msgstr "上次在线于 {minutes} 分钟前"
 #: src/components/settings-servers.tsx
 msgid "Last seen just now"
 msgstr "刚刚在线"
-
-#: src/app/computer-map.tsx
-msgid "Last-known peer reports are separate from this app’s connection. They may have changed since the Gateway was read."
-msgstr "上次报告的电脑间连接与此应用的连接是两回事。自读取 Gateway 后，状态可能已变化"
 
 #: src/components/update-status-banner.tsx
 msgid "Later"
@@ -3392,6 +3384,10 @@ msgstr "第 {depth} 层"
 #: src/components/settings-appearance.tsx
 msgid "Light"
 msgstr "浅色"
+
+#: src/app/computer-map.tsx
+msgid "Lines: this app. Dashed arrows: last reported computer links."
+msgstr "连线：此应用。虚线箭头：上次报告的电脑间连接"
 
 #: src/components/file-mention-panel.tsx
 msgid "Link revoked · re-linking…"
@@ -3891,10 +3887,6 @@ msgstr "还没有 Gateway？"
 msgid "No input"
 msgstr "无输入"
 
-#: src/app/computer-map.tsx
-msgid "No links in the last peer report."
-msgstr "上次电脑间连接报告中没有连接"
-
 #: src/components/task-row.tsx
 msgid "No longer linked with {computer}"
 msgstr "已不再与 {computer} 关联"
@@ -3943,8 +3935,8 @@ msgid "No password or key is saved for this host."
 msgstr "此主机没有保存密码或密钥"
 
 #: src/app/computer-map.tsx
-msgid "No peer report available. This Gateway may be offline or may not support peer reports."
-msgstr "暂无电脑间连接报告。此 Gateway 可能离线，或不支持此类报告"
+msgid "No peer report available."
+msgstr "暂无电脑间连接报告"
 
 #: src/components/custom-theme-library.tsx
 msgid "No personal themes yet. Import one, or browse the published themes."
@@ -3970,6 +3962,10 @@ msgstr "没有匹配“{0}”的项目"
 #: src/components/task-row.tsx
 msgid "No reason was recorded."
 msgstr "未记录原因"
+
+#: src/app/computer-map.tsx
+msgid "No reported links."
+msgstr "未报告任何连接"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "No sessions in this project yet. Start one from the + button."
@@ -4042,6 +4038,10 @@ msgstr "还没有工作树。在下面创建一个，就能在某个分支上工
 #: src/components/changes-worktree-list.tsx
 msgid "Not a git repository"
 msgstr "不是 Git 仓库"
+
+#: src/app/computer-map.tsx
+msgid "Not accepting work"
+msgstr "不接受工作"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -4892,8 +4892,8 @@ msgid "Recording failed."
 msgstr "录音失败"
 
 #: src/app/computer-map.tsx
-msgid "Reduced motion is on. Use the connection list below."
-msgstr "已开启减少动态效果。请使用下方连接列表"
+msgid "Reduced motion: list view."
+msgstr "减少动态效果：列表视图"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -5402,10 +5402,6 @@ msgstr "搜索整个项目"
 msgid "Security"
 msgstr "安全"
 
-#: src/components/settings-servers.tsx
-msgid "See this app’s connections and last-known computer links."
-msgstr "查看此应用的连接及上次获知的电脑间连接"
-
 #. placeholder {0}: age.value
 #: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
@@ -5773,6 +5769,10 @@ msgstr "技能已启动"
 msgid "Skip intro"
 msgstr "跳过介绍"
 
+#: src/app/computer-map.tsx
+msgid "Some connections are omitted from the map."
+msgstr "部分连接未在图中显示"
+
 #: src/components/settings-storage.tsx
 msgid "Some files could not be removed · {clearable}"
 msgstr "部分文件无法清除 · {clearable}"
@@ -5780,10 +5780,6 @@ msgstr "部分文件无法清除 · {clearable}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "有些文件没有上传成功"
-
-#: src/app/computer-map.tsx
-msgid "Some older peer records have no computer identity and cannot be placed on the map."
-msgstr "部分旧连接记录缺少电脑标识，无法在图中显示"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Some theme colors need more contrast"
@@ -6377,14 +6373,6 @@ msgstr "显示在主屏幕上的图标。Android 会关闭应用以应用更改"
 #: src/components/ssh-host-form.tsx
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "无法读取密钥（{0}）。请检查密钥及其密码短语"
-
-#: src/app/computer-map.tsx
-msgid "The latest peer read failed. Any retained reports below may be out of date."
-msgstr "最近一次读取电脑间连接失败。下方保留的报告可能已过期"
-
-#: src/app/computer-map.tsx
-msgid "The map shows up to 12 computers and 36 peer links. All paired computers remain in the list."
-msgstr "图中最多显示 12 台电脑和 36 条电脑间连接。所有已配对电脑仍列于列表中"
 
 #: src/components/session-map.tsx
 msgid "The new terminal was created, but could not open it."

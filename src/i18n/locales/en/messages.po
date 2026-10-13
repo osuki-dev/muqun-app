@@ -409,8 +409,8 @@ msgid "30 days"
 msgstr "30 days"
 
 #: src/app/computer-map.tsx
-msgid "3D is unavailable on this device. All connection details are available below."
-msgstr "3D is unavailable on this device. All connection details are available below"
+msgid "3D unavailable. Connections are listed below."
+msgstr "3D unavailable. Connections are listed below"
 
 #. placeholder {0}: Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))
 #: src/components/settings-font-sheet.tsx
@@ -478,6 +478,10 @@ msgstr "About"
 #: src/components/settings-fleet-peers.tsx
 msgid "Accept work from other computers"
 msgstr "Accept work from other computers"
+
+#: src/app/computer-map.tsx
+msgid "Accepting work"
+msgstr "Accepting work"
 
 #: src/components/task-row.tsx
 msgid "Acknowledge"
@@ -1460,10 +1464,6 @@ msgstr "Computer not found"
 msgid "Computer offline"
 msgstr "Computer offline"
 
-#: src/app/computer-map.tsx
-msgid "Computer status below describes reachability from this device."
-msgstr "Computer status below describes reachability from this device"
-
 #: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-server-tasks.ts
@@ -1587,10 +1587,6 @@ msgstr "Connection map"
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "Connections"
-
-#: src/app/computer-map.tsx
-msgid "Connections from this app and last-known links between paired computers."
-msgstr "Connections from this app and last-known links between paired computers"
 
 #: src/components/agent-composer.tsx
 msgid "Contains subagent sessions"
@@ -2078,6 +2074,10 @@ msgstr "Could not read this file"
 msgid "Could not read voice settings. Save your configuration again."
 msgstr "Could not read voice settings. Save your configuration again"
 
+#: src/app/computer-map.tsx
+msgid "Could not refresh. This report may be outdated."
+msgstr "Could not refresh. This report may be outdated"
+
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
 msgstr "Could not remove host"
@@ -2501,8 +2501,8 @@ msgid "Draft the notes for the next build"
 msgstr "Draft the notes for the next build"
 
 #: src/app/computer-map.tsx
-msgid "Drag to orbit. Pinch to zoom. Tap a computer to select it. Solid lines show app connections; dashed arrows show last-known peer reports. Positions are illustrative."
-msgstr "Drag to orbit. Pinch to zoom. Tap a computer to select it. Solid lines show app connections; dashed arrows show last-known peer reports. Positions are illustrative"
+msgid "Drag to rotate · Pinch to zoom · Tap to select"
+msgstr "Drag to rotate · Pinch to zoom · Tap to select"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -3323,12 +3323,8 @@ msgid "Last known activity"
 msgstr "Last known activity"
 
 #: src/app/computer-map.tsx
-msgid "Last reported: accepting work from other computers."
-msgstr "Last reported: accepting work from other computers"
-
-#: src/app/computer-map.tsx
-msgid "Last reported: not accepting work from other computers. This does not mean offline."
-msgstr "Last reported: not accepting work from other computers. This does not mean offline"
+msgid "Last reported by this computer"
+msgstr "Last reported by this computer"
 
 #: src/components/task-row.tsx
 msgid "last seen {ago}"
@@ -3349,10 +3345,6 @@ msgstr "Last seen {minutes}m ago"
 #: src/components/settings-servers.tsx
 msgid "Last seen just now"
 msgstr "Last seen just now"
-
-#: src/app/computer-map.tsx
-msgid "Last-known peer reports are separate from this app’s connection. They may have changed since the Gateway was read."
-msgstr "Last-known peer reports are separate from this app’s connection. They may have changed since the Gateway was read"
 
 #: src/components/update-status-banner.tsx
 msgid "Later"
@@ -3392,6 +3384,10 @@ msgstr "Level {depth}"
 #: src/components/settings-appearance.tsx
 msgid "Light"
 msgstr "Light"
+
+#: src/app/computer-map.tsx
+msgid "Lines: this app. Dashed arrows: last reported computer links."
+msgstr "Lines: this app. Dashed arrows: last reported computer links"
 
 #: src/components/file-mention-panel.tsx
 msgid "Link revoked · re-linking…"
@@ -3891,10 +3887,6 @@ msgstr "No Gateway yet?"
 msgid "No input"
 msgstr "No input"
 
-#: src/app/computer-map.tsx
-msgid "No links in the last peer report."
-msgstr "No links in the last peer report"
-
 #: src/components/task-row.tsx
 msgid "No longer linked with {computer}"
 msgstr "No longer linked with {computer}"
@@ -3943,8 +3935,8 @@ msgid "No password or key is saved for this host."
 msgstr "No password or key is saved for this host"
 
 #: src/app/computer-map.tsx
-msgid "No peer report available. This Gateway may be offline or may not support peer reports."
-msgstr "No peer report available. This Gateway may be offline or may not support peer reports"
+msgid "No peer report available."
+msgstr "No peer report available"
 
 #: src/components/custom-theme-library.tsx
 msgid "No personal themes yet. Import one, or browse the published themes."
@@ -3970,6 +3962,10 @@ msgstr "No projects match “{0}”"
 #: src/components/task-row.tsx
 msgid "No reason was recorded."
 msgstr "No reason was recorded"
+
+#: src/app/computer-map.tsx
+msgid "No reported links."
+msgstr "No reported links"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "No sessions in this project yet. Start one from the + button."
@@ -4042,6 +4038,10 @@ msgstr "No worktrees yet. Make one below to work on a branch without disturbing 
 #: src/components/changes-worktree-list.tsx
 msgid "Not a git repository"
 msgstr "Not a git repository"
+
+#: src/app/computer-map.tsx
+msgid "Not accepting work"
+msgstr "Not accepting work"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -4892,8 +4892,8 @@ msgid "Recording failed."
 msgstr "Recording failed"
 
 #: src/app/computer-map.tsx
-msgid "Reduced motion is on. Use the connection list below."
-msgstr "Reduced motion is on. Use the connection list below"
+msgid "Reduced motion: list view."
+msgstr "Reduced motion: list view"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -5402,10 +5402,6 @@ msgstr "Search the whole project"
 msgid "Security"
 msgstr "Security"
 
-#: src/components/settings-servers.tsx
-msgid "See this app’s connections and last-known computer links."
-msgstr "See this app’s connections and last-known computer links"
-
 #. placeholder {0}: age.value
 #: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
@@ -5773,6 +5769,10 @@ msgstr "Skill started"
 msgid "Skip intro"
 msgstr "Skip intro"
 
+#: src/app/computer-map.tsx
+msgid "Some connections are omitted from the map."
+msgstr "Some connections are omitted from the map"
+
 #: src/components/settings-storage.tsx
 msgid "Some files could not be removed · {clearable}"
 msgstr "Some files could not be removed · {clearable}"
@@ -5780,10 +5780,6 @@ msgstr "Some files could not be removed · {clearable}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "Some files did not upload"
-
-#: src/app/computer-map.tsx
-msgid "Some older peer records have no computer identity and cannot be placed on the map."
-msgstr "Some older peer records have no computer identity and cannot be placed on the map"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Some theme colors need more contrast"
@@ -6377,14 +6373,6 @@ msgstr "The icon on your home screen. Android closes the app to apply it"
 #: src/components/ssh-host-form.tsx
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "The key could not be read ({0}). Check the key and its passphrase"
-
-#: src/app/computer-map.tsx
-msgid "The latest peer read failed. Any retained reports below may be out of date."
-msgstr "The latest peer read failed. Any retained reports below may be out of date"
-
-#: src/app/computer-map.tsx
-msgid "The map shows up to 12 computers and 36 peer links. All paired computers remain in the list."
-msgstr "The map shows up to 12 computers and 36 peer links. All paired computers remain in the list"
 
 #: src/components/session-map.tsx
 msgid "The new terminal was created, but could not open it."
