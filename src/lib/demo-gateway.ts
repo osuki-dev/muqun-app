@@ -251,6 +251,55 @@ export function demoAgentSessionSnapshot(asid: string): AgentSessionSnapshot | n
   const sessions = [tree.root, ...Object.values(tree.childrenByParent).flat()];
   const info = sessions.find((session) => session.asid === asid);
   if (!info) return null;
+  if (asid === 'demo-tree-leaf-21') {
+    const timeline: TimelineItem[] = [
+      {
+        id: 'demo-pdf-attachment',
+        message_id: 'pdf-request',
+        role: 'user',
+        ordinal: 0,
+        part: { type: 'text', text: 'Review the attached PDF.' },
+        attachments: ['/demo/muqun-gateway/uploads/design-spec.pdf'],
+        seq: 1,
+        updated_ms: 1,
+      },
+      {
+        id: 'demo-pdf-link',
+        message_id: 'pdf-result',
+        role: 'assistant',
+        ordinal: 0,
+        part: { type: 'text', text: '[PDF output](./docs/design-spec.pdf)' },
+        seq: 2,
+        updated_ms: 2,
+      },
+      {
+        id: 'demo-pdf-tool',
+        message_id: 'pdf-tool',
+        role: 'assistant',
+        ordinal: 0,
+        part: {
+          type: 'tool',
+          id: 'demo-pdf-call',
+          name: 'document',
+          input: {},
+          output: '',
+          content: [
+            {
+              type: 'file',
+              uri: './docs/design-spec.pdf',
+              mime: 'application/pdf',
+              name: 'Tool PDF',
+            },
+          ],
+          metadata: { status: 'completed' },
+          state: 'completed',
+        },
+        seq: 3,
+        updated_ms: 3,
+      },
+    ];
+    return { info, timeline, permissions: [], forms: [], inbox: [], seq: timeline.length };
+  }
   if (asid === 'demo-tree-leaf-22') {
     const timeline: TimelineItem[] = [
       {

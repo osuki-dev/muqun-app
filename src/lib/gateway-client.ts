@@ -2,7 +2,8 @@ import { parseGitWorktrees, type GitWorktreeInventory } from './git-worktrees';
 import * as TransportSecureStore from 'expo-secure-store';
 import { TransportNegotiation, type TransportVersion } from './transport-negotiation';
 import { AudioPlaybackError } from '@/lib/audio-playback-session';
-import { File, Paths } from 'expo-file-system';
+import { File, FileMode, Paths } from 'expo-file-system';
+import { isHostPathSource } from './message-images';
 import { fetch as nitroFetch, Response as NitroResponse } from 'react-native-nitro-fetch';
 import QuickCrypto from 'react-native-quick-crypto';
 import { assertDeliveryCurrent, deliverPasteAndEnter } from './bound-delivery';
@@ -79,6 +80,8 @@ import {
   type MultipartPart,
 } from './multipart';
 import {
+  assertAssetGateway,
+  assetFromUploadedPdf,
   assetFromContentHeaders,
   findAssetById,
   findAssetByPath,
@@ -1219,12 +1222,18 @@ export async function listSessionAssets(
   return requestSessionAssets(sessionId, tabId, query, options.signal);
 }
 
+function assertFileGateway(serverId: string | null) {
+  if (serverId !== configuredGatewayServerId())
+    throw new Error('The file belongs to a different Gateway');
+}
+
 async function requestSessionAssets(
   sessionId: string,
   tabId: string,
   query: string[],
   signal?: AbortSignal
 ): Promise<SessionAsset[]> {
+  const serverId = configuredGatewayServerId();
   const response = await gatewayFetch(
     gatewayUrl(
       `/api/sessions/${encodeURIComponent(sessionId)}/tabs/${encodeURIComponent(tabId)}/assets?${query.join('&')}`
@@ -1235,7 +1244,9 @@ async function requestSessionAssets(
     throw new Error(`HTTP ${response.status}: ${await response.text()}`);
   }
 
-  return sessionAssetsFromResponse(await response.json());
+  const assets = sessionAssetsFromResponse(await response.json());
+  assertFileGateway(serverId);
+  return assets.map((asset) => ({ ...asset, gatewayServerId: serverId ?? undefined }));
 }
 
 /**
@@ -1259,6 +1270,15 @@ export async function resolveAssetByPath(
   /** The pane's directory, so a relative path means what it says. */
   cwd?: string
 ): Promise<SessionAsset | null> {
+  if (!isHostPathSource(path)) return null;
+  if (/^file:/i.test(path)) {
+    if (!/^file:\/\/\//i.test(path)) return null;
+    try {
+      path = decodeURIComponent(path.slice('file://'.length));
+    } catch {
+      return null;
+    }
+  }
   if (isDemoActive()) return findAssetByPath(demoSessionAssets(), path);
 
   // Every form of the path is worth asking about, including `~`.
@@ -1321,6 +1341,7 @@ export async function resolveAssetById(
  * they always mean; only the bytes are left out.
  */
 async function describeAssetById(assetId: string): Promise<SessionAsset | null> {
+  const serverId = configuredGatewayServerId();
   const response = await gatewayFetch(assetContentUrl(assetId), {
     // A HEAD response has no bytes in which to carry an encrypted envelope.
     // Encrypted records use GET for this rare fallback; ordinary records keep
@@ -1331,9 +1352,11 @@ async function describeAssetById(assetId: string): Promise<SessionAsset | null> 
   // 415 is the gateway saying "this exists, it just has no preview" -- which is
   // a file the details sheet can still describe.
   if (!response.ok && response.status !== 415) return null;
-  return assetFromContentHeaders(assetId, (name) => response.headers.get(name), {
+  assertFileGateway(serverId);
+  const asset = assetFromContentHeaders(assetId, (name) => response.headers.get(name), {
     previewable: response.status !== 415,
   });
+  return asset ? { ...asset, gatewayServerId: serverId ?? undefined } : null;
 }
 
 /** Absolute, authenticated-read URL for an asset's bytes. */
@@ -1576,13 +1599,18 @@ export async function resolveAgentAudioAsset(
 export async function resolveAgentFileAsset(
   asid: string,
   uri: string,
-  signal: AbortSignal
+  signal: AbortSignal,
+  serverId = configuredGatewayServerId()
 ): Promise<SessionAsset> {
+  if (!isHostPathSource(uri)) throw new Error('File output unavailable.');
+  assertFileGateway(serverId);
   if (isDemoActive()) {
     const asset = demoSessionAssets().find((entry) => uri.endsWith(entry.name));
     if (!asset) throw new Error('File output unavailable.');
     return asset;
   }
+  const upload = assetFromUploadedPdf(uri, serverId);
+  if (upload) return upload;
   const health = await gatewayFetch(gatewayUrl('/health'), {
     headers: gatewayAuthHeaders(),
     signal,
@@ -1592,6 +1620,7 @@ export async function resolveAgentFileAsset(
   if (!Array.isArray(capabilities) || !capabilities.includes('agent_file_assets')) {
     throw new AudioPlaybackError('unsupported');
   }
+  assertFileGateway(serverId);
   const response = await gatewayFetch(
     gatewayUrl(
       `/api/agent-sessions/${encodeURIComponent(asid)}/file-asset?uri=${encodeURIComponent(uri)}`
@@ -1602,7 +1631,8 @@ export async function resolveAgentFileAsset(
   const envelope = await response.json();
   const asset = sessionAssetsFromResponse({ data: { assets: [envelope?.data?.asset] } })[0];
   if (!asset) throw new Error('File output unavailable.');
-  return asset;
+  assertFileGateway(serverId);
+  return { ...asset, gatewayServerId: serverId ?? undefined };
 }
 
 export async function readAssetBytes(
@@ -1616,13 +1646,31 @@ export async function readAssetBytes(
 ): Promise<Uint8Array> {
   if (asset.size > options.maxBytes) throw new Error('HTTP 413: This file is too large to open.');
   if (options.signal?.aborted) throw new Error('Operation cancelled.');
+  if (asset.localUri) {
+    if (!/^(?:file|content):\/\//.test(asset.localUri)) throw new Error('Invalid local file');
+    const file = new File(asset.localUri);
+    if (file.size > options.maxBytes) throw new Error('HTTP 413: This file is too large.');
+    const handle = file.open(FileMode.ReadOnly);
+    try {
+      // Bound even unknown-size document-provider files before allocating more.
+      const bytes = handle.readBytes(options.maxBytes + 1);
+      if (bytes.length > options.maxBytes) throw new Error('HTTP 413: This file is too large.');
+      if (options.signal?.aborted) throw new Error('Operation cancelled.');
+      options.onProgress?.(bytes.length, bytes.length);
+      return bytes;
+    } finally {
+      handle.close();
+    }
+  }
+  const serverId = configuredGatewayServerId();
+  assertAssetGateway(asset, serverId);
   const demoBytes = isDemoActive() ? demoAudioBytes(asset.id) : null;
   if (demoBytes) {
     if (demoBytes.length > options.maxBytes) throw new Error('HTTP 413: This file is too large.');
     options.onProgress?.(demoBytes.length, demoBytes.length);
     return demoBytes;
   }
-  if (options.download) {
+  if (options.download && !asset.uploadName) {
     const health = await gatewayFetch(gatewayUrl('/health'), {
       headers: gatewayAuthHeaders(),
       signal: options.signal,
@@ -1632,14 +1680,18 @@ export async function readAssetBytes(
     if (!Array.isArray(capabilities) || !capabilities.includes('asset_download'))
       throw new AudioPlaybackError('unsupported');
   }
-  const url = options.download
-    ? assetContentUrl(asset.id).replace(/\/content$/, '/download')
-    : assetContentUrl(asset.id);
+  assertFileGateway(serverId);
+  const url = asset.uploadName
+    ? uploadContentUrl(asset.uploadName)
+    : options.download
+      ? assetContentUrl(asset.id).replace(/\/content$/, '/download')
+      : assetContentUrl(asset.id);
   const init = { headers: gatewayAuthHeaders(), signal: options.signal };
   const response =
     currentTransport === GATEWAY_TRANSPORT
       ? await encryptedGatewayFetch(url, init, ASSET_CONTENT_TIMEOUT_MS)
       : await fetchWithin(ASSET_CONTENT_TIMEOUT_MS, 'Timed out reading the file.', url, init);
+  assertFileGateway(serverId);
   if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
   const declared = Number(response.headers.get('content-length') ?? '0');
   if (declared > options.maxBytes) throw new Error('HTTP 413: This file is too large to open.');
@@ -1650,6 +1702,7 @@ export async function readAssetBytes(
     const whole = new Uint8Array(await response.arrayBuffer());
     if (whole.length > options.maxBytes) throw new Error('HTTP 413: This file is too large.');
     options.onProgress?.(whole.length, total);
+    assertFileGateway(serverId);
     return whole;
   }
   const chunks: Uint8Array[] = [];
@@ -1676,6 +1729,7 @@ export async function readAssetBytes(
     bytes.set(chunk, offset);
     offset += chunk.length;
   }
+  assertFileGateway(serverId);
   return bytes;
 }
 

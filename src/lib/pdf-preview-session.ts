@@ -33,13 +33,22 @@ export class PdfPreviewSession {
       this.runtime.write(bytes);
       return this.runtime.uri;
     } catch (error) {
-      this.runtime.remove();
+      this.remove();
       throw error;
     }
   }
 
   close() {
     this.controller.abort();
-    this.runtime.remove();
+    this.remove();
+  }
+
+  private remove() {
+    try {
+      this.runtime.remove();
+    } catch {
+      // Expo cache files may already have been evicted or become unavailable.
+      // Preserve the read failure and never throw out of an unmount cleanup.
+    }
   }
 }

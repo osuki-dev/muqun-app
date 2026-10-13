@@ -1,3 +1,5 @@
+import { assetFromLocalPdf } from '@/lib/session-assets';
+import { AssetViewer } from '@/components/asset-viewer';
 import type { HomeComposerOutset } from '@/theme/home-composer-outset';
 import { ComposerAttachmentButton } from '@/components/composer-attachment-button';
 import { memo, useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
@@ -724,9 +726,7 @@ export const AgentComposer = memo(function AgentComposer({
   const record = useGatewayConnectionStore((state) => state.record);
   const attachmentUploads = useAttachmentUploads(record, undefined, holdStagedAttachments);
 
-  // Staged image preview, the same viewer the terminal dock uses: only images
-  // can open full screen, so the tapped chip's position is resolved within
-  // that subset.
+  // Staged images page in the lightbox; device-picked PDFs use the file viewer.
   const [previewAttachmentId, setPreviewAttachmentId] = useState<string | null>(null);
   const previewImages = useMemo<PreviewImage[]>(
     () =>
@@ -734,6 +734,9 @@ export const AgentComposer = memo(function AgentComposer({
         .filter((item) => isImageAttachment(item.mime))
         .map((item) => ({ id: item.id, uri: item.localUri })),
     [attachmentUploads.attachments]
+  );
+  const previewPdf = assetFromLocalPdf(
+    attachmentUploads.attachments.find((item) => item.id === previewAttachmentId)
   );
   const previewIndex = previewAttachmentId
     ? previewImages.findIndex((item) => item.id === previewAttachmentId)
@@ -2136,6 +2139,9 @@ export const AgentComposer = memo(function AgentComposer({
           </View>
         </ComposerSurface>
       </View>
+      {previewPdf ? (
+        <AssetViewer asset={previewPdf} onClose={() => setPreviewAttachmentId(null)} />
+      ) : null}
       {previewIndex >= 0 ? (
         <ImagePreviewModal
           images={previewImages}

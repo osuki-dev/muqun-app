@@ -1,3 +1,4 @@
+import { isPdfFile } from '@/lib/session-assets';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { goalContinuationSummary } from '@/lib/agent-goal-message';
 import { Fragment, memo, useEffect, useMemo, useState, type ReactNode } from 'react';
@@ -161,8 +162,10 @@ const AttachmentImage = memo(function AttachmentImage({
 const MessageAttachments = memo(function MessageAttachments({
   attachments,
   onPreviewImage,
+  asid,
 }: {
   attachments: readonly string[];
+  asid?: string;
   onPreviewImage: (uri: string) => void;
 }) {
   const { t } = useLingui();
@@ -183,6 +186,15 @@ const MessageAttachments = memo(function MessageAttachments({
           );
         }
         const fileName = att.split('/').filter(Boolean).pop() || t`Attachment`;
+        if (asid && isPdfFile({ uri: att })) {
+          return (
+            <InlineFileLink
+              key={`${att}-${attIdx}`}
+              asid={asid}
+              file={{ uri: att, name: fileName }}
+            />
+          );
+        }
         return (
           <View key={`${att}-${attIdx}`} style={[styles.attachmentChip, raised]}>
             <FileText size={13} color={theme.colors.primary} />
@@ -1299,7 +1311,11 @@ export const AgentUserMessage = memo(function AgentUserMessage({
         )}
 
       {attachments.length > 0 ? (
-        <MessageAttachments attachments={attachments} onPreviewImage={onPreviewImage} />
+        <MessageAttachments
+          attachments={attachments}
+          onPreviewImage={onPreviewImage}
+          asid={actions.audioSessionId}
+        />
       ) : null}
 
       {menuOpen ? (

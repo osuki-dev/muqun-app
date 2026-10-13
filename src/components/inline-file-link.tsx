@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { FileText } from 'lucide-react-native';
 import { useThemeTokens, useToast } from '@osuki-dev/ui';
@@ -6,7 +6,7 @@ import { useLingui } from '@lingui/react/macro';
 import { PressableScale } from '@/components/pressable-scale';
 import { Text } from '@/components/text';
 import { AssetViewer } from '@/components/asset-viewer';
-import { resolveAgentFileAsset } from '@/lib/gateway-client';
+import { configuredGatewayServerId, resolveAgentFileAsset } from '@/lib/gateway-client';
 import { saveSessionAsset } from '@/lib/save-file';
 import { useFileActions } from '@/hooks/use-file-actions';
 import type { SessionAsset } from '@/lib/session-assets';
@@ -24,7 +24,25 @@ export function InlineFileLink({
   const { showToast } = useToast();
   const [asset, setAsset] = useState<SessionAsset | null>(null);
   const [busy, setBusy] = useState(false);
-  const resolve = () => resolveAgentFileAsset(asid, file.uri, new AbortController().signal);
+  const [serverId] = useState(configuredGatewayServerId);
+  const pending = useRef(new Set<AbortController>());
+  useEffect(() => {
+    const requests = pending.current;
+    return () => {
+      for (const controller of requests) controller.abort();
+      requests.clear();
+    };
+  }, []);
+  const resolve = () => {
+    const controller = new AbortController();
+    pending.current.add(controller);
+    return resolveAgentFileAsset(asid, file.uri, controller.signal, serverId)
+      .then((result) => {
+        if (controller.signal.aborted) throw new Error('Operation cancelled');
+        return result;
+      })
+      .finally(() => pending.current.delete(controller));
+  };
   const actions = useFileActions(
     file.name,
     async () => saveSessionAsset(await resolve()),
@@ -41,7 +59,8 @@ export function InlineFileLink({
           setBusy(true);
           void resolve()
             .then(setAsset)
-            .catch((error: unknown) =>
+            .catch((error: unknown) => {
+              if (error instanceof Error && /cancel/i.test(error.message)) return;
               showToast({
                 variant: 'danger',
                 title: t`Could not open file`,
@@ -49,8 +68,8 @@ export function InlineFileLink({
                   error instanceof AudioPlaybackError
                     ? t`Update the Gateway to open or save this file.`
                     : t`Try again`,
-              })
-            )
+              });
+            })
             .then(() => setBusy(false));
         }}
         style={{

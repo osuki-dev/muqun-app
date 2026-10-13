@@ -84,6 +84,7 @@ export const PaneChatView = memo(function PaneChatView({
   awaitingFirstParts = false,
   onLoadEarlier,
   onOpenAsset,
+  onOpenFile,
   onToggleDetail,
 }: {
   parts: PanePart[];
@@ -108,6 +109,7 @@ export const PaneChatView = memo(function PaneChatView({
   onLoadEarlier?: () => void;
   /** A file part was tapped; the screen resolves it and opens the viewer. */
   onOpenAsset?: (assetId: string) => void;
+  onOpenFile?: (path: string) => void;
   /** Switches every run of tool calls between folded and shown. */
   onToggleDetail?: () => void;
 }) {
@@ -165,10 +167,11 @@ export const PaneChatView = memo(function PaneChatView({
           expanded={expandedIds.has(item.id)}
           onToggle={toggleExpanded}
           onOpenAsset={onOpenAsset}
+          onOpenFile={onOpenFile}
         />
       );
     },
-    [colors, expandedIds, markdownStyle, onOpenAsset, toggleExpanded]
+    [colors, expandedIds, markdownStyle, onOpenAsset, onOpenFile, toggleExpanded]
   );
 
   function requestEarlier() {
