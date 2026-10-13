@@ -3,8 +3,8 @@
 This integration replaces Expo Updates with Hot Updater **1.0.0**. EAS still
 builds and signs the native apps. The Expo project ID, `dev.osuki.muqun`, Android
 keystore, Apple team and app-store identities are unchanged. Existing Expo
-Updates binaries need a native APK/IPA upgrade; an OTA cannot replace their
-native loader.
+Updates binaries need a native app upgrade through the stores; an OTA cannot
+replace their native loader.
 
 ## Current activation state
 
@@ -109,7 +109,7 @@ rejected, authenticated catalog reads work, and downloaded artifacts validate.
 
 ## Signing and native compatibility
 
-OTA signing is separate from APK/IPA signing. Preserve any existing OTA signer;
+OTA signing is separate from native app signing. Preserve any existing OTA signer;
 do not rotate app signing credentials. For a first OTA signer, use the official
 `hot-updater keys generate` workflow in a private directory and retain a secure
 backup. Keep the private key outside the repository and native build inputs.
@@ -122,13 +122,14 @@ Supply these **public** values to both native and OTA build environments:
 ```text
 EXPO_PUBLIC_HOT_UPDATER_ENABLED=1
 EXPO_PUBLIC_HOT_UPDATER_API_KEY=<registered client credential>
-HOT_UPDATER_CHANNEL=ota-test
+HOT_UPDATER_CHANNEL=preview
 ```
 
-`preview`/`testflight` EAS profiles embed `preview`; `production` and its APK
-profile embed `production`. Local builds default to `development`. Choose
-`ota-test` explicitly for the first native acceptance build. Changing channel,
-trust anchor or native dependencies requires rebuilding the binary.
+The `play-preview` and `testflight` EAS profiles embed `preview`; `production`
+embeds `production`. Local development builds default to `development`. Use the
+explicit preview [store release commands](store-release.md) for the first native
+acceptance build. Changing channel, trust anchor or native dependencies requires
+rebuilding the binary.
 
 Both client and CLI use `fingerprint`. The Expo plugin generates and embeds the
 hash during prebuild. Extra sources explicitly cover app config, config plugins,
@@ -233,14 +234,17 @@ against an existing signed release AAB. Use official bundletool's `dump manifest
 to verify package ID, increased versionCode, `com.hotupdater.CHANNEL=preview`,
 `com.hotupdater.FINGERPRINT_HASH` matching the archived `fingerprint.json`, and
 the configured public key. Confirm no `expo.modules.updates.*` metadata remains.
-These checks prove the upload artifact's identity; they do not prove Google's
-Play App Signing distribution certificate matches a separately installed APK.
+These checks prove the upload artifact's identity. Final upgrade acceptance uses
+the Play-distributed app, which is signed with Google's Play App Signing
+distribution certificate rather than the AAB's upload certificate.
 
 ## Acceptance before enabling for users
 
 1. Run TypeScript, lint, format, unit tests and the complete native E2E suite.
-2. Build Release APK and IPA with the test channel, registered client key,
-   public trust anchor and fingerprint. Keep existing app signing identities.
+2. Use the preview [store release commands](store-release.md) to build and upload
+   an Android AAB to Play internal testing and an iOS IPA to TestFlight with the
+   registered client key, public trust anchor and fingerprint. Keep existing app
+   signing identities and install each test build through its store testing channel.
 3. Confirm cold launch and normal terminal use with the server offline; bring it
    online and confirm checks and failed downloads leave the live screen usable.
 4. Publish a compatible test bundle with a visible text and asset change. Verify
@@ -251,6 +255,9 @@ Play App Signing distribution certificate matches a separately installed APK.
    recovery. Disable/roll back that release through the authenticated operator
    workflow. Never clear crash history as a normal retry mechanism.
 7. Repeat on iOS; Android evidence cannot claim iOS native compatibility.
+8. Before a public release, repeat acceptance with a production-channel candidate
+   in Play internal testing or TestFlight, then promote that exact tested build
+   through Play Console or App Store Connect.
 
 ## Sources checked
 
