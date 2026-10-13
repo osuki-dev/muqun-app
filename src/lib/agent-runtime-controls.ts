@@ -1,8 +1,29 @@
-import type { AgentSessionInfo, ModelRef } from './agent-protocol';
+import type { AgentSessionInfo, FormRequest, ModelRef } from './agent-protocol';
+import { nativeAgentInteraction, type AgentSessionRuntime } from './agent-session-runtime';
 
 /** Prompt delivery is separate from structured form and approval replies. */
-export function canSendAgentPrompt(running: boolean, supportsInbox: boolean): boolean {
-  return !running || supportsInbox;
+export function canSendAgentPrompt(
+  running: boolean,
+  supportsInbox: boolean,
+  supportsSteering = false,
+  delivery?: 'steer' | 'queue'
+): boolean {
+  return !running || supportsInbox || (supportsSteering && delivery !== 'queue');
+}
+
+/** An async question asks for input without stopping the agent's turn. */
+export function hasBlockingAgentForm(forms: readonly FormRequest[]): boolean {
+  return forms.some((form) => form.nonblocking !== true);
+}
+
+/** Async question controls require a currently owned native session. */
+export function canReplyAgentForm(
+  form: FormRequest,
+  runtime: AgentSessionRuntime | undefined
+): boolean {
+  return (
+    nativeAgentInteraction(runtime) && (form.nonblocking !== true || runtime?.source === 'native')
+  );
 }
 
 export interface StagedAgentModel {
