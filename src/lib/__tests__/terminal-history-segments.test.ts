@@ -271,11 +271,20 @@ test('the production reader keeps the held page and viewport on expiry, mismatch
   expect(refresh).toBe(false);
 });
 
-test('capability arrival offers segments above a full live window without adopting a legacy or probe cursor', async () => {
+test('segmented snapshots neither arm the inline pull nor navigate when a native pull reaches its limit', async () => {
   const source = productionSource('src/components/server-terminal-workspace.tsx');
   let probeSource = '';
   let pullSource = '';
+  let affordanceSource = '';
   walk(source.program, (node) => {
+    if (
+      node.type === 'JSXAttribute' &&
+      node.name.type === 'JSXIdentifier' &&
+      node.name.name === 'canLoadEarlier' &&
+      node.value?.type === 'JSXExpressionContainer'
+    ) {
+      affordanceSource = source.code(node.value.expression);
+    }
     if (node.type !== 'CallExpression' || node.callee.type !== 'Identifier') return;
     const callback = node.arguments[0];
     if (callback?.type !== 'ArrowFunctionExpression') return;
@@ -285,14 +294,17 @@ test('capability arrival offers segments above a full live window without adopti
       code.includes('const probedOutput = readOutputWindow().output;')
     )
       probeSource = code;
-    if (node.callee.name === 'useCallback' && code.includes("pathname: '/pane-history'"))
+    if (
+      node.callee.name === 'useCallback' &&
+      code.includes('const currentLimit = outputLineLimitRef.current;') &&
+      code.includes('pullEarlierPage')
+    )
       pullSource = code;
   });
   expect(probeSource).not.toBe('');
   expect(pullSource).not.toBe('');
-  const legacyCursor = { before: 'legacy', epoch: 'epoch' };
-  const offers: boolean[] = [];
-  const reads: unknown[][] = [];
+  expect(affordanceSource).not.toBe('');
+  const routes: unknown[] = [];
   const globals = {
     selection: { paneId: 'agent' },
     data: { sessionId: 'herdr' },
@@ -300,57 +312,55 @@ test('capability arrival offers segments above a full live window without adopti
     ready: true,
     servesCapturedHistory: true,
     servesSegmentedHistory: true,
-    capturedProbe: 0,
-    capturedViewportReady: false,
-    capturedOffRef: { current: true },
-    capturedExhaustedRef: { current: true },
-    capturedCursorRef: { current: legacyCursor },
-    capturedProbedKeyRef: { current: '' },
-    capturedProbedAtRef: { current: 0 },
-    activePaneRef: { current: 'agent' },
-    loadingEarlierOutputRef: { current: false },
-    capturedRefreshRequiredRef: { current: true },
-    capturedEmptyRef: { current: false },
-    paneScreenRowsRef: { current: 0 },
-    outputLineLimitRef: { current: 2000 },
-    MAX_PANE_OUTPUT_LINES: 2000,
-    capturedProbeDue: runInNewContext(
-      transpile(
-        `${declaration('src/lib/terminal-history-pull.ts', 'capturedProbeDue')}\ncapturedProbeDue`
-      )
-    ),
-    readOutputWindow: () => ({ output: 'live', capturedRows: 0 }),
-    readPaneHistory: () => {
-      throw new Error('Do not use the legacy endpoint');
-    },
-    readPaneHistorySegments: async (...args: unknown[]) => {
-      reads.push(args);
-      return { ok: true, page: { rowCount: 1 } };
-    },
-    setCapturedEmptyProbe: () => {},
-    offerCaptured: (_pane: string, open: boolean) => offers.push(open),
-  };
-  const probe = runInNewContext(transpile(probeSource), globals) as () => void;
-  probe();
-  await Promise.resolve();
-  await Promise.resolve();
-  expect(offers).toEqual([true]);
-  expect(reads).toEqual([[owner, 'herdr', 'agent', null, 1]]);
-  expect(globals.capturedCursorRef.current).toBe(legacyCursor);
-  const routes: unknown[] = [];
-  const pull = runInNewContext(transpile(pullSource), {
-    ...globals,
     capturedOpen: true,
     connection: { phase: 'connected' },
     serverId: owner.serverId,
+    loadingEarlierOutputRef: { current: false },
+    historyPullBlockedRef: { current: false },
+    outputLineLimitRef: { current: 2000 },
+    MAX_PANE_OUTPUT_LINES: 2000,
     router: { push: (route: unknown) => routes.push(route) },
-  }) as () => Promise<void>;
-  await pull();
-  expect(routes).toEqual([
-    {
-      pathname: '/pane-history',
-      params: { serverId: owner.serverId, sessionId: 'herdr', paneId: 'agent' },
-    },
-  ]);
-  expect(reads).toHaveLength(1);
+  };
+  // No background segment probe is needed for the explicit saved-history entry.
+  runInNewContext(transpile(probeSource), globals)();
+  await runInNewContext(transpile(pullSource), globals)();
+  expect(routes).toEqual([]);
+  const offered = (overrides: Record<string, unknown>) =>
+    runInNewContext(transpile(affordanceSource), {
+      ...globals,
+      fullScreenPane: false,
+      canLoadEarlierOutput: false,
+      historyPullBlocked: false,
+      canOfferHistoryPull: ({
+        canLoadEarlier,
+        blocked,
+      }: {
+        canLoadEarlier: boolean;
+        blocked: boolean;
+      }) => canLoadEarlier && !blocked,
+      ...overrides,
+    });
+  expect(offered({})).toBe(false);
+  expect(offered({ canLoadEarlierOutput: true })).toBe(true);
+  expect(offered({ canLoadEarlierOutput: true, historyPullBlocked: true })).toBe(false);
+  expect(offered({ fullScreenPane: true, canLoadEarlierOutput: true })).toBe(false);
+  expect(offered({ servesSegmentedHistory: false })).toBe(true);
+});
+
+test('saved history opens only from its explicit quick action with the captured pane identity', () => {
+  const routes: unknown[] = [];
+  const globals = {
+    available: { canOpenSavedHistory: true },
+    params: { serverId: 'computer-a', sessionId: 'session-a', paneId: 'pane-a' },
+    router: { replace: (route: unknown) => routes.push(route) },
+  };
+  const open = runInNewContext(
+    transpile(`${declaration('src/app/commands.tsx', 'openSavedHistory')}\nopenSavedHistory`),
+    globals
+  );
+  open();
+  expect(routes).toEqual([{ pathname: '/pane-history', params: globals.params }]);
+  globals.available.canOpenSavedHistory = false;
+  open();
+  expect(routes).toHaveLength(1);
 });

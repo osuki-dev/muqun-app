@@ -22,6 +22,7 @@ describe('quickActionAvailability', () => {
       canStartTask: true,
       canStopAgent: true,
       canOpenWebService: true,
+      canOpenSavedHistory: false,
       canPreviewSimulator: true,
       hasTiles: true,
     });
@@ -172,4 +173,18 @@ describe('a gateway reached through an SSH tunnel', () => {
     });
     expect(availability.webServiceBlockedByTunnel).toBe(false);
   });
+});
+
+test('saved history requires its capability and a complete pane identity, never Settings', () => {
+  const capable = { ...overALivePane, savedHistorySupported: true };
+  expect(quickActionAvailability(capable).canOpenSavedHistory).toBe(true);
+  for (const missing of [
+    { serverId: undefined },
+    { sessionId: undefined },
+    { paneId: undefined },
+    { savedHistorySupported: false },
+    { manageOnly: true },
+  ]) {
+    expect(quickActionAvailability({ ...capable, ...missing }).canOpenSavedHistory).toBe(false);
+  }
 });

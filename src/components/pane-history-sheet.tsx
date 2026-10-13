@@ -171,7 +171,7 @@ export function PaneHistorySheet({
                     ? t`This snapshot can no longer be extended. Refresh to read the latest saved output; the current page is kept until then.`
                     : failure
                       ? failure.message
-                      : t`Saved observations, separate from the live terminal. New output appears only after Refresh.`}
+                      : t`Refresh to see new saved output.`}
             </Text>
             {failure?.retryable && !refreshRequired ? (
               <SheetSceneQuietAction
