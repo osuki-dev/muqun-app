@@ -23,7 +23,12 @@ import { recentCatalogModels } from '@/lib/recent-agent-models';
 import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
 import { fadeIn, listLayout, riseIn, STAGGER } from '@/lib/motion';
-import { groupModelsByProvider, hasFreeModel, providerTitle } from '@/lib/agent-model-groups';
+import {
+  groupModelsByProvider,
+  hasFreeModel,
+  hasMultipleModelProviders,
+  providerTitle,
+} from '@/lib/agent-model-groups';
 import { SECTION_PAGE_SIZE, nearListEnd, pageSections } from '@/lib/paged-sections';
 import { findAgentModelPosition } from '@/lib/agent-model-position';
 import {
@@ -137,6 +142,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
    * later as an unexplained failed turn.
    */
   const [providers, setProviders] = useState<readonly ProviderInfo[]>([]);
+  const showProviderRail = hasMultipleModelProviders(models, providers);
   const [defaults, setDefaults] = useState<CatalogDefaults>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [pickedFilter, setFilterMode] = useState<'all' | 'free'>('all');
@@ -166,6 +172,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
     setLoading(true);
     setLoadFailed(false);
     setModels([]);
+    setProviders([]);
     setRecentRefs(loadRecentAgentModels(sessionId ?? '', agentId));
     getAgentCatalog(sessionId, undefined, {
       ...(directory ? { directory } : {}),
@@ -220,7 +227,11 @@ export const AgentModelSheet = memo(function AgentModelSheet({
   // Recent rows resolve against the same catalog and filters as provider groups.
   const searching = searchQuery.trim().length > 0 || filterMode === 'free';
   const providerSections = useMemo(() => {
-    const recent = recentCatalogModels(recentRefs, filteredModels, providers);
+    // One provider needs no navigation, including a separate Recent destination.
+    // Keep its entire matching catalog directly available in the full-width list.
+    const recent = showProviderRail
+      ? recentCatalogModels(recentRefs, filteredModels, providers)
+      : [];
     const result: {
       providerId: string;
       title: string;
@@ -250,7 +261,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
       });
     }
     return result;
-  }, [filteredModels, recentRefs, providers, searching, t]);
+  }, [filteredModels, recentRefs, providers, searching, showProviderRail, t]);
 
   const activeProvider = providerSections.some((section) => section.providerId === pickedProvider)
     ? pickedProvider
@@ -427,50 +438,56 @@ export const AgentModelSheet = memo(function AgentModelSheet({
         </View>
       ) : (
         <View style={styles.columns}>
-          <ScrollView
-            style={styles.providers}
-            contentContainerStyle={styles.providerContent}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled">
-            {providerSections.map((section) => {
-              const selected = section.providerId === activeProvider;
-              return (
-                <PressableScale
-                  key={section.providerId}
-                  testID={`agent-model-provider-${section.providerId}`}
-                  accessibilityRole="button"
-                  accessibilityLabel={section.title}
-                  accessibilityState={{ selected }}
-                  onPress={() => {
-                    autoRevealCancelledRef.current = true;
-                    setPickedProvider(section.providerId);
-                    modelListRef.current?.scrollTo({ y: 0, animated: false });
-                  }}
-                  style={[
-                    styles.providerRow,
-                    {
-                      borderLeftColor: selected ? theme.colors.primary : 'transparent',
-                      backgroundColor: selected
-                        ? withAlpha(theme.colors.primary, 0.08)
-                        : 'transparent',
-                    },
-                  ]}>
-                  <Text
-                    variant="caption"
-                    weight={selected ? 'semibold' : 'regular'}
-                    color={selected ? theme.colors.primary : theme.colors.textMuted}>
-                    {section.title}
-                  </Text>
-                </PressableScale>
-              );
-            })}
-          </ScrollView>
+          {showProviderRail ? (
+            <ScrollView
+              testID="agent-model-provider-rail"
+              style={styles.providers}
+              contentContainerStyle={styles.providerContent}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled">
+              {providerSections.map((section) => {
+                const selected = section.providerId === activeProvider;
+                return (
+                  <PressableScale
+                    key={section.providerId}
+                    testID={`agent-model-provider-${section.providerId}`}
+                    accessibilityRole="button"
+                    accessibilityLabel={section.title}
+                    accessibilityState={{ selected }}
+                    onPress={() => {
+                      autoRevealCancelledRef.current = true;
+                      setPickedProvider(section.providerId);
+                      modelListRef.current?.scrollTo({ y: 0, animated: false });
+                    }}
+                    style={[
+                      styles.providerRow,
+                      {
+                        borderLeftColor: selected ? theme.colors.primary : 'transparent',
+                        backgroundColor: selected
+                          ? withAlpha(theme.colors.primary, 0.08)
+                          : 'transparent',
+                      },
+                    ]}>
+                    <Text
+                      variant="caption"
+                      weight={selected ? 'semibold' : 'regular'}
+                      color={selected ? theme.colors.primary : theme.colors.textMuted}>
+                      {section.title}
+                    </Text>
+                  </PressableScale>
+                );
+              })}
+            </ScrollView>
+          ) : null}
           <ScrollView
             key={activeProvider}
             nestedScrollEnabled
             ref={modelListRef}
             style={sheetSceneStyles.scroller}
-            contentContainerStyle={[sheetSceneStyles.scrollerContent, styles.modelContent]}
+            contentContainerStyle={[
+              sheetSceneStyles.scrollerContent,
+              showProviderRail && styles.modelContent,
+            ]}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
             scrollEventThrottle={64}
