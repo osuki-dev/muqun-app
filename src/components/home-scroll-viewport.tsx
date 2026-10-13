@@ -19,6 +19,7 @@ export function HomeScrollViewport({
   dockOffset,
   ...scrollProps
 }: ComponentProps<typeof KeyboardAwareScrollView> & {
+  /** Painted dock height; transparent decoration only contributes to scroll padding. */
   dockHeight: number;
   dockOffset?: SharedValue<number>;
 }) {

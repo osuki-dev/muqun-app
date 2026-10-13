@@ -392,6 +392,7 @@ export function HomeOverview({
   const [composerPulse, setComposerPulse] = useState(0);
   // The phone dock floats over the page; the page's foot clears it.
   const [dockHeight, setDockHeight] = useState(0);
+  const [dockClipHeight, setDockClipHeight] = useState(0);
   // The Pad cover's left column holds still while the dock's field has focus.
   const [dockFocused, setDockFocused] = useState(false);
   // Classic: the pack artwork's measured slot, which the work block overlaps.
@@ -968,7 +969,10 @@ export function HomeOverview({
           : { inset: classicLayout ? metrics.contentGutter : padGeometry.gutter }
       }
       fieldLines={padLaunch ? PAD_DOCK_FIELD_LINES : undefined}
-      onDockHeight={setDockHeight}
+      onDockHeight={(height, clipHeight) => {
+        setDockHeight(height);
+        setDockClipHeight(clipHeight);
+      }}
       onFieldFocus={isPad ? setDockFocused : undefined}
       // The device class decides, not the layout: a Pad never hides its dock.
       autoHide={isPad ? undefined : pageDockHide.dock}
@@ -1053,7 +1057,7 @@ export function HomeOverview({
           onChange={setHasComputerCards}
         />
         <HomeScrollViewport
-          dockHeight={dock && !padLaunch ? dockHeight : 0}
+          dockHeight={dock && !padLaunch ? dockClipHeight : 0}
           dockOffset={isPad ? undefined : pageDockHide.dock.offset}
           ref={overviewScroll}
           keyboardShouldPersistTaps="handled"
@@ -1542,7 +1546,7 @@ export function HomeOverview({
       </Animated.View>
 
       <HomeScrollViewport
-        dockHeight={dock ? dockHeight : 0}
+        dockHeight={dock ? dockClipHeight : 0}
         dockOffset={pageDockHide.dock.offset}
         ref={overviewScroll}
         onContentSizeChange={restoreScroll}

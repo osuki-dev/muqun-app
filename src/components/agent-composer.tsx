@@ -480,9 +480,10 @@ export interface AgentComposerProps {
    * much of the screen it is standing on. The empty-state card has to: it is
    * centred in the room between the header and the dock, and that room is not
    * a constant -- a session strip, a chips row and a two-line draft are all
-   * optional. It is the same measurement the popups already take, handed up.
+   * optional. The first height includes decorative overflow for scroll clearance;
+   * the second ends at the painted surface for clipping scrolling foreground.
    */
-  onDockHeight?: (height: number) => void;
+  onDockHeight?: (height: number, clipHeight: number) => void;
   /**
    * A line drawn as the dock's first row, inside its glass: it rides the
    * keyboard with the dock and is counted in `onDockHeight`. Home's assignment bar -- where Send
@@ -1258,13 +1259,15 @@ export const AgentComposer = memo(function AgentComposer({
   const decorationClearance =
     fieldDecoration && !decorationHidden && !voiceActive ? fieldDecorationOverhang : 0;
   const dockHeight = surfaceHeight + dockFoot;
-  const reportDockHeight = useEffectEvent((height: number) => onDockHeight?.(height));
+  const reportDockHeight = useEffectEvent((height: number, clipHeight: number) =>
+    onDockHeight?.(height, clipHeight)
+  );
   // Local height still bounds popups. Forwarding each animated accessory frame
   // to Home also changes its scroll padding and clipping, feeding the reveal
   // through another React/layout pass. Publish the latest height once it lands.
   useEffect(() => {
     if (surfaceHeight > 0 && !accessoryHeightAnimating)
-      reportDockHeight(dockHeight + decorationClearance);
+      reportDockHeight(dockHeight + decorationClearance, dockHeight);
   }, [surfaceHeight, dockHeight, decorationClearance, accessoryHeightAnimating]);
   const [inputRowHeight, setInputRowHeight] = useState(0);
   const popupMaxHeight = Math.max(
