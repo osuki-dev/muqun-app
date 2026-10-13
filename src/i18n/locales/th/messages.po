@@ -458,10 +458,6 @@ msgstr "เครื่องจำลองสามารถควบคุม
 msgid "A simulator that was shut down can take a minute to come up."
 msgstr "เครื่องจำลองที่ปิดไปแล้วอาจใช้เวลาประมาณหนึ่งนาทีในการเริ่ม"
 
-#: src/components/launch-intro.tsx
-msgid "A spread on the Pad"
-msgstr "หน้าคู่บนแท็บเล็ต"
-
 #: src/components/server-terminal-workspace.tsx
 msgid "A terminal was created. Check it before sending again — your task is still here."
 msgstr "สร้างเทอร์มินัลแล้ว ตรวจสอบก่อนส่งอีกครั้ง งานของคุณยังอยู่ที่นี่"
@@ -881,6 +877,7 @@ msgstr "พัฒนาซอฟต์แวร์อัตโนมัติ: �
 msgid "Available modes"
 msgstr "โหมดที่ใช้ได้"
 
+#: src/components/launch-intro.tsx
 #: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back"
@@ -1080,8 +1077,8 @@ msgid "Changes"
 msgstr "การเปลี่ยนแปลง"
 
 #: src/components/launch-intro.tsx
-msgid "Changes as a tree"
-msgstr "การเปลี่ยนแปลงแบบต้นไม้"
+msgid "Changes and Lazygit now live together. Move between linked worktrees when your Gateway supports them."
+msgstr "การเปลี่ยนแปลงและ Lazygit อยู่ด้วยกันแล้ว สลับระหว่างเวิร์กทรีที่เชื่อมโยงได้เมื่อ Gateway รองรับ"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Changes coloured backgrounds, not text, icons or artwork"
@@ -1142,6 +1139,10 @@ msgstr "กำลังตรวจสอบ…"
 #: src/components/home-target-sheet.tsx
 msgid "Choose a computer"
 msgstr "เลือกคอมพิวเตอร์"
+
+#: src/components/launch-intro.tsx
+msgid "Choose a computer and an agent, then send your goal from Home. Follow tasks and decisions in the same place."
+msgstr "เลือกคอมพิวเตอร์และเอเจนต์ แล้วส่งเป้าหมายจากหน้าแรก ติดตามงานและเรื่องที่ต้องตัดสินใจได้ในที่เดียว"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Choose a mode"
@@ -1548,6 +1549,7 @@ msgid "Connecting…"
 msgstr "กำลังเชื่อมต่อ…"
 
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "การเชื่อมต่อ"
@@ -1578,6 +1580,7 @@ msgid "Context used"
 msgstr "บริบทที่ใช้ไป"
 
 #: src/app/explore.tsx
+#: src/components/launch-intro.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
@@ -2158,10 +2161,6 @@ msgstr "อัปเดตเซสชันไม่ได้"
 msgid "Could not upload the file."
 msgstr "อัปโหลดไฟล์ไม่ได้"
 
-#: src/components/launch-intro.tsx
-msgid "Cover Courier comes built in. Install a theme or pick a colour pack, and the whole app follows."
-msgstr "มี Cover Courier ติดมาในตัว ติดตั้งธีมหรือเลือกชุดสี แล้วทั้งแอปจะเปลี่ยนตาม"
-
 #: src/lib/release-notes.ts
 msgid "Cover Courier is built in and worn until you pick a theme, and Interface background opacity now reaches every sheet and notice."
 msgstr "มี Cover Courier ติดมาในตัวและใช้จนกว่าคุณจะเลือกธีม และความทึบของพื้นหลังส่วนติดต่อตอนนี้มีผลกับทุกชีตและทุกการแจ้งเตือน"
@@ -2443,10 +2442,6 @@ msgstr "กำลังดาวน์โหลด…"
 msgid "Draft the notes for the next build"
 msgstr "ร่างบันทึกสำหรับบิลด์ถัดไป"
 
-#: src/components/launch-intro.tsx
-msgid "Drawn on the GPU with Skia, with real keys and full tmux control. nvim, less and REPLs behave."
-msgstr "วาดบน GPU ด้วย Skia พร้อมปุ่มจริงและควบคุม tmux ได้เต็มที่ nvim, less และ REPL ทำงานได้ตามปกติ"
-
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
 msgid "Each device holds its own token for {0}."
@@ -2546,14 +2541,6 @@ msgstr "Escape สองครั้ง"
 #: src/components/agent-context-sheet.tsx
 msgid "Estimated cost"
 msgstr "ค่าใช้จ่ายโดยประมาณ"
-
-#: src/components/launch-intro.tsx
-msgid "Every agent on your computer, in your hand."
-msgstr "ทุกเอเจนต์บนคอมพิวเตอร์ของคุณ อยู่ในมือคุณ"
-
-#: src/components/launch-intro.tsx
-msgid "Every changed file in one folder tree with line totals. Open a patch, or discard a file from its menu."
-msgstr "ทุกไฟล์ที่เปลี่ยนแปลงรวมอยู่ในต้นไม้โฟลเดอร์เดียวพร้อมจำนวนบรรทัด เปิดดูแพตช์ หรือละทิ้งไฟล์จากเมนูของไฟล์นั้น"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Every screen in the app."
@@ -2763,6 +2750,10 @@ msgstr "ใช้บ่อย"
 #: src/components/task-row.tsx
 msgid "from {requester}"
 msgstr "จาก {requester}"
+
+#: src/components/launch-intro.tsx
+msgid "From a goal to work in motion."
+msgstr "จากเป้าหมายสู่งานที่กำลังเดินหน้า"
 
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
@@ -3211,6 +3202,10 @@ msgstr "พิมพ์ต่อเพื่อจำกัดผลลัพธ
 msgid "Keys"
 msgstr "ปุ่ม"
 
+#: src/components/launch-intro.tsx
+msgid "Know what is coming next."
+msgstr "รู้ว่ามีอะไรใหม่ก่อนอัปเดต"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
 msgid "Language"
@@ -3419,10 +3414,6 @@ msgstr "กำลังค้นหาเครื่องจำลอง"
 msgid "Mac mini · Office"
 msgstr "Mac mini · สำนักงาน"
 
-#: src/components/launch-intro.tsx
-msgid "Make it yours"
-msgstr "ทำให้เป็นของคุณ"
-
 #: src/components/settings-fleet-peers.tsx
 msgid "Make sure the computer is reachable, then try again."
 msgstr "ตรวจสอบว่าเข้าถึงคอมพิวเตอร์ได้ แล้วลองอีกครั้ง"
@@ -3591,10 +3582,6 @@ msgstr "Muqun ไม่มีฟอนต์ของตัวเอง ฟอ�
 msgid "Muqun is locked"
 msgstr "Muqun ถูกล็อก"
 
-#: src/components/launch-intro.tsx
-msgid "Muqun pairs with a Gateway on your own machine and puts its coding agents and terminals on your phone or tablet."
-msgstr "Muqun จับคู่กับ Gateway บนเครื่องของคุณเอง แล้วนำเอเจนต์เขียนโค้ดและเทอร์มินัลของเครื่องนั้นมาไว้บนโทรศัพท์หรือแท็บเล็ตของคุณ"
-
 #: src/components/pairing-camera.tsx
 msgid "Muqun reads the Gateway's QR code through the camera. Nothing is recorded."
 msgstr "Muqun อ่าน QR ของ Gateway ผ่านกล้อง โดยไม่บันทึกภาพ"
@@ -3670,6 +3657,10 @@ msgstr "กลุ่มใหม่"
 #: src/components/ssh-host-key-dialog.tsx
 msgid "New host key"
 msgstr "คีย์โฮสต์ใหม่"
+
+#: src/components/launch-intro.tsx
+msgid "New in 4.0"
+msgstr "สิ่งใหม่ใน 4.0"
 
 #: src/components/collaboration-notice.tsx
 msgid "New output available · refresh"
@@ -4053,10 +4044,6 @@ msgstr "เปิด"
 msgid "On a tablet, Home is a two-page spread, work sheets fill the screen, and the on-screen keyboard is a whole keyboard with F-keys and sticky modifiers."
 msgstr "บนแท็บเล็ต หน้าแรกเป็นหน้าคู่ ชีตงานเปิดเต็มหน้าจอ และแป้นพิมพ์บนหน้าจอเป็นแป้นพิมพ์เต็มรูปแบบพร้อมปุ่ม F และปุ่มปรับแต่งแบบค้างได้"
 
-#: src/components/launch-intro.tsx
-msgid "On a tablet, Home opens as a two-page spread and the on-screen keyboard is a whole keyboard."
-msgstr "บนแท็บเล็ต หน้าแรกจะเปิดเป็นหน้าคู่ และแป้นพิมพ์บนหน้าจอเป็นแป้นพิมพ์เต็มรูปแบบ"
-
 #: src/lib/release-notes.ts
 msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
 msgstr "ชีตการเปลี่ยนแปลงเดียวสำหรับเทอร์มินัลและเซสชันเอเจนต์: ไฟล์ที่เปลี่ยนแสดงเป็นต้นไม้พร้อมจำนวนบรรทัด สาขาอยู่ใต้ชื่อเรื่อง และมีละทิ้งในเมนูของไฟล์"
@@ -4246,10 +4233,6 @@ msgstr "เปิดพื้นที่ทำงาน {0} {panelCount, plural
 #: src/app/settings-voice.tsx
 msgid "OpenAI requires an API key and model. Compatible services may provide their own defaults. Your API key is stored securely on this device."
 msgstr "OpenAI ต้องใช้คีย์ API และโมเดล บริการที่รองรับอาจมีค่าเริ่มต้นของตัวเอง คีย์ API ของคุณจะถูกจัดเก็บอย่างปลอดภัยบนอุปกรณ์นี้"
-
-#: src/components/launch-intro.tsx
-msgid "OpenCode, DeepSeek and T3 Code side by side, each with its own tile, sessions and workbench."
-msgstr "OpenCode, DeepSeek และ T3 Code อยู่เคียงข้างกัน แต่ละตัวมีไทล์ เซสชัน และพื้นที่ทำงานของตัวเอง"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -4654,6 +4637,10 @@ msgstr "อ่านไฟล์"
 #: src/i18n/labels.ts
 msgid "Read outside the workspace"
 msgstr "อ่านนอกพื้นที่ทำงาน"
+
+#: src/components/launch-intro.tsx
+msgid "Read release notes before downloading. Follow real download progress, then restart when the update is ready—or leave it for later."
+msgstr "อ่านบันทึกประจำรุ่นก่อนดาวน์โหลด ดูความคืบหน้าการดาวน์โหลดจริง แล้วเริ่มใหม่เมื่ออัปเดตพร้อม หรือเก็บไว้ทำภายหลัง"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Read-only: symbol search, file discovery, dependency tracing."
@@ -5178,10 +5165,6 @@ msgstr "สแกน QR ของ Gateway"
 msgid "Scan the Gateway’s QR code, or enter its address."
 msgstr "สแกน QR code ของ Gateway หรือพิมพ์ที่อยู่"
 
-#: src/components/launch-intro.tsx
-msgid "Scan the QR code of a Gateway on your own computer. No account, no relay, end-to-end encrypted."
-msgstr "สแกนคิวอาร์โค้ดของ Gateway บนคอมพิวเตอร์ของคุณเอง ไม่ต้องมีบัญชี ไม่มีรีเลย์ เข้ารหัสตั้งแต่ต้นทางถึงปลายทาง"
-
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
 msgstr "การสแกนต้องใช้กล้อง ซึ่งเบราว์เซอร์นี้ไม่รองรับ"
@@ -5403,10 +5386,6 @@ msgstr "ตั้งค่าบนโฮสต์"
 #: src/components/pad-server-rail.tsx
 msgid "Settings"
 msgstr "การตั้งค่า"
-
-#: src/components/launch-intro.tsx
-msgid "Several agents, one computer"
-msgstr "หลายเอเจนต์ ในคอมพิวเตอร์เครื่องเดียว"
 
 #: src/components/agent-tool-card.tsx
 msgid "Several answers"
@@ -5767,6 +5746,10 @@ msgstr "แทรกแซง"
 #: src/components/agent-composer.tsx
 msgid "Steer running agent"
 msgstr "แทรกแซงเอเจนต์ที่กำลังทำงานแบบเรียลไทม์"
+
+#: src/components/launch-intro.tsx
+msgid "Step {position} of {count}"
+msgstr "ขั้นตอนที่ {position} จาก {count}"
 
 #: src/components/tool-call-code-rows.tsx
 msgid "Still arriving"
@@ -6190,17 +6173,9 @@ msgstr "สร้างเทอร์มินัลใหม่แล้ว �
 msgid "The previous send could not be checked."
 msgstr "ไม่สามารถตรวจสอบการส่งครั้งก่อนได้"
 
-#: src/components/launch-intro.tsx
-msgid "The question comes to you"
-msgstr "คำถามส่งตรงถึงคุณ"
-
 #: src/i18n/labels.ts
 msgid "The raw pane, on its grid and in its own colours."
 msgstr "พาเนลดิบ บนกริดและใช้สีของตัวเอง"
-
-#: src/components/launch-intro.tsx
-msgid "The real terminal"
-msgstr "เทอร์มินัลจริง"
 
 #: src/components/app-error-boundary.tsx
 msgid "The screen hit an error. Try again — your computers stay paired."
@@ -7002,10 +6977,6 @@ msgstr "สิ่งที่กำลังทำงาน"
 msgid "What's new"
 msgstr "มีอะไรใหม่"
 
-#: src/components/launch-intro.tsx
-msgid "When an agent stops for a decision, it arrives as a push. Approve or deny from the Lock Screen."
-msgstr "เมื่อเอเจนต์หยุดรอการตัดสินใจ คำถามจะมาเป็นการแจ้งเตือนแบบพุช อนุมัติหรือปฏิเสธได้จากหน้าจอล็อก"
-
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
 msgstr "ขณะที่คุณไม่อยู่"
@@ -7099,8 +7070,8 @@ msgid "Your agents, anywhere."
 msgstr "เอเจนต์ของคุณ ใช้ได้ทุกที่"
 
 #: src/components/launch-intro.tsx
-msgid "Your machine, your rules"
-msgstr "เครื่องของคุณ กติกาของคุณ"
+msgid "Your checkout, in one workspace."
+msgstr "เช็กเอาต์ของคุณในพื้นที่ทำงานเดียว"
 
 #: src/components/agent-message-block.tsx
 msgid "Your message"
