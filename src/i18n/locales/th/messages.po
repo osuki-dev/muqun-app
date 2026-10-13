@@ -1270,6 +1270,7 @@ msgstr "ล้างแคชเมื่อเปิด Muqun หลังค�
 
 #: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
+#: src/components/task-row.tsx
 msgid "Close"
 msgstr "ปิด"
 
@@ -3885,6 +3886,10 @@ msgstr "ยังไม่มีโปรเจกต์ที่นี่ พ�
 msgid "No projects match “{0}”."
 msgstr "ไม่มีโปรเจกต์ที่ตรงกับ “{0}”"
 
+#: src/components/task-row.tsx
+msgid "No reason was recorded."
+msgstr "ไม่ได้บันทึกเหตุผลไว้"
+
 #: src/components/agent-sessions-sheet.tsx
 msgid "No sessions in this project yet. Start one from the + button."
 msgstr "โปรเจกต์นี้ยังไม่มีเซสชัน เริ่มได้จากปุ่ม +"
@@ -4921,6 +4926,10 @@ msgstr "เล่นเสียงอีกครั้ง"
 #: src/app/settings-about.tsx
 msgid "Report a bug or request a feature"
 msgstr "รายงานข้อผิดพลาดหรือเสนอฟีเจอร์"
+
+#: src/components/task-row.tsx
+msgid "Reported blocker"
+msgstr "อุปสรรคที่รายงาน"
 
 #: src/lib/network-error.ts
 msgid "Request failed."
@@ -6304,6 +6313,10 @@ msgstr "บริการเสียงส่งข้อความถอด
 #: src/app/commands.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "อุโมงค์ SSH ส่งผ่านเฉพาะพอร์ตของ Gateway จึงเข้าถึงเครื่องจำลองและเบราว์เซอร์จากที่นี่ไม่ได้ โปรดเชื่อมต่อผ่านเครือข่ายภายในหรือ Tailscale"
+
+#: src/components/task-row.tsx
+msgid "The task was recorded as waiting. Open its session to check the current state."
+msgstr "งานถูกบันทึกว่ากำลังรอ เปิดเซสชันของงานเพื่อตรวจสอบสถานะปัจจุบัน"
 
 #: src/components/guide-command.tsx
 msgid "The terminal opened, but the command could not be typed."

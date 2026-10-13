@@ -1270,6 +1270,7 @@ msgstr "Bereinigt den Cache nach dem Öffnen von Muqun, wenn das Intervall abgel
 
 #: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
+#: src/components/task-row.tsx
 msgid "Close"
 msgstr "Schließen"
 
@@ -3885,6 +3886,10 @@ msgstr "Hier gibt es noch keine Projekte. Gib oben einen Pfad ein, um eines zu �
 msgid "No projects match “{0}”."
 msgstr "Keine Projekte passen zu „{0}“"
 
+#: src/components/task-row.tsx
+msgid "No reason was recorded."
+msgstr "Es wurde kein Grund erfasst"
+
 #: src/components/agent-sessions-sheet.tsx
 msgid "No sessions in this project yet. Start one from the + button."
 msgstr "In diesem Projekt gibt es noch keine Sitzungen. Starte eine über die +-Taste"
@@ -4921,6 +4926,10 @@ msgstr "Audio erneut abspielen"
 #: src/app/settings-about.tsx
 msgid "Report a bug or request a feature"
 msgstr "Fehler melden oder Funktion vorschlagen"
+
+#: src/components/task-row.tsx
+msgid "Reported blocker"
+msgstr "Gemeldetes Hindernis"
 
 #: src/lib/network-error.ts
 msgid "Request failed."
@@ -6304,6 +6313,10 @@ msgstr "Der Sprachdienst hat ein ungültiges Transkript zurückgegeben"
 #: src/app/commands.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "Der SSH-Tunnel trägt den Port des Gateways und keinen anderen, der Simulator und der Browser sind von hier also nicht erreichbar. Verbinde dich über das lokale Netz oder Tailscale"
+
+#: src/components/task-row.tsx
+msgid "The task was recorded as waiting. Open its session to check the current state."
+msgstr "Die Aufgabe wurde als wartend erfasst. Öffne die Sitzung, um den aktuellen Stand zu prüfen"
 
 #: src/components/guide-command.tsx
 msgid "The terminal opened, but the command could not be typed."

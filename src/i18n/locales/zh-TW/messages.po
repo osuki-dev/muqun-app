@@ -1270,6 +1270,7 @@ msgstr "到期後開啟 Muqun 時清理快取，保留已儲存的主題"
 
 #: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
+#: src/components/task-row.tsx
 msgid "Close"
 msgstr "關閉"
 
@@ -3885,6 +3886,10 @@ msgstr "這裡還沒有專案。在上方輸入路徑即可開啟一個"
 msgid "No projects match “{0}”."
 msgstr "沒有符合「{0}」的專案"
 
+#: src/components/task-row.tsx
+msgid "No reason was recorded."
+msgstr "未記錄原因"
+
 #: src/components/agent-sessions-sheet.tsx
 msgid "No sessions in this project yet. Start one from the + button."
 msgstr "此專案還沒有工作階段。點 + 按鈕新增一個"
@@ -4921,6 +4926,10 @@ msgstr "重播音訊"
 #: src/app/settings-about.tsx
 msgid "Report a bug or request a feature"
 msgstr "回報問題或提出功能建議"
+
+#: src/components/task-row.tsx
+msgid "Reported blocker"
+msgstr "已回報的阻礙"
 
 #: src/lib/network-error.ts
 msgid "Request failed."
@@ -6304,6 +6313,10 @@ msgstr "語音服務傳回了無效的轉寫結果"
 #: src/app/commands.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "SSH 通道只帶 Gateway 這一個連接埠，不含其他，所以從這裡碰不到模擬器和瀏覽器。改用區域網路或 Tailscale 連線"
+
+#: src/components/task-row.tsx
+msgid "The task was recorded as waiting. Open its session to check the current state."
+msgstr "任務被記錄為等待中。開啟工作階段以查看目前狀態"
 
 #: src/components/guide-command.tsx
 msgid "The terminal opened, but the command could not be typed."

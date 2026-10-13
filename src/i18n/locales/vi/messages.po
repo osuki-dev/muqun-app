@@ -1270,6 +1270,7 @@ msgstr "Dọn bộ nhớ đệm sau khi mở Muqun khi đến hạn. Các chủ 
 
 #: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
+#: src/components/task-row.tsx
 msgid "Close"
 msgstr "Đóng"
 
@@ -3885,6 +3886,10 @@ msgstr "Chưa có dự án nào ở đây. Nhập đường dẫn ở trên đ�
 msgid "No projects match “{0}”."
 msgstr "Không có dự án nào khớp “{0}”"
 
+#: src/components/task-row.tsx
+msgid "No reason was recorded."
+msgstr "Chưa ghi lại lý do"
+
 #: src/components/agent-sessions-sheet.tsx
 msgid "No sessions in this project yet. Start one from the + button."
 msgstr "Dự án này chưa có phiên nào. Bắt đầu bằng nút +"
@@ -4921,6 +4926,10 @@ msgstr "Phát lại âm thanh"
 #: src/app/settings-about.tsx
 msgid "Report a bug or request a feature"
 msgstr "Báo lỗi hoặc đề xuất tính năng"
+
+#: src/components/task-row.tsx
+msgid "Reported blocker"
+msgstr "Trở ngại được báo cáo"
 
 #: src/lib/network-error.ts
 msgid "Request failed."
@@ -6304,6 +6313,10 @@ msgstr "Dịch vụ giọng nói trả về bản phiên âm không hợp lệ"
 #: src/app/commands.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "Đường hầm SSH chỉ mang cổng của Gateway và không cổng nào khác, nên không thể kết nối đến trình giả lập và trình duyệt từ đây. Hãy kết nối qua mạng cục bộ hoặc Tailscale"
+
+#: src/components/task-row.tsx
+msgid "The task was recorded as waiting. Open its session to check the current state."
+msgstr "Tác vụ được ghi nhận là đang chờ. Mở phiên của tác vụ để kiểm tra trạng thái hiện tại"
 
 #: src/components/guide-command.tsx
 msgid "The terminal opened, but the command could not be typed."
