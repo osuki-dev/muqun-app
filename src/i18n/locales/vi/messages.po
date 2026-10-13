@@ -3635,6 +3635,7 @@ msgid "Needs your attention"
 msgstr "Cần bạn xử lý"
 
 #: src/components/home-recent-sessions.tsx
+#: src/components/in-app-notification-host.tsx
 #: src/components/server-agent-rows.tsx
 #: src/components/task-row.tsx
 #: src/lib/notifications.ts

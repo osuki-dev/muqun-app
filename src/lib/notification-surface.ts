@@ -7,13 +7,13 @@ export type NotificationSurfaceStyle = Readonly<{
   boxShadow?: string;
 }>;
 
-/** Shared notification geometry selected by the active Home appearance profile. */
+/** Shared, compact notification geometry selected by the active appearance profile. */
 export function notificationSurfaceStyle(
   profile: AppearanceProfile,
   shadow = true
 ): NotificationSurfaceStyle {
   return {
-    borderRadius: profile.chrome.overlay,
+    borderRadius: Math.min(profile.chrome.overlay, profile.chrome.card),
     borderCurve: 'continuous',
     ...(shadow ? { boxShadow: appChrome.shadow.notice } : {}),
   };

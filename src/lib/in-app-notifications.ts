@@ -288,3 +288,19 @@ export function noticeTitleParts(title: string): NoticeTitleParts {
   if (!lead || !suffix) return whole;
   return { lead, suffix };
 }
+
+/** Presentation follows typed requests; a generic "blocked" event may be an error or approval. */
+export function noticeDisplayTitle(
+  notice: Pick<InAppNotice, 'title' | 'kind' | 'question'>,
+  labels: { question: string; approval: string; fallback: string }
+): NoticeTitleParts {
+  const parts = noticeTitleParts(notice.title);
+  return {
+    lead: notice.question
+      ? labels.question
+      : notice.kind === 'approval'
+        ? labels.approval
+        : parts.lead || labels.fallback,
+    suffix: parts.suffix,
+  };
+}
