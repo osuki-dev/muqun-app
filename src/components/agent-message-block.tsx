@@ -27,7 +27,6 @@ import {
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import * as Clipboard from 'expo-clipboard';
-import { Image } from 'expo-image';
 import { type MarkdownStyle } from 'react-native-enriched-markdown';
 import Animated, {
   cancelAnimation,
@@ -40,6 +39,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
+import { AttachmentImage } from '@/components/attachment-image';
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { BoundedMarkdown } from '@/components/bounded-markdown';
 import { TranscriptBlockImage } from '@/components/transcript-block-image';
@@ -59,12 +59,6 @@ import { useRelativeTime } from '@/hooks/use-relative-time';
 import { useCompactMarkdownStyle } from '@/hooks/use-markdown-style';
 import { buildTimelineEntries, type ReasoningRun, type TimelineEntry } from '@/lib/agent-reasoning';
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
-import {
-  readUploadImageSource,
-  uploadImageSource,
-  uploadNameFromPath,
-  type AssetImageSource,
-} from '@/lib/gateway-client';
 import { fadeIn, timing } from '@/lib/motion';
 import { plainFromMarkdown } from '@/lib/markdown-text';
 import { normalizeAssistantMarkdown } from '@/lib/assistant-markdown';
@@ -95,69 +89,6 @@ const IMAGE_DATA_URI_PREFIX = 'data:image/';
 function isImageAttachment(uri: string): boolean {
   return uri.startsWith(IMAGE_DATA_URI_PREFIX) || /\.(png|jpg|jpeg|gif|webp)(\?.*)?$/i.test(uri);
 }
-
-/**
- * What the reader attached, under what they said.
- *
- * A row of chips and thumbnails rather than a grid above the text: the text is
- * the message and the files are what came with it, which is the order the
- * composer stages them in and the order the TUI prints them.
- */
-/**
- * One attached image. A data URI or a URL is shown as it is; a host path under
- * the gateway's upload folder is fetched back from the gateway with the
- * device's credentials (streamed by expo-image on a plain transport, decoded
- * from authenticated bytes on an encrypted one). Anything that cannot load
- * stays a quiet placeholder rather than an empty box.
- */
-const AttachmentImage = memo(function AttachmentImage({
-  uri,
-  label,
-  onPreviewImage,
-}: {
-  uri: string;
-  label: string;
-  onPreviewImage: (uri: string) => void;
-}) {
-  const theme = useThemeTokens();
-  const profile = useAppearanceProfile();
-  const uploadName =
-    uri.startsWith('data:') || /^https?:/.test(uri) ? null : uploadNameFromPath(uri);
-  const [source, setSource] = useState<AssetImageSource | null>(() =>
-    uploadName ? uploadImageSource(uploadName) : { uri, cacheKey: uri }
-  );
-  const [failed, setFailed] = useState(false);
-  useEffect(() => {
-    if (!uploadName || source) return;
-    const controller = new AbortController();
-    readUploadImageSource(uploadName, { signal: controller.signal })
-      .then((resolved) => setSource(resolved))
-      .catch(() => setFailed(true));
-    return () => controller.abort();
-  }, [uploadName, source]);
-
-  if (failed || !source) {
-    return (
-      <View style={[styles.attachmentThumbnail, styles.attachmentPlaceholder]}>
-        <FileText size={16} color={theme.colors.textSubtle} />
-      </View>
-    );
-  }
-  return (
-    <PressableScale
-      accessibilityRole="imagebutton"
-      accessibilityLabel={label}
-      onPress={() => onPreviewImage(source.uri)}
-      style={[styles.attachmentImageWrapper, { borderRadius: profile.chrome.surface }]}>
-      <Image
-        source={source}
-        style={styles.attachmentThumbnail}
-        contentFit="cover"
-        onError={() => setFailed(true)}
-      />
-    </PressableScale>
-  );
-});
 
 const MessageAttachments = memo(function MessageAttachments({
   attachments,
@@ -1562,10 +1493,6 @@ const styles = StyleSheet.create({
   roleLabel: {
     fontSize: AGENT_TYPE.meta.size,
   },
-  attachmentPlaceholder: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   roleStamp: {
     fontSize: AGENT_TYPE.micro.size,
     // Never shrinks: "just now" is not allowed to become "just".
@@ -1589,14 +1516,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-  },
-  attachmentImageWrapper: {
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-  },
-  attachmentThumbnail: {
-    width: 160,
-    height: 110,
   },
   attachmentChip: {
     flexDirection: 'row',

@@ -6,13 +6,15 @@ import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { ChevronDown, ChevronRight, FileText } from 'lucide-react-native';
 import { EnrichedMarkdownText, type MarkdownStyle } from 'react-native-enriched-markdown';
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { ActivityIndicator, Linking, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { useMarkdownStyle } from '@/hooks/use-markdown-style';
 import { markdownPaletteKey } from '@/lib/markdown-palette';
 import { PressableScale } from '@/components/pressable-scale';
+import { AttachmentImage } from '@/components/attachment-image';
+import { ImagePreviewModal } from '@/components/image-preview-modal';
 import { InlineDiffRows } from '@/components/diff-rows';
 import { diffRowsForFence } from '@/lib/agent-diff-rows';
 import { firstLine, type PaneChatItem, type PaneChatToolBlock } from '@/lib/pane-chat';
@@ -114,11 +116,15 @@ export function usePaneChatMarkdownStyle(): MarkdownStyle {
 /** What the user said, on the right, as a bubble. */
 export const PaneChatPromptRow = memo(function PaneChatPromptRow({
   text,
+  attachments,
   colors,
 }: {
   text: string;
+  attachments?: readonly string[];
   colors: PaneChatColors;
 }) {
+  const { t } = useLingui();
+  const [previewUri, setPreviewUri] = useState<string | null>(null);
   const surfaceBackground = useSurfaceBackground();
   const profile = useAppearanceProfile();
   return (
@@ -131,10 +137,31 @@ export const PaneChatPromptRow = memo(function PaneChatPromptRow({
             backgroundColor: surfaceBackground(colors.bubble),
           },
         ]}>
-        <Text variant="bodySmall" selectable color={colors.text}>
-          {text}
-        </Text>
+        {text ? (
+          <Text variant="bodySmall" selectable color={colors.text}>
+            {text}
+          </Text>
+        ) : null}
+        {attachments?.length ? (
+          <View style={styles.promptAttachments}>
+            {attachments.map((uri, index) => (
+              <AttachmentImage
+                key={`${index}:${uri}`}
+                uri={uri}
+                label={t`Open attachment`}
+                onPreviewImage={setPreviewUri}
+              />
+            ))}
+          </View>
+        ) : null}
       </View>
+      {previewUri ? (
+        <ImagePreviewModal
+          images={[{ id: previewUri, uri: previewUri }]}
+          initialIndex={0}
+          onClose={() => setPreviewUri(null)}
+        />
+      ) : null}
     </View>
   );
 });
@@ -296,7 +323,7 @@ export const PaneChatPartRow = memo(function PaneChatPartRow({
     case 'prompt':
       // Reachable only in the unusual case of a prompt part arriving where the
       // model did not group it; drawn as the user bubble it is either way.
-      return <PaneChatPromptRow text={part.text} colors={colors} />;
+      return <PaneChatPromptRow text={part.text} attachments={part.attachments} colors={colors} />;
 
     case 'asset-ref':
       return (
@@ -579,6 +606,7 @@ function withAlpha(color: string, alpha: number): string {
 }
 
 const styles = StyleSheet.create({
+  promptAttachments: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
   flexOne: {
     flex: 1,
     minWidth: 0,
