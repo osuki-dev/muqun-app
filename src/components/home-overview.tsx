@@ -1039,6 +1039,45 @@ export function HomeOverview({
         }}
       />
     ) : undefined;
+  // Both layouts expose the same sessions and row actions. Only their framing
+  // differs: Classic keeps compact cards; Editorial keeps its numbered rows.
+  const recentSection =
+    !loading && !hydrationError && recentEntries.length > 0 ? (
+      <HomeRecentSessions
+        compact={classicLayout}
+        pad={isPad}
+        limit={3}
+        moreLabel="show-all"
+        linkStyle={padLaunch ? PAD_WORK_LINK : undefined}
+        selectedServerId={launchController.chosen?.serverId}
+        servers={records}
+        hosts={sshRows}
+        available={recentShown}
+        query={recentQuery}
+        header={
+          recentFilterIds.length > 0 ? (
+            <HomeRecentChips
+              servers={records}
+              serverIds={recentFilterIds}
+              value={recentFilter}
+              onChange={setRecentServerId}
+            />
+          ) : undefined
+        }
+        onOpen={(command) => {
+          // QA-only leaves already have read-only snapshots in the demo
+          // detail sheet; never send them to a live agent workbench.
+          if (demoSearchEntries && command.type === 'open-agent') {
+            router.push({
+              pathname: '/agent-subagent-detail',
+              params: { asid: command.target.asid, sessionId: 'demo' },
+            });
+            return;
+          }
+          void commands.dispatch(command);
+        }}
+      />
+    ) : undefined;
   if (!classicLayout) {
     const editorialContent = (
       <View
@@ -1238,43 +1277,7 @@ export function HomeOverview({
                   </View>
                 )
               }
-              recent={
-                !loading && !hydrationError && recentEntries.length > 0 ? (
-                  <HomeRecentSessions
-                    pad={isPad}
-                    limit={3}
-                    moreLabel="show-all"
-                    linkStyle={padLaunch ? PAD_WORK_LINK : undefined}
-                    selectedServerId={launchController.chosen?.serverId}
-                    servers={records}
-                    hosts={sshRows}
-                    available={recentShown}
-                    query={recentQuery}
-                    header={
-                      recentFilterIds.length > 0 ? (
-                        <HomeRecentChips
-                          servers={records}
-                          serverIds={recentFilterIds}
-                          value={recentFilter}
-                          onChange={setRecentServerId}
-                        />
-                      ) : undefined
-                    }
-                    onOpen={(command) => {
-                      // QA-only leaves already have read-only snapshots in the demo
-                      // detail sheet; never send them to a live agent workbench.
-                      if (demoSearchEntries && command.type === 'open-agent') {
-                        router.push({
-                          pathname: '/agent-subagent-detail',
-                          params: { asid: command.target.asid, sessionId: 'demo' },
-                        });
-                        return;
-                      }
-                      void commands.dispatch(command);
-                    }}
-                  />
-                ) : undefined
-              }
+              recent={recentSection}
               recentHeading={recentHeading}
               hasAttention={!loading && !hydrationError && hasAttention}
               attention={attentionSection}
@@ -1850,10 +1853,8 @@ export function HomeOverview({
         <Animated.View
           layout={listLayout()}
           style={artworkOverlap ? { marginTop: -artworkOverlap } : undefined}>
-          {/* The dispatch surface every layout has (see `classicLayout`): Needs
-              you, then the computers with work, then this layout's own server
-              cards as its Recent. Below the spacer, so each label sits on what
-              it labels. */}
+          {/* The shared work and session sections keep their actions in both
+              layouts. Classic's connection cards remain underneath them. */}
           {/* Mounted while empty, as on the editorial page, so its first row
               arrives with its pulse; spaced only with a row. */}
           {attentionSection ? (
@@ -1874,9 +1875,23 @@ export function HomeOverview({
               {progressSection}
             </View>
           ) : null}
-          {progressSection && records.length > 0 ? (
+          {recentSection ? (
+            <View style={{ marginBottom: metrics.cardGap }}>
+              <View style={{ marginBottom: theme.spacing.sm }}>
+                {recentHeading ?? (
+                  <SectionLabel
+                    title={<Trans>Recent</Trans>}
+                    color={theme.colors.textMuted}
+                    style={styles.classicLabel}
+                  />
+                )}
+              </View>
+              {recentSection}
+            </View>
+          ) : null}
+          {(progressSection || recentSection) && records.length > 0 ? (
             <SectionLabel
-              title={<Trans>Recent</Trans>}
+              title={<Trans>Connections</Trans>}
               color={theme.colors.textMuted}
               style={[styles.classicLabel, { marginBottom: theme.spacing.sm }]}
             />
