@@ -2,6 +2,7 @@ import type { HotUpdaterInstance } from '@hot-updater/react-native';
 import Constants from 'expo-constants';
 import { getActiveLocale } from '../i18n/active-locale';
 import { fetchOtaReleaseNotes } from './ota-release-notes';
+import { fetchOtaDownloadSize } from './ota-download-size';
 import { Platform, TurboModuleRegistry } from 'react-native';
 import { create } from 'zustand';
 
@@ -36,6 +37,8 @@ function createClient(): UpdateClient | null {
       checkForUpdate: instance.checkForUpdate,
       getReleaseNotes: (releaseId) =>
         fetchOtaReleaseNotes(releaseId, getActiveLocale(), settings.clientApiKey),
+      getDownloadSize: (releaseId) =>
+        fetchOtaDownloadSize(releaseId, instance.getManifest().bundleId, settings.clientApiKey),
       addListener: instance.addListener,
       reload: instance.reload,
       getRunningReleaseId: async () =>

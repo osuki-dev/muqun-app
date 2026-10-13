@@ -20,7 +20,8 @@ function fixture(
   check: UpdateClient['checkForUpdate'],
   reload = async () => {},
   runningReleaseId: string | null = null,
-  getReleaseNotes?: UpdateClient['getReleaseNotes']
+  getReleaseNotes?: UpdateClient['getReleaseNotes'],
+  getDownloadSize?: UpdateClient['getDownloadSize']
 ) {
   const states: UpdateSnapshot[] = [];
   let listener = (_event: UpdateProgress) => {};
@@ -32,6 +33,7 @@ function fixture(
       checkForUpdate: check,
       getRunningReleaseId: async () => runningReleaseId,
       getReleaseNotes,
+      getDownloadSize,
       reload: async () => {
         reloads++;
         await reload();
@@ -65,6 +67,62 @@ const metadata = {
 };
 
 describe('OTA update consent lifecycle', () => {
+  test('size metadata settles before consent without becoming measured progress', async () => {
+    let resolveSize: (size: { estimatedBytes: number; fullBytes: number }) => void = () => {};
+    const size = new Promise<{ estimatedBytes: number; fullBytes: number }>((resolve) => {
+      resolveSize = resolve;
+    });
+    let downloads = 0;
+    const f = fixture(
+      async () =>
+        release({
+          updateBundle: async () => {
+            downloads++;
+            return true;
+          },
+        }),
+      async () => {},
+      null,
+      undefined,
+      async () => size
+    );
+    const checking = f.controller.check();
+    await Promise.resolve();
+    const prematureConsent = f.controller.updateNow();
+    resolveSize({ estimatedBytes: 200, fullBytes: 1000 });
+    await checking;
+    await prematureConsent;
+    expect(f.states.at(-1)?.downloadSize).toEqual({ estimatedBytes: 200, fullBytes: 1000 });
+    expect(f.states.at(-1)?.totalBytes).toBeUndefined();
+    expect(downloads).toBe(0);
+    f.controller.defer();
+    await f.controller.check();
+    expect(downloads).toBe(0);
+    await f.controller.checkOnLaunch();
+    await f.controller.updateNow();
+    expect(downloads).toBe(1);
+  });
+
+  test('size outage leaves consent usable and no-transfer transitions skip lookup', async () => {
+    for (const transitionKind of ['INSTALL', 'ADOPT_RELEASE', 'USE_BUILTIN'] as const) {
+      let calls = 0;
+      const f = fixture(
+        async () => release({ transitionKind }),
+        async () => {},
+        null,
+        undefined,
+        async () => {
+          calls++;
+          throw new Error('offline');
+        }
+      );
+      await f.controller.check();
+      expect(f.states.at(-1)?.phase).toBe('available');
+      expect(f.states.at(-1)?.downloadSize).toBeUndefined();
+      expect(calls).toBe(transitionKind === 'INSTALL' ? 1 : 0);
+      await f.controller.updateNow();
+    }
+  });
   test.each([false, true])(
     'localized notes load before consent, including required=%s',
     async (required) => {

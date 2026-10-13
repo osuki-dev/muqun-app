@@ -2428,6 +2428,14 @@ msgstr "下载"
 msgid "Download and preview"
 msgstr "下载并预览"
 
+#: src/components/update-status-banner.tsx
+msgid "Download size: about {estimate}"
+msgstr "下载大小：约 {estimate}"
+
+#: src/components/update-status-banner.tsx
+msgid "Download size: unavailable"
+msgstr "下载大小：暂不可用"
+
 #: src/components/settings-font-sheet.tsx
 msgid "Downloading"
 msgstr "正在下载"
@@ -2795,6 +2803,10 @@ msgstr "来自 {requester}"
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "前置摄像头。将二维码朝向屏幕"
+
+#: src/components/update-status-banner.tsx
+msgid "Full package: {fullPackage}"
+msgstr "完整更新包：{fullPackage}"
 
 #: src/components/video-asset-preview.tsx
 msgid "Fullscreen"
@@ -5632,6 +5644,10 @@ msgstr "模拟器控件"
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Size"
 msgstr "大小"
+
+#: src/components/update-status-banner.tsx
+msgid "Size covers update files. File reuse or fallback can change the download."
+msgstr "大小仅包含更新文件，文件复用或回退可能改变实际下载量"
 
 #. placeholder {0}: part.name ?? part.skill
 #: src/components/agent-message-block.tsx

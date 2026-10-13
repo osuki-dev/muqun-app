@@ -2428,6 +2428,14 @@ msgstr "다운로드"
 msgid "Download and preview"
 msgstr "다운로드 후 미리 보기"
 
+#: src/components/update-status-banner.tsx
+msgid "Download size: about {estimate}"
+msgstr "다운로드 크기: 약 {estimate}"
+
+#: src/components/update-status-banner.tsx
+msgid "Download size: unavailable"
+msgstr "다운로드 크기: 확인할 수 없음"
+
 #: src/components/settings-font-sheet.tsx
 msgid "Downloading"
 msgstr "다운로드 중"
@@ -2795,6 +2803,10 @@ msgstr "{requester}에서"
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "전면 카메라입니다. QR 코드를 화면 쪽으로 들어 주세요"
+
+#: src/components/update-status-banner.tsx
+msgid "Full package: {fullPackage}"
+msgstr "전체 패키지: {fullPackage}"
 
 #: src/components/video-asset-preview.tsx
 msgid "Fullscreen"
@@ -5632,6 +5644,10 @@ msgstr "시뮬레이터 컨트롤"
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Size"
 msgstr "크기"
+
+#: src/components/update-status-banner.tsx
+msgid "Size covers update files. File reuse or fallback can change the download."
+msgstr "크기는 업데이트 파일만 포함합니다. 파일 재사용이나 대체 다운로드에 따라 달라질 수 있습니다"
 
 #. placeholder {0}: part.name ?? part.skill
 #: src/components/agent-message-block.tsx

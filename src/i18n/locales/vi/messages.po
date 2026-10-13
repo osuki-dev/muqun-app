@@ -2428,6 +2428,14 @@ msgstr "Tải xuống"
 msgid "Download and preview"
 msgstr "Tải xuống và xem trước"
 
+#: src/components/update-status-banner.tsx
+msgid "Download size: about {estimate}"
+msgstr "Dung lượng tải xuống: khoảng {estimate}"
+
+#: src/components/update-status-banner.tsx
+msgid "Download size: unavailable"
+msgstr "Dung lượng tải xuống: chưa có"
+
 #: src/components/settings-font-sheet.tsx
 msgid "Downloading"
 msgstr "Đang tải"
@@ -2795,6 +2803,10 @@ msgstr "từ {requester}"
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "Camera trước. Giơ mã QR lên trước màn hình"
+
+#: src/components/update-status-banner.tsx
+msgid "Full package: {fullPackage}"
+msgstr "Gói đầy đủ: {fullPackage}"
 
 #: src/components/video-asset-preview.tsx
 msgid "Fullscreen"
@@ -5632,6 +5644,10 @@ msgstr "Điều khiển trình giả lập"
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Size"
 msgstr "Kích thước"
+
+#: src/components/update-status-banner.tsx
+msgid "Size covers update files. File reuse or fallback can change the download."
+msgstr "Dung lượng chỉ gồm các tệp cập nhật. Việc dùng lại tệp hoặc tải thay thế có thể làm thay đổi dung lượng"
 
 #. placeholder {0}: part.name ?? part.skill
 #: src/components/agent-message-block.tsx
