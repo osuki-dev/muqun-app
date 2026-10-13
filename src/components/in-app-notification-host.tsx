@@ -212,14 +212,15 @@ export function InAppNotificationHost() {
         dragX.set(offset.x);
         dragY.set(offset.y);
       })
-      .onEnd((event) => {
+      .onEnd((event, success) => {
         if (dismissing.get()) return;
-        const end = noticeSwipeEnd(event);
+        // Native cancellation also calls onEnd; it must never dismiss a notice.
+        const end = success ? noticeSwipeEnd(event) : { dismissed: false as const };
         if (!end.dismissed) {
-          // Under the threshold the plate goes back where it was, carrying the
-          // finger's own velocity into a critically damped landing.
-          settleTo(dragX, 0, event.velocityX);
-          settleTo(dragY, 0, event.velocityY);
+          // An ordinary release carries the finger's velocity into the landing;
+          // a cancellation returns to rest without inferring a flick.
+          settleTo(dragX, 0, success ? event.velocityX : 0);
+          settleTo(dragY, 0, success ? event.velocityY : 0);
           return;
         }
         // A short glide and fade replaces the full-screen throw. Ignore release
@@ -269,10 +270,10 @@ export function InAppNotificationHost() {
       approval: t`Approval required`,
       fallback: t`Muqun`,
     });
-    // A terminal approval push is ordinary prose, not an OpenCode rule/path.
-    // Keep it in the wrapping UI face instead of the single-line code detail.
-    const body = approval?.action ? approvalPhrase : entry.body;
-    const detail = approval?.action ? approval.subject : '';
+    // Preserve prose and unfamiliar action keys in full. Only a known phrase
+    // can replace the action while showing its subject separately.
+    const body = approvalPhrase || entry.body;
+    const detail = approvalPhrase ? approval?.subject : '';
     return (
       <Animated.View
         key={entry.id}

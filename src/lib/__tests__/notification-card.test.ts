@@ -3,6 +3,8 @@ import { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import * as notices from '../in-app-notifications';
+import * as swipe from '../notice-swipe';
+import { readApprovalBody } from '../agent-engine-text';
 import { appearanceProfiles } from '../appearance-profile';
 import { notificationSurfaceStyle } from '../notification-surface';
 import { appChrome } from '../../constants/appearance';
@@ -194,14 +196,17 @@ function fixture(
         };
       if (name === '@/constants/appearance') return { appChrome };
       if (name === '@/constants/nav-header') return { NAV_HEADER_TOP_GAP: 4 };
-      if (name === '@/i18n/labels') return { permissionActionPhrase: {} };
-      if (name === '@/lib/agent-engine-text') return { readApprovalBody: () => null };
+      if (name === '@/i18n/labels') return { permissionActionPhrase: { bash: 'Run a command' } };
+      if (name === '@/lib/agent-engine-text') return { readApprovalBody };
       if (name === '@/lib/feedback') return { feedback: () => Promise.resolve() };
       if (name === '@/lib/in-app-notifications') return notices;
       if (name === '@/lib/motion')
-        return { fadeInDown: () => undefined, timing: () => ({}), settleTo: () => {} };
-      if (name === '@/lib/notice-swipe')
-        return { noticeDragOffset: () => ({}), noticeSwipeEnd: () => ({}) };
+        return {
+          fadeInDown: () => undefined,
+          timing: () => ({}),
+          settleTo: (shared: { set: (value: number) => void }, value: number) => shared.set(value),
+        };
+      if (name === '@/lib/notice-swipe') return swipe;
       if (name === '@/constants/agent-type')
         return { AGENT_TYPE: { meta: { size: 12, lineHeight: 18 } } };
       if (name === '@/stores/app-settings')
@@ -312,4 +317,39 @@ test('multiline notifications keep actions outside a bounded scroller and give v
   expect(scope.gestureCalls.activeOffsetY).toBeUndefined();
   expect(scope.gestureCalls.failOffsetY).toEqual([[-6, 6]]);
   expect(scope.gestureCalls.activeOffsetX).toEqual([[-6, 6]]);
+});
+
+test('cancelled notification swipes return to rest without beginning dismissal', () => {
+  const scope = fixture(1);
+  const translation = (tree: Node) => {
+    const detector = nodes(tree).find((node) => node.type === 'GestureDetector')!;
+    return style((detector.props.children as Node).props.style);
+  };
+  scope.render();
+  const event = { translationX: 30, translationY: -20, velocityX: 500, velocityY: -300 };
+  (scope.gestureCalls.onUpdate![0] as (event: swipe.NoticeSwipe) => void)(event);
+  expect(translation(scope.render()).transform).toEqual([{ translateX: 15 }, { translateY: -10 }]);
+  const end = scope.gestureCalls.onEnd![0] as (event: swipe.NoticeSwipe, success: boolean) => void;
+  end(event, false);
+  expect(translation(scope.render())).toEqual({
+    opacity: 1,
+    transform: [{ translateX: 0 }, { translateY: 0 }],
+  });
+  expect(scope.items()).toHaveLength(1);
+  // An intentional release with the same movement still starts dismissal.
+  end(event, true);
+  expect(translation(scope.render()).opacity).toBe(0);
+});
+
+test('approval bodies preserve unknown actions and translate known actions without repeating their subject', () => {
+  const scope = fixture(1);
+  const notice = scope.items()[0]!;
+  delete notice.question;
+  notice.body = 'custom_permission: /critical/file.ts';
+  expect(text(byId(scope.render(), 'in-app-notification-content'))).toContain(notice.body);
+  notice.body = 'bash: echo hello';
+  const content = text(byId(scope.render(), 'in-app-notification-content'));
+  expect(content).toContain('Run a command');
+  expect(content).not.toContain('bash:');
+  expect(content.match(/echo hello/g)).toHaveLength(1);
 });
