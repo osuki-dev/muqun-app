@@ -31,6 +31,7 @@ import {
 } from '@/lib/agent-model-groups';
 import { SECTION_PAGE_SIZE, nearListEnd, pageSections } from '@/lib/paged-sections';
 import { findAgentModelPosition } from '@/lib/agent-model-position';
+import { modelPickerChoice } from '@/lib/agent-session-defaults';
 import {
   formatModelName,
   getAgentCatalog,
@@ -637,19 +638,13 @@ export const AgentModelSheet = memo(function AgentModelSheet({
                               }
                             : {})}
                           onPress={() =>
-                            selectModel({
-                              provider_id: model.provider_id,
-                              model_id: model.id,
-                              variant: isSelected
-                                ? effectiveModel?.variant
-                                : (variants.find((v) => v.id === 'high')?.id ?? variants[0]?.id),
-                            })
+                            selectModel(modelPickerChoice(model, effectiveModel, defaults.model))
                           }
                           trailing={
                             isSelected && !unavailable && variants.length > 0 ? (
                               <View style={styles.variants}>
                                 {variants.map((variant) => {
-                                  const active = (effectiveModel?.variant || 'high') === variant.id;
+                                  const active = effectiveModel?.variant === variant.id;
                                   return (
                                     <PressableScale
                                       key={variant.id}

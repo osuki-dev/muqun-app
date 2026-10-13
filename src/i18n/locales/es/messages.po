@@ -27,10 +27,6 @@ msgstr "«{0}» tiene cambios sin confirmar. Al eliminarlo se descartan"
 msgid "“{args}” was not sent: a skill takes no arguments."
 msgstr "«{args}» no se envió: una habilidad no admite argumentos"
 
-#: src/components/agent-sessions-sheet.tsx
-msgid "“{title}” and any subagent sessions under it are removed from the host. This cannot be undone."
-msgstr "«{title}» y las sesiones de subagente que contiene se eliminan del host. Esto no se puede deshacer"
-
 #: src/components/home-recent-sessions.tsx
 msgid "“{title}” and its conversation history will be deleted in {provider} on {computer}. The service may also delete its subagent sessions. This cannot be undone."
 msgstr "«{title}» y su historial de conversación se eliminarán de {provider} en {computer}. El servicio también puede eliminar sus sesiones de subagentes. Esta acción no se puede deshacer"
@@ -1912,6 +1908,10 @@ msgstr "No se pudo activar el Bloqueo de la app"
 msgid "Could not follow this task on {computer}"
 msgstr "No se pudo seguir esta tarea en {computer}"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not fork"
+msgstr "No se pudo crear la rama"
+
 #: src/components/ssh-host-form.tsx
 msgid "Could not generate a key"
 msgstr "No se pudo generar una clave"
@@ -2314,6 +2314,10 @@ msgstr "Por defecto, theme.json en la raíz del repositorio"
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "Eliminar"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Delete “{title}”?"
+msgstr "¿Eliminar «{title}»?"
 
 #: src/components/changes-sheet.tsx
 msgid "Delete {discardName}?"
@@ -2813,6 +2817,10 @@ msgstr "Dirección del archivo de fuente"
 #: src/components/settings-appearance.tsx
 msgid "Font, {fontValue}"
 msgstr "Fuente, {fontValue}"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Fork session"
+msgstr "Crear una rama de la sesión"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"

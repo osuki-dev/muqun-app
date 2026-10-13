@@ -27,10 +27,6 @@ msgstr "“{0}” มีการเปลี่ยนแปลงที่ย�
 msgid "“{args}” was not sent: a skill takes no arguments."
 msgstr "ไม่ได้ส่ง “{args}” เพราะสกิลไม่รับอาร์กิวเมนต์"
 
-#: src/components/agent-sessions-sheet.tsx
-msgid "“{title}” and any subagent sessions under it are removed from the host. This cannot be undone."
-msgstr "“{title}” และเซสชันของซับเอเจนต์ที่อยู่ข้างใต้จะถูกลบออกจากโฮสต์ และย้อนกลับไม่ได้"
-
 #: src/components/home-recent-sessions.tsx
 msgid "“{title}” and its conversation history will be deleted in {provider} on {computer}. The service may also delete its subagent sessions. This cannot be undone."
 msgstr "“{title}” และประวัติการสนทนาจะถูกลบใน {provider} บน {computer} บริการอาจลบเซสชันของเอเจนต์ย่อยด้วย การดำเนินการนี้ย้อนกลับไม่ได้"
@@ -1912,6 +1908,10 @@ msgstr "เปิดใช้การล็อกแอปไม่ได้"
 msgid "Could not follow this task on {computer}"
 msgstr "ติดตามงานนี้บน {computer} ไม่ได้"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not fork"
+msgstr "แยกสาขาไม่สำเร็จ"
+
 #: src/components/ssh-host-form.tsx
 msgid "Could not generate a key"
 msgstr "สร้างคีย์ไม่ได้"
@@ -2314,6 +2314,10 @@ msgstr "ค่าเริ่มต้นคือ theme.json ที่ราก
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "ลบ"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Delete “{title}”?"
+msgstr "ลบ “{title}” หรือไม่?"
 
 #: src/components/changes-sheet.tsx
 msgid "Delete {discardName}?"
@@ -2813,6 +2817,10 @@ msgstr "ที่อยู่ไฟล์ฟอนต์"
 #: src/components/settings-appearance.tsx
 msgid "Font, {fontValue}"
 msgstr "ฟอนต์, {fontValue}"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Fork session"
+msgstr "แยกสาขาเซสชัน"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"

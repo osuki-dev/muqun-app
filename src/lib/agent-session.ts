@@ -512,6 +512,17 @@ export async function renameAgentSession(asid: string, title: string): Promise<v
   await writeJson(sessionRoute(asid, '/rename'), 'Failed to rename session', { title });
 }
 
+/** Whole-session fork; item boundaries require a separate advertised contract. */
+export async function forkAgentSession(asid: string, agentId?: string): Promise<AgentSessionInfo> {
+  const path = agentId
+    ? `/api/agents/${encodeURIComponent(agentId)}/sessions/${encodeURIComponent(asid)}/fork`
+    : sessionRoute(asid, '/fork');
+  const data = await writeJson(path, 'Failed to fork session', {});
+  const info = parseAgentSessionInfo(data);
+  if (!info) throw new Error('Failed to fork session: unreadable response');
+  return info;
+}
+
 /**
  * Marks the session read, and answers with the moment it was marked at.
  *

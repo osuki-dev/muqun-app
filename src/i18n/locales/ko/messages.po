@@ -27,10 +27,6 @@ msgstr "“{0}”에 커밋하지 않은 변경이 있습니다. 제거하면 �
 msgid "“{args}” was not sent: a skill takes no arguments."
 msgstr "“{args}”은(는) 전송되지 않았습니다. 스킬은 인자를 받지 않습니다"
 
-#: src/components/agent-sessions-sheet.tsx
-msgid "“{title}” and any subagent sessions under it are removed from the host. This cannot be undone."
-msgstr "“{title}”과(와) 그 아래의 서브에이전트 세션이 호스트에서 제거됩니다. 되돌릴 수 없습니다"
-
 #: src/components/home-recent-sessions.tsx
 msgid "“{title}” and its conversation history will be deleted in {provider} on {computer}. The service may also delete its subagent sessions. This cannot be undone."
 msgstr "{computer}의 {provider}에서 “{title}” 및 해당 대화 기록이 삭제됩니다. 서비스가 하위 에이전트 세션도 삭제할 수 있습니다. 이 작업은 되돌릴 수 없습니다"
@@ -1912,6 +1908,10 @@ msgstr "앱 잠금을 켜지 못했습니다"
 msgid "Could not follow this task on {computer}"
 msgstr "{computer}에서 이 작업을 추적할 수 없습니다"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not fork"
+msgstr "분기할 수 없습니다"
+
 #: src/components/ssh-host-form.tsx
 msgid "Could not generate a key"
 msgstr "키를 생성할 수 없습니다"
@@ -2314,6 +2314,10 @@ msgstr "기본값은 저장소 루트의 theme.json입니다"
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "삭제"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Delete “{title}”?"
+msgstr "“{title}”을(를) 삭제할까요?"
 
 #: src/components/changes-sheet.tsx
 msgid "Delete {discardName}?"
@@ -2813,6 +2817,10 @@ msgstr "글꼴 파일 주소"
 #: src/components/settings-appearance.tsx
 msgid "Font, {fontValue}"
 msgstr "글꼴, {fontValue}"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Fork session"
+msgstr "세션 분기"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"

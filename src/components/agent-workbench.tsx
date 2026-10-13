@@ -7,6 +7,8 @@ import {
 } from '@/lib/agent-session-runtime';
 import { useGatewayGeneration } from '@/stores/gateway-connection-generation';
 import {
+  canMutateAgentSession,
+  type AgentSessionAction,
   canSendAgentPrompt,
   canReplyAgentForm,
   hasBlockingAgentForm,
@@ -93,6 +95,7 @@ import {
   replyAgentPermission,
   replyAgentForm,
   getAgentVcsDiff,
+  getAgentVcsFiles,
   getAgentCatalog,
   getAgentProjects,
   openAgentSessionStream,
@@ -101,6 +104,7 @@ import {
   compactAgentSession,
   deleteAgentSession,
   renameAgentSession,
+  forkAgentSession,
   invokeAgentSkill,
   getAgentContext,
   listAgentSessionChildrenObserved,
@@ -160,7 +164,7 @@ import {
   stagingUnsupported,
   type OneStepRevertRequest,
 } from '@/lib/agent-revert';
-import { hiddenClientCommands, normalizeAgentId } from '@/lib/agent-discovery';
+import { agentFeaturesFor, hiddenClientCommands, normalizeAgentId } from '@/lib/agent-discovery';
 import {
   useAgentFeatures,
   useAgentsDiscoveryRefresh,
@@ -1639,7 +1643,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const refreshShells = useCallback(async () => {
     const request = ++shellRequestRef.current;
     const directory = activeDirectory;
-    if (!badgeLoads) {
+    if (!badgeLoads || !agentFeatures.backgroundShells) {
       if (request === shellRequestRef.current) setShells([]);
       return;
     }
@@ -1648,7 +1652,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     // let the old response put its shells back under the new directory.
     if (request !== shellRequestRef.current || directory !== activeDirectoryRef.current) return;
     setShells(list);
-  }, [activeDirectory, badgeLoads]);
+  }, [activeDirectory, badgeLoads, agentFeatures.backgroundShells]);
 
   /**
    * Whether there is anything to open the changes sheet on.
@@ -1663,22 +1667,45 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       setHasDiffs(false);
       return;
     }
-    try {
-      const answer = await getAgentVcsDiff(sessionId, activeAsid);
-      noteWorkspaceMissing(answer.missing, activeAsid);
-      setHasDiffs(answer.files.length > 0);
-    } catch {
-      setHasDiffs(false);
-    }
-  }, [sessionId, activeAsid, badgeLoads, noteWorkspaceMissing]);
+    await recoverWith(
+      async () => {
+        const supportsFiles = useServerCapabilities
+          .getState()
+          .byServer[serverId]?.includes('agent_vcs_files');
+        const files = supportsFiles ? await getAgentVcsFiles(sessionId, activeAsid) : null;
+        const answer =
+          files ??
+          (agentFeatures.extra.legacyVcsDiff !== false
+            ? await getAgentVcsDiff(sessionId, activeAsid)
+            : null);
+        if (activeAsidRef.current !== activeAsid) return;
+        if (!answer) {
+          setHasDiffs(false);
+          return;
+        }
+        noteWorkspaceMissing(answer.missing, activeAsid);
+        setHasDiffs(answer.files.length > 0);
+      },
+      () => {
+        if (activeAsidRef.current === activeAsid) setHasDiffs(false);
+      }
+    );
+  }, [
+    sessionId,
+    serverId,
+    activeAsid,
+    badgeLoads,
+    noteWorkspaceMissing,
+    agentFeatures.extra.legacyVcsDiff,
+  ]);
 
   const refreshInbox = useCallback(async () => {
-    if (!activeAsid) {
+    if (!activeAsid || !agentFeatures.inbox) {
       setInbox([]);
       return;
     }
     setInbox(await listAgentInbox(activeAsid));
-  }, [activeAsid]);
+  }, [activeAsid, agentFeatures.inbox]);
 
   /**
    * What the model can still see, read from the engine rather than guessed.
@@ -3367,6 +3394,68 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     }
   }, [abortSessionRef, handleAbort]);
 
+  const canMutateSession = useCallback(
+    (action: AgentSessionAction, asid: string, supplied?: AgentSessionInfo) => {
+      const info =
+        (sessionInfo?.asid === asid ? sessionInfo : undefined) ??
+        sessions.find((session) => session.asid === asid) ??
+        Object.values(childrenByParent)
+          .flat()
+          .find((session) => session.asid === asid) ??
+        supplied;
+      if (!info || info.asid !== asid) return false;
+      const current = asid === activeAsidRef.current ? { ...info, runtime: readRuntime() } : info;
+      return canMutateAgentSession(
+        action,
+        current,
+        agentFeaturesFor(
+          useAgents.getState().index.servers[serverId]?.agents?.agents,
+          info.agent_id
+        ),
+        useServerCapabilities.getState().byServer[serverId]
+      );
+    },
+    [sessionInfo, sessions, childrenByParent, readRuntime, serverId]
+  );
+
+  const handleForkSession = useCallback(
+    async (source: AgentSessionInfo) => {
+      if (
+        newSessionCreationRef.current ||
+        promptDispatchRef.current ||
+        !canMutateSession('fork', source.asid, source)
+      )
+        return;
+      const owner = captureWorkbenchOwner(activeAsidRef.current, activeDirectoryRef.current);
+      if (!ownsWorkbench(owner)) return;
+      newSessionCreationRef.current = true;
+      setCreatingSession(true);
+      return settleAfter(
+        async () => {
+          try {
+            const created = await forkAgentSession(source.asid, source.agent_id);
+            if (!ownsWorkbench(owner)) return;
+            setSessions((previous) => [
+              created,
+              ...previous.filter((item) => item.asid !== created.asid),
+            ]);
+            // Navigation follows the accepted fork. A failure leaves the original
+            // transcript, scroll position, and composer draft untouched.
+            selectAsid(created.asid);
+          } catch (error) {
+            if (ownsWorkbench(owner))
+              showScreenNotice(t`Could not fork`, agentErrorRef.current(error));
+          }
+        },
+        () => {
+          newSessionCreationRef.current = false;
+          setCreatingSession(false);
+        }
+      );
+    },
+    [canMutateSession, captureWorkbenchOwner, ownsWorkbench, selectAsid, showScreenNotice, t]
+  );
+
   /**
    * A new name for a session, everywhere it is shown, before the engine has
    * answered -- and the old one back if it refuses.
@@ -3378,7 +3467,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * they all read the same lists.
    */
   const handleRenameSession = useCallback(
-    (asid: string, title: string) => {
+    (asid: string, title: string, supplied?: AgentSessionInfo) => {
+      if (!canMutateSession('rename', asid, supplied)) return;
       const next = title.trim();
       if (!asid || !next) return;
       const previous =
@@ -3415,7 +3505,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           showScreenNotice(t`Could not rename`, agentErrorRef.current(err));
         });
     },
-    [homeTargetFor, sessions, sessionInfo, showScreenNotice, t]
+    [canMutateSession, homeTargetFor, sessions, sessionInfo, showScreenNotice, t]
   );
 
   /**
@@ -3426,8 +3516,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * confirmation is the caller's; by the time this runs it has been given.
    */
   const handleDeleteSession = useCallback(
-    (asid: string) => {
-      if (!asid) return;
+    (asid: string, supplied?: AgentSessionInfo) => {
+      if (!asid || !canMutateSession('delete', asid, supplied)) return;
       const previousSessions = sessions;
       const previousChildren = childrenByParent;
       childrenRequestRef.current++;
@@ -3474,7 +3564,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           showScreenNotice(t`Could not delete`, agentErrorRef.current(err));
         });
     },
-    [setTimeline, sessions, childrenByParent, activeAsid, homeTargetFor, showScreenNotice, t]
+    [
+      canMutateSession,
+      setTimeline,
+      sessions,
+      childrenByParent,
+      activeAsid,
+      homeTargetFor,
+      showScreenNotice,
+      t,
+    ]
   );
 
   const handleSelectWorkspace = useCallback(
@@ -5003,6 +5102,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       },
       renameSession: handleRenameSession,
       deleteSession: handleDeleteSession,
+      forkSession: handleForkSession,
       selectModel: handleSelectModel,
       selectAgentMode: handleSelectAgentMode,
       selectWorkspace: (directory, project) => {
@@ -5018,6 +5118,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     }),
     [
       handleCreateNewSession,
+      handleForkSession,
       handleRenameSession,
       handleDeleteSession,
       handleSelectModel,

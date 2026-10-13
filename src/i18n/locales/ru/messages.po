@@ -27,10 +27,6 @@ msgstr "«{0}» содержит незакоммиченные изменени
 msgid "“{args}” was not sent: a skill takes no arguments."
 msgstr "«{args}» не отправлено: навык не принимает аргументы"
 
-#: src/components/agent-sessions-sheet.tsx
-msgid "“{title}” and any subagent sessions under it are removed from the host. This cannot be undone."
-msgstr "«{title}» и все вложенные сессии субагентов будут удалены с хоста. Это необратимо"
-
 #: src/components/home-recent-sessions.tsx
 msgid "“{title}” and its conversation history will be deleted in {provider} on {computer}. The service may also delete its subagent sessions. This cannot be undone."
 msgstr "«{title}» и история этой беседы будут удалены в {provider} на {computer}. Сервис также может удалить его сеансы субагентов. Это действие нельзя отменить"
@@ -1912,6 +1908,10 @@ msgstr "Не удалось включить блокировку приложе
 msgid "Could not follow this task on {computer}"
 msgstr "Не удалось отследить эту задачу на {computer}"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not fork"
+msgstr "Не удалось создать ветку"
+
 #: src/components/ssh-host-form.tsx
 msgid "Could not generate a key"
 msgstr "Не удалось создать ключ"
@@ -2314,6 +2314,10 @@ msgstr "По умолчанию — theme.json в корне репозитор�
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "Удалить"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Delete “{title}”?"
+msgstr "Удалить «{title}»?"
 
 #: src/components/changes-sheet.tsx
 msgid "Delete {discardName}?"
@@ -2813,6 +2817,10 @@ msgstr "Адрес файла шрифта"
 #: src/components/settings-appearance.tsx
 msgid "Font, {fontValue}"
 msgstr "Шрифт, {fontValue}"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Fork session"
+msgstr "Создать ветку сеанса"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"
