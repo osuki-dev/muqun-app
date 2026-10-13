@@ -408,6 +408,10 @@ msgstr "10 jours"
 msgid "30 days"
 msgstr "30 jours"
 
+#: src/app/computer-map.tsx
+msgid "3D is unavailable on this device. All connection details are available below."
+msgstr "La 3D est indisponible sur cet appareil. Tous les détails des connexions figurent ci-dessous"
+
 #. placeholder {0}: Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))
 #: src/components/settings-font-sheet.tsx
 msgid "A .ttf or .otf up to {0} MB."
@@ -1438,6 +1442,10 @@ msgstr "Terminé"
 msgid "Computer"
 msgstr "Ordinateur"
 
+#: src/app/computer-map.tsx
+msgid "Computer details"
+msgstr "Détails de l’ordinateur"
+
 #: src/app/explore.tsx
 #: src/components/settings-servers.tsx
 msgid "Computer name"
@@ -1451,6 +1459,10 @@ msgstr "Ordinateur introuvable"
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer offline"
 msgstr "Ordinateur hors ligne"
+
+#: src/app/computer-map.tsx
+msgid "Computer status below describes reachability from this device."
+msgstr "L’état des ordinateurs ci-dessous indique leur accessibilité depuis cet appareil"
 
 #: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -1565,11 +1577,20 @@ msgstr "Connexion à {address}"
 msgid "Connecting…"
 msgstr "Connexion…"
 
+#: src/app/computer-map.tsx
+#: src/components/settings-servers.tsx
+msgid "Connection map"
+msgstr "Carte des connexions"
+
 #: src/components/home-editorial-layout.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "Connexions"
+
+#: src/app/computer-map.tsx
+msgid "Connections from this app and last-known links between paired computers."
+msgstr "Connexions de cette application et dernières liaisons connues entre les ordinateurs associés"
 
 #: src/components/agent-composer.tsx
 msgid "Contains subagent sessions"
@@ -1897,6 +1918,10 @@ msgstr "Impossible de lister les worktrees. Actualisez pour réessayer"
 #: src/components/settings-server-capabilities.tsx
 msgid "Could not load capabilities"
 msgstr "Impossible de charger les capacités"
+
+#: src/app/computer-map.tsx
+msgid "Could not load computers. Open Computers to try again."
+msgstr "Impossible de charger les ordinateurs. Ouvrez « Ordinateurs » pour réessayer"
 
 #: src/components/session-artifacts.tsx
 msgid "Could not load files."
@@ -2474,6 +2499,10 @@ msgstr "Téléchargement…"
 #: src/lib/demo-gateway.ts
 msgid "Draft the notes for the next build"
 msgstr "Rédige les notes du prochain build"
+
+#: src/app/computer-map.tsx
+msgid "Drag to orbit. Pinch to zoom. Tap a computer to select it. Solid lines show app connections; dashed arrows show last-known peer reports. Positions are illustrative."
+msgstr "Faites glisser pour pivoter, pincez pour zoomer. Touchez un ordinateur pour le sélectionner. Les lignes continues indiquent les connexions de l’application ; les flèches en pointillés, les dernières liaisons signalées. Les positions sont schématiques"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -3293,6 +3322,14 @@ msgstr "Dernier dossier"
 msgid "Last known activity"
 msgstr "Dernière activité connue"
 
+#: src/app/computer-map.tsx
+msgid "Last reported: accepting work from other computers."
+msgstr "Dernier état signalé : accepte les tâches d’autres ordinateurs"
+
+#: src/app/computer-map.tsx
+msgid "Last reported: not accepting work from other computers. This does not mean offline."
+msgstr "Dernier état signalé : n’accepte pas les tâches d’autres ordinateurs. Cela ne signifie pas qu’il est hors ligne"
+
 #: src/components/task-row.tsx
 msgid "last seen {ago}"
 msgstr "vu pour la dernière fois {ago}"
@@ -3312,6 +3349,10 @@ msgstr "Vu il y a {minutes} min"
 #: src/components/settings-servers.tsx
 msgid "Last seen just now"
 msgstr "Vu à l’instant"
+
+#: src/app/computer-map.tsx
+msgid "Last-known peer reports are separate from this app’s connection. They may have changed since the Gateway was read."
+msgstr "Les dernières liaisons signalées entre ordinateurs sont distinctes de la connexion de cette application. Elles ont pu changer depuis la lecture du Gateway"
 
 #: src/components/update-status-banner.tsx
 msgid "Later"
@@ -3364,6 +3405,10 @@ msgstr "Le lien vers {name} a été révoqué · reconnexion…"
 msgid "Linked with: {linkedNames}"
 msgstr "Lié à : {linkedNames}"
 
+#: src/app/computer-map.tsx
+msgid "List"
+msgstr "Liste"
+
 #: src/app/commands.tsx
 msgid "List branches"
 msgstr "Lister les branches"
@@ -3401,12 +3446,18 @@ msgstr "Chargement"
 msgid "Loading commands"
 msgstr "Chargement des commandes"
 
+#: src/app/computer-map.tsx
 #: src/app/servers/[serverId].tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading computers"
 msgstr "Chargement des ordinateurs"
+
+#: src/app/computer-map.tsx
+#: src/components/computer-map/gpu-map.native.tsx
+msgid "Loading map…"
+msgstr "Chargement de la carte…"
 
 #: src/components/settings-servers.tsx
 msgid "Loading paired devices…"
@@ -3475,6 +3526,10 @@ msgstr "Gérer les connexions"
 #: src/components/home-overview.tsx
 msgid "Manage SSH hosts"
 msgstr "Gérer les hôtes SSH"
+
+#: src/app/computer-map.tsx
+msgid "Map"
+msgstr "Carte"
 
 #: src/components/task-row.tsx
 msgid "Mark done"
@@ -3815,6 +3870,7 @@ msgstr "Aucun ordinateur en ligne"
 msgid "No computer to start a task on."
 msgstr "Aucun ordinateur sur lequel démarrer une tâche"
 
+#: src/app/computer-map.tsx
 #: src/components/settings-servers.tsx
 msgid "No computers paired yet"
 msgstr "Aucun ordinateur appairé pour l’instant"
@@ -3834,6 +3890,10 @@ msgstr "Pas encore de Gateway ?"
 #: src/components/tool-call-code-rows.tsx
 msgid "No input"
 msgstr "Aucune entrée"
+
+#: src/app/computer-map.tsx
+msgid "No links in the last peer report."
+msgstr "Aucune liaison dans le dernier rapport entre ordinateurs"
 
 #: src/components/task-row.tsx
 msgid "No longer linked with {computer}"
@@ -3881,6 +3941,10 @@ msgstr "Aucune sortie"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "No password or key is saved for this host."
 msgstr "Aucun mot de passe ni clé n’est enregistré pour cet hôte"
+
+#: src/app/computer-map.tsx
+msgid "No peer report available. This Gateway may be offline or may not support peer reports."
+msgstr "Aucun rapport de liaison disponible. Ce Gateway est peut-être hors ligne ou ne prend pas en charge ces rapports"
 
 #: src/components/custom-theme-library.tsx
 msgid "No personal themes yet. Import one, or browse the published themes."
@@ -4427,6 +4491,10 @@ msgstr "Code d’appairage"
 msgid "Pairing code expired. Scan again for a new code."
 msgstr "Le code d’appairage a expiré. Scannez à nouveau pour obtenir un nouveau code"
 
+#: src/app/computer-map.tsx
+msgid "Pairing expired"
+msgstr "Association expirée"
+
 #: src/i18n/labels.ts
 msgid "PAIRING EXPIRED"
 msgstr "APPAIRAGE EXPIRÉ"
@@ -4823,6 +4891,10 @@ msgstr "RECONNEXION…"
 msgid "Recording failed."
 msgstr "Échec de l’enregistrement"
 
+#: src/app/computer-map.tsx
+msgid "Reduced motion is on. Use the connection list below."
+msgstr "La réduction des animations est activée. Utilisez la liste des connexions ci-dessous"
+
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/pane-history-sheet.tsx
@@ -4960,6 +5032,14 @@ msgstr "Signaler un bug ou proposer une fonctionnalité"
 msgid "Reported blocker"
 msgstr "Blocage signalé"
 
+#: src/app/computer-map.tsx
+msgid "Reported reachable"
+msgstr "Signalé comme accessible"
+
+#: src/app/computer-map.tsx
+msgid "Reported unreachable"
+msgstr "Signalé comme inaccessible"
+
 #: src/lib/network-error.ts
 msgid "Request failed."
 msgstr "Échec de la requête"
@@ -4980,6 +5060,10 @@ msgstr "Obligatoire"
 #: src/components/settings-alerts.tsx
 msgid "Requires iOS 16.1 or later."
 msgstr "Nécessite iOS 16.1 ou une version ultérieure"
+
+#: src/app/computer-map.tsx
+msgid "Reset view"
+msgstr "Réinitialiser la vue"
 
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
@@ -5318,6 +5402,10 @@ msgstr "Rechercher dans tout le projet"
 msgid "Security"
 msgstr "Sécurité"
 
+#: src/components/settings-servers.tsx
+msgid "See this app’s connections and last-known computer links."
+msgstr "Voir les connexions de cette application et les dernières liaisons connues entre ordinateurs"
+
 #. placeholder {0}: age.value
 #: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
@@ -5353,6 +5441,7 @@ msgstr "Tout sélectionner"
 msgid "Select model: {modelDisplayName}"
 msgstr "Sélectionner le modèle: {modelDisplayName}"
 
+#: src/app/computer-map.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Selected"
 msgstr "Sélectionné"
@@ -5691,6 +5780,10 @@ msgstr "Certains fichiers n’ont pas pu être supprimés · {clearable}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "Certains fichiers n’ont pas été envoyés"
+
+#: src/app/computer-map.tsx
+msgid "Some older peer records have no computer identity and cannot be placed on the map."
+msgstr "Certains anciens enregistrements n’ont pas d’identifiant d’ordinateur et ne peuvent pas figurer sur la carte"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Some theme colors need more contrast"
@@ -6285,6 +6378,14 @@ msgstr "L’icône sur votre écran d’accueil. Android ferme l’app pour l’
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "La clé n’a pas pu être lue ({0}). Vérifiez la clé et sa phrase secrète"
 
+#: src/app/computer-map.tsx
+msgid "The latest peer read failed. Any retained reports below may be out of date."
+msgstr "La dernière lecture des liaisons a échoué. Les rapports conservés ci-dessous peuvent être obsolètes"
+
+#: src/app/computer-map.tsx
+msgid "The map shows up to 12 computers and 36 peer links. All paired computers remain in the list."
+msgstr "La carte affiche jusqu’à 12 ordinateurs et 36 liaisons. Tous les ordinateurs associés restent dans la liste"
+
 #: src/components/session-map.tsx
 msgid "The new terminal was created, but could not open it."
 msgstr "Le nouveau terminal a été créé, mais n’a pas pu être ouvert"
@@ -6419,6 +6520,10 @@ msgstr "Réflexion en cours…"
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
 msgstr "Cet agent n’a pas proposé cette réponse"
+
+#: src/app/computer-map.tsx
+msgid "This app"
+msgstr "Cette application"
 
 #: src/components/changes-sheet.tsx
 msgid "This cannot be undone."

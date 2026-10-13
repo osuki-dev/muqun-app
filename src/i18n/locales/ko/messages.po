@@ -408,6 +408,10 @@ msgstr "10일"
 msgid "30 days"
 msgstr "30일"
 
+#: src/app/computer-map.tsx
+msgid "3D is unavailable on this device. All connection details are available below."
+msgstr "이 기기에서는 3D를 사용할 수 없습니다. 모든 연결 정보는 아래에서 확인할 수 있습니다"
+
 #. placeholder {0}: Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))
 #: src/components/settings-font-sheet.tsx
 msgid "A .ttf or .otf up to {0} MB."
@@ -1438,6 +1442,10 @@ msgstr "완료됨"
 msgid "Computer"
 msgstr "컴퓨터"
 
+#: src/app/computer-map.tsx
+msgid "Computer details"
+msgstr "컴퓨터 상세 정보"
+
 #: src/app/explore.tsx
 #: src/components/settings-servers.tsx
 msgid "Computer name"
@@ -1451,6 +1459,10 @@ msgstr "컴퓨터를 찾을 수 없음"
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer offline"
 msgstr "컴퓨터 오프라인"
+
+#: src/app/computer-map.tsx
+msgid "Computer status below describes reachability from this device."
+msgstr "아래 컴퓨터 상태는 이 기기에서 해당 컴퓨터에 연결할 수 있는지를 나타냅니다"
 
 #: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -1565,11 +1577,20 @@ msgstr "{address}에 연결하는 중"
 msgid "Connecting…"
 msgstr "연결 중…"
 
+#: src/app/computer-map.tsx
+#: src/components/settings-servers.tsx
+msgid "Connection map"
+msgstr "연결 지도"
+
 #: src/components/home-editorial-layout.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "연결"
+
+#: src/app/computer-map.tsx
+msgid "Connections from this app and last-known links between paired computers."
+msgstr "이 앱의 연결과 페어링된 컴퓨터 간 마지막으로 확인된 연결"
 
 #: src/components/agent-composer.tsx
 msgid "Contains subagent sessions"
@@ -1897,6 +1918,10 @@ msgstr "작업 트리를 불러올 수 없습니다. 새로고침하여 다시 �
 #: src/components/settings-server-capabilities.tsx
 msgid "Could not load capabilities"
 msgstr "기능을 불러올 수 없습니다"
+
+#: src/app/computer-map.tsx
+msgid "Could not load computers. Open Computers to try again."
+msgstr "컴퓨터를 불러오지 못했습니다. 컴퓨터를 열어 다시 시도하세요"
 
 #: src/components/session-artifacts.tsx
 msgid "Could not load files."
@@ -2474,6 +2499,10 @@ msgstr "다운로드 중…"
 #: src/lib/demo-gateway.ts
 msgid "Draft the notes for the next build"
 msgstr "다음 빌드의 릴리스 노트 초안을 작성합니다"
+
+#: src/app/computer-map.tsx
+msgid "Drag to orbit. Pinch to zoom. Tap a computer to select it. Solid lines show app connections; dashed arrows show last-known peer reports. Positions are illustrative."
+msgstr "드래그하여 회전하고 두 손가락으로 확대·축소하세요. 컴퓨터를 탭하여 선택하세요. 실선은 앱 연결, 점선 화살표는 마지막으로 보고된 컴퓨터 간 연결입니다. 위치는 이해를 돕기 위한 배치입니다"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -3293,6 +3322,14 @@ msgstr "마지막 폴더"
 msgid "Last known activity"
 msgstr "마지막으로 확인한 활동"
 
+#: src/app/computer-map.tsx
+msgid "Last reported: accepting work from other computers."
+msgstr "마지막 보고: 다른 컴퓨터의 작업을 받는 중"
+
+#: src/app/computer-map.tsx
+msgid "Last reported: not accepting work from other computers. This does not mean offline."
+msgstr "마지막 보고: 다른 컴퓨터의 작업을 받지 않음. 오프라인이라는 뜻은 아닙니다"
+
 #: src/components/task-row.tsx
 msgid "last seen {ago}"
 msgstr "마지막 확인 {ago}"
@@ -3312,6 +3349,10 @@ msgstr "마지막 확인: {minutes}분 전"
 #: src/components/settings-servers.tsx
 msgid "Last seen just now"
 msgstr "마지막 확인: 방금"
+
+#: src/app/computer-map.tsx
+msgid "Last-known peer reports are separate from this app’s connection. They may have changed since the Gateway was read."
+msgstr "마지막 컴퓨터 간 연결 보고는 이 앱의 연결과 별개입니다. Gateway를 읽은 이후 상태가 바뀌었을 수 있습니다"
 
 #: src/components/update-status-banner.tsx
 msgid "Later"
@@ -3364,6 +3405,10 @@ msgstr "{name}와(과)의 연결이 해제되었습니다 · 다시 연결하는
 msgid "Linked with: {linkedNames}"
 msgstr "연결됨: {linkedNames}"
 
+#: src/app/computer-map.tsx
+msgid "List"
+msgstr "목록"
+
 #: src/app/commands.tsx
 msgid "List branches"
 msgstr "브랜치 목록"
@@ -3401,12 +3446,18 @@ msgstr "불러오는 중"
 msgid "Loading commands"
 msgstr "명령 불러오는 중"
 
+#: src/app/computer-map.tsx
 #: src/app/servers/[serverId].tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading computers"
 msgstr "컴퓨터 불러오는 중"
+
+#: src/app/computer-map.tsx
+#: src/components/computer-map/gpu-map.native.tsx
+msgid "Loading map…"
+msgstr "지도를 불러오는 중…"
 
 #: src/components/settings-servers.tsx
 msgid "Loading paired devices…"
@@ -3475,6 +3526,10 @@ msgstr "연결 관리"
 #: src/components/home-overview.tsx
 msgid "Manage SSH hosts"
 msgstr "SSH 호스트 관리"
+
+#: src/app/computer-map.tsx
+msgid "Map"
+msgstr "지도"
 
 #: src/components/task-row.tsx
 msgid "Mark done"
@@ -3815,6 +3870,7 @@ msgstr "온라인 컴퓨터 없음"
 msgid "No computer to start a task on."
 msgstr "작업을 시작할 컴퓨터가 없습니다"
 
+#: src/app/computer-map.tsx
 #: src/components/settings-servers.tsx
 msgid "No computers paired yet"
 msgstr "아직 페어링된 컴퓨터가 없습니다"
@@ -3834,6 +3890,10 @@ msgstr "아직 Gateway가 없나요?"
 #: src/components/tool-call-code-rows.tsx
 msgid "No input"
 msgstr "입력 없음"
+
+#: src/app/computer-map.tsx
+msgid "No links in the last peer report."
+msgstr "마지막 컴퓨터 간 연결 보고에 연결이 없습니다"
 
 #: src/components/task-row.tsx
 msgid "No longer linked with {computer}"
@@ -3881,6 +3941,10 @@ msgstr "출력이 없습니다"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "No password or key is saved for this host."
 msgstr "이 호스트에 저장된 비밀번호나 키가 없습니다"
+
+#: src/app/computer-map.tsx
+msgid "No peer report available. This Gateway may be offline or may not support peer reports."
+msgstr "컴퓨터 간 연결 보고가 없습니다. Gateway가 오프라인이거나 보고를 지원하지 않을 수 있습니다"
 
 #: src/components/custom-theme-library.tsx
 msgid "No personal themes yet. Import one, or browse the published themes."
@@ -4427,6 +4491,10 @@ msgstr "페어링 코드"
 msgid "Pairing code expired. Scan again for a new code."
 msgstr "페어링 코드가 만료되었습니다. 다시 스캔해 새 코드를 받으세요"
 
+#: src/app/computer-map.tsx
+msgid "Pairing expired"
+msgstr "페어링 만료"
+
 #: src/i18n/labels.ts
 msgid "PAIRING EXPIRED"
 msgstr "페어링 만료됨"
@@ -4823,6 +4891,10 @@ msgstr "다시 연결 중…"
 msgid "Recording failed."
 msgstr "녹음하지 못했습니다"
 
+#: src/app/computer-map.tsx
+msgid "Reduced motion is on. Use the connection list below."
+msgstr "동작 줄이기가 켜져 있습니다. 아래 연결 목록을 사용하세요"
+
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/pane-history-sheet.tsx
@@ -4960,6 +5032,14 @@ msgstr "버그 신고 또는 기능 제안"
 msgid "Reported blocker"
 msgstr "보고된 장애 요인"
 
+#: src/app/computer-map.tsx
+msgid "Reported reachable"
+msgstr "연결 가능으로 보고됨"
+
+#: src/app/computer-map.tsx
+msgid "Reported unreachable"
+msgstr "연결 불가로 보고됨"
+
 #: src/lib/network-error.ts
 msgid "Request failed."
 msgstr "요청에 실패했습니다"
@@ -4980,6 +5060,10 @@ msgstr "필수입니다"
 #: src/components/settings-alerts.tsx
 msgid "Requires iOS 16.1 or later."
 msgstr "iOS 16.1 이상이 필요합니다"
+
+#: src/app/computer-map.tsx
+msgid "Reset view"
+msgstr "시점 초기화"
 
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
@@ -5318,6 +5402,10 @@ msgstr "프로젝트 전체 검색"
 msgid "Security"
 msgstr "보안"
 
+#: src/components/settings-servers.tsx
+msgid "See this app’s connections and last-known computer links."
+msgstr "이 앱의 연결과 마지막으로 확인된 컴퓨터 간 연결 보기"
+
 #. placeholder {0}: age.value
 #: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
@@ -5353,6 +5441,7 @@ msgstr "모두 선택"
 msgid "Select model: {modelDisplayName}"
 msgstr "모델 선택: {modelDisplayName}"
 
+#: src/app/computer-map.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Selected"
 msgstr "선택됨"
@@ -5691,6 +5780,10 @@ msgstr "일부 파일을 지우지 못했습니다 · {clearable}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "일부 파일을 업로드하지 못했습니다"
+
+#: src/app/computer-map.tsx
+msgid "Some older peer records have no computer identity and cannot be placed on the map."
+msgstr "일부 이전 연결 기록에는 컴퓨터 식별 정보가 없어 지도에 표시할 수 없습니다"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Some theme colors need more contrast"
@@ -6285,6 +6378,14 @@ msgstr "홈 화면에 표시되는 아이콘입니다. Android에서는 적용�
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "키를 읽을 수 없습니다({0}). 키와 암호 문구를 확인하세요"
 
+#: src/app/computer-map.tsx
+msgid "The latest peer read failed. Any retained reports below may be out of date."
+msgstr "최근 컴퓨터 간 연결 정보를 읽지 못했습니다. 아래에 남아 있는 보고는 오래된 정보일 수 있습니다"
+
+#: src/app/computer-map.tsx
+msgid "The map shows up to 12 computers and 36 peer links. All paired computers remain in the list."
+msgstr "지도에는 최대 12대의 컴퓨터와 36개의 컴퓨터 간 연결을 표시합니다. 페어링된 모든 컴퓨터는 목록에 표시됩니다"
+
 #: src/components/session-map.tsx
 msgid "The new terminal was created, but could not open it."
 msgstr "새 터미널이 생성되었지만 열 수 없습니다"
@@ -6419,6 +6520,10 @@ msgstr "생각 중…"
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
 msgstr "이 에이전트는 그 답변을 제시하지 않았습니다"
+
+#: src/app/computer-map.tsx
+msgid "This app"
+msgstr "이 앱"
 
 #: src/components/changes-sheet.tsx
 msgid "This cannot be undone."

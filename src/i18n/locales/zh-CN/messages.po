@@ -408,6 +408,10 @@ msgstr "10 天"
 msgid "30 days"
 msgstr "30 天"
 
+#: src/app/computer-map.tsx
+msgid "3D is unavailable on this device. All connection details are available below."
+msgstr "此设备无法显示 3D。所有连接详情均可在下方查看"
+
 #. placeholder {0}: Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))
 #: src/components/settings-font-sheet.tsx
 msgid "A .ttf or .otf up to {0} MB."
@@ -1438,6 +1442,10 @@ msgstr "已完成"
 msgid "Computer"
 msgstr "电脑"
 
+#: src/app/computer-map.tsx
+msgid "Computer details"
+msgstr "电脑详情"
+
 #: src/app/explore.tsx
 #: src/components/settings-servers.tsx
 msgid "Computer name"
@@ -1451,6 +1459,10 @@ msgstr "找不到电脑"
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer offline"
 msgstr "电脑离线"
+
+#: src/app/computer-map.tsx
+msgid "Computer status below describes reachability from this device."
+msgstr "下方电脑状态表示此设备能否连接到该电脑"
 
 #: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -1565,11 +1577,20 @@ msgstr "正在连接到 {address}"
 msgid "Connecting…"
 msgstr "连接中…"
 
+#: src/app/computer-map.tsx
+#: src/components/settings-servers.tsx
+msgid "Connection map"
+msgstr "连接图"
+
 #: src/components/home-editorial-layout.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "连接"
+
+#: src/app/computer-map.tsx
+msgid "Connections from this app and last-known links between paired computers."
+msgstr "显示此应用的连接，以及已配对电脑之间最后已知的连接"
 
 #: src/components/agent-composer.tsx
 msgid "Contains subagent sessions"
@@ -1897,6 +1918,10 @@ msgstr "无法列出工作树。请刷新重试"
 #: src/components/settings-server-capabilities.tsx
 msgid "Could not load capabilities"
 msgstr "无法加载功能"
+
+#: src/app/computer-map.tsx
+msgid "Could not load computers. Open Computers to try again."
+msgstr "无法加载电脑。请打开“电脑”重试"
 
 #: src/components/session-artifacts.tsx
 msgid "Could not load files."
@@ -2474,6 +2499,10 @@ msgstr "正在下载…"
 #: src/lib/demo-gateway.ts
 msgid "Draft the notes for the next build"
 msgstr "草拟下一个版本的发布说明"
+
+#: src/app/computer-map.tsx
+msgid "Drag to orbit. Pinch to zoom. Tap a computer to select it. Solid lines show app connections; dashed arrows show last-known peer reports. Positions are illustrative."
+msgstr "拖动旋转，双指缩放，轻点电脑进行选择。实线表示应用连接，虚线箭头表示上次报告的电脑间连接。位置仅作示意"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -3293,6 +3322,14 @@ msgstr "上次的文件夹"
 msgid "Last known activity"
 msgstr "上次记录的活动"
 
+#: src/app/computer-map.tsx
+msgid "Last reported: accepting work from other computers."
+msgstr "上次报告：接受其他电脑分派的工作"
+
+#: src/app/computer-map.tsx
+msgid "Last reported: not accepting work from other computers. This does not mean offline."
+msgstr "上次报告：不接受其他电脑分派的工作。这不代表离线"
+
 #: src/components/task-row.tsx
 msgid "last seen {ago}"
 msgstr "上次在线 {ago}"
@@ -3312,6 +3349,10 @@ msgstr "上次在线于 {minutes} 分钟前"
 #: src/components/settings-servers.tsx
 msgid "Last seen just now"
 msgstr "刚刚在线"
+
+#: src/app/computer-map.tsx
+msgid "Last-known peer reports are separate from this app’s connection. They may have changed since the Gateway was read."
+msgstr "上次报告的电脑间连接与此应用的连接是两回事。自读取 Gateway 后，状态可能已变化"
 
 #: src/components/update-status-banner.tsx
 msgid "Later"
@@ -3364,6 +3405,10 @@ msgstr "与 {name} 的关联已被撤销 · 正在重新关联…"
 msgid "Linked with: {linkedNames}"
 msgstr "已连接：{linkedNames}"
 
+#: src/app/computer-map.tsx
+msgid "List"
+msgstr "列表"
+
 #: src/app/commands.tsx
 msgid "List branches"
 msgstr "列出分支"
@@ -3401,12 +3446,18 @@ msgstr "加载中"
 msgid "Loading commands"
 msgstr "正在加载命令"
 
+#: src/app/computer-map.tsx
 #: src/app/servers/[serverId].tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading computers"
 msgstr "正在加载电脑"
+
+#: src/app/computer-map.tsx
+#: src/components/computer-map/gpu-map.native.tsx
+msgid "Loading map…"
+msgstr "正在加载连接图…"
 
 #: src/components/settings-servers.tsx
 msgid "Loading paired devices…"
@@ -3475,6 +3526,10 @@ msgstr "管理连接"
 #: src/components/home-overview.tsx
 msgid "Manage SSH hosts"
 msgstr "管理 SSH 主机"
+
+#: src/app/computer-map.tsx
+msgid "Map"
+msgstr "图示"
 
 #: src/components/task-row.tsx
 msgid "Mark done"
@@ -3815,6 +3870,7 @@ msgstr "没有在线的电脑"
 msgid "No computer to start a task on."
 msgstr "没有可以开始任务的电脑"
 
+#: src/app/computer-map.tsx
 #: src/components/settings-servers.tsx
 msgid "No computers paired yet"
 msgstr "尚未配对任何电脑"
@@ -3834,6 +3890,10 @@ msgstr "还没有 Gateway？"
 #: src/components/tool-call-code-rows.tsx
 msgid "No input"
 msgstr "无输入"
+
+#: src/app/computer-map.tsx
+msgid "No links in the last peer report."
+msgstr "上次电脑间连接报告中没有连接"
 
 #: src/components/task-row.tsx
 msgid "No longer linked with {computer}"
@@ -3881,6 +3941,10 @@ msgstr "没有输出"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "No password or key is saved for this host."
 msgstr "此主机没有保存密码或密钥"
+
+#: src/app/computer-map.tsx
+msgid "No peer report available. This Gateway may be offline or may not support peer reports."
+msgstr "暂无电脑间连接报告。此 Gateway 可能离线，或不支持此类报告"
 
 #: src/components/custom-theme-library.tsx
 msgid "No personal themes yet. Import one, or browse the published themes."
@@ -4427,6 +4491,10 @@ msgstr "配对码"
 msgid "Pairing code expired. Scan again for a new code."
 msgstr "配对码已过期。请重新扫描获取新的代码"
 
+#: src/app/computer-map.tsx
+msgid "Pairing expired"
+msgstr "配对已过期"
+
 #: src/i18n/labels.ts
 msgid "PAIRING EXPIRED"
 msgstr "配对已失效"
@@ -4823,6 +4891,10 @@ msgstr "重新连接中…"
 msgid "Recording failed."
 msgstr "录音失败"
 
+#: src/app/computer-map.tsx
+msgid "Reduced motion is on. Use the connection list below."
+msgstr "已开启减少动态效果。请使用下方连接列表"
+
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/pane-history-sheet.tsx
@@ -4960,6 +5032,14 @@ msgstr "报告问题或提出功能建议"
 msgid "Reported blocker"
 msgstr "已报告的阻碍"
 
+#: src/app/computer-map.tsx
+msgid "Reported reachable"
+msgstr "报告为可连接"
+
+#: src/app/computer-map.tsx
+msgid "Reported unreachable"
+msgstr "报告为无法连接"
+
 #: src/lib/network-error.ts
 msgid "Request failed."
 msgstr "请求失败"
@@ -4980,6 +5060,10 @@ msgstr "必填"
 #: src/components/settings-alerts.tsx
 msgid "Requires iOS 16.1 or later."
 msgstr "需要 iOS 16.1 或更高版本"
+
+#: src/app/computer-map.tsx
+msgid "Reset view"
+msgstr "重置视角"
 
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
@@ -5318,6 +5402,10 @@ msgstr "搜索整个项目"
 msgid "Security"
 msgstr "安全"
 
+#: src/components/settings-servers.tsx
+msgid "See this app’s connections and last-known computer links."
+msgstr "查看此应用的连接及上次获知的电脑间连接"
+
 #. placeholder {0}: age.value
 #: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
@@ -5353,6 +5441,7 @@ msgstr "全选"
 msgid "Select model: {modelDisplayName}"
 msgstr "选择模型：{modelDisplayName}"
 
+#: src/app/computer-map.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Selected"
 msgstr "已选择"
@@ -5691,6 +5780,10 @@ msgstr "部分文件无法清除 · {clearable}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "有些文件没有上传成功"
+
+#: src/app/computer-map.tsx
+msgid "Some older peer records have no computer identity and cannot be placed on the map."
+msgstr "部分旧连接记录缺少电脑标识，无法在图中显示"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Some theme colors need more contrast"
@@ -6285,6 +6378,14 @@ msgstr "显示在主屏幕上的图标。Android 会关闭应用以应用更改"
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "无法读取密钥（{0}）。请检查密钥及其密码短语"
 
+#: src/app/computer-map.tsx
+msgid "The latest peer read failed. Any retained reports below may be out of date."
+msgstr "最近一次读取电脑间连接失败。下方保留的报告可能已过期"
+
+#: src/app/computer-map.tsx
+msgid "The map shows up to 12 computers and 36 peer links. All paired computers remain in the list."
+msgstr "图中最多显示 12 台电脑和 36 条电脑间连接。所有已配对电脑仍列于列表中"
+
 #: src/components/session-map.tsx
 msgid "The new terminal was created, but could not open it."
 msgstr "新终端已创建，但无法打开"
@@ -6419,6 +6520,10 @@ msgstr "正在思考…"
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
 msgstr "这个代理没有提供那个选项"
+
+#: src/app/computer-map.tsx
+msgid "This app"
+msgstr "此应用"
 
 #: src/components/changes-sheet.tsx
 msgid "This cannot be undone."

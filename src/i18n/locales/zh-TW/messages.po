@@ -408,6 +408,10 @@ msgstr "10 天"
 msgid "30 days"
 msgstr "30 天"
 
+#: src/app/computer-map.tsx
+msgid "3D is unavailable on this device. All connection details are available below."
+msgstr "此裝置無法顯示 3D。所有連線詳細資訊均可在下方查看"
+
 #. placeholder {0}: Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))
 #: src/components/settings-font-sheet.tsx
 msgid "A .ttf or .otf up to {0} MB."
@@ -1438,6 +1442,10 @@ msgstr "已完成"
 msgid "Computer"
 msgstr "電腦"
 
+#: src/app/computer-map.tsx
+msgid "Computer details"
+msgstr "電腦詳細資訊"
+
 #: src/app/explore.tsx
 #: src/components/settings-servers.tsx
 msgid "Computer name"
@@ -1451,6 +1459,10 @@ msgstr "找不到電腦"
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer offline"
 msgstr "電腦離線"
+
+#: src/app/computer-map.tsx
+msgid "Computer status below describes reachability from this device."
+msgstr "下方電腦狀態表示此裝置能否連線至該電腦"
 
 #: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -1565,11 +1577,20 @@ msgstr "正在連線至 {address}"
 msgid "Connecting…"
 msgstr "連線中…"
 
+#: src/app/computer-map.tsx
+#: src/components/settings-servers.tsx
+msgid "Connection map"
+msgstr "連線圖"
+
 #: src/components/home-editorial-layout.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "連線"
+
+#: src/app/computer-map.tsx
+msgid "Connections from this app and last-known links between paired computers."
+msgstr "顯示此應用程式的連線，以及已配對電腦之間最後已知的連線"
 
 #: src/components/agent-composer.tsx
 msgid "Contains subagent sessions"
@@ -1897,6 +1918,10 @@ msgstr "無法列出工作樹。請重新整理後再試"
 #: src/components/settings-server-capabilities.tsx
 msgid "Could not load capabilities"
 msgstr "無法載入功能"
+
+#: src/app/computer-map.tsx
+msgid "Could not load computers. Open Computers to try again."
+msgstr "無法載入電腦。請開啟「電腦」重試"
 
 #: src/components/session-artifacts.tsx
 msgid "Could not load files."
@@ -2474,6 +2499,10 @@ msgstr "正在下載…"
 #: src/lib/demo-gateway.ts
 msgid "Draft the notes for the next build"
 msgstr "草擬下一版的發行說明"
+
+#: src/app/computer-map.tsx
+msgid "Drag to orbit. Pinch to zoom. Tap a computer to select it. Solid lines show app connections; dashed arrows show last-known peer reports. Positions are illustrative."
+msgstr "拖曳旋轉、雙指縮放，點選電腦以選取。實線表示應用程式連線，虛線箭頭表示上次回報的電腦間連線。位置僅供示意"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -3293,6 +3322,14 @@ msgstr "上次的資料夾"
 msgid "Last known activity"
 msgstr "上次記錄的活動"
 
+#: src/app/computer-map.tsx
+msgid "Last reported: accepting work from other computers."
+msgstr "上次回報：接受其他電腦指派的工作"
+
+#: src/app/computer-map.tsx
+msgid "Last reported: not accepting work from other computers. This does not mean offline."
+msgstr "上次回報：不接受其他電腦指派的工作。這不代表離線"
+
 #: src/components/task-row.tsx
 msgid "last seen {ago}"
 msgstr "上次連線 {ago}"
@@ -3312,6 +3349,10 @@ msgstr "上次連線於 {minutes} 分鐘前"
 #: src/components/settings-servers.tsx
 msgid "Last seen just now"
 msgstr "剛剛連線過"
+
+#: src/app/computer-map.tsx
+msgid "Last-known peer reports are separate from this app’s connection. They may have changed since the Gateway was read."
+msgstr "上次回報的電腦間連線與此應用程式的連線是不同資訊。自讀取 Gateway 後，狀態可能已變更"
 
 #: src/components/update-status-banner.tsx
 msgid "Later"
@@ -3364,6 +3405,10 @@ msgstr "與 {name} 的連結已被撤銷 · 正在重新連結…"
 msgid "Linked with: {linkedNames}"
 msgstr "已連結：{linkedNames}"
 
+#: src/app/computer-map.tsx
+msgid "List"
+msgstr "清單"
+
 #: src/app/commands.tsx
 msgid "List branches"
 msgstr "列出分支"
@@ -3401,12 +3446,18 @@ msgstr "載入中"
 msgid "Loading commands"
 msgstr "正在載入指令"
 
+#: src/app/computer-map.tsx
 #: src/app/servers/[serverId].tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading computers"
 msgstr "正在載入電腦"
+
+#: src/app/computer-map.tsx
+#: src/components/computer-map/gpu-map.native.tsx
+msgid "Loading map…"
+msgstr "正在載入連線圖…"
 
 #: src/components/settings-servers.tsx
 msgid "Loading paired devices…"
@@ -3475,6 +3526,10 @@ msgstr "管理連線"
 #: src/components/home-overview.tsx
 msgid "Manage SSH hosts"
 msgstr "管理 SSH 主機"
+
+#: src/app/computer-map.tsx
+msgid "Map"
+msgstr "圖示"
 
 #: src/components/task-row.tsx
 msgid "Mark done"
@@ -3815,6 +3870,7 @@ msgstr "沒有在線的電腦"
 msgid "No computer to start a task on."
 msgstr "沒有可以開始任務的電腦"
 
+#: src/app/computer-map.tsx
 #: src/components/settings-servers.tsx
 msgid "No computers paired yet"
 msgstr "尚未配對任何電腦"
@@ -3834,6 +3890,10 @@ msgstr "還沒有 Gateway？"
 #: src/components/tool-call-code-rows.tsx
 msgid "No input"
 msgstr "無輸入"
+
+#: src/app/computer-map.tsx
+msgid "No links in the last peer report."
+msgstr "上次電腦間連線報告中沒有連線"
 
 #: src/components/task-row.tsx
 msgid "No longer linked with {computer}"
@@ -3881,6 +3941,10 @@ msgstr "沒有輸出"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "No password or key is saved for this host."
 msgstr "此主機沒有儲存密碼或金鑰"
+
+#: src/app/computer-map.tsx
+msgid "No peer report available. This Gateway may be offline or may not support peer reports."
+msgstr "尚無電腦間連線報告。此 Gateway 可能離線，或不支援此類報告"
 
 #: src/components/custom-theme-library.tsx
 msgid "No personal themes yet. Import one, or browse the published themes."
@@ -4427,6 +4491,10 @@ msgstr "配對碼"
 msgid "Pairing code expired. Scan again for a new code."
 msgstr "配對碼已過期。請重新掃描取得新的代碼"
 
+#: src/app/computer-map.tsx
+msgid "Pairing expired"
+msgstr "配對已過期"
+
 #: src/i18n/labels.ts
 msgid "PAIRING EXPIRED"
 msgstr "配對已失效"
@@ -4823,6 +4891,10 @@ msgstr "重新連線中…"
 msgid "Recording failed."
 msgstr "錄音失敗"
 
+#: src/app/computer-map.tsx
+msgid "Reduced motion is on. Use the connection list below."
+msgstr "已開啟減少動態效果。請使用下方連線清單"
+
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/pane-history-sheet.tsx
@@ -4960,6 +5032,14 @@ msgstr "回報問題或提出功能建議"
 msgid "Reported blocker"
 msgstr "已回報的阻礙"
 
+#: src/app/computer-map.tsx
+msgid "Reported reachable"
+msgstr "回報為可連線"
+
+#: src/app/computer-map.tsx
+msgid "Reported unreachable"
+msgstr "回報為無法連線"
+
 #: src/lib/network-error.ts
 msgid "Request failed."
 msgstr "請求失敗"
@@ -4980,6 +5060,10 @@ msgstr "必填"
 #: src/components/settings-alerts.tsx
 msgid "Requires iOS 16.1 or later."
 msgstr "需要 iOS 16.1 或以上版本"
+
+#: src/app/computer-map.tsx
+msgid "Reset view"
+msgstr "重設視角"
 
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
@@ -5318,6 +5402,10 @@ msgstr "搜尋整個專案"
 msgid "Security"
 msgstr "安全性"
 
+#: src/components/settings-servers.tsx
+msgid "See this app’s connections and last-known computer links."
+msgstr "查看此應用程式的連線及上次得知的電腦間連線"
+
 #. placeholder {0}: age.value
 #: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
@@ -5353,6 +5441,7 @@ msgstr "全選"
 msgid "Select model: {modelDisplayName}"
 msgstr "選擇模型：{modelDisplayName}"
 
+#: src/app/computer-map.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Selected"
 msgstr "已選取"
@@ -5691,6 +5780,10 @@ msgstr "部分檔案無法清除 · {clearable}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "有些檔案沒有上傳成功"
+
+#: src/app/computer-map.tsx
+msgid "Some older peer records have no computer identity and cannot be placed on the map."
+msgstr "部分舊連線記錄缺少電腦識別資訊，無法在圖中顯示"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Some theme colors need more contrast"
@@ -6285,6 +6378,14 @@ msgstr "顯示在主畫面上的圖示。Android 會關閉 App 以套用變更"
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "無法讀取金鑰（{0}）。請檢查金鑰及其通行密語"
 
+#: src/app/computer-map.tsx
+msgid "The latest peer read failed. Any retained reports below may be out of date."
+msgstr "最近一次讀取電腦間連線失敗。下方保留的報告可能已過期"
+
+#: src/app/computer-map.tsx
+msgid "The map shows up to 12 computers and 36 peer links. All paired computers remain in the list."
+msgstr "圖中最多顯示 12 台電腦和 36 條電腦間連線。所有已配對電腦仍列於清單中"
+
 #: src/components/session-map.tsx
 msgid "The new terminal was created, but could not open it."
 msgstr "已建立新的終端機，但無法開啟"
@@ -6419,6 +6520,10 @@ msgstr "正在思考…"
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
 msgstr "這個代理程式沒有提供那個選項"
+
+#: src/app/computer-map.tsx
+msgid "This app"
+msgstr "此應用程式"
 
 #: src/components/changes-sheet.tsx
 msgid "This cannot be undone."
