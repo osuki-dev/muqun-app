@@ -166,7 +166,7 @@ export function HomeComposerDock({
   autoHide?: DockAutoHide;
   /** See `AgentComposer`'s `onFieldFocus`. */
   onFieldFocus?: (focused: boolean) => void;
-  onDockHeight?: (height: number) => void;
+  onDockHeight?: (height: number, clipHeight: number) => void;
   onOpenAgent: (
     serverId: string,
     asid?: string,

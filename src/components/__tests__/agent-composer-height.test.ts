@@ -21,7 +21,9 @@ walk(source.program, (node) => {
     node.callee.type === 'Identifier' &&
     node.callee.name === 'useEffect' &&
     node.arguments[0] &&
-    source.code(node.arguments[0]).includes('reportDockHeight(dockHeight + decorationClearance)')
+    source
+      .code(node.arguments[0])
+      .includes('reportDockHeight(dockHeight + decorationClearance, dockHeight)')
   ) {
     report = source.code(node.arguments[0]);
   }
@@ -29,6 +31,7 @@ walk(source.program, (node) => {
 
 function measurement() {
   const reported: number[] = [];
+  const clipHeights: number[] = [];
   const local: number[] = [];
   const context = {
     accessoryHeightAnimating: false,
@@ -41,7 +44,10 @@ function measurement() {
       context.dockHeight = height + context.dockFoot;
       local.push(height);
     },
-    reportDockHeight: (height: number) => reported.push(height),
+    reportDockHeight: (height: number, clipHeight: number) => {
+      reported.push(height);
+      clipHeights.push(clipHeight);
+    },
   };
   const layout = runInNewContext(transpile(`(${onLayout});`), context) as (event: {
     nativeEvent: { layout: { height: number } };
@@ -49,6 +55,7 @@ function measurement() {
   const update = runInNewContext(transpile(`(${report});`), context) as () => void;
   return {
     reported,
+    clipHeights,
     local,
     layout: (height: number) => {
       layout({ nativeEvent: { layout: { height } } });
@@ -108,4 +115,17 @@ test('content and inset changes during a reveal are included in its settled repo
   expect(dock.reported).toEqual([]);
   dock.animating(false);
   expect(dock.reported).toEqual([515]);
+  expect(dock.clipHeights).toEqual([500]);
+});
+
+test('transparent decoration keeps its scroll clearance without clipping the page above the field', () => {
+  const dock = measurement();
+  dock.insets(20, 48);
+  dock.layout(180);
+  expect(dock.reported).toEqual([248]);
+  expect(dock.clipHeights).toEqual([200]);
+  // Menus and voice hide the decoration, while the field keeps the same boundary.
+  dock.insets(20, 0);
+  expect(dock.reported).toEqual([248, 200]);
+  expect(dock.clipHeights).toEqual([200, 200]);
 });

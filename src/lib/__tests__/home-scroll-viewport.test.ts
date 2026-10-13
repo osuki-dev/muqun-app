@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { homeScrollViewportBottom } from '@/lib/home-scroll-viewport';
 
 describe('Home scrolling foreground clearance', () => {
-  test('clears the complete measured dock, including its outer gutter and decoration', () => {
+  test('clips at the painted dock boundary, including its outer gutter', () => {
     expect(homeScrollViewportBottom(224, 0, 0, 800)).toBe(224);
   });
 
