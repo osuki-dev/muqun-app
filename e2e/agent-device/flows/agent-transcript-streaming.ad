@@ -1,8 +1,17 @@
 # The finite offline fixture exercises the real list/native Markdown in release too.
 open "muqun://agent?asid=demo-streaming-markdown"
 wait "id=\"demo-streaming-transcript\"" 15000
-wait 6000
-screenshot "shots/transcript-stream-follow.png"
+# Start a fresh finite stream, then enter the live tail explicitly.
+press "id=\"demo-stream-restart\""
+scroll bottom
+wait "text=\"部件 08\" visible=true" 15000
+is hidden "text=\"部件 20\""
+is hidden "text=\"DEMO_STREAM_COMPLETE\""
+screenshot "shots/transcript-stream-follow-before.png"
+# No further scroll: a later row must become visible as Markdown grows.
+wait "text=\"部件 20\" visible=true" 15000
+is hidden "text=\"DEMO_STREAM_COMPLETE\""
+screenshot "shots/transcript-stream-follow-after.png"
 # A reader who moves above the live table must retain their place while it grows.
 scroll top
 wait 750
