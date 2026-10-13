@@ -4842,6 +4842,10 @@ msgstr "Làm mới đầu ra"
 msgid "Refresh terminal history"
 msgstr "Làm mới lịch sử terminal"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Refresh to see new saved output."
+msgstr "Làm mới để xem đầu ra mới được lưu"
+
 #: src/components/agent-worktree-sheet.tsx
 #: src/components/git-diff-view.tsx
 msgid "Refresh worktrees"
@@ -5214,10 +5218,6 @@ msgstr "Lệnh đã lưu"
 msgid "Saved observations"
 msgstr "Các lần quan sát đã lưu"
 
-#: src/components/pane-history-sheet.tsx
-msgid "Saved observations, separate from the live terminal. New output appears only after Refresh."
-msgstr "Các lần quan sát đã lưu, tách biệt với terminal trực tiếp. Đầu ra mới chỉ xuất hiện sau khi làm mới"
-
 #: src/app/commands.tsx
 msgid "Saved prompts"
 msgstr "Yêu cầu đã lưu"
@@ -5230,6 +5230,7 @@ msgstr "Đoạn đã lưu"
 msgid "Saved SSH host"
 msgstr "Host SSH đã lưu"
 
+#: src/app/commands.tsx
 #: src/app/pane-history.tsx
 #: src/components/pane-history-sheet.tsx
 msgid "Saved terminal history"
@@ -7195,7 +7196,3 @@ msgstr "Tin nhắn của bạn"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "Các máy tính đã ghép nối của bạn"
-
-#: src/components/pane-history-sheet.tsx
-msgid "Refresh to see new saved output."
-msgstr "Làm mới để xem đầu ra mới được lưu."
