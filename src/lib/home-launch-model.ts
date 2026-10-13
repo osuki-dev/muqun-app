@@ -17,9 +17,6 @@
 import type { HomeAgentEntry, MirroredServerDiscovery } from '@/lib/agent-discovery';
 import { agentReadiness, findAgent, normalizeAgentId } from '@/lib/agent-discovery';
 
-/** More agent tiles than this collapse into one "More agents" tile. */
-export const MAX_AGENT_TILES = 3;
-
 /** What an agent tile says under its name; state is never colour alone. */
 export type LaunchAgentCaption =
   | 'new-session'
@@ -59,7 +56,6 @@ export type LaunchEntry =
       /** The old testID this tile keeps answering to, for the e2e manifest. */
       aliasTestID?: string;
     })
-  | (LaunchEntryBase & { kind: 'more-agents'; layout: 'tile'; hidden: number })
   | (LaunchEntryBase & { kind: 'sessions'; layout: 'compact'; aliasTestID: string })
   | (LaunchEntryBase & { kind: 'terminal'; layout: 'compact' })
   | (LaunchEntryBase & {
@@ -81,11 +77,6 @@ export type LaunchModelInput = {
   discovery?: MirroredServerDiscovery | null;
   /** The agent the gateway last created a session on. */
   lastUsedAgentId?: string;
-  /**
-   * Agent tiles shown before the rest collapse into "More agents". The Pad
-   * grid has a row of its own for agents and shows every one.
-   */
-  maxAgentTiles?: number;
 };
 
 /** The agent that owned Home before agents were listed. */
@@ -204,20 +195,19 @@ function fallbackModel(): LaunchModel {
 /**
  * The launch row for one gateway.
  *
- * In order: one primary tile per offered agent (the first primary-filled, at
- * most three, the rest behind "More agents"); Sessions; Terminal and New
+ * In order: one tile per offered agent (the first primary-filled, with
+ * full visibility); Sessions; Terminal and New
  * terminal; SSH. Markers are numbered after the row is known.
  */
 export function buildLaunchModel(input: LaunchModelInput = {}): LaunchModel {
-  const { discovery, lastUsedAgentId, maxAgentTiles = MAX_AGENT_TILES } = input;
+  const { discovery, lastUsedAgentId } = input;
   const plane = discovery?.agents;
   // Without an agents plane, or with one that names nobody, discovery has
   // nothing to project and the fixed row stands.
   if (!discovery || !plane || plane.agents.length === 0) return fallbackModel();
 
   const agents = projectLaunchAgents(discovery, lastUsedAgentId);
-  const shown = agents.length > maxAgentTiles ? agents.slice(0, maxAgentTiles) : agents;
-  const drafts: Draft[] = shown.map((agent, index) => ({
+  const drafts: Draft[] = agents.map((agent, index) => ({
     key: `agent:${agent.id}`,
     kind: 'agent',
     layout: 'tile',
@@ -229,15 +219,6 @@ export function buildLaunchModel(input: LaunchModelInput = {}): LaunchModel {
     name: agent.name,
     caption: launchAgentCaption(agent),
   }));
-  if (agents.length > maxAgentTiles) {
-    drafts.push({
-      key: 'more-agents',
-      kind: 'more-agents',
-      layout: 'tile',
-      testID: 'home-more-agents',
-      hidden: agents.length - maxAgentTiles,
-    });
-  }
   // A session list with no agent behind it would open an empty screen.
   if (agents.length > 0) drafts.push(sessionsDraft());
   // A gateway that says its terminal plane is unsupported has no terminal to
@@ -290,26 +271,13 @@ export function groupLaunchCells(entries: readonly LaunchEntry[]): LaunchCell[] 
   return cells;
 }
 
-/** Under this measured width the phone row scrolls sideways; above it, it wraps. */
-export const LAUNCH_SCROLL_MAX_WIDTH = 560;
-/** The Pad grid takes a fourth column from this content width. */
-export const LAUNCH_GRID_FOUR_COLUMN_MIN_WIDTH = 640;
 export const LAUNCH_GRID_GAP = 8;
 
-export type LaunchRowLayout =
-  | { mode: 'scroll' }
-  | { mode: 'wrap' }
-  | {
-      mode: 'grid';
-      /** 3 or 4, from the content width. */
-      columns: number;
-      /** Agents share a row of their own: as many columns as there are agents, up to `columns`. */
-      agentColumns: number;
-      agentWidth: number;
-      /** The four utilities sit in one row of four, or two rows of two. */
-      utilityColumns: number;
-      utilityWidth: number;
-    };
+export type LaunchMosaicCell = { indices: number[]; width: number; featured: boolean };
+export type LaunchRowLayout = {
+  agentRows: LaunchMosaicCell[][];
+  utilityWidth: number;
+};
 
 /**
  * The style that pins a tile to one grid cell.
@@ -329,37 +297,44 @@ function columnWidth(width: number, columns: number): number {
   return Math.max(0, Math.floor((width - LAUNCH_GRID_GAP * (columns - 1)) / columns));
 }
 
-/**
- * How the launch row is laid out.
- *
- * The phone keeps its row exactly as it was: a sideways scroller under 560pt
- * and a wrapping row above it. The Pad's embedded Home asks for `grid` and
- * never scrolls sideways, however many agents the gateway lists: agents take
- * the first row (or rows), and Sessions, Terminal, New terminal and SSH sit
- * under them as compact tiles.
- */
+/** Every discovered agent stays visible; narrow odd counts use a lead and a stacked pair. */
 export function launchRowLayout({
   width,
-  grid,
   agentCount,
   utilityCount,
 }: {
   width: number;
-  grid: boolean;
   agentCount: number;
   utilityCount: number;
 }): LaunchRowLayout {
   const measured = Number.isFinite(width) ? Math.max(0, width) : 0;
-  if (!grid) return measured < LAUNCH_SCROLL_MAX_WIDTH ? { mode: 'scroll' } : { mode: 'wrap' };
-  const columns = measured >= LAUNCH_GRID_FOUR_COLUMN_MIN_WIDTH ? 4 : 3;
-  const agentColumns = Math.max(1, Math.min(agentCount, columns));
-  const utilityColumns = Math.max(1, Math.min(utilityCount, columns === 4 ? 4 : 2));
+  const agentRows: LaunchMosaicCell[][] = [];
+  const maxColumns = measured >= 640 ? 3 : 2;
+  let next = 0;
+  if (agentCount >= 3 && (agentCount === 3 || (maxColumns === 2 && agentCount % 2 === 1))) {
+    const cellWidth = columnWidth(measured, 2);
+    agentRows.push([
+      { indices: [0], width: cellWidth, featured: true },
+      { indices: [1, 2], width: cellWidth, featured: false },
+    ]);
+    next = 3;
+  }
+  const remaining = agentCount - next;
+  const rows = Math.ceil(remaining / maxColumns);
+  for (let row = 0; row < rows; row++) {
+    // Distribute the remainder across rows instead of leaving an orphan tile.
+    const columns = Math.ceil((agentCount - next) / (rows - row));
+    const cells: LaunchMosaicCell[] = [];
+    for (let column = 0; column < columns; column++) {
+      cells.push({ indices: [next++], width: columnWidth(measured, columns), featured: false });
+    }
+    agentRows.push(cells);
+  }
   return {
-    mode: 'grid',
-    columns,
-    agentColumns,
-    agentWidth: columnWidth(measured, agentColumns),
-    utilityColumns,
-    utilityWidth: columnWidth(measured, utilityColumns),
+    agentRows,
+    utilityWidth: columnWidth(
+      measured,
+      Math.max(1, Math.min(utilityCount, measured >= 640 ? 4 : 2))
+    ),
   };
 }

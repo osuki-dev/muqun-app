@@ -120,7 +120,7 @@ describe('a projected row', () => {
     expect(ids(model.entries)).not.toContain('home-more-agents');
   });
 
-  test('five agents collapse to three plus a More agents tile', () => {
+  test('every discovered agent keeps a direct launch tile', () => {
     const model = buildLaunchModel({
       discovery: mirror(['a1', 'a2', 'a3', 'a4', 'a5'].map((id) => agent(id))),
     });
@@ -128,14 +128,15 @@ describe('a projected row', () => {
       'home-new-agent-a1',
       'home-new-agent-a2',
       'home-new-agent-a3',
-      'home-more-agents',
+      'home-new-agent-a4',
+      'home-new-agent-a5',
       'home-open-sessions',
       'home-open-terminal',
       'home-new-terminal',
       'home-open-ssh',
     ]);
-    expect(model.entries[3]).toMatchObject({ kind: 'more-agents', hidden: 2 });
-    expect(markers(model.entries).at(-1)).toBe('08');
+    expect(model.entries[4]).toMatchObject({ kind: 'agent', agentId: 'a5' });
+    expect(markers(model.entries).at(-1)).toBe('09');
   });
 
   test('the last-used agent moves to the front and takes the primary fill', () => {

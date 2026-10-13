@@ -141,8 +141,17 @@ export function HomeContinueSearch({
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
   return (
-    <View style={styles.search}>
+    <View
+      style={[
+        styles.search,
+        {
+          backgroundColor: theme.colors.surface,
+          borderColor: theme.colors.border,
+          borderRadius: profile.chrome.control,
+        },
+      ]}>
       <FontedTextInput
         testID="home-continue-search"
         accessibilityLabel={t`Search sessions`}
@@ -889,6 +898,8 @@ function RecentSessionRow({
 
 const styles = StyleSheet.create({
   search: {
+    paddingHorizontal: 12,
+    borderWidth: StyleSheet.hairlineWidth,
     width: '100%',
     minWidth: 0,
     minHeight: 44,
