@@ -220,7 +220,7 @@ import {
 } from '@/stores/agent-sheet-bridge';
 import { ImagePreviewModal, type PreviewImage } from '@/components/image-preview-modal';
 import { AssetViewer } from '@/components/asset-viewer';
-import { assetFromToolFile } from '@/lib/session-assets';
+import { assetFromToolFile, isPdfFile } from '@/lib/session-assets';
 import { type AgentToolActions } from './agent-message-block';
 import { createTranscriptFollow, type TranscriptFollow } from '@/lib/transcript-follow';
 import { TRANSCRIPT_ESTIMATED_ITEM_SIZE } from '@/lib/transcript-sizing';
@@ -231,7 +231,7 @@ import { AgentComposer, type DraftInjector } from './agent-composer';
 import { runningShellCount } from '@/components/agent-background-tray';
 import { ThinkingIndicator } from './agent-thinking-indicator';
 import { AGENT_TYPE } from '@/constants/agent-type';
-import { gatewayAuthHeaders, gatewayUrl } from '@/lib/gateway-client';
+import { gatewayAuthHeaders, gatewayUrl, resolveAgentFileAsset } from '@/lib/gateway-client';
 import { appChrome } from '@/constants/appearance';
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
 import {
@@ -3875,10 +3875,30 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
   const handleOpenToolFile = useCallback(
     (file: { uri: string; mime?: string; name?: string }) => {
+      if (activeAsid && isPdfFile(file)) {
+        const owner = captureWorkbenchOwner(activeAsid, activeDirectory);
+        void resolveAgentFileAsset(activeAsid, file.uri, new AbortController().signal, serverId)
+          .then((asset) => {
+            if (ownsWorkbench(owner)) setOpenToolAsset(asset);
+          })
+          .catch(() => {
+            if (ownsWorkbench(owner)) showScreenNotice(t`Could not open file`, t`Try again`);
+          });
+        return;
+      }
       const asset = assetFromToolFile(file, sessionId);
-      if (asset) setOpenToolAsset(asset);
+      if (asset) setOpenToolAsset({ ...asset, gatewayServerId: serverId });
     },
-    [sessionId]
+    [
+      activeAsid,
+      activeDirectory,
+      captureWorkbenchOwner,
+      ownsWorkbench,
+      serverId,
+      sessionId,
+      showScreenNotice,
+      t,
+    ]
   );
 
   /**

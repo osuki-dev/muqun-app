@@ -21,3 +21,17 @@ wait "text=\"Page 1 of 3\"" 15000
 press "label=\"Close file\""
 wait "id=\"artifacts-search\"" 10000
 back --system
+
+# Sent attachments and relative assistant/tool output share the same reader.
+open "muqun://agent-subagent-detail?asid=demo-tree-leaf-21"
+wait "label=\"Open design-spec.pdf\"" 10000
+press "label=\"Open design-spec.pdf\""
+wait "text=\"Page 1 of 3\"" 15000
+press "label=\"Close file\""
+press "label=\"Open PDF output\""
+wait "text=\"Page 1 of 3\"" 15000
+press "label=\"Close file\""
+press "label=\"Open Tool PDF\""
+wait "text=\"Page 1 of 3\"" 15000
+press "label=\"Close file\""
+back --system

@@ -1,3 +1,4 @@
+import { assetFromLocalPdf } from '@/lib/session-assets';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { AudioPlaybackError } from '@/lib/audio-playback-session';
 import { GuideCommand } from '@/components/guide-command';
@@ -3115,7 +3116,7 @@ export function ServerTerminalWorkspace({
       candidate.instanceId ? [candidate] : []
     );
   }, [data.agents, data.panes, selection.paneId, selection.workspaceId, selectedPane]);
-  // Only images can be opened full screen, and the viewer pages between them,
+  // PDFs use the shared document viewer. The image viewer pages between images,
   // so the tapped tile's position is resolved within that subset.
   const previewImages = useMemo<PreviewImage[]>(
     () =>
@@ -3124,6 +3125,7 @@ export function ServerTerminalWorkspace({
         .map((item) => ({ id: item.id, uri: item.localUri })),
     [attachments]
   );
+  const previewPdf = assetFromLocalPdf(attachments.find((item) => item.id === previewAttachmentId));
   const previewIndex = previewAttachmentId
     ? previewImages.findIndex((item) => item.id === previewAttachmentId)
     : -1;
@@ -6001,6 +6003,7 @@ export function ServerTerminalWorkspace({
                           loadingEarlier={loadingEarlierParts}
                           onLoadEarlier={loadEarlierParts}
                           onOpenAsset={openAssetById}
+                          onOpenFile={openFileLink}
                           onToggleDetail={paneView.toggleDetail}
                         />
                       )
@@ -6493,6 +6496,9 @@ export function ServerTerminalWorkspace({
                 </Animated.View>
               ) : null}
 
+              {previewPdf ? (
+                <AssetViewer asset={previewPdf} onClose={() => setPreviewAttachmentId(null)} />
+              ) : null}
               {previewIndex >= 0 ? (
                 <ImagePreviewModal
                   images={previewImages}

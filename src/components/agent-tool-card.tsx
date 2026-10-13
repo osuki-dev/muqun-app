@@ -1,3 +1,5 @@
+import { InlineFileLink } from '@/components/inline-file-link';
+import { isPdfFile } from '@/lib/session-assets';
 import { InlineVideoFile } from '@/components/video-asset-preview';
 import { InlineAudioFile } from '@/components/audio-asset-preview';
 import { memo, useCallback, useMemo, useState } from 'react';
@@ -287,6 +289,15 @@ const ToolFiles = memo(function ToolFiles({
   return (
     <View style={styles.fileRow}>
       {files.map((file) => {
+        if (audioSessionId && isPdfFile(file)) {
+          return (
+            <InlineFileLink
+              key={`${audioSessionId}:${file.uri}`}
+              asid={audioSessionId}
+              file={{ uri: file.uri, name: file.name ?? basename(file.uri) }}
+            />
+          );
+        }
         if (audioSessionId && file.mime?.startsWith('video/')) {
           return (
             <InlineVideoFile

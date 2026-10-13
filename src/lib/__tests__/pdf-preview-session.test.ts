@@ -85,3 +85,15 @@ describe('PDF preview ownership', () => {
     expect(f.exists()).toBe(false);
   });
 });
+
+test('cleanup failure preserves the original error and does not escape unmount', async () => {
+  const f = fixture(async () => {
+    throw new Error('Download failed');
+  });
+  f.runtime.remove = () => {
+    throw new Error('Cache unavailable');
+  };
+  const session = new PdfPreviewSession(f.runtime, 0);
+  await expect(session.prepare()).rejects.toThrow('Download failed');
+  expect(() => session.close()).not.toThrow();
+});

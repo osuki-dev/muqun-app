@@ -8,6 +8,7 @@ import Animated from 'react-native-reanimated';
 import { PressableScale } from '@/components/pressable-scale';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { isImageAttachment, type PendingAttachment } from '@/lib/attachments';
+import { isPdfFile } from '@/lib/session-assets';
 import { DURATION, fadeIn, fadeOut, listLayout, zoomIn, zoomOut } from '@/lib/motion';
 
 const TILE_SIZE = 62;
@@ -62,12 +63,13 @@ export function AttachmentStrip({
       {attachments.map((attachment) => {
         const failed = attachment.status === 'error';
         const isImage = isImageAttachment(attachment.mime);
+        const previewable = isImage || isPdfFile(attachment);
         // A tap means retry on a failed tile and preview on anything else worth
         // looking at, so the label has to say which of the two it is.
         const status = describeStatus(attachment.status);
         const label = failed
           ? t`Retry uploading ${attachment.name}`
-          : isImage
+          : previewable
             ? t`Preview ${attachment.name}, ${status}`
             : `${attachment.name}, ${status}`;
 
@@ -85,7 +87,7 @@ export function AttachmentStrip({
             style={styles.tileWrap}>
             <PressableScale
               accessibilityLabel={label}
-              disabled={!failed && !isImage}
+              disabled={!failed && !previewable}
               pressedScale={0.94}
               onPress={() => (failed ? onRetry(attachment.id) : onPreview(attachment.id))}
               style={[

@@ -1,3 +1,4 @@
+import { isHostPathSource } from '@/lib/message-images';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
@@ -228,6 +229,7 @@ export const PaneChatPartRow = memo(function PaneChatPartRow({
   expanded,
   onToggle,
   onOpenAsset,
+  onOpenFile,
 }: {
   part: PanePart;
   colors: PaneChatColors;
@@ -235,6 +237,7 @@ export const PaneChatPartRow = memo(function PaneChatPartRow({
   expanded: boolean;
   onToggle: (id: string) => void;
   onOpenAsset?: (assetId: string) => void;
+  onOpenFile?: (path: string) => void;
 }) {
   const surfaceBackground = useSurfaceBackground();
   const profile = useAppearanceProfile();
@@ -257,7 +260,8 @@ export const PaneChatPartRow = memo(function PaneChatPartRow({
             textBreakStrategy="simple"
             md4cFlags={{ latexMath: true }}
             onLinkPress={({ url }) => {
-              if (isSafeExternalLink(url)) void Linking.openURL(url);
+              if (isHostPathSource(url)) onOpenFile?.(url);
+              else if (isSafeExternalLink(url)) void Linking.openURL(url);
             }}
           />
         </View>

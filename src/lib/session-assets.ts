@@ -26,6 +26,12 @@ export interface SessionAsset {
     workspace_id?: string;
   };
   previewable: boolean;
+  /** Bound by the client, never trusted from Gateway JSON. */
+  gatewayServerId?: string;
+  /** Only set for a file picked on this device, never for a host file:// URI. */
+  localUri?: string;
+  /** Validated upload name; uploads are outside the session workspace root. */
+  uploadName?: string;
 }
 
 const ASSET_KINDS: readonly AssetKind[] = [
@@ -229,7 +235,7 @@ export function assetFromToolFile(
   const uri = file.uri ?? '';
   const path = uri.startsWith('file://') ? decodeURI(uri.slice('file://'.length)) : uri;
   if (!path.startsWith('/')) return null;
-  const mime = file.mime ?? '';
+  const mime = isPdfFile(file) ? 'application/pdf' : (file.mime ?? '');
   const kind: AssetKind = mime.startsWith('audio/')
     ? 'audio'
     : mime.startsWith('image/')
@@ -253,5 +259,72 @@ export function assetFromToolFile(
     modified_unix_ms: 0,
     ...(sessionId ? { origin: { session_id: sessionId } } : {}),
     previewable: kind !== 'binary',
+  };
+}
+
+/** A filename is the fallback when a picker or tool omits a useful MIME. */
+export function isPdfFile(file: { mime?: string; name?: string; uri?: string }): boolean {
+  return (
+    file.mime?.split(';')[0].trim().toLowerCase() === 'application/pdf' ||
+    /\.pdf$/i.test(file.name ?? '') ||
+    /\.pdf$/i.test(file.uri ?? '')
+  );
+}
+
+/** Device-picked bytes are distinct from identically shaped paths on a host. */
+export function assetFromLocalPdf(
+  file:
+    | {
+        id: string;
+        localUri: string;
+        name: string;
+        mime: string;
+        size?: number;
+      }
+    | undefined
+): SessionAsset | null {
+  if (
+    !file ||
+    !isPdfFile({ ...file, uri: file.localUri }) ||
+    !/^(?:file|content):\/\//.test(file.localUri)
+  )
+    return null;
+  return {
+    id: file.id,
+    path: file.name,
+    name: file.name,
+    kind: 'pdf',
+    mime: 'application/pdf',
+    size: file.size ?? 0,
+    modified_unix_ms: 0,
+    previewable: true,
+    localUri: file.localUri,
+  };
+}
+
+export function assertAssetGateway(
+  asset: Pick<SessionAsset, 'gatewayServerId'>,
+  currentServerId: string | null
+) {
+  if (asset.gatewayServerId && asset.gatewayServerId !== currentServerId)
+    throw new Error('The file belongs to a different Gateway');
+}
+
+/** Uploaded PDFs use the authenticated upload route, never a host-path fetch. */
+export function assetFromUploadedPdf(path: string, serverId: string | null): SessionAsset | null {
+  if (!/^(?:\/|file:\/\/\/)/.test(path) || path.startsWith('//')) return null;
+  const name = /\/muqun-gateway\/uploads\/([a-zA-Z0-9_-]+\.pdf)$/i.exec(path)?.[1];
+  if (!name) return null;
+  return {
+    id: `upload:${name}`,
+    path,
+    name,
+    kind: 'pdf',
+    mime: 'application/pdf',
+    size: 0,
+    modified_unix_ms: 0,
+    previewable: true,
+    gatewayServerId: serverId ?? undefined,
+    uploadName: name,
   };
 }
