@@ -400,7 +400,8 @@
           "granularPermissions": [],
           "isAccessMediaLocationEnabled": false
         }
-      ]
+      ],
+      "react-native-webgpu"
     ],
     "experiments": {
       "typedRoutes": true,

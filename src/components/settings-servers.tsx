@@ -140,6 +140,14 @@ export function SettingsServers({ initialOpenId }: { initialOpenId?: string } = 
 
   return (
     <SettingsCard flush reflow>
+      <SettingsChoiceRow
+        label={t`Connection map`}
+        accessibilityLabel={t`Connection map`}
+        value=""
+        detail={t`See this app’s connections and last-known computer links.`}
+        testID="settings-computer-map-row"
+        onPress={() => router.push('/computer-map')}
+      />
       {hydrationError ? (
         <GatewayStorageError busy={loading} onRetry={retryHydration} />
       ) : loading ? (
