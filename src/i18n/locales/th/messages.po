@@ -1983,6 +1983,10 @@ msgstr "เปิดอุโมงค์ SSH ไม่ได้"
 msgid "Could not open this file."
 msgstr "เปิดไฟล์นี้ไม่ได้"
 
+#: src/components/pdf-asset-preview.tsx
+msgid "Could not open this PDF."
+msgstr "ไม่สามารถเปิด PDF นี้ได้"
+
 #: src/components/asset-viewer.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not open this theme."
@@ -3386,6 +3390,7 @@ msgstr "โหลดเพิ่มเติม"
 
 #: src/components/gateway-storage-error.tsx
 #: src/components/list-load-more-footer.tsx
+#: src/components/pdf-asset-preview.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
 #: src/components/theme-link-import.tsx
@@ -4357,6 +4362,10 @@ msgstr "เอาต์พุต"
 msgid "Output copied to clipboard"
 msgstr "คัดลอกเอาต์พุตไปยังคลิปบอร์ดแล้ว"
 
+#: src/components/pdf-asset-preview.tsx
+msgid "Page {page} of {pageCount}"
+msgstr "หน้า {page} จาก {pageCount}"
+
 #: src/components/pane-history-sheet.tsx
 msgid "Page {pageNumber} · {lines} lines"
 msgstr "หน้า {pageNumber} · {lines} บรรทัด"
@@ -4491,6 +4500,10 @@ msgstr "หยุดเสียงชั่วคราว"
 msgctxt "task state"
 msgid "Paused"
 msgstr "หยุดชั่วคราว"
+
+#: src/components/pdf-asset-preview.tsx
+msgid "PDF preview supports files up to {ceiling}. Open this file on your computer."
+msgstr "การดูตัวอย่าง PDF รองรับไฟล์ขนาดไม่เกิน {ceiling} โปรดเปิดไฟล์นี้บนคอมพิวเตอร์ของคุณ"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Permission"
@@ -6550,6 +6563,14 @@ msgstr "ลิงก์นี้ไม่มีปลายทาง"
 msgid "This one is required."
 msgstr "ต้องกรอกช่องนี้"
 
+#: src/components/pdf-asset-preview.tsx
+msgid "This PDF cannot be previewed. Save it to open with a PDF reader."
+msgstr "ไม่สามารถดูตัวอย่าง PDF นี้ได้ โปรดบันทึกไฟล์แล้วเปิดด้วยโปรแกรมอ่าน PDF"
+
+#: src/components/pdf-asset-preview.tsx
+msgid "This PDF is password-protected. Save it to open with a PDF reader."
+msgstr "PDF นี้มีการป้องกันด้วยรหัสผ่าน โปรดบันทึกไฟล์แล้วเปิดด้วยโปรแกรมอ่าน PDF"
+
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
 msgid "This project"
@@ -6710,6 +6731,7 @@ msgstr "เชื่อถือ"
 #: src/components/audio-asset-preview.tsx
 #: src/components/changes-sheet.tsx
 #: src/components/inline-file-link.tsx
+#: src/components/pdf-asset-preview.tsx
 #: src/components/theme-browse-sheet.tsx
 #: src/components/video-asset-preview.tsx
 #: src/components/voice-input-button.tsx
@@ -6934,6 +6956,7 @@ msgstr "อัปเดต Gateway เพื่อเปิด Lazygit ใน wo
 
 #: src/components/asset-viewer.tsx
 #: src/components/inline-file-link.tsx
+#: src/components/pdf-asset-preview.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-file-actions.tsx
 msgid "Update the Gateway to open or save this file."

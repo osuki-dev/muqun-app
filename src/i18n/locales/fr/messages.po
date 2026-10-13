@@ -1983,6 +1983,10 @@ msgstr "Impossible d’ouvrir le tunnel SSH"
 msgid "Could not open this file."
 msgstr "Impossible d’ouvrir ce fichier"
 
+#: src/components/pdf-asset-preview.tsx
+msgid "Could not open this PDF."
+msgstr "Impossible d’ouvrir ce PDF"
+
 #: src/components/asset-viewer.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not open this theme."
@@ -3386,6 +3390,7 @@ msgstr "Charger plus"
 
 #: src/components/gateway-storage-error.tsx
 #: src/components/list-load-more-footer.tsx
+#: src/components/pdf-asset-preview.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
 #: src/components/theme-link-import.tsx
@@ -4357,6 +4362,10 @@ msgstr "Sortie"
 msgid "Output copied to clipboard"
 msgstr "Sortie copiée dans le presse-papiers"
 
+#: src/components/pdf-asset-preview.tsx
+msgid "Page {page} of {pageCount}"
+msgstr "Page {page} sur {pageCount}"
+
 #: src/components/pane-history-sheet.tsx
 msgid "Page {pageNumber} · {lines} lines"
 msgstr "Page {pageNumber} · {lines} lignes"
@@ -4491,6 +4500,10 @@ msgstr "Mettre l’audio en pause"
 msgctxt "task state"
 msgid "Paused"
 msgstr "En pause"
+
+#: src/components/pdf-asset-preview.tsx
+msgid "PDF preview supports files up to {ceiling}. Open this file on your computer."
+msgstr "L’aperçu PDF prend en charge les fichiers jusqu’à {ceiling}. Ouvrez ce fichier sur votre ordinateur"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Permission"
@@ -6550,6 +6563,14 @@ msgstr "Ce lien ne mène nulle part"
 msgid "This one is required."
 msgstr "Ce champ est obligatoire"
 
+#: src/components/pdf-asset-preview.tsx
+msgid "This PDF cannot be previewed. Save it to open with a PDF reader."
+msgstr "Impossible d’afficher un aperçu de ce PDF. Enregistrez-le pour l’ouvrir avec un lecteur PDF"
+
+#: src/components/pdf-asset-preview.tsx
+msgid "This PDF is password-protected. Save it to open with a PDF reader."
+msgstr "Ce PDF est protégé par un mot de passe. Enregistrez-le pour l’ouvrir avec un lecteur PDF"
+
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
 msgid "This project"
@@ -6710,6 +6731,7 @@ msgstr "Faire confiance"
 #: src/components/audio-asset-preview.tsx
 #: src/components/changes-sheet.tsx
 #: src/components/inline-file-link.tsx
+#: src/components/pdf-asset-preview.tsx
 #: src/components/theme-browse-sheet.tsx
 #: src/components/video-asset-preview.tsx
 #: src/components/voice-input-button.tsx
@@ -6934,6 +6956,7 @@ msgstr "Mettez à jour le Gateway pour ouvrir Lazygit dans un autre worktree"
 
 #: src/components/asset-viewer.tsx
 #: src/components/inline-file-link.tsx
+#: src/components/pdf-asset-preview.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-file-actions.tsx
 msgid "Update the Gateway to open or save this file."

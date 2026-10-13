@@ -1983,6 +1983,10 @@ msgstr "SSH トンネルを開けませんでした"
 msgid "Could not open this file."
 msgstr "このファイルを開けませんでした"
 
+#: src/components/pdf-asset-preview.tsx
+msgid "Could not open this PDF."
+msgstr "このPDFを開けませんでした"
+
 #: src/components/asset-viewer.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not open this theme."
@@ -3386,6 +3390,7 @@ msgstr "さらに読み込む"
 
 #: src/components/gateway-storage-error.tsx
 #: src/components/list-load-more-footer.tsx
+#: src/components/pdf-asset-preview.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
 #: src/components/theme-link-import.tsx
@@ -4357,6 +4362,10 @@ msgstr "出力"
 msgid "Output copied to clipboard"
 msgstr "出力をクリップボードにコピーしました"
 
+#: src/components/pdf-asset-preview.tsx
+msgid "Page {page} of {pageCount}"
+msgstr "{pageCount}ページ中{page}ページ"
+
 #: src/components/pane-history-sheet.tsx
 msgid "Page {pageNumber} · {lines} lines"
 msgstr "{pageNumber} ページ · {lines} 行"
@@ -4491,6 +4500,10 @@ msgstr "音声を一時停止"
 msgctxt "task state"
 msgid "Paused"
 msgstr "一時停止"
+
+#: src/components/pdf-asset-preview.tsx
+msgid "PDF preview supports files up to {ceiling}. Open this file on your computer."
+msgstr "PDFプレビューは{ceiling}までのファイルに対応しています。このファイルはコンピュータで開いてください"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Permission"
@@ -6550,6 +6563,14 @@ msgstr "このリンクの先には何もありません"
 msgid "This one is required."
 msgstr "この項目は必須です"
 
+#: src/components/pdf-asset-preview.tsx
+msgid "This PDF cannot be previewed. Save it to open with a PDF reader."
+msgstr "このPDFはプレビューできません。保存してPDFリーダーで開いてください"
+
+#: src/components/pdf-asset-preview.tsx
+msgid "This PDF is password-protected. Save it to open with a PDF reader."
+msgstr "このPDFはパスワードで保護されています。保存してPDFリーダーで開いてください"
+
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
 msgid "This project"
@@ -6710,6 +6731,7 @@ msgstr "信頼する"
 #: src/components/audio-asset-preview.tsx
 #: src/components/changes-sheet.tsx
 #: src/components/inline-file-link.tsx
+#: src/components/pdf-asset-preview.tsx
 #: src/components/theme-browse-sheet.tsx
 #: src/components/video-asset-preview.tsx
 #: src/components/voice-input-button.tsx
@@ -6934,6 +6956,7 @@ msgstr "別のワークツリーで Lazygit を開くには Gateway を更新し
 
 #: src/components/asset-viewer.tsx
 #: src/components/inline-file-link.tsx
+#: src/components/pdf-asset-preview.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-file-actions.tsx
 msgid "Update the Gateway to open or save this file."
