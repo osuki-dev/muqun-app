@@ -1067,6 +1067,14 @@ msgstr "Impossible de joindre {quietNames}"
 msgid "Capabilities"
 msgstr "Capacités"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Capture changed"
+msgstr "Paramètres de capture modifiés"
+
+#: src/components/pane-history-sheet.tsx
+msgid "Capture restarted"
+msgstr "Capture redémarrée"
+
 #: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Changed"
@@ -1590,6 +1598,10 @@ msgstr "Continuer"
 msgid "Continue task"
 msgstr "Poursuivre la tâche"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Continued on another page"
+msgstr "Suite sur une autre page"
+
 #: src/components/virtual-keyboard.tsx
 msgid "Control"
 msgstr "Touche Contrôle"
@@ -1998,6 +2010,10 @@ msgstr "Impossible de joindre cet ordinateur"
 #: src/components/gateway-storage-error.tsx
 msgid "Could not read saved computers. Your saved data has not been changed. Unlock this device and retry."
 msgstr "Impossible de lire les ordinateurs enregistrés. Tes données enregistrées n’ont pas été modifiées. Déverrouille cet appareil et réessaie"
+
+#: src/components/pane-history-sheet.tsx
+msgid "Could not read saved terminal history."
+msgstr "Impossible de lire l’historique enregistré du terminal"
 
 #: src/components/changes-sheet.tsx
 msgid "Could not read the changes."
@@ -2474,6 +2490,10 @@ msgstr "Modifier l’hôte SSH"
 msgid "Edit this computer"
 msgstr "Modifier cet ordinateur"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Editor changed"
+msgstr "Éditeur changé"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Editorial"
@@ -2790,6 +2810,10 @@ msgstr "Notifications du Gateway"
 #: src/app/explore.tsx
 msgid "Gateway port on that host"
 msgstr "Port du gateway sur cet hôte"
+
+#: src/components/pane-history-sheet.tsx
+msgid "Gateway restarted"
+msgstr "Gateway redémarré"
 
 #: src/lib/notifications.ts
 msgid "Gateway updates"
@@ -3702,6 +3726,10 @@ msgstr "Nouvel espace de travail"
 msgid "New worktree…"
 msgstr "Nouveau worktree…"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Newer"
+msgstr "Plus récent"
+
 #: src/components/agent-composer.tsx
 msgid "Next"
 msgstr "Suivant"
@@ -3734,6 +3762,10 @@ msgstr "Aucune caméra pour scanner"
 #: src/components/pairing-camera.tsx
 msgid "No camera was found on this device."
 msgstr "Aucune caméra n'a été trouvée sur cet appareil"
+
+#: src/components/pane-history-sheet.tsx
+msgid "No captured history yet."
+msgstr "Aucun historique capturé pour le moment"
 
 #: src/components/update-status-banner.tsx
 msgid "No changelog was provided for this update."
@@ -3805,6 +3837,10 @@ msgstr "Aucun modèle ne correspond à « {0} »"
 #: src/components/agent-model-sheet.tsx
 msgid "No models on this host."
 msgstr "Aucun modèle sur cet hôte"
+
+#: src/components/pane-history-sheet.tsx
+msgid "No older captured output."
+msgstr "Aucune sortie capturée plus ancienne"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "No other assistants in this session yet."
@@ -4018,6 +4054,10 @@ msgstr "Rien n’a été modifié"
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
 msgstr "Rien pour l’instant — une réponse « Toujours autoriser » atterrit ici, pour ce projet"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Observation started"
+msgstr "Observation démarrée"
+
 #: src/components/settings-storage.tsx
 #: src/components/toggle.tsx
 msgid "Off"
@@ -4036,6 +4076,10 @@ msgstr "HORS LIGNE"
 #: src/i18n/labels.ts
 msgid "Offline, not answering"
 msgstr "Hors ligne, ne répond pas"
+
+#: src/components/pane-history-sheet.tsx
+msgid "Older"
+msgstr "Plus ancien"
 
 #: src/components/toggle.tsx
 msgid "On"
@@ -4295,6 +4339,10 @@ msgstr "Sortie"
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Output copied to clipboard"
 msgstr "Sortie copiée dans le presse-papiers"
+
+#: src/components/pane-history-sheet.tsx
+msgid "Page {pageNumber} · {lines} lines"
+msgstr "Page {pageNumber} · {lines} lignes"
 
 #: src/components/app-drawer-content.tsx
 #: src/components/home-launch-actions.tsx
@@ -4747,6 +4795,7 @@ msgstr "Échec de l’enregistrement"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
@@ -4909,6 +4958,7 @@ msgstr "Restaurer les valeurs par défaut masquées"
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/gateway-storage-error.tsx
+#: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
 #: src/components/update-status-banner.tsx
@@ -5134,13 +5184,30 @@ msgstr "Enregistrée"
 msgid "Saved commands"
 msgstr "Commandes enregistrées"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Saved observations"
+msgstr "Observations enregistrées"
+
+#: src/components/pane-history-sheet.tsx
+msgid "Saved observations, separate from the live terminal. New output appears only after Refresh."
+msgstr "Observations enregistrées, distinctes du terminal en direct. Les nouvelles sorties n’apparaissent qu’après actualisation"
+
 #: src/app/commands.tsx
 msgid "Saved prompts"
 msgstr "Consignes enregistrées"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Saved segment"
+msgstr "Segment enregistré"
+
 #: src/components/home-connections.tsx
 msgid "Saved SSH host"
 msgstr "Hôte SSH enregistré"
+
+#: src/app/pane-history.tsx
+#: src/components/pane-history-sheet.tsx
+msgid "Saved terminal history"
+msgstr "Historique enregistré du terminal"
 
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
@@ -5698,6 +5765,10 @@ msgstr "Démarrez l’agent sur l’ordinateur, puis vérifiez à nouveau"
 msgid "Start the OpenCode service on the computer, then check again."
 msgstr "Démarrez le service OpenCode sur l’ordinateur, puis vérifiez à nouveau"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Started {started}"
+msgstr "Début : {started}"
+
 #: src/components/agent-workbench.tsx
 msgid "Started with a clean context."
 msgstr "Démarrée avec un contexte vierge"
@@ -6019,6 +6090,10 @@ msgstr "L’historique du terminal a changé"
 msgid "Terminal key row"
 msgstr "Rangée de touches du terminal"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Terminal resized"
+msgstr "Terminal redimensionné"
+
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-home-commands.ts
 msgid "Terminal unavailable"
@@ -6128,6 +6203,10 @@ msgstr "L’ordinateur n’a pas dit quel terminal il a créé"
 #: src/components/settings-servers.tsx
 msgid "The computer was kept on this device. Make sure its Gateway is running, then try again."
 msgstr "L’ordinateur a été conservé sur cet appareil. Vérifiez que son Gateway est en cours d’exécution, puis réessayez"
+
+#: src/components/pane-history-sheet.tsx
+msgid "The connection changed. Close and reopen history for this computer."
+msgstr "La connexion a changé. Fermez puis rouvrez l’historique de cet ordinateur"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "The connection dropped."
@@ -6404,6 +6483,10 @@ msgstr "Cette police n'a pas pu être lue"
 msgid "This Gateway does not answer to that address."
 msgstr "Ce Gateway ne répond pas à cette adresse"
 
+#: src/components/pane-history-sheet.tsx
+msgid "This Gateway no longer offers saved segments. The pages already read are kept here."
+msgstr "Ce Gateway ne fournit plus de segments enregistrés. Les pages déjà lues sont conservées ici"
+
 #: src/components/session-map.tsx
 msgid "This group has no terminals."
 msgstr "Ce groupe n'a aucun terminal"
@@ -6472,6 +6555,10 @@ msgstr "Cette session n’est plus disponible dans ce service. Actualisez l’ac
 #: src/components/agent-workbench.tsx
 msgid "This session no longer exists"
 msgstr "Cette session n'existe plus"
+
+#: src/components/pane-history-sheet.tsx
+msgid "This snapshot can no longer be extended. Refresh to read the latest saved output; the current page is kept until then."
+msgstr "Cet instantané ne permet plus de charger la suite. Actualisez pour lire la dernière sortie enregistrée ; la page actuelle est conservée jusque-là"
 
 #: src/components/virtual-keyboard.tsx
 msgid "This terminal can't send {chord}"
@@ -6655,6 +6742,7 @@ msgstr "Saisissez-le, ou utilisez la touche de dictée de votre clavier"
 msgid "Type on the simulator"
 msgstr "Saisir sur le simulateur"
 
+#: src/app/pane-history.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/task-result-sheet.tsx
 msgid "Unavailable"

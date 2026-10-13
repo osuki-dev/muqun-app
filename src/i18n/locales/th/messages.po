@@ -1067,6 +1067,14 @@ msgstr "เข้าถึง {quietNames} ไม่ได้"
 msgid "Capabilities"
 msgstr "ความสามารถ"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Capture changed"
+msgstr "เปลี่ยนการตั้งค่าการบันทึกแล้ว"
+
+#: src/components/pane-history-sheet.tsx
+msgid "Capture restarted"
+msgstr "เริ่มการบันทึกใหม่แล้ว"
+
 #: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Changed"
@@ -1590,6 +1598,10 @@ msgstr "ดำเนินการต่อ"
 msgid "Continue task"
 msgstr "ทำงานต่อ"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Continued on another page"
+msgstr "มีเนื้อหาต่อในหน้าอื่น"
+
 #: src/components/virtual-keyboard.tsx
 msgid "Control"
 msgstr "Control"
@@ -1998,6 +2010,10 @@ msgstr "ติดต่อคอมพิวเตอร์นี้ไม่ไ
 #: src/components/gateway-storage-error.tsx
 msgid "Could not read saved computers. Your saved data has not been changed. Unlock this device and retry."
 msgstr "อ่านคอมพิวเตอร์ที่บันทึกไว้ไม่ได้ ข้อมูลที่บันทึกยังไม่เปลี่ยนแปลง ปลดล็อกอุปกรณ์นี้แล้วลองอีกครั้ง"
+
+#: src/components/pane-history-sheet.tsx
+msgid "Could not read saved terminal history."
+msgstr "อ่านประวัติเทอร์มินัลที่บันทึกไว้ไม่ได้"
 
 #: src/components/changes-sheet.tsx
 msgid "Could not read the changes."
@@ -2474,6 +2490,10 @@ msgstr "แก้ไขโฮสต์ SSH"
 msgid "Edit this computer"
 msgstr "แก้ไขคอมพิวเตอร์นี้"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Editor changed"
+msgstr "เปลี่ยนตัวแก้ไขแล้ว"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Editorial"
@@ -2790,6 +2810,10 @@ msgstr "การแจ้งเตือนจาก Gateway"
 #: src/app/explore.tsx
 msgid "Gateway port on that host"
 msgstr "พอร์ต Gateway บนโฮสต์นั้น"
+
+#: src/components/pane-history-sheet.tsx
+msgid "Gateway restarted"
+msgstr "Gateway เริ่มทำงานใหม่แล้ว"
 
 #: src/lib/notifications.ts
 msgid "Gateway updates"
@@ -3702,6 +3726,10 @@ msgstr "พื้นที่ทำงานใหม่"
 msgid "New worktree…"
 msgstr "เวิร์กทรีใหม่…"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Newer"
+msgstr "ใหม่กว่า"
+
 #: src/components/agent-composer.tsx
 msgid "Next"
 msgstr "ถัดไป"
@@ -3734,6 +3762,10 @@ msgstr "ไม่มีกล้องสำหรับสแกน"
 #: src/components/pairing-camera.tsx
 msgid "No camera was found on this device."
 msgstr "ไม่พบกล้องบนอุปกรณ์นี้"
+
+#: src/components/pane-history-sheet.tsx
+msgid "No captured history yet."
+msgstr "ยังไม่มีประวัติที่บันทึกไว้"
 
 #: src/components/update-status-banner.tsx
 msgid "No changelog was provided for this update."
@@ -3805,6 +3837,10 @@ msgstr "ไม่มีโมเดลที่ตรงกับ “{0}”"
 #: src/components/agent-model-sheet.tsx
 msgid "No models on this host."
 msgstr "ไม่มีโมเดลบนโฮสต์นี้"
+
+#: src/components/pane-history-sheet.tsx
+msgid "No older captured output."
+msgstr "ไม่มีเอาต์พุตที่บันทึกไว้เก่ากว่านี้"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "No other assistants in this session yet."
@@ -4018,6 +4054,10 @@ msgstr "ไม่มีการเปลี่ยนแปลงใด"
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
 msgstr "ยังไม่มี — คำตอบ “อนุญาตเสมอ” จะมาอยู่ที่นี่ สำหรับโปรเจกต์นี้"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Observation started"
+msgstr "เริ่มการสังเกตแล้ว"
+
 #: src/components/settings-storage.tsx
 #: src/components/toggle.tsx
 msgid "Off"
@@ -4036,6 +4076,10 @@ msgstr "ออฟไลน์"
 #: src/i18n/labels.ts
 msgid "Offline, not answering"
 msgstr "ออฟไลน์ ไม่ตอบกลับ"
+
+#: src/components/pane-history-sheet.tsx
+msgid "Older"
+msgstr "เก่ากว่า"
 
 #: src/components/toggle.tsx
 msgid "On"
@@ -4295,6 +4339,10 @@ msgstr "เอาต์พุต"
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Output copied to clipboard"
 msgstr "คัดลอกเอาต์พุตไปยังคลิปบอร์ดแล้ว"
+
+#: src/components/pane-history-sheet.tsx
+msgid "Page {pageNumber} · {lines} lines"
+msgstr "หน้า {pageNumber} · {lines} บรรทัด"
 
 #: src/components/app-drawer-content.tsx
 #: src/components/home-launch-actions.tsx
@@ -4747,6 +4795,7 @@ msgstr "บันทึกเสียงไม่สำเร็จ"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
@@ -4909,6 +4958,7 @@ msgstr "คืนค่ารายการเริ่มต้นที่ซ
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/gateway-storage-error.tsx
+#: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
 #: src/components/update-status-banner.tsx
@@ -5134,13 +5184,30 @@ msgstr "บันทึกแล้ว"
 msgid "Saved commands"
 msgstr "คำสั่งที่บันทึกไว้"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Saved observations"
+msgstr "ข้อมูลการสังเกตที่บันทึกไว้"
+
+#: src/components/pane-history-sheet.tsx
+msgid "Saved observations, separate from the live terminal. New output appears only after Refresh."
+msgstr "ข้อมูลการสังเกตที่บันทึกไว้ แยกจากเทอร์มินัลที่แสดงผลแบบเรียลไทม์ เอาต์พุตใหม่จะแสดงหลังจากรีเฟรชเท่านั้น"
+
 #: src/app/commands.tsx
 msgid "Saved prompts"
 msgstr "คำสั่งที่บันทึกไว้"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Saved segment"
+msgstr "ส่วนที่บันทึกไว้"
+
 #: src/components/home-connections.tsx
 msgid "Saved SSH host"
 msgstr "โฮสต์ SSH ที่บันทึกไว้"
+
+#: src/app/pane-history.tsx
+#: src/components/pane-history-sheet.tsx
+msgid "Saved terminal history"
+msgstr "ประวัติเทอร์มินัลที่บันทึกไว้"
 
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
@@ -5698,6 +5765,10 @@ msgstr "เริ่มเอเจนต์บนคอมพิวเตอร
 msgid "Start the OpenCode service on the computer, then check again."
 msgstr "เริ่มบริการ OpenCode บนคอมพิวเตอร์ แล้วตรวจสอบอีกครั้ง"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Started {started}"
+msgstr "เริ่มเมื่อ {started}"
+
 #: src/components/agent-workbench.tsx
 msgid "Started with a clean context."
 msgstr "เริ่มต้นด้วยบริบทที่ว่างเปล่า"
@@ -6019,6 +6090,10 @@ msgstr "ประวัติเทอร์มินัลเปลี่ยน
 msgid "Terminal key row"
 msgstr "แถวปุ่มเทอร์มินัล"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Terminal resized"
+msgstr "เปลี่ยนขนาดเทอร์มินัลแล้ว"
+
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-home-commands.ts
 msgid "Terminal unavailable"
@@ -6128,6 +6203,10 @@ msgstr "คอมพิวเตอร์ไม่ได้ระบุว่า
 #: src/components/settings-servers.tsx
 msgid "The computer was kept on this device. Make sure its Gateway is running, then try again."
 msgstr "ยังเก็บคอมพิวเตอร์ไว้บนอุปกรณ์นี้ ตรวจว่า Gateway ทำงานอยู่แล้วลองอีกครั้ง"
+
+#: src/components/pane-history-sheet.tsx
+msgid "The connection changed. Close and reopen history for this computer."
+msgstr "การเชื่อมต่อเปลี่ยนไปแล้ว โปรดปิดแล้วเปิดประวัติของคอมพิวเตอร์เครื่องนี้อีกครั้ง"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "The connection dropped."
@@ -6404,6 +6483,10 @@ msgstr "อ่านฟอนต์นี้ไม่ได้"
 msgid "This Gateway does not answer to that address."
 msgstr "Gateway นี้ไม่ตอบกลับที่ที่อยู่นั้น"
 
+#: src/components/pane-history-sheet.tsx
+msgid "This Gateway no longer offers saved segments. The pages already read are kept here."
+msgstr "Gateway นี้ไม่มีส่วนที่บันทึกไว้ให้ใช้อีกแล้ว หน้าที่อ่านไปแล้วยังคงเก็บไว้ที่นี่"
+
 #: src/components/session-map.tsx
 msgid "This group has no terminals."
 msgstr "กลุ่มนี้ไม่มีเทอร์มินัล"
@@ -6472,6 +6555,10 @@ msgstr "เซสชันนี้ไม่พร้อมใช้งานใ
 #: src/components/agent-workbench.tsx
 msgid "This session no longer exists"
 msgstr "เซสชันนี้ไม่มีอยู่อีกต่อไป"
+
+#: src/components/pane-history-sheet.tsx
+msgid "This snapshot can no longer be extended. Refresh to read the latest saved output; the current page is kept until then."
+msgstr "สแนปช็อตนี้โหลดเนื้อหาเพิ่มไม่ได้แล้ว รีเฟรชเพื่ออ่านเอาต์พุตที่บันทึกไว้ล่าสุด โดยจะเก็บหน้าปัจจุบันไว้จนกว่าจะรีเฟรช"
 
 #: src/components/virtual-keyboard.tsx
 msgid "This terminal can't send {chord}"
@@ -6655,6 +6742,7 @@ msgstr "พิมพ์หรือใช้ปุ่มป้อนตามค
 msgid "Type on the simulator"
 msgstr "พิมพ์บนเครื่องจำลอง"
 
+#: src/app/pane-history.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/task-result-sheet.tsx
 msgid "Unavailable"
