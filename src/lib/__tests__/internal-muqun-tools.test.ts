@@ -69,6 +69,7 @@ describe('internal Muqun tool visibility', () => {
     const completed = row(part);
     const answer = { ...row({ type: 'text', text: 'Hardware details.' }), id: 'answer' };
     store.getState().setTimeline([user, running]);
+    expect(store.getState().keys).toEqual(['grp_user']);
     const userRow = store.getState().rows.grp_user;
     store.getState().setTimeline([user, completed, answer]);
     expect(store.getState().keys).toEqual(['grp_user', 'grp_answer']);
@@ -96,15 +97,12 @@ describe('internal Muqun tool visibility', () => {
     );
   });
 
-  test('mixed execute children hide only Muqun discovery and keep third-party work and errors', () => {
+  test('mixed execute children hide internal discovery in every state and keep third-party work', () => {
     const external = { ...search, input: { namespace: 'files', query: 'muqun' } };
     const failed = { ...search, status: 'failed' };
     const metadata = { tool_calls: [search, external, failed] };
     const shown = executeToolCalls(metadata);
-    expect(shown.map((call) => [call.name, call.status])).toEqual([
-      ['search', 'completed'],
-      ['search', 'error'],
-    ]);
+    expect(shown.map((call) => [call.name, call.status])).toEqual([['search', 'completed']]);
     expect(shown[0]?.input).toContain('namespace files');
     const part = execute({ input: { code: searchCode }, metadata });
     expect(isHiddenMuqunTool(part)).toBe(false);
@@ -173,6 +171,8 @@ describe('internal Muqun tool visibility', () => {
   });
 
   test.each<Partial<ToolPart>>([
+    { state: 'pending' },
+    { state: 'streaming' },
     { state: 'failed' },
     { state: 'running' },
     { error: { name: 'PermissionDenied', message: 'Permission denied' } },
@@ -183,17 +183,49 @@ describe('internal Muqun tool visibility', () => {
     { metadata: { toolCalls: [{ ...discovery, status: 'rejected' }] } },
     { metadata: { toolCalls: [{ ...discovery, status: 'unknown' }] } },
     { metadata: { toolCalls: [{ ...discovery, result: { isError: true } }] } },
+    { truncated: true },
+  ])('ordinary internal logs remain hidden regardless of state or error: %j', (overrides) => {
+    expect(isHiddenMuqunTool(execute(overrides))).toBe(true);
+    expect(isHiddenMuqunTool(execute({ ...overrides, name: 'muqun_tasks_read', input: {} }))).toBe(
+      true
+    );
+  });
+
+  test.each<Partial<ToolPart>>([
+    { background: true },
+    { child_session_id: 'child-session' },
+    { metadata: { toolCalls: 'unknown' } },
     { metadata: { toolCalls: [discovery, { tool: 'read', status: 'completed' }] } },
     { metadata: { toolCalls: [discovery, null] } },
-  ])('failures, mixed children and missing evidence are retained: %j', (overrides) => {
+  ])('actionable entry points and mixed or unknown children are retained: %j', (overrides) => {
     expect(isHiddenMuqunTool(execute(overrides))).toBe(false);
   });
 
-  test('a mixed wrapper keeps external and failed child rows', () => {
+  test('hidden failures retain the canonical error and actionable process/session entries', () => {
+    const error = { name: 'ConnectionError', message: 'Internal call failed' };
+    const failed = execute({ state: 'failed', error, metadata: { error: true } });
+    const background = execute({ ...failed, id: 'process', background: true });
+    const child = execute({ ...failed, id: 'child', child_session_id: 'child-session' });
+    const items = [
+      row(failed),
+      { ...row(background), id: 'process' },
+      { ...row(child), id: 'child' },
+    ];
+    const store = createAgentTranscriptStore();
+    store.getState().setTimeline(items);
+    expect(store.getState().timeline).toEqual(items);
+    expect(store.getState().timeline[0]?.part).toBe(failed);
+    expect(failed.error).toBe(error);
+    expect(store.getState().keys).toEqual(['grp_process', 'grp_child']);
+    expect(store.getState().toolIds.has(failed.id)).toBe(true);
+  });
+
+  test('a mixed wrapper keeps external child rows and their failures', () => {
     const calls = [
       discovery,
       { ...discovery, input: { server: 'external' } },
       { ...discovery, status: 'rejected' },
+      { ...discovery, status: 'failed', input: { server: 'external' } },
       { tool: 'muqun_tasks_read', status: 'completed', input: {} },
       { tool: 'read', status: 'completed', input: { path: 'result.txt' } },
     ];
@@ -205,8 +237,20 @@ describe('internal Muqun tool visibility', () => {
     const part = execute({ metadata: { toolCalls: calls }, output: 'Useful external result' });
     const item = row(part);
     expect(withoutTaskPlumbing(item)).toBe(item);
-    expect(part.metadata.toolCalls).toHaveLength(5);
+    expect(part.metadata.toolCalls).toHaveLength(6);
   });
+
+  test.each(['pending', 'running', 'failed', 'completed', 'unknown'])(
+    'nested internal calls are hidden in %s state',
+    (status) => {
+      const internal = { ...search, status, error: 'Failure', result: { isError: true } };
+      expect(executeToolCalls({ toolCalls: [internal, 'muqun_tasks_read'] })).toEqual([]);
+      expect(
+        executeToolCalls({ toolCalls: [{ ...internal, child_session_id: 'child' }] })
+      ).toHaveLength(1);
+      expect(executeToolCalls({ toolCalls: [{ ...internal, background: true }] })).toHaveLength(1);
+    }
+  );
 
   test('permission rows never enter the tool filter', () => {
     const item = row({

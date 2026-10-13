@@ -37,16 +37,15 @@ function literalInput(source: string): unknown {
   }
 }
 
-/** Keep failures and unknown/in-flight states, including MCP error results. */
+/** Internal identity is independent of progress or failure state. */
 export function isHiddenMuqunExecuteCall(value: unknown): boolean {
+  if (typeof value === 'string') return isInternalCall(value, undefined);
   const call = asRecord(value);
   return !!(
     call &&
     typeof call.tool === 'string' &&
-    call.status === 'completed' &&
-    !call.error &&
-    asRecord(call.output)?.isError !== true &&
-    asRecord(call.result)?.isError !== true &&
+    !call.background &&
+    !call.child_session_id &&
     isInternalCall(call.tool, call.input)
   );
 }
@@ -69,20 +68,15 @@ function isSingleInternalCall(code: unknown): boolean {
 
 /** Display-only counterpart to the Gateway's internal Muqun tool policy. */
 export function isHiddenMuqunTool(part: ToolPart): boolean {
-  if (
-    part.state !== 'completed' ||
-    part.error ||
-    part.metadata.error ||
-    part.background ||
-    part.child_session_id ||
-    part.truncated ||
-    asRecord(part.output)?.isError === true
-  )
-    return false;
+  // Keep actionable process/session entry points, not ordinary internal logs.
+  // Approval and question parts use their own presentation path.
+  if (part.background || part.child_session_id) return false;
   if (isInternalCall(part.name, part.input)) return true;
   if (part.name !== 'execute' || !isSingleInternalCall(asRecord(part.input)?.code)) return false;
   // Children alone cannot prove the whole execution was internal: code can
   // also print useful output or perform work outside the tool bridge.
   const calls = part.metadata.toolCalls ?? part.metadata.tool_calls;
-  return Array.isArray(calls) && calls.length > 0 && calls.every(isHiddenMuqunExecuteCall);
+  // The literal code already proves identity before child progress arrives.
+  // Once present, contradictory or unknown children keep the wrapper visible.
+  return calls === undefined || (Array.isArray(calls) && calls.every(isHiddenMuqunExecuteCall));
 }
