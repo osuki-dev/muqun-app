@@ -1,10 +1,12 @@
 # Agent artwork
 
-`codex.png` is the unmodified icon published by OpenAI for its Codex IDE extension:
+The OpenAI glyph used for the Codex entry is embedded in
+`src/components/codex-icon.tsx`. Its path and 24 × 24 viewBox are unchanged from
+[Simple Icons 14.15.0](https://github.com/simple-icons/simple-icons/blob/14.15.0/icons/openai.svg).
+The [source metadata](https://github.com/simple-icons/simple-icons/blob/14.15.0/_data/simple-icons.json)
+identifies [OpenAI's brand page](https://openai.com/brand) as the original source.
+Simple Icons is distributed under [CC0-1.0](https://github.com/simple-icons/simple-icons/blob/14.15.0/LICENSE.md).
 
-- Product: https://marketplace.visualstudio.com/items?itemName=openai.chatgpt
-- Publisher: OpenAI (`openai`)
-- Asset: https://openai.gallerycdn.vsassets.io/extensions/openai/chatgpt/26.51007.21434/1791508178385/Microsoft.VisualStudio.Services.Icons.Default
-
-Used only to identify the Codex agent entry. The OpenAI mark remains OpenAI's
-trademark; this is not Muqun's application icon or an endorsement.
+Only the glyph is drawn: the SVG has no background, and its fill uses the
+surrounding agent entry's theme color. The OpenAI mark remains OpenAI's trademark;
+it identifies the Codex agent, not Muqun's application icon or an endorsement.

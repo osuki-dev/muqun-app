@@ -15,7 +15,7 @@ import { agentMarkKind } from '@/lib/agent-mark-kind';
 export function AgentMark({ kind, size, color }: { kind: string; size: number; color: string }) {
   switch (agentMarkKind(kind)) {
     case 'codex':
-      return <CodexIcon size={size} />;
+      return <CodexIcon size={size} color={color} />;
     case 'opencode':
       return <OpenCodeIcon size={size} color={color} />;
     case 'deepseek':
