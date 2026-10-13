@@ -175,15 +175,20 @@ export function createHomeRecentsState(
       atMs?: number,
       sessionObservation?: HomeSessionObservation
     ): Promise<void> => {
-      const entry = createHomeRecentEntry(target, title, atMs, sessionObservation);
-      if (!entry) return;
-      if (allowed && !isHomeRecentEntryAllowed(entry, allowed)) return;
+      const incoming = createHomeRecentEntry(target, title, atMs, sessionObservation);
+      if (!incoming) return;
+      if (allowed && !isHomeRecentEntryAllowed(incoming, allowed)) return;
+
+      const before = get().entries;
+      const entry = preserveRecentAgent(
+        incoming,
+        before.find((item) => item.key === incoming.key)
+      );
 
       const visitWasDuringHydration = !hydrated;
       if (visitWasDuringHydration) changedDuringHydration.add(entry.key);
       removedDuringHydration.delete(entry.key);
 
-      const before = get().entries;
       const next = [entry, ...before.filter((item) => item.key !== entry.key)].slice(
         0,
         MAX_HOME_RECENTS
@@ -385,12 +390,33 @@ function mergeHydratedEntries(
   // Current entries are only authoritative for keys explicitly touched while
   // the read was pending. Stored rows keep their persisted order otherwise.
   for (const entry of current) {
-    if (changedKeys.has(entry.key)) append(entry);
+    if (changedKeys.has(entry.key))
+      append(
+        preserveRecentAgent(
+          entry,
+          stored.find((item) => item.key === entry.key)
+        )
+      );
   }
   for (const entry of stored) {
     if (!changedKeys.has(entry.key)) append(entry);
   }
   return merged;
+}
+
+/** An untagged legacy visit is not evidence that a known session changed providers. */
+function preserveRecentAgent(
+  incoming: HomeRecentEntry,
+  known: HomeRecentEntry | undefined
+): HomeRecentEntry {
+  if (
+    incoming.target.kind === 'agent-session' &&
+    !incoming.target.agentId &&
+    known?.target.kind === 'agent-session' &&
+    known.target.agentId
+  )
+    return { ...incoming, target: { ...incoming.target, agentId: known.target.agentId } };
+  return incoming;
 }
 
 function sameHomeRecentEntries(

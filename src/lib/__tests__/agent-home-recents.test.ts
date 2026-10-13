@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 import {
   isRootSessionRecent,
+  recentSessionAgentId,
   removeChildSessionRecents,
   rootSessionWithStatus,
 } from '../agent-home-recents';
@@ -18,6 +19,16 @@ const target = (asid: string, serverId = 'server-a', directory = '/workspace'): 
 });
 
 describe('authoritative subagent Home exclusion', () => {
+  test('recent providers follow exact session metadata, including create/fork inventory, never another active session', () => {
+    const current = { asid: 'open', agent_id: 'codex' };
+    const inventory = [{ asid: 'fork', agent_id: 'deepseek' }];
+    expect(recentSessionAgentId('open', current, inventory)).toBe('codex');
+    expect(recentSessionAgentId('fork', current, inventory)).toBe('deepseek');
+    expect(recentSessionAgentId('open', current, inventory, 'opencode')).toBe('opencode');
+    expect(recentSessionAgentId('unknown', current, inventory)).toBeUndefined();
+    expect(recentSessionAgentId('unknown', null, [])).toBeUndefined();
+  });
+
   test('only root visits qualify; status, titles and pane rows are not hierarchy', () => {
     expect(isRootSessionRecent({})).toBe(true);
     expect(isRootSessionRecent({ parent_id: 'root' })).toBe(false);

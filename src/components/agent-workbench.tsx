@@ -231,6 +231,7 @@ import { useGoneAgentSessions } from '@/stores/gone-agent-sessions';
 import { useHomeRecentsStore } from '@/stores/home-recents';
 import {
   isRootSessionRecent,
+  recentSessionAgentId,
   removeChildSessionRecents,
   rootSessionWithStatus,
 } from '@/lib/agent-home-recents';
@@ -613,6 +614,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     if (freshSessionRef.current !== activeAsid) freshSessionRef.current = undefined;
   }, [activeAsid]);
   const [sessionInfo, setSessionInfo] = useState<AgentSessionInfo | null>(null);
+  const readSessionInfo = useLatestReader(sessionInfo);
   const runtime = sessionInfo?.runtime;
   const readRenderedRuntime = useLatestReader(runtime);
   const canInteractNatively = nativeAgentInteraction(runtime);
@@ -807,7 +809,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const homeTargetFor = useCallback(
     (
       asid: string | undefined,
-      directory: string | undefined
+      directory: string | undefined,
+      reportedAgentId?: string
     ): Extract<HomeTarget, { kind: 'agent-session' }> | null => {
       if (
         !serverId ||
@@ -818,9 +821,22 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       ) {
         return null;
       }
-      return { kind: 'agent-session', serverId, sessionId, directory, asid };
+      const agentId = recentSessionAgentId(
+        asid,
+        readSessionInfo(),
+        sessionsRef.current,
+        reportedAgentId
+      );
+      return {
+        kind: 'agent-session',
+        serverId,
+        sessionId,
+        directory,
+        asid,
+        ...(agentId ? { agentId } : {}),
+      };
     },
-    [serverId, sessionId]
+    [serverId, sessionId, readSessionInfo]
   );
   /**
    * An auto-title or explicit rename changes display metadata only. Updating a
@@ -828,14 +844,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * it ahead of targets the reader opened later.
    */
   const syncHomeRecentTitle = useCallback(
-    (asid: string, title: string, directory?: string) => {
+    (asid: string, title: string, directory?: string, agentId?: string) => {
       if (!hasRealSessionTitle({ asid, title })) return;
       const knownDirectory =
         directory ??
         (asid === activeAsidRef.current
           ? activeDirectoryRef.current
           : sessionsRef.current.find((session) => session.asid === asid)?.directory);
-      const target = homeTargetFor(asid, knownDirectory);
+      const target = homeTargetFor(asid, knownDirectory, agentId);
       if (target) void useHomeRecentsStore.getState().updateTitle(target, title);
     },
     [homeTargetFor]
@@ -843,7 +859,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const syncHomeRecentObservation = useCallback(
     (info: AgentSessionInfo, observedAtMs: number = Date.now()) => {
       if (!isRootSessionRecent(info)) return;
-      const target = homeTargetFor(info.asid, info.directory);
+      const target = homeTargetFor(info.asid, info.directory, info.agent_id);
       if (!target) return;
       void useHomeRecentsStore.getState().observeSession(target, {
         status: info.status,
@@ -1466,7 +1482,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 );
                 const observedAtMs = observation.observedAtMs;
                 for (const info of list) {
-                  syncHomeRecentTitle(info.asid, info.title, info.directory);
+                  syncHomeRecentTitle(info.asid, info.title, info.directory, info.agent_id);
                   if (observedAtMs !== undefined) syncHomeRecentObservation(info, observedAtMs);
                 }
                 void removeChildSessionRecents(useHomeRecentsStore.getState, serverId, list);
@@ -1833,7 +1849,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 if (info.parent_id)
                   setChildrenByParent((previous) => applyChildInfo(previous, info));
                 void removeChildSessionRecents(useHomeRecentsStore.getState, serverId, [info]);
-                syncHomeRecentTitle(info.asid, info.title, info.directory);
+                syncHomeRecentTitle(info.asid, info.title, info.directory, info.agent_id);
                 syncHomeRecentObservation(info);
                 if (info.directory) {
                   snapshotDirectoryRef.current = info.directory;
@@ -1846,7 +1862,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               setStagedRevert(info?.revert ?? null);
 
               if (ownsSnapshot() && info?.asid === asid && !info.deleted && info.directory) {
-                const target = homeTargetFor(asid, info.directory);
+                const target = homeTargetFor(asid, info.directory, info.agent_id);
                 if (target) {
                   const observedAt = Date.now();
                   // This is the only entry visit publisher: silent resyncs and
@@ -2241,7 +2257,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           if (info.deleted) {
             // A late inventory reply must not resurrect an explicitly deleted node.
             childrenRequestRef.current++;
-            const deletedTarget = homeTargetFor(info.asid, info.directory);
+            const deletedTarget = homeTargetFor(info.asid, info.directory, info.agent_id);
             if (deletedTarget) {
               void useHomeRecentsStore.getState().remove(deletedTarget);
               useHomeAttention.getState().observe(deletedTarget, [], Date.now());
@@ -2261,7 +2277,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             break;
           }
 
-          syncHomeRecentTitle(info.asid, info.title, info.directory);
+          syncHomeRecentTitle(info.asid, info.title, info.directory, info.agent_id);
 
           if (forActiveSession) {
             observedRuntimeRef.current = { serverId, asid: info.asid, runtime: info.runtime };
@@ -3538,7 +3554,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           ? (activeDirectoryRef.current ??
             (sessionInfo?.asid === asid ? sessionInfo.directory : undefined))
           : sessions.find((session) => session.asid === asid)?.directory;
-      const renameTarget = homeTargetFor(asid, renameDirectory);
+      const renameTarget = homeTargetFor(asid, renameDirectory, supplied?.agent_id);
 
       const apply = (value: string) => {
         setSessions((prev) =>
@@ -3586,7 +3602,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           .flat()
           .find((session) => session.asid === asid);
       // Capture identity before the optimistic navigation changes the active session.
-      const deletedTarget = homeTargetFor(asid, deletedInfo?.directory);
+      const deletedTarget = homeTargetFor(asid, deletedInfo?.directory, deletedInfo?.agent_id);
 
       const remaining = sessions.filter((session) => session.asid !== asid);
       setSessions(remaining);
