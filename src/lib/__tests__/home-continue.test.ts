@@ -65,6 +65,69 @@ test('first Home visit shows the same pane inventory as Classic without recent h
   });
 });
 
+test('Classic removes only connection shortcuts represented below, retaining distinct sessions', () => {
+  const recent = (key: string, target: HomeRecentEntry['target']): HomeRecentEntry => ({
+    key,
+    title: 'Same title',
+    atMs: 20,
+    target,
+  });
+  const currentPane = recent('current', {
+    kind: 'gateway-terminal',
+    serverId: 'a',
+    sessionId: 'routing',
+    paneId: 'p1',
+  });
+  const otherSession = recent('other-session', {
+    kind: 'gateway-terminal',
+    serverId: 'a',
+    sessionId: 'other',
+    paneId: 'p1',
+  });
+  const filteredPane = recent('plain-shell', {
+    kind: 'gateway-terminal',
+    serverId: 'a',
+    sessionId: 'routing',
+    paneId: 'p2',
+  });
+  const structured = recent('structured', {
+    kind: 'agent-session',
+    serverId: 'a',
+    sessionId: 'routing',
+    asid: 'conversation',
+    directory: '/work',
+  });
+  const ssh = recent('ssh', { kind: 'ssh-host', hostId: 'host' });
+  const shared = {
+    ...input,
+    paneMode: 'agents' as const,
+    hostIds: ['host'],
+    snapshots: { a: { ...snapshots.a!, sessionId: 'routing' } },
+    recents: [currentPane, otherSession, filteredPane, structured, ssh],
+  };
+  const classic = homeContinueEntries({ ...shared, connectionShortcutsElsewhere: true });
+  expect(classic.map((entry) => entry.key)).toEqual(['other-session', 'plain-shell', 'structured']);
+  expect(classic.map((entry) => entry.destination)).toEqual(
+    [otherSession, filteredPane, structured].map((entry) => ({
+      type: 'recent',
+      target: entry.target,
+    }))
+  );
+  const editorial = homeContinueEntries(shared);
+  expect(editorial.some((entry) => entry.destination.type === 'pane')).toBe(true);
+  expect(editorial.some((entry) => entry.key === 'ssh')).toBe(true);
+});
+
+test('Classic keeps a terminal recent when no connection pane inventory can replace it', () => {
+  const rows = homeContinueEntries({
+    ...input,
+    snapshots: {},
+    recents: [history],
+    connectionShortcutsElsewhere: true,
+  });
+  expect(rows.map((entry) => entry.key)).toEqual(['old']);
+});
+
 test('Terminal metadata uses the structured gateway agent label and never guesses from a title', () => {
   const rows = homeContinueEntries({
     ...input,
