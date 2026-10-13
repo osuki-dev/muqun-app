@@ -4842,6 +4842,10 @@ msgstr "重新整理輸出"
 msgid "Refresh terminal history"
 msgstr "重新整理終端機歷史記錄"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Refresh to see new saved output."
+msgstr "重新整理以查看新儲存的輸出"
+
 #: src/components/agent-worktree-sheet.tsx
 #: src/components/git-diff-view.tsx
 msgid "Refresh worktrees"
@@ -5214,10 +5218,6 @@ msgstr "已儲存的指令"
 msgid "Saved observations"
 msgstr "已儲存的觀察記錄"
 
-#: src/components/pane-history-sheet.tsx
-msgid "Saved observations, separate from the live terminal. New output appears only after Refresh."
-msgstr "這是已儲存的觀察記錄，與即時終端機分開顯示。只有在「重新整理」後才會顯示新輸出"
-
 #: src/app/commands.tsx
 msgid "Saved prompts"
 msgstr "已儲存的指令"
@@ -5230,6 +5230,7 @@ msgstr "已儲存的片段"
 msgid "Saved SSH host"
 msgstr "已儲存的 SSH 主機"
 
+#: src/app/commands.tsx
 #: src/app/pane-history.tsx
 #: src/components/pane-history-sheet.tsx
 msgid "Saved terminal history"
@@ -7195,7 +7196,3 @@ msgstr "你的訊息"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "你已配對的電腦"
-
-#: src/components/pane-history-sheet.tsx
-msgid "Refresh to see new saved output."
-msgstr "重新整理以查看新儲存的輸出。"

@@ -4842,6 +4842,10 @@ msgstr "刷新输出"
 msgid "Refresh terminal history"
 msgstr "刷新终端历史记录"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Refresh to see new saved output."
+msgstr "刷新以查看新保存的输出"
+
 #: src/components/agent-worktree-sheet.tsx
 #: src/components/git-diff-view.tsx
 msgid "Refresh worktrees"
@@ -5214,10 +5218,6 @@ msgstr "已保存的命令"
 msgid "Saved observations"
 msgstr "已保存的观察记录"
 
-#: src/components/pane-history-sheet.tsx
-msgid "Saved observations, separate from the live terminal. New output appears only after Refresh."
-msgstr "这是已保存的观察记录，与实时终端分开显示。只有在“刷新”后才会显示新输出"
-
 #: src/app/commands.tsx
 msgid "Saved prompts"
 msgstr "已保存的指令"
@@ -5230,6 +5230,7 @@ msgstr "已保存的片段"
 msgid "Saved SSH host"
 msgstr "已保存的 SSH 主机"
 
+#: src/app/commands.tsx
 #: src/app/pane-history.tsx
 #: src/components/pane-history-sheet.tsx
 msgid "Saved terminal history"
@@ -7195,7 +7196,3 @@ msgstr "你的消息"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "你已配对的电脑"
-
-#: src/components/pane-history-sheet.tsx
-msgid "Refresh to see new saved output."
-msgstr "刷新以查看新保存的输出。"

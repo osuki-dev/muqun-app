@@ -4842,6 +4842,10 @@ msgstr "รีเฟรชเอาต์พุต"
 msgid "Refresh terminal history"
 msgstr "รีเฟรชประวัติเทอร์มินัล"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Refresh to see new saved output."
+msgstr "รีเฟรชเพื่อดูผลลัพธ์ที่บันทึกใหม่"
+
 #: src/components/agent-worktree-sheet.tsx
 #: src/components/git-diff-view.tsx
 msgid "Refresh worktrees"
@@ -5214,10 +5218,6 @@ msgstr "คำสั่งที่บันทึกไว้"
 msgid "Saved observations"
 msgstr "ข้อมูลการสังเกตที่บันทึกไว้"
 
-#: src/components/pane-history-sheet.tsx
-msgid "Saved observations, separate from the live terminal. New output appears only after Refresh."
-msgstr "ข้อมูลการสังเกตที่บันทึกไว้ แยกจากเทอร์มินัลที่แสดงผลแบบเรียลไทม์ เอาต์พุตใหม่จะแสดงหลังจากรีเฟรชเท่านั้น"
-
 #: src/app/commands.tsx
 msgid "Saved prompts"
 msgstr "คำสั่งที่บันทึกไว้"
@@ -5230,6 +5230,7 @@ msgstr "ส่วนที่บันทึกไว้"
 msgid "Saved SSH host"
 msgstr "โฮสต์ SSH ที่บันทึกไว้"
 
+#: src/app/commands.tsx
 #: src/app/pane-history.tsx
 #: src/components/pane-history-sheet.tsx
 msgid "Saved terminal history"
@@ -7195,7 +7196,3 @@ msgstr "ข้อความของคุณ"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "คอมพิวเตอร์ที่คุณจับคู่ไว้"
-
-#: src/components/pane-history-sheet.tsx
-msgid "Refresh to see new saved output."
-msgstr "รีเฟรชเพื่อดูผลลัพธ์ที่บันทึกใหม่"

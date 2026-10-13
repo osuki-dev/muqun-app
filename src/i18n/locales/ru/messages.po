@@ -4842,6 +4842,10 @@ msgstr "Обновить вывод"
 msgid "Refresh terminal history"
 msgstr "Обновить историю терминала"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Refresh to see new saved output."
+msgstr "Обновите, чтобы увидеть новый сохранённый вывод"
+
 #: src/components/agent-worktree-sheet.tsx
 #: src/components/git-diff-view.tsx
 msgid "Refresh worktrees"
@@ -5214,10 +5218,6 @@ msgstr "Сохранённые команды"
 msgid "Saved observations"
 msgstr "Сохранённые наблюдения"
 
-#: src/components/pane-history-sheet.tsx
-msgid "Saved observations, separate from the live terminal. New output appears only after Refresh."
-msgstr "Сохранённые наблюдения, отдельно от терминала в реальном времени. Новый вывод появляется только после нажатия «Обновить»"
-
 #: src/app/commands.tsx
 msgid "Saved prompts"
 msgstr "Сохранённые задания"
@@ -5230,6 +5230,7 @@ msgstr "Сохранённый фрагмент"
 msgid "Saved SSH host"
 msgstr "Сохранённый SSH-хост"
 
+#: src/app/commands.tsx
 #: src/app/pane-history.tsx
 #: src/components/pane-history-sheet.tsx
 msgid "Saved terminal history"
@@ -7195,7 +7196,3 @@ msgstr "Ваше сообщение"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "Ваши привязанные компьютеры"
-
-#: src/components/pane-history-sheet.tsx
-msgid "Refresh to see new saved output."
-msgstr "Обновите, чтобы увидеть новый сохранённый вывод."

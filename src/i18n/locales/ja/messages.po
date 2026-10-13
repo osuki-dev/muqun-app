@@ -4842,6 +4842,10 @@ msgstr "出力を更新"
 msgid "Refresh terminal history"
 msgstr "ターミナル履歴を更新"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Refresh to see new saved output."
+msgstr "更新すると、新しく保存された出力が表示されます"
+
 #: src/components/agent-worktree-sheet.tsx
 #: src/components/git-diff-view.tsx
 msgid "Refresh worktrees"
@@ -5214,10 +5218,6 @@ msgstr "保存したコマンド"
 msgid "Saved observations"
 msgstr "保存済みの観測記録"
 
-#: src/components/pane-history-sheet.tsx
-msgid "Saved observations, separate from the live terminal. New output appears only after Refresh."
-msgstr "保存済みの観測記録で、ライブターミナルとは別の表示です。新しい出力は「更新」後にのみ表示されます"
-
 #: src/app/commands.tsx
 msgid "Saved prompts"
 msgstr "保存した指示"
@@ -5230,6 +5230,7 @@ msgstr "保存済みの区間"
 msgid "Saved SSH host"
 msgstr "保存済み SSH ホスト"
 
+#: src/app/commands.tsx
 #: src/app/pane-history.tsx
 #: src/components/pane-history-sheet.tsx
 msgid "Saved terminal history"
@@ -7195,7 +7196,3 @@ msgstr "あなたのメッセージ"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "ペアリング済みのコンピュータ"
-
-#: src/components/pane-history-sheet.tsx
-msgid "Refresh to see new saved output."
-msgstr "更新すると、新しく保存された出力が表示されます。"

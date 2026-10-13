@@ -4842,6 +4842,10 @@ msgstr "Ausgabe aktualisieren"
 msgid "Refresh terminal history"
 msgstr "Terminalverlauf aktualisieren"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Refresh to see new saved output."
+msgstr "Aktualisieren, um neu gespeicherte Ausgabe zu sehen"
+
 #: src/components/agent-worktree-sheet.tsx
 #: src/components/git-diff-view.tsx
 msgid "Refresh worktrees"
@@ -5214,10 +5218,6 @@ msgstr "Gespeicherte Befehle"
 msgid "Saved observations"
 msgstr "Gespeicherte Beobachtungen"
 
-#: src/components/pane-history-sheet.tsx
-msgid "Saved observations, separate from the live terminal. New output appears only after Refresh."
-msgstr "Gespeicherte Beobachtungen, getrennt vom Live-Terminal. Neue Ausgabe erscheint erst nach dem Aktualisieren"
-
 #: src/app/commands.tsx
 msgid "Saved prompts"
 msgstr "Gespeicherte Aufträge"
@@ -5230,6 +5230,7 @@ msgstr "Gespeicherter Abschnitt"
 msgid "Saved SSH host"
 msgstr "Gespeicherter SSH-Host"
 
+#: src/app/commands.tsx
 #: src/app/pane-history.tsx
 #: src/components/pane-history-sheet.tsx
 msgid "Saved terminal history"
@@ -7195,7 +7196,3 @@ msgstr "Deine Nachricht"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "Deine gekoppelten Computer"
-
-#: src/components/pane-history-sheet.tsx
-msgid "Refresh to see new saved output."
-msgstr "Aktualisieren, um neu gespeicherte Ausgabe zu sehen."
