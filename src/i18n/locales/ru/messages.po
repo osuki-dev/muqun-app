@@ -7195,3 +7195,7 @@ msgstr "Ваше сообщение"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "Ваши привязанные компьютеры"
+
+#: src/components/pane-history-sheet.tsx
+msgid "Refresh to see new saved output."
+msgstr "Обновите, чтобы увидеть новый сохранённый вывод."

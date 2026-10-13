@@ -7195,3 +7195,7 @@ msgstr "你的訊息"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "你已配對的電腦"
+
+#: src/components/pane-history-sheet.tsx
+msgid "Refresh to see new saved output."
+msgstr "重新整理以查看新儲存的輸出。"

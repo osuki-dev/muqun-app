@@ -7195,3 +7195,7 @@ msgstr "ข้อความของคุณ"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "คอมพิวเตอร์ที่คุณจับคู่ไว้"
+
+#: src/components/pane-history-sheet.tsx
+msgid "Refresh to see new saved output."
+msgstr "รีเฟรชเพื่อดูผลลัพธ์ที่บันทึกใหม่"

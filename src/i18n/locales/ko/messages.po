@@ -7195,3 +7195,7 @@ msgstr "내 메시지"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "페어링된 컴퓨터"
+
+#: src/components/pane-history-sheet.tsx
+msgid "Refresh to see new saved output."
+msgstr "새로 저장된 출력을 보려면 새로고침하세요."
