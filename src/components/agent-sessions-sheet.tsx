@@ -57,6 +57,7 @@ import {
 } from '@/lib/agent-session';
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { FontedTextInput } from '@/components/fonted-text-input';
+import { ListLoadMoreFooter } from '@/components/list-load-more-footer';
 
 const STAGGERED_ROWS = 8;
 
@@ -122,6 +123,14 @@ export interface AgentSessionsSheetProps {
   /** Open the project sheet, where the reader switches project or opens a path. */
   onOpenProjects?: () => void;
   onClose: () => void;
+  remoteSearch?: boolean;
+  preserveOrder?: boolean;
+  loading?: boolean;
+  loadFailed?: boolean;
+  hasMore?: boolean;
+  onLoadMore?: () => void;
+  onSearchQueryChange?: (query: string) => void;
+  onDirectoryFilterChange?: (directory: string | undefined) => void;
 }
 
 export const AgentSessionsSheet = memo(function AgentSessionsSheet({
@@ -138,6 +147,14 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
   canMoveSession,
   onOpenProjects,
   onClose,
+  remoteSearch = false,
+  preserveOrder = false,
+  loading = false,
+  loadFailed = false,
+  hasMore = false,
+  onLoadMore,
+  onSearchQueryChange,
+  onDirectoryFilterChange,
 }: AgentSessionsSheetProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -169,9 +186,9 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
         roots.push(session);
       }
     }
-    roots.sort((a, b) => (b.updated_ms || 0) - (a.updated_ms || 0));
+    if (!preserveOrder) roots.sort((a, b) => (b.updated_ms || 0) - (a.updated_ms || 0));
     return { rootSessions: roots, subagentMap: subs };
-  }, [sessions]);
+  }, [sessions, preserveOrder]);
 
   const projects = useMemo(() => {
     const map = new Map<string, { id: string; name: string; canonical?: string }>();
@@ -231,7 +248,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
       });
     }
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return list;
+    if (!q || remoteSearch) return list;
     return list.filter((root) => {
       const hit =
         root.title?.toLowerCase().includes(q) ||
@@ -246,7 +263,15 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
           sub.asid.toLowerCase().includes(q)
       );
     });
-  }, [rootSessions, subagentMap, searchQuery, workspaceFilter, activeDirectory, projects]);
+  }, [
+    rootSessions,
+    subagentMap,
+    searchQuery,
+    workspaceFilter,
+    activeDirectory,
+    projects,
+    remoteSearch,
+  ]);
 
   const [nowMs] = useState(() => Date.now());
   const formatTime = (ms?: number) => {
@@ -527,7 +552,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
     <SheetScene
       testID="agent-sessions-sheet"
       title={t`Sessions`}
-      caption={t`${sessions.length} on this host`}
+      caption={preserveOrder ? undefined : t`${sessions.length} on this host`}
       header={
         <>
           {/* Where the reader is, and the way to somewhere else. This sheet is
@@ -550,14 +575,22 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
             accessibilityLabel={t`Search sessions`}
             placeholder={t`Search sessions`}
             value={searchQuery}
-            onChangeText={setSearchQuery}
+            onChangeText={(query) => {
+              setSearchQuery(query);
+              onSearchQueryChange?.(query);
+            }}
           />
           {segments.length > 1 ? (
             <SettingsSegmented
               testID="agent-sessions-project-filter"
               options={segments}
               value={workspaceFilter}
-              onChange={setWorkspaceFilter}
+              onChange={(filter) => {
+                setWorkspaceFilter(filter);
+                onDirectoryFilterChange?.(
+                  filter === CURRENT_WORKSPACE ? activeDirectory : undefined
+                );
+              }}
             />
           ) : null}
         </>
@@ -569,7 +602,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
         contentContainerStyle={sheetSceneStyles.scrollerContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
-        {filteredRoots.length === 0 ? (
+        {filteredRoots.length === 0 && !loading && !loadFailed ? (
           <View style={styles.empty}>
             <Text variant="caption" color={theme.colors.textMuted} style={styles.emptyText}>
               {searchQuery
@@ -648,6 +681,18 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
             );
           })
         )}
+        {loadFailed ? (
+          <Text variant="caption" color={theme.colors.danger}>
+            {t`Could not load sessions`}
+          </Text>
+        ) : null}
+        <ListLoadMoreFooter
+          hasMore={hasMore || loading || loadFailed}
+          loading={loading}
+          onLoadMore={onLoadMore}
+          buttonLabel={loadFailed ? t`Retry` : undefined}
+          testID="agent-sessions-load-more"
+        />
         <SheetSceneFooter bottomInset={insets.bottom} />
       </ScrollView>
     </SheetScene>

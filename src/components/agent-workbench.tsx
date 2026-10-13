@@ -67,7 +67,7 @@ import {
   sessionWorktreeName,
   listAgentWorktrees,
   listAgentSessions,
-  listAgentSessionsObserved,
+  listAgentSessionPage,
   sameDirectory,
   createAgentSession,
   sendAgentPrompt,
@@ -552,6 +552,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     sessionsRef.current = sessions;
   }, [sessions]);
   const sessionListRequestRef = useRef(0);
+  const sessionListAbortRef = useRef<AbortController | null>(null);
+  useEffect(() => () => sessionListAbortRef.current?.abort(), [serverId, sessionId]);
   const workspaceSelectionRef = useRef(0);
   const [availableAgents, setAvailableAgents] = useState<ModeInfo[]>([]);
   /**
@@ -1311,6 +1313,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       const directory =
         requestedDirectory === undefined ? activeDirectoryRef.current : requestedDirectory;
       const request = ++sessionListRequestRef.current;
+      sessionListAbortRef.current?.abort();
+      const controller = new AbortController();
+      sessionListAbortRef.current = controller;
       const capturedOwner: AgentWorkbenchOwner = {
         serverId,
         sessionId,
@@ -1332,18 +1337,35 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               // that reads this list sorts by recency: `desc` is newest first, so
               // what the limit cuts is the oldest.
               const agentId = listAgentIdRef.current;
-              const observation = await listAgentSessionsObserved(sessionId, {
-                roots: true,
-                limit: SESSION_LIST_LIMIT,
-                order: 'desc',
-                ...(directory ? { directory } : {}),
-                ...(agentId ? { agentId } : {}),
-              });
+              const observation = await listAgentSessionPage(
+                sessionId,
+                {
+                  roots: true,
+                  limit: SESSION_LIST_LIMIT,
+                  order: 'desc',
+                  ...(directory ? { directory } : {}),
+                  ...(agentId ? { agentId } : {}),
+                },
+                {
+                  serverId,
+                  capabilities: useServerCapabilities.getState().byServer[serverId],
+                  features: useAgents
+                    .getState()
+                    .index.servers[serverId]?.agents?.agents.find((agent) => agent.id === agentId)
+                    ?.features,
+                  signal: controller.signal,
+                }
+              );
               const list = observation.sessions;
               if (!ownsList()) return;
               setIsOffline(false);
               if (list) {
-                if (!directory) hostListCompleteRef.current = list.length < SESSION_LIST_LIMIT;
+                if (!directory)
+                  hostListCompleteRef.current =
+                    observation.authoritative &&
+                    (observation.paginated
+                      ? observation.nextCursor === null
+                      : list.length < SESSION_LIST_LIMIT);
                 const fresh = freshSessionRef.current;
                 setSessions((previous) => {
                   const local = previous.find((item) => item.asid === fresh);
@@ -1422,9 +1444,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const listedScopeRef = useRef<string | undefined>(undefined);
   /** The agent the listing in hand was asked for; another agent is another list. */
   const listedAgentRef = useRef<string | undefined>(undefined);
+  const listedOwnerRef = useRef<string | undefined>(undefined);
   useEffect(() => {
     const scope = activeDirectory ?? '';
-    if (listedScopeRef.current !== undefined && listedAgentRef.current === listAgentId) {
+    const owner = JSON.stringify([serverId, sessionId]);
+    if (
+      listedOwnerRef.current === owner &&
+      listedScopeRef.current !== undefined &&
+      listedAgentRef.current === listAgentId
+    ) {
       if (listedScopeRef.current === scope) return;
       // A directory that arrived from the session we just opened is a directory
       // the listing already covers -- but only when the listing in hand is the
@@ -1446,8 +1474,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     }
     listedScopeRef.current = scope;
     listedAgentRef.current = listAgentId;
+    listedOwnerRef.current = owner;
     void refreshSessions(scope || undefined).catch(() => {});
-  }, [activeDirectory, listAgentId, refreshSessions]);
+  }, [activeDirectory, listAgentId, refreshSessions, serverId, sessionId]);
 
   const handleTimelineScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -4631,6 +4660,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       catalogAgentId,
       activeAsid,
       sessions: allSessions,
+      listAgentId,
       childrenByParent,
       knownProjects,
       activeDirectory,
@@ -4658,6 +4688,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     sessionId,
     serverId,
     activeAgentId,
+    listAgentId,
     catalogAgentId,
     activeAsid,
     allSessions,

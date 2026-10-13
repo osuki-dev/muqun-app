@@ -1,5 +1,10 @@
 import { fetch as nitroFetch } from 'react-native-nitro-fetch';
 import { agentSessionListQuery, type ListAgentSessionsQuery } from './agent-session-list-query';
+import {
+  parseAgentSessionPage,
+  supportsAgentSessionPages,
+  type AgentSessionPage,
+} from './agent-session-page';
 import { TextDecoder } from 'react-native-nitro-text-decoder';
 import {
   configuredGatewayServerId,
@@ -72,6 +77,7 @@ import {
   parseWorktreeList,
   sortTimeline,
   type AgentCatalog,
+  type AgentFeatures,
   type AgentContextUsage,
   type AgentProject,
   type AgentDomainEvent,
@@ -260,6 +266,7 @@ export interface ObservedAgentSessionList {
   sessions: AgentSessionInfo[];
   /** Last successful Gateway confirmation; cached fallbacks keep their original time. */
   observedAtMs?: number;
+  authoritative?: boolean;
 }
 
 /**
@@ -275,7 +282,8 @@ export interface ObservedAgentSessionList {
  */
 export async function listAgentSessionsObserved(
   sessionId?: string,
-  query?: ListAgentSessionsQuery
+  query?: ListAgentSessionsQuery,
+  signal?: AbortSignal
 ): Promise<ObservedAgentSessionList> {
   const search = agentSessionListQuery(query);
   const path = sessionId
@@ -283,10 +291,12 @@ export async function listAgentSessionsObserved(
     : `/api/agent-sessions${search}`;
   // The query is part of the key: a listing scoped to one workspace is not the
   // same resource as the unscoped one, and they must not share an ETag.
-  const cacheKey = buildAgentCacheKey('sessions', null, sessionId, search || 'all');
+  const url = gatewayUrl(path);
+  const headers: Record<string, string> = gatewayAuthHeaders();
+  const cacheKey = buildAgentCacheKey('sessions', gatewayUrl(''), sessionId, search || 'all');
   const cached = getCachedEntry<AgentSessionInfo[]>(cacheKey);
 
-  return dedupeInFlight(`GET observed ${path}`, async () => {
+  const read = async () => {
     try {
       if (!isGatewayConfigured()) {
         return {
@@ -294,13 +304,13 @@ export async function listAgentSessionsObserved(
           ...(cached ? { observedAtMs: cached.timestamp } : {}),
         };
       }
-      const headers: Record<string, string> = gatewayAuthHeaders();
       if (cached?.etag) headers['If-None-Match'] = cached.etag;
 
-      const res = await gatewayFetch(gatewayUrl(path), { method: 'GET', headers });
+      const res = await gatewayFetch(url, { method: 'GET', headers, signal });
+      if (signal?.aborted) throw new Error('Session list cancelled');
       if (res.status === 304 && cached) {
         touchCacheEntryTimestamp(cacheKey);
-        return { sessions: cached.data, observedAtMs: Date.now() };
+        return { sessions: cached.data, observedAtMs: Date.now(), authoritative: true };
       }
       if (!res.ok) {
         return {
@@ -311,15 +321,62 @@ export async function listAgentSessionsObserved(
 
       const etag = res.headers.get('etag') ?? undefined;
       const list = parseAgentSessionList(envelopeData(await res.json()));
+      if (signal?.aborted) throw new Error('Session list cancelled');
       setCachedEntry(cacheKey, list, etag);
-      return { sessions: list, observedAtMs: Date.now() };
+      return { sessions: list, observedAtMs: Date.now(), authoritative: true };
     } catch {
       return {
         sessions: cached?.data ?? [],
         ...(cached ? { observedAtMs: cached.timestamp } : {}),
       };
     }
-  });
+  };
+  return signal ? read() : dedupeInFlight(`GET observed ${url}`, read);
+}
+
+/** Provider-scoped pagination, with the legacy array reader for unsupported gateways. */
+export async function listAgentSessionPage(
+  sessionId: string | undefined,
+  query: ListAgentSessionsQuery,
+  options: {
+    serverId: string;
+    capabilities?: readonly string[];
+    features?: AgentFeatures;
+    signal?: AbortSignal;
+  }
+): Promise<AgentSessionPage> {
+  if (configuredGatewayServerId() !== options.serverId || options.signal?.aborted)
+    throw new Error('Session list owner changed');
+  if (!supportsAgentSessionPages(options.capabilities, options.features, query.agentId)) {
+    // A provider cursor is never sent to the legacy merged inventory.
+    const { cursor: _cursor, ...legacyQuery } = query;
+    const result = await listAgentSessionsObserved(sessionId, legacyQuery, options.signal);
+    return {
+      ...result,
+      nextCursor: null,
+      previousCursor: null,
+      paginated: false,
+      authoritative: result.authoritative === true,
+    };
+  }
+  const path = `/api/agent-sessions/page${agentSessionListQuery(query)}`;
+  const url = gatewayUrl(path);
+  const headers = gatewayAuthHeaders();
+  const cacheKey = buildAgentCacheKey('sessions', gatewayUrl(''), sessionId, `page:${path}`);
+  const cached = getCachedEntry<AgentSessionPage>(cacheKey);
+  if (cached?.etag) headers['If-None-Match'] = cached.etag;
+  const response = await gatewayFetch(url, { method: 'GET', headers, signal: options.signal });
+  if (options.signal?.aborted) throw new Error('Session page cancelled');
+  if (response.status === 304 && cached) {
+    touchCacheEntryTimestamp(cacheKey);
+    return { ...cached.data, authoritative: true, observedAtMs: Date.now() };
+  }
+  if (!response.ok) throw new Error('Session page unavailable');
+  const page = parseAgentSessionPage(envelopeData(await response.json()));
+  if (options.signal?.aborted) throw new Error('Session page cancelled');
+  const result = { ...page, paginated: true, authoritative: true, observedAtMs: Date.now() };
+  setCachedEntry(cacheKey, result, response.headers.get('etag') ?? undefined);
+  return result;
 }
 
 export async function listAgentSessions(

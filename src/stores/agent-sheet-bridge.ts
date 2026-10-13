@@ -58,6 +58,8 @@ export interface AgentSheetSnapshot {
    * gateway with discovery, absent on one without (it has no parameter).
    */
   catalogAgentId?: string;
+  /** Exact provider owner of the workbench session list, including initial navigation intent. */
+  listAgentId?: string;
   /** The agent session the workbench is showing, if it has one. */
   activeAsid?: string;
   sessions: readonly AgentSessionInfo[];
