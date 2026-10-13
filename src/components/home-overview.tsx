@@ -1151,6 +1151,7 @@ export function HomeOverview({
         style={[styles.page, { backgroundColor: background(theme.colors.background) }]}>
         <ThemeArtwork
           slot="home.wallpaper"
+          waitForTransition
           fallbackSlot="shell.wallpaper"
           effectsEnabled={!hasDevEffectOverride}
         />
@@ -1516,6 +1517,7 @@ export function HomeOverview({
       style={[styles.page, { backgroundColor: background(theme.colors.background) }]}>
       <ThemeArtwork
         slot="home.wallpaper"
+        waitForTransition
         fallbackSlot="shell.wallpaper"
         effectsEnabled={!hasDevEffectOverride}
       />

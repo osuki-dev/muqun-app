@@ -8,7 +8,7 @@ import { resolveThemeImage } from '@/theme/resolve';
 import type { ThemeManifest, ThemeSlot } from '@/theme/schema';
 import { SkiaAmbientEffect } from '@/components/skia-ambient-effect';
 import { isRenderableThemeAsset } from '@/theme/renderable-asset';
-import { useThemeRenderReady } from '@/hooks/use-theme-render-ready';
+import { ThemeRenderReadiness } from '@/hooks/use-theme-render-ready';
 
 /**
  * What a shell surface paints when the pack has no `shell.wallpaper` of its own.
@@ -50,12 +50,15 @@ export function ThemeArtwork({
   banner = false,
   opacityLimit = 1,
   effectsEnabled = true,
+  waitForTransition = false,
 }: {
   slot: ThemeSlot;
   fallbackSlot?: ThemeSlot;
   banner?: boolean;
   opacityLimit?: number;
   effectsEnabled?: boolean;
+  /** Opt in only for the visible route's background, never a drawer or decoration. */
+  waitForTransition?: boolean;
 }) {
   const { resolvedMode } = useThemeMode();
   const { theme: active, assets } = useEffectiveCustomTheme();
@@ -70,6 +73,7 @@ export function ThemeArtwork({
       banner={banner}
       opacityLimit={opacityLimit}
       effectsEnabled={effectsEnabled}
+      waitForTransition={waitForTransition}
     />
   );
 }
@@ -85,6 +89,7 @@ export function ThemeArtworkLayer({
   opacityLimit = 1,
   viewport,
   effectsEnabled = true,
+  waitForTransition = false,
 }: {
   manifest: ThemeManifest;
   assets: Record<string, string>;
@@ -97,6 +102,7 @@ export function ThemeArtworkLayer({
   viewport?: 'compact' | 'regular';
   /** Suppress a duplicate effect when another visible layer already owns it. */
   effectsEnabled?: boolean;
+  waitForTransition?: boolean;
 }) {
   const { width } = useWindowDimensions();
   const [failed, setFailed] = useState<string | null>(null);
@@ -104,10 +110,6 @@ export function ThemeArtworkLayer({
   const size = viewport ?? (width >= 768 ? 'regular' : 'compact');
   const image = resolveThemeImage(manifest, slot, mode, size, true, fallbackSlot);
   const uri = image ? assets[image.asset] : undefined;
-  useThemeRenderReady(
-    !banner && !viewport && isRenderableThemeAsset(uri) ? uri : undefined,
-    failed === uri || displayed === uri
-  );
   if (!image || !isRenderableThemeAsset(uri) || failed === uri) return null;
   const style = [StyleSheet.absoluteFill, { opacity: Math.min(image.opacity ?? 1, opacityLimit) }];
   return (
@@ -116,6 +118,9 @@ export function ThemeArtworkLayer({
       accessible={false}
       importantForAccessibility="no-hide-descendants"
       style={banner ? styles.banner : StyleSheet.absoluteFill}>
+      {waitForTransition && !banner && !viewport ? (
+        <ThemeRenderReadiness source={uri} ready={displayed === uri} />
+      ) : null}
       {image.fit === 'tile' && !banner ? (
         // expo-image explicitly does not support repeat. Use RN's native tile path
         // only for this fit mode; both paths consume the same validated local file.
