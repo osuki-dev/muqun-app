@@ -39,6 +39,7 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { SNAP_DUST_EFFECT, SnapDust } from '@/components/launch-snap';
 import { useAppliedCustomTheme } from '@/components/theme-candidate';
@@ -60,7 +61,8 @@ import {
 } from '@/lib/ink-bloom-shader';
 import { useSharedSkiaImage } from '@/lib/skia-image-cache';
 import { recoverWithSync } from '@/lib/compiler-safe-control-flow';
-import { containedImageRect, coveredImageRect } from '@/lib/hero-feather';
+import { containedImageRect, coveredImageRect, type FeatherSize } from '@/lib/hero-feather';
+import { launchArtworkLanding } from '@/lib/launch-artwork-landing';
 import {
   heroEdgeAmount,
   HERO_EDGE_REST_FRACTION,
@@ -308,6 +310,7 @@ export function LaunchSceneIntro({
   const nativeMirror = useSplashMirror();
   const launchArtwork = useLaunchArtwork();
   const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const artworkBox = Math.min(width * LAUNCH_ARTWORK_WIDTH_FRACTION, LAUNCH_ARTWORK_MAX_WIDTH);
   // Native keeps the image from process startup. A theme applied later must
   // still use its own launch artwork when this scene mounts again.
@@ -325,6 +328,11 @@ export function LaunchSceneIntro({
         },
       }
     : nativeMirror;
+  // Decode this launch picture itself: an explicit launch override can have a
+  // different aspect ratio from Home. Compiled drawables keep the mirror view.
+  const heroUri = mirror.logo.source?.uri;
+  const heroDrawable = mirror.hasLogo && isMeasurableHeroUri(heroUri);
+  const heroImage = useSharedSkiaImage(heroDrawable ? heroUri : null);
   const packBackground = useLaunchBackground();
   const { theme: pack, assets } = useAppliedCustomTheme();
   const theme = useThemeTokens();
@@ -344,29 +352,32 @@ export function LaunchSceneIntro({
   // after the opening starts.
   const latestHomeRect = useRef<LaunchArtworkRect | null>(null);
   const startedAt = useRef(0);
-  const [homeRect, setHomeRect] = useState<LaunchArtworkRect | null>(null);
+  const [landing, setLanding] = useState<{
+    home: LaunchArtworkRect | null;
+    intrinsic: FeatherSize | null;
+  } | null>(null);
+  const captureLanding = useEffectEvent((rect: LaunchArtworkRect | null) => {
+    if (phase !== 'visible' || reduced) return;
+    if (startedAt.current > 0 && Date.now() - startedAt.current > beats.hero.at) return;
+    setLanding({
+      home: rect,
+      intrinsic: heroImage ? { width: heroImage.width(), height: heroImage.height() } : null,
+    });
+  });
   useEffect(
     () =>
       subscribeLaunchArtworkRect((rect) => {
         latestHomeRect.current = rect;
-        // A cold image decode may complete after the native handover. Accept
-        // it before departure, but never redirect an artwork already in flight.
-        if (
-          phase === 'visible' &&
-          !reduced &&
-          startedAt.current > 0 &&
-          Date.now() - startedAt.current <= beats.hero.at
-        ) {
-          setHomeRect(rect);
-        }
+        captureLanding(rect);
       }),
-    [phase, reduced, beats.hero.at]
+    []
   );
   // Capture before scheduling travel. The animation is armed only after this
   // snapshot has committed, so a delayed JS render cannot redirect it mid-flight.
   useEffect(() => {
-    if (phase === 'visible' && !reduced) setHomeRect(latestHomeRect.current);
-  }, [phase, reduced]);
+    captureLanding(latestHomeRect.current);
+  }, [phase, reduced, heroImage]);
+  const homeRect = landing?.home ?? null;
 
   // The picture's box on the launch screen the OS drew. The mirror centres it
   // in the window, so this is a size rather than a rectangle.
@@ -394,31 +405,24 @@ export function LaunchSceneIntro({
     width: heroBox.width,
     height: heroBox.height,
   };
-  // Exact matches can land without a dissolve. Cropped or independent artwork
-  // still travels toward Home, then dissolves into its actual composition.
-  const canLand = Boolean(
-    !reduced &&
-    homeRect &&
-    !homeRect.cropped &&
-    homeRect.source === mirror.logo.source?.uri &&
-    homeRect.intrinsicWidth &&
-    homeRect.intrinsicHeight
-  );
-  const canTravel = !reduced && Boolean(homeRect);
-  const landingCentre =
-    canTravel && homeRect
-      ? { x: homeRect.x + homeRect.width / 2, y: homeRect.y + homeRect.height / 2 }
-      : launchCentre;
-  const launchDrawing = containedImageRect(heroBox, {
-    width: homeRect?.intrinsicWidth ?? 0,
-    height: homeRect?.intrinsicHeight ?? 0,
+  // Use this image's decoded contain bounds, even when Home draws a different
+  // or masked image. The whole figure lands inside Home's visible safe area.
+  const destination = launchArtworkLanding({
+    box: heroBox,
+    intrinsic: landing?.intrinsic ?? null,
+    source: heroUri,
+    home: reduced ? null : homeRect,
+    viewport: {
+      x: insets.left,
+      y: insets.top,
+      width: width - insets.left - insets.right,
+      height: height - insets.top - insets.bottom,
+    },
+    centre: launchCentre,
   });
-  const landingScale =
-    canLand && homeRect
-      ? homeRect.width / launchDrawing.width
-      : canTravel && homeRect
-        ? Math.min(homeRect.width / heroBox.width, homeRect.height / heroBox.height)
-        : 1;
+  const canLand = destination.exact;
+  const landingCentre = destination.centre;
+  const landingScale = destination.scale;
 
   const paper = packBackground ?? theme.colors.background;
   const handoffPaper = useSharedValue(1);
@@ -485,12 +489,6 @@ export function LaunchSceneIntro({
   // Whether the world is drawn by the canvas -- everything but the iris, which
   // is the fallback built from views for a painting that came too late.
   const canvasWorld = INK_BLOOM_EFFECT !== null && world.kind !== 'iris';
-  // The picture, decoded for the canvas. Only a file the canvas can open: a
-  // compiled launch drawable stays the splash mirror's view throughout, and
-  // that launch ends on the cross-fade.
-  const heroUri = mirror.logo.source?.uri;
-  const heroDrawable = mirror.hasLogo && isMeasurableHeroUri(heroUri);
-  const heroImage = useSharedSkiaImage(heroDrawable ? heroUri : null);
   // The exit is planned as the snap whenever motion is allowed and the canvas
   // draws the whole picture; otherwise it is the cross-fade from the start.
   const snapAhead =
