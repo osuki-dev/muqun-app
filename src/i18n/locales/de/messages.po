@@ -27,10 +27,6 @@ msgstr "„{0}“ hat Änderungen, die nicht committet sind. Beim Entfernen gehe
 msgid "“{args}” was not sent: a skill takes no arguments."
 msgstr "„{args}“ wurde nicht gesendet: Ein Skill nimmt keine Argumente"
 
-#: src/components/agent-sessions-sheet.tsx
-msgid "“{title}” and any subagent sessions under it are removed from the host. This cannot be undone."
-msgstr "„{title}“ und alle darunterliegenden Subagent-Sitzungen werden vom Host entfernt. Das lässt sich nicht rückgängig machen"
-
 #: src/components/home-recent-sessions.tsx
 msgid "“{title}” and its conversation history will be deleted in {provider} on {computer}. The service may also delete its subagent sessions. This cannot be undone."
 msgstr "„{title}“ und sein Gesprächsverlauf werden in {provider} auf {computer} gelöscht. Der Dienst kann auch zugehörige Unteragent-Sitzungen löschen. Dies kann nicht rückgängig gemacht werden"
@@ -1912,6 +1908,10 @@ msgstr "App-Sperre konnte nicht aktiviert werden"
 msgid "Could not follow this task on {computer}"
 msgstr "Diese Aufgabe auf {computer} konnte nicht verfolgt werden"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not fork"
+msgstr "Verzweigen fehlgeschlagen"
+
 #: src/components/ssh-host-form.tsx
 msgid "Could not generate a key"
 msgstr "Schlüssel konnte nicht erzeugt werden"
@@ -2314,6 +2314,10 @@ msgstr "Standardmäßig theme.json im Stammverzeichnis des Repositorys"
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "Löschen"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Delete “{title}”?"
+msgstr "„{title}“ löschen?"
 
 #: src/components/changes-sheet.tsx
 msgid "Delete {discardName}?"
@@ -2813,6 +2817,10 @@ msgstr "Adresse der Schriftdatei"
 #: src/components/settings-appearance.tsx
 msgid "Font, {fontValue}"
 msgstr "Schrift, {fontValue}"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Fork session"
+msgstr "Sitzung verzweigen"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"

@@ -27,10 +27,6 @@ msgstr "« {0} » contient des modifications non validées. Le supprimer les jet
 msgid "“{args}” was not sent: a skill takes no arguments."
 msgstr "« {args} » n’a pas été envoyé : une compétence ne prend pas d’arguments"
 
-#: src/components/agent-sessions-sheet.tsx
-msgid "“{title}” and any subagent sessions under it are removed from the host. This cannot be undone."
-msgstr "« {title} » et les sessions de sous-agent qu’elle contient sont supprimées de l’hôte. C’est irréversible"
-
 #: src/components/home-recent-sessions.tsx
 msgid "“{title}” and its conversation history will be deleted in {provider} on {computer}. The service may also delete its subagent sessions. This cannot be undone."
 msgstr "« {title} » et son historique de conversation seront supprimés dans {provider} sur {computer}. Le service peut aussi supprimer ses sessions de sous-agents. Cette action est irréversible"
@@ -1912,6 +1908,10 @@ msgstr "Impossible d’activer le verrouillage de l’app"
 msgid "Could not follow this task on {computer}"
 msgstr "Impossible de suivre cette tâche sur {computer}"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not fork"
+msgstr "Impossible de créer la branche"
+
 #: src/components/ssh-host-form.tsx
 msgid "Could not generate a key"
 msgstr "Impossible de générer une clé"
@@ -2314,6 +2314,10 @@ msgstr "Par défaut, theme.json à la racine du dépôt"
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "Supprimer"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Delete “{title}”?"
+msgstr "Supprimer « {title} » ?"
 
 #: src/components/changes-sheet.tsx
 msgid "Delete {discardName}?"
@@ -2813,6 +2817,10 @@ msgstr "Adresse du fichier de police"
 #: src/components/settings-appearance.tsx
 msgid "Font, {fontValue}"
 msgstr "Police, {fontValue}"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Fork session"
+msgstr "Créer une branche de la session"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"

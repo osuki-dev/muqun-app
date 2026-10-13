@@ -27,10 +27,6 @@ msgstr "“{0}” có thay đổi chưa commit. Xóa nó là bỏ luôn những 
 msgid "“{args}” was not sent: a skill takes no arguments."
 msgstr "“{args}” không được gửi: kỹ năng không nhận đối số"
 
-#: src/components/agent-sessions-sheet.tsx
-msgid "“{title}” and any subagent sessions under it are removed from the host. This cannot be undone."
-msgstr "“{title}” và các phiên subagent bên dưới sẽ bị xóa khỏi máy chủ. Không thể hoàn tác"
-
 #: src/components/home-recent-sessions.tsx
 msgid "“{title}” and its conversation history will be deleted in {provider} on {computer}. The service may also delete its subagent sessions. This cannot be undone."
 msgstr "“{title}” và lịch sử cuộc hội thoại này sẽ bị xóa trong {provider} trên {computer}. Dịch vụ cũng có thể xóa các phiên tác nhân phụ của nó. Không thể hoàn tác thao tác này"
@@ -1912,6 +1908,10 @@ msgstr "Không thể bật Khóa ứng dụng"
 msgid "Could not follow this task on {computer}"
 msgstr "Không thể theo dõi tác vụ này trên {computer}"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not fork"
+msgstr "Không thể tạo nhánh"
+
 #: src/components/ssh-host-form.tsx
 msgid "Could not generate a key"
 msgstr "Không thể tạo khóa"
@@ -2314,6 +2314,10 @@ msgstr "Mặc định là theme.json ở thư mục gốc của kho mã"
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "Xóa"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Delete “{title}”?"
+msgstr "Xóa “{title}”?"
 
 #: src/components/changes-sheet.tsx
 msgid "Delete {discardName}?"
@@ -2813,6 +2817,10 @@ msgstr "Địa chỉ tệp phông chữ"
 #: src/components/settings-appearance.tsx
 msgid "Font, {fontValue}"
 msgstr "Phông chữ, {fontValue}"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Fork session"
+msgstr "Tạo nhánh phiên"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"

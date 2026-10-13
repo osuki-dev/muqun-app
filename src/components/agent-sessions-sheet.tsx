@@ -56,6 +56,7 @@ import {
   type ModelRef,
 } from '@/lib/agent-session';
 import { AGENT_TYPE } from '@/constants/agent-type';
+import type { AgentSessionAction } from '@/lib/agent-runtime-controls';
 import { FontedTextInput } from '@/components/fonted-text-input';
 import { ListLoadMoreFooter } from '@/components/list-load-more-footer';
 
@@ -99,6 +100,8 @@ export interface AgentSessionsSheetProps {
   onRenameSession?: (asid: string, title: string) => void;
   /** Delete one session, after the confirmation this sheet asks for. */
   onDeleteSession?: (asid: string) => void;
+  onForkSession?: (session: AgentSessionInfo) => void;
+  canMutateSession?: (action: AgentSessionAction, session: AgentSessionInfo) => boolean;
   /**
    * Open the worktree sheet on one session.
    *
@@ -143,6 +146,8 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
   onSelectSession,
   onRenameSession,
   onDeleteSession,
+  onForkSession,
+  canMutateSession,
   onMoveSession,
   canMoveSession,
   onOpenProjects,
@@ -413,15 +418,15 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
 
   const menuItems = (session: AgentSessionInfo): AgentActionMenuItem[] => {
     const title = sessionTitleOr(session, t`Untitled session`);
-    const items: AgentActionMenuItem[] = [
-      {
+    const items: AgentActionMenuItem[] = [];
+    if (onRenameSession && (canMutateSession?.('rename', session) ?? true))
+      items.push({
         id: 'rename',
         label: t`Rename`,
         Icon: PencilLine,
         onPress: () => startRename(session),
         testID: `agent-session-rename-${session.asid}`,
-      },
-    ];
+      });
     // Bound out of the field rather than asserted: there is no `!` on anything
     // that came off the wire in this surface.
     const parent = session.parent_id;
@@ -436,6 +441,19 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
           onClose();
         },
         testID: `agent-session-open-parent-${session.asid}`,
+      });
+    }
+    if (onForkSession && canMutateSession?.('fork', session)) {
+      items.push({
+        id: 'fork',
+        label: t`Fork session`,
+        Icon: GitFork,
+        onPress: () => {
+          setMenuAsid(null);
+          onForkSession(session);
+          onClose();
+        },
+        testID: `agent-session-fork-${session.asid}`,
       });
     }
     if (onMoveSession && (canMoveSession?.(session) ?? true)) {
@@ -458,40 +476,42 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
         testID: `agent-session-worktree-${session.asid}`,
       });
     }
-    items.push({
-      id: 'delete',
-      label: t`Delete`,
-      Icon: Trash2,
-      tone: 'danger',
-      // The one destructive thing on this sheet, asked in the row. A row that
-      // deletes on one tap is a row that deletes by accident, and what goes
-      // with it is not only this session: OpenCode removes its children too.
-      confirm: {
-        label: t`Tap again to delete`,
-        detail: t`“${title}” and any subagent sessions under it are removed from the host. This cannot be undone.`,
-      },
-      onPress: () => {
-        setMenuAsid(null);
-        onDeleteSession?.(session.asid);
-      },
-      testID: `agent-session-delete-${session.asid}`,
-    });
+    if (onDeleteSession && (canMutateSession?.('delete', session) ?? true))
+      items.push({
+        id: 'delete',
+        label: t`Delete`,
+        Icon: Trash2,
+        tone: 'danger',
+        // The one destructive thing on this sheet, asked in the row. A row that
+        // deletes on one tap is a row that deletes by accident, and what goes
+        // with it is not only this session: OpenCode removes its children too.
+        confirm: {
+          label: t`Tap again to delete`,
+          detail: t`Delete “${title}”?`,
+        },
+        onPress: () => {
+          setMenuAsid(null);
+          onDeleteSession?.(session.asid);
+        },
+        testID: `agent-session-delete-${session.asid}`,
+      });
     return items;
   };
 
   /** The actions affordance, for a reader who cannot long-press. */
-  const overflowButton = (session: AgentSessionInfo) => (
-    <PressableScale
-      testID={`agent-session-actions-${session.asid}`}
-      accessibilityRole="button"
-      accessibilityState={{ expanded: menuAsid === session.asid }}
-      accessibilityLabel={t`Actions for ${sessionTitleOr(session, t`Untitled session`)}`}
-      hitSlop={10}
-      onPress={() => openMenu(session.asid)}
-      style={styles.overflow}>
-      <MoreHorizontal size={16} color={theme.colors.textMuted} />
-    </PressableScale>
-  );
+  const overflowButton = (session: AgentSessionInfo) =>
+    menuItems(session).length ? (
+      <PressableScale
+        testID={`agent-session-actions-${session.asid}`}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: menuAsid === session.asid }}
+        accessibilityLabel={t`Actions for ${sessionTitleOr(session, t`Untitled session`)}`}
+        hitSlop={10}
+        onPress={() => openMenu(session.asid)}
+        style={styles.overflow}>
+        <MoreHorizontal size={16} color={theme.colors.textMuted} />
+      </PressableScale>
+    ) : null;
 
   /** The menu, or the rename field that replaced it, under the row it belongs to. */
   const rowTrailing = (session: AgentSessionInfo) => {
@@ -636,7 +656,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
                     onSelectSession(root.asid);
                     onClose();
                   }}
-                  onLongPress={() => openMenu(root.asid)}
+                  onLongPress={menuItems(root).length ? () => openMenu(root.asid) : undefined}
                   meta={
                     <View style={styles.meta}>
                       {isSessionUnread(root) ? (
@@ -665,7 +685,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
                       onSelectSession(sub.asid);
                       onClose();
                     }}
-                    onLongPress={() => openMenu(sub.asid)}
+                    onLongPress={menuItems(sub).length ? () => openMenu(sub.asid) : undefined}
                     meta={
                       <View style={styles.meta}>
                         {isSessionUnread(sub) ? (

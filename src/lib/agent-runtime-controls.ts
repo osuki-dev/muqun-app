@@ -1,5 +1,24 @@
-import type { AgentSessionInfo, FormRequest, ModelRef } from './agent-protocol';
+import type { AgentFeatures, AgentSessionInfo, FormRequest, ModelRef } from './agent-protocol';
 import { nativeAgentInteraction, type AgentSessionRuntime } from './agent-session-runtime';
+
+export type AgentSessionAction = 'rename' | 'delete' | 'fork';
+
+/** Existing actions retain legacy support; new routes require explicit discovery. */
+export function canMutateAgentSession(
+  action: AgentSessionAction,
+  session: Pick<AgentSessionInfo, 'runtime'>,
+  features: AgentFeatures,
+  capabilities?: readonly string[]
+): boolean {
+  if (!nativeAgentInteraction(session.runtime)) return false;
+  if (action === 'fork') {
+    return (
+      features.extra.sessionFork === true &&
+      capabilities?.includes('agent_session_fork_v1') === true
+    );
+  }
+  return features.extra[action === 'rename' ? 'sessionRename' : 'sessionDelete'] !== false;
+}
 
 /** Prompt delivery is separate from structured form and approval replies. */
 export function canSendAgentPrompt(

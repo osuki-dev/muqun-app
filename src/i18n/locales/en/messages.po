@@ -27,10 +27,6 @@ msgstr "“{0}” has changes that have not been committed. Removing it throws t
 msgid "“{args}” was not sent: a skill takes no arguments."
 msgstr "“{args}” was not sent: a skill takes no arguments"
 
-#: src/components/agent-sessions-sheet.tsx
-msgid "“{title}” and any subagent sessions under it are removed from the host. This cannot be undone."
-msgstr "“{title}” and any subagent sessions under it are removed from the host. This cannot be undone"
-
 #: src/components/home-recent-sessions.tsx
 msgid "“{title}” and its conversation history will be deleted in {provider} on {computer}. The service may also delete its subagent sessions. This cannot be undone."
 msgstr "“{title}” and its conversation history will be deleted in {provider} on {computer}. The service may also delete its subagent sessions. This cannot be undone"
@@ -1912,6 +1908,10 @@ msgstr "Could not enable App Lock"
 msgid "Could not follow this task on {computer}"
 msgstr "Could not follow this task on {computer}"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not fork"
+msgstr "Could not fork"
+
 #: src/components/ssh-host-form.tsx
 msgid "Could not generate a key"
 msgstr "Could not generate a key"
@@ -2314,6 +2314,10 @@ msgstr "Defaults to theme.json at the repository root"
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "Delete"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Delete “{title}”?"
+msgstr "Delete “{title}”?"
 
 #: src/components/changes-sheet.tsx
 msgid "Delete {discardName}?"
@@ -2813,6 +2817,10 @@ msgstr "Font file address"
 #: src/components/settings-appearance.tsx
 msgid "Font, {fontValue}"
 msgstr "Font, {fontValue}"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Fork session"
+msgstr "Fork session"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"

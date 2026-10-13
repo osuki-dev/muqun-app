@@ -27,10 +27,6 @@ msgstr "「{0}」にはコミットしていない変更があります。削除
 msgid "“{args}” was not sent: a skill takes no arguments."
 msgstr "「{args}」は送信されませんでした。スキルは引数を取りません"
 
-#: src/components/agent-sessions-sheet.tsx
-msgid "“{title}” and any subagent sessions under it are removed from the host. This cannot be undone."
-msgstr "「{title}」とその配下のサブエージェントセッションがホストから削除されます。元に戻せません"
-
 #: src/components/home-recent-sessions.tsx
 msgid "“{title}” and its conversation history will be deleted in {provider} on {computer}. The service may also delete its subagent sessions. This cannot be undone."
 msgstr "{computer}の{provider}で「{title}」とその会話履歴を削除します。サービスによっては配下のサブエージェントセッションも削除されます。この操作は元に戻せません"
@@ -1912,6 +1908,10 @@ msgstr "アプリロックを有効にできませんでした"
 msgid "Could not follow this task on {computer}"
 msgstr "{computer} でこのタスクを追跡できませんでした"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not fork"
+msgstr "分岐できませんでした"
+
 #: src/components/ssh-host-form.tsx
 msgid "Could not generate a key"
 msgstr "鍵を生成できませんでした"
@@ -2314,6 +2314,10 @@ msgstr "既定はリポジトリ直下の theme.json です"
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "削除"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Delete “{title}”?"
+msgstr "「{title}」を削除しますか？"
 
 #: src/components/changes-sheet.tsx
 msgid "Delete {discardName}?"
@@ -2813,6 +2817,10 @@ msgstr "フォントファイルのアドレス"
 #: src/components/settings-appearance.tsx
 msgid "Font, {fontValue}"
 msgstr "フォント、{fontValue}"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Fork session"
+msgstr "セッションを分岐"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"

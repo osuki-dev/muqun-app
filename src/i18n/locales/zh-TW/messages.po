@@ -27,10 +27,6 @@ msgstr "「{0}」有尚未提交的變更。移除它就會把這些變更丟掉
 msgid "“{args}” was not sent: a skill takes no arguments."
 msgstr "「{args}」未送出：技能不接受參數"
 
-#: src/components/agent-sessions-sheet.tsx
-msgid "“{title}” and any subagent sessions under it are removed from the host. This cannot be undone."
-msgstr "「{title}」及其下的子代理工作階段都會從主機移除，且無法復原"
-
 #: src/components/home-recent-sessions.tsx
 msgid "“{title}” and its conversation history will be deleted in {provider} on {computer}. The service may also delete its subagent sessions. This cannot be undone."
 msgstr "將刪除{computer}上{provider}中的「{title}」及其對話記錄。服務也可能刪除其子代理工作階段。此操作無法復原"
@@ -1912,6 +1908,10 @@ msgstr "無法啟用 App 鎖定"
 msgid "Could not follow this task on {computer}"
 msgstr "無法在 {computer} 上追蹤此任務"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not fork"
+msgstr "無法建立分支"
+
 #: src/components/ssh-host-form.tsx
 msgid "Could not generate a key"
 msgstr "無法產生金鑰"
@@ -2314,6 +2314,10 @@ msgstr "預設為儲存庫根目錄下的 theme.json"
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "刪除"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Delete “{title}”?"
+msgstr "刪除「{title}」？"
 
 #: src/components/changes-sheet.tsx
 msgid "Delete {discardName}?"
@@ -2813,6 +2817,10 @@ msgstr "字型檔案位址"
 #: src/components/settings-appearance.tsx
 msgid "Font, {fontValue}"
 msgstr "字型，{fontValue}"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Fork session"
+msgstr "分支工作階段"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"

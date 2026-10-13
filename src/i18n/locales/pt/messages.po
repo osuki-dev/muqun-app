@@ -27,10 +27,6 @@ msgstr "“{0}” tem alterações por confirmar. Removê-lo descarta essas alte
 msgid "“{args}” was not sent: a skill takes no arguments."
 msgstr "“{args}” não foi enviado: uma habilidade não aceita argumentos"
 
-#: src/components/agent-sessions-sheet.tsx
-msgid "“{title}” and any subagent sessions under it are removed from the host. This cannot be undone."
-msgstr "“{title}” e as sessões de subagente abaixo dela são removidas do host. Isso não pode ser desfeito"
-
 #: src/components/home-recent-sessions.tsx
 msgid "“{title}” and its conversation history will be deleted in {provider} on {computer}. The service may also delete its subagent sessions. This cannot be undone."
 msgstr "“{title}” e o seu histórico de conversa serão eliminados de {provider} em {computer}. O serviço também pode eliminar as sessões dos seus subagentes. Esta ação não pode ser anulada"
@@ -1912,6 +1908,10 @@ msgstr "Não foi possível ativar o bloqueio da app"
 msgid "Could not follow this task on {computer}"
 msgstr "Não foi possível acompanhar esta tarefa em {computer}"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not fork"
+msgstr "Não foi possível ramificar"
+
 #: src/components/ssh-host-form.tsx
 msgid "Could not generate a key"
 msgstr "Não foi possível gerar uma chave"
@@ -2314,6 +2314,10 @@ msgstr "Por padrão, theme.json na raiz do repositório"
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "Eliminar"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Delete “{title}”?"
+msgstr "Excluir “{title}”?"
 
 #: src/components/changes-sheet.tsx
 msgid "Delete {discardName}?"
@@ -2813,6 +2817,10 @@ msgstr "Endereço do ficheiro do tipo de letra"
 #: src/components/settings-appearance.tsx
 msgid "Font, {fontValue}"
 msgstr "Tipo de letra, {fontValue}"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Fork session"
+msgstr "Ramificar sessão"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"

@@ -2,7 +2,8 @@ import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AgentSessionsSheet } from '@/components/agent-sessions-sheet';
-import { canMoveSessionToWorktree } from '@/lib/agent-discovery';
+import { agentFeaturesFor, canMoveSessionToWorktree } from '@/lib/agent-discovery';
+import { canMutateAgentSession, type AgentSessionAction } from '@/lib/agent-runtime-controls';
 import { listAgentSessionPage, type AgentSessionInfo } from '@/lib/agent-session';
 import { useAgentSheetBridge } from '@/stores/agent-sheet-bridge';
 import { useAgents } from '@/stores/agents';
@@ -56,6 +57,7 @@ function OwnedAgentSessionsScreen() {
   const router = useRouter();
   const sessions = useAgentSheetBridge((state) => state.sessions);
   const activeAsid = useAgentSheetBridge((state) => state.activeAsid);
+  const sessionInfo = useAgentSheetBridge((state) => state.sessionInfo);
   const knownProjects = useAgentSheetBridge((state) => state.knownProjects);
   const activeDirectory = useAgentSheetBridge((state) => state.activeDirectory);
   const activeProject = useAgentSheetBridge((state) => state.activeProject);
@@ -78,6 +80,17 @@ function OwnedAgentSessionsScreen() {
   const canMoveSession = useCallback(
     (session: AgentSessionInfo) => canMoveSessionToWorktree(discoveredAgents, session.agent_id),
     [discoveredAgents]
+  );
+
+  const canMutateSession = useCallback(
+    (action: AgentSessionAction, session: AgentSessionInfo) =>
+      canMutateAgentSession(
+        action,
+        sessionInfo?.asid === session.asid ? sessionInfo : session,
+        agentFeaturesFor(discoveredAgents, session.agent_id),
+        capabilities
+      ),
+    [sessionInfo, discoveredAgents, capabilities]
   );
 
   const features = discoveredAgents?.find((agent) => agent.id === agentId)?.features;
@@ -175,18 +188,24 @@ function OwnedAgentSessionsScreen() {
       // to one has to land on the copy too: a deleted session from another
       // project stayed on screen until the sheet was reopened, because only
       // the workbench's list heard about it.
+      canMutateSession={canMutateSession}
+      onForkSession={actions.forkSession}
       onRenameSession={(asid, title) => {
+        const session = merged.find((row) => row.asid === asid);
+        if (!session || !canMutateSession('rename', session)) return;
         updateHostSessions((rows) =>
           rows.map((row) => (row.asid === asid ? { ...row, title } : row))
         );
-        actions.renameSession(asid, title);
+        actions.renameSession(asid, title, session);
       }}
       onDeleteSession={(asid) => {
+        const session = merged.find((row) => row.asid === asid);
+        if (!session || !canMutateSession('delete', session)) return;
         // The session and everything under it: OpenCode removes the children.
         updateHostSessions((rows) =>
           rows.filter((row) => row.asid !== asid && row.parent_id !== asid)
         );
-        actions.deleteSession(asid);
+        actions.deleteSession(asid, session);
       }}
       // Replaces rather than stacks: two form sheets deep is two grabbers and
       // one question, and the reader asked to go from this list to that one.

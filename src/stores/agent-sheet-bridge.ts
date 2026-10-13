@@ -134,12 +134,13 @@ export interface AgentSheetActions {
   selectSession: (asid: string) => void;
   createSession: () => void;
   /** Rename one session. Optimistic in the workbench, rolled back on refusal. */
-  renameSession: (asid: string, title: string) => void;
+  renameSession: (asid: string, title: string, session?: AgentSessionInfo) => void;
   /**
    * Delete one session. The confirmation belongs to the surface that asks --
    * this is the call that follows a yes.
    */
-  deleteSession: (asid: string) => void;
+  deleteSession: (asid: string, session?: AgentSessionInfo) => void;
+  forkSession?: (session: AgentSessionInfo) => void;
   selectModel: (model: ModelRef) => void;
   selectAgentMode: (agent: string) => void;
   selectWorkspace: (directory: string, project?: AgentProject) => void;

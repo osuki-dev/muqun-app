@@ -9,6 +9,26 @@ import {
 } from './agent-protocol';
 import { isUnsupportedModelFailure } from './agent-engine-text';
 
+/** Selecting a model must not invent a reasoning effort from catalog order. */
+export function modelPickerChoice(
+  model: ModelInfo,
+  current?: ModelRef,
+  catalogDefault?: ModelRef
+): ModelRef {
+  const matches = (choice: ModelRef | undefined) =>
+    choice?.model_id === model.id && choice.provider_id === model.provider_id;
+  const variant = matches(current)
+    ? current?.variant
+    : matches(catalogDefault)
+      ? catalogDefault?.variant
+      : undefined;
+  return {
+    provider_id: model.provider_id,
+    model_id: model.id,
+    ...(variant ? { variant } : {}),
+  };
+}
+
 /**
  * What a new session starts on.
  *
