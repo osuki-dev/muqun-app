@@ -6646,10 +6646,6 @@ msgstr "変更が多すぎて一覧にできません。これは先頭部分で
 msgid "Tool call"
 msgstr "ツール呼び出し"
 
-#: src/components/settings-server-capabilities.tsx
-msgid "Toolchains"
-msgstr "ツールチェーン"
-
 #: src/components/changes-sheet.tsx
 msgid "tracking {upstream}"
 msgstr "{upstream} を追跡"

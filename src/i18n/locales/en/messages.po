@@ -6646,10 +6646,6 @@ msgstr "Too many changes to list. This is the start of them, not all of them"
 msgid "Tool call"
 msgstr "Tool call"
 
-#: src/components/settings-server-capabilities.tsx
-msgid "Toolchains"
-msgstr "Toolchains"
-
 #: src/components/changes-sheet.tsx
 msgid "tracking {upstream}"
 msgstr "tracking {upstream}"

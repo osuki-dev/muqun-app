@@ -6646,10 +6646,6 @@ msgstr "มีการเปลี่ยนแปลงมากเกินก
 msgid "Tool call"
 msgstr "การเรียกใช้เครื่องมือ"
 
-#: src/components/settings-server-capabilities.tsx
-msgid "Toolchains"
-msgstr "ชุดเครื่องมือ"
-
 #: src/components/changes-sheet.tsx
 msgid "tracking {upstream}"
 msgstr "ติดตาม {upstream}"

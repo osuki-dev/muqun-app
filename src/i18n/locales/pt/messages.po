@@ -6646,10 +6646,6 @@ msgstr "Alterações demais para listar. Este é o início delas, não o total"
 msgid "Tool call"
 msgstr "Chamada de ferramenta"
 
-#: src/components/settings-server-capabilities.tsx
-msgid "Toolchains"
-msgstr "Cadeias de ferramentas"
-
 #: src/components/changes-sheet.tsx
 msgid "tracking {upstream}"
 msgstr "segue {upstream}"
