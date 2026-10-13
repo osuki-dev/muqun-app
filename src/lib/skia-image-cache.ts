@@ -85,3 +85,10 @@ export function useSharedSkiaImage(
   // Already decoded for somebody else: draw it on the first frame.
   return cache.peek(uri);
 }
+
+/** Hold decoded images until the newly mounted artwork has acquired its own lease. */
+export async function prepareSharedSkiaImages(uris: readonly string[]): Promise<() => void> {
+  const handles = [...new Set(uris)].map((uri) => cache.acquire(uri));
+  await Promise.all(handles.map((handle) => handle.promise));
+  return () => handles.forEach((handle) => handle.release());
+}

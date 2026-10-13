@@ -25,7 +25,7 @@ import { useLingui } from '@lingui/react/macro';
 import { useThemeMode } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -51,6 +51,7 @@ import { useThemeLibrary } from '@/stores/theme-library';
 import { useThemePack } from '@/hooks/use-theme-pack';
 import { useOpenThemeEditor } from '@/hooks/use-open-theme-editor';
 import { useReskinTransition } from '@/components/reskin-transition';
+import { prepareThemeArtwork } from '@/theme/prepare-artwork';
 import { BUILTIN_THEME_INSTALLATION_ID } from '@/theme/repository';
 
 /** The focused field's clearance above the keyboard: the import link's input. */
@@ -67,6 +68,7 @@ export function SettingsThemeSheet({ onClose }: { onClose: () => void }) {
   const themePack = useThemePack();
   const { resolvedMode } = useThemeMode();
   const reskin = useReskinTransition();
+  const { width: artworkWidth } = useWindowDimensions();
   const [error, setError] = useState<string | null>(null);
 
   /**
@@ -104,6 +106,13 @@ export function SettingsThemeSheet({ onClose }: { onClose: () => void }) {
     void reskin.run({
       kind: 'theme',
       accent: themeVariant(builtin, resolvedMode).colors.primary,
+      prepare: () =>
+        prepareThemeArtwork(
+          builtin.manifest,
+          useThemeLibrary.getState().defaultAssets,
+          resolvedMode,
+          artworkWidth
+        ),
       apply: () => {
         try {
           useThemeLibrary.getState().resetToDefault();

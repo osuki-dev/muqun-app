@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
 
+import { ReskinSurface } from '@/components/reskin-transition';
 import { SettingsThemeSheet } from '@/components/settings-theme-sheet';
 
 /**
@@ -17,5 +18,9 @@ import { SettingsThemeSheet } from '@/components/settings-theme-sheet';
  */
 export default function SettingsThemeScreen() {
   const router = useRouter();
-  return <SettingsThemeSheet onClose={() => router.back()} />;
+  return (
+    <ReskinSurface id="settings-theme">
+      <SettingsThemeSheet onClose={() => router.back()} />
+    </ReskinSurface>
+  );
 }

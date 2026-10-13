@@ -1,6 +1,6 @@
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useLingui } from '@lingui/react/macro';
-import { Tag, useThemeTokens } from '@osuki-dev/ui';
+import { Tag, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { Button } from '@/components/themed-button';
 import { Image } from 'expo-image';
@@ -32,6 +32,7 @@ import { PressableScale } from '@/components/pressable-scale';
 import { useSheetGroundPlate } from '@/components/sheet-ground';
 import { ThemePaletteStrip } from '@/components/theme-palette-strip';
 import { useThemePack } from '@/hooks/use-theme-pack';
+import { prepareThemeArtwork } from '@/theme/prepare-artwork';
 import { useReskinTransition } from '@/components/reskin-transition';
 import { useThemeLibrary } from '@/stores/theme-library';
 import { auditThemeContrast } from '@/theme/contrast';
@@ -185,6 +186,7 @@ export function CustomThemeLibrary({
   const { t } = useLingui();
   const { colors } = useThemeTokens();
   const reskin = useReskinTransition();
+  const { resolvedMode } = useThemeMode();
   // The plate a label takes when the pack draws a wallpaper behind this sheet.
   // Bare, because this component is always somebody else's child: inside the
   // theme sheet it takes that sheet's `surface`, and on the full-screen editor
@@ -334,47 +336,55 @@ export function CustomThemeLibrary({
 
   async function save(apply: boolean) {
     if (!candidate) return;
-    let installedAssets: Record<string, string> | undefined;
-    if (!candidate.id && candidate.prepared) {
-      setStep('installing');
-      installedAssets = await candidate.prepared.install();
-    }
-    if (!mounted.current) return;
-    const store = useThemeLibrary.getState();
-    const id = candidate.id ?? store.save(JSON.stringify(candidate.manifest), installedAssets).id;
-    // Retain the installed identity even if a subsequent activation write fails.
-    setCandidate({ ...candidate, id });
-    if (!installedCandidate) {
-      if (draftAppearance.terminalBackgroundOpacity !== undefined)
-        store.setTerminalBackgroundOpacity(id, draftAppearance.terminalBackgroundOpacity);
-      if (draftAppearance.surfaceBackgroundOpacity !== undefined)
-        store.setSurfaceBackgroundOpacity(id, draftAppearance.surfaceBackgroundOpacity);
-      if (draftAppearance.hideHomeLogo !== undefined)
-        store.setHideHomeLogo(id, draftAppearance.hideHomeLogo);
-      if (draftAppearance.hideHomeText !== undefined)
-        store.setHideHomeText(id, draftAppearance.hideHomeText);
-      if (draftAppearance.homeArtwork !== undefined)
-        store.setHomeArtwork(id, draftAppearance.homeArtwork);
-    }
+    const persist = async () => {
+      let installedAssets: Record<string, string> | undefined;
+      if (!candidate.id && candidate.prepared) {
+        setStep('installing');
+        installedAssets = await candidate.prepared.install();
+      }
+      if (!mounted.current) return undefined;
+      const store = useThemeLibrary.getState();
+      const id = candidate.id ?? store.save(JSON.stringify(candidate.manifest), installedAssets).id;
+      // Retain the installed identity even if a subsequent activation write fails.
+      setCandidate({ ...candidate, id });
+      if (!installedCandidate) {
+        if (draftAppearance.terminalBackgroundOpacity !== undefined)
+          store.setTerminalBackgroundOpacity(id, draftAppearance.terminalBackgroundOpacity);
+        if (draftAppearance.surfaceBackgroundOpacity !== undefined)
+          store.setSurfaceBackgroundOpacity(id, draftAppearance.surfaceBackgroundOpacity);
+        if (draftAppearance.hideHomeLogo !== undefined)
+          store.setHideHomeLogo(id, draftAppearance.hideHomeLogo);
+        if (draftAppearance.hideHomeText !== undefined)
+          store.setHideHomeText(id, draftAppearance.hideHomeText);
+        if (draftAppearance.homeArtwork !== undefined)
+          store.setHomeArtwork(id, draftAppearance.homeArtwork);
+      }
+      return id;
+    };
     if (apply) {
-      // `colors` here is the *candidate's* palette -- this editor is already
-      // wearing the theme being judged -- so the wash's front is lit in the
-      // theme the reader is about to get, without having to apply it to find
-      // out what colour that is.
-      void reskin.run({
+      let selectedId: string | undefined;
+      await reskin.run({
         kind: 'theme',
         accent: colors.primary,
+        isCurrent: () => mounted.current,
+        prepare: async () => {
+          selectedId = await persist();
+          const installed = useThemeLibrary
+            .getState()
+            .library.themes.find((entry) => entry.id === selectedId);
+          if (installed)
+            return prepareThemeArtwork(installed.manifest, installed.assets, resolvedMode, width);
+        },
         apply: () => {
-          store.apply({ kind: 'custom', id });
-          // Applying is a confirmation, exactly as choosing a built-in pack
-          // is: write first, then leave. Holding the screen open behind a
-          // notice read as the app having ignored the tap.
+          if (!selectedId) return;
+          useThemeLibrary.getState().apply({ kind: 'custom', id: selectedId });
           closePreview();
         },
       });
       return;
     }
-    setNotice(t`Theme saved`);
+    await persist();
+    if (mounted.current) setNotice(t`Theme saved`);
   }
 
   /**
