@@ -76,7 +76,7 @@ export function NewTaskAction({
     if (hasAgentSessions && server) void refreshAgentServerDiscovery(server);
   }, [hasAgentSessions, server]);
 
-  // Every offered agent keeps a named button; the row wraps as discovery grows.
+  // Every offered agent keeps a named button in one horizontally scrolling row.
   const mirrored = useAgents((state) => state.index.servers[serverId]);
   const lastUsedAgentId = useAgents((state) => state.index.lastUsed[serverId]);
   const offered = projectLaunchAgents(mirrored, lastUsedAgentId);
@@ -224,7 +224,14 @@ export function NewTaskAction({
         exiting={fadeOut()}
         style={styles.group}>
         <Text variant="caption" color={theme.colors.textMuted}>{t`Agents`}</Text>
-        <View style={styles.agentRow}>
+        <Animated.ScrollView
+          testID={`server-agent-actions-${serverId}`}
+          horizontal
+          nestedScrollEnabled
+          directionalLockEnabled
+          showsHorizontalScrollIndicator={false}
+          style={styles.agentScroll}
+          contentContainerStyle={styles.agentRow}>
           {offered.map((agent) => (
             <AgentRowButton
               key={agent.id}
@@ -249,7 +256,7 @@ export function NewTaskAction({
               }
             />
           ))}
-        </View>
+        </Animated.ScrollView>
       </Animated.View>
     );
   }
@@ -427,11 +434,12 @@ function AgentRowButton({
       accessibilityRole="button"
       accessibilityLabel={description}
       onPress={ready ? onOpen : onSetup}
-      style={styles.button}>
+      style={[styles.button, styles.agentButton]}>
       <View
         pointerEvents="none"
         style={[
           styles.buttonFace,
+          styles.agentFace,
           ready
             ? {
                 backgroundColor: surfaceBackground(theme.colors.primarySubtle),
@@ -450,7 +458,11 @@ function AgentRowButton({
             <View style={[styles.offlineDot, { backgroundColor: theme.colors.warning }]} />
           </View>
         )}
-        <Text variant="bodySmall" color={ready ? theme.colors.primary : theme.colors.warning}>
+        <Text
+          variant="bodySmall"
+          color={ready ? theme.colors.primary : theme.colors.warning}
+          numberOfLines={1}
+          style={styles.agentName}>
           {name}
         </Text>
       </View>
@@ -460,12 +472,16 @@ function AgentRowButton({
 
 const styles = StyleSheet.create({
   group: { gap: 6, marginTop: 12, alignSelf: 'stretch' },
+  agentScroll: { flexGrow: 0 },
   agentRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexWrap: 'nowrap',
     alignItems: 'center',
     gap: 6,
   },
+  agentButton: { flexShrink: 0, maxWidth: 240 },
+  agentFace: { maxWidth: '100%' },
+  agentName: { flexShrink: 1 },
   actionRow: {
     flexDirection: 'column',
     alignItems: 'flex-start',

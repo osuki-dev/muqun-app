@@ -193,3 +193,27 @@ test('Pad grid and cover dock render four agent tiles across without a phone scr
     ]);
   }
 });
+
+test('classic Pad keeps all agents in one horizontal row with four visible and utilities below', () => {
+  for (const options of [{ grid: true }, { dock: true }]) {
+    for (const count of [1, 2, 4, 5, 12]) {
+      const tree = fixture(count, 'classic').render(1000, { ...options, newOnly: true });
+      const scroll = tree.find((node) => node.props.testID === 'home-launch-agents-scroll')!;
+      expect(scroll.props.horizontal).toBe(true);
+      expect(scroll.props.nestedScrollEnabled).toBe(true);
+      expect(buttons(nodes(scroll)).map((button) => button.props.testID)).toEqual(
+        Array.from({ length: count }, (_, index) => `home-new-agent-agent-${index}`)
+      );
+      const columns = scroll.props.children as Element[];
+      expect(columns[0]!.props.style.width).toBe(
+        Math.floor((1000 - (Math.min(count, 4) - 1) * 8) / Math.min(count, 4))
+      );
+      expect(
+        buttons(nodes(scroll)).some((button) => button.props.testID === 'home-new-terminal')
+      ).toBe(false);
+      expect(
+        buttons(tree).filter((button) => button.props.testID === 'home-new-terminal')
+      ).toHaveLength(1);
+    }
+  }
+});
