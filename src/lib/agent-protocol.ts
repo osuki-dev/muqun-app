@@ -21,6 +21,7 @@
  * OpenCode's payloads and stay camelCase.
  */
 
+import { parseAgentSessionRuntime, type AgentSessionRuntime } from './agent-session-runtime';
 import { parseKeyboardVocabulary, type KeyboardVocabulary } from './key-vocabulary';
 import { parseMessageImageAssets, type MessageImageAsset } from './message-images';
 import { stripTaskInstruction } from './task-plumbing';
@@ -281,6 +282,8 @@ export interface AgentSessionInfo {
    */
   model: ModelRef | null;
   status: AgentRunStatus;
+  /** Which runtime observed this session and accepts interaction. */
+  runtime?: AgentSessionRuntime;
   directory?: string;
   cost?: number;
   tokens?: TokensUsage;
@@ -314,6 +317,9 @@ export function parseAgentSessionInfo(value: unknown): AgentSessionInfo | null {
     status: parseRunStatus(rec.status),
     updated_ms: asFiniteNumber(rec.updated_ms) ?? 0,
   };
+
+  const runtime = parseAgentSessionRuntime(rec.runtime);
+  if (runtime) info.runtime = runtime;
 
   const mode = pickString(rec, ['mode']);
   if (mode) info.mode = mode;

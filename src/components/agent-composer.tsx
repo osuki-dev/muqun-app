@@ -342,6 +342,8 @@ export interface AgentComposerProps {
   running: boolean;
   /** Ordinary prompt delivery only; request reply controls are independent. */
   canSendWhileRunning?: boolean;
+  /** A session observed elsewhere keeps its draft, but cannot send through this runtime. */
+  interactionBlockedReason?: string;
   /** A Gateway-staged choice, distinct from the session model. */
   nextTurnModelName?: string;
   nextTurnModelTemporary?: boolean;
@@ -565,6 +567,7 @@ export interface AgentComposerProps {
 export const AgentComposer = memo(function AgentComposer({
   running,
   canSendWhileRunning = true,
+  interactionBlockedReason,
   nextTurnModelName,
   nextTurnModelTemporary = false,
   sessionStrip = EMPTY_STRIP,
@@ -699,7 +702,8 @@ export const AgentComposer = memo(function AgentComposer({
     [availableAgentsProp]
   );
   const [sending, setSending] = useState(false);
-  const promptAllowed = canSendAgentPrompt(running, canSendWhileRunning);
+  const promptAllowed =
+    !interactionBlockedReason && canSendAgentPrompt(running, canSendWhileRunning);
   const [deliveryMode, setDeliveryMode] = useState<'steer' | 'queue'>('steer');
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
@@ -1039,7 +1043,7 @@ export const AgentComposer = memo(function AgentComposer({
   const handleSend = useCallback(async () => {
     const trimmed = text.trim();
     const hasAttachments = attachmentUploads.attachments.length > 0;
-    if ((!trimmed && !hasAttachments) || sending) return;
+    if ((!trimmed && !hasAttachments) || sending || interactionBlockedReason) return;
 
     // A slash command is a command. It used to be sent as the literal text it
     // was typed as, and whatever the model made of it was the result.
@@ -1122,6 +1126,7 @@ export const AgentComposer = memo(function AgentComposer({
     record,
     sending,
     promptAllowed,
+    interactionBlockedReason,
     disabled,
     onSend,
     showToast,
@@ -2082,9 +2087,11 @@ export const AgentComposer = memo(function AgentComposer({
             ) : null}
             {!promptAllowed ? (
               <Text variant="caption" color={theme.colors.textMuted}>
-                <Trans>
-                  This agent accepts messages after its turn ends. Your draft stays here.
-                </Trans>
+                {interactionBlockedReason ?? (
+                  <Trans>
+                    This agent accepts messages after its turn ends. Your draft stays here.
+                  </Trans>
+                )}
               </Text>
             ) : null}
 
@@ -2148,7 +2155,7 @@ export const AgentComposer = memo(function AgentComposer({
                 }}
                 send={{
                   accessibilityLabel: !promptAllowed
-                    ? t`Waiting for the current turn to end`
+                    ? (interactionBlockedReason ?? t`Waiting for the current turn to end`)
                     : running
                       ? deliveryMode === 'steer'
                         ? t`Steer running agent`

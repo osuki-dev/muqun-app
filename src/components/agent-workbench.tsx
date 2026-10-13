@@ -1,3 +1,10 @@
+import { AgentRuntimeNotice } from '@/components/agent-runtime-notice';
+import {
+  matchesRuntimeTerminal,
+  nativeAgentInteraction,
+  replaceAgentTranscript,
+  type AgentSessionRuntime,
+} from '@/lib/agent-session-runtime';
 import { useGatewayGeneration } from '@/stores/gateway-connection-generation';
 import {
   canSendAgentPrompt,
@@ -14,7 +21,7 @@ import { useFleetPeers } from '@/stores/fleet-peers';
 import type { MentionComputer } from '@/lib/composer-mentions';
 import { useToolCallDetailStore } from '@/stores/tool-call-detail';
 import { AgentTranscriptList } from '@/components/agent-transcript-list';
-import { useLatestRef } from '@/hooks/use-render-refs';
+import { useLatestReader, useLatestRef } from '@/hooks/use-render-refs';
 import {
   memo,
   useCallback,
@@ -238,7 +245,12 @@ import { AgentComposer, type DraftInjector } from './agent-composer';
 import { runningShellCount } from '@/components/agent-background-tray';
 import { ThinkingIndicator } from './agent-thinking-indicator';
 import { AGENT_TYPE } from '@/constants/agent-type';
-import { gatewayAuthHeaders, gatewayUrl, resolveAgentFileAsset } from '@/lib/gateway-client';
+import {
+  gatewayAuthHeaders,
+  gatewayUrl,
+  loadAgents,
+  resolveAgentFileAsset,
+} from '@/lib/gateway-client';
 import { appChrome } from '@/constants/appearance';
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
 import {
@@ -589,6 +601,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     if (freshSessionRef.current !== activeAsid) freshSessionRef.current = undefined;
   }, [activeAsid]);
   const [sessionInfo, setSessionInfo] = useState<AgentSessionInfo | null>(null);
+  const runtime = sessionInfo?.runtime;
+  const readRenderedRuntime = useLatestReader(runtime);
+  const canInteractNatively = nativeAgentInteraction(runtime);
+  const externalRuntime = runtime?.source !== 'native' ? runtime : undefined;
+  const supportsHistoryRefresh = useServerCapabilities(
+    (state) => state.byServer[serverId]?.includes('agent_session_refresh_v1') === true
+  );
+  const [refreshingHistory, setRefreshingHistory] = useState(false);
   /**
    * Which agent this screen is on, and which a new session would go to.
    *
@@ -715,6 +735,19 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * another's.
    */
   const activeAsidRef = useRef<string | undefined>(initialAsid);
+  // Metadata and timeline events can arrive in one batch before React commits.
+  // Their imperative guard must see the last observed owner immediately.
+  const observedRuntimeRef = useRef<{
+    serverId: string;
+    asid: string;
+    runtime?: AgentSessionRuntime;
+  } | null>(null);
+  const readRuntime = useCallback(() => {
+    const observed = observedRuntimeRef.current;
+    return observed?.serverId === serverId && observed.asid === activeAsidRef.current
+      ? observed.runtime
+      : readRenderedRuntime();
+  }, [readRenderedRuntime, serverId]);
   useEffect(() => {
     activeAsidRef.current = activeAsid;
   }, [activeAsid]);
@@ -1525,6 +1558,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   // destructive commands — this is the only honesty YOLO mode has.
   const handleAutoPermission = useCallback(
     (req: PermissionRequest) => {
+      if (!nativeAgentInteraction(readRuntime())) return;
       const asid = req.asid;
       if (!asid) return;
       const sourceAsid = activeAsidRef.current;
@@ -1557,7 +1591,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         });
       }
     },
-    [captureWorkbenchOwner, homeTargetFor, ownsWorkbench, sessionId, showToast, t]
+    [readRuntime, captureWorkbenchOwner, homeTargetFor, ownsWorkbench, sessionId, showToast, t]
   );
 
   /**
@@ -1694,7 +1728,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * already at the bottom.
    */
   const loadSnapshot = useCallback(
-    async (mode: 'enter' | 'silent' = 'enter') => {
+    async (mode: 'enter' | 'silent' | 'refresh' = 'enter') => {
       const asid = activeAsid;
       if (!asid) {
         if (initialCheckDoneRef.current) {
@@ -1715,7 +1749,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         async () => {
           return recoverWith(
             async () => {
-              const snap = await getAgentSessionSnapshot(sessionId, asid);
+              const snap = await getAgentSessionSnapshot(sessionId, asid, {
+                refresh: mode === 'refresh',
+                capabilities: useServerCapabilities.getState().byServer[serverId],
+              });
               if (!ownsSnapshot()) return;
               const fresh = freshSessionRef.current === asid;
               const timeline = fresh
@@ -1728,6 +1765,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               }
               const info = snap.info;
               if (info) {
+                observedRuntimeRef.current = { serverId, asid: info.asid, runtime: info.runtime };
                 setSessionInfo((previous) =>
                   pendingFirstPrompt && previous?.status === 'busy' && info.status === 'idle'
                     ? { ...info, status: 'busy' }
@@ -1788,7 +1826,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 setTimeline(timeline, nextWindow);
                 setWindowStart(nextWindow);
                 follow.reset();
-              } else {
+              } else if (replaceAgentTranscript(mode, info?.runtime ?? readRuntime())) {
                 // Hold the reader's place across the correction. The row that was at
                 // the top of the window is the anchor: its index has moved, because
                 // that is what a resync means, so the window start moves with it.
@@ -1803,7 +1841,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 setWindowStart(nextWindow);
               }
 
-              if (yoloModeRef.current) {
+              if (yoloModeRef.current && nativeAgentInteraction(info?.runtime)) {
                 // Auto-answer everything the engine raised while we were away — the
                 // safety list still denies its share.
                 for (const perm of snap.permissions) void handleAutoPermission(perm);
@@ -1836,7 +1874,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                * between this call leaving and landing is still unread afterwards,
                * which is the honest answer.
                */
-              if (info && appActiveRef.current) {
+              if (info && appActiveRef.current && replaceAgentTranscript(mode, info.runtime)) {
                 const idle = info.time_idle;
                 const viewedAsid = info.asid;
                 void (
@@ -1933,6 +1971,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       sessionId,
       activeAsid,
       applySelectedModel,
+      readRuntime,
       applyViewed,
       follow,
       handleAutoPermission,
@@ -2051,6 +2090,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
       switch (event.type) {
         case 'agent.timeline.upsert':
+          if (!replaceAgentTranscript('silent', readRuntime())) break;
           setTimeline((prev) => upsertTimelineItems(prev, event.items));
           // Pinning to the latest message while the reader is at the bottom is
           // LegendList's `maintainScrollAtEnd` job (threshold-guarded); a
@@ -2059,6 +2099,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           break;
 
         case 'agent.timeline.removed':
+          if (!replaceAgentTranscript('silent', readRuntime())) break;
           /**
            * Rows the gateway says are gone. A committed rollback is the one
            * that sends many at once: OpenCode deletes the boundary message and
@@ -2107,7 +2148,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             setTimeline((prev) => prev.map((it) => (it.queued ? { ...it, queued: false } : it)));
             // A turn that ended under the reader's eyes has been read. The
             // dot is for the sessions they were not looking at.
-            if (appActiveRef.current && event.asid) {
+            if (
+              appActiveRef.current &&
+              event.asid &&
+              replaceAgentTranscript('silent', readRuntime())
+            ) {
               const viewedAsid = event.asid;
               void markAgentSessionViewed(viewedAsid)
                 .then((viewed) => applyViewed(viewedAsid, viewed))
@@ -2160,6 +2205,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           syncHomeRecentTitle(info.asid, info.title, info.directory);
 
           if (forActiveSession) {
+            observedRuntimeRef.current = { serverId, asid: info.asid, runtime: info.runtime };
             setSessionInfo((prev) =>
               prev && prev.asid !== info.asid ? prev : prev ? { ...prev, ...info } : info
             );
@@ -2167,6 +2213,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             // A reply delivered to the foreground conversation has been read.
             if (
               appActiveRef.current &&
+              replaceAgentTranscript('silent', info.runtime) &&
               info.status === 'idle' &&
               info.time_idle !== undefined &&
               info.time_idle > (info.time_viewed ?? 0)
@@ -2285,6 +2332,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       setTimeline,
       activeAsid,
       loadSnapshot,
+      readRuntime,
       refreshSessions,
       refreshContext,
       refreshShells,
@@ -2335,7 +2383,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           void loadSnapshot('silent');
           return;
         }
-        if (delta.items.length > 0) {
+        if (delta.items.length > 0 && replaceAgentTranscript('silent', readRuntime())) {
           setTimeline((prev) => upsertTimelineItems(prev, delta.items));
         }
         // Bound out of the union rather than asserted: there is no `!` on
@@ -2345,7 +2393,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           setSessionInfo((prev) => (prev ? { ...prev, status: nextStatus } : prev));
           // A reconnect may recover the reply without replaying its idle event.
           // A foreground reader has read that recovered conversation too.
-          if (nextStatus === 'idle' && appActiveRef.current) {
+          if (
+            nextStatus === 'idle' &&
+            appActiveRef.current &&
+            replaceAgentTranscript('silent', readRuntime())
+          ) {
             void markAgentSessionViewed(asid)
               .then((viewed) => applyViewed(asid, viewed))
               .catch(() => {});
@@ -2354,7 +2406,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         syncRef.current = advanceSeq(syncRef.current, delta.latest_seq);
       })
       .catch(() => {});
-  }, [setTimeline, sessionId, loadSnapshot, applyViewed]);
+  }, [setTimeline, sessionId, loadSnapshot, applyViewed, readRuntime]);
 
   useEffect(() => {
     catchUpRef.current = catchUp;
@@ -2382,12 +2434,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   useEffect(() => {
     const returned = appActive && !wasForegroundRef.current;
     wasForegroundRef.current = appActive;
-    if (!returned || !activeAsid) return;
+    if (!returned || !activeAsid || !replaceAgentTranscript('silent', readRuntime())) return;
     const viewedAsid = activeAsid;
     void markAgentSessionViewed(viewedAsid)
       .then((viewed) => applyViewed(viewedAsid, viewed))
       .catch(() => {});
-  }, [appActive, activeAsid, applyViewed]);
+  }, [appActive, activeAsid, applyViewed, readRuntime]);
 
   /**
    * The stream handler, behind a ref for the same reason the sequence is.
@@ -2559,6 +2611,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
   const handleSelectModel = useCallback(
     (model: ModelRef) => {
+      if (activeAsid && !nativeAgentInteraction(readRuntime())) return;
       const owner = captureWorkbenchOwner(activeAsid, activeDirectoryRef.current);
       const applyModel = () => {
         if (!ownsWorkbench(owner)) return;
@@ -2604,6 +2657,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     },
     [
       applySelectedModel,
+      readRuntime,
       sessionId,
       serverId,
       stagesNextTurnModel,
@@ -2797,7 +2851,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     attachments?: string[],
     delivery?: 'steer' | 'queue'
   ): Promise<boolean> => {
-    if (!canSendAgentPrompt(isBusyStatus(sessionInfo?.status), agentFeatures.inbox)) return false;
+    if (
+      !canInteractNatively ||
+      !canSendAgentPrompt(isBusyStatus(sessionInfo?.status), agentFeatures.inbox)
+    )
+      return false;
     const sourceAsid = activeAsidRef.current;
     const stagedChoice = sourceAsid ? stagedModels[sourceAsid] : undefined;
     let directory = activeDirectoryRef.current ?? sessionInfo?.directory;
@@ -2987,7 +3045,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * said out loud rather than papered over.
    */
   const handleAbort = useCallback(async () => {
-    if (!activeAsid) return;
+    if (!activeAsid || !nativeAgentInteraction(readRuntime())) return;
     try {
       await abortAgentSession(sessionId, activeAsid);
     } catch (err) {
@@ -2998,7 +3056,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         message: agentErrorRef.current(err),
       });
     }
-  }, [activeAsid, sessionId, showToast, t]);
+  }, [activeAsid, sessionId, showToast, t, readRuntime]);
 
   /**
    * The agent mode, switched on the session rather than in a local variable.
@@ -3092,6 +3150,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
   const handlePermissionDecision = useCallback(
     async (permId: string, decision: PermissionDecision) => {
+      if (!nativeAgentInteraction(readRuntime())) return;
       const request = permissions.find((permission) => permission.id === permId);
       const asid = request?.asid || activeAsidRef.current;
       if (!asid) return;
@@ -3124,7 +3183,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       if (decision === 'allow_always') setSavedPermissionsRevision((count) => count + 1);
       setPermissions((prev) => prev.filter((p) => p.id !== permId));
     },
-    [captureWorkbenchOwner, homeTargetFor, ownsWorkbench, permissions, sessionId, showToast, t]
+    [
+      readRuntime,
+      captureWorkbenchOwner,
+      homeTargetFor,
+      ownsWorkbench,
+      permissions,
+      sessionId,
+      showToast,
+      t,
+    ]
   );
 
   const handleToggleYoloMode = useCallback(() => {
@@ -3133,6 +3201,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
   const handleFormSubmit = useCallback(
     async (formId: string, answers: Record<string, unknown>) => {
+      if (!nativeAgentInteraction(readRuntime())) return;
       if (!activeAsid) return;
       try {
         await replyAgentForm(sessionId, activeAsid, formId, answers);
@@ -3147,7 +3216,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       }
       setForms((prev) => prev.filter((f) => f.id !== formId));
     },
-    [activeAsid, sessionId, showToast, t]
+    [readRuntime, activeAsid, sessionId, showToast, t]
   );
 
   const handleCreateNewSession = useCallback(
@@ -4186,6 +4255,68 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * offered a switch to a model id (`opencode/union-alpha`) that appears
    * nowhere else in this app or in any catalog it fetches.
    */
+  const historyRefreshInFlight = useRef(false);
+  const refreshHistory = useCallback(async () => {
+    if (historyRefreshInFlight.current) return;
+    historyRefreshInFlight.current = true;
+    setRefreshingHistory(true);
+    await settleAfter(
+      () => loadSnapshot('refresh'),
+      () => {
+        historyRefreshInFlight.current = false;
+        setRefreshingHistory(false);
+      }
+    );
+  }, [loadSnapshot]);
+  const openRuntimeTerminal = useCallback(async () => {
+    const terminal = readRuntime()?.terminal;
+    if (!terminal || readRuntime()?.interaction !== 'terminal') return;
+    const owner = captureWorkbenchOwner(activeAsid, activeDirectoryRef.current);
+    if (!ownsWorkbench(owner)) return;
+    await recoverWith(
+      async () => {
+        const agents = await loadAgents(terminal.session_id);
+        if (!ownsWorkbench(owner)) return;
+        const current = readRuntime();
+        if (
+          current?.interaction !== 'terminal' ||
+          current.terminal?.session_id !== terminal.session_id ||
+          current.terminal.pane_id !== terminal.pane_id ||
+          current.terminal.instance_id !== terminal.instance_id ||
+          !matchesRuntimeTerminal(terminal, agents)
+        ) {
+          showToast({
+            variant: 'info',
+            title: t`Terminal unavailable`,
+            message: t`The linked agent is no longer in that terminal.`,
+          });
+          return;
+        }
+        router.push({
+          pathname: '/servers/[serverId]',
+          params: { serverId, sessionId: terminal.session_id, paneId: terminal.pane_id },
+        });
+      },
+      (error) => {
+        if (!ownsWorkbench(owner)) return;
+        showToast({
+          variant: 'danger',
+          title: t`Could not open terminal`,
+          message: agentErrorRef.current(error),
+        });
+      }
+    );
+  }, [
+    activeAsid,
+    captureWorkbenchOwner,
+    ownsWorkbench,
+    readRuntime,
+    router,
+    serverId,
+    showToast,
+    t,
+  ]);
+
   const statusPlate = useTranscriptPlate();
   const [retryNoticeDismissed, setRetryNoticeDismissed] = useState(false);
   useEffect(() => {
@@ -4194,6 +4325,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     setRetryNoticeDismissed(false);
   }, [activeAsid, sessionInfo?.status, sessionInfo?.error?.message]);
   const statusNotice = useMemo(() => {
+    if (externalRuntime) return null;
     const status = sessionInfo?.status;
     if (status === 'failed') {
       const detail = sessionInfo?.error?.message ?? '';
@@ -4244,7 +4376,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       };
     }
     return null;
-  }, [sessionInfo?.status, sessionInfo?.error?.message, retryNoticeDismissed, theme.colors, t]);
+  }, [
+    externalRuntime,
+    sessionInfo?.status,
+    sessionInfo?.error?.message,
+    retryNoticeDismissed,
+    theme.colors,
+    t,
+  ]);
 
   // A form field in the footer took focus: once the keyboard has risen, bring
   // the card up above the composer. The inset at the end of the list is what
@@ -4306,7 +4445,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
   const listFooter = useMemo(() => {
     const hasFormsOrPerms = footerPermissions.length > 0 || forms.length > 0;
-    if (!hasFormsOrPerms && !isRunning && !statusNotice) return null;
+    if (!hasFormsOrPerms && !isRunning && !statusNotice && !externalRuntime) return null;
     /*
       A turn blocked on a question is still `running`, and the footer said
       "Thinking…" over a form whose only blocker was the reader. The agent is
@@ -4316,7 +4455,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     const waitingOnReader = forms.length > 0;
     return (
       <View style={styles.footerContainer}>
-        {isRunning ? (
+        {externalRuntime ? (
+          <AgentRuntimeNotice
+            runtime={externalRuntime}
+            offline={isOffline}
+            refreshing={refreshingHistory}
+            onOpenTerminal={
+              externalRuntime.interaction === 'terminal' ? openRuntimeTerminal : undefined
+            }
+            onRefresh={supportsHistoryRefresh ? refreshHistory : undefined}
+          />
+        ) : null}
+        {isRunning && !externalRuntime ? (
           <View style={styles.thinkingRow}>
             <View
               style={[
@@ -4346,7 +4496,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             accessibilityLabel={statusNotice.label}
             disabled={!statusNotice.refresh}
             onPress={() => {
-              void loadSnapshot('silent');
+              void refreshHistory();
             }}
             style={[
               styles.statusNotice,
@@ -4430,7 +4580,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     forms,
     isRunning,
     statusNotice,
-    loadSnapshot,
+    externalRuntime,
+    isOffline,
+    refreshingHistory,
+    supportsHistoryRefresh,
+    refreshHistory,
+    openRuntimeTerminal,
     openModelSheet,
     handlePermissionDecision,
     handleFormSubmit,
@@ -4901,7 +5056,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             replaced by another between two frames.
           */
           <AgentTranscriptSkeleton paddingTop={topInset + 20} />
-        ) : timelineEmpty && permissions.length === 0 && forms.length === 0 ? (
+        ) : timelineEmpty && permissions.length === 0 && forms.length === 0 && !externalRuntime ? (
           <Animated.View
             style={[
               styles.emptyScrollWrapper,
@@ -5284,7 +5439,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         mentionComputers={mentionComputers}
         disabled={isOffline}
         agentName={agentName}
-        running={isRunning}
+        running={isRunning && canInteractNatively}
+        interactionBlockedReason={
+          canInteractNatively
+            ? undefined
+            : runtime?.interaction === 'terminal'
+              ? t`Continue in the linked terminal. Your draft stays here.`
+              : t`Live control is unavailable for this saved history. Your draft stays here.`
+        }
         canSendWhileRunning={agentFeatures.inbox}
         nextTurnModelName={nextTurnModelName}
         nextTurnModelTemporary={
@@ -5329,7 +5491,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         canPickMode={canPickMode}
         canAttach={agentFeatures.attachments}
         sessionLead={sessionLead}
-        onOpenModelSheet={agentFeatures.modelSelection ? openModelSheet : undefined}
+        onOpenModelSheet={
+          canInteractNatively && agentFeatures.modelSelection ? openModelSheet : undefined
+        }
         onOpenDiffSheet={openDiffSheet}
         onOpenSessionsSheet={openSessionsSheet}
         onOpenTasksSheet={activeTodos && activeTodos.length > 0 ? openTasksSheet : undefined}
