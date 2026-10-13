@@ -7178,3 +7178,19 @@ msgstr "내 메시지"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "페어링된 컴퓨터"
+
+#: src/components/agent-permission-card.tsx
+msgid "Allow once"
+msgstr "한 번 허용"
+
+#: src/components/agent-permission-card.tsx
+msgid "Allow for this turn"
+msgstr "이번 턴 동안 허용"
+
+#: src/components/agent-permission-card.tsx
+msgid "Requested permissions"
+msgstr "요청된 권한"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Could not load sessions"
+msgstr "세션을 불러오지 못했습니다"

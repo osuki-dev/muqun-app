@@ -7178,3 +7178,19 @@ msgstr "Tu mensaje"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "Tus ordenadores vinculados"
+
+#: src/components/agent-permission-card.tsx
+msgid "Allow once"
+msgstr "Permitir una vez"
+
+#: src/components/agent-permission-card.tsx
+msgid "Allow for this turn"
+msgstr "Permitir durante este turno"
+
+#: src/components/agent-permission-card.tsx
+msgid "Requested permissions"
+msgstr "Permisos solicitados"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Could not load sessions"
+msgstr "No se pudieron cargar las sesiones"

@@ -7178,3 +7178,19 @@ msgstr "ข้อความของคุณ"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "คอมพิวเตอร์ที่คุณจับคู่ไว้"
+
+#: src/components/agent-permission-card.tsx
+msgid "Allow once"
+msgstr "อนุญาตครั้งเดียว"
+
+#: src/components/agent-permission-card.tsx
+msgid "Allow for this turn"
+msgstr "อนุญาตสำหรับรอบนี้"
+
+#: src/components/agent-permission-card.tsx
+msgid "Requested permissions"
+msgstr "สิทธิ์ที่ร้องขอ"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Could not load sessions"
+msgstr "โหลดเซสชันไม่ได้"

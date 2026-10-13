@@ -7178,3 +7178,19 @@ msgstr "Tin nhắn của bạn"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "Các máy tính đã ghép nối của bạn"
+
+#: src/components/agent-permission-card.tsx
+msgid "Allow once"
+msgstr "Cho phép một lần"
+
+#: src/components/agent-permission-card.tsx
+msgid "Allow for this turn"
+msgstr "Cho phép trong lượt này"
+
+#: src/components/agent-permission-card.tsx
+msgid "Requested permissions"
+msgstr "Quyền được yêu cầu"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Could not load sessions"
+msgstr "Không thể tải phiên"

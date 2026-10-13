@@ -7178,3 +7178,19 @@ msgstr "你的消息"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "你已配对的电脑"
+
+#: src/components/agent-permission-card.tsx
+msgid "Allow once"
+msgstr "允许一次"
+
+#: src/components/agent-permission-card.tsx
+msgid "Allow for this turn"
+msgstr "允许本轮使用"
+
+#: src/components/agent-permission-card.tsx
+msgid "Requested permissions"
+msgstr "请求的权限"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Could not load sessions"
+msgstr "无法加载会话"
