@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
+  noticeDisplayTitle,
   dismissNotice,
   dismissNoticeKind,
   dismissSessionQuestions,
@@ -24,6 +25,42 @@ const notice = (id: string): InAppNotice => ({
   kind: 'general',
 });
 const empty = (): NoticeQueue => ({ items: [], seen: [] });
+
+describe('notice display wording', () => {
+  const labels = { question: 'Needs your input', approval: 'Approval required', fallback: 'Muqun' };
+
+  test('typed questions use reader-facing wording without losing the computer or altering the source', () => {
+    const entry: InAppNotice = {
+      ...notice('form'),
+      title: 'Agent blocked · Studio',
+      kind: 'approval',
+      question: { asid: 'session', formId: 'form' },
+    };
+    expect(noticeDisplayTitle(entry, labels)).toEqual({
+      lead: 'Needs your input',
+      suffix: 'Studio',
+    });
+    expect(entry.title).toBe('Agent blocked · Studio');
+    expect(noticeAutoDismissDelay(entry.kind, true)).toBeNull();
+  });
+
+  test('approval prose remains approval even when it is not a parsed OpenCode rule', () => {
+    expect(
+      noticeDisplayTitle(
+        { ...notice('permission'), title: 'APPROVAL REQUIRED · Studio', kind: 'approval' },
+        labels
+      )
+    ).toEqual({ lead: 'Approval required', suffix: 'Studio' });
+  });
+
+  test('untyped blocked and error events never become ordinary questions', () => {
+    for (const lead of ['Agent blocked', 'Agent error', 'Connection failed']) {
+      const entry = { ...notice('status'), title: `${lead} · Studio` };
+      expect(noticeDisplayTitle(entry, labels)).toEqual({ lead, suffix: 'Studio' });
+      expect(noticeAutoDismissDelay(entry.kind, true)).toBe(2000);
+    }
+  });
+});
 
 test('only visible general notices expire after two seconds', () => {
   expect(noticeAutoDismissDelay('general', true)).toBe(2000);

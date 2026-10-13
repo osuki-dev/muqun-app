@@ -115,7 +115,7 @@ export const appChrome = {
     /** The terminal's floating Copy / Select all / Cancel bar. */
     selectionBar: '0 6px 18px rgba(0, 0, 0, 0.22)',
     floatingPill: '0 8px 22px rgba(0, 0, 0, 0.26)',
-    notice: '0 8px 28px rgba(0, 0, 0, 0.22)',
+    notice: '0 4px 16px rgba(0, 0, 0, 0.14)',
     popover: '0 10px 30px rgba(0, 0, 0, 0.24)',
     workspaceRail: '0 10px 30px rgba(0, 0, 0, 0.06)',
   },

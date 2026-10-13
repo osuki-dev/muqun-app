@@ -1,12 +1,12 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
-import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
+import { useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
 import { surfaceBackgroundFill } from '@/theme/surface-background';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { router, usePathname, type Href } from 'expo-router';
-import { Bell } from 'lucide-react-native';
+import { Bell, ChevronRight } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { AppState, StyleSheet, View, type AccessibilityActionEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -30,7 +30,7 @@ import { feedback } from '@/lib/feedback';
 import {
   noticeAutoDismissDelay,
   noticePresentationAllowed,
-  noticeTitleParts,
+  noticeDisplayTitle,
   type InAppNotice,
 } from '@/lib/in-app-notifications';
 import { fadeInDown, settleTo, timing } from '@/lib/motion';
@@ -65,12 +65,12 @@ const NOTICE_SIDE_MARGIN = 16;
 const DRAG_SLOP = 6;
 
 /**
- * The foreground notification banner: one plate, one row, one way out.
+ * The foreground notification banner: one readable plate and a compact action row.
  *
  * What it says is the gateway's; how it reads is the app's. A push arrives as
  * a title and a body, and the banner draws them the way the rest of Muqun
  * draws a thing and its provenance -- "Agent done" in the app's ink and "desk"
- * muted behind it, on one line, with the sentence underneath.
+ * muted behind it, with the sentence underneath and room for either to wrap.
  *
  * ## Why the close button went
  *
@@ -88,7 +88,6 @@ export function InAppNotificationHost() {
   const notificationSurfaceStyle = useNotificationSurfaceStyle();
   const backPageClipStyle = useNotificationSurfaceStyle(false);
   const insets = useSafeAreaInsets();
-  const surfaceBackground = useSurfaceBackground();
   const surfaceOpacity = useSurfaceBackgroundOpacity();
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
@@ -163,7 +162,7 @@ export function InAppNotificationHost() {
   }));
 
   const backSizeStyle = useAnimatedStyle(() => ({
-    height: plateHeight.get() + 8,
+    height: plateHeight.get(),
     opacity: plateHeight.get() > 0 ? 1 : 0,
   }));
 
@@ -230,8 +229,7 @@ export function InAppNotificationHost() {
       );
     });
 
-  // Render real queued content with exactly the same presentation as the front.
-  const renderCard = (entry: InAppNotice, page: number, front: boolean) => {
+  const renderCard = (entry: InAppNotice) => {
     /*
     An approval is the one notice the app can say better than the gateway can.
     The push arrives titled "APPROVAL REQUIRED" -- a sign, not a sentence --
@@ -245,9 +243,11 @@ export function InAppNotificationHost() {
       approval && approval.action && permissionActionPhrase[approval.action]
         ? _(permissionActionPhrase[approval.action]!)
         : '';
-    const { lead, suffix } = noticeTitleParts(
-      approval ? t`Approval required` : entry.title || t`Muqun`
-    );
+    const { lead, suffix } = noticeDisplayTitle(entry, {
+      question: t`Needs your input`,
+      approval: t`Approval required`,
+      fallback: t`Muqun`,
+    });
     // A terminal approval push is ordinary prose, not an OpenCode rule/path.
     // Keep it in the wrapping UI face instead of the single-line code detail.
     const body = approval?.action ? approvalPhrase : entry.body;
@@ -255,15 +255,9 @@ export function InAppNotificationHost() {
     return (
       <Animated.View
         key={entry.id}
-        entering={front ? fadeInDown('short') : undefined}
-        accessibilityLiveRegion={front ? 'polite' : 'none'}
-        onLayout={
-          front
-            ? (event) => {
-                plateHeight.set(event.nativeEvent.layout.height);
-              }
-            : undefined
-        }
+        entering={fadeInDown('short')}
+        accessibilityLiveRegion="polite"
+        onLayout={(event) => plateHeight.set(event.nativeEvent.layout.height)}
         // The reader's opacity, but never thinner than the chrome floor. A
         // notice floats over whatever screen is up -- header buttons, a
         // transcript, the pages waiting behind it -- and a plate at the bare
@@ -271,6 +265,7 @@ export function InAppNotificationHost() {
         // seconds; it has to be readable for all of them.
         style={[
           styles.card,
+          waiting === 0 && !entry.route ? styles.withoutActions : null,
           notificationSurfaceStyle,
           {
             backgroundColor: surfaceBackgroundFill(
@@ -279,26 +274,26 @@ export function InAppNotificationHost() {
             ),
           },
         ]}
-        testID={front ? 'in-app-notification' : 'in-app-notification-back'}>
-        {/* The glyph alone. A tinted circle around it is a second
-                  surface on a plate that is already one surface. */}
-        <Bell size={18} color={colors.primary} style={styles.glyph} />
+        testID="in-app-notification">
         <View
           style={styles.content}
           accessible
           accessibilityActions={dismissAction}
           onAccessibilityAction={onAccessibilityAction}>
-          <Text variant="bodySmall" weight="semibold" numberOfLines={1}>
-            {lead}
-            {suffix ? (
-              <Text variant="bodySmall" color={colors.textMuted}>
-                {' \u00b7 '}
-                {suffix}
-              </Text>
-            ) : null}
-          </Text>
+          <View style={styles.heading}>
+            <Bell size={18} color={colors.primary} style={styles.glyph} />
+            <Text variant="bodySmall" weight="semibold" style={styles.title}>
+              {lead}
+              {suffix ? (
+                <Text variant="bodySmall" color={colors.textMuted}>
+                  {' \u00b7 '}
+                  {suffix}
+                </Text>
+              ) : null}
+            </Text>
+          </View>
           {body ? (
-            <Text selectable variant="caption" color={colors.textMuted} numberOfLines={2}>
+            <Text selectable variant="caption" color={colors.textMuted}>
               {body}
             </Text>
           ) : null}
@@ -306,53 +301,46 @@ export function InAppNotificationHost() {
                     it: an approval that does not name its subject is not an
                     approval the reader can answer. */}
           {detail ? (
-            <Text
-              selectable
-              color={colors.text}
-              numberOfLines={1}
-              style={[styles.detail, { fontFamily: mono }]}>
+            <Text selectable color={colors.text} style={[styles.detail, { fontFamily: mono }]}>
               {detail}
             </Text>
           ) : null}
         </View>
-        <View style={[styles.trailing, waiting > 0 ? styles.trailingStacked : null]}>
-          {/* One shared card surface; the page counter turns the deck. */}
-          {waiting > 0 ? (
-            <PressableScale
-              testID="in-app-notification-next"
-              accessibilityRole="button"
-              onPress={() => setSelectedId(items[(position + 1) % items.length]!.id)}
-              style={[
-                styles.pill,
-                {
-                  borderRadius: profile.chrome.control,
-                  backgroundColor: surfaceBackground(colors.primarySubtle),
-                },
-              ]}
-              accessibilityLabel={t`Next notification`}>
-              <Text variant="caption" color={colors.textMuted} style={styles.count}>
-                {page + 1} / {items.length}
-              </Text>
-            </PressableScale>
-          ) : null}
-          {entry.route ? (
-            <PressableScale
-              onPress={open}
-              accessibilityRole="button"
-              accessibilityLabel={t`Open`}
-              accessibilityActions={dismissAction}
-              onAccessibilityAction={onAccessibilityAction}
-              testID="in-app-notification-open"
-              style={styles.action}>
-              {/* Sentence case, and `caption` rather than the kit's
+        {waiting > 0 || entry.route ? (
+          <View style={styles.actions}>
+            {waiting > 0 ? (
+              <PressableScale
+                testID="in-app-notification-next"
+                accessibilityRole="button"
+                onPress={() => setSelectedId(items[(position + 1) % items.length]!.id)}
+                style={[styles.counter, { borderRadius: profile.chrome.control }]}
+                accessibilityValue={{ text: `${position + 1} / ${items.length}` }}
+                accessibilityLabel={t`Next notification`}>
+                <Text variant="caption" color={colors.textMuted} style={styles.count}>
+                  {position + 1} / {items.length}
+                </Text>
+                <ChevronRight size={12} color={colors.textMuted} />
+              </PressableScale>
+            ) : null}
+            {entry.route ? (
+              <PressableScale
+                onPress={open}
+                accessibilityRole="button"
+                accessibilityLabel={t`Open`}
+                accessibilityActions={dismissAction}
+                onAccessibilityAction={onAccessibilityAction}
+                testID="in-app-notification-open"
+                style={[styles.action, { borderRadius: profile.chrome.control }]}>
+                {/* Sentence case, and `caption` rather than the kit's
                         `label`: `label` is uppercase, and this is a word the
                         reader is asked to read, not a sign. */}
-              <Text variant="caption" weight="semibold" color={colors.primary}>
-                {t`Open`}
-              </Text>
-            </PressableScale>
-          ) : null}
-        </View>
+                <Text variant="caption" weight="semibold" color={colors.primary}>
+                  {t`Open`}
+                </Text>
+              </PressableScale>
+            ) : null}
+          </View>
+        ) : null}
       </Animated.View>
     );
   };
@@ -372,23 +360,25 @@ export function InAppNotificationHost() {
               importantForAccessibility="no-hide-descendants"
               style={[
                 styles.backPage,
-                // A taller card or its shadow must follow the deck's rounded clip.
+                // Only a quiet page edge: no duplicate content or shadow
+                // beneath the translucent front card.
                 backPageClipStyle,
                 backSizeStyle,
                 {
-                  transform: [{ translateY: depth * 6 }, { scaleX: 1 - depth * 0.035 }],
+                  backgroundColor: surfaceBackgroundFill(
+                    colors.surfaceRaised,
+                    depth === 1 ? 0.7 : 0.4
+                  ),
+                  borderColor: surfaceBackgroundFill(colors.border, 0.35),
+                  transform: [{ translateY: depth * 3 }, { scaleX: 1 - depth * 0.025 }],
                 },
-              ]}>
-              {renderCard(
-                items[(position + depth) % items.length]!,
-                (position + depth) % items.length,
-                false
-              )}
-            </Animated.View>
+              ]}
+              testID="in-app-notification-back"
+            />
           ) : null
         )}
         <GestureDetector gesture={swipe}>
-          <Animated.View style={dragStyle}>{renderCard(notice, position, true)}</Animated.View>
+          <Animated.View style={dragStyle}>{renderCard(notice)}</Animated.View>
         </GestureDetector>
       </View>
     </View>
@@ -405,37 +395,48 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: NOTICE_SIDE_MARGIN,
   },
-  deck: { width: '100%', maxWidth: 480 },
+  deck: { width: '100%', maxWidth: 480, marginTop: 8 },
   backPage: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth,
   },
   card: {
     width: '100%',
     maxWidth: 480,
-    paddingVertical: 12,
+    paddingTop: 12,
+    paddingBottom: 4,
     paddingHorizontal: 14,
-    marginTop: 8,
+    gap: 2,
+  },
+  withoutActions: { paddingBottom: 12 },
+  heading: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  glyph: { marginTop: 1 },
+  title: { flex: 1, minWidth: 0 },
+  content: { minWidth: 0, gap: 5 },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  counter: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-  },
-  glyph: { alignSelf: 'flex-start', marginTop: 2 },
-  content: { flex: 1, minWidth: 0, gap: 3 },
-  trailing: { alignItems: 'flex-end', justifyContent: 'center', gap: 6 },
-  /** With a count above it, the column reads top-down: how many, then the way in. */
-  trailingStacked: { alignSelf: 'stretch', justifyContent: 'space-between' },
-  pill: {
-    paddingHorizontal: 7,
+    gap: 4,
+    paddingHorizontal: 8,
+    minWidth: 44,
     minHeight: 44,
     justifyContent: 'center',
   },
-  action: { minHeight: 44, justifyContent: 'center', paddingLeft: 10 },
+  action: {
+    minHeight: 44,
+    minWidth: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    marginLeft: 'auto',
+  },
   count: { fontVariant: ['tabular-nums'] },
-  // The approval's subject: a path or a command, and the one line of the
+  // The approval's subject: a path or a command, and the part of the
   // banner the reader has to read character for character before they can
   // answer it. The literal `'monospace'` it used to name meant this line alone
   // stayed on the platform face while the permission card it mirrors moved to
