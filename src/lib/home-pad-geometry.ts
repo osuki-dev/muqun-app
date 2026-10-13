@@ -106,6 +106,9 @@ const COVER_ARTWORK_RATIO = 0.9;
 /** The cover block's share of the viewport. */
 export const PAD_COVER_SHARE = 0.45;
 
+/** Keep the theme legible in a short window; the launch pane can scroll. */
+export const PAD_COVER_MIN_HEIGHT = 200;
+
 /**
  * The Pad cover block at the top of the left column: the pack's title and
  * painting, or the app's wordmark, prefers `PAD_COVER_SHARE` of the viewport.
@@ -147,7 +150,10 @@ export function padCover({
   artwork: { width: number; height: number };
 } {
   const preferredHeight = Math.round(viewportHeight * PAD_COVER_SHARE);
-  const height = Math.min(preferredHeight, Math.max(0, availableHeight ?? preferredHeight));
+  const height = Math.min(
+    preferredHeight,
+    Math.max(PAD_COVER_MIN_HEIGHT, availableHeight ?? preferredHeight)
+  );
   const byWidth =
     measuredTitleWidth > 0
       ? Math.min(coverWidth * 0.38, ((coverWidth - 4) * 100) / measuredTitleWidth)
