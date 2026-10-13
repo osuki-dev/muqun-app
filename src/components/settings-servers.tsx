@@ -21,7 +21,6 @@ import {
   SettingsSeparator,
 } from '@/components/settings-chrome';
 import { FleetPeersSection } from '@/components/settings-fleet-peers';
-import { McpTokens } from '@/components/settings-mcp-tokens';
 import { ServerCapabilities } from '@/components/settings-server-capabilities';
 import { SettingsSegmented } from '@/components/settings-segmented';
 import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
@@ -427,7 +426,6 @@ function ServerRow({
               <FleetPeersSection server={server} />
               <PairedDevices server={server} />
               <ServerCapabilities serverId={server.serverId} />
-              <McpTokens serverId={server.serverId} />
             </>
           ) : (
             <>
