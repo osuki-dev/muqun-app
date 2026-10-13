@@ -172,7 +172,9 @@ export function normalizeServerAgents(snapshot: ServerAgentsSnapshot): ServerAge
       name: agent.name.slice(0, MAX_AGENT_NAME_LENGTH),
       status: agent.status,
       hasAgent: agent.hasAgent,
-      ...(agent.pendingUserInput === true ? { pendingUserInput: true } : {}),
+      ...(typeof agent.pendingUserInput === 'boolean'
+        ? { pendingUserInput: agent.pendingUserInput }
+        : {}),
       ...(agent.instanceId ? { instanceId: agent.instanceId } : {}),
       ...(positivePid(agent.shellPid) ? { shellPid: agent.shellPid } : {}),
       ...(agent.agentLabel
@@ -228,8 +230,8 @@ export function mirroredServerAgents(
         : {}),
       ...(positivePid(agent.raw.shell_pid) ? { shellPid: agent.raw.shell_pid as number } : {}),
       ...(capabilities?.includes('terminal_pending_user_input') &&
-      agent.raw.pending_user_input === true
-        ? { pendingUserInput: true }
+      typeof agent.raw.pending_user_input === 'boolean'
+        ? { pendingUserInput: agent.raw.pending_user_input }
         : {}),
       ...(agentLabel ? { agentLabel } : {}),
       // What makes an agent on the home screen a link rather than a label: the
@@ -290,8 +292,8 @@ export function mirroredServerPanes(
           : {}),
         ...(positivePid(agent.raw.shell_pid) ? { shellPid: agent.raw.shell_pid as number } : {}),
         ...(capabilities?.includes('terminal_pending_user_input') &&
-        agent.raw.pending_user_input === true
-          ? { pendingUserInput: true }
+        typeof agent.raw.pending_user_input === 'boolean'
+          ? { pendingUserInput: agent.raw.pending_user_input }
           : {}),
         ...(agentLabel ? { agentLabel } : {}),
         paneId: pane.id,
@@ -519,7 +521,9 @@ function parseSnapshot(value: unknown): ServerAgentsSnapshot | null {
           // field's own doc comment on `ServerAgent` for why `true` is the
           // correct default rather than a guess.
           hasAgent: typeof agent.hasAgent === 'boolean' ? agent.hasAgent : true,
-          ...(agent.pendingUserInput === true ? { pendingUserInput: true } : {}),
+          ...(typeof agent.pendingUserInput === 'boolean'
+            ? { pendingUserInput: agent.pendingUserInput }
+            : {}),
           ...(typeof agent.instanceId === 'string' && agent.instanceId
             ? { instanceId: agent.instanceId }
             : {}),

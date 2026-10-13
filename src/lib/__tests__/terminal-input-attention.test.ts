@@ -73,3 +73,15 @@ test('native attention survives storage and its resolution invalidates the mirro
   };
   expect(sameServerAgents(normalized, resolved)).toBe(false);
 });
+
+test('a confirmed empty native input state survives storage without becoming unknown', () => {
+  const resolved = {
+    ...snapshot,
+    agents: snapshot.agents.map((agent) => ({ ...agent, pendingUserInput: false })),
+  };
+  const restored = parseServerAgentsIndex(
+    JSON.stringify({ computer: normalizeServerAgents(resolved) })
+  );
+  expect(restored.computer?.agents[0]?.pendingUserInput).toBe(false);
+  expect(terminalPendingUserInput(restored.computer, 'qa', 'pane', NOW, 4242)).toBe(false);
+});

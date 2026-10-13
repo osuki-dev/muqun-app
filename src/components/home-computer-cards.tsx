@@ -45,6 +45,7 @@ import { useServerReachability } from '@/stores/server-reachability';
 import { useHomeSortHold } from '@/stores/home-sort-hold';
 import { useServerTasksStore } from '@/stores/server-tasks';
 import { useServerAgents } from '@/stores/server-agents';
+import { useHomeAttention } from '@/stores/home-attention';
 import { useServerChannels } from '@/stores/server-channels';
 
 /**
@@ -172,12 +173,14 @@ export function ComputerCardsPresence({
   const hiddenList = useHomeTaskCards((state) => state.hidden);
   const hidden = new Set(hiddenList);
   const panesByServer = useServerAgents((state) => state.byServer);
+  const requests = useHomeAttention((state) => state.byTarget);
   const hasCards = useServerTasksStore(
     (state) =>
       buildComputerCards({
         servers,
         index: state.index,
         panesByServer,
+        requests,
         reachability: (serverId) => reachabilityByServer[serverId],
         dismissed,
         hidden,
@@ -240,6 +243,7 @@ export function HomeComputerCards({
   const nowMs = useMinuteNow(probeNowMs);
   const inputs = useCardInputs(nowMs);
   const panesByServer = useServerAgents((state) => state.byServer);
+  const requests = useHomeAttention((state) => state.byTarget);
   // The same fold Home's presence check uses, so a card and the section agree;
   // it moves only when a computer goes live, offline or unknown.
   const reachability = useHomeReachability(serverIds, activeConnection);
@@ -252,6 +256,7 @@ export function HomeComputerCards({
     servers,
     index,
     panesByServer,
+    requests,
     reachability: (serverId) => reachability[serverId],
     followed: new Set(followedIds),
     dismissed: inputs.dismissed,

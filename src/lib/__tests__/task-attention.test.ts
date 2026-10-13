@@ -1,8 +1,16 @@
 import { expect, test } from 'bun:test';
-import { taskAttentionDestination } from '../task-attention';
+import { taskAttentionView, taskHasPendingInput } from '../task-attention';
 import { createHomeAttentionStore } from '../home-attention';
 import { SERVER_AGENTS_STALE_AFTER_MS, type ServerAgentsSnapshot } from '../server-agents';
 import type { TaskView } from '../task-ledger';
+import {
+  buildComputerCards,
+  buildTaskTree,
+  groupTaskTree,
+  openTaskWork,
+  taskRowVisual,
+} from '../home-computer-cards';
+import { homeWaitingTasks } from '../home-in-progress';
 
 const nowMs = 1_700_000_000_000;
 const task: TaskView = {
@@ -24,6 +32,7 @@ const panes: ServerAgentsSnapshot = {
       name: 'Codex',
       status: 'working',
       hasAgent: true,
+      pendingUserInput: false,
       paneId: 'pane',
       shellPid: 42,
       instanceId: 'instance',
@@ -32,11 +41,14 @@ const panes: ServerAgentsSnapshot = {
 };
 const input = { task, serverId: 'computer', panes, requests: {}, nowMs };
 
-test('a blocked report with a working agent opens the reason without rewriting waiting history', () => {
+test('a blocked report with a freshly working agent does not rewrite waiting history', () => {
   const before = structuredClone(task);
-  expect(taskAttentionDestination(input)).toBe('waiting-detail');
+  expect(taskAttentionView(input)).toMatchObject({ state: 'working', summary: undefined });
   expect(task).toEqual(before);
-  expect(taskAttentionDestination({ ...input, panes: undefined })).toBe('waiting-detail');
+  expect(taskAttentionView({ ...input, panes: undefined })).toMatchObject({
+    state: 'idle_unconfirmed',
+    summary: undefined,
+  });
 });
 
 test('a concrete asynchronous question still opens its terminal while the agent works', () => {
@@ -44,19 +56,23 @@ test('a concrete asynchronous question still opens its terminal while the agent 
     ...panes,
     agents: panes.agents.map((agent) => ({ ...agent, pendingUserInput: true })),
   };
-  expect(taskAttentionDestination({ ...input, panes: pending })).toBe('work');
+  expect(taskAttentionView({ ...input, panes: pending })).toMatchObject({
+    state: 'waiting',
+    summary: undefined,
+  });
   expect(
-    taskAttentionDestination({
+    taskAttentionView({
       ...input,
       panes: pending,
       nowMs: nowMs + SERVER_AGENTS_STALE_AFTER_MS + 1,
     })
-  ).toBe('waiting-detail');
-  expect(taskAttentionDestination({ ...input, panes: { ...pending, serverId: 'other' } })).toBe(
-    'waiting-detail'
-  );
+  ).toMatchObject({ state: 'idle_unconfirmed', summary: undefined });
+  expect(taskAttentionView({ ...input, panes: { ...pending, serverId: 'other' } })).toMatchObject({
+    state: 'idle_unconfirmed',
+    summary: undefined,
+  });
   expect(
-    taskAttentionDestination({
+    taskAttentionView({
       ...input,
       task: {
         ...task,
@@ -71,7 +87,7 @@ test('a concrete asynchronous question still opens its terminal while the agent 
       },
       panes: pending,
     })
-  ).toBe('waiting-detail');
+  ).toMatchObject({ state: 'idle_unconfirmed', summary: undefined });
 });
 
 test('a session request takes precedence until its exact request resolves', () => {
@@ -88,16 +104,16 @@ test('a session request takes precedence until its exact request resolves', () =
     binding: { kind: 'agent_session', agentId: 'agent', asid: 'conversation' },
   };
   const destination = () =>
-    taskAttentionDestination({ ...input, task: sessionTask, requests: store.getState().byTarget });
+    taskAttentionView({ ...input, task: sessionTask, requests: store.getState().byTarget });
   store.getState().pending({ ...target, serverId: 'other' }, 'request', nowMs);
-  expect(destination()).toBe('waiting-detail');
+  expect(destination()).toMatchObject({ state: 'idle_unconfirmed', summary: undefined });
   store.getState().pending(target, 'request', nowMs);
-  expect(destination()).toBe('work');
+  expect(destination()).toMatchObject({ state: 'waiting', summary: undefined });
   store.getState().resolve(target, 'request', nowMs + 1);
-  expect(destination()).toBe('waiting-detail');
+  expect(destination()).toMatchObject({ state: 'idle_unconfirmed', summary: undefined });
 });
 
-test('ordinary rows keep opening their live work or result', () => {
+test('ordinary rows retain their ledger state', () => {
   for (const state of [
     'working',
     'queued',
@@ -106,9 +122,76 @@ test('ordinary rows keep opening their live work or result', () => {
     'failed',
     'cancelled',
   ] as const) {
-    expect(taskAttentionDestination({ ...input, task: { ...task, state } })).toBe('work');
+    expect(taskAttentionView({ ...input, task: { ...task, state } }).state).toBe(state);
   }
-  expect(taskAttentionDestination({ ...input, task: { ...task, summary: undefined } })).toBe(
-    'waiting-detail'
+  expect(taskAttentionView({ ...input, task: { ...task, summary: undefined } }).state).toBe(
+    'working'
   );
+});
+
+test('native question lifecycle agrees across the card, attention list and row without changing history', () => {
+  const workingTask = { ...task, state: 'working' as const };
+  for (const ledgerTask of [task, workingTask]) {
+    const index = { computer: { tasks: [ledgerTask], fetchedAt: nowMs } };
+    for (const pendingUserInput of [false, true, false]) {
+      const snapshot = {
+        ...panes,
+        agents: panes.agents.map((agent) => ({ ...agent, pendingUserInput })),
+      };
+      const panesByServer = { computer: snapshot };
+      const [card] = buildComputerCards({
+        servers: [{ serverId: 'computer' }],
+        index,
+        reachability: () => 'live',
+        dismissed: new Set(),
+        nowMs,
+        panesByServer,
+      });
+      expect(card?.activity).toBe(pendingUserInput ? 'needs-you' : 'working');
+      expect(card?.now[0]?.task).toBe(ledgerTask);
+      expect(homeWaitingTasks(index, ['computer'], [], { panesByServer, nowMs })).toHaveLength(
+        pendingUserInput ? 1 : 0
+      );
+      const view = taskAttentionView({ ...input, task: ledgerTask, panes: snapshot });
+      const groups = groupTaskTree(buildTaskTree([ledgerTask]), (task) =>
+        taskHasPendingInput({ ...input, task, panes: snapshot })
+      );
+      expect(groups.attention).toHaveLength(pendingUserInput ? 1 : 0);
+      expect(
+        taskRowVisual(view, { canComplete: false, acknowledged: false }).needsYou === true
+      ).toBe(pendingUserInput);
+      expect(view.summary).toBe(
+        pendingUserInput || ledgerTask.state === 'waiting' ? undefined : ledgerTask.summary
+      );
+    }
+    expect(ledgerTask.summary).toBe('The QA device is unavailable.');
+  }
+});
+
+test('stale, status-only, replaced and unknown agents leave a quiet unresolved task', () => {
+  const observations = [
+    undefined,
+    { ...panes, agents: panes.agents.map((agent) => ({ ...agent, pendingUserInput: undefined })) },
+    { ...panes, checkedAtMs: nowMs - SERVER_AGENTS_STALE_AFTER_MS - 1 },
+    { ...panes, agents: panes.agents.map((agent) => ({ ...agent, instanceId: undefined })) },
+    { ...panes, agents: panes.agents.map((agent) => ({ ...agent, shellPid: 43 })) },
+    { ...panes, agents: panes.agents.map((agent) => ({ ...agent, status: 'unknown' as const })) },
+  ];
+  for (const observed of observations) {
+    expect(taskAttentionView({ ...input, panes: observed })).toMatchObject({
+      state: 'idle_unconfirmed',
+      summary: undefined,
+    });
+  }
+  expect(task.state).toBe('waiting');
+});
+
+test('a recorded blocker opens its terminal directly', async () => {
+  const opened: unknown[][] = [];
+  await openTaskWork(
+    { openServer: (...args) => opened.push(args), openAgent: () => {}, openTaskResult: () => {} },
+    'computer',
+    task
+  );
+  expect(opened).toEqual([['computer', 'pane', 'session']]);
 });

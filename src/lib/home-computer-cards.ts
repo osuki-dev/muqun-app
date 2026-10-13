@@ -9,6 +9,7 @@
  */
 
 import type { HomeSessionParams } from '@/lib/home-composer';
+import { taskAttentionView, type TaskAttentionInput } from './task-attention';
 import type { ServerReachability } from './server-reachability';
 import {
   isServerAgentsStale,
@@ -408,14 +409,6 @@ export function treeRowIsOpen(row: CardTaskRow): boolean {
   return Boolean(counts && counts.active + counts.waiting > 0);
 }
 
-/** Whether a root row, or work under it, is running or asking (not only paused). */
-function treeRowIsActive(row: CardTaskRow): boolean {
-  if (ACTIVE.has(row.task.state)) return true;
-  if (row.children.some((child) => ACTIVE.has(child.state))) return true;
-  const counts = row.task.children;
-  return Boolean(counts && counts.active + counts.waiting > 0);
-}
-
 /** How urgent a root row is: its most urgent open work, by {@link taskRowRank}. */
 function treeRowRank(row: CardTaskRow): number {
   if (treeRowIsWaiting(row)) return 0;
@@ -443,7 +436,10 @@ export function treeRowIsWaiting(row: CardTaskRow): boolean {
  * it waits on the reader, In progress while any of it is open, else Finished
  * (capped as the flat list was). Newest first within each.
  */
-export function groupTaskTree(rows: readonly CardTaskRow[]): {
+export function groupTaskTree(
+  rows: readonly CardTaskRow[],
+  needsInput?: (task: TaskView) => boolean
+): {
   attention: TaskView[];
   active: TaskView[];
   finished: TaskView[];
@@ -452,7 +448,10 @@ export function groupTaskTree(rows: readonly CardTaskRow[]): {
   const active: TaskView[] = [];
   const finished: TaskView[] = [];
   for (const row of byUrgency(rows)) {
-    if (treeRowIsWaiting(row)) attention.push(row.task);
+    const waiting = needsInput
+      ? [row.task, ...row.children].some(needsInput)
+      : treeRowIsWaiting(row);
+    if (waiting) attention.push(row.task);
     else if (treeRowIsOpen(row) || !isTerminalTaskState(row.task.state)) active.push(row.task);
     else if (finished.length < FINISHED_TASKS_SHOWN) finished.push(row.task);
   }
@@ -574,6 +573,7 @@ export function buildComputerCards(input: {
   followed?: ReadonlySet<string>;
   /** Confirmed pane inventories; absence without one never hides a task. */
   panesByServer?: ServerAgentsIndex;
+  requests?: TaskAttentionInput['requests'];
 }): ComputerCard[] {
   const all = input.servers.map((server, order): ComputerCard & { order: number } => {
     const entry = input.index[server.serverId];
@@ -592,7 +592,16 @@ export function buildComputerCards(input: {
           input.nowMs
         )
     );
-    const tree = buildTaskTree(tasks);
+    const displayTasks = tasks.map((task) =>
+      taskAttentionView({
+        task,
+        serverId: server.serverId,
+        panes: input.panesByServer?.[server.serverId],
+        requests: input.requests,
+        nowMs: input.nowMs,
+      })
+    );
+    const tree = buildTaskTree(displayTasks);
     // A root stays in Now while any work it started is still open, even after
     // the root itself finished: a delegating turn can end before its
     // sub-tasks do, and an idle parent is not finished work.
@@ -615,9 +624,10 @@ export function buildComputerCards(input: {
     );
     // The same predicates Now uses, so work known only from the gateway's
     // child counts moves the card as well as listing it.
-    const waiting = tasks.some((task) => task.state === 'waiting') || tree.some(treeRowIsWaiting);
+    const waiting = displayTasks.some((task) => task.state === 'waiting');
     const working =
-      tree.some(treeRowIsActive) || pending.some((item) => pendingWorking(item, input.nowMs));
+      displayTasks.some((task) => ACTIVE.has(task.state) || (task.children?.active ?? 0) > 0) ||
+      pending.some((item) => pendingWorking(item, input.nowMs));
     const activity: CardActivity =
       input.reachability(server.serverId) === 'offline'
         ? 'offline'
@@ -636,8 +646,10 @@ export function buildComputerCards(input: {
       activity,
       pending,
       now: open.map((row) => ({
-        task: row.task,
-        children: row.children.filter((child) => !isTerminalTaskState(child.state)),
+        task: byId.get(row.task.taskId) ?? row.task,
+        children: row.children
+          .filter((child) => !isTerminalTaskState(child.state))
+          .map((child) => byId.get(child.taskId) ?? child),
       })),
       nowTotal: open.length,
       finished,

@@ -20,91 +20,42 @@ function index(byServer: Record<string, TaskView[]>): ServerTasksIndex {
 }
 
 describe('homeWaitingTasks', () => {
-  test('a remote command does not duplicate or suppress its originating waiting row', () => {
-    const remote = { ...task('remote', 'waiting', 1), origin: 'peer' as const };
-    const mirror = task('mirror', 'waiting', 2, {
-      kind: 'peer',
-      peerId: 'mini',
-      remoteTaskId: remote.taskId,
-    });
-    const tasks = index({ source: [mirror], mini: [remote] });
-    expect(homeWaitingTasks(tasks, ['source', 'mini'])).toEqual([
-      { serverId: 'source', task: mirror },
-    ]);
-  });
-
-  test('waiting tasks only, newest first', () => {
-    const tasks = index({
-      a: [task('w1', 'waiting', 1), task('run', 'working', 9), task('w2', 'waiting', 4)],
-    });
-    expect(homeWaitingTasks(tasks, ['a']).map((row) => row.task.taskId)).toEqual(['w2', 'w1']);
-  });
-
-  // A question is listed once: the real task when its computer's ledger is
-  // here, else the mirror that stands for it.
-  const mirror: TaskBinding = {
-    kind: 'peer',
-    peerId: 'peer-1',
-    peerServerId: 'cedar',
-    remoteTaskId: 'r',
-  };
-  test.each([
-    [
-      'both tasks present: one row, the real one',
-      { atlas: [task('m', 'waiting', 3, mirror)], cedar: [task('r', 'waiting', 2)] },
-      ['atlas', 'cedar'],
-      ['r'],
-    ],
-    [
-      'the real task there is not waiting yet: the mirror is listed',
-      { atlas: [task('m', 'waiting', 3, mirror)], cedar: [task('r', 'working', 2)] },
-      ['atlas', 'cedar'],
-      ['m'],
-    ],
-    [
-      "the running computer's ledger is stale: the mirror is listed",
-      { atlas: [task('m', 'waiting', 3, mirror)], cedar: [task('r', 'waiting', 2)] },
-      ['atlas'],
-      ['m'],
-    ],
-    [
-      'the task there is not known yet: the mirror is listed',
-      {
-        atlas: [task('m', 'waiting', 3, { ...mirror, remoteTaskId: '' })],
-        cedar: [task('r', 'waiting', 2)],
-      },
-      ['atlas', 'cedar'],
-      ['m', 'r'],
-    ],
-    [
-      'the running computer is not paired here: the mirror is listed',
-      { atlas: [task('m', 'waiting', 3, mirror)] },
-      ['atlas'],
-      ['m'],
-    ],
-  ] as const)('%s', (_name, byServer, fresh, listed) => {
-    const tasks = index(
-      Object.fromEntries(Object.entries(byServer).map(([id, list]) => [id, [...list]]))
-    );
-    expect(homeWaitingTasks(tasks, fresh).map((row) => row.task.taskId)).toEqual([...listed]);
-  });
-
-  test('a task whose session Needs you already lists is not listed twice', () => {
-    const bound = (asid: string): TaskBinding => ({ kind: 'agent_session', agentId: 'oc', asid });
+  test('recorded waiting and peer mirrors alone never become requests', () => {
     const tasks = index({
       a: [
-        task('dup', 'waiting', 3, bound('ses_1')),
-        task('other', 'waiting', 2, bound('ses_2')),
-        task('cmd', 'waiting', 1),
+        task('blocked', 'waiting', 1),
+        task('mirror', 'waiting', 2, { kind: 'peer', peerId: 'b', remoteTaskId: 'remote' }),
       ],
-      b: [task('elsewhere', 'waiting', 4, bound('ses_1'))],
     });
-    const pending = [{ serverId: 'a', asid: 'ses_1' }];
-    expect(homeWaitingTasks(tasks, ['a', 'b'], pending).map((row) => row.task.taskId)).toEqual([
-      'elsewhere',
-      'other',
-      'cmd',
-    ]);
+    expect(homeWaitingTasks(tasks, ['a'])).toEqual([]);
+  });
+  test('working sessions with requests are listed once, newest first', () => {
+    const target = (asid: string) => ({
+      kind: 'agent-session' as const,
+      serverId: 'a',
+      asid,
+      sessionId: 'session',
+      directory: '/work',
+    });
+    const tasks = index({
+      a: [
+        task('older', 'working', 1, { kind: 'agent_session', agentId: 'agent', asid: 'older' }),
+        task('newer', 'working', 2, { kind: 'agent_session', agentId: 'agent', asid: 'newer' }),
+      ],
+    });
+    const requests = {
+      older: { target: target('older'), requestIds: ['one'], observedAt: 3 },
+      newer: { target: target('newer'), requestIds: ['two'], observedAt: 3 },
+    };
+    expect(
+      homeWaitingTasks(tasks, ['a'], [], { requests, nowMs: 3 }).map((row) => row.task.taskId)
+    ).toEqual(['newer', 'older']);
+    expect(
+      homeWaitingTasks(tasks, ['a'], [target('newer')], { requests, nowMs: 3 }).map(
+        (row) => row.task.taskId
+      )
+    ).toEqual(['older']);
+    expect(homeWaitingTasks(tasks, ['b'], [], { requests, nowMs: 3 })).toEqual([]);
   });
 });
 
@@ -123,7 +74,9 @@ describe('needsYouAcrossComputers', () => {
         ])
       )
     );
-    const rows = homeWaitingTasks(tasks, Object.keys(byServer));
+    const rows = Object.entries(tasks)
+      .flatMap(([serverId, entry]) => (entry?.tasks ?? []).map((task) => ({ serverId, task })))
+      .sort((a, b) => b.task.updatedMs - a.task.updatedMs);
     expect(needsYouAcrossComputers(rows).map((row) => row.task.taskId)).toEqual(listed);
   });
 });

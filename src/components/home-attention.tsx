@@ -12,8 +12,7 @@ import {
   RowMarkdown,
   TaskRowLineText,
   useTaskRowLine,
-  useWaitingTaskDetail,
-  WaitingTaskDetail,
+  useTaskAttentionView,
 } from '@/components/task-row';
 import { useMinuteNow } from '@/hooks/use-minute-now';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -37,12 +36,11 @@ import {
   needsYouAcrossComputers,
   type HomeTaskRow,
 } from '@/lib/home-in-progress';
-import { peerServerIdOf } from '@/lib/fleet-peers';
 import { useAgents } from '@/stores/agents';
-import { useFleetPeers } from '@/stores/fleet-peers';
 import { useHomeAttention } from '@/stores/home-attention';
 import { taskOpeningKey, useHomeTaskCards } from '@/stores/home-task-cards';
-import { useServerTasksStore } from '@/stores/server-tasks';
+import { useServerAgents } from '@/stores/server-agents';
+import type { ServerAgentsIndex } from '@/lib/server-agents';
 
 const OBSERVATION_DATE_FORMAT: Intl.DateTimeFormatOptions = {
   month: 'short',
@@ -70,20 +68,13 @@ function pendingObservations(
  * tasks waiting on the reader that no listed request already covers, when
  * those span more than one computer (`needsYouAcrossComputers`).
  */
-type PeerServerOf = (binding: { peerId: string; peerServerId?: string }) => string;
-
-/** Which computer a mirror runs on, by this phone's server id for it. */
-function usePeerServerOf(): PeerServerOf {
-  const byServer = useFleetPeers((state) => state.byServer);
-  return (binding) => peerServerIdOf(byServer, binding);
-}
-
 function attentionRows(
   observations: Observations,
   index: ServerTasksIndex,
   servers: readonly GatewayRecord[],
   taskServerIds: readonly string[],
-  peerServerOf: PeerServerOf
+  panesByServer: ServerAgentsIndex,
+  nowMs: number
 ) {
   const pending = pendingObservations(observations, servers);
   const waiting = needsYouAcrossComputers(
@@ -91,7 +82,7 @@ function attentionRows(
       index,
       taskServerIds,
       pending.map(([, snapshot]) => snapshot.target),
-      peerServerOf
+      { panesByServer, requests: observations, nowMs }
     )
   );
   return { pending, waiting };
@@ -100,9 +91,8 @@ function attentionRows(
 /**
  * Whether Needs you has a row: `HomeAttention` stays mounted while it is
  * empty, so the layout asks this rather than whether the slot is filled.
- * Each selector returns a boolean, so a task frame or an observation
- * re-renders Home only when the answer changes. With no open request no
- * task is covered by one, so the two halves answer separately.
+ * Use exactly the same observations as the list, including native requests
+ * whose agent remains working and requests that have since resolved.
  */
 export function useHasHomeAttention({
   servers,
@@ -111,16 +101,19 @@ export function useHasHomeAttention({
   servers: readonly GatewayRecord[];
   taskServerIds?: readonly string[];
 }): boolean {
-  const hasRequest = useHomeAttention(
-    (state) => pendingObservations(state.byTarget, servers).length > 0
+  const observations = useHomeAttention((state) => state.byTarget);
+  const index = useTaskIndexFor(taskServerIds);
+  const panes = useServerAgents((state) => state.byServer);
+  const nowMs = useMinuteNow();
+  const { pending, waiting } = attentionRows(
+    observations,
+    index,
+    servers,
+    taskServerIds,
+    panes,
+    nowMs
   );
-  const peerServerOf = usePeerServerOf();
-  const hasWaiting = useServerTasksStore(
-    (state) =>
-      needsYouAcrossComputers(homeWaitingTasks(state.index, taskServerIds, [], peerServerOf))
-        .length > 0
-  );
-  return hasRequest || hasWaiting;
+  return pending.length > 0 || waiting.length > 0;
 }
 
 /**
@@ -142,13 +135,15 @@ export function HomeAttention({
 }) {
   const observations = useHomeAttention((state) => state.byTarget);
   const taskIndex = useTaskIndexFor(taskServerIds);
-  const peerServerOf = usePeerServerOf();
+  const panes = useServerAgents((state) => state.byServer);
+  const nowMs = useMinuteNow();
   const { pending, waiting } = attentionRows(
     observations,
     taskIndex,
     servers,
     taskServerIds,
-    peerServerOf
+    panes,
+    nowMs
   );
   // The config stays mounted while the list is empty, so the first row to
   // arrive is an arrival (it enters and pulses), not part of a fresh mount.
@@ -174,7 +169,7 @@ export function HomeAttention({
   );
 }
 
-/** A waiting ledger entry may record a blocker without an outstanding request. */
+/** A confirmed input request opens its original task session directly. */
 function WaitingTaskRow({
   row,
   servers,
@@ -191,11 +186,11 @@ function WaitingTaskRow({
   const discovery = useAgents((state) => state.index.servers[row.serverId]);
   // The same icon and line as the row on its computer's card (`taskRowVisual`),
   // with the computer named, since this list spans every computer.
-  const visual = taskRowVisual(task, { canComplete: false, acknowledged: true });
   // The shared minute clock: a quiet mirror's line says when it was last seen.
   const nowMs = useMinuteNow();
-  const waitingDetail = useWaitingTaskDetail(task, row.serverId, nowMs);
-  const line = useTaskRowLine(discovery)(task, visual, '', nowMs);
+  const displayTask = useTaskAttentionView(task, row.serverId, nowMs);
+  const visual = taskRowVisual(displayTask, { canComplete: false, acknowledged: true });
+  const line = useTaskRowLine(discovery)(displayTask, visual, '', nowMs);
   const title = taskRowTitle(task) || line.text;
   const computer = homeContinueComputerLabel(servers, row.serverId);
   const meta = [computer, line.text].filter(Boolean).join(META_SEPARATOR);
@@ -210,9 +205,8 @@ function WaitingTaskRow({
         accessibilityLabel={`${title}, ${meta}`}
         accessibilityState={{
           busy: opening,
-          ...(waitingDetail.enabled ? { expanded: waitingDetail.shown } : {}),
         }}
-        onPress={waitingDetail.enabled ? waitingDetail.toggle : onOpen}
+        onPress={onOpen}
         style={[
           styles.row,
           {
@@ -249,9 +243,6 @@ function WaitingTaskRow({
           />
         )}
       </PressableScale>
-      {waitingDetail.shown ? (
-        <WaitingTaskDetail task={task} onOpen={onOpen} onClose={waitingDetail.close} />
-      ) : null}
     </View>
   );
 }
