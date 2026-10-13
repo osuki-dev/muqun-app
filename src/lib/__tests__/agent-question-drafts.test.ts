@@ -75,9 +75,15 @@ test('live expiration event removes callback and hands draft to composer without
     drafts.edit(owner, question, 'answer', 'Unsent answer');
     let forms = [question];
     const injections: unknown[] = [];
+    const resolutions: unknown[] = [];
     const environment: Record<string, unknown> = {
       useCallback: (fn: unknown) => fn,
       activeAsid: 'session',
+      serverId: 'server',
+      gatewayGeneration: 'run-1',
+      useInAppNotifications: {
+        getState: () => ({ resolveQuestion: (question: unknown) => resolutions.push(question) }),
+      },
       activeAsidRef: { current: scenario === 'navigated' ? 'another' : 'session' },
       syncRef: { current: {} },
       advanceSeq: () => ({}),
@@ -117,6 +123,14 @@ test('live expiration event removes callback and hands draft to composer without
       reason,
     });
     handle(event);
+    expect(resolutions).toEqual([
+      {
+        serverId: 'server',
+        asid: scenario === 'other-session' ? 'child' : 'session',
+        formId: question.id,
+        generation: 'run-1',
+      },
+    ]);
     expect(forms).toEqual(
       scenario === 'other-session' || scenario === 'navigated' ? [question] : []
     );

@@ -43,6 +43,7 @@ import { useServerTasksStore } from '@/stores/server-tasks';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { attributePush, noticeFromPush, noticePresentation } from '@/lib/in-app-notifications';
 import { useInAppNotifications } from '@/stores/in-app-notifications';
+import { useGatewayGeneration } from '@/stores/gateway-connection-generation';
 import { isDemoRecord } from '@/lib/demo-gateway';
 import { getActiveLocale } from '@/i18n/active-locale';
 import { recoverWith } from '@/lib/compiler-safe-control-flow';
@@ -70,9 +71,12 @@ Notifications.setNotificationHandler({
       AppState.currentState === 'active'
     );
     if (presentation.inApp && content) {
+      const source = content.data?.server_id ?? content.data?.serverId;
       const notice = noticeFromPush(notification.request.identifier, content, {
         isPad: windowIsPad(),
         questionTitle: i18n._(msg`Needs your input`),
+        gatewayGeneration:
+          typeof source === 'string' ? useGatewayGeneration.getState().byServer[source] : undefined,
       });
       if (notice) useInAppNotifications.getState().enqueue(notice);
     }

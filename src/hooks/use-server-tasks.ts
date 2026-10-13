@@ -7,7 +7,7 @@ import { configuredGatewayServerId } from '@/lib/gateway-client';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { WS_EVENTS_CAPABILITY, type GatewaySocketState } from '@/lib/gateway-socket';
 import { gatewaySocketFor } from '@/lib/gateway-socket-runtime';
-import { applyListAnswer, isTaskChannelLive, sessionsLeftWaiting } from '@/lib/server-tasks-state';
+import { applyListAnswer, isTaskChannelLive } from '@/lib/server-tasks-state';
 import {
   cancelTask,
   completeTask,
@@ -23,23 +23,9 @@ import { peerServerIdOf } from '@/lib/fleet-peers';
 import { useFleetPeers } from '@/stores/fleet-peers';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useServerCapabilities } from '@/stores/server-capabilities';
-import { useInAppNotifications } from '@/stores/in-app-notifications';
 import { useServerTasksStore } from '@/stores/server-tasks';
 
 const NO_TASKS: TaskView[] = [];
-
-/**
- * Apply a ledger update for `serverId`, then retire the question notices
- * ("Agent blocked") of sessions whose task left `waiting` in it: answered,
- * working again, or finished.
- */
-function settlingQuestions(serverId: string, update: () => void): void {
-  const tasksOf = () => useServerTasksStore.getState().index[serverId]?.tasks ?? NO_TASKS;
-  const before = tasksOf();
-  update();
-  const notices = useInAppNotifications.getState();
-  for (const asid of sessionsLeftWaiting(before, tasksOf())) notices.dismissQuestions(asid);
-}
 
 /** How a computer's ledger is reached from here, if at all. */
 export function taskRouteFor(
@@ -161,8 +147,7 @@ export function useServerTasks(serverId: string | null): ServerTasks {
       if (request !== requestRef.current) return;
       // A failed read keeps the list already held and says so.
       applyListAnswer(list, {
-        replace: (tasks) =>
-          settlingQuestions(serverId, () => replace(serverId, tasks, requestedAtMs)),
+        replace: (tasks) => replace(serverId, tasks, requestedAtMs),
         ok: () => setError(null),
         fail: () => setError('unavailable'),
       });
@@ -196,7 +181,9 @@ export function useServerTasks(serverId: string | null): ServerTasks {
     if (!socket || !serverId) return;
     return socket.watchTasks(
       {
-        onTaskUpdated: (task) => settlingQuestions(serverId, () => upsert(serverId, task)),
+        // Task state does not resolve forms: async questions can remain open
+        // while the agent works. Only the form's own resolution clears it.
+        onTaskUpdated: (task) => upsert(serverId, task),
         // After every (re)connect: whatever changed while it was down.
         onSubscribed: () => void refresh(),
         // The gateway dropped frames for this socket; a task may have changed

@@ -760,8 +760,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   }, [activeAsid]);
   // Opening a session answers its question notices: the form is on screen now.
   useEffect(() => {
-    if (activeAsid) useInAppNotifications.getState().dismissQuestions(activeAsid);
-  }, [activeAsid]);
+    if (activeAsid) useInAppNotifications.getState().dismissQuestions(activeAsid, serverId);
+  }, [activeAsid, serverId]);
   /**
    * Whether the app is in front, for the stream handler.
    *
@@ -2326,12 +2326,24 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         }
 
         case 'agent.form.pending':
+          useInAppNotifications.getState().reopenQuestion({
+            serverId,
+            asid: event.asid || activeAsid || '',
+            formId: event.request.id,
+            generation: gatewayGeneration,
+          });
           setForms((prev) =>
             prev.some((f) => f.id === event.request.id) ? prev : [...prev, event.request]
           );
           break;
 
         case 'agent.form.resolved': {
+          useInAppNotifications.getState().resolveQuestion({
+            serverId,
+            asid: event.asid || activeAsid || '',
+            formId: event.form_id,
+            generation: gatewayGeneration,
+          });
           if (!forActiveSession || activeAsidRef.current !== activeAsid) break;
           const draft = questionDrafts.resolve(questionDraftOwner, event.form_id, event.reason);
           if (draft) injectDraftRef.current?.(draft, { expiredQuestionOwner: questionDraftOwner });
@@ -2390,6 +2402,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       loadSnapshot,
       questionDrafts,
       questionDraftOwner,
+      gatewayGeneration,
       readRuntime,
       refreshSessions,
       refreshContext,
@@ -3271,6 +3284,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       if (!activeAsid || activeAsidRef.current !== activeAsid) return;
       const ownsReply = () =>
         activeAsidRef.current === activeAsid &&
+        useGatewayGeneration.getState().byServer[serverId] === gatewayGeneration &&
         useGatewayConnectionStore.getState().record?.serverId === serverId;
       if (!ownsReply()) return;
       try {
@@ -3285,6 +3299,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         return;
       }
       if (ownsReply()) {
+        useInAppNotifications
+          .getState()
+          .resolveQuestion({ serverId, asid: activeAsid, formId, generation: gatewayGeneration });
         questionDrafts.resolve(questionDraftOwner, formId, 'answered');
         setForms((prev) => prev.filter((f) => f.id !== formId));
       }
@@ -3299,6 +3316,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       t,
       questionDrafts,
       questionDraftOwner,
+      gatewayGeneration,
     ]
   );
 

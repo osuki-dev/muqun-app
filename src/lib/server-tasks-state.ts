@@ -76,33 +76,6 @@ export function replaceTasks(
   };
 }
 
-/**
- * The agent sessions whose task the ledger held as `waiting` and now holds
- * in another state: their question notices are stale. Read from the stored
- * ledger before and after an update, so a frame the store ignored as older
- * moves nothing, and a task not yet seen waiting (its question push came
- * first) keeps its notice.
- */
-export function sessionsLeftWaiting(
-  before: readonly TaskView[],
-  after: readonly TaskView[]
-): string[] {
-  const waiting = new Set(
-    before.filter((task) => task.state === 'waiting').map((task) => task.taskId)
-  );
-  const asids: string[] = [];
-  for (const task of after) {
-    if (
-      task.state !== 'waiting' &&
-      waiting.has(task.taskId) &&
-      task.binding.kind === 'agent_session'
-    ) {
-      asids.push(task.binding.asid);
-    }
-  }
-  return asids;
-}
-
 /** Tasks that have not finished, waiting ones included. */
 export function activeTaskCount(tasks: readonly TaskView[]): number {
   let count = 0;
