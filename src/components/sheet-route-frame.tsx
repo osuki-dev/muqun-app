@@ -87,8 +87,8 @@ export function FullscreenRouteSafeArea({ children }: { children: ReactNode }) {
 /**
  * Whether the sheet under this subtree is being shown full-screen.
  *
- * Set by the root stack's `screenLayout` for a sheet route that a Pad presents
- * as a `fullScreenModal` (`isFullscreenSheetRoute`). A full-screen modal has no
+ * Set by the root stack's `screenLayout` from the native presentation, including
+ * explicit full-screen routes and sheets promoted on a Pad. A full-screen modal has no
  * grabber and no swipe, so the scene draws a close button and status-bar
  * clearance instead, and `SheetHandle` draws nothing.
  */

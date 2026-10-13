@@ -3,7 +3,6 @@ import { useAppSettings } from '@/stores/app-settings';
 import { AppDiagramProvider } from '@/components/app-diagram-provider';
 import { RouteScene } from '@/components/route-scene';
 import {
-  isFullscreenSheetRoute,
   isCenteredSettingsSheetRoute,
   sheetPresentationOptions,
   sheetRouteOptions as resolveSheetRouteOptions,
@@ -428,9 +427,9 @@ function RootContent() {
                     )
                   ) : (
                     <RouteScene modal={options.presentation === 'fullScreenModal'}>
-                      {/* A sheet a Pad shows full-screen draws its own close
-                          button: there is no grabber to drag. */}
-                      <SheetFullscreenProvider value={isFullscreenSheetRoute(route.name, isPad)}>
+                      {/* Native full-screen modals have no sheet grabber. Scenes
+                          using SheetScene need safe-area clearance and a close button. */}
+                      <SheetFullscreenProvider value={options.presentation === 'fullScreenModal'}>
                         {children}
                       </SheetFullscreenProvider>
                     </RouteScene>
