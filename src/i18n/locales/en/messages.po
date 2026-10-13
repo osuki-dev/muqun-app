@@ -628,9 +628,17 @@ msgstr "Allow"
 msgid "Allow camera"
 msgstr "Allow camera"
 
+#: src/components/agent-permission-card.tsx
+msgid "Allow for this turn"
+msgstr "Allow for this turn"
+
 #: src/components/voice-input-button.tsx
 msgid "Allow microphone access in system settings."
 msgstr "Allow microphone access in system settings"
+
+#: src/components/agent-permission-card.tsx
+msgid "Allow once"
+msgstr "Allow once"
 
 #: src/app/explore.tsx
 msgid "Allow the camera, or enter the address instead."
@@ -1901,6 +1909,10 @@ msgstr "Could not load models"
 #: src/lib/terminal-history-pull.ts
 msgid "Could not load older history from this terminal"
 msgstr "Could not load older history from this terminal"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Could not load sessions"
+msgstr "Could not load sessions"
 
 #: src/components/server-tasks-sheet.tsx
 msgid "Could not load tasks"
@@ -4935,6 +4947,10 @@ msgstr "Reported blocker"
 msgid "Request failed."
 msgstr "Request failed"
 
+#: src/components/agent-permission-card.tsx
+msgid "Requested permissions"
+msgstr "Requested permissions"
+
 #: src/components/settings-security.tsx
 msgid "Required on launch and after 30 seconds in the background."
 msgstr "Required on launch and after 30 seconds in the background"
@@ -4965,6 +4981,7 @@ msgid "Restore hidden defaults"
 msgstr "Restore hidden defaults"
 
 #: src/components/agent-model-sheet.tsx
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/pane-history-sheet.tsx
@@ -7178,19 +7195,3 @@ msgstr "Your message"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "Your paired computers"
-
-#: src/components/agent-permission-card.tsx
-msgid "Allow once"
-msgstr "Allow once"
-
-#: src/components/agent-permission-card.tsx
-msgid "Allow for this turn"
-msgstr "Allow for this turn"
-
-#: src/components/agent-permission-card.tsx
-msgid "Requested permissions"
-msgstr "Requested permissions"
-
-#: src/components/agent-sessions-sheet.tsx
-msgid "Could not load sessions"
-msgstr "Could not load sessions"

@@ -628,9 +628,17 @@ msgstr "Cho phép"
 msgid "Allow camera"
 msgstr "Cho phép camera"
 
+#: src/components/agent-permission-card.tsx
+msgid "Allow for this turn"
+msgstr "Cho phép trong lượt này"
+
 #: src/components/voice-input-button.tsx
 msgid "Allow microphone access in system settings."
 msgstr "Cho phép truy cập micrô trong cài đặt hệ thống"
+
+#: src/components/agent-permission-card.tsx
+msgid "Allow once"
+msgstr "Cho phép một lần"
 
 #: src/app/explore.tsx
 msgid "Allow the camera, or enter the address instead."
@@ -1901,6 +1909,10 @@ msgstr "Không thể tải mô hình"
 #: src/lib/terminal-history-pull.ts
 msgid "Could not load older history from this terminal"
 msgstr "Không thể tải lịch sử cũ hơn của terminal này"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Could not load sessions"
+msgstr "Không thể tải phiên"
 
 #: src/components/server-tasks-sheet.tsx
 msgid "Could not load tasks"
@@ -4935,6 +4947,10 @@ msgstr "Trở ngại được báo cáo"
 msgid "Request failed."
 msgstr "Yêu cầu thất bại"
 
+#: src/components/agent-permission-card.tsx
+msgid "Requested permissions"
+msgstr "Quyền được yêu cầu"
+
 #: src/components/settings-security.tsx
 msgid "Required on launch and after 30 seconds in the background."
 msgstr "Yêu cầu khi khởi động và sau 30 giây ở nền"
@@ -4965,6 +4981,7 @@ msgid "Restore hidden defaults"
 msgstr "Khôi phục mặc định đã ẩn"
 
 #: src/components/agent-model-sheet.tsx
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/pane-history-sheet.tsx
@@ -7178,19 +7195,3 @@ msgstr "Tin nhắn của bạn"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "Các máy tính đã ghép nối của bạn"
-
-#: src/components/agent-permission-card.tsx
-msgid "Allow once"
-msgstr "Cho phép một lần"
-
-#: src/components/agent-permission-card.tsx
-msgid "Allow for this turn"
-msgstr "Cho phép trong lượt này"
-
-#: src/components/agent-permission-card.tsx
-msgid "Requested permissions"
-msgstr "Quyền được yêu cầu"
-
-#: src/components/agent-sessions-sheet.tsx
-msgid "Could not load sessions"
-msgstr "Không thể tải phiên"

@@ -628,9 +628,17 @@ msgstr "允許"
 msgid "Allow camera"
 msgstr "允許相機"
 
+#: src/components/agent-permission-card.tsx
+msgid "Allow for this turn"
+msgstr "允許本輪使用"
+
 #: src/components/voice-input-button.tsx
 msgid "Allow microphone access in system settings."
 msgstr "請在系統設定中允許存取麥克風"
+
+#: src/components/agent-permission-card.tsx
+msgid "Allow once"
+msgstr "允許一次"
 
 #: src/app/explore.tsx
 msgid "Allow the camera, or enter the address instead."
@@ -1901,6 +1909,10 @@ msgstr "無法載入模型"
 #: src/lib/terminal-history-pull.ts
 msgid "Could not load older history from this terminal"
 msgstr "無法載入此終端機更早的歷史"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Could not load sessions"
+msgstr "無法載入工作階段"
 
 #: src/components/server-tasks-sheet.tsx
 msgid "Could not load tasks"
@@ -4935,6 +4947,10 @@ msgstr "已回報的阻礙"
 msgid "Request failed."
 msgstr "請求失敗"
 
+#: src/components/agent-permission-card.tsx
+msgid "Requested permissions"
+msgstr "要求的權限"
+
 #: src/components/settings-security.tsx
 msgid "Required on launch and after 30 seconds in the background."
 msgstr "啟動時，以及在背景超過 30 秒後都會要求驗證"
@@ -4965,6 +4981,7 @@ msgid "Restore hidden defaults"
 msgstr "還原隱藏的預設"
 
 #: src/components/agent-model-sheet.tsx
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/pane-history-sheet.tsx
@@ -7178,19 +7195,3 @@ msgstr "你的訊息"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "你已配對的電腦"
-
-#: src/components/agent-permission-card.tsx
-msgid "Allow once"
-msgstr "允許一次"
-
-#: src/components/agent-permission-card.tsx
-msgid "Allow for this turn"
-msgstr "允許本輪使用"
-
-#: src/components/agent-permission-card.tsx
-msgid "Requested permissions"
-msgstr "要求的權限"
-
-#: src/components/agent-sessions-sheet.tsx
-msgid "Could not load sessions"
-msgstr "無法載入工作階段"
