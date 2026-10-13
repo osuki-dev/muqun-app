@@ -7178,3 +7178,19 @@ msgstr "Ваше сообщение"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "Ваши привязанные компьютеры"
+
+#: src/components/agent-permission-card.tsx
+msgid "Allow once"
+msgstr "Разрешить один раз"
+
+#: src/components/agent-permission-card.tsx
+msgid "Allow for this turn"
+msgstr "Разрешить на этот ход"
+
+#: src/components/agent-permission-card.tsx
+msgid "Requested permissions"
+msgstr "Запрошенные разрешения"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Could not load sessions"
+msgstr "Не удалось загрузить сеансы"

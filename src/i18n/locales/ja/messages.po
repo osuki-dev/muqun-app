@@ -7178,3 +7178,19 @@ msgstr "あなたのメッセージ"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "ペアリング済みのコンピュータ"
+
+#: src/components/agent-permission-card.tsx
+msgid "Allow once"
+msgstr "今回のみ許可"
+
+#: src/components/agent-permission-card.tsx
+msgid "Allow for this turn"
+msgstr "このターンで許可"
+
+#: src/components/agent-permission-card.tsx
+msgid "Requested permissions"
+msgstr "要求された権限"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Could not load sessions"
+msgstr "セッションを読み込めませんでした"
