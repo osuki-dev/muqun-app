@@ -1316,10 +1316,7 @@ export function HomeComposerDock({
       accessibilityLabel={t`Task options`}
       accessibilityHint={t`Choose computer, agent, folder, mode and model`}
       accessibilityState={{ expanded: optionsOpen }}
-      onPress={() => {
-        playTransition(optionsOpen ? 'choice' : 'options');
-        setOptionsOpen((open) => !open);
-      }}
+      onPress={() => setOptionsOpen((open) => !open)}
       style={[composerStyles.button, { borderRadius: profile.chrome.roundControl }]}>
       <ThemeIcon
         name="chrome.parameters"
