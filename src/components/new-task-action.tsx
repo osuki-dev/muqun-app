@@ -285,16 +285,20 @@ export function NewTaskAction({
                 },
               })
             }
-            style={[
-              styles.button,
-              {
-                backgroundColor: surfaceBackground(withAlpha(theme.colors.warning, 0.12)),
-                borderColor: withAlpha(theme.colors.warning, 0.4),
-              },
-            ]}>
-            <View style={styles.offlineIconWrapper}>
-              <AgentMark kind={agentKind} size={16} color={theme.colors.warning} />
-              <View style={[styles.offlineDot, { backgroundColor: theme.colors.warning }]} />
+            style={styles.button}>
+            <View
+              pointerEvents="none"
+              style={[
+                styles.buttonFace,
+                {
+                  backgroundColor: surfaceBackground(withAlpha(theme.colors.warning, 0.12)),
+                  borderColor: withAlpha(theme.colors.warning, 0.4),
+                },
+              ]}>
+              <View style={styles.offlineIconWrapper}>
+                <AgentMark kind={agentKind} size={16} color={theme.colors.warning} />
+                <View style={[styles.offlineDot, { backgroundColor: theme.colors.warning }]} />
+              </View>
             </View>
           </PressableScale>
         </Animated.View>
@@ -315,25 +319,29 @@ export function NewTaskAction({
           accessibilityRole="button"
           accessibilityLabel={actionLabel}
           onPress={handlePress}
-          style={[
-            styles.button,
-            {
-              backgroundColor: surfaceBackground(theme.colors.primarySubtle),
-              borderColor: surfaceBackground(theme.colors.border),
-            },
-          ]}>
-          {/* The light first, so the glyph is drawn over it. */}
-          <Animated.View
+          style={styles.button}>
+          <View
             pointerEvents="none"
             style={[
-              styles.sheen,
-              { backgroundColor: withAlpha(theme.colors.primary, 0.22) },
-              sheenStyle,
-            ]}
-          />
-          <Animated.View style={glyphStyle}>
-            <AgentMark kind={agentKind} size={18} color={theme.colors.primary} />
-          </Animated.View>
+              styles.buttonFace,
+              {
+                backgroundColor: surfaceBackground(theme.colors.primarySubtle),
+                borderColor: surfaceBackground(theme.colors.border),
+              },
+            ]}>
+            {/* The light first, so the glyph is drawn over it. */}
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                styles.sheen,
+                { backgroundColor: withAlpha(theme.colors.primary, 0.22) },
+                sheenStyle,
+              ]}
+            />
+            <Animated.View style={glyphStyle}>
+              <AgentMark kind={agentKind} size={16} color={theme.colors.primary} />
+            </Animated.View>
+          </View>
         </PressableScale>
         {agentMenuOpen ? (
           <View style={styles.agentMenu}>
@@ -397,26 +405,30 @@ function AgentRowButton({
       accessibilityRole="button"
       accessibilityLabel={description}
       onPress={ready ? onOpen : onSetup}
-      style={[
-        styles.button,
-        ready
-          ? {
-              backgroundColor: surfaceBackground(theme.colors.primarySubtle),
-              borderColor: surfaceBackground(theme.colors.border),
-            }
-          : {
-              backgroundColor: surfaceBackground(withAlpha(theme.colors.warning, 0.12)),
-              borderColor: withAlpha(theme.colors.warning, 0.4),
-            },
-      ]}>
-      {ready ? (
-        <AgentMark kind={agent.kind} size={18} color={theme.colors.primary} />
-      ) : (
-        <View style={styles.offlineIconWrapper}>
-          <AgentMark kind={agent.kind} size={16} color={theme.colors.warning} />
-          <View style={[styles.offlineDot, { backgroundColor: theme.colors.warning }]} />
-        </View>
-      )}
+      style={styles.button}>
+      <View
+        pointerEvents="none"
+        style={[
+          styles.buttonFace,
+          ready
+            ? {
+                backgroundColor: surfaceBackground(theme.colors.primarySubtle),
+                borderColor: surfaceBackground(theme.colors.border),
+              }
+            : {
+                backgroundColor: surfaceBackground(withAlpha(theme.colors.warning, 0.12)),
+                borderColor: withAlpha(theme.colors.warning, 0.4),
+              },
+        ]}>
+        {ready ? (
+          <AgentMark kind={agent.kind} size={16} color={theme.colors.primary} />
+        ) : (
+          <View style={styles.offlineIconWrapper}>
+            <AgentMark kind={agent.kind} size={16} color={theme.colors.warning} />
+            <View style={[styles.offlineDot, { backgroundColor: theme.colors.warning }]} />
+          </View>
+        )}
+      </View>
     </PressableScale>
   );
 }
@@ -425,7 +437,7 @@ const styles = StyleSheet.create({
   agentRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 2,
   },
   actionRow: {
     width: 44,
@@ -436,7 +448,13 @@ const styles = StyleSheet.create({
   button: {
     width: 44,
     height: 44,
-    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonFace: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',

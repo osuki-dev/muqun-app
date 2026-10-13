@@ -57,6 +57,9 @@ export const HOME_HERO_FEATHER = {
   vertical: 0.32,
 } as const;
 
+/** Cover scenes keep the authored sky and fade into the work below. */
+export const HOME_COVER_BOTTOM_FEATHER_START = 0.68;
+
 /** Half of each axis, less a tenth kept opaque, so the two fades can never meet. */
 export const MAX_FEATHER_FRACTION = 0.45;
 
@@ -151,6 +154,19 @@ export function coveredImageRect(
     width: drawnWidth,
     height: drawnHeight,
   };
+}
+
+/** Both the theme's crop and a cutout's whole figure survive Classic cover framing. */
+export function homeCoverArtworkRect(
+  container: FeatherSize,
+  intrinsic: FeatherSize,
+  fit: string | undefined,
+  focalPoint?: { x: number; y: number },
+  foreground = false
+): FeatherRect {
+  return !foreground && fit === 'cover'
+    ? coveredImageRect(container, intrinsic, focalPoint)
+    : containedImageRect(container, intrinsic, focalPoint);
 }
 
 /** Foreground portraits retain their top edge; only wallpaper may crop above it. */

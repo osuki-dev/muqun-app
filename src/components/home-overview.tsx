@@ -137,6 +137,7 @@ import {
 } from '@/lib/motion';
 import {
   homeServerListLayout,
+  homeCoverArtworkHeight,
   THEME_ARTWORK_REGULAR_MIN_WIDTH,
   type HomeServerListLayout,
 } from '@/lib/responsive-layout';
@@ -397,6 +398,8 @@ export function HomeOverview({
   const [dockFocused, setDockFocused] = useState(false);
   // Classic: the pack artwork's measured slot, which the work block overlaps.
   const [classicArtworkHeight, setClassicArtworkHeight] = useState(0);
+  const [classicBrandHeight, setClassicBrandHeight] = useState(0);
+  const [failedClassicArtworkSource, setFailedClassicArtworkSource] = useState<string | null>(null);
   // On the phone the dock slides out of the way while the page scrolls down.
   // The Pad cover's dock stays fixed at the foot of its column.
   const pageDockHide = useDockAutoHide(dockHeight);
@@ -1393,13 +1396,41 @@ export function HomeOverview({
   }
 
   const classicArtwork =
-    !loading && !hydrationError && records.length > 0 && artworkResolution
+    !loading &&
+    !hydrationError &&
+    records.length > 0 &&
+    isHomeArtworkAvailable(artworkResolution, failedClassicArtworkSource)
       ? artworkResolution
       : undefined;
+  const classicCover = Boolean(classicArtwork && coverHeader);
+  const classicBareToolbar =
+    classicCover && customTheme?.manifest.homePresentation?.toolbarBackground === false;
+  const classicCoverHeight = homeCoverArtworkHeight(Math.min(windowWidth, metrics.contentMaxWidth));
+  const classicBrandBlockHeight = identity.showBrand
+    ? classicBrandHeight || metrics.brand.minHeight
+    : 0;
+  // Large or wrapped wordmarks stand above the painting instead of covering
+  // its subject. Ordinary type shares the theme's quiet header sky.
+  const classicCoverTop =
+    fontScale >= 1.35 || classicBrandBlockHeight > metrics.brand.minHeight
+      ? barHeight + styles.content.paddingTop + classicBrandBlockHeight
+      : insets.top;
+  // The quiet sky begins below the status bar, behind the fixed controls and
+  // the existing wordmark. Its measured wordmark leaves room for large type.
+  const classicCoverRemainder = Math.max(
+    0,
+    classicCoverHeight +
+      classicCoverTop -
+      barHeight -
+      styles.content.paddingTop -
+      classicBrandBlockHeight
+  );
   // The work block rises over the artwork slot's bottom third; with no
   // artwork it keeps the list's own spacing.
   const artworkOverlap =
-    classicArtwork && classicArtworkHeight > 0 ? Math.round(classicArtworkHeight / 3) : 0;
+    classicArtwork && classicArtworkHeight > 0
+      ? Math.round((classicCover ? classicCoverRemainder : classicArtworkHeight) / 3)
+      : 0;
   const classicContent = (
     <View
       // Any finger on the page holds the cards' order (design §9).
@@ -1510,12 +1541,14 @@ export function HomeOverview({
               herdr, so it is the one door here that is not about a gateway. */}
                   <HeaderButton
                     testID="home-open-ssh"
+                    bare={classicBareToolbar}
                     label={t`SSH`}
                     onPress={() => void commands.openSsh()}>
                     <SquareTerminal size={20} color={theme.colors.textMuted} strokeWidth={2} />
                   </HeaderButton>
                   <HeaderButton
                     label={t`Scan a gateway QR`}
+                    bare={classicBareToolbar}
                     onPress={() => void commands.pairGateway()}>
                     {/* The same mark as the empty card's corner brackets, at a fifth of
                 the size: the one productive gesture on this screen looks the
@@ -1531,7 +1564,10 @@ export function HomeOverview({
                   </HeaderButton>
                 </>
               )}
-              <HeaderButton label={t`Settings`} onPress={() => void commands.manageConnections()}>
+              <HeaderButton
+                bare={classicBareToolbar}
+                label={t`Settings`}
+                onPress={() => void commands.manageConnections()}>
                 <ThemeIcon
                   name="chrome.settings"
                   fallback={Settings}
@@ -1599,6 +1635,21 @@ export function HomeOverview({
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}>
         {returnToTask ? <View style={styles.embeddedReturnRow}>{returnToTask}</View> : null}
+        {classicCover && classicArtwork ? (
+          <View
+            pointerEvents="none"
+            style={{ position: 'absolute', top: classicCoverTop, left: 0, right: 0 }}>
+            <HomeArtwork
+              resolution={classicArtwork}
+              scrollY={scrollY}
+              cover
+              maxHeight={classicCoverHeight}
+              onAvailabilityChange={(available) => {
+                if (!available) setFailedClassicArtworkSource(classicArtwork.source);
+              }}
+            />
+          </View>
+        ) : null}
         {/* The app's name, at the weight the screen's own content leaves for
             it. On an empty screen this block *is* the content and is set as
             such; once a machine is paired the card below is what the reader
@@ -1617,7 +1668,11 @@ export function HomeOverview({
           <Animated.View
             testID="home-brand-expanded"
             entering={riseIn()}
-            layout={listLayout('medium')}>
+            layout={listLayout('medium')}
+            onLayout={(event) => {
+              const height = event.nativeEvent.layout.height;
+              setClassicBrandHeight((current) => (current === height ? current : height));
+            }}>
             <Animated.View
               style={[
                 styles.brandBlock,
@@ -1640,16 +1695,17 @@ export function HomeOverview({
                 <View
                   style={[
                     styles.titleCopy,
-                    hasScene && {
-                      flex: 0,
-                      flexShrink: 1,
-                      backgroundColor: background(theme.colors.background),
-                      padding: 10,
-                      borderRadius: 14,
-                      overflow: 'hidden',
-                    },
+                    hasScene &&
+                      !classicCover && {
+                        flex: 0,
+                        flexShrink: 1,
+                        backgroundColor: background(theme.colors.background),
+                        padding: 10,
+                        borderRadius: 14,
+                        overflow: 'hidden',
+                      },
                   ]}>
-                  {hasScene ? (
+                  {hasScene && !classicCover ? (
                     <ThemedSurfaceArtwork
                       slot="navigation.background"
                       baseColor={theme.colors.background}
@@ -1706,11 +1762,20 @@ export function HomeOverview({
             theme looks like. */}
         {classicArtwork ? (
           <View
+            style={classicCover ? { height: classicCoverRemainder } : undefined}
             onLayout={(event) => {
               const height = event.nativeEvent.layout.height;
               setClassicArtworkHeight((current) => (current === height ? current : height));
             }}>
-            <HomeArtwork resolution={classicArtwork} scrollY={scrollY} />
+            {classicCover ? null : (
+              <HomeArtwork
+                resolution={classicArtwork}
+                scrollY={scrollY}
+                onAvailabilityChange={(available) => {
+                  if (!available) setFailedClassicArtworkSource(classicArtwork.source);
+                }}
+              />
+            )}
           </View>
         ) : null}
 
@@ -1948,7 +2013,10 @@ function HeaderButton({
       onPress={onPress}
       style={[
         styles.headerButton,
-        { backgroundColor: background(theme.colors.surface), overflow: 'hidden' },
+        {
+          backgroundColor: bare ? 'transparent' : background(theme.colors.surface),
+          overflow: 'hidden',
+        },
         editorial && {
           backgroundColor: bare ? 'transparent' : background(theme.colors.surface),
           width: HOME_TOOLBAR_BUTTON_SIZE,
@@ -2009,6 +2077,7 @@ function ServerCard({
 
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
+  const { fontScale } = useWindowDimensions();
 
   // The card's own mirror, read here rather than handed down: a pass that only
   // re-confirms the panes moves `checkedAtMs`, and that re-renders this card,
@@ -2044,7 +2113,7 @@ function ServerCard({
             accessibilityRole="button"
             accessibilityLabel={t`Open ${server.label}`}
             onPress={onOpen}
-            style={styles.identityMain}>
+            style={[styles.identityMain, { flexBasis: 160 * Math.max(1, fontScale) }]}>
             {/* The one place the accent is spent on this card. It used to be
                 spent twice -- here and on the loom -- and with the loom gone the
                 avatar is the whole answer to "which machine is the app attached
@@ -2064,13 +2133,13 @@ function ServerCard({
                 },
               ]}>
               {selected ? (
-                <SquareTerminal size={20} color={theme.colors.onPrimary} strokeWidth={2} />
+                <SquareTerminal size={18} color={theme.colors.onPrimary} strokeWidth={2} />
               ) : (
                 // The pack's primary, like every other glyph on this screen. The
                 // difference between the two tiles is the fill, not the ink: a
                 // grey glyph beside rows of accent-coloured ones read as a
                 // machine that was switched off, and this one is online.
-                <Monitor size={19} color={theme.colors.primary} strokeWidth={2} />
+                <Monitor size={17} color={theme.colors.primary} strokeWidth={2} />
               )}
             </View>
 
@@ -2088,39 +2157,27 @@ function ServerCard({
                 {server.label}
               </Text>
 
-              {/* The status is the machine's subtitle now, not a row of its own.
-                  It was a row because it was the root the tree grew out of, and
-                  with no tree that row was a line of 12pt caps sitting alone
-                  between the name above it and the list below -- belonging to
-                  neither, and pushing the two things that do belong together
-                  apart. Under the name it is what it always was: one fact about
-                  this machine, said at the smallest size on the card.
-
-                  The dot never speaks alone: `OFFLINE` and `NOT CONNECTED` are
-                  the same grey on purpose, and the words and the hollow ring are
-                  what tell them apart. It is said only when something is wrong
-                  (§3a): a reachable machine is just its name, and nothing on
-                  the card pulses. */}
-              {reachability === 'live' ? null : (
-                <View
-                  accessibilityLabel={_(reachabilityDescription[reachability])}
-                  style={styles.statusLine}>
-                  <StatusDot
-                    color={theme.colors.textSubtle}
-                    filled={reachability !== 'unknown'}
-                    pulse={false}
-                    size={STATUS_DOT_SIZE}
-                  />
-                  <Text
-                    variant="caption"
-                    color={theme.colors.textSubtle}
-                    style={styles.statusLabel}>
-                    {_(reachabilityLabel[reachability])}
-                  </Text>
-                  {/* No count: the rows below are the count, and saying it here as
+              {/* The connection is a quiet subtitle, paired with a still dot
+                  so colour alone never has to explain the machine's state. */}
+              <View
+                accessibilityLabel={_(reachabilityDescription[reachability])}
+                style={styles.statusLine}>
+                <StatusDot
+                  color={reachability === 'live' ? theme.colors.success : theme.colors.textSubtle}
+                  filled={reachability !== 'unknown'}
+                  pulse={false}
+                  size={STATUS_DOT_SIZE}
+                />
+                <Text
+                  variant="caption"
+                  color={theme.colors.textSubtle}
+                  numberOfLines={1}
+                  style={styles.statusLabel}>
+                  {_(reachabilityLabel[reachability])}
+                </Text>
+                {/* No count: the rows below are the count, and saying it here as
                       well would be the same fact twice on one card. */}
-                </View>
-              )}
+              </View>
 
               {/* Only when a second machine answers to the same name. On every
                   other install this line was a constant the reader had already
@@ -2278,10 +2335,9 @@ function EmptyState({
 }
 
 /**
- * The machine's tile. Big enough to be the card's one piece of iconography, so
- * the identity block outranks the list under it on weight alone.
+ * A quiet machine mark; the name and connection subtitle carry its identity.
  */
-const AVATAR_SIZE = 44;
+const AVATAR_SIZE = 36;
 
 /**
  * The machine's status light, in the identity block.
@@ -2290,7 +2346,7 @@ const AVATAR_SIZE = 44;
  * because it was the root the tree grew out of and had to read as a different
  * kind of mark from the bullets hanging off it. There is no tree, so there is
  * nothing to be the root of: the machine is already told apart from its panes by
- * a 44pt tile and 18pt type, and a dot two points wider than the ones below it
+ * a 36pt tile and 18pt type, and a dot two points wider than the ones below it
  * was hierarchy asserted twice.
  */
 const STATUS_DOT_SIZE = 7;
@@ -2641,21 +2697,24 @@ const styles = StyleSheet.create({
   },
   identityRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
-    gap: 10,
+    columnGap: 8,
+    rowGap: 4,
   },
   identityMain: {
     flex: 1,
+    minHeight: 44,
     minWidth: 0,
     alignSelf: 'stretch',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
   },
   serverAvatar: {
     width: AVATAR_SIZE,
     height: AVATAR_SIZE,
-    borderRadius: 14,
+    borderRadius: 11,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
@@ -2668,20 +2727,19 @@ const styles = StyleSheet.create({
   statusLine: {
     flexDirection: 'row',
     alignItems: 'center',
-    // Clearance for the live dot's ring, which is the one thing on this card
-    // that paints outside its own box: `StatusDot` sends it out to 2.6x the
-    // dot, so a subtitle gap sized by eye for a static dot has the ring
-    // crossing the first letter of ONLINE every two and a half seconds.
-    gap: 12,
+    gap: 6,
   },
   statusLabel: {
-    letterSpacing: 0.9,
+    letterSpacing: 0.3,
+    flexShrink: 1,
+    minWidth: 0,
   },
   // A right-aligned row rather than the default stretch column: the slot's
   // width travels between nothing and a 36pt button as `NewTaskAction`'s
   // capability check resolves, and it has to stay pinned to the card's
   // trailing edge while that width changes rather than stretch to fill it.
   serverTrailing: {
+    marginLeft: 'auto',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
