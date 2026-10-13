@@ -92,15 +92,22 @@ test('steering support never enables queueing', () => {
 });
 
 test('question answers use the form reply contract and retain pending input on timeout', async () => {
-  for (const outcome of ['accepted', 'timeout', 'history', 'switched'] as const) {
+  for (const outcome of ['accepted', 'timeout', 'history', 'switched', 'restarted'] as const) {
     let forms = [question];
     const sent: unknown[] = [];
     const resolvedDrafts: unknown[] = [];
+    const resolvedNotices: unknown[] = [];
+    let generation = 'run-1';
     const activeAsidRef = { current: 'thread' };
     const submit = callback('src/components/agent-workbench.tsx', 'handleFormSubmit', {
       forms,
       questionDraftOwner: 'owner',
       questionDrafts: { resolve: (...args: unknown[]) => resolvedDrafts.push(args) },
+      gatewayGeneration: 'run-1',
+      useGatewayGeneration: { getState: () => ({ byServer: { server: generation } }) },
+      useInAppNotifications: {
+        getState: () => ({ resolveQuestion: (value: unknown) => resolvedNotices.push(value) }),
+      },
       canReplyAgentForm,
       readRuntime: () =>
         outcome === 'history' ? { source: 'terminal', interaction: 'terminal' } : native,
@@ -113,6 +120,7 @@ test('question answers use the form reply contract and retain pending input on t
         sent.push(args);
         if (outcome === 'timeout') throw new Error('timeout');
         if (outcome === 'switched') activeAsidRef.current = 'other-thread';
+        if (outcome === 'restarted') generation = 'run-2';
       },
       setForms: (update: (previous: FormRequest[]) => FormRequest[]) => {
         forms = update(forms);
@@ -129,6 +137,11 @@ test('question answers use the form reply contract and retain pending input on t
     expect(forms).toEqual(outcome === 'accepted' ? [] : [question]);
     expect(resolvedDrafts).toEqual(
       outcome === 'accepted' ? [['owner', 'question', 'answered']] : []
+    );
+    expect(resolvedNotices).toEqual(
+      outcome === 'accepted'
+        ? [{ serverId: 'server', asid: 'thread', formId: 'question', generation: 'run-1' }]
+        : []
     );
   }
 });

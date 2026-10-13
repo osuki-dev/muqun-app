@@ -15,6 +15,8 @@ import {
   type InAppNotice,
   type NoticeQueue,
   attributePush,
+  resolveQuestionNotice,
+  reopenQuestionNotice,
 } from '../in-app-notifications';
 
 const notice = (id: string): InAppNotice => ({
@@ -477,7 +479,9 @@ describe('question pushes', () => {
       queue,
       noticeFromPush('q-2', { title: 'Q', data: { ...data, asid: 'asid-2' } })!
     );
-    expect(dismissSessionQuestions(queue, 'asid-1').items.map((item) => item.id)).toEqual(['q-2']);
+    expect(
+      dismissSessionQuestions(queue, 'asid-1', 'server-1').items.map((item) => item.id)
+    ).toEqual(['q-2']);
   });
 
   test('an answered approval leaves questions on screen', () => {
@@ -491,5 +495,78 @@ describe('question pushes', () => {
       })!
     );
     expect(dismissNoticeKind(queue, 'approval').items.map((item) => item.id)).toEqual(['q-1']);
+  });
+});
+
+describe('resolved question notifications', () => {
+  const identity = { serverId: 'server', asid: 'thread', formId: 'form', generation: 'run-1' };
+  const question = (id: string, overrides = {}) => ({
+    ...notice(id),
+    kind: 'approval' as const,
+    question: { ...identity, ...overrides },
+  });
+
+  test('explicit resolution removes only the exact source question and rejects delayed pushes', () => {
+    const entries = [
+      question('answered'),
+      question('other-form', { formId: 'next' }),
+      question('other-server', { serverId: 'peer' }),
+      question('other-thread', { asid: 'other' }),
+      question('other-generation', { generation: 'run-2' }),
+      { ...notice('permission'), kind: 'approval' as const },
+    ];
+    const queue = entries.reduce(enqueueNotice, empty());
+    const resolved = resolveQuestionNotice(queue, identity);
+    expect(resolved.items.map((item) => item.id)).toEqual(entries.slice(1).map((item) => item.id));
+    expect(enqueueNotice(resolved, question('delayed'))).toBe(resolved);
+    expect(
+      enqueueNotice(reopenQuestionNotice(resolved, identity), question('reopened')).items.at(-1)?.id
+    ).toBe('reopened');
+  });
+
+  test('resolution before push is remembered and cannot silence a different process', () => {
+    const resolved = resolveQuestionNotice(empty(), identity);
+    expect(enqueueNotice(resolved, question('late')).items).toEqual([]);
+    expect(
+      enqueueNotice(resolved, question('new-run', { generation: 'run-2' })).items
+    ).toHaveLength(1);
+    expect(resolveQuestionNotice(resolved, { ...identity, serverId: undefined })).toBe(resolved);
+  });
+
+  test('question replacement and visit dismissal cannot cross paired servers', () => {
+    const queue = [question('local'), question('peer', { serverId: 'peer' })].reduce(
+      enqueueNotice,
+      empty()
+    );
+    expect(queue.items).toHaveLength(2);
+    expect(dismissSessionQuestions(queue, 'thread', 'server').items.map((item) => item.id)).toEqual(
+      ['peer']
+    );
+  });
+
+  test('resolution memory is bounded and ordinary events retain it', () => {
+    let queue = empty();
+    for (let i = 0; i < MAX_SEEN_NOTICES + 5; i++)
+      queue = resolveQuestionNotice(queue, { ...identity, formId: String(i) });
+    expect(queue.resolvedQuestions).toHaveLength(MAX_SEEN_NOTICES);
+    const ordinary = enqueueNotice(queue, notice('ordinary'));
+    expect(ordinary.resolvedQuestions).toBe(queue.resolvedQuestions);
+  });
+
+  test('question attribution uses its source pairing label, never another ledger with the same asid', () => {
+    const paired = [
+      { serverId: 'local', label: 'osk local' },
+      { serverId: 'other', label: 'osk' },
+    ];
+    const source = {
+      title: 'Needs your input · osk',
+      data: { type: 'question', server_id: 'local', asid: 'thread', form_id: 'form' },
+    };
+    const attributed = attributePush(source, paired, () => 'other')!;
+    expect(attributed.title).toBe('Needs your input · osk local');
+    expect(attributed.data?.server_id).toBe('local');
+    expect(
+      noticeFromPush('question', attributed, { gatewayGeneration: 'run-1' })?.question
+    ).toEqual({ ...identity, serverId: 'local' });
   });
 });
