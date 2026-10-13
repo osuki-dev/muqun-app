@@ -17,6 +17,11 @@ import type { HomeLaunchController } from '@/components/home-launch-actions';
 import type { DockAutoHide } from '@/hooks/use-dock-auto-hide';
 import { HomeComposerOptions } from '@/components/home-composer-options';
 import {
+  HomeComposerTransition,
+  type HomeComposerPulse,
+  type HomeComposerTransitionKind,
+} from '@/components/home-composer-transition';
+import {
   HomeComposerBackground,
   useHomeComposerBackgroundOutset,
   HomeComposerDecoration,
@@ -183,6 +188,10 @@ export function HomeComposerDock({
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [optionsVisible, setOptionsVisible] = useState(false);
   const [optionsHeightAnimating, setOptionsHeightAnimating] = useState(false);
+  const [transitionPulse, setTransitionPulse] = useState<HomeComposerPulse | null>(null);
+  const playTransition = useStableHandler((kind: HomeComposerTransitionKind) => {
+    setTransitionPulse((previous) => ({ id: (previous?.id ?? 0) + 1, kind }));
+  });
   const background = useSurfaceBackground();
   const router = useRouter();
   const { showToast } = useToast();
@@ -203,13 +212,14 @@ export function HomeComposerDock({
   const flash = useSharedValue(0);
   useEffect(() => {
     if (targetPulse === 0) return;
+    playTransition('choice');
     flash.set(
       withSequence(
         withTiming(1, { duration: FLASH_IN_MS }),
         withTiming(0, { duration: FLASH_OUT_MS })
       )
     );
-  }, [targetPulse, flash]);
+  }, [targetPulse, flash, playTransition]);
   const flashStyle = useAnimatedStyle(() => ({ opacity: flash.get() }));
 
   const target = resolveHomeComposerTarget({ servers, chosen, reachabilityByServer });
@@ -456,6 +466,19 @@ export function HomeComposerDock({
     catalogRead: catalog !== undefined,
   });
   const selectedModel = shown.model;
+  // Only a picker opened here can animate its changed choice on returning.
+  // Catalog refreshes and initial preference hydration are not user steps.
+  const pendingChoiceRef = useRef<string | null>(null);
+  const choiceSignature = JSON.stringify([targetId, chosenAgentKey, folder, picked]);
+  useEffect(() => {
+    if (!focused || pendingChoiceRef.current === null) return;
+    const previous = pendingChoiceRef.current;
+    pendingChoiceRef.current = null;
+    if (previous !== choiceSignature) playTransition('choice');
+  }, [focused, choiceSignature, playTransition]);
+  function beginChoice() {
+    pendingChoiceRef.current = choiceSignature;
+  }
   const modelInfo = selectedModel
     ? models.find(
         (model) =>
@@ -480,6 +503,7 @@ export function HomeComposerDock({
   });
   useEffect(() => () => useHomeComposerSheet.getState().release(selectModel), [selectModel]);
   function openModelSheet() {
+    beginChoice();
     useHomeComposerSheet.getState().open(selectedModel, selectModel);
     router.push({
       pathname: '/agent-model',
@@ -495,7 +519,10 @@ export function HomeComposerDock({
   // that names none keeps the model the reader picked.
   function selectMode(mode: string) {
     const bringsModel = modes.find((entry) => entry.id === mode)?.model !== undefined;
-    if (targetId) chooseMode(targetId, agentId, mode, bringsModel);
+    if (targetId) {
+      chooseMode(targetId, agentId, mode, bringsModel);
+      if (mode !== shown.mode) playTransition('choice');
+    }
   }
 
   /** The workbench's own sentences for a failed request, in this agent's name. */
@@ -1063,6 +1090,7 @@ export function HomeComposerDock({
 
   function sendPrompt(text: string, attachments?: string[]): Promise<boolean> {
     if (terminalAgent) {
+      if (!inFlightRef.current && ready) playTransition('send');
       const start = () =>
         startTerminalAgent(
           terminalAgent.agentKind,
@@ -1077,6 +1105,7 @@ export function HomeComposerDock({
       return attachments?.length ? start() : dispatchTask(text, start);
     }
     if (heldByModelGate()) return Promise.resolve(false);
+    if (!inFlightRef.current && ready) playTransition('send');
     // Attachments ride on a prompt to a session; the ledger route takes text
     // only, so a send with files keeps the session path. So does a retry onto
     // the session a failed send left. Either way Home stays put.
@@ -1246,19 +1275,25 @@ export function HomeComposerDock({
         mode={shown.mode ?? 'build'}
         modes={modes}
         offline={!ready}
-        onComputer={openTargetPicker}
+        onComputer={() => {
+          beginChoice();
+          openTargetPicker();
+        }}
         onAgent={
           targetServer
-            ? () =>
+            ? () => {
+                beginChoice();
                 router.push({
                   pathname: '/home-agent',
                   params: { serverId: targetServer.serverId },
-                })
+                });
+              }
             : undefined
         }
         onFolder={
           targetServer && ready && selected
-            ? () =>
+            ? () => {
+                beginChoice();
                 router.push({
                   pathname: '/agent-workspace',
                   params: {
@@ -1267,7 +1302,8 @@ export function HomeComposerDock({
                     sessionId: HOME_AGENT_SESSION_ID,
                     ...(agentId ? { agentId } : {}),
                   },
-                })
+                });
+              }
             : undefined
         }
         onModel={features.modelSelection && !terminalAgent ? openModelSheet : undefined}
@@ -1282,7 +1318,10 @@ export function HomeComposerDock({
       accessibilityLabel={t`Task options`}
       accessibilityHint={t`Choose computer, agent, folder, mode and model`}
       accessibilityState={{ expanded: optionsOpen }}
-      onPress={() => setOptionsOpen((open) => !open)}
+      onPress={() => {
+        playTransition(optionsOpen ? 'choice' : 'options');
+        setOptionsOpen((open) => !open);
+      }}
       style={[
         composerStyles.button,
         { borderRadius: profile.chrome.roundControl },
@@ -1312,7 +1351,27 @@ export function HomeComposerDock({
     <AgentComposer
       accessory={bar}
       accessoryHeightAnimating={optionsHeightAnimating || optionsOpen !== optionsVisible}
-      fieldBackground={<HomeComposerBackground />}
+      fieldBackground={
+        <>
+          <HomeComposerBackground />
+          <View
+            pointerEvents="none"
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                left: backgroundOutset?.left ?? 0,
+                right: backgroundOutset?.right ?? 0,
+                bottom: backgroundOutset?.bottom ?? 0,
+              },
+            ]}>
+            <HomeComposerTransition
+              pulse={transitionPulse}
+              focused={focused}
+              radius={profile.chrome.composerField}
+            />
+          </View>
+        </>
+      }
       fieldBackgroundOutset={backgroundOutset ?? undefined}
       fieldBackgroundColor={background(theme.colors.surface)}
       fieldDecoration={decorationOverhang > 0 ? <HomeComposerDecoration /> : undefined}
