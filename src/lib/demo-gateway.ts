@@ -13,6 +13,7 @@ import type { GatewayRecord } from '@/lib/gateway-storage';
 import type { AgentSessionInfo, AgentSessionSnapshot, TimelineItem } from '@/lib/agent-protocol';
 import { DEMO_PAIRING_SERVER_ID } from '@/lib/pairing';
 import { parseTaskList, type TaskView } from '@/lib/task-ledger';
+import { PANE_CAPTURED_HISTORY_SEGMENTS_CAPABILITY } from '@/lib/terminal-history-segments';
 import {
   buildDemoTerminalRows,
   demoTerminalRange,
@@ -1303,6 +1304,7 @@ export function demoHealth() {
       'pane_lazygit',
       'pane_lazygit_worktree',
       'agent_audio_assets',
+      PANE_CAPTURED_HISTORY_SEGMENTS_CAPABILITY,
     ],
     // The per-session capability list a current gateway answers with. The demo
     // session is a Herdr 0.9.0, so it carries collaboration; a demo that only
