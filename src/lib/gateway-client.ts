@@ -47,6 +47,11 @@ import {
 import { activeLocaleHeaders } from '@/i18n/active-locale';
 import type { CapturedHistoryPage, CapturedHistoryRead } from './terminal-history-pull';
 import {
+  CAPTURED_HISTORY_PAGE_ROWS,
+  parseCapturedSegmentsPage,
+  type CapturedSegmentsRead,
+} from './terminal-history-segments';
+import {
   answerHasNoBody,
   headerRecord,
   isStreamingRequest,
@@ -3361,6 +3366,31 @@ export async function readPaneHistory(
     return { ok: true, page };
   } catch (error) {
     return { ok: false, status: null, error };
+  }
+}
+
+/** Segment cursors stay on this endpoint, request shape and captured pairing. */
+export async function readPaneHistorySegments(
+  record: GatewayRecord,
+  sessionId: string,
+  paneId: string,
+  before: string | null,
+  limit = CAPTURED_HISTORY_PAGE_ROWS
+): Promise<CapturedSegmentsRead> {
+  const request = { sessionId, paneId, limit: Math.max(1, Math.min(500, Math.round(limit))) };
+  const query = new URLSearchParams({ format: 'ansi', limit: String(request.limit) });
+  if (before) query.set('before', before);
+  const path = `/api/sessions/${encodeURIComponent(sessionId)}/panes/${encodeURIComponent(paneId)}/history/segments?${query.toString()}`;
+  try {
+    const value = await readGatewayRecordJson(record, path);
+    const page = parseCapturedSegmentsPage(value, request);
+    return page
+      ? { ok: true, page }
+      : { ok: false, status: 502, error: new Error('HTTP 502: unreadable captured history') };
+  } catch (error) {
+    const status =
+      error instanceof Error ? Number(error.message.match(/^HTTP (\d{3})\b/)?.[1]) : NaN;
+    return { ok: false, status: Number.isFinite(status) ? status : null, error };
   }
 }
 

@@ -612,6 +612,11 @@ function RootContent() {
                   }}
                 />
                 <Stack.Screen name="agent-context" options={sheetRouteOptions('agent-context')} />
+                <Stack.Screen
+                  name="pane-history"
+                  dangerouslySingular
+                  options={sheetRouteOptions('pane-history')}
+                />
                 <Stack.Screen name="agent-vcs-diff" options={sheetRouteOptions('agent-vcs-diff')} />
                 <Stack.Screen name="agent-tasks" options={sheetRouteOptions('agent-tasks')} />
                 <Stack.Screen name="server-tasks" options={sheetRouteOptions('server-tasks')} />
