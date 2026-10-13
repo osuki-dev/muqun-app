@@ -110,6 +110,10 @@ export function createAgentTranscriptStore() {
         config.status === 'busy' && last?.role === 'assistant' && last.part.type === 'reasoning'
           ? keys.at(-1)
           : undefined;
+      const streamingKey =
+        config.status === 'busy' && last?.role === 'assistant' && last.part.type === 'text'
+          ? keys.at(-1)
+          : undefined;
       const toolIds = new Set<string>();
       let backgroundTools = 0;
       let todos: AgentTranscriptState['todos'];
@@ -130,6 +134,7 @@ export function createAgentTranscriptStore() {
         config,
         rows: nextRows,
         reasoningKey,
+        streamingKey,
         backgroundTools,
         todos,
         keys:
@@ -151,6 +156,7 @@ export function createAgentTranscriptStore() {
       backgroundTools: 0,
       todos: undefined,
       reasoningKey: undefined,
+      streamingKey: undefined,
       config: { windowStart: 0, status: undefined },
       setTimeline: (update, windowStart) => {
         const current = get().timeline;
@@ -177,6 +183,8 @@ export interface AgentTranscriptState {
   rows: Record<string, TimelineRenderGroup>;
   keys: string[];
   reasoningKey: string | undefined;
+  /** Only the live text row uses progressive native Markdown measurement. */
+  streamingKey: string | undefined;
   config: TranscriptConfig;
   toolIds: ReadonlySet<string>;
   backgroundTools: number;

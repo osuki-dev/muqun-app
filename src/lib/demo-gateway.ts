@@ -67,6 +67,58 @@ import {
  * string.
  */
 export const DEMO_SERVER_ID = DEMO_PAIRING_SERVER_ID;
+export const DEMO_STREAMING_ASID = 'demo-streaming-markdown';
+
+/** Finite, fictional native transcript coverage; never part of a live gateway. */
+export const DEMO_STREAMING_MARKDOWN =
+  'Streaming output keeps **earlier paragraphs** readable while the answer grows.\n\n' +
+  '| 项目 / Item | 型号 / Configuration |\n| --- | --- |\n' +
+  Array.from(
+    { length: 36 },
+    (_, index) =>
+      `| 部件 ${String(index + 1).padStart(2, '0')} | Fictional component ${index + 1}: **24 cores / 24 threads**, 64 GB memory; a long wrapped description arriving progressively. |\n`
+  ).join('') +
+  '\nTable complete.\n\n```diff\n-old value\n+new value\n```\n\nDEMO_STREAM_COMPLETE';
+
+const DEMO_STREAMING_HISTORY: TimelineItem[] = Array.from({ length: 12 }, (_, index) => ({
+  id: `demo-stream-history-${index}`,
+  message_id: `demo-stream-history-${index}`,
+  order: String(index).padStart(3, '0'),
+  role: 'assistant',
+  ordinal: 0,
+  seq: index + 1,
+  updated_ms: 1,
+  part: {
+    type: 'text',
+    text: `History anchor ${String(index + 1).padStart(2, '0')}. This previously read paragraph must remain still while new output arrives below it.`,
+  },
+}));
+const DEMO_STREAMING_PROMPT: TimelineItem = {
+  id: 'demo-stream-prompt',
+  message_id: 'demo-stream-prompt',
+  order: '100',
+  role: 'user',
+  ordinal: 0,
+  seq: 13,
+  updated_ms: 1,
+  part: { type: 'text', text: 'Show a long table of fictional computer components.' },
+};
+export function demoStreamingTimeline(characters: number): TimelineItem[] {
+  return [
+    ...DEMO_STREAMING_HISTORY,
+    DEMO_STREAMING_PROMPT,
+    {
+      id: 'demo-stream-answer',
+      message_id: 'demo-stream-answer',
+      order: '101',
+      role: 'assistant',
+      ordinal: 0,
+      seq: 14 + characters,
+      updated_ms: 1,
+      part: { type: 'text', text: DEMO_STREAMING_MARKDOWN.slice(0, characters) },
+    },
+  ];
+}
 
 export const demoRecord: GatewayRecord = {
   serverId: DEMO_SERVER_ID,

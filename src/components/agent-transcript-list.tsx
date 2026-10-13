@@ -41,6 +41,9 @@ const TranscriptRow = memo(function TranscriptRow({ id }: { id: string }) {
   const { store, diagramsActive, visibility, playback, ...props } = context;
   const group = useStore(store, (state) => state.rows[id]);
   const reasoningLive = useStore(store, (state) => state.reasoningKey === id);
+  const streamingItemId = useStore(store, (state) =>
+    state.streamingKey === id ? state.rows[id]?.items.at(-1)?.id : undefined
+  );
   const visible = useStore(visibility, (keys) => keys.has(id));
   if (!group) return null;
   // Recycle the list container, but give each stateful/native part its own
@@ -55,6 +58,7 @@ const TranscriptRow = memo(function TranscriptRow({ id }: { id: string }) {
           key={id}
           group={group}
           reasoningLive={reasoningLive}
+          streamingItemId={props.readOnly ? undefined : streamingItemId}
           showReasoning={props.showReasoning}
           markdownStyle={props.markdownStyle}
           actions={props.actions}

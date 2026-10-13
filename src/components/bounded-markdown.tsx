@@ -110,6 +110,8 @@ export interface BoundedMarkdownProps {
   /** Links are opened by the caller's rule, never by this component's guess. */
   openLinks?: boolean;
   latexMath?: boolean;
+  /** Live assistant output: native measurement and display commit complete table rows together. */
+  streaming?: boolean;
   /**
    * The selection tint, when a surface wants its own.
    *
@@ -142,6 +144,7 @@ export const BoundedMarkdown = memo(function BoundedMarkdown({
   containerStyle,
   openLinks = true,
   latexMath = false,
+  streaming = false,
   selectionColor,
   imageRequestHeaders,
   onImagePress,
@@ -219,7 +222,11 @@ export const BoundedMarkdown = memo(function BoundedMarkdown({
         selectable
         selectionColor={selectionColor ?? theme.colors.primary}
         selectionHandleColor={theme.colors.primary}
-        streamingAnimation={false}
+        // The native renderer fades appended text/new rows only, and checks
+        // the platform's Reduce Motion setting itself. Its progressive filter
+        // must stay enabled for stable measurement even with motion reduced.
+        streamingAnimation={streaming}
+        streamingConfig={PROGRESSIVE_STREAMING}
         textBreakStrategy="simple"
         // The copy button belongs to the renderer's own code-block header; all
         // this adds is the confirmation the rest of the app gives.
@@ -247,6 +254,8 @@ export const BoundedMarkdown = memo(function BoundedMarkdown({
     </View>
   );
 });
+
+const PROGRESSIVE_STREAMING = { tableMode: 'progressive', codeBlockMode: 'progressive' } as const;
 
 const styles = StyleSheet.create({
   stretch: {
