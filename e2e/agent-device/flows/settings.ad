@@ -41,7 +41,10 @@ wait stable 300 5000
 # button on both, but the id is still what this matches: it carries the
 # selection state, with the same `(on|off)` pattern the scroll steps use.
 press "${TARGET}"
-wait stable 400 5000
+# Theme application can consume nearly five seconds in one Android debug
+# accessibility capture. Leave room for a second capture and the same 400ms
+# quiet interval; the following theme assertions still verify the selection.
+wait stable 400 15000
 
 # section confirm-reset
 press "${TARGET}"
@@ -53,7 +56,8 @@ is visible "${TARGET}"
 press "${TARGET}"
 
 # section s14
-wait stable 400 5000
+# Catppuccin application uses the same capture budget as reset-theme.
+wait stable 400 15000
 
 # section s15
 is visible "${TARGET}"
@@ -352,7 +356,8 @@ is visible "${TARGET}"
 press "${TARGET}"
 
 # section s82
-wait stable 400 5000
+# Restoring Osuki also needs room for multiple accessibility captures.
+wait stable 400 15000
 
 # section s83
 is visible "${TARGET}"
