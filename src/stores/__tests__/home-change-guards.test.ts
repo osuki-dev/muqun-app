@@ -1,20 +1,5 @@
-import * as bunTest from 'bun:test';
-
-const { expect, test } = bunTest;
-const { module: mockModule } = (
-  bunTest as unknown as { mock: { module: (id: string, factory: () => unknown) => void } }
-).mock;
-
-// The same MMKV stand-in `agents.test.ts` registers (`mock.module` is process-wide).
-const stored = new Map<string, string>();
-mockModule('react-native-mmkv', () => ({
-  createMMKV: () => ({
-    getString: (key: string) => stored.get(key),
-    set: (key: string, value: string) => {
-      stored.set(key, value);
-    },
-  }),
-}));
+import { expect, test } from 'bun:test';
+import '../../test-support/agents-storage';
 
 const { parseGatewayDiscovery } = await import('@/lib/agent-protocol');
 const { createHomeRecentsStore } = await import('@/lib/home-recents-state');
