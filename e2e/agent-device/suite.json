@@ -3961,7 +3961,7 @@
       },
       {
         "when": {
-          "target": { "id": "pad-server-rail-workbench" },
+          "target": { "id": "pad-server-rail-back" },
           "absent": false
         },
         "steps": [

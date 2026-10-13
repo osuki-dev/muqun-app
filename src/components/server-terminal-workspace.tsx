@@ -5709,7 +5709,7 @@ export function ServerTerminalWorkspace({
           selectedAsid={padDetail.kind === 'agent' ? padDetail.asid : undefined}
           workbenchSelected={false}
           commandOptions={{ embedded: true, routeBound, sourceRouteActive, openAgentInPlace }}
-          onOpenWorkbench={() => setOverviewVisible(true)}
+          onBack={() => setOverviewVisible(true)}
           onSelectServer={selectPadServer}
           onPairServer={() => router.push('/explore')}
           onOpenSettings={() => router.push('/settings')}
@@ -5739,6 +5739,7 @@ export function ServerTerminalWorkspace({
       }
       // The header stays mounted under Home; the overlay covers it.
       detailTitle={shellTitle}
+      expandDetailTitle={!padDetailIsPane}
       onDetailBack={canReturnToPane ? returnToPreviousPane : demoMode ? leaveDetail : undefined}
       detailFadeColor={padDetailIsPane ? terminalBackground : theme.colors.background}
       detailTitleSlot={
