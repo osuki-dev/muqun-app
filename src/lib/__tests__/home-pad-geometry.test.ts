@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { EDITORIAL_PAD_MAX_WIDTH, getEditorialLayoutGeometry } from '@/lib/home-editorial-layout';
 import {
   PAD_COVER_TITLE_LINE_HEIGHT,
+  PAD_COVER_MIN_HEIGHT,
   PAD_WORDMARK_DESCENDER,
   PAD_LAUNCH_GAP,
   PAD_LAUNCH_BOTTOM_SPACE,
@@ -149,15 +150,17 @@ describe('Pad launch controls take space before the cover', () => {
     );
   });
 
-  test('an unmeasured column keeps its first frame; very short windows never go negative', () => {
+  test('an unmeasured column keeps its first frame; short windows keep art and scroll controls', () => {
     expect(padCoverAvailableHeight(0, 208, 184)).toBeUndefined();
     expect(padCoverAvailableHeight(columnHeight, 208, 0)).toBeUndefined();
     const availableHeight = padCoverAvailableHeight(300, 208, 184);
     expect(availableHeight).toBe(0);
     const block = padCover({ ...cover, availableHeight });
-    expect(block.height).toBe(0);
-    expect(block.titleSize).toBe(0);
-    expect(block.artwork).toEqual({ width: 0, height: 0 });
+    expect(block.height).toBe(PAD_COVER_MIN_HEIGHT);
+    expect(block.titleSize).toBeGreaterThan(40);
+    expect(block.artwork.height).toBeGreaterThan(100);
+    // Controls stay in the existing scroll pane instead of erasing the theme.
+    expect(block.height + PAD_LAUNCH_GAP + 184).toBeGreaterThan(300 - 208);
   });
 });
 
