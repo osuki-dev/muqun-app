@@ -3009,7 +3009,13 @@ export type AgentDomainEvent =
   | { type: 'agent.permission.pending'; asid: string; seq: number; request: PermissionRequest }
   | { type: 'agent.permission.resolved'; asid: string; seq: number; request_id: string }
   | { type: 'agent.form.pending'; asid: string; seq: number; request: FormRequest }
-  | { type: 'agent.form.resolved'; asid: string; seq: number; form_id: string }
+  | {
+      type: 'agent.form.resolved';
+      asid: string;
+      seq: number;
+      form_id: string;
+      reason?: 'answered' | 'expired';
+    }
   | {
       type: 'agent.compaction.changed';
       asid: string;
@@ -3136,7 +3142,8 @@ export function parseAgentDomainEvent(eventName: string, data: unknown): AgentDo
     }
     case 'agent.form.resolved': {
       const formId = pickString(rec, ['form_id', 'formID', 'id']);
-      return formId ? { type, asid, seq, form_id: formId } : null;
+      const reason = rec.reason === 'answered' || rec.reason === 'expired' ? rec.reason : undefined;
+      return formId ? { type, asid, seq, form_id: formId, ...(reason ? { reason } : {}) } : null;
     }
     case 'agent.compaction.changed': {
       const delta = asString(rec.delta);

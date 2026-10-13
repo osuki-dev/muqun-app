@@ -28,12 +28,14 @@ export interface AgentFormCardProps {
   onSubmit: (answers: Record<string, unknown>) => Promise<void>;
   /** A text field took focus: the host scrolls the card above the keyboard. */
   onFieldFocus?: () => void;
+  onDraftChange?: (field: string, value: unknown) => void;
 }
 
 export const AgentFormCard = memo(function AgentFormCard({
   request,
   onSubmit,
   onFieldFocus,
+  onDraftChange,
 }: AgentFormCardProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -80,16 +82,20 @@ export const AgentFormCard = memo(function AgentFormCard({
 
   const [violations, setViolations] = useState<Record<string, FormFieldViolation>>({});
 
-  const setValue = useCallback((key: string, val: unknown) => {
-    setValues((prev) => ({ ...prev, [key]: val }));
-    // A field the reader is fixing stops complaining while they fix it.
-    setViolations((prev) => {
-      if (!(key in prev)) return prev;
-      const next = { ...prev };
-      delete next[key];
-      return next;
-    });
-  }, []);
+  const setValue = useCallback(
+    (key: string, val: unknown) => {
+      setValues((prev) => ({ ...prev, [key]: val }));
+      onDraftChange?.(key, val);
+      // A field the reader is fixing stops complaining while they fix it.
+      setViolations((prev) => {
+        if (!(key in prev)) return prev;
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+    },
+    [onDraftChange]
+  );
 
   /**
    * A field is hidden unless every one of its `when` conditions holds against

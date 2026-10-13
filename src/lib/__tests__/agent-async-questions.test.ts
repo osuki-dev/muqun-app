@@ -95,9 +95,12 @@ test('question answers use the form reply contract and retain pending input on t
   for (const outcome of ['accepted', 'timeout', 'history', 'switched'] as const) {
     let forms = [question];
     const sent: unknown[] = [];
+    const resolvedDrafts: unknown[] = [];
     const activeAsidRef = { current: 'thread' };
     const submit = callback('src/components/agent-workbench.tsx', 'handleFormSubmit', {
       forms,
+      questionDraftOwner: 'owner',
+      questionDrafts: { resolve: (...args: unknown[]) => resolvedDrafts.push(args) },
       canReplyAgentForm,
       readRuntime: () =>
         outcome === 'history' ? { source: 'terminal', interaction: 'terminal' } : native,
@@ -124,6 +127,9 @@ test('question answers use the form reply contract and retain pending input on t
       outcome === 'history' ? [] : [['workspace', 'thread', 'question', { answer: 'Keep going' }]]
     );
     expect(forms).toEqual(outcome === 'accepted' ? [] : [question]);
+    expect(resolvedDrafts).toEqual(
+      outcome === 'accepted' ? [['owner', 'question', 'answered']] : []
+    );
   }
 });
 
