@@ -9,11 +9,18 @@ import { snapCellSize, SNAP_DUST_SKSL } from '@/lib/snap-dissolve';
  * cannot compile it, in which case the scene never plans the snap and the
  * launch ends on the cross-fade.
  */
-export const SNAP_DUST_EFFECT = Skia.RuntimeEffect.Make(SNAP_DUST_SKSL);
+function compileDust() {
+  try {
+    return Skia.RuntimeEffect.Make(SNAP_DUST_SKSL);
+  } catch {
+    return null;
+  }
+}
+export const SNAP_DUST_EFFECT = compileDust();
 
 /**
  * The opening's exit, drawn inside the opening's own canvas: the frame that
- * canvas was showing, turned to dust that blows off up and to the right, with
+ * canvas was showing, eroding from its edges into softly drifting ash, with
  * Home beneath (the arithmetic and why it is a fragment shader are in
  * `snap-dissolve.ts`).
  *
