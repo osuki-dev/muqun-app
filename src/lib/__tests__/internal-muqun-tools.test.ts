@@ -12,6 +12,14 @@ const discovery = {
   input: { server: 'muqun' },
 };
 
+const search = {
+  tool: 'search',
+  status: 'completed',
+  input: { namespace: 'muqun', query: 'exec.run tasks.read tasks.complete', limit: 10 },
+};
+const searchCode =
+  'return search({namespace:"muqun",query:"exec.run tasks.read tasks.complete",limit:10});';
+
 /** The successful discovery wrapper and child shown in the reported card. */
 const execute = (overrides: Partial<ToolPart> = {}): ToolPart => ({
   type: 'tool',
@@ -36,6 +44,73 @@ const row = (part: TimelineItem['part']): TimelineItem => ({
 });
 
 describe('internal Muqun tool visibility', () => {
+  test.each([
+    searchCode,
+    "return await search({namespace: 'muqun', query: 'exec.run tasks.read', limit: 10});",
+    'await tools.search({"namespace":"muqun","query":"tasks.read"})',
+    'return search({namespace:"muqun",query:"tasks.read",limit:10,});',
+  ])('the namespace discovery wrapper in the screenshot is hidden: %s', (code) => {
+    const part = execute({ input: { code }, metadata: { toolCalls: [search] } });
+    expect(isHiddenMuqunTool(part)).toBe(true);
+    expect(executeToolCalls(part.metadata)).toEqual([]);
+    expect(part.metadata.toolCalls).toEqual([search]);
+  });
+
+  test('live completion and history use the same filter without dropping the initial user row', () => {
+    const store = createAgentTranscriptStore();
+    const user = {
+      ...row({ type: 'text', text: 'Check my hardware; muqun is the app name.' }),
+      id: 'user',
+      message_id: 'user-message',
+      role: 'user' as const,
+    };
+    const part = execute({ input: { code: searchCode }, metadata: { toolCalls: [search] } });
+    const running = row({ ...part, state: 'running' });
+    const completed = row(part);
+    const answer = { ...row({ type: 'text', text: 'Hardware details.' }), id: 'answer' };
+    store.getState().setTimeline([user, running]);
+    const userRow = store.getState().rows.grp_user;
+    store.getState().setTimeline([user, completed, answer]);
+    expect(store.getState().keys).toEqual(['grp_user', 'grp_answer']);
+    expect(store.getState().rows.grp_user).toBe(userRow);
+    expect(store.getState().timeline).toEqual([user, completed, answer]);
+    expect(store.getState().toolIds.has(part.id)).toBe(true);
+    const history = createAgentTranscriptStore();
+    history.getState().setTimeline([user, completed, answer]);
+    expect(history.getState().keys).toEqual(store.getState().keys);
+  });
+
+  test.each([
+    'return search({namespace:"muqun-docs",query:"muqun"});',
+    'return search({namespace: provider, query:"muqun"});',
+    'return search({namespace: "muqun", ...other});',
+    'return search({namespace: "muqun", query: await work()});',
+    'return search({namespace: "muqun"}); return tools.read({path:"README.md"});',
+    'return search({namespace: "muqun"}).then(work);',
+    'console.log("search({namespace: muqun})");',
+    'return search({namespace: "external", query: "namespace: muqun"});',
+    'return search({namespace: "muqun", namespace: "external"});',
+  ])('mixed or ambiguous search code remains visible: %s', (code) => {
+    expect(isHiddenMuqunTool(execute({ input: { code }, metadata: { toolCalls: [search] } }))).toBe(
+      false
+    );
+  });
+
+  test('mixed execute children hide only Muqun discovery and keep third-party work and errors', () => {
+    const external = { ...search, input: { namespace: 'files', query: 'muqun' } };
+    const failed = { ...search, status: 'failed' };
+    const metadata = { tool_calls: [search, external, failed] };
+    const shown = executeToolCalls(metadata);
+    expect(shown.map((call) => [call.name, call.status])).toEqual([
+      ['search', 'completed'],
+      ['search', 'error'],
+    ]);
+    expect(shown[0]?.input).toContain('namespace files');
+    const part = execute({ input: { code: searchCode }, metadata });
+    expect(isHiddenMuqunTool(part)).toBe(false);
+    expect(part.metadata).toBe(metadata);
+  });
+
   test('the reported wrapper disappears from display, with its canonical call retained', () => {
     const store = createAgentTranscriptStore();
     const call = row(execute());
@@ -52,6 +127,7 @@ describe('internal Muqun tool visibility', () => {
     ['muqun__tasks_wait', {}],
     ['list_mcp_resources', { server: 'muqun' }],
     ['opencode.list_mcp_resource_templates', { server: 'muqun' }],
+    ['search', { namespace: 'muqun', query: 'exec.run tasks.read tasks.complete' }],
   ])('successful internal call %s is hidden', (name, input) => {
     expect(isHiddenMuqunTool(execute({ name, input }))).toBe(true);
   });
@@ -63,6 +139,9 @@ describe('internal Muqun tool visibility', () => {
     ['mcp__external__tasks.complete', {}],
     ['tasks.complete', {}],
     ['read', { path: 'muqun' }],
+    ['search', { query: 'namespace: muqun' }],
+    ['search', { namespace: 'muqun-docs' }],
+    ['mcp__external__search', { namespace: 'muqun' }],
   ])('external or unqualified call %s is retained', (name, input) => {
     expect(isHiddenMuqunTool(execute({ name, input }))).toBe(false);
   });
