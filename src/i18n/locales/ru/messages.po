@@ -1270,6 +1270,7 @@ msgstr "Очищает кеш после открытия Muqun, когда ис
 
 #: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
+#: src/components/task-row.tsx
 msgid "Close"
 msgstr "Закрыть"
 
@@ -3885,6 +3886,10 @@ msgstr "Здесь пока нет проектов. Введите путь в�
 msgid "No projects match “{0}”."
 msgstr "Нет проектов, подходящих под «{0}»"
 
+#: src/components/task-row.tsx
+msgid "No reason was recorded."
+msgstr "Причина не указана"
+
 #: src/components/agent-sessions-sheet.tsx
 msgid "No sessions in this project yet. Start one from the + button."
 msgstr "В этом проекте пока нет сессий. Начните новую кнопкой +"
@@ -4921,6 +4926,10 @@ msgstr "Воспроизвести аудио снова"
 #: src/app/settings-about.tsx
 msgid "Report a bug or request a feature"
 msgstr "Сообщить об ошибке или идее"
+
+#: src/components/task-row.tsx
+msgid "Reported blocker"
+msgstr "Указанное препятствие"
 
 #: src/lib/network-error.ts
 msgid "Request failed."
@@ -6304,6 +6313,10 @@ msgstr "Сервис распознавания вернул неверную р
 #: src/app/commands.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "SSH-туннель переносит только порт Gateway и никакой другой, поэтому симулятор и браузер отсюда недоступны. Подключитесь через локальную сеть или Tailscale"
+
+#: src/components/task-row.tsx
+msgid "The task was recorded as waiting. Open its session to check the current state."
+msgstr "Задача отмечена как ожидающая. Откройте её сеанс, чтобы проверить текущее состояние"
 
 #: src/components/guide-command.tsx
 msgid "The terminal opened, but the command could not be typed."

@@ -1270,6 +1270,7 @@ msgstr "設定した間隔が経過すると、Muqunを開いた後にキャッ�
 
 #: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
+#: src/components/task-row.tsx
 msgid "Close"
 msgstr "閉じる"
 
@@ -3885,6 +3886,10 @@ msgstr "まだプロジェクトがありません。上にパスを入力して
 msgid "No projects match “{0}”."
 msgstr "「{0}」に一致するプロジェクトはありません"
 
+#: src/components/task-row.tsx
+msgid "No reason was recorded."
+msgstr "理由は記録されていません"
+
 #: src/components/agent-sessions-sheet.tsx
 msgid "No sessions in this project yet. Start one from the + button."
 msgstr "このプロジェクトにはまだセッションがありません。+ ボタンから開始してください"
@@ -4921,6 +4926,10 @@ msgstr "音声をもう一度再生"
 #: src/app/settings-about.tsx
 msgid "Report a bug or request a feature"
 msgstr "不具合の報告・機能のリクエスト"
+
+#: src/components/task-row.tsx
+msgid "Reported blocker"
+msgstr "報告された障害"
 
 #: src/lib/network-error.ts
 msgid "Request failed."
@@ -6304,6 +6313,10 @@ msgstr "音声サービスから無効な文字起こしが返されました"
 #: src/app/commands.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "SSH トンネルが運ぶのは Gateway のポートだけで、他のポートは通しません。そのためここからはシミュレータにもブラウザーにも届きません。ローカルネットワークか Tailscale で接続してください"
+
+#: src/components/task-row.tsx
+msgid "The task was recorded as waiting. Open its session to check the current state."
+msgstr "タスクは待機中として記録されています。セッションを開いて現在の状態を確認してください"
 
 #: src/components/guide-command.tsx
 msgid "The terminal opened, but the command could not be typed."
