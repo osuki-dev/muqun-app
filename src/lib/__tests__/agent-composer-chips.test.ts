@@ -88,6 +88,12 @@ describe('composerChipIds', () => {
     ).not.toContain('background');
   });
 
+  test('a runtime without an inbox keeps Stop but never offers delivery modes', () => {
+    const chips = composerChipIds({ ...quiet, running: true, canSendWhileRunning: false });
+    expect(chips).not.toContain('delivery');
+    expect(chips.at(-1)).toBe('stop');
+  });
+
   test('steering and stopping belong to a turn in flight', () => {
     expect(composerChipIds({ ...quiet, running: true })).toEqual([
       'sessions',

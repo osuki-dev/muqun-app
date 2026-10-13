@@ -63,6 +63,7 @@ import { ComposerPopup } from '@/components/composer-popup';
 import { useComposerPopup } from '@/hooks/use-composer-popup';
 import { useLatestReader } from '@/hooks/use-render-refs';
 import { composerChipIds } from '@/lib/agent-composer-chips';
+import { canSendAgentPrompt } from '@/lib/agent-runtime-controls';
 import { slashCommandTrigger, type PaneSlashCommand } from '@/lib/pane-composer';
 import {
   findFileMentionTrigger,
@@ -339,6 +340,11 @@ export type DraftInjector = (text: string, options?: { ifEmpty?: boolean }) => b
 
 export interface AgentComposerProps {
   running: boolean;
+  /** Ordinary prompt delivery only; request reply controls are independent. */
+  canSendWhileRunning?: boolean;
+  /** A Gateway-staged choice, distinct from the session model. */
+  nextTurnModelName?: string;
+  nextTurnModelTemporary?: boolean;
   /** Row 1 contains roots only. Descendants belong in the tree sheet. */
   sessionStrip?: readonly SessionNode[];
   selectedRootAsid?: string;
@@ -558,6 +564,9 @@ export interface AgentComposerProps {
 
 export const AgentComposer = memo(function AgentComposer({
   running,
+  canSendWhileRunning = true,
+  nextTurnModelName,
+  nextTurnModelTemporary = false,
   sessionStrip = EMPTY_STRIP,
   selectedRootAsid,
   onOpenSessionTree,
@@ -690,6 +699,7 @@ export const AgentComposer = memo(function AgentComposer({
     [availableAgentsProp]
   );
   const [sending, setSending] = useState(false);
+  const promptAllowed = canSendAgentPrompt(running, canSendWhileRunning);
   const [deliveryMode, setDeliveryMode] = useState<'steer' | 'queue'>('steer');
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
@@ -828,6 +838,7 @@ export const AgentComposer = memo(function AgentComposer({
           hasContextPill: Boolean(contextPill),
           hasDiffs: Boolean(hasDiffs),
           running,
+          canSendWhileRunning,
         })
       ),
     [
@@ -842,6 +853,7 @@ export const AgentComposer = memo(function AgentComposer({
       contextPill,
       hasDiffs,
       running,
+      canSendWhileRunning,
     ]
   );
 
@@ -1062,6 +1074,7 @@ export const AgentComposer = memo(function AgentComposer({
       }
     }
 
+    if (!promptAllowed || disabled) return;
     setSending(true);
     return settleAfter(
       async () => {
@@ -1108,6 +1121,8 @@ export const AgentComposer = memo(function AgentComposer({
     attachmentTargetId,
     record,
     sending,
+    promptAllowed,
+    disabled,
     onSend,
     showToast,
     t,
@@ -2058,6 +2073,21 @@ export const AgentComposer = memo(function AgentComposer({
               </Animated.View>
             ) : null}
 
+            {nextTurnModelName ? (
+              <Text variant="caption" color={theme.colors.textMuted}>
+                {nextTurnModelTemporary
+                  ? t`Next turn: ${nextTurnModelName}. Staged until the next turn or Gateway restart.`
+                  : t`Next turn: ${nextTurnModelName}`}
+              </Text>
+            ) : null}
+            {!promptAllowed ? (
+              <Text variant="caption" color={theme.colors.textMuted}>
+                <Trans>
+                  This agent accepts messages after its turn ends. Your draft stays here.
+                </Trans>
+              </Text>
+            ) : null}
+
             {/* TerminalComposer reused for agent prompt */}
             <View onLayout={(event) => setInputRowHeight(event.nativeEvent.layout.height)}>
               <TerminalComposer
@@ -2117,19 +2147,23 @@ export const AgentComposer = memo(function AgentComposer({
                   style: { fontFamily: interfaceFontFamily },
                 }}
                 send={{
-                  accessibilityLabel: running
-                    ? deliveryMode === 'steer'
-                      ? t`Steer running agent`
-                      : t`Queue message for agent`
-                    : t`Send message`,
+                  accessibilityLabel: !promptAllowed
+                    ? t`Waiting for the current turn to end`
+                    : running
+                      ? deliveryMode === 'steer'
+                        ? t`Steer running agent`
+                        : t`Queue message for agent`
+                      : t`Send message`,
                   armed:
                     (Boolean(text.trim()) || attachmentUploads.attachments.length > 0) &&
                     !sending &&
-                    !disabled,
+                    !disabled &&
+                    promptAllowed,
                   sending,
                   disabled:
                     sending ||
                     disabled ||
+                    !promptAllowed ||
                     (!text.trim() && attachmentUploads.attachments.length === 0),
                   onPress: handleSend,
                   ...(sendTestID ? { testID: sendTestID } : {}),
