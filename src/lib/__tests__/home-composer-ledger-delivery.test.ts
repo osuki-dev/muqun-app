@@ -19,6 +19,7 @@ function dock(
   const errors: (string | null)[] = [];
   const tasks: string[] = [];
   const unknown: unknown[] = [];
+  const modelSwitches: string[] = [];
   const record = { serverId: 'computer-a', deviceId: 'phone-a' };
   let currentRecord = record;
   let visibleScope = record;
@@ -70,12 +71,15 @@ function dock(
         }),
       },
       inFlightRef: { current: false },
+      HOME_AGENT_SESSION_ID: 'herdr',
       unknownDelivery: null,
       setUnknownDelivery: (value: unknown) => unknown.push(value),
       setError: (value: string | null) => errors.push(value),
       sendTarget: async () => record.serverId,
       mentionsIn: async () => [],
-      sessionParams: {},
+      sessionParams: { model: { model_id: 'model-a', variant: 'high' } },
+      ledgerModelId: () => 'model-a',
+      switchAgentModel: async () => modelSwitches.push(currentRecord.serverId),
       folder: undefined,
       markAgentUsed: () => {},
       markPromptedSession: () => {},
@@ -100,8 +104,29 @@ function dock(
       cwd?: string
     ) => Promise<boolean>;
   };
-  return { ...api, settled, errors, tasks, unknown };
+  return { ...api, settled, errors, tasks, unknown, modelSwitches };
 }
+
+test('a late session acceptance cannot set the model on a replacement computer or pairing', async () => {
+  const created = parseCreatedLedgerTask({
+    task_id: 'task-a',
+    state: 'working',
+    goal: 'Read the date',
+    binding: { kind: 'agent_session', agent_id: 'opencode', asid: 'session-a' },
+  });
+  if (!created) throw new Error('Invalid fixture');
+  for (const move of [
+    undefined,
+    { serverId: 'computer-b', deviceId: 'phone-a' },
+    { serverId: 'computer-a', deviceId: 'phone-b' },
+  ]) {
+    const home = dock({ kind: 'accepted', created }, false, move);
+    expect(await home.openLedgerTask('Read the date')).toBe(true);
+    expect(home.tasks).toEqual(['task-a']);
+    expect(home.errors).toEqual([null]);
+    expect(home.modelSwitches).toEqual(move ? [] : ['computer-a']);
+  }
+});
 
 function accepted(state: 'queued' | 'failed'): LedgerTaskDelivery {
   const created = parseCreatedLedgerTask({

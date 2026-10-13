@@ -814,7 +814,15 @@ export function HomeComposerDock({
         const serverId = await sendTarget();
         if (!serverId) return false;
         const params = sessionParams;
-        const owns = () => useGatewayConnectionStore.getState().record?.serverId === serverId;
+        const owner = useGatewayConnectionStore.getState().record;
+        const owns = () => {
+          const current = useGatewayConnectionStore.getState().record;
+          return (
+            owner?.serverId === serverId &&
+            sameComputer(current, owner) &&
+            current?.deviceId === owner.deviceId
+          );
+        };
         return recoverWith(
           async () => {
             if (!owns()) {
@@ -864,7 +872,9 @@ export function HomeComposerDock({
             // takes the picked variant for every turn after. On one that
             // applied it, this sets what is already set.
             const pickedModel = params.model;
-            if (pickedModel?.variant) {
+            // Creation may finish after the reader selected another computer.
+            // The shared client's fallback write still belongs to this one.
+            if (pickedModel?.variant && owns()) {
               void switchAgentModel(HOME_AGENT_SESSION_ID, asid, pickedModel).catch(
                 (failure: unknown) => console.warn('Home could not set the model variant:', failure)
               );
