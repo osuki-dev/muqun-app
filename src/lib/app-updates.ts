@@ -55,6 +55,7 @@ const controller = createAppUpdateController(client, (snapshot) =>
   useAppUpdateStore.setState(snapshot, true)
 );
 export const checkForAppUpdate = controller.check;
+export const checkForAppUpdateOnLaunch = controller.checkOnLaunch;
 
 export const updateAppNow = controller.updateNow;
 export const deferAppUpdate = controller.defer;

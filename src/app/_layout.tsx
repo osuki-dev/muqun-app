@@ -45,7 +45,7 @@ import { AppLockGate } from '@/components/app-lock-gate';
 import { HugSlackProvider } from '@/components/text';
 import { SshConnectPromptGate } from '@/components/ssh-connect-prompt-gate';
 import { UpdateStatusBanner } from '@/components/update-status-banner';
-import { checkForAppUpdate } from '@/lib/app-updates';
+import { checkForAppUpdate, checkForAppUpdateOnLaunch } from '@/lib/app-updates';
 import { InAppNotificationHost } from '@/components/in-app-notification-host';
 import { useNotificationSurfaceStyle } from '@/components/notification-surface';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
@@ -178,7 +178,7 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
-    void checkForAppUpdate();
+    void checkForAppUpdateOnLaunch();
     const subscription = AppState.addEventListener('change', (state) => {
       if (state === 'active') void checkForAppUpdate();
     });
