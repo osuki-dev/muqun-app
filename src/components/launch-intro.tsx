@@ -55,8 +55,8 @@ import { DURATION, timing } from '@/lib/motion';
  *
  * Copy comes through the hook's `t`, not the global one, for the reason
  * `_layout.tsx` and every screen give: React Compiler memoises a global `t`
- * call across a language switch. The features are 3.1.0's, in the order a
- * reader meets them: the agents, the terminal, the question, the changes, the
+ * call across a language switch. The features follow the order a reader meets
+ * them: the agents, the terminal, the question, the changes, the
  * Pad, the machine, the theme. Nothing on the page needs a Gateway to be true.
  *
  * "Skip intro" and "Get started" both record the intro as seen. Seen is a

@@ -141,7 +141,7 @@ export default function SettingsScreen() {
     return () => cancelIdleCallback(handle);
   }, []);
 
-  const version = Constants.expoConfig?.version ?? Application.nativeApplicationVersion ?? '1.1.0';
+  const version = Constants.expoConfig?.version ?? Application.nativeApplicationVersion ?? '—';
   const build = Application.nativeBuildVersion;
 
   return (
