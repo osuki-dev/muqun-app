@@ -147,7 +147,10 @@ export const PaneChatView = memo(function PaneChatView({
 
   const renderItem = useCallback(
     ({ item }: LegendListRenderItemProps<PaneChatItem>) => {
-      if (item.kind === 'prompt') return <PaneChatPromptRow text={item.text} colors={colors} />;
+      if (item.kind === 'prompt')
+        return (
+          <PaneChatPromptRow text={item.text} attachments={item.part.attachments} colors={colors} />
+        );
       if (item.kind === 'label') return <PaneChatLabelRow text={item.text} colors={colors} />;
       if (item.kind === 'activity') {
         return (
