@@ -1983,6 +1983,10 @@ msgstr "Không thể mở đường hầm SSH"
 msgid "Could not open this file."
 msgstr "Không thể mở tệp này"
 
+#: src/components/pdf-asset-preview.tsx
+msgid "Could not open this PDF."
+msgstr "Không thể mở tệp PDF này"
+
 #: src/components/asset-viewer.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not open this theme."
@@ -3386,6 +3390,7 @@ msgstr "Tải thêm"
 
 #: src/components/gateway-storage-error.tsx
 #: src/components/list-load-more-footer.tsx
+#: src/components/pdf-asset-preview.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
 #: src/components/theme-link-import.tsx
@@ -4357,6 +4362,10 @@ msgstr "Đầu ra"
 msgid "Output copied to clipboard"
 msgstr "Đã sao chép đầu ra vào bảng nhớ tạm"
 
+#: src/components/pdf-asset-preview.tsx
+msgid "Page {page} of {pageCount}"
+msgstr "Trang {page} trên {pageCount}"
+
 #: src/components/pane-history-sheet.tsx
 msgid "Page {pageNumber} · {lines} lines"
 msgstr "Trang {pageNumber} · {lines} dòng"
@@ -4491,6 +4500,10 @@ msgstr "Tạm dừng âm thanh"
 msgctxt "task state"
 msgid "Paused"
 msgstr "Tạm dừng"
+
+#: src/components/pdf-asset-preview.tsx
+msgid "PDF preview supports files up to {ceiling}. Open this file on your computer."
+msgstr "Xem trước PDF hỗ trợ tệp tối đa {ceiling}. Hãy mở tệp này trên máy tính của bạn"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Permission"
@@ -6550,6 +6563,14 @@ msgstr "Liên kết này không dẫn đến đâu cả"
 msgid "This one is required."
 msgstr "Mục này là bắt buộc"
 
+#: src/components/pdf-asset-preview.tsx
+msgid "This PDF cannot be previewed. Save it to open with a PDF reader."
+msgstr "Không thể xem trước tệp PDF này. Hãy lưu tệp rồi mở bằng trình đọc PDF"
+
+#: src/components/pdf-asset-preview.tsx
+msgid "This PDF is password-protected. Save it to open with a PDF reader."
+msgstr "Tệp PDF này được bảo vệ bằng mật khẩu. Hãy lưu tệp rồi mở bằng trình đọc PDF"
+
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
 msgid "This project"
@@ -6710,6 +6731,7 @@ msgstr "Tin cậy"
 #: src/components/audio-asset-preview.tsx
 #: src/components/changes-sheet.tsx
 #: src/components/inline-file-link.tsx
+#: src/components/pdf-asset-preview.tsx
 #: src/components/theme-browse-sheet.tsx
 #: src/components/video-asset-preview.tsx
 #: src/components/voice-input-button.tsx
@@ -6934,6 +6956,7 @@ msgstr "Cập nhật Gateway để mở Lazygit trong cây làm việc khác"
 
 #: src/components/asset-viewer.tsx
 #: src/components/inline-file-link.tsx
+#: src/components/pdf-asset-preview.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-file-actions.tsx
 msgid "Update the Gateway to open or save this file."
