@@ -47,10 +47,14 @@ function themesCheckout(): string | null {
 
 function packLocally(checkout: string): Uint8Array {
   const out = join(tmpdir(), `muqun-builtin-${process.pid}.muqun-theme`);
-  const result = spawnSync('bunx', ['@osuki-dev/muqun-theme@2', 'pack', THEME_ID, '--out', out], {
-    cwd: checkout,
-    stdio: ['ignore', 'inherit', 'inherit'],
-  });
+  const result = spawnSync(
+    'bunx',
+    ['@osuki-dev/muqun-theme@2.4.1', 'pack', THEME_ID, '--out', out],
+    {
+      cwd: checkout,
+      stdio: ['ignore', 'inherit', 'inherit'],
+    }
+  );
   if (result.status !== 0) throw new Error(`muqun-theme pack failed in ${checkout}`);
   const bytes = new Uint8Array(readFileSync(out));
   rmSync(out, { force: true });
