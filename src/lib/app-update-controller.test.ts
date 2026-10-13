@@ -210,6 +210,141 @@ describe('OTA update consent lifecycle', () => {
     expect(f.reloads()).toBe(1);
   });
 
+  test.each(['same', 'new'] as const)(
+    'Later expires on a retained-runtime launch and discovers the %s release',
+    async (nextRelease) => {
+      let checks = 0;
+      let downloads = 0;
+      let releaseId = 'release-1';
+      const f = fixture(async () => {
+        checks++;
+        return release({
+          id: releaseId,
+          updateBundle: async () => {
+            downloads++;
+            return true;
+          },
+        });
+      });
+      await f.controller.checkOnLaunch();
+      f.controller.defer();
+      f.advance(3_600_000);
+      await f.controller.check();
+      expect(checks).toBe(1);
+      expect(f.states.at(-1)?.phase).toBe('deferred');
+
+      if (nextRelease === 'new') releaseId = 'release-2';
+      await f.controller.checkOnLaunch();
+      expect(checks).toBe(2);
+      expect(f.states.at(-1)).toEqual({
+        ...metadata,
+        releaseId,
+        phase: 'available',
+        progress: 0,
+      });
+      expect(downloads).toBe(0);
+      expect(f.reloads()).toBe(0);
+      f.controller.defer();
+      await f.controller.check();
+      expect(checks).toBe(2);
+      expect(f.states.at(-1)?.phase).toBe('deferred');
+    }
+  );
+
+  test('a cold runtime checks the same eligible release after Later without retaining dismissal', async () => {
+    let checks = 0;
+    const check = async () => {
+      checks++;
+      return release();
+    };
+    const firstLaunch = fixture(check);
+    await firstLaunch.controller.checkOnLaunch();
+    firstLaunch.controller.defer();
+    const coldLaunch = fixture(check);
+    await coldLaunch.controller.checkOnLaunch();
+    expect(checks).toBe(2);
+    expect(coldLaunch.states.at(-1)).toEqual({ ...metadata, phase: 'available', progress: 0 });
+    expect(coldLaunch.reloads()).toBe(0);
+  });
+
+  test('launch checks preserve required consent and an in-flight download', async () => {
+    let checks = 0;
+    let finishDownload = (_verified: boolean) => {};
+    const f = fixture(async () => {
+      checks++;
+      return release({
+        shouldForceUpdate: true,
+        updateBundle: () =>
+          new Promise<boolean>((resolve) => {
+            finishDownload = resolve;
+          }),
+      });
+    });
+    await f.controller.checkOnLaunch();
+    f.controller.defer();
+    await f.controller.checkOnLaunch();
+    expect(checks).toBe(1);
+    expect(f.states.at(-1)?.phase).toBe('available');
+    const downloading = f.controller.updateNow();
+    expect(f.controller.checkOnLaunch()).toBe(downloading);
+    expect(f.states.at(-1)?.phase).toBe('downloading');
+    finishDownload(true);
+    await downloading;
+    expect(f.reloads()).toBe(1);
+  });
+
+  test('a new launch rediscovers a deferred download failure without retrying automatically', async () => {
+    let checks = 0;
+    let downloads = 0;
+    const f = fixture(async () => {
+      checks++;
+      return release({
+        updateBundle: async () => {
+          downloads++;
+          return false;
+        },
+      });
+    });
+    await f.controller.checkOnLaunch();
+    await f.controller.updateNow();
+    expect(f.states.at(-1)?.phase).toBe('download-failed');
+    f.controller.defer();
+    await f.controller.checkOnLaunch();
+    expect(checks).toBe(2);
+    expect(downloads).toBe(1);
+    expect(f.states.at(-1)).toEqual({ ...metadata, phase: 'available', progress: 0 });
+    expect(f.reloads()).toBe(0);
+  });
+
+  test('a launch after deferring a failed restart retains restart-only explicit retry', async () => {
+    let checks = 0;
+    let downloads = 0;
+    const f = fixture(
+      async () => {
+        checks++;
+        return release({
+          updateBundle: async () => {
+            downloads++;
+            return true;
+          },
+        });
+      },
+      async () => {
+        throw new Error('native restart unavailable');
+      }
+    );
+    await f.controller.checkOnLaunch();
+    await f.controller.updateNow();
+    f.controller.defer();
+    await f.controller.checkOnLaunch();
+    expect(f.states.at(-1)).toEqual({ ...metadata, phase: 'restart-failed', progress: 1 });
+    expect(f.reloads()).toBe(1);
+    await f.controller.updateNow();
+    expect(checks).toBe(1);
+    expect(downloads).toBe(1);
+    expect(f.reloads()).toBe(2);
+  });
+
   test.each(['ADOPT_RELEASE', 'INSTALL', 'USE_BUILTIN'] as const)(
     'a different release %s still waits for consent',
     async (transitionKind) => {
@@ -540,6 +675,7 @@ describe('OTA update consent lifecycle', () => {
   test('disabled client performs no work', async () => {
     const states: UpdateSnapshot[] = [];
     const controller = createAppUpdateController(null, (state) => states.push(state));
+    await controller.checkOnLaunch();
     await controller.check();
     await controller.updateNow();
     controller.defer();

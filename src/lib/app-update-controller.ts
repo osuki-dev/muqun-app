@@ -91,6 +91,7 @@ export function createAppUpdateController(
   let pending: Promise<void> | null = null;
   let nextCheckAt = 0;
   let update: AvailableUpdate | null = null;
+  let deferredPhase: UpdatePhase = 'available';
   let localizedNotes: string | null = null;
   let bytes: Pick<UpdateSnapshot, 'downloadedBytes' | 'totalBytes'> = {};
   const publishProgress = (progress: number) => {
@@ -203,14 +204,35 @@ export function createAppUpdateController(
     return pending;
   }
 
+  function check() {
+    if (pending) return pending;
+    // A prompt, dismissal or transfer survives foreground events for this
+    // app launch. Those events must never consent or replace readable notes.
+    if (!client || update || phase === 'restarting' || now() < nextCheckAt)
+      return Promise.resolve();
+    return run(discover);
+  }
+
   return {
-    check() {
+    check,
+    checkOnLaunch() {
       if (pending) return pending;
-      // A prompt, dismissal or transfer survives foreground events for this
-      // app session. Those events must never consent or replace readable notes.
-      if (!client || update || phase === 'restarting' || now() < nextCheckAt)
-        return Promise.resolve();
-      return run(discover);
+      // Android can remount the app's root while retaining its JS runtime.
+      // Later expires at that launch boundary, not just at process death.
+      if (phase === 'deferred') {
+        if (deferredPhase === 'restart-failed') {
+          // The verified artifact is already staged. Keep restart-only retry.
+          phase = 'restart-failed';
+          publishProgress(1);
+          return Promise.resolve();
+        }
+        update = null;
+        localizedNotes = null;
+        bytes = {};
+        phase = 'idle';
+      }
+      nextCheckAt = 0;
+      return check();
     },
     updateNow() {
       if (pending) return pending;
@@ -225,6 +247,7 @@ export function createAppUpdateController(
         !['available', 'download-failed', 'restart-failed'].includes(phase)
       )
         return;
+      deferredPhase = phase;
       phase = 'deferred';
       publishProgress(0);
     },
