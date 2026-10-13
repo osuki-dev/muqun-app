@@ -405,8 +405,9 @@ export function LaunchSceneIntro({
     width: heroBox.width,
     height: heroBox.height,
   };
-  // Use this image's decoded contain bounds, even when Home draws a different
-  // or masked image. The whole figure lands inside Home's visible safe area.
+  // Same-image travel uses its decoded contain bounds and Home's safe area.
+  // An independent launch figure keeps its composition for the snap dissolve:
+  // Home's scene is a different picture, with no corresponding sprite position.
   const destination = launchArtworkLanding({
     box: heroBox,
     intrinsic: landing?.intrinsic ?? null,

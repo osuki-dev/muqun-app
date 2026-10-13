@@ -37,7 +37,7 @@ test.each([
   }
 );
 
-test('a separate launch portrait fits as a whole without borrowing Home’s wide image dimensions', () => {
+test('a separate launch portrait keeps its own contain composition instead of borrowing Home’s dimensions', () => {
   const result = launchArtworkLanding({
     box: { width: 300, height: 300 },
     intrinsic: PORTRAIT,
@@ -54,9 +54,28 @@ test('a separate launch portrait fits as a whole without borrowing Home’s wide
     viewport: { x: 0, y: 24, width: 384, height: 768 },
     centre: { x: 192, y: 408 },
   });
-  expect(result.scale).toBe(0.4);
-  expect(result.centre).toEqual({ x: 192, y: 160 });
-  expect(result.exact).toBe(false);
+  expect(result).toEqual({ centre: { x: 192, y: 408 }, scale: 1, exact: false });
+});
+
+test('Ink’s 1254-square full-body traveler never flies toward its independent 1536×1024 scene', () => {
+  const result = launchArtworkLanding({
+    box: { width: 304, height: 304 },
+    intrinsic: { width: 1254, height: 1254 },
+    source: 'file:///theme/launch-traveler.png',
+    home: {
+      x: 0,
+      y: 110,
+      width: 411,
+      height: 274,
+      source: 'file:///theme/home-scene.png',
+      intrinsicWidth: 1536,
+      intrinsicHeight: 1024,
+      cropped: true,
+    },
+    viewport: { x: 0, y: 24, width: 411, height: 866 },
+    centre: { x: 205.5, y: 457 },
+  });
+  expect(result).toEqual({ centre: { x: 205.5, y: 457 }, scale: 1, exact: false });
 });
 
 test('a tall or clipped Home image lands wholly inside the visible safe area', () => {
@@ -64,7 +83,7 @@ test('a tall or clipped Home image lands wholly inside the visible safe area', (
     box: { width: 300, height: 300 },
     intrinsic: PORTRAIT,
     source: SOURCE,
-    home: { x: 100, y: -80, width: 200, height: 1200 },
+    home: { x: 100, y: -80, width: 200, height: 1200, source: SOURCE },
     viewport: { x: 0, y: 32, width: 400, height: 736 },
     centre: { x: 200, y: 400 },
   });
@@ -106,7 +125,7 @@ test('unknown dimensions and a wholly hidden target keep the launch centred for 
     box: { width: 300, height: 300 },
     intrinsic: PORTRAIT,
     source: SOURCE,
-    home: { x: 100, y: 900, width: 100, height: 200 },
+    home: { x: 100, y: 900, width: 100, height: 200, source: SOURCE },
     viewport: { x: 0, y: 32, width: 400, height: 736 },
     centre: { x: 200, y: 400 },
   };
