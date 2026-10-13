@@ -2,15 +2,16 @@ import { msg } from '@lingui/core/macro';
 import type { MessageDescriptor } from '@lingui/core';
 
 /**
- * User-facing notes bundled with this native release, available manually in
- * About. OTA downloads display their own localized server Markdown, with the
+ * Archived notes retained for the legacy bundled fallback. There is no manual
+ * About entry. OTA downloads display their own localized server Markdown, with the
  * English Hot Updater catalog message as a fallback;
  * these notes must never stand in for an unknown OTA changelog.
  *
  * `msg` descriptors rather than strings, so the card reads in the active
  * locale.
  *
- * These are the 3.1.0 notes. They do not automatically open at startup.
+ * These are the historical 3.1.0 notes, not the current release changelog.
+ * The update banner does not select this fallback.
  */
 export const RELEASE_NOTES: { title: MessageDescriptor; items: MessageDescriptor[] } = {
   title: msg`What's new`,

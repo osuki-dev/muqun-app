@@ -5,6 +5,9 @@ tested commit. Use it as the GitHub Release description. Include user-visible
 improvements, fixes, required App/Gateway/Herdr versions, and store upgrade steps;
 an automated commit list is not a substitute.
 
+The next native release is [v4.0.0](v4.0.0.md). Earlier version notes remain
+historical records, including builds already submitted with those versions.
+
 Android distribution uses AAB through Play; iOS uses IPA through TestFlight and
 App Store Connect. There is no separate APK publication or tag-triggered binary
 build. The shared [store release commands](../infrastructure/store-release.md) build locally
@@ -22,7 +25,12 @@ builds so an older candidate is not submitted after a newer one. Final Android
 upgrade acceptance uses the Play-distributed app; an APK extracted for an emulator
 does not prove Play App Signing compatibility or store delivery.
 
-When a release is requested, set `app.json`'s `expo.version`, write matching notes,
-complete the repository checks and store acceptance, then tag that reviewed commit.
+When a release is requested, set `app.json`'s `expo.version` and `package.json`'s
+`version` together. The Expo version is the native marketing version;
+`app.config.ts` forwards it and EAS increments the build counters separately.
+Write matching notes, complete the repository checks and store acceptance, then
+tag that reviewed commit. A marketing-version or native-input change requires
+a new store build and its own archived fingerprint; an OTA cannot rename an
+already submitted binary or adopt its fingerprint for a different native build.
 Store submission and public release are explicit actions, never side effects of
 committing or tagging.
