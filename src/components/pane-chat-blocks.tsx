@@ -6,17 +6,11 @@ import { Text } from '@/components/text';
 import { ChevronDown, ChevronRight, FileText } from 'lucide-react-native';
 import { EnrichedMarkdownText, type MarkdownStyle } from 'react-native-enriched-markdown';
 import { memo, useMemo } from 'react';
-import {
-  ActivityIndicator,
-  Linking,
-  ScrollView,
-  StyleSheet,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Linking, ScrollView, StyleSheet, View } from 'react-native';
 
-import { useMarkdownFonts, useMonoFontFamily } from '@/hooks/use-user-fonts';
-import { createMarkdownStyle, markdownImageStyle } from '@/lib/markdown-style';
+import { useMonoFontFamily } from '@/hooks/use-user-fonts';
+import { useMarkdownStyle } from '@/hooks/use-markdown-style';
+import { markdownPaletteKey } from '@/lib/markdown-palette';
 import { PressableScale } from '@/components/pressable-scale';
 import { InlineDiffRows } from '@/components/diff-rows';
 import { diffRowsForFence } from '@/lib/agent-diff-rows';
@@ -106,20 +100,14 @@ export function usePaneChatColors(): PaneChatColors {
  * asset viewer reads documents with, and there a rule is content.
  */
 export function usePaneChatMarkdownStyle(): MarkdownStyle {
-  const profile = useAppearanceProfile();
-  const theme = useThemeTokens();
-  const fonts = useMarkdownFonts();
-  const { height: viewportHeight } = useWindowDimensions();
-  return useMemo(() => {
-    const base = createMarkdownStyle(theme.colors, fonts);
-    return {
+  const base = useMarkdownStyle();
+  return useMemo(
+    () => ({
       ...base,
-      codeBlock: { ...base.codeBlock, borderRadius: profile.chrome.surface },
-      table: { ...base.table, borderRadius: profile.chrome.surface },
       thematicBreak: { color: 'transparent', height: 0, marginTop: 0, marginBottom: 0 },
-      image: markdownImageStyle(viewportHeight, profile.chrome.surface),
-    };
-  }, [theme.colors, fonts, profile.chrome.surface, viewportHeight]);
+    }),
+    [base]
+  );
 }
 
 /** What the user said, on the right, as a bubble. */
@@ -257,6 +245,7 @@ export const PaneChatPartRow = memo(function PaneChatPartRow({
       return (
         <View style={styles.agentAlign}>
           <EnrichedMarkdownText
+            key={markdownPaletteKey(markdownStyle)}
             flavor="commonmark"
             markdown={part.markdown}
             markdownStyle={markdownStyle}
