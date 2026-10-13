@@ -1,4 +1,5 @@
-import { asRecord, type ToolPart } from './agent-protocol';
+import type { ToolPart } from './agent-protocol';
+import { asRecord } from './record';
 
 /** Server-qualified names only; another server's tasks.complete is real work. */
 function isInternalCall(name: string, input: unknown): boolean {

@@ -24,16 +24,13 @@
 import { parseKeyboardVocabulary, type KeyboardVocabulary } from './key-vocabulary';
 import { parseMessageImageAssets, type MessageImageAsset } from './message-images';
 import { stripTaskInstruction } from './task-plumbing';
+import { asRecord } from './record';
+
+export { asRecord } from './record';
 
 // ---------------------------------------------------------------------------
 // Primitives
 // ---------------------------------------------------------------------------
-
-export function asRecord(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : null;
-}
 
 export function asString(value: unknown): string | undefined {
   return typeof value === 'string' ? value : undefined;
