@@ -23,6 +23,7 @@ import {
   type LayoutChangeEvent,
 } from 'react-native';
 import Animated, {
+  cancelAnimation,
   Easing,
   Extrapolation,
   interpolate,
@@ -43,6 +44,7 @@ import { SNAP_DUST_EFFECT, SnapDust } from '@/components/launch-snap';
 import { useAppliedCustomTheme } from '@/components/theme-candidate';
 import { useLaunchHandoff } from '@/stores/launch-handoff';
 import { useLaunchArtwork, useLaunchBackground } from '@/hooks/use-launch-artwork';
+import { useAppActive } from '@/hooks/use-app-active';
 import { useLaunchHeroEdge } from '@/hooks/use-launch-hero-edge';
 import {
   LAUNCH_ARTWORK_MAX_WIDTH,
@@ -328,6 +330,7 @@ export function LaunchSceneIntro({
   const theme = useThemeTokens();
   const { resolvedMode } = useThemeMode();
   const reduced = useReducedMotion();
+  const active = useAppActive();
   const fonts = useMarkdownFonts();
   const packLabel = useThemePack().label;
 
@@ -421,9 +424,9 @@ export function LaunchSceneIntro({
   const handoffPaper = useSharedValue(1);
   const handoffPaperStyle = useAnimatedStyle(() => ({ opacity: handoffPaper.value }));
   useEffect(() => {
-    if (phase !== 'visible') return;
+    if (phase !== 'visible' || !active) return;
     handoffPaper.set(withTiming(0, { duration: reduced ? 0 : 220 }));
-  }, [phase, reduced, handoffPaper]);
+  }, [phase, active, reduced, handoffPaper]);
   const widthClass = width >= THEME_ARTWORK_REGULAR_MIN_WIDTH ? 'regular' : 'compact';
 
   // The pack's own world, resolved exactly the way Home resolves it, so what
@@ -459,10 +462,10 @@ export function LaunchSceneIntro({
   // The budget is read when the timer is armed, not a reason to re-arm it.
   const readWorldDeadline = useEffectEvent(() => beats.worldDeadlineAt);
   useEffect(() => {
-    if (phase !== 'visible' || reduced || !hasArtwork) return;
+    if (phase !== 'visible' || !active || reduced || !hasArtwork) return;
     const timer = setTimeout(() => setDeadlinePassed(true), readWorldDeadline());
     return () => clearTimeout(timer);
-  }, [phase, hasArtwork, reduced]);
+  }, [phase, active, hasArtwork, reduced]);
 
   // The reveal, once chosen, may only become more conservative. `irisLatched`
   // is the one-way door: see `LaunchWorldInput`.
@@ -494,10 +497,10 @@ export function LaunchSceneIntro({
     !reduced && canvasWorld && SNAP_DUST_EFFECT !== null && (heroDrawable || !mirror.hasLogo);
   const [heroSwapped, setHeroSwapped] = useState(false);
   useEffect(() => {
-    if (phase !== 'visible' || !heroImage || heroSwapped) return;
+    if (phase !== 'visible' || !active || !heroImage || heroSwapped) return;
     const timer = setTimeout(() => setHeroSwapped(true), HERO_SWAP_MS);
     return () => clearTimeout(timer);
-  }, [phase, heroImage, heroSwapped]);
+  }, [phase, active, heroImage, heroSwapped]);
   const heroInCanvas = canvasWorld && heroImage !== null && heroSwapped;
 
   // The far corner from wherever the hero is, taken over both ends of its
@@ -563,11 +566,34 @@ export function LaunchSceneIntro({
   // under the cross-fade it keeps its own.
   const setRevealDriver = useLaunchHandoff((state) => state.setRevealDriver);
   useEffect(() => {
-    setRevealDriver(snapAhead ? snapProgress : null);
-  }, [snapAhead, snapProgress, setRevealDriver]);
+    setRevealDriver(active && snapAhead ? snapProgress : null);
+    return () => setRevealDriver(null);
+  }, [active, snapAhead, snapProgress, setRevealDriver]);
   const [snapImage, setSnapImage] = useState<SkImage | null>(null);
   // The snapshot is the scene's to release, once nothing is drawing it.
   useEffect(() => () => snapImage?.dispose(), [snapImage]);
+
+  // A backgrounded opening has nothing left to present. Stop its clocks so
+  // resuming cannot replay it or leave a reveal driver running offscreen.
+  const stopMotion = useEffectEvent(() => {
+    for (const value of [
+      handoffPaper,
+      ignite,
+      bloom,
+      settle,
+      hero,
+      type,
+      blink,
+      hold,
+      exit,
+      sheetFade,
+      snapProgress,
+    ]) {
+      cancelAnimation(value);
+    }
+    setRevealDriver(null);
+  });
+  useEffect(() => () => stopMotion(), []);
 
   const skip = useCallback(() => {
     if (!canSkipLaunchIntro(Date.now() - startedAt.current, beats)) return;
@@ -599,6 +625,15 @@ export function LaunchSceneIntro({
   // callbacks are read when it changes rather than being reasons to run, and
   // the shared values are stable -- which is what an effect event is for.
   const followPhase = useEffectEvent(() => {
+    if (!active) {
+      if (phase !== 'native') {
+        stopMotion();
+        setSnapImage(null);
+        onDone();
+        finish();
+      }
+      return;
+    }
     if (phase === 'visible') {
       startedAt.current = Date.now();
       if (reduced) {
@@ -677,10 +712,10 @@ export function LaunchSceneIntro({
   const homeRevealed = useLaunchHandoff((state) => state.ready);
   const [homeWaitOver, setHomeWaitOver] = useState(false);
   useEffect(() => {
-    if (!snapImage) return;
+    if (!snapImage || !active) return;
     const timer = setTimeout(() => setHomeWaitOver(true), HOME_REVEAL_PATIENCE_MS);
     return () => clearTimeout(timer);
-  }, [snapImage]);
+  }, [snapImage, active]);
   const swept = useRef(false);
   // Read when the moment comes; not reasons to schedule it again.
   const sweep = useEffectEvent(() => {
@@ -700,7 +735,7 @@ export function LaunchSceneIntro({
     );
   });
   useEffect(() => {
-    if (!dustReady || !(homeRevealed || homeWaitOver)) return;
+    if (!active || !dustReady || !(homeRevealed || homeWaitOver)) return;
     let frames = 0;
     let request = 0;
     const tick = () => {
@@ -713,19 +748,19 @@ export function LaunchSceneIntro({
     };
     request = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(request);
-  }, [dustReady, homeRevealed, homeWaitOver]);
+  }, [active, dustReady, homeRevealed, homeWaitOver]);
   useEffect(() => {
     followPhase();
-  }, [phase]);
+  }, [phase, active]);
 
   useEffect(() => {
-    if (phase !== 'visible' || reduced) return;
+    if (phase !== 'visible' || !active || reduced) return;
     const elapsed = Date.now() - startedAt.current;
     // Missing the scheduled departure chooses the dissolve, never a late flight
     // or a longer splash. The rest of the opening keeps its original timeline.
     if (elapsed > beats.hero.at) return;
     hero.set(withDelay(beats.hero.at - elapsed, withTiming(1, timing(beats.hero.ms))));
-  }, [phase, reduced, homeRect, beats.hero.at, beats.hero.ms, hero]);
+  }, [phase, active, reduced, homeRect, beats.hero.at, beats.hero.ms, hero]);
 
   // The bloom is the one beat driven by something other than the clock: it
   // leaves when the world behind it exists. Until then it breathes in place,
@@ -733,7 +768,7 @@ export function LaunchSceneIntro({
   // Driven by the phase, the reveal and the setting; the beats and
   // `onFrontGone` are read when those change, not reasons to run.
   const followBloom = useEffectEvent(() => {
-    if (phase !== 'visible' || reduced) return;
+    if (phase !== 'visible' || !active || reduced) return;
     if (!revealReady) {
       bloom.set(
         withRepeat(
@@ -765,7 +800,7 @@ export function LaunchSceneIntro({
   });
   useEffect(() => {
     followBloom();
-  }, [phase, revealReady, reduced]);
+  }, [phase, active, revealReady, reduced]);
 
   const paperVector = useMemo(() => colorVector(paper), [paper]);
   const primaryVector = useMemo(() => colorVector(theme.colors.primary), [theme.colors.primary]);
@@ -885,6 +920,8 @@ export function LaunchSceneIntro({
   // are in it.
   const showCover =
     world.kind === 'palette' || (world.kind === 'painted' && !(frontGone && world.ready));
+
+  if (!active && phase !== 'native') return null;
 
   return (
     <Animated.View
