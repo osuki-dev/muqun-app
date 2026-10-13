@@ -146,6 +146,7 @@ function ThemeFileOpener() {
 
 /**
  * The profiling control, in a Debug bundle or a Release profiling bundle only.
+ * Set EXPO_PUBLIC_RELEASE_PROFILER=0 to keep native QA controls unobstructed.
  *
  * A `require` behind a condition Metro can fold, not an import: `__DEV__` and
  * `process.env.EXPO_PUBLIC_*` are inlined when a bundle is built, so a store
@@ -155,7 +156,8 @@ function ThemeFileOpener() {
 type ProfilerControlModule = typeof import('@/components/release-profiler-control');
 
 const ReleaseProfilerControl =
-  __DEV__ || process.env.EXPO_PUBLIC_RELEASE_PROFILER === '1'
+  (__DEV__ && process.env.EXPO_PUBLIC_RELEASE_PROFILER !== '0') ||
+  process.env.EXPO_PUBLIC_RELEASE_PROFILER === '1'
     ? // oxlint-disable-next-line typescript/no-require-imports
       (require('@/components/release-profiler-control') as ProfilerControlModule)
         .ReleaseProfilerControl
