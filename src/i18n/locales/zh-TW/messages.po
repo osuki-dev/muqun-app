@@ -191,10 +191,6 @@ msgstr "{0} 分鐘"
 msgid "{0}m ago"
 msgstr "{0} 分鐘前"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "{agentId} service"
-msgstr "{agentId} 服務"
-
 #: src/components/agent-workbench.tsx
 msgid "{agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone."
 msgstr "{agentName} 無法預覽回溯。這會刪除這則訊息及其之後的所有內容，也就是整輪對話，且無法還原"
@@ -551,10 +547,6 @@ msgctxt "git file status"
 msgid "Added"
 msgstr "新增"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Advanced agent access"
-msgstr "進階智能體存取權限"
-
 #: src/app/settings-voice.tsx
 msgid "After recording"
 msgstr "錄完轉錄"
@@ -563,10 +555,6 @@ msgstr "錄完轉錄"
 #: src/components/new-task-sheet.tsx
 msgid "Agent"
 msgstr "Agent"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Agent access"
-msgstr "智能體存取權限"
 
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
@@ -1496,10 +1484,6 @@ msgstr "確認移除 {0}"
 msgid "Confirm revoke {0}"
 msgstr "確認撤銷 {0}"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Confirm revoke {title}"
-msgstr "確認撤銷 {title}"
-
 #: src/components/settings-alerts.tsx
 msgid "Confirm taps, pairing, and gateway events."
 msgstr "為點按、配對與 Gateway 事件提供觸覺回饋"
@@ -1886,10 +1870,6 @@ msgstr "無法取得這台電腦的代理程式清單"
 msgid "Could not list worktrees. Refresh to try again."
 msgstr "無法列出工作樹。請重新整理後再試"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Could not load agent access"
-msgstr "無法載入智能體存取權限"
-
 #: src/components/settings-server-capabilities.tsx
 msgid "Could not load capabilities"
 msgstr "無法載入功能"
@@ -2060,10 +2040,6 @@ msgstr "無法撤銷授權"
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
 msgstr "無法撤銷裝置"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Could not revoke token"
-msgstr "無法撤銷權杖"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not run that"
@@ -2617,27 +2593,11 @@ msgstr "展開工作"
 msgid "Expand tool call"
 msgstr "展開工具呼叫"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Expired"
-msgstr "已過期"
-
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
 #: src/app/explore.tsx
 msgid "Expires in {0}:{1}"
 msgstr "將於 {0}:{1} 後過期"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Expires in {days}d"
-msgstr "{days} 天後過期"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Expires in {hours}h"
-msgstr "{hours} 小時後過期"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Expires in {minutes}m"
-msgstr "{minutes} 分鐘後過期"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Explore"
@@ -3321,10 +3281,6 @@ msgstr "上次連線於 {minutes} 分鐘前"
 msgid "Last seen just now"
 msgstr "剛剛連線過"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Last used {when}"
-msgstr "上次使用 {when}"
-
 #: src/components/update-status-banner.tsx
 msgid "Later"
 msgstr "稍後"
@@ -3478,10 +3434,6 @@ msgstr "請確認這台電腦可以連線，然後再試一次"
 #: src/components/home-overview.tsx
 msgid "Manage"
 msgstr "管理"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Manage access granted to coding agents through MCP. Revoking access stops that agent from using this computer's tools."
-msgstr "管理透過 MCP 授予程式開發智能體的存取權限。撤銷授權後，該智能體將無法使用此電腦上的工具"
 
 #: src/components/session-map.tsx
 msgid "Manage computers"
@@ -3711,17 +3663,9 @@ msgstr "需要你的輸入"
 msgid "Never connected"
 msgstr "從未連接過"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Never expires"
-msgstr "永不過期"
-
 #: src/components/settings-servers.tsx
 msgid "Never seen"
 msgstr "從未連線"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Never used"
-msgstr "從未使用"
 
 #: src/app/commands.tsx
 msgid "New group"
@@ -3782,10 +3726,6 @@ msgstr "下一則通知"
 #: src/components/agent-title-pill.tsx
 msgid "Next session"
 msgstr "下一個會話"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "No agent access grants"
-msgstr "尚無智能體存取授權"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
@@ -4449,10 +4389,6 @@ msgstr "配對失敗"
 msgid "Palette (up to 4)"
 msgstr "配色（最多 4 色）"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Pane {paneId}"
-msgstr "窗格 {paneId}"
-
 #: src/components/settings-servers.tsx
 msgid "Panes on computer cards"
 msgstr "電腦卡片上的面板"
@@ -5083,7 +5019,6 @@ msgid "Reviewing the changes and checking the tests…"
 msgstr "正在審查改動並檢查測試…"
 
 #: src/components/agent-context-sheet.tsx
-#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke"
 msgstr "撤銷"
@@ -5095,11 +5030,6 @@ msgstr "撤銷"
 msgid "Revoke {0}"
 msgstr "撤銷 {0}"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Revoke {title}"
-msgstr "撤銷 {title}"
-
-#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoking…"
 msgstr "撤銷中…"
@@ -6705,7 +6635,6 @@ msgstr "信任"
 msgid "Try again"
 msgstr "再試一次"
 
-#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/settings-servers.tsx
 msgid "Try again once the computer responds."

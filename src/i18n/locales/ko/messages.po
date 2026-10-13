@@ -191,10 +191,6 @@ msgstr "{0}분"
 msgid "{0}m ago"
 msgstr "{0}분 전"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "{agentId} service"
-msgstr "{agentId} 서비스"
-
 #: src/components/agent-workbench.tsx
 msgid "{agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone."
 msgstr "{agentName}은(는) 롤백을 미리 볼 수 없습니다. 이 메시지와 그 이후의 모든 내용, 즉 턴 전체가 삭제되며 되돌릴 수 없습니다"
@@ -551,10 +547,6 @@ msgctxt "git file status"
 msgid "Added"
 msgstr "추가됨"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Advanced agent access"
-msgstr "고급 에이전트 접근 설정"
-
 #: src/app/settings-voice.tsx
 msgid "After recording"
 msgstr "녹음 후 변환"
@@ -563,10 +555,6 @@ msgstr "녹음 후 변환"
 #: src/components/new-task-sheet.tsx
 msgid "Agent"
 msgstr "에이전트"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Agent access"
-msgstr "에이전트 접근 권한"
 
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
@@ -1496,10 +1484,6 @@ msgstr "{0} 제거 확인"
 msgid "Confirm revoke {0}"
 msgstr "{0} 해제 확인"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Confirm revoke {title}"
-msgstr "{title} 해지 확인"
-
 #: src/components/settings-alerts.tsx
 msgid "Confirm taps, pairing, and gateway events."
 msgstr "탭, 페어링, Gateway 이벤트를 진동으로 알립니다"
@@ -1886,10 +1870,6 @@ msgstr "이 컴퓨터의 에이전트 목록을 가져오지 못했습니다"
 msgid "Could not list worktrees. Refresh to try again."
 msgstr "작업 트리를 불러올 수 없습니다. 새로고침하여 다시 시도하세요"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Could not load agent access"
-msgstr "에이전트 접근 권한을 불러오지 못했습니다"
-
 #: src/components/settings-server-capabilities.tsx
 msgid "Could not load capabilities"
 msgstr "기능을 불러올 수 없습니다"
@@ -2060,10 +2040,6 @@ msgstr "해제할 수 없습니다"
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
 msgstr "기기를 해제하지 못했습니다"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Could not revoke token"
-msgstr "토큰을 해지할 수 없습니다"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not run that"
@@ -2617,27 +2593,11 @@ msgstr "작업 펼치기"
 msgid "Expand tool call"
 msgstr "도구 호출 펼치기"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Expired"
-msgstr "만료됨"
-
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
 #: src/app/explore.tsx
 msgid "Expires in {0}:{1}"
 msgstr "{0}:{1} 후 만료"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Expires in {days}d"
-msgstr "{days}일 후 만료"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Expires in {hours}h"
-msgstr "{hours}시간 후 만료"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Expires in {minutes}m"
-msgstr "{minutes}분 후 만료"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Explore"
@@ -3321,10 +3281,6 @@ msgstr "마지막 확인: {minutes}분 전"
 msgid "Last seen just now"
 msgstr "마지막 확인: 방금"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Last used {when}"
-msgstr "마지막 사용 {when}"
-
 #: src/components/update-status-banner.tsx
 msgid "Later"
 msgstr "나중에"
@@ -3478,10 +3434,6 @@ msgstr "컴퓨터에 연결할 수 있는지 확인한 후 다시 시도하세�
 #: src/components/home-overview.tsx
 msgid "Manage"
 msgstr "관리"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Manage access granted to coding agents through MCP. Revoking access stops that agent from using this computer's tools."
-msgstr "MCP를 통해 코딩 에이전트에 부여된 접근 권한을 관리합니다. 권한을 취소하면 해당 에이전트는 이 컴퓨터의 도구를 사용할 수 없습니다"
 
 #: src/components/session-map.tsx
 msgid "Manage computers"
@@ -3711,17 +3663,9 @@ msgstr "입력이 필요합니다"
 msgid "Never connected"
 msgstr "연결된 적 없음"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Never expires"
-msgstr "만료되지 않음"
-
 #: src/components/settings-servers.tsx
 msgid "Never seen"
 msgstr "확인된 적 없음"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Never used"
-msgstr "사용된 적 없음"
 
 #: src/app/commands.tsx
 msgid "New group"
@@ -3782,10 +3726,6 @@ msgstr "다음 알림"
 #: src/components/agent-title-pill.tsx
 msgid "Next session"
 msgstr "다음 세션"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "No agent access grants"
-msgstr "에이전트에 부여된 접근 권한이 없습니다"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
@@ -4449,10 +4389,6 @@ msgstr "페어링에 실패했습니다"
 msgid "Palette (up to 4)"
 msgstr "팔레트 (최대 4개)"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Pane {paneId}"
-msgstr "창 {paneId}"
-
 #: src/components/settings-servers.tsx
 msgid "Panes on computer cards"
 msgstr "컴퓨터 카드의 패널"
@@ -5083,7 +5019,6 @@ msgid "Reviewing the changes and checking the tests…"
 msgstr "변경 사항과 테스트를 확인하는 중…"
 
 #: src/components/agent-context-sheet.tsx
-#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke"
 msgstr "해제"
@@ -5095,11 +5030,6 @@ msgstr "해제"
 msgid "Revoke {0}"
 msgstr "{0} 해제"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Revoke {title}"
-msgstr "{title} 해지"
-
-#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoking…"
 msgstr "해제 중…"
@@ -6705,7 +6635,6 @@ msgstr "신뢰"
 msgid "Try again"
 msgstr "다시 시도"
 
-#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/settings-servers.tsx
 msgid "Try again once the computer responds."

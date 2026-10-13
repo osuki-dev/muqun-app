@@ -191,10 +191,6 @@ msgstr "{0}分"
 msgid "{0}m ago"
 msgstr "{0}分前"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "{agentId} service"
-msgstr "{agentId} サービス"
-
 #: src/components/agent-workbench.tsx
 msgid "{agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone."
 msgstr "{agentName} はロールバックをプレビューできません。このメッセージ以降、ターン全体が削除され、元に戻せません"
@@ -551,10 +547,6 @@ msgctxt "git file status"
 msgid "Added"
 msgstr "追加"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Advanced agent access"
-msgstr "エージェントアクセスの詳細設定"
-
 #: src/app/settings-voice.tsx
 msgid "After recording"
 msgstr "録音後に変換"
@@ -563,10 +555,6 @@ msgstr "録音後に変換"
 #: src/components/new-task-sheet.tsx
 msgid "Agent"
 msgstr "エージェント"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Agent access"
-msgstr "エージェントのアクセス権"
 
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
@@ -1496,10 +1484,6 @@ msgstr "{0} の削除を確認"
 msgid "Confirm revoke {0}"
 msgstr "{0} の取り消しを確認"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Confirm revoke {title}"
-msgstr "{title} の取り消しを確認"
-
 #: src/components/settings-alerts.tsx
 msgid "Confirm taps, pairing, and gateway events."
 msgstr "タップ、ペアリング、Gateway のイベントを触覚で知らせます"
@@ -1886,10 +1870,6 @@ msgstr "このコンピュータのエージェント一覧を取得できませ
 msgid "Could not list worktrees. Refresh to try again."
 msgstr "ワークツリーを取得できませんでした。更新して再試行してください"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Could not load agent access"
-msgstr "エージェントのアクセス権を読み込めませんでした"
-
 #: src/components/settings-server-capabilities.tsx
 msgid "Could not load capabilities"
 msgstr "機能を読み込めませんでした"
@@ -2060,10 +2040,6 @@ msgstr "取り消せませんでした"
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
 msgstr "デバイスを取り消せませんでした"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Could not revoke token"
-msgstr "トークンを取り消せませんでした"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not run that"
@@ -2617,27 +2593,11 @@ msgstr "タスクを展開"
 msgid "Expand tool call"
 msgstr "ツール呼び出しを展開"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Expired"
-msgstr "期限切れ"
-
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
 #: src/app/explore.tsx
 msgid "Expires in {0}:{1}"
 msgstr "あと {0}:{1} で期限切れ"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Expires in {days}d"
-msgstr "あと {days} 日で期限切れ"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Expires in {hours}h"
-msgstr "あと {hours} 時間で期限切れ"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Expires in {minutes}m"
-msgstr "あと {minutes} 分で期限切れ"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Explore"
@@ -3321,10 +3281,6 @@ msgstr "最終確認: {minutes}分前"
 msgid "Last seen just now"
 msgstr "最終確認: たった今"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Last used {when}"
-msgstr "最終使用 {when}"
-
 #: src/components/update-status-banner.tsx
 msgid "Later"
 msgstr "後で"
@@ -3478,10 +3434,6 @@ msgstr "コンピュータに接続できることを確認してから、もう
 #: src/components/home-overview.tsx
 msgid "Manage"
 msgstr "管理"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Manage access granted to coding agents through MCP. Revoking access stops that agent from using this computer's tools."
-msgstr "MCP経由でコーディングエージェントに付与したアクセス権を管理します。アクセス権を取り消すと、そのエージェントはこのコンピューターのツールを使用できなくなります"
 
 #: src/components/session-map.tsx
 msgid "Manage computers"
@@ -3711,17 +3663,9 @@ msgstr "入力が必要です"
 msgid "Never connected"
 msgstr "一度も接続されていません"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Never expires"
-msgstr "無期限"
-
 #: src/components/settings-servers.tsx
 msgid "Never seen"
 msgstr "一度も確認されていません"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Never used"
-msgstr "未使用"
 
 #: src/app/commands.tsx
 msgid "New group"
@@ -3782,10 +3726,6 @@ msgstr "次の通知"
 #: src/components/agent-title-pill.tsx
 msgid "Next session"
 msgstr "次のセッション"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "No agent access grants"
-msgstr "エージェントへのアクセス許可はありません"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
@@ -4449,10 +4389,6 @@ msgstr "ペアリングに失敗しました"
 msgid "Palette (up to 4)"
 msgstr "パレット（最大4色）"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Pane {paneId}"
-msgstr "ペイン {paneId}"
-
 #: src/components/settings-servers.tsx
 msgid "Panes on computer cards"
 msgstr "コンピュータカードのパネル"
@@ -5083,7 +5019,6 @@ msgid "Reviewing the changes and checking the tests…"
 msgstr "変更とテストを確認中…"
 
 #: src/components/agent-context-sheet.tsx
-#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke"
 msgstr "取り消す"
@@ -5095,11 +5030,6 @@ msgstr "取り消す"
 msgid "Revoke {0}"
 msgstr "{0} を取り消す"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Revoke {title}"
-msgstr "{title} を取り消す"
-
-#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoking…"
 msgstr "取り消し中…"
@@ -6705,7 +6635,6 @@ msgstr "信頼する"
 msgid "Try again"
 msgstr "もう一度試す"
 
-#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/settings-servers.tsx
 msgid "Try again once the computer responds."
