@@ -460,7 +460,12 @@
     ],
     "flows/home-continue-search": [
       { "include": "subflows/open-demo" },
-      { "run": "flows/home-continue-search.ad#choose-editorial" },
+      { "include": "subflows/home-continue-search", "env": { "HOME_LAYOUT": "editorial" } },
+      { "include": "subflows/home-continue-search", "env": { "HOME_LAYOUT": "classic" } },
+      { "run": "flows/home-continue-search.ad#cleanup" }
+    ],
+    "subflows/home-continue-search": [
+      { "run": "flows/home-continue-search.ad#choose-layout" },
       {
         "target": { "id": "settings-home-layout-sheet" },
         "mode": "visible",
@@ -468,10 +473,10 @@
         "run": "flows/home-continue-search.ad#picker-ready"
       },
       {
-        "target": { "id": "settings-selection:(on|off):home-layout-editorial" },
+        "target": { "id": "settings-selection:(on|off):home-layout-${HOME_LAYOUT}" },
         "mode": "press",
         "timeout": 15000,
-        "run": "flows/home-continue-search.ad#select-editorial"
+        "run": "flows/home-continue-search.ad#select-layout"
       },
       {
         "target": { "id": "settings-home-layout-sheet" },
@@ -480,12 +485,6 @@
         "run": "flows/home-continue-search.ad#picker-closed"
       },
       { "run": "flows/home-continue-search.ad#fifteen" },
-      {
-        "target": { "id": "home-editorial" },
-        "mode": "visible",
-        "timeout": 15000,
-        "run": "flows/home-continue-search.ad#assert-visible"
-      },
       {
         "target": { "text": "Recent" },
         "mode": "scroll",
@@ -513,14 +512,57 @@
         "mode": "visible",
         "run": "flows/home-continue-search.ad#assert-visible"
       },
-      { "run": "flows/home-continue-search.ad#scroll-top" },
-      { "run": "flows/home-continue-search.ad#sixteen" },
       {
-        "target": { "id": "home-editorial" },
+        "target": { "text": "Demo search leaf 4" },
+        "mode": "hidden",
+        "run": "flows/home-continue-search.ad#assert-hidden"
+      },
+      {
+        "target": { "text": "Show all" },
+        "mode": "press",
+        "run": "flows/home-continue-search.ad#press"
+      },
+      {
+        "target": { "text": "Demo search leaf 15" },
+        "mode": "scroll",
+        "direction": "down",
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": { "text": "Demo search leaf 15" },
         "mode": "visible",
-        "timeout": 15000,
         "run": "flows/home-continue-search.ad#assert-visible"
       },
+      {
+        "target": { "text": "Show less" },
+        "mode": "scroll",
+        "direction": "down",
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": { "text": "Show less" },
+        "mode": "press",
+        "run": "flows/home-continue-search.ad#press"
+      },
+      { "run": "flows/home-continue-search.ad#scroll-top" },
+      {
+        "target": { "text": "Recent" },
+        "mode": "scroll",
+        "direction": "down",
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": { "text": "Recent" },
+        "mode": "visible",
+        "run": "flows/home-continue-search.ad#assert-visible"
+      },
+      {
+        "target": { "text": "Demo search leaf 4" },
+        "mode": "hidden",
+        "run": "flows/home-continue-search.ad#assert-hidden"
+      },
+      { "run": "flows/home-continue-search.ad#scroll-top" },
+      { "run": "flows/home-continue-search.ad#sixteen" },
       {
         "target": { "id": "home-continue-search" },
         "mode": "scroll",
@@ -532,6 +574,7 @@
         "mode": "visible",
         "run": "flows/home-continue-search.ad#assert-visible"
       },
+      { "run": "flows/home-continue-search.ad#whitespace" },
       {
         "target": { "text": "Recent" },
         "mode": "hidden",
@@ -650,27 +693,7 @@
         "mode": "visible",
         "timeout": 10000,
         "run": "flows/home-continue-search.ad#assert-visible"
-      },
-      { "run": "flows/home-continue-search.ad#restore-layout" },
-      {
-        "target": { "id": "settings-home-layout-sheet" },
-        "mode": "visible",
-        "timeout": 15000,
-        "run": "flows/home-continue-search.ad#picker-ready"
-      },
-      {
-        "target": { "id": "settings-selection:(on|off):home-layout-classic" },
-        "mode": "press",
-        "timeout": 15000,
-        "run": "flows/home-continue-search.ad#select-classic"
-      },
-      {
-        "target": { "id": "settings-home-layout-sheet" },
-        "mode": "hidden",
-        "timeout": 15000,
-        "run": "flows/home-continue-search.ad#picker-closed"
-      },
-      { "run": "flows/home-continue-search.ad#cleanup" }
+      }
     ],
     "flows/agent-changes-worktree": [
       { "include": "subflows/open-demo" },

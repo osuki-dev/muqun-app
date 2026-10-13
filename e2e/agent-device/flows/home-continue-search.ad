@@ -1,14 +1,14 @@
-# Opt-in offline Home inventory; suite must open the demo and choose Editorial first.
+# Opt-in offline Home inventory; the suite runs the same checks in both layouts.
 # Existing demo-tree leaves remain navigable. No live inventory or progress is fabricated.
 
-# section choose-editorial
+# section choose-layout
 open "muqun:///settings-home-layout"
 wait stable 400 5000
 
 # section picker-ready
 is visible "${TARGET}"
 
-# section select-editorial
+# section select-layout
 press "${TARGET}"
 
 # section picker-closed
@@ -23,6 +23,10 @@ is visible "${TARGET}"
 
 # section assert-hidden
 is hidden "${TARGET}"
+
+# section press
+press "${TARGET}"
+wait stable 300 5000
 
 # section sixteen
 open "muqun:///?homeContinueFixture=16"
@@ -73,10 +77,3 @@ press "${TARGET}"
 # section cleanup
 open "muqun:///"
 wait stable 400 5000
-
-# section restore-layout
-open "muqun:///settings-home-layout"
-wait stable 400 5000
-
-# section select-classic
-press "${TARGET}"
