@@ -88,6 +88,7 @@
     "react-dom": "19.3.0",
     "react-native": "0.86.3",
     "react-native-android-widget": "^0.22.1",
+    "react-native-better-pdf": "1.0.0",
     "react-native-enriched-markdown": "1.1.1",
     "react-native-gesture-handler": "~3.3.0",
     "react-native-keyboard-controller": "1.22.7",

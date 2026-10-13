@@ -43,8 +43,12 @@ describe('assetPresentation', () => {
     expect(assetPresentation(asset('image', { size: MAX_ASSET_TEXT_BYTES + 1 }))).toBe('lightbox');
   });
 
-  test('PDF, binary and unpreviewable text get the details body', () => {
-    expect(assetPresentation(asset('pdf'))).toBe('details');
+  test('PDF uses its download reader even when Gateway has no content preview', () => {
+    expect(assetPresentation(asset('pdf'))).toBe('pdf');
+    expect(assetPresentation(asset('pdf', { previewable: false }))).toBe('pdf');
+  });
+
+  test('binary and unpreviewable text get the details body', () => {
     expect(assetPresentation(asset('binary'))).toBe('details');
     expect(assetPresentation(asset('text', { previewable: false }))).toBe('details');
   });

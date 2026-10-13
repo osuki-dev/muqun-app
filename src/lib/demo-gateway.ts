@@ -1,3 +1,4 @@
+import { demoPdfBytes } from './demo-pdf';
 import { DEMO_VIDEO_BASE64, DEMO_VIDEO_POSTER } from '@/lib/demo-video.generated';
 import { i18n } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
@@ -973,7 +974,7 @@ export function demoSessionAssets(): SessionAsset[] {
       name: 'design-spec.pdf',
       kind: 'pdf',
       mime: 'application/pdf',
-      size: 2_411_008,
+      size: demoPdfBytes().length,
       modified_unix_ms: demoAssetModifiedAt('as-demo-spec'),
       origin,
       previewable: false,
@@ -1230,6 +1231,7 @@ export function demoAssetText(assetId: string): string {
  */
 /** A quiet eight-second tone sequence for offline playback, with real WAV bytes. */
 export function demoAudioBytes(assetId: string): Uint8Array | null {
+  if (assetId === 'as-demo-spec') return demoPdfBytes();
   if (assetId === 'as-demo-video')
     return Uint8Array.from(atob(DEMO_VIDEO_BASE64), (char) => char.charCodeAt(0));
   if (assetId !== 'as-demo-audio') return null;

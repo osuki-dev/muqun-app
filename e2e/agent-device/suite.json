@@ -2,6 +2,12 @@
   "version": 1,
   "flows": [
     {
+      "name": "pdf-preview",
+      "program": "flows/pdf-preview",
+      "tags": ["full", "files"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "release-intro",
       "program": "flows/release-intro",
       "tags": ["full", "settings"],
@@ -299,6 +305,7 @@
     }
   ],
   "programs": {
+    "flows/pdf-preview": [{ "include": "subflows/open-demo" }, { "run": "flows/pdf-preview.ad" }],
     "flows/release-intro": [
       {
         "run": "subflows/launch-home.ad#s1"
@@ -2202,45 +2209,11 @@
       },
       {
         "target": {
-          "text": "No preview for this kind of file. It stays on the computer"
+          "text": "Page 1 of 3"
         },
         "mode": "visible",
+        "timeout": 15000,
         "run": "flows/artifacts.ad#s57"
-      },
-      {
-        "target": {
-          "text": "Type"
-        },
-        "mode": "visible",
-        "run": "flows/artifacts.ad#s58"
-      },
-      {
-        "target": {
-          "text": "Size"
-        },
-        "mode": "visible",
-        "run": "flows/artifacts.ad#s59"
-      },
-      {
-        "target": {
-          "text": "Modified"
-        },
-        "mode": "visible",
-        "run": "flows/artifacts.ad#s60"
-      },
-      {
-        "target": {
-          "text": "Path"
-        },
-        "mode": "visible",
-        "run": "flows/artifacts.ad#s61"
-      },
-      {
-        "target": {
-          "text": "~/code/muqun/docs/design-spec.pdf"
-        },
-        "mode": "visible",
-        "run": "flows/artifacts.ad#s62"
       },
       {
         "target": {

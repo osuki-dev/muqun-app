@@ -18,6 +18,7 @@ import { useMarkdownStyle } from '@/hooks/use-markdown-style';
 import { markdownPaletteKey } from '@/lib/markdown-palette';
 import type { createMarkdownStyle } from '@/lib/markdown-style';
 import { ImagePreviewModal } from '@/components/image-preview-modal';
+import { PdfAssetPreview } from '@/components/pdf-asset-preview';
 import { VideoAssetPreview } from '@/components/video-asset-preview';
 import { AudioAssetPreview } from '@/components/audio-asset-preview';
 import { useFileActions } from '@/hooks/use-file-actions';
@@ -635,6 +636,7 @@ function AssetBody({
   // one down rather than reusing it, and the two overlap for the length of a
   // short fade -- which is what makes a document read as having arrived rather
   // than as having replaced something.
+  if (presentation === 'pdf') return <PdfAssetPreview asset={asset} />;
   if (presentation === 'audio') return <AudioAssetPreview asset={asset} />;
   if (presentation === 'video') return <VideoAssetPreview asset={asset} />;
   if (tooLarge) {
@@ -831,7 +833,7 @@ function AssetBodyLayer({ id, children }: { id: string; children: React.ReactNod
 }
 
 /**
- * For a PDF, a video or a binary: say what it is and where it stays, and stop
+ * For an unsupported file: say what it is and where it stays, and stop
  * there.
  *
  * Label and value straight on the frosted ground, a hairline between one fact
