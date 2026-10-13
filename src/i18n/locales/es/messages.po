@@ -628,9 +628,17 @@ msgstr "Permitir"
 msgid "Allow camera"
 msgstr "Permitir cámara"
 
+#: src/components/agent-permission-card.tsx
+msgid "Allow for this turn"
+msgstr "Permitir durante este turno"
+
 #: src/components/voice-input-button.tsx
 msgid "Allow microphone access in system settings."
 msgstr "Permite el acceso al micrófono en los ajustes del sistema"
+
+#: src/components/agent-permission-card.tsx
+msgid "Allow once"
+msgstr "Permitir una vez"
 
 #: src/app/explore.tsx
 msgid "Allow the camera, or enter the address instead."
@@ -1901,6 +1909,10 @@ msgstr "No se pudieron cargar los modelos"
 #: src/lib/terminal-history-pull.ts
 msgid "Could not load older history from this terminal"
 msgstr "No se pudo cargar el historial anterior de esta terminal"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Could not load sessions"
+msgstr "No se pudieron cargar las sesiones"
 
 #: src/components/server-tasks-sheet.tsx
 msgid "Could not load tasks"
@@ -4935,6 +4947,10 @@ msgstr "Bloqueo indicado"
 msgid "Request failed."
 msgstr "La solicitud falló"
 
+#: src/components/agent-permission-card.tsx
+msgid "Requested permissions"
+msgstr "Permisos solicitados"
+
 #: src/components/settings-security.tsx
 msgid "Required on launch and after 30 seconds in the background."
 msgstr "Se pide al abrir la app y después de 30 segundos en segundo plano"
@@ -4965,6 +4981,7 @@ msgid "Restore hidden defaults"
 msgstr "Restaurar predeterminados ocultos"
 
 #: src/components/agent-model-sheet.tsx
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/pane-history-sheet.tsx
@@ -7178,19 +7195,3 @@ msgstr "Tu mensaje"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "Tus ordenadores vinculados"
-
-#: src/components/agent-permission-card.tsx
-msgid "Allow once"
-msgstr "Permitir una vez"
-
-#: src/components/agent-permission-card.tsx
-msgid "Allow for this turn"
-msgstr "Permitir durante este turno"
-
-#: src/components/agent-permission-card.tsx
-msgid "Requested permissions"
-msgstr "Permisos solicitados"
-
-#: src/components/agent-sessions-sheet.tsx
-msgid "Could not load sessions"
-msgstr "No se pudieron cargar las sesiones"

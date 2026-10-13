@@ -628,9 +628,17 @@ msgstr "Разрешить"
 msgid "Allow camera"
 msgstr "Разрешить камеру"
 
+#: src/components/agent-permission-card.tsx
+msgid "Allow for this turn"
+msgstr "Разрешить на этот ход"
+
 #: src/components/voice-input-button.tsx
 msgid "Allow microphone access in system settings."
 msgstr "Разрешите доступ к микрофону в настройках системы"
+
+#: src/components/agent-permission-card.tsx
+msgid "Allow once"
+msgstr "Разрешить один раз"
 
 #: src/app/explore.tsx
 msgid "Allow the camera, or enter the address instead."
@@ -1901,6 +1909,10 @@ msgstr "Не удалось загрузить модели"
 #: src/lib/terminal-history-pull.ts
 msgid "Could not load older history from this terminal"
 msgstr "Не удалось загрузить более раннюю историю этого терминала"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Could not load sessions"
+msgstr "Не удалось загрузить сеансы"
 
 #: src/components/server-tasks-sheet.tsx
 msgid "Could not load tasks"
@@ -4935,6 +4947,10 @@ msgstr "Указанное препятствие"
 msgid "Request failed."
 msgstr "Запрос не удался"
 
+#: src/components/agent-permission-card.tsx
+msgid "Requested permissions"
+msgstr "Запрошенные разрешения"
+
 #: src/components/settings-security.tsx
 msgid "Required on launch and after 30 seconds in the background."
 msgstr "Требуется при запуске и после 30 секунд в фоне"
@@ -4965,6 +4981,7 @@ msgid "Restore hidden defaults"
 msgstr "Восстановить скрытые значения по умолчанию"
 
 #: src/components/agent-model-sheet.tsx
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/pane-history-sheet.tsx
@@ -7178,19 +7195,3 @@ msgstr "Ваше сообщение"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "Ваши привязанные компьютеры"
-
-#: src/components/agent-permission-card.tsx
-msgid "Allow once"
-msgstr "Разрешить один раз"
-
-#: src/components/agent-permission-card.tsx
-msgid "Allow for this turn"
-msgstr "Разрешить на этот ход"
-
-#: src/components/agent-permission-card.tsx
-msgid "Requested permissions"
-msgstr "Запрошенные разрешения"
-
-#: src/components/agent-sessions-sheet.tsx
-msgid "Could not load sessions"
-msgstr "Не удалось загрузить сеансы"

@@ -628,9 +628,17 @@ msgstr "허용"
 msgid "Allow camera"
 msgstr "카메라 허용"
 
+#: src/components/agent-permission-card.tsx
+msgid "Allow for this turn"
+msgstr "이번 턴 동안 허용"
+
 #: src/components/voice-input-button.tsx
 msgid "Allow microphone access in system settings."
 msgstr "시스템 설정에서 마이크 접근을 허용하세요"
+
+#: src/components/agent-permission-card.tsx
+msgid "Allow once"
+msgstr "한 번 허용"
 
 #: src/app/explore.tsx
 msgid "Allow the camera, or enter the address instead."
@@ -1901,6 +1909,10 @@ msgstr "모델을 불러올 수 없습니다"
 #: src/lib/terminal-history-pull.ts
 msgid "Could not load older history from this terminal"
 msgstr "이 터미널의 이전 기록을 불러올 수 없습니다"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Could not load sessions"
+msgstr "세션을 불러오지 못했습니다"
 
 #: src/components/server-tasks-sheet.tsx
 msgid "Could not load tasks"
@@ -4935,6 +4947,10 @@ msgstr "보고된 장애 요인"
 msgid "Request failed."
 msgstr "요청에 실패했습니다"
 
+#: src/components/agent-permission-card.tsx
+msgid "Requested permissions"
+msgstr "요청된 권한"
+
 #: src/components/settings-security.tsx
 msgid "Required on launch and after 30 seconds in the background."
 msgstr "앱을 실행할 때와 백그라운드에서 30초가 지난 뒤에 인증을 요구합니다"
@@ -4965,6 +4981,7 @@ msgid "Restore hidden defaults"
 msgstr "숨긴 기본 항목 복원"
 
 #: src/components/agent-model-sheet.tsx
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/pane-history-sheet.tsx
@@ -7178,19 +7195,3 @@ msgstr "내 메시지"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "페어링된 컴퓨터"
-
-#: src/components/agent-permission-card.tsx
-msgid "Allow once"
-msgstr "한 번 허용"
-
-#: src/components/agent-permission-card.tsx
-msgid "Allow for this turn"
-msgstr "이번 턴 동안 허용"
-
-#: src/components/agent-permission-card.tsx
-msgid "Requested permissions"
-msgstr "요청된 권한"
-
-#: src/components/agent-sessions-sheet.tsx
-msgid "Could not load sessions"
-msgstr "세션을 불러오지 못했습니다"

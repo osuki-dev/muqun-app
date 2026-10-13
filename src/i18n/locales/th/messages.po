@@ -628,9 +628,17 @@ msgstr "อนุญาต"
 msgid "Allow camera"
 msgstr "อนุญาตกล้อง"
 
+#: src/components/agent-permission-card.tsx
+msgid "Allow for this turn"
+msgstr "อนุญาตสำหรับรอบนี้"
+
 #: src/components/voice-input-button.tsx
 msgid "Allow microphone access in system settings."
 msgstr "อนุญาตการเข้าถึงไมโครโฟนในการตั้งค่าระบบ"
+
+#: src/components/agent-permission-card.tsx
+msgid "Allow once"
+msgstr "อนุญาตครั้งเดียว"
 
 #: src/app/explore.tsx
 msgid "Allow the camera, or enter the address instead."
@@ -1901,6 +1909,10 @@ msgstr "ไม่สามารถโหลดโมเดลได้"
 #: src/lib/terminal-history-pull.ts
 msgid "Could not load older history from this terminal"
 msgstr "โหลดประวัติก่อนหน้าของเทอร์มินัลนี้ไม่ได้"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Could not load sessions"
+msgstr "โหลดเซสชันไม่ได้"
 
 #: src/components/server-tasks-sheet.tsx
 msgid "Could not load tasks"
@@ -4935,6 +4947,10 @@ msgstr "อุปสรรคที่รายงาน"
 msgid "Request failed."
 msgstr "คำขอไม่สำเร็จ"
 
+#: src/components/agent-permission-card.tsx
+msgid "Requested permissions"
+msgstr "สิทธิ์ที่ร้องขอ"
+
 #: src/components/settings-security.tsx
 msgid "Required on launch and after 30 seconds in the background."
 msgstr "ต้องยืนยันเมื่อเปิดแอปและหลังอยู่เบื้องหลัง 30 วินาที"
@@ -4965,6 +4981,7 @@ msgid "Restore hidden defaults"
 msgstr "คืนค่ารายการเริ่มต้นที่ซ่อนอยู่"
 
 #: src/components/agent-model-sheet.tsx
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/pane-history-sheet.tsx
@@ -7178,19 +7195,3 @@ msgstr "ข้อความของคุณ"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "คอมพิวเตอร์ที่คุณจับคู่ไว้"
-
-#: src/components/agent-permission-card.tsx
-msgid "Allow once"
-msgstr "อนุญาตครั้งเดียว"
-
-#: src/components/agent-permission-card.tsx
-msgid "Allow for this turn"
-msgstr "อนุญาตสำหรับรอบนี้"
-
-#: src/components/agent-permission-card.tsx
-msgid "Requested permissions"
-msgstr "สิทธิ์ที่ร้องขอ"
-
-#: src/components/agent-sessions-sheet.tsx
-msgid "Could not load sessions"
-msgstr "โหลดเซสชันไม่ได้"

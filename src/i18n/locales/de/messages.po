@@ -628,9 +628,17 @@ msgstr "Zulassen"
 msgid "Allow camera"
 msgstr "Kamera erlauben"
 
+#: src/components/agent-permission-card.tsx
+msgid "Allow for this turn"
+msgstr "Für diesen Durchgang erlauben"
+
 #: src/components/voice-input-button.tsx
 msgid "Allow microphone access in system settings."
 msgstr "Erlaube den Mikrofonzugriff in den Systemeinstellungen"
+
+#: src/components/agent-permission-card.tsx
+msgid "Allow once"
+msgstr "Einmal erlauben"
 
 #: src/app/explore.tsx
 msgid "Allow the camera, or enter the address instead."
@@ -1901,6 +1909,10 @@ msgstr "Modelle konnten nicht geladen werden"
 #: src/lib/terminal-history-pull.ts
 msgid "Could not load older history from this terminal"
 msgstr "Ältere Ausgaben dieses Terminals konnten nicht geladen werden"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Could not load sessions"
+msgstr "Sitzungen konnten nicht geladen werden"
 
 #: src/components/server-tasks-sheet.tsx
 msgid "Could not load tasks"
@@ -4935,6 +4947,10 @@ msgstr "Gemeldetes Hindernis"
 msgid "Request failed."
 msgstr "Anfrage fehlgeschlagen"
 
+#: src/components/agent-permission-card.tsx
+msgid "Requested permissions"
+msgstr "Angeforderte Berechtigungen"
+
 #: src/components/settings-security.tsx
 msgid "Required on launch and after 30 seconds in the background."
 msgstr "Erforderlich beim Start und nach 30 Sekunden im Hintergrund"
@@ -4965,6 +4981,7 @@ msgid "Restore hidden defaults"
 msgstr "Ausgeblendete Standards wiederherstellen"
 
 #: src/components/agent-model-sheet.tsx
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/pane-history-sheet.tsx
@@ -7178,19 +7195,3 @@ msgstr "Deine Nachricht"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "Deine gekoppelten Computer"
-
-#: src/components/agent-permission-card.tsx
-msgid "Allow once"
-msgstr "Einmal erlauben"
-
-#: src/components/agent-permission-card.tsx
-msgid "Allow for this turn"
-msgstr "Für diesen Durchgang erlauben"
-
-#: src/components/agent-permission-card.tsx
-msgid "Requested permissions"
-msgstr "Angeforderte Berechtigungen"
-
-#: src/components/agent-sessions-sheet.tsx
-msgid "Could not load sessions"
-msgstr "Sitzungen konnten nicht geladen werden"
