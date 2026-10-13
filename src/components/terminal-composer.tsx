@@ -21,7 +21,6 @@ import Animated, {
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { PressableScale } from '@/components/pressable-scale';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
-import { ThemedSurfaceArtwork } from '@/components/themed-surface';
 import { ThemeIcon } from '@/components/theme-icon';
 import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
@@ -49,7 +48,11 @@ import { FontedTextInput, type FontedTextInputProps } from '@/components/fonted-
 
 type AnimatedViewProps = ComponentProps<typeof Animated.View>;
 const VOICE_HOLD_MS = 500;
-const voiceHoldRing = Skia.PathBuilder.Make().addCircle(20, 20, 17).detach();
+const COMPOSER_ACTION_SIZE = 44;
+const voiceHoldCenter = COMPOSER_ACTION_SIZE / 2;
+const voiceHoldRing = Skia.PathBuilder.Make()
+  .addCircle(voiceHoldCenter, voiceHoldCenter, 17)
+  .detach();
 
 export interface TerminalComposerSend {
   accessibilityLabel: string;
@@ -201,7 +204,6 @@ export function TerminalComposer({
         testID={send.testID}
         onLongPress={voice.open}
         longPressLabel={t`Voice to text`}
-        armedFill={theme.colors.primarySubtle}
         restText={theme.colors.textMuted}
         activeText={theme.colors.primary}
       />
@@ -333,12 +335,9 @@ export function TerminalComposer({
 }
 
 /**
- * Send, which has three things to say and used to say all of them in one frame:
- * whether there is anything to send, whether a send is in flight, and -- by the
- * fill -- how much attention it wants.
- *
- * The armed state uses the same quiet tint as the other composer controls;
- * the theme's primary ink carries its emphasis. The glyph and the spinner
+ * Send stays transparent like the other composer actions; the theme's primary
+ * ink carries its armed state. Generic primary-button artwork belongs to filled
+ * buttons, not this glyph control. The glyph and the spinner
  * cross-fade rather than swap, because a spinner appearing exactly where an
  * arrow was, on the same frame, reads as the arrow having broken.
  */
@@ -350,7 +349,6 @@ export function ComposerSendButton({
   onPress,
   onLongPress,
   longPressLabel,
-  armedFill,
   restText,
   activeText,
   testID = 'composer-send',
@@ -363,13 +361,11 @@ export function ComposerSendButton({
   onPress: () => void;
   onLongPress?: () => void;
   longPressLabel?: string;
-  armedFill: string;
   restText: string;
   activeText: string;
   testID?: string;
 }) {
   const profile = useAppearanceProfile();
-  const surfaceBackground = useSurfaceBackground();
   const armedValue = useSharedValue(armed ? 1 : 0);
   const sendingValue = useSharedValue(sending ? 1 : 0);
   const voiceHold = useSharedValue(0);
@@ -395,9 +391,6 @@ export function ComposerSendButton({
     );
   }, [sending, sendingValue]);
 
-  const fillStyle = useAnimatedStyle(() => ({
-    opacity: Math.max(armedValue.get(), sendingValue.get()),
-  }));
   const restGlyphStyle = useAnimatedStyle(() => ({
     opacity: (1 - armedValue.get()) * (1 - sendingValue.get()) * (1 - voiceHold.get()),
   }));
@@ -440,19 +433,11 @@ export function ComposerSendButton({
       onPressOut={() => {
         voiceHold.set(reduced ? 0 : withTiming(0, timing('micro')));
       }}
-      style={[composerStyles.button, { borderRadius: profile.chrome.roundControl }]}>
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          StyleSheet.absoluteFill,
-          { borderRadius: profile.chrome.roundControl },
-          { backgroundColor: surfaceBackground(armedFill) },
-          fillStyle,
-        ]}>
-        {/* Keep authored button artwork on the armed plane, with the actual
-            tint as its contrast base and the existing background opacity. */}
-        <ThemedSurfaceArtwork slot="buttons.primary.background" baseColor={armedFill} />
-      </Animated.View>
+      style={[
+        composerStyles.button,
+        { borderRadius: profile.chrome.roundControl },
+        disabled && !onLongPress && !sending && composerStyles.disabledButton,
+      ]}>
       <Animated.View style={[StyleSheet.absoluteFill, composerStyles.buttonGlyph, restGlyphStyle]}>
         <ThemeIcon name="chrome.send" fallback={Send} size={18} color={restText} />
       </Animated.View>
@@ -467,7 +452,9 @@ export function ComposerSendButton({
             <Mic size={18} color={activeText} />
           </Animated.View>
           <Canvas pointerEvents="none" style={StyleSheet.absoluteFill}>
-            <Group origin={{ x: 20, y: 20 }} transform={[{ rotate: -Math.PI / 2 }]}>
+            <Group
+              origin={{ x: voiceHoldCenter, y: voiceHoldCenter }}
+              transform={[{ rotate: -Math.PI / 2 }]}>
               <Path
                 path={voiceHoldRing}
                 color={activeText}
@@ -490,7 +477,7 @@ export function ComposerSendButton({
 }
 
 /** The field box at one line: its input's own one-line height, and Send's. */
-const ONE_LINE_FIELD = 40;
+const ONE_LINE_FIELD = COMPOSER_ACTION_SIZE;
 
 /** Shared with the gateway's paperclip, which sits in the same row at the same size. */
 export const composerStyles = StyleSheet.create({
@@ -546,11 +533,12 @@ export const composerStyles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   button: {
-    width: 40,
-    height: 40,
+    width: COMPOSER_ACTION_SIZE,
+    height: COMPOSER_ACTION_SIZE,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  disabledButton: { opacity: 0.5 },
   buttonGlyph: {
     alignItems: 'center',
     justifyContent: 'center',
