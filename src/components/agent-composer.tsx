@@ -1537,17 +1537,13 @@ export const AgentComposer = memo(function AgentComposer({
           const { height } = event.nativeEvent.layout;
           setSurfaceHeight(height);
         }}
-        // The bar's upward shadow sits on this wrapper, not on the material:
-        // the material clips to its shape (`overflow: hidden`), and Android
-        // clips an outset shadow with it.
+        // Enclosing bars cast their shadow outside the clipped material.
+        // Home's field owns its plate; leave the ornament above it transparent.
         style={
-          bar && {
-            ...(flushField
-              ? { borderRadius: profile.chrome.composerField }
-              : {
-                  borderTopLeftRadius: profile.chrome.surface,
-                  borderTopRightRadius: profile.chrome.surface,
-                }),
+          bar &&
+          !flushField && {
+            borderTopLeftRadius: profile.chrome.surface,
+            borderTopRightRadius: profile.chrome.surface,
             boxShadow: appChrome.shadow.composerDock,
           }
         }>
