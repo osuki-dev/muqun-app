@@ -3,12 +3,20 @@ import { useLingui } from '@lingui/react/macro';
 import { useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
 import { surfaceBackgroundFill } from '@/theme/surface-background';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
+import { useStableHandler } from '@/hooks/use-render-refs';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { router, usePathname, type Href } from 'expo-router';
 import { Bell, ChevronRight } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
-import { AppState, StyleSheet, View, type AccessibilityActionEvent } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  AppState,
+  ScrollView,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+  type AccessibilityActionEvent,
+} from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   cancelAnimation,
@@ -88,6 +96,14 @@ export function InAppNotificationHost() {
   const notificationSurfaceStyle = useNotificationSurfaceStyle();
   const backPageClipStyle = useNotificationSurfaceStyle(false);
   const insets = useSafeAreaInsets();
+  const { height } = useWindowDimensions();
+  const [contentHeight, setContentHeight] = useState(0);
+  // Leave room for the action row, safe areas and the deck's quiet back edges.
+  const contentLimit = Math.max(
+    44,
+    Math.min(height * 0.45, height - insets.top - insets.bottom - NOTICE_TOP_GAP - 88)
+  );
+  const scrollable = contentHeight > contentLimit;
   const surfaceOpacity = useSurfaceBackgroundOpacity();
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
@@ -166,28 +182,15 @@ export function InAppNotificationHost() {
     opacity: plateHeight.get() > 0 ? 1 : 0,
   }));
 
-  if (!visible || !notice) return null;
-
-  /** How many notices are waiting behind this one. */
-  const waiting = items.length - 1;
-  const dismiss = () => {
-    setSelectedId(items[(position + 1) % items.length]?.id ?? null);
-    useInAppNotifications.getState().dismiss(notice.id);
-  };
+  const dismiss = useStableHandler((id: string) => {
+    if (id === notice?.id) setSelectedId(items[(position + 1) % items.length]?.id ?? null);
+    useInAppNotifications.getState().dismiss(id);
+  });
   // Dismiss the card captured by this gesture, even if new notices arrive.
-  const swept = () => {
+  const swept = useStableHandler((id: string) => {
     void feedback('selection');
-    dismiss();
-  };
-  const open = () => {
-    if (!notice.route) return;
-    router.navigate(notice.route as Href);
-    dismiss();
-  };
-  const onAccessibilityAction = (event: AccessibilityActionEvent) => {
-    if (event.nativeEvent.actionName === 'dismiss') dismiss();
-  };
-  const dismissAction = [{ name: 'dismiss', label: t`Dismiss` }];
+    dismiss(id);
+  });
 
   /*
     Sideways either way, upward only, and nothing at all downward: the deck's
@@ -196,38 +199,56 @@ export function InAppNotificationHost() {
     than a dead zone -- the gesture gives the touch up, so whatever is under
     the plate can have it.
   */
-  const swipe = Gesture.Pan()
-    .activeOffsetX([-DRAG_SLOP, DRAG_SLOP])
-    .activeOffsetY(-DRAG_SLOP)
-    .failOffsetY(DRAG_SLOP)
-    .onUpdate((event) => {
-      if (dismissing.get()) return;
-      const offset = noticeDragOffset(event);
-      dragX.set(offset.x);
-      dragY.set(offset.y);
-    })
-    .onEnd((event) => {
-      if (dismissing.get()) return;
-      const end = noticeSwipeEnd(event);
-      if (!end.dismissed) {
-        // Under the threshold the plate goes back where it was, carrying the
-        // finger's own velocity into a critically damped landing.
-        settleTo(dragX, 0, event.velocityX);
-        settleTo(dragY, 0, event.velocityY);
-        return;
-      }
-      // A short glide and fade replaces the full-screen throw. Ignore release
-      // velocity here so a fast flick cannot launch the card into the status bar.
-      dismissing.set(true);
-      const config = timing('short');
-      dragX.set(withTiming(end.x, config));
-      dragY.set(withTiming(end.y, config));
-      dragOpacity.set(
-        withTiming(0, config, (finished) => {
-          if (finished) runOnJS(swept)();
-        })
-      );
-    });
+  const swipe = useMemo(() => {
+    const pan = Gesture.Pan().activeOffsetX([-DRAG_SLOP, DRAG_SLOP]);
+    // A long notice owns vertical scrolling. Sideways dismissal remains
+    // available; short cards also keep their familiar upward dismissal.
+    if (scrollable) pan.failOffsetY([-DRAG_SLOP, DRAG_SLOP]);
+    else pan.activeOffsetY(-DRAG_SLOP).failOffsetY(DRAG_SLOP);
+    return pan
+      .onUpdate((event) => {
+        if (dismissing.get()) return;
+        const offset = noticeDragOffset(event);
+        dragX.set(offset.x);
+        dragY.set(offset.y);
+      })
+      .onEnd((event) => {
+        if (dismissing.get()) return;
+        const end = noticeSwipeEnd(event);
+        if (!end.dismissed) {
+          // Under the threshold the plate goes back where it was, carrying the
+          // finger's own velocity into a critically damped landing.
+          settleTo(dragX, 0, event.velocityX);
+          settleTo(dragY, 0, event.velocityY);
+          return;
+        }
+        // A short glide and fade replaces the full-screen throw. Ignore release
+        // velocity here so a fast flick cannot launch the card into the status bar.
+        dismissing.set(true);
+        const config = timing('short');
+        dragX.set(withTiming(end.x, config));
+        dragY.set(withTiming(end.y, config));
+        dragOpacity.set(
+          withTiming(0, config, (finished) => {
+            if (finished) runOnJS(swept)(noticeId);
+          })
+        );
+      });
+  }, [dismissing, dragX, dragY, dragOpacity, swept, scrollable, noticeId]);
+
+  if (!visible || !notice) return null;
+
+  /** How many notices are waiting behind this one. */
+  const waiting = items.length - 1;
+  const open = () => {
+    if (!notice.route) return;
+    router.navigate(notice.route as Href);
+    dismiss(notice.id);
+  };
+  const onAccessibilityAction = (event: AccessibilityActionEvent) => {
+    if (event.nativeEvent.actionName === 'dismiss') dismiss(notice.id);
+  };
+  const dismissAction = [{ name: 'dismiss', label: t`Dismiss` }];
 
   const renderCard = (entry: InAppNotice) => {
     /*
@@ -275,37 +296,45 @@ export function InAppNotificationHost() {
           },
         ]}
         testID="in-app-notification">
-        <View
-          style={styles.content}
-          accessible
-          accessibilityActions={dismissAction}
-          onAccessibilityAction={onAccessibilityAction}>
-          <View style={styles.heading}>
-            <Bell size={18} color={colors.primary} style={styles.glyph} />
-            <Text variant="bodySmall" weight="semibold" style={styles.title}>
-              {lead}
-              {suffix ? (
-                <Text variant="bodySmall" color={colors.textMuted}>
-                  {' \u00b7 '}
-                  {suffix}
-                </Text>
-              ) : null}
-            </Text>
-          </View>
-          {body ? (
-            <Text selectable variant="caption" color={colors.textMuted}>
-              {body}
-            </Text>
-          ) : null}
-          {/* The path or the command, once, in the face the card gives
+        <ScrollView
+          testID="in-app-notification-content"
+          style={{ maxHeight: contentLimit }}
+          nestedScrollEnabled
+          bounces={false}
+          showsVerticalScrollIndicator={scrollable}
+          onContentSizeChange={(_width, content) => setContentHeight(content)}>
+          <View
+            style={styles.content}
+            accessible
+            accessibilityActions={dismissAction}
+            onAccessibilityAction={onAccessibilityAction}>
+            <View style={styles.heading}>
+              <Bell size={18} color={colors.primary} style={styles.glyph} />
+              <Text variant="bodySmall" weight="semibold" style={styles.title}>
+                {lead}
+                {suffix ? (
+                  <Text variant="bodySmall" color={colors.textMuted}>
+                    {' \u00b7 '}
+                    {suffix}
+                  </Text>
+                ) : null}
+              </Text>
+            </View>
+            {body ? (
+              <Text selectable variant="caption" color={colors.textMuted}>
+                {body}
+              </Text>
+            ) : null}
+            {/* The path or the command, once, in the face the card gives
                     it: an approval that does not name its subject is not an
                     approval the reader can answer. */}
-          {detail ? (
-            <Text selectable color={colors.text} style={[styles.detail, { fontFamily: mono }]}>
-              {detail}
-            </Text>
-          ) : null}
-        </View>
+            {detail ? (
+              <Text selectable color={colors.text} style={[styles.detail, { fontFamily: mono }]}>
+                {detail}
+              </Text>
+            ) : null}
+          </View>
+        </ScrollView>
         {waiting > 0 || entry.route ? (
           <View style={styles.actions}>
             {waiting > 0 ? (
