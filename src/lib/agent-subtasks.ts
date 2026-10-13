@@ -85,7 +85,7 @@ export function subtaskSummary(
   let running = 0;
   let blocked = 0;
   for (const { session } of descendants) {
-    if (isSubtaskBlocked(blocks, session.asid)) blocked++;
+    if (isSubtaskBlocked(blocks, session.asid) || session.runtime?.status === 'blocked') blocked++;
     else if (isBusyStatus(session.status)) running++;
   }
   const kind: SubtaskSummaryKind = blocked > 0 ? 'blocked' : running > 0 ? 'running' : 'idle';

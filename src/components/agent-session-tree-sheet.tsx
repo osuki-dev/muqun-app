@@ -36,7 +36,7 @@ function SessionTreeRow({
   const selected = useAgentSheetBridge((state) => state.activeAsid === session.asid);
   const title = sessionTitleOr(session, t`Untitled session`);
   const unread = isSessionUnread(session);
-  const status = {
+  const nativeStatus = {
     busy: t`Running`,
     idle: t`Idle`,
     failed: t`The turn failed`,
@@ -44,11 +44,23 @@ function SessionTreeRow({
     retry: t`Retrying…`,
     unknown: t`Status unknown`,
   }[session.status];
+  const status =
+    session.runtime?.status === 'blocked'
+      ? t`Needs input`
+      : session.runtime?.status === 'completed'
+        ? t`Completed`
+        : nativeStatus;
   // react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs.
   const level = t`Level ${depth}`;
   // react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs.
   const parent = parentTitle ? t`Parent: ${parentTitle}` : '';
-  const caption = [session.mode, status, depth > 0 ? level : '', parent]
+  const caption = [
+    session.agent_name,
+    session.agent_role ?? session.mode,
+    status,
+    depth > 0 ? level : '',
+    parent,
+  ]
     .filter(Boolean)
     .join(' · ');
 

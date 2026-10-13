@@ -714,15 +714,19 @@ export const AgentComposer = memo(function AgentComposer({
   // Session spend cannot substitute for the latest context measurement.
   const contextPill = useMemo(() => {
     const live = contextUsage?.tokens ?? null;
-    const total = contextTokenTotal(live);
+    const total = contextUsage?.total_tokens ?? contextTokenTotal(live);
     if (total <= 0) return null;
-    const ratio = live ? contextFillRatio(live, contextLimit) : null;
+    const ratio = contextFillRatio(
+      live,
+      contextUsage?.limit?.context ?? contextLimit,
+      contextUsage?.total_tokens
+    );
     let tokStr = `${total}`;
     if (total >= 1_000_000) tokStr = `${(total / 1_000_000).toFixed(1)}M`;
     else if (total >= 1_000) tokStr = `${(total / 1_000).toFixed(1)}k`;
     const costStr =
-      cost === undefined || cost === null || cost === 0 ? t`Free` : `$${cost.toFixed(2)}`;
-    return { label: `${tokStr} • ${costStr}`, ratio };
+      cost === undefined || cost === null ? null : cost === 0 ? t`Free` : `$${cost.toFixed(2)}`;
+    return { label: costStr === null ? tokStr : `${tokStr} • ${costStr}`, ratio };
   }, [contextUsage, contextLimit, cost, t]);
 
   const modelDisplayName = useMemo(

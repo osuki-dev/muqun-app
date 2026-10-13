@@ -34,6 +34,7 @@ import { createAgentTranscriptStore } from '@/stores/agent-transcript';
 import { useAgentSheetBridge } from '@/stores/agent-sheet-bridge';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useToolCallDetailStore } from '@/stores/tool-call-detail';
+import { useServerCapabilities } from '@/stores/server-capabilities';
 
 const doNothing = () => {};
 
@@ -72,7 +73,7 @@ export function AgentSubagentDetailSheet({
   const scopeKey = agentSubagentDetailScopeKey({ serverId, sessionId, ownerSessionId, asid });
   const [store] = useState(createAgentTranscriptStore);
   const [loaded, setLoaded] = useState<LoadedDetail | null>(null);
-  const [attempt, setAttempt] = useState(0);
+  const [attempt, setAttempt] = useState<{ scopeKey: string; sequence: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const requestRef = useRef(0);
@@ -100,7 +101,12 @@ export function AgentSubagentDetailSheet({
 
     const load = async () => {
       const demo = isDemoActive() ? demoAgentSessionSnapshot(asid) : null;
-      const snapshot = demo ?? (await getAgentSessionSnapshot(sessionId, asid));
+      const snapshot =
+        demo ??
+        (await getAgentSessionSnapshot(sessionId, asid, {
+          refresh: attempt?.scopeKey === scopeKey,
+          capabilities: serverId ? useServerCapabilities.getState().byServer[serverId] : undefined,
+        }));
       if (!current()) return;
       const transcript = store.getState();
       transcript.configure({
@@ -169,6 +175,11 @@ export function AgentSubagentDetailSheet({
       caption={title}
       header={
         <View style={styles.metadata}>
+          {info?.agent_name || info?.agent_role ? (
+            <Text variant="caption" color={colors.textMuted}>
+              {[info.agent_name, info.agent_role].filter(Boolean).join(' · ')}
+            </Text>
+          ) : null}
           {childModelName ? (
             <Text testID="agent-subagent-detail-model" variant="caption" color={colors.textMuted}>
               {t`Model`}: {childModelName}
@@ -194,7 +205,9 @@ export function AgentSubagentDetailSheet({
           testID="agent-subagent-detail-refresh"
           accessibilityLabel={t`Refresh`}
           busy={loading}
-          onPress={() => setAttempt((value) => value + 1)}>
+          onPress={() =>
+            setAttempt((value) => ({ scopeKey, sequence: (value?.sequence ?? 0) + 1 }))
+          }>
           <RefreshCw size={17} color={colors.textMuted} />
         </SheetSceneQuietControl>
       }>
@@ -210,7 +223,9 @@ export function AgentSubagentDetailSheet({
           <SheetSceneAction
             testID="agent-subagent-detail-retry"
             label={t`Try again`}
-            onPress={() => setAttempt((value) => value + 1)}
+            onPress={() =>
+              setAttempt((value) => ({ scopeKey, sequence: (value?.sequence ?? 0) + 1 }))
+            }
           />
         </View>
       ) : (

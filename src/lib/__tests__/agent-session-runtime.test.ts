@@ -126,3 +126,20 @@ describe('opening the linked terminal', () => {
     ).toBe(false);
   });
 });
+
+test('transcript observation is independent of terminal interaction', () => {
+  for (const transcript of ['live', 'persisted'] as const) {
+    const runtime = parseAgentSessionRuntime({ ...external, transcript });
+    expect(runtime?.transcript).toBe(transcript);
+    expect(replaceAgentTranscript('silent', runtime)).toBe(true);
+    expect(nativeAgentInteraction(runtime)).toBe(false);
+  }
+  expect(
+    replaceAgentTranscript('silent', {
+      source: 'native',
+      interaction: 'native',
+      transcript: 'snapshot',
+    })
+  ).toBe(false);
+  expect(replaceAgentTranscript('refresh', { ...external, transcript: 'snapshot' })).toBe(true);
+});

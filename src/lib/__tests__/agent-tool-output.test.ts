@@ -841,3 +841,24 @@ describe('a subagent card at its first event', () => {
     expect(json?.text).toBe(JSON.stringify(input, null, 2));
   });
 });
+
+test('native file diffs count changed lines when the provider omits totals', () => {
+  const files = editFilesFromMetadata({
+    files: [
+      {
+        path: 'module.ts',
+        diff: '--- a/module.ts\n+++ b/module.ts\n@@ -1 +1,2 @@\n-old\n+new\n+extra',
+        status: 'modified',
+      },
+    ],
+  });
+  expect(files).toEqual([
+    {
+      path: 'module.ts',
+      patch: '--- a/module.ts\n+++ b/module.ts\n@@ -1 +1,2 @@\n-old\n+new\n+extra',
+      additions: 2,
+      deletions: 1,
+      status: 'modified',
+    },
+  ]);
+});

@@ -287,6 +287,10 @@ export interface AgentSessionInfo {
   directory?: string;
   cost?: number;
   tokens?: TokensUsage;
+  context_usage?: AgentContextUsage;
+  git_info?: { sha?: string; branch?: string; origin_url?: string };
+  agent_name?: string;
+  agent_role?: string;
   limit?: ContextLimit;
   parent_id?: string;
   project_id?: string;
@@ -329,6 +333,22 @@ export function parseAgentSessionInfo(value: unknown): AgentSessionInfo | null {
   if (cost !== undefined) info.cost = cost;
   const tokens = parseTokensUsage(rec.tokens);
   if (tokens) info.tokens = tokens;
+  if (asRecord(rec.context_usage)) info.context_usage = parseAgentContextUsage(rec.context_usage);
+  const git = asRecord(rec.git_info);
+  if (git) {
+    const sha = pickString(git, ['sha']);
+    const branch = pickString(git, ['branch']);
+    const origin = pickString(git, ['origin_url']);
+    info.git_info = {
+      ...(sha ? { sha } : {}),
+      ...(branch ? { branch } : {}),
+      ...(origin ? { origin_url: origin } : {}),
+    };
+  }
+  const agentName = pickString(rec, ['agent_name']);
+  if (agentName) info.agent_name = agentName;
+  const agentRole = pickString(rec, ['agent_role']);
+  if (agentRole) info.agent_role = agentRole;
   const limit = parseContextLimit(rec.limit);
   if (limit) info.limit = limit;
   const parentId = pickString(rec, ['parent_id', 'parentID']);
@@ -1023,9 +1043,14 @@ function parseToolTiming(value: unknown): ToolTiming | undefined {
     : timing;
 }
 
-/** How long a tool ran, in milliseconds, when both ends are known. */
-export function toolDurationMs(time: ToolTiming | undefined): number | undefined {
-  if (!time || time.ran === undefined || time.completed === undefined) return undefined;
+/** Elapsed tool time from timestamps, or the provider’s reported duration. */
+export function toolDurationMs(
+  time: ToolTiming | undefined,
+  metadata?: Record<string, unknown>
+): number | undefined {
+  const reported = asFiniteNumber(metadata?.durationMs);
+  if (!time || time.ran === undefined || time.completed === undefined)
+    return reported !== undefined && reported >= 0 ? reported : undefined;
   const elapsed = time.completed - time.ran;
   return elapsed >= 0 ? elapsed : undefined;
 }
@@ -1446,15 +1471,22 @@ export function parseAgentSessionSnapshot(value: unknown): AgentSessionSnapshot 
 
 /** What `GET …/context` answers: everything still in the model's context. */
 export interface AgentContextUsage {
-  messages: number;
+  messages?: number;
   tokens: TokensUsage | null;
+  total_tokens?: number;
+  limit?: ContextLimit;
 }
 
 export function parseAgentContextUsage(value: unknown): AgentContextUsage {
   const rec = asRecord(value) ?? {};
+  const messages = asFiniteNumber(rec.messages);
+  const total = asFiniteNumber(rec.total_tokens);
+  const limit = parseContextLimit(rec.limit);
   return {
-    messages: asFiniteNumber(rec.messages) ?? 0,
+    ...(messages !== undefined && messages >= 0 ? { messages } : {}),
     tokens: parseTokensUsage(rec.tokens) ?? null,
+    ...(total !== undefined && total >= 0 ? { total_tokens: total } : {}),
+    ...(limit ? { limit } : {}),
   };
 }
 
@@ -1473,10 +1505,11 @@ export function contextTokenTotal(tokens: TokensUsage | null | undefined): numbe
 /** 0…1, or `null` when there is no limit to measure against. */
 export function contextFillRatio(
   tokens: TokensUsage | null | undefined,
-  limit: number | undefined
+  limit: number | undefined,
+  reportedTotal?: number
 ): number | null {
-  if (!tokens || !limit || limit <= 0) return null;
-  const used = contextTokenTotal(tokens);
+  if ((!tokens && reportedTotal === undefined) || !limit || limit <= 0) return null;
+  const used = reportedTotal ?? contextTokenTotal(tokens);
   if (used <= 0) return 0;
   return Math.min(1, used / limit);
 }

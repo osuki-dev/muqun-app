@@ -510,7 +510,9 @@ const AgentDiffBlock = memo(function AgentDiffBlock({
   diff: string;
   onOpenFullDiff?: (path?: string) => void;
 }) {
+  const { t } = useLingui();
   const theme = useThemeTokens();
+  const label = file || t`Changes`;
   const colors = usePaneChatColors();
   const [expanded, setExpanded] = useState(true);
 
@@ -532,7 +534,7 @@ const AgentDiffBlock = memo(function AgentDiffBlock({
       <PressableScale
         testID="agent-diff-toggle"
         accessibilityRole="button"
-        accessibilityLabel={file}
+        accessibilityLabel={label}
         onPress={() => setExpanded((prev) => !prev)}
         style={styles.diffHeader}>
         <FileDiff size={12} color={theme.colors.primary} />
@@ -542,7 +544,7 @@ const AgentDiffBlock = memo(function AgentDiffBlock({
           color={theme.colors.text}
           numberOfLines={1}
           style={styles.diffFile}>
-          {file}
+          {label}
         </Text>
         <Text variant="caption" weight="semibold" color={colors.added} style={styles.diffStat}>
           +{stats.added}
@@ -563,7 +565,7 @@ const AgentDiffBlock = memo(function AgentDiffBlock({
               one above it, which is the only thing a diff is read for. */}
           <InlinePatch
             patch={diff}
-            targetPath={file}
+            targetPath={file || undefined}
             {...(onOpenFullDiff ? { onOpenFullDiff } : {})}
           />
         </Animated.View>
