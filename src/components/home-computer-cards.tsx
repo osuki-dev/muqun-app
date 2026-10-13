@@ -2,7 +2,7 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Monitor } from 'lucide-react-native';
-import { useLayoutEffect } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { LayoutAnimationConfig } from 'react-native-reanimated';
 import { useShallow } from 'zustand/react/shallow';
@@ -17,6 +17,7 @@ import { useServerTasks } from '@/hooks/use-server-tasks';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { connectionStatusDescription, connectionStatusLabel } from '@/i18n/labels';
 import type { GatewayRecord } from '@/lib/gateway-storage';
+import { HOME_CONTINUE_INITIAL_LIMIT } from '@/lib/home-continue';
 import {
   buildComputerCards,
   heldCardOrder,
@@ -47,6 +48,7 @@ import { useServerTasksStore } from '@/stores/server-tasks';
 import { useServerAgents } from '@/stores/server-agents';
 import { useHomeAttention } from '@/stores/home-attention';
 import { useServerChannels } from '@/stores/server-channels';
+import { FINISHED_TASKS_SHOWN } from '@/lib/server-tasks-state';
 
 /**
  * Keeps the ledgers of these computers live while Home is up: a list read on
@@ -253,6 +255,9 @@ export function HomeComputerCards({
     if (entry) index[serverId] = entry;
   });
   const sorted = buildComputerCards({
+    // Expand the currently held task page, bounded like the Tasks sheet.
+    // The toggle never promises to fetch the computer's entire history.
+    limits: { now: 100, finished: FINISHED_TASKS_SHOWN },
     servers,
     index,
     panesByServer,
@@ -326,6 +331,9 @@ function ComputerCardView({
   onOpenTask: (task: TaskView, tree?: boolean) => void;
 }) {
   const { t } = useLingui();
+  const [expanded, setExpanded] = useState(false);
+  const hasMore =
+    card.now.length + card.pending.length + card.finished.length > HOME_CONTINUE_INITIAL_LIMIT;
   // This card's own status: a probe or a retry against another computer
   // re-renders only the card whose status moved.
   const selectedId = useGatewayConnectionStore((state) => state.record?.serverId);
@@ -424,13 +432,6 @@ function ComputerCardView({
               <SentTaskRow key={item.id} item={item} computer={server.label} nowMs={nowMs} />
             )),
             ...restNow.map(nowRow),
-            ...(card.nowTotal > card.now.length
-              ? [
-                  <Text key="more" variant="caption" color={theme.colors.textMuted}>
-                    {t`+${card.nowTotal - card.now.length} more`}
-                  </Text>,
-                ]
-              : []),
             ...card.finished.map((task) => (
               <TaskRow
                 key={task.taskId}
@@ -444,7 +445,19 @@ function ComputerCardView({
                 onOpenTree={(finished) => onOpenTask(finished, true)}
               />
             )),
-          ]}
+          ].slice(0, expanded ? undefined : HOME_CONTINUE_INITIAL_LIMIT)}
+          {hasMore ? (
+            <PressableScale
+              testID={`home-card-more-${server.serverId}`}
+              accessibilityRole="button"
+              accessibilityState={{ expanded }}
+              onPress={() => setExpanded((shown) => !shown)}
+              style={styles.more}>
+              <Text variant="bodySmall" color={theme.colors.primary}>
+                {expanded ? t`Show less` : t`Show more`}
+              </Text>
+            </PressableScale>
+          ) : null}
         </View>
       ) : (
         <View style={styles.block}>
@@ -484,5 +497,6 @@ const styles = StyleSheet.create({
   headerCopy: { flexShrink: 1, minWidth: 0, gap: 2 },
   statusLine: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   block: { gap: 4, paddingBottom: 8 },
+  more: { minHeight: 44, justifyContent: 'center' },
   fill: { flexGrow: 1 },
 });

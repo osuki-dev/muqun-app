@@ -66,6 +66,7 @@ import {
   type HomeContinueObservationView,
   homeContinueTarget,
   shouldShowHomeContinueOverflow,
+  HOME_CONTINUE_INITIAL_LIMIT,
   type HomeContinueEntry,
 } from '@/lib/home-continue';
 import { agentSessionStatusWord, agentStatusWord, taskStateWord } from '@/i18n/labels';
@@ -341,7 +342,6 @@ export function HomeRecentSessions({
   onOpen,
   query = '',
   pad = false,
-  moreLabel = 'count',
   header,
 }: {
   servers: readonly GatewayRecord[];
@@ -349,7 +349,7 @@ export function HomeRecentSessions({
   available: readonly HomeContinueEntry[];
   selectedServerId?: string;
   compact?: boolean;
-  /** Rows shown before the `Sessions (N)` toggle; compact lists default to four. */
+  /** Rows shown before the inline expansion toggle; defaults to five. */
   limit?: number;
   /** Overrides the `Sessions (N)` link's box, e.g. to inset it like the rows. */
   linkStyle?: StyleProp<ViewStyle>;
@@ -360,8 +360,6 @@ export function HomeRecentSessions({
   query?: string;
   /** Pad keeps the large ordinal; a phone shrinks it so the title has the row. */
   pad?: boolean;
-  /** What the collapsed list's toggle says: `Sessions (N)` or Home's `Show all`. */
-  moreLabel?: 'count' | 'show-all';
   /** Drawn above the rows, e.g. Home's per-computer filter chips. */
   header?: ReactNode;
 }) {
@@ -379,7 +377,7 @@ export function HomeRecentSessions({
     theme.typography.caption.fontSize * fontScale
   );
   const discovery = useAgents((state) => state.index.servers);
-  const collapsedLimit = limit ?? (compact ? 4 : undefined);
+  const collapsedLimit = limit ?? HOME_CONTINUE_INITIAL_LIMIT;
   const searching = query.trim().length > 0;
   const displayed = searchedHomeContinueEntries(
     available,
@@ -427,20 +425,15 @@ export function HomeRecentSessions({
           {t`No matching sessions`}
         </Text>
       ) : null}
-      {!searching &&
-      (shouldShowHomeContinueOverflow(available) ||
-        (collapsedLimit !== undefined && available.length > collapsedLimit)) ? (
+      {!searching && shouldShowHomeContinueOverflow(available, collapsedLimit) ? (
         <PressableScale
           testID="home-recent-sessions-more"
           accessibilityRole="button"
+          accessibilityState={{ expanded }}
           onPress={() => setExpanded(!expanded)}
           style={[styles.more, linkStyle]}>
           <Text variant="bodySmall" color={theme.colors.primary}>
-            {expanded
-              ? t`Show less`
-              : moreLabel === 'show-all'
-                ? t`Show all`
-                : `${t`Sessions`} (${available.length})`}
+            {expanded ? t`Show less` : t`Show more`}
           </Text>
         </PressableScale>
       ) : null}

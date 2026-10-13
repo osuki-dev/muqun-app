@@ -21,8 +21,7 @@ export function searchedHomeContinueEntries(
 ): readonly HomeContinueEntry[] {
   const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
   if (!words.length) {
-    const visible = visibleHomeContinueEntries(entries, expanded);
-    return limit !== undefined && !expanded ? visible.slice(0, limit) : visible;
+    return visibleHomeContinueEntries(entries, expanded, limit);
   }
   return entries.filter((entry) => {
     const target = homeContinueTarget(entry.destination);

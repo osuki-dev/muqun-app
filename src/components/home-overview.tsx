@@ -1110,8 +1110,7 @@ export function HomeOverview({
       <HomeRecentSessions
         compact={classicLayout}
         pad={isPad}
-        limit={classicLayout ? 3 : 5}
-        moreLabel="show-all"
+        limit={5}
         linkStyle={padLaunch ? PAD_WORK_LINK : undefined}
         selectedServerId={launchController.chosen?.serverId}
         servers={records}
@@ -2306,23 +2305,10 @@ function ServerCard({
               <GatewayTunnelBadge record={server} />
             </View>
           </PressableScale>
-
-          {/* The one action a card still offers directly: everything else
-              that used to live behind the `...` menu -- rename, unpair -- now
-              lives in Settings > Computers, but New Task has no equivalent
-              there. It is not a fact about the server's identity the way a
-              name or an address is; it is a shortcut to starting work on it
-              without opening it first, which only makes sense from a list of
-              servers. `NewTaskAction` renders nothing at all unless this
-              gateway has told the app it can spawn one, so most cards spend
-              nothing on this slot. When capabilities finish loading, the
-              action and identity are measured together by native flex layout. */}
-          <View style={styles.serverTrailing}>
-            {reachability === 'live' || Boolean(server.sshTunnel) ? (
-              <NewTaskAction server={server} serverId={server.serverId} label={server.label} />
-            ) : null}
-          </View>
         </View>
+        {reachability === 'live' || Boolean(server.sshTunnel) ? (
+          <NewTaskAction server={server} serverId={server.serverId} label={server.label} />
+        ) : null}
 
         {/* `listGap` is the whole grouping device now, so it belongs to the
             list rather than to a spacer between the two: a machine with no
@@ -2330,7 +2316,7 @@ function ServerCard({
             that card with a gap under its name separating it from nothing. */}
         <ServerAgentRows
           serverId={server.serverId}
-          initialLimit={3}
+          initialLimit={5}
           style={{ marginTop: metrics.listGap }}
           snapshot={agents}
           reachability={reachability}
@@ -2841,16 +2827,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
     flexShrink: 1,
     minWidth: 0,
-  },
-  // A right-aligned row rather than the default stretch column: the slot's
-  // width travels between nothing and a 36pt button as `NewTaskAction`'s
-  // capability check resolves, and it has to stay pinned to the card's
-  // trailing edge while that width changes rather than stretch to fill it.
-  serverTrailing: {
-    marginLeft: 'auto',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
   },
   // The gap above comes from `cardGap` at the call site, and only when there
   // is a card above to gap from.
