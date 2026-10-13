@@ -23,7 +23,12 @@ export function DemoStreamingTranscript() {
   const focused = useIsFocused();
   const reducedMotion = useReducedMotion();
   const markdownStyle = usePaneChatMarkdownStyle();
-  const [store] = useState(createAgentTranscriptStore);
+  const [store] = useState(() => {
+    const initial = createAgentTranscriptStore();
+    initial.getState().configure({ windowStart: 0, status: 'busy' });
+    initial.getState().setTimeline(demoStreamingTimeline(0), 0);
+    return initial;
+  });
   const [run, setRun] = useState(0);
   const list = useRef<LegendListRef>(null);
   const maintainEnd = useMemo(() => ({ animated: !reducedMotion }), [reducedMotion]);
