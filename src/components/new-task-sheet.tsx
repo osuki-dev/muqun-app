@@ -8,6 +8,7 @@ import { Text } from '@/components/text';
 import { TerminalComposer } from '@/components/terminal-composer';
 import { AttachmentMenu } from '@/components/attachment-menu';
 import { AttachmentStrip } from '@/components/attachment-strip';
+import { AssetViewer } from '@/components/asset-viewer';
 import { ImagePreviewModal } from '@/components/image-preview-modal';
 import { LogoLoader } from '@/components/logo-loader';
 import { useAttachmentUploads } from '@/hooks/use-attachment-uploads';
@@ -42,6 +43,7 @@ import {
 } from '@/components/sheet-scene';
 import { LADDER } from '@/components/settings-chrome';
 import { terminalPromptWithAttachments } from '@/lib/agent-spawn';
+import { assetFromLocalPdf } from '@/lib/session-assets';
 import {
   agentSpawnRequest,
   canSpawnAgent,
@@ -161,6 +163,7 @@ export function NewTaskSheet({
   const previewImages = uploads.attachments
     .filter((item) => isImageAttachment(item.mime))
     .map((item) => ({ id: item.id, uri: item.localUri }));
+  const previewPdf = assetFromLocalPdf(uploads.attachments.find((item) => item.id === previewId));
   function chooseAttachmentSource(source: AttachmentSource) {
     setAttachmentMenuOpen(false);
     const picker = uploads.capturePicker();
@@ -433,6 +436,9 @@ export function NewTaskSheet({
               onPress={() => void start()}
             />
 
+            {previewPdf ? (
+              <AssetViewer asset={previewPdf} onClose={() => setPreviewId(null)} />
+            ) : null}
             {previewId && previewImages.some((item) => item.id === previewId) ? (
               <ImagePreviewModal
                 images={previewImages}
