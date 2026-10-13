@@ -458,10 +458,6 @@ msgstr "Trình giả lập có thể được điều khiển chứ không chỉ
 msgid "A simulator that was shut down can take a minute to come up."
 msgstr "Trình giả lập đã tắt có thể mất một phút để khởi động"
 
-#: src/components/launch-intro.tsx
-msgid "A spread on the Pad"
-msgstr "Trang đôi trên máy tính bảng"
-
 #: src/components/server-terminal-workspace.tsx
 msgid "A terminal was created. Check it before sending again — your task is still here."
 msgstr "Một terminal đã được tạo. Hãy kiểm tra trước khi gửi lại — tác vụ của bạn vẫn còn đây"
@@ -881,6 +877,7 @@ msgstr "Kỹ thuật phần mềm tự chủ: sửa tệp, chạy lệnh, kiểm
 msgid "Available modes"
 msgstr "Các chế độ có sẵn"
 
+#: src/components/launch-intro.tsx
 #: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back"
@@ -1080,8 +1077,8 @@ msgid "Changes"
 msgstr "Thay đổi"
 
 #: src/components/launch-intro.tsx
-msgid "Changes as a tree"
-msgstr "Thay đổi dạng cây"
+msgid "Changes and Lazygit now live together. Move between linked worktrees when your Gateway supports them."
+msgstr "Thay đổi và Lazygit nay nằm cùng nhau. Chuyển giữa các worktree được liên kết khi Gateway của bạn hỗ trợ"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Changes coloured backgrounds, not text, icons or artwork"
@@ -1142,6 +1139,10 @@ msgstr "Đang kiểm tra…"
 #: src/components/home-target-sheet.tsx
 msgid "Choose a computer"
 msgstr "Chọn một máy tính"
+
+#: src/components/launch-intro.tsx
+msgid "Choose a computer and an agent, then send your goal from Home. Follow tasks and decisions in the same place."
+msgstr "Chọn máy tính và agent, rồi gửi mục tiêu ngay từ Trang chủ. Theo dõi nhiệm vụ và các quyết định tại cùng một nơi"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Choose a mode"
@@ -1548,6 +1549,7 @@ msgid "Connecting…"
 msgstr "Đang kết nối…"
 
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "Kết nối"
@@ -1578,6 +1580,7 @@ msgid "Context used"
 msgstr "Ngữ cảnh đã dùng"
 
 #: src/app/explore.tsx
+#: src/components/launch-intro.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
@@ -2158,10 +2161,6 @@ msgstr "Không thể cập nhật phiên"
 msgid "Could not upload the file."
 msgstr "Không thể tải tệp lên"
 
-#: src/components/launch-intro.tsx
-msgid "Cover Courier comes built in. Install a theme or pick a colour pack, and the whole app follows."
-msgstr "Cover Courier có sẵn. Cài một chủ đề hoặc chọn một bộ màu, và cả ứng dụng sẽ đổi theo"
-
 #: src/lib/release-notes.ts
 msgid "Cover Courier is built in and worn until you pick a theme, and Interface background opacity now reaches every sheet and notice."
 msgstr "Cover Courier có sẵn và được dùng cho đến khi bạn chọn chủ đề, và độ mờ đục của nền giao diện giờ áp dụng cho mọi bảng và thông báo"
@@ -2443,10 +2442,6 @@ msgstr "Đang tải xuống…"
 msgid "Draft the notes for the next build"
 msgstr "Soạn ghi chú cho bản dựng tiếp theo"
 
-#: src/components/launch-intro.tsx
-msgid "Drawn on the GPU with Skia, with real keys and full tmux control. nvim, less and REPLs behave."
-msgstr "Vẽ trên GPU bằng Skia, với phím thật và toàn quyền điều khiển tmux. nvim, less và REPL đều chạy đúng"
-
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
 msgid "Each device holds its own token for {0}."
@@ -2546,14 +2541,6 @@ msgstr "Escape hai lần"
 #: src/components/agent-context-sheet.tsx
 msgid "Estimated cost"
 msgstr "Chi phí ước tính"
-
-#: src/components/launch-intro.tsx
-msgid "Every agent on your computer, in your hand."
-msgstr "Mọi tác nhân trên máy tính, trong tầm tay bạn"
-
-#: src/components/launch-intro.tsx
-msgid "Every changed file in one folder tree with line totals. Open a patch, or discard a file from its menu."
-msgstr "Mọi tệp đã thay đổi trong một cây thư mục kèm tổng số dòng. Mở bản vá hoặc hủy bỏ một tệp từ menu của nó"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Every screen in the app."
@@ -2763,6 +2750,10 @@ msgstr "Thường dùng"
 #: src/components/task-row.tsx
 msgid "from {requester}"
 msgstr "từ {requester}"
+
+#: src/components/launch-intro.tsx
+msgid "From a goal to work in motion."
+msgstr "Từ mục tiêu đến công việc đang chạy"
 
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
@@ -3211,6 +3202,10 @@ msgstr "Tiếp tục gõ để thu hẹp"
 msgid "Keys"
 msgstr "Phím"
 
+#: src/components/launch-intro.tsx
+msgid "Know what is coming next."
+msgstr "Biết trước những gì sắp thay đổi"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
 msgid "Language"
@@ -3419,10 +3414,6 @@ msgstr "Đang tìm trình giả lập"
 msgid "Mac mini · Office"
 msgstr "Mac mini · Văn phòng"
 
-#: src/components/launch-intro.tsx
-msgid "Make it yours"
-msgstr "Biến nó thành của bạn"
-
 #: src/components/settings-fleet-peers.tsx
 msgid "Make sure the computer is reachable, then try again."
 msgstr "Hãy đảm bảo máy tính có thể kết nối, rồi thử lại"
@@ -3591,10 +3582,6 @@ msgstr "Muqun không có phông chữ riêng. Phông bạn thêm sẽ được g
 msgid "Muqun is locked"
 msgstr "Muqun đang khóa"
 
-#: src/components/launch-intro.tsx
-msgid "Muqun pairs with a Gateway on your own machine and puts its coding agents and terminals on your phone or tablet."
-msgstr "Muqun ghép nối với Gateway trên máy của chính bạn và đưa các tác nhân lập trình cùng terminal của máy đó lên điện thoại hoặc máy tính bảng"
-
 #: src/components/pairing-camera.tsx
 msgid "Muqun reads the Gateway's QR code through the camera. Nothing is recorded."
 msgstr "Muqun đọc mã QR của Gateway qua camera. Không có gì được ghi lại"
@@ -3670,6 +3657,10 @@ msgstr "Nhóm mới"
 #: src/components/ssh-host-key-dialog.tsx
 msgid "New host key"
 msgstr "Khóa host mới"
+
+#: src/components/launch-intro.tsx
+msgid "New in 4.0"
+msgstr "Điểm mới trong 4.0"
 
 #: src/components/collaboration-notice.tsx
 msgid "New output available · refresh"
@@ -4053,10 +4044,6 @@ msgstr "Bật"
 msgid "On a tablet, Home is a two-page spread, work sheets fill the screen, and the on-screen keyboard is a whole keyboard with F-keys and sticky modifiers."
 msgstr "Trên máy tính bảng, Trang chủ là trang đôi, các bảng làm việc phủ kín màn hình, và bàn phím ảo là bàn phím đầy đủ với phím F và phím bổ trợ dính"
 
-#: src/components/launch-intro.tsx
-msgid "On a tablet, Home opens as a two-page spread and the on-screen keyboard is a whole keyboard."
-msgstr "Trên máy tính bảng, Trang chủ mở thành trang đôi và bàn phím ảo là một bàn phím đầy đủ"
-
 #: src/lib/release-notes.ts
 msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
 msgstr "Một bảng Thay đổi chung cho terminal và phiên tác nhân: các tệp thay đổi dạng cây kèm tổng số dòng, nhánh dưới tiêu đề, và Hủy bỏ trong menu của tệp"
@@ -4246,10 +4233,6 @@ msgstr "Mở không gian làm việc {0}, {panelCount, plural, other {# đang ch
 #: src/app/settings-voice.tsx
 msgid "OpenAI requires an API key and model. Compatible services may provide their own defaults. Your API key is stored securely on this device."
 msgstr "OpenAI yêu cầu khóa API và mô hình. Các dịch vụ tương thích có thể cung cấp giá trị mặc định riêng. Khóa API của bạn được lưu an toàn trên thiết bị này"
-
-#: src/components/launch-intro.tsx
-msgid "OpenCode, DeepSeek and T3 Code side by side, each with its own tile, sessions and workbench."
-msgstr "OpenCode, DeepSeek và T3 Code cạnh nhau, mỗi tác nhân có ô khởi chạy, phiên và bàn làm việc riêng"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -4654,6 +4637,10 @@ msgstr "Đọc một tệp"
 #: src/i18n/labels.ts
 msgid "Read outside the workspace"
 msgstr "Đọc bên ngoài không gian làm việc"
+
+#: src/components/launch-intro.tsx
+msgid "Read release notes before downloading. Follow real download progress, then restart when the update is ready—or leave it for later."
+msgstr "Đọc ghi chú phát hành trước khi tải xuống. Theo dõi tiến độ tải thực tế, rồi khởi động lại khi bản cập nhật sẵn sàng hoặc để sau"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Read-only: symbol search, file discovery, dependency tracing."
@@ -5178,10 +5165,6 @@ msgstr "Quét mã QR của Gateway"
 msgid "Scan the Gateway’s QR code, or enter its address."
 msgstr "Quét mã QR của Gateway hoặc nhập địa chỉ"
 
-#: src/components/launch-intro.tsx
-msgid "Scan the QR code of a Gateway on your own computer. No account, no relay, end-to-end encrypted."
-msgstr "Quét mã QR của Gateway trên máy tính của chính bạn. Không tài khoản, không máy chuyển tiếp, mã hóa đầu cuối"
-
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
 msgstr "Quét cần camera, mà trình duyệt này không cung cấp"
@@ -5403,10 +5386,6 @@ msgstr "Thiết lập trên máy chủ"
 #: src/components/pad-server-rail.tsx
 msgid "Settings"
 msgstr "Cài đặt"
-
-#: src/components/launch-intro.tsx
-msgid "Several agents, one computer"
-msgstr "Nhiều tác nhân, một máy tính"
 
 #: src/components/agent-tool-card.tsx
 msgid "Several answers"
@@ -5767,6 +5746,10 @@ msgstr "Can thiệp"
 #: src/components/agent-composer.tsx
 msgid "Steer running agent"
 msgstr "Can thiệp vào tác nhân đang chạy theo thời gian thực"
+
+#: src/components/launch-intro.tsx
+msgid "Step {position} of {count}"
+msgstr "Bước {position} trên {count}"
 
 #: src/components/tool-call-code-rows.tsx
 msgid "Still arriving"
@@ -6190,17 +6173,9 @@ msgstr "Terminal mới đã được tạo nhưng không thể mở"
 msgid "The previous send could not be checked."
 msgstr "Không thể kiểm tra lần gửi trước"
 
-#: src/components/launch-intro.tsx
-msgid "The question comes to you"
-msgstr "Câu hỏi sẽ tìm đến bạn"
-
 #: src/i18n/labels.ts
 msgid "The raw pane, on its grid and in its own colours."
 msgstr "Ngăn nguyên bản, trên lưới của nó và với màu sắc riêng"
-
-#: src/components/launch-intro.tsx
-msgid "The real terminal"
-msgstr "Terminal thật sự"
 
 #: src/components/app-error-boundary.tsx
 msgid "The screen hit an error. Try again — your computers stay paired."
@@ -7002,10 +6977,6 @@ msgstr "Những gì đang chạy"
 msgid "What's new"
 msgstr "Có gì mới"
 
-#: src/components/launch-intro.tsx
-msgid "When an agent stops for a decision, it arrives as a push. Approve or deny from the Lock Screen."
-msgstr "Khi tác nhân dừng lại chờ quyết định, câu hỏi đến dưới dạng thông báo đẩy. Phê duyệt hoặc từ chối ngay trên màn hình khóa"
-
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
 msgstr "Khi bạn vắng mặt"
@@ -7099,8 +7070,8 @@ msgid "Your agents, anywhere."
 msgstr "Các tác tử của bạn, ở bất cứ đâu"
 
 #: src/components/launch-intro.tsx
-msgid "Your machine, your rules"
-msgstr "Máy của bạn, luật của bạn"
+msgid "Your checkout, in one workspace."
+msgstr "Bản checkout trong một không gian làm việc"
 
 #: src/components/agent-message-block.tsx
 msgid "Your message"

@@ -2,6 +2,12 @@
   "version": 1,
   "flows": [
     {
+      "name": "release-intro",
+      "program": "flows/release-intro",
+      "tags": ["full", "settings"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "inline-video",
       "program": "flows/inline-video",
       "tags": ["full", "agents", "files"],
@@ -287,6 +293,109 @@
     }
   ],
   "programs": {
+    "flows/release-intro": [
+      {
+        "run": "subflows/launch-home.ad#s1"
+      },
+      {
+        "run": "subflows/launch-home.ad#s8"
+      },
+      {
+        "target": {
+          "text": "(?i)(Skip intro|Try the demo)"
+        },
+        "mode": "visible",
+        "timeout": 20000,
+        "run": "subflows/launch-home.ad#startup-ready"
+      },
+      {
+        "when": {
+          "target": {
+            "id": "launch-intro-skip"
+          },
+          "absent": false
+        },
+        "steps": [
+          {
+            "target": {
+              "id": "launch-intro-feature-home"
+            },
+            "mode": "visible",
+            "run": "flows/release-intro.ad#visible"
+          },
+          {
+            "target": {
+              "id": "launch-intro-next"
+            },
+            "mode": "press",
+            "run": "flows/release-intro.ad#press"
+          },
+          {
+            "target": {
+              "id": "launch-intro-feature-git"
+            },
+            "mode": "visible",
+            "run": "flows/release-intro.ad#visible"
+          },
+          {
+            "target": {
+              "id": "launch-intro-back"
+            },
+            "mode": "press",
+            "run": "flows/release-intro.ad#press"
+          },
+          {
+            "target": {
+              "id": "launch-intro-feature-home"
+            },
+            "mode": "visible",
+            "run": "flows/release-intro.ad#visible"
+          },
+          {
+            "target": {
+              "id": "launch-intro-next"
+            },
+            "mode": "press",
+            "run": "flows/release-intro.ad#press"
+          },
+          {
+            "target": {
+              "id": "launch-intro-next"
+            },
+            "mode": "press",
+            "run": "flows/release-intro.ad#press"
+          },
+          {
+            "target": {
+              "id": "launch-intro-feature-updates"
+            },
+            "mode": "visible",
+            "run": "flows/release-intro.ad#visible"
+          },
+          {
+            "target": {
+              "id": "launch-intro-skip"
+            },
+            "mode": "visible",
+            "run": "flows/release-intro.ad#visible"
+          },
+          {
+            "target": {
+              "id": "launch-intro-start"
+            },
+            "mode": "press",
+            "run": "flows/release-intro.ad#press"
+          },
+          {
+            "target": {
+              "id": "launch-intro-skip"
+            },
+            "mode": "hidden",
+            "run": "flows/release-intro.ad#dismissed"
+          }
+        ]
+      }
+    ],
     "flows/git-worktrees": [
       { "include": "subflows/open-demo" },
       { "run": "flows/git-worktrees.ad#open" },

@@ -458,10 +458,6 @@ msgstr "シミュレータは見るだけでなく操作もできるため、プ
 msgid "A simulator that was shut down can take a minute to come up."
 msgstr "終了していたシミュレータは、起動に1分ほどかかることがあります"
 
-#: src/components/launch-intro.tsx
-msgid "A spread on the Pad"
-msgstr "タブレットは見開きで"
-
 #: src/components/server-terminal-workspace.tsx
 msgid "A terminal was created. Check it before sending again — your task is still here."
 msgstr "ターミナルが作成されました。もう一度送る前に確認してください。タスクはそのまま残っています"
@@ -881,6 +877,7 @@ msgstr "自律的なソフトウェア開発。ファイル編集、コマンド
 msgid "Available modes"
 msgstr "利用できるモード"
 
+#: src/components/launch-intro.tsx
 #: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back"
@@ -1080,8 +1077,8 @@ msgid "Changes"
 msgstr "変更点"
 
 #: src/components/launch-intro.tsx
-msgid "Changes as a tree"
-msgstr "変更点をツリーで"
+msgid "Changes and Lazygit now live together. Move between linked worktrees when your Gateway supports them."
+msgstr "変更と Lazygit をひとつに。Gateway が対応していれば、リンクされたワークツリーも切り替えられます"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Changes coloured backgrounds, not text, icons or artwork"
@@ -1142,6 +1139,10 @@ msgstr "確認中…"
 #: src/components/home-target-sheet.tsx
 msgid "Choose a computer"
 msgstr "コンピュータを選択"
+
+#: src/components/launch-intro.tsx
+msgid "Choose a computer and an agent, then send your goal from Home. Follow tasks and decisions in the same place."
+msgstr "コンピューターとエージェントを選び、ホームから目標を送信。タスクの進捗や判断が必要な項目を、同じ場所で確認できます"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Choose a mode"
@@ -1548,6 +1549,7 @@ msgid "Connecting…"
 msgstr "接続中…"
 
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "接続"
@@ -1578,6 +1580,7 @@ msgid "Context used"
 msgstr "コンテキスト使用量"
 
 #: src/app/explore.tsx
+#: src/components/launch-intro.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
@@ -2158,10 +2161,6 @@ msgstr "セッションを更新できませんでした"
 msgid "Could not upload the file."
 msgstr "ファイルをアップロードできませんでした"
 
-#: src/components/launch-intro.tsx
-msgid "Cover Courier comes built in. Install a theme or pick a colour pack, and the whole app follows."
-msgstr "Cover Courier を内蔵。テーマをインストールするかカラーパックを選ぶと、アプリ全体が変わります"
-
 #: src/lib/release-notes.ts
 msgid "Cover Courier is built in and worn until you pick a theme, and Interface background opacity now reaches every sheet and notice."
 msgstr "Cover Courier を内蔵し、テーマを選ぶまではこれが使われます。画面の背景の不透明度は、すべてのシートと通知に反映されるようになりました"
@@ -2443,10 +2442,6 @@ msgstr "ダウンロードしています…"
 msgid "Draft the notes for the next build"
 msgstr "次のビルドのリリースノートを下書きします"
 
-#: src/components/launch-intro.tsx
-msgid "Drawn on the GPU with Skia, with real keys and full tmux control. nvim, less and REPLs behave."
-msgstr "Skia で GPU に描画し、本物のキー入力と tmux の完全な操作に対応。nvim も less も REPL もそのまま動きます"
-
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
 msgid "Each device holds its own token for {0}."
@@ -2546,14 +2541,6 @@ msgstr "Escape を2回"
 #: src/components/agent-context-sheet.tsx
 msgid "Estimated cost"
 msgstr "推定コスト"
-
-#: src/components/launch-intro.tsx
-msgid "Every agent on your computer, in your hand."
-msgstr "コンピュータのすべてのエージェントを、手のひらに"
-
-#: src/components/launch-intro.tsx
-msgid "Every changed file in one folder tree with line totals. Open a patch, or discard a file from its menu."
-msgstr "変更されたファイルを行数の合計つきのフォルダーツリーにまとめて表示。パッチを開いたり、メニューからファイルを破棄したりできます"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Every screen in the app."
@@ -2763,6 +2750,10 @@ msgstr "よく使う"
 #: src/components/task-row.tsx
 msgid "from {requester}"
 msgstr "{requester} から"
+
+#: src/components/launch-intro.tsx
+msgid "From a goal to work in motion."
+msgstr "目標から、動き出す仕事へ"
 
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
@@ -3211,6 +3202,10 @@ msgstr "続けて入力すると絞り込めます"
 msgid "Keys"
 msgstr "キー"
 
+#: src/components/launch-intro.tsx
+msgid "Know what is coming next."
+msgstr "更新の内容を、先に確認"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
 msgid "Language"
@@ -3419,10 +3414,6 @@ msgstr "シミュレータを探しています"
 msgid "Mac mini · Office"
 msgstr "Mac mini · オフィス"
 
-#: src/components/launch-intro.tsx
-msgid "Make it yours"
-msgstr "自分好みに"
-
 #: src/components/settings-fleet-peers.tsx
 msgid "Make sure the computer is reachable, then try again."
 msgstr "コンピュータに接続できることを確認してから、もう一度お試しください"
@@ -3591,10 +3582,6 @@ msgstr "Muqun 自体はフォントを持ちません。追加するとこのデ
 msgid "Muqun is locked"
 msgstr "牧群（ぼくぐん）はロックされています"
 
-#: src/components/launch-intro.tsx
-msgid "Muqun pairs with a Gateway on your own machine and puts its coding agents and terminals on your phone or tablet."
-msgstr "Muqun は自分のマシンで動く Gateway とペアリングし、そこのコーディングエージェントとターミナルをスマートフォンやタブレットに届けます"
-
 #: src/components/pairing-camera.tsx
 msgid "Muqun reads the Gateway's QR code through the camera. Nothing is recorded."
 msgstr "Muqun はカメラで Gateway の QR コードを読み取ります。録画は行いません"
@@ -3670,6 +3657,10 @@ msgstr "新しいグループ"
 #: src/components/ssh-host-key-dialog.tsx
 msgid "New host key"
 msgstr "新しいホスト鍵"
+
+#: src/components/launch-intro.tsx
+msgid "New in 4.0"
+msgstr "4.0 の新機能"
 
 #: src/components/collaboration-notice.tsx
 msgid "New output available · refresh"
@@ -4053,10 +4044,6 @@ msgstr "オン"
 msgid "On a tablet, Home is a two-page spread, work sheets fill the screen, and the on-screen keyboard is a whole keyboard with F-keys and sticky modifiers."
 msgstr "タブレットでは、ホームが見開きの2ページになり、作業用シートは全画面で開き、オンスクリーンキーボードは F キーと固定できる修飾キーを備えたフルキーボードになりました"
 
-#: src/components/launch-intro.tsx
-msgid "On a tablet, Home opens as a two-page spread and the on-screen keyboard is a whole keyboard."
-msgstr "タブレットではホームが見開きの2ページで開き、オンスクリーンキーボードもフルキーボードになります"
-
 #: src/lib/release-notes.ts
 msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
 msgstr "ターミナルとエージェントのセッションで同じ変更点シートを使います。変更ファイルは行数つきのツリーで表示、タイトルの下にブランチ、ファイルのメニューに破棄があります"
@@ -4246,10 +4233,6 @@ msgstr "ワークスペース {0} を開く（{panelCount, plural, one {# 実行
 #: src/app/settings-voice.tsx
 msgid "OpenAI requires an API key and model. Compatible services may provide their own defaults. Your API key is stored securely on this device."
 msgstr "OpenAI には API キーとモデルの指定が必要です。互換サービスによっては既定値が用意されています。API キーはこのデバイスに安全に保存されます"
-
-#: src/components/launch-intro.tsx
-msgid "OpenCode, DeepSeek and T3 Code side by side, each with its own tile, sessions and workbench."
-msgstr "OpenCode、DeepSeek、T3 Code が並んで使えます。それぞれに専用のタイル、セッション、ワークベンチがあります"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -4654,6 +4637,10 @@ msgstr "ファイルを読む"
 #: src/i18n/labels.ts
 msgid "Read outside the workspace"
 msgstr "ワークスペースの外を読む"
+
+#: src/components/launch-intro.tsx
+msgid "Read release notes before downloading. Follow real download progress, then restart when the update is ready—or leave it for later."
+msgstr "ダウンロード前にリリースノートを確認。実際のダウンロード進捗を見ながら、準備ができたら再起動するか、後回しにできます"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Read-only: symbol search, file discovery, dependency tracing."
@@ -5178,10 +5165,6 @@ msgstr "Gateway の QR コードをスキャンしてください"
 msgid "Scan the Gateway’s QR code, or enter its address."
 msgstr "Gateway の QR コードをスキャンするか、アドレスを入力します"
 
-#: src/components/launch-intro.tsx
-msgid "Scan the QR code of a Gateway on your own computer. No account, no relay, end-to-end encrypted."
-msgstr "自分のコンピュータで動く Gateway の QR コードを読み取るだけ。アカウント不要、中継サーバーなし、エンドツーエンド暗号化"
-
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
 msgstr "スキャンにはカメラが必要ですが、このブラウザでは使えません"
@@ -5403,10 +5386,6 @@ msgstr "ホスト側で設定してください"
 #: src/components/pad-server-rail.tsx
 msgid "Settings"
 msgstr "設定"
-
-#: src/components/launch-intro.tsx
-msgid "Several agents, one computer"
-msgstr "1台のコンピュータに複数のエージェント"
 
 #: src/components/agent-tool-card.tsx
 msgid "Several answers"
@@ -5767,6 +5746,10 @@ msgstr "ステア (Steer)"
 #: src/components/agent-composer.tsx
 msgid "Steer running agent"
 msgstr "実行中のエージェントにリアルタイムで指示"
+
+#: src/components/launch-intro.tsx
+msgid "Step {position} of {count}"
+msgstr "ステップ {position} / {count}"
 
 #: src/components/tool-call-code-rows.tsx
 msgid "Still arriving"
@@ -6190,17 +6173,9 @@ msgstr "新しいターミナルは作成されましたが、開けませんで
 msgid "The previous send could not be checked."
 msgstr "前回の送信状態を確認できませんでした"
 
-#: src/components/launch-intro.tsx
-msgid "The question comes to you"
-msgstr "質問はあなたのもとへ"
-
 #: src/i18n/labels.ts
 msgid "The raw pane, on its grid and in its own colours."
 msgstr "素のパネルを、文字グリッドと本来の色のまま表示します"
-
-#: src/components/launch-intro.tsx
-msgid "The real terminal"
-msgstr "本物のターミナル"
 
 #: src/components/app-error-boundary.tsx
 msgid "The screen hit an error. Try again — your computers stay paired."
@@ -7002,10 +6977,6 @@ msgstr "実行中のもの"
 msgid "What's new"
 msgstr "新着情報"
 
-#: src/components/launch-intro.tsx
-msgid "When an agent stops for a decision, it arrives as a push. Approve or deny from the Lock Screen."
-msgstr "エージェントが判断を求めて止まると、プッシュ通知で届きます。ロック画面から承認・拒否できます"
-
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
 msgstr "離席中の変化"
@@ -7099,8 +7070,8 @@ msgid "Your agents, anywhere."
 msgstr "どこでも、エージェントと"
 
 #: src/components/launch-intro.tsx
-msgid "Your machine, your rules"
-msgstr "あなたのマシン、あなたのルール"
+msgid "Your checkout, in one workspace."
+msgstr "チェックアウトを、ひとつのワークスペースに"
 
 #: src/components/agent-message-block.tsx
 msgid "Your message"

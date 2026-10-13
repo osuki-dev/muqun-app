@@ -458,10 +458,6 @@ msgstr "A simulator can be driven and not only watched, so a preview is offered 
 msgid "A simulator that was shut down can take a minute to come up."
 msgstr "A simulator that was shut down can take a minute to come up"
 
-#: src/components/launch-intro.tsx
-msgid "A spread on the Pad"
-msgstr "A spread on the Pad"
-
 #: src/components/server-terminal-workspace.tsx
 msgid "A terminal was created. Check it before sending again — your task is still here."
 msgstr "A terminal was created. Check it before sending again — your task is still here"
@@ -881,6 +877,7 @@ msgstr "Autonomous software engineering: edits files, runs commands, tests"
 msgid "Available modes"
 msgstr "Available modes"
 
+#: src/components/launch-intro.tsx
 #: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back"
@@ -1080,8 +1077,8 @@ msgid "Changes"
 msgstr "Changes"
 
 #: src/components/launch-intro.tsx
-msgid "Changes as a tree"
-msgstr "Changes as a tree"
+msgid "Changes and Lazygit now live together. Move between linked worktrees when your Gateway supports them."
+msgstr "Changes and Lazygit now live together. Move between linked worktrees when your Gateway supports them"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Changes coloured backgrounds, not text, icons or artwork"
@@ -1142,6 +1139,10 @@ msgstr "Checking…"
 #: src/components/home-target-sheet.tsx
 msgid "Choose a computer"
 msgstr "Choose a computer"
+
+#: src/components/launch-intro.tsx
+msgid "Choose a computer and an agent, then send your goal from Home. Follow tasks and decisions in the same place."
+msgstr "Choose a computer and an agent, then send your goal from Home. Follow tasks and decisions in the same place"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Choose a mode"
@@ -1548,6 +1549,7 @@ msgid "Connecting…"
 msgstr "Connecting…"
 
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "Connections"
@@ -1578,6 +1580,7 @@ msgid "Context used"
 msgstr "Context used"
 
 #: src/app/explore.tsx
+#: src/components/launch-intro.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
@@ -2158,10 +2161,6 @@ msgstr "Could not update the session"
 msgid "Could not upload the file."
 msgstr "Could not upload the file"
 
-#: src/components/launch-intro.tsx
-msgid "Cover Courier comes built in. Install a theme or pick a colour pack, and the whole app follows."
-msgstr "Cover Courier comes built in. Install a theme or pick a colour pack, and the whole app follows"
-
 #: src/lib/release-notes.ts
 msgid "Cover Courier is built in and worn until you pick a theme, and Interface background opacity now reaches every sheet and notice."
 msgstr "Cover Courier is built in and worn until you pick a theme, and Interface background opacity now reaches every sheet and notice"
@@ -2443,10 +2442,6 @@ msgstr "Downloading…"
 msgid "Draft the notes for the next build"
 msgstr "Draft the notes for the next build"
 
-#: src/components/launch-intro.tsx
-msgid "Drawn on the GPU with Skia, with real keys and full tmux control. nvim, less and REPLs behave."
-msgstr "Drawn on the GPU with Skia, with real keys and full tmux control. nvim, less and REPLs behave"
-
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
 msgid "Each device holds its own token for {0}."
@@ -2546,14 +2541,6 @@ msgstr "Escape twice"
 #: src/components/agent-context-sheet.tsx
 msgid "Estimated cost"
 msgstr "Estimated cost"
-
-#: src/components/launch-intro.tsx
-msgid "Every agent on your computer, in your hand."
-msgstr "Every agent on your computer, in your hand"
-
-#: src/components/launch-intro.tsx
-msgid "Every changed file in one folder tree with line totals. Open a patch, or discard a file from its menu."
-msgstr "Every changed file in one folder tree with line totals. Open a patch, or discard a file from its menu"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Every screen in the app."
@@ -2763,6 +2750,10 @@ msgstr "Frequent"
 #: src/components/task-row.tsx
 msgid "from {requester}"
 msgstr "from {requester}"
+
+#: src/components/launch-intro.tsx
+msgid "From a goal to work in motion."
+msgstr "From a goal to work in motion"
 
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
@@ -3211,6 +3202,10 @@ msgstr "Keep typing to narrow down"
 msgid "Keys"
 msgstr "Keys"
 
+#: src/components/launch-intro.tsx
+msgid "Know what is coming next."
+msgstr "Know what is coming next"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
 msgid "Language"
@@ -3419,10 +3414,6 @@ msgstr "Looking for a simulator"
 msgid "Mac mini · Office"
 msgstr "Mac mini · Office"
 
-#: src/components/launch-intro.tsx
-msgid "Make it yours"
-msgstr "Make it yours"
-
 #: src/components/settings-fleet-peers.tsx
 msgid "Make sure the computer is reachable, then try again."
 msgstr "Make sure the computer is reachable, then try again"
@@ -3591,10 +3582,6 @@ msgstr "Muqun has no fonts of its own. Add one and it is kept on this device"
 msgid "Muqun is locked"
 msgstr "Muqun is locked"
 
-#: src/components/launch-intro.tsx
-msgid "Muqun pairs with a Gateway on your own machine and puts its coding agents and terminals on your phone or tablet."
-msgstr "Muqun pairs with a Gateway on your own machine and puts its coding agents and terminals on your phone or tablet"
-
 #: src/components/pairing-camera.tsx
 msgid "Muqun reads the Gateway's QR code through the camera. Nothing is recorded."
 msgstr "Muqun reads the Gateway's QR code through the camera. Nothing is recorded"
@@ -3670,6 +3657,10 @@ msgstr "New group"
 #: src/components/ssh-host-key-dialog.tsx
 msgid "New host key"
 msgstr "New host key"
+
+#: src/components/launch-intro.tsx
+msgid "New in 4.0"
+msgstr "New in 4.0"
 
 #: src/components/collaboration-notice.tsx
 msgid "New output available · refresh"
@@ -4053,10 +4044,6 @@ msgstr "On"
 msgid "On a tablet, Home is a two-page spread, work sheets fill the screen, and the on-screen keyboard is a whole keyboard with F-keys and sticky modifiers."
 msgstr "On a tablet, Home is a two-page spread, work sheets fill the screen, and the on-screen keyboard is a whole keyboard with F-keys and sticky modifiers"
 
-#: src/components/launch-intro.tsx
-msgid "On a tablet, Home opens as a two-page spread and the on-screen keyboard is a whole keyboard."
-msgstr "On a tablet, Home opens as a two-page spread and the on-screen keyboard is a whole keyboard"
-
 #: src/lib/release-notes.ts
 msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
 msgstr "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu"
@@ -4246,10 +4233,6 @@ msgstr "Open workspace {0}, {panelCount, plural, one {# running} other {# runnin
 #: src/app/settings-voice.tsx
 msgid "OpenAI requires an API key and model. Compatible services may provide their own defaults. Your API key is stored securely on this device."
 msgstr "OpenAI requires an API key and model. Compatible services may provide their own defaults. Your API key is stored securely on this device"
-
-#: src/components/launch-intro.tsx
-msgid "OpenCode, DeepSeek and T3 Code side by side, each with its own tile, sessions and workbench."
-msgstr "OpenCode, DeepSeek and T3 Code side by side, each with its own tile, sessions and workbench"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -4654,6 +4637,10 @@ msgstr "Read a file"
 #: src/i18n/labels.ts
 msgid "Read outside the workspace"
 msgstr "Read outside the workspace"
+
+#: src/components/launch-intro.tsx
+msgid "Read release notes before downloading. Follow real download progress, then restart when the update is ready—or leave it for later."
+msgstr "Read release notes before downloading. Follow real download progress, then restart when the update is ready—or leave it for later"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Read-only: symbol search, file discovery, dependency tracing."
@@ -5178,10 +5165,6 @@ msgstr "Scan the Gateway QR"
 msgid "Scan the Gateway’s QR code, or enter its address."
 msgstr "Scan the Gateway’s QR code, or enter its address"
 
-#: src/components/launch-intro.tsx
-msgid "Scan the QR code of a Gateway on your own computer. No account, no relay, end-to-end encrypted."
-msgstr "Scan the QR code of a Gateway on your own computer. No account, no relay, end-to-end encrypted"
-
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
 msgstr "Scanning needs a camera, which this browser does not offer"
@@ -5403,10 +5386,6 @@ msgstr "Set up on the host"
 #: src/components/pad-server-rail.tsx
 msgid "Settings"
 msgstr "Settings"
-
-#: src/components/launch-intro.tsx
-msgid "Several agents, one computer"
-msgstr "Several agents, one computer"
 
 #: src/components/agent-tool-card.tsx
 msgid "Several answers"
@@ -5767,6 +5746,10 @@ msgstr "Steer"
 #: src/components/agent-composer.tsx
 msgid "Steer running agent"
 msgstr "Steer running agent"
+
+#: src/components/launch-intro.tsx
+msgid "Step {position} of {count}"
+msgstr "Step {position} of {count}"
 
 #: src/components/tool-call-code-rows.tsx
 msgid "Still arriving"
@@ -6190,17 +6173,9 @@ msgstr "The new terminal was created, but could not open it"
 msgid "The previous send could not be checked."
 msgstr "The previous send could not be checked"
 
-#: src/components/launch-intro.tsx
-msgid "The question comes to you"
-msgstr "The question comes to you"
-
 #: src/i18n/labels.ts
 msgid "The raw pane, on its grid and in its own colours."
 msgstr "The raw pane, on its grid and in its own colours"
-
-#: src/components/launch-intro.tsx
-msgid "The real terminal"
-msgstr "The real terminal"
 
 #: src/components/app-error-boundary.tsx
 msgid "The screen hit an error. Try again — your computers stay paired."
@@ -7002,10 +6977,6 @@ msgstr "What is running"
 msgid "What's new"
 msgstr "What's new"
 
-#: src/components/launch-intro.tsx
-msgid "When an agent stops for a decision, it arrives as a push. Approve or deny from the Lock Screen."
-msgstr "When an agent stops for a decision, it arrives as a push. Approve or deny from the Lock Screen"
-
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
 msgstr "While you were away"
@@ -7099,8 +7070,8 @@ msgid "Your agents, anywhere."
 msgstr "Your agents, anywhere"
 
 #: src/components/launch-intro.tsx
-msgid "Your machine, your rules"
-msgstr "Your machine, your rules"
+msgid "Your checkout, in one workspace."
+msgstr "Your checkout, in one workspace"
 
 #: src/components/agent-message-block.tsx
 msgid "Your message"

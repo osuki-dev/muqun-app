@@ -458,10 +458,6 @@ msgstr "模擬器不只是看，還能操作，因此預覽只在 Tailscale 或 
 msgid "A simulator that was shut down can take a minute to come up."
 msgstr "已關機的模擬器可能需要一分鐘才能啟動"
 
-#: src/components/launch-intro.tsx
-msgid "A spread on the Pad"
-msgstr "平板上的雙頁版面"
-
 #: src/components/server-terminal-workspace.tsx
 msgid "A terminal was created. Check it before sending again — your task is still here."
 msgstr "已經建立了一個終端機。再次傳送前先查看一下——你的任務還在"
@@ -881,6 +877,7 @@ msgstr "自主軟體工程：編輯檔案、執行指令、執行測試"
 msgid "Available modes"
 msgstr "可用模式"
 
+#: src/components/launch-intro.tsx
 #: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back"
@@ -1080,8 +1077,8 @@ msgid "Changes"
 msgstr "變更"
 
 #: src/components/launch-intro.tsx
-msgid "Changes as a tree"
-msgstr "變更一目了然"
+msgid "Changes and Lazygit now live together. Move between linked worktrees when your Gateway supports them."
+msgstr "變更與 Lazygit 現在整合在一起。Gateway 支援時，還可切換關聯的工作樹"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Changes coloured backgrounds, not text, icons or artwork"
@@ -1142,6 +1139,10 @@ msgstr "檢查中…"
 #: src/components/home-target-sheet.tsx
 msgid "Choose a computer"
 msgstr "選擇電腦"
+
+#: src/components/launch-intro.tsx
+msgid "Choose a computer and an agent, then send your goal from Home. Follow tasks and decisions in the same place."
+msgstr "選擇電腦和代理，直接從首頁傳送目標。在同一處追蹤任務和待處理的決策"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Choose a mode"
@@ -1548,6 +1549,7 @@ msgid "Connecting…"
 msgstr "連線中…"
 
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "連線"
@@ -1578,6 +1580,7 @@ msgid "Context used"
 msgstr "上下文佔用"
 
 #: src/app/explore.tsx
+#: src/components/launch-intro.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
@@ -2158,10 +2161,6 @@ msgstr "無法更新工作階段"
 msgid "Could not upload the file."
 msgstr "無法上傳檔案"
 
-#: src/components/launch-intro.tsx
-msgid "Cover Courier comes built in. Install a theme or pick a colour pack, and the whole app follows."
-msgstr "內建 Cover Courier 主題。安裝一個主題或選一套配色，整個應用程式隨之改變"
-
 #: src/lib/release-notes.ts
 msgid "Cover Courier is built in and worn until you pick a theme, and Interface background opacity now reaches every sheet and notice."
 msgstr "內建 Cover Courier 主題，在你選定主題前預設使用；介面背景不透明度現在也作用於所有面板和通知"
@@ -2443,10 +2442,6 @@ msgstr "正在下載…"
 msgid "Draft the notes for the next build"
 msgstr "草擬下一版的發行說明"
 
-#: src/components/launch-intro.tsx
-msgid "Drawn on the GPU with Skia, with real keys and full tmux control. nvim, less and REPLs behave."
-msgstr "由 Skia 在 GPU 上繪製，按鍵真實，完整掌控 tmux。nvim、less 和各種 REPL 都能正常使用"
-
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
 msgid "Each device holds its own token for {0}."
@@ -2546,14 +2541,6 @@ msgstr "按兩次 Escape"
 #: src/components/agent-context-sheet.tsx
 msgid "Estimated cost"
 msgstr "預估費用"
-
-#: src/components/launch-intro.tsx
-msgid "Every agent on your computer, in your hand."
-msgstr "電腦上的每個代理，盡在掌中"
-
-#: src/components/launch-intro.tsx
-msgid "Every changed file in one folder tree with line totals. Open a patch, or discard a file from its menu."
-msgstr "所有變更的檔案匯成一棵目錄樹，附帶增刪行數。打開查看修補，或從檔案選單裡捨棄變更"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Every screen in the app."
@@ -2763,6 +2750,10 @@ msgstr "常用"
 #: src/components/task-row.tsx
 msgid "from {requester}"
 msgstr "來自 {requester}"
+
+#: src/components/launch-intro.tsx
+msgid "From a goal to work in motion."
+msgstr "從一個目標，開始推進工作"
 
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
@@ -3211,6 +3202,10 @@ msgstr "繼續輸入以縮小範圍"
 msgid "Keys"
 msgstr "按鍵"
 
+#: src/components/launch-intro.tsx
+msgid "Know what is coming next."
+msgstr "更新之前，先了解新變化"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
 msgid "Language"
@@ -3419,10 +3414,6 @@ msgstr "正在尋找模擬器"
 msgid "Mac mini · Office"
 msgstr "Mac mini · 辦公室"
 
-#: src/components/launch-intro.tsx
-msgid "Make it yours"
-msgstr "打造你的專屬風格"
-
 #: src/components/settings-fleet-peers.tsx
 msgid "Make sure the computer is reachable, then try again."
 msgstr "請確認這台電腦可以連線，然後再試一次"
@@ -3591,10 +3582,6 @@ msgstr "Muqun 自己不提供字型。加入後會保存在本機"
 msgid "Muqun is locked"
 msgstr "牧群已鎖定"
 
-#: src/components/launch-intro.tsx
-msgid "Muqun pairs with a Gateway on your own machine and puts its coding agents and terminals on your phone or tablet."
-msgstr "Muqun 與你自己電腦上的 Gateway 配對，把那裡的程式設計代理和終端機搬到你的手機或平板上"
-
 #: src/components/pairing-camera.tsx
 msgid "Muqun reads the Gateway's QR code through the camera. Nothing is recorded."
 msgstr "Muqun 透過相機讀取 Gateway 的 QR 碼，不會錄下任何內容"
@@ -3670,6 +3657,10 @@ msgstr "新增群組"
 #: src/components/ssh-host-key-dialog.tsx
 msgid "New host key"
 msgstr "新的主機金鑰"
+
+#: src/components/launch-intro.tsx
+msgid "New in 4.0"
+msgstr "4.0 新亮點"
 
 #: src/components/collaboration-notice.tsx
 msgid "New output available · refresh"
@@ -4053,10 +4044,6 @@ msgstr "開啟"
 msgid "On a tablet, Home is a two-page spread, work sheets fill the screen, and the on-screen keyboard is a whole keyboard with F-keys and sticky modifiers."
 msgstr "在平板上，主畫面以雙頁展開，工作面板鋪滿全螢幕，螢幕鍵盤也成了帶 F 鍵和黏滯修飾鍵的完整鍵盤"
 
-#: src/components/launch-intro.tsx
-msgid "On a tablet, Home opens as a two-page spread and the on-screen keyboard is a whole keyboard."
-msgstr "在平板上，主畫面以雙頁展開，螢幕鍵盤也是一整副完整的鍵盤"
-
 #: src/lib/release-notes.ts
 msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
 msgstr "終端機和代理工作階段共用同一個變更面板：變更的檔案以目錄樹呈現並附帶行數，標題下顯示分支，檔案選單裡可以捨棄變更"
@@ -4246,10 +4233,6 @@ msgstr "開啟工作區 {0}，{panelCount, plural, one {# 個執行中} other {#
 #: src/app/settings-voice.tsx
 msgid "OpenAI requires an API key and model. Compatible services may provide their own defaults. Your API key is stored securely on this device."
 msgstr "OpenAI 需要 API 金鑰和模型。相容服務可能提供自己的預設值。API 金鑰會安全地儲存在此裝置上"
-
-#: src/components/launch-intro.tsx
-msgid "OpenCode, DeepSeek and T3 Code side by side, each with its own tile, sessions and workbench."
-msgstr "OpenCode、DeepSeek 和 T3 Code 並排登場，各有自己的啟動磚、工作階段和工作台"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -4654,6 +4637,10 @@ msgstr "讀取檔案"
 #: src/i18n/labels.ts
 msgid "Read outside the workspace"
 msgstr "讀取工作區之外的內容"
+
+#: src/components/launch-intro.tsx
+msgid "Read release notes before downloading. Follow real download progress, then restart when the update is ready—or leave it for later."
+msgstr "下載前先閱讀更新說明。查看實際下載進度，準備好後重新啟動，也可以留待稍後"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Read-only: symbol search, file discovery, dependency tracing."
@@ -5178,10 +5165,6 @@ msgstr "掃描 Gateway 的 QR code"
 msgid "Scan the Gateway’s QR code, or enter its address."
 msgstr "掃描 Gateway 的 QR code，或輸入它的位址"
 
-#: src/components/launch-intro.tsx
-msgid "Scan the QR code of a Gateway on your own computer. No account, no relay, end-to-end encrypted."
-msgstr "掃描你自己電腦上 Gateway 的 QR 碼即可。無需帳號，沒有中繼，端對端加密"
-
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
 msgstr "掃描需要相機，這個瀏覽器沒有提供"
@@ -5403,10 +5386,6 @@ msgstr "請在主機上設定"
 #: src/components/pad-server-rail.tsx
 msgid "Settings"
 msgstr "設定"
-
-#: src/components/launch-intro.tsx
-msgid "Several agents, one computer"
-msgstr "一台電腦，多個代理"
 
 #: src/components/agent-tool-card.tsx
 msgid "Several answers"
@@ -5767,6 +5746,10 @@ msgstr "插話"
 #: src/components/agent-composer.tsx
 msgid "Steer running agent"
 msgstr "對執行中的代理進行插話指導"
+
+#: src/components/launch-intro.tsx
+msgid "Step {position} of {count}"
+msgstr "第 {position} 步，共 {count} 步"
 
 #: src/components/tool-call-code-rows.tsx
 msgid "Still arriving"
@@ -6190,17 +6173,9 @@ msgstr "已建立新的終端機，但無法開啟"
 msgid "The previous send could not be checked."
 msgstr "無法核對上次傳送的狀態"
 
-#: src/components/launch-intro.tsx
-msgid "The question comes to you"
-msgstr "問題會來找你"
-
 #: src/i18n/labels.ts
 msgid "The raw pane, on its grid and in its own colours."
 msgstr "原始面板，保留它的字元格線與色彩"
-
-#: src/components/launch-intro.tsx
-msgid "The real terminal"
-msgstr "真正的終端機"
 
 #: src/components/app-error-boundary.tsx
 msgid "The screen hit an error. Try again — your computers stay paired."
@@ -7002,10 +6977,6 @@ msgstr "正在執行的項目"
 msgid "What's new"
 msgstr "新功能"
 
-#: src/components/launch-intro.tsx
-msgid "When an agent stops for a decision, it arrives as a push. Approve or deny from the Lock Screen."
-msgstr "代理停下來等你決定時，問題會以推播送達。在鎖定畫面上就能核准或拒絕"
-
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
 msgstr "離開期間"
@@ -7099,8 +7070,8 @@ msgid "Your agents, anywhere."
 msgstr "你的代理程式，隨時隨地"
 
 #: src/components/launch-intro.tsx
-msgid "Your machine, your rules"
-msgstr "你的電腦，你說了算"
+msgid "Your checkout, in one workspace."
+msgstr "一個工作區，掌握目前的檢出"
 
 #: src/components/agent-message-block.tsx
 msgid "Your message"

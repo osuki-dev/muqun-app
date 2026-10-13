@@ -458,10 +458,6 @@ msgstr "模拟器不只能看，还能操作，因此预览只在 Tailscale 或 
 msgid "A simulator that was shut down can take a minute to come up."
 msgstr "已关机的模拟器可能需要一分钟才能启动"
 
-#: src/components/launch-intro.tsx
-msgid "A spread on the Pad"
-msgstr "平板上的双页布局"
-
 #: src/components/server-terminal-workspace.tsx
 msgid "A terminal was created. Check it before sending again — your task is still here."
 msgstr "已经创建了一个终端。再次发送前先查看一下——你的任务还在"
@@ -881,6 +877,7 @@ msgstr "自主软件工程：编辑文件、执行命令、运行测试"
 msgid "Available modes"
 msgstr "可用模式"
 
+#: src/components/launch-intro.tsx
 #: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back"
@@ -1080,8 +1077,8 @@ msgid "Changes"
 msgstr "改动"
 
 #: src/components/launch-intro.tsx
-msgid "Changes as a tree"
-msgstr "改动一目了然"
+msgid "Changes and Lazygit now live together. Move between linked worktrees when your Gateway supports them."
+msgstr "变更与 Lazygit 现在整合在一起。Gateway 支持时，还可切换关联的工作树"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Changes coloured backgrounds, not text, icons or artwork"
@@ -1142,6 +1139,10 @@ msgstr "检查中…"
 #: src/components/home-target-sheet.tsx
 msgid "Choose a computer"
 msgstr "选择电脑"
+
+#: src/components/launch-intro.tsx
+msgid "Choose a computer and an agent, then send your goal from Home. Follow tasks and decisions in the same place."
+msgstr "选择电脑和代理，直接从首页发送目标。在同一处跟进任务和待处理的决策"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Choose a mode"
@@ -1548,6 +1549,7 @@ msgid "Connecting…"
 msgstr "连接中…"
 
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "连接"
@@ -1578,6 +1580,7 @@ msgid "Context used"
 msgstr "上下文占用"
 
 #: src/app/explore.tsx
+#: src/components/launch-intro.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
@@ -2158,10 +2161,6 @@ msgstr "无法更新会话"
 msgid "Could not upload the file."
 msgstr "无法上传文件"
 
-#: src/components/launch-intro.tsx
-msgid "Cover Courier comes built in. Install a theme or pick a colour pack, and the whole app follows."
-msgstr "内置 Cover Courier 主题。安装一个主题或选一套配色，整个应用随之改变"
-
 #: src/lib/release-notes.ts
 msgid "Cover Courier is built in and worn until you pick a theme, and Interface background opacity now reaches every sheet and notice."
 msgstr "内置 Cover Courier 主题，在你选定主题前默认使用；界面背景不透明度现在也作用于所有面板和通知"
@@ -2443,10 +2442,6 @@ msgstr "正在下载…"
 msgid "Draft the notes for the next build"
 msgstr "草拟下一个版本的发布说明"
 
-#: src/components/launch-intro.tsx
-msgid "Drawn on the GPU with Skia, with real keys and full tmux control. nvim, less and REPLs behave."
-msgstr "由 Skia 在 GPU 上绘制，按键真实，完整掌控 tmux。nvim、less 和各种 REPL 都能正常使用"
-
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
 msgid "Each device holds its own token for {0}."
@@ -2546,14 +2541,6 @@ msgstr "按两次 Escape"
 #: src/components/agent-context-sheet.tsx
 msgid "Estimated cost"
 msgstr "预计费用"
-
-#: src/components/launch-intro.tsx
-msgid "Every agent on your computer, in your hand."
-msgstr "电脑上的每个智能体，尽在掌中"
-
-#: src/components/launch-intro.tsx
-msgid "Every changed file in one folder tree with line totals. Open a patch, or discard a file from its menu."
-msgstr "所有改动的文件汇成一棵目录树，附带增删行数。打开查看补丁，或从文件菜单里放弃改动"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Every screen in the app."
@@ -2763,6 +2750,10 @@ msgstr "常用"
 #: src/components/task-row.tsx
 msgid "from {requester}"
 msgstr "来自 {requester}"
+
+#: src/components/launch-intro.tsx
+msgid "From a goal to work in motion."
+msgstr "从一个目标，开始推进工作"
 
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
@@ -3211,6 +3202,10 @@ msgstr "继续输入以缩小范围"
 msgid "Keys"
 msgstr "按键"
 
+#: src/components/launch-intro.tsx
+msgid "Know what is coming next."
+msgstr "更新之前，先了解新变化"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
 msgid "Language"
@@ -3419,10 +3414,6 @@ msgstr "正在查找模拟器"
 msgid "Mac mini · Office"
 msgstr "Mac mini · 办公室"
 
-#: src/components/launch-intro.tsx
-msgid "Make it yours"
-msgstr "打造你的专属风格"
-
 #: src/components/settings-fleet-peers.tsx
 msgid "Make sure the computer is reachable, then try again."
 msgstr "请确认这台电脑可以连接，然后重试"
@@ -3591,10 +3582,6 @@ msgstr "Muqun 自己不提供字体。添加后会保存在本机"
 msgid "Muqun is locked"
 msgstr "牧群已锁定"
 
-#: src/components/launch-intro.tsx
-msgid "Muqun pairs with a Gateway on your own machine and puts its coding agents and terminals on your phone or tablet."
-msgstr "Muqun 与你自己电脑上的 Gateway 配对，把那里的编程智能体和终端搬到你的手机或平板上"
-
 #: src/components/pairing-camera.tsx
 msgid "Muqun reads the Gateway's QR code through the camera. Nothing is recorded."
 msgstr "Muqun 通过相机读取 Gateway 的二维码，不会录制任何内容"
@@ -3670,6 +3657,10 @@ msgstr "新建分组"
 #: src/components/ssh-host-key-dialog.tsx
 msgid "New host key"
 msgstr "新的主机密钥"
+
+#: src/components/launch-intro.tsx
+msgid "New in 4.0"
+msgstr "4.0 新亮点"
 
 #: src/components/collaboration-notice.tsx
 msgid "New output available · refresh"
@@ -4053,10 +4044,6 @@ msgstr "开启"
 msgid "On a tablet, Home is a two-page spread, work sheets fill the screen, and the on-screen keyboard is a whole keyboard with F-keys and sticky modifiers."
 msgstr "在平板上，主页以双页展开，工作面板铺满全屏，屏幕键盘也成了带 F 键和粘滞修饰键的完整键盘"
 
-#: src/components/launch-intro.tsx
-msgid "On a tablet, Home opens as a two-page spread and the on-screen keyboard is a whole keyboard."
-msgstr "在平板上，主页以双页展开，屏幕键盘也是一整副完整的键盘"
-
 #: src/lib/release-notes.ts
 msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
 msgstr "终端和智能体会话共用同一个改动面板：改动的文件以目录树呈现并附带行数，标题下显示分支，文件菜单里可以放弃改动"
@@ -4246,10 +4233,6 @@ msgstr "打开工作区 {0}，{panelCount, plural, one {# 个运行中} other {#
 #: src/app/settings-voice.tsx
 msgid "OpenAI requires an API key and model. Compatible services may provide their own defaults. Your API key is stored securely on this device."
 msgstr "OpenAI 需要 API 密钥和模型。兼容服务可能提供自己的默认值。API 密钥会安全地保存在此设备上"
-
-#: src/components/launch-intro.tsx
-msgid "OpenCode, DeepSeek and T3 Code side by side, each with its own tile, sessions and workbench."
-msgstr "OpenCode、DeepSeek 和 T3 Code 并排登场，各有自己的启动磁贴、会话和工作台"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -4654,6 +4637,10 @@ msgstr "读取文件"
 #: src/i18n/labels.ts
 msgid "Read outside the workspace"
 msgstr "读取工作区之外的内容"
+
+#: src/components/launch-intro.tsx
+msgid "Read release notes before downloading. Follow real download progress, then restart when the update is ready—or leave it for later."
+msgstr "下载前先阅读更新说明。查看真实下载进度，准备好后重启，也可以留待稍后"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Read-only: symbol search, file discovery, dependency tracing."
@@ -5178,10 +5165,6 @@ msgstr "扫描 Gateway 的二维码"
 msgid "Scan the Gateway’s QR code, or enter its address."
 msgstr "扫描 Gateway 的二维码，或输入它的地址"
 
-#: src/components/launch-intro.tsx
-msgid "Scan the QR code of a Gateway on your own computer. No account, no relay, end-to-end encrypted."
-msgstr "扫描你自己电脑上 Gateway 的二维码即可。无需账号，没有中转，端到端加密"
-
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
 msgstr "扫描需要相机，而这个浏览器没有提供"
@@ -5403,10 +5386,6 @@ msgstr "请在主机上配置"
 #: src/components/pad-server-rail.tsx
 msgid "Settings"
 msgstr "设置"
-
-#: src/components/launch-intro.tsx
-msgid "Several agents, one computer"
-msgstr "一台电脑，多个智能体"
 
 #: src/components/agent-tool-card.tsx
 msgid "Several answers"
@@ -5767,6 +5746,10 @@ msgstr "插话"
 #: src/components/agent-composer.tsx
 msgid "Steer running agent"
 msgstr "对运行中的智能体进行插话指导"
+
+#: src/components/launch-intro.tsx
+msgid "Step {position} of {count}"
+msgstr "第 {position} 步，共 {count} 步"
 
 #: src/components/tool-call-code-rows.tsx
 msgid "Still arriving"
@@ -6190,17 +6173,9 @@ msgstr "新终端已创建，但无法打开"
 msgid "The previous send could not be checked."
 msgstr "无法核对上次发送的状态"
 
-#: src/components/launch-intro.tsx
-msgid "The question comes to you"
-msgstr "问题会来找你"
-
 #: src/i18n/labels.ts
 msgid "The raw pane, on its grid and in its own colours."
 msgstr "原始面板，保留它的字符网格和配色"
-
-#: src/components/launch-intro.tsx
-msgid "The real terminal"
-msgstr "真正的终端"
 
 #: src/components/app-error-boundary.tsx
 msgid "The screen hit an error. Try again — your computers stay paired."
@@ -7002,10 +6977,6 @@ msgstr "正在运行的项目"
 msgid "What's new"
 msgstr "新功能"
 
-#: src/components/launch-intro.tsx
-msgid "When an agent stops for a decision, it arrives as a push. Approve or deny from the Lock Screen."
-msgstr "智能体停下来等你决定时，问题会以推送送达。在锁屏上就能批准或拒绝"
-
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
 msgstr "离开期间"
@@ -7099,8 +7070,8 @@ msgid "Your agents, anywhere."
 msgstr "你的代理，随时随地"
 
 #: src/components/launch-intro.tsx
-msgid "Your machine, your rules"
-msgstr "你的电脑，你说了算"
+msgid "Your checkout, in one workspace."
+msgstr "一个工作区，掌握当前检出"
 
 #: src/components/agent-message-block.tsx
 msgid "Your message"
