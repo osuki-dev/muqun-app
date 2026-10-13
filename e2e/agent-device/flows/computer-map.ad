@@ -5,6 +5,7 @@ press "label=\"List\""
 is visible "label=\"This app\""
 press "label=\"Map\""
 is visible "id=\"computer-map-screen\""
+is visible "label=\"Close\""
 screenshot "shots/computer-map.png"
-back --system
+press "label=\"Close\""
 wait "id=\"settings-servers-sheet\"" 10000
