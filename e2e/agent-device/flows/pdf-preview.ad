@@ -1,0 +1,23 @@
+# Real three-page PDF bytes use the native renderer in the offline demo.
+wait "label=\"Open files\"" 10000
+press "label=\"Open files\""
+wait "id=\"artifacts-search\"" 10000
+fill "id=\"artifacts-search\"" "design-spec"
+keyboard dismiss
+wait "label=\"Open design-spec.pdf\"" 10000
+press "label=\"Open design-spec.pdf\""
+wait "id=\"pdf-asset-preview\"" 10000
+wait "text=\"Page 1 of 3\"" 15000
+is hidden "id=\"pdf-preview-error\""
+screenshot "shots/pdf-first-page.png"
+scroll down --pixels 2400
+wait "text=\"Page 3 of 3\"" 10000
+screenshot "shots/pdf-last-page.png"
+# System back releases the native document and its temporary file.
+back --system
+wait "id=\"artifacts-search\"" 10000
+press "label=\"Open design-spec.pdf\""
+wait "text=\"Page 1 of 3\"" 15000
+press "label=\"Close file\""
+wait "id=\"artifacts-search\"" 10000
+back --system

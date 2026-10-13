@@ -175,21 +175,6 @@ wait stable 400 5000
 # section s57
 is visible "${TARGET}"
 
-# section s58
-is visible "${TARGET}"
-
-# section s59
-is visible "${TARGET}"
-
-# section s60
-is visible "${TARGET}"
-
-# section s61
-is visible "${TARGET}"
-
-# section s62
-is visible "${TARGET}"
-
 # section s63
 press "${TARGET}"
 
