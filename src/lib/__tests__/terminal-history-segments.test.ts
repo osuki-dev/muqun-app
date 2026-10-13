@@ -181,6 +181,7 @@ test('the production reader binds the endpoint and credentials, never reusing a 
       Error,
       CAPTURED_HISTORY_PAGE_ROWS,
       parseCapturedSegmentsPage,
+      isDemoRecord: () => false,
       readGatewayRecordJson: async (record: GatewayRecord, path: string) => {
         calls.push({ record, path });
         if (path.includes('before=expired')) throw new Error('HTTP 410');

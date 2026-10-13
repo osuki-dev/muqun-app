@@ -165,6 +165,7 @@ import {
   setDemoActive,
 } from './demo-gateway';
 import type { GatewayRecord } from './gateway-storage';
+import { demoCapturedHistory } from './demo-captured-history';
 import { withSessionAvailability } from './session-switcher';
 import { validatePairingTransport, type PairingPayload } from './pairing';
 import {
@@ -3380,7 +3381,9 @@ export async function readPaneHistorySegments(
   if (before) query.set('before', before);
   const path = `/api/sessions/${encodeURIComponent(sessionId)}/panes/${encodeURIComponent(paneId)}/history/segments?${query.toString()}`;
   try {
-    const value = await readGatewayRecordJson(record, path);
+    const value = isDemoRecord(record)
+      ? demoCapturedHistory(sessionId, paneId, before, request.limit)
+      : await readGatewayRecordJson(record, path);
     const page = parseCapturedSegmentsPage(value, request);
     return page
       ? { ok: true, page }

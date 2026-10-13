@@ -94,6 +94,12 @@
       "platforms": ["ios", "android"]
     },
     {
+      "name": "pane-history",
+      "program": "flows/pane-history",
+      "tags": ["full", "terminal", "workspace"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "agent-session-tree",
       "program": "flows/agent-session-tree",
       "tags": ["full", "agents", "workspace"],
@@ -8555,6 +8561,88 @@
         "target": { "id": "task-row-demo-command-peer" },
         "mode": "hidden",
         "run": "flows/task-result.ad#closed"
+      }
+    ],
+    "flows/pane-history": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/pane-history.ad#open" },
+      {
+        "target": { "id": "pane-history-sheet" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/pane-history.ad#visible"
+      },
+      {
+        "target": { "text": "Page 1.*240 lines" },
+        "mode": "visible",
+        "run": "flows/pane-history.ad#visible"
+      },
+      {
+        "target": { "text": "Observation started" },
+        "mode": "visible",
+        "run": "flows/pane-history.ad#visible"
+      },
+      {
+        "target": { "text": "Gateway restarted" },
+        "mode": "scroll",
+        "direction": "down",
+        "run": "flows/pane-history.ad#scroll"
+      },
+      {
+        "target": { "text": "Gateway restarted" },
+        "mode": "visible",
+        "run": "flows/pane-history.ad#visible"
+      },
+      {
+        "target": { "id": "pane-history-older" },
+        "mode": "press",
+        "run": "flows/pane-history.ad#press"
+      },
+      {
+        "target": { "text": "Page 2.*240 lines" },
+        "mode": "visible",
+        "run": "flows/pane-history.ad#visible"
+      },
+      {
+        "target": { "text": ".*Continued on another page" },
+        "mode": "visible",
+        "run": "flows/pane-history.ad#visible"
+      },
+      {
+        "target": { "id": "pane-history-older" },
+        "mode": "press",
+        "run": "flows/pane-history.ad#press"
+      },
+      {
+        "target": { "text": "Page 3.*40 lines" },
+        "mode": "visible",
+        "run": "flows/pane-history.ad#visible"
+      },
+      {
+        "target": { "id": "pane-history-newer" },
+        "mode": "press",
+        "run": "flows/pane-history.ad#press"
+      },
+      {
+        "target": { "text": "Page 2.*240 lines" },
+        "mode": "visible",
+        "run": "flows/pane-history.ad#visible"
+      },
+      {
+        "target": { "id": "pane-history-refresh" },
+        "mode": "press",
+        "run": "flows/pane-history.ad#press"
+      },
+      {
+        "target": { "text": "Page 1.*240 lines" },
+        "mode": "visible",
+        "run": "flows/pane-history.ad#visible"
+      },
+      { "run": "flows/pane-history.ad#close" },
+      {
+        "target": { "id": "pane-history-sheet" },
+        "mode": "hidden",
+        "run": "flows/pane-history.ad#closed"
       }
     ],
     "flows/agent-session-tree": [
