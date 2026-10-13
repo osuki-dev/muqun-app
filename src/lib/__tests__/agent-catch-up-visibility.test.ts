@@ -24,6 +24,7 @@ test('recovered foreground replies are read; external history, background, super
     'superseded',
     'running',
     'external',
+    'persisted',
   ] as const) {
     const marked: string[] = [];
     let timelineWrites = 0;
@@ -39,8 +40,13 @@ test('recovered foreground replies are read; external history, background, super
       syncRef: { current: { seq: 5, owed: false } },
       appActiveRef: { current: scenario !== 'background' },
       readRuntime: (): AgentSessionRuntime | undefined =>
-        scenario === 'external'
-          ? { source: 'terminal', interaction: 'unavailable', status: 'idle' }
+        scenario === 'external' || scenario === 'persisted'
+          ? {
+              source: 'terminal',
+              interaction: 'unavailable',
+              status: 'idle',
+              ...(scenario === 'persisted' ? { transcript: 'persisted' } : {}),
+            }
           : undefined,
       replaceAgentTranscript,
       askCatchUp,
@@ -68,7 +74,11 @@ test('recovered foreground replies are read; external history, background, super
     });
     await new Promise((yes) => setImmediate(yes));
     expect(timelineWrites).toBe(scenario === 'external' || scenario === 'superseded' ? 0 : 1);
-    expect(marked).toEqual(scenario === 'foreground' ? ['session-a'] : []);
-    expect(applied).toEqual(scenario === 'foreground' ? [['session-a', 123]] : []);
+    expect(marked).toEqual(
+      scenario === 'foreground' || scenario === 'persisted' ? ['session-a'] : []
+    );
+    expect(applied).toEqual(
+      scenario === 'foreground' || scenario === 'persisted' ? [['session-a', 123]] : []
+    );
   }
 });

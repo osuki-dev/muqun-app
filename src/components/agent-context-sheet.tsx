@@ -165,13 +165,13 @@ export const AgentContextSheet = memo(function AgentContextSheet({
    * last compaction -- so that is the capacity. The spend keeps its own row.
    */
   const live = contextUsage?.tokens ?? null;
-  const inContext = contextTokenTotal(live);
+  const inContext = contextUsage?.total_tokens ?? contextTokenTotal(live);
   const spent = contextTokenTotal(tokens);
   // No invented window, but no window thrown away either: the gateway states
   // one when OpenCode does, and the model catalogue states one for every model
   // it publishes. Only with neither is there nothing to draw a percentage in.
-  const limit = contextLimit ?? session?.limit?.context;
-  const ratio = contextFillRatio(live, limit);
+  const limit = contextUsage?.limit?.context ?? contextLimit ?? session?.limit?.context;
+  const ratio = contextFillRatio(live, limit, contextUsage?.total_tokens);
   const limitLabel =
     limit === undefined
       ? null
@@ -185,7 +185,11 @@ export const AgentContextSheet = memo(function AgentContextSheet({
         ? theme.colors.warning
         : theme.colors.primary;
   const costLabel =
-    cost === undefined || cost === null || cost === 0 ? t`Free` : `$${cost.toFixed(4)}`;
+    cost === undefined || cost === null
+      ? t`Not available`
+      : cost === 0
+        ? t`Free`
+        : `$${cost.toFixed(4)}`;
   // `modelName` is already normalized by the workbench, including its variant.
   // When it is unavailable, format the session reference by the same rule.
   const displayModelName = modelName || formatModelName(session?.model, '');
@@ -241,7 +245,7 @@ export const AgentContextSheet = memo(function AgentContextSheet({
                 ? t`${compact(inContext)} tokens the model last read`
                 : t`${compact(inContext)} of ${limitLabel} tokens the model can hold`}
           </Text>
-          {contextUsage ? (
+          {contextUsage?.messages !== undefined ? (
             <Text variant="caption" color={theme.colors.textSubtle}>
               {t`${contextUsage.messages} messages in context`}
             </Text>
@@ -292,7 +296,7 @@ export const AgentContextSheet = memo(function AgentContextSheet({
           title={t`Input`}
           meta={
             <Text variant="caption" color={theme.colors.textMuted}>
-              {compact(tokens?.input)}
+              {tokens?.input === undefined ? t`Not available` : compact(tokens.input)}
             </Text>
           }
         />
@@ -300,7 +304,7 @@ export const AgentContextSheet = memo(function AgentContextSheet({
           title={t`Output`}
           meta={
             <Text variant="caption" color={theme.colors.textMuted}>
-              {compact(tokens?.output)}
+              {tokens?.output === undefined ? t`Not available` : compact(tokens.output)}
             </Text>
           }
         />
@@ -308,7 +312,7 @@ export const AgentContextSheet = memo(function AgentContextSheet({
           title={t`Reasoning`}
           meta={
             <Text variant="caption" color={theme.colors.textMuted}>
-              {compact(tokens?.reasoning)}
+              {tokens?.reasoning === undefined ? t`Not available` : compact(tokens.reasoning)}
             </Text>
           }
         />
@@ -316,10 +320,49 @@ export const AgentContextSheet = memo(function AgentContextSheet({
           title={t`Cache read`}
           meta={
             <Text variant="caption" color={theme.colors.textMuted}>
-              {compact(tokens?.cache_read)}
+              {tokens?.cache_read === undefined ? t`Not available` : compact(tokens.cache_read)}
             </Text>
           }
         />
+
+        <SheetSceneRow
+          title={t`Cache write`}
+          meta={
+            <Text variant="caption" color={theme.colors.textMuted}>
+              {tokens?.cache_write === undefined ? t`Not available` : compact(tokens.cache_write)}
+            </Text>
+          }
+        />
+        {session?.git_info?.branch || session?.git_info?.sha ? (
+          <>
+            <SheetSceneGroupRule />
+            <SheetSceneGroupHeading title={t`Git snapshot`} />
+            {session.git_info.branch ? (
+              <SheetSceneRow
+                title={t`Branch`}
+                meta={
+                  <Text
+                    variant="caption"
+                    color={theme.colors.textMuted}
+                    numberOfLines={1}
+                    style={styles.metaWide}>
+                    {session.git_info.branch}
+                  </Text>
+                }
+              />
+            ) : null}
+            {session.git_info.sha ? (
+              <SheetSceneRow
+                title={t`Commit`}
+                meta={
+                  <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
+                    {session.git_info.sha.slice(0, 12)}
+                  </Text>
+                }
+              />
+            ) : null}
+          </>
+        ) : null}
 
         {onToggleReasoning || onToggleYolo ? (
           <>

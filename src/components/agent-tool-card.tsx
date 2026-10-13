@@ -449,7 +449,7 @@ export const AgentToolCard = memo(function AgentToolCard({
   // Only while it is pending: once the call has run, the result is what the
   // card is about and its arguments are in the body.
   const argumentLine = useMemo(() => (pending ? toolArgumentLine(input) : ''), [pending, input]);
-  const durationMs = toolDurationMs(part.time);
+  const durationMs = toolDurationMs(part.time, part.metadata);
   const truncated = part.truncated === true || parsed.truncated;
 
   /** The tray, opened on this call's own shell when the engine named one. */
@@ -593,7 +593,18 @@ export const AgentToolCard = memo(function AgentToolCard({
     if (kind === 'subagent') {
       const status = subagentStatusFromMetadata(part.metadata) ?? subagent?.state;
       if (status) {
-        nodes.push(<Chip key="sub" text={status} color={theme.colors.textMuted} />);
+        const labels: Record<string, string> = {
+          starting: t`Starting`,
+          working: t`Working`,
+          completed: t`Completed`,
+          failed: t`Failed`,
+          interrupted: t`Stopped`,
+          shutdown: t`Stopped`,
+          notFound: t`Unavailable`,
+        };
+        nodes.push(
+          <Chip key="sub" text={labels[status] ?? status} color={theme.colors.textMuted} />
+        );
       }
     }
     return nodes.length > 0 ? nodes : null;
@@ -682,7 +693,7 @@ export const AgentToolCard = memo(function AgentToolCard({
                 ? theme.colors.danger
                 : isBusyStatus(childStatus)
                   ? theme.colors.warning
-                  : theme.colors.success
+                  : theme.colors.textMuted
             }
           />
           <GitFork size={11} color={colors.accent} />

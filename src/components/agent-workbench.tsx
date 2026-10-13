@@ -1079,7 +1079,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * in total: a compaction drops the first and leaves the second alone, and a
    * gauge drawn from the spend would never come down.
    */
-  const [contextUsage, setContextUsage] = useState<AgentContextUsage | null>(null);
+  const [fetchedContextUsage, setContextUsage] = useState<{
+    serverId: string;
+    asid: string;
+    usage: AgentContextUsage;
+  } | null>(null);
+  const contextUsage =
+    sessionInfo?.context_usage ??
+    (fetchedContextUsage?.serverId === serverId && fetchedContextUsage.asid === activeAsid
+      ? fetchedContextUsage.usage
+      : null);
   /**
    * The subagent sessions under whichever root is open, keyed by parent.
    *
@@ -1680,8 +1689,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const refreshContext = useCallback(async () => {
     if (!activeAsid || !badgeLoads) return;
     const usage = await getAgentContext(activeAsid);
-    setContextUsage(usage);
-  }, [activeAsid, badgeLoads]);
+    setContextUsage({ serverId, asid: activeAsid, usage });
+  }, [activeAsid, badgeLoads, serverId]);
 
   /**
    * The four reads that feed the composer's chips, reachable without being
@@ -4865,7 +4874,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * "window not reported" was this app declining to read a number it already
    * had in hand.
    */
-  const contextLimit = sessionInfo?.limit?.context ?? activeModelInfo?.limit?.context;
+  const contextLimit =
+    contextUsage?.limit?.context ?? sessionInfo?.limit?.context ?? activeModelInfo?.limit?.context;
 
   /**
    * How many things the Background tasks sheet can actually show.

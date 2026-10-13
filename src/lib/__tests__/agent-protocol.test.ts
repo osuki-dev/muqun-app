@@ -1351,3 +1351,41 @@ describe('a tool part whose input is still streaming', () => {
     expect(part && part.type === 'tool' ? 'input_partial' in part : true).toBe(false);
   });
 });
+
+test('reported context occupancy stays distinct from cumulative usage and missing message counts', () => {
+  const session = parseAgentSessionInfo({
+    asid: 'native-thread',
+    tokens: { input: 900, output: 100 },
+    context_usage: {
+      tokens: { input: 60, output: 5, cache_read: 40, reasoning: 5 },
+      total_tokens: 80,
+      limit: { context: 200 },
+    },
+    git_info: { sha: 'revision', branch: 'feature', origin_url: 'https://example.test/repo' },
+    agent_name: 'Explorer',
+    agent_role: 'researcher',
+    parent_id: 'parent-thread',
+  });
+  expect(contextTokenTotal(session?.tokens)).toBe(1000);
+  expect(contextTokenTotal(session?.context_usage?.tokens)).toBe(110);
+  expect(
+    contextFillRatio(
+      session?.context_usage?.tokens,
+      session?.context_usage?.limit?.context,
+      session?.context_usage?.total_tokens
+    )
+  ).toBe(0.4);
+  expect(session?.context_usage?.messages).toBeUndefined();
+  expect(session?.git_info?.branch).toBe('feature');
+  expect(session?.agent_name).toBe('Explorer');
+  expect(session?.agent_role).toBe('researcher');
+  expect(session?.parent_id).toBe('parent-thread');
+  expect(parseAgentContextUsage({ total_tokens: -1 }).total_tokens).toBeUndefined();
+});
+
+test('reported tool duration works without invented absolute timestamps', () => {
+  expect(toolDurationMs(undefined, { durationMs: 321 })).toBe(321);
+  expect(toolDurationMs(undefined, { durationMs: -1 })).toBeUndefined();
+  expect(toolDurationMs(undefined, { durationMs: Number.NaN })).toBeUndefined();
+  expect(toolDurationMs({ ran: 100, completed: 120 }, { durationMs: 321 })).toBe(20);
+});

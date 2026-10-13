@@ -3,6 +3,7 @@ import { asRecord } from './record';
 export interface AgentSessionRuntime {
   source: 'native' | 'terminal' | 'unobserved';
   interaction: 'native' | 'terminal' | 'unavailable';
+  transcript?: 'live' | 'persisted' | 'snapshot';
   status?: 'idle' | 'working' | 'blocked' | 'starting' | 'completed' | 'unknown';
   terminal?: { session_id: string; pane_id: string; instance_id: string };
   reason?: 'not_loaded' | 'ambiguous_terminal' | 'terminal_unavailable';
@@ -25,6 +26,7 @@ export function parseAgentSessionRuntime(value: unknown): AgentSessionRuntime | 
   const source = knownSource ?? 'unobserved';
   let interaction = member(record?.interaction, INTERACTIONS) ?? 'unavailable';
   const status = member(record?.status, STATUSES);
+  const transcript = member(record?.transcript, ['live', 'persisted', 'snapshot'] as const);
   const reason = member(record?.reason, REASONS);
   const rawTerminal = asRecord(record?.terminal);
   const terminal =
@@ -50,6 +52,7 @@ export function parseAgentSessionRuntime(value: unknown): AgentSessionRuntime | 
     source,
     interaction,
     ...(status ? { status } : {}),
+    ...(transcript ? { transcript } : {}),
     ...(terminal ? { terminal } : {}),
     ...(reason ? { reason } : {}),
   };
@@ -59,12 +62,14 @@ export function nativeAgentInteraction(runtime: AgentSessionRuntime | undefined)
   return runtime === undefined || runtime.interaction === 'native';
 }
 
-/** External history is replaced only when the reader asks for a new snapshot. */
+/** Manual history stays frozen; subscribed live or persisted events retain normal viewport policy. */
 export function replaceAgentTranscript(
   mode: 'enter' | 'silent' | 'refresh',
   runtime: AgentSessionRuntime | undefined
 ): boolean {
-  return mode !== 'silent' || runtime === undefined || runtime.source === 'native';
+  if (mode !== 'silent' || runtime === undefined) return true;
+  if (runtime.transcript) return runtime.transcript !== 'snapshot';
+  return runtime.source === 'native';
 }
 
 export function agentSnapshotRefreshQuery(
