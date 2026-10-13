@@ -12,11 +12,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated from 'react-native-reanimated';
 
+import { useHomeArtworkForeground } from '@/hooks/use-home-artwork-foreground';
 import { useSharedSkiaImage } from '@/lib/skia-image-cache';
 import { useLaunchHomeArtwork } from '@/hooks/use-launch-home-artwork';
 import {
   artworkVisibleTop,
   editorialArtworkRect,
+  homeCoverSceneRect,
   HOME_COVER_BOTTOM_FEATHER_START,
 } from '@/lib/hero-feather';
 import { fadeIn, listLayout } from '@/lib/motion';
@@ -34,8 +36,12 @@ export function HomeEditorialArtwork({
   fill = false,
   onAvailabilityChange,
   onVisibleTopChange,
+  onForegroundChange,
+  fullBleed = false,
 }: {
   resolution: ResolvedHomeArtworkAsset;
+  onForegroundChange?: (source: string, foreground: boolean) => void;
+  fullBleed?: boolean;
   cover?: boolean;
   /** Take the height the layout gives it (the Pad cover block) instead of its own proportion. */
   fill?: boolean;
@@ -50,6 +56,8 @@ export function HomeEditorialArtwork({
       fill={fill}
       onAvailabilityChange={onAvailabilityChange}
       onVisibleTopChange={onVisibleTopChange}
+      onForegroundChange={onForegroundChange}
+      fullBleed={fullBleed}
     />
   );
 }
@@ -60,9 +68,13 @@ function HomeEditorialArtworkImage({
   fill,
   onAvailabilityChange,
   onVisibleTopChange,
+  onForegroundChange,
+  fullBleed,
 }: {
   resolution: ResolvedHomeArtworkAsset;
   cover: boolean;
+  onForegroundChange?: (source: string, foreground: boolean) => void;
+  fullBleed: boolean;
   fill: boolean;
   onAvailabilityChange?: (available: boolean) => void;
   onVisibleTopChange?: (source: string, top: number) => void;
@@ -81,18 +93,22 @@ function HomeEditorialArtworkImage({
     onAvailabilityChange?.(false);
   }, [onAvailabilityChange]);
   const image = useSharedSkiaImage(resolution.source, onError);
+  const foreground = useHomeArtworkForeground(image);
+  useEffect(() => {
+    if (image) onForegroundChange?.(resolution.source, foreground);
+  }, [image, resolution.source, foreground, onForegroundChange]);
   const { focalPoint, fit } = resolution.resolved.image;
   const imageRect = useMemo(
     () =>
       box && image
-        ? editorialArtworkRect(
+        ? (fullBleed && !foreground ? homeCoverSceneRect : editorialArtworkRect)(
             box,
             { width: image.width(), height: image.height() },
             fit,
             focalPoint
           )
         : null,
-    [box, focalPoint, image, fit]
+    [box, focalPoint, image, fit, fullBleed, foreground]
   );
   const visibleTop = useMemo(() => {
     if (!cover || !image) return 0;

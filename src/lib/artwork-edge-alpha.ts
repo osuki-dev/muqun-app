@@ -26,3 +26,27 @@ export function hasTransparentArtworkEdges(
   }
   return false;
 }
+
+/** Cover scenes can fade at their foot without becoming foreground portraits. */
+export function hasTransparentArtworkUpperEdges(
+  width: number,
+  height: number,
+  readAlpha: (x: number, y: number) => number | undefined
+): boolean {
+  if (width < 1 || height < 1) return false;
+  const right = Math.floor(width) - 1;
+  const middleY = Math.floor((height - 1) / 2);
+  const points = [
+    [0, 0],
+    [Math.floor(right / 2), 0],
+    [right, 0],
+    [0, middleY],
+    [right, middleY],
+  ];
+  let clear = 0;
+  for (const [x, y] of points) {
+    const alpha = readAlpha(x, y);
+    if (alpha !== undefined && alpha < 32 && ++clear >= 2) return true;
+  }
+  return false;
+}

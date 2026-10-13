@@ -10,7 +10,7 @@ import {
   vec,
   Image as SkiaImage,
 } from 'react-native-skia';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
 import Animated, {
   Extrapolation,
@@ -23,9 +23,11 @@ import { useSharedSkiaImage } from '@/lib/skia-image-cache';
 import {
   HOME_COVER_BOTTOM_FEATHER_START,
   homeCoverArtworkRect,
+  homeCoverSceneRect,
   heroFeatherGeometry,
 } from '@/lib/hero-feather';
 import { hasTransparentArtworkEdges } from '@/lib/artwork-edge-alpha';
+import { useHomeArtworkForeground } from '@/hooks/use-home-artwork-foreground';
 import { useLaunchHomeArtwork } from '@/hooks/use-launch-home-artwork';
 import { fadeIn, listLayout } from '@/lib/motion';
 import { homeCoverArtworkHeight, homeHeroMaxHeight } from '@/lib/responsive-layout';
@@ -100,10 +102,12 @@ export function HomeArtwork({
   onAvailabilityChange,
   maxHeight,
   cover = false,
+  onForegroundChange,
 }: {
   scrollY: SharedValue<number>;
   resolution: ResolvedHomeArtworkAsset;
   onAvailabilityChange?: (available: boolean) => void;
+  onForegroundChange?: (source: string, foreground: boolean) => void;
   /** A composition may use a smaller illustration without changing the theme asset. */
   maxHeight?: number;
   /** A theme's cover scene fills the header; ordinary illustrations keep the legacy band. */
@@ -124,6 +128,7 @@ export function HomeArtwork({
       source={resolution.source}
       band={band}
       cover={cover}
+      onForegroundChange={onForegroundChange}
       scrollY={scrollY}
       onAvailabilityChange={onAvailabilityChange}
     />
@@ -135,6 +140,7 @@ function HomeArtworkImage({
   source,
   band,
   cover,
+  onForegroundChange,
   scrollY,
   onAvailabilityChange,
 }: {
@@ -142,6 +148,7 @@ function HomeArtworkImage({
   source: string;
   band: number;
   cover: boolean;
+  onForegroundChange?: (source: string, foreground: boolean) => void;
   scrollY: SharedValue<number>;
   onAvailabilityChange?: (available: boolean) => void;
 }) {
@@ -177,6 +184,10 @@ function HomeArtworkImage({
         })?.[0]
     );
   }, [image]);
+  const coverForeground = useHomeArtworkForeground(image);
+  useEffect(() => {
+    if (image) onForegroundChange?.(source, coverForeground);
+  }, [image, source, coverForeground, onForegroundChange]);
   // The band in window coordinates, for the launch opening to land in. The
   // layout event carries the box in the scroll content's coordinates, which is
   // not where the overlay draws -- it sits above the router with the whole
@@ -213,14 +224,16 @@ function HomeArtworkImage({
     if (!cover || !box || !intrinsic) return null;
     // Cutouts keep their whole figure. An opaque scene uses its authored fit
     // and focal point, including responsive overrides from the resolver.
+    if (!coverForeground)
+      return homeCoverSceneRect(box, intrinsic, resolved.image.fit, resolved.image.focalPoint);
     return homeCoverArtworkRect(
       box,
       intrinsic,
       resolved.image.fit,
       resolved.image.focalPoint,
-      foreground
+      coverForeground
     );
-  }, [cover, box, intrinsic, foreground, resolved.image]);
+  }, [cover, box, intrinsic, coverForeground, resolved.image]);
   const imageRect = coverRect ?? geometry?.image;
   useLaunchHomeArtwork({
     view,

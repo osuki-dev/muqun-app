@@ -15,6 +15,7 @@ import {
   coveredImageRect,
   editorialArtworkRect,
   homeCoverArtworkRect,
+  homeCoverSceneRect,
   heroFeatherGeometry,
   HOME_HERO_FEATHER,
   MAX_FEATHER_FRACTION,
@@ -291,4 +292,21 @@ test('foreground alignment ignores transparent padding and faint export residue'
   expect(artworkVisibleTop(alpha, 1000, 20)).toBe(8);
   expect(artworkVisibleTop(new Uint8Array(80).fill(255), 10, 8)).toBe(0);
   expect(artworkVisibleTop(new Uint8Array(80), 10, 8)).toBe(0);
+});
+
+test.each([320, 390, 430])('scenic contain art reaches both phone edges at width %i', (width) => {
+  const container = { width, height: homeCoverArtworkHeight(width) };
+  const intrinsic = { width: 1254, height: 1254 };
+  const previous = homeCoverArtworkRect(container, intrinsic, 'contain', { x: 0.5, y: 0 });
+  const scene = homeCoverSceneRect(container, intrinsic, 'contain', { x: 0.5, y: 0 });
+  expect(previous.x).toBeCloseTo(width * 0.05);
+  expect(scene).toEqual({ x: 0, y: 0, width, height: width });
+  expect(scene.width / scene.height).toBe(intrinsic.width / intrinsic.height);
+  // The portrait contract and explicit cover crop remain independent.
+  expect(homeCoverArtworkRect(container, intrinsic, 'contain', { x: 0.5, y: 0 }, true)).toEqual(
+    previous
+  );
+  expect(homeCoverSceneRect(container, intrinsic, 'cover', { x: 0.4, y: 0.2 })).toEqual(
+    coveredImageRect(container, intrinsic, { x: 0.4, y: 0.2 })
+  );
 });

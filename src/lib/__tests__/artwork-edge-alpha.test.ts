@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { hasTransparentArtworkEdges } from '../artwork-edge-alpha';
+import { hasTransparentArtworkEdges, hasTransparentArtworkUpperEdges } from '../artwork-edge-alpha';
 
 describe('Classic artwork perimeter', () => {
   test('preserves foreground heads without reading the full image', () => {
@@ -22,4 +22,20 @@ describe('Classic artwork perimeter', () => {
       false
     );
   });
+});
+
+test('bottom-feathered scenes keep their scenic cover framing', () => {
+  // Aegean has a translucent sky and near-clear foot, not a cutout silhouette.
+  const readAlpha = (_x: number, y: number) => (y === 99 ? 4 : y === 0 ? 58 : 244);
+  expect(hasTransparentArtworkEdges(100, 100, readAlpha)).toBe(true);
+  expect(hasTransparentArtworkUpperEdges(100, 100, readAlpha)).toBe(false);
+  expect(hasTransparentArtworkUpperEdges(100, 100, () => 255)).toBe(false);
+});
+
+test('upper silhouette transparency preserves portraits over the title', () => {
+  expect(hasTransparentArtworkUpperEdges(100, 150, (_x, y) => (y === 0 ? 0 : 255))).toBe(true);
+  expect(hasTransparentArtworkUpperEdges(100, 150, (x) => (x === 0 || x === 99 ? 0 : 255))).toBe(
+    true
+  );
+  expect(hasTransparentArtworkUpperEdges(100, 150, () => undefined)).toBe(false);
 });

@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { getEditorialLayoutGeometry } from '../home-editorial-layout';
+import { getEditorialLayoutGeometry, editorialScenePlacement } from '../home-editorial-layout';
 
 test('keeps the editorial pad threshold tied to measured remaining content width', () => {
   const justNarrow = getEditorialLayoutGeometry(751, 1, true);
@@ -49,4 +49,18 @@ test('stays one column when the utility slots are absent', () => {
   expect(geometry.asideWidth).toBe(0);
   expect(geometry.gap).toBe(0);
   expect(geometry.mainWidth).toBe(1152);
+});
+
+test('scenes reach the status bar without moving the launch tiles or controls', () => {
+  for (const safeTop of [0, 24, 48, 59]) {
+    for (const titleHeight of [0, 48, 120, 240]) {
+      const topInset = safeTop + 12;
+      const placement = editorialScenePlacement(titleHeight, topInset);
+      expect(topInset + titleHeight + placement.marginTop).toBe(0);
+      // The former foreground overlap determines the slot's total contribution.
+      expect(placement.marginTop + placement.marginBottom).toBeCloseTo(-titleHeight * 0.35);
+      // Title and toolbar positions never consume the artwork's negative margin.
+      expect(topInset).toBeGreaterThanOrEqual(safeTop);
+    }
+  }
 });
