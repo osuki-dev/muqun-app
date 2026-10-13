@@ -5218,11 +5218,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       ) : null}
 
       {/*
-        The one thing the transcript does about output that landed behind the
-        reader: offer the way back. Never a scroll of its own -- a viewport
-        that moves under someone reading is the behaviour this whole screen is
-        built to avoid -- and never a standing button either: it appears when
-        something has actually arrived, and goes when they are level with it.
+        Offer the way back whenever the reader browses history, even when no
+        new output has arrived. The button disappears when they reach the
+        latest message; only their explicit tap requests a scroll.
       */}
       <JumpToLatestPill
         follow={follow}
