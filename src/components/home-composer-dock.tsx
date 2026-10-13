@@ -134,8 +134,8 @@ const NO_SKILLS: AgentCatalog['skills'] = [];
  * The target computer is the selected gateway record (one connection at a
  * time), so the catalog, the attachment uploads and the file mentions all go
  * to the computer the bar names. Send does what the workbench does for a new
- * session -- `createAgentSession`, then the prompt -- and only then opens that
- * session as an existing one. A failure keeps the draft and the staged files
+ * session -- `createAgentSession`, then the prompt -- and binds Home's status
+ * row to the returned session. A failure keeps the draft and the staged files
  * in the dock and says why under the bar; nothing is retried by itself.
  */
 /** How many of the target's recent sessions are read for models it refused. */
@@ -647,7 +647,15 @@ export function HomeComposerDock({
         const key = `${serverId}\u0000${params.agentId ?? ''}\u0000${sendFolder ?? ''}`;
         // The selection moved while this was in flight: the session and its
         // prompt would go to a computer the bar no longer names.
-        const owns = () => useGatewayConnectionStore.getState().record?.serverId === serverId;
+        const owner = useGatewayConnectionStore.getState().record;
+        const owns = () => {
+          const current = useGatewayConnectionStore.getState().record;
+          return (
+            owner?.serverId === serverId &&
+            sameComputer(current, owner) &&
+            current?.deviceId === owner.deviceId
+          );
+        };
         let creating = false;
         return recoverWith(
           async () => {
@@ -660,6 +668,7 @@ export function HomeComposerDock({
             if (plan.kind === 'reuse') {
               const { asid } = plan.started;
               if (plan.switchMode) await switchAgentMode(asid, plan.switchMode);
+              if (!owns()) throw new Error(t`Computer unavailable.`);
               if (plan.switchModel)
                 await switchAgentModel(HOME_AGENT_SESSION_ID, asid, plan.switchModel);
               started = { ...plan.started, params };
@@ -1085,8 +1094,8 @@ export function HomeComposerDock({
     return Promise.resolve(true);
   }
 
-  /** A goal with files, to a session; `again` sends a failed row's payload as it was. */
-  function sendWithFiles(
+  /** A goal, with or without files; `again` preserves the failed row's destination. */
+  function sendSessionPrompt(
     text: string,
     attachments: string[],
     again?: { serverId: string; params: HomeSessionParams; folder?: string }
@@ -1116,19 +1125,16 @@ export function HomeComposerDock({
     }
     if (heldByModelGate()) return Promise.resolve(false);
     if (!inFlightRef.current && ready) playTransition('send');
-    // Attachments ride on a prompt to a session; the ledger route takes text
-    // only, so a send with files keeps the session path. So does a retry onto
-    // the session a failed send left. Either way Home stays put.
-    if (ledgerCreate && !attachments?.length && !startedRef.current) {
+    // The task API reserves explicit `codex` for terminal delivery, even
+    // when discovery also offers its native session adapter. Native Codex
+    // must create a session and prompt the returned ID, just like files and
+    // retries. Other session providers retain their supported ledger route.
+    if (agentId !== 'codex' && ledgerCreate && !attachments?.length && !startedRef.current) {
       return dispatchTask(text, () => openLedgerTask(text));
     }
-    // Attachments cannot be put back once the field lets them go, so a send
-    // with files is answered for real: a failure leaves text and files where
-    // they are, and the row keeps them to send again.
-    if (attachments?.length) return sendWithFiles(text, attachments);
-    return dispatchTask(text, () =>
-      startSession((asid) => sendAgentPrompt(HOME_AGENT_SESSION_ID, asid, { text }))
-    );
+    // Wait for acceptance so any failure retains the complete draft. Passing
+    // the goal also binds Home's status row without opening another screen.
+    return sendSessionPrompt(text, attachments ?? []);
   }
   // The composer empties the field as it hands a command over, so a command
   // that did not run puts its line back.
@@ -1167,7 +1173,7 @@ export function HomeComposerDock({
     retrySwitchBegins();
     void settleAfterAsync(
       async () => {
-        const sent = await sendWithFiles(resend.text, resend.attachments, {
+        const sent = await sendSessionPrompt(resend.text, resend.attachments, {
           serverId: item.serverId,
           params: resend.params,
           ...(resend.folder ? { folder: resend.folder } : {}),
