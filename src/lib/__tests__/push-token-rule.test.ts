@@ -11,6 +11,9 @@
 // are both pinned here: an unchanged token must be silent, and a changed token,
 // a new server or a new app binary must not be.
 import { describe, expect, test } from 'bun:test';
+import { runInNewContext } from 'node:vm';
+import * as crypto from 'node:crypto';
+import { declaration, transpile } from '../../test-support/production-source';
 
 import {
   PUSH_TOKEN_MAX_AGE_MS,
@@ -112,4 +115,75 @@ test('a language the gateway was not told about is a post that is owed', () => {
   expect(pushTokenNeedsSending(legacy, stored.token, stored.build, at + 1, 'th')).toBe(true);
   // A caller that names no language keeps the rule it was written against.
   expect(pushTokenNeedsSending(legacy, stored.token, stored.build, at + 1)).toBe(false);
+});
+
+test('the registry reads back locale and the successful ownership receipt without persisting Gateway credentials', () => {
+  const values = new Map<string, string>();
+  const registry = runInNewContext(
+    transpile(
+      [
+        declaration('src/lib/push-token-registry.ts', 'registeredPushToken'),
+        declaration('src/lib/push-token-registry.ts', 'rememberRegisteredPushToken'),
+        declaration('src/lib/push-token-registry.ts', 'pushPairingIdentity'),
+        '({ read: registeredPushToken, remember: rememberRegisteredPushToken, identity: pushPairingIdentity })',
+      ].join('\n')
+    ),
+    {
+      QuickCrypto: crypto,
+      storage: {
+        getString: (key: string) => values.get(key),
+        set: (key: string, value: string) => values.set(key, value),
+      },
+    }
+  ) as {
+    read: (id: string) => RegisteredPushToken | null;
+    remember: (id: string, entry: Omit<RegisteredPushToken, 'atMs'>, now: number) => void;
+    identity: (record: object) => string;
+  };
+  const pairing = {
+    serverId: 'server',
+    url: 'http://fixture.invalid',
+    token: 'fixture-gateway-credential',
+  };
+  const ownerBinding = { revision: 1 as const, identity: registry.identity(pairing) };
+  registry.remember('server', { token: 'expo-token', build, locale: 'zh-TW', ownerBinding }, now);
+  expect(registry.read('server')).toMatchObject({
+    token: 'expo-token',
+    build,
+    locale: 'zh-TW',
+    atMs: now,
+    ownerBinding,
+  });
+  expect(values.get('server')).not.toContain(pairing.token);
+  const stored = registry.read('server');
+  expect(pushTokenNeedsSending(stored, 'expo-token', build, now + 1, 'zh-TW', ownerBinding)).toBe(
+    false
+  );
+  expect(
+    pushTokenNeedsSending(stored, 'expo-token', build, now + 1, 'zh-TW', {
+      ...ownerBinding,
+      identity: registry.identity({ ...pairing, token: 'replacement' }),
+    })
+  ).toBe(true);
+  values.set(
+    'server',
+    JSON.stringify({
+      token: 'expo-token',
+      build,
+      locale: 'zh-TW',
+      atMs: now,
+      ownerBinding: { revision: 1, identity: 'invalid' },
+    })
+  );
+  expect(registry.read('server')?.ownerBinding).toBeUndefined();
+  expect(
+    pushTokenNeedsSending(
+      registry.read('server'),
+      'expo-token',
+      build,
+      now + 1,
+      'zh-TW',
+      ownerBinding
+    )
+  ).toBe(true);
 });
