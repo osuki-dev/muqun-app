@@ -3,11 +3,14 @@
  * character in the draft means, what it filters to, and what a pick puts back.
  *
  * Written once for both surfaces that need it. `/` raises the pane's slash
- * command catalog; `@` raises a file search over the pane's workspace. The two
- * differ only in which character opens them, where in the draft that character
- * counts, and where the rows come from -- so those three are parameters and
- * everything else (the query scan, the fuzzy rank, the replacement, the
- * dismissal) is shared.
+ * command catalog; `$` raises the skills catalog; `@` raises a file search
+ * over the pane's workspace. They differ only in which character opens them,
+ * where in the draft that character counts, and where the rows come from -- so
+ * those three are parameters and everything else (the query scan, the fuzzy
+ * rank, the replacement, the dismissal) is shared.
+ *
+ * `#` can be another start-anchored trigger later (issues and pull requests).
+ * It is not one until a catalog exists for it.
  *
  * Three rules govern it, and the callers are only correct as long as they keep
  * them:

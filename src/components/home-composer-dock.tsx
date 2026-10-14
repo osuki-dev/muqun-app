@@ -38,6 +38,7 @@ import {
   createAgentSession,
   formatModelName,
   getAgentCatalog,
+  peekAgentCatalog,
   listAgentSessions,
   invokeAgentSkill,
   normalizeAgentId,
@@ -410,6 +411,8 @@ export function HomeComposerDock({
   useEffect(() => {
     if (!ready || !selected || terminalAgent) return;
     let current = true;
+    const peeked = peekAgentCatalog(HOME_AGENT_SESSION_ID, agentId ? { agentId } : undefined);
+    if (peeked) setCatalogRead({ key: catalogKey, catalog: peeked });
     getAgentCatalog(HOME_AGENT_SESSION_ID, undefined, agentId ? { agentId } : undefined)
       .then((catalog) => {
         if (current) setCatalogRead({ key: catalogKey, catalog });

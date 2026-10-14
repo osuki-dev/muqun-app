@@ -16,6 +16,7 @@ import {
 } from '../agent-runtime-controls';
 import { applySubtaskBlockEvent } from '../agent-subtasks';
 import { composerChipIds } from '../agent-composer-chips';
+import { readSkillInvocation } from '../agent-commands';
 import { recoverWith, settleAfter } from '../compiler-safe-control-flow';
 import type { AgentSessionRuntime } from '../agent-session-runtime';
 
@@ -223,6 +224,7 @@ test('composer clears its draft only after accepted steering', async () => {
       sending: false,
       interactionBlockedReason: undefined,
       readSlashCommand: () => null,
+      readSkillInvocation,
       commands: [],
       skills: [],
       onRunCommand: undefined,

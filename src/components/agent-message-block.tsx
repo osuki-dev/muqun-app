@@ -294,7 +294,7 @@ export interface AgentToolActions {
   onOpenChildSession?: (asid: string) => void;
   onRunInBackground?: (toolCallId: string) => void;
   onOpenBackgroundTray?: (shellId?: string) => void;
-  onPreviewImage?: (uri: string) => void;
+  onPreviewImage?: (uri: string, album?: readonly string[]) => void;
   onOpenFile?: (file: { uri: string; mime?: string; name?: string }) => void;
   /** The virtualised changes viewer, for a patch too big to draw in a cell. */
   onOpenFullDiff?: (path?: string) => void;
@@ -586,6 +586,7 @@ const MessageTextPart = memo(function MessageTextPart({
   imageAssets,
   audioSessionId,
   onPreviewImage,
+  onOpenFile,
   streaming = false,
 }: {
   text: string;
@@ -594,7 +595,8 @@ const MessageTextPart = memo(function MessageTextPart({
   /** The gateway's resolution of the images this text embeds by host path. */
   imageAssets?: readonly MessageImageAsset[];
   audioSessionId?: string;
-  onPreviewImage?: (uri: string) => void;
+  onPreviewImage?: (uri: string, album?: readonly string[]) => void;
+  onOpenFile?: (file: { uri: string; mime?: string; name?: string }) => void;
   streaming?: boolean;
 }) {
   const { t } = useLingui();
@@ -632,20 +634,46 @@ const MessageTextPart = memo(function MessageTextPart({
       cover?.kind === 'image' && !images.pending.has(cover.uri) ? cover.uri : undefined;
     const coverMetadata = imageAssets?.find((asset) => images.uris.get(asset.src) === coverUri);
     const renderText = (partKey: string, content: string) => {
-      const blocks = splitBlockImages(content);
+      const blocks = groupBlockImages(splitBlockImages(content));
       return blocks.map((block) => {
-        if (block.kind === 'image') {
-          if (block.uri === coverUri) return null;
-          const metadata = imageAssets?.find((asset) => images.uris.get(asset.src) === block.uri);
+        if (block.kind === 'images') {
+          const shown = block.images.filter((image) => image.uri !== coverUri);
+          if (shown.length === 0) return null;
+          if (shown.length === 1) {
+            const image = shown[0]!;
+            const metadata = imageAssets?.find((asset) => images.uris.get(asset.src) === image.uri);
+            return (
+              <TranscriptBlockImage
+                key={`${partKey}:${image.start}:${image.uri}`}
+                uri={image.uri}
+                alt={image.alt}
+                headers={metadata ? images.headers : undefined}
+                pending={images.pending.has(image.uri)}
+                width={metadata?.width}
+                height={metadata?.height}
+                onPress={
+                  onPreviewImage
+                    ? (uri) =>
+                        onPreviewImage(
+                          uri,
+                          shown.map((entry) => entry.uri)
+                        )
+                    : undefined
+                }
+              />
+            );
+          }
           return (
-            <TranscriptBlockImage
-              key={`${partKey}:${block.start}:${block.uri}`}
-              uri={block.uri}
-              alt={block.alt}
-              headers={metadata ? images.headers : undefined}
-              pending={images.pending.has(block.uri)}
-              width={metadata?.width}
-              height={metadata?.height}
+            <ImageAlbum
+              key={`${partKey}:${shown[0]!.start}`}
+              images={shown.map((image) => ({
+                uri: image.uri,
+                alt: image.alt,
+                pending: images.pending.has(image.uri),
+                headers: imageAssets?.some((asset) => images.uris.get(asset.src) === image.uri)
+                  ? images.headers
+                  : undefined,
+              }))}
               onPress={onPreviewImage}
             />
           );
@@ -660,7 +688,7 @@ const MessageTextPart = memo(function MessageTextPart({
             latexMath
             streaming={streaming}
             {...(images.headers ? { imageRequestHeaders: images.headers } : {})}
-            {...(onPreviewImage ? { onImagePress: onPreviewImage } : {})}
+            {...(onPreviewImage ? { onImagePress: (uri: string) => onPreviewImage(uri) } : {})}
           />
         );
       });
@@ -706,6 +734,7 @@ const MessageTextPart = memo(function MessageTextPart({
 
   // Keep the same parent and offset keys when a streamed diff fence closes.
   // Reparenting the preceding Markdown would discard its native measurement.
+  const files = (imageAssets ?? []).filter((asset) => !asset.mime.startsWith('image/'));
   return (
     <View style={styles.markdownSegments}>
       {segments.map((seg) =>
@@ -715,9 +744,75 @@ const MessageTextPart = memo(function MessageTextPart({
           <InlinePatch key={seg.start} patch={seg.text} />
         )
       )}
+      {files.map((asset) => (
+        <PressableScale
+          key={asset.asset_id}
+          accessibilityRole="button"
+          accessibilityLabel={t`Download ${asset.src.split('/').pop() ?? asset.src}`}
+          onPress={() =>
+            onOpenFile?.({
+              uri: asset.src.startsWith('file://') ? asset.src : `file://${asset.src}`,
+              mime: asset.mime,
+              name: asset.src.split('/').pop(),
+            })
+          }
+          style={styles.fileRow}>
+          <Text variant="bodySmall" numberOfLines={1}>
+            {asset.src.split('/').pop() ?? asset.src}
+          </Text>
+        </PressableScale>
+      ))}
     </View>
   );
 });
+
+type GroupedBlock =
+  | { kind: 'images'; images: { uri: string; alt: string; start: number }[] }
+  | { kind: 'markdown'; text: string; start: number };
+
+function groupBlockImages(blocks: ReturnType<typeof splitBlockImages>): GroupedBlock[] {
+  const grouped: GroupedBlock[] = [];
+  let images: { uri: string; alt: string; start: number }[] = [];
+  const flush = () => {
+    if (images.length === 0) return;
+    grouped.push({ kind: 'images', images });
+    images = [];
+  };
+  for (const block of blocks) {
+    if (block.kind === 'image') images.push(block);
+    else {
+      flush();
+      grouped.push(block);
+    }
+  }
+  flush();
+  return grouped;
+}
+
+function ImageAlbum({
+  images,
+  onPress,
+}: {
+  images: { uri: string; alt: string; pending: boolean; headers?: Record<string, string> }[];
+  onPress?: (uri: string, album?: readonly string[]) => void;
+}) {
+  const uris = images.map((image) => image.uri);
+  return (
+    <View style={styles.album}>
+      {images.map((image) => (
+        <View key={image.uri} style={styles.albumCell}>
+          <TranscriptBlockImage
+            uri={image.uri}
+            alt={image.alt}
+            headers={image.headers}
+            pending={image.pending}
+            onPress={onPress ? (uri) => onPress(uri, uris) : undefined}
+          />
+        </View>
+      ))}
+    </View>
+  );
+}
 
 /**
  * The drawn item before this one, skipping merged thinking.
@@ -822,6 +917,7 @@ function renderTimelinePart(
           {...(options.actions.onPreviewImage
             ? { onPreviewImage: options.actions.onPreviewImage }
             : {})}
+          {...(options.actions.onOpenFile ? { onOpenFile: options.actions.onOpenFile } : {})}
         />
       );
     default:
@@ -1596,6 +1692,20 @@ const styles = StyleSheet.create({
   markdownSegments: {
     gap: 6,
     alignSelf: 'stretch',
+  },
+  album: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    alignSelf: 'stretch',
+  },
+  albumCell: {
+    width: '48%',
+    flexGrow: 1,
+  },
+  fileRow: {
+    alignSelf: 'stretch',
+    paddingVertical: 8,
   },
   statusRow: {
     paddingVertical: 2,

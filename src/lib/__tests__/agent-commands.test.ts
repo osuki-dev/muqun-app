@@ -5,6 +5,7 @@ import {
   AGENT_CLIENT_COMMANDS,
   commandKey,
   isClientCommand,
+  readSkillInvocation,
   readSlashCommand,
 } from '../agent-commands';
 
@@ -152,5 +153,32 @@ describe('readSlashCommand', () => {
 
   test('isClientCommand says no to a name that is not one', () => {
     expect(isClientCommand('review')).toBe(false);
+  });
+});
+
+describe('readSkillInvocation', () => {
+  test('`$id` and `$id args` name a catalog skill, slash or not', () => {
+    expect(readSkillInvocation('$commit-message', SKILLS)).toEqual({
+      name: 'commit-message',
+      args: '',
+    });
+    expect(readSkillInvocation('$pdf the brief', SKILLS)).toEqual({
+      name: 'pdf',
+      args: 'the brief',
+    });
+    // The id is the wire value, whatever case it was typed in.
+    expect(readSkillInvocation('$CHANGELOG last week', SKILLS)).toEqual({
+      name: 'Changelog',
+      args: 'last week',
+    });
+    expect(readSkillInvocation('$docx', SKILLS)).toEqual({ name: 'docx', args: '' });
+  });
+
+  test('a dollar that names nothing, or is not the whole line, stays a prompt', () => {
+    expect(readSkillInvocation('$unknown', SKILLS)).toBeNull();
+    expect(readSkillInvocation('$', SKILLS)).toBeNull();
+    expect(readSkillInvocation('see $pdf', SKILLS)).toBeNull();
+    expect(readSkillInvocation('/commit-message', SKILLS)).toBeNull();
+    expect(readSkillInvocation('$commit-message', [])).toBeNull();
   });
 });
