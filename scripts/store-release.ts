@@ -11,7 +11,7 @@ import {
   readdirSync,
   rmSync,
 } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as nodeUtil from 'node:util';
@@ -104,7 +104,13 @@ export function runStoreCommand(
   if (command.action !== 'submit') readHotUpdaterAppConfig(env, projectRoot);
   const profile = storeProfile(command.platform, command.channel);
   const androidBuild = command.action !== 'submit' && command.platform === 'android';
-  const temporaryRoot = androidBuild ? resolve(projectRoot, 'dist/cache') : tmpdir();
+  // EAS copies the checkout into its own temporary directory before building, so the
+  // temporary root must stay outside the project: node:fs refuses to copy a directory
+  // into itself (EINVAL). Use the home filesystem, not the system temporary filesystem,
+  // which may be a small tmpfs.
+  const temporaryRoot = androidBuild
+    ? join(homedir(), '.cache', 'muqun-store-builds')
+    : tmpdir();
   mkdirSync(temporaryRoot, { recursive: true });
   const privateDir = mkdtempSync(join(temporaryRoot, 'muqun-store-release-'));
   const logPath = join(privateDir, 'eas.log');

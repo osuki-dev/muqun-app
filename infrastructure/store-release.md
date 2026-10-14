@@ -26,11 +26,14 @@ The artifact and native `fingerprint.json` remain together in a unique directory
 under `dist/eas-builds/`. A submission failure never triggers a rebuild or retry;
 check its status in Expo before submitting the retained artifact again.
 
-Local Android builds use a per-invocation temporary directory under ignored
-`dist/cache/` for EAS and Java, independent of the system temporary filesystem.
-The wrapper preserves existing `_JAVA_OPTIONS`, appends the Java temporary path,
-and disables reusable Gradle daemons for that build. Temporary files are removed
-when the command finishes; ensure the checkout's filesystem has build space.
+Local Android builds use a per-invocation temporary directory under
+`~/.cache/muqun-store-builds` for EAS and Java. It must stay outside the checkout:
+EAS copies the project into its own temporary directory, which fails when that
+directory is inside the project. The home filesystem is used instead of the system
+temporary filesystem, which may be a small tmpfs. The wrapper preserves existing
+`_JAVA_OPTIONS`, appends the Java temporary path, and disables reusable Gradle
+daemons for that build. Temporary files are removed when the command finishes;
+ensure that filesystem has build space.
 
 For build-only, use the same command with `build` instead of `release`:
 

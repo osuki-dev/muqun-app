@@ -10,7 +10,7 @@ import {
   symlinkSync,
   writeFileSync,
 } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import {
   parseStoreCommand,
@@ -227,14 +227,16 @@ test('Android builds isolate Java temporary files, preserve caller options, and 
     })
   ).toBe(0);
   const temporaryDir = readFileSync(join(root, 'build-tmpdir'), 'utf8');
-  expect(temporaryDir.startsWith(join(root, 'dist/cache/muqun-store-release-'))).toBe(true);
+  // EAS copies the checkout into its temporary directory; a root inside the project
+  // would make node:fs refuse that copy.
+  expect(temporaryDir.startsWith(root)).toBe(false);
+  expect(temporaryDir.startsWith(join(homedir(), '.cache', 'muqun-store-builds'))).toBe(true);
   const options = readFileSync(join(root, 'java-options'), 'utf8').trim().split('\n');
   expect(options).toEqual([
     `${callerOptions} -Djava.io.tmpdir="${temporaryDir}" -Dorg.gradle.daemon=false`,
     callerOptions,
   ]);
   expect(existsSync(temporaryDir)).toBe(false);
-  expect(readdirSync(join(root, 'dist/cache'))).toEqual([]);
 });
 
 test('explicit missing/empty/wrong-platform files and symlink artifacts never reach EAS', () => {
