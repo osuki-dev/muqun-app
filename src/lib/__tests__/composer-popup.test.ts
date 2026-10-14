@@ -17,6 +17,8 @@ import {
   type ComposerPopupRow,
   type ComposerTrigger,
 } from '../composer-popup';
+import { skillPopupTrigger } from '../agent-commands';
+import type { SkillInfo } from '../agent-protocol';
 import { paneComposerFromResponse, slashCommandTrigger } from '../pane-composer';
 
 const COMMANDS = [
@@ -463,5 +465,60 @@ describe('the dismissal backdrop', () => {
   test('a composer that has not measured yet still leaves a tappable backdrop', () => {
     expect(composerBackdropBottom(0, KEYBOARD_DOWN)).toBe(0);
     expect(composerBackdropBottom(0, KEYBOARD_UP)).toBe(1008);
+  });
+});
+
+const SKILLS: SkillInfo[] = [
+  { id: 'commit-message', name: 'Commit message', description: 'Write one', slash: true },
+  { id: 'pdf', name: 'PDF', description: 'Read a PDF', autoinvoke: true },
+  { id: 'docx', name: 'DOCX', description: 'Read a document' },
+];
+
+function skillsPopup(draft: string, caret?: number) {
+  return readComposerPopup({
+    draft,
+    caret,
+    trigger: skillPopupTrigger(SKILLS),
+  });
+}
+
+describe('the skills trigger', () => {
+  test('with no skills `$` is a plain character', () => {
+    const state = readComposerPopup({ draft: '$', trigger: skillPopupTrigger([]) });
+
+    expect(state.open).toBe(false);
+    expect(state.reason).toBe('no-catalog');
+  });
+
+  test('`$` at the start lists every skill, not only the slash ones', () => {
+    const state = skillsPopup('$');
+
+    expect(state.open).toBe(true);
+    expect(labels(state.rows)).toEqual(['$commit-message', '$pdf', '$docx']);
+  });
+
+  test('a dollar anywhere but the start is an ordinary character', () => {
+    expect(skillsPopup('cost is $5').open).toBe(false);
+    expect(skillsPopup('see $pdf').reason).toBe('no-query');
+  });
+
+  test('a space ends the query, because the rest is the argument', () => {
+    expect(skillsPopup('$pdf ').open).toBe(false);
+    expect(skillsPopup('$pdf the brief').open).toBe(false);
+  });
+
+  test('typing narrows the list by id, including a skill the slash menu hides', () => {
+    expect(labels(skillsPopup('$p').rows)).toEqual(['$pdf']);
+  });
+
+  test('a pick inserts `$id` and a trailing space for its argument', () => {
+    const state = skillsPopup('$com');
+    if (!state.open) throw new Error('expected the popup to be open');
+
+    expect(state.rows[0].insert).toBe('$commit-message');
+    expect(insertComposerPick('$com', state.query, state.rows[0])).toEqual({
+      draft: '$commit-message ',
+      caret: '$commit-message '.length,
+    });
   });
 });

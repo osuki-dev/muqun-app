@@ -29,7 +29,9 @@ function render(path: string, name: string, props: object): Element {
   });
   const code =
     [...expressions].map(([key, value]) => `const ${key} = ${value};`).join('\n') +
-    (name === 'MessageTextPart' ? declaration(path, 'splitDiffFences') : '') +
+    (name === 'MessageTextPart'
+      ? declaration(path, 'splitDiffFences') + declaration(path, 'groupBlockImages')
+      : '') +
     (name === 'AgentAssistantMessage'
       ? declaration(path, 'renderTimelinePart') + declaration(path, 'previousItemAt')
       : '') +

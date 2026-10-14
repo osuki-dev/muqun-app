@@ -107,7 +107,9 @@ import { withAlpha } from '@/lib/color';
 import type { SessionNode } from '@/lib/agent-session-tree';
 import {
   AGENT_CLIENT_COMMANDS,
+  readSkillInvocation,
   readSlashCommand,
+  skillPopupTrigger,
   type AgentClientCommandId,
 } from '@/lib/agent-commands';
 import { agentClientCommandDescription, agentHostCommandDescription } from '@/i18n/labels';
@@ -675,10 +677,10 @@ export const AgentComposer = memo(function AgentComposer({
    * monospace slot on its own `TextInput`, correctly: a shell line is a
    * literal and its alignment is part of what it says. This composer reuses
    * the same component for something else entirely. "Send a message, type /
-   * for commands, @ for files…" is a sentence, and it was being drawn in a
-   * typewriter face beside a transcript set in the reader's own. The
-   * placeholder is where a reader meets that first, for the ordinary reason
-   * that an empty field is nothing but its placeholder.
+   * for commands, $ for skills, @ for files…" is a sentence, and it was
+   * being drawn in a typewriter face beside a transcript set in the reader's
+   * own. The placeholder is where a reader meets that first, for the ordinary
+   * reason that an empty field is nothing but its placeholder.
    *
    * The composer merges its family ahead of `inputProps.style` precisely so a
    * caller can say otherwise, and this is the caller that has to. A family and
@@ -826,10 +828,17 @@ export const AgentComposer = memo(function AgentComposer({
     [skills]
   );
 
-  const slashCatalog = useMemo(
-    () => [...builtinCommands, ...serverCommands, ...skillCommands],
-    [builtinCommands, serverCommands, skillCommands]
-  );
+  const slashCatalog = useMemo(() => {
+    const seen = new Set<string>();
+    const rows = [];
+    for (const command of [...builtinCommands, ...serverCommands, ...skillCommands]) {
+      const key = command.name.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      rows.push(command);
+    }
+    return rows;
+  }, [builtinCommands, serverCommands, skillCommands]);
   const slashTrigger = useMemo(() => slashCommandTrigger(slashCatalog), [slashCatalog]);
 
   /**
@@ -878,6 +887,14 @@ export const AgentComposer = memo(function AgentComposer({
     draft: text,
     onDraftChange: setText,
     trigger: slashTrigger,
+  });
+  // Every skill the screen was given, not only the slash menu's subset. An
+  // empty list leaves `$` as a plain character.
+  const skillTrigger = useMemo(() => skillPopupTrigger(skills ?? []), [skills]);
+  const skillPopup = useComposerPopup({
+    draft: text,
+    onDraftChange: setText,
+    trigger: skillTrigger,
   });
 
   // File mentions (@) trigger
@@ -961,7 +978,7 @@ export const AgentComposer = memo(function AgentComposer({
   const selection =
     heldCaret && heldCaret.draft === text
       ? { start: heldCaret.caret, end: heldCaret.caret }
-      : slashPopup.inputProps.selection;
+      : (skillPopup.inputProps.selection ?? slashPopup.inputProps.selection);
   // Span mode starts as soon as a mention can appear (an `@` or a token in the
   // draft), so the field switches from `value` to spans on a keystroke rather
   // than in the same commit as a pick -- Android drops the first colouring
@@ -1013,8 +1030,9 @@ export const AgentComposer = memo(function AgentComposer({
       setCaret(next);
       setHeldCaret(null);
       slashPopup.inputProps.onSelectionChange(event);
+      skillPopup.inputProps.onSelectionChange(event);
     },
-    [slashPopup.inputProps]
+    [slashPopup.inputProps, skillPopup.inputProps]
   );
 
   const chooseAttachmentSource = useCallback(
@@ -1072,14 +1090,19 @@ export const AgentComposer = memo(function AgentComposer({
         setText('');
         return;
       }
-      if (parsed?.kind === 'skill' && onInvokeSkill) {
+      const skillCall =
+        parsed?.kind === 'skill'
+          ? { name: parsed.name, args: parsed.args }
+          : readSkillInvocation(trimmed, skills);
+      if (skillCall && onInvokeSkill) {
         // The draft stays put until the engine has taken it: a skill the
         // gateway refused with the composer already emptied is a line the
-        // reader has to remember and retype.
+        // reader has to remember and retype. `$id` and `$id args` use this
+        // same path; `/` still only matches skills the catalog marks slash.
         setSending(true);
         await settleAfter(
           async () => {
-            const accepted = await onInvokeSkill(parsed.name, parsed.args);
+            const accepted = await onInvokeSkill(skillCall.name, skillCall.args);
             if (accepted === false) return;
             setText('');
           },
@@ -1321,6 +1344,7 @@ export const AgentComposer = memo(function AgentComposer({
     modeMenuOpen ||
     inboxOpen ||
     slashPopup.open ||
+    skillPopup.open ||
     Boolean(mentionTrigger);
   const decorationClearance =
     fieldDecoration && !decorationHidden && !voiceActive ? fieldDecorationOverhang : 0;
@@ -1576,6 +1600,19 @@ export const AgentComposer = memo(function AgentComposer({
             onPick={slashPopup.pick}
             maxHeight={popupMaxHeight}
             testIDPrefix="slash-command"
+            scope="project"
+          />
+        </View>
+      ) : null}
+
+      {/* Skills ($) floating list. `#` can take this same slot later. */}
+      {skillPopup.open ? (
+        <View style={styles.composerPopup}>
+          <ComposerPopup
+            rows={skillPopup.rows}
+            onPick={skillPopup.pick}
+            maxHeight={popupMaxHeight}
+            testIDPrefix="skill"
             scope="project"
           />
         </View>
@@ -2111,7 +2148,7 @@ export const AgentComposer = memo(function AgentComposer({
             {/* TerminalComposer reused for agent prompt */}
             <View onLayout={(event) => setInputRowHeight(event.nativeEvent.layout.height)}>
               <TerminalComposer
-                squareBottom={!flushField}
+                nested={!flushField}
                 fieldBackground={fieldBackground}
                 fieldBackgroundColor={fieldBackgroundColor}
                 fieldBackgroundOutset={fieldBackgroundOutset}
@@ -2155,13 +2192,17 @@ export const AgentComposer = memo(function AgentComposer({
                     ? agentName
                       ? t`${agentName} is offline`
                       : t`The agent is offline`
-                    : (placeholder ?? t`Send a message, type / for commands, @ for files…`),
-                  ...(compact ? { shortPlaceholder: t`Send a message…` } : {}),
+                    : (placeholder ??
+                      t`Send a message, type / for commands, $ for skills, @ for files…`),
+                  shortPlaceholder: t`Send a message…`,
                   editable: !sending && !disabled,
                   testID: inputTestID,
                   selection,
                   onSelectionChange: handleSelectionChange,
-                  onKeyPress: slashPopup.inputProps.onKeyPress,
+                  onKeyPress: (event) => {
+                    slashPopup.inputProps.onKeyPress(event);
+                    skillPopup.inputProps.onKeyPress(event);
+                  },
                   onSubmitEditing: handleSend,
                   onFocus: () => setFocused(true),
                   onBlur: () => setFocused(false),

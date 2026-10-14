@@ -86,6 +86,11 @@ export interface TerminalComposerProps {
   send: TerminalComposerSend;
   /** Home's field sits on the keyboard, so only its top corners stay rounded. */
   squareBottom?: boolean;
+  /**
+   * The field sits inside a dock that already has the component's corner.
+   * It does not draw a second radius of its own.
+   */
+  nested?: boolean;
   entering?: AnimatedViewProps['entering'];
   exiting?: AnimatedViewProps['exiting'];
   layout?: AnimatedViewProps['layout'];
@@ -116,6 +121,7 @@ export function TerminalComposer({
   minLines,
   spans,
   squareBottom = false,
+  nested = false,
 }: TerminalComposerProps) {
   const readInput = useLatestReader(inputProps);
   const { t } = useLingui();
@@ -144,18 +150,20 @@ export function TerminalComposer({
     opacity: voiceActive ? 0 : contentReveal.get(),
   }));
   const profile = useAppearanceProfile();
-  const fieldRadius = squareBottom
-    ? {
-        borderTopLeftRadius: profile.chrome.composerField,
-        borderTopRightRadius: profile.chrome.composerField,
-        borderBottomLeftRadius: 0,
-        borderBottomRightRadius: 0,
-        borderCurve: 'continuous' as const,
-      }
-    : {
-        borderRadius: profile.chrome.composerField,
-        borderCurve: 'continuous' as const,
-      };
+  const fieldRadius = nested
+    ? { borderRadius: 0, borderCurve: 'continuous' as const }
+    : squareBottom
+      ? {
+          borderTopLeftRadius: profile.chrome.composerField,
+          borderTopRightRadius: profile.chrome.composerField,
+          borderBottomLeftRadius: 0,
+          borderBottomRightRadius: 0,
+          borderCurve: 'continuous' as const,
+        }
+      : {
+          borderRadius: profile.chrome.composerField,
+          borderCurve: 'continuous' as const,
+        };
   const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
   // The monospace slot is this component's *default*, not its rule, because
@@ -164,10 +172,11 @@ export function TerminalComposer({
   // Typed into the terminal it is a shell line: a literal, where alignment is
   // part of what it says, and mono is the only right answer. Mounted by the
   // agent composer it is a sentence addressed to a person-shaped thing, with a
-  // placeholder that reads "Send a message, type / for commands, @ for
-  // files..." -- prose, and the owner's report was precisely that it was not
-  // in the face they chose. So the agent composer passes the interface family
-  // through `inputProps.style`, which is layered after this and wins.
+  // placeholder that reads "Send a message, type / for commands, $ for
+  // skills, @ for files..." -- prose, and the owner's report was precisely
+  // that it was not in the face they chose. So the agent composer passes the
+  // interface family through `inputProps.style`, which is layered after this
+  // and wins.
   //
   // Either way it has to be resolved here and not in `composerStyles` below.
   // A `StyleSheet` is built once at module load, long before the settings

@@ -600,6 +600,22 @@ export async function sendAgentCommand(
  * `resume` asks the engine to continue the run the skill was part of rather
  * than starting a turn of its own; it is omitted unless the caller says so.
  */
+/** The next older history page. An empty `items` list means there is no further page. */
+export async function loadEarlierAgentTimeline(
+  sessionId: string | undefined,
+  asid: string
+): Promise<{ items: TimelineItem[]; exhausted: boolean }> {
+  const data = await writeJson(
+    sessionRoute(asid, '/timeline/earlier', sessionId, false),
+    'Failed to load earlier messages',
+    {}
+  );
+  const record =
+    data && typeof data === 'object' ? (data as { items?: unknown; exhausted?: unknown }) : {};
+  const items = parseTimelineItems(record.items);
+  return { items, exhausted: record.exhausted === true || items.length === 0 };
+}
+
 export async function invokeAgentSkill(
   sessionId: string | undefined,
   asid: string,
@@ -928,6 +944,21 @@ export async function discardAgentVcsFile(
  *
  * A caller with no directory keeps the behaviour and the cache entry it had.
  */
+/** The last catalog this device stored for the scope, including a stale one. */
+export function peekAgentCatalog(
+  sessionId?: string,
+  options?: { directory?: string; agentId?: string }
+): AgentCatalog | null {
+  const directory = normalizeCatalogDirectory(options?.directory);
+  const cacheKey = buildAgentCacheKey(
+    'catalog',
+    undefined,
+    sessionId,
+    agentCatalogCacheVariant(directory, options?.agentId)
+  );
+  return getCachedAgentCatalogSync(cacheKey);
+}
+
 export async function getAgentCatalog(
   sessionId?: string,
   endpoint?: { url?: string; token?: string | null },

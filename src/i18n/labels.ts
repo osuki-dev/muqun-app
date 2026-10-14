@@ -489,8 +489,8 @@ export const agentGuideCopy: Record<string, AgentGuideCopy> = {
     installUrl: OPENCODE_INSTALL_URL,
   },
   deepseek: {
-    start: msg`Enable deepseek in the gateway config, start DeepSeek Harness on the host, then restart the gateway.`,
-    command: 'bunx @deepseek-ai/dsh web --no-open',
+    start: msg`Gateway starts or joins DeepSeek Harness on the computer (default http://127.0.0.1:3080, override deepseek.endpoint).`,
+    command: 'muqun-gateway agent setup deepseek',
   },
   // T3 is not `connected` until the gateway holds a pairing token. A stopped T3
   // is offered the command that starts it; one that is running but unpaired

@@ -830,7 +830,13 @@ export const AgentToolCard = memo(function AgentToolCard({
   return (
     <EmbeddedTerminalToolBlock
       testID={`agent-tool-${part.id}`}
-      toolName={child?.action ? i18n._(subagentActionWord[child.action]) : part.name}
+      toolName={
+        part.name === 'image_generation'
+          ? t`Image`
+          : child?.action
+            ? i18n._(subagentActionWord[child.action])
+            : part.name
+      }
       kind={kind}
       title={headerTitle}
       caption={headerCaption}
@@ -1080,9 +1086,20 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
         </>
       );
 
-    default:
+    default: {
+      // Codex's picture brief is the `prompt` string. Print that string,
+      // with its own line breaks.
+      const prompt = imageGenerationPrompt(part.name, input);
+      if (prompt) return <ImagePrompt text={prompt} />;
       return <GenericToolBody input={part.input} outputText={outputText} />;
+    }
   }
+}
+
+function imageGenerationPrompt(name: string, input: Record<string, unknown> | null): string {
+  if (name !== 'image_generation') return '';
+  const prompt = input?.prompt;
+  return typeof prompt === 'string' ? prompt.trim() : '';
 }
 
 /**
@@ -1532,6 +1549,16 @@ const ExecuteCalls = memo(function ExecuteCalls({
 
 /** Calls a card draws before it says how many more there were. */
 const EXECUTE_CALL_MAX = 12;
+
+/** The picture brief, as the sentences Codex wrote. */
+const ImagePrompt = memo(function ImagePrompt({ text }: { text: string }) {
+  const theme = useThemeTokens();
+  return (
+    <Text selectable variant="bodySmall" color={theme.colors.text}>
+      {text}
+    </Text>
+  );
+});
 
 /**
  * A tool nothing in this build recognises.

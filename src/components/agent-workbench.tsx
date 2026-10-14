@@ -103,6 +103,8 @@ import {
   getAgentVcsDiff,
   getAgentVcsFiles,
   getAgentCatalog,
+  peekAgentCatalog,
+  loadEarlierAgentTimeline,
   getAgentProjects,
   openAgentSessionStream,
   getAgentTimelineDelta,
@@ -729,6 +731,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const [windowStart, setWindowStart] = useState(0);
   // Whether a pull for earlier history is still being answered.
   const [loadingEarlier, setLoadingEarlier] = useState(false);
+  const [earlierExhausted, setEarlierExhausted] = useState(false);
   /**
    * Where the rendered window starts, mirrored for the resync path.
    *
@@ -764,6 +767,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   }, [readRenderedRuntime, serverId]);
   useEffect(() => {
     activeAsidRef.current = activeAsid;
+    setEarlierExhausted(false);
   }, [activeAsid]);
   // Opening a session answers its question notices: the form is on screen now.
   useEffect(() => {
@@ -985,7 +989,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
   // Attachment image preview. The shared lightbox, not a second copy of it:
   // `ImagePreviewModal` already owns pinch, drag-to-dismiss and the paging.
-  const [previewImageUri, setPreviewImageUri] = useState<string | null>(null);
+  const [previewAlbum, setPreviewAlbum] = useState<{
+    uris: readonly string[];
+    index: number;
+  } | null>(null);
+  const previewImage = useCallback((uri: string, album?: readonly string[]) => {
+    const uris = album && album.length > 0 ? album : [uri];
+    setPreviewAlbum({ uris, index: Math.max(0, uris.indexOf(uri)) });
+  }, []);
   // A file a tool returned -- a PDF from `read`, say -- opened in the same
   // viewer the artifacts list uses rather than in a second one.
   const [openToolAsset, setOpenToolAsset] = useState<SessionAsset | null>(null);
@@ -1283,6 +1294,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     const previous = catalogScopeRef.current;
     if (!shouldRefetchAgentCatalog(previous, scope)) return;
     catalogScopeRef.current = scope;
+    const peeked = peekAgentCatalog(sessionId, {
+      ...(scope.directory ? { directory: scope.directory } : {}),
+      ...(scope.agentId ? { agentId: scope.agentId } : {}),
+    });
+    if (peeked?.skills.length) setSkills(peeked.skills);
+    if (peeked?.commands.length) setCommands(peeked.commands);
     const agentChanged = previous !== null && (previous.agentId ?? '') !== (scope.agentId ?? '');
     if (agentChanged && !activeAsidRef.current) {
       // A new session on another agent: what was picked or applied for the
@@ -4269,7 +4286,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       audioSessionId: activeAsid ?? undefined,
       onOpenChildSession: openSubagentDetail,
       ...(canRunInBackground ? { onRunInBackground: handleRunInBackground } : {}),
-      onPreviewImage: setPreviewImageUri,
+      onPreviewImage: previewImage,
       onOpenFile: handleOpenToolFile,
       ...(canRunInBackground ? { onOpenBackgroundTray: openBackgroundTray } : {}),
       onOpenFullDiff: openDiffSheet,
@@ -4286,6 +4303,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       openToolDetail,
       childSessions,
       openSubagentDetail,
+      previewImage,
     ]
   );
 
@@ -4308,7 +4326,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     () => ({
       showReasoning,
       markdownStyle,
-      onPreviewImage: setPreviewImageUri,
+      onPreviewImage: previewImage,
       onEditQueued: handleEditQueuedItem,
       onCancelQueued: handleCancelQueuedItem,
       // Roll-back is offered on any agent that can revert; one that cannot
@@ -4324,6 +4342,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       handleStageRevert,
       agentFeatures.revert,
       toolActions,
+      previewImage,
     ]
   );
 
@@ -4429,10 +4448,30 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * a guess at how long the prepend would take.
    */
   const handleLoadEarlier = useCallback(() => {
-    if (windowStart <= 0) return;
+    if (windowStart > 0) {
+      setLoadingEarlier(true);
+      setWindowStart((prev) => Math.max(0, prev - HISTORY_PAGE_SIZE));
+      return;
+    }
+    if (!activeAsid || earlierExhausted) return;
     setLoadingEarlier(true);
-    setWindowStart((prev) => Math.max(0, prev - HISTORY_PAGE_SIZE));
-  }, [windowStart]);
+    const owner = activeAsid;
+    void loadEarlierAgentTimeline(sessionId, owner)
+      .then((page) => {
+        if (activeAsidRef.current !== owner) return;
+        if (page.exhausted || page.items.length === 0) {
+          setEarlierExhausted(true);
+          return;
+        }
+        setTimeline((prev) => upsertTimelineItems(prev, page.items));
+      })
+      .catch((err) => {
+        console.warn('Failed to load earlier messages:', err);
+      })
+      .finally(() => {
+        if (activeAsidRef.current === owner) setLoadingEarlier(false);
+      });
+  }, [activeAsid, earlierExhausted, sessionId, setTimeline, windowStart]);
 
   // The window grew (or there was nothing left to grow into), so the pull is
   // answered and the indicator can retract.
@@ -4618,7 +4657,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     () => (
       <RefreshControl
         refreshing={loadingEarlier}
-        enabled={windowStart > 0}
+        enabled={windowStart > 0 || !earlierExhausted}
         onRefresh={handleLoadEarlier}
         progressViewOffset={topInset}
         // The same three colours the terminal transcript's own pull uses,
@@ -4629,6 +4668,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       />
     ),
     [
+      earlierExhausted,
       loadingEarlier,
       windowStart,
       handleLoadEarlier,
@@ -5211,18 +5251,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * stream tick, which would reset its pager.
    */
   const previewImages = useMemo<PreviewImage[] | null>(() => {
-    if (!previewImageUri) return null;
+    if (!previewAlbum) return null;
     // A thumbnail served by the gateway was loaded with the device's token;
     // the lightbox fetches the same URL itself and needs the same headers.
-    const fromGateway = previewImageUri.startsWith(gatewayUrl('/'));
-    return [
-      {
-        id: previewImageUri,
-        uri: previewImageUri,
+    return previewAlbum.uris.map((uri) => {
+      const fromGateway = uri.startsWith(gatewayUrl('/'));
+      return {
+        id: uri,
+        uri,
         ...(fromGateway ? { headers: gatewayAuthHeaders() } : {}),
-      },
-    ];
-  }, [previewImageUri]);
+      };
+    });
+  }, [previewAlbum]);
 
   return (
     <View style={styles.root}>
@@ -5715,8 +5755,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       {previewImages ? (
         <ImagePreviewModal
           images={previewImages}
-          initialIndex={0}
-          onClose={() => setPreviewImageUri(null)}
+          initialIndex={previewAlbum?.index ?? 0}
+          onClose={() => setPreviewAlbum(null)}
         />
       ) : null}
 
