@@ -134,7 +134,7 @@ export function GlassChrome({
   const radiusStyle: ViewStyle | undefined =
     resolvedShape === 'none'
       ? undefined
-      :       resolvedShape === 'sheet' || resolvedShape === 'composerDock'
+      : resolvedShape === 'sheet' || resolvedShape === 'composerDock'
         ? {
             borderTopLeftRadius:
               resolvedShape === 'sheet' ? profile.chrome.sheet : profile.chrome.composerDock,
