@@ -5,6 +5,7 @@ import { runInNewContext } from 'node:vm';
 import * as protocol from '../agent-protocol';
 import * as pages from '../agent-session-page';
 import * as query from '../agent-session-list-query';
+import { flattenSessionTree, type ChildrenByParent } from '../agent-session-tree';
 
 const features = { ...protocol.defaultAgentFeatures(), extra: { sessionPagination: true } };
 const capabilities = ['agent_session_pages_v1'];
@@ -16,6 +17,80 @@ const page = (ids: string[], nextCursor: string | null): pages.AgentSessionPage 
   previousCursor: null,
   paginated: true,
   authoritative: true,
+});
+
+test('root pages retain known children and grandchildren without admitting unrelated scope', () => {
+  const root = row('root');
+  const child = { ...row('child'), parent_id: 'root' };
+  const grandchild = { ...row('grandchild'), parent_id: 'child' };
+  const merged = pages.mergeSessionPageTree([root], [root, child], {
+    root: [child],
+    child: [grandchild],
+    unloaded: [{ ...row('unrelated'), parent_id: 'unloaded' }],
+  });
+  expect(merged.map((session) => session.asid)).toEqual(['root', 'child', 'grandchild']);
+  const children: Record<string, protocol.AgentSessionInfo[]> = {};
+  for (const session of merged) {
+    if (session.parent_id) (children[session.parent_id] ??= []).push(session);
+  }
+  expect(flattenSessionTree(merged[0], children).map((node) => node.session.asid)).toEqual([
+    'root',
+    'child',
+    'grandchild',
+  ]);
+});
+
+test('page-tree merge follows validated links, respects live deletion/provider and terminates cycles', () => {
+  const root = row('root');
+  const child = { ...row('child'), parent_id: 'root' };
+  const children: ChildrenByParent = {
+    root: [
+      child,
+      child,
+      { ...row('deleted'), parent_id: 'root', deleted: true },
+      { ...row('other-provider'), parent_id: 'root', agent_id: 'another-agent' },
+      { ...row('misfiled'), parent_id: 'elsewhere' },
+      row('unrelated-root'),
+    ],
+    child: [{ ...root, parent_id: 'child' }],
+    cycleA: [{ ...row('cycleB'), parent_id: 'cycleA' }],
+    cycleB: [{ ...row('cycleA'), parent_id: 'cycleB' }],
+  };
+  expect(pages.mergeSessionPageTree([root], [], children).map((session) => session.asid)).toEqual([
+    'root',
+    'child',
+  ]);
+  expect(pages.mergeSessionPageTree([root], [{ ...child, deleted: true }], children)).toEqual([
+    root,
+  ]);
+  expect(pages.mergeSessionPageTree([], [root, child], children)).toEqual([]);
+});
+
+test('appending root pages preserves root order and deduplicates live children', async () => {
+  let state!: pages.SessionPagesState;
+  const child = { ...row('child'), parent_id: 'first' };
+  const loader = pages.createSessionPageLoader(
+    async (cursor) => (cursor ? page(['first', 'second'], null) : page(['first'], 'next')),
+    (next) => {
+      state = next;
+    }
+  );
+  await loader.load();
+  const live = [{ ...row('first'), title: 'live title' }, row('unloaded'), child, child];
+  expect(
+    pages
+      .mergeSessionPageTree(state.sessions, live, { first: [child] })
+      .map((session) => session.asid)
+  ).toEqual(['first', 'child']);
+  await loader.load();
+  const merged = pages.mergeSessionPageTree(state.sessions, live, { first: [child] });
+  expect(merged.filter((session) => !session.parent_id).map((session) => session.asid)).toEqual([
+    'first',
+    'second',
+  ]);
+  expect(merged.map((session) => session.asid)).toEqual(['first', 'child', 'second']);
+  expect(merged[0]?.title).toBe('live title');
+  expect(state.nextCursor).toBeNull();
 });
 
 test('pages require both capability declarations and a real selected provider', () => {

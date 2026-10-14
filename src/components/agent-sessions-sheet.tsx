@@ -59,6 +59,7 @@ import { AGENT_TYPE } from '@/constants/agent-type';
 import type { AgentSessionAction } from '@/lib/agent-runtime-controls';
 import { FontedTextInput } from '@/components/fonted-text-input';
 import { ListLoadMoreFooter } from '@/components/list-load-more-footer';
+import { flattenSessionTree } from '@/lib/agent-session-tree';
 
 const STAGGERED_ROWS = 8;
 
@@ -192,7 +193,16 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
       }
     }
     if (!preserveOrder) roots.sort((a, b) => (b.updated_ms || 0) - (a.updated_ms || 0));
-    return { rootSessions: roots, subagentMap: subs };
+    const childrenByParent = Object.fromEntries(subs);
+    const descendants = new Map(
+      roots.map((root) => [
+        root.asid,
+        flattenSessionTree(root, childrenByParent, root.agent_id)
+          .slice(1)
+          .map((node) => node.session),
+      ])
+    );
+    return { rootSessions: roots, subagentMap: descendants };
   }, [sessions, preserveOrder]);
 
   const projects = useMemo(() => {
