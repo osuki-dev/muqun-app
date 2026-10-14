@@ -44,6 +44,27 @@ export function hasMultiAgent(capabilities: readonly string[] | undefined | null
   return Boolean(capabilities?.includes(MULTI_AGENT_CAPABILITY));
 }
 
+/** Remote history needs both Gateway and provider opt-in; cached history does not. */
+export function canLoadEarlierAgentTimeline(
+  capabilities: readonly string[] | undefined | null,
+  features: Pick<AgentFeatures, 'timelineEarlier'> | undefined | null
+): boolean {
+  return (
+    capabilities?.includes('agent_timeline_earlier_v1') === true &&
+    features?.timelineEarlier === true
+  );
+}
+
+/** The remote-history limitation worth explaining, if discovery is known. */
+export function timelineEarlierUnavailableReason(
+  capabilities: readonly string[] | undefined | null,
+  features: Pick<AgentFeatures, 'timelineEarlier'> | undefined | null
+): 'gateway-upgrade' | 'provider-unsupported' | null {
+  if (!capabilities) return null;
+  if (!capabilities.includes('agent_timeline_earlier_v1')) return 'gateway-upgrade';
+  return features?.timelineEarlier === false ? 'provider-unsupported' : null;
+}
+
 /**
  * Whether an agent id belongs on the wire.
  *
@@ -182,9 +203,9 @@ const SHARED_DEFAULT_FEATURES: AgentFeatures = defaultAgentFeatures();
  * What an agent can do, for a screen that must answer whether or not
  * discovery ever happened.
  *
- * No discovery, or an agent discovery does not list, answers every control
+ * No discovery, or an agent discovery does not list, answers legacy controls
  * on: a gateway too old to be asked loses nothing, and no agent kind is
- * treated differently from another.
+ * treated differently from another. New remote history still requires opt-in.
  *
  * The answer is the same object for the same input: this runs as a zustand
  * selector, and a fresh default on every call is a snapshot that never

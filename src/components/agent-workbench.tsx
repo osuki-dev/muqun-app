@@ -172,7 +172,14 @@ import {
   stagingUnsupported,
   type OneStepRevertRequest,
 } from '@/lib/agent-revert';
-import { agentFeaturesFor, hiddenClientCommands, normalizeAgentId } from '@/lib/agent-discovery';
+import {
+  agentFeaturesFor,
+  canLoadEarlierAgentTimeline,
+  findAgent,
+  hiddenClientCommands,
+  normalizeAgentId,
+  timelineEarlierUnavailableReason,
+} from '@/lib/agent-discovery';
 import {
   useAgentFeatures,
   useAgentsDiscoveryRefresh,
@@ -640,6 +647,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const agentChoice = useSelectedAgent(serverId);
   const activeAgentId = sessionInfo?.agent_id ?? agentChoice.selected;
   const agentFeatures = useAgentFeatures(serverId, activeAgentId);
+  const historyCapabilities = useServerCapabilities((state) => state.byServer[serverId]);
+  const supportsRemoteEarlier = canLoadEarlierAgentTimeline(historyCapabilities, agentFeatures);
+  const earlierUnavailableReason = timelineEarlierUnavailableReason(
+    historyCapabilities,
+    findAgent(agentChoice.agents, activeAgentId)?.features
+  );
   /**
    * The agent every catalog and project read names, or none on a gateway
    * without discovery (it drives one agent and predates the parameter).
@@ -4493,7 +4506,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       setWindowStart((prev) => Math.max(0, prev - HISTORY_PAGE_SIZE));
       return;
     }
-    if (!activeAsid || earlierExhausted) return;
+    if (!activeAsid || earlierExhausted || !supportsRemoteEarlier) return;
     setLoadingEarlier(true);
     const owner = activeAsid;
     void loadEarlierAgentTimeline(sessionId, owner)
@@ -4511,7 +4524,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       .finally(() => {
         if (activeAsidRef.current === owner) setLoadingEarlier(false);
       });
-  }, [activeAsid, earlierExhausted, sessionId, setTimeline, windowStart]);
+  }, [activeAsid, earlierExhausted, sessionId, setTimeline, supportsRemoteEarlier, windowStart]);
 
   // The window grew (or there was nothing left to grow into), so the pull is
   // answered and the indicator can retract.
@@ -4697,7 +4710,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     () => (
       <RefreshControl
         refreshing={loadingEarlier}
-        enabled={windowStart > 0 || !earlierExhausted}
+        enabled={windowStart > 0 || (supportsRemoteEarlier && !!activeAsid && !earlierExhausted)}
         onRefresh={handleLoadEarlier}
         progressViewOffset={topInset}
         // The same three colours the terminal transcript's own pull uses,
@@ -4709,6 +4722,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     ),
     [
       earlierExhausted,
+      supportsRemoteEarlier,
+      activeAsid,
       loadingEarlier,
       windowStart,
       handleLoadEarlier,
@@ -5557,6 +5572,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           */
               showsVerticalScrollIndicator={false}
               refreshControl={timelineRefresh}
+              ListHeaderComponent={
+                windowStart === 0 && earlierUnavailableReason ? (
+                  <Text variant="caption" color={theme.colors.textMuted}>
+                    {earlierUnavailableReason === 'gateway-upgrade'
+                      ? t`Update the Gateway to load earlier remote history.`
+                      : t`${agentName} does not support loading earlier remote history.`}
+                  </Text>
+                ) : null
+              }
               ListFooterComponent={listFooter}
               style={styles.timelineScroll}
               contentContainerStyle={timelineContentStyle}
