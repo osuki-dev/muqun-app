@@ -1169,7 +1169,7 @@ export function HomeOverview({
           onChange={setHasComputerCards}
         />
         <HomeScrollViewport
-          dockHeight={dock && !padLaunch ? dockClipHeight : 0}
+          dockHeight={dock && !padLaunch && composerRevealed ? dockClipHeight : 0}
           dockOffset={isPad ? undefined : pageDockHide.dock.offset}
           ref={overviewScroll}
           keyboardShouldPersistTaps="handled"
@@ -1668,7 +1668,7 @@ export function HomeOverview({
       </Animated.View>
 
       <HomeScrollViewport
-        dockHeight={dock ? dockClipHeight : 0}
+        dockHeight={dock && composerRevealed ? dockClipHeight : 0}
         dockOffset={pageDockHide.dock.offset}
         ref={overviewScroll}
         onContentSizeChange={restoreScroll}
