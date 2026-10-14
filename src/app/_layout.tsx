@@ -575,13 +575,6 @@ function RootContent() {
                     ...pageOptions,
                   }}
                 />
-                <Stack.Screen
-                  name="computer-map"
-                  options={{
-                    ...sheetPresentationOptions(sheetRoutePresentations['computer-map']),
-                    ...pageOptions,
-                  }}
-                />
                 {/*
               The agent surface's pickers. They were `<Modal transparent>`
               components mounted inside the workbench, each with its own

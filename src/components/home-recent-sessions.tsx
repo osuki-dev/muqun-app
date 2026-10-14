@@ -899,7 +899,7 @@ function RecentSessionRow({
 const styles = StyleSheet.create({
   search: {
     paddingHorizontal: 12,
-    borderWidth: StyleSheet.hairlineWidth,
+    // borderWidth: StyleSheet.hairlineWidth,
     width: '100%',
     minWidth: 0,
     minHeight: 44,

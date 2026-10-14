@@ -5420,6 +5420,7 @@ export function ServerTerminalWorkspace({
 
   const composerField = (
     <TerminalComposer
+      squareBottom
       voiceContext={`${serverId}:${data.sessionId}:${selection.paneId}`}
       entering={fadeInDown('short')}
       exiting={fadeOutDown('short')}
@@ -6289,8 +6290,9 @@ export function ServerTerminalWorkspace({
                       {
                         borderTopLeftRadius: profile.chrome.composerDock,
                         borderTopRightRadius: profile.chrome.composerDock,
+                        borderBottomLeftRadius: 0,
+                        borderBottomRightRadius: 0,
                       },
-                      isPadLayout && { borderRadius: profile.chrome.composerDock },
                     ]}>
                     {/*
               The dock's own height is a moving thing: an approval banner, the

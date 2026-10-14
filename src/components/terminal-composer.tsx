@@ -84,6 +84,8 @@ export interface TerminalComposerProps {
   /** The field's own props: value, placeholder, editability, test id. */
   inputProps: FontedTextInputProps;
   send: TerminalComposerSend;
+  /** Home's field sits on the keyboard, so only its top corners stay rounded. */
+  squareBottom?: boolean;
   entering?: AnimatedViewProps['entering'];
   exiting?: AnimatedViewProps['exiting'];
   layout?: AnimatedViewProps['layout'];
@@ -113,6 +115,7 @@ export function TerminalComposer({
   compact = false,
   minLines,
   spans,
+  squareBottom = false,
 }: TerminalComposerProps) {
   const readInput = useLatestReader(inputProps);
   const { t } = useLingui();
@@ -141,6 +144,18 @@ export function TerminalComposer({
     opacity: voiceActive ? 0 : contentReveal.get(),
   }));
   const profile = useAppearanceProfile();
+  const fieldRadius = squareBottom
+    ? {
+        borderTopLeftRadius: profile.chrome.composerField,
+        borderTopRightRadius: profile.chrome.composerField,
+        borderBottomLeftRadius: 0,
+        borderBottomRightRadius: 0,
+        borderCurve: 'continuous' as const,
+      }
+    : {
+        borderRadius: profile.chrome.composerField,
+        borderCurve: 'continuous' as const,
+      };
   const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
   // The monospace slot is this component's *default*, not its rule, because
@@ -225,8 +240,7 @@ export function TerminalComposer({
               StyleSheet.absoluteFill,
               {
                 backgroundColor,
-                borderRadius: profile.chrome.composerField,
-                borderCurve: 'continuous',
+                ...fieldRadius,
               },
             ]}
           />
@@ -252,7 +266,7 @@ export function TerminalComposer({
         testID="composer-field-shell"
         style={[
           composerStyles.fieldShell,
-          { borderRadius: profile.chrome.composerField },
+          fieldRadius,
           { backgroundColor: outsideBackground ? 'transparent' : backgroundColor },
         ]}>
         {!voiceActive && !outsideBackground ? fieldBackground : null}

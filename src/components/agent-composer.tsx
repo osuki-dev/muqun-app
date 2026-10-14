@@ -1290,7 +1290,7 @@ export const AgentComposer = memo(function AgentComposer({
   const revealProgress = useSharedValue(revealed ? 1 : 0);
   useEffect(() => {
     const target = revealed ? 1 : 0;
-    if (revealProgress.get() !== target) revealProgress.set(withTiming(target, timing('short')));
+    if (revealProgress.get() !== target) revealProgress.set(withTiming(target, timing('micro')));
   }, [revealed, revealProgress]);
   const composerKeyboardStyle = useAnimatedStyle(() => ({
     opacity: revealProgress.get(),
@@ -2123,6 +2123,7 @@ export const AgentComposer = memo(function AgentComposer({
             {/* TerminalComposer reused for agent prompt */}
             <View onLayout={(event) => setInputRowHeight(event.nativeEvent.layout.height)}>
               <TerminalComposer
+                squareBottom={!flushField}
                 fieldBackground={fieldBackground}
                 fieldBackgroundColor={fieldBackgroundColor}
                 fieldBackgroundOutset={fieldBackgroundOutset}

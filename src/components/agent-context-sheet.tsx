@@ -19,7 +19,6 @@ import {
 import { Toggle } from '@/components/toggle';
 import { appChrome } from '@/constants/appearance';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { withAlpha } from '@/lib/color';
 import { fadeIn, fadeOut, listLayout } from '@/lib/motion';
 import { formatModelName } from '@/lib/agent-protocol';
 import {
@@ -383,21 +382,9 @@ export const AgentContextSheet = memo(function AgentContextSheet({
             ) : null}
             {onToggleYolo ? (
               <>
-                {/*
-                  "YOLO mode" is a joke about the consequence, and the row it
-                  named looked exactly like the one above it -- the same ink,
-                  the same weight, no hint that one of them hands the agent the
-                  keys. It says what it does, in a row tinted the colour this
-                  app uses for "be careful", with the consequence on the line
-                  under it rather than behind a confirmation nobody reads.
-                */}
                 <SheetSceneRow
                   title={t`Auto-approve every action`}
                   caption={t`The agent stops asking; irreversibly destructive commands stay blocked`}
-                  style={[
-                    styles.dangerRow,
-                    { backgroundColor: withAlpha(theme.colors.warning, yoloMode ? 0.16 : 0.08) },
-                  ]}
                   meta={
                     <Toggle
                       value={yoloMode}
@@ -554,12 +541,6 @@ const styles = StyleSheet.create({
   metaWide: { maxWidth: 200 },
   rulesEmpty: { paddingVertical: SHEET_LADDER.snug, lineHeight: AGENT_TYPE.mono.lineHeight },
   revoke: { minHeight: 32, paddingHorizontal: 4, alignItems: 'center', justifyContent: 'center' },
-  // Out to the sheet's own edge, like the selection rule: the tint is the
-  // sheet's warning about the row, not a card around it.
-  dangerRow: {
-    marginHorizontal: -SHEET_LADDER.gutter,
-    paddingHorizontal: SHEET_LADDER.gutter,
-  },
   confirm: { paddingBottom: SHEET_LADDER.snug, gap: SHEET_LADDER.gap },
   confirmText: { lineHeight: AGENT_TYPE.mono.lineHeight },
   confirmActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: SHEET_LADDER.gap },
