@@ -10,6 +10,7 @@ import { useAgents } from '@/stores/agents';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import {
   createSessionPageLoader,
+  mergeSessionPageTree,
   supportsAgentSessionPages,
   type SessionPagesState,
 } from '@/lib/agent-session-page';
@@ -56,6 +57,7 @@ export default function AgentSessionsScreen() {
 function OwnedAgentSessionsScreen() {
   const router = useRouter();
   const sessions = useAgentSheetBridge((state) => state.sessions);
+  const childrenByParent = useAgentSheetBridge((state) => state.childrenByParent);
   const activeAsid = useAgentSheetBridge((state) => state.activeAsid);
   const sessionInfo = useAgentSheetBridge((state) => state.sessionInfo);
   const knownProjects = useAgentSheetBridge((state) => state.knownProjects);
@@ -155,16 +157,13 @@ function OwnedAgentSessionsScreen() {
   );
   const merged = useMemo(() => {
     if (paginated) {
-      // Preserve provider order and the viewport as pages append. Overlay current
-      // titles/status only for identities already in this query's result.
-      const live = new Map(sessions.map((session) => [session.asid, session]));
-      return page.sessions.map((session) => live.get(session.asid) ?? session);
+      return mergeSessionPageTree(page.sessions, sessions, childrenByParent);
     }
     const others = page.sessions.filter(
       (session) => !activeDirectory || session.directory !== activeDirectory
     );
     return [...sessions, ...others];
-  }, [activeDirectory, page.sessions, paginated, sessions]);
+  }, [activeDirectory, page.sessions, paginated, sessions, childrenByParent]);
 
   return (
     <AgentSessionsSheet
