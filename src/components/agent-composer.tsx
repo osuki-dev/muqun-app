@@ -351,9 +351,6 @@ export interface AgentComposerProps {
   canMentionFiles?: boolean;
   /** A session observed elsewhere keeps its draft, but cannot send through this runtime. */
   interactionBlockedReason?: string;
-  /** A Gateway-staged choice, distinct from the session model. */
-  nextTurnModelName?: string;
-  nextTurnModelTemporary?: boolean;
   /** Row 1 contains roots only. Descendants belong in the tree sheet. */
   sessionStrip?: readonly SessionNode[];
   selectedRootAsid?: string;
@@ -578,8 +575,6 @@ export const AgentComposer = memo(function AgentComposer({
   canQueueWhileRunning = true,
   canMentionFiles = true,
   interactionBlockedReason,
-  nextTurnModelName,
-  nextTurnModelTemporary = false,
   sessionStrip = EMPTY_STRIP,
   selectedRootAsid,
   onOpenSessionTree,
@@ -2103,13 +2098,6 @@ export const AgentComposer = memo(function AgentComposer({
               </Animated.View>
             ) : null}
 
-            {nextTurnModelName ? (
-              <Text variant="caption" color={theme.colors.textMuted}>
-                {nextTurnModelTemporary
-                  ? t`Next turn: ${nextTurnModelName}. Staged until the next turn or Gateway restart.`
-                  : t`Next turn: ${nextTurnModelName}`}
-              </Text>
-            ) : null}
             {!promptAllowed ? (
               <Text variant="caption" color={theme.colors.textMuted}>
                 {interactionBlockedReason ?? (
