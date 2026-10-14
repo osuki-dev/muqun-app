@@ -46,7 +46,7 @@ function renderCard(props: object): any {
       i18n: { _: (word: unknown) => word },
     }),
     subagentActionWord: { wait: 'Wait', close: 'Close', completed: 'Completed' },
-    subagentStateWord: { working: 'Working', idle: 'Idle' },
+    subagentStateWord: { working: 'Working', idle: 'Idle', unknown: 'Unknown' },
     useThemeTokens: () => ({ colors }),
     usePaneChatMarkdownStyle: () => ({}),
     usePaneChatColors: () => colors,
@@ -63,6 +63,7 @@ function renderCard(props: object): any {
         'StatusDot',
         'GitFork',
         'Text',
+        'View',
         'Trans',
       ].map((name) => [name, name])
     ),
@@ -95,20 +96,24 @@ test('subagent card renders action, observed identity/state and exact child navi
     onOpenChildSession: (id: string) => opened.push(id),
   });
   expect(card.props.toolName).toBe('Wait');
-  expect(card.props.title).toBe('Reviewer');
-  expect(card.props.caption).toBe('Security · Review authentication');
+  expect(card.props.taskSummary.identity).toBe('Reviewer');
+  expect(card.props.taskSummary.title).toBe('Review authentication');
   expect(card.props.status).toBe('completed');
-  expect(card.props.chips[0].props.text).toBe('Working');
+  expect(card.props.taskSummary.status.props.children[1].props.children).toBe('Working');
+  expect(card.props.taskSummary.statusLabel).toBe('Working');
+  expect(card.props.taskSummary.busy).toBe(true);
   expect(card.props.children.subagentText).toBe(part.output);
   expect(card.props.actions).toHaveLength(1);
   card.props.actions[0].props.onPress();
   expect(opened).toEqual(['opaque-child-id']);
   const closed = renderCard({
     part: { ...part, input: { operation: 'closeAgent' } },
-    childSession,
+    childSession: { ...childSession, status: 'idle' },
   });
   expect(closed.props.toolName).toBe('Close');
-  expect(closed.props.chips[0].props.text).toBe('Working');
+  expect(closed.props.taskSummary.status.props.children[1].props.children).toBe('Idle');
+  expect(closed.props.taskSummary.statusLabel).toBe('Idle');
+  expect(closed.props.taskSummary.busy).toBe(false);
   expect(closed.props.actions).toBeNull();
 });
 
@@ -127,7 +132,10 @@ test('historical activity preserves its supplied path and result without inventi
     },
   });
   expect(card.props.toolName).toBe('Completed');
-  expect(card.props.title).toBe('/root/review');
+  expect(card.props.taskSummary.identity).toBe('/root/review');
+  expect(card.props.taskSummary.status.props.children[1].props.children).toBe('Unknown');
+  expect(card.props.taskSummary.statusLabel).toBe('Unknown');
+  expect(card.props.taskSummary.busy).toBe(false);
   expect(card.props.chips).toBeNull();
   expect(card.props.actions).toBeNull();
   expect(card.props.children.subagentText).toBe('Review returned.');

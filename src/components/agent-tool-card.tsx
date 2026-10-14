@@ -8,7 +8,7 @@ import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { plural } from '@lingui/core/macro';
-import { Check, FileText, GitFork, Play } from 'lucide-react-native';
+import { Check, FileText, Play } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { EnrichedMarkdownText, type MarkdownStyle } from 'react-native-enriched-markdown';
 
@@ -447,6 +447,26 @@ export const AgentToolCard = memo(function AgentToolCard({
   const argumentLine = useMemo(() => (pending ? toolArgumentLine(input) : ''), [pending, input]);
   const durationMs = toolDurationMs(part.time, part.metadata);
   const truncated = part.truncated === true || parsed.truncated;
+  // Read previews (including images) belong inside the log row's disclosure.
+  // Other rich results and interactive families keep their presentation.
+  const compactSummary =
+    part.name !== 'image_generation' &&
+    (kind === 'read' ||
+      (files.length === 0 &&
+        (kind === 'shell' ||
+          kind === 'glob' ||
+          kind === 'grep' ||
+          kind === 'search' ||
+          kind === 'web' ||
+          kind === 'skill' ||
+          kind === 'write' ||
+          kind === 'execute' ||
+          (kind === 'mcp' && (part.output == null || typeof part.output === 'string')))));
+  const shellExit = shellExitFromMetadata(part.metadata) ?? parsed.exitCode;
+  const resultFailed =
+    (kind === 'shell' &&
+      ((shellExit !== undefined && shellExit !== 0) || shellTimedOutFromMetadata(part.metadata))) ||
+    (kind === 'execute' && executeErrored(part.metadata));
 
   /** The tray, opened on this call's own shell when the engine named one. */
   const handleOpenTray = useCallback(() => {
@@ -503,6 +523,8 @@ export const AgentToolCard = memo(function AgentToolCard({
   );
   const childWorking =
     child?.state === 'working' || child?.state === 'starting' || child?.state === 'retrying';
+  const childStatusLabel =
+    kind === 'subagent' ? i18n._(subagentStateWord[child?.state ?? 'unknown']) : '';
   const questions = useMemo(
     () => (kind === 'question' ? parseToolQuestions(part.input) : []),
     [kind, part.input]
@@ -674,25 +696,7 @@ export const AgentToolCard = memo(function AgentToolCard({
           accessibilityRole="button"
           accessibilityLabel={t`Open the subagent's session`}
           onPress={handleOpenChild}
-          style={[
-            styles.action,
-            { borderRadius: profile.chrome.control, borderColor: colors.border },
-          ]}>
-          {/* The child's own status, not the tool's: a subagent can still be
-              working after the call that started it has returned. */}
-          <StatusDot
-            size={7}
-            filled
-            pulse={childWorking}
-            color={
-              child?.state === 'failed'
-                ? theme.colors.danger
-                : childWorking || child?.state === 'blocked'
-                  ? theme.colors.warning
-                  : theme.colors.textMuted
-            }
-          />
-          <GitFork size={11} color={colors.accent} />
+          style={styles.sessionAction}>
           <Text variant="caption" color={colors.accent} style={styles.actionText}>
             <Trans>Open session</Trans>
           </Text>
@@ -710,10 +714,7 @@ export const AgentToolCard = memo(function AgentToolCard({
     onOpenChildSession,
     handleOpenTray,
     handleOpenChild,
-    child,
-    childWorking,
     colors,
-    theme.colors,
     profile.chrome.control,
     t,
   ]);
@@ -838,9 +839,47 @@ export const AgentToolCard = memo(function AgentToolCard({
             : part.name
       }
       kind={kind}
+      compactSummary={compactSummary}
+      taskSummary={
+        kind === 'subagent'
+          ? {
+              title:
+                (typeof input?.description === 'string' && input.description.trim()) ||
+                (typeof input?.prompt === 'string' && input.prompt.trim().split('\n')[0]) ||
+                headerCaption ||
+                headerTitle ||
+                part.name,
+              identity: headerTitle,
+              statusLabel: childStatusLabel,
+              busy: childWorking,
+              status: (
+                <View style={styles.taskState}>
+                  <StatusDot
+                    size={7}
+                    filled
+                    pulse={childWorking}
+                    color={
+                      child?.state === 'failed'
+                        ? theme.colors.danger
+                        : childWorking || child?.state === 'blocked'
+                          ? theme.colors.warning
+                          : theme.colors.textMuted
+                    }
+                  />
+                  <Text
+                    variant="caption"
+                    color={theme.colors.textMuted}
+                    style={[styles.actionText, styles.taskStateText]}>
+                    {childStatusLabel}
+                  </Text>
+                </View>
+              ),
+            }
+          : undefined
+      }
       title={headerTitle}
       caption={headerCaption}
-      status={part.state}
+      status={!pending && resultFailed ? 'failed' : part.state}
       {...(durationMs === undefined ? {} : { durationMs })}
       truncated={truncated}
       {...(errorLine ? { error: errorLine } : {})}
@@ -848,8 +887,7 @@ export const AgentToolCard = memo(function AgentToolCard({
       {...(onOpenDetail ? { onOpenDetail } : {})}
       chips={chips}
       actions={actions}
-      // An edit's diff and a read's images are the content, not a detail
-      // behind an expand.
+      // Diffs stay visible. Read previews are mounted only after disclosure.
       preview={
         // While the input is still arriving there is no result to preview and
         // the arguments are the only thing there is to say.
@@ -1648,6 +1686,21 @@ const styles = StyleSheet.create({
   actionText: {
     fontSize: AGENT_TYPE.micro.size,
     fontWeight: '600',
+  },
+  sessionAction: {
+    minHeight: 44,
+    minWidth: 44,
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  taskState: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    flexShrink: 1,
+  },
+  taskStateText: {
+    flexShrink: 1,
   },
   fileRow: {
     flexDirection: 'row',
