@@ -149,7 +149,7 @@ export function HomeContinueSearch({
         {
           backgroundColor: theme.colors.surface,
           borderColor: theme.colors.border,
-          borderRadius: profile.chrome.control,
+          borderRadius: profile.chrome.surface,
         },
       ]}>
       <FontedTextInput
