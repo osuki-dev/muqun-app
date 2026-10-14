@@ -86,11 +86,6 @@ export interface TerminalComposerProps {
   send: TerminalComposerSend;
   /** Home's field sits on the keyboard, so only its top corners stay rounded. */
   squareBottom?: boolean;
-  /**
-   * The field sits inside a dock that already has the component's corner.
-   * It does not draw a second radius of its own.
-   */
-  nested?: boolean;
   entering?: AnimatedViewProps['entering'];
   exiting?: AnimatedViewProps['exiting'];
   layout?: AnimatedViewProps['layout'];
@@ -121,7 +116,6 @@ export function TerminalComposer({
   minLines,
   spans,
   squareBottom = false,
-  nested = false,
 }: TerminalComposerProps) {
   const readInput = useLatestReader(inputProps);
   const { t } = useLingui();
@@ -150,20 +144,18 @@ export function TerminalComposer({
     opacity: voiceActive ? 0 : contentReveal.get(),
   }));
   const profile = useAppearanceProfile();
-  const fieldRadius = nested
-    ? { borderRadius: 0, borderCurve: 'continuous' as const }
-    : squareBottom
-      ? {
-          borderTopLeftRadius: profile.chrome.composerField,
-          borderTopRightRadius: profile.chrome.composerField,
-          borderBottomLeftRadius: 0,
-          borderBottomRightRadius: 0,
-          borderCurve: 'continuous' as const,
-        }
-      : {
-          borderRadius: profile.chrome.composerField,
-          borderCurve: 'continuous' as const,
-        };
+  const fieldRadius = squareBottom
+    ? {
+        borderTopLeftRadius: profile.chrome.composerField,
+        borderTopRightRadius: profile.chrome.composerField,
+        borderBottomLeftRadius: 0,
+        borderBottomRightRadius: 0,
+        borderCurve: 'continuous' as const,
+      }
+    : {
+        borderRadius: profile.chrome.composerField,
+        borderCurve: 'continuous' as const,
+      };
   const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
   // The monospace slot is this component's *default*, not its rule, because

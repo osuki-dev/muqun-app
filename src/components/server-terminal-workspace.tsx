@@ -5420,7 +5420,6 @@ export function ServerTerminalWorkspace({
 
   const composerField = (
     <TerminalComposer
-      squareBottom
       voiceContext={`${serverId}:${data.sessionId}:${selection.paneId}`}
       entering={fadeInDown('short')}
       exiting={fadeOutDown('short')}

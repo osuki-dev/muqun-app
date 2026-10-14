@@ -2148,7 +2148,6 @@ export const AgentComposer = memo(function AgentComposer({
             {/* TerminalComposer reused for agent prompt */}
             <View onLayout={(event) => setInputRowHeight(event.nativeEvent.layout.height)}>
               <TerminalComposer
-                nested={!flushField}
                 fieldBackground={fieldBackground}
                 fieldBackgroundColor={fieldBackgroundColor}
                 fieldBackgroundOutset={fieldBackgroundOutset}
