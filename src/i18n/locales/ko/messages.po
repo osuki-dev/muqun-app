@@ -403,7 +403,7 @@ msgstr "10일"
 msgid "30 days"
 msgstr "30일"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "3D unavailable. Connections are listed below."
 msgstr "3D를 사용할 수 없습니다. 연결은 아래에 표시됩니다"
 
@@ -474,7 +474,7 @@ msgstr "정보"
 msgid "Accept work from other computers"
 msgstr "다른 컴퓨터의 작업 받기"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Accepting work"
 msgstr "작업 받는 중"
 
@@ -846,8 +846,8 @@ msgid "Authenticate with {authLabel} to continue."
 msgstr "계속하려면 {authLabel}(으)로 인증하세요"
 
 #: src/lib/local-authentication.ts
-msgid "Authenticate with {method} to continue"
-msgstr "계속하려면 {method}(으)로 인증하세요"
+msgid "Authenticate with {name} to continue"
+msgstr "계속하려면 {name}(으)로 인증하세요"
 
 #: src/components/app-lock-gate.tsx
 msgid "Authenticating"
@@ -1456,7 +1456,7 @@ msgstr "완료됨"
 msgid "Computer"
 msgstr "컴퓨터"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Computer details"
 msgstr "컴퓨터 상세 정보"
 
@@ -1587,8 +1587,7 @@ msgstr "{address}에 연결하는 중"
 msgid "Connecting…"
 msgstr "연결 중…"
 
-#: src/app/computer-map.tsx
-#: src/components/settings-servers.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Connection map"
 msgstr "연결 지도"
 
@@ -1933,7 +1932,7 @@ msgstr "작업 트리를 불러올 수 없습니다. 새로고침하여 다시 �
 msgid "Could not load capabilities"
 msgstr "기능을 불러올 수 없습니다"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Could not load computers. Open Computers to try again."
 msgstr "컴퓨터를 불러오지 못했습니다. 컴퓨터를 열어 다시 시도하세요"
 
@@ -2097,7 +2096,7 @@ msgstr "이 파일을 읽을 수 없습니다"
 msgid "Could not read voice settings. Save your configuration again."
 msgstr "음성 설정을 읽을 수 없습니다. 설정을 다시 저장하세요"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Could not refresh. This report may be outdated."
 msgstr "새로고침하지 못했습니다. 이 보고는 오래된 정보일 수 있습니다"
 
@@ -2400,7 +2399,6 @@ msgstr "{head}에서 분리됨"
 msgid "Development"
 msgstr "개발"
 
-#: src/components/settings-security.tsx
 #: src/lib/local-authentication.ts
 msgid "device authentication"
 msgstr "기기 인증"
@@ -2492,6 +2490,11 @@ msgstr "아래쪽 화살표"
 msgid "Download"
 msgstr "다운로드"
 
+#. placeholder {0}: asset.src.split('/').pop() ?? asset.src
+#: src/components/agent-message-block.tsx
+msgid "Download {0}"
+msgstr "{0} 다운로드"
+
 #: src/components/theme-link-import.tsx
 msgid "Download and preview"
 msgstr "다운로드 후 미리 보기"
@@ -2527,7 +2530,7 @@ msgstr "다운로드 중…"
 msgid "Draft the notes for the next build"
 msgstr "다음 빌드의 릴리스 노트 초안을 작성합니다"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Drag to rotate · Pinch to zoom · Tap to select"
 msgstr "드래그로 회전 · 두 손가락으로 확대·축소 · 탭하여 선택"
 
@@ -2576,10 +2579,6 @@ msgstr "에디토리얼"
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Effects · {0}"
 msgstr "효과 · {0}"
-
-#: src/i18n/labels.ts
-msgid "Enable deepseek in the gateway config, start DeepSeek Harness on the host, then restart the gateway."
-msgstr "게이트웨이 설정에서 deepseek를 활성화하고 호스트에서 DeepSeek Harness를 시작한 뒤 게이트웨이를 다시 시작하세요"
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -2897,6 +2896,10 @@ msgstr "그 호스트의 Gateway 포트"
 msgid "Gateway restarted"
 msgstr "Gateway 재시작"
 
+#: src/i18n/labels.ts
+msgid "Gateway starts or joins DeepSeek Harness on the computer (default http://127.0.0.1:3080, override deepseek.endpoint)."
+msgstr "Gateway가 컴퓨터에서 DeepSeek Harness를 시작하거나 연결합니다 (기본 http://127.0.0.1:3080, deepseek.endpoint로 재정의)"
+
 #: src/lib/notifications.ts
 msgid "Gateway updates"
 msgstr "Gateway 업데이트"
@@ -3095,6 +3098,7 @@ msgstr "대기"
 msgid "If this continues, restart the app or check the app installation"
 msgstr "문제가 계속되면 앱을 다시 시작하거나 앱 설치 상태를 확인하세요"
 
+#: src/components/agent-tool-card.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image"
 msgstr "이미지"
@@ -3157,13 +3161,13 @@ msgstr "입력"
 msgid "Input copied to clipboard"
 msgstr "입력을 클립보드에 복사했습니다"
 
-#. placeholder {0}: row.label
+#. placeholder {0}: item.label
 #: src/components/composer-popup.tsx
 msgid "Insert {0}"
 msgstr "{0} 삽입"
 
-#. placeholder {0}: row.label
-#. placeholder {1}: row.hint
+#. placeholder {0}: item.label
+#. placeholder {1}: item.hint
 #: src/components/composer-popup.tsx
 msgid "Insert {0} {1}"
 msgstr "{0} {1} 삽입"
@@ -3365,7 +3369,7 @@ msgstr "마지막 폴더"
 msgid "Last known activity"
 msgstr "마지막으로 확인한 활동"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Last reported by this computer"
 msgstr "이 컴퓨터의 마지막 보고"
 
@@ -3428,7 +3432,7 @@ msgstr "깊이 {depth}"
 msgid "Light"
 msgstr "라이트"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Lines: this app. Dashed arrows: last reported computer links."
 msgstr "선: 이 앱. 점선 화살표: 마지막으로 보고된 컴퓨터 간 연결"
 
@@ -3444,7 +3448,7 @@ msgstr "{name}와(과)의 연결이 해제되었습니다 · 다시 연결하는
 msgid "Linked with: {linkedNames}"
 msgstr "연결됨: {linkedNames}"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "List"
 msgstr "목록"
 
@@ -3493,16 +3497,16 @@ msgstr "불러오는 중"
 msgid "Loading commands"
 msgstr "명령 불러오는 중"
 
-#: src/app/computer-map.tsx
 #: src/app/servers/[serverId].tsx
+#: src/components/computer-map/screen.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading computers"
 msgstr "컴퓨터 불러오는 중"
 
-#: src/app/computer-map.tsx
 #: src/components/computer-map/gpu-map.native.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Loading map…"
 msgstr "지도를 불러오는 중…"
 
@@ -3574,7 +3578,7 @@ msgstr "연결 관리"
 msgid "Manage SSH hosts"
 msgstr "SSH 호스트 관리"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Map"
 msgstr "지도"
 
@@ -3733,10 +3737,9 @@ msgstr "Muqun 설정은 이 기기에만 남습니다"
 msgid "Muqun stays in this language whatever the phone is set to."
 msgstr "휴대폰 설정과 상관없이 Muqun은 이 언어를 유지합니다"
 
-#. placeholder {0}: availability.label
 #: src/components/settings-security.tsx
-msgid "Muqun will use {0} when the app opens."
-msgstr "앱을 열면 Muqun이 {0}을(를) 사용합니다"
+msgid "Muqun will use {methodName} when the app opens."
+msgstr "앱을 열면 Muqun이 {methodName}을(를) 사용합니다"
 
 #: src/components/custom-theme-library.tsx
 msgid "My themes"
@@ -3862,14 +3865,6 @@ msgstr "다음 알림"
 msgid "Next session"
 msgstr "다음 세션"
 
-#: src/components/agent-composer.tsx
-msgid "Next turn: {nextTurnModelName}"
-msgstr "다음 턴: {nextTurnModelName}"
-
-#: src/components/agent-composer.tsx
-msgid "Next turn: {nextTurnModelName}. Staged until the next turn or Gateway restart."
-msgstr "다음 턴: {nextTurnModelName}. 다음 턴 또는 Gateway 재시작 전까지 임시 선택이 유지됩니다"
-
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
 msgstr "실행 중인 에이전트 없음"
@@ -3924,7 +3919,7 @@ msgstr "온라인 컴퓨터 없음"
 msgid "No computer to start a task on."
 msgstr "작업을 시작할 컴퓨터가 없습니다"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 #: src/components/settings-servers.tsx
 msgid "No computers paired yet"
 msgstr "아직 페어링된 컴퓨터가 없습니다"
@@ -3992,7 +3987,7 @@ msgstr "출력이 없습니다"
 msgid "No password or key is saved for this host."
 msgstr "이 호스트에 저장된 비밀번호나 키가 없습니다"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "No peer report available."
 msgstr "컴퓨터 간 연결 보고가 없습니다"
 
@@ -4017,7 +4012,7 @@ msgstr "아직 프로젝트가 없습니다. 위에 경로를 입력해 열어 �
 msgid "No projects match “{0}”."
 msgstr "“{0}”와 일치하는 프로젝트가 없습니다"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "No reported links."
 msgstr "보고된 연결이 없습니다"
 
@@ -4093,7 +4088,7 @@ msgstr "아직 워크트리가 없습니다. 아래에서 하나 만들면 이 �
 msgid "Not a git repository"
 msgstr "Git 저장소가 아닙니다"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Not accepting work"
 msgstr "작업 받지 않음"
 
@@ -4551,7 +4546,7 @@ msgstr "페어링 코드"
 msgid "Pairing code expired. Scan again for a new code."
 msgstr "페어링 코드가 만료되었습니다. 다시 스캔해 새 코드를 받으세요"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Pairing expired"
 msgstr "페어링 만료"
 
@@ -4742,7 +4737,6 @@ msgstr "개인 키(비워 두면 저장된 값 유지)"
 #: src/app/agent.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
-#: src/components/composer-popup.tsx
 msgid "Project"
 msgstr "프로젝트"
 
@@ -4951,12 +4945,13 @@ msgstr "다시 연결 중…"
 msgid "Recording failed."
 msgstr "녹음하지 못했습니다"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Reduced motion: list view."
 msgstr "동작 줄이기: 목록 보기"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/demo-streaming-transcript.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
@@ -5096,11 +5091,11 @@ msgstr "오디오 다시 재생"
 msgid "Report a bug or request a feature"
 msgstr "버그 신고 또는 기능 제안"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Reported reachable"
 msgstr "연결 가능으로 보고됨"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Reported unreachable"
 msgstr "연결 불가로 보고됨"
 
@@ -5125,7 +5120,7 @@ msgstr "필수입니다"
 msgid "Requires iOS 16.1 or later."
 msgstr "iOS 16.1 이상이 필요합니다"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Reset view"
 msgstr "시점 초기화"
 
@@ -5513,7 +5508,7 @@ msgstr "모두 선택"
 msgid "Select model: {modelDisplayName}"
 msgstr "모델 선택: {modelDisplayName}"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Selected"
 msgstr "선택됨"
@@ -5532,8 +5527,8 @@ msgid "Send a message"
 msgstr "메시지 보내기"
 
 #: src/components/agent-composer.tsx
-msgid "Send a message, type / for commands, @ for files…"
-msgstr "메시지 보내기, / 명령어, @ 파일…"
+msgid "Send a message, type / for commands, $ for skills, @ for files…"
+msgstr "메시지 보내기, / 명령어, $ 스킬, @ 파일…"
 
 #: src/components/agent-composer.tsx
 msgid "Send a message…"
@@ -5629,20 +5624,17 @@ msgstr "내 컴퓨터에 하나 설치하기"
 msgid "Set the AI model for Claude Code"
 msgstr "Claude Code가 사용할 AI 모델을 설정합니다"
 
-#. placeholder {0}: authAvailability.label
-#. placeholder {0}: availability.label
-#: src/components/settings-security.tsx
-msgid "Set up {0} in system settings first."
-msgstr "먼저 시스템 설정에서 {0}을(를) 설정하세요"
-
-#. placeholder {0}: availability.label
-#: src/components/app-lock-gate.tsx
-msgid "Set up {0} in system settings to unlock Muqun."
-msgstr "Muqun을 잠금 해제하려면 시스템 설정에서 {0}을(를) 설정하세요"
-
 #: src/components/app-lock-gate.tsx
 msgid "Set up {label} in system settings first."
 msgstr "먼저 시스템 설정에서 {label}을(를) 설정하세요"
+
+#: src/components/settings-security.tsx
+msgid "Set up {methodName} in system settings first."
+msgstr "먼저 시스템 설정에서 {methodName}을(를) 설정하세요"
+
+#: src/components/app-lock-gate.tsx
+msgid "Set up {methodName} in system settings to unlock Muqun."
+msgstr "Muqun을 잠금 해제하려면 시스템 설정에서 {methodName}을(를) 설정하세요"
 
 #: src/app/explore.tsx
 msgid "Set up a Gateway on your computer"
@@ -5849,7 +5841,7 @@ msgstr "스킬을 시작했습니다"
 msgid "Skip intro"
 msgstr "소개 건너뛰기"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Some connections are omitted from the map."
 msgstr "일부 연결은 지도에서 생략됩니다"
 
@@ -6104,6 +6096,7 @@ msgstr "말하는 동안 음성을 스트리밍합니다. OpenAI Realtime과 호
 
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/demo-streaming-transcript.tsx
 msgid "Subagent"
 msgstr "서브에이전트"
 
@@ -6634,7 +6627,7 @@ msgstr "이 에이전트는 턴이 끝난 후 메시지를 받습니다. 초안�
 msgid "This agent did not offer that answer."
 msgstr "이 에이전트는 그 답변을 제시하지 않았습니다"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "This app"
 msgstr "이 앱"
 
@@ -7064,14 +7057,13 @@ msgstr "날짜 알 수 없음"
 msgid "Unlock Muqun"
 msgstr "Muqun 잠금 해제"
 
-#. placeholder {0}: authAvailability?.label ?? t`device authentication`
-#: src/components/settings-security.tsx
-msgid "Unlock with {0}"
-msgstr "{0}(으)로 잠금 해제"
-
 #: src/components/app-lock-gate.tsx
 msgid "Unlock with {authLabel}"
 msgstr "{authLabel}(으)로 잠금 해제"
+
+#: src/components/settings-security.tsx
+msgid "Unlock with {methodName}"
+msgstr "{methodName}(으)로 잠금 해제"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Unpacking…"
@@ -7362,7 +7354,6 @@ msgctxt "task state"
 msgid "Working"
 msgstr "작업 중"
 
-#: src/components/composer-popup.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "워크스페이스"

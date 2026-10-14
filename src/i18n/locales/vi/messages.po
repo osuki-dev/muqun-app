@@ -403,7 +403,7 @@ msgstr "10 ngày"
 msgid "30 days"
 msgstr "30 ngày"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "3D unavailable. Connections are listed below."
 msgstr "Không hỗ trợ 3D. Các kết nối được liệt kê bên dưới"
 
@@ -474,7 +474,7 @@ msgstr "Giới thiệu"
 msgid "Accept work from other computers"
 msgstr "Nhận việc từ máy tính khác"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Accepting work"
 msgstr "Nhận công việc"
 
@@ -846,8 +846,8 @@ msgid "Authenticate with {authLabel} to continue."
 msgstr "Xác thực bằng {authLabel} để tiếp tục"
 
 #: src/lib/local-authentication.ts
-msgid "Authenticate with {method} to continue"
-msgstr "Xác thực bằng {method} để tiếp tục"
+msgid "Authenticate with {name} to continue"
+msgstr "Xác thực bằng {name} để tiếp tục"
 
 #: src/components/app-lock-gate.tsx
 msgid "Authenticating"
@@ -1456,7 +1456,7 @@ msgstr "Đã hoàn tất"
 msgid "Computer"
 msgstr "Máy tính"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Computer details"
 msgstr "Chi tiết máy tính"
 
@@ -1587,8 +1587,7 @@ msgstr "Đang kết nối đến {address}"
 msgid "Connecting…"
 msgstr "Đang kết nối…"
 
-#: src/app/computer-map.tsx
-#: src/components/settings-servers.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Connection map"
 msgstr "Sơ đồ kết nối"
 
@@ -1933,7 +1932,7 @@ msgstr "Không thể liệt kê cây làm việc. Hãy làm mới để thử l�
 msgid "Could not load capabilities"
 msgstr "Không tải được khả năng"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Could not load computers. Open Computers to try again."
 msgstr "Không thể tải máy tính. Mở mục Máy tính để thử lại"
 
@@ -2097,7 +2096,7 @@ msgstr "Không đọc được tệp này"
 msgid "Could not read voice settings. Save your configuration again."
 msgstr "Không thể đọc cài đặt giọng nói. Hãy lưu lại cấu hình"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Could not refresh. This report may be outdated."
 msgstr "Không thể làm mới. Báo cáo này có thể đã cũ"
 
@@ -2400,7 +2399,6 @@ msgstr "Tách rời tại {head}"
 msgid "Development"
 msgstr "Phát triển"
 
-#: src/components/settings-security.tsx
 #: src/lib/local-authentication.ts
 msgid "device authentication"
 msgstr "xác thực thiết bị"
@@ -2492,6 +2490,11 @@ msgstr "Mũi tên xuống"
 msgid "Download"
 msgstr "Tải xuống"
 
+#. placeholder {0}: asset.src.split('/').pop() ?? asset.src
+#: src/components/agent-message-block.tsx
+msgid "Download {0}"
+msgstr "Tải xuống {0}"
+
 #: src/components/theme-link-import.tsx
 msgid "Download and preview"
 msgstr "Tải xuống và xem trước"
@@ -2527,7 +2530,7 @@ msgstr "Đang tải xuống…"
 msgid "Draft the notes for the next build"
 msgstr "Soạn ghi chú cho bản dựng tiếp theo"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Drag to rotate · Pinch to zoom · Tap to select"
 msgstr "Kéo để xoay · Chụm hai ngón để thu phóng · Chạm để chọn"
 
@@ -2576,10 +2579,6 @@ msgstr "Biên tập"
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Effects · {0}"
 msgstr "Hiệu ứng · {0}"
-
-#: src/i18n/labels.ts
-msgid "Enable deepseek in the gateway config, start DeepSeek Harness on the host, then restart the gateway."
-msgstr "Bật deepseek trong cấu hình gateway, khởi động DeepSeek Harness trên máy chủ, sau đó khởi động lại gateway"
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -2897,6 +2896,10 @@ msgstr "Cổng Gateway trên host đó"
 msgid "Gateway restarted"
 msgstr "Gateway đã khởi động lại"
 
+#: src/i18n/labels.ts
+msgid "Gateway starts or joins DeepSeek Harness on the computer (default http://127.0.0.1:3080, override deepseek.endpoint)."
+msgstr "Gateway khởi động hoặc kết nối DeepSeek Harness trên máy tính (mặc định http://127.0.0.1:3080, ghi đè bằng deepseek.endpoint)"
+
 #: src/lib/notifications.ts
 msgid "Gateway updates"
 msgstr "Cập nhật Gateway"
@@ -3095,6 +3098,7 @@ msgstr "Rảnh"
 msgid "If this continues, restart the app or check the app installation"
 msgstr "Nếu sự cố vẫn tiếp diễn, hãy khởi động lại ứng dụng hoặc kiểm tra bản cài đặt"
 
+#: src/components/agent-tool-card.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image"
 msgstr "Hình ảnh"
@@ -3157,13 +3161,13 @@ msgstr "Đầu vào"
 msgid "Input copied to clipboard"
 msgstr "Đã sao chép đầu vào vào bảng nhớ tạm"
 
-#. placeholder {0}: row.label
+#. placeholder {0}: item.label
 #: src/components/composer-popup.tsx
 msgid "Insert {0}"
 msgstr "Chèn {0}"
 
-#. placeholder {0}: row.label
-#. placeholder {1}: row.hint
+#. placeholder {0}: item.label
+#. placeholder {1}: item.hint
 #: src/components/composer-popup.tsx
 msgid "Insert {0} {1}"
 msgstr "Chèn {0} {1}"
@@ -3365,7 +3369,7 @@ msgstr "Thư mục lần cuối"
 msgid "Last known activity"
 msgstr "Hoạt động được ghi nhận gần nhất"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Last reported by this computer"
 msgstr "Báo cáo gần nhất của máy tính này"
 
@@ -3428,7 +3432,7 @@ msgstr "Cấp {depth}"
 msgid "Light"
 msgstr "Sáng"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Lines: this app. Dashed arrows: last reported computer links."
 msgstr "Đường: ứng dụng này. Mũi tên nét đứt: liên kết máy tính được báo cáo gần nhất"
 
@@ -3444,7 +3448,7 @@ msgstr "Liên kết tới {name} đã bị thu hồi · đang liên kết lại�
 msgid "Linked with: {linkedNames}"
 msgstr "Đã liên kết với: {linkedNames}"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "List"
 msgstr "Danh sách"
 
@@ -3493,16 +3497,16 @@ msgstr "Đang tải"
 msgid "Loading commands"
 msgstr "Đang tải lệnh"
 
-#: src/app/computer-map.tsx
 #: src/app/servers/[serverId].tsx
+#: src/components/computer-map/screen.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading computers"
 msgstr "Đang tải máy tính"
 
-#: src/app/computer-map.tsx
 #: src/components/computer-map/gpu-map.native.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Loading map…"
 msgstr "Đang tải sơ đồ…"
 
@@ -3574,7 +3578,7 @@ msgstr "Quản lý kết nối"
 msgid "Manage SSH hosts"
 msgstr "Quản lý host SSH"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Map"
 msgstr "Sơ đồ"
 
@@ -3733,10 +3737,9 @@ msgstr "Cài đặt của Muqun ở lại trên thiết bị này"
 msgid "Muqun stays in this language whatever the phone is set to."
 msgstr "Muqun giữ nguyên ngôn ngữ này bất kể điện thoại đặt gì"
 
-#. placeholder {0}: availability.label
 #: src/components/settings-security.tsx
-msgid "Muqun will use {0} when the app opens."
-msgstr "Muqun sẽ dùng {0} khi mở ứng dụng"
+msgid "Muqun will use {methodName} when the app opens."
+msgstr "Muqun sẽ dùng {methodName} khi mở ứng dụng"
 
 #: src/components/custom-theme-library.tsx
 msgid "My themes"
@@ -3862,14 +3865,6 @@ msgstr "Thông báo tiếp theo"
 msgid "Next session"
 msgstr "Phiên tiếp theo"
 
-#: src/components/agent-composer.tsx
-msgid "Next turn: {nextTurnModelName}"
-msgstr "Lượt tiếp theo: {nextTurnModelName}"
-
-#: src/components/agent-composer.tsx
-msgid "Next turn: {nextTurnModelName}. Staged until the next turn or Gateway restart."
-msgstr "Lượt tiếp theo: {nextTurnModelName}. Lựa chọn được lưu tạm đến lượt tiếp theo hoặc khi Gateway khởi động lại"
-
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
 msgstr "Không có tác tử nào đang chạy"
@@ -3924,7 +3919,7 @@ msgstr "Không có máy tính nào trực tuyến"
 msgid "No computer to start a task on."
 msgstr "Không có máy tính để bắt đầu tác vụ"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 #: src/components/settings-servers.tsx
 msgid "No computers paired yet"
 msgstr "Chưa ghép nối máy tính nào"
@@ -3992,7 +3987,7 @@ msgstr "Không có đầu ra"
 msgid "No password or key is saved for this host."
 msgstr "Chưa lưu mật khẩu hay khóa nào cho host này"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "No peer report available."
 msgstr "Chưa có báo cáo liên kết máy tính"
 
@@ -4017,7 +4012,7 @@ msgstr "Chưa có dự án nào ở đây. Nhập đường dẫn ở trên đ�
 msgid "No projects match “{0}”."
 msgstr "Không có dự án nào khớp “{0}”"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "No reported links."
 msgstr "Chưa có liên kết nào được báo cáo"
 
@@ -4093,7 +4088,7 @@ msgstr "Chưa có worktree nào. Tạo một cái bên dưới để làm việc
 msgid "Not a git repository"
 msgstr "Không phải kho mã Git"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Not accepting work"
 msgstr "Không nhận công việc"
 
@@ -4551,7 +4546,7 @@ msgstr "Mã ghép nối"
 msgid "Pairing code expired. Scan again for a new code."
 msgstr "Mã ghép nối đã hết hạn. Hãy quét lại để lấy mã mới"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Pairing expired"
 msgstr "Ghép đôi đã hết hạn"
 
@@ -4742,7 +4737,6 @@ msgstr "Khóa riêng (để trống để giữ khóa đã lưu)"
 #: src/app/agent.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
-#: src/components/composer-popup.tsx
 msgid "Project"
 msgstr "Dự án"
 
@@ -4951,12 +4945,13 @@ msgstr "ĐANG KẾT NỐI LẠI…"
 msgid "Recording failed."
 msgstr "Ghi âm thất bại"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Reduced motion: list view."
 msgstr "Giảm chuyển động: chế độ danh sách"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/demo-streaming-transcript.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
@@ -5096,11 +5091,11 @@ msgstr "Phát lại âm thanh"
 msgid "Report a bug or request a feature"
 msgstr "Báo lỗi hoặc đề xuất tính năng"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Reported reachable"
 msgstr "Được báo cáo là có thể kết nối"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Reported unreachable"
 msgstr "Được báo cáo là không thể kết nối"
 
@@ -5125,7 +5120,7 @@ msgstr "Bắt buộc"
 msgid "Requires iOS 16.1 or later."
 msgstr "Yêu cầu iOS 16.1 trở lên"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Reset view"
 msgstr "Đặt lại góc nhìn"
 
@@ -5513,7 +5508,7 @@ msgstr "Chọn tất cả"
 msgid "Select model: {modelDisplayName}"
 msgstr "Chọn mô hình: {modelDisplayName}"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Selected"
 msgstr "Đã chọn"
@@ -5532,8 +5527,8 @@ msgid "Send a message"
 msgstr "Gửi tin nhắn"
 
 #: src/components/agent-composer.tsx
-msgid "Send a message, type / for commands, @ for files…"
-msgstr "Gửi tin nhắn, gõ / để xem lệnh, @ để chọn tệp…"
+msgid "Send a message, type / for commands, $ for skills, @ for files…"
+msgstr "Gửi tin nhắn, gõ / để xem lệnh, $ để xem kỹ năng, @ để chọn tệp…"
 
 #: src/components/agent-composer.tsx
 msgid "Send a message…"
@@ -5629,20 +5624,17 @@ msgstr "Cài một cái trên máy tính của bạn"
 msgid "Set the AI model for Claude Code"
 msgstr "Đặt mô hình AI cho Claude Code"
 
-#. placeholder {0}: authAvailability.label
-#. placeholder {0}: availability.label
-#: src/components/settings-security.tsx
-msgid "Set up {0} in system settings first."
-msgstr "Hãy thiết lập {0} trong cài đặt hệ thống trước"
-
-#. placeholder {0}: availability.label
-#: src/components/app-lock-gate.tsx
-msgid "Set up {0} in system settings to unlock Muqun."
-msgstr "Hãy thiết lập {0} trong cài đặt hệ thống để mở khóa Muqun"
-
 #: src/components/app-lock-gate.tsx
 msgid "Set up {label} in system settings first."
 msgstr "Hãy thiết lập {label} trong cài đặt hệ thống trước"
+
+#: src/components/settings-security.tsx
+msgid "Set up {methodName} in system settings first."
+msgstr "Hãy thiết lập {methodName} trong cài đặt hệ thống trước"
+
+#: src/components/app-lock-gate.tsx
+msgid "Set up {methodName} in system settings to unlock Muqun."
+msgstr "Hãy thiết lập {methodName} trong cài đặt hệ thống để mở khóa Muqun"
 
 #: src/app/explore.tsx
 msgid "Set up a Gateway on your computer"
@@ -5849,7 +5841,7 @@ msgstr "Đã bắt đầu kỹ năng"
 msgid "Skip intro"
 msgstr "Bỏ qua phần giới thiệu"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Some connections are omitted from the map."
 msgstr "Một số kết nối không được hiển thị trên sơ đồ"
 
@@ -6104,6 +6096,7 @@ msgstr "Truyền âm thanh trong khi bạn nói. Cần điểm cuối phiên âm
 
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/demo-streaming-transcript.tsx
 msgid "Subagent"
 msgstr "Tác nhân phụ"
 
@@ -6634,7 +6627,7 @@ msgstr "Tác tử này nhận tin nhắn sau khi kết thúc lượt. Bản nhá
 msgid "This agent did not offer that answer."
 msgstr "Tác tử này không đưa ra câu trả lời đó"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "This app"
 msgstr "Ứng dụng này"
 
@@ -7064,14 +7057,13 @@ msgstr "Không rõ ngày"
 msgid "Unlock Muqun"
 msgstr "Mở khóa Muqun"
 
-#. placeholder {0}: authAvailability?.label ?? t`device authentication`
-#: src/components/settings-security.tsx
-msgid "Unlock with {0}"
-msgstr "Mở khóa bằng {0}"
-
 #: src/components/app-lock-gate.tsx
 msgid "Unlock with {authLabel}"
 msgstr "Mở khóa bằng {authLabel}"
+
+#: src/components/settings-security.tsx
+msgid "Unlock with {methodName}"
+msgstr "Mở khóa bằng {methodName}"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Unpacking…"
@@ -7362,7 +7354,6 @@ msgctxt "task state"
 msgid "Working"
 msgstr "Đang làm"
 
-#: src/components/composer-popup.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "Không gian làm việc"

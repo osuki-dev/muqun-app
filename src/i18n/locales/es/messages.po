@@ -403,7 +403,7 @@ msgstr "10 días"
 msgid "30 days"
 msgstr "30 días"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "3D unavailable. Connections are listed below."
 msgstr "3D no disponible. Las conexiones se muestran abajo"
 
@@ -474,7 +474,7 @@ msgstr "Acerca de"
 msgid "Accept work from other computers"
 msgstr "Aceptar trabajo de otros ordenadores"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Accepting work"
 msgstr "Acepta trabajo"
 
@@ -846,8 +846,8 @@ msgid "Authenticate with {authLabel} to continue."
 msgstr "Autentícate con {authLabel} para continuar"
 
 #: src/lib/local-authentication.ts
-msgid "Authenticate with {method} to continue"
-msgstr "Autentícate con {method} para continuar"
+msgid "Authenticate with {name} to continue"
+msgstr "Autentícate con {name} para continuar"
 
 #: src/components/app-lock-gate.tsx
 msgid "Authenticating"
@@ -1456,7 +1456,7 @@ msgstr "Completado"
 msgid "Computer"
 msgstr "Ordenador"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Computer details"
 msgstr "Detalles del ordenador"
 
@@ -1587,8 +1587,7 @@ msgstr "Conectando a {address}"
 msgid "Connecting…"
 msgstr "Conectando…"
 
-#: src/app/computer-map.tsx
-#: src/components/settings-servers.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Connection map"
 msgstr "Mapa de conexiones"
 
@@ -1933,7 +1932,7 @@ msgstr "No se pudieron listar los árboles de trabajo. Actualiza para reintentar
 msgid "Could not load capabilities"
 msgstr "No se pudieron cargar las capacidades"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Could not load computers. Open Computers to try again."
 msgstr "No se pudieron cargar los ordenadores. Abre «Ordenadores» para volver a intentarlo"
 
@@ -2097,7 +2096,7 @@ msgstr "No se ha podido leer este archivo"
 msgid "Could not read voice settings. Save your configuration again."
 msgstr "No se pudo leer la configuración de voz. Vuelve a guardarla"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Could not refresh. This report may be outdated."
 msgstr "No se pudo actualizar. Este informe puede estar desactualizado"
 
@@ -2400,7 +2399,6 @@ msgstr "Desacoplado en {head}"
 msgid "Development"
 msgstr "Desarrollo"
 
-#: src/components/settings-security.tsx
 #: src/lib/local-authentication.ts
 msgid "device authentication"
 msgstr "autenticación del dispositivo"
@@ -2492,6 +2490,11 @@ msgstr "Flecha abajo"
 msgid "Download"
 msgstr "Descargar"
 
+#. placeholder {0}: asset.src.split('/').pop() ?? asset.src
+#: src/components/agent-message-block.tsx
+msgid "Download {0}"
+msgstr "Descargar {0}"
+
 #: src/components/theme-link-import.tsx
 msgid "Download and preview"
 msgstr "Descargar y previsualizar"
@@ -2527,7 +2530,7 @@ msgstr "Descargando…"
 msgid "Draft the notes for the next build"
 msgstr "Redacta las notas de la próxima versión"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Drag to rotate · Pinch to zoom · Tap to select"
 msgstr "Arrastra para girar · Pellizca para ampliar · Toca para seleccionar"
 
@@ -2576,10 +2579,6 @@ msgstr "Revista"
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Effects · {0}"
 msgstr "Efectos · {0}"
-
-#: src/i18n/labels.ts
-msgid "Enable deepseek in the gateway config, start DeepSeek Harness on the host, then restart the gateway."
-msgstr "Activa deepseek en la configuración del gateway, inicia DeepSeek Harness en el host y reinicia el gateway"
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -2897,6 +2896,10 @@ msgstr "Puerto del gateway en ese host"
 msgid "Gateway restarted"
 msgstr "Gateway reiniciado"
 
+#: src/i18n/labels.ts
+msgid "Gateway starts or joins DeepSeek Harness on the computer (default http://127.0.0.1:3080, override deepseek.endpoint)."
+msgstr "El Gateway inicia o se conecta a DeepSeek Harness en el ordenador (por defecto http://127.0.0.1:3080, se puede sobrescribir con deepseek.endpoint)"
+
 #: src/lib/notifications.ts
 msgid "Gateway updates"
 msgstr "Actualizaciones del Gateway"
@@ -3095,6 +3098,7 @@ msgstr "Inactivo"
 msgid "If this continues, restart the app or check the app installation"
 msgstr "Si el problema persiste, reinicia la app o comprueba su instalación"
 
+#: src/components/agent-tool-card.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image"
 msgstr "Imagen"
@@ -3157,13 +3161,13 @@ msgstr "Entrada"
 msgid "Input copied to clipboard"
 msgstr "Entrada copiada al portapapeles"
 
-#. placeholder {0}: row.label
+#. placeholder {0}: item.label
 #: src/components/composer-popup.tsx
 msgid "Insert {0}"
 msgstr "Insertar {0}"
 
-#. placeholder {0}: row.label
-#. placeholder {1}: row.hint
+#. placeholder {0}: item.label
+#. placeholder {1}: item.hint
 #: src/components/composer-popup.tsx
 msgid "Insert {0} {1}"
 msgstr "Insertar {0} {1}"
@@ -3365,7 +3369,7 @@ msgstr "Última carpeta"
 msgid "Last known activity"
 msgstr "Última actividad conocida"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Last reported by this computer"
 msgstr "Último informe de este ordenador"
 
@@ -3428,7 +3432,7 @@ msgstr "Nivel {depth}"
 msgid "Light"
 msgstr "Claro"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Lines: this app. Dashed arrows: last reported computer links."
 msgstr "Líneas: esta aplicación. Flechas discontinuas: últimos enlaces notificados entre ordenadores"
 
@@ -3444,7 +3448,7 @@ msgstr "Se revocó el vínculo con {name} · volviendo a vincular…"
 msgid "Linked with: {linkedNames}"
 msgstr "Enlazado con: {linkedNames}"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "List"
 msgstr "Lista"
 
@@ -3493,16 +3497,16 @@ msgstr "Cargando"
 msgid "Loading commands"
 msgstr "Cargando comandos"
 
-#: src/app/computer-map.tsx
 #: src/app/servers/[serverId].tsx
+#: src/components/computer-map/screen.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading computers"
 msgstr "Cargando ordenadores"
 
-#: src/app/computer-map.tsx
 #: src/components/computer-map/gpu-map.native.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Loading map…"
 msgstr "Cargando mapa…"
 
@@ -3574,7 +3578,7 @@ msgstr "Gestionar conexiones"
 msgid "Manage SSH hosts"
 msgstr "Gestionar hosts SSH"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Map"
 msgstr "Mapa"
 
@@ -3733,10 +3737,9 @@ msgstr "Los ajustes de Muqun se quedan en este dispositivo"
 msgid "Muqun stays in this language whatever the phone is set to."
 msgstr "Muqun se mantiene en este idioma, sea cual sea el del teléfono"
 
-#. placeholder {0}: availability.label
 #: src/components/settings-security.tsx
-msgid "Muqun will use {0} when the app opens."
-msgstr "Muqun usará {0} al abrir la app"
+msgid "Muqun will use {methodName} when the app opens."
+msgstr "Muqun usará {methodName} al abrir la app"
 
 #: src/components/custom-theme-library.tsx
 msgid "My themes"
@@ -3862,14 +3865,6 @@ msgstr "Siguiente notificación"
 msgid "Next session"
 msgstr "Sesión siguiente"
 
-#: src/components/agent-composer.tsx
-msgid "Next turn: {nextTurnModelName}"
-msgstr "Siguiente turno: {nextTurnModelName}"
-
-#: src/components/agent-composer.tsx
-msgid "Next turn: {nextTurnModelName}. Staged until the next turn or Gateway restart."
-msgstr "Siguiente turno: {nextTurnModelName}. Selección pendiente hasta el siguiente turno o el reinicio de Gateway"
-
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
 msgstr "Ningún agente en ejecución"
@@ -3924,7 +3919,7 @@ msgstr "Ningún ordenador en línea"
 msgid "No computer to start a task on."
 msgstr "No hay ningún ordenador en el que iniciar una tarea"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 #: src/components/settings-servers.tsx
 msgid "No computers paired yet"
 msgstr "Aún no hay ordenadores vinculados"
@@ -3992,7 +3987,7 @@ msgstr "Sin salida"
 msgid "No password or key is saved for this host."
 msgstr "No hay contraseña ni clave guardada para este host"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "No peer report available."
 msgstr "No hay informes de enlaces disponibles"
 
@@ -4017,7 +4012,7 @@ msgstr "Aún no hay proyectos aquí. Escribe una ruta arriba para abrir uno"
 msgid "No projects match “{0}”."
 msgstr "Ningún proyecto coincide con “{0}”"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "No reported links."
 msgstr "No se han notificado enlaces"
 
@@ -4093,7 +4088,7 @@ msgstr "Todavía no hay worktrees. Crea uno abajo para trabajar en una rama sin 
 msgid "Not a git repository"
 msgstr "No es un repositorio Git"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Not accepting work"
 msgstr "No acepta trabajo"
 
@@ -4551,7 +4546,7 @@ msgstr "Código de vinculación"
 msgid "Pairing code expired. Scan again for a new code."
 msgstr "El código de vinculación caducó. Escanea de nuevo para obtener otro código"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Pairing expired"
 msgstr "Vinculación caducada"
 
@@ -4742,7 +4737,6 @@ msgstr "Clave privada (deja en blanco para conservar la guardada)"
 #: src/app/agent.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
-#: src/components/composer-popup.tsx
 msgid "Project"
 msgstr "Proyecto"
 
@@ -4951,12 +4945,13 @@ msgstr "RECONECTANDO…"
 msgid "Recording failed."
 msgstr "Error al grabar"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Reduced motion: list view."
 msgstr "Movimiento reducido: vista de lista"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/demo-streaming-transcript.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
@@ -5096,11 +5091,11 @@ msgstr "Volver a reproducir audio"
 msgid "Report a bug or request a feature"
 msgstr "Reportar un error o pedir una función"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Reported reachable"
 msgstr "Notificado como accesible"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Reported unreachable"
 msgstr "Notificado como inaccesible"
 
@@ -5125,7 +5120,7 @@ msgstr "Obligatorio"
 msgid "Requires iOS 16.1 or later."
 msgstr "Requiere iOS 16.1 o posterior"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Reset view"
 msgstr "Restablecer vista"
 
@@ -5513,7 +5508,7 @@ msgstr "Seleccionar todo"
 msgid "Select model: {modelDisplayName}"
 msgstr "Seleccionar modelo: {modelDisplayName}"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Selected"
 msgstr "Seleccionado"
@@ -5532,8 +5527,8 @@ msgid "Send a message"
 msgstr "Enviar un mensaje"
 
 #: src/components/agent-composer.tsx
-msgid "Send a message, type / for commands, @ for files…"
-msgstr "Enviar un mensaje, / para comandos, @ para archivos…"
+msgid "Send a message, type / for commands, $ for skills, @ for files…"
+msgstr "Enviar un mensaje, / para comandos, $ para habilidades, @ para archivos…"
 
 #: src/components/agent-composer.tsx
 msgid "Send a message…"
@@ -5629,20 +5624,17 @@ msgstr "Instala uno en tu ordenador"
 msgid "Set the AI model for Claude Code"
 msgstr "Define el modelo de IA de Claude Code"
 
-#. placeholder {0}: authAvailability.label
-#. placeholder {0}: availability.label
-#: src/components/settings-security.tsx
-msgid "Set up {0} in system settings first."
-msgstr "Configura primero {0} en los ajustes del sistema"
-
-#. placeholder {0}: availability.label
-#: src/components/app-lock-gate.tsx
-msgid "Set up {0} in system settings to unlock Muqun."
-msgstr "Configura {0} en los ajustes del sistema para desbloquear Muqun"
-
 #: src/components/app-lock-gate.tsx
 msgid "Set up {label} in system settings first."
 msgstr "Configura primero {label} en los ajustes del sistema"
+
+#: src/components/settings-security.tsx
+msgid "Set up {methodName} in system settings first."
+msgstr "Configura primero {methodName} en los ajustes del sistema"
+
+#: src/components/app-lock-gate.tsx
+msgid "Set up {methodName} in system settings to unlock Muqun."
+msgstr "Configura {methodName} en los ajustes del sistema para desbloquear Muqun"
 
 #: src/app/explore.tsx
 msgid "Set up a Gateway on your computer"
@@ -5849,7 +5841,7 @@ msgstr "Habilidad iniciada"
 msgid "Skip intro"
 msgstr "Saltar la introducción"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Some connections are omitted from the map."
 msgstr "Se omiten algunas conexiones del mapa"
 
@@ -6104,6 +6096,7 @@ msgstr "Transmite el audio mientras hablas. Requiere un punto de conexión de tr
 
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/demo-streaming-transcript.tsx
 msgid "Subagent"
 msgstr "Subagente"
 
@@ -6634,7 +6627,7 @@ msgstr "Este agente acepta mensajes cuando termina su turno. Tu borrador se qued
 msgid "This agent did not offer that answer."
 msgstr "Este agente no ofreció esa respuesta"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "This app"
 msgstr "Esta aplicación"
 
@@ -7064,14 +7057,13 @@ msgstr "Fecha desconocida"
 msgid "Unlock Muqun"
 msgstr "Desbloquear Muqun"
 
-#. placeholder {0}: authAvailability?.label ?? t`device authentication`
-#: src/components/settings-security.tsx
-msgid "Unlock with {0}"
-msgstr "Desbloquear con {0}"
-
 #: src/components/app-lock-gate.tsx
 msgid "Unlock with {authLabel}"
 msgstr "Desbloquear con {authLabel}"
+
+#: src/components/settings-security.tsx
+msgid "Unlock with {methodName}"
+msgstr "Desbloquear con {methodName}"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Unpacking…"
@@ -7362,7 +7354,6 @@ msgctxt "task state"
 msgid "Working"
 msgstr "Trabajando"
 
-#: src/components/composer-popup.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "Espacio de trabajo"

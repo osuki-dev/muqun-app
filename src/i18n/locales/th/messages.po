@@ -403,7 +403,7 @@ msgstr "10 วัน"
 msgid "30 days"
 msgstr "30 วัน"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "3D unavailable. Connections are listed below."
 msgstr "ไม่รองรับ 3D การเชื่อมต่อแสดงอยู่ด้านล่าง"
 
@@ -474,7 +474,7 @@ msgstr "เกี่ยวกับ"
 msgid "Accept work from other computers"
 msgstr "รับงานจากคอมพิวเตอร์เครื่องอื่น"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Accepting work"
 msgstr "รับงาน"
 
@@ -846,8 +846,8 @@ msgid "Authenticate with {authLabel} to continue."
 msgstr "ยืนยันตัวตนด้วย {authLabel} เพื่อดำเนินการต่อ"
 
 #: src/lib/local-authentication.ts
-msgid "Authenticate with {method} to continue"
-msgstr "ยืนยันตัวตนด้วย {method} เพื่อดำเนินการต่อ"
+msgid "Authenticate with {name} to continue"
+msgstr "ยืนยันตัวตนด้วย {name} เพื่อดำเนินการต่อ"
 
 #: src/components/app-lock-gate.tsx
 msgid "Authenticating"
@@ -1456,7 +1456,7 @@ msgstr "เสร็จสิ้น"
 msgid "Computer"
 msgstr "คอมพิวเตอร์"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Computer details"
 msgstr "รายละเอียดคอมพิวเตอร์"
 
@@ -1587,8 +1587,7 @@ msgstr "กำลังเชื่อมต่อกับ {address}"
 msgid "Connecting…"
 msgstr "กำลังเชื่อมต่อ…"
 
-#: src/app/computer-map.tsx
-#: src/components/settings-servers.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Connection map"
 msgstr "แผนผังการเชื่อมต่อ"
 
@@ -1933,7 +1932,7 @@ msgstr "ไม่สามารถแสดงรายการเวิร์
 msgid "Could not load capabilities"
 msgstr "โหลดความสามารถไม่ได้"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Could not load computers. Open Computers to try again."
 msgstr "โหลดคอมพิวเตอร์ไม่ได้ เปิดหน้าคอมพิวเตอร์เพื่อลองอีกครั้ง"
 
@@ -2097,7 +2096,7 @@ msgstr "อ่านไฟล์นี้ไม่ได้"
 msgid "Could not read voice settings. Save your configuration again."
 msgstr "ไม่สามารถอ่านการตั้งค่าเสียงได้ โปรดบันทึกการตั้งค่าอีกครั้ง"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Could not refresh. This report may be outdated."
 msgstr "รีเฟรชไม่ได้ รายงานนี้อาจล้าสมัย"
 
@@ -2400,7 +2399,6 @@ msgstr "แยกออกที่ {head}"
 msgid "Development"
 msgstr "การพัฒนา"
 
-#: src/components/settings-security.tsx
 #: src/lib/local-authentication.ts
 msgid "device authentication"
 msgstr "การยืนยันตัวตนของอุปกรณ์"
@@ -2492,6 +2490,11 @@ msgstr "ลูกศรลง"
 msgid "Download"
 msgstr "ดาวน์โหลด"
 
+#. placeholder {0}: asset.src.split('/').pop() ?? asset.src
+#: src/components/agent-message-block.tsx
+msgid "Download {0}"
+msgstr "ดาวน์โหลด {0}"
+
 #: src/components/theme-link-import.tsx
 msgid "Download and preview"
 msgstr "ดาวน์โหลดและดูตัวอย่าง"
@@ -2527,7 +2530,7 @@ msgstr "กำลังดาวน์โหลด…"
 msgid "Draft the notes for the next build"
 msgstr "ร่างบันทึกสำหรับบิลด์ถัดไป"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Drag to rotate · Pinch to zoom · Tap to select"
 msgstr "ลากเพื่อหมุน · ใช้สองนิ้วเพื่อซูม · แตะเพื่อเลือก"
 
@@ -2576,10 +2579,6 @@ msgstr "บทบรรณาธิการ"
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Effects · {0}"
 msgstr "เอฟเฟกต์ · {0}"
-
-#: src/i18n/labels.ts
-msgid "Enable deepseek in the gateway config, start DeepSeek Harness on the host, then restart the gateway."
-msgstr "เปิดใช้ deepseek ในการกำหนดค่าเกตเวย์ เริ่ม DeepSeek Harness บนโฮสต์ แล้วรีสตาร์ตเกตเวย์"
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -2897,6 +2896,10 @@ msgstr "พอร์ต Gateway บนโฮสต์นั้น"
 msgid "Gateway restarted"
 msgstr "Gateway เริ่มทำงานใหม่แล้ว"
 
+#: src/i18n/labels.ts
+msgid "Gateway starts or joins DeepSeek Harness on the computer (default http://127.0.0.1:3080, override deepseek.endpoint)."
+msgstr "Gateway เริ่มหรือเชื่อมต่อ DeepSeek Harness บนคอมพิวเตอร์ (ค่าเริ่มต้น http://127.0.0.1:3080 แก้ไขได้ด้วย deepseek.endpoint)"
+
 #: src/lib/notifications.ts
 msgid "Gateway updates"
 msgstr "อัปเดตจาก Gateway"
@@ -3095,6 +3098,7 @@ msgstr "ว่าง"
 msgid "If this continues, restart the app or check the app installation"
 msgstr "หากยังเกิดปัญหา ให้เริ่มแอปใหม่หรือตรวจสอบการติดตั้งแอป"
 
+#: src/components/agent-tool-card.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image"
 msgstr "รูปภาพ"
@@ -3157,13 +3161,13 @@ msgstr "อินพุต"
 msgid "Input copied to clipboard"
 msgstr "คัดลอกอินพุตไปยังคลิปบอร์ดแล้ว"
 
-#. placeholder {0}: row.label
+#. placeholder {0}: item.label
 #: src/components/composer-popup.tsx
 msgid "Insert {0}"
 msgstr "แทรก {0}"
 
-#. placeholder {0}: row.label
-#. placeholder {1}: row.hint
+#. placeholder {0}: item.label
+#. placeholder {1}: item.hint
 #: src/components/composer-popup.tsx
 msgid "Insert {0} {1}"
 msgstr "แทรก {0} {1}"
@@ -3365,7 +3369,7 @@ msgstr "โฟลเดอร์ล่าสุด"
 msgid "Last known activity"
 msgstr "กิจกรรมล่าสุดที่ทราบ"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Last reported by this computer"
 msgstr "รายงานล่าสุดจากคอมพิวเตอร์นี้"
 
@@ -3428,7 +3432,7 @@ msgstr "ระดับ {depth}"
 msgid "Light"
 msgstr "สว่าง"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Lines: this app. Dashed arrows: last reported computer links."
 msgstr "เส้น: แอปนี้ ลูกศรเส้นประ: ลิงก์ระหว่างคอมพิวเตอร์ที่รายงานล่าสุด"
 
@@ -3444,7 +3448,7 @@ msgstr "ลิงก์ไปยัง {name} ถูกเพิกถอน · 
 msgid "Linked with: {linkedNames}"
 msgstr "เชื่อมกับ: {linkedNames}"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "List"
 msgstr "รายการ"
 
@@ -3493,16 +3497,16 @@ msgstr "กำลังโหลด"
 msgid "Loading commands"
 msgstr "กำลังโหลดคำสั่ง"
 
-#: src/app/computer-map.tsx
 #: src/app/servers/[serverId].tsx
+#: src/components/computer-map/screen.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading computers"
 msgstr "กำลังโหลดคอมพิวเตอร์"
 
-#: src/app/computer-map.tsx
 #: src/components/computer-map/gpu-map.native.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Loading map…"
 msgstr "กำลังโหลดแผนผัง…"
 
@@ -3574,7 +3578,7 @@ msgstr "จัดการการเชื่อมต่อ"
 msgid "Manage SSH hosts"
 msgstr "จัดการโฮสต์ SSH"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Map"
 msgstr "แผนผัง"
 
@@ -3733,10 +3737,9 @@ msgstr "การตั้งค่า Muqun อยู่บนอุปกร�
 msgid "Muqun stays in this language whatever the phone is set to."
 msgstr "Muqun ใช้ภาษานี้ไม่ว่าโทรศัพท์จะตั้งเป็นภาษาใด"
 
-#. placeholder {0}: availability.label
 #: src/components/settings-security.tsx
-msgid "Muqun will use {0} when the app opens."
-msgstr "Muqun จะใช้ {0} เมื่อเปิดแอป"
+msgid "Muqun will use {methodName} when the app opens."
+msgstr "Muqun จะใช้ {methodName} เมื่อเปิดแอป"
 
 #: src/components/custom-theme-library.tsx
 msgid "My themes"
@@ -3862,14 +3865,6 @@ msgstr "การแจ้งเตือนถัดไป"
 msgid "Next session"
 msgstr "เซสชันถัดไป"
 
-#: src/components/agent-composer.tsx
-msgid "Next turn: {nextTurnModelName}"
-msgstr "รอบถัดไป: {nextTurnModelName}"
-
-#: src/components/agent-composer.tsx
-msgid "Next turn: {nextTurnModelName}. Staged until the next turn or Gateway restart."
-msgstr "รอบถัดไป: {nextTurnModelName} เก็บตัวเลือกชั่วคราวไว้จนถึงรอบถัดไปหรือจนกว่า Gateway จะเริ่มใหม่"
-
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
 msgstr "ไม่มีเอเจนต์กำลังทำงาน"
@@ -3924,7 +3919,7 @@ msgstr "ไม่มีคอมพิวเตอร์ที่ออนไล
 msgid "No computer to start a task on."
 msgstr "ไม่มีคอมพิวเตอร์ให้เริ่มงาน"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 #: src/components/settings-servers.tsx
 msgid "No computers paired yet"
 msgstr "ยังไม่ได้จับคู่คอมพิวเตอร์"
@@ -3992,7 +3987,7 @@ msgstr "ไม่มีเอาต์พุต"
 msgid "No password or key is saved for this host."
 msgstr "ไม่มีรหัสผ่านหรือคีย์ที่บันทึกไว้สำหรับโฮสต์นี้"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "No peer report available."
 msgstr "ไม่มีรายงานลิงก์ระหว่างคอมพิวเตอร์"
 
@@ -4017,7 +4012,7 @@ msgstr "ยังไม่มีโปรเจกต์ที่นี่ พ�
 msgid "No projects match “{0}”."
 msgstr "ไม่มีโปรเจกต์ที่ตรงกับ “{0}”"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "No reported links."
 msgstr "ไม่มีลิงก์ที่รายงาน"
 
@@ -4093,7 +4088,7 @@ msgstr "ยังไม่มีเวิร์กทรี สร้างส�
 msgid "Not a git repository"
 msgstr "ไม่ใช่ที่เก็บโค้ด Git"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Not accepting work"
 msgstr "ไม่รับงาน"
 
@@ -4551,7 +4546,7 @@ msgstr "รหัสจับคู่"
 msgid "Pairing code expired. Scan again for a new code."
 msgstr "รหัสจับคู่หมดอายุ สแกนอีกครั้งเพื่อรับรหัสใหม่"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Pairing expired"
 msgstr "การจับคู่หมดอายุ"
 
@@ -4742,7 +4737,6 @@ msgstr "คีย์ส่วนตัว (เว้นว่างเพื่�
 #: src/app/agent.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
-#: src/components/composer-popup.tsx
 msgid "Project"
 msgstr "โปรเจกต์"
 
@@ -4951,12 +4945,13 @@ msgstr "กำลังเชื่อมต่อใหม่…"
 msgid "Recording failed."
 msgstr "บันทึกเสียงไม่สำเร็จ"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Reduced motion: list view."
 msgstr "ลดการเคลื่อนไหว: มุมมองรายการ"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/demo-streaming-transcript.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
@@ -5096,11 +5091,11 @@ msgstr "เล่นเสียงอีกครั้ง"
 msgid "Report a bug or request a feature"
 msgstr "รายงานข้อผิดพลาดหรือเสนอฟีเจอร์"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Reported reachable"
 msgstr "รายงานว่าเชื่อมต่อได้"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Reported unreachable"
 msgstr "รายงานว่าเชื่อมต่อไม่ได้"
 
@@ -5125,7 +5120,7 @@ msgstr "จำเป็น"
 msgid "Requires iOS 16.1 or later."
 msgstr "ต้องใช้ iOS 16.1 ขึ้นไป"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Reset view"
 msgstr "รีเซ็ตมุมมอง"
 
@@ -5513,7 +5508,7 @@ msgstr "เลือกทั้งหมด"
 msgid "Select model: {modelDisplayName}"
 msgstr "เลือกโมเดล: {modelDisplayName}"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Selected"
 msgstr "เลือกแล้ว"
@@ -5532,8 +5527,8 @@ msgid "Send a message"
 msgstr "ส่งข้อความ"
 
 #: src/components/agent-composer.tsx
-msgid "Send a message, type / for commands, @ for files…"
-msgstr "ส่งข้อความ พิมพ์ / เพื่อดูคำสั่ง, @ เพื่อเลือกไฟล์…"
+msgid "Send a message, type / for commands, $ for skills, @ for files…"
+msgstr "ส่งข้อความ พิมพ์ / เพื่อดูคำสั่ง, $ เพื่อดูสกิล, @ เพื่อเลือกไฟล์…"
 
 #: src/components/agent-composer.tsx
 msgid "Send a message…"
@@ -5629,20 +5624,17 @@ msgstr "ตั้งค่าบนคอมพิวเตอร์ของค
 msgid "Set the AI model for Claude Code"
 msgstr "ตั้งค่าโมเดล AI สำหรับ Claude Code"
 
-#. placeholder {0}: authAvailability.label
-#. placeholder {0}: availability.label
-#: src/components/settings-security.tsx
-msgid "Set up {0} in system settings first."
-msgstr "ตั้งค่า {0} ในการตั้งค่าระบบก่อน"
-
-#. placeholder {0}: availability.label
-#: src/components/app-lock-gate.tsx
-msgid "Set up {0} in system settings to unlock Muqun."
-msgstr "ตั้งค่า {0} ในการตั้งค่าระบบเพื่อปลดล็อก Muqun"
-
 #: src/components/app-lock-gate.tsx
 msgid "Set up {label} in system settings first."
 msgstr "ตั้งค่า {label} ในการตั้งค่าระบบก่อน"
+
+#: src/components/settings-security.tsx
+msgid "Set up {methodName} in system settings first."
+msgstr "ตั้งค่า {methodName} ในการตั้งค่าระบบก่อน"
+
+#: src/components/app-lock-gate.tsx
+msgid "Set up {methodName} in system settings to unlock Muqun."
+msgstr "ตั้งค่า {methodName} ในการตั้งค่าระบบเพื่อปลดล็อก Muqun"
 
 #: src/app/explore.tsx
 msgid "Set up a Gateway on your computer"
@@ -5849,7 +5841,7 @@ msgstr "เริ่มสกิลแล้ว"
 msgid "Skip intro"
 msgstr "ข้ามคำแนะนำ"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Some connections are omitted from the map."
 msgstr "การเชื่อมต่อบางรายการไม่แสดงบนแผนผัง"
 
@@ -6104,6 +6096,7 @@ msgstr "สตรีมเสียงขณะที่คุณพูด ต�
 
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/demo-streaming-transcript.tsx
 msgid "Subagent"
 msgstr "เอเจนต์ย่อย"
 
@@ -6634,7 +6627,7 @@ msgstr "เอเจนต์นี้รับข้อความหลัง
 msgid "This agent did not offer that answer."
 msgstr "เอเจนต์นี้ไม่ได้เสนอตัวเลือกคำตอบนั้น"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "This app"
 msgstr "แอปนี้"
 
@@ -7064,14 +7057,13 @@ msgstr "ไม่ทราบวันที่"
 msgid "Unlock Muqun"
 msgstr "ปลดล็อก Muqun"
 
-#. placeholder {0}: authAvailability?.label ?? t`device authentication`
-#: src/components/settings-security.tsx
-msgid "Unlock with {0}"
-msgstr "ปลดล็อกด้วย {0}"
-
 #: src/components/app-lock-gate.tsx
 msgid "Unlock with {authLabel}"
 msgstr "ปลดล็อกด้วย {authLabel}"
+
+#: src/components/settings-security.tsx
+msgid "Unlock with {methodName}"
+msgstr "ปลดล็อกด้วย {methodName}"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Unpacking…"
@@ -7362,7 +7354,6 @@ msgctxt "task state"
 msgid "Working"
 msgstr "กำลังทำงาน"
 
-#: src/components/composer-popup.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "พื้นที่ทำงาน"
