@@ -108,9 +108,7 @@ export function runStoreCommand(
   // temporary root must stay outside the project: node:fs refuses to copy a directory
   // into itself (EINVAL). Use the home filesystem, not the system temporary filesystem,
   // which may be a small tmpfs.
-  const temporaryRoot = androidBuild
-    ? join(homedir(), '.cache', 'muqun-store-builds')
-    : tmpdir();
+  const temporaryRoot = androidBuild ? join(homedir(), '.cache', 'muqun-store-builds') : tmpdir();
   mkdirSync(temporaryRoot, { recursive: true });
   const privateDir = mkdtempSync(join(temporaryRoot, 'muqun-store-release-'));
   const logPath = join(privateDir, 'eas.log');
