@@ -5028,8 +5028,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     availableAgents.find((entry) => entry.id === activeAgent)?.model,
     catalogModels
   );
-  const activeModelRef =
-    stagesNextTurnModel && activeAsid
+  const activeModelRef = nextTurnModel
+    ? nextTurnModel
+    : stagesNextTurnModel && activeAsid
       ? confirmedAgentModel(activeAsid, sessionInfo, currentSession)
       : manualModelOverride
         ? selectedModel
@@ -5047,17 +5048,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     );
   }, [catalogModels, activeModelRef]);
 
-  /** The catalogue's name for it, which is the one the reader chose from. */
   const activeModelName = formatModelName(activeModelRef, '', activeModelInfo?.name);
-  const nextTurnModelInfo = nextTurnModel
-    ? catalogModels.find(
-        (model) =>
-          model.id === nextTurnModel.model_id && model.provider_id === nextTurnModel.provider_id
-      )
-    : undefined;
-  const nextTurnModelName = nextTurnModel
-    ? formatModelName(nextTurnModel, '', nextTurnModelInfo?.name)
-    : undefined;
 
   /**
    * The window the context gauge measures against.
@@ -5655,10 +5646,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         canSendWhileRunning={agentFeatures.inbox || agentFeatures.extra.promptSteering === true}
         canQueueWhileRunning={agentFeatures.inbox}
         canMentionFiles={agentFeatures.extra.fileMentions !== false}
-        nextTurnModelName={nextTurnModelName}
-        nextTurnModelTemporary={
-          agentFeatures.extra.modelSelectionPersistence === 'gateway_until_turn_start'
-        }
         sessionStrip={rootStrip.nodes}
         selectedRootAsid={rootStrip.selectedRootAsid}
         onOpenSessionTree={openSessionTree}
