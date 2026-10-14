@@ -2260,7 +2260,7 @@ export const AgentComposer = memo(function AgentComposer({
                 ) : (
                   <Spinner size="sm" color={theme.colors.textMuted} />
                 )}
-                <Text variant="caption" color={theme.colors.textMuted}>
+                <Text variant="caption" color={theme.colors.textMuted} style={styles.noticeText}>
                   {showSubmissionReceipt ? (
                     <Trans>Submission acknowledged. Check the conversation for the message.</Trans>
                   ) : attachmentUploads.uploading ? (
@@ -2576,6 +2576,10 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 6,
     marginBottom: 4,
+  },
+  noticeText: {
+    flex: 1,
+    minWidth: 0,
   },
   sessionStripViewport: {
     marginBottom: 6,
