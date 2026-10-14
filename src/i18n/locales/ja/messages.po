@@ -192,6 +192,10 @@ msgid "{agentName} cannot preview a rollback. This removes the message and every
 msgstr "{agentName} はロールバックをプレビューできません。このメッセージ以降、ターン全体が削除され、元に戻せません"
 
 #: src/components/agent-workbench.tsx
+msgid "{agentName} does not support loading earlier remote history."
+msgstr "{agentName} はリモートの過去の履歴の読み込みに対応していません"
+
+#: src/components/agent-workbench.tsx
 #: src/components/home-composer-dock.tsx
 msgid "{agentName} does not support that action."
 msgstr "{agentName} はこの操作に対応していません"
@@ -7161,6 +7165,10 @@ msgstr "今すぐ更新"
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"
 msgstr "公開リンクからテーマをインポートするにはアプリを更新してください。ファイルからのインポートは引き続き利用できます"
+
+#: src/components/agent-workbench.tsx
+msgid "Update the Gateway to load earlier remote history."
+msgstr "リモートの過去の履歴を読み込むには Gateway を更新してください"
 
 #: src/components/git-diff-view.tsx
 msgid "Update the Gateway to open Lazygit in another worktree."

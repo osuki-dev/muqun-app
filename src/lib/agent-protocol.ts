@@ -1896,7 +1896,7 @@ export function parseAgentAvailability(value: unknown): AgentAvailability {
 /**
  * What an agent can do, as the gateway's `AgentFeatures` (camelCase on the
  * wire, like the whole discovery document). Every flag is the gateway's to
- * state; a flag it does not send reads `true` -- see `parseAgentFeatures`.
+ * state; legacy flags it does not send read `true` -- see `parseAgentFeatures`.
  */
 export interface AgentFeatures {
   streaming: boolean;
@@ -1924,6 +1924,8 @@ export interface AgentFeatures {
   slashCommands: boolean;
   /** Files and images attached to a prompt. */
   attachments: boolean;
+  /** Older remote timeline pages; unlike legacy controls, requires explicit opt-in. */
+  timelineEarlier: boolean;
   /** Every other key the gateway sent, untouched, for a reader that knows one. */
   extra: Record<string, unknown>;
 }
@@ -1944,12 +1946,13 @@ const AGENT_FEATURE_KEYS = [
   'skills',
   'slashCommands',
   'attachments',
+  'timelineEarlier',
 ] as const;
 
 /**
- * Every control on, which is what the app assumed before it could ask: a
+ * Legacy controls on, which is what the app assumed before it could ask: a
  * gateway without discovery drives the one agent every surface here was built
- * on, and silence must not take a control away.
+ * on, and silence must not take a control away. New remote history is opt-in.
  */
 export const LEGACY_AGENT_FEATURES: Readonly<AgentFeatures> = Object.freeze({
   streaming: true,
@@ -1966,11 +1969,12 @@ export const LEGACY_AGENT_FEATURES: Readonly<AgentFeatures> = Object.freeze({
   skills: true,
   slashCommands: true,
   attachments: true,
+  timelineEarlier: false,
   extra: Object.freeze({}) as Record<string, unknown>,
 });
 
 /**
- * What to assume of an agent whose features nobody has stated: everything.
+ * What to assume of an agent whose features nobody has stated: legacy controls.
  *
  * No agent kind is special here. The gateway states each agent's features in
  * discovery; this is only the answer for a gateway that has no discovery at
@@ -1992,10 +1996,11 @@ function pickBool(rec: Record<string, unknown>, keys: readonly string[]): boolea
 /**
  * `features` of one agent, as the gateway stated them.
  *
- * A flag the gateway did not send reads `true`: an older gateway predates the
+ * A legacy flag the gateway did not send reads `true`: an older gateway predates the
  * flag, and taking a control away because nobody mentioned it would break the
  * agent those gateways drive. Whatever a flag leaves open, the screen still
  * narrows by what the agent's catalog lists -- no modes, no mode button.
+ * `timelineEarlier` instead defaults off until the provider explicitly opts in.
  */
 export function parseAgentFeatures(value: unknown): AgentFeatures {
   const defaults = defaultAgentFeatures();
@@ -2024,6 +2029,7 @@ export function parseAgentFeatures(value: unknown): AgentFeatures {
     skills: flag('skills'),
     slashCommands: flag('slashCommands'),
     attachments: flag('attachments'),
+    timelineEarlier: flag('timelineEarlier'),
     extra,
   };
 }

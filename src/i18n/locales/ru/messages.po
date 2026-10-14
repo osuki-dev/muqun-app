@@ -192,6 +192,10 @@ msgid "{agentName} cannot preview a rollback. This removes the message and every
 msgstr "{agentName} не может показать откат заранее. Будет удалено это сообщение и всё после него — весь ход, и это нельзя отменить"
 
 #: src/components/agent-workbench.tsx
+msgid "{agentName} does not support loading earlier remote history."
+msgstr "{agentName} не поддерживает загрузку более ранней истории с компьютера"
+
+#: src/components/agent-workbench.tsx
 #: src/components/home-composer-dock.tsx
 msgid "{agentName} does not support that action."
 msgstr "{agentName} не поддерживает это действие"
@@ -7161,6 +7165,10 @@ msgstr "Обновить сейчас"
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"
 msgstr "Обновите приложение для импорта тем по публичным ссылкам. Импорт из файла по-прежнему доступен"
+
+#: src/components/agent-workbench.tsx
+msgid "Update the Gateway to load earlier remote history."
+msgstr "Обновите Gateway, чтобы загрузить более раннюю историю с компьютера"
 
 #: src/components/git-diff-view.tsx
 msgid "Update the Gateway to open Lazygit in another worktree."

@@ -192,6 +192,10 @@ msgid "{agentName} cannot preview a rollback. This removes the message and every
 msgstr "{agentName} 無法預覽回溯。這會刪除這則訊息及其之後的所有內容，也就是整輪對話，且無法還原"
 
 #: src/components/agent-workbench.tsx
+msgid "{agentName} does not support loading earlier remote history."
+msgstr "{agentName} 不支援載入更早的遠端歷史"
+
+#: src/components/agent-workbench.tsx
 #: src/components/home-composer-dock.tsx
 msgid "{agentName} does not support that action."
 msgstr "{agentName} 不支援此操作"
@@ -7161,6 +7165,10 @@ msgstr "立即更新"
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"
 msgstr "更新 App 後即可從公開連結匯入主題，你仍然可以從檔案匯入"
+
+#: src/components/agent-workbench.tsx
+msgid "Update the Gateway to load earlier remote history."
+msgstr "更新 Gateway 以載入更早的遠端歷史"
 
 #: src/components/git-diff-view.tsx
 msgid "Update the Gateway to open Lazygit in another worktree."

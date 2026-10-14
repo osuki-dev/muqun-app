@@ -192,6 +192,10 @@ msgid "{agentName} cannot preview a rollback. This removes the message and every
 msgstr "{agentName} không thể xem trước thao tác hoàn tác. Thao tác này xoá tin nhắn và mọi thứ sau nó, tức cả lượt, và không thể khôi phục"
 
 #: src/components/agent-workbench.tsx
+msgid "{agentName} does not support loading earlier remote history."
+msgstr "{agentName} không hỗ trợ tải lịch sử từ xa cũ hơn"
+
+#: src/components/agent-workbench.tsx
 #: src/components/home-composer-dock.tsx
 msgid "{agentName} does not support that action."
 msgstr "{agentName} không hỗ trợ thao tác này"
@@ -7161,6 +7165,10 @@ msgstr "Cập nhật ngay"
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"
 msgstr "Cập nhật ứng dụng để nhập giao diện từ liên kết công khai. Bạn vẫn có thể nhập từ tệp"
+
+#: src/components/agent-workbench.tsx
+msgid "Update the Gateway to load earlier remote history."
+msgstr "Cập nhật Gateway để tải lịch sử từ xa cũ hơn"
 
 #: src/components/git-diff-view.tsx
 msgid "Update the Gateway to open Lazygit in another worktree."
