@@ -1,5 +1,10 @@
 import { sortTimeline, timelineOrderKey, type TimelineItem } from './agent-protocol';
 
+/** Attachment exports need not retain upload paths, and submission has no native ID receipt. */
+export function agentPromptUsesOptimisticRow(attachments?: readonly string[]): boolean {
+  return !attachments?.length;
+}
+
 /** Match the Gateway's exact ByPath transport suffix, never a loose text prefix. */
 function acknowledgeAttachments(
   item: TimelineItem,

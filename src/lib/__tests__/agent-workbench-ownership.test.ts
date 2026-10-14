@@ -2,6 +2,7 @@ import { expect, test } from 'bun:test';
 
 import {
   advanceAgentWorkbenchOwnerAfterCreate,
+  captureAgentPromptOwnership,
   agentWorkbenchOwnerMatches,
   agentWorkbenchRouteMatches,
   shouldPreserveNewSessionDraft,
@@ -105,4 +106,25 @@ test('a fresh Home new intent keeps its draft when choosing a workspace', () => 
 test('ordinary workspace selection still resolves a backend session', () => {
   expect(shouldPreserveNewSessionDraft(undefined, undefined)).toBe(false);
   expect(shouldPreserveNewSessionDraft('new', 'agent-existing')).toBe(false);
+});
+
+test('attachment ownership advances only its own first-session create and survives late ACK checks', () => {
+  let current: AgentWorkbenchOwner = { ...owner, asid: undefined };
+  let available = true;
+  const request = captureAgentPromptOwnership(
+    current,
+    () => current,
+    () => available
+  );
+  expect(request.isCurrent()).toBe(true);
+  expect(request.advanceAfterCreate('created', '/created')).toBe(true);
+  current = { ...current, asid: 'created', directory: '/created' };
+  expect(request.isCurrent()).toBe(true);
+  current = { ...current, asid: 'other' };
+  expect(request.isCurrent()).toBe(false);
+  expect(request.advanceAfterCreate('late-created', '/created')).toBe(false);
+  current = { ...current, asid: 'created' };
+  expect(request.isCurrent()).toBe(false);
+  available = false;
+  expect(request.isCurrent()).toBe(false);
 });

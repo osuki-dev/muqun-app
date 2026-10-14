@@ -26,12 +26,15 @@ export function AttachmentStrip({
   onRetry,
   onPreview,
   textColor,
+  readOnly = false,
 }: {
   attachments: PendingAttachment[];
   onRemove: (id: string) => void;
   onRetry: (id: string) => void;
   onPreview: (id: string) => void;
   textColor: string;
+  /** Submission previews remain inspectable, but cannot mutate the in-flight files. */
+  readOnly?: boolean;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -87,7 +90,7 @@ export function AttachmentStrip({
             style={styles.tileWrap}>
             <PressableScale
               accessibilityLabel={label}
-              disabled={!failed && !previewable}
+              disabled={(!failed && !previewable) || (readOnly && failed)}
               pressedScale={0.94}
               onPress={() => (failed ? onRetry(attachment.id) : onPreview(attachment.id))}
               style={[
@@ -169,14 +172,16 @@ export function AttachmentStrip({
                 <Icon name="Check" size={9} color="#FFFFFF" strokeWidth={3} />
               </Animated.View>
             ) : null}
-            <PressableScale
-              accessibilityLabel={t`Remove ${attachment.name}`}
-              hitSlop={6}
-              pressedScale={0.9}
-              onPress={() => onRemove(attachment.id)}
-              style={[styles.remove, { backgroundColor: surfaceBackground(theme.colors.text) }]}>
-              <Icon name="X" size={11} color={theme.colors.background} strokeWidth={3} />
-            </PressableScale>
+            {!readOnly ? (
+              <PressableScale
+                accessibilityLabel={t`Remove ${attachment.name}`}
+                hitSlop={6}
+                pressedScale={0.9}
+                onPress={() => onRemove(attachment.id)}
+                style={[styles.remove, { backgroundColor: surfaceBackground(theme.colors.text) }]}>
+                <Icon name="X" size={11} color={theme.colors.background} strokeWidth={3} />
+              </PressableScale>
+            ) : null}
           </Animated.View>
         );
       })}
