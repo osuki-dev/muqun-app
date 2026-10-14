@@ -72,13 +72,12 @@ export function SettingsThemeSheet({ onClose }: { onClose: () => void }) {
   const [error, setError] = useState<string | null>(null);
 
   /**
-   * Apply, then leave.
+   * Apply under the cover, then leave once the new theme has painted.
    *
-   * The write goes in before the dismissal rather than after it, so the rule
-   * has somewhere to travel to while the sheet is on its way out and the app
-   * behind it is already repainted when it lands. Tapping the pack that is
-   * already chosen writes nothing and still closes: in a sheet that is a
-   * confirmation, not a no-op.
+   * Closing in the same turn as the write made the sheet dismissal and the
+   * ripple reveal fight, and Home showed through while it was still painting.
+   * The write stays in `apply`; the sheet leaves in `settle`, one frame
+   * before the cover lifts.
    */
   function choose(id: ThemePackId) {
     // The new pack's primary is resolved before it is applied -- the packs are
@@ -91,11 +90,11 @@ export function SettingsThemeSheet({ onClose }: { onClose: () => void }) {
       apply: () => {
         try {
           useThemeLibrary.getState().apply({ kind: 'builtin', id });
-          onClose();
         } catch {
           setError(t`Could not save theme`);
         }
       },
+      settle: onClose,
     });
   }
 
@@ -116,11 +115,11 @@ export function SettingsThemeSheet({ onClose }: { onClose: () => void }) {
       apply: () => {
         try {
           useThemeLibrary.getState().resetToDefault();
-          onClose();
         } catch {
           setError(t`Could not save theme`);
         }
       },
+      settle: onClose,
     });
   }
 

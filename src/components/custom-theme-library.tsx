@@ -238,6 +238,7 @@ export function CustomThemeLibrary({
   const [pendingRemoval, setPendingRemoval] = useState<string | null>(null);
   const pending = useRef(false);
   const mounted = useRef(true);
+  const leavingUnderCover = useRef(false);
   const legacyTheme = useAppSettings((state) => state.themePack);
   const canUndo =
     Boolean(library.previous) ||
@@ -366,7 +367,7 @@ export function CustomThemeLibrary({
       await reskin.run({
         kind: 'theme',
         accent: colors.primary,
-        isCurrent: () => mounted.current,
+        isCurrent: () => mounted.current || leavingUnderCover.current,
         prepare: async () => {
           selectedId = await persist();
           const installed = useThemeLibrary
@@ -378,6 +379,9 @@ export function CustomThemeLibrary({
         apply: () => {
           if (!selectedId) return;
           useThemeLibrary.getState().apply({ kind: 'custom', id: selectedId });
+        },
+        settle: () => {
+          leavingUnderCover.current = true;
           closePreview();
         },
       });

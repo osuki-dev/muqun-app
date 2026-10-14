@@ -162,6 +162,12 @@ export type ReskinRunOptions = {
   isCurrent?: () => boolean;
   /** The change itself, after preparation and only for the latest request. */
   apply: () => void | Promise<void>;
+  /**
+   * Navigation that should happen under the cover, after the new theme has
+   * painted and one frame before the cover lifts. Closing a sheet in the same
+   * turn as `apply` makes the dismissal and the reveal fight.
+   */
+  settle?: () => void;
 };
 
 type ActiveRun = {
@@ -524,7 +530,10 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
         await runReskinSwap({
           prepare: options.prepare,
           cover: async () => {},
-          apply,
+          apply: async () => {
+            await apply();
+            options.settle?.();
+          },
           painted: async () => {},
           reveal: () => {},
           current: () => id === nextId.current && options.isCurrent?.() !== false,
@@ -561,7 +570,10 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
         await runReskinSwap({
           prepare: options.prepare,
           cover: async () => {},
-          apply,
+          apply: async () => {
+            await apply();
+            options.settle?.();
+          },
           painted: async () => {},
           reveal: () => {},
           current: () => id === nextId.current && options.isCurrent?.() !== false,
@@ -657,8 +669,11 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
                   cover: async () => {
                     // Capture before preparing assets. The old screen stays live
                     // until every cover has submitted its image to Skia.
+                    // Only the surface the reader is looking at. Photographing Home
+                    // underneath the sheet made the capture slower and showed
+                    // Home through the ripple while the sheet was still leaving.
                     const taken = await photographSurfaces(
-                      entries,
+                      entries.slice(-1),
                       strikes,
                       stillWanted,
                       3000,
@@ -701,6 +716,8 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
                     await painted();
                     const ready = await waitForThemeRender();
                     trace(`theme renderers ${ready ? 'ready' : 'timed out'}`);
+                    await painted();
+                    if (stillWanted()) options.settle?.();
                     await painted();
                   },
                   reveal: () => {
@@ -860,7 +877,10 @@ export function useReskinTransition(): { run: (options: ReskinRunOptions) => Pro
     await runReskinSwap({
       prepare: options.prepare,
       cover: async () => {},
-      apply: options.apply,
+      apply: async () => {
+        await options.apply();
+        options.settle?.();
+      },
       painted: async () => {},
       reveal: () => {},
       current: () => options.isCurrent?.() !== false,

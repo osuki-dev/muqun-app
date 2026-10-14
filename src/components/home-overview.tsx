@@ -103,6 +103,7 @@ import { homeContinueSearchEnabled } from '@/lib/home-continue-search';
 import { demoContinueSearchEntries } from '@/lib/demo-recents';
 import { useScreenVisible } from '@/hooks/use-screen-visible';
 import { claimHomeFirstEntry, hasHomeComposerRevealed } from '@/lib/home-first-entry';
+import { useThemePack } from '@/hooks/use-theme-pack';
 import { useLaunchHandoff } from '@/stores/launch-handoff';
 import {
   nextRestingInset,
@@ -491,6 +492,13 @@ export function HomeOverview({
   // A scroll view that leaves mid-drag never reports its end: let go with Home.
   useEffect(() => resetSortHold, []);
   const [entering, setEntering] = useState(claimHomeFirstEntry);
+  const wornTheme = useThemePack();
+  const wornThemeRef = useRef(wornTheme);
+  useEffect(() => {
+    if (wornThemeRef.current === wornTheme) return;
+    wornThemeRef.current = wornTheme;
+    setEntering(false);
+  }, [wornTheme]);
   useEffect(() => {
     if (!entering || loading) return;
     const timer = setTimeout(() => setEntering(false), ENTRY_BUDGET_MS);
