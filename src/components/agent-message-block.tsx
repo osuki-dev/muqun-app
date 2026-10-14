@@ -61,6 +61,7 @@ import { buildTimelineEntries, type ReasoningRun, type TimelineEntry } from '@/l
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
 import { fadeIn, timing } from '@/lib/motion';
 import { plainFromMarkdown } from '@/lib/markdown-text';
+import { hasSidewaysBlock } from '@/lib/markdown-blocks';
 import { normalizeAssistantMarkdown } from '@/lib/assistant-markdown';
 import {
   escapeMarkdownText,
@@ -1487,7 +1488,13 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
         splitDiagramMarkdown(entry.item.part.text).some((part) => part.source !== undefined) ||
         splitBlockImages(entry.item.part.text).some((part) => part.kind === 'image') ||
         (Boolean(actions.audioSessionId) &&
-          splitAudioMarkdown(entry.item.part.text).some((part) => part.kind !== 'markdown'));
+          splitAudioMarkdown(entry.item.part.text).some((part) => part.kind !== 'markdown')) ||
+        // A fence or a table is scrolled sideways and so cannot measure inside a
+        // plate that hugs its contents. The `diff` fences are the patch rows'
+        // to draw, not the markdown renderer's, so they do not count here.
+        splitDiffFences(entry.item.part.text).some(
+          (part) => part.kind !== 'diff' && hasSidewaysBlock(part.text)
+        );
     const audioParts =
       entry.item.part.type === 'text' && actions.audioSessionId
         ? splitAudioMarkdown(entry.item.part.text)

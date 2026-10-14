@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 
-import { MARKDOWN_BLOCK_CHUNK_CHARS, splitMarkdownBlocks } from '../markdown-blocks';
+import {
+  MARKDOWN_BLOCK_CHUNK_CHARS,
+  hasSidewaysBlock,
+  splitMarkdownBlocks,
+} from '../markdown-blocks';
 
 /** The invariant behind the whole viewer: the cells are the document again. */
 function rejoins(markdown: string, target?: number) {
@@ -125,5 +129,28 @@ describe('splitMarkdownBlocks', () => {
 
   test('a document with no trailing newline rejoins', () => {
     expect(rejoins('# A\n\nbody\n\n# B\n\nbody', 10)).toBe(true);
+  });
+});
+
+describe('hasSidewaysBlock', () => {
+  test('a fenced block counts, in either marker and at any depth of prose', () => {
+    expect(hasSidewaysBlock('Before.\n\n```ts\nconst a = 1;\n```\n')).toBe(true);
+    expect(hasSidewaysBlock('~~~\nplain\n~~~')).toBe(true);
+    expect(hasSidewaysBlock('   ```diff\n+added\n```')).toBe(true);
+  });
+
+  test('a table counts, by its delimiter row rather than by a pipe in a sentence', () => {
+    expect(hasSidewaysBlock('| a | b |\n| --- | ---: |\n| 1 | 2 |')).toBe(true);
+    expect(hasSidewaysBlock('a | b\n--- | ---')).toBe(true);
+    expect(hasSidewaysBlock('A sentence with a | pipe and a - dash.')).toBe(false);
+    expect(hasSidewaysBlock('| a | b |\n| 1 | 2 |')).toBe(false);
+    expect(hasSidewaysBlock('---')).toBe(false);
+  });
+
+  test('prose, inline code and links are not sideways blocks', () => {
+    expect(
+      hasSidewaysBlock('Just a paragraph, with `inline code` and a [link](https://x.y).')
+    ).toBe(false);
+    expect(hasSidewaysBlock('')).toBe(false);
   });
 });
