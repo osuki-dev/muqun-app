@@ -102,9 +102,20 @@ export interface EmbeddedTerminalProps {
   /** Drawn when the card is expanded. */
   children?: ReactNode;
   defaultExpanded?: boolean;
+  /** Ordinary calls use a quiet log row; the whole header toggles inline. */
+  compactSummary?: boolean;
+  /** A delegated task keeps its real child state and session entry visible. */
+  taskSummary?: {
+    title: string;
+    identity: string;
+    status: ReactNode;
+    statusLabel: string;
+    busy: boolean;
+  };
   /**
    * The whole call in its own sheet. When given, the header opens it and the
-   * chevron alone expands the card in place.
+   * chevron alone expands rich cards in place. Compact calls keep this entry
+   * inside their expanded content instead.
    */
   onOpenDetail?: () => void;
   testID?: string;
@@ -130,6 +141,8 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
   preview,
   children,
   defaultExpanded = false,
+  compactSummary = false,
+  taskSummary,
   onOpenDetail,
   testID,
 }: EmbeddedTerminalProps) {
@@ -156,103 +169,139 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
   // degrees, so an open card pointed left.
   const chevronProgress = useSharedValue(expanded ? 1 : 0);
   useEffect(() => {
-    chevronProgress.value = withTiming(expanded ? 1 : 0, timing());
+    chevronProgress.set(withTiming(expanded ? 1 : 0, timing()));
   }, [expanded, chevronProgress]);
   const chevronStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${chevronProgress.value * 180}deg` }],
   }));
 
-  const hasBody = Boolean(children);
+  const inlineSummary = compactSummary || Boolean(taskSummary);
+  const hasBody =
+    Boolean(children) ||
+    (inlineSummary && Boolean(title || caption || error || chips || preview || onOpenDetail));
+  const headerOpensDetail = Boolean(onOpenDetail) && !inlineSummary;
+  const showDetails = !inlineSummary || expanded;
+  const headerActionLabel = headerOpensDetail
+    ? t`Open tool call details`
+    : expanded
+      ? t`Collapse tool call`
+      : t`Expand tool call`;
+  const headerBusy = taskSummary ? taskSummary.busy : pending;
 
   return (
     <Animated.View
-      style={[styles.container, raised]}
+      style={[styles.container, compactSummary && !expanded ? styles.collapsedContainer : raised]}
       testID={testID}
       // A screen reader hears the call, not the engine's id for it.
       accessibilityLabel={[title, caption].filter(Boolean).join(' ') || undefined}>
       {/* Keep controls on the first line; narrow-screen paths get the full card width. */}
       <PressableScale
-        testID={onOpenDetail ? 'agent-tool-open-detail' : 'agent-tool-toggle'}
+        testID={headerOpensDetail ? 'agent-tool-open-detail' : 'agent-tool-toggle'}
         accessibilityRole="button"
-        accessibilityState={onOpenDetail ? { busy: pending } : { expanded, busy: pending }}
-        accessibilityLabel={
-          onOpenDetail
-            ? t`Open tool call details`
-            : expanded
-              ? t`Collapse tool call`
-              : t`Expand tool call`
+        accessibilityState={
+          headerOpensDetail ? { busy: headerBusy } : { expanded, busy: headerBusy }
         }
-        disabled={!hasBody && !onOpenDetail}
-        onPress={onOpenDetail ?? (() => setExpanded((prev) => !prev))}
-        style={styles.header}>
-        <View style={styles.headerRow}>
-          <View style={styles.headerIcon}>
-            {createElement(TOOL_ICONS[kind], { size: 13, color: theme.colors.textMuted })}
+        accessibilityLabel={[
+          taskSummary ? taskSummary.title : toolName,
+          taskSummary
+            ? taskSummary.statusLabel
+            : durationMs !== undefined
+              ? formatToolDuration(durationMs)
+              : '',
+          headerActionLabel,
+        ]
+          .filter(Boolean)
+          .join(' · ')}
+        disabled={!hasBody && !headerOpensDetail}
+        onPress={headerOpensDetail ? onOpenDetail : () => setExpanded((prev) => !prev)}
+        style={[styles.header, compactSummary && !expanded && styles.summaryHeader]}>
+        {taskSummary ? (
+          <View style={styles.headerRow}>
+            <View style={styles.headerIcon}>
+              <GitFork size={13} color={theme.colors.textMuted} />
+            </View>
+            <Text variant="caption" weight="semibold" style={styles.taskTitle}>
+              {taskSummary.title}
+            </Text>
+            <View style={styles.taskStatus}>{taskSummary.status}</View>
+            {hasBody ? (
+              <Animated.View style={chevronStyle}>
+                <ChevronDown size={12} color={theme.colors.textMuted} />
+              </Animated.View>
+            ) : null}
           </View>
-          <View style={styles.headerText}>
-            <View style={styles.headerLine}>
-              <Text
-                variant="caption"
-                weight="semibold"
-                color={theme.colors.text}
-                style={styles.toolName}>
-                {toolName}
-              </Text>
-              {!compact && title ? (
+        ) : (
+          <View style={styles.headerRow}>
+            <View style={styles.headerIcon}>
+              {createElement(TOOL_ICONS[kind], { size: 13, color: theme.colors.textMuted })}
+            </View>
+            <View style={[styles.headerText, compactSummary && !expanded && styles.summaryText]}>
+              <View style={styles.headerLine}>
+                <Text
+                  variant="caption"
+                  weight="semibold"
+                  numberOfLines={1}
+                  color={compactSummary && !expanded ? theme.colors.textMuted : theme.colors.text}
+                  style={styles.toolName}>
+                  {toolName}
+                </Text>
+                {!compactSummary && !compact && title ? (
+                  <Text
+                    variant="caption"
+                    numberOfLines={1}
+                    // A long file name keeps its start and its extension; the
+                    // caption under it carries the folder rather than the name
+                    // again.
+                    ellipsizeMode="middle"
+                    color={theme.colors.textMuted}
+                    style={[styles.target, { fontFamily: mono }]}>
+                    {title}
+                  </Text>
+                ) : null}
+              </View>
+              {!compactSummary && !compact && caption ? (
                 <Text
                   variant="caption"
                   numberOfLines={1}
-                  // A long file name keeps its start and its extension; the
-                  // caption under it carries the folder rather than the name
-                  // again.
-                  ellipsizeMode="middle"
-                  color={theme.colors.textMuted}
-                  style={[styles.target, { fontFamily: mono }]}>
-                  {title}
+                  ellipsizeMode="head"
+                  color={theme.colors.textSubtle}
+                  style={[styles.caption, { fontFamily: mono }]}>
+                  {caption}
                 </Text>
               ) : null}
             </View>
-            {!compact && caption ? (
-              <Text
-                variant="caption"
-                numberOfLines={1}
-                ellipsizeMode="head"
-                color={theme.colors.textSubtle}
-                style={[styles.caption, { fontFamily: mono }]}>
-                {caption}
+            {/* A soft pulse rather than a spinner: a tool that is thinking reads
+            the same way the assistant does while it thinks. */}
+            {pending ? (
+              <ThinkingIndicator size={12} color={statusColor} />
+            ) : failed ? (
+              <AlertCircle size={12} color={statusColor} />
+            ) : null}
+            {durationMs !== undefined ? (
+              <Text variant="caption" color={theme.colors.textSubtle} style={styles.duration}>
+                {formatToolDuration(durationMs)}
               </Text>
             ) : null}
-          </View>
-          {/* A soft pulse rather than a spinner: a tool that is thinking reads
-            the same way the assistant does while it thinks. */}
-          {pending ? (
-            <ThinkingIndicator size={12} color={statusColor} />
-          ) : failed ? (
-            <AlertCircle size={12} color={statusColor} />
-          ) : durationMs !== undefined ? (
-            <Text variant="caption" color={theme.colors.textSubtle} style={styles.duration}>
-              {formatToolDuration(durationMs)}
-            </Text>
-          ) : null}
-          {hasBody && onOpenDetail ? (
-            <PressableScale
-              testID="agent-tool-toggle"
-              accessibilityRole="button"
-              accessibilityState={{ expanded }}
-              accessibilityLabel={expanded ? t`Collapse tool call` : t`Expand tool call`}
-              hitSlop={12}
-              onPress={() => setExpanded((prev) => !prev)}>
+            {hasBody && headerOpensDetail ? (
+              <PressableScale
+                testID="agent-tool-toggle"
+                accessibilityRole="button"
+                accessibilityState={{ expanded }}
+                accessibilityLabel={expanded ? t`Collapse tool call` : t`Expand tool call`}
+                hitSlop={12}
+                onPress={() => setExpanded((prev) => !prev)}>
+                <Animated.View entering={fadeIn('micro')} style={chevronStyle}>
+                  <ChevronDown size={12} color={theme.colors.textMuted} />
+                </Animated.View>
+              </PressableScale>
+            ) : hasBody ? (
               <Animated.View entering={fadeIn('micro')} style={chevronStyle}>
                 <ChevronDown size={12} color={theme.colors.textMuted} />
               </Animated.View>
-            </PressableScale>
-          ) : hasBody ? (
-            <Animated.View entering={fadeIn('micro')} style={chevronStyle}>
-              <ChevronDown size={12} color={theme.colors.textMuted} />
-            </Animated.View>
-          ) : null}
-        </View>
-        {compact && (title || caption) ? (
+            ) : null}
+          </View>
+        )}
+        {showDetails && !taskSummary && (compact || compactSummary) && (title || caption) ? (
           <View style={styles.compactHeaderCopy}>
             {title ? (
               <Text
@@ -278,9 +327,9 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
         ) : null}
       </PressableScale>
 
-      {chips || truncated || background ? (
+      {(showDetails && (chips || truncated || background)) || (background && !taskSummary) ? (
         <View style={[styles.chipRow, styles.underTitle]}>
-          {chips}
+          {showDetails ? chips : null}
           {background ? (
             <View
               style={[
@@ -292,7 +341,7 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
               </Text>
             </View>
           ) : null}
-          {truncated ? (
+          {showDetails && truncated ? (
             <View
               style={[
                 styles.badge,
@@ -308,18 +357,42 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
 
       {/* OpenCode's own message, said as it was said: one line when it is a
           sentence, markdown when it arrived as a small document. */}
-      {failed && error ? (
+      {showDetails && failed && error ? (
         <View style={styles.underTitle}>
           <EngineFailureText message={error} />
         </View>
       ) : null}
 
-      {preview ? (
+      {showDetails && preview ? (
         // Code, images and streaming arguments use the full content width.
         <View>{preview}</View>
       ) : null}
 
-      {actions ? <View style={[styles.actionRow, styles.underTitle]}>{actions}</View> : null}
+      {taskSummary ? (
+        <View style={[styles.taskIdentityRow, styles.underTitle]}>
+          {taskSummary.identity ? (
+            <Text variant="caption" color={theme.colors.textSubtle} style={styles.taskIdentity}>
+              {taskSummary.identity}
+            </Text>
+          ) : null}
+          {actions}
+        </View>
+      ) : actions ? (
+        <View style={[styles.actionRow, styles.underTitle]}>{actions}</View>
+      ) : null}
+
+      {inlineSummary && expanded && onOpenDetail ? (
+        <PressableScale
+          testID="agent-tool-open-detail"
+          accessibilityRole="button"
+          accessibilityLabel={t`Open tool call details`}
+          onPress={onOpenDetail}
+          style={styles.underTitle}>
+          <Text variant="caption" color={colors.accent}>
+            {t`Open tool call details`}
+          </Text>
+        </PressableScale>
+      ) : null}
 
       {expanded && hasBody ? (
         // Fades in, and leaves without an exit -- as the thought block's body
@@ -333,6 +406,11 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
           entering={fadeIn('micro')}
           style={[styles.body, { borderTopColor: theme.colors.border }]}>
           {children}
+          {taskSummary && durationMs !== undefined ? (
+            <Text variant="caption" color={theme.colors.textSubtle} style={styles.duration}>
+              {toolName} · {formatToolDuration(durationMs)}
+            </Text>
+          ) : null}
         </Animated.View>
       ) : null}
     </Animated.View>
@@ -353,6 +431,38 @@ const styles = StyleSheet.create({
     gap: TRANSCRIPT_GRID.attachGap,
   },
   header: { gap: 4 },
+  collapsedContainer: {
+    paddingVertical: 0,
+    paddingHorizontal: 0,
+  },
+  summaryHeader: {
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
+    paddingVertical: 5,
+    paddingHorizontal: TRANSCRIPT_GRID.inset,
+  },
+  summaryText: {
+    flex: 0,
+    flexShrink: 1,
+  },
+  taskTitle: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: AGENT_TYPE.meta.size,
+  },
+  taskStatus: {
+    maxWidth: '40%',
+  },
+  taskIdentityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  taskIdentity: {
+    flexShrink: 1,
+    fontSize: AGENT_TYPE.micro.size,
+  },
   compactHeaderCopy: { gap: 1 },
   headerRow: {
     flexDirection: 'row',
@@ -386,6 +496,7 @@ const styles = StyleSheet.create({
   },
   toolName: {
     fontSize: AGENT_TYPE.meta.size,
+    flexShrink: 1,
   },
   // The target is the file or the command the call is pointed at, and the
   // caption under it is the folder it sits in: two literals, read the way a
@@ -402,6 +513,7 @@ const styles = StyleSheet.create({
     fontSize: AGENT_TYPE.micro.size,
   },
   duration: {
+    flexShrink: 0,
     fontSize: AGENT_TYPE.micro.size,
     fontVariant: ['tabular-nums'],
   },
