@@ -14,8 +14,9 @@ const PLAIN_T_LITERAL = /(?<![\w$.])t`([^`$\\]*)`/g;
 
 const PLAIN_MSG_LITERAL = /(?<![\w$.])msg`([^`$\\]*)`/g;
 
+/** `//` inside a URL is not a comment; translatable hints carry endpoint URLs. */
 function stripComments(source: string): string {
-  return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+  return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(?<!:)\/\/[^\n]*/g, '');
 }
 
 function normalize(text: string): string {

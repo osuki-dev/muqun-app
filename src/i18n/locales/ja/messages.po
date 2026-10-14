@@ -403,7 +403,7 @@ msgstr "10日"
 msgid "30 days"
 msgstr "30日"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "3D unavailable. Connections are listed below."
 msgstr "3D は利用できません。接続は下に表示されます"
 
@@ -474,7 +474,7 @@ msgstr "アプリについて"
 msgid "Accept work from other computers"
 msgstr "ほかのコンピュータからの作業を受け付ける"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Accepting work"
 msgstr "作業を受け付け中"
 
@@ -846,8 +846,8 @@ msgid "Authenticate with {authLabel} to continue."
 msgstr "続けるには {authLabel} で認証してください"
 
 #: src/lib/local-authentication.ts
-msgid "Authenticate with {method} to continue"
-msgstr "続けるには {method} で認証してください"
+msgid "Authenticate with {name} to continue"
+msgstr "続けるには {name} で認証してください"
 
 #: src/components/app-lock-gate.tsx
 msgid "Authenticating"
@@ -1456,7 +1456,7 @@ msgstr "完了"
 msgid "Computer"
 msgstr "コンピュータ"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Computer details"
 msgstr "コンピュータの詳細"
 
@@ -1587,8 +1587,7 @@ msgstr "{address} に接続しています"
 msgid "Connecting…"
 msgstr "接続中…"
 
-#: src/app/computer-map.tsx
-#: src/components/settings-servers.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Connection map"
 msgstr "接続マップ"
 
@@ -1933,7 +1932,7 @@ msgstr "ワークツリーを取得できませんでした。更新して再試
 msgid "Could not load capabilities"
 msgstr "機能を読み込めませんでした"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Could not load computers. Open Computers to try again."
 msgstr "コンピュータを読み込めませんでした。「コンピュータ」を開いて再試行してください"
 
@@ -2097,7 +2096,7 @@ msgstr "このファイルを読み込めませんでした"
 msgid "Could not read voice settings. Save your configuration again."
 msgstr "音声設定を読み込めません。設定を保存し直してください"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Could not refresh. This report may be outdated."
 msgstr "更新できませんでした。この報告は古い可能性があります"
 
@@ -2400,7 +2399,6 @@ msgstr "{head} で切り離し"
 msgid "Development"
 msgstr "開発"
 
-#: src/components/settings-security.tsx
 #: src/lib/local-authentication.ts
 msgid "device authentication"
 msgstr "デバイス認証"
@@ -2492,6 +2490,11 @@ msgstr "下矢印"
 msgid "Download"
 msgstr "ダウンロード"
 
+#. placeholder {0}: asset.src.split('/').pop() ?? asset.src
+#: src/components/agent-message-block.tsx
+msgid "Download {0}"
+msgstr "{0} をダウンロード"
+
 #: src/components/theme-link-import.tsx
 msgid "Download and preview"
 msgstr "ダウンロードしてプレビュー"
@@ -2527,7 +2530,7 @@ msgstr "ダウンロードしています…"
 msgid "Draft the notes for the next build"
 msgstr "次のビルドのリリースノートを下書きします"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Drag to rotate · Pinch to zoom · Tap to select"
 msgstr "ドラッグで回転 · ピンチで拡大縮小 · タップで選択"
 
@@ -2576,10 +2579,6 @@ msgstr "エディトリアル"
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Effects · {0}"
 msgstr "エフェクト · {0}"
-
-#: src/i18n/labels.ts
-msgid "Enable deepseek in the gateway config, start DeepSeek Harness on the host, then restart the gateway."
-msgstr "ゲートウェイ設定で deepseek を有効にし、ホストで DeepSeek Harness を起動してから、ゲートウェイを再起動してください"
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -2897,6 +2896,10 @@ msgstr "そのホスト上の Gateway のポート"
 msgid "Gateway restarted"
 msgstr "Gateway 再起動"
 
+#: src/i18n/labels.ts
+msgid "Gateway starts or joins DeepSeek Harness on the computer (default http://127.0.0.1:3080, override deepseek.endpoint)."
+msgstr "Gateway はコンピュータ上で DeepSeek Harness を起動または接続します（既定 http://127.0.0.1:3080、deepseek.endpoint で上書き）"
+
 #: src/lib/notifications.ts
 msgid "Gateway updates"
 msgstr "Gateway の更新"
@@ -3095,6 +3098,7 @@ msgstr "待機"
 msgid "If this continues, restart the app or check the app installation"
 msgstr "問題が続く場合は、アプリを再起動するか、インストール状態を確認してください"
 
+#: src/components/agent-tool-card.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image"
 msgstr "画像"
@@ -3157,13 +3161,13 @@ msgstr "入力"
 msgid "Input copied to clipboard"
 msgstr "入力をクリップボードにコピーしました"
 
-#. placeholder {0}: row.label
+#. placeholder {0}: item.label
 #: src/components/composer-popup.tsx
 msgid "Insert {0}"
 msgstr "{0} を挿入"
 
-#. placeholder {0}: row.label
-#. placeholder {1}: row.hint
+#. placeholder {0}: item.label
+#. placeholder {1}: item.hint
 #: src/components/composer-popup.tsx
 msgid "Insert {0} {1}"
 msgstr "{0} {1} を挿入"
@@ -3365,7 +3369,7 @@ msgstr "前回のフォルダー"
 msgid "Last known activity"
 msgstr "最後に確認したアクティビティ"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Last reported by this computer"
 msgstr "このコンピュータの前回の報告"
 
@@ -3428,7 +3432,7 @@ msgstr "階層 {depth}"
 msgid "Light"
 msgstr "ライト"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Lines: this app. Dashed arrows: last reported computer links."
 msgstr "線：このアプリ。破線の矢印：前回報告されたコンピュータ間の接続"
 
@@ -3444,7 +3448,7 @@ msgstr "{name} とのリンクが取り消されました · 再リンク中…"
 msgid "Linked with: {linkedNames}"
 msgstr "連携先: {linkedNames}"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "List"
 msgstr "リスト"
 
@@ -3493,16 +3497,16 @@ msgstr "読み込み中"
 msgid "Loading commands"
 msgstr "コマンドを読み込み中"
 
-#: src/app/computer-map.tsx
 #: src/app/servers/[serverId].tsx
+#: src/components/computer-map/screen.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading computers"
 msgstr "コンピュータを読み込み中"
 
-#: src/app/computer-map.tsx
 #: src/components/computer-map/gpu-map.native.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Loading map…"
 msgstr "マップを読み込み中…"
 
@@ -3574,7 +3578,7 @@ msgstr "接続を管理"
 msgid "Manage SSH hosts"
 msgstr "SSH ホストを管理"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Map"
 msgstr "マップ"
 
@@ -3733,10 +3737,9 @@ msgstr "牧群（ぼくぐん）の設定はこのデバイスの中だけに保
 msgid "Muqun stays in this language whatever the phone is set to."
 msgstr "端末の設定にかかわらず、牧群（ぼくぐん）はこの言語のままになります"
 
-#. placeholder {0}: availability.label
 #: src/components/settings-security.tsx
-msgid "Muqun will use {0} when the app opens."
-msgstr "アプリを開くとき、牧群は {0} を使います"
+msgid "Muqun will use {methodName} when the app opens."
+msgstr "アプリを開くとき、牧群は {methodName} を使います"
 
 #: src/components/custom-theme-library.tsx
 msgid "My themes"
@@ -3862,14 +3865,6 @@ msgstr "次の通知"
 msgid "Next session"
 msgstr "次のセッション"
 
-#: src/components/agent-composer.tsx
-msgid "Next turn: {nextTurnModelName}"
-msgstr "次のターン：{nextTurnModelName}"
-
-#: src/components/agent-composer.tsx
-msgid "Next turn: {nextTurnModelName}. Staged until the next turn or Gateway restart."
-msgstr "次のターン：{nextTurnModelName}。次のターンまたは Gateway の再起動まで仮設定を保持します"
-
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
 msgstr "実行中のエージェントはありません"
@@ -3924,7 +3919,7 @@ msgstr "オンラインのコンピュータがありません"
 msgid "No computer to start a task on."
 msgstr "タスクを開始できるコンピュータがありません"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 #: src/components/settings-servers.tsx
 msgid "No computers paired yet"
 msgstr "ペアリング済みのコンピュータはまだありません"
@@ -3992,7 +3987,7 @@ msgstr "出力はありません"
 msgid "No password or key is saved for this host."
 msgstr "このホストにはパスワードも鍵も保存されていません"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "No peer report available."
 msgstr "コンピュータ間接続の報告はありません"
 
@@ -4017,7 +4012,7 @@ msgstr "まだプロジェクトがありません。上にパスを入力して
 msgid "No projects match “{0}”."
 msgstr "「{0}」に一致するプロジェクトはありません"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "No reported links."
 msgstr "報告された接続はありません"
 
@@ -4093,7 +4088,7 @@ msgstr "ワークツリーはまだありません。下で作成すると、こ
 msgid "Not a git repository"
 msgstr "Git リポジトリではありません"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Not accepting work"
 msgstr "作業の受け付け停止中"
 
@@ -4551,7 +4546,7 @@ msgstr "ペアリングコード"
 msgid "Pairing code expired. Scan again for a new code."
 msgstr "ペアリングコードの有効期限が切れました。もう一度スキャンして新しいコードを取得してください"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Pairing expired"
 msgstr "ペアリングの有効期限切れ"
 
@@ -4742,7 +4737,6 @@ msgstr "秘密鍵（空欄なら保存済みのものを維持）"
 #: src/app/agent.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
-#: src/components/composer-popup.tsx
 msgid "Project"
 msgstr "プロジェクト"
 
@@ -4951,12 +4945,13 @@ msgstr "再接続中…"
 msgid "Recording failed."
 msgstr "録音に失敗しました"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Reduced motion: list view."
 msgstr "視差効果を減らす：リスト表示"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/demo-streaming-transcript.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
@@ -5096,11 +5091,11 @@ msgstr "音声をもう一度再生"
 msgid "Report a bug or request a feature"
 msgstr "不具合の報告・機能のリクエスト"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Reported reachable"
 msgstr "接続可能との報告"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Reported unreachable"
 msgstr "接続不可との報告"
 
@@ -5125,7 +5120,7 @@ msgstr "必須です"
 msgid "Requires iOS 16.1 or later."
 msgstr "iOS 16.1 以降が必要です"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Reset view"
 msgstr "視点をリセット"
 
@@ -5513,7 +5508,7 @@ msgstr "すべて選択"
 msgid "Select model: {modelDisplayName}"
 msgstr "モデルを選択: {modelDisplayName}"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Selected"
 msgstr "選択中"
@@ -5532,8 +5527,8 @@ msgid "Send a message"
 msgstr "メッセージを送信"
 
 #: src/components/agent-composer.tsx
-msgid "Send a message, type / for commands, @ for files…"
-msgstr "メッセージを送信、/でコマンド、@でファイル…"
+msgid "Send a message, type / for commands, $ for skills, @ for files…"
+msgstr "メッセージを送信、/でコマンド、$でスキル、@でファイル…"
 
 #: src/components/agent-composer.tsx
 msgid "Send a message…"
@@ -5629,20 +5624,17 @@ msgstr "自分のコンピュータに用意する"
 msgid "Set the AI model for Claude Code"
 msgstr "Claude Code が使う AI モデルを設定します"
 
-#. placeholder {0}: authAvailability.label
-#. placeholder {0}: availability.label
-#: src/components/settings-security.tsx
-msgid "Set up {0} in system settings first."
-msgstr "先にシステム設定で {0} を設定してください"
-
-#. placeholder {0}: availability.label
-#: src/components/app-lock-gate.tsx
-msgid "Set up {0} in system settings to unlock Muqun."
-msgstr "牧群のロックを解除するには、システム設定で {0} を設定してください"
-
 #: src/components/app-lock-gate.tsx
 msgid "Set up {label} in system settings first."
 msgstr "先にシステム設定で {label} を設定してください"
+
+#: src/components/settings-security.tsx
+msgid "Set up {methodName} in system settings first."
+msgstr "先にシステム設定で {methodName} を設定してください"
+
+#: src/components/app-lock-gate.tsx
+msgid "Set up {methodName} in system settings to unlock Muqun."
+msgstr "牧群のロックを解除するには、システム設定で {methodName} を設定してください"
 
 #: src/app/explore.tsx
 msgid "Set up a Gateway on your computer"
@@ -5849,7 +5841,7 @@ msgstr "スキルを開始しました"
 msgid "Skip intro"
 msgstr "紹介をスキップ"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "Some connections are omitted from the map."
 msgstr "一部の接続はマップから省略されています"
 
@@ -6104,6 +6096,7 @@ msgstr "話している間に音声をストリーミング送信します。Ope
 
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/demo-streaming-transcript.tsx
 msgid "Subagent"
 msgstr "サブエージェント"
 
@@ -6634,7 +6627,7 @@ msgstr "このエージェントはターン終了後にメッセージを受け
 msgid "This agent did not offer that answer."
 msgstr "このエージェントはその選択肢を提示していません"
 
-#: src/app/computer-map.tsx
+#: src/components/computer-map/screen.tsx
 msgid "This app"
 msgstr "このアプリ"
 
@@ -7064,14 +7057,13 @@ msgstr "日付不明"
 msgid "Unlock Muqun"
 msgstr "牧群（ぼくぐん）のロックを解除"
 
-#. placeholder {0}: authAvailability?.label ?? t`device authentication`
-#: src/components/settings-security.tsx
-msgid "Unlock with {0}"
-msgstr "{0} でロック解除"
-
 #: src/components/app-lock-gate.tsx
 msgid "Unlock with {authLabel}"
 msgstr "{authLabel} でロック解除"
+
+#: src/components/settings-security.tsx
+msgid "Unlock with {methodName}"
+msgstr "{methodName} でロック解除"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Unpacking…"
@@ -7362,7 +7354,6 @@ msgctxt "task state"
 msgid "Working"
 msgstr "実行中"
 
-#: src/components/composer-popup.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "ワークスペース"
