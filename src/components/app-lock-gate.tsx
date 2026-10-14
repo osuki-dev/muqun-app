@@ -15,6 +15,8 @@ import { fadeIn, fadeOut } from '@/lib/motion';
 import {
   authenticateForAppUnlock,
   getLocalAuthAvailability,
+  localAuthMethodLabel,
+  type LocalAuthMethod,
   type LocalAuthKind,
   wasRecentlyAuthenticated,
 } from '@/lib/local-authentication';
@@ -65,7 +67,8 @@ export function AppLockGate({ children }: { children: ReactNode }) {
   const appLockEnabled = useAppSettings((state) => state.appLockEnabled);
   const [locked, setLocked] = useState(false);
   const [authenticating, setAuthenticating] = useState(false);
-  const [authLabel, setAuthLabel] = useState('device authentication');
+  const [authMethod, setAuthMethod] = useState<LocalAuthMethod>('device');
+  const authLabel = localAuthMethodLabel(authMethod);
   const [authKind, setAuthKind] = useState<LocalAuthKind>('generic');
   const [error, setError] = useState<string | null>(null);
   const authenticatingRef = useRef(false);
@@ -107,13 +110,14 @@ export function AppLockGate({ children }: { children: ReactNode }) {
         return recoverWith(
           async () => {
             const availability = await getLocalAuthAvailability();
-            setAuthLabel(availability.label);
+            setAuthMethod(availability.method);
             setAuthKind(availability.kind);
+            const methodName = localAuthMethodLabel(availability.method);
             if (!availability.available || !availability.enrolled) {
-              setError(t`Set up ${availability.label} in system settings to unlock Muqun.`);
+              setError(t`Set up ${methodName} in system settings to unlock Muqun.`);
               return;
             }
-            const result = await authenticateForAppUnlock(availability.label);
+            const result = await authenticateForAppUnlock(availability.method);
             if (result.success) {
               setLocked(false);
               await feedback('success');
@@ -125,7 +129,7 @@ export function AppLockGate({ children }: { children: ReactNode }) {
               return;
             }
             if (result.error !== 'user_cancel' && result.error !== 'system_cancel') {
-              setError(localAuthErrorMessage(result.error, availability.label));
+              setError(localAuthErrorMessage(result.error, methodName));
             }
           },
           () => {

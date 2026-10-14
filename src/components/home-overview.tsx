@@ -596,11 +596,11 @@ export function HomeOverview({
     }, [appActive, loading, hydrationError, probeTargets, refreshReachabilityMany])
   );
 
-  // The computers arrive first. Reuse their bounded initial probe (including
-  // offline/failure), cached rows and native viewport layout, then let that
-  // committed page paint before revealing the measured dock. This gate never
-  // closes on a refresh, reconnect or return; an empty inventory needs no probe.
-  const initialComputersReady =
+    // The computers arrive first. Reuse their bounded initial probe, cached
+    // rows and native viewport layout, then one frame so that page can commit
+    // before the dock rises. This gate never closes on a refresh, reconnect
+    // or return; an empty inventory needs no probe.
+    const initialComputersReady =
     !loading &&
     (Boolean(hydrationError) ||
       (serverAgentsHydrated && (records.length === 0 || initialProbeSettled)));
@@ -615,10 +615,8 @@ export function HomeOverview({
       !appActive
     )
       return;
-    let frame = requestAnimationFrame(() => {
-      frame = requestAnimationFrame(() => {
-        setComposerRevealed(true);
-      });
+    const frame = requestAnimationFrame(() => {
+      setComposerRevealed(true);
     });
     return () => cancelAnimationFrame(frame);
   }, [

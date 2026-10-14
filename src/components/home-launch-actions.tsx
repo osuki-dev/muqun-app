@@ -33,6 +33,7 @@ import {
   buildLaunchModel,
   groupLaunchCells,
   LAUNCH_GRID_GAP,
+  LAUNCH_MOSAIC_GAP,
   launchGridCellStyle,
   launchRowLayout,
   type LaunchEntry,
@@ -53,7 +54,7 @@ import { HOME_CONTINUE_REFRESH_MS, homeRefreshDue } from '@/lib/home-refresh-sch
 import { useServerChannels } from '@/stores/server-channels';
 
 /** Minimum row height shared by phone and Pad; labels can grow with text size. */
-const DOCK_ROW_HEIGHT = 56;
+const DOCK_ROW_HEIGHT = 40;
 
 /** Target choice is local to Home; a selection alone never switches a live connection. */
 export function useHomeLaunchController({
@@ -344,7 +345,7 @@ export function HomeLaunchActions({
       ...(cell ? { width: cell.width } : {}),
       rowHeight:
         entry.kind !== 'agent' && !utilityCompact
-          ? DOCK_ROW_HEIGHT * 2 + LAUNCH_GRID_GAP
+          ? DOCK_ROW_HEIGHT * 2 + LAUNCH_MOSAIC_GAP
           : DOCK_ROW_HEIGHT,
     };
     switch (entry.kind) {
@@ -397,7 +398,7 @@ export function HomeLaunchActions({
             {...common}
             aliasTestID={entry.aliasTestID}
             primary={filled}
-            rowHeight={DOCK_ROW_HEIGHT * 2 + LAUNCH_GRID_GAP}
+            rowHeight={DOCK_ROW_HEIGHT * 2 + LAUNCH_MOSAIC_GAP}
             title={entry.name}
             caption={_(agentLaunchCaption[entry.caption])}
             icon={<AgentMark kind={entry.agentKind} size={entry.primary ? 24 : 22} color={ink} />}
@@ -518,18 +519,18 @@ export function HomeLaunchActions({
               directionalLockEnabled
               showsHorizontalScrollIndicator={false}
               testID="home-launch-actions-scroll"
-              contentContainerStyle={styles.scrollRow}>
+              contentContainerStyle={[styles.scrollRow, { gap: LAUNCH_MOSAIC_GAP }]}>
               {layout.agentRows[0]?.map((cell) => (
                 <View
                   key={agentEntries[cell.indices[0]!]!.key}
-                  style={{ width: cell.width, gap: LAUNCH_GRID_GAP }}>
+                  style={{ width: cell.width, gap: LAUNCH_MOSAIC_GAP }}>
                   {cell.indices.map((index) =>
                     renderEntry(agentEntries[index]!, { compact: false, featured: cell.featured })
                   )}
                 </View>
               ))}
               {groupLaunchCells(utilityEntries).map((cell) => (
-                <View key={cell.key} style={{ width: layout.utilityWidth, gap: LAUNCH_GRID_GAP }}>
+                <View key={cell.key} style={{ width: layout.utilityWidth, gap: LAUNCH_MOSAIC_GAP }}>
                   {cell.entries.map((entry) =>
                     renderEntry(entry, { compact: entry.layout === 'compact' })
                   )}

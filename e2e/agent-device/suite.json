@@ -14,12 +14,6 @@
       "platforms": ["ios", "android"]
     },
     {
-      "name": "computer-map",
-      "program": "flows/computer-map",
-      "tags": ["full", "settings"],
-      "platforms": ["ios", "android"]
-    },
-    {
       "name": "release-intro",
       "program": "flows/release-intro",
       "tags": ["full", "settings"],
@@ -322,22 +316,6 @@
       { "run": "flows/agent-transcript-streaming.ad" }
     ],
     "flows/pdf-preview": [{ "include": "subflows/open-demo" }, { "run": "flows/pdf-preview.ad" }],
-    "flows/computer-map": [
-      { "include": "subflows/launch-home" },
-      {
-        "target": { "text": "Settings" },
-        "mode": "press",
-        "timeout": 15000,
-        "run": "flows/settings-sheets.ad#press"
-      },
-      { "include": "subflows/open-settings-sheet", "env": { "SETTINGS_GROUP": "servers" } },
-      {
-        "target": { "id": "settings-computer-map-row" },
-        "mode": "press",
-        "run": "flows/settings-sheets.ad#press"
-      },
-      { "run": "flows/computer-map.ad" }
-    ],
     "flows/release-intro": [
       {
         "run": "subflows/launch-home.ad#s1"

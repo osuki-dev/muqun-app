@@ -64,7 +64,7 @@ function scene(fullscreen: boolean, topInset = 0) {
   return execute(
     `${declaration('src/components/sheet-scene.tsx', 'SheetScene')}\nSheetScene(props)`,
     {
-      props: { title: 'Connection map', children: createElement('content'), topInset },
+      props: { title: 'Diagram', children: createElement('content'), topInset },
       useSheetIsFullscreen: () => fullscreen,
       useSafeAreaInsets: () => ({ top: 48 }),
       styles: { fixedTop: {}, scene: {} },
@@ -78,9 +78,9 @@ function scene(fullscreen: boolean, topInset = 0) {
   ) as Element;
 }
 
-test('the real stack gives the map full-screen safe-area and close semantics on phone and Pad', () => {
+test('the real stack gives a fullscreen sheet safe-area and close semantics on phone and Pad', () => {
   for (const isPad of [false, true]) {
-    const fullscreen = routeContext('computer-map', isPad);
+    const fullscreen = routeContext('diagram-viewer', isPad);
     expect(fullscreen).toBe(true);
     const nodes = elements(scene(fullscreen!));
     const top = nodes.find((node) => Array.isArray(node.props.style));
@@ -113,11 +113,11 @@ test('full-screen clearance does not double an existing explicit top inset', () 
   ]);
 });
 
-test('the map has no draggable sheet handle on Android', () => {
+test('a fullscreen sheet has no draggable handle on Android', () => {
   const handle = execute(
     `${declaration('src/components/sheet-route-frame.tsx', 'SheetHandle')}\nSheetHandle({})`,
     {
-      useSheetIsFullscreen: () => routeContext('computer-map', false),
+      useSheetIsFullscreen: () => routeContext('diagram-viewer', false),
       useAppearanceProfile: () => ({}),
       useThemeTokens: () => ({ colors: {} }),
       process: { env: { EXPO_OS: 'android' } },

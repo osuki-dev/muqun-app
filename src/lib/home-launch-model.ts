@@ -272,6 +272,17 @@ export function groupLaunchCells(entries: readonly LaunchEntry[]): LaunchCell[] 
 
 export const LAUNCH_GRID_GAP = 8;
 
+/**
+ * Phone mosaic only. The Pad grid keeps `LAUNCH_GRID_GAP`; these two chips
+ * share a column, so the same 8-point gap reads as a slot of beach between
+ * them and again beside the next column.
+ */
+export const LAUNCH_MOSAIC_GAP = 3;
+
+/** Wide enough for an icon and a name; a landscape phone must not stretch the chip. */
+export const LAUNCH_MOSAIC_COLUMN_MIN = 126;
+export const LAUNCH_MOSAIC_COLUMN_MAX = 136;
+
 export type LaunchMosaicCell = { indices: number[]; width: number; featured: boolean };
 export type LaunchRowLayout = {
   mode: 'scroll' | 'grid';
@@ -316,11 +327,18 @@ export function launchRowLayout({
   const measured = Number.isFinite(width) ? Math.max(0, width) : 0;
   const agentRows: LaunchMosaicCell[][] = [];
   if (!grid) {
-    // A partial next column makes the horizontal continuation visible. Keep
-    // columns readable on small phones and bounded on landscape phones.
+    // A partial next column makes the horizontal continuation visible. The
+    // fraction stays under half so the next pair is obviously in view, and the
+    // cap keeps a landscape phone from stretching a two-word chip.
     const width =
       measured > 0
-        ? Math.min(measured, Math.max(160, Math.min(220, Math.floor(measured * 0.58))))
+        ? Math.min(
+            measured,
+            Math.max(
+              LAUNCH_MOSAIC_COLUMN_MIN,
+              Math.min(LAUNCH_MOSAIC_COLUMN_MAX, Math.floor(measured * 0.46))
+            )
+          )
         : 0;
     const cells: LaunchMosaicCell[] = [];
     for (let index = 0; index < agentCount; index += 2) {

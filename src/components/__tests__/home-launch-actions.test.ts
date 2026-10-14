@@ -1,5 +1,11 @@
 import { expect, test } from 'bun:test';
-import { LAUNCH_GRID_GAP, launchRowLayout } from '../../lib/home-launch-model';
+import {
+  LAUNCH_GRID_GAP,
+  LAUNCH_MOSAIC_COLUMN_MAX,
+  LAUNCH_MOSAIC_COLUMN_MIN,
+  LAUNCH_MOSAIC_GAP,
+  launchRowLayout,
+} from '../../lib/home-launch-model';
 
 test('phones group consecutive agents in horizontally scrolling pairs for every count', () => {
   for (const width of [280, 320, 370, 560, 640, 900]) {
@@ -14,8 +20,8 @@ test('phones group consecutive agents in horizontally scrolling pairs for every 
       expect(cells).toHaveLength(Math.ceil(agentCount / 2));
       for (const cell of cells) {
         expect(cell.indices.length).toBe(cell.featured ? 1 : 2);
-        expect(cell.width).toBeGreaterThanOrEqual(160);
-        expect(cell.width).toBeLessThanOrEqual(220);
+        expect(cell.width).toBeGreaterThanOrEqual(LAUNCH_MOSAIC_COLUMN_MIN);
+        expect(cell.width).toBeLessThanOrEqual(LAUNCH_MOSAIC_COLUMN_MAX);
         expect(cell.width).toBe(layout.utilityWidth);
       }
     }
@@ -42,12 +48,12 @@ test('one agent fills a column, two stack, and an odd final agent fills its colu
   }
 });
 
-test('phone columns reveal the next column and allow overflow instead of wrapping below', () => {
+test('phone columns leave the next column obviously in view', () => {
   for (const width of [280, 320, 370, 430]) {
     const { agentRows } = launchRowLayout({ width, agentCount: 4, utilityCount: 4 });
-    const row = agentRows[0]!;
-    expect(row[0]!.width + LAUNCH_GRID_GAP).toBeLessThan(width);
-    expect(row.reduce((total, cell) => total + cell.width, LAUNCH_GRID_GAP)).toBeGreaterThan(width);
+    const column = agentRows[0]![0]!.width;
+    expect(column + LAUNCH_MOSAIC_GAP).toBeLessThan(width);
+    expect(width - column - LAUNCH_MOSAIC_GAP).toBeGreaterThanOrEqual(Math.floor(width * 0.33));
   }
 });
 

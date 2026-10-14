@@ -39,7 +39,8 @@ export type SheetDetents = 'full' | 'expandable' | 'fitToContents' | readonly nu
 export const sheetRoutePresentations: Readonly<Record<string, SheetPresentation>> = {
   // The diagram canvas owns pan/pinch gestures and provides its own close control.
   'diagram-viewer': 'fullscreen',
-  // The connection map owns orbit/pinch gestures and provides a close control.
+  // The screen file is parked and not routed. This only records how it presents
+  // if the route is registered again; it does not import the map.
   'computer-map': 'fullscreen',
   commands: 'sheet',
   panels: 'sheet',

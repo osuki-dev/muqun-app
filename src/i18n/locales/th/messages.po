@@ -41,7 +41,7 @@ msgstr "[โมเดล]"
 
 #: src/lib/demo-gateway.ts
 msgid "[pr number]"
-msgstr "[หมายเลข pr]"
+msgstr "[หมายเลขพูลรีเควสต์]"
 
 #. placeholder {0}: capped.hidden
 #: src/components/bounded-markdown.tsx
@@ -430,7 +430,7 @@ msgstr "Gateway บนเครื่องที่คุณเชื่อม�
 
 #: src/components/settings-home-layout-sheet.tsx
 msgid "A magazine-style Home with attention and recent sessions."
-msgstr "Home สไตล์นิตยสารพร้อมรายการติดตามและเซสชันล่าสุด"
+msgstr "หน้าแรกสไตล์นิตยสารพร้อมรายการติดตามและเซสชันล่าสุด"
 
 #. placeholder {0}: assignment.target.kind
 #: src/components/server-terminal-workspace.tsx
@@ -1412,7 +1412,7 @@ msgstr "คอมมิตและพุช"
 
 #: src/components/settings-terminal.tsx
 msgid "Compact"
-msgstr "ย่อบริบท"
+msgstr "กะทัดรัด"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Compact context"
@@ -2143,7 +2143,7 @@ msgstr "บันทึกไฟล์ไม่ได้"
 
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Could not save Home layout"
-msgstr "บันทึกเลย์เอาต์ Home ไม่ได้"
+msgstr "บันทึกเลย์เอาต์หน้าแรกไม่ได้"
 
 #: src/components/ssh-host-form.tsx
 msgid "Could not save host"
@@ -3052,15 +3052,15 @@ msgstr "โฟลเดอร์หลัก"
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"
-msgstr "เลย์เอาต์ Home"
+msgstr "เลย์เอาต์หน้าแรก"
 
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout changed for this session, but could not be saved on this device. Try again."
-msgstr "เลย์เอาต์ Home เปลี่ยนแปลงสำหรับเซสชันนี้แล้ว แต่บันทึกลงในอุปกรณ์นี้ไม่ได้ ลองอีกครั้ง"
+msgstr "เลย์เอาต์หน้าแรกเปลี่ยนแปลงสำหรับเซสชันนี้แล้ว แต่บันทึกลงในอุปกรณ์นี้ไม่ได้ ลองอีกครั้ง"
 
 #: src/components/settings-appearance.tsx
 msgid "Home layout, {homeLayoutLabel}"
-msgstr "เลย์เอาต์ Home: {homeLayoutLabel}"
+msgstr "เลย์เอาต์หน้าแรก: {homeLayoutLabel}"
 
 #: src/components/settings-alerts.tsx
 msgid "Home screen widget"
@@ -4402,7 +4402,7 @@ msgstr "เปิดเซสชันของซับเอเจนต์"
 
 #: src/components/diff-rows.tsx
 msgid "Open this diff in the changes viewer"
-msgstr "เปิด diff นี้ในตัวดูการเปลี่ยนแปลง"
+msgstr "เปิดความแตกต่างนี้ในตัวดูการเปลี่ยนแปลง"
 
 #: src/components/agent-workspace-sheet.tsx
 msgid "Open this path"
@@ -5753,7 +5753,7 @@ msgstr "แสดงโมเดลเพิ่มเติม"
 
 #: src/components/diff-rows.tsx
 msgid "Show more of this diff"
-msgstr "แสดง diff นี้เพิ่มเติม"
+msgstr "แสดงความแตกต่างนี้เพิ่มเติม"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Show the app background behind terminal text"
@@ -6517,7 +6517,7 @@ msgstr "หน้าจอเกิดข้อผิดพลาด ลอง�
 
 #: src/components/changes-worktree-list.tsx
 msgid "The selected worktree is no longer available. Choose another checkout."
-msgstr "worktree ที่เลือกไม่พร้อมใช้งานแล้ว เลือก checkout อื่น"
+msgstr "เวิร์กทรีที่เลือกไม่พร้อมใช้งานแล้ว เลือกเช็กเอาต์อื่น"
 
 #: src/components/ssh-host-form.tsx
 msgid "The server asks its own questions when you connect, a password or a one-time code, and nothing is stored on this device."
@@ -7019,7 +7019,7 @@ msgstr "ไม่พร้อมใช้งาน"
 
 #: src/components/changes-sheet.tsx
 msgid "Uncommitted changes"
-msgstr "การเปลี่ยนแปลงที่ยังไม่ commit"
+msgstr "การเปลี่ยนแปลงที่ยังไม่คอมมิต"
 
 #: src/components/agent-revert-plate.tsx
 #: src/components/agent-workbench.tsx
@@ -7172,7 +7172,7 @@ msgstr "อัปเดตแอปเพื่อนำเข้าลิงก
 
 #: src/components/git-diff-view.tsx
 msgid "Update the Gateway to open Lazygit in another worktree."
-msgstr "อัปเดต Gateway เพื่อเปิด Lazygit ใน worktree อื่น"
+msgstr "อัปเดต Gateway เพื่อเปิด Lazygit ในเวิร์กทรีอื่น"
 
 #: src/components/asset-viewer.tsx
 #: src/components/inline-file-link.tsx
