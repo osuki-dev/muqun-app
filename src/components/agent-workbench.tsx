@@ -222,7 +222,8 @@ import {
   subtaskSummary,
   type SubtaskBlocks,
 } from '@/lib/agent-subtasks';
-import { upsertTimelineItems } from '@/lib/agent-timeline-upsert';
+import { agentPromptUsesOptimisticRow, upsertTimelineItems } from '@/lib/agent-timeline-upsert';
+import type { AgentAttachmentSendRequest } from '@/lib/agent-attachment-send';
 import { windowStartForSnapshot } from '@/lib/agent-timeline-window';
 import { createAgentStreamBatch } from '@/lib/agent-stream-batch';
 import { useAgentSessionState } from '@/stores/agent-session-state';
@@ -277,10 +278,12 @@ import {
 } from '@/lib/agent-workbench-global-owner';
 import {
   advanceAgentWorkbenchOwnerAfterCreate,
+  captureAgentPromptOwnership,
   agentWorkbenchOwnerMatches,
   agentWorkbenchRouteMatches,
   shouldPreserveNewSessionDraft,
   type AgentWorkbenchOwner,
+  type AgentPromptOwnership,
 } from '@/lib/agent-workbench-ownership';
 import { isHomeRelativePath, settledWorkspaceDirectory } from '@/lib/agent-directory-suggest';
 import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
@@ -2960,8 +2963,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const dispatchPrompt = async (
     text: string,
     attachments?: string[],
-    delivery?: 'steer' | 'queue'
+    delivery?: 'steer' | 'queue',
+    attachmentOwnership?: AgentPromptOwnership
   ): Promise<boolean> => {
+    if (attachmentOwnership && !attachmentOwnership.isCurrent()) return false;
     const running = isBusyStatus(sessionInfo?.status);
     if (
       !canInteractNatively ||
@@ -2980,6 +2985,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     let requestOwner = captureWorkbenchOwner(sourceAsid, directory);
     const ownsRoute = () =>
       mountedRef.current &&
+      (!attachmentOwnership || attachmentOwnership.isCurrent()) &&
       agentWorkbenchRouteMatches(
         requestOwner,
         captureWorkbenchOwner(activeAsidRef.current, activeDirectoryRef.current)
@@ -3014,6 +3020,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               );
               if (!advancedOwner) return false;
               directory = created.directory ?? directory;
+              if (
+                attachmentOwnership &&
+                !attachmentOwnership.advanceAfterCreate(created.asid, directory)
+              )
+                return false;
               activeDirectoryRef.current = directory;
               setActiveDirectory(directory);
               freshSessionRef.current = created.asid;
@@ -3077,16 +3088,23 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       queued: isQueued,
       order: orderKeyAfter(transcriptStore.getState().timeline),
     };
-    setTimeline((prev) => [...prev, tempUserItem]);
-    setScrollToSentRow(`grp_${tempKey}`);
+    // All attachments stay in the composer's explicit submission UI. Upload
+    // paths are not message identities (images may export as data URIs), and
+    // a submission ACK carries no canonical message ID. Do not guess a match.
+    const optimistic = agentPromptUsesOptimisticRow(attachments);
+    if (optimistic) {
+      setTimeline((prev) => [...prev, tempUserItem]);
+      setScrollToSentRow(`grp_${tempKey}`);
+    }
 
     // No optimistic title. Auto-titling happens on the engine's first turn and
     // arrives as `agent.session.updated`; a client-side guess made from the
     // first thirty characters was only ever replaced a few seconds later, and
     // it is what put a truncated prompt in the strip instead of a real title.
-    setSessionInfo((previous) =>
-      previous?.asid === promptAsid ? { ...previous, status: 'busy' } : previous
-    );
+    if (optimistic)
+      setSessionInfo((previous) =>
+        previous?.asid === promptAsid ? { ...previous, status: 'busy' } : previous
+      );
 
     return recoverWith(
       async () => {
@@ -3117,13 +3135,17 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         // The row goes with the failure. A message that was never delivered has
         // no business sitting in the transcript, and the draft comes back so the
         // reader can try again rather than retype it.
-        setTimeline((prev) => prev.filter((item) => item.id !== tempUserItem.id));
-        // A refusal can mean the runtime is still busy. Wait for source status.
-        void loadSnapshot('silent');
+        if (optimistic) setTimeline((prev) => prev.filter((item) => item.id !== tempUserItem.id));
+        // Only text changed status optimistically. An attachment error is
+        // ambiguous: do not replace an already-arrived native row with a
+        // possibly older snapshot. Its native status/events remain authoritative.
+        if (optimistic) void loadSnapshot('silent');
         showToast({
           variant: 'danger',
-          title: t`Message not sent`,
-          message: agentErrorRef.current(err),
+          title: optimistic ? t`Message not sent` : t`Could not confirm submission`,
+          message: optimistic
+            ? agentErrorRef.current(err)
+            : t`Your draft is kept. Check the conversation before sending again. ${agentErrorRef.current(err)}`,
           durationMs: 6000,
         });
         return false;
@@ -4158,6 +4180,24 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     (...args: Parameters<typeof handleSendPrompt>) => sendPromptLatest.current(...args),
     [sendPromptLatest]
   );
+  const captureAttachmentSend = useCallback((): AgentAttachmentSendRequest => {
+    const record = useGatewayConnectionStore.getState().record;
+    const generation = useGatewayGeneration.getState().byServer[serverId];
+    const ownership = captureAgentPromptOwnership(
+      captureWorkbenchOwner(activeAsidRef.current, activeDirectoryRef.current),
+      () => captureWorkbenchOwner(activeAsidRef.current, activeDirectoryRef.current),
+      () =>
+        mountedRef.current &&
+        record?.serverId === serverId &&
+        useGatewayConnectionStore.getState().record === record &&
+        useGatewayGeneration.getState().byServer[serverId] === generation
+    );
+    return {
+      isCurrent: ownership.isCurrent,
+      send: (text, attachments, delivery) =>
+        sendPromptLatest.current(text, attachments, delivery, ownership),
+    };
+  }, [captureWorkbenchOwner, sendPromptLatest, serverId]);
   const commandFromComposer = useCallback(
     (name: AgentClientCommandId) => clientCommandLatest.current(name),
     [clientCommandLatest]
@@ -5717,6 +5757,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         cost={sessionInfo?.cost}
         sessionTitle={sessionInfo?.title}
         onSend={sendFromComposer}
+        captureAttachmentSend={captureAttachmentSend}
         onAbort={handleAbort}
         onSelectSession={selectAsid}
         onSelectAgentMode={handleSelectAgentMode}

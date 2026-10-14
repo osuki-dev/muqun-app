@@ -19,6 +19,7 @@ import { composerChipIds } from '../agent-composer-chips';
 import { readSkillInvocation } from '../agent-commands';
 import { recoverWith, settleAfter } from '../compiler-safe-control-flow';
 import type { AgentSessionRuntime } from '../agent-session-runtime';
+import { agentPromptUsesOptimisticRow, upsertTimelineItems } from '../agent-timeline-upsert';
 
 const native: AgentSessionRuntime = { source: 'native', interaction: 'native', transcript: 'live' };
 const question: FormRequest = {
@@ -147,17 +148,33 @@ test('question answers use the form reply contract and retain pending input on t
   }
 });
 
-test('normal follow-ups steer the native turn, preserve staging, and report uncertain delivery as unaccepted', async () => {
-  for (const outcome of ['accepted', 'timeout', 'queue', 'idle'] as const) {
+test('normal follow-ups preserve body, attachments and staging, including canonical before late failure', async () => {
+  const cases = (['accepted', 'timeout', 'queue', 'idle'] as const).flatMap((outcome) => [
+    { outcome, attachments: undefined },
+    { outcome, attachments: ['/uploads/original.bin'] },
+  ]);
+  for (const { outcome, attachments } of cases) {
     let timeline: TimelineItem[] = [];
     const sent: unknown[] = [];
     let clearedStaging = false;
+    let snapshotReads = 0;
     const owner = { serverId: 'server' };
+    const canonical: TimelineItem = {
+      id: 'native-user',
+      message_id: 'native-user',
+      ordinal: 0,
+      seq: 2,
+      updated_ms: 2,
+      role: 'user',
+      part: { type: 'text', text: 'Continue normally' },
+      attachments: ['data:image/png;base64,QUFB'],
+    };
     const send = callback('src/components/agent-workbench.tsx', 'dispatchPrompt', {
       isBusyStatus,
       sessionInfo: { status: outcome === 'idle' ? 'idle' : 'busy', asid: 'thread' },
       canInteractNatively: true,
       canSendAgentPrompt,
+      agentPromptUsesOptimisticRow,
       agentFeatures: { inbox: false, extra: { promptSteering: true } },
       activeAsidRef: { current: 'thread' },
       activeDirectoryRef: { current: '/project' },
@@ -178,12 +195,15 @@ test('normal follow-ups steer the native turn, preserve staging, and report unce
       recoverWith,
       sendAgentPrompt: async (...args: unknown[]) => {
         sent.push(args);
+        if (attachments) timeline = upsertTimelineItems(timeline, [canonical]);
         if (outcome === 'timeout') throw new Error('timeout');
       },
       setStagedModels: () => {
         clearedStaging = true;
       },
-      loadSnapshot: async () => {},
+      loadSnapshot: async () => {
+        snapshotReads++;
+      },
       showToast: () => {},
       agentErrorRef: { current: String },
       t: (strings: string[]) => strings[0],
@@ -191,7 +211,7 @@ test('normal follow-ups steer the native turn, preserve staging, and report unce
     }) as (text: string, attachments?: string[], delivery?: 'steer' | 'queue') => Promise<boolean>;
     const accepted = await send(
       'Continue normally',
-      undefined,
+      attachments,
       outcome === 'queue' ? 'queue' : undefined
     );
     expect(accepted).toBe(outcome === 'accepted' || outcome === 'idle');
@@ -204,14 +224,16 @@ test('normal follow-ups steer the native turn, preserve staging, and report unce
               'thread',
               {
                 text: 'Continue normally',
-                attachments: undefined,
+                attachments,
                 delivery: outcome === 'idle' ? undefined : 'steer',
               },
             ],
           ]
     );
     expect(clearedStaging).toBe(outcome === 'idle');
-    expect(timeline.length).toBe(accepted ? 1 : 0);
+    expect(snapshotReads).toBe(outcome === 'timeout' && !attachments ? 1 : 0);
+    if (attachments) expect(timeline).toEqual(outcome === 'queue' ? [] : [canonical]);
+    else expect(timeline.length).toBe(accepted ? 1 : 0);
   }
 });
 
@@ -233,8 +255,13 @@ test('composer clears its draft only after accepted steering', async () => {
       promptAllowed: true,
       disabled: false,
       setSending: () => {},
+      setPendingAttachmentSend: () => {},
       settleAfter,
       onSend: async () => accepted,
+      captureAttachmentSend: undefined,
+      attachmentSendGuard: undefined,
+      readStagedAttachments: undefined,
+      setPreviewAttachmentId: undefined,
       setText: (text: string) => {
         draft = text;
       },

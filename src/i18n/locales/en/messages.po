@@ -1855,6 +1855,10 @@ msgstr "Could not check download size. Try again"
 msgid "Could not compact"
 msgstr "Could not compact"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not confirm submission"
+msgstr "Could not confirm submission"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not connect"
 msgstr "Could not connect"
@@ -2446,6 +2450,10 @@ msgstr "Disconnected"
 #: src/components/task-row.tsx
 msgid "Dismiss"
 msgstr "Dismiss"
+
+#: src/components/agent-composer.tsx
+msgid "Dismiss submission preview"
+msgstr "Dismiss submission preview"
 
 #: src/components/approval-banner.tsx
 msgid "Dismiss the approval error"
@@ -5107,6 +5115,10 @@ msgstr "Request failed"
 msgid "Requested permissions"
 msgstr "Requested permissions"
 
+#: src/components/agent-composer.tsx
+msgid "Requesting queued delivery…"
+msgstr "Requesting queued delivery…"
+
 #: src/components/settings-security.tsx
 msgid "Required on launch and after 30 seconds in the background."
 msgstr "Required on launch and after 30 seconds in the background"
@@ -5553,6 +5565,10 @@ msgstr "Send this task to {assignmentLabel}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
 msgstr "Send to agent"
+
+#: src/components/agent-composer.tsx
+msgid "Sending attachment message…"
+msgstr "Sending attachment message…"
 
 #. placeholder {0}: inboxItemText(item) || item.type
 #: src/components/agent-composer.tsx
@@ -6100,9 +6116,17 @@ msgstr "Streams speech while you talk. Requires an OpenAI Realtime-compatible tr
 msgid "Subagent"
 msgstr "Subagent"
 
+#: src/components/agent-composer.tsx
+msgid "Submission acknowledged. Check the conversation for the message."
+msgstr "Submission acknowledged. Check the conversation for the message"
+
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "Submit"
+
+#: src/components/agent-composer.tsx
+msgid "Submitting follow-up…"
+msgstr "Submitting follow-up…"
 
 #: src/i18n/labels.ts
 msgid "Summarise progress"
@@ -7433,6 +7457,11 @@ msgstr "Your agents, anywhere"
 #: src/components/launch-intro.tsx
 msgid "Your checkout, in one workspace."
 msgstr "Your checkout, in one workspace"
+
+#. placeholder {0}: agentErrorRef.current(err)
+#: src/components/agent-workbench.tsx
+msgid "Your draft is kept. Check the conversation before sending again. {0}"
+msgstr "Your draft is kept. Check the conversation before sending again. {0}"
 
 #: src/components/agent-message-block.tsx
 msgid "Your message"

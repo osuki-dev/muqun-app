@@ -91,6 +91,7 @@ import {
   describePickerFailure,
   isImageAttachment,
   type AttachmentSource,
+  type PendingAttachment,
 } from '@/lib/attachments';
 import {
   DURATION,
@@ -137,6 +138,11 @@ import {
 } from '@/lib/agent-session';
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
+import { ComposerSendGuard } from '@/lib/composer-send-guard';
+import {
+  deliverAgentAttachmentPrompt,
+  type AgentAttachmentSendRequest,
+} from '@/lib/agent-attachment-send';
 
 /** What a root's subtasks are doing; `blocked` ones are waiting on the reader. */
 export interface SubtaskActivity {
@@ -428,6 +434,8 @@ export interface AgentComposerProps {
     attachments?: string[],
     delivery?: 'steer' | 'queue'
   ) => Promise<boolean | void>;
+  /** Bind attachment delivery before uploads settle; the workbench can advance its own create. */
+  captureAttachmentSend?: () => AgentAttachmentSendRequest;
   onAbort: () => Promise<void>;
   onSelectSession?: (asid: string) => void;
   onSelectAgentMode?: (agent: string) => void;
@@ -608,6 +616,7 @@ export const AgentComposer = memo(function AgentComposer({
   cost,
   sessionTitle,
   onSend,
+  captureAttachmentSend,
   onAbort,
   onSelectSession,
   onSelectAgentMode,
@@ -710,6 +719,13 @@ export const AgentComposer = memo(function AgentComposer({
     [availableAgentsProp]
   );
   const [sending, setSending] = useState(false);
+  const [attachmentSendGuard] = useState(() => new ComposerSendGuard());
+  const [pendingAttachmentSend, setPendingAttachmentSend] = useState<{
+    request: AgentAttachmentSendRequest;
+    token: symbol;
+    delivery: 'steer' | 'queue' | undefined;
+    submittedAttachments?: PendingAttachment[];
+  } | null>(null);
   const promptAllowed =
     !interactionBlockedReason && canSendAgentPrompt(running, canSendWhileRunning);
   const [requestedDeliveryMode, setDeliveryMode] = useState<'steer' | 'queue'>('steer');
@@ -752,22 +768,68 @@ export const AgentComposer = memo(function AgentComposer({
 
   const record = useGatewayConnectionStore((state) => state.record);
   const attachmentUploads = useAttachmentUploads(record, undefined, holdStagedAttachments);
+  const { clearAttachments } = attachmentUploads;
+  const readStagedAttachments = useLatestReader(attachmentUploads.attachments);
+  // Keep the last receipt visible across an ACK-before-history gap. It is not
+  // matched to a native message; a new draft or explicit dismissal hides it.
+  const showSubmissionReceipt = Boolean(
+    pendingAttachmentSend?.submittedAttachments &&
+    !text.trim() &&
+    attachmentUploads.attachments.length === 0
+  );
+  const submittingAttachments = Boolean(
+    sending && pendingAttachmentSend && !pendingAttachmentSend.submittedAttachments
+  );
+  const visibleAttachments = showSubmissionReceipt
+    ? (pendingAttachmentSend?.submittedAttachments ?? attachmentUploads.attachments)
+    : attachmentUploads.attachments;
 
   // Staged images page in the lightbox; device-picked PDFs use the file viewer.
   const [previewAttachmentId, setPreviewAttachmentId] = useState<string | null>(null);
   const previewImages = useMemo<PreviewImage[]>(
     () =>
-      attachmentUploads.attachments
+      visibleAttachments
         .filter((item) => isImageAttachment(item.mime))
         .map((item) => ({ id: item.id, uri: item.localUri })),
-    [attachmentUploads.attachments]
+    [visibleAttachments]
   );
   const previewPdf = assetFromLocalPdf(
-    attachmentUploads.attachments.find((item) => item.id === previewAttachmentId)
+    visibleAttachments.find((item) => item.id === previewAttachmentId)
   );
   const previewIndex = previewAttachmentId
     ? previewImages.findIndex((item) => item.id === previewAttachmentId)
     : -1;
+
+  useEffect(() => {
+    // A source change discards only this still-locked source's staged files. Its late
+    // ACK/error cannot clear a replacement draft or end a newer request. An
+    // owned first-session create advances the captured owner and keeps it.
+    if (!pendingAttachmentSend || pendingAttachmentSend.request.isCurrent()) return;
+    const wasSending = attachmentSendGuard.release(pendingAttachmentSend.token);
+    if (wasSending || pendingAttachmentSend.submittedAttachments) {
+      setPendingAttachmentSend(null);
+      setPreviewAttachmentId(null);
+      if (wasSending) {
+        setSending(false);
+        clearAttachments();
+      }
+    }
+  }, [
+    draftOwnerKey,
+    activeDirectory,
+    record,
+    pendingAttachmentSend,
+    attachmentSendGuard,
+    clearAttachments,
+  ]);
+  useEffect(() => () => attachmentSendGuard.reset(), [attachmentSendGuard]);
+
+  const removeStagedAttachment = (id: string) => {
+    if (!attachmentSendGuard.isPending()) attachmentUploads.removeAttachment(id);
+  };
+  const retryStagedAttachment = (id: string) => {
+    if (!attachmentSendGuard.isPending()) attachmentUploads.retryUpload(id);
+  };
 
   /**
    * The app's own commands, and the host's.
@@ -1080,6 +1142,7 @@ export const AgentComposer = memo(function AgentComposer({
     const trimmed = text.trim();
     const hasAttachments = attachmentUploads.attachments.length > 0;
     if ((!trimmed && !hasAttachments) || sending || interactionBlockedReason) return;
+    setPendingAttachmentSend((previous) => (previous?.submittedAttachments ? null : previous));
 
     // A slash command is a command. It used to be sent as the literal text it
     // was typed as, and whatever the model made of it was the result.
@@ -1120,6 +1183,58 @@ export const AgentComposer = memo(function AgentComposer({
     }
 
     if (!promptAllowed || disabled) return;
+    if (hasAttachments && captureAttachmentSend) {
+      const token = attachmentSendGuard.acquire();
+      if (!token) return;
+      const captured = captureAttachmentSend();
+      const request = {
+        ...captured,
+        isCurrent: () => attachmentSendGuard.owns(token) && captured.isCurrent(),
+      };
+      const delivery = running ? deliveryMode : undefined;
+      setPendingAttachmentSend({ request: captured, token, delivery });
+      setSending(true);
+      return settleAfter(
+        async () => {
+          const result = await deliverAgentAttachmentPrompt(
+            request,
+            trimmed,
+            attachmentUploads.awaitUploads,
+            () => {
+              const submittedAttachments = readStagedAttachments().map((item) =>
+                item.status === 'done' ? item : { ...item, status: 'done' as const }
+              );
+              setPendingAttachmentSend((previous) =>
+                previous?.token === token ? { ...previous, submittedAttachments } : previous
+              );
+              setText((current) => (current.trim() === trimmed ? '' : current));
+              attachmentUploads.clearAttachments();
+            },
+            delivery
+          );
+          if (result === 'upload-failed') {
+            showToast({
+              variant: 'danger',
+              title: t`Upload failed`,
+              message: t`Please retry or remove failed attachments.`,
+            });
+          } else if (result === 'obsolete' && attachmentSendGuard.owns(token)) {
+            // A late result can beat the source-change effect. The field is
+            // still locked by this request, so discard only its old staged files.
+            attachmentUploads.clearAttachments();
+            setPreviewAttachmentId(null);
+          }
+        },
+        () => {
+          if (attachmentSendGuard.release(token)) {
+            setPendingAttachmentSend((previous) =>
+              previous?.token === token && !previous.submittedAttachments ? null : previous
+            );
+            setSending(false);
+          }
+        }
+      );
+    }
     setSending(true);
     return settleAfter(
       async () => {
@@ -1171,6 +1286,10 @@ export const AgentComposer = memo(function AgentComposer({
     interactionBlockedReason,
     disabled,
     onSend,
+    captureAttachmentSend,
+    attachmentSendGuard,
+    readStagedAttachments,
+    setPreviewAttachmentId,
     showToast,
     t,
     running,
@@ -2093,7 +2212,7 @@ export const AgentComposer = memo(function AgentComposer({
             )}
 
             {/* Attachment staged preview strip */}
-            {attachmentUploads.attachments.length > 0 ? (
+            {visibleAttachments.length > 0 ? (
               <Animated.View
                 entering={fadeIn('micro')}
                 // Home restores field artwork on removal; do not leave a native
@@ -2107,18 +2226,22 @@ export const AgentComposer = memo(function AgentComposer({
                   },
                 ]}>
                 <AttachmentStrip
-                  attachments={attachmentUploads.attachments}
-                  onRemove={attachmentUploads.removeAttachment}
-                  onRetry={attachmentUploads.retryUpload}
+                  attachments={visibleAttachments}
+                  onRemove={removeStagedAttachment}
+                  onRetry={retryStagedAttachment}
                   onPreview={setPreviewAttachmentId}
                   textColor={chromeText}
+                  readOnly={submittingAttachments || showSubmissionReceipt}
                 />
               </Animated.View>
             ) : null}
 
-            {/* Uploading wait banner */}
-            {sending && attachmentUploads.uploading ? (
+            {/* Submission feedback stays outside the canonical transcript. */}
+            {(sending && attachmentUploads.uploading) ||
+            submittingAttachments ||
+            showSubmissionReceipt ? (
               <Animated.View
+                testID="agent-composer-attachment-submission"
                 entering={fadeIn('micro')}
                 exiting={fadeOut('micro')}
                 style={[
@@ -2128,9 +2251,27 @@ export const AgentComposer = memo(function AgentComposer({
                     borderRadius: profile.chrome.noticeBanner,
                   },
                 ]}>
-                <Spinner size="sm" color={theme.colors.textMuted} />
+                {showSubmissionReceipt ? (
+                  <PressableScale
+                    accessibilityLabel={t`Dismiss submission preview`}
+                    onPress={() => setPendingAttachmentSend(null)}>
+                    <CheckSquare size={16} color={theme.colors.textMuted} />
+                  </PressableScale>
+                ) : (
+                  <Spinner size="sm" color={theme.colors.textMuted} />
+                )}
                 <Text variant="caption" color={theme.colors.textMuted}>
-                  <Trans>Waiting for uploads to finish…</Trans>
+                  {showSubmissionReceipt ? (
+                    <Trans>Submission acknowledged. Check the conversation for the message.</Trans>
+                  ) : attachmentUploads.uploading ? (
+                    <Trans>Waiting for uploads to finish…</Trans>
+                  ) : pendingAttachmentSend?.delivery === 'queue' ? (
+                    <Trans>Requesting queued delivery…</Trans>
+                  ) : pendingAttachmentSend?.delivery === 'steer' ? (
+                    <Trans>Submitting follow-up…</Trans>
+                  ) : (
+                    <Trans>Sending attachment message…</Trans>
+                  )}
                 </Text>
               </Animated.View>
             ) : null}
