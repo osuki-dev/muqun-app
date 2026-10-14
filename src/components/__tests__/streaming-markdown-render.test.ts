@@ -10,8 +10,11 @@ import {
 } from '@/lib/markdown-cap';
 import { splitBlockImages, rewriteMessageImages, messageImageResolver } from '@/lib/message-images';
 import { normalizeAssistantMarkdown } from '@/lib/assistant-markdown';
+import { hasSidewaysBlock } from '@/lib/markdown-blocks';
 import { buildTimelineEntries } from '@/lib/agent-reasoning';
 import { groupRoutineToolEntries } from '@/lib/agent-tool-groups';
+import { TRANSCRIPT_GRID, TRANSCRIPT_HANG } from '@/constants/transcript-grid';
+import { AGENT_TYPE } from '@/constants/agent-type';
 
 type Element = { type: unknown; key: string | null; props: Record<string, any> };
 const require = createRequire(import.meta.url);
@@ -23,7 +26,13 @@ function render(path: string, name: string, props: object): Element {
       node.type === 'VariableDeclarator' &&
       node.id.type === 'Identifier' &&
       node.init &&
-      [name, 'PROGRESSIVE_STREAMING', 'STANDALONE_PART_TYPES'].includes(node.id.name)
+      [
+        name,
+        'PROGRESSIVE_STREAMING',
+        'STANDALONE_PART_TYPES',
+        'styles',
+        'TRANSCRIPT_ROW_GAP',
+      ].includes(node.id.name)
     )
       expressions.set(node.id.name, source.code(node.init));
   });
@@ -33,7 +42,9 @@ function render(path: string, name: string, props: object): Element {
       ? declaration(path, 'splitDiffFences') + declaration(path, 'groupBlockImages')
       : '') +
     (name === 'AgentAssistantMessage'
-      ? declaration(path, 'renderTimelinePart') + declaration(path, 'previousItemAt')
+      ? declaration(path, 'renderTimelinePart') +
+        declaration(path, 'previousItemAt') +
+        declaration(path, 'splitDiffFences')
       : '') +
     `\nexports.render = ${name};`;
   const exports: { render?: (props: object) => Element } = {};
@@ -64,6 +75,9 @@ function render(path: string, name: string, props: object): Element {
       rewriteMessageImages,
       messageImageResolver,
       normalizeAssistantMarkdown,
+      hasSidewaysBlock,
+      TRANSCRIPT_GRID,
+      TRANSCRIPT_HANG,
       buildTimelineEntries,
       groupRoutineToolEntries,
       useTranscriptPlate: () => ({}),
@@ -71,7 +85,7 @@ function render(path: string, name: string, props: object): Element {
       splitDiagramMarkdown: () => [],
       splitAudioMarkdown: () => [],
       StyleSheet: { create: (value: unknown) => value, hairlineWidth: 1 },
-      AGENT_TYPE: { mono: { size: 14, lineHeight: 20 }, micro: { size: 12 } },
+      AGENT_TYPE,
       Fragment: require('react').Fragment,
       View: 'View',
       DiagramMarkdown: 'NativeMarkdown',
@@ -165,4 +179,33 @@ test('closing a streamed diff fence preserves the parent and native identity of 
   expect(second.props.markdown).toBe(prefix);
   expect(second.props.streaming).toBe(true);
   expect(nodes(after).filter((node) => node.type === 'InlinePatch')).toHaveLength(1);
+});
+
+test('a fence or a table widens the plate so it can scroll instead of being cut off', () => {
+  const fullWidthPlate = (markdown: string) =>
+    nodes(
+      render('src/components/agent-message-block.tsx', 'AgentAssistantMessage', {
+        group: {
+          key: 'group',
+          role: 'assistant',
+          items: [{ id: 'text', role: 'assistant', part: { type: 'text', text: markdown } }],
+        },
+        showReasoning: false,
+        streamingItemId: undefined,
+        actions: {},
+      })
+    ).some((node) => {
+      const style = node.props.style;
+      return (
+        Array.isArray(style) &&
+        (style as { width?: unknown }[]).some((entry) => entry?.width === '100%')
+      );
+    });
+
+  expect(fullWidthPlate('A paragraph.\n\n```ts\nconst a = 1;\n```')).toBe(true);
+  expect(fullWidthPlate('| a | b |\n| --- | --- |\n| 1 | 2 |')).toBe(true);
+  // A plate that hugs its content is what keeps "OK" from being a screen wide.
+  expect(fullWidthPlate('A paragraph with a | pipe and a - dash.')).toBe(false);
+  // The `diff` fences are drawn by the patch rows, not by the renderer.
+  expect(fullWidthPlate('```diff\n+added\n```')).toBe(false);
 });
