@@ -241,15 +241,20 @@ type ReskinContextValue = {
  * detail in it to lose, and a quarter-resolution target is a draw measured in
  * microseconds.
  *
- * `makeNonTextureImage` because an offscreen surface lives on the context of
- * the thread that made it, and the canvas that will draw this one is on
- * another. Null on any failure, and a null veil is an apply with no effect.
+ * `makeRasterImage` because an offscreen surface lives on the context of the
+ * thread that made it, and the canvas that will draw this one is on another.
+ * Null on any failure, and a null veil is an apply with no effect.
  */
-function makeVeilImage(size: ReskinSize, paper: string, raised: string): SkImage | null {
+async function makeVeilImage(
+  size: ReskinSize,
+  paper: string,
+  raised: string
+): Promise<SkImage | null> {
   try {
     const width = Math.max(1, Math.round(size.width));
     const height = Math.max(1, Math.round(size.height));
-    const surface = Skia.Surface.MakeOffscreen(width, height) ?? Skia.Surface.Make(width, height);
+    const surface =
+      Skia.Surface.MakeOffscreen(width, height) ?? Skia.Surface.MakeRaster(width, height);
     if (!surface) return null;
     const canvas = surface.getCanvas();
     canvas.drawColor(Skia.Color(paper));
@@ -267,7 +272,7 @@ function makeVeilImage(size: ReskinSize, paper: string, raised: string): SkImage
     canvas.drawRect({ x: 0, y: 0, width, height }, wash);
     surface.flush();
     const snapshot = surface.makeImageSnapshot();
-    const image = snapshot.makeNonTextureImage();
+    const image = await snapshot.makeRasterImage();
     if (image !== snapshot) snapshot.dispose();
     return image;
   } catch {
@@ -797,8 +802,16 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
 
       const veils = new Map<string, SkImage>();
       for (const [key, entry] of entries) {
-        const image = makeVeilImage(entry.size.current, paint.current.paper, paint.current.raised);
+        const image = await makeVeilImage(
+          entry.size.current,
+          paint.current.paper,
+          paint.current.raised
+        );
         if (image) veils.set(key, image);
+      }
+      if (!stillWanted()) {
+        release(veils.values());
+        return;
       }
       if (veils.size === 0) {
         await apply();
