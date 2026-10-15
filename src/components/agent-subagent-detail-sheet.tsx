@@ -2,11 +2,12 @@ import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { useRouter } from 'expo-router';
 import { RefreshCw } from 'lucide-react-native';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AgentTranscriptList } from '@/components/agent-transcript-list';
+import { ImagePreviewModal, type PreviewImage } from '@/components/image-preview-modal';
 import { usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
 import {
   SheetScene,
@@ -17,7 +18,7 @@ import {
 } from '@/components/sheet-scene';
 import { Text } from '@/components/text';
 import { TRANSCRIPT_ROW_GAP, type AgentToolActions } from '@/components/agent-message-block';
-import { demoAgentSessionSnapshot, isDemoActive } from '@/lib/demo-gateway';
+import { demoAgentSessionSnapshot, demoAgentSessionTree, isDemoActive } from '@/lib/demo-gateway';
 import {
   agentSubagentDetailContentState,
   agentSubagentDetailScopeKey,
@@ -30,6 +31,7 @@ import {
   type AgentSessionSnapshot,
 } from '@/lib/agent-session';
 import { contextTokenTotal, formatModelName } from '@/lib/agent-protocol';
+import { gatewayAuthHeaders, gatewayUrl, isGatewayConfigured } from '@/lib/gateway-client';
 import { subagentSessionState } from '@/lib/agent-subagent-presentation';
 import { subagentStateWord } from '@/i18n/labels';
 import { createAgentTranscriptStore } from '@/stores/agent-transcript';
@@ -75,6 +77,7 @@ export function AgentSubagentDetailSheet({
   const scopeKey = agentSubagentDetailScopeKey({ serverId, sessionId, ownerSessionId, asid });
   const [store] = useState(createAgentTranscriptStore);
   const [loaded, setLoaded] = useState<LoadedDetail | null>(null);
+  const [preview, setPreview] = useState<{ scopeKey: string; uri: string } | null>(null);
   const [attempt, setAttempt] = useState<{ scopeKey: string; sequence: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -85,6 +88,7 @@ export function AgentSubagentDetailSheet({
     const request = ++requestRef.current;
     // react-doctor-disable-next-line react-hooks-js/set-state-in-effect -- scope changes intentionally retain only a snapshot owned by the new target before loading it.
     setLoaded((current) => retainAgentSubagentDetail(current, scopeKey));
+    setPreview((current) => retainAgentSubagentDetail(current, scopeKey));
     setLoading(true);
     setError('');
 
@@ -132,12 +136,44 @@ export function AgentSubagentDetailSheet({
   }, [asid, attempt, ownerSessionId, scopeKey, serverId, sessionId, store, t]);
 
   const activeLoaded = retainAgentSubagentDetail(loaded, scopeKey);
+  const activePreview = retainAgentSubagentDetail(preview, scopeKey);
+  const previewImage = useCallback((uri: string) => setPreview({ scopeKey, uri }), [scopeKey]);
+  const closePreview = useCallback(() => setPreview(null), []);
+  // The same URI/auth path as workbench previews; data/local/external URLs
+  // never inherit Gateway credentials. Scope masking precedes the load effect.
+  const previewImages = useMemo<PreviewImage[] | null>(() => {
+    if (!activePreview) return null;
+    const { uri } = activePreview;
+    return [
+      {
+        id: uri,
+        uri,
+        ...(isGatewayConfigured() && uri.startsWith(gatewayUrl('/'))
+          ? { headers: gatewayAuthHeaders() }
+          : {}),
+      },
+    ];
+  }, [activePreview]);
   const info = activeLoaded?.snapshot.info ?? fallbackInfo;
   const title = info ? sessionTitleOr(info, t`Untitled session`) : t`Subagent`;
+  const demoActive = isDemoActive();
   const actions = useMemo<AgentToolActions>(
     () => ({
       audioSessionId: asid,
+      // A completed dispatch is not the child's status. Only the offline demo
+      // supplies its known children here; non-demo snapshot actions are unchanged.
+      ...(demoActive && asid
+        ? {
+            childSessions: Object.fromEntries(
+              (demoAgentSessionTree().childrenByParent[asid] ?? []).map((child) => [
+                child.asid,
+                child,
+              ])
+            ),
+          }
+        : {}),
       onOpenChildSession: onOpenChild,
+      onPreviewImage: previewImage,
       onOpenToolDetail: (part) => {
         useToolCallDetailStore.getState().open({
           part,
@@ -148,19 +184,19 @@ export function AgentSubagentDetailSheet({
         router.push('/agent-tool-detail');
       },
     }),
-    [asid, info?.directory, onOpenChild, router, sessionId, store]
+    [asid, demoActive, info?.directory, onOpenChild, previewImage, router, sessionId, store]
   );
   const rowProps = useMemo(
     () => ({
       showReasoning,
       markdownStyle,
-      onPreviewImage: doNothing,
+      onPreviewImage: previewImage,
       onEditQueued: doNothing,
       onCancelQueued: doNothing,
       actions,
       readOnly: true,
     }),
-    [actions, markdownStyle, showReasoning]
+    [actions, markdownStyle, previewImage, showReasoning]
   );
   const childModel = info?.model;
   const catalogName = models.find(
@@ -259,6 +295,14 @@ export function AgentSubagentDetailSheet({
           contentContainerStyle={styles.transcriptContent}
         />
       )}
+      {previewImages ? (
+        <ImagePreviewModal
+          key={scopeKey}
+          images={previewImages}
+          initialIndex={0}
+          onClose={closePreview}
+        />
+      ) : null}
     </SheetScene>
   );
 }

@@ -11,3 +11,14 @@ press "${TARGET}"
 
 # section close
 back --system
+
+# section fullscreen-evidence
+# Retain the native hierarchy and pixels for inset/handle review. The named
+# close action remains exercised by the existing press-and-return assertions.
+is visible "id=diagram-close"
+snapshot
+screenshot "shots/diagram-fullscreen-inset-close.png"
+
+# section viewer-closed
+is hidden "id=diagram-viewer-canvas"
+is hidden "id=diagram-close"

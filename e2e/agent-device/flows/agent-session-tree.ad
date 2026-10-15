@@ -7,6 +7,23 @@ wait stable 400 5000
 # section visible
 is visible "${TARGET}"
 
+# section root-and-child
+# The manifest checks the actual mode/status captions before retaining pixels.
+# Its regex matcher handles Android's combined label and iOS's separate value.
+snapshot
+screenshot "shots/session-tree-root-child-caption.png"
+
+# section branch-detail
+press "id=agent-session-tree-row-demo-tree-branch"
+wait "id=agent-subagent-detail-transcript" 10000
+is visible "text=\"Research branch\""
+is visible "id=agent-subagent-detail-status label=Idle"
+is visible "text=\"Snapshot output for demo-tree-branch.\""
+back --system
+wait "id=agent-session-tree-row-demo-tree-branch" 10000
+is visible "id=agent-session-tree-row-demo-tree-root"
+is visible "id=agent-session-tree-row-demo-tree-branch"
+
 # section scroll
 # Cover most of the visible list on every pass, independent of device density.
 # The manifest checks the exact leaf before each gesture and keeps a fixed budget.

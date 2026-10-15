@@ -108,3 +108,19 @@ gesture drag "${TARGET}" "label=\"Demo shell\"" 0 300 0
 
 # section notification-dismissed
 is hidden "${TARGET}"
+
+# section composer-radius-evidence
+# Draft-only geometry evidence on the fictional offline host. Never execute the
+# draft as a shell command. Review the screenshots for themed corner geometry.
+wait "id=ssh-composer-input" 10000
+is hidden "id=composer-expanded-actions"
+screenshot "shots/ssh-composer-compact.png"
+fill "id=ssh-composer-input" "An offline visual draft that wraps across several lines so the expanded SSH composer can be compared with its compact field. This text is cleared without running any terminal command."
+wait "id=composer-expanded-actions" 10000
+is visible "id=ssh-composer-input value=\"An offline visual draft that wraps across several lines so the expanded SSH composer can be compared with its compact field. This text is cleared without running any terminal command.\""
+screenshot "shots/ssh-composer-expanded.png"
+fill "id=ssh-composer-input" ""
+keyboard dismiss
+wait stable 400 5000
+is hidden "id=composer-expanded-actions"
+screenshot "shots/ssh-composer-restored.png"
