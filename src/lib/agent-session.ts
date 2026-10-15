@@ -1,4 +1,6 @@
 import { agentSnapshotRefreshQuery } from './agent-session-runtime';
+import { DEMO_COMPACTION_LOG_ASIDS, isDemoCompactionLogAsid } from './demo-compaction-log-native';
+import { DEMO_NOTICE_ASIDS, isDemoNoticeAsid } from './demo-notification-native';
 import { fetch as nitroFetch } from 'react-native-nitro-fetch';
 import { agentSessionListQuery, type ListAgentSessionsQuery } from './agent-session-list-query';
 import {
@@ -28,6 +30,23 @@ import {
   type DirectoryListing,
 } from './agent-directory-suggest';
 import { activeLocaleHeaders } from '@/i18n/active-locale';
+import {
+  advanceDemoCompaction,
+  DEMO_COMPACTION_ASID,
+  DEMO_ITALIC_BOUNDARY_ASID,
+  DEMO_NATIVE_PREVIEW_ASID,
+  DEMO_NATIVE_PREVIEW_CHILD_ASID,
+  DEMO_SERVER_ID,
+  demoCompactionSnapshot,
+  demoNativePreviewSnapshot,
+  demoCompactionLogsSnapshot,
+  advanceDemoCompactionLogs,
+  subscribeDemoCompactionLogs,
+  demoNotificationSnapshot,
+  subscribeDemoNotification,
+  isDemoActive,
+  subscribeDemoCompaction,
+} from './demo-gateway';
 import {
   buildAgentCacheKey,
   CATALOG_TTL_MS,
@@ -146,6 +165,15 @@ function jsonHeaders(): Record<string, string> {
   return { ...gatewayAuthHeaders(), 'Content-Type': 'application/json' };
 }
 
+/** A selected offline record never uses a live agent transport, even for auxiliary reads. */
+function usesOfflineDemo(endpoint?: { url?: string }): boolean {
+  return (
+    configuredGatewayServerId() === DEMO_SERVER_ID &&
+    isDemoActive() &&
+    (!endpoint?.url || endpoint.url.replace(/\/$/, '') === gatewayUrl(''))
+  );
+}
+
 /** The `data` of the gateway's envelope, or the body when it has none. */
 function envelopeData(json: unknown): unknown {
   if (json && typeof json === 'object' && !Array.isArray(json) && 'data' in json) {
@@ -173,6 +201,7 @@ async function readScoped<T>(
   fallback: T,
   init?: { headers?: Record<string, string>; signal?: AbortSignal }
 ): Promise<{ value: T; missing?: WorkspaceMissing }> {
+  if (usesOfflineDemo()) return { value: fallback };
   const url = gatewayUrl(path);
   /**
    * One request per path in flight, and everyone waits on the same answer.
@@ -241,6 +270,21 @@ export async function writeJson(
   body?: unknown,
   method: 'POST' | 'DELETE' = 'POST'
 ): Promise<unknown> {
+  if (usesOfflineDemo()) {
+    if (method === 'POST' && path === sessionRoute(DEMO_COMPACTION_ASID, '/view')) return null;
+    if (
+      method === 'POST' &&
+      [
+        DEMO_NATIVE_PREVIEW_ASID,
+        DEMO_NATIVE_PREVIEW_CHILD_ASID,
+        DEMO_ITALIC_BOUNDARY_ASID,
+        ...DEMO_NOTICE_ASIDS,
+        ...DEMO_COMPACTION_LOG_ASIDS,
+      ].some((asid) => path === sessionRoute(asid, '/view'))
+    )
+      return null;
+    throw new Error('Agent writes are not available in the offline demo');
+  }
   const res = await gatewayFetch(gatewayUrl(path), {
     method,
     headers: body === undefined ? gatewayAuthHeaders() : jsonHeaders(),
@@ -286,6 +330,7 @@ export async function listAgentSessionsObserved(
   query?: ListAgentSessionsQuery,
   signal?: AbortSignal
 ): Promise<ObservedAgentSessionList> {
+  if (usesOfflineDemo()) return { sessions: [], authoritative: true };
   const search = agentSessionListQuery(query);
   const path = sessionId
     ? `/api/sessions/${encodeURIComponent(sessionId)}/agent-sessions${search}`
@@ -348,7 +393,10 @@ export async function listAgentSessionPage(
 ): Promise<AgentSessionPage> {
   if (configuredGatewayServerId() !== options.serverId || options.signal?.aborted)
     throw new Error('Session list owner changed');
-  if (!supportsAgentSessionPages(options.capabilities, options.features, query.agentId)) {
+  if (
+    usesOfflineDemo() ||
+    !supportsAgentSessionPages(options.capabilities, options.features, query.agentId)
+  ) {
     // A provider cursor is never sent to the legacy merged inventory.
     const { cursor: _cursor, ...legacyQuery } = query;
     const result = await listAgentSessionsObserved(sessionId, legacyQuery, options.signal);
@@ -398,6 +446,7 @@ export async function listAgentSessionChildrenObserved(
   asid: string,
   query?: Omit<ListAgentSessionsQuery, 'parent_id' | 'roots'>
 ): Promise<AgentSessionChildrenInventory> {
+  if (usesOfflineDemo()) return { children: [], authoritative: true };
   if (!asid || !isGatewayConfigured()) return { children: [], authoritative: false };
   const path = `${sessionRoute(asid, '/children')}${agentSessionListQuery(query)}`;
   // Capture endpoint and credentials together. `gatewayFetch` already dedupes
@@ -471,6 +520,12 @@ export async function readAgentSessionAt(
   sessionId: string | undefined,
   asid: string
 ): Promise<AgentSessionSnapshot | null> {
+  if (usesOfflineDemo(endpoint))
+    return asid === DEMO_COMPACTION_ASID
+      ? demoCompactionSnapshot()
+      : (demoCompactionLogsSnapshot(asid) ??
+          demoNotificationSnapshot(asid) ??
+          demoNativePreviewSnapshot(asid));
   try {
     const base = endpoint.url.replace(/\/$/, '');
     const res = await gatewayEndpointFetch(
@@ -493,6 +548,16 @@ export async function getAgentSessionSnapshot(
   asid: string,
   options?: { refresh?: boolean; capabilities?: readonly string[] }
 ): Promise<AgentSessionSnapshot> {
+  if (usesOfflineDemo()) {
+    if (asid === DEMO_COMPACTION_ASID) return demoCompactionSnapshot();
+    const compactionLogs = demoCompactionLogsSnapshot(asid);
+    if (compactionLogs) return compactionLogs;
+    const notification = demoNotificationSnapshot(asid);
+    if (notification) return notification;
+    const preview = demoNativePreviewSnapshot(asid);
+    if (preview) return preview;
+    throw new Error('This agent session is not available in the offline demo');
+  }
   const query = agentSnapshotRefreshQuery(options?.refresh === true, options?.capabilities);
   const res = await gatewayFetch(gatewayUrl(sessionRoute(asid, '', sessionId, true) + query), {
     method: 'GET',
@@ -716,11 +781,27 @@ export async function compactAgentSession(
   asid: string,
   delivery: AgentDelivery = 'steer'
 ): Promise<void> {
+  if (usesOfflineDemo()) {
+    if (isDemoCompactionLogAsid(asid)) {
+      advanceDemoCompactionLogs(asid);
+      return;
+    }
+    if (asid !== DEMO_COMPACTION_ASID) throw new Error('Not the offline compaction session');
+    advanceDemoCompaction();
+    return;
+  }
   await writeJson(sessionRoute(asid, '/compact'), 'Failed to compact session', { delivery });
 }
 
 /** Everything still in the model's context, i.e. after the last compaction. */
 export async function getAgentContext(asid: string): Promise<AgentContextUsage> {
+  if (usesOfflineDemo() && isDemoCompactionLogAsid(asid))
+    return {
+      tokens: demoCompactionLogsSnapshot(asid)?.info?.tokens ?? null,
+      limit: { context: 32768 },
+    };
+  if (usesOfflineDemo() && asid === DEMO_COMPACTION_ASID)
+    return { tokens: demoCompactionSnapshot().info?.tokens ?? null, limit: { context: 32768 } };
   return readJson(sessionRoute(asid, '/context'), parseAgentContextUsage, {
     messages: 0,
     tokens: null,
@@ -964,6 +1045,7 @@ export async function getAgentCatalog(
   endpoint?: { url?: string; token?: string | null },
   options?: { directory?: string; forceRefresh?: boolean; requireFresh?: boolean; agentId?: string }
 ): Promise<AgentCatalog> {
+  if (usesOfflineDemo(endpoint)) return EMPTY_CATALOG;
   const directory = normalizeCatalogDirectory(options?.directory);
   const cacheKey = buildAgentCacheKey(
     'catalog',
@@ -1035,6 +1117,7 @@ export async function getAgentProjects(
   endpoint?: { url?: string; token?: string | null },
   options?: { forceRefresh?: boolean; agentId?: string }
 ): Promise<AgentProject[]> {
+  if (usesOfflineDemo(endpoint)) return [];
   const cacheKey = buildAgentCacheKey(
     'projects',
     endpoint?.url,
@@ -1294,6 +1377,7 @@ export async function getAgentStatus(
     stream_connected: false,
     autostart: true,
   };
+  if (usesOfflineDemo(endpoint)) return fallback;
   const path = withAgentIdQuery('/api/agent-status', agentId);
   if (!endpoint) return readJson(path, parseAgentStatusInfo, fallback);
 
@@ -1335,6 +1419,7 @@ export async function getAgentsDiscovery(options: {
    */
   serverId?: string;
 }): Promise<GatewayDiscovery | null> {
+  if (usesOfflineDemo(options.endpoint)) return null;
   if (!hasMultiAgent(options.capabilities)) return null;
   const serverId = options.serverId ?? (options.endpoint ? null : configuredGatewayServerId());
   try {
@@ -1391,6 +1476,7 @@ export async function getAgentTimelineDelta(
   afterSeq: number
 ): Promise<AgentTimelineDelta> {
   const empty: AgentTimelineDelta = { items: [], resync: false, latest_seq: afterSeq };
+  if (usesOfflineDemo()) return empty;
   try {
     if (!isGatewayConfigured()) return empty;
     const res = await gatewayFetch(
@@ -1446,6 +1532,17 @@ export function openAgentSessionStream(options: {
   onClose?: () => void;
   onConnected?: () => void;
 }): () => void {
+  if (usesOfflineDemo()) {
+    if (isDemoCompactionLogAsid(options.asid))
+      return subscribeDemoCompactionLogs(options.asid, options.onEvent);
+    if (isDemoNoticeAsid(options.asid))
+      return subscribeDemoNotification(options.asid, options.onEvent);
+    // No SSE, socket retry or timer. The real Workbench batches these typed
+    // events through its normal handler; only the existing Compact action advances them.
+    return options.asid === DEMO_COMPACTION_ASID
+      ? subscribeDemoCompaction(options.onEvent)
+      : () => {};
+  }
   let cancelled = false;
   const controller = new AbortController();
 

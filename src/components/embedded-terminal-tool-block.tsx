@@ -45,6 +45,7 @@ import type { ToolCallState } from '@/lib/agent-protocol';
 import type { ToolKind } from '@/lib/agent-tool-output';
 import { formatToolDuration } from '@/lib/tool-call-detail';
 import { AGENT_TYPE } from '@/constants/agent-type';
+import { withAlpha } from '@/lib/color';
 
 /**
  * The shell every tool call is drawn in.
@@ -104,7 +105,7 @@ export interface EmbeddedTerminalProps {
   defaultExpanded?: boolean;
   /** Ordinary calls use a quiet log row; the whole header toggles inline. */
   compactSummary?: boolean;
-  /** A delegated task keeps its real child state and session entry visible. */
+  /** A delegated task keeps its real child state visible; identity and actions expand. */
   taskSummary?: {
     title: string;
     identity: string;
@@ -178,6 +179,7 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
   const inlineSummary = compactSummary || Boolean(taskSummary);
   const hasBody =
     Boolean(children) ||
+    Boolean(taskSummary && (taskSummary.title || taskSummary.identity || actions)) ||
     (inlineSummary && Boolean(title || caption || error || chips || preview || onOpenDetail));
   const headerOpensDetail = Boolean(onOpenDetail) && !inlineSummary;
   const showDetails = !inlineSummary || expanded;
@@ -187,10 +189,43 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
       ? t`Collapse tool call`
       : t`Expand tool call`;
   const headerBusy = taskSummary ? taskSummary.busy : pending;
+  const headerCopy =
+    showDetails && !taskSummary && (compact || compactSummary) && (title || caption) ? (
+      <View style={styles.compactHeaderCopy}>
+        {title ? (
+          <Text
+            variant="caption"
+            numberOfLines={2}
+            ellipsizeMode="middle"
+            color={theme.colors.textMuted}
+            style={[styles.target, { fontFamily: mono }]}>
+            {title}
+          </Text>
+        ) : null}
+        {caption ? (
+          <Text
+            variant="caption"
+            numberOfLines={2}
+            ellipsizeMode="head"
+            color={theme.colors.textSubtle}
+            style={[styles.caption, { fontFamily: mono }]}>
+            {caption}
+          </Text>
+        ) : null}
+      </View>
+    ) : null;
+  const hasVisibleDetails = Boolean(
+    (inlineSummary && headerCopy) ||
+    (taskSummary && expanded) ||
+    (showDetails && (chips || truncated || background || (failed && error) || preview)) ||
+    (!taskSummary && (background || actions)) ||
+    (inlineSummary && expanded && onOpenDetail) ||
+    (expanded && hasBody)
+  );
 
   return (
     <Animated.View
-      style={[styles.container, compactSummary && !expanded ? styles.collapsedContainer : raised]}
+      style={[styles.container, !inlineSummary && raised, inlineSummary && styles.summaryContainer]}
       testID={testID}
       // A screen reader hears the call, not the engine's id for it.
       accessibilityLabel={[title, caption].filter(Boolean).join(' ') || undefined}>
@@ -214,13 +249,24 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
           .join(' · ')}
         disabled={!hasBody && !headerOpensDetail}
         onPress={headerOpensDetail ? onOpenDetail : () => setExpanded((prev) => !prev)}
-        style={[styles.header, compactSummary && !expanded && styles.summaryHeader]}>
+        style={[
+          styles.header,
+          {
+            borderRadius: profile.chrome.control,
+            backgroundColor: withAlpha(theme.colors.primary, 0.08),
+          },
+        ]}>
         {taskSummary ? (
           <View style={styles.headerRow}>
             <View style={styles.headerIcon}>
               <GitFork size={13} color={theme.colors.textMuted} />
             </View>
-            <Text variant="caption" weight="semibold" style={styles.taskTitle}>
+            <Text
+              variant="caption"
+              weight="semibold"
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              style={styles.taskTitle}>
               {taskSummary.title}
             </Text>
             <View style={styles.taskStatus}>{taskSummary.status}</View>
@@ -235,7 +281,7 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
             <View style={styles.headerIcon}>
               {createElement(TOOL_ICONS[kind], { size: 13, color: theme.colors.textMuted })}
             </View>
-            <View style={[styles.headerText, compactSummary && !expanded && styles.summaryText]}>
+            <View style={styles.headerText}>
               <View style={styles.headerLine}>
                 <Text
                   variant="caption"
@@ -290,123 +336,121 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
                 accessibilityLabel={expanded ? t`Collapse tool call` : t`Expand tool call`}
                 hitSlop={12}
                 onPress={() => setExpanded((prev) => !prev)}>
-                <Animated.View entering={fadeIn('micro')} style={chevronStyle}>
+                <Animated.View style={chevronStyle}>
                   <ChevronDown size={12} color={theme.colors.textMuted} />
                 </Animated.View>
               </PressableScale>
             ) : hasBody ? (
-              <Animated.View entering={fadeIn('micro')} style={chevronStyle}>
+              <Animated.View style={chevronStyle}>
                 <ChevronDown size={12} color={theme.colors.textMuted} />
               </Animated.View>
             ) : null}
           </View>
         )}
-        {showDetails && !taskSummary && (compact || compactSummary) && (title || caption) ? (
-          <View style={styles.compactHeaderCopy}>
-            {title ? (
-              <Text
-                variant="caption"
-                numberOfLines={2}
-                ellipsizeMode="middle"
-                color={theme.colors.textMuted}
-                style={[styles.target, { fontFamily: mono }]}>
-                {title}
-              </Text>
-            ) : null}
-            {caption ? (
-              <Text
-                variant="caption"
-                numberOfLines={2}
-                ellipsizeMode="head"
-                color={theme.colors.textSubtle}
-                style={[styles.caption, { fontFamily: mono }]}>
-                {caption}
-              </Text>
-            ) : null}
-          </View>
-        ) : null}
+        {!inlineSummary ? headerCopy : null}
       </PressableScale>
 
-      {(showDetails && (chips || truncated || background)) || (background && !taskSummary) ? (
-        <View style={[styles.chipRow, styles.underTitle]}>
-          {showDetails ? chips : null}
-          {background ? (
-            <View
-              style={[
-                styles.badge,
-                { borderRadius: profile.chrome.control, borderColor: colors.accent },
-              ]}>
-              <Text variant="caption" color={colors.accent} style={styles.badgeText}>
-                {t`Background`}
-              </Text>
-            </View>
-          ) : null}
-          {showDetails && truncated ? (
-            <View
-              style={[
-                styles.badge,
-                { borderRadius: profile.chrome.control, borderColor: theme.colors.warning },
-              ]}>
-              <Text variant="caption" color={theme.colors.warning} style={styles.badgeText}>
-                {t`Truncated`}
-              </Text>
-            </View>
-          ) : null}
-        </View>
-      ) : null}
-
-      {/* OpenCode's own message, said as it was said: one line when it is a
-          sentence, markdown when it arrived as a small document. */}
-      {showDetails && failed && error ? (
-        <View style={styles.underTitle}>
-          <EngineFailureText message={error} />
-        </View>
-      ) : null}
-
-      {showDetails && preview ? (
-        // Code, images and streaming arguments use the full content width.
-        <View>{preview}</View>
-      ) : null}
-
-      {taskSummary ? (
-        <View style={[styles.taskIdentityRow, styles.underTitle]}>
-          {taskSummary.identity ? (
-            <Text variant="caption" color={theme.colors.textSubtle} style={styles.taskIdentity}>
-              {taskSummary.identity}
+      {hasVisibleDetails ? (
+        <View
+          style={[
+            styles.details,
+            inlineSummary && expanded && raised,
+            inlineSummary && expanded && styles.summaryDetails,
+          ]}>
+          {inlineSummary ? headerCopy : null}
+          {taskSummary && expanded ? (
+            <Text variant="caption" weight="semibold" style={styles.underTitle}>
+              {taskSummary.title}
             </Text>
           ) : null}
-          {actions}
+
+          {(showDetails && (chips || truncated || background)) || (background && !taskSummary) ? (
+            <View style={[styles.chipRow, styles.underTitle]}>
+              {showDetails ? chips : null}
+              {background ? (
+                <View
+                  style={[
+                    styles.badge,
+                    { borderRadius: profile.chrome.control, borderColor: colors.accent },
+                  ]}>
+                  <Text variant="caption" color={colors.accent} style={styles.badgeText}>
+                    {t`Background`}
+                  </Text>
+                </View>
+              ) : null}
+              {showDetails && truncated ? (
+                <View
+                  style={[
+                    styles.badge,
+                    { borderRadius: profile.chrome.control, borderColor: theme.colors.warning },
+                  ]}>
+                  <Text variant="caption" color={theme.colors.warning} style={styles.badgeText}>
+                    {t`Truncated`}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+          ) : null}
+
+          {/* OpenCode's own message, said as it was said: one line when it is a
+          sentence, markdown when it arrived as a small document. */}
+          {showDetails && failed && error ? (
+            <View style={styles.underTitle}>
+              <EngineFailureText message={error} />
+            </View>
+          ) : null}
+
+          {showDetails && preview ? (
+            // Code, images and streaming arguments use the full content width.
+            <View>{preview}</View>
+          ) : null}
+
+          {taskSummary ? (
+            expanded ? (
+              <View style={[styles.taskIdentityRow, styles.underTitle]}>
+                {taskSummary.identity ? (
+                  <Text
+                    variant="caption"
+                    color={theme.colors.textSubtle}
+                    style={styles.taskIdentity}>
+                    {taskSummary.identity}
+                  </Text>
+                ) : null}
+                {actions}
+              </View>
+            ) : null
+          ) : actions ? (
+            <View style={[styles.actionRow, styles.underTitle]}>{actions}</View>
+          ) : null}
+
+          {inlineSummary && expanded && onOpenDetail ? (
+            <PressableScale
+              testID="agent-tool-open-detail"
+              accessibilityRole="button"
+              accessibilityLabel={t`Open tool call details`}
+              onPress={onOpenDetail}
+              style={styles.underTitle}>
+              <Text variant="caption" color={colors.accent}>
+                {t`Open tool call details`}
+              </Text>
+            </PressableScale>
+          ) : null}
+
+          {expanded && hasBody ? (
+            // Fades in, and leaves without an exit -- as the thought block's body
+            // does, which is why that one never flickered and this one did. An
+            // exiting view is lifted out of the layout while it fades, so the row
+            // collapsed to its header at once with the old body still painted over
+            // the rows below it; inside a virtualised list that also re-measures
+            // the row twice. The collapse is the row getting shorter, which the
+            // list already animates the neighbours for.
+            <Animated.View
+              entering={fadeIn('micro')}
+              style={[styles.body, { borderTopColor: theme.colors.border }]}>
+              {children}
+            </Animated.View>
+          ) : null}
         </View>
-      ) : actions ? (
-        <View style={[styles.actionRow, styles.underTitle]}>{actions}</View>
-      ) : null}
-
-      {inlineSummary && expanded && onOpenDetail ? (
-        <PressableScale
-          testID="agent-tool-open-detail"
-          accessibilityRole="button"
-          accessibilityLabel={t`Open tool call details`}
-          onPress={onOpenDetail}
-          style={styles.underTitle}>
-          <Text variant="caption" color={colors.accent}>
-            {t`Open tool call details`}
-          </Text>
-        </PressableScale>
-      ) : null}
-
-      {expanded && hasBody ? (
-        // Fades in, and leaves without an exit -- as the thought block's body
-        // does, which is why that one never flickered and this one did. An
-        // exiting view is lifted out of the layout while it fades, so the row
-        // collapsed to its header at once with the old body still painted over
-        // the rows below it; inside a virtualised list that also re-measures
-        // the row twice. The collapse is the row getting shorter, which the
-        // list already animates the neighbours for.
-        <Animated.View
-          entering={fadeIn('micro')}
-          style={[styles.body, { borderTopColor: theme.colors.border }]}>
-          {children}
-        </Animated.View>
       ) : null}
     </Animated.View>
   );
@@ -425,28 +469,35 @@ const styles = StyleSheet.create({
     paddingHorizontal: TRANSCRIPT_GRID.inset,
     gap: TRANSCRIPT_GRID.attachGap,
   },
-  header: { gap: 4 },
-  collapsedContainer: {
-    paddingVertical: 0,
+  summaryContainer: {
+    paddingVertical: 2,
     paddingHorizontal: 0,
   },
-  summaryHeader: {
+  header: {
     alignSelf: 'flex-start',
     maxWidth: '100%',
+    // Leave 1dp above the strict 44dp native-bounds minimum.
+    minHeight: 45,
+    justifyContent: 'center',
+    gap: 4,
     paddingVertical: 5,
     paddingHorizontal: TRANSCRIPT_GRID.inset,
+    borderCurve: 'continuous',
   },
-  summaryText: {
-    flex: 0,
-    flexShrink: 1,
+  details: {
+    gap: TRANSCRIPT_GRID.attachGap,
+  },
+  summaryDetails: {
+    paddingVertical: TRANSCRIPT_GRID.plateInsetY,
+    paddingHorizontal: TRANSCRIPT_GRID.inset,
   },
   taskTitle: {
-    flex: 1,
+    flexShrink: 1,
     minWidth: 0,
     fontSize: AGENT_TYPE.meta.size,
   },
   taskStatus: {
-    maxWidth: '40%',
+    flexShrink: 0,
   },
   taskIdentityRow: {
     flexDirection: 'row',
@@ -480,7 +531,7 @@ const styles = StyleSheet.create({
     marginLeft: ICON_COLUMN + HEADER_GAP,
   },
   headerText: {
-    flex: 1,
+    flexShrink: 1,
     minWidth: 0,
     gap: 1,
   },

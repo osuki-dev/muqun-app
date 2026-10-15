@@ -28,6 +28,7 @@ import Animated, {
   Extrapolation,
   interpolate,
   ReduceMotion,
+  useAnimatedReaction,
   useAnimatedStyle,
   useDerivedValue,
   useReducedMotion,
@@ -62,7 +63,12 @@ import {
 import { useSharedSkiaImage } from '@/lib/skia-image-cache';
 import { recoverWithSync } from '@/lib/compiler-safe-control-flow';
 import { containedImageRect, coveredImageRect, type FeatherSize } from '@/lib/hero-feather';
-import { launchArtworkLanding } from '@/lib/launch-artwork-landing';
+import {
+  launchArtworkDeparture,
+  launchArtworkDepartureLimit,
+  launchArtworkDepartureOffset,
+  launchArtworkLanding,
+} from '@/lib/launch-artwork-landing';
 import {
   heroEdgeAmount,
   HERO_EDGE_REST_FRACTION,
@@ -180,8 +186,8 @@ import { isRenderableThemeAsset } from '@/theme/renderable-asset';
  * block some packs hide, plus a banner slot. When Home has not reported one --
  * no servers paired yet, the hero switched off, the lock gate up, a
  * notification deep-linking past Home -- there is nothing to land in, so the
- * hero holds where it is and the opening ends with it coming apart where it
- * stands (or, without the snap, on a cross-fade). That is the documented
+ * theme figure lifts a little within its safe area and comes apart there
+ * (or, without the snap, cross-fades). The default logo stays still. That is the
  * fallback, not a failure; the world still blooms, because the world arriving
  * is true of every first screen.
  *
@@ -406,19 +412,27 @@ export function LaunchSceneIntro({
     height: heroBox.height,
   };
   // Same-image travel uses its decoded contain bounds and Home's safe area.
-  // An independent launch figure keeps its composition for the snap dissolve:
+  // An independent launch figure keeps its scale and only lifts a little:
   // Home's scene is a different picture, with no corresponding sprite position.
+  const safeViewport = {
+    x: insets.left,
+    y: insets.top,
+    width: width - insets.left - insets.right,
+    height: height - insets.top - insets.bottom,
+  };
   const destination = launchArtworkLanding({
     box: heroBox,
     intrinsic: landing?.intrinsic ?? null,
     source: heroUri,
     home: reduced ? null : homeRect,
-    viewport: {
-      x: insets.left,
-      y: insets.top,
-      width: width - insets.left - insets.right,
-      height: height - insets.top - insets.bottom,
-    },
+    viewport: safeViewport,
+    centre: launchCentre,
+  });
+  const departureY = launchArtworkDeparture({
+    enabled: launchUri !== undefined && homeRect?.source !== heroUri,
+    reducedMotion: reduced,
+    box: heroBox,
+    viewport: safeViewport,
     centre: launchCentre,
   });
   const canLand = destination.exact;
@@ -550,6 +564,21 @@ export function LaunchSceneIntro({
   const bloom = useSharedValue(0);
   const settle = useSharedValue(0);
   const hero = useSharedValue(0);
+  const departure = useSharedValue(0);
+  const departureLimit = useSharedValue(departureY);
+  useAnimatedReaction(
+    () => departureY,
+    (allowed) => {
+      departureLimit.set(launchArtworkDepartureLimit(departureLimit.get(), allowed));
+    }
+  );
+  const departureOffset = useDerivedValue(() =>
+    launchArtworkDepartureOffset(
+      departure.get(),
+      hero.get(),
+      launchArtworkDepartureLimit(departureLimit.get(), departureY)
+    )
+  );
   const type = useSharedValue(0);
   const blink = useSharedValue(0);
   const hold = useSharedValue(0);
@@ -752,12 +781,18 @@ export function LaunchSceneIntro({
     followPhase();
   }, [phase, active]);
 
+  const captureDeparture = useEffectEvent(() => {
+    // Keep the original journey and clock. The derived offset only projects
+    // already-travelled distance if the current safe viewport becomes smaller.
+    departure.set(departureY);
+  });
   useEffect(() => {
     if (phase !== 'visible' || !active || reduced) return;
     const elapsed = Date.now() - startedAt.current;
     // Missing the scheduled departure chooses the dissolve, never a late flight
     // or a longer splash. The rest of the opening keeps its original timeline.
     if (elapsed > beats.hero.at) return;
+    captureDeparture();
     hero.set(withDelay(beats.hero.at - elapsed, withTiming(1, timing(beats.hero.ms))));
   }, [phase, active, reduced, homeRect, beats.hero.at, beats.hero.ms, hero]);
 
@@ -828,7 +863,7 @@ export function LaunchSceneIntro({
       // the hero while the hero travels.
       centre: {
         x: launchCentre.x + (landingCentre.x - launchCentre.x) * hero.value,
-        y: launchCentre.y + (landingCentre.y - launchCentre.y) * hero.value,
+        y: launchCentre.y + (landingCentre.y - launchCentre.y) * hero.value + departureOffset.get(),
       },
       front,
       // The drift rides the bloom rather than a clock, so the canvas stops
@@ -871,7 +906,7 @@ export function LaunchSceneIntro({
   const heroStyle = useAnimatedStyle(() => ({
     transform: [
       { translateX: (landingCentre.x - launchCentre.x) * hero.value },
-      { translateY: (landingCentre.y - launchCentre.y) * hero.value },
+      { translateY: (landingCentre.y - launchCentre.y) * hero.value + departureOffset.get() },
       { scale: 1 + (landingScale - 1) * hero.value },
     ],
   }));
@@ -894,7 +929,7 @@ export function LaunchSceneIntro({
   ]);
   const heroTransform = useDerivedValue(() => [
     { translateX: (landingCentre.x - launchCentre.x) * hero.value },
-    { translateY: (landingCentre.y - launchCentre.y) * hero.value },
+    { translateY: (landingCentre.y - launchCentre.y) * hero.value + departureOffset.get() },
     { scale: 1 + (landingScale - 1) * hero.value },
   ]);
   // The view's copy goes once the canvas's is the one on screen.

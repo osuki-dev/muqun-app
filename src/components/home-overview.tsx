@@ -66,7 +66,6 @@ import AppDrawer from '@/components/app-drawer';
 import { NewTaskAction } from '@/components/new-task-action';
 import { PressableScale } from '@/components/pressable-scale';
 import { SectionLabel } from '@/components/settings-chrome';
-import { ServerAgentRows } from '@/components/server-agent-rows';
 import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
 import { HomeArtwork } from '@/components/home-artwork';
 import { ThemeIcon } from '@/components/theme-icon';
@@ -144,7 +143,6 @@ import {
   type HomeServerListLayout,
 } from '@/lib/responsive-layout';
 import { serverIdsNeedingAddress } from '@/lib/server-address';
-import type { ServerAgent } from '@/lib/server-agents';
 import {
   reachabilityOfStatus,
   REACHABILITY_TICK_MS,
@@ -162,7 +160,6 @@ import { GatewayStorageError } from '@/components/gateway-storage-error';
 import { useServerAgents } from '@/stores/server-agents';
 import { retryHomeRefresh } from '@/lib/home-refresh-schedule';
 import { useConnectionStatuses } from '@/hooks/use-home-reachability';
-import { useMinuteNow } from '@/hooks/use-minute-now';
 import { useHomeRecentsStore } from '@/stores/home-recents';
 import { useHomeAgentChoice } from '@/stores/home-agent-choice';
 import { useHomeAttention } from '@/stores/home-attention';
@@ -887,7 +884,8 @@ export function HomeOverview({
   });
 
   const availableRecentEntries = useHomeRecentEntries({
-    connectionShortcutsElsewhere: classicLayout,
+    // Every layout keeps its pane inventory in Continue; Classic's computer
+    // cards below are entry points, not a second list of those panes.
     servers: records,
     hosts: sshRows,
     selectedServerId: launchController.chosen?.serverId,
@@ -1109,8 +1107,8 @@ export function HomeOverview({
         }}
       />
     ) : undefined;
-  // Classic keeps pane shortcuts in its connection cards; its remaining
-  // Recent sessions stay compact. Editorial uses the combined numbered list.
+  // Continue keeps the full inventory in every layout. Classic uses compact
+  // rows above entry-only computer cards; Editorial uses numbered rows.
   const recentSection =
     !loading && !hydrationError && recentEntries.length > 0 ? (
       <HomeRecentSessions
@@ -2014,7 +2012,6 @@ export function HomeOverview({
                 showAddress={addressNeeded.has(server.serverId)}
                 reachability={padReachabilityByServer[server.serverId] ?? 'unknown'}
                 onOpen={() => openServer(server.serverId)}
-                onOpenAgent={(agent) => openServer(server.serverId, agent.paneId)}
               />
             ))}
           </View>
@@ -2146,20 +2143,7 @@ function HeaderButton({
   );
 }
 
-/**
- * One machine, then the panes running on it.
- *
- * The card is an identity block and a list, and nothing draws the relationship
- * between them. It used to: a coral trunk grew out of the status dot and turned
- * into each pane row through a rounded elbow, which made the card read as a
- * process tree. The line was saying what the card's own surface already says --
- * these panes are on this machine -- and at nine rows it was the loudest thing
- * on the screen. What replaces it is arrangement: the identity block is the only
- * thing on the card with an icon and 18pt type, the panes below it share one
- * left edge and one column of status lights, and the gap between the two is the
- * largest on the card. The reader gets the same hierarchy without anything
- * being drawn to assert it.
- */
+/** Classic's computer and agent entry points; individual panes live in Continue. */
 function ServerCard({
   server,
   metrics,
@@ -2167,7 +2151,6 @@ function ServerCard({
   showAddress,
   reachability,
   onOpen,
-  onOpenAgent,
 }: {
   server: GatewayRecord;
   /** Card geometry and row density for the current window and server count. */
@@ -2181,7 +2164,6 @@ function ServerCard({
   showAddress: boolean;
   reachability: ServerReachability;
   onOpen: () => void;
-  onOpenAgent: (agent: ServerAgent) => void;
 }) {
   const { t } = useLingui();
   // The runtime `_`, for the message descriptors in `@/i18n/labels`. Same
@@ -2193,18 +2175,7 @@ function ServerCard({
   const background = useSurfaceBackground();
   const { fontScale } = useWindowDimensions();
 
-  // The card's own mirror, read here rather than handed down: a pass that only
-  // re-confirms the panes moves `checkedAtMs`, and that re-renders this card,
-  // not the screen. Undefined when the server has never been opened.
-  const agents = useServerAgents((state) => state.byServer[server.serverId]);
-  // Freshness is relative to now: a card sitting untouched keeps telling the
-  // truth about a snapshot ageing under it, a minute at a time.
-  const nowMs = useMinuteNow();
-
   return (
-    // The header and asynchronously refreshed pane rows share one native
-    // layout. Do not animate their frames independently or flatten the hosts
-    // that establish the rows' offset below the identity block.
     <View collapsable={false}>
       <ThemedSurface
         collapsable={false}
@@ -2258,15 +2229,7 @@ function ServerCard({
             </View>
 
             <View style={styles.serverCopy}>
-              {/* Sentence case on purpose: a machine's name is a proper noun,
-                  and the ALL-CAPS register on this screen is reserved for the
-                  one instrument label, which is the status.
-
-                  18/600 against the panes' 14 and the address's 12. It used to
-                  be 16 against 14 against a 14 all-caps status, which is three
-                  sizes inside two points of each other and therefore no
-                  hierarchy at all -- the machine has to outrank the things
-                  running on it. */}
+              {/* A machine's name is a proper noun; keep its sentence case. */}
               <Text variant="subheading" weight="semibold" numberOfLines={1}>
                 {server.label}
               </Text>
@@ -2289,8 +2252,6 @@ function ServerCard({
                   style={styles.statusLabel}>
                   {_(reachabilityLabel[reachability])}
                 </Text>
-                {/* No count: the rows below are the count, and saying it here as
-                      well would be the same fact twice on one card. */}
               </View>
 
               {/* Only when a second machine answers to the same name. On every
@@ -2317,21 +2278,6 @@ function ServerCard({
         {reachability === 'live' || Boolean(server.sshTunnel) ? (
           <NewTaskAction server={server} serverId={server.serverId} label={server.label} />
         ) : null}
-
-        {/* `listGap` is the whole grouping device now, so it belongs to the
-            list rather than to a spacer between the two: a machine with no
-            mirrored panes renders no rows, and a standalone spacer would leave
-            that card with a gap under its name separating it from nothing. */}
-        <ServerAgentRows
-          serverId={server.serverId}
-          initialLimit={5}
-          style={{ marginTop: metrics.listGap }}
-          snapshot={agents}
-          reachability={reachability}
-          rowMinHeight={metrics.rowMinHeight}
-          nowMs={nowMs}
-          onOpenAgent={onOpenAgent}
-        />
       </ThemedSurface>
     </View>
   );

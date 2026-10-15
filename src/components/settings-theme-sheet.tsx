@@ -84,43 +84,46 @@ export function SettingsThemeSheet({ onClose }: { onClose: () => void }) {
     // pure data, so a theme can be asked its colours without wearing them --
     // and it is what the wash's front is lit in. That light is the one moment
     // in the transition that tells the reader in colour what they just chose.
-    void reskin.run({
-      kind: 'theme',
-      accent: themeVariant(resolveThemePack(id), resolvedMode).colors.primary,
-      apply: () => {
-        try {
+    setError(null);
+    void reskin
+      .run({
+        kind: 'theme',
+        accent: themeVariant(resolveThemePack(id), resolvedMode).colors.primary,
+        apply: () => {
           useThemeLibrary.getState().apply({ kind: 'builtin', id });
-        } catch {
-          setError(t`Could not save theme`);
-        }
-      },
-      settle: onClose,
-    });
+        },
+        settle: onClose,
+      })
+      .catch(() => {
+        // A rejected apply skips settle; show the error after the cover is removed.
+        setError(t`Could not save theme`);
+      });
   }
 
   /** The same apply-then-leave as `choose`, back to the bundled default. */
   function chooseDefault() {
     const builtin = useThemeLibrary.getState().defaultTheme;
     if (!builtin) return;
-    void reskin.run({
-      kind: 'theme',
-      accent: themeVariant(builtin, resolvedMode).colors.primary,
-      prepare: () =>
-        prepareThemeArtwork(
-          builtin.manifest,
-          useThemeLibrary.getState().defaultAssets,
-          resolvedMode,
-          artworkWidth
-        ),
-      apply: () => {
-        try {
+    setError(null);
+    void reskin
+      .run({
+        kind: 'theme',
+        accent: themeVariant(builtin, resolvedMode).colors.primary,
+        prepare: () =>
+          prepareThemeArtwork(
+            builtin.manifest,
+            useThemeLibrary.getState().defaultAssets,
+            resolvedMode,
+            artworkWidth
+          ),
+        apply: () => {
           useThemeLibrary.getState().resetToDefault();
-        } catch {
-          setError(t`Could not save theme`);
-        }
-      },
-      settle: onClose,
-    });
+        },
+        settle: onClose,
+      })
+      .catch(() => {
+        setError(t`Could not save theme`);
+      });
   }
 
   return (

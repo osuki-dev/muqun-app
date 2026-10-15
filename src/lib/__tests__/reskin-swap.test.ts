@@ -1,6 +1,7 @@
 import { expect, test } from 'bun:test';
 
 import { runReskinSwap } from '../reskin-swap';
+import { ThemeRepository } from '@/theme/repository';
 
 function deferred() {
   let resolve = () => {};
@@ -83,6 +84,52 @@ test('apply failure releases prepared assets without revealing a half-applied th
     })
   ).rejects.toThrow('save failed');
   expect(events).toEqual(['covered', 'prepared', 'released']);
+});
+
+test('failed persisted theme selections skip the painted step and retain selection until retry', async () => {
+  for (const target of ['builtin', 'default'] as const) {
+    let fail = false;
+    let writes = 0;
+    const repository = new ThemeRepository(
+      {
+        read: () => undefined,
+        write: () => {
+          writes += 1;
+          if (fail) throw new Error('disk full');
+        },
+      },
+      () => 'unused'
+    );
+    repository.apply({ kind: 'builtin', id: 'catppuccin' });
+    const before = repository.snapshot();
+    const events: string[] = [];
+    const select = () =>
+      swap(events, {
+        apply: () => {
+          if (target === 'builtin') repository.apply({ kind: 'builtin', id: 'osuki' });
+          else repository.resetToDefault();
+        },
+        painted: async () => {
+          events.push('dismissed');
+        },
+      }).catch(() => {
+        events.push('error');
+      });
+    fail = true;
+    await select();
+    expect(events).toEqual(['covered', 'prepared', 'released', 'error']);
+    expect(repository.snapshot()).toEqual(before);
+    expect(writes).toBe(2);
+
+    fail = false;
+    events.length = 0;
+    await select();
+    expect(events).toEqual(['covered', 'prepared', 'dismissed', 'reveal', 'released']);
+    expect(repository.snapshot().selection).toEqual(
+      target === 'builtin' ? { kind: 'builtin', id: 'osuki' } : null
+    );
+    expect(writes).toBe(3);
+  }
 });
 
 test('holds the cover while the new renderers are pending', async () => {

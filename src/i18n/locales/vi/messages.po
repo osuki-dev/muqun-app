@@ -1249,6 +1249,10 @@ msgstr "Cổ điển"
 msgid "Clear"
 msgstr "Xóa"
 
+#: src/components/in-app-notification-host.tsx
+msgid "Clear all"
+msgstr "Xóa tất cả"
+
 #: src/components/settings-storage.tsx
 msgid "Clear cache"
 msgstr "Xóa bộ nhớ đệm"
@@ -1295,6 +1299,10 @@ msgstr "Đang xóa…"
 msgid "Clears cache when due after opening Muqun. Saved themes are kept."
 msgstr "Dọn bộ nhớ đệm sau khi mở Muqun khi đến hạn. Các chủ đề đã lưu được giữ lại"
 
+#: src/components/in-app-notification-host.tsx
+msgid "Clears notifications only. Pending tasks still need your attention."
+msgstr "Chỉ xóa thông báo. Các tác vụ đang chờ vẫn cần bạn xử lý"
+
 #: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
 #: src/i18n/labels.ts
@@ -1318,6 +1326,7 @@ msgstr "Đóng menu"
 msgid "Close new task"
 msgstr "Đóng tác vụ mới"
 
+#: src/components/agent-tool-card.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/image-preview-modal.tsx
@@ -1859,6 +1868,10 @@ msgstr "Không thể kiểm tra dung lượng tải xuống. Hãy thử lại"
 msgid "Could not compact"
 msgstr "Không thể nén"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not confirm submission"
+msgstr "Không thể xác nhận việc gửi"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not connect"
 msgstr "Không thể kết nối"
@@ -2398,6 +2411,10 @@ msgstr "tách rời tại {head}"
 #: src/components/changes-worktree-list.tsx
 msgid "Detached at {head}"
 msgstr "Tách rời tại {head}"
+
+#: src/components/in-app-notification-host.tsx
+msgid "Details"
+msgstr "Chi tiết"
 
 #: src/lib/demo-gateway.ts
 msgid "Development"
@@ -3107,15 +3124,19 @@ msgstr "Nếu sự cố vẫn tiếp diễn, hãy khởi động lại ứng d�
 msgid "Image"
 msgstr "Hình ảnh"
 
+#: src/components/image-preview-modal.tsx
+msgid "Image preview"
+msgstr "Xem trước hình ảnh"
+
 #: src/components/agent-message-block.tsx
-#: src/components/asset-viewer.tsx
+#: src/components/file-text-body.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image unavailable"
 msgstr "Không thể hiển thị hình ảnh"
 
 #. placeholder {0}: alt.trim()
 #: src/components/agent-message-block.tsx
-#: src/components/asset-viewer.tsx
+#: src/components/file-text-body.tsx
 msgid "Image unavailable: {0}"
 msgstr "Không thể hiển thị hình ảnh: {0}"
 
@@ -3426,10 +3447,6 @@ msgstr "Mũi tên trái"
 #: src/components/virtual-keyboard.tsx
 msgid "Letters"
 msgstr "Chữ cái"
-
-#: src/components/agent-session-tree-sheet.tsx
-msgid "Level {depth}"
-msgstr "Cấp {depth}"
 
 #: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
@@ -3859,6 +3876,10 @@ msgstr "Mới hơn"
 #: src/components/agent-composer.tsx
 msgid "Next"
 msgstr "Tiếp theo"
+
+#: src/components/image-preview-modal.tsx
+msgid "Next image"
+msgstr "Ảnh tiếp theo"
 
 #: src/components/in-app-notification-host.tsx
 #: src/components/notice-deck.tsx
@@ -4574,10 +4595,6 @@ msgstr "Bảng màu (tối đa 4)"
 msgid "Panes on computer cards"
 msgstr "Ngăn trên thẻ máy tính"
 
-#: src/components/agent-session-tree-sheet.tsx
-msgid "Parent: {parentTitle}"
-msgstr "Phiên cha: {parentTitle}"
-
 #: src/components/ssh-host-form.tsx
 msgid "Passphrase (optional)"
 msgstr "Cụm mật khẩu (tùy chọn)"
@@ -4717,6 +4734,10 @@ msgstr "Xem trước và áp dụng"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "Xem trước đã. Giao diện hiện tại của bạn sẽ không thay đổi"
+
+#: src/components/image-preview-modal.tsx
+msgid "Previous image"
+msgstr "Ảnh trước"
 
 #: src/components/agent-title-pill.tsx
 msgid "Previous session"
@@ -5111,6 +5132,10 @@ msgstr "Yêu cầu thất bại"
 msgid "Requested permissions"
 msgstr "Quyền được yêu cầu"
 
+#: src/components/agent-composer.tsx
+msgid "Requesting queued delivery…"
+msgstr "Đang yêu cầu đưa tin nhắn vào hàng đợi…"
+
 #: src/components/settings-security.tsx
 msgid "Required on launch and after 30 seconds in the background."
 msgstr "Yêu cầu khi khởi động và sau 30 giây ở nền"
@@ -5127,6 +5152,10 @@ msgstr "Yêu cầu iOS 16.1 trở lên"
 #: src/components/computer-map/screen.tsx
 msgid "Reset view"
 msgstr "Đặt lại góc nhìn"
+
+#: src/components/image-preview-modal.tsx
+msgid "Reset zoom"
+msgstr "Đặt lại mức thu phóng"
 
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
@@ -5558,6 +5587,10 @@ msgstr "Gửi tác vụ này đến {assignmentLabel}"
 msgid "Send to agent"
 msgstr "Gửi cho tác tử"
 
+#: src/components/agent-composer.tsx
+msgid "Sending attachment message…"
+msgstr "Đang gửi tin nhắn có tệp đính kèm…"
+
 #. placeholder {0}: inboxItemText(item) || item.type
 #: src/components/agent-composer.tsx
 msgid "Sending next: {0}"
@@ -5708,6 +5741,10 @@ msgstr "Hiển thị hình ảnh trên Trang chủ"
 msgid "Show camera details"
 msgstr "Hiện chi tiết camera"
 
+#: src/components/in-app-notification-host.tsx
+msgid "Show details"
+msgstr "Hiện chi tiết"
+
 #: src/components/settings-terminal.tsx
 msgid "Show Esc, Tab, Ctrl and navigation keys above input."
 msgstr "Hiện các phím Esc, Tab, Ctrl và điều hướng phía trên ô nhập"
@@ -5726,6 +5763,7 @@ msgstr "Hiển thị chữ trên trang chủ"
 
 #: src/components/home-computer-cards.tsx
 #: src/components/home-recent-sessions.tsx
+#: src/components/in-app-notification-host.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Show less"
 msgstr "Hiện ít hơn"
@@ -6107,6 +6145,10 @@ msgstr "Tác nhân phụ"
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "Gửi"
+
+#: src/components/agent-composer.tsx
+msgid "Submitting follow-up…"
+msgstr "Đang gửi tin nhắn tiếp theo…"
 
 #: src/i18n/labels.ts
 msgid "Summarise progress"
@@ -6901,7 +6943,7 @@ msgstr "Token trong phiên này"
 msgid "Tokens usage and cost"
 msgstr "Mức sử dụng mã token và chi phí"
 
-#: src/components/asset-viewer.tsx
+#: src/components/file-text-body.tsx
 msgid "Too large to highlight — showing plain text."
 msgstr "Quá lớn để tô sáng cú pháp — hiển thị dưới dạng văn bản thuần"
 
@@ -6929,6 +6971,7 @@ msgstr "Phiên âm thất bại. Kiểm tra dịch vụ giọng nói và thử l
 msgid "Transcription mode"
 msgstr "Chế độ phiên âm"
 
+#: src/components/agent-tool-card.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/tool-call-code-rows.tsx
@@ -7442,6 +7485,11 @@ msgstr "Các tác tử của bạn, ở bất cứ đâu"
 msgid "Your checkout, in one workspace."
 msgstr "Bản checkout trong một không gian làm việc"
 
+#. placeholder {0}: agentErrorRef.current(err)
+#: src/components/agent-workbench.tsx
+msgid "Your draft is kept. Check the conversation before sending again. {0}"
+msgstr "Bản nháp của bạn được giữ lại. Hãy kiểm tra cuộc trò chuyện trước khi gửi lại. {0}"
+
 #: src/components/agent-message-block.tsx
 msgid "Your message"
 msgstr "Tin nhắn của bạn"
@@ -7449,3 +7497,11 @@ msgstr "Tin nhắn của bạn"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "Các máy tính đã ghép nối của bạn"
+
+#: src/components/image-preview-modal.tsx
+msgid "Zoom in"
+msgstr "Phóng to"
+
+#: src/components/image-preview-modal.tsx
+msgid "Zoom out"
+msgstr "Thu nhỏ"

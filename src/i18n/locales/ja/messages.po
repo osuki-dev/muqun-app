@@ -1249,6 +1249,10 @@ msgstr "クラシック"
 msgid "Clear"
 msgstr "削除"
 
+#: src/components/in-app-notification-host.tsx
+msgid "Clear all"
+msgstr "すべて消去"
+
 #: src/components/settings-storage.tsx
 msgid "Clear cache"
 msgstr "キャッシュを削除"
@@ -1295,6 +1299,10 @@ msgstr "削除しています…"
 msgid "Clears cache when due after opening Muqun. Saved themes are kept."
 msgstr "設定した間隔が経過すると、Muqunを開いた後にキャッシュを削除します。保存したテーマは保持されます"
 
+#: src/components/in-app-notification-host.tsx
+msgid "Clears notifications only. Pending tasks still need your attention."
+msgstr "通知のみを消去します。保留中のタスクには引き続き対応が必要です"
+
 #: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
 #: src/i18n/labels.ts
@@ -1318,6 +1326,7 @@ msgstr "メニューを閉じる"
 msgid "Close new task"
 msgstr "新規タスクを閉じる"
 
+#: src/components/agent-tool-card.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/image-preview-modal.tsx
@@ -1859,6 +1868,10 @@ msgstr "ダウンロードサイズを確認できませんでした。もう一
 msgid "Could not compact"
 msgstr "圧縮できませんでした"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not confirm submission"
+msgstr "送信を確認できませんでした"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not connect"
 msgstr "接続できませんでした"
@@ -2398,6 +2411,10 @@ msgstr "{head} で切り離し"
 #: src/components/changes-worktree-list.tsx
 msgid "Detached at {head}"
 msgstr "{head} で切り離し"
+
+#: src/components/in-app-notification-host.tsx
+msgid "Details"
+msgstr "詳細"
 
 #: src/lib/demo-gateway.ts
 msgid "Development"
@@ -3107,15 +3124,19 @@ msgstr "問題が続く場合は、アプリを再起動するか、インスト
 msgid "Image"
 msgstr "画像"
 
+#: src/components/image-preview-modal.tsx
+msgid "Image preview"
+msgstr "画像プレビュー"
+
 #: src/components/agent-message-block.tsx
-#: src/components/asset-viewer.tsx
+#: src/components/file-text-body.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image unavailable"
 msgstr "画像を表示できません"
 
 #. placeholder {0}: alt.trim()
 #: src/components/agent-message-block.tsx
-#: src/components/asset-viewer.tsx
+#: src/components/file-text-body.tsx
 msgid "Image unavailable: {0}"
 msgstr "画像を表示できません：{0}"
 
@@ -3426,10 +3447,6 @@ msgstr "左矢印"
 #: src/components/virtual-keyboard.tsx
 msgid "Letters"
 msgstr "英字"
-
-#: src/components/agent-session-tree-sheet.tsx
-msgid "Level {depth}"
-msgstr "階層 {depth}"
 
 #: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
@@ -3859,6 +3876,10 @@ msgstr "新しい記録"
 #: src/components/agent-composer.tsx
 msgid "Next"
 msgstr "次へ"
+
+#: src/components/image-preview-modal.tsx
+msgid "Next image"
+msgstr "次の画像"
 
 #: src/components/in-app-notification-host.tsx
 #: src/components/notice-deck.tsx
@@ -4574,10 +4595,6 @@ msgstr "パレット（最大4色）"
 msgid "Panes on computer cards"
 msgstr "コンピュータカードのパネル"
 
-#: src/components/agent-session-tree-sheet.tsx
-msgid "Parent: {parentTitle}"
-msgstr "親セッション: {parentTitle}"
-
 #: src/components/ssh-host-form.tsx
 msgid "Passphrase (optional)"
 msgstr "パスフレーズ（任意）"
@@ -4717,6 +4734,10 @@ msgstr "プレビューして適用"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "まずプレビューします。現在のテーマは変更されません"
+
+#: src/components/image-preview-modal.tsx
+msgid "Previous image"
+msgstr "前の画像"
 
 #: src/components/agent-title-pill.tsx
 msgid "Previous session"
@@ -5111,6 +5132,10 @@ msgstr "リクエストに失敗しました"
 msgid "Requested permissions"
 msgstr "要求された権限"
 
+#: src/components/agent-composer.tsx
+msgid "Requesting queued delivery…"
+msgstr "キューへの送信をリクエストしています…"
+
 #: src/components/settings-security.tsx
 msgid "Required on launch and after 30 seconds in the background."
 msgstr "起動時と、バックグラウンドで 30 秒経過した後に認証を求めます"
@@ -5127,6 +5152,10 @@ msgstr "iOS 16.1 以降が必要です"
 #: src/components/computer-map/screen.tsx
 msgid "Reset view"
 msgstr "視点をリセット"
+
+#: src/components/image-preview-modal.tsx
+msgid "Reset zoom"
+msgstr "ズームをリセット"
 
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
@@ -5558,6 +5587,10 @@ msgstr "このタスクを {assignmentLabel} に送る"
 msgid "Send to agent"
 msgstr "エージェントに送信"
 
+#: src/components/agent-composer.tsx
+msgid "Sending attachment message…"
+msgstr "添付ファイル付きメッセージを送信しています…"
+
 #. placeholder {0}: inboxItemText(item) || item.type
 #: src/components/agent-composer.tsx
 msgid "Sending next: {0}"
@@ -5708,6 +5741,10 @@ msgstr "ホームにアートワークを表示"
 msgid "Show camera details"
 msgstr "カメラの詳細を表示"
 
+#: src/components/in-app-notification-host.tsx
+msgid "Show details"
+msgstr "詳細を表示"
+
 #: src/components/settings-terminal.tsx
 msgid "Show Esc, Tab, Ctrl and navigation keys above input."
 msgstr "入力欄の上に Esc、Tab、Ctrl と方向キーを表示します"
@@ -5726,6 +5763,7 @@ msgstr "ホームのテキストを表示"
 
 #: src/components/home-computer-cards.tsx
 #: src/components/home-recent-sessions.tsx
+#: src/components/in-app-notification-host.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Show less"
 msgstr "表示を減らす"
@@ -6107,6 +6145,10 @@ msgstr "サブエージェント"
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "送信"
+
+#: src/components/agent-composer.tsx
+msgid "Submitting follow-up…"
+msgstr "追加メッセージを送信しています…"
 
 #: src/i18n/labels.ts
 msgid "Summarise progress"
@@ -6901,7 +6943,7 @@ msgstr "このセッションのトークン"
 msgid "Tokens usage and cost"
 msgstr "トークン使用量とコスト"
 
-#: src/components/asset-viewer.tsx
+#: src/components/file-text-body.tsx
 msgid "Too large to highlight — showing plain text."
 msgstr "大きすぎてハイライトできません。プレーンテキストで表示しています"
 
@@ -6929,6 +6971,7 @@ msgstr "文字起こしに失敗しました。音声サービスを確認して
 msgid "Transcription mode"
 msgstr "文字起こしモード"
 
+#: src/components/agent-tool-card.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/tool-call-code-rows.tsx
@@ -7442,6 +7485,11 @@ msgstr "どこでも、エージェントと"
 msgid "Your checkout, in one workspace."
 msgstr "チェックアウトを、ひとつのワークスペースに"
 
+#. placeholder {0}: agentErrorRef.current(err)
+#: src/components/agent-workbench.tsx
+msgid "Your draft is kept. Check the conversation before sending again. {0}"
+msgstr "下書きは保持されています。再送信する前に会話を確認してください。{0}"
+
 #: src/components/agent-message-block.tsx
 msgid "Your message"
 msgstr "あなたのメッセージ"
@@ -7449,3 +7497,11 @@ msgstr "あなたのメッセージ"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "ペアリング済みのコンピュータ"
+
+#: src/components/image-preview-modal.tsx
+msgid "Zoom in"
+msgstr "拡大"
+
+#: src/components/image-preview-modal.tsx
+msgid "Zoom out"
+msgstr "縮小"
