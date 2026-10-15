@@ -22,3 +22,14 @@ wait stable 400 5000
 
 # section close
 back --system
+
+# section compact-shot
+# Geometry evidence only: native presence assertions do not establish a radius.
+is visible "id=terminal-composer-input"
+is hidden "id=composer-expanded-actions"
+screenshot "shots/composer-compact.png"
+
+# section restored-shot
+is visible "id=terminal-composer-input"
+is hidden "id=composer-expanded-actions"
+screenshot "shots/composer-compact-restored.png"

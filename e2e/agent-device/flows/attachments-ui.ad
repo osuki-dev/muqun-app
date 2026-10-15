@@ -48,3 +48,19 @@ is hidden "${TARGET}"
 
 # section s15
 is visible "${TARGET}"
+
+# section artifact-image-preview
+# Reused by artifacts after its existing image filter assertion. This opens the
+# bundled bytes, not a photo picker or a user's files. Pixels require review of
+# the retained screenshot; a close button alone does not prove image decoding.
+press "label=\"Open settings-dark.png\""
+wait "label=\"Close preview\"" 10000
+wait stable 400 5000
+is hidden "text=\"This image could not be loaded\""
+is hidden "text=\"This image could not be loaded.\""
+snapshot
+screenshot "shots/artifact-image-preview.png"
+press "label=\"Close preview\""
+wait absent "label=\"Close preview\"" 10000
+wait "label=\"Refresh files\"" 10000
+is visible "label=\"Open settings-dark.png\""

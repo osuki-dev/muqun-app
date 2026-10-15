@@ -233,7 +233,11 @@ export function demoAgentSessionTree(): {
   });
   const root = session('demo-tree-root', undefined, 'Root session');
   const branch = session('demo-tree-branch', root.asid, 'Research branch');
-  const nested = session('demo-tree-nested', branch.asid, 'Nested investigation');
+  const nested = {
+    ...session('demo-tree-nested', branch.asid, 'Nested investigation'),
+    agent_name: 'Demo researcher',
+    agent_role: 'research',
+  };
   const leaves = Array.from({ length: 24 }, (_, index) =>
     session(
       `demo-tree-leaf-${index + 1}`,
@@ -303,6 +307,88 @@ export function demoAgentSessionSnapshot(asid: string): AgentSessionSnapshot | n
   const sessions = [tree.root, ...Object.values(tree.childrenByParent).flat()];
   const info = sessions.find((session) => session.asid === asid);
   if (!info) return null;
+  if (asid === 'demo-tree-leaf-20') {
+    // Distinct messages keep these calls out of routine-tool grouping. They
+    // exercise the real disclosure, detail and image renderer without a host.
+    const timeline: TimelineItem[] = [
+      {
+        id: 'demo-tool-request',
+        message_id: 'demo-tool-request',
+        role: 'user',
+        ordinal: 0,
+        part: { type: 'text', text: 'Inspect the offline tool disclosures.' },
+        seq: 1,
+        updated_ms: 1,
+      },
+      {
+        id: 'demo-tool-shell',
+        message_id: 'demo-tool-shell',
+        role: 'assistant',
+        ordinal: 0,
+        part: {
+          type: 'tool',
+          id: 'demo-tool-shell-call',
+          name: 'bash',
+          input: { command: 'printf QA_TOOL_OUTPUT', workdir: 'fixtures' },
+          output: 'QA_TOOL_OUTPUT',
+          content: [{ type: 'text', text: 'QA_TOOL_OUTPUT' }],
+          metadata: { exit: 0 },
+          state: 'completed',
+          time: { ran: 1000, completed: 1042 },
+        },
+        seq: 2,
+        updated_ms: 2,
+      },
+      {
+        id: 'demo-tool-read',
+        message_id: 'demo-tool-read',
+        role: 'assistant',
+        ordinal: 0,
+        part: {
+          type: 'tool',
+          id: 'demo-tool-read-call',
+          name: 'read',
+          input: { filePath: 'fixtures/qa-image.webp' },
+          output: 'QA_READ_IMAGE_OUTPUT',
+          content: [
+            { type: 'text', text: 'QA_READ_IMAGE_OUTPUT' },
+            {
+              type: 'file',
+              uri: demoAssetContentUri('as-demo-shot'),
+              mime: 'image/webp',
+              name: 'QA read image',
+            },
+          ],
+          metadata: {},
+          state: 'completed',
+          time: { ran: 2000, completed: 2053 },
+        },
+        seq: 3,
+        updated_ms: 3,
+      },
+      {
+        id: 'demo-tool-failure',
+        message_id: 'demo-tool-failure',
+        role: 'assistant',
+        ordinal: 0,
+        part: {
+          type: 'tool',
+          id: 'demo-tool-failure-call',
+          name: 'bash',
+          input: { command: 'false', workdir: 'fixtures' },
+          output: 'QA_FAILURE_OUTPUT',
+          content: [{ type: 'text', text: 'QA_FAILURE_OUTPUT' }],
+          metadata: { exit: 1 },
+          state: 'failed',
+          error: { name: 'DemoToolError', message: 'QA_TOOL_FAILURE' },
+          time: { ran: 3000, completed: 3061 },
+        },
+        seq: 4,
+        updated_ms: 4,
+      },
+    ];
+    return { info, timeline, permissions: [], forms: [], inbox: [], seq: timeline.length };
+  }
   if (asid === 'demo-tree-leaf-21') {
     const timeline: TimelineItem[] = [
       {
@@ -444,6 +530,7 @@ export function demoAgentSessionSnapshot(asid: string): AgentSessionSnapshot | n
         metadata: { status: 'completed' },
         state: 'completed',
         child_session_id: child.asid,
+        time: { ran: 1000, completed: 1031 },
       },
       seq: 3,
       updated_ms: 3,

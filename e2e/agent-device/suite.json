@@ -323,6 +323,7 @@
       {
         "run": "subflows/launch-home.ad#s8"
       },
+      { "include": "subflows/dismiss-immersive" },
       {
         "target": {
           "text": "(?i)(Skip intro|Try the demo)"
@@ -964,6 +965,7 @@
         "timeout": 15000,
         "run": "flows/mermaid-output.ad#visible"
       },
+      { "run": "flows/mermaid-output.ad#fullscreen-evidence" },
       {
         "target": {
           "id": "diagram-actual-size"
@@ -1004,6 +1006,7 @@
         "timeout": 15000,
         "run": "flows/mermaid-output.ad#visible"
       },
+      { "run": "flows/mermaid-output.ad#viewer-closed" },
       {
         "run": "flows/mermaid-output.ad#close"
       }
@@ -1478,6 +1481,7 @@
         "timeout": 8000,
         "run": "flows/custom-themes.ad#visible"
       },
+      { "run": "flows/custom-themes.ad#selected-builtin" },
       {
         "include": "subflows/close-settings-sheet",
         "env": {
@@ -2054,6 +2058,7 @@
         "mode": "visible",
         "run": "flows/artifacts.ad#s22"
       },
+      { "run": "flows/attachments-ui.ad#artifact-image-preview" },
       {
         "target": {
           "text": "Open dark-mode.md"
@@ -6012,7 +6017,7 @@
       },
       {
         "target": {
-          "text": "(?i)workspace"
+          "text": "Draft the notes for the next build"
         },
         "mode": "visible",
         "run": "flows/slash-commands.ad#s23"
@@ -6346,6 +6351,7 @@
       {
         "run": "flows/ssh.ad#s11"
       },
+      { "run": "flows/ssh.ad#composer-radius-evidence" },
       {
         "include": "subflows/dismiss-logbox"
       },
@@ -7963,6 +7969,20 @@
         ]
       }
     ],
+    "subflows/dismiss-immersive": [
+      {
+        "when": { "env": "PLATFORM", "equals": "android" },
+        "steps": [
+          {
+            "when": {
+              "target": { "id": "com.android.systemui:id/immersive_cling_title" },
+              "absent": false
+            },
+            "steps": [{ "run": "subflows/dismiss-immersive.ad" }]
+          }
+        ]
+      }
+    ],
     "subflows/launch-home": [
       {
         "run": "subflows/launch-home.ad#s1"
@@ -7970,6 +7990,7 @@
       {
         "run": "subflows/launch-home.ad#s8"
       },
+      { "include": "subflows/dismiss-immersive" },
       {
         "target": { "text": "(?i)(Skip intro|Try the demo)" },
         "mode": "visible",
@@ -7979,14 +8000,6 @@
       {
         "target": {
           "id": "launch-intro-skip"
-        },
-        "mode": "press",
-        "optional": true,
-        "run": "subflows/launch-home.ad#s9"
-      },
-      {
-        "target": {
-          "text": "Got it"
         },
         "mode": "press",
         "optional": true,
@@ -8699,6 +8712,37 @@
       },
       {
         "target": {
+          "id": "agent-session-tree-row-demo-tree-root",
+          "text": "(Root session, )?build · Idle"
+        },
+        "mode": "visible",
+        "run": "flows/agent-session-tree.ad#visible"
+      },
+      {
+        "target": {
+          "id": "agent-session-tree-row-demo-tree-branch",
+          "text": "(Research branch, )?build · Idle"
+        },
+        "mode": "visible",
+        "run": "flows/agent-session-tree.ad#visible"
+      },
+      {
+        "target": {
+          "id": "agent-session-tree-row-demo-tree-nested",
+          "text": "(Nested investigation, )?Demo researcher · research · Idle"
+        },
+        "mode": "visible",
+        "run": "flows/agent-session-tree.ad#visible"
+      },
+      {
+        "target": { "text": "(?i).*(Level|Parent).*" },
+        "mode": "hidden",
+        "run": "flows/agent-session-tree.ad#closed"
+      },
+      { "run": "flows/agent-session-tree.ad#root-and-child" },
+      { "run": "flows/agent-session-tree.ad#branch-detail" },
+      {
+        "target": {
           "id": "agent-session-tree-row-demo-tree-leaf-24"
         },
         "mode": "scroll",
@@ -8777,6 +8821,41 @@
         "run": "flows/agent-tool-detail.ad#transcript-visible"
       },
       {
+        "target": {
+          "id": "agent-tool-toggle",
+          "text": "Continue in demo-tree-nested · Idle · Expand tool call"
+        },
+        "mode": "visible",
+        "run": "flows/agent-tool-detail.ad#transcript-visible"
+      },
+      { "run": "flows/agent-tool-detail.ad#compact-task" },
+      { "include": "subflows/no-task-dispatch-duration" },
+      { "run": "flows/agent-tool-detail.ad#open-child" },
+      {
+        "target": { "id": "agent-session-tree-row-demo-tree-branch" },
+        "mode": "press",
+        "run": "flows/agent-tool-detail.ad#open-branch"
+      },
+      {
+        "target": {
+          "id": "agent-tool-toggle",
+          "text": "Continue in demo-tree-nested · Idle · Expand tool call"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/agent-tool-detail.ad#transcript-visible"
+      },
+      {
+        "target": {
+          "id": "agent-tool-toggle",
+          "text": "Continue in demo-tree-nested · Idle · Expand tool call"
+        },
+        "mode": "press",
+        "run": "flows/agent-tool-detail.ad#open-tool"
+      },
+      { "run": "flows/agent-tool-detail.ad#expanded-task" },
+      { "include": "subflows/no-task-dispatch-duration" },
+      {
         "target": { "id": "agent-tool-open-detail" },
         "mode": "press",
         "timeout": 10000,
@@ -8789,7 +8868,7 @@
         "run": "flows/agent-tool-detail.ad#sheet-visible"
       },
       {
-        "target": { "text": "Completed" },
+        "target": { "id": "agent-tool-detail-status", "text": "Completed · 31ms" },
         "mode": "visible",
         "run": "flows/agent-tool-detail.ad#status"
       },
@@ -8798,6 +8877,7 @@
         "mode": "visible",
         "run": "flows/agent-tool-detail.ad#input"
       },
+      { "run": "flows/agent-tool-detail.ad#dispatch-detail-shot" },
       {
         "target": { "id": "agent-tool-detail-copy-input" },
         "mode": "press",
@@ -8810,8 +8890,236 @@
         "timeout": 10000,
         "run": "flows/agent-tool-detail.ad#transcript-restored"
       },
+      {
+        "target": {
+          "id": "agent-tool-toggle",
+          "text": "Continue in demo-tree-nested · Idle · Collapse tool call"
+        },
+        "mode": "visible",
+        "run": "flows/agent-tool-detail.ad#transcript-visible"
+      },
+      { "run": "flows/agent-tool-detail.ad#task-expanded-restored" },
+      { "include": "subflows/no-task-dispatch-duration" },
+      {
+        "target": {
+          "id": "agent-tool-toggle",
+          "text": "Continue in demo-tree-nested · Idle · Collapse tool call"
+        },
+        "mode": "press",
+        "run": "flows/agent-tool-detail.ad#open-tool"
+      },
+      { "run": "flows/agent-tool-detail.ad#task-collapsed-restored" },
+      { "include": "subflows/no-task-dispatch-duration" },
       { "run": "flows/agent-tool-detail.ad#close-detail" },
-      { "run": "flows/agent-tool-detail.ad#close-tree" }
+      { "run": "flows/agent-tool-detail.ad#close-tree" },
+      { "run": "flows/agent-tool-detail.ad#open-logs" },
+      {
+        "include": "subflows/tool-log-disclosure",
+        "env": {
+          "TOOL_NAME": "shell",
+          "TOOL_HEADER": "bash",
+          "TOOL_DURATION": "42ms",
+          "TOOL_TARGET": "printf QA_TOOL_OUTPUT",
+          "TOOL_OUTPUT": "QA_TOOL_OUTPUT",
+          "TOOL_DETAIL_INPUT": ".*printf QA_TOOL_OUTPUT.*",
+          "TOOL_STATUS": "Completed · 42ms"
+        }
+      },
+      {
+        "include": "subflows/tool-log-disclosure",
+        "env": {
+          "TOOL_NAME": "read",
+          "TOOL_HEADER": "read",
+          "TOOL_DURATION": "53ms",
+          "TOOL_TARGET": "qa-image.webp",
+          "TOOL_OUTPUT": "QA_READ_IMAGE_OUTPUT",
+          "TOOL_DETAIL_INPUT": ".*fixtures/qa-image\\.webp.*",
+          "TOOL_STATUS": "Completed · 53ms"
+        }
+      },
+      {
+        "include": "subflows/tool-log-disclosure",
+        "env": {
+          "TOOL_NAME": "failure",
+          "TOOL_HEADER": "bash",
+          "TOOL_DURATION": "61ms",
+          "TOOL_TARGET": "false",
+          "TOOL_OUTPUT": "QA_FAILURE_OUTPUT",
+          "TOOL_DETAIL_INPUT": "false",
+          "TOOL_STATUS": "Failed · 61ms"
+        }
+      },
+      { "run": "flows/agent-tool-detail.ad#close-detail" }
+    ],
+    "subflows/no-task-dispatch-duration": [
+      {
+        "target": { "text": "[\\s\\S]*31ms[\\s\\S]*" },
+        "mode": "hidden",
+        "run": "flows/agent-tool-detail.ad#hidden"
+      }
+    ],
+    "subflows/tool-log-disclosure": [
+      {
+        "target": {
+          "id": "agent-tool-toggle",
+          "text": "${TOOL_HEADER} · ${TOOL_DURATION} · Expand tool call"
+        },
+        "mode": "visible",
+        "run": "flows/agent-tool-detail.ad#transcript-visible"
+      },
+      {
+        "target": { "text": "${TOOL_TARGET}" },
+        "mode": "hidden",
+        "run": "flows/agent-tool-detail.ad#hidden"
+      },
+      {
+        "target": { "text": "${TOOL_OUTPUT}" },
+        "mode": "hidden",
+        "run": "flows/agent-tool-detail.ad#hidden"
+      },
+      {
+        "when": { "env": "TOOL_NAME", "equals": "read" },
+        "steps": [
+          {
+            "target": { "text": "QA read image" },
+            "mode": "hidden",
+            "run": "flows/agent-tool-detail.ad#hidden"
+          }
+        ]
+      },
+      {
+        "when": { "env": "TOOL_NAME", "equals": "failure" },
+        "steps": [
+          {
+            "target": { "text": "QA_TOOL_FAILURE" },
+            "mode": "hidden",
+            "run": "flows/agent-tool-detail.ad#hidden"
+          }
+        ]
+      },
+      { "run": "flows/agent-tool-detail.ad#log-collapsed" },
+      {
+        "target": {
+          "id": "agent-tool-toggle",
+          "text": "${TOOL_HEADER} · ${TOOL_DURATION} · Expand tool call"
+        },
+        "mode": "press",
+        "run": "flows/agent-tool-detail.ad#open-tool"
+      },
+      {
+        "target": { "text": "${TOOL_TARGET}" },
+        "mode": "visible",
+        "run": "flows/agent-tool-detail.ad#transcript-visible"
+      },
+      {
+        "target": { "text": "${TOOL_OUTPUT}" },
+        "mode": "visible",
+        "run": "flows/agent-tool-detail.ad#transcript-visible"
+      },
+      {
+        "when": { "env": "TOOL_NAME", "equals": "read" },
+        "steps": [{ "run": "flows/agent-tool-detail.ad#read-preview" }]
+      },
+      {
+        "when": { "env": "TOOL_NAME", "equals": "failure" },
+        "steps": [
+          {
+            "target": { "text": "QA_TOOL_FAILURE" },
+            "mode": "visible",
+            "run": "flows/agent-tool-detail.ad#transcript-visible"
+          }
+        ]
+      },
+      { "run": "flows/agent-tool-detail.ad#log-expanded" },
+      {
+        "target": { "id": "agent-tool-open-detail" },
+        "mode": "press",
+        "run": "flows/agent-tool-detail.ad#open-tool"
+      },
+      {
+        "target": { "id": "agent-tool-detail-sheet" },
+        "mode": "visible",
+        "run": "flows/agent-tool-detail.ad#sheet-visible"
+      },
+      {
+        "target": { "id": "agent-tool-detail-status", "text": "${TOOL_STATUS}" },
+        "mode": "visible",
+        "run": "flows/agent-tool-detail.ad#status"
+      },
+      {
+        "target": { "text": "${TOOL_DETAIL_INPUT}" },
+        "mode": "visible",
+        "run": "flows/agent-tool-detail.ad#input"
+      },
+      {
+        "target": { "text": "${TOOL_OUTPUT}" },
+        "mode": "visible",
+        "run": "flows/agent-tool-detail.ad#input"
+      },
+      {
+        "when": { "env": "TOOL_NAME", "equals": "failure" },
+        "steps": [
+          {
+            "target": { "id": "agent-tool-detail-error", "text": "QA_TOOL_FAILURE" },
+            "mode": "visible",
+            "run": "flows/agent-tool-detail.ad#input"
+          }
+        ]
+      },
+      { "run": "flows/agent-tool-detail.ad#log-detail-shot" },
+      { "run": "flows/agent-tool-detail.ad#close-tool" },
+      {
+        "target": { "id": "agent-subagent-detail-transcript" },
+        "mode": "visible",
+        "run": "flows/agent-tool-detail.ad#transcript-restored"
+      },
+      {
+        "target": {
+          "id": "agent-tool-toggle",
+          "text": "${TOOL_HEADER} · ${TOOL_DURATION} · Collapse tool call"
+        },
+        "mode": "visible",
+        "run": "flows/agent-tool-detail.ad#transcript-visible"
+      },
+      {
+        "target": {
+          "id": "agent-tool-toggle",
+          "text": "${TOOL_HEADER} · ${TOOL_DURATION} · Collapse tool call"
+        },
+        "mode": "press",
+        "run": "flows/agent-tool-detail.ad#open-tool"
+      },
+      {
+        "target": { "text": "${TOOL_TARGET}" },
+        "mode": "hidden",
+        "run": "flows/agent-tool-detail.ad#hidden"
+      },
+      {
+        "target": { "text": "${TOOL_OUTPUT}" },
+        "mode": "hidden",
+        "run": "flows/agent-tool-detail.ad#hidden"
+      },
+      {
+        "when": { "env": "TOOL_NAME", "equals": "read" },
+        "steps": [
+          {
+            "target": { "text": "QA read image" },
+            "mode": "hidden",
+            "run": "flows/agent-tool-detail.ad#hidden"
+          }
+        ]
+      },
+      {
+        "when": { "env": "TOOL_NAME", "equals": "failure" },
+        "steps": [
+          {
+            "target": { "text": "QA_TOOL_FAILURE" },
+            "mode": "hidden",
+            "run": "flows/agent-tool-detail.ad#hidden"
+          }
+        ]
+      },
+      { "run": "flows/agent-tool-detail.ad#log-restored" }
     ],
     "flows/thai-language": [
       {
@@ -9219,6 +9527,7 @@
     ],
     "flows/composer-wrap": [
       { "include": "subflows/open-demo" },
+      { "run": "flows/composer-wrap.ad#compact-shot" },
       {
         "target": {
           "id": "terminal-composer-input"
@@ -9264,6 +9573,7 @@
         "timeout": 15000,
         "run": "flows/composer-wrap.ad#hidden"
       },
+      { "run": "flows/composer-wrap.ad#restored-shot" },
       {
         "run": "flows/composer-wrap.ad#close"
       }
