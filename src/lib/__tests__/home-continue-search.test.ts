@@ -4,7 +4,12 @@ import {
   homeProviderTextColor,
   searchedHomeContinueEntries,
 } from '../home-continue-search';
-import type { HomeContinueEntry } from '../home-continue';
+import {
+  filterHomeRecent,
+  homeContinueEntries,
+  shouldShowHomeContinueOverflow,
+  type HomeContinueEntry,
+} from '../home-continue';
 import { contrastRatio } from '@/theme/contrast';
 import { defaultAgentFeatures } from '../agent-protocol';
 import type { MirroredServerDiscovery } from '../agent-discovery';
@@ -51,6 +56,59 @@ test('clear and whitespace restore the exact collapsed or expanded ordering', ()
   expect(searchedHomeContinueEntries(entries, '\n  \t', false, 8)).toEqual(entries.slice(0, 8));
   expect(searchedHomeContinueEntries(entries, '', true, 4)).toBe(entries);
   expect(searchedHomeContinueEntries(entries, 'not a session', false, 4)).toEqual([]);
+});
+
+test('session-first inventory is sorted before limits, search and computer filtering without losing terminals', () => {
+  const rows = homeContinueEntries({
+    serverIds: ['server'],
+    hostIds: [],
+    snapshots: {},
+    paneMode: 'all',
+    reachabilityByServer: {},
+    recents: [
+      {
+        key: 'terminal',
+        title: 'Session terminal',
+        atMs: 1_000,
+        target: {
+          kind: 'gateway-terminal',
+          serverId: 'server',
+          sessionId: 'session',
+          paneId: 'shell',
+        },
+      },
+    ],
+    gatewaySessions: {
+      serverId: 'server',
+      sessionId: 'session',
+      observedAtMs: 1_000,
+      sessions: Array.from({ length: 6 }, (_, index) => ({
+        asid: `fixture-${index}`,
+        agentId: index % 2 === 0 ? 'opencode' : 'codex',
+        title: `Session ${index}`,
+        directory: '/work/app',
+        status: 'unknown',
+        updatedMs: index,
+      })),
+    },
+  });
+  expect(rows.map((row) => row.title)).toEqual([
+    'Session 5',
+    'Session 4',
+    'Session 3',
+    'Session 2',
+    'Session 1',
+    'Session 0',
+    'Session terminal',
+  ]);
+  expect(shouldShowHomeContinueOverflow(rows)).toBe(true);
+  expect(searchedHomeContinueEntries(rows, '', false, undefined)).toEqual(rows.slice(0, 5));
+  expect(searchedHomeContinueEntries(rows, '', false, 2)).toEqual(rows.slice(0, 2));
+  expect(searchedHomeContinueEntries(rows, '', true, undefined)).toBe(rows);
+  expect(searchedHomeContinueEntries(rows, 'session', false, 2)).toEqual(rows);
+  expect(searchedHomeContinueEntries(rows, 'terminal', false, undefined)).toEqual([rows[6]]);
+  expect(filterHomeRecent(rows, 'server')).toEqual(rows);
+  expect(searchedHomeContinueEntries(rows, '  ', false, undefined)).toEqual(rows.slice(0, 5));
 });
 
 test('agent labels and gateway labels are metadata, not arbitrary entry fields', () => {

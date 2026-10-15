@@ -65,7 +65,7 @@ test('first Home visit shows the same pane inventory as Classic without recent h
   });
 });
 
-test('Classic removes only connection shortcuts represented below, retaining distinct sessions', () => {
+test('entry-only computer cards retain Continue inventory; optional shortcut suppression stays scoped', () => {
   const recent = (key: string, target: HomeRecentEntry['target']): HomeRecentEntry => ({
     key,
     title: 'Same title',
@@ -106,9 +106,9 @@ test('Classic removes only connection shortcuts represented below, retaining dis
     recents: [currentPane, otherSession, filteredPane, structured, ssh],
   };
   const classic = homeContinueEntries({ ...shared, connectionShortcutsElsewhere: true });
-  expect(classic.map((entry) => entry.key)).toEqual(['other-session', 'plain-shell', 'structured']);
+  expect(classic.map((entry) => entry.key)).toEqual(['structured', 'other-session', 'plain-shell']);
   expect(classic.map((entry) => entry.destination)).toEqual(
-    [otherSession, filteredPane, structured].map((entry) => ({
+    [structured, otherSession, filteredPane].map((entry) => ({
       type: 'recent',
       target: entry.target,
     }))
@@ -116,6 +116,24 @@ test('Classic removes only connection shortcuts represented below, retaining dis
   const editorial = homeContinueEntries(shared);
   expect(editorial.some((entry) => entry.destination.type === 'pane')).toBe(true);
   expect(editorial.some((entry) => entry.key === 'ssh')).toBe(true);
+  // Classic now uses this same unsuppressed inventory: its computer cards
+  // navigate to workspaces instead of rendering a second pane list.
+  expect(editorial[0]?.key).toBe('structured');
+  expect(
+    editorial.flatMap((entry) =>
+      entry.destination.type === 'pane' ? [entry.destination.paneId] : []
+    )
+  ).toEqual(['p1']);
+  expect(
+    editorial.filter((entry) => entry.destination.type === 'recent').map((entry) => entry.key)
+  ).toEqual(['structured', 'other-session', 'plain-shell', 'ssh']);
+  const allPanes = homeContinueEntries({ ...shared, paneMode: 'all' });
+  expect(
+    allPanes.flatMap((entry) =>
+      entry.destination.type === 'pane' ? [entry.destination.paneId] : []
+    )
+  ).toEqual(['p1', 'p2']);
+  expect(allPanes.some((entry) => entry.key === 'plain-shell')).toBe(false);
 });
 
 test('Classic keeps a terminal recent when no connection pane inventory can replace it', () => {
@@ -370,14 +388,15 @@ const rankingInput = {
   },
 };
 
-test('a terminal visited at T ranks between agents updated at T+1s and T-1s', () => {
+test('agent sessions precede a terminal visited between their update times', () => {
   const rows = homeContinueEntries({ ...rankingInput, recents: [terminalVisit] });
   expect(rows.map((row) => row.title)).toEqual([
     'newer task',
-    'Shell',
     'older task',
+    'Shell',
     'Current agent title',
   ]);
+  expect(rows.map((row) => row.atMs)).toEqual([T + 1_000, T - 1_000, T, 0]);
 });
 
 test('a terminal with neither a visit nor activity ranks last', () => {
@@ -394,11 +413,11 @@ test('a visited plain terminal survives the agents-only pane filter', () => {
   });
   expect(rows.map((row) => row.title)).toEqual([
     'newer task',
-    'zsh',
     'older task',
+    'zsh',
     'Current agent title',
   ]);
-  expect(rows[1]?.destination).toEqual({ type: 'recent', target: terminalVisit.target });
+  expect(rows[2]?.destination).toEqual({ type: 'recent', target: terminalVisit.target });
   // Unvisited plain panes still follow the filter.
   expect(
     homeContinueEntries({ ...rankingInput, paneMode: 'agents' }).some(

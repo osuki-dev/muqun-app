@@ -18,6 +18,7 @@ import {
   type AccessibilityActionEvent,
 } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { useKeyboardState } from 'react-native-keyboard-controller';
 import Animated, {
   cancelAnimation,
   runOnJS,
@@ -97,12 +98,15 @@ export function InAppNotificationHost() {
   const backPageClipStyle = useNotificationSurfaceStyle(false);
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
+  const keyboardHeight = useKeyboardState((state) => state.height);
   const [contentHeight, setContentHeight] = useState(0);
-  // Leave room for the action row, safe areas and the deck's quiet back edges.
-  const contentLimit = Math.max(
-    44,
-    Math.min(height * 0.45, height - insets.top - insets.bottom - NOTICE_TOP_GAP - 88)
+  // Bound the whole card, including wrapped controls. The keyboard already
+  // covers the bottom safe area; do not subtract that inset twice.
+  const availableHeight = Math.max(
+    0,
+    height - insets.top - NOTICE_TOP_GAP - 8 - Math.max(keyboardHeight, insets.bottom) - 6
   );
+  const contentLimit = Math.min(height * 0.45, availableHeight);
   const scrollable = contentHeight > contentLimit;
   const surfaceOpacity = useSurfaceBackgroundOpacity();
   const { t } = useLingui();
@@ -123,10 +127,15 @@ export function InAppNotificationHost() {
     if (!enabled) useInAppNotifications.getState().clear();
   }, [enabled]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const selectedIndex = items.findIndex((item) => item.id === selectedId);
   const position = selectedIndex < 0 ? 0 : selectedIndex;
   const notice = items[position];
-  const visible = Boolean(enabled && active && notice && noticePresentationAllowed(pathname));
+  // If even one touch target cannot fit below navigation, defer the banner
+  // without consuming it or its lifetime. Closing the keyboard restores it.
+  const visible = Boolean(
+    enabled && active && notice && contentLimit >= 44 && noticePresentationAllowed(pathname)
+  );
 
   /**
    * Where the plate is, as a translation off its resting place.
@@ -144,7 +153,9 @@ export function InAppNotificationHost() {
   /** The plate's own size, for the sideways threshold and the flight distance. */
   const plateHeight = useSharedValue(0);
   const noticeId = notice?.id ?? '';
-  const autoDismissDelay = noticeAutoDismissDelay(notice?.kind, visible);
+  const gestureNoticeId = useSharedValue('');
+  const expanded = expandedId === noticeId;
+  const autoDismissDelay = noticeAutoDismissDelay(notice?.kind, visible && !expanded);
   useEffect(() => {
     if (!noticeId || autoDismissDelay === null) return;
     // Depend on the visible identity, not the queue: incoming/duplicate events
@@ -159,10 +170,11 @@ export function InAppNotificationHost() {
     cancelAnimation(dragY);
     cancelAnimation(dragOpacity);
     dragOpacity.set(1);
+    gestureNoticeId.set(noticeId);
     dismissing.set(false);
     dragX.set(0);
     dragY.set(0);
-  }, [noticeId, dragX, dragY, dragOpacity, dismissing]);
+  }, [noticeId, dragX, dragY, dragOpacity, dismissing, gestureNoticeId]);
   useEffect(
     () => () => {
       cancelAnimation(dragX);
@@ -191,6 +203,15 @@ export function InAppNotificationHost() {
     void feedback('selection');
     dismiss(id);
   });
+  const clearAll = () => {
+    gestureNoticeId.set('');
+    cancelAnimation(dragX);
+    cancelAnimation(dragY);
+    cancelAnimation(dragOpacity);
+    setSelectedId(null);
+    setExpandedId(null);
+    useInAppNotifications.getState().clear();
+  };
 
   /*
     Sideways either way, upward only, and nothing at all downward: the deck's
@@ -207,13 +228,13 @@ export function InAppNotificationHost() {
     else pan.activeOffsetY(-DRAG_SLOP).failOffsetY(DRAG_SLOP);
     return pan
       .onUpdate((event) => {
-        if (dismissing.get()) return;
+        if (dismissing.get() || gestureNoticeId.get() !== noticeId) return;
         const offset = noticeDragOffset(event);
         dragX.set(offset.x);
         dragY.set(offset.y);
       })
       .onEnd((event, success) => {
-        if (dismissing.get()) return;
+        if (dismissing.get() || gestureNoticeId.get() !== noticeId) return;
         // Native cancellation also calls onEnd; it must never dismiss a notice.
         const end = success ? noticeSwipeEnd(event) : { dismissed: false as const };
         if (!end.dismissed) {
@@ -235,7 +256,7 @@ export function InAppNotificationHost() {
           })
         );
       });
-  }, [dismissing, dragX, dragY, dragOpacity, swept, scrollable, noticeId]);
+  }, [dismissing, dragX, dragY, dragOpacity, swept, scrollable, noticeId, gestureNoticeId]);
 
   if (!visible || !notice) return null;
 
@@ -270,8 +291,8 @@ export function InAppNotificationHost() {
       approval: t`Approval required`,
       fallback: t`Muqun`,
     });
-    // Preserve prose and unfamiliar action keys in full. Only a known phrase
-    // can replace the action while showing its subject separately.
+    // Full prose and unfamiliar action keys remain available in Details. Only a
+    // known phrase can replace the action while showing its subject separately.
     const body = approvalPhrase || entry.body;
     const detail = approvalPhrase ? approval?.subject : '';
     return (
@@ -287,7 +308,6 @@ export function InAppNotificationHost() {
         // seconds; it has to be readable for all of them.
         style={[
           styles.card,
-          waiting === 0 && !entry.route ? styles.withoutActions : null,
           notificationSurfaceStyle,
           {
             backgroundColor: surfaceBackgroundFill(
@@ -300,7 +320,9 @@ export function InAppNotificationHost() {
         <ScrollView
           testID="in-app-notification-content"
           style={{ maxHeight: contentLimit }}
+          contentContainerStyle={styles.cardContent}
           nestedScrollEnabled
+          keyboardShouldPersistTaps="handled"
           bounces={false}
           showsVerticalScrollIndicator={scrollable}
           onContentSizeChange={(_width, content) => setContentHeight(content)}>
@@ -311,7 +333,11 @@ export function InAppNotificationHost() {
             onAccessibilityAction={onAccessibilityAction}>
             <View style={styles.heading}>
               <Bell size={18} color={colors.primary} style={styles.glyph} />
-              <Text variant="bodySmall" weight="semibold" style={styles.title}>
+              <Text
+                numberOfLines={expanded ? undefined : 2}
+                variant="bodySmall"
+                weight="semibold"
+                style={styles.title}>
                 {lead}
                 {suffix ? (
                   <Text variant="bodySmall" color={colors.textMuted}>
@@ -322,7 +348,11 @@ export function InAppNotificationHost() {
               </Text>
             </View>
             {body ? (
-              <Text selectable variant="caption" color={colors.textMuted}>
+              <Text
+                numberOfLines={expanded ? undefined : 2}
+                selectable
+                variant="caption"
+                color={colors.textMuted}>
                 {body}
               </Text>
             ) : null}
@@ -330,13 +360,15 @@ export function InAppNotificationHost() {
                     it: an approval that does not name its subject is not an
                     approval the reader can answer. */}
             {detail ? (
-              <Text selectable color={colors.text} style={[styles.detail, { fontFamily: mono }]}>
+              <Text
+                numberOfLines={expanded ? undefined : 2}
+                selectable
+                color={colors.text}
+                style={[styles.detail, { fontFamily: mono }]}>
                 {detail}
               </Text>
             ) : null}
           </View>
-        </ScrollView>
-        {waiting > 0 || entry.route ? (
           <View style={styles.actions}>
             {waiting > 0 ? (
               <PressableScale
@@ -352,6 +384,28 @@ export function InAppNotificationHost() {
                 <ChevronRight size={12} color={colors.textMuted} />
               </PressableScale>
             ) : null}
+            <PressableScale
+              testID="in-app-notification-clear-all"
+              accessibilityRole="button"
+              accessibilityLabel={t`Clear all`}
+              accessibilityHint={t`Clears notifications only. Pending tasks still need your attention.`}
+              onPress={clearAll}
+              style={[styles.counter, { borderRadius: profile.chrome.control }]}>
+              <Text variant="caption" color={colors.textMuted}>
+                {t`Clear all`}
+              </Text>
+            </PressableScale>
+            <PressableScale
+              testID="in-app-notification-details"
+              accessibilityRole="button"
+              accessibilityState={{ expanded }}
+              accessibilityLabel={expanded ? t`Show less` : t`Show details`}
+              onPress={() => setExpandedId(expanded ? null : entry.id)}
+              style={[styles.counter, { borderRadius: profile.chrome.control }]}>
+              <Text variant="caption" color={colors.textMuted}>
+                {expanded ? t`Show less` : t`Details`}
+              </Text>
+            </PressableScale>
             {entry.route ? (
               <PressableScale
                 onPress={open}
@@ -370,7 +424,7 @@ export function InAppNotificationHost() {
               </PressableScale>
             ) : null}
           </View>
-        ) : null}
+        </ScrollView>
       </Animated.View>
     );
   };
@@ -437,22 +491,24 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 480,
-    paddingTop: 12,
+  },
+  cardContent: {
+    paddingTop: 8,
     paddingBottom: 4,
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     gap: 2,
   },
-  withoutActions: { paddingBottom: 12 },
   heading: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   glyph: { marginTop: 1 },
   title: { flex: 1, minWidth: 0 },
-  content: { minWidth: 0, gap: 5 },
-  actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  content: { minWidth: 0, gap: 3 },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 4 },
   counter: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     paddingHorizontal: 8,
+    maxWidth: '100%',
     minWidth: 44,
     minHeight: 44,
     justifyContent: 'center',
@@ -463,6 +519,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 12,
+    maxWidth: '100%',
     marginLeft: 'auto',
   },
   count: { fontVariant: ['tabular-nums'] },

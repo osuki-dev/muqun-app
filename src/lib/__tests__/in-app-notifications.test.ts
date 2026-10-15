@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { useInAppNotifications } from '../../stores/in-app-notifications';
 
 import {
   noticeDisplayTitle,
@@ -27,6 +28,75 @@ const notice = (id: string): InAppNotice => ({
   kind: 'general',
 });
 const empty = (): NoticeQueue => ({ items: [], seen: [] });
+
+test('Clear all retains receipts and question resolution state across late callbacks and fresh arrivals', () => {
+  const previous = useInAppNotifications.getState();
+  useInAppNotifications.setState({ items: [], seen: [], resolvedQuestions: [] });
+  try {
+    const store = useInAppNotifications.getState();
+    const question = { serverId: 'studio', asid: 'session', formId: 'form', generation: 'run' };
+    const pending: InAppNotice = {
+      ...notice('pending'),
+      kind: 'approval',
+      body: 'Choose a deployment target.',
+      question,
+    };
+    const before = structuredClone(pending);
+    store.enqueue(pending);
+    store.enqueue({ ...notice('permission'), kind: 'approval' });
+    store.resolveQuestion({ ...question, formId: 'answered' });
+    const receipts = useInAppNotifications.getState().seen;
+    const resolutions = useInAppNotifications.getState().resolvedQuestions;
+    store.clear();
+    expect(useInAppNotifications.getState().items).toEqual([]);
+    expect(useInAppNotifications.getState().seen).toBe(receipts);
+    expect(useInAppNotifications.getState().resolvedQuestions).toBe(resolutions);
+    expect(pending).toEqual(before);
+
+    store.enqueue(pending);
+    expect(useInAppNotifications.getState().items).toEqual([]);
+    const fresh = { ...pending, id: 'fresh-pending' };
+    store.enqueue(fresh);
+    // A timeout or completed swipe captured before Clear all cannot remove a fresh receipt.
+    store.dismiss('pending');
+    store.dismiss('permission');
+    expect(useInAppNotifications.getState().items).toEqual([fresh]);
+    store.clear();
+    store.resolveQuestion(question);
+    store.enqueue({ ...pending, id: 'late-resolved' });
+    expect(useInAppNotifications.getState().items).toEqual([]);
+    store.reopenQuestion(question);
+    expect(useInAppNotifications.getState().items).toEqual([]);
+    store.enqueue({ ...pending, id: 'authoritative-pending' });
+    expect(useInAppNotifications.getState().items[0]?.id).toBe('authoritative-pending');
+  } finally {
+    useInAppNotifications.setState(previous, true);
+  }
+});
+
+test('Clear all keeps bounded seen IDs and accepts arrivals on either side of the clear', () => {
+  const previous = useInAppNotifications.getState();
+  useInAppNotifications.setState({ items: [], seen: [], resolvedQuestions: [] });
+  try {
+    const store = useInAppNotifications.getState();
+    for (let index = 0; index < MAX_SEEN_NOTICES + 5; index++)
+      store.enqueue(notice(`event-${index}`));
+    store.clear();
+    expect(useInAppNotifications.getState().seen).toHaveLength(MAX_SEEN_NOTICES);
+    store.enqueue(notice(`event-${MAX_SEEN_NOTICES + 4}`));
+    expect(useInAppNotifications.getState().items).toEqual([]);
+    store.enqueue(notice('after-clear'));
+    expect(useInAppNotifications.getState().items.map((item) => item.id)).toEqual(['after-clear']);
+    store.clear();
+    store.clear();
+    store.enqueue(notice('after-repeated-clear'));
+    expect(useInAppNotifications.getState().items.map((item) => item.id)).toEqual([
+      'after-repeated-clear',
+    ]);
+  } finally {
+    useInAppNotifications.setState(previous, true);
+  }
+});
 
 describe('notice display wording', () => {
   const labels = { question: 'Needs your input', approval: 'Approval required', fallback: 'Muqun' };

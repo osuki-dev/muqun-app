@@ -83,7 +83,7 @@ test('gateway sessions join Continue as agent-session rows ranked by their updat
     hostIds: ['box'],
     gatewaySessions: snapshot([session('a', 900), session('b', 100, { status: 'busy' })]),
   });
-  expect(rows.map((row) => row.title)).toEqual(['Session a', 'Box', 'Session b']);
+  expect(rows.map((row) => row.title)).toEqual(['Session a', 'Session b', 'Box']);
   expect(rows[0].destination).toEqual({
     type: 'agent-session',
     target: {
@@ -95,7 +95,7 @@ test('gateway sessions join Continue as agent-session rows ranked by their updat
       agentId: 'deepseek',
     },
   });
-  expect(rows[2].observation).toMatchObject({ kind: 'agent-session', status: 'busy' });
+  expect(rows[1].observation).toMatchObject({ kind: 'agent-session', status: 'busy' });
 });
 
 test('a gateway session a recent already points at is that recent, not a second row', () => {
@@ -124,6 +124,72 @@ test('a gateway session a recent already points at is that recent, not a second 
   expect(rows[0].atMs).toBe(900);
   expect(rows[0].observation).toMatchObject({ status: 'busy' });
   expect(rows[0].destination.type).toBe('recent');
+});
+
+test('mixed session sources lead terminals by identity, with stable time ordering in each group', () => {
+  const recent = (
+    key: string,
+    atMs: number,
+    target: HomeRecentEntry['target']
+  ): HomeRecentEntry => ({ key, title: key, atMs, target });
+  const agentTarget = (asid: string, agentId: string): HomeRecentEntry['target'] => ({
+    kind: 'agent-session',
+    serverId: 'desk',
+    sessionId: 'dev',
+    directory: '/work',
+    asid,
+    agentId,
+  });
+  const terminal = { kind: 'gateway-terminal', serverId: 'desk', sessionId: 'other' } as const;
+  const rows = homeContinueEntries({
+    ...base,
+    hostIds: ['box'],
+    reachabilityByServer: { desk: 'unknown' },
+    snapshots: {
+      desk: {
+        serverId: 'desk',
+        sessionId: 'dev',
+        checkedAtMs: 1,
+        agents: [{ id: 'pane', paneId: 'pane', name: 'Codex', hasAgent: true, status: 'idle' }],
+      },
+    },
+    recents: [
+      recent('OpenCode terminal', 1_000, { ...terminal, paneId: 'opencode' }),
+      recent('ssh', 900, { kind: 'ssh-host', hostId: 'box' }),
+      recent('Codex terminal', 900, { ...terminal, paneId: 'codex' }),
+      recent('updated-recent', 10, agentTarget('updated', 'codex')),
+      recent('visited-recent', 70, agentTarget('visited', 'opencode')),
+      recent('no-observation', 50, agentTarget('remembered', 'codex')),
+      {
+        ...recent('stale-observation', 50, agentTarget('stale', 'opencode')),
+        sessionObservation: { status: 'unknown', observedAtMs: 1 },
+      },
+      recent('zero-recent', 0, agentTarget('zero', 'codex')),
+    ],
+    gatewaySessions: snapshot([
+      session('listed', 80, { agentId: 'opencode' }),
+      session('updated', 80, { agentId: 'codex' }),
+      session('visited', 20, { agentId: 'opencode' }),
+      session('zero-listed', 0, { agentId: 'codex' }),
+    ]),
+  });
+  expect(rows.map((row) => [row.title, row.atMs])).toEqual([
+    ['updated-recent', 80],
+    ['Session listed', 80],
+    ['visited-recent', 70],
+    ['no-observation', 50],
+    ['stale-observation', 50],
+    ['zero-recent', 0],
+    ['Session zero-listed', 0],
+    ['OpenCode terminal', 1_000],
+    ['ssh', 900],
+    ['Codex terminal', 900],
+    ['Codex', 0],
+  ]);
+  expect(rows[3].observation).toBeUndefined();
+  expect(rows[4].observation).toMatchObject({ status: 'unknown', observedAtMs: 1 });
+  expect(rows.at(-1)?.destination.type).toBe('pane');
+  expect(rows.at(-1)?.observation?.kind).toBe('gateway-agent');
 });
 
 test("the gateway's agent wins over a recent recorded before agents were tagged", () => {

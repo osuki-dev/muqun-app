@@ -1,0 +1,131 @@
+# Offline real-store/native contract subset. This registered full flow does NOT
+# replace six old VM cases: manual AX, exact-room, drag/cancel/race, long-tail,
+# profile pixels and old-short-card baseline remain explicit acceptance gates.
+# Every navigation here follows released press/scroll commands, NEVER a held
+# pointer. Never treat deeplink injection as a held-gesture clear/arrival test.
+
+# section begin
+open "muqun://agent?asid=demo-notice-begin&agentId=opencode"
+wait "text=\"QA_NOTICE_READY begin\"" 15000
+wait "text=\"QA_NOTICE_COUNT 0\"" 10000
+snapshot
+screenshot "shots/notice-begin-real-namespace.png"
+
+# section case
+open "muqun://agent?asid=demo-notice-${CASE}&agentId=opencode"
+wait "text=\"QA_NOTICE_READY ${CASE}\"" 15000
+wait "text=\"QA_NOTICE_COUNT ${COUNT}\"" 10000
+is visible "text=\"QA_NOTICE_FOREIGN 0\""
+is visible "text=\"QA_NOTICE_LOG_OVERFLOW no\""
+snapshot
+screenshot "shots/notice-${SHOT}-initial.png"
+
+# section single
+is visible "id=in-app-notification"
+is visible "id=in-app-notification-open"
+is hidden "id=in-app-notification-next"
+press "id=in-app-notification-details"
+wait "label=\"Show less\"" 10000
+snapshot
+screenshot "shots/notice-single-expanded.png"
+press "id=in-app-notification-details"
+wait "label=\"Show details\"" 10000
+
+# section clear
+press "id=in-app-notification-clear-all"
+wait absent "id=in-app-notification" 10000
+wait "text=\"QA_NOTICE_COUNT 0\"" 10000
+is visible "text=\"QA_NOTICE_RECEIPTS_RETAINED yes\""
+is visible "text=\"QA_NOTICE_TASK_WAITING yes\""
+snapshot
+screenshot "shots/notice-${SHOT}-after-clear.png"
+
+# section canonical-in-place
+# No reload/deeplink between Clear all and these actual canonical UI checks.
+is visible "text=QA_NOTICE_ORIGINAL_MESSAGE"
+is visible "text=QA_NOTICE_FORM_CANONICAL"
+wait "text=\"QA_NOTICE_PERMISSION_PRESENT yes\"" 10000
+snapshot
+screenshot "shots/notice-${SHOT}-canonical-same-workbench.png"
+
+# section cycle-open
+is visible "text=\"QA_NOTICE_BATCH_INTACT yes\""
+press "id=in-app-notification-next"
+wait "text=\"2 / 5\"" 10000
+is visible "text=\"QA_NOTICE_COUNT 5\""
+is visible "text=\"QA_NOTICE_BATCH_INTACT yes\""
+snapshot
+screenshot "shots/notice-cycle-preserves-actual-batch.png"
+press "id=in-app-notification-open"
+wait "text=\"QA_NOTICE_ASID demo-notice-target-1\"" 15000
+wait "text=\"QA_NOTICE_COUNT 4\"" 10000
+is visible "text=\"QA_NOTICE_RECEIPTS_RETAINED yes\""
+snapshot
+screenshot "shots/notice-open-exact-destination-and-only-current.png"
+
+# section no-route
+is hidden "id=in-app-notification-open"
+is visible "id=in-app-notification-details"
+is visible "id=in-app-notification-clear-all"
+snapshot
+screenshot "shots/notice-short-no-route.png"
+
+# section known
+is visible "text=\"Edit a file\""
+snapshot
+screenshot "shots/notice-known-localized-action.png"
+
+# section unknown
+snapshot
+screenshot "shots/notice-unknown-context.png"
+# Complete long/unknown context and occurrence counts need native/pixel review;
+# this screenshot command is NOT an automatic full-context/count assertion.
+
+# section duplicate
+is hidden "id=in-app-notification"
+is visible "text=\"QA_NOTICE_RECEIPTS_RETAINED yes\""
+snapshot
+screenshot "shots/notice-${SHOT}-same-run-duplicate-rejected.png"
+
+# section expire
+open "muqun://agent?asid=demo-notice-info&agentId=opencode"
+wait "id=in-app-notification" 1000
+snapshot
+screenshot "shots/notice-general-first-observed-visible.png"
+wait absent "id=in-app-notification" 5000
+wait "text=\"QA_NOTICE_COUNT 0\"" 10000
+snapshot
+screenshot "shots/notice-general-actually-expired.png"
+# Above observes actual production expiry; enqueue is NOT its effect start.
+# Restored FULL 2s delay/clear-before-expiry require separate native timestamp
+# receipts. A wait or source contract alone is never that timing proof.
+
+# section info-clear-open
+open "muqun://agent?asid=demo-notice-info-clear&agentId=opencode"
+wait "id=in-app-notification" 1000
+# Go directly to the REAL clear action; avoid spending the actual 2s lifetime
+# on generic report/screenshot setup. External timestamps still decide whether
+# this conservatively qualifies as clear-before-enqueue+2s.
+
+# section fresh-survives
+wait "id=in-app-notification" 10000
+wait stable 2500 5000
+is visible "id=in-app-notification"
+is visible "text=\"QA_NOTICE_COUNT 1\""
+snapshot
+screenshot "shots/notice-fresh-survives-past-old-general-window.png"
+
+# section reopened
+wait "text=\"QA_NOTICE_REOPEN barrier-reopened\"" 10000
+wait "text=\"QA_NOTICE_COUNT 1\"" 10000
+is visible "id=in-app-notification"
+snapshot
+screenshot "shots/notice-authoritative-typed-reopen.png"
+
+# section finish
+open "muqun://agent?asid=demo-notice-finish&agentId=opencode"
+wait "text=\"QA_NOTICE_READY finish\"" 10000
+snapshot
+screenshot "shots/notice-final-log-segment.png"
+open "muqun:///"
+wait stable 600 10000

@@ -1249,6 +1249,10 @@ msgstr "Classic"
 msgid "Clear"
 msgstr "Clear"
 
+#: src/components/in-app-notification-host.tsx
+msgid "Clear all"
+msgstr "Clear all"
+
 #: src/components/settings-storage.tsx
 msgid "Clear cache"
 msgstr "Clear cache"
@@ -1295,6 +1299,10 @@ msgstr "Clearing…"
 msgid "Clears cache when due after opening Muqun. Saved themes are kept."
 msgstr "Clears cache when due after opening Muqun. Saved themes are kept"
 
+#: src/components/in-app-notification-host.tsx
+msgid "Clears notifications only. Pending tasks still need your attention."
+msgstr "Clears notifications only. Pending tasks still need your attention"
+
 #: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
 #: src/i18n/labels.ts
@@ -1318,6 +1326,7 @@ msgstr "Close menu"
 msgid "Close new task"
 msgstr "Close new task"
 
+#: src/components/agent-tool-card.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/image-preview-modal.tsx
@@ -2403,6 +2412,10 @@ msgstr "detached at {head}"
 msgid "Detached at {head}"
 msgstr "Detached at {head}"
 
+#: src/components/in-app-notification-host.tsx
+msgid "Details"
+msgstr "Details"
+
 #: src/lib/demo-gateway.ts
 msgid "Development"
 msgstr "Development"
@@ -2454,10 +2467,6 @@ msgstr "Disconnected"
 #: src/components/task-row.tsx
 msgid "Dismiss"
 msgstr "Dismiss"
-
-#: src/components/agent-composer.tsx
-msgid "Dismiss submission preview"
-msgstr "Dismiss submission preview"
 
 #: src/components/approval-banner.tsx
 msgid "Dismiss the approval error"
@@ -3115,15 +3124,19 @@ msgstr "If this continues, restart the app or check the app installation"
 msgid "Image"
 msgstr "Image"
 
+#: src/components/image-preview-modal.tsx
+msgid "Image preview"
+msgstr "Image preview"
+
 #: src/components/agent-message-block.tsx
-#: src/components/asset-viewer.tsx
+#: src/components/file-text-body.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image unavailable"
 msgstr "Image unavailable"
 
 #. placeholder {0}: alt.trim()
 #: src/components/agent-message-block.tsx
-#: src/components/asset-viewer.tsx
+#: src/components/file-text-body.tsx
 msgid "Image unavailable: {0}"
 msgstr "Image unavailable: {0}"
 
@@ -3434,10 +3447,6 @@ msgstr "Left arrow"
 #: src/components/virtual-keyboard.tsx
 msgid "Letters"
 msgstr "Letters"
-
-#: src/components/agent-session-tree-sheet.tsx
-msgid "Level {depth}"
-msgstr "Level {depth}"
 
 #: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
@@ -3867,6 +3876,10 @@ msgstr "Newer"
 #: src/components/agent-composer.tsx
 msgid "Next"
 msgstr "Next"
+
+#: src/components/image-preview-modal.tsx
+msgid "Next image"
+msgstr "Next image"
 
 #: src/components/in-app-notification-host.tsx
 #: src/components/notice-deck.tsx
@@ -4582,10 +4595,6 @@ msgstr "Palette (up to 4)"
 msgid "Panes on computer cards"
 msgstr "Panes on computer cards"
 
-#: src/components/agent-session-tree-sheet.tsx
-msgid "Parent: {parentTitle}"
-msgstr "Parent: {parentTitle}"
-
 #: src/components/ssh-host-form.tsx
 msgid "Passphrase (optional)"
 msgstr "Passphrase (optional)"
@@ -4725,6 +4734,10 @@ msgstr "Preview and apply"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "Preview first. Your current theme stays unchanged"
+
+#: src/components/image-preview-modal.tsx
+msgid "Previous image"
+msgstr "Previous image"
 
 #: src/components/agent-title-pill.tsx
 msgid "Previous session"
@@ -5139,6 +5152,10 @@ msgstr "Requires iOS 16.1 or later"
 #: src/components/computer-map/screen.tsx
 msgid "Reset view"
 msgstr "Reset view"
+
+#: src/components/image-preview-modal.tsx
+msgid "Reset zoom"
+msgstr "Reset zoom"
 
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
@@ -5724,6 +5741,10 @@ msgstr "Show artwork on Home"
 msgid "Show camera details"
 msgstr "Show camera details"
 
+#: src/components/in-app-notification-host.tsx
+msgid "Show details"
+msgstr "Show details"
+
 #: src/components/settings-terminal.tsx
 msgid "Show Esc, Tab, Ctrl and navigation keys above input."
 msgstr "Show Esc, Tab, Ctrl and navigation keys above input"
@@ -5742,6 +5763,7 @@ msgstr "Show Home text"
 
 #: src/components/home-computer-cards.tsx
 #: src/components/home-recent-sessions.tsx
+#: src/components/in-app-notification-host.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Show less"
 msgstr "Show less"
@@ -6119,10 +6141,6 @@ msgstr "Streams speech while you talk. Requires an OpenAI Realtime-compatible tr
 #: src/components/demo-streaming-transcript.tsx
 msgid "Subagent"
 msgstr "Subagent"
-
-#: src/components/agent-composer.tsx
-msgid "Submission acknowledged. Check the conversation for the message."
-msgstr "Submission acknowledged. Check the conversation for the message"
 
 #: src/components/agent-form-card.tsx
 msgid "Submit"
@@ -6925,7 +6943,7 @@ msgstr "Tokens this session"
 msgid "Tokens usage and cost"
 msgstr "Tokens usage and cost"
 
-#: src/components/asset-viewer.tsx
+#: src/components/file-text-body.tsx
 msgid "Too large to highlight — showing plain text."
 msgstr "Too large to highlight — showing plain text"
 
@@ -6953,6 +6971,7 @@ msgstr "Transcription failed. Check your speech service and try again"
 msgid "Transcription mode"
 msgstr "Transcription mode"
 
+#: src/components/agent-tool-card.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/tool-call-code-rows.tsx
@@ -7478,3 +7497,11 @@ msgstr "Your message"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "Your paired computers"
+
+#: src/components/image-preview-modal.tsx
+msgid "Zoom in"
+msgstr "Zoom in"
+
+#: src/components/image-preview-modal.tsx
+msgid "Zoom out"
+msgstr "Zoom out"

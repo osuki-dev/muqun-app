@@ -270,7 +270,8 @@ export function shouldShowHomeContinueOverflow(
  * inventory. The chosen gateway's own agent sessions join them: one it lists
  * that a recent already points at is that recent (with the gateway's agent,
  * which wins over what the device wrote down), and the rest are new rows,
- * ranked by when the gateway last saw them change.
+ * ranked by when the gateway last saw them change. Agent sessions come before
+ * terminal and connection rows; each group keeps its most-recent-first order.
  */
 export function homeContinueEntries({
   serverIds,
@@ -293,7 +294,7 @@ export function homeContinueEntries({
   gatewaySessions?: GatewayAgentSessionsSnapshot;
   /** Sessions the gateway answered gone for (`goneSessionKey`); they are neither recents nor new rows. */
   goneSessions?: ReadonlySet<string>;
-  /** Classic already lists pane inventory and saved SSH hosts in its connection cards. */
+  /** Suppress shortcuts represented elsewhere; Classic's entry-only cards keep this false. */
   connectionShortcutsElsewhere?: boolean;
 }): HomeContinueEntry[] {
   const rows: HomeContinueEntry[] = [];
@@ -439,7 +440,11 @@ export function homeContinueEntries({
       });
     }
   }
-  return rows.sort((a, b) => b.atMs - a.atMs);
+  return rows.sort((a, b) => {
+    const aSession = homeContinueTarget(a.destination)?.kind === 'agent-session';
+    const bSession = homeContinueTarget(b.destination)?.kind === 'agent-session';
+    return Number(bSession) - Number(aSession) || b.atMs - a.atMs;
+  });
 }
 
 type GatewayTerminalTarget = Extract<HomeTarget, { kind: 'gateway-terminal' }>;

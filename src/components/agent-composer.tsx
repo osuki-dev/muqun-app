@@ -3,6 +3,8 @@ import { useQuestionComposerDraft } from '@/hooks/use-question-composer-draft';
 import { AssetViewer } from '@/components/asset-viewer';
 import type { HomeComposerOutset } from '@/theme/home-composer-outset';
 import { ComposerAttachmentButton } from '@/components/composer-attachment-button';
+import { CompactionPill } from '@/components/agent-compaction-pill';
+import type { CompactionActivity } from '@/lib/agent-compaction';
 import { memo, useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import {
   NativeSyntheticEvent,
@@ -19,7 +21,6 @@ import { Text } from '@/components/text';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
-  AlertCircle,
   ArrowLeft,
   CheckSquare,
   ChevronDown,
@@ -28,7 +29,6 @@ import {
   GitFork,
   Inbox,
   Layers,
-  Loader,
   Terminal,
   Square,
   Trash2,
@@ -129,7 +129,6 @@ import {
   type InboxItem,
   type AgentProject,
   type AgentSessionInfo,
-  type CompactionReason,
   type FileDiffItem,
   type ModelRef,
   type SkillInfo,
@@ -417,8 +416,8 @@ export interface AgentComposerProps {
   onCommitRevert?: () => void;
   onKeepRevert?: () => void;
   revertBusy?: boolean;
-  /** A compaction in flight, or one that failed and has not been read yet. */
-  compaction?: { status: 'running' | 'failed'; reason: CompactionReason } | null;
+  /** A running compaction, or terminal details not yet handed back to history. */
+  compaction?: CompactionActivity | null;
   onDismissCompaction?: () => void;
   cost?: number;
   sessionTitle?: string;
@@ -770,19 +769,12 @@ export const AgentComposer = memo(function AgentComposer({
   const attachmentUploads = useAttachmentUploads(record, undefined, holdStagedAttachments);
   const { clearAttachments } = attachmentUploads;
   const readStagedAttachments = useLatestReader(attachmentUploads.attachments);
-  // Keep the last receipt visible across an ACK-before-history gap. It is not
-  // matched to a native message; a new draft or explicit dismissal hides it.
-  const showSubmissionReceipt = Boolean(
-    pendingAttachmentSend?.submittedAttachments &&
-    !text.trim() &&
-    attachmentUploads.attachments.length === 0
-  );
   const submittingAttachments = Boolean(
     sending && pendingAttachmentSend && !pendingAttachmentSend.submittedAttachments
   );
-  const visibleAttachments = showSubmissionReceipt
-    ? (pendingAttachmentSend?.submittedAttachments ?? attachmentUploads.attachments)
-    : attachmentUploads.attachments;
+  // Only staged files belong in the composer. An ACK clears them through the
+  // owned submission callback; it does not establish a canonical timeline row.
+  const visibleAttachments = attachmentUploads.attachments;
 
   // Staged images page in the lightbox; device-picked PDFs use the file viewer.
   const [previewAttachmentId, setPreviewAttachmentId] = useState<string | null>(null);
@@ -1455,6 +1447,8 @@ export const AgentComposer = memo(function AgentComposer({
   const safeAreaFoot = flushField && keyboardHeight === 0 ? bottomInset : 0;
   const dockFoot = safeAreaFoot + (outerInsets?.bottom ?? 0);
   const [surfaceHeight, setSurfaceHeight] = useState(0);
+  const [compactionRowHeight, setCompactionRowHeight] = useState(0);
+  const compactionClearance = compaction ? compactionRowHeight : 0;
   const [voiceActive, setVoiceActive] = useState(false);
   const decorationHidden =
     hideFieldDecoration ||
@@ -1468,8 +1462,9 @@ export const AgentComposer = memo(function AgentComposer({
   const decorationClearance =
     fieldDecoration && !decorationHidden && !voiceActive ? fieldDecorationOverhang : 0;
   const dockHeight = surfaceHeight + dockFoot;
+  // The status row occupies transcript space, but does not move the material's clip edge.
   const reportDockHeight = useEffectEvent((height: number, clipHeight: number) =>
-    onDockHeight?.(height, clipHeight)
+    onDockHeight?.(height + compactionClearance, clipHeight)
   );
   // Local height still bounds popups. Forwarding each animated accessory frame
   // to Home also changes its scroll padding and clipping, feeding the reveal
@@ -1477,11 +1472,17 @@ export const AgentComposer = memo(function AgentComposer({
   useEffect(() => {
     if (surfaceHeight > 0 && !accessoryHeightAnimating)
       reportDockHeight(dockHeight + decorationClearance, dockHeight);
-  }, [surfaceHeight, dockHeight, decorationClearance, accessoryHeightAnimating]);
+  }, [
+    surfaceHeight,
+    dockHeight,
+    decorationClearance,
+    compactionClearance,
+    accessoryHeightAnimating,
+  ]);
   const [inputRowHeight, setInputRowHeight] = useState(0);
   const popupMaxHeight = Math.max(
     POPUP_MIN_HEIGHT,
-    windowHeight - keyboardHeight - dockHeight - topInset - POPUP_HEADER_GAP
+    windowHeight - keyboardHeight - dockHeight - compactionClearance - topInset - POPUP_HEADER_GAP
   );
   // The compact dock's second line holds the two choices that define a new
   // turn and nothing else; Home has no running turn, queue or diff to show.
@@ -1749,15 +1750,21 @@ export const AgentComposer = memo(function AgentComposer({
         />
       ) : null}
 
-      {/* A compaction in flight. Transient, above the dock, and gone the
-          moment the boundary lands in the timeline as a row of its own. */}
-      {compaction ? (
-        <CompactionPill
-          status={compaction.status}
-          reason={compaction.reason}
-          {...(onDismissCompaction ? { onDismiss: onDismissCompaction } : {})}
-        />
-      ) : null}
+      {/* Real streamed details stay accessible until the completed summary
+          lands in the timeline, or the reader dismisses the terminal notice. */}
+      <View
+        onLayout={(event) => {
+          const { height } = event.nativeEvent.layout;
+          setCompactionRowHeight(height);
+        }}>
+        {compaction ? (
+          <CompactionPill
+            key={compaction.startedSeq}
+            activity={compaction}
+            {...(onDismissCompaction ? { onDismiss: onDismissCompaction } : {})}
+          />
+        ) : null}
+      </View>
 
       {/* The wrapper is here to be measured: `GlassChrome` is a material and
           takes no `onLayout` of its own. */}
@@ -2231,15 +2238,13 @@ export const AgentComposer = memo(function AgentComposer({
                   onRetry={retryStagedAttachment}
                   onPreview={setPreviewAttachmentId}
                   textColor={chromeText}
-                  readOnly={submittingAttachments || showSubmissionReceipt}
+                  readOnly={submittingAttachments}
                 />
               </Animated.View>
             ) : null}
 
             {/* Submission feedback stays outside the canonical transcript. */}
-            {(sending && attachmentUploads.uploading) ||
-            submittingAttachments ||
-            showSubmissionReceipt ? (
+            {(sending && attachmentUploads.uploading) || submittingAttachments ? (
               <Animated.View
                 testID="agent-composer-attachment-submission"
                 entering={fadeIn('micro')}
@@ -2251,19 +2256,9 @@ export const AgentComposer = memo(function AgentComposer({
                     borderRadius: profile.chrome.noticeBanner,
                   },
                 ]}>
-                {showSubmissionReceipt ? (
-                  <PressableScale
-                    accessibilityLabel={t`Dismiss submission preview`}
-                    onPress={() => setPendingAttachmentSend(null)}>
-                    <CheckSquare size={16} color={theme.colors.textMuted} />
-                  </PressableScale>
-                ) : (
-                  <Spinner size="sm" color={theme.colors.textMuted} />
-                )}
+                <Spinner size="sm" color={theme.colors.textMuted} />
                 <Text variant="caption" color={theme.colors.textMuted} style={styles.noticeText}>
-                  {showSubmissionReceipt ? (
-                    <Trans>Submission acknowledged. Check the conversation for the message.</Trans>
-                  ) : attachmentUploads.uploading ? (
+                  {attachmentUploads.uploading ? (
                     <Trans>Waiting for uploads to finish…</Trans>
                   ) : pendingAttachmentSend?.delivery === 'queue' ? (
                     <Trans>Requesting queued delivery…</Trans>
@@ -2404,86 +2399,6 @@ function ComposerSurface({
     );
   return <View style={[style, styles.flushSurface]}>{children}</View>;
 }
-
-/**
- * "Compacting context…", while it is happening.
- *
- * `agent.compaction.changed` is the only thing that knows a compaction is
- * running: the boundary does not reach the timeline until it finishes, so
- * without this the reader watches a quiet agent and wonders what it is doing.
- */
-const CompactionPill = memo(function CompactionPill({
-  status,
-  reason,
-  onDismiss,
-}: {
-  status: 'running' | 'failed';
-  reason: CompactionReason;
-  onDismiss?: () => void;
-}) {
-  const { t } = useLingui();
-  const theme = useThemeTokens();
-  const profile = useAppearanceProfile();
-  const surfaceBackground = useSurfaceBackground();
-  const failed = status === 'failed';
-
-  const pulse = useSharedValue(failed ? 1 : 0.4);
-  useEffect(() => {
-    pulse.set(
-      failed
-        ? withTiming(1, timing('micro'))
-        : withRepeat(
-            withSequence(withTiming(1, timing('long')), withTiming(0.4, timing('long'))),
-            -1
-          )
-    );
-    // An endless repeat must not outlive the pill: a view that is gone while
-    // its animation still writes props is the SurfaceMountingManager noise
-    // in logcat, not a harmless leftover.
-    return () => cancelAnimation(pulse);
-  }, [failed, pulse]);
-  const pulseStyle = useAnimatedStyle(() => ({ opacity: pulse.value }));
-
-  return (
-    <Animated.View
-      entering={fadeIn('micro')}
-      exiting={fadeOut('micro')}
-      style={styles.compactionPillWrap}>
-      <PressableScale
-        testID="agent-composer-compaction-pill"
-        accessibilityRole={failed ? 'button' : 'progressbar'}
-        accessibilityLabel={failed ? t`Compaction failed — tap to dismiss` : t`Compacting context…`}
-        disabled={!failed || !onDismiss}
-        onPress={onDismiss}
-        style={[
-          styles.compactionPill,
-          { borderRadius: profile.chrome.control },
-          {
-            backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-            borderColor: failed ? theme.colors.danger : theme.colors.border,
-          },
-        ]}>
-        <Animated.View style={pulseStyle}>
-          {failed ? (
-            <AlertCircle size={12} color={theme.colors.danger} />
-          ) : (
-            <Loader size={12} color={theme.colors.primary} />
-          )}
-        </Animated.View>
-        <Text
-          variant="caption"
-          weight="semibold"
-          color={failed ? theme.colors.danger : theme.colors.text}>
-          {failed
-            ? t`Compaction failed`
-            : reason === 'manual'
-              ? t`Compacting context…`
-              : t`Compacting context automatically…`}
-        </Text>
-      </PressableScale>
-    </Animated.View>
-  );
-});
 
 /** The least room a popup is given, even on a short window with the keyboard up. */
 const POPUP_MIN_HEIGHT = 120;
@@ -2745,20 +2660,6 @@ const styles = StyleSheet.create({
   contextFill: {
     height: '100%',
     borderRadius: 2,
-  },
-  compactionPillWrap: {
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    marginBottom: 6,
-  },
-  compactionPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
   },
   diffIndicator: {
     position: 'absolute',

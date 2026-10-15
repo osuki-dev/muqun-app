@@ -2,6 +2,26 @@
   "version": 1,
   "flows": [
     {
+      "name": "compaction-protocol-logs",
+      "program": "flows/compaction-protocol-logs",
+      "cleanup": "subflows/compaction-log-cleanup",
+      "tags": ["full", "agents", "composer"],
+      "platforms": ["android"]
+    },
+    {
+      "name": "notifications-compact-lifecycle",
+      "program": "flows/notifications-compact-lifecycle",
+      "cleanup": "subflows/notifications-compact-cleanup",
+      "tags": ["full", "settings", "notifications"],
+      "platforms": ["android"]
+    },
+    {
+      "name": "read-files-preview",
+      "program": "flows/read-files-preview",
+      "tags": ["full", "agents", "files"],
+      "platforms": ["android"]
+    },
+    {
       "name": "agent-transcript-streaming",
       "program": "flows/agent-transcript-streaming",
       "tags": ["full", "agents"],
@@ -311,6 +331,176 @@
     }
   ],
   "programs": {
+    "flows/compaction-protocol-logs": [
+      { "include": "subflows/open-demo" },
+      {
+        "include": "subflows/compaction-log-complete",
+        "env": { "ASID": "demo-compaction-log-complete", "CASE": "complete" }
+      },
+      {
+        "include": "subflows/compaction-log-failed",
+        "env": { "ASID": "demo-compaction-log-failed", "CASE": "failed" }
+      },
+      {
+        "include": "subflows/compaction-log-empty",
+        "env": { "ASID": "demo-compaction-log-empty-failed", "CASE": "empty-failed" }
+      }
+    ],
+    "subflows/compaction-log-begin": [
+      { "run": "flows/compaction-protocol-logs.ad#open" },
+      { "run": "flows/composer-wrap.ad#compaction-advance" }
+    ],
+    "subflows/compaction-log-complete": [
+      { "include": "subflows/compaction-log-begin" },
+      { "run": "flows/compaction-protocol-logs.ad#blank" },
+      { "run": "flows/compaction-protocol-logs.ad#expanded" },
+      { "run": "flows/compaction-protocol-logs.ad#keyboard" },
+      { "run": "flows/compaction-protocol-logs.ad#appended" },
+      { "run": "flows/compaction-protocol-logs.ad#complete" },
+      { "run": "flows/composer-wrap.ad#compaction-clear" }
+    ],
+    "subflows/compaction-log-failed": [
+      { "include": "subflows/compaction-log-begin" },
+      { "run": "flows/compaction-protocol-logs.ad#failed-log" },
+      { "run": "flows/composer-wrap.ad#compaction-clear" }
+    ],
+    "subflows/compaction-log-empty": [
+      { "include": "subflows/compaction-log-begin" },
+      { "run": "flows/compaction-protocol-logs.ad#failed-empty" },
+      { "run": "flows/composer-wrap.ad#compaction-clear" }
+    ],
+    "subflows/compaction-log-cleanup": [
+      {
+        "when": { "target": { "id": "agent-composer-input" } },
+        "steps": [{ "run": "flows/composer-wrap.ad#compaction-clear" }]
+      },
+      { "run": "flows/compaction-protocol-logs.ad#home" }
+    ],
+    "flows/notifications-compact-lifecycle": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/notifications-compact-lifecycle.ad#begin" },
+      {
+        "include": "subflows/notice-native-case",
+        "env": { "CASE": "one", "COUNT": "1", "SHOT": "one" }
+      },
+      { "run": "flows/notifications-compact-lifecycle.ad#single" },
+      { "include": "subflows/notice-native-clear", "env": { "SHOT": "one" } },
+      { "include": "subflows/notice-native-canonical", "env": { "SHOT": "one" } },
+      {
+        "include": "subflows/notice-native-case",
+        "env": { "CASE": "duplicate", "COUNT": "0", "SHOT": "duplicate-one" }
+      },
+      { "include": "subflows/notice-native-duplicate", "env": { "SHOT": "one" } },
+      {
+        "include": "subflows/notice-native-case",
+        "env": { "CASE": "five", "COUNT": "5", "SHOT": "five" }
+      },
+      { "run": "flows/notifications-compact-lifecycle.ad#cycle-open" },
+      { "include": "subflows/notice-native-clear", "env": { "SHOT": "five" } },
+      {
+        "include": "subflows/notice-native-case",
+        "env": { "CASE": "duplicate", "COUNT": "0", "SHOT": "duplicate-five" }
+      },
+      { "include": "subflows/notice-native-duplicate", "env": { "SHOT": "five" } },
+      {
+        "include": "subflows/notice-native-case",
+        "env": { "CASE": "short", "COUNT": "1", "SHOT": "short" }
+      },
+      { "run": "flows/notifications-compact-lifecycle.ad#no-route" },
+      { "include": "subflows/notice-native-clear", "env": { "SHOT": "short" } },
+      {
+        "include": "subflows/notice-native-case",
+        "env": { "CASE": "known", "COUNT": "1", "SHOT": "known" }
+      },
+      { "run": "flows/notifications-compact-lifecycle.ad#known" },
+      { "include": "subflows/notice-native-clear", "env": { "SHOT": "known" } },
+      {
+        "include": "subflows/notice-native-case",
+        "env": { "CASE": "unknown", "COUNT": "1", "SHOT": "unknown" }
+      },
+      { "run": "flows/notifications-compact-lifecycle.ad#unknown" },
+      { "include": "subflows/notice-native-clear", "env": { "SHOT": "unknown" } },
+      { "run": "flows/notifications-compact-lifecycle.ad#expire" },
+      { "run": "flows/notifications-compact-lifecycle.ad#info-clear-open" },
+      { "include": "subflows/notice-native-clear", "env": { "SHOT": "info-clear" } },
+      {
+        "include": "subflows/notice-native-case",
+        "env": { "CASE": "fresh", "COUNT": "1", "SHOT": "fresh" }
+      },
+      { "run": "flows/notifications-compact-lifecycle.ad#fresh-survives" },
+      { "include": "subflows/notice-native-clear", "env": { "SHOT": "fresh" } },
+      {
+        "include": "subflows/notice-native-case",
+        "env": { "CASE": "reopen", "COUNT": "1", "SHOT": "reopen" }
+      },
+      { "run": "flows/notifications-compact-lifecycle.ad#reopened" },
+      { "include": "subflows/notice-native-clear", "env": { "SHOT": "reopen" } },
+      { "include": "subflows/notice-native-canonical", "env": { "SHOT": "reopen" } }
+    ],
+    "subflows/notice-native-case": [{ "run": "flows/notifications-compact-lifecycle.ad#case" }],
+    "subflows/notice-native-clear": [{ "run": "flows/notifications-compact-lifecycle.ad#clear" }],
+    "subflows/notice-native-canonical": [
+      { "run": "flows/notifications-compact-lifecycle.ad#canonical-in-place" }
+    ],
+    "subflows/notice-native-duplicate": [
+      { "run": "flows/notifications-compact-lifecycle.ad#duplicate" }
+    ],
+    "subflows/notifications-compact-cleanup": [
+      {
+        "when": { "target": { "text": "QA_NOTICE_FOREIGN 0" } },
+        "steps": [
+          {
+            "when": { "target": { "id": "in-app-notification" } },
+            "steps": [{ "include": "subflows/notice-native-clear", "env": { "SHOT": "cleanup" } }]
+          }
+        ]
+      },
+      { "run": "flows/notifications-compact-lifecycle.ad#finish" }
+    ],
+    "flows/read-files-preview": [
+      { "include": "subflows/open-demo" },
+      {
+        "include": "subflows/read-files-preview-open-host",
+        "env": { "URL": "muqun://agent?asid=demo-native-preview&agentId=opencode" }
+      },
+      { "run": "flows/read-files-preview.ad#question-and-task" },
+      {
+        "include": "subflows/read-files-preview-host",
+        "env": { "URL": "muqun://agent?asid=demo-native-preview&agentId=opencode", "HOST": "main" }
+      },
+      {
+        "include": "subflows/read-files-preview-host",
+        "env": {
+          "URL": "muqun://agent-subagent-detail?asid=demo-native-preview-child",
+          "HOST": "child"
+        }
+      },
+      { "run": "flows/read-files-preview.ad#close" }
+    ],
+    "subflows/read-files-preview-open-host": [{ "run": "flows/read-files-preview.ad#host" }],
+    "subflows/read-files-preview-host": [
+      { "run": "flows/read-files-preview.ad#host" },
+      { "run": "flows/read-files-preview.ad#document" },
+      {
+        "when": { "env": "HOST", "equals": "main" },
+        "steps": [{ "run": "flows/read-files-preview.ad#reposition" }]
+      },
+      { "run": "flows/read-files-preview.ad#document-collapse" },
+      { "run": "flows/read-files-preview.ad#code" },
+      {
+        "when": { "env": "HOST", "equals": "main" },
+        "steps": [{ "run": "flows/read-files-preview.ad#reposition" }]
+      },
+      { "run": "flows/read-files-preview.ad#code-collapse" },
+      { "run": "flows/read-files-preview.ad#large" },
+      {
+        "when": { "env": "HOST", "equals": "main" },
+        "steps": [{ "run": "flows/read-files-preview.ad#reposition" }]
+      },
+      { "run": "flows/read-files-preview.ad#large-collapse" },
+      { "run": "flows/read-files-preview.ad#small" },
+      { "run": "flows/read-files-preview.ad#small-document" }
+    ],
     "flows/agent-transcript-streaming": [
       { "include": "subflows/open-demo" },
       { "run": "flows/agent-transcript-streaming.ad" }
@@ -9576,7 +9766,112 @@
       { "run": "flows/composer-wrap.ad#restored-shot" },
       {
         "run": "flows/composer-wrap.ad#close"
+      },
+      {
+        "when": { "env": "PLATFORM", "equals": "android" },
+        "steps": [{ "include": "subflows/compaction-layout" }]
       }
+    ],
+    "subflows/compaction-samples-closed": [
+      {
+        "run": "flows/composer-wrap.ad#compaction-samples",
+        "point": [0.5, 0.45],
+        "delta": [0, -0.27]
+      }
+    ],
+    "subflows/compaction-samples-keyboard": [
+      {
+        "run": "flows/composer-wrap.ad#compaction-samples",
+        "point": [0.5, 0.22],
+        "delta": [0, -0.1]
+      }
+    ],
+    "subflows/compaction-layout": [
+      { "run": "flows/composer-wrap.ad#compaction-open" },
+      { "run": "flows/composer-wrap.ad#compaction-draft" },
+      {
+        "target": { "id": "agent-composer-compaction-pill" },
+        "mode": "hidden",
+        "run": "flows/composer-wrap.ad#hidden"
+      },
+      {
+        "include": "subflows/compaction-samples-closed",
+        "env": { "STATE": "baseline" }
+      },
+      { "run": "flows/composer-wrap.ad#compaction-advance" },
+      {
+        "target": { "id": "agent-composer-compaction-pill", "text": "Compacting context…" },
+        "mode": "visible",
+        "run": "flows/composer-wrap.ad#visible"
+      },
+      {
+        "include": "subflows/compaction-samples-closed",
+        "env": { "STATE": "manual" }
+      },
+      { "run": "flows/composer-wrap.ad#compaction-keyboard-open" },
+      {
+        "include": "subflows/compaction-samples-keyboard",
+        "env": { "STATE": "manual-keyboard" }
+      },
+      { "run": "flows/composer-wrap.ad#compaction-keyboard-close" },
+      {
+        "include": "subflows/compaction-samples-closed",
+        "env": { "STATE": "manual-return" }
+      },
+      { "run": "flows/composer-wrap.ad#compaction-advance" },
+      {
+        "target": { "id": "agent-composer-compaction-pill" },
+        "mode": "hidden",
+        "run": "flows/composer-wrap.ad#hidden"
+      },
+      {
+        "include": "subflows/compaction-samples-closed",
+        "env": { "STATE": "completed" }
+      },
+      { "run": "flows/composer-wrap.ad#compaction-advance" },
+      {
+        "target": { "text": "Compacting context automatically…" },
+        "mode": "visible",
+        "run": "flows/composer-wrap.ad#visible"
+      },
+      {
+        "include": "subflows/compaction-samples-closed",
+        "env": { "STATE": "auto" }
+      },
+      { "run": "flows/composer-wrap.ad#compaction-keyboard-open" },
+      {
+        "include": "subflows/compaction-samples-keyboard",
+        "env": { "STATE": "auto-keyboard" }
+      },
+      { "run": "flows/composer-wrap.ad#compaction-keyboard-close" },
+      {
+        "include": "subflows/compaction-samples-closed",
+        "env": { "STATE": "auto-return" }
+      },
+      { "run": "flows/composer-wrap.ad#compaction-advance" },
+      {
+        "target": {
+          "id": "agent-composer-compaction-pill",
+          "text": "Compaction failed — tap to dismiss"
+        },
+        "mode": "visible",
+        "run": "flows/composer-wrap.ad#visible"
+      },
+      {
+        "include": "subflows/compaction-samples-closed",
+        "env": { "STATE": "failed" }
+      },
+      { "run": "flows/composer-wrap.ad#compaction-dismiss" },
+      {
+        "target": { "id": "agent-composer-compaction-pill" },
+        "mode": "hidden",
+        "run": "flows/composer-wrap.ad#hidden"
+      },
+      {
+        "include": "subflows/compaction-samples-closed",
+        "env": { "STATE": "dismissed" }
+      },
+      { "run": "flows/composer-wrap.ad#compaction-clear" }
     ]
   }
 }

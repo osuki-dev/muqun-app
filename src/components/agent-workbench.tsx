@@ -143,7 +143,6 @@ import {
   type CommandInfo,
   type FileDiffItem,
   type ShellInfo,
-  type CompactionReason,
   type InboxItem,
   type TimelineItem,
   type ToolPart,
@@ -230,6 +229,12 @@ import {
   type SubtaskBlocks,
 } from '@/lib/agent-subtasks';
 import { agentPromptUsesOptimisticRow, upsertTimelineItems } from '@/lib/agent-timeline-upsert';
+import {
+  applyCompactionEvent,
+  beginCompaction,
+  reconcileCompactionTimeline,
+  type CompactionActivity,
+} from '@/lib/agent-compaction';
 import type { AgentAttachmentSendRequest } from '@/lib/agent-attachment-send';
 import { windowStartForSnapshot } from '@/lib/agent-timeline-window';
 import { createAgentStreamBatch } from '@/lib/agent-stream-batch';
@@ -936,10 +941,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const [oneStepRevert, setOneStepRevert] = useState<OneStepRevertRequest | null>(null);
   // A compaction in flight, which is a pill above the composer rather than a
   // row: the row lands in the timeline when the boundary is reached.
-  const [compaction, setCompaction] = useState<{
-    status: 'running' | 'failed';
-    reason: CompactionReason;
-  } | null>(null);
+  const [compactionState, setCompaction] = useState<CompactionActivity | null>(null);
+  const compaction = compactionState?.asid === activeAsid ? compactionState : null;
   /**
    * Where this session is in the gateway's event sequence, and whether a
    * catch-up is owed. See `lib/agent-catch-up.ts`: the marker is raised, never
@@ -959,6 +962,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       setPermissions([]);
       setForms([]);
       setInbox([]);
+      setCompaction(null);
       syncRef.current = CATCH_UP_START;
       activeAsidRef.current = nextAsid;
       setActiveAsid(nextAsid);
@@ -1891,6 +1895,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 }
               }
               setInbox(snap.inbox);
+              setCompaction((current) => reconcileCompactionTimeline(current, timeline, asid));
               // A rollback staged before the app was opened is still staged.
               setStagedRevert(info?.revert ?? null);
 
@@ -2200,6 +2205,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         case 'agent.timeline.upsert':
           if (!replaceAgentTranscript('silent', readRuntime())) break;
           setTimeline((prev) => upsertTimelineItems(prev, event.items));
+          setCompaction((current) =>
+            reconcileCompactionTimeline(current, event.items, event.asid || activeAsid || '')
+          );
           // Pinning to the latest message while the reader is at the bottom is
           // LegendList's `maintainScrollAtEnd` job (threshold-guarded); a
           // manual scrollToEnd here would start a new animation on every
@@ -2425,12 +2433,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           // Likewise: a subagent compacting its own context is not this
           // session's pill.
           if (!forActiveSession) break;
-          setCompaction(
-            event.status === 'completed'
-              ? null
-              : event.status === 'failed'
-                ? { status: 'failed', reason: event.reason }
-                : { status: 'running', reason: event.reason }
+          setCompaction((current) =>
+            reconcileCompactionTimeline(
+              applyCompactionEvent(
+                current,
+                { ...event, asid: event.asid || activeAsid || '' },
+                transcriptStore.getState().timeline
+              ),
+              transcriptStore.getState().timeline,
+              activeAsid ?? ''
+            )
           );
           // The boundary itself arrives in the timeline; what changed here is
           // how much of the window is left.
@@ -2455,6 +2467,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     [
       setTimeline,
       activeAsid,
+      transcriptStore,
       loadSnapshot,
       questionDrafts,
       questionDraftOwner,
@@ -2512,6 +2525,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         }
         if (delta.items.length > 0 && replaceAgentTranscript('silent', readRuntime())) {
           setTimeline((prev) => upsertTimelineItems(prev, delta.items));
+          setCompaction((current) => reconcileCompactionTimeline(current, delta.items, asid));
         }
         // Bound out of the union rather than asserted: there is no `!` on
         // anything that came off the wire anywhere in this surface.
@@ -2808,17 +2822,23 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    */
   const handleCompactContext = useCallback(() => {
     if (!activeAsid) return;
-    setCompaction({ status: 'running', reason: 'manual' });
+    const requested = beginCompaction(
+      activeAsid,
+      'manual',
+      syncRef.current.seq,
+      transcriptStore.getState().timeline
+    );
+    setCompaction(requested);
     compactAgentSession(activeAsid).catch((err) => {
       console.warn('Failed to compact session:', err);
-      setCompaction(null);
+      setCompaction((current) => (current === requested ? null : current));
       showToast({
         variant: 'danger',
         title: t`Could not compact`,
         message: agentErrorRef.current(err),
       });
     });
-  }, [activeAsid, showToast, t]);
+  }, [activeAsid, showToast, t, transcriptStore]);
 
   /**
    * Clearing the context is starting a session, not typing `/clear`.
@@ -2887,9 +2907,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     [activeAsid, sessionId, showScreenNotice, t]
   );
 
-  /** A failed compaction stays until the reader has seen it. */
+  /** A failed notice or a completed stream awaiting its boundary can be dismissed. */
   const dismissCompaction = useCallback(() => {
-    setCompaction((current) => (current?.status === 'failed' ? null : current));
+    setCompaction((current) => (current?.status !== 'running' ? null : current));
   }, []);
 
   const handleCancelInboxItem = useCallback(
@@ -5216,7 +5236,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       yoloMode,
       todos: activeTodos ?? EMPTY_TODOS,
       inbox,
-      compaction,
+      compaction:
+        compaction && compaction.status !== 'completed'
+          ? { status: compaction.status, reason: compaction.reason }
+          : null,
       contextUsage,
       commands,
       savedPermissionsRevision,

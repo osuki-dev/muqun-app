@@ -1249,6 +1249,10 @@ msgstr "Классический"
 msgid "Clear"
 msgstr "Очистить"
 
+#: src/components/in-app-notification-host.tsx
+msgid "Clear all"
+msgstr "Очистить все"
+
 #: src/components/settings-storage.tsx
 msgid "Clear cache"
 msgstr "Очистить кэш"
@@ -1295,6 +1299,10 @@ msgstr "Очищаем…"
 msgid "Clears cache when due after opening Muqun. Saved themes are kept."
 msgstr "Очищает кеш после открытия Muqun, когда истечёт интервал. Сохранённые темы остаются"
 
+#: src/components/in-app-notification-host.tsx
+msgid "Clears notifications only. Pending tasks still need your attention."
+msgstr "Удаляются только уведомления. Ожидающие задачи по-прежнему требуют вашего внимания"
+
 #: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
 #: src/i18n/labels.ts
@@ -1318,6 +1326,7 @@ msgstr "Закрыть меню"
 msgid "Close new task"
 msgstr "Закрыть новую задачу"
 
+#: src/components/agent-tool-card.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/image-preview-modal.tsx
@@ -1859,6 +1868,10 @@ msgstr "Не удалось проверить размер загрузки. П
 msgid "Could not compact"
 msgstr "Не удалось сжать"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not confirm submission"
+msgstr "Не удалось подтвердить отправку"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not connect"
 msgstr "Не удалось подключиться"
@@ -2398,6 +2411,10 @@ msgstr "отсоединён на {head}"
 #: src/components/changes-worktree-list.tsx
 msgid "Detached at {head}"
 msgstr "Отсоединён на {head}"
+
+#: src/components/in-app-notification-host.tsx
+msgid "Details"
+msgstr "Подробности"
 
 #: src/lib/demo-gateway.ts
 msgid "Development"
@@ -3107,15 +3124,19 @@ msgstr "Если проблема сохраняется, перезапусти
 msgid "Image"
 msgstr "Изображение"
 
+#: src/components/image-preview-modal.tsx
+msgid "Image preview"
+msgstr "Предпросмотр изображения"
+
 #: src/components/agent-message-block.tsx
-#: src/components/asset-viewer.tsx
+#: src/components/file-text-body.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image unavailable"
 msgstr "Изображение недоступно"
 
 #. placeholder {0}: alt.trim()
 #: src/components/agent-message-block.tsx
-#: src/components/asset-viewer.tsx
+#: src/components/file-text-body.tsx
 msgid "Image unavailable: {0}"
 msgstr "Изображение недоступно: {0}"
 
@@ -3426,10 +3447,6 @@ msgstr "Стрелка влево"
 #: src/components/virtual-keyboard.tsx
 msgid "Letters"
 msgstr "Буквы"
-
-#: src/components/agent-session-tree-sheet.tsx
-msgid "Level {depth}"
-msgstr "Уровень {depth}"
 
 #: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
@@ -3859,6 +3876,10 @@ msgstr "Позже"
 #: src/components/agent-composer.tsx
 msgid "Next"
 msgstr "Далее"
+
+#: src/components/image-preview-modal.tsx
+msgid "Next image"
+msgstr "Следующее изображение"
 
 #: src/components/in-app-notification-host.tsx
 #: src/components/notice-deck.tsx
@@ -4574,10 +4595,6 @@ msgstr "Палитра (до 4)"
 msgid "Panes on computer cards"
 msgstr "Панели на карточках компьютеров"
 
-#: src/components/agent-session-tree-sheet.tsx
-msgid "Parent: {parentTitle}"
-msgstr "Родительский сеанс: {parentTitle}"
-
 #: src/components/ssh-host-form.tsx
 msgid "Passphrase (optional)"
 msgstr "Парольная фраза (необязательно)"
@@ -4717,6 +4734,10 @@ msgstr "Посмотреть и применить"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "Сначала просмотрите тему. Текущая тема не изменится"
+
+#: src/components/image-preview-modal.tsx
+msgid "Previous image"
+msgstr "Предыдущее изображение"
 
 #: src/components/agent-title-pill.tsx
 msgid "Previous session"
@@ -5111,6 +5132,10 @@ msgstr "Запрос не удался"
 msgid "Requested permissions"
 msgstr "Запрошенные разрешения"
 
+#: src/components/agent-composer.tsx
+msgid "Requesting queued delivery…"
+msgstr "Запрашивается постановка сообщения в очередь…"
+
 #: src/components/settings-security.tsx
 msgid "Required on launch and after 30 seconds in the background."
 msgstr "Требуется при запуске и после 30 секунд в фоне"
@@ -5127,6 +5152,10 @@ msgstr "Требуется iOS 16.1 или новее"
 #: src/components/computer-map/screen.tsx
 msgid "Reset view"
 msgstr "Сбросить вид"
+
+#: src/components/image-preview-modal.tsx
+msgid "Reset zoom"
+msgstr "Сбросить масштаб"
 
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
@@ -5558,6 +5587,10 @@ msgstr "Отправить эту задачу: {assignmentLabel}"
 msgid "Send to agent"
 msgstr "Отправить агенту"
 
+#: src/components/agent-composer.tsx
+msgid "Sending attachment message…"
+msgstr "Отправляется сообщение с вложениями…"
+
 #. placeholder {0}: inboxItemText(item) || item.type
 #: src/components/agent-composer.tsx
 msgid "Sending next: {0}"
@@ -5708,6 +5741,10 @@ msgstr "Показывать оформление на главном экран
 msgid "Show camera details"
 msgstr "Показать сведения о камере"
 
+#: src/components/in-app-notification-host.tsx
+msgid "Show details"
+msgstr "Показать подробности"
+
 #: src/components/settings-terminal.tsx
 msgid "Show Esc, Tab, Ctrl and navigation keys above input."
 msgstr "Показывать Esc, Tab, Ctrl и клавиши навигации над полем ввода"
@@ -5726,6 +5763,7 @@ msgstr "Показывать текст на главной"
 
 #: src/components/home-computer-cards.tsx
 #: src/components/home-recent-sessions.tsx
+#: src/components/in-app-notification-host.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Show less"
 msgstr "Показать меньше"
@@ -6107,6 +6145,10 @@ msgstr "Субагент"
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "Отправить"
+
+#: src/components/agent-composer.tsx
+msgid "Submitting follow-up…"
+msgstr "Отправляется последующее сообщение…"
 
 #: src/i18n/labels.ts
 msgid "Summarise progress"
@@ -6901,7 +6943,7 @@ msgstr "Токенов за сессию"
 msgid "Tokens usage and cost"
 msgstr "Использование токенов и стоимость"
 
-#: src/components/asset-viewer.tsx
+#: src/components/file-text-body.tsx
 msgid "Too large to highlight — showing plain text."
 msgstr "Слишком большой для подсветки — показан обычным текстом"
 
@@ -6929,6 +6971,7 @@ msgstr "Не удалось распознать речь. Проверьте с
 msgid "Transcription mode"
 msgstr "Режим расшифровки"
 
+#: src/components/agent-tool-card.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/tool-call-code-rows.tsx
@@ -7442,6 +7485,11 @@ msgstr "Ваши агенты, где угодно"
 msgid "Your checkout, in one workspace."
 msgstr "Рабочая копия в едином пространстве"
 
+#. placeholder {0}: agentErrorRef.current(err)
+#: src/components/agent-workbench.tsx
+msgid "Your draft is kept. Check the conversation before sending again. {0}"
+msgstr "Ваш черновик сохранён. Проверьте переписку перед повторной отправкой. {0}"
+
 #: src/components/agent-message-block.tsx
 msgid "Your message"
 msgstr "Ваше сообщение"
@@ -7449,3 +7497,11 @@ msgstr "Ваше сообщение"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "Ваши привязанные компьютеры"
+
+#: src/components/image-preview-modal.tsx
+msgid "Zoom in"
+msgstr "Увеличить"
+
+#: src/components/image-preview-modal.tsx
+msgid "Zoom out"
+msgstr "Уменьшить"

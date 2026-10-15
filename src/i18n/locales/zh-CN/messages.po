@@ -1249,6 +1249,10 @@ msgstr "经典"
 msgid "Clear"
 msgstr "清除"
 
+#: src/components/in-app-notification-host.tsx
+msgid "Clear all"
+msgstr "清除全部"
+
 #: src/components/settings-storage.tsx
 msgid "Clear cache"
 msgstr "清除缓存"
@@ -1295,6 +1299,10 @@ msgstr "正在清除…"
 msgid "Clears cache when due after opening Muqun. Saved themes are kept."
 msgstr "到期后打开 Muqun 时清理缓存，保留已保存的主题"
 
+#: src/components/in-app-notification-host.tsx
+msgid "Clears notifications only. Pending tasks still need your attention."
+msgstr "仅清除通知。待处理任务仍需你处理"
+
 #: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
 #: src/i18n/labels.ts
@@ -1318,6 +1326,7 @@ msgstr "收起"
 msgid "Close new task"
 msgstr "关闭新任务"
 
+#: src/components/agent-tool-card.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/image-preview-modal.tsx
@@ -1859,6 +1868,10 @@ msgstr "无法检查下载大小，请重试"
 msgid "Could not compact"
 msgstr "无法压缩"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not confirm submission"
+msgstr "无法确认提交"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not connect"
 msgstr "无法连接"
@@ -2398,6 +2411,10 @@ msgstr "分离于 {head}"
 #: src/components/changes-worktree-list.tsx
 msgid "Detached at {head}"
 msgstr "分离于 {head}"
+
+#: src/components/in-app-notification-host.tsx
+msgid "Details"
+msgstr "详情"
 
 #: src/lib/demo-gateway.ts
 msgid "Development"
@@ -3107,15 +3124,19 @@ msgstr "如果问题仍然存在，请重启 App 或检查 App 安装"
 msgid "Image"
 msgstr "图片"
 
+#: src/components/image-preview-modal.tsx
+msgid "Image preview"
+msgstr "图片预览"
+
 #: src/components/agent-message-block.tsx
-#: src/components/asset-viewer.tsx
+#: src/components/file-text-body.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image unavailable"
 msgstr "图片无法显示"
 
 #. placeholder {0}: alt.trim()
 #: src/components/agent-message-block.tsx
-#: src/components/asset-viewer.tsx
+#: src/components/file-text-body.tsx
 msgid "Image unavailable: {0}"
 msgstr "图片无法显示：{0}"
 
@@ -3426,10 +3447,6 @@ msgstr "向左键"
 #: src/components/virtual-keyboard.tsx
 msgid "Letters"
 msgstr "字母"
-
-#: src/components/agent-session-tree-sheet.tsx
-msgid "Level {depth}"
-msgstr "第 {depth} 层"
 
 #: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
@@ -3859,6 +3876,10 @@ msgstr "较新"
 #: src/components/agent-composer.tsx
 msgid "Next"
 msgstr "下一步"
+
+#: src/components/image-preview-modal.tsx
+msgid "Next image"
+msgstr "下一张图片"
 
 #: src/components/in-app-notification-host.tsx
 #: src/components/notice-deck.tsx
@@ -4574,10 +4595,6 @@ msgstr "配色（最多 4 色）"
 msgid "Panes on computer cards"
 msgstr "电脑卡片上的面板"
 
-#: src/components/agent-session-tree-sheet.tsx
-msgid "Parent: {parentTitle}"
-msgstr "父会话：{parentTitle}"
-
 #: src/components/ssh-host-form.tsx
 msgid "Passphrase (optional)"
 msgstr "密码短语（可选）"
@@ -4717,6 +4734,10 @@ msgstr "预览并应用"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "先预览，当前主题保持不变"
+
+#: src/components/image-preview-modal.tsx
+msgid "Previous image"
+msgstr "上一张图片"
 
 #: src/components/agent-title-pill.tsx
 msgid "Previous session"
@@ -5111,6 +5132,10 @@ msgstr "请求失败"
 msgid "Requested permissions"
 msgstr "请求的权限"
 
+#: src/components/agent-composer.tsx
+msgid "Requesting queued delivery…"
+msgstr "正在请求排队投递…"
+
 #: src/components/settings-security.tsx
 msgid "Required on launch and after 30 seconds in the background."
 msgstr "启动时，以及在后台超过 30 秒后都会要求验证"
@@ -5127,6 +5152,10 @@ msgstr "需要 iOS 16.1 或更高版本"
 #: src/components/computer-map/screen.tsx
 msgid "Reset view"
 msgstr "重置视角"
+
+#: src/components/image-preview-modal.tsx
+msgid "Reset zoom"
+msgstr "重置缩放"
 
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
@@ -5558,6 +5587,10 @@ msgstr "把这个任务发给 {assignmentLabel}"
 msgid "Send to agent"
 msgstr "发送给代理"
 
+#: src/components/agent-composer.tsx
+msgid "Sending attachment message…"
+msgstr "正在发送附件消息…"
+
 #. placeholder {0}: inboxItemText(item) || item.type
 #: src/components/agent-composer.tsx
 msgid "Sending next: {0}"
@@ -5708,6 +5741,10 @@ msgstr "在首页显示图稿"
 msgid "Show camera details"
 msgstr "显示相机详细信息"
 
+#: src/components/in-app-notification-host.tsx
+msgid "Show details"
+msgstr "显示详情"
+
 #: src/components/settings-terminal.tsx
 msgid "Show Esc, Tab, Ctrl and navigation keys above input."
 msgstr "在输入栏上方显示 Esc、Tab、Ctrl 和方向键"
@@ -5726,6 +5763,7 @@ msgstr "显示首页文字"
 
 #: src/components/home-computer-cards.tsx
 #: src/components/home-recent-sessions.tsx
+#: src/components/in-app-notification-host.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Show less"
 msgstr "显示更少"
@@ -6107,6 +6145,10 @@ msgstr "子代理"
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "提交"
+
+#: src/components/agent-composer.tsx
+msgid "Submitting follow-up…"
+msgstr "正在提交后续消息…"
 
 #: src/i18n/labels.ts
 msgid "Summarise progress"
@@ -6901,7 +6943,7 @@ msgstr "本次会话的 token"
 msgid "Tokens usage and cost"
 msgstr "Token 用量与花费"
 
-#: src/components/asset-viewer.tsx
+#: src/components/file-text-body.tsx
 msgid "Too large to highlight — showing plain text."
 msgstr "文件太大，无法着色，显示为纯文本"
 
@@ -6929,6 +6971,7 @@ msgstr "转写失败。请检查语音服务后重试"
 msgid "Transcription mode"
 msgstr "转录模式"
 
+#: src/components/agent-tool-card.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/tool-call-code-rows.tsx
@@ -7442,6 +7485,11 @@ msgstr "你的代理，随时随地"
 msgid "Your checkout, in one workspace."
 msgstr "一个工作区，掌握当前检出"
 
+#. placeholder {0}: agentErrorRef.current(err)
+#: src/components/agent-workbench.tsx
+msgid "Your draft is kept. Check the conversation before sending again. {0}"
+msgstr "草稿已保留。再次发送前，请先检查对话。{0}"
+
 #: src/components/agent-message-block.tsx
 msgid "Your message"
 msgstr "你的消息"
@@ -7449,3 +7497,11 @@ msgstr "你的消息"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "你已配对的电脑"
+
+#: src/components/image-preview-modal.tsx
+msgid "Zoom in"
+msgstr "放大"
+
+#: src/components/image-preview-modal.tsx
+msgid "Zoom out"
+msgstr "缩小"

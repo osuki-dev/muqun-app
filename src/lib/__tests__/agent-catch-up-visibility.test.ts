@@ -2,6 +2,12 @@ import { expect, test } from 'bun:test';
 import { runInNewContext } from 'node:vm';
 import { productionSource, transpile, walk } from '../../test-support/production-source';
 import { advanceSeq, askCatchUp } from '../agent-catch-up';
+import {
+  beginCompaction,
+  reconcileCompactionTimeline,
+  type CompactionActivity,
+} from '../agent-compaction';
+import type { TimelineItem } from '../agent-protocol';
 import { replaceAgentTranscript, type AgentSessionRuntime } from '../agent-session-runtime';
 
 const source = productionSource('src/components/agent-workbench.tsx');
@@ -25,9 +31,11 @@ test('recovered foreground replies are read; external history, background, super
     'running',
     'external',
     'persisted',
+    'compacted',
   ] as const) {
     const marked: string[] = [];
     let timelineWrites = 0;
+    let compaction: CompactionActivity | null = beginCompaction('session-a', 'manual', 5);
     const applied: [string, number][] = [];
     const activeAsidRef = { current: 'session-a' };
     let resolve!: (delta: unknown) => void;
@@ -56,6 +64,12 @@ test('recovered foreground replies are read; external history, background, super
       setTimeline: () => {
         timelineWrites++;
       },
+      reconcileCompactionTimeline,
+      setCompaction: (
+        update: (current: CompactionActivity | null) => CompactionActivity | null
+      ) => {
+        compaction = update(compaction);
+      },
       setSessionInfo: () => {},
       getAgentTimelineDelta: () => delta,
       markAgentSessionViewed: async (asid: string) => {
@@ -68,17 +82,41 @@ test('recovered foreground replies are read; external history, background, super
     if (scenario === 'superseded') activeAsidRef.current = 'session-b';
     resolve({
       resync: false,
-      items: [{ id: 'new-history-row' }],
+      items: [
+        {
+          id: 'new-history-row',
+          message_id: 'message-1',
+          role: 'assistant',
+          ordinal: 0,
+          seq: 6,
+          updated_ms: 1000,
+          part:
+            scenario === 'compacted'
+              ? {
+                  type: 'compaction',
+                  status: 'completed',
+                  reason: 'manual',
+                  summary: 'Recovered summary',
+                }
+              : { type: 'text', text: 'Recovered reply' },
+        } satisfies TimelineItem,
+      ],
       status: scenario === 'running' ? 'busy' : 'idle',
       latest_seq: 6,
     });
     await new Promise((yes) => setImmediate(yes));
     expect(timelineWrites).toBe(scenario === 'external' || scenario === 'superseded' ? 0 : 1);
     expect(marked).toEqual(
-      scenario === 'foreground' || scenario === 'persisted' ? ['session-a'] : []
+      scenario === 'foreground' || scenario === 'persisted' || scenario === 'compacted'
+        ? ['session-a']
+        : []
     );
     expect(applied).toEqual(
-      scenario === 'foreground' || scenario === 'persisted' ? [['session-a', 123]] : []
+      scenario === 'foreground' || scenario === 'persisted' || scenario === 'compacted'
+        ? [['session-a', 123]]
+        : []
     );
+    if (scenario === 'compacted') expect(compaction).toBeNull();
+    else expect(compaction?.status).toBe('running');
   }
 });

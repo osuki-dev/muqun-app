@@ -33,3 +33,74 @@ screenshot "shots/composer-compact.png"
 is visible "id=terminal-composer-input"
 is hidden "id=composer-expanded-actions"
 screenshot "shots/composer-compact-restored.png"
+
+# section compaction-open
+# Unlike the streaming demo sheet, this route mounts the normal Workbench.
+open "muqun://agent?asid=demo-compaction-layout&agentId=opencode"
+wait "id=agent-composer-tokens-pill" 15000
+
+# section compaction-draft
+# A multi-line dock must exceed the Workbench's minimum bottom reserve;
+# otherwise that minimum can conceal a missing measured status-row height.
+press "id=agent-composer-input"
+fill "id=agent-composer-input" "Offline layout draft. Keep this unsent text while the existing compaction status appears and disappears. A sufficiently long draft exercises the measured dock rather than relying on a minimum transcript inset. More words keep the field naturally wrapped on a phone and remain a harmless draft on a wider tablet. This sample never sends a prompt or starts a provider. The additional fixed paragraph also fills several lines in a wider detail column so both layouts exercise a measured multi-line field. Nothing here is a request to an agent: keep the whole draft local and clear it after the status and keyboard samples have been captured."
+wait stable 400 5000
+keyboard restore-ime
+keyboard dismiss
+wait stable 400 5000
+wait "text=\"Thinking…\"" 10000
+
+# section compaction-advance
+# Each real Context → Compact action advances one held demo event, no timer.
+press "id=agent-composer-tokens-pill"
+scroll down --until "id=agent-context-compact-btn"
+wait "id=agent-context-compact-btn" 10000
+press "id=agent-context-compact-btn"
+wait absent "id=agent-context-sheet" 10000
+wait "id=agent-composer-tokens-pill" 10000
+wait stable 400 5000
+
+# section compaction-samples
+# Presence alone is not geometry acceptance. Keep three real native trees and
+# pixels for the mandatory receipt checker (tail/pill bounds, reserve, stability).
+# A real transcript-body drag reaches the end where accessibility scroll does not.
+# Repeat it before EVERY settled sample: the existing bounds-stability gate must
+# reject a first pan that stopped short, or a temporary overscroll position.
+gesture pan "${X}" "${Y}" "${DX}" "${DY}" 400
+wait stable 400 5000
+wait "text=\"Thinking…\"" 10000
+wait stable 400 5000
+snapshot
+screenshot "shots/compaction-${STATE}-0.png"
+wait 400
+gesture pan "${X}" "${Y}" "${DX}" "${DY}" 400
+wait stable 400 5000
+snapshot
+screenshot "shots/compaction-${STATE}-1.png"
+wait 400
+gesture pan "${X}" "${Y}" "${DX}" "${DY}" 400
+wait stable 400 5000
+snapshot
+screenshot "shots/compaction-${STATE}-2.png"
+
+# section compaction-keyboard-open
+press "id=agent-composer-input"
+wait stable 400 5000
+keyboard require-visible
+
+# section compaction-keyboard-close
+keyboard dismiss
+wait stable 400 5000
+
+# section compaction-dismiss
+press "id=agent-composer-compaction-pill"
+wait absent "id=agent-composer-compaction-pill" 10000
+wait stable 400 5000
+
+# section compaction-clear
+press "id=agent-composer-input"
+open "dev.osuki.muqun" --test-ime
+fill "id=agent-composer-input" ""
+keyboard dismiss
+open "muqun:///"
+wait stable 400 5000

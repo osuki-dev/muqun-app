@@ -1249,6 +1249,10 @@ msgstr "Klassisch"
 msgid "Clear"
 msgstr "Leeren"
 
+#: src/components/in-app-notification-host.tsx
+msgid "Clear all"
+msgstr "Alle leeren"
+
 #: src/components/settings-storage.tsx
 msgid "Clear cache"
 msgstr "Cache leeren"
@@ -1295,6 +1299,10 @@ msgstr "Wird geleert…"
 msgid "Clears cache when due after opening Muqun. Saved themes are kept."
 msgstr "Bereinigt den Cache nach dem Öffnen von Muqun, wenn das Intervall abgelaufen ist. Gespeicherte Themes bleiben erhalten"
 
+#: src/components/in-app-notification-host.tsx
+msgid "Clears notifications only. Pending tasks still need your attention."
+msgstr "Entfernt nur Benachrichtigungen. Ausstehende Aufgaben benötigen weiterhin deine Aufmerksamkeit"
+
 #: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
 #: src/i18n/labels.ts
@@ -1318,6 +1326,7 @@ msgstr "Menü schließen"
 msgid "Close new task"
 msgstr "Neue Aufgabe schließen"
 
+#: src/components/agent-tool-card.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/image-preview-modal.tsx
@@ -1859,6 +1868,10 @@ msgstr "Downloadgröße konnte nicht geprüft werden. Erneut versuchen"
 msgid "Could not compact"
 msgstr "Verdichtung nicht möglich"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not confirm submission"
+msgstr "Übermittlung konnte nicht bestätigt werden"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not connect"
 msgstr "Verbindung fehlgeschlagen"
@@ -2398,6 +2411,10 @@ msgstr "losgelöst bei {head}"
 #: src/components/changes-worktree-list.tsx
 msgid "Detached at {head}"
 msgstr "Losgelöst bei {head}"
+
+#: src/components/in-app-notification-host.tsx
+msgid "Details"
+msgstr "Details"
 
 #: src/lib/demo-gateway.ts
 msgid "Development"
@@ -3107,15 +3124,19 @@ msgstr "Wenn das Problem weiterhin besteht, starte die App neu oder prüfe die A
 msgid "Image"
 msgstr "Bild"
 
+#: src/components/image-preview-modal.tsx
+msgid "Image preview"
+msgstr "Bildvorschau"
+
 #: src/components/agent-message-block.tsx
-#: src/components/asset-viewer.tsx
+#: src/components/file-text-body.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image unavailable"
 msgstr "Bild nicht verfügbar"
 
 #. placeholder {0}: alt.trim()
 #: src/components/agent-message-block.tsx
-#: src/components/asset-viewer.tsx
+#: src/components/file-text-body.tsx
 msgid "Image unavailable: {0}"
 msgstr "Bild nicht verfügbar: {0}"
 
@@ -3426,10 +3447,6 @@ msgstr "Pfeil nach links"
 #: src/components/virtual-keyboard.tsx
 msgid "Letters"
 msgstr "Buchstaben"
-
-#: src/components/agent-session-tree-sheet.tsx
-msgid "Level {depth}"
-msgstr "Ebene {depth}"
 
 #: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
@@ -3859,6 +3876,10 @@ msgstr "Neuer"
 #: src/components/agent-composer.tsx
 msgid "Next"
 msgstr "Weiter"
+
+#: src/components/image-preview-modal.tsx
+msgid "Next image"
+msgstr "Nächstes Bild"
 
 #: src/components/in-app-notification-host.tsx
 #: src/components/notice-deck.tsx
@@ -4574,10 +4595,6 @@ msgstr "Palette (bis zu 4)"
 msgid "Panes on computer cards"
 msgstr "Panels auf Computer-Karten"
 
-#: src/components/agent-session-tree-sheet.tsx
-msgid "Parent: {parentTitle}"
-msgstr "Übergeordnet: {parentTitle}"
-
 #: src/components/ssh-host-form.tsx
 msgid "Passphrase (optional)"
 msgstr "Passphrase (optional)"
@@ -4717,6 +4734,10 @@ msgstr "Ansehen und anwenden"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "Zuerst die Vorschau ansehen. Dein aktuelles Theme bleibt unverändert"
+
+#: src/components/image-preview-modal.tsx
+msgid "Previous image"
+msgstr "Vorheriges Bild"
 
 #: src/components/agent-title-pill.tsx
 msgid "Previous session"
@@ -5111,6 +5132,10 @@ msgstr "Anfrage fehlgeschlagen"
 msgid "Requested permissions"
 msgstr "Angeforderte Berechtigungen"
 
+#: src/components/agent-composer.tsx
+msgid "Requesting queued delivery…"
+msgstr "Zustellung in die Warteschlange wird angefordert…"
+
 #: src/components/settings-security.tsx
 msgid "Required on launch and after 30 seconds in the background."
 msgstr "Erforderlich beim Start und nach 30 Sekunden im Hintergrund"
@@ -5127,6 +5152,10 @@ msgstr "Erfordert iOS 16.1 oder neuer"
 #: src/components/computer-map/screen.tsx
 msgid "Reset view"
 msgstr "Ansicht zurücksetzen"
+
+#: src/components/image-preview-modal.tsx
+msgid "Reset zoom"
+msgstr "Zoom zurücksetzen"
 
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
@@ -5558,6 +5587,10 @@ msgstr "Diese Aufgabe an {assignmentLabel} senden"
 msgid "Send to agent"
 msgstr "An den Agenten senden"
 
+#: src/components/agent-composer.tsx
+msgid "Sending attachment message…"
+msgstr "Nachricht mit Anhängen wird gesendet…"
+
 #. placeholder {0}: inboxItemText(item) || item.type
 #: src/components/agent-composer.tsx
 msgid "Sending next: {0}"
@@ -5708,6 +5741,10 @@ msgstr "Artwork auf der Startseite anzeigen"
 msgid "Show camera details"
 msgstr "Kameradetails anzeigen"
 
+#: src/components/in-app-notification-host.tsx
+msgid "Show details"
+msgstr "Details anzeigen"
+
 #: src/components/settings-terminal.tsx
 msgid "Show Esc, Tab, Ctrl and navigation keys above input."
 msgstr "Zeigt Esc, Tab, Ctrl und die Navigationstasten über der Eingabe"
@@ -5726,6 +5763,7 @@ msgstr "Text auf der Startseite anzeigen"
 
 #: src/components/home-computer-cards.tsx
 #: src/components/home-recent-sessions.tsx
+#: src/components/in-app-notification-host.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Show less"
 msgstr "Weniger anzeigen"
@@ -6107,6 +6145,10 @@ msgstr "Subagent"
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "Absenden"
+
+#: src/components/agent-composer.tsx
+msgid "Submitting follow-up…"
+msgstr "Folgenachricht wird übermittelt…"
 
 #: src/i18n/labels.ts
 msgid "Summarise progress"
@@ -6901,7 +6943,7 @@ msgstr "Tokens in dieser Sitzung"
 msgid "Tokens usage and cost"
 msgstr "Token-Nutzung und Kosten"
 
-#: src/components/asset-viewer.tsx
+#: src/components/file-text-body.tsx
 msgid "Too large to highlight — showing plain text."
 msgstr "Zu groß für Syntaxhervorhebung — als einfacher Text angezeigt"
 
@@ -6929,6 +6971,7 @@ msgstr "Die Transkription ist fehlgeschlagen. Prüfe deinen Sprachdienst und ver
 msgid "Transcription mode"
 msgstr "Transkriptionsmodus"
 
+#: src/components/agent-tool-card.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/tool-call-code-rows.tsx
@@ -7442,6 +7485,11 @@ msgstr "Deine Agenten, überall dabei"
 msgid "Your checkout, in one workspace."
 msgstr "Dein Checkout in einem Arbeitsbereich"
 
+#. placeholder {0}: agentErrorRef.current(err)
+#: src/components/agent-workbench.tsx
+msgid "Your draft is kept. Check the conversation before sending again. {0}"
+msgstr "Dein Entwurf bleibt erhalten. Prüfe die Unterhaltung, bevor du erneut sendest. {0}"
+
 #: src/components/agent-message-block.tsx
 msgid "Your message"
 msgstr "Deine Nachricht"
@@ -7449,3 +7497,11 @@ msgstr "Deine Nachricht"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "Deine gekoppelten Computer"
+
+#: src/components/image-preview-modal.tsx
+msgid "Zoom in"
+msgstr "Vergrößern"
+
+#: src/components/image-preview-modal.tsx
+msgid "Zoom out"
+msgstr "Verkleinern"

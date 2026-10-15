@@ -1,10 +1,181 @@
 import { expect, test } from 'bun:test';
 
 import { containedImageRect } from '../hero-feather';
-import { launchArtworkLanding } from '../launch-artwork-landing';
+import {
+  launchArtworkDeparture,
+  launchArtworkDepartureLimit,
+  launchArtworkDepartureOffset,
+  launchArtworkLanding,
+} from '../launch-artwork-landing';
 
 const PORTRAIT = { width: 1024, height: 2048 };
 const SOURCE = 'file:///theme/portrait.webp';
+
+const DEPARTURE = {
+  enabled: true,
+  reducedMotion: false,
+  box: { width: 300, height: 300 },
+  centre: { x: 200, y: 400 },
+  viewport: { x: 0, y: 32, width: 400, height: 736 },
+};
+
+test.each([
+  { width: 800, height: 640, top: 32, bottom: 32 },
+  { width: 640, height: 800, top: 160, bottom: 32 },
+  { width: 800, height: 640, top: 40, bottom: 32 },
+])(
+  'resize projects only the already-travelled offset into the current safe range: %j',
+  (screen) => {
+    const initial = {
+      ...DEPARTURE,
+      box: { width: 473.6, height: 473.6 },
+      centre: { x: 320, y: 400 },
+      viewport: { x: 0, y: 32, width: 640, height: 736 },
+    };
+    const captured = launchArtworkDeparture(initial);
+    expect(captured).toBeCloseTo(-14.72);
+    const box = Math.min(screen.width * 0.74, 560);
+    const resized = {
+      ...initial,
+      box: { width: box, height: box },
+      centre: { x: screen.width / 2, y: screen.height / 2 },
+      viewport: {
+        x: 0,
+        y: screen.top,
+        width: screen.width,
+        height: screen.height - screen.top - screen.bottom,
+      },
+    };
+    const allowed = launchArtworkDeparture(resized);
+    for (const progress of [0, 0.25, 0.5, 0.75, 1]) {
+      const before = launchArtworkDepartureOffset(captured, progress, captured);
+      const after = launchArtworkDepartureOffset(captured, progress, allowed);
+      expect(after).toBeCloseTo(Math.max(captured * progress, allowed));
+      // No restart or retarget when the currently travelled displacement still fits.
+      if (before >= allowed) expect(after).toBe(before);
+      expect(Number.isFinite(after)).toBe(true);
+      expect(resized.centre.y - box / 2 + after).toBeGreaterThanOrEqual(screen.top);
+      expect(resized.centre.y + box / 2 + after).toBeLessThanOrEqual(screen.height - screen.bottom);
+    }
+    // Returning to a roomier viewport cannot amplify the original single journey.
+    expect(
+      launchArtworkDepartureOffset(captured, 0.75, launchArtworkDeparture(initial))
+    ).toBeCloseTo(captured * 0.75);
+  }
+);
+
+test('the reported landscape endpoint is -8, not the captured -14.72 that clips 6.72 points', () => {
+  const allowed = launchArtworkDeparture({
+    ...DEPARTURE,
+    box: { width: 560, height: 560 },
+    centre: { x: 400, y: 320 },
+    viewport: { x: 0, y: 32, width: 800, height: 576 },
+  });
+  expect(allowed).toBe(-8);
+  expect(launchArtworkDepartureOffset(-14.72, 0.5, allowed)).toBe(-7.36);
+  expect(launchArtworkDepartureOffset(-14.72, 1, allowed)).toBe(-8);
+});
+
+test('a resize sequence retains its safety limit instead of jumping back when space returns', () => {
+  const captured = -14.72;
+  let limit = captured;
+  const frames = [
+    { progress: 0.5, allowed: captured, offset: -7.36 },
+    { progress: 0.5, allowed: -8, offset: -7.36 },
+    { progress: 0.75, allowed: -8, offset: -8 },
+    { progress: 0.75, allowed: captured, offset: -8 },
+    { progress: 1, allowed: captured, offset: -8 },
+    { progress: 1, allowed: -3, offset: -3 },
+    { progress: 1, allowed: 0, offset: 0 },
+    { progress: 1, allowed: captured, offset: 0 },
+  ];
+  for (const frame of frames) {
+    limit = launchArtworkDepartureLimit(limit, frame.allowed);
+    expect(launchArtworkDepartureOffset(captured, frame.progress, limit)).toBe(frame.offset);
+    expect(limit).toBeGreaterThanOrEqual(frame.allowed);
+    expect(Number.isFinite(limit)).toBe(true);
+  }
+  expect(launchArtworkDepartureLimit(NaN, -8)).toBe(0);
+  expect(launchArtworkDepartureLimit(-8, Infinity)).toBe(0);
+});
+
+test('inset changes, no room, reduced motion and invalid resize values yield finite safe offsets', () => {
+  for (const progress of [0, 0.5, 1]) {
+    for (const top of [245, 250, 251]) {
+      const allowed = launchArtworkDeparture({
+        ...DEPARTURE,
+        viewport: { ...DEPARTURE.viewport, y: top, height: 768 - top },
+      });
+      const offset = launchArtworkDepartureOffset(-14.72, progress, allowed);
+      expect(Number.isFinite(offset)).toBe(true);
+      expect(offset).toBeGreaterThanOrEqual(Math.min(0, top - 250));
+      expect(offset).toBeLessThanOrEqual(0);
+    }
+    for (const flags of [{ enabled: false }, { reducedMotion: true }]) {
+      expect(
+        launchArtworkDepartureOffset(
+          -14.72,
+          progress,
+          launchArtworkDeparture({ ...DEPARTURE, ...flags })
+        )
+      ).toBe(0);
+    }
+  }
+  for (const [captured, progress, allowed] of [
+    [NaN, 0.5, -8],
+    [-14.72, Infinity, -8],
+    [-14.72, 0.5, NaN],
+    [-14.72, -1, -8],
+    [2, 0.5, -8],
+    [-14.72, 0.5, 2],
+  ] as const) {
+    expect(launchArtworkDepartureOffset(captured, progress, allowed)).toBe(0);
+  }
+  expect(launchArtworkDepartureOffset(-14.72, 2, -8)).toBe(-8);
+});
+
+test.each([
+  { width: 150, height: 300 },
+  { width: 300, height: 150 },
+  { width: 300, height: 300 },
+])('independent artwork gets a restrained upward departure for a $width × $height box', (box) => {
+  const delta = launchArtworkDeparture({ ...DEPARTURE, box });
+  expect(delta).toBeLessThan(0);
+  expect(delta).toBeGreaterThanOrEqual(-16);
+  expect(DEPARTURE.centre.y + delta - box.height / 2).toBeGreaterThanOrEqual(DEPARTURE.viewport.y);
+});
+
+test('departure scales with the safe viewport and never moves a full box past its edge', () => {
+  expect(launchArtworkDeparture(DEPARTURE)).toBeCloseTo(-14.72);
+  expect(
+    launchArtworkDeparture({
+      ...DEPARTURE,
+      centre: { x: 640, y: 400 },
+      viewport: { x: 24, y: 24, width: 1232, height: 752 },
+    })
+  ).toBeCloseTo(-15.04);
+  expect(
+    launchArtworkDeparture({
+      ...DEPARTURE,
+      centre: { x: 400, y: 640 },
+      viewport: { x: 24, y: 24, width: 752, height: 1232 },
+    })
+  ).toBe(-16);
+  expect(launchArtworkDeparture({ ...DEPARTURE, centre: { x: 200, y: 184 } })).toBe(-2);
+  expect(launchArtworkDeparture({ ...DEPARTURE, centre: { x: 200, y: 182 } })).toBe(0);
+  expect(
+    launchArtworkDeparture({ ...DEPARTURE, viewport: { x: 0, y: 32, width: 400, height: 400 } })
+  ).toBe(0);
+});
+
+test('default logos, reduced motion, invalid geometry and already clipped boxes stay static', () => {
+  expect(launchArtworkDeparture({ ...DEPARTURE, enabled: false })).toBe(0);
+  expect(launchArtworkDeparture({ ...DEPARTURE, reducedMotion: true })).toBe(0);
+  expect(launchArtworkDeparture({ ...DEPARTURE, box: { width: NaN, height: 300 } })).toBe(0);
+  expect(launchArtworkDeparture({ ...DEPARTURE, box: { width: 300, height: 0 } })).toBe(0);
+  expect(launchArtworkDeparture({ ...DEPARTURE, centre: { x: Infinity, y: 400 } })).toBe(0);
+  expect(launchArtworkDeparture({ ...DEPARTURE, centre: { x: 100, y: 400 } })).toBe(0);
+});
 
 test.each([
   {
@@ -112,12 +283,35 @@ test('only the same complete, visible decoded image can land without a dissolve'
     centre: { x: 200, y: 400 },
   };
   expect(launchArtworkLanding(input).exact).toBe(true);
+  expect(launchArtworkLanding(input).centre).toEqual({ x: 150, y: 200 });
+  expect(launchArtworkLanding(input).scale).toBeCloseTo(2 / 3);
   expect(launchArtworkLanding({ ...input, home: { ...input.home, cropped: true } }).exact).toBe(
     false
   );
   expect(
     launchArtworkLanding({ ...input, home: { ...input.home, intrinsicHeight: undefined } }).exact
   ).toBe(false);
+});
+
+test('a same-image zero-distance landing stays exact rather than adding a departure', () => {
+  expect(
+    launchArtworkLanding({
+      box: { width: 300, height: 300 },
+      intrinsic: PORTRAIT,
+      source: SOURCE,
+      home: {
+        x: 125,
+        y: 250,
+        width: 150,
+        height: 300,
+        source: SOURCE,
+        intrinsicWidth: PORTRAIT.width,
+        intrinsicHeight: PORTRAIT.height,
+      },
+      viewport: DEPARTURE.viewport,
+      centre: DEPARTURE.centre,
+    })
+  ).toEqual({ centre: DEPARTURE.centre, scale: 1, exact: true });
 });
 
 test('unknown dimensions and a wholly hidden target keep the launch centred for its dissolve', () => {

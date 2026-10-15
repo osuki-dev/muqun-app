@@ -3,12 +3,13 @@ import { isPdfFile } from '@/lib/session-assets';
 import { InlineVideoFile } from '@/components/video-asset-preview';
 import { InlineAudioFile } from '@/components/audio-asset-preview';
 import { memo, useCallback, useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Modal, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { plural } from '@lingui/core/macro';
-import { Check, FileText, Play } from 'lucide-react-native';
+import { Check, FileText, Play, X } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { EnrichedMarkdownText, type MarkdownStyle } from 'react-native-enriched-markdown';
 
@@ -17,6 +18,9 @@ import { PressableScale } from '@/components/pressable-scale';
 import { BoundedMarkdown, TruncationFooter } from '@/components/bounded-markdown';
 import { StatusDot } from '@/components/status-dot';
 import { AgentTodoBlock } from '@/components/agent-todo-block';
+import { FileTextBody } from '@/components/file-text-body';
+import { SheetFrame } from '@/components/sheet-ground';
+import { canInlineFileText, readFilePreview, toolFileForPath } from '@/lib/file-text-preview';
 import {
   EmbeddedTerminalToolBlock,
   isToolPending,
@@ -63,7 +67,6 @@ import {
   skillDirectoryFromMetadata,
   skillNameFromMetadata,
   splitUrl,
-  stripReadLineNumbers,
   stripSubagentEnvelope,
   textFromContent,
   toolArgumentLine,
@@ -765,6 +768,7 @@ export const AgentToolCard = memo(function AgentToolCard({
         input,
         target,
         outputText,
+        outputTruncated: truncated,
         files,
         editFiles,
         patchSections,
@@ -788,6 +792,7 @@ export const AgentToolCard = memo(function AgentToolCard({
       input,
       target,
       outputText,
+      truncated,
       files,
       editFiles,
       patchSections,
@@ -909,15 +914,115 @@ export const AgentToolCard = memo(function AgentToolCard({
   );
 });
 
-/** Drops `data:…;base64,…` runs and bare base64 walls from a text body. */
-function stripDataUris(text: string): string {
-  return text
-    .replace(/data:[a-z0-9.+-]+\/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=\s]+/gi, '')
-    .split('\n')
-    .filter((line) => !(line.length > 120 && /^[A-Za-z0-9+/=]+$/.test(line.trim())))
-    .join('\n')
-    .trim();
-}
+/** Small complete runs fit their content using the Files cell/code renderer.
+ * Larger bodies keep an explicit non-scrolling viewport and a snapshot viewer:
+ * no unbounded list or competing vertical gestures inside the transcript.
+ */
+const ReadFileBody = memo(function ReadFileBody({
+  preview,
+  markdownStyle,
+  truncated,
+}: {
+  preview: Extract<ReturnType<typeof readFilePreview>, { type: 'file' }>;
+  markdownStyle: MarkdownStyle;
+  truncated: boolean;
+}) {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  const insets = useSafeAreaInsets();
+  const [open, setOpen] = useState(false);
+  if (canInlineFileText(preview.file, preview.content)) {
+    return (
+      <FileTextBody
+        file={preview.file}
+        content={preview.content}
+        markdownStyle={markdownStyle}
+        testID="agent-read"
+        layout="inline"
+      />
+    );
+  }
+  return (
+    <View style={styles.stretch}>
+      <PressableScale
+        testID="agent-read-preview"
+        accessibilityRole="button"
+        accessibilityLabel={t`Open in viewer`}
+        onPress={() => setOpen(true)}>
+        <View style={readStyles.viewport} pointerEvents="none">
+          {open ? null : (
+            <FileTextBody
+              file={preview.file}
+              content={preview.content}
+              markdownStyle={markdownStyle}
+              testID="agent-read"
+            />
+          )}
+        </View>
+        <Text variant="caption" color={theme.colors.primary} style={readStyles.openLabel}>
+          {t`Open in viewer`}
+        </Text>
+      </PressableScale>
+      {open ? (
+        <Modal
+          visible
+          transparent
+          statusBarTranslucent
+          navigationBarTranslucent
+          animationType="fade"
+          onRequestClose={() => setOpen(false)}>
+          <View style={readStyles.fullscreen}>
+            <SheetFrame tint="background" frosted>
+              <View
+                style={[
+                  readStyles.fullscreen,
+                  { paddingTop: insets.top, paddingBottom: insets.bottom },
+                ]}>
+                <View style={readStyles.header}>
+                  <Text
+                    variant="bodySmall"
+                    weight="semibold"
+                    numberOfLines={2}
+                    style={readStyles.title}>
+                    {preview.file.name}
+                  </Text>
+                  {truncated ? (
+                    <Text variant="caption" color={theme.colors.warning}>
+                      {t`Truncated`}
+                    </Text>
+                  ) : null}
+                  <PressableScale
+                    testID="agent-read-close-preview"
+                    accessibilityRole="button"
+                    accessibilityLabel={t`Close preview`}
+                    onPress={() => setOpen(false)}
+                    style={readStyles.close}>
+                    <X size={20} color={theme.colors.text} />
+                  </PressableScale>
+                </View>
+                <FileTextBody
+                  file={preview.file}
+                  content={preview.content}
+                  markdownStyle={markdownStyle}
+                  testID="agent-read-full"
+                />
+              </View>
+            </SheetFrame>
+          </View>
+        </Modal>
+      ) : null}
+    </View>
+  );
+});
+
+const readStyles = StyleSheet.create({
+  viewport: { height: 280, overflow: 'hidden' },
+  fullscreen: { flex: 1, minHeight: 0 },
+  openLabel: { paddingHorizontal: 16, paddingVertical: 8 },
+  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 8 },
+  title: { flex: 1 },
+  close: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+});
 
 function readTodoItems(input: Record<string, unknown> | null): { text: string; done: boolean }[] {
   const raw = input?.todos ?? input?.items;
@@ -948,6 +1053,7 @@ interface ToolBodyArgs {
   input: Record<string, unknown> | null;
   target: string;
   outputText: string;
+  outputTruncated: boolean;
   files: readonly { uri: string; mime?: string; name?: string }[];
   editFiles: ReturnType<typeof editFilesFromMetadata>;
   patchSections: ReturnType<typeof parsePatchSections>;
@@ -980,18 +1086,14 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
       );
 
     case 'read': {
-      const language = fenceLanguageForPath(target);
-      // An image read comes back as a file item (drawn above) and, on some
-      // engines, the same bytes again as a data URI in the text. The picture
-      // is the content; the base64 never is.
-      const body = stripDataUris(stripReadLineNumbers(outputText));
-      if (!body) return null;
+      const preview = readFilePreview(outputText, target, args.files);
+      if (preview.type === 'empty') return null;
+      if (preview.type === 'output') return <OutputLines text={preview.text} />;
       return (
-        <CodeBody
-          body={body}
-          language={language}
+        <ReadFileBody
+          preview={preview}
           markdownStyle={markdownStyle}
-          {...viewerAction(target, args.onOpenFile)}
+          truncated={args.outputTruncated}
         />
       );
     }
@@ -1151,16 +1253,7 @@ function viewerAction(
   onOpenFile?: (file: { uri: string; mime?: string; name?: string }) => void
 ): { onOpenInViewer?: () => void } {
   if (!onOpenFile || !target.startsWith('/')) return {};
-  return { onOpenInViewer: () => onOpenFile(viewerFile(target)) };
-}
-
-/** One file, in the shape the asset viewer takes. */
-function viewerFile(path: string): { uri: string; mime: string; name: string } {
-  return {
-    uri: path,
-    mime: /\.mdx?$/i.test(path) ? 'text/markdown' : 'text/plain',
-    name: basename(path),
-  };
+  return { onOpenInViewer: () => onOpenFile(toolFileForPath(target)) };
 }
 
 /** A `+`/`-` patch made from a before and an after, when no real one came. */
@@ -1285,7 +1378,7 @@ const GlobFiles = memo(function GlobFiles({
                 accessibilityRole="button"
                 accessibilityLabel={name}
                 disabled={!onOpenFile}
-                onPress={() => onOpenFile?.(viewerFile(path))}
+                onPress={() => onOpenFile?.(toolFileForPath(path))}
                 style={styles.globRow}>
                 <FileText size={11} color={colors.subtle} />
                 <Text

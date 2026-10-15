@@ -1249,6 +1249,10 @@ msgstr "คลาสสิก"
 msgid "Clear"
 msgstr "ล้าง"
 
+#: src/components/in-app-notification-host.tsx
+msgid "Clear all"
+msgstr "ล้างทั้งหมด"
+
 #: src/components/settings-storage.tsx
 msgid "Clear cache"
 msgstr "ล้างแคช"
@@ -1295,6 +1299,10 @@ msgstr "กำลังล้าง…"
 msgid "Clears cache when due after opening Muqun. Saved themes are kept."
 msgstr "ล้างแคชเมื่อเปิด Muqun หลังครบกำหนด โดยเก็บธีมที่บันทึกไว้"
 
+#: src/components/in-app-notification-host.tsx
+msgid "Clears notifications only. Pending tasks still need your attention."
+msgstr "ล้างเฉพาะการแจ้งเตือน งานที่รอดำเนินการยังต้องการความสนใจจากคุณ"
+
 #: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
 #: src/i18n/labels.ts
@@ -1318,6 +1326,7 @@ msgstr "ปิดเมนู"
 msgid "Close new task"
 msgstr "ปิดงานใหม่"
 
+#: src/components/agent-tool-card.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/image-preview-modal.tsx
@@ -1859,6 +1868,10 @@ msgstr "ตรวจสอบขนาดดาวน์โหลดไม่ไ
 msgid "Could not compact"
 msgstr "บีบอัดไม่ได้"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not confirm submission"
+msgstr "ไม่สามารถยืนยันการส่งได้"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not connect"
 msgstr "เชื่อมต่อไม่ได้"
@@ -2398,6 +2411,10 @@ msgstr "แยกออกที่ {head}"
 #: src/components/changes-worktree-list.tsx
 msgid "Detached at {head}"
 msgstr "แยกออกที่ {head}"
+
+#: src/components/in-app-notification-host.tsx
+msgid "Details"
+msgstr "รายละเอียด"
 
 #: src/lib/demo-gateway.ts
 msgid "Development"
@@ -3107,15 +3124,19 @@ msgstr "หากยังเกิดปัญหา ให้เริ่ม�
 msgid "Image"
 msgstr "รูปภาพ"
 
+#: src/components/image-preview-modal.tsx
+msgid "Image preview"
+msgstr "ตัวอย่างรูปภาพ"
+
 #: src/components/agent-message-block.tsx
-#: src/components/asset-viewer.tsx
+#: src/components/file-text-body.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image unavailable"
 msgstr "ไม่สามารถแสดงรูปภาพ"
 
 #. placeholder {0}: alt.trim()
 #: src/components/agent-message-block.tsx
-#: src/components/asset-viewer.tsx
+#: src/components/file-text-body.tsx
 msgid "Image unavailable: {0}"
 msgstr "ไม่สามารถแสดงรูปภาพ: {0}"
 
@@ -3426,10 +3447,6 @@ msgstr "ลูกศรซ้าย"
 #: src/components/virtual-keyboard.tsx
 msgid "Letters"
 msgstr "ตัวอักษร"
-
-#: src/components/agent-session-tree-sheet.tsx
-msgid "Level {depth}"
-msgstr "ระดับ {depth}"
 
 #: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
@@ -3859,6 +3876,10 @@ msgstr "ใหม่กว่า"
 #: src/components/agent-composer.tsx
 msgid "Next"
 msgstr "ถัดไป"
+
+#: src/components/image-preview-modal.tsx
+msgid "Next image"
+msgstr "รูปภาพถัดไป"
 
 #: src/components/in-app-notification-host.tsx
 #: src/components/notice-deck.tsx
@@ -4574,10 +4595,6 @@ msgstr "ชุดสี (สูงสุด 4 สี)"
 msgid "Panes on computer cards"
 msgstr "พาเนลบนการ์ดคอมพิวเตอร์"
 
-#: src/components/agent-session-tree-sheet.tsx
-msgid "Parent: {parentTitle}"
-msgstr "เซสชันแม่: {parentTitle}"
-
 #: src/components/ssh-host-form.tsx
 msgid "Passphrase (optional)"
 msgstr "วลีรหัสผ่าน (ไม่บังคับ)"
@@ -4717,6 +4734,10 @@ msgstr "ดูตัวอย่างและใช้"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "ดูตัวอย่างก่อน ธีมปัจจุบันของคุณยังไม่เปลี่ยน"
+
+#: src/components/image-preview-modal.tsx
+msgid "Previous image"
+msgstr "รูปภาพก่อนหน้า"
 
 #: src/components/agent-title-pill.tsx
 msgid "Previous session"
@@ -5111,6 +5132,10 @@ msgstr "คำขอไม่สำเร็จ"
 msgid "Requested permissions"
 msgstr "สิทธิ์ที่ร้องขอ"
 
+#: src/components/agent-composer.tsx
+msgid "Requesting queued delivery…"
+msgstr "กำลังขอส่งข้อความเข้าคิว…"
+
 #: src/components/settings-security.tsx
 msgid "Required on launch and after 30 seconds in the background."
 msgstr "ต้องยืนยันเมื่อเปิดแอปและหลังอยู่เบื้องหลัง 30 วินาที"
@@ -5127,6 +5152,10 @@ msgstr "ต้องใช้ iOS 16.1 ขึ้นไป"
 #: src/components/computer-map/screen.tsx
 msgid "Reset view"
 msgstr "รีเซ็ตมุมมอง"
+
+#: src/components/image-preview-modal.tsx
+msgid "Reset zoom"
+msgstr "รีเซ็ตการซูม"
 
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
@@ -5558,6 +5587,10 @@ msgstr "ส่งงานนี้ให้ {assignmentLabel}"
 msgid "Send to agent"
 msgstr "ส่งให้เอเจนต์"
 
+#: src/components/agent-composer.tsx
+msgid "Sending attachment message…"
+msgstr "กำลังส่งข้อความพร้อมไฟล์แนบ…"
+
 #. placeholder {0}: inboxItemText(item) || item.type
 #: src/components/agent-composer.tsx
 msgid "Sending next: {0}"
@@ -5708,6 +5741,10 @@ msgstr "แสดงอาร์ตเวิร์กในหน้าแรก
 msgid "Show camera details"
 msgstr "แสดงรายละเอียดกล้อง"
 
+#: src/components/in-app-notification-host.tsx
+msgid "Show details"
+msgstr "แสดงรายละเอียด"
+
 #: src/components/settings-terminal.tsx
 msgid "Show Esc, Tab, Ctrl and navigation keys above input."
 msgstr "แสดง Esc, Tab, Ctrl และปุ่มนำทางเหนือช่องป้อนข้อมูล"
@@ -5726,6 +5763,7 @@ msgstr "แสดงข้อความหน้าแรก"
 
 #: src/components/home-computer-cards.tsx
 #: src/components/home-recent-sessions.tsx
+#: src/components/in-app-notification-host.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Show less"
 msgstr "แสดงน้อยลง"
@@ -6107,6 +6145,10 @@ msgstr "เอเจนต์ย่อย"
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "ส่ง"
+
+#: src/components/agent-composer.tsx
+msgid "Submitting follow-up…"
+msgstr "กำลังส่งข้อความติดตามผล…"
 
 #: src/i18n/labels.ts
 msgid "Summarise progress"
@@ -6901,7 +6943,7 @@ msgstr "โทเค็นในเซสชันนี้"
 msgid "Tokens usage and cost"
 msgstr "การใช้โทเค็นและค่าใช้จ่าย"
 
-#: src/components/asset-viewer.tsx
+#: src/components/file-text-body.tsx
 msgid "Too large to highlight — showing plain text."
 msgstr "ใหญ่เกินกว่าจะไฮไลต์ — แสดงเป็นข้อความธรรมดา"
 
@@ -6929,6 +6971,7 @@ msgstr "ถอดเสียงไม่สำเร็จ ตรวจสอ�
 msgid "Transcription mode"
 msgstr "โหมดถอดเสียง"
 
+#: src/components/agent-tool-card.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/tool-call-code-rows.tsx
@@ -7442,6 +7485,11 @@ msgstr "เอเจนต์ของคุณ ใช้ได้ทุกท�
 msgid "Your checkout, in one workspace."
 msgstr "เช็กเอาต์ของคุณในพื้นที่ทำงานเดียว"
 
+#. placeholder {0}: agentErrorRef.current(err)
+#: src/components/agent-workbench.tsx
+msgid "Your draft is kept. Check the conversation before sending again. {0}"
+msgstr "ระบบเก็บฉบับร่างของคุณไว้แล้ว โปรดตรวจสอบการสนทนาก่อนส่งอีกครั้ง {0}"
+
 #: src/components/agent-message-block.tsx
 msgid "Your message"
 msgstr "ข้อความของคุณ"
@@ -7449,3 +7497,11 @@ msgstr "ข้อความของคุณ"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "คอมพิวเตอร์ที่คุณจับคู่ไว้"
+
+#: src/components/image-preview-modal.tsx
+msgid "Zoom in"
+msgstr "ซูมเข้า"
+
+#: src/components/image-preview-modal.tsx
+msgid "Zoom out"
+msgstr "ซูมออก"
