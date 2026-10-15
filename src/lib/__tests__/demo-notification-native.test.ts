@@ -37,6 +37,7 @@ const report = (asid = 'demo-notice-observe') =>
     )
     .join('\n');
 const begin = () => subscribeDemoNotice('demo-notice-begin', () => {});
+const logJson = (text: string) => text.slice(text.indexOf('{"name":'));
 
 test('exact isolated ASIDs only; snapshot reads/observe never enqueue', () =>
   isolated(() => {
@@ -54,6 +55,10 @@ test('exact isolated ASIDs only; snapshot reads/observe never enqueue', () =>
     expect(useInAppNotifications.getState()).toBe(original);
     begin();
     const before = useInAppNotifications.getState();
+    // AgentFormCard intentionally renders field titles, not request.title.
+    expect(demoNoticeSnapshot('demo-notice-one')?.forms[0].fields[0].title).toBe(
+      'QA_NOTICE_FORM_CANONICAL'
+    );
     demoNoticeSnapshot('demo-notice-five');
     subscribeDemoNotice('demo-notice-observe', () => {});
     expect(useInAppNotifications.getState()).toBe(before);
@@ -132,7 +137,7 @@ test('case-segmented actual transition receipts retain before/after; overflow is
     const id = useInAppNotifications.getState().items[0].id;
     useInAppNotifications.getState().clear();
     const saved = report();
-    const segment = JSON.parse(saved.split('\n\n').at(-1)!);
+    const segment = JSON.parse(logJson(saved));
     expect(segment.name).toBe('one');
     expect(segment.entries.some((e: { ids: string[] }) => e.ids.includes(id))).toBe(true);
     expect(segment.entries.at(-1).ids).toEqual([]);
@@ -148,7 +153,24 @@ test('case-segmented actual transition receipts retain before/after; overflow is
         kind: 'approval',
       });
     expect(report()).toContain('QA_NOTICE_LOG_OVERFLOW yes');
-    expect(JSON.parse(report().split('\n\n').at(-1)!).entries).toHaveLength(32);
+    expect(JSON.parse(logJson(report())).entries).toHaveLength(32);
+  }));
+
+test('log export keeps full actual observations as valid JSON with one entry per visible paragraph', () =>
+  isolated(() => {
+    begin();
+    subscribeDemoNotice('demo-notice-five', () => {});
+    const json = logJson(report());
+    const segment = JSON.parse(json);
+    const paragraphs = json.split('\n\n');
+    expect(segment.name).toBe('five');
+    expect(segment.overflow).toBe(false);
+    expect(paragraphs).toHaveLength(segment.entries.length + 2);
+    const observed = paragraphs.slice(1, -1).map((line) => JSON.parse(line.replace(/,$/, '')));
+    expect(observed).toEqual(segment.entries);
+    expect(observed.at(-1).ids).toEqual(useInAppNotifications.getState().items.map((n) => n.id));
+    expect(observed.at(-1).seen).toEqual(useInAppNotifications.getState().seen);
+    expect(JSON.parse(json.replaceAll('\n\n', ''))).toEqual(segment);
   }));
 
 test('authoritative reopen emits genuine typed events and waits for their real consumer; no direct unsee/fresh substitute', () =>
