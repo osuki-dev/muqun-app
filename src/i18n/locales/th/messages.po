@@ -1431,21 +1431,21 @@ msgstr "กะทัดรัด"
 msgid "Compact context"
 msgstr "ย่อบริบท"
 
-#: src/components/agent-composer.tsx
+#: src/components/agent-compaction-pill.tsx
 msgid "Compacting context automatically…"
 msgstr "กำลังบีบอัดบริบทโดยอัตโนมัติ…"
 
-#: src/components/agent-composer.tsx
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 msgid "Compacting context…"
 msgstr "กำลังบีบอัดบริบท…"
 
-#: src/components/agent-composer.tsx
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 msgid "Compaction failed"
 msgstr "บีบอัดไม่สำเร็จ"
 
-#: src/components/agent-composer.tsx
+#: src/components/agent-compaction-pill.tsx
 msgid "Compaction failed — tap to dismiss"
 msgstr "บีบอัดไม่สำเร็จ — แตะเพื่อปิด"
 
@@ -1623,10 +1623,12 @@ msgstr "บริบท"
 msgid "Context {0}% full"
 msgstr "บริบทใช้ไปแล้ว {0}%"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 msgid "Context compacted · auto"
 msgstr "บีบอัดบริบทแล้ว · อัตโนมัติ"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 msgid "Context compacted · manual"
 msgstr "บีบอัดบริบทแล้ว · ด้วยตนเอง"
@@ -1774,6 +1776,7 @@ msgstr "การควบคุม"
 msgid "Conversational help and open-ended project questions."
 msgstr "ความช่วยเหลือแบบสนทนาและคำถามปลายเปิดเกี่ยวกับโปรเจกต์"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
@@ -1810,6 +1813,7 @@ msgstr "คัดลอกอินพุต"
 msgid "Copy message"
 msgstr "คัดลอกข้อความ"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Copy output"
 msgstr "คัดลอกเอาต์พุต"
@@ -2462,6 +2466,7 @@ msgstr "ตัดการเชื่อมต่อแล้ว · {0}"
 msgid "Disconnected."
 msgstr "ตัดการเชื่อมต่อแล้ว"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/task-row.tsx
@@ -3038,6 +3043,7 @@ msgstr "ซ่อน {name}"
 msgid "Hide keyboard"
 msgstr "ซ่อนแป้นพิมพ์"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Hide output"
 msgstr "ซ่อนเอาต์พุต"
@@ -3119,6 +3125,7 @@ msgstr "ว่าง"
 msgid "If this continues, restart the app or check the app installation"
 msgstr "หากยังเกิดปัญหา ให้เริ่มแอปใหม่หรือตรวจสอบการติดตั้งแอป"
 
+#: src/components/agent-message-block.tsx
 #: src/components/agent-tool-card.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image"
@@ -3130,6 +3137,7 @@ msgstr "ตัวอย่างรูปภาพ"
 
 #: src/components/agent-message-block.tsx
 #: src/components/file-text-body.tsx
+#: src/components/gateway-image-thumbnail.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image unavailable"
 msgstr "ไม่สามารถแสดงรูปภาพ"
@@ -4502,6 +4510,7 @@ msgstr "คอมพิวเตอร์เครื่องอื่น"
 msgid "Output"
 msgstr "เอาต์พุต"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Output copied to clipboard"
 msgstr "คัดลอกเอาต์พุตไปยังคลิปบอร์ดแล้ว"
@@ -5741,6 +5750,7 @@ msgstr "แสดงอาร์ตเวิร์กในหน้าแรก
 msgid "Show camera details"
 msgstr "แสดงรายละเอียดกล้อง"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Show details"
 msgstr "แสดงรายละเอียด"
@@ -7314,6 +7324,10 @@ msgstr "เวอร์ชัน {version}{0}"
 #: src/components/agent-composer.tsx
 msgid "View file changes"
 msgstr "ดูการเปลี่ยนแปลงของไฟล์"
+
+#: src/components/image-preview-modal.tsx
+msgid "View original"
+msgstr "ดูภาพต้นฉบับ"
 
 #: src/components/git-diff-view.tsx
 msgid "Viewing another checkout. Changes are read-only."

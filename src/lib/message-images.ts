@@ -19,16 +19,28 @@
  * `<img>`, outside fenced code blocks and inline code spans.
  */
 
+import { imageAssetPath } from './gateway-image-previews';
+
 /** One entry of a text part's `image_assets`, as the gateway sends it. */
 export interface MessageImageAsset {
   /** The source exactly as the markdown wrote it. */
   src: string;
   asset_id: string;
-  /** Gateway-relative: `/api/assets/{asset_id}/content`. */
+  /** Gateway-relative original, under /api/assets or /api/agent-images. */
   url: string;
   mime: string;
   width?: number;
   height?: number;
+  thumbnail_url?: string;
+  preview_url?: string;
+  download_url?: string;
+  version_url?: string;
+  size?: number;
+  unavailable_reason?: string;
+  /** Client marker: optional derivative fields existed but all were unusable. */
+  preview_declared?: boolean;
+  /** Client-bound timeline/file revision, not accepted from image_assets JSON. */
+  cache_revision?: number;
 }
 
 export function parseMessageImageAssets(value: unknown): MessageImageAsset[] {
@@ -37,19 +49,47 @@ export function parseMessageImageAssets(value: unknown): MessageImageAsset[] {
   for (const entry of value) {
     if (!entry || typeof entry !== 'object') continue;
     const rec = entry as Record<string, unknown>;
+    if (typeof rec.unavailable_reason === 'string' && rec.unavailable_reason.trim()) {
+      out.push({
+        src: typeof rec.src === 'string' ? rec.src : '',
+        asset_id: '',
+        url: '',
+        mime: 'application/octet-stream',
+        unavailable_reason: rec.unavailable_reason,
+      });
+      continue;
+    }
     const { src, asset_id: assetId, url, mime } = rec;
     if (typeof src !== 'string' || !src) continue;
     if (typeof assetId !== 'string' || !assetId) continue;
     // Only ever a path on the gateway: a map that pointed anywhere else would
     // send the device's credentials there.
-    if (typeof url !== 'string' || !url.startsWith('/api/assets/')) continue;
+    const original = imageAssetPath(url, assetId, 'original');
+    if (!original) continue;
+    const thumbnail = imageAssetPath(rec.thumbnail_url, assetId, 'thumbnail');
+    const preview = imageAssetPath(rec.preview_url, assetId, 'preview');
+    const download = imageAssetPath(rec.download_url, assetId, 'download');
+    const version = imageAssetPath(rec.version_url, assetId, 'version');
+    const declared = ['thumbnail_url', 'preview_url', 'download_url'].some((key) => key in rec);
     out.push({
       src,
       asset_id: assetId,
-      url,
+      url: original,
       mime: typeof mime === 'string' ? mime : 'image/*',
-      ...(typeof rec.width === 'number' && rec.width > 0 ? { width: rec.width } : {}),
-      ...(typeof rec.height === 'number' && rec.height > 0 ? { height: rec.height } : {}),
+      ...(typeof rec.width === 'number' && Number.isFinite(rec.width) && rec.width > 0
+        ? { width: rec.width }
+        : {}),
+      ...(typeof rec.height === 'number' && Number.isFinite(rec.height) && rec.height > 0
+        ? { height: rec.height }
+        : {}),
+      ...(thumbnail ? { thumbnail_url: thumbnail } : {}),
+      ...(preview ? { preview_url: preview } : {}),
+      ...(download ? { download_url: download } : {}),
+      ...(version ? { version_url: version } : {}),
+      ...(declared && !thumbnail && !preview && !download ? { preview_declared: true } : {}),
+      ...(typeof rec.size === 'number' && Number.isSafeInteger(rec.size) && rec.size >= 0
+        ? { size: rec.size }
+        : {}),
     });
   }
   return out;

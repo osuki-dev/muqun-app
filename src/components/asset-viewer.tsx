@@ -29,6 +29,7 @@ import { useRelativeTime } from '@/hooks/use-relative-time';
 import { fadeIn, fadeOut } from '@/lib/motion';
 import {
   assetImageSource,
+  assetPreviewImage,
   readAssetImageSource,
   readAssetText,
   type AssetImageSource,
@@ -63,6 +64,8 @@ export function AssetViewer({ asset, onClose }: { asset: SessionAsset; onClose: 
   // text or a description of a file, on the frosted ground below. See
   // `asset-viewer-layout.ts`.
   if (assetPresentation(asset) === 'lightbox') {
+    const preview = assetPreviewImage(asset);
+    if (preview) return <ImagePreviewModal images={[preview]} initialIndex={0} onClose={onClose} />;
     const source = assetImageSource(asset);
     if (!source) return <EncryptedImageViewer asset={asset} onClose={onClose} />;
     return (

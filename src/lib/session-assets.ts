@@ -9,6 +9,7 @@
  */
 
 /** What the gateway sniffed the file to be; decides which viewer opens. */
+import { imageAssetPath } from './gateway-image-previews';
 export type AssetKind = 'image' | 'audio' | 'video' | 'markdown' | 'text' | 'pdf' | 'binary';
 
 export interface SessionAsset {
@@ -26,6 +27,11 @@ export interface SessionAsset {
     workspace_id?: string;
   };
   previewable: boolean;
+  thumbnail_url?: string;
+  preview_url?: string;
+  download_url?: string;
+  version_url?: string;
+  preview_declared?: boolean;
   /** Bound by the client, never trusted from Gateway JSON. */
   gatewayServerId?: string;
   /** Only set for a file picked on this device, never for a host file:// URI. */
@@ -106,6 +112,11 @@ function normalizeSessionAsset(value: unknown): SessionAsset | null {
 
   const kind = ASSET_KINDS.find((entry) => entry === raw.kind) ?? 'binary';
   const name = typeof raw.name === 'string' && raw.name ? raw.name : fileNameOf(path);
+  const thumbnail = imageAssetPath(raw.thumbnail_url, id, 'thumbnail');
+  const preview = imageAssetPath(raw.preview_url, id, 'preview');
+  const download = imageAssetPath(raw.download_url, id, 'download');
+  const version = imageAssetPath(raw.version_url, id, 'version');
+  const declared = ['thumbnail_url', 'preview_url', 'download_url'].some((key) => key in raw);
   return {
     id,
     path,
@@ -118,6 +129,11 @@ function normalizeSessionAsset(value: unknown): SessionAsset | null {
     // An older gateway that does not send the flag still gets a sensible
     // answer: everything but an opaque binary is worth trying to render.
     previewable: typeof raw.previewable === 'boolean' ? raw.previewable : kind !== 'binary',
+    ...(thumbnail ? { thumbnail_url: thumbnail } : {}),
+    ...(preview ? { preview_url: preview } : {}),
+    ...(download ? { download_url: download } : {}),
+    ...(version ? { version_url: version } : {}),
+    ...(declared && !thumbnail && !preview && !download ? { preview_declared: true } : {}),
   };
 }
 

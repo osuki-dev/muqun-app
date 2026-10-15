@@ -1431,21 +1431,21 @@ msgstr "Compacto"
 msgid "Compact context"
 msgstr "Compactar el contexto"
 
-#: src/components/agent-composer.tsx
+#: src/components/agent-compaction-pill.tsx
 msgid "Compacting context automatically…"
 msgstr "Compactando el contexto automáticamente…"
 
-#: src/components/agent-composer.tsx
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 msgid "Compacting context…"
 msgstr "Compactando el contexto…"
 
-#: src/components/agent-composer.tsx
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 msgid "Compaction failed"
 msgstr "La compactación falló"
 
-#: src/components/agent-composer.tsx
+#: src/components/agent-compaction-pill.tsx
 msgid "Compaction failed — tap to dismiss"
 msgstr "La compactación falló: toca para descartar"
 
@@ -1623,10 +1623,12 @@ msgstr "Contexto"
 msgid "Context {0}% full"
 msgstr "Contexto al {0}%"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 msgid "Context compacted · auto"
 msgstr "Contexto compactado · automático"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 msgid "Context compacted · manual"
 msgstr "Contexto compactado · manual"
@@ -1774,6 +1776,7 @@ msgstr "Controles"
 msgid "Conversational help and open-ended project questions."
 msgstr "Ayuda conversacional y preguntas abiertas sobre el proyecto"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
@@ -1810,6 +1813,7 @@ msgstr "Copiar entrada"
 msgid "Copy message"
 msgstr "Copiar mensaje"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Copy output"
 msgstr "Copiar salida"
@@ -2462,6 +2466,7 @@ msgstr "Desconectado · {0}"
 msgid "Disconnected."
 msgstr "Desconectado"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/task-row.tsx
@@ -3038,6 +3043,7 @@ msgstr "Ocultar {name}"
 msgid "Hide keyboard"
 msgstr "Ocultar el teclado"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Hide output"
 msgstr "Ocultar salida"
@@ -3119,6 +3125,7 @@ msgstr "Inactivo"
 msgid "If this continues, restart the app or check the app installation"
 msgstr "Si el problema persiste, reinicia la app o comprueba su instalación"
 
+#: src/components/agent-message-block.tsx
 #: src/components/agent-tool-card.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image"
@@ -3130,6 +3137,7 @@ msgstr "Vista previa de la imagen"
 
 #: src/components/agent-message-block.tsx
 #: src/components/file-text-body.tsx
+#: src/components/gateway-image-thumbnail.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image unavailable"
 msgstr "Imagen no disponible"
@@ -4502,6 +4510,7 @@ msgstr "Otros ordenadores"
 msgid "Output"
 msgstr "Salida"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Output copied to clipboard"
 msgstr "Salida copiada al portapapeles"
@@ -5741,6 +5750,7 @@ msgstr "Mostrar ilustración en Inicio"
 msgid "Show camera details"
 msgstr "Mostrar detalles de la cámara"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Show details"
 msgstr "Mostrar detalles"
@@ -7314,6 +7324,10 @@ msgstr "Versión {version}{0}"
 #: src/components/agent-composer.tsx
 msgid "View file changes"
 msgstr "Ver cambios de archivos"
+
+#: src/components/image-preview-modal.tsx
+msgid "View original"
+msgstr "Ver imagen original"
 
 #: src/components/git-diff-view.tsx
 msgid "Viewing another checkout. Changes are read-only."

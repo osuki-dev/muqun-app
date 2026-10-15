@@ -1431,21 +1431,21 @@ msgstr "コンパクト"
 msgid "Compact context"
 msgstr "コンテキストを圧縮"
 
-#: src/components/agent-composer.tsx
+#: src/components/agent-compaction-pill.tsx
 msgid "Compacting context automatically…"
 msgstr "コンテキストを自動で圧縮しています…"
 
-#: src/components/agent-composer.tsx
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 msgid "Compacting context…"
 msgstr "コンテキストを圧縮しています…"
 
-#: src/components/agent-composer.tsx
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 msgid "Compaction failed"
 msgstr "圧縮に失敗しました"
 
-#: src/components/agent-composer.tsx
+#: src/components/agent-compaction-pill.tsx
 msgid "Compaction failed — tap to dismiss"
 msgstr "圧縮に失敗しました — タップで閉じる"
 
@@ -1623,10 +1623,12 @@ msgstr "コンテキスト"
 msgid "Context {0}% full"
 msgstr "コンテキスト使用率 {0}%"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 msgid "Context compacted · auto"
 msgstr "コンテキストを圧縮しました · 自動"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 msgid "Context compacted · manual"
 msgstr "コンテキストを圧縮しました · 手動"
@@ -1774,6 +1776,7 @@ msgstr "操作"
 msgid "Conversational help and open-ended project questions."
 msgstr "対話形式のヘルプと、プロジェクトに関する自由な質問"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
@@ -1810,6 +1813,7 @@ msgstr "入力をコピー"
 msgid "Copy message"
 msgstr "メッセージをコピー"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Copy output"
 msgstr "出力をコピー"
@@ -2462,6 +2466,7 @@ msgstr "切断 · {0}"
 msgid "Disconnected."
 msgstr "切断しました"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/task-row.tsx
@@ -3038,6 +3043,7 @@ msgstr "{name} を隠す"
 msgid "Hide keyboard"
 msgstr "キーボードを隠す"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Hide output"
 msgstr "出力を閉じる"
@@ -3119,6 +3125,7 @@ msgstr "待機"
 msgid "If this continues, restart the app or check the app installation"
 msgstr "問題が続く場合は、アプリを再起動するか、インストール状態を確認してください"
 
+#: src/components/agent-message-block.tsx
 #: src/components/agent-tool-card.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image"
@@ -3130,6 +3137,7 @@ msgstr "画像プレビュー"
 
 #: src/components/agent-message-block.tsx
 #: src/components/file-text-body.tsx
+#: src/components/gateway-image-thumbnail.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image unavailable"
 msgstr "画像を表示できません"
@@ -4502,6 +4510,7 @@ msgstr "ほかのコンピュータ"
 msgid "Output"
 msgstr "出力"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Output copied to clipboard"
 msgstr "出力をクリップボードにコピーしました"
@@ -5741,6 +5750,7 @@ msgstr "ホームにアートワークを表示"
 msgid "Show camera details"
 msgstr "カメラの詳細を表示"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Show details"
 msgstr "詳細を表示"
@@ -7314,6 +7324,10 @@ msgstr "バージョン {version}{0}"
 #: src/components/agent-composer.tsx
 msgid "View file changes"
 msgstr "ファイルの変更を表示"
+
+#: src/components/image-preview-modal.tsx
+msgid "View original"
+msgstr "元の画像を表示"
 
 #: src/components/git-diff-view.tsx
 msgid "Viewing another checkout. Changes are read-only."

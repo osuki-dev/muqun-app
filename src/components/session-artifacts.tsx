@@ -4,6 +4,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { Image } from 'expo-image';
+import { GatewayImageThumbnail } from '@/components/gateway-image-thumbnail';
 import {
   File as FileIcon,
   FileCode,
@@ -812,7 +813,31 @@ const AssetRow = memo(function AssetRow({
               // Opacity audit: decorative -- the matte behind a thumbnail image.
               thumbnail ? { backgroundColor: theme.colors.background } : null,
             ]}>
-            {thumbnail ? (
+            {asset.kind === 'image' &&
+            (asset.thumbnail_url ||
+              asset.preview_url ||
+              asset.download_url ||
+              asset.preview_declared) ? (
+              <GatewayImageThumbnail
+                asset={{
+                  src: asset.path,
+                  asset_id: asset.id,
+                  url: `/api/assets/${asset.id}/content`,
+                  mime: asset.mime,
+                  thumbnail_url: asset.thumbnail_url,
+                  preview_url: asset.preview_url,
+                  download_url: asset.download_url,
+                  version_url: asset.version_url,
+                  cache_revision: asset.modified_unix_ms,
+                  gatewayServerId: asset.gatewayServerId,
+                  preview_declared: asset.preview_declared,
+                  size: asset.size > 0 ? asset.size : undefined,
+                }}
+                label={asset.name}
+                interactive={false}
+                style={styles.thumbnail}
+              />
+            ) : thumbnail ? (
               <Image
                 source={{ uri: thumbnail.uri, headers: thumbnail.headers }}
                 cachePolicy="memory-disk"

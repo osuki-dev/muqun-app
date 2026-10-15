@@ -1431,21 +1431,21 @@ msgstr "Gọn"
 msgid "Compact context"
 msgstr "Nén ngữ cảnh"
 
-#: src/components/agent-composer.tsx
+#: src/components/agent-compaction-pill.tsx
 msgid "Compacting context automatically…"
 msgstr "Đang tự động nén ngữ cảnh…"
 
-#: src/components/agent-composer.tsx
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 msgid "Compacting context…"
 msgstr "Đang nén ngữ cảnh…"
 
-#: src/components/agent-composer.tsx
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 msgid "Compaction failed"
 msgstr "Nén thất bại"
 
-#: src/components/agent-composer.tsx
+#: src/components/agent-compaction-pill.tsx
 msgid "Compaction failed — tap to dismiss"
 msgstr "Nén thất bại — chạm để bỏ qua"
 
@@ -1623,10 +1623,12 @@ msgstr "Ngữ cảnh"
 msgid "Context {0}% full"
 msgstr "Ngữ cảnh đã dùng {0}%"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 msgid "Context compacted · auto"
 msgstr "Đã nén ngữ cảnh · tự động"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 msgid "Context compacted · manual"
 msgstr "Đã nén ngữ cảnh · thủ công"
@@ -1774,6 +1776,7 @@ msgstr "Điều khiển"
 msgid "Conversational help and open-ended project questions."
 msgstr "Trợ giúp dạng hội thoại và các câu hỏi mở về dự án"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
@@ -1810,6 +1813,7 @@ msgstr "Sao chép đầu vào"
 msgid "Copy message"
 msgstr "Sao chép tin nhắn"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Copy output"
 msgstr "Sao chép đầu ra"
@@ -2462,6 +2466,7 @@ msgstr "Đã ngắt kết nối · {0}"
 msgid "Disconnected."
 msgstr "Đã ngắt kết nối"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/task-row.tsx
@@ -3038,6 +3043,7 @@ msgstr "Ẩn {name}"
 msgid "Hide keyboard"
 msgstr "Ẩn bàn phím"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Hide output"
 msgstr "Ẩn đầu ra"
@@ -3119,6 +3125,7 @@ msgstr "Rảnh"
 msgid "If this continues, restart the app or check the app installation"
 msgstr "Nếu sự cố vẫn tiếp diễn, hãy khởi động lại ứng dụng hoặc kiểm tra bản cài đặt"
 
+#: src/components/agent-message-block.tsx
 #: src/components/agent-tool-card.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image"
@@ -3130,6 +3137,7 @@ msgstr "Xem trước hình ảnh"
 
 #: src/components/agent-message-block.tsx
 #: src/components/file-text-body.tsx
+#: src/components/gateway-image-thumbnail.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image unavailable"
 msgstr "Không thể hiển thị hình ảnh"
@@ -4502,6 +4510,7 @@ msgstr "Máy tính khác"
 msgid "Output"
 msgstr "Đầu ra"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Output copied to clipboard"
 msgstr "Đã sao chép đầu ra vào bảng nhớ tạm"
@@ -5741,6 +5750,7 @@ msgstr "Hiển thị hình ảnh trên Trang chủ"
 msgid "Show camera details"
 msgstr "Hiện chi tiết camera"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Show details"
 msgstr "Hiện chi tiết"
@@ -7314,6 +7324,10 @@ msgstr "Phiên bản {version}{0}"
 #: src/components/agent-composer.tsx
 msgid "View file changes"
 msgstr "Xem các thay đổi tệp"
+
+#: src/components/image-preview-modal.tsx
+msgid "View original"
+msgstr "Xem ảnh gốc"
 
 #: src/components/git-diff-view.tsx
 msgid "Viewing another checkout. Changes are read-only."

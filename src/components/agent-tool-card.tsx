@@ -19,6 +19,16 @@ import { BoundedMarkdown, TruncationFooter } from '@/components/bounded-markdown
 import { StatusDot } from '@/components/status-dot';
 import { AgentTodoBlock } from '@/components/agent-todo-block';
 import { FileTextBody } from '@/components/file-text-body';
+import {
+  GatewayImageThumbnail,
+  UnmappedImageThumbnail,
+} from '@/components/gateway-image-thumbnail';
+import {
+  messageImageForSource,
+  withMessageImageFiles,
+  unavailableMessageImage,
+} from '@/lib/gateway-image-previews';
+import type { MessageImageAsset } from '@/lib/message-images';
 import { SheetFrame } from '@/components/sheet-ground';
 import { canInlineFileText, readFilePreview, toolFileForPath } from '@/lib/file-text-preview';
 import {
@@ -271,11 +281,15 @@ function isImageFile(file: { mime?: string }): boolean {
 /** The files a tool returned: images inline, everything else as a chip. */
 const ToolFiles = memo(function ToolFiles({
   files,
+  imageAssets,
+  imageAttachments,
   audioSessionId,
   onPreviewImage,
   onOpenFile,
 }: {
   files: readonly { uri: string; mime?: string; name?: string }[];
+  imageAssets?: readonly MessageImageAsset[];
+  imageAttachments?: readonly string[];
   audioSessionId?: string;
   onPreviewImage?: (uri: string) => void;
   onOpenFile?: (file: { uri: string; mime?: string; name?: string }) => void;
@@ -284,10 +298,24 @@ const ToolFiles = memo(function ToolFiles({
   const theme = useThemeTokens();
   const raised = useTranscriptPlate('raised');
   const profile = useAppearanceProfile();
+  const displayedFiles = useMemo(
+    () => withMessageImageFiles(files, imageAssets, imageAttachments),
+    [files, imageAssets, imageAttachments]
+  );
 
   return (
     <View style={styles.fileRow}>
-      {files.map((file) => {
+      {displayedFiles.map((file) => {
+        const image = messageImageForSource(imageAssets, file.uri);
+        if (image)
+          return (
+            <GatewayImageThumbnail
+              key={file.uri}
+              asset={image}
+              label={file.name ?? t`Open image`}
+              style={[styles.fileThumb, { borderRadius: profile.chrome.surface }]}
+            />
+          );
         if (audioSessionId && isPdfFile(file)) {
           return (
             <InlineFileLink
@@ -317,14 +345,22 @@ const ToolFiles = memo(function ToolFiles({
         }
         if (isImageFile(file)) {
           return (
-            <PressableScale
+            <UnmappedImageThumbnail
               key={file.uri}
-              accessibilityRole="imagebutton"
-              accessibilityLabel={file.name ?? t`Open image`}
-              onPress={() => onPreviewImage?.(file.uri)}
-              style={[styles.fileThumbWrap, { borderRadius: profile.chrome.surface }]}>
-              <Image source={{ uri: file.uri }} style={styles.fileThumb} contentFit="cover" />
-            </PressableScale>
+              uri={file.uri}
+              unavailable={unavailableMessageImage(imageAssets, file.uri)}
+              label={file.name ?? t`Open image`}
+              style={[styles.fileThumb, { borderRadius: profile.chrome.surface }]}
+              onPreviewImage={onPreviewImage}>
+              <PressableScale
+                key={file.uri}
+                accessibilityRole="imagebutton"
+                accessibilityLabel={file.name ?? t`Open image`}
+                onPress={() => onPreviewImage?.(file.uri)}
+                style={[styles.fileThumbWrap, { borderRadius: profile.chrome.surface }]}>
+                <Image source={{ uri: file.uri }} style={styles.fileThumb} contentFit="cover" />
+              </PressableScale>
+            </UnmappedImageThumbnail>
           );
         }
         return (
@@ -429,6 +465,13 @@ export const AgentToolCard = memo(function AgentToolCard({
     return fromContent || parseToolOutput(part.output).stdout;
   }, [part.content, part.output]);
   const files = useMemo(() => filesFromContent(part.content), [part.content]);
+  const hasFiles =
+    files.length > 0 ||
+    Boolean(
+      part.image_attachments?.some((uri) =>
+        part.image_assets?.some((asset) => asset.src === uri && asset.mime.startsWith('image/'))
+      )
+    );
   const parsed = useMemo(() => parseToolOutput(part.output), [part.output]);
 
   /**
@@ -455,7 +498,7 @@ export const AgentToolCard = memo(function AgentToolCard({
   const compactSummary =
     part.name !== 'image_generation' &&
     (kind === 'read' ||
-      (files.length === 0 &&
+      (!hasFiles &&
         (kind === 'shell' ||
           kind === 'glob' ||
           kind === 'grep' ||
@@ -900,9 +943,11 @@ export const AgentToolCard = memo(function AgentToolCard({
           <StreamingArguments text={argumentLine} />
         ) : kind === 'edit' || kind === 'patch' ? (
           body
-        ) : files.length > 0 ? (
+        ) : hasFiles ? (
           <ToolFiles
             files={files}
+            imageAssets={part.image_assets}
+            imageAttachments={part.image_attachments}
             audioSessionId={audioSessionId}
             onPreviewImage={onPreviewImage}
             onOpenFile={onOpenFile}

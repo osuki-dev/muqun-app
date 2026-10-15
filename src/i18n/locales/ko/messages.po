@@ -1431,21 +1431,21 @@ msgstr "작게"
 msgid "Compact context"
 msgstr "컨텍스트 압축"
 
-#: src/components/agent-composer.tsx
+#: src/components/agent-compaction-pill.tsx
 msgid "Compacting context automatically…"
 msgstr "컨텍스트를 자동으로 압축하는 중…"
 
-#: src/components/agent-composer.tsx
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 msgid "Compacting context…"
 msgstr "컨텍스트를 압축하는 중…"
 
-#: src/components/agent-composer.tsx
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 msgid "Compaction failed"
 msgstr "압축에 실패했습니다"
 
-#: src/components/agent-composer.tsx
+#: src/components/agent-compaction-pill.tsx
 msgid "Compaction failed — tap to dismiss"
 msgstr "압축에 실패했습니다 — 탭하여 닫기"
 
@@ -1623,10 +1623,12 @@ msgstr "컨텍스트"
 msgid "Context {0}% full"
 msgstr "컨텍스트 {0}% 사용"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 msgid "Context compacted · auto"
 msgstr "컨텍스트 압축됨 · 자동"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 msgid "Context compacted · manual"
 msgstr "컨텍스트 압축됨 · 수동"
@@ -1774,6 +1776,7 @@ msgstr "제어"
 msgid "Conversational help and open-ended project questions."
 msgstr "대화형 도움말과 프로젝트에 대한 자유로운 질문"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
@@ -1810,6 +1813,7 @@ msgstr "입력 복사"
 msgid "Copy message"
 msgstr "메시지 복사"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Copy output"
 msgstr "출력 복사"
@@ -2462,6 +2466,7 @@ msgstr "연결 끊김 · {0}"
 msgid "Disconnected."
 msgstr "연결이 끊겼습니다"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/task-row.tsx
@@ -3038,6 +3043,7 @@ msgstr "{name} 숨기기"
 msgid "Hide keyboard"
 msgstr "키보드 숨기기"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Hide output"
 msgstr "출력 접기"
@@ -3119,6 +3125,7 @@ msgstr "대기"
 msgid "If this continues, restart the app or check the app installation"
 msgstr "문제가 계속되면 앱을 다시 시작하거나 앱 설치 상태를 확인하세요"
 
+#: src/components/agent-message-block.tsx
 #: src/components/agent-tool-card.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image"
@@ -3130,6 +3137,7 @@ msgstr "이미지 미리보기"
 
 #: src/components/agent-message-block.tsx
 #: src/components/file-text-body.tsx
+#: src/components/gateway-image-thumbnail.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image unavailable"
 msgstr "이미지를 표시할 수 없음"
@@ -4502,6 +4510,7 @@ msgstr "다른 컴퓨터"
 msgid "Output"
 msgstr "출력"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Output copied to clipboard"
 msgstr "출력을 클립보드에 복사했습니다"
@@ -5741,6 +5750,7 @@ msgstr "홈에 아트워크 표시"
 msgid "Show camera details"
 msgstr "카메라 세부 정보 표시"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Show details"
 msgstr "세부 정보 표시"
@@ -7314,6 +7324,10 @@ msgstr "버전 {version}{0}"
 #: src/components/agent-composer.tsx
 msgid "View file changes"
 msgstr "파일 변경 사항 보기"
+
+#: src/components/image-preview-modal.tsx
+msgid "View original"
+msgstr "원본 이미지 보기"
 
 #: src/components/git-diff-view.tsx
 msgid "Viewing another checkout. Changes are read-only."

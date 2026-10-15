@@ -1431,21 +1431,21 @@ msgstr "紧凑"
 msgid "Compact context"
 msgstr "压缩上下文"
 
-#: src/components/agent-composer.tsx
+#: src/components/agent-compaction-pill.tsx
 msgid "Compacting context automatically…"
 msgstr "正在自动压缩上下文…"
 
-#: src/components/agent-composer.tsx
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 msgid "Compacting context…"
 msgstr "正在压缩上下文…"
 
-#: src/components/agent-composer.tsx
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 msgid "Compaction failed"
 msgstr "压缩失败"
 
-#: src/components/agent-composer.tsx
+#: src/components/agent-compaction-pill.tsx
 msgid "Compaction failed — tap to dismiss"
 msgstr "压缩失败 — 点按关闭"
 
@@ -1623,10 +1623,12 @@ msgstr "上下文"
 msgid "Context {0}% full"
 msgstr "上下文已用 {0}%"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 msgid "Context compacted · auto"
 msgstr "上下文已压缩 · 自动"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 msgid "Context compacted · manual"
 msgstr "上下文已压缩 · 手动"
@@ -1774,6 +1776,7 @@ msgstr "控制"
 msgid "Conversational help and open-ended project questions."
 msgstr "对话式帮助，以及关于项目的开放式问题"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
@@ -1810,6 +1813,7 @@ msgstr "复制输入"
 msgid "Copy message"
 msgstr "复制消息"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Copy output"
 msgstr "复制输出"
@@ -2462,6 +2466,7 @@ msgstr "已断开 · {0}"
 msgid "Disconnected."
 msgstr "连接已断开"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/task-row.tsx
@@ -3038,6 +3043,7 @@ msgstr "隐藏 {name}"
 msgid "Hide keyboard"
 msgstr "隐藏键盘"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Hide output"
 msgstr "收起输出"
@@ -3119,6 +3125,7 @@ msgstr "空闲"
 msgid "If this continues, restart the app or check the app installation"
 msgstr "如果问题仍然存在，请重启 App 或检查 App 安装"
 
+#: src/components/agent-message-block.tsx
 #: src/components/agent-tool-card.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image"
@@ -3130,6 +3137,7 @@ msgstr "图片预览"
 
 #: src/components/agent-message-block.tsx
 #: src/components/file-text-body.tsx
+#: src/components/gateway-image-thumbnail.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image unavailable"
 msgstr "图片无法显示"
@@ -4502,6 +4510,7 @@ msgstr "其他电脑"
 msgid "Output"
 msgstr "输出"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Output copied to clipboard"
 msgstr "输出已复制到剪贴板"
@@ -5741,6 +5750,7 @@ msgstr "在首页显示图稿"
 msgid "Show camera details"
 msgstr "显示相机详细信息"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Show details"
 msgstr "显示详情"
@@ -7314,6 +7324,10 @@ msgstr "版本 {version}{0}"
 #: src/components/agent-composer.tsx
 msgid "View file changes"
 msgstr "查看文件变更"
+
+#: src/components/image-preview-modal.tsx
+msgid "View original"
+msgstr "查看原图"
 
 #: src/components/git-diff-view.tsx
 msgid "Viewing another checkout. Changes are read-only."

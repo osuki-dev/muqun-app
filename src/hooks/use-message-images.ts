@@ -1,81 +1,122 @@
 import { useEffect, useMemo, useState } from 'react';
-
-import { gatewayAuthHeaders, messageImageUrl, readMessageImageFile } from '@/lib/gateway-client';
+import {
+  configuredGatewayServerId,
+  gatewayImageBinding,
+  gatewayImageConnectionKey,
+} from '@/lib/gateway-client';
 import type { MessageImageAsset } from '@/lib/message-images';
+import type { PreviewImageSource } from '@/lib/gateway-image-previews';
+import { useServerCapabilities } from '@/stores/server-capabilities';
 
-const NO_URIS: ReadonlyMap<string, string> = new Map();
-const NO_SOURCES: ReadonlySet<string> = new Set();
 const NO_ASSETS: readonly MessageImageAsset[] = [];
-
-function assetsKey(assets: readonly MessageImageAsset[] | undefined): string {
-  return assets?.map((asset) => `${asset.src}\u0000${asset.asset_id}`).join('\n') ?? '';
-}
+const NO_CAPABILITIES: string[] = [];
 
 export interface MessageImageSources {
-  /** Source as written -> the URI the renderer should load instead. */
   uris: ReadonlyMap<string, string>;
-  /** Sources whose bytes are still on their way (encrypted transport only). */
   pending: ReadonlySet<string>;
-  /** Headers for the renderer's own requests, when any URI is a gateway URL. */
+  sources: ReadonlyMap<string, PreviewImageSource>;
   headers?: Record<string, string>;
 }
 
-/**
- * The URIs a text part's `image_assets` load from.
- *
- * On a plain transport every image is the gateway URL, fetched by the
- * renderer with the device's credentials. On an encrypted transport each one is
- * downloaded through the sealed channel into a cache file first; until it lands
- * the source is `pending`, and if it never does it simply drops out, which the
- * caller draws as a caption.
- *
- * Keyed on the sources and ids rather than the array: a streamed part hands a
- * new array on every token, and nothing about its images changed.
- */
+/** Markdown's header prop is global. Authenticated local thumbnails keep tokens
+ * off unrelated external images. Files/requests are owned by this mounted part. */
 export function useMessageImages(
   assets: readonly MessageImageAsset[] | undefined
 ): MessageImageSources {
-  const key = assetsKey(assets);
-  const [held, setHeld] = useState(() => ({ key, assets: assets ?? NO_ASSETS }));
-  if (held.key !== key) setHeld({ key, assets: assets ?? NO_ASSETS });
-  const stable = held.key === key ? held.assets : (assets ?? NO_ASSETS);
-  const [files, setFiles] = useState<ReadonlyMap<string, string>>(NO_URIS);
-  const [failed, setFailed] = useState<ReadonlySet<string>>(NO_SOURCES);
+  const serverId = configuredGatewayServerId();
+  const capabilities = useServerCapabilities((state) =>
+    serverId ? (state.byServer[serverId] ?? NO_CAPABILITIES) : NO_CAPABILITIES
+  );
+  const key = JSON.stringify([gatewayImageConnectionKey(), capabilities, assets]);
+  const [held, setHeld] = useState(() => ({ key, assets: assets ?? NO_ASSETS, capabilities }));
+  if (held.key !== key) setHeld({ key, assets: assets ?? NO_ASSETS, capabilities });
+  const bindings = useMemo(
+    () =>
+      held.assets.flatMap((asset) => {
+        const binding = gatewayImageBinding(asset, held.capabilities);
+        return binding ? [{ asset, ...binding }] : [];
+      }),
+    [held]
+  );
+  const [owned] = useState(() => new Map<string, PreviewImageSource | null>());
+  const [reads] = useState(() => new Map<string, AbortController>());
+  const [files, setFiles] = useState<ReadonlyMap<string, PreviewImageSource | null>>(new Map());
+
+  useEffect(
+    () => () => {
+      for (const controller of reads.values()) controller.abort();
+      reads.clear();
+      for (const source of owned.values()) source?.dispose?.();
+      owned.clear();
+    },
+    [owned, reads]
+  );
 
   useEffect(() => {
-    let live = true;
-    for (const asset of stable) {
-      if (messageImageUrl(asset.url) !== null) continue;
-      readMessageImageFile(asset).then(
-        (uri) => {
-          if (live) setFiles((prev) => new Map(prev).set(asset.asset_id, uri));
+    const desired = new Set(
+      bindings.flatMap((binding) =>
+        binding.plan.thumbnail
+          ? [binding.plan.thumbnail.cacheKey ?? binding.plan.thumbnail.uri]
+          : []
+      )
+    );
+    for (const [imageKey, controller] of reads) {
+      if (!desired.has(imageKey)) {
+        controller.abort();
+        reads.delete(imageKey);
+      }
+    }
+    for (const [imageKey, source] of owned) {
+      if (!desired.has(imageKey)) {
+        source?.dispose?.();
+        owned.delete(imageKey);
+      }
+    }
+    setFiles(new Map(owned));
+    for (const binding of bindings) {
+      const source = binding.plan.thumbnail;
+      if (!source) continue;
+      const imageKey = source.cacheKey ?? source.uri;
+      if (owned.has(imageKey) || reads.has(imageKey)) continue;
+      const controller = new AbortController();
+      reads.set(imageKey, controller);
+      binding.readThumbnail(controller.signal).then(
+        (resolved) => {
+          if (controller.signal.aborted || reads.get(imageKey) !== controller) {
+            resolved?.dispose?.();
+            return;
+          }
+          reads.delete(imageKey);
+          if (resolved) {
+            owned.set(imageKey, resolved);
+            setFiles(new Map(owned));
+          }
         },
         () => {
-          if (live) setFailed((prev) => new Set(prev).add(asset.asset_id));
+          if (!controller.signal.aborted && reads.get(imageKey) === controller) {
+            reads.delete(imageKey);
+            owned.set(imageKey, null);
+            setFiles(new Map(owned));
+          }
         }
       );
     }
-    return () => {
-      live = false;
-    };
-  }, [stable]);
+  }, [bindings, owned, reads]);
 
   return useMemo(() => {
-    if (stable.length === 0) return { uris: NO_URIS, pending: NO_SOURCES };
     const uris = new Map<string, string>();
     const pending = new Set<string>();
-    let direct = false;
-    for (const asset of stable) {
-      const url = messageImageUrl(asset.url);
-      if (url !== null) {
-        uris.set(asset.src, url);
-        direct = true;
-        continue;
-      }
-      const file = files.get(asset.asset_id);
-      if (file) uris.set(asset.src, file);
-      else if (!failed.has(asset.asset_id)) pending.add(asset.src);
+    const sources = new Map<string, PreviewImageSource>();
+    for (const binding of bindings) {
+      const source = binding.plan.thumbnail;
+      if (!source) continue;
+      const imageKey = source.cacheKey ?? source.uri;
+      const file = files.get(imageKey);
+      if (file) {
+        uris.set(binding.asset.src, file.uri);
+        sources.set(binding.asset.src, file);
+      } else if (!files.has(imageKey)) pending.add(binding.asset.src);
     }
-    return { uris, pending, ...(direct ? { headers: gatewayAuthHeaders() } : {}) };
-  }, [stable, files, failed]);
+    return { uris, pending, sources };
+  }, [bindings, files]);
 }

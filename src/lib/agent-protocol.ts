@@ -907,6 +907,9 @@ export interface ToolPart {
   input_partial?: string;
   output?: unknown;
   content: ToolContent[];
+  /** Client carry-through of the timeline envelope's typed image metadata. */
+  image_assets?: MessageImageAsset[];
+  image_attachments?: string[];
   /** OpenCode's own metadata, verbatim and camelCase. */
   metadata: Record<string, unknown>;
   state: ToolCallState;
@@ -1300,7 +1303,14 @@ export function parseTimelineItem(value: unknown): TimelineItem | null {
     message_id: asString(rec.message_id) ?? id,
     role: parseTimelineRole(rec.role),
     ordinal: asFiniteNumber(rec.ordinal) ?? 0,
-    part,
+    part:
+      part.type === 'tool' && imageAssets.length > 0
+        ? {
+            ...part,
+            image_assets: imageAssets,
+            ...(attachments.length ? { image_attachments: attachments } : {}),
+          }
+        : part,
     seq: asFiniteNumber(rec.seq) ?? 0,
     updated_ms: asFiniteNumber(rec.updated_ms) ?? 0,
     ...(attachments.length > 0 ? { attachments } : {}),
