@@ -406,11 +406,6 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
           entering={fadeIn('micro')}
           style={[styles.body, { borderTopColor: theme.colors.border }]}>
           {children}
-          {taskSummary && durationMs !== undefined ? (
-            <Text variant="caption" color={theme.colors.textSubtle} style={styles.duration}>
-              {toolName} · {formatToolDuration(durationMs)}
-            </Text>
-          ) : null}
         </Animated.View>
       ) : null}
     </Animated.View>
