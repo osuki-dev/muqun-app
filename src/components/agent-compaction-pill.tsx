@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
   plate: { maxWidth: '100%', borderCurve: 'continuous', borderWidth: StyleSheet.hairlineWidth },
   header: { flexDirection: 'row', alignItems: 'center' },
   pill: {
-    minHeight: 44,
+    minHeight: 45,
     flexShrink: 1,
     flexDirection: 'row',
     alignItems: 'center',

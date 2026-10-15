@@ -243,6 +243,8 @@ export function demoCompactionSnapshot(): AgentSessionSnapshot {
   const timeline: TimelineItem[] = Array.from({ length: 32 }, (_, index) => ({
     id: `demo-compaction-history-${index}`,
     message_id: `demo-compaction-history-${index}`,
+    // Explicit chronological keys survive the normal live-boundary merge.
+    order: `demo-compaction-${String(index + 1).padStart(3, '0')}`,
     role: 'assistant',
     ordinal: 0,
     part: {

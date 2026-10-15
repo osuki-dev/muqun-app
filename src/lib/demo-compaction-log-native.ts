@@ -49,6 +49,7 @@ export function demoCompactionLogPlan(asid: string): Planned[] {
       {
         id: `${asid}-boundary`,
         message_id: `${asid}-boundary`,
+        order: 'demo-compaction-033',
         role: 'assistant',
         ordinal: 0,
         seq: revision,

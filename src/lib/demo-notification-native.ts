@@ -67,7 +67,7 @@ const formFor = (r: Run, asid: string): FormRequest => ({
   id: `${r.namespace}-${asid}-form`,
   asid,
   title: 'QA_NOTICE_FORM_CANONICAL',
-  fields: [{ type: 'string', key: 'answer', title: 'Synthetic answer', when: [] }],
+  fields: [{ type: 'string', key: 'answer', title: 'QA_NOTICE_FORM_CANONICAL', when: [] }],
 });
 function questionFor(r: Run): QuestionNoticeIdentity {
   const asid = 'demo-notice-reopen';
@@ -109,6 +109,7 @@ function report(r: Run, asid: string): string {
     r.receipts.size > 0 && [...r.receipts.keys()].every((id) => state.seen.includes(id));
   const batchIntact =
     r.batch.length > 0 && r.batch.every((n) => state.items.some((item) => item.id === n.id));
+  const segment = r.segments.at(-1)!;
   return [
     `QA_NOTICE_READY ${commandFor(asid) ?? asid}`,
     `QA_NOTICE_NAMESPACE ${r.namespace}`,
@@ -125,7 +126,14 @@ function report(r: Run, asid: string): string {
     // its native snapshot before navigation. Timestamps are STORE observation,
     // NOT host-effect/timer visibility-start timestamps.
     `QA_NOTICE_SEGMENTS ${r.segments.map((s) => `${s.name}:${s.entries.length}`).join(',')}`,
-    JSON.stringify(r.segments.at(-1)),
+    // Preserve the SAME complete JSON object; whitespace only between entries
+    // makes normal Markdown expose bounded observation paragraphs instead of
+    // one giant clipped AX node. Never trim/sample/evict recorded observations.
+    `{"name":${JSON.stringify(segment.name)},"entries":[`,
+    ...segment.entries.map(
+      (entry, index) => JSON.stringify(entry) + (index < segment.entries.length - 1 ? ',' : '')
+    ),
+    `],"overflow":${segment.overflow}}`,
   ].join('\n\n');
 }
 function textItem(asid: string, text: string): TimelineItem {

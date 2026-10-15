@@ -7,21 +7,29 @@
 # section open
 open "muqun://agent?asid=${ASID}&agentId=opencode"
 wait "id=agent-composer-tokens-pill" 15000
-keyboard restore-ime
+# Reuse the existing verified input helper ONLY for seeding an unsent draft;
+# restore the captured real IME before compaction or native keyboard evidence.
+open "dev.osuki.muqun" --test-ime
 press "id=agent-composer-input"
 fill "id=agent-composer-input" "Offline compaction log draft. Do not send."
 keyboard dismiss
+keyboard restore-ime
+keyboard dismiss
+wait stable 400 5000
 
 # section blank
 wait "id=agent-composer-compaction-pill" 10000
-is visible "id=agent-composer-compaction-pill label=\"Compacting context…\""
+# Android native AX appends the actual accessibilityState.busy to this label.
+# Assert that state AND the unchanged rendered caption; do not strip busy.
+is visible "id=agent-composer-compaction-pill label=\"Compacting context…, busy\""
+is visible "text=\"Compacting context…\""
 is hidden "id=agent-compaction-details"
 is hidden "id=agent-compaction-copy"
 snapshot
 screenshot "shots/compaction-${CASE}-whitespace-no-panel.png"
 
 # section expanded
-wait "id=agent-composer-compaction-pill label=\"Compacting context… · Show details\"" 12000
+wait "id=agent-composer-compaction-pill label=\"Compacting context… · Show details, busy\"" 12000
 press "id=agent-composer-compaction-pill"
 wait "id=agent-compaction-output" 10000
 is visible "text=QA_STREAM_HEAD"
@@ -88,5 +96,6 @@ press "id=agent-composer-compaction-pill"
 wait absent "id=agent-composer-compaction-pill" 10000
 
 # section home
+keyboard restore-ime
 open "muqun:///"
 wait stable 400 5000

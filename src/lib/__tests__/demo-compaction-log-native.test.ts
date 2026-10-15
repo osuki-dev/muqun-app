@@ -1,4 +1,7 @@
 import { expect, test } from 'bun:test';
+import { runInNewContext } from 'node:vm';
+import { declaration, transpile } from '../../test-support/production-source';
+import { upsertTimelineItems } from '../agent-timeline-upsert';
 import {
   parseAgentDomainEvent,
   type AgentDomainEvent,
@@ -43,6 +46,54 @@ const base = (): AgentSessionSnapshot => ({
   forms: [],
   inbox: [],
   seq: 32,
+});
+
+test('real layout history stays byte-identical and chronological through both parsed boundary merges', () => {
+  const layout = runInNewContext(
+    transpile(
+      `${declaration('src/lib/demo-gateway.ts', 'demoCompactionSnapshot')}; demoCompactionSnapshot();`
+    ),
+    { DEMO_COMPACTION_ASID: 'demo-compaction-layout', demoCompactionStep: 0 }
+  ) as AgentSessionSnapshot;
+  const saved = JSON.stringify(layout);
+  for (const asid of DEMO_COMPACTION_LOG_ASIDS) {
+    const snapshot = demoCompactionLogSnapshot(asid, layout);
+    const history = snapshot.timeline;
+    const bytes = JSON.stringify(history);
+    let timeline = history;
+    let merges = 0;
+    for (const planned of demoCompactionLogPlan(asid)) {
+      const event = parseAgentDomainEvent(planned.event.type, planned.event);
+      if (!event) throw new Error('Malformed fixture event');
+      if (event.type !== 'agent.timeline.upsert') continue;
+      timeline = upsertTimelineItems(timeline, event.items);
+      merges += 1;
+      expect(timeline).toHaveLength(33);
+      expect(timeline.map((item) => item.id)).toEqual([
+        ...history.map((item) => item.id),
+        `${asid}-boundary`,
+      ]);
+      expect(JSON.stringify(timeline.slice(0, 32))).toBe(bytes);
+      for (let index = 0; index < 32; index += 1) {
+        expect(timeline[index]).toBe(history[index]);
+        expect(timeline[index].part).toEqual(layout.timeline[index].part);
+      }
+      expect(timeline[31].part).toEqual(layout.timeline[31].part);
+      expect(timeline[32]).toEqual(event.items[0]);
+      if (event.seq === 40) {
+        expect(timeline[32].part).toEqual({
+          type: 'compaction',
+          status: 'completed',
+          reason: 'manual',
+          summary: DEMO_COMPACTION_RAW,
+        });
+      }
+    }
+    expect(merges).toBe(asid.endsWith('-complete') ? 2 : asid.endsWith('-empty-failed') ? 0 : 1);
+    expect(JSON.stringify(history)).toBe(bytes);
+  }
+  expect(JSON.stringify(layout)).toBe(saved);
+  stopDemoCompactionLogs();
 });
 
 test('exact independent ASIDs/snapshot cloning preserve original 32 rows and event cursor', () => {

@@ -396,6 +396,16 @@
         "env": { "CASE": "five", "COUNT": "5", "SHOT": "five" }
       },
       { "run": "flows/notifications-compact-lifecycle.ad#cycle-open" },
+      {
+        "target": {
+          "text": "\\{\"at\":[0-9]+,\"source\":\"notice-store\",\"ids\":\\[\"(notice-[a-z0-9]+-[0-9]+)-five-0\",\"\\1-five-2\",\"\\1-five-3\",\"\\1-five-4\"\\],\"seen\":\\[(?:\"\\1-one-0\",)?\"\\1-five-0\",\"\\1-five-1\",\"\\1-five-2\",\"\\1-five-3\",\"\\1-five-4\"\\],\"resolved\":\\[\\],\"task\":\"waiting\",\"permissionIds\":\\[[^\\]]*\\]\\},?"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 30000,
+        "run": "flows/notifications-compact-lifecycle.ad#seek-open-receipt"
+      },
+      { "run": "flows/notifications-compact-lifecycle.ad#exact-open-receipt" },
       { "include": "subflows/notice-native-clear", "env": { "SHOT": "five" } },
       {
         "include": "subflows/notice-native-case",
@@ -446,6 +456,7 @@
       { "run": "flows/notifications-compact-lifecycle.ad#duplicate" }
     ],
     "subflows/notifications-compact-cleanup": [
+      { "run": "flows/notifications-compact-lifecycle.ad#cleanup-receipts" },
       {
         "when": { "target": { "text": "QA_NOTICE_FOREIGN 0" } },
         "steps": [
