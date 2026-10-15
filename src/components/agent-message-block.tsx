@@ -40,6 +40,18 @@ import Animated, {
 
 import { PressableScale } from '@/components/pressable-scale';
 import { AttachmentImage } from '@/components/attachment-image';
+import {
+  GatewayImageThumbnail,
+  UnmappedImageThumbnail,
+} from '@/components/gateway-image-thumbnail';
+import { ImagePreviewModal } from '@/components/image-preview-modal';
+import { gatewayImageBinding } from '@/lib/gateway-client';
+import {
+  messageImageForSource,
+  unavailableMessageImage,
+  type PreviewImageDescriptor,
+  type PreviewImageSource,
+} from '@/lib/gateway-image-previews';
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { BoundedMarkdown } from '@/components/bounded-markdown';
 import { TranscriptBlockImage } from '@/components/transcript-block-image';
@@ -93,10 +105,12 @@ function isImageAttachment(uri: string): boolean {
 
 const MessageAttachments = memo(function MessageAttachments({
   attachments,
+  imageAssets,
   onPreviewImage,
   asid,
 }: {
   attachments: readonly string[];
+  imageAssets?: readonly MessageImageAsset[];
   asid?: string;
   onPreviewImage: (uri: string) => void;
 }) {
@@ -107,14 +121,32 @@ const MessageAttachments = memo(function MessageAttachments({
   return (
     <View style={styles.attachmentRow}>
       {attachments.map((att, attIdx) => {
+        const image = messageImageForSource(imageAssets, att);
+        if (image)
+          return (
+            <GatewayImageThumbnail
+              key={`${att}-${attIdx}`}
+              asset={image}
+              label={t`Open attachment`}
+              style={{ width: 160, height: 110 }}
+            />
+          );
         if (isImageAttachment(att)) {
           return (
-            <AttachmentImage
+            <UnmappedImageThumbnail
               key={`${att}-${attIdx}`}
               uri={att}
+              unavailable={unavailableMessageImage(imageAssets, att)}
               label={t`Open attachment`}
-              onPreviewImage={onPreviewImage}
-            />
+              style={{ width: 160, height: 110 }}
+              onPreviewImage={onPreviewImage}>
+              <AttachmentImage
+                key={`${att}-${attIdx}`}
+                uri={att}
+                label={t`Open attachment`}
+                onPreviewImage={onPreviewImage}
+              />
+            </UnmappedImageThumbnail>
           );
         }
         const fileName = att.split('/').filter(Boolean).pop() || t`Attachment`;
@@ -602,6 +634,40 @@ const MessageTextPart = memo(function MessageTextPart({
 }) {
   const { t } = useLingui();
   const images = useMessageImages(imageAssets);
+  const [preview, setPreview] = useState<{
+    images: PreviewImageDescriptor[];
+    index: number;
+  } | null>(null);
+  const openGatewayPreview = (
+    image: PreviewImageDescriptor,
+    assets: readonly MessageImageAsset[]
+  ) => {
+    const album = [
+      ...new Map(
+        assets.flatMap((asset) => {
+          const bound = gatewayImageBinding(asset);
+          return bound ? [[bound.image.id, bound.image] as const] : [];
+        })
+      ).values(),
+    ];
+    const index = album.findIndex((entry) => entry.id === image.id);
+    setPreview({ images: index >= 0 ? album : [image], index: Math.max(0, index) });
+  };
+  const previewMessageImage = (uri: string, album?: readonly string[]) => {
+    const asset = imageAssets?.find(
+      (entry) => entry.src === uri || images.uris.get(entry.src) === uri
+    );
+    const bound = asset ? gatewayImageBinding(asset) : null;
+    if (asset && bound) openGatewayPreview(bound.image, [asset]);
+    else onPreviewImage?.(uri, album);
+  };
+  const blockSources = useMemo(
+    () =>
+      new Set(
+        splitBlockImages(written).flatMap((block) => (block.kind === 'image' ? [block.uri] : []))
+      ),
+    [written]
+  );
   // The text as drawn: each image the gateway can serve loads from it, and one
   // that names a host path nothing can serve says so in words rather than
   // leaving an empty box. The agent's own text -- what copy and export use --
@@ -610,13 +676,16 @@ const MessageTextPart = memo(function MessageTextPart({
     () =>
       rewriteMessageImages(
         role === 'assistant' ? normalizeAssistantMarkdown(written) : written,
-        messageImageResolver(images.uris, images.pending),
+        (src) =>
+          blockSources.has(src) && messageImageForSource(imageAssets, src) && !images.uris.has(src)
+            ? { kind: 'keep' }
+            : messageImageResolver(images.uris, images.pending)(src),
         (alt) => {
           const label = alt.trim() ? t`Image unavailable: ${alt.trim()}` : t`Image unavailable`;
           return `*${escapeMarkdownText(label)}*`;
         }
       ),
-    [written, role, images, t]
+    [written, role, images, t, blockSources, imageAssets]
   );
   const segments = useMemo(
     () => splitDiffFences(text).filter((seg) => seg.kind === 'diff' || seg.text.trim().length > 0),
@@ -631,9 +700,17 @@ const MessageTextPart = memo(function MessageTextPart({
             (block) => block.kind === 'image' && /cover|poster|封面/i.test(block.alt)
           )
         : undefined;
+    const coverMetadata = imageAssets?.find(
+      (asset) =>
+        asset.src === (cover?.kind === 'image' ? cover.uri : '') ||
+        images.uris.get(asset.src) === (cover?.kind === 'image' ? cover.uri : '')
+    );
     const coverUri =
-      cover?.kind === 'image' && !images.pending.has(cover.uri) ? cover.uri : undefined;
-    const coverMetadata = imageAssets?.find((asset) => images.uris.get(asset.src) === coverUri);
+      cover?.kind === 'image' &&
+      !images.pending.has(cover.uri) &&
+      (!coverMetadata || images.uris.has(coverMetadata.src))
+        ? cover.uri
+        : undefined;
     const renderText = (partKey: string, content: string) => {
       const blocks = groupBlockImages(splitBlockImages(content));
       return blocks.map((block) => {
@@ -642,7 +719,20 @@ const MessageTextPart = memo(function MessageTextPart({
           if (shown.length === 0) return null;
           if (shown.length === 1) {
             const image = shown[0]!;
-            const metadata = imageAssets?.find((asset) => images.uris.get(asset.src) === image.uri);
+            const metadata = imageAssets?.find(
+              (asset) => asset.src === image.uri || images.uris.get(asset.src) === image.uri
+            );
+            if (metadata && metadata.mime.startsWith('image/'))
+              return (
+                <GatewayImageThumbnail
+                  key={`${partKey}:${image.start}:${metadata.asset_id}`}
+                  asset={metadata}
+                  label={image.alt || t`Image`}
+                  block
+                  sourceOverride={images.sources.get(metadata.src) ?? null}
+                  onPreview={(opened) => openGatewayPreview(opened, [metadata])}
+                />
+              );
             return (
               <TranscriptBlockImage
                 key={`${partKey}:${image.start}:${image.uri}`}
@@ -671,11 +761,21 @@ const MessageTextPart = memo(function MessageTextPart({
                 uri: image.uri,
                 alt: image.alt,
                 pending: images.pending.has(image.uri),
+                asset: imageAssets?.find(
+                  (asset) => asset.src === image.uri || images.uris.get(asset.src) === image.uri
+                ),
+                source:
+                  images.sources.get(
+                    imageAssets?.find(
+                      (asset) => asset.src === image.uri || images.uris.get(asset.src) === image.uri
+                    )?.src ?? ''
+                  ) ?? null,
                 headers: imageAssets?.some((asset) => images.uris.get(asset.src) === image.uri)
                   ? images.headers
                   : undefined,
               }))}
               onPress={onPreviewImage}
+              onGatewayPreview={openGatewayPreview}
             />
           );
         }
@@ -688,8 +788,7 @@ const MessageTextPart = memo(function MessageTextPart({
             containerStyle={styles.markdownContainer}
             latexMath
             streaming={streaming}
-            {...(images.headers ? { imageRequestHeaders: images.headers } : {})}
-            {...(onPreviewImage ? { onImagePress: (uri: string) => onPreviewImage(uri) } : {})}
+            onImagePress={(uri: string) => previewMessageImage(uri)}
           />
         );
       });
@@ -735,7 +834,9 @@ const MessageTextPart = memo(function MessageTextPart({
 
   // Keep the same parent and offset keys when a streamed diff fence closes.
   // Reparenting the preceding Markdown would discard its native measurement.
-  const files = (imageAssets ?? []).filter((asset) => !asset.mime.startsWith('image/'));
+  const files = (imageAssets ?? []).filter(
+    (asset) => !asset.unavailable_reason && !asset.mime.startsWith('image/')
+  );
   return (
     <View style={styles.markdownSegments}>
       {segments.map((seg) =>
@@ -763,6 +864,13 @@ const MessageTextPart = memo(function MessageTextPart({
           </Text>
         </PressableScale>
       ))}
+      {preview ? (
+        <ImagePreviewModal
+          images={preview.images}
+          initialIndex={preview.index}
+          onClose={() => setPreview(null)}
+        />
+      ) : null}
     </View>
   );
 });
@@ -793,22 +901,46 @@ function groupBlockImages(blocks: ReturnType<typeof splitBlockImages>): GroupedB
 function ImageAlbum({
   images,
   onPress,
+  onGatewayPreview,
 }: {
-  images: { uri: string; alt: string; pending: boolean; headers?: Record<string, string> }[];
+  images: {
+    uri: string;
+    alt: string;
+    pending: boolean;
+    headers?: Record<string, string>;
+    asset?: MessageImageAsset;
+    source?: PreviewImageSource | null;
+  }[];
   onPress?: (uri: string, album?: readonly string[]) => void;
+  onGatewayPreview?: (image: PreviewImageDescriptor, assets: readonly MessageImageAsset[]) => void;
 }) {
   const uris = images.map((image) => image.uri);
   return (
     <View style={styles.album}>
       {images.map((image) => (
         <View key={image.uri} style={styles.albumCell}>
-          <TranscriptBlockImage
-            uri={image.uri}
-            alt={image.alt}
-            headers={image.headers}
-            pending={image.pending}
-            onPress={onPress ? (uri) => onPress(uri, uris) : undefined}
-          />
+          {image.asset ? (
+            <GatewayImageThumbnail
+              asset={image.asset}
+              label={image.alt || image.asset.src}
+              block
+              sourceOverride={image.source ?? null}
+              onPreview={(opened) =>
+                onGatewayPreview?.(
+                  opened,
+                  images.flatMap((entry) => (entry.asset ? [entry.asset] : []))
+                )
+              }
+            />
+          ) : (
+            <TranscriptBlockImage
+              uri={image.uri}
+              alt={image.alt}
+              headers={image.headers}
+              pending={image.pending}
+              onPress={onPress ? (uri) => onPress(uri, uris) : undefined}
+            />
+          )}
         </View>
       ))}
     </View>
@@ -1347,6 +1479,7 @@ export const AgentUserMessage = memo(function AgentUserMessage({
       {attachments.length > 0 ? (
         <MessageAttachments
           attachments={attachments}
+          imageAssets={group.items.flatMap((item) => item.image_assets ?? [])}
           onPreviewImage={onPreviewImage}
           asid={actions.audioSessionId}
         />

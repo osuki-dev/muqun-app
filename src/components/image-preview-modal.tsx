@@ -2,10 +2,17 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { Text } from '@/components/text';
 import { Image } from 'expo-image';
 import { X } from 'lucide-react-native';
-import { useMemo, useState } from 'react';
+import { useEffect, useEffectEvent, useMemo, useState } from 'react';
 import { useFileActions } from '@/hooks/use-file-actions';
 import { useStableHandler } from '@/hooks/use-render-refs';
 import { savePreviewImage } from '@/lib/save-file';
+import {
+  failedPreviewLoad,
+  saveOriginalPreview,
+  shouldLoadImagePreview,
+  type PreviewImageDescriptor,
+  type PreviewLoadState,
+} from '@/lib/gateway-image-previews';
 import {
   clampPreviewTransform,
   finishPreviewPan,
@@ -41,7 +48,7 @@ const AXIS_LOCK_DISTANCE = 8;
 const DOUBLE_TAP_SCALE = 2.5;
 const UNKNOWN_SIZE: PreviewSize = { width: 0, height: 0 };
 
-export interface PreviewImage {
+export interface PreviewImage extends PreviewImageDescriptor {
   id: string;
   uri: string;
   /**
@@ -76,6 +83,14 @@ export function ImagePreviewModal({
 }) {
   const window = useWindowDimensions();
   const [layout, setLayout] = useState<PreviewSize | null>(null);
+  const [pendingSaves] = useState(() => new Set<AbortController>());
+  useEffect(
+    () => () => {
+      for (const controller of pendingSaves) controller.abort();
+      pendingSaves.clear();
+    },
+    [pendingSaves]
+  );
   const { width, height } = layout ?? window;
   const sourceKey = JSON.stringify([
     initialIndex,
@@ -113,6 +128,7 @@ export function ImagePreviewModal({
             width={width}
             height={height}
             onClose={onClose}
+            pendingSaves={pendingSaves}
           />
         </Animated.View>
       </GestureHandlerRootView>
@@ -127,12 +143,14 @@ function PreviewSelection({
   width,
   height,
   onClose,
+  pendingSaves,
 }: {
   images: PreviewImage[];
   initialIndex: number;
   width: number;
   height: number;
   onClose: () => void;
+  pendingSaves: Set<AbortController>;
 }) {
   const [index, setIndex] = useState(() => previewPageIndex(initialIndex, images.length));
   return (
@@ -144,6 +162,7 @@ function PreviewSelection({
       height={height}
       onPageChange={setIndex}
       onClose={onClose}
+      pendingSaves={pendingSaves}
     />
   );
 }
@@ -160,6 +179,7 @@ function PreviewSurface({
   height,
   onPageChange,
   onClose,
+  pendingSaves,
 }: {
   images: PreviewImage[];
   activeIndex: number;
@@ -167,11 +187,19 @@ function PreviewSurface({
   height: number;
   onPageChange: (index: number) => void;
   onClose: () => void;
+  pendingSaves: Set<AbortController>;
 }) {
   const { t } = useLingui();
   const insets = useSafeAreaInsets();
   const viewport = useMemo(() => ({ width, height }), [width, height]);
   const count = images.length;
+  const [originalPages, setOriginalPages] = useState<ReadonlySet<number>>(new Set());
+  const canViewOriginal = Boolean(
+    images[activeIndex]?.resolveOriginal &&
+    images[activeIndex]?.original &&
+    images[activeIndex]?.uri !== images[activeIndex]?.original?.uri
+  );
+  const viewOriginal = () => setOriginalPages((current) => new Set(current).add(activeIndex));
   const pagerX = useSharedValue(-activeIndex * width);
   const dragY = useSharedValue(0);
   const transform = useSharedValue(RESTING_PREVIEW);
@@ -199,7 +227,13 @@ function PreviewSurface({
     t`Save image`,
     async () => {
       const image = images[pageIndex.get()];
-      if (image) await savePreviewImage(image);
+      if (image) {
+        const controller = new AbortController();
+        pendingSaves.add(controller);
+        await saveOriginalPreview(image, savePreviewImage, controller.signal).finally(() =>
+          pendingSaves.delete(controller)
+        );
+      }
     },
     true
   );
@@ -469,6 +503,9 @@ function PreviewSurface({
   const accessibility: PreviewAccessibility = {
     onAccessibilityEscape: close,
     accessibilityActions: [
+      ...(canViewOriginal && !originalPages.has(activeIndex)
+        ? [{ name: 'viewOriginal', label: t`View original` }]
+        : []),
       { name: 'increment', label: t`Zoom in` },
       { name: 'decrement', label: t`Zoom out` },
       { name: 'resetZoom', label: t`Reset zoom` },
@@ -482,6 +519,10 @@ function PreviewSurface({
       { name: 'escape', label: t`Close preview` },
     ],
     onAccessibilityAction: ({ nativeEvent: { actionName } }) => {
+      if (actionName === 'viewOriginal' && canViewOriginal) {
+        viewOriginal();
+        return;
+      }
       if (actionName === 'escape') {
         close();
         return;
@@ -545,6 +586,7 @@ function PreviewSurface({
                 transform={transform}
                 sizes={sizes}
                 pageIndex={pageIndex}
+                originalRequested={originalPages.has(index)}
               />
             ))}
           </Animated.View>
@@ -565,6 +607,14 @@ function PreviewSurface({
         style={[styles.close, { top: insets.top + 10 }]}>
         <X size={20} color="#FFFFFF" />
       </PressableScale>
+      {canViewOriginal && !originalPages.has(activeIndex) ? (
+        <PressableScale
+          accessibilityLabel={t`View original`}
+          onPress={viewOriginal}
+          style={[styles.original, { top: insets.top + 10 }]}>
+          <Text variant="caption" style={{ color: '#FFFFFF' }}>{t`View original`}</Text>
+        </PressableScale>
+      ) : null}
     </>
   );
 }
@@ -592,6 +642,7 @@ function PreviewPage({
   transform,
   sizes,
   pageIndex,
+  originalRequested,
 }: {
   image: PreviewImage;
   index: number;
@@ -602,9 +653,47 @@ function PreviewPage({
   transform: SharedValue<typeof RESTING_PREVIEW>;
   sizes: SharedValue<PreviewSize[]>;
   pageIndex: SharedValue<number>;
+  originalRequested: boolean;
 }) {
   const { t } = useLingui();
-  const [status, setStatus] = useState<'loading' | 'loaded' | 'failed'>('loading');
+  const [load, setLoad] = useState<PreviewLoadState>(() => ({
+    source: image.resolveSource ? null : image,
+    status: 'loading',
+    original: false,
+  }));
+  const { status, original } = load;
+  const wantsOriginal = original || originalRequested;
+  useEffect(() => {
+    if (originalRequested)
+      setLoad((current) =>
+        current.original && current.status === 'loading'
+          ? current
+          : { source: null, status: 'loading', original: true }
+      );
+  }, [originalRequested]);
+  const asynchronous = Boolean(image.resolveSource);
+  const resolve = useEffectEvent((signal: AbortSignal, original: boolean) =>
+    original
+      ? (image.resolveOriginal?.(signal) ?? Promise.resolve(image.original ?? image))
+      : (image.resolveSource?.(signal) ?? Promise.resolve(image))
+  );
+  useEffect(() => {
+    if (!active || !asynchronous) return;
+    const controller = new AbortController();
+    resolve(controller.signal, wantsOriginal).then(
+      (source) => {
+        if (!controller.signal.aborted)
+          setLoad({ source, status: 'loading', original: wantsOriginal });
+        else source.dispose?.();
+      },
+      () => {
+        if (!controller.signal.aborted)
+          setLoad({ source: null, status: 'failed', original: wantsOriginal });
+      }
+    );
+    return () => controller.abort();
+  }, [active, asynchronous, wantsOriginal, originalRequested]);
+  useEffect(() => () => load.source?.dispose?.(), [load.source]);
   const zoomStyle = useAnimatedStyle(() => {
     // Clamp even during timed zooms: an axis may not overflow until halfway through.
     const current =
@@ -631,30 +720,39 @@ function PreviewPage({
       }
       {...accessibility}>
       <Animated.View style={[styles.page, zoomStyle]}>
-        <Image
-          source={{
-            uri: image.uri,
-            headers: image.headers,
-            cacheKey: image.cacheKey,
-          }}
-          style={styles.image}
-          contentFit="contain"
-          // The decode's own fade. It was 120 ms, which is not a step on any
-          // scale this app uses. There is deliberately no `placeholder`: a
-          // blurhash is the right answer and the gateway does not send one, so
-          // writing a fake one here would be a lie about the file. Until it
-          // does, the wait is stated by the frame below rather than guessed at.
-          transition={DURATION.micro}
-          onLoad={({ source }) => {
-            sizes.set((current) =>
-              current.map((size, page) =>
-                page === index ? { width: source.width, height: source.height } : size
-              )
-            );
-            setStatus('loaded');
-          }}
-          onError={() => setStatus('failed')}
-        />
+        {load.source && shouldLoadImagePreview(image, active, status === 'loaded') ? (
+          <Image
+            key={load.source.cacheKey ?? load.source.uri}
+            source={{
+              uri: load.source.uri,
+              headers: load.source.headers,
+              cacheKey: load.source.cacheKey,
+            }}
+            cachePolicy={image.deferred ? 'none' : undefined}
+            style={styles.image}
+            contentFit="contain"
+            // The decode's own fade. It was 120 ms, which is not a step on any
+            // scale this app uses. There is deliberately no `placeholder`: a
+            // blurhash is the right answer and the gateway does not send one, so
+            // writing a fake one here would be a lie about the file. Until it
+            // does, the wait is stated by the frame below rather than guessed at.
+            transition={DURATION.micro}
+            onLoad={({ source }) => {
+              sizes.set((current) =>
+                current.map((size, page) =>
+                  page === index ? { width: source.width, height: source.height } : size
+                )
+              );
+              setLoad((current) =>
+                current.source === load.source ? { ...current, status: 'loaded' } : current
+              );
+            }}
+            onError={() => {
+              const failed = load.source;
+              if (failed) setLoad((current) => failedPreviewLoad(current, image, failed));
+            }}
+          />
+        ) : null}
       </Animated.View>
       {status === 'loading' ? (
         <Animated.View
@@ -691,6 +789,18 @@ const styles = StyleSheet.create({
   viewport: {
     flex: 1,
     overflow: 'hidden',
+  },
+  original: {
+    position: 'absolute',
+    left: 14,
+    height: 40,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.30)',
+    zIndex: 1,
+    elevation: 1,
   },
   backdrop: {
     backgroundColor: '#000000',

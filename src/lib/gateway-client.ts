@@ -2,7 +2,8 @@ import { parseGitWorktrees, type GitWorktreeInventory } from './git-worktrees';
 import * as TransportSecureStore from 'expo-secure-store';
 import { TransportNegotiation, type TransportVersion } from './transport-negotiation';
 import { AudioPlaybackError } from '@/lib/audio-playback-session';
-import { File, FileMode, Paths } from 'expo-file-system';
+import { Directory, File, FileMode, Paths } from 'expo-file-system';
+import { fetch as expoFetch } from 'expo/fetch';
 import { isHostPathSource } from './message-images';
 import { fetch as nitroFetch, Response as NitroResponse } from 'react-native-nitro-fetch';
 import QuickCrypto from 'react-native-quick-crypto';
@@ -191,6 +192,25 @@ import { assertSupportedHerdr } from './herdr-compatibility';
 import { GatewayTunnelUnavailableError, directGatewayBaseUrl } from './ssh-tunnel';
 import { MAX_ASSET_TEXT_BYTES } from './text-preview';
 import { noteGatewayGeneration } from '@/stores/gateway-connection-generation';
+import { useServerCapabilities } from '@/stores/server-capabilities';
+import { downloadOriginalImageFile } from './image-original-file';
+import {
+  IMAGE_RANGE_BYTES,
+  readLimitedImageBody,
+  assertImageEnvelopeLimit,
+  fetchBoundedImageResponse,
+  readOriginalImageVersion,
+  IMAGE_VERSION_BYTES,
+} from './image-original-ranges';
+import type { MessageImageAsset } from './message-images';
+import {
+  gatewayImagePlan,
+  IMAGE_PREVIEWS_CAPABILITY,
+  readPreviewWithFallback,
+  readThumbnailOnly,
+  type PreviewImageDescriptor,
+  type PreviewImageSource,
+} from './gateway-image-previews';
 
 const REQUEST_TIMEOUT_MS = 8_000;
 // An attachment is orders of magnitude larger than a control call, and the
@@ -247,6 +267,16 @@ async function fetchWithin(
   }
 
   return withBodyDeadline(response, budget);
+}
+
+/** Installed nitroFetch buffers unless stream:true; that streaming client ignores
+ * redirect:error. Existing Expo fetch streams AND refuses redirects on iOS/Android. */
+async function fetchImageWithin(
+  timeoutMs: number,
+  input: RequestInfo | URL,
+  init: RequestInit = {}
+): Promise<Response> {
+  return fetchBoundedImageResponse(expoFetch, requestUrl(input), init, timeoutMs);
 }
 
 interface EncryptedRequestPayload {
@@ -383,7 +413,8 @@ async function encryptedGatewayFetch(
   init: RequestInit = {},
   timeoutMs = REQUEST_TIMEOUT_MS,
   endpoint?: GatewayEndpoint,
-  isCurrent: () => boolean = () => true
+  isCurrent: () => boolean = () => true,
+  readLimit?: number
 ): Promise<Response> {
   const started = Date.now();
   const method = (
@@ -401,7 +432,9 @@ async function encryptedGatewayFetch(
       { ...init, method },
       Math.max(1, timeoutMs - (Date.now() - started)),
       capturedEndpoint,
-      isCurrent
+      isCurrent,
+      undefined,
+      readLimit
     )
   );
 }
@@ -456,7 +489,8 @@ async function sendEncryptedGatewayRequest(
   timeoutMs = REQUEST_TIMEOUT_MS,
   endpoint?: GatewayEndpoint,
   isCurrent: () => boolean = () => true,
-  negotiatedVersion?: TransportVersion
+  negotiatedVersion?: TransportVersion,
+  readLimit?: number
 ): Promise<Response> {
   const requestStarted = Date.now();
   const token = endpoint ? endpoint.token : currentToken;
@@ -497,33 +531,55 @@ async function sendEncryptedGatewayRequest(
       delete outerHeaders[name];
     }
   }
-  const response = await fetchWithin(
-    Math.max(1, timeoutMs - (Date.now() - requestStarted)),
-    'Timed out waiting for the server.',
-    input,
-    {
-      ...init,
-      method,
-      headers: {
-        ...outerHeaders,
-        'Content-Type': 'application/json',
-        'X-Muqun-Transport': '1',
-        'X-Muqun-Device': deviceId,
-        // Compression cannot happen outside the envelope -- the body on the wire
-        // is ciphertext, and ciphertext does not compress -- so it is offered
-        // for the inside of it. A gateway that has never heard of this header
-        // answers exactly as it always did. Deliberately not `Accept-Encoding`:
-        // Cronet and NSURLSession own that one and decompress transparently, and
-        // setting it by hand is how an app ends up holding a body the platform
-        // has stopped decoding for it.
-        [ENVELOPE_ACCEPT_HEADER]: ENVELOPE_ACCEPT_ENCODINGS,
-        ...(bodylessMethod
-          ? { 'X-Muqun-Envelope': base64Url(QuickCrypto.Buffer.from(envelopeJson, 'utf8')) }
-          : {}),
-      },
-      body: bodylessMethod ? undefined : envelopeJson,
-    }
-  );
+  const response = await (readLimit === undefined
+    ? fetchWithin(
+        Math.max(1, timeoutMs - (Date.now() - requestStarted)),
+        'Timed out waiting for the server.',
+        input,
+        {
+          ...init,
+          method,
+          headers: {
+            ...outerHeaders,
+            'Content-Type': 'application/json',
+            'X-Muqun-Transport': '1',
+            'X-Muqun-Device': deviceId,
+            // Compression cannot happen outside the envelope -- the body on the wire
+            // is ciphertext, and ciphertext does not compress -- so it is offered
+            // for the inside of it. A gateway that has never heard of this header
+            // answers exactly as it always did. Deliberately not `Accept-Encoding`:
+            // Cronet and NSURLSession own that one and decompress transparently, and
+            // setting it by hand is how an app ends up holding a body the platform
+            // has stopped decoding for it.
+            [ENVELOPE_ACCEPT_HEADER]:
+              readLimit === undefined ? ENVELOPE_ACCEPT_ENCODINGS : 'identity',
+            ...(bodylessMethod
+              ? { 'X-Muqun-Envelope': base64Url(QuickCrypto.Buffer.from(envelopeJson, 'utf8')) }
+              : {}),
+          },
+          body: bodylessMethod ? undefined : envelopeJson,
+        }
+      )
+    : fetchImageWithin(Math.max(1, timeoutMs - (Date.now() - requestStarted)), input, {
+        ...init,
+        method,
+        headers: {
+          ...outerHeaders,
+          'Content-Type': 'application/json',
+          'X-Muqun-Transport': '1',
+          'X-Muqun-Device': deviceId,
+          [ENVELOPE_ACCEPT_HEADER]: 'identity',
+          ...(bodylessMethod
+            ? { 'X-Muqun-Envelope': base64Url(QuickCrypto.Buffer.from(envelopeJson, 'utf8')) }
+            : {}),
+        },
+        body: bodylessMethod ? undefined : envelopeJson,
+      }));
+  const limitedBody =
+    readLimit === undefined
+      ? null
+      : await readLimitedImageBody(response, readLimit * 2 + 64 * 1024, init.signal ?? undefined);
+  const limitedText = limitedBody ? QuickCrypto.Buffer.from(limitedBody).toString('utf8') : null;
   if (response.headers.get('x-muqun-transport') !== '1') {
     // Not a mystery, and not a transport fault. The gateway's middleware seals
     // a response only once the request has authenticated, so every refusal on
@@ -533,9 +589,14 @@ async function sendEncryptedGatewayRequest(
     // longer knows their device and telling them an encryption marker was
     // missing. `GatewayTransportRefusalError` carries status and body through to
     // `describeGatewayFailure`, which decides what that reason means.
-    throw new GatewayTransportRefusalError(response.status, await response.text().catch(() => ''));
+    throw new GatewayTransportRefusalError(
+      response.status,
+      limitedText ?? (await response.text().catch(() => ''))
+    );
   }
-  const sealed = (await response.json()) as EncryptedEnvelope;
+  const sealed = (
+    limitedText === null ? await response.json() : JSON.parse(limitedText)
+  ) as EncryptedEnvelope;
   const payload = decryptJson<EncryptedResponsePayload>(
     material,
     'response',
@@ -554,11 +615,16 @@ async function sendEncryptedGatewayRequest(
   ) {
     throw new Error('Gateway returned an invalid encrypted response.');
   }
+  if (readLimit !== undefined) {
+    assertImageEnvelopeLimit(payload, readLimit);
+  }
   // Inflated before the response is rebuilt, so every caller above reads the
   // body the gateway meant to send and no one downstream has to know whether
   // this connection compressed anything. `headers` comes back describing the
   // bytes that come back with it.
   const { bytes, headers: answerHeaders } = decodeSealedBody(fromBase64Url(payload.body), payload);
+  if (readLimit !== undefined && bytes.length > readLimit)
+    throw new Error('Encrypted image response exceeds the read limit');
   const noBody = answerHasNoBody(method, payload.status);
   // Use the same response implementation as the request transport. React
   // Native's global Response treats a QuickCrypto Buffer as a string-like body
@@ -1092,6 +1158,223 @@ export interface AssetImageSource {
   headers?: Record<string, string>;
   /** Identity for the image cache, so a rewritten file is not served stale. */
   cacheKey: string;
+}
+
+export function gatewayImageConnectionKey(): string {
+  return QuickCrypto.createHash('sha256')
+    .update(
+      JSON.stringify([
+        configuredGatewayServerId(),
+        currentBaseUrl,
+        currentDeviceId,
+        currentToken,
+        currentTransportKey,
+      ])
+    )
+    .digest('hex');
+}
+
+/** Bind URLs, credentials and cache identity to this exact pairing, before any async work. */
+export function gatewayImageBinding(asset: MessageImageAsset, capabilities?: readonly string[]) {
+  const baseUrl = currentBaseUrl;
+  const serverId = configuredGatewayServerId();
+  const token = currentToken;
+  const deviceId = currentDeviceId;
+  const transport = currentTransport;
+  const transportKey = currentTransportKey;
+  const pairingKey = gatewayImageConnectionKey();
+  const observedCapabilities =
+    capabilities ?? (serverId ? (useServerCapabilities.getState().byServer[serverId] ?? []) : []);
+  const plan = gatewayImagePlan(
+    asset,
+    {
+      serverId: serverId ?? '',
+      baseUrl,
+      pairingKey,
+      headers: gatewayAuthHeaders(),
+    },
+    observedCapabilities
+  );
+  if (!plan) return null;
+  const rangedOriginal =
+    Boolean(plan.version) ||
+    (observedCapabilities.includes(IMAGE_PREVIEWS_CAPABILITY) &&
+      (plan.original.uri.endsWith(`/api/agent-images/${asset.asset_id}/download`) ||
+        plan.original.uri.endsWith(`/api/agent-images/${asset.asset_id}/original`)));
+  const assertCurrent = () => {
+    if (
+      configuredGatewayServerId() !== serverId ||
+      currentBaseUrl !== baseUrl ||
+      currentToken !== token ||
+      currentDeviceId !== deviceId ||
+      currentTransportKey !== transportKey ||
+      currentTransport !== transport
+    )
+      throw new Error('The image belongs to a different Gateway connection');
+  };
+  const requestImage = async (
+    source: PreviewImageSource,
+    signal: AbortSignal | undefined,
+    limit: number,
+    headers?: Record<string, string>
+  ) => {
+    assertCurrent();
+    const init = { headers: { ...source.headers, ...headers }, signal, redirect: 'error' as const };
+    const response =
+      transport === GATEWAY_TRANSPORT
+        ? await encryptedGatewayFetch(
+            source.uri,
+            init,
+            ASSET_CONTENT_TIMEOUT_MS,
+            {
+              url: baseUrl,
+              token: token ?? '',
+              deviceId: deviceId ?? undefined,
+              transportKey: transportKey ?? undefined,
+            },
+            () => gatewayImageConnectionKey() === pairingKey,
+            limit
+          )
+        : await fetchImageWithin(ASSET_CONTENT_TIMEOUT_MS, source.uri, init);
+    try {
+      assertCurrent();
+      return response;
+    } catch (error) {
+      await response.body?.cancel().catch(() => undefined);
+      throw error;
+    }
+  };
+  const read = async (
+    source: PreviewImageSource,
+    signal?: AbortSignal
+  ): Promise<PreviewImageSource> => {
+    assertCurrent();
+    if (signal?.aborted) throw new Error('Image read cancelled');
+    if (rangedOriginal && (source.uri === plan.original.uri || source.uri === plan.fallback.uri)) {
+      let fixedSource = source;
+      return downloadOriginalImageFile({
+        signal,
+        size: asset.size,
+        assertCurrent,
+        acquireVersion: plan.version
+          ? async (versionSignal) => {
+              const response = await requestImage(
+                plan.version!,
+                versionSignal,
+                IMAGE_VERSION_BYTES
+              );
+              const fixed = await readOriginalImageVersion(response, asset.asset_id, versionSignal);
+              assertCurrent();
+              fixedSource = {
+                uri: `${baseUrl.replace(/\/$/, '')}${fixed.download_url}`,
+                headers: source.headers,
+                cacheKey: JSON.stringify([source.cacheKey, fixed.version]),
+              };
+              return fixed;
+            }
+          : undefined,
+        request: (rangeHeaders, rangeSignal) =>
+          requestImage(fixedSource, rangeSignal, IMAGE_RANGE_BYTES, rangeHeaders),
+      });
+    }
+    const key = source.cacheKey ?? source.uri;
+    const limit = source.uri.endsWith('/thumbnail')
+      ? 1024 * 1024
+      : source.uri.endsWith('/preview')
+        ? 4 * 1024 * 1024
+        : 25 * 1024 * 1024;
+    const response = await requestImage(source, signal, limit);
+    let bytes: Uint8Array;
+    let extension: string;
+    try {
+      assertCurrent();
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const mime = response.headers.get('content-type')?.split(';')[0].trim().toLowerCase() ?? '';
+      extension = IMAGE_EXTENSIONS[mime];
+      if (!extension) throw new Error('Gateway did not return an image.');
+      bytes = await readLimitedImageBody(response, limit, signal);
+    } finally {
+      await response.body?.cancel().catch(() => undefined);
+    }
+    assertCurrent();
+    if (signal?.aborted) throw new Error('Image read cancelled');
+    if (bytes.length > 25 * 1024 * 1024) throw new Error('Image exceeds the download limit');
+    const directory = new Directory(
+      Paths.cache,
+      `file-export-${Date.now()}-${Math.floor(Math.random() * 2 ** 32)}`
+    );
+    directory.create();
+    const cachedFile = new File(directory, `preview.${extension}`);
+    try {
+      cachedFile.create();
+      cachedFile.write(bytes);
+    } catch (error) {
+      directory.delete();
+      throw error;
+    }
+    return {
+      uri: cachedFile.uri,
+      cacheKey: key,
+      dispose: () => {
+        try {
+          if (directory.exists) directory.delete();
+        } catch {
+          console.warn('[image-preview] Temporary image cleanup deferred to startup');
+        }
+      },
+    };
+  };
+  const image: PreviewImageDescriptor = {
+    id: plan.id,
+    ...plan.preview,
+    original: plan.original,
+    fallback: plan.fallback,
+    deferred: true,
+    resolveSource: (signal: AbortSignal) =>
+      readPreviewWithFallback(
+        plan,
+        (source) => read(source, signal),
+        (error) =>
+          error instanceof Error ? Number(error.message.match(/^HTTP (\d+)/)?.[1] ?? 0) : 0,
+        signal
+      ),
+    resolveOriginal: (signal) => read(plan.original, signal),
+  };
+  return {
+    image,
+    plan,
+    // Native image loaders must never receive bearer headers or follow redirects.
+    readThumbnail: (signal: AbortSignal) =>
+      readThumbnailOnly(plan, (source) => read(source, signal)),
+  };
+}
+
+export function assetPreviewImage(asset: SessionAsset): PreviewImageDescriptor | null {
+  if (asset.gatewayServerId && asset.gatewayServerId !== configuredGatewayServerId()) return null;
+  // Listing metadata without derivative fields retains the established asset path.
+  if (
+    !asset.preview_url &&
+    !asset.thumbnail_url &&
+    !asset.download_url &&
+    !asset.version_url &&
+    !asset.preview_declared
+  )
+    return null;
+  return (
+    gatewayImageBinding({
+      src: asset.path,
+      asset_id: asset.id,
+      url: `/api/assets/${asset.id}/content`,
+      mime: asset.mime,
+      thumbnail_url: asset.thumbnail_url,
+      preview_url: asset.preview_url,
+      download_url: asset.download_url,
+      version_url: asset.version_url,
+      cache_revision: asset.modified_unix_ms,
+      size: asset.size > 0 ? asset.size : undefined,
+      preview_declared: asset.preview_declared,
+    })?.image ?? null
+  );
 }
 
 /**
