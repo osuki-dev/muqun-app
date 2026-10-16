@@ -49,7 +49,7 @@ describe('staging', () => {
   test('an oversized pick fails at staging without opening a socket', () => {
     const queue = stage(pick('huge.jpg', MAX_UPLOAD_BYTES + 1));
     expect(queue[0].status).toBe('error');
-    expect(queue[0].error).toContain('10MB');
+    expect(queue[0].failure).toBe('too-large');
     expect(startableIds(queue)).toEqual([]);
     expect(isBusy(queue)).toBe(false);
   });

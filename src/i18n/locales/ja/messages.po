@@ -113,6 +113,17 @@ msgstr "{0}（ゲートウェイ）"
 msgid "{0} (this device)"
 msgstr "{0}（このデバイス）"
 
+#. placeholder {0}: failed.name
+#: src/lib/attachments.ts
+msgid "{0} did not upload. Retry it or remove it to send."
+msgstr "{0}をアップロードできませんでした。再試行するか削除してから送信してください"
+
+#. placeholder {0}: failed.name
+#. placeholder {1}: uploadLimitMb(maxUploadBytesFor(failed.mime))
+#: src/lib/attachments.ts
+msgid "{0} is too large ({1} MB max). Remove it to send."
+msgstr "{0}は大きすぎます（最大{1} MB）。削除してから送信してください"
+
 #. placeholder {0}: contextUsage.messages
 #: src/components/agent-context-sheet.tsx
 msgid "{0} messages in context"
@@ -1847,7 +1858,6 @@ msgid "Copying…"
 msgstr "コピー中…"
 
 #: src/components/agent-composer.tsx
-#: src/components/new-task-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
 msgstr "ファイルを追加できませんでした"
@@ -2761,8 +2771,8 @@ msgid "Fetch a web page"
 msgstr "ウェブページを取得する"
 
 #: src/lib/attachments.ts
-msgid "File too large (25MB max)"
-msgstr "ファイルが大きすぎます（最大 25MB）"
+msgid "File too large ({mb} MB max)"
+msgstr "ファイルが大きすぎます（最大{mb} MB）"
 
 #: src/lib/attachments.ts
 msgid "File type not allowed"
@@ -4165,6 +4175,11 @@ msgstr "未接続"
 msgid "NOT CONNECTED"
 msgstr "未接続"
 
+#: src/components/agent-composer.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Not every file was added"
+msgstr "一部のファイルは追加されませんでした"
+
 #: src/app/+not-found.tsx
 #: src/app/custom-theme.tsx
 msgid "Not found"
@@ -4286,6 +4301,10 @@ msgstr "オンラインです"
 #: src/i18n/labels.ts
 msgid "ONLINE"
 msgstr "オンライン"
+
+#: src/lib/attachments.ts
+msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."
+msgstr "最初の{MAX_ATTACHMENTS_PER_PICK}件のみ追加しました。{dropped}件は追加されていません"
 
 #: src/components/task-row.tsx
 msgid "Only this Home row is hidden. The task and its history remain available. Running work is not stopped."
@@ -4711,6 +4730,7 @@ msgid "Playback position"
 msgstr "再生位置"
 
 #: src/components/agent-composer.tsx
+#: src/lib/attachments.ts
 msgid "Please retry or remove failed attachments."
 msgstr "失敗した添付ファイルを再試行または削除してください"
 
@@ -5233,14 +5253,10 @@ msgstr "以前の出力の読み込みをやり直す"
 msgid "Retry size check"
 msgstr "サイズ確認を再試行"
 
-#: src/components/server-terminal-workspace.tsx
-msgid "Retry the ones marked in red, or remove them, then send again."
-msgstr "赤で示された項目を再試行するか、削除してからもう一度送信してください"
-
 #. placeholder {0}: attachment.name
 #: src/components/attachment-strip.tsx
-msgid "Retry uploading {0}"
-msgstr "{0} のアップロードを再試行"
+msgid "Retry uploading {0}: {reason}"
+msgstr "{0}を再アップロード: {reason}"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
@@ -6976,6 +6992,11 @@ msgstr "このセッションのトークン"
 msgid "Tokens usage and cost"
 msgstr "トークン使用量とコスト"
 
+#. placeholder {0}: uploadLimitMb(maxUploadBytesFor(entry.mime))
+#: src/lib/attachments.ts
+msgid "Too large ({0} MB max)"
+msgstr "大きすぎます（最大{0} MB）"
+
 #: src/components/file-text-body.tsx
 msgid "Too large to highlight — showing plain text."
 msgstr "大きすぎてハイライトできません。プレーンテキストで表示しています"
@@ -7285,6 +7306,10 @@ msgstr "アップロード失敗"
 #: src/components/agent-composer.tsx
 msgid "Upload failed"
 msgstr "アップロードに失敗しました"
+
+#: src/lib/attachments.ts
+msgid "Upload failed. Tap to retry."
+msgstr "アップロードに失敗しました。タップして再試行"
 
 #: src/components/attachment-strip.tsx
 msgid "uploaded"

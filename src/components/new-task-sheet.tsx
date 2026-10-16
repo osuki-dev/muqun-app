@@ -19,6 +19,8 @@ import {
   describePickerFailure,
   isImageAttachment,
   type AttachmentSource,
+  describeBlockedSend,
+  takePickTruncationNotice,
 } from '@/lib/attachments';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Bot, Check, FolderOpen } from 'lucide-react-native';
@@ -169,7 +171,11 @@ export function NewTaskSheet({
     const picker = uploads.capturePicker();
     if (!picker.isCurrent() || sending.current) return;
     void pickAttachments(source)
-      .then(picker.addFiles)
+      .then((files) => {
+        picker.addFiles(files);
+        const cut = takePickTruncationNotice();
+        if (cut && picker.isCurrent()) setError(cut);
+      })
       .catch((failure: unknown) => {
         if (picker.isCurrent()) setError(describePickerFailure(source, failure));
       });
@@ -234,7 +240,7 @@ export function NewTaskSheet({
           async () => {
             const paths = await uploads.awaitUploads();
             if (!mounted.current || useGatewayConnectionStore.getState().record !== owner) return;
-            if (paths === null) rethrow(new Error(t`Could not add a file`));
+            if (paths === null) rethrow(new Error(describeBlockedSend(uploads.attachments)));
             const firstPrompt = terminalPromptWithAttachments(prompt, paths);
             const spawned = await spawnAgent(
               sessionId,

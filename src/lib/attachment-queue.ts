@@ -16,7 +16,24 @@ export const MAX_ATTACHMENTS_PER_PICK = 9;
  * base64, ciphertext, envelope JSON) inside what a mid-range device absorbs
  * without a hiccup.
  */
-export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
+
+/**
+ * A video's own cap. The gateway is raising its uploads limit for video to
+ * 64 MiB; until a capability says so, or a 413 names the real limit, video
+ * is held to the same 25 MB as everything else rather than sent to fail.
+ */
+export const MAX_VIDEO_UPLOAD_BYTES = 25 * 1024 * 1024;
+
+/** The cap for a file of this type. */
+export function maxUploadBytesFor(mime: string | undefined): number {
+  return mime?.startsWith('video/') ? MAX_VIDEO_UPLOAD_BYTES : MAX_UPLOAD_BYTES;
+}
+
+/** A cap as the reader is told it: whole megabytes. */
+export function uploadLimitMb(bytes: number): number {
+  return Math.round(bytes / (1024 * 1024));
+}
 
 /**
  * Enough to keep a home network busy without a nine-photo pick opening nine
@@ -24,7 +41,7 @@ export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
  */
 export const MAX_CONCURRENT_UPLOADS = 3;
 
-const TOO_LARGE_MESSAGE = 'File too large (10MB max)';
+const TOO_LARGE_MESSAGE = 'File too large';
 
 /** A file chosen on the device, before it has been sent anywhere. */
 export interface PickedFile {
@@ -62,6 +79,12 @@ export interface PendingAttachment {
   status: AttachmentUploadStatus;
   remotePath?: string;
   error?: string;
+  /**
+   * Why `status` is `error`: a file over the cap, which no retry will send,
+   * or an upload that failed and may be retried. The strip says which and
+   * offers retry only for the second.
+   */
+  failure?: 'too-large' | 'upload';
   /**
    * What the reader wrote about this file, and what the receiver may do with
    * it. Both are optional and absent for an ordinary composer attachment: they
@@ -183,7 +206,7 @@ export function stageFiles(
   return [
     ...queue,
     ...files.map((file) => {
-      const tooLarge = file.size !== undefined && file.size > MAX_UPLOAD_BYTES;
+      const tooLarge = file.size !== undefined && file.size > maxUploadBytesFor(file.mime);
       return {
         id: nextAttachmentId(),
         destination,
@@ -195,6 +218,7 @@ export function stageFiles(
         height: file.height,
         status: tooLarge ? ('error' as const) : ('pending' as const),
         error: tooLarge ? TOO_LARGE_MESSAGE : undefined,
+        ...(tooLarge ? { failure: 'too-large' as const } : {}),
       };
     }),
   ];
@@ -259,7 +283,7 @@ export function markFailed(
   id: string,
   message: string
 ): PendingAttachment[] {
-  return patch(queue, id, { status: 'error', error: message });
+  return patch(queue, id, { status: 'error', failure: 'upload', error: message });
 }
 
 /**
@@ -271,10 +295,10 @@ export function markFailed(
 export function requeue(queue: PendingAttachment[], id: string): PendingAttachment[] {
   const entry = queue.find((item) => item.id === id);
   if (!entry || entry.status === 'uploading' || entry.status === 'done') return queue;
-  if (entry.size !== undefined && entry.size > MAX_UPLOAD_BYTES) {
-    return patch(queue, id, { status: 'error', error: TOO_LARGE_MESSAGE });
+  if (entry.size !== undefined && entry.size > maxUploadBytesFor(entry.mime)) {
+    return patch(queue, id, { status: 'error', error: TOO_LARGE_MESSAGE, failure: 'too-large' });
   }
-  return patch(queue, id, { status: 'pending', error: undefined });
+  return patch(queue, id, { status: 'pending', error: undefined, failure: undefined });
 }
 
 export function removeEntry(queue: PendingAttachment[], id: string): PendingAttachment[] {

@@ -160,6 +160,8 @@ import {
   isImageAttachment,
   pickAttachments,
   type AttachmentSource,
+  describeBlockedSend,
+  takePickTruncationNotice,
 } from '@/lib/attachments';
 import {
   ATTACHMENT_CONNECTION_GENERATION,
@@ -4787,7 +4789,7 @@ export function ServerTerminalWorkspace({
               showToast({
                 variant: 'danger',
                 title: t`Some files did not upload`,
-                message: t`Retry the ones marked in red, or remove them, then send again.`,
+                message: describeBlockedSend(attachments),
               });
               return;
             }
@@ -5012,7 +5014,12 @@ export function ServerTerminalWorkspace({
     const picker = capturePicker();
     if (!picker.isCurrent()) return;
     void pickAttachments(source)
-      .then(picker.addFiles)
+      .then((files) => {
+        picker.addFiles(files);
+        const cut = takePickTruncationNotice();
+        if (cut && picker.isCurrent())
+          showToast({ variant: 'warning', title: t`Not every file was added`, message: cut });
+      })
       .catch((failure: unknown) => {
         if (!picker.isCurrent()) return;
         showToast({

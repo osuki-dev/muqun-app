@@ -113,6 +113,17 @@ msgstr "{0}（閘道）"
 msgid "{0} (this device)"
 msgstr "{0}（這台裝置）"
 
+#. placeholder {0}: failed.name
+#: src/lib/attachments.ts
+msgid "{0} did not upload. Retry it or remove it to send."
+msgstr "{0} 未能上傳。重試或移除後再傳送"
+
+#. placeholder {0}: failed.name
+#. placeholder {1}: uploadLimitMb(maxUploadBytesFor(failed.mime))
+#: src/lib/attachments.ts
+msgid "{0} is too large ({1} MB max). Remove it to send."
+msgstr "{0} 過大（最大 {1} MB）。移除後再傳送"
+
 #. placeholder {0}: contextUsage.messages
 #: src/components/agent-context-sheet.tsx
 msgid "{0} messages in context"
@@ -1847,7 +1858,6 @@ msgid "Copying…"
 msgstr "複製中…"
 
 #: src/components/agent-composer.tsx
-#: src/components/new-task-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
 msgstr "無法加入檔案"
@@ -2761,8 +2771,8 @@ msgid "Fetch a web page"
 msgstr "擷取網頁"
 
 #: src/lib/attachments.ts
-msgid "File too large (25MB max)"
-msgstr "檔案太大（上限 25MB）"
+msgid "File too large ({mb} MB max)"
+msgstr "檔案過大（最大 {mb} MB）"
 
 #: src/lib/attachments.ts
 msgid "File type not allowed"
@@ -4165,6 +4175,11 @@ msgstr "未連線"
 msgid "NOT CONNECTED"
 msgstr "未連線"
 
+#: src/components/agent-composer.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Not every file was added"
+msgstr "部分檔案未加入"
+
 #: src/app/+not-found.tsx
 #: src/app/custom-theme.tsx
 msgid "Not found"
@@ -4286,6 +4301,10 @@ msgstr "線上"
 #: src/i18n/labels.ts
 msgid "ONLINE"
 msgstr "線上"
+
+#: src/lib/attachments.ts
+msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."
+msgstr "僅加入了前 {MAX_ATTACHMENTS_PER_PICK} 個檔案，{dropped} 個未加入"
 
 #: src/components/task-row.tsx
 msgid "Only this Home row is hidden. The task and its history remain available. Running work is not stopped."
@@ -4711,6 +4730,7 @@ msgid "Playback position"
 msgstr "播放進度"
 
 #: src/components/agent-composer.tsx
+#: src/lib/attachments.ts
 msgid "Please retry or remove failed attachments."
 msgstr "請重試或移除上傳失敗的附件"
 
@@ -5233,14 +5253,10 @@ msgstr "重試載入更早的輸出"
 msgid "Retry size check"
 msgstr "重試大小檢查"
 
-#: src/components/server-terminal-workspace.tsx
-msgid "Retry the ones marked in red, or remove them, then send again."
-msgstr "請重試標為紅色的項目，或移除它們後再送出"
-
 #. placeholder {0}: attachment.name
 #: src/components/attachment-strip.tsx
-msgid "Retry uploading {0}"
-msgstr "重試上傳 {0}"
+msgid "Retry uploading {0}: {reason}"
+msgstr "重新上傳 {0}：{reason}"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
@@ -6976,6 +6992,11 @@ msgstr "本次工作階段的 token"
 msgid "Tokens usage and cost"
 msgstr "Token 用量與費用"
 
+#. placeholder {0}: uploadLimitMb(maxUploadBytesFor(entry.mime))
+#: src/lib/attachments.ts
+msgid "Too large ({0} MB max)"
+msgstr "過大（最大 {0} MB）"
+
 #: src/components/file-text-body.tsx
 msgid "Too large to highlight — showing plain text."
 msgstr "檔案太大，無法上色，顯示為純文字"
@@ -7285,6 +7306,10 @@ msgstr "上傳失敗"
 #: src/components/agent-composer.tsx
 msgid "Upload failed"
 msgstr "上傳失敗"
+
+#: src/lib/attachments.ts
+msgid "Upload failed. Tap to retry."
+msgstr "上傳失敗。點按重試"
 
 #: src/components/attachment-strip.tsx
 msgid "uploaded"

@@ -113,6 +113,17 @@ msgstr "{0} (เกตเวย์)"
 msgid "{0} (this device)"
 msgstr "{0} (อุปกรณ์นี้)"
 
+#. placeholder {0}: failed.name
+#: src/lib/attachments.ts
+msgid "{0} did not upload. Retry it or remove it to send."
+msgstr "อัปโหลด {0} ไม่สำเร็จ ลองอีกครั้งหรือลบออกเพื่อส่ง"
+
+#. placeholder {0}: failed.name
+#. placeholder {1}: uploadLimitMb(maxUploadBytesFor(failed.mime))
+#: src/lib/attachments.ts
+msgid "{0} is too large ({1} MB max). Remove it to send."
+msgstr "{0} มีขนาดใหญ่เกินไป (สูงสุด {1} MB) ลบออกเพื่อส่ง"
+
 #. placeholder {0}: contextUsage.messages
 #: src/components/agent-context-sheet.tsx
 msgid "{0} messages in context"
@@ -1847,7 +1858,6 @@ msgid "Copying…"
 msgstr "กำลังคัดลอก…"
 
 #: src/components/agent-composer.tsx
-#: src/components/new-task-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
 msgstr "เพิ่มไฟล์ไม่ได้"
@@ -2761,8 +2771,8 @@ msgid "Fetch a web page"
 msgstr "ดึงหน้าเว็บ"
 
 #: src/lib/attachments.ts
-msgid "File too large (25MB max)"
-msgstr "ไฟล์ใหญ่เกินไป (สูงสุด 25MB)"
+msgid "File too large ({mb} MB max)"
+msgstr "ไฟล์ใหญ่เกินไป (สูงสุด {mb} MB)"
 
 #: src/lib/attachments.ts
 msgid "File type not allowed"
@@ -4165,6 +4175,11 @@ msgstr "ไม่ได้เชื่อมต่อ"
 msgid "NOT CONNECTED"
 msgstr "ไม่ได้เชื่อมต่อ"
 
+#: src/components/agent-composer.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Not every file was added"
+msgstr "ไม่ได้เพิ่มไฟล์ทั้งหมด"
+
 #: src/app/+not-found.tsx
 #: src/app/custom-theme.tsx
 msgid "Not found"
@@ -4286,6 +4301,10 @@ msgstr "ออนไลน์"
 #: src/i18n/labels.ts
 msgid "ONLINE"
 msgstr "ออนไลน์"
+
+#: src/lib/attachments.ts
+msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."
+msgstr "เพิ่มเฉพาะ {MAX_ATTACHMENTS_PER_PICK} ไฟล์แรก อีก {dropped} ไฟล์ไม่ได้เพิ่ม"
 
 #: src/components/task-row.tsx
 msgid "Only this Home row is hidden. The task and its history remain available. Running work is not stopped."
@@ -4711,6 +4730,7 @@ msgid "Playback position"
 msgstr "ตำแหน่งการเล่น"
 
 #: src/components/agent-composer.tsx
+#: src/lib/attachments.ts
 msgid "Please retry or remove failed attachments."
 msgstr "โปรดลองอีกครั้งหรือนำไฟล์แนบที่ไม่สำเร็จออก"
 
@@ -5233,14 +5253,10 @@ msgstr "ลองโหลดเอาต์พุตก่อนหน้าอ
 msgid "Retry size check"
 msgstr "ตรวจสอบขนาดอีกครั้ง"
 
-#: src/components/server-terminal-workspace.tsx
-msgid "Retry the ones marked in red, or remove them, then send again."
-msgstr "ลองอัปโหลดรายการสีแดงอีกครั้งหรือลบออก แล้วส่งใหม่"
-
 #. placeholder {0}: attachment.name
 #: src/components/attachment-strip.tsx
-msgid "Retry uploading {0}"
-msgstr "ลองอัปโหลด {0} อีกครั้ง"
+msgid "Retry uploading {0}: {reason}"
+msgstr "อัปโหลด {0} อีกครั้ง: {reason}"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
@@ -6976,6 +6992,11 @@ msgstr "โทเค็นในเซสชันนี้"
 msgid "Tokens usage and cost"
 msgstr "การใช้โทเค็นและค่าใช้จ่าย"
 
+#. placeholder {0}: uploadLimitMb(maxUploadBytesFor(entry.mime))
+#: src/lib/attachments.ts
+msgid "Too large ({0} MB max)"
+msgstr "ใหญ่เกินไป (สูงสุด {0} MB)"
+
 #: src/components/file-text-body.tsx
 msgid "Too large to highlight — showing plain text."
 msgstr "ใหญ่เกินกว่าจะไฮไลต์ — แสดงเป็นข้อความธรรมดา"
@@ -7285,6 +7306,10 @@ msgstr "อัปโหลดไม่สำเร็จ"
 #: src/components/agent-composer.tsx
 msgid "Upload failed"
 msgstr "การอัปโหลดล้มเหลว"
+
+#: src/lib/attachments.ts
+msgid "Upload failed. Tap to retry."
+msgstr "อัปโหลดไม่สำเร็จ แตะเพื่อลองอีกครั้ง"
 
 #: src/components/attachment-strip.tsx
 msgid "uploaded"
