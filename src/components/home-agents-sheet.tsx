@@ -44,11 +44,14 @@ export function HomeAgentsSheet() {
   );
   const agents = projectLaunchAgents(discovery, lastUsed);
 
-  // beforeRemove covers swipe, hardware back and programmatic dismissal; a
-  // dismissal answers with no agent, and an answered request ignores it.
+  // `removed` covers swipe, hardware back and programmatic dismissal; a
+  // dismissal answers with no agent, and an answered request ignores it. The
+  // event fires after the screen unmounts, so the cleanup unsubscribes a
+  // microtask later, as its contract asks.
   useEffect(() => {
     if (!Number.isSafeInteger(requestId)) return;
-    return navigation.addListener('beforeRemove', () => complete(requestId, null));
+    const unsubscribe = navigation.addListener('removed', () => complete(requestId, null));
+    return () => queueMicrotask(unsubscribe);
   }, [complete, navigation, requestId]);
 
   function select(agentId: string) {
