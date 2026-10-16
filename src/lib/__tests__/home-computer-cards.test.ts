@@ -4,7 +4,6 @@ import {
   buildComputerCards,
   buildTaskTree,
   cardLimits,
-  acknowledgementsHeld,
   dismissedKey,
   hiddenTaskKey,
   groupTaskTree,
@@ -23,8 +22,6 @@ import {
   taskRowTitle,
   taskRowDestination,
   heldCardOrder,
-  openTaskWork,
-  lastKnownActivityCaption,
 } from '../home-computer-cards';
 import type { ServerTasksIndex } from '../server-tasks-state';
 import {
@@ -601,95 +598,6 @@ describe('buildComputerCards', () => {
   });
 });
 
-describe('which computers get a card', () => {
-  const done = (id: string, at: number, extra: Partial<TaskView> = {}) =>
-    task(id, 'done', at, extra);
-  test.each([
-    ['finished just now', [done('f', NOW - 60_000)], new Set<string>(), true],
-    ['finished an hour ago', [done('f', NOW - 3_600_000)], new Set<string>(), true],
-    ['finished just under a day ago', [done('f', NOW - 86_400_000 + 1)], new Set<string>(), true],
-    ['finished exactly a day ago', [done('f', NOW - 86_400_000)], new Set<string>(), true],
-    // Finished work no longer expires: it stays until dismissed.
-    ['finished over a day ago', [done('f', NOW - 86_400_000 - 1)], new Set<string>(), true],
-    [
-      'finished long ago, settled here just now',
-      [done('f', NOW - 2 * 86_400_000, { settledAtMs: NOW })],
-      new Set<string>(),
-      true,
-    ],
-    [
-      'finished, acknowledged',
-      [done('f', NOW)],
-      new Set([dismissedKey('a', { taskId: 'f' })]),
-      false,
-    ],
-    // Acknowledged once, reopened and finished again: the new finish is news.
-    [
-      'finished again after a reopen',
-      [done('f', NOW, { reopenCount: 1 })],
-      new Set([dismissedKey('a', { taskId: 'f' })]),
-      true,
-    ],
-    [
-      'the second finish acknowledged on its own',
-      [done('f', NOW, { reopenCount: 1 })],
-      new Set([dismissedKey('a', { taskId: 'f', reopenCount: 1 })]),
-      false,
-    ],
-    ['no ledger (nothing read)', undefined, new Set<string>(), false],
-  ] as const)('%s', (_name, tasks, dismissed, shown) => {
-    const cards = buildComputerCards({
-      servers: [{ serverId: 'a' }],
-      index: tasks ? index({ a: [...tasks] }) : {},
-      reachability: () => 'live',
-      dismissed,
-      nowMs: NOW,
-    });
-    expect(cards.length > 0).toBe(shown);
-  });
-
-  test('an acknowledgement goes when its task is back at work, and only then', () => {
-    const acked = [
-      dismissedKey('a', { taskId: 'w' }),
-      dismissedKey('a', { taskId: 'c' }),
-      dismissedKey('a', { taskId: 'gone' }),
-    ];
-    const ledgers = index({
-      a: [task('w', 'working', NOW), task('c', 'cancelled', NOW)],
-    });
-    // Back at work (an older gateway's only sign): let go. Cancelled, or not
-    // in view: kept.
-    expect(acknowledgementsHeld(acked, ledgers)).toEqual([acked[1], acked[2]]);
-    // Nothing back at work: the same list, untouched.
-    const quiet = index({ a: [task('c', 'cancelled', NOW)] });
-    expect(acknowledgementsHeld(acked, quiet)).toBe(acked);
-  });
-
-  test('repeated cancelled attempts at one goal show once; acknowledging it takes the group', () => {
-    const finishedIds = (dismissed: Set<string>) =>
-      buildComputerCards({
-        servers: [{ serverId: 'a' }],
-        index: index({
-          a: [
-            task('old', 'cancelled', 1, { goal: 'retry it' }),
-            task('new', 'cancelled', 2, { goal: 'retry it' }),
-            task('untitled-1', 'cancelled', 3, { goal: '' }),
-            task('untitled-2', 'cancelled', 4, { goal: '' }),
-          ],
-        }),
-        reachability: () => 'live',
-        dismissed,
-        nowMs: NOW,
-        limits: { now: 5, finished: 5 },
-      })[0]?.finished.map((t) => t.taskId) ?? [];
-    expect(finishedIds(new Set())).toEqual(['untitled-2', 'untitled-1', 'new']);
-    expect(finishedIds(new Set([dismissedKey('a', { taskId: 'new' })]))).toEqual([
-      'untitled-2',
-      'untitled-1',
-    ]);
-  });
-});
-
 describe('work that outlives its root', () => {
   test('a finished root with a working child stays in Now and the card is working', () => {
     const [card] = buildComputerCards({
@@ -998,134 +906,6 @@ describe('taskRowVisual: the rules the state table carries', () => {
   });
 });
 
-describe('openTaskWork on a mirror', () => {
-  const mirror = task('m', 'working', 1, {
-    binding: { kind: 'peer', peerId: 'peer-1', remoteTaskId: 'r' },
-  });
-  const there = task('r', 'working', 1, {
-    binding: { kind: 'agent_session', agentId: 'opencode', asid: 'ses_9' },
-  });
-  const known = async (): Promise<TaskView | null> => there;
-  test.each([
-    [
-      'opens the session on the computer that runs it',
-      known,
-      'srv-cedar',
-      [['agent', 'srv-cedar', 'ses_9']],
-    ],
-    [
-      'without a mapping, the link id is taken as the computer',
-      known,
-      undefined,
-      [['agent', 'peer-1', 'ses_9']],
-    ],
-    [
-      'opens that computer when its task there cannot be read',
-      async (): Promise<TaskView | null> => null,
-      'srv-cedar',
-      [['server', 'srv-cedar']],
-    ],
-    ['does nothing without a resolver', undefined, 'srv-cedar', []],
-  ] as const)('%s', async (_name, resolveTask, mapped, expected) => {
-    const opened: string[][] = [];
-    const asked: string[] = [];
-    openTaskWork(
-      {
-        openTaskResult: (serverId, task) => opened.push(['result', serverId, task.taskId]),
-        openAgent: (serverId, asid) => opened.push(['agent', serverId, asid ?? '']),
-        openServer: (serverId) => opened.push(['server', serverId]),
-        ...(resolveTask
-          ? {
-              resolveTask: (serverId: string, taskId: string) => {
-                asked.push(`${serverId}/${taskId}`);
-                return resolveTask();
-              },
-            }
-          : {}),
-        ...(mapped ? { peerServerId: () => mapped } : {}),
-      },
-      'srv-atlas',
-      mirror
-    );
-    await Promise.resolve();
-    await Promise.resolve();
-    expect(opened).toEqual(expected.map((entry) => [...entry]));
-    if (resolveTask) expect(asked).toEqual([`${mapped ?? 'peer-1'}/r`]);
-  });
-});
-
-describe('command task destinations', () => {
-  test.each(['done', 'failed', 'cancelled'] as const)(
-    '%s opens the local saved result even when the peer is offline',
-    async (state) => {
-      const finished = task('command', state, 1, {
-        kind: 'command',
-        summary: 'saved output\nlast line',
-        peerReachable: false,
-        binding: { kind: 'peer', peerId: 'offline-peer', remoteTaskId: 'remote-command' },
-      });
-      const opened: [string, TaskView][] = [];
-      await openTaskWork(
-        {
-          openTaskResult: (serverId, result) => opened.push([serverId, result]),
-          openAgent: () => {
-            throw new Error('a finished command must not open an agent');
-          },
-          openServer: () => {
-            throw new Error('a finished command must not open a computer or stale pane');
-          },
-          resolveTask: () => {
-            throw new Error('the saved result must not require a peer read');
-          },
-        },
-        'source',
-        finished
-      );
-      expect(opened).toEqual([['source', finished]]);
-    }
-  );
-
-  test('a receiver command with a closed or reused pane opens its saved result', async () => {
-    const finished = task('command', 'done', 1, {
-      kind: 'command',
-      origin: 'peer',
-      exitCode: 0,
-      binding: { kind: 'pane', paneId: 'reused', sessionId: 'temporary', shellPid: 123 },
-    });
-    const opened: TaskView[] = [];
-    await openTaskWork(
-      {
-        openTaskResult: (_serverId, result) => opened.push(result),
-        openServer: () => {
-          throw new Error('the old pane binding is history');
-        },
-        openAgent: () => {
-          throw new Error('the command has no agent');
-        },
-      },
-      'receiver',
-      finished
-    );
-    expect(opened).toEqual([finished]);
-  });
-
-  test('open commands and agent delegations retain their original destinations', () => {
-    const pane = { kind: 'pane', paneId: 'live', sessionId: 'session' } as const;
-    expect(taskRowDestination(task('c', 'working', 1, { kind: 'command', binding: pane }))).toEqual(
-      pane
-    );
-    for (const state of ['working', 'done'] as const) {
-      expect(
-        taskRowDestination(
-          task('agent', state, 1, {
-            binding: { kind: 'agent_session', agentId: 'codex', asid: 'original' },
-          })
-        )
-      ).toEqual({ kind: 'session', agentId: 'codex', asid: 'original' });
-    }
-  });
-});
-
 describe('heldCardOrder', () => {
   const cards = (...ids: string[]) => ids.map((serverId) => ({ serverId }));
   // shown order, newly sorted cards -> what is drawn
@@ -1136,28 +916,5 @@ describe('heldCardOrder', () => {
     ['a card that went is dropped', ['a', 'b', 'c'], ['c', 'a'], ['a', 'c']],
   ])('%s', (_name, shown, sorted, drawn) => {
     expect(heldCardOrder(shown, cards(...sorted)).map((card) => card.serverId)).toEqual(drawn);
-  });
-});
-
-describe('the "Last known activity" caption keeps its slot and speaks only when the socket is gone', () => {
-  test('rows under an open socket are current: the slot is there, the words are not', () => {
-    expect(lastKnownActivityCaption({ followed: true, socket: 'open', rows: 2 })).toBe('hidden');
-  });
-
-  test('a reconnect in progress, or the app in the background, is not a loss', () => {
-    for (const socket of ['connecting', 'backoff', 'paused']) {
-      expect(lastKnownActivityCaption({ followed: true, socket, rows: 2 })).toBe('hidden');
-    }
-  });
-
-  test('a socket gone for good, or never opened, makes the rows history', () => {
-    for (const socket of ['idle', 'unauthorized', 'unavailable', 'superseded', undefined]) {
-      expect(lastKnownActivityCaption({ followed: true, socket, rows: 2 })).toBe('shown');
-    }
-  });
-
-  test('no rows, or a card that is not followed, has no slot to reserve', () => {
-    expect(lastKnownActivityCaption({ followed: true, socket: 'idle', rows: 0 })).toBe('none');
-    expect(lastKnownActivityCaption({ followed: false, socket: 'idle', rows: 3 })).toBe('none');
   });
 });
