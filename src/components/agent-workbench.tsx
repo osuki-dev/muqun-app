@@ -116,6 +116,7 @@ import {
   invokeAgentSkill,
   getAgentContext,
   listAgentSessionChildrenObserved,
+  listAgentSessionDescendantsObserved,
   listAgentShells,
   listAgentInbox,
   markAgentSessionViewed,
@@ -196,6 +197,7 @@ import { agentGuideCommand, agentGuideStart } from '@/lib/home-agent-readiness';
 import { hasAgentsDiscoveryFor, useAgents } from '@/stores/agents';
 import { sessionChipLead } from '@/lib/agent-session-chip';
 import { useServerCapabilities } from '@/stores/server-capabilities';
+import { hasObservedCapability, SESSION_DESCENDANTS_CAPABILITY } from '@/lib/server-capabilities';
 import { socketReconnectDelay, WS_EVENTS_CAPABILITY } from '@/lib/gateway-socket';
 import { gatewaySocketFor } from '@/lib/gateway-socket-runtime';
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
@@ -2150,11 +2152,22 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       // Unscoped, a multi-agent gateway asks every agent for these children,
       // and an adapter without a parent filter answers with all its roots.
       const agentId = listAgentIdRef.current;
+      const query = agentId ? { agentId } : undefined;
+      // One request for the whole subtree where the gateway has said it can
+      // (`session_descendants` in the snapshot's envelope); the per-parent
+      // walk, one request per branch, everywhere else.
+      const descendantsInOne = hasObservedCapability(
+        useServerCapabilities.getState().observed,
+        serverId,
+        SESSION_DESCENDANTS_CAPABILITY
+      );
       await loadSessionDescendants({
         rootAsid,
         known: observedChildren,
-        listChildren: (asid) =>
-          listAgentSessionChildrenObserved(asid, agentId ? { agentId } : undefined),
+        listChildren: (asid) => listAgentSessionChildrenObserved(asid, query),
+        ...(descendantsInOne
+          ? { listDescendants: (asid) => listAgentSessionDescendantsObserved(asid, query) }
+          : {}),
         isCurrent,
         onChildren: (parent, inventory) => {
           if (!isCurrent()) return;

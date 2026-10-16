@@ -15,9 +15,11 @@ import {
   sessionsOfAgent,
   workbenchAgentId,
   SESSION_STRIP_MAX_NODES,
+  groupDescendantsByParent,
   loadSessionDescendants,
   mergeSessionChildren,
   type ChildrenByParent,
+  type SessionDescendantsInventory,
 } from '../agent-session-tree';
 
 function session(asid: string, extra: Partial<AgentSessionInfo> = {}): AgentSessionInfo {
@@ -583,5 +585,130 @@ describe('the sheet shows one root subtree, linked only by parent_id', () => {
       'ses_effect',
       'ses_effect_child',
     ]);
+  });
+});
+
+describe('a whole subtree in one request', () => {
+  const GREAT = session('ses_a1xx', { parent_id: 'ses_a1x' });
+  const FLAT = [CHILD_A1, CHILD_A2, GRANDCHILD, GREAT];
+
+  test('a flat answer is sorted into the per-parent inventories the walk reports', () => {
+    expect(groupDescendantsByParent(ROOT_A.asid, FLAT)).toEqual({
+      ses_a: [CHILD_A1, CHILD_A2],
+      ses_a1: [GRANDCHILD],
+      ses_a2: [],
+      ses_a1x: [GREAT],
+      ses_a1xx: [],
+    });
+  });
+
+  test('a stranger, a cycle and a deleted session are sorted as the walk would', () => {
+    const stranger = session('ses_x', { parent_id: 'ses_elsewhere' });
+    const loop = session('ses_a', { parent_id: 'ses_a1' });
+    const gone = { ...CHILD_A2, deleted: true };
+    expect(groupDescendantsByParent(ROOT_A.asid, [CHILD_A1, stranger, loop, gone])).toEqual({
+      ses_a: [CHILD_A1, gone],
+      ses_a1: [loop],
+    });
+  });
+
+  test('with the capability it is one request, each parent authoritative, and no walk', async () => {
+    const asked: string[] = [];
+    const walked: string[] = [];
+    const reported: [string, string[], boolean][] = [];
+    await loadSessionDescendants({
+      rootAsid: ROOT_A.asid,
+      known: {},
+      isCurrent: () => true,
+      listChildren: async (asid) => {
+        walked.push(asid);
+        return { children: [], authoritative: true };
+      },
+      listDescendants: async (asid) => {
+        asked.push(asid);
+        return { descendants: FLAT, authoritative: true, truncated: false };
+      },
+      onChildren: (parent, inventory) =>
+        reported.push([parent, inventory.children.map((c) => c.asid), inventory.authoritative]),
+    });
+    expect(asked).toEqual([ROOT_A.asid]);
+    expect(walked).toEqual([]);
+    expect(reported).toEqual([
+      ['ses_a', ['ses_a1', 'ses_a2'], true],
+      ['ses_a1', ['ses_a1x'], true],
+      ['ses_a2', [], true],
+      ['ses_a1x', ['ses_a1xx'], true],
+      ['ses_a1xx', [], true],
+    ]);
+  });
+
+  test('without the capability the walk runs exactly as before', async () => {
+    const walked: string[] = [];
+    await loadSessionDescendants({
+      rootAsid: ROOT_A.asid,
+      known: {},
+      isCurrent: () => true,
+      listChildren: async (asid) => {
+        walked.push(asid);
+        return { children: (CHILDREN as ChildrenByParent)[asid] ?? [], authoritative: true };
+      },
+      onChildren: () => {},
+    });
+    expect(walked).toEqual(['ses_a', 'ses_a1', 'ses_a2', 'ses_a1x', 'ses_a1xy']);
+  });
+
+  test('a truncated answer is merged without authority and then walked from what it listed', async () => {
+    const walked: string[] = [];
+    const reported: [string, boolean][] = [];
+    await loadSessionDescendants({
+      rootAsid: ROOT_A.asid,
+      known: {},
+      isCurrent: () => true,
+      listChildren: async (asid) => {
+        walked.push(asid);
+        // The walk itself is unavailable this time; the listed subtree still carries it.
+        return { children: [], authoritative: false };
+      },
+      listDescendants: async () => ({
+        descendants: [CHILD_A1, CHILD_A2],
+        authoritative: true,
+        truncated: true,
+      }),
+      onChildren: (parent, inventory) => reported.push([parent, inventory.authoritative]),
+    });
+    expect(reported.slice(0, 3)).toEqual([
+      ['ses_a', false],
+      ['ses_a1', false],
+      ['ses_a2', false],
+    ]);
+    expect(walked).toEqual(['ses_a', 'ses_a1', 'ses_a2']);
+  });
+
+  test('a descendants request that fails or is refused falls back to the walk', async () => {
+    for (const answer of [
+      async (): Promise<SessionDescendantsInventory> => {
+        throw new Error('network');
+      },
+      async (): Promise<SessionDescendantsInventory> => ({
+        descendants: [],
+        authoritative: false,
+        truncated: false,
+      }),
+    ]) {
+      const walked: string[] = [];
+      await loadSessionDescendants({
+        rootAsid: ROOT_A.asid,
+        known: {},
+        isCurrent: () => true,
+        listChildren: async (asid) => {
+          walked.push(asid);
+          return { children: (CHILDREN as ChildrenByParent)[asid] ?? [], authoritative: true };
+        },
+        listDescendants: answer,
+        onChildren: () => {},
+      });
+      expect(walked[0]).toBe('ses_a');
+      expect(walked).toContain('ses_a1x');
+    }
   });
 });
