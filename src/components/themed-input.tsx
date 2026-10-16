@@ -17,9 +17,10 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { resolveFontStyle, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { FontedTextInput } from '@/components/fonted-text-input';
+import { resolveUserFontStyle } from '@/hooks/use-user-fonts';
 
 export type InputVariant = 'underline' | 'outline';
 export type InputSize = 'default' | 'compact';
@@ -126,7 +127,7 @@ export const Input: React.FC<InputProps> = ({
 
     return {
       alignSelf: 'stretch',
-      ...resolveFontStyle(theme.fonts, theme.typeStyles.body.fontFamily, 'regular'),
+      ...resolveUserFontStyle(theme.fonts, theme.typeStyles.body.fontFamily, 'regular'),
       fontSize: size === 'compact' ? 14 : 16,
       color: theme.colors[input.foreground],
       padding: 0,

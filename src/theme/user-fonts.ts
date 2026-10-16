@@ -42,6 +42,7 @@ import {
   downloadStatusFrom,
   findSfntTable,
   fontAdvanceProfile,
+  fontAxesFromFvarTable,
   fontFamilyNameFromNameTable,
   isUserFontRelativePath,
   joinDocumentUri,
@@ -59,6 +60,7 @@ import {
   userFontLabel,
   userFontRelativePath,
   type FontAdvanceProfile,
+  type FontAxis,
   type FontSlot,
   type FontSlotId,
   type UserFontProblem,
@@ -192,35 +194,48 @@ async function probeFont(uri: string): Promise<FontAdvanceProfile | null> {
 }
 
 /**
- * What the font calls itself, read out of its own `name` table.
+ * What the font calls itself, read out of its own `name` table, and the design
+ * axes in its `fvar` table.
  *
- * Three small reads rather than one big one, and that is the whole reason this
- * is a file handle and not `file.bytes()`. A CJK face is ten to twenty
- * megabytes; the answer is in about two hundred bytes of header and directory
- * plus a table that is rarely past ten kilobytes, and its offset is in the
- * directory. `FileHandle.offset` is settable, so the app seeks to it instead
+ * Small reads rather than one big one, and that is the whole reason this is a
+ * file handle and not `file.bytes()`. A CJK face is ten to twenty megabytes;
+ * the answers are in about two hundred bytes of header and directory plus two
+ * tables that are rarely past ten kilobytes, and their offsets are in the
+ * directory. `FileHandle.offset` is settable, so the app seeks to each instead
  * of reading past it.
  *
  * Every failure is `null` and none of them is an error the reader sees. A
  * stripped face, a subset with the `name` table dropped, a font whose header
  * disagrees with its own directory: the answer to all of them is the same, and
- * it is the one the app had before -- call the font after the file it came in.
- * Refusing to install a font because its metadata is untidy would be the app
- * having an opinion about somebody else's typography.
+ * it is the one the app had before -- call the font after the file it came in,
+ * and treat it as static. Refusing to install a font because its metadata is
+ * untidy would be the app having an opinion about somebody else's typography.
+ * `axes` is `[]` only when the directory was read and has no usable `fvar`, so
+ * a backfill that could not open the file can try again on the next launch.
  */
-async function readFamilyName(file: File): Promise<string | null> {
+async function readFontTables(
+  file: File
+): Promise<{ family: string | null; axes: FontAxis[] | null }> {
   try {
     const handle = file.open(FileMode.ReadOnly);
     try {
       const count = sfntTableCount(await handle.readBytes(SFNT_HEADER_BYTES));
-      if (count === null) return null;
+      if (count === null) return { family: null, axes: null };
       // Back to the start: the directory the count describes begins at the
       // header, and `findSfntTable` wants both together.
       handle.offset = 0;
-      const table = findSfntTable(await handle.readBytes(sfntDirectoryBytes(count)), 'name');
-      if (!table) return null;
-      handle.offset = table.offset;
-      return fontFamilyNameFromNameTable(await handle.readBytes(table.length));
+      const directory = await handle.readBytes(sfntDirectoryBytes(count));
+      const read = async (table: { offset: number; length: number } | null) => {
+        if (!table) return null;
+        handle.offset = table.offset;
+        return handle.readBytes(table.length);
+      };
+      const nameTable = await read(findSfntTable(directory, 'name'));
+      const fvarTable = await read(findSfntTable(directory, 'fvar'));
+      return {
+        family: nameTable ? fontFamilyNameFromNameTable(nameTable) : null,
+        axes: fvarTable ? (fontAxesFromFvarTable(fvarTable) ?? []) : [],
+      };
     } finally {
       handle.close();
     }
@@ -228,8 +243,26 @@ async function readFamilyName(file: File): Promise<string | null> {
     // A file that will not open here has already opened twice above, so this
     // is a font with a directory pointing past its own end rather than a
     // storage failure worth reporting.
-    return null;
+    return { family: null, axes: null };
   }
+}
+
+/**
+ * The axes of a slot installed before they were recorded, or `null` when there
+ * is nothing to backfill or the file cannot be read.
+ *
+ * The migration for slots written by an older build: the settings blob is
+ * tolerant field by field, so a slot without `axes` still hydrates, and launch
+ * registration reads the one table it is missing instead of asking the reader
+ * to install the font again.
+ */
+export async function readUserFontAxes(slot: FontSlot): Promise<FontAxis[] | null> {
+  if (slot.kind !== 'file' || slot.axes !== undefined) return null;
+  const uri = userFontUri(slot);
+  if (!uri) return null;
+  const file = new File(uri);
+  if (!file.exists) return null;
+  return (await readFontTables(file)).axes;
 }
 
 /**
@@ -269,7 +302,7 @@ async function acceptStagedFont(
     // known to be a font -- the sniff above has passed and Skia has opened it,
     // so a `name` table that will not parse is the font's own business rather
     // than a sign the download is broken.
-    const family = await readFamilyName(staged);
+    const { family, axes } = await readFontTables(staged);
 
     // The last place a cancel can still be honoured, and the reader has had
     // time to reach it: the parse above is seconds on a large CJK face, and a
@@ -308,6 +341,7 @@ async function acceptStagedFont(
        */
       label: family ?? userFontLabel(source) ?? slot,
       ...(profile ? { advanceRatio: profile.advanceRatio, isMonospace: profile.isMonospace } : {}),
+      ...(axes ? { axes } : {}),
     };
   } catch (error) {
     discard(staged);

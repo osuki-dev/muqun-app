@@ -7374,6 +7374,11 @@ msgstr "Uses the theme's Home artwork in the position chosen by your Home layout
 msgid "Using"
 msgstr "Using"
 
+#. placeholder {0}: fontAxesSummary(axes)
+#: src/components/settings-font-sheet.tsx
+msgid "Variable · {0}"
+msgstr "Variable · {0}"
+
 #. placeholder {0}: build ? ` (${build})` : ''
 #: src/app/settings.tsx
 msgid "Version {version}{0}"

@@ -33,7 +33,7 @@ import { useLaunchHandoff } from '@/stores/launch-handoff';
 import { launchEntryProgress } from '@/lib/launch-handoff';
 import { useHomeScenePlate } from '@/hooks/use-home-scene-plate';
 import { useInterfaceFontFamily } from '@/hooks/use-user-fonts';
-import { USER_FONT_MAX_NATIVE_WEIGHT } from '@/theme/interface-font-registry';
+import { registryWeightAxis, USER_FONT_MAX_NATIVE_WEIGHT } from '@/theme/interface-font-registry';
 
 import {
   EDITORIAL_MAX_WIDTH,
@@ -289,7 +289,12 @@ export function HomeEditorialLayout({
   const interfaceFontFamily = useInterfaceFontFamily();
   const chromeFontFamily =
     interfaceFontFamily ?? (Platform.OS === 'android' ? 'sans-serif-condensed' : undefined);
-  const titleWeight = interfaceFontFamily ? USER_FONT_MAX_NATIVE_WEIGHT : 900;
+  // A static reader face is capped below Android's bold lookup; a variable one
+  // takes 900 on its `wght` axis through the app's `Text`.
+  const titleWeight =
+    interfaceFontFamily && !registryWeightAxis(theme.fonts, 'display')
+      ? USER_FONT_MAX_NATIVE_WEIGHT
+      : 900;
   const titleKey = `${coverTitle ?? ''}:${chromeFontFamily ?? 'system'}:${titleWeight}`;
   const { fontScale: windowFontScale } = useWindowDimensions();
   const fontScale = fontScaleProp ?? windowFontScale;
