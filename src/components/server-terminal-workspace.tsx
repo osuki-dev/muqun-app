@@ -2819,7 +2819,7 @@ export function ServerTerminalWorkspace({
   // re-ask while the backend is down. The nonce restarts the poller, whose
   // first read is immediate and whose result updates the state.
   const retryBackend = useCallback(() => {
-    void refreshAgentsDiscovery(serverId);
+    void refreshAgentsDiscovery(serverId, undefined, { force: true });
     setRetryNonce((value) => value + 1);
   }, [serverId]);
   // Narrowed by the pane's own answer: tmux can speak extended keys and the
