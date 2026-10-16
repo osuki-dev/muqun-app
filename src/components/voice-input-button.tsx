@@ -21,7 +21,7 @@ import { useLatestReader } from '@/hooks/use-render-refs';
 import { fadeIn, fadeOut, timing } from '@/lib/motion';
 import { VoiceInputError } from '@/lib/voice-input-session';
 import { VoiceMeterHistory, VOICE_METER_SAMPLES } from '@/lib/voice-meter-history';
-import { VoiceRecordingWaveform } from '@/components/voice-recording-waveform';
+import { VoiceLevelRing, VoiceRecordingWaveform } from '@/components/voice-recording-waveform';
 import { voiceRecorderAvailable } from '@/lib/voice-recorder-capability';
 import { VoiceInputSession, type VoiceState } from '@/lib/voice-input';
 import {
@@ -154,6 +154,10 @@ function VoiceRecording({
         : t`Listening…`;
   const recording = !error && state === 'recording';
   const busy = state !== 'recording';
+  // Realtime transcription shows its words as they come, so the field is the
+  // transcript's and the level moves onto the stop control; after-recording
+  // transcription has no words to show and keeps the full-width waveform.
+  const realtime = config.mode === 'realtime';
   const elapsed = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
   const cancel = (
     <PressableScale
@@ -185,7 +189,10 @@ function VoiceRecording({
       {error ? (
         <RotateCcw size={18} color={theme.colors.primary} />
       ) : (
-        <Square size={16} color={theme.colors.primary} />
+        <>
+          {realtime ? <VoiceLevelRing history={history} processing={!recording} /> : null}
+          <Square size={16} color={theme.colors.primary} />
+        </>
       )}
     </PressableScale>
   );
@@ -212,9 +219,48 @@ function VoiceRecording({
             accessible={!recording}
             accessibilityLabel={!recording ? status : undefined}
             accessibilityLiveRegion={!recording ? 'polite' : undefined}
-            style={[styles.pending, compact && styles.compactPending]}>
-            <VoiceRecordingWaveform history={history} processing={!recording} compact={compact} />
-            {!recording && !compact && !!partial && (
+            style={[
+              styles.pending,
+              compact && styles.compactPending,
+              realtime && styles.realtimePending,
+              realtime && compact && styles.compactRealtimePending,
+            ]}>
+            {realtime ? (
+              // The transcript, or until the first words the status, each
+              // fading in over the other: the field is never bare and never
+              // cut from one to the other.
+              <Animated.View
+                key={partial ? 'words' : 'status'}
+                entering={fadeIn('micro')}
+                exiting={fadeOut('micro')}
+                style={styles.realtimeField}>
+                {partial ? (
+                  compact ? (
+                    <Text
+                      testID="voice-live-transcript"
+                      numberOfLines={2}
+                      weight="regular"
+                      color={theme.colors.text}
+                      style={styles.realtimeLine}>
+                      {partial}
+                    </Text>
+                  ) : (
+                    <LiveTranscript text={partial} />
+                  )
+                ) : (
+                  <Text
+                    numberOfLines={1}
+                    weight="regular"
+                    color={theme.colors.textMuted}
+                    style={styles.realtimeLine}>
+                    {status}
+                  </Text>
+                )}
+              </Animated.View>
+            ) : (
+              <VoiceRecordingWaveform history={history} processing={!recording} compact={compact} />
+            )}
+            {!realtime && !recording && !compact && !!partial && (
               <Text
                 testID="voice-processing-status"
                 weight="regular"
@@ -225,7 +271,8 @@ function VoiceRecording({
                 {partial}
               </Text>
             )}
-            {recording &&
+            {!realtime &&
+              recording &&
               !!partial &&
               (compact ? (
                 <Text
@@ -378,6 +425,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   compactPending: { paddingHorizontal: 48, paddingVertical: 4, gap: 4 },
+  // Realtime: the transcript takes the field, clear of the timer at the top
+  // right and of the cancel and stop controls at either side.
+  realtimePending: { paddingTop: 28, paddingBottom: 12, alignItems: 'stretch' },
+  compactRealtimePending: { paddingTop: 2, paddingBottom: 2, paddingLeft: 48, paddingRight: 92 },
+  realtimeField: { flex: 1, alignSelf: 'stretch', justifyContent: 'center' },
+  realtimeLine: { fontSize: 14, lineHeight: 20 },
   pendingLabel: {
     position: 'absolute',
     top: '50%',
