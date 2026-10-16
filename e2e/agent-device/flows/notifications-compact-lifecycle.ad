@@ -130,7 +130,10 @@ screenshot "shots/notice-${SHOT}-same-run-duplicate-rejected.png"
 
 # section expire
 open "muqun://agent?asid=demo-notice-info&agentId=opencode"
-wait "id=in-app-notification" 1000
+# A capture of this transcript costs 350-800 ms, so a 1 s budget allowed one
+# or two polls and missed a card that was on screen. 1.8 s stays inside the
+# card's 2 s lifetime, which starts only once the host shows it.
+wait "id=in-app-notification" 1800
 snapshot
 screenshot "shots/notice-general-first-observed-visible.png"
 wait absent "id=in-app-notification" 5000
@@ -144,10 +147,13 @@ screenshot "shots/notice-general-actually-expired.png"
 
 # section info-clear-open
 open "muqun://agent?asid=demo-notice-info-clear&agentId=opencode"
-wait "id=in-app-notification" 1000
 # Go directly to the REAL clear action; avoid spending the actual 2s lifetime
-# on generic report/screenshot setup. External timestamps still decide whether
-# this conservatively qualifies as clear-before-enqueue+2s.
+# on generic report/screenshot setup. The fixture enqueues the card before
+# `open` returns, and the press resolves Clear all itself: a separate wait
+# spent one more capture of the card's two seconds, and with the runner's
+# guard capture before the press the card could expire under the tap.
+# External timestamps still decide whether this conservatively qualifies as
+# clear-before-enqueue+2s.
 
 # section fresh-survives
 wait "id=in-app-notification" 10000
