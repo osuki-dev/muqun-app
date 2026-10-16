@@ -5,13 +5,21 @@ import { Image } from 'expo-image';
 import * as ScreenCapture from 'expo-screen-capture';
 import { Fingerprint, LockKeyhole, ScanFace } from 'lucide-react-native';
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
-import { AppState, type AppStateStatus, StyleSheet, View } from 'react-native';
+import {
+  AppState,
+  type AppStateStatus,
+  Keyboard,
+  Modal,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { useBrandMark } from '@/components/brand-mark';
 import { useLaunchArtwork } from '@/hooks/use-launch-artwork';
 import { feedback } from '@/lib/feedback';
-import { fadeIn, fadeOut } from '@/lib/motion';
+import { DURATION, fadeIn, fadeOut } from '@/lib/motion';
 import {
   authenticateForAppUnlock,
   getLocalAuthAvailability,
@@ -201,6 +209,28 @@ export function AppLockGate({ children }: { children: ReactNode }) {
     return () => subscription.remove();
   }, [hydrated, locked, requestUnlock]);
 
+  const showLock = appLockEnabled && locked;
+  /*
+   * The lock lives in its own window (`Modal`), above every surface the app
+   * can present -- a sheet route, a lightbox, a native dialog -- which a view
+   * inside the tree would have sat beneath. The window stays up for the
+   * length of the unlock fade so the crossfade below is not cut short, and
+   * while it is up a back press is consumed by it and nothing beneath takes
+   * a touch. Locking also closes the keyboard and blurs the field that had
+   * it, so no text is left half-typed under the cover.
+   */
+  const [lockWindow, setLockWindow] = useState(showLock);
+  useEffect(() => {
+    if (showLock) {
+      setLockWindow(true);
+      Keyboard.dismiss();
+      TextInput.State.currentlyFocusedInput()?.blur();
+      return;
+    }
+    const timer = setTimeout(() => setLockWindow(false), DURATION.medium);
+    return () => clearTimeout(timer);
+  }, [showLock]);
+
   // Opacity audit: safety -- the lock screen's fills stay opaque so nothing shows through it.
   if (!hydrated) {
     return (
@@ -209,8 +239,6 @@ export function AppLockGate({ children }: { children: ReactNode }) {
       </View>
     );
   }
-
-  const showLock = appLockEnabled && locked;
 
   /*
    * The gate crossfades in one direction only, and deliberately so.
@@ -246,14 +274,23 @@ export function AppLockGate({ children }: { children: ReactNode }) {
         importantForAccessibility={showLock ? 'no-hide-descendants' : 'auto'}>
         {children}
       </View>
-      {showLock ? (
-        <Animated.View
-          exiting={fadeOut('medium')}
-          style={[styles.lockScreen, { backgroundColor: theme.colors.background }]}>
-          <Animated.View entering={fadeIn('short')} style={styles.lockContent}>
-            <View style={[styles.iconFrame, { backgroundColor: theme.colors.surfaceRaised }]}>
-              <View style={styles.appIcon}>
-                {/*
+      <Modal
+        visible={lockWindow}
+        transparent
+        animationType="none"
+        presentationStyle="overFullScreen"
+        statusBarTranslucent
+        navigationBarTranslucent
+        hardwareAccelerated
+        onRequestClose={() => {}}>
+        {showLock ? (
+          <Animated.View
+            exiting={fadeOut('medium')}
+            style={[styles.lockScreen, { backgroundColor: theme.colors.background }]}>
+            <Animated.View entering={fadeIn('short')} style={styles.lockContent}>
+              <View style={[styles.iconFrame, { backgroundColor: theme.colors.surfaceRaised }]}>
+                <View style={styles.appIcon}>
+                  {/*
                   Both marks are on screen together while one replaces the
                   other: Reanimated holds the `exiting` view until its fade
                   finishes, so this is a cross-fade rather than the frame
@@ -261,64 +298,65 @@ export function AppLockGate({ children }: { children: ReactNode }) {
                   surface replacing another", the same window the launch
                   overlay hands over in.
                 */}
-                <Animated.View
-                  key={markKey}
-                  entering={markReplaced ? fadeIn('medium') : undefined}
-                  exiting={fadeOut('medium')}
-                  style={StyleSheet.absoluteFill}>
-                  <Image
-                    source={
-                      launchArtwork.kind === 'default' ? brandMark : { uri: launchArtwork.uri }
-                    }
-                    contentFit="contain"
-                    style={StyleSheet.absoluteFill}
-                  />
-                </Animated.View>
+                  <Animated.View
+                    key={markKey}
+                    entering={markReplaced ? fadeIn('medium') : undefined}
+                    exiting={fadeOut('medium')}
+                    style={StyleSheet.absoluteFill}>
+                    <Image
+                      source={
+                        launchArtwork.kind === 'default' ? brandMark : { uri: launchArtwork.uri }
+                      }
+                      contentFit="contain"
+                      style={StyleSheet.absoluteFill}
+                    />
+                  </Animated.View>
+                </View>
+                <View style={[styles.lockBadge, { backgroundColor: theme.colors.primary }]}>
+                  <LockKeyhole size={16} color={theme.colors.onPrimary} strokeWidth={2.4} />
+                </View>
               </View>
-              <View style={[styles.lockBadge, { backgroundColor: theme.colors.primary }]}>
-                <LockKeyhole size={16} color={theme.colors.onPrimary} strokeWidth={2.4} />
+              <View style={styles.copy}>
+                <Text variant="heading" style={styles.title}>
+                  <Trans>Muqun is locked</Trans>
+                </Text>
+                <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.detail}>
+                  <Trans>Authenticate with {authLabel} to continue.</Trans>
+                </Text>
+                {error ? (
+                  <Animated.View entering={fadeIn('micro')} exiting={fadeOut('micro')}>
+                    <Text
+                      selectable
+                      variant="caption"
+                      color={theme.colors.danger}
+                      style={styles.detail}>
+                      {error}
+                    </Text>
+                  </Animated.View>
+                ) : null}
               </View>
-            </View>
-            <View style={styles.copy}>
-              <Text variant="heading" style={styles.title}>
-                <Trans>Muqun is locked</Trans>
-              </Text>
-              <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.detail}>
-                <Trans>Authenticate with {authLabel} to continue.</Trans>
-              </Text>
-              {error ? (
-                <Animated.View entering={fadeIn('micro')} exiting={fadeOut('micro')}>
-                  <Text
-                    selectable
-                    variant="caption"
-                    color={theme.colors.danger}
-                    style={styles.detail}>
-                    {error}
-                  </Text>
-                </Animated.View>
-              ) : null}
-            </View>
-            <PressableScale
-              accessibilityLabel={t`Unlock with ${authLabel}`}
-              disabled={authenticating}
-              onPress={() => void requestUnlock()}
-              style={[styles.unlockButton, { backgroundColor: theme.colors.primary }]}>
-              {authenticating ? (
-                <LogoLoader accessibilityLabel={t`Authenticating`} compact size={28} />
-              ) : authKind === 'face' ? (
-                <ScanFace size={20} color="#FFFFFF" strokeWidth={2.3} />
-              ) : (
-                // Fingerprint covers fingerprint, iris, and the generic Android
-                // case (which prompts with a fingerprint glyph by default).
-                <Fingerprint size={20} color="#FFFFFF" strokeWidth={2.3} />
-              )}
-              <Text variant="label" color="#FFFFFF">
-                {authenticating ? t`Authenticating…` : t`Unlock with ${authLabel}`}
-              </Text>
-            </PressableScale>
+              <PressableScale
+                accessibilityLabel={t`Unlock with ${authLabel}`}
+                disabled={authenticating}
+                onPress={() => void requestUnlock()}
+                style={[styles.unlockButton, { backgroundColor: theme.colors.primary }]}>
+                {authenticating ? (
+                  <LogoLoader accessibilityLabel={t`Authenticating`} compact size={28} />
+                ) : authKind === 'face' ? (
+                  <ScanFace size={20} color="#FFFFFF" strokeWidth={2.3} />
+                ) : (
+                  // Fingerprint covers fingerprint, iris, and the generic Android
+                  // case (which prompts with a fingerprint glyph by default).
+                  <Fingerprint size={20} color="#FFFFFF" strokeWidth={2.3} />
+                )}
+                <Text variant="label" color="#FFFFFF">
+                  {authenticating ? t`Authenticating…` : t`Unlock with ${authLabel}`}
+                </Text>
+              </PressableScale>
+            </Animated.View>
           </Animated.View>
-        </Animated.View>
-      ) : null}
+        ) : null}
+      </Modal>
     </View>
   );
 }
