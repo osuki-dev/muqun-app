@@ -16,6 +16,7 @@
  */
 
 import type { AgentClientCommandId } from './agent-commands';
+import { parseLedgerDelivery } from './task-ledger';
 import {
   DEFAULT_AGENT_ID,
   defaultAgentFeatures,
@@ -338,6 +339,7 @@ export function mirrorAgent(info: AgentInfo): MirroredAgent {
     enabled: info.enabled,
     ...(info.reason ? { reason: info.reason } : {}),
     features: info.features,
+    ...(info.ledgerDelivery ? { ledgerDelivery: info.ledgerDelivery } : {}),
   };
 }
 
@@ -390,6 +392,9 @@ function parseMirroredAgent(value: unknown): MirroredAgent | null {
       ? { reason: value.reason.trim() }
       : {}),
     features: parseAgentFeatures(value.features),
+    ...(parseLedgerDelivery(value.ledgerDelivery)
+      ? { ledgerDelivery: parseLedgerDelivery(value.ledgerDelivery) }
+      : {}),
   };
 }
 

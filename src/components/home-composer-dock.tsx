@@ -85,11 +85,11 @@ import {
 } from '@/lib/home-agent-choice';
 import { describeGatewayFailure } from '@/lib/network-error';
 import {
-  hasTaskLedgerCreate,
   TASK_DEFAULTS_CAPABILITY,
   TASK_LEDGER_PANE_CAPABILITY,
   type LedgerTaskRequest,
-  hasTaskLedgerCodexSession,
+  hasTaskLedgerDelivery,
+  type LedgerDelivery,
 } from '@/lib/task-ledger';
 import {
   createHomeLedgerTask,
@@ -385,17 +385,22 @@ export function HomeComposerDock({
     ? t`${providerName} (terminal)`
     : providerName;
   const agentLabel = agentName || computerLabel;
-  // A gateway that opens ledger tasks gets the goal as one: Home's cards then
-  // see the work, and the work it delegates, live.
-  const ledgerCreate = useServerCapabilities((state) =>
-    targetId ? hasTaskLedgerCreate(state.byServer[targetId]) : false
+  // A gateway that takes the delivery by name lets the reader's pick decide
+  // how a goal is carried: the provider's session entry sends a session
+  // task, its terminal entry a pane task, each only where that provider
+  // lists the delivery. No agent is named here; the data is.
+  const ledgerDelivery = useServerCapabilities((state) =>
+    targetId ? hasTaskLedgerDelivery(state.byServer[targetId]) : false
   );
-  // A Codex goal can be a ledger task too, bound to its native session, on a
-  // gateway that says so; otherwise Home opens the session itself and only
-  // its own Sent row stands for the work.
-  const ledgerCodexSession = useServerCapabilities((state) =>
-    targetId ? hasTaskLedgerCodexSession(state.byServer[targetId]) : false
-  );
+  /** The discovery entry a picked option stands for, if the computer listed one. */
+  const discoveredAgent = (option: {
+    kind: 'session' | 'terminal';
+    agentId?: string;
+    agentKind: string;
+  }) =>
+    discovery?.agents?.agents.find((entry) =>
+      option.kind === 'session' ? entry.id === option.agentId : entry.kind === option.agentKind
+    );
   // ... and a terminal agent's goal as one too: the gateway opens the pane,
   // types the goal and follows the agent as the task's state.
   const ledgerPane = useServerCapabilities((state) =>
@@ -844,7 +849,10 @@ export function HomeComposerDock({
     );
   });
 
-  async function openLedgerTask(text: string, delivery?: 'session'): Promise<boolean> {
+  async function openLedgerTask(
+    text: string,
+    carried?: { delivery: LedgerDelivery; agentId?: string }
+  ): Promise<boolean> {
     if (inFlightRef.current) return false;
     inFlightRef.current = true;
     let pendingId: string | null = null;
@@ -877,14 +885,18 @@ export function HomeComposerDock({
               {
                 goal: text,
                 ...(mentions.length ? { mentions } : {}),
-                ...(params.agentId ? { agentId: params.agentId } : {}),
+                ...(carried?.agentId
+                  ? { agentId: carried.agentId }
+                  : params.agentId
+                    ? { agentId: params.agentId }
+                    : {}),
                 ...(folder ? { cwd: folder } : {}),
                 ...(params.mode ? { mode: params.mode } : {}),
                 ...(params.model ? { model: ledgerModelId(params.model) } : {}),
                 // Applied at session creation by a gateway that takes it (Gateway
                 // Task 15); an older one ignores it, and the switch below sets it.
                 ...(params.model?.variant ? { variant: params.model.variant } : {}),
-                ...(delivery ? { delivery } : {}),
+                ...(carried ? { delivery: carried.delivery } : {}),
               },
               owns,
               pendingId
@@ -1106,6 +1118,14 @@ export function HomeComposerDock({
   function sendPrompt(text: string, attachments?: string[]): Promise<boolean> {
     if (terminalAgent) {
       if (!inFlightRef.current && ready) playTransition('send');
+      // The terminal entry of a provider whose ledger carries goals into a
+      // pane: the task is the computer's, with the pane as its delivery.
+      const paneEntry = ledgerDelivery ? discoveredAgent(terminalAgent) : undefined;
+      if (paneEntry?.ledgerDelivery?.includes('pane') && !attachments?.length) {
+        return dispatchTask(text, () =>
+          openLedgerTask(text, { delivery: 'pane', agentId: paneEntry.id })
+        );
+      }
       const start = () =>
         startTerminalAgent(
           terminalAgent.agentKind,
@@ -1121,17 +1141,19 @@ export function HomeComposerDock({
     }
     if (heldByModelGate()) return Promise.resolve(false);
     if (!inFlightRef.current && ready) playTransition('send');
-    // The task API reserves explicit `codex` for terminal delivery unless the
-    // gateway advertises session delivery for it; then a Codex goal is a
-    // ledger task bound to its native session, like every other session
-    // provider's, and survives this device the way a task does. Otherwise
-    // native Codex must create a session and prompt the returned ID, just
-    // like files and retries.
-    const viaLedger = agentId !== 'codex' ? ledgerCreate : ledgerCodexSession;
-    if (viaLedger && !attachments?.length && !startedRef.current) {
-      return dispatchTask(text, () =>
-        openLedgerTask(text, agentId === 'codex' ? 'session' : undefined)
-      );
+    // A session entry: a ledger task bound to the provider's native session
+    // where the gateway takes the delivery by name and the provider lists it,
+    // which is what lets the card follow the work and keep it across this
+    // device's restarts. A gateway without that answer, or a provider that
+    // does not list it, gets the session opened by Home directly -- the
+    // path files and retries take too.
+    const sessionEntry = ledgerDelivery && agent ? discoveredAgent(agent) : undefined;
+    if (
+      sessionEntry?.ledgerDelivery?.includes('session') &&
+      !attachments?.length &&
+      !startedRef.current
+    ) {
+      return dispatchTask(text, () => openLedgerTask(text, { delivery: 'session' }));
     }
     // Wait for acceptance so any failure retains the complete draft. Passing
     // the goal also binds Home's status row without opening another screen.

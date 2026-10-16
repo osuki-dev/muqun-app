@@ -104,6 +104,23 @@ export function homeAgentOptions(
       confirmed: true,
     });
   }
+  // A session provider whose ledger can also carry its goal into a terminal
+  // pane is offered in both forms, so the delivery is the reader's pick and
+  // never an app rule; the computer's own terminal launcher for that kind,
+  // when it has one, is the terminal entry already.
+  for (const agent of listed) {
+    if (!agent.ledgerDelivery?.includes('pane')) continue;
+    const key = terminalAgentKey(agent.kind);
+    if (terminals.some((entry) => entry.key === key)) continue;
+    terminals.push({
+      key,
+      kind: 'terminal',
+      agentKind: agent.kind,
+      name: agent.name,
+      ready: agent.readiness === 'ready',
+      confirmed: true,
+    });
+  }
   // The two coding agents people pick first, then the rest in catalog order.
   const rank = (option: HomeAgentOption) => {
     const at = PREFERRED_TERMINAL_KINDS.indexOf(option.agentKind.toLowerCase());

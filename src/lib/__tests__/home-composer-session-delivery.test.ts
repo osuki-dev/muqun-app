@@ -56,9 +56,13 @@ function dock(
     agentId: params.agentId,
     folder: '/workspace/selected',
     terminalAgent: options.terminal ? { agentKind: 'codex', name: 'Codex', confirmed: true } : null,
-    ledgerCreate: options.ledger !== false,
-    // No session delivery for Codex on this gateway: Codex stays on its session plane.
-    ledgerCodexSession: false,
+    // The picked entry: a session provider. `ledger` says the gateway takes the
+    // delivery by name and this provider lists a session delivery; without it
+    // a session pick opens its session directly.
+    agent: { kind: 'session', agentId: params.agentId, agentKind: params.agentId ?? '' },
+    ledgerDelivery: options.ledger !== false,
+    discoveredAgent: (option: { agentId?: string }) =>
+      options.ledger !== false ? { id: option.agentId, ledgerDelivery: ['session'] } : undefined,
     ledgerPane: true,
     ready: true,
     playTransition: () => {},
@@ -135,8 +139,8 @@ for (const [text, attachments] of [
   ['Read this file', ['/uploads/report.pdf']],
   ['', ['/uploads/image.png']],
 ] as const) {
-  test(`native Codex stays on its session plane: ${text || 'attachment only'}`, async () => {
-    const home = dock();
+  test(`a session pick with no session delivery listed opens its session directly: ${text || 'attachment only'}`, async () => {
+    const home = dock({ ledger: false });
     expect(await home.sendPrompt(text, attachments ? [...attachments] : undefined)).toBe(true);
     expect(home.creates).toEqual([['herdr', { ...home.params, directory: '/workspace/selected' }]]);
     expect(home.prompts).toEqual([
@@ -171,7 +175,7 @@ test('terminal Codex retains terminal delivery, including attachment-only prompt
   }
 });
 
-test('other session providers keep their ledger path and direct sends stay on Home', async () => {
+test('a session pick is a session-delivered task where the provider lists it, else a direct send', async () => {
   const ledger = dock({ agentId: 'opencode' });
   expect(await ledger.sendPrompt('Read the date')).toBe(true);
   expect(ledger.ledger).toEqual(['Read the date']);
@@ -208,7 +212,7 @@ for (const fail of ['create', 'prompt'] as const) {
 
 for (const replaceDevice of [false, true]) {
   test(`selection ${replaceDevice ? 'device' : 'computer'} changed during creation never receives the prompt`, async () => {
-    const home = dock({ moveAt: 'create', replaceDevice });
+    const home = dock({ moveAt: 'create', replaceDevice, ledger: false });
     expect(await home.sendPrompt('Read the date')).toBe(false);
     expect(home.creates).toHaveLength(1);
     expect(home.prompts).toEqual([]);

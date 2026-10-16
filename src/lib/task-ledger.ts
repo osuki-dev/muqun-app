@@ -9,12 +9,23 @@ export const TASK_LEDGER_CAPABILITY = 'task_ledger';
  */
 export const TASK_LEDGER_CREATE_CAPABILITY = 'task_ledger_create';
 /**
- * `POST /api/tasks` takes `delivery: "session"` for `agent_id: "codex"`: the
- * task is bound to a native Codex agent session and answers its `asid` like
- * any other session delegation. Without it the task API reserves explicit
- * `codex` for terminal delivery, and Home has to open the session itself.
+ * `POST /api/tasks` takes `delivery: "session" | "pane"`, and each agent in
+ * `/api/discovery` lists the deliveries it offers (`ledger_delivery`). The
+ * reader's pick in the dock -- the provider's session entry or its terminal
+ * entry -- is what names the delivery; the app holds no rule by agent name.
  */
-export const TASK_LEDGER_CODEX_SESSION_CAPABILITY = 'task_ledger_codex_session';
+export const TASK_LEDGER_DELIVERY_CAPABILITY = 'task_ledger_delivery';
+
+/** How a ledger task is carried out: as a native agent session, or in a terminal pane. */
+export type LedgerDelivery = 'session' | 'pane';
+
+export function parseLedgerDelivery(value: unknown): LedgerDelivery[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const listed = value.filter(
+    (entry): entry is LedgerDelivery => entry === 'session' || entry === 'pane'
+  );
+  return listed.length > 0 ? [...new Set(listed)] : undefined;
+}
 
 /**
  * `POST /api/tasks` also takes a terminal agent (Codex, Claude Code, ...): the
@@ -284,10 +295,10 @@ export function hasTaskLedgerCreate(capabilities: readonly string[] | undefined)
   return capabilities?.includes(TASK_LEDGER_CREATE_CAPABILITY) === true;
 }
 
-export function hasTaskLedgerCodexSession(capabilities: readonly string[] | undefined): boolean {
+export function hasTaskLedgerDelivery(capabilities: readonly string[] | undefined): boolean {
   return (
     hasTaskLedgerCreate(capabilities) &&
-    capabilities?.includes(TASK_LEDGER_CODEX_SESSION_CAPABILITY) === true
+    capabilities?.includes(TASK_LEDGER_DELIVERY_CAPABILITY) === true
   );
 }
 
@@ -326,11 +337,11 @@ export interface LedgerTaskRequest {
    */
   mentions?: string[];
   /**
-   * `session`: bind the task to a native agent session rather than a
-   * terminal pane. Sent for Codex to a gateway that advertises
-   * `task_ledger_codex_session`, and to no other.
+   * How the task is carried out, as the reader picked it: the provider's
+   * session entry or its terminal entry. Sent only to a gateway that
+   * advertises `task_ledger_delivery` and lists that delivery for the agent.
    */
-  delivery?: 'session';
+  delivery?: LedgerDelivery;
 }
 
 export function ledgerTaskBody(request: LedgerTaskRequest): Record<string, string | string[]> {
