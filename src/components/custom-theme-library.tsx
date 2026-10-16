@@ -4,7 +4,7 @@ import { Tag, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { Button } from '@/components/themed-button';
 import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useWindowDimensions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -34,6 +34,7 @@ import { ThemePaletteStrip } from '@/components/theme-palette-strip';
 import { useThemePack } from '@/hooks/use-theme-pack';
 import { prepareThemeArtwork } from '@/theme/prepare-artwork';
 import { useReskinTransition } from '@/components/reskin-transition';
+import { afterNavigationSettles, type SettleNavigation } from '@/lib/navigation-settle';
 import { useThemeLibrary } from '@/stores/theme-library';
 import { auditThemeContrast } from '@/theme/contrast';
 import {
@@ -186,6 +187,7 @@ export function CustomThemeLibrary({
   const { t } = useLingui();
   const { colors } = useThemeTokens();
   const reskin = useReskinTransition();
+  const navigation = useNavigation();
   const { resolvedMode } = useThemeMode();
   // The plate a label takes when the pack draws a wallpaper behind this sheet.
   // Bare, because this component is always somebody else's child: inside the
@@ -383,6 +385,8 @@ export function CustomThemeLibrary({
         settle: () => {
           leavingUnderCover.current = true;
           closePreview();
+          // The cover stays until this screen has finished leaving.
+          return afterNavigationSettles(navigation as unknown as SettleNavigation);
         },
       });
       return;
