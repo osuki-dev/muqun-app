@@ -1426,7 +1426,7 @@ export function gatewayImageBinding(asset: MessageImageAsset, capabilities?: rea
     const cachedFile = new File(directory, `preview.${extension}`);
     try {
       cachedFile.create();
-      cachedFile.write(bytes);
+      await cachedFile.write(bytes);
     } catch (error) {
       directory.delete();
       throw error;
@@ -1898,7 +1898,7 @@ export function readMessageImageFile(asset: { asset_id: string; url: string }): 
     const file = new File(Paths.cache, `message-image-${asset.asset_id}.${extension}`);
     if (file.exists) file.delete();
     file.create();
-    file.write(bytes);
+    await file.write(bytes);
     return file.uri;
   })();
   messageImageFiles.set(asset.asset_id, pending);
@@ -2055,7 +2055,7 @@ export async function readAssetBytes(
     const handle = file.open(FileMode.ReadOnly);
     try {
       // Bound even unknown-size document-provider files before allocating more.
-      const bytes = handle.readBytes(options.maxBytes + 1);
+      const bytes = await handle.readBytes(options.maxBytes + 1);
       if (bytes.length > options.maxBytes) throw new Error('HTTP 413: This file is too large.');
       if (options.signal?.aborted) throw new Error('Operation cancelled.');
       options.onProgress?.(bytes.length, bytes.length);

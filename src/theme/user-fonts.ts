@@ -212,15 +212,15 @@ async function readFamilyName(file: File): Promise<string | null> {
   try {
     const handle = file.open(FileMode.ReadOnly);
     try {
-      const count = sfntTableCount(handle.readBytes(SFNT_HEADER_BYTES));
+      const count = sfntTableCount(await handle.readBytes(SFNT_HEADER_BYTES));
       if (count === null) return null;
       // Back to the start: the directory the count describes begins at the
       // header, and `findSfntTable` wants both together.
       handle.offset = 0;
-      const table = findSfntTable(handle.readBytes(sfntDirectoryBytes(count)), 'name');
+      const table = findSfntTable(await handle.readBytes(sfntDirectoryBytes(count)), 'name');
       if (!table) return null;
       handle.offset = table.offset;
-      return fontFamilyNameFromNameTable(handle.readBytes(table.length));
+      return fontFamilyNameFromNameTable(await handle.readBytes(table.length));
     } finally {
       handle.close();
     }

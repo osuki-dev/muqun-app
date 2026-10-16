@@ -60,7 +60,7 @@ function PdfReader({ asset, onRetry }: { asset: SessionAsset; onRetry: () => voi
         read: (signal, maxBytes) => readAssetBytes(asset, { signal, maxBytes, download: true }),
         write: (bytes) => {
           file.create();
-          file.write(bytes);
+          file.writeSync(bytes);
         },
         remove: () => {
           if (file.exists) file.delete();

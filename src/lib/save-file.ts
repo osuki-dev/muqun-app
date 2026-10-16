@@ -33,7 +33,7 @@ export async function exportFile(
   if (!photos && Platform.OS === 'android') {
     const destination = await Directory.pickDirectoryAsync();
     assertSaveActive(signal);
-    destination.createFile(safeName, mime).write(bytes);
+    await destination.createFile(safeName, mime).write(bytes);
     return;
   }
   const directory = new Directory(Paths.cache, `file-export-${Date.now()}-${sequence++}`);
@@ -41,7 +41,7 @@ export async function exportFile(
   const file = new File(directory, safeName);
   try {
     file.create();
-    file.write(bytes);
+    await file.write(bytes);
     if (photos) {
       const permission = await requestPermissionsAsync(true, []);
       assertSaveActive(signal);

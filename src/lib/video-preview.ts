@@ -26,7 +26,7 @@ export function videoPreviewRuntime(
       const bytes = await readAssetBytes(resolved, { signal, maxBytes: VIDEO_CONTENT_LIMIT });
       if (signal.aborted) throw new Error('Operation cancelled');
       file.create();
-      file.write(bytes);
+      await file.write(bytes);
       player = new VideoPlayer({ uri: file.uri, initializeOnCreation: false });
       options.onPrepared(player);
     },
