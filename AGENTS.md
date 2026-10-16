@@ -23,6 +23,16 @@ bash scripts/e2e.sh
 Lint uses oxlint with warnings denied; formatting uses oxfmt. Use
 `// oxlint-disable-next-line <rule> -- <reason>` only for a justified exception.
 
+Tests: only core modules need unit tests. Those are wire and protocol
+contracts (transport envelopes, pairing, sockets and streams, agent and task
+ledger shapes, upload bodies, OTA metadata, route parameters), security rules
+(who gets which credential, what is refused, path and URL fences) and logic
+with real failure modes (history paging and cursors, ordering and dedupe,
+state machines, timeline compaction, diff parsing). Do not write tests for
+constants, layout numbers, labels, one-line helpers, rendering or catalogs;
+the end-to-end suite is the device acceptance for those. A reviewer may delete
+a test that does not meet this rule.
+
 Native tests use agent-device 0.21.12 and the existing `.ad` runner. Add new
 surface coverage to `e2e/agent-device/suite.json` with the `full` tag. Use
 `bash scripts/e2e.sh --check` for syntax validation, `--list` for flows, and
