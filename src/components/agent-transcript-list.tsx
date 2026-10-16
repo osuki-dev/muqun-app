@@ -10,7 +10,7 @@ import {
   useCallback,
   type ComponentProps,
 } from 'react';
-import { UIManager, type View } from 'react-native';
+import { UIManager, type ViewInstance } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
 import { useStore } from 'zustand';
 import { createStore, type StoreApi } from 'zustand/vanilla';
@@ -34,14 +34,14 @@ import type { ToolExpansionIntent } from './embedded-terminal-tool-block';
 type BeginToolExpansion = (
   rowKey: string,
   toolId: string,
-  header: View
+  header: ViewInstance
 ) => ToolExpansionIntent | undefined;
 
 interface PendingToolExpansion {
   owner: string;
   rowKey: string;
   toolId: string;
-  header: View;
+  header: ViewInstance;
   bodyReady: boolean;
   rowReady: boolean;
   measuring: boolean;
@@ -82,7 +82,8 @@ const TranscriptRow = memo(function TranscriptRow({ id }: { id: string }) {
   const actions = useMemo(
     () => ({
       ...props.actions,
-      onExpandTool: (toolId: string, header: View) => beginToolExpansion(id, toolId, header),
+      onExpandTool: (toolId: string, header: ViewInstance) =>
+        beginToolExpansion(id, toolId, header),
     }),
     [props.actions, beginToolExpansion, id]
   );
@@ -424,7 +425,14 @@ export const AgentTranscriptList = memo(function AgentTranscriptList({
     }),
     [store, diagramsActive, visibility, pool, namespace, beginToolExpansion, owner, rowProps]
   );
-  const List = keyboardAware ? KeyboardAwareLegendList<string> : LegendList<string>;
+  // @legendapp/list 3.6 types the plain list's `refScrollView` as
+  // `Ref<ScrollView>`, which under React Native 0.88's Strict TypeScript API
+  // is the component function rather than the instance; the keyboard-aware
+  // list already takes the instance. Both receive the same props here, so the
+  // plain one is read through the keyboard-aware type.
+  const List = keyboardAware
+    ? KeyboardAwareLegendList<string>
+    : (LegendList<string> as unknown as typeof KeyboardAwareLegendList<string>);
   return (
     <RowContext.Provider value={context}>
       <List

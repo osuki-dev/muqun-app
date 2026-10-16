@@ -10,6 +10,7 @@ import {
   StyleSheet,
   useWindowDimensions,
   View,
+  type ScrollViewInstance,
 } from 'react-native';
 import Animated, {
   cancelAnimation,
@@ -52,7 +53,7 @@ export function LaunchIntro({
   const { width, height } = useWindowDimensions();
   const [sheetHeight, setSheetHeight] = useState(height);
   const [index, setIndex] = useState(0);
-  const scroll = useRef<ScrollView>(null);
+  const scroll = useRef<ScrollViewInstance>(null);
   useEffect(() => {
     scroll.current?.scrollTo({ y: 0, animated: false });
   }, [index]);

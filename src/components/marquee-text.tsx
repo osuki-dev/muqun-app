@@ -105,7 +105,7 @@ export const MarqueeText = memo(function MarqueeText({
       <Animated.View style={[styles.track, travel]}>
         <Text
           {...text}
-          style={StyleSheet.flatten([style, styles.line])}
+          style={StyleSheet.flatten([style, styles.line]) ?? undefined}
           numberOfLines={1}
           onLayout={onLine}>
           {children}

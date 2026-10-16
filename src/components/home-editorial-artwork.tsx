@@ -10,7 +10,7 @@ import {
   vec,
 } from 'react-native-skia';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { StyleSheet, type LayoutChangeEvent, type ViewInstance } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { useHomeArtworkForeground } from '@/hooks/use-home-artwork-foreground';
@@ -133,7 +133,7 @@ function HomeEditorialArtworkImage({
       Math.max(0, imageRect.y + (visibleTop * imageRect.height) / image.height())
     );
   }, [image, imageRect, onVisibleTopChange, resolution.source, visibleTop]);
-  const view = useRef<View | null>(null);
+  const view = useRef<ViewInstance | null>(null);
   const intrinsic = useMemo(
     () => (image ? { width: image.width(), height: image.height() } : null),
     [image]

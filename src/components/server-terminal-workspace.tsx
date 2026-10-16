@@ -50,6 +50,7 @@ import {
   type LayoutChangeEvent,
   Pressable,
   ScrollView,
+  type ScrollViewInstance,
   StyleSheet,
   useWindowDimensions,
   View,
@@ -1545,7 +1546,7 @@ export function ServerTerminalWorkspace({
   // its right-hand end used to leave the strip highlighting nothing: the
   // active chip was simply somewhere the user could not see, so the only
   // indicator of which pane is open pointed at empty space.
-  const paneStripRef = useRef<ScrollView>(null);
+  const paneStripRef = useRef<ScrollViewInstance>(null);
   const paneChipLayouts = useRef<Record<string, { x: number; width: number }>>({});
   const paneStripViewportRef = useRef(0);
   const paneStripOffsetRef = useRef(0);

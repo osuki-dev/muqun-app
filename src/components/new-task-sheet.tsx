@@ -25,7 +25,14 @@ import {
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Bot, Check, FolderOpen } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
-import { Keyboard, Platform, ScrollView, StyleSheet, View, type TextInput } from 'react-native';
+import {
+  Keyboard,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+  type TextInputInstance,
+} from 'react-native';
 import {
   KeyboardAwareScrollView,
   KeyboardController,
@@ -143,7 +150,7 @@ export function NewTaskSheet({
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
   const [menuKeyboardPadding, setMenuKeyboardPadding] = useState(0);
   const [previewId, setPreviewId] = useState<string | null>(null);
-  const promptInput = useRef<TextInput>(null);
+  const promptInput = useRef<TextInputInstance>(null);
   const sheetScroll = useRef<KeyboardAwareScrollViewRef>(null);
   const sending = useRef(false);
   const mounted = useRef(true);

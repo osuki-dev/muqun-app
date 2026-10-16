@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, type ScrollViewInstance } from 'react-native';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useLingui } from '@lingui/react/macro';
@@ -362,7 +362,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
   const [menuAsid, setMenuAsid] = useState<string | null>(null);
   const [renameAsid, setRenameAsid] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState('');
-  const scrollerRef = useRef<ScrollView>(null);
+  const scrollerRef = useRef<ScrollViewInstance>(null);
   /** Where each root's block sits, so a rename field can be brought up. */
   const rowOffsets = useRef<Record<string, number>>({});
   const inputStyle = useSheetSceneInputStyle();

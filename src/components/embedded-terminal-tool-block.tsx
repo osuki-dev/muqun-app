@@ -7,7 +7,7 @@ import {
   type ComponentType,
   type ReactNode,
 } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, type ViewInstance } from 'react-native';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useLingui } from '@lingui/react/macro';
@@ -104,7 +104,7 @@ export interface EmbeddedTerminalProps {
   children?: ReactNode;
   defaultExpanded?: boolean;
   /** Only explicit opening creates an intent; body layout completes it once. */
-  onExpand?: (header: View) => ToolExpansionIntent | undefined;
+  onExpand?: (header: ViewInstance) => ToolExpansionIntent | undefined;
   /** A delegated task keeps its real child state visible; identity and actions expand. */
   taskSummary?: {
     title: string;
@@ -159,7 +159,7 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
   const raised = useTranscriptPlate();
   const mono = useMonoFontFamily();
   const [expanded, setExpanded] = useState(defaultExpanded);
-  const headerRef = useRef<View>(null);
+  const headerRef = useRef<ViewInstance>(null);
   const expansionIntent = useRef<ToolExpansionIntent | undefined>(undefined);
   useEffect(() => () => expansionIntent.current?.cancel(), []);
 

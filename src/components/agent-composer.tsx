@@ -7,14 +7,14 @@ import { CompactionPill } from '@/components/agent-compaction-pill';
 import type { CompactionActivity } from '@/lib/agent-compaction';
 import { memo, useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import {
-  NativeSyntheticEvent,
   Pressable,
   ScrollView,
   StyleSheet,
-  TextInput,
-  TextInputSelectionChangeEventData,
   useWindowDimensions,
   View,
+  type ScrollViewInstance,
+  type TextInputInstance,
+  type TextInputSelectionChangeEvent,
 } from 'react-native';
 import { Spinner, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
@@ -763,7 +763,7 @@ export const AgentComposer = memo(function AgentComposer({
     [modelName, selectedModel, t]
   );
 
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<TextInputInstance>(null);
   const [caret, setCaret] = useState<number | undefined>(undefined);
   const [mentionHits, setMentionHits] = useState<FileMentionHit[]>([]);
 
@@ -1076,7 +1076,7 @@ export const AgentComposer = memo(function AgentComposer({
   };
 
   const handleSelectionChange = useCallback(
-    (event: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => {
+    (event: TextInputSelectionChangeEvent) => {
       const next = event.nativeEvent.selection.start;
       // A held caret stays until the field reports it: Android applies the
       // new text after the selection of the same commit and moves its own
@@ -1403,7 +1403,7 @@ export const AgentComposer = memo(function AgentComposer({
    * chip reports where it sits; when the active one changes, the strip scrolls
    * it to the left edge.
    */
-  const sessionStripRef = useRef<ScrollView>(null);
+  const sessionStripRef = useRef<ScrollViewInstance>(null);
   const chipOffsetsRef = useRef<Record<string, { x: number; width: number }>>({});
   const measureChip = useCallback((asid: string, x: number, width: number) => {
     chipOffsetsRef.current[asid] = { x, width };
