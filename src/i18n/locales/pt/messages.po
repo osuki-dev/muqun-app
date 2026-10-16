@@ -7374,6 +7374,11 @@ msgstr "Mostra a ilustração inicial do tema na posição definida pelo layout 
 msgid "Using"
 msgstr "Em uso"
 
+#. placeholder {0}: fontAxesSummary(axes)
+#: src/components/settings-font-sheet.tsx
+msgid "Variable · {0}"
+msgstr "Variável · {0}"
+
 #. placeholder {0}: build ? ` (${build})` : ''
 #: src/app/settings.tsx
 msgid "Version {version}{0}"
