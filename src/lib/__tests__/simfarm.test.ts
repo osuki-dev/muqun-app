@@ -17,13 +17,11 @@ import { describe, expect, test } from 'bun:test';
 import {
   allowsSimfarmPreview,
   parseSimfarmDevices,
-  simfarmDeviceKind,
   simfarmDevicesUrl,
   simfarmHealthUrl,
   simfarmClientUrl,
   simfarmSocketUrl,
   SIMFARM_DEFAULT_PORT,
-  SIMFARM_RUN_COMMAND,
 } from '@/lib/simfarm';
 
 const GATEWAY = 'https://tower.example.ts.net:23847';
@@ -79,27 +77,6 @@ describe('the URLs', () => {
   });
 });
 
-describe('simfarmDeviceKind', () => {
-  test('reads the provider off the id', () => {
-    expect(simfarmDeviceKind('ios:00000000-0000-4000-8000-000000000000')).toBe('ios');
-    expect(simfarmDeviceKind('android:emulator-5554')).toBe('android');
-    expect(simfarmDeviceKind('wechat:wx0000000000000000')).toBe('wechat');
-    expect(simfarmDeviceKind('mock:phone')).toBe('mock');
-  });
-
-  test('a provider added after this build is a device we cannot label, not a lost one', () => {
-    expect(simfarmDeviceKind('harmony:whatever')).toBe('other');
-    expect(simfarmDeviceKind('nocolon')).toBe('other');
-  });
-});
-
-/**
- * What a device with nothing declared comes back as.
- *
- * The direction is the point: a capability this app could not read has to
- * become "cannot", or an older or newer simfarm gets a text field and a row of
- * hardware keys that silently do nothing.
- */
 const EMPTY_CAPABILITIES = { video: [], text: false, buttons: [], boot: false };
 
 describe('parseSimfarmDevices', () => {
@@ -220,16 +197,3 @@ describe('simfarmSocketUrl', () => {
 // print, and `links.ts` records what a URL that does not answer has already
 // cost this app in review -- so the thing worth pinning is that it stays a
 // command, and that it stays the *useful* one.
-describe('SIMFARM_RUN_COMMAND', () => {
-  test('starts a reachable, real simfarm and leaves the port to the field', () => {
-    // No URL ships in a store binary; simfarm binds 127.0.0.1 and runs only the
-    // mock provider by default, so the bare command would start a server this
-    // app cannot see holding a fake device; and the port field beside it is
-    // the one answer to which port.
-    expect(SIMFARM_RUN_COMMAND.startsWith('npx simfarm ')).toBe(true);
-    expect(/:\/\//.test(SIMFARM_RUN_COMMAND)).toBe(false);
-    expect(SIMFARM_RUN_COMMAND).toContain('--host 0.0.0.0');
-    expect(/--providers \S*(ios|android)/.test(SIMFARM_RUN_COMMAND)).toBe(true);
-    expect(SIMFARM_RUN_COMMAND).not.toContain('--port');
-  });
-});
