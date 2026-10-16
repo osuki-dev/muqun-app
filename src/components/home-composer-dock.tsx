@@ -100,6 +100,8 @@ import {
 import { useHomeAgentChoice } from '@/stores/home-agent-choice';
 import { useHomeTaskCards } from '@/stores/home-task-cards';
 import { useServerCapabilities } from '@/stores/server-capabilities';
+import { gatewaySocketFor } from '@/lib/gateway-socket-runtime';
+import { WS_EVENTS_CAPABILITY } from '@/lib/gateway-socket';
 import { useFleetPeers } from '@/stores/fleet-peers';
 import { fetchFleetPeers, hasFleetPeers } from '@/lib/fleet-peers';
 import { recordEndpoint } from '@/hooks/use-server-tasks';
@@ -1192,31 +1194,72 @@ export function HomeComposerDock({
       .join(',')
   );
   useEffect(() => {
-    if (!followedBound) return;
-    const read = () => {
-      if (AppState.currentState !== 'active') return;
-      for (const item of useHomeTaskCards.getState().pending) {
-        if (!item.asid || item.failed || item.reply?.state === 'done') continue;
-        if (item.reply?.state === 'failed') continue;
-        const record = useGatewayConnectionStore
-          .getState()
-          .records.find((entry) => entry.serverId === item.serverId);
-        if (!record) continue;
-        const asid = item.asid;
-        void readAgentSessionAt(recordEndpoint(record), HOME_AGENT_SESSION_ID, asid).then(
-          (snapshot) => {
-            if (!snapshot) return;
-            const state = boundSessionState(snapshot);
-            if (state !== 'waiting')
-              useHomeTaskCards.getState().replied(item.id, state, Date.now());
-          }
-        );
-      }
+    if (!followedBound || !focused) return;
+    // One read per row at a time: a snapshot takes up to the request budget,
+    // which is longer than the poll, and the poll used to stack reads behind
+    // a slow one. Where the row's computer has `ws_events`, its session's
+    // socket says when something changed and the poll is not run at all.
+    const inFlight = new Set<string>();
+    const readOne = (item: PendingDispatch) => {
+      if (AppState.currentState !== 'active' || inFlight.has(item.id) || !item.asid) return;
+      const record = useGatewayConnectionStore
+        .getState()
+        .records.find((entry) => entry.serverId === item.serverId);
+      if (!record) return;
+      inFlight.add(item.id);
+      void readAgentSessionAt(recordEndpoint(record), HOME_AGENT_SESSION_ID, item.asid)
+        .then((snapshot) => {
+          if (!snapshot) return;
+          const state = boundSessionState(snapshot);
+          if (state !== 'waiting') useHomeTaskCards.getState().replied(item.id, state, Date.now());
+        })
+        .finally(() => inFlight.delete(item.id));
     };
-    read();
-    const timer = setInterval(read, BOUND_SESSION_READ_MS);
-    return () => clearInterval(timer);
-  }, [followedBound]);
+    const rows = useHomeTaskCards
+      .getState()
+      .pending.filter(
+        (item) =>
+          item.asid &&
+          !item.failed &&
+          item.reply?.state !== 'done' &&
+          item.reply?.state !== 'failed'
+      );
+    const capabilities = useServerCapabilities.getState().byServer;
+    const watched = rows.filter((item) =>
+      capabilities[item.serverId]?.includes(WS_EVENTS_CAPABILITY)
+    );
+    const polled = rows.filter((item) => !watched.includes(item));
+    for (const item of rows) readOne(item);
+    // A turn's events arrive in bursts; one read a moment after the last of them.
+    const settle = new Map<string, ReturnType<typeof setTimeout>>();
+    const releases = watched.map((item) =>
+      gatewaySocketFor(item.serverId).watch(item.asid!, {
+        onEvent: () => {
+          const pending = settle.get(item.id);
+          if (pending) clearTimeout(pending);
+          settle.set(
+            item.id,
+            setTimeout(() => {
+              settle.delete(item.id);
+              readOne(item);
+            }, BOUND_SESSION_SETTLE_MS)
+          );
+        },
+        onSubscribed: () => readOne(item),
+      })
+    );
+    const timer =
+      polled.length > 0
+        ? setInterval(() => {
+            for (const item of polled) readOne(item);
+          }, BOUND_SESSION_READ_MS)
+        : null;
+    return () => {
+      if (timer) clearInterval(timer);
+      for (const pending of settle.values()) clearTimeout(pending);
+      for (const release of releases) release();
+    };
+  }, [followedBound, focused]);
   const openRow = useStableHandler((item: PendingDispatch) => {
     if (item.asid) void onOpenAgent(item.serverId, item.asid, undefined, HOME_AGENT_SESSION_ID);
   });
@@ -1427,6 +1470,8 @@ export function HomeComposerDock({
 
 /** How often a row bound to its session reads that session, while it waits or works. */
 const BOUND_SESSION_READ_MS = 5_000;
+/** How long after a session's last event its snapshot is read, so a burst costs one read. */
+const BOUND_SESSION_SETTLE_MS = 1_500;
 
 /** Failed rows' retries under way: their switch of the selection holds the staged files. */
 let retrySwitches = 0;
