@@ -7374,6 +7374,11 @@ msgstr "Zeigt das Home-Motiv des Themes an der vom Home-Layout festgelegten Posi
 msgid "Using"
 msgstr "In Verwendung"
 
+#. placeholder {0}: fontAxesSummary(axes)
+#: src/components/settings-font-sheet.tsx
+msgid "Variable · {0}"
+msgstr "Variabel · {0}"
+
 #. placeholder {0}: build ? ` (${build})` : ''
 #: src/app/settings.tsx
 msgid "Version {version}{0}"

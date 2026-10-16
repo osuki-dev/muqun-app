@@ -7374,6 +7374,11 @@ msgstr "홈 레이아웃에서 지정한 위치에 테마의 홈 이미지를 �
 msgid "Using"
 msgstr "사용 중"
 
+#. placeholder {0}: fontAxesSummary(axes)
+#: src/components/settings-font-sheet.tsx
+msgid "Variable · {0}"
+msgstr "가변 · {0}"
+
 #. placeholder {0}: build ? ` (${build})` : ''
 #: src/app/settings.tsx
 msgid "Version {version}{0}"

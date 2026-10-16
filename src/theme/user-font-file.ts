@@ -76,7 +76,26 @@ export type FontSlot =
       advanceRatio?: number;
       /** Whether `i M W 0` all advanced the same. Only measured for the mono slot. */
       isMonospace?: boolean;
+      /**
+       * The design axes in the file's `fvar` table: empty for a static face,
+       * absent for a face installed before the table was read, which launch
+       * registration backfills (`readUserFontAxes`).
+       */
+      axes?: readonly FontAxis[];
     };
+
+/**
+ * One design axis of a variable font, in the font's own user-space units.
+ *
+ * `wght` is 1-1000, `wdth` a percentage, `slnt` degrees, `ital` 0-1 and `opsz`
+ * points; a foundry's own axes (upper-case tags) are recorded as they come.
+ */
+export interface FontAxis {
+  tag: string;
+  min: number;
+  default: number;
+  max: number;
+}
 
 /** Nothing chosen. A frozen constant, so identity is stable across renders. */
 export const SYSTEM_FONT_SLOT: FontSlot = Object.freeze({ kind: 'system' });
@@ -598,6 +617,114 @@ export function fontFamilyName(bytes: Uint8Array): string | null {
 }
 
 /**
+ * The most axes a slot records. Real variable fonts carry one to five; the cap
+ * keeps a hand-built `fvar` from bloating the settings blob in the keychain.
+ */
+export const FONT_AXES_MAX = 16;
+
+/** The `fvar` header: version, axes offset, a reserved word, then four counts. */
+const FVAR_HEADER_BYTES = 16;
+
+/** One `VariationAxisRecord`: tag, three 16.16 values, flags, a name id. */
+const FVAR_AXIS_RECORD_BYTES = 20;
+
+/** `VariationAxisRecord.flags` bit: the foundry asks UIs not to expose the axis. */
+const FVAR_AXIS_HIDDEN = 0x0001;
+
+function fixed16Dot16(bytes: Uint8Array, at: number): number {
+  const raw = uint32(bytes, at);
+  return (raw >= 0x80000000 ? raw - 0x100000000 : raw) / 0x10000;
+}
+
+/**
+ * The visible design axes in an `fvar` table, or `null` if it is not one.
+ *
+ * OpenType 1.8 `fvar` (major version 1). Records are walked with the table's
+ * own `axisSize`, which a later minor version may grow, and every read is
+ * bounded by the table length. An axis whose range is not ordered is dropped
+ * rather than trusted, and so is one flagged hidden: the app only ever offers
+ * what the foundry meant a reader to set.
+ */
+export function fontAxesFromFvarTable(table: Uint8Array): FontAxis[] | null {
+  if (table.length < FVAR_HEADER_BYTES || uint16(table, 0) !== 1) return null;
+  const axesOffset = uint16(table, 4);
+  const axisCount = uint16(table, 8);
+  const axisSize = uint16(table, 10);
+  if (axisSize < FVAR_AXIS_RECORD_BYTES) return null;
+  if (axesOffset + axisCount * axisSize > table.length) return null;
+
+  const axes: FontAxis[] = [];
+  for (let index = 0; index < axisCount && axes.length < FONT_AXES_MAX; index += 1) {
+    const at = axesOffset + index * axisSize;
+    if (uint16(table, at + 16) & FVAR_AXIS_HIDDEN) continue;
+    const axis = {
+      tag: tag(table.subarray(at, at + 4)),
+      min: fixed16Dot16(table, at + 4),
+      default: fixed16Dot16(table, at + 8),
+      max: fixed16Dot16(table, at + 12),
+    };
+    if (isFontAxis(axis)) axes.push(axis);
+  }
+  return axes;
+}
+
+/**
+ * The visible axes of a whole font held in memory: empty for a static face.
+ *
+ * The convenience form for a test; the install path reads the one table
+ * through a file handle (`user-fonts.ts`).
+ */
+export function fontVariationAxes(bytes: Uint8Array): FontAxis[] {
+  const table = findSfntTable(bytes, 'fvar');
+  if (!table || table.offset + table.length > bytes.length) return [];
+  return fontAxesFromFvarTable(bytes.subarray(table.offset, table.offset + table.length)) ?? [];
+}
+
+/** A well-formed axis: a printable four-character tag and an ordered range. */
+function isFontAxis(value: unknown): value is FontAxis {
+  if (typeof value !== 'object' || value === null) return false;
+  const axis = value as Record<keyof FontAxis, unknown>;
+  if (typeof axis.tag !== 'string' || !/^[\x20-\x7e]{4}$/u.test(axis.tag)) return false;
+  const { min, default: initial, max } = axis;
+  if (typeof min !== 'number' || typeof initial !== 'number' || typeof max !== 'number') {
+    return false;
+  }
+  if (![min, initial, max].every(Number.isFinite)) return false;
+  return min <= initial && initial <= max && min < max;
+}
+
+/** A stored axis list, checked; `undefined` when absent or malformed. */
+function parseFontAxes(value: unknown): FontAxis[] | undefined {
+  if (!Array.isArray(value) || value.length > FONT_AXES_MAX) return undefined;
+  if (!value.every(isFontAxis)) return undefined;
+  return value.map(({ tag: axisTag, min, default: initial, max }) => ({
+    tag: axisTag,
+    min,
+    default: initial,
+    max,
+  }));
+}
+
+/** A slot's `wght` axis, or `null` for a static or unmeasured face. */
+export function slotWeightAxis(slot: FontSlot): FontAxis | null {
+  if (slot.kind !== 'file') return null;
+  return slot.axes?.find((axis) => axis.tag === 'wght') ?? null;
+}
+
+/**
+ * The axes as one caption, weight first: `wght 100–900 · wdth 75–125`.
+ *
+ * Values are the font's own units, rounded to one decimal so a `slnt` of
+ * -9.99 reads as a number rather than a float.
+ */
+export function fontAxesSummary(axes: readonly FontAxis[]): string {
+  const value = (number: number) => String(Math.round(number * 10) / 10);
+  // Weight first: it is the axis the app sets, and the one a reader looks for.
+  const ordered = [...axes].sort((a, b) => Number(b.tag === 'wght') - Number(a.tag === 'wght'));
+  return ordered.map((axis) => `${axis.tag} ${value(axis.min)}–${value(axis.max)}`).join(' · ');
+}
+
+/**
  * Whether a pasted string is something worth trying to download.
  *
  * Deliberately shallow. The app is not in a position to know what a reader's
@@ -739,6 +866,7 @@ export function parseFontSlot(value: unknown): FontSlot | undefined {
     slot.advanceRatio <= 4
       ? slot.advanceRatio
       : undefined;
+  const axes = parseFontAxes(slot.axes);
   return {
     kind: 'file',
     source: slot.source,
@@ -746,6 +874,7 @@ export function parseFontSlot(value: unknown): FontSlot | undefined {
     label: slot.label,
     ...(advanceRatio === undefined ? {} : { advanceRatio }),
     ...(typeof slot.isMonospace === 'boolean' ? { isMonospace: slot.isMonospace } : {}),
+    ...(axes === undefined ? {} : { axes }),
   };
 }
 

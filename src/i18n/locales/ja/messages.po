@@ -7374,6 +7374,11 @@ msgstr "ホームレイアウトで指定された位置にテーマのホーム
 msgid "Using"
 msgstr "使用中"
 
+#. placeholder {0}: fontAxesSummary(axes)
+#: src/components/settings-font-sheet.tsx
+msgid "Variable · {0}"
+msgstr "可変 · {0}"
+
 #. placeholder {0}: build ? ` (${build})` : ''
 #: src/app/settings.tsx
 msgid "Version {version}{0}"

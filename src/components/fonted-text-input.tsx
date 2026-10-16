@@ -64,6 +64,7 @@ const TYPE_KEYS = [
   'fontSize',
   'fontStyle',
   'fontWeight',
+  'fontVariationSettings',
   'letterSpacing',
   'lineHeight',
   'textAlign',
