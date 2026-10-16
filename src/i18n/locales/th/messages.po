@@ -4611,10 +4611,6 @@ msgstr "การจับคู่หมดอายุ"
 msgid "PAIRING EXPIRED"
 msgstr "การจับคู่หมดอายุ"
 
-#: src/i18n/labels.ts
-msgid "Pairing expired — pair again"
-msgstr "การจับคู่หมดอายุ — จับคู่อีกครั้ง"
-
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "จับคู่ไม่สำเร็จ"
@@ -6774,6 +6770,10 @@ msgstr "คอมพิวเตอร์นี้ไม่ได้จับค
 #: src/components/agent-guide-sheet.tsx
 msgid "This computer is not answering. Check the computer connection, then try again."
 msgstr "คอมพิวเตอร์เครื่องนี้ไม่ตอบสนอง ตรวจสอบการเชื่อมต่อกับคอมพิวเตอร์ แล้วลองอีกครั้ง"
+
+#: src/i18n/labels.ts
+msgid "This computer no longer recognises this device. Pair again."
+msgstr "คอมพิวเตอร์นี้ไม่รู้จักอุปกรณ์นี้อีกต่อไป จับคู่อีกครั้ง"
 
 #: src/components/settings-fleet-peers.tsx
 #: src/lib/network-error.ts

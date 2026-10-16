@@ -6,6 +6,7 @@ import {
   faultAfterRefusal,
   parsePairingFaults,
   pruneFaults,
+  sameFaultEntry,
   type PairingFault,
   type PairingFaultEntry,
 } from '@/lib/pairing-faults';
@@ -90,7 +91,7 @@ export const usePairingFaults = create<PairingFaultsState>((set, get) => ({
     if (!refusal || !record) return;
     const previous = get().byServer[serverId];
     const next = faultAfterRefusal(previous, refusal, record.pairedAt);
-    if (previous?.pairedAt === next.pairedAt && previous.fault === next.fault) return;
+    if (sameFaultEntry(previous, next)) return;
     const byServer = { ...get().byServer, [serverId]: next };
     set({ byServer });
     saveIndex(byServer);

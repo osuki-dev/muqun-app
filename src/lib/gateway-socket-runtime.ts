@@ -254,14 +254,20 @@ async function checkAuthorization(serverId: string): Promise<SocketAuthorization
 
 /**
  * A socket refused on the upgrade said why with a status and nothing else.
- * A demand to pair again is remembered as such; a dead token is left to the
- * `/health` probe the socket already asks for, which reads the gateway's
- * reason off the body (`stores/pairing-faults`).
+ * A demand to pair again is remembered as such. A dead token is put to the
+ * `/health` probe instead, forced, so the gateway's reason is read off a body:
+ * `invalid_token` counts toward the pairing being `unauthorized`, while a
+ * 403 from a captive portal or an `unknown_host` does not
+ * (`stores/pairing-faults`). The probe is one flight per server, so a socket
+ * that already asked through `checkAuthorization` is not asking twice.
  */
 function noteSocketRefusal(serverId: string, refusal: SocketRefusal): void {
   if (refusal === 'repair') {
     usePairingFaults.getState().noteRefusal(serverId, DEVICE_REPAIR_STATUS, '');
+    return;
   }
+  const record = directRecord(serverId);
+  if (record) void useServerReachability.getState().refresh(record, { force: true });
 }
 
 let watchingProbes = false;

@@ -27,10 +27,22 @@ import { readApiError } from './gateway-refusal';
 export type PairingFault = 'repair' | 'unauthorized';
 
 /** One refusal, as the gateway classified it. */
-export type PairingRefusal = 'repair';
+export type PairingRefusal = 'repair' | 'invalid-token';
 
 /** `Upgrade Required`, which the gateway answers for `device_repair_required` and nothing else. */
 export const DEVICE_REPAIR_STATUS = 426;
+
+/**
+ * How many `invalid_token` refusals in a row make the pairing `unauthorized`.
+ *
+ * Two, not one: a single 403 can be a gateway mid-restart reading an empty
+ * device table, and marking the pairing dead on it would stop every probe
+ * until the reader paired again for nothing. Two refusals of the same token
+ * with no accepted answer between them is the computer's settled opinion.
+ * The count carries across launches, so a computer refusing once per launch
+ * gets there too.
+ */
+export const INVALID_TOKEN_REFUSALS_TO_FAULT = 2;
 
 /**
  * What a refusal from a record's own gateway says about the pairing, or
@@ -44,6 +56,9 @@ export function classifyPairingRefusal(status: number, body: string): PairingRef
   if (status === DEVICE_REPAIR_STATUS) {
     return code === undefined || code === 'device_repair_required' ? 'repair' : null;
   }
+  // Only the code: `unknown_host` is also a 403 and pairing will not fix it,
+  // and a captive portal's 401 page is not the gateway speaking at all.
+  if ((status === 401 || status === 403) && code === 'invalid_token') return 'invalid-token';
   return null;
 }
 
@@ -52,9 +67,17 @@ export type PairingFaultEntry = {
   /** The record's `pairedAt`; a re-pair writes a new one and this entry stops applying. */
   pairedAt: number;
   fault?: PairingFault;
+  /** `invalid_token` refusals heard since the computer last accepted the token. */
+  invalidTokenRefusals?: number;
 };
 
-/** The entry after hearing `refusal` for the pairing made at `pairedAt`. */
+/**
+ * The entry after hearing `refusal` for the pairing made at `pairedAt`.
+ *
+ * A repair demand is a fault at once and is never downgraded: a dead token on
+ * a record that also needs a key has the same remedy. A dead token is counted
+ * and becomes a fault at `INVALID_TOKEN_REFUSALS_TO_FAULT`.
+ */
 export function faultAfterRefusal(
   previous: PairingFaultEntry | undefined,
   refusal: PairingRefusal,
@@ -62,7 +85,24 @@ export function faultAfterRefusal(
 ): PairingFaultEntry {
   const base = previous?.pairedAt === pairedAt ? previous : { pairedAt };
   if (refusal === 'repair') return { ...base, fault: 'repair' };
-  return base;
+  const invalidTokenRefusals = (base.invalidTokenRefusals ?? 0) + 1;
+  const fault =
+    base.fault ??
+    (invalidTokenRefusals >= INVALID_TOKEN_REFUSALS_TO_FAULT ? 'unauthorized' : undefined);
+  return { ...base, invalidTokenRefusals, ...(fault ? { fault } : {}) };
+}
+
+/** Whether two entries say the same thing, so an unchanged one is not written again. */
+export function sameFaultEntry(
+  a: PairingFaultEntry | undefined,
+  b: PairingFaultEntry | undefined
+): boolean {
+  if (!a || !b) return a === b;
+  return (
+    a.pairedAt === b.pairedAt &&
+    a.fault === b.fault &&
+    (a.invalidTokenRefusals ?? 0) === (b.invalidTokenRefusals ?? 0)
+  );
 }
 
 /** The fault held against a record, if the entry is about this pairing of it. */
@@ -103,11 +143,16 @@ export function parsePairingFaults(value: string): Record<string, PairingFaultEn
   const index: Record<string, PairingFaultEntry> = {};
   for (const [serverId, raw] of Object.entries(parsed as Record<string, unknown>)) {
     if (!serverId || !raw || typeof raw !== 'object') continue;
-    const { pairedAt, fault } = raw as Record<string, unknown>;
+    const { pairedAt, fault, invalidTokenRefusals } = raw as Record<string, unknown>;
     if (typeof pairedAt !== 'number' || !Number.isFinite(pairedAt)) continue;
+    const refusals =
+      typeof invalidTokenRefusals === 'number' && Number.isInteger(invalidTokenRefusals)
+        ? Math.max(0, invalidTokenRefusals)
+        : 0;
     index[serverId] = {
       pairedAt,
       ...(fault === 'repair' || fault === 'unauthorized' ? { fault } : {}),
+      ...(refusals > 0 ? { invalidTokenRefusals: refusals } : {}),
     };
   }
   return index;

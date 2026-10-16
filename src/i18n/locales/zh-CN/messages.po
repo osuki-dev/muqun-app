@@ -4611,10 +4611,6 @@ msgstr "配对已过期"
 msgid "PAIRING EXPIRED"
 msgstr "配对已失效"
 
-#: src/i18n/labels.ts
-msgid "Pairing expired — pair again"
-msgstr "配对已失效 — 请重新配对"
-
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "配对失败"
@@ -6774,6 +6770,10 @@ msgstr "这台电脑已经取消配对"
 #: src/components/agent-guide-sheet.tsx
 msgid "This computer is not answering. Check the computer connection, then try again."
 msgstr "这台电脑没有响应。请检查与电脑的连接，然后重试"
+
+#: src/i18n/labels.ts
+msgid "This computer no longer recognises this device. Pair again."
+msgstr "这台电脑已不再识别此设备。请重新配对"
 
 #: src/components/settings-fleet-peers.tsx
 #: src/lib/network-error.ts

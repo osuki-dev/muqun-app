@@ -12,8 +12,10 @@ import {
   DEVICE_REPAIR_STATUS,
   faultAfterRefusal,
   faultFor,
+  INVALID_TOKEN_REFUSALS_TO_FAULT,
   parsePairingFaults,
   pruneFaults,
+  sameFaultEntry,
   type PairingFaultEntry,
 } from '../pairing-faults';
 
@@ -102,5 +104,71 @@ describe('what is held against a record', () => {
     });
     expect(parsePairingFaults('not json')).toEqual({});
     expect(parsePairingFaults('[]')).toEqual({});
+  });
+});
+
+describe('a dead token', () => {
+  const INVALID = JSON.stringify({ error: { code: 'invalid_token', message: 'invalid token' } });
+
+  test('invalid_token on 401 or 403 is a refusal of the token; other 403s are not', () => {
+    expect(classifyPairingRefusal(403, INVALID)).toBe('invalid-token');
+    expect(classifyPairingRefusal(401, INVALID)).toBe('invalid-token');
+    // `unknown_host` is a 403 pairing cannot fix; a portal's page is not the gateway.
+    expect(
+      classifyPairingRefusal(403, JSON.stringify({ error: { code: 'unknown_host' } }))
+    ).toBeNull();
+    expect(classifyPairingRefusal(401, '<html>Sign in to the network</html>')).toBeNull();
+    expect(classifyPairingRefusal(403, '')).toBeNull();
+    // A transient failure has no status to classify; it never reaches here.
+    expect(classifyPairingRefusal(0, '')).toBeNull();
+  });
+
+  test('one refusal is counted, the second makes the pairing unauthorized', () => {
+    const first = faultAfterRefusal(undefined, 'invalid-token', PAIRED_AT);
+    expect(first).toEqual({ pairedAt: PAIRED_AT, invalidTokenRefusals: 1 });
+    expect(faultFor(first, { pairedAt: PAIRED_AT })).toBeUndefined();
+    const second = faultAfterRefusal(first, 'invalid-token', PAIRED_AT);
+    expect(second).toEqual({ pairedAt: PAIRED_AT, invalidTokenRefusals: 2, fault: 'unauthorized' });
+    expect(faultFor(second, { pairedAt: PAIRED_AT })).toBe('unauthorized');
+    expect(INVALID_TOKEN_REFUSALS_TO_FAULT).toBe(2);
+  });
+
+  test('the count survives a relaunch, so one refusal per launch gets there too', () => {
+    const stored = parsePairingFaults(
+      JSON.stringify({ osk: { pairedAt: PAIRED_AT, invalidTokenRefusals: 1 } })
+    );
+    expect(faultAfterRefusal(stored.osk, 'invalid-token', PAIRED_AT).fault).toBe('unauthorized');
+    expect(
+      parsePairingFaults(JSON.stringify({ osk: { pairedAt: PAIRED_AT, invalidTokenRefusals: -3 } }))
+    ).toEqual({ osk: { pairedAt: PAIRED_AT } });
+  });
+
+  test('a repair demand is never downgraded by a dead token, and a re-pair starts the count over', () => {
+    const repair = faultAfterRefusal(undefined, 'repair', PAIRED_AT);
+    expect(faultAfterRefusal(repair, 'invalid-token', PAIRED_AT).fault).toBe('repair');
+    const dead = faultAfterRefusal(
+      faultAfterRefusal(undefined, 'invalid-token', PAIRED_AT),
+      'invalid-token',
+      PAIRED_AT
+    );
+    expect(faultAfterRefusal(dead, 'invalid-token', PAIRED_AT + 1)).toEqual({
+      pairedAt: PAIRED_AT + 1,
+      invalidTokenRefusals: 1,
+    });
+  });
+
+  test('an unchanged entry is recognised, so nothing is written for it', () => {
+    const entry: PairingFaultEntry = {
+      pairedAt: PAIRED_AT,
+      fault: 'unauthorized',
+      invalidTokenRefusals: 2,
+    };
+    expect(sameFaultEntry(entry, { ...entry })).toBe(true);
+    expect(sameFaultEntry(entry, { ...entry, invalidTokenRefusals: 3 })).toBe(false);
+    expect(sameFaultEntry(undefined, undefined)).toBe(true);
+    expect(sameFaultEntry(entry, undefined)).toBe(false);
+    expect(
+      sameFaultEntry({ pairedAt: PAIRED_AT }, { pairedAt: PAIRED_AT, invalidTokenRefusals: 0 })
+    ).toBe(true);
   });
 });

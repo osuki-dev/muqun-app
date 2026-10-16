@@ -4611,10 +4611,6 @@ msgstr "Ghép đôi đã hết hạn"
 msgid "PAIRING EXPIRED"
 msgstr "GHÉP NỐI ĐÃ HẾT HẠN"
 
-#: src/i18n/labels.ts
-msgid "Pairing expired — pair again"
-msgstr "Ghép nối đã hết hạn — hãy ghép nối lại"
-
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "Ghép nối thất bại"
@@ -6774,6 +6770,10 @@ msgstr "Máy tính này không còn được ghép nối"
 #: src/components/agent-guide-sheet.tsx
 msgid "This computer is not answering. Check the computer connection, then try again."
 msgstr "Máy tính này không phản hồi. Hãy kiểm tra kết nối tới máy tính rồi thử lại"
+
+#: src/i18n/labels.ts
+msgid "This computer no longer recognises this device. Pair again."
+msgstr "Máy tính này không còn nhận ra thiết bị này. Ghép nối lại"
 
 #: src/components/settings-fleet-peers.tsx
 #: src/lib/network-error.ts

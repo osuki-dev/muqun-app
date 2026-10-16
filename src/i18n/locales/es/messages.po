@@ -4611,10 +4611,6 @@ msgstr "Vinculación caducada"
 msgid "PAIRING EXPIRED"
 msgstr "VINCULACIÓN CADUCADA"
 
-#: src/i18n/labels.ts
-msgid "Pairing expired — pair again"
-msgstr "La vinculación caducó — vuelve a vincular"
-
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "No se pudo vincular"
@@ -6774,6 +6770,10 @@ msgstr "Este ordenador ya no está vinculado"
 #: src/components/agent-guide-sheet.tsx
 msgid "This computer is not answering. Check the computer connection, then try again."
 msgstr "Este ordenador no responde. Comprueba la conexión con el ordenador e inténtalo de nuevo"
+
+#: src/i18n/labels.ts
+msgid "This computer no longer recognises this device. Pair again."
+msgstr "Este ordenador ya no reconoce este dispositivo. Vincular de nuevo"
 
 #: src/components/settings-fleet-peers.tsx
 #: src/lib/network-error.ts

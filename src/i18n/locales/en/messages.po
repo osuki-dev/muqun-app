@@ -4611,10 +4611,6 @@ msgstr "Pairing expired"
 msgid "PAIRING EXPIRED"
 msgstr "PAIRING EXPIRED"
 
-#: src/i18n/labels.ts
-msgid "Pairing expired — pair again"
-msgstr "Pairing expired — pair again"
-
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "Pairing failed"
@@ -6774,6 +6770,10 @@ msgstr "This computer is no longer paired"
 #: src/components/agent-guide-sheet.tsx
 msgid "This computer is not answering. Check the computer connection, then try again."
 msgstr "This computer is not answering. Check the computer connection, then try again"
+
+#: src/i18n/labels.ts
+msgid "This computer no longer recognises this device. Pair again."
+msgstr "This computer no longer recognises this device. Pair again"
 
 #: src/components/settings-fleet-peers.tsx
 #: src/lib/network-error.ts
