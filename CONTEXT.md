@@ -68,7 +68,7 @@ Network and domain services throw contextual errors for callers to present or re
 
 ## Configuration and Deployment
 
-`app.json` defines Expo SDK/native configuration, permissions, schemes, plugins, EAS project identity, and platform-specific privacy settings. `package.json` pins Expo SDK 57 packages and exposes EAS build, submit, and update commands. Releases use EAS builds for native binaries and EAS Update for compatible JavaScript changes.
+`app.json` defines Expo SDK/native configuration, permissions, schemes, plugins, EAS project identity, and platform-specific privacy settings. `package.json` pins Expo SDK 58 packages and exposes EAS build, submit, and update commands. Releases use EAS builds for native binaries and EAS Update for compatible JavaScript changes.
 
 ## Documentation and Operations
 
@@ -76,7 +76,7 @@ This repository holds the app and nothing else. The store listing copy, the App 
 
 ## Sharp Edges
 
-- Read the exact Expo SDK 57 versioned documentation before code changes.
+- Read the exact Expo SDK 58 versioned documentation before code changes.
 - A feature is not complete until the full offline end-to-end suite passes with one booted simulator or emulator and the app installed.
 - The theme picker must remain scrollable: the registry now contains thirty-two paired packs.
 - Form sheets have native layout constraints; `ScrollScreen` must remain the sheet root.

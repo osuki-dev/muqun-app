@@ -1,6 +1,6 @@
 # Contributing to Muqun
 
-- Read the [Expo SDK 57 documentation](https://docs.expo.dev/versions/v57.0.0/)
+- Read the [Expo SDK 58 documentation](https://docs.expo.dev/versions/v58.0.0/)
   before changing code.
 - Write repository documentation, release notes, and bundled skill instructions
   in English. UI localization is separate.

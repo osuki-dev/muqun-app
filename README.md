@@ -57,7 +57,7 @@ to disable Voice to text.
 File recording requires a native build containing `react-native-nitro-sound`;
 Expo Go and older native builds do not expose the microphone. A new native
 runtime must be shipped before distributing an OTA that depends on the recorder.
-Realtime capture uses Expo SDK 57's `expo-audio` `AudioStream`. It does not
+Realtime capture uses Expo SDK 58's `expo-audio` `AudioStream`. It does not
 replace or patch Nitro Sound or enable background recording.
 
 ## Audio previews
