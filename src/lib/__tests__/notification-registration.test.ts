@@ -40,6 +40,7 @@ function harness(
   let current: GatewayRecord | null = null;
   let enabled = true;
   let bindsOwner = false;
+  let faulted = false;
   const settings = Object.assign(
     (selector: (state: { notificationsEnabled: boolean; language: string }) => unknown) =>
       selector(settings.getState()),
@@ -68,6 +69,10 @@ function harness(
             : {},
       }),
     useGatewayConnectionStore: { getState: () => ({ record: current }) },
+    usePairingFaults: (selector: (state: { byServer: Record<string, unknown> }) => unknown) =>
+      selector({ byServer: current && faulted ? { [current.serverId]: { fault: 'repair' } } : {} }),
+    pairingFaultOf: (state: { byServer: Record<string, { fault?: string }> }, serverId: string) =>
+      state.byServer[serverId]?.fault,
     useEffect: (body: () => (() => void) | undefined) => {
       cleanup = body();
     },
@@ -111,10 +116,17 @@ function harness(
     calls,
     posts,
     store,
-    mount(serverId: string | null, on: boolean, capability = false, deviceId = 'fixture-device') {
+    mount(
+      serverId: string | null,
+      on: boolean,
+      capability = false,
+      deviceId = 'fixture-device',
+      fault = false
+    ) {
       cleanup?.();
       enabled = on;
       bindsOwner = capability;
+      faulted = fault;
       current =
         serverId === null
           ? null
@@ -166,6 +178,21 @@ test('real record still registers and detaches its foreground observer', async (
   expect(run.calls).toEqual(['listen', 'token lookup', 'gateway register', 'remember']);
   run.cleanup();
   expect(run.calls.at(-1)).toBe('unlisten');
+});
+
+test('a computer that refused this pairing is not told the token until paired again', async () => {
+  // Every foreground would otherwise post to a gateway that answers 426 or
+  // `invalid_token` to it; the fault clears when the record is paired again,
+  // which re-runs the effect with a new record.
+  const run = harness(new Map(), {});
+  run.mount('paired-fixture', true, false, 'fixture-device', true);
+  await settle();
+  run.foreground();
+  await settle();
+  expect(run.calls).toEqual([]);
+  run.mount('paired-fixture', true);
+  await settle();
+  expect(run.calls).toEqual(['listen', 'token lookup', 'gateway register', 'remember']);
 });
 
 test('a renamed or reselected server does not re-post an unchanged token', async () => {

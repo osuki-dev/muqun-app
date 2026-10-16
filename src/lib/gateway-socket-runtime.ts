@@ -12,6 +12,7 @@ import { activeLocaleHeaders } from '@/i18n/active-locale';
 import { mirroredDiscoveryFor } from '@/stores/agents';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { noteGatewayGeneration } from '@/stores/gateway-connection-generation';
+import { usePairingFaults } from '@/stores/pairing-faults';
 import { useServerChannels } from '@/stores/server-channels';
 import { useServerReachability } from '@/stores/server-reachability';
 
@@ -31,7 +32,9 @@ import {
   type GatewaySocketTransport,
   type GatewaySocketUpgrade,
   type SocketAuthorization,
+  type SocketRefusal,
 } from './gateway-socket';
+import { DEVICE_REPAIR_STATUS } from './pairing-faults';
 import { authorizationFromProbe } from './server-reachability';
 import { streamRecordCrypto } from './gateway-transport';
 import { onNetworkChange } from './network-events';
@@ -249,6 +252,18 @@ async function checkAuthorization(serverId: string): Promise<SocketAuthorization
   return authorizationFromProbe(before, useServerReachability.getState().probes[serverId]);
 }
 
+/**
+ * A socket refused on the upgrade said why with a status and nothing else.
+ * A demand to pair again is remembered as such; a dead token is left to the
+ * `/health` probe the socket already asks for, which reads the gateway's
+ * reason off the body (`stores/pairing-faults`).
+ */
+function noteSocketRefusal(serverId: string, refusal: SocketRefusal): void {
+  if (refusal === 'repair') {
+    usePairingFaults.getState().noteRefusal(serverId, DEVICE_REPAIR_STATUS, '');
+  }
+}
+
 let watchingProbes = false;
 
 /**
@@ -278,6 +293,7 @@ export function gatewaySocketFor(serverId: string): GatewaySocket {
       appState,
       onHello: (hello) => noteGatewayGeneration(serverId, hello),
       checkAuthorization: () => checkAuthorization(serverId),
+      onRefused: (refusal) => noteSocketRefusal(serverId, refusal),
     });
     // The Home dot reads the socket as evidence the computer is answering.
     created.onStateChange((state) => useServerChannels.getState().setSocket(serverId, state));

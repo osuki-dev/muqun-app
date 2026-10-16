@@ -246,11 +246,22 @@ export function checkAgentServer(
     // This lets command and readiness tests run in Bun without React Native,
     // while this adapter still uses the real server-scoped APIs.
     try {
-      const [gatewayClient, agentSession, agentsStore] = await Promise.all([
+      const [gatewayClient, agentSession, agentsStore, faults] = await Promise.all([
         import('@/lib/gateway-client'),
         import('@/lib/agent-session'),
         import('@/stores/agents'),
+        import('@/stores/pairing-faults'),
       ]);
+      // A computer that refused this pairing is not asked five questions it
+      // will refuse one by one; it is offline until the reader pairs again.
+      if (faults.pairingFaultOf(faults.usePairingFaults.getState(), record.serverId)) {
+        return {
+          status: 'offline',
+          capabilities: [],
+          agentId: agentId ? normalizeAgentId(agentId) : DEFAULT_AGENT_ID,
+          cause: 'health',
+        };
+      }
       const endpoint: GatewayEndpoint = {
         url: gatewayClient.effectiveGatewayBaseUrl(record),
         token: record.token,

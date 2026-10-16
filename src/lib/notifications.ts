@@ -38,6 +38,7 @@ import {
 import { PUSH_TOKEN_OWNER_BINDING_CAPABILITY } from '@/lib/push-token-rule';
 import { directGatewayBaseUrl } from '@/lib/ssh-tunnel';
 import { useAppSettings } from '@/stores/app-settings';
+import { pairingFaultOf, usePairingFaults } from '@/stores/pairing-faults';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useServerTasksStore } from '@/stores/server-tasks';
 import { useServerCapabilities } from '@/stores/server-capabilities';
@@ -221,6 +222,12 @@ export function useGatewayPushRegistration(record: GatewayRecord | null) {
       ? state.byServer[record.serverId]?.includes(PUSH_TOKEN_OWNER_BINDING_CAPABILITY) === true
       : false
   );
+  // A computer that refused this pairing will refuse the token too, on every
+  // foreground, until the reader pairs again -- which writes a new record and
+  // runs this effect afresh.
+  const fault = usePairingFaults((state) =>
+    record ? pairingFaultOf(state, record.serverId) : undefined
+  );
 
   useEffect(() => {
     // Demo is offline, including when notifications are disabled. Neither
@@ -237,7 +244,7 @@ export function useGatewayPushRegistration(record: GatewayRecord | null) {
         cancelled = true;
       };
     }
-    if (!record) return;
+    if (!record || fault) return;
     const ownerRecord = record;
     const { serverId } = ownerRecord;
     const identity = pushPairingIdentity(ownerRecord);
@@ -328,7 +335,7 @@ export function useGatewayPushRegistration(record: GatewayRecord | null) {
     // `language` is read inside through `getActiveLocale()`; it is listed so that
     // choosing a language runs this again.
     // oxlint-disable-next-line react-hooks/exhaustive-deps -- a trigger, not an input
-  }, [notificationsEnabled, record, language, bindsOwner]);
+  }, [notificationsEnabled, record, language, bindsOwner, fault]);
 }
 
 async function unregisterPushNotificationsAsync(record: GatewayRecord | null): Promise<void> {

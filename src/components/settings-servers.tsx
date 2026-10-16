@@ -11,6 +11,7 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
+import { PairAgainNotice } from '@/components/pair-again-notice';
 import { PressableScale } from '@/components/pressable-scale';
 import {
   LADDER,
@@ -39,7 +40,11 @@ import { acceptsCancel, acceptsConfirm, unpairView } from '@/lib/unpair-action';
 import { useRenderTally } from '@/lib/render-tally';
 import { describeGatewayFailure } from '@/lib/network-error';
 import { normalizeGatewayUrl } from '@/lib/pairing';
-import { serversToProbe, type ConnectionStatus } from '@/lib/server-reachability';
+import {
+  serversToProbe,
+  statusNeedsPairing,
+  type ConnectionStatus,
+} from '@/lib/server-reachability';
 import { useAppSettings, type ServerCardPanes } from '@/stores/app-settings';
 import { useServerAgents } from '@/stores/server-agents';
 import { retryHomeRefresh } from '@/lib/home-refresh-schedule';
@@ -333,7 +338,7 @@ function ServerRow({
   const statusColor =
     reachability === 'live'
       ? theme.colors.success
-      : reachability === 'unauthorized'
+      : statusNeedsPairing(reachability)
         ? theme.colors.warning
         : theme.colors.textSubtle;
   // Read at render, like `PairedDevices`' own `nowMs` below: "last connected"
@@ -413,6 +418,11 @@ function ServerRow({
           <ChevronDown size={18} color={theme.colors.textMuted} />
         </Animated.View>
       </PressableScale>
+      <PairAgainNotice
+        testID={`settings-server-pair-again-${server.serverId}`}
+        status={reachability}
+        server={server}
+      />
 
       {open ? (
         <Animated.View

@@ -57,6 +57,7 @@ export default function ComputerMapScreen() {
     offline: colors.textMuted,
     unknown: colors.textMuted,
     unauthorized: colors.danger,
+    repair: colors.warning,
     reconnecting: colors.warning,
     background: colors.background,
     foreground: colors.text,
