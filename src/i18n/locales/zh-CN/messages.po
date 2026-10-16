@@ -7061,6 +7061,10 @@ msgstr "类型"
 msgid "Type a line and press Enter; it is echoed back."
 msgstr "输入一行并按 Enter，它会被原样返回"
 
+#: src/app/explore.tsx
+msgid "Type a pairing code only on a network you trust."
+msgstr "仅在你信任的网络上输入配对码"
+
 #: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Type changed"

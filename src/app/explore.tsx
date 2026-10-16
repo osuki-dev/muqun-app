@@ -238,15 +238,17 @@ export default function PairModal() {
   // Scanning is the default path. Manual address entry is a peer mode rather
   // than a disclosure under the camera, so switching replaces the preview
   // instead of stacking a form below it.
-  // Opened to pair a computer again (`PairAgainNotice`): the address of the
-  // record this device already holds for that id is typed in, and the screen
-  // starts on the manual panel it belongs to. Only the id travels on the
-  // route; the address comes from storage (`pairAgainAddress`).
+  // Opened to pair a computer again (`PairAgainNotice`): the screen still
+  // starts on the scanner -- the QR is the path nobody on the network can
+  // steer -- and the stored address of the record this device holds for that
+  // id is typed in only once the reader opens the manual form themselves.
+  // Only the id travels on the route; the address comes from storage
+  // (`pairAgainAddress`), never from a parameter.
   const params = useLocalSearchParams<{ serverId?: string }>();
   const records = useGatewayConnectionStore((state) => state.records);
   const [pairAgainUrl] = useState(() => pairAgainAddress(params, records));
-  const [manualOpen, setManualOpen] = useState(pairAgainUrl !== '');
-  const [manualUrl, setManualUrl] = useState(pairAgainUrl);
+  const [manualOpen, setManualOpen] = useState(false);
+  const [manualUrl, setManualUrl] = useState('');
   // The third way in: a gateway that only listens on its own machine, reached
   // through an SSH host the reader has already saved. The pairing itself is
   // the existing manual flow, pointed at the loopback forward the tunnel
@@ -792,6 +794,12 @@ export default function PairModal() {
                         style={[inputStyle, { fontFamily: mono }]}
                       />
                     </SheetSceneField>
+                    {/* A typed address is the one way in that something on the
+                        path could have steered the reader to; the code they
+                        type next is what it would be after. */}
+                    <Text variant="caption" color={theme.colors.textMuted}>
+                      {t`Type a pairing code only on a network you trust.`}
+                    </Text>
                     <SheetSceneAction
                       label={busy ? t`Connecting` : t`Continue`}
                       busy={busy}
@@ -893,6 +901,8 @@ export default function PairModal() {
                   onPress={() => {
                     setSshOpen(false);
                     setManualOpen((value) => !value);
+                    // The computer being paired again, if the field is still empty.
+                    setManualUrl((value) => value || pairAgainUrl);
                     // The mode switch is below the viewfinder on compact sheets.
                     // Reveal the replacement form instead of keeping it above the viewport.
                     scrollRef.current?.scrollTo({ y: 0, animated: true });

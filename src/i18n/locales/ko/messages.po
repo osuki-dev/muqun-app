@@ -7061,6 +7061,10 @@ msgstr "종류"
 msgid "Type a line and press Enter; it is echoed back."
 msgstr "한 줄을 입력하고 Enter를 누르면 그대로 돌려줍니다"
 
+#: src/app/explore.tsx
+msgid "Type a pairing code only on a network you trust."
+msgstr "페어링 코드는 신뢰할 수 있는 네트워크에서만 입력하세요"
+
 #: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Type changed"
