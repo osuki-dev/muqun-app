@@ -113,6 +113,17 @@ msgstr "{0} (게이트웨이)"
 msgid "{0} (this device)"
 msgstr "{0} (이 기기)"
 
+#. placeholder {0}: failed.name
+#: src/lib/attachments.ts
+msgid "{0} did not upload. Retry it or remove it to send."
+msgstr "{0}을(를) 업로드하지 못했습니다. 다시 시도하거나 제거한 뒤 보내세요"
+
+#. placeholder {0}: failed.name
+#. placeholder {1}: uploadLimitMb(maxUploadBytesFor(failed.mime))
+#: src/lib/attachments.ts
+msgid "{0} is too large ({1} MB max). Remove it to send."
+msgstr "{0}이(가) 너무 큽니다(최대 {1} MB). 제거한 뒤 보내세요"
+
 #. placeholder {0}: contextUsage.messages
 #: src/components/agent-context-sheet.tsx
 msgid "{0} messages in context"
@@ -1847,7 +1858,6 @@ msgid "Copying…"
 msgstr "복사 중…"
 
 #: src/components/agent-composer.tsx
-#: src/components/new-task-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
 msgstr "파일을 추가하지 못했습니다"
@@ -2761,8 +2771,8 @@ msgid "Fetch a web page"
 msgstr "웹 페이지 가져오기"
 
 #: src/lib/attachments.ts
-msgid "File too large (25MB max)"
-msgstr "파일이 너무 큽니다(최대 25MB)"
+msgid "File too large ({mb} MB max)"
+msgstr "파일이 너무 큽니다(최대 {mb} MB)"
 
 #: src/lib/attachments.ts
 msgid "File type not allowed"
@@ -4165,6 +4175,11 @@ msgstr "연결되지 않음"
 msgid "NOT CONNECTED"
 msgstr "연결 안 됨"
 
+#: src/components/agent-composer.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Not every file was added"
+msgstr "일부 파일이 추가되지 않았습니다"
+
 #: src/app/+not-found.tsx
 #: src/app/custom-theme.tsx
 msgid "Not found"
@@ -4286,6 +4301,10 @@ msgstr "온라인 상태"
 #: src/i18n/labels.ts
 msgid "ONLINE"
 msgstr "온라인"
+
+#: src/lib/attachments.ts
+msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."
+msgstr "처음 {MAX_ATTACHMENTS_PER_PICK}개 파일만 추가되었고 {dropped}개는 제외되었습니다"
 
 #: src/components/task-row.tsx
 msgid "Only this Home row is hidden. The task and its history remain available. Running work is not stopped."
@@ -4711,6 +4730,7 @@ msgid "Playback position"
 msgstr "재생 위치"
 
 #: src/components/agent-composer.tsx
+#: src/lib/attachments.ts
 msgid "Please retry or remove failed attachments."
 msgstr "실패한 첨부파일을 다시 시도하거나 삭제하세요"
 
@@ -5233,14 +5253,10 @@ msgstr "이전 출력 다시 불러오기"
 msgid "Retry size check"
 msgstr "크기 확인 다시 시도"
 
-#: src/components/server-terminal-workspace.tsx
-msgid "Retry the ones marked in red, or remove them, then send again."
-msgstr "빨간색으로 표시된 항목을 다시 시도하거나 삭제한 뒤 다시 보내세요"
-
 #. placeholder {0}: attachment.name
 #: src/components/attachment-strip.tsx
-msgid "Retry uploading {0}"
-msgstr "{0} 업로드 다시 시도"
+msgid "Retry uploading {0}: {reason}"
+msgstr "{0} 다시 업로드: {reason}"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
@@ -6976,6 +6992,11 @@ msgstr "이 세션의 토큰"
 msgid "Tokens usage and cost"
 msgstr "토큰 사용량 및 비용"
 
+#. placeholder {0}: uploadLimitMb(maxUploadBytesFor(entry.mime))
+#: src/lib/attachments.ts
+msgid "Too large ({0} MB max)"
+msgstr "너무 큽니다(최대 {0} MB)"
+
 #: src/components/file-text-body.tsx
 msgid "Too large to highlight — showing plain text."
 msgstr "너무 커서 구문 강조 없이 일반 텍스트로 표시합니다"
@@ -7285,6 +7306,10 @@ msgstr "업로드 실패"
 #: src/components/agent-composer.tsx
 msgid "Upload failed"
 msgstr "업로드 실패"
+
+#: src/lib/attachments.ts
+msgid "Upload failed. Tap to retry."
+msgstr "업로드 실패. 탭하여 다시 시도"
 
 #: src/components/attachment-strip.tsx
 msgid "uploaded"

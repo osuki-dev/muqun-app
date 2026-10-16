@@ -92,6 +92,8 @@ import {
   isImageAttachment,
   type AttachmentSource,
   type PendingAttachment,
+  describeBlockedSend,
+  takePickTruncationNotice,
 } from '@/lib/attachments';
 import {
   DURATION,
@@ -1103,7 +1105,12 @@ export const AgentComposer = memo(function AgentComposer({
       const picker = attachmentUploads.capturePicker();
       if (!picker.isCurrent()) return;
       void pickAttachments(source)
-        .then(picker.addFiles)
+        .then((files) => {
+          picker.addFiles(files);
+          const cut = takePickTruncationNotice();
+          if (cut && picker.isCurrent())
+            showToast({ variant: 'warning', title: t`Not every file was added`, message: cut });
+        })
         .catch((failure: unknown) => {
           if (!picker.isCurrent()) return;
           showToast({
@@ -1240,7 +1247,7 @@ export const AgentComposer = memo(function AgentComposer({
             showToast({
               variant: 'danger',
               title: t`Upload failed`,
-              message: t`Please retry or remove failed attachments.`,
+              message: describeBlockedSend(attachmentUploads.attachments),
             });
             return;
           }

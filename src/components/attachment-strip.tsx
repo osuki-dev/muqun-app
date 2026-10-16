@@ -7,7 +7,11 @@ import Animated from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { isImageAttachment, type PendingAttachment } from '@/lib/attachments';
+import {
+  describeAttachmentFailure,
+  isImageAttachment,
+  type PendingAttachment,
+} from '@/lib/attachments';
 import { isPdfFile } from '@/lib/session-assets';
 import { DURATION, fadeIn, fadeOut, listLayout, zoomIn, zoomOut } from '@/lib/motion';
 
@@ -65,13 +69,18 @@ export function AttachmentStrip({
       contentContainerStyle={styles.strip}>
       {attachments.map((attachment) => {
         const failed = attachment.status === 'error';
+        // A file over the cap has nothing to retry: the tile says so and takes no tap.
+        const retryable = failed && attachment.failure !== 'too-large';
+        const reason = failed ? describeAttachmentFailure(attachment) : null;
         const isImage = isImageAttachment(attachment.mime);
         const previewable = isImage || isPdfFile(attachment);
         // A tap means retry on a failed tile and preview on anything else worth
         // looking at, so the label has to say which of the two it is.
         const status = describeStatus(attachment.status);
         const label = failed
-          ? t`Retry uploading ${attachment.name}`
+          ? retryable
+            ? t`Retry uploading ${attachment.name}: ${reason}`
+            : `${attachment.name}: ${reason}`
           : previewable
             ? t`Preview ${attachment.name}, ${status}`
             : `${attachment.name}, ${status}`;
@@ -90,7 +99,7 @@ export function AttachmentStrip({
             style={styles.tileWrap}>
             <PressableScale
               accessibilityLabel={label}
-              disabled={(!failed && !previewable) || (readOnly && failed)}
+              disabled={(!failed && !previewable) || (failed && (!retryable || readOnly))}
               pressedScale={0.94}
               onPress={() => (failed ? onRetry(attachment.id) : onPreview(attachment.id))}
               style={[
@@ -152,10 +161,24 @@ export function AttachmentStrip({
                   entering={fadeIn('micro')}
                   exiting={fadeOut('micro')}
                   style={[styles.overlay, styles.failedOverlay]}>
-                  <Icon name="RotateCcw" size={17} color="#FFFFFF" />
+                  <Icon name={retryable ? 'RotateCcw' : 'Ban'} size={17} color="#FFFFFF" />
                 </Animated.View>
               ) : null}
             </PressableScale>
+            {/* The reason, where the tile is: a red rim and an icon said that
+                something was wrong and nothing said what, and a file over the
+                cap stayed red with a retry arrow that could not help. */}
+            {reason ? (
+              <Animated.View entering={fadeIn('micro')} exiting={fadeOut('micro')}>
+                <Text
+                  variant="caption"
+                  color={theme.colors.danger}
+                  numberOfLines={2}
+                  style={styles.reason}>
+                  {reason}
+                </Text>
+              </Animated.View>
+            ) : null}
             {/* Ready is worth its own mark rather than just the absence of an
                 overlay, because Send waiting on a tile only makes sense if the
                 user can see which tiles it is waiting for. It lands rather than
@@ -200,8 +223,9 @@ const styles = StyleSheet.create({
   },
   tileWrap: {
     width: TILE_SIZE,
-    height: TILE_SIZE,
+    minHeight: TILE_SIZE,
   },
+  reason: { fontSize: 9, textAlign: 'center', paddingTop: 2 },
   tile: {
     width: TILE_SIZE,
     height: TILE_SIZE,

@@ -29,7 +29,7 @@ export const SERVER_CAPABILITIES_STORAGE_KEY = 'muqun.server-capabilities.v1';
  * accumulate lists for servers it will never show again.
  */
 export const MAX_MIRRORED_CAPABILITY_SERVERS = 24;
-const MAX_CAPABILITIES = 128;
+const MAX_CAPABILITIES = 512;
 const MAX_CAPABILITY_LENGTH = 48;
 
 /**

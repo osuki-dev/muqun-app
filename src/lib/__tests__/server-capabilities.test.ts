@@ -21,9 +21,9 @@ describe('reading a health answer', () => {
     expect(normalizeCapabilities(names)).toEqual(names);
   });
 
-  test('bounds a hostile list at 128, keeping the first in order', () => {
-    const names = Array.from({ length: 200 }, (_, i) => `cap_${i}`);
-    expect(normalizeCapabilities(names)).toEqual(names.slice(0, 128));
+  test('bounds a hostile list at 512, keeping the first in order', () => {
+    const names = Array.from({ length: 600 }, (_, i) => `cap_${i}`);
+    expect(normalizeCapabilities(names)).toEqual(names.slice(0, 512));
   });
 
   test('keeps the names, in order, once each', () => {
