@@ -43,6 +43,7 @@ import {
   pendingWorking,
   type PendingDispatch,
   type TaskRowVisual,
+  pendingUnconfirmed,
 } from '@/lib/home-computer-cards';
 import { fadeIn, fadeOut, listLayout, PULSE_ONCE_MS, pulseOnce, travelTiming } from '@/lib/motion';
 import Svg, { Path } from 'react-native-svg';
@@ -889,6 +890,9 @@ export function SentTaskRow({
     acknowledged: true,
   });
   const noReply = !failed && !replied && item.asid !== undefined && !pendingWorking(item, nowMs);
+  // A plain send the gateway never answered within the TTL stays, says so,
+  // and a tap asks the computer whether it has the task after all.
+  const unconfirmed = pendingUnconfirmed(item, nowMs);
   const line = failed
     ? lineView(
         t`Could not send`,
@@ -897,10 +901,25 @@ export function SentTaskRow({
       )
     : noReply
       ? lineView('', theme.colors.textMuted, t`Sent · no reply yet`)
-      : rowLine(replied, visual, computer, nowMs);
-  const press = !actions ? null : failed ? actions.retry : item.asid ? actions.open : null;
+      : unconfirmed
+        ? lineView(
+            t`Delivery not confirmed`,
+            theme.colors.textMuted,
+            actions?.check ? t`Check status` : ''
+          )
+        : rowLine(replied, visual, computer, nowMs);
+  const press = !actions
+    ? null
+    : failed
+      ? actions.retry
+      : item.asid
+        ? actions.open
+        : unconfirmed
+          ? (actions.check ?? null)
+          : null;
   // Rows that stay until acted on can be let go; the field keeps its own draft.
-  const dismissible = failed || noReply || (replied !== null && replied.state !== 'working');
+  const dismissible =
+    failed || noReply || unconfirmed || (replied !== null && replied.state !== 'working');
   return (
     <Animated.View
       testID="home-card-pending"
@@ -913,7 +932,13 @@ export function SentTaskRow({
         disabled={!press}
         onPress={() => press?.(item)}
         accessibilityRole={press ? 'button' : undefined}
-        accessibilityLabel={failed ? t`Could not send. Tap to retry` : undefined}
+        accessibilityLabel={
+          failed
+            ? t`Could not send. Tap to retry`
+            : unconfirmed
+              ? t`Delivery not confirmed. Tap to check status`
+              : undefined
+        }
         style={[styles.sentBody, styles.grow]}>
         <View style={styles.titleLine}>
           <RowMarkdown text={goalTitle(item.goal)} ink={theme.colors.text} kind="title" />

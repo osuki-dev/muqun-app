@@ -1263,11 +1263,12 @@ export function HomeComposerDock({
   const openRow = useStableHandler((item: PendingDispatch) => {
     if (item.asid) void onOpenAgent(item.serverId, item.asid, undefined, HOME_AGENT_SESSION_ID);
   });
+  const checkRow = useStableHandler((_item: PendingDispatch) => void checkDelivery());
   useEffect(() => {
     const { setRowActions } = useHomeTaskCards.getState();
-    setRowActions({ retry: retryRow, open: openRow });
+    setRowActions({ retry: retryRow, open: openRow, check: checkRow });
     return () => setRowActions(null);
-  }, [retryRow, openRow]);
+  }, [retryRow, openRow, checkRow]);
   function clientCommand(name: AgentClientCommandId) {
     if (name === 'models') openModelSheet();
   }

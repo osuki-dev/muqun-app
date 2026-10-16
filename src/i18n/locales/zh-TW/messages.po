@@ -1144,6 +1144,7 @@ msgid "Check device authentication settings and try again."
 msgstr "請檢查裝置的驗證設定後再試一次"
 
 #: src/components/home-composer-dock.tsx
+#: src/components/task-row.tsx
 msgid "Check status"
 msgstr "核對狀態"
 
@@ -2393,8 +2394,13 @@ msgstr "傳送模式：即時插話。點擊切換為排隊"
 
 #: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/components/task-row.tsx
 msgid "Delivery not confirmed"
 msgstr "傳送未確認"
+
+#: src/components/task-row.tsx
+msgid "Delivery not confirmed. Tap to check status"
+msgstr "傳送未確認。點按檢查狀態"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Demo catalogue. Leave the demo to download themes."
@@ -6332,6 +6338,11 @@ msgstr "給 {assignmentLabel} 的任務"
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for a new {0}"
 msgstr "給新的 {0} 的任務"
+
+#. placeholder {0}: server.label
+#: src/components/home-computer-cards.tsx
+msgid "Task history for {0}"
+msgstr "{0} 的任務歷史"
 
 #: src/components/home-composer-dock.tsx
 msgid "Task options"

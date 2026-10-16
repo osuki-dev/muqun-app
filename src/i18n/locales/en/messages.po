@@ -1144,6 +1144,7 @@ msgid "Check device authentication settings and try again."
 msgstr "Check device authentication settings and try again"
 
 #: src/components/home-composer-dock.tsx
+#: src/components/task-row.tsx
 msgid "Check status"
 msgstr "Check status"
 
@@ -2393,8 +2394,13 @@ msgstr "Delivery mode: Steer (real-time). Tap to switch to Queue"
 
 #: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/components/task-row.tsx
 msgid "Delivery not confirmed"
 msgstr "Delivery not confirmed"
+
+#: src/components/task-row.tsx
+msgid "Delivery not confirmed. Tap to check status"
+msgstr "Delivery not confirmed. Tap to check status"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Demo catalogue. Leave the demo to download themes."
@@ -6332,6 +6338,11 @@ msgstr "Task for {assignmentLabel}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for a new {0}"
 msgstr "Task for a new {0}"
+
+#. placeholder {0}: server.label
+#: src/components/home-computer-cards.tsx
+msgid "Task history for {0}"
+msgstr "Task history for {0}"
 
 #: src/components/home-composer-dock.tsx
 msgid "Task options"

@@ -1120,6 +1120,9 @@ export function HomeOverview({
         skipEntering={cardsSkipEntering}
         gridWidth={cardGridWidth}
         onSelectServer={targetComposer}
+        onOpenHistory={(serverId) =>
+          router.push({ pathname: '/server-tasks', params: { serverId } })
+        }
         onOpenTask={({ serverId, task, tree }) => {
           // A row opens the session or pane the task runs in; only
           // the sub-task count opens the list of the work under it.

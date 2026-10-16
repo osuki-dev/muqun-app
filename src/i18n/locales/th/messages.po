@@ -1144,6 +1144,7 @@ msgid "Check device authentication settings and try again."
 msgstr "ตรวจสอบการตั้งค่าการยืนยันตัวตนของอุปกรณ์แล้วลองอีกครั้ง"
 
 #: src/components/home-composer-dock.tsx
+#: src/components/task-row.tsx
 msgid "Check status"
 msgstr "ตรวจสอบสถานะ"
 
@@ -2393,8 +2394,13 @@ msgstr "โหมดการส่ง: แทรกแซงแบบเรี�
 
 #: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/components/task-row.tsx
 msgid "Delivery not confirmed"
 msgstr "ยังไม่ยืนยันการส่ง"
+
+#: src/components/task-row.tsx
+msgid "Delivery not confirmed. Tap to check status"
+msgstr "ยังไม่ยืนยันการส่ง แตะเพื่อตรวจสอบสถานะ"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Demo catalogue. Leave the demo to download themes."
@@ -6332,6 +6338,11 @@ msgstr "งานสำหรับ {assignmentLabel}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for a new {0}"
 msgstr "งานสำหรับ {0} ใหม่"
+
+#. placeholder {0}: server.label
+#: src/components/home-computer-cards.tsx
+msgid "Task history for {0}"
+msgstr "ประวัติงานของ {0}"
 
 #: src/components/home-composer-dock.tsx
 msgid "Task options"

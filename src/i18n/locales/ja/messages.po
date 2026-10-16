@@ -1144,6 +1144,7 @@ msgid "Check device authentication settings and try again."
 msgstr "デバイスの認証設定を確認して、もう一度お試しください"
 
 #: src/components/home-composer-dock.tsx
+#: src/components/task-row.tsx
 msgid "Check status"
 msgstr "状態を確認"
 
@@ -2393,8 +2394,13 @@ msgstr "送信モード: リアルタイム割り込み (Steer)。タップし�
 
 #: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/components/task-row.tsx
 msgid "Delivery not confirmed"
 msgstr "配信は未確認です"
+
+#: src/components/task-row.tsx
+msgid "Delivery not confirmed. Tap to check status"
+msgstr "配信は未確認です。タップして状態を確認"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Demo catalogue. Leave the demo to download themes."
@@ -6332,6 +6338,11 @@ msgstr "{assignmentLabel} へのタスク"
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for a new {0}"
 msgstr "新しい {0} へのタスク"
+
+#. placeholder {0}: server.label
+#: src/components/home-computer-cards.tsx
+msgid "Task history for {0}"
+msgstr "{0}のタスク履歴"
 
 #: src/components/home-composer-dock.tsx
 msgid "Task options"

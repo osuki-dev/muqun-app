@@ -1,7 +1,7 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
-import { Monitor } from 'lucide-react-native';
+import { History, Monitor } from 'lucide-react-native';
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
@@ -32,9 +32,8 @@ import {
   taskRowRank,
   type ComputerCard,
   HOME_CARD_INSET,
-  RECENT_FINISHED_MS,
+  FINISHED_ROWS_SHOWN,
 } from '@/lib/home-computer-cards';
-import { isTerminalTaskState } from '@/lib/task-ledger';
 import { useDeadlineNow } from '@/hooks/use-deadline-now';
 import { useMinuteNow } from '@/hooks/use-minute-now';
 import { PAD_CARD_GAP, padCardColumns } from '@/lib/home-pad-geometry';
@@ -108,24 +107,15 @@ const subscribeCardDeadlines = (onChange: () => void) => {
 };
 
 /**
- * The first instant after `afterMs` at which time alone could take a card
- * away: a Sent row outliving `PENDING_DISPATCH_TTL_MS`, or a finished task
- * leaving the `RECENT_FINISHED_MS` window.
+ * The first instant after `afterMs` at which time alone changes a card: a
+ * Sent row outliving `PENDING_DISPATCH_TTL_MS`, which stops counting as work
+ * and reads as delivery unconfirmed. Nothing leaves a card by time any more.
  */
 function nextCardExpiry(afterMs: number): number | undefined {
   let next: number | undefined;
-  const consider = (atMs: number) => {
+  for (const item of useHomeTaskCards.getState().pending) {
+    const atMs = item.atMs + PENDING_DISPATCH_TTL_MS;
     if (atMs > afterMs && (next === undefined || atMs < next)) next = atMs;
-  };
-  for (const item of useHomeTaskCards.getState().pending)
-    consider(item.atMs + PENDING_DISPATCH_TTL_MS);
-  for (const entry of Object.values(useServerTasksStore.getState().index)) {
-    for (const task of entry?.tasks ?? []) {
-      if (!isTerminalTaskState(task.state)) continue;
-      consider(
-        Math.max(task.updatedMs, task.settledAtMs ?? task.updatedMs) + RECENT_FINISHED_MS + 1
-      );
-    }
   }
   return next;
 }
@@ -224,6 +214,7 @@ export function HomeComputerCards({
   gridWidth,
   onSelectServer,
   onOpenTask,
+  onOpenHistory,
 }: {
   servers: readonly GatewayRecord[];
   /**
@@ -242,6 +233,8 @@ export function HomeComputerCards({
   gridWidth?: number;
   onSelectServer: (serverId: string) => void;
   onOpenTask: (target: CardTaskTarget) => void;
+  /** The computer's task history, everything the card no longer lists. */
+  onOpenHistory?: (serverId: string) => void;
 }) {
   const serverIds = servers.map((server) => server.serverId);
   const entries = useServerTasksStore(
@@ -311,6 +304,7 @@ export function HomeComputerCards({
                   onOpenTask={(task, tree) =>
                     onOpenTask({ serverId: card.serverId, task, ...(tree ? { tree } : {}) })
                   }
+                  onOpenHistory={onOpenHistory ? () => onOpenHistory(card.serverId) : undefined}
                 />
               </Animated.View>
             );
@@ -329,6 +323,7 @@ function ComputerCardView({
   nowMs,
   onSelect,
   onOpenTask,
+  onOpenHistory,
 }: {
   card: ComputerCard;
   server: GatewayRecord;
@@ -337,11 +332,16 @@ function ComputerCardView({
   nowMs: number;
   onSelect: () => void;
   onOpenTask: (task: TaskView, tree?: boolean) => void;
+  onOpenHistory?: () => void;
 }) {
   const { t } = useLingui();
   const [expanded, setExpanded] = useState(false);
-  const hasMore =
-    card.now.length + card.pending.length + card.finished.length > HOME_CONTINUE_INITIAL_LIMIT;
+  // Open work is shown up to the usual limit; finished work shows three
+  // rows and keeps the rest behind Show more, since it no longer expires.
+  const openRows = card.now.length + card.pending.length;
+  const shownOpen = Math.min(openRows, HOME_CONTINUE_INITIAL_LIMIT);
+  const shownFinished = Math.min(card.finished.length, FINISHED_ROWS_SHOWN);
+  const hasMore = openRows + card.finished.length > shownOpen + shownFinished;
   // This card's own status: a probe or a retry against another computer
   // re-renders only the card whose status moved.
   const selectedId = useGatewayConnectionStore((state) => state.record?.serverId);
@@ -409,7 +409,7 @@ function ComputerCardView({
         onPress={onSelect}
         style={styles.header}>
         <Monitor size={18} color={theme.colors.primary} />
-        <View style={styles.headerCopy}>
+        <View style={[styles.headerCopy, styles.fill]}>
           <Text variant="bodySmall" weight="semibold" numberOfLines={1}>
             {server.label}
           </Text>
@@ -423,6 +423,17 @@ function ComputerCardView({
             </View>
           ) : null}
         </View>
+        {onOpenHistory ? (
+          <PressableScale
+            testID={`home-card-history-${server.serverId}`}
+            accessibilityRole="button"
+            accessibilityLabel={t`Task history for ${server.label}`}
+            hitSlop={8}
+            onPress={onOpenHistory}
+            style={styles.history}>
+            <History size={16} color={theme.colors.textMuted} />
+          </PressableScale>
+        ) : null}
       </PressableScale>
       <PairAgainNotice
         testID={`home-card-pair-again-${server.serverId}`}
@@ -442,25 +453,29 @@ function ComputerCardView({
               and Just finished (it finished, or it was reopened) is the same
               row element, moved by its layout transition, never re-created. */}
           {[
-            ...urgentNow.map(nowRow),
-            ...card.pending.map((item) => (
-              <SentTaskRow key={item.id} item={item} computer={server.label} nowMs={nowMs} />
-            )),
-            ...restNow.map(nowRow),
-            ...card.finished.map((task) => (
-              <TaskRow
-                key={task.taskId}
-                task={task}
-                inComputerCard
-                statusCurrent={statusCurrent}
-                serverId={server.serverId}
-                discovery={discovery}
-                nowMs={nowMs}
-                onOpen={(finished) => onOpenTask(finished)}
-                onOpenTree={(finished) => onOpenTask(finished, true)}
-              />
-            )),
-          ].slice(0, expanded ? undefined : HOME_CONTINUE_INITIAL_LIMIT)}
+            ...[
+              ...urgentNow.map(nowRow),
+              ...card.pending.map((item) => (
+                <SentTaskRow key={item.id} item={item} computer={server.label} nowMs={nowMs} />
+              )),
+              ...restNow.map(nowRow),
+            ].slice(0, expanded ? undefined : shownOpen),
+            ...card.finished
+              .slice(0, expanded ? undefined : shownFinished)
+              .map((task) => (
+                <TaskRow
+                  key={task.taskId}
+                  task={task}
+                  inComputerCard
+                  statusCurrent={statusCurrent}
+                  serverId={server.serverId}
+                  discovery={discovery}
+                  nowMs={nowMs}
+                  onOpen={(finished) => onOpenTask(finished)}
+                  onOpenTree={(finished) => onOpenTask(finished, true)}
+                />
+              )),
+          ]}
           {hasMore ? (
             <PressableScale
               testID={`home-card-more-${server.serverId}`}
@@ -544,6 +559,7 @@ const styles = StyleSheet.create({
   },
   headerCopy: { flexShrink: 1, minWidth: 0, gap: 2 },
   statusLine: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  history: { minWidth: 32, minHeight: 32, alignItems: 'center', justifyContent: 'center' },
   block: { gap: 4, paddingBottom: 8 },
   more: { minHeight: 44, justifyContent: 'center' },
   fill: { flexGrow: 1 },

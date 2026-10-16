@@ -1144,6 +1144,7 @@ msgid "Check device authentication settings and try again."
 msgstr "Hãy kiểm tra cài đặt xác thực của thiết bị và thử lại"
 
 #: src/components/home-composer-dock.tsx
+#: src/components/task-row.tsx
 msgid "Check status"
 msgstr "Kiểm tra trạng thái"
 
@@ -2393,8 +2394,13 @@ msgstr "Chế độ gửi: Can thiệp trực tiếp (Steer). Chạm để chuy�
 
 #: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/components/task-row.tsx
 msgid "Delivery not confirmed"
 msgstr "Chưa xác nhận được việc gửi"
+
+#: src/components/task-row.tsx
+msgid "Delivery not confirmed. Tap to check status"
+msgstr "Chưa xác nhận đã gửi. Chạm để kiểm tra trạng thái"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Demo catalogue. Leave the demo to download themes."
@@ -6332,6 +6338,11 @@ msgstr "Tác vụ cho {assignmentLabel}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for a new {0}"
 msgstr "Tác vụ cho một {0} mới"
+
+#. placeholder {0}: server.label
+#: src/components/home-computer-cards.tsx
+msgid "Task history for {0}"
+msgstr "Lịch sử tác vụ của {0}"
 
 #: src/components/home-composer-dock.tsx
 msgid "Task options"

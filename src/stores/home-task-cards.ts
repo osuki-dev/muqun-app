@@ -116,6 +116,8 @@ type HomeTaskCardsState = {
   rowActions: {
     retry: (item: PendingDispatch) => void;
     open: (item: PendingDispatch) => void;
+    /** Ask the computer whether an unconfirmed send reached it (the dock's delivery check). */
+    check?: (item: PendingDispatch) => void;
   } | null;
   setRowActions: (actions: HomeTaskCardsState['rowActions']) => void;
   /** The row whose work is being opened (`taskOpeningKey`): it shows a loading state. */
