@@ -5048,6 +5048,26 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     }, 500);
   });
   /**
+   * One descendant's children, read again after its socket (re)subscribed:
+   * what it may have spawned while its channel was down. The whole tree was
+   * walked for this before, once per descendant, which on a tree of fifty
+   * was fifty walks on every reconnect.
+   */
+  const refreshNodeChildren = useEffectEvent(async (asid: string) => {
+    const generation = childrenRequestRef.current;
+    const agentId = listAgentIdRef.current;
+    const observed = childrenByParentRef.current[asid] ?? [];
+    const inventory = await listAgentSessionChildrenObserved(
+      asid,
+      agentId ? { agentId } : undefined
+    );
+    if (generation !== childrenRequestRef.current) return;
+    setChildrenByParent((previous) =>
+      mergeSessionChildren(previous, asid, inventory.children, inventory.authoritative, observed)
+    );
+    void removeChildSessionRecents(useHomeRecentsStore.getState, serverId, inventory.children);
+  });
+  /**
    * Follow every descendant while its ancestor is open.
    *
    * The event socket is strictly per session (`subscribe` names one asid) and
@@ -5068,7 +5088,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     const socket = gatewaySocketFor(serverId);
     const releases = watched.map((asid) =>
       socket.watch(asid, {
-        onSubscribed: () => refreshSubtasksSoon(),
+        onSubscribed: () => void refreshNodeChildren(asid),
         onResync: () => refreshSubtasksSoon(),
         onEvent: (event) => {
           if (event.asid === asid) applyDescendantEvent(event);
@@ -5142,7 +5162,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     childrenRootRef.current = activeRootAsid;
     // react-doctor-disable-next-line react-doctor/no-pass-live-state-to-parent -- refreshChildren loads the workbench-owned child index; it is not a parent state callback.
     void refreshChildren(activeRootAsid).catch(() => {});
-  }, [refreshChildren, activeRootAsid, isRunning, activeDirectory]);
+    // Not on `activeDirectory`: a workspace change re-keys the roots and
+    // arrives here as a new root; on its own it re-walked the same tree.
+  }, [refreshChildren, activeRootAsid, isRunning]);
 
   const currentSession = useMemo(() => {
     return sessions.find((s) => s.asid === activeAsid) ?? sessionInfo;

@@ -242,7 +242,7 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
             action: {
               label: t`Retry`,
               onPress: () => {
-                void refreshAgentsDiscovery(command.serverId);
+                void refreshAgentsDiscovery(command.serverId, undefined, { force: true });
                 void dispatchRef.current?.(command);
               },
             },
