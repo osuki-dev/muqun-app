@@ -1144,6 +1144,7 @@ msgid "Check device authentication settings and try again."
 msgstr "기기 인증 설정을 확인한 뒤 다시 시도하세요"
 
 #: src/components/home-composer-dock.tsx
+#: src/components/task-row.tsx
 msgid "Check status"
 msgstr "상태 확인"
 
@@ -2393,8 +2394,13 @@ msgstr "전송 모드: 실시간 개입(Steer). 탭하여 대기열로 전환"
 
 #: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/components/task-row.tsx
 msgid "Delivery not confirmed"
 msgstr "전달이 확인되지 않음"
+
+#: src/components/task-row.tsx
+msgid "Delivery not confirmed. Tap to check status"
+msgstr "전달이 확인되지 않았습니다. 탭하여 상태 확인"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Demo catalogue. Leave the demo to download themes."
@@ -6332,6 +6338,11 @@ msgstr "{assignmentLabel}에게 줄 작업"
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for a new {0}"
 msgstr "새 {0}에게 줄 작업"
+
+#. placeholder {0}: server.label
+#: src/components/home-computer-cards.tsx
+msgid "Task history for {0}"
+msgstr "{0}의 작업 기록"
 
 #: src/components/home-composer-dock.tsx
 msgid "Task options"

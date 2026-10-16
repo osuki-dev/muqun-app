@@ -105,19 +105,23 @@ export type PendingResend = {
 export const PENDING_DISPATCH_TTL_MS = 2 * 60_000;
 
 /**
- * Whether a Sent row is still shown. A plain one goes when it outlives
- * PENDING_DISPATCH_TTL_MS. A failed one holds a draft and stays until it is
- * sent again or dismissed. One that went to its session stays too, until that
- * session's task appears or it is dismissed -- and once its session finished,
- * for RECENT_FINISHED_MS, as a finished task does.
+ * Whether a Sent row is still shown: always, until something settles it.
+ * A plain one the gateway never answered used to go after
+ * PENDING_DISPATCH_TTL_MS, which read as the work vanishing; it stays as
+ * "delivery not confirmed" until the gateway's task appears
+ * (`settlesPending`) or the reader dismisses it. A failed one holds a draft
+ * and stays until it is sent again or dismissed; one that went to its
+ * session stays until that session's task appears or it is dismissed.
  */
-export function pendingShown(item: PendingDispatch, nowMs: number): boolean {
-  if (item.failed === true) return true;
-  if (item.asid !== undefined) {
-    const ended = item.reply?.state === 'done' || item.reply?.state === 'failed';
-    return !ended || nowMs - (item.reply?.atMs ?? item.atMs) <= RECENT_FINISHED_MS;
-  }
-  return nowMs - item.atMs < PENDING_DISPATCH_TTL_MS;
+export function pendingShown(_item: PendingDispatch, _nowMs: number): boolean {
+  return true;
+}
+
+/** A plain Sent row the gateway has not answered within the TTL: delivery unconfirmed. */
+export function pendingUnconfirmed(item: PendingDispatch, nowMs: number): boolean {
+  return (
+    item.failed !== true && item.asid === undefined && nowMs - item.atMs >= PENDING_DISPATCH_TTL_MS
+  );
 }
 
 /**
@@ -483,8 +487,8 @@ function settlesPending(tasks: readonly TaskView[], item: PendingDispatch): bool
   );
 }
 
-/** Keep unacknowledged finished tasks on Home for 24 hours, including the boundary. */
-export const RECENT_FINISHED_MS = 24 * 60 * 60_000;
+/** How many finished rows a card shows before "Show more"; the rest wait behind it. */
+export const FINISHED_ROWS_SHOWN = 3;
 
 /**
  * Repeated cancelled attempts at one goal say one thing: only the newest of
@@ -550,10 +554,11 @@ function hasClosedTaskPane(
  * paused → idle (the reader's own order within each).
  *
  * A computer gets a card only while it has something to show: an open task,
- * a goal just sent, or a finished task not yet acknowledged from the last
- * {@link RECENT_FINISHED_MS}. One that is offline, idle with nothing recent,
- * or keeps no ledger gets none; Settings and the dock's target picker list
- * every computer. The room each card gets follows how many are shown.
+ * a goal sent, or a finished task the reader has not yet dismissed -- time
+ * alone never takes a row off a card. One that is offline, idle with nothing
+ * to show, or keeps no ledger gets none; Settings and the dock's target
+ * picker list every computer. The room each card gets follows how many are
+ * shown.
  */
 export function buildComputerCards(input: {
   servers: readonly { serverId: string }[];
@@ -581,17 +586,28 @@ export function buildComputerCards(input: {
     // originating conversation. Keep the ledger; omit this duplicate Home row.
     const ledgerTasks = entry?.tasks ?? [];
     const byId = new Map(ledgerTasks.map((task) => [task.taskId, task]));
-    const tasks = ledgerTasks.filter(
-      (task) =>
-        !isRemoteCommandTask(task) &&
-        !hiddenTask(task, server.serverId, input.hidden, byId) &&
-        !hasClosedTaskPane(
+    // A task whose terminal pane is gone is not dropped: the ledger keeps its
+    // summary and result, and the card shows it as finished work. Only the
+    // reader's own hidden and dismissed sets omit a row.
+    const tasks = ledgerTasks
+      .filter(
+        (task) =>
+          !isRemoteCommandTask(task) && !hiddenTask(task, server.serverId, input.hidden, byId)
+      )
+      .map((task) =>
+        !isTerminalTaskState(task.state) &&
+        hasClosedTaskPane(
           task,
           server.serverId,
           input.panesByServer?.[server.serverId],
           input.nowMs
         )
-    );
+          ? { ...task, state: 'done' as const, settledAtMs: task.settledAtMs ?? input.nowMs }
+          : task
+      );
+    // The rows are rebuilt from the tasks as shown, so a closed pane's task
+    // keeps the finished state given above rather than the ledger's.
+    const shownById = new Map(tasks.map((task) => [task.taskId, task]));
     const displayTasks = tasks.map((task) =>
       taskAttentionView({
         task,
@@ -610,15 +626,10 @@ export function buildComputerCards(input: {
       tree
         .filter((row) => !treeRowIsOpen(row) && isTerminalTaskState(row.task.state))
         .map((row) => row.task)
-    ).filter(
-      (task) =>
-        !input.dismissed.has(dismissedKey(server.serverId, task)) &&
-        // A row the reader just settled counts from that moment, so an old
-        // paused task marked done does not vanish until the gateway answers
-        // with its own fresh time.
-        input.nowMs - Math.max(task.updatedMs, task.settledAtMs ?? task.updatedMs) <=
-          RECENT_FINISHED_MS
-    );
+      // Finished work stays until the reader dismisses it; time alone never
+      // takes a row off the card. The card shows a few and the rest wait
+      // behind "Show more".
+    ).filter((task) => !input.dismissed.has(dismissedKey(server.serverId, task)));
     const pending = (input.pending ?? []).filter(
       (item) => item.serverId === server.serverId && !settlesPending(ledgerTasks, item)
     );
@@ -646,10 +657,10 @@ export function buildComputerCards(input: {
       activity,
       pending,
       now: open.map((row) => ({
-        task: byId.get(row.task.taskId) ?? row.task,
+        task: shownById.get(row.task.taskId) ?? row.task,
         children: row.children
           .filter((child) => !isTerminalTaskState(child.state))
-          .map((child) => byId.get(child.taskId) ?? child),
+          .map((child) => shownById.get(child.taskId) ?? child),
       })),
       nowTotal: open.length,
       finished,

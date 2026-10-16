@@ -10,10 +10,10 @@ import {
   groupTaskTree,
   PENDING_CLOCK_SKEW_MS,
   PENDING_DISPATCH_TTL_MS,
+  pendingUnconfirmed,
   boundSessionState,
   pendingShown,
   pendingWorking,
-  RECENT_FINISHED_MS,
   type BoundSessionState,
   type PendingDispatch,
   taskResultLine,
@@ -265,7 +265,7 @@ describe('buildComputerCards', () => {
     }
   });
 
-  test('Gateway-confirmed pane closures disappear from Home without losing history', () => {
+  test('Gateway-confirmed pane closures stay on Home as finished work', () => {
     const closed = [
       'the pane closed',
       'the pane closed: notes.md does not exist',
@@ -288,8 +288,11 @@ describe('buildComputerCards', () => {
       dismissed: new Set(),
       pending: [{ id: 'send', serverId: 'coding', goal: closed[0]!.goal, atMs: NOW }],
       nowMs: NOW,
+      limits: { now: 5, finished: 5 },
     });
-    expect(cards[0]!.finished).toEqual([origin]);
+    // A closed pane's task is finished work with its saved summary, not a
+    // row that vanished; the send that became it is settled by it.
+    expect(cards[0]!.finished).toEqual([...closed, origin]);
     expect(cards[0]!.pending).toEqual([]);
     expect(ledger.coding!.tasks).toEqual([...closed, origin]);
     expect(taskRowDestination(origin)).toEqual({
@@ -364,7 +367,7 @@ describe('buildComputerCards', () => {
     }
   });
 
-  test('completed pane tasks and orphan children use the same Home filter', () => {
+  test('a task whose pane closed stays as finished work, its open child still under it', () => {
     const root = task('root', 'working', NOW - 1, {
       binding: { kind: 'pane', sessionId: 'routing', paneId: 'gone' },
     });
@@ -388,8 +391,14 @@ describe('buildComputerCards', () => {
       dismissed: new Set(),
       nowMs: NOW,
     });
-    expect(cards[0]!.now.map((row) => row.task)).toEqual([child]);
-    expect(cards[0]!.finished).toEqual([]);
+    // The root's pane is gone, so it reads as done; it stays in Now only
+    // because the work it started is still open, and that child is under it.
+    expect(cards[0]!.now.map((row) => row.task)).toEqual([
+      { ...root, state: 'done', settledAtMs: NOW },
+    ]);
+    expect(cards[0]!.now[0]!.children).toEqual([child]);
+    // A finished command whose pane closed keeps its saved result on the card.
+    expect(cards[0]!.finished).toEqual([finished]);
     expect(ledger.coding!.tasks).toEqual([root, child, finished]);
     expect(taskRowDestination(finished)).toEqual({ kind: 'result' });
   });
@@ -600,7 +609,8 @@ describe('which computers get a card', () => {
     ['finished an hour ago', [done('f', NOW - 3_600_000)], new Set<string>(), true],
     ['finished just under a day ago', [done('f', NOW - 86_400_000 + 1)], new Set<string>(), true],
     ['finished exactly a day ago', [done('f', NOW - 86_400_000)], new Set<string>(), true],
-    ['finished over a day ago', [done('f', NOW - 86_400_000 - 1)], new Set<string>(), false],
+    // Finished work no longer expires: it stays until dismissed.
+    ['finished over a day ago', [done('f', NOW - 86_400_000 - 1)], new Set<string>(), true],
     [
       'finished long ago, settled here just now',
       [done('f', NOW - 2 * 86_400_000, { settledAtMs: NOW })],
@@ -744,13 +754,18 @@ describe('the Sent row', () => {
     );
   });
 
-  test('a plain one goes after two minutes; a failed or session-bound one stays until acted on', () => {
+  test('every Sent row stays until acted on; a plain one reads as unconfirmed after two minutes', () => {
     const at = 1_000;
     const later = at + PENDING_DISPATCH_TTL_MS;
     const sent = { id: 's', serverId: 'a', goal: 'g', atMs: at };
+    expect(pendingUnconfirmed(sent, at + 1)).toBe(false);
+    expect(pendingUnconfirmed(sent, later)).toBe(true);
+    expect(pendingUnconfirmed({ ...sent, asid: 'as-1' }, later)).toBe(false);
+    expect(pendingUnconfirmed({ ...sent, failed: true }, later)).toBe(false);
     const cases: [PendingDispatch, number, shown: boolean, working: boolean][] = [
       [sent, at + 1, true, true],
-      [sent, later, false, false],
+      // Still shown, as delivery not confirmed; no longer work.
+      [sent, later, true, false],
       // A failed send holds its draft: shown, never work.
       [{ ...sent, failed: true }, later, true, false],
       // Sent to its session and no task yet: shown ("no reply yet"), no longer work.
@@ -759,12 +774,12 @@ describe('the Sent row', () => {
       // The agent replied: the row follows its session's run, however long.
       [{ ...sent, asid: 'as-1', reply: { state: 'working', atMs: at } }, later, true, true],
       [{ ...sent, asid: 'as-1', reply: { state: 'done', atMs: at } }, later, true, false],
-      // A finished one stays through the full day, as a finished task does.
+      // A finished one stays however long, until dismissed, as a finished task does.
       [{ ...sent, asid: 'as-1', reply: { state: 'done', atMs: at } }, at + 86_400_000, true, false],
       [
         { ...sent, asid: 'as-1', reply: { state: 'done', atMs: at } },
-        at + RECENT_FINISHED_MS + 1,
-        false,
+        at + 30 * 86_400_000,
+        true,
         false,
       ],
     ];
