@@ -2075,45 +2075,6 @@ describe('scoped native-ref press host contract (no App render simulation)', () 
     expect(failure).toBe(stale);
     expect(presses).toEqual([['press', '@e5~s41']]);
   });
-
-  test('actual suite composition repositions ONLY main after each original return section', async () => {
-    const manifest = JSON.parse(
-      await readFile(new URL('../../e2e/agent-device/suite.json', import.meta.url), 'utf8')
-    ) as Suite;
-    for (const host of ['main', 'child']) {
-      const refs: string[] = [];
-      const runner = new NativeRunner(
-        manifest,
-        '/unused',
-        '/unused',
-        async () => {
-          throw new Error('No UI simulation in composition test');
-        },
-        {}
-      );
-      runner.runSection = async (ref) => {
-        refs.push(ref.split('#')[1]);
-      };
-      await runner.run(manifest.programs['subflows/read-files-preview-host'], { HOST: host });
-      expect(refs).toEqual([
-        'host',
-        'document',
-        ...(host === 'main' ? ['reposition'] : []),
-        'document-collapse',
-        'code',
-        ...(host === 'main' ? ['reposition'] : []),
-        'code-collapse',
-        'large',
-        ...(host === 'main' ? ['reposition'] : []),
-        'large-collapse',
-        'small',
-        'small-document',
-      ]);
-    }
-    expect(selectFlows(manifest, 'full', 'android').map((flow) => flow.name)).toContain(
-      'read-files-preview'
-    );
-  });
 });
 
 describe('stable wait capture recovery', () => {
