@@ -215,11 +215,10 @@ export function AppLockGate({ children }: { children: ReactNode }) {
   /*
    * The gate crossfades in one direction only, and deliberately so.
    *
-   * Unlocking: the app mounts underneath while the lock screen fades off the
-   * top of it, which is the transition every app-lock user meets on every cold
-   * start and every resume. It works because Reanimated keeps an `exiting`
-   * view on screen after React has dropped it -- the children below are
-   * already rendering by the time the fade starts.
+   * Unlocking: the lock screen fades off the top of the app, which is the
+   * transition every app-lock user meets on every cold start and every
+   * resume. It works because Reanimated keeps an `exiting` view on screen
+   * after React has dropped it -- the app below is already there.
    *
    * Locking: the backdrop takes the screen on the first frame, with no opacity
    * ramp of its own. A fade in would mean showing whatever was on screen --
@@ -228,9 +227,25 @@ export function AppLockGate({ children }: { children: ReactNode }) {
    * The motion goes on the contents instead, so the lock still arrives rather
    * than appearing to have always been there.
    */
+  /*
+   * The app stays mounted under the lock. It used to be unmounted on lock and
+   * mounted afresh on unlock, so thirty seconds away cost the whole tree: a
+   * cold start, every screen's reads again, the terminal re-painted from
+   * nothing. The lock layer is opaque and sits above everything; while it is
+   * up the app under it takes no touches and is hidden from assistive
+   * technology, and the screen-capture and app-switcher protection apply as
+   * before -- the pixels under the cover never reach a screenshot or the
+   * switcher's thumbnail.
+   */
   return (
     <View style={styles.root}>
-      {showLock ? null : children}
+      <View
+        style={styles.root}
+        pointerEvents={showLock ? 'none' : 'auto'}
+        accessibilityElementsHidden={showLock}
+        importantForAccessibility={showLock ? 'no-hide-descendants' : 'auto'}>
+        {children}
+      </View>
       {showLock ? (
         <Animated.View
           exiting={fadeOut('medium')}
