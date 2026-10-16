@@ -127,6 +127,7 @@ import {
   type WorkspaceMissing,
   type WorktreeDirectory,
 } from './agent-protocol';
+import { readApiError } from './gateway-refusal';
 
 export { getCachedAgentCatalogSync, getCachedAgentProjectsSync, buildAgentCacheKey };
 
@@ -733,16 +734,37 @@ export async function sendAgentCommand(
  * `resume` asks the engine to continue the run the skill was part of rather
  * than starting a turn of its own; it is omitted unless the caller says so.
  */
-/** The next older history page. An empty `items` list means there is no further page. */
+/**
+ * The next older history page. An empty `items` list means there is no
+ * further page.
+ *
+ * `409 history_cursor_lost` is the adapter saying it no longer holds the
+ * cursor this paging was reading from -- it restarted, or evicted it -- which
+ * is not the end of the history. `cursorLost` tells the caller to re-read the
+ * snapshot, which gives the adapter a cursor again, and page on from there.
+ */
 export async function loadEarlierAgentTimeline(
   sessionId: string | undefined,
   asid: string
-): Promise<{ items: TimelineItem[]; exhausted: boolean }> {
-  const data = await writeJson(
-    sessionRoute(asid, '/timeline/earlier', sessionId, false),
-    'Failed to load earlier messages',
-    {}
+): Promise<{ items: TimelineItem[]; exhausted: boolean; cursorLost?: boolean }> {
+  if (usesOfflineDemo()) throw new Error('Agent writes are not available in the offline demo');
+  const res = await gatewayFetch(
+    gatewayUrl(sessionRoute(asid, '/timeline/earlier', sessionId, false)),
+    { method: 'POST', headers: jsonHeaders(), body: '{}' }
   );
+  if (!res.ok) {
+    const text = await res.text();
+    if (res.status === 409 && readApiError(text).code === 'history_cursor_lost') {
+      return { items: [], exhausted: false, cursorLost: true };
+    }
+    throw new Error(`Failed to load earlier messages: ${res.status} ${text}`);
+  }
+  let data: unknown = null;
+  try {
+    data = envelopeData(await res.json());
+  } catch {
+    data = null;
+  }
   const record =
     data && typeof data === 'object' ? (data as { items?: unknown; exhausted?: unknown }) : {};
   const items = parseTimelineItems(record.items);

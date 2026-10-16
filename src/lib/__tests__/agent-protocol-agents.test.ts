@@ -192,6 +192,31 @@ describe('the agents plane', () => {
     expect(t3?.agents[0]?.features.extra).toEqual({});
   });
 
+  test('the ledger deliveries are read under either spelling, unknown names dropped', () => {
+    // `src/platform/discovery.rs` writes `ledgerDelivery` on each discovery
+    // entry; `src/agents/session_routes.rs` writes `ledger_delivery` on each
+    // catalog entry. One parser reads both.
+    const camel = parseAgentsDiscovery({
+      planes: {
+        agents: {
+          supported: true,
+          agents: [{ id: 'codex', name: 'Codex', ledgerDelivery: ['pane', 'session', 'mail'] }],
+        },
+      },
+    });
+    expect(camel?.agents[0].ledgerDelivery).toEqual(['pane', 'session']);
+    const snake = parseAgentsDiscovery({
+      planes: {
+        agents: { supported: true, agents: [{ id: 'codex', ledger_delivery: ['pane'] }] },
+      },
+    });
+    expect(snake?.agents[0].ledgerDelivery).toEqual(['pane']);
+    const silent = parseAgentsDiscovery({
+      planes: { agents: { supported: true, agents: [{ id: 'codex', ledgerDelivery: [] }] } },
+    });
+    expect(silent?.agents[0].ledgerDelivery).toBeUndefined();
+  });
+
   test('a status this build has never heard of is `unknown`, not a crash', () => {
     const parsed = parseAgentsDiscovery({
       agents: [{ id: 'x', status: 'hibernating', features: null }],
@@ -259,6 +284,22 @@ describe('the whole discovery answer', () => {
       pushTokenSupported: false,
     });
     expect(parsed.agents).toMatchObject({ supported: false, agents: [], multiAgent: false });
+  });
+
+  test('the upload caps are read in bytes, and a cap that is not one is left out', () => {
+    const named = parseGatewayDiscovery({
+      ok: true,
+      uploads: { maxBytes: 26214400, maxVideoBytes: 67108864 },
+      planes: {},
+    });
+    expect(named.uploads).toEqual({ maxBytes: 26214400, maxVideoBytes: 67108864 });
+    const partial = parseGatewayDiscovery({
+      ok: true,
+      uploads: { maxBytes: '25MB', maxVideoBytes: 67108864 },
+      planes: {},
+    });
+    expect(partial.uploads).toEqual({ maxVideoBytes: 67108864 });
+    expect(parseGatewayDiscovery({ ok: true, planes: {} }).uploads).toBeUndefined();
   });
 
   test('an answer without planes has no planes, and is not an error', () => {

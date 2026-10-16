@@ -155,7 +155,14 @@ type ApiErrorBody = { code?: string; message?: string; serverTimeMs?: number };
  * seconds since the epoch, under the name the gateway chose for it.
  */
 function serverTimeOf(error: Record<string, unknown>): number | undefined {
-  for (const key of ['server_time_ms', 'server_time', 'server_now_ms', 'now_ms', 'now']) {
+  for (const key of [
+    'server_time_ms',
+    'serverTimeMs',
+    'server_time',
+    'server_now_ms',
+    'now_ms',
+    'now',
+  ]) {
     const value = error[key];
     if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) continue;
     return value < 1e12 ? value * 1000 : value;

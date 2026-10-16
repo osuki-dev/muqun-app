@@ -1121,9 +1121,18 @@ export function HomeComposerDock({
       // The terminal entry of a provider whose ledger carries goals into a
       // pane: the task is the computer's, with the pane as its delivery.
       const paneEntry = ledgerDelivery ? discoveredAgent(terminalAgent) : undefined;
-      if (paneEntry?.ledgerDelivery?.includes('pane') && !attachments?.length) {
+      const paneListed =
+        paneEntry?.ledgerDelivery?.includes('pane') ||
+        (ledgerDelivery &&
+          terminalCatalog
+            ?.find((profile) => profile.kind === terminalAgent.agentKind)
+            ?.ledgerDelivery?.includes('pane'));
+      if (paneListed && !attachments?.length) {
         return dispatchTask(text, () =>
-          openLedgerTask(text, { delivery: 'pane', agentId: paneEntry.id })
+          openLedgerTask(text, {
+            delivery: 'pane',
+            agentId: paneEntry?.id ?? terminalAgent.agentKind,
+          })
         );
       }
       const start = () =>
