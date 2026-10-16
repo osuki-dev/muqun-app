@@ -299,6 +299,8 @@ async function linkPair(
         name: toName,
         requestId: minted.requestId,
         code: minted.code,
+        // The target's key for encrypted transport, when it minted one.
+        ...(minted.pairingKey ? { pairingKey: minted.pairingKey } : {}),
       });
       return 'linked';
     },
