@@ -9,7 +9,6 @@ import {
   Shader,
   Skia,
   TileMode,
-  makeImageFromView,
   useCanvasRef,
   type SkImage,
 } from 'react-native-skia';
@@ -24,12 +23,15 @@ import {
   type ReactNode,
   type RefObject,
 } from 'react';
+import { importDevice } from 'react-native-webgpu';
 import {
+  PixelRatio,
   Platform,
   StyleSheet,
   View,
   type GestureResponderEvent,
   type LayoutChangeEvent,
+  type ViewInstance,
 } from 'react-native';
 import Animated, {
   Easing,
@@ -102,7 +104,7 @@ import { colorVector } from '@/lib/ink-bloom-shader';
  * settle. Even without the reflow the change is a hard cut -- the reader taps
  * a row and the world they were reading is gone between two frames.
  *
- * So the app photographs the old screen with `makeImageFromView`, holds the
+ * So the app photographs the old screen (see {@link photograph}), holds the
  * photograph over the top, lets the live interface underneath change and
  * settle where nobody is watching, and then erases the photograph with a
  * shader. The reflow happens behind a still image. What the reader sees is one
@@ -116,8 +118,7 @@ import { colorVector } from '@/lib/ink-bloom-shader';
  * view in the app's hierarchy: on iOS it is a separately presented
  * `UIViewController`, on Android a `Dialog` with a `Window` of its own. No
  * `zIndex` and no `elevation` reaches above either. A root overlay cannot
- * cover a form sheet, and `makeImageFromView` on a root ref does not
- * photograph one.
+ * cover a form sheet, and a snapshot of a root ref does not photograph one.
  *
  * For the theme sheet that does not matter, because applying a theme closes
  * it. For the font sheet it matters a great deal: "Use system font" and a
@@ -207,7 +208,7 @@ type ActiveRun = {
 type TouchRecord = { point: ReskinPoint; at: number } | null;
 
 type SurfaceEntry = {
-  ref: RefObject<View | null>;
+  ref: RefObject<ViewInstance | null>;
   size: { current: ReskinSize };
   touch: { current: TouchRecord };
 };
@@ -325,7 +326,7 @@ async function photographSurfaces(
   const capture = Promise.all(
     entries.map(([, entry]) =>
       Promise.resolve()
-        .then(() => makeImageFromView(entry.ref))
+        .then(() => photograph(entry))
         .catch((): SkImage | null => null)
     )
   );
@@ -358,16 +359,71 @@ async function photographSurfaces(
   return { shots: shots.size > 0 ? shots : null, ms: elapsed, outcome };
 }
 
+/**
+ * A picture of one surface, taken by React Native WebGPU.
+ *
+ * Skia 3.6 removed `makeImageFromView`; the platform now rasterizes the view
+ * into a texture on Skia's own device (`queue.drawElementImageToTexture`), and
+ * `MakeImageFromGPUTexture` wraps that texture without a copy. The image keeps
+ * the texture alive only by reference, so {@link disposeImage} destroys the
+ * texture when the picture goes. The capture is a promise, which is what lets
+ * the budget race in {@link photographSurfaces} cut a slow one short.
+ */
+async function photograph(entry: SurfaceEntry): Promise<SkImage | null> {
+  const { width, height } = entry.size.current;
+  if (!entry.ref.current || width <= 0 || height <= 0) return null;
+  const scale = PixelRatio.get();
+  const texture = sharedDevice().createTexture({
+    size: [Math.max(1, Math.round(width * scale)), Math.max(1, Math.round(height * scale))],
+    format: 'rgba8unorm',
+    usage:
+      GPUTextureUsage.COPY_DST |
+      GPUTextureUsage.RENDER_ATTACHMENT |
+      GPUTextureUsage.TEXTURE_BINDING,
+  });
+  try {
+    // Skia images are premultiplied.
+    await sharedDevice().queue.drawElementImageToTexture(
+      { source: entry.ref },
+      { texture, premultipliedAlpha: true }
+    );
+    const image = Skia.Image.MakeImageFromGPUTexture(texture);
+    textures.set(image, texture);
+    return image;
+  } catch (error) {
+    texture.destroy();
+    throw error;
+  }
+}
+
+let device: GPUDevice | null = null;
+
+/** Skia's render device, wrapped once; the two libraries share one Dawn. */
+function sharedDevice(): GPUDevice {
+  device ??= importDevice(Skia.getNativeDevice());
+  return device;
+}
+
+/** The texture each photograph samples, destroyed with the photograph. */
+const textures = new Map<SkImage, GPUTexture>();
+
+/** Give an image back to Skia, and its texture back to the device. */
+function disposeImage(image: SkImage): void {
+  image.dispose();
+  textures.get(image)?.destroy();
+  textures.delete(image);
+}
+
 /** Share the cover's upload with its on-screen and readiness canvases. */
 function uploadCover(image: SkImage | null): SkImage | null {
   if (!image) return null;
   try {
     const texture = image.makeTextureImage();
-    if (texture !== image) image.dispose();
+    if (texture !== image) disposeImage(image);
     return texture;
   } catch {
     // A renderer failure takes the bounded live-screen fallback.
-    image.dispose();
+    disposeImage(image);
     return null;
   }
 }
@@ -405,7 +461,7 @@ function afterNextPaint(run: () => void): void {
 function release(images: Iterable<SkImage | null>): void {
   const doomed = [...new Set(images)];
   afterNextPaint(() => {
-    for (const image of doomed) image?.dispose();
+    for (const image of doomed) if (image) disposeImage(image);
   });
 }
 
@@ -423,7 +479,7 @@ function bySurface(
   images.forEach((image, index) => {
     const key = keys[index];
     if (image && key) shots.set(key, image);
-    else if (image) image.dispose();
+    else if (image) disposeImage(image);
   });
   return shots;
 }
@@ -938,8 +994,8 @@ export function useReskinTransition(): { run: (options: ReskinRunOptions) => Pro
  */
 export function ReskinSurface({ id, children }: { id: string; children: ReactNode }) {
   const context = useContext(ReskinContext);
-  const ref = useRef<View>(null);
-  const frame = useRef<View>(null);
+  const ref = useRef<ViewInstance>(null);
+  const frame = useRef<ViewInstance>(null);
   const size = useRef<ReskinSize>({ width: 0, height: 0 });
   const touch = useRef<TouchRecord>(null);
   const [measured, setMeasured] = useState<ReskinSize>({ width: 0, height: 0 });

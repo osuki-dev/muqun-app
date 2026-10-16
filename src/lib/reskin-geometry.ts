@@ -22,7 +22,7 @@ import type { ReskinPoint, ReskinSize } from './reskin-shaders';
  * and nobody is told, because there is nothing the reader could do about it.
  *
  * 120 ms is a little under two frames of the budget a 16 ms device has for
- * eight -- long enough that a warm `makeImageFromView` always lands inside it,
+ * eight -- long enough that a warm view snapshot always lands inside it,
  * short enough that a cold one does not become a stutter the reader reads as
  * the setting being slow to take.
  */
@@ -52,17 +52,21 @@ export function snapshotBudget(platform: string, play: ReskinPlay): number | nul
 /**
  * What stands over the old interface while the new one settles.
  *
- * - `photograph`: a picture of the old screen itself (`makeImageFromView`).
+ * - `photograph`: a picture of the old screen itself (a view snapshot).
  * - `veil`: a sheet of the old theme's own paper, drawn by the app.
  *
  * iOS photographs, because there a view snapshot is a GPU copy that costs a
- * few milliseconds. Android never does. Skia's Android snapshot re-draws the
- * whole view tree in software on the calling thread, which blocks JavaScript
- * for hundreds of milliseconds on a phone and for over a second on an
- * emulator -- always past {@link SNAPSHOT_BUDGET_MS}, so every Android run was
- * classified `slow` and played nothing, and after {@link SNAPSHOT_STRIKES} of
- * them the effect retired for the session. The owner saw exactly that: the
- * wash on iOS, and on Android a hard cut.
+ * few milliseconds. Android never does. This was measured against Skia's own
+ * `makeImageFromView`, which re-drew the whole view tree in software on the
+ * calling thread and blocked JavaScript for hundreds of milliseconds on a
+ * phone and for over a second on an emulator -- always past
+ * {@link SNAPSHOT_BUDGET_MS}, so every Android run was classified `slow` and
+ * played nothing, and after {@link SNAPSHOT_STRIKES} of them the effect
+ * retired for the session. The owner saw exactly that: the wash on iOS, and
+ * on Android a hard cut. Skia 3.6 replaced that API with React Native
+ * WebGPU's `drawElementImageToTexture`, which draws the view on the GPU on
+ * Android 13 and later; the Android policy stays as measured until the new
+ * path has been timed on a phone.
  *
  * A veil needs no picture. The old paper fades up over the old interface, the
  * change lands underneath it, and the same front then takes the veil away. It
@@ -103,15 +107,18 @@ export function veilWhenUnphotographed(platform: string, play: ReskinPlay): bool
  * This exists because of something measured rather than assumed, and it is the
  * most important note in the module.
  *
- * `makeImageFromView` **blocks the JavaScript thread** on Android. That makes
- * {@link SNAPSHOT_BUDGET_MS} unenforceable in the obvious way: racing the
- * capture against a timer cannot work, because the timer cannot fire while the
- * capture is running. The race resolves only once the capture has already
- * finished, so the budget can classify a snapshot after the fact but can never
- * cut one short. Measured on the GPU-less emulator, one full-screen capture
- * cost between 600 ms and 1.8 s -- so the first apply on such a device pays
- * that in full, and the reader gets a *slower* setting in exchange for an
- * animation that is then discarded for being late. That is a worse app.
+ * Skia's `makeImageFromView` **blocked the JavaScript thread** on Android.
+ * That made {@link SNAPSHOT_BUDGET_MS} unenforceable in the obvious way:
+ * racing the capture against a timer cannot work when the timer cannot fire
+ * while the capture is running. The race resolved only once the capture had
+ * already finished, so the budget could classify a snapshot after the fact
+ * but never cut one short. Measured on the GPU-less emulator, one full-screen
+ * capture cost between 600 ms and 1.8 s -- so the first apply on such a
+ * device paid that in full, and the reader got a *slower* setting in exchange
+ * for an animation that was then discarded for being late. That is a worse
+ * app. The WebGPU capture that replaced it (Skia 3.6) is a promise, so the
+ * race can now cut a slow one short; the strikes stay as the bound on what a
+ * slow device is asked to try.
  *
  * Since the first one cannot be prevented, the only thing left to control is
  * how many there are. After this many over-budget captures in a row, the
