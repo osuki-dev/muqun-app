@@ -5,7 +5,7 @@ import { isPdfFile } from '@/lib/session-assets';
 import { InlineVideoFile } from '@/components/video-asset-preview';
 import { InlineAudioFile } from '@/components/audio-asset-preview';
 import { memo, useCallback, useMemo, useState } from 'react';
-import { Modal, StyleSheet, View } from 'react-native';
+import { Modal, StyleSheet, View, type ViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
@@ -130,7 +130,7 @@ export interface AgentToolCardProps {
   onOpenFullDiff?: (path?: string) => void;
   /** The whole call in its own sheet, offered inside expanded content. */
   onOpenDetail?: () => void;
-  onExpand?: (header: View) => ToolExpansionIntent | undefined;
+  onExpand?: (header: ViewInstance) => ToolExpansionIntent | undefined;
 }
 
 // ---------------------------------------------------------------------------

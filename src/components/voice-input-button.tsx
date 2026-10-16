@@ -12,6 +12,7 @@ import {
   StyleSheet,
   View,
   useWindowDimensions,
+  type ScrollViewInstance,
 } from 'react-native';
 import Animated, { useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { Text } from '@/components/text';
@@ -40,7 +41,7 @@ const enter = fadeIn('short');
 const exit = fadeOut('short');
 function LiveTranscript({ text }: { text: string }) {
   const theme = useThemeTokens();
-  const scroll = useRef<ScrollView>(null);
+  const scroll = useRef<ScrollViewInstance>(null);
   const following = useRef(true);
   return (
     <ScrollView
@@ -125,11 +126,14 @@ function VoiceRecording({
               : t`Recording failed.`
           ),
         setPartial,
-        { appState: () => AppState.currentState, onBackground: () => latest().onClose() }
+        {
+          appState: () => AppState.currentState ?? 'unknown',
+          onBackground: () => latest().onClose(),
+        }
       )
   );
   useEffect(() => {
-    session.setAppState(AppState.currentState);
+    session.setAppState(AppState.currentState ?? 'unknown');
     void session.start();
     const listener = AppState.addEventListener('change', (next) => {
       session.setAppState(next);

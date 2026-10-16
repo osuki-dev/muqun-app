@@ -1,6 +1,13 @@
 import { useThemeMode } from '@osuki-dev/ui';
 import { useMemo } from 'react';
-import { StyleSheet, useWindowDimensions, View, type ViewProps } from 'react-native';
+import {
+  StyleSheet,
+  useWindowDimensions,
+  View,
+  type ViewProps,
+  type ViewStyle,
+} from 'react-native';
+import { flattenStyle } from '@/lib/flatten-style';
 
 import { ThemeArtworkLayer } from '@/components/theme-artwork';
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
@@ -91,7 +98,7 @@ export function ThemedSurface({
   ...props
 }: ViewProps & ArtworkProps) {
   const background = useSurfaceBackground();
-  const override = StyleSheet.flatten(style)?.backgroundColor;
+  const override = flattenStyle<ViewStyle>(style)?.backgroundColor;
   const actualBase = typeof override === 'string' ? override : baseColor;
   return (
     <View

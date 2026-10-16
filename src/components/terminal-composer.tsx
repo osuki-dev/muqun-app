@@ -8,7 +8,14 @@ import { Mic, Send } from 'lucide-react-native';
 import { Canvas, Group, Path, Skia } from 'react-native-skia';
 import { scheduleOnRN } from 'react-native-worklets';
 import { useEffect, useRef, useState, type ComponentProps, type ReactNode, type Ref } from 'react';
-import { StyleSheet, TextInput, View, useWindowDimensions, type TextStyle } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  useWindowDimensions,
+  type TextInputInstance,
+  type TextStyle,
+} from 'react-native';
+import { flattenStyle } from '@/lib/flatten-style';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -88,7 +95,7 @@ export interface TerminalComposerProps {
    */
   fieldShadow?: string;
   onVoiceActiveChange?: (active: boolean) => void;
-  inputRef?: Ref<TextInput>;
+  inputRef?: Ref<TextInputInstance>;
   /** The field's own props: value, placeholder, editability, test id. */
   inputProps: FontedTextInputProps;
   send: TerminalComposerSend;
@@ -202,7 +209,7 @@ export function TerminalComposer({
   useEffect(() => {
     if (!hasText) setWrapped(false);
   }, [hasText]);
-  const inputStyle = StyleSheet.flatten<TextStyle>([composerStyles.input, inputProps.style]);
+  const inputStyle = flattenStyle<TextStyle>([composerStyles.input, inputProps.style]) ?? {};
   const lineHeight = inputStyle.lineHeight ?? 19;
   const topPadding = inputStyle.paddingTop ?? inputStyle.paddingVertical;
   const bottomPadding = inputStyle.paddingBottom ?? inputStyle.paddingVertical;

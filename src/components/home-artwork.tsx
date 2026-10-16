@@ -12,7 +12,12 @@ import {
   Image as SkiaImage,
 } from 'react-native-skia';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
+import {
+  StyleSheet,
+  useWindowDimensions,
+  type LayoutChangeEvent,
+  type ViewInstance,
+} from 'react-native';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -198,7 +203,7 @@ function HomeArtworkImage({
   // not where the overlay draws -- it sits above the router with the whole
   // window to itself -- so the position has to be measured against the window
   // rather than derived from a header height the overlay cannot see.
-  const view = useRef<View | null>(null);
+  const view = useRef<ViewInstance | null>(null);
   const onLayout = useCallback((event: LayoutChangeEvent) => {
     const { width: measuredWidth, height: measuredHeight } = event.nativeEvent.layout;
     setBox((previous) =>

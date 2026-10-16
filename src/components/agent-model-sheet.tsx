@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, type ScrollViewInstance } from 'react-native';
 import { Spinner, useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useLingui } from '@lingui/react/macro';
@@ -151,7 +151,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
   // Without the control there is no way back from "free", so it reads as "all".
   const filterMode = showFilter ? pickedFilter : 'all';
   const [pickedProvider, setPickedProvider] = useState<string | null>(null);
-  const modelListRef = useRef<ScrollView>(null);
+  const modelListRef = useRef<ScrollViewInstance>(null);
   const sectionOffsetsRef = useRef(new Map<number, number>());
   const selectedRowOffsetRef = useRef<number | null>(null);
   const viewportHeightRef = useRef(0);

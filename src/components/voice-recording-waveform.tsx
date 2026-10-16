@@ -62,7 +62,7 @@ function GlowingWaveform({ history, processing = false }: WaveformProps) {
   }, false);
   useEffect(() => {
     const sync = (state: string) => frame.setActive(!reduced && state === 'active');
-    sync(AppState.currentState);
+    sync(AppState.currentState ?? 'unknown');
     const subscription = AppState.addEventListener('change', sync);
     return () => {
       subscription.remove();

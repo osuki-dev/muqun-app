@@ -3,7 +3,7 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import type { ToolExpansionIntent } from '@/components/embedded-terminal-tool-block';
 import { goalContinuationSummary } from '@/lib/agent-goal-message';
 import { Fragment, memo, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View, type ViewInstance } from 'react-native';
 import { useThemeTokens, useToast } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { Trans, useLingui } from '@lingui/react/macro';
@@ -335,7 +335,7 @@ export interface AgentToolActions {
   childSessions?: Readonly<Record<string, AgentSessionInfo>>;
   /** The whole call in the tool detail sheet. */
   onOpenToolDetail?: (part: ToolPart) => void;
-  onExpandTool?: (toolId: string, header: View) => ToolExpansionIntent | undefined;
+  onExpandTool?: (toolId: string, header: ViewInstance) => ToolExpansionIntent | undefined;
 }
 
 const NO_TOOL_ACTIONS: AgentToolActions = Object.freeze({});
@@ -1092,7 +1092,7 @@ const ToolPartCard = memo(function ToolPartCard({
   const openToolDetail = actions.onOpenToolDetail;
   const expandTool = actions.onExpandTool;
   const handleExpand = useMemo(
-    () => (expandTool ? (header: View) => expandTool(part.id, header) : undefined),
+    () => (expandTool ? (header: ViewInstance) => expandTool(part.id, header) : undefined),
     [expandTool, part.id]
   );
   const handleOpenDetail = useMemo(

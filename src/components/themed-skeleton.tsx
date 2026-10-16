@@ -1,5 +1,6 @@
 import { Skeleton as BaseSkeleton, useThemeTokens, type SkeletonProps } from '@osuki-dev/ui';
-import { StyleSheet } from 'react-native';
+import type { ViewStyle } from 'react-native';
+import { flattenStyle } from '@/lib/flatten-style';
 
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 
@@ -24,7 +25,7 @@ export type { SkeletonProps } from '@osuki-dev/ui';
 export function Skeleton({ style, ...props }: SkeletonProps) {
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
-  const override = StyleSheet.flatten(style)?.backgroundColor;
+  const override = flattenStyle<ViewStyle>(style)?.backgroundColor;
   const base = typeof override === 'string' ? override : theme.colors.border;
   return <BaseSkeleton {...props} style={[style, { backgroundColor: background(base) }]} />;
 }
