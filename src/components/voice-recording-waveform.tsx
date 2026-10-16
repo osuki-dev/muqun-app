@@ -123,6 +123,46 @@ export function VoiceRecordingWaveform({
   );
 }
 
+/**
+ * The recorder's level on the stop control, for realtime transcription,
+ * where the field belongs to the live transcript and the full-width
+ * waveform would sit on top of it. A ring around the stop square breathes
+ * with the newest sample of the same history the waveform reads; once the
+ * recording is being finished it settles to a quiet, steady ring rather
+ * than vanishing, the same hand-over the waveform makes.
+ */
+export function VoiceLevelRing({
+  history,
+  processing = false,
+}: {
+  history: SharedValue<number[]>;
+  processing?: boolean;
+}) {
+  const theme = useThemeTokens();
+  const reduced = useReducedMotion();
+  const settled = useSharedValue(processing ? 1 : 0);
+  useEffect(() => {
+    settled.set(withTiming(processing ? 1 : 0, { duration: reduced ? 0 : 280 }));
+  }, [processing, reduced, settled]);
+  const motion = useAnimatedStyle(() => {
+    const samples = history.get();
+    const amplitude = samples[samples.length - 1] ?? 0;
+    const quiet = settled.get();
+    const live = reduced ? 0.5 : amplitude;
+    return {
+      opacity: (0.3 + live * 0.7) * (1 - quiet) + 0.6 * quiet,
+      transform: [{ scale: (0.88 + live * 0.28) * (1 - quiet) + quiet }],
+    };
+  });
+  return (
+    <Animated.View
+      pointerEvents="none"
+      accessible={false}
+      style={[styles.levelRing, { borderColor: theme.colors.primary }, motion]}
+    />
+  );
+}
+
 function QuietProcessingIndicator() {
   const theme = useThemeTokens();
   return <View style={[styles.quietRing, { borderColor: theme.colors.primary }]} />;
@@ -140,5 +180,12 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   quietRing: { width: 16, height: 16, borderWidth: 2, borderRadius: 8, opacity: 0.6 },
+  levelRing: {
+    position: 'absolute',
+    width: 34,
+    height: 34,
+    borderWidth: 2,
+    borderRadius: 17,
+  },
   bar: { flex: 1, maxWidth: 4, height: 20, borderRadius: 2 },
 });
