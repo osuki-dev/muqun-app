@@ -2747,8 +2747,13 @@ export function gatewayEndpointFetch(
   init: RequestInit = {},
   timeoutMs = REQUEST_TIMEOUT_MS
 ) {
+  // The sealed route joins identical GETs in flight the way the plain route
+  // does through `gatewayFetchWithin`: two screens asking a stored computer
+  // the same question at once used to be two sealed requests.
   return endpointCredentialRoute(endpoint) === 'sealed'
-    ? encryptedGatewayFetch(input, init, timeoutMs, endpoint)
+    ? withRequestDedupe(inFlightGets, dedupeKey(input, init, timeoutMs), () =>
+        encryptedGatewayFetch(input, init, timeoutMs, endpoint)
+      )
     : gatewayFetchWithin(timeoutMs, input, init, { plainRecord: true });
 }
 
@@ -3160,10 +3165,16 @@ export async function readGatewayRecordJson(record: GatewayRecord, path: string)
       headers: { Authorization: `Bearer ${captured.token}`, ...activeLocaleHeaders() },
     };
     const url = `${baseUrl}${path}`;
-    const response =
-      captured.transport === GATEWAY_TRANSPORT
-        ? await encryptedGatewayFetch(url, init, REQUEST_TIMEOUT_MS, { ...captured, url: baseUrl })
-        : await fetchWithin(REQUEST_TIMEOUT_MS, 'Timed out waiting for the server.', url, init);
+    // Joined with any identical read of this record already in flight: Home
+    // and the dock asked a stored computer for the same list twice at launch.
+    const response = await withRequestDedupe(
+      inFlightGets,
+      dedupeKey(url, init, REQUEST_TIMEOUT_MS),
+      () =>
+        captured.transport === GATEWAY_TRANSPORT
+          ? encryptedGatewayFetch(url, init, REQUEST_TIMEOUT_MS, { ...captured, url: baseUrl })
+          : fetchWithin(REQUEST_TIMEOUT_MS, 'Timed out waiting for the server.', url, init)
+    );
     await noteRefusedResponse({ url, token: captured.token }, response);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return response.json();
@@ -3198,10 +3209,14 @@ export async function loadRecordSessions(record: GatewayRecord): Promise<Session
     };
     async function read(path: string) {
       const url = `${baseUrl}${path}`;
-      const response =
-        record.transport === GATEWAY_TRANSPORT
-          ? await encryptedGatewayFetch(url, init, REQUEST_TIMEOUT_MS, { ...record, url: baseUrl })
-          : await fetchWithin(REQUEST_TIMEOUT_MS, 'Timed out waiting for the server.', url, init);
+      const response = await withRequestDedupe(
+        inFlightGets,
+        dedupeKey(url, init, REQUEST_TIMEOUT_MS),
+        () =>
+          record.transport === GATEWAY_TRANSPORT
+            ? encryptedGatewayFetch(url, init, REQUEST_TIMEOUT_MS, { ...record, url: baseUrl })
+            : fetchWithin(REQUEST_TIMEOUT_MS, 'Timed out waiting for the server.', url, init)
+      );
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       return response.json();
     }
