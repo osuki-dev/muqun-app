@@ -7564,6 +7564,10 @@ msgstr "あなたのメッセージ"
 msgid "Your paired computers"
 msgstr "ペアリング済みのコンピュータ"
 
+#: src/lib/network-error.ts
+msgid "Your phone's clock is off by {minutes} minutes. Fix the date and time, then try again."
+msgstr "この端末の時計が{minutes}分ずれています。日付と時刻を直してからやり直してください"
+
 #: src/components/image-preview-modal.tsx
 msgid "Zoom in"
 msgstr "拡大"

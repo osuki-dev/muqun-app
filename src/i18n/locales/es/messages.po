@@ -7564,6 +7564,10 @@ msgstr "Tu mensaje"
 msgid "Your paired computers"
 msgstr "Tus ordenadores vinculados"
 
+#: src/lib/network-error.ts
+msgid "Your phone's clock is off by {minutes} minutes. Fix the date and time, then try again."
+msgstr "El reloj de tu teléfono está desfasado {minutes} minutos. Corrige la fecha y la hora e inténtalo de nuevo"
+
 #: src/components/image-preview-modal.tsx
 msgid "Zoom in"
 msgstr "Acercar"

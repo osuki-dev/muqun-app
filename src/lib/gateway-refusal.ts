@@ -83,6 +83,8 @@ export type TransportRefusalReason =
   | 'unknown-host'
   /** The sealed request would not open -- in practice, a device clock past the 5 minute skew. */
   | 'unreadable-request'
+  /** The gateway said outright that this device's clock is off, and by how much. */
+  | 'clock-skew'
   /** This exact request was already handled; a fresh one carries a fresh nonce. */
   | 'already-handled'
   /** The gateway failed against itself. Nothing on this device caused it. */
@@ -97,6 +99,8 @@ export type TransportRefusal = {
   code?: string;
   /** The gateway's own sentence. Already localized -- it honours `X-Muqun-Locale`. */
   apiMessage?: string;
+  /** The gateway's clock when it refused a `clock_skew`, so the skew can be said in minutes. */
+  serverTimeMs?: number;
   retryable: boolean;
   /** Pairing this server again is the remedy, and the screen should offer it. */
   needsPairing: boolean;
@@ -131,6 +135,7 @@ const REFUSALS: Record<string, Classification> = {
   },
   unknown_host: { reason: 'unknown-host', retryable: false, needsPairing: false },
   invalid_envelope: { reason: 'unreadable-request', retryable: false, needsPairing: false },
+  clock_skew: { reason: 'clock-skew', retryable: false, needsPairing: false },
   replayed_request: { reason: 'already-handled', retryable: true, needsPairing: false },
   device_lock_failed: { reason: 'server-fault', retryable: true, needsPairing: false },
   replay_cache_failed: { reason: 'server-fault', retryable: true, needsPairing: false },
@@ -143,7 +148,20 @@ const REFUSALS: Record<string, Classification> = {
   invalid_content_type: { reason: 'refused', retryable: false, needsPairing: false },
 };
 
-type ApiErrorBody = { code?: string; message?: string };
+type ApiErrorBody = { code?: string; message?: string; serverTimeMs?: number };
+
+/**
+ * The gateway's clock as a `clock_skew` refusal carries it: milliseconds or
+ * seconds since the epoch, under the name the gateway chose for it.
+ */
+function serverTimeOf(error: Record<string, unknown>): number | undefined {
+  for (const key of ['server_time_ms', 'server_time', 'server_now_ms', 'now_ms', 'now']) {
+    const value = error[key];
+    if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) continue;
+    return value < 1e12 ? value * 1000 : value;
+  }
+  return undefined;
+}
 
 /**
  * Pull `{"error":{"code":…,"message":…}}` out of a body that may be anything.
@@ -165,9 +183,11 @@ export function readApiError(body: string): ApiErrorBody {
   const error = (parsed as { error?: unknown }).error;
   if (typeof error !== 'object' || error === null) return {};
   const { code, message } = error as { code?: unknown; message?: unknown };
+  const serverTimeMs = serverTimeOf(error as Record<string, unknown>);
   return {
     ...(typeof code === 'string' && code ? { code } : {}),
     ...(typeof message === 'string' && message ? { message } : {}),
+    ...(serverTimeMs !== undefined ? { serverTimeMs } : {}),
   };
 }
 
@@ -177,7 +197,7 @@ function refusalDetail(status: number, code?: string): string {
 }
 
 export function classifyTransportRefusal(status: number, body: string): TransportRefusal {
-  const { code, message } = readApiError(body);
+  const { code, message, serverTimeMs } = readApiError(body);
   const known = code ? REFUSALS[code] : undefined;
   const classification: Classification = known ?? {
     reason: 'refused',
@@ -191,6 +211,12 @@ export function classifyTransportRefusal(status: number, body: string): Transpor
     status,
     ...(code ? { code } : {}),
     ...(message ? { apiMessage: message } : {}),
+    ...(serverTimeMs !== undefined ? { serverTimeMs } : {}),
     detail: refusalDetail(status, code),
   };
+}
+
+/** How far this device's clock is from the gateway's, in whole minutes, never less than one. */
+export function clockSkewMinutes(serverTimeMs: number, nowMs: number = Date.now()): number {
+  return Math.max(1, Math.round(Math.abs(nowMs - serverTimeMs) / 60_000));
 }

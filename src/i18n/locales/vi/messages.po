@@ -7564,6 +7564,10 @@ msgstr "Tin nhắn của bạn"
 msgid "Your paired computers"
 msgstr "Các máy tính đã ghép nối của bạn"
 
+#: src/lib/network-error.ts
+msgid "Your phone's clock is off by {minutes} minutes. Fix the date and time, then try again."
+msgstr "Đồng hồ của điện thoại lệch {minutes} phút. Chỉnh lại ngày giờ rồi thử lại"
+
 #: src/components/image-preview-modal.tsx
 msgid "Zoom in"
 msgstr "Phóng to"
