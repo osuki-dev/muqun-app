@@ -64,12 +64,15 @@ export function HomeTargetSheet() {
     [lastViewedByServer, record?.serverId, records, selectedServerId]
   );
 
-  // beforeRemove covers swipe, hardware back and programmatic dismissal. The
+  // `removed` covers swipe, hardware back and programmatic dismissal. The
   // cleanup only unregisters the listener, so StrictMode cannot cancel a live
-  // request during its setup/cleanup probe.
+  // request during its setup/cleanup probe. The event fires after the screen
+  // unmounts, so the cleanup unsubscribes a microtask later, as its contract
+  // asks.
   useEffect(() => {
     if (!Number.isSafeInteger(requestId)) return;
-    return navigation.addListener('beforeRemove', () => close(requestId));
+    const unsubscribe = navigation.addListener('removed', () => close(requestId));
+    return () => queueMicrotask(unsubscribe);
   }, [close, navigation, requestId]);
 
   const refreshVisibleTargets = useCallback(
