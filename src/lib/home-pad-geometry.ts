@@ -14,6 +14,30 @@ export function padLaunchLayoutEnabled(
 /** The Pad cover dock's field, empty: room for a paragraph, not one line. */
 export const PAD_DOCK_FIELD_LINES = 3;
 
+/** The phone dock's gutter outside its field and its shadow, on each side and below. */
+export const HOME_DOCK_OUTER_INSET = 12;
+export const HOME_DOCK_OUTER_BOTTOM_INSET = 8;
+
+/** The widest phone the dock's field is drawn for; the Pad dock is capped at its width. */
+const HOME_DOCK_PHONE_WIDTH = 430;
+
+/**
+ * The widest the Home dock gets anywhere: the phone's dock, gutters taken
+ * off. The Pad cover column is half again as wide, and a dock stretched to
+ * it drew the theme's composer decoration -- fit to the field's width -- half
+ * again as large as on the phone, so the field read as a different field.
+ */
+export const HOME_COMPOSER_MAX_FIELD_WIDTH = HOME_DOCK_PHONE_WIDTH - 2 * HOME_DOCK_OUTER_INSET;
+
+/**
+ * The inset on each side that centres a dock no wider than the phone's in a
+ * Pad cover column of `coverWidth`; nothing when the column is no wider.
+ */
+export function padDockOuterInset(coverWidth: number): number {
+  if (!Number.isFinite(coverWidth) || coverWidth <= HOME_COMPOSER_MAX_FIELD_WIDTH) return 0;
+  return Math.floor((coverWidth - HOME_COMPOSER_MAX_FIELD_WIDTH) / 2);
+}
+
 /** The gap between the two Pad columns, and between two cards in the grid. */
 export const PAD_COLUMN_GAP = 24;
 export const PAD_CARD_GAP = 12;

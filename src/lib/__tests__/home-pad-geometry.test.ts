@@ -13,6 +13,9 @@ import {
   padHomeColumns,
   nextRestingInset,
   padLaunchLayoutEnabled,
+  HOME_COMPOSER_MAX_FIELD_WIDTH,
+  HOME_DOCK_OUTER_INSET,
+  padDockOuterInset,
 } from '@/lib/home-pad-geometry';
 
 describe('padLaunchLayoutEnabled', () => {
@@ -202,5 +205,27 @@ describe('Pad artwork and title depth', () => {
     });
     expect(first.artwork.height).toBeLessThan(first.height);
     expect(untitled.artwork.height).toBe(untitled.height);
+  });
+});
+
+describe('the Pad dock is no wider than the phone dock, centred in the cover column', () => {
+  test('the cap is a 430 dp phone less the dock gutters', () => {
+    expect(HOME_COMPOSER_MAX_FIELD_WIDTH).toBe(430 - 2 * HOME_DOCK_OUTER_INSET);
+  });
+
+  test('a 1280 dp landscape pad centres a phone-wide dock in its cover column', () => {
+    const inner = getEditorialLayoutGeometry(Math.min(1280, EDITORIAL_PAD_MAX_WIDTH)).innerWidth;
+    const { cover } = padHomeColumns(inner);
+    const inset = padDockOuterInset(cover);
+    expect(inset).toBeGreaterThan(0);
+    const width = cover - 2 * inset;
+    expect(width).toBeLessThanOrEqual(HOME_COMPOSER_MAX_FIELD_WIDTH);
+    expect(width).toBeGreaterThanOrEqual(HOME_COMPOSER_MAX_FIELD_WIDTH - 1);
+  });
+
+  test('a column no wider than the cap keeps the full width', () => {
+    expect(padDockOuterInset(HOME_COMPOSER_MAX_FIELD_WIDTH)).toBe(0);
+    expect(padDockOuterInset(300)).toBe(0);
+    expect(padDockOuterInset(Number.NaN)).toBe(0);
   });
 });
