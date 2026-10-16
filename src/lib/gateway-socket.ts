@@ -519,7 +519,10 @@ export class GatewaySocket {
             if (this.preparation === preparation) this.openPrepared(ready);
           },
           () => {
-            if (this.preparation === preparation) this.unavailable();
+            // A sealing that failed -- a negotiation read that timed out, a
+            // network blip -- is a failed open, not a socket this build cannot
+            // use: retried on the backoff like a dropped connection.
+            if (this.preparation === preparation) this.openFailed();
           }
         );
       } else {
@@ -716,11 +719,27 @@ export class GatewaySocket {
         this.refused('unauthorized');
         return;
       }
-      this.failures += 1;
-      const failures = this.failures;
-      this.allListeners((l) => l.onOpenFailed?.(failures));
-      if (failures >= AUTH_CHECK_AFTER_FAILURES) this.checkAuthorization();
+      this.countOpenFailure();
     }
+    this.scheduleRetry();
+  }
+
+  /** An attempt that never reached `hello`, before or after a transport existed. */
+  private openFailed(): void {
+    this.drop();
+    this.countOpenFailure();
+    this.scheduleRetry();
+  }
+
+  private countOpenFailure(): void {
+    this.failures += 1;
+    const failures = this.failures;
+    this.allListeners((l) => l.onOpenFailed?.(failures));
+    if (failures >= AUTH_CHECK_AFTER_FAILURES) this.checkAuthorization();
+  }
+
+  /** Connect again on the backoff, or rest if nothing wants it or the app is away. */
+  private scheduleRetry(): void {
     if (!this.hasDemand()) {
       this.setState('idle');
       return;

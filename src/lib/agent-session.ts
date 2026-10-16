@@ -21,6 +21,7 @@ import {
   type GatewayEndpoint,
 } from './gateway-client';
 import { streamRecordCrypto } from './gateway-transport';
+import { STREAM_WATCHDOG_TICK_MS, streamIsStalled } from './stream-watchdog';
 import { noteGatewayGeneration } from '@/stores/gateway-connection-generation';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { connectAgentStream, type AgentStreamResponse } from './agent-stream';
@@ -1638,6 +1639,15 @@ export function openAgentSessionStream(options: {
   }
   let cancelled = false;
   const controller = new AbortController();
+  // The same watchdog the pane stream keeps: a half-open connection delivers
+  // nothing and never errors, and the session sat on it looking current. Past
+  // the idle limit it is aborted, which reaches `onError` and the caller's
+  // reconnect like any other failure. The gateway's keep-alives count as
+  // heard, so a quiet session is not mistaken for a dead one.
+  let lastHeardAt = Date.now();
+  const watchdog = setInterval(() => {
+    if (!cancelled && streamIsStalled(lastHeardAt, Date.now())) controller.abort();
+  }, STREAM_WATCHDOG_TICK_MS);
 
   const connect = async () => {
     try {
@@ -1666,7 +1676,17 @@ export function openAgentSessionStream(options: {
         abort: () => controller.abort(),
         isCancelled: () => cancelled,
         onEvent: options.onEvent,
-        ...(options.onConnected ? { onConnected: options.onConnected } : {}),
+        onHeard: () => {
+          lastHeardAt = Date.now();
+        },
+        ...(options.onConnected
+          ? {
+              onConnected: () => {
+                lastHeardAt = Date.now();
+                options.onConnected?.();
+              },
+            }
+          : {}),
       });
 
       // The one line this whole split exists for.
@@ -1675,6 +1695,8 @@ export function openAgentSessionStream(options: {
       if (!cancelled) {
         options.onError?.(err);
       }
+    } finally {
+      clearInterval(watchdog);
     }
   };
 
@@ -1684,6 +1706,7 @@ export function openAgentSessionStream(options: {
 
   return () => {
     cancelled = true;
+    clearInterval(watchdog);
     controller.abort();
   };
 }
