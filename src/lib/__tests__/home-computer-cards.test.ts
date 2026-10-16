@@ -24,6 +24,7 @@ import {
   taskRowDestination,
   heldCardOrder,
   openTaskWork,
+  lastKnownActivityCaption,
 } from '../home-computer-cards';
 import type { ServerTasksIndex } from '../server-tasks-state';
 import {
@@ -1120,5 +1121,28 @@ describe('heldCardOrder', () => {
     ['a card that went is dropped', ['a', 'b', 'c'], ['c', 'a'], ['a', 'c']],
   ])('%s', (_name, shown, sorted, drawn) => {
     expect(heldCardOrder(shown, cards(...sorted)).map((card) => card.serverId)).toEqual(drawn);
+  });
+});
+
+describe('the "Last known activity" caption keeps its slot and speaks only when the socket is gone', () => {
+  test('rows under an open socket are current: the slot is there, the words are not', () => {
+    expect(lastKnownActivityCaption({ followed: true, socket: 'open', rows: 2 })).toBe('hidden');
+  });
+
+  test('a reconnect in progress, or the app in the background, is not a loss', () => {
+    for (const socket of ['connecting', 'backoff', 'paused']) {
+      expect(lastKnownActivityCaption({ followed: true, socket, rows: 2 })).toBe('hidden');
+    }
+  });
+
+  test('a socket gone for good, or never opened, makes the rows history', () => {
+    for (const socket of ['idle', 'unauthorized', 'unavailable', 'superseded', undefined]) {
+      expect(lastKnownActivityCaption({ followed: true, socket, rows: 2 })).toBe('shown');
+    }
+  });
+
+  test('no rows, or a card that is not followed, has no slot to reserve', () => {
+    expect(lastKnownActivityCaption({ followed: true, socket: 'idle', rows: 0 })).toBe('none');
+    expect(lastKnownActivityCaption({ followed: false, socket: 'idle', rows: 3 })).toBe('none');
   });
 });

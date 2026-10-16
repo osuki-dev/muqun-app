@@ -1021,3 +1021,39 @@ export function heldCardOrder<T extends { serverId: string }>(
     .sort((a, b) => place.get(a.serverId)! - place.get(b.serverId)!);
   return [...kept, ...cards.filter((card) => !place.has(card.serverId))];
 }
+
+/**
+ * Whether a followed card's rows are its computer's current activity or the
+ * last it heard, and so whether the "Last known activity" caption is wanted.
+ *
+ * - `none`: no caption and no room for one -- the card is not followed, or
+ *   has no rows for the caption to describe.
+ * - `hidden`: the rows are current (the task socket is open), or about to be
+ *   again: a socket connecting, backing off to reconnect, or paused for the
+ *   background is the app on its way back, and announcing the rows as stale
+ *   for the length of a reconnect -- or in the app switcher's snapshot --
+ *   would call every backgrounding a loss. The caption's room is kept so
+ *   its arrival moves nothing.
+ * - `shown`: the socket is gone with nothing scheduled to bring it back
+ *   (idle, refused, unusable, superseded, or never opened), so the rows are
+ *   history and say so.
+ */
+export type LastKnownActivityCaption = 'shown' | 'hidden' | 'none';
+
+export function lastKnownActivityCaption(input: {
+  followed: boolean;
+  /** The task socket's state (`GatewaySocketState`), or `undefined` before one exists. */
+  socket: string | undefined;
+  rows: number;
+}): LastKnownActivityCaption {
+  if (!input.followed || input.rows <= 0) return 'none';
+  switch (input.socket) {
+    case 'open':
+    case 'connecting':
+    case 'backoff':
+    case 'paused':
+      return 'hidden';
+    default:
+      return 'shown';
+  }
+}
