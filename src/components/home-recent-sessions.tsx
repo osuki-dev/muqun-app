@@ -35,6 +35,7 @@ import {
   onHomeRefreshRetry,
   retryHomeRefresh,
   startHomeRefresh,
+  forgetHomeRefresh,
 } from '@/lib/home-refresh-schedule';
 import { onNetworkChange } from '@/lib/network-events';
 import { snapshotServesAgents } from '@/lib/session-snapshot';
@@ -214,9 +215,16 @@ export function useHomeRecentEntries({
   }, [appActive]);
   // Read at each tick, not reacted to: a probe landing must not restart the loop.
   const readReachability = useLatestReader(reachabilityByServer);
+  // The computer the dock points at, as of the last run: a newly chosen one
+  // is read now rather than when its last cadence comes round.
+  const refreshTargetRef = useRef<string | undefined>(undefined);
   useFocusEffect(
     useCallback(() => {
       if (!appActive || !hydrated) return;
+      if (refreshTargetRef.current !== targetId) {
+        refreshTargetRef.current = targetId;
+        if (targetId) forgetHomeRefresh(targetId);
+      }
       let current = true;
       let pending = false;
       let again = false;
