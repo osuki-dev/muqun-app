@@ -14,9 +14,8 @@ scroll down --pixels 300
 # theme could reach this app: the two routes that remain are a system file
 # picker and the network gallery, and this suite is required to run with
 # neither. So the theme comes from the document the demo workspace already
-# ships -- the same file `theme-document` previews without applying -- and this
-# flow applies it, which is what puts a custom theme in the library for
-# everything below to work on.
+# ships, and this flow applies it, which is what puts a custom theme in the
+# library for everything below to work on.
 #
 # Raw selectors rather than manifest targets: closing the viewer is addressed by
 # accessibility label, and the manifest's target vocabulary is text and id only.
@@ -27,8 +26,7 @@ press "text=\"Open muqun.muqun-theme.json\""
 wait "id=asset-preview-theme" 15000
 press "id=asset-preview-theme"
 wait "id=custom-theme-preview" 15000
-# Same fold as `theme-document`: the confirm sits under the appearance
-# settings in the asset viewer.
+# The confirm sits under the appearance settings in the asset viewer.
 scroll down --pixels 900
 press "id=theme-apply"
 wait "label=\"Close file\"" 15000
