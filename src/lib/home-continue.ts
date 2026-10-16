@@ -134,6 +134,13 @@ export type GatewayAgentSession = {
   directory: string;
   status: HomeSessionObservation['status'];
   updatedMs: number;
+  /**
+   * The terminal pane the gateway observed this session running in
+   * (`runtime.terminal`), when it runs in one. This is the gateway's own word
+   * that the session and that pane are the same work, which is what lets
+   * Continue show the work once rather than as a session row and a pane row.
+   */
+  terminal?: { sessionId: string; paneId: string };
 };
 
 /** The chosen gateway's merged `GET /api/agent-sessions`, as last read. */
@@ -164,7 +171,43 @@ export function gatewayAgentSessions(
       directory: info.directory ?? '',
       status: info.status,
       updatedMs: info.updated_ms,
+      ...(info.runtime?.terminal
+        ? {
+            terminal: {
+              sessionId: info.runtime.terminal.session_id,
+              paneId: info.runtime.terminal.pane_id,
+            },
+          }
+        : {}),
     }));
+}
+
+/** The pane a Continue row stands for, when it is a pane or a remembered terminal. */
+function continueRowPane(entry: HomeContinueEntry): { serverId: string; paneId: string } | null {
+  if (entry.destination.type === 'pane') {
+    const { serverId, paneId } = entry.destination;
+    return paneId ? { serverId, paneId } : null;
+  }
+  const target = homeContinueTarget(entry.destination);
+  return target?.kind === 'gateway-terminal'
+    ? { serverId: target.serverId, paneId: target.paneId }
+    : null;
+}
+
+function paneKey(serverId: string, paneId: string): string {
+  return JSON.stringify([serverId, paneId]);
+}
+
+/**
+ * At the same instant, the richer row first: a session over the pane it
+ * might be running in, a pane over a connection shortcut. Only a tiebreak;
+ * recency decides everything else.
+ */
+function continueKindRank(entry: HomeContinueEntry): number {
+  const target = homeContinueTarget(entry.destination);
+  if (target?.kind === 'agent-session') return 0;
+  if (target?.kind === 'ssh-host') return 2;
+  return 1;
 }
 
 /** The target a Continue row stands for, when it is not a live pane. */
@@ -270,8 +313,17 @@ export function shouldShowHomeContinueOverflow(
  * inventory. The chosen gateway's own agent sessions join them: one it lists
  * that a recent already points at is that recent (with the gateway's agent,
  * which wins over what the device wrote down), and the rest are new rows,
- * ranked by when the gateway last saw them change. Agent sessions come before
- * terminal and connection rows; each group keeps its most-recent-first order.
+ * ranked by when the gateway last saw them change.
+ *
+ * Every row -- agent session, terminal pane, connection shortcut -- is
+ * ordered by its most recent activity alone, so an agent that only exists as
+ * a terminal pane (Claude Code in tmux, say) sits where its recency puts it
+ * rather than under every session. "Session over terminal" is only a rule of
+ * identity: when the gateway says a listed session runs in a terminal pane
+ * (`GatewayAgentSession.terminal`, from the session's `runtime.terminal`),
+ * that pane's row and any remembered visit to it are the same work as the
+ * session row, and only the session row is kept. The gateway's word is the
+ * only linkage used; nothing is inferred from titles or folders.
  */
 export function homeContinueEntries({
   serverIds,
@@ -440,11 +492,23 @@ export function homeContinueEntries({
       });
     }
   }
-  return rows.sort((a, b) => {
-    const aSession = homeContinueTarget(a.destination)?.kind === 'agent-session';
-    const bSession = homeContinueTarget(b.destination)?.kind === 'agent-session';
-    return Number(bSession) - Number(aSession) || b.atMs - a.atMs;
-  });
+  // The panes the kept session rows run in, by the gateway's own account.
+  const claimedPanes = new Set<string>();
+  for (const row of rows) {
+    const target = homeContinueTarget(row.destination);
+    if (target?.kind !== 'agent-session' || !listed || target.serverId !== listed.serverId)
+      continue;
+    const session = listed.sessions.find(
+      (candidate) => candidate.asid === target.asid && candidate.agentId === target.agentId
+    );
+    if (session?.terminal) claimedPanes.add(paneKey(target.serverId, session.terminal.paneId));
+  }
+  return rows
+    .filter((row) => {
+      const pane = continueRowPane(row);
+      return !pane || !claimedPanes.has(paneKey(pane.serverId, pane.paneId));
+    })
+    .sort((a, b) => b.atMs - a.atMs || continueKindRank(a) - continueKindRank(b));
 }
 
 type GatewayTerminalTarget = Extract<HomeTarget, { kind: 'gateway-terminal' }>;
