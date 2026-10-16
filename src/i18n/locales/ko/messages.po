@@ -4611,10 +4611,6 @@ msgstr "페어링 만료"
 msgid "PAIRING EXPIRED"
 msgstr "페어링 만료됨"
 
-#: src/i18n/labels.ts
-msgid "Pairing expired — pair again"
-msgstr "페어링이 만료되었습니다 — 다시 페어링하세요"
-
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "페어링에 실패했습니다"
@@ -6774,6 +6770,10 @@ msgstr "이 컴퓨터는 더 이상 페어링되어 있지 않습니다"
 #: src/components/agent-guide-sheet.tsx
 msgid "This computer is not answering. Check the computer connection, then try again."
 msgstr "이 컴퓨터가 응답하지 않습니다. 컴퓨터 연결을 확인한 뒤 다시 시도하세요"
+
+#: src/i18n/labels.ts
+msgid "This computer no longer recognises this device. Pair again."
+msgstr "이 컴퓨터가 이 기기를 더 이상 인식하지 않습니다. 다시 페어링하세요"
 
 #: src/components/settings-fleet-peers.tsx
 #: src/lib/network-error.ts

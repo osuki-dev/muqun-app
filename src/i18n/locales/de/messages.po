@@ -4611,10 +4611,6 @@ msgstr "Kopplung abgelaufen"
 msgid "PAIRING EXPIRED"
 msgstr "KOPPLUNG ABGELAUFEN"
 
-#: src/i18n/labels.ts
-msgid "Pairing expired — pair again"
-msgstr "Kopplung abgelaufen — erneut koppeln"
-
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "Kopplung fehlgeschlagen"
@@ -6774,6 +6770,10 @@ msgstr "Dieser Computer ist nicht mehr gekoppelt"
 #: src/components/agent-guide-sheet.tsx
 msgid "This computer is not answering. Check the computer connection, then try again."
 msgstr "Dieser Computer antwortet nicht. Prüfe die Verbindung zum Computer und versuche es dann erneut"
+
+#: src/i18n/labels.ts
+msgid "This computer no longer recognises this device. Pair again."
+msgstr "Dieser Computer kennt dieses Gerät nicht mehr. Erneut koppeln"
 
 #: src/components/settings-fleet-peers.tsx
 #: src/lib/network-error.ts

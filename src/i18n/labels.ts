@@ -70,7 +70,7 @@ export const connectionStatusLabel: Record<ConnectionStatus, MessageDescriptor> 
 export const connectionStatusDescription: Record<ConnectionStatus, MessageDescriptor> = {
   ...reachabilityDescription,
   reconnecting: msg`Reconnecting…`,
-  unauthorized: msg`Pairing expired — pair again`,
+  unauthorized: msg`This computer no longer recognises this device. Pair again.`,
   repair: msg`Encryption was turned on for this computer. Pair it again to keep using it.`,
 };
 

@@ -4611,10 +4611,6 @@ msgstr "Association expirée"
 msgid "PAIRING EXPIRED"
 msgstr "APPAIRAGE EXPIRÉ"
 
-#: src/i18n/labels.ts
-msgid "Pairing expired — pair again"
-msgstr "Appairage expiré — appairez à nouveau"
-
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "Échec de l’appairage"
@@ -6774,6 +6770,10 @@ msgstr "Cet ordinateur n’est plus appairé"
 #: src/components/agent-guide-sheet.tsx
 msgid "This computer is not answering. Check the computer connection, then try again."
 msgstr "Cet ordinateur ne répond pas. Vérifiez la connexion à l’ordinateur, puis réessayez"
+
+#: src/i18n/labels.ts
+msgid "This computer no longer recognises this device. Pair again."
+msgstr "Cet ordinateur ne reconnaît plus cet appareil. Appairer de nouveau"
 
 #: src/components/settings-fleet-peers.tsx
 #: src/lib/network-error.ts

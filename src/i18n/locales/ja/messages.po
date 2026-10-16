@@ -4611,10 +4611,6 @@ msgstr "ペアリングの有効期限切れ"
 msgid "PAIRING EXPIRED"
 msgstr "ペアリング期限切れ"
 
-#: src/i18n/labels.ts
-msgid "Pairing expired — pair again"
-msgstr "ペアリングの有効期限が切れました — もう一度ペアリングしてください"
-
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "ペアリングに失敗しました"
@@ -6774,6 +6770,10 @@ msgstr "このコンピュータはもうペアリングされていません"
 #: src/components/agent-guide-sheet.tsx
 msgid "This computer is not answering. Check the computer connection, then try again."
 msgstr "このコンピュータは応答していません。コンピュータとの接続を確認して、もう一度お試しください"
+
+#: src/i18n/labels.ts
+msgid "This computer no longer recognises this device. Pair again."
+msgstr "このコンピュータはこのデバイスを認識しなくなりました。再ペアリングしてください"
 
 #: src/components/settings-fleet-peers.tsx
 #: src/lib/network-error.ts

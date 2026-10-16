@@ -4611,10 +4611,6 @@ msgstr "Срок сопряжения истёк"
 msgid "PAIRING EXPIRED"
 msgstr "ПРИВЯЗКА ИСТЕКЛА"
 
-#: src/i18n/labels.ts
-msgid "Pairing expired — pair again"
-msgstr "Привязка истекла — привяжите снова"
-
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "Привязка не удалась"
@@ -6774,6 +6770,10 @@ msgstr "Этот компьютер больше не привязан"
 #: src/components/agent-guide-sheet.tsx
 msgid "This computer is not answering. Check the computer connection, then try again."
 msgstr "Этот компьютер не отвечает. Проверьте подключение к компьютеру и повторите попытку"
+
+#: src/i18n/labels.ts
+msgid "This computer no longer recognises this device. Pair again."
+msgstr "Этот компьютер больше не распознаёт это устройство. Привяжите снова"
 
 #: src/components/settings-fleet-peers.tsx
 #: src/lib/network-error.ts

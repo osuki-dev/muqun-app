@@ -4611,10 +4611,6 @@ msgstr "Emparelhamento expirado"
 msgid "PAIRING EXPIRED"
 msgstr "EMPARELHAMENTO EXPIRADO"
 
-#: src/i18n/labels.ts
-msgid "Pairing expired — pair again"
-msgstr "Emparelhamento expirado — emparelhe novamente"
-
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "O emparelhamento falhou"
@@ -6774,6 +6770,10 @@ msgstr "Este computador já não está emparelhado"
 #: src/components/agent-guide-sheet.tsx
 msgid "This computer is not answering. Check the computer connection, then try again."
 msgstr "Este computador não está a responder. Verifique a ligação ao computador e tente novamente"
+
+#: src/i18n/labels.ts
+msgid "This computer no longer recognises this device. Pair again."
+msgstr "Este computador já não reconhece este dispositivo. Emparelhar novamente"
 
 #: src/components/settings-fleet-peers.tsx
 #: src/lib/network-error.ts
