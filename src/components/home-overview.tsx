@@ -1574,16 +1574,21 @@ export function HomeOverview({
           points below *is* the title, and repeating it up here is what made the
           batch4 header read as chrome. Past 82pt of scroll the brand walks up
           into the bar and the bar earns its left half. The controls never move,
-          so the only thing that changes is where the brand is. */}
+          so the only thing that changes is where the brand is.
+
+          The bar has no surface of its own, so only its buttons take touches:
+          the page scrolls under it, and a drag or tap on its empty half
+          reaches the page that shows through it. */}
       <Animated.View
+        pointerEvents="box-none"
         style={[styles.topBar, barFoldStyle]}
         onLayout={(event: LayoutChangeEvent) => {
           const { height } = event.nativeEvent.layout;
           barHeightValue.set(height);
           setBarHeight(height);
         }}>
-        <SafeAreaView edges={['top']}>
-          <View style={styles.topBarRow}>
+        <SafeAreaView edges={['top']} pointerEvents="box-none">
+          <View pointerEvents="box-none" style={styles.topBarRow}>
             {identity.showBrand ? (
               <Animated.View
                 testID="home-brand-compact"
@@ -1648,7 +1653,9 @@ export function HomeOverview({
             selected server's avatar and loom (card #629) and to the empty
             state's one button; a coral control in the corner is exactly the
             batch4 `ADD` pill under a different icon. */}
-            <Animated.View style={[styles.headerActions, headerActionsStyle]}>
+            <Animated.View
+              pointerEvents="box-none"
+              style={[styles.headerActions, headerActionsStyle]}>
               {/* Two doors that are only here until the first server is
               paired. After that they are things done once a month, standing in
               the most-used corner of the most-used screen; both live in
