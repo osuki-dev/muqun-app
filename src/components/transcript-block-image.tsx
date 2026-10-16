@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
-import { Image } from 'expo-image';
+import { StyleSheet, View } from 'react-native';
+import { ContentImage } from '@/components/content-image';
+import { contentImageIdentity, type ContentImagePreviewState } from '@/lib/content-image-layout';
 import { useLingui } from '@lingui/react/macro';
 import { Text } from '@/components/text';
 import { PressableScale } from '@/components/pressable-scale';
@@ -25,10 +26,9 @@ export function TranscriptBlockImage({
   onPress?: (uri: string) => void;
 }) {
   const { t } = useLingui();
-  const viewport = useWindowDimensions();
   const profile = useAppearanceProfile();
   const [failed, setFailed] = useState(false);
-  const [ratio, setRatio] = useState(width && height ? width / height : 16 / 9);
+  const [previewState, setPreviewState] = useState<ContentImagePreviewState>();
   if (pending || failed)
     return (
       <Text variant="caption">
@@ -40,30 +40,38 @@ export function TranscriptBlockImage({
       <PressableScale
         accessibilityRole="imagebutton"
         accessibilityLabel={alt || t`Image`}
+        accessibilityHint={
+          previewState?.identity === contentImageIdentity({ uri }) && previewState.cropped
+            ? t`Cropped preview · Open full image`
+            : undefined
+        }
         disabled={!onPress}
         onPress={() => onPress?.(uri)}
         style={[
           styles.image,
           {
-            aspectRatio: ratio,
-            maxHeight: viewport.height * 0.45,
             borderRadius: profile.chrome.surface,
           },
         ]}>
-        <Image
+        <ContentImage
           source={{ uri, ...(headers ? { headers } : {}) }}
-          contentFit="contain"
-          style={StyleSheet.absoluteFill}
-          onLoad={({ source }) => {
-            if (source.width > 0 && source.height > 0) setRatio(source.width / source.height);
-          }}
+          width={width}
+          height={height}
+          previewable={Boolean(onPress)}
           onError={() => setFailed(true)}
+          onPreviewStateChange={setPreviewState}
         />
       </PressableScale>
     </View>
   );
 }
 const styles = StyleSheet.create({
-  container: { width: '100%', paddingVertical: 8 },
-  image: { width: '100%', overflow: 'hidden' },
+  container: { alignSelf: 'flex-start', maxWidth: '100%', paddingVertical: 8 },
+  image: {
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
+    minWidth: 44,
+    minHeight: 44,
+    overflow: 'hidden',
+  },
 });

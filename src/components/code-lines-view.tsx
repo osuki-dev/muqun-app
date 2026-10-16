@@ -119,6 +119,7 @@ export interface CodeLinesViewProps {
    */
   inset: number;
   testID?: string;
+  showsHorizontalScrollIndicator?: boolean;
 }
 
 export function CodeLinesView({
@@ -128,6 +129,7 @@ export function CodeLinesView({
   note,
   inset,
   testID,
+  showsHorizontalScrollIndicator = true,
 }: CodeLinesViewProps) {
   const theme = useThemeTokens();
 
@@ -289,7 +291,7 @@ export function CodeLinesView({
         </Text>
         <Animated.ScrollView
           horizontal
-          showsHorizontalScrollIndicator
+          showsHorizontalScrollIndicator={showsHorizontalScrollIndicator}
           onScroll={onHorizontalScroll}
           scrollEventThrottle={16}
           onLayout={onViewportLayout}

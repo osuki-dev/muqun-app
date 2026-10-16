@@ -89,7 +89,7 @@ function nodes(value: unknown): Element[] {
 }
 
 const require = createRequire(import.meta.url);
-/** Execute production components with only native boundaries replaced. */
+/** Execute production host components with child/native boundaries replaced. */
 function component(path: string, name: string) {
   const code = require('@babel/core').transformSync(readFileSync(path, 'utf8'), {
     filename: path,
@@ -133,6 +133,8 @@ function component(path: string, name: string) {
       if (module === '@/hooks/use-surface-background')
         return { useSurfaceBackground: () => (value: unknown) => value };
       if (module === '@/components/attachment-image') return { AttachmentImage: 'AttachmentImage' };
+      if (module === '@/components/content-image') return { ContentImage: 'ContentImage' };
+      if (module === '@/lib/content-image-layout') return require('../content-image-layout');
       if (module === '@/components/image-preview-modal')
         return { ImagePreviewModal: 'ImagePreviewModal' };
       if (module === '@/components/pressable-scale') return { PressableScale: 'PressableScale' };
@@ -161,10 +163,12 @@ test('a recovered image-only prompt renders a thumbnail and opens then closes th
   expect(thumbnail.props.uri).toBe(image);
   const renderThumbnail = component('src/components/attachment-image.tsx', 'AttachmentImage');
   const imageNodes = renderThumbnail(thumbnail.props);
-  expect(imageNodes.find((node) => node.type === 'Image')!.props.source).toEqual({
+  const contentImage = imageNodes.find((node) => node.type === 'ContentImage')!;
+  expect(contentImage.props.source).toEqual({
     uri: image,
     cacheKey: image,
   });
+  expect(contentImage.props.previewable).toBe(true);
   imageNodes.find((node) => node.type === 'PressableScale')!.props.onPress();
   const viewer = render(props).find((node) => node.type === 'ImagePreviewModal')!;
   expect(viewer.props.images).toEqual([{ id: image, uri: image }]);

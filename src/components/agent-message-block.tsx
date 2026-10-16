@@ -1,5 +1,6 @@
 import { isPdfFile } from '@/lib/session-assets';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
+import type { ToolExpansionIntent } from '@/components/embedded-terminal-tool-block';
 import { goalContinuationSummary } from '@/lib/agent-goal-message';
 import { Fragment, memo, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -128,7 +129,6 @@ const MessageAttachments = memo(function MessageAttachments({
               key={`${att}-${attIdx}`}
               asset={image}
               label={t`Open attachment`}
-              style={{ width: 160, height: 110 }}
             />
           );
         if (isImageAttachment(att)) {
@@ -335,6 +335,7 @@ export interface AgentToolActions {
   childSessions?: Readonly<Record<string, AgentSessionInfo>>;
   /** The whole call in the tool detail sheet. */
   onOpenToolDetail?: (part: ToolPart) => void;
+  onExpandTool?: (toolId: string, header: View) => ToolExpansionIntent | undefined;
 }
 
 const NO_TOOL_ACTIONS: AgentToolActions = Object.freeze({});
@@ -817,6 +818,8 @@ const MessageTextPart = memo(function MessageTextPart({
               key={part.start}
               asid={audioSessionId}
               file={{ uri: part.uri, name: part.name }}
+              imageAsset={messageImageForSource(imageAssets, part.uri)}
+              imageSource={images.sources.get(part.uri) ?? null}
             />
           ) : part.kind === 'audio' ? (
             <InlineAudioFile
@@ -1087,6 +1090,11 @@ const ToolPartCard = memo(function ToolPartCard({
     ? actions.childSessions?.[part.child_session_id]
     : undefined;
   const openToolDetail = actions.onOpenToolDetail;
+  const expandTool = actions.onExpandTool;
+  const handleExpand = useMemo(
+    () => (expandTool ? (header: View) => expandTool(part.id, header) : undefined),
+    [expandTool, part.id]
+  );
   const handleOpenDetail = useMemo(
     () => (openToolDetail ? () => openToolDetail(part) : undefined),
     [openToolDetail, part]
@@ -1121,6 +1129,7 @@ const ToolPartCard = memo(function ToolPartCard({
         {...(actions.onOpenFile ? { onOpenFile: actions.onOpenFile } : {})}
         {...(actions.onOpenFullDiff ? { onOpenFullDiff: actions.onOpenFullDiff } : {})}
         {...(handleOpenDetail ? { onOpenDetail: handleOpenDetail } : {})}
+        onExpand={handleExpand}
       />
       {attachedPermission && handleDecision ? (
         <AgentPermissionCard attached request={attachedPermission} onDecision={handleDecision} />
@@ -1575,7 +1584,7 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
     if (displayEntry.kind === 'tool-group') {
       flush();
       rows.push(
-        <View key={displayEntry.key} style={styles.standaloneRow}>
+        <View key={displayEntry.key} style={styles.toolRow}>
           <AgentToolGroup
             entries={displayEntry.entries}
             markdownStyle={markdownStyle}
@@ -1608,7 +1617,13 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
     if (STANDALONE_PART_TYPES.has(entry.item.part.type)) {
       flush();
       rows.push(
-        <View key={`row:${entry.item.id}`} style={styles.standaloneRow}>
+        <View
+          key={`row:${entry.item.id}`}
+          style={
+            entry.item.part.type === 'tool' || entry.item.part.type === 'shell'
+              ? styles.toolRow
+              : styles.standaloneRow
+          }>
           {drawn}
         </View>
       );
@@ -1665,11 +1680,12 @@ const STANDALONE_PART_TYPES: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * The one gap between two rows of the transcript, whether they belong to the
- * same message or not.
+ * The general gap for prose, thoughts and notices, whether they belong to the
+ * same message or not. Tool rows already reserve a 44dp transparent touch
+ * boundary and omit this additional margin; expanded tool bodies keep their
+ * own trailing separation.
  *
- * Each row carries half of it above and half below, so a tool card has the
- * same air over it as under it -- it used to have ten points above and twenty
+ * Each ordinary row carries half above and half below -- it used to have ten points above and twenty
  * below, because the list put its own gap between messages on top of the
  * rows' own margins. The list's gap is zero now; this is the only spacing.
  */
@@ -1704,6 +1720,10 @@ const styles = StyleSheet.create({
     width: '100%',
     marginVertical: TRANSCRIPT_ROW_GAP / 2,
   },
+  toolRow: {
+    alignSelf: 'stretch',
+    width: '100%',
+  },
   toolGroup: { gap: TRANSCRIPT_ROW_GAP },
   toolGroupHeader: {
     minHeight: 44,
@@ -1717,7 +1737,7 @@ const styles = StyleSheet.create({
   marker: { width: TRANSCRIPT_GRID.markerWidth, alignItems: 'center' },
   toolGroupCopy: { flex: 1, minWidth: 0, gap: 1 },
   toolGroupNames: { fontSize: AGENT_TYPE.micro.size },
-  toolGroupItems: { gap: TRANSCRIPT_ROW_GAP },
+  toolGroupItems: { gap: 0 },
   goalMessage: { alignSelf: 'stretch', width: '100%' },
   goalDisclosure: {
     alignSelf: 'stretch',

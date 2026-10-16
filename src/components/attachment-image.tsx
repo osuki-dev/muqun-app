@@ -2,7 +2,9 @@ import { memo, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { FileText } from 'lucide-react-native';
-import { Image } from 'expo-image';
+import { ContentImage } from '@/components/content-image';
+import { contentImageIdentity, type ContentImagePreviewState } from '@/lib/content-image-layout';
+import { useLingui } from '@lingui/react/macro';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { PressableScale } from '@/components/pressable-scale';
 import {
@@ -28,6 +30,7 @@ export const AttachmentImage = memo(function AttachmentImage({
   label: string;
   onPreviewImage: (uri: string) => void;
 }) {
+  const { t } = useLingui();
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
   const uploadName =
@@ -36,6 +39,7 @@ export const AttachmentImage = memo(function AttachmentImage({
     uploadName ? uploadImageSource(uploadName) : { uri, cacheKey: uri }
   );
   const [failed, setFailed] = useState(false);
+  const [previewState, setPreviewState] = useState<ContentImagePreviewState>();
   useEffect(() => {
     if (!uploadName || source) return;
     const controller = new AbortController();
@@ -56,13 +60,18 @@ export const AttachmentImage = memo(function AttachmentImage({
     <PressableScale
       accessibilityRole="imagebutton"
       accessibilityLabel={label}
+      accessibilityHint={
+        previewState?.identity === contentImageIdentity(source) && previewState.cropped
+          ? t`Cropped preview · Open full image`
+          : undefined
+      }
       onPress={() => onPreviewImage(source.uri)}
       style={[styles.attachmentImageWrapper, { borderRadius: profile.chrome.surface }]}>
-      <Image
+      <ContentImage
         source={source}
-        style={styles.attachmentThumbnail}
-        contentFit="cover"
+        previewable
         onError={() => setFailed(true)}
+        onPreviewStateChange={setPreviewState}
       />
     </PressableScale>
   );
@@ -70,6 +79,13 @@ export const AttachmentImage = memo(function AttachmentImage({
 
 const styles = StyleSheet.create({
   attachmentPlaceholder: { alignItems: 'center', justifyContent: 'center' },
-  attachmentImageWrapper: { borderCurve: 'continuous', overflow: 'hidden' },
+  attachmentImageWrapper: {
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
+    minWidth: 44,
+    minHeight: 44,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
+  },
   attachmentThumbnail: { width: 160, height: 110 },
 });

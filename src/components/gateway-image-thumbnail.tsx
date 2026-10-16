@@ -1,13 +1,9 @@
 import { useEffect, useEffectEvent, useState, type ReactNode } from 'react';
 import { useLingui } from '@lingui/react/macro';
-import {
-  StyleSheet,
-  View,
-  useWindowDimensions,
-  type StyleProp,
-  type ViewStyle,
-} from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { Image } from 'expo-image';
+import { ContentImage } from '@/components/content-image';
+import { contentImageIdentity, type ContentImagePreviewState } from '@/lib/content-image-layout';
 import { FileImage } from 'lucide-react-native';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { PressableScale } from '@/components/pressable-scale';
@@ -73,27 +69,26 @@ export function GatewayImageThumbnail({
   interactive = true,
   sourceOverride,
   onPreview,
+  onLongPress,
   block = false,
+  compact = false,
 }: {
   asset: MessageImageAsset & { gatewayServerId?: string };
   label: string;
   style?: StyleProp<ViewStyle>;
   block?: boolean;
+  compact?: boolean;
   interactive?: boolean;
   sourceOverride?: PreviewImageSource | null;
   onPreview?: (image: PreviewImageDescriptor) => void;
+  onLongPress?: (image: PreviewImageDescriptor) => void;
 }) {
+  const { t } = useLingui();
   const theme = useThemeTokens();
-  const viewport = useWindowDimensions();
   const frame = [
     styles.frame,
-    block
-      ? {
-          width: '100%' as const,
-          aspectRatio: asset.width && asset.height ? asset.width / asset.height : 16 / 9,
-          maxHeight: viewport.height * 0.45,
-        }
-      : null,
+    block ? { marginVertical: 8 } : null,
+    compact ? null : { minWidth: 44, minHeight: 44 },
     style,
   ];
   const serverId = configuredGatewayServerId();
@@ -112,6 +107,7 @@ export function GatewayImageThumbnail({
   });
   const [failed, setFailed] = useState('');
   const [open, setOpen] = useState(false);
+  const [previewState, setPreviewState] = useState<ContentImagePreviewState>();
   const source =
     sourceOverride !== undefined ? sourceOverride : held.key === key ? held.source : null;
   const needsRead =
@@ -140,25 +136,51 @@ export function GatewayImageThumbnail({
     };
   }, [needsRead, key]);
   const nativeKey = source ? `${key}:${source.uri}` : key;
-  const content =
-    source && failed !== nativeKey ? (
+  const bitmap = source && failed !== nativeKey ? source : undefined;
+  const content = compact ? (
+    bitmap ? (
       <Image
         key={nativeKey}
-        source={{ uri: source.uri, headers: source.headers, cacheKey: source.cacheKey }}
-        contentFit={block ? 'contain' : 'cover'}
+        source={{ uri: bitmap.uri, headers: bitmap.headers, cacheKey: bitmap.cacheKey }}
+        contentFit="contain"
         style={StyleSheet.absoluteFill}
         onError={() => setFailed(nativeKey)}
       />
     ) : (
       <FileImage size={20} color={theme.colors.textMuted} />
-    );
+    )
+  ) : (
+    <ContentImage
+      source={bitmap}
+      width={asset.width}
+      height={asset.height}
+      previewable={interactive && Boolean(binding)}
+      placeholder={<FileImage size={20} color={theme.colors.textMuted} />}
+      onError={() => setFailed(nativeKey)}
+      onPreviewStateChange={setPreviewState}
+    />
+  );
   return (
     <>
       {interactive ? (
         <PressableScale
           accessibilityRole="imagebutton"
           accessibilityLabel={label}
+          accessibilityHint={
+            !compact &&
+            previewState?.identity === contentImageIdentity(bitmap) &&
+            previewState.cropped
+              ? t`Cropped preview · Open full image`
+              : undefined
+          }
           disabled={!binding}
+          onLongPress={
+            onLongPress
+              ? () => {
+                  if (binding) onLongPress(binding.image);
+                }
+              : undefined
+          }
           onPress={() => {
             if (binding && onPreview) onPreview(binding.image);
             else setOpen(true);
@@ -181,5 +203,11 @@ export function GatewayImageThumbnail({
 }
 
 const styles = StyleSheet.create({
-  frame: { overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  frame: {
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

@@ -2274,6 +2274,14 @@ msgstr "Tạo và chuyển sang"
 msgid "Creating session…"
 msgstr "Đang tạo phiên…"
 
+#: src/components/agent-tool-card.tsx
+#: src/components/attachment-image.tsx
+#: src/components/content-image.tsx
+#: src/components/gateway-image-thumbnail.tsx
+#: src/components/transcript-block-image.tsx
+msgid "Cropped preview · Open full image"
+msgstr "Xem trước một phần · Mở ảnh đầy đủ"
+
 #: src/components/custom-theme-library.tsx
 #: src/components/file-mention-panel.tsx
 msgid "Current"
@@ -2416,6 +2424,7 @@ msgstr "tách rời tại {head}"
 msgid "Detached at {head}"
 msgstr "Tách rời tại {head}"
 
+#: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Details"
 msgstr "Chi tiết"

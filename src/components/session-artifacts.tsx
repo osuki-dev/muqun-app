@@ -835,6 +835,7 @@ const AssetRow = memo(function AssetRow({
                 }}
                 label={asset.name}
                 interactive={false}
+                compact
                 style={styles.thumbnail}
               />
             ) : thumbnail ? (
@@ -842,7 +843,7 @@ const AssetRow = memo(function AssetRow({
                 source={{ uri: thumbnail.uri, headers: thumbnail.headers }}
                 cachePolicy="memory-disk"
                 recyclingKey={thumbnail.cacheKey}
-                contentFit="cover"
+                contentFit="contain"
                 style={styles.thumbnail}
               />
             ) : (

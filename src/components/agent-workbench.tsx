@@ -4789,7 +4789,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 {
                   borderRadius: profile.chrome.control,
                   backgroundColor: surfaceBackground(theme.colors.surface),
-                  borderColor: theme.colors.border,
                 },
               ]}>
               <ThinkingIndicator size={13} color={theme.colors.primary} />
@@ -5539,6 +5538,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               rowProps={rowProps}
               ref={listRef}
               scrollToSentRow={scrollToSentRow}
+              toolScrollTopInset={topInset}
               /*
             Lift only for a reader at the latest message. Someone who has
             scrolled up to read is not moved by a keyboard any more than by
@@ -6081,7 +6081,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
   },
   emptyScrollWrapper: {
     flex: 1,
