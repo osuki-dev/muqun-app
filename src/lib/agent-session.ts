@@ -1040,9 +1040,35 @@ export function peekAgentCatalog(
   return getCachedAgentCatalogSync(cacheKey);
 }
 
+/**
+ * A stored record's address and credentials for the catalog loaders, which
+ * otherwise read through the shared client. Everything the record carries is
+ * taken, not only its URL and token: a record with a transport key must be
+ * sealed with it, whichever computer the client is pointed at.
+ */
+export type CatalogEndpoint = Partial<Omit<GatewayEndpoint, 'token'>> & {
+  token?: string | null;
+};
+
+/** The request a stored record is read through; the shared client when none is named. */
+function catalogFetch(endpoint: CatalogEndpoint | undefined, url: string, init: RequestInit) {
+  if (!endpoint?.url) return gatewayFetch(url, init);
+  return gatewayEndpointFetch(
+    {
+      url: endpoint.url,
+      token: endpoint.token ?? '',
+      ...(endpoint.deviceId ? { deviceId: endpoint.deviceId } : {}),
+      ...(endpoint.transportKey ? { transportKey: endpoint.transportKey } : {}),
+      ...(endpoint.transport ? { transport: endpoint.transport } : {}),
+    },
+    url,
+    init
+  );
+}
+
 export async function getAgentCatalog(
   sessionId?: string,
-  endpoint?: { url?: string; token?: string | null },
+  endpoint?: CatalogEndpoint,
   options?: { directory?: string; forceRefresh?: boolean; requireFresh?: boolean; agentId?: string }
 ): Promise<AgentCatalog> {
   if (usesOfflineDemo(endpoint)) return EMPTY_CATALOG;
@@ -1080,7 +1106,7 @@ export async function getAgentCatalog(
         headers['If-None-Match'] = cached.etag;
       }
 
-      const res = await gatewayFetch(url, { method: 'GET', headers });
+      const res = await catalogFetch(endpoint, url, { method: 'GET', headers });
 
       if (res.status === 304 && cached) {
         touchCacheEntryTimestamp(cacheKey);
@@ -1114,7 +1140,7 @@ export async function getAgentCatalog(
 
 export async function getAgentProjects(
   sessionId?: string,
-  endpoint?: { url?: string; token?: string | null },
+  endpoint?: CatalogEndpoint,
   options?: { forceRefresh?: boolean; agentId?: string }
 ): Promise<AgentProject[]> {
   if (usesOfflineDemo(endpoint)) return [];
@@ -1153,7 +1179,7 @@ export async function getAgentProjects(
         headers['If-None-Match'] = cached.etag;
       }
 
-      const res = await gatewayFetch(url, { method: 'GET', headers });
+      const res = await catalogFetch(endpoint, url, { method: 'GET', headers });
 
       if (res.status === 304 && cached) {
         touchCacheEntryTimestamp(cacheKey);
