@@ -109,6 +109,9 @@ function requestHarness(responseVersion: 1 | 2 = 2) {
       ENVELOPE_ACCEPT_HEADER: 'X-Muqun-Envelope-Accept',
       ENVELOPE_ACCEPT_ENCODINGS: 'gzip',
       isStreamingRequest: () => false,
+      // The pairing-fault bookkeeping; what it records is another suite's.
+      noteAccepted: () => {},
+      noteRefusal: () => {},
       headerRecord: (headers: unknown) => ({ ...(headers as Record<string, string>) }),
       serializeBody: async (body: string) => ({
         bytes: Buffer.from(body ?? ''),

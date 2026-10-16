@@ -7061,6 +7061,10 @@ msgstr "Тип"
 msgid "Type a line and press Enter; it is echoed back."
 msgstr "Введите строку и нажмите Enter; она вернётся эхом"
 
+#: src/app/explore.tsx
+msgid "Type a pairing code only on a network you trust."
+msgstr "Вводите код привязки только в доверенной сети"
+
 #: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Type changed"

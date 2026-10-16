@@ -5,6 +5,7 @@ import { noteGatewayGeneration } from '@/stores/gateway-connection-generation';
 import { assertSupportedHerdr } from '@/lib/herdr-compatibility';
 import { directGatewayBaseUrl } from '@/lib/ssh-tunnel';
 import type { GatewayRecord } from '@/lib/gateway-storage';
+import { faultProbeDue } from '@/lib/pairing-faults';
 import { pairingFaultOf, usePairingFaults } from '@/stores/pairing-faults';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { retryHomeRefresh } from '@/lib/home-refresh-schedule';
@@ -119,10 +120,17 @@ export const useServerReachability = create<ServerReachabilityState>((set, get) 
     if (!directGatewayBaseUrl(endpoint)) return;
     // A computer that refused this pairing outright -- pair again for
     // encryption, or the token is dead -- is not asked again on every focus:
-    // it said no, and will say no until the reader pairs again. A pull to
-    // refresh is still a question, and the one way a gateway rolled back to
-    // accepting the token gets to clear its own entry (`noteAnswer`).
-    if (!options?.force && pairingFaultOf(usePairingFaults.getState(), serverId)) return;
+    // it said no, and will say no until the reader pairs again. It is still
+    // asked once a launch and every few minutes after (`faultProbeDue`), and
+    // a pull to refresh is still a question: an answer that takes the token
+    // clears the entry (`noteAnswer`), which is how a refusal that was forged,
+    // or a gateway rolled back, undoes itself without the reader's help.
+    if (
+      !options?.force &&
+      pairingFaultOf(usePairingFaults.getState(), serverId) &&
+      !faultProbeDue(get().probes[serverId]?.checkedAtMs, Date.now())
+    )
+      return;
     // Still one flight per server even when forced: two pulls in a second are
     // one question, and the second would only race the first. Awaited rather
     // than skipped so the loser of the race sees the answer -- see `inFlight`.

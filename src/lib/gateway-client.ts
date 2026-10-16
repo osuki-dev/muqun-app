@@ -629,6 +629,9 @@ async function sendEncryptedGatewayRequest(
   const { bytes, headers: answerHeaders } = decodeSealedBody(fromBase64Url(payload.body), payload);
   if (readLimit !== undefined && bytes.length > readLimit)
     throw new Error('Encrypted image response exceeds the read limit');
+  // Opened with this device's key: the gateway knows this device, whatever
+  // the status inside says.
+  noteAccepted({ url: requestUrl(input), token: token ?? '' });
   const noBody = answerHasNoBody(method, payload.status);
   // Use the same response implementation as the request transport. React
   // Native's global Response treats a QuickCrypto Buffer as a string-like body
@@ -642,33 +645,43 @@ async function sendEncryptedGatewayRequest(
 }
 
 /**
- * Told about every refusal of a pairing the transport hears: a 401/403/426
- * from the gateway a request's token belongs to, with the plaintext body the
- * reason is in. Installed by `stores/pairing-faults`, which maps the token
- * back to the record and remembers what the computer said; the client does
- * not know records, only endpoints.
+ * Told what every gateway said about the token a request carried: a refusal
+ * (401/403/426, with the plaintext body the reason is in) or an acceptance
+ * (an answer that took the token -- a sealed response that opened, a 2xx on
+ * a route that needed it). Installed by `stores/pairing-faults`, which maps
+ * the token back to the record and remembers, or forgets, what the computer
+ * said; the client does not know records, only endpoints.
  */
-export type GatewayRefusalObserver = (
-  endpoint: { url: string; token: string },
-  status: number,
-  body: string
-) => void;
+export interface GatewayAuthObserver {
+  refused(endpoint: { url: string; token: string }, status: number, body: string): void;
+  accepted(endpoint: { url: string; token: string }): void;
+}
 
-let refusalObserver: GatewayRefusalObserver | null = null;
+let authObserver: GatewayAuthObserver | null = null;
 
-export function setGatewayRefusalObserver(observer: GatewayRefusalObserver | null): void {
-  refusalObserver = observer;
+export function setGatewayAuthObserver(observer: GatewayAuthObserver | null): void {
+  authObserver = observer;
 }
 
 /** The statuses a gateway refuses a pairing with; everything else is not about the pairing. */
 const PAIRING_REFUSAL_STATUSES = new Set([401, 403, 426]);
 
 function noteRefusal(endpoint: { url: string; token: string }, status: number, body: string) {
-  if (!refusalObserver || !PAIRING_REFUSAL_STATUSES.has(status) || !endpoint.token) return;
+  if (!authObserver || !PAIRING_REFUSAL_STATUSES.has(status) || !endpoint.token) return;
   try {
-    refusalObserver(endpoint, status, body);
+    authObserver.refused(endpoint, status, body);
   } catch {
     // An observer that throws must not turn a refusal into a different error.
+  }
+}
+
+/** The gateway took this token: whatever was held against its pairing is disproved. */
+function noteAccepted(endpoint: { url: string; token: string }) {
+  if (!authObserver || !endpoint.token) return;
+  try {
+    authObserver.accepted(endpoint);
+  } catch {
+    // Likewise: bookkeeping never changes the answer.
   }
 }
 
@@ -681,7 +694,12 @@ async function noteRefusedResponse(
   endpoint: { url: string; token: string },
   response: Response
 ): Promise<void> {
-  if (!refusalObserver || !PAIRING_REFUSAL_STATUSES.has(response.status)) return;
+  if (!authObserver) return;
+  if (response.ok) {
+    noteAccepted(endpoint);
+    return;
+  }
+  if (!PAIRING_REFUSAL_STATUSES.has(response.status)) return;
   let body = '';
   try {
     body = await response.clone().text();
@@ -3134,10 +3152,8 @@ export async function readGatewayRecordJson(record: GatewayRecord, path: string)
       captured.transport === GATEWAY_TRANSPORT
         ? await encryptedGatewayFetch(url, init, REQUEST_TIMEOUT_MS, { ...captured, url: baseUrl })
         : await fetchWithin(REQUEST_TIMEOUT_MS, 'Timed out waiting for the server.', url, init);
-    if (!response.ok) {
-      await noteRefusedResponse({ url, token: captured.token }, response);
-      throw new Error(`HTTP ${response.status}`);
-    }
+    await noteRefusedResponse({ url, token: captured.token }, response);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return response.json();
   });
 }
@@ -4043,6 +4059,7 @@ async function writeDevicePushToken(
       noteRefusal({ url, token: captured.token }, response.status, text);
       throw new Error(`HTTP ${response.status}: ${text}`);
     }
+    noteAccepted({ url, token: captured.token });
     const answer = (await response.json()) as { ok?: unknown } | null;
     if (answer?.ok !== true) throw new Error('HTTP 502: unreadable push registration receipt');
   });

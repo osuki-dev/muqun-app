@@ -416,6 +416,9 @@ test('the production token writer preserves explicit HTTP and encrypted record o
       activeLocaleHeaders: () => ({}),
       GATEWAY_TRANSPORT: 'muqun-aes-256-gcm-v1',
       REQUEST_TIMEOUT_MS: 1000,
+      // The pairing-fault bookkeeping; what it records is another suite's.
+      noteAccepted: () => {},
+      noteRefusal: () => {},
       withRecordBaseUrl: async (record: GatewayRecord, body: (url: string) => Promise<void>) =>
         body(record.url),
       fetchWithin: async (_ms: number, _message: string, url: string, init: RequestInit) => {

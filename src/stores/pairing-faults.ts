@@ -1,12 +1,14 @@
 import { create } from 'zustand';
 
-import { setGatewayRefusalObserver } from '@/lib/gateway-client';
+import { setGatewayAuthObserver } from '@/lib/gateway-client';
 import {
   classifyPairingRefusal,
   faultAfterRefusal,
+  faultsAfterAnswer,
   parsePairingFaults,
   pruneFaults,
   sameFaultEntry,
+  serializePairingFaults,
   type PairingFault,
   type PairingFaultEntry,
 } from '@/lib/pairing-faults';
@@ -16,22 +18,26 @@ import { useGatewayConnectionStore } from '@/stores/gateway-connection';
  * Which paired computers have refused this device's pairing, kept across
  * launches.
  *
- * Unlike the probes, this is persisted on purpose: a gateway that answered
- * `device_repair_required` will answer it again on the next launch, and
- * probing it anyway -- with a token it has already refused -- is noise on the
- * wire and a red line in every log. The remedy is pairing again, which writes
- * a record with a new `pairedAt`; an entry is bound to the `pairedAt` it was
- * heard for and stops applying the moment that changes (`faultFor`,
- * `pruneFaults`). A computer that accepts the token again -- the gateway was
- * rolled back, say -- clears its entry through `noteAnswer`.
+ * Unlike the probes, a confirmed fault is persisted on purpose: a gateway
+ * that answered `device_repair_required` will answer it again on the next
+ * launch, and probing it on every focus -- with a token it has already
+ * refused -- is noise on the wire and a red line in every log. The remedy is
+ * pairing again, which writes a record with a new `pairedAt`; an entry is
+ * bound to the `pairedAt` it was heard for and stops applying the moment
+ * that changes (`pruneFaults`). Any authenticated answer from the computer
+ * -- a sealed response that opens, a 2xx on a route that took the token --
+ * clears its entry through `noteAnswer`, and a low-rate probe keeps asking
+ * while the fault stands so a forged refusal undoes itself.
  *
- * The rule itself is in `lib/pairing-faults`; this is the persistence and the
- * one seam the transport needs. Not secret, so MMKV rather than the keychain.
+ * The rule itself is in `lib/pairing-faults`, including why one refusal is
+ * only noted and a second one some seconds later confirms it; this is the
+ * persistence and the one seam the transport needs. Not secret, so MMKV
+ * rather than the keychain, and only confirmed faults reach disk.
  */
 type PairingFaultsState = {
   byServer: Readonly<Record<string, PairingFaultEntry>>;
   /** A refusal heard from this computer's own gateway. */
-  noteRefusal: (serverId: string, status: number, body: string) => void;
+  noteRefusal: (serverId: string, status: number, body: string, nowMs?: number) => void;
   /** The computer accepted this device's token: nothing held against it stands. */
   noteAnswer: (serverId: string) => void;
 };
@@ -70,7 +76,7 @@ function loadIndex(): Record<string, PairingFaultEntry> {
 
 function saveIndex(byServer: Readonly<Record<string, PairingFaultEntry>>): void {
   try {
-    storage?.set(INDEX_KEY, JSON.stringify(byServer));
+    storage?.set(INDEX_KEY, serializePairingFaults(byServer));
   } catch {
     // The in-memory index still drives this launch; the next one hears the
     // refusal again and writes it then.
@@ -85,24 +91,24 @@ function recordFor(serverId: string) {
 export const usePairingFaults = create<PairingFaultsState>((set, get) => ({
   byServer: loadIndex(),
 
-  noteRefusal(serverId, status, body) {
+  noteRefusal(serverId, status, body, nowMs = Date.now()) {
     const refusal = classifyPairingRefusal(status, body);
     const record = recordFor(serverId);
     if (!refusal || !record) return;
     const previous = get().byServer[serverId];
-    const next = faultAfterRefusal(previous, refusal, record.pairedAt);
+    const next = faultAfterRefusal(previous, refusal, record.pairedAt, nowMs);
     if (sameFaultEntry(previous, next)) return;
     const byServer = { ...get().byServer, [serverId]: next };
     set({ byServer });
-    saveIndex(byServer);
+    if (previous?.fault !== next.fault) saveIndex(byServer);
   },
 
   noteAnswer(serverId) {
-    if (!get().byServer[serverId]) return;
-    const byServer = { ...get().byServer };
-    delete byServer[serverId];
+    const previous = get().byServer[serverId];
+    if (!previous) return;
+    const byServer = faultsAfterAnswer(get().byServer, serverId);
     set({ byServer });
-    saveIndex(byServer);
+    if (previous.fault) saveIndex(byServer);
   },
 }));
 
@@ -124,13 +130,24 @@ useGatewayConnectionStore.subscribe((state, previous) => {
   saveIndex(pruned);
 });
 
-// The transport reports refusals by the endpoint it spoke to; the token is
-// what identifies the record, because every record's token is its own.
-if (typeof setGatewayRefusalObserver === 'function') {
-  setGatewayRefusalObserver((endpoint, status, body) => {
-    const record = useGatewayConnectionStore
-      .getState()
-      .records.find((entry) => entry.token === endpoint.token);
-    if (record) usePairingFaults.getState().noteRefusal(record.serverId, status, body);
+/** The record whose token this is; every record's token is its own. */
+function recordByToken(token: string) {
+  return useGatewayConnectionStore.getState().records.find((entry) => entry.token === token);
+}
+
+// The transport reports by the endpoint it spoke to, and the token is what
+// identifies the record. An acceptance costs a lookup only while something
+// is held against some computer, which is almost never.
+if (typeof setGatewayAuthObserver === 'function') {
+  setGatewayAuthObserver({
+    refused(endpoint, status, body) {
+      const record = recordByToken(endpoint.token);
+      if (record) usePairingFaults.getState().noteRefusal(record.serverId, status, body);
+    },
+    accepted(endpoint) {
+      if (Object.keys(usePairingFaults.getState().byServer).length === 0) return;
+      const record = recordByToken(endpoint.token);
+      if (record) usePairingFaults.getState().noteAnswer(record.serverId);
+    },
   });
 }
