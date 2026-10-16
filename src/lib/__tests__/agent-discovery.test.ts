@@ -96,6 +96,23 @@ describe('earlier timeline capability', () => {
     ).toBe(true);
   });
 
+  test('the mirror keeps the upload caps a computer named', () => {
+    const discovery = parseGatewayDiscovery({
+      uploads: { maxBytes: 26214400, maxVideoBytes: 67108864 },
+      planes: { agents: { supported: true, agents: [{ id: 'codex' }] } },
+    });
+    const index = withMirroredDiscovery(
+      emptyAgentsMirror(),
+      'server',
+      mirrorDiscovery(discovery, 1)
+    );
+    const restored = parseAgentsMirrorIndex(serializeAgentsMirrorIndex(index));
+    expect(restored.servers.server?.uploads).toEqual({
+      maxBytes: 26214400,
+      maxVideoBytes: 67108864,
+    });
+  });
+
   test('discovery and its persisted mirror retain an explicit provider opt-in', () => {
     const discovery = parseGatewayDiscovery({
       planes: {

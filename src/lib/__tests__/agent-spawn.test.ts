@@ -73,6 +73,15 @@ describe('the agent catalog', () => {
     ]);
   });
 
+  test('reads the ledger deliveries a catalog entry lists', () => {
+    // `src/agents/session_routes.rs` writes `ledger_delivery` on each entry.
+    const [profile] = agentProfilesFromResponse({
+      agents: [{ kind: 'claude', command: 'claude', available: true, ledger_delivery: ['pane'] }],
+      default_startup_timeout_ms: 30_000,
+    });
+    expect(profile.ledgerDelivery).toEqual(['pane']);
+  });
+
   test('a probe the gateway never ran is not a missing agent', () => {
     // `available` absent means the gateway did not look, which is different
     // from having looked and not found it. Only an explicit false dims a row.

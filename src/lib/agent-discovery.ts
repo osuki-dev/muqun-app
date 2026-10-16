@@ -24,6 +24,7 @@ import {
   parseAgentAvailability,
   parseAgentFeatures,
   parseTransportsDiscovery,
+  parseUploadLimits,
   type AgentAvailability,
   type AgentFeatures,
   type AgentInfo,
@@ -34,6 +35,7 @@ import {
   type TransportsDiscovery,
 } from './agent-protocol';
 import { parseKeyboardVocabulary } from './key-vocabulary';
+import type { UploadLimits } from './attachment-queue';
 
 export { DEFAULT_AGENT_ID, normalizeAgentId };
 
@@ -305,6 +307,8 @@ export interface MirroredServerDiscovery {
   ssh: SshDiscovery | null;
   /** The transports it advertised; absent from a gateway that predates them. */
   transports?: TransportsDiscovery;
+  /** The upload caps it named; absent from a gateway that does not say. */
+  uploads?: UploadLimits;
   /** When the answer was taken, so a reader can say how old it is. */
   observedAtMs: number;
 }
@@ -354,6 +358,7 @@ export function mirrorDiscovery(
     terminal: discovery.terminal,
     ssh: discovery.ssh,
     ...(discovery.transports ? { transports: discovery.transports } : {}),
+    ...(discovery.uploads ? { uploads: discovery.uploads } : {}),
     observedAtMs,
   };
 }
@@ -469,7 +474,15 @@ function parseMirroredServer(value: unknown): MirroredServerDiscovery | null {
   const ssh = parseMirroredSsh(value.ssh);
   if (!agents && !terminal && !ssh) return null;
   const transports = parseTransportsDiscovery(value.transports);
-  return { agents, terminal, ssh, ...(transports ? { transports } : {}), observedAtMs };
+  const uploads = parseUploadLimits(value.uploads);
+  return {
+    agents,
+    terminal,
+    ssh,
+    ...(transports ? { transports } : {}),
+    ...(uploads ? { uploads } : {}),
+    observedAtMs,
+  };
 }
 
 function parseIdMap(value: unknown): Record<string, string> {

@@ -4539,8 +4539,17 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     setLoadingEarlier(true);
     const owner = activeAsid;
     void loadEarlierAgentTimeline(sessionId, owner)
+      .then(async (page) => {
+        // The adapter lost the cursor this paging read from (a restart, an
+        // eviction): the snapshot is read again, which gives it one, and the
+        // same pull goes on from there. It is not the end of the history.
+        if (!page.cursorLost || activeAsidRef.current !== owner) return page;
+        await loadSnapshot('refresh');
+        if (activeAsidRef.current !== owner) return page;
+        return loadEarlierAgentTimeline(sessionId, owner);
+      })
       .then((page) => {
-        if (activeAsidRef.current !== owner) return;
+        if (activeAsidRef.current !== owner || page.cursorLost) return;
         if (page.exhausted || page.items.length === 0) {
           setEarlierExhausted(true);
           return;
@@ -4553,7 +4562,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       .finally(() => {
         if (activeAsidRef.current === owner) setLoadingEarlier(false);
       });
-  }, [activeAsid, earlierExhausted, sessionId, setTimeline, supportsRemoteEarlier, windowStart]);
+  }, [
+    activeAsid,
+    earlierExhausted,
+    loadSnapshot,
+    sessionId,
+    setTimeline,
+    supportsRemoteEarlier,
+    windowStart,
+  ]);
 
   // The window grew (or there was nothing left to grow into), so the pull is
   // answered and the indicator can retract.

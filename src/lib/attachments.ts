@@ -11,7 +11,7 @@ import { protectCacheDirectory } from './cache-cleanup';
 import {
   MAX_ATTACHMENTS_PER_PICK,
   type PickedFile,
-  maxUploadBytesFor,
+  attachmentLimitBytes,
   uploadLimitMb,
   type PendingAttachment,
   MAX_UPLOAD_BYTES,
@@ -234,7 +234,7 @@ export function takePickTruncationNotice(): string | null {
  */
 export function describeAttachmentFailure(entry: PendingAttachment): string {
   if (entry.failure === 'too-large')
-    return i18n._(msg`Too large (${uploadLimitMb(maxUploadBytesFor(entry.mime))} MB max)`);
+    return i18n._(msg`Too large (${uploadLimitMb(attachmentLimitBytes(entry))} MB max)`);
   return entry.error ?? i18n._(msg`Upload failed. Tap to retry.`);
 }
 
@@ -244,7 +244,7 @@ export function describeBlockedSend(queue: readonly PendingAttachment[]): string
   if (!failed) return i18n._(msg`Please retry or remove failed attachments.`);
   return failed.failure === 'too-large'
     ? i18n._(
-        msg`${failed.name} is too large (${uploadLimitMb(maxUploadBytesFor(failed.mime))} MB max). Remove it to send.`
+        msg`${failed.name} is too large (${uploadLimitMb(attachmentLimitBytes(failed))} MB max). Remove it to send.`
       )
     : i18n._(msg`${failed.name} did not upload. Retry it or remove it to send.`);
 }

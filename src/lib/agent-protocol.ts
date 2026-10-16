@@ -27,6 +27,7 @@ import { parseKeyboardVocabulary, type KeyboardVocabulary } from './key-vocabula
 import { parseMessageImageAssets, type MessageImageAsset } from './message-images';
 import { stripTaskInstruction } from './task-plumbing';
 import { asRecord } from './record';
+import type { UploadLimits } from './attachment-queue';
 
 export { asRecord } from './record';
 
@@ -2076,7 +2077,11 @@ export interface AgentInfo {
   models: AgentModelSummary[];
   modes: AgentModeSummary[];
   features: AgentFeatures;
-  /** The ledger deliveries this agent offers (`ledger_delivery`); absent on an older gateway. */
+  /**
+   * The ledger deliveries this agent offers: `ledgerDelivery` on a discovery
+   * entry, like the rest of that document; `ledger_delivery` on a terminal
+   * catalog entry. Absent on an older gateway.
+   */
   ledgerDelivery?: LedgerDelivery[];
 }
 
@@ -2136,6 +2141,7 @@ export function parseAgentInfo(value: unknown): AgentInfo | null {
       if (mode) modes.push(mode);
     }
   }
+  const ledgerDelivery = parseLedgerDelivery(rec.ledgerDelivery ?? rec.ledger_delivery);
   return {
     id,
     kind,
@@ -2150,9 +2156,7 @@ export function parseAgentInfo(value: unknown): AgentInfo | null {
     models,
     modes,
     features: parseAgentFeatures(rec.features),
-    ...(parseLedgerDelivery(rec.ledger_delivery)
-      ? { ledgerDelivery: parseLedgerDelivery(rec.ledger_delivery) }
-      : {}),
+    ...(ledgerDelivery ? { ledgerDelivery } : {}),
   };
 }
 
@@ -2258,6 +2262,27 @@ export interface GatewayDiscovery {
   ssh: SshDiscovery | null;
   /** Absent on a gateway that predates `transports`. */
   transports?: TransportsDiscovery;
+  /** What `POST /api/uploads` takes, in bytes; absent on a gateway that does not say. */
+  uploads?: UploadLimits;
+}
+
+/**
+ * `uploads` from discovery: `{ maxBytes, maxVideoBytes }`, each a positive
+ * whole number of bytes. A number that is not one is left out, and the
+ * app's own cap stands for that type.
+ */
+export function parseUploadLimits(value: unknown): UploadLimits | undefined {
+  const rec = asRecord(value);
+  if (!rec) return undefined;
+  const bytes = (entry: unknown) =>
+    typeof entry === 'number' && Number.isSafeInteger(entry) && entry > 0 ? entry : undefined;
+  const maxBytes = bytes(rec.maxBytes);
+  const maxVideoBytes = bytes(rec.maxVideoBytes);
+  if (maxBytes === undefined && maxVideoBytes === undefined) return undefined;
+  return {
+    ...(maxBytes !== undefined ? { maxBytes } : {}),
+    ...(maxVideoBytes !== undefined ? { maxVideoBytes } : {}),
+  };
 }
 
 /**
@@ -2360,11 +2385,13 @@ export function parseGatewayDiscovery(value: unknown): GatewayDiscovery {
   }
   const planes = asRecord(rec.planes) ?? {};
   const transports = parseTransportsDiscovery(rec.transports);
+  const uploads = parseUploadLimits(rec.uploads);
   return {
     agents: parseAgentsDiscovery(rec),
     terminal: parseTerminalDiscovery(planes.terminal),
     ssh: parseSshDiscovery(planes.ssh),
     ...(transports ? { transports } : {}),
+    ...(uploads ? { uploads } : {}),
   };
 }
 
