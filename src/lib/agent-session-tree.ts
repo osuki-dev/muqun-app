@@ -242,14 +242,96 @@ export interface SessionChildrenInventory {
   authoritative: boolean;
 }
 
-/** Walk every discovered branch, with at most four requests in flight. */
+/** A whole subtree in one answer, flat; see `listAgentSessionDescendantsObserved`. */
+export interface SessionDescendantsInventory {
+  descendants: readonly AgentSessionInfo[];
+  authoritative: boolean;
+  truncated: boolean;
+}
+
+/**
+ * A flat subtree sorted into per-parent inventories, the shape the walk
+ * reports in: the root and every descendant that is itself listed get an
+ * entry, so a parent whose children are all gone is reported empty rather
+ * than left alone. A session naming a parent that is not in the subtree is
+ * dropped: it is not under this root, whatever it says. A deleted session
+ * stays in its parent's list -- the merge removes it -- but has no children
+ * entry of its own.
+ */
+export function groupDescendantsByParent(
+  rootAsid: string,
+  descendants: readonly AgentSessionInfo[]
+): Record<string, AgentSessionInfo[]> {
+  const byParent = new Map<string, AgentSessionInfo[]>();
+  for (const session of descendants) {
+    const parent = session.parent_id;
+    if (!parent || !isChildSession(session, parent)) continue;
+    const siblings = byParent.get(parent);
+    if (siblings) siblings.push(session);
+    else byParent.set(parent, [session]);
+  }
+  // Walked from the root rather than taken as listed, so a session that
+  // names a parent outside the subtree is left out and a `parent_id` cycle
+  // -- which a remote program can send -- ends with the sessions it reaches.
+  const grouped: Record<string, AgentSessionInfo[]> = {};
+  const queue = [rootAsid];
+  const seen = new Set(queue);
+  for (let index = 0; index < queue.length; index += 1) {
+    const parent = queue[index];
+    const children = byParent.get(parent) ?? [];
+    grouped[parent] = children;
+    for (const child of children) {
+      if (child.deleted || seen.has(child.asid)) continue;
+      seen.add(child.asid);
+      queue.push(child.asid);
+    }
+  }
+  return grouped;
+}
+
+/**
+ * Discover a root's whole subtree.
+ *
+ * With `listDescendants` -- the gateway advertised `session_descendants` --
+ * it is one request, sorted into the same per-parent inventories the walk
+ * would have reported, each authoritative. A subtree the gateway cut short
+ * (`truncated`) is reported non-authoritatively, so nothing it listed can
+ * erase a child the stream announced, and then walked from the root as
+ * before with what it listed as the known starting point: correctness costs
+ * the old number of requests only in that case. A descendants request that
+ * fails is also walked, so a gateway that advertised the route and then
+ * refused it degrades to the old behaviour rather than to nothing.
+ *
+ * Without it, the walk: every discovered branch, at most four requests in flight.
+ */
 export async function loadSessionDescendants(input: {
   rootAsid: string;
   known: ChildrenByParent;
   listChildren: (asid: string) => Promise<SessionChildrenInventory>;
+  /** One request for the whole subtree, when the gateway offers it. */
+  listDescendants?: (asid: string) => Promise<SessionDescendantsInventory>;
   isCurrent: () => boolean;
   onChildren: (parent: string, inventory: SessionChildrenInventory) => void;
 }): Promise<void> {
+  let known = input.known;
+  if (input.listDescendants) {
+    let inventory: SessionDescendantsInventory | null = null;
+    try {
+      inventory = await input.listDescendants(input.rootAsid);
+    } catch {
+      inventory = null;
+    }
+    if (!input.isCurrent()) return;
+    if (inventory?.authoritative) {
+      const grouped = groupDescendantsByParent(input.rootAsid, inventory.descendants);
+      const authoritative = !inventory.truncated;
+      for (const [parent, children] of Object.entries(grouped)) {
+        input.onChildren(parent, { children, authoritative });
+      }
+      if (authoritative) return;
+      known = { ...known, ...grouped };
+    }
+  }
   const pending = [input.rootAsid];
   const scheduled = new Set(pending);
   let offset = 0;
@@ -269,7 +351,7 @@ export async function loadSessionDescendants(input: {
         input.onChildren(parent, inventory);
         const discovered = inventory.authoritative
           ? inventory.children
-          : [...(input.known[parent] ?? []), ...inventory.children];
+          : [...(known[parent] ?? []), ...inventory.children];
         for (const child of discovered) {
           if (child.deleted || !isChildSession(child, parent) || scheduled.has(child.asid)) {
             continue;

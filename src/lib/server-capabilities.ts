@@ -102,3 +102,42 @@ export function parseServerCapabilitiesIndex(value: string): ServerCapabilitiesI
     return {};
   }
 }
+
+/**
+ * The gateway can answer a session's whole subtree in one request
+ * (`GET /api/agent-sessions/{asid}/descendants`). Advertised in the content
+ * envelope of the agent-session routes, beside `parts` and `assets`, not in
+ * `/health`.
+ */
+export const SESSION_DESCENDANTS_CAPABILITY = 'session_descendants';
+
+/**
+ * The names a content envelope's `capabilities` object switches on.
+ *
+ * The envelope carries an object, not `/health`'s list: `{ parts: true,
+ * assets: true, session_descendants: true }`, where a per-pane entry may
+ * name a strategy (`"dictionary"`) rather than say `true`. A name counts
+ * when its value is `true` or a non-empty string other than `"none"`, the
+ * same reading `pane-parts` gives it; anything else is off.
+ */
+export function envelopeCapabilityNames(value: unknown): string[] {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return [];
+  const names: string[] = [];
+  for (const [name, enabled] of Object.entries(value as Record<string, unknown>)) {
+    const on =
+      enabled === true || (typeof enabled === 'string' && enabled.length > 0 && enabled !== 'none');
+    if (!on || !name || name.length > MAX_CAPABILITY_LENGTH) continue;
+    names.push(name);
+    if (names.length >= MAX_CAPABILITIES) break;
+  }
+  return names;
+}
+
+/** Whether a name has been seen switched on in some envelope from this server. */
+export function hasObservedCapability(
+  observed: Readonly<Record<string, readonly string[]>>,
+  serverId: string | null | undefined,
+  name: string
+): boolean {
+  return Boolean(serverId && observed[serverId]?.includes(name));
+}

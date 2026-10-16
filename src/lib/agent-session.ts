@@ -21,6 +21,7 @@ import {
 } from './gateway-client';
 import { streamRecordCrypto } from './gateway-transport';
 import { noteGatewayGeneration } from '@/stores/gateway-connection-generation';
+import { useServerCapabilities } from '@/stores/server-capabilities';
 import { connectAgentStream, type AgentStreamResponse } from './agent-stream';
 import { isShellNotFoundError } from './agent-shell-errors';
 import type { FileMentionHit } from './file-mentions';
@@ -172,6 +173,16 @@ function usesOfflineDemo(endpoint?: { url?: string }): boolean {
     isDemoActive() &&
     (!endpoint?.url || endpoint.url.replace(/\/$/, '') === gatewayUrl(''))
   );
+}
+
+/**
+ * What the envelope says the gateway can do, filed under the configured
+ * server so the next screen can act on it without asking (`observe`).
+ */
+function observeEnvelopeCapabilities(json: unknown): void {
+  const capabilities = asRecord(json)?.capabilities;
+  if (capabilities === undefined) return;
+  useServerCapabilities.getState().observe(configuredGatewayServerId(), capabilities);
 }
 
 /** The `data` of the gateway's envelope, or the body when it has none. */
@@ -457,12 +468,58 @@ export async function listAgentSessionChildrenObserved(
   try {
     const res = await gatewayFetch(url, { method: 'GET', headers });
     if (!res.ok) return { children: [], authoritative: false };
+    const json = await res.json();
+    observeEnvelopeCapabilities(json);
     return {
-      children: parseAgentSessionList(envelopeData(await res.json())),
+      children: parseAgentSessionList(envelopeData(json)),
       authoritative: true,
     };
   } catch {
     return { children: [], authoritative: false };
+  }
+}
+
+export interface AgentSessionDescendantsInventory {
+  /** Every session under the one asked about, at every depth, flat. */
+  descendants: AgentSessionInfo[];
+  /** True only when the Gateway successfully answered this exact request. */
+  authoritative: boolean;
+  /** The gateway stopped short of the whole subtree; deeper levels are unlisted. */
+  truncated: boolean;
+}
+
+/**
+ * A session's whole subtree in one request
+ * (`GET /api/agent-sessions/{asid}/descendants`): the same query, auth,
+ * envelope and list shape as `/children`, flattened over every depth, with
+ * an optional `truncated: true` beside the list when the gateway cut it
+ * short. Only for a gateway that advertised `session_descendants`
+ * (`SESSION_DESCENDANTS_CAPABILITY`); an older one answers 404, which is
+ * reported as not authoritative so the caller walks instead.
+ */
+export async function listAgentSessionDescendantsObserved(
+  asid: string,
+  query?: Omit<ListAgentSessionsQuery, 'parent_id' | 'roots'>
+): Promise<AgentSessionDescendantsInventory> {
+  const none = { descendants: [], authoritative: false, truncated: false };
+  if (usesOfflineDemo()) return { ...none, authoritative: true };
+  if (!asid || !isGatewayConfigured()) return none;
+  const path = `${sessionRoute(asid, '/descendants')}${agentSessionListQuery(query)}`;
+  const url = gatewayUrl(path);
+  const headers = gatewayAuthHeaders();
+  try {
+    const res = await gatewayFetch(url, { method: 'GET', headers });
+    if (!res.ok) return none;
+    const json = await res.json();
+    observeEnvelopeCapabilities(json);
+    const data = envelopeData(json);
+    // `truncated` sits beside the list: inside `data` when the list is wrapped
+    // (`{ sessions, truncated }`), beside `data` when the list is `data` itself.
+    const truncated =
+      (Array.isArray(data) ? asRecord(json)?.truncated : asRecord(data)?.truncated) === true;
+    return { descendants: parseAgentSessionList(data), authoritative: true, truncated };
+  } catch {
+    return none;
   }
 }
 
@@ -566,7 +623,11 @@ export async function getAgentSessionSnapshot(
   if (!res.ok) {
     throw new Error(`Failed to get agent session: ${res.status} ${await res.text()}`);
   }
-  return parseAgentSessionSnapshot(envelopeData(await res.json()));
+  const json = await res.json();
+  // The snapshot is the first agent-session answer a workbench reads, so
+  // what its envelope advertises decides how the subtree is fetched next.
+  observeEnvelopeCapabilities(json);
+  return parseAgentSessionSnapshot(envelopeData(json));
 }
 
 export async function deleteAgentSession(asid: string): Promise<void> {

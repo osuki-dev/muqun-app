@@ -2,6 +2,7 @@ import * as SecureStore from 'expo-secure-store';
 import { create } from 'zustand';
 
 import {
+  envelopeCapabilityNames,
   normalizeCapabilities,
   parseServerCapabilitiesIndex,
   sameCapabilities,
@@ -21,14 +22,25 @@ import {
 type ServerCapabilitiesState = {
   hydrated: boolean;
   byServer: ServerCapabilitiesIndex;
+  /**
+   * What the content envelopes of a server's agent-session routes have said
+   * they can do (`envelopeCapabilityNames`), this launch. Memory only: the
+   * first such answer after a launch teaches it again, and that answer is one
+   * the screen was making anyway. Separate from `byServer`, which is the
+   * `/health` list and is replaced whole by every health answer.
+   */
+  observed: ServerCapabilitiesIndex;
   hydrate: () => Promise<void>;
   /** Writes down what `/health` just said. */
   record: (serverId: string, capabilities: unknown) => Promise<void>;
+  /** Notes what a content envelope's `capabilities` object switched on. */
+  observe: (serverId: string | null | undefined, capabilities: unknown) => void;
 };
 
 export const useServerCapabilities = create<ServerCapabilitiesState>((set, get) => ({
   hydrated: false,
   byServer: {},
+  observed: {},
 
   async hydrate() {
     if (get().hydrated) return;
@@ -48,6 +60,18 @@ export const useServerCapabilities = create<ServerCapabilitiesState>((set, get) 
     const byServer = withMirroredCapabilities(get().byServer, serverId, names);
     set({ byServer });
     await saveIndex(byServer);
+  },
+
+  observe(serverId, capabilities) {
+    if (!serverId) return;
+    const names = envelopeCapabilityNames(capabilities);
+    const known = get().observed[serverId] ?? [];
+    const added = names.filter((name) => !known.includes(name));
+    // Only ever grows within a launch: an envelope that happens not to carry
+    // the object -- an older route, an error body -- is not the gateway
+    // taking a capability back.
+    if (added.length === 0) return;
+    set({ observed: { ...get().observed, [serverId]: [...known, ...added] } });
   },
 }));
 
