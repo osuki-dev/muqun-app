@@ -105,8 +105,11 @@ import { claimHomeFirstEntry, hasHomeComposerRevealed } from '@/lib/home-first-e
 import { useThemePack } from '@/hooks/use-theme-pack';
 import { useLaunchHandoff } from '@/stores/launch-handoff';
 import {
+  HOME_DOCK_OUTER_BOTTOM_INSET,
+  HOME_DOCK_OUTER_INSET,
   nextRestingInset,
   PAD_DOCK_FIELD_LINES,
+  padDockOuterInset,
   padHomeColumns,
   padLaunchLayoutEnabled,
   type RestingInset,
@@ -1028,12 +1031,23 @@ export function HomeOverview({
       targetPulse={composerPulse}
       bottomInset={padLaunch ? 0 : insets.bottom}
       topInset={insets.top}
-      outerInsets={isPad ? undefined : { horizontal: 12, bottom: 8 }}
       // Phone Home has a small gutter outside the field and its shadow.
-      // On the Pad cover, the same bar as wide as the work column, its rows
-      // padded like the cards' rows, and a field with room for a paragraph.
-      // A Pad too narrow for the cover (portrait, large text) keeps the
-      // phone's full-width bar.
+      // On the Pad cover, the bar is capped at the phone dock's width and
+      // centred in the cover column (`padDockOuterInset`), so the field and
+      // the theme's decoration fit to it keep the phone's proportions; its
+      // rows are padded like the cards' rows, and the field has room for a
+      // paragraph. A Pad too narrow for the cover (portrait, large text)
+      // keeps the phone's full-width bar.
+      outerInsets={
+        padLaunch
+          ? {
+              horizontal: padDockOuterInset(padHomeColumns(padGeometry.innerWidth).cover),
+              bottom: 0,
+            }
+          : isPad
+            ? undefined
+            : { horizontal: HOME_DOCK_OUTER_INSET, bottom: HOME_DOCK_OUTER_BOTTOM_INSET }
+      }
       edgeBar={
         padLaunch
           ? { inset: HOME_CARD_INSET }
