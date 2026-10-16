@@ -7564,6 +7564,10 @@ msgstr "ข้อความของคุณ"
 msgid "Your paired computers"
 msgstr "คอมพิวเตอร์ที่คุณจับคู่ไว้"
 
+#: src/lib/network-error.ts
+msgid "Your phone's clock is off by {minutes} minutes. Fix the date and time, then try again."
+msgstr "นาฬิกาของโทรศัพท์คลาดเคลื่อน {minutes} นาที แก้ไขวันที่และเวลาแล้วลองอีกครั้ง"
+
 #: src/components/image-preview-modal.tsx
 msgid "Zoom in"
 msgstr "ซูมเข้า"

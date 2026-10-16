@@ -7564,6 +7564,10 @@ msgstr "Ваше сообщение"
 msgid "Your paired computers"
 msgstr "Ваши привязанные компьютеры"
 
+#: src/lib/network-error.ts
+msgid "Your phone's clock is off by {minutes} minutes. Fix the date and time, then try again."
+msgstr "Часы этого телефона отстают или спешат на {minutes} мин. Исправьте дату и время и повторите попытку"
+
 #: src/components/image-preview-modal.tsx
 msgid "Zoom in"
 msgstr "Увеличить"

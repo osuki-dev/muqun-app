@@ -7564,6 +7564,10 @@ msgstr "你的消息"
 msgid "Your paired computers"
 msgstr "你已配对的电脑"
 
+#: src/lib/network-error.ts
+msgid "Your phone's clock is off by {minutes} minutes. Fix the date and time, then try again."
+msgstr "手机时钟偏差了 {minutes} 分钟。请校正日期和时间后重试"
+
 #: src/components/image-preview-modal.tsx
 msgid "Zoom in"
 msgstr "放大"

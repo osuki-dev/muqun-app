@@ -7564,6 +7564,10 @@ msgstr "내 메시지"
 msgid "Your paired computers"
 msgstr "페어링된 컴퓨터"
 
+#: src/lib/network-error.ts
+msgid "Your phone's clock is off by {minutes} minutes. Fix the date and time, then try again."
+msgstr "이 휴대폰의 시계가 {minutes}분 어긋나 있습니다. 날짜와 시간을 맞춘 뒤 다시 시도하세요"
+
 #: src/components/image-preview-modal.tsx
 msgid "Zoom in"
 msgstr "확대"
