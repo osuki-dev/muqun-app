@@ -388,15 +388,15 @@ const rankingInput = {
   },
 };
 
-test('agent sessions precede a terminal visited between their update times', () => {
+test("a terminal visited between two sessions' update times sits between them", () => {
   const rows = homeContinueEntries({ ...rankingInput, recents: [terminalVisit] });
   expect(rows.map((row) => row.title)).toEqual([
     'newer task',
-    'older task',
     'Shell',
+    'older task',
     'Current agent title',
   ]);
-  expect(rows.map((row) => row.atMs)).toEqual([T + 1_000, T - 1_000, T, 0]);
+  expect(rows.map((row) => row.atMs)).toEqual([T + 1_000, T, T - 1_000, 0]);
 });
 
 test('a terminal with neither a visit nor activity ranks last', () => {
@@ -413,11 +413,11 @@ test('a visited plain terminal survives the agents-only pane filter', () => {
   });
   expect(rows.map((row) => row.title)).toEqual([
     'newer task',
-    'older task',
     'zsh',
+    'older task',
     'Current agent title',
   ]);
-  expect(rows[2]?.destination).toEqual({ type: 'recent', target: terminalVisit.target });
+  expect(rows[1]?.destination).toEqual({ type: 'recent', target: terminalVisit.target });
   // Unvisited plain panes still follow the filter.
   expect(
     homeContinueEntries({ ...rankingInput, paneMode: 'agents' }).some(

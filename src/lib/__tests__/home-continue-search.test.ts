@@ -58,7 +58,7 @@ test('clear and whitespace restore the exact collapsed or expanded ordering', ()
   expect(searchedHomeContinueEntries(entries, 'not a session', false, 4)).toEqual([]);
 });
 
-test('session-first inventory is sorted before limits, search and computer filtering without losing terminals', () => {
+test('inventory is sorted by recency before limits, search and computer filtering without losing terminals', () => {
   const rows = homeContinueEntries({
     serverIds: ['server'],
     hostIds: [],
@@ -93,20 +93,20 @@ test('session-first inventory is sorted before limits, search and computer filte
     },
   });
   expect(rows.map((row) => row.title)).toEqual([
+    'Session terminal',
     'Session 5',
     'Session 4',
     'Session 3',
     'Session 2',
     'Session 1',
     'Session 0',
-    'Session terminal',
   ]);
   expect(shouldShowHomeContinueOverflow(rows)).toBe(true);
   expect(searchedHomeContinueEntries(rows, '', false, undefined)).toEqual(rows.slice(0, 5));
   expect(searchedHomeContinueEntries(rows, '', false, 2)).toEqual(rows.slice(0, 2));
   expect(searchedHomeContinueEntries(rows, '', true, undefined)).toBe(rows);
   expect(searchedHomeContinueEntries(rows, 'session', false, 2)).toEqual(rows);
-  expect(searchedHomeContinueEntries(rows, 'terminal', false, undefined)).toEqual([rows[6]]);
+  expect(searchedHomeContinueEntries(rows, 'terminal', false, undefined)).toEqual([rows[0]]);
   expect(filterHomeRecent(rows, 'server')).toEqual(rows);
   expect(searchedHomeContinueEntries(rows, '  ', false, undefined)).toEqual(rows.slice(0, 5));
 });
