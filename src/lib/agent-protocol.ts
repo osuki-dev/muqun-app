@@ -22,6 +22,7 @@
  */
 
 import { parseAgentSessionRuntime, type AgentSessionRuntime } from './agent-session-runtime';
+import { parseLedgerDelivery, type LedgerDelivery } from './task-ledger';
 import { parseKeyboardVocabulary, type KeyboardVocabulary } from './key-vocabulary';
 import { parseMessageImageAssets, type MessageImageAsset } from './message-images';
 import { stripTaskInstruction } from './task-plumbing';
@@ -2075,6 +2076,8 @@ export interface AgentInfo {
   models: AgentModelSummary[];
   modes: AgentModeSummary[];
   features: AgentFeatures;
+  /** The ledger deliveries this agent offers (`ledger_delivery`); absent on an older gateway. */
+  ledgerDelivery?: LedgerDelivery[];
 }
 
 /** The agents plane, as `AgentPlaneDiscovery` on the gateway. */
@@ -2147,6 +2150,9 @@ export function parseAgentInfo(value: unknown): AgentInfo | null {
     models,
     modes,
     features: parseAgentFeatures(rec.features),
+    ...(parseLedgerDelivery(rec.ledger_delivery)
+      ? { ledgerDelivery: parseLedgerDelivery(rec.ledger_delivery) }
+      : {}),
   };
 }
 
