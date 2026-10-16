@@ -22,7 +22,7 @@ import { DEMO_STREAMING_ASID, isDemoRecord } from '@/lib/demo-gateway';
 import AppDrawer from '@/components/app-drawer';
 import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
 import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
-import { SessionActionIcon, WorkspacePillContent } from '@/components/agent-header-morph';
+import { NewSessionIcon, WorkspacePillContent } from '@/components/agent-header-morph';
 import { AgentTitlePill } from '@/components/agent-title-pill';
 import { GlassChrome } from '@/components/glass-chrome';
 import { PressableScale } from '@/components/pressable-scale';
@@ -47,8 +47,8 @@ import {
  * 1. The interactive project / workspace pill in the center (touch to switch
  *    workspaces), which shows the live session title while the agent is
  *    producing output and switches back once it goes idle.
- * 2. Dedicated '+' New Session button on the right, which morphs into a Stop
- *    control while the session is running.
+ * 2. Dedicated '+' New Session button on the right. Stop lives on the composer
+ *    row only, so the corner means one thing whatever the session is doing.
  */
 export default function AgentScreen() {
   const { t } = useLingui();
@@ -118,7 +118,6 @@ export default function AgentScreen() {
     isAgentWorkbenchOwnedOverlayPath(pathname);
 
   const createNewSessionRef = useRef<(() => void) | null>(null);
-  const abortSessionRef = useRef<(() => void) | null>(null);
 
   const displayWorkspaceName = workspaceDisplayName(activeProject, activeDirectory, t`Project`);
   const displayWorkspacePath = activeDirectory || activeProject?.canonical || '~/';
@@ -186,7 +185,6 @@ export default function AgentScreen() {
             topInset={insets.top + DETAIL_HEADER_HEIGHT}
             bottomInset={insets.bottom}
             createNewSessionRef={createNewSessionRef}
-            abortSessionRef={abortSessionRef}
           />
         ) : (
           <View style={styles.serverWait}>
@@ -238,16 +236,10 @@ export default function AgentScreen() {
             <PressableScale
               testID="agent-header-new-session"
               accessibilityRole="button"
-              accessibilityLabel={sessionRunning ? t`Stop agent` : t`New session`}
-              onPress={() => {
-                if (sessionRunning) {
-                  abortSessionRef.current?.();
-                } else {
-                  createNewSessionRef.current?.();
-                }
-              }}
+              accessibilityLabel={t`New session`}
+              onPress={() => createNewSessionRef.current?.()}
               style={navHeaderButtonStyle}>
-              <SessionActionIcon running={sessionRunning} />
+              <NewSessionIcon />
             </PressableScale>
           </NavHeaderCircle>
         </DetailHeader>

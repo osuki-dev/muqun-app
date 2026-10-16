@@ -1,7 +1,7 @@
 import { ThemeIcon } from '@/components/theme-icon';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
-import { ChevronDown, FolderGit2, Plus, Square } from 'lucide-react-native';
+import { ChevronDown, FolderGit2, Plus } from 'lucide-react-native';
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
@@ -16,14 +16,14 @@ import { fadeIn, PRESET, timing } from '@/lib/motion';
 import { AGENT_TYPE } from '@/constants/agent-type';
 
 /**
- * The two morphs the agent header is built from.
+ * The agent header's controls.
  *
- * Both were written inline in `src/app/agent.tsx`. They are reusable controls
+ * They were written inline in `src/app/agent.tsx`. They are reusable controls
  * rather than screen furniture -- the SSH and server headers want the same
  * pair -- so they live here next to `nav-header.tsx`, and the screen keeps only
  * the wiring.
  *
- * Both follow the same rule, which is the one `workspace-title-switcher.tsx`
+ * The pill's morph follows the rule `workspace-title-switcher.tsx`
  * established: the state that is leaving clears before the state arriving
  * commits. Out on `dropdown` (the shorter preset), in on `short` after it. A
  * symmetric cross-fade shows both states at half strength through the middle,
@@ -31,80 +31,30 @@ import { AGENT_TYPE } from '@/constants/agent-type';
  * for.
  */
 
-/**
- * How small a departing layer is allowed to get.
- *
- * It used to be 0.55, which meant the midpoint of the cross-fade showed *two*
- * small glyphs rather than one continuous shape. 0.8 keeps enough of the
- * outgoing form on screen for the eye to follow it into the incoming one.
- */
-const MORPH_SCALE_FLOOR = 0.8;
-
-/**
- * `Plus` is four-fold symmetric, so rotating it 90 degrees is a visual no-op --
- * the glyph lands on itself and the rotation was invisible. At 45 the `+` reads
- * as turning into an `x` on its way out, which is the half-beat that sells the
- * change into the filled stop square.
- */
-const PLUS_ROTATION_DEGREES = 45;
-
 /** How far the departing title slides, and the arriving one slides in from. */
 const PILL_SLIDE_DISTANCE = 6;
 
 /**
- * The `+` that becomes a Stop control while the session is producing output,
- * morphing back once it goes idle. Both icons stay mounted and cross-fade so
- * the switch reads as one control changing, not two trading places.
+ * The header's `+`: a new session, whatever the open one is doing.
+ *
+ * It used to become a Stop control while the session was producing output.
+ * That put interrupt in two places with two meanings -- the composer row's
+ * Stop ends the turn being read, the header's ended whichever turn the store
+ * said was running -- and a reader reaching for a new session mid-turn got
+ * the other one. Stop now lives on the composer row only, and this corner
+ * means one thing.
  */
-export function SessionActionIcon({ running }: { running: boolean }) {
+export function NewSessionIcon() {
   const theme = useThemeTokens();
-  const plus = useSharedValue(running ? 0 : 1);
-  const stop = useSharedValue(running ? 1 : 0);
-
-  useEffect(() => {
-    // Asymmetric on purpose: whichever glyph is leaving goes out on the
-    // shorter preset, and the one arriving starts only once it has gone.
-    if (running) {
-      plus.set(withTiming(0, timing('dropdown')));
-      stop.set(withDelay(PRESET.dropdown, withTiming(1, timing('short'))));
-    } else {
-      stop.set(withTiming(0, timing('dropdown')));
-      plus.set(withDelay(PRESET.dropdown, withTiming(1, timing('short'))));
-    }
-  }, [running, plus, stop]);
-
-  const plusStyle = useAnimatedStyle(() => ({
-    opacity: plus.value,
-    transform: [
-      { scale: MORPH_SCALE_FLOOR + (1 - MORPH_SCALE_FLOOR) * plus.value },
-      { rotate: `${(1 - plus.value) * PLUS_ROTATION_DEGREES}deg` },
-    ],
-  }));
-
-  const stopStyle = useAnimatedStyle(() => ({
-    opacity: stop.value,
-    transform: [{ scale: MORPH_SCALE_FLOOR + (1 - MORPH_SCALE_FLOOR) * stop.value }],
-  }));
-
   return (
     <View pointerEvents="none" style={styles.actionIconStack}>
-      <Animated.View style={[styles.actionIconLayer, plusStyle]}>
-        <ThemeIcon
-          name="chrome.create"
-          fallback={Plus}
-          size={18}
-          color={theme.colors.text}
-          strokeWidth={2.2}
-        />
-      </Animated.View>
-      <Animated.View style={[styles.actionIconLayer, stopStyle]}>
-        <Square
-          size={14}
-          color={theme.colors.danger}
-          strokeWidth={2.4}
-          fill={theme.colors.danger}
-        />
-      </Animated.View>
+      <ThemeIcon
+        name="chrome.create"
+        fallback={Plus}
+        size={18}
+        color={theme.colors.text}
+        strokeWidth={2.2}
+      />
     </View>
   );
 }
@@ -247,11 +197,6 @@ const styles = StyleSheet.create({
   actionIconStack: {
     width: '100%',
     height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  actionIconLayer: {
-    position: 'absolute',
     alignItems: 'center',
     justifyContent: 'center',
   },
