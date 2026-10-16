@@ -2,9 +2,14 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Monitor } from 'lucide-react-native';
-import { useLayoutEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { LayoutAnimationConfig } from 'react-native-reanimated';
+import Animated, {
+  LayoutAnimationConfig,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import { useShallow } from 'zustand/react/shallow';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -22,6 +27,7 @@ import { HOME_CONTINUE_INITIAL_LIMIT } from '@/lib/home-continue';
 import {
   buildComputerCards,
   heldCardOrder,
+  lastKnownActivityCaption,
   pendingShown,
   taskRowRank,
   type ComputerCard,
@@ -32,7 +38,7 @@ import { isTerminalTaskState } from '@/lib/task-ledger';
 import { useDeadlineNow } from '@/hooks/use-deadline-now';
 import { useMinuteNow } from '@/hooks/use-minute-now';
 import { PAD_CARD_GAP, padCardColumns } from '@/lib/home-pad-geometry';
-import { fadeOut, listLayout, riseIn } from '@/lib/motion';
+import { fadeOut, listLayout, riseIn, timing } from '@/lib/motion';
 import { useConnectionStatuses, useHomeReachability } from '@/hooks/use-home-reachability';
 import {
   statusNeedsPairing,
@@ -350,8 +356,13 @@ function ComputerCardView({
   // A followed ledger can retain a list while its socket is reconnecting or
   // unavailable. Keep that history, but do not animate its remembered status
   // as current activity merely because a health probe or terminal stream is up.
-  const taskChannelLive = useServerChannels((state) => state.sockets[server.serverId] === 'open');
-  const statusCurrent = followed && taskChannelLive;
+  const taskSocket = useServerChannels((state) => state.sockets[server.serverId]);
+  const statusCurrent = followed && taskSocket === 'open';
+  const cachedCaption = lastKnownActivityCaption({
+    followed,
+    socket: taskSocket,
+    rows: card.now.length + card.finished.length,
+  });
   // A card says its computer's connection only when something is wrong with
   // it; a reachable computer is just its name (§3a).
   const statusColor = statusNeedsPairing(status)
@@ -421,13 +432,11 @@ function ComputerCardView({
 
       {followed ? (
         <View style={styles.block}>
-          {!statusCurrent && card.now.length + card.finished.length > 0 ? (
-            <Text
+          {cachedCaption !== 'none' ? (
+            <LastKnownActivityCaption
+              shown={cachedCaption === 'shown'}
               testID={`home-card-cached-${server.serverId}`}
-              variant="caption"
-              color={theme.colors.textMuted}>
-              {t`Last known activity`}
-            </Text>
+            />
           ) : null}
           {/* One keyed list, not one per section: a task moving between Now
               and Just finished (it finished, or it was reopened) is the same
@@ -473,6 +482,39 @@ function ComputerCardView({
         </View>
       )}
     </View>
+  );
+}
+
+/**
+ * "Last known activity", in a slot that is always there once the card has
+ * rows. The caption used to mount above the keyed task rows the moment the
+ * socket closed and leave by unmounting, so every arrival pushed the rows
+ * down through a layout transition -- and in the app switcher, where
+ * Reanimated has stopped, the snapshot caught the first frame of that move
+ * with the caption drawn across the first row's title. The text now keeps its
+ * line and only fades, so nothing around it ever moves.
+ */
+function LastKnownActivityCaption({ shown, testID }: { shown: boolean; testID: string }) {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  const opacity = useSharedValue(shown ? 1 : 0);
+  useEffect(() => {
+    opacity.set(withTiming(shown ? 1 : 0, timing('micro')));
+  }, [opacity, shown]);
+  const fade = useAnimatedStyle(() => ({ opacity: opacity.get() }));
+  return (
+    <Animated.View
+      style={fade}
+      accessibilityElementsHidden={!shown}
+      importantForAccessibility={shown ? 'auto' : 'no-hide-descendants'}>
+      <Text
+        testID={shown ? testID : undefined}
+        variant="caption"
+        color={theme.colors.textMuted}
+        numberOfLines={1}>
+        {t`Last known activity`}
+      </Text>
+    </Animated.View>
   );
 }
 
