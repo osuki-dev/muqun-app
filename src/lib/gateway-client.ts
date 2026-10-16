@@ -69,6 +69,11 @@ import {
   classifyTransportRefusal,
 } from './gateway-refusal';
 import {
+  bearerLeavesGateway,
+  CLEARTEXT_TOKEN_REFUSAL,
+  endpointCredentialRoute,
+} from './gateway-request-policy';
+import {
   decodeSealedBody,
   ENVELOPE_ACCEPT_ENCODINGS,
   ENVELOPE_ACCEPT_HEADER,
@@ -667,20 +672,37 @@ export function forgetInFlightGets(): void {
  * are module state and so identical for two calls that overlap in time. What a
  * caller passed for itself *is* in the key.
  */
+/**
+ * How a request may carry credentials beyond the defaults.
+ *
+ * `plainRecord` is the explicit route for a stored record that has no
+ * transport key: the caller named the record, put its bearer token on the
+ * request itself, and the request goes out in the clear to that record's
+ * origin. The configured gateway's own token is never merged in on this route
+ * -- the request is not for the configured gateway -- and the foreign-origin
+ * refusal below does not apply, because this is the one route that is allowed
+ * to cross it. See `lib/gateway-request-policy`.
+ */
+interface RequestPolicy {
+  plainRecord?: boolean;
+}
+
 function gatewayFetchWithin(
   timeoutMs: number,
   input: RequestInfo | URL,
-  init?: RequestInit
+  init?: RequestInit,
+  policy?: RequestPolicy
 ): Promise<Response> {
   return withRequestDedupe(inFlightGets, dedupeKey(input, init, timeoutMs), () =>
-    sendGatewayRequest(timeoutMs, input, init)
+    sendGatewayRequest(timeoutMs, input, init, policy)
   );
 }
 
 async function sendGatewayRequest(
   timeoutMs: number,
   input: RequestInfo | URL,
-  init?: RequestInit
+  init?: RequestInit,
+  policy?: RequestPolicy
 ): Promise<Response> {
   // The one place worth stamping the locale, because both the generated client
   // and every raw call in this file come through here. Merged underneath the
@@ -690,11 +712,20 @@ async function sendGatewayRequest(
   // next request without reconfiguring anything.
   const headers = {
     ...activeLocaleHeaders(),
-    ...(currentToken ? { Authorization: `Bearer ${currentToken}` } : {}),
+    ...(currentToken && !policy?.plainRecord ? { Authorization: `Bearer ${currentToken}` } : {}),
     ...headerRecord(init?.headers),
   };
   if (shouldEncryptGatewayRequest(input)) {
     return encryptedGatewayFetch(input, { ...init, headers }, timeoutMs);
+  }
+  // Not sealed, so about to go out in the clear. A bearer token addressed to
+  // any origin but the configured gateway's is refused here unless the caller
+  // took the explicit plain route for a record that has nothing to seal with
+  // (`gatewayEndpointFetch`). This is the guard against the bug it replaced:
+  // a stored record's catalog read that sent that record's token unsealed
+  // because the record was not the one selected.
+  if (!policy?.plainRecord && bearerLeavesGateway(requestUrl(input), currentBaseUrl, headers)) {
+    throw new Error(CLEARTEXT_TOKEN_REFUSAL);
   }
 
   // Exempt, and deliberately: see `isStreamingRequest`.
@@ -2613,15 +2644,24 @@ export interface GatewayEndpoint {
   transport?: typeof GATEWAY_TRANSPORT;
 }
 
+/**
+ * One request to a stored record with that record's own credentials, whichever
+ * computer the shared client is pointed at.
+ *
+ * A record with a transport key is sealed with it; one with no key -- paired
+ * before encryption existed -- goes in the clear by its bearer token, and that
+ * is the only route on which a token may leave the configured gateway unsealed
+ * (`endpointCredentialRoute`).
+ */
 export function gatewayEndpointFetch(
   endpoint: GatewayEndpoint,
   input: string,
   init: RequestInit = {},
   timeoutMs = REQUEST_TIMEOUT_MS
 ) {
-  return endpoint.transport === GATEWAY_TRANSPORT && endpoint.deviceId && endpoint.transportKey
+  return endpointCredentialRoute(endpoint) === 'sealed'
     ? encryptedGatewayFetch(input, init, timeoutMs, endpoint)
-    : gatewayFetchWithin(timeoutMs, input, init);
+    : gatewayFetchWithin(timeoutMs, input, init, { plainRecord: true });
 }
 
 function approvalPath(sessionId: string, paneId: string): string {
