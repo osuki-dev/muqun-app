@@ -4,7 +4,7 @@ import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import * as Clipboard from 'expo-clipboard';
 import * as Device from 'expo-device';
-import { type Href, useRouter } from 'expo-router';
+import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
 import {
   Check,
   Copy as CopyIcon,
@@ -55,6 +55,8 @@ import {
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { GATEWAY_INSTALL_COMMAND, GATEWAY_SETUP_URL } from '@/constants/links';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
+import { pairAgainAddress } from '@/lib/pair-again-target';
+import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { GATEWAY_DEFAULT_PORT } from '@/lib/ssh-tunnel';
@@ -236,8 +238,15 @@ export default function PairModal() {
   // Scanning is the default path. Manual address entry is a peer mode rather
   // than a disclosure under the camera, so switching replaces the preview
   // instead of stacking a form below it.
-  const [manualOpen, setManualOpen] = useState(false);
-  const [manualUrl, setManualUrl] = useState('');
+  // Opened to pair a computer again (`PairAgainNotice`): the address of the
+  // record this device already holds for that id is typed in, and the screen
+  // starts on the manual panel it belongs to. Only the id travels on the
+  // route; the address comes from storage (`pairAgainAddress`).
+  const params = useLocalSearchParams<{ serverId?: string }>();
+  const records = useGatewayConnectionStore((state) => state.records);
+  const [pairAgainUrl] = useState(() => pairAgainAddress(params, records));
+  const [manualOpen, setManualOpen] = useState(pairAgainUrl !== '');
+  const [manualUrl, setManualUrl] = useState(pairAgainUrl);
   // The third way in: a gateway that only listens on its own machine, reached
   // through an SSH host the reader has already saved. The pairing itself is
   // the existing manual flow, pointed at the loopback forward the tunnel

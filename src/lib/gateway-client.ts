@@ -594,10 +594,9 @@ async function sendEncryptedGatewayRequest(
     // longer knows their device and telling them an encryption marker was
     // missing. `GatewayTransportRefusalError` carries status and body through to
     // `describeGatewayFailure`, which decides what that reason means.
-    throw new GatewayTransportRefusalError(
-      response.status,
-      limitedText ?? (await response.text().catch(() => ''))
-    );
+    const refusalBody = limitedText ?? (await response.text().catch(() => ''));
+    noteRefusal({ url: requestUrl(input), token: token ?? '' }, response.status, refusalBody);
+    throw new GatewayTransportRefusalError(response.status, refusalBody);
   }
   const sealed = (
     limitedText === null ? await response.json() : JSON.parse(limitedText)
@@ -640,6 +639,63 @@ async function sendEncryptedGatewayRequest(
     status: payload.status,
     headers: answerHeaders,
   }) as unknown as Response;
+}
+
+/**
+ * Told about every refusal of a pairing the transport hears: a 401/403/426
+ * from the gateway a request's token belongs to, with the plaintext body the
+ * reason is in. Installed by `stores/pairing-faults`, which maps the token
+ * back to the record and remembers what the computer said; the client does
+ * not know records, only endpoints.
+ */
+export type GatewayRefusalObserver = (
+  endpoint: { url: string; token: string },
+  status: number,
+  body: string
+) => void;
+
+let refusalObserver: GatewayRefusalObserver | null = null;
+
+export function setGatewayRefusalObserver(observer: GatewayRefusalObserver | null): void {
+  refusalObserver = observer;
+}
+
+/** The statuses a gateway refuses a pairing with; everything else is not about the pairing. */
+const PAIRING_REFUSAL_STATUSES = new Set([401, 403, 426]);
+
+function noteRefusal(endpoint: { url: string; token: string }, status: number, body: string) {
+  if (!refusalObserver || !PAIRING_REFUSAL_STATUSES.has(status) || !endpoint.token) return;
+  try {
+    refusalObserver(endpoint, status, body);
+  } catch {
+    // An observer that throws must not turn a refusal into a different error.
+  }
+}
+
+/**
+ * Report a plaintext refusal without consuming the answer the caller is
+ * about to read. Only the pairing statuses pay for the clone; a body that
+ * will not clone is reported by status alone.
+ */
+async function noteRefusedResponse(
+  endpoint: { url: string; token: string },
+  response: Response
+): Promise<void> {
+  if (!refusalObserver || !PAIRING_REFUSAL_STATUSES.has(response.status)) return;
+  let body = '';
+  try {
+    body = await response.clone().text();
+  } catch {
+    body = '';
+  }
+  noteRefusal(endpoint, response.status, body);
+}
+
+/** The bearer token a header record carries, or the empty string. */
+function bearerOf(headers: Readonly<Record<string, string>>): string {
+  const name = Object.keys(headers).find((key) => key.toLowerCase() === 'authorization');
+  const value = name ? headers[name] : '';
+  return value.replace(/^Bearer\s+/i, '');
 }
 
 /** Every gateway call the generated client and this file make, on one budget. */
@@ -729,17 +785,19 @@ async function sendGatewayRequest(
   }
 
   // Exempt, and deliberately: see `isStreamingRequest`.
-  if (isStreamingRequest(init)) return nitroFetch(input, { ...init, headers });
-
-  // "Timed out" is load-bearing, not phrasing. `describeGatewayFailure` reads
-  // these messages to decide what kind of failure this was, and a deadline that
-  // does not say so is filed as a plain request error: shown to the user
-  // verbatim, in English, and marked not worth retrying -- which is the wrong
-  // answer on all three counts for a server that simply went quiet.
-  return fetchWithin(timeoutMs, 'Timed out waiting for the server.', input, {
-    ...init,
-    headers,
-  });
+  const response = isStreamingRequest(init)
+    ? await nitroFetch(input, { ...init, headers })
+    : // "Timed out" is load-bearing, not phrasing. `describeGatewayFailure` reads
+      // these messages to decide what kind of failure this was, and a deadline that
+      // does not say so is filed as a plain request error: shown to the user
+      // verbatim, in English, and marked not worth retrying -- which is the wrong
+      // answer on all three counts for a server that simply went quiet.
+      await fetchWithin(timeoutMs, 'Timed out waiting for the server.', input, {
+        ...init,
+        headers,
+      });
+  await noteRefusedResponse({ url: requestUrl(input), token: bearerOf(headers) }, response);
+  return response;
 }
 
 export interface HealthResponse {
@@ -3019,6 +3077,7 @@ export async function probeGatewayReachable(
             },
             signal: controller.signal,
           });
+    await noteRefusedResponse({ url: `${base}/health`, token: endpoint.token }, response);
     onStatus?.(response.status);
     if (response.ok && onHealth) {
       try {
@@ -3075,7 +3134,10 @@ export async function readGatewayRecordJson(record: GatewayRecord, path: string)
       captured.transport === GATEWAY_TRANSPORT
         ? await encryptedGatewayFetch(url, init, REQUEST_TIMEOUT_MS, { ...captured, url: baseUrl })
         : await fetchWithin(REQUEST_TIMEOUT_MS, 'Timed out waiting for the server.', url, init);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    if (!response.ok) {
+      await noteRefusedResponse({ url, token: captured.token }, response);
+      throw new Error(`HTTP ${response.status}`);
+    }
     return response.json();
   });
 }
@@ -3976,7 +4038,11 @@ async function writeDevicePushToken(
       captured.transport === GATEWAY_TRANSPORT
         ? await encryptedGatewayFetch(url, init, REQUEST_TIMEOUT_MS, endpoint)
         : await fetchWithin(REQUEST_TIMEOUT_MS, 'Timed out waiting for the server.', url, init);
-    if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+    if (!response.ok) {
+      const text = await response.text();
+      noteRefusal({ url, token: captured.token }, response.status, text);
+      throw new Error(`HTTP ${response.status}: ${text}`);
+    }
     const answer = (await response.json()) as { ok?: unknown } | null;
     if (answer?.ok !== true) throw new Error('HTTP 502: unreadable push registration receipt');
   });

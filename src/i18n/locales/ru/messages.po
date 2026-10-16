@@ -2616,6 +2616,10 @@ msgid "Effects · {0}"
 msgstr "Эффекты · {0}"
 
 #: src/i18n/labels.ts
+msgid "Encryption was turned on for this computer. Pair it again to keep using it."
+msgstr "На этом компьютере включено шифрование. Привяжите его снова, чтобы продолжить работу"
+
+#: src/i18n/labels.ts
 msgid "Enter"
 msgstr "Enter"
 
@@ -4532,6 +4536,11 @@ msgstr "Страница {page} из {pageCount}"
 msgid "Page {pageNumber} · {lines} lines"
 msgstr "Страница {pageNumber} · строк: {lines}"
 
+#. placeholder {0}: server.label
+#: src/components/pair-again-notice.tsx
+msgid "Pair {0} again"
+msgstr "Привязать {0} снова"
+
 #: src/components/app-drawer-content.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -4540,9 +4549,14 @@ msgstr "Страница {pageNumber} · строк: {lines}"
 msgid "Pair a computer"
 msgstr "Привязать компьютер"
 
+#: src/components/pair-again-notice.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Pair again"
 msgstr "Привязать снова"
+
+#: src/i18n/labels.ts
+msgid "PAIR AGAIN"
+msgstr "ПРИВЯЖИТЕ СНОВА"
 
 #: src/app/explore.tsx
 msgid "Pair computer"

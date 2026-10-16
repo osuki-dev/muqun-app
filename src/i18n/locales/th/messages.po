@@ -2616,6 +2616,10 @@ msgid "Effects · {0}"
 msgstr "เอฟเฟกต์ · {0}"
 
 #: src/i18n/labels.ts
+msgid "Encryption was turned on for this computer. Pair it again to keep using it."
+msgstr "เปิดใช้การเข้ารหัสบนคอมพิวเตอร์นี้แล้ว จับคู่อีกครั้งเพื่อใช้งานต่อ"
+
+#: src/i18n/labels.ts
 msgid "Enter"
 msgstr "Enter"
 
@@ -4532,6 +4536,11 @@ msgstr "หน้า {page} จาก {pageCount}"
 msgid "Page {pageNumber} · {lines} lines"
 msgstr "หน้า {pageNumber} · {lines} บรรทัด"
 
+#. placeholder {0}: server.label
+#: src/components/pair-again-notice.tsx
+msgid "Pair {0} again"
+msgstr "จับคู่ {0} อีกครั้ง"
+
 #: src/components/app-drawer-content.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -4540,8 +4549,13 @@ msgstr "หน้า {pageNumber} · {lines} บรรทัด"
 msgid "Pair a computer"
 msgstr "จับคู่คอมพิวเตอร์"
 
+#: src/components/pair-again-notice.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Pair again"
+msgstr "จับคู่อีกครั้ง"
+
+#: src/i18n/labels.ts
+msgid "PAIR AGAIN"
 msgstr "จับคู่อีกครั้ง"
 
 #: src/app/explore.tsx

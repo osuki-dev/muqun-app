@@ -2616,6 +2616,10 @@ msgid "Effects · {0}"
 msgstr "Hiệu ứng · {0}"
 
 #: src/i18n/labels.ts
+msgid "Encryption was turned on for this computer. Pair it again to keep using it."
+msgstr "Mã hóa đã được bật cho máy tính này. Ghép nối lại để tiếp tục sử dụng"
+
+#: src/i18n/labels.ts
 msgid "Enter"
 msgstr "Enter"
 
@@ -4532,6 +4536,11 @@ msgstr "Trang {page} trên {pageCount}"
 msgid "Page {pageNumber} · {lines} lines"
 msgstr "Trang {pageNumber} · {lines} dòng"
 
+#. placeholder {0}: server.label
+#: src/components/pair-again-notice.tsx
+msgid "Pair {0} again"
+msgstr "Ghép nối lại {0}"
+
 #: src/components/app-drawer-content.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -4540,9 +4549,14 @@ msgstr "Trang {pageNumber} · {lines} dòng"
 msgid "Pair a computer"
 msgstr "Ghép nối máy tính"
 
+#: src/components/pair-again-notice.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Pair again"
 msgstr "Ghép nối lại"
+
+#: src/i18n/labels.ts
+msgid "PAIR AGAIN"
+msgstr "GHÉP NỐI LẠI"
 
 #: src/app/explore.tsx
 msgid "Pair computer"

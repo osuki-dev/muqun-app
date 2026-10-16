@@ -8,6 +8,7 @@ import Animated, { LayoutAnimationConfig } from 'react-native-reanimated';
 import { useShallow } from 'zustand/react/shallow';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
+import { PairAgainNotice } from '@/components/pair-again-notice';
 import { PressableScale } from '@/components/pressable-scale';
 import { StatusDot } from '@/components/status-dot';
 import { SentTaskRow, TaskRow } from '@/components/task-row';
@@ -34,6 +35,7 @@ import { PAD_CARD_GAP, padCardColumns } from '@/lib/home-pad-geometry';
 import { fadeOut, listLayout, riseIn } from '@/lib/motion';
 import { useConnectionStatuses, useHomeReachability } from '@/hooks/use-home-reachability';
 import {
+  statusNeedsPairing,
   type ActiveServerConnection,
   type ConnectionStatus,
   type ServerReachability,
@@ -352,12 +354,11 @@ function ComputerCardView({
   const statusCurrent = followed && taskChannelLive;
   // A card says its computer's connection only when something is wrong with
   // it; a reachable computer is just its name (§3a).
-  const statusColor =
-    status === 'unauthorized'
-      ? theme.colors.warning
-      : status === 'offline' || status === 'reconnecting'
-        ? theme.colors.textSubtle
-        : null;
+  const statusColor = statusNeedsPairing(status)
+    ? theme.colors.warning
+    : status === 'offline' || status === 'reconnecting'
+      ? theme.colors.textSubtle
+      : null;
   // Sent goals sit among the open work by the same urgency (after working,
   // before paused), and finished rows under all of it, with no group headers:
   // each row's icon and time say which it is. Open and finished rows share
@@ -412,6 +413,11 @@ function ComputerCardView({
           ) : null}
         </View>
       </PressableScale>
+      <PairAgainNotice
+        testID={`home-card-pair-again-${server.serverId}`}
+        status={status}
+        server={server}
+      />
 
       {followed ? (
         <View style={styles.block}>

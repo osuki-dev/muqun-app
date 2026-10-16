@@ -153,7 +153,7 @@ type ApiErrorBody = { code?: string; message?: string };
  * code that is not in `REFUSALS`. All three have to survive as a refusal that
  * still says something true.
  */
-function readApiError(body: string): ApiErrorBody {
+export function readApiError(body: string): ApiErrorBody {
   if (!body.trim()) return {};
   let parsed: unknown;
   try {

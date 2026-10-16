@@ -2616,6 +2616,10 @@ msgid "Effects · {0}"
 msgstr "效果 · {0}"
 
 #: src/i18n/labels.ts
+msgid "Encryption was turned on for this computer. Pair it again to keep using it."
+msgstr "这台电脑已开启加密。请重新配对以继续使用"
+
+#: src/i18n/labels.ts
 msgid "Enter"
 msgstr "Enter 键"
 
@@ -4532,6 +4536,11 @@ msgstr "第 {page} 页，共 {pageCount} 页"
 msgid "Page {pageNumber} · {lines} lines"
 msgstr "第 {pageNumber} 页 · {lines} 行"
 
+#. placeholder {0}: server.label
+#: src/components/pair-again-notice.tsx
+msgid "Pair {0} again"
+msgstr "重新配对 {0}"
+
 #: src/components/app-drawer-content.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -4540,9 +4549,14 @@ msgstr "第 {pageNumber} 页 · {lines} 行"
 msgid "Pair a computer"
 msgstr "配对电脑"
 
+#: src/components/pair-again-notice.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Pair again"
 msgstr "重新配对"
+
+#: src/i18n/labels.ts
+msgid "PAIR AGAIN"
+msgstr "需要重新配对"
 
 #: src/app/explore.tsx
 msgid "Pair computer"

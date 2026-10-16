@@ -2616,6 +2616,10 @@ msgid "Effects · {0}"
 msgstr "エフェクト · {0}"
 
 #: src/i18n/labels.ts
+msgid "Encryption was turned on for this computer. Pair it again to keep using it."
+msgstr "このコンピュータで暗号化が有効になりました。引き続き使うには再ペアリングしてください"
+
+#: src/i18n/labels.ts
 msgid "Enter"
 msgstr "エンター"
 
@@ -4532,6 +4536,11 @@ msgstr "{pageCount}ページ中{page}ページ"
 msgid "Page {pageNumber} · {lines} lines"
 msgstr "{pageNumber} ページ · {lines} 行"
 
+#. placeholder {0}: server.label
+#: src/components/pair-again-notice.tsx
+msgid "Pair {0} again"
+msgstr "{0}を再ペアリング"
+
 #: src/components/app-drawer-content.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -4540,9 +4549,14 @@ msgstr "{pageNumber} ページ · {lines} 行"
 msgid "Pair a computer"
 msgstr "コンピュータをペアリング"
 
+#: src/components/pair-again-notice.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Pair again"
 msgstr "再ペアリング"
+
+#: src/i18n/labels.ts
+msgid "PAIR AGAIN"
+msgstr "再ペアリングが必要"
 
 #: src/app/explore.tsx
 msgid "Pair computer"

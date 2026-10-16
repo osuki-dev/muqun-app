@@ -2616,6 +2616,10 @@ msgid "Effects · {0}"
 msgstr "Efectos · {0}"
 
 #: src/i18n/labels.ts
+msgid "Encryption was turned on for this computer. Pair it again to keep using it."
+msgstr "Se activó el cifrado en este ordenador. Vincúlalo de nuevo para seguir usándolo"
+
+#: src/i18n/labels.ts
 msgid "Enter"
 msgstr "Intro"
 
@@ -4532,6 +4536,11 @@ msgstr "Página {page} de {pageCount}"
 msgid "Page {pageNumber} · {lines} lines"
 msgstr "Página {pageNumber} · {lines} líneas"
 
+#. placeholder {0}: server.label
+#: src/components/pair-again-notice.tsx
+msgid "Pair {0} again"
+msgstr "Vincular {0} de nuevo"
+
 #: src/components/app-drawer-content.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -4540,9 +4549,14 @@ msgstr "Página {pageNumber} · {lines} líneas"
 msgid "Pair a computer"
 msgstr "Vincular un ordenador"
 
+#: src/components/pair-again-notice.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Pair again"
 msgstr "Vincular de nuevo"
+
+#: src/i18n/labels.ts
+msgid "PAIR AGAIN"
+msgstr "VINCULAR DE NUEVO"
 
 #: src/app/explore.tsx
 msgid "Pair computer"

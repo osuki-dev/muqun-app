@@ -2616,6 +2616,10 @@ msgid "Effects · {0}"
 msgstr "효과 · {0}"
 
 #: src/i18n/labels.ts
+msgid "Encryption was turned on for this computer. Pair it again to keep using it."
+msgstr "이 컴퓨터에서 암호화가 켜졌습니다. 계속 사용하려면 다시 페어링하세요"
+
+#: src/i18n/labels.ts
 msgid "Enter"
 msgstr "엔터"
 
@@ -4532,6 +4536,11 @@ msgstr "{pageCount}페이지 중 {page}페이지"
 msgid "Page {pageNumber} · {lines} lines"
 msgstr "{pageNumber}페이지 · {lines}줄"
 
+#. placeholder {0}: server.label
+#: src/components/pair-again-notice.tsx
+msgid "Pair {0} again"
+msgstr "{0} 다시 페어링"
+
 #: src/components/app-drawer-content.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -4540,9 +4549,14 @@ msgstr "{pageNumber}페이지 · {lines}줄"
 msgid "Pair a computer"
 msgstr "컴퓨터 페어링"
 
+#: src/components/pair-again-notice.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Pair again"
 msgstr "다시 페어링"
+
+#: src/i18n/labels.ts
+msgid "PAIR AGAIN"
+msgstr "다시 페어링 필요"
 
 #: src/app/explore.tsx
 msgid "Pair computer"

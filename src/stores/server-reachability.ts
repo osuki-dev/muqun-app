@@ -5,6 +5,7 @@ import { noteGatewayGeneration } from '@/stores/gateway-connection-generation';
 import { assertSupportedHerdr } from '@/lib/herdr-compatibility';
 import { directGatewayBaseUrl } from '@/lib/ssh-tunnel';
 import type { GatewayRecord } from '@/lib/gateway-storage';
+import { pairingFaultOf, usePairingFaults } from '@/stores/pairing-faults';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { retryHomeRefresh } from '@/lib/home-refresh-schedule';
 import {
@@ -116,6 +117,12 @@ export const useServerReachability = create<ServerReachabilityState>((set, get) 
     // caller cannot reintroduce the leak. A tunnelled server reports through
     // its tunnel badge instead.
     if (!directGatewayBaseUrl(endpoint)) return;
+    // A computer that refused this pairing outright -- pair again for
+    // encryption, or the token is dead -- is not asked again on every focus:
+    // it said no, and will say no until the reader pairs again. A pull to
+    // refresh is still a question, and the one way a gateway rolled back to
+    // accepting the token gets to clear its own entry (`noteAnswer`).
+    if (!options?.force && pairingFaultOf(usePairingFaults.getState(), serverId)) return;
     // Still one flight per server even when forced: two pulls in a second are
     // one question, and the second would only race the first. Awaited rather
     // than skipped so the loser of the race sees the answer -- see `inFlight`.
@@ -181,8 +188,12 @@ export const useServerReachability = create<ServerReachabilityState>((set, get) 
           },
         },
       }));
-      // An answer is contact: Continue stops backing off from this computer.
-      if (ok) retryHomeRefresh(serverId);
+      // An answer is contact: Continue stops backing off from this computer,
+      // and nothing held against its pairing stands.
+      if (ok) {
+        retryHomeRefresh(serverId);
+        usePairingFaults.getState().noteAnswer(serverId);
+      }
     })();
     inFlight.set(serverId, flight);
     try {

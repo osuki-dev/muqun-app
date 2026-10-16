@@ -59,12 +59,19 @@ export const connectionStatusLabel: Record<ConnectionStatus, MessageDescriptor> 
   ...reachabilityLabel,
   reconnecting: msg`RECONNECTING…`,
   unauthorized: msg`PAIRING EXPIRED`,
+  repair: msg`PAIR AGAIN`,
 };
 
+/**
+ * The full sentence, which for the two states a reader has to act on is also
+ * the explanation shown under the status with the "Pair again" action
+ * (`PairAgainNotice`).
+ */
 export const connectionStatusDescription: Record<ConnectionStatus, MessageDescriptor> = {
   ...reachabilityDescription,
   reconnecting: msg`Reconnecting…`,
   unauthorized: msg`Pairing expired — pair again`,
+  repair: msg`Encryption was turned on for this computer. Pair it again to keep using it.`,
 };
 
 export const paneViewModeLabel: Record<PaneViewMode, MessageDescriptor> = {
