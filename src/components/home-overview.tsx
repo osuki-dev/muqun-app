@@ -595,13 +595,32 @@ export function HomeOverview({
       const finishInitialProbe = () => {
         if (current) setInitialProbeSettled(true);
       };
-      void refreshReachabilityMany(probeTargets, {
-        shouldContinue: () => current && AppState.currentState === 'active',
-      }).then(finishInitialProbe, finishInitialProbe);
+      const shouldContinue = () => current && AppState.currentState === 'active';
+      // The dock waits on the selected computer alone: the one the next goal
+      // goes to. The others used to be asked first, one after another at up
+      // to four seconds each, and the composer waited on all of them; they
+      // are asked alongside it now, and their dots fill in as they answer.
+      const selected = probeTargets.find((target) => target.serverId === record?.serverId);
+      void (selected ? refreshReachability(selected, { shouldContinue }) : Promise.resolve()).then(
+        finishInitialProbe,
+        finishInitialProbe
+      );
+      void refreshReachabilityMany(
+        probeTargets.filter((target) => target !== selected),
+        { shouldContinue }
+      );
       return () => {
         current = false;
       };
-    }, [appActive, loading, hydrationError, probeTargets, refreshReachabilityMany])
+    }, [
+      appActive,
+      loading,
+      hydrationError,
+      probeTargets,
+      record?.serverId,
+      refreshReachability,
+      refreshReachabilityMany,
+    ])
   );
 
   // The computers arrive first. Reuse their bounded initial probe, cached
