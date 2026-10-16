@@ -89,6 +89,7 @@ import {
   TASK_DEFAULTS_CAPABILITY,
   TASK_LEDGER_PANE_CAPABILITY,
   type LedgerTaskRequest,
+  hasTaskLedgerCodexSession,
 } from '@/lib/task-ledger';
 import {
   createHomeLedgerTask,
@@ -388,6 +389,12 @@ export function HomeComposerDock({
   // see the work, and the work it delegates, live.
   const ledgerCreate = useServerCapabilities((state) =>
     targetId ? hasTaskLedgerCreate(state.byServer[targetId]) : false
+  );
+  // A Codex goal can be a ledger task too, bound to its native session, on a
+  // gateway that says so; otherwise Home opens the session itself and only
+  // its own Sent row stands for the work.
+  const ledgerCodexSession = useServerCapabilities((state) =>
+    targetId ? hasTaskLedgerCodexSession(state.byServer[targetId]) : false
   );
   // ... and a terminal agent's goal as one too: the gateway opens the pane,
   // types the goal and follows the agent as the task's state.
@@ -837,7 +844,7 @@ export function HomeComposerDock({
     );
   });
 
-  async function openLedgerTask(text: string): Promise<boolean> {
+  async function openLedgerTask(text: string, delivery?: 'session'): Promise<boolean> {
     if (inFlightRef.current) return false;
     inFlightRef.current = true;
     let pendingId: string | null = null;
@@ -877,6 +884,7 @@ export function HomeComposerDock({
                 // Applied at session creation by a gateway that takes it (Gateway
                 // Task 15); an older one ignores it, and the switch below sets it.
                 ...(params.model?.variant ? { variant: params.model.variant } : {}),
+                ...(delivery ? { delivery } : {}),
               },
               owns,
               pendingId
@@ -1113,12 +1121,17 @@ export function HomeComposerDock({
     }
     if (heldByModelGate()) return Promise.resolve(false);
     if (!inFlightRef.current && ready) playTransition('send');
-    // The task API reserves explicit `codex` for terminal delivery, even
-    // when discovery also offers its native session adapter. Native Codex
-    // must create a session and prompt the returned ID, just like files and
-    // retries. Other session providers retain their supported ledger route.
-    if (agentId !== 'codex' && ledgerCreate && !attachments?.length && !startedRef.current) {
-      return dispatchTask(text, () => openLedgerTask(text));
+    // The task API reserves explicit `codex` for terminal delivery unless the
+    // gateway advertises session delivery for it; then a Codex goal is a
+    // ledger task bound to its native session, like every other session
+    // provider's, and survives this device the way a task does. Otherwise
+    // native Codex must create a session and prompt the returned ID, just
+    // like files and retries.
+    const viaLedger = agentId !== 'codex' ? ledgerCreate : ledgerCodexSession;
+    if (viaLedger && !attachments?.length && !startedRef.current) {
+      return dispatchTask(text, () =>
+        openLedgerTask(text, agentId === 'codex' ? 'session' : undefined)
+      );
     }
     // Wait for acceptance so any failure retains the complete draft. Passing
     // the goal also binds Home's status row without opening another screen.

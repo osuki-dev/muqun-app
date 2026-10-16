@@ -22,6 +22,9 @@ type KeyValueStore = {
 const STORE_ID = 'muqun.home';
 const DISMISSED_KEY = 'muqun.home.acknowledged-tasks.v1';
 const HIDDEN_KEY = 'muqun.home.hidden-tasks.v1';
+const PENDING_KEY = 'muqun.home.pending-dispatches.v1';
+/** Sent rows kept across launches, newest last; the oldest goes first past this. */
+const MAX_PENDING = 50;
 /** Enough for months of finished work; the oldest acknowledgement goes first. */
 const MAX_DISMISSED = 500;
 /** Bound local removals independently of per-finish acknowledgements. */
@@ -73,6 +76,88 @@ function saveDismissed(dismissed: readonly string[]): void {
 }
 let loadedDismissed: readonly string[] = [];
 
+/**
+ * The Sent rows as they were when the app last ran. A goal sent from Home
+ * that never became a ledger task -- a native Codex session on a gateway
+ * without session delivery -- is known to this device alone, and this row
+ * was all the card had: in memory only, it went with the process, and the
+ * work looked as if it had never been sent. Read back without trust, and
+ * pruned by the card's own rules.
+ */
+function loadPending(nowMs: number): PendingDispatch[] {
+  try {
+    const parsed: unknown = JSON.parse(store().getString(PENDING_KEY) ?? '[]');
+    if (!Array.isArray(parsed)) return [];
+    const rows: PendingDispatch[] = [];
+    for (const raw of parsed) {
+      if (!raw || typeof raw !== 'object') continue;
+      const item = raw as Record<string, unknown>;
+      if (
+        typeof item.id !== 'string' ||
+        typeof item.serverId !== 'string' ||
+        typeof item.goal !== 'string' ||
+        typeof item.atMs !== 'number' ||
+        !Number.isFinite(item.atMs)
+      )
+        continue;
+      const row: PendingDispatch = {
+        id: item.id,
+        serverId: item.serverId,
+        goal: item.goal,
+        atMs: item.atMs,
+        ...(item.failed === true ? { failed: true as const } : {}),
+        ...(typeof item.reason === 'string' ? { reason: item.reason } : {}),
+        ...(isResend(item.resend) ? { resend: item.resend } : {}),
+        ...(typeof item.asid === 'string' && item.asid ? { asid: item.asid } : {}),
+        ...(isReply(item.reply) ? { reply: item.reply } : {}),
+      };
+      if (pendingShown(row, nowMs)) rows.push(row);
+    }
+    return rows.slice(-MAX_PENDING);
+  } catch {
+    return [];
+  }
+}
+
+function isResend(value: unknown): value is PendingResend {
+  if (!value || typeof value !== 'object') return false;
+  const resend = value as Record<string, unknown>;
+  return (
+    typeof resend.text === 'string' &&
+    Array.isArray(resend.attachments) &&
+    resend.attachments.every((entry) => typeof entry === 'string') &&
+    typeof resend.params === 'object' &&
+    resend.params !== null
+  );
+}
+
+function isReply(value: unknown): value is NonNullable<PendingDispatch['reply']> {
+  if (!value || typeof value !== 'object') return false;
+  const reply = value as Record<string, unknown>;
+  return (
+    (reply.state === 'working' || reply.state === 'done' || reply.state === 'failed') &&
+    typeof reply.atMs === 'number'
+  );
+}
+
+function savePending(pending: readonly PendingDispatch[]): void {
+  try {
+    store().set(PENDING_KEY, JSON.stringify(pending.slice(-MAX_PENDING)));
+  } catch {
+    // Kept for this launch.
+  }
+}
+
+/** A loaded row's number, so a new row never takes an id a kept one holds. */
+function pendingIdCounter(pending: readonly PendingDispatch[]): number {
+  let highest = 0;
+  for (const item of pending) {
+    const number = Number(item.id.match(/^dispatch-(\d+)$/)?.[1]);
+    if (Number.isFinite(number) && number > highest) highest = number;
+  }
+  return highest;
+}
+
 function loadHidden(): string[] {
   try {
     const parsed: unknown = JSON.parse(store().getString(HIDDEN_KEY) ?? '[]');
@@ -84,7 +169,8 @@ function loadHidden(): string[] {
   }
 }
 
-let nextPendingId = 0;
+const loadedPending = loadPending(Date.now());
+let nextPendingId = pendingIdCounter(loadedPending);
 
 type HomeTaskCardsState = {
   /** Finished tasks the reader acknowledged: off the card, still in the Tasks sheet. */
@@ -137,88 +223,95 @@ export function showOpeningWhile(key: string, open: Promise<void>): void {
   });
 }
 
-export const useHomeTaskCards = create<HomeTaskCardsState>((set, get) => ({
-  dismissed: (loadedDismissed = loadDismissed()),
-  hidden: loadHidden(),
-  hide(serverId, task) {
-    const key = hiddenTaskKey(serverId, task.taskId);
-    if (get().hidden.includes(key)) return;
-    const hidden = [...get().hidden, key].slice(-MAX_HIDDEN);
-    try {
-      store().set(HIDDEN_KEY, JSON.stringify(hidden));
-    } catch {
-      // Keep the removal for this launch when storage is unavailable.
-    }
-    set({ hidden });
-  },
-  pending: [],
-  rowActions: null,
-  setRowActions(actions) {
-    set({ rowActions: actions });
-  },
-  opening: null,
-  setOpening(key) {
-    set({ opening: key });
-  },
-  acknowledge(serverId, task) {
-    const key = dismissedKey(serverId, task);
-    if (get().dismissed.includes(key)) return;
-    saveDismissed([...get().dismissed, key].slice(-MAX_DISMISSED));
-    set({ dismissed: loadedDismissed });
-  },
-  followLedgers(index) {
-    const dismissed = acknowledgementsHeld(get().dismissed, index);
-    if (dismissed === get().dismissed) return;
-    saveDismissed(dismissed);
-    set({ dismissed });
-  },
-  dispatched(serverId, goal) {
-    const id = `dispatch-${++nextPendingId}`;
-    const now = Date.now();
-    set((state) => ({
-      pending: [
-        // A retry replaces the row its failure left, rather than standing beside it.
-        ...state.pending.filter(
-          (item) =>
-            pendingShown(item, now) &&
-            !(item.failed && item.serverId === serverId && item.goal === goal)
+export const useHomeTaskCards = create<HomeTaskCardsState>((setState, get) => {
+  // The Sent rows are written down with every change, like acknowledgements.
+  const set: typeof setState = (partial) => {
+    setState(partial);
+    savePending(get().pending);
+  };
+  return {
+    dismissed: (loadedDismissed = loadDismissed()),
+    hidden: loadHidden(),
+    hide(serverId, task) {
+      const key = hiddenTaskKey(serverId, task.taskId);
+      if (get().hidden.includes(key)) return;
+      const hidden = [...get().hidden, key].slice(-MAX_HIDDEN);
+      try {
+        store().set(HIDDEN_KEY, JSON.stringify(hidden));
+      } catch {
+        // Keep the removal for this launch when storage is unavailable.
+      }
+      set({ hidden });
+    },
+    pending: loadedPending,
+    rowActions: null,
+    setRowActions(actions) {
+      set({ rowActions: actions });
+    },
+    opening: null,
+    setOpening(key) {
+      set({ opening: key });
+    },
+    acknowledge(serverId, task) {
+      const key = dismissedKey(serverId, task);
+      if (get().dismissed.includes(key)) return;
+      saveDismissed([...get().dismissed, key].slice(-MAX_DISMISSED));
+      set({ dismissed: loadedDismissed });
+    },
+    followLedgers(index) {
+      const dismissed = acknowledgementsHeld(get().dismissed, index);
+      if (dismissed === get().dismissed) return;
+      saveDismissed(dismissed);
+      set({ dismissed });
+    },
+    dispatched(serverId, goal) {
+      const id = `dispatch-${++nextPendingId}`;
+      const now = Date.now();
+      set((state) => ({
+        pending: [
+          // A retry replaces the row its failure left, rather than standing beside it.
+          ...state.pending.filter(
+            (item) =>
+              pendingShown(item, now) &&
+              !(item.failed && item.serverId === serverId && item.goal === goal)
+          ),
+          { id, serverId, goal, atMs: now },
+        ],
+      }));
+      return id;
+    },
+    settle(id) {
+      set((state) => ({ pending: state.pending.filter((item) => item.id !== id) }));
+    },
+    failed(id, reason, resend) {
+      set((state) => {
+        const pending = state.pending.map((item) =>
+          item.id === id ? { ...item, failed: true as const, reason, resend } : item
+        );
+        // A failed row stays until acted on; past the cap the oldest goes first.
+        const failed = pending.filter((item) => item.failed).sort((a, b) => a.atMs - b.atMs);
+        const over = new Set(
+          failed.slice(0, Math.max(0, failed.length - MAX_FAILED_ROWS)).map((item) => item.id)
+        );
+        return { pending: over.size ? pending.filter((item) => !over.has(item.id)) : pending };
+      });
+    },
+    bound(id, asid) {
+      set((state) => ({
+        pending: state.pending.map((item) => (item.id === id ? { ...item, asid } : item)),
+      }));
+    },
+    replied(id, reply, atMs) {
+      set((state) => ({
+        pending: state.pending.map((item) =>
+          item.id === id && item.reply?.state !== reply
+            ? { ...item, reply: { state: reply, atMs } }
+            : item
         ),
-        { id, serverId, goal, atMs: now },
-      ],
-    }));
-    return id;
-  },
-  settle(id) {
-    set((state) => ({ pending: state.pending.filter((item) => item.id !== id) }));
-  },
-  failed(id, reason, resend) {
-    set((state) => {
-      const pending = state.pending.map((item) =>
-        item.id === id ? { ...item, failed: true as const, reason, resend } : item
-      );
-      // A failed row stays until acted on; past the cap the oldest goes first.
-      const failed = pending.filter((item) => item.failed).sort((a, b) => a.atMs - b.atMs);
-      const over = new Set(
-        failed.slice(0, Math.max(0, failed.length - MAX_FAILED_ROWS)).map((item) => item.id)
-      );
-      return { pending: over.size ? pending.filter((item) => !over.has(item.id)) : pending };
-    });
-  },
-  bound(id, asid) {
-    set((state) => ({
-      pending: state.pending.map((item) => (item.id === id ? { ...item, asid } : item)),
-    }));
-  },
-  replied(id, reply, atMs) {
-    set((state) => ({
-      pending: state.pending.map((item) =>
-        item.id === id && item.reply?.state !== reply
-          ? { ...item, reply: { state: reply, atMs } }
-          : item
-      ),
-    }));
-  },
-}));
+      }));
+    },
+  };
+});
 
 // A task the ledger shows back at work loses its acknowledgement, so its next
 // finish shows on the card (a gateway that counts reopens says so in the key

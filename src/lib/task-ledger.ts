@@ -8,6 +8,13 @@ export const TASK_LEDGER_CAPABILITY = 'task_ledger';
  * serves the task tree: `parent_task_id`, `children`, `origin`, `?root=`.
  */
 export const TASK_LEDGER_CREATE_CAPABILITY = 'task_ledger_create';
+/**
+ * `POST /api/tasks` takes `delivery: "session"` for `agent_id: "codex"`: the
+ * task is bound to a native Codex agent session and answers its `asid` like
+ * any other session delegation. Without it the task API reserves explicit
+ * `codex` for terminal delivery, and Home has to open the session itself.
+ */
+export const TASK_LEDGER_CODEX_SESSION_CAPABILITY = 'task_ledger_codex_session';
 
 /**
  * `POST /api/tasks` also takes a terminal agent (Codex, Claude Code, ...): the
@@ -277,6 +284,13 @@ export function hasTaskLedgerCreate(capabilities: readonly string[] | undefined)
   return capabilities?.includes(TASK_LEDGER_CREATE_CAPABILITY) === true;
 }
 
+export function hasTaskLedgerCodexSession(capabilities: readonly string[] | undefined): boolean {
+  return (
+    hasTaskLedgerCreate(capabilities) &&
+    capabilities?.includes(TASK_LEDGER_CODEX_SESSION_CAPABILITY) === true
+  );
+}
+
 /**
  * Whether the reader can say a task is done, on a gateway that takes the
  * confirmation: one this device's owner opened, stopped without saying it
@@ -311,6 +325,12 @@ export interface LedgerTaskRequest {
    * its agent; sent only to a computer that advertises `fleet_peers`.
    */
   mentions?: string[];
+  /**
+   * `session`: bind the task to a native agent session rather than a
+   * terminal pane. Sent for Codex to a gateway that advertises
+   * `task_ledger_codex_session`, and to no other.
+   */
+  delivery?: 'session';
 }
 
 export function ledgerTaskBody(request: LedgerTaskRequest): Record<string, string | string[]> {
@@ -324,6 +344,7 @@ export function ledgerTaskBody(request: LedgerTaskRequest): Record<string, strin
     ...(request.model && request.variant ? { variant: request.variant } : {}),
     ...(request.label?.trim() ? { label: request.label.trim() } : {}),
     ...(request.mentions?.length ? { mentions: request.mentions } : {}),
+    ...(request.delivery ? { delivery: request.delivery } : {}),
   };
 }
 
