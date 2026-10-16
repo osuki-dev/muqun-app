@@ -89,7 +89,7 @@
         "zustand": "^5.0.15",
       },
       "devDependencies": {
-        "@expo/fingerprint": "~0.21.5",
+        "@expo/fingerprint": "0.21.5",
         "@hot-updater/cloudflare": "1.0.7",
         "@hot-updater/expo": "1.0.7",
         "@hot-updater/plugin-core": "1.0.7",
@@ -118,6 +118,7 @@
   "patchedDependencies": {
     "react-native-nitro-sound@0.2.20": "patches/react-native-nitro-sound@0.2.20.patch",
     "react-native-enriched-markdown@1.1.1": "patches/react-native-enriched-markdown@1.1.1.patch",
+    "expo-widgets@58.0.19": "patches/expo-widgets@58.0.19.patch",
   },
   "overrides": {
     "react-native-screens": "4.30.0",
