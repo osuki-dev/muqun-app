@@ -7374,6 +7374,11 @@ msgstr "Иллюстрация главного экрана темы отобр
 msgid "Using"
 msgstr "Используется"
 
+#. placeholder {0}: fontAxesSummary(axes)
+#: src/components/settings-font-sheet.tsx
+msgid "Variable · {0}"
+msgstr "Вариативный · {0}"
+
 #. placeholder {0}: build ? ` (${build})` : ''
 #: src/app/settings.tsx
 msgid "Version {version}{0}"

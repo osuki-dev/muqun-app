@@ -7374,6 +7374,11 @@ msgstr "按首页布局指定的位置显示主题首页图稿。未提供首页
 msgid "Using"
 msgstr "使用中"
 
+#. placeholder {0}: fontAxesSummary(axes)
+#: src/components/settings-font-sheet.tsx
+msgid "Variable · {0}"
+msgstr "可变 · {0}"
+
 #. placeholder {0}: build ? ` (${build})` : ''
 #: src/app/settings.tsx
 msgid "Version {version}{0}"

@@ -7374,6 +7374,11 @@ msgstr "แสดงภาพประกอบหน้าแรกของธ
 msgid "Using"
 msgstr "กำลังใช้"
 
+#. placeholder {0}: fontAxesSummary(axes)
+#: src/components/settings-font-sheet.tsx
+msgid "Variable · {0}"
+msgstr "แปรผันได้ · {0}"
+
 #. placeholder {0}: build ? ` (${build})` : ''
 #: src/app/settings.tsx
 msgid "Version {version}{0}"

@@ -7374,6 +7374,11 @@ msgstr "依首頁版面配置指定的位置顯示主題首頁圖稿。未提供
 msgid "Using"
 msgstr "使用中"
 
+#. placeholder {0}: fontAxesSummary(axes)
+#: src/components/settings-font-sheet.tsx
+msgid "Variable · {0}"
+msgstr "可變 · {0}"
+
 #. placeholder {0}: build ? ` (${build})` : ''
 #: src/app/settings.tsx
 msgid "Version {version}{0}"
