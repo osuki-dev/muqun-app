@@ -6146,11 +6146,6 @@ msgstr "実行中…"
 msgid "Stop"
 msgstr "停止"
 
-#: src/app/agent.tsx
-#: src/components/pad-agent-detail.tsx
-msgid "Stop agent"
-msgstr "エージェントを停止"
-
 #: src/components/agent-composer.tsx
 msgid "Stop agent execution"
 msgstr "エージェントの実行を停止"

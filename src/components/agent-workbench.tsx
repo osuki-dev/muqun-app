@@ -414,8 +414,6 @@ export interface AgentWorkbenchProps {
   topInset?: number;
   bottomInset?: number;
   createNewSessionRef?: React.MutableRefObject<(() => void) | null>;
-  /** Wired to the workbench's abort call so a header can expose a Stop control. */
-  abortSessionRef?: React.MutableRefObject<(() => void) | null>;
 }
 
 export const AgentWorkbench = memo(function AgentWorkbench({
@@ -429,7 +427,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   topInset = 0,
   bottomInset = 0,
   createNewSessionRef,
-  abortSessionRef,
 }: AgentWorkbenchProps) {
   const mountedRef = useRef(true);
   const ownerGenerationRef = useRef(0);
@@ -3551,14 +3548,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       createNewSessionRef.current = handleCreateNewSession;
     }
   }, [createNewSessionRef, handleCreateNewSession]);
-
-  useEffect(() => {
-    if (abortSessionRef) {
-      abortSessionRef.current = () => {
-        void handleAbort();
-      };
-    }
-  }, [abortSessionRef, handleAbort]);
 
   const canMutateSession = useCallback(
     (action: AgentSessionAction, asid: string, supplied?: AgentSessionInfo) => {

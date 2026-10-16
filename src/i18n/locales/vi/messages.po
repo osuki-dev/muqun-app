@@ -6146,11 +6146,6 @@ msgstr "Vẫn đang chạy…"
 msgid "Stop"
 msgstr "Dừng"
 
-#: src/app/agent.tsx
-#: src/components/pad-agent-detail.tsx
-msgid "Stop agent"
-msgstr "Dừng agent"
-
 #: src/components/agent-composer.tsx
 msgid "Stop agent execution"
 msgstr "Dừng thực thi tác nhân"
