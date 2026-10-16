@@ -533,6 +533,8 @@ export interface AgentComposerProps {
   fieldBackgroundOutset?: HomeComposerOutset;
   fieldDecoration?: React.ReactNode;
   fieldDecorationOverhang?: number;
+  /** The shadow the field's own plate casts; see `TerminalComposer`. */
+  fieldShadow?: string;
   hideFieldDecoration?: boolean;
   fieldTextTopInset?: number;
   hideParameterRow?: boolean;
@@ -656,6 +658,7 @@ export const AgentComposer = memo(function AgentComposer({
   fieldBackgroundOutset,
   fieldDecoration,
   fieldDecorationOverhang = 0,
+  fieldShadow,
   hideFieldDecoration = false,
   fieldTextTopInset,
   hideParameterRow = false,
@@ -2283,6 +2286,7 @@ export const AgentComposer = memo(function AgentComposer({
                 fieldBackgroundOutset={fieldBackgroundOutset}
                 fieldDecoration={decorationHidden ? undefined : fieldDecoration}
                 fieldTextTopInset={fieldTextTopInset}
+                fieldShadow={fieldShadow}
                 onVoiceActiveChange={setVoiceActive}
                 spans={spans}
                 compact={compact}

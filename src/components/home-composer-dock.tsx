@@ -110,6 +110,7 @@ import { useAgents } from '@/stores/agents';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useHomeComposerSheet } from '@/stores/home-composer-sheet';
 import { markHomeComposerRevealed } from '@/lib/home-first-entry';
+import { appChrome } from '@/constants/appearance';
 
 const NO_COMMANDS: AgentCatalog['commands'] = [];
 const NO_SKILLS: AgentCatalog['skills'] = [];
@@ -1364,6 +1365,9 @@ export function HomeComposerDock({
         optionsOpen || optionsVisible || Boolean(error) || Boolean(visibleUnknownDelivery)
       }
       fieldTextTopInset={6}
+      // Home's field is the dock's only painted surface, on both the phone
+      // bar and the Pad cover, so it casts the edge a dock's glass would.
+      fieldShadow={appChrome.shadow.homeComposerField}
       toolbarLeading={parameterButton}
       hideParameterRow
       flushField
