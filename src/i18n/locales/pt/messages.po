@@ -119,7 +119,7 @@ msgid "{0} did not upload. Retry it or remove it to send."
 msgstr "{0} não foi enviado. Tente novamente ou remova-o para enviar"
 
 #. placeholder {0}: failed.name
-#. placeholder {1}: uploadLimitMb(maxUploadBytesFor(failed.mime))
+#. placeholder {1}: uploadLimitMb(attachmentLimitBytes(failed))
 #: src/lib/attachments.ts
 msgid "{0} is too large ({1} MB max). Remove it to send."
 msgstr "{0} é grande demais (máx. {1} MB). Remova-o para enviar"
@@ -6998,7 +6998,7 @@ msgstr "Tokens desta sessão"
 msgid "Tokens usage and cost"
 msgstr "Uso de tokens e custo"
 
-#. placeholder {0}: uploadLimitMb(maxUploadBytesFor(entry.mime))
+#. placeholder {0}: uploadLimitMb(attachmentLimitBytes(entry))
 #: src/lib/attachments.ts
 msgid "Too large ({0} MB max)"
 msgstr "Grande demais (máx. {0} MB)"
