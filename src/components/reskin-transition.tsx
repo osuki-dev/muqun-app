@@ -1,4 +1,5 @@
 import { useThemeTokens } from '@osuki-dev/ui';
+import { create } from 'zustand';
 import {
   Canvas,
   ColorShader,
@@ -164,10 +165,13 @@ export type ReskinRunOptions = {
   apply: () => void | Promise<void>;
   /**
    * Navigation that should happen under the cover, after the new theme has
-   * painted and one frame before the cover lifts. Closing a sheet in the same
-   * turn as `apply` makes the dismissal and the reveal fight.
+   * painted and before the cover lifts. Closing a sheet in the same turn as
+   * `apply` makes the dismissal and the reveal fight -- and so does lifting
+   * the cover while the dismissal is still animating, so a settle that
+   * returns a promise (`afterNavigationSettles`) holds the cover until the
+   * navigation has come to rest, up to `SETTLE_CAP_MS`.
    */
-  settle?: () => void;
+  settle?: () => void | Promise<void>;
 };
 
 type ActiveRun = {
@@ -452,6 +456,26 @@ function eraseTiming(play: Exclude<ReskinPlay, 'none'>) {
   }
 }
 
+/** The longest the cover waits on a settle's promise before lifting anyway. */
+const SETTLE_CAP_MS = 800;
+
+/** A settle's promise, or nothing, bounded so the cover always lifts. */
+async function settled(outcome: void | Promise<void>): Promise<void> {
+  if (!outcome) return;
+  await Promise.race([
+    outcome.catch(() => undefined),
+    new Promise<void>((resolve) => setTimeout(resolve, SETTLE_CAP_MS)),
+  ]);
+}
+
+/**
+ * Whether a reskin is under way, for the navigator: blurred screens are
+ * frozen the rest of the time, and a frozen Home would pay its whole
+ * re-render under the new theme during the transition back to it. For the
+ * length of a run they thaw and re-render under the cover instead.
+ */
+export const useReskinActivity = create<{ active: boolean }>(() => ({ active: false }));
+
 export function ReskinTransitionProvider({ children }: { children: ReactNode }) {
   const { colors, typography } = useThemeTokens();
   const reduceMotion = useReducedMotion();
@@ -467,6 +491,8 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
       const value = typeof next === 'function' ? next(activeRef.current) : next;
       activeRef.current = value;
       setActive(value);
+      if ((value !== null) !== useReskinActivity.getState().active)
+        useReskinActivity.setState({ active: value !== null });
     },
     []
   );
@@ -722,7 +748,7 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
                     const ready = await waitForThemeRender();
                     trace(`theme renderers ${ready ? 'ready' : 'timed out'}`);
                     await painted();
-                    if (stillWanted()) options.settle?.();
+                    if (stillWanted()) await settled(options.settle?.());
                     await painted();
                   },
                   reveal: () => {

@@ -33,7 +33,11 @@ import { useReducedMotion } from 'react-native-reanimated';
 import { SplashScreen } from '@osuki-dev/react-native-splash';
 
 import { LaunchOverlay } from '@/components/launch-overlay';
-import { ReskinSurface, ReskinTransitionProvider } from '@/components/reskin-transition';
+import {
+  ReskinSurface,
+  ReskinTransitionProvider,
+  useReskinActivity,
+} from '@/components/reskin-transition';
 import { AppErrorBoundary } from '@/components/app-error-boundary';
 import {
   AppearanceProfileProvider,
@@ -330,6 +334,8 @@ export default function RootLayout() {
 }
 
 function RootContent() {
+  // Blurred screens thaw for the length of a theme change; see `freezeOnBlur` below.
+  const reskinActive = useReskinActivity((state) => state.active);
   const reduceMotion = useReducedMotion();
   const profile = useAppearanceProfile();
   const notificationSurfaceStyle = useNotificationSurfaceStyle();
@@ -445,7 +451,10 @@ function RootContent() {
                   // server card keep the UI thread at vsync the whole time. Work
                   // that must outlive a blur already lives in a store rather than
                   // in a screen, so nothing here depends on rendering while hidden.
-                  freezeOnBlur: true,
+                  // Except for the length of a theme change: a Home frozen under
+                  // Settings would re-render under the new theme during the
+                  // transition back to it, which is where that stuttered.
+                  freezeOnBlur: !reskinActive,
                 }}>
                 <Stack.Screen
                   name="index"

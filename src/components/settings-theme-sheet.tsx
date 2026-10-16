@@ -57,7 +57,7 @@ import { BUILTIN_THEME_INSTALLATION_ID } from '@/theme/repository';
 /** The focused field's clearance above the keyboard: the import link's input. */
 const KEYBOARD_BOTTOM_OFFSET = 88;
 
-export function SettingsThemeSheet({ onClose }: { onClose: () => void }) {
+export function SettingsThemeSheet({ onClose }: { onClose: () => void | Promise<void> }) {
   // `t` from the hook, not the global `t` from `@lingui/core/macro` -- see the
   // note at the top of the settings screen for why.
   const { t } = useLingui();

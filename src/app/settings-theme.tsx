@@ -1,6 +1,7 @@
-import { useRouter } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
 
 import { ReskinSurface } from '@/components/reskin-transition';
+import { afterNavigationSettles, type SettleNavigation } from '@/lib/navigation-settle';
 import { SettingsThemeSheet } from '@/components/settings-theme-sheet';
 
 /**
@@ -18,9 +19,16 @@ import { SettingsThemeSheet } from '@/components/settings-theme-sheet';
  */
 export default function SettingsThemeScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
   return (
     <ReskinSurface id="settings-theme">
-      <SettingsThemeSheet onClose={() => router.back()} />
+      <SettingsThemeSheet
+        onClose={() => {
+          router.back();
+          // Under the reskin cover, which waits for the sheet to have left.
+          return afterNavigationSettles(navigation as unknown as SettleNavigation);
+        }}
+      />
     </ReskinSurface>
   );
 }
