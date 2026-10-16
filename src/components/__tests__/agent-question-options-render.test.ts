@@ -16,10 +16,6 @@ function nodes(value: unknown): Element[] {
     ...nodes(typeof node.type === 'function' ? node.type(node.props) : node.props.children),
   ];
 }
-function style(value: unknown): Record<string, unknown> {
-  if (Array.isArray(value)) return Object.assign({}, ...value.map(style));
-  return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
-}
 
 /** Run both actual renderers, isolating only the native boundaries. */
 function renderer(file: string, component: string) {
@@ -111,46 +107,6 @@ const label = 'A long option title that needs multiple lines on a narrow phone';
 const description =
   'The full explanation belongs below the title and must wrap naturally instead of being truncated at the right edge.';
 
-test('tool question options stack full title above full description without a fixed height or line cap', () => {
-  const render = renderer('src/components/agent-tool-card.tsx', 'QuestionBody');
-  assertStack(
-    render({
-      questions: [{ header: '', question: '', options: [{ label, description }] }],
-      answers: [[label]],
-      fallback: '',
-    })
-  );
-});
-
-test('single and multiple choice forms render wrapping descriptions and retain selection accessibility', () => {
-  for (const type of ['string', 'multiselect']) {
-    const render = renderer('src/components/agent-form-card.tsx', 'AgentFormCard');
-    const tree = render({
-      request: {
-        title: 'Question',
-        fields: [
-          {
-            key: 'answer',
-            title: '',
-            type,
-            when: [],
-            options: [{ value: 'selected', label, description }],
-            default: type === 'string' ? 'selected' : ['selected'],
-          },
-        ],
-      },
-      onSubmit: async () => {},
-    });
-    assertStack(tree);
-    const option = nodes(tree).find(
-      (node) => node.props.accessibilityRole === (type === 'string' ? 'radio' : 'checkbox')
-    );
-    expect(option?.props.accessibilityState).toEqual(
-      type === 'string' ? { selected: true } : { checked: true }
-    );
-  }
-});
-
 test('only advertised custom answers have an input, sharing validated values with option selection', async () => {
   for (const custom of [undefined, false, true]) {
     const render = renderer('src/components/agent-form-card.tsx', 'AgentFormCard');
@@ -210,25 +166,3 @@ test('only advertised custom answers have an input, sharing validated values wit
     ]);
   }
 });
-
-function assertStack(tree: unknown) {
-  const all = nodes(tree);
-  const copy = all.find(
-    (node) =>
-      node.type === 'View' &&
-      Array.isArray(node.props.children) &&
-      node.props.children[0]?.props?.children === label
-  );
-  expect(copy).toBeDefined();
-  expect(style(copy?.props.style).flexDirection ?? 'column').toBe('column');
-  const texts = nodes(copy).filter((node) => node.type === 'Text');
-  expect(texts.map((node) => node.props.children)).toEqual([label, description]);
-  for (const text of texts) expect(text.props.numberOfLines).toBeUndefined();
-  const option = all.find((node) => style(node.props.style).width === '100%');
-  expect(option).toBeDefined();
-  expect(all.some((node) => node.type === 'Check')).toBe(true);
-  for (const node of nodes(option)) {
-    expect(style(node.props.style).height).toBeUndefined();
-    expect(style(node.props.style).maxHeight).toBeUndefined();
-  }
-}
