@@ -155,12 +155,27 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
             const isOwned = () =>
               useGatewayConnectionStore.getState().record?.serverId === target.serverId;
             if (!isOwned()) return false;
-            const loaded = await loadWorkspaceSnapshot(target.sessionId, undefined, isOwned);
-            return Boolean(
-              isOwned() &&
-              loaded?.snapshot.sessionId === target.sessionId &&
-              loaded.snapshot.panes.some((pane) => pane.id === target.paneId)
+            // Navigate first. The snapshot is the terminal screen's own first
+            // read, and waiting for it here held the tap for up to its budget
+            // on a slow computer. The read still goes out now, warm for the
+            // screen, and if it says the pane is gone the reader hears so
+            // where they would have -- on the screen, not instead of it.
+            void loadWorkspaceSnapshot(target.sessionId, undefined, isOwned).then(
+              (loaded) => {
+                if (!loaded || !isOwned()) return;
+                const present =
+                  loaded.snapshot.sessionId === target.sessionId &&
+                  loaded.snapshot.panes.some((pane) => pane.id === target.paneId);
+                if (!present)
+                  showToast({
+                    variant: 'danger',
+                    title: t`Could not open destination`,
+                    message: t`That destination is no longer available.`,
+                  });
+              },
+              () => {}
             );
+            return true;
           }
         }
       },
