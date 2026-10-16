@@ -15,6 +15,7 @@ import {
   gatewayAuthHeaders,
   gatewayEndpointFetch,
   gatewayFetch,
+  gatewayWriteFetch,
   gatewayUrl,
   isGatewayConfigured,
   type GatewayEndpoint,
@@ -296,7 +297,12 @@ export async function writeJson(
       return null;
     throw new Error('Agent writes are not available in the offline demo');
   }
-  const res = await gatewayFetch(gatewayUrl(path), {
+  // Creating a session, prompting and commanding wait on the agent; every
+  // other write is a lookup-sized bookkeeping call.
+  const fetch = /\/agent-sessions$|\/(prompt|command)$/.test(path)
+    ? gatewayWriteFetch
+    : gatewayFetch;
+  const res = await fetch(gatewayUrl(path), {
     method,
     headers: body === undefined ? gatewayAuthHeaders() : jsonHeaders(),
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),

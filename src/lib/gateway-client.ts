@@ -218,6 +218,14 @@ import {
 } from './gateway-image-previews';
 
 const REQUEST_TIMEOUT_MS = 8_000;
+/**
+ * A write that starts or steers an agent turn -- creating a session, a
+ * prompt, a command -- waits on the agent, not on a lookup: OpenCode has to
+ * load the workspace or finish accepting the message before the gateway can
+ * answer. Cut off at the read budget, the app gave up on a prompt the gateway
+ * then delivered, and a retry sent it twice.
+ */
+const AGENT_WRITE_TIMEOUT_MS = 45_000;
 // An attachment is orders of magnitude larger than a control call, and the
 // gateway is usually reached over Wi-Fi or a tunnel, so it gets its own budget
 // rather than being cut off by the request timeout.
@@ -719,6 +727,10 @@ function bearerOf(headers: Readonly<Record<string, string>>): string {
 /** Every gateway call the generated client and this file make, on one budget. */
 export const gatewayFetch: typeof globalThis.fetch = (input, init) =>
   gatewayFetchWithin(REQUEST_TIMEOUT_MS, input, init);
+
+/** A write that waits on the agent itself; see `AGENT_WRITE_TIMEOUT_MS`. */
+export const gatewayWriteFetch: typeof globalThis.fetch = (input, init) =>
+  gatewayFetchWithin(AGENT_WRITE_TIMEOUT_MS, input, init);
 
 /**
  * Identical GETs that are out right now, so a second asker joins rather than

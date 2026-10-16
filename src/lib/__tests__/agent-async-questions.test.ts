@@ -129,6 +129,8 @@ test('question answers use the form reply contract and retain pending input on t
       },
       showToast: () => {},
       agentErrorRef: { current: String },
+      // A refusal, never a deadline: the late-failure path under test removes the row.
+      describeGatewayFailure: () => ({ kind: 'request' }),
       t: (strings: string[]) => strings[0],
       console: { warn: () => {} },
     }) as (id: string, answers: Record<string, unknown>) => Promise<void>;
@@ -206,6 +208,8 @@ test('normal follow-ups preserve body, attachments and staging, including canoni
       },
       showToast: () => {},
       agentErrorRef: { current: String },
+      // A refusal, never a deadline: the late-failure path under test removes the row.
+      describeGatewayFailure: () => ({ kind: 'request' }),
       t: (strings: string[]) => strings[0],
       console: { warn: () => {} },
     }) as (text: string, attachments?: string[], delivery?: 'steer' | 'queue') => Promise<boolean>;
