@@ -26,6 +26,7 @@ import {
   HOME_CONTINUE_REFRESH_MS,
   refreshHomeContinue,
   refreshHomeGateways,
+  homeAgentSessionsListPath,
 } from '@/lib/home-continue-refresh';
 import {
   endHomeRefresh,
@@ -221,6 +222,13 @@ export function useHomeRecentEntries({
       let again = false;
       const isCurrent = () => current && AppState.currentState === 'active';
       const refreshOne = async (record: GatewayRecord): Promise<boolean | undefined> => {
+        // The selected computer's listing does not need the Herdr session,
+        // so it goes out beside that lookup rather than after it.
+        const agentSessionsList =
+          record.serverId === targetId
+            ? readGatewayRecordJson(record, homeAgentSessionsListPath())
+            : undefined;
+        agentSessionsList?.catch(() => undefined);
         const choices = await homeSessionChoices(record);
         if (!isCurrent()) return undefined;
         const sessionId = resolveSessionId(
@@ -246,6 +254,7 @@ export function useHomeRecentEntries({
             capabilities: useServerCapabilities.getState().byServer[record.serverId],
           }),
           capabilities: useServerCapabilities.getState().byServer[record.serverId],
+          agentSessionsList,
         });
         // The panes read failing while the list answered is the session the
         // cached choice names having gone: ask `/api/sessions` again next pass.

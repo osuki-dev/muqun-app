@@ -91,6 +91,9 @@ export type ServerTasks = {
  * `ws_events`, the demo, or a socket closed in the background all still get a
  * list that is true as of the moment the sheet opened (review focus 1).
  */
+/** A list read this recently is what a socket subscribing now would read again. */
+const TASK_LIST_FRESH_MS = 2_000;
+
 export function useServerTasks(serverId: string | null): ServerTasks {
   const tasks = useServerTasksStore((state) =>
     serverId ? (state.index[serverId]?.tasks ?? NO_TASKS) : NO_TASKS
@@ -113,6 +116,8 @@ export function useServerTasks(serverId: string | null): ServerTasks {
   const [error, setError] = useState<string | null>(null);
   /** A slower answer for an earlier request must not overwrite a newer one. */
   const requestRef = useRef(0);
+  /** When the list was last read back, so a socket subscribing right after mount does not read it again. */
+  const readAtRef = useRef(0);
 
   const refresh = useCallback(async () => {
     if (isDemoActive() && serverId === DEMO_SERVER_ID) {
@@ -145,6 +150,7 @@ export function useServerTasks(serverId: string | null): ServerTasks {
     try {
       const list = await fetchTaskList(query);
       if (request !== requestRef.current) return;
+      readAtRef.current = Date.now();
       // A failed read keeps the list already held and says so.
       applyListAnswer(list, {
         replace: (tasks) => replace(serverId, tasks, requestedAtMs),
@@ -184,8 +190,12 @@ export function useServerTasks(serverId: string | null): ServerTasks {
         // Task state does not resolve forms: async questions can remain open
         // while the agent works. Only the form's own resolution clears it.
         onTaskUpdated: (task) => upsert(serverId, task),
-        // After every (re)connect: whatever changed while it was down.
-        onSubscribed: () => void refresh(),
+        // After every (re)connect: whatever changed while it was down. Not
+        // after the first connect on the heels of the mount read, which
+        // asked the same list a moment ago.
+        onSubscribed: () => {
+          if (Date.now() - readAtRef.current > TASK_LIST_FRESH_MS) void refresh();
+        },
         // The gateway dropped frames for this socket; a task may have changed
         // in them, and the frame that said so is gone.
         onResync: () => void refresh(),
