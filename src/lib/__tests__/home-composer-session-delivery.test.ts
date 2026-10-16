@@ -57,6 +57,8 @@ function dock(
     folder: '/workspace/selected',
     terminalAgent: options.terminal ? { agentKind: 'codex', name: 'Codex', confirmed: true } : null,
     ledgerCreate: options.ledger !== false,
+    // No session delivery for Codex on this gateway: Codex stays on its session plane.
+    ledgerCodexSession: false,
     ledgerPane: true,
     ready: true,
     playTransition: () => {},
