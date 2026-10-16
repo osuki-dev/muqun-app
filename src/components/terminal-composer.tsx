@@ -79,6 +79,14 @@ export interface TerminalComposerProps {
   fieldDecoration?: ReactNode;
   /** Moves tall-field text down by borrowing its bottom padding, not adding height. */
   fieldTextTopInset?: number;
+  /**
+   * A `boxShadow` cast by the field's plate, for a field that is the dock's
+   * only painted surface (Home). Drawn on a transparent layer behind the
+   * shell rather than on the shell itself, which clips to its shape -- and
+   * Android clips an outset shadow with it. A box shadow paints only outside
+   * its box, so a translucent, pack-tinted plate shows none of it through.
+   */
+  fieldShadow?: string;
   onVoiceActiveChange?: (active: boolean) => void;
   inputRef?: Ref<TextInput>;
   /** The field's own props: value, placeholder, editability, test id. */
@@ -105,6 +113,7 @@ export function TerminalComposer({
   fieldBackgroundOutset,
   fieldDecoration,
   fieldTextTopInset = 0,
+  fieldShadow,
   onVoiceActiveChange,
   inputRef,
   inputProps,
@@ -232,6 +241,14 @@ export function TerminalComposer({
       exiting={exiting}
       layout={layout}
       style={composerStyles.fieldOuter}>
+      {fieldShadow ? (
+        <View
+          testID="composer-field-shadow"
+          pointerEvents="none"
+          accessible={false}
+          style={[StyleSheet.absoluteFill, fieldRadius, { boxShadow: fieldShadow }]}
+        />
+      ) : null}
       {outsideBackground ? (
         <>
           <View
