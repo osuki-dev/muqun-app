@@ -924,7 +924,7 @@ export function InlineDiffRows({
       <DiffLayoutContext.Provider value={layout}>
         <Animated.ScrollView
           horizontal
-          showsHorizontalScrollIndicator={pans}
+          showsHorizontalScrollIndicator={onGrid ? false : pans}
           onScroll={onHorizontalScroll}
           scrollEventThrottle={16}
           onLayout={onViewportLayout}

@@ -1,4 +1,6 @@
 import { InlineFileLink } from '@/components/inline-file-link';
+import { ContentImage } from '@/components/content-image';
+import { contentImageIdentity, type ContentImagePreviewState } from '@/lib/content-image-layout';
 import { isPdfFile } from '@/lib/session-assets';
 import { InlineVideoFile } from '@/components/video-asset-preview';
 import { InlineAudioFile } from '@/components/audio-asset-preview';
@@ -10,7 +12,6 @@ import { Text } from '@/components/text';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { plural } from '@lingui/core/macro';
 import { Check, FileText, Play, X } from 'lucide-react-native';
-import { Image } from 'expo-image';
 import { EnrichedMarkdownText, type MarkdownStyle } from 'react-native-enriched-markdown';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -34,6 +35,7 @@ import { canInlineFileText, readFilePreview, toolFileForPath } from '@/lib/file-
 import {
   EmbeddedTerminalToolBlock,
   isToolPending,
+  type ToolExpansionIntent,
 } from '@/components/embedded-terminal-tool-block';
 import { InlineDiffRows } from '@/components/diff-rows';
 import { usePaneChatColors, usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
@@ -126,8 +128,9 @@ export interface AgentToolCardProps {
   onOpenFile?: (file: { uri: string; mime?: string; name?: string }) => void;
   /** The virtualised changes viewer, for a patch too big to draw in a cell. */
   onOpenFullDiff?: (path?: string) => void;
-  /** The whole call in its own sheet; the header opens it. */
+  /** The whole call in its own sheet, offered inside expanded content. */
   onOpenDetail?: () => void;
+  onExpand?: (header: View) => ToolExpansionIntent | undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -278,6 +281,38 @@ function isImageFile(file: { mime?: string }): boolean {
   return (file.mime ?? '').startsWith(IMAGE_MIME_PREFIX);
 }
 
+function LegacyToolImage({
+  uri,
+  label,
+  onPreviewImage,
+}: {
+  uri: string;
+  label: string;
+  onPreviewImage?: (uri: string) => void;
+}) {
+  const { t } = useLingui();
+  const profile = useAppearanceProfile();
+  const [previewState, setPreviewState] = useState<ContentImagePreviewState>();
+  return (
+    <PressableScale
+      accessibilityRole="imagebutton"
+      accessibilityLabel={label}
+      accessibilityHint={
+        previewState?.identity === contentImageIdentity({ uri }) && previewState.cropped
+          ? t`Cropped preview · Open full image`
+          : undefined
+      }
+      onPress={() => onPreviewImage?.(uri)}
+      style={[styles.fileThumbWrap, { borderRadius: profile.chrome.surface }]}>
+      <ContentImage
+        source={{ uri }}
+        previewable={Boolean(onPreviewImage)}
+        onPreviewStateChange={setPreviewState}
+      />
+    </PressableScale>
+  );
+}
+
 /** The files a tool returned: images inline, everything else as a chip. */
 const ToolFiles = memo(function ToolFiles({
   files,
@@ -313,7 +348,7 @@ const ToolFiles = memo(function ToolFiles({
               key={file.uri}
               asset={image}
               label={file.name ?? t`Open image`}
-              style={[styles.fileThumb, { borderRadius: profile.chrome.surface }]}
+              style={{ borderRadius: profile.chrome.surface }}
             />
           );
         if (audioSessionId && isPdfFile(file)) {
@@ -352,14 +387,11 @@ const ToolFiles = memo(function ToolFiles({
               label={file.name ?? t`Open image`}
               style={[styles.fileThumb, { borderRadius: profile.chrome.surface }]}
               onPreviewImage={onPreviewImage}>
-              <PressableScale
-                key={file.uri}
-                accessibilityRole="imagebutton"
-                accessibilityLabel={file.name ?? t`Open image`}
-                onPress={() => onPreviewImage?.(file.uri)}
-                style={[styles.fileThumbWrap, { borderRadius: profile.chrome.surface }]}>
-                <Image source={{ uri: file.uri }} style={styles.fileThumb} contentFit="cover" />
-              </PressableScale>
+              <LegacyToolImage
+                uri={file.uri}
+                label={file.name ?? t`Open image`}
+                onPreviewImage={onPreviewImage}
+              />
             </UnmappedImageThumbnail>
           );
         }
@@ -427,6 +459,7 @@ export const AgentToolCard = memo(function AgentToolCard({
   onOpenFile,
   onOpenFullDiff,
   onOpenDetail,
+  onExpand,
 }: AgentToolCardProps) {
   const { t, i18n } = useLingui();
   const theme = useThemeTokens();
@@ -436,7 +469,6 @@ export const AgentToolCard = memo(function AgentToolCard({
   // subscribes this card to the theme itself, so a colour-mode switch reaches
   // it whatever the list decides.
   const markdownStyle = usePaneChatMarkdownStyle();
-  const profile = useAppearanceProfile();
   const colors = usePaneChatColors();
 
   const kind = useMemo(() => classifyTool(part.name), [part.name]);
@@ -493,21 +525,6 @@ export const AgentToolCard = memo(function AgentToolCard({
   const argumentLine = useMemo(() => (pending ? toolArgumentLine(input) : ''), [pending, input]);
   const durationMs = toolDurationMs(part.time, part.metadata);
   const truncated = part.truncated === true || parsed.truncated;
-  // Read previews (including images) belong inside the log row's disclosure.
-  // Other rich results and interactive families keep their presentation.
-  const compactSummary =
-    part.name !== 'image_generation' &&
-    (kind === 'read' ||
-      (!hasFiles &&
-        (kind === 'shell' ||
-          kind === 'glob' ||
-          kind === 'grep' ||
-          kind === 'search' ||
-          kind === 'web' ||
-          kind === 'skill' ||
-          kind === 'write' ||
-          kind === 'execute' ||
-          (kind === 'mcp' && (part.output == null || typeof part.output === 'string')))));
   const shellExit = shellExitFromMetadata(part.metadata) ?? parsed.exitCode;
   const resultFailed =
     (kind === 'shell' &&
@@ -661,15 +678,6 @@ export const AgentToolCard = memo(function AgentToolCard({
         nodes.push(<Chip key="provider" text={provider} color={theme.colors.textMuted} />);
       }
     }
-    if (child?.state) {
-      nodes.push(
-        <Chip
-          key="sub"
-          text={i18n._(subagentStateWord[child.state])}
-          color={theme.colors.textMuted}
-        />
-      );
-    }
     return nodes.length > 0 ? nodes : null;
   }, [
     kind,
@@ -682,8 +690,6 @@ export const AgentToolCard = memo(function AgentToolCard({
     newString,
     oldString,
     writeContent,
-    child,
-    i18n,
     theme.colors.textMuted,
     t,
   ]);
@@ -702,10 +708,7 @@ export const AgentToolCard = memo(function AgentToolCard({
           accessibilityRole="button"
           accessibilityLabel={t`Run in background`}
           onPress={onRunInBackground}
-          style={[
-            styles.action,
-            { borderRadius: profile.chrome.control, borderColor: colors.border },
-          ]}>
+          style={styles.action}>
           <Play size={11} color={colors.accent} />
           <Text variant="caption" color={colors.accent} style={styles.actionText}>
             <Trans>Run in background</Trans>
@@ -724,10 +727,7 @@ export const AgentToolCard = memo(function AgentToolCard({
           accessibilityRole="button"
           accessibilityLabel={t`Open background tasks`}
           onPress={handleOpenTray}
-          style={[
-            styles.action,
-            { borderRadius: profile.chrome.control, borderColor: colors.border },
-          ]}>
+          style={styles.action}>
           <Text variant="caption" color={colors.accent} style={styles.actionText}>
             <Trans>Background tasks</Trans>
           </Text>
@@ -742,7 +742,7 @@ export const AgentToolCard = memo(function AgentToolCard({
           accessibilityRole="button"
           accessibilityLabel={t`Open the subagent's session`}
           onPress={handleOpenChild}
-          style={styles.sessionAction}>
+          style={styles.action}>
           <Text variant="caption" color={colors.accent} style={styles.actionText}>
             <Trans>Open session</Trans>
           </Text>
@@ -761,7 +761,6 @@ export const AgentToolCard = memo(function AgentToolCard({
     handleOpenTray,
     handleOpenChild,
     colors,
-    profile.chrome.control,
     t,
   ]);
 
@@ -869,13 +868,6 @@ export const AgentToolCard = memo(function AgentToolCard({
       : part.error.message
     : '';
 
-  // A todo list is a checklist, not a tool row: OpenCode's own UI draws it
-  // that way and there is nothing about the call worth a header.
-  if (kind === 'todo') {
-    const items = readTodoItems(input);
-    if (items.length > 0) return <AgentTodoBlock items={items} />;
-  }
-
   return (
     <EmbeddedTerminalToolBlock
       testID={`agent-tool-${part.id}`}
@@ -887,7 +879,6 @@ export const AgentToolCard = memo(function AgentToolCard({
             : part.name
       }
       kind={kind}
-      compactSummary={compactSummary}
       taskSummary={
         kind === 'subagent'
           ? {
@@ -898,6 +889,10 @@ export const AgentToolCard = memo(function AgentToolCard({
                 headerTitle ||
                 part.name,
               identity: headerTitle,
+              role:
+                childSession && childSession.asid === part.child_session_id
+                  ? childSession.agent_role
+                  : undefined,
               statusLabel: childStatusLabel,
               busy: childWorking,
               status: (
@@ -933,9 +928,10 @@ export const AgentToolCard = memo(function AgentToolCard({
       {...(errorLine ? { error: errorLine } : {})}
       background={detached}
       {...(onOpenDetail ? { onOpenDetail } : {})}
+      onExpand={onExpand}
       chips={chips}
       actions={actions}
-      // Diffs stay visible. Read previews are mounted only after disclosure.
+      // Every rich result mounts only after disclosure, including images and diffs.
       preview={
         // While the input is still arriving there is no result to preview and
         // the arguments are the only thing there is to say.
@@ -984,6 +980,7 @@ const ReadFileBody = memo(function ReadFileBody({
         markdownStyle={markdownStyle}
         testID="agent-read"
         layout="inline"
+        showsHorizontalScrollIndicator={false}
       />
     );
   }
@@ -1001,6 +998,7 @@ const ReadFileBody = memo(function ReadFileBody({
               content={preview.content}
               markdownStyle={markdownStyle}
               testID="agent-read"
+              showsHorizontalScrollIndicator={false}
             />
           )}
         </View>
@@ -1050,6 +1048,7 @@ const ReadFileBody = memo(function ReadFileBody({
                   content={preview.content}
                   markdownStyle={markdownStyle}
                   testID="agent-read-full"
+                  showsHorizontalScrollIndicator={false}
                 />
               </View>
             </SheetFrame>
@@ -1259,6 +1258,15 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
       return (
         <QuestionBody questions={args.questions} answers={args.answers} fallback={outputText} />
       );
+
+    case 'todo': {
+      const items = readTodoItems(input);
+      return items.length > 0 ? (
+        <AgentTodoBlock items={items} />
+      ) : (
+        <GenericToolBody input={part.input} outputText={outputText} />
+      );
+    }
 
     case 'execute':
       return (
@@ -1816,20 +1824,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    minHeight: 28,
-    paddingHorizontal: 10,
-    borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
+    minHeight: 44,
+    minWidth: 44,
+    maxWidth: '100%',
+    flexShrink: 1,
+    paddingHorizontal: 4,
+    justifyContent: 'center',
   },
   actionText: {
     fontSize: AGENT_TYPE.micro.size,
     fontWeight: '600',
-  },
-  sessionAction: {
-    minHeight: 44,
-    minWidth: 44,
-    justifyContent: 'center',
-    paddingHorizontal: 4,
+    flexShrink: 1,
   },
   taskState: {
     flexDirection: 'row',
@@ -1846,6 +1851,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   fileThumbWrap: {
+    maxWidth: '100%',
+    minWidth: 44,
+    minHeight: 44,
     borderCurve: 'continuous',
     overflow: 'hidden',
   },

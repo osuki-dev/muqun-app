@@ -35,12 +35,14 @@ export function FileTextBody({
   markdownStyle,
   testID = 'asset',
   layout = 'viewport',
+  showsHorizontalScrollIndicator = true,
 }: {
   file: TextPreviewFile;
   content: string;
   markdownStyle: MarkdownStyle;
   testID?: string;
   layout?: 'inline' | 'viewport';
+  showsHorizontalScrollIndicator?: boolean;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -93,6 +95,7 @@ export function FileTextBody({
     return (
       <CodeLinesView
         testID={`${testID}-lines`}
+        showsHorizontalScrollIndicator={showsHorizontalScrollIndicator}
         lines={index.lines}
         longest={index.longest}
         markdownStyle={markdownStyle}

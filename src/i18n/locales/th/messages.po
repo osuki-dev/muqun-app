@@ -2274,6 +2274,14 @@ msgstr "สร้างแล้วย้ายไป"
 msgid "Creating session…"
 msgstr "กำลังสร้างเซสชัน…"
 
+#: src/components/agent-tool-card.tsx
+#: src/components/attachment-image.tsx
+#: src/components/content-image.tsx
+#: src/components/gateway-image-thumbnail.tsx
+#: src/components/transcript-block-image.tsx
+msgid "Cropped preview · Open full image"
+msgstr "ตัวอย่างบางส่วน · เปิดภาพเต็ม"
+
 #: src/components/custom-theme-library.tsx
 #: src/components/file-mention-panel.tsx
 msgid "Current"
@@ -2416,6 +2424,7 @@ msgstr "แยกออกที่ {head}"
 msgid "Detached at {head}"
 msgstr "แยกออกที่ {head}"
 
+#: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Details"
 msgstr "รายละเอียด"

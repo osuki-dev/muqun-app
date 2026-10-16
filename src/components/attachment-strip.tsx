@@ -106,7 +106,7 @@ export function AttachmentStrip({
                 <Image
                   source={{ uri: attachment.localUri }}
                   style={styles.thumbnail}
-                  contentFit="cover"
+                  contentFit="contain"
                   // The decode's own fade. It was 100 ms, which is not a step
                   // on any scale this app uses; `micro` is the token for a
                   // state flip you should barely notice, which is what this is.

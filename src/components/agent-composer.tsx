@@ -1786,6 +1786,7 @@ export const AgentComposer = memo(function AgentComposer({
         <ComposerSurface
           flushField={flushField}
           surface="composer"
+          borderless
           shape={flushField ? 'composerField' : bar ? 'none' : 'sheet'}
           style={[
             styles.composerDock,
@@ -1793,13 +1794,6 @@ export const AgentComposer = memo(function AgentComposer({
               !flushField && {
                 borderTopLeftRadius: profile.chrome.surface,
                 borderTopRightRadius: profile.chrome.surface,
-                borderTopWidth: StyleSheet.hairlineWidth,
-                borderTopColor: theme.colors.border,
-                // The material draws a hairline on every side on a translucent
-                // pack; the bar's only edge is its top.
-                borderLeftColor: 'transparent',
-                borderRightColor: 'transparent',
-                borderBottomColor: 'transparent',
               },
           ]}>
           <View

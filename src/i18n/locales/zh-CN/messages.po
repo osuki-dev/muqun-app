@@ -2274,6 +2274,14 @@ msgstr "创建并移动"
 msgid "Creating session…"
 msgstr "正在创建会话…"
 
+#: src/components/agent-tool-card.tsx
+#: src/components/attachment-image.tsx
+#: src/components/content-image.tsx
+#: src/components/gateway-image-thumbnail.tsx
+#: src/components/transcript-block-image.tsx
+msgid "Cropped preview · Open full image"
+msgstr "局部预览 · 查看完整图片"
+
 #: src/components/custom-theme-library.tsx
 #: src/components/file-mention-panel.tsx
 msgid "Current"
@@ -2416,6 +2424,7 @@ msgstr "分离于 {head}"
 msgid "Detached at {head}"
 msgstr "分离于 {head}"
 
+#: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Details"
 msgstr "详情"

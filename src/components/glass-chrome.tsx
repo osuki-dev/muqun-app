@@ -70,6 +70,8 @@ type GlassChromeProps = {
   surface?: ThemeSurface;
   /** Semantic geometry owned by the active appearance profile. */
   shape?: keyof AppearanceProfile['chrome'] | 'pill' | 'none';
+  /** Hide a decorative edge without changing the stable native border width. */
+  borderless?: boolean;
   /**
    * The face's own shape -- size, radius, padding, shadow. The material is this
    * component's business; where the surface is and how big it is stays with the
@@ -106,6 +108,7 @@ export function GlassChrome({
   face = 'floating',
   surface = 'actions',
   shape,
+  borderless = false,
   style,
   entering,
   exiting,
@@ -181,7 +184,7 @@ export function GlassChrome({
     hasImage && { overflow: 'hidden' },
     {
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: backgroundOpacity < 1 ? theme.colors.border : 'transparent',
+      borderColor: !borderless && backgroundOpacity < 1 ? theme.colors.border : 'transparent',
     },
   ];
   const opacityLimit = useMemo(
@@ -245,7 +248,7 @@ export function GlassChrome({
       surface === 'composer'
         ? {
             backgroundColor: surfaceBackgroundFill(theme.colors.surface, backgroundOpacity),
-            borderColor: theme.colors.border,
+            borderColor: borderless ? 'transparent' : theme.colors.border,
           }
         : {
             backgroundColor: withAlpha(
