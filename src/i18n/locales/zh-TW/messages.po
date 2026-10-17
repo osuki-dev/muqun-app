@@ -4517,6 +4517,10 @@ msgstr "正在開啟通道"
 msgid "Opening…"
 msgstr "正在開啟…"
 
+#: src/components/home-computer-cards.tsx
+msgid "Opens its tasks."
+msgstr "開啟這台電腦的任務"
+
 #: src/components/editor-controls.tsx
 msgid "Opens the keyboard, the editor keys and the composer over this editor. Drag to move."
 msgstr "在這個編輯器上方開啟鍵盤、編輯器按鍵與輸入欄。拖曳即可移動"
@@ -5812,8 +5816,7 @@ msgstr "顯示首頁 Logo"
 msgid "Show Home text"
 msgstr "顯示首頁文字"
 
-#: src/components/home-computer-cards.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/components/home-fold-link.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Show less"
@@ -5822,8 +5825,7 @@ msgstr "顯示較少"
 #: src/components/agent-tool-card.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/diff-rows.tsx
-#: src/components/home-computer-cards.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/components/home-fold-link.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Show more"
 msgstr "顯示更多"
@@ -6333,11 +6335,6 @@ msgstr "給 {assignmentLabel} 的任務"
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for a new {0}"
 msgstr "給新的 {0} 的任務"
-
-#. placeholder {0}: server.label
-#: src/components/home-computer-cards.tsx
-msgid "Task history for {0}"
-msgstr "{0} 的任務歷史"
 
 #: src/components/home-composer-dock.tsx
 msgid "Task options"

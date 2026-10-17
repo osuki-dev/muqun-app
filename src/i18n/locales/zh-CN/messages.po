@@ -4517,6 +4517,10 @@ msgstr "正在打开隧道"
 msgid "Opening…"
 msgstr "正在打开…"
 
+#: src/components/home-computer-cards.tsx
+msgid "Opens its tasks."
+msgstr "打开这台电脑的任务"
+
 #: src/components/editor-controls.tsx
 msgid "Opens the keyboard, the editor keys and the composer over this editor. Drag to move."
 msgstr "在这个编辑器上方打开键盘、编辑器按键和输入栏。拖动即可移动"
@@ -5812,8 +5816,7 @@ msgstr "显示首页 Logo"
 msgid "Show Home text"
 msgstr "显示首页文字"
 
-#: src/components/home-computer-cards.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/components/home-fold-link.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Show less"
@@ -5822,8 +5825,7 @@ msgstr "显示更少"
 #: src/components/agent-tool-card.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/diff-rows.tsx
-#: src/components/home-computer-cards.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/components/home-fold-link.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Show more"
 msgstr "显示更多"
@@ -6333,11 +6335,6 @@ msgstr "给 {assignmentLabel} 的任务"
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for a new {0}"
 msgstr "给新的 {0} 的任务"
-
-#. placeholder {0}: server.label
-#: src/components/home-computer-cards.tsx
-msgid "Task history for {0}"
-msgstr "{0} 的任务历史"
 
 #: src/components/home-composer-dock.tsx
 msgid "Task options"

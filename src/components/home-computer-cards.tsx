@@ -1,7 +1,7 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
-import { History, Monitor } from 'lucide-react-native';
+import { Monitor } from 'lucide-react-native';
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
@@ -14,6 +14,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { PairAgainNotice } from '@/components/pair-again-notice';
+import { HomeFoldLink } from '@/components/home-fold-link';
 import { PressableScale } from '@/components/pressable-scale';
 import { StatusDot } from '@/components/status-dot';
 import { SentTaskRow, TaskRow } from '@/components/task-row';
@@ -391,123 +392,114 @@ function ComputerCardView({
     />
   );
   return (
-    <View
-      testID={`home-card-${server.serverId}`}
-      style={[
-        styles.card,
-        styles.fill,
-        {
-          backgroundColor: background(theme.colors.surface),
-          borderRadius: profile.chrome.surface,
-        },
-      ]}>
-      <PressableScale
-        testID={`home-card-header-${server.serverId}`}
-        accessibilityRole="button"
-        accessibilityLabel={`${server.label}, ${_(connectionStatusDescription[status])}`}
-        accessibilityHint={t`Sends your next goal here.`}
-        onPress={onSelect}
-        style={styles.header}>
-        <Monitor size={18} color={theme.colors.primary} />
-        <View style={[styles.headerCopy, styles.fill]}>
-          <Text variant="bodySmall" weight="semibold" numberOfLines={1}>
-            {server.label}
-          </Text>
-          {statusColor ? (
-            <View style={styles.statusLine}>
-              {/* No ripple: every card rippling forever keeps Home's UI thread busy. */}
-              <StatusDot color={statusColor} filled pulse={false} />
-              <Text variant="caption" color={statusColor} numberOfLines={1}>
-                {_(connectionStatusLabel[status])}
-              </Text>
-            </View>
-          ) : null}
-        </View>
-        {onOpenHistory ? (
-          <PressableScale
-            testID={`home-card-history-${server.serverId}`}
-            accessibilityRole="button"
-            accessibilityLabel={t`Task history for ${server.label}`}
-            hitSlop={8}
-            onPress={onOpenHistory}
-            style={styles.history}>
-            <History size={16} color={theme.colors.textMuted} />
-          </PressableScale>
-        ) : null}
-      </PressableScale>
-      <PairAgainNotice
-        testID={`home-card-pair-again-${server.serverId}`}
-        status={status}
-        server={server}
-      />
-
-      {followed ? (
-        <View style={styles.block}>
+    <View style={styles.fill}>
+      <View
+        testID={`home-card-${server.serverId}`}
+        style={[
+          styles.card,
+          styles.fill,
+          {
+            backgroundColor: background(theme.colors.surface),
+            borderRadius: profile.chrome.surface,
+          },
+        ]}>
+        <PressableScale
+          testID={`home-card-header-${server.serverId}`}
+          accessibilityRole="button"
+          accessibilityLabel={`${server.label}, ${_(connectionStatusDescription[status])}`}
+          accessibilityHint={onOpenHistory ? t`Opens its tasks.` : t`Sends your next goal here.`}
+          onPress={onOpenHistory ?? onSelect}
+          style={styles.header}>
+          <Monitor size={18} color={theme.colors.primary} />
+          <View style={[styles.headerCopy, styles.fill]}>
+            <Text variant="bodySmall" weight="semibold" numberOfLines={1}>
+              {server.label}
+            </Text>
+            {statusColor ? (
+              <View style={styles.statusLine}>
+                {/* No ripple: every card rippling forever keeps Home's UI thread busy. */}
+                <StatusDot color={statusColor} filled pulse={false} />
+                <Text variant="caption" color={statusColor} numberOfLines={1}>
+                  {_(connectionStatusLabel[status])}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+          {/* The caption sits in the header's spare right half, so it never
+            takes a line of its own and nothing below it moves when it fades. */}
           {cachedCaption !== 'none' ? (
             <LastKnownActivityCaption
               shown={cachedCaption === 'shown'}
               testID={`home-card-cached-${server.serverId}`}
             />
           ) : null}
-          {/* One keyed list, not one per section: a task moving between Now
+        </PressableScale>
+        <PairAgainNotice
+          testID={`home-card-pair-again-${server.serverId}`}
+          status={status}
+          server={server}
+        />
+
+        {followed ? (
+          <View style={styles.block}>
+            {/* One keyed list, not one per section: a task moving between Now
               and Just finished (it finished, or it was reopened) is the same
               row element, moved by its layout transition, never re-created. */}
-          {[
-            ...[
-              ...urgentNow.map(nowRow),
-              ...card.pending.map((item) => (
-                <SentTaskRow key={item.id} item={item} computer={server.label} nowMs={nowMs} />
-              )),
-              ...restNow.map(nowRow),
-            ].slice(0, expanded ? undefined : shownOpen),
-            ...card.finished
-              .slice(0, expanded ? undefined : shownFinished)
-              .map((task) => (
-                <TaskRow
-                  key={task.taskId}
-                  task={task}
-                  inComputerCard
-                  statusCurrent={statusCurrent}
-                  serverId={server.serverId}
-                  discovery={discovery}
-                  nowMs={nowMs}
-                  onOpen={(finished) => onOpenTask(finished)}
-                  onOpenTree={(finished) => onOpenTask(finished, true)}
-                />
-              )),
-          ]}
-          {hasMore ? (
-            <PressableScale
-              testID={`home-card-more-${server.serverId}`}
-              accessibilityRole="button"
-              accessibilityState={{ expanded }}
-              onPress={() => setExpanded((shown) => !shown)}
-              style={styles.more}>
-              <Text variant="bodySmall" color={theme.colors.primary}>
-                {expanded ? t`Show less` : t`Show more`}
-              </Text>
-            </PressableScale>
-          ) : null}
-        </View>
-      ) : (
-        <View style={styles.block}>
-          <Text variant="caption" color={theme.colors.textMuted}>
-            {t`Not updating from here. Open this computer to see its tasks.`}
-          </Text>
-        </View>
-      )}
+            {[
+              ...[
+                ...urgentNow.map(nowRow),
+                ...card.pending.map((item) => (
+                  <SentTaskRow key={item.id} item={item} computer={server.label} nowMs={nowMs} />
+                )),
+                ...restNow.map(nowRow),
+              ].slice(0, expanded ? undefined : shownOpen),
+              ...card.finished
+                .slice(0, expanded ? undefined : shownFinished)
+                .map((task) => (
+                  <TaskRow
+                    key={task.taskId}
+                    task={task}
+                    inComputerCard
+                    statusCurrent={statusCurrent}
+                    serverId={server.serverId}
+                    discovery={discovery}
+                    nowMs={nowMs}
+                    onOpen={(finished) => onOpenTask(finished)}
+                    onOpenTree={(finished) => onOpenTask(finished, true)}
+                  />
+                )),
+            ]}
+          </View>
+        ) : (
+          <View style={styles.block}>
+            <Text variant="caption" color={theme.colors.textMuted}>
+              {t`Not updating from here. Open this computer to see its tasks.`}
+            </Text>
+          </View>
+        )}
+      </View>
+      {/* Under the surface, not in it, the same as Continue's: the card is
+          the computer's work, and the fold is a line of the page. */}
+      {hasMore ? (
+        <HomeFoldLink
+          testID={`home-card-more-${server.serverId}`}
+          expanded={expanded}
+          onPress={() => setExpanded((shown) => !shown)}
+        />
+      ) : null}
     </View>
   );
 }
 
 /**
- * "Last known activity", in a slot that is always there once the card has
+ * "Last known activity", at the right of the card's header once the card has
  * rows. The caption used to mount above the keyed task rows the moment the
  * socket closed and leave by unmounting, so every arrival pushed the rows
  * down through a layout transition -- and in the app switcher, where
  * Reanimated has stopped, the snapshot caught the first frame of that move
- * with the caption drawn across the first row's title. The text now keeps its
- * line and only fades, so nothing around it ever moves.
+ * with the caption drawn across the first row's title. It now lives in the
+ * header's spare half and only fades, so nothing around it ever moves and
+ * the card spends no line on it.
  */
 function LastKnownActivityCaption({ shown, testID }: { shown: boolean; testID: string }) {
   const { t } = useLingui();
@@ -552,15 +544,13 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   header: {
-    minHeight: 44,
+    minHeight: 36,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
   },
   headerCopy: { flexShrink: 1, minWidth: 0, gap: 2 },
   statusLine: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  history: { minWidth: 32, minHeight: 32, alignItems: 'center', justifyContent: 'center' },
   block: { gap: 4, paddingBottom: 8 },
-  more: { minHeight: 44, justifyContent: 'center' },
   fill: { flexGrow: 1 },
 });

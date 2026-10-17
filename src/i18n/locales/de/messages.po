@@ -4517,6 +4517,10 @@ msgstr "Tunnel wird geöffnet"
 msgid "Opening…"
 msgstr "Wird geöffnet…"
 
+#: src/components/home-computer-cards.tsx
+msgid "Opens its tasks."
+msgstr "Öffnet seine Aufgaben"
+
 #: src/components/editor-controls.tsx
 msgid "Opens the keyboard, the editor keys and the composer over this editor. Drag to move."
 msgstr "Öffnet Tastatur, Editor-Tasten und Eingabefeld über diesem Editor. Zum Verschieben ziehen"
@@ -5812,8 +5816,7 @@ msgstr "Logo auf der Startseite anzeigen"
 msgid "Show Home text"
 msgstr "Text auf der Startseite anzeigen"
 
-#: src/components/home-computer-cards.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/components/home-fold-link.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Show less"
@@ -5822,8 +5825,7 @@ msgstr "Weniger anzeigen"
 #: src/components/agent-tool-card.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/diff-rows.tsx
-#: src/components/home-computer-cards.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/components/home-fold-link.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Show more"
 msgstr "Mehr anzeigen"
@@ -6333,11 +6335,6 @@ msgstr "Aufgabe für {assignmentLabel}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for a new {0}"
 msgstr "Aufgabe für einen neuen {0}"
-
-#. placeholder {0}: server.label
-#: src/components/home-computer-cards.tsx
-msgid "Task history for {0}"
-msgstr "Aufgabenverlauf von {0}"
 
 #: src/components/home-composer-dock.tsx
 msgid "Task options"

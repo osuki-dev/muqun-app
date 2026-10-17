@@ -4517,6 +4517,10 @@ msgstr "กำลังเปิดอุโมงค์"
 msgid "Opening…"
 msgstr "กำลังเปิด…"
 
+#: src/components/home-computer-cards.tsx
+msgid "Opens its tasks."
+msgstr "เปิดงานของเครื่องนี้"
+
 #: src/components/editor-controls.tsx
 msgid "Opens the keyboard, the editor keys and the composer over this editor. Drag to move."
 msgstr "เปิดแป้นพิมพ์ ปุ่มตัวแก้ไข และช่องเขียนข้อความเหนือตัวแก้ไขนี้ ลากเพื่อย้าย"
@@ -5812,8 +5816,7 @@ msgstr "แสดงโลโก้หน้าแรก"
 msgid "Show Home text"
 msgstr "แสดงข้อความหน้าแรก"
 
-#: src/components/home-computer-cards.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/components/home-fold-link.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Show less"
@@ -5822,8 +5825,7 @@ msgstr "แสดงน้อยลง"
 #: src/components/agent-tool-card.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/diff-rows.tsx
-#: src/components/home-computer-cards.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/components/home-fold-link.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Show more"
 msgstr "แสดงเพิ่มเติม"
@@ -6333,11 +6335,6 @@ msgstr "งานสำหรับ {assignmentLabel}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for a new {0}"
 msgstr "งานสำหรับ {0} ใหม่"
-
-#. placeholder {0}: server.label
-#: src/components/home-computer-cards.tsx
-msgid "Task history for {0}"
-msgstr "ประวัติงานของ {0}"
 
 #: src/components/home-composer-dock.tsx
 msgid "Task options"
