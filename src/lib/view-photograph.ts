@@ -22,14 +22,41 @@ export async function photographView(
   height: number
 ): Promise<SkImage | null> {
   if (!ref.current || width <= 0 || height <= 0) return null;
+  if (!zeroCopyFailed) {
+    try {
+      return await capture(ref, width, height, true);
+    } catch {
+      // The device could not import the renderer's buffer (an emulator
+      // without shared AHardwareBuffer memory): read the pixels back instead,
+      // from now on.
+      zeroCopyFailed = true;
+    }
+  }
+  return capture(ref, width, height, false);
+}
+
+/**
+ * Whether the zero-copy path has failed on this device. A texture that can be
+ * rendered to lets the platform hand over the GPU buffer it drew the view
+ * into; without `RENDER_ATTACHMENT` it reads the pixels back and uploads them,
+ * which costs a copy but works wherever WebGPU does.
+ */
+let zeroCopyFailed = false;
+
+async function capture(
+  ref: RefObject<ViewInstance | null>,
+  width: number,
+  height: number,
+  zeroCopy: boolean
+): Promise<SkImage> {
   const scale = PixelRatio.get();
   const texture = sharedDevice().createTexture({
     size: [Math.max(1, Math.round(width * scale)), Math.max(1, Math.round(height * scale))],
     format: 'rgba8unorm',
     usage:
       GPUTextureUsage.COPY_DST |
-      GPUTextureUsage.RENDER_ATTACHMENT |
-      GPUTextureUsage.TEXTURE_BINDING,
+      GPUTextureUsage.TEXTURE_BINDING |
+      (zeroCopy ? GPUTextureUsage.RENDER_ATTACHMENT : 0),
   });
   try {
     // Skia images are premultiplied.
