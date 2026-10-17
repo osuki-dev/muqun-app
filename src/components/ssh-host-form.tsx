@@ -1,5 +1,12 @@
-import { Input, Textarea, useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
-import { SegmentedControl } from '@/components/segmented-control';
+import {
+  Input,
+  Textarea,
+  useThemeTokens,
+  useToast,
+  PressableScale,
+  SegmentedControl,
+  Text,
+} from '@osuki-dev/ui';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
 import * as Clipboard from 'expo-clipboard';
