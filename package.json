@@ -173,8 +173,7 @@
   },
   "patchedDependencies": {
     "react-native-enriched-markdown@1.1.1": "patches/react-native-enriched-markdown@1.1.1.patch",
-    "react-native-nitro-sound@0.2.20": "patches/react-native-nitro-sound@0.2.20.patch",
-    "expo-widgets@58.0.19": "patches/expo-widgets@58.0.19.patch"
+    "react-native-nitro-sound@0.2.20": "patches/react-native-nitro-sound@0.2.20.patch"
   },
   "trustedDependencies": [
     "react-native-skia",

@@ -118,7 +118,6 @@
   "patchedDependencies": {
     "react-native-nitro-sound@0.2.20": "patches/react-native-nitro-sound@0.2.20.patch",
     "react-native-enriched-markdown@1.1.1": "patches/react-native-enriched-markdown@1.1.1.patch",
-    "expo-widgets@58.0.19": "patches/expo-widgets@58.0.19.patch",
   },
   "overrides": {
     "react-native-screens": "4.30.0",
