@@ -3936,6 +3936,7 @@ msgid "Next"
 msgstr "次へ"
 
 #: src/components/home-computer-deck.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Next computer"
 msgstr "次のコンピュータ"
 
@@ -3951,10 +3952,6 @@ msgstr "次の通知"
 #: src/components/agent-title-pill.tsx
 msgid "Next session"
 msgstr "次のセッション"
-
-#: src/components/home-recent-sessions.tsx
-msgid "Next sessions"
-msgstr "次のセッション一覧"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
@@ -4582,7 +4579,6 @@ msgstr "出力"
 msgid "Output copied to clipboard"
 msgstr "出力をクリップボードにコピーしました"
 
-#: src/components/home-recent-sessions.tsx
 #: src/components/pdf-asset-preview.tsx
 msgid "Page {page} of {pageCount}"
 msgstr "{pageCount}ページ中{page}ページ"
@@ -4820,6 +4816,7 @@ msgid "Preview first. Your current theme stays unchanged"
 msgstr "まずプレビューします。現在のテーマは変更されません"
 
 #: src/components/home-computer-deck.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Previous computer"
 msgstr "前のコンピュータ"
 
@@ -4830,10 +4827,6 @@ msgstr "前の画像"
 #: src/components/agent-title-pill.tsx
 msgid "Previous session"
 msgstr "前のセッション"
-
-#: src/components/home-recent-sessions.tsx
-msgid "Previous sessions"
-msgstr "前のセッション一覧"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Primary"

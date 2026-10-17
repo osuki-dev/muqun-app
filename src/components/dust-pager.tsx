@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent, type ViewInstance } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Easing,
   ReduceMotion,
@@ -18,6 +18,7 @@ import { CARD_DUST_EFFECT, CardDust, type CardShot } from '@/components/card-dus
 import { useStableHandler } from '@/hooks/use-render-refs';
 import { deckCommits, deckReform, deckScrub } from '@/lib/home-computer-deck';
 import { timing } from '@/lib/motion';
+import { sidewaysPan } from '@/lib/sideways-pan';
 import { disposeViewPhotograph, photographView } from '@/lib/view-photograph';
 
 /** The rest of the dissolve after a commit. */
@@ -51,8 +52,7 @@ type Scrub = {
  * the edge the finger pulls towards while the next page reforms in its place.
  * Past the commit distance or on a flick the rest blows away; short of it the
  * ash flows back. Left is the next page, right the previous; there is no page
- * before the first or after the last. Every page is as tall as the tallest
- * seen, so turning never moves what is under it.
+ * before the first or after the last.
  *
  * Without a photograph, a compiled shader or with Reduce Motion, the pages
  * cross-fade instead. Every frame of a turn is shared values and one shader.
@@ -63,6 +63,7 @@ export function DustPager({
   onPageChange,
   renderPage,
   accessibilityLabels,
+  uniformHeight = false,
 }: {
   pageCount: number;
   page: number;
@@ -70,6 +71,8 @@ export function DustPager({
   /** One page's surface, at least `minHeight` tall. */
   renderPage: (index: number, minHeight: number) => ReactNode;
   accessibilityLabels: { next: string; previous: string };
+  /** Every page as tall as the tallest seen; otherwise each keeps its own height. */
+  uniformHeight?: boolean;
 }) {
   const reduced = useReducedMotion();
   const [scrub, setScrub] = useState<Scrub | null>(null);
@@ -90,6 +93,7 @@ export function DustPager({
   const crossOut = useSharedValue(-1);
   const crossIn = useSharedValue(-1);
   const token = useSharedValue(0);
+  const origin = useSharedValue({ x: 0, y: 0 });
   const pageWidth = useSharedValue(0);
   const current = useSharedValue(page);
   const count = useSharedValue(pageCount);
@@ -282,11 +286,10 @@ export function DustPager({
 
   const gesture = useMemo(
     () =>
-      Gesture.Pan()
-        // Sideways only: past `failOffsetY` the page's scroll has the touch.
-        .activeOffsetX([-8, 8])
-        .failOffsetY([-12, 12])
+      // Only a clearly sideways drag turns; anything else is the page's scroll.
+      sidewaysPan(origin)
         .onStart(() => {
+          'worklet';
           if (busy.get() === 1 || count.get() < 2) {
             skip.set(1);
             return;
@@ -296,6 +299,7 @@ export function DustPager({
           direction.set(0);
         })
         .onUpdate((event) => {
+          'worklet';
           if (skip.get() === 1) return;
           if (direction.get() === 0) {
             if (event.translationX === 0) return;
@@ -316,6 +320,7 @@ export function DustPager({
           );
         })
         .onEnd((event) => {
+          'worklet';
           if (skip.get() === 1) return;
           if (direction.get() === 0) {
             busy.set(0);
@@ -350,6 +355,7 @@ export function DustPager({
     [
       beginTurn,
       busy,
+      origin,
       cancelled,
       commitUnderAsh,
       count,
@@ -404,7 +410,7 @@ export function DustPager({
             shootToken={scrub && !scrub.failed ? scrub.token : null}
             onHeight={onPageHeight}
             onShot={shot}>
-            {renderPage(page, tallest)}
+            {renderPage(page, uniformHeight ? tallest : 0)}
           </PagerPage>
           {scrub ? (
             <PagerPage
@@ -418,7 +424,7 @@ export function DustPager({
               shootToken={!scrub.failed ? scrub.token : null}
               onHeight={onPageHeight}
               onShot={shot}>
-              {renderPage(scrub.to, tallest)}
+              {renderPage(scrub.to, uniformHeight ? tallest : 0)}
             </PagerPage>
           ) : null}
         </View>
