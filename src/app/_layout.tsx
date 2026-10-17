@@ -90,7 +90,21 @@ import { useSshHostsStore } from '@/stores/ssh-hosts';
  * text and nothing else, so every other warning still raises the notification
  * the way it always did.
  */
-LogBox.ignoreLogs(['[Reanimated] dependencies should only be used in web implementation.']);
+LogBox.ignoreLogs([
+  '[Reanimated] dependencies should only be used in web implementation.',
+  /*
+   * Legend List's two development diagnostics. The first says a transcript
+   * needed one more row container than its pool held and made one, which it
+   * calls a minor performance issue; the second that its first scroll to the
+   * end did not settle in its own budget. Both describe the list's internals,
+   * neither is an error in this app, and both fired on the demo transcript a
+   * few seconds after it opened, with the notification landing on the files
+   * sheet's bottom row. The console still carries them; only the notification
+   * is kept off the screen.
+   */
+  '[legend-list] No unused container available',
+  'LegendList bootstrap initial scroll aborted',
+]);
 
 /*
  * Keep the native launch screen up until `LaunchOverlay` has painted its copy

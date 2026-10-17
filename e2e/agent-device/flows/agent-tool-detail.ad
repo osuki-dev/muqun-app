@@ -68,7 +68,7 @@ press "id=agent-tool-open-child"
 wait "id=agent-subagent-detail-transcript" 10000
 is visible "text=\"Nested investigation\""
 is visible "id=agent-subagent-detail-status label=Idle"
-is visible "text=\"Snapshot output for demo-tree-nested.\""
+wait "text=\"Snapshot output for demo-tree-nested.\"" 5000
 snapshot
 screenshot "shots/tool-child-session.png"
 back --system
