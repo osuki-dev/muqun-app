@@ -1,5 +1,4 @@
-import { Input } from '@/components/themed-input';
-import { Textarea, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { Input, Textarea, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Text } from '@/components/text';

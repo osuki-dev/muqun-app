@@ -1,6 +1,5 @@
 import { SheetHandle } from '@/components/sheet-route-frame';
-import { Input } from '@/components/themed-input';
-import { Card, Spinner, useThemeTokens, Skeleton, Tabs } from '@osuki-dev/ui';
+import { Input, Card, Spinner, useThemeTokens, Skeleton, Tabs } from '@osuki-dev/ui';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { SheetFrame } from '@/components/sheet-ground';
 import { SettingsSegmented } from '@/components/settings-segmented';
