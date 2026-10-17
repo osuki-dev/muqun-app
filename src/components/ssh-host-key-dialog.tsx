@@ -1,6 +1,5 @@
-import { Input } from '@/components/themed-input';
+import { Input, Dialog, useThemeTokens } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Dialog, useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useEffect, useState } from 'react';
 import { Keyboard, Platform, StyleSheet, View } from 'react-native';

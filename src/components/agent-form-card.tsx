@@ -57,7 +57,7 @@ export const AgentFormCard = memo(function AgentFormCard({
    * title that is not is the most visible version of that mismatch the app
    * has.
    *
-   * `body` at `'regular'` is the same lookup `themed-input.tsx` does, so a
+   * `body` at `'regular'` is the same lookup the kit's `Input` does, so a
    * field here and a field on a sheet cannot drift apart; the weight stays at
    * regular for the Android reason in `interface-font-registry.ts`.
    */

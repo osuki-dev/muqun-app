@@ -3,10 +3,9 @@ import { throwIfThemeAborted } from '@/theme/abort';
 import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, Input } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { Button } from '@/components/themed-button';
-import { Input } from '@/components/themed-input';
 import { ThemeImportProgress } from '@/components/theme-import-progress';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { prepareThemeAssetStream, type PreparedThemeAssets } from '@/theme/assets';
@@ -197,9 +196,12 @@ export function ThemeLinkImport({
               setError(null);
             }}
           />
-          <Input
-            label={t`Theme file (optional)`}
-            helper={t`Defaults to theme.json at the repository root`}
+          {/*
+            Composed rather than `helper`: the kit sets a hint in `textDisabled`,
+            and this one is an instruction the reader needs, so it is held to
+            the muted tier like the app's other helper text.
+          */}
+          <Input.Root
             testID="theme-link-manifest-path"
             variant="outline"
             value={manifestPath}
@@ -212,8 +214,13 @@ export function ThemeLinkImport({
               setManifestPath(value);
               setReview(null);
               setError(null);
-            }}
-          />
+            }}>
+            <Input.Label>{t`Theme file (optional)`}</Input.Label>
+            <Input.Control />
+            <Text variant="caption" colorKey="textMuted" plated>
+              {t`Defaults to theme.json at the repository root`}
+            </Text>
+          </Input.Root>
         </View>
       ) : null}
       {!themeLinkImportAvailable ? (
