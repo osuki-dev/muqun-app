@@ -18,6 +18,7 @@ import {
   type ButtonProps,
 } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
+import { flattenStyle } from '@/lib/flatten-style';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { ThemeArtworkLayer } from '@/components/theme-artwork';
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
@@ -111,7 +112,8 @@ export function Button(props: ButtonProps) {
   const textColor = disabled ? theme.colors.textDisabled : theme.colors[variantTokens.foreground];
   const iconColor = loading ? theme.colors.textDisabled : textColor;
 
-  const actualBackground = style?.backgroundColor ?? buttonStyle.backgroundColor;
+  const flatStyle = flattenStyle<ViewStyle>(style);
+  const actualBackground = flatStyle?.backgroundColor ?? buttonStyle.backgroundColor;
   const protectsTransparentLabel = Boolean(active && actualBackground === 'transparent');
   const baseColor = protectsTransparentLabel
     ? theme.colors.surfaceRaised
@@ -150,7 +152,7 @@ export function Button(props: ButtonProps) {
         style={{
           borderRadius: profile.chrome.control,
           ...(variantTokens.border && { borderWidth: StyleSheet.hairlineWidth }),
-          ...style,
+          ...flatStyle,
         }}
       />
     );
@@ -176,12 +178,12 @@ export function Button(props: ButtonProps) {
           style={[
             StyleSheet.absoluteFill,
             {
-              borderRadius: style?.borderRadius ?? profile.chrome.control,
-              borderCurve: style?.borderCurve,
-              borderTopLeftRadius: style?.borderTopLeftRadius,
-              borderTopRightRadius: style?.borderTopRightRadius,
-              borderBottomLeftRadius: style?.borderBottomLeftRadius,
-              borderBottomRightRadius: style?.borderBottomRightRadius,
+              borderRadius: flatStyle?.borderRadius ?? profile.chrome.control,
+              borderCurve: flatStyle?.borderCurve,
+              borderTopLeftRadius: flatStyle?.borderTopLeftRadius,
+              borderTopRightRadius: flatStyle?.borderTopRightRadius,
+              borderBottomLeftRadius: flatStyle?.borderBottomLeftRadius,
+              borderBottomRightRadius: flatStyle?.borderBottomRightRadius,
               overflow: 'hidden',
             },
           ]}>

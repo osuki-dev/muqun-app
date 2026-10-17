@@ -31,7 +31,6 @@
     "muqun/pane-cache-shape": "error",
     "muqun/composer-delivery": "error",
     "muqun/ssh-dialog-contract": "error",
-    "muqun/input-adapter-contract": "error",
     "muqun/home-model-boundary": "error",
     "lingui/t-call-in-function": "error",
     "lingui/no-single-tag-to-translate": "error",

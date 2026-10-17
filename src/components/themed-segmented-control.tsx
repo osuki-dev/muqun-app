@@ -1,6 +1,7 @@
 import { useThemeTokens, type SegmentedControlProps } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
-import { View } from 'react-native';
+import { View, type ViewStyle } from 'react-native';
+import { flattenStyle } from '@/lib/flatten-style';
 
 import { PressableScale } from '@/components/pressable-scale';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -19,7 +20,7 @@ export function SegmentedControl(props: SegmentedControlProps) {
   const profile = useAppearanceProfile();
   const background = useSurfaceBackground();
   const { options, value, onChange, variant = 'rounded', style, testID, ...rest } = props;
-  const fill = style?.backgroundColor ?? theme.colors.surfaceRaised;
+  const fill = flattenStyle<ViewStyle>(style)?.backgroundColor ?? theme.colors.surfaceRaised;
   return (
     <View
       {...rest}

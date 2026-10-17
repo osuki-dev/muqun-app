@@ -1,6 +1,7 @@
 import { Tabs as BaseTabs, useThemeTokens, type TabsProps } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
-import { View } from 'react-native';
+import { View, type ViewStyle } from 'react-native';
+import { flattenStyle } from '@/lib/flatten-style';
 
 import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
 
@@ -42,7 +43,8 @@ export function Tabs(props: TabsProps) {
    * shows the wallpaper at the same rate as everything else on the screen.
    */
   const trackFill =
-    style?.backgroundColor ?? (variant === 'pill' ? theme.colors.surfaceRaised : 'transparent');
+    flattenStyle<ViewStyle>(style)?.backgroundColor ??
+    (variant === 'pill' ? theme.colors.surfaceRaised : 'transparent');
   return (
     <BaseTabs.Root value={value} onValueChange={onChange} variant={variant} size={size}>
       <BaseTabs.List {...rest} testID={testID} style={[style, { backgroundColor: 'transparent' }]}>

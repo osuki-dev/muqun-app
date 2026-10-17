@@ -85,7 +85,7 @@ export function userFontDefinition(
 export type UserFontDefinition = FontDefinition & { weightAxis?: FontAxis };
 
 /** A resolved style that may set the `wght` axis. */
-export type UserFontStyle = ResolvedFontStyle & { fontVariationSettings?: { wght: number } };
+export type UserFontStyle = ResolvedFontStyle;
 
 /** The native weight each kit weight name asks for. */
 const KIT_WEIGHTS: Record<FontWeight, number> = {
