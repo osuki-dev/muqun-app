@@ -3936,7 +3936,6 @@ msgid "Next"
 msgstr "Weiter"
 
 #: src/components/home-computer-deck.tsx
-#: src/components/home-recent-sessions.tsx
 msgid "Next computer"
 msgstr "Nächster Computer"
 
@@ -3952,6 +3951,10 @@ msgstr "Nächste Benachrichtigung"
 #: src/components/agent-title-pill.tsx
 msgid "Next session"
 msgstr "Nächste Sitzung"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Next sessions"
+msgstr "Nächste Sitzungen"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
@@ -4579,6 +4582,7 @@ msgstr "Ausgabe"
 msgid "Output copied to clipboard"
 msgstr "Ausgabe in die Zwischenablage kopiert"
 
+#: src/components/home-recent-sessions.tsx
 #: src/components/pdf-asset-preview.tsx
 msgid "Page {page} of {pageCount}"
 msgstr "Seite {page} von {pageCount}"
@@ -4816,7 +4820,6 @@ msgid "Preview first. Your current theme stays unchanged"
 msgstr "Zuerst die Vorschau ansehen. Dein aktuelles Theme bleibt unverändert"
 
 #: src/components/home-computer-deck.tsx
-#: src/components/home-recent-sessions.tsx
 msgid "Previous computer"
 msgstr "Vorheriger Computer"
 
@@ -4827,6 +4830,10 @@ msgstr "Vorheriges Bild"
 #: src/components/agent-title-pill.tsx
 msgid "Previous session"
 msgstr "Vorherige Sitzung"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Previous sessions"
+msgstr "Vorherige Sitzungen"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Primary"

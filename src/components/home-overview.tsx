@@ -1166,16 +1166,6 @@ export function HomeOverview({
         hosts={sshRows}
         available={recentShown}
         query={recentQuery}
-        filters={
-          recentFilterIds.length > 0
-            ? {
-                ids: [null, ...recentFilterIds],
-                value: recentFilter,
-                onChange: setRecentServerId,
-                entriesFor: (serverId) => filterHomeRecent(recentEntries, serverId),
-              }
-            : undefined
-        }
         header={
           recentFilterIds.length > 0 ? (
             <HomeRecentChips

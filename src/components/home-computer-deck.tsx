@@ -11,7 +11,7 @@ import {
   type LayoutChangeEvent,
   type ViewInstance,
 } from 'react-native';
-import { GestureDetector } from 'react-native-gesture-handler';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Easing,
   ReduceMotion,
@@ -57,7 +57,6 @@ import {
   type DeckMove,
 } from '@/lib/home-computer-deck';
 import { riseIn, timing } from '@/lib/motion';
-import { sidewaysPan } from '@/lib/sideways-pan';
 import {
   statusNeedsPairing,
   type ActiveServerConnection,
@@ -194,7 +193,6 @@ export function HomeComputerDeck({
   const frontHeight = useSharedValue(0);
   const band = useSharedValue(deckPeekBand(count));
   const token = useSharedValue(0);
-  const origin = useSharedValue({ x: 0, y: 0 });
   // A commit or a cross-fade is under way: a second request for one is ignored.
   const playing = useSharedValue(0);
 
@@ -456,10 +454,11 @@ export function HomeComputerDeck({
 
   const gesture = useMemo(
     () =>
-      // Only a clearly sideways drag turns; anything else is the page's scroll.
-      sidewaysPan(origin)
+      Gesture.Pan()
+        // Sideways only: past `failOffsetY` the page's scroll has the touch.
+        .activeOffsetX([-8, 8])
+        .failOffsetY([-12, 12])
         .onStart(() => {
-          'worklet';
           const count = ring.get().split('\n').length;
           if (busy.get() === 1 || count < 2) {
             skip.set(1);
@@ -470,7 +469,6 @@ export function HomeComputerDeck({
           direction.set(0);
         })
         .onUpdate((event) => {
-          'worklet';
           if (skip.get() === 1) return;
           // The side is the one the pull first goes towards, latched for the move.
           if (direction.get() === 0) {
@@ -486,7 +484,6 @@ export function HomeComputerDeck({
           );
         })
         .onEnd((event) => {
-          'worklet';
           if (skip.get() === 1) return;
           if (direction.get() === 0) {
             busy.set(0);
@@ -524,7 +521,6 @@ export function HomeComputerDeck({
     [
       beginMove,
       busy,
-      origin,
       cancelled,
       commitUnderAsh,
       releasedEarly,

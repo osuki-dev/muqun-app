@@ -67,7 +67,6 @@ import {
   type HomeContinueObservationView,
   homeContinueTarget,
   shouldShowHomeContinueOverflow,
-  visibleHomeContinueEntries,
   HOME_CONTINUE_INITIAL_LIMIT,
   type HomeContinueEntry,
 } from '@/lib/home-continue';
@@ -369,7 +368,6 @@ export function HomeRecentSessions({
   query = '',
   pad = false,
   header,
-  filters,
 }: {
   servers: readonly GatewayRecord[];
   hosts: readonly SshHostRecord[];
@@ -389,17 +387,6 @@ export function HomeRecentSessions({
   pad?: boolean;
   /** Drawn above the rows, e.g. Home's per-computer filter chips. */
   header?: ReactNode;
-  /**
-   * The filter chips' choices (`null` is All), in chip order: a sideways swipe
-   * on the list moves to the next or previous one. `entriesFor` is a choice's
-   * rows, as `available` is the chosen one's.
-   */
-  filters?: {
-    ids: readonly (string | null)[];
-    value: string | null;
-    onChange: (serverId: string | null) => void;
-    entriesFor: (serverId: string | null) => readonly HomeContinueEntry[];
-  };
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -407,6 +394,7 @@ export function HomeRecentSessions({
   const background = useSurfaceBackground();
   const { fontScale } = useWindowDimensions();
   const [expanded, setExpanded] = useState(false);
+  const [pageIndex, setPageIndex] = useState(0);
   const [listWidth, setListWidth] = useState(0);
   // What the meta line has across: the row less its padding, ordinal, gaps and arrow.
   const ordinalWidth = compact ? 0 : (pad ? 48 : 30) + 12;
@@ -425,28 +413,29 @@ export function HomeRecentSessions({
     discovery,
     Object.fromEntries(servers.map((server) => [server.serverId, server.label]))
   );
-  // On a phone, a sideways swipe on the list does what tapping the next or
-  // previous filter chip does, with the computer sheaf's ash dissolve; the
-  // list itself, its fold and its height are the chosen filter's own. A search
-  // and the Pad keep the plain list.
-  const filterCount = filters?.ids.length ?? 0;
-  const swipeable = Boolean(filters) && !pad && !searching && filterCount > 1;
-  const filterIndex = filters ? Math.max(0, filters.ids.indexOf(filters.value)) : 0;
-  const list = (entries: readonly HomeContinueEntry[]) => (
+  // A phone turns through the sessions five at a time with the same dust as
+  // the computer sheaf, at the height of a full page; the Pad, and a search,
+  // keep the one list with its fold.
+  const paged = !pad && !searching && available.length > collapsedLimit;
+  const pageCount = paged ? Math.ceil(available.length / collapsedLimit) : 1;
+  const shownPage = Math.min(pageIndex, pageCount - 1);
+  const page = shownPage + 1;
+  const list = (entries: readonly HomeContinueEntry[], first: number, minHeight?: number) => (
     <View
       onLayout={(event) => setListWidth(event.nativeEvent.layout.width)}
       style={[
         styles.list,
         {
-          backgroundColor: entries.length ? background(theme.colors.surface) : 'transparent',
+          backgroundColor: available.length ? background(theme.colors.surface) : 'transparent',
           borderRadius: profile.chrome.surface,
+          minHeight,
         },
       ]}>
       {entries.map((entry, index) => (
         <RecentSessionRow
           key={entry.key}
           entry={entry}
-          number={index + 1}
+          number={first + index + 1}
           compact={compact}
           selectedServerId={selectedServerId}
           selectedPaneId={selectedPaneId}
@@ -463,24 +452,22 @@ export function HomeRecentSessions({
   return (
     <View testID="home-recent-sessions" style={styles.root}>
       {header}
-      {swipeable && filters ? (
+      {paged ? (
         <DustPager
-          pageCount={filterCount}
-          page={filterIndex}
-          onPageChange={(index) => filters.onChange(filters.ids[index] ?? null)}
-          accessibilityLabels={{ next: t`Next computer`, previous: t`Previous computer` }}
-          renderPage={(index) =>
+          pageCount={pageCount}
+          page={shownPage}
+          onPageChange={setPageIndex}
+          accessibilityLabels={{ next: t`Next sessions`, previous: t`Previous sessions` }}
+          renderPage={(index, minHeight) =>
             list(
-              visibleHomeContinueEntries(
-                filters.entriesFor(filters.ids[index] ?? null),
-                expanded,
-                collapsedLimit
-              )
+              available.slice(index * collapsedLimit, (index + 1) * collapsedLimit),
+              index * collapsedLimit,
+              minHeight
             )
           }
         />
       ) : (
-        list(displayed)
+        list(displayed, 0)
       )}
       {searching && !displayed.length ? (
         <Text
@@ -491,7 +478,26 @@ export function HomeRecentSessions({
           {t`No matching sessions`}
         </Text>
       ) : null}
-      {!searching && shouldShowHomeContinueOverflow(available, collapsedLimit) ? (
+      {paged ? (
+        <View
+          testID="home-recent-pages"
+          accessibilityLabel={t`Page ${page} of ${pageCount}`}
+          style={styles.pages}>
+          {Array.from({ length: pageCount }, (_, index) => (
+            <View
+              key={index}
+              style={[
+                styles.pageDot,
+                {
+                  backgroundColor:
+                    index === shownPage ? theme.colors.primary : theme.colors.textSubtle,
+                  opacity: index === shownPage ? 1 : 0.4,
+                },
+              ]}
+            />
+          ))}
+        </View>
+      ) : !searching && shouldShowHomeContinueOverflow(available, collapsedLimit) ? (
         <HomeFoldLink
           testID="home-recent-sessions-more"
           expanded={expanded}
@@ -963,7 +969,9 @@ const styles = StyleSheet.create({
   searchInput: { flex: 1, minWidth: 0, fontSize: 14, paddingVertical: 10, paddingHorizontal: 0 },
   searchClear: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   root: { minWidth: 0 },
-
+  // Where the page is among the sessions, under the list; the section's 8 points below it.
+  pages: { flexDirection: 'row', justifyContent: 'center', gap: 6, paddingTop: 8 },
+  pageDot: { width: 6, height: 6, borderRadius: 3 },
   list: { minWidth: 0, overflow: 'hidden' },
   row: {
     flexDirection: 'row',
