@@ -12,7 +12,6 @@ import {
   type ButtonVariant,
   useThemeTokens,
   type SurfaceMeta,
-  type SurfaceSlot,
 } from '@osuki-dev/ui';
 import { useCallback, useMemo, type ReactNode } from 'react';
 import { useWindowDimensions } from 'react-native';
@@ -28,48 +27,42 @@ import { surfaceBackgroundFill } from '@/theme/surface-background';
 import { THEME_SLOTS, type ThemeSlot } from '@/theme/schema';
 
 declare module '@osuki-dev/ui' {
-  /** The pack's own slots, painted on app surfaces through `SurfaceDecoration`. */
+  // The pack's own slots, painted on app surfaces through `Surface` and
+  // `SurfaceDecoration`, and `cards.plain`: a kit `Card` that thins with the
+  // slider but carries no pack artwork.
   // oxlint-disable-next-line typescript/no-empty-object-type -- module augmentation; the members come from `extends`
-  interface SurfaceSlotRegistry extends Record<ThemeSlot, true> {}
+  interface SurfaceSlotRegistry extends Record<ThemeSlot | 'cards.plain', true> {}
 }
 
 /**
- * Fills that keep their authored colour whatever the slider says.
- *
- * - Marks (badges, toggle tracks) carry meaning by their colour.
- * - Selection controls: a segmented track says where the choices are and which
- *   side you are not on, and has to stay legible against any wallpaper; the
- *   selected pill over it is solid for the same reason, so the chosen side does
- *   not go muddy with the track showing through it. Two opaque fills, one mark.
- * - Floors: a dialog or a sheet body is the single opaque base of what it
- *   presents, or the screen underneath shows through.
+ * The kit fills that follow the reader's slider: exactly the ones the app has
+ * always thinned (its cards and planes, buttons, fields and their error pill,
+ * placeholders, toasts, and the pack's own slots). Every other kit fill --
+ * tags, alerts, dialogs, sheets, segmented tracks and their selection, badges
+ * -- keeps its authored colour, as it did before the kit had a decorator.
  */
-const AUTHORED_SLOTS = new Set<SurfaceSlot>([
-  'tabs.track',
-  'tabs.selected',
-  'segmented.track',
-  'segmented.selected',
-  'dialogs.background',
-  'sheets.background',
-  'sheets.action',
-  'screens.page',
+const TRANSLUCENT_SLOTS = new Set<string>([
+  ...THEME_SLOTS,
+  'cards.plain',
+  'surfaces.surface',
+  'surfaces.raised',
+  'buttons.primary.background',
+  'buttons.secondary.background',
+  'buttons.ghost.background',
+  'buttons.destructive.background',
+  'inputs.background',
+  'inputs.search',
+  'inputs.error',
+  'skeleton.fill',
+  'toasts.background',
 ]);
-
-function keepsAuthoredFill(meta: SurfaceMeta): boolean {
-  return meta.role === 'mark' || (meta.slot !== undefined && AUTHORED_SLOTS.has(meta.slot));
-}
-
-/** Kit slots that draw a pack slot of another name. */
-const PACK_SLOT_ALIASES: Partial<Record<SurfaceSlot, ThemeSlot>> = {
-  'tabs.track': 'tabs.background',
-  'segmented.track': 'tabs.background',
-};
 
 const PACK_SLOTS = new Set<string>(THEME_SLOTS);
 
-function packSlot(slot: SurfaceSlot | undefined): ThemeSlot | null {
-  if (!slot) return null;
-  return PACK_SLOT_ALIASES[slot] ?? (PACK_SLOTS.has(slot) ? (slot as ThemeSlot) : null);
+function packSlot(meta: SurfaceMeta): ThemeSlot | null {
+  // A clear fill has nothing to hold artwork against.
+  if (!meta.slot || meta.baseColor === 'transparent') return null;
+  return PACK_SLOTS.has(meta.slot) ? (meta.slot as ThemeSlot) : null;
 }
 
 /**
@@ -103,13 +96,12 @@ function SlotArtwork({ slot, meta }: { slot: ThemeSlot; meta: SurfaceMeta }) {
           minimum: 3,
         })),
       ];
-  const baseAlpha = keepsAuthoredFill(meta) ? 1 : sliderOpacity;
   const opacity =
     !hasImage || meta.disabled || meta.selected
       ? 0
       : jointArtworkOpacity(
           safeArtworkOpacity(meta.baseColor, inks, 1),
-          baseAlpha,
+          sliderOpacity,
           artwork?.opacity ?? 1
         );
   if (!active || !assets || opacity <= 0) return null;
@@ -134,15 +126,14 @@ export function AppSurfaceDecorator({ children }: { children: ReactNode }) {
       opacity === 1
         ? undefined
         : (color: string, meta: SurfaceMeta) =>
-            keepsAuthoredFill(meta) ? color : surfaceBackgroundFill(color, opacity),
+            meta.slot && TRANSLUCENT_SLOTS.has(meta.slot)
+              ? surfaceBackgroundFill(color, opacity)
+              : color,
     [opacity]
   );
-  // Always mounted, so a kit control lays itself out the same way whether or
-  // not the theme has artwork (the kit's SegmentedControl uses the system
-  // widget on iOS only when nothing decorates fills).
   const renderDecoration = useCallback(
     (meta: SurfaceMeta) => {
-      const slot = active ? packSlot(meta.slot) : null;
+      const slot = active ? packSlot(meta) : null;
       return slot ? <SlotArtwork slot={slot} meta={meta} /> : null;
     },
     [active]

@@ -1,5 +1,5 @@
+import { PillTabs } from '@/components/pill-tabs';
 import { useLingui } from '@lingui/react/macro';
-import { Tabs } from '@osuki-dev/ui';
 
 import type { QuickCommandDelivery } from '@/lib/quick-commands';
 
@@ -17,7 +17,7 @@ export function AgentCommandDeliveryPicker({
 }) {
   const { t } = useLingui();
   return (
-    <Tabs
+    <PillTabs
       testID={testID}
       options={[
         { label: t`Current agent`, value: 'current-agent', disabled },

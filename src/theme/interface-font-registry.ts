@@ -64,9 +64,8 @@ export const USER_FONT_MAX_NATIVE_WEIGHT = 600;
  *
  * `family` stays as the backstop for any weight the ladder cannot satisfy.
  *
- * A variable face declares its `fvar` axes, and the kit then skips the ladder:
- * every weight resolves to the face at native 400 with the weight on `wght`
- * (and the text size on `opsz`, where the face has one).
+ * A variable face declares its `wght` axis, and the kit then skips the ladder:
+ * every weight resolves to the face at native 400 with the weight on `wght`.
  *
  * `trailingSlack` because the app cannot vouch for a reader's file: it may be
  * an italic or a wide face that draws past its last advance, which Android
@@ -89,12 +88,17 @@ export function userFontDefinition(
   };
 }
 
-/** The kit's axes declaration for a face with a `wght` axis, or `undefined` for a static one. */
+/**
+ * The kit's axes declaration for a face with a `wght` axis, or `undefined` for
+ * a static one.
+ *
+ * Only `wght`. The app has always drawn a reader's face at its default
+ * instance on every other axis; declaring `opsz` would have the kit follow the
+ * text size on it (CSS `font-optical-sizing: auto`) and redraw every glyph.
+ */
 function variableFontAxes(axes?: readonly FontAxis[] | null): VariableFontAxes | undefined {
-  if (!axes?.some((axis) => axis.tag === 'wght')) return undefined;
-  return Object.fromEntries(
-    axes.map(({ tag, min, max, default: initial }) => [tag, { min, max, default: initial }])
-  ) as VariableFontAxes;
+  const wght = axes?.find((axis) => axis.tag === 'wght');
+  return wght ? { wght: { min: wght.min, max: wght.max, default: wght.default } } : undefined;
 }
 
 /** Five weights spread across a `wght` axis, ends included, for a preview line. */

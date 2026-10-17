@@ -182,8 +182,8 @@ export function resolveAppearanceProfile(value: unknown): AppearanceProfile {
  * Component radii are token names, not numbers, so each chrome radius is named
  * by the step of the profile's own ladder that holds it. Every `Card` follows
  * `chrome.card` whatever its `radius` prop asks for, as the app's cards always
- * have. `Tabs` is the app's segmented control (`SettingsSegmented`), so it
- * takes the segmented track radius.
+ * have. `Tabs` keeps the kit's pill: the profile's segmented radii belong to
+ * the app's own segmented controls, which draw their selection themselves.
  *
  * `decorated` is a custom theme pack being worn: its artwork or a translucent
  * ground can sit under a ghost button, so the ghost keeps a raised base under
@@ -200,11 +200,6 @@ export function profileThemeOverride(profile: AppearanceProfile, decorated = fal
         ...(decorated ? { ghost: { background: 'surfaceRaised' } } : {}),
       },
       Card: { radius: { none: card, xs: card, sm: card, md: card, lg: card } },
-      Tabs: { radius: token(profile.chrome.segmentedTrack) },
-      SegmentedControl: {
-        radius: token(profile.chrome.segmentedTrack),
-        optionRadius: token(profile.chrome.segmentedOption),
-      },
     },
     // The kit's press timings (`motion.press.inMs`/`outMs`) are the app's
     // `PRESS`, and its Button springs are the ones the app's button used; only
