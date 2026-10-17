@@ -6,6 +6,7 @@ import {
   type ResolvedFontStyle,
   Text,
   type TextProps,
+  TextField,
 } from '@osuki-dev/ui';
 import { useRouter } from 'expo-router';
 import { Search, X } from 'lucide-react-native';
@@ -40,7 +41,6 @@ import { SheetHandle, useSheetIsFullscreen } from '@/components/sheet-route-fram
 import { KeyboardInset } from '@/components/keyboard-inset';
 import { fadeIn, PRESET, timing } from '@/lib/motion';
 import { EXPANDABLE_DETENT } from '@/lib/route-presentation';
-import { FontedTextInput } from '@/components/fonted-text-input';
 
 /**
  * The furniture every bottom sheet in Muqun is built from.
@@ -425,7 +425,7 @@ export function SheetSceneSearch({
   return (
     <View style={[styles.searchRow, { borderBottomColor: colors.border }]}>
       <Search size={16} color={colors.textSubtle} />
-      <FontedTextInput
+      <TextField
         testID={testID}
         accessibilityLabel={accessibilityLabel}
         value={value}

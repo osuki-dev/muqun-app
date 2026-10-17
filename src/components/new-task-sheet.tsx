@@ -3,7 +3,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 /** Start an agent with the shared terminal composer and attachment pipeline.
  * The full-height sheet keeps input reachable with long host catalogs.
  */
-import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale, Text, TextField } from '@osuki-dev/ui';
 import { TerminalComposer } from '@/components/terminal-composer';
 import { AttachmentMenu } from '@/components/attachment-menu';
 import { AttachmentStrip } from '@/components/attachment-strip';
@@ -63,7 +63,6 @@ import {
 import { listLayout, riseIn, STAGGER } from '@/lib/motion';
 import { describeGatewayFailure } from '@/lib/network-error';
 import { useRenderTally } from '@/lib/render-tally';
-import { FontedTextInput } from '@/components/fonted-text-input';
 import { recoverWith, rethrow, settleAfter } from '@/lib/compiler-safe-control-flow';
 
 /**
@@ -336,7 +335,7 @@ export function NewTaskSheet({
             <SheetSceneField
               label={t`Directory`}
               hint={t`Leave it empty to start where the session already is.`}>
-              <FontedTextInput
+              <TextField
                 accessibilityLabel={t`Path`}
                 editable={!starting}
                 value={cwd}

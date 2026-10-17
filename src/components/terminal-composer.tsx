@@ -3,7 +3,13 @@ import { useVoiceInputTrigger } from '@/components/voice-input-button';
 import { useLingui } from '@lingui/react/macro';
 import { useLatestReader } from '@/hooks/use-render-refs';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { Spinner, useThemeTokens, PressableScale } from '@osuki-dev/ui';
+import {
+  Spinner,
+  useThemeTokens,
+  PressableScale,
+  TextField,
+  type TextFieldProps,
+} from '@osuki-dev/ui';
 import { Mic, Send } from 'lucide-react-native';
 import { Canvas, Group, Path, Skia } from 'react-native-skia';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -32,7 +38,6 @@ import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
 import { timing } from '@/lib/motion';
 import { composerLongPress } from '@/lib/composer-long-press';
-import { FontedTextInput, type FontedTextInputProps } from '@/components/fonted-text-input';
 
 /**
  * The line field at the bottom of a terminal: the app's only raw `TextInput`,
@@ -96,7 +101,7 @@ export interface TerminalComposerProps {
   onVoiceActiveChange?: (active: boolean) => void;
   inputRef?: Ref<TextInputInstance>;
   /** The field's own props: value, placeholder, editability, test id. */
-  inputProps: FontedTextInputProps;
+  inputProps: TextFieldProps;
   send: TerminalComposerSend;
   /** Home's field sits on the keyboard, so only its top corners stay rounded. */
   squareBottom?: boolean;
@@ -107,7 +112,7 @@ export interface TerminalComposerProps {
   compact?: boolean;
   /** How many lines the field is tall while empty; it grows from there to its max. */
   minLines?: number;
-  /** The draft as nested spans, passed to the field (`FontedTextInput` `spans`). */
+  /** The draft as nested spans, the field's children (kit `TextField`). */
   spans?: ReactNode;
 }
 
@@ -307,14 +312,13 @@ export function TerminalComposer({
           ]}>
           <>
             {!expanded && leading}
-            <FontedTextInput
+            <TextField
               ref={inputRef}
               multiline
               autoCorrect={false}
               placeholderTextColor={placeholderText}
               selectionColor={theme.colors.primary}
               {...inputProps}
-              spans={spans}
               textBreakStrategy={inputProps.textBreakStrategy ?? 'simple'}
               onContentSizeChange={(event) => {
                 // Keep the expanded layout until the draft clears. Collapsing as soon
@@ -341,8 +345,9 @@ export function TerminalComposer({
                 },
                 minLines !== undefined && { minHeight: minLines * lineHeight + verticalPadding },
                 expanded && composerStyles.expandedInput,
-              ]}
-            />
+              ]}>
+              {spans}
+            </TextField>
             <View
               testID={expanded ? 'composer-expanded-actions' : undefined}
               style={expanded ? composerStyles.expandedActions : composerStyles.compactActions}>

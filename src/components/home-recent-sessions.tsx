@@ -1,6 +1,6 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale, Text, TextField } from '@osuki-dev/ui';
 import { ChevronRight, Trash2, X } from 'lucide-react-native';
 import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import {
@@ -15,7 +15,6 @@ import { useFocusEffect } from 'expo-router';
 
 import { AgentMark } from '@/components/agent-mark';
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
-import { FontedTextInput } from '@/components/fonted-text-input';
 import { HomeFoldLink } from '@/components/home-fold-link';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
@@ -153,7 +152,7 @@ export function HomeContinueSearch({
           borderRadius: profile.chrome.surface,
         },
       ]}>
-      <FontedTextInput
+      <TextField
         testID="home-continue-search"
         accessibilityLabel={t`Search sessions`}
         placeholder={t`Search sessions`}
