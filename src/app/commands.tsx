@@ -1,6 +1,6 @@
 import { SheetHandle } from '@/components/sheet-route-frame';
 import { Input } from '@/components/themed-input';
-import { Card } from '@/components/themed-card';
+import { Card, Spinner, useThemeTokens } from '@osuki-dev/ui';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { SheetFrame } from '@/components/sheet-ground';
 import { SettingsSegmented } from '@/components/settings-segmented';
@@ -68,7 +68,6 @@ import {
  * whole reading it switched to, because this sheet was the only way in. See
  * `src/lib/pane-view-mode.ts`.
  */
-import { Spinner, useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { Tabs } from '@/components/themed-tabs';
 import { Button } from '@/components/themed-button';

@@ -5,9 +5,8 @@ import {
 } from '@/constants/home-toolbar';
 import { useAppActive } from '@/hooks/use-app-active';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
-import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeMode, useThemeTokens, Card } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
-import { Card } from '@/components/themed-card';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Button } from '@/components/themed-button';
 import { Skeleton } from '@/components/themed-skeleton';
@@ -2696,7 +2695,6 @@ const styles = StyleSheet.create({
   padEmptyCard: {
     paddingHorizontal: 44,
     paddingVertical: 40,
-    borderRadius: 28,
     borderCurve: 'continuous',
     gap: 20,
     boxShadow: '0 16px 44px rgba(0, 0, 0, 0.08)',
