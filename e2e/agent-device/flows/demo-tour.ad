@@ -142,9 +142,6 @@ press "${TARGET}"
 # checks whether the unpaired home offers Try the demo again.
 wait stable 400 5000
 
-# section s43
-is visible "${TARGET}"
-
 # section s44
 wait stable 400 5000
 

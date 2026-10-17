@@ -73,8 +73,8 @@ The target matcher preserves whole-string regular expressions, including
 trailing spaces in composer insertion assertions. A missing target is established
 only by a readable capture; capture errors fail even optional steps. Selected
 and checked state remain assertions, not screenshots. Native selectors perform
-mutations and reject ambiguous controls. Coordinates are reserved for the Skia
-canvas gestures and the two historical motion-capture touches.
+mutations and reject ambiguous controls. Prefer semantic controls; coordinates
+are reserved for canvas gestures and bounded drags within observed content.
 
 The full gate is the device acceptance and holds only core flows: a flow stays
 only if it proves a core user path or a contract that unit tests cannot. Its 20
@@ -86,8 +86,12 @@ personal and pad workspaces. The `git-diff` flow opens the demo checkout,
 expands its six-thousand-line file, pages it with `Show more`, and refreshes --
 all against the bundled fixtures, so it proves the rows and the paging rather
 than anything about a real `git`. Pad-specific rail assertions execute when
-the persistent Servers rail is present. Run on a landscape tablet to verify
-those branches; passing a phone suite does not prove tablet coverage.
+the persistent Servers rail is present. Run on a tablet to verify those
+branches; passing a phone suite does not prove tablet coverage. Tablet Home
+retains its editorial spread when Classic is selected. Home search checks
+filtering, clearing and opening a result without fixed pagination counts or
+repeated popup query permutations. The keyboard flow checks the phone's
+symbol pages or the tablet's wide keys, plus contextual editor actions.
 
 Capture-only flows retain their `capture` tag and run only when requested:
 `--tag capture` or `--flow <name>`. They include themes, languages, store images

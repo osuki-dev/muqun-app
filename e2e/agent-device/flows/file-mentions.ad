@@ -17,7 +17,7 @@ is visible "${TARGET}"
 is visible "${TARGET}"
 
 # section s7
-type "the"
+fill id="terminal-composer-input" "@the"
 
 # section s8
 wait stable 400 5000
@@ -56,13 +56,13 @@ is visible "${TARGET}"
 press "${TARGET}"
 
 # section s21
-type "mail ellen"
+fill id="terminal-composer-input" "mail ellen"
 
 # section s22
-type "@"
+fill id="terminal-composer-input" "mail ellen@"
 
 # section s23
-type "exa"
+fill id="terminal-composer-input" "mail ellen@exa"
 
 # section s24
 wait stable 400 5000
@@ -83,7 +83,7 @@ wait stable 400 5000
 press "${TARGET}"
 
 # section s30
-type "@"
+fill id="terminal-composer-input" "@"
 
 # section s31
 wait stable 400 5000

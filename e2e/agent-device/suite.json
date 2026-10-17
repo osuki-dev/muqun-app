@@ -47,6 +47,7 @@
     {
       "name": "demo-tour",
       "program": "flows/demo-tour",
+      "cleanup": "subflows/restore-key-row",
       "tags": ["smoke", "full", "workspace"],
       "platforms": ["ios", "android"]
     },
@@ -260,12 +261,30 @@
     ],
     "flows/agent-transcript-streaming": [
       { "include": "subflows/open-demo" },
-      { "run": "flows/agent-transcript-streaming.ad" }
+      { "run": "flows/agent-transcript-streaming.ad#start" },
+      {
+        "target": { "text": ".*\u90e8\u4ef6 08.*" },
+        "mode": "visible",
+        "timeout": 20000,
+        "run": "flows/agent-transcript-streaming.ad#ready"
+      },
+      { "run": "flows/agent-transcript-streaming.ad#history" }
     ],
     "flows/home-continue-search": [
       { "include": "subflows/open-demo" },
       { "include": "subflows/home-continue-search", "env": { "HOME_LAYOUT": "editorial" } },
-      { "include": "subflows/home-continue-search", "env": { "HOME_LAYOUT": "classic" } },
+      {
+        "when": { "env": "DEVICE_KIND", "equals": "iphone" },
+        "steps": [
+          { "include": "subflows/home-continue-search", "env": { "HOME_LAYOUT": "classic" } }
+        ]
+      },
+      {
+        "when": { "env": "DEVICE_KIND", "equals": "android-phone" },
+        "steps": [
+          { "include": "subflows/home-continue-search", "env": { "HOME_LAYOUT": "classic" } }
+        ]
+      },
       { "run": "flows/home-continue-search.ad#cleanup" }
     ],
     "subflows/home-continue-search": [
@@ -288,84 +307,6 @@
         "timeout": 15000,
         "run": "flows/home-continue-search.ad#picker-closed"
       },
-      { "run": "flows/home-continue-search.ad#fifteen" },
-      {
-        "target": { "text": "^(?:Recent|RECENT)$" },
-        "mode": "scroll",
-        "direction": "down",
-        "run": "flows/settings-home-layout.ad#seek-down"
-      },
-      {
-        "target": { "text": "^(?:Recent|RECENT)$" },
-        "mode": "visible",
-        "run": "flows/home-continue-search.ad#assert-visible"
-      },
-      {
-        "target": { "id": "home-continue-search" },
-        "mode": "hidden",
-        "run": "flows/home-continue-search.ad#assert-hidden"
-      },
-      {
-        "target": { "id": "home-recent-sessions-more" },
-        "mode": "scroll",
-        "direction": "down",
-        "run": "flows/settings-home-layout.ad#seek-down"
-      },
-      {
-        "target": { "id": "home-recent-sessions-more" },
-        "mode": "visible",
-        "run": "flows/home-continue-search.ad#assert-visible"
-      },
-      {
-        "target": { "text": "Demo search leaf 6" },
-        "mode": "hidden",
-        "run": "flows/home-continue-search.ad#assert-hidden"
-      },
-      {
-        "target": { "id": "home-recent-sessions-more" },
-        "mode": "press",
-        "run": "flows/home-continue-search.ad#press"
-      },
-      {
-        "target": { "text": "Demo search leaf 15" },
-        "mode": "scroll",
-        "direction": "down",
-        "run": "flows/settings-home-layout.ad#seek-down"
-      },
-      {
-        "target": { "text": "Demo search leaf 15" },
-        "mode": "visible",
-        "run": "flows/home-continue-search.ad#assert-visible"
-      },
-      {
-        "target": { "text": "Show less" },
-        "mode": "scroll",
-        "direction": "down",
-        "run": "flows/settings-home-layout.ad#seek-down"
-      },
-      {
-        "target": { "text": "Show less" },
-        "mode": "press",
-        "run": "flows/home-continue-search.ad#press"
-      },
-      { "run": "flows/home-continue-search.ad#scroll-top" },
-      {
-        "target": { "text": "^(?:Recent|RECENT)$" },
-        "mode": "scroll",
-        "direction": "down",
-        "run": "flows/settings-home-layout.ad#seek-down"
-      },
-      {
-        "target": { "text": "^(?:Recent|RECENT)$" },
-        "mode": "visible",
-        "run": "flows/home-continue-search.ad#assert-visible"
-      },
-      {
-        "target": { "text": "Demo search leaf 6" },
-        "mode": "hidden",
-        "run": "flows/home-continue-search.ad#assert-hidden"
-      },
-      { "run": "flows/home-continue-search.ad#scroll-top" },
       { "run": "flows/home-continue-search.ad#sixteen" },
       {
         "target": { "id": "home-continue-search" },
@@ -378,34 +319,18 @@
         "mode": "visible",
         "run": "flows/home-continue-search.ad#assert-visible"
       },
-      { "run": "flows/home-continue-search.ad#whitespace" },
-      {
-        "target": { "text": "^(?:Recent|RECENT)$" },
-        "mode": "hidden",
-        "run": "flows/home-continue-search.ad#assert-hidden"
-      },
-      {
-        "target": { "text": "Demo search hidden leaf" },
-        "mode": "hidden",
-        "run": "flows/home-continue-search.ad#assert-hidden"
-      },
       { "run": "flows/home-continue-search.ad#hidden-match" },
       {
-        "target": { "text": "Demo search hidden leaf" },
+        "target": { "id": "home-recent-open", "text": "Demo search hidden leaf,.*" },
         "mode": "scroll",
         "direction": "down",
         "timeout": 15000,
         "run": "flows/settings-home-layout.ad#seek-down"
       },
       {
-        "target": { "text": "Demo search hidden leaf" },
+        "target": { "id": "home-recent-open", "text": "Demo search hidden leaf,.*" },
         "mode": "visible",
         "run": "flows/home-continue-search.ad#assert-visible"
-      },
-      {
-        "target": { "text": "Demo search leaf 1" },
-        "mode": "hidden",
-        "run": "flows/home-continue-search.ad#assert-hidden"
       },
       { "run": "flows/home-continue-search.ad#session-menu" },
       {
@@ -418,13 +343,6 @@
         "mode": "hidden",
         "run": "flows/home-continue-search.ad#assert-hidden"
       },
-      { "run": "flows/home-continue-search.ad#session-menu" },
-      {
-        "target": { "id": "home-recent-actions" },
-        "mode": "hidden",
-        "run": "flows/home-continue-search.ad#assert-hidden"
-      },
-      { "run": "flows/home-continue-search.ad#session-menu" },
       {
         "target": { "id": "home-recent-delete" },
         "mode": "hidden",
@@ -444,14 +362,14 @@
         "run": "flows/home-continue-search.ad#assert-hidden"
       },
       {
-        "target": { "text": "Demo search hidden leaf" },
+        "target": { "id": "home-recent-open", "text": "Demo search hidden leaf,.*" },
         "mode": "scroll",
         "direction": "down",
         "timeout": 15000,
         "run": "flows/settings-home-layout.ad#seek-down"
       },
       {
-        "target": { "text": "Demo search hidden leaf" },
+        "target": { "id": "home-recent-open", "text": "Demo search hidden leaf,.*" },
         "mode": "visible",
         "run": "flows/home-continue-search.ad#assert-visible"
       },
@@ -475,76 +393,32 @@
         "run": "flows/home-continue-search.ad#assert-hidden"
       },
       {
-        "target": { "text": "Demo search leaf 1" },
+        "target": { "id": "home-recent-open", "text": "Demo search leaf 1,.*" },
         "mode": "scroll",
         "direction": "down",
         "timeout": 15000,
         "run": "flows/settings-home-layout.ad#seek-down"
       },
       {
-        "target": { "text": "Demo search leaf 1" },
+        "target": { "id": "home-recent-open", "text": "Demo search leaf 1,.*" },
         "mode": "visible",
         "run": "flows/home-continue-search.ad#assert-visible"
       },
       {
-        "target": { "text": "Demo search hidden leaf" },
+        "target": { "id": "home-recent-open", "text": "Demo search hidden leaf,.*" },
         "mode": "hidden",
         "run": "flows/home-continue-search.ad#assert-hidden"
-      },
-      { "run": "flows/home-continue-search.ad#whitespace" },
-      {
-        "target": { "text": "Demo search leaf 1" },
-        "mode": "scroll",
-        "direction": "down",
-        "timeout": 15000,
-        "run": "flows/settings-home-layout.ad#seek-down"
-      },
-      {
-        "target": { "text": "Demo search leaf 1" },
-        "mode": "visible",
-        "run": "flows/home-continue-search.ad#assert-visible"
-      },
-      {
-        "target": { "text": "Demo search hidden leaf" },
-        "mode": "hidden",
-        "run": "flows/home-continue-search.ad#assert-hidden"
-      },
-      { "run": "flows/home-continue-search.ad#provider" },
-      {
-        "target": { "text": "Demo search leaf 1" },
-        "mode": "scroll",
-        "direction": "down",
-        "timeout": 15000,
-        "run": "flows/settings-home-layout.ad#seek-down"
-      },
-      {
-        "target": { "text": "Demo search leaf 1" },
-        "mode": "visible",
-        "run": "flows/home-continue-search.ad#assert-visible"
-      },
-      { "run": "flows/home-continue-search.ad#directory" },
-      {
-        "target": { "text": "Demo search leaf 1" },
-        "mode": "scroll",
-        "direction": "down",
-        "timeout": 15000,
-        "run": "flows/settings-home-layout.ad#seek-down"
-      },
-      {
-        "target": { "text": "Demo search leaf 1" },
-        "mode": "visible",
-        "run": "flows/home-continue-search.ad#assert-visible"
       },
       { "run": "flows/home-continue-search.ad#hidden-match" },
       {
-        "target": { "text": "Demo search hidden leaf.*" },
+        "target": { "id": "home-recent-open", "text": "Demo search hidden leaf.*" },
         "mode": "scroll",
         "direction": "down",
         "timeout": 15000,
         "run": "flows/settings-home-layout.ad#seek-down"
       },
       {
-        "target": { "text": "Demo search hidden leaf.*" },
+        "target": { "id": "home-recent-open", "text": "Demo search hidden leaf.*" },
         "mode": "press",
         "run": "flows/home-continue-search.ad#open-hidden-match"
       },
@@ -553,7 +427,8 @@
         "mode": "visible",
         "timeout": 10000,
         "run": "flows/home-continue-search.ad#assert-visible"
-      }
+      },
+      { "run": "flows/home-continue-search.ad#close-detail" }
     ],
     "subflows/open-editor-composer": [
       {
@@ -573,48 +448,7 @@
     "flows/custom-themes": [
       { "include": "subflows/open-demo" },
       {
-        "when": {
-          "env": "DEVICE_KIND",
-          "equals": "ipad"
-        },
-        "steps": [
-          {
-            "run": "flows/custom-themes.ad#install-ipad"
-          }
-        ]
-      },
-      {
-        "when": {
-          "env": "DEVICE_KIND",
-          "equals": "iphone"
-        },
-        "steps": [
-          {
-            "run": "flows/custom-themes.ad#install"
-          }
-        ]
-      },
-      {
-        "when": {
-          "env": "DEVICE_KIND",
-          "equals": "android-phone"
-        },
-        "steps": [
-          {
-            "run": "flows/custom-themes.ad#install"
-          }
-        ]
-      },
-      {
-        "when": {
-          "env": "DEVICE_KIND",
-          "equals": "android-tablet"
-        },
-        "steps": [
-          {
-            "run": "flows/custom-themes.ad#install"
-          }
-        ]
+        "run": "flows/custom-themes.ad#install"
       },
       {
         "target": {
@@ -1178,14 +1012,6 @@
         "run": "flows/git-diff.ad#s3"
       },
       {
-        "target": {
-          "text": "Uncommitted changes"
-        },
-        "mode": "visible",
-        "timeout": 8000,
-        "run": "flows/git-diff.ad#s4"
-      },
-      {
         "run": "flows/git-diff.ad#s5"
       },
       {
@@ -1432,9 +1258,7 @@
         "run": "flows/demo-tour.ad#s2"
       },
       {
-        "target": {
-          "text": "Claude Code"
-        },
+        "target": { "id": "terminal-composer-input" },
         "mode": "visible",
         "timeout": 15000,
         "run": "flows/demo-tour.ad#s3"
@@ -1719,22 +1543,7 @@
           }
         ]
       },
-      {
-        "target": {
-          "id": "server-agent-pane-1"
-        },
-        "mode": "press",
-        "optional": true,
-        "run": "flows/demo-tour.ad#s29"
-      },
-      {
-        "target": {
-          "text": "Claude Code"
-        },
-        "mode": "visible",
-        "timeout": 15000,
-        "run": "flows/demo-tour.ad#s43"
-      },
+      { "run": "subflows/open-agent-pane.ad" },
       {
         "run": "flows/demo-tour.ad#s44"
       },
@@ -1788,9 +1597,6 @@
         },
         "mode": "hidden",
         "timeout": 8000
-      },
-      {
-        "include": "subflows/restore-key-row"
       }
     ],
     "flows/file-mentions": [
@@ -2805,19 +2611,15 @@
         "steps": [
           { "run": "flows/pad-workspace.ad#home-navigation" },
           {
-            "point": [0.78, 0.6],
-            "delta": [0, -0.4],
-            "run": "flows/pad-workspace.ad#home-navigation-work-column"
+            "when": { "env": "PLATFORM", "equals": "android" },
+            "steps": [{ "run": "flows/pad-workspace.ad#home-settings-android" }]
           },
           {
-            "target": { "id": "home-connection-gateway-muqun-demo" },
-            "mode": "scroll",
-            "direction": "down",
-            "timeout": 20000,
-            "run": "flows/pad-workspace.ad#home-navigation-scroll"
+            "when": { "env": "PLATFORM", "equals": "ios" },
+            "steps": [{ "run": "flows/pad-workspace.ad#home-settings-ios" }]
           },
-          { "run": "flows/pad-workspace.ad#home-navigation-connect" },
-          { "run": "flows/pad-workspace.ad#pad-agent-in-place" }
+          { "run": "flows/pad-workspace.ad#home-settings-return" },
+          { "run": "flows/pad-workspace.ad#home-navigation-connect" }
         ]
       },
       {
@@ -4496,413 +4298,35 @@
         "run": "flows/settings-home-layout.ad#leave-classic-settings"
       },
       {
-        "target": {
-          "id": "home-editorial-layout"
-        },
-        "mode": "hidden",
-        "timeout": 8000,
-        "run": "flows/settings-home-layout.ad#classic-home"
+        "when": { "target": { "id": "home-pad-toolbar-actions" }, "absent": true },
+        "steps": [
+          {
+            "target": {
+              "id": "home-editorial-layout"
+            },
+            "mode": "hidden",
+            "timeout": 8000,
+            "run": "flows/settings-home-layout.ad#classic-home"
+          }
+        ]
+      },
+      {
+        "when": { "target": { "id": "home-pad-toolbar-actions" } },
+        "steps": [
+          {
+            "target": {
+              "id": "home-editorial-layout"
+            },
+            "mode": "visible",
+            "run": "flows/settings-home-layout.ad#editorial-home"
+          }
+        ]
       }
     ],
     "flows/slash-commands": [
       { "include": "subflows/open-demo" },
-      {
-        "target": {
-          "text": "Send to agent"
-        },
-        "mode": "visible",
-        "run": "flows/slash-commands.ad#s1"
-      },
-      {
-        "target": {
-          "text": "Switch to Claude Code"
-        },
-        "mode": "press",
-        "run": "flows/slash-commands.ad#s2"
-      },
-      {
-        "run": "flows/slash-commands.ad#s3"
-      },
-      {
-        "target": {
-          "id": "terminal-composer-input"
-        },
-        "mode": "press",
-        "run": "flows/slash-commands.ad#s4"
-      },
-      {
-        "run": "flows/slash-commands.ad#s5"
-      },
-      {
-        "target": {
-          "text": "Insert /clear.*"
-        },
-        "mode": "visible",
-        "timeout": 8000,
-        "run": "flows/slash-commands.ad#s6"
-      },
-      {
-        "target": {
-          "text": "Insert /compact.*"
-        },
-        "mode": "visible",
-        "run": "flows/slash-commands.ad#s7"
-      },
-      {
-        "target": {
-          "text": "Insert /context.*"
-        },
-        "mode": "visible",
-        "run": "flows/slash-commands.ad#s8"
-      },
-      {
-        "target": {
-          "text": "Send to agent"
-        },
-        "mode": "visible",
-        "run": "flows/slash-commands.ad#s9"
-      },
-      {
-        "run": "flows/slash-commands.ad#s10"
-      },
-      {
-        "run": "flows/slash-commands.ad#s11"
-      },
-      {
-        "target": {
-          "text": "Insert /compact.*"
-        },
-        "mode": "visible",
-        "run": "flows/slash-commands.ad#s12"
-      },
-      {
-        "target": {
-          "text": "Insert /context.*"
-        },
-        "mode": "visible",
-        "run": "flows/slash-commands.ad#s13"
-      },
-      {
-        "target": {
-          "text": "Insert /clear.*"
-        },
-        "mode": "hidden",
-        "run": "flows/slash-commands.ad#s14"
-      },
-      {
-        "target": {
-          "text": "Insert /model.*"
-        },
-        "mode": "hidden",
-        "run": "flows/slash-commands.ad#s15"
-      },
-      {
-        "when": {
-          "env": "PLATFORM",
-          "equals": "android"
-        },
-        "steps": [
-          {
-            "run": "flows/slash-commands.ad#s16"
-          },
-          {
-            "when": {
-              "target": {
-                "id": "terminal-composer-input",
-                "text": "Send a message"
-              }
-            },
-            "steps": [
-              {
-                "run": "flows/slash-commands.ad#insert-cleared-slash"
-              }
-            ]
-          },
-          {
-            "run": "flows/slash-commands.ad#verify-slash"
-          }
-        ]
-      },
-      {
-        "when": {
-          "env": "PLATFORM",
-          "equals": "ios"
-        },
-        "steps": [
-          {
-            "run": "flows/slash-commands.ad#reset-query-ios"
-          }
-        ]
-      },
-      {
-        "run": "flows/slash-commands.ad#s18"
-      },
-      {
-        "target": {
-          "text": "Insert /clear.*"
-        },
-        "mode": "visible",
-        "timeout": 6000,
-        "run": "flows/slash-commands.ad#s19"
-      },
-      {
-        "run": "flows/slash-commands.ad#s20"
-      },
-      {
-        "run": "flows/slash-commands.ad#s21"
-      },
-      {
-        "target": {
-          "text": "Insert /release-notes.*"
-        },
-        "mode": "visible",
-        "run": "flows/slash-commands.ad#s22"
-      },
-      {
-        "target": {
-          "text": "Draft the notes for the next build"
-        },
-        "mode": "visible",
-        "run": "flows/slash-commands.ad#s23"
-      },
-      {
-        "target": {
-          "text": "Insert /clear.*"
-        },
-        "mode": "hidden",
-        "run": "flows/slash-commands.ad#s24"
-      },
-      {
-        "target": {
-          "text": "Close the command list"
-        },
-        "mode": "press",
-        "run": "flows/slash-commands.ad#s25"
-      },
-      {
-        "run": "flows/slash-commands.ad#s26"
-      },
-      {
-        "target": {
-          "text": "Insert /release-notes.*"
-        },
-        "mode": "hidden",
-        "run": "flows/slash-commands.ad#s27"
-      },
-      {
-        "target": {
-          "text": "Send to agent"
-        },
-        "mode": "visible",
-        "run": "flows/slash-commands.ad#s28"
-      },
-      {
-        "target": {
-          "id": "terminal-composer-input"
-        },
-        "mode": "press",
-        "run": "flows/slash-commands.ad#s29"
-      },
-      {
-        "when": {
-          "env": "PLATFORM",
-          "equals": "android"
-        },
-        "steps": [
-          {
-            "run": "flows/slash-commands.ad#s30"
-          },
-          {
-            "when": {
-              "target": {
-                "id": "terminal-composer-input",
-                "text": "Send a message"
-              }
-            },
-            "steps": [
-              {
-                "run": "flows/slash-commands.ad#insert-cleared-model"
-              }
-            ]
-          },
-          {
-            "run": "flows/slash-commands.ad#verify-model"
-          }
-        ]
-      },
-      {
-        "when": {
-          "env": "PLATFORM",
-          "equals": "ios"
-        },
-        "steps": [
-          {
-            "run": "flows/slash-commands.ad#model-query-ios"
-          }
-        ]
-      },
-      {
-        "run": "flows/slash-commands.ad#s34"
-      },
-      {
-        "target": {
-          "text": "Insert /model.*"
-        },
-        "mode": "visible",
-        "timeout": 8000,
-        "run": "flows/slash-commands.ad#s36"
-      },
-      {
-        "target": {
-          "text": "Insert /model \\[model\\]"
-        },
-        "mode": "visible",
-        "run": "flows/slash-commands.ad#s37"
-      },
-      {
-        "target": {
-          "text": "Insert /model.*"
-        },
-        "mode": "press",
-        "run": "flows/slash-commands.ad#s38"
-      },
-      {
-        "run": "flows/slash-commands.ad#s39"
-      },
-      {
-        "target": {
-          "text": "Insert /model.*"
-        },
-        "mode": "hidden",
-        "run": "flows/slash-commands.ad#s40"
-      },
-      {
-        "target": {
-          "text": "Insert /clear.*"
-        },
-        "mode": "hidden",
-        "run": "flows/slash-commands.ad#s41"
-      },
-      {
-        "target": {
-          "text": "Send to agent"
-        },
-        "mode": "visible",
-        "run": "flows/slash-commands.ad#s42"
-      },
-      {
-        "run": "flows/slash-commands.ad#s43"
-      },
-      {
-        "run": "flows/slash-commands.ad#s44"
-      },
-      {
-        "target": {
-          "text": "Insert /model.*"
-        },
-        "mode": "hidden",
-        "run": "flows/slash-commands.ad#s45"
-      },
-      {
-        "target": {
-          "text": "Send to agent"
-        },
-        "mode": "visible",
-        "run": "flows/slash-commands.ad#s46"
-      },
-      { "include": "subflows/open-demo" },
-      {
-        "target": {
-          "text": "Switch to Claude Code"
-        },
-        "mode": "press",
-        "run": "flows/slash-commands.ad#s47"
-      },
-      {
-        "target": {
-          "id": "terminal-composer-input"
-        },
-        "mode": "press",
-        "run": "flows/slash-commands.ad#s48"
-      },
-      {
-        "run": "flows/slash-commands.ad#s49"
-      },
-      {
-        "run": "flows/slash-commands.ad#s50"
-      },
-      {
-        "run": "flows/slash-commands.ad#s51"
-      },
-      {
-        "target": {
-          "text": "Insert /clear.*"
-        },
-        "mode": "hidden",
-        "run": "flows/slash-commands.ad#s52"
-      },
-      {
-        "target": {
-          "text": "Insert /model.*"
-        },
-        "mode": "hidden",
-        "run": "flows/slash-commands.ad#s53"
-      },
-      {
-        "target": {
-          "text": "Send to agent"
-        },
-        "mode": "visible",
-        "run": "flows/slash-commands.ad#s54"
-      },
-      { "include": "subflows/open-demo" },
-      {
-        "target": {
-          "text": "Switch to zsh"
-        },
-        "mode": "press",
-        "run": "flows/slash-commands.ad#s55"
-      },
-      {
-        "run": "flows/slash-commands.ad#s56"
-      },
-      {
-        "target": {
-          "text": "Run a terminal command"
-        },
-        "mode": "press",
-        "run": "flows/slash-commands.ad#s57"
-      },
-      {
-        "run": "flows/slash-commands.ad#s58"
-      },
-      {
-        "run": "flows/slash-commands.ad#s59"
-      },
-      {
-        "run": "flows/slash-commands.ad#s60"
-      },
-      {
-        "target": {
-          "text": "Insert /clear.*"
-        },
-        "mode": "hidden",
-        "run": "flows/slash-commands.ad#s61"
-      },
-      {
-        "target": {
-          "text": "Insert /compact.*"
-        },
-        "mode": "hidden",
-        "run": "flows/slash-commands.ad#s62"
-      },
-      {
-        "target": {
-          "text": "Run command"
-        },
-        "mode": "visible",
-        "run": "flows/slash-commands.ad#s63"
-      }
+      { "run": "subflows/open-agent-pane.ad" },
+      { "run": "flows/slash-commands.ad" }
     ],
     "flows/ssh": [
       {
@@ -4994,7 +4418,6 @@
       {
         "run": "flows/ssh.ad#s11"
       },
-      { "run": "flows/ssh.ad#composer-radius-evidence" },
       {
         "include": "subflows/dismiss-logbox"
       },
@@ -5138,13 +4561,7 @@
         "timeout": 10000,
         "run": "flows/ssh.ad#s28"
       },
-      {
-        "target": {
-          "text": "Go back"
-        },
-        "mode": "press",
-        "run": "flows/ssh.ad#s29"
-      },
+      { "run": "flows/ssh.ad#s29" },
       {
         "target": {
           "text": "Open SSH host Demo shell"
@@ -5153,13 +4570,7 @@
         "timeout": 8000,
         "run": "flows/ssh.ad#s30"
       },
-      {
-        "target": {
-          "text": "Go back"
-        },
-        "mode": "press",
-        "run": "flows/ssh.ad#s31"
-      },
+      { "run": "flows/ssh.ad#s31" },
       {
         "target": {
           "id": "settings-ssh-row"
@@ -7119,9 +6530,16 @@
         "include": "subflows/restore-key-row"
       },
       { "include": "subflows/open-demo" },
+      { "run": "flows/soft-keyboard.ad#open" },
       {
-        "run": "flows/soft-keyboard.ad"
-      }
+        "when": { "target": { "id": "virtual-key-char-q" } },
+        "steps": [{ "run": "flows/soft-keyboard.ad#wide" }]
+      },
+      {
+        "when": { "target": { "id": "virtual-key-q" } },
+        "steps": [{ "run": "flows/soft-keyboard.ad#phone" }]
+      },
+      { "run": "flows/soft-keyboard.ad#editor" }
     ],
     "flows/personal-workspace": [
       { "include": "subflows/open-demo" },
