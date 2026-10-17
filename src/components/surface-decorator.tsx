@@ -76,6 +76,9 @@ const PACK_SLOTS = new Set<string>(THEME_SLOTS);
 function packSlot(meta: SurfaceMeta): ThemeSlot | null {
   // A clear fill has nothing to hold artwork against.
   if (!meta.slot || meta.baseColor === 'transparent') return null;
+  // The pack's `tabs.background` decorates a pill list's single track, under
+  // its selection; `segments` triggers stay plain rather than tile it.
+  if (meta.slot === 'tabs.track') return meta.variant === 'pill' ? 'tabs.background' : null;
   return PACK_SLOTS.has(meta.slot) ? (meta.slot as ThemeSlot) : null;
 }
 
