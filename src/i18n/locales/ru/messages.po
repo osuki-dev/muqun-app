@@ -3952,10 +3952,6 @@ msgstr "Следующее уведомление"
 msgid "Next session"
 msgstr "Следующая сессия"
 
-#: src/components/home-recent-sessions.tsx
-msgid "Next sessions"
-msgstr "Следующие сессии"
-
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
 msgstr "Нет запущенных агентов"
@@ -4582,7 +4578,6 @@ msgstr "Выход"
 msgid "Output copied to clipboard"
 msgstr "Вывод скопирован в буфер обмена"
 
-#: src/components/home-recent-sessions.tsx
 #: src/components/pdf-asset-preview.tsx
 msgid "Page {page} of {pageCount}"
 msgstr "Страница {page} из {pageCount}"
@@ -4830,10 +4825,6 @@ msgstr "Предыдущее изображение"
 #: src/components/agent-title-pill.tsx
 msgid "Previous session"
 msgstr "Предыдущая сессия"
-
-#: src/components/home-recent-sessions.tsx
-msgid "Previous sessions"
-msgstr "Предыдущие сессии"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Primary"

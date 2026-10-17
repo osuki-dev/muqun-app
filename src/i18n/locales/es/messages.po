@@ -3952,10 +3952,6 @@ msgstr "Siguiente notificación"
 msgid "Next session"
 msgstr "Sesión siguiente"
 
-#: src/components/home-recent-sessions.tsx
-msgid "Next sessions"
-msgstr "Sesiones siguientes"
-
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
 msgstr "Ningún agente en ejecución"
@@ -4582,7 +4578,6 @@ msgstr "Salida"
 msgid "Output copied to clipboard"
 msgstr "Salida copiada al portapapeles"
 
-#: src/components/home-recent-sessions.tsx
 #: src/components/pdf-asset-preview.tsx
 msgid "Page {page} of {pageCount}"
 msgstr "Página {page} de {pageCount}"
@@ -4830,10 +4825,6 @@ msgstr "Imagen anterior"
 #: src/components/agent-title-pill.tsx
 msgid "Previous session"
 msgstr "Sesión anterior"
-
-#: src/components/home-recent-sessions.tsx
-msgid "Previous sessions"
-msgstr "Sesiones anteriores"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Primary"
