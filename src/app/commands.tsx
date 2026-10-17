@@ -1,4 +1,3 @@
-import { PillTabs } from '@/components/pill-tabs';
 import { SheetHandle } from '@/components/sheet-route-frame';
 import {
   Input,
@@ -8,9 +7,10 @@ import {
   Skeleton,
   Button,
   PressableScale,
+  Tabs,
   Text,
 } from '@osuki-dev/ui';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { usePillTabsLayering, useSurfaceBackground } from '@/hooks/use-surface-background';
 import { SheetFrame } from '@/components/sheet-ground';
 import { SettingsSegmented } from '@/components/settings-segmented';
 import {
@@ -171,6 +171,7 @@ const MONO_TEXT = {
 export default function QuickCommandsScreen() {
   const profile = useAppearanceProfile();
   const surfaceBackground = useSurfaceBackground();
+  const pillLayering = usePillTabsLayering();
   const router = useRouter();
   const theme = useThemeTokens();
   // `t` from the hook, never the global `t` from `@lingui/core/macro`: React
@@ -1063,13 +1064,14 @@ export default function QuickCommandsScreen() {
                 </Text>
 
                 {mode === 'terminal' ? (
-                  <PillTabs
+                  <Tabs
                     options={[
                       { label: t`Command`, value: 'command' },
                       { label: t`Keys`, value: 'keys' },
                     ]}
                     value={kind}
                     variant="pill"
+                    layering={pillLayering}
                     size="compact"
                     onChange={(next) => setKind(next as QuickCommandKind)}
                   />

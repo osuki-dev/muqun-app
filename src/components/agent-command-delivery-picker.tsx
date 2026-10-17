@@ -1,6 +1,7 @@
-import { PillTabs } from '@/components/pill-tabs';
+import { Tabs } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 
+import { usePillTabsLayering } from '@/hooks/use-surface-background';
 import type { QuickCommandDelivery } from '@/lib/quick-commands';
 
 /** Reused when creating a shortcut and changing an existing custom shortcut. */
@@ -16,8 +17,9 @@ export function AgentCommandDeliveryPicker({
   disabled?: boolean;
 }) {
   const { t } = useLingui();
+  const layering = usePillTabsLayering();
   return (
-    <PillTabs
+    <Tabs
       testID={testID}
       options={[
         { label: t`Current agent`, value: 'current-agent', disabled },
@@ -25,6 +27,7 @@ export function AgentCommandDeliveryPicker({
       ]}
       value={value}
       variant="pill"
+      layering={layering}
       size="compact"
       onChange={(next) => {
         if (next === 'current-agent' || next === 'collaboration') onChange(next);

@@ -122,7 +122,7 @@ export function SettingsSegmented({
         testID={testID}
         style={{ borderRadius: profile.chrome.segmentedTrack }}
         // The kit's own opaque `surfaceRaised` track, kept, and this is a
-        // deliberate exception to the one-layer rule `pill-tabs.tsx` argues
+        // deliberate exception to the one-layer rule `usePillTabsLayering` argues
         // at length.
         //
         // The rule is about surfaces: a card, a sheet, a row -- things the
