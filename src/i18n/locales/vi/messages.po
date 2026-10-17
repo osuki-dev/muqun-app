@@ -3952,6 +3952,10 @@ msgstr "Thông báo tiếp theo"
 msgid "Next session"
 msgstr "Phiên tiếp theo"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Next sessions"
+msgstr "Các phiên tiếp theo"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
 msgstr "Không có tác tử nào đang chạy"
@@ -4578,6 +4582,7 @@ msgstr "Đầu ra"
 msgid "Output copied to clipboard"
 msgstr "Đã sao chép đầu ra vào bảng nhớ tạm"
 
+#: src/components/home-recent-sessions.tsx
 #: src/components/pdf-asset-preview.tsx
 msgid "Page {page} of {pageCount}"
 msgstr "Trang {page} trên {pageCount}"
@@ -4825,6 +4830,10 @@ msgstr "Ảnh trước"
 #: src/components/agent-title-pill.tsx
 msgid "Previous session"
 msgstr "Phiên trước"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Previous sessions"
+msgstr "Các phiên trước"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Primary"

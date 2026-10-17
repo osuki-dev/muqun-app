@@ -3952,6 +3952,10 @@ msgstr "การแจ้งเตือนถัดไป"
 msgid "Next session"
 msgstr "เซสชันถัดไป"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Next sessions"
+msgstr "เซสชันชุดถัดไป"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
 msgstr "ไม่มีเอเจนต์กำลังทำงาน"
@@ -4578,6 +4582,7 @@ msgstr "เอาต์พุต"
 msgid "Output copied to clipboard"
 msgstr "คัดลอกเอาต์พุตไปยังคลิปบอร์ดแล้ว"
 
+#: src/components/home-recent-sessions.tsx
 #: src/components/pdf-asset-preview.tsx
 msgid "Page {page} of {pageCount}"
 msgstr "หน้า {page} จาก {pageCount}"
@@ -4825,6 +4830,10 @@ msgstr "รูปภาพก่อนหน้า"
 #: src/components/agent-title-pill.tsx
 msgid "Previous session"
 msgstr "เซสชันก่อนหน้า"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Previous sessions"
+msgstr "เซสชันชุดก่อนหน้า"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Primary"
