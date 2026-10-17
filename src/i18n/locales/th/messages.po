@@ -299,6 +299,10 @@ msgstr "พบคำขอ {count} รายการในการตรวจ
 msgid "{done} of {0} done"
 msgstr "เสร็จ {done} จาก {0}"
 
+#: src/components/home-computer-deck.tsx
+msgid "{failed, plural, one {# failed} other {# failed}}"
+msgstr "{failed, plural, other {ล้มเหลว #}}"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "{from} still lists an older {name}. Remove that entry on {from}."
 msgstr "{from} ยังมีรายการ {name} อันเก่าอยู่ ลบรายการนั้นบน {from}"
@@ -375,6 +379,10 @@ msgstr "{providerName} (เทอร์มินัล)"
 msgid "{removeLabel}: {label}"
 msgstr "{removeLabel}: {label}"
 
+#: src/components/home-computer-deck.tsx
+msgid "{running, plural, one {# running} other {# running}}"
+msgstr "{running, plural, other {กำลังทำงาน #}}"
+
 #. placeholder {0}: shells.length
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
@@ -393,6 +401,10 @@ msgstr "{total, plural, other {งานย่อย # งาน}}"
 #: src/components/task-row.tsx
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, other {งานย่อย # งาน}} ({waiting, plural, other {รอ # งาน}})"
+
+#: src/components/home-computer-deck.tsx
+msgid "{waiting, plural, one {# needs you} other {# need you}}"
+msgstr "{waiting, plural, other {รอคุณ #}}"
 
 #: src/components/task-row.tsx
 msgid "→ {name}"
@@ -1003,6 +1015,11 @@ msgstr "สาขาหรือคอมมิต (ไม่บังคับ)
 #: src/components/agent-worktree-sheet.tsx
 msgid "Branch to start from"
 msgstr "สาขาที่ใช้เป็นจุดเริ่ม"
+
+#. placeholder {0}: server.label
+#: src/components/home-computer-deck.tsx
+msgid "Bring {0} to the front"
+msgstr "นำ {0} มาไว้ด้านหน้า"
 
 #: src/components/custom-theme-library.tsx
 #: src/components/theme-browse-sheet.tsx
@@ -3918,6 +3935,10 @@ msgstr "ใหม่กว่า"
 msgid "Next"
 msgstr "ถัดไป"
 
+#: src/components/home-computer-deck.tsx
+msgid "Next computer"
+msgstr "คอมพิวเตอร์ถัดไป"
+
 #: src/components/image-preview-modal.tsx
 msgid "Next image"
 msgstr "รูปภาพถัดไป"
@@ -4792,6 +4813,10 @@ msgstr "ดูตัวอย่างและใช้"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "ดูตัวอย่างก่อน ธีมปัจจุบันของคุณยังไม่เปลี่ยน"
+
+#: src/components/home-computer-deck.tsx
+msgid "Previous computer"
+msgstr "คอมพิวเตอร์ก่อนหน้า"
 
 #: src/components/image-preview-modal.tsx
 msgid "Previous image"

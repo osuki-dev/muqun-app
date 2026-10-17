@@ -299,6 +299,10 @@ msgstr "최근 확인된 요청 {count}개"
 msgid "{done} of {0} done"
 msgstr "{0}개 중 {done}개 완료"
 
+#: src/components/home-computer-deck.tsx
+msgid "{failed, plural, one {# failed} other {# failed}}"
+msgstr "{failed, plural, other {#개 실패}}"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "{from} still lists an older {name}. Remove that entry on {from}."
 msgstr "{from}에 이전 {name} 항목이 아직 남아 있습니다. {from}에서 그 항목을 삭제하세요"
@@ -375,6 +379,10 @@ msgstr "{providerName}(터미널)"
 msgid "{removeLabel}: {label}"
 msgstr "{removeLabel}: {label}"
 
+#: src/components/home-computer-deck.tsx
+msgid "{running, plural, one {# running} other {# running}}"
+msgstr "{running, plural, other {#개 실행 중}}"
+
 #. placeholder {0}: shells.length
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
@@ -393,6 +401,10 @@ msgstr "{total, plural, other {하위 작업 #개}}"
 #: src/components/task-row.tsx
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, other {하위 작업 #개}} ({waiting, plural, other {#개 대기 중}})"
+
+#: src/components/home-computer-deck.tsx
+msgid "{waiting, plural, one {# needs you} other {# need you}}"
+msgstr "{waiting, plural, other {#개 확인 필요}}"
 
 #: src/components/task-row.tsx
 msgid "→ {name}"
@@ -1003,6 +1015,11 @@ msgstr "브랜치 또는 커밋 (선택 사항)"
 #: src/components/agent-worktree-sheet.tsx
 msgid "Branch to start from"
 msgstr "시작점으로 삼을 브랜치"
+
+#. placeholder {0}: server.label
+#: src/components/home-computer-deck.tsx
+msgid "Bring {0} to the front"
+msgstr "{0}을(를) 앞으로 가져오기"
 
 #: src/components/custom-theme-library.tsx
 #: src/components/theme-browse-sheet.tsx
@@ -3918,6 +3935,10 @@ msgstr "이후 기록"
 msgid "Next"
 msgstr "다음"
 
+#: src/components/home-computer-deck.tsx
+msgid "Next computer"
+msgstr "다음 컴퓨터"
+
 #: src/components/image-preview-modal.tsx
 msgid "Next image"
 msgstr "다음 이미지"
@@ -4792,6 +4813,10 @@ msgstr "미리 보고 적용"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "먼저 미리 보세요. 현재 테마는 변경되지 않습니다"
+
+#: src/components/home-computer-deck.tsx
+msgid "Previous computer"
+msgstr "이전 컴퓨터"
 
 #: src/components/image-preview-modal.tsx
 msgid "Previous image"

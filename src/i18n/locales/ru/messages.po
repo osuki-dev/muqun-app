@@ -299,6 +299,10 @@ msgstr "Последняя проверка: запросов — {count}"
 msgid "{done} of {0} done"
 msgstr "{done} из {0} готово"
 
+#: src/components/home-computer-deck.tsx
+msgid "{failed, plural, one {# failed} other {# failed}}"
+msgstr "{failed, plural, one {# с ошибкой} few {# с ошибкой} many {# с ошибкой} other {# с ошибкой}}"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "{from} still lists an older {name}. Remove that entry on {from}."
 msgstr "В {from} всё ещё есть старая запись {name}. Удалите эту запись на {from}"
@@ -375,6 +379,10 @@ msgstr "{providerName} (терминал)"
 msgid "{removeLabel}: {label}"
 msgstr "{removeLabel}: {label}"
 
+#: src/components/home-computer-deck.tsx
+msgid "{running, plural, one {# running} other {# running}}"
+msgstr "{running, plural, one {# выполняется} few {# выполняются} many {# выполняются} other {# выполняется}}"
+
 #. placeholder {0}: shells.length
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
@@ -393,6 +401,10 @@ msgstr "{total, plural, one {# подзадача} few {# подзадачи} ma
 #: src/components/task-row.tsx
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, one {# подзадача} few {# подзадачи} many {# подзадач} other {# подзадачи}} ({waiting, plural, one {# ждёт} few {# ждут} many {# ждут} other {# ждут}})"
+
+#: src/components/home-computer-deck.tsx
+msgid "{waiting, plural, one {# needs you} other {# need you}}"
+msgstr "{waiting, plural, one {# ждёт вас} few {# ждут вас} many {# ждут вас} other {# ждёт вас}}"
 
 #: src/components/task-row.tsx
 msgid "→ {name}"
@@ -1003,6 +1015,11 @@ msgstr "Ветка или коммит (необязательно)"
 #: src/components/agent-worktree-sheet.tsx
 msgid "Branch to start from"
 msgstr "Ветка, от которой начать"
+
+#. placeholder {0}: server.label
+#: src/components/home-computer-deck.tsx
+msgid "Bring {0} to the front"
+msgstr "Вывести {0} вперёд"
 
 #: src/components/custom-theme-library.tsx
 #: src/components/theme-browse-sheet.tsx
@@ -3918,6 +3935,10 @@ msgstr "Позже"
 msgid "Next"
 msgstr "Далее"
 
+#: src/components/home-computer-deck.tsx
+msgid "Next computer"
+msgstr "Следующий компьютер"
+
 #: src/components/image-preview-modal.tsx
 msgid "Next image"
 msgstr "Следующее изображение"
@@ -4792,6 +4813,10 @@ msgstr "Посмотреть и применить"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "Сначала просмотрите тему. Текущая тема не изменится"
+
+#: src/components/home-computer-deck.tsx
+msgid "Previous computer"
+msgstr "Предыдущий компьютер"
 
 #: src/components/image-preview-modal.tsx
 msgid "Previous image"

@@ -299,6 +299,10 @@ msgstr "{count} requests last observed"
 msgid "{done} of {0} done"
 msgstr "{done} of {0} done"
 
+#: src/components/home-computer-deck.tsx
+msgid "{failed, plural, one {# failed} other {# failed}}"
+msgstr "{failed, plural, one {# failed} other {# failed}}"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "{from} still lists an older {name}. Remove that entry on {from}."
 msgstr "{from} still lists an older {name}. Remove that entry on {from}"
@@ -375,6 +379,10 @@ msgstr "{providerName} (terminal)"
 msgid "{removeLabel}: {label}"
 msgstr "{removeLabel}: {label}"
 
+#: src/components/home-computer-deck.tsx
+msgid "{running, plural, one {# running} other {# running}}"
+msgstr "{running, plural, one {# running} other {# running}}"
+
 #. placeholder {0}: shells.length
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
@@ -393,6 +401,10 @@ msgstr "{total, plural, one {# sub-task} other {# sub-tasks}}"
 #: src/components/task-row.tsx
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
+
+#: src/components/home-computer-deck.tsx
+msgid "{waiting, plural, one {# needs you} other {# need you}}"
+msgstr "{waiting, plural, one {# needs you} other {# need you}}"
 
 #: src/components/task-row.tsx
 msgid "→ {name}"
@@ -1003,6 +1015,11 @@ msgstr "Branch or commit (optional)"
 #: src/components/agent-worktree-sheet.tsx
 msgid "Branch to start from"
 msgstr "Branch to start from"
+
+#. placeholder {0}: server.label
+#: src/components/home-computer-deck.tsx
+msgid "Bring {0} to the front"
+msgstr "Bring {0} to the front"
 
 #: src/components/custom-theme-library.tsx
 #: src/components/theme-browse-sheet.tsx
@@ -3918,6 +3935,10 @@ msgstr "Newer"
 msgid "Next"
 msgstr "Next"
 
+#: src/components/home-computer-deck.tsx
+msgid "Next computer"
+msgstr "Next computer"
+
 #: src/components/image-preview-modal.tsx
 msgid "Next image"
 msgstr "Next image"
@@ -4792,6 +4813,10 @@ msgstr "Preview and apply"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "Preview first. Your current theme stays unchanged"
+
+#: src/components/home-computer-deck.tsx
+msgid "Previous computer"
+msgstr "Previous computer"
 
 #: src/components/image-preview-modal.tsx
 msgid "Previous image"

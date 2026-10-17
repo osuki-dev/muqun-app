@@ -7,7 +7,7 @@ describe('home computer deck', () => {
     const order = ['a', 'b', 'c', 'd'];
     expect(deckMoved(order, deckSwipeMove(-1, 4))).toEqual(['b', 'c', 'd', 'a']);
     expect(deckMoved(order, deckSwipeMove(1, 4))).toEqual(['d', 'a', 'b', 'c']);
-    expect(deckMoved(order, { kind: 'raise', level: 2 })).toEqual(['c', 'a', 'b', 'd']);
+    expect(deckMoved(order, 2)).toEqual(['c', 'a', 'b', 'd']);
     // The order survives cards coming and going; the remembered front leads at first.
     expect(deckOrder(null, ['a', 'b', 'c'], 'c')).toEqual(['c', 'a', 'b']);
     expect(deckOrder(['c', 'a', 'b'], ['a', 'b', 'e'])).toEqual(['a', 'b', 'e']);

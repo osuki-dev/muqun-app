@@ -299,6 +299,10 @@ msgstr "Lần quan sát gần nhất: {count} yêu cầu"
 msgid "{done} of {0} done"
 msgstr "Xong {done} trên {0}"
 
+#: src/components/home-computer-deck.tsx
+msgid "{failed, plural, one {# failed} other {# failed}}"
+msgstr "{failed, plural, other {# thất bại}}"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "{from} still lists an older {name}. Remove that entry on {from}."
 msgstr "{from} vẫn còn một mục {name} cũ. Hãy xóa mục đó trên {from}"
@@ -375,6 +379,10 @@ msgstr "{providerName} (trong terminal)"
 msgid "{removeLabel}: {label}"
 msgstr "{removeLabel}: {label}"
 
+#: src/components/home-computer-deck.tsx
+msgid "{running, plural, one {# running} other {# running}}"
+msgstr "{running, plural, other {# đang chạy}}"
+
 #. placeholder {0}: shells.length
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
@@ -393,6 +401,10 @@ msgstr "{total, plural, other {# nhiệm vụ con}}"
 #: src/components/task-row.tsx
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, other {# nhiệm vụ con}} ({waiting, plural, other {# đang chờ}})"
+
+#: src/components/home-computer-deck.tsx
+msgid "{waiting, plural, one {# needs you} other {# need you}}"
+msgstr "{waiting, plural, other {# cần bạn}}"
 
 #: src/components/task-row.tsx
 msgid "→ {name}"
@@ -1003,6 +1015,11 @@ msgstr "Nhánh hoặc commit (không bắt buộc)"
 #: src/components/agent-worktree-sheet.tsx
 msgid "Branch to start from"
 msgstr "Nhánh để bắt đầu"
+
+#. placeholder {0}: server.label
+#: src/components/home-computer-deck.tsx
+msgid "Bring {0} to the front"
+msgstr "Đưa {0} lên trước"
 
 #: src/components/custom-theme-library.tsx
 #: src/components/theme-browse-sheet.tsx
@@ -3918,6 +3935,10 @@ msgstr "Mới hơn"
 msgid "Next"
 msgstr "Tiếp theo"
 
+#: src/components/home-computer-deck.tsx
+msgid "Next computer"
+msgstr "Máy tính tiếp theo"
+
 #: src/components/image-preview-modal.tsx
 msgid "Next image"
 msgstr "Ảnh tiếp theo"
@@ -4792,6 +4813,10 @@ msgstr "Xem trước và áp dụng"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "Xem trước đã. Giao diện hiện tại của bạn sẽ không thay đổi"
+
+#: src/components/home-computer-deck.tsx
+msgid "Previous computer"
+msgstr "Máy tính trước"
 
 #: src/components/image-preview-modal.tsx
 msgid "Previous image"

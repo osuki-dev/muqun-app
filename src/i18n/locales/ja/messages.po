@@ -299,6 +299,10 @@ msgstr "{count} 件のリクエストを最後に確認"
 msgid "{done} of {0} done"
 msgstr "{0} 件中 {done} 件完了"
 
+#: src/components/home-computer-deck.tsx
+msgid "{failed, plural, one {# failed} other {# failed}}"
+msgstr "{failed, plural, other {#件失敗}}"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "{from} still lists an older {name}. Remove that entry on {from}."
 msgstr "{from} に古い {name} の項目が残っています。{from} でその項目を削除してください"
@@ -375,6 +379,10 @@ msgstr "{providerName}（ターミナル）"
 msgid "{removeLabel}: {label}"
 msgstr "{removeLabel}：{label}"
 
+#: src/components/home-computer-deck.tsx
+msgid "{running, plural, one {# running} other {# running}}"
+msgstr "{running, plural, other {#件実行中}}"
+
 #. placeholder {0}: shells.length
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
@@ -393,6 +401,10 @@ msgstr "{total, plural, other {サブタスク # 件}}"
 #: src/components/task-row.tsx
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, other {サブタスク # 件}}（{waiting, plural, other {# 件が対応待ち}}）"
+
+#: src/components/home-computer-deck.tsx
+msgid "{waiting, plural, one {# needs you} other {# need you}}"
+msgstr "{waiting, plural, other {#件対応が必要}}"
 
 #: src/components/task-row.tsx
 msgid "→ {name}"
@@ -1003,6 +1015,11 @@ msgstr "ブランチまたはコミット（任意）"
 #: src/components/agent-worktree-sheet.tsx
 msgid "Branch to start from"
 msgstr "起点にするブランチ"
+
+#. placeholder {0}: server.label
+#: src/components/home-computer-deck.tsx
+msgid "Bring {0} to the front"
+msgstr "{0}を前面に出す"
 
 #: src/components/custom-theme-library.tsx
 #: src/components/theme-browse-sheet.tsx
@@ -3918,6 +3935,10 @@ msgstr "新しい記録"
 msgid "Next"
 msgstr "次へ"
 
+#: src/components/home-computer-deck.tsx
+msgid "Next computer"
+msgstr "次のコンピュータ"
+
 #: src/components/image-preview-modal.tsx
 msgid "Next image"
 msgstr "次の画像"
@@ -4792,6 +4813,10 @@ msgstr "プレビューして適用"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "まずプレビューします。現在のテーマは変更されません"
+
+#: src/components/home-computer-deck.tsx
+msgid "Previous computer"
+msgstr "前のコンピュータ"
 
 #: src/components/image-preview-modal.tsx
 msgid "Previous image"
