@@ -38,8 +38,9 @@ declare module '@osuki-dev/ui' {
  * The kit fills that follow the reader's slider: exactly the ones the app has
  * always thinned (its cards and planes, buttons, fields and their error pill,
  * placeholders, toasts, and the pack's own slots). Every other kit fill --
- * tags, alerts, dialogs, sheets, segmented tracks and their selection, badges
- * -- keeps its authored colour, as it did before the kit had a decorator.
+ * tags, alerts, dialogs, sheets, segmented tracks and their selection, badges,
+ * the settings tabs' solid track and selection -- keeps its authored colour, as
+ * it did before the kit had a decorator.
  */
 const TRANSLUCENT_SLOTS = new Set<string>([
   ...THEME_SLOTS,
@@ -56,6 +57,19 @@ const TRANSLUCENT_SLOTS = new Set<string>([
   'skeleton.fill',
   'toasts.background',
 ]);
+
+/**
+ * A pill `Tabs` in `segments` layering (`usePillTabsLayering`): each idle
+ * trigger's track fill and the selected trigger's own surface are side by side,
+ * not stacked, so both thin with the slider. The `overlay` layering's track and
+ * selection stay solid marks.
+ */
+function isTabsSegment(meta: SurfaceMeta): boolean {
+  return (
+    (meta.slot === 'tabs.track' && meta.variant === 'segment') ||
+    (meta.slot === 'tabs.selected' && meta.role === 'surface')
+  );
+}
 
 const PACK_SLOTS = new Set<string>(THEME_SLOTS);
 
@@ -126,7 +140,7 @@ export function AppSurfaceDecorator({ children }: { children: ReactNode }) {
       opacity === 1
         ? undefined
         : (color: string, meta: SurfaceMeta) =>
-            meta.slot && TRANSLUCENT_SLOTS.has(meta.slot)
+            meta.slot && (TRANSLUCENT_SLOTS.has(meta.slot) || isTabsSegment(meta))
               ? surfaceBackgroundFill(color, opacity)
               : color,
     [opacity]
