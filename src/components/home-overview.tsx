@@ -5,7 +5,14 @@ import {
 } from '@/constants/home-toolbar';
 import { useAppActive } from '@/hooks/use-app-active';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
-import { useThemeMode, useThemeTokens, Card, Skeleton } from '@osuki-dev/ui';
+import {
+  useThemeMode,
+  useThemeTokens,
+  Card,
+  Skeleton,
+  Surface,
+  SurfaceDecoration,
+} from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Button } from '@/components/themed-button';
@@ -186,7 +193,6 @@ import type {
   ThemeEffectColorRole,
   ThemeEffectDirection,
 } from '@/theme/schema';
-import { ThemedSurface, ThemedSurfaceArtwork } from '@/components/themed-surface';
 import { useBrandMark } from '@/components/brand-mark';
 import { forgetWarmWorkspace } from '@/lib/server-warm-cache';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
@@ -1613,7 +1619,7 @@ export function HomeOverview({
                       overflow: 'hidden',
                     },
                   ]}>
-                  <ThemedSurfaceArtwork
+                  <SurfaceDecoration
                     slot="navigation.background"
                     baseColor={theme.colors.surface}
                   />
@@ -1847,7 +1853,7 @@ export function HomeOverview({
                       },
                   ]}>
                   {hasScene && !classicCover ? (
-                    <ThemedSurfaceArtwork
+                    <SurfaceDecoration
                       slot="navigation.background"
                       baseColor={theme.colors.background}
                     />
@@ -2176,9 +2182,7 @@ function HeaderButton({
           borderRadius: profile.chrome.control,
         },
       ]}>
-      {!bare && (
-        <ThemedSurfaceArtwork slot="navigation.background" baseColor={theme.colors.surface} />
-      )}
+      {!bare && <SurfaceDecoration slot="navigation.background" baseColor={theme.colors.surface} />}
       {children}
     </PressableScale>
   );
@@ -2218,10 +2222,9 @@ function ServerCard({
 
   return (
     <View collapsable={false}>
-      <ThemedSurface
+      <Surface
         collapsable={false}
         slot="cards.decoration"
-        baseColor={theme.colors.surface}
         style={[
           styles.serverSection,
           {
@@ -2319,7 +2322,7 @@ function ServerCard({
         {reachability === 'live' || Boolean(server.sshTunnel) ? (
           <NewTaskAction server={server} serverId={server.serverId} label={server.label} />
         ) : null}
-      </ThemedSurface>
+      </Surface>
     </View>
   );
 }

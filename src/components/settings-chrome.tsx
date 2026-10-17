@@ -16,7 +16,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
  * two transitions telling the same story. Motion on this screen is spent only
  * where a state changes under the finger.
  */
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, Surface } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { ChevronRight, type LucideIcon } from 'lucide-react-native';
 import { Children, Fragment, isValidElement, type ReactNode } from 'react';
@@ -32,7 +32,6 @@ import Animated, {
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { PressableScale } from '@/components/pressable-scale';
 import { Toggle } from '@/components/toggle';
-import { ThemedSurface } from '@/components/themed-surface';
 import { useSheetGroundPlate } from '@/components/sheet-ground';
 import { listLayout, PRESS, timing } from '@/lib/motion';
 import { useRenderTally } from '@/lib/render-tally';
@@ -282,7 +281,6 @@ export function SettingsCard({
   flush?: boolean;
 }) {
   const profile = useAppearanceProfile();
-  const theme = useThemeTokens();
   const items = Children.toArray(children);
   const rows = items.map((row, position) => {
     const key = isValidElement(row) && row.key != null ? row.key : `settings-row-${position}`;
@@ -304,12 +302,11 @@ export function SettingsCard({
   });
   if (flush) return <View style={styles.sectionBodyFlush}>{rows}</View>;
   return (
-    <ThemedSurface
+    <Surface
       slot="cards.decoration"
-      baseColor={theme.colors.surface}
       style={[styles.sectionBody, { borderRadius: profile.chrome.surface }]}>
       {rows}
-    </ThemedSurface>
+    </Surface>
   );
 }
 

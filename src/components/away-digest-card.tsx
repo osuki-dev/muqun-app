@@ -3,7 +3,7 @@
 // turns a `msg` descriptor into a sentence in the active locale.
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, Surface } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { History, X } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -11,7 +11,6 @@ import Animated from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
 import { StatusDot } from '@/components/status-dot';
-import { ThemedSurface } from '@/components/themed-surface';
 import { appChrome } from '@/constants/appearance';
 import { useRelativeTime } from '@/hooks/use-relative-time';
 import { agentStatusWord } from '@/i18n/labels';
@@ -81,9 +80,8 @@ export function AwayDigestCard({
           The rows stay individually accessible instead, and the dismissal is
           published by the close control below, which is a real button. */}
       <Pressable accessible={false} onPress={dismiss} style={styles.card} testID="away-digest">
-        <ThemedSurface
+        <Surface
           slot="cards.decoration"
-          baseColor={theme.colors.surface}
           pointerEvents="none"
           accessible={false}
           importantForAccessibility="no-hide-descendants"

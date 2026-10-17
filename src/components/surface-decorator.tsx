@@ -15,10 +15,15 @@ import {
   type SurfaceSlot,
 } from '@osuki-dev/ui';
 import { useCallback, useMemo, type ReactNode } from 'react';
+import { useWindowDimensions } from 'react-native';
 
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
-import { ThemedSurfaceArtwork } from '@/components/themed-surface';
+import { ThemeArtworkLayer } from '@/components/theme-artwork';
 import { useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
+import { safeArtworkOpacity } from '@/theme/artwork-contrast';
+import { jointArtworkOpacity } from '@/theme/opacity-policy';
+import { isRenderableThemeAsset } from '@/theme/renderable-asset';
+import { resolveThemeImage } from '@/theme/resolve';
 import { surfaceBackgroundFill } from '@/theme/surface-background';
 import { THEME_SLOTS, type ThemeSlot } from '@/theme/schema';
 
@@ -67,22 +72,54 @@ function packSlot(slot: SurfaceSlot | undefined): ThemeSlot | null {
   return PACK_SLOT_ALIASES[slot] ?? (PACK_SLOTS.has(slot) ? (slot as ThemeSlot) : null);
 }
 
+/**
+ * The pack's artwork for one slot, at the most opacity the fill under it can
+ * take before its text loses contrast. The kit places it in an absolute,
+ * non-interactive layer clipped to the surface.
+ */
 function SlotArtwork({ slot, meta }: { slot: ThemeSlot; meta: SurfaceMeta }) {
-  const { colors, components } = useThemeTokens();
-  const opacity = useSurfaceBackgroundOpacity();
-  // A button's artwork is held against its own label, not the page's inks.
+  const { colors, components, mode } = useThemeTokens();
+  const sliderOpacity = useSurfaceBackgroundOpacity();
+  const { width } = useWindowDimensions();
+  const { theme: active, assets } = useEffectiveCustomTheme();
+  const artwork = active
+    ? resolveThemeImage(active.manifest, slot, mode, width >= 768 ? 'regular' : 'compact')
+    : null;
+  const hasImage = Boolean(artwork && isRenderableThemeAsset(assets?.[artwork.asset]));
+  // A button's artwork is held against its own label, anything else against
+  // every text and accent ink the surface may carry.
   const button = meta.slot?.startsWith('buttons.')
     ? components.Button[meta.variant as ButtonVariant]
     : undefined;
-  const ink = button ? colors[button.foreground] : undefined;
+  const inks = button
+    ? [{ color: colors[button.foreground], minimum: 4.5 }]
+    : [
+        ...(['text', 'textMuted', 'textSubtle'] as const).map((key) => ({
+          color: colors[key],
+          minimum: 4.5,
+        })),
+        ...(['primary', 'danger', 'info', 'success', 'warning'] as const).map((key) => ({
+          color: colors[key],
+          minimum: 3,
+        })),
+      ];
+  const baseAlpha = keepsAuthoredFill(meta) ? 1 : sliderOpacity;
+  const opacity =
+    !hasImage || meta.disabled || meta.selected
+      ? 0
+      : jointArtworkOpacity(
+          safeArtworkOpacity(meta.baseColor, inks, 1),
+          baseAlpha,
+          artwork?.opacity ?? 1
+        );
+  if (!active || !assets || opacity <= 0) return null;
   return (
-    <ThemedSurfaceArtwork
+    <ThemeArtworkLayer
+      manifest={active.manifest}
+      assets={assets}
       slot={slot}
-      baseColor={meta.baseColor}
-      baseAlpha={keepsAuthoredFill(meta) ? 1 : opacity}
-      ink={ink}
-      disabled={meta.disabled}
-      selected={meta.selected}
+      mode={mode}
+      opacityLimit={opacity}
     />
   );
 }
