@@ -4974,7 +4974,6 @@ export function ServerTerminalWorkspace({
         // The health answer this screen is already holding. A gateway that
         // cannot spawn gets a sheet with neither New task nor Stop in it.
         canSpawn: gatewaySupportsAgentSpawn(data.health?.capabilities) ? '1' : '',
-        canLazygit: data.health?.capabilities?.includes('pane_lazygit') ? '1' : '',
         canSavedHistory: data.health?.capabilities?.includes(
           PANE_CAPTURED_HISTORY_SEGMENTS_CAPABILITY
         )
