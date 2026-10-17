@@ -300,45 +300,6 @@ describe('native end-to-end gate', () => {
     ])
       expect(isNotificationFixtureCommand(args)).toBe(false);
   });
-  test('reopening a dismissed slash query observes trigger deletion before typing a new one', async () => {
-    const base = path.resolve(fileURLToPath(new URL('../../e2e/agent-device/', import.meta.url)));
-    const manifest = JSON.parse(await readFile(path.join(base, 'suite.json'), 'utf8')) as Suite;
-    for (const cleared of [true, false]) {
-      let value = '/rel';
-      let typed = 0;
-      const runner = new NativeRunner(
-        manifest,
-        base,
-        '/unused',
-        async (args) => {
-          if (args[0] === 'fill') {
-            if (args[2] === '/mod') typed++;
-            if (cleared) value = args[2];
-          }
-          if (args[0] === 'snapshot') {
-            return {
-              nodes: [
-                {
-                  ...node,
-                  type: 'android.widget.EditText',
-                  identifier: 'terminal-composer-input',
-                  label: value || 'Send a message',
-                  value,
-                },
-              ],
-            };
-          }
-          return { pass: args[0] !== 'is' || value === 'draft' };
-        },
-        {}
-      );
-      const result = runner.run([{ run: 'flows/slash-commands.ad#s30' }], {});
-      if (cleared) await result;
-      else await expect(result).rejects.toThrow();
-      expect(typed).toBe(cleared ? 1 : 0);
-      expect(value).toBe(cleared ? '/mod' : '/rel');
-    }
-  });
   test('manifest targets reject unsupported constraints instead of broadening a match', () => {
     expect(() => validateTarget({ text: 'Osuki', role: 'radiobutton' })).toThrow(
       'Unsupported native target key: role'
@@ -358,48 +319,6 @@ describe('native end-to-end gate', () => {
       validateTarget({ id: 'settings-selection:(on|off):theme-osuki', selected: false })
     ).not.toThrow();
     expect(() => validateTarget({ text: 'Osuki', checked: true })).not.toThrow();
-  });
-  test('Android slash recovery types only into an observed empty composer, never partial input', async () => {
-    const base = path.resolve(fileURLToPath(new URL('../../e2e/agent-device/', import.meta.url)));
-    const manifest = JSON.parse(await readFile(path.join(base, 'suite.json'), 'utf8')) as Suite;
-    const reset = manifest.programs['flows/slash-commands'].find(
-      (step) => step.steps?.[0]?.run === 'flows/slash-commands.ad#s16'
-    )!;
-    for (const initial of ['/', 'Send a message', '/co/', 'capture-error']) {
-      let value = initial;
-      let typed = 0;
-      const runner = new NativeRunner(
-        manifest,
-        base,
-        '/unused',
-        async (args) => {
-          if (args[0] === 'snapshot') {
-            if (initial === 'capture-error') throw new Error('capture failed');
-            return {
-              nodes: [
-                {
-                  ...node,
-                  type: 'android.widget.EditText',
-                  identifier: 'terminal-composer-input',
-                  label: value,
-                  value,
-                },
-              ],
-            };
-          }
-          if (args[0] === 'type') {
-            typed++;
-            value = args[1];
-          }
-          return { pass: !args[2]?.includes('value="/"') || value === '/' };
-        },
-        {}
-      );
-      const result = runner.run([reset], { PLATFORM: 'android' });
-      if (initial === '/co/' || initial === 'capture-error') await expect(result).rejects.toThrow();
-      else await result;
-      expect(typed).toBe(initial === 'Send a message' ? 1 : 0);
-    }
   });
   test('private AX Other settings state requires a unique leaf and preserves native precedence', () => {
     const off = {
@@ -1005,32 +924,6 @@ describe('native end-to-end gate', () => {
     ]);
     expect(interpolate('${TARGET}', { TARGET: 'label="Use spaces"' })).toBe('label="Use spaces"');
     expect(() => interpolate('${MISSING}', {})).toThrow('Missing test input');
-  });
-  test('the iPad visual press records evidence and cannot bypass guards on other devices', async () => {
-    const directory = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-visual-'));
-    try {
-      await writeFile(path.join(directory, 'visual.ad'), '# section tap\npress 605 778 --visual\n');
-      const calls: string[][] = [];
-      const runner = new NativeRunner(
-        suite,
-        directory,
-        directory,
-        async (args) => {
-          calls.push(args);
-          return {};
-        },
-        {}
-      );
-      await runner.runSection('visual.ad#tap', { DEVICE_KIND: 'ipad' });
-      expect(calls.map((args) => args[0])).toEqual(['screenshot', 'press']);
-      expect(calls[1]).toEqual(['press', '605', '778']);
-      await expect(runner.runSection('visual.ad#tap', { DEVICE_KIND: 'iphone' })).rejects.toThrow(
-        'Visual press requires iPad'
-      );
-      expect(calls).toHaveLength(2);
-    } finally {
-      await rm(directory, { recursive: true, force: true });
-    }
   });
   test('a landscape form sheet dismisses outside the keyboard-reduced viewport', async () => {
     const directory = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-popover-'));

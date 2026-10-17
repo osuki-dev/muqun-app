@@ -6,7 +6,7 @@
 
 # section begin
 open "muqun://agent?asid=demo-notice-begin&agentId=opencode"
-scroll up --pixels 1000 --until "text=\"QA_NOTICE_READY begin\""
+scroll up 0.4 --until "text=\"QA_NOTICE_READY begin\""
 wait "text=\"QA_NOTICE_READY begin\"" 15000
 wait "text=\"QA_NOTICE_COUNT 0\"" 10000
 snapshot
@@ -14,10 +14,9 @@ screenshot "shots/notice-begin-real-namespace.png"
 
 # section case
 open "muqun://agent?asid=demo-notice-${CASE}&agentId=opencode"
-# Existing pinned native scroll supports a shorter, centred finger band.
-# On QA5560 the default band starts inside the floating notice; 1000px starts
-# below it in the transcript. No host gesture engine/coordinates/fallback added.
-scroll up --pixels 1000 --until "text=\"QA_NOTICE_READY ${CASE}\""
+# Keep the swipe below the floating notice and within the transcript on
+# both phones and tablets; a fixed pixel band can start inside the banner.
+scroll up 0.4 --until "text=\"QA_NOTICE_READY ${CASE}\""
 wait "text=\"QA_NOTICE_READY ${CASE}\"" 15000
 wait "text=\"QA_NOTICE_COUNT ${COUNT}\"" 10000
 is visible "text=\"QA_NOTICE_FOREIGN 0\""
@@ -39,7 +38,7 @@ wait "label=\"Show details\"" 10000
 # section clear
 press "id=in-app-notification-clear-all"
 wait absent "id=in-app-notification" 10000
-scroll up --pixels 1000 --until "text=\"QA_NOTICE_COUNT 0\""
+scroll up 0.4 --until "text=\"QA_NOTICE_COUNT 0\""
 wait "text=\"QA_NOTICE_COUNT 0\"" 10000
 is visible "text=\"QA_NOTICE_RECEIPTS_RETAINED yes\""
 is visible "text=\"QA_NOTICE_TASK_WAITING yes\""
@@ -48,13 +47,13 @@ screenshot "shots/notice-${SHOT}-after-clear.png"
 
 # section canonical-in-place
 # No reload/deeplink between Clear all and these actual canonical UI checks.
-scroll up --pixels 1000 --until "text=QA_NOTICE_ORIGINAL_MESSAGE"
+scroll up 0.4 --until "text=QA_NOTICE_ORIGINAL_MESSAGE"
 is visible "text=QA_NOTICE_ORIGINAL_MESSAGE"
-scroll down --pixels 1000 --until "text=QA_NOTICE_FORM_CANONICAL"
+scroll down 0.4 --until "text=QA_NOTICE_FORM_CANONICAL"
 is visible "text=QA_NOTICE_FORM_CANONICAL"
 snapshot
 screenshot "shots/notice-${SHOT}-actual-form-same-workbench-after-clear.png"
-scroll up --pixels 1000 --until "text=\"QA_NOTICE_PERMISSION_PRESENT yes\""
+scroll up 0.4 --until "text=\"QA_NOTICE_PERMISSION_PRESENT yes\""
 wait "text=\"QA_NOTICE_PERMISSION_PRESENT yes\"" 10000
 snapshot
 screenshot "shots/notice-${SHOT}-canonical-same-workbench.png"
@@ -71,9 +70,9 @@ screenshot "shots/notice-cycle-preserves-actual-batch.png"
 press "id=in-app-notification-open"
 # Bounded real pre-positioning through the long unchanged log paragraph;
 # the existing --until detector can report no progress on clipped giant AX text.
-scroll up --pixels 1000
-scroll up --pixels 1000
-scroll up --pixels 1000 --until "text=\"QA_NOTICE_ASID demo-notice-target-1\""
+scroll up 0.4
+scroll up 0.4
+scroll up 0.4 --until "text=\"QA_NOTICE_ASID demo-notice-target-1\""
 wait "text=\"QA_NOTICE_ASID demo-notice-target-1\"" 15000
 wait "text=\"QA_NOTICE_COUNT 4\"" 10000
 is visible "text=\"QA_NOTICE_RECEIPTS_RETAINED yes\""
@@ -86,7 +85,7 @@ screenshot "shots/notice-open-exact-destination-and-only-current.png"
 # This is a transition receipt, not a claim that a screenshot reads current IDs.
 snapshot
 screenshot "shots/notice-open-exact-original-minus-selected.png"
-scroll up --pixels 1000 --until "text=\"QA_NOTICE_ASID demo-notice-target-1\""
+scroll up 0.4 --until "text=\"QA_NOTICE_ASID demo-notice-target-1\""
 wait "text=\"QA_NOTICE_ASID demo-notice-target-1\"" 10000
 is visible "text=\"QA_NOTICE_COUNT 4\""
 is visible "text=\"QA_NOTICE_FOREIGN 0\""
@@ -137,7 +136,7 @@ wait "id=in-app-notification" 1800
 snapshot
 screenshot "shots/notice-general-first-observed-visible.png"
 wait absent "id=in-app-notification" 5000
-scroll up --pixels 1000 --until "text=\"QA_NOTICE_COUNT 0\""
+scroll up 0.4 --until "text=\"QA_NOTICE_COUNT 0\""
 wait "text=\"QA_NOTICE_COUNT 0\"" 10000
 snapshot
 screenshot "shots/notice-general-actually-expired.png"
@@ -172,9 +171,9 @@ screenshot "shots/notice-authoritative-typed-reopen.png"
 
 # section finish
 open "muqun://agent?asid=demo-notice-finish&agentId=opencode"
-scroll up --pixels 1000
-scroll up --pixels 1000
-scroll up --pixels 1000 --until "text=\"QA_NOTICE_READY finish\""
+scroll up 0.4
+scroll up 0.4
+scroll up 0.4 --until "text=\"QA_NOTICE_READY finish\""
 wait "text=\"QA_NOTICE_READY finish\"" 10000
 snapshot
 screenshot "shots/notice-final-log-segment.png"
@@ -184,4 +183,4 @@ wait stable 600 10000
 # section cleanup-receipts
 # Reveal the existing same-run ownership receipt before the existing conditional
 # Clear all. If no readable receipt exists, fail closed; never clear foreign data.
-scroll up --pixels 1000 --until "text=\"QA_NOTICE_FOREIGN 0\""
+scroll up 0.4 --until "text=\"QA_NOTICE_FOREIGN 0\""

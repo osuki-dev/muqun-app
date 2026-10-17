@@ -38,29 +38,8 @@ wait "label=\"Refresh files\"" 10000
 back --system
 wait stable 400 5000
 
-# section install-ipad
-# XCUITest 0.21.12 can stall while reading the landscape theme preview tree.
-# The preview screenshot is retained, then the known bottom Apply button is
-# tapped at its visible centre on the dedicated 1210x834 landscape QA iPad.
-press "text=\"Open files\""
-wait stable 400 5000
-scroll down --pixels 350
-press "text=\"Open muqun.muqun-theme.json\""
-wait "id=asset-preview-theme" 15000
-press "id=asset-preview-theme"
-press 605 778 --visual
-wait "label=\"Close file\"" 15000
-press "label=\"Close file\""
-wait "label=\"Refresh files\"" 10000
-back --system
-wait stable 400 5000
-
 # section install-back
-# The workspace stack unwinds differently per form factor: a phone pushes the
-# demo workspace over Home and offers the way back, while a pad rail keeps
-# Servers beside the workspace and offers no back button at all. The manifest
-# presses this only when it is there (optional, like demo-tour's return), so
-# the flow continues from the workspace on a rail and from Home on a phone.
+# Phones return to Home here; tablets reach Settings through the retained rail.
 press "${TARGET}"
 wait stable 400 5000
 
