@@ -32,7 +32,15 @@ import { appChrome } from '@/constants/appearance';
 import { Asset } from 'expo-asset';
 import * as Clipboard from 'expo-clipboard';
 import * as Linking from 'expo-linking';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useEffectEvent,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   ActivityIndicator,
   Keyboard,
@@ -66,12 +74,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { PressableScale } from '@/components/pressable-scale';
 import { useCoalescedValue } from '@/hooks/use-coalesced-value';
 import { useFreezeGate, useFrozenValue } from '@/hooks/use-frozen-value';
-import {
-  useLatestReader,
-  useLatestRef,
-  useResetSignal,
-  useStableHandler,
-} from '@/hooks/use-render-refs';
+import { useLatestReader, useLatestRef, useStableHandler } from '@/hooks/use-render-refs';
 import { followsOutputOnScreenRelease, latestPillVisible } from '@/lib/dock-presentation';
 import { feedback } from '@/lib/feedback';
 import { fadeOut, timing, zoomIn, zoomOut } from '@/lib/motion';
@@ -361,37 +364,49 @@ function recordCommittedHead(
 
 /**
  * The pane-open adjust in `SkiaTerminal`: reset the zoom and the horizontal pan,
- * and mark the new pane's placement as owed.
+ * and mark the new pane's placement as owed, once per `paneOpenKey`.
  *
- * Moved here verbatim from the component body and called from the same place
- * in the same render. It writes shared values and a ref *during render* on
- * purpose -- the adjust-during-render pattern `useResetSignal` exists for; an
- * effect is a painted frame late -- and React Compiler will not compile a
- * component that touches a ref in render. `'use no memo'` keeps the compiler
- * out of this one hook so the terminal around it can be compiled.
+ * A layout effect, not a write during render. Both land in the same JS task
+ * as the commit: a shared value written from JS is queued for the UI runtime
+ * and flushed when that task ends, whether the write came from the render or
+ * from the layout effect after it, so the new pane's first painted frame
+ * carries the reset either way. The render-time spelling was the same
+ * statements a few microseconds earlier, and Reanimated's strict mode now
+ * warns about every such write, which in a dev build pins LogBox's banner
+ * over the bottom of the screen. The ref is read only by a passive effect,
+ * which runs after this one.
+ *
+ * Skipped on mount, as the change detector it replaces was: the first render
+ * already starts from the open scale, the left edge and an unplaced pane.
  */
 function useArmPaneOpen(
-  armed: boolean,
+  paneOpenKey: string,
+  ready: boolean,
   paneOpenScale: number,
   scale: SharedValue<number>,
   translateX: SharedValue<number>,
   placedOpenKeyRef: { current: string | null }
 ): void {
-  'use no memo';
-  if (!armed) return;
-  // A shared value, not React state: nothing in this render reads it back, so
-  // there is no torn render to have. This is the adjust-during-render pattern
-  // `useResetSignal` exists for, and an effect here is a painted frame late.
-  scale.value = paneOpenScale;
-  // The pan goes back to the left edge, as it always has on open.
-  translateX.value = 0;
-  // The placement itself is applied on the first frame of the new pane rather
-  // than here. This render still describes the outgoing pane -- its content
-  // height, which the resting anchor is made of, and its text width, which
-  // both pan clamps are made of -- so a position applied here is clamped
-  // against the wrong pane and lost. All this render does is say one is owed.
-  // oxlint-disable-next-line react/refs -- deliberate: nothing renders from this ref; it is the arm half of the adjust-during-render pattern above, and an effect would set it a commit too late. See its doc comment.
-  placedOpenKeyRef.current = null;
+  const arm = useEffectEvent(() => {
+    if (!ready) return;
+    scale.set(paneOpenScale);
+    // The pan goes back to the left edge, as it always has on open.
+    translateX.set(0);
+    // The placement itself is applied on the first frame of the new pane rather
+    // than here. This commit still describes the outgoing pane -- its content
+    // height, which the resting anchor is made of, and its text width, which
+    // both pan clamps are made of -- so a position applied here is clamped
+    // against the wrong pane and lost. All this does is say one is owed.
+    placedOpenKeyRef.current = null;
+  });
+  const mounted = useRef(false);
+  useLayoutEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true;
+      return;
+    }
+    arm();
+  }, [paneOpenKey]);
 }
 
 export function SkiaTerminal({
@@ -1392,15 +1407,14 @@ export function SkiaTerminal({
    * columns reach the edge. `terminalOpenScale` is the whole rule and this is
    * its only call site.
    *
-   * During the render the pane changes on, not in an effect after it. The scale
+   * In the commit the pane changes on, not a passive effect after it. The scale
    * is a transform on the recorded picture rather than an input to it -- nothing
    * here re-parses, re-records or re-measures -- so the cost is a shared-value
-   * write, and the reason it is here is timing rather than cost: an effect runs
-   * after the commit it belongs to has been painted, so a fitted pane would
-   * show one frame of its text at 1:1 hugging the left of the screen and then
-   * jump. #33 measured that shape of mistake from the other end and moved its
-   * own restore into the switch render for the same reason; `useResetSignal`'s
-   * docblock describes this case by name.
+   * write, and the reason it is here is timing rather than cost: a passive
+   * effect runs after the commit it belongs to has been painted, so a fitted
+   * pane would show one frame of its text at 1:1 hugging the left of the
+   * screen and then jump. #33 measured that shape of mistake from the other
+   * end and moved its own restore into the switch commit for the same reason.
    *
    * The key is the pane *and* the geometry, which is exactly the set of
    * dependencies the effect this replaces re-ran on, plus the pane's own column
@@ -1417,12 +1431,11 @@ export function SkiaTerminal({
    * render and always a change from the zero this saw first.
    */
   const paneOpenKey = `${terminalId}:${viewport.width}x${viewport.height}:${fitColumns ?? 0}x${paneRows ?? 0}:${cellWidth}:${ownsScreen ? 1 : 0}`;
-  const paneOpened = useResetSignal(paneOpenKey);
-  // The adjust itself lives in `useArmPaneOpen` -- the same statements, run
-  // here, in this render -- so React Compiler can compile the terminal around
-  // it. See the hook's docblock.
+  // The adjust itself lives in `useArmPaneOpen`, a layout effect on this key.
+  // See the hook's docblock.
   useArmPaneOpen(
-    paneOpened && viewport.width > 0 && viewport.height > 0,
+    paneOpenKey,
+    viewport.width > 0 && viewport.height > 0,
     paneOpenScale,
     scale,
     translateX,
