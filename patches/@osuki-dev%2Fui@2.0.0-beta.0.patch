@@ -1,0 +1,30 @@
+@osuki-dev/ui 2.0.0-beta.0 (Android): Text puts the trailing slack inside the
+fontVariationSettings run, so the thin space is drawn at the run's axes and its
+advance follows the requested weight. A centred label in a variable reader
+face (wght != the face's default) moved by a point against 1.x, where the app
+appended the slack after the run, at the paragraph's own face.
+
+Fix: when the run is split off, append the slack after the run instead of
+inside it. Remove when the kit ships the same placement (beta.1 changeset:
+"Text keeps the hug slack outside the variation run").
+
+diff --git a/src/components/text.tsx b/src/components/text.tsx
+index f199aee04b3a516c3bd39d68578153eeb29d3997..2812abae2c49173287c577ae4f182a67ad33ef97 100644
+--- a/src/components/text.tsx
++++ b/src/components/text.tsx
+@@ -250,7 +250,14 @@ export const Text: React.FC<TextProps> = ({
+ 	const { paragraph, run } = splitVariation(resolvedStyle);
+ 	const content = (
+ 		<NestedTextContext.Provider value>
+-			{run ? <RNText style={run}>{renderedChildren}</RNText> : renderedChildren}
++			{run && renderedChildren !== children
++				? // The slack stays outside the variation run, at the paragraph's own
++					// face: inside it, its advance follows the run's axes and shifts
++					// centred text by a fraction of a point.
++					<>{<RNText style={run}>{children}</RNText>}{HUG_SLACK}</>
++				: run
++					? <RNText style={run}>{renderedChildren}</RNText>
++					: renderedChildren}
+ 		</NestedTextContext.Provider>
+ 	);
+ 	const lineHeight =
