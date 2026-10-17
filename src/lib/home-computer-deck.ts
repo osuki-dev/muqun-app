@@ -8,12 +8,22 @@
  * drawing is in `home-computer-deck.tsx`.
  */
 
-/** The height of a peek's header strip, in points. */
-export const DECK_PEEK_STRIP = 36;
+/**
+ * The height of a peek's header strip, in points: one caption line, enough to
+ * tell which computer it is and no more.
+ */
+export const DECK_PEEK_STRIP = 22;
 /** The paper showing between one peek's strip and the next sheet's edge. */
-export const DECK_PEEK_STEP = 8;
+export const DECK_PEEK_STEP = 4;
 /** How far each level sits above the one in front of it. */
 export const DECK_LEVEL_RISE = DECK_PEEK_STRIP + DECK_PEEK_STEP;
+/** The rows a card in the sheaf shows; its header opens the rest. */
+export const DECK_CARD_ROWS = 3;
+/**
+ * The least a card in the sheaf is, in points: its header and three
+ * two-line rows. Every card is this tall, or as tall as the tallest.
+ */
+export const DECK_CARD_MIN_HEIGHT = 8 + 36 + DECK_CARD_ROWS * 44 + 8;
 /** At most this many sheets peek out; the rest are counted on the last one. */
 export const DECK_MAX_PEEKS = 3;
 /** The pull, as a share of the card's width, that commits on release. */
@@ -21,7 +31,7 @@ export const DECK_COMMIT_SHARE = 0.35;
 /** A flick faster than this commits whatever the distance, in pt/s. */
 export const DECK_FLICK_VELOCITY = 800;
 /** The largest tilt a sheet behind the front is given, in degrees. */
-export const DECK_MAX_TILT = 1.5;
+export const DECK_MAX_TILT = 0.6;
 /**
  * The scrub's rubber band: the dissolve reached at the commit distance, and
  * the most a pull can ever erode. A short pull loosens only the leading edge;
@@ -152,8 +162,8 @@ export function deckLevelPose(level: number): {
   // Sheets beyond the last peek wait behind it, unseen.
   const hidden = Math.min(Math.max(level - DECK_MAX_PEEKS, 0), 1);
   return {
-    scale: 1 - 0.03 * shown,
-    opacity: (1 - 0.15 * shown) * (1 - hidden),
+    scale: 1 - 0.02 * shown,
+    opacity: (1 - 0.1 * shown) * (1 - hidden),
     translateY: -DECK_LEVEL_RISE * shown,
   };
 }
