@@ -3936,7 +3936,6 @@ msgid "Next"
 msgstr "ถัดไป"
 
 #: src/components/home-computer-deck.tsx
-#: src/components/home-recent-sessions.tsx
 msgid "Next computer"
 msgstr "คอมพิวเตอร์ถัดไป"
 
@@ -3952,6 +3951,10 @@ msgstr "การแจ้งเตือนถัดไป"
 #: src/components/agent-title-pill.tsx
 msgid "Next session"
 msgstr "เซสชันถัดไป"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Next sessions"
+msgstr "เซสชันชุดถัดไป"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
@@ -4579,6 +4582,7 @@ msgstr "เอาต์พุต"
 msgid "Output copied to clipboard"
 msgstr "คัดลอกเอาต์พุตไปยังคลิปบอร์ดแล้ว"
 
+#: src/components/home-recent-sessions.tsx
 #: src/components/pdf-asset-preview.tsx
 msgid "Page {page} of {pageCount}"
 msgstr "หน้า {page} จาก {pageCount}"
@@ -4816,7 +4820,6 @@ msgid "Preview first. Your current theme stays unchanged"
 msgstr "ดูตัวอย่างก่อน ธีมปัจจุบันของคุณยังไม่เปลี่ยน"
 
 #: src/components/home-computer-deck.tsx
-#: src/components/home-recent-sessions.tsx
 msgid "Previous computer"
 msgstr "คอมพิวเตอร์ก่อนหน้า"
 
@@ -4827,6 +4830,10 @@ msgstr "รูปภาพก่อนหน้า"
 #: src/components/agent-title-pill.tsx
 msgid "Previous session"
 msgstr "เซสชันก่อนหน้า"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Previous sessions"
+msgstr "เซสชันชุดก่อนหน้า"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Primary"
