@@ -74,6 +74,17 @@ export type LaunchIntroTimeline = {
   settle: IntroBeat;
   /** The hero lifting out of the launch frame and landing in Home's hero rect. */
   hero: IntroBeat;
+  /**
+   * The hero loosening into the exit's grains and gathering whole again
+   * (`hero-gather.ts`): the picture arriving the way it will later leave.
+   *
+   * Starts once the canvas has the picture (the view-to-canvas swap, which
+   * is why it begins a beat after the rim) and is over before the prompt has
+   * finished typing, so the frame the exit cuts up is a whole picture. The
+   * scene splits the beat itself: a short rise to the loosest point, the
+   * rest of it falling back to whole.
+   */
+  gather: IntroBeat;
   /** The prompt in the lower third typing the pack's name, one character at a time. */
   type: IntroBeat;
   /** The block cursor's single blink, once the name is spelled out. */
@@ -165,6 +176,7 @@ export function launchIntroTimeline(d: MotionDurations): LaunchIntroTimeline {
     worldDeadlineAt: bloom.at + d.medium,
     settle: { at: d.micro, ms: d.long + d.long },
     hero: { at: d.short, ms: d.long + d.short },
+    gather: { at: d.medium, ms: d.long + d.short },
     type,
     blink,
     skipArmedAt: d.long,
@@ -199,6 +211,7 @@ export function reducedLaunchIntroTimeline(d: MotionDurations): LaunchIntroTimel
     worldDeadlineAt: 0,
     settle: still,
     hero: still,
+    gather: still,
     type: still,
     blink: still,
     skipArmedAt: 0,

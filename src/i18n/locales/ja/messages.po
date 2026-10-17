@@ -3466,7 +3466,7 @@ msgstr "最新"
 
 #: src/app/commands.tsx
 msgid "Lazygit"
-msgstr ""
+msgstr "Lazygit"
 
 #: src/hooks/use-lazygit.ts
 msgid "Lazygit startup could not be confirmed"

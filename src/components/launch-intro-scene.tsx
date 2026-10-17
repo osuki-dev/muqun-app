@@ -42,6 +42,7 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { HERO_GATHER_EFFECT, HeroGather } from '@/components/launch-gather';
 import { SNAP_DUST_EFFECT, SnapDust } from '@/components/launch-snap';
 import { useAppliedCustomTheme } from '@/components/theme-candidate';
 import { useLaunchHandoff } from '@/stores/launch-handoff';
@@ -83,6 +84,7 @@ import {
   reducedLaunchIntroTimeline,
   WORLD_ARRIVAL_ZOOM,
 } from '@/lib/launch-intro-timeline';
+import { HERO_GATHER_PEAK } from '@/lib/hero-gather';
 import { bloomRadius, chooseLaunchWorld, launchWorldHole } from '@/lib/launch-intro-world';
 import { DURATION, RISE_DISTANCE, timing } from '@/lib/motion';
 import { THEME_ARTWORK_REGULAR_MIN_WIDTH } from '@/lib/responsive-layout';
@@ -126,6 +128,11 @@ import { isRenderableThemeAsset } from '@/theme/renderable-asset';
  * 3. **The hero travels.** It lifts out of the middle of the launch frame into
  *    the exact band Home keeps it in, with two ghost copies trailing a beat
  *    behind it at falling opacity -- an anime-register smear, not a particle.
+ *    And on the way it gathers: once the canvas has the picture, it loosens
+ *    from its outline inward into the same fine grains the exit will blow it
+ *    away in, and comes whole again as it lands (`launch-gather.tsx`,
+ *    arithmetic in `hero-gather.ts`). The picture arrives the way it will
+ *    leave, so the exit reads as the other half of the opening.
  * 4. **The prompt types.** In the lower third, a monospace line spells out the
  *    pack's name behind a block cursor. It is the one element that could only
  *    belong to a terminal app, and it is deliberately small.
@@ -564,6 +571,9 @@ export function LaunchSceneIntro({
   const bloom = useSharedValue(0);
   const settle = useSharedValue(0);
   const hero = useSharedValue(0);
+  // The picture's own beat: 0 is the whole drawing, `HERO_GATHER_PEAK` is as
+  // loose as it gets. Rises and falls once, while the picture is in flight.
+  const gather = useSharedValue(0);
   const departure = useSharedValue(0);
   const departureLimit = useSharedValue(departureY);
   useAnimatedReaction(
@@ -610,6 +620,7 @@ export function LaunchSceneIntro({
       bloom,
       settle,
       hero,
+      gather,
       type,
       blink,
       hold,
@@ -795,6 +806,34 @@ export function LaunchSceneIntro({
     captureDeparture();
     hero.set(withDelay(beats.hero.at - elapsed, withTiming(1, timing(beats.hero.ms))));
   }, [phase, active, reduced, homeRect, beats.hero.at, beats.hero.ms, hero]);
+
+  // The gather waits for the canvas to be the one drawing the picture: a
+  // view cannot be loosened into grains, and the swap is what makes the
+  // canvas's copy the one on screen. From there it keeps the timeline's beat
+  // -- a short rise to its loosest and the rest of the beat falling back to
+  // whole -- and a swap that comes too late for it skips the beat rather than
+  // playing it over the typed prompt, the same rule the hero's flight keeps.
+  const followGather = useEffectEvent(() => {
+    if (phase !== 'visible' || !active || reduced || !heroInCanvas || !HERO_GATHER_EFFECT) return;
+    const elapsed = Date.now() - startedAt.current;
+    const end = beats.gather.at + beats.gather.ms;
+    if (elapsed > beats.gather.at + beats.gather.ms / 2) return;
+    const delay = Math.max(0, beats.gather.at - elapsed);
+    const remaining = end - Math.max(elapsed, beats.gather.at);
+    const rise = Math.min(DURATION.short, remaining * 0.4);
+    gather.set(
+      withDelay(
+        delay,
+        withSequence(
+          withTiming(HERO_GATHER_PEAK, timing(rise)),
+          withTiming(0, timing(remaining - rise))
+        )
+      )
+    );
+  });
+  useEffect(() => {
+    followGather();
+  }, [phase, active, reduced, heroInCanvas]);
 
   // The bloom is the one beat driven by something other than the clock: it
   // leaves when the world behind it exists. Until then it breathes in place,
@@ -1054,14 +1093,23 @@ export function LaunchSceneIntro({
                       ))
                     : null}
                   <Group origin={launchCentre} transform={heroTransform}>
-                    <SkiaImage
-                      fit="contain"
-                      height={heroFrame.height}
-                      image={heroImage}
-                      width={heroFrame.width}
-                      x={heroFrame.left}
-                      y={heroFrame.top}
-                    />
+                    {/*
+                      Through the gather when the device compiled it: the
+                      same picture at the same rectangle, whole whenever
+                      `gather` is 0, which is every frame but its own beat.
+                    */}
+                    {HERO_GATHER_EFFECT ? (
+                      <HeroGather frame={heroFrame} image={heroImage} progress={gather} />
+                    ) : (
+                      <SkiaImage
+                        fit="contain"
+                        height={heroFrame.height}
+                        image={heroImage}
+                        width={heroFrame.width}
+                        x={heroFrame.left}
+                        y={heroFrame.top}
+                      />
+                    )}
                   </Group>
                 </>
               ) : null}
