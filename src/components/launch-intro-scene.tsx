@@ -42,7 +42,7 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { HERO_GATHER_EFFECT, HeroGather } from '@/components/launch-gather';
+import { HERO_TRAIL_EFFECT, HeroDustTrail } from '@/components/launch-dust-trail';
 import { SNAP_DUST_EFFECT, SnapDust } from '@/components/launch-snap';
 import { useAppliedCustomTheme } from '@/components/theme-candidate';
 import { useLaunchHandoff } from '@/stores/launch-handoff';
@@ -84,7 +84,7 @@ import {
   reducedLaunchIntroTimeline,
   WORLD_ARRIVAL_ZOOM,
 } from '@/lib/launch-intro-timeline';
-import { HERO_GATHER_PEAK } from '@/lib/hero-gather';
+import { HERO_TRAIL_CLOCK_SECONDS } from '@/lib/hero-dust-trail';
 import { bloomRadius, chooseLaunchWorld, launchWorldHole } from '@/lib/launch-intro-world';
 import { DURATION, RISE_DISTANCE, timing } from '@/lib/motion';
 import { THEME_ARTWORK_REGULAR_MIN_WIDTH } from '@/lib/responsive-layout';
@@ -128,11 +128,13 @@ import { isRenderableThemeAsset } from '@/theme/renderable-asset';
  * 3. **The hero travels.** It lifts out of the middle of the launch frame into
  *    the exact band Home keeps it in, with two ghost copies trailing a beat
  *    behind it at falling opacity -- an anime-register smear, not a particle.
- *    And on the way it gathers: once the canvas has the picture, it loosens
- *    from its outline inward into the same fine grains the exit will blow it
- *    away in, and comes whole again as it lands (`launch-gather.tsx`,
- *    arithmetic in `hero-gather.ts`). The picture arrives the way it will
- *    leave, so the exit reads as the other half of the opening.
+ *    And from the moment the front passes it, ash lifts off its outline: a
+ *    sparse, continuous drift of the same fine grains the exit will blow the
+ *    frame away in, floating up and to the right the way the exit's ash goes
+ *    (`launch-dust-trail.tsx`, arithmetic in `hero-dust-trail.ts`). The
+ *    drawing itself never changes; the air around it is already moving the
+ *    way everything will move at the end, so the exit arrives as more of the
+ *    same rather than as a new effect.
  * 4. **The prompt types.** In the lower third, a monospace line spells out the
  *    pack's name behind a block cursor. It is the one element that could only
  *    belong to a terminal app, and it is deliberately small.
@@ -571,9 +573,10 @@ export function LaunchSceneIntro({
   const bloom = useSharedValue(0);
   const settle = useSharedValue(0);
   const hero = useSharedValue(0);
-  // The picture's own beat: 0 is the whole drawing, `HERO_GATHER_PEAK` is as
-  // loose as it gets. Rises and falls once, while the picture is in flight.
-  const gather = useSharedValue(0);
+  // The ash lifting off the picture: a clock in seconds for the grains, and
+  // the drift's strength, 0 until the front has passed the picture.
+  const trailTime = useSharedValue(0);
+  const trailFade = useSharedValue(0);
   const departure = useSharedValue(0);
   const departureLimit = useSharedValue(departureY);
   useAnimatedReaction(
@@ -620,7 +623,8 @@ export function LaunchSceneIntro({
       bloom,
       settle,
       hero,
-      gather,
+      trailTime,
+      trailFade,
       type,
       blink,
       hold,
@@ -807,33 +811,35 @@ export function LaunchSceneIntro({
     hero.set(withDelay(beats.hero.at - elapsed, withTiming(1, timing(beats.hero.ms))));
   }, [phase, active, reduced, homeRect, beats.hero.at, beats.hero.ms, hero]);
 
-  // The gather waits for the canvas to be the one drawing the picture: a
-  // view cannot be loosened into grains, and the swap is what makes the
-  // canvas's copy the one on screen. From there it keeps the timeline's beat
-  // -- a short rise to its loosest and the rest of the beat falling back to
-  // whole -- and a swap that comes too late for it skips the beat rather than
-  // playing it over the typed prompt, the same rule the hero's flight keeps.
-  const followGather = useEffectEvent(() => {
-    if (phase !== 'visible' || !active || reduced || !heroInCanvas || !HERO_GATHER_EFFECT) return;
+  // The trail needs only the canvas's copy of the picture, not the swap: the
+  // copy is drawn under the view at the same rectangle from the moment it
+  // decodes, and the grains leave the outline outwards, into the margin the
+  // view does not cover, so they show around the view's picture while the
+  // swap is still pending. From there the drift fades in on the timeline's
+  // beat and the grain clock runs linearly until the exit cuts the frame up
+  // -- the snapshot keeps whatever grains are in the air, and the exit's own
+  // ash takes them with everything else. A decode that lands after the hold
+  // has ended skips the beat.
+  const followTrail = useEffectEvent(() => {
+    if (phase !== 'visible' || !active || reduced || !canvasWorld || !heroImage) return;
+    if (!HERO_TRAIL_EFFECT) return;
     const elapsed = Date.now() - startedAt.current;
-    const end = beats.gather.at + beats.gather.ms;
-    if (elapsed > beats.gather.at + beats.gather.ms / 2) return;
-    const delay = Math.max(0, beats.gather.at - elapsed);
-    const remaining = end - Math.max(elapsed, beats.gather.at);
-    const rise = Math.min(DURATION.short, remaining * 0.4);
-    gather.set(
+    if (elapsed > beats.holdUntil) return;
+    const delay = Math.max(0, beats.trail.at - elapsed);
+    trailFade.set(withDelay(delay, withTiming(1, timing(DURATION.short))));
+    trailTime.set(
       withDelay(
         delay,
-        withSequence(
-          withTiming(HERO_GATHER_PEAK, timing(rise)),
-          withTiming(0, timing(remaining - rise))
-        )
+        withTiming(HERO_TRAIL_CLOCK_SECONDS, {
+          duration: HERO_TRAIL_CLOCK_SECONDS * 1000,
+          easing: Easing.linear,
+        })
       )
     );
   });
   useEffect(() => {
-    followGather();
-  }, [phase, active, reduced, heroInCanvas]);
+    followTrail();
+  }, [phase, active, reduced, canvasWorld, heroImage]);
 
   // The bloom is the one beat driven by something other than the clock: it
   // leaves when the world behind it exists. Until then it breathes in place,
@@ -1094,12 +1100,17 @@ export function LaunchSceneIntro({
                     : null}
                   <Group origin={launchCentre} transform={heroTransform}>
                     {/*
-                      Through the gather when the device compiled it: the
-                      same picture at the same rectangle, whole whenever
-                      `gather` is 0, which is every frame but its own beat.
+                      Through the trail when the device compiled it: the
+                      same picture at the same rectangle, with ash lifting
+                      off its outline once `trailFade` rises.
                     */}
-                    {HERO_GATHER_EFFECT ? (
-                      <HeroGather frame={heroFrame} image={heroImage} progress={gather} />
+                    {HERO_TRAIL_EFFECT ? (
+                      <HeroDustTrail
+                        frame={heroFrame}
+                        image={heroImage}
+                        time={trailTime}
+                        fade={trailFade}
+                      />
                     ) : (
                       <SkiaImage
                         fit="contain"

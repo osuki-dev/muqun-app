@@ -75,16 +75,16 @@ export type LaunchIntroTimeline = {
   /** The hero lifting out of the launch frame and landing in Home's hero rect. */
   hero: IntroBeat;
   /**
-   * The hero loosening into the exit's grains and gathering whole again
-   * (`hero-gather.ts`): the picture arriving the way it will later leave.
+   * Ash lifting off the hero's outline (`hero-dust-trail.ts`): a sparse
+   * drift of the exit's grains that starts once the front has passed the
+   * picture and keeps going until the exit takes the frame.
    *
-   * Starts once the canvas has the picture (the view-to-canvas swap, which
-   * is why it begins a beat after the rim) and is over before the prompt has
-   * finished typing, so the frame the exit cuts up is a whole picture. The
-   * scene splits the beat itself: a short rise to the loosest point, the
-   * rest of it falling back to whole.
+   * `at` is when the drift fades in; `ms` is how long it runs, to the hold's
+   * end, which is where the exit begins. The scene starts it only once the
+   * canvas is drawing the picture (the view-to-canvas swap), so on a slow
+   * decode it begins late rather than on the view.
    */
-  gather: IntroBeat;
+  trail: IntroBeat;
   /** The prompt in the lower third typing the pack's name, one character at a time. */
   type: IntroBeat;
   /** The block cursor's single blink, once the name is spelled out. */
@@ -176,7 +176,7 @@ export function launchIntroTimeline(d: MotionDurations): LaunchIntroTimeline {
     worldDeadlineAt: bloom.at + d.medium,
     settle: { at: d.micro, ms: d.long + d.long },
     hero: { at: d.short, ms: d.long + d.short },
-    gather: { at: d.medium, ms: d.long + d.short },
+    trail: { at: bloom.at + d.micro, ms: holdUntil - (bloom.at + d.micro) },
     type,
     blink,
     skipArmedAt: d.long,
@@ -211,7 +211,7 @@ export function reducedLaunchIntroTimeline(d: MotionDurations): LaunchIntroTimel
     worldDeadlineAt: 0,
     settle: still,
     hero: still,
-    gather: still,
+    trail: still,
     type: still,
     blink: still,
     skipArmedAt: 0,
