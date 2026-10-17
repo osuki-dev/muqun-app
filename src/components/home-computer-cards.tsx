@@ -2,7 +2,7 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Monitor } from 'lucide-react-native';
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { useEffect, useLayoutEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   LayoutAnimationConfig,
@@ -14,7 +14,6 @@ import { useShallow } from 'zustand/react/shallow';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { PairAgainNotice } from '@/components/pair-again-notice';
-import { HomeFoldLink } from '@/components/home-fold-link';
 import { PressableScale } from '@/components/pressable-scale';
 import { StatusDot } from '@/components/status-dot';
 import { SentTaskRow, TaskRow } from '@/components/task-row';
@@ -336,13 +335,12 @@ function ComputerCardView({
   onOpenHistory?: () => void;
 }) {
   const { t } = useLingui();
-  const [expanded, setExpanded] = useState(false);
-  // Open work is shown up to the usual limit; finished work shows three
-  // rows and keeps the rest behind Show more, since it no longer expires.
+  // Open work is shown up to the usual limit and finished work shows three
+  // rows. There is no fold under the card: the rest of the computer's work is
+  // one tap away in its tasks list, which the header opens.
   const openRows = card.now.length + card.pending.length;
   const shownOpen = Math.min(openRows, HOME_CONTINUE_INITIAL_LIMIT);
   const shownFinished = Math.min(card.finished.length, FINISHED_ROWS_SHOWN);
-  const hasMore = openRows + card.finished.length > shownOpen + shownFinished;
   // This card's own status: a probe or a retry against another computer
   // re-renders only the card whose status moved.
   const selectedId = useGatewayConnectionStore((state) => state.record?.serverId);
@@ -392,101 +390,90 @@ function ComputerCardView({
     />
   );
   return (
-    <View style={styles.fill}>
-      <View
-        testID={`home-card-${server.serverId}`}
-        style={[
-          styles.card,
-          styles.fill,
-          {
-            backgroundColor: background(theme.colors.surface),
-            borderRadius: profile.chrome.surface,
-          },
-        ]}>
-        <PressableScale
-          testID={`home-card-header-${server.serverId}`}
-          accessibilityRole="button"
-          accessibilityLabel={`${server.label}, ${_(connectionStatusDescription[status])}`}
-          accessibilityHint={onOpenHistory ? t`Opens its tasks.` : t`Sends your next goal here.`}
-          onPress={onOpenHistory ?? onSelect}
-          style={styles.header}>
-          <Monitor size={18} color={theme.colors.primary} />
-          <View style={[styles.headerCopy, styles.fill]}>
-            <Text variant="bodySmall" weight="semibold" numberOfLines={1}>
-              {server.label}
-            </Text>
-            {statusColor ? (
-              <View style={styles.statusLine}>
-                {/* No ripple: every card rippling forever keeps Home's UI thread busy. */}
-                <StatusDot color={statusColor} filled pulse={false} />
-                <Text variant="caption" color={statusColor} numberOfLines={1}>
-                  {_(connectionStatusLabel[status])}
-                </Text>
-              </View>
-            ) : null}
-          </View>
-          {/* The caption sits in the header's spare right half, so it never
-            takes a line of its own and nothing below it moves when it fades. */}
-          {cachedCaption !== 'none' ? (
-            <LastKnownActivityCaption
-              shown={cachedCaption === 'shown'}
-              testID={`home-card-cached-${server.serverId}`}
-            />
+    <View
+      testID={`home-card-${server.serverId}`}
+      style={[
+        styles.card,
+        styles.fill,
+        {
+          backgroundColor: background(theme.colors.surface),
+          borderRadius: profile.chrome.surface,
+        },
+      ]}>
+      <PressableScale
+        testID={`home-card-header-${server.serverId}`}
+        accessibilityRole="button"
+        accessibilityLabel={`${server.label}, ${_(connectionStatusDescription[status])}`}
+        accessibilityHint={onOpenHistory ? t`Opens its tasks.` : t`Sends your next goal here.`}
+        onPress={onOpenHistory ?? onSelect}
+        style={styles.header}>
+        <Monitor size={18} color={theme.colors.primary} />
+        <View style={[styles.headerCopy, styles.fill]}>
+          <Text variant="bodySmall" weight="semibold" numberOfLines={1}>
+            {server.label}
+          </Text>
+          {statusColor ? (
+            <View style={styles.statusLine}>
+              {/* No ripple: every card rippling forever keeps Home's UI thread busy. */}
+              <StatusDot color={statusColor} filled pulse={false} />
+              <Text variant="caption" color={statusColor} numberOfLines={1}>
+                {_(connectionStatusLabel[status])}
+              </Text>
+            </View>
           ) : null}
-        </PressableScale>
-        <PairAgainNotice
-          testID={`home-card-pair-again-${server.serverId}`}
-          status={status}
-          server={server}
-        />
+        </View>
+        {/* The caption sits in the header's spare right half, so it never
+            takes a line of its own and nothing below it moves when it fades. */}
+        {cachedCaption !== 'none' ? (
+          <LastKnownActivityCaption
+            shown={cachedCaption === 'shown'}
+            testID={`home-card-cached-${server.serverId}`}
+          />
+        ) : null}
+      </PressableScale>
+      <PairAgainNotice
+        testID={`home-card-pair-again-${server.serverId}`}
+        status={status}
+        server={server}
+      />
 
-        {followed ? (
-          <View style={styles.block}>
-            {/* One keyed list, not one per section: a task moving between Now
+      {followed ? (
+        <View style={styles.block}>
+          {/* One keyed list, not one per section: a task moving between Now
               and Just finished (it finished, or it was reopened) is the same
               row element, moved by its layout transition, never re-created. */}
-            {[
-              ...[
-                ...urgentNow.map(nowRow),
-                ...card.pending.map((item) => (
-                  <SentTaskRow key={item.id} item={item} computer={server.label} nowMs={nowMs} />
-                )),
-                ...restNow.map(nowRow),
-              ].slice(0, expanded ? undefined : shownOpen),
-              ...card.finished
-                .slice(0, expanded ? undefined : shownFinished)
-                .map((task) => (
-                  <TaskRow
-                    key={task.taskId}
-                    task={task}
-                    inComputerCard
-                    statusCurrent={statusCurrent}
-                    serverId={server.serverId}
-                    discovery={discovery}
-                    nowMs={nowMs}
-                    onOpen={(finished) => onOpenTask(finished)}
-                    onOpenTree={(finished) => onOpenTask(finished, true)}
-                  />
-                )),
-            ]}
-          </View>
-        ) : (
-          <View style={styles.block}>
-            <Text variant="caption" color={theme.colors.textMuted}>
-              {t`Not updating from here. Open this computer to see its tasks.`}
-            </Text>
-          </View>
-        )}
-      </View>
-      {/* Under the surface, not in it, the same as Continue's: the card is
-          the computer's work, and the fold is a line of the page. */}
-      {hasMore ? (
-        <HomeFoldLink
-          testID={`home-card-more-${server.serverId}`}
-          expanded={expanded}
-          onPress={() => setExpanded((shown) => !shown)}
-        />
-      ) : null}
+          {[
+            ...[
+              ...urgentNow.map(nowRow),
+              ...card.pending.map((item) => (
+                <SentTaskRow key={item.id} item={item} computer={server.label} nowMs={nowMs} />
+              )),
+              ...restNow.map(nowRow),
+            ].slice(0, shownOpen),
+            ...card.finished
+              .slice(0, shownFinished)
+              .map((task) => (
+                <TaskRow
+                  key={task.taskId}
+                  task={task}
+                  inComputerCard
+                  statusCurrent={statusCurrent}
+                  serverId={server.serverId}
+                  discovery={discovery}
+                  nowMs={nowMs}
+                  onOpen={(finished) => onOpenTask(finished)}
+                  onOpenTree={(finished) => onOpenTask(finished, true)}
+                />
+              )),
+          ]}
+        </View>
+      ) : (
+        <View style={styles.block}>
+          <Text variant="caption" color={theme.colors.textMuted}>
+            {t`Not updating from here. Open this computer to see its tasks.`}
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
