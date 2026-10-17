@@ -3952,6 +3952,10 @@ msgstr "下一条通知"
 msgid "Next session"
 msgstr "下一个会话"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Next sessions"
+msgstr "下一页会话"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
 msgstr "没有运行中的代理"
@@ -4578,6 +4582,7 @@ msgstr "输出"
 msgid "Output copied to clipboard"
 msgstr "输出已复制到剪贴板"
 
+#: src/components/home-recent-sessions.tsx
 #: src/components/pdf-asset-preview.tsx
 msgid "Page {page} of {pageCount}"
 msgstr "第 {page} 页，共 {pageCount} 页"
@@ -4825,6 +4830,10 @@ msgstr "上一张图片"
 #: src/components/agent-title-pill.tsx
 msgid "Previous session"
 msgstr "上一个会话"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Previous sessions"
+msgstr "上一页会话"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Primary"

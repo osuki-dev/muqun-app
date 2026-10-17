@@ -3952,6 +3952,10 @@ msgstr "다음 알림"
 msgid "Next session"
 msgstr "다음 세션"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Next sessions"
+msgstr "다음 세션 목록"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
 msgstr "실행 중인 에이전트 없음"
@@ -4578,6 +4582,7 @@ msgstr "출력"
 msgid "Output copied to clipboard"
 msgstr "출력을 클립보드에 복사했습니다"
 
+#: src/components/home-recent-sessions.tsx
 #: src/components/pdf-asset-preview.tsx
 msgid "Page {page} of {pageCount}"
 msgstr "{pageCount}페이지 중 {page}페이지"
@@ -4825,6 +4830,10 @@ msgstr "이전 이미지"
 #: src/components/agent-title-pill.tsx
 msgid "Previous session"
 msgstr "이전 세션"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Previous sessions"
+msgstr "이전 세션 목록"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Primary"
