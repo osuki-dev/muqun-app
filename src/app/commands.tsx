@@ -1,6 +1,6 @@
 import { SheetHandle } from '@/components/sheet-route-frame';
 import { Input } from '@/components/themed-input';
-import { Card, Spinner, useThemeTokens } from '@osuki-dev/ui';
+import { Card, Spinner, useThemeTokens, Skeleton } from '@osuki-dev/ui';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { SheetFrame } from '@/components/sheet-ground';
 import { SettingsSegmented } from '@/components/settings-segmented';
@@ -71,7 +71,6 @@ import {
 import { Text } from '@/components/text';
 import { Tabs } from '@/components/themed-tabs';
 import { Button } from '@/components/themed-button';
-import { Skeleton } from '@/components/themed-skeleton';
 // Two hooks of the same name and they are not interchangeable: the macro one
 // expands `t` at build time, and only the runtime one hands back the `_` that
 // turns a `msg` descriptor into a sentence in the active locale.
