@@ -1,8 +1,7 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, Button } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 
-import { Button } from '@/components/themed-button';
 import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
 import { sheetFrostAlpha, surfaceBackgroundFill } from '@/theme/surface-background';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';

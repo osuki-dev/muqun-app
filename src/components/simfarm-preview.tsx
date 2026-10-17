@@ -1,10 +1,9 @@
-import { Input, Spinner, useThemeTokens } from '@osuki-dev/ui';
+import { Input, Spinner, useThemeTokens, Button } from '@osuki-dev/ui';
 import { GuideCommand } from '@/components/guide-command';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Text } from '@/components/text';
-import { Button } from '@/components/themed-button';
 import { Lock, MonitorSmartphone, X } from 'lucide-react-native';
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';

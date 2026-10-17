@@ -1,10 +1,9 @@
 import * as Clipboard from 'expo-clipboard';
 import { AudioPlaybackError } from '@/lib/audio-playback-session';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { useThemeTokens, Skeleton } from '@osuki-dev/ui';
+import { useThemeTokens, Skeleton, Button } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { Button } from '@/components/themed-button';
 import { Check, Copy, Download, X } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Modal, ScrollView, StyleSheet, View } from 'react-native';

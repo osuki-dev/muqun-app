@@ -1,9 +1,8 @@
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, Button } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useLingui } from '@lingui/react/macro';
 import { View } from 'react-native';
 
-import { Button } from '@/components/themed-button';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 
 /** A failed secure read is not an empty list and must not suggest pairing again. */
