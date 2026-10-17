@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
-import { Tabs } from '@/components/themed-tabs';
+import { Tabs } from '@osuki-dev/ui';
 
 import type { QuickCommandDelivery } from '@/lib/quick-commands';
 
