@@ -37,6 +37,7 @@ import type { GatewayRecord } from '@/lib/gateway-storage';
 import { FINISHED_ROWS_SHOWN, HOME_CARD_INSET, type ComputerCard } from '@/lib/home-computer-cards';
 import {
   DECK_AT_REST,
+  DECK_CARD_MIN_HEIGHT,
   DECK_ENTRY_DROP,
   DECK_ENTRY_SCALE,
   DECK_MAX_PEEKS,
@@ -100,6 +101,14 @@ type Scrub = {
   drawing: boolean;
   /** Started by a tap or an accessibility action: it plays once both are in. */
   auto: boolean;
+  /** Cross-fading instead of the dust. */
+  crossing?: boolean;
+};
+
+/** Every card in the sheaf is as tall as the tallest; each reports its own content height. */
+export type DeckCardLayout = {
+  minHeight: number;
+  onContentHeight: (height: number) => void;
 };
 
 export type DeckCardActions = {
@@ -130,13 +139,16 @@ export function HomeComputerDeck({
   activeConnection,
   onSelectServer,
   renderCard,
+  signatures,
 }: {
   /** Two or more, in the cards' own order. */
   cards: readonly ComputerCard[];
   servers: readonly GatewayRecord[];
   activeConnection?: ActiveServerConnection;
   onSelectServer: (serverId: string) => void;
-  renderCard: (card: ComputerCard, actions: DeckCardActions) => ReactNode;
+  /** What each card shows, as a string that changes when its height may. */
+  signatures: Readonly<Record<string, string>>;
+  renderCard: (card: ComputerCard, actions?: DeckCardActions, layout?: DeckCardLayout) => ReactNode;
 }) {
   const { t } = useLingui();
   const profile = useAppearanceProfile();
@@ -146,6 +158,13 @@ export function HomeComputerDeck({
   const [held, setHeld] = useState<string[] | null>(null);
   const [scrub, setScrub] = useState<Scrub | null>(null);
   const [width, setWidth] = useState(0);
+  // Each card's own height, as it last laid out, and what it showed then. The
+  // deck is as tall as the tallest, so moving between computers never makes
+  // the page jump; a card behind the front is laid out again, unseen, when
+  // what it shows changes.
+  const [heights, setHeights] = useState<
+    Readonly<Record<string, { height: number; signature: string }>>
+  >({});
   const ids = cards.map((card) => card.serverId);
   const order = scrub ? scrub.order : deckOrder(held, ids, remembered);
   const orderKey = order.join('\n');
@@ -161,11 +180,15 @@ export function HomeComputerDeck({
   const settled = useSharedValue(0);
   const busy = useSharedValue(0);
   const ready = useSharedValue(0);
+  // The incoming card's photograph has landed: a commit can reform it.
+  const incomingReady = useSharedValue(0);
   const skip = useSharedValue(0);
   const direction = useSharedValue(-1);
   // The cross-fade: how far it is, and the card fading out.
   const cross = useSharedValue(0);
   const crossFrom = useSharedValue('');
+  // The card a cross-fade brings in.
+  const crossIn = useSharedValue('');
   const deckWidth = useSharedValue(0);
   const frontHeight = useSharedValue(0);
   const band = useSharedValue(deckPeekBand(count));
@@ -188,6 +211,25 @@ export function HomeComputerDeck({
   );
 
   const cardOf = (serverId: string) => cards.find((card) => card.serverId === serverId);
+  const cardHeight = Math.max(DECK_CARD_MIN_HEIGHT, ...ids.map((id) => heights[id]?.height ?? 0));
+  const reportHeight = (serverId: string, height: number) => {
+    const rounded = Math.ceil(height);
+    const signature = signatures[serverId] ?? '';
+    setHeights((current) =>
+      current[serverId]?.height === rounded && current[serverId]?.signature === signature
+        ? current
+        : { ...current, [serverId]: { height: rounded, signature } }
+    );
+  };
+  const layoutOf = (serverId: string): DeckCardLayout => ({
+    minHeight: cardHeight,
+    onContentHeight: (height) => reportHeight(serverId, height),
+  });
+  useEffect(() => {
+    // The first height is set, not animated: the deck arrives at its size.
+    if (!frontId || heights[frontId] === undefined) return;
+    frontHeight.set(frontHeight.get() === 0 ? cardHeight : withTiming(cardHeight, timing('short')));
+  }, [cardHeight, frontHeight, frontId, heights]);
 
   // A move has ended on the UI thread: React takes the new order, and the
   // canvas goes in the same commit the new front card is shown in.
@@ -197,6 +239,11 @@ export function HomeComputerDeck({
     ready.set(0);
     setHeld(next.split('\n'));
     setScrub(null);
+    // After the commit that shows the new front: it may have faded in.
+    requestAnimationFrame(() => {
+      cross.set(0);
+      crossIn.set('');
+    });
   });
   const cancelled = useStableHandler(() => {
     busy.set(0);
@@ -205,15 +252,6 @@ export function HomeComputerDeck({
     setScrub(null);
   });
   const committed = useStableHandler((front: string) => {
-    // The deck takes the incoming card's height while the dust plays.
-    if (scrub?.incoming && scrub.incomingId === front) {
-      frontHeight.set(
-        withTiming(
-          scrub.incoming.height,
-          timing(DUST_COMMIT_MS, { reduceMotion: ReduceMotion.Never })
-        )
-      );
-    }
     setDeckFront(front);
     onSelectServer(front);
   });
@@ -224,13 +262,14 @@ export function HomeComputerDeck({
   // photographs were in, or no shader on this device). Under Reduce Motion
   // the sheets take their new levels without travelling.
   const faded = useStableHandler((next: string) => {
+    playing.set(0);
     setHeld(next.split('\n'));
     setScrub(null);
     requestAnimationFrame(() => {
       cross.set(0);
       crossFrom.set('');
+      crossIn.set('');
       busy.set(0);
-      playing.set(0);
       ready.set(0);
     });
   });
@@ -253,6 +292,8 @@ export function HomeComputerDeck({
     committed(next[0]!);
     const key = next.join('\n');
     crossFrom.set(scrub.order[0]!);
+    crossIn.set(scrub.incomingId);
+    setScrub({ ...scrub, crossing: true });
     progress.set(withTiming(1, timing(CROSS_FADE_MS)));
     cross.set(
       withTiming(1, timing(CROSS_FADE_MS, { reduceMotion: ReduceMotion.Never }), (finished) => {
@@ -275,6 +316,7 @@ export function HomeComputerDeck({
     }
     const nextToken = token.get() + 1;
     token.set(nextToken);
+    incomingReady.set(0);
     const dust = CARD_DUST_EFFECT !== null && !reduced;
     setScrub({
       token: nextToken,
@@ -295,6 +337,13 @@ export function HomeComputerDeck({
       if (image) disposeLater(image);
       return;
     }
+    const incoming = serverId === scrub?.incomingId;
+    // Too late: the real card is already fading in under the ash.
+    if (incoming && scrub?.crossing) {
+      if (image) disposeLater(image);
+      return;
+    }
+    if (incoming && image) incomingReady.set(1);
     setScrub((current) => {
       if (!current || current.token !== forToken) return current;
       const role = serverId === current.incomingId ? 'incoming' : 'outgoing';
@@ -329,21 +378,6 @@ export function HomeComputerDeck({
   useEffect(() => {
     if (!scrub) settled.set(0);
   }, [scrub, settled]);
-
-  // Let go before the dust was drawing. A cancel has nothing to undo; a commit
-  // plays the dust once the photographs land, or cross-fades if they do not
-  // land soon.
-  const releasedEarly = useStableHandler((commit: boolean) => {
-    if (!commit || !scrub || scrub.failed) {
-      crossFade(commit);
-      return;
-    }
-    const waiting = scrub.token;
-    setScrub({ ...scrub, auto: true });
-    setTimeout(() => {
-      if (token.get() === waiting && ready.get() !== 1) crossFade(true);
-    }, EARLY_RELEASE_WAIT_MS);
-  });
 
   const startMove = useStableHandler((next: DeckMove, towards: number) => {
     if (busy.get() === 1 || count < 2) return;
@@ -389,6 +423,35 @@ export function HomeComputerDeck({
     };
   }, [committed, move, moved, playing, progress, ring, settled]);
 
+  // A commit whose incoming photograph has not landed: the outgoing card
+  // still blows away, and the real incoming card fades in beneath it.
+  const commitUnderAsh = useStableHandler(() => {
+    if (!scrub || playing.get() === 1) return;
+    crossIn.set(scrub.incomingId);
+    setScrub({ ...scrub, crossing: true });
+    cross.set(withTiming(1, timing(DUST_COMMIT_MS, { reduceMotion: ReduceMotion.Never })));
+    playCommit();
+  });
+
+  // Let go before the dust could play. A cancel has nothing to undo; a commit
+  // plays the dust once the photographs land, or cross-fades if they do not
+  // land soon.
+  const releasedEarly = useStableHandler((commit: boolean) => {
+    if (!commit || !scrub || scrub.failed) {
+      crossFade(commit);
+      return;
+    }
+    const waiting = scrub.token;
+    setScrub({ ...scrub, auto: true });
+    setTimeout(() => {
+      if (token.get() !== waiting || playing.get() === 1) return;
+      // Still nothing to reform: blow the card away regardless, or, with no
+      // dust drawing at all, cross-fade.
+      if (ready.get() === 1) commitUnderAsh();
+      else crossFade(true);
+    }, EARLY_RELEASE_WAIT_MS);
+  });
+
   const gesture = useMemo(
     () =>
       Gesture.Pan()
@@ -432,8 +495,14 @@ export function HomeComputerDeck({
             deckWidth.get(),
             direction.get()
           );
+          // Not drawing yet: wait for the photographs (or cross-fade).
           if (ready.get() !== 1) {
             scheduleOnRN(releasedEarly, commit);
+            return;
+          }
+          // Nothing to reform from yet: the real card fades in under the ash.
+          if (commit && incomingReady.get() !== 1) {
+            scheduleOnRN(commitUnderAsh);
             return;
           }
           if (commit) {
@@ -453,9 +522,11 @@ export function HomeComputerDeck({
       beginMove,
       busy,
       cancelled,
+      commitUnderAsh,
       releasedEarly,
       deckWidth,
       direction,
+      incomingReady,
       move,
       playCommit,
       progress,
@@ -492,15 +563,11 @@ export function HomeComputerDeck({
     deckWidth.set(next);
     setWidth(next);
   };
-  const onFrontHeight = (height: number) => {
-    frontHeight.set(frontHeight.get() === 0 ? height : withTiming(height, timing('short')));
-  };
 
   const deckStyle = useAnimatedStyle(() => ({
     height: band.get() + frontHeight.get(),
   }));
-  // The ash may blow above and beside the card, but nothing is drawn below
-  // the deck's current height: a taller incoming card shows as the deck grows.
+  // The ash may blow above and beside the card, never below the deck.
   const dustStyle = useAnimatedStyle(() => ({
     height: DUST_TOP + frontHeight.get() + DUST_BOTTOM,
   }));
@@ -518,6 +585,13 @@ export function HomeComputerDeck({
   }));
 
   const visibleLevels = Math.min(count - 1, DECK_MAX_PEEKS);
+  const incomingKey = scrub?.incomingId ?? '';
+  const unmeasured = cards.filter(
+    (card) =>
+      card.serverId !== frontId &&
+      card.serverId !== incomingKey &&
+      heights[card.serverId]?.signature !== (signatures[card.serverId] ?? '')
+  );
   const incomingCard = scrub ? cardOf(scrub.incomingId) : undefined;
   const frontCard = frontId ? cardOf(frontId) : undefined;
   const hideFront = Boolean(scrub?.drawing);
@@ -580,10 +654,10 @@ export function HomeComputerDeck({
                 hidden={hideFront}
                 cross={cross}
                 crossFrom={crossFrom}
+                crossIn={crossIn}
                 shootToken={scrub && !scrub.failed ? scrub.token : null}
-                onHeight={onFrontHeight}
                 onShot={shot}>
-                {renderCard(frontCard, actions)}
+                {renderCard(frontCard, actions, layoutOf(frontCard.serverId))}
               </DeckSlotCard>
             ) : null}
             {incomingCard && incomingCard.serverId !== frontId ? (
@@ -592,13 +666,27 @@ export function HomeComputerDeck({
                 serverId={incomingCard.serverId}
                 role="incoming"
                 hidden
+                crossing={Boolean(scrub?.crossing)}
                 cross={cross}
                 crossFrom={crossFrom}
+                crossIn={crossIn}
                 shootToken={scrub && !scrub.failed ? scrub.token : null}
                 onShot={shot}>
-                {renderCard(incomingCard, actions)}
+                {renderCard(incomingCard, actions, layoutOf(incomingCard.serverId))}
               </DeckSlotCard>
             ) : null}
+            {/* Cards not measured yet, laid out once unseen so the deck knows
+                the tallest before anyone moves to them. */}
+            {unmeasured.map((card) => (
+              <View
+                key={`measure-${card.serverId}`}
+                pointerEvents="none"
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+                style={[styles.slotCard, styles.unseen]}>
+                {renderCard(card, undefined, layoutOf(card.serverId))}
+              </View>
+            ))}
           </View>
         </GestureDetector>
         {scrub?.outgoing ? (
@@ -764,7 +852,7 @@ function PeekStrip({
       accessibilityHint={_(connectionStatusLabel[status])}
       onPress={onPress}
       style={styles.strip}>
-      <Monitor size={16} color={theme.colors.primary} />
+      <Monitor size={13} color={theme.colors.primary} />
       <Text variant="caption" weight="semibold" numberOfLines={1} style={styles.stripName}>
         {server.label}
       </Text>
@@ -797,8 +885,9 @@ function DeckSlotCard({
   hidden,
   cross,
   crossFrom,
+  crossIn,
+  crossing,
   shootToken,
-  onHeight,
   onShot,
   children,
 }: {
@@ -808,9 +897,12 @@ function DeckSlotCard({
   cross: SharedValue<number>;
   /** The card fading out of a cross-fade. */
   crossFrom: SharedValue<string>;
+  /** The card fading in. */
+  crossIn: SharedValue<string>;
+  /** A cross-fade is showing the incoming card. */
+  crossing?: boolean;
   /** The move asking for a photograph, or null. */
   shootToken: number | null;
-  onHeight?: (height: number) => void;
   onShot: (serverId: string, token: number, shot: CardShot | null) => void;
   children: ReactNode;
 }) {
@@ -819,12 +911,7 @@ function DeckSlotCard({
   const onLayout = (event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout;
     setSize({ width, height });
-    onHeight?.(height);
   };
-  useEffect(() => {
-    if (role === 'front' && size) onHeight?.(size.height);
-    // oxlint-disable-next-line react-hooks/exhaustive-deps -- when this card becomes the front: its height is already known.
-  }, [role]);
   useEffect(() => {
     if (shootToken === null || !size) return;
     let live = true;
@@ -843,8 +930,13 @@ function DeckSlotCard({
     };
     // oxlint-disable-next-line react-hooks/exhaustive-deps -- one photograph per move, once the card has a size.
   }, [shootToken, size?.height]);
+  // Read from shared values only, never from `role`: when the incoming card
+  // becomes the front, its opacity must not wait for a new worklet to run.
+  // Whether a card is seen at all is React's, so it changes in the same
+  // commit as the canvas over it.
   const fadeStyle = useAnimatedStyle(() => ({
-    opacity: role === 'incoming' ? cross.get() : crossFrom.get() === serverId ? 1 - cross.get() : 1,
+    opacity:
+      crossFrom.get() === serverId ? 1 - cross.get() : crossIn.get() === serverId ? cross.get() : 1,
   }));
   return (
     <Animated.View
@@ -857,7 +949,9 @@ function DeckSlotCard({
         pointerEvents="box-none"
         accessibilityElementsHidden={role !== 'front'}
         importantForAccessibility={role === 'front' ? 'auto' : 'no-hide-descendants'}
-        style={role === 'front' && hidden ? styles.unseen : null}>
+        style={
+          (role === 'front' && hidden) || (role === 'incoming' && !crossing) ? styles.unseen : null
+        }>
         {children}
       </View>
     </Animated.View>
@@ -872,14 +966,15 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     overflow: 'hidden',
-    transformOrigin: '50% 0%',
+    // From the top-left corner, so every sheet's edge lines up with the section's label.
+    transformOrigin: '0% 0%',
     boxShadow: appChrome.shadow.deckSheet,
   },
   strip: {
     height: DECK_PEEK_STRIP,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
     paddingHorizontal: HOME_CARD_INSET,
   },
   stripName: { flexShrink: 1, minWidth: 0 },
