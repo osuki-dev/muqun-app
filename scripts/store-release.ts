@@ -95,13 +95,31 @@ export function runStoreCommand(
       : undefined;
   // Available in SDK 57's required Node 22+, ahead of this repository's Node types.
   const { parseEnv } = nodeUtil as typeof nodeUtil & {
-    parseEnv(content: string): Record<string, string>;
+    parseEnv?(content: string): Record<string, string>;
   };
+  if (typeof parseEnv !== 'function') {
+    throw new StoreCommandError(
+      `Node ${process.versions.node} has no util.parseEnv; Node 22 or newer is required. No build or submission started.`
+    );
+  }
   const envFile = join(projectRoot, '.env.hotupdater');
   // EAS Submit also evaluates app.config; only allowlisted public settings leave this file.
   const local = existsSync(envFile) ? parseEnv(readFileSync(envFile, 'utf8')) : {};
   const env = storeReleaseEnvironment(inherited, local, command.channel);
-  if (command.action !== 'submit') readHotUpdaterAppConfig(env, projectRoot);
+  if (command.action !== 'submit') {
+    // The OTA preflight's own messages are fixed strings about what is
+    // missing, never a value, so they are safe to show. Without this a
+    // machine without `.env.hotupdater` failed with the generic line and no
+    // way to tell what it lacked.
+    try {
+      readHotUpdaterAppConfig(env, projectRoot);
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : 'OTA configuration is invalid';
+      throw new StoreCommandError(
+        `${detail}. On this machine that means ${existsSync(envFile) ? `.env.hotupdater is incomplete` : `.env.hotupdater is missing (copy it from the release machine or export EXPO_PUBLIC_HOT_UPDATER_API_KEY)`}, or keys/hot-updater-public.pem is not the committed public key. No build or submission started.`
+      );
+    }
+  }
   const profile = storeProfile(command.platform, command.channel);
   const androidBuild = command.action !== 'submit' && command.platform === 'android';
   // EAS copies the checkout into its own temporary directory before building, so the
