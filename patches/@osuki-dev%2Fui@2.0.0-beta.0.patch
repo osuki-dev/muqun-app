@@ -1,15 +1,51 @@
-@osuki-dev/ui 2.0.0-beta.0 (Android): Text puts the trailing slack inside the
-fontVariationSettings run, so the thin space is drawn at the run's axes and its
-advance follows the requested weight. A centred label in a variable reader
-face (wght != the face's default) moved by a point against 1.x, where the app
-appended the slack after the run, at the paragraph's own face.
+@osuki-dev/ui 2.0.0-beta.0: three places where beta.0 draws differently from
+1.x, kept at the 1.x look until the kit ships the same (beta.1 changesets).
 
-Fix: when the run is split off, append the slack after the run instead of
-inside it. Remove when the kit ships the same placement (beta.1 changeset:
-"Text keeps the hug slack outside the variation run").
+- Text (Android): the trailing slack sat inside the fontVariationSettings run,
+  so its advance followed the requested weight and centred labels in a
+  variable reader face moved by a point. It is appended after the run, at the
+  paragraph's face, as the app's own Text did.
+- Button: the root became a row in 2.0. Inside a wrapping column (the theme
+  preview's export actions) a row root measured its label row against the
+  parent and the buttons grew to twice their width with off-centre labels.
+  The root is a column again, as in 1.x.
+- Button.Background lifts every non-transparent variant in light mode, so a
+  ghost given a protective base (components.Button.ghost.background while a
+  pack is worn) gained the pill shadow it never had. A ghost stays flat.
 
+Remove each hunk when the kit releases the matching fix.
+
+diff --git a/src/components/button.tsx b/src/components/button.tsx
+index a7fa5c3c4b0d5b90f620191e157ce3fb7e6458f5..f4e7fbee1efae87c4ba2e64e7070a976bd59ed86 100644
+--- a/src/components/button.tsx
++++ b/src/components/button.tsx
+@@ -57,7 +57,9 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+ 
+ const styles = StyleSheet.create({
+ 	baseRoot: {
+-		flexDirection: "row",
++		// A column, as in 1.x: a row root measures its label row against the
++		// parent's width inside a wrapping column and the button grows past it.
++		flexDirection: "column",
+ 		alignItems: "center",
+ 		justifyContent: "center",
+ 		position: "relative",
+@@ -238,7 +240,12 @@ export function ButtonBackground({ style, children, ...props }: ButtonBackground
+ 	const { resolvedBackgroundColor, borderRadius, meta, variant, disabled } = useButton();
+ 	const theme = useThemeTokens();
+ 	const variantTokens = theme.components.Button[variant];
+-	const lift = !disabled && variantTokens.background !== "transparent" && theme.mode === "light";
++	// A ghost given a fill (a protective base under its label) stays flat.
++	const lift =
++		!disabled &&
++		variant !== "ghost" &&
++		variantTokens.background !== "transparent" &&
++		theme.mode === "light";
+ 
+ 	return (
+ 		<View
 diff --git a/src/components/text.tsx b/src/components/text.tsx
-index f199aee04b3a516c3bd39d68578153eeb29d3997..2812abae2c49173287c577ae4f182a67ad33ef97 100644
+index f199aee04b3a516c3bd39d68578153eeb29d3997..aa070f285869258ff1658dfb107ae51c9c0011d3 100644
 --- a/src/components/text.tsx
 +++ b/src/components/text.tsx
 @@ -250,7 +250,14 @@ export const Text: React.FC<TextProps> = ({
