@@ -476,6 +476,10 @@ msgstr "Un simulateur éteint peut mettre une minute à démarrer"
 msgid "A terminal was created. Check it before sending again — your task is still here."
 msgstr "Un terminal a été créé. Vérifiez-le avant de renvoyer — votre tâche est toujours là"
 
+#: src/hooks/use-lazygit.ts
+msgid "A terminal was created. Open it to inspect startup; launching again could create a duplicate."
+msgstr "Un terminal a été créé. Ouvrez-le pour vérifier le démarrage ; relancer pourrait créer un doublon"
+
 #: src/app/settings-about.tsx
 #: src/app/settings.tsx
 msgid "About"
@@ -1055,6 +1059,7 @@ msgstr "Accès à la caméra requis"
 #: src/components/theme-link-import.tsx
 #: src/components/voice-input-button.tsx
 #: src/hooks/use-file-actions.tsx
+#: src/hooks/use-lazygit.ts
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "Annuler"
@@ -1142,6 +1147,10 @@ msgstr "Vérifiez les paramètres d’authentification de l’appareil, puis ré
 #: src/components/task-row.tsx
 msgid "Check status"
 msgstr "Vérifier le statut"
+
+#: src/hooks/use-lazygit.ts
+msgid "Check that lazygit is installed on this computer and this pane is in a Git repository."
+msgstr "Vérifiez que lazygit est installé sur cet ordinateur et que ce volet se trouve dans un dépôt Git"
 
 #: src/hooks/use-agent-command-delivery.ts
 msgid "Check the assistant before sending again; it may have received the request."
@@ -2222,6 +2231,7 @@ msgid "Could not start a session"
 msgstr "Impossible de démarrer la session"
 
 #: src/app/commands.tsx
+#: src/hooks/use-lazygit.ts
 msgid "Could not start a terminal."
 msgstr "Impossible de démarrer un terminal"
 
@@ -3454,6 +3464,14 @@ msgstr "Plus tard"
 msgid "Latest"
 msgstr "Dernière"
 
+#: src/app/commands.tsx
+msgid "Lazygit"
+msgstr ""
+
+#: src/hooks/use-lazygit.ts
+msgid "Lazygit startup could not be confirmed"
+msgstr "Le démarrage de Lazygit n’a pas pu être confirmé"
+
 #: src/components/agent-worktree-sheet.tsx
 msgid "Leave it empty and the agent picks a name."
 msgstr "Laissez vide et l'agent choisira un nom"
@@ -4390,6 +4408,7 @@ msgstr "Ouvrir dans le navigateur — indisponible via le tunnel SSH"
 msgid "Open installation guide"
 msgstr "Ouvrir le guide d’installation"
 
+#: src/app/commands.tsx
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
 msgstr "Ouvrir Lazygit"
@@ -4435,6 +4454,7 @@ msgstr "Ouvrez T3 Code sur l’ordinateur (ou exécutez t3 service install), pui
 
 #: src/components/agent-runtime-notice.tsx
 #: src/components/collaboration-notice.tsx
+#: src/hooks/use-lazygit.ts
 msgid "Open terminal"
 msgstr "Ouvrir le terminal"
 
