@@ -24,6 +24,8 @@ import { ScreenHeader } from '@/components/screen-header';
 import { ThemeArtwork } from '@/components/theme-artwork';
 import { ReskinSurface } from '@/components/reskin-transition';
 import { CandidateThemeProvider } from '@/components/theme-candidate';
+import { GroundTextPlate } from '@/components/sheet-ground';
+import { AppSurfaceDecorator } from '@/components/surface-decorator';
 import { themeDraftSessions, type ThemeEditorCandidate } from '@/theme/draft-session';
 import type { InstalledTheme } from '@/theme/repository';
 
@@ -88,9 +90,14 @@ export default function CustomThemeScreen() {
             }
       }
       installationId={candidate.id}>
-      <ReskinSurface id="custom-theme">
-        <CustomThemeScene candidate={candidate} onPreviewAppearanceChange={setAppearance} />
-      </ReskinSurface>
+      {/* The candidate's own opacity, artwork and plates for the kit surfaces inside. */}
+      <AppSurfaceDecorator>
+        <GroundTextPlate>
+          <ReskinSurface id="custom-theme">
+            <CustomThemeScene candidate={candidate} onPreviewAppearanceChange={setAppearance} />
+          </ReskinSurface>
+        </GroundTextPlate>
+      </AppSurfaceDecorator>
     </CandidateThemeProvider>
   );
 }

@@ -10,7 +10,14 @@
  * `resolveFontStyle` is allowed to return.
  */
 
-import type { FontDefinition, FontRegistry, FontWeight, ResolvedFontStyle } from '@osuki-dev/ui';
+import type {
+  FontAxisRange,
+  FontDefinition,
+  FontRegistry,
+  FontWeight,
+  ResolvedFontStyle,
+  VariableFontAxes,
+} from '@osuki-dev/ui';
 
 import type { FontAxis } from '@/theme/user-font-file';
 
@@ -63,26 +70,38 @@ export const USER_FONT_MAX_NATIVE_WEIGHT = 600;
  *
  * `family` stays as the backstop for any weight the ladder cannot satisfy.
  *
- * A variable face carries its `wght` axis as well. The kit reads only the
- * weight keys and `family`, so its own components keep the ladder; the app's
- * `Text` and fields read `weightAxis` and set the axis directly.
+ * A variable face declares its `fvar` axes, and the kit then skips the ladder:
+ * every weight resolves to the face at native 400 with the weight on `wght`
+ * (and the text size on `opsz`, where the face has one).
+ *
+ * `trailingSlack` because the app cannot vouch for a reader's file: it may be
+ * an italic or a wide face that draws past its last advance, which Android
+ * clips at the line edge. Every kit `Text` in the role then carries a trailing
+ * thin space on Android, including the labels inside kit components.
  */
 export function userFontDefinition(
   family: string,
-  weightAxis?: FontAxis | null
-): UserFontDefinition {
+  axes?: readonly FontAxis[] | null
+): FontDefinition {
+  const variable = variableFontAxes(axes);
   return {
     light: family,
     regular: family,
     medium: family,
     semibold: family,
     family,
-    ...(weightAxis ? { weightAxis } : {}),
+    trailingSlack: true,
+    ...(variable ? { axes: variable } : {}),
   };
 }
 
-/** A registry entry that may also carry a variable reader face's `wght` axis. */
-export type UserFontDefinition = FontDefinition & { weightAxis?: FontAxis };
+/** The kit's axes declaration for a face with a `wght` axis, or `undefined` for a static one. */
+function variableFontAxes(axes?: readonly FontAxis[] | null): VariableFontAxes | undefined {
+  if (!axes?.some((axis) => axis.tag === 'wght')) return undefined;
+  return Object.fromEntries(
+    axes.map(({ tag, min, max, default: initial }) => [tag, { min, max, default: initial }])
+  ) as VariableFontAxes;
+}
 
 /** A resolved style that may set the `wght` axis. */
 export type UserFontStyle = ResolvedFontStyle;
@@ -127,8 +146,8 @@ export function numericFontWeight(value: string | number | undefined): number | 
 }
 
 /** A role's `wght` axis, when its registry entry is a variable reader face. */
-export function registryWeightAxis(registry: FontRegistry, role: string): FontAxis | null {
-  return (registry[role] as UserFontDefinition | undefined)?.weightAxis ?? null;
+export function registryWeightAxis(registry: FontRegistry, role: string): FontAxisRange | null {
+  return registry[role]?.axes?.wght ?? null;
 }
 
 /**
@@ -141,7 +160,7 @@ export function registryWeightAxis(registry: FontRegistry, role: string): FontAx
  */
 export function variableWeightStyle(
   family: string,
-  axis: FontAxis,
+  axis: FontAxisRange,
   weight: number | FontWeight
 ): Required<UserFontStyle> {
   const requested = typeof weight === 'number' ? weight : KIT_WEIGHTS[weight];
@@ -171,11 +190,8 @@ export type KitFontRole = (typeof KIT_FONT_ROLES)[number];
 /** The whole registry for one interface face: every role, one file. */
 export function userFontRegistry(
   family: string,
-  weightAxis?: FontAxis | null
-): Record<KitFontRole, UserFontDefinition> {
-  return {
-    display: userFontDefinition(family, weightAxis),
-    body: userFontDefinition(family, weightAxis),
-    label: userFontDefinition(family, weightAxis),
-  };
+  axes?: readonly FontAxis[] | null
+): Record<KitFontRole, FontDefinition> {
+  const definition = userFontDefinition(family, axes);
+  return { display: definition, body: definition, label: definition };
 }
