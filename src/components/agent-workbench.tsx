@@ -345,6 +345,8 @@ const SCREEN_NOTICE_DWELL_MS = 4200;
  * 4pt the terminal's notice stack leaves -- and never reaches the pills.
  */
 const SCREEN_NOTICE_HEADER_GAP = 4;
+/** How long the "no earlier history" caption stays before it fades (ms). */
+const EARLIER_UNAVAILABLE_NOTICE_MS = 4000;
 
 /** A catalog that has not answered yet, as one object rather than a new `{}`. */
 const NO_CATALOG_DEFAULTS: CatalogDefaults = {};
@@ -658,6 +660,28 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     historyCapabilities,
     findAgent(agentChoice.agents, activeAgentId)?.features
   );
+  /**
+   * The "no earlier history here" caption is a note on arrival, not a fixture:
+   * it says its piece for a few seconds when a session opens and then leaves
+   * the top of the transcript to the first message. The session it has
+   * already said it for is remembered, so a re-render does not bring it back;
+   * a different session, or a reason that changes under the reader, gets its
+   * own few seconds.
+   */
+  const [earlierNoticeDoneFor, setEarlierNoticeDoneFor] = useState<string | null>(null);
+  const earlierNoticeKey = activeAsid ? `${activeAsid}:${earlierUnavailableReason ?? ''}` : null;
+  useEffect(() => {
+    if (!earlierNoticeKey || !earlierUnavailableReason) return;
+    const timer = setTimeout(
+      () => setEarlierNoticeDoneFor(earlierNoticeKey),
+      EARLIER_UNAVAILABLE_NOTICE_MS
+    );
+    return () => clearTimeout(timer);
+  }, [earlierNoticeKey, earlierUnavailableReason]);
+  const earlierNoticeShown =
+    earlierUnavailableReason !== null &&
+    earlierNoticeKey !== null &&
+    earlierNoticeDoneFor !== earlierNoticeKey;
   /**
    * The agent every catalog and project read names, or none on a gateway
    * without discovery (it drives one agent and predates the parameter).
@@ -5644,12 +5668,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               showsVerticalScrollIndicator={false}
               refreshControl={timelineRefresh}
               ListHeaderComponent={
-                windowStart === 0 && earlierUnavailableReason ? (
-                  <Text variant="caption" color={theme.colors.textMuted}>
-                    {earlierUnavailableReason === 'gateway-upgrade'
-                      ? t`Update the Gateway to load earlier remote history.`
-                      : t`${agentName} does not support loading earlier remote history.`}
-                  </Text>
+                windowStart === 0 && earlierNoticeShown ? (
+                  <Animated.View entering={fadeInDown('short')} exiting={fadeOutUp('short')}>
+                    <Text variant="caption" color={theme.colors.textMuted}>
+                      {earlierUnavailableReason === 'gateway-upgrade'
+                        ? t`Update the Gateway to load earlier remote history.`
+                        : t`${agentName} does not support loading earlier remote history.`}
+                    </Text>
+                  </Animated.View>
                 ) : null
               }
               ListFooterComponent={listFooter}
