@@ -1,7 +1,7 @@
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { Linking, View, StyleSheet, Switch, ActivityIndicator } from 'react-native';
-import { useThemeTokens, PressableScale, resolveFontStyle, Text } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale, resolveFontStyle, Text, TextField } from '@osuki-dev/ui';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import { ExternalLink, FormInput, Send, Check } from 'lucide-react-native';
 import { BoundedMarkdown } from '@/components/bounded-markdown';
@@ -18,7 +18,6 @@ import {
   type FormRequest,
 } from '@/lib/agent-session';
 import { AGENT_TYPE } from '@/constants/agent-type';
-import { FontedTextInput } from '@/components/fonted-text-input';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
 export interface AgentFormCardProps {
@@ -206,7 +205,7 @@ export const AgentFormCard = memo(function AgentFormCard({
       case 'string': {
         const currentVal = (values[field.key] as string) ?? '';
         const input = (
-          <FontedTextInput
+          <TextField
             value={field.options?.some((option) => option.value === currentVal) ? '' : currentVal}
             onChangeText={(text) => setValue(field.key, text)}
             placeholder={field.placeholder ?? t`Type here…`}
@@ -305,7 +304,7 @@ export const AgentFormCard = memo(function AgentFormCard({
         return (
           <View key={field.key} style={styles.fieldRow}>
             <FieldTitle field={field} />
-            <FontedTextInput
+            <TextField
               keyboardType="numeric"
               value={currentVal}
               onChangeText={(text) => setValue(field.key, Number(text) || 0)}
