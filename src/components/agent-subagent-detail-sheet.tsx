@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
 import { useRouter } from 'expo-router';
 import { RefreshCw } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -16,7 +16,6 @@ import {
   SheetSceneQuietControl,
   sheetSceneStyles,
 } from '@/components/sheet-scene';
-import { Text } from '@/components/text';
 import { TRANSCRIPT_ROW_GAP, type AgentToolActions } from '@/components/agent-message-block';
 import { demoAgentSessionSnapshot, demoAgentSessionTree, isDemoActive } from '@/lib/demo-gateway';
 import {

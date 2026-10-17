@@ -1,6 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens, Button, PressableScale } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, Button, PressableScale, Text } from '@osuki-dev/ui';
 import { CameraOff, ScanLine } from 'lucide-react-native';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';

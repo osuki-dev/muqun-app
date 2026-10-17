@@ -14,11 +14,10 @@ import Animated, {
 } from 'react-native-reanimated';
 import { LegendList, type LegendListRenderItemProps } from '@legendapp/list/react-native';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
 
 import { GUTTER_NUMBER_FONT_SIZE, LINE_FONT_SIZE, LINE_ROW_HEIGHT } from '@/components/diff-rows';
 import { usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
-import { Text } from '@/components/text';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { tokenizeLine, type CodeTokenKind } from '@/lib/code-tokens';
 import { gutterNumbersOf, gutterWidthOf } from '@/lib/diff-geometry';

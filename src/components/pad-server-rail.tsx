@@ -1,6 +1,5 @@
 import { Trans, useLingui } from '@lingui/react/macro';
-import { useThemeMode, useThemeTokens, SurfaceDecoration } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeMode, useThemeTokens, SurfaceDecoration, Text } from '@osuki-dev/ui';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { ChevronLeft, ChevronRight, ScanLine, Settings, SquareTerminal } from 'lucide-react-native';
 import { useEffect, useState } from 'react';

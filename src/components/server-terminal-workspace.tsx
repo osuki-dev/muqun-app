@@ -7,8 +7,14 @@ import { TerminalNotice, terminalNoticeStyles } from '@/components/terminal-noti
 import { NoticeDeck } from '@/components/notice-deck';
 import { revealableSubtreeImportance } from '@/lib/hidden-subtree';
 import { ComposerSendGuard } from '@/lib/composer-send-guard';
-import { Spinner, useThemeMode, useThemeTokens, useToast, PressableScale } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import {
+  Spinner,
+  useThemeMode,
+  useThemeTokens,
+  useToast,
+  PressableScale,
+  Text,
+} from '@osuki-dev/ui';
 import { resolvePanelPick } from '@/lib/resolve-panel-pick';
 import { paneChipRevealOffset } from '@/lib/pane-chip-reveal';
 import {

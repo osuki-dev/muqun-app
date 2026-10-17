@@ -1,6 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
-import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { ChevronRight, CircleAlert } from 'lucide-react-native';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { LayoutAnimationConfig } from 'react-native-reanimated';
@@ -15,7 +15,6 @@ import {
 } from '@/components/task-row';
 import { useMinuteNow } from '@/hooks/use-minute-now';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { taskRowVisual, taskRowTitle } from '@/lib/home-computer-cards';

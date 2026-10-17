@@ -2,8 +2,7 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useLingui } from '@lingui/react/macro';
 
 import { resolveHomeIdentity } from '@/theme/resolve';
-import { useThemeMode, useThemeTokens, Button } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeMode, useThemeTokens, Button, Text } from '@osuki-dev/ui';
 import { useState } from 'react';
 import { View } from 'react-native';
 

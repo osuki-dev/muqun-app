@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens, Skeleton } from '@osuki-dev/ui';
+import { useThemeTokens, Skeleton, Text } from '@osuki-dev/ui';
 import { Bot, Cpu, SquareTerminal, TriangleAlert, type LucideIcon } from 'lucide-react-native';
 import { useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -7,7 +7,6 @@ import { StyleSheet, View } from 'react-native';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { LADDER, SettingsSection } from '@/components/settings-chrome';
 import { StatusDot } from '@/components/status-dot';
-import { Text } from '@/components/text';
 import { getFleetManifest, hasFleet, type FleetManifest } from '@/lib/fleet-manifest';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 

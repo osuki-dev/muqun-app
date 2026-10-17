@@ -1,6 +1,6 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { Monitor } from 'lucide-react-native';
 import { useEffect, useLayoutEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -16,7 +16,6 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { PairAgainNotice } from '@/components/pair-again-notice';
 import { StatusDot } from '@/components/status-dot';
 import { SentTaskRow, TaskRow } from '@/components/task-row';
-import { Text } from '@/components/text';
 import { useFrozenValue } from '@/hooks/use-frozen-value';
 import { useServerTasks } from '@/hooks/use-server-tasks';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';

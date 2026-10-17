@@ -1,6 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,7 +13,6 @@ import {
   SheetSceneQuietAction,
   sheetSceneStyles,
 } from '@/components/sheet-scene';
-import { Text } from '@/components/text';
 import { useCompactMarkdownStyle } from '@/hooks/use-markdown-style';
 import { resolveTask } from '@/hooks/use-server-tasks';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';

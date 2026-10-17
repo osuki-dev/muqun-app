@@ -1,8 +1,7 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { Text } from '@/components/text';
 import { useHomeScenePlate } from '@/hooks/use-home-scene-plate';
 
 /**

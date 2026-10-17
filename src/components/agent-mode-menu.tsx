@@ -1,7 +1,6 @@
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { Bot, Check, Compass, Sparkles } from 'lucide-react-native';
 import Animated from 'react-native-reanimated';
 

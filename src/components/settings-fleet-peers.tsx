@@ -1,11 +1,10 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens, useToast } from '@osuki-dev/ui';
+import { useThemeTokens, useToast, Text } from '@osuki-dev/ui';
 import { useFocusEffect } from 'expo-router';
 import { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { LADDER, SettingsSection, SettingsToggleRow } from '@/components/settings-chrome';
-import { Text } from '@/components/text';
 import { reconcileFleet } from '@/hooks/use-fleet-link';
 import { useStableHandler } from '@/hooks/use-render-refs';
 import { recordEndpoint } from '@/hooks/use-server-tasks';

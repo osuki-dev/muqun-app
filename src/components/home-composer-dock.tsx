@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens, useToast, PressableScale } from '@osuki-dev/ui';
+import { useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
 import { useIsFocused, useRouter } from 'expo-router';
 import { SlidersHorizontal } from 'lucide-react-native';
 import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
@@ -22,7 +22,6 @@ import {
   useHomeComposerDecorationOverhang,
 } from '@/components/home-composer-background';
 import { composerStyles } from '@/components/terminal-composer';
-import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useAgentFeatures, useAgentsDiscoveryRefresh } from '@/hooks/use-agent-features';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';

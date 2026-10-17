@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { useIsFocused } from 'expo-router';
 import { RotateCcw, Square, X } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
@@ -15,7 +15,6 @@ import {
   type ScrollViewInstance,
 } from 'react-native';
 import Animated, { useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
-import { Text } from '@/components/text';
 import { useResolvedLocale } from '@/i18n/provider';
 import { useLatestReader } from '@/hooks/use-render-refs';
 import { fadeIn, fadeOut, timing } from '@/lib/motion';

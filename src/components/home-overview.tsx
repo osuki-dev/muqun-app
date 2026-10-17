@@ -14,8 +14,8 @@ import {
   SurfaceDecoration,
   Button,
   PressableScale,
+  Text,
 } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';

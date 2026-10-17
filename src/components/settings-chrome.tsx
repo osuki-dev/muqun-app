@@ -16,8 +16,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
  * two transitions telling the same story. Motion on this screen is spent only
  * where a state changes under the finger.
  */
-import { useThemeTokens, Surface, PressableScale } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, Surface, PressableScale, Text } from '@osuki-dev/ui';
 import { ChevronRight, type LucideIcon } from 'lucide-react-native';
 import { Children, Fragment, isValidElement, type ReactNode } from 'react';
 import { StyleSheet, type TextStyle, View } from 'react-native';
@@ -192,8 +191,9 @@ export function SectionLabel({
    * ink stopped at the identical pixel in all three. What the padding did do
    * was make the plate lopsided, which is what it was really being judged on.
    *
-   * The clip is fixed where it can be, in `components/text.tsx`, by making the
-   * line itself longer than the glyphs. The plate is symmetrical again.
+   * The clip is fixed where it can be, by the kit `Text`'s trailing slack
+   * (`trailingSlack` on the reader's font roles), which makes the line itself
+   * longer than the glyphs. The plate is symmetrical again.
    */
   return (
     <Text

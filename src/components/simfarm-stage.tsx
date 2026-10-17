@@ -1,7 +1,6 @@
-import { Input, Spinner, useThemeTokens, PressableScale } from '@osuki-dev/ui';
+import { Input, Spinner, useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
-import { Text } from '@/components/text';
 import { Canvas, Fill, Group, Image as SkiaImage } from 'react-native-skia';
 import {
   ArrowLeft,

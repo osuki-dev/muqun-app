@@ -1,7 +1,6 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
-import { Spinner, useThemeTokens, Button, PressableScale } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { Spinner, useThemeTokens, Button, PressableScale, Text } from '@osuki-dev/ui';
 import { ChevronDown, ChevronUp } from 'lucide-react-native';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';

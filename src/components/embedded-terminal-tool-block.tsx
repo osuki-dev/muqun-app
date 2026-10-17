@@ -8,8 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import { View, StyleSheet, type ViewInstance } from 'react-native';
-import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import {
   AlertCircle,

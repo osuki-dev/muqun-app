@@ -1,7 +1,6 @@
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useLingui } from '@lingui/react/macro';
-import { Tag, useThemeMode, useThemeTokens, Button, PressableScale } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { Tag, useThemeMode, useThemeTokens, Button, PressableScale, Text } from '@osuki-dev/ui';
 import { Image } from 'expo-image';
 import { useNavigation, useRouter } from 'expo-router';
 import { useEffect, useRef, useState, type ReactNode } from 'react';

@@ -1,7 +1,6 @@
 import { memo, useState, useCallback } from 'react';
 import { View, StyleSheet, ActivityIndicator, Linking } from 'react-native';
-import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import { ExternalLink, RefreshCw, Terminal } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

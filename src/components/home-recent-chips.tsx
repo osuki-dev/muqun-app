@@ -1,9 +1,8 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { ScrollView, StyleSheet } from 'react-native';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { Text } from '@/components/text';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 

@@ -1,11 +1,10 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens, useToast, PressableScale } from '@osuki-dev/ui';
+import { useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
 import { useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { SheetScene, SheetSceneFooter, sheetSceneStyles } from '@/components/sheet-scene';
-import { Text } from '@/components/text';
 import type { HomeLayout } from '@/lib/home-layout';
 import { resolveAppearanceProfile } from '@/lib/appearance-profile';
 import { useRenderTally } from '@/lib/render-tally';

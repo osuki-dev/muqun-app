@@ -1,5 +1,4 @@
-import { useThemeTokens, Button } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, Button, Text } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import { View } from 'react-native';
 

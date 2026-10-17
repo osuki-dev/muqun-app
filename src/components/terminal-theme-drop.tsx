@@ -1,5 +1,4 @@
-import { useThemeTokens, Button, PressableScale } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, Button, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import { Palette, X } from 'lucide-react-native';
 import { useEffect } from 'react';

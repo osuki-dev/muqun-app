@@ -1,5 +1,4 @@
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
 import { useEffect, useState } from 'react';
 import { View, type LayoutChangeEvent } from 'react-native';
 import Animated, {

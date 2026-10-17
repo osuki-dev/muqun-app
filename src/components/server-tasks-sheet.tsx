@@ -1,6 +1,6 @@
 import { LegendList } from '@legendapp/list/react-native';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
 import { useEffect, useState, type ComponentProps } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { LayoutAnimationConfig } from 'react-native-reanimated';
@@ -14,7 +14,6 @@ import {
   sheetSceneStyles,
 } from '@/components/sheet-scene';
 import { TaskRow } from '@/components/task-row';
-import { Text } from '@/components/text';
 import type { ServerTasks } from '@/hooks/use-server-tasks';
 import { buildTaskTree, groupTaskTree } from '@/lib/home-computer-cards';
 import type { TaskView } from '@/lib/task-ledger';

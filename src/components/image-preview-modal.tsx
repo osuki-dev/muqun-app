@@ -1,5 +1,5 @@
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Text } from '@/components/text';
+import { Text, PressableScale } from '@osuki-dev/ui';
 import { Image } from 'expo-image';
 import { X } from 'lucide-react-native';
 import { useEffect, useEffectEvent, useMemo, useState } from 'react';
@@ -41,7 +41,6 @@ import Animated, {
 import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { PressableScale } from '@osuki-dev/ui';
 import { DURATION, fadeIn, fadeOut, timing, zoomIn } from '@/lib/motion';
 
 const AXIS_LOCK_DISTANCE = 8;

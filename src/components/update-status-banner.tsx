@@ -1,7 +1,6 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { formatAssetSize } from '@/lib/asset-display';
 import { measuredUpdateProgress } from '@/lib/update-progress-shader';
 import { deferAppUpdate, updateAppNow, useAppUpdateStore } from '@/lib/app-updates';

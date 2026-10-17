@@ -1,7 +1,6 @@
 import { LegendList } from '@legendapp/list/react-native';
 import { useLingui } from '@lingui/react/macro';
-import { Tag, useThemeTokens, Button, PressableScale } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { Tag, useThemeTokens, Button, PressableScale, Text } from '@osuki-dev/ui';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LogoLoader } from '@/components/logo-loader';

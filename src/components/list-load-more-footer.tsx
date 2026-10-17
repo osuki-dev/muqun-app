@@ -1,10 +1,9 @@
 import { type ReactNode } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useLingui } from '@lingui/react/macro';
-import { Spinner, useThemeTokens, Button } from '@osuki-dev/ui';
+import { Spinner, useThemeTokens, Button, Text } from '@osuki-dev/ui';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { Text } from '@/components/text';
 
 export interface ListLoadMoreFooterProps {
   /** Whether there are more items to load beyond the current page. */
