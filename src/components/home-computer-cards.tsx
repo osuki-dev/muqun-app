@@ -13,6 +13,7 @@ import Animated, {
 import { useShallow } from 'zustand/react/shallow';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
+import { HomeComputerDeck, type DeckCardActions } from '@/components/home-computer-deck';
 import { PairAgainNotice } from '@/components/pair-again-notice';
 import { StatusDot } from '@/components/status-dot';
 import { SentTaskRow, TaskRow } from '@/components/task-row';
@@ -210,6 +211,7 @@ export function HomeComputerCards({
   activeConnection,
   skipEntering,
   gridWidth,
+  deck = false,
   onSelectServer,
   onOpenTask,
   onOpenHistory,
@@ -229,6 +231,8 @@ export function HomeComputerCards({
   skipEntering: boolean;
   /** The Pad work column's width: cards sit two abreast when it has room (`padCardColumns`). */
   gridWidth?: number;
+  /** The phone: two or more computers sit in a sheaf (`HomeComputerDeck`), not a list. */
+  deck?: boolean;
   onSelectServer: (serverId: string) => void;
   onOpenTask: (target: CardTaskTarget) => void;
   /** The computer's task history, everything the card no longer lists. */
@@ -278,35 +282,54 @@ export function HomeComputerCards({
   const cards = heldCardOrder(shownIds, sorted);
   const grid = gridWidth !== undefined && padCardColumns(gridWidth, cards.length) === 2;
   const tickMs = nowMs;
+  const renderCard = (card: ComputerCard, deckActions?: DeckCardActions) => {
+    const server = servers.find((item) => item.serverId === card.serverId);
+    if (!server) return null;
+    return (
+      <ComputerCardView
+        card={card}
+        server={server}
+        followed={followedIds.includes(card.serverId)}
+        activeConnection={activeConnection}
+        nowMs={tickMs}
+        deckActions={deckActions}
+        onSelect={() => onSelectServer(card.serverId)}
+        onOpenTask={(task, tree) =>
+          onOpenTask({ serverId: card.serverId, task, ...(tree ? { tree } : {}) })
+        }
+        onOpenHistory={onOpenHistory ? () => onOpenHistory(card.serverId) : undefined}
+      />
+    );
+  };
+  if (deck && !grid && cards.length >= 2) {
+    return (
+      <LayoutAnimationConfig skipEntering={skipEntering}>
+        <View testID="home-computer-cards" style={styles.cards}>
+          <HomeComputerDeck
+            cards={cards}
+            servers={servers}
+            activeConnection={activeConnection}
+            onSelectServer={onSelectServer}
+            renderCard={renderCard}
+          />
+        </View>
+      </LayoutAnimationConfig>
+    );
+  }
   return (
     <LayoutAnimationConfig skipEntering={skipEntering}>
       {cards.length === 0 ? null : (
         <View testID="home-computer-cards" style={grid ? styles.grid : styles.cards}>
-          {cards.map((card) => {
-            const server = servers.find((item) => item.serverId === card.serverId);
-            if (!server) return null;
-            return (
-              <Animated.View
-                key={card.serverId}
-                entering={riseIn()}
-                exiting={fadeOut('micro')}
-                layout={listLayout()}
-                style={grid ? styles.gridCell : undefined}>
-                <ComputerCardView
-                  card={card}
-                  server={server}
-                  followed={followedIds.includes(card.serverId)}
-                  activeConnection={activeConnection}
-                  nowMs={tickMs}
-                  onSelect={() => onSelectServer(card.serverId)}
-                  onOpenTask={(task, tree) =>
-                    onOpenTask({ serverId: card.serverId, task, ...(tree ? { tree } : {}) })
-                  }
-                  onOpenHistory={onOpenHistory ? () => onOpenHistory(card.serverId) : undefined}
-                />
-              </Animated.View>
-            );
-          })}
+          {cards.map((card) => (
+            <Animated.View
+              key={card.serverId}
+              entering={riseIn()}
+              exiting={fadeOut('micro')}
+              layout={listLayout()}
+              style={grid ? styles.gridCell : undefined}>
+              {renderCard(card)}
+            </Animated.View>
+          ))}
         </View>
       )}
     </LayoutAnimationConfig>
@@ -319,6 +342,7 @@ function ComputerCardView({
   followed,
   activeConnection,
   nowMs,
+  deckActions,
   onSelect,
   onOpenTask,
   onOpenHistory,
@@ -328,6 +352,8 @@ function ComputerCardView({
   followed: boolean;
   activeConnection?: ActiveServerConnection;
   nowMs: number;
+  /** In the sheaf, the header also moves to the next or previous computer. */
+  deckActions?: DeckCardActions;
   onSelect: () => void;
   onOpenTask: (task: TaskView, tree?: boolean) => void;
   onOpenHistory?: () => void;
@@ -404,6 +430,8 @@ function ComputerCardView({
         accessibilityLabel={`${server.label}, ${_(connectionStatusDescription[status])}`}
         accessibilityHint={onOpenHistory ? t`Opens its tasks.` : t`Sends your next goal here.`}
         onPress={onOpenHistory ?? onSelect}
+        accessibilityActions={deckActions?.accessibilityActions}
+        onAccessibilityAction={deckActions?.onAccessibilityAction}
         style={styles.header}>
         <Monitor size={18} color={theme.colors.primary} />
         <View style={[styles.headerCopy, styles.fill]}>

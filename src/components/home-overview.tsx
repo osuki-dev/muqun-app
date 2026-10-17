@@ -1127,6 +1127,7 @@ export function HomeOverview({
         activeConnection={activeConnection}
         skipEntering={cardsSkipEntering}
         gridWidth={cardGridWidth}
+        deck={!isPad}
         onSelectServer={targetComposer}
         onOpenHistory={(serverId) =>
           router.push({ pathname: '/server-tasks', params: { serverId } })
