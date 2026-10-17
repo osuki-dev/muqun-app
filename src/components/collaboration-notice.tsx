@@ -1,11 +1,10 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
-import { Spinner, useThemeTokens, Button } from '@osuki-dev/ui';
+import { Spinner, useThemeTokens, Button, PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { ChevronDown, ChevronUp } from 'lucide-react-native';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { PressableScale } from '@/components/pressable-scale';
 import { TerminalTranscript } from '@/components/terminal-transcript';
 import { appChrome } from '@/constants/appearance';
 import { useCollaborationOutput } from '@/hooks/use-collaboration-output';

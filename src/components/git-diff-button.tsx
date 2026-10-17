@@ -1,13 +1,12 @@
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useRouter, type Href } from 'expo-router';
 import { GitCompare } from 'lucide-react-native';
 import { Keyboard, StyleSheet, View } from 'react-native';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { KEY_ROW_HEIGHT } from '@/constants/key-row';
 import { useGitRepoStatus } from '@/hooks/use-git-repo-status';
 import { gatewaySupportsPaneVcsFiles } from '@/lib/agent-protocol';

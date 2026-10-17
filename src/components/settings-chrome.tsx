@@ -16,7 +16,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
  * two transitions telling the same story. Motion on this screen is spent only
  * where a state changes under the finger.
  */
-import { useThemeTokens, Surface } from '@osuki-dev/ui';
+import { useThemeTokens, Surface, PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { ChevronRight, type LucideIcon } from 'lucide-react-native';
 import { Children, Fragment, isValidElement, type ReactNode } from 'react';
@@ -30,7 +30,6 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { PressableScale } from '@/components/pressable-scale';
 import { Toggle } from '@/components/toggle';
 import { useSheetGroundPlate } from '@/components/sheet-ground';
 import { listLayout, PRESS, timing } from '@/lib/motion';

@@ -1,7 +1,7 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { SHELL_WALLPAPER_FALLBACK, ThemeArtwork } from '@/components/theme-artwork';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { LogoLoader } from '@/components/logo-loader';
 import { useRouter } from 'expo-router';
@@ -11,7 +11,6 @@ import { StyleSheet, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { ScreenHeader } from '@/components/screen-header';
 import { SshHostForm } from '@/components/ssh-host-form';

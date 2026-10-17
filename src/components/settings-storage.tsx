@@ -31,7 +31,7 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
  */
 import { plural } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Spinner, useThemeTokens } from '@osuki-dev/ui';
+import { Spinner, useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { Directory, Paths } from 'expo-file-system';
 import { useFocusEffect } from 'expo-router';
@@ -40,7 +40,6 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import { PressableScale } from '@/components/pressable-scale';
 import {
   LADDER,
   SettingsBlock,

@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useLingui } from '@lingui/react/macro';
 import {
@@ -16,7 +16,6 @@ import * as Haptics from 'expo-haptics';
 import Animated from 'react-native-reanimated';
 
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
-import { PressableScale } from '@/components/pressable-scale';
 import {
   SheetScene,
   SheetSceneAction,

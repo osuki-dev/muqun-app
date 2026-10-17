@@ -16,7 +16,7 @@ import {
   type TextInputInstance,
   type TextInputSelectionChangeEvent,
 } from 'react-native';
-import { Spinner, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { Spinner, useThemeTokens, useToast, PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
@@ -46,7 +46,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useKeyboardState, useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { AgentRevertPlate } from '@/components/agent-revert-plate';
 import { AgentUnreadDot } from '@/components/agent-unread-dot';

@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { ChevronDown, ChevronRight } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
@@ -7,7 +7,6 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-na
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { PressableScale } from '@/components/pressable-scale';
 import { Text } from '@/components/text';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLatestReader } from '@/hooks/use-render-refs';

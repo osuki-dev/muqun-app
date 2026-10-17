@@ -1,11 +1,10 @@
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { Linking, View, StyleSheet, Switch, ActivityIndicator } from 'react-native';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import { ExternalLink, FormInput, Send, Check } from 'lucide-react-native';
-import { PressableScale } from '@/components/pressable-scale';
 import { BoundedMarkdown } from '@/components/bounded-markdown';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useCompactMarkdownStyle } from '@/hooks/use-markdown-style';

@@ -1,6 +1,6 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { ChevronRight, Trash2, X } from 'lucide-react-native';
 import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import {
@@ -17,7 +17,6 @@ import { AgentMark } from '@/components/agent-mark';
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { FontedTextInput } from '@/components/fonted-text-input';
 import { HomeFoldLink } from '@/components/home-fold-link';
-import { PressableScale } from '@/components/pressable-scale';
 import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';

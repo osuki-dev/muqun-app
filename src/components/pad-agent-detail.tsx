@@ -9,7 +9,7 @@ import { AgentWorkbench } from '@/components/agent-workbench';
 import { DETAIL_HEADER_HEIGHT } from '@/components/detail-header';
 import { LogoLoader } from '@/components/logo-loader';
 import { navHeaderButtonStyle } from '@/components/nav-header';
-import { PressableScale } from '@/components/pressable-scale';
+import { PressableScale } from '@osuki-dev/ui';
 import { hasRealSessionTitle } from '@/lib/agent-protocol';
 import { consumeNewAgentIntent, type HomeAgentEntry } from '@/lib/home-commands';
 import { padAgentRouteParams, type PadDetail, type PadShellEvent } from '@/lib/pad-detail';

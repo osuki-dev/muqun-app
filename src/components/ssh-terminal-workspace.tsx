@@ -2,7 +2,7 @@ import { TerminalNotice, terminalNoticeStyles } from '@/components/terminal-noti
 import { ThemeArtwork, useHasThemeArtwork } from '@/components/theme-artwork';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { useThemeTokens, useToast } from '@osuki-dev/ui';
+import { useThemeTokens, useToast, PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useRouter } from 'expo-router';
 import { Keyboard as KeyboardIcon, PenLine, RefreshCw, Unplug, X } from 'lucide-react-native';
@@ -24,7 +24,6 @@ import { EditorControls } from '@/components/editor-controls';
 import { GlassChrome } from '@/components/glass-chrome';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { LogoLoader } from '@/components/logo-loader';
-import { PressableScale } from '@/components/pressable-scale';
 import { ScreenHeader } from '@/components/screen-header';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
 import { SshHostKeyDialog, SshKeyboardInteractiveDialog } from '@/components/ssh-host-key-dialog';

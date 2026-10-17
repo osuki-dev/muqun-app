@@ -1,5 +1,14 @@
 import { SheetHandle } from '@/components/sheet-route-frame';
-import { Input, Card, Spinner, useThemeTokens, Skeleton, Tabs, Button } from '@osuki-dev/ui';
+import {
+  Input,
+  Card,
+  Spinner,
+  useThemeTokens,
+  Skeleton,
+  Tabs,
+  Button,
+  PressableScale,
+} from '@osuki-dev/ui';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { SheetFrame } from '@/components/sheet-ground';
 import { SettingsSegmented } from '@/components/settings-segmented';
@@ -92,7 +101,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AgentCommandDeliveryPicker } from '@/components/agent-command-delivery-picker';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { PressableScale } from '@/components/pressable-scale';
 import { LADDER, SettingsCard } from '@/components/settings-chrome';
 import { useAgentCommandDelivery } from '@/hooks/use-agent-command-delivery';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';

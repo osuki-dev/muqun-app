@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { useLingui } from '@lingui/react';
 
-import { PressableScale } from '@/components/pressable-scale';
+import { PressableScale } from '@osuki-dev/ui';
 import { paneViewModeFallback, switchToViewLabel } from '@/i18n/labels';
 import { nextPaneViewMode, type PaneViewMode } from '@/lib/pane-view-mode';
 

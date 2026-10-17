@@ -20,7 +20,7 @@ import {
   type SkRect,
   type SkTypefaceFontProvider,
 } from 'react-native-skia';
-import { useThemeTokens, useToast, Button } from '@osuki-dev/ui';
+import { useThemeTokens, useToast, Button, PressableScale } from '@osuki-dev/ui';
 import { useHasThemeArtwork } from '@/components/theme-artwork';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { ChevronUp } from 'lucide-react-native';
@@ -70,7 +70,6 @@ import {
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { useCoalescedValue } from '@/hooks/use-coalesced-value';
 import { useFreezeGate, useFrozenValue } from '@/hooks/use-frozen-value';
 import { useLatestReader, useLatestRef, useStableHandler } from '@/hooks/use-render-refs';

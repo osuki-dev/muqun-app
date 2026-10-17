@@ -14,7 +14,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { GlassChrome } from '@/components/glass-chrome';
-import { PressableScale } from '@/components/pressable-scale';
+import { PressableScale } from '@osuki-dev/ui';
 import { appChrome } from '@/constants/appearance';
 import {
   floatingHandleBounds,

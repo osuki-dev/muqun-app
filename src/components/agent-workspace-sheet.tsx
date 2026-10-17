@@ -1,7 +1,7 @@
 import { scopedAgentCacheVariant } from '@/lib/agent-discovery';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { Spinner, useThemeTokens } from '@osuki-dev/ui';
+import { Spinner, useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useLingui } from '@lingui/react/macro';
 import { CornerDownRight, Folder, FolderGit2 } from 'lucide-react-native';
@@ -34,7 +34,6 @@ import {
   visibleSuggestions,
   type DirectoryListing,
 } from '@/lib/agent-directory-suggest';
-import { PressableScale } from '@/components/pressable-scale';
 import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
 import { listableWorkspaces, workspaceProjectMissing } from '@/lib/agent-workspace-missing';

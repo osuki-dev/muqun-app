@@ -1,4 +1,4 @@
-import { Input, Spinner, useThemeTokens } from '@osuki-dev/ui';
+import { Input, Spinner, useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
 import { Text } from '@/components/text';
@@ -38,7 +38,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FloatingHandle, floatingHandleFrame } from '@/components/floating-handle';
 import { GlassChrome } from '@/components/glass-chrome';
-import { PressableScale } from '@/components/pressable-scale';
 import { appChrome } from '@/constants/appearance';
 import { feedback } from '@/lib/feedback';
 import { fadeIn, fadeInDown, fadeOut } from '@/lib/motion';

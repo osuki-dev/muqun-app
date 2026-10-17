@@ -1,6 +1,6 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import * as Clipboard from 'expo-clipboard';
 import * as Device from 'expo-device';
@@ -39,7 +39,6 @@ import Animated, {
 import { LogoLoader } from '@/components/logo-loader';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { SshConnectPromptGate } from '@/components/ssh-connect-prompt-gate';
-import { PressableScale } from '@/components/pressable-scale';
 import {
   SheetScene,
   SheetSceneAction,

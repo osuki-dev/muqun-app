@@ -1,5 +1,5 @@
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { Input, Spinner, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { Input, Spinner, useThemeTokens, useToast, PressableScale } from '@osuki-dev/ui';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
@@ -11,7 +11,6 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { PairAgainNotice } from '@/components/pair-again-notice';
-import { PressableScale } from '@/components/pressable-scale';
 import {
   LADDER,
   SettingsBlock,

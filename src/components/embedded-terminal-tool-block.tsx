@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import { View, StyleSheet, type ViewInstance } from 'react-native';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useLingui } from '@lingui/react/macro';
 import {
@@ -33,7 +33,6 @@ import {
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { PressableScale } from '@/components/pressable-scale';
 import { EngineFailureText } from '@/components/engine-failure-text';
 import { ThinkingIndicator } from '@/components/agent-thinking-indicator';
 import { usePaneChatColors } from '@/components/pane-chat-blocks';

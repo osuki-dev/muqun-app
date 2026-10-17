@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter, type Href } from 'expo-router';
 import { Check, Copy, Play } from 'lucide-react-native';
@@ -7,7 +7,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { PressableScale } from '@/components/pressable-scale';
 import { SHEET_LADDER } from '@/components/sheet-scene';
 import { Text } from '@/components/text';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';

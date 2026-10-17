@@ -1,7 +1,7 @@
 import * as Clipboard from 'expo-clipboard';
 import { AudioPlaybackError } from '@/lib/audio-playback-session';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { useThemeTokens, Skeleton, Button } from '@osuki-dev/ui';
+import { useThemeTokens, Skeleton, Button, PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Check, Copy, Download, X } from 'lucide-react-native';
@@ -20,7 +20,6 @@ import { AudioAssetPreview } from '@/components/audio-asset-preview';
 import { useFileActions } from '@/hooks/use-file-actions';
 import { saveSessionAsset } from '@/lib/save-file';
 import { SheetFrame } from '@/components/sheet-ground';
-import { PressableScale } from '@/components/pressable-scale';
 import { formatAssetSize } from '@/lib/asset-display';
 import { useLatestRef } from '@/hooks/use-render-refs';
 import { useRelativeTime } from '@/hooks/use-relative-time';
