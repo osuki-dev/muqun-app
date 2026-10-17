@@ -130,6 +130,8 @@ is visible "label=\"QA read image\""
 wait stable 400 5000
 snapshot
 screenshot "shots/tool-read-preview-close-return.png"
+
+# section read-preview-back
 # Android Back must dismiss the native modal, not navigate out of the sheet.
 press "label=\"QA read image\""
 wait "label=\"Close preview\"" 10000
