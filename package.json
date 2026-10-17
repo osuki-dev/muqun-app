@@ -173,7 +173,8 @@
   },
   "patchedDependencies": {
     "react-native-enriched-markdown@1.1.1": "patches/react-native-enriched-markdown@1.1.1.patch",
-    "react-native-nitro-sound@0.2.20": "patches/react-native-nitro-sound@0.2.20.patch"
+    "react-native-nitro-sound@0.2.20": "patches/react-native-nitro-sound@0.2.20.patch",
+    "@osuki-dev/ui@2.0.0-beta.0": "patches/@osuki-dev%2Fui@2.0.0-beta.0.patch"
   },
   "trustedDependencies": [
     "react-native-skia",
