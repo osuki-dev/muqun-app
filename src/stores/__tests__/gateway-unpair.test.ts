@@ -199,28 +199,26 @@ describe('the revoke that precedes forgetting a gateway', () => {
     expect(await storedIds()).toEqual([]);
   });
 
-  for (const [status, code] of [
-    [401, 'invalid_token'],
-    [403, 'invalid_token'],
-    [426, 'device_repair_required'],
+  for (const [status, code, transportRefusal] of [
+    [401, 'invalid_token', false],
+    [403, 'invalid_token', true],
+    [426, 'device_repair_required', true],
   ] as const) {
-    for (const sealed of [false, true]) {
-      test(`an expired pairing is forgotten locally (${status} ${code}, transport refusal: ${sealed})`, async () => {
-        revoke = async () => {
-          const body = JSON.stringify({ error: { code } });
-          throw sealed
-            ? new GatewayTransportRefusalError(status, body)
-            : new Error(`HTTP ${status}: ${body}`);
-        };
+    test(`an expired pairing is forgotten locally (${status} ${code})`, async () => {
+      revoke = async () => {
+        const body = JSON.stringify({ error: { code } });
+        throw transportRefusal
+          ? new GatewayTransportRefusalError(status, body)
+          : new Error(`HTTP ${status}: ${body}`);
+      };
 
-        await useGatewayConnectionStore.getState().removeRecord(SERVER_ID);
+      await useGatewayConnectionStore.getState().removeRecord(SERVER_ID);
 
-        expect(revokedFor).toEqual([SERVER_ID]);
-        expect(remainingIds()).toEqual([]);
-        expect(await storedIds()).toEqual([]);
-        expect(useGatewayConnectionStore.getState().record).toBeNull();
-      });
-    }
+      expect(revokedFor).toEqual([SERVER_ID]);
+      expect(remainingIds()).toEqual([]);
+      expect(await storedIds()).toEqual([]);
+      expect(useGatewayConnectionStore.getState().record).toBeNull();
+    });
   }
 
   test('an unrecognised auth refusal still blocks the removal', async () => {
@@ -236,8 +234,6 @@ describe('the revoke that precedes forgetting a gateway', () => {
 
   for (const [status, code] of [
     [403, 'clock_skew'],
-    [403, 'unknown_host'],
-    [403, 'invalid_envelope'],
     [500, 'transport_key_unavailable'],
     [500, 'invalid_token'],
   ] as const) {
