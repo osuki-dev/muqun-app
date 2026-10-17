@@ -37,10 +37,13 @@ declare module '@osuki-dev/ui' {
 /**
  * The kit fills that follow the reader's slider: exactly the ones the app has
  * always thinned (its cards and planes, buttons, fields and their error pill,
- * placeholders, toasts, and the pack's own slots). Every other kit fill --
- * tags, alerts, dialogs, sheets, segmented tracks and their selection, badges,
- * the settings tabs' solid track and selection -- keeps its authored colour, as
- * it did before the kit had a decorator.
+ * placeholders, toasts, the SSH form's segmented control, and the pack's own
+ * slots). Every other kit fill -- tags, alerts, dialogs, sheets, badges, the
+ * settings tabs' solid track and selection -- keeps its authored colour, as it
+ * did before the kit had a decorator.
+ *
+ * The segmented selection is an overlay on its track and is thinned as well,
+ * each fill at the slider's opacity, as the app's own control always drew it.
  */
 const TRANSLUCENT_SLOTS = new Set<string>([
   ...THEME_SLOTS,
@@ -56,6 +59,8 @@ const TRANSLUCENT_SLOTS = new Set<string>([
   'inputs.error',
   'skeleton.fill',
   'toasts.background',
+  'segmented.track',
+  'segmented.selected',
 ]);
 
 /**
