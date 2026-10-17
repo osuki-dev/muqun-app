@@ -1,3 +1,4 @@
+import type { HapticFeedbackKind } from '@osuki-dev/ui';
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
 
@@ -35,4 +36,22 @@ export async function feedback(kind: FeedbackKind = 'selection'): Promise<void> 
   } catch {
     // Haptics are best-effort and may be disabled by the OS.
   }
+}
+
+/**
+ * The kit's haptic kinds, played as the app's. The kit asks for `light` on a
+ * button press; the app has one press haptic, the selection tick.
+ */
+const KIT_FEEDBACK: Record<HapticFeedbackKind, FeedbackKind> = {
+  selection: 'selection',
+  light: 'selection',
+  medium: 'selection',
+  success: 'success',
+  warning: 'warning',
+  error: 'error',
+};
+
+/** `HapticsProvider`'s `feedback`: every kit press goes through the reader's haptics setting. */
+export function kitFeedback(kind: HapticFeedbackKind = 'selection'): Promise<void> {
+  return feedback(KIT_FEEDBACK[kind]);
 }

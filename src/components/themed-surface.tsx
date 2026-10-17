@@ -27,10 +27,25 @@ type ArtworkProps = {
   selected?: boolean;
 };
 
+type ArtworkContrast = {
+  /** The alpha the fill under the artwork is painted at. Defaults to the reader's slider. */
+  baseAlpha?: number;
+  /** The one label the artwork must keep legible, instead of every text and accent ink. */
+  ink?: string;
+};
+
 /** Absolute, noninteractive decoration for an already positioned/clipped surface. */
-export function ThemedSurfaceArtwork({ slot, baseColor, disabled, selected }: ArtworkProps) {
+export function ThemedSurfaceArtwork({
+  slot,
+  baseColor,
+  disabled,
+  selected,
+  baseAlpha,
+  ink,
+}: ArtworkProps & ArtworkContrast) {
   const { resolvedMode } = useThemeMode();
-  const baseOpacity = useSurfaceBackgroundOpacity();
+  const sliderOpacity = useSurfaceBackgroundOpacity();
+  const baseOpacity = baseAlpha ?? sliderOpacity;
   const { width } = useWindowDimensions();
   const { theme: active, assets } = useEffectiveCustomTheme();
   const artwork = active
@@ -42,16 +57,18 @@ export function ThemedSurfaceArtwork({ slot, baseColor, disabled, selected }: Ar
     const { colors } = active.manifest.variants[resolvedMode];
     const opaqueMaximum = safeArtworkOpacity(
       baseColor,
-      [
-        ...(['text', 'textMuted', 'textSubtle'] as const).map((key) => ({
-          color: colors[key],
-          minimum: 4.5,
-        })),
-        ...(['primary', 'danger', 'info', 'success', 'warning'] as const).map((key) => ({
-          color: colors[key],
-          minimum: 3,
-        })),
-      ],
+      ink
+        ? [{ color: ink, minimum: 4.5 }]
+        : [
+            ...(['text', 'textMuted', 'textSubtle'] as const).map((key) => ({
+              color: colors[key],
+              minimum: 4.5,
+            })),
+            ...(['primary', 'danger', 'info', 'success', 'warning'] as const).map((key) => ({
+              color: colors[key],
+              minimum: 3,
+            })),
+          ],
       1
     );
     return jointArtworkOpacity(opaqueMaximum, baseOpacity, artwork?.opacity ?? 1);
@@ -62,6 +79,7 @@ export function ThemedSurfaceArtwork({ slot, baseColor, disabled, selected }: Ar
     selected,
     resolvedMode,
     baseColor,
+    ink,
     artwork?.opacity,
     baseOpacity,
   ]);

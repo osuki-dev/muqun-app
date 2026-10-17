@@ -14,7 +14,7 @@
 
 import '@/global.css';
 
-import { createThemePreset, type ThemeOverride } from '@osuki-dev/ui';
+import { createThemePreset, deepMerge, type ThemeOverride } from '@osuki-dev/ui';
 
 import {
   resolveAppearanceProfile,
@@ -27,12 +27,7 @@ import {
   type ThemeAppearance,
 } from '@/constants/theme-packs';
 import { userFontRegistry } from '@/theme/interface-font-registry';
-import {
-  slotFontFamily,
-  slotWeightAxis,
-  SYSTEM_FONT_SLOT,
-  type FontSlot,
-} from '@/theme/user-font-file';
+import { slotFontFamily, SYSTEM_FONT_SLOT, type FontSlot } from '@/theme/user-font-file';
 
 /**
  * The shape of the app, independent of its colours: density, corner radius and
@@ -83,17 +78,26 @@ export function buildTheme(
    */
   const interfaceFamily = slotFontFamily(interfaceFont, 'interface');
   const fonts = interfaceFamily
-    ? { ...preset.fonts, ...userFontRegistry(interfaceFamily, slotWeightAxis(interfaceFont)) }
+    ? {
+        ...preset.fonts,
+        ...userFontRegistry(
+          interfaceFamily,
+          interfaceFont.kind === 'file' ? interfaceFont.axes : null
+        ),
+      }
     : preset.fonts;
 
+  // Is this a custom pack (it carries its manifest), whose artwork or
+  // translucent ground can sit under the app's controls.
+  const decorated = 'manifest' in pack;
+  const appearance = deepMerge<ThemeOverride>(preset, profileThemeOverride(profile, decorated));
   return {
-    ...preset,
-    ...profileThemeOverride(profile),
+    ...appearance,
     ...(fonts ? { fonts } : {}),
     components: {
-      ...preset.components,
+      ...appearance.components,
       Input: {
-        ...preset.components?.Input,
+        ...appearance.components?.Input,
         // The library points this at `textDisabled`, which measures under 2:1
         // on a field. Placeholder text here names the agent being messaged, so
         // it is content, and content is held to the muted tier.
