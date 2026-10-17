@@ -3936,6 +3936,7 @@ msgid "Next"
 msgstr "下一步"
 
 #: src/components/home-computer-deck.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Next computer"
 msgstr "下一台電腦"
 
@@ -3951,10 +3952,6 @@ msgstr "下一則通知"
 #: src/components/agent-title-pill.tsx
 msgid "Next session"
 msgstr "下一個會話"
-
-#: src/components/home-recent-sessions.tsx
-msgid "Next sessions"
-msgstr "下一頁工作階段"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
@@ -4582,7 +4579,6 @@ msgstr "輸出"
 msgid "Output copied to clipboard"
 msgstr "輸出已複製到剪貼簿"
 
-#: src/components/home-recent-sessions.tsx
 #: src/components/pdf-asset-preview.tsx
 msgid "Page {page} of {pageCount}"
 msgstr "第 {page} 頁，共 {pageCount} 頁"
@@ -4820,6 +4816,7 @@ msgid "Preview first. Your current theme stays unchanged"
 msgstr "先預覽，目前的主題保持不變"
 
 #: src/components/home-computer-deck.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Previous computer"
 msgstr "上一台電腦"
 
@@ -4830,10 +4827,6 @@ msgstr "上一張圖片"
 #: src/components/agent-title-pill.tsx
 msgid "Previous session"
 msgstr "上一個會話"
-
-#: src/components/home-recent-sessions.tsx
-msgid "Previous sessions"
-msgstr "上一頁工作階段"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Primary"

@@ -3936,6 +3936,7 @@ msgid "Next"
 msgstr "다음"
 
 #: src/components/home-computer-deck.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Next computer"
 msgstr "다음 컴퓨터"
 
@@ -3951,10 +3952,6 @@ msgstr "다음 알림"
 #: src/components/agent-title-pill.tsx
 msgid "Next session"
 msgstr "다음 세션"
-
-#: src/components/home-recent-sessions.tsx
-msgid "Next sessions"
-msgstr "다음 세션 목록"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
@@ -4582,7 +4579,6 @@ msgstr "출력"
 msgid "Output copied to clipboard"
 msgstr "출력을 클립보드에 복사했습니다"
 
-#: src/components/home-recent-sessions.tsx
 #: src/components/pdf-asset-preview.tsx
 msgid "Page {page} of {pageCount}"
 msgstr "{pageCount}페이지 중 {page}페이지"
@@ -4820,6 +4816,7 @@ msgid "Preview first. Your current theme stays unchanged"
 msgstr "먼저 미리 보세요. 현재 테마는 변경되지 않습니다"
 
 #: src/components/home-computer-deck.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Previous computer"
 msgstr "이전 컴퓨터"
 
@@ -4830,10 +4827,6 @@ msgstr "이전 이미지"
 #: src/components/agent-title-pill.tsx
 msgid "Previous session"
 msgstr "이전 세션"
-
-#: src/components/home-recent-sessions.tsx
-msgid "Previous sessions"
-msgstr "이전 세션 목록"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Primary"
