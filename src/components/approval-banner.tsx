@@ -120,7 +120,7 @@ export function ApprovalBanner({
       // terminal's inset with it.
       layout={listLayout('short')}
       testID="approval-banner">
-      <Card variant="raised" radius="md" padding="sm">
+      <Card slot="cards.plain" variant="raised" radius="md" padding="sm">
         <Stack gap="sm">
           <Stack direction="horizontal" gap="sm" align="flex-start">
             <View style={{ paddingTop: 1 }}>

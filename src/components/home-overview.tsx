@@ -2359,7 +2359,10 @@ function EmptyState({
     // card vanish on one frame while the new one faded in underneath it -- the
     // one moment in the app where two things are meant to hand over cleanly.
     <Animated.View entering={fadeIn('medium')} exiting={fadeOut('short')}>
-      <Card padding="none" style={[styles.emptyCard, isPad && styles.padEmptyCard]}>
+      <Card
+        slot="cards.plain"
+        padding="none"
+        style={[styles.emptyCard, isPad && styles.padEmptyCard]}>
         {/* The same mark as the pairing screen's aperture, in the same colour,
             at a sixth of the size: this is the shape the reader is about to
             point at their machine. It is drawn in `borderStrong` rather than

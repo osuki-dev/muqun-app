@@ -1,3 +1,4 @@
+import { PillTabs } from '@/components/pill-tabs';
 import { SheetHandle } from '@/components/sheet-route-frame';
 import {
   Input,
@@ -5,7 +6,6 @@ import {
   Spinner,
   useThemeTokens,
   Skeleton,
-  Tabs,
   Button,
   PressableScale,
   Text,
@@ -1055,7 +1055,7 @@ export default function QuickCommandsScreen() {
               layout={listLayout('short')}
               style={styles.section}>
               <SectionHeading title={t`New shortcut`} />
-              <Card variant="flat" padding="md" style={styles.addCard}>
+              <Card slot="cards.plain" variant="flat" padding="md" style={styles.addCard}>
                 <Text variant="caption" color={theme.colors.textMuted}>
                   {mode === 'agent'
                     ? t`Save a prompt you send this agent often.`
@@ -1063,7 +1063,7 @@ export default function QuickCommandsScreen() {
                 </Text>
 
                 {mode === 'terminal' ? (
-                  <Tabs
+                  <PillTabs
                     options={[
                       { label: t`Command`, value: 'command' },
                       { label: t`Keys`, value: 'keys' },

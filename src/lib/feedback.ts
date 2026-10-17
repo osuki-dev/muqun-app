@@ -39,19 +39,20 @@ export async function feedback(kind: FeedbackKind = 'selection'): Promise<void> 
 }
 
 /**
- * The kit's haptic kinds, played as the app's. The kit asks for `light` on a
- * button press; the app has one press haptic, the selection tick.
+ * The kit's haptic kinds, played as the app's. The kit's `light` and `medium`
+ * are its button presses, which have always been silent in this app.
  */
-const KIT_FEEDBACK: Record<HapticFeedbackKind, FeedbackKind> = {
+const KIT_FEEDBACK: Record<HapticFeedbackKind, FeedbackKind | null> = {
   selection: 'selection',
-  light: 'selection',
-  medium: 'selection',
+  light: null,
+  medium: null,
   success: 'success',
   warning: 'warning',
   error: 'error',
 };
 
 /** `HapticsProvider`'s `feedback`: every kit press goes through the reader's haptics setting. */
-export function kitFeedback(kind: HapticFeedbackKind = 'selection'): Promise<void> {
-  return feedback(KIT_FEEDBACK[kind]);
+export async function kitFeedback(kind: HapticFeedbackKind = 'selection'): Promise<void> {
+  const mapped = KIT_FEEDBACK[kind];
+  if (mapped) await feedback(mapped);
 }

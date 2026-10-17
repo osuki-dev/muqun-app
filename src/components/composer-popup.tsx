@@ -89,7 +89,7 @@ export function ComposerPopup({
       entering={fadeInDown('dropdown')}
       exiting={fadeOutDown('micro')}
       testID={testIDPrefix}>
-      <Card variant="raised" radius="md" padding="xs">
+      <Card slot="cards.plain" variant="raised" radius="md" padding="xs">
         <LegendList
           data={rows}
           dataKey={testIDPrefix}
