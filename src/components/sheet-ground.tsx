@@ -33,7 +33,7 @@
  * slider down, and the maintainer who reported "sheets have no artwork" was
  * looking at the default.
  *
- * Note what this deliberately does *not* use. `ThemedSurfaceArtwork` clamps
+ * Note what this deliberately does *not* use. The surface decorator's artwork (`surface-decorator.tsx`) clamps
  * artwork to `safeArtworkOpacity`, which asks "at what alpha does every one of
  * this theme's inks still clear 4.5:1 over this surface" -- and for real
  * palettes the answer is ~0 (measured: tokyo-night 0.000, github light 0.000,

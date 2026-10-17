@@ -1,5 +1,5 @@
 import { Trans, useLingui } from '@lingui/react/macro';
-import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeMode, useThemeTokens, SurfaceDecoration } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { ChevronLeft, ChevronRight, ScanLine, Settings, SquareTerminal } from 'lucide-react-native';
@@ -14,7 +14,6 @@ import { useHomeCommands, type HomeCommandOptions } from '@/hooks/use-home-comma
 import { useHomeRecentsStore } from '@/stores/home-recents';
 import { SectionLabel } from '@/components/settings-chrome';
 import { HomeConnections } from '@/components/home-connections';
-import { ThemedSurfaceArtwork } from '@/components/themed-surface';
 import { useThemeLibrary } from '@/stores/theme-library';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { type ActiveServerConnection, type ServerReachability } from '@/lib/server-reachability';
@@ -127,7 +126,7 @@ export function PadServerRail({
         },
         style,
       ]}>
-      <ThemedSurfaceArtwork slot="navigation.background" baseColor={theme.colors.surface} />
+      <SurfaceDecoration slot="navigation.background" baseColor={theme.colors.surface} />
       <PadRailHeader onBack={onBack} testID={`${testID}-back`} />
 
       <ScrollView

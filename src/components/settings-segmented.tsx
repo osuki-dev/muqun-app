@@ -20,13 +20,12 @@
  * is what the compound API is for -- so this cannot drift from `Tabs` when
  * `Tabs` changes.
  */
-import { Tabs, useThemeTokens } from '@osuki-dev/ui';
+import { Tabs, useThemeTokens, SurfaceDecoration } from '@osuki-dev/ui';
 import { Text, type TextProps } from '@/components/text';
 import { useEffect, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
-import { ThemedSurfaceArtwork } from '@/components/themed-surface';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { INSTANT, PRESET, timing } from '@/lib/motion';
 import { useRenderTally } from '@/lib/render-tally';
@@ -148,7 +147,7 @@ export function SettingsSegmented({
           artwork is under the track's fill and under the pill, so neither the
           mark nor the chosen side loses contrast to it.
         */}
-        <ThemedSurfaceArtwork slot="tabs.background" baseColor={theme.colors.surfaceRaised} />
+        <SurfaceDecoration slot="tabs.background" baseColor={theme.colors.surfaceRaised} />
         <Animated.View
           pointerEvents="none"
           style={[
