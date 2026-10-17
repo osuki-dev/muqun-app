@@ -299,6 +299,10 @@ msgstr "Última observación: {count} solicitudes"
 msgid "{done} of {0} done"
 msgstr "{done} de {0} hechas"
 
+#: src/components/home-computer-deck.tsx
+msgid "{failed, plural, one {# failed} other {# failed}}"
+msgstr "{failed, plural, one {# fallida} other {# fallidas}}"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "{from} still lists an older {name}. Remove that entry on {from}."
 msgstr "{from} todavía tiene una entrada antigua de {name}. Elimina esa entrada en {from}"
@@ -375,6 +379,10 @@ msgstr "{providerName} (en terminal)"
 msgid "{removeLabel}: {label}"
 msgstr "{removeLabel}: {label}"
 
+#: src/components/home-computer-deck.tsx
+msgid "{running, plural, one {# running} other {# running}}"
+msgstr "{running, plural, one {# en curso} other {# en curso}}"
+
 #. placeholder {0}: shells.length
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
@@ -393,6 +401,10 @@ msgstr "{total, plural, one {# subtarea} other {# subtareas}}"
 #: src/components/task-row.tsx
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, one {# subtarea} other {# subtareas}} ({waiting, plural, one {# en espera} other {# en espera}})"
+
+#: src/components/home-computer-deck.tsx
+msgid "{waiting, plural, one {# needs you} other {# need you}}"
+msgstr "{waiting, plural, one {# te necesita} other {# te necesitan}}"
 
 #: src/components/task-row.tsx
 msgid "→ {name}"
@@ -1003,6 +1015,11 @@ msgstr "Rama o commit (opcional)"
 #: src/components/agent-worktree-sheet.tsx
 msgid "Branch to start from"
 msgstr "Rama desde la que partir"
+
+#. placeholder {0}: server.label
+#: src/components/home-computer-deck.tsx
+msgid "Bring {0} to the front"
+msgstr "Traer {0} al frente"
 
 #: src/components/custom-theme-library.tsx
 #: src/components/theme-browse-sheet.tsx
@@ -3918,6 +3935,10 @@ msgstr "Más reciente"
 msgid "Next"
 msgstr "Siguiente"
 
+#: src/components/home-computer-deck.tsx
+msgid "Next computer"
+msgstr "Ordenador siguiente"
+
 #: src/components/image-preview-modal.tsx
 msgid "Next image"
 msgstr "Imagen siguiente"
@@ -4792,6 +4813,10 @@ msgstr "Ver y aplicar"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "Revisa primero la vista previa. Tu tema actual no cambiará"
+
+#: src/components/home-computer-deck.tsx
+msgid "Previous computer"
+msgstr "Ordenador anterior"
 
 #: src/components/image-preview-modal.tsx
 msgid "Previous image"

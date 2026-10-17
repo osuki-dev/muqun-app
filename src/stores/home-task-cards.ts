@@ -23,6 +23,7 @@ const STORE_ID = 'muqun.home';
 const DISMISSED_KEY = 'muqun.home.acknowledged-tasks.v1';
 const HIDDEN_KEY = 'muqun.home.hidden-tasks.v1';
 const PENDING_KEY = 'muqun.home.pending-dispatches.v1';
+const DECK_FRONT_KEY = 'muqun.home.deck-front.v1';
 /** Sent rows kept across launches, newest last; the oldest goes first past this. */
 const MAX_PENDING = 50;
 /** Enough for months of finished work; the oldest acknowledgement goes first. */
@@ -209,7 +210,18 @@ type HomeTaskCardsState = {
   /** The row whose work is being opened (`taskOpeningKey`): it shows a loading state. */
   opening: string | null;
   setOpening: (key: string | null) => void;
+  /** The computer last brought to the front of the phone's sheaf, across launches. */
+  deckFront: string | null;
+  setDeckFront: (serverId: string) => void;
 };
+
+function loadDeckFront(): string | null {
+  try {
+    return store().getString(DECK_FRONT_KEY) ?? null;
+  } catch {
+    return null;
+  }
+}
 
 export function taskOpeningKey(serverId: string, taskId: string): string {
   return `${serverId}\u0000${taskId}`;
@@ -251,6 +263,16 @@ export const useHomeTaskCards = create<HomeTaskCardsState>((setState, get) => {
     opening: null,
     setOpening(key) {
       set({ opening: key });
+    },
+    deckFront: loadDeckFront(),
+    setDeckFront(serverId) {
+      if (get().deckFront === serverId) return;
+      try {
+        store().set(DECK_FRONT_KEY, serverId);
+      } catch {
+        // Kept for this launch.
+      }
+      setState({ deckFront: serverId });
     },
     acknowledge(serverId, task) {
       const key = dismissedKey(serverId, task);

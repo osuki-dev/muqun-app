@@ -109,6 +109,8 @@ export const appChrome = {
   },
   shadow: {
     ambientCard: '0 8px 24px rgba(0, 0, 0, 0.18)',
+    /** A sheet of the Home computer sheaf, falling on the one behind it. */
+    deckSheet: '0 -2px 10px rgba(0, 0, 0, 0.10)',
     connectionPill: '0 6px 16px rgba(0, 0, 0, 0.12)',
     composerDock: '0 -8px 28px rgba(0, 0, 0, 0.18)',
     /**

@@ -299,6 +299,10 @@ msgstr "最近觀察到 {count} 個請求"
 msgid "{done} of {0} done"
 msgstr "已完成 {done}/{0}"
 
+#: src/components/home-computer-deck.tsx
+msgid "{failed, plural, one {# failed} other {# failed}}"
+msgstr "{failed, plural, other {# 個失敗}}"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "{from} still lists an older {name}. Remove that entry on {from}."
 msgstr "{from} 上仍有一筆舊的 {name} 紀錄，請在 {from} 上刪除這筆紀錄"
@@ -375,6 +379,10 @@ msgstr "{providerName}（終端機）"
 msgid "{removeLabel}: {label}"
 msgstr "{removeLabel}：{label}"
 
+#: src/components/home-computer-deck.tsx
+msgid "{running, plural, one {# running} other {# running}}"
+msgstr "{running, plural, other {# 個執行中}}"
+
 #. placeholder {0}: shells.length
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
@@ -393,6 +401,10 @@ msgstr "{total, plural, other {# 個子任務}}"
 #: src/components/task-row.tsx
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, other {# 個子任務}}（{waiting, plural, other {# 個等待中}}）"
+
+#: src/components/home-computer-deck.tsx
+msgid "{waiting, plural, one {# needs you} other {# need you}}"
+msgstr "{waiting, plural, other {# 個需要你處理}}"
 
 #: src/components/task-row.tsx
 msgid "→ {name}"
@@ -1003,6 +1015,11 @@ msgstr "分支或提交（選填）"
 #: src/components/agent-worktree-sheet.tsx
 msgid "Branch to start from"
 msgstr "作為起點的分支"
+
+#. placeholder {0}: server.label
+#: src/components/home-computer-deck.tsx
+msgid "Bring {0} to the front"
+msgstr "將 {0} 移到最前"
 
 #: src/components/custom-theme-library.tsx
 #: src/components/theme-browse-sheet.tsx
@@ -3918,6 +3935,10 @@ msgstr "較新"
 msgid "Next"
 msgstr "下一步"
 
+#: src/components/home-computer-deck.tsx
+msgid "Next computer"
+msgstr "下一台電腦"
+
 #: src/components/image-preview-modal.tsx
 msgid "Next image"
 msgstr "下一張圖片"
@@ -4792,6 +4813,10 @@ msgstr "預覽並套用"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "先預覽，目前的主題保持不變"
+
+#: src/components/home-computer-deck.tsx
+msgid "Previous computer"
+msgstr "上一台電腦"
 
 #: src/components/image-preview-modal.tsx
 msgid "Previous image"

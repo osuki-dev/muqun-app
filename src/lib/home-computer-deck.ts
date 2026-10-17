@@ -33,8 +33,14 @@ export const DECK_SCRUB_CEILING = 0.85;
 export const DECK_ENTRY_SCALE = 0.9;
 export const DECK_ENTRY_DROP = 16;
 
-/** How the order changes: the front goes to the back, or one sheet comes forward. */
-export type DeckMove = { kind: 'rotate' } | { kind: 'raise'; level: number };
+/**
+ * How the order changes: `DECK_ROTATE` sends the front to the back; a level
+ * (1 and up) brings that sheet forward. A number, so a shared value holds it.
+ */
+export type DeckMove = number;
+export const DECK_ROTATE = 0;
+/** No move in progress. */
+export const DECK_AT_REST = -1;
 
 /** The height the peeks add above the front card. */
 export function deckPeekBand(count: number): number {
@@ -73,15 +79,24 @@ export function deckOrder(
 export function deckMoved(order: readonly string[], move: DeckMove): string[] {
   'worklet';
   if (order.length < 2) return [...order];
-  if (move.kind === 'rotate') return [...order.slice(1), order[0]!];
-  const level = Math.min(Math.max(move.level, 1), order.length - 1);
+  if (move === DECK_ROTATE) return [...order.slice(1), order[0]!];
+  const level = Math.min(Math.max(move, 1), order.length - 1);
   return [order[level]!, ...order.slice(0, level), ...order.slice(level + 1)];
+}
+
+/**
+ * `deckMoved` over the order written as one string (ids joined by a newline),
+ * which is how the deck keeps it on the UI thread.
+ */
+export function deckMovedKey(key: string, move: DeckMove): string {
+  'worklet';
+  return deckMoved(key.split('\n'), move).join('\n');
 }
 
 /** The level of the computer `move` brings to the front. */
 export function deckIncomingLevel(move: DeckMove): number {
   'worklet';
-  return move.kind === 'rotate' ? 1 : move.level;
+  return move === DECK_ROTATE ? 1 : move;
 }
 
 /**
@@ -90,7 +105,7 @@ export function deckIncomingLevel(move: DeckMove): number {
  */
 export function deckSwipeMove(direction: number, count: number): DeckMove {
   'worklet';
-  return direction < 0 ? { kind: 'rotate' } : { kind: 'raise', level: count - 1 };
+  return direction < 0 ? DECK_ROTATE : count - 1;
 }
 
 /**
@@ -145,7 +160,7 @@ export function deckLevelPose(level: number): {
 
 /**
  * Where the sheet at ring position `position` is, `p` of the way through
- * `move` (null at rest). `fade` multiplies its opacity; `enter` < 1 is the
+ * `move` (`DECK_AT_REST` at rest). `fade` multiplies its opacity; `enter` < 1 is the
  * old front re-entering at the back, from a smaller, lower pose. `rest` is
  * the level it ends on, which sets its stacking.
  */
@@ -153,21 +168,23 @@ export function deckSheetLevel(
   position: number,
   count: number,
   p: number,
-  move: DeckMove | null
+  move: DeckMove
 ): { level: number; fade: number; enter: number; rest: number } {
   'worklet';
-  if (!move) {
+  if (move === DECK_AT_REST) {
     return { level: position, fade: position === 0 ? 0 : 1, enter: 1, rest: position };
   }
   const incoming = deckIncomingLevel(move);
   if (position === 0) {
-    const rest = move.kind === 'rotate' ? count - 1 : 1;
+    const rest = move === DECK_ROTATE ? count - 1 : 1;
     return { level: rest, fade: p, enter: p, rest };
   }
+  // The incoming computer is reforming in the front slot: its peek fades
+  // where it is rather than travelling down through the sheets in front of it.
   if (position === incoming) {
-    return { level: position * (1 - p), fade: 1 - p, enter: 1, rest: 0 };
+    return { level: position, fade: Math.max(0, 1 - p * 2.5), enter: 1, rest: 0 };
   }
-  if (move.kind === 'rotate') {
+  if (move === DECK_ROTATE) {
     return { level: position - p, fade: 1, enter: 1, rest: position - 1 };
   }
   if (position < incoming) return { level: position + p, fade: 1, enter: 1, rest: position + 1 };
