@@ -4517,6 +4517,10 @@ msgstr "Đang mở đường hầm"
 msgid "Opening…"
 msgstr "Đang mở…"
 
+#: src/components/home-computer-cards.tsx
+msgid "Opens its tasks."
+msgstr "Mở các tác vụ của máy này"
+
 #: src/components/editor-controls.tsx
 msgid "Opens the keyboard, the editor keys and the composer over this editor. Drag to move."
 msgstr "Mở bàn phím, các phím soạn thảo và ô soạn thảo phía trên trình soạn thảo này. Kéo để di chuyển"
@@ -5812,8 +5816,7 @@ msgstr "Hiển thị logo trên trang chủ"
 msgid "Show Home text"
 msgstr "Hiển thị chữ trên trang chủ"
 
-#: src/components/home-computer-cards.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/components/home-fold-link.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Show less"
@@ -5822,8 +5825,7 @@ msgstr "Hiện ít hơn"
 #: src/components/agent-tool-card.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/diff-rows.tsx
-#: src/components/home-computer-cards.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/components/home-fold-link.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Show more"
 msgstr "Hiện thêm"
@@ -6333,11 +6335,6 @@ msgstr "Tác vụ cho {assignmentLabel}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for a new {0}"
 msgstr "Tác vụ cho một {0} mới"
-
-#. placeholder {0}: server.label
-#: src/components/home-computer-cards.tsx
-msgid "Task history for {0}"
-msgstr "Lịch sử tác vụ của {0}"
 
 #: src/components/home-composer-dock.tsx
 msgid "Task options"

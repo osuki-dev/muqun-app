@@ -72,14 +72,16 @@ function Chip({
         styles.chip,
         {
           borderRadius: profile.chrome.control,
-          borderColor: selected ? theme.colors.primary : theme.colors.border,
-          backgroundColor: background(selected ? theme.colors.primarySubtle : theme.colors.surface),
+          // The same two fills as the launch tiles above: the chosen chip is
+          // solid primary, the rest are surface. A primary tint over the
+          // wallpaper read as a hollow outline.
+          backgroundColor: background(selected ? theme.colors.primary : theme.colors.surface),
         },
       ]}>
       <Text
         variant="caption"
         weight={selected ? 'semibold' : undefined}
-        color={selected ? theme.colors.primary : theme.colors.textMuted}
+        color={selected ? theme.colors.onPrimary : theme.colors.textMuted}
         numberOfLines={1}>
         {label}
       </Text>
@@ -93,7 +95,6 @@ const styles = StyleSheet.create({
     minHeight: 32,
     justifyContent: 'center',
     paddingHorizontal: 12,
-    borderWidth: StyleSheet.hairlineWidth,
     maxWidth: 200,
   },
 });

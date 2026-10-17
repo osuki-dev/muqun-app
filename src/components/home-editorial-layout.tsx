@@ -169,7 +169,6 @@ type EditorialSectionProps = {
   entering?: ReturnType<typeof entryRise>;
   heading?: ReactNode;
   children: ReactNode;
-  borderColor: string;
   textColor: string;
   spacing: {
     md: number;
@@ -182,7 +181,6 @@ function EditorialSection({
   title,
   heading,
   children,
-  borderColor,
   textColor,
   spacing,
   first = false,
@@ -193,7 +191,7 @@ function EditorialSection({
     <Animated.View
       entering={entering}
       style={[styles.section, { marginTop: first ? 0 : spacing.lg, marginBottom: 0 }]}>
-      <View style={[styles.sectionHeader, { borderBottomColor: borderColor }]}>
+      <View style={styles.sectionHeader}>
         {heading ?? (
           <Text variant="heading" color={textColor} accessibilityRole="header" style={plate}>
             {title}
@@ -824,7 +822,6 @@ export function HomeEditorialLayout({
             ) : null}
             {hasProgress ? (
               <EditorialSection
-                borderColor={theme.colors.border}
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
                 title={t`Computers`}
@@ -835,7 +832,6 @@ export function HomeEditorialLayout({
             ) : null}
             {hasSlot(recent) ? (
               <EditorialSection
-                borderColor={theme.colors.border}
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
                 title={t`Recent`}
@@ -847,7 +843,6 @@ export function HomeEditorialLayout({
             ) : null}
             {hasSlot(connections) ? (
               <EditorialSection
-                borderColor={theme.colors.border}
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
                 title={t`Connections`}
@@ -923,7 +918,6 @@ export function HomeEditorialLayout({
             ) : null}
             {hasProgress ? (
               <EditorialSection
-                borderColor={theme.colors.border}
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
                 title={t`Computers`}
@@ -934,7 +928,6 @@ export function HomeEditorialLayout({
             ) : null}
             {hasSlot(recent) ? (
               <EditorialSection
-                borderColor={theme.colors.border}
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
                 title={t`Recent`}
@@ -946,7 +939,6 @@ export function HomeEditorialLayout({
             ) : null}
             {geometry.mode === 'one-column' && hasSlot(connections) ? (
               <EditorialSection
-                borderColor={theme.colors.border}
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
                 title={t`Connections`}
@@ -960,7 +952,6 @@ export function HomeEditorialLayout({
             <View style={[styles.aside, { width: geometry.asideWidth }]}>
               {hasSlot(connections) ? (
                 <EditorialSection
-                  borderColor={theme.colors.border}
                   textColor={theme.colors.text}
                   spacing={theme.spacing}
                   title={t`Connections`}
@@ -1051,7 +1042,6 @@ export function HomeEditorialLayout({
           ) : null}
           {hasProgress ? (
             <EditorialSection
-              borderColor={theme.colors.border}
               textColor={theme.colors.text}
               spacing={theme.spacing}
               title={t`Computers`}
@@ -1062,7 +1052,6 @@ export function HomeEditorialLayout({
           ) : null}
           {hasSlot(recent) ? (
             <EditorialSection
-              borderColor={theme.colors.border}
               textColor={theme.colors.text}
               spacing={theme.spacing}
               first={!hasArtwork && !hasProgress}
@@ -1074,7 +1063,6 @@ export function HomeEditorialLayout({
           ) : null}
           {geometry.mode === 'one-column' && hasSlot(connections) ? (
             <EditorialSection
-              borderColor={theme.colors.border}
               textColor={theme.colors.text}
               spacing={theme.spacing}
               title={t`Connections`}
@@ -1088,7 +1076,6 @@ export function HomeEditorialLayout({
           <View style={[styles.aside, { width: geometry.asideWidth }]}>
             {hasSlot(connections) ? (
               <EditorialSection
-                borderColor={theme.colors.border}
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
                 first
@@ -1245,11 +1232,13 @@ const styles = StyleSheet.create({
   section: {
     minWidth: 0,
   },
+  // No rule under a heading: the title plate and the card below it already
+  // say where a section starts, and a hairline across the wallpaper read as a
+  // third edge between them.
   sectionHeader: {
     minWidth: 0,
     flexDirection: 'row',
     alignItems: 'baseline',
-    borderBottomWidth: StyleSheet.hairlineWidth,
     paddingBottom: 8,
   },
   sectionContent: {

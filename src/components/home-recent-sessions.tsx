@@ -16,6 +16,7 @@ import { useFocusEffect } from 'expo-router';
 import { AgentMark } from '@/components/agent-mark';
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { FontedTextInput } from '@/components/fonted-text-input';
+import { HomeFoldLink } from '@/components/home-fold-link';
 import { PressableScale } from '@/components/pressable-scale';
 import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
@@ -452,16 +453,12 @@ export function HomeRecentSessions({
         </Text>
       ) : null}
       {!searching && shouldShowHomeContinueOverflow(available, collapsedLimit) ? (
-        <PressableScale
+        <HomeFoldLink
           testID="home-recent-sessions-more"
-          accessibilityRole="button"
-          accessibilityState={{ expanded }}
+          expanded={expanded}
           onPress={() => setExpanded(!expanded)}
-          style={[styles.more, linkStyle]}>
-          <Text variant="bodySmall" color={theme.colors.primary}>
-            {expanded ? t`Show less` : t`Show more`}
-          </Text>
-        </PressableScale>
+          style={linkStyle}
+        />
       ) : null}
     </View>
   );
@@ -950,11 +947,4 @@ const styles = StyleSheet.create({
   // Centred on the title's first line (bodySmall's 20pt line box).
   titleMark: { height: 20, justifyContent: 'center' },
   title: { minWidth: 0, flex: 1 },
-  more: {
-    alignSelf: 'flex-start',
-    minHeight: 44,
-    justifyContent: 'center',
-    marginTop: 4,
-    paddingVertical: 8,
-  },
 });
