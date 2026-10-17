@@ -7521,7 +7521,13 @@
       },
       {
         "when": { "env": "TOOL_NAME", "equals": "read" },
-        "steps": [{ "run": "flows/agent-tool-detail.ad#read-preview" }]
+        "steps": [
+          { "run": "flows/agent-tool-detail.ad#read-preview" },
+          {
+            "when": { "env": "PLATFORM", "equals": "android" },
+            "steps": [{ "run": "flows/agent-tool-detail.ad#read-preview-back" }]
+          }
+        ]
       },
       {
         "when": { "env": "TOOL_NAME", "equals": "failure" },
