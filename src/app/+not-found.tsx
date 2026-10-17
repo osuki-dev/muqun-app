@@ -1,9 +1,8 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { SHELL_WALLPAPER_FALLBACK, ThemeArtwork } from '@/components/theme-artwork';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, Button } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
-import { Button } from '@/components/themed-button';
 import { Stack, useRouter } from 'expo-router';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 

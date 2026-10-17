@@ -20,9 +20,8 @@ import {
   type SkRect,
   type SkTypefaceFontProvider,
 } from 'react-native-skia';
-import { useThemeTokens, useToast } from '@osuki-dev/ui';
+import { useThemeTokens, useToast, Button } from '@osuki-dev/ui';
 import { useHasThemeArtwork } from '@/components/theme-artwork';
-import { Button } from '@/components/themed-button';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { ChevronUp } from 'lucide-react-native';
 

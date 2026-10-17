@@ -1,6 +1,6 @@
 import { LegendList } from '@legendapp/list/react-native';
 import { useLingui } from '@lingui/react/macro';
-import { Tag, useThemeTokens } from '@osuki-dev/ui';
+import { Tag, useThemeTokens, Button } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,7 +20,6 @@ import {
 import { PressableScale } from '@/components/pressable-scale';
 import { ListLoadMoreFooter } from '@/components/list-load-more-footer';
 import { ThemeImportProgress } from '@/components/theme-import-progress';
-import { Button } from '@/components/themed-button';
 import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
 import { formatAssetSize } from '@/lib/asset-display';
 import { isDemoActive } from '@/lib/demo-gateway';

@@ -14,7 +14,7 @@ import { useGatewayTunnel } from '@/hooks/use-gateway-tunnel';
  * Firing the picker off against whichever server was selected last would ask
  * the wrong machine what it can run -- and then start an agent on it.
  */
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, Button } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { LogoLoader } from '@/components/logo-loader';
 import { useLingui } from '@lingui/react/macro';
@@ -23,7 +23,6 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { NewTaskSheet } from '@/components/new-task-sheet';
-import { Button } from '@/components/themed-button';
 import { loadSessions, type SpawnedAgent } from '@/lib/gateway-client';
 import { describeGatewayFailure } from '@/lib/network-error';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';

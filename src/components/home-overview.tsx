@@ -12,10 +12,10 @@ import {
   Skeleton,
   Surface,
   SurfaceDecoration,
+  Button,
 } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { Button } from '@/components/themed-button';
 import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import {

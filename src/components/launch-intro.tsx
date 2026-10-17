@@ -1,7 +1,7 @@
 import type { SplashRenderContext } from '@osuki-dev/react-native-splash';
 import { useSplashMirror } from '@osuki-dev/react-native-splash';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, Button } from '@osuki-dev/ui';
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
@@ -25,7 +25,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 import { ReleaseIntroArt } from '@/components/release-intro-art';
 import { Text } from '@/components/text';
-import { Button } from '@/components/themed-button';
 import { useAppActive } from '@/hooks/use-app-active';
 import { markLaunchIntroSeen } from '@/lib/launch-intro-seen';
 import { DURATION, timing } from '@/lib/motion';

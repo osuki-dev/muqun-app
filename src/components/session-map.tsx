@@ -1,7 +1,7 @@
 import { plural } from '@lingui/core/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
-import { useThemeTokens, Skeleton, Input } from '@osuki-dev/ui';
+import { useThemeTokens, Skeleton, Input, Button } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { Bot, Plus, RefreshCw, SquareTerminal } from 'lucide-react-native';
 import {
@@ -24,7 +24,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { agentStatusWord } from '@/i18n/labels';
 import { appChrome } from '@/constants/appearance';
-import { Button } from '@/components/themed-button';
 import { PressableScale } from '@/components/pressable-scale';
 import { RowActionMenu } from '@/components/row-action-menu';
 import {

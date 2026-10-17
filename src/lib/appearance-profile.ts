@@ -206,8 +206,9 @@ export function profileThemeOverride(profile: AppearanceProfile, decorated = fal
         optionRadius: token(profile.chrome.segmentedOption),
       },
     },
-    // The kit's press timings and springs are the app's own (`PRESS`,
-    // `kitButtonPressMotion`); only the resting scale differs by profile.
+    // The kit's press timings (`motion.press.inMs`/`outMs`) are the app's
+    // `PRESS`, and its Button springs are the ones the app's button used; only
+    // the resting scale differs by profile.
     motion: { press: { surface: profile.motion.pressedScale } },
   } satisfies ThemeOverride;
 }

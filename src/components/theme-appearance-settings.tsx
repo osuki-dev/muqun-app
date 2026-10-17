@@ -2,14 +2,13 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useLingui } from '@lingui/react/macro';
 
 import { resolveHomeIdentity } from '@/theme/resolve';
-import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeMode, useThemeTokens, Button } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useState } from 'react';
 import { View } from 'react-native';
 
 import { OpacitySlider } from '@/components/opacity-slider';
 import { SettingsSegmented } from '@/components/settings-segmented';
-import { Button } from '@/components/themed-button';
 import { Toggle } from '@/components/toggle';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { terminalBackgroundOpacity } from '@/terminal/background';
