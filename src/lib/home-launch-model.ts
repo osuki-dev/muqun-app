@@ -17,9 +17,6 @@
 import type { HomeAgentEntry, MirroredServerDiscovery } from '@/lib/agent-discovery';
 import { agentReadiness, findAgent, normalizeAgentId } from '@/lib/agent-discovery';
 
-/** More agent tiles than this collapse into one "More agents" tile. */
-export const MAX_AGENT_TILES = 3;
-
 /** What an agent tile says under its name; state is never colour alone. */
 export type LaunchAgentCaption =
   | 'new-session'
@@ -59,7 +56,6 @@ export type LaunchEntry =
       /** The old testID this tile keeps answering to, for the e2e manifest. */
       aliasTestID?: string;
     })
-  | (LaunchEntryBase & { kind: 'more-agents'; layout: 'tile'; hidden: number })
   | (LaunchEntryBase & { kind: 'sessions'; layout: 'compact'; aliasTestID: string })
   | (LaunchEntryBase & { kind: 'terminal'; layout: 'compact' })
   | (LaunchEntryBase & {
@@ -81,11 +77,6 @@ export type LaunchModelInput = {
   discovery?: MirroredServerDiscovery | null;
   /** The agent the gateway last created a session on. */
   lastUsedAgentId?: string;
-  /**
-   * Agent tiles shown before the rest collapse into "More agents". The Pad
-   * grid has a row of its own for agents and shows every one.
-   */
-  maxAgentTiles?: number;
 };
 
 /** The agent that owned Home before agents were listed. */
@@ -101,8 +92,7 @@ export function launchAgentTestID(agentId: string): string {
  * agent switched off (a choice made on the host, not a fault). One that still
  * needs setup keeps its tile, which opens the guide, in the gateway's own order with the last-used agent first.
  *
- * The "More agents" sheet reads the same list, so the two can never disagree
- * about what an agent is called or whether it is ready.
+ * Every offered agent gets a tile; no separate overflow picker hides entries.
  */
 export function projectLaunchAgents(
   discovery: MirroredServerDiscovery | null | undefined,
@@ -204,20 +194,19 @@ function fallbackModel(): LaunchModel {
 /**
  * The launch row for one gateway.
  *
- * In order: one primary tile per offered agent (the first primary-filled, at
- * most three, the rest behind "More agents"); Sessions; Terminal and New
+ * In order: one tile per offered agent (the first primary-filled, with
+ * full visibility); Sessions; Terminal and New
  * terminal; SSH. Markers are numbered after the row is known.
  */
 export function buildLaunchModel(input: LaunchModelInput = {}): LaunchModel {
-  const { discovery, lastUsedAgentId, maxAgentTiles = MAX_AGENT_TILES } = input;
+  const { discovery, lastUsedAgentId } = input;
   const plane = discovery?.agents;
   // Without an agents plane, or with one that names nobody, discovery has
   // nothing to project and the fixed row stands.
   if (!discovery || !plane || plane.agents.length === 0) return fallbackModel();
 
   const agents = projectLaunchAgents(discovery, lastUsedAgentId);
-  const shown = agents.length > maxAgentTiles ? agents.slice(0, maxAgentTiles) : agents;
-  const drafts: Draft[] = shown.map((agent, index) => ({
+  const drafts: Draft[] = agents.map((agent, index) => ({
     key: `agent:${agent.id}`,
     kind: 'agent',
     layout: 'tile',
@@ -229,15 +218,6 @@ export function buildLaunchModel(input: LaunchModelInput = {}): LaunchModel {
     name: agent.name,
     caption: launchAgentCaption(agent),
   }));
-  if (agents.length > maxAgentTiles) {
-    drafts.push({
-      key: 'more-agents',
-      kind: 'more-agents',
-      layout: 'tile',
-      testID: 'home-more-agents',
-      hidden: agents.length - maxAgentTiles,
-    });
-  }
   // A session list with no agent behind it would open an empty screen.
   if (agents.length > 0) drafts.push(sessionsDraft());
   // A gateway that says its terminal plane is unsupported has no terminal to
@@ -254,6 +234,7 @@ const KNOWN_AGENT_NAMES: Readonly<Record<string, string>> = {
   opencode: 'OpenCode',
   deepseek: 'DeepSeek',
   t3: 'T3 Code',
+  codex: 'Codex',
 };
 
 /**
@@ -289,26 +270,25 @@ export function groupLaunchCells(entries: readonly LaunchEntry[]): LaunchCell[] 
   return cells;
 }
 
-/** Under this measured width the phone row scrolls sideways; above it, it wraps. */
-export const LAUNCH_SCROLL_MAX_WIDTH = 560;
-/** The Pad grid takes a fourth column from this content width. */
-export const LAUNCH_GRID_FOUR_COLUMN_MIN_WIDTH = 640;
 export const LAUNCH_GRID_GAP = 8;
 
-export type LaunchRowLayout =
-  | { mode: 'scroll' }
-  | { mode: 'wrap' }
-  | {
-      mode: 'grid';
-      /** 3 or 4, from the content width. */
-      columns: number;
-      /** Agents share a row of their own: as many columns as there are agents, up to `columns`. */
-      agentColumns: number;
-      agentWidth: number;
-      /** The four utilities sit in one row of four, or two rows of two. */
-      utilityColumns: number;
-      utilityWidth: number;
-    };
+/**
+ * Phone mosaic only. The Pad grid keeps `LAUNCH_GRID_GAP`; these two chips
+ * share a column, so the same 8-point gap reads as a slot of beach between
+ * them and again beside the next column.
+ */
+export const LAUNCH_MOSAIC_GAP = 3;
+
+/** Wide enough for an icon and a name; a landscape phone must not stretch the chip. */
+export const LAUNCH_MOSAIC_COLUMN_MIN = 126;
+export const LAUNCH_MOSAIC_COLUMN_MAX = 136;
+
+export type LaunchMosaicCell = { indices: number[]; width: number; featured: boolean };
+export type LaunchRowLayout = {
+  mode: 'scroll' | 'grid';
+  agentRows: LaunchMosaicCell[][];
+  utilityWidth: number;
+};
 
 /**
  * The style that pins a tile to one grid cell.
@@ -329,36 +309,65 @@ function columnWidth(width: number, columns: number): number {
 }
 
 /**
- * How the launch row is laid out.
- *
- * The phone keeps its row exactly as it was: a sideways scroller under 560pt
- * and a wrapping row above it. The Pad's embedded Home asks for `grid` and
- * never scrolls sideways, however many agents the gateway lists: agents take
- * the first row (or rows), and Sessions, Terminal, New terminal and SSH sit
- * under them as compact tiles.
+ * Phones keep a horizontal strip, with consecutive agent pairs sharing a column.
+ * Pad callers opt into a grid; four tiles fit once each has at least 136 points.
+ * Width alone never turns a landscape phone into a tall static grid.
  */
 export function launchRowLayout({
   width,
-  grid,
   agentCount,
   utilityCount,
+  grid = false,
 }: {
   width: number;
-  grid: boolean;
   agentCount: number;
   utilityCount: number;
+  grid?: boolean;
 }): LaunchRowLayout {
   const measured = Number.isFinite(width) ? Math.max(0, width) : 0;
-  if (!grid) return measured < LAUNCH_SCROLL_MAX_WIDTH ? { mode: 'scroll' } : { mode: 'wrap' };
-  const columns = measured >= LAUNCH_GRID_FOUR_COLUMN_MIN_WIDTH ? 4 : 3;
-  const agentColumns = Math.max(1, Math.min(agentCount, columns));
-  const utilityColumns = Math.max(1, Math.min(utilityCount, columns === 4 ? 4 : 2));
+  const agentRows: LaunchMosaicCell[][] = [];
+  if (!grid) {
+    // A partial next column makes the horizontal continuation visible. The
+    // fraction stays under half so the next pair is obviously in view, and the
+    // cap keeps a landscape phone from stretching a two-word chip.
+    const width =
+      measured > 0
+        ? Math.min(
+            measured,
+            Math.max(
+              LAUNCH_MOSAIC_COLUMN_MIN,
+              Math.min(LAUNCH_MOSAIC_COLUMN_MAX, Math.floor(measured * 0.46))
+            )
+          )
+        : 0;
+    const cells: LaunchMosaicCell[] = [];
+    for (let index = 0; index < agentCount; index += 2) {
+      const paired = index + 1 < agentCount;
+      cells.push({ indices: paired ? [index, index + 1] : [index], width, featured: !paired });
+    }
+    if (cells.length) agentRows.push(cells);
+    return { mode: 'scroll', agentRows, utilityWidth: width };
+  }
+
+  const maxColumns = Math.max(
+    1,
+    Math.min(4, Math.floor((measured + LAUNCH_GRID_GAP) / (136 + LAUNCH_GRID_GAP)))
+  );
+  const columns = Math.min(agentCount, maxColumns);
+  for (let index = 0; index < agentCount; index += columns) {
+    const cells: LaunchMosaicCell[] = [];
+    for (let offset = 0; offset < columns && index + offset < agentCount; offset++) {
+      cells.push({
+        indices: [index + offset],
+        width: columnWidth(measured, columns),
+        featured: false,
+      });
+    }
+    agentRows.push(cells);
+  }
   return {
     mode: 'grid',
-    columns,
-    agentColumns,
-    agentWidth: columnWidth(measured, agentColumns),
-    utilityColumns,
-    utilityWidth: columnWidth(measured, utilityColumns),
+    agentRows,
+    utilityWidth: columnWidth(measured, Math.max(1, Math.min(utilityCount, maxColumns))),
   };
 }

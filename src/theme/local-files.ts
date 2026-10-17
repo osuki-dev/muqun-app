@@ -3,6 +3,7 @@ import { Directory, File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import QuickCrypto from 'react-native-quick-crypto';
 
+import { protectCacheDirectory } from '@/lib/cache-cleanup';
 import { parseThemeManifest, THEME_LIMITS, type ThemeManifest } from '@/theme/schema';
 import { unpackTheme } from '@/theme/package';
 import { prepareThemeAssets, type PreparedThemeAssets } from '@/theme/assets';
@@ -19,7 +20,7 @@ const shareFile = createThemeFileSharer({
     try {
       const file = new File(directory, name);
       file.create();
-      file.write(data);
+      file.writeSync(data);
       return { uri: file.uri, dispose: () => directory.delete() };
     } catch (error) {
       try {
@@ -52,6 +53,7 @@ export type ThemeFileStage =
 export async function pickThemeManifest(
   onStage?: (stage: ThemeFileStage) => void
 ): Promise<ThemeFilePreview | null> {
+  await protectCacheDirectory('DocumentPicker');
   const result = await DocumentPicker.getDocumentAsync({
     // Providers do not consistently classify our custom extension. Let the user
     // select it, then enforce byte limits and strict JSON/ZIP validation below.
@@ -119,6 +121,7 @@ export async function readThemeFile(
    */
   onStage?: (stage: ThemeFileStage) => void
 ): Promise<ThemeFilePreview> {
+  await protectCacheDirectory('DocumentPicker');
   const file = new File(uri);
   try {
     // A name is a hint and the bytes are the fact. Android hands over a

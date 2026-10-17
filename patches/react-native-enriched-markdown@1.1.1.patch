@@ -20,6 +20,20 @@ iOS measures the attributed string it draws, so it needs no change.
 
 Remove this patch when upstream makes the two spans order-independent.
 
+Android container lifecycle: shutting down the render executor does not cancel
+results already queued on the main Handler, nor work which ignores interruption
+and posts after shutdown. A dropped EnrichedMarkdown could still apply segments,
+request image remeasurement through a stale Fabric StateWrapper, or submit work
+to its shutdown executor. Mark the final view drop as disposed, invalidate render
+ids, clear queued callbacks and the state wrapper, and ignore subsequent render,
+prop-commit and image-layout work. Do not gate on window attachment: legitimate
+rendering before first attachment and temporary detachment must still work.
+
+Remove the lifecycle hunks and regression tests once upstream protects the
+container's permanent teardown against these late callbacks. This is an
+independently verified native lifecycle defect, not proof that it caused a
+particular user-reported file-preview close crash.
+
 diff --git a/android/src/main/java/com/swmansion/enriched/markdown/spans/LineHeightSpan.kt b/android/src/main/java/com/swmansion/enriched/markdown/spans/LineHeightSpan.kt
 --- a/android/src/main/java/com/swmansion/enriched/markdown/spans/LineHeightSpan.kt
 +++ b/android/src/main/java/com/swmansion/enriched/markdown/spans/LineHeightSpan.kt
@@ -42,3 +56,173 @@ diff --git a/android/src/main/java/com/swmansion/enriched/markdown/spans/LineHei
  
      val leading = lineHeight - ((-fm.ascent) + fm.descent)
      if (leading <= 0) return
+diff --git a/android/src/main/java/com/swmansion/enriched/markdown/EnrichedMarkdown.kt b/android/src/main/java/com/swmansion/enriched/markdown/EnrichedMarkdown.kt
+--- a/android/src/main/java/com/swmansion/enriched/markdown/EnrichedMarkdown.kt
++++ b/android/src/main/java/com/swmansion/enriched/markdown/EnrichedMarkdown.kt
+@@ -57,6 +57,8 @@
+   private val videoContainerClass: Class<*>? by lazy { SegmentViewCreators.videoContainerClass() }
+ 
+   private var currentRenderId = 0L
++  // Native view drop is permanent; temporary detachment is not disposal.
++  private var isDisposed = false
+   private val dirtyFlags = EnumSet.noneOf(DirtyFlag::class.java)
+   var streamingAnimation: Boolean = false
+ 
+@@ -166,6 +168,7 @@
+   }
+ 
+   fun commitProps() {
++    if (isDisposed) return
+     MeasurementStore.updateStreamingTableMode(id, tableStreamingMode)
+     MeasurementStore.updateStreamingCodeBlockMode(id, codeBlockStreamingMode)
+     MeasurementStore.updateFontScalingSettings(id, allowFontScaling, maxFontSizeMultiplier)
+@@ -366,6 +369,7 @@
+   }
+ 
+   private fun scheduleRender() {
++    if (isDisposed) return
+     val style = markdownStyle ?: return
+     val markdown = currentMarkdown.takeIf { it.isNotEmpty() } ?: return
+     val isStreaming = streamingAnimation
+@@ -616,7 +620,7 @@
+     action: () -> Unit,
+   ) {
+     mainHandler.post {
+-      if (renderId == currentRenderId) action()
++      if (!isDisposed && renderId == currentRenderId) action()
+     }
+   }
+ 
+@@ -631,6 +635,7 @@
+   }
+ 
+   fun onImageLayoutChanged() {
++    if (isDisposed) return
+     if (width > 0) {
+       layoutSegments()
+       requestLayout()
+@@ -643,7 +648,11 @@
+   }
+ 
+   fun cleanup() {
++    isDisposed = true
++    currentRenderId++
+     executor.shutdownNow()
++    mainHandler.removeCallbacksAndMessages(null)
++    stateWrapper = null
+   }
+ 
+   companion object {
+diff --git a/android/src/test/java/com/swmansion/enriched/markdown/EnrichedMarkdownLifecycleTest.kt b/android/src/test/java/com/swmansion/enriched/markdown/EnrichedMarkdownLifecycleTest.kt
+new file mode 100644
+--- /dev/null
++++ b/android/src/test/java/com/swmansion/enriched/markdown/EnrichedMarkdownLifecycleTest.kt
+@@ -0,0 +1,108 @@
++package com.swmansion.enriched.markdown
++
++import android.os.Looper
++import com.facebook.react.bridge.JavaOnlyMap
++import com.facebook.react.uimanager.StateWrapper
++import java.lang.reflect.Proxy
++import java.util.concurrent.CountDownLatch
++import java.util.concurrent.TimeUnit
++import org.junit.Assert.assertEquals
++import org.junit.Assert.assertFalse
++import org.junit.Assert.assertNull
++import org.junit.Assert.assertTrue
++import org.junit.Test
++import org.junit.runner.RunWith
++import org.robolectric.RobolectricTestRunner
++import org.robolectric.RuntimeEnvironment
++import org.robolectric.Shadows.shadowOf
++import org.robolectric.annotation.Config
++import org.robolectric.annotation.LooperMode
++
++@RunWith(RobolectricTestRunner::class)
++@Config(manifest = Config.NONE, sdk = [28])
++@LooperMode(LooperMode.Mode.PAUSED)
++class EnrichedMarkdownLifecycleTest {
++  // Exercise the actual native view and its actual Handler, without invoking the
++  // ARM-only markdown parser. Reflection only opens the render-completion seam.
++  private fun postResult(view: EnrichedMarkdown, renderId: Long = 0L, action: () -> Unit) {
++    val method = EnrichedMarkdown::class.java.getDeclaredMethod(
++      "postToMain", Long::class.javaPrimitiveType, Function0::class.java,
++    )
++    method.isAccessible = true
++    method.invoke(view, renderId, action)
++  }
++
++  @Test
++  fun liveResultRunsBeforeFirstAttachmentButDroppedQueuedResultDoesNot() {
++    val view = EnrichedMarkdown(RuntimeEnvironment.getApplication())
++    var applied = 0
++    assertFalse(view.isAttachedToWindow)
++    postResult(view) { applied++ }
++    shadowOf(Looper.getMainLooper()).idle()
++    assertEquals(1, applied)
++
++    postResult(view) { applied++ }
++    view.cleanup()
++    shadowOf(Looper.getMainLooper()).idle()
++    assertEquals(1, applied)
++  }
++
++  @Test
++  fun workerPostingAfterCleanupCannotApplyItsResult() {
++    val view = EnrichedMarkdown(RuntimeEnvironment.getApplication())
++    val releaseWorker = CountDownLatch(1)
++    val posted = CountDownLatch(1)
++    var applied = false
++    val worker = Thread {
++      check(releaseWorker.await(5, TimeUnit.SECONDS))
++      postResult(view) { applied = true }
++      posted.countDown()
++    }
++    worker.start()
++    view.cleanup()
++    // Deliberately post after cleanup's queue removal, as non-interruptible work can.
++    releaseWorker.countDown()
++    assertTrue(posted.await(5, TimeUnit.SECONDS))
++    worker.join()
++    shadowOf(Looper.getMainLooper()).idle()
++    assertFalse(applied)
++  }
++
++  @Test
++  fun cleanupReleasesStateAndIgnoresLateImageLayout() {
++    val view = EnrichedMarkdown(RuntimeEnvironment.getApplication())
++    view.layout(0, 0, 100, 100)
++    view.onImageLayoutChanged()
++    assertTrue(view.isLayoutRequested)
++    view.layout(0, 0, 100, 100)
++    assertFalse(view.isLayoutRequested)
++    view.stateWrapper = Proxy.newProxyInstance(
++      StateWrapper::class.java.classLoader,
++      arrayOf(StateWrapper::class.java),
++    ) { _, method, _ ->
++      if (method.name == "toString") "TestStateWrapper" else error("Unexpected Fabric state call")
++    } as StateWrapper
++    view.cleanup()
++    assertNull(view.stateWrapper)
++    view.onImageLayoutChanged()
++    assertFalse(view.isLayoutRequested)
++  }
++
++  @Test
++  fun cleanupRejectsNoFurtherRenderSubmissionsOrPropBookkeeping() {
++    val view = EnrichedMarkdown(RuntimeEnvironment.getApplication())
++    view.id = 91327
++    // StyleConfig lazily parses its contents. No native parser should run after drop.
++    view.setMarkdownStyle(JavaOnlyMap())
++    view.setMarkdownContent("Late update")
++    view.cleanup()
++    view.cleanup() // Teardown is idempotent.
++    view.commitProps()
++    val settings = MeasurementStore::class.java.getDeclaredField("fontScalingSettings")
++    settings.isAccessible = true
++    assertFalse((settings.get(MeasurementStore) as Map<*, *>).containsKey(view.id))
++    val schedule = EnrichedMarkdown::class.java.getDeclaredMethod("scheduleRender")
++    schedule.isAccessible = true
++    schedule.invoke(view) // Previously throws RejectedExecutionException synchronously.
++  }
++}

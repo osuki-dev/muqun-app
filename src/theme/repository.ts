@@ -1,6 +1,7 @@
 import { isThemePackId, type ThemePackId } from '@/constants/theme-packs';
 import { auditThemeContrast } from '@/theme/contrast';
 import { cloneThemeData } from '@/theme/clone';
+import { compareThemeVersions } from '@/theme/version';
 import { clampThemeOpacity } from '@/theme/opacity-policy';
 import type { HomeArtworkPreference } from '@/theme/home-artwork';
 import { compileTheme, type ResolvedCustomTheme } from '@/theme/resolve';
@@ -234,10 +235,17 @@ export class ThemeRepository {
         }
       }
       const previous = readableSelection(raw.previous, themes);
+      // A stored `null` is the reader's own choice: the built-in theme, after
+      // `resetToDefault`. Only a selection that is no longer readable -- its
+      // theme removed, or failing the contrast audit -- falls back to the one
+      // before it. Treating the explicit null as unreadable put the previous
+      // theme back on every launch, so choosing the built-in one never lasted.
+      const stored =
+        raw.selection === null ? null : (readableSelection(raw.selection, themes) ?? previous);
       this.state = {
         version: 1,
         themes,
-        selection: readableSelection(raw.selection, themes) ?? previous,
+        selection: stored,
         previous,
       };
       this.compiled.clear();
@@ -279,6 +287,9 @@ export class ThemeRepository {
         ...this.state,
         themes: this.state.themes.map((theme) => (theme.id === existing.id ? replaced : theme)),
       });
+      // The installation keeps its id, but its compiled appearance is now stale.
+      // Invalidate only after persistence succeeds so a failed import changes nothing.
+      this.compiled.delete(existing.id);
       return cloneThemeData(replaced);
     }
     if (this.state.themes.length >= MAX_THEMES)
@@ -376,7 +387,7 @@ export class ThemeRepository {
     return this.snapshot();
   }
 
-  /** Back to the implicit default: the built-in theme while nothing else is installed. */
+  /** Back to the implicit default without removing the reader's installed themes. */
   resetToDefault(): ThemeLibrary {
     if (this.state.selection === null) return this.snapshot();
     this.commit({ ...this.state, previous: this.state.selection, selection: null });
@@ -418,17 +429,37 @@ export class ThemeRepository {
    * The installation the app is wearing.
    *
    * The owner's rule: the built-in theme shows exactly while the reader has
-   * chosen nothing of their own -- no installed theme, and no colour pack
-   * picked (the selection is still the implicit default). A picked pack or an
-   * installed theme wins; removing every theme with nothing picked, or
-   * `resetToDefault`, brings the built-in one back. It is not in `themes`, so it
+   * chosen nothing of their own (the selection is still the implicit default).
+   * A picked colour pack or custom theme wins; installing a theme without
+   * applying it keeps the current choice. `resetToDefault` brings the built-in
+   * one back while preserving installed themes. It is not in `themes`, so it
    * is never counted, listed under the reader's own, or removable.
    */
   activeInstalled(): InstalledTheme | null {
-    if (this.state.themes.length === 0 && this.state.selection === null) return this.builtin;
+    if (this.state.selection === null) return this.builtin;
     if (this.state.selection?.kind !== 'custom') return null;
     const id = this.state.selection.id;
-    return this.state.themes.find((theme) => theme.id === id) ?? null;
+    const theme = this.state.themes.find((theme) => theme.id === id);
+    return theme ? this.newestCopy(theme) : null;
+  }
+
+  /**
+   * The binary's copy of a pack the reader also installed, when the binary's
+   * is newer.
+   *
+   * The built-in pack was on the gallery before it was in the app, so a
+   * library can hold an older copy under the same author id -- and that copy,
+   * not the bundled one, is what the reader is wearing. The newer manifest and
+   * its files win at read time. The stored record is not rewritten: it keeps
+   * its installation id, the reader's appearance preferences and its own
+   * files, so a later install from the gallery still replaces it in place,
+   * and a copy newer than the binary's stays the reader's.
+   */
+  private newestCopy(theme: InstalledTheme): InstalledTheme {
+    const builtin = this.builtin;
+    if (!builtin || theme.manifest.id !== builtin.manifest.id) return theme;
+    if (compareThemeVersions(builtin.manifest.version, theme.manifest.version) <= 0) return theme;
+    return { ...theme, manifest: builtin.manifest, assets: builtin.assets };
   }
 
   active(): ResolvedCustomTheme | null {

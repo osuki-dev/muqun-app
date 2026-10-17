@@ -349,6 +349,7 @@ function uploads() {
   const calls: GatewayRecord[] = [];
   const cleanups: (() => void)[] = [];
   let blur: (() => void) | undefined;
+  let voiceRequest: object | null = null;
   const source = declaration('src/hooks/use-attachment-uploads.ts', 'useAttachmentUploads');
   const hook = runInNewContext(transpile(`${source}\nuseAttachmentUploads(record)`), {
     ...queue,
@@ -375,6 +376,10 @@ function uploads() {
         return () => {};
       },
     },
+    useVoiceInput: { getState: () => ({ request: voiceRequest }) },
+    // No discovery in the fixture: every file is held to the app's own cap.
+    useAgents: (select: (state: { index: { servers: Record<string, never> } }) => unknown) =>
+      select({ index: { servers: {} } }),
     compressPickedImage: () => compression.promise,
     uploadAttachment: (destination: GatewayRecord) => {
       calls.push(destination);
@@ -389,6 +394,9 @@ function uploads() {
     upload,
     remove: () => hook.removeAttachment(uploadingId),
     blur: () => blur?.(),
+    setVoiceActive: (active: boolean) => {
+      voiceRequest = active ? {} : null;
+    },
     unmount: () => cleanups.forEach((cleanup) => cleanup()),
     switchRecord: (next: GatewayRecord) => {
       const previous = record;
@@ -402,6 +410,34 @@ const file: queue.PickedFile = {
   name: 'fixture.webp',
   mime: 'image/webp',
 };
+
+test('opening dictation preserves staged attachments until ordinary navigation', async () => {
+  const h = uploads();
+  h.hook.addFiles([file]);
+  h.setVoiceActive(true);
+  h.blur();
+  h.compression.resolve(file);
+  await turn();
+  expect(h.calls).toEqual([a]);
+  h.upload.resolve({ path: '/a/private-image.webp' });
+  await turn();
+  expect(await h.hook.awaitUploads()).toEqual(['/a/private-image.webp']);
+  h.setVoiceActive(false);
+  h.blur();
+  expect(await h.hook.awaitUploads()).toEqual([]);
+});
+
+test('dictation never preserves attachments across a server change', async () => {
+  const h = uploads();
+  h.hook.addFiles([file]);
+  h.setVoiceActive(true);
+  h.blur();
+  h.switchRecord(b);
+  h.compression.resolve(file);
+  await turn();
+  expect(h.calls).toEqual([]);
+  expect(await h.hook.awaitUploads()).toEqual([]);
+});
 
 test('actual hook drops picker results after navigation or A/B/A without unmount', async () => {
   for (const invalidate of ['blur', 'switch'] as const) {

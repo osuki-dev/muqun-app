@@ -2,13 +2,13 @@ import {
   createElement,
   memo,
   useEffect,
+  useRef,
   useState,
   type ComponentType,
   type ReactNode,
 } from 'react';
-import { View, StyleSheet, useWindowDimensions } from 'react-native';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { View, StyleSheet, type ViewInstance } from 'react-native';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import {
   AlertCircle,
@@ -32,12 +32,10 @@ import {
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { PressableScale } from '@/components/pressable-scale';
 import { EngineFailureText } from '@/components/engine-failure-text';
 import { ThinkingIndicator } from '@/components/agent-thinking-indicator';
 import { usePaneChatColors } from '@/components/pane-chat-blocks';
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
-import { PAD_LAYOUT_MIN_WIDTH } from '@/lib/responsive-layout';
 import { TRANSCRIPT_GRID } from '@/constants/transcript-grid';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { fadeIn, timing } from '@/lib/motion';
@@ -45,6 +43,7 @@ import type { ToolCallState } from '@/lib/agent-protocol';
 import type { ToolKind } from '@/lib/agent-tool-output';
 import { formatToolDuration } from '@/lib/tool-call-detail';
 import { AGENT_TYPE } from '@/constants/agent-type';
+import { withAlpha } from '@/lib/color';
 
 /**
  * The shell every tool call is drawn in.
@@ -97,17 +96,33 @@ export interface EmbeddedTerminalProps {
   chips?: ReactNode;
   /** Buttons: run in background, open the child session. */
   actions?: ReactNode;
-  /** Drawn above the fold, whether or not the card is expanded. */
+  /** Rich output or streaming arguments, mounted only after disclosure. */
   preview?: ReactNode;
   /** Drawn when the card is expanded. */
   children?: ReactNode;
   defaultExpanded?: boolean;
+  /** Only explicit opening creates an intent; body layout completes it once. */
+  onExpand?: (header: ViewInstance) => ToolExpansionIntent | undefined;
+  /** A delegated task keeps its real child state visible; identity and actions expand. */
+  taskSummary?: {
+    title: string;
+    identity: string;
+    role?: string;
+    status: ReactNode;
+    statusLabel: string;
+    busy: boolean;
+  };
   /**
-   * The whole call in its own sheet. When given, the header opens it and the
-   * chevron alone expands the card in place.
+   * The whole call in its own sheet, offered inside the expanded content.
+   * The header always toggles the inline body.
    */
   onOpenDetail?: () => void;
   testID?: string;
+}
+
+export interface ToolExpansionIntent {
+  layout: () => void;
+  cancel: () => void;
 }
 
 /** Whether the tool is still doing something, in any of the three ways it can be. */
@@ -130,6 +145,8 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
   preview,
   children,
   defaultExpanded = false,
+  onExpand,
+  taskSummary,
   onOpenDetail,
   testID,
 }: EmbeddedTerminalProps) {
@@ -139,9 +156,10 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
   const { t } = useLingui();
   const raised = useTranscriptPlate();
   const mono = useMonoFontFamily();
-  const { width } = useWindowDimensions();
-  const compact = width < PAD_LAYOUT_MIN_WIDTH;
   const [expanded, setExpanded] = useState(defaultExpanded);
+  const headerRef = useRef<ViewInstance>(null);
+  const expansionIntent = useRef<ToolExpansionIntent | undefined>(undefined);
+  useEffect(() => () => expansionIntent.current?.cancel(), []);
 
   const pending = isToolPending(status);
   const failed = status === 'failed';
@@ -156,184 +174,218 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
   // degrees, so an open card pointed left.
   const chevronProgress = useSharedValue(expanded ? 1 : 0);
   useEffect(() => {
-    chevronProgress.value = withTiming(expanded ? 1 : 0, timing());
+    chevronProgress.set(withTiming(expanded ? 1 : 0, timing()));
   }, [expanded, chevronProgress]);
   const chevronStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${chevronProgress.value * 180}deg` }],
+    transform: [{ rotate: `${chevronProgress.get() * 180}deg` }],
   }));
 
-  const hasBody = Boolean(children);
-
+  const hasBody =
+    Boolean(children || actions || title || caption || error || chips || preview || onOpenDetail) ||
+    Boolean(taskSummary && (taskSummary.title || taskSummary.identity || actions)) ||
+    Boolean(truncated || background);
+  const headerActionLabel = expanded ? t`Collapse tool call` : t`Expand tool call`;
+  const headerBusy = taskSummary ? taskSummary.busy : pending;
+  const headerCopy =
+    !taskSummary && (title || caption) ? (
+      <>
+        {title ? (
+          <Text
+            variant="caption"
+            color={theme.colors.textMuted}
+            style={[styles.target, { fontFamily: mono }]}>
+            {title}
+          </Text>
+        ) : null}
+        {caption ? (
+          <Text
+            variant="caption"
+            color={theme.colors.textSubtle}
+            style={[styles.caption, { fontFamily: mono }]}>
+            {caption}
+          </Text>
+        ) : null}
+      </>
+    ) : null;
+  const detailAction = onOpenDetail ? (
+    <PressableScale
+      testID="agent-tool-open-detail"
+      accessibilityRole="button"
+      accessibilityLabel={t`Open tool call details`}
+      onPress={onOpenDetail}
+      style={styles.detailAction}>
+      <Text variant="caption" color={colors.accent} style={styles.detailActionText}>
+        {t`Details`}
+      </Text>
+    </PressableScale>
+  ) : null;
+  const taskIdentity =
+    taskSummary?.identity && taskSummary.identity !== taskSummary.title ? taskSummary.identity : '';
+  const hasMetadata = Boolean(
+    headerCopy ||
+    chips ||
+    truncated ||
+    (taskSummary && (taskIdentity || taskSummary.role || background || actions || detailAction))
+  );
   return (
     <Animated.View
-      style={[styles.container, raised]}
+      style={styles.container}
       testID={testID}
       // A screen reader hears the call, not the engine's id for it.
       accessibilityLabel={[title, caption].filter(Boolean).join(' ') || undefined}>
       {/* Keep controls on the first line; narrow-screen paths get the full card width. */}
       <PressableScale
-        testID={onOpenDetail ? 'agent-tool-open-detail' : 'agent-tool-toggle'}
+        testID="agent-tool-toggle"
         accessibilityRole="button"
-        accessibilityState={onOpenDetail ? { busy: pending } : { expanded, busy: pending }}
-        accessibilityLabel={
-          onOpenDetail
-            ? t`Open tool call details`
-            : expanded
-              ? t`Collapse tool call`
-              : t`Expand tool call`
-        }
-        disabled={!hasBody && !onOpenDetail}
-        onPress={onOpenDetail ?? (() => setExpanded((prev) => !prev))}
+        accessibilityState={{ expanded, busy: headerBusy }}
+        accessibilityLabel={[
+          taskSummary ? taskSummary.title : toolName,
+          taskSummary
+            ? taskSummary.statusLabel
+            : durationMs !== undefined
+              ? formatToolDuration(durationMs)
+              : '',
+          headerActionLabel,
+        ]
+          .filter(Boolean)
+          .join(' · ')}
+        disabled={!hasBody}
+        onPress={() => {
+          expansionIntent.current?.cancel();
+          expansionIntent.current =
+            !expanded && headerRef.current ? onExpand?.(headerRef.current) : undefined;
+          setExpanded(!expanded);
+        }}
         style={styles.header}>
-        <View style={styles.headerRow}>
-          <View style={styles.headerIcon}>
-            {createElement(TOOL_ICONS[kind], { size: 13, color: theme.colors.textMuted })}
-          </View>
-          <View style={styles.headerText}>
-            <View style={styles.headerLine}>
+        <View
+          ref={headerRef}
+          collapsable={false}
+          style={[
+            styles.headerPill,
+            {
+              borderRadius: profile.chrome.control,
+              backgroundColor: withAlpha(theme.colors.primary, 0.08),
+            },
+          ]}>
+          {taskSummary ? (
+            <View style={styles.headerRow}>
+              <View style={styles.headerIcon}>
+                <GitFork size={13} color={theme.colors.textMuted} />
+              </View>
               <Text
                 variant="caption"
-                weight="semibold"
-                color={theme.colors.text}
+                weight="medium"
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={styles.taskTitle}>
+                {taskSummary.title}
+              </Text>
+              <View style={styles.taskStatus}>{taskSummary.status}</View>
+              {hasBody ? (
+                <Animated.View style={chevronStyle}>
+                  <ChevronDown size={12} color={theme.colors.textMuted} />
+                </Animated.View>
+              ) : null}
+            </View>
+          ) : (
+            <View style={styles.headerRow}>
+              <View style={styles.headerIcon}>
+                {createElement(TOOL_ICONS[kind], { size: 13, color: theme.colors.textMuted })}
+              </View>
+              <Text
+                variant="caption"
+                weight="medium"
+                numberOfLines={1}
+                color={theme.colors.textMuted}
                 style={styles.toolName}>
                 {toolName}
               </Text>
-              {!compact && title ? (
-                <Text
-                  variant="caption"
-                  numberOfLines={1}
-                  // A long file name keeps its start and its extension; the
-                  // caption under it carries the folder rather than the name
-                  // again.
-                  ellipsizeMode="middle"
-                  color={theme.colors.textMuted}
-                  style={[styles.target, { fontFamily: mono }]}>
-                  {title}
+              {/* A soft pulse rather than a spinner: a tool that is thinking reads
+            the same way the assistant does while it thinks. */}
+              {pending ? (
+                <ThinkingIndicator size={12} color={statusColor} />
+              ) : failed ? (
+                <AlertCircle size={12} color={statusColor} />
+              ) : null}
+              {durationMs !== undefined ? (
+                <Text variant="caption" color={theme.colors.textSubtle} style={styles.duration}>
+                  {formatToolDuration(durationMs)}
                 </Text>
               ) : null}
+              {background ? (
+                <Text variant="caption" color={colors.accent} style={styles.badgeText}>
+                  {t`Background`}
+                </Text>
+              ) : null}
+              {hasBody ? (
+                <Animated.View style={chevronStyle}>
+                  <ChevronDown size={12} color={theme.colors.textMuted} />
+                </Animated.View>
+              ) : null}
             </View>
-            {!compact && caption ? (
-              <Text
-                variant="caption"
-                numberOfLines={1}
-                ellipsizeMode="head"
-                color={theme.colors.textSubtle}
-                style={[styles.caption, { fontFamily: mono }]}>
-                {caption}
-              </Text>
-            ) : null}
-          </View>
-          {/* A soft pulse rather than a spinner: a tool that is thinking reads
-            the same way the assistant does while it thinks. */}
-          {pending ? (
-            <ThinkingIndicator size={12} color={statusColor} />
-          ) : failed ? (
-            <AlertCircle size={12} color={statusColor} />
-          ) : durationMs !== undefined ? (
-            <Text variant="caption" color={theme.colors.textSubtle} style={styles.duration}>
-              {formatToolDuration(durationMs)}
-            </Text>
-          ) : null}
-          {hasBody && onOpenDetail ? (
-            <PressableScale
-              testID="agent-tool-toggle"
-              accessibilityRole="button"
-              accessibilityState={{ expanded }}
-              accessibilityLabel={expanded ? t`Collapse tool call` : t`Expand tool call`}
-              hitSlop={12}
-              onPress={() => setExpanded((prev) => !prev)}>
-              <Animated.View entering={fadeIn('micro')} style={chevronStyle}>
-                <ChevronDown size={12} color={theme.colors.textMuted} />
-              </Animated.View>
-            </PressableScale>
-          ) : hasBody ? (
-            <Animated.View entering={fadeIn('micro')} style={chevronStyle}>
-              <ChevronDown size={12} color={theme.colors.textMuted} />
-            </Animated.View>
-          ) : null}
+          )}
         </View>
-        {compact && (title || caption) ? (
-          <View style={styles.compactHeaderCopy}>
-            {title ? (
-              <Text
-                variant="caption"
-                numberOfLines={2}
-                ellipsizeMode="middle"
-                color={theme.colors.textMuted}
-                style={[styles.target, { fontFamily: mono }]}>
-                {title}
-              </Text>
-            ) : null}
-            {caption ? (
-              <Text
-                variant="caption"
-                numberOfLines={2}
-                ellipsizeMode="head"
-                color={theme.colors.textSubtle}
-                style={[styles.caption, { fontFamily: mono }]}>
-                {caption}
-              </Text>
-            ) : null}
-          </View>
-        ) : null}
       </PressableScale>
 
-      {chips || truncated || background ? (
-        <View style={[styles.chipRow, styles.underTitle]}>
-          {chips}
-          {background ? (
-            <View
-              style={[
-                styles.badge,
-                { borderRadius: profile.chrome.control, borderColor: colors.accent },
-              ]}>
-              <Text variant="caption" color={colors.accent} style={styles.badgeText}>
-                {t`Background`}
-              </Text>
-            </View>
-          ) : null}
-          {truncated ? (
-            <View
-              style={[
-                styles.badge,
-                { borderRadius: profile.chrome.control, borderColor: theme.colors.warning },
-              ]}>
-              <Text variant="caption" color={theme.colors.warning} style={styles.badgeText}>
-                {t`Truncated`}
-              </Text>
-            </View>
-          ) : null}
-        </View>
-      ) : null}
-
-      {/* OpenCode's own message, said as it was said: one line when it is a
-          sentence, markdown when it arrived as a small document. */}
-      {failed && error ? (
-        <View style={styles.underTitle}>
-          <EngineFailureText message={error} />
-        </View>
-      ) : null}
-
-      {preview ? (
-        // Code, images and streaming arguments use the full content width.
-        <View>{preview}</View>
-      ) : null}
-
-      {actions ? <View style={[styles.actionRow, styles.underTitle]}>{actions}</View> : null}
-
       {expanded && hasBody ? (
-        // Fades in, and leaves without an exit -- as the thought block's body
-        // does, which is why that one never flickered and this one did. An
-        // exiting view is lifted out of the layout while it fades, so the row
-        // collapsed to its header at once with the old body still painted over
-        // the rows below it; inside a virtualised list that also re-measures
-        // the row twice. The collapse is the row getting shorter, which the
-        // list already animates the neighbours for.
-        <Animated.View
-          entering={fadeIn('micro')}
-          style={[styles.body, { borderTopColor: theme.colors.border }]}>
-          {children}
-        </Animated.View>
+        <View style={[styles.details, raised]} onLayout={() => expansionIntent.current?.layout()}>
+          {hasMetadata ? (
+            <View style={styles.metadataRow}>
+              {headerCopy}
+              {taskIdentity ? (
+                <Text variant="caption" color={theme.colors.textSubtle} style={styles.taskIdentity}>
+                  {taskIdentity}
+                </Text>
+              ) : null}
+              {taskSummary?.role ? (
+                <Text variant="caption" color={theme.colors.textSubtle} style={styles.taskIdentity}>
+                  {taskSummary.role}
+                </Text>
+              ) : null}
+              {chips}
+              {taskSummary && background ? (
+                <Text variant="caption" color={colors.accent} style={styles.badgeText}>
+                  {t`Background`}
+                </Text>
+              ) : null}
+              {truncated ? (
+                <Text variant="caption" color={theme.colors.warning} style={styles.badgeText}>
+                  {t`Truncated`}
+                </Text>
+              ) : null}
+              {taskSummary ? actions : null}
+              {taskSummary ? detailAction : null}
+            </View>
+          ) : null}
+
+          {/* OpenCode's own message, said as it was said: one line when it is a
+          sentence, markdown when it arrived as a small document. */}
+          {failed && error ? <EngineFailureText message={error} /> : null}
+
+          {preview ? (
+            // Code, images and streaming arguments use the full content width.
+            <View>{preview}</View>
+          ) : null}
+
+          {children ? (
+            // Fades in, and leaves without an exit -- as the thought block's body
+            // does, which is why that one never flickered and this one did. An
+            // exiting view is lifted out of the layout while it fades, so the row
+            // collapsed to its header at once with the old body still painted over
+            // the rows below it; inside a virtualised list that also re-measures
+            // the row twice. The collapse is the row getting shorter, which the
+            // list already animates the neighbours for.
+            <Animated.View entering={fadeIn('micro')} style={styles.body}>
+              {children}
+            </Animated.View>
+          ) : null}
+          {!taskSummary && (actions || detailAction) ? (
+            <View style={styles.metadataRow}>
+              {actions}
+              {detailAction}
+            </View>
+          ) : null}
+        </View>
       ) : null}
     </Animated.View>
   );
@@ -348,44 +400,65 @@ const styles = StyleSheet.create({
     // A card is a row: its header lays out with flex and its diff rows pan,
     // neither of which measures inside a shrink-to-fit box.
     alignSelf: 'stretch',
-    paddingVertical: 8,
-    paddingHorizontal: TRANSCRIPT_GRID.inset,
-    gap: TRANSCRIPT_GRID.attachGap,
   },
-  header: { gap: 4 },
-  compactHeaderCopy: { gap: 1 },
+  header: {
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
+    // Only the transparent touch boundary is 44dp, never the painted pill.
+    // Each row owns its bounds; no hitSlop overlaps its neighbours or body.
+    minHeight: 44,
+    minWidth: 44,
+    justifyContent: 'center',
+  },
+  headerPill: {
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
+    paddingVertical: 5,
+    paddingHorizontal: TRANSCRIPT_GRID.inset,
+    borderCurve: 'continuous',
+  },
+  details: {
+    gap: TRANSCRIPT_GRID.attachGap,
+    // Only open bodies need extra separation after compact tool rows.
+    marginBottom: TRANSCRIPT_GRID.rowGap / 2,
+    paddingVertical: TRANSCRIPT_GRID.plateInsetY,
+    paddingHorizontal: TRANSCRIPT_GRID.inset,
+  },
+  taskTitle: {
+    flexShrink: 1,
+    minWidth: 0,
+    fontSize: AGENT_TYPE.meta.size,
+  },
+  taskStatus: {
+    flexShrink: 0,
+  },
+  metadataRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    columnGap: 8,
+    rowGap: 2,
+  },
+  taskIdentity: {
+    flexShrink: 1,
+    minWidth: 0,
+    maxWidth: '100%',
+    fontSize: AGENT_TYPE.micro.size,
+  },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: HEADER_GAP,
   },
   headerIcon: {
-    paddingTop: 1,
     width: ICON_COLUMN,
     alignItems: 'center',
-  },
-  /**
-   * The column the title starts in.
-   *
-   * The exit chip, the result count and the error line all began at
-   * the card's outer edge while the title was indented past the icon, so every
-   * fact about a call hung left of the call it was about.
-   */
-  underTitle: {
-    marginLeft: ICON_COLUMN + HEADER_GAP,
-  },
-  headerText: {
-    flex: 1,
-    minWidth: 0,
-    gap: 1,
-  },
-  headerLine: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+    justifyContent: 'center',
   },
   toolName: {
     fontSize: AGENT_TYPE.meta.size,
+    flexShrink: 1,
+    minWidth: 0,
   },
   // The target is the file or the command the call is pointed at, and the
   // caption under it is the folder it sits in: two literals, read the way a
@@ -397,40 +470,37 @@ const styles = StyleSheet.create({
   target: {
     fontSize: AGENT_TYPE.micro.size,
     flexShrink: 1,
+    minWidth: 0,
+    maxWidth: '100%',
   },
   caption: {
     fontSize: AGENT_TYPE.micro.size,
+    flexShrink: 1,
+    minWidth: 0,
+    maxWidth: '100%',
   },
   duration: {
+    flexShrink: 0,
     fontSize: AGENT_TYPE.micro.size,
     fontVariant: ['tabular-nums'],
-  },
-  chipRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  badge: {
-    paddingHorizontal: 7,
-    paddingVertical: 1,
-    borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
   },
   badgeText: {
     fontSize: AGENT_TYPE.micro.size,
     fontWeight: '600',
   },
-  actionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 6,
+  detailAction: {
+    minHeight: 44,
+    minWidth: 44,
+    maxWidth: '100%',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  detailActionText: {
+    fontSize: AGENT_TYPE.micro.size,
+    fontWeight: '600',
   },
   body: {
     // Expanded documents use the full card width, not the header icon column.
-    paddingTop: 6,
-    borderTopWidth: StyleSheet.hairlineWidth,
     gap: 4,
   },
 });

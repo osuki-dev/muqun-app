@@ -96,6 +96,11 @@ type Node = {
   value?: string;
   selected?: boolean;
   checked?: boolean;
+  /** Android's native snapshot visibility; iOS may omit it. */
+  visibleToUser?: boolean;
+  enabled?: boolean;
+  hittable?: boolean;
+  interactionBlocked?: string;
   bundleId?: string;
   rect?: { x: number; y: number; width: number; height: number };
 };
@@ -473,6 +478,74 @@ export function exactSelectorMatches(node: Node, selector: string): boolean {
   return matches;
 }
 
+/** Resolve only a unique existing ancestor/descendant in ONE current capture.
+ * Native generation pins reject stale refs; snapshot annotations alone cannot
+ * disambiguate the platform's independent semantic-selector resolver.
+ */
+function scopedNativeRef(capture: Record<string, unknown>, identity: string, scopeId: string) {
+  const nodes = snapshotNodes(capture);
+  if (capture.appBundleId !== 'dev.osuki.muqun' || capture.truncated !== false)
+    throw new Error('Scoped press requires a complete foreground Muqun capture');
+  const generation = capture.refsGeneration;
+  if (typeof generation !== 'number' || !Number.isSafeInteger(generation) || generation < 1)
+    throw new Error('Scoped press requires a current native refsGeneration');
+  const byIndex = new Map(nodes.map((node) => [node.index, node]));
+  if (nodes.some((node) => !Number.isSafeInteger(node.index) || node.index < 0))
+    throw new Error('Scoped press has invalid native indexes');
+  if (byIndex.size !== nodes.length) throw new Error('Scoped press has duplicate native indexes');
+  const scopes = nodes.filter((node) => node.identifier === scopeId);
+  if (scopes.length !== 1) throw new Error('Scoped press requires one existing ancestor');
+  const scope = scopes[0];
+  if (
+    scope.bundleId !== 'dev.osuki.muqun' ||
+    scope.visibleToUser === false ||
+    scope.interactionBlocked
+  )
+    throw new Error('Scoped press ancestor is not available');
+  const targets = nodes.filter((node) => {
+    if (!exactSelectorMatches(node, identity)) return false;
+    const seen = new Set<number>([node.index]);
+    let containsScope = false;
+    let parentIndex = node.parentIndex;
+    while (parentIndex !== undefined) {
+      if (!Number.isSafeInteger(parentIndex) || parentIndex < 0)
+        throw new Error('Scoped press has invalid native ancestry');
+      if (seen.has(parentIndex)) throw new Error('Scoped press has cyclic native ancestry');
+      seen.add(parentIndex);
+      const parent = byIndex.get(parentIndex);
+      if (!parent) throw new Error('Scoped press has missing native ancestry');
+      if (parent === scope) containsScope = true;
+      parentIndex = parent.parentIndex;
+    }
+    // Finding the scope is not sufficient: validate THROUGH it to a legal
+    // root, before the legacy viewport helper's permissive missing/cycle exit.
+    return containsScope;
+  });
+  if (targets.length !== 1) throw new Error('Scoped press requires one semantic descendant');
+  const target = targets[0];
+  if (
+    target.bundleId !== 'dev.osuki.muqun' ||
+    target.visibleToUser !== true ||
+    target.hittable !== true ||
+    target.enabled === false ||
+    target.interactionBlocked ||
+    !target.rect ||
+    !Object.values(target.rect).every(Number.isFinite) ||
+    target.rect.width <= 0 ||
+    target.rect.height <= 0 ||
+    !withinScrollViewport(target, nodes)
+  )
+    throw new Error('Scoped press descendant is not visible and hittable');
+  const ref = /^e\d+(?:~s(\d+))?$/.exec(target.ref);
+  if (
+    !ref ||
+    nodes.filter((node) => node.ref === target.ref).length !== 1 ||
+    (ref[1] !== undefined && Number(ref[1]) !== generation)
+  )
+    throw new Error('Scoped press has a missing, invalid or stale native ref');
+  return `@${target.ref}${ref[1] === undefined ? `~s${generation}` : ''}`;
+}
+
 function selector(node: Node): string {
   const role = selectorRole(node);
   const prefix = role ? `role=${JSON.stringify(role)} ` : '';
@@ -574,6 +647,10 @@ export class NativeRunner {
   ) {}
 
   async readySnapshot(forceAlertCheck = false): Promise<Node[]> {
+    return snapshotNodes(await this.readyCapture(forceAlertCheck));
+  }
+
+  private async readyCapture(forceAlertCheck = false): Promise<Record<string, unknown>> {
     let capture = await this.readCapture();
     let nodes = snapshotNodes(capture);
     if (capture.androidSnapshot) {
@@ -614,7 +691,7 @@ export class NativeRunner {
         this.lastAlertClearMs = Date.now();
       }
     }
-    if (!hasAlert(nodes)) return nodes;
+    if (!hasAlert(nodes)) return capture;
     // A system dialog is caught mid-slide as often as not: a button resolved
     // from that capture carries the geometry of a frame the dialog has since
     // left, and the tap lands on the scrim. Let it settle, resolve the button
@@ -622,8 +699,9 @@ export class NativeRunner {
     // press can still race the last frame of the animation.
     for (let attempt = 0; attempt < 2; attempt++) {
       await this.invoke(['wait', 'stable', '300', '5000']);
-      nodes = snapshotNodes(await this.readCapture());
-      if (!hasAlert(nodes)) return nodes;
+      capture = await this.readCapture();
+      nodes = snapshotNodes(capture);
+      if (!hasAlert(nodes)) return capture;
       const actionButton =
         notificationDenyButton(nodes, this.runtime.allowCameraDenial) ??
         schemeConfirmationOpenButton(nodes);
@@ -638,9 +716,10 @@ export class NativeRunner {
       await this.invoke(['press', selector(actionButton)]);
     }
     await this.invoke(['wait', 'stable', '300', '5000']);
-    nodes = snapshotNodes(await this.readCapture());
+    capture = await this.readCapture();
+    nodes = snapshotNodes(capture);
     if (hasAlert(nodes)) throw new Error('Notification permission alert did not dismiss');
-    return nodes;
+    return capture;
   }
 
   /**
@@ -770,12 +849,96 @@ export class NativeRunner {
       if (!active || !line.trim() || line.trim().startsWith('#') || line.startsWith('context '))
         continue;
       const args = tokenize(line).map((arg) => interpolate(arg, env));
+      const scopeIndex = args.indexOf('--within-id');
+      let scopeId: string | undefined;
+      if (scopeIndex >= 0) {
+        if (args[0] !== 'press' || scopeIndex !== 2 || args.length !== 4 || !args[3])
+          throw new Error('Scoped press requires press <exact selector> --within-id <existing ID>');
+        scopeId = args[3];
+        args.splice(2, 2);
+      }
+      if (args.includes('--allow-microphone-prompt')) {
+        args.splice(args.indexOf('--allow-microphone-prompt'), 1);
+        if (args[0] !== 'wait' || !/^id="voice-visual-(?:recording|error)"$/.test(args[1] ?? ''))
+          throw new Error('Microphone prompt handling requires an explicit voice-state wait');
+        const timeout = Number(args[2] ?? 15000);
+        if (!Number.isFinite(timeout) || timeout <= 0)
+          throw new Error('Microphone prompt wait requires a positive timeout');
+        const deadline = Date.now() + timeout;
+        let accepted = false;
+        let arrived = false;
+        while (Date.now() < deadline) {
+          const capture = await this.readCapture();
+          const status = await this.invoke(['alert', 'get']);
+          if (status.kind !== 'alertStatus' || status.alert === undefined)
+            throw new Error('Invalid microphone alert status');
+          const alert = status.alert as {
+            title?: string;
+            message?: string;
+            source?: string;
+            packageName?: string;
+            buttons?: string[];
+          } | null;
+          if (alert) {
+            const copy = `${alert.title ?? ''} ${alert.message ?? ''}`;
+            if (
+              accepted ||
+              !/\bMuqun\b/i.test(copy) ||
+              !/microphone|record audio/i.test(copy) ||
+              /camera|location|notifications?|contacts/i.test(copy) ||
+              (capture.androidSnapshot &&
+                (alert.source !== 'permission' ||
+                  !/^com\.(?:google\.)?android\.permissioncontroller$/.test(
+                    alert.packageName ?? ''
+                  ))) ||
+              !alert.buttons?.some((button) =>
+                /^(?:while using the app|only this time|allow|ok)$/i.test(button)
+              )
+            )
+              throw new Error('Unexpected alert during the explicit microphone request');
+            await this.invoke(['alert', 'accept']);
+            accepted = true;
+            await this.invoke(['wait', 'stable', '300', '5000']);
+            const after = await this.invoke(['alert', 'get']);
+            if (after.kind !== 'alertStatus' || after.alert !== null)
+              throw new Error('Microphone permission alert did not dismiss');
+          } else if (
+            snapshotNodes(capture).some(
+              (node) => exactSelectorMatches(node, args[1]) && node.visibleToUser !== false
+            )
+          ) {
+            // Retain the native state assertion after the permission branch.
+            await this.invoke(args);
+            arrived = true;
+            break;
+          }
+          if (Date.now() >= deadline)
+            throw new Error(`Voice state did not arrive after microphone request: ${args[1]}`);
+          await new Promise((resolve) => setTimeout(resolve, 200));
+        }
+        if (!arrived)
+          throw new Error(`Voice state did not arrive after microphone request: ${args[1]}`);
+        continue;
+      }
       // Visibility means at least one visible exact match, not unique identity.
       // Native is visible uses readUnique and mistakes duplicate headings for
       // absence; exists + visible=true uses the identical visibility predicate.
       if (args[0] === 'is' && args[1] === 'visible') {
         args[1] = 'exists';
         args[2] = `${args[2]} visible=true`;
+      }
+      if (args[0] === 'keyboard' && args[1] === 'require-visible') {
+        if (args.length !== 2 || env.PLATFORM !== 'android')
+          throw new Error('Real keyboard visibility assertion requires Android');
+        const keyboard = await this.invoke(['keyboard', 'status']);
+        if (
+          keyboard.platform !== 'android' ||
+          keyboard.visible !== true ||
+          keyboard.inputOwner !== 'app' ||
+          keyboard.focusedPackage !== 'dev.osuki.muqun'
+        )
+          throw new Error('The real Android keyboard is not visible');
+        continue;
       }
       if (args[0] === 'open' && args[1] === 'dev.osuki.muqun') {
         if (this.runtime.metroHost) args.push('--metro-host', this.runtime.metroHost);
@@ -836,25 +999,15 @@ export class NativeRunner {
       }
       // A launch reopens the window; every other step spends it down.
       this.stepsSinceLaunch = args[0] === 'open' ? 0 : this.stepsSinceLaunch + 1;
-      // The landscape iPad theme preview stalls XCUITest accessibility capture.
-      // Permit one screenshot-backed coordinate press there, without asking the
-      // stalled tree for another verdict. The next assertion checks its result.
-      const visualPress =
-        args[0] === 'press' &&
-        args[3] === '--visual' &&
-        /^\d+$/.test(args[1] ?? '') &&
-        /^\d+$/.test(args[2] ?? '') &&
-        env.DEVICE_KIND === 'ipad';
-      if (args.includes('--visual') && !visualPress)
-        throw new Error('Visual press requires iPad and numeric coordinates');
-      if (visualPress) {
-        const screenshot = path.join(this.artifacts, 'visual-press-before.png');
-        await this.invoke(['screenshot', screenshot]);
-        args.pop();
-      }
       let guardedNodes: Node[] | undefined;
-      if (guardedMutations.has(args[0]) && !visualPress)
-        guardedNodes = await this.readySnapshot(true);
+      if (scopeId !== undefined) {
+        const capture = await this.readyCapture(true);
+        // One guarded capture supplies BOTH ancestry and generation. Never
+        // retry a stale/rejected press or fall back to an ambiguous selector.
+        await this.invoke(['press', scopedNativeRef(capture, args[1], scopeId)]);
+        continue;
+      }
+      if (guardedMutations.has(args[0])) guardedNodes = await this.readySnapshot(true);
       if (args[0] === 'alert' && args[1] === 'dismiss') {
         const status = await this.invoke(['alert', 'get']);
         const alert = status.alert as { title?: string; buttons?: string[] } | null;
@@ -917,16 +1070,18 @@ export class NativeRunner {
           }
         }
         const grabber = guardedNodes?.find((node) => node.label === 'Sheet Grabber');
-        if (grabber?.rect) {
+        if (grabber?.rect && guardedNodes) {
           const x = Math.round(grabber.rect.x + grabber.rect.width / 2);
           const y = Math.round(grabber.rect.y + grabber.rect.height / 2);
-          await this.invoke(['gesture', 'pan', String(x), String(y), '0', '500', '350']);
+          const viewport = appViewport(guardedNodes);
+          const distance = Math.max(1, Math.min(500, viewport.y + viewport.height - y - 24));
+          await this.invoke(['gesture', 'pan', String(x), String(y), '0', String(distance), '350']);
           continue;
         }
         const goBack = guardedNodes?.find(
           (node) => nodeRole(node) === 'button' && /^(?:go back|back)$/i.test(node.label ?? '')
         );
-        if (goBack) {
+        if (goBack && !args.includes('--in-app')) {
           await this.invoke(['press', selector(goBack)]);
           continue;
         }
@@ -956,17 +1111,17 @@ export class NativeRunner {
               result = await this.invoke(retry);
             }
           } else {
-            // Right after a relaunch the accessibility backend can stall before
-            // it has read a single tree: agent-device reports `captureStalled`
-            // with zero captures and calls it retriable. The app is up (the
-            // failure screenshot shows it); only the capture is. One more try
-            // before it counts as the flow's failure.
-            const detail = error instanceof NativeCommandError ? error.details.details : undefined;
+            // A capture can stall after earlier trees were read, leaving no
+            // stable verdict. Retry only this read once; prior capture count
+            // does not prove stability. Ordinary UI instability still fails,
+            // and a second stalled capture propagates without another retry.
+            const detail = error instanceof NativeCommandError ? error.details : undefined;
             if (
               args[0] !== 'wait' ||
               args[1] !== 'stable' ||
-              detail?.captureStalled !== true ||
-              (typeof detail.captures === 'number' && detail.captures > 0)
+              detail?.code !== 'COMMAND_FAILED' ||
+              detail.details?.reason !== 'wait_stable_timeout' ||
+              detail.details.captureStalled !== true
             )
               throw error;
             result = await this.invoke(args);
@@ -1080,12 +1235,50 @@ export class NativeRunner {
   }
 }
 
+/** Explicit opt-in for this isolated QA device, never an automatic fill side effect. */
+export async function restoreAndroidIme(
+  config: { platform?: string; serial?: string; component?: string },
+  adb: (args: string[]) => Promise<string>
+) {
+  const { platform, serial, component } = config;
+  if (platform !== 'android' || serial !== 'emulator-5560')
+    throw new Error('Real IME restoration is restricted to Android emulator-5560');
+  if (
+    !component ||
+    !/^[A-Za-z0-9_.]+\/[A-Za-z0-9_.$]+$/.test(component) ||
+    component.includes('agentdevice.imehelper')
+  )
+    throw new Error('Explicit installed real IME component is required');
+  if ((await adb(['get-serialno'])).trim() !== serial)
+    throw new Error('Real IME device serial mismatch');
+  const avd = (await adb(['emu', 'avd', 'name'])).trim().split(/\r?\n/)[0];
+  if (avd !== 'muqun_ui_clean_qa_20261015') throw new Error('Real IME AVD mismatch');
+  const installed = (await adb(['shell', 'ime', 'list', '-s'])).trim().split(/\r?\n/);
+  if (!installed.includes(component)) throw new Error('Configured real IME is not installed');
+  await adb(['shell', 'ime', 'set', component]);
+  if (
+    (await adb(['shell', 'settings', 'get', 'secure', 'default_input_method'])).trim() !== component
+  )
+    throw new Error('Real IME selection was not observed');
+  return { platform, serial, avd, action: 'restore-ime', component };
+}
+
 export function subprocess(binary: string, common: string[], log: string, cwd: string): Invoke {
   let sequence = 0;
-  return async (args) => {
+  const record = async (name: string, value: unknown) =>
+    writeFile(
+      path.join(log, `${String(++sequence).padStart(4, '0')}-${name}.json`),
+      JSON.stringify(value, null, 2)
+    );
+  const execute = async (
+    command: string,
+    commandArgs: string[],
+    name: string,
+    recordedArgs: string[]
+  ) => {
     const result = await new Promise<{ stdout: string; stderr: string; status: number }>(
       (resolve, reject) => {
-        const child = spawn(binary, [...args, ...common, '--json'], {
+        const child = spawn(command, commandArgs, {
           cwd,
           stdio: ['ignore', 'pipe', 'pipe'],
         });
@@ -1108,10 +1301,47 @@ export function subprocess(binary: string, common: string[], log: string, cwd: s
         });
       }
     );
-    await writeFile(
-      path.join(log, `${String(++sequence).padStart(4, '0')}-${args[0]}.json`),
-      JSON.stringify({ args, ...result }, null, 2)
-    );
+    await record(name, { command, args: recordedArgs, ...result });
+    return result;
+  };
+  return async (args) => {
+    if (args[0] === 'keyboard' && args[1] === 'restore-ime') {
+      const flag = (name: string) => {
+        const index = common.indexOf(name);
+        return index < 0 ? undefined : common[index + 1];
+      };
+      try {
+        if (args.length !== 2)
+          throw new Error('restore-ime accepts no implicit device/component arguments');
+        const serial = flag('--serial') ?? '';
+        const data = await restoreAndroidIme(
+          { platform: flag('--platform'), serial, component: process.env.E2E_ANDROID_REAL_IME },
+          async (adbArgs) => {
+            const fullArgs = ['-s', serial, ...adbArgs];
+            const result = await execute('adb', fullArgs, 'adb', fullArgs);
+            if (result.status !== 0)
+              throw new Error(`Real IME adb command failed: ${adbArgs.join(' ')}`);
+            return result.stdout;
+          }
+        );
+        await record('keyboard', {
+          args,
+          status: 0,
+          stderr: '',
+          stdout: JSON.stringify({ success: true, data }),
+        });
+        return data;
+      } catch (error) {
+        await record('keyboard', {
+          args,
+          status: 1,
+          stderr: String(error),
+          stdout: JSON.stringify({ success: false }),
+        });
+        throw error;
+      }
+    }
+    const result = await execute(binary, [...args, ...common, '--json'], args[0], args);
     return decodeReply(result.stdout, result.status);
   };
 }

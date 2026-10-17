@@ -1,17 +1,16 @@
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { useRouter, type Href } from 'expo-router';
 import { GitCompare } from 'lucide-react-native';
 import { Keyboard, StyleSheet, View } from 'react-native';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { KEY_ROW_HEIGHT } from '@/constants/key-row';
 import { useGitRepoStatus } from '@/hooks/use-git-repo-status';
 import { gatewaySupportsPaneVcsFiles } from '@/lib/agent-protocol';
 import { badgeCount } from '@/lib/git-diff';
+import { gatewaySupportsGitWorktrees } from '@/lib/git-worktrees';
 
 /**
  * The way into what the pane has changed.
@@ -41,6 +40,7 @@ export function GitDiffButton({
   disabled,
   background,
   compact = false,
+  serverId,
 }: {
   sessionId: string;
   /** The selected pane, so the sheet asks about this checkout only. */
@@ -54,6 +54,7 @@ export function GitDiffButton({
   background: string;
   /** Pad docks have less vertical chrome even though they have more width. */
   compact?: boolean;
+  serverId?: string;
 }) {
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
   //
@@ -80,7 +81,7 @@ export function GitDiffButton({
   return (
     <PressableScale
       accessibilityRole="button"
-      accessibilityLabel={t`Open changes`}
+      accessibilityLabel={t`Open Git`}
       feedback="selection"
       pressedScale={0.9}
       disabled={disabled}
@@ -100,7 +101,9 @@ export function GitDiffButton({
           params: {
             sessionId,
             paneId,
+            serverId,
             vcsFiles: gatewaySupportsPaneVcsFiles(capabilities) ? '1' : '0',
+            worktrees: gatewaySupportsGitWorktrees(capabilities) ? '1' : '0',
           },
         } as unknown as Href);
       }}

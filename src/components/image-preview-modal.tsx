@@ -1,29 +1,53 @@
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Text } from '@/components/text';
+import { Text, PressableScale } from '@osuki-dev/ui';
 import { Image } from 'expo-image';
 import { X } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Modal, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { useEffect, useEffectEvent, useMemo, useState } from 'react';
+import { useFileActions } from '@/hooks/use-file-actions';
+import { useStableHandler } from '@/hooks/use-render-refs';
+import { savePreviewImage } from '@/lib/save-file';
+import {
+  failedPreviewLoad,
+  saveOriginalPreview,
+  shouldLoadImagePreview,
+  type PreviewImageDescriptor,
+  type PreviewLoadState,
+} from '@/lib/gateway-image-previews';
+import {
+  clampPreviewTransform,
+  finishPreviewPan,
+  panPreviewFrom,
+  previewPageIndex,
+  RESTING_PREVIEW,
+  zoomPreviewAt,
+  type PreviewSize,
+} from '@/lib/image-preview-geometry';
+import {
+  ActivityIndicator,
+  Modal,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+  type ViewProps,
+} from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { scheduleOnRN } from 'react-native-worklets';
+import Animated, {
+  cancelAnimation,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+  type SharedValue,
+} from 'react-native-reanimated';
+import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { DURATION, fadeIn, fadeOut, timing, zoomIn } from '@/lib/motion';
 
-const AXIS_UNDECIDED = 0;
-const AXIS_HORIZONTAL = 1;
-const AXIS_VERTICAL = 2;
 const AXIS_LOCK_DISTANCE = 8;
-const MIN_SCALE = 1;
-const MAX_SCALE = 4;
 const DOUBLE_TAP_SCALE = 2.5;
-/** How far down the sheet has to travel before letting go closes it. */
-const DISMISS_DISTANCE = 120;
-const DISMISS_VELOCITY = 900;
+const UNKNOWN_SIZE: PreviewSize = { width: 0, height: 0 };
 
-export interface PreviewImage {
+export interface PreviewImage extends PreviewImageDescriptor {
   id: string;
   uri: string;
   /**
@@ -56,147 +80,21 @@ export function ImagePreviewModal({
   initialIndex: number;
   onClose: () => void;
 }) {
-  const { t } = useLingui();
-  const { width, height } = useWindowDimensions();
-  const insets = useSafeAreaInsets();
-  const pagerX = useSharedValue(-initialIndex * width);
-  const dragY = useSharedValue(0);
-  const scale = useSharedValue(1);
-  const imageX = useSharedValue(0);
-  const imageY = useSharedValue(0);
-  const gestureStartPagerX = useSharedValue(0);
-  const gestureStartImageX = useSharedValue(0);
-  const gestureStartImageY = useSharedValue(0);
-  const gestureStartScale = useSharedValue(1);
-  const panAxis = useSharedValue(AXIS_UNDECIDED);
-  const pageIndex = useSharedValue(initialIndex);
-
-  // A rotation, or opening a different image, changes what "page 3" means in
-  // pixels. Re-resting the pager keeps the visible page put.
-  useEffect(() => {
-    pagerX.set(-pageIndex.get() * width);
-  }, [pageIndex, pagerX, width]);
-
-  const panGesture = Gesture.Pan()
-    .minDistance(2)
-    .onStart(() => {
-      gestureStartPagerX.set(pagerX.get());
-      gestureStartImageX.set(imageX.get());
-      gestureStartImageY.set(imageY.get());
-      panAxis.set(AXIS_UNDECIDED);
-    })
-    .onUpdate((event) => {
-      if (scale.get() > 1) {
-        // Zoomed in, the drag moves the image inside its own frame. The bounds
-        // are half the overflow in each direction, so the picture can never be
-        // dragged clear of the screen.
-        const boundX = ((scale.get() - 1) * width) / 2;
-        const boundY = ((scale.get() - 1) * height) / 2;
-        imageX.set(
-          Math.max(-boundX, Math.min(boundX, gestureStartImageX.get() + event.translationX))
-        );
-        imageY.set(
-          Math.max(-boundY, Math.min(boundY, gestureStartImageY.get() + event.translationY))
-        );
-        return;
-      }
-
-      if (panAxis.get() === AXIS_UNDECIDED) {
-        const dx = Math.abs(event.translationX);
-        const dy = Math.abs(event.translationY);
-        if (Math.max(dx, dy) >= AXIS_LOCK_DISTANCE) {
-          panAxis.set(dx > dy ? AXIS_HORIZONTAL : AXIS_VERTICAL);
-        }
-      }
-      if (panAxis.get() === AXIS_HORIZONTAL) {
-        pagerX.set(gestureStartPagerX.get() + event.translationX);
-      } else if (panAxis.get() === AXIS_VERTICAL) {
-        // Only downward: dragging up has no meaning here and letting the image
-        // follow it looked like a broken scroll.
-        dragY.set(Math.max(0, event.translationY));
-      }
-    })
-    .onEnd((event) => {
-      if (scale.get() > 1) return;
-      if (panAxis.get() === AXIS_HORIZONTAL) {
-        const travelled = event.translationX;
-        const flicked = Math.abs(event.velocityX) > 500;
-        const step = flicked || Math.abs(travelled) > width * 0.3 ? (travelled < 0 ? 1 : -1) : 0;
-        const next = Math.max(0, Math.min(images.length - 1, pageIndex.get() + step));
-        pageIndex.set(next);
-        pagerX.set(withTiming(-next * width, timing('short')));
-        return;
-      }
-      if (panAxis.get() === AXIS_VERTICAL) {
-        if (dragY.get() > DISMISS_DISTANCE || event.velocityY > DISMISS_VELOCITY) {
-          scheduleOnRN(onClose);
-          return;
-        }
-        dragY.set(withTiming(0, timing('short')));
-      }
-    })
-    .onFinalize(() => {
-      panAxis.set(AXIS_UNDECIDED);
-    });
-
-  const pinchGesture = Gesture.Pinch()
-    .onStart(() => {
-      gestureStartScale.set(scale.get());
-    })
-    .onUpdate((event) => {
-      scale.set(Math.max(MIN_SCALE, Math.min(MAX_SCALE, gestureStartScale.get() * event.scale)));
-    })
-    .onEnd(() => {
-      // Anything near 1x snaps back cleanly, so a stray pinch cannot leave the
-      // image a few percent off and permanently pannable.
-      if (scale.get() <= 1.05) {
-        scale.set(withTiming(1, timing('micro')));
-        imageX.set(withTiming(0, timing('micro')));
-        imageY.set(withTiming(0, timing('micro')));
-        return;
-      }
-      // Re-clamp: shrinking can leave the image translated further than its
-      // new, smaller overflow allows.
-      const boundX = ((scale.get() - 1) * width) / 2;
-      const boundY = ((scale.get() - 1) * height) / 2;
-      imageX.set(withTiming(Math.max(-boundX, Math.min(boundX, imageX.get())), timing('micro')));
-      imageY.set(withTiming(Math.max(-boundY, Math.min(boundY, imageY.get())), timing('micro')));
-    });
-
-  const doubleTapGesture = Gesture.Tap()
-    .numberOfTaps(2)
-    .maxDuration(260)
-    .onEnd((_event, success) => {
-      if (!success) return;
-      const zoomedIn = scale.get() > 1.05;
-      scale.set(withTiming(zoomedIn ? 1 : DOUBLE_TAP_SCALE, timing('short')));
-      imageX.set(withTiming(0, timing('short')));
-      imageY.set(withTiming(0, timing('short')));
-    });
-
-  const singleTapGesture = Gesture.Tap()
-    .numberOfTaps(1)
-    .maxDistance(12)
-    .onEnd((_event, success) => {
-      if (success) scheduleOnRN(onClose);
-    });
-
-  const gesture = Gesture.Exclusive(
-    doubleTapGesture,
-    singleTapGesture,
-    Gesture.Simultaneous(panGesture, pinchGesture)
+  const window = useWindowDimensions();
+  const [layout, setLayout] = useState<PreviewSize | null>(null);
+  const [pendingSaves] = useState(() => new Set<AbortController>());
+  useEffect(
+    () => () => {
+      for (const controller of pendingSaves) controller.abort();
+      pendingSaves.clear();
+    },
+    [pendingSaves]
   );
-
-  const backdropStyle = useAnimatedStyle(() => ({
-    opacity: 1 - Math.min(0.7, dragY.get() / 420),
-  }));
-  const pagerStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: pagerX.get() }, { translateY: dragY.get() }],
-  }));
-  const zoomStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: imageX.get() }, { translateY: imageY.get() }, { scale: scale.get() }],
-  }));
-
+  const { width, height } = layout ?? window;
+  const sourceKey = JSON.stringify([
+    initialIndex,
+    images.map(({ id, uri, cacheKey }) => [id, uri, cacheKey]),
+  ]);
   return (
     <Modal
       visible
@@ -204,52 +102,519 @@ export function ImagePreviewModal({
       statusBarTranslucent
       navigationBarTranslucent
       animationType="fade"
-      // Android's back button. It is the way out a reader reaches for first
-      // while a picture is still arriving, and it has to keep working when
-      // there is nothing on screen yet.
+      supportedOrientations={[
+        'portrait',
+        'portrait-upside-down',
+        'landscape-left',
+        'landscape-right',
+      ]}
       onRequestClose={onClose}>
-      {/* Gestures inside a native modal need their own root on Android. */}
-      <GestureHandlerRootView style={styles.root}>
-        <Animated.View style={[StyleSheet.absoluteFill, styles.backdrop, backdropStyle]} />
-        <GestureDetector gesture={gesture}>
-          <Animated.View
-            // The arrival beat, on the modal token.
-            //
-            // Not a shared element: the picture is opened from a 62pt tile in
-            // the attachment strip *or* from a row in the artifacts list, and
-            // neither hands this component the frame it came from -- a real
-            // shared-element transition needs that measurement plumbed through
-            // both call sites, which is a piece of work of its own. What is
-            // wrong without one is not the missing continuity so much as the
-            // stillness: the system fade brought the picture up at full size
-            // with nothing to say it had been opened. Growing the last few
-            // percent says it, and the gesture that dismisses it already
-            // shrinks the same way, so the two agree.
-            entering={zoomIn('modal')}
-            style={[styles.pager, { width: width * images.length }, pagerStyle]}>
-            {images.map((image) => (
+      {/* Keep the native modal mounted on rotation; reset only its gesture surface. */}
+      <GestureHandlerRootView
+        style={styles.root}
+        onLayout={({ nativeEvent: { layout: next } }) => {
+          setLayout((current) =>
+            current?.width === next.width && current.height === next.height
+              ? current
+              : { width: next.width, height: next.height }
+          );
+        }}>
+        <Animated.View entering={zoomIn('modal')} style={styles.root}>
+          <PreviewSelection
+            key={sourceKey}
+            images={images}
+            initialIndex={initialIndex}
+            width={width}
+            height={height}
+            onClose={onClose}
+            pendingSaves={pendingSaves}
+          />
+        </Animated.View>
+      </GestureHandlerRootView>
+    </Modal>
+  );
+}
+
+/** Image identity resets selection; viewport identity resets only manipulation. */
+function PreviewSelection({
+  images,
+  initialIndex,
+  width,
+  height,
+  onClose,
+  pendingSaves,
+}: {
+  images: PreviewImage[];
+  initialIndex: number;
+  width: number;
+  height: number;
+  onClose: () => void;
+  pendingSaves: Set<AbortController>;
+}) {
+  const [index, setIndex] = useState(() => previewPageIndex(initialIndex, images.length));
+  return (
+    <PreviewSurface
+      key={`${width}:${height}`}
+      images={images}
+      activeIndex={index}
+      width={width}
+      height={height}
+      onPageChange={setIndex}
+      onClose={onClose}
+      pendingSaves={pendingSaves}
+    />
+  );
+}
+
+type PreviewAccessibility = Pick<
+  ViewProps,
+  'accessibilityActions' | 'onAccessibilityAction' | 'onAccessibilityEscape'
+>;
+
+function PreviewSurface({
+  images,
+  activeIndex,
+  width,
+  height,
+  onPageChange,
+  onClose,
+  pendingSaves,
+}: {
+  images: PreviewImage[];
+  activeIndex: number;
+  width: number;
+  height: number;
+  onPageChange: (index: number) => void;
+  onClose: () => void;
+  pendingSaves: Set<AbortController>;
+}) {
+  const { t } = useLingui();
+  const insets = useSafeAreaInsets();
+  const viewport = useMemo(() => ({ width, height }), [width, height]);
+  const count = images.length;
+  const [originalPages, setOriginalPages] = useState<ReadonlySet<number>>(new Set());
+  const canViewOriginal = Boolean(
+    images[activeIndex]?.resolveOriginal &&
+    images[activeIndex]?.original &&
+    images[activeIndex]?.uri !== images[activeIndex]?.original?.uri
+  );
+  const viewOriginal = () => setOriginalPages((current) => new Set(current).add(activeIndex));
+  const pagerX = useSharedValue(-activeIndex * width);
+  const dragY = useSharedValue(0);
+  const transform = useSharedValue(RESTING_PREVIEW);
+  const sizes = useSharedValue<PreviewSize[]>(images.map(() => UNKNOWN_SIZE));
+  const pageIndex = useSharedValue(activeIndex);
+  const pan = useSharedValue({
+    axis: null as 'horizontal' | 'vertical' | null,
+    startPagerX: 0,
+    startImage: RESTING_PREVIEW,
+    origin: { x: 0, y: 0 },
+    zoomedAtStart: false,
+    usedMultiplePointers: false,
+    needsRebase: false,
+  });
+  const pinch = useSharedValue({
+    active: false,
+    startImage: RESTING_PREVIEW,
+    focal: { x: 0, y: 0 },
+    eventScale: 1,
+    pointers: 0,
+  });
+  const close = useStableHandler(onClose);
+  const commitPage = useStableHandler(onPageChange);
+  const fileActions = useFileActions(
+    t`Save image`,
+    async () => {
+      const image = images[pageIndex.get()];
+      if (image) {
+        const controller = new AbortController();
+        pendingSaves.add(controller);
+        await saveOriginalPreview(image, savePreviewImage, controller.signal).finally(() =>
+          pendingSaves.delete(controller)
+        );
+      }
+    },
+    true
+  );
+  const showFileActions = useStableHandler(fileActions.show);
+
+  // Native recognizers and all their relations must share one memoized lifetime.
+  const gesture = useMemo(() => {
+    const panGesture = Gesture.Pan()
+      .minDistance(AXIS_LOCK_DISTANCE)
+      .averageTouches(true)
+      .onBegin((event) => {
+        pan.set({
+          ...pan.get(),
+          axis: null,
+          usedMultiplePointers: event.numberOfPointers > 1,
+          needsRebase: false,
+        });
+      })
+      .onTouchesDown((event) => {
+        if (event.numberOfTouches > 1) {
+          pan.set({ ...pan.get(), usedMultiplePointers: true, needsRebase: true });
+        }
+      })
+      .onStart(() => {
+        cancelAnimation(pagerX);
+        cancelAnimation(dragY);
+        cancelAnimation(transform);
+        const image = clampPreviewTransform(
+          transform.get(),
+          sizes.get()[pageIndex.get()] ?? UNKNOWN_SIZE,
+          viewport
+        );
+        transform.set(image);
+        pan.set({
+          ...pan.get(),
+          startPagerX: pagerX.get(),
+          startImage: image,
+          origin: { x: 0, y: 0 },
+          zoomedAtStart: image.scale > 1,
+        });
+      })
+      .onUpdate((event) => {
+        const state = pan.get();
+        if (pinch.get().active || event.numberOfPointers !== 1) {
+          pan.set({ ...state, usedMultiplePointers: true, needsRebase: true });
+          return;
+        }
+        const translation = { x: event.translationX, y: event.translationY };
+        if (state.needsRebase) {
+          cancelAnimation(transform);
+          const current = transform.get();
+          const rebased = current.scale <= 1.05 ? RESTING_PREVIEW : current;
+          transform.set(rebased);
+          pan.set({
+            ...state,
+            startImage: rebased,
+            origin: translation,
+            needsRebase: false,
+          });
+          return;
+        }
+        if (state.zoomedAtStart || state.usedMultiplePointers || transform.get().scale > 1) {
+          transform.set(
+            panPreviewFrom(
+              state.startImage,
+              state.origin,
+              translation,
+              sizes.get()[pageIndex.get()] ?? UNKNOWN_SIZE,
+              viewport
+            )
+          );
+          return;
+        }
+        let axis = state.axis;
+        if (
+          axis === null &&
+          Math.max(Math.abs(event.translationX), Math.abs(event.translationY)) >= AXIS_LOCK_DISTANCE
+        ) {
+          axis =
+            Math.abs(event.translationX) > Math.abs(event.translationY) ? 'horizontal' : 'vertical';
+          pan.set({ ...state, axis });
+        }
+        if (axis === 'horizontal') {
+          pagerX.set(
+            Math.max(
+              -Math.max(0, count - 1) * width,
+              Math.min(0, state.startPagerX + event.translationX)
+            )
+          );
+        } else if (axis === 'vertical') {
+          dragY.set(Math.max(0, event.translationY));
+        }
+      })
+      .onEnd((event, success) => {
+        const state = pan.get();
+        const result = finishPreviewPan({
+          success,
+          zoomedAtStart: state.zoomedAtStart,
+          usedMultiplePointers: state.usedMultiplePointers,
+          axis: state.axis,
+          index: pageIndex.get(),
+          count,
+          width,
+          translationX: event.translationX,
+          velocityX: event.velocityX,
+          dragY: dragY.get(),
+          velocityY: event.velocityY,
+        });
+        if (result.index !== pageIndex.get()) {
+          pageIndex.set(result.index);
+          transform.set(RESTING_PREVIEW);
+          scheduleOnRN(commitPage, result.index);
+        }
+        pagerX.set(withTiming(-result.index * width, timing('short')));
+        dragY.set(withTiming(0, timing('short')));
+        if (result.dismiss) scheduleOnRN(close);
+      })
+      .onFinalize((_event, success) => {
+        if (!success) {
+          pagerX.set(withTiming(-pageIndex.get() * width, timing('short')));
+          dragY.set(withTiming(0, timing('short')));
+        }
+        pan.set({ ...pan.get(), axis: null });
+      });
+
+    const pinchGesture = Gesture.Pinch()
+      .onStart((event) => {
+        cancelAnimation(transform);
+        cancelAnimation(pagerX);
+        cancelAnimation(dragY);
+        pagerX.set(-pageIndex.get() * width);
+        dragY.set(0);
+        pinch.set({
+          active: true,
+          startImage: clampPreviewTransform(
+            transform.get(),
+            sizes.get()[pageIndex.get()] ?? UNKNOWN_SIZE,
+            viewport
+          ),
+          focal: { x: event.focalX - width / 2, y: event.focalY - height / 2 },
+          eventScale: event.scale,
+          pointers: event.numberOfPointers,
+        });
+        pan.set({ ...pan.get(), usedMultiplePointers: true, needsRebase: true });
+      })
+      .onUpdate((event) => {
+        const state = pinch.get();
+        const focal = { x: event.focalX - width / 2, y: event.focalY - height / 2 };
+        if (event.numberOfPointers !== state.pointers || state.eventScale <= 0) {
+          pinch.set({
+            ...state,
+            startImage: transform.get(),
+            focal,
+            eventScale: event.scale,
+            pointers: event.numberOfPointers,
+          });
+          return;
+        }
+        transform.set(
+          zoomPreviewAt(
+            state.startImage,
+            (state.startImage.scale * event.scale) / state.eventScale,
+            state.focal,
+            focal,
+            sizes.get()[pageIndex.get()] ?? UNKNOWN_SIZE,
+            viewport
+          )
+        );
+      })
+      .onFinalize(() => {
+        if (!pinch.get().active) return;
+        const current = transform.get();
+        transform.set(
+          withTiming(
+            current.scale <= 1.05
+              ? RESTING_PREVIEW
+              : clampPreviewTransform(
+                  current,
+                  sizes.get()[pageIndex.get()] ?? UNKNOWN_SIZE,
+                  viewport
+                ),
+            timing('micro')
+          )
+        );
+        pinch.set({ ...pinch.get(), active: false });
+        pan.set({ ...pan.get(), needsRebase: true });
+      });
+
+    const doubleTap = Gesture.Tap()
+      .numberOfTaps(2)
+      .maxDuration(260)
+      .maxDelay(260)
+      .maxDistance(12)
+      .onTouchesDown((event, manager) => {
+        if (event.numberOfTouches > 1) manager.fail();
+      })
+      .onEnd((event, success) => {
+        if (!success) return;
+        cancelAnimation(transform);
+        cancelAnimation(pagerX);
+        cancelAnimation(dragY);
+        pagerX.set(-pageIndex.get() * width);
+        dragY.set(0);
+        const focal = { x: event.x - width / 2, y: event.y - height / 2 };
+        const current = transform.get();
+        transform.set(
+          withTiming(
+            current.scale > 1.05
+              ? RESTING_PREVIEW
+              : zoomPreviewAt(
+                  current,
+                  DOUBLE_TAP_SCALE,
+                  focal,
+                  focal,
+                  sizes.get()[pageIndex.get()] ?? UNKNOWN_SIZE,
+                  viewport
+                ),
+            timing('short')
+          )
+        );
+      });
+    const singleTap = Gesture.Tap()
+      .maxDistance(12)
+      .onTouchesDown((event, manager) => {
+        if (event.numberOfTouches > 1) manager.fail();
+      })
+      .onEnd((_event, success) => {
+        if (success) scheduleOnRN(close);
+      });
+    const longPress = Gesture.LongPress()
+      .minDuration(450)
+      .maxDistance(12)
+      .numberOfPointers(1)
+      .onTouchesDown((event, manager) => {
+        if (event.numberOfTouches > 1) manager.fail();
+      })
+      .onEnd((_event, success) => {
+        if (success) scheduleOnRN(showFileActions);
+      });
+    return Gesture.Race(
+      Gesture.Simultaneous(panGesture, pinchGesture),
+      Gesture.Exclusive(longPress, doubleTap, singleTap)
+    );
+  }, [
+    close,
+    commitPage,
+    count,
+    dragY,
+    height,
+    pageIndex,
+    pagerX,
+    pan,
+    pinch,
+    showFileActions,
+    sizes,
+    transform,
+    viewport,
+    width,
+  ]);
+
+  const backdropStyle = useAnimatedStyle(() => ({
+    opacity: 1 - Math.min(0.7, dragY.get() / 420),
+  }));
+  const pagerStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: pagerX.get() }, { translateY: dragY.get() }],
+  }));
+  const accessibility: PreviewAccessibility = {
+    onAccessibilityEscape: close,
+    accessibilityActions: [
+      ...(canViewOriginal && !originalPages.has(activeIndex)
+        ? [{ name: 'viewOriginal', label: t`View original` }]
+        : []),
+      { name: 'increment', label: t`Zoom in` },
+      { name: 'decrement', label: t`Zoom out` },
+      { name: 'resetZoom', label: t`Reset zoom` },
+      ...(count > 1
+        ? [
+            { name: 'previousImage', label: t`Previous image` },
+            { name: 'nextImage', label: t`Next image` },
+          ]
+        : []),
+      { name: 'longpress', label: t`Save image` },
+      { name: 'escape', label: t`Close preview` },
+    ],
+    onAccessibilityAction: ({ nativeEvent: { actionName } }) => {
+      if (actionName === 'viewOriginal' && canViewOriginal) {
+        viewOriginal();
+        return;
+      }
+      if (actionName === 'escape') {
+        close();
+        return;
+      }
+      if (actionName === 'longpress') {
+        showFileActions();
+        return;
+      }
+      scheduleOnUI(() => {
+        'worklet';
+        cancelAnimation(transform);
+        const index = pageIndex.get();
+        if (actionName === 'previousImage' || actionName === 'nextImage') {
+          const next = previewPageIndex(index + (actionName === 'nextImage' ? 1 : -1), count);
+          transform.set(RESTING_PREVIEW);
+          pageIndex.set(next);
+          pagerX.set(withTiming(-next * width, timing('short')));
+          dragY.set(0);
+          scheduleOnRN(commitPage, next);
+        } else if (
+          actionName === 'increment' ||
+          actionName === 'decrement' ||
+          actionName === 'resetZoom'
+        ) {
+          const current = transform.get();
+          transform.set(
+            withTiming(
+              actionName === 'resetZoom'
+                ? RESTING_PREVIEW
+                : zoomPreviewAt(
+                    current,
+                    current.scale + (actionName === 'increment' ? 0.5 : -0.5),
+                    { x: 0, y: 0 },
+                    { x: 0, y: 0 },
+                    sizes.get()[index] ?? UNKNOWN_SIZE,
+                    viewport
+                  ),
+              timing('short')
+            )
+          );
+        }
+      });
+    },
+  };
+  return (
+    <>
+      <Animated.View style={[StyleSheet.absoluteFill, styles.backdrop, backdropStyle]} />
+      <GestureDetector gesture={gesture}>
+        <Animated.View style={styles.viewport} testID="image-preview-viewport">
+          {/* The detector stays still; its focal coordinates never include pager translation. */}
+          <Animated.View style={[styles.pager, { width: width * count }, pagerStyle]}>
+            {images.map((image, index) => (
               <PreviewPage
                 key={image.id}
                 image={image}
+                index={index}
+                active={index === activeIndex}
+                accessibility={accessibility}
                 width={width}
                 height={height}
-                zoomStyle={zoomStyle}
+                transform={transform}
+                sizes={sizes}
+                pageIndex={pageIndex}
+                originalRequested={originalPages.has(index)}
               />
             ))}
           </Animated.View>
-        </GestureDetector>
-        {/* Declared last, and carrying `zIndex` and `elevation` as well:
+        </Animated.View>
+      </GestureDetector>
+      {/* Declared last, and carrying `zIndex` and `elevation` as well:
             Android hit-tests by Z before draw order, and this is the control
             that has to stay reachable no matter what the pager is doing or
             failing to do underneath it. */}
+      {fileActions.menu && (
+        <View style={{ position: 'absolute', bottom: insets.bottom + 24, left: 24, right: 24 }}>
+          {fileActions.menu}
+        </View>
+      )}
+      <PressableScale
+        accessibilityLabel={t`Close preview`}
+        onPress={onClose}
+        style={[styles.close, { top: insets.top + 10 }]}>
+        <X size={20} color="#FFFFFF" />
+      </PressableScale>
+      {canViewOriginal && !originalPages.has(activeIndex) ? (
         <PressableScale
-          accessibilityLabel={t`Close preview`}
-          onPress={onClose}
-          style={[styles.close, { top: insets.top + 10 }]}>
-          <X size={20} color="#FFFFFF" />
+          accessibilityLabel={t`View original`}
+          onPress={viewOriginal}
+          style={[styles.original, { top: insets.top + 10 }]}>
+          <Text variant="caption" style={{ color: '#FFFFFF' }}>{t`View original`}</Text>
         </PressableScale>
-      </GestureHandlerRootView>
-    </Modal>
+      ) : null}
+    </>
   );
 }
 
@@ -268,37 +633,125 @@ export function ImagePreviewModal({
  */
 function PreviewPage({
   image,
+  index,
+  active,
+  accessibility,
   width,
   height,
-  zoomStyle,
+  transform,
+  sizes,
+  pageIndex,
+  originalRequested,
 }: {
   image: PreviewImage;
+  index: number;
+  active: boolean;
+  accessibility: PreviewAccessibility;
   width: number;
   height: number;
-  zoomStyle: React.ComponentProps<typeof Animated.View>['style'];
+  transform: SharedValue<typeof RESTING_PREVIEW>;
+  sizes: SharedValue<PreviewSize[]>;
+  pageIndex: SharedValue<number>;
+  originalRequested: boolean;
 }) {
-  const [status, setStatus] = useState<'loading' | 'loaded' | 'failed'>('loading');
+  const { t } = useLingui();
+  const [load, setLoad] = useState<PreviewLoadState>(() => ({
+    source: image.resolveSource ? null : image,
+    status: 'loading',
+    original: false,
+  }));
+  const { status, original } = load;
+  const wantsOriginal = original || originalRequested;
+  useEffect(() => {
+    if (originalRequested)
+      setLoad((current) =>
+        current.original && current.status === 'loading'
+          ? current
+          : { source: null, status: 'loading', original: true }
+      );
+  }, [originalRequested]);
+  const asynchronous = Boolean(image.resolveSource);
+  const resolve = useEffectEvent((signal: AbortSignal, original: boolean) =>
+    original
+      ? (image.resolveOriginal?.(signal) ?? Promise.resolve(image.original ?? image))
+      : (image.resolveSource?.(signal) ?? Promise.resolve(image))
+  );
+  useEffect(() => {
+    if (!active || !asynchronous) return;
+    const controller = new AbortController();
+    resolve(controller.signal, wantsOriginal).then(
+      (source) => {
+        if (!controller.signal.aborted)
+          setLoad({ source, status: 'loading', original: wantsOriginal });
+        else source.dispose?.();
+      },
+      () => {
+        if (!controller.signal.aborted)
+          setLoad({ source: null, status: 'failed', original: wantsOriginal });
+      }
+    );
+    return () => controller.abort();
+  }, [active, asynchronous, wantsOriginal, originalRequested]);
+  useEffect(() => () => load.source?.dispose?.(), [load.source]);
+  const zoomStyle = useAnimatedStyle(() => {
+    // Clamp even during timed zooms: an axis may not overflow until halfway through.
+    const current =
+      index === pageIndex.get()
+        ? clampPreviewTransform(transform.get(), sizes.get()[index] ?? UNKNOWN_SIZE, {
+            width,
+            height,
+          })
+        : RESTING_PREVIEW;
+    return {
+      transform: [{ translateX: current.x }, { translateY: current.y }, { scale: current.scale }],
+    };
+  });
 
   return (
-    <View style={{ width, height }}>
+    <View
+      style={{ width, height, overflow: 'hidden' }}
+      accessible={active}
+      importantForAccessibility={active ? 'yes' : 'no-hide-descendants'}
+      accessibilityElementsHidden={!active}
+      accessibilityRole="adjustable"
+      accessibilityLabel={
+        status === 'failed' ? t`This image could not be loaded.` : t`Image preview`
+      }
+      {...accessibility}>
       <Animated.View style={[styles.page, zoomStyle]}>
-        <Image
-          source={{
-            uri: image.uri,
-            headers: image.headers,
-            cacheKey: image.cacheKey,
-          }}
-          style={styles.image}
-          contentFit="contain"
-          // The decode's own fade. It was 120 ms, which is not a step on any
-          // scale this app uses. There is deliberately no `placeholder`: a
-          // blurhash is the right answer and the gateway does not send one, so
-          // writing a fake one here would be a lie about the file. Until it
-          // does, the wait is stated by the frame below rather than guessed at.
-          transition={DURATION.micro}
-          onLoad={() => setStatus('loaded')}
-          onError={() => setStatus('failed')}
-        />
+        {load.source && shouldLoadImagePreview(image, active, status === 'loaded') ? (
+          <Image
+            key={load.source.cacheKey ?? load.source.uri}
+            source={{
+              uri: load.source.uri,
+              headers: load.source.headers,
+              cacheKey: load.source.cacheKey,
+            }}
+            cachePolicy={image.deferred ? 'none' : undefined}
+            style={styles.image}
+            contentFit="contain"
+            // The decode's own fade. It was 120 ms, which is not a step on any
+            // scale this app uses. There is deliberately no `placeholder`: a
+            // blurhash is the right answer and the gateway does not send one, so
+            // writing a fake one here would be a lie about the file. Until it
+            // does, the wait is stated by the frame below rather than guessed at.
+            transition={DURATION.micro}
+            onLoad={({ source }) => {
+              sizes.set((current) =>
+                current.map((size, page) =>
+                  page === index ? { width: source.width, height: source.height } : size
+                )
+              );
+              setLoad((current) =>
+                current.source === load.source ? { ...current, status: 'loaded' } : current
+              );
+            }}
+            onError={() => {
+              const failed = load.source;
+              if (failed) setLoad((current) => failedPreviewLoad(current, image, failed));
+            }}
+          />
+        ) : null}
       </Animated.View>
       {status === 'loading' ? (
         <Animated.View
@@ -331,6 +784,22 @@ function PreviewPage({
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+  },
+  viewport: {
+    flex: 1,
+    overflow: 'hidden',
+  },
+  original: {
+    position: 'absolute',
+    left: 14,
+    height: 40,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.30)',
+    zIndex: 1,
+    elevation: 1,
   },
   backdrop: {
     backgroundColor: '#000000',

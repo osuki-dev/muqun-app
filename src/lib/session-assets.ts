@@ -9,7 +9,8 @@
  */
 
 /** What the gateway sniffed the file to be; decides which viewer opens. */
-export type AssetKind = 'image' | 'markdown' | 'text' | 'pdf' | 'binary';
+import { imageAssetPath } from './gateway-image-previews';
+export type AssetKind = 'image' | 'audio' | 'video' | 'markdown' | 'text' | 'pdf' | 'binary';
 
 export interface SessionAsset {
   id: string;
@@ -26,9 +27,28 @@ export interface SessionAsset {
     workspace_id?: string;
   };
   previewable: boolean;
+  thumbnail_url?: string;
+  preview_url?: string;
+  download_url?: string;
+  version_url?: string;
+  preview_declared?: boolean;
+  /** Bound by the client, never trusted from Gateway JSON. */
+  gatewayServerId?: string;
+  /** Only set for a file picked on this device, never for a host file:// URI. */
+  localUri?: string;
+  /** Validated upload name; uploads are outside the session workspace root. */
+  uploadName?: string;
 }
 
-const ASSET_KINDS: readonly AssetKind[] = ['image', 'markdown', 'text', 'pdf', 'binary'];
+const ASSET_KINDS: readonly AssetKind[] = [
+  'image',
+  'audio',
+  'video',
+  'markdown',
+  'text',
+  'pdf',
+  'binary',
+];
 
 /**
  * The `kind=` value for a listing request, or null for "ask for everything".
@@ -92,6 +112,11 @@ function normalizeSessionAsset(value: unknown): SessionAsset | null {
 
   const kind = ASSET_KINDS.find((entry) => entry === raw.kind) ?? 'binary';
   const name = typeof raw.name === 'string' && raw.name ? raw.name : fileNameOf(path);
+  const thumbnail = imageAssetPath(raw.thumbnail_url, id, 'thumbnail');
+  const preview = imageAssetPath(raw.preview_url, id, 'preview');
+  const download = imageAssetPath(raw.download_url, id, 'download');
+  const version = imageAssetPath(raw.version_url, id, 'version');
+  const declared = ['thumbnail_url', 'preview_url', 'download_url'].some((key) => key in raw);
   return {
     id,
     path,
@@ -104,6 +129,11 @@ function normalizeSessionAsset(value: unknown): SessionAsset | null {
     // An older gateway that does not send the flag still gets a sensible
     // answer: everything but an opaque binary is worth trying to render.
     previewable: typeof raw.previewable === 'boolean' ? raw.previewable : kind !== 'binary',
+    ...(thumbnail ? { thumbnail_url: thumbnail } : {}),
+    ...(preview ? { preview_url: preview } : {}),
+    ...(download ? { download_url: download } : {}),
+    ...(version ? { version_url: version } : {}),
+    ...(declared && !thumbnail && !preview && !download ? { preview_declared: true } : {}),
   };
 }
 
@@ -177,6 +207,8 @@ export function assetFromContentHeaders(
 
 function assetKindFromMime(mime: string): AssetKind {
   if (mime.startsWith('image/')) return 'image';
+  if (mime.startsWith('audio/')) return 'audio';
+  if (mime.startsWith('video/')) return 'video';
   if (mime === 'application/pdf') return 'pdf';
   if (mime === 'text/markdown') return 'markdown';
   if (mime.startsWith('text/') || mime === 'application/json') return 'text';
@@ -219,16 +251,18 @@ export function assetFromToolFile(
   const uri = file.uri ?? '';
   const path = uri.startsWith('file://') ? decodeURI(uri.slice('file://'.length)) : uri;
   if (!path.startsWith('/')) return null;
-  const mime = file.mime ?? '';
-  const kind: AssetKind = mime.startsWith('image/')
-    ? 'image'
-    : mime === 'application/pdf'
-      ? 'pdf'
-      : mime === 'text/markdown'
-        ? 'markdown'
-        : mime.startsWith('text/')
-          ? 'text'
-          : 'binary';
+  const mime = isPdfFile(file) ? 'application/pdf' : (file.mime ?? '');
+  const kind: AssetKind = mime.startsWith('audio/')
+    ? 'audio'
+    : mime.startsWith('image/')
+      ? 'image'
+      : mime === 'application/pdf'
+        ? 'pdf'
+        : mime === 'text/markdown'
+          ? 'markdown'
+          : mime.startsWith('text/')
+            ? 'text'
+            : 'binary';
   return {
     id: path,
     path,
@@ -241,5 +275,72 @@ export function assetFromToolFile(
     modified_unix_ms: 0,
     ...(sessionId ? { origin: { session_id: sessionId } } : {}),
     previewable: kind !== 'binary',
+  };
+}
+
+/** A filename is the fallback when a picker or tool omits a useful MIME. */
+export function isPdfFile(file: { mime?: string; name?: string; uri?: string }): boolean {
+  return (
+    file.mime?.split(';')[0].trim().toLowerCase() === 'application/pdf' ||
+    /\.pdf$/i.test(file.name ?? '') ||
+    /\.pdf$/i.test(file.uri ?? '')
+  );
+}
+
+/** Device-picked bytes are distinct from identically shaped paths on a host. */
+export function assetFromLocalPdf(
+  file:
+    | {
+        id: string;
+        localUri: string;
+        name: string;
+        mime: string;
+        size?: number;
+      }
+    | undefined
+): SessionAsset | null {
+  if (
+    !file ||
+    !isPdfFile({ ...file, uri: file.localUri }) ||
+    !/^(?:file|content):\/\//.test(file.localUri)
+  )
+    return null;
+  return {
+    id: file.id,
+    path: file.name,
+    name: file.name,
+    kind: 'pdf',
+    mime: 'application/pdf',
+    size: file.size ?? 0,
+    modified_unix_ms: 0,
+    previewable: true,
+    localUri: file.localUri,
+  };
+}
+
+export function assertAssetGateway(
+  asset: Pick<SessionAsset, 'gatewayServerId'>,
+  currentServerId: string | null
+) {
+  if (asset.gatewayServerId && asset.gatewayServerId !== currentServerId)
+    throw new Error('The file belongs to a different Gateway');
+}
+
+/** Uploaded PDFs use the authenticated upload route, never a host-path fetch. */
+export function assetFromUploadedPdf(path: string, serverId: string | null): SessionAsset | null {
+  if (!/^(?:\/|file:\/\/\/)/.test(path) || path.startsWith('//')) return null;
+  const name = /\/muqun-gateway\/uploads\/([a-zA-Z0-9_-]+\.pdf)$/i.exec(path)?.[1];
+  if (!name) return null;
+  return {
+    id: `upload:${name}`,
+    path,
+    name,
+    kind: 'pdf',
+    mime: 'application/pdf',
+    size: 0,
+    modified_unix_ms: 0,
+    previewable: true,
+    gatewayServerId: serverId ?? undefined,
+    uploadName: name,
   };
 }

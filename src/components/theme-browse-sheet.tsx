@@ -1,7 +1,6 @@
 import { LegendList } from '@legendapp/list/react-native';
 import { useLingui } from '@lingui/react/macro';
-import { Tag, useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { Tag, useThemeTokens, Button, PressableScale, Text } from '@osuki-dev/ui';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LogoLoader } from '@/components/logo-loader';
@@ -17,10 +16,8 @@ import {
   SHEET_LADDER,
   sheetSceneStyles,
 } from '@/components/sheet-scene';
-import { PressableScale } from '@/components/pressable-scale';
 import { ListLoadMoreFooter } from '@/components/list-load-more-footer';
 import { ThemeImportProgress } from '@/components/theme-import-progress';
-import { Button } from '@/components/themed-button';
 import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
 import { formatAssetSize } from '@/lib/asset-display';
 import { isDemoActive } from '@/lib/demo-gateway';
@@ -582,8 +579,6 @@ export function ThemeBrowseSheet({
       testID="settings-sheet-scene"
       title={t`Browse themes`}
       topInset={insets.top}
-      captionLines={0}
-      caption={t`Themes published at muqun.dev. Nothing downloads until you open one.`}
       header={header}>
       <LegendList
         nestedScrollEnabled

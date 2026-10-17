@@ -314,6 +314,8 @@ export async function updateGateway(
 export async function removeGateway(serverId: string): Promise<GatewayRecord[]> {
   const records = (await loadGateways()).filter((record) => record.serverId !== serverId);
   await saveRecords(records);
+  const { forgetHomeLedgerDeliveries } = await import('./home-ledger-delivery');
+  forgetHomeLedgerDeliveries(serverId);
   const selected = await SecureStore.getItemAsync(SELECTED_RECORD_ID);
   if (selected === serverId || records.length === 0) {
     const next = records[0] ?? null;
@@ -332,6 +334,8 @@ export async function clearGateway(): Promise<void> {
   if (!current) return;
   const records = (await loadGateways()).filter((record) => record.serverId !== current.serverId);
   await saveRecords(records);
+  const { forgetHomeLedgerDeliveries } = await import('./home-ledger-delivery');
+  forgetHomeLedgerDeliveries(current.serverId);
   const next = records[0] ?? null;
   if (next) {
     await SecureStore.setItemAsync(SELECTED_RECORD_ID, next.serverId, STORAGE_OPTIONS);

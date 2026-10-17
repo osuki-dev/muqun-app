@@ -1,10 +1,14 @@
 import { create } from 'zustand';
 
+import { useServerCapabilities } from '@/stores/server-capabilities';
+
 import { configureGateway, revokeOwnGatewayPairing, setGatewayLabel } from '@/lib/gateway-client';
 import { demoRecord, DEMO_SERVER_ID } from '@/lib/demo-gateway';
 import { seedDemoAgentRecent } from '@/lib/demo-recents';
+import { forgetRegisteredPushToken } from '@/lib/push-token-registry';
 import { forgetWarmWorkspace } from '@/lib/server-warm-cache';
 import { describeGatewayFailure } from '@/lib/network-error';
+import { isExpiredGatewayPairing } from '@/lib/gateway-refusal';
 import { GatewayTunnelUnavailableError } from '@/lib/ssh-tunnel';
 import {
   clearGateway,
@@ -77,6 +81,8 @@ function enqueue<T>(task: () => Promise<T>): Promise<T> {
  * enough that "nothing happened" is never what unpairing looks like.
  */
 const REVOKE_BUDGET_MS = 4_000;
+/** How long unpairing waits for the unlink on the other computers before it goes on (it finishes in the background). */
+const UNLINK_BUDGET_MS = 10_000;
 
 export const useGatewayConnectionStore = create<GatewayConnectionState>((set, get) => ({
   record: null,
@@ -238,6 +244,23 @@ export const useGatewayConnectionStore = create<GatewayConnectionState>((set, ge
     const recordToRemove = get().records.find((item) => item.serverId === serverId);
     if (!recordToRemove) return;
 
+    // Unlink it from the reader's other computers, both ways, while this device
+    // still holds its token (A5 D6). Best effort and bounded: what it could not
+    // finish is followed up by the reconciler. Imported here because the
+    // reconciler reads this store.
+    // Only where there is a fleet at all.
+    const capabilities = useServerCapabilities.getState().byServer;
+    const fleet = get().records.some((item) =>
+      capabilities[item.serverId]?.includes('fleet_peers')
+    );
+    if (fleet)
+      await Promise.race([
+        import('@/hooks/use-fleet-link')
+          .then(({ unlinkBeforeUnpair }) => unlinkBeforeUnpair(recordToRemove))
+          .catch(() => undefined),
+        new Promise((resolve) => setTimeout(resolve, UNLINK_BUDGET_MS)),
+      ]);
+
     // Keep both sides consistent when the gateway can answer: forget the
     // local credential only after it has removed the matching device token
     // and its push registration. But a record whose gateway no longer exists
@@ -245,9 +268,9 @@ export const useGatewayConnectionStore = create<GatewayConnectionState>((set, ge
     // out -- can never answer that request; it times out, every time,
     // forever. Refusing to ever forget a pairing nothing will ever ask about
     // again is worse than the server-side state it would otherwise be
-    // guarding, so only unreachability gets this pass. A gateway that is
-    // there and says no -- bad auth, a real server error -- still blocks the
-    // removal below exactly as before.
+    // guarding. A known expired credential also permits local removal: the
+    // gateway has already stopped accepting this pairing. Other refusals and
+    // server errors still keep the local record so removal can be retried.
     try {
       // The revoke is two requests, each with the standard 8 s budget. A
       // gateway that is simply gone burns all sixteen seconds before we
@@ -271,7 +294,8 @@ export const useGatewayConnectionStore = create<GatewayConnectionState>((set, ge
       // `GatewayTunnelUnavailableError`.
       if (!(error instanceof GatewayTunnelUnavailableError)) {
         const { kind } = describeGatewayFailure(error);
-        if (kind !== 'timeout' && kind !== 'network') throw error;
+        if (kind !== 'timeout' && kind !== 'network' && !isExpiredGatewayPairing(error))
+          throw error;
       }
     }
 
@@ -283,6 +307,8 @@ export const useGatewayConnectionStore = create<GatewayConnectionState>((set, ge
       // A workspace snapshot outlives nothing it describes: the pairing this
       // one came from is gone, so the snapshot must not paint a screen again.
       forgetWarmWorkspace(serverId);
+      // Paired again later, it has to be told the push token again.
+      forgetRegisteredPushToken(serverId);
       // Only tear down the live connection if we removed the server it points
       // at; deleting some other card must not knock the user out of a session.
       const nextRecord = removedCurrent ? await loadGateway() : get().record;

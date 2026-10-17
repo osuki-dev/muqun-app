@@ -1,21 +1,22 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
-import * as Updates from 'expo-updates';
-import { Check, Download } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
+import { formatAssetSize } from '@/lib/asset-display';
+import { measuredUpdateProgress } from '@/lib/update-progress-shader';
+import { deferAppUpdate, updateAppNow, useAppUpdateStore } from '@/lib/app-updates';
+import { Download, RotateCw } from 'lucide-react-native';
+import { Modal, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import Animated from 'react-native-reanimated';
+import { UpdateDownloadProgress } from '@/components/update-download-progress';
+import { UpdateReleaseNotes } from '@/components/update-release-notes';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useNotificationSurfaceStyle } from '@/components/notification-surface';
-import { fadeInDown, fadeOutUp, timing } from '@/lib/motion';
-
-/** How long the indeterminate download bar takes to crawl to 92%. */
-const DOWNLOAD_RAMP_MS = 2400;
+import { fadeIn } from '@/lib/motion';
 
 export function UpdateStatusBanner() {
+  const { height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const notificationSurfaceStyle = useNotificationSurfaceStyle();
   const surfaceBackground = useSurfaceBackground();
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
@@ -29,117 +30,225 @@ export function UpdateStatusBanner() {
   const { t } = useLingui();
 
   const theme = useThemeTokens();
-  const { isDownloading, isUpdatePending } = Updates.useUpdates();
-  const [reloadFailed, setReloadFailed] = useState(false);
-  const progress = useSharedValue(0);
-  const visible = Updates.isEnabled && (isDownloading || isUpdatePending || reloadFailed);
-
-  // `downloadProgress` from expo-updates counts assets, not bytes -- and on an
-  // over-the-air update almost every asset (fonts, images) is already cached, so
-  // it jumps straight to ~0.97 and sits there while the one new thing, the JS
-  // bundle, downloads as a single unit with no sub-progress. Showing that number
-  // reads as "stuck at 97%". Ramp the bar smoothly instead: from zero while the
-  // download runs, snap to full once the update is staged.
-  useEffect(() => {
-    if (isUpdatePending) {
-      progress.value = withTiming(1, timing('short'));
-    } else if (isDownloading) {
-      progress.value = 0;
-      // Not a transition but a stand-in for a download whose real length is
-      // unknown, so it is deliberately far outside the token scale: the bar
-      // has to still be crawling when a slow bundle finally lands.
-      progress.value = withTiming(0.92, timing(DOWNLOAD_RAMP_MS));
-    }
-  }, [isDownloading, isUpdatePending, progress]);
-
-  useEffect(() => {
-    if (!isUpdatePending) return;
-    const timer = setTimeout(() => {
-      void Updates.reloadAsync({
-        reloadScreenOptions: {
-          backgroundColor: '#08111B',
-          spinner: { color: '#58AFFF' },
-        },
-      }).catch(() => setReloadFailed(true));
-    }, 1100);
-    return () => clearTimeout(timer);
-  }, [isUpdatePending]);
-
-  const progressStyle = useAnimatedStyle(() => ({
-    transform: [{ scaleX: progress.value }],
-  }));
+  const phase = useAppUpdateStore((state) => state.phase);
+  const downloadedProgress = useAppUpdateStore((state) => state.progress);
+  const releaseNotes = useAppUpdateStore((state) => state.releaseNotes);
+  const downloadedBytes = useAppUpdateStore((state) => state.downloadedBytes);
+  const totalBytes = useAppUpdateStore((state) => state.totalBytes);
+  const downloadSize = useAppUpdateStore((state) => state.downloadSize);
+  const downloadSizeStatus = useAppUpdateStore((state) => state.downloadSizeStatus);
+  const transitionKind = useAppUpdateStore((state) => state.transitionKind);
+  const required = useAppUpdateStore((state) => state.required);
+  const releaseId = useAppUpdateStore((state) => state.releaseId);
+  const downloading = phase === 'downloading';
+  const restarting = phase === 'restarting';
+  const restartFailed = phase === 'restart-failed';
+  const applying = phase === 'applying';
+  const downloadFailed = phase === 'download-failed';
+  const actionable = phase === 'available' || downloadFailed || restartFailed;
+  const visible = actionable || downloading || applying || restarting;
 
   if (!visible) return null;
 
-  const ready = isUpdatePending && !reloadFailed;
-  const label = reloadFailed
-    ? t`Restart Muqun to finish updating`
-    : ready
-      ? t`Update ready · restarting…`
-      : t`Updating Muqun…`;
+  const label = restarting
+    ? t`Restarting Muqun…`
+    : restartFailed
+      ? t`Restart Muqun to finish updating`
+      : downloadFailed
+        ? t`Update download failed. Try again.`
+        : applying
+          ? t`Applying…`
+          : downloading
+            ? t`Updating Muqun…`
+            : t`Update available`;
+  const transferred =
+    downloadedBytes === undefined ? undefined : formatAssetSize(downloadedBytes) || '0 B';
+  const total = totalBytes === undefined ? undefined : formatAssetSize(totalBytes) || '0 B';
+  const fullPackage = downloadSize?.fullBytes ? formatAssetSize(downloadSize.fullBytes) : undefined;
 
   return (
-    <SafeAreaView edges={['top']} pointerEvents="none" style={styles.overlay}>
-      <Animated.View
-        // Timed rather than sprung: the design system is explicitly "no spring,
-        // no bounce", and this banner sits under the status bar where an
-        // overshoot reads as a glitch.
-        entering={fadeInDown('medium')}
-        exiting={fadeOutUp('short')}
+    <Modal
+      transparent
+      visible
+      animationType="fade"
+      statusBarTranslucent
+      onRequestClose={deferAppUpdate}>
+      <View
         style={[
-          styles.banner,
-          notificationSurfaceStyle,
-          {
-            backgroundColor: surfaceBackground(theme.colors.surface),
-          },
+          styles.overlay,
+          { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16 },
         ]}>
         <View
-          style={[styles.icon, { backgroundColor: surfaceBackground(theme.colors.primarySubtle) }]}>
-          {ready ? (
-            <Check size={15} color={theme.colors.primary} strokeWidth={2.4} />
-          ) : (
-            <Download size={15} color={theme.colors.primary} strokeWidth={2.2} />
-          )}
+          testID="update-consent-prompt"
+          accessibilityViewIsModal
+          style={[
+            styles.banner,
+            notificationSurfaceStyle,
+            {
+              backgroundColor: theme.colors.surface,
+              maxHeight: Math.max(0, height - insets.top - insets.bottom - 32),
+            },
+          ]}>
+          <ScrollView
+            testID="update-prompt-scroll"
+            accessibilityLabel={t`What's new`}
+            style={styles.body}
+            contentContainerStyle={styles.bodyContent}>
+            <View style={styles.header}>
+              <View
+                style={[
+                  styles.icon,
+                  { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
+                ]}>
+                <Animated.View
+                  key={downloading ? 'downloading' : 'restarting'}
+                  entering={fadeIn('short')}>
+                  {downloading ? (
+                    <Download size={15} color={theme.colors.primary} strokeWidth={2.2} />
+                  ) : (
+                    <RotateCw size={15} color={theme.colors.primary} strokeWidth={2.2} />
+                  )}
+                </Animated.View>
+              </View>
+              <View style={styles.content}>
+                <Text variant="body" weight="medium" accessibilityLiveRegion="polite">
+                  {label}
+                </Text>
+                {downloading || restarting || restartFailed ? (
+                  <UpdateDownloadProgress value={downloadedProgress} downloading={downloading} />
+                ) : null}
+                {transferred || downloading || restarting ? (
+                  <View style={styles.progressRow}>
+                    {transferred ? (
+                      <Text
+                        testID="update-download-bytes"
+                        variant="caption"
+                        weight="regular"
+                        color={theme.colors.textMuted}
+                        style={styles.transfer}>
+                        {total ? `${transferred} / ${total}` : transferred}
+                      </Text>
+                    ) : null}
+                    {downloading || restarting ? (
+                      <Text variant="caption" weight="regular" color={theme.colors.textMuted}>
+                        {Math.floor(measuredUpdateProgress(downloadedProgress) * 100)}%
+                      </Text>
+                    ) : null}
+                  </View>
+                ) : null}
+              </View>
+            </View>
+            {releaseId ? (
+              <Text variant="caption" color={theme.colors.textMuted} style={styles.identifier}>
+                {t`Update`} · {releaseId.slice(0, 8)}
+              </Text>
+            ) : null}
+            {actionable &&
+            !restartFailed &&
+            transitionKind !== 'ADOPT_RELEASE' &&
+            transitionKind !== 'USE_BUILTIN' ? (
+              <View testID="update-download-size" style={styles.identifier}>
+                <Text variant="bodySmall" color={theme.colors.textMuted}>
+                  {downloadSizeStatus === 'checking'
+                    ? t`Checking download size…`
+                    : downloadSizeStatus === 'failed'
+                      ? t`Could not check download size. Try again.`
+                      : t`Download size: ${fullPackage}`}
+                </Text>
+                {fullPackage ? (
+                  <Text variant="caption" color={theme.colors.textMuted}>
+                    {t`Full package size. File reuse may reduce the download.`}
+                  </Text>
+                ) : null}
+              </View>
+            ) : null}
+            {required ? (
+              <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.identifier}>
+                {t`This update is required to continue using Muqun. Read what's new, then update when you're ready.`}
+              </Text>
+            ) : null}
+            {releaseNotes ? (
+              <View testID="update-release-notes" style={styles.notes}>
+                <UpdateReleaseNotes notes={releaseNotes} bundled={false} />
+              </View>
+            ) : (
+              <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.identifier}>
+                {t`No changelog was provided for this update.`}
+              </Text>
+            )}
+          </ScrollView>
+          {actionable ? (
+            <View testID="update-prompt-actions" style={styles.actions}>
+              {!required ? (
+                <PressableScale
+                  testID="update-later"
+                  accessibilityRole="button"
+                  accessibilityLabel={t`Later`}
+                  onPress={deferAppUpdate}
+                  style={styles.action}>
+                  <Text variant="bodySmall" color={theme.colors.textMuted}>{t`Later`}</Text>
+                </PressableScale>
+              ) : null}
+              <PressableScale
+                testID="update-now"
+                accessibilityRole="button"
+                accessibilityLabel={
+                  downloadSizeStatus
+                    ? t`Retry size check`
+                    : downloadFailed || restartFailed
+                      ? t`Retry`
+                      : t`Update now`
+                }
+                onPress={() => {
+                  void updateAppNow();
+                }}
+                style={[styles.action, { backgroundColor: theme.colors.primarySubtle }]}>
+                <Text variant="bodySmall" color={theme.colors.primary}>
+                  {downloadSizeStatus
+                    ? t`Retry size check`
+                    : downloadFailed || restartFailed
+                      ? t`Retry`
+                      : t`Update now`}
+                </Text>
+              </PressableScale>
+            </View>
+          ) : null}
         </View>
-        <View style={styles.content}>
-          <Text variant="caption" numberOfLines={1} style={styles.label}>
-            {label}
-          </Text>
-          <View
-            style={[
-              styles.track,
-              { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
-            ]}>
-            <Animated.View
-              style={[styles.progress, { backgroundColor: theme.colors.primary }, progressStyle]}
-            />
-          </View>
-        </View>
-      </Animated.View>
-    </SafeAreaView>
+      </View>
+    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
   overlay: {
-    position: 'absolute',
-    zIndex: 100,
-    top: 0,
-    left: 0,
-    right: 0,
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
     alignItems: 'center',
-    paddingHorizontal: 12,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
   },
   banner: {
     width: '100%',
     maxWidth: 420,
-    minHeight: 48,
-    paddingHorizontal: 6,
-    paddingVertical: 6,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 9,
+    padding: 16,
+    gap: 12,
   },
+  // Header, explanation and notes share one shrinkable scroller. The action
+  // footer never competes with their intrinsic height, even with large text.
+  body: { flexShrink: 1, minHeight: 0 },
+  bodyContent: { gap: 12 },
+  identifier: { paddingHorizontal: 4 },
+  actions: { flexShrink: 0, flexDirection: 'row', justifyContent: 'flex-end', gap: 12 },
+  action: {
+    flexShrink: 1,
+    minWidth: 0,
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 9 },
   icon: {
     width: 36,
     height: 36,
@@ -152,18 +261,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingRight: 10,
   },
-  label: {
-    fontWeight: '600',
-  },
-  track: {
-    height: 3,
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  progress: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 2,
-    transformOrigin: 'left center',
-  },
+  notes: { paddingHorizontal: 10, paddingBottom: 8 },
+  progressRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8 },
+  transfer: { flex: 1 },
 });

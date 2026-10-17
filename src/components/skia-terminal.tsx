@@ -20,17 +20,26 @@ import {
   type SkRect,
   type SkTypefaceFontProvider,
 } from 'react-native-skia';
-import { useThemeTokens, useToast } from '@osuki-dev/ui';
+import { useThemeTokens, useToast, Button, PressableScale } from '@osuki-dev/ui';
 import { useHasThemeArtwork } from '@/components/theme-artwork';
-import { Button } from '@/components/themed-button';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { ChevronUp } from 'lucide-react-native';
 
 import { LogoLoader } from '@/components/logo-loader';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
+import { appChrome } from '@/constants/appearance';
 import { Asset } from 'expo-asset';
 import * as Clipboard from 'expo-clipboard';
 import * as Linking from 'expo-linking';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useEffectEvent,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   ActivityIndicator,
   Keyboard,
@@ -61,15 +70,9 @@ import {
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { useCoalescedValue } from '@/hooks/use-coalesced-value';
 import { useFreezeGate, useFrozenValue } from '@/hooks/use-frozen-value';
-import {
-  useLatestReader,
-  useLatestRef,
-  useResetSignal,
-  useStableHandler,
-} from '@/hooks/use-render-refs';
+import { useLatestReader, useLatestRef, useStableHandler } from '@/hooks/use-render-refs';
 import { followsOutputOnScreenRelease, latestPillVisible } from '@/lib/dock-presentation';
 import { feedback } from '@/lib/feedback';
 import { fadeOut, timing, zoomIn, zoomOut } from '@/lib/motion';
@@ -90,7 +93,7 @@ import {
   terminalOpenScale,
   terminalOpenView,
   terminalPanMinX,
-  terminalScaleOnScreenLeave,
+  terminalScaleOnPinchEnd,
   type TerminalPaneScales,
   type TerminalPinchPhase,
   type TerminalTextSize,
@@ -359,37 +362,49 @@ function recordCommittedHead(
 
 /**
  * The pane-open adjust in `SkiaTerminal`: reset the zoom and the horizontal pan,
- * and mark the new pane's placement as owed.
+ * and mark the new pane's placement as owed, once per `paneOpenKey`.
  *
- * Moved here verbatim from the component body and called from the same place
- * in the same render. It writes shared values and a ref *during render* on
- * purpose -- the adjust-during-render pattern `useResetSignal` exists for; an
- * effect is a painted frame late -- and React Compiler will not compile a
- * component that touches a ref in render. `'use no memo'` keeps the compiler
- * out of this one hook so the terminal around it can be compiled.
+ * A layout effect, not a write during render. Both land in the same JS task
+ * as the commit: a shared value written from JS is queued for the UI runtime
+ * and flushed when that task ends, whether the write came from the render or
+ * from the layout effect after it, so the new pane's first painted frame
+ * carries the reset either way. The render-time spelling was the same
+ * statements a few microseconds earlier, and Reanimated's strict mode now
+ * warns about every such write, which in a dev build pins LogBox's banner
+ * over the bottom of the screen. The ref is read only by a passive effect,
+ * which runs after this one.
+ *
+ * Skipped on mount, as the change detector it replaces was: the first render
+ * already starts from the open scale, the left edge and an unplaced pane.
  */
 function useArmPaneOpen(
-  armed: boolean,
+  paneOpenKey: string,
+  ready: boolean,
   paneOpenScale: number,
   scale: SharedValue<number>,
   translateX: SharedValue<number>,
   placedOpenKeyRef: { current: string | null }
 ): void {
-  'use no memo';
-  if (!armed) return;
-  // A shared value, not React state: nothing in this render reads it back, so
-  // there is no torn render to have. This is the adjust-during-render pattern
-  // `useResetSignal` exists for, and an effect here is a painted frame late.
-  scale.value = paneOpenScale;
-  // The pan goes back to the left edge, as it always has on open.
-  translateX.value = 0;
-  // The placement itself is applied on the first frame of the new pane rather
-  // than here. This render still describes the outgoing pane -- its content
-  // height, which the resting anchor is made of, and its text width, which
-  // both pan clamps are made of -- so a position applied here is clamped
-  // against the wrong pane and lost. All this render does is say one is owed.
-  // oxlint-disable-next-line react/refs -- deliberate: nothing renders from this ref; it is the arm half of the adjust-during-render pattern above, and an effect would set it a commit too late. See its doc comment.
-  placedOpenKeyRef.current = null;
+  const arm = useEffectEvent(() => {
+    if (!ready) return;
+    scale.set(paneOpenScale);
+    // The pan goes back to the left edge, as it always has on open.
+    translateX.set(0);
+    // The placement itself is applied on the first frame of the new pane rather
+    // than here. This commit still describes the outgoing pane -- its content
+    // height, which the resting anchor is made of, and its text width, which
+    // both pan clamps are made of -- so a position applied here is clamped
+    // against the wrong pane and lost. All this does is say one is owed.
+    placedOpenKeyRef.current = null;
+  });
+  const mounted = useRef(false);
+  useLayoutEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true;
+      return;
+    }
+    arm();
+  }, [paneOpenKey]);
 }
 
 export function SkiaTerminal({
@@ -559,6 +574,9 @@ export function SkiaTerminal({
 }) {
   const fontSize = terminalFontSize(textSize);
   const theme = useThemeTokens();
+  // The floating chrome's corners follow the profile, so the editorial one
+  // goes square with the rest of the app.
+  const profile = useAppearanceProfile();
   const appActive = useAppActive();
   // Whether anything patterned sits behind this canvas. `shell.background` is
   // the only slot that reaches behind a terminal; Home's own wallpaper never
@@ -1387,15 +1405,14 @@ export function SkiaTerminal({
    * columns reach the edge. `terminalOpenScale` is the whole rule and this is
    * its only call site.
    *
-   * During the render the pane changes on, not in an effect after it. The scale
+   * In the commit the pane changes on, not a passive effect after it. The scale
    * is a transform on the recorded picture rather than an input to it -- nothing
    * here re-parses, re-records or re-measures -- so the cost is a shared-value
-   * write, and the reason it is here is timing rather than cost: an effect runs
-   * after the commit it belongs to has been painted, so a fitted pane would
-   * show one frame of its text at 1:1 hugging the left of the screen and then
-   * jump. #33 measured that shape of mistake from the other end and moved its
-   * own restore into the switch render for the same reason; `useResetSignal`'s
-   * docblock describes this case by name.
+   * write, and the reason it is here is timing rather than cost: a passive
+   * effect runs after the commit it belongs to has been painted, so a fitted
+   * pane would show one frame of its text at 1:1 hugging the left of the
+   * screen and then jump. #33 measured that shape of mistake from the other
+   * end and moved its own restore into the switch commit for the same reason.
    *
    * The key is the pane *and* the geometry, which is exactly the set of
    * dependencies the effect this replaces re-ran on, plus the pane's own column
@@ -1412,12 +1429,11 @@ export function SkiaTerminal({
    * render and always a change from the zero this saw first.
    */
   const paneOpenKey = `${terminalId}:${viewport.width}x${viewport.height}:${fitColumns ?? 0}x${paneRows ?? 0}:${cellWidth}:${ownsScreen ? 1 : 0}`;
-  const paneOpened = useResetSignal(paneOpenKey);
-  // The adjust itself lives in `useArmPaneOpen` -- the same statements, run
-  // here, in this render -- so React Compiler can compile the terminal around
-  // it. See the hook's docblock.
+  // The adjust itself lives in `useArmPaneOpen`, a layout effect on this key.
+  // See the hook's docblock.
   useArmPaneOpen(
-    paneOpened && viewport.width > 0 && viewport.height > 0,
+    paneOpenKey,
+    viewport.width > 0 && viewport.height > 0,
     paneOpenScale,
     scale,
     translateX,
@@ -1431,63 +1447,26 @@ export function SkiaTerminal({
   const openViewRef = useLatestRef(openView);
   const paneOpenKeyRef = useLatestRef(paneOpenKey);
 
-  // Leaving the service screen remembers the pinch this pane is showing, keyed
-  // on its id (see `terminalScaleOnScreenLeave`), rather than resetting it.
-  // Deliberately not keyed on the pane: the carousel keeps this canvas mounted
-  // across a pane switch, and going out to Settings or the panels sheet leaves
-  // the screen mounted underneath, so `screenFocused` still reaches `false` on
-  // a render for those. Running while the pane is off screen still matters:
-  // the write happens where the reader cannot see it land.
+  // Leaving the service screen resets the pan and writes nothing down. Only the
+  // end of a pinch remembers a scale (`rememberPinch` below): a leave, a pane
+  // switch or an unmount used to store whatever scale the canvas held -- a fit,
+  // or one carried over from the previous pane -- sometimes under another
+  // pane's id (home-dispatch-ux §10).
   useEffect(() => {
     if (screenFocused) return;
     if (viewport.width <= 0) return;
-    savePaneScales(
-      terminalScaleOnScreenLeave(terminalId, scale.get(), loadPaneScales(), paneRestingScale)
-    );
     translateX.set(0);
-  }, [paneRestingScale, scale, screenFocused, terminalId, translateX, viewport.width]);
+  }, [screenFocused, translateX, viewport.width]);
 
-  // The other half of the write above, for the one path that never renders
-  // `screenFocused: false` at all.
-  //
-  // Going back to the server list does not push a screen over this one, it
-  // pops this screen's own route -- confirmed live: the route
-  // disappears from the stack in the same commit that starts the pop, so this
-  // component unmounts with whatever `screenFocused` it last rendered, which
-  // is still `true`. `useIsFocused` never has a render in between to say
-  // otherwise. The comment above used to claim the server list left the
-  // screen mounted the way Settings does; measured live, it does not, and
-  // this effect is the fix rather than the comment.
-  //
-  // A ref pair, not `terminalId`/`viewport.width` in the deps, because this
-  // has to run *once*, on the unmount that actually happens -- putting either
-  // in the deps would make the effect restart (and its cleanup fire) on every
-  // ordinary prop change, which is not a pane leaving the screen. Both refs
-  // are read only from this cleanup, never from render.
-  const unmountTerminalIdRef = useLatestRef(terminalId);
-  const unmountViewportWidthRef = useLatestRef(viewport.width);
-  // The size this pane would have opened at anyway, so the write below can tell
-  // a scale the reader chose from one the fit handed them (see
-  // `terminalScaleOnScreenLeave`). Same mailbox pattern as the two above, and
-  // read from the same one place.
-  const unmountRestingScaleRef = useLatestRef(paneRestingScale);
-  useEffect(() => {
-    return () => {
-      // oxlint-disable-next-line react/exhaustive-deps -- deliberate: `useLatestRef` (see its own doc comment) exists exactly so a callback outside render can read the current value; this is that read, at the one moment -- unmount -- render can no longer reach.
-      if (unmountViewportWidthRef.current <= 0) return;
-      savePaneScales(
-        terminalScaleOnScreenLeave(
-          // oxlint-disable-next-line react/exhaustive-deps -- deliberate: same as above.
-          unmountTerminalIdRef.current,
-          scale.get(),
-          loadPaneScales(),
-          // oxlint-disable-next-line react/exhaustive-deps -- deliberate: same as above.
-          unmountRestingScaleRef.current
-        )
-      );
-    };
-    // oxlint-disable-next-line react/exhaustive-deps -- deliberate: unmount only, see comment above. `scale` and the two refs are stable identities, so listing them would not change when this runs.
-  }, []);
+  // The end of a pinch the reader made: this pane, at the width it has now,
+  // keeps that scale (`terminalScaleOnPinchEnd`), until it is pinched again or
+  // tmux reports another width.
+  const rememberPinch = useStableHandler((pinched: number) => {
+    if (viewport.width <= 0) return;
+    savePaneScales(
+      terminalScaleOnPinchEnd(terminalId, pinched, loadPaneScales(), paneRestingScale, fitColumns)
+    );
+  });
 
   // Output arriving in a wider column must not undo a pinch or scroll the
   // reader was in the middle of; only the pan bounds move.
@@ -2695,6 +2674,8 @@ export function SkiaTerminal({
           );
         })
         .onFinalize(() => {
+          // Only a pinch that really zoomed is the reader's choice of size.
+          if (pinchPhase.get() === 'active') scheduleOnRN(rememberPinch, scale.get());
           gesturing.set(false);
           pinchPhase.set('idle');
         }),
@@ -2712,6 +2693,7 @@ export function SkiaTerminal({
       gesturing,
       historyHeight,
       pinchPhase,
+      rememberPinch,
       scale,
       textWidth,
       touchModeBits,
@@ -3375,6 +3357,7 @@ export function SkiaTerminal({
           style={[
             styles.historyIndicator,
             {
+              borderRadius: profile.chrome.roundControl,
               top: historyIndicatorTopInset,
               backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
               borderColor: theme.colors.border,
@@ -3403,6 +3386,7 @@ export function SkiaTerminal({
           style={[
             styles.selectionBar,
             {
+              borderRadius: profile.chrome.noticeBanner,
               bottom: 14 + bottomInset,
               backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
               borderColor: theme.colors.border,
@@ -3454,6 +3438,7 @@ export function SkiaTerminal({
             style={[
               styles.latestButton,
               {
+                borderRadius: profile.chrome.roundControl,
                 backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
                 borderColor: theme.colors.border,
               },
@@ -4179,11 +4164,10 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 14,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: '0 4px 14px rgba(0, 0, 0, 0.16)',
+    boxShadow: appChrome.shadow.controlTray,
   },
   selectionBar: {
     position: 'absolute',
@@ -4193,11 +4177,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 24,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 4,
-    boxShadow: '0 6px 18px rgba(0, 0, 0, 0.22)',
+    boxShadow: appChrome.shadow.selectionBar,
   },
   selectionAction: {
     flexShrink: 1,
@@ -4216,12 +4199,11 @@ const styles = StyleSheet.create({
   latestButton: {
     minHeight: 38,
     paddingHorizontal: 14,
-    borderRadius: 19,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: '0 4px 14px rgba(0, 0, 0, 0.16)',
+    boxShadow: appChrome.shadow.controlTray,
   },
   /**
    * See `emptyText` for why the family is not stated here.

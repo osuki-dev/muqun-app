@@ -5,12 +5,19 @@ import {
 } from '@/constants/home-toolbar';
 import { useAppActive } from '@/hooks/use-app-active';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
-import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
-import { Card } from '@/components/themed-card';
+import {
+  useThemeMode,
+  useThemeTokens,
+  Card,
+  Skeleton,
+  Surface,
+  SurfaceDecoration,
+  Button,
+  PressableScale,
+  Text,
+} from '@osuki-dev/ui';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { Button } from '@/components/themed-button';
-import { Skeleton } from '@/components/themed-skeleton';
+import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import {
   type Href,
@@ -23,22 +30,31 @@ import {
   ChevronRight,
   Play,
   ScanLine,
-  Server,
+  Monitor,
   Settings,
   SquareTerminal,
 } from 'lucide-react-native';
-import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useEffectEvent,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   AppState,
   useWindowDimensions,
   RefreshControl,
   StyleSheet,
+  TextInput,
   View,
   type LayoutChangeEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import { KeyboardAwareScrollView, useKeyboardState } from 'react-native-keyboard-controller';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -54,9 +70,7 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 
 import AppDrawer from '@/components/app-drawer';
 import { NewTaskAction } from '@/components/new-task-action';
-import { PressableScale } from '@/components/pressable-scale';
 import { SectionLabel } from '@/components/settings-chrome';
-import { ServerAgentRows } from '@/components/server-agent-rows';
 import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
 import { HomeArtwork } from '@/components/home-artwork';
 import { ThemeIcon } from '@/components/theme-icon';
@@ -69,7 +83,21 @@ import {
 } from '@/components/home-editorial-layout';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { HomeConnections } from '@/components/home-connections';
-import { HomeAttention } from '@/components/home-attention';
+import { HomeAttention, useHasHomeAttention } from '@/components/home-attention';
+import {
+  HomeComputerCards,
+  HomeTaskSync,
+  ComputerCardsPresence,
+  hasComputerCardsAt,
+} from '@/components/home-computer-cards';
+import { HomeRecentChips } from '@/components/home-recent-chips';
+import { filterHomeRecent, homeRecentFilterIds } from '@/lib/home-continue';
+import {
+  HOME_CARD_INSET,
+  openTaskWork,
+  taskSubscriptionServerIds,
+} from '@/lib/home-computer-cards';
+import { hasTaskLedger } from '@/lib/task-ledger';
 import {
   HomeContinueSearch,
   HomeRecentSessions,
@@ -77,12 +105,29 @@ import {
 } from '@/components/home-recent-sessions';
 import { homeContinueSearchEnabled } from '@/lib/home-continue-search';
 import { demoContinueSearchEntries } from '@/lib/demo-recents';
-import { padLaunchLayoutEnabled } from '@/lib/home-pad-geometry';
+import { useScreenVisible } from '@/hooks/use-screen-visible';
+import { claimHomeFirstEntry, hasHomeComposerRevealed } from '@/lib/home-first-entry';
+import { useThemePack } from '@/hooks/use-theme-pack';
+import { useLaunchHandoff } from '@/stores/launch-handoff';
+import {
+  HOME_DOCK_OUTER_BOTTOM_INSET,
+  HOME_DOCK_OUTER_INSET,
+  nextRestingInset,
+  PAD_DOCK_FIELD_LINES,
+  padDockOuterInset,
+  padHomeColumns,
+  padLaunchLayoutEnabled,
+  type RestingInset,
+} from '@/lib/home-pad-geometry';
+import { useDockAutoHide } from '@/hooks/use-dock-auto-hide';
+import { resetSortHold, sortHoldScroll, sortHoldTouches } from '@/stores/home-sort-hold';
 import {
   HomeLaunchActions,
   HomeLaunchTarget,
   useHomeLaunchController,
 } from '@/components/home-launch-actions';
+import { HomeComposerDock } from '@/components/home-composer-dock';
+import { HomeScrollViewport } from '@/components/home-scroll-viewport';
 import { SshHostRow } from '@/components/ssh-host-row';
 import { StatusDot } from '@/components/status-dot';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
@@ -90,16 +135,25 @@ import { reachabilityDescription, reachabilityLabel } from '@/i18n/labels';
 import { DEMO_SERVER_ID, isDemoRecord } from '@/lib/demo-gateway';
 import { demoSshHost } from '@/lib/demo-ssh';
 import type { GatewayRecord } from '@/lib/gateway-storage';
-import { fadeIn, fadeOut, listLayout, riseIn, STAGGER, timing } from '@/lib/motion';
+import {
+  ENTRY_BUDGET_MS,
+  fadeIn,
+  fadeOut,
+  listLayout,
+  riseIn,
+  STAGGER,
+  timing,
+} from '@/lib/motion';
 import {
   homeServerListLayout,
+  homeCoverArtworkHeight,
   THEME_ARTWORK_REGULAR_MIN_WIDTH,
   type HomeServerListLayout,
 } from '@/lib/responsive-layout';
 import { serverIdsNeedingAddress } from '@/lib/server-address';
-import type { ServerAgent, ServerAgentsSnapshot } from '@/lib/server-agents';
 import {
-  resolveServerReachability,
+  reachabilityOfStatus,
+  REACHABILITY_TICK_MS,
   serversToProbe,
   type ActiveServerConnection,
   type ServerReachability,
@@ -107,16 +161,24 @@ import {
 import { sshHomeRows } from '@/lib/ssh-home';
 import type { SshHostRecord } from '@/lib/ssh-hosts';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
+import { useFleetLink } from '@/hooks/use-fleet-link';
 import { type HomeCommandOptions, useHomeCommands } from '@/hooks/use-home-commands';
 import type { HomeServerEntry } from '@/lib/home-commands';
 import { GatewayStorageError } from '@/components/gateway-storage-error';
 import { useServerAgents } from '@/stores/server-agents';
+import { retryHomeRefresh } from '@/lib/home-refresh-schedule';
+import { useConnectionStatuses } from '@/hooks/use-home-reachability';
 import { useHomeRecentsStore } from '@/stores/home-recents';
+import { useHomeAgentChoice } from '@/stores/home-agent-choice';
 import { useHomeAttention } from '@/stores/home-attention';
+import { useServerTasksStore } from '@/stores/server-tasks';
+import { dismissTaskNotices } from '@/stores/in-app-notifications';
+import { useServerChannels } from '@/stores/server-channels';
 import { serverPrewarmGate, useServerReachability } from '@/stores/server-reachability';
 import { useServerSession } from '@/stores/server-session';
 import { warmConfiguredWorkspace } from '@/lib/workspace-snapshot';
 import { useServerCapabilities } from '@/stores/server-capabilities';
+import { showOpeningWhile, taskOpeningKey } from '@/stores/home-task-cards';
 import { useServerLastViewed } from '@/stores/server-last-viewed';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
 import { useThemeLibrary } from '@/stores/theme-library';
@@ -131,7 +193,6 @@ import type {
   ThemeEffectColorRole,
   ThemeEffectDirection,
 } from '@/theme/schema';
-import { ThemedSurface, ThemedSurfaceArtwork } from '@/components/themed-surface';
 import { useBrandMark } from '@/components/brand-mark';
 import { forgetWarmWorkspace } from '@/lib/server-warm-cache';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
@@ -157,7 +218,6 @@ export type HomeOverviewProps = {
  * 12 under the card (the 44 tap box centres it) and inset to the rows' text.
  */
 const PAD_WORK_LINK = { marginTop: 0, paddingVertical: 0, paddingHorizontal: 12 } as const;
-
 export function HomeOverview({
   width,
   layoutMode,
@@ -194,7 +254,7 @@ export function HomeOverview({
     identity.logo?.mode === 'custom' ? customAssets?.[identity.logo.asset] : undefined;
   const logoSource = customLogo && customLogo !== failedLogo ? { uri: customLogo } : brandMark;
   const isPad = layoutMode === 'pad';
-  const { height: windowHeight, fontScale } = useWindowDimensions();
+  const { width: windowWidth, height: windowHeight, fontScale } = useWindowDimensions();
   const showsEditorialBrand = identity.showBrand;
   // Renaming and unpairing live in Settings, not here: the owner asked for one
   // place that manages servers, and the tablet branch's long-press row menu was
@@ -202,14 +262,60 @@ export function HomeOverview({
   // kept; its row menu is not.
   const { record, records, loading, hydrationError, retryHydration, selectRecord, enterDemo } =
     useGatewayRecord();
+  const recordIds = useMemo(() => records.map((server) => server.serverId), [records]);
+  const connectionStatuses = useConnectionStatuses(recordIds, record?.serverId, activeConnection);
+  const padReachabilityByServer = useMemo(
+    () =>
+      Object.fromEntries(
+        recordIds.map((serverId) => [
+          serverId,
+          reachabilityOfStatus(connectionStatuses[serverId] ?? 'unknown'),
+        ])
+      ),
+    [connectionStatuses, recordIds]
+  );
+  // The ledgers Home keeps live: every computer that keeps one and answers,
+  // the selected one first, each over its own task-only socket while Home is
+  // mounted (see `taskSubscriptionServerIds`). One Home's check says is down
+  // is left alone until it answers. Needs you and the cards read them all.
+  const capabilitiesByServer = useServerCapabilities((state) => state.byServer);
+  const taskServerIds = useMemo(
+    () =>
+      taskSubscriptionServerIds({
+        servers: records,
+        selectedId: record?.serverId,
+        hasLedger: (serverId) => hasTaskLedger(capabilitiesByServer[serverId]),
+        isDemo: (serverId) => serverId === DEMO_SERVER_ID,
+        isOffline: (serverId) => padReachabilityByServer[serverId] === 'offline',
+      }),
+    [records, record?.serverId, capabilitiesByServer, padReachabilityByServer]
+  );
+  // One card per paired computer; the demo has no ledger and no card.
+  const cardServers = useMemo(
+    () => records.filter((server) => server.serverId !== DEMO_SERVER_ID),
+    [records]
+  );
+  const [recentServerId, setRecentServerId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const profile = useAppearanceProfile();
   const homeLayout = profile.id;
+  const classicLayout = homeLayout === 'classic' && !isPad;
   const [editorialWidth, setEditorialWidth] = useState(0);
   const [editorialArtworkTop, setEditorialArtworkTop] = useState<{
     source: string;
     top: number;
   } | null>(null);
+  const [artworkForeground, setArtworkForeground] = useState<{
+    source: string;
+    foreground: boolean;
+  } | null>(null);
+  const reportArtworkForeground = useCallback((source: string, foreground: boolean) => {
+    setArtworkForeground((current) =>
+      current?.source === source && current.foreground === foreground
+        ? current
+        : { source, foreground }
+    );
+  }, []);
   const reportEditorialArtworkTop = useCallback((source: string, top: number) => {
     setEditorialArtworkTop((current) =>
       current?.source === source && current.top === top ? current : { source, top }
@@ -286,16 +392,53 @@ export function HomeOverview({
   const hasPairedServer = records.some((server) => server.serverId !== DEMO_SERVER_ID);
   const appActive = useAppActive();
   const isFocused = useIsFocused();
+  // The other computers' task sockets live only while Home is on screen --
+  // which it still is under a sheet (a dock picker, the Tasks list), so those
+  // do not tear the sockets down and read every list again on the way back.
+  // The selected one's ledger stays current as it always has (the dock, Needs
+  // you and the Continue status read it).
+  const homeInView = useScreenVisible(isPad);
+  const liveTaskServerIds = useMemo(
+    () => (homeInView ? taskServerIds : taskServerIds.filter((id) => id === record?.serverId)),
+    [homeInView, taskServerIds, record?.serverId]
+  );
   const scrollY = useSharedValue(0);
   // Save only at gesture boundaries, never once per frame on the JS thread.
   // A composition can replace the list chrome, not the reader's scroll intent.
   const overviewScroll = useRef<React.ComponentRef<typeof KeyboardAwareScrollView>>(null);
   const restoredScroll = useRef<React.ComponentRef<typeof KeyboardAwareScrollView>>(null);
   const savedScrollY = useRef(0);
+  const [composerPulse, setComposerPulse] = useState(0);
+  const [composerRevealed, setComposerRevealed] = useState(hasHomeComposerRevealed);
+  const [initialProbeSettled, setInitialProbeSettled] = useState(false);
+  const [viewportReady, setViewportReady] = useState(false);
+  const launchSettled = useLaunchHandoff((state) => state.settled);
+  // The phone dock floats over the page; the page's foot clears it.
+  const [dockHeight, setDockHeight] = useState(0);
+  const [dockClipHeight, setDockClipHeight] = useState(0);
+  // The Pad cover's left column holds still while the dock's field has focus.
+  const [dockFocused, setDockFocused] = useState(false);
+  // Classic: the pack artwork's measured slot, which the work block overlaps.
+  const [classicArtworkHeight, setClassicArtworkHeight] = useState(0);
+  const [classicBrandHeight, setClassicBrandHeight] = useState(0);
+  const [failedClassicArtworkSource, setFailedClassicArtworkSource] = useState<string | null>(null);
+  // On the phone the dock slides out of the way while the page scrolls down.
+  // The Pad cover's dock stays fixed at the foot of its column.
+  const pageDockHide = useDockAutoHide(dockHeight);
+  // Back on Home, the dock is there: a scroll that hid it belonged to the
+  // visit that ended.
+  const resetDocks = useEffectEvent(() => {
+    pageDockHide.reset();
+  });
+  useEffect(() => {
+    if (isFocused) resetDocks();
+  }, [isFocused]);
   const rememberScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     savedScrollY.current = event.nativeEvent.contentOffset.y;
   };
-  const restoreScroll = () => {
+  // Also the page's content-size change, which the dock's hide-on-scroll reads.
+  const restoreScroll = (_width: number, contentHeight: number) => {
+    pageDockHide.settle({ contentHeight });
     if (restoredScroll.current === overviewScroll.current) return;
     overviewScroll.current?.scrollTo({ y: savedScrollY.current, animated: false });
     restoredScroll.current = overviewScroll.current;
@@ -304,21 +447,18 @@ export function HomeOverview({
   // `homeServerListLayout` for why room, not server count alone, decides it.
   const metrics = homeServerListLayout(width, records.length);
 
-  // The mirror holds all panes; the shared Home model applies the reader's
-  // agent-only filter without changing what is persisted.
-  const agentsByServer = useServerAgents((state) => state.byServer);
+  const serverAgentsHydrated = useServerAgents((state) => state.hydrated);
   const hydrateServerAgents = useServerAgents((state) => state.hydrate);
   const keepServerAgents = useServerAgents((state) => state.keepOnly);
 
-  const probes = useServerReachability((state) => state.probes);
   const refreshReachabilityMany = useServerReachability((state) => state.refreshMany);
   const refreshReachability = useServerReachability((state) => state.refresh);
   const keepReachability = useServerReachability((state) => state.keepOnly);
 
-  // Read once so every Home projection resolves probe freshness against the
-  // same instant. A standalone Home has no active connection override.
-  // oxlint-disable-next-line react/purity -- deliberate: freshness is relative to render.
-  const nowMs = Date.now();
+  // Whether each computer is answering, from its probe and its live channels
+  // (agent socket, terminal stream). Home re-renders only when one of those
+  // answers moves -- not when a probe lands or expires with the same answer,
+  // and not on a tick. A standalone Home has no active connection override.
 
   // Which servers have been opened on this device, and when. Already stored for
   // the "while you were away" digest; the probe order is its second reader, and
@@ -330,22 +470,44 @@ export function HomeOverview({
     void hydrateLastViewed();
     void hydrateServerCapabilities();
   }, [hydrateLastViewed, hydrateServerCapabilities]);
-  const padReachabilityByServer = useMemo(
-    () =>
-      Object.fromEntries(
-        records.map((server) => [
-          server.serverId,
-          resolveServerReachability(
-            server.serverId,
-            probes[server.serverId],
-            activeConnection,
-            nowMs
-          ),
-        ])
-      ),
-    [activeConnection, nowMs, probes, records]
+  // Only computers with work get a card; with none the section is left out.
+  // A boolean, so task frames do not re-render all of Home.
+  // `ComputerCardsPresence` below keeps this current; Home holds only the answer.
+  const [hasComputerCards, setHasComputerCards] = useState(() =>
+    hasComputerCardsAt({
+      servers: cardServers,
+      reachabilityByServer: padReachabilityByServer,
+      nowMs: Date.now(),
+    })
   );
-
+  // Needs you stays mounted while empty; the Pad cover asks whether it has a row.
+  const hasAttention = useHasHomeAttention({ servers: records, taskServerIds });
+  const coverHeader = customTheme?.manifest.homePresentation?.header === 'cover';
+  // Cards on screen when Home mounts are not arrivals; once the section has
+  // emptied, the next card to come is one and enters (and pulses) as such.
+  const [cardsSkipEntering, setCardsSkipEntering] = useState(hasComputerCards);
+  useEffect(() => {
+    if (!hasComputerCards) setCardsSkipEntering(false);
+  }, [hasComputerCards]);
+  // The launch's first Home: its sections rise in once the records have
+  // loaded, and the window closes with the entry budget. A return from a
+  // sub-screen (or the Pad shell's Home replacing the first one later) is not
+  // an entry.
+  // A scroll view that leaves mid-drag never reports its end: let go with Home.
+  useEffect(() => resetSortHold, []);
+  const [entering, setEntering] = useState(claimHomeFirstEntry);
+  const wornTheme = useThemePack();
+  const wornThemeRef = useRef(wornTheme);
+  useEffect(() => {
+    if (wornThemeRef.current === wornTheme) return;
+    wornThemeRef.current = wornTheme;
+    setEntering(false);
+  }, [wornTheme]);
+  useEffect(() => {
+    if (!entering || loading) return;
+    const timer = setTimeout(() => setEntering(false), ENTRY_BUDGET_MS);
+    return () => clearTimeout(timer);
+  }, [entering, loading]);
   useEffect(() => {
     void hydrateServerAgents();
   }, [hydrateServerAgents]);
@@ -370,7 +532,7 @@ export function HomeOverview({
     : sshHomeRows(sshHosts, isDemoRecord(record) ? demoSshHost() : null);
 
   // Unpairing a server has to take its agent names and its status with it, and
-  // this catches every route to that -- Settings > SERVERS, the drawer, a
+  // this catches every route to that -- Settings > Computers, the drawer, a
   // wiped install -- because it follows the record list rather than any one
   // action.
   const serverIds = useMemo(() => records.map((server) => server.serverId), [records]);
@@ -387,11 +549,15 @@ export function HomeOverview({
       hostIds: sshHosts.map((host) => host.id),
     });
     useHomeAttention.getState().keepOnly(serverIds);
+    // What this device kept per computer goes with the pairing: its ledger
+    // and reported folder, and the dock's folder and model picks.
+    useServerTasksStore.getState().keepOnly(serverIds);
+    useHomeAgentChoice.getState().keepOnly(serverIds);
   }, [hydrationError, loading, serverIds, sshHosts, sshLoading]);
 
   // An address is a disambiguator, so it is on screen exactly when it is
   // disambiguating -- which for most installs is never. See
-  // `lib/server-address.ts`; Settings > SERVERS lists every address regardless.
+  // `lib/server-address.ts`; Settings > Computers lists every address regardless.
   const addressNeeded = useMemo(() => serverIdsNeedingAddress(records), [records]);
 
   useEffect(() => {
@@ -430,13 +596,91 @@ export function HomeOverview({
       // The initial focus runs under LaunchOverlay: hydrate cached home data
       // and establish reachability without holding the splash for the network.
       // Re-entry and foreground resume reuse fresh results and refresh stale ones.
-      void refreshReachabilityMany(probeTargets, {
-        shouldContinue: () => current && AppState.currentState === 'active',
-      });
+      const finishInitialProbe = () => {
+        if (current) setInitialProbeSettled(true);
+      };
+      const shouldContinue = () => current && AppState.currentState === 'active';
+      // The dock waits on the selected computer alone: the one the next goal
+      // goes to. The others used to be asked first, one after another at up
+      // to four seconds each, and the composer waited on all of them; they
+      // are asked alongside it now, and their dots fill in as they answer.
+      const selected = probeTargets.find((target) => target.serverId === record?.serverId);
+      void (selected ? refreshReachability(selected, { shouldContinue }) : Promise.resolve()).then(
+        finishInitialProbe,
+        finishInitialProbe
+      );
+      void refreshReachabilityMany(
+        probeTargets.filter((target) => target !== selected),
+        { shouldContinue }
+      );
       return () => {
         current = false;
       };
-    }, [appActive, loading, hydrationError, probeTargets, refreshReachabilityMany])
+    }, [
+      appActive,
+      loading,
+      hydrationError,
+      probeTargets,
+      record?.serverId,
+      refreshReachability,
+      refreshReachabilityMany,
+    ])
+  );
+
+  // The computers arrive first. Reuse their bounded initial probe, cached
+  // rows and native viewport layout, then one frame so that page can commit
+  // before the dock rises. This gate never closes on a refresh, reconnect
+  // or return; an empty inventory needs no probe.
+  const initialComputersReady =
+    !loading &&
+    (Boolean(hydrationError) ||
+      (serverAgentsHydrated && (records.length === 0 || initialProbeSettled)));
+  useEffect(() => {
+    if (
+      composerRevealed ||
+      !initialComputersReady ||
+      !viewportReady ||
+      (records.length > 0 && !hydrationError && dockHeight === 0) ||
+      !launchSettled ||
+      !isFocused ||
+      !appActive
+    )
+      return;
+    const frame = requestAnimationFrame(() => {
+      setComposerRevealed(true);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [
+    composerRevealed,
+    initialComputersReady,
+    viewportReady,
+    records.length,
+    hydrationError,
+    dockHeight,
+    launchSettled,
+    isFocused,
+    appActive,
+  ]);
+
+  // While Home is on screen: re-read freshness every tick, and ask the
+  // selected computer again. The store's own limit (one probe per server per
+  // `REACHABILITY_RECHECK_MS`) still holds, so the tick costs at most one
+  // `/health` every 30 s, and only for the computer the composer sends to.
+  useFocusEffect(
+    useCallback(() => {
+      if (!appActive) return;
+      const timer = setInterval(() => {
+        const selected = useGatewayConnectionStore.getState().record;
+        if (!selected || isDemoRecord(selected) || selected.sshTunnel) return;
+        // An open task socket already says the computer is answering; a
+        // `/health` on top of it would only repeat that.
+        if (useServerChannels.getState().sockets[selected.serverId] === 'open') return;
+        void refreshReachability(selected, {
+          shouldContinue: () => AppState.currentState === 'active',
+        });
+      }, REACHABILITY_TICK_MS);
+      return () => clearInterval(timer);
+    }, [appActive, refreshReachability])
   );
 
   useFocusEffect(
@@ -556,10 +800,34 @@ export function HomeOverview({
   const travel = useSharedValue(0);
   const fold = useSharedValue(0);
   const insets = useSafeAreaInsets();
+  // The bottom inset with no keyboard up, which the Pad page is sized from
+  // (`nextRestingInset`). Pad only: the phone reads `insets.bottom` and must
+  // not re-render on a keyboard showing.
+  const keyboardVisible = useKeyboardState((state) => isPad && state.isVisible);
+  const [restingInset, setRestingInset] = useState<RestingInset>(() => ({
+    inset: insets.bottom,
+    width: windowWidth,
+    height: windowHeight,
+  }));
+  useEffect(() => {
+    if (!isPad) return;
+    setRestingInset((previous) =>
+      nextRestingInset(previous, {
+        inset: insets.bottom,
+        width: windowWidth,
+        height: windowHeight,
+        keyboardVisible,
+        // Any field, not just the dock's: Recent's search and a sheet's field
+        // raise the inset before the keyboard reports itself too.
+        fieldFocused: TextInput.State.currentlyFocusedInput() != null,
+      })
+    );
+  }, [isPad, keyboardVisible, insets.bottom, windowWidth, windowHeight]);
   const [barHeight, setBarHeight] = useState(insets.top + HEADER_ROW_HEIGHT);
   const barHeightValue = useSharedValue(insets.top + HEADER_ROW_HEIGHT);
   const onScroll = useAnimatedScrollHandler({
     onScroll(event) {
+      pageDockHide.scroll(event);
       const y = event.contentOffset.y;
       const delta = y - lastScrollY.value;
       lastScrollY.set(y);
@@ -624,6 +892,8 @@ export function HomeOverview({
     opacity: interpolate(scrollY.value, [0, 82], [1, 0], Extrapolation.CLAMP),
   }));
 
+  // Links the reader's computers to each other in the background (spec §4.1).
+  useFleetLink();
   const commands = useHomeCommands({
     resumeServer: embedded ? undefined : resumeServerTarget,
     embedded,
@@ -634,11 +904,14 @@ export function HomeOverview({
   const launchController = useHomeLaunchController({
     servers: records,
     selectedServerId: record?.serverId,
+    connectionStatuses,
     reachabilityByServer: padReachabilityByServer,
     onPair: commands.pairGateway,
   });
 
   const availableRecentEntries = useHomeRecentEntries({
+    // Every layout keeps its pane inventory in Continue; Classic's computer
+    // cards below are entry points, not a second list of those panes.
     servers: records,
     hosts: sshRows,
     selectedServerId: launchController.chosen?.serverId,
@@ -654,8 +927,18 @@ export function HomeOverview({
     <HomeContinueSearch query={continueQuery} onChange={setContinueQuery} />
   ) : undefined;
   const recentQuery = searchContinue ? continueQuery : '';
+  // Recent narrowed to one computer by its chip; a chip whose computer has no
+  // rows any more is let go of.
+  const recentFilterIds = homeRecentFilterIds(
+    recentEntries,
+    records.map((server) => server.serverId)
+  );
+  const recentFilter =
+    recentServerId && recentFilterIds.includes(recentServerId) ? recentServerId : null;
+  const recentShown = filterHomeRecent(recentEntries, recentFilter);
 
   function openServer(serverId: string, paneId?: string) {
+    retryHomeRefresh(serverId);
     void commands.openServer(serverId, paneId);
   }
 
@@ -691,6 +974,10 @@ export function HomeOverview({
 
   function openDemo() {
     enterDemo();
+    if (embedded && activeConnection?.serverId === DEMO_SERVER_ID && onExitOverview) {
+      onExitOverview();
+      return;
+    }
     router.navigate({
       pathname: '/servers/[serverId]',
       params: { serverId: DEMO_SERVER_ID },
@@ -726,38 +1013,241 @@ export function HomeOverview({
   // optional chain in a conditional's test.
   const editorialArtworkTopCurrent =
     editorialArtworkTop?.source === editorialArtworkResolution?.source;
-  if (homeLayout !== 'classic' || isPad) {
-    // Same width and predicate the layout resolves for itself: the Pad cover
-    // spread lists eight Continue rows in its work column; other layouts keep theirs.
-    const editorialViewportHeight = windowHeight - insets.top - insets.bottom - 24;
-    const padGeometry = getEditorialLayoutGeometry(
-      Math.min(editorialWidth || width, isPad ? EDITORIAL_PAD_MAX_WIDTH : EDITORIAL_MAX_WIDTH)
-    );
-    const padLaunch =
-      isPad && padLaunchLayoutEnabled(padGeometry.contentWidth, fontScale, editorialViewportHeight);
+  const editorialArtworkSource = editorialArtworkResolution?.source;
+  const editorialArtworkForeground =
+    artworkForeground === null ||
+    artworkForeground.source !== editorialArtworkSource ||
+    artworkForeground.foreground;
+  // Every layout gets the same dispatch surface -- the dock, Needs you and the
+  // computer cards -- built once here; a layout only decides where they go.
+  // Classic keeps its own look on the phone; a Pad always takes the editorial
+  // spread, and so does any layout added later.
+  // Same width and predicate the layout resolves for itself: the Pad cover
+  // spread lists eight Continue rows in its work column; other layouts keep theirs.
+  // On the Pad the page's height does not follow the keyboard: the bottom
+  // inset grows while an on-screen keyboard is up, and a page sized from it
+  // would shrink the cover and move every column. Only the dock reacts.
+  const pageBottomInset = isPad ? restingInset.inset : insets.bottom;
+  const editorialViewportHeight = windowHeight - insets.top - pageBottomInset - 24;
+  const padGeometry = getEditorialLayoutGeometry(
+    Math.min(editorialWidth || width, isPad ? EDITORIAL_PAD_MAX_WIDTH : EDITORIAL_MAX_WIDTH)
+  );
+  const padLaunch =
+    isPad && padLaunchLayoutEnabled(padGeometry.contentWidth, fontScale, editorialViewportHeight);
+  // The Pad work column's width, which decides whether cards sit two abreast.
+  const cardGridWidth = padLaunch ? padHomeColumns(padGeometry.innerWidth).work : undefined;
+  // Hidden with nothing paired: the pair card is that page's one action.
+  const showDock = !hydrationError && !loading && launchController.servers.length > 0;
+  // The session screen's own dock, at the foot of the page -- or, on the
+  // wide Pad cover, at the foot of the work column.
+  // Nothing paired: the pairing call to action.
+  const emptyState =
+    !hydrationError && !loading && launchController.servers.length === 0 ? (
+      <EmptyState
+        compact
+        isPad={isPad}
+        onPair={() => void commands.pairGateway()}
+        onDemo={openDemo}
+      />
+    ) : undefined;
+  const dock = showDock ? (
+    <HomeComposerDock
+      revealed={composerRevealed}
+      controller={launchController}
+      reachabilityByServer={padReachabilityByServer}
+      targetPulse={composerPulse}
+      bottomInset={padLaunch ? 0 : insets.bottom}
+      topInset={insets.top}
+      // Phone Home has a small gutter outside the field and its shadow.
+      // On the Pad cover, the bar is capped at the phone dock's width and
+      // centred in the cover column (`padDockOuterInset`), so the field and
+      // the theme's decoration fit to it keep the phone's proportions; its
+      // rows are padded like the cards' rows, and the field has room for a
+      // paragraph. A Pad too narrow for the cover (portrait, large text)
+      // keeps the phone's full-width bar.
+      outerInsets={
+        padLaunch
+          ? {
+              horizontal: padDockOuterInset(padHomeColumns(padGeometry.innerWidth).cover),
+              bottom: 0,
+            }
+          : isPad
+            ? undefined
+            : { horizontal: HOME_DOCK_OUTER_INSET, bottom: HOME_DOCK_OUTER_BOTTOM_INSET }
+      }
+      edgeBar={
+        padLaunch
+          ? { inset: HOME_CARD_INSET }
+          : { inset: classicLayout ? metrics.contentGutter : padGeometry.gutter }
+      }
+      fieldLines={padLaunch ? PAD_DOCK_FIELD_LINES : undefined}
+      onDockHeight={(height, clipHeight) => {
+        setDockHeight(height);
+        setDockClipHeight(clipHeight);
+      }}
+      onFieldFocus={isPad ? setDockFocused : undefined}
+      // The device class decides, not the layout: a Pad never hides its dock.
+      autoHide={isPad ? undefined : pageDockHide.dock}
+      onOpenAgent={commands.openAgent}
+    />
+  ) : null;
+  // A computer row sets the dock's target; the bar flashes to say so.
+  const targetComposer = (serverId: string) => {
+    retryHomeRefresh(serverId);
+    launchController.choose(serverId);
+    void Haptics.selectionAsync();
+    setComposerPulse((pulse) => pulse + 1);
+  };
+  const attentionSection =
+    !loading && !hydrationError ? (
+      <HomeAttention
+        servers={records}
+        taskServerIds={taskServerIds}
+        onOpen={(target) => {
+          void commands.resumeTarget(target);
+        }}
+        // A request is answered where the task runs: its session
+        // or its pane, on its own computer.
+        onOpenTask={({ serverId, task }) => {
+          dismissTaskNotices(task);
+          // Opening work on another computer keeps the dock where it is.
+          launchController.pinTarget();
+          showOpeningWhile(
+            taskOpeningKey(serverId, task.taskId),
+            openTaskWork(commands, serverId, task)
+          );
+        }}
+      />
+    ) : undefined;
+  const progressSection =
+    !loading && !hydrationError && hasComputerCards ? (
+      <HomeComputerCards
+        servers={cardServers}
+        followedIds={taskServerIds}
+        activeConnection={activeConnection}
+        skipEntering={cardsSkipEntering}
+        gridWidth={cardGridWidth}
+        onSelectServer={targetComposer}
+        onOpenHistory={(serverId) =>
+          router.push({ pathname: '/server-tasks', params: { serverId } })
+        }
+        onOpenTask={({ serverId, task, tree }) => {
+          // A row opens the session or pane the task runs in; only
+          // the sub-task count opens the list of the work under it.
+          if (tree) {
+            router.push({
+              pathname: '/server-tasks',
+              params: { serverId, root: task.parentTaskId ?? task.taskId },
+            });
+            return;
+          }
+          dismissTaskNotices(task);
+          // Opening work on another computer keeps the dock where it is.
+          launchController.pinTarget();
+          showOpeningWhile(
+            taskOpeningKey(serverId, task.taskId),
+            openTaskWork(commands, serverId, task)
+          );
+        }}
+      />
+    ) : undefined;
+  // Continue keeps the full inventory in every layout. Classic uses compact
+  // rows above entry-only computer cards; Editorial uses numbered rows.
+  const recentSection =
+    !loading && !hydrationError && recentEntries.length > 0 ? (
+      <HomeRecentSessions
+        compact={classicLayout}
+        pad={isPad}
+        limit={5}
+        linkStyle={padLaunch ? PAD_WORK_LINK : undefined}
+        selectedServerId={launchController.chosen?.serverId}
+        servers={records}
+        hosts={sshRows}
+        available={recentShown}
+        query={recentQuery}
+        header={
+          recentFilterIds.length > 0 ? (
+            <HomeRecentChips
+              servers={records}
+              serverIds={recentFilterIds}
+              value={recentFilter}
+              onChange={setRecentServerId}
+            />
+          ) : undefined
+        }
+        onOpen={(command) => {
+          // QA-only leaves already have read-only snapshots in the demo
+          // detail sheet; never send them to a live agent workbench.
+          if (demoSearchEntries && command.type === 'open-agent') {
+            router.push({
+              pathname: '/agent-subagent-detail',
+              params: { asid: command.target.asid, sessionId: 'demo' },
+            });
+            return;
+          }
+          void commands.dispatch(command);
+        }}
+      />
+    ) : undefined;
+  if (!classicLayout) {
     const editorialContent = (
       <View
         testID="home-editorial"
         onLayout={(event) => setEditorialWidth(event.nativeEvent.layout.width)}
+        // Any finger on the page holds the cards' order (design §9).
+        {...sortHoldTouches}
         style={[styles.page, { backgroundColor: background(theme.colors.background) }]}>
         <ThemeArtwork
           slot="home.wallpaper"
+          waitForTransition
           fallbackSlot="shell.wallpaper"
           effectsEnabled={!hasDevEffectOverride}
         />
         {devAmbientLayer}
-        <KeyboardAwareScrollView
+        <HomeTaskSync serverIds={liveTaskServerIds} />
+        <ComputerCardsPresence
+          servers={cardServers}
+          reachabilityByServer={padReachabilityByServer}
+          onChange={setHasComputerCards}
+        />
+        <HomeScrollViewport
+          dockHeight={dock && !padLaunch && composerRevealed ? dockClipHeight : 0}
+          dockOffset={isPad ? undefined : pageDockHide.dock.offset}
           ref={overviewScroll}
           keyboardShouldPersistTaps="handled"
+          // The wide Pad cover holds the dock inside this page, and the dock
+          // rides the keyboard by itself; this view must not move it twice.
+          enabled={!padLaunch}
+          // Elsewhere the dock floats over the page's foot and rises with the
+          // keyboard: a field in the page is kept clear of it, not just of the
+          // keyboard.
+          bottomOffset={dock && !padLaunch ? dockHeight : undefined}
           onContentSizeChange={restoreScroll}
-          onScrollEndDrag={rememberScroll}
-          onMomentumScrollEnd={rememberScroll}
+          onLayout={(event) => {
+            pageDockHide.settle({ viewportHeight: event.nativeEvent.layout.height });
+            if (event.nativeEvent.layout.height > 0 && event.nativeEvent.layout.width > 0)
+              setViewportReady(true);
+          }}
+          onScrollBeginDrag={() => {
+            sortHoldScroll.onScrollBeginDrag();
+            pageDockHide.beginDrag();
+          }}
+          onScrollEndDrag={(event) => {
+            rememberScroll(event);
+            sortHoldScroll.onScrollEndDrag();
+            pageDockHide.endDrag();
+          }}
+          onMomentumScrollBegin={sortHoldScroll.onMomentumScrollBegin}
+          onMomentumScrollEnd={(event) => {
+            rememberScroll(event);
+            sortHoldScroll.onMomentumScrollEnd();
+          }}
           contentInsetAdjustmentBehavior="never"
           style={styles.page}
           contentContainerStyle={{
             flexGrow: 1,
             paddingTop: insets.top,
-            paddingBottom: insets.bottom + 24,
+            paddingBottom: (dock && !padLaunch ? dockHeight : insets.bottom) + 24,
           }}
           onScroll={onScroll}
           scrollEventThrottle={16}
@@ -779,11 +1269,12 @@ export function HomeOverview({
               contentWidth={editorialWidth || width}
               viewportHeight={editorialViewportHeight}
               scrollY={scrollY}
-              cover={customTheme?.manifest.homePresentation?.header === 'cover'}
+              cover={coverHeader}
+              artworkForeground={editorialArtworkForeground}
+              topInset={insets.top}
               coverTitle={showsEditorialBrand ? (identity.name ?? undefined) : undefined}
               pad={isPad}
               typographicCover={themeLibraryHydrated && !customTheme}
-              firstRun={launchController.servers.length === 0}
               coverMark={
                 identity.logo ? (
                   <Image
@@ -812,7 +1303,11 @@ export function HomeOverview({
               artwork={
                 hasEditorialArtwork && editorialArtworkResolution ? (
                   <HomeEditorialArtwork
-                    cover={customTheme?.manifest.homePresentation?.header === 'cover'}
+                    cover={coverHeader}
+                    fullBleed={coverHeader && !isPad}
+                    onForegroundChange={reportArtworkForeground}
+                    // The Pad cover block sizes the painting; elsewhere it keeps its own proportion.
+                    fill={padLaunch && coverHeader}
                     resolution={editorialArtworkResolution}
                     onVisibleTopChange={reportEditorialArtworkTop}
                     onAvailabilityChange={(available) => {
@@ -846,8 +1341,11 @@ export function HomeOverview({
                 ) : undefined
               }
               headerLeading={
-                // On Pad the Gateway pill lives in the New-session block only.
-                isPad || launchController.servers.length <= 1 ? undefined : (
+                // The composer's assignment bar is where a computer is picked;
+                // a header dropdown beside it said the same thing twice (and
+                // truncated the name to fit). Only while no composer is drawn
+                // -- a storage error -- does the header keep the choice.
+                isPad || showDock || launchController.servers.length <= 1 ? undefined : (
                   <HomeLaunchTarget
                     wide={isPad}
                     bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
@@ -857,28 +1355,27 @@ export function HomeOverview({
                   />
                 )
               }
+              padComposer={padLaunch ? dock : undefined}
+              padWorkEmpty={padLaunch ? emptyState : undefined}
+              padComposerHeight={dockHeight}
+              coverPaneKeyboardAware={!dockFocused}
+              workScrollEvents={sortHoldScroll}
+              entering={entering}
               launches={
                 hydrationError || loading ? undefined : launchController.servers.length === 0 ? (
-                  <EmptyState
-                    compact
-                    isPad={isPad}
-                    onPair={() => void commands.pairGateway()}
-                    onDemo={openDemo}
-                  />
+                  // On the Pad cover it heads the work column instead.
+                  padLaunch ? undefined : (
+                    emptyState
+                  )
                 ) : (
                   <View style={{ gap: padLaunch ? 12 : 16 }}>
                     {padLaunch ? null : isPad ? (
                       <>
+                        {/* No computer picker here: the dock carries the
+                            assignment bar, the one place a target is chosen. */}
                         <Text variant="heading" accessibilityRole="header">
                           <Trans>New session</Trans>
                         </Text>
-                        <HomeLaunchTarget
-                          wide
-                          bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
-                          controller={launchController}
-                          loading={loading}
-                          onPair={commands.pairGateway}
-                        />
                       </>
                     ) : null}
                     <HomeLaunchActions
@@ -886,19 +1383,6 @@ export function HomeOverview({
                       grid={isPad}
                       newOnly={isPad}
                       dock={padLaunch}
-                      dockAccessory={
-                        // The cover dock has no heading; the Gateway chip sits
-                        // beside the terminal pill, only when there is a choice.
-                        padLaunch && launchController.servers.length > 1 ? (
-                          <HomeLaunchTarget
-                            wide
-                            chip
-                            controller={launchController}
-                            loading={loading}
-                            onPair={commands.pairGateway}
-                          />
-                        ) : undefined
-                      }
                       onNewAgent={commands.newAgent}
                       onOpenAgent={commands.openAgent}
                       onNewTerminal={commands.newTerminal}
@@ -911,51 +1395,23 @@ export function HomeOverview({
                   </View>
                 )
               }
-              recent={
-                !loading && !hydrationError && recentEntries.length > 0 ? (
-                  <HomeRecentSessions
-                    limit={padLaunch ? 8 : undefined}
-                    linkStyle={padLaunch ? PAD_WORK_LINK : undefined}
-                    selectedServerId={launchController.chosen?.serverId}
-                    servers={records}
-                    hosts={sshRows}
-                    available={recentEntries}
-                    query={recentQuery}
-                    onOpen={(command) => {
-                      // QA-only leaves already have read-only snapshots in the demo
-                      // detail sheet; never send them to a live agent workbench.
-                      if (demoSearchEntries && command.type === 'open-agent') {
-                        router.push({
-                          pathname: '/agent-subagent-detail',
-                          params: { asid: command.target.asid, sessionId: 'demo' },
-                        });
-                        return;
-                      }
-                      void commands.dispatch(command);
-                    }}
-                  />
-                ) : undefined
-              }
+              recent={recentSection}
               recentHeading={recentHeading}
-              attention={
-                !loading && !hydrationError ? (
-                  <HomeAttention
-                    servers={records}
-                    onOpen={(target) => {
-                      void commands.resumeTarget(target);
-                    }}
-                  />
-                ) : undefined
-              }
+              hasAttention={!loading && !hydrationError && hasAttention}
+              attention={attentionSection}
+              progress={progressSection}
               connections={
+                // The cards are the computers now; this keeps the SSH hosts
+                // and the way to manage connections.
                 !loading &&
                 !hydrationError &&
                 !sshLoading &&
-                (records.length > 0 || sshRows.length > 0) ? (
+                (sshRows.length > 0 || (cardServers.length === 0 && records.length > 0)) ? (
                   <HomeConnections
-                    servers={records}
+                    servers={cardServers.length > 0 ? [] : records}
                     hosts={sshRows}
                     onOpenServer={openServer}
+                    onSelectServer={targetComposer}
                     onOpenHost={(hostId) => {
                       void commands.openSsh(hostId);
                     }}
@@ -963,7 +1419,6 @@ export function HomeOverview({
                       void commands.manageConnections();
                     }}
                     activeConnection={activeConnection}
-                    nowMs={nowMs}
                     linkStyle={padLaunch ? PAD_WORK_LINK : undefined}
                   />
                 ) : undefined
@@ -978,7 +1433,7 @@ export function HomeOverview({
                     <HeaderButton
                       editorial
                       bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
-                      label={t`Pair a server`}
+                      label={t`Pair a computer`}
                       onPress={() => void commands.pairGateway()}>
                       <ThemeIcon
                         name="chrome.scan"
@@ -1047,7 +1502,8 @@ export function HomeOverview({
               }
             />
           </View>
-        </KeyboardAwareScrollView>
+        </HomeScrollViewport>
+        {padLaunch ? null : dock}
         {devAmbientControls}
       </View>
     );
@@ -1060,30 +1516,87 @@ export function HomeOverview({
     );
   }
 
+  const classicArtwork =
+    !loading &&
+    !hydrationError &&
+    records.length > 0 &&
+    isHomeArtworkAvailable(artworkResolution, failedClassicArtworkSource)
+      ? artworkResolution
+      : undefined;
+  const classicCover = Boolean(classicArtwork && coverHeader);
+  const classicBareToolbar =
+    classicCover && customTheme?.manifest.homePresentation?.toolbarBackground === false;
+  const classicCoverHeight = homeCoverArtworkHeight(Math.min(windowWidth, metrics.contentMaxWidth));
+  const classicBrandBlockHeight = identity.showBrand
+    ? classicBrandHeight || metrics.brand.minHeight
+    : 0;
+  const classicArtworkSource = classicArtwork?.source;
+  const classicScene =
+    classicCover &&
+    artworkForeground !== null &&
+    artworkForeground.source === classicArtworkSource &&
+    !artworkForeground.foreground;
+  // Large or wrapped wordmarks stand above the painting instead of covering
+  // its subject. Ordinary type shares the theme's quiet header sky.
+  const classicCoverTop =
+    fontScale >= 1.35 || classicBrandBlockHeight > metrics.brand.minHeight
+      ? barHeight + styles.content.paddingTop + classicBrandBlockHeight
+      : insets.top;
+  // The quiet sky begins below the status bar, behind the fixed controls and
+  // the existing wordmark. Its measured wordmark leaves room for large type.
+  const classicCoverRemainder = Math.max(
+    0,
+    classicCoverHeight +
+      classicCoverTop -
+      barHeight -
+      styles.content.paddingTop -
+      classicBrandBlockHeight
+  );
+  // The work block rises over the artwork slot's bottom third; with no
+  // artwork it keeps the list's own spacing.
+  const artworkOverlap =
+    classicArtwork && classicArtworkHeight > 0
+      ? Math.round((classicCover ? classicCoverRemainder : classicArtworkHeight) / 3)
+      : 0;
   const classicContent = (
-    <View style={[styles.page, { backgroundColor: background(theme.colors.background) }]}>
+    <View
+      // Any finger on the page holds the cards' order (design §9).
+      {...sortHoldTouches}
+      style={[styles.page, { backgroundColor: background(theme.colors.background) }]}>
       <ThemeArtwork
         slot="home.wallpaper"
+        waitForTransition
         fallbackSlot="shell.wallpaper"
         effectsEnabled={!hasDevEffectOverride}
       />
       {devAmbientLayer}
+      <HomeTaskSync serverIds={liveTaskServerIds} />
+      <ComputerCardsPresence
+        servers={cardServers}
+        reachabilityByServer={padReachabilityByServer}
+        onChange={setHasComputerCards}
+      />
       {/* The bar and the brand block below it are one header in two states, not
           two rows. At rest the bar's left half is deliberately empty -- no
           hamburger, no title, no rule, no blur -- because the brand block ten
           points below *is* the title, and repeating it up here is what made the
           batch4 header read as chrome. Past 82pt of scroll the brand walks up
           into the bar and the bar earns its left half. The controls never move,
-          so the only thing that changes is where the brand is. */}
+          so the only thing that changes is where the brand is.
+
+          The bar has no surface of its own, so only its buttons take touches:
+          the page scrolls under it, and a drag or tap on its empty half
+          reaches the page that shows through it. */}
       <Animated.View
+        pointerEvents="box-none"
         style={[styles.topBar, barFoldStyle]}
         onLayout={(event: LayoutChangeEvent) => {
           const { height } = event.nativeEvent.layout;
           barHeightValue.set(height);
           setBarHeight(height);
         }}>
-        <SafeAreaView edges={['top']}>
-          <View style={styles.topBarRow}>
+        <SafeAreaView edges={['top']} pointerEvents="box-none">
+          <View pointerEvents="box-none" style={styles.topBarRow}>
             {identity.showBrand ? (
               <Animated.View
                 testID="home-brand-compact"
@@ -1110,7 +1623,7 @@ export function HomeOverview({
                       overflow: 'hidden',
                     },
                   ]}>
-                  <ThemedSurfaceArtwork
+                  <SurfaceDecoration
                     slot="navigation.background"
                     baseColor={theme.colors.surface}
                   />
@@ -1148,7 +1661,9 @@ export function HomeOverview({
             selected server's avatar and loom (card #629) and to the empty
             state's one button; a coral control in the corner is exactly the
             batch4 `ADD` pill under a different icon. */}
-            <Animated.View style={[styles.headerActions, headerActionsStyle]}>
+            <Animated.View
+              pointerEvents="box-none"
+              style={[styles.headerActions, headerActionsStyle]}>
               {/* Two doors that are only here until the first server is
               paired. After that they are things done once a month, standing in
               the most-used corner of the most-used screen; both live in
@@ -1161,12 +1676,14 @@ export function HomeOverview({
               herdr, so it is the one door here that is not about a gateway. */}
                   <HeaderButton
                     testID="home-open-ssh"
+                    bare={classicBareToolbar}
                     label={t`SSH`}
                     onPress={() => void commands.openSsh()}>
                     <SquareTerminal size={20} color={theme.colors.textMuted} strokeWidth={2} />
                   </HeaderButton>
                   <HeaderButton
                     label={t`Scan a gateway QR`}
+                    bare={classicBareToolbar}
                     onPress={() => void commands.pairGateway()}>
                     {/* The same mark as the empty card's corner brackets, at a fifth of
                 the size: the one productive gesture on this screen looks the
@@ -1182,7 +1699,10 @@ export function HomeOverview({
                   </HeaderButton>
                 </>
               )}
-              <HeaderButton label={t`Settings`} onPress={() => void commands.manageConnections()}>
+              <HeaderButton
+                bare={classicBareToolbar}
+                label={t`Settings`}
+                onPress={() => void commands.manageConnections()}>
                 <ThemeIcon
                   name="chrome.settings"
                   fallback={Settings}
@@ -1196,12 +1716,33 @@ export function HomeOverview({
         </SafeAreaView>
       </Animated.View>
 
-      <KeyboardAwareScrollView
+      <HomeScrollViewport
+        dockHeight={dock && composerRevealed ? dockClipHeight : 0}
+        dockOffset={pageDockHide.dock.offset}
         ref={overviewScroll}
         onContentSizeChange={restoreScroll}
-        onScrollEndDrag={rememberScroll}
-        onMomentumScrollEnd={rememberScroll}
-        bottomOffset={24}
+        onLayout={(event) => {
+          pageDockHide.settle({ viewportHeight: event.nativeEvent.layout.height });
+          if (event.nativeEvent.layout.height > 0 && event.nativeEvent.layout.width > 0)
+            setViewportReady(true);
+        }}
+        onScrollBeginDrag={() => {
+          sortHoldScroll.onScrollBeginDrag();
+          pageDockHide.beginDrag();
+        }}
+        onScrollEndDrag={(event) => {
+          rememberScroll(event);
+          sortHoldScroll.onScrollEndDrag();
+          pageDockHide.endDrag();
+        }}
+        onMomentumScrollBegin={sortHoldScroll.onMomentumScrollBegin}
+        onMomentumScrollEnd={(event) => {
+          rememberScroll(event);
+          sortHoldScroll.onMomentumScrollEnd();
+        }}
+        // The dock floats over the page's foot: a field in the page is kept
+        // clear of it, not just of the keyboard.
+        bottomOffset={dock ? dockHeight : 24}
         extraKeyboardSpace={12}
         contentInsetAdjustmentBehavior="never"
         scrollIndicatorInsets={{ top: barHeight }}
@@ -1213,6 +1754,8 @@ export function HomeOverview({
             maxWidth: metrics.contentMaxWidth,
           },
           { paddingTop: barHeight + styles.content.paddingTop },
+          // Room under the last card above the bar.
+          dock && { paddingBottom: dockHeight + theme.spacing.lg },
         ]}
         keyboardDismissMode={process.env.EXPO_OS === 'ios' ? 'interactive' : 'on-drag'}
         keyboardShouldPersistTaps="handled"
@@ -1229,6 +1772,27 @@ export function HomeOverview({
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}>
         {returnToTask ? <View style={styles.embeddedReturnRow}>{returnToTask}</View> : null}
+        {classicCover && classicArtwork ? (
+          <View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              top: classicScene ? 0 : classicCoverTop,
+              left: 0,
+              right: 0,
+            }}>
+            <HomeArtwork
+              resolution={classicArtwork}
+              scrollY={scrollY}
+              cover
+              onForegroundChange={reportArtworkForeground}
+              maxHeight={classicCoverHeight}
+              onAvailabilityChange={(available) => {
+                if (!available) setFailedClassicArtworkSource(classicArtwork.source);
+              }}
+            />
+          </View>
+        ) : null}
         {/* The app's name, at the weight the screen's own content leaves for
             it. On an empty screen this block *is* the content and is set as
             such; once a machine is paired the card below is what the reader
@@ -1247,12 +1811,24 @@ export function HomeOverview({
           <Animated.View
             testID="home-brand-expanded"
             entering={riseIn()}
-            layout={listLayout('medium')}>
+            layout={listLayout('medium')}
+            onLayout={(event) => {
+              const height = event.nativeEvent.layout.height;
+              setClassicBrandHeight((current) => (current === height ? current : height));
+            }}>
             <Animated.View
               style={[
                 styles.brandBlock,
                 expandedBrandStyle,
                 { minHeight: metrics.brand.minHeight, gap: metrics.brand.gap },
+                // Full-bleed scenes begin at the status bar. Keep their title
+                // in the toolbar's quiet left area rather than on the subject
+                // below it. The existing flow reservation still positions cards.
+                classicScene && {
+                  transform: [{ translateY: insets.top - barHeight }],
+                  paddingRight:
+                    (hasPairedServer ? 1 : 3) * (HEADER_BUTTON_SIZE + HEADER_BUTTON_GAP),
+                },
               ]}>
               {/* The mark alone, on the page. The rounded tile it used to sit in
               gave a shape the mark already has, and cost it 30% of its own
@@ -1270,17 +1846,18 @@ export function HomeOverview({
                 <View
                   style={[
                     styles.titleCopy,
-                    hasScene && {
-                      flex: 0,
-                      flexShrink: 1,
-                      backgroundColor: background(theme.colors.background),
-                      padding: 10,
-                      borderRadius: 14,
-                      overflow: 'hidden',
-                    },
+                    hasScene &&
+                      !classicCover && {
+                        flex: 0,
+                        flexShrink: 1,
+                        backgroundColor: background(theme.colors.background),
+                        padding: 10,
+                        borderRadius: 14,
+                        overflow: 'hidden',
+                      },
                   ]}>
-                  {hasScene ? (
-                    <ThemedSurfaceArtwork
+                  {hasScene && !classicCover ? (
+                    <SurfaceDecoration
                       slot="navigation.background"
                       baseColor={theme.colors.background}
                     />
@@ -1327,15 +1904,30 @@ export function HomeOverview({
         ) : null}
 
         {/* The pack's own illustration, between the header and the machines.
-            Absent while the "Pair your first server" card is up: that card
+            Absent while the "Pair your first computer" card is up: that card
             already carries `emptyState.illustration`, and two pictures stacked
             on an otherwise empty screen is a gallery rather than an invitation.
             It is also independent of the logo pill above -- a reader can keep
             the mark and drop the picture, or the other way round -- because the
             two answer different questions: what the app is called, and what the
             theme looks like. */}
-        {!loading && !hydrationError && records.length > 0 && artworkResolution ? (
-          <HomeArtwork resolution={artworkResolution} scrollY={scrollY} />
+        {classicArtwork ? (
+          <View
+            style={classicCover ? { height: classicCoverRemainder } : undefined}
+            onLayout={(event) => {
+              const height = event.nativeEvent.layout.height;
+              setClassicArtworkHeight((current) => (current === height ? current : height));
+            }}>
+            {classicCover ? null : (
+              <HomeArtwork
+                resolution={classicArtwork}
+                scrollY={scrollY}
+                onAvailabilityChange={(available) => {
+                  if (!available) setFailedClassicArtworkSource(classicArtwork.source);
+                }}
+              />
+            )}
+          </View>
         ) : null}
 
         {hydrationError ? <GatewayStorageError busy={loading} onRetry={retryHydration} /> : null}
@@ -1350,7 +1942,7 @@ export function HomeOverview({
           <Animated.View
             exiting={fadeOut('short')}
             style={[styles.serverList, { gap: metrics.cardGap }]}
-            accessibilityLabel={t`Loading servers`}>
+            accessibilityLabel={t`Loading computers`}>
             {/* The same surface, padding and identity block as a real card, so
                 the skeleton previews the shape that is actually coming. */}
             {[0, 1].map((index) => (
@@ -1380,12 +1972,12 @@ export function HomeOverview({
             below the middle of the space it has rather than either floating in
             the centre or being stranded under the header. They are flex, so a
             list long enough to fill the screen squeezes them to nothing and the
-            layout goes back to being an ordinary column. There is no `Servers`
+            layout goes back to being an ordinary column. There is no `Computers`
             eyebrow above them and no `Add server` beside it: the list is the
             only thing on the screen, so labelling it says nothing, and pairing
             -- which happens once per machine, ever -- belongs in the drawer,
             not in the corner furthest from a thumb. */}
-        {!loading ? (
+        {!loading && !artworkOverlap ? (
           <View
             style={[
               styles.spacerAbove,
@@ -1400,91 +1992,142 @@ export function HomeOverview({
           />
         ) : null}
 
-        {!loading && !hydrationError && records.length === 0 ? (
-          <EmptyState isPad={isPad} onPair={() => void commands.pairGateway()} onDemo={openDemo} />
-        ) : null}
-
-        <View style={[styles.serverList, { gap: metrics.cardGap }]}>
-          {records.map((server) => (
-            <ServerCard
-              key={server.serverId}
-              server={server}
-              metrics={metrics}
-              selected={server.serverId === record?.serverId}
-              showAddress={addressNeeded.has(server.serverId)}
-              reachability={resolveServerReachability(
-                server.serverId,
-                probes[server.serverId],
-                activeConnection,
-                nowMs
-              )}
-              agents={agentsByServer[server.serverId]}
-              onOpen={() => openServer(server.serverId)}
-              onOpenAgent={(agent) => openServer(server.serverId, agent.paneId)}
-            />
-          ))}
-        </View>
-
-        {/* The saved SSH hosts, under the gateways and apart from them: a
-            gateway hands the app a workspace, an SSH host is a machine with
-            sshd, and the two are added and trusted in different ways -- see
-            `SshHostList` for why they are not one list. Absent entirely until
-            there is a host to show, so a reader who has never added one is not
-            told about the feature by an empty heading; the header's SSH
-            button is the door to that. The eyebrow is the one place this
-            screen labels a group, because here there are two. */}
-        {sshRows.length > 0 ? (
-          <Animated.View
-            entering={riseIn(records.length * STAGGER.card)}
-            layout={listLayout()}
-            style={[styles.sshSection, records.length > 0 && { marginTop: metrics.cardGap }]}
-            testID="home-ssh-hosts">
-            <View style={styles.sshHeading}>
-              {/* The same pill the settings page draws over TERMINAL. This
-                  screen's whole point is the wallpaper behind it, so the one
-                  heading it has is the one that most needs the plate. The row
-                  keeps its `Manage` opposite; only the label hugs. */}
+        {/* The work block. Under a pack's artwork it starts over the slot's
+            bottom third, so the figure's lower edge fades under the first
+            card instead of leaving a band of nothing above the heading. */}
+        {/* The overlap is measured, so it lands a frame after the artwork:
+            the shared layout transition carries the block up rather than
+            letting it jump (instant under reduce-motion). */}
+        <Animated.View
+          layout={listLayout()}
+          style={artworkOverlap ? { marginTop: -artworkOverlap } : undefined}>
+          {/* The shared work and session sections keep their actions in both
+              layouts. Classic's connection cards remain underneath them. */}
+          {/* Mounted while empty, as on the editorial page, so its first row
+              arrives with its pulse; spaced only with a row. */}
+          {attentionSection ? (
+            <View
+              style={
+                hasAttention ? { marginBottom: metrics.cardGap, gap: theme.spacing.sm } : undefined
+              }>
+              {attentionSection}
+            </View>
+          ) : null}
+          {progressSection ? (
+            <View style={[{ marginBottom: metrics.cardGap, gap: theme.spacing.sm }]}>
               <SectionLabel
-                title={<Trans>SSH hosts</Trans>}
+                title={<Trans>Computers</Trans>}
                 color={theme.colors.textMuted}
-                style={styles.sshHeadingLabel}
+                style={styles.classicLabel}
               />
-              {/* The way to the list this section is a view of: adding,
-                  editing and forgetting a host happen there, not here. */}
-              <PressableScale
-                accessibilityRole="button"
-                accessibilityLabel={t`Manage SSH hosts`}
-                hitSlop={8}
-                onPress={() => void commands.openSsh()}
-                style={styles.sshManage}>
-                <Text variant="caption" color={theme.colors.textMuted}>
-                  <Trans>Manage</Trans>
-                </Text>
-                <ThemeIcon
-                  name="home.arrow"
-                  fallback={ChevronRight}
-                  size={14}
+              {progressSection}
+            </View>
+          ) : null}
+          {recentSection ? (
+            <View style={{ marginBottom: metrics.cardGap }}>
+              <View style={{ marginBottom: theme.spacing.sm }}>
+                {recentHeading ?? (
+                  <SectionLabel
+                    title={<Trans>Recent</Trans>}
+                    color={theme.colors.textMuted}
+                    style={styles.classicLabel}
+                  />
+                )}
+              </View>
+              {recentSection}
+            </View>
+          ) : null}
+          {(progressSection || recentSection) && records.length > 0 ? (
+            <SectionLabel
+              title={<Trans>Connections</Trans>}
+              color={theme.colors.textMuted}
+              style={[styles.classicLabel, { marginBottom: theme.spacing.sm }]}
+            />
+          ) : null}
+
+          {!loading && !hydrationError && records.length === 0 ? (
+            <EmptyState
+              isPad={isPad}
+              onPair={() => void commands.pairGateway()}
+              onDemo={openDemo}
+            />
+          ) : null}
+
+          <View style={[styles.serverList, { gap: metrics.cardGap }]}>
+            {records.map((server) => (
+              <ServerCard
+                key={server.serverId}
+                server={server}
+                metrics={metrics}
+                selected={server.serverId === record?.serverId}
+                showAddress={addressNeeded.has(server.serverId)}
+                reachability={padReachabilityByServer[server.serverId] ?? 'unknown'}
+                onOpen={() => openServer(server.serverId)}
+              />
+            ))}
+          </View>
+
+          {/* The saved SSH hosts, under the gateways and apart from them: a
+              gateway hands the app a workspace, an SSH host is a machine with
+              sshd, and the two are added and trusted in different ways -- see
+              `SshHostList` for why they are not one list. Absent entirely until
+              there is a host to show, so a reader who has never added one is not
+              told about the feature by an empty heading; the header's SSH
+              button is the door to that. The eyebrow is the one place this
+              screen labels a group, because here there are two. */}
+          {sshRows.length > 0 ? (
+            <Animated.View
+              entering={riseIn(records.length * STAGGER.card)}
+              layout={listLayout()}
+              style={[styles.sshSection, records.length > 0 && { marginTop: metrics.cardGap }]}
+              testID="home-ssh-hosts">
+              <View style={styles.sshHeading}>
+                {/* The same pill the settings page draws over TERMINAL. This
+                    screen's whole point is the wallpaper behind it, so the one
+                    heading it has is the one that most needs the plate. The row
+                    keeps its `Manage` opposite; only the label hugs. */}
+                <SectionLabel
+                  title={<Trans>SSH hosts</Trans>}
                   color={theme.colors.textMuted}
-                  strokeWidth={2}
+                  style={styles.sshHeadingLabel}
                 />
-              </PressableScale>
-            </View>
-            <View style={styles.sshList}>
-              {sshRows.map((host) => (
-                <SshHostRow
-                  key={host.id}
-                  record={host}
-                  nowMs={nowMs}
-                  showAddress={false}
-                  onOpen={() => openSshHost(host)}
-                />
-              ))}
-            </View>
-          </Animated.View>
-        ) : null}
+                {/* The way to the list this section is a view of: adding,
+                    editing and forgetting a host happen there, not here. */}
+                <PressableScale
+                  accessibilityRole="button"
+                  accessibilityLabel={t`Manage SSH hosts`}
+                  hitSlop={8}
+                  onPress={() => void commands.openSsh()}
+                  style={styles.sshManage}>
+                  <Text variant="caption" color={theme.colors.textMuted}>
+                    <Trans>Manage</Trans>
+                  </Text>
+                  <ThemeIcon
+                    name="home.arrow"
+                    fallback={ChevronRight}
+                    size={14}
+                    color={theme.colors.textMuted}
+                    strokeWidth={2}
+                  />
+                </PressableScale>
+              </View>
+              <View style={styles.sshList}>
+                {sshRows.map((host) => (
+                  <SshHostRow
+                    key={host.id}
+                    record={host}
+                    showAddress={false}
+                    onOpen={() => openSshHost(host)}
+                  />
+                ))}
+              </View>
+            </Animated.View>
+          ) : null}
+        </Animated.View>
 
         {!loading ? <View style={[styles.spacerBelow, isPad && styles.padSpacer]} /> : null}
-      </KeyboardAwareScrollView>
+      </HomeScrollViewport>
+      {dock}
       {devAmbientControls}
     </View>
   );
@@ -1532,7 +2175,10 @@ function HeaderButton({
       onPress={onPress}
       style={[
         styles.headerButton,
-        { backgroundColor: background(theme.colors.surface), overflow: 'hidden' },
+        {
+          backgroundColor: bare ? 'transparent' : background(theme.colors.surface),
+          overflow: 'hidden',
+        },
         editorial && {
           backgroundColor: bare ? 'transparent' : background(theme.colors.surface),
           width: HOME_TOOLBAR_BUTTON_SIZE,
@@ -1540,37 +2186,20 @@ function HeaderButton({
           borderRadius: profile.chrome.control,
         },
       ]}>
-      {!bare && (
-        <ThemedSurfaceArtwork slot="navigation.background" baseColor={theme.colors.surface} />
-      )}
+      {!bare && <SurfaceDecoration slot="navigation.background" baseColor={theme.colors.surface} />}
       {children}
     </PressableScale>
   );
 }
 
-/**
- * One machine, then the panes running on it.
- *
- * The card is an identity block and a list, and nothing draws the relationship
- * between them. It used to: a coral trunk grew out of the status dot and turned
- * into each pane row through a rounded elbow, which made the card read as a
- * process tree. The line was saying what the card's own surface already says --
- * these panes are on this machine -- and at nine rows it was the loudest thing
- * on the screen. What replaces it is arrangement: the identity block is the only
- * thing on the card with an icon and 18pt type, the panes below it share one
- * left edge and one column of status lights, and the gap between the two is the
- * largest on the card. The reader gets the same hierarchy without anything
- * being drawn to assert it.
- */
+/** Classic's computer and agent entry points; individual panes live in Continue. */
 function ServerCard({
   server,
   metrics,
   selected,
   showAddress,
   reachability,
-  agents,
   onOpen,
-  onOpenAgent,
 }: {
   server: GatewayRecord;
   /** Card geometry and row density for the current window and server count. */
@@ -1583,10 +2212,7 @@ function ServerCard({
    */
   showAddress: boolean;
   reachability: ServerReachability;
-  /** Undefined when the setting is off, or the server has never been opened. */
-  agents: ServerAgentsSnapshot | undefined;
   onOpen: () => void;
-  onOpenAgent: (agent: ServerAgent) => void;
 }) {
   const { t } = useLingui();
   // The runtime `_`, for the message descriptors in `@/i18n/labels`. Same
@@ -1596,24 +2222,13 @@ function ServerCard({
 
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
-
-  // Read at render because freshness is relative to *now*, not to whenever the
-  // last state change happened: a card sitting untouched has to keep telling the
-  // truth about a snapshot ageing under it. The alternative is a ticking clock
-  // in state, which re-renders the whole list to change one label.
-  // oxlint-disable-next-line react/purity -- deliberate: see above.
-  const nowMs = Date.now();
-  const statusColor = reachability === 'live' ? theme.colors.success : theme.colors.textSubtle;
+  const { fontScale } = useWindowDimensions();
 
   return (
-    // The header and asynchronously refreshed pane rows share one native
-    // layout. Do not animate their frames independently or flatten the hosts
-    // that establish the rows' offset below the identity block.
     <View collapsable={false}>
-      <ThemedSurface
+      <Surface
         collapsable={false}
         slot="cards.decoration"
-        baseColor={theme.colors.surface}
         style={[
           styles.serverSection,
           {
@@ -1624,14 +2239,14 @@ function ServerCard({
         ]}>
         <View collapsable={false} style={styles.identityRow}>
           {/* No long press, and no menu: renaming, editing the address and
-              unpairing all moved to Settings > SERVERS once that screen could
+              unpairing all moved to Settings > Computers once that screen could
               do everything a card's old `...` menu could -- see the note on
               `SettingsServers`. A card is a link now, and nothing else. */}
           <PressableScale
             accessibilityRole="button"
             accessibilityLabel={t`Open ${server.label}`}
             onPress={onOpen}
-            style={styles.identityMain}>
+            style={[styles.identityMain, { flexBasis: 160 * Math.max(1, fontScale) }]}>
             {/* The one place the accent is spent on this card. It used to be
                 spent twice -- here and on the loom -- and with the loom gone the
                 avatar is the whole answer to "which machine is the app attached
@@ -1651,62 +2266,46 @@ function ServerCard({
                 },
               ]}>
               {selected ? (
-                <SquareTerminal size={20} color={theme.colors.onPrimary} strokeWidth={2} />
+                <SquareTerminal size={18} color={theme.colors.onPrimary} strokeWidth={2} />
               ) : (
                 // The pack's primary, like every other glyph on this screen. The
                 // difference between the two tiles is the fill, not the ink: a
                 // grey glyph beside rows of accent-coloured ones read as a
                 // machine that was switched off, and this one is online.
-                <Server size={19} color={theme.colors.primary} strokeWidth={2} />
+                <Monitor size={17} color={theme.colors.primary} strokeWidth={2} />
               )}
             </View>
 
             <View style={styles.serverCopy}>
-              {/* Sentence case on purpose: a machine's name is a proper noun,
-                  and the ALL-CAPS register on this screen is reserved for the
-                  one instrument label, which is the status.
-
-                  18/600 against the panes' 14 and the address's 12. It used to
-                  be 16 against 14 against a 14 all-caps status, which is three
-                  sizes inside two points of each other and therefore no
-                  hierarchy at all -- the machine has to outrank the things
-                  running on it. */}
+              {/* A machine's name is a proper noun; keep its sentence case. */}
               <Text variant="subheading" weight="semibold" numberOfLines={1}>
                 {server.label}
               </Text>
 
-              {/* The status is the machine's subtitle now, not a row of its own.
-                  It was a row because it was the root the tree grew out of, and
-                  with no tree that row was a line of 12pt caps sitting alone
-                  between the name above it and the list below -- belonging to
-                  neither, and pushing the two things that do belong together
-                  apart. Under the name it is what it always was: one fact about
-                  this machine, said at the smallest size on the card.
-
-                  The dot never speaks alone: `OFFLINE` and `NOT CONNECTED` are
-                  the same grey on purpose, and the words and the hollow ring are
-                  what tell them apart. It is still the only dot on the screen
-                  that pulses. */}
+              {/* The connection is a quiet subtitle, paired with a still dot
+                  so colour alone never has to explain the machine's state. */}
               <View
                 accessibilityLabel={_(reachabilityDescription[reachability])}
                 style={styles.statusLine}>
                 <StatusDot
-                  color={statusColor}
+                  color={reachability === 'live' ? theme.colors.success : theme.colors.textSubtle}
                   filled={reachability !== 'unknown'}
-                  pulse={reachability === 'live'}
+                  pulse={false}
                   size={STATUS_DOT_SIZE}
                 />
-                <Text variant="caption" color={statusColor} style={styles.statusLabel}>
+                <Text
+                  variant="caption"
+                  color={theme.colors.textSubtle}
+                  numberOfLines={1}
+                  style={styles.statusLabel}>
                   {_(reachabilityLabel[reachability])}
                 </Text>
-                {/* No count: the rows below are the count, and saying it here as
-                    well would be the same fact twice on one card. */}
               </View>
 
               {/* Only when a second machine answers to the same name. On every
                   other install this line was a constant the reader had already
                   read -- and on a one-server screen it was the address of the
-                  only address there is. It is not lost: Settings > SERVERS
+                  only address there is. It is not lost: Settings > Computers
                   lists every server with its address, always. */}
               {showAddress ? (
                 <Text
@@ -1723,38 +2322,11 @@ function ServerCard({
               <GatewayTunnelBadge record={server} />
             </View>
           </PressableScale>
-
-          {/* The one action a card still offers directly: everything else
-              that used to live behind the `...` menu -- rename, unpair -- now
-              lives in Settings > SERVERS, but New Task has no equivalent
-              there. It is not a fact about the server's identity the way a
-              name or an address is; it is a shortcut to starting work on it
-              without opening it first, which only makes sense from a list of
-              servers. `NewTaskAction` renders nothing at all unless this
-              gateway has told the app it can spawn one, so most cards spend
-              nothing on this slot. When capabilities finish loading, the
-              action and identity are measured together by native flex layout. */}
-          <View style={styles.serverTrailing}>
-            {reachability === 'live' || Boolean(server.sshTunnel) ? (
-              <NewTaskAction server={server} serverId={server.serverId} label={server.label} />
-            ) : null}
-          </View>
         </View>
-
-        {/* `listGap` is the whole grouping device now, so it belongs to the
-            list rather than to a spacer between the two: a machine with no
-            mirrored panes renders no rows, and a standalone spacer would leave
-            that card with a gap under its name separating it from nothing. */}
-        <ServerAgentRows
-          serverId={server.serverId}
-          style={{ marginTop: metrics.listGap }}
-          snapshot={agents}
-          reachability={reachability}
-          rowMinHeight={metrics.rowMinHeight}
-          nowMs={nowMs}
-          onOpenAgent={onOpenAgent}
-        />
-      </ThemedSurface>
+        {reachability === 'live' || Boolean(server.sshTunnel) ? (
+          <NewTaskAction server={server} serverId={server.serverId} label={server.label} />
+        ) : null}
+      </Surface>
     </View>
   );
 }
@@ -1791,7 +2363,10 @@ function EmptyState({
     // card vanish on one frame while the new one faded in underneath it -- the
     // one moment in the app where two things are meant to hand over cleanly.
     <Animated.View entering={fadeIn('medium')} exiting={fadeOut('short')}>
-      <Card padding="none" style={[styles.emptyCard, isPad && styles.padEmptyCard]}>
+      <Card
+        slot="cards.plain"
+        padding="none"
+        style={[styles.emptyCard, isPad && styles.padEmptyCard]}>
         {/* The same mark as the pairing screen's aperture, in the same colour,
             at a sixth of the size: this is the shape the reader is about to
             point at their machine. It is drawn in `borderStrong` rather than
@@ -1817,12 +2392,12 @@ function EmptyState({
                 style={[styles.corner, corner.style, { borderColor: theme.colors.borderStrong }]}
               />
             ))}
-            <Server size={26} color={theme.colors.textMuted} strokeWidth={1.8} />
+            <Monitor size={26} color={theme.colors.textMuted} strokeWidth={1.8} />
           </View>
         )}
         <View style={[styles.emptyCopy, isPad && styles.padEmptyCopy]}>
           <Text variant="subheading">
-            <Trans>Pair your first server</Trans>
+            <Trans>Pair your first computer</Trans>
           </Text>
           <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.emptyDetail}>
             <Trans>
@@ -1834,14 +2409,14 @@ function EmptyState({
         <Button
           variant="primary"
           leftIcon="ScanLine"
-          accessibilityLabel={t`Pair a server`}
+          accessibilityLabel={t`Pair a computer`}
           testID="home-pair-server"
           onPress={onPair}
           style={isPad ? styles.padEmptyAction : styles.emptyAction}>
           {/* `t` rather than `<Trans>`: the design system's Button types its
               children as a string, so the translation has to arrive already
               rendered rather than as an element. */}
-          {t`Pair a server`}
+          {t`Pair a computer`}
         </Button>
         <PressableScale
           accessibilityRole="button"
@@ -1859,10 +2434,9 @@ function EmptyState({
 }
 
 /**
- * The machine's tile. Big enough to be the card's one piece of iconography, so
- * the identity block outranks the list under it on weight alone.
+ * A quiet machine mark; the name and connection subtitle carry its identity.
  */
-const AVATAR_SIZE = 44;
+const AVATAR_SIZE = 36;
 
 /**
  * The machine's status light, in the identity block.
@@ -1871,7 +2445,7 @@ const AVATAR_SIZE = 44;
  * because it was the root the tree grew out of and had to read as a different
  * kind of mark from the bullets hanging off it. There is no tree, so there is
  * nothing to be the root of: the machine is already told apart from its panes by
- * a 44pt tile and 18pt type, and a dot two points wider than the ones below it
+ * a 36pt tile and 18pt type, and a dot two points wider than the ones below it
  * was hierarchy asserted twice.
  */
 const STATUS_DOT_SIZE = 7;
@@ -2063,6 +2637,8 @@ const styles = StyleSheet.create({
   },
   // The horizontal inset and the measure come from `homeServerListLayout` at
   // the call site; what is left here is the same in both modes.
+  // The labels hug their text in the classic column.
+  classicLabel: { alignSelf: 'flex-start' },
   content: {
     flexGrow: 1,
     paddingTop: 10,
@@ -2128,7 +2704,6 @@ const styles = StyleSheet.create({
   padEmptyCard: {
     paddingHorizontal: 44,
     paddingVertical: 40,
-    borderRadius: 28,
     borderCurve: 'continuous',
     gap: 20,
     boxShadow: '0 16px 44px rgba(0, 0, 0, 0.08)',
@@ -2220,21 +2795,24 @@ const styles = StyleSheet.create({
   },
   identityRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
-    gap: 10,
+    columnGap: 8,
+    rowGap: 4,
   },
   identityMain: {
     flex: 1,
+    minHeight: 44,
     minWidth: 0,
     alignSelf: 'stretch',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
   },
   serverAvatar: {
     width: AVATAR_SIZE,
     height: AVATAR_SIZE,
-    borderRadius: 14,
+    borderRadius: 11,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
@@ -2247,23 +2825,12 @@ const styles = StyleSheet.create({
   statusLine: {
     flexDirection: 'row',
     alignItems: 'center',
-    // Clearance for the live dot's ring, which is the one thing on this card
-    // that paints outside its own box: `StatusDot` sends it out to 2.6x the
-    // dot, so a subtitle gap sized by eye for a static dot has the ring
-    // crossing the first letter of ONLINE every two and a half seconds.
-    gap: 12,
+    gap: 6,
   },
   statusLabel: {
-    letterSpacing: 0.9,
-  },
-  // A right-aligned row rather than the default stretch column: the slot's
-  // width travels between nothing and a 36pt button as `NewTaskAction`'s
-  // capability check resolves, and it has to stay pinned to the card's
-  // trailing edge while that width changes rather than stretch to fill it.
-  serverTrailing: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
+    letterSpacing: 0.3,
+    flexShrink: 1,
+    minWidth: 0,
   },
   // The gap above comes from `cardGap` at the call site, and only when there
   // is a card above to gap from.

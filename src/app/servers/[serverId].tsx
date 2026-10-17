@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useLingui } from '@lingui/react/macro';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Spinner, useThemeTokens } from '@osuki-dev/ui';
+import { Spinner, useThemeTokens, Text } from '@osuki-dev/ui';
 import { StyleSheet, View } from 'react-native';
 
 import AppDrawer from '@/components/app-drawer';
 import { ServerTerminalWorkspace } from '@/components/server-terminal-workspace';
-import { Text } from '@/components/text';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { homeWorkspaceHostStore, homeWorkspaceRouteMode } from '@/lib/home-workspace-owner';
 import { homeWorkspaceHandoffStore } from '@/lib/home-workspace-handoff';
@@ -186,9 +185,9 @@ function RouteTargetUnavailable() {
   return (
     <AppDrawer>
       <View style={styles.missing}>
-        <Text variant="heading">{t`Server not found`}</Text>
+        <Text variant="heading">{t`Computer not found`}</Text>
         <Text variant="bodySmall" color={theme.colors.textMuted}>
-          {t`Return to the server list and pair again.`}
+          {t`Return to the computer list and pair again.`}
         </Text>
       </View>
     </AppDrawer>
@@ -203,7 +202,7 @@ function RouteTransferLoading() {
       <View style={styles.loading}>
         <Spinner size="sm" color={theme.colors.textMuted} />
         <Text variant="bodySmall" color={theme.colors.textMuted}>
-          {t`Loading servers`}
+          {t`Loading computers`}
         </Text>
       </View>
     </AppDrawer>

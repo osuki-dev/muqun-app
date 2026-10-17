@@ -1,9 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import type {
-  NativeSyntheticEvent,
-  TextInputKeyPressEventData,
-  TextInputSelectionChangeEventData,
-} from 'react-native';
+import type { TextInputKeyPressEvent, TextInputSelectionChangeEvent } from 'react-native';
 
 import {
   dismissComposerPopup,
@@ -49,8 +45,8 @@ export interface UseComposerPopupOptions<T> {
 /** Props to spread onto the composer's `TextInput`. */
 export interface ComposerPopupInputProps {
   selection: { start: number; end: number } | undefined;
-  onSelectionChange: (event: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => void;
-  onKeyPress: (event: NativeSyntheticEvent<TextInputKeyPressEventData>) => void;
+  onSelectionChange: (event: TextInputSelectionChangeEvent) => void;
+  onKeyPress: (event: TextInputKeyPressEvent) => void;
 }
 
 export interface ComposerPopupController<T> {
@@ -95,7 +91,7 @@ export function useComposerPopup<T>({
   }
 
   const onSelectionChange = useCallback(
-    (event: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => {
+    (event: TextInputSelectionChangeEvent) => {
       const next = event.nativeEvent.selection.start;
       setCaret(next);
       setPending((current) => {
@@ -109,7 +105,7 @@ export function useComposerPopup<T>({
   );
 
   const onKeyPress = useCallback(
-    (event: NativeSyntheticEvent<TextInputKeyPressEventData>) => {
+    (event: TextInputKeyPressEvent) => {
       if (event.nativeEvent.key !== 'Escape') return;
       setDismissedAt((current) => dismissComposerPopup(state) ?? current);
     },

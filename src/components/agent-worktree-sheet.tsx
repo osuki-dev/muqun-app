@@ -1,7 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
+import { useThemeTokens, PressableScale, Text, TextField } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import {
   FolderGit2,
@@ -16,7 +15,6 @@ import * as Haptics from 'expo-haptics';
 import Animated from 'react-native-reanimated';
 
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
-import { PressableScale } from '@/components/pressable-scale';
 import {
   SheetScene,
   SheetSceneAction,
@@ -53,7 +51,6 @@ import {
   type WorkspaceMissing,
   type WorktreeDirectory,
 } from '@/lib/agent-session';
-import { FontedTextInput } from '@/components/fonted-text-input';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
 const STAGGERED_ROWS = 8;
@@ -155,7 +152,7 @@ export const AgentWorktreeSheet = memo(function AgentWorktreeSheet({
   const [branchDraft, setBranchDraft] = useState('');
   const [createError, setCreateError] = useState<string | null>(null);
 
-  const scrollerRef = useRef<ScrollView>(null);
+  const scrollerRef = useRef<ScrollViewInstance>(null);
   const createOffset = useRef(0);
 
   /**
@@ -522,7 +519,7 @@ export const AgentWorktreeSheet = memo(function AgentWorktreeSheet({
                   <SheetSceneField
                     label={t`Name`}
                     hint={t`Leave it empty and the agent picks a name.`}>
-                    <FontedTextInput
+                    <TextField
                       testID="agent-worktree-name-input"
                       accessibilityLabel={t`Worktree name`}
                       value={nameDraft}
@@ -544,7 +541,7 @@ export const AgentWorktreeSheet = memo(function AgentWorktreeSheet({
                     label={t`Branch from`}
                     hint={t`A branch or tag this repository already has.`}
                     error={createError ?? undefined}>
-                    <FontedTextInput
+                    <TextField
                       testID="agent-worktree-branch-input"
                       accessibilityLabel={t`Branch to start from`}
                       value={branchDraft}

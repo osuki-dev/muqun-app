@@ -1,8 +1,7 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { ThemeArtwork } from '@/components/theme-artwork';
+import { SHELL_WALLPAPER_FALLBACK, ThemeArtwork } from '@/components/theme-artwork';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { LogoLoader } from '@/components/logo-loader';
 import { useRouter } from 'expo-router';
 import { Plus, SquareTerminal } from 'lucide-react-native';
@@ -11,7 +10,6 @@ import { StyleSheet, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { ScreenHeader } from '@/components/screen-header';
 import { SshHostForm } from '@/components/ssh-host-form';
@@ -76,7 +74,7 @@ export function SshHostList() {
 
   return (
     <View style={[styles.screen, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
-      <ThemeArtwork slot="shell.wallpaper" />
+      <ThemeArtwork slot="shell.wallpaper" fallbackSlot={SHELL_WALLPAPER_FALLBACK} />
       <ScreenHeader
         title={editing === 'new' ? t`New SSH host` : editing ? t`Edit SSH host` : t`SSH`}
         onBack={editing ? () => setEditing(null) : undefined}

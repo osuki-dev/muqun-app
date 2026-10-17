@@ -1,9 +1,12 @@
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { ThemeArtwork, useHasThemeArtwork } from '@/components/theme-artwork';
+import {
+  SHELL_WALLPAPER_FALLBACK,
+  ThemeArtwork,
+  useHasThemeArtwork,
+} from '@/components/theme-artwork';
 import { brandMark } from '@/components/brand-mark';
-import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeMode, useThemeTokens, Text } from '@osuki-dev/ui';
 import * as Application from 'expo-application';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
@@ -16,11 +19,13 @@ import {
   Bell,
   Terminal,
   ChevronRight,
-  Server,
+  Monitor,
+  Mic,
   Settings2,
 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Trans, useLingui } from '@lingui/react/macro';
@@ -31,6 +36,8 @@ import { SettingsRegistration } from '@/components/settings-registration';
 import { LADDER, SettingsNavRow, SettingsCard } from '@/components/settings-chrome';
 import { SettingsSecurity } from '@/components/settings-security';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
+import { DURATION, ENTRY_BUDGET_MS, entryRise, STAGGER } from '@/lib/motion';
+import { staggerDelay } from '@/lib/stagger';
 import { RenderTally, useRenderTally } from '@/lib/render-tally';
 
 /**
@@ -47,10 +54,37 @@ const SETTINGS_CONTENT_MAX_WIDTH = 760;
  * The header is laid over the scroll rather than stacked above it, which is how
  * the server page carries its own pills: content passes under the glass instead
  * of stopping at a band. `NAV_HEADER_TOP_GAP` + the header's controls + its own
- * 8 of bottom padding, plus a `gap` so the first section label clears the glass
- * rather than starting under it.
+ * 8 of bottom padding, plus a section gap so the entry list has breathing room
+ * below the navigation on both phones and tablets.
  */
-const HEADER_INSET = NAV_HEADER_TOP_GAP + NAV_HEADER_CONTROL_SIZE + 8 + LADDER.gap;
+const HEADER_INSET = NAV_HEADER_TOP_GAP + NAV_HEADER_CONTROL_SIZE + 8 + LADDER.section;
+
+/** The entry list. Labels are translated in the component, with the hook's `t`. */
+const ROWS = [
+  { route: '/settings-appearance', icon: Palette },
+  { route: '/settings-terminal', icon: Terminal },
+  { route: '/settings-voice', icon: Mic },
+  { route: '/settings-alerts', icon: Bell },
+  { route: '/settings-servers', icon: Monitor },
+  { route: '/settings-storage', icon: HardDrive },
+  { route: '/settings-about', icon: Info },
+] as const;
+
+/** Security, then the footer line with the version block: what follows the rows. */
+const TAIL_COUNT = 2;
+
+/**
+ * When the last row starts rising, which the tail waits out from its own
+ * mount. Derived from the row count, and `entryRise` clamps whatever it adds
+ * up to inside `ENTRY_BUDGET_MS`.
+ */
+const ROWS_SETTLED_MS = staggerDelay(
+  ROWS.length - 1,
+  ROWS.length,
+  STAGGER.entry,
+  DURATION.short,
+  ENTRY_BUDGET_MS
+);
 
 /** Settings gathers everyday preferences and app management into one entry list. */
 export default function SettingsScreen() {
@@ -61,7 +95,7 @@ export default function SettingsScreen() {
   // under it, so against a pack's wallpaper it is read on whatever the picture
   // happens to put there. `SettingsSection` already solved this for its
   // instrument labels; these two are the only other bare strings on the page.
-  const hasShell = useHasThemeArtwork('shell.wallpaper');
+  const hasShell = useHasThemeArtwork('shell.wallpaper', SHELL_WALLPAPER_FALLBACK);
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
   //
   // React Compiler is enabled, and it will memoize a global `t` call whose
@@ -71,6 +105,15 @@ export default function SettingsScreen() {
   // call keeps the old language. The hook's `t` is bound to the Lingui context,
   // so the compiler sees a dependency that actually changes.
   const { t } = useLingui();
+  const labels = {
+    '/settings-appearance': t`Appearance`,
+    '/settings-terminal': t`Terminal`,
+    '/settings-voice': t`Voice to text`,
+    '/settings-alerts': t`Alerts`,
+    '/settings-servers': t`Computers`,
+    '/settings-storage': t`Storage`,
+    '/settings-about': t`About`,
+  } satisfies Record<(typeof ROWS)[number]['route'], string>;
   const theme = useThemeTokens();
   const { resolvedMode } = useThemeMode();
   const insets = useSafeAreaInsets();
@@ -97,12 +140,16 @@ export default function SettingsScreen() {
     return () => cancelIdleCallback(handle);
   }, []);
 
-  const version = Constants.expoConfig?.version ?? Application.nativeApplicationVersion ?? '1.1.0';
+  const version = Constants.expoConfig?.version ?? Application.nativeApplicationVersion ?? '—';
   const build = Application.nativeBuildVersion;
 
   return (
     <View style={[styles.page, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
-      <ThemeArtwork slot="shell.wallpaper" />
+      <ThemeArtwork
+        slot="shell.wallpaper"
+        fallbackSlot={SHELL_WALLPAPER_FALLBACK}
+        waitForTransition
+      />
       <StatusBar animated style={resolvedMode === 'dark' ? 'light' : 'dark'} />
 
       <RenderTally id="settings">
@@ -112,22 +159,17 @@ export default function SettingsScreen() {
           onScroll={deep ? undefined : () => setDeep(true)}
           scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}>
-          <SettingsCard>
-            {(
-              [
-                { route: '/settings-appearance', icon: Palette, label: t`Appearance` },
-                { route: '/settings-terminal', icon: Terminal, label: t`Terminal` },
-                { route: '/settings-alerts', icon: Bell, label: t`Alerts` },
-                { route: '/settings-servers', icon: Server, label: t`Servers` },
-                { route: '/settings-storage', icon: HardDrive, label: t`Storage` },
-                { route: '/settings-about', icon: Info, label: t`About` },
-              ] as const
-            ).map(({ route, icon, label }) => (
+          {/* First mount only: `entering` runs when a row mounts, and the page
+              stays mounted under its sub-pages, so coming back from one does
+              not replay the sequence. `riseIn` carries the system
+              reduce-motion check, so with it on the rows are simply there. */}
+          <SettingsCard enter={entryRise}>
+            {ROWS.map(({ route, icon }) => (
               <SettingsNavRow
                 key={route}
                 icon={icon}
                 trailing={ChevronRight}
-                label={label}
+                label={labels[route]}
                 testID={route.slice(1) + '-row'}
                 onPress={() => router.push(route)}
               />
@@ -136,47 +178,61 @@ export default function SettingsScreen() {
 
           {deep ? (
             <>
-              <SettingsSecurity title={t`Security`} />
+              {/* Mounted after the idle callback, so already behind the rows;
+                  `after` keeps them behind the last row even when the callback
+                  comes early. */}
+              <Animated.View entering={entryRise(0, TAIL_COUNT, ROWS_SETTLED_MS)}>
+                <SettingsSecurity title={t`Security`} />
+              </Animated.View>
 
-              <View style={[styles.footer, plate ? { ...plate, alignSelf: 'flex-start' } : null]}>
-                <Settings2 size={16} color={theme.colors.textMuted} strokeWidth={2} />
-                <Text variant="caption" color={theme.colors.textMuted} style={styles.footerText}>
-                  <Trans>Muqun settings stay on this device.</Trans>
-                </Text>
-              </View>
+              {/* The footer line, the mark, the version and the registration
+                  line arrive as one beat: a wrapper with the page's own gap,
+                  because the registration link renders nothing outside
+                  mainland China and an empty animated box of its own would
+                  still take a gap. */}
+              <Animated.View
+                entering={entryRise(1, TAIL_COUNT, ROWS_SETTLED_MS)}
+                style={styles.tail}>
+                <View style={[styles.footer, plate ? { ...plate, alignSelf: 'flex-start' } : null]}>
+                  <Settings2 size={16} color={theme.colors.textMuted} strokeWidth={2} />
+                  <Text variant="caption" color={theme.colors.textMuted} style={styles.footerText}>
+                    <Trans>Muqun settings stay on this device.</Trans>
+                  </Text>
+                </View>
 
-              {/* Keep version information easy to find without a second navigation row. */}
-              <View style={styles.brand}>
-                <Image
-                  // The rendered mascot with a real alpha channel, not the
-                  // launcher icon: that one carries an opaque plate, which on a
-                  // themed page reads as a square nobody asked for. Two cuts,
-                  // because the dark master is lit for a dark ground and its
-                  // rim would fringe on a light one. `resolvedMode` rather than
-                  // the system scheme, so a theme chosen in Appearance counts.
-                  source={brandMark(resolvedMode)}
-                  style={styles.brandMark}
-                  contentFit="contain"
-                  // Decorative: the version alongside it already names the app,
-                  // and the screen is titled `Settings`.
-                  accessible={false}
-                />
-                <Text
-                  variant="caption"
-                  color={theme.colors.textMuted}
-                  // Keep the version plate aligned with the mark.
-                  style={
-                    plate
-                      ? { ...styles.brandVersion, ...plate, alignSelf: 'center' }
-                      : styles.brandVersion
-                  }>
-                  <Trans>
-                    Version {version}
-                    {build ? ` (${build})` : ''}
-                  </Trans>
-                </Text>
-              </View>
-              <SettingsRegistration />
+                {/* Keep version information easy to find without a second navigation row. */}
+                <View style={styles.brand}>
+                  <Image
+                    // The rendered mascot with a real alpha channel, not the
+                    // launcher icon: that one carries an opaque plate, which on a
+                    // themed page reads as a square nobody asked for. Two cuts,
+                    // because the dark master is lit for a dark ground and its
+                    // rim would fringe on a light one. `resolvedMode` rather than
+                    // the system scheme, so a theme chosen in Appearance counts.
+                    source={brandMark(resolvedMode)}
+                    style={styles.brandMark}
+                    contentFit="contain"
+                    // Decorative: the version alongside it already names the app,
+                    // and the screen is titled `Settings`.
+                    accessible={false}
+                  />
+                  <Text
+                    variant="caption"
+                    color={theme.colors.textMuted}
+                    // Keep the version plate aligned with the mark.
+                    style={
+                      plate
+                        ? { ...styles.brandVersion, ...plate, alignSelf: 'center' }
+                        : styles.brandVersion
+                    }>
+                    <Trans>
+                      Version {version}
+                      {build ? ` (${build})` : ''}
+                    </Trans>
+                  </Text>
+                </View>
+                <SettingsRegistration />
+              </Animated.View>
             </>
           ) : null}
         </ScrollView>
@@ -217,6 +273,9 @@ const styles = StyleSheet.create({
   // wide. Shrinking is what lets it wrap instead. `minWidth: 0` goes with it
   // because `flexShrink` alone will not take a box below its content width.
   footerText: { flexShrink: 1, minWidth: 0 },
+  // The page's own gap, carried inside the one animated box the footer line,
+  // the brand block and the registration line share.
+  tail: { gap: LADDER.section },
   brand: {
     flexDirection: 'row',
     alignItems: 'center',

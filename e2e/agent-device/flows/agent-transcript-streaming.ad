@@ -1,0 +1,35 @@
+# The finite offline fixture exercises the real list/native Markdown in release too.
+# section start
+open "muqun://agent?asid=demo-streaming-markdown"
+wait "id=\"demo-streaming-transcript\"" 15000
+# Start a finite stream. Keep the reader's history anchored as output grows.
+press "id=\"demo-stream-restart\""
+scroll bottom
+
+# section ready
+# The initial history can fit on a tall tablet; allow enough output to leave
+# the live tail before checking that a reader's history stays anchored.
+is visible "${TARGET}"
+
+# section history
+# A reader who moves above the live table must retain their place while it grows.
+scroll up --until "text=\"History anchor 01. This previously read paragraph must remain still while new output arrives below it.\""
+wait 750
+is visible "text=\"History anchor 01. This previously read paragraph must remain still while new output arrives below it.\""
+snapshot
+screenshot "shots/transcript-stream-reading-before.png"
+wait 4000
+is visible "text=\"History anchor 01. This previously read paragraph must remain still while new output arrives below it.\""
+snapshot
+screenshot "shots/transcript-stream-reading-after.png"
+# Completion cannot steal the viewport either. An explicit restart tests another run.
+wait 25000
+scroll bottom
+is visible "text=\"DEMO_STREAM_COMPLETE\""
+# Preserve native pixels of the completed table and diff, not a reconstructed
+# renderer. This does not assert animation identity or real protocol streaming.
+snapshot
+screenshot "shots/transcript-stream-complete-diff.png"
+press "id=\"demo-stream-restart\""
+wait 2000
+is visible "id=\"demo-streaming-list\""

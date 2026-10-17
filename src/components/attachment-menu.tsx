@@ -2,14 +2,12 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import type { MessageDescriptor } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { Camera, FileUp, Images } from 'lucide-react-native';
 import { StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { PressableScale } from '@/components/pressable-scale';
 import { appChrome } from '@/constants/appearance';
 import type { AttachmentSource } from '@/lib/attachments';
 import { fadeInDown, fadeOutDown } from '@/lib/motion';

@@ -96,17 +96,43 @@ const NO_AGENTS: HomeAgentEntry[] = [];
  */
 export async function refreshAgentsDiscovery(
   serverId: string,
-  endpoint?: GatewayEndpoint
+  endpoint?: GatewayEndpoint,
+  options?: { force?: boolean }
 ): Promise<void> {
   if (!serverId) return;
-  const capabilities = useServerCapabilities.getState().byServer[serverId];
-  const discovery = await getAgentsDiscovery({
-    capabilities,
-    serverId,
-    ...(endpoint ? { endpoint } : {}),
-  });
-  if (discovery) useAgents.getState().record(serverId, discovery);
+  // Every screen on a server asks on mount -- Home's dock, the workbench, the
+  // terminal -- and the answer changes when an agent is attached or
+  // detached, not between two screens. One read per server per minute, and
+  // callers arriving while it is out share it.
+  const readAt = discoveryReadAt.get(serverId);
+  if (
+    !options?.force &&
+    readAt !== undefined &&
+    Date.now() - readAt < DISCOVERY_FRESH_MS &&
+    useAgents.getState().index.servers[serverId]
+  )
+    return;
+  const pending = discoveryInFlight.get(serverId);
+  if (pending) return pending;
+  const flight = (async () => {
+    const capabilities = useServerCapabilities.getState().byServer[serverId];
+    const discovery = await getAgentsDiscovery({
+      capabilities,
+      serverId,
+      ...(endpoint ? { endpoint } : {}),
+    });
+    if (discovery) {
+      useAgents.getState().record(serverId, discovery);
+      discoveryReadAt.set(serverId, Date.now());
+    }
+  })().finally(() => discoveryInFlight.delete(serverId));
+  discoveryInFlight.set(serverId, flight);
+  return flight;
 }
+
+const DISCOVERY_FRESH_MS = 60_000;
+const discoveryReadAt = new Map<string, number>();
+const discoveryInFlight = new Map<string, Promise<void>>();
 
 /**
  * Refreshes the mirror for the server a screen is on, once per server.

@@ -1,12 +1,10 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
-import { Spinner, useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { View, StyleSheet, ScrollView, type ScrollViewInstance } from 'react-native';
+import { Spinner, useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated from 'react-native-reanimated';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { SettingsSegmented } from '@/components/settings-segmented';
 import {
   SheetScene,
@@ -23,9 +21,15 @@ import { recentCatalogModels } from '@/lib/recent-agent-models';
 import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
 import { fadeIn, listLayout, riseIn, STAGGER } from '@/lib/motion';
-import { groupModelsByProvider } from '@/lib/agent-model-groups';
+import {
+  groupModelsByProvider,
+  hasFreeModel,
+  hasMultipleModelProviders,
+  providerTitle,
+} from '@/lib/agent-model-groups';
 import { SECTION_PAGE_SIZE, nearListEnd, pageSections } from '@/lib/paged-sections';
 import { findAgentModelPosition } from '@/lib/agent-model-position';
+import { modelPickerChoice } from '@/lib/agent-session-defaults';
 import {
   formatModelName,
   getAgentCatalog,
@@ -64,33 +68,6 @@ export interface AgentModelSheetProps {
   selectedModel?: ModelRef;
   onSelectModel: (model: ModelRef) => void;
   onClose: () => void;
-}
-
-/**
- * The provider's own spelling of its name.
- *
- * The group heading is the only thing telling two identically-named models
- * apart -- `opencode` and `opencode-go` both publish a "Union Alpha Free" --
- * so a hyphenated id has to survive as words rather than collapse to one.
- */
-function providerName(provider: string): string {
-  const known: Record<string, string> = {
-    anthropic: 'Anthropic',
-    openai: 'OpenAI',
-    google: 'Google Cloud',
-    deepseek: 'DeepSeek',
-    ollama: 'Ollama',
-    openrouter: 'OpenRouter',
-    opencode: 'OpenCode',
-    'opencode-go': 'OpenCode Go',
-  };
-  const lower = provider.toLowerCase();
-  if (known[lower]) return known[lower];
-  return lower
-    .split(/[-_]/)
-    .filter(Boolean)
-    .map((word) => known[word] ?? word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
 }
 
 /**
@@ -164,11 +141,15 @@ export const AgentModelSheet = memo(function AgentModelSheet({
    * later as an unexplained failed turn.
    */
   const [providers, setProviders] = useState<readonly ProviderInfo[]>([]);
+  const showProviderRail = hasMultipleModelProviders(models, providers);
   const [defaults, setDefaults] = useState<CatalogDefaults>({});
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterMode, setFilterMode] = useState<'all' | 'free'>('all');
+  const [pickedFilter, setFilterMode] = useState<'all' | 'free'>('all');
+  const showFilter = hasFreeModel(models);
+  // Without the control there is no way back from "free", so it reads as "all".
+  const filterMode = showFilter ? pickedFilter : 'all';
   const [pickedProvider, setPickedProvider] = useState<string | null>(null);
-  const modelListRef = useRef<ScrollView>(null);
+  const modelListRef = useRef<ScrollViewInstance>(null);
   const sectionOffsetsRef = useRef(new Map<number, number>());
   const selectedRowOffsetRef = useRef<number | null>(null);
   const viewportHeightRef = useRef(0);
@@ -190,6 +171,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
     setLoading(true);
     setLoadFailed(false);
     setModels([]);
+    setProviders([]);
     setRecentRefs(loadRecentAgentModels(sessionId ?? '', agentId));
     getAgentCatalog(sessionId, undefined, {
       ...(directory ? { directory } : {}),
@@ -244,7 +226,11 @@ export const AgentModelSheet = memo(function AgentModelSheet({
   // Recent rows resolve against the same catalog and filters as provider groups.
   const searching = searchQuery.trim().length > 0 || filterMode === 'free';
   const providerSections = useMemo(() => {
-    const recent = recentCatalogModels(recentRefs, filteredModels, providers);
+    // One provider needs no navigation, including a separate Recent destination.
+    // Keep its entire matching catalog directly available in the full-width list.
+    const recent = showProviderRail
+      ? recentCatalogModels(recentRefs, filteredModels, providers)
+      : [];
     const result: {
       providerId: string;
       title: string;
@@ -252,11 +238,18 @@ export const AgentModelSheet = memo(function AgentModelSheet({
       recent?: boolean;
       unavailable?: boolean;
     }[] = recent.length
-      ? [{ providerId: '__recent__', title: t`Recently used`, models: recent, recent: true }]
+      ? [
+          {
+            providerId: '__recent__',
+            title: t`Recently used`,
+            models: recent,
+            recent: true,
+          },
+        ]
       : [];
     // Titled by the catalog's provider names; a provider the host has not
     // signed in is still a group, greyed, so the reader learns why it is empty.
-    for (const group of groupModelsByProvider(filteredModels, providers, providerName, {
+    for (const group of groupModelsByProvider(filteredModels, providers, {
       includeEmptyUnavailable: !searching,
     })) {
       result.push({
@@ -267,7 +260,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
       });
     }
     return result;
-  }, [filteredModels, recentRefs, providers, searching, t]);
+  }, [filteredModels, recentRefs, providers, searching, showProviderRail, t]);
 
   const activeProvider = providerSections.some((section) => section.providerId === pickedProvider)
     ? pickedProvider
@@ -422,18 +415,20 @@ export const AgentModelSheet = memo(function AgentModelSheet({
               setSearchQuery(query);
             }}
           />
-          <SettingsSegmented
-            testID="agent-model-filter"
-            options={[
-              { label: t`All models`, value: 'all' },
-              { label: t`Free only`, value: 'free' },
-            ]}
-            value={filterMode}
-            onChange={(next) => {
-              autoRevealCancelledRef.current = true;
-              setFilterMode(next === 'free' ? 'free' : 'all');
-            }}
-          />
+          {showFilter && (
+            <SettingsSegmented
+              testID="agent-model-filter"
+              options={[
+                { label: t`All models`, value: 'all' },
+                { label: t`Free only`, value: 'free' },
+              ]}
+              value={filterMode}
+              onChange={(next) => {
+                autoRevealCancelledRef.current = true;
+                setFilterMode(next === 'free' ? 'free' : 'all');
+              }}
+            />
+          )}
         </>
       }>
       {loading ? (
@@ -442,50 +437,56 @@ export const AgentModelSheet = memo(function AgentModelSheet({
         </View>
       ) : (
         <View style={styles.columns}>
-          <ScrollView
-            style={styles.providers}
-            contentContainerStyle={styles.providerContent}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled">
-            {providerSections.map((section) => {
-              const selected = section.providerId === activeProvider;
-              return (
-                <PressableScale
-                  key={section.providerId}
-                  testID={`agent-model-provider-${section.providerId}`}
-                  accessibilityRole="button"
-                  accessibilityLabel={section.title}
-                  accessibilityState={{ selected }}
-                  onPress={() => {
-                    autoRevealCancelledRef.current = true;
-                    setPickedProvider(section.providerId);
-                    modelListRef.current?.scrollTo({ y: 0, animated: false });
-                  }}
-                  style={[
-                    styles.providerRow,
-                    {
-                      borderLeftColor: selected ? theme.colors.primary : 'transparent',
-                      backgroundColor: selected
-                        ? withAlpha(theme.colors.primary, 0.08)
-                        : 'transparent',
-                    },
-                  ]}>
-                  <Text
-                    variant="caption"
-                    weight={selected ? 'semibold' : 'regular'}
-                    color={selected ? theme.colors.primary : theme.colors.textMuted}>
-                    {section.title}
-                  </Text>
-                </PressableScale>
-              );
-            })}
-          </ScrollView>
+          {showProviderRail ? (
+            <ScrollView
+              testID="agent-model-provider-rail"
+              style={styles.providers}
+              contentContainerStyle={styles.providerContent}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled">
+              {providerSections.map((section) => {
+                const selected = section.providerId === activeProvider;
+                return (
+                  <PressableScale
+                    key={section.providerId}
+                    testID={`agent-model-provider-${section.providerId}`}
+                    accessibilityRole="button"
+                    accessibilityLabel={section.title}
+                    accessibilityState={{ selected }}
+                    onPress={() => {
+                      autoRevealCancelledRef.current = true;
+                      setPickedProvider(section.providerId);
+                      modelListRef.current?.scrollTo({ y: 0, animated: false });
+                    }}
+                    style={[
+                      styles.providerRow,
+                      {
+                        borderLeftColor: selected ? theme.colors.primary : 'transparent',
+                        backgroundColor: selected
+                          ? withAlpha(theme.colors.primary, 0.08)
+                          : 'transparent',
+                      },
+                    ]}>
+                    <Text
+                      variant="caption"
+                      weight={selected ? 'semibold' : 'regular'}
+                      color={selected ? theme.colors.primary : theme.colors.textMuted}>
+                      {section.title}
+                    </Text>
+                  </PressableScale>
+                );
+              })}
+            </ScrollView>
+          ) : null}
           <ScrollView
             key={activeProvider}
             nestedScrollEnabled
             ref={modelListRef}
             style={sheetSceneStyles.scroller}
-            contentContainerStyle={[sheetSceneStyles.scrollerContent, styles.modelContent]}
+            contentContainerStyle={[
+              sheetSceneStyles.scrollerContent,
+              showProviderRail && styles.modelContent,
+            ]}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
             scrollEventThrottle={64}
@@ -534,7 +535,9 @@ export const AgentModelSheet = memo(function AgentModelSheet({
                     onPress={() => setReloadToken((token) => token + 1)}
                     style={[
                       styles.retry,
-                      { backgroundColor: withAlpha(theme.colors.primary, 0.09) },
+                      {
+                        backgroundColor: withAlpha(theme.colors.primary, 0.09),
+                      },
                     ]}>
                     <Text variant="caption" weight="semibold" color={theme.colors.primary}>
                       {t`Retry`}
@@ -597,7 +600,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
                           title={model.name || model.id}
                           caption={
                             section.recent
-                              ? [providerName(model.provider_id), modelCaption(model)]
+                              ? [providerTitle(providers, model.provider_id), modelCaption(model)]
                                   .filter(Boolean)
                                   .join(' · ')
                               : modelCaption(model)
@@ -618,7 +621,9 @@ export const AgentModelSheet = memo(function AgentModelSheet({
                                   <View
                                     style={[
                                       styles.freeChip,
-                                      { backgroundColor: withAlpha(theme.colors.success, 0.14) },
+                                      {
+                                        backgroundColor: withAlpha(theme.colors.success, 0.14),
+                                      },
                                     ]}>
                                     <Text
                                       variant="caption"
@@ -631,19 +636,13 @@ export const AgentModelSheet = memo(function AgentModelSheet({
                               }
                             : {})}
                           onPress={() =>
-                            selectModel({
-                              provider_id: model.provider_id,
-                              model_id: model.id,
-                              variant: isSelected
-                                ? effectiveModel?.variant
-                                : (variants.find((v) => v.id === 'high')?.id ?? variants[0]?.id),
-                            })
+                            selectModel(modelPickerChoice(model, effectiveModel, defaults.model))
                           }
                           trailing={
                             isSelected && !unavailable && variants.length > 0 ? (
                               <View style={styles.variants}>
                                 {variants.map((variant) => {
-                                  const active = (effectiveModel?.variant || 'high') === variant.id;
+                                  const active = effectiveModel?.variant === variant.id;
                                   return (
                                     <PressableScale
                                       key={variant.id}
@@ -712,7 +711,10 @@ export const AgentModelSheet = memo(function AgentModelSheet({
 const styles = StyleSheet.create({
   columns: { flex: 1, minHeight: 0, flexDirection: 'row' },
   providers: { width: '29%', maxWidth: 160, flexGrow: 0, flexShrink: 0 },
-  providerContent: { paddingLeft: SHEET_LADDER.gap, paddingBottom: SHEET_LADDER.section },
+  providerContent: {
+    paddingLeft: SHEET_LADDER.gap,
+    paddingBottom: SHEET_LADDER.section,
+  },
   providerRow: {
     minHeight: 48,
     justifyContent: 'center',

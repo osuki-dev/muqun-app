@@ -5,7 +5,6 @@ import {
   composerDelivery,
   homeBoundary,
   homeModels,
-  inputAdapter,
   paneShape,
   sshDialogs,
 } from './source-contracts.ts';
@@ -92,12 +91,6 @@ export default definePlugin({
     'ssh-dialog-contract': contract((path, root) =>
       path.endsWith('/src/components/ssh-host-key-dialog.tsx') ? sshDialogs(root) : []
     ),
-    'input-adapter-contract': contract((path, root) => {
-      const component = ['input', 'textarea', 'search-input'].find((name) =>
-        path.endsWith(`/src/components/themed-${name}.tsx`)
-      );
-      return component ? inputAdapter(root, component, resolve(dirname(path), '../..')) : [];
-    }),
     'home-model-boundary': contract((path, root) =>
       homeModels.some((name) => path.endsWith(`/src/lib/${name}.ts`))
         ? homeBoundary(path, root, resolve(dirname(path), '..'))

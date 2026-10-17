@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { DeliveryOwnership } from '@/lib/bound-delivery';
 import type { GatewayRecord } from '@/lib/gateway-storage';
+import { useAgents } from '@/stores/agents';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
+import { useVoiceInput } from '@/stores/voice-input';
 
 import {
   isBusy,
@@ -69,7 +71,15 @@ export function useAttachmentUploads(
    * Omitting it leaves entries unbound, and an unbound entry is refused by that
    * check rather than treated as bindable anywhere.
    */
-  destination?: () => AttachmentDestination | undefined
+  destination?: () => AttachmentDestination | undefined,
+  /**
+   * Leaving the screen (`blur`) or a change of the selected computer
+   * (`switch`) clears the staged files, except while this says to hold them:
+   * Home's dock keeps them while a failed send still holds them, over the
+   * setup guide it opened itself, and across the switch a failed row's retry
+   * makes to its own computer and back.
+   */
+  holdStaged?: (reason: 'blur' | 'switch') => boolean
 ): AttachmentUploads {
   const [attachments, setAttachments] = useState<PendingAttachment[]>([]);
   const attachmentsRef = useRef<PendingAttachment[]>([]);
@@ -164,6 +174,11 @@ export function useAttachmentUploads(
     };
   }, [releaseWaiters, ownership]);
 
+  // The caps the computer named in discovery, so a staged file is held to
+  // what this gateway takes rather than to the app's own number.
+  const limits = useAgents((state) =>
+    record ? state.index.servers[record.serverId]?.uploads : undefined
+  );
   const capturePicker = useCallback(() => {
     const currentRecord = record;
     const isCurrent = ownership.capture(
@@ -183,14 +198,14 @@ export function useAttachmentUploads(
       addFiles: (files: PickedFile[]) => {
         if (!captured || !isCurrent() || files.length === 0) return;
         const previous = attachmentsRef.current;
-        const next = stageFiles(previous, files, destination?.());
+        const next = stageFiles(previous, files, destination?.(), limits);
         for (const entry of next.slice(previous.length))
           destinations.current.set(entry.id, { record: captured, isCurrent });
         commit(next);
         pump();
       },
     };
-  }, [record, ownership, commit, pump, destination]);
+  }, [record, ownership, commit, pump, destination, limits]);
   const addFiles = useCallback(
     (files: PickedFile[]) => capturePicker().addFiles(files),
     [capturePicker]
@@ -221,13 +236,22 @@ export function useAttachmentUploads(
     commit([]);
   }, [commit, ownership]);
 
-  useFocusEffect(useCallback(() => () => clearAttachments(), [clearAttachments]));
+  useFocusEffect(
+    useCallback(
+      () => () => {
+        // Dictation temporarily covers the same composer; it is not a new destination.
+        if (useVoiceInput.getState().request || holdStaged?.('blur')) return;
+        clearAttachments();
+      },
+      [clearAttachments, holdStaged]
+    )
+  );
   useEffect(
     () =>
       useGatewayConnectionStore.subscribe((next, previous) => {
-        if (next.record !== previous.record) clearAttachments();
+        if (next.record !== previous.record && !holdStaged?.('switch')) clearAttachments();
       }),
-    [clearAttachments]
+    [clearAttachments, holdStaged]
   );
 
   const awaitUploads = useCallback(

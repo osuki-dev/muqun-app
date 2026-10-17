@@ -1,7 +1,7 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
-import { Server } from 'lucide-react-native';
+import { Monitor } from 'lucide-react-native';
 import { ScrollView, View } from 'react-native';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useIsFocused, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
@@ -64,12 +64,15 @@ export function HomeTargetSheet() {
     [lastViewedByServer, record?.serverId, records, selectedServerId]
   );
 
-  // beforeRemove covers swipe, hardware back and programmatic dismissal. The
+  // `removed` covers swipe, hardware back and programmatic dismissal. The
   // cleanup only unregisters the listener, so StrictMode cannot cancel a live
-  // request during its setup/cleanup probe.
+  // request during its setup/cleanup probe. The event fires after the screen
+  // unmounts, so the cleanup unsubscribes a microtask later, as its contract
+  // asks.
   useEffect(() => {
     if (!Number.isSafeInteger(requestId)) return;
-    return navigation.addListener('beforeRemove', () => close(requestId));
+    const unsubscribe = navigation.addListener('removed', () => close(requestId));
+    return () => queueMicrotask(unsubscribe);
   }, [close, navigation, requestId]);
 
   const refreshVisibleTargets = useCallback(
@@ -113,7 +116,7 @@ export function HomeTargetSheet() {
         selected={requestIsActive && server.serverId === selectedServerId}
         accessibilityLabel={`${server.label}, ${_(reachabilityDescription[reachability])}`}
         leading={
-          <Server
+          <Monitor
             size={20}
             color={reachability === 'live' ? theme.colors.success : theme.colors.textMuted}
           />
@@ -126,7 +129,7 @@ export function HomeTargetSheet() {
   return (
     <SheetScene
       testID="home-target-sheet"
-      title={t`Choose a gateway`}
+      title={t`Choose a computer`}
       caption={selected?.label}
       contentSized={contentSized}>
       {contentSized ? (

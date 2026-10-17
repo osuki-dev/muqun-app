@@ -14,7 +14,7 @@
 
 import '@/global.css';
 
-import { createThemePreset, type ThemeOverride } from '@osuki-dev/ui';
+import { createThemePreset, deepMerge, type ThemeOverride } from '@osuki-dev/ui';
 
 import {
   resolveAppearanceProfile,
@@ -67,7 +67,7 @@ export function buildTheme(
    *
    * `display` and `body` are the app's *reading*: a title, a row, a caption, a
    * message. `label` is the 11pt all-caps instrument style the section
-   * headings are set in -- SERVERS, APPEARANCE, TERMINAL -- and it was left on
+   * headings are set in -- COMPUTERS, APPEARANCE, TERMINAL -- and it was left on
    * the system face for a while on the argument that it is chrome rather than
    * content. It reads as two fonts in one line, so it follows the reader now:
    * the instrument style (size, tracking, case) is the role's, the face is
@@ -78,21 +78,33 @@ export function buildTheme(
    */
   const interfaceFamily = slotFontFamily(interfaceFont, 'interface');
   const fonts = interfaceFamily
-    ? { ...preset.fonts, ...userFontRegistry(interfaceFamily) }
+    ? {
+        ...preset.fonts,
+        ...userFontRegistry(
+          interfaceFamily,
+          interfaceFont.kind === 'file' ? interfaceFont.axes : null
+        ),
+      }
     : preset.fonts;
 
+  // Is this a custom pack (it carries its manifest), whose artwork or
+  // translucent ground can sit under the app's controls.
+  const decorated = 'manifest' in pack;
+  const appearance = deepMerge<ThemeOverride>(preset, profileThemeOverride(profile, decorated));
   return {
-    ...preset,
-    ...profileThemeOverride(profile),
+    ...appearance,
     ...(fonts ? { fonts } : {}),
     components: {
-      ...preset.components,
+      ...appearance.components,
       Input: {
-        ...preset.components?.Input,
+        ...appearance.components?.Input,
         // The library points this at `textDisabled`, which measures under 2:1
         // on a field. Placeholder text here names the agent being messaged, so
         // it is content, and content is held to the muted tier.
         placeholder: 'textMuted',
+        // The helper line under a field is an instruction the reader needs,
+        // held to the same muted tier rather than the kit's `textDisabled`.
+        hint: 'textMuted',
       },
     },
   };

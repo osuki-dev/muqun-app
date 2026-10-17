@@ -1,5 +1,10 @@
 import { expect, test } from 'bun:test';
-import { homeContinueEntries, supersededTerminalRecent } from '../home-continue';
+import {
+  homeContinueEntries,
+  homeContinueObservationNow,
+  supersededTerminalRecent,
+  type HomeContinueEntry,
+} from '../home-continue';
 import { homeServerModel } from '../home-server-model';
 import type { HomeRecentEntry } from '../home-recents';
 import { MAX_SERVER_AGENTS, type ServerAgentsIndex } from '../server-agents';
@@ -27,8 +32,13 @@ const input = {
   recents: [],
   reachabilityByServer: { a: 'unknown' as const },
   paneMode: 'all' as const,
-  nowMs: 100,
 };
+
+/** What the first row's meta line says about its observation at `nowMs`. */
+function shownAt(rows: HomeContinueEntry[], nowMs: number, confirmedAtMs = 0) {
+  const observation = rows[0]?.observation;
+  return observation && homeContinueObservationNow(observation, confirmedAtMs, nowMs);
+}
 
 test('first Home visit shows the same pane inventory as Classic without recent history', () => {
   const rows = homeContinueEntries(input);
@@ -47,12 +57,93 @@ test('first Home visit shows the same pane inventory as Classic without recent h
     paneId: 'p1',
     cwd: undefined,
   });
-  expect(rows[0].observation).toEqual({
+  expect(shownAt(rows, 100)).toEqual({
     kind: 'gateway-agent',
     status: 'idle',
     age: { unit: 'now', value: 0 },
     stale: false,
   });
+});
+
+test('entry-only computer cards retain Continue inventory; optional shortcut suppression stays scoped', () => {
+  const recent = (key: string, target: HomeRecentEntry['target']): HomeRecentEntry => ({
+    key,
+    title: 'Same title',
+    atMs: 20,
+    target,
+  });
+  const currentPane = recent('current', {
+    kind: 'gateway-terminal',
+    serverId: 'a',
+    sessionId: 'routing',
+    paneId: 'p1',
+  });
+  const otherSession = recent('other-session', {
+    kind: 'gateway-terminal',
+    serverId: 'a',
+    sessionId: 'other',
+    paneId: 'p1',
+  });
+  const filteredPane = recent('plain-shell', {
+    kind: 'gateway-terminal',
+    serverId: 'a',
+    sessionId: 'routing',
+    paneId: 'p2',
+  });
+  const structured = recent('structured', {
+    kind: 'agent-session',
+    serverId: 'a',
+    sessionId: 'routing',
+    asid: 'conversation',
+    directory: '/work',
+  });
+  const ssh = recent('ssh', { kind: 'ssh-host', hostId: 'host' });
+  const shared = {
+    ...input,
+    paneMode: 'agents' as const,
+    hostIds: ['host'],
+    snapshots: { a: { ...snapshots.a!, sessionId: 'routing' } },
+    recents: [currentPane, otherSession, filteredPane, structured, ssh],
+  };
+  const classic = homeContinueEntries({ ...shared, connectionShortcutsElsewhere: true });
+  expect(classic.map((entry) => entry.key)).toEqual(['structured', 'other-session', 'plain-shell']);
+  expect(classic.map((entry) => entry.destination)).toEqual(
+    [structured, otherSession, filteredPane].map((entry) => ({
+      type: 'recent',
+      target: entry.target,
+    }))
+  );
+  const editorial = homeContinueEntries(shared);
+  expect(editorial.some((entry) => entry.destination.type === 'pane')).toBe(true);
+  expect(editorial.some((entry) => entry.key === 'ssh')).toBe(true);
+  // Classic now uses this same unsuppressed inventory: its computer cards
+  // navigate to workspaces instead of rendering a second pane list.
+  expect(editorial[0]?.key).toBe('structured');
+  expect(
+    editorial.flatMap((entry) =>
+      entry.destination.type === 'pane' ? [entry.destination.paneId] : []
+    )
+  ).toEqual(['p1']);
+  expect(
+    editorial.filter((entry) => entry.destination.type === 'recent').map((entry) => entry.key)
+  ).toEqual(['structured', 'other-session', 'plain-shell', 'ssh']);
+  const allPanes = homeContinueEntries({ ...shared, paneMode: 'all' });
+  expect(
+    allPanes.flatMap((entry) =>
+      entry.destination.type === 'pane' ? [entry.destination.paneId] : []
+    )
+  ).toEqual(['p1', 'p2']);
+  expect(allPanes.some((entry) => entry.key === 'plain-shell')).toBe(false);
+});
+
+test('Classic keeps a terminal recent when no connection pane inventory can replace it', () => {
+  const rows = homeContinueEntries({
+    ...input,
+    snapshots: {},
+    recents: [history],
+    connectionShortcutsElsewhere: true,
+  });
+  expect(rows.map((entry) => entry.key)).toEqual(['old']);
 });
 
 test('Terminal metadata uses the structured gateway agent label and never guesses from a title', () => {
@@ -100,13 +191,8 @@ test('OpenCode recents show only current Gateway observations and keep honest ag
     },
     sessionObservation: { status: 'busy', observedAtMs: 10_000 },
   };
-  const current = homeContinueEntries({
-    ...input,
-    snapshots: {},
-    recents: [recent],
-    nowMs: 70_000,
-  })[0]?.observation;
-  expect(current).toEqual({
+  const rows = homeContinueEntries({ ...input, snapshots: {}, recents: [recent] });
+  expect(shownAt(rows, 70_000)).toEqual({
     kind: 'agent-session',
     status: 'busy',
     age: { unit: 'now', value: 0 },
@@ -119,22 +205,18 @@ test('OpenCode recents show only current Gateway observations and keep honest ag
       snapshots: {},
       recents: [recent],
       reachabilityByServer: { a: 'offline' },
-      nowMs: 70_000,
     })
   ).toEqual([]);
 
-  const stale = homeContinueEntries({
-    ...input,
-    snapshots: {},
-    recents: [recent],
-    nowMs: 400_001,
-  })[0]?.observation;
+  const stale = shownAt(rows, 400_001);
   expect(stale).toMatchObject({
     kind: 'agent-session',
     age: { unit: 'minute', value: 6 },
     stale: true,
   });
   expect(stale?.status).toBeUndefined();
+  // A pass that found the same status again keeps it current without a rebuild.
+  expect(shownAt(rows, 400_001, 390_000)).toMatchObject({ status: 'busy', stale: false });
 });
 
 test('history changes ranking without duplicating panes or replacing authoritative names', () => {
@@ -186,11 +268,9 @@ test('Continue hides every gateway-owned entry while its gateway is offline', ()
     },
   };
 
-  expect(homeContinueEntries(blocked)[0]?.observation?.status).toBe('blocked');
+  expect(shownAt(homeContinueEntries(blocked), 100)?.status).toBe('blocked');
   expect(homeContinueEntries({ ...blocked, reachabilityByServer: { a: 'offline' } })).toEqual([]);
-  expect(
-    homeContinueEntries({ ...blocked, nowMs: 1_000_000 })[0]?.observation?.status
-  ).toBeUndefined();
+  expect(shownAt(homeContinueEntries(blocked), 1_000_000)?.status).toBeUndefined();
 });
 
 test('offline filtering is gateway-scoped, retains unknown and SSH entries, and recovers', () => {
@@ -300,7 +380,6 @@ function gatewayAgent(asid: string, updatedMs: number) {
 const rankingInput = {
   ...input,
   snapshots: { a: { ...snapshots.a, sessionId: 'routing', checkedAtMs: T } },
-  nowMs: T + 1_000,
   gatewaySessions: {
     serverId: 'a',
     sessionId: 'routing',
@@ -309,7 +388,7 @@ const rankingInput = {
   },
 };
 
-test('a terminal visited at T ranks between agents updated at T+1s and T-1s', () => {
+test("a terminal visited between two sessions' update times sits between them", () => {
   const rows = homeContinueEntries({ ...rankingInput, recents: [terminalVisit] });
   expect(rows.map((row) => row.title)).toEqual([
     'newer task',
@@ -317,6 +396,7 @@ test('a terminal visited at T ranks between agents updated at T+1s and T-1s', ()
     'older task',
     'Current agent title',
   ]);
+  expect(rows.map((row) => row.atMs)).toEqual([T + 1_000, T, T - 1_000, 0]);
 });
 
 test('a terminal with neither a visit nor activity ranks last', () => {
@@ -413,7 +493,7 @@ test('a recent missing from a snapshot cut at the mirror cap is kept, not taken 
   const rows = homeContinueEntries({
     ...input,
     snapshots: { a: full },
-    recents: [{ key: 'newest', title: 'ryu@osk:~/app', atMs: 50, target: shell }],
+    recents: [{ key: 'newest', title: 'me@desk:~/app', atMs: 50, target: shell }],
   });
-  expect(rows[0]?.title).toBe('ryu@osk:~/app');
+  expect(rows[0]?.title).toBe('me@desk:~/app');
 });

@@ -23,11 +23,9 @@ import { useAgentSheetBridge } from '@/stores/agent-sheet-bridge';
 /** Stateless item-owned rendering remains correct when LegendList recycles a cell. */
 function SessionTreeRow({
   node,
-  parentTitle,
   onPress,
 }: {
   node: SessionNode;
-  parentTitle?: string;
   onPress: (node: SessionNode) => void;
 }) {
   const { t } = useLingui();
@@ -36,7 +34,7 @@ function SessionTreeRow({
   const selected = useAgentSheetBridge((state) => state.activeAsid === session.asid);
   const title = sessionTitleOr(session, t`Untitled session`);
   const unread = isSessionUnread(session);
-  const status = {
+  const nativeStatus = {
     busy: t`Running`,
     idle: t`Idle`,
     failed: t`The turn failed`,
@@ -44,11 +42,13 @@ function SessionTreeRow({
     retry: t`Retrying…`,
     unknown: t`Status unknown`,
   }[session.status];
-  // react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs.
-  const level = t`Level ${depth}`;
-  // react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs.
-  const parent = parentTitle ? t`Parent: ${parentTitle}` : '';
-  const caption = [session.mode, status, depth > 0 ? level : '', parent]
+  const status =
+    session.runtime?.status === 'blocked'
+      ? t`Needs input`
+      : session.runtime?.status === 'completed'
+        ? t`Completed`
+        : nativeStatus;
+  const caption = [session.agent_name, session.agent_role ?? session.mode, status]
     .filter(Boolean)
     .join(' · ');
 
@@ -93,9 +93,6 @@ export function AgentSessionTreeSheet({
   const { t } = useLingui();
   const insets = useSafeAreaInsets();
   const nodes = flattenSessionTree(root, childrenByParent, root?.agent_id ?? undefined);
-  const titles = new Map(
-    nodes.map(({ session }) => [session.asid, sessionTitleOr(session, t`Untitled session`)])
-  );
 
   return (
     <SheetScene
@@ -112,13 +109,7 @@ export function AgentSessionTreeSheet({
         estimatedItemSize={80}
         style={sheetSceneStyles.scroller}
         contentContainerStyle={sheetSceneStyles.scrollerContent}
-        renderItem={({ item }) => (
-          <SessionTreeRow
-            node={item}
-            parentTitle={item.session.parent_id ? titles.get(item.session.parent_id) : undefined}
-            onPress={onPressNode}
-          />
-        )}
+        renderItem={({ item }) => <SessionTreeRow node={item} onPress={onPressNode} />}
         ListFooterComponent={<SheetSceneFooter bottomInset={insets.bottom} />}
       />
     </SheetScene>

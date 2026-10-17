@@ -1,21 +1,6 @@
 # Native agent-device action sections; suite.json composes guards and includes.
 # motion-p2-capture
 
-# section s1
-open "dev.osuki.muqun" --relaunch
-
-# section s2
-wait stable 400 5000
-
-# section s3
-screenshot "dist/motion-618-p2/10-home.png"
-
-# section s4
-press "${TARGET}"
-
-# section s5
-press "${TARGET}"
-
 # section s6
 is visible "${TARGET}"
 

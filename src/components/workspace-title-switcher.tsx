@@ -1,6 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';

@@ -1,6 +1,6 @@
 import { memo, useEffect, useState, type ComponentProps } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
-import { Text } from '@/components/text';
+import { Text } from '@osuki-dev/ui';
 import Animated, {
   Easing,
   cancelAnimation,
@@ -105,7 +105,7 @@ export const MarqueeText = memo(function MarqueeText({
       <Animated.View style={[styles.track, travel]}>
         <Text
           {...text}
-          style={StyleSheet.flatten([style, styles.line])}
+          style={StyleSheet.flatten([style, styles.line]) ?? undefined}
           numberOfLines={1}
           onLayout={onLine}>
           {children}

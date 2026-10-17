@@ -10,13 +10,17 @@ import QuickCrypto from 'react-native-quick-crypto';
 import { activeLocaleHeaders } from '@/i18n/active-locale';
 
 import { mirroredDiscoveryFor } from '@/stores/agents';
+import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { noteGatewayGeneration } from '@/stores/gateway-connection-generation';
+import { useServerChannels } from '@/stores/server-channels';
+import { useServerReachability } from '@/stores/server-reachability';
 
 import type { SocketFrameCrypto } from './agent-socket-codec';
-import { isDemoActive } from './demo-gateway';
+import { isDemoActive, isDemoRecord } from './demo-gateway';
 import {
   configuredGatewayServerId,
   encryptedEventStreamRequest,
+  type GatewayEndpoint,
   gatewayAuthHeaders,
   gatewayUrl,
   isGatewayConfigured,
@@ -26,8 +30,11 @@ import {
   gatewaySocketPath,
   type GatewaySocketTransport,
   type GatewaySocketUpgrade,
+  type SocketAuthorization,
 } from './gateway-socket';
+import { authorizationFromProbe } from './server-reachability';
 import { streamRecordCrypto } from './gateway-transport';
+import { onNetworkChange } from './network-events';
 
 const TAG_BYTES = 16;
 
@@ -72,9 +79,11 @@ export const socketFrameCrypto: SocketFrameCrypto = {
  * envelope nonce and binds the frame keys to it. Null when the shared client
  * is pointed at another server, at the demo, or at nothing.
  */
-function prepareUpgrade(serverId: string): GatewaySocketUpgrade | null {
-  if (isDemoActive() || !isGatewayConfigured()) return null;
-  if (configuredGatewayServerId() !== serverId) return null;
+async function prepareUpgrade(serverId: string): Promise<GatewaySocketUpgrade | null> {
+  if (isDemoActive()) return null;
+  if (!isGatewayConfigured() || configuredGatewayServerId() !== serverId) {
+    return prepareStoredUpgrade(serverId);
+  }
   // Read per attempt, so a reconnect follows a discovery answered since.
   const path = gatewaySocketPath(mirroredDiscoveryFor(serverId)?.transports);
   if (!path) return null;
@@ -83,7 +92,7 @@ function prepareUpgrade(serverId: string): GatewaySocketUpgrade | null {
   if (!/^wss?:\/\//i.test(url)) return null;
   // The AAD is path-only, so sealing against the http spelling is the same
   // request the gateway sees.
-  const sealed = encryptedEventStreamRequest(httpUrl);
+  const sealed = await encryptedEventStreamRequest(httpUrl);
   if (!sealed) return { url, headers: gatewayAuthHeaders(), seal: null };
   return {
     url,
@@ -95,6 +104,57 @@ function prepareUpgrade(serverId: string): GatewaySocketUpgrade | null {
       material: sealed.material,
     },
   };
+}
+
+/**
+ * A paired computer that is not the selected one, reached through its own
+ * stored address and credentials: Home's computer cards keep a task-only
+ * socket open to it. Never for a tunnelled record -- its stored address is
+ * the gateway's on the SSH host, and from here that is the phone's own
+ * loopback -- nor for the demo.
+ */
+async function prepareStoredUpgrade(serverId: string): Promise<GatewaySocketUpgrade | null> {
+  const record = directRecord(serverId);
+  if (!record) return null;
+  const path = gatewaySocketPath(mirroredDiscoveryFor(serverId)?.transports);
+  if (!path) return null;
+  const httpUrl = `${record.url.replace(/\/$/, '')}${path}`;
+  const url = httpUrl.replace(/^http(s?):\/\//i, (_, secure: string) => `ws${secure}://`);
+  if (!/^wss?:\/\//i.test(url)) return null;
+  const endpoint: GatewayEndpoint = {
+    url: record.url,
+    token: record.token,
+    ...(record.deviceId ? { deviceId: record.deviceId } : {}),
+    ...(record.transportKey ? { transportKey: record.transportKey } : {}),
+    ...(record.transport ? { transport: record.transport } : {}),
+  };
+  const sealed = await encryptedEventStreamRequest(httpUrl, endpoint);
+  if (!sealed) {
+    return {
+      url,
+      headers: { ...activeLocaleHeaders(), Authorization: `Bearer ${record.token}` },
+      seal: null,
+    };
+  }
+  return {
+    url,
+    headers: { ...activeLocaleHeaders(), ...sealed.headers },
+    seal: {
+      requestAad: sealed.requestAad,
+      requestNonce: sealed.requestNonce,
+      material: sealed.material,
+    },
+  };
+}
+
+/** A stored record this device may reach directly: paired, not tunnelled, not the demo. */
+function directRecord(serverId: string) {
+  const { record, records } = useGatewayConnectionStore.getState();
+  const match =
+    records.find((entry) => entry.serverId === serverId) ??
+    (record?.serverId === serverId ? record : null);
+  if (!match || isDemoRecord(match) || match.sshTunnel) return null;
+  return match;
 }
 
 interface NitroWebSocketLike {
@@ -166,18 +226,99 @@ const appState = {
 
 const sockets = new Map<string, GatewaySocket>();
 
+/** The selected record, when it is one this device may probe directly. */
+function probeableSelectedRecord() {
+  const record = useGatewayConnectionStore.getState().record;
+  if (!record || isDemoRecord(record) || record.sshTunnel) return null;
+  return record;
+}
+
+/**
+ * Whether the gateway still accepts this device, asked through the same
+ * `/health` probe the Home dot uses -- so the answer lights the row too, and
+ * the store's guards (no probing a tunnelled record's stored address, one
+ * flight per server) apply to it.
+ */
+async function checkAuthorization(serverId: string): Promise<SocketAuthorization> {
+  // Any paired computer this device reaches directly: the cards' task sockets
+  // are refused the same way the selected one's is.
+  const record = directRecord(serverId);
+  if (!record) return 'unknown';
+  const before = useServerReachability.getState().probes[serverId]?.checkedAtMs;
+  await useServerReachability.getState().refresh(record, { force: true });
+  return authorizationFromProbe(before, useServerReachability.getState().probes[serverId]);
+}
+
+/**
+ * A socket refused on the upgrade said why with a status and nothing else,
+ * and a status alone is not evidence about the pairing: it is exactly what a
+ * forged answer looks like. Either refusal is put to the `/health` probe
+ * instead, forced, so the gateway's reason is read off a body it wrote --
+ * `device_repair_required` or `invalid_token` count, a captive portal's page
+ * or an `unknown_host` do not (`stores/pairing-faults`). The probe is one
+ * flight per server, so a socket that already asked through
+ * `checkAuthorization` is not asking twice.
+ */
+function probeAfterSocketRefusal(serverId: string): void {
+  const record = directRecord(serverId);
+  if (record) void useServerReachability.getState().refresh(record, { force: true });
+}
+
+let watchingProbes = false;
+
+/**
+ * A computer whose socket stood down as refused, answering a probe after all
+ * (re-paired, or the refusal was a middlebox), gets its socket back.
+ */
+function watchProbesForRecovery(): void {
+  if (watchingProbes) return;
+  watchingProbes = true;
+  useServerReachability.subscribe((state, previous) => {
+    for (const [serverId, socket] of sockets) {
+      const probe = state.probes[serverId];
+      if (!probe?.ok || probe.checkedAtMs === previous.probes[serverId]?.checkedAtMs) continue;
+      socket.retryAfterRefusal();
+    }
+  });
+}
+
 /** The one event socket for a paired server, created on first use. */
 export function gatewaySocketFor(serverId: string): GatewaySocket {
   let socket = sockets.get(serverId);
   if (!socket) {
-    socket = new GatewaySocket({
+    const created = new GatewaySocket({
       prepare: () => prepareUpgrade(serverId),
       open: openTransport,
       crypto: socketFrameCrypto,
       appState,
       onHello: (hello) => noteGatewayGeneration(serverId, hello),
+      checkAuthorization: () => checkAuthorization(serverId),
+      onRefused: () => probeAfterSocketRefusal(serverId),
     });
-    sockets.set(serverId, socket);
+    // The Home dot reads the socket as evidence the computer is answering.
+    created.onStateChange((state) => useServerChannels.getState().setSocket(serverId, state));
+    sockets.set(serverId, created);
+    watchProbesForRecovery();
+    socket = created;
   }
   return socket;
+}
+
+/**
+ * React to the device changing networks: reopen every gateway socket on the
+ * new route and ask the selected computer again whether it is there. The
+ * terminal stream listens for itself (`use-pane-events`). Started once at the
+ * app root; the returned function stops it.
+ */
+export function startNetworkReactions(): () => void {
+  return onNetworkChange(() => {
+    for (const socket of sockets.values()) {
+      // A refused socket gets one more try per change: a captive portal's 403
+      // looked like a revoked pairing, and the new network may not have one.
+      if (socket.state === 'unauthorized') socket.retryAfterRefusal();
+      else socket.reconnect();
+    }
+    const record = probeableSelectedRecord();
+    if (record) void useServerReachability.getState().refresh(record, { force: true });
+  });
 }

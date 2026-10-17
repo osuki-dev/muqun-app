@@ -111,9 +111,17 @@ export const appChrome = {
     ambientCard: '0 8px 24px rgba(0, 0, 0, 0.18)',
     connectionPill: '0 6px 16px rgba(0, 0, 0, 0.12)',
     composerDock: '0 -8px 28px rgba(0, 0, 0, 0.18)',
+    /**
+     * Home's field, which is its own plate rather than a dock's glass: the
+     * same upward fall as `composerDock`, quieter, so the page reads as
+     * passing under the field rather than the field sitting in a well.
+     */
+    homeComposerField: '0 -6px 22px rgba(0, 0, 0, 0.14)',
     controlTray: '0 4px 14px rgba(0, 0, 0, 0.16)',
+    /** The terminal's floating Copy / Select all / Cancel bar. */
+    selectionBar: '0 6px 18px rgba(0, 0, 0, 0.22)',
     floatingPill: '0 8px 22px rgba(0, 0, 0, 0.26)',
-    notice: '0 8px 28px rgba(0, 0, 0, 0.22)',
+    notice: '0 4px 16px rgba(0, 0, 0, 0.14)',
     popover: '0 10px 30px rgba(0, 0, 0, 0.24)',
     workspaceRail: '0 10px 30px rgba(0, 0, 0, 0.06)',
   },

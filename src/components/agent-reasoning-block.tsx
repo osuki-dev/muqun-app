@@ -1,8 +1,7 @@
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { useEffect, useMemo, useRef, useState, memo } from 'react';
+import { useEffect, useRef, useState, memo } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import { ChevronDown } from 'lucide-react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -12,8 +11,7 @@ import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
 import { fadeIn, fadeOut, timing } from '@/lib/motion';
 import { formatThoughtDuration } from '@/lib/agent-reasoning';
 import { withAlpha } from '@/lib/color';
-import { useMarkdownFonts } from '@/hooks/use-user-fonts';
-import { createThoughtMarkdownStyle } from '@/lib/markdown-style';
+import { useCompactMarkdownStyle } from '@/hooks/use-markdown-style';
 import { AGENT_TYPE } from '@/constants/agent-type';
 import {
   TRANSCRIPT_GRID,
@@ -53,15 +51,7 @@ export const AgentReasoningBlock = memo(function AgentReasoningBlock({
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
   const plate = useTranscriptPlate();
-  const markdownFonts = useMarkdownFonts();
-  const markdownStyle = useMemo(() => {
-    const base = createThoughtMarkdownStyle(theme.colors, markdownFonts);
-    return {
-      ...base,
-      codeBlock: { ...base.codeBlock, borderRadius: profile.chrome.surface },
-      table: { ...base.table, borderRadius: profile.chrome.surface },
-    };
-  }, [theme.colors, markdownFonts, profile.chrome.surface]);
+  const markdownStyle = useCompactMarkdownStyle('muted');
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   /**

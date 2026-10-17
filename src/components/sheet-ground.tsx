@@ -33,7 +33,7 @@
  * slider down, and the maintainer who reported "sheets have no artwork" was
  * looking at the default.
  *
- * Note what this deliberately does *not* use. `ThemedSurfaceArtwork` clamps
+ * Note what this deliberately does *not* use. The surface decorator's artwork (`surface-decorator.tsx`) clamps
  * artwork to `safeArtworkOpacity`, which asks "at what alpha does every one of
  * this theme's inks still clear 4.5:1 over this surface" -- and for real
  * palettes the answer is ~0 (measured: tokyo-night 0.000, github light 0.000,
@@ -46,11 +46,15 @@
  * at full strength plus a plate under any text that would otherwise sit on it.
  * That is `useSheetGroundPlate` below.
  */
-import { useThemeTokens } from '@osuki-dev/ui';
+import { TextPlateProvider, useThemeTokens } from '@osuki-dev/ui';
 import { createContext, useContext, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { ThemeArtwork, useHasThemeArtwork } from '@/components/theme-artwork';
+import {
+  SHELL_WALLPAPER_FALLBACK,
+  ThemeArtwork,
+  useHasThemeArtwork,
+} from '@/components/theme-artwork';
 import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
 import { withAlpha } from '@/lib/color';
 import { sheetFrostAlpha } from '@/theme/surface-background';
@@ -106,7 +110,7 @@ export function SheetGround({
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   const opacity = useSurfaceBackgroundOpacity();
-  const hasShell = useHasThemeArtwork('shell.wallpaper');
+  const hasShell = useHasThemeArtwork('shell.wallpaper', SHELL_WALLPAPER_FALLBACK);
   return (
     <View
       testID={testID}
@@ -126,7 +130,7 @@ export function SheetGround({
           { backgroundColor: surfaceBackground(sheetGroundTintColor(theme.colors, tint)) },
         ]}
       />
-      <ThemeArtwork slot="shell.wallpaper" />
+      <ThemeArtwork slot="shell.wallpaper" fallbackSlot={SHELL_WALLPAPER_FALLBACK} />
       {frosted && hasShell ? (
         <View
           style={[
@@ -207,7 +211,7 @@ export function SheetFrame({
   return (
     <SheetGroundTintContext.Provider value={tint ?? 'surface'}>
       <SheetGround testID={testID} tint={tint} frosted={frosted} overdrawBottom={overdrawBottom} />
-      {children}
+      <GroundTextPlate>{children}</GroundTextPlate>
     </SheetGroundTintContext.Provider>
   );
 }
@@ -263,7 +267,7 @@ export const SHEET_GROUND_PLATE_PADDING_VERTICAL = 4;
 export function useSheetGroundPlate(tint?: SheetGroundTint): SheetGroundPlate {
   const profile = useAppearanceProfile();
   const theme = useThemeTokens();
-  const hasShell = useHasThemeArtwork('shell.wallpaper');
+  const hasShell = useHasThemeArtwork('shell.wallpaper', SHELL_WALLPAPER_FALLBACK);
   const ground = useSheetGroundTint();
   if (!hasShell) return EMPTY_PLATE;
   return {
@@ -278,4 +282,12 @@ export function useSheetGroundPlate(tint?: SheetGroundTint): SheetGroundPlate {
     paddingHorizontal: SHEET_GROUND_PLATE_PADDING_HORIZONTAL,
     paddingVertical: SHEET_GROUND_PLATE_PADDING_VERTICAL,
   };
+}
+
+/**
+ * Publishes the ground's plate to the kit, so its field labels and hints (and
+ * any `<Text plated>`) stand on the same plate as the app's own labels here.
+ */
+export function GroundTextPlate({ children }: { children: ReactNode }) {
+  return <TextPlateProvider plate={useSheetGroundPlate()}>{children}</TextPlateProvider>;
 }

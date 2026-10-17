@@ -9,12 +9,29 @@ import {
   agentIsInterruptible,
   agentProfilesFromResponse,
   agentSpawnRequest,
+  terminalPromptWithAttachments,
   canSpawnAgent,
   gatewaySupportsAgentSpawn,
   normalizeCwd,
   recentCwdsFromResponse,
   spawnedAgentFromResponse,
 } from '../agent-spawn';
+
+describe('terminal first prompts with uploaded files', () => {
+  test('keeps every host path in order, including attachment-only tasks', () => {
+    const paths = ['/home/ryu/uploads/a.webp', '/home/ryu/uploads/b.pdf'];
+    expect(terminalPromptWithAttachments('  Read these  ', paths)).toBe(
+      'Read these /home/ryu/uploads/a.webp /home/ryu/uploads/b.pdf'
+    );
+    expect(terminalPromptWithAttachments('', paths)).toBe(paths.join(' '));
+  });
+
+  test('the existing spawn envelope preserves file paths as prompt text', () => {
+    const prompt = terminalPromptWithAttachments('Read this', ['/home/a b/uploads/photo.webp']);
+    expect(agentSpawnRequest({ agent: 'codex', prompt })).toEqual({ agent: 'codex', prompt });
+    expect(terminalPromptWithAttachments('  Hello  ', [])).toBe('Hello');
+  });
+});
 
 describe('the capability gate', () => {
   test('a gateway that declares it can spawn is offered the entries', () => {
@@ -54,6 +71,15 @@ describe('the agent catalog', () => {
       { kind: 'claude', command: 'claude', available: true },
       { kind: 'codex', command: 'codex-cli', available: false },
     ]);
+  });
+
+  test('reads the ledger deliveries a catalog entry lists', () => {
+    // `src/agents/session_routes.rs` writes `ledger_delivery` on each entry.
+    const [profile] = agentProfilesFromResponse({
+      agents: [{ kind: 'claude', command: 'claude', available: true, ledger_delivery: ['pane'] }],
+      default_startup_timeout_ms: 30_000,
+    });
+    expect(profile.ledgerDelivery).toEqual(['pane']);
   });
 
   test('a probe the gateway never ran is not a missing agent', () => {

@@ -1,18 +1,18 @@
 import { HOME_TOOLBAR_PAIR_WIDTH, HOME_TOOLBAR_ICON_INSET } from '@/constants/home-toolbar';
+import { homeDockTargetId } from '@/lib/home-composer';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import {
   ArrowUpRight,
   ChevronDown,
-  Ellipsis,
   Link,
   MessagesSquare,
   Play,
   SquareTerminal,
 } from 'lucide-react-native';
 import { useIsFocused, useRouter } from 'expo-router';
-import { useEffect, useEffectEvent, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -22,8 +22,6 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { AgentMark } from '@/components/agent-mark';
-import { PressableScale } from '@/components/pressable-scale';
-import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useAppActive } from '@/hooks/use-app-active';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
@@ -33,35 +31,40 @@ import {
   buildLaunchModel,
   groupLaunchCells,
   LAUNCH_GRID_GAP,
+  LAUNCH_MOSAIC_GAP,
   launchGridCellStyle,
   launchRowLayout,
   type LaunchEntry,
 } from '@/lib/home-launch-model';
 import { useAgents } from '@/stores/agents';
-import { useHomeAgentPicker } from '@/stores/home-agent-picker';
 import { PRESS, timing } from '@/lib/motion';
 import type { GatewayRecord } from '@/lib/gateway-storage';
-import { agentLaunchCaption, reachabilityDescription } from '@/i18n/labels';
-import type { ServerReachability } from '@/lib/server-reachability';
+import { agentLaunchCaption, connectionStatusDescription } from '@/i18n/labels';
+import {
+  reachabilityOfStatus,
+  type ConnectionStatus,
+  type ServerReachability,
+} from '@/lib/server-reachability';
 import { useHomeTargetPicker } from '@/stores/home-target-picker';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
+import { HOME_CONTINUE_REFRESH_MS, homeRefreshDue } from '@/lib/home-refresh-schedule';
+import { useServerChannels } from '@/stores/server-channels';
 
-/** Agent chips and utility rows in the wide Pad cover's launch dock share one height. */
-const DOCK_ROW_HEIGHT = 56;
-
-/** Discovery is refreshed on the same cadence Continue uses. */
-const HOME_AGENTS_REFRESH_MS = 30_000;
+/** Minimum row height shared by phone and Pad; labels can grow with text size. */
+const DOCK_ROW_HEIGHT = 40;
 
 /** Target choice is local to Home; a selection alone never switches a live connection. */
 export function useHomeLaunchController({
   servers,
   selectedServerId,
+  connectionStatuses,
   reachabilityByServer,
   onPair,
 }: {
   servers: readonly GatewayRecord[];
   selectedServerId?: string;
+  connectionStatuses: Readonly<Record<string, ConnectionStatus | undefined>>;
   reachabilityByServer: Readonly<Record<string, ServerReachability | undefined>>;
   onPair: () => Promise<unknown>;
 }) {
@@ -82,14 +85,14 @@ export function useHomeLaunchController({
     pickerRequestId !== null && pickerCompletedRequestId === pickerRequestId
       ? pickerCompletedServerId
       : null;
-  const chosen =
-    servers.find((server) => server.serverId === (returnedServerId ?? chosenId)) ??
-    servers.find((server) => server.serverId === selectedServerId) ??
-    (servers.length === 1 ? servers[0] : undefined);
-  const chosenReachability = chosen
-    ? (reachabilityByServer[chosen.serverId] ?? 'unknown')
-    : undefined;
-  const chosenOffline = chosenReachability === 'offline';
+  const chosenTargetId = homeDockTargetId({
+    serverIds: servers.map((server) => server.serverId),
+    pickedId: returnedServerId ?? chosenId,
+    ...(selectedServerId ? { selectedId: selectedServerId } : {}),
+  });
+  const chosen = servers.find((server) => server.serverId === chosenTargetId);
+  const chosenConnection = chosen ? (connectionStatuses[chosen.serverId] ?? 'unknown') : undefined;
+  const chosenOffline = reachabilityOfStatus(chosenConnection ?? 'unknown') === 'offline';
 
   useEffect(() => {
     if (pickerRequestId === null || pickerCompletedRequestId !== pickerRequestId) return;
@@ -135,9 +138,24 @@ export function useHomeLaunchController({
     else void launch(onPair);
   }
 
+  /** Choose a target directly, as Home's composer does from an `@` mention. */
+  function choose(serverId: string) {
+    if (servers.some((server) => server.serverId === serverId)) setChosenId(serverId);
+  }
+  /**
+   * Keep the dock on the computer it names now, before something else (opening
+   * a task on another computer) moves the app's selection.
+   */
+  function pinTarget() {
+    if (chosen) setChosenId(chosen.serverId);
+  }
+
   return {
+    choose,
+    pinTarget,
     chosen,
     chosenOffline,
+    chosenConnection,
     launchOnChosen,
     openTargetPicker,
     opening,
@@ -211,12 +229,12 @@ export function HomeLaunchTarget({
         style={styles.targetName}
         pointerEvents="none">
         {loading
-          ? t`Loading servers`
+          ? t`Loading computers`
           : chosen
             ? chosen.label
             : servers.length
-              ? t`Choose a gateway`
-              : t`Pair a gateway`}
+              ? t`Choose a computer`
+              : t`Pair a computer`}
       </Text>
       {hasMultiple ? (
         <Animated.View style={pickerChevronStyle} pointerEvents="none">
@@ -244,23 +262,19 @@ export function HomeLaunchActions({
   grid = false,
   newOnly = false,
   dock = false,
-  dockAccessory,
 }: {
   controller: HomeLaunchController;
   /**
    * The Pad's embedded Home: every agent in a row of its own and the
-   * utilities in compact tiles under it, with no sideways scroll.
+   * utilities in compact tiles under it. Classic keeps the agents in a rail.
    */
   grid?: boolean;
   /** Existing destinations live in the Pad's persistent navigation. */
   newOnly?: boolean;
   /**
-   * The wide Pad cover's launch dock: up to three agents (plus More agents) as
-   * one row of equal chips, then the utilities as full-width rows.
+   * The wide Pad cover uses the same agent grid with compact utilities.
    */
   dock?: boolean;
-  /** Drawn beside the dock's terminal pill (the Gateway chip, when there is a choice). */
-  dockAccessory?: ReactNode;
   onNewAgent: (serverId: string, directory?: string, agentId?: string) => Promise<unknown>;
   onOpenAgent: (serverId: string) => Promise<unknown>;
   onNewTerminal: (serverId: string) => Promise<unknown>;
@@ -271,8 +285,8 @@ export function HomeLaunchActions({
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
-  const router = useRouter();
-  const { chosen, chosenOffline, launchOnChosen, opening, run } = controller;
+  const profile = useAppearanceProfile();
+  const { chosen, chosenOffline, chosenConnection, launchOnChosen, opening, run } = controller;
   const [availableWidth, setAvailableWidth] = useState(0);
 
   // The row is a projection of what the chosen gateway said about itself; a
@@ -285,21 +299,18 @@ export function HomeLaunchActions({
   const model = buildLaunchModel({
     discovery,
     lastUsedAgentId,
-    ...(grid && !dock ? { maxAgentTiles: Number.POSITIVE_INFINITY } : {}),
   });
   const entries = newOnly
     ? model.entries.filter((entry) => isAgentEntry(entry) || entry.kind === 'new-terminal')
     : model.entries;
-  const cells = groupLaunchCells(entries);
   const agentEntries = entries.filter(isAgentEntry);
   const utilityEntries = entries.filter((entry) => !isAgentEntry(entry));
   const layout = launchRowLayout({
     width: availableWidth,
-    grid,
     agentCount: agentEntries.length,
     utilityCount: utilityEntries.length,
+    grid: grid || dock,
   });
-  const horizontal = layout.mode === 'scroll';
 
   // Fresh on focus and on Continue's own cadence, for the chosen gateway only,
   // and never in the way of a render: the row draws from the mirror.
@@ -307,48 +318,38 @@ export function HomeLaunchActions({
   const appActive = useAppActive();
   useEffect(() => {
     if (!chosen || chosenOffline || !focused || !appActive || isDemoRecord(chosen)) return;
+    let askedAtMs = Date.now();
     void refreshAgentServerDiscovery(chosen);
     const timer = setInterval(() => {
+      // Continue's cadence: half as often while the task socket is open.
+      const nowMs = Date.now();
+      const live = useServerChannels.getState().sockets[chosen.serverId] === 'open';
+      if (!homeRefreshDue({ atMs: askedAtMs, failures: 0 }, nowMs, live)) return;
+      askedAtMs = nowMs;
       void refreshAgentServerDiscovery(chosen);
-    }, HOME_AGENTS_REFRESH_MS);
+    }, HOME_CONTINUE_REFRESH_MS);
     return () => clearInterval(timer);
   }, [appActive, chosen, chosenOffline, focused]);
 
-  // "More agents" answers through a store, as the gateway picker does: the
-  // sheet only says which agent, and the command that starts it runs here.
-  const [agentsRequestId, setAgentsRequestId] = useState<number | null>(null);
-  const beginAgentsPicker = useHomeAgentPicker((state) => state.begin);
-  const agentsCompletedRequestId = useHomeAgentPicker((state) => state.completedRequestId);
-  const agentsCompletedAgentId = useHomeAgentPicker((state) => state.completedAgentId);
-  const startChosenAgent = useEffectEvent((agentId: string) => {
-    launchOnChosen((serverId) => onNewAgent(serverId, undefined, agentId));
-  });
-  useEffect(() => {
-    if (agentsRequestId === null || agentsCompletedRequestId !== agentsRequestId) return;
-    setAgentsRequestId(null);
-    if (agentsCompletedAgentId) startChosenAgent(agentsCompletedAgentId);
-  }, [agentsCompletedAgentId, agentsCompletedRequestId, agentsRequestId]);
-  function openAgentsPicker() {
-    if (!chosenId) return;
-    const requestId = beginAgentsPicker(chosenId);
-    setAgentsRequestId(requestId);
-    router.push({ pathname: '/home-agents', params: { requestId: String(requestId) } });
-  }
-
-  /** `cell` is the Pad grid's fixed width and whether the tile is drawn compact there. */
-  function renderEntry(entry: LaunchEntry, cell?: { width: number; compact: boolean }) {
+  /** Agent widths belong to their mosaic column; utility widths belong to the tile. */
+  function renderEntry(
+    entry: LaunchEntry,
+    cell?: { width?: number; compact: boolean; featured?: boolean }
+  ) {
+    const utilityCompact = dock || (cell?.compact ?? false);
     const common = {
       testID: entry.testID,
       marker: entry.marker,
-      horizontal,
       ...(cell ? { width: cell.width } : {}),
-      ...(dock ? { rowHeight: DOCK_ROW_HEIGHT } : {}),
+      rowHeight:
+        entry.kind !== 'agent' && !utilityCompact
+          ? DOCK_ROW_HEIGHT * 2 + LAUNCH_MOSAIC_GAP
+          : DOCK_ROW_HEIGHT,
     };
-    const utilityCompact = dock || (cell?.compact ?? false);
     switch (entry.kind) {
       case 'agent': {
-        if (dock) {
-          // Not ready: muted, with its state after the name instead of a second line.
+        if (!cell?.featured) {
+          // Setup states remain visible alongside the agent name.
           const ready = entry.caption === 'new-session';
           const filled = entry.primary && ready;
           return (
@@ -382,13 +383,20 @@ export function HomeLaunchActions({
             />
           );
         }
-        const ink = entry.primary ? theme.colors.onPrimary : theme.colors.primary;
+        const ready = entry.caption === 'new-session';
+        const filled = entry.primary && ready;
+        const ink = filled
+          ? theme.colors.onPrimary
+          : ready
+            ? theme.colors.primary
+            : theme.colors.textMuted;
         return (
           <LaunchTile
             key={entry.key}
             {...common}
             aliasTestID={entry.aliasTestID}
-            primary={entry.primary}
+            primary={filled}
+            rowHeight={DOCK_ROW_HEIGHT * 2 + LAUNCH_MOSAIC_GAP}
             title={entry.name}
             caption={_(agentLaunchCaption[entry.caption])}
             icon={<AgentMark kind={entry.agentKind} size={entry.primary ? 24 : 22} color={ink} />}
@@ -396,21 +404,6 @@ export function HomeLaunchActions({
             onPress={() =>
               launchOnChosen((serverId) => onNewAgent(serverId, undefined, entry.agentId))
             }
-          />
-        );
-      }
-      case 'more-agents': {
-        const hidden = entry.hidden;
-        return (
-          <LaunchTile
-            key={entry.key}
-            {...common}
-            chip={dock}
-            title={t`More agents`}
-            caption={t`${hidden} more`}
-            icon={<Ellipsis size={dock ? 18 : 22} color={theme.colors.primary} />}
-            disabled={opening || chosenOffline}
-            onPress={openAgentsPicker}
           />
         );
       }
@@ -444,7 +437,6 @@ export function HomeLaunchActions({
           <LaunchTile
             key={entry.key}
             {...common}
-            pill={dock}
             compact={utilityCompact}
             title={t`New terminal`}
             caption={entry.backend}
@@ -481,13 +473,16 @@ export function HomeLaunchActions({
       testID="home-launch-actions"
       onLayout={(event) => setAvailableWidth(event.nativeEvent.layout.width)}
       style={styles.root}>
-      {chosenOffline ? (
+      {chosen &&
+      chosenConnection &&
+      chosenConnection !== 'live' &&
+      chosenConnection !== 'unknown' ? (
         <Text
           testID="home-launch-unavailable"
           accessibilityLiveRegion="polite"
           variant="caption"
           color={theme.colors.textMuted}>
-          {_(reachabilityDescription.offline)}
+          {`${chosen.label} · ${_(connectionStatusDescription[chosenConnection])}`}
         </Text>
       ) : null}
       {onDemo ? (
@@ -505,66 +500,92 @@ export function HomeLaunchActions({
           </Text>
         </PressableScale>
       ) : null}
-      {dock ? (
-        <View testID="home-launch-actions-dock" style={styles.dock}>
-          {agentEntries.length ? (
-            <View style={styles.dockChips}>{agentEntries.map((entry) => renderEntry(entry))}</View>
-          ) : null}
-          <View style={styles.dockPills}>
-            {utilityEntries.map((entry) => renderEntry(entry))}
-            {dockAccessory}
-          </View>
-        </View>
-      ) : layout.mode === 'grid' ? (
-        <View testID="home-launch-actions-grid" style={styles.grid}>
-          {layout.agentWidth > 0 ? (
+      <View
+        testID={
+          dock
+            ? 'home-launch-actions-dock'
+            : grid
+              ? 'home-launch-actions-grid'
+              : 'home-launch-actions-mosaic'
+        }
+        style={styles.grid}>
+        {availableWidth > 0 ? (
+          layout.mode === 'scroll' ? (
+            <Animated.ScrollView
+              horizontal
+              nestedScrollEnabled
+              directionalLockEnabled
+              showsHorizontalScrollIndicator={false}
+              testID="home-launch-actions-scroll"
+              contentContainerStyle={[styles.scrollRow, { gap: LAUNCH_MOSAIC_GAP }]}>
+              {layout.agentRows[0]?.map((cell) => (
+                <View
+                  key={agentEntries[cell.indices[0]!]!.key}
+                  style={{ width: cell.width, gap: LAUNCH_MOSAIC_GAP }}>
+                  {cell.indices.map((index) =>
+                    renderEntry(agentEntries[index]!, { compact: false, featured: cell.featured })
+                  )}
+                </View>
+              ))}
+              {groupLaunchCells(utilityEntries).map((cell) => (
+                <View key={cell.key} style={{ width: layout.utilityWidth, gap: LAUNCH_MOSAIC_GAP }}>
+                  {cell.entries.map((entry) =>
+                    renderEntry(entry, { compact: entry.layout === 'compact' })
+                  )}
+                </View>
+              ))}
+            </Animated.ScrollView>
+          ) : (
             <>
-              {agentEntries.length ? (
+              {profile.id === 'classic' && agentEntries.length > 0 ? (
+                <Animated.ScrollView
+                  horizontal
+                  nestedScrollEnabled
+                  directionalLockEnabled
+                  showsHorizontalScrollIndicator={false}
+                  testID="home-launch-agents-scroll"
+                  contentContainerStyle={styles.scrollRow}>
+                  {layout.agentRows.flat().map((cell) => (
+                    <View key={agentEntries[cell.indices[0]!]!.key} style={{ width: cell.width }}>
+                      {cell.indices.map((index) =>
+                        renderEntry(agentEntries[index]!, { compact: false })
+                      )}
+                    </View>
+                  ))}
+                </Animated.ScrollView>
+              ) : (
+                layout.agentRows.map((row) => (
+                  <View key={agentEntries[row[0]!.indices[0]!]!.key} style={styles.gridRow}>
+                    {row.map((cell) => (
+                      <View
+                        key={agentEntries[cell.indices[0]!]!.key}
+                        style={{ width: cell.width, gap: LAUNCH_GRID_GAP }}>
+                        {cell.indices.map((index) =>
+                          renderEntry(agentEntries[index]!, { compact: false })
+                        )}
+                      </View>
+                    ))}
+                  </View>
+                ))
+              )}
+              {utilityEntries.length ? (
                 <View style={styles.gridRow}>
-                  {agentEntries.map((entry) =>
-                    renderEntry(entry, { width: layout.agentWidth, compact: false })
+                  {utilityEntries.map((entry) =>
+                    renderEntry(entry, { width: layout.utilityWidth, compact: true })
                   )}
                 </View>
               ) : null}
-              <View style={styles.gridRow}>
-                {utilityEntries.map((entry) =>
-                  renderEntry(entry, { width: layout.utilityWidth, compact: true })
-                )}
-              </View>
             </>
-          ) : null}
-        </View>
-      ) : (
-        <View>
-          <Animated.ScrollView
-            horizontal={horizontal}
-            scrollEnabled={horizontal}
-            nestedScrollEnabled
-            directionalLockEnabled
-            showsHorizontalScrollIndicator={false}
-            testID="home-launch-actions-scroll"
-            contentContainerStyle={[styles.actions, horizontal && styles.horizontalActions]}>
-            {cells.map((cell) =>
-              cell.entries[0]?.layout === 'compact' ? (
-                <View
-                  key={cell.key}
-                  style={[styles.stackedActions, horizontal && styles.horizontalStack]}>
-                  {cell.entries.map((entry) => renderEntry(entry))}
-                </View>
-              ) : (
-                renderEntry(cell.entries[0]!)
-              )
-            )}
-          </Animated.ScrollView>
-        </View>
-      )}
+          )
+        ) : null}
+      </View>
       {opening ? <Text variant="caption" color={theme.colors.textMuted}>{t`Opening…`}</Text> : null}
     </View>
   );
 }
 
 function isAgentEntry(entry: LaunchEntry): boolean {
-  return entry.kind === 'agent' || entry.kind === 'more-agents';
+  return entry.kind === 'agent';
 }
 
 function LaunchTile({
@@ -576,11 +597,9 @@ function LaunchTile({
   primary = false,
   compact = false,
   chip = false,
-  pill = false,
   muted = false,
   inlineCaption,
   rowHeight,
-  horizontal = false,
   width,
   disabled,
   testID,
@@ -593,21 +612,15 @@ function LaunchTile({
   onPress: () => void;
   primary?: boolean;
   compact?: boolean;
-  /** One line, icon + name, sharing a row equally: the Pad cover dock's agent chip. */
+  /** Compact agent tile with an icon and a wrapping name. */
   chip?: boolean;
-  /**
-   * An auto-width outlined pill, a step below the chips: the Pad dock's terminal
-   * action. The caption (a backend, only when there is a choice) is a muted suffix.
-   */
-  pill?: boolean;
   /** A chip for an agent that is not ready to start. */
   muted?: boolean;
-  /** Shown after a chip's name ("T3 Code · Not installed"); `caption` stays the a11y text. */
+  /** Setup state below the name; `caption` also supplies the accessibility text. */
   inlineCaption?: string;
-  /** A fixed height for chips and compact rows. */
+  /** Minimum height for chips and compact rows. */
   rowHeight?: number;
-  horizontal?: boolean;
-  /** A fixed cell width, from the Pad grid; the phone row sizes tiles by flex. */
+  /** Fixed utility width; agent columns own their width. */
   width?: number;
   disabled: boolean;
   testID: string;
@@ -631,37 +644,6 @@ function LaunchTile({
       withTiming(pressed && !reduceMotion ? 2 : 0, timing(pressed ? PRESS.in : PRESS.out))
     );
   };
-  if (pill) {
-    return (
-      <PressableScale
-        testID={testID}
-        nativeID={aliasTestID}
-        accessibilityRole="button"
-        accessibilityLabel={caption ? `${title}, ${caption}` : title}
-        accessibilityState={{ disabled }}
-        disabled={disabled}
-        onPress={onPress}
-        style={[
-          styles.pill,
-          {
-            borderRadius: profile.chrome.control,
-            borderColor: theme.colors.border,
-            backgroundColor: background(theme.colors.surface),
-            opacity: disabled ? 0.6 : 1,
-          },
-        ]}>
-        {icon}
-        <Text variant="bodySmall" weight="semibold" color={theme.colors.text}>
-          {title}
-        </Text>
-        {caption ? (
-          <Text variant="bodySmall" color={theme.colors.textMuted}>
-            {`· ${caption}`}
-          </Text>
-        ) : null}
-      </PressableScale>
-    );
-  }
   if (chip) {
     const chipInk = primary
       ? theme.colors.onPrimary
@@ -680,20 +662,16 @@ function LaunchTile({
         style={[
           styles.chip,
           { borderRadius: profile.chrome.control },
-          rowHeight !== undefined && { height: rowHeight },
+          rowHeight !== undefined && { minHeight: rowHeight },
           {
             backgroundColor: background(primary ? theme.colors.primary : theme.colors.surface),
             opacity: disabled ? 0.6 : 1,
           },
         ]}>
         {icon}
-        <Text
-          variant="bodySmall"
-          weight="semibold"
-          color={chipInk}
-          numberOfLines={1}
-          style={styles.chipTitle}>
-          {inlineCaption ? `${title} · ${inlineCaption}` : title}
+        <Text variant="bodySmall" weight="semibold" color={chipInk} style={styles.chipTitle}>
+          {title}
+          {inlineCaption ? `\n${inlineCaption}` : ''}
         </Text>
       </PressableScale>
     );
@@ -764,13 +742,7 @@ function LaunchTile({
           borderRadius: profile.chrome.control,
         },
         primary ? styles.primaryTile : styles.secondaryTile,
-        horizontal && {
-          flexGrow: 0,
-          flexBasis: 'auto',
-          width: primary ? 148 : 124,
-          minHeight: 92,
-          padding: 6,
-        },
+        rowHeight !== undefined && { minHeight: rowHeight, flexBasis: 0, flex: 1 },
         width !== undefined && launchGridCellStyle(width),
         {
           backgroundColor: background(primary ? theme.colors.primary : theme.colors.surface),
@@ -839,8 +811,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderWidth: StyleSheet.hairlineWidth,
   },
-  dock: { gap: 12, minWidth: 0 },
-  dockChips: { flexDirection: 'row', gap: LAUNCH_GRID_GAP, minWidth: 0 },
   chip: {
     flex: 1,
     minWidth: 0,
@@ -848,18 +818,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   chipTitle: { minWidth: 0, flexShrink: 1 },
-  dockPills: { flexDirection: 'row', alignItems: 'center', gap: LAUNCH_GRID_GAP, minWidth: 0 },
-  pill: {
-    height: 44,
-    flexShrink: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 14,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
   demoAction: {
     minWidth: 44,
     minHeight: 44,
@@ -873,12 +834,9 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   demoLabel: { minWidth: 0, flexShrink: 1 },
+  scrollRow: { flexDirection: 'row', gap: LAUNCH_GRID_GAP },
   grid: { gap: LAUNCH_GRID_GAP, minWidth: 0 },
   gridRow: { flexDirection: 'row', flexWrap: 'wrap', gap: LAUNCH_GRID_GAP, minWidth: 0 },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'stretch', gap: 6 },
-  horizontalActions: { flexWrap: 'nowrap', gap: 4, paddingRight: 2 },
-  horizontalStack: { flexGrow: 0, flexBasis: 'auto', width: 152, minHeight: 92, gap: 4 },
-  stackedActions: { flexGrow: 1, flexBasis: 152, minHeight: 104, gap: 6 },
   tile: {
     flexGrow: 1,
     flexBasis: 124,
@@ -899,10 +857,6 @@ const styles = StyleSheet.create({
   tileMarker: { fontSize: 9, lineHeight: 12, letterSpacing: 0.8, opacity: 0.66 },
   tileCopy: { gap: 1 },
   tileTitle: { minWidth: 0, flexShrink: 1, letterSpacing: -0.25 },
-  // The lead action is close to a golden rectangle at the rail's base height;
-  // utility actions stay narrower so the row has hierarchy rather than clones.
-  // 148 × 92 is approximately a golden rectangle and keeps the main action
-  // distinct without making every item in the rail oversized.
   primaryTile: { flexBasis: 148, padding: 10 },
   secondaryTile: { padding: 10 },
   compactTile: {

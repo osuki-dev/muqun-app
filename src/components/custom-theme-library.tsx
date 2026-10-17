@@ -1,10 +1,8 @@
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useLingui } from '@lingui/react/macro';
-import { Tag, useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
-import { Button } from '@/components/themed-button';
+import { Tag, useThemeMode, useThemeTokens, Button, PressableScale, Text } from '@osuki-dev/ui';
 import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useWindowDimensions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -28,11 +26,12 @@ import {
 } from '@/lib/motion';
 import { loadThemeTab, saveThemeTab, type ThemeTab } from '@/lib/theme-tab-preference';
 import { effectiveThemeManifest, type InstalledTheme } from '@/theme/repository';
-import { PressableScale } from '@/components/pressable-scale';
 import { useSheetGroundPlate } from '@/components/sheet-ground';
 import { ThemePaletteStrip } from '@/components/theme-palette-strip';
 import { useThemePack } from '@/hooks/use-theme-pack';
+import { prepareThemeArtwork } from '@/theme/prepare-artwork';
 import { useReskinTransition } from '@/components/reskin-transition';
+import { afterNavigationSettles, type SettleNavigation } from '@/lib/navigation-settle';
 import { useThemeLibrary } from '@/stores/theme-library';
 import { auditThemeContrast } from '@/theme/contrast';
 import {
@@ -111,6 +110,11 @@ export function ThemeCover({
  * including the leave that follows an apply.
  */
 export type ThemePrimaryAction = { applies: boolean; disabled: boolean; run: () => void };
+/** What the library has to say while it works, for a host that shows it itself. */
+export type ThemeStatus =
+  | { kind: 'installing' }
+  | { kind: 'error'; text: string }
+  | { kind: 'notice'; text: string };
 type DraftAppearance = Pick<
   InstalledTheme,
   | 'terminalBackgroundOpacity'
@@ -128,6 +132,7 @@ export function CustomThemeLibrary({
   ownsPreparedAssets = true,
   onClosePreview,
   onPrimaryActionChange,
+  onStatusChange,
   mode = 'manage',
   onPreviewAppearanceChange,
   tabs = false,
@@ -157,6 +162,15 @@ export function CustomThemeLibrary({
    */
   onPrimaryActionChange?: (action: ThemePrimaryAction | null) => void;
   /**
+   * Hand the status line to the host instead of drawing it above the theme.
+   *
+   * Drawn here, the progress of an apply ("Installing images") and its error
+   * or notice appear above the preview and push it and the sliders down the
+   * moment Apply is tapped. A host that pins its own button shows them where
+   * they take no room; this component then stops drawing them.
+   */
+  onStatusChange?: (status: ThemeStatus | null) => void;
+  /**
    * Split `children` and the personal library into two tabs.
    *
    * Only the picker sheet passes this. The detail route and the file viewer see
@@ -170,6 +184,8 @@ export function CustomThemeLibrary({
   const { t } = useLingui();
   const { colors } = useThemeTokens();
   const reskin = useReskinTransition();
+  const navigation = useNavigation();
+  const { resolvedMode } = useThemeMode();
   // The plate a label takes when the pack draws a wallpaper behind this sheet.
   // Bare, because this component is always somebody else's child: inside the
   // theme sheet it takes that sheet's `surface`, and on the full-screen editor
@@ -221,6 +237,7 @@ export function CustomThemeLibrary({
   const [pendingRemoval, setPendingRemoval] = useState<string | null>(null);
   const pending = useRef(false);
   const mounted = useRef(true);
+  const leavingUnderCover = useRef(false);
   const legacyTheme = useAppSettings((state) => state.themePack);
   const canUndo =
     Boolean(library.previous) ||
@@ -319,47 +336,60 @@ export function CustomThemeLibrary({
 
   async function save(apply: boolean) {
     if (!candidate) return;
-    let installedAssets: Record<string, string> | undefined;
-    if (!candidate.id && candidate.prepared) {
-      setStep('installing');
-      installedAssets = await candidate.prepared.install();
-    }
-    if (!mounted.current) return;
-    const store = useThemeLibrary.getState();
-    const id = candidate.id ?? store.save(JSON.stringify(candidate.manifest), installedAssets).id;
-    // Retain the installed identity even if a subsequent activation write fails.
-    setCandidate({ ...candidate, id });
-    if (!installedCandidate) {
-      if (draftAppearance.terminalBackgroundOpacity !== undefined)
-        store.setTerminalBackgroundOpacity(id, draftAppearance.terminalBackgroundOpacity);
-      if (draftAppearance.surfaceBackgroundOpacity !== undefined)
-        store.setSurfaceBackgroundOpacity(id, draftAppearance.surfaceBackgroundOpacity);
-      if (draftAppearance.hideHomeLogo !== undefined)
-        store.setHideHomeLogo(id, draftAppearance.hideHomeLogo);
-      if (draftAppearance.hideHomeText !== undefined)
-        store.setHideHomeText(id, draftAppearance.hideHomeText);
-      if (draftAppearance.homeArtwork !== undefined)
-        store.setHomeArtwork(id, draftAppearance.homeArtwork);
-    }
+    const persist = async () => {
+      let installedAssets: Record<string, string> | undefined;
+      if (!candidate.id && candidate.prepared) {
+        setStep('installing');
+        installedAssets = await candidate.prepared.install();
+      }
+      if (!mounted.current) return undefined;
+      const store = useThemeLibrary.getState();
+      const id = candidate.id ?? store.save(JSON.stringify(candidate.manifest), installedAssets).id;
+      // Retain the installed identity even if a subsequent activation write fails.
+      setCandidate({ ...candidate, id });
+      if (!installedCandidate) {
+        if (draftAppearance.terminalBackgroundOpacity !== undefined)
+          store.setTerminalBackgroundOpacity(id, draftAppearance.terminalBackgroundOpacity);
+        if (draftAppearance.surfaceBackgroundOpacity !== undefined)
+          store.setSurfaceBackgroundOpacity(id, draftAppearance.surfaceBackgroundOpacity);
+        if (draftAppearance.hideHomeLogo !== undefined)
+          store.setHideHomeLogo(id, draftAppearance.hideHomeLogo);
+        if (draftAppearance.hideHomeText !== undefined)
+          store.setHideHomeText(id, draftAppearance.hideHomeText);
+        if (draftAppearance.homeArtwork !== undefined)
+          store.setHomeArtwork(id, draftAppearance.homeArtwork);
+      }
+      return id;
+    };
     if (apply) {
-      // `colors` here is the *candidate's* palette -- this editor is already
-      // wearing the theme being judged -- so the wash's front is lit in the
-      // theme the reader is about to get, without having to apply it to find
-      // out what colour that is.
-      void reskin.run({
+      let selectedId: string | undefined;
+      await reskin.run({
         kind: 'theme',
         accent: colors.primary,
+        isCurrent: () => mounted.current || leavingUnderCover.current,
+        prepare: async () => {
+          selectedId = await persist();
+          const installed = useThemeLibrary
+            .getState()
+            .library.themes.find((entry) => entry.id === selectedId);
+          if (installed)
+            return prepareThemeArtwork(installed.manifest, installed.assets, resolvedMode, width);
+        },
         apply: () => {
-          store.apply({ kind: 'custom', id });
-          // Applying is a confirmation, exactly as choosing a built-in pack
-          // is: write first, then leave. Holding the screen open behind a
-          // notice read as the app having ignored the tap.
+          if (!selectedId) return;
+          useThemeLibrary.getState().apply({ kind: 'custom', id: selectedId });
+        },
+        settle: () => {
+          leavingUnderCover.current = true;
           closePreview();
+          // The cover stays until this screen has finished leaving.
+          return afterNavigationSettles(navigation as unknown as SettleNavigation);
         },
       });
       return;
     }
-    setNotice(t`Theme saved`);
+    await persist();
+    if (mounted.current) setNotice(t`Theme saved`);
   }
 
   /**
@@ -409,6 +439,19 @@ export function CustomThemeLibrary({
   // A host holding the description in state would otherwise keep a button alive
   // for a screen that has gone.
   useEffect(() => () => onPrimaryActionChange?.(null), [onPrimaryActionChange]);
+  useEffect(() => {
+    if (!onStatusChange) return;
+    onStatusChange(
+      error
+        ? { kind: 'error', text: error }
+        : step
+          ? { kind: 'installing' }
+          : notice
+            ? { kind: 'notice', text: notice }
+            : null
+    );
+  }, [onStatusChange, error, step, notice]);
+  useEffect(() => () => onStatusChange?.(null), [onStatusChange]);
 
   function chooseTab(next: ThemeTab) {
     setPendingRemoval(null);
@@ -700,7 +743,7 @@ export function CustomThemeLibrary({
           )}
         </View>
       ) : null}
-      {step ? (
+      {step && !onStatusChange ? (
         <ThemeImportProgress testID="theme-install-progress" label={t`Installing images`} />
       ) : null}
       {readStage ? (
@@ -717,7 +760,7 @@ export function CustomThemeLibrary({
           total={readStage.phase === 'staging' ? readStage.total : undefined}
         />
       ) : null}
-      {error || notice ? (
+      {(error || notice) && !onStatusChange ? (
         <View
           testID="theme-status-message"
           style={{

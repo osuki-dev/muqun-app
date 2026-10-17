@@ -1,7 +1,14 @@
 import { useLingui } from '@lingui/react/macro';
-import { resolveFontStyle, useThemeTokens, type ResolvedFontStyle } from '@osuki-dev/ui';
+import {
+  useThemeTokens,
+  PressableScale,
+  resolveFontStyle,
+  type ResolvedFontStyle,
+  Text,
+  type TextProps,
+  TextField,
+} from '@osuki-dev/ui';
 import { useRouter } from 'expo-router';
-import { Text } from '@/components/text';
 import { Search, X } from 'lucide-react-native';
 import { useEffect, useRef, type ReactNode } from 'react';
 import {
@@ -13,7 +20,9 @@ import {
   type StyleProp,
   type TextStyle,
   type ViewStyle,
+  useWindowDimensions,
 } from 'react-native';
+import { useKeyboardState } from 'react-native-keyboard-controller';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -24,7 +33,6 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { appChrome } from '@/constants/appearance';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -32,7 +40,7 @@ import { SheetFrame } from '@/components/sheet-ground';
 import { SheetHandle, useSheetIsFullscreen } from '@/components/sheet-route-frame';
 import { KeyboardInset } from '@/components/keyboard-inset';
 import { fadeIn, PRESET, timing } from '@/lib/motion';
-import { FontedTextInput } from '@/components/fonted-text-input';
+import { EXPANDABLE_DETENT } from '@/lib/route-presentation';
 
 /**
  * The furniture every bottom sheet in Muqun is built from.
@@ -172,6 +180,7 @@ export function SheetScene({
   headingTrailing,
   header,
   contentSized = false,
+  fitsContent = false,
   children,
 }: {
   testID?: string;
@@ -197,6 +206,13 @@ export function SheetScene({
    * strip. Content-sized scenes size themselves instead.
    */
   contentSized?: boolean;
+  /**
+   * Content-sized up to the expandable detent, past which its scroller
+   * scrolls: for a `fitToContents` route whose content is sometimes three rows
+   * and sometimes a page. The scroller takes `sheetSceneStyles.fitScroller`
+   * and the footer `contentSized`.
+   */
+  fitsContent?: boolean;
   children: ReactNode;
 }) {
   const fullscreen = useSheetIsFullscreen();
@@ -205,36 +221,61 @@ export function SheetScene({
   // where a form sheet never reaches. A sheet that already asked for that
   // clearance (the catalogue) is not given it twice.
   const top = fullscreen ? Math.max(topInset, insets.top) : topInset;
+  const sized = contentSized || fitsContent;
+  const scene = (
+    <>
+      <View style={[styles.fixedTop, { paddingTop: SHEET_LADDER.gap + top }]}>
+        <SheetHandle />
+        <SheetSceneHeading
+          title={title}
+          caption={caption}
+          captionLines={captionLines}
+          detail={detail}
+          trailing={
+            fullscreen ? (
+              <>
+                {headingTrailing}
+                <SheetSceneClose />
+              </>
+            ) : (
+              headingTrailing
+            )
+          }
+        />
+        {header}
+      </View>
+      {children}
+    </>
+  );
   return (
     <SheetFrame
       testID={testID}
       tint="surface"
       frosted
-      overdrawBottom={contentSized ? CONTENT_SIZED_OVERDRAW : 0}>
-      <View collapsable={false} style={contentSized ? undefined : styles.scene}>
-        <View style={[styles.fixedTop, { paddingTop: SHEET_LADDER.gap + top }]}>
-          <SheetHandle />
-          <SheetSceneHeading
-            title={title}
-            caption={caption}
-            captionLines={captionLines}
-            detail={detail}
-            trailing={
-              fullscreen ? (
-                <>
-                  {headingTrailing}
-                  <SheetSceneClose />
-                </>
-              ) : (
-                headingTrailing
-              )
-            }
-          />
-          {header}
+      overdrawBottom={sized ? CONTENT_SIZED_OVERDRAW : 0}>
+      {fitsContent ? (
+        <SheetSceneFitColumn>{scene}</SheetSceneFitColumn>
+      ) : (
+        <View collapsable={false} style={contentSized ? undefined : styles.scene}>
+          {scene}
         </View>
-        {children}
-      </View>
+      )}
     </SheetFrame>
+  );
+}
+
+/**
+ * A `fitsContent` scene's column: no taller than the expandable detent of the
+ * room the keyboard leaves, so a long group scrolls inside a sheet that still
+ * fits on screen while the native sheet rides the keyboard up.
+ */
+function SheetSceneFitColumn({ children }: { children: ReactNode }) {
+  const { height } = useWindowDimensions();
+  const keyboard = useKeyboardState((state) => state.height);
+  return (
+    <View collapsable={false} style={{ maxHeight: (height - keyboard) * EXPANDABLE_DETENT }}>
+      {children}
+    </View>
   );
 }
 
@@ -384,7 +425,7 @@ export function SheetSceneSearch({
   return (
     <View style={[styles.searchRow, { borderBottomColor: colors.border }]}>
       <Search size={16} color={colors.textSubtle} />
-      <FontedTextInput
+      <TextField
         testID={testID}
         accessibilityLabel={accessibilityLabel}
         value={value}
@@ -538,10 +579,10 @@ export function SheetSceneRow({
    *
    * Prose wraps to two lines and clips at the end, because the start of a
    * sentence is the part that says what it is about. A filesystem path is the
-   * other way round: `/Users/ryu/Work/muqun/app-worktrees/opencode-c3` and
-   * `/Users/ryu/Work/muqun/app-worktrees/opencode-b2` differ only in the run
+   * other way round: `/Users/me/Work/muqun/app-worktrees/opencode-c3` and
+   * `/Users/me/Work/muqun/app-worktrees/opencode-b2` differ only in the run
    * that a tail clip throws away, and two rows reading
-   * `/Users/ryu/Work/muqun/app-worktre…` are two rows the reader cannot tell
+   * `/Users/me/Work/muqun/app-worktre…` are two rows the reader cannot tell
    * apart. So a path keeps its tail, loses its head, and stays on one line --
    * wrapping a path to two lines breaks it at no meaningful boundary and
    * doubles the row for a string the reader scans rather than reads.
@@ -825,6 +866,7 @@ export function useSheetSceneInputStyle(): StyleProp<TextStyle> {
  */
 export function SheetSceneAction({
   label,
+  labelWeight = 'bold',
   onPress,
   disabled = false,
   busy = false,
@@ -833,6 +875,7 @@ export function SheetSceneAction({
   testID,
 }: {
   label: string;
+  labelWeight?: TextProps['weight'];
   onPress: () => void;
   disabled?: boolean;
   busy?: boolean;
@@ -865,7 +908,7 @@ export function SheetSceneAction({
         },
       ]}>
       {busy ? <ActivityIndicator size="small" color={colors.onPrimary} /> : leading}
-      <Text variant="bodySmall" weight="bold" color={labelColor}>
+      <Text variant="bodySmall" weight={labelWeight} color={labelColor}>
         {label}
       </Text>
     </PressableScale>
@@ -875,12 +918,14 @@ export function SheetSceneAction({
 /** A secondary action: a line of text under the primary one, never a button. */
 export function SheetSceneQuietAction({
   label,
+  labelWeight = 'semibold',
   onPress,
   tone = 'muted',
   disabled = false,
   testID,
 }: {
   label: string;
+  labelWeight?: TextProps['weight'];
   onPress: () => void;
   /** `danger` for the one that throws something away. */
   tone?: 'muted' | 'danger';
@@ -898,7 +943,7 @@ export function SheetSceneQuietAction({
       style={styles.quietAction}>
       <Text
         variant="caption"
-        weight="semibold"
+        weight={labelWeight}
         color={tone === 'danger' ? colors.danger : colors.textMuted}>
         {label}
       </Text>
@@ -916,7 +961,15 @@ export function SheetSceneGroupRule() {
  * The end of a scroller's content: the sheet's own bottom room plus whatever
  * the keyboard is standing on, so the last row is always reachable.
  */
-export function SheetSceneFooter({ bottomInset = 0 }: { bottomInset?: number }) {
+export function SheetSceneFooter({
+  bottomInset = 0,
+  contentSized = false,
+}: {
+  bottomInset?: number;
+  /** A content-sized sheet rides the keyboard natively, so no keyboard strip. */
+  contentSized?: boolean;
+}) {
+  if (contentSized) return <View style={{ height: contentSizedBottomPadding(bottomInset) }} />;
   return (
     <>
       <View style={{ height: SHEET_LADDER.section + bottomInset }} />
@@ -928,6 +981,8 @@ export function SheetSceneFooter({ bottomInset = 0 }: { bottomInset?: number }) 
 export const sheetSceneStyles = StyleSheet.create({
   /** For a scroller that fills the sheet under the pinned heading. */
   scroller: { flex: 1, minHeight: 0, overflow: 'hidden' },
+  /** For a `fitsContent` scene's scroller: its content's height, shrinking past the cap. */
+  fitScroller: { flexGrow: 0, flexShrink: 1 },
   /** For that scroller's content container: the gutter, and nothing else. */
   scrollerContent: { paddingHorizontal: SHEET_LADDER.gutter },
   /** For a sheet with no scroller of its own, sized to what it holds. */

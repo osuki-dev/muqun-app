@@ -1,17 +1,13 @@
 import { Children, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import { ChevronRight } from 'lucide-react-native';
-import { PressableScale } from '@/components/pressable-scale';
 import { useNotificationSurfaceStyle } from '@/components/notification-surface';
 import { fadeIn, listLayout } from '@/lib/motion';
 import { noticeDeckPage } from '@/lib/notice-deck';
-import { appChrome } from '@/constants/appearance';
-import { useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
-import { surfaceBackgroundFill } from '@/theme/surface-background';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 
 /** Keep condition-driven notices mounted, but expose only one page's text/actions.
  * Empty children measure zero; they must not create a blank notification page.
@@ -19,13 +15,8 @@ import { surfaceBackgroundFill } from '@/theme/surface-background';
 export function NoticeDeck({ children }: { children: ReactNode }) {
   const notificationSurfaceStyle = useNotificationSurfaceStyle(false);
   const { colors } = useThemeTokens();
-  const surfaceOpacity = useSurfaceBackgroundOpacity();
-  // A notice floats over live content: the reader's opacity, never thinner
-  // than the chrome floor, like `GlassChrome`'s solid material.
-  const plate = surfaceBackgroundFill(
-    colors.surfaceRaised,
-    Math.max(surfaceOpacity, appChrome.opacity.glassSolidFloor)
-  );
+  const background = useSurfaceBackground();
+  const plate = background(colors.surfaceRaised);
   const { t } = useLingui();
   const [heights, setHeights] = useState<Record<string, number>>({});
   const [widths, setWidths] = useState<Record<string, number>>({});
@@ -72,11 +63,9 @@ export function NoticeDeck({ children }: { children: ReactNode }) {
             pointerEvents={active ? 'auto' : 'none'}
             accessibilityElementsHidden={!active}
             importantForAccessibility={active ? 'auto' : 'no-hide-descendants'}
-            style={
-              active
-                ? [styles.page, styles.front, notificationSurfaceStyle, { backgroundColor: plate }]
-                : styles.measuring
-            }>
+            // Each notice paints its own surface. A second filled wrapper shows
+            // through rounded corners and compounds the theme's chosen opacity.
+            style={active ? styles.front : styles.measuring}>
             <View
               style={styles.front}
               onLayout={(event) => {

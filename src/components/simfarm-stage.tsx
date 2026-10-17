@@ -1,8 +1,6 @@
-import { Input } from '@/components/themed-input';
+import { Input, Spinner, useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
-import { Spinner, useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
 import { Canvas, Fill, Group, Image as SkiaImage } from 'react-native-skia';
 import {
   ArrowLeft,
@@ -39,7 +37,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FloatingHandle, floatingHandleFrame } from '@/components/floating-handle';
 import { GlassChrome } from '@/components/glass-chrome';
-import { PressableScale } from '@/components/pressable-scale';
 import { appChrome } from '@/constants/appearance';
 import { feedback } from '@/lib/feedback';
 import { fadeIn, fadeInDown, fadeOut } from '@/lib/motion';

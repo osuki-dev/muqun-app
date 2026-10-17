@@ -1,7 +1,7 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useMinuteNow } from '@/hooks/use-minute-now';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import {
   ChevronRight,
   Fingerprint,
@@ -12,7 +12,6 @@ import {
 } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { type SshHomeAge, sshHomeAge, sshHomeSubtitle } from '@/lib/ssh-home';
 import type { SshHostRecord } from '@/lib/ssh-hosts';
@@ -23,7 +22,7 @@ import type { SshHostRecord } from '@/lib/ssh-hosts';
  * One message per unit rather than a template with a unit letter in a hole,
  * for the reason `server-agent-rows.tsx` gives: "5m ago" is English's
  * abbreviation, and a translator needs the whole sentence. The messages are
- * the ones Settings > SERVERS already says about a gateway, so a host and a
+ * the ones Settings > Computers already says about a gateway, so a host and a
  * server describe their age in the same words. A hook rather than a helper
  * because the macro only expands a `t` it can trace to `useLingui()`.
  */
@@ -85,8 +84,11 @@ export function SshHostRow({
    * demo host inside the list, where the address should still show.
    */
   showAddress?: boolean;
-  /** Read at the caller's render, so a screen of rows ages against one clock. */
-  nowMs: number;
+  /**
+   * Read at the caller's render, so a screen of rows ages against one clock.
+   * Absent on the home screen, where the row ages on the shared minute clock.
+   */
+  nowMs?: number;
   testID?: string;
 }) {
   const { t } = useLingui();
@@ -96,7 +98,8 @@ export function SshHostRow({
   const address = sshHomeSubtitle(record);
   const trusted = Boolean(record.trustedHostKey);
 
-  const lastConnected = useSshHostAgeLabel(sshHomeAge(record, nowMs));
+  const minuteNowMs = useMinuteNow(nowMs);
+  const lastConnected = useSshHostAgeLabel(sshHomeAge(record, minuteNowMs));
 
   // The hint carries what the glyphs say, so a screen reader hears the
   // address, the age and the trust in one breath after the name. It keeps the

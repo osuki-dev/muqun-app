@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
 
 import {
   HOME_RECENTS_STORAGE_VERSION,
@@ -36,7 +35,10 @@ function terminal(serverId: string, paneId = `${serverId}-pane`): HomeTarget {
   };
 }
 
-function opencode(serverId: string, asid = `${serverId}-asid`): HomeTarget {
+function opencode(
+  serverId: string,
+  asid = `${serverId}-asid`
+): Extract<HomeTarget, { kind: 'agent-session' }> {
   return {
     kind: 'agent-session',
     serverId,
@@ -59,6 +61,42 @@ function entry(target: HomeTarget, title = 'Terminal', atMs = 1): HomeRecentEntr
 }
 
 describe('home recents domain', () => {
+  test('cold visits preserve persisted provider metadata, while explicit owner changes and unknown sessions stay honest', async () => {
+    const codex = { ...opencode('server-a'), agentId: 'codex' };
+    let saved = serializeHomeRecents([entry(codex, 'Codex session', 1)]);
+    const store = createHomeRecentsStore({
+      load: async () => saved,
+      save: async (value) => {
+        saved = value;
+      },
+    });
+    await store.getState().hydrate();
+    await store.getState().visit(opencode('server-a'), 'Cold visit', 2);
+    expect(store.getState().entries[0]?.target).toEqual(codex);
+    expect(parseHomeRecentsDocument(saved).entries[0]?.target).toEqual(codex);
+
+    const changed = { ...codex, agentId: 'deepseek' };
+    await store.getState().visit(changed, 'Reported owner', 3);
+    expect(store.getState().entries[0]?.target).toEqual(changed);
+    await store.getState().visit(opencode('server-a', 'unknown'), 'Unowned', 4);
+    expect(store.getState().entries[0]?.target).toEqual(opencode('server-a', 'unknown'));
+  });
+
+  test('an untagged visit racing cold hydration keeps the persisted provider but explicit ownership wins', async () => {
+    for (const agentId of [undefined, 'deepseek']) {
+      const load = deferred<string | null>();
+      const store = createHomeRecentsStore({ load: () => load.promise, save: async () => {} });
+      const target = { ...opencode('server-a'), ...(agentId ? { agentId } : {}) };
+      const visiting = store.getState().visit(target, 'Cold visit', 2);
+      load.resolve(serializeHomeRecents([entry({ ...target, agentId: 'codex' }, 'Stored', 1)]));
+      await visiting;
+      expect(store.getState().entries[0]?.target).toEqual({
+        ...target,
+        agentId: agentId ?? 'codex',
+      });
+    }
+  });
+
   test('keys every target field with a structured discriminant', () => {
     expect(homeTargetKey(terminal('server:one', 'pane/two'))).not.toBe(
       homeTargetKey(terminal('server', 'one:pane/two'))
@@ -424,6 +462,25 @@ describe('home recents state', () => {
 });
 
 describe('agents on a target', () => {
+  test('stored visits to the same agent session collapse across routing and directory changes', () => {
+    const target = opencode('srv');
+    const newer = { ...target, sessionId: 'new-routing', directory: '/new/worktree' };
+    expect(homeTargetKey(newer)).toBe(homeTargetKey(target));
+    const parsed = parseHomeRecentsDocument(
+      JSON.stringify({
+        version: HOME_RECENTS_STORAGE_VERSION,
+        entries: [
+          { target: newer, title: 'Latest', atMs: 20 },
+          { target, title: 'Earlier', atMs: 10 },
+          { target: { ...target, asid: 'another-session' }, title: 'Latest', atMs: 5 },
+          { target: { ...target, serverId: 'another-gateway' }, title: 'Latest', atMs: 4 },
+        ],
+      })
+    );
+    expect(parsed.entries).toHaveLength(3);
+    expect(parsed.entries[0]).toMatchObject({ target: newer, title: 'Latest', atMs: 20 });
+  });
+
   test('a target written as `opencode-session` reads as the default agent under the new kind', () => {
     const doc = JSON.stringify({
       version: HOME_RECENTS_STORAGE_VERSION,
@@ -547,15 +604,4 @@ describe('isLiveHomeTerminalVisit', () => {
   test('a pane id from another Herdr session is not live', () => {
     expect(isLiveHomeTerminalVisit(target, 'other', [pane('p1')])).toBe(false);
   });
-});
-
-test('the terminal visit effect re-runs once a refresh confirms the session it gates on', () => {
-  // A session pick clears the non-reactive `resolvedSessionRef`; when the
-  // confirming refresh leaves `data` unchanged, only the snapshot generation
-  // changes, so without it the open pane is never stamped for Home.
-  const source = readFileSync('src/components/server-terminal-workspace.tsx', 'utf8');
-  const body = source.indexOf('const observed = resolvedSessionRef.current;');
-  expect(body).toBeGreaterThan(-1);
-  const deps = source.slice(source.indexOf('}, [', body), source.indexOf(']);', body));
-  expect(deps).toContain('snapshotGeneration');
 });

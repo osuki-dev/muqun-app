@@ -1,6 +1,5 @@
 import { Image } from 'expo-image';
-import { useState } from 'react';
-import type { LucideIcon } from 'lucide-react-native';
+import { useState, type ComponentType } from 'react';
 
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import type { ThemeIconDirection, ThemeIconName } from '@/theme/schema';
@@ -30,7 +29,8 @@ export function ThemeIcon({
   direction,
 }: {
   name: ThemeIconName;
-  fallback: LucideIcon;
+  /** A chrome glyph (lucide's or the app's own): what is drawn without the pack's. */
+  fallback: ComponentType<{ size: number; color: string; strokeWidth?: number }>;
   size: number;
   color: string;
   strokeWidth?: number;
@@ -59,7 +59,10 @@ export function ThemeIcon({
       style={{
         width: size,
         height: size,
-        transform: rotation ? [{ rotate: `${rotation}deg` }] : undefined,
+        // ExpoImage forwards this as both a native prop and a style field.
+        // Reset a previous rotation explicitly; undefined becomes null in the
+        // native diff and React Native's transform processor cannot read it.
+        transform: [{ rotate: `${rotation}deg` }],
       }}
       tintColor={icon.render === 'template' ? color : undefined}
     />

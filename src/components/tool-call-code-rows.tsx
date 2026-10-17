@@ -14,11 +14,10 @@ import Animated, {
 } from 'react-native-reanimated';
 import { LegendList, type LegendListRenderItemProps } from '@legendapp/list/react-native';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
 
 import { GUTTER_NUMBER_FONT_SIZE, LINE_FONT_SIZE, LINE_ROW_HEIGHT } from '@/components/diff-rows';
 import { usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
-import { Text } from '@/components/text';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { tokenizeLine, type CodeTokenKind } from '@/lib/code-tokens';
 import { gutterNumbersOf, gutterWidthOf } from '@/lib/diff-geometry';
@@ -35,7 +34,7 @@ import type { ToolCallDetail, ToolCallRow } from '@/lib/tool-call-detail';
  * they stay at the left edge at any pan; the scroll indicator shown only when
  * there is something to pan to; the gutter as wide as the largest number.
  *
- * A mono surface (`interface-font-reach.test.ts`): each coloured run is a
+ * A mono surface: each coloured run is a
  * nested React Native `Text`. The app's `Text` is the kit's, a component with
  * its own state, theme reads and marquee machinery -- one per token, a few
  * thousand on screen in a fling, for a span that only needs a colour.

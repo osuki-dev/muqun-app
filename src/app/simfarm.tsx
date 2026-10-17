@@ -56,8 +56,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
  * (`simfarmEdgeBands`).
  */
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
 import * as NavigationBar from 'expo-navigation-bar';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -131,7 +130,7 @@ export default function SimfarmScreen() {
       {!record ? (
         <View style={[styles.notice, { backgroundColor: surfaceBackground(theme.colors.surface) }]}>
           <Text selectable variant="bodySmall" color={theme.colors.danger}>
-            {t`This server is no longer paired.`}
+            {t`This computer is no longer paired.`}
           </Text>
         </View>
       ) : (

@@ -3,11 +3,11 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 /** Start an agent with the shared terminal composer and attachment pipeline.
  * The full-height sheet keeps input reachable with long host catalogs.
  */
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, PressableScale, Text, TextField } from '@osuki-dev/ui';
 import { TerminalComposer } from '@/components/terminal-composer';
 import { AttachmentMenu } from '@/components/attachment-menu';
 import { AttachmentStrip } from '@/components/attachment-strip';
+import { AssetViewer } from '@/components/asset-viewer';
 import { ImagePreviewModal } from '@/components/image-preview-modal';
 import { LogoLoader } from '@/components/logo-loader';
 import { useAttachmentUploads } from '@/hooks/use-attachment-uploads';
@@ -18,11 +18,20 @@ import {
   describePickerFailure,
   isImageAttachment,
   type AttachmentSource,
+  describeBlockedSend,
+  takePickTruncationNotice,
 } from '@/lib/attachments';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Bot, Check, FolderOpen } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
-import { Keyboard, Platform, ScrollView, StyleSheet, View, type TextInput } from 'react-native';
+import {
+  Keyboard,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+  type TextInputInstance,
+} from 'react-native';
 import {
   KeyboardAwareScrollView,
   KeyboardController,
@@ -30,7 +39,6 @@ import {
 } from 'react-native-keyboard-controller';
 import Animated from 'react-native-reanimated';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import {
   SheetScene,
@@ -41,6 +49,8 @@ import {
   useSheetSceneInputStyle,
 } from '@/components/sheet-scene';
 import { LADDER } from '@/components/settings-chrome';
+import { terminalPromptWithAttachments } from '@/lib/agent-spawn';
+import { assetFromLocalPdf } from '@/lib/session-assets';
 import {
   agentSpawnRequest,
   canSpawnAgent,
@@ -53,7 +63,6 @@ import {
 import { listLayout, riseIn, STAGGER } from '@/lib/motion';
 import { describeGatewayFailure } from '@/lib/network-error';
 import { useRenderTally } from '@/lib/render-tally';
-import { FontedTextInput } from '@/components/fonted-text-input';
 import { recoverWith, rethrow, settleAfter } from '@/lib/compiler-safe-control-flow';
 
 /**
@@ -138,7 +147,7 @@ export function NewTaskSheet({
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
   const [menuKeyboardPadding, setMenuKeyboardPadding] = useState(0);
   const [previewId, setPreviewId] = useState<string | null>(null);
-  const promptInput = useRef<TextInput>(null);
+  const promptInput = useRef<TextInputInstance>(null);
   const sheetScroll = useRef<KeyboardAwareScrollViewRef>(null);
   const sending = useRef(false);
   const mounted = useRef(true);
@@ -160,12 +169,17 @@ export function NewTaskSheet({
   const previewImages = uploads.attachments
     .filter((item) => isImageAttachment(item.mime))
     .map((item) => ({ id: item.id, uri: item.localUri }));
+  const previewPdf = assetFromLocalPdf(uploads.attachments.find((item) => item.id === previewId));
   function chooseAttachmentSource(source: AttachmentSource) {
     setAttachmentMenuOpen(false);
     const picker = uploads.capturePicker();
     if (!picker.isCurrent() || sending.current) return;
     void pickAttachments(source)
-      .then(picker.addFiles)
+      .then((files) => {
+        picker.addFiles(files);
+        const cut = takePickTruncationNotice();
+        if (cut && picker.isCurrent()) setError(cut);
+      })
       .catch((failure: unknown) => {
         if (picker.isCurrent()) setError(describePickerFailure(source, failure));
       });
@@ -192,7 +206,9 @@ export function NewTaskSheet({
         if (cancelled) return;
         setProfiles([]);
         setLoadingProfiles(false);
-        setError(describeGatewayFailure(failure, t`Could not list this server's agents.`).message);
+        setError(
+          describeGatewayFailure(failure, t`Could not list this computer's agents.`).message
+        );
       });
     return () => {
       cancelled = true;
@@ -228,8 +244,8 @@ export function NewTaskSheet({
           async () => {
             const paths = await uploads.awaitUploads();
             if (!mounted.current || useGatewayConnectionStore.getState().record !== owner) return;
-            if (paths === null) rethrow(new Error(t`Could not add a file`));
-            const firstPrompt = [prompt.trim(), ...paths].filter(Boolean).join(' ');
+            if (paths === null) rethrow(new Error(describeBlockedSend(uploads.attachments)));
+            const firstPrompt = terminalPromptWithAttachments(prompt, paths);
             const spawned = await spawnAgent(
               sessionId,
               agentSpawnRequest({ agent, cwd, tabId, prompt: firstPrompt })
@@ -282,15 +298,15 @@ export function NewTaskSheet({
                 <View style={styles.loadingRow}>
                   <LogoLoader
                     size={28}
-                    accessibilityLabel={t`Asking the server what it can run…`}
+                    accessibilityLabel={t`Asking the computer what it can run…`}
                   />
                   <Text variant="caption" color={theme.colors.textMuted}>
-                    <Trans>Asking the server what it can run…</Trans>
+                    <Trans>Asking the computer what it can run…</Trans>
                   </Text>
                 </View>
               ) : profiles.length === 0 ? (
                 <Text variant="caption" color={theme.colors.textMuted}>
-                  <Trans>This server did not name any agents it can start.</Trans>
+                  <Trans>This computer did not name any agents it can start.</Trans>
                 </Text>
               ) : (
                 <ScrollView
@@ -319,7 +335,7 @@ export function NewTaskSheet({
             <SheetSceneField
               label={t`Directory`}
               hint={t`Leave it empty to start where the session already is.`}>
-              <FontedTextInput
+              <TextField
                 accessibilityLabel={t`Path`}
                 editable={!starting}
                 value={cwd}
@@ -375,6 +391,7 @@ export function NewTaskSheet({
                   />
                 </View>
                 <TerminalComposer
+                  voiceContext={`new-task:${sessionId}`}
                   inputRef={promptInput}
                   leading={
                     <ComposerAttachmentButton
@@ -429,6 +446,9 @@ export function NewTaskSheet({
               onPress={() => void start()}
             />
 
+            {previewPdf ? (
+              <AssetViewer asset={previewPdf} onClose={() => setPreviewId(null)} />
+            ) : null}
             {previewId && previewImages.some((item) => item.id === previewId) ? (
               <ImagePreviewModal
                 images={previewImages}
@@ -469,7 +489,7 @@ function AgentPill({
       accessibilityRole="radio"
       accessibilityState={{ selected }}
       accessibilityLabel={
-        profile.available ? profile.kind : t`${profile.kind}, not found on this server's PATH`
+        profile.available ? profile.kind : t`${profile.kind}, not found on this computer's PATH`
       }
       onPress={onSelect}
       style={[

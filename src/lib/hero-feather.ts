@@ -57,6 +57,9 @@ export const HOME_HERO_FEATHER = {
   vertical: 0.32,
 } as const;
 
+/** Cover scenes keep the authored sky and fade into the work below. */
+export const HOME_COVER_BOTTOM_FEATHER_START = 0.68;
+
 /** Half of each axis, less a tenth kept opaque, so the two fades can never meet. */
 export const MAX_FEATHER_FRACTION = 0.45;
 
@@ -151,6 +154,40 @@ export function coveredImageRect(
     width: drawnWidth,
     height: drawnHeight,
   };
+}
+
+/** Both the theme's crop and a cutout's whole figure survive Classic cover framing. */
+export function homeCoverArtworkRect(
+  container: FeatherSize,
+  intrinsic: FeatherSize,
+  fit: string | undefined,
+  focalPoint?: { x: number; y: number },
+  foreground = false
+): FeatherRect {
+  return !foreground && fit === 'cover'
+    ? coveredImageRect(container, intrinsic, focalPoint)
+    : containedImageRect(container, intrinsic, focalPoint);
+}
+
+/**
+ * Scenic phone covers fill the page width, including authored contain scenes.
+ * Give contain its natural height instead of shrinking it into the short cover
+ * band. The existing bottom mask clips the foot; the subject is never widened
+ * or cropped at the sides to conceal a layout gutter.
+ */
+export function homeCoverSceneRect(
+  container: FeatherSize,
+  intrinsic: FeatherSize,
+  fit: string | undefined,
+  focalPoint?: { x: number; y: number }
+): FeatherRect {
+  if (fit === 'cover') return coveredImageRect(container, intrinsic, focalPoint);
+  const width = positive(container.width);
+  const sourceWidth = positive(intrinsic.width);
+  const sourceHeight = positive(intrinsic.height);
+  if (!width || !sourceWidth || !sourceHeight)
+    return { x: 0, y: 0, width, height: positive(container.height) };
+  return { x: 0, y: 0, width, height: (width * sourceHeight) / sourceWidth };
 }
 
 /** Foreground portraits retain their top edge; only wallpaper may crop above it. */

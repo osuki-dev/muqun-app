@@ -57,7 +57,7 @@ beforeEach(reset);
 
 const INPUT = {
   label: 'Build box',
-  host: '10.0.0.5',
+  host: '192.0.2.5',
   port: 2222,
   username: 'ci',
   credential: { type: 'password' as const, password: 'hunter2' },
@@ -108,7 +108,7 @@ describe('addHost', () => {
     // Nothing in the keychain is plaintext.
     for (const value of Object.values(vault)) {
       expect(value).not.toContain('hunter2');
-      expect(value).not.toContain('10.0.0.5');
+      expect(value).not.toContain('192.0.2.5');
     }
     expect(Object.keys(vault).sort()).toEqual([
       'muqun.ssh.encryption-key.v1',
@@ -176,7 +176,7 @@ describe('updateHost', () => {
     await store.getState().updateHost(record.id, { ...INPUT, label: 'Renamed' });
     expect(store.getState().hosts[0].trustedHostKey).toEqual(key);
 
-    await store.getState().updateHost(record.id, { ...INPUT, host: '10.0.0.6' });
+    await store.getState().updateHost(record.id, { ...INPUT, host: '192.0.2.6' });
     expect(store.getState().hosts[0].trustedHostKey).toBeUndefined();
   });
 });

@@ -22,10 +22,9 @@ import {
 } from '@legendapp/list/react-native';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
-import { Text } from '@/components/text';
+import { Text, PressableScale } from '@osuki-dev/ui';
 import { ChevronDown, ChevronUp } from 'lucide-react-native';
 
-import { PressableScale } from '@/components/pressable-scale';
 // A type-only import, so this module never holds a runtime reference back to
 // `pane-chat-blocks` -- which imports `InlineDiffRows` from here.
 import type { PaneChatColors } from '@/components/pane-chat-blocks';
@@ -924,7 +923,7 @@ export function InlineDiffRows({
       <DiffLayoutContext.Provider value={layout}>
         <Animated.ScrollView
           horizontal
-          showsHorizontalScrollIndicator={pans}
+          showsHorizontalScrollIndicator={onGrid ? false : pans}
           onScroll={onHorizontalScroll}
           scrollEventThrottle={16}
           onLayout={onViewportLayout}

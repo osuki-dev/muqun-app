@@ -1,21 +1,25 @@
+import { assetFromLocalPdf } from '@/lib/session-assets';
+import { useQuestionComposerDraft } from '@/hooks/use-question-composer-draft';
+import { AssetViewer } from '@/components/asset-viewer';
+import type { HomeComposerOutset } from '@/theme/home-composer-outset';
 import { ComposerAttachmentButton } from '@/components/composer-attachment-button';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { CompactionPill } from '@/components/agent-compaction-pill';
+import type { CompactionActivity } from '@/lib/agent-compaction';
+import { memo, useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import {
-  NativeSyntheticEvent,
   Pressable,
   ScrollView,
   StyleSheet,
-  TextInput,
-  TextInputSelectionChangeEventData,
   useWindowDimensions,
   View,
+  type ScrollViewInstance,
+  type TextInputInstance,
+  type TextInputSelectionChangeEvent,
 } from 'react-native';
-import { Spinner, useThemeTokens, useToast } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { Spinner, useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
-  AlertCircle,
   ArrowLeft,
   CheckSquare,
   ChevronDown,
@@ -24,7 +28,6 @@ import {
   GitFork,
   Inbox,
   Layers,
-  Loader,
   Terminal,
   Square,
   Trash2,
@@ -42,7 +45,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useKeyboardState, useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { AgentRevertPlate } from '@/components/agent-revert-plate';
 import { AgentUnreadDot } from '@/components/agent-unread-dot';
@@ -52,11 +54,15 @@ import { AgentModeMenu } from '@/components/agent-mode-menu';
 import { AttachmentStrip } from '@/components/attachment-strip';
 import { ImagePreviewModal, type PreviewImage } from '@/components/image-preview-modal';
 import { GlassChrome } from '@/components/glass-chrome';
+import { TextSegment, useSegmentHitSlop, useSegmentRowLead } from '@/components/text-segment';
+import type { DockAutoHide } from '@/hooks/use-dock-auto-hide';
 import { EdgeFade } from '@/components/edge-fade';
 import { FileMentionPanel } from '@/components/file-mention-panel';
 import { ComposerPopup } from '@/components/composer-popup';
 import { useComposerPopup } from '@/hooks/use-composer-popup';
+import { useLatestReader } from '@/hooks/use-render-refs';
 import { composerChipIds } from '@/lib/agent-composer-chips';
+import { canSendAgentPrompt } from '@/lib/agent-runtime-controls';
 import { slashCommandTrigger, type PaneSlashCommand } from '@/lib/pane-composer';
 import {
   findFileMentionTrigger,
@@ -65,6 +71,14 @@ import {
   type FileMentionHit,
   type FileMentionTrigger,
 } from '@/lib/file-mentions';
+import {
+  deleteMentionAtomically,
+  mentionRanges,
+  orderMentionComputers,
+  type MentionComputer,
+  type MentionToken,
+} from '@/lib/composer-mentions';
+import { MentionSpans } from '@/components/mention-spans';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useAppActive } from '@/hooks/use-app-active';
 import { useInterfaceFontFamily } from '@/hooks/use-user-fonts';
@@ -75,15 +89,28 @@ import {
   describePickerFailure,
   isImageAttachment,
   type AttachmentSource,
+  type PendingAttachment,
+  describeBlockedSend,
+  takePickTruncationNotice,
 } from '@/lib/attachments';
-import { DURATION, fadeIn, fadeOut, fadeOutDown, listLayout, timing } from '@/lib/motion';
+import {
+  DURATION,
+  RISE_DISTANCE,
+  fadeIn,
+  fadeOut,
+  fadeOutDown,
+  listLayout,
+  timing,
+} from '@/lib/motion';
 import { appChrome } from '@/constants/appearance';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { withAlpha } from '@/lib/color';
 import type { SessionNode } from '@/lib/agent-session-tree';
 import {
   AGENT_CLIENT_COMMANDS,
+  readSkillInvocation,
   readSlashCommand,
+  skillPopupTrigger,
   type AgentClientCommandId,
 } from '@/lib/agent-commands';
 import { agentClientCommandDescription, agentHostCommandDescription } from '@/i18n/labels';
@@ -102,7 +129,6 @@ import {
   type InboxItem,
   type AgentProject,
   type AgentSessionInfo,
-  type CompactionReason,
   type FileDiffItem,
   type ModelRef,
   type SkillInfo,
@@ -111,6 +137,11 @@ import {
 } from '@/lib/agent-session';
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
+import { ComposerSendGuard } from '@/lib/composer-send-guard';
+import {
+  deliverAgentAttachmentPrompt,
+  type AgentAttachmentSendRequest,
+} from '@/lib/agent-attachment-send';
 
 /** What a root's subtasks are doing; `blocked` ones are waiting on the reader. */
 export interface SubtaskActivity {
@@ -312,8 +343,21 @@ const SessionChip = memo(function SessionChip({
   );
 });
 
+/** See `AgentComposerProps.injectDraftRef`. */
+export type DraftInjector = (
+  text: string,
+  options?: { ifEmpty?: boolean; expiredQuestionOwner?: string }
+) => boolean;
+
 export interface AgentComposerProps {
   running: boolean;
+  /** Ordinary prompt delivery only; request reply controls are independent. */
+  canSendWhileRunning?: boolean;
+  /** Queue support is independent of steering into the current turn. */
+  canQueueWhileRunning?: boolean;
+  canMentionFiles?: boolean;
+  /** A session observed elsewhere keeps its draft, but cannot send through this runtime. */
+  interactionBlockedReason?: string;
   /** Row 1 contains roots only. Descendants belong in the tree sheet. */
   sessionStrip?: readonly SessionNode[];
   selectedRootAsid?: string;
@@ -323,6 +367,11 @@ export interface AgentComposerProps {
   /** The session above the one on screen, for the way back out of a subagent. */
   parentSession?: AgentSessionInfo;
   availableAgents?: ModeInfo[];
+  /**
+   * The computers `@` offers above the files, in the order they are given
+   * (`orderMentionComputers` ranks them). Absent or empty: no Computers group.
+   */
+  mentionComputers?: readonly MentionComputer[];
   skills?: SkillInfo[];
   sessionId?: string;
   activeAsid?: string;
@@ -367,8 +416,8 @@ export interface AgentComposerProps {
   onCommitRevert?: () => void;
   onKeepRevert?: () => void;
   revertBusy?: boolean;
-  /** A compaction in flight, or one that failed and has not been read yet. */
-  compaction?: { status: 'running' | 'failed'; reason: CompactionReason } | null;
+  /** A running compaction, or terminal details not yet handed back to history. */
+  compaction?: CompactionActivity | null;
   onDismissCompaction?: () => void;
   cost?: number;
   sessionTitle?: string;
@@ -384,6 +433,8 @@ export interface AgentComposerProps {
     attachments?: string[],
     delivery?: 'steer' | 'queue'
   ) => Promise<boolean | void>;
+  /** Bind attachment delivery before uploads settle; the workbench can advance its own create. */
+  captureAttachmentSend?: () => AgentAttachmentSendRequest;
   onAbort: () => Promise<void>;
   onSelectSession?: (asid: string) => void;
   onSelectAgentMode?: (agent: string) => void;
@@ -397,6 +448,10 @@ export interface AgentComposerProps {
   canPickMode?: boolean;
   /** Whether the session's agent takes attachments. Absent means yes. */
   canAttach?: boolean;
+  /** Home uploads to its selected computer, not a temporarily connected neighbor. */
+  attachmentTargetId?: string;
+  /** Replaces the field's own invitation, e.g. to say why attaching is off. */
+  placeholder?: string;
   /** What a session chip leads with; see `lib/agent-session-chip.ts`. */
   sessionLead?: (session: AgentSessionInfo) => string | undefined;
   onOpenDiffSheet: () => void;
@@ -436,7 +491,20 @@ export interface AgentComposerProps {
    */
   onSetInboxDelivery?: (inboxId: string, delivery: 'steer' | 'queue') => void;
   onPressTokens?: () => void;
-  injectDraftRef?: React.MutableRefObject<((text: string) => void) | null>;
+  /**
+   * Puts a line into the field. With `ifEmpty`, only when the field is empty
+   * (a refused send coming back must not replace what the reader has typed
+   * since); answers whether it did.
+   */
+  injectDraftRef?: React.MutableRefObject<DraftInjector | null>;
+  draftOwnerKey?: string;
+  /**
+   * Empties the field, files included, if it still holds `text` -- what a
+   * send from elsewhere (Home's failed row) just delivered.
+   */
+  clearDraftRef?: React.MutableRefObject<((text: string) => void) | null>;
+  /** See `useAttachmentUploads`' `holdStaged`. */
+  holdStagedAttachments?: (reason: 'blur' | 'switch') => boolean;
   /**
    * The dock's height, whenever it changes.
    *
@@ -444,19 +512,87 @@ export interface AgentComposerProps {
    * much of the screen it is standing on. The empty-state card has to: it is
    * centred in the room between the header and the dock, and that room is not
    * a constant -- a session strip, a chips row and a two-line draft are all
-   * optional. It is the same measurement the popups already take, handed up.
+   * optional. The first height includes decorative overflow for scroll clearance;
+   * the second ends at the painted surface for clipping scrolling foreground.
    */
-  onDockHeight?: (height: number) => void;
+  onDockHeight?: (height: number, clipHeight: number) => void;
+  /**
+   * A line drawn as the dock's first row, inside its glass: it rides the
+   * keyboard with the dock and is counted in `onDockHeight`. Home's assignment bar -- where Send
+   * is about to go, before there is a session to say so -- is the one caller.
+   */
+  accessory?: React.ReactNode;
+  /** Keep accessory animation frames out of the parent's scroll layout; report the settled size. */
+  accessoryHeightAnimating?: boolean;
+  /** Home consolidates its choices in one control beside the attachment button. */
+  toolbarLeading?: React.ReactNode;
+  /** Optional decoration inside the draft field, behind text and controls. */
+  fieldBackground?: React.ReactNode;
+  fieldBackgroundColor?: string;
+  /** Optional bounded artwork overflow; the field and its controls remain clipped. */
+  fieldBackgroundOutset?: HomeComposerOutset;
+  fieldDecoration?: React.ReactNode;
+  fieldDecorationOverhang?: number;
+  /** The shadow the field's own plate casts; see `TerminalComposer`. */
+  fieldShadow?: string;
+  hideFieldDecoration?: boolean;
+  fieldTextTopInset?: number;
+  hideParameterRow?: boolean;
+  /** Home's field reaches the dock edges; safe-area space remains outside the surface. */
+  flushField?: boolean;
+  /** Space outside Home's surface, in addition to the current bottom safe area. */
+  outerInsets?: { horizontal: number; bottom: number };
+  /** Cancels inline dictation when the dispatch destination changes. */
+  voiceContext?: string;
+  /**
+   * The phone Home's bar: edge to edge at the foot of the screen, with the
+   * safe area inside it, the cards' corner (`chrome.surface`) on its top
+   * corners only, and its one edge on top -- the hairline `border` and the
+   * dock's upward shadow (`appChrome.shadow.composerDock`), the edge the
+   * session dock casts too. `inset` is the page gutter: the field runs from
+   * gutter to gutter, like the cards, and the text rows start at its left
+   * edge.
+   */
+  bar?: { inset: number };
+  /**
+   * Home's dock: the mode and model as a second line of text segments rather
+   * than pills, the compact spacing between the rows, and a field one line
+   * high while empty (`TerminalComposer`'s `shortPlaceholder`).
+   */
+  compact?: boolean;
+  /** The field's height while empty, in lines (one by default); it still grows to its max. */
+  fieldLines?: number;
+  /**
+   * Slide down out of view as Home's list scrolls down (`useDockAutoHide`).
+   * The dock pins itself shown while its field is focused, the keyboard is
+   * up or a send is in flight.
+   */
+  autoHide?: DockAutoHide;
+  /** Told when the field gains or loses focus (the Pad cover keeps its left column still). */
+  onFieldFocus?: (focused: boolean) => void;
+  /** Home measures the mounted dock before revealing it after its computers. */
+  revealed?: boolean;
+  /**
+   * The field's and Send's test ids. Home hosts this same dock beside a Pad
+   * workspace whose own composers keep the defaults, so it names its own.
+   */
+  inputTestID?: string;
+  sendTestID?: string;
 }
 
 export const AgentComposer = memo(function AgentComposer({
   running,
+  canSendWhileRunning = true,
+  canQueueWhileRunning = true,
+  canMentionFiles = true,
+  interactionBlockedReason,
   sessionStrip = EMPTY_STRIP,
   selectedRootAsid,
   onOpenSessionTree,
   rootSubtaskActivity,
   parentSession,
   availableAgents: availableAgentsProp,
+  mentionComputers,
   skills = [],
   sessionId,
   activeAsid,
@@ -481,6 +617,7 @@ export const AgentComposer = memo(function AgentComposer({
   cost,
   sessionTitle,
   onSend,
+  captureAttachmentSend,
   onAbort,
   onSelectSession,
   onSelectAgentMode,
@@ -491,6 +628,8 @@ export const AgentComposer = memo(function AgentComposer({
   onOpenModeSheet,
   canPickMode = true,
   canAttach = true,
+  attachmentTargetId,
+  placeholder,
   sessionLead,
   onOpenDiffSheet,
   onOpenSessionsSheet,
@@ -507,7 +646,33 @@ export const AgentComposer = memo(function AgentComposer({
   onSetInboxDelivery,
   onPressTokens,
   injectDraftRef,
+  draftOwnerKey,
+  clearDraftRef,
+  holdStagedAttachments,
   onDockHeight,
+  accessory,
+  accessoryHeightAnimating = false,
+  toolbarLeading,
+  fieldBackground,
+  fieldBackgroundColor,
+  fieldBackgroundOutset,
+  fieldDecoration,
+  fieldDecorationOverhang = 0,
+  fieldShadow,
+  hideFieldDecoration = false,
+  fieldTextTopInset,
+  hideParameterRow = false,
+  flushField = false,
+  outerInsets,
+  voiceContext,
+  bar,
+  compact = false,
+  fieldLines,
+  autoHide,
+  onFieldFocus,
+  revealed = true,
+  inputTestID = 'agent-composer-input',
+  sendTestID,
 }: AgentComposerProps) {
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
@@ -523,10 +688,10 @@ export const AgentComposer = memo(function AgentComposer({
    * monospace slot on its own `TextInput`, correctly: a shell line is a
    * literal and its alignment is part of what it says. This composer reuses
    * the same component for something else entirely. "Send a message, type /
-   * for commands, @ for files…" is a sentence, and it was being drawn in a
-   * typewriter face beside a transcript set in the reader's own. The
-   * placeholder is where a reader meets that first, for the ordinary reason
-   * that an empty field is nothing but its placeholder.
+   * for commands, $ for skills, @ for files…" is a sentence, and it was
+   * being drawn in a typewriter face beside a transcript set in the reader's
+   * own. The placeholder is where a reader meets that first, for the ordinary
+   * reason that an empty field is nothing but its placeholder.
    *
    * The composer merges its family ahead of `inputProps.style` precisely so a
    * caller can say otherwise, and this is the caller that has to. A family and
@@ -538,19 +703,35 @@ export const AgentComposer = memo(function AgentComposer({
    * out would let the mono family underneath stand.
    */
   const interfaceFontFamily = useInterfaceFontFamily() ?? undefined;
-  const [text, setText] = useState('');
+  const { text, setText, appendAnswer } = useQuestionComposerDraft(draftOwnerKey ?? 'shared');
   /**
    * One answer to "what is this agent called", for the chip strip and the
    * action row alike. The catalogue's name when the host publishes one, the id
    * otherwise -- a reader's own agent under `.opencode/agent` often has no
    * other name, and an id is still the truth about it.
    */
+  // The mode as the chips name it: the catalog's display name when it has
+  // one, else the bare id with its first letter raised (`standard` →
+  // `Standard`; ids are ASCII, so no locale is involved).
+  const modeLabel = (id: string) =>
+    availableAgentsProp?.find((agent) => agent.id === id)?.name ||
+    id.charAt(0).toUpperCase() + id.slice(1);
   const nameOfAgent = useCallback(
     (id: string) => availableAgentsProp?.find((agent) => agent.id === id)?.name || id,
     [availableAgentsProp]
   );
   const [sending, setSending] = useState(false);
-  const [deliveryMode, setDeliveryMode] = useState<'steer' | 'queue'>('steer');
+  const [attachmentSendGuard] = useState(() => new ComposerSendGuard());
+  const [pendingAttachmentSend, setPendingAttachmentSend] = useState<{
+    request: AgentAttachmentSendRequest;
+    token: symbol;
+    delivery: 'steer' | 'queue' | undefined;
+    submittedAttachments?: PendingAttachment[];
+  } | null>(null);
+  const promptAllowed =
+    !interactionBlockedReason && canSendAgentPrompt(running, canSendWhileRunning);
+  const [requestedDeliveryMode, setDeliveryMode] = useState<'steer' | 'queue'>('steer');
+  const deliveryMode = canQueueWhileRunning ? requestedDeliveryMode : 'steer';
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
   const [inboxOpen, setInboxOpen] = useState(false);
@@ -560,23 +741,27 @@ export const AgentComposer = memo(function AgentComposer({
   // Session spend cannot substitute for the latest context measurement.
   const contextPill = useMemo(() => {
     const live = contextUsage?.tokens ?? null;
-    const total = contextTokenTotal(live);
+    const total = contextUsage?.total_tokens ?? contextTokenTotal(live);
     if (total <= 0) return null;
-    const ratio = live ? contextFillRatio(live, contextLimit) : null;
+    const ratio = contextFillRatio(
+      live,
+      contextUsage?.limit?.context ?? contextLimit,
+      contextUsage?.total_tokens
+    );
     let tokStr = `${total}`;
     if (total >= 1_000_000) tokStr = `${(total / 1_000_000).toFixed(1)}M`;
     else if (total >= 1_000) tokStr = `${(total / 1_000).toFixed(1)}k`;
     const costStr =
-      cost === undefined || cost === null || cost === 0 ? t`Free` : `$${cost.toFixed(2)}`;
-    return { label: `${tokStr} • ${costStr}`, ratio };
+      cost === undefined || cost === null ? null : cost === 0 ? t`Free` : `$${cost.toFixed(2)}`;
+    return { label: costStr === null ? tokStr : `${tokStr} • ${costStr}`, ratio };
   }, [contextUsage, contextLimit, cost, t]);
 
   const modelDisplayName = useMemo(
-    () => modelName || formatModelName(selectedModel),
-    [modelName, selectedModel]
+    () => modelName || formatModelName(selectedModel, t`Model`),
+    [modelName, selectedModel, t]
   );
 
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<TextInputInstance>(null);
   const [caret, setCaret] = useState<number | undefined>(undefined);
   const [mentionHits, setMentionHits] = useState<FileMentionHit[]>([]);
 
@@ -584,22 +769,62 @@ export const AgentComposer = memo(function AgentComposer({
   const chromeGlass = withAlpha(theme.colors.text, appChrome.opacity.chromeControl);
 
   const record = useGatewayConnectionStore((state) => state.record);
-  const attachmentUploads = useAttachmentUploads(record);
+  const attachmentUploads = useAttachmentUploads(record, undefined, holdStagedAttachments);
+  const { clearAttachments } = attachmentUploads;
+  const readStagedAttachments = useLatestReader(attachmentUploads.attachments);
+  const submittingAttachments = Boolean(
+    sending && pendingAttachmentSend && !pendingAttachmentSend.submittedAttachments
+  );
+  // Only staged files belong in the composer. An ACK clears them through the
+  // owned submission callback; it does not establish a canonical timeline row.
+  const visibleAttachments = attachmentUploads.attachments;
 
-  // Staged image preview, the same viewer the terminal dock uses: only images
-  // can open full screen, so the tapped chip's position is resolved within
-  // that subset.
+  // Staged images page in the lightbox; device-picked PDFs use the file viewer.
   const [previewAttachmentId, setPreviewAttachmentId] = useState<string | null>(null);
   const previewImages = useMemo<PreviewImage[]>(
     () =>
-      attachmentUploads.attachments
+      visibleAttachments
         .filter((item) => isImageAttachment(item.mime))
         .map((item) => ({ id: item.id, uri: item.localUri })),
-    [attachmentUploads.attachments]
+    [visibleAttachments]
+  );
+  const previewPdf = assetFromLocalPdf(
+    visibleAttachments.find((item) => item.id === previewAttachmentId)
   );
   const previewIndex = previewAttachmentId
     ? previewImages.findIndex((item) => item.id === previewAttachmentId)
     : -1;
+
+  useEffect(() => {
+    // A source change discards only this still-locked source's staged files. Its late
+    // ACK/error cannot clear a replacement draft or end a newer request. An
+    // owned first-session create advances the captured owner and keeps it.
+    if (!pendingAttachmentSend || pendingAttachmentSend.request.isCurrent()) return;
+    const wasSending = attachmentSendGuard.release(pendingAttachmentSend.token);
+    if (wasSending || pendingAttachmentSend.submittedAttachments) {
+      setPendingAttachmentSend(null);
+      setPreviewAttachmentId(null);
+      if (wasSending) {
+        setSending(false);
+        clearAttachments();
+      }
+    }
+  }, [
+    draftOwnerKey,
+    activeDirectory,
+    record,
+    pendingAttachmentSend,
+    attachmentSendGuard,
+    clearAttachments,
+  ]);
+  useEffect(() => () => attachmentSendGuard.reset(), [attachmentSendGuard]);
+
+  const removeStagedAttachment = (id: string) => {
+    if (!attachmentSendGuard.isPending()) attachmentUploads.removeAttachment(id);
+  };
+  const retryStagedAttachment = (id: string) => {
+    if (!attachmentSendGuard.isPending()) attachmentUploads.retryUpload(id);
+  };
 
   /**
    * The app's own commands, and the host's.
@@ -660,10 +885,17 @@ export const AgentComposer = memo(function AgentComposer({
     [skills]
   );
 
-  const slashCatalog = useMemo(
-    () => [...builtinCommands, ...serverCommands, ...skillCommands],
-    [builtinCommands, serverCommands, skillCommands]
-  );
+  const slashCatalog = useMemo(() => {
+    const seen = new Set<string>();
+    const rows = [];
+    for (const command of [...builtinCommands, ...serverCommands, ...skillCommands]) {
+      const key = command.name.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      rows.push(command);
+    }
+    return rows;
+  }, [builtinCommands, serverCommands, skillCommands]);
   const slashTrigger = useMemo(() => slashCommandTrigger(slashCatalog), [slashCatalog]);
 
   /**
@@ -687,6 +919,8 @@ export const AgentComposer = memo(function AgentComposer({
           hasContextPill: Boolean(contextPill),
           hasDiffs: Boolean(hasDiffs),
           running,
+          canSendWhileRunning,
+          canQueueWhileRunning,
         })
       ),
     [
@@ -701,6 +935,8 @@ export const AgentComposer = memo(function AgentComposer({
       contextPill,
       hasDiffs,
       running,
+      canSendWhileRunning,
+      canQueueWhileRunning,
     ]
   );
 
@@ -708,6 +944,14 @@ export const AgentComposer = memo(function AgentComposer({
     draft: text,
     onDraftChange: setText,
     trigger: slashTrigger,
+  });
+  // Every skill the screen was given, not only the slash menu's subset. An
+  // empty list leaves `$` as a plain character.
+  const skillTrigger = useMemo(() => skillPopupTrigger(skills ?? []), [skills]);
+  const skillPopup = useComposerPopup({
+    draft: text,
+    onDraftChange: setText,
+    trigger: skillTrigger,
   });
 
   // File mentions (@) trigger
@@ -719,7 +963,7 @@ export const AgentComposer = memo(function AgentComposer({
   const mentionQuery = mentionTrigger?.query ?? null;
 
   useEffect(() => {
-    if (mentionQuery === null) {
+    if (mentionQuery === null || !canMentionFiles) {
       setMentionHits([]);
       return;
     }
@@ -734,7 +978,80 @@ export const AgentComposer = memo(function AgentComposer({
     return () => {
       active = false;
     };
-  }, [mentionQuery, sessionId, activeAsid]);
+  }, [mentionQuery, sessionId, activeAsid, canMentionFiles]);
+
+  // Which words of the draft are mentions: every computer this composer
+  // offers (typed by hand or picked) and the file paths picked in this draft.
+  const [fileTokens, setFileTokens] = useState<readonly string[]>([]);
+  useEffect(() => {
+    if (!text) setFileTokens((current) => (current.length ? [] : current));
+  }, [text]);
+  const mentionTokens = useMemo<MentionToken[]>(
+    () => [
+      ...(mentionComputers ?? []).map((computer) => ({
+        text: `@${computer.name}`,
+        kind: 'computer' as const,
+      })),
+      ...fileTokens.map((path) => ({ text: path, kind: 'file' as const })),
+    ],
+    [mentionComputers, fileTokens]
+  );
+  const ranges = useMemo(() => mentionRanges(text, mentionTokens), [text, mentionTokens]);
+  // The caret after a pick or an atomic delete, held for exactly the render
+  // that shows it (the `useComposerPopup` rule: a permanently controlled
+  // selection fights the user on Android).
+  const [heldCaret, setHeldCaretState] = useState<{ draft: string; caret: number } | null>(null);
+  // The same caret, readable from the native selection callback, which can
+  // run before the render that set it (Android reports the old caret first).
+  const heldCaretRef = useRef<{ draft: string; caret: number } | null>(null);
+  const setHeldCaret = (next: { draft: string; caret: number } | null) => {
+    heldCaretRef.current = next;
+    setHeldCaretState(next);
+  };
+  const changeText = (next: string) => {
+    const whole = deleteMentionAtomically(text, next, ranges, effectiveCaret);
+    if (whole) {
+      setText(whole.text);
+      setCaret(whole.caret);
+      setHeldCaret({ draft: whole.text, caret: whole.caret });
+      return;
+    }
+    setText(next);
+  };
+  // Android can apply the new text after the `selection` prop of the same
+  // render and leave its own caret; place it once more after the commit.
+  useEffect(() => {
+    if (!heldCaret || heldCaret.draft !== text) return;
+    const place = () => inputRef.current?.setSelection(heldCaret.caret, heldCaret.caret);
+    place();
+    // Once more after the native text update has landed (a frame later),
+    // then let go: the reader's own caret moves are theirs again.
+    const timer = setTimeout(() => {
+      place();
+      heldCaretRef.current = null;
+    }, CARET_SETTLE_MS);
+    return () => clearTimeout(timer);
+  }, [heldCaret, text]);
+  const selection =
+    heldCaret && heldCaret.draft === text
+      ? { start: heldCaret.caret, end: heldCaret.caret }
+      : (skillPopup.inputProps.selection ?? slashPopup.inputProps.selection);
+  // Span mode starts as soon as a mention can appear (an `@` or a token in the
+  // draft), so the field switches from `value` to spans on a keystroke rather
+  // than in the same commit as a pick -- Android drops the first colouring
+  // otherwise.
+  const spans =
+    ranges.length > 0 || (mentionTokens.length > 0 && text.includes('@')) ? (
+      <MentionSpans text={text} ranges={ranges} />
+    ) : undefined;
+
+  const offeredComputers = useMemo(
+    () =>
+      mentionTrigger && mentionComputers?.length
+        ? orderMentionComputers(mentionComputers, mentionTrigger.query)
+        : [],
+    [mentionComputers, mentionTrigger]
+  );
 
   const chooseMention = useCallback(
     (hit: FileMentionHit) => {
@@ -742,27 +1059,56 @@ export const AgentComposer = memo(function AgentComposer({
       const next = insertFileMention(text, mentionTrigger, hit.path);
       setText(next.text);
       setCaret(next.caret);
+      setHeldCaret({ draft: next.text, caret: next.caret });
+      setFileTokens((current) => (current.includes(hit.path) ? current : [...current, hit.path]));
       setMentionHits([]);
     },
-    [text, mentionTrigger]
+    [text, mentionTrigger, setText]
   );
+  const chooseComputer = (computer: MentionComputer) => {
+    if (!mentionTrigger || !computer.reachable) return;
+    const next = insertFileMention(text, mentionTrigger, `@${computer.name}`);
+    setText(next.text);
+    setCaret(next.caret);
+    setHeldCaret({ draft: next.text, caret: next.caret });
+  };
 
   const handleSelectionChange = useCallback(
-    (event: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => {
+    (event: TextInputSelectionChangeEvent) => {
       const next = event.nativeEvent.selection.start;
+      // A held caret stays until the field reports it: Android applies the
+      // new text after the selection of the same commit and moves its own
+      // caret, which would otherwise be taken as where the reader put it.
+      const held = heldCaretRef.current;
+      if (held && next !== held.caret) {
+        inputRef.current?.setSelection(held.caret, held.caret);
+        return;
+      }
       setCaret(next);
+      setHeldCaret(null);
       slashPopup.inputProps.onSelectionChange(event);
+      skillPopup.inputProps.onSelectionChange(event);
     },
-    [slashPopup.inputProps]
+    [slashPopup.inputProps, skillPopup.inputProps]
   );
 
   const chooseAttachmentSource = useCallback(
     (source: AttachmentSource) => {
       setAttachmentMenuOpen(false);
+      if (
+        attachmentTargetId !== undefined &&
+        useGatewayConnectionStore.getState().record?.serverId !== attachmentTargetId
+      )
+        return;
       const picker = attachmentUploads.capturePicker();
       if (!picker.isCurrent()) return;
       void pickAttachments(source)
-        .then(picker.addFiles)
+        .then((files) => {
+          picker.addFiles(files);
+          const cut = takePickTruncationNotice();
+          if (cut && picker.isCurrent())
+            showToast({ variant: 'warning', title: t`Not every file was added`, message: cut });
+        })
         .catch((failure: unknown) => {
           if (!picker.isCurrent()) return;
           showToast({
@@ -772,22 +1118,31 @@ export const AgentComposer = memo(function AgentComposer({
           });
         });
     },
-    [attachmentUploads, showToast, t]
+    [attachmentUploads, attachmentTargetId, showToast, t]
   );
 
+  const readText = useLatestReader(text);
   useEffect(() => {
     if (injectDraftRef) {
-      injectDraftRef.current = (draftText: string) => {
+      injectDraftRef.current = (draftText, options) => {
+        if (options?.expiredQuestionOwner) {
+          if (options.expiredQuestionOwner !== draftOwnerKey) return false;
+          appendAnswer(draftText);
+          return true;
+        }
+        if (options?.ifEmpty && readText().trim()) return false;
         setText(draftText);
         setTimeout(() => inputRef.current?.focus(), 50);
+        return true;
       };
     }
-  }, [injectDraftRef]);
+  }, [injectDraftRef, readText, draftOwnerKey, appendAnswer, setText]);
 
   const handleSend = useCallback(async () => {
     const trimmed = text.trim();
     const hasAttachments = attachmentUploads.attachments.length > 0;
-    if ((!trimmed && !hasAttachments) || sending) return;
+    if ((!trimmed && !hasAttachments) || sending || interactionBlockedReason) return;
+    setPendingAttachmentSend((previous) => (previous?.submittedAttachments ? null : previous));
 
     // A slash command is a command. It used to be sent as the literal text it
     // was typed as, and whatever the model made of it was the result.
@@ -798,14 +1153,19 @@ export const AgentComposer = memo(function AgentComposer({
         setText('');
         return;
       }
-      if (parsed?.kind === 'skill' && onInvokeSkill) {
+      const skillCall =
+        parsed?.kind === 'skill'
+          ? { name: parsed.name, args: parsed.args }
+          : readSkillInvocation(trimmed, skills);
+      if (skillCall && onInvokeSkill) {
         // The draft stays put until the engine has taken it: a skill the
         // gateway refused with the composer already emptied is a line the
-        // reader has to remember and retype.
+        // reader has to remember and retype. `$id` and `$id args` use this
+        // same path; `/` still only matches skills the catalog marks slash.
         setSending(true);
         await settleAfter(
           async () => {
-            const accepted = await onInvokeSkill(parsed.name, parsed.args);
+            const accepted = await onInvokeSkill(skillCall.name, skillCall.args);
             if (accepted === false) return;
             setText('');
           },
@@ -822,6 +1182,59 @@ export const AgentComposer = memo(function AgentComposer({
       }
     }
 
+    if (!promptAllowed || disabled) return;
+    if (hasAttachments && captureAttachmentSend) {
+      const token = attachmentSendGuard.acquire();
+      if (!token) return;
+      const captured = captureAttachmentSend();
+      const request = {
+        ...captured,
+        isCurrent: () => attachmentSendGuard.owns(token) && captured.isCurrent(),
+      };
+      const delivery = running ? deliveryMode : undefined;
+      setPendingAttachmentSend({ request: captured, token, delivery });
+      setSending(true);
+      return settleAfter(
+        async () => {
+          const result = await deliverAgentAttachmentPrompt(
+            request,
+            trimmed,
+            attachmentUploads.awaitUploads,
+            () => {
+              const submittedAttachments = readStagedAttachments().map((item) =>
+                item.status === 'done' ? item : { ...item, status: 'done' as const }
+              );
+              setPendingAttachmentSend((previous) =>
+                previous?.token === token ? { ...previous, submittedAttachments } : previous
+              );
+              setText((current) => (current.trim() === trimmed ? '' : current));
+              attachmentUploads.clearAttachments();
+            },
+            delivery
+          );
+          if (result === 'upload-failed') {
+            showToast({
+              variant: 'danger',
+              title: t`Upload failed`,
+              message: t`Please retry or remove failed attachments.`,
+            });
+          } else if (result === 'obsolete' && attachmentSendGuard.owns(token)) {
+            // A late result can beat the source-change effect. The field is
+            // still locked by this request, so discard only its old staged files.
+            attachmentUploads.clearAttachments();
+            setPreviewAttachmentId(null);
+          }
+        },
+        () => {
+          if (attachmentSendGuard.release(token)) {
+            setPendingAttachmentSend((previous) =>
+              previous?.token === token && !previous.submittedAttachments ? null : previous
+            );
+            setSending(false);
+          }
+        }
+      );
+    }
     setSending(true);
     return settleAfter(
       async () => {
@@ -832,10 +1245,19 @@ export const AgentComposer = memo(function AgentComposer({
             showToast({
               variant: 'danger',
               title: t`Upload failed`,
-              message: t`Please retry or remove failed attachments.`,
+              message: describeBlockedSend(attachmentUploads.attachments),
             });
             return;
           }
+          // Switching computers during an upload must not dispatch old host
+          // paths to the replacement destination, or silently drop the files.
+          if (
+            attachmentTargetId !== undefined &&
+            (paths.length === 0 ||
+              record?.serverId !== attachmentTargetId ||
+              useGatewayConnectionStore.getState().record !== record)
+          )
+            return;
           uploadedFilePaths = paths;
         }
         const accepted = await onSend(
@@ -855,9 +1277,19 @@ export const AgentComposer = memo(function AgentComposer({
     );
   }, [
     text,
+    setText,
     attachmentUploads,
+    attachmentTargetId,
+    record,
     sending,
+    promptAllowed,
+    interactionBlockedReason,
+    disabled,
     onSend,
+    captureAttachmentSend,
+    attachmentSendGuard,
+    readStagedAttachments,
+    setPreviewAttachmentId,
     showToast,
     t,
     running,
@@ -868,6 +1300,18 @@ export const AgentComposer = memo(function AgentComposer({
     onInvokeSkill,
     onClientCommand,
   ]);
+
+  useEffect(() => {
+    if (!clearDraftRef) return;
+    clearDraftRef.current = (sent) => {
+      if (readText().trim() !== sent.trim()) return;
+      setText('');
+      attachmentUploads.clearAttachments();
+    };
+    return () => {
+      clearDraftRef.current = null;
+    };
+  }, [clearDraftRef, readText, attachmentUploads, setText]);
 
   /**
    * What can be done to one queued prompt.
@@ -957,7 +1401,7 @@ export const AgentComposer = memo(function AgentComposer({
    * chip reports where it sits; when the active one changes, the strip scrolls
    * it to the left edge.
    */
-  const sessionStripRef = useRef<ScrollView>(null);
+  const sessionStripRef = useRef<ScrollViewInstance>(null);
   const chipOffsetsRef = useRef<Record<string, { x: number; width: number }>>({});
   const measureChip = useCallback((asid: string, x: number, width: number) => {
     chipOffsetsRef.current[asid] = { x, width };
@@ -980,8 +1424,21 @@ export const AgentComposer = memo(function AgentComposer({
   }, [selectedRootAsid]);
 
   const { height: keyboardOffset } = useReanimatedKeyboardAnimation();
+  const revealProgress = useSharedValue(revealed ? 1 : 0);
+  useEffect(() => {
+    const target = revealed ? 1 : 0;
+    if (revealProgress.get() !== target) revealProgress.set(withTiming(target, timing('micro')));
+  }, [revealed, revealProgress]);
   const composerKeyboardStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: keyboardOffset.value }],
+    opacity: revealProgress.get(),
+    transform: [
+      {
+        translateY:
+          keyboardOffset.get() +
+          (autoHide?.offset.get() ?? 0) +
+          (1 - revealProgress.get()) * RISE_DISTANCE,
+      },
+    ],
   }));
 
   /**
@@ -995,18 +1452,99 @@ export const AgentComposer = memo(function AgentComposer({
    */
   const { height: windowHeight } = useWindowDimensions();
   const keyboardHeight = useKeyboardState((state) => state.height);
-  const [dockHeight, setDockHeight] = useState(0);
+  const safeAreaFoot = flushField && keyboardHeight === 0 ? bottomInset : 0;
+  const dockFoot = safeAreaFoot + (outerInsets?.bottom ?? 0);
+  const [surfaceHeight, setSurfaceHeight] = useState(0);
+  const [compactionRowHeight, setCompactionRowHeight] = useState(0);
+  const compactionClearance = compaction ? compactionRowHeight : 0;
+  const [voiceActive, setVoiceActive] = useState(false);
+  const decorationHidden =
+    hideFieldDecoration ||
+    attachmentUploads.attachments.length > 0 ||
+    attachmentMenuOpen ||
+    modeMenuOpen ||
+    inboxOpen ||
+    slashPopup.open ||
+    skillPopup.open ||
+    Boolean(mentionTrigger);
+  const decorationClearance =
+    fieldDecoration && !decorationHidden && !voiceActive ? fieldDecorationOverhang : 0;
+  const dockHeight = surfaceHeight + dockFoot;
+  // The status row occupies transcript space, but does not move the material's clip edge.
+  const reportDockHeight = useEffectEvent((height: number, clipHeight: number) =>
+    onDockHeight?.(height + compactionClearance, clipHeight)
+  );
+  // Local height still bounds popups. Forwarding each animated accessory frame
+  // to Home also changes its scroll padding and clipping, feeding the reveal
+  // through another React/layout pass. Publish the latest height once it lands.
+  useEffect(() => {
+    if (surfaceHeight > 0 && !accessoryHeightAnimating)
+      reportDockHeight(dockHeight + decorationClearance, dockHeight);
+  }, [
+    surfaceHeight,
+    dockHeight,
+    decorationClearance,
+    compactionClearance,
+    accessoryHeightAnimating,
+  ]);
   const [inputRowHeight, setInputRowHeight] = useState(0);
   const popupMaxHeight = Math.max(
     POPUP_MIN_HEIGHT,
-    windowHeight - keyboardHeight - dockHeight - topInset - POPUP_HEADER_GAP
+    windowHeight - keyboardHeight - dockHeight - compactionClearance - topInset - POPUP_HEADER_GAP
   );
-  /** The dock's own bottom padding, which the anchored menu has to clear too. */
-  const dockBottomPadding = Math.max(10, bottomInset + 6);
+  // The compact dock's second line holds the two choices that define a new
+  // turn and nothing else; Home has no running turn, queue or diff to show.
+  const [segmentMode, segmentModel] = (['mode', 'model'] as const).map(
+    (id) => compact && chipIds.has(id)
+  );
+  const [focused, setFocused] = useState(false);
+  const keyboardOpen = keyboardHeight > 0;
+  const reportFocus = useEffectEvent((next: boolean) => onFieldFocus?.(next));
+  useEffect(() => {
+    reportFocus(focused);
+  }, [focused]);
+  // A dock that goes while focused has lost its focus too.
+  useEffect(() => () => reportFocus(false), []);
+  useEffect(() => {
+    autoHide?.setPinned(focused || keyboardOpen || sending);
+  }, [autoHide, focused, keyboardOpen, sending]);
+  const segmentRowLead = useSegmentRowLead();
+  const segmentHitSlop = useSegmentHitSlop();
+  const toggleMode = () => {
+    setAttachmentMenuOpen(false);
+    if (onOpenModeSheet) {
+      setModeMenuOpen(false);
+      onOpenModeSheet();
+    } else {
+      // A second press closes the menu it opened.
+      setModeMenuOpen((prev) => !prev);
+    }
+  };
+  /** What sits under the field inside the glass. */
+  // Session docks carry the safe area inside their material. Home's single
+  // field keeps it outside, so the safe area cannot reintroduce a white rim.
+  const innerBottomPadding = flushField
+    ? 0
+    : bar
+      ? Math.max(theme.spacing.sm, keyboardHeight > 0 ? 0 : bottomInset)
+      : Math.max(10, bottomInset + 6);
+  /** From the dock's foot to the field's, which the anchored menu has to clear too. */
+  const dockBottomPadding = innerBottomPadding + dockFoot;
 
   return (
-    <Animated.View style={[styles.dockOuter, composerKeyboardStyle]}>
-      <EdgeFade edge="bottom" color={theme.colors.background} style={styles.composerFade} />
+    <Animated.View
+      pointerEvents={revealed ? 'auto' : 'none'}
+      accessibilityElementsHidden={!revealed}
+      importantForAccessibility={revealed ? 'auto' : 'no-hide-descendants'}
+      style={[
+        styles.dockOuter,
+        composerKeyboardStyle,
+        outerInsets && { left: outerInsets.horizontal, right: outerInsets.horizontal },
+        { paddingBottom: dockFoot },
+      ]}>
+      {bar ? null : (
+        <EdgeFade edge="bottom" color={theme.colors.background} style={styles.composerFade} />
+      )}
 
       {/*
         Dismiss backdrop for popups.
@@ -1168,10 +1706,13 @@ export const AgentComposer = memo(function AgentComposer({
       ) : null}
 
       {/* File mention (@) floating list */}
-      {mentionTrigger && mentionHits.length > 0 ? (
+      {mentionTrigger &&
+      (offeredComputers.length > 0 || (canMentionFiles && mentionHits.length > 0)) ? (
         <View style={styles.composerFloatingContent}>
           <FileMentionPanel
-            hits={mentionHits}
+            hits={canMentionFiles ? mentionHits : []}
+            computers={offeredComputers}
+            onSelectComputer={chooseComputer}
             query={mentionTrigger.query}
             onSelect={chooseMention}
             scope="project"
@@ -1192,6 +1733,19 @@ export const AgentComposer = memo(function AgentComposer({
         </View>
       ) : null}
 
+      {/* Skills ($) floating list. `#` can take this same slot later. */}
+      {skillPopup.open ? (
+        <View style={styles.composerPopup}>
+          <ComposerPopup
+            rows={skillPopup.rows}
+            onPick={skillPopup.pick}
+            maxHeight={popupMaxHeight}
+            testIDPrefix="skill"
+            scope="project"
+          />
+        </View>
+      ) : null}
+
       {/* What a staged rollback would take, and the two words that decide it.
           Above the dock, where the reader's hands already are. */}
       {revert && onCommitRevert && onKeepRevert ? (
@@ -1204,26 +1758,62 @@ export const AgentComposer = memo(function AgentComposer({
         />
       ) : null}
 
-      {/* A compaction in flight. Transient, above the dock, and gone the
-          moment the boundary lands in the timeline as a row of its own. */}
-      {compaction ? (
-        <CompactionPill
-          status={compaction.status}
-          reason={compaction.reason}
-          {...(onDismissCompaction ? { onDismiss: onDismissCompaction } : {})}
-        />
-      ) : null}
+      {/* Real streamed details stay accessible until the completed summary
+          lands in the timeline, or the reader dismisses the terminal notice. */}
+      <View
+        onLayout={(event) => {
+          const { height } = event.nativeEvent.layout;
+          setCompactionRowHeight(height);
+        }}>
+        {compaction ? (
+          <CompactionPill
+            key={compaction.startedSeq}
+            activity={compaction}
+            {...(onDismissCompaction ? { onDismiss: onDismissCompaction } : {})}
+          />
+        ) : null}
+      </View>
 
       {/* The wrapper is here to be measured: `GlassChrome` is a material and
           takes no `onLayout` of its own. */}
       <View
         onLayout={(event) => {
           const { height } = event.nativeEvent.layout;
-          setDockHeight(height);
-          onDockHeight?.(height);
-        }}>
-        <GlassChrome surface="composer" shape="sheet" style={styles.composerDock}>
-          <View style={[styles.composerInner, { paddingBottom: dockBottomPadding }]}>
+          setSurfaceHeight(height);
+        }}
+        // Enclosing bars cast their shadow outside the clipped material.
+        // Home's field owns its plate; leave the ornament above it transparent.
+        style={
+          bar &&
+          !flushField && {
+            borderTopLeftRadius: profile.chrome.surface,
+            borderTopRightRadius: profile.chrome.surface,
+            boxShadow: appChrome.shadow.composerDock,
+          }
+        }>
+        <ComposerSurface
+          flushField={flushField}
+          surface="composer"
+          borderless
+          shape={flushField ? 'composerField' : bar ? 'none' : 'sheet'}
+          style={[
+            styles.composerDock,
+            bar &&
+              !flushField && {
+                borderTopLeftRadius: profile.chrome.surface,
+                borderTopRightRadius: profile.chrome.surface,
+              },
+          ]}>
+          <View
+            style={[
+              styles.composerInner,
+              { paddingBottom: innerBottomPadding },
+              // Above row 1, the same step as under the field.
+              compact && { paddingTop: theme.spacing.sm },
+              bar && { paddingHorizontal: bar.inset },
+              flushField && { paddingHorizontal: 0, paddingTop: 0 },
+            ]}>
+            {accessory}
             {/* Row 1: roots only. Tapping the current root opens its tree. */}
             {sessionStrip.length > 0 ? (
               <ScrollView
@@ -1280,394 +1870,512 @@ export const AgentComposer = memo(function AgentComposer({
             fade says there is more, and the content's own right padding keeps
             the last chip whole under it.
           */}
-            <View style={styles.actionRowViewport}>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.actionRowContent}
-                style={styles.actionRowScroll}>
-                {/* All-sessions button (icon only) */}
-                {chipIds.has('sessions') ? (
-                  <PressableScale
-                    testID="agent-composer-sessions-btn"
-                    onPress={onOpenSessionsSheet}
-                    accessibilityRole="button"
-                    accessibilityLabel={t`All sessions`}
-                    style={[
-                      styles.actionBtn,
-                      { borderRadius: profile.chrome.roundControl },
-                      { backgroundColor: surfaceBackground(chromeGlass) },
-                    ]}>
-                    <Layers size={16} color={chromeText} />
-                  </PressableScale>
-                ) : null}
-
-                {/* Quick Agent Mode Popover Button */}
-                {chipIds.has('mode') ? (
-                  <PressableScale
+            {hideParameterRow ? null : compact ? (
+              // The quiet line: caption type in the subtle tone, under row 1's
+              // body-size primary line, then the compact gap to the field.
+              // One step more to the field than between the two text rows:
+              // the field is a different thing.
+              <View style={[styles.segmentRow, segmentRowLead, { marginBottom: theme.spacing.sm }]}>
+                {segmentMode ? (
+                  <TextSegment
                     testID="agent-composer-mode-btn"
-                    onPress={() => {
-                      setAttachmentMenuOpen(false);
-                      setModeMenuOpen(false);
-                      if (onOpenModeSheet) {
-                        onOpenModeSheet();
-                      } else {
-                        setModeMenuOpen((prev) => !prev);
-                      }
-                    }}
+                    hitSlop={segmentHitSlop.next}
+                    onPress={toggleMode}
                     accessibilityRole="button"
-                    accessibilityLabel={t`Select agent mode`}
-                    style={[
-                      styles.actionBtnWithLabel,
-                      { borderRadius: profile.chrome.roundControl },
-                      modeMenuOpen && { borderColor: theme.colors.primary, borderWidth: 1 },
-                      { backgroundColor: surfaceBackground(chromeGlass) },
-                    ]}>
-                    <Text variant="caption" color={theme.colors.text} style={styles.actionBtnLabel}>
-                      {nameOfAgent(selectedAgent ?? 'build')}
+                    accessibilityLabel={t`Select agent mode`}>
+                    <Text
+                      variant="caption"
+                      numberOfLines={1}
+                      color={modeMenuOpen ? theme.colors.primary : theme.colors.textSubtle}>
+                      {modeLabel(selectedAgent ?? 'build')}
                     </Text>
-                    <ChevronDown size={12} color={theme.colors.textMuted} />
-                  </PressableScale>
+                    <ChevronDown size={QUIET_CHEVRON} color={theme.colors.textSubtle} />
+                  </TextSegment>
                 ) : null}
-
-                {/* Quick Model Selector Button */}
-                {chipIds.has('model') ? (
-                  <PressableScale
+                {segmentModel ? (
+                  <TextSegment
                     testID="agent-composer-model-btn"
+                    hitSlop={segmentHitSlop.next}
                     onPress={onOpenModelSheet}
                     accessibilityRole="button"
-                    accessibilityLabel={t`Select model: ${modelDisplayName}`}
-                    style={[
-                      styles.actionBtnWithLabel,
-                      { borderRadius: profile.chrome.roundControl },
-                      { backgroundColor: surfaceBackground(chromeGlass) },
-                    ]}>
-                    <Text variant="caption" color={theme.colors.text} style={styles.actionBtnLabel}>
-                      {modelDisplayName}
+                    accessibilityLabel={t`Select model: ${modelDisplayName}`}>
+                    <Text variant="caption" numberOfLines={1} color={theme.colors.textSubtle}>
+                      {segmentMode ? `· ${modelDisplayName}` : modelDisplayName}
                     </Text>
-                    <ChevronDown size={12} color={theme.colors.textMuted} />
-                  </PressableScale>
+                    <ChevronDown size={QUIET_CHEVRON} color={theme.colors.textSubtle} />
+                  </TextSegment>
                 ) : null}
+              </View>
+            ) : (
+              <View style={styles.actionRowViewport}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.actionRowContent}
+                  style={styles.actionRowScroll}>
+                  {/* All-sessions button (icon only) */}
+                  {chipIds.has('sessions') ? (
+                    <PressableScale
+                      testID="agent-composer-sessions-btn"
+                      onPress={onOpenSessionsSheet}
+                      accessibilityRole="button"
+                      accessibilityLabel={t`All sessions`}
+                      style={[
+                        styles.actionBtn,
+                        { borderRadius: profile.chrome.roundControl },
+                        { backgroundColor: surfaceBackground(chromeGlass) },
+                      ]}>
+                      <Layers size={16} color={chromeText} />
+                    </PressableScale>
+                  ) : null}
 
-                {/* The queue, as the gateway last stated it */}
-                {chipIds.has('inbox') ? (
-                  <PressableScale
-                    testID="agent-composer-inbox-pill"
-                    onPress={() => setInboxOpen((open) => !open)}
-                    accessibilityRole="button"
-                    accessibilityState={{ expanded: inboxOpen }}
-                    accessibilityLabel={t`${inbox.length} queued`}
-                    style={[
-                      styles.actionBtnWithLabel,
-                      { borderRadius: profile.chrome.roundControl },
-                      { backgroundColor: surfaceBackground(withAlpha(theme.colors.primary, 0.18)) },
-                    ]}>
-                    <Inbox size={13} color={theme.colors.primary} />
-                    <Text
-                      variant="caption"
-                      weight="bold"
-                      color={theme.colors.primary}
-                      style={styles.actionBtnLabel}>
-                      {inbox.length}
-                    </Text>
-                  </PressableScale>
-                ) : null}
+                  {/* Quick Agent Mode Popover Button */}
+                  {chipIds.has('mode') ? (
+                    <PressableScale
+                      testID="agent-composer-mode-btn"
+                      onPress={toggleMode}
+                      accessibilityRole="button"
+                      accessibilityLabel={t`Select agent mode`}
+                      style={[
+                        styles.actionBtnWithLabel,
+                        { borderRadius: profile.chrome.roundControl },
+                        // Always one point of border, coloured only while open, so
+                        // opening the menu never widens the chip and moves the next.
+                        {
+                          borderWidth: 1,
+                          borderColor: modeMenuOpen ? theme.colors.primary : 'transparent',
+                        },
+                        { backgroundColor: surfaceBackground(chromeGlass) },
+                      ]}>
+                      <Text
+                        variant="caption"
+                        color={theme.colors.text}
+                        style={styles.actionBtnLabel}>
+                        {modeLabel(selectedAgent ?? 'build')}
+                      </Text>
+                      <ChevronDown size={12} color={theme.colors.textMuted} />
+                    </PressableScale>
+                  ) : null}
 
-                {/* What is still running after the agent moved on */}
-                {chipIds.has('background') ? (
-                  <PressableScale
-                    testID="agent-composer-background-pill"
-                    onPress={onOpenBackgroundTray}
-                    accessibilityRole="button"
-                    accessibilityLabel={t`${backgroundCount} running in the background`}
-                    style={[
-                      styles.actionBtnWithLabel,
-                      { borderRadius: profile.chrome.roundControl },
-                      {
-                        backgroundColor: surfaceBackground(withAlpha(theme.colors.warning, 0.18)),
-                      },
-                    ]}>
-                    <Terminal size={13} color={theme.colors.warning} />
-                    <Text
-                      variant="caption"
-                      weight="bold"
-                      color={theme.colors.warning}
-                      style={styles.actionBtnLabel}>
-                      {backgroundCount}
-                    </Text>
-                  </PressableScale>
-                ) : null}
+                  {/* Quick Model Selector Button */}
+                  {chipIds.has('model') ? (
+                    <PressableScale
+                      testID="agent-composer-model-btn"
+                      onPress={onOpenModelSheet}
+                      accessibilityRole="button"
+                      accessibilityLabel={t`Select model: ${modelDisplayName}`}
+                      style={[
+                        styles.actionBtnWithLabel,
+                        { borderRadius: profile.chrome.roundControl },
+                        { backgroundColor: surfaceBackground(chromeGlass) },
+                      ]}>
+                      <Text
+                        variant="caption"
+                        color={theme.colors.text}
+                        style={styles.actionBtnLabel}>
+                        {modelDisplayName}
+                      </Text>
+                      <ChevronDown size={12} color={theme.colors.textMuted} />
+                    </PressableScale>
+                  ) : null}
 
-                {/* OpenCode Tasks Button */}
-                {chipIds.has('tasks') ? (
-                  <PressableScale
-                    testID="agent-composer-tasks-btn"
-                    onPress={onOpenTasksSheet}
-                    accessibilityRole="button"
-                    accessibilityLabel={t`Tasks progress`}
-                    style={[
-                      styles.actionBtnWithLabel,
-                      { borderRadius: profile.chrome.roundControl },
-                      { backgroundColor: surfaceBackground(chromeGlass) },
-                    ]}>
-                    <CheckSquare
-                      size={14}
-                      color={
-                        tasks && tasks.length > 0 && tasks.every((t) => t.done)
-                          ? theme.colors.success
-                          : theme.colors.primary
+                  {/* The queue, as the gateway last stated it */}
+                  {chipIds.has('inbox') ? (
+                    <PressableScale
+                      testID="agent-composer-inbox-pill"
+                      onPress={() => setInboxOpen((open) => !open)}
+                      accessibilityRole="button"
+                      accessibilityState={{ expanded: inboxOpen }}
+                      accessibilityLabel={t`${inbox.length} queued`}
+                      style={[
+                        styles.actionBtnWithLabel,
+                        { borderRadius: profile.chrome.roundControl },
+                        {
+                          backgroundColor: surfaceBackground(withAlpha(theme.colors.primary, 0.18)),
+                        },
+                      ]}>
+                      <Inbox size={13} color={theme.colors.primary} />
+                      <Text
+                        variant="caption"
+                        weight="bold"
+                        color={theme.colors.primary}
+                        style={styles.actionBtnLabel}>
+                        {inbox.length}
+                      </Text>
+                    </PressableScale>
+                  ) : null}
+
+                  {/* What is still running after the agent moved on */}
+                  {chipIds.has('background') ? (
+                    <PressableScale
+                      testID="agent-composer-background-pill"
+                      onPress={onOpenBackgroundTray}
+                      accessibilityRole="button"
+                      accessibilityLabel={t`${backgroundCount} running in the background`}
+                      style={[
+                        styles.actionBtnWithLabel,
+                        { borderRadius: profile.chrome.roundControl },
+                        {
+                          backgroundColor: surfaceBackground(withAlpha(theme.colors.warning, 0.18)),
+                        },
+                      ]}>
+                      <Terminal size={13} color={theme.colors.warning} />
+                      <Text
+                        variant="caption"
+                        weight="bold"
+                        color={theme.colors.warning}
+                        style={styles.actionBtnLabel}>
+                        {backgroundCount}
+                      </Text>
+                    </PressableScale>
+                  ) : null}
+
+                  {/* OpenCode Tasks Button */}
+                  {chipIds.has('tasks') ? (
+                    <PressableScale
+                      testID="agent-composer-tasks-btn"
+                      onPress={onOpenTasksSheet}
+                      accessibilityRole="button"
+                      accessibilityLabel={t`Tasks progress`}
+                      style={[
+                        styles.actionBtnWithLabel,
+                        { borderRadius: profile.chrome.roundControl },
+                        { backgroundColor: surfaceBackground(chromeGlass) },
+                      ]}>
+                      <CheckSquare
+                        size={14}
+                        color={
+                          tasks && tasks.length > 0 && tasks.every((t) => t.done)
+                            ? theme.colors.success
+                            : theme.colors.primary
+                        }
+                      />
+                      <Text
+                        variant="caption"
+                        color={theme.colors.text}
+                        style={styles.actionBtnLabel}>
+                        {tasks && tasks.length > 0
+                          ? t`Tasks (${tasks.filter((t) => t.done).length}/${tasks.length})`
+                          : t`Tasks`}
+                      </Text>
+                      <ChevronDown size={12} color={theme.colors.textMuted} />
+                    </PressableScale>
+                  ) : null}
+
+                  {chipIds.has('delivery') ? (
+                    <PressableScale
+                      testID="agent-composer-delivery-btn"
+                      onPress={() => {
+                        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setDeliveryMode((prev) => (prev === 'steer' ? 'queue' : 'steer'));
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        deliveryMode === 'steer'
+                          ? t`Delivery mode: Steer (real-time). Tap to switch to Queue.`
+                          : t`Delivery mode: Queue. Tap to switch to Steer.`
                       }
-                    />
-                    <Text variant="caption" color={theme.colors.text} style={styles.actionBtnLabel}>
-                      {tasks && tasks.length > 0
-                        ? t`Tasks (${tasks.filter((t) => t.done).length}/${tasks.length})`
-                        : t`Tasks`}
-                    </Text>
-                    <ChevronDown size={12} color={theme.colors.textMuted} />
-                  </PressableScale>
-                ) : null}
+                      style={[
+                        styles.actionBtnWithLabel,
+                        { borderRadius: profile.chrome.roundControl },
+                        {
+                          backgroundColor:
+                            deliveryMode === 'steer'
+                              ? withAlpha(theme.colors.warning, 0.2)
+                              : withAlpha(theme.colors.primary, 0.2),
+                          borderColor:
+                            deliveryMode === 'steer'
+                              ? withAlpha(theme.colors.warning, 0.5)
+                              : withAlpha(theme.colors.primary, 0.5),
+                          borderWidth: 1,
+                        },
+                      ]}>
+                      {deliveryMode === 'steer' ? (
+                        <>
+                          <Zap size={13} color={theme.colors.warning} />
+                          <Text
+                            variant="caption"
+                            weight="bold"
+                            color={theme.colors.warning}
+                            style={styles.actionBtnLabel}>
+                            <Trans>Steer</Trans>
+                          </Text>
+                        </>
+                      ) : (
+                        <>
+                          <Inbox size={13} color={theme.colors.primary} />
+                          <Text
+                            variant="caption"
+                            weight="bold"
+                            color={theme.colors.primary}
+                            style={styles.actionBtnLabel}>
+                            <Trans>Queue</Trans>
+                          </Text>
+                        </>
+                      )}
+                    </PressableScale>
+                  ) : null}
 
-                {chipIds.has('delivery') ? (
-                  <PressableScale
-                    testID="agent-composer-delivery-btn"
-                    onPress={() => {
-                      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      setDeliveryMode((prev) => (prev === 'steer' ? 'queue' : 'steer'));
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel={
-                      deliveryMode === 'steer'
-                        ? t`Delivery mode: Steer (real-time). Tap to switch to Queue.`
-                        : t`Delivery mode: Queue. Tap to switch to Steer.`
-                    }
-                    style={[
-                      styles.actionBtnWithLabel,
-                      { borderRadius: profile.chrome.roundControl },
-                      {
-                        backgroundColor:
-                          deliveryMode === 'steer'
-                            ? withAlpha(theme.colors.warning, 0.2)
-                            : withAlpha(theme.colors.primary, 0.2),
-                        borderColor:
-                          deliveryMode === 'steer'
-                            ? withAlpha(theme.colors.warning, 0.5)
-                            : withAlpha(theme.colors.primary, 0.5),
-                        borderWidth: 1,
-                      },
-                    ]}>
-                    {deliveryMode === 'steer' ? (
-                      <>
-                        <Zap size={13} color={theme.colors.warning} />
-                        <Text
-                          variant="caption"
-                          weight="bold"
-                          color={theme.colors.warning}
-                          style={styles.actionBtnLabel}>
-                          <Trans>Steer</Trans>
-                        </Text>
-                      </>
-                    ) : (
-                      <>
-                        <Inbox size={13} color={theme.colors.primary} />
-                        <Text
-                          variant="caption"
-                          weight="bold"
-                          color={theme.colors.primary}
-                          style={styles.actionBtnLabel}>
-                          <Trans>Queue</Trans>
-                        </Text>
-                      </>
-                    )}
-                  </PressableScale>
-                ) : null}
-
-                {/* Context window, token spend and cost, in one pill */}
-                {chipIds.has('context') && contextPill ? (
-                  <PressableScale
-                    testID="agent-composer-tokens-pill"
-                    onPress={() => {
-                      if (onPressTokens) {
-                        onPressTokens();
-                      } else if (tokens) {
-                        showToast({
-                          variant: 'info',
-                          title: t`Session Tokens`,
-                          message: `Input: ${tokens.input.toLocaleString()} • Output: ${tokens.output.toLocaleString()}${tokens.reasoning ? ` • Reasoning: ${tokens.reasoning.toLocaleString()}` : ''}`,
-                        });
+                  {/* Context window, token spend and cost, in one pill */}
+                  {chipIds.has('context') && contextPill ? (
+                    <PressableScale
+                      testID="agent-composer-tokens-pill"
+                      onPress={() => {
+                        if (onPressTokens) {
+                          onPressTokens();
+                        } else if (tokens) {
+                          showToast({
+                            variant: 'info',
+                            title: t`Session Tokens`,
+                            message: `Input: ${tokens.input.toLocaleString()} • Output: ${tokens.output.toLocaleString()}${tokens.reasoning ? ` • Reasoning: ${tokens.reasoning.toLocaleString()}` : ''}`,
+                          });
+                        }
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        contextPill.ratio === null
+                          ? t`Tokens usage and cost`
+                          : t`Context ${Math.round(contextPill.ratio * 100)}% full`
                       }
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel={
-                      contextPill.ratio === null
-                        ? t`Tokens usage and cost`
-                        : t`Context ${Math.round(contextPill.ratio * 100)}% full`
-                    }
-                    style={[
-                      styles.actionBtnWithLabel,
-                      { borderRadius: profile.chrome.roundControl },
-                      { backgroundColor: surfaceBackground(chromeGlass) },
-                    ]}>
-                    <Cpu size={13} color={chromeText} />
-                    <Text
-                      variant="caption"
-                      color={theme.colors.textMuted}
-                      style={styles.actionBtnLabel}>
-                      {contextPill.label}
-                    </Text>
-                    {/* A gauge only when the engine stated a window to measure. */}
-                    {contextPill.ratio !== null ? (
-                      <View
-                        style={[
-                          styles.contextTrack,
-                          { backgroundColor: withAlpha(theme.colors.text, 0.12) },
-                        ]}>
+                      style={[
+                        styles.actionBtnWithLabel,
+                        { borderRadius: profile.chrome.roundControl },
+                        { backgroundColor: surfaceBackground(chromeGlass) },
+                      ]}>
+                      <Cpu size={13} color={chromeText} />
+                      <Text
+                        variant="caption"
+                        color={theme.colors.textMuted}
+                        style={styles.actionBtnLabel}>
+                        {contextPill.label}
+                      </Text>
+                      {/* A gauge only when the engine stated a window to measure. */}
+                      {contextPill.ratio !== null ? (
                         <View
                           style={[
-                            styles.contextFill,
-                            {
-                              width: `${Math.max(3, Math.round(contextPill.ratio * 100))}%`,
-                              backgroundColor:
-                                contextPill.ratio > 0.9
-                                  ? theme.colors.danger
-                                  : contextPill.ratio > 0.7
-                                    ? theme.colors.warning
-                                    : theme.colors.primary,
-                            },
-                          ]}
-                        />
-                      </View>
-                    ) : null}
-                    <ChevronDown size={12} color={theme.colors.textMuted} />
-                  </PressableScale>
-                ) : null}
+                            styles.contextTrack,
+                            { backgroundColor: withAlpha(theme.colors.text, 0.12) },
+                          ]}>
+                          <View
+                            style={[
+                              styles.contextFill,
+                              {
+                                width: `${Math.max(3, Math.round(contextPill.ratio * 100))}%`,
+                                backgroundColor:
+                                  contextPill.ratio > 0.9
+                                    ? theme.colors.danger
+                                    : contextPill.ratio > 0.7
+                                      ? theme.colors.warning
+                                      : theme.colors.primary,
+                              },
+                            ]}
+                          />
+                        </View>
+                      ) : null}
+                      <ChevronDown size={12} color={theme.colors.textMuted} />
+                    </PressableScale>
+                  ) : null}
 
-                {/* Changes stay independent of the context pill. */}
-                {chipIds.has('diff') ? (
-                  <PressableScale
-                    onPress={onOpenDiffSheet}
-                    accessibilityRole="button"
-                    accessibilityLabel={t`View file changes`}
-                    style={[
-                      styles.actionBtn,
-                      { borderRadius: profile.chrome.roundControl },
-                      {
-                        backgroundColor: withAlpha(theme.colors.primary, 0.18),
-                      },
-                    ]}>
-                    <GitCompare size={15} color={theme.colors.primary} />
-                    <View
-                      style={[styles.diffIndicator, { backgroundColor: theme.colors.primary }]}
-                    />
-                  </PressableScale>
-                ) : null}
+                  {/* Changes stay independent of the context pill. */}
+                  {chipIds.has('diff') ? (
+                    <PressableScale
+                      onPress={onOpenDiffSheet}
+                      accessibilityRole="button"
+                      accessibilityLabel={t`View file changes`}
+                      style={[
+                        styles.actionBtn,
+                        { borderRadius: profile.chrome.roundControl },
+                        {
+                          backgroundColor: withAlpha(theme.colors.primary, 0.18),
+                        },
+                      ]}>
+                      <GitCompare size={15} color={theme.colors.primary} />
+                      <View
+                        style={[styles.diffIndicator, { backgroundColor: theme.colors.primary }]}
+                      />
+                    </PressableScale>
+                  ) : null}
 
-                {chipIds.has('stop') ? (
-                  <PressableScale
-                    onPress={onAbort}
-                    accessibilityRole="button"
-                    accessibilityLabel={t`Stop agent execution`}
-                    style={[
-                      styles.actionBtnWithLabel,
-                      { borderRadius: profile.chrome.roundControl },
-                      styles.stopActionBtn,
-                      { backgroundColor: theme.colors.danger },
-                    ]}>
-                    <Square size={12} color={theme.colors.onPrimary} />
-                    <Text
-                      variant="caption"
-                      color={theme.colors.onPrimary}
-                      style={styles.actionBtnLabel}>
-                      <Trans>Stop</Trans>
-                    </Text>
-                  </PressableScale>
-                ) : null}
-              </ScrollView>
-            </View>
+                  {chipIds.has('stop') ? (
+                    <PressableScale
+                      onPress={onAbort}
+                      accessibilityRole="button"
+                      accessibilityLabel={t`Stop agent execution`}
+                      style={[
+                        styles.actionBtnWithLabel,
+                        { borderRadius: profile.chrome.roundControl },
+                        styles.stopActionBtn,
+                        { backgroundColor: theme.colors.danger },
+                      ]}>
+                      <Square size={12} color={theme.colors.onPrimary} />
+                      <Text
+                        variant="caption"
+                        color={theme.colors.onPrimary}
+                        style={styles.actionBtnLabel}>
+                        <Trans>Stop</Trans>
+                      </Text>
+                    </PressableScale>
+                  ) : null}
+                </ScrollView>
+              </View>
+            )}
 
             {/* Attachment staged preview strip */}
-            {attachmentUploads.attachments.length > 0 ? (
+            {visibleAttachments.length > 0 ? (
               <Animated.View
                 entering={fadeIn('micro')}
-                exiting={fadeOutDown('short')}
-                style={styles.stripWrapper}>
+                // Home restores field artwork on removal; do not leave a native
+                // exit view painting across that field's newly raised position.
+                exiting={flushField ? undefined : fadeOutDown('short')}
+                style={[
+                  styles.stripWrapper,
+                  flushField && {
+                    backgroundColor: surfaceBackground(theme.colors.surface),
+                    borderRadius: profile.chrome.noticeBanner,
+                  },
+                ]}>
                 <AttachmentStrip
-                  attachments={attachmentUploads.attachments}
-                  onRemove={attachmentUploads.removeAttachment}
-                  onRetry={attachmentUploads.retryUpload}
+                  attachments={visibleAttachments}
+                  onRemove={removeStagedAttachment}
+                  onRetry={retryStagedAttachment}
                   onPreview={setPreviewAttachmentId}
                   textColor={chromeText}
+                  readOnly={submittingAttachments}
                 />
               </Animated.View>
             ) : null}
 
-            {/* Uploading wait banner */}
-            {sending && attachmentUploads.uploading ? (
+            {/* Submission feedback stays outside the canonical transcript. */}
+            {(sending && attachmentUploads.uploading) || submittingAttachments ? (
               <Animated.View
+                testID="agent-composer-attachment-submission"
                 entering={fadeIn('micro')}
                 exiting={fadeOut('micro')}
-                style={styles.uploadWait}>
+                style={[
+                  styles.uploadWait,
+                  flushField && {
+                    backgroundColor: surfaceBackground(theme.colors.surface),
+                    borderRadius: profile.chrome.noticeBanner,
+                  },
+                ]}>
                 <Spinner size="sm" color={theme.colors.textMuted} />
-                <Text variant="caption" color={theme.colors.textMuted}>
-                  <Trans>Waiting for uploads to finish…</Trans>
+                <Text variant="caption" color={theme.colors.textMuted} style={styles.noticeText}>
+                  {attachmentUploads.uploading ? (
+                    <Trans>Waiting for uploads to finish…</Trans>
+                  ) : pendingAttachmentSend?.delivery === 'queue' ? (
+                    <Trans>Requesting queued delivery…</Trans>
+                  ) : pendingAttachmentSend?.delivery === 'steer' ? (
+                    <Trans>Submitting follow-up…</Trans>
+                  ) : (
+                    <Trans>Sending attachment message…</Trans>
+                  )}
                 </Text>
               </Animated.View>
+            ) : null}
+
+            {!promptAllowed ? (
+              <Text variant="caption" color={theme.colors.textMuted}>
+                {interactionBlockedReason ?? (
+                  <Trans>
+                    This agent accepts messages after its turn ends. Your draft stays here.
+                  </Trans>
+                )}
+              </Text>
             ) : null}
 
             {/* TerminalComposer reused for agent prompt */}
             <View onLayout={(event) => setInputRowHeight(event.nativeEvent.layout.height)}>
               <TerminalComposer
+                fieldBackground={fieldBackground}
+                fieldBackgroundColor={fieldBackgroundColor}
+                fieldBackgroundOutset={fieldBackgroundOutset}
+                fieldDecoration={decorationHidden ? undefined : fieldDecoration}
+                fieldTextTopInset={fieldTextTopInset}
+                fieldShadow={fieldShadow}
+                onVoiceActiveChange={setVoiceActive}
+                spans={spans}
+                compact={compact}
+                minLines={fieldLines}
+                voiceContext={voiceContext ?? `${sessionId}:${activeAsid ?? 'new'}`}
                 inputRef={inputRef}
                 leading={
-                  canAttach ? (
-                    <ComposerAttachmentButton
-                      testID="agent-composer-attach"
-                      label={attachmentMenuOpen ? t`Close the attachment menu` : t`Attach a file`}
-                      expanded={attachmentMenuOpen}
-                      disabled={sending || disabled}
-                      onPress={() => setAttachmentMenuOpen((open) => !open)}
-                      size={16}
-                      color={attachmentMenuOpen ? theme.colors.primary : chromeText}
-                    />
+                  canAttach || toolbarLeading ? (
+                    <>
+                      {canAttach ? (
+                        <ComposerAttachmentButton
+                          testID="agent-composer-attach"
+                          label={
+                            attachmentMenuOpen ? t`Close the attachment menu` : t`Attach a file`
+                          }
+                          expanded={attachmentMenuOpen}
+                          disabled={
+                            sending ||
+                            disabled ||
+                            (attachmentTargetId !== undefined &&
+                              record?.serverId !== attachmentTargetId)
+                          }
+                          onPress={() => setAttachmentMenuOpen((open) => !open)}
+                          size={16}
+                          color={attachmentMenuOpen ? theme.colors.primary : chromeText}
+                        />
+                      ) : null}
+                      {toolbarLeading}
+                    </>
                   ) : undefined
                 }
                 inputProps={{
                   value: text,
-                  onChangeText: setText,
+                  onChangeText: changeText,
                   placeholder: disabled
                     ? agentName
                       ? t`${agentName} is offline`
                       : t`The agent is offline`
-                    : t`Send a message, type / for commands, @ for files…`,
+                    : (placeholder ??
+                      t`Send a message, type / for commands, $ for skills, @ for files…`),
+                  shortPlaceholder: t`Send a message…`,
                   editable: !sending && !disabled,
-                  testID: 'agent-composer-input',
-                  selection: slashPopup.inputProps.selection,
+                  testID: inputTestID,
+                  selection,
                   onSelectionChange: handleSelectionChange,
-                  onKeyPress: slashPopup.inputProps.onKeyPress,
+                  onKeyPress: (event) => {
+                    slashPopup.inputProps.onKeyPress(event);
+                    skillPopup.inputProps.onKeyPress(event);
+                  },
                   onSubmitEditing: handleSend,
+                  onFocus: () => setFocused(true),
+                  onBlur: () => setFocused(false),
                   style: { fontFamily: interfaceFontFamily },
                 }}
                 send={{
-                  accessibilityLabel: running
-                    ? deliveryMode === 'steer'
-                      ? t`Steer running agent`
-                      : t`Queue message for agent`
-                    : t`Send message`,
+                  accessibilityLabel: !promptAllowed
+                    ? (interactionBlockedReason ?? t`Waiting for the current turn to end`)
+                    : running
+                      ? deliveryMode === 'steer'
+                        ? t`Steer running agent`
+                        : t`Queue message for agent`
+                      : t`Send message`,
                   armed:
                     (Boolean(text.trim()) || attachmentUploads.attachments.length > 0) &&
                     !sending &&
-                    !disabled,
+                    !disabled &&
+                    promptAllowed,
                   sending,
                   disabled:
                     sending ||
                     disabled ||
+                    !promptAllowed ||
                     (!text.trim() && attachmentUploads.attachments.length === 0),
                   onPress: handleSend,
+                  ...(sendTestID ? { testID: sendTestID } : {}),
                 }}
               />
             </View>
           </View>
-        </GlassChrome>
+        </ComposerSurface>
       </View>
+      {previewPdf ? (
+        <AssetViewer asset={previewPdf} onClose={() => setPreviewAttachmentId(null)} />
+      ) : null}
       {previewIndex >= 0 ? (
         <ImagePreviewModal
           images={previewImages}
@@ -1679,85 +2387,21 @@ export const AgentComposer = memo(function AgentComposer({
   );
 });
 
-/**
- * "Compacting context…", while it is happening.
- *
- * `agent.compaction.changed` is the only thing that knows a compaction is
- * running: the boundary does not reach the timeline until it finishes, so
- * without this the reader watches a quiet agent and wonders what it is doing.
- */
-const CompactionPill = memo(function CompactionPill({
-  status,
-  reason,
-  onDismiss,
-}: {
-  status: 'running' | 'failed';
-  reason: CompactionReason;
-  onDismiss?: () => void;
-}) {
-  const { t } = useLingui();
-  const theme = useThemeTokens();
-  const profile = useAppearanceProfile();
-  const surfaceBackground = useSurfaceBackground();
-  const failed = status === 'failed';
-
-  const pulse = useSharedValue(failed ? 1 : 0.4);
-  useEffect(() => {
-    pulse.set(
-      failed
-        ? withTiming(1, timing('micro'))
-        : withRepeat(
-            withSequence(withTiming(1, timing('long')), withTiming(0.4, timing('long'))),
-            -1
-          )
+/** Home owns one painted field; session docks retain their enclosing glass material. */
+function ComposerSurface({
+  flushField,
+  children,
+  style,
+  ...props
+}: React.ComponentProps<typeof GlassChrome> & { flushField: boolean }) {
+  if (!flushField)
+    return (
+      <GlassChrome {...props} style={style}>
+        {children}
+      </GlassChrome>
     );
-    // An endless repeat must not outlive the pill: a view that is gone while
-    // its animation still writes props is the SurfaceMountingManager noise
-    // in logcat, not a harmless leftover.
-    return () => cancelAnimation(pulse);
-  }, [failed, pulse]);
-  const pulseStyle = useAnimatedStyle(() => ({ opacity: pulse.value }));
-
-  return (
-    <Animated.View
-      entering={fadeIn('micro')}
-      exiting={fadeOut('micro')}
-      style={styles.compactionPillWrap}>
-      <PressableScale
-        testID="agent-composer-compaction-pill"
-        accessibilityRole={failed ? 'button' : 'progressbar'}
-        accessibilityLabel={failed ? t`Compaction failed — tap to dismiss` : t`Compacting context…`}
-        disabled={!failed || !onDismiss}
-        onPress={onDismiss}
-        style={[
-          styles.compactionPill,
-          { borderRadius: profile.chrome.control },
-          {
-            backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-            borderColor: failed ? theme.colors.danger : theme.colors.border,
-          },
-        ]}>
-        <Animated.View style={pulseStyle}>
-          {failed ? (
-            <AlertCircle size={12} color={theme.colors.danger} />
-          ) : (
-            <Loader size={12} color={theme.colors.primary} />
-          )}
-        </Animated.View>
-        <Text
-          variant="caption"
-          weight="semibold"
-          color={failed ? theme.colors.danger : theme.colors.text}>
-          {failed
-            ? t`Compaction failed`
-            : reason === 'manual'
-              ? t`Compacting context…`
-              : t`Compacting context automatically…`}
-        </Text>
-      </PressableScale>
-    </Animated.View>
-  );
-});
+  return <View style={[style, styles.flushSurface]}>{children}</View>;
+}
 
 /** The least room a popup is given, even on a short window with the keyboard up. */
 const POPUP_MIN_HEIGHT = 120;
@@ -1773,12 +2417,21 @@ const ATTACHMENT_MENU_GAP = 8;
 /** How much of the strip stays visible to the left of the chip brought into view. */
 const SESSION_CHIP_REVEAL_MARGIN = 24;
 
+/** How long after a programmatic edit the native field has applied it. */
+const CARET_SETTLE_MS = 50;
+
+/** A chevron at the caption line's size: about its cap height, as 12 is to body text. */
+const QUIET_CHEVRON = AGENT_TYPE.meta.size - 2;
+
 const EMPTY_STRIP: readonly SessionNode[] = Object.freeze([]);
 const EMPTY_COMMANDS: readonly CommandInfo[] = Object.freeze([]);
 const EMPTY_INBOX: readonly InboxItem[] = Object.freeze([]);
 const NO_HIDDEN_COMMANDS: readonly AgentClientCommandId[] = Object.freeze([]);
 
 const styles = StyleSheet.create({
+  flushSurface: {
+    overflow: 'visible',
+  },
   dockOuter: {
     position: 'absolute',
     left: 0,
@@ -1800,6 +2453,7 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     overflow: 'hidden',
   },
+  segmentRow: { minWidth: 0, flexDirection: 'row', alignItems: 'center' },
   composerInner: {
     paddingHorizontal: 12,
     paddingTop: 8,
@@ -1840,6 +2494,10 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 6,
     marginBottom: 4,
+  },
+  noticeText: {
+    flex: 1,
+    minWidth: 0,
   },
   sessionStripViewport: {
     marginBottom: 6,
@@ -2005,20 +2663,6 @@ const styles = StyleSheet.create({
   contextFill: {
     height: '100%',
     borderRadius: 2,
-  },
-  compactionPillWrap: {
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    marginBottom: 6,
-  },
-  compactionPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
   },
   diffIndicator: {
     position: 'absolute',

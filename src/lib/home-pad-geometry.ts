@@ -1,5 +1,6 @@
 /**
- * Whether Pad Home gets the cover spread (full-height cover, work column).
+ * Whether Pad Home gets the two-column page: the cover, the tiles and Recent
+ * on the left; Needs you, the computer cards and the dock on the right.
  * Narrower content or large type falls back to the vertical editorial page.
  */
 export function padLaunchLayoutEnabled(
@@ -10,17 +11,89 @@ export function padLaunchLayoutEnabled(
   return contentWidth >= 752 && fontScale < 1.35 && Boolean(viewportHeight);
 }
 
-/** Width of the Pad work column beside the cover; the cover takes the rest. */
-export function padWorkColumnWidth(innerWidth: number): number {
-  return Math.min(400, innerWidth * 0.36);
+/** The Pad cover dock's field, empty: room for a paragraph, not one line. */
+export const PAD_DOCK_FIELD_LINES = 3;
+
+/** The phone dock's gutter outside its field and its shadow, on each side and below. */
+export const HOME_DOCK_OUTER_INSET = 12;
+export const HOME_DOCK_OUTER_BOTTOM_INSET = 8;
+
+/** The widest phone the dock's field is drawn for; the Pad dock is capped at its width. */
+const HOME_DOCK_PHONE_WIDTH = 430;
+
+/**
+ * The widest the Home dock gets anywhere: the phone's dock, gutters taken
+ * off. The Pad cover column is half again as wide, and a dock stretched to
+ * it drew the theme's composer decoration -- fit to the field's width -- half
+ * again as large as on the phone, so the field read as a different field.
+ */
+export const HOME_COMPOSER_MAX_FIELD_WIDTH = HOME_DOCK_PHONE_WIDTH - 2 * HOME_DOCK_OUTER_INSET;
+
+/**
+ * The inset on each side that centres a dock no wider than the phone's in a
+ * Pad cover column of `coverWidth`; nothing when the column is no wider.
+ */
+export function padDockOuterInset(coverWidth: number): number {
+  if (!Number.isFinite(coverWidth) || coverWidth <= HOME_COMPOSER_MAX_FIELD_WIDTH) return 0;
+  return Math.floor((coverWidth - HOME_COMPOSER_MAX_FIELD_WIDTH) / 2);
+}
+
+/** The gap between the two Pad columns, and between two cards in the grid. */
+export const PAD_COLUMN_GAP = 24;
+export const PAD_CARD_GAP = 12;
+export const PAD_LAUNCH_GAP = 16;
+export const PAD_LAUNCH_BOTTOM_SPACE = 24;
+
+/** Reserve the measured controls before giving the cover its preferred height.
+ * Column height excludes the toolbar and stays fixed while the keyboard rises.
+ */
+export function padCoverAvailableHeight(
+  columnHeight: number,
+  composerHeight: number,
+  launchesHeight: number
+): number | undefined {
+  if (columnHeight <= 0 || launchesHeight <= 0) return undefined;
+  return Math.max(
+    0,
+    columnHeight - composerHeight - launchesHeight - PAD_LAUNCH_GAP - PAD_LAUNCH_BOTTOM_SPACE
+  );
+}
+
+/** Narrower than this a card's rows wrap their titles to stubs; it takes the column alone. */
+const PAD_CARD_MIN_WIDTH = 320;
+
+/**
+ * The two Pad columns (design §8 Pad, revised): the cover, the tiles and
+ * Recent take about 55% of the page on the left; the work -- Needs you, the
+ * computer cards and the dock -- the rest on the right.
+ */
+export function padHomeColumns(innerWidth: number): { cover: number; work: number } {
+  const room = Math.max(0, innerWidth - PAD_COLUMN_GAP);
+  const cover = Math.round(room * 0.55);
+  return { cover, work: room - cover };
 }
 
 /**
- * What the Pad cover column carries.
+ * How many columns the computer cards take in the work column: one card is
+ * one wide card with the larger budget; two to four sit two abreast when each
+ * still has a card's width, else they stack.
+ *
+ * Since the columns swapped, the work column is 45 % of at most
+ * `EDITORIAL_PAD_MAX_WIDTH` -- about 620 dp, short of the 652 two cards need
+ * -- so today it always stacks. The rule is kept, not deleted, because the
+ * card grid it drives is the one the work column takes back if the page
+ * widens.
+ */
+export function padCardColumns(workWidth: number, cards: number): 1 | 2 {
+  return cards >= 2 && workWidth >= PAD_CARD_MIN_WIDTH * 2 + PAD_CARD_GAP ? 2 : 1;
+}
+
+/**
+ * What the Pad cover block carries at the top of the work column.
  *
  * - `artwork`: a pack's cover painting with its title (AKIBA and friends).
  * - `wordmark`: no pack, so no painting: the app's name set as large as the
- *   column allows, the way a pack's title fills its cover.
+ *   block allows, over the app's own quiet texture.
  * - `identity`: anything else keeps the small identity block it had.
  */
 export type PadCoverKind = 'artwork' | 'wordmark' | 'identity';
@@ -47,75 +120,111 @@ export const PAD_COVER_TITLE_LINE_HEIGHT = 1.08;
 
 /**
  * How far a descender (the q in "Muqun") hangs below that line box. The line
- * height is tight on purpose, so the block under the wordmark keeps this clear.
+ * height is tight on purpose, so the wordmark's cover keeps this clear.
  */
 export const PAD_WORDMARK_DESCENDER = 0.22;
 
+/** The cover painting's own proportion: as tall as 0.9 of its width (`HomeEditorialArtwork`). */
+const COVER_ARTWORK_RATIO = 0.9;
+
+/** The cover block's share of the viewport. */
+export const PAD_COVER_SHARE = 0.45;
+
+/** Keep the theme legible in a short window; the launch pane can scroll. */
+export const PAD_COVER_MIN_HEIGHT = 200;
+
 /**
- * Font size for the wordmark cover: as wide as the column (the pack cover's
- * own fit and 38% cap), and never so tall that it crowds what sits under it.
+ * The Pad cover block at the top of the left column: the pack's title and
+ * painting, or the app's wordmark, prefers `PAD_COVER_SHARE` of the viewport.
+ * The measured launch controls and composer take priority when space is tight.
  *
- * `measuredWidth` is the title's width at 100pt, 0 until it has been measured.
- * `reservedHeight` is the block below the wordmark (pair card or dock) plus its
- * breathing room; `paneHeight` is 0 until the column has been measured.
+ * - `titleSize`: the cover title as wide as the column allows (the 38% cap
+ *   and measured fit the cover has always used), and never taller than its
+ *   share of the block: 40% of it over a painting, the whole block (with the
+ *   descender) for the wordmark.
+ * - `artwork`: the painting at its own proportion, standing on the block's
+ *   foot at the right. Portraits beside long titles leave most of the type
+ *   clear while still overlapping its lower edge. Short-title portraits keep
+ *   their original frame; scenic rectangles stay behind the title.
+ *
+ * `measuredTitleWidth` is the title's width at 100pt, 0 until measured.
  */
-export function padWordmarkFontSize({
+export function padCover({
+  viewportHeight,
   coverWidth,
-  measuredWidth,
-  paneHeight,
-  reservedHeight,
+  measuredTitleWidth,
+  wordmark,
+  foreground = true,
+  hasTitle = true,
+  availableHeight,
 }: {
+  viewportHeight: number;
   coverWidth: number;
-  measuredWidth: number;
-  paneHeight: number;
-  reservedHeight: number;
-}): number {
+  measuredTitleWidth: number;
+  wordmark: boolean;
+  /** Scenic backgrounds sit behind type; cutout portraits may overlap its lower edge. */
+  foreground?: boolean;
+  hasTitle?: boolean;
+  /** Space left after the toolbar, measured launch controls, and composer. */
+  availableHeight?: number;
+}): {
+  height: number;
+  titleSize: number;
+  titleZIndex: number;
+  artwork: { width: number; height: number };
+} {
+  const preferredHeight = Math.round(viewportHeight * PAD_COVER_SHARE);
+  const height = Math.min(
+    preferredHeight,
+    Math.max(PAD_COVER_MIN_HEIGHT, availableHeight ?? preferredHeight)
+  );
   const byWidth =
-    measuredWidth > 0
-      ? Math.min(coverWidth * 0.38, ((coverWidth - 4) * 100) / measuredWidth)
+    measuredTitleWidth > 0
+      ? Math.min(coverWidth * 0.38, ((coverWidth - 4) * 100) / measuredTitleWidth)
       : coverWidth * 0.25;
-  if (paneHeight <= 0) return Math.max(0, byWidth);
-  const byHeight =
-    (paneHeight - reservedHeight) / (PAD_COVER_TITLE_LINE_HEIGHT + PAD_WORDMARK_DESCENDER);
-  return Math.max(48, Math.min(byWidth, byHeight));
+  const byHeight = wordmark
+    ? height / (PAD_COVER_TITLE_LINE_HEIGHT + PAD_WORDMARK_DESCENDER)
+    : (height * 0.4) / PAD_COVER_TITLE_LINE_HEIGHT;
+  const titleSize = Math.max(0, Math.min(byWidth, byHeight));
+  const naturalArtworkHeight = Math.min(height, coverWidth * 0.85 * COVER_ARTWORK_RATIO);
+  const naturalArtworkWidth = naturalArtworkHeight / COVER_ARTWORK_RATIO;
+  const titleWidth = measuredTitleWidth > 0 ? (titleSize * measuredTitleWidth) / 100 : coverWidth;
+  // A short title ends before the portrait's centre and keeps the authored
+  // side-by-side composition. Long titles may pass behind a silhouette, but
+  // most of every letter must remain above it, even for wide heads or ears.
+  const sharesTitle =
+    !wordmark && hasTitle && foreground && titleWidth > coverWidth - naturalArtworkWidth / 2;
+  const clearTitleHeight = sharesTitle ? titleSize * PAD_COVER_TITLE_LINE_HEIGHT * 0.78 : 0;
+  const artworkHeight = Math.min(naturalArtworkHeight, Math.max(0, height - clearTitleHeight));
+  return {
+    height,
+    titleSize,
+    titleZIndex: foreground ? 0 : 2,
+    artwork: {
+      width: Math.round(artworkHeight / COVER_ARTWORK_RATIO),
+      height: Math.round(artworkHeight),
+    },
+  };
 }
 
-/**
- * How much taller than wide the cover column must be before a pack's artwork
- * cover counts as portrait. A Pad in portrait gives a column about twice as
- * tall as wide; in landscape it is about square.
- */
-export const PAD_PORTRAIT_COVER_RATIO = 1.25;
+/** The Pad page's bottom inset, with the window size it was measured at. */
+export type RestingInset = { inset: number; width: number; height: number };
 
 /**
- * Where the first-run pair card stands on the Pad cover.
- *
- * - `centred`: in the open under the cover title, vertically centred in what
- *   the title leaves. Always on the wordmark cover; on a pack's artwork cover
- *   only in portrait, where a card at the foot leaves the middle of a tall
- *   column as empty paper. The artwork stays anchored at the foot behind it.
- * - `dock`: at the column's foot. Every paired cover (that is the New-session
- *   dock), the artwork cover in landscape, where the card stands beside the
- *   figure, and the small identity cover.
- *
- * `paneHeight` is 0 until the column has been measured, which reads as
- * landscape so an unmeasured artwork cover keeps its dock.
+ * The bottom inset the Pad page is sized from: only ever one measured with no
+ * keyboard up. While a soft keyboard shows, or a field has focus (the inset can
+ * rise before the keyboard reports itself visible), the last such measure
+ * stands -- unless the window itself changed size with no keyboard up
+ * (rotation, split view), when the new measure is the resting one even while a
+ * field keeps focus.
  */
-export function padFirstRunPlacement({
-  coverKind,
-  firstRun,
-  coverWidth,
-  paneHeight,
-}: {
-  coverKind: PadCoverKind;
-  firstRun: boolean;
-  coverWidth: number;
-  paneHeight: number;
-}): 'centred' | 'dock' {
-  if (!firstRun) return 'dock';
-  if (coverKind === 'wordmark') return 'centred';
-  if (coverKind === 'artwork' && coverWidth > 0) {
-    return paneHeight >= coverWidth * PAD_PORTRAIT_COVER_RATIO ? 'centred' : 'dock';
-  }
-  return 'dock';
+export function nextRestingInset(
+  previous: RestingInset,
+  now: RestingInset & { keyboardVisible: boolean; fieldFocused: boolean }
+): RestingInset {
+  if (now.keyboardVisible) return previous;
+  const resized = now.width !== previous.width || now.height !== previous.height;
+  if (now.fieldFocused && !resized) return previous;
+  if (!resized && now.inset === previous.inset) return previous;
+  return { inset: now.inset, width: now.width, height: now.height };
 }

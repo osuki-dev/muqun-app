@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
@@ -17,7 +16,6 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
-import { PressableScale } from '@/components/pressable-scale';
 import { AgentMark } from '@/components/agent-mark';
 import { useSelectedAgent } from '@/hooks/use-agent-features';
 import { useHomeCommands } from '@/hooks/use-home-commands';
@@ -31,7 +29,7 @@ import {
   type AgentReadiness,
 } from '@/lib/home-agent-readiness';
 import type { HomeAgentEntry } from '@/lib/agent-discovery';
-import { MAX_AGENT_TILES, agentDisplayName, projectLaunchAgents } from '@/lib/home-launch-model';
+import { agentDisplayName, projectLaunchAgents } from '@/lib/home-launch-model';
 import { useAgents } from '@/stores/agents';
 import { INSTANT, SHEEN_MOTION, fadeIn, fadeOut, listLayout } from '@/lib/motion';
 
@@ -76,14 +74,12 @@ export function NewTaskAction({
     if (hasAgentSessions && server) void refreshAgentServerDiscovery(server);
   }, [hasAgentSessions, server]);
 
-  // What the card offers is what the gateway lists. One agent keeps the one
-  // button this card always had; two or three get a button each; more fall
-  // back to the one button and its menu.
+  // Every offered agent keeps a named button in one horizontally scrolling row.
   const mirrored = useAgents((state) => state.index.servers[serverId]);
   const lastUsedAgentId = useAgents((state) => state.index.lastUsed[serverId]);
   const offered = projectLaunchAgents(mirrored, lastUsedAgentId);
   const soleAgentId = offered.length === 1 ? offered[0]?.id : undefined;
-  const agentRow = offered.length > 1 && offered.length <= MAX_AGENT_TILES;
+  const agentRow = offered.length > 1;
   const agentName = agentDisplayName([...offered], soleAgentId ?? agentChoice.selected);
   const agentKind = (offered.length === 1 ? offered[0]?.kind : undefined) ?? 'opencode';
 
@@ -220,8 +216,20 @@ export function NewTaskAction({
 
   if (agentRow) {
     return (
-      <Animated.View layout={listLayout()} entering={fadeIn()} exiting={fadeOut()}>
-        <View style={styles.agentRow}>
+      <Animated.View
+        layout={listLayout()}
+        entering={fadeIn()}
+        exiting={fadeOut()}
+        style={styles.group}>
+        <Text variant="caption" color={theme.colors.textMuted}>{t`Agents`}</Text>
+        <Animated.ScrollView
+          testID={`server-agent-actions-${serverId}`}
+          horizontal
+          nestedScrollEnabled
+          directionalLockEnabled
+          showsHorizontalScrollIndicator={false}
+          style={styles.agentScroll}
+          contentContainerStyle={styles.agentRow}>
           {offered.map((agent) => (
             <AgentRowButton
               key={agent.id}
@@ -246,7 +254,7 @@ export function NewTaskAction({
               }
             />
           ))}
-        </View>
+        </Animated.ScrollView>
       </Animated.View>
     );
   }
@@ -257,7 +265,12 @@ export function NewTaskAction({
     if (!hasChecked) return null;
     return (
       <>
-        <Animated.View layout={listLayout()} entering={fadeIn()} exiting={fadeOut()}>
+        <Animated.View
+          layout={listLayout()}
+          entering={fadeIn()}
+          exiting={fadeOut()}
+          style={styles.group}>
+          <Text variant="caption" color={theme.colors.textMuted}>{t`Agents`}</Text>
           <PressableScale
             testID="server-opencode-offline-action"
             accessibilityRole="button"
@@ -285,16 +298,23 @@ export function NewTaskAction({
                 },
               })
             }
-            style={[
-              styles.button,
-              {
-                backgroundColor: surfaceBackground(withAlpha(theme.colors.warning, 0.12)),
-                borderColor: withAlpha(theme.colors.warning, 0.4),
-              },
-            ]}>
-            <View style={styles.offlineIconWrapper}>
-              <AgentMark kind={agentKind} size={16} color={theme.colors.warning} />
-              <View style={[styles.offlineDot, { backgroundColor: theme.colors.warning }]} />
+            style={styles.button}>
+            <View
+              pointerEvents="none"
+              style={[
+                styles.buttonFace,
+                {
+                  backgroundColor: surfaceBackground(withAlpha(theme.colors.warning, 0.12)),
+                  borderColor: withAlpha(theme.colors.warning, 0.4),
+                },
+              ]}>
+              <View style={styles.offlineIconWrapper}>
+                <AgentMark kind={agentKind} size={16} color={theme.colors.warning} />
+                <View style={[styles.offlineDot, { backgroundColor: theme.colors.warning }]} />
+              </View>
+              <Text variant="bodySmall" color={theme.colors.warning}>
+                {agentName}
+              </Text>
             </View>
           </PressableScale>
         </Animated.View>
@@ -303,37 +323,52 @@ export function NewTaskAction({
   }
 
   // react-doctor-disable-next-line react-hooks-js/todo -- lingui t macro; the lingui babel plugin compiles the template away
-  const openAgentLabel = t`Open ${agentName} Agent on ${label}`;
+  const openAgentLabel = agentChoice.offersChoice
+    ? t`Agents`
+    : t`Open ${agentName} Agent on ${label}`;
   const readyLabel = t`${agentName} ready`;
   const actionLabel = showAnnouncement ? `${readyLabel}. ${openAgentLabel}` : openAgentLabel;
 
   return (
-    <Animated.View layout={listLayout()} entering={fadeIn()} exiting={fadeOut()}>
+    <Animated.View
+      layout={listLayout()}
+      entering={fadeIn()}
+      exiting={fadeOut()}
+      style={styles.group}>
+      <Text variant="caption" color={theme.colors.textMuted}>{t`Agents`}</Text>
       <View style={styles.actionRow}>
         <PressableScale
           testID="server-opencode-action"
           accessibilityRole="button"
           accessibilityLabel={actionLabel}
+          accessibilityState={agentChoice.offersChoice ? { expanded: agentMenuOpen } : undefined}
           onPress={handlePress}
-          style={[
-            styles.button,
-            {
-              backgroundColor: surfaceBackground(theme.colors.primarySubtle),
-              borderColor: surfaceBackground(theme.colors.border),
-            },
-          ]}>
-          {/* The light first, so the glyph is drawn over it. */}
-          <Animated.View
+          style={styles.button}>
+          <View
             pointerEvents="none"
             style={[
-              styles.sheen,
-              { backgroundColor: withAlpha(theme.colors.primary, 0.22) },
-              sheenStyle,
-            ]}
-          />
-          <Animated.View style={glyphStyle}>
-            <AgentMark kind={agentKind} size={18} color={theme.colors.primary} />
-          </Animated.View>
+              styles.buttonFace,
+              {
+                backgroundColor: surfaceBackground(theme.colors.primarySubtle),
+                borderColor: surfaceBackground(theme.colors.border),
+              },
+            ]}>
+            {/* The light first, so the glyph is drawn over it. */}
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                styles.sheen,
+                { backgroundColor: withAlpha(theme.colors.primary, 0.22) },
+                sheenStyle,
+              ]}
+            />
+            <Animated.View style={glyphStyle}>
+              <AgentMark kind={agentKind} size={16} color={theme.colors.primary} />
+            </Animated.View>
+            <Text variant="bodySmall" color={theme.colors.primary}>
+              {agentChoice.offersChoice ? t`Agents` : agentName}
+            </Text>
+          </View>
         </PressableScale>
         {agentMenuOpen ? (
           <View style={styles.agentMenu}>
@@ -397,46 +432,71 @@ function AgentRowButton({
       accessibilityRole="button"
       accessibilityLabel={description}
       onPress={ready ? onOpen : onSetup}
-      style={[
-        styles.button,
-        ready
-          ? {
-              backgroundColor: surfaceBackground(theme.colors.primarySubtle),
-              borderColor: surfaceBackground(theme.colors.border),
-            }
-          : {
-              backgroundColor: surfaceBackground(withAlpha(theme.colors.warning, 0.12)),
-              borderColor: withAlpha(theme.colors.warning, 0.4),
-            },
-      ]}>
-      {ready ? (
-        <AgentMark kind={agent.kind} size={18} color={theme.colors.primary} />
-      ) : (
-        <View style={styles.offlineIconWrapper}>
-          <AgentMark kind={agent.kind} size={16} color={theme.colors.warning} />
-          <View style={[styles.offlineDot, { backgroundColor: theme.colors.warning }]} />
-        </View>
-      )}
+      style={[styles.button, styles.agentButton]}>
+      <View
+        pointerEvents="none"
+        style={[
+          styles.buttonFace,
+          styles.agentFace,
+          ready
+            ? {
+                backgroundColor: surfaceBackground(theme.colors.primarySubtle),
+                borderColor: surfaceBackground(theme.colors.border),
+              }
+            : {
+                backgroundColor: surfaceBackground(withAlpha(theme.colors.warning, 0.12)),
+                borderColor: withAlpha(theme.colors.warning, 0.4),
+              },
+        ]}>
+        {ready ? (
+          <AgentMark kind={agent.kind} size={16} color={theme.colors.primary} />
+        ) : (
+          <View style={styles.offlineIconWrapper}>
+            <AgentMark kind={agent.kind} size={16} color={theme.colors.warning} />
+            <View style={[styles.offlineDot, { backgroundColor: theme.colors.warning }]} />
+          </View>
+        )}
+        <Text
+          variant="bodySmall"
+          color={ready ? theme.colors.primary : theme.colors.warning}
+          numberOfLines={1}
+          style={styles.agentName}>
+          {name}
+        </Text>
+      </View>
     </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
+  group: { gap: 6, marginTop: 12, alignSelf: 'stretch' },
+  agentScroll: { flexGrow: 0 },
   agentRow: {
     flexDirection: 'row',
+    flexWrap: 'nowrap',
     alignItems: 'center',
     gap: 6,
   },
+  agentButton: { flexShrink: 0, maxWidth: 240 },
+  agentFace: { maxWidth: '100%' },
+  agentName: { flexShrink: 1 },
   actionRow: {
-    width: 44,
     flexDirection: 'column',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 4,
   },
   button: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    minHeight: 44,
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonFace: {
+    minHeight: 36,
+    paddingHorizontal: 10,
+    gap: 8,
+    borderRadius: 10,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
@@ -466,15 +526,10 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   announcementLane: {
-    width: 44,
-    maxWidth: 44,
+    maxWidth: 180,
   },
   agentMenu: {
-    position: 'absolute',
-    top: 48,
-    right: 0,
-    zIndex: 10,
-    minWidth: 180,
+    alignSelf: 'stretch',
   },
   announcementText: {
     letterSpacing: 0.2,

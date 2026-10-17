@@ -1,12 +1,9 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
-import { Spinner, useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
-import { Button } from '@/components/themed-button';
+import { Spinner, useThemeTokens, Button, PressableScale, Text } from '@osuki-dev/ui';
 import { ChevronDown, ChevronUp } from 'lucide-react-native';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { PressableScale } from '@/components/pressable-scale';
 import { TerminalTranscript } from '@/components/terminal-transcript';
 import { appChrome } from '@/constants/appearance';
 import { useCollaborationOutput } from '@/hooks/use-collaboration-output';
@@ -70,7 +67,7 @@ export function CollaborationNotice({
         try {
           const assertConnection = () => {
             if (useGatewayConnectionStore.getState().record?.serverId !== task.serverId)
-              throw new Error(t`Return to this server to continue.`);
+              throw new Error(t`Return to this computer to continue.`);
           };
           assertConnection();
           const fresh = await loadAgents(task.sessionId);

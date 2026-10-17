@@ -1,9 +1,10 @@
 import type { NativeStackNavigationOptions } from 'expo-router';
-import type { ThemeDensity, ThemeOverride, ThemeShape } from '@osuki-dev/ui';
+import type { RadiusToken, ThemeDensity, ThemeOverride, ThemeShape } from '@osuki-dev/ui';
 
 import type { HomeLayout } from '@/lib/home-layout';
 import { resolveHomeLayout } from '@/lib/home-layout';
 import { appAppearanceConfig, appChrome } from '@/constants/appearance';
+import { EASE_OUT } from '@/lib/motion';
 
 export type AppearanceProfileId = HomeLayout;
 
@@ -52,8 +53,6 @@ export type AppearanceProfile = Readonly<{
   settingsRowPaddingVertical: number;
   navigation: Readonly<Pick<NativeStackNavigationOptions, 'animation'>>;
   motion: Readonly<{
-    pageMs: number;
-    modalMs: number;
     revealMs: number;
     revealDistance: number;
     pressedScale: number;
@@ -101,8 +100,8 @@ const classic: AppearanceProfile = {
     showsTagline: true,
   },
   settingsRowPaddingVertical: 12,
-  navigation: { animation: 'fade' },
-  motion: { pageMs: 240, modalMs: 260, revealMs: 240, revealDistance: 8, pressedScale: 0.985 },
+  navigation: { animation: 'default' },
+  motion: { revealMs: 240, revealDistance: 8, pressedScale: 0.985 },
   rowPaddingVertical: 8,
 };
 
@@ -151,7 +150,7 @@ const editorial: AppearanceProfile = {
   settingsRowPaddingVertical: 10,
   // Native presentation owns route motion, duration and back gestures.
   navigation: { animation: 'default' },
-  motion: { pageMs: 200, modalMs: 220, revealMs: 200, revealDistance: 4, pressedScale: 0.99 },
+  motion: { revealMs: 200, revealDistance: 4, pressedScale: 0.99 },
   rowPaddingVertical: 10,
 };
 
@@ -177,20 +176,60 @@ export function resolveAppearanceProfile(value: unknown): AppearanceProfile {
   return appearanceProfiles[resolveHomeLayout(value)];
 }
 
-export function profileThemeOverride(profile: AppearanceProfile): ThemeOverride {
-  return { radius: profile.radius } satisfies ThemeOverride;
+/**
+ * The profile as kit theme tokens, so kit components take its geometry and
+ * press motion without a wrapper.
+ *
+ * Component radii are token names, not numbers, so each chrome radius is named
+ * by the step of the profile's own ladder that holds it. Every `Card` follows
+ * `chrome.card` whatever its `radius` prop asks for, as the app's cards always
+ * have. Pill `Tabs` and `SegmentedControl` take the profile's segmented radii:
+ * the track's corner, and a selection corner that can differ from it
+ * (Editorial: 2pt inside a 4pt track).
+ *
+ * `decorated` is a custom theme pack being worn: its artwork or a translucent
+ * ground can sit under a ghost button, so the ghost keeps a raised base under
+ * its label instead of none.
+ */
+export function profileThemeOverride(profile: AppearanceProfile, decorated = false): ThemeOverride {
+  const token = (value: number) => radiusToken(profile, value);
+  const card = token(profile.chrome.card);
+  const track = token(profile.chrome.segmentedTrack);
+  const option = token(profile.chrome.segmentedOption);
+  return {
+    radius: profile.radius,
+    components: {
+      Button: {
+        radius: token(profile.chrome.control),
+        ...(decorated ? { ghost: { background: 'surfaceRaised' } } : {}),
+      },
+      Card: { radius: { none: card, xs: card, sm: card, md: card, lg: card } },
+      Tabs: { radius: track, optionRadius: option },
+      SegmentedControl: { radius: track, optionRadius: option },
+    },
+    // The kit's press timings (`motion.press.inMs`/`outMs`) are the app's
+    // `PRESS`, and its Button springs are the ones the app's button used. The
+    // dip eases on the app's own curve, segments settle at 0.96, and only the
+    // resting scale differs by profile.
+    motion: {
+      press: { surface: profile.motion.pressedScale, segment: 0.96, easing: EASE_OUT },
+    },
+  } satisfies ThemeOverride;
+}
+
+/** The step of the profile's radius ladder that is `value` points. */
+function radiusToken(profile: AppearanceProfile, value: number): RadiusToken {
+  const tokens = Object.keys(profile.radius) as RadiusToken[];
+  const match = tokens.find((key) => profile.radius[key] === value);
+  if (!match) throw new Error(`Appearance profile ${profile.id} has no ${value}pt radius step`);
+  return match;
 }
 
 /** Native options only: profiles never replace Stack ownership or gestures. */
 export function profileNavigationOptions(
   profile: AppearanceProfile,
-  reduceMotion: boolean,
-  modal = false
+  reduceMotion: boolean
 ): Pick<NativeStackNavigationOptions, 'animation' | 'animationDuration'> {
   if (reduceMotion) return { animation: 'none', animationDuration: 0 };
-  if (profile.navigation.animation === 'default') return { animation: 'default' };
-  return {
-    animation: modal ? 'slide_from_bottom' : profile.navigation.animation,
-    animationDuration: modal ? profile.motion.modalMs : profile.motion.pageMs,
-  };
+  return { animation: profile.navigation.animation };
 }

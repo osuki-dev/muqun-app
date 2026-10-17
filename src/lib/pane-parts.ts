@@ -64,7 +64,7 @@ export type PanePart = PanePartCommon &
     | { type: 'diff'; file?: string; hunks: string[] }
     | { type: 'table'; rows: string[][] }
     | { type: 'status'; text: string; spinner: boolean }
-    | { type: 'prompt'; text: string }
+    | { type: 'prompt'; text: string; attachments?: string[] }
     | { type: 'asset-ref'; asset_id: string }
     | { type: 'unknown'; declaredType: string }
   );
@@ -315,7 +315,16 @@ function normalizePanePart(value: unknown, index: number, understood: boolean): 
     }
     case 'prompt': {
       const text = typeof raw.text === 'string' ? raw.text : fallbackText;
-      return text ? { ...common, type: 'prompt', text } : unknown;
+      // The gateway exports attachment bytes or a producer URL, never a host
+      // path for the phone to open. Text such as [Image #1] is not image data.
+      const attachments = stringList(raw.attachments).filter(
+        (uri) =>
+          /^data:image\/[a-z0-9.+-]+;base64,[a-z0-9+/]+={0,2}$/i.test(uri) ||
+          /^https?:\/\//i.test(uri)
+      );
+      return text || attachments.length
+        ? { ...common, type: 'prompt', text, ...(attachments.length ? { attachments } : {}) }
+        : unknown;
     }
     case 'asset-ref': {
       const assetId = typeof raw.asset_id === 'string' ? raw.asset_id : '';
@@ -374,9 +383,23 @@ function normalizeTableRows(value: unknown): string[][] {
  */
 const REPEAT_RUN_PARTS = 4;
 
+/** Image bytes must participate in row reuse and repeated-screen detection. */
+export function promptAttachmentsKey(attachments: readonly string[] | undefined): string {
+  return (attachments ?? [])
+    .map((uri) => {
+      let hash = 0x811c9dc5;
+      for (let index = 0; index < uri.length; index += 1) {
+        hash ^= uri.charCodeAt(index);
+        hash = Math.imul(hash, 0x01000193);
+      }
+      return `~${uri.length}.${(hash >>> 0).toString(36)}`;
+    })
+    .join('');
+}
+
 /** What a part says, as one comparable string. */
 function partKey(part: PanePart): string {
-  return `${part.type}\u0001${part.fallback_text}`;
+  return `${part.type}\u0001${part.fallback_text}${part.type === 'prompt' ? promptAttachmentsKey(part.attachments) : ''}`;
 }
 
 function carriesText(part: PanePart): boolean {
@@ -426,6 +449,7 @@ function isComposerBox(parts: readonly PanePart[], index: number): boolean {
   const below = parts[index + 1];
   return Boolean(
     prompt?.type === 'prompt' &&
+    !prompt.attachments?.length &&
     above?.type === 'text' &&
     isRuleLine(lastLineOf(above)) &&
     below &&

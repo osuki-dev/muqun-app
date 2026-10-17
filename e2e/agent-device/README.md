@@ -9,12 +9,9 @@ release builds include their own JavaScript bundle.
 bash scripts/e2e.sh --check
 bash scripts/e2e.sh --device <id> --platform ios
 bash scripts/e2e.sh --smoke --device <id> --platform android
-# All four QA devices in parallel (see "Parallel gate" below):
-bash scripts/e2e-all.sh
-E2E_ALL_ONLY="android-phone android-tablet" bash scripts/e2e-all.sh --smoke
 E2E_AD_METRO_HOST=127.0.0.1 E2E_AD_METRO_PORT=8081 \
   bash scripts/e2e.sh --device <id> --platform ios
-bash scripts/e2e-agent-device.sh --flow settings --device <id> --platform ios
+bash scripts/e2e.sh --flow settings --device <id> --platform ios
 ```
 
 Notification permission requests for Muqun are declined through their native
@@ -44,27 +41,13 @@ screenshots, native command results, and captured view hierarchies beside them.
 Each run keeps its evidence; previous runs are not deleted. A failure returns a
 nonzero exit status. The runner's pure tests execute before device tests.
 
-## Parallel gate
+## Device isolation
 
-`scripts/e2e-all.sh` runs the gate on the iPhone, iPad, Android phone and
-Android tablet concurrently, one suite process per device. A serial run of all
-four takes over an hour wall-clock (about 18 minutes per device); parallel it
-is roughly one device run. Devices are discovered by their QA names on every
-run -- UDIDs and emulator serials are never hardcoded -- and an unbooted QA
-device is booted, never created. Each leg gets its own agent-device session
-(`muqun-e2e-<name>`) and its own report directory (`dist/e2e-reports/<name>`),
-so legs cannot steal sessions or overwrite evidence.
-
-Before starting a leg, a read-only preflight opens the app and snapshots it:
-a device that shows paired servers instead of the first-run demo entries is
-skipped, loudly, and any skip fails the gate -- the suite must never run
-against real user data, and partial coverage must never pass as full coverage.
-Android legs are taken offline with `svc wifi disable; svc data disable`,
-verified by an unreachable ping: the gate is an offline gate (custom-themes
-asserts the catalogue's offline failure UI), and a QA emulator with a working
-route would reach that assertion online. (Airplane mode alone does not sever
-the emulator's virtual route.)
-`E2E_ALL_ONLY="ipad android-tablet"` restricts a run to named legs.
+Discover the existing dedicated QA device and pass its identity explicitly. Verify
+that it has no paired computers or saved SSH hosts before running the suite. Do
+not create a device for each feature, clear user data, or automate a paired device.
+Run each supported platform separately; a phone result does not prove tablet or
+iOS coverage. The runner serializes flows within one invocation.
 
 Visibility assertions use native `is exists` with `visible=true`: multiple
 visible copies of a heading still satisfy an exact-text visibility assertion.
@@ -81,43 +64,45 @@ parameters. It invokes command argument arrays without a shell and checks
 `is.pass` explicitly: a successful command containing a false predicate fails.
 
 Do not replay a sectioned file as one flat flow: its branches belong to the
-manifest. Use `--flow <name>`. Standalone native scripts can use
-`bash scripts/e2e-agent-device.sh e2e/agent-device/ssh-demo.ad`; the runner applies
-runtime overrides to each open and reports assertion failures in the same way.
+manifest. Use `--flow <name>`. A `run` reference without a section executes only the
+commands before the first `# section` marker. A file containing only named
+sections must reference them explicitly; merely registering its filename does
+not execute them.
 
 The target matcher preserves whole-string regular expressions, including
 trailing spaces in composer insertion assertions. A missing target is established
 only by a readable capture; capture errors fail even optional steps. Selected
 and checked state remain assertions, not screenshots. Native selectors perform
-mutations and reject ambiguous controls. Coordinates are reserved for the Skia
-canvas gestures and the two historical motion-capture touches.
+mutations and reject ambiguous controls. Prefer semantic controls; coordinates
+are reserved for canvas gestures and bounded drags within observed content.
 
-The default suite covers the demo tour, manual pairing, terminal interactions,
-SSH, file mentions, attachments, artifacts, the git diff viewer, settings, away
-digest, slash commands, and responsive workspace navigation. The `git-diff` flow
-opens the demo checkout, expands its six-thousand-line file, pages it with
-`Show more`, and refreshes -- all against the bundled fixtures, so it proves the
-rows and the paging rather than anything about a real `git`. The
-`large-file-preview` flow opens the three demo fixtures that sit past the sizes
-the asset viewer routes on -- a 100 KB changelog, a 140 KB bundle with a
-six-thousand-character line in it, and an 8 MB log -- and asserts that the first
-draws headings rather than its own source, that the second draws numbered rows
-under the note saying why they are not coloured, and that only the third is
-refused, by a sentence naming both sizes. Pad-specific rail assertions execute when
-the persistent Servers rail is present. Run on a landscape tablet to verify
-those branches; passing a phone suite does not prove tablet coverage.
+The full gate is the device acceptance and holds only core flows: a flow stays
+only if it proves a core user path or a contract that unit tests cannot. Its 20
+flows cover the demo tour, manual pairing, SSH, terminal interactions, the soft
+keyboard, slash commands, file mentions, attachments, the git diff viewer,
+settings and the Home layout, Home continue and search, notifications, custom
+themes, the agent transcript, tool detail, session tree and task result, and the
+personal and pad workspaces. The `git-diff` flow opens the demo checkout,
+expands its six-thousand-line file, pages it with `Show more`, and refreshes --
+all against the bundled fixtures, so it proves the rows and the paging rather
+than anything about a real `git`. Pad-specific rail assertions execute when
+the persistent Servers rail is present. Run on a tablet to verify those
+branches; passing a phone suite does not prove tablet coverage. Tablet Home
+retains its editorial spread when Classic is selected. Home search checks
+filtering, clearing and opening a result without fixed pagination counts or
+repeated popup query permutations. The keyboard flow checks the phone's
+symbol pages or the tablet's wide keys, plus contextual editor actions.
 
 Capture-only flows retain their `capture` tag and run only when requested:
 `--tag capture` or `--flow <name>`. They include themes, languages, store images
 and motion evidence. Some target older labels and may need updating before a new
 marketing capture. `store-shot-actions` takes `--env LANG_NAME=...`,
 `--env DEMO_LABEL=...`, and `--env ACTIONS_LABEL=...`.
-The New Task flow remains disabled, but no longer because the feature is held
-back: `AGENT_SPAWN_SHIPPED` is gone and spawning is gated on the gateway's
-`agent_spawn` capability, which the demo announces. `flows/new-task.ad` is an
-unconverted stub -- every step targets `${TARGET}` and nothing supplies it --
-so it has to be rewritten against real selectors before it can carry the `full`
-tag. Disabled coverage is never reported as passed.
+New-task attachment-menu and draft-preservation coverage lives in
+`personal-workspace`. Real agent startup, streamed responses and worktree
+creation/removal require a separate paired integration check in an isolated
+workspace; no offline flow claims to prove them. Obsolete live-device recordings
+and disabled placeholder flows are not retained as nominal coverage.
 
 The suite relaunches the process instead of clearing app storage. It restores
 persistent preferences explicitly and never unpairs real servers. The terminal

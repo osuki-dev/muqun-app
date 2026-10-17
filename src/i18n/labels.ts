@@ -24,9 +24,10 @@ import type { AgentClientCommandId } from '@/lib/agent-commands';
 import type { GitFileStatus } from '@/lib/git-diff';
 import type { NamedApprovalDecision } from '@/lib/pane-approval';
 import type { PaneViewMode } from '@/lib/pane-view-mode';
-import type { ServerReachability } from '@/lib/server-reachability';
+import type { ConnectionStatus, ServerReachability } from '@/lib/server-reachability';
 import type { LaunchAgentCaption } from '@/lib/home-launch-model';
 import type { AgentSessionStatusWord } from '@/lib/home-continue';
+import type { TaskState } from '@/lib/task-ledger';
 import { OPENCODE_INSTALL_URL } from '@/constants/links';
 
 /**
@@ -47,6 +48,30 @@ export const reachabilityDescription: Record<ServerReachability, MessageDescript
   live: msg`Online`,
   offline: msg`Offline, not answering`,
   unknown: msg`Not connected`,
+};
+
+/**
+ * A computer row's status, which can also say the app is reconnecting to the
+ * selected computer, or that the computer refused this device's pairing --
+ * neither of which is a network outage, so neither borrows its words.
+ */
+export const connectionStatusLabel: Record<ConnectionStatus, MessageDescriptor> = {
+  ...reachabilityLabel,
+  reconnecting: msg`RECONNECTING…`,
+  unauthorized: msg`PAIRING EXPIRED`,
+  repair: msg`PAIR AGAIN`,
+};
+
+/**
+ * The full sentence, which for the two states a reader has to act on is also
+ * the explanation shown under the status with the "Pair again" action
+ * (`PairAgainNotice`).
+ */
+export const connectionStatusDescription: Record<ConnectionStatus, MessageDescriptor> = {
+  ...reachabilityDescription,
+  reconnecting: msg`Reconnecting…`,
+  unauthorized: msg`This computer no longer recognises this device. Pair again.`,
+  repair: msg`Encryption was turned on for this computer. Pair it again to keep using it.`,
 };
 
 export const paneViewModeLabel: Record<PaneViewMode, MessageDescriptor> = {
@@ -120,6 +145,34 @@ export const agentStatusWord: Record<string, MessageDescriptor> = {
   done: msg`Done`,
   idle: msg`Idle`,
   unknown: msg`Unknown`,
+};
+
+/** Historical collaboration operations and observed child state are separate facts. */
+export const subagentActionWord = {
+  start: msg`Start`,
+  send: msg`Send`,
+  resume: msg`Resume`,
+  wait: msg`Wait`,
+  close: msg`Close`,
+  interrupt: msg`Interrupt`,
+  followup: msg`Follow up`,
+  list: msg`List agents`,
+  started: msg`Started`,
+  interacted: msg`Interacted`,
+  completed: msg`Completed`,
+  interrupted: msg`Stopped`,
+};
+export const subagentStateWord = {
+  starting: msg`Starting`,
+  working: msg`Working`,
+  idle: msg`Idle`,
+  completed: msg`Completed`,
+  failed: msg`Failed`,
+  stopped: msg`Stopped`,
+  blocked: msg`Needs input`,
+  unknown: msg`Status unknown`,
+  retrying: msg`Retrying…`,
+  unavailable: msg`Unavailable`,
 };
 
 /**
@@ -386,6 +439,18 @@ export const agentSessionStatusWord: Record<AgentSessionStatusWord, MessageDescr
   unknown: msg`Status unknown`,
 };
 
+/** A ledger task's state, as the tasks sheet says it. */
+export const taskStateWord: Record<TaskState, MessageDescriptor> = {
+  queued: msg({ message: 'Queued', context: 'task state' }),
+  dispatching: msg({ message: 'Starting', context: 'task state' }),
+  working: msg({ message: 'Working', context: 'task state' }),
+  waiting: msg({ message: 'Needs you', context: 'task state' }),
+  idle_unconfirmed: msg({ message: 'Paused', context: 'task state' }),
+  done: msg({ message: 'Done', context: 'task state' }),
+  failed: msg({ message: 'Failed', context: 'task state' }),
+  cancelled: msg({ message: 'Cancelled', context: 'task state' }),
+};
+
 export const agentLaunchCaption: Record<LaunchAgentCaption, MessageDescriptor> = {
   'new-session': msg`New session`,
   'not-installed': msg`Not installed`,
@@ -420,21 +485,26 @@ export type AgentGuideCopy = {
  * more useful to say.
  */
 export const agentGuideCopy: Record<string, AgentGuideCopy> = {
+  codex: {
+    start: msg`Run muqun-gateway agent setup codex on the computer for setup instructions. Gateway starts its own Codex connection using the host's existing configuration and sign-in.`,
+    command: 'muqun-gateway agent setup codex',
+    installUrl: 'https://developers.openai.com/codex/cli/',
+  },
   opencode: {
-    start: msg`Start the OpenCode service on the gateway host, then check again.`,
+    start: msg`Start the OpenCode service on the computer, then check again.`,
     command: 'opencode service start',
     installUrl: OPENCODE_INSTALL_URL,
   },
   deepseek: {
-    start: msg`Enable deepseek in the gateway config, start DeepSeek Harness on the host, then restart the gateway.`,
-    command: 'bunx @deepseek-ai/dsh web --no-open',
+    start: msg`Gateway starts or joins DeepSeek Harness on the computer (default http://127.0.0.1:3080, override deepseek.endpoint).`,
+    command: 'muqun-gateway agent setup deepseek',
   },
   // T3 is not `connected` until the gateway holds a pairing token. A stopped T3
   // is offered the command that starts it; one that is running but unpaired
   // (`needs-setup`) gets the pairing sentence and `t3 pair`. Never both at once: pasted as two lines, `t3 pair` would wait
   // behind the server.
   t3: {
-    start: msg`Open T3 Code on the gateway host (or run t3 service install), then check again.`,
+    start: msg`Open T3 Code on the computer (or run t3 service install), then check again.`,
     setupStart: msg`Run t3 pair on the host, set the printed token as t3.pairing_token in the gateway config, and restart the gateway within 5 minutes.`,
     command: 't3 service install',
     setupCommand: 't3 pair',
@@ -443,7 +513,7 @@ export const agentGuideCopy: Record<string, AgentGuideCopy> = {
 
 /** The guide for a kind this build has never heard of. */
 export const agentGuideFallback: AgentGuideCopy = {
-  start: msg`Start the agent on the gateway host, then check again.`,
+  start: msg`Start the agent on the computer, then check again.`,
 };
 
 export function agentGuideFor(kind: string | undefined): AgentGuideCopy {

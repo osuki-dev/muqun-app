@@ -26,12 +26,21 @@ export interface InAppNotice {
    * persistence -- a question waits for an answer just as an approval does --
    * but is drawn with its own words and cleared by its own session.
    */
-  question?: { asid: string; formId: string };
+  question?: QuestionNoticeIdentity;
+}
+
+export interface QuestionNoticeIdentity {
+  serverId?: string;
+  asid: string;
+  formId: string;
+  /** Gateway process observed when the notice or resolution was received. */
+  generation?: string;
 }
 
 export interface NoticeQueue {
   items: InAppNotice[];
   seen: string[];
+  resolvedQuestions?: QuestionNoticeIdentity[];
 }
 
 export const MAX_NOTICES = 20;
@@ -71,7 +80,15 @@ function semanticNoticeKey(notice: InAppNotice): string | null {
 }
 
 function sameQuestion(a: InAppNotice['question'], b: InAppNotice['question']): boolean {
-  return Boolean(a && b && a.asid === b.asid && a.formId === b.formId);
+  return Boolean(
+    a &&
+    b &&
+    a.serverId &&
+    a.serverId === b.serverId &&
+    a.asid === b.asid &&
+    a.formId === b.formId &&
+    a.generation === b.generation
+  );
 }
 
 /** Memory-only: never persist notification bodies or approval details. */
@@ -79,7 +96,8 @@ export function enqueueNotice(queue: NoticeQueue, notice: InAppNotice): NoticeQu
   if (
     !notice.id ||
     queue.seen.includes(notice.id) ||
-    queue.items.some((item) => item.id === notice.id)
+    queue.items.some((item) => item.id === notice.id) ||
+    queue.resolvedQuestions?.some((question) => sameQuestion(question, notice.question))
   )
     return queue;
   // The same question asked again retires its earlier card; one card per form.
@@ -106,12 +124,14 @@ export function enqueueNotice(queue: NoticeQueue, notice: InAppNotice): NoticeQu
     }
     if (replaced) {
       return {
+        ...queue,
         items,
         seen: [...queue.seen, notice.id].slice(-MAX_SEEN_NOTICES),
       };
     }
   }
   return {
+    ...queue,
     // Keep the visible item stable while new events arrive behind it.
     items:
       queue.items.length >= MAX_NOTICES
@@ -136,8 +156,54 @@ export function dismissNoticeKind(queue: NoticeQueue, kind: NoticeKind): NoticeQ
 }
 
 /** Every question about one agent session: the reader has opened it. */
-export function dismissSessionQuestions(queue: NoticeQueue, asid: string): NoticeQueue {
-  const gone = (item: InAppNotice) => item.question?.asid === asid;
+export function dismissSessionQuestions(
+  queue: NoticeQueue,
+  asid: string,
+  serverId: string
+): NoticeQueue {
+  const gone = (item: InAppNotice) =>
+    item.question?.asid === asid && item.question.serverId === serverId;
+  if (!queue.items.some(gone)) return queue;
+  return { ...queue, items: queue.items.filter((item) => !gone(item)) };
+}
+
+/** Explicit resolution only; an empty snapshot or idle turn is not proof. */
+export function resolveQuestionNotice(
+  queue: NoticeQueue,
+  question: QuestionNoticeIdentity
+): NoticeQueue {
+  if (!question.serverId || !question.asid || !question.formId) return queue;
+  const resolvedQuestions = [
+    ...(queue.resolvedQuestions ?? []).filter((item) => !sameQuestion(item, question)),
+    question,
+  ].slice(-MAX_SEEN_NOTICES);
+  return {
+    ...queue,
+    items: queue.items.filter((item) => !sameQuestion(item.question, question)),
+    resolvedQuestions,
+  };
+}
+
+/** A new authoritative pending event may reopen the same form identity. */
+export function reopenQuestionNotice(
+  queue: NoticeQueue,
+  question: QuestionNoticeIdentity
+): NoticeQueue {
+  if (!queue.resolvedQuestions?.some((item) => sameQuestion(item, question))) return queue;
+  return {
+    ...queue,
+    resolvedQuestions: queue.resolvedQuestions.filter((item) => !sameQuestion(item, question)),
+  };
+}
+
+/**
+ * Every notice about one agent session, questions or not: the reader opened
+ * or acknowledged its task from Home, so nothing about it is news any more.
+ */
+export function dismissSessionNotices(queue: NoticeQueue, asid: string): NoticeQueue {
+  const gone = (item: InAppNotice) =>
+    item.question?.asid === asid ||
+    (typeof item.route === 'object' && item.route?.params.asid === asid);
   if (!queue.items.some(gone)) return queue;
   return { ...queue, items: queue.items.filter((item) => !gone(item)) };
 }
@@ -168,12 +234,17 @@ function pushIsQuestion(data: Record<string, unknown> | undefined): boolean {
 
 /** A question's identity: the session it was asked in and its form. */
 function pushQuestion(
-  data: Record<string, unknown> | undefined
+  data: Record<string, unknown> | undefined,
+  generation?: string
 ): InAppNotice['question'] | undefined {
   if (!pushIsQuestion(data)) return undefined;
   const asid = typeof data?.asid === 'string' ? data.asid.trim() : '';
   const formId = typeof data?.form_id === 'string' ? data.form_id.trim() : '';
-  return asid && formId ? { asid, formId } : undefined;
+  const source = data?.server_id ?? data?.serverId;
+  const serverId = typeof source === 'string' ? source.trim() : '';
+  return asid && formId
+    ? { asid, formId, ...(serverId ? { serverId } : {}), ...(generation ? { generation } : {}) }
+    : undefined;
 }
 
 export interface NoticeFromPushOptions {
@@ -181,6 +252,7 @@ export interface NoticeFromPushOptions {
   isPad?: boolean;
   /** The localized title a question push falls back to when it arrives without one. */
   questionTitle?: string;
+  gatewayGeneration?: string;
 }
 
 export function noticeFromPush(
@@ -192,7 +264,7 @@ export function noticeFromPush(
   const body = sanitizeServerText(content.body, 320);
   if (!title && pushIsQuestion(content.data)) title = options.questionTitle ?? '';
   if (!id || id.length > 512 || (!title && !body)) return null;
-  const question = pushQuestion(content.data);
+  const question = pushQuestion(content.data, options.gatewayGeneration);
   return {
     id,
     title,
@@ -204,6 +276,45 @@ export function noticeFromPush(
   };
 }
 
+/**
+ * Which paired computer a push is about, or `null` for one this device must
+ * not show at all.
+ *
+ * Several gateways can front one agent service and so see one another's
+ * sessions; each pushes as itself. A push from a computer that is no longer
+ * paired (a registration it kept, a session seen only through it) is dropped.
+ * A push about a session a paired computer's task ledger has bound is named
+ * after that computer -- the one the work was sent to -- with the title's
+ * provenance (`Agent done · desk`) and the route moved to it. Questions keep
+ * their emitting server because session IDs alone cannot establish ownership.
+ * The suffix always uses that source's saved label, not an older push title.
+ */
+export function attributePush(
+  content: { title?: unknown; data?: Record<string, unknown> },
+  paired: readonly { serverId: string; label: string }[],
+  ledgerOwner: (asid: string) => string | undefined
+): { title?: unknown; data?: Record<string, unknown> } | null {
+  const data = content.data;
+  const serverId = typeof data?.server_id === 'string' ? data.server_id : data?.serverId;
+  if (typeof serverId !== 'string' || !serverId) return content;
+  if (!paired.some((record) => record.serverId === serverId)) return null;
+  const asid = typeof data?.asid === 'string' ? data.asid : '';
+  // A form belongs to its emitting server, even if another paired gateway's
+  // ledger happens to contain the same session ID.
+  const owner = asid && !pushIsQuestion(data) ? ledgerOwner(asid) : undefined;
+  const record =
+    paired.find((item) => item.serverId === (owner ?? serverId)) ??
+    paired.find((item) => item.serverId === serverId);
+  if (!record) return content;
+  const { lead } = noticeTitleParts(typeof content.title === 'string' ? content.title : '');
+  const { serverId: _serverId, ...rest } = data ?? {};
+  return {
+    ...content,
+    title: lead ? `${lead}${TITLE_SEPARATOR}${record.label}` : content.title,
+    data: { ...rest, server_id: record.serverId },
+  };
+}
+
 /** Foreground messages belong to the app, background delivery stays with the OS. */
 export function noticePresentation(enabled: boolean, active: boolean) {
   return { inApp: enabled && active, system: enabled && !active };
@@ -212,7 +323,7 @@ export function noticePresentation(enabled: boolean, active: boolean) {
 /**
  * The separator the gateway puts between what happened and where.
  *
- * A push arrives titled "Agent done · osk": one sentence of subject and one
+ * A push arrives titled "Agent done · desk": one sentence of subject and one
  * word of provenance, joined by a middle dot. The banner draws them as two
  * weights on one line rather than as one string, so the eye reaches the event
  * first and the machine second.
@@ -242,4 +353,20 @@ export function noticeTitleParts(title: string): NoticeTitleParts {
   const suffix = title.slice(at + TITLE_SEPARATOR.length).trim();
   if (!lead || !suffix) return whole;
   return { lead, suffix };
+}
+
+/** Presentation follows typed requests; a generic "blocked" event may be an error or approval. */
+export function noticeDisplayTitle(
+  notice: Pick<InAppNotice, 'title' | 'kind' | 'question'>,
+  labels: { question: string; approval: string; fallback: string }
+): NoticeTitleParts {
+  const parts = noticeTitleParts(notice.title);
+  return {
+    lead: notice.question
+      ? labels.question
+      : notice.kind === 'approval'
+        ? labels.approval
+        : parts.lead || labels.fallback,
+    suffix: parts.suffix,
+  };
 }

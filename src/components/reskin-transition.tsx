@@ -1,13 +1,15 @@
 import { useThemeTokens } from '@osuki-dev/ui';
+import { create } from 'zustand';
 import {
   Canvas,
+  ColorShader,
   Fill,
   Image as SkiaImage,
   ImageShader,
   Shader,
   Skia,
   TileMode,
-  makeImageFromView,
+  useCanvasRef,
   type SkImage,
 } from 'react-native-skia';
 import {
@@ -21,15 +23,19 @@ import {
   type ReactNode,
   type RefObject,
 } from 'react';
+import { importDevice } from 'react-native-webgpu';
 import {
+  PixelRatio,
   Platform,
   StyleSheet,
   View,
   type GestureResponderEvent,
   type LayoutChangeEvent,
+  type ViewInstance,
 } from 'react-native';
 import Animated, {
   Easing,
+  cancelAnimation,
   ReduceMotion,
   runOnJS,
   useAnimatedStyle,
@@ -80,6 +86,10 @@ import {
   type ReskinPoint,
   type ReskinSize,
 } from '@/lib/reskin-shaders';
+import { recoverWith, rethrow, settleAfter } from '@/lib/compiler-safe-control-flow';
+import { runReskinSwap } from '@/lib/reskin-swap';
+import { createCoverReadiness, waitForThemeRender } from '@/lib/theme-render-readiness';
+import { useSkiaDrawReady } from '@/hooks/use-theme-render-ready';
 import { colorVector } from '@/lib/ink-bloom-shader';
 
 /**
@@ -94,7 +104,7 @@ import { colorVector } from '@/lib/ink-bloom-shader';
  * settle. Even without the reflow the change is a hard cut -- the reader taps
  * a row and the world they were reading is gone between two frames.
  *
- * So the app photographs the old screen with `makeImageFromView`, holds the
+ * So the app photographs the old screen (see {@link photograph}), holds the
  * photograph over the top, lets the live interface underneath change and
  * settle where nobody is watching, and then erases the photograph with a
  * shader. The reflow happens behind a still image. What the reader sees is one
@@ -108,8 +118,7 @@ import { colorVector } from '@/lib/ink-bloom-shader';
  * view in the app's hierarchy: on iOS it is a separately presented
  * `UIViewController`, on Android a `Dialog` with a `Window` of its own. No
  * `zIndex` and no `elevation` reaches above either. A root overlay cannot
- * cover a form sheet, and `makeImageFromView` on a root ref does not
- * photograph one.
+ * cover a form sheet, and a snapshot of a root ref does not photograph one.
  *
  * For the theme sheet that does not matter, because applying a theme closes
  * it. For the font sheet it matters a great deal: "Use system font" and a
@@ -123,14 +132,11 @@ import { colorVector } from '@/lib/ink-bloom-shader';
  * every surface it can find. Origins cross between them as fractions rather
  * than as points, for the reason set out on `resolveOrigin`.
  *
- * ## The transition never delays the change
- *
- * Every failure here is answered by applying the setting with no effect at
- * all: a device that cannot snapshot, a snapshot that takes longer than
- * {@link SNAPSHOT_BUDGET_MS}, a shader that will not compile, a surface with
- * no size yet. The reader asked for a font, not for an animation, and a
- * setting that takes a beat longer to land because the app was taking its
- * picture is a worse app in exchange for a nicer one.
+ * Theme changes start the ripple on the live old surface, then prepare the
+ * new artwork before activating it under a real photograph. An unavailable
+ * photograph leaves the live screen visible; a blank paper veil is never a
+ * substitute for a theme snapshot. Native theme routes register their own
+ * surfaces so feedback starts where the reader tapped, before dismissal.
  */
 
 /** What a caller asks for. */
@@ -152,12 +158,28 @@ export type ReskinRunOptions = {
    * a font change, where the palette is not moving.
    */
   accent?: string;
-  /** The change itself. Runs behind the photograph, and always runs. */
+  /** Prepare assets while the old interface and its ripple remain visible. */
+  prepare?: () => Promise<void | (() => void)>;
+  /** A dismissed caller must not activate a theme after its preparation completes. */
+  isCurrent?: () => boolean;
+  /** The change itself, after preparation and only for the latest request. */
   apply: () => void | Promise<void>;
+  /**
+   * Navigation that should happen under the cover, after the new theme has
+   * painted and before the cover lifts. Closing a sheet in the same turn as
+   * `apply` makes the dismissal and the reveal fight -- and so does lifting
+   * the cover while the dismissal is still animating, so a settle that
+   * returns a promise (`afterNavigationSettles`) holds the cover until the
+   * navigation has come to rest, up to `SETTLE_CAP_MS`.
+   */
+  settle?: () => void | Promise<void>;
 };
 
 type ActiveRun = {
   id: number;
+  preparing?: boolean;
+  initiator?: string;
+  coverReady?: (surface: string, ready: boolean) => void;
   play: Exclude<ReskinPlay, 'none'>;
   /** A fraction of each surface -- see `resolveOrigin`. */
   origin: ReskinPoint;
@@ -186,7 +208,7 @@ type ActiveRun = {
 type TouchRecord = { point: ReskinPoint; at: number } | null;
 
 type SurfaceEntry = {
-  ref: RefObject<View | null>;
+  ref: RefObject<ViewInstance | null>;
   size: { current: ReskinSize };
   touch: { current: TouchRecord };
 };
@@ -224,15 +246,20 @@ type ReskinContextValue = {
  * detail in it to lose, and a quarter-resolution target is a draw measured in
  * microseconds.
  *
- * `makeNonTextureImage` because an offscreen surface lives on the context of
- * the thread that made it, and the canvas that will draw this one is on
- * another. Null on any failure, and a null veil is an apply with no effect.
+ * `makeRasterImage` because an offscreen surface lives on the context of the
+ * thread that made it, and the canvas that will draw this one is on another.
+ * Null on any failure, and a null veil is an apply with no effect.
  */
-function makeVeilImage(size: ReskinSize, paper: string, raised: string): SkImage | null {
+async function makeVeilImage(
+  size: ReskinSize,
+  paper: string,
+  raised: string
+): Promise<SkImage | null> {
   try {
     const width = Math.max(1, Math.round(size.width));
     const height = Math.max(1, Math.round(size.height));
-    const surface = Skia.Surface.MakeOffscreen(width, height) ?? Skia.Surface.Make(width, height);
+    const surface =
+      Skia.Surface.MakeOffscreen(width, height) ?? Skia.Surface.MakeRaster(width, height);
     if (!surface) return null;
     const canvas = surface.getCanvas();
     canvas.drawColor(Skia.Color(paper));
@@ -250,7 +277,7 @@ function makeVeilImage(size: ReskinSize, paper: string, raised: string): SkImage
     canvas.drawRect({ x: 0, y: 0, width, height }, wash);
     surface.flush();
     const snapshot = surface.makeImageSnapshot();
-    const image = snapshot.makeNonTextureImage();
+    const image = await snapshot.makeRasterImage();
     if (image !== snapshot) snapshot.dispose();
     return image;
   } catch {
@@ -292,11 +319,16 @@ async function photographSurfaces(
   entries: readonly (readonly [string, SurfaceEntry])[],
   strikes: { current: number },
   stillWanted: () => boolean,
-  budgetMs: number
+  budgetMs: number,
+  keepCompleted = false
 ): Promise<Photographs> {
   const started = Date.now();
   const capture = Promise.all(
-    entries.map(([, entry]) => makeImageFromView(entry.ref).catch((): SkImage | null => null))
+    entries.map(([, entry]) =>
+      Promise.resolve()
+        .then(() => photograph(entry))
+        .catch((): SkImage | null => null)
+    )
   );
   const raced = await Promise.race([
     capture,
@@ -316,15 +348,84 @@ async function photographSurfaces(
     elapsed,
     budgetMs
   );
-  if (outcome !== 'ok') {
+  if (outcome !== 'ok' && !(keepCompleted && raced.some(Boolean))) {
     release(raced);
     return { shots: null, ms: elapsed, outcome };
   }
   const shots = bySurface(
     entries.map(([key]) => key),
-    raced
+    keepCompleted ? raced.map(uploadCover) : raced
   );
   return { shots: shots.size > 0 ? shots : null, ms: elapsed, outcome };
+}
+
+/**
+ * A picture of one surface, taken by React Native WebGPU.
+ *
+ * Skia 3.6 removed `makeImageFromView`; the platform now rasterizes the view
+ * into a texture on Skia's own device (`queue.drawElementImageToTexture`), and
+ * `MakeImageFromGPUTexture` wraps that texture without a copy. The image keeps
+ * the texture alive only by reference, so {@link disposeImage} destroys the
+ * texture when the picture goes. The capture is a promise, which is what lets
+ * the budget race in {@link photographSurfaces} cut a slow one short.
+ */
+async function photograph(entry: SurfaceEntry): Promise<SkImage | null> {
+  const { width, height } = entry.size.current;
+  if (!entry.ref.current || width <= 0 || height <= 0) return null;
+  const scale = PixelRatio.get();
+  const texture = sharedDevice().createTexture({
+    size: [Math.max(1, Math.round(width * scale)), Math.max(1, Math.round(height * scale))],
+    format: 'rgba8unorm',
+    usage:
+      GPUTextureUsage.COPY_DST |
+      GPUTextureUsage.RENDER_ATTACHMENT |
+      GPUTextureUsage.TEXTURE_BINDING,
+  });
+  try {
+    // Skia images are premultiplied.
+    await sharedDevice().queue.drawElementImageToTexture(
+      { source: entry.ref },
+      { texture, premultipliedAlpha: true }
+    );
+    const image = Skia.Image.MakeImageFromGPUTexture(texture);
+    textures.set(image, texture);
+    return image;
+  } catch (error) {
+    texture.destroy();
+    throw error;
+  }
+}
+
+let device: GPUDevice | null = null;
+
+/** Skia's render device, wrapped once; the two libraries share one Dawn. */
+function sharedDevice(): GPUDevice {
+  device ??= importDevice(Skia.getNativeDevice());
+  return device;
+}
+
+/** The texture each photograph samples, destroyed with the photograph. */
+const textures = new Map<SkImage, GPUTexture>();
+
+/** Give an image back to Skia, and its texture back to the device. */
+function disposeImage(image: SkImage): void {
+  image.dispose();
+  textures.get(image)?.destroy();
+  textures.delete(image);
+}
+
+/** Share the cover's upload with its on-screen and readiness canvases. */
+function uploadCover(image: SkImage | null): SkImage | null {
+  if (!image) return null;
+  try {
+    const texture = image.makeTextureImage();
+    if (texture !== image) disposeImage(image);
+    return texture;
+  } catch {
+    // A renderer failure takes the bounded live-screen fallback.
+    disposeImage(image);
+    return null;
+  }
 }
 
 /**
@@ -358,9 +459,9 @@ function afterNextPaint(run: () => void): void {
  * rather than a dropped frame.
  */
 function release(images: Iterable<SkImage | null>): void {
-  const doomed = [...images];
-  requestAnimationFrame(() => {
-    for (const image of doomed) image?.dispose();
+  const doomed = [...new Set(images)];
+  afterNextPaint(() => {
+    for (const image of doomed) if (image) disposeImage(image);
   });
 }
 
@@ -378,7 +479,7 @@ function bySurface(
   images.forEach((image, index) => {
     const key = keys[index];
     if (image && key) shots.set(key, image);
-    else if (image) image.dispose();
+    else if (image) disposeImage(image);
   });
   return shots;
 }
@@ -411,6 +512,26 @@ function eraseTiming(play: Exclude<ReskinPlay, 'none'>) {
   }
 }
 
+/** The longest the cover waits on a settle's promise before lifting anyway. */
+const SETTLE_CAP_MS = 800;
+
+/** A settle's promise, or nothing, bounded so the cover always lifts. */
+async function settled(outcome: void | Promise<void>): Promise<void> {
+  if (!outcome) return;
+  await Promise.race([
+    outcome.catch(() => undefined),
+    new Promise<void>((resolve) => setTimeout(resolve, SETTLE_CAP_MS)),
+  ]);
+}
+
+/**
+ * Whether a reskin is under way, for the navigator: blurred screens are
+ * frozen the rest of the time, and a frozen Home would pay its whole
+ * re-render under the new theme during the transition back to it. For the
+ * length of a run they thaw and re-render under the cover instead.
+ */
+export const useReskinActivity = create<{ active: boolean }>(() => ({ active: false }));
+
 export function ReskinTransitionProvider({ children }: { children: ReactNode }) {
   const { colors, typography } = useThemeTokens();
   const reduceMotion = useReducedMotion();
@@ -421,20 +542,32 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
   const nextId = useRef(0);
   const strikes = useRef(0);
   const activeRef = useRef<ActiveRun | null>(null);
-  // Synchronised after the commit rather than during the render, so that `run`
-  // and `finish` -- both of which are called long after any render, from a tap
-  // or from an animation ending -- can read what is on screen now without
-  // holding a stale closure over it.
-  useEffect(() => {
-    activeRef.current = active;
-  }, [active]);
+  const updateActive = useCallback(
+    (next: ActiveRun | null | ((current: ActiveRun | null) => ActiveRun | null)) => {
+      const value = typeof next === 'function' ? next(activeRef.current) : next;
+      activeRef.current = value;
+      setActive(value);
+      if ((value !== null) !== useReskinActivity.getState().active)
+        useReskinActivity.setState({ active: value !== null });
+    },
+    []
+  );
 
-  const register = useCallback((id: string, entry: SurfaceEntry) => {
-    surfaces.current.set(id, entry);
-    return () => {
-      surfaces.current.delete(id);
-    };
-  }, []);
+  const register = useCallback(
+    (id: string, entry: SurfaceEntry) => {
+      surfaces.current.set(id, entry);
+      return () => {
+        surfaces.current.delete(id);
+        const current = activeRef.current;
+        if (current?.preparing && current.initiator === id) {
+          nextId.current += 1;
+          updateActive(null);
+          release(picturesOf(current));
+        }
+      };
+    },
+    [updateActive]
+  );
 
   // A live copy of everything a run needs off the theme, so that `run` can
   // stay a stable callback and still read today's palette and type scale.
@@ -453,12 +586,15 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
     };
   }, [colors.background, colors.primary, colors.surfaceRaised, typography.body.fontSize]);
 
-  const finish = useCallback((id: number) => {
-    const current = activeRef.current;
-    if (!current || current.id !== id) return;
-    release(picturesOf(current));
-    setActive(null);
-  }, []);
+  const finish = useCallback(
+    (id: number) => {
+      const current = activeRef.current;
+      if (!current || current.id !== id) return;
+      updateActive(null);
+      release(picturesOf(current));
+    },
+    [updateActive]
+  );
 
   const run = useCallback(
     async (options: ReskinRunOptions) => {
@@ -468,15 +604,27 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
       // Anything already on screen belongs to a run the reader has overtaken.
       const previous = activeRef.current;
       if (previous) {
+        cancelAnimation(progress);
+        cancelAnimation(veil);
+        updateActive(null);
         release(picturesOf(previous));
-        setActive(null);
       }
 
       const entries = [...surfaces.current.entries()].filter(
         ([, entry]) => entry.size.current.width > 0 && entry.size.current.height > 0
       );
       if (entries.length === 0) {
-        await apply();
+        await runReskinSwap({
+          prepare: options.prepare,
+          cover: async () => {},
+          apply: async () => {
+            await apply();
+            options.settle?.();
+          },
+          painted: async () => {},
+          reveal: () => {},
+          current: () => id === nextId.current && options.isCurrent?.() !== false,
+        });
         return;
       }
 
@@ -506,10 +654,22 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
 
       const chosen = play(entries[entries.length - 1]?.[1].size.current ?? { width: 0, height: 0 });
       if (chosen === 'none') {
-        await apply();
+        await runReskinSwap({
+          prepare: options.prepare,
+          cover: async () => {},
+          apply: async () => {
+            await apply();
+            options.settle?.();
+          },
+          painted: async () => {},
+          reveal: () => {},
+          current: () => id === nextId.current && options.isCurrent?.() !== false,
+        });
         return;
       }
-      const stillWanted = () => id === nextId.current;
+      let applied = false;
+      const stillWanted = () =>
+        id === nextId.current && (applied || options.isCurrent?.() !== false);
       const budget = snapshotBudget(Platform.OS, chosen);
       // On Android only the topmost surface is photographed: it is the one the
       // reader is looking at (a font sheet covers the app behind it), and a
@@ -521,7 +681,7 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
       const erase = (photographed: boolean) => {
         afterNextPaint(() => {
           if (!stillWanted()) return;
-          setActive((current) =>
+          updateActive((current) =>
             current?.id === id && current.swapping ? { ...current, swapping: false } : current
           );
           const start = (mode: string) => {
@@ -549,7 +709,7 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
           void photographSurfaces(targets, strikes, stillWanted, budget).then((taken) => {
             const { shots: next } = taken;
             if (next && stillWanted()) {
-              setActive((current) => (current?.id === id ? { ...current, next } : current));
+              updateActive((current) => (current?.id === id ? { ...current, next } : current));
             } else if (next) {
               release(next.values());
             }
@@ -565,6 +725,7 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
       const accent = colorVector(options.accent ?? paint.current.primary);
       const base = {
         id,
+        initiator: entries.at(-1)?.[0],
         play: chosen,
         origin: resolveOrigin(options.origin ?? sniffOrigin(), kind),
         rim: accent,
@@ -572,6 +733,104 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
         cell: halftoneCell(paint.current.body),
         next: new Map<string, SkImage>(),
       };
+
+      if (kind === 'theme') {
+        // Start on the live old screen, including the native theme sheet. A
+        // missing/slow snapshot must never be replaced by an opaque blank veil.
+        progress.set(0);
+        veil.set(1);
+        updateActive({ ...base, shots: new Map(), veiled: false, swapping: true, preparing: true });
+        if (chosen === 'ripple')
+          progress.set(withTiming(0.18, { duration: 180, easing: Easing.linear }));
+        const painted = () => new Promise<void>((resolve) => afterNextPaint(resolve));
+        await settleAfter(
+          () =>
+            recoverWith(
+              async () => {
+                // Let the UI-thread ripple paint before capture or decoding can occupy JS.
+                await painted();
+                if (!stillWanted()) return;
+                await runReskinSwap({
+                  current: stillWanted,
+                  prepare: options.prepare,
+                  cover: async () => {
+                    // Capture before preparing assets. The old screen stays live
+                    // until every cover has submitted its image to Skia.
+                    // Only the surface the reader is looking at. Photographing Home
+                    // underneath the sheet made the capture slower and showed
+                    // Home through the ripple while the sheet was still leaving.
+                    const taken = await photographSurfaces(
+                      entries.slice(-1),
+                      strikes,
+                      stillWanted,
+                      3000,
+                      true
+                    );
+                    if (taken.shots && stillWanted()) {
+                      const cover = createCoverReadiness(taken.shots.keys());
+                      updateActive((current) =>
+                        current?.id === id
+                          ? {
+                              ...current,
+                              shots: taken.shots ?? new Map(),
+                              coverReady: cover.complete,
+                            }
+                          : current
+                      );
+                      const ready = await cover.promise;
+                      trace(`theme cover draw ${ready ? 'ready' : 'failed or timed out'}`);
+                      if (!ready && stillWanted()) {
+                        // Unmount failed covers before applying. A late GPU upload
+                        // must not bring the old screen back over the new one.
+                        updateActive((current) =>
+                          current?.id === id
+                            ? { ...current, shots: new Map(), coverReady: undefined }
+                            : current
+                        );
+                        release(taken.shots.values());
+                      }
+                      await painted();
+                    } else if (taken.shots) release(taken.shots.values());
+                  },
+                  apply: async () => {
+                    applied = true;
+                    updateActive((current) =>
+                      current?.id === id ? { ...current, preparing: false } : current
+                    );
+                    await apply();
+                  },
+                  painted: async () => {
+                    await painted();
+                    const ready = await waitForThemeRender();
+                    trace(`theme renderers ${ready ? 'ready' : 'timed out'}`);
+                    await painted();
+                    if (stillWanted()) await settled(options.settle?.());
+                    await painted();
+                  },
+                  reveal: () => {
+                    updateActive((current) =>
+                      current?.id === id ? { ...current, swapping: false } : current
+                    );
+                    progress.set(
+                      withTiming(1, eraseTiming(chosen), (done) => {
+                        'worklet';
+                        if (done) runOnJS(finish)(id);
+                      })
+                    );
+                  },
+                });
+              },
+              (error) => {
+                finish(id);
+                return rethrow(error);
+              }
+            ),
+          () => {
+            if (!stillWanted()) finish(id);
+          }
+        );
+        return;
+      }
 
       // A device that has already shown it cannot photograph itself in time is
       // not asked again: the picture is the expensive half, and taking one we
@@ -582,7 +841,6 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
         trace(`old-UI photo ${taken.outcome} ${taken.ms} ms (budget ${budget} ms)`);
         if (!stillWanted()) {
           if (taken.shots) release(taken.shots.values());
-          await apply();
           return;
         }
         shots = taken.shots;
@@ -597,7 +855,7 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
         // where the reader last touched, on whichever surface they touched: a
         // finger is a better record of what was tapped than a row component's
         // idea of where it is.
-        setActive({ ...base, shots, veiled: false, swapping: false });
+        updateActive({ ...base, shots, veiled: false, swapping: false });
         // Not in the same commit as the apply: a Skia canvas does not paint
         // in the commit that mounts it -- its picture is recorded after the
         // commit and handed to the UI thread a frame or more later. Measured on Android, applying a
@@ -606,7 +864,13 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
         // photograph arrived over it. So the cover gets two frames to paint
         // before the change it is covering is made.
         await new Promise<void>((resolve) => afterNextPaint(() => afterNextPaint(resolve)));
-        await apply();
+        if (!stillWanted()) return;
+        try {
+          await apply();
+        } catch (error) {
+          finish(id);
+          throw error;
+        }
         erase(true);
         return;
       }
@@ -620,8 +884,16 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
 
       const veils = new Map<string, SkImage>();
       for (const [key, entry] of entries) {
-        const image = makeVeilImage(entry.size.current, paint.current.paper, paint.current.raised);
+        const image = await makeVeilImage(
+          entry.size.current,
+          paint.current.paper,
+          paint.current.raised
+        );
         if (image) veils.set(key, image);
+      }
+      if (!stillWanted()) {
+        release(veils.values());
+        return;
       }
       if (veils.size === 0) {
         await apply();
@@ -630,7 +902,7 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
 
       progress.set(0);
       veil.set(0);
-      setActive({ ...base, shots: veils, veiled: true, swapping: true });
+      updateActive({ ...base, shots: veils, veiled: true, swapping: true });
 
       // The veil comes up over the old interface, the change lands under it
       // once it is opaque, and only then does the front take it away. It has
@@ -653,20 +925,30 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
           );
         });
       });
-      await apply();
+      if (!stillWanted()) return;
+      try {
+        await apply();
+      } catch (error) {
+        finish(id);
+        throw error;
+      }
       if (stillWanted()) erase(false);
     },
-    [finish, progress, reduceMotion, veil]
+    [finish, progress, reduceMotion, veil, updateActive]
   );
 
   // A run still on screen when the tree goes away would otherwise take its
   // textures with it.
   useEffect(
     () => () => {
+      nextId.current += 1;
+      cancelAnimation(progress);
+      cancelAnimation(veil);
       const current = activeRef.current;
-      if (current) for (const image of picturesOf(current)) image.dispose();
+      activeRef.current = null;
+      if (current) release(picturesOf(current));
     },
-    []
+    [progress, veil]
   );
 
   const value = useMemo<ReskinContextValue>(
@@ -687,7 +969,17 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
 export function useReskinTransition(): { run: (options: ReskinRunOptions) => Promise<void> } {
   const context = useContext(ReskinContext);
   const fallback = useCallback(async (options: ReskinRunOptions) => {
-    await options.apply();
+    await runReskinSwap({
+      prepare: options.prepare,
+      cover: async () => {},
+      apply: async () => {
+        await options.apply();
+        options.settle?.();
+      },
+      painted: async () => {},
+      reveal: () => {},
+      current: () => options.isCurrent?.() !== false,
+    });
   }, []);
   return { run: context?.run ?? fallback };
 }
@@ -702,8 +994,8 @@ export function useReskinTransition(): { run: (options: ReskinRunOptions) => Pro
  */
 export function ReskinSurface({ id, children }: { id: string; children: ReactNode }) {
   const context = useContext(ReskinContext);
-  const ref = useRef<View>(null);
-  const frame = useRef<View>(null);
+  const ref = useRef<ViewInstance>(null);
+  const frame = useRef<ViewInstance>(null);
   const size = useRef<ReskinSize>({ width: 0, height: 0 });
   const touch = useRef<TouchRecord>(null);
   const [measured, setMeasured] = useState<ReskinSize>({ width: 0, height: 0 });
@@ -765,10 +1057,14 @@ export function ReskinSurface({ id, children }: { id: string; children: ReactNod
       <View collapsable={false} ref={ref} style={styles.surface}>
         {children}
       </View>
-      {active && image && measured.width > 0 && context ? (
+      {active &&
+      (image || active.preparing || active.play === 'ripple') &&
+      measured.width > 0 &&
+      context ? (
         <ReskinOverlay
           image={image}
-          key={active.id}
+          onReady={(ready) => active.coverReady?.(id, ready)}
+          key={`${active.id}:${image ? 'captured' : 'live'}`}
           next={active.next.get(id) ?? null}
           progress={context.progress}
           run={active}
@@ -804,13 +1100,15 @@ export function ReskinSurface({ id, children }: { id: string; children: ReactNod
  */
 function ReskinOverlay({
   image,
+  onReady,
   next,
   progress,
   run,
   size,
   veil,
 }: {
-  image: SkImage;
+  image: SkImage | null;
+  onReady: (ready: boolean) => void;
   next: SkImage | null;
   progress: SharedValue<number>;
   run: ActiveRun;
@@ -837,20 +1135,28 @@ function ReskinOverlay({
       {run.play === 'ripple' ? (
         <RippleOverlay
           image={image}
+          onReady={onReady}
           next={next}
           origin={origin}
           progress={progress}
           run={run}
           size={size}
         />
-      ) : run.play === 'scan' ? (
+      ) : !image ? null : run.play === 'scan' ? (
         <ScanOverlay image={image} origin={origin} progress={progress} run={run} size={size} />
       ) : run.play === 'wash' ? (
-        <WashOverlay image={image} origin={origin} progress={progress} run={run} size={size} />
+        <WashOverlay
+          image={image}
+          onReady={onReady}
+          origin={origin}
+          progress={progress}
+          run={run}
+          size={size}
+        />
       ) : run.play === 'halftone' ? (
         <HalftoneOverlay image={image} origin={origin} progress={progress} run={run} size={size} />
       ) : (
-        <CrossfadeOverlay image={image} progress={progress} size={size} />
+        <CrossfadeOverlay image={image} onReady={onReady} progress={progress} size={size} />
       )}
     </Animated.View>
   );
@@ -858,17 +1164,21 @@ function ReskinOverlay({
 
 function WashOverlay({
   image,
+  onReady,
   origin,
   progress,
   run,
   size,
 }: {
   image: SkImage;
+  onReady: (ready: boolean) => void;
   origin: ReskinPoint;
   progress: SharedValue<number>;
   run: ActiveRun;
   size: ReskinSize;
 }) {
+  const canvas = useCanvasRef();
+  useSkiaDrawReady(canvas, image, true, onReady);
   const geometry: WashGeometry = useMemo(
     () => washGeometry(origin, size, WASH_BLEED),
     [origin, size]
@@ -895,7 +1205,7 @@ function WashOverlay({
   if (!THEME_WASH_EFFECT) return null;
   return (
     <Animated.View style={[styles.overlay, style]}>
-      <Canvas style={styles.overlay}>
+      <Canvas ref={canvas} style={styles.overlay}>
         <Fill>
           <Shader source={THEME_WASH_EFFECT} uniforms={uniforms}>
             <ImageShader
@@ -964,21 +1274,25 @@ function HalftoneOverlay({
  */
 function RippleOverlay({
   image,
+  onReady,
   next,
   origin,
   progress,
   run,
   size,
 }: {
-  image: SkImage;
+  image: SkImage | null;
+  onReady: (ready: boolean) => void;
   next: SkImage | null;
   origin: ReskinPoint;
   progress: SharedValue<number>;
   run: ActiveRun;
   size: ReskinSize;
 }) {
+  const canvas = useCanvasRef();
+  useSkiaDrawReady(canvas, image, image !== null, onReady);
   const reach = useMemo(() => rippleReach(origin, size), [origin, size]);
-  const live = next === null;
+  const live = image === null || (!run.swapping && next === null);
 
   const uniforms = useDerivedValue(() =>
     themeRippleUniforms({
@@ -993,11 +1307,19 @@ function RippleOverlay({
   const rect = { x: 0, y: 0, width: size.width, height: size.height };
   if (!THEME_RIPPLE_EFFECT) return null;
   return (
-    <Canvas style={styles.overlay}>
+    <Canvas ref={canvas} style={styles.overlay}>
       <Fill>
         <Shader source={THEME_RIPPLE_EFFECT} uniforms={uniforms}>
-          <ImageShader fit="cover" image={image} rect={rect} tx="clamp" ty="clamp" />
-          <ImageShader fit="cover" image={next ?? image} rect={rect} tx="clamp" ty="clamp" />
+          {image ? (
+            <ImageShader fit="cover" image={image} rect={rect} tx="clamp" ty="clamp" />
+          ) : (
+            <ColorShader color="transparent" />
+          )}
+          {image ? (
+            <ImageShader fit="cover" image={next ?? image} rect={rect} tx="clamp" ty="clamp" />
+          ) : (
+            <ColorShader color="transparent" />
+          )}
         </Shader>
       </Fill>
     </Canvas>
@@ -1055,17 +1377,21 @@ function ScanOverlay({
  */
 function CrossfadeOverlay({
   image,
+  onReady,
   progress,
   size,
 }: {
   image: SkImage;
+  onReady: (ready: boolean) => void;
   progress: SharedValue<number>;
   size: ReskinSize;
 }) {
+  const canvas = useCanvasRef();
+  useSkiaDrawReady(canvas, image, true, onReady);
   const style = useAnimatedStyle(() => ({ opacity: 1 - progress.value }));
   return (
     <Animated.View style={[styles.overlay, style]}>
-      <Canvas style={styles.overlay}>
+      <Canvas ref={canvas} style={styles.overlay}>
         <SkiaImage fit="cover" height={size.height} image={image} width={size.width} x={0} y={0} />
       </Canvas>
     </Animated.View>

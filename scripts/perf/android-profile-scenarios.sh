@@ -93,6 +93,8 @@ settings_scroll() {
 theme_switch() {
   quiet ad press 'label="Settings"'
   settle
+  ad press 'id=settings-appearance-row' >/dev/null
+  ad wait 'id=settings-appearance-sheet' 8000 >/dev/null
   local current next
   for _ in 1 2; do
     current=$(ad snapshot -i | grep -oE '"Theme, [^"]+"' | head -1 | sed 's/"Theme, //; s/"//')
@@ -104,13 +106,9 @@ theme_switch() {
     quiet ad press "role=button label=\"$next\""
     settle 1000
   done
+  ad back --system >/dev/null
+  settle
   quiet ad press 'label="Go back"'
-  settle
-}
-workbench() {
-  quiet ad press 'label="Workbench"'
-  settle
-  quiet ad press 'label="Demo workspace, Online"'
   settle
 }
 typing() {
@@ -137,7 +135,6 @@ record switch-panes switch_panes
 record files-sheet files_sheet
 record settings-scroll settings_scroll
 record theme-switch theme_switch
-record workbench workbench
 record typing typing
 
 for trace in "$out"/*.json; do

@@ -32,9 +32,11 @@ import type { MarkdownFonts } from '@/lib/markdown-style';
 import { useAppSettings } from '@/stores/app-settings';
 import {
   FONT_SLOT_IDS,
+  readUserFontAxes,
   registerUserFonts,
   literalFontFamily,
   slotFontFamily,
+  type FontSlot,
   type FontSlotId,
   type UserFontProblem,
 } from '@/theme/user-fonts';
@@ -128,7 +130,9 @@ export function useUserFontsReady(): boolean {
           open({});
           return;
         }
-        open({ problems: await registerUserFonts(slots) });
+        const problems = await registerUserFonts(slots);
+        await backfillFontAxes(slots);
+        open({ problems });
       } catch {
         // A hydrate that throws is a reader with no settings, not a reader with
         // no app. The store publishes its defaults either way and the app opens
@@ -144,6 +148,26 @@ export function useUserFontsReady(): boolean {
   }, []);
 
   return ready;
+}
+
+/**
+ * Record the `fvar` axes of a slot installed by a build that did not read them.
+ *
+ * A few kilobytes per slot, once: the stored slot carries `axes` from then on,
+ * so the next launch finds nothing to do. Guarded on the file so a slot the
+ * reader replaced meanwhile is never overwritten with the old face's axes.
+ */
+async function backfillFontAxes(slots: Readonly<Record<FontSlotId, FontSlot>>): Promise<void> {
+  const keys = { interface: 'interfaceFont', mono: 'monoFont' } as const;
+  for (const id of FONT_SLOT_IDS) {
+    const slot = slots[id];
+    const axes = await readUserFontAxes(slot);
+    if (!axes || slot.kind !== 'file') continue;
+    const settings = useAppSettings.getState();
+    const current = settings[keys[id]];
+    if (current.kind !== 'file' || current.file !== slot.file) continue;
+    await settings.update({ [keys[id]]: { ...current, axes } });
+  }
 }
 
 /**

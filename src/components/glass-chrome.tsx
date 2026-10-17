@@ -17,6 +17,7 @@ import { appChrome } from '@/constants/appearance';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import type { AppearanceProfile } from '@/lib/appearance-profile';
 import { withAlpha } from '@/lib/color';
+import { surfaceBackgroundFill } from '@/theme/surface-background';
 import { DURATION } from '@/lib/motion';
 import { resolveThemeImage } from '@/theme/resolve';
 import { resolveThemeMaterial, type ThemeSurface } from '@/theme/material';
@@ -69,6 +70,8 @@ type GlassChromeProps = {
   surface?: ThemeSurface;
   /** Semantic geometry owned by the active appearance profile. */
   shape?: keyof AppearanceProfile['chrome'] | 'pill' | 'none';
+  /** Hide a decorative edge without changing the stable native border width. */
+  borderless?: boolean;
   /**
    * The face's own shape -- size, radius, padding, shadow. The material is this
    * component's business; where the surface is and how big it is stays with the
@@ -105,6 +108,7 @@ export function GlassChrome({
   face = 'floating',
   surface = 'actions',
   shape,
+  borderless = false,
   style,
   entering,
   exiting,
@@ -133,10 +137,14 @@ export function GlassChrome({
   const radiusStyle: ViewStyle | undefined =
     resolvedShape === 'none'
       ? undefined
-      : resolvedShape === 'sheet'
+      : resolvedShape === 'sheet' || resolvedShape === 'composerDock'
         ? {
-            borderTopLeftRadius: profile.chrome.sheet,
-            borderTopRightRadius: profile.chrome.sheet,
+            borderTopLeftRadius:
+              resolvedShape === 'sheet' ? profile.chrome.sheet : profile.chrome.composerDock,
+            borderTopRightRadius:
+              resolvedShape === 'sheet' ? profile.chrome.sheet : profile.chrome.composerDock,
+            borderBottomLeftRadius: 0,
+            borderBottomRightRadius: 0,
           }
         : {
             borderRadius:
@@ -176,7 +184,7 @@ export function GlassChrome({
     hasImage && { overflow: 'hidden' },
     {
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: backgroundOpacity < 1 ? theme.colors.border : 'transparent',
+      borderColor: !borderless && backgroundOpacity < 1 ? theme.colors.border : 'transparent',
     },
   ];
   const opacityLimit = useMemo(
@@ -231,16 +239,28 @@ export function GlassChrome({
   }
 
   if (material === 'solid') {
-    // The slider may thin the page; chrome keeps a frosted floor under it.
-    const alpha = Math.max(backgroundOpacity, appChrome.opacity.glassSolidFloor);
+    // The composer is a plate like the content cards around it -- Home's dock
+    // under the computer cards, the session composer under the transcript --
+    // so a solid pack draws it as they are drawn: `surface` at the reader's
+    // surface opacity, with the `border` hairline. Raised chrome (pills,
+    // buttons) keeps `surfaceRaised` and a frosted floor under the slider.
+    const plate =
+      surface === 'composer'
+        ? {
+            backgroundColor: surfaceBackgroundFill(theme.colors.surface, backgroundOpacity),
+            borderColor: borderless ? 'transparent' : theme.colors.border,
+          }
+        : {
+            backgroundColor: withAlpha(
+              theme.colors.surfaceRaised,
+              Math.max(backgroundOpacity, appChrome.opacity.glassSolidFloor)
+            ),
+          };
     return (
       <Animated.View
         entering={entering}
         exiting={exiting}
-        style={[
-          chromeStyle,
-          { backgroundColor: withAlpha(theme.colors.surfaceRaised, alpha), overflow: 'hidden' },
-        ]}>
+        style={[chromeStyle, plate, { overflow: 'hidden' }]}>
         {content}
       </Animated.View>
     );

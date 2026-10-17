@@ -1,8 +1,8 @@
 import { createMMKV } from 'react-native-mmkv';
 
 /**
- * Whether the launch intro -- the three pages that explain the app on its
- * first run -- has been seen on this install.
+ * Whether this edition of the release introduction has been seen on this
+ * install. Version 3 introduces only the new capabilities in Muqun 4.0.
  *
  * Read synchronously and at module scope by the launch overlay, on purpose:
  * the overlay is the first React frame, and the decision "intro or brand
@@ -28,7 +28,7 @@ const STORE_ID = 'muqun.launch';
 const STORAGE_KEY = 'muqun.launch-intro.seen';
 
 /** Bump when the intro's content changes enough that returning readers should see it. */
-export const LAUNCH_INTRO_VERSION = 2;
+export const LAUNCH_INTRO_VERSION = 3;
 
 function openStore(): KeyValueStore {
   try {

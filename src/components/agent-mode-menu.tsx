@@ -1,12 +1,10 @@
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { Bot, Check, Compass, Sparkles } from 'lucide-react-native';
 import Animated from 'react-native-reanimated';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { PressableScale } from '@/components/pressable-scale';
 import { appChrome } from '@/constants/appearance';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { withAlpha } from '@/lib/color';

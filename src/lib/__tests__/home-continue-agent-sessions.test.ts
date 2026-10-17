@@ -27,18 +27,20 @@ function session(asid: string, updatedMs: number, extra: Partial<GatewayAgentSes
   };
 }
 
-function snapshot(sessions: GatewayAgentSession[], serverId = 'osk'): GatewayAgentSessionsSnapshot {
+function snapshot(
+  sessions: GatewayAgentSession[],
+  serverId = 'desk'
+): GatewayAgentSessionsSnapshot {
   return { serverId, sessionId: 'dev', observedAtMs: 1_000, sessions };
 }
 
 const base = {
-  serverIds: ['osk'],
+  serverIds: ['desk'],
   hostIds: [],
   snapshots: {},
   recents: [] as HomeRecentEntry[],
-  reachabilityByServer: { osk: 'live' as const },
+  reachabilityByServer: { desk: 'live' as const },
   paneMode: 'all' as const,
-  nowMs: 1_000,
 };
 
 function info(asid: string, updated_ms: number, extra: Partial<AgentSessionInfo> = {}) {
@@ -81,12 +83,13 @@ test('gateway sessions join Continue as agent-session rows ranked by their updat
     hostIds: ['box'],
     gatewaySessions: snapshot([session('a', 900), session('b', 100, { status: 'busy' })]),
   });
+  // Recency alone: the connection shortcut visited at 500 sits between them.
   expect(rows.map((row) => row.title)).toEqual(['Session a', 'Box', 'Session b']);
   expect(rows[0].destination).toEqual({
     type: 'agent-session',
     target: {
       kind: 'agent-session',
-      serverId: 'osk',
+      serverId: 'desk',
       sessionId: 'dev',
       directory: '/work',
       asid: 'a',
@@ -103,7 +106,7 @@ test('a gateway session a recent already points at is that recent, not a second 
     atMs: 50,
     target: {
       kind: 'agent-session',
-      serverId: 'osk',
+      serverId: 'desk',
       sessionId: 'other-routing',
       directory: '/elsewhere',
       asid: 'a',
@@ -124,6 +127,74 @@ test('a gateway session a recent already points at is that recent, not a second 
   expect(rows[0].destination.type).toBe('recent');
 });
 
+test('mixed session sources are one list in recency order, ties by kind', () => {
+  const recent = (
+    key: string,
+    atMs: number,
+    target: HomeRecentEntry['target']
+  ): HomeRecentEntry => ({ key, title: key, atMs, target });
+  const agentTarget = (asid: string, agentId: string): HomeRecentEntry['target'] => ({
+    kind: 'agent-session',
+    serverId: 'desk',
+    sessionId: 'dev',
+    directory: '/work',
+    asid,
+    agentId,
+  });
+  const terminal = { kind: 'gateway-terminal', serverId: 'desk', sessionId: 'other' } as const;
+  const rows = homeContinueEntries({
+    ...base,
+    hostIds: ['box'],
+    reachabilityByServer: { desk: 'unknown' },
+    snapshots: {
+      desk: {
+        serverId: 'desk',
+        sessionId: 'dev',
+        checkedAtMs: 1,
+        agents: [{ id: 'pane', paneId: 'pane', name: 'Codex', hasAgent: true, status: 'idle' }],
+      },
+    },
+    recents: [
+      recent('OpenCode terminal', 1_000, { ...terminal, paneId: 'opencode' }),
+      recent('ssh', 900, { kind: 'ssh-host', hostId: 'box' }),
+      recent('Codex terminal', 900, { ...terminal, paneId: 'codex' }),
+      recent('updated-recent', 10, agentTarget('updated', 'codex')),
+      recent('visited-recent', 70, agentTarget('visited', 'opencode')),
+      recent('no-observation', 50, agentTarget('remembered', 'codex')),
+      {
+        ...recent('stale-observation', 50, agentTarget('stale', 'opencode')),
+        sessionObservation: { status: 'unknown', observedAtMs: 1 },
+      },
+      recent('zero-recent', 0, agentTarget('zero', 'codex')),
+    ],
+    gatewaySessions: snapshot([
+      session('listed', 80, { agentId: 'opencode' }),
+      session('updated', 80, { agentId: 'codex' }),
+      session('visited', 20, { agentId: 'opencode' }),
+      session('zero-listed', 0, { agentId: 'codex' }),
+    ]),
+  });
+  expect(rows.map((row) => [row.title, row.atMs])).toEqual([
+    ['OpenCode terminal', 1_000],
+    // At the same instant a terminal sits before a connection shortcut.
+    ['Codex terminal', 900],
+    ['ssh', 900],
+    ['updated-recent', 80],
+    ['Session listed', 80],
+    ['visited-recent', 70],
+    ['no-observation', 50],
+    ['stale-observation', 50],
+    // And a session before an unvisited pane.
+    ['zero-recent', 0],
+    ['Session zero-listed', 0],
+    ['Codex', 0],
+  ]);
+  expect(rows[6].observation).toBeUndefined();
+  expect(rows[7].observation).toMatchObject({ status: 'unknown', observedAtMs: 1 });
+  expect(rows.at(-1)?.destination.type).toBe('pane');
+  expect(rows.at(-1)?.observation?.kind).toBe('gateway-agent');
+});
+
 test("the gateway's agent wins over a recent recorded before agents were tagged", () => {
   // "Pong Response": a T3 session this device remembered without an agent.
   const recent: HomeRecentEntry = {
@@ -132,7 +203,7 @@ test("the gateway's agent wins over a recent recorded before agents were tagged"
     atMs: 50,
     target: {
       kind: 'agent-session',
-      serverId: 'osk',
+      serverId: 'desk',
       sessionId: 'dev',
       directory: '/work',
       asid: '9cedff14',
@@ -159,7 +230,7 @@ test('an offline, unpaired or unselected gateway contributes nothing', () => {
   expect(
     homeContinueEntries({
       ...base,
-      reachabilityByServer: { osk: 'offline' },
+      reachabilityByServer: { desk: 'offline' },
       gatewaySessions: listed,
     })
   ).toEqual([]);
@@ -174,7 +245,7 @@ test('tapping a gateway session opens the workbench on it with its agent', () =>
     type: 'open-agent',
     target: {
       kind: 'agent-session',
-      serverId: 'osk',
+      serverId: 'desk',
       sessionId: 'dev',
       directory: '/work',
       asid: 'a',
@@ -184,7 +255,7 @@ test('tapping a gateway session opens the workbench on it with its agent', () =>
 });
 
 test('captions name the agent only for agent rows', () => {
-  expect(homeContinueKind({ type: 'pane', serverId: 'osk', paneId: 'p' })).toEqual({
+  expect(homeContinueKind({ type: 'pane', serverId: 'desk', paneId: 'p' })).toEqual({
     kind: 'terminal',
   });
   expect(homeContinueKind({ type: 'recent', target: { kind: 'ssh-host', hostId: 'box' } })).toEqual(
@@ -219,7 +290,7 @@ test('repairAgent writes the agent in place without reordering or creating a vis
   });
   const target = {
     kind: 'agent-session' as const,
-    serverId: 'osk',
+    serverId: 'desk',
     sessionId: 'dev',
     directory: '/work',
     asid: '9cedff14',
@@ -242,7 +313,7 @@ test('a session the gateway answered gone is neither a recent row nor a listed o
     atMs: 500,
     target: {
       kind: 'agent-session',
-      serverId: 'osk',
+      serverId: 'desk',
       sessionId: 'dev',
       directory: '/x',
       asid: 'a',
@@ -262,7 +333,114 @@ test('a session the gateway answered gone is neither a recent row nor a listed o
         : ''
     );
   expect(keys()).toEqual(['a', 'b']);
-  expect(keys(new Set([goneSessionKey('osk', 'a')]))).toEqual(['b']);
+  expect(keys(new Set([goneSessionKey('desk', 'a')]))).toEqual(['b']);
   // Another gateway's session with the same id is a different session.
   expect(keys(new Set([goneSessionKey('other', 'a')]))).toEqual(['a', 'b']);
+});
+
+test('a newer terminal row sorts above an older session row', () => {
+  const rows = homeContinueEntries({
+    ...base,
+    snapshots: {
+      desk: {
+        serverId: 'desk',
+        sessionId: 'dev',
+        checkedAtMs: 1,
+        agents: [
+          {
+            id: 'claude',
+            paneId: 'p-claude',
+            name: 'Claude Code',
+            hasAgent: true,
+            status: 'working',
+          },
+        ],
+      },
+    },
+    recents: [
+      {
+        key: 'claude-visit',
+        title: 'Claude Code',
+        atMs: 5_000,
+        target: {
+          kind: 'gateway-terminal',
+          serverId: 'desk',
+          sessionId: 'dev',
+          paneId: 'p-claude',
+        },
+      },
+    ],
+    gatewaySessions: snapshot([session('older', 4_000)]),
+  });
+  expect(rows.map((row) => [row.title, row.atMs])).toEqual([
+    ['Claude Code', 5_000],
+    ['Session older', 4_000],
+  ]);
+  expect(rows[0].destination.type).toBe('pane');
+});
+
+test('a session and the pane the gateway says it runs in collapse to the session row', () => {
+  const rows = homeContinueEntries({
+    ...base,
+    snapshots: {
+      desk: {
+        serverId: 'desk',
+        sessionId: 'dev',
+        checkedAtMs: 1,
+        agents: [
+          { id: 'cc', paneId: 'p-cc', name: 'Claude Code', hasAgent: true, status: 'working' },
+          { id: 'other', paneId: 'p-other', name: 'zsh', hasAgent: false, status: 'idle' },
+        ],
+      },
+    },
+    recents: [
+      {
+        key: 'cc-visit',
+        title: 'Claude Code',
+        atMs: 9_000,
+        target: { kind: 'gateway-terminal', serverId: 'desk', sessionId: 'dev', paneId: 'p-cc' },
+      },
+    ],
+    gatewaySessions: snapshot([
+      session('cc-session', 8_000, { terminal: { sessionId: 'dev', paneId: 'p-cc' } }),
+    ]),
+  });
+  // The visited pane row and the pane's own inventory row are both the
+  // session's work; the unrelated pane keeps its row.
+  expect(rows.map((row) => [row.title, row.destination.type])).toEqual([
+    ['Session cc-session', 'agent-session'],
+    ['zsh', 'pane'],
+  ]);
+});
+
+test('two unrelated rows keep recency order whatever their kinds', () => {
+  const rows = homeContinueEntries({
+    ...base,
+    hostIds: ['box'],
+    recents: [
+      { key: 'ssh', title: 'Box', atMs: 300, target: { kind: 'ssh-host', hostId: 'box' } },
+      {
+        key: 'shell',
+        title: 'Shell',
+        atMs: 100,
+        target: { kind: 'gateway-terminal', serverId: 'desk', sessionId: 'dev', paneId: 'p-shell' },
+      },
+    ],
+    gatewaySessions: snapshot([session('mid', 200)]),
+  });
+  expect(rows.map((row) => row.title)).toEqual(['Box', 'Session mid', 'Shell']);
+});
+
+test("the gateway's terminal provenance rides into the Continue snapshot", () => {
+  const [listed] = gatewayAgentSessions([
+    info('cc', 10, {
+      runtime: {
+        source: 'terminal',
+        interaction: 'terminal',
+        terminal: { session_id: 'dev', pane_id: 'p-cc', instance_id: 'i-1' },
+      },
+    }),
+  ]);
+  expect(listed.terminal).toEqual({ sessionId: 'dev', paneId: 'p-cc' });
+  expect(gatewayAgentSessions([info('native', 10)])[0].terminal).toBeUndefined();
 });

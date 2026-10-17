@@ -1,7 +1,7 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { ThemeArtwork } from '@/components/theme-artwork';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { useRouter } from 'expo-router';
 import { PanelsTopLeft } from 'lucide-react-native';
 import { isValidElement, useEffect, useState, type ReactNode } from 'react';
@@ -18,11 +18,11 @@ import {
   navHeaderTitlePillStyle,
   navHeaderTitleTextStyle,
 } from '@/components/nav-header';
-import { PressableScale } from '@/components/pressable-scale';
 import { DetailHeader } from '@/components/detail-header';
 import { appChrome } from '@/constants/appearance';
 import { isDrawerPermanent } from '@/constants/navigation';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
+import { revealableSubtreeImportance } from '@/lib/hidden-subtree';
 import { fadeIn, fadeInLeft, fadeOut, fadeOutLeft, listLayout } from '@/lib/motion';
 import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
 
@@ -47,6 +47,8 @@ type AppDrawerProps = {
    */
   padRailCollapsed?: boolean;
   detailTitle?: string;
+  /** Pad conversations use the row width and align the title with their content. */
+  expandDetailTitle?: boolean;
   onDetailAction?: () => void;
   /**
    * Replaces what the back button does, for a screen that has something to
@@ -91,6 +93,7 @@ export default function AppDrawer({
   padRail,
   padRailCollapsed = false,
   detailTitle,
+  expandDetailTitle = false,
   onDetailAction,
   onDetailBack,
   detailFadeColor,
@@ -125,6 +128,7 @@ export default function AppDrawer({
   // server, and a rail that stayed out would have taken back the width the
   // preview was opened for.
   const [railPeeked, setRailPeeked] = useState(false);
+  const expandsDetailTitle = hasPadRail && expandDetailTitle;
   const showsPadRail = hasPadRail && !padRailCollapsed;
   const peeksPadRail = hasPadRail && padRailCollapsed && railPeeked;
   // A rail that is not in the layout must not keep a stale peek alive: closing
@@ -155,7 +159,7 @@ export default function AppDrawer({
         <Animated.View
           testID="pad-server-rail-container"
           accessibilityElementsHidden={overlayVisible}
-          importantForAccessibility={overlayVisible ? 'no-hide-descendants' : 'auto'}
+          importantForAccessibility={revealableSubtreeImportance(overlayVisible)}
           entering={fadeInLeft()}
           exiting={fadeOutLeft()}
           style={[
@@ -183,7 +187,7 @@ export default function AppDrawer({
             pointerEvents="auto">
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={t`Hide the server list`}
+              accessibilityLabel={t`Hide the computer list`}
               onPress={() => setRailPeeked(false)}
               style={StyleSheet.absoluteFill}
             />
@@ -211,7 +215,7 @@ export default function AppDrawer({
         style={styles.main}
         layout={listLayout()}
         accessibilityElementsHidden={overlayVisible}
-        importantForAccessibility={overlayVisible ? 'no-hide-descendants' : 'auto'}>
+        importantForAccessibility={revealableSubtreeImportance(overlayVisible)}>
         {children}
 
         {/*
@@ -229,7 +233,7 @@ export default function AppDrawer({
             <SafeAreaView edges={['top']} pointerEvents="box-none">
               <PressableScale
                 accessibilityRole="button"
-                accessibilityLabel={t`Show the server list`}
+                accessibilityLabel={t`Show the computer list`}
                 onPress={() => setRailPeeked(true)}
                 style={[
                   styles.railHandle,
@@ -248,7 +252,7 @@ export default function AppDrawer({
           <DetailHeader fadeColor={detailFadeColor}>
             {!permanent && !showsPadRail ? (
               <NavHeaderBackButton
-                accessibilityLabel={t`Back to servers`}
+                accessibilityLabel={t`Back to computers`}
                 onPress={
                   onDetailBack ?? (() => (router.canGoBack() ? router.back() : router.replace('/')))
                 }
@@ -258,8 +262,9 @@ export default function AppDrawer({
             ) : null}
             {detailTitleSlot ?? (
               <NavHeaderTitlePill
-                title={detailTitle ?? record?.label ?? t`Server`}
-                style={styles.detailHeaderTitleMeasure}
+                title={detailTitle ?? record?.label ?? t`Computer`}
+                style={expandsDetailTitle ? undefined : styles.detailHeaderTitleMeasure}
+                textAlign={expandsDetailTitle ? 'left' : 'center'}
               />
             )}
             {detailAccessories.map((accessory, slot) => (
@@ -283,9 +288,9 @@ export default function AppDrawer({
                   <PanelsTopLeft size={18} color={theme.colors.text} strokeWidth={2} />
                 </PressableScale>
               </NavHeaderCircle>
-            ) : (
+            ) : !expandsDetailTitle ? (
               <NavHeaderSpacer />
-            )}
+            ) : null}
           </DetailHeader>
         ) : null}
       </Animated.View>

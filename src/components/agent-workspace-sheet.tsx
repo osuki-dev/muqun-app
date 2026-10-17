@@ -1,8 +1,7 @@
 import { scopedAgentCacheVariant } from '@/lib/agent-discovery';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { Spinner, useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { Spinner, useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import { CornerDownRight, Folder, FolderGit2 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -34,7 +33,6 @@ import {
   visibleSuggestions,
   type DirectoryListing,
 } from '@/lib/agent-directory-suggest';
-import { PressableScale } from '@/components/pressable-scale';
 import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
 import { listableWorkspaces, workspaceProjectMissing } from '@/lib/agent-workspace-missing';
@@ -74,6 +72,11 @@ export interface AgentWorkspaceSheetProps {
   /** The agent whose projects are listed; absent on a gateway without discovery. */
   agentId?: string;
   initialProjects?: readonly AgentProject[];
+  /**
+   * A first row standing for "no folder picked", selected while
+   * `activeDirectory` is unset; choosing it answers an empty directory.
+   */
+  defaultRow?: { label: string };
   onSelectWorkspace: (directory: string, project?: AgentProject) => void;
   onClose: () => void;
 }
@@ -87,6 +90,7 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
   sessionId,
   agentId,
   initialProjects,
+  defaultRow,
   onSelectWorkspace,
   onClose,
 }: AgentWorkspaceSheetProps) {
@@ -302,6 +306,20 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
               title={t`Projects`}
               first={!showTypedPath && suggestions.length === 0}
             />
+            {defaultRow && !searchQuery.trim() ? (
+              <SheetSceneRow
+                testID="agent-workspace-default-row"
+                title={defaultRow.label}
+                selected={!activeDirectory}
+                leading={
+                  <Folder
+                    size={16}
+                    color={activeDirectory ? theme.colors.textSubtle : theme.colors.primary}
+                  />
+                }
+                onPress={() => choose('')}
+              />
+            ) : null}
             {filtered.length === 0 ? (
               <View style={styles.empty}>
                 <Text variant="caption" color={theme.colors.textMuted} style={styles.emptyText}>

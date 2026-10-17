@@ -9,8 +9,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
  * connect to and nothing to wait for. All a route knows here is which server
  * was meant.
  */
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
@@ -39,7 +38,7 @@ export default function WebServiceScreen() {
     return (
       <View style={[styles.notice, { backgroundColor: surfaceBackground(theme.colors.surface) }]}>
         <Text selectable variant="bodySmall" color={theme.colors.danger}>
-          {t`This server is no longer paired.`}
+          {t`This computer is no longer paired.`}
         </Text>
       </View>
     );

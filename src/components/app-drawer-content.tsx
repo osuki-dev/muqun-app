@@ -1,14 +1,12 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import type { DrawerContentComponentProps } from 'expo-router/drawer';
 import { type Href, usePathname, useRouter } from 'expo-router';
 import { Bot, ChevronRight, LayoutGrid, ScanLine, Settings } from 'lucide-react-native';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { isDrawerPermanent } from '@/constants/navigation';
 
 /**
@@ -17,7 +15,7 @@ import { isDrawerPermanent } from '@/constants/navigation';
  * places -- servers, pairing, settings -- not for picking a server.
  *
  * Unreachable while `HOME_DRAWER_ENABLED` is false (card #664): `Servers` was
- * the screen it opened from, and `Pair a server` and `Settings` are now the two
+ * the screen it opened from, and `Pair a computer` and `Settings` are now the two
  * controls in the home header. Kept intact so flipping the switch back restores
  * a working panel rather than an empty one.
  */
@@ -58,8 +56,8 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
   }[] = [
     {
       key: 'servers',
-      label: t`Servers`,
-      detail: t`Your paired gateways`,
+      label: t`Computers`,
+      detail: t`Your paired computers`,
       icon: LayoutGrid,
       href: '/' as Href,
       active: pathname === '/' || pathname.startsWith('/servers'),
@@ -74,7 +72,7 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
     },
     {
       key: 'pair',
-      label: t`Pair a server`,
+      label: t`Pair a computer`,
       detail: t`Scan a gateway QR`,
       icon: ScanLine,
       href: '/explore' as Href,

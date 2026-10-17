@@ -23,12 +23,13 @@ msgid "“{0}” has changes that have not been committed. Removing it throws th
 msgstr "„{0}“ hat Änderungen, die nicht committet sind. Beim Entfernen gehen sie verloren"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "“{args}” was not sent: a skill takes no arguments."
 msgstr "„{args}“ wurde nicht gesendet: Ein Skill nimmt keine Argumente"
 
-#: src/components/agent-sessions-sheet.tsx
-msgid "“{title}” and any subagent sessions under it are removed from the host. This cannot be undone."
-msgstr "„{title}“ und alle darunterliegenden Subagent-Sitzungen werden vom Host entfernt. Das lässt sich nicht rückgängig machen"
+#: src/components/home-recent-sessions.tsx
+msgid "“{title}” and its conversation history will be deleted in {provider} on {computer}. The service may also delete its subagent sessions. This cannot be undone."
+msgstr "„{title}“ und sein Gesprächsverlauf werden in {provider} auf {computer} gelöscht. Der Dienst kann auch zugehörige Unteragent-Sitzungen löschen. Dies kann nicht rückgängig gemacht werden"
 
 #: src/lib/demo-gateway.ts
 msgid "[instructions]"
@@ -102,15 +103,26 @@ msgstr "{0, plural, one {und # weiterer Agent} other {und # weitere Agents}}"
 msgid "{0, plural, one {Question} other {Questions}}"
 msgstr "{0, plural, one {Frage} other {Fragen}}"
 
-#. placeholder {0}: formatCacheSize(totals.other)
-#: src/components/settings-storage.tsx
-msgid "{0} · Managed by the system. Clear cache leaves it alone."
-msgstr "{0} · Wird vom System verwaltet und beim Leeren des Caches nicht entfernt"
+#. placeholder {0}: device.name
+#: src/components/settings-servers.tsx
+msgid "{0} (gateway)"
+msgstr "{0} (Gateway)"
 
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
 msgid "{0} (this device)"
 msgstr "{0} (dieses Gerät)"
+
+#. placeholder {0}: failed.name
+#: src/lib/attachments.ts
+msgid "{0} did not upload. Retry it or remove it to send."
+msgstr "{0} wurde nicht hochgeladen. Erneut versuchen oder entfernen, um zu senden"
+
+#. placeholder {0}: failed.name
+#. placeholder {1}: uploadLimitMb(attachmentLimitBytes(failed))
+#: src/lib/attachments.ts
+msgid "{0} is too large ({1} MB max). Remove it to send."
+msgstr "{0} ist zu groß (max. {1} MB). Entfernen, um zu senden"
 
 #. placeholder {0}: contextUsage.messages
 #: src/components/agent-context-sheet.tsx
@@ -144,23 +156,44 @@ msgstr "{0} Tokens, die das Modell zuletzt gelesen hat"
 
 #. placeholder {0}: profile.kind
 #: src/components/new-task-sheet.tsx
-msgid "{0}, not found on this server's PATH"
-msgstr "{0}, nicht im PATH dieses Servers gefunden"
+msgid "{0}, not found on this computer's PATH"
+msgstr "{0}, nicht im PATH dieses Computers gefunden"
 
+#. placeholder {0}: age.value
+#: src/hooks/use-task-age.ts
+msgid "{0}d"
+msgstr "{0} T"
+
+#. placeholder {0}: age.value
 #. placeholder {0}: parts.value
 #: src/hooks/use-relative-time.ts
+#: src/hooks/use-task-age.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}d ago"
 msgstr "vor {0} T"
 
+#. placeholder {0}: age.value
+#: src/hooks/use-task-age.ts
+msgid "{0}h"
+msgstr "{0} Std"
+
+#. placeholder {0}: age.value
 #. placeholder {0}: parts.value
 #: src/hooks/use-relative-time.ts
+#: src/hooks/use-task-age.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}h ago"
 msgstr "vor {0} Std"
 
+#. placeholder {0}: age.value
+#: src/hooks/use-task-age.ts
+msgid "{0}m"
+msgstr "{0} Min"
+
+#. placeholder {0}: age.value
 #. placeholder {0}: parts.value
 #: src/hooks/use-relative-time.ts
+#: src/hooks/use-task-age.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}m ago"
 msgstr "vor {0} Min"
@@ -170,11 +203,17 @@ msgid "{agentName} cannot preview a rollback. This removes the message and every
 msgstr "{agentName} kann einen Rollback nicht vorab anzeigen. Dies entfernt die Nachricht und alles danach, den ganzen Durchgang, und lässt sich nicht rückgängig machen"
 
 #: src/components/agent-workbench.tsx
+msgid "{agentName} does not support loading earlier remote history."
+msgstr "{agentName} unterstützt das Laden älterer Verlaufsdaten vom Computer nicht"
+
+#: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "{agentName} does not support that action."
 msgstr "{agentName} unterstützt diese Aktion nicht"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "{agentName} is offline"
 msgstr "{agentName} ist offline"
 
@@ -191,16 +230,13 @@ msgid "{agentName} ready"
 msgstr "{agentName} bereit"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "{agentName} refused the request: {message}"
 msgstr "{agentName} hat die Anfrage abgelehnt: {message}"
 
 #: src/components/new-task-action.tsx
 msgid "{agentName} service offline. Tap for setup instructions"
 msgstr "{agentName}-Dienst offline. Tippen Sie für Einrichtungshinweise"
-
-#: src/components/home-recent-sessions.tsx
-msgid "{agentName} session"
-msgstr "{agentName}-Sitzung"
 
 #: src/components/new-task-action.tsx
 msgid "{agentName} sessions are not supported. Tap for details"
@@ -238,9 +274,21 @@ msgstr "{behind} zurück"
 msgid "{commandName} · sending to"
 msgstr "{commandName} · senden an"
 
+#: src/components/task-row.tsx
+msgid "{computer} never confirmed this task"
+msgstr "{computer} hat diese Aufgabe nie bestätigt"
+
+#: src/components/task-row.tsx
+msgid "{computer} no longer has this task"
+msgstr "{computer} hat diese Aufgabe nicht mehr"
+
 #: src/components/agent-tool-card.tsx
 msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, one {# Ergebnis} other {# Ergebnisse}}"
+
+#: src/components/home-connections.tsx
+msgid "{count} in progress"
+msgstr "{count} in Arbeit"
 
 #: src/components/home-attention.tsx
 msgid "{count} requests last observed"
@@ -251,9 +299,13 @@ msgstr "{count} Anfragen zuletzt beobachtet"
 msgid "{done} of {0} done"
 msgstr "{done} von {0} erledigt"
 
-#: src/components/home-launch-actions.tsx
-msgid "{hidden} more"
-msgstr "{hidden} weitere"
+#: src/components/settings-fleet-peers.tsx
+msgid "{from} still lists an older {name}. Remove that entry on {from}."
+msgstr "{from} führt noch einen älteren Eintrag für {name}. Entferne diesen Eintrag auf {from}"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "{gone} still lists {thisLabel}; remove it on {gone}'s Manage screen"
+msgstr "{gone} führt {thisLabel} noch; entferne es im Verwaltungsbildschirm von {gone}"
 
 #: src/components/bounded-markdown.tsx
 msgid "{hiddenKb} KB not shown"
@@ -287,6 +339,18 @@ msgstr "{messages, plural, one {# Nachricht} other {# Nachrichten}}"
 msgid "{modifierKeys} combinations need the program in this terminal to enable extended keys"
 msgstr "{modifierKeys}-Kombinationen funktionieren erst, wenn das Programm in diesem Terminal erweiterte Tasten aktiviert"
 
+#: src/components/home-agent-sheet.tsx
+msgid "{name} (terminal)"
+msgstr "{name} (Terminal)"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "{name} does not take work from other computers."
+msgstr "{name} nimmt keine Arbeit von anderen Computern an"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "{name} has the same name as {other}; rename one of them."
+msgstr "{name} hat denselben Namen wie {other}. Benenne einen der beiden um"
+
 #: src/components/new-task-action.tsx
 msgid "{name} needs setup. Tap for setup instructions"
 msgstr "{name} muss eingerichtet werden. Tippen Sie für Einrichtungshinweise"
@@ -303,6 +367,10 @@ msgstr "{name} wurde nicht gefunden. Tippen Sie für Installationshinweise"
 msgid "{panelCount, plural, one {# running} other {# running}}"
 msgstr "{panelCount, plural, one {# aktiv} other {# aktiv}}"
 
+#: src/components/home-composer-dock.tsx
+msgid "{providerName} (terminal)"
+msgstr "{providerName} (Terminal)"
+
 #: src/components/row-action-menu.tsx
 msgid "{removeLabel}: {label}"
 msgstr "{removeLabel}: {label}"
@@ -318,13 +386,41 @@ msgstr "{running} von {0} laufen"
 msgid "{title} — finished while you were away"
 msgstr "{title} – wurde fertig, während Sie weg waren"
 
+#: src/components/task-row.tsx
+msgid "{total, plural, one {# sub-task} other {# sub-tasks}}"
+msgstr "{total, plural, one {# Unteraufgabe} other {# Unteraufgaben}}"
+
+#: src/components/task-row.tsx
+msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
+msgstr "{total, plural, one {# Unteraufgabe} other {# Unteraufgaben}} ({waiting, plural, one {# wartet} other {# warten}})"
+
+#: src/components/task-row.tsx
+msgid "→ {name}"
+msgstr "→ {name}"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "+{overflow} weitere"
 
+#: src/hooks/use-task-age.ts
+msgid "<1m"
+msgstr "<1 Min"
+
 #: src/components/dev-home-ambient-controls.tsx
 msgid "0 speed pauses motion. Theme default restores the theme."
 msgstr "Geschwindigkeit 0 pausiert die Bewegung. Theme-Standard stellt das Theme wieder her"
+
+#: src/components/settings-storage.tsx
+msgid "10 days"
+msgstr "10 Tage"
+
+#: src/components/settings-storage.tsx
+msgid "30 days"
+msgstr "30 Tage"
+
+#: src/components/computer-map/screen.tsx
+msgid "3D unavailable. Connections are listed below."
+msgstr "3D nicht verfügbar. Die Verbindungen stehen unten"
 
 #. placeholder {0}: Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))
 #: src/components/settings-font-sheet.tsx
@@ -376,17 +472,30 @@ msgstr "Ein Simulator lässt sich bedienen und nicht nur ansehen, deshalb gibt e
 msgid "A simulator that was shut down can take a minute to come up."
 msgstr "Ein heruntergefahrener Simulator kann eine Minute brauchen, bis er läuft"
 
-#: src/components/launch-intro.tsx
-msgid "A spread on the Pad"
-msgstr "Eine Doppelseite auf dem Tablet"
-
 #: src/components/server-terminal-workspace.tsx
 msgid "A terminal was created. Check it before sending again — your task is still here."
 msgstr "Ein Terminal wurde erstellt. Prüfe es, bevor du erneut sendest – deine Aufgabe ist noch hier"
 
+#: src/hooks/use-lazygit.ts
+msgid "A terminal was created. Open it to inspect startup; launching again could create a duplicate."
+msgstr "Ein Terminal wurde erstellt. Öffne es, um den Start zu prüfen. Ein erneuter Start könnte ein Duplikat erstellen"
+
+#: src/app/settings-about.tsx
 #: src/app/settings.tsx
 msgid "About"
 msgstr "Über"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Accept work from other computers"
+msgstr "Aufgaben von anderen Computern annehmen"
+
+#: src/components/computer-map/screen.tsx
+msgid "Accepting work"
+msgstr "Nimmt Aufgaben an"
+
+#: src/components/task-row.tsx
+msgid "Acknowledge"
+msgstr "Zur Kenntnis nehmen"
 
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send it a command"
@@ -395,6 +504,11 @@ msgstr "Auf dieses Terminal wirken oder ihm einen Befehl schicken"
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send its agent a prompt"
 msgstr "Auf dieses Terminal wirken oder seinem Agenten etwas auftragen"
+
+#: src/components/home-recent-sessions.tsx
+#: src/components/task-row.tsx
+msgid "Actions"
+msgstr "Aktionen"
 
 #. placeholder {0}: row.name
 #. placeholder {0}: sessionTitleOr(session, t`Untitled session`)
@@ -410,8 +524,8 @@ msgid "Actual size"
 msgstr "Originalgröße"
 
 #: src/components/home-connections.tsx
-msgid "Add a gateway or an SSH host to start working."
-msgstr "Füge ein Gateway oder einen SSH-Host hinzu, um zu beginnen"
+msgid "Add a computer or an SSH host to start working."
+msgstr "Füge einen Computer oder einen SSH-Host hinzu, um zu beginnen"
 
 #: src/components/ssh-host-list.tsx
 msgid "Add a host"
@@ -431,8 +545,8 @@ msgid "Add commands and custom key combinations."
 msgstr "Befehle und eigene Tastenkombinationen hinzufügen"
 
 #: src/components/session-map.tsx
-msgid "Add machine"
-msgstr "Rechner hinzufügen"
+msgid "Add computer"
+msgstr "Computer hinzufügen"
 
 #: src/app/explore.tsx
 msgid "Add one first"
@@ -447,6 +561,11 @@ msgctxt "git file status"
 msgid "Added"
 msgstr "Hinzugefügt"
 
+#: src/app/settings-voice.tsx
+msgid "After recording"
+msgstr "Nach der Aufnahme"
+
+#: src/components/home-composer-options.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Agent"
 msgstr "Agent"
@@ -471,14 +590,21 @@ msgid "Agent panes open in"
 msgstr "Standardansicht für Agent-Panels"
 
 #: src/components/app-drawer-content.tsx
+#: src/components/new-task-action.tsx
+#: src/components/settings-server-capabilities.tsx
 #: src/components/settings-servers.tsx
 msgid "Agents"
 msgstr "Agenten"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Agents on your other computers can hand part of a task to this one."
+msgstr "Agenten auf deinen anderen Computern können einen Teil einer Aufgabe an diesen abgeben"
 
 #: src/components/app-drawer-content.tsx
 msgid "AI coding assistant"
 msgstr "KI-Coding-Assistent"
 
+#: src/app/settings-alerts.tsx
 #: src/app/settings.tsx
 msgid "Alerts"
 msgstr "Mitteilungen"
@@ -487,6 +613,7 @@ msgstr "Mitteilungen"
 msgid "Align the QR inside the frame"
 msgstr "Richte den QR-Code im Rahmen aus"
 
+#: src/components/home-recent-chips.tsx
 #: src/components/session-artifacts.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "All"
@@ -519,6 +646,18 @@ msgstr "Zulassen"
 #: src/components/pairing-camera.tsx
 msgid "Allow camera"
 msgstr "Kamera erlauben"
+
+#: src/components/agent-permission-card.tsx
+msgid "Allow for this turn"
+msgstr "Für diesen Durchgang erlauben"
+
+#: src/components/voice-input-button.tsx
+msgid "Allow microphone access in system settings."
+msgstr "Erlaube den Mikrofonzugriff in den Systemeinstellungen"
+
+#: src/components/agent-permission-card.tsx
+msgid "Allow once"
+msgstr "Einmal erlauben"
 
 #: src/app/explore.tsx
 msgid "Allow the camera, or enter the address instead."
@@ -565,6 +704,10 @@ msgstr "Immer erlaubt"
 msgid "and {rest} more"
 msgstr "und {rest} weitere"
 
+#: src/components/task-row.tsx
+msgid "another computer"
+msgstr "einem anderen Computer"
+
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
 msgstr "Antwort"
@@ -573,6 +716,18 @@ msgstr "Antwort"
 #: src/components/approval-banner.tsx
 msgid "Answer: {0}"
 msgstr "Antwort: {0}"
+
+#: src/app/settings-voice.tsx
+msgid "API key"
+msgstr "API-Schlüssel"
+
+#: src/app/settings-voice.tsx
+msgid "API key (optional)"
+msgstr "API-Schlüssel (optional)"
+
+#: src/app/settings-voice.tsx
+msgid "API URL"
+msgstr "API-URL"
 
 #: src/components/settings-appearance.tsx
 msgid "App icon"
@@ -595,6 +750,7 @@ msgstr "App-Sperre nicht verfügbar"
 msgid "App name and tagline"
 msgstr "App-Name und Slogan"
 
+#: src/app/settings-appearance.tsx
 #: src/app/settings.tsx
 msgid "Appearance"
 msgstr "Aussehen"
@@ -615,6 +771,7 @@ msgid "Apply theme"
 msgstr "Design anwenden"
 
 #: src/components/terminal-theme-drop.tsx
+#: src/components/update-status-banner.tsx
 msgid "Applying…"
 msgstr "Wird angewendet …"
 
@@ -642,13 +799,13 @@ msgstr "Stelle Fragen, sieh dir Dateien an oder führe Befehle in deinem Projekt
 msgid "Ask you a question"
 msgstr "Dir eine Frage stellen"
 
+#: src/components/new-task-sheet.tsx
+msgid "Asking the computer what it can run…"
+msgstr "Frage den Computer, was er ausführen kann…"
+
 #: src/app/explore.tsx
 msgid "Asking the Gateway about that code."
 msgstr "Der Code wird beim Gateway geprüft"
-
-#: src/components/new-task-sheet.tsx
-msgid "Asking the server what it can run…"
-msgstr "Frage den Server, was er ausführen kann…"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Assign this to an assistant"
@@ -691,13 +848,21 @@ msgstr "Datei anhängen"
 msgid "Attachment"
 msgstr "Anhang"
 
+#: src/components/session-artifacts.tsx
+msgid "Audio"
+msgstr "Audio"
+
+#: src/components/audio-asset-preview.tsx
+msgid "Audio preview supports files up to {ceiling}."
+msgstr "Die Audiovorschau unterstützt Dateien bis {ceiling}"
+
 #: src/components/app-lock-gate.tsx
 msgid "Authenticate with {authLabel} to continue."
 msgstr "Authentifiziere dich mit {authLabel}, um fortzufahren"
 
 #: src/lib/local-authentication.ts
-msgid "Authenticate with {method} to continue"
-msgstr "Authentifiziere dich mit {method}, um fortzufahren"
+msgid "Authenticate with {name} to continue"
+msgstr "Authentifiziere dich mit {name}, um fortzufahren"
 
 #: src/components/app-lock-gate.tsx
 msgid "Authenticating"
@@ -719,9 +884,17 @@ msgstr "Authentifizierung ist nicht verfügbar. Versuche es erneut oder prüfe d
 msgid "Auto-approve every action"
 msgstr "Jede Aktion automatisch genehmigen"
 
+#: src/app/settings-voice.tsx
+msgid "Auto-detect"
+msgstr "Automatisch erkennen"
+
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Automatic"
 msgstr "Automatisch"
+
+#: src/components/settings-storage.tsx
+msgid "Automatic cache cleanup"
+msgstr "Automatische Cache-Bereinigung"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Autonomous software engineering: edits files, runs commands, tests."
@@ -731,6 +904,8 @@ msgstr "Autonome Softwareentwicklung: bearbeitet Dateien, führt Befehle aus, te
 msgid "Available modes"
 msgstr "Verfügbare Modi"
 
+#: src/components/launch-intro.tsx
+#: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back"
@@ -740,13 +915,14 @@ msgstr "Zurück"
 msgid "Back one word"
 msgstr "Ein Wort zurück"
 
+#: src/components/app-drawer.tsx
+msgid "Back to computers"
+msgstr "Zurück zu den Computern"
+
+#: src/components/pad-server-rail.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Back to Home"
 msgstr "Zurück zu Home"
-
-#: src/components/app-drawer.tsx
-msgid "Back to servers"
-msgstr "Zurück zu den Servern"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back to SSH hosts"
@@ -800,6 +976,10 @@ msgstr "Blockiert"
 msgid "Blocked by agent safety"
 msgstr "Von der Agent-Sicherheit blockiert"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Branch"
+msgstr "Zweig"
+
 #: src/components/changes-sheet.tsx
 msgid "Branch {branch}"
 msgstr "Branch {branch}"
@@ -845,6 +1025,10 @@ msgstr "Integriert"
 msgid "Cache read"
 msgstr "Cache gelesen"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Cache write"
+msgstr "Cache geschrieben"
+
 #: src/components/settings-storage.tsx
 msgid "Calculating…"
 msgstr "Wird berechnet…"
@@ -873,6 +1057,9 @@ msgstr "Kamerazugriff erforderlich"
 #: src/components/ssh-host-form.tsx
 #: src/components/ssh-host-key-dialog.tsx
 #: src/components/theme-link-import.tsx
+#: src/components/voice-input-button.tsx
+#: src/hooks/use-file-actions.tsx
+#: src/hooks/use-lazygit.ts
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "Abbrechen"
@@ -891,6 +1078,10 @@ msgstr "Bearbeitung von {0} abbrechen"
 msgid "Cancel queued message"
 msgstr "Wartende Nachricht abbrechen"
 
+#: src/components/task-row.tsx
+msgid "Cancel task"
+msgstr "Aufgabe abbrechen"
+
 #: src/components/agent-composer.tsx
 msgid "Cancel this queued message"
 msgstr "Diese wartende Nachricht abbrechen"
@@ -901,17 +1092,39 @@ msgid "Cancelled"
 msgstr "Abgebrochen"
 
 #: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Cancelled"
+msgstr "Abgebrochen"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Cannot reach {quietNames}"
+msgstr "Nicht erreichbar: {quietNames}"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Capabilities"
+msgstr "Funktionen"
+
+#: src/components/pane-history-sheet.tsx
+msgid "Capture changed"
+msgstr "Aufzeichnungseinstellungen geändert"
+
+#: src/components/pane-history-sheet.tsx
+msgid "Capture restarted"
+msgstr "Aufzeichnung neu gestartet"
+
+#: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Changed"
 msgstr "Geändert"
 
+#: src/components/agent-message-block.tsx
 #: src/components/changes-sheet.tsx
 msgid "Changes"
 msgstr "Änderungen"
 
 #: src/components/launch-intro.tsx
-msgid "Changes as a tree"
-msgstr "Änderungen als Baum"
+msgid "Changes and Lazygit now live together. Move between linked worktrees when your Gateway supports them."
+msgstr "Änderungen und Lazygit sind jetzt vereint. Wechsle zwischen verknüpften Worktrees, wenn dein Gateway sie unterstützt"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Changes coloured backgrounds, not text, icons or artwork"
@@ -930,6 +1143,15 @@ msgstr "Erneut prüfen"
 msgid "Check device authentication settings and try again."
 msgstr "Prüfe die Authentifizierungseinstellungen des Geräts und versuche es erneut"
 
+#: src/components/home-composer-dock.tsx
+#: src/components/task-row.tsx
+msgid "Check status"
+msgstr "Status prüfen"
+
+#: src/hooks/use-lazygit.ts
+msgid "Check that lazygit is installed on this computer and this pane is in a Git repository."
+msgstr "Prüfe, ob lazygit auf diesem Computer installiert ist und sich dieses Pane in einem Git-Repository befindet"
+
 #: src/hooks/use-agent-command-delivery.ts
 msgid "Check the assistant before sending again; it may have received the request."
 msgstr "Prüfe den Assistenten vor dem erneuten Senden. Die Anfrage könnte bereits angekommen sein"
@@ -938,14 +1160,23 @@ msgstr "Prüfe den Assistenten vor dem erneuten Senden. Die Anfrage könnte bere
 msgid "Check the repository URL, branch and theme file"
 msgstr "Repository-URL, Branch und Theme-Datei prüfen"
 
+#: src/components/home-composer-dock.tsx
+msgid "Check this computer's tasks. This request has not been sent again."
+msgstr "Prüfe die Aufgaben dieses Computers. Diese Anfrage wurde nicht erneut gesendet"
+
 #: src/components/theme-browse-sheet.tsx
 msgid "Check your connection and try again."
 msgstr "Prüfe deine Verbindung und versuche es erneut"
+
+#: src/components/update-status-banner.tsx
+msgid "Checking download size…"
+msgstr "Downloadgröße wird geprüft…"
 
 #: src/components/settings-security.tsx
 msgid "Checking system authentication…"
 msgstr "Systemauthentifizierung wird geprüft…"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/settings-font-sheet.tsx
 msgid "Checking…"
@@ -953,8 +1184,12 @@ msgstr "Wird geprüft…"
 
 #: src/components/home-launch-actions.tsx
 #: src/components/home-target-sheet.tsx
-msgid "Choose a gateway"
-msgstr "Gateway auswählen"
+msgid "Choose a computer"
+msgstr "Computer auswählen"
+
+#: src/components/launch-intro.tsx
+msgid "Choose a computer and an agent, then send your goal from Home. Follow tasks and decisions in the same place."
+msgstr "Wähle einen Computer und einen Agenten und sende dein Ziel direkt von der Startseite. Verfolge Aufgaben und anstehende Entscheidungen am selben Ort"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Choose a mode"
@@ -989,6 +1224,10 @@ msgstr "Wähle einen SSH-Host"
 msgid "Choose another terminal"
 msgstr "Ein anderes Terminal auswählen"
 
+#: src/components/home-composer-dock.tsx
+msgid "Choose computer, agent, folder, mode and model"
+msgstr "Computer, Agent, Ordner, Modus und Modell wählen"
+
 #: src/components/attachment-menu.tsx
 msgid "Choose files"
 msgstr "Dateien auswählen"
@@ -1009,6 +1248,10 @@ msgstr "Angezeigte Änderungen wählen"
 msgid "Choose which simulator to show"
 msgstr "Auswählen, welcher Simulator gezeigt wird"
 
+#: src/components/git-diff-view.tsx
+msgid "Choose worktree"
+msgstr "Worktree auswählen"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Classic"
@@ -1018,9 +1261,17 @@ msgstr "Klassisch"
 msgid "Clear"
 msgstr "Leeren"
 
+#: src/components/in-app-notification-host.tsx
+msgid "Clear all"
+msgstr "Alle leeren"
+
 #: src/components/settings-storage.tsx
 msgid "Clear cache"
 msgstr "Cache leeren"
+
+#: src/app/settings-voice.tsx
+msgid "Clear configuration"
+msgstr "Konfiguration löschen"
 
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
@@ -1056,8 +1307,17 @@ msgstr "Cache wird geleert"
 msgid "Clearing…"
 msgstr "Wird geleert…"
 
+#: src/components/settings-storage.tsx
+msgid "Clears cache when due after opening Muqun. Saved themes are kept."
+msgstr "Bereinigt den Cache nach dem Öffnen von Muqun, wenn das Intervall abgelaufen ist. Gespeicherte Themes bleiben erhalten"
+
+#: src/components/in-app-notification-host.tsx
+msgid "Clears notifications only. Pending tasks still need your attention."
+msgstr "Entfernt nur Benachrichtigungen. Ausstehende Aufgaben benötigen weiterhin deine Aufmerksamkeit"
+
 #: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
+#: src/i18n/labels.ts
 msgid "Close"
 msgstr "Schließen"
 
@@ -1069,10 +1329,16 @@ msgstr "Effekte schließen"
 msgid "Close file"
 msgstr "Datei schließen"
 
+#: src/components/home-recent-sessions.tsx
+#: src/components/task-row.tsx
+msgid "Close menu"
+msgstr "Menü schließen"
+
 #: src/app/new-task.tsx
 msgid "Close new task"
 msgstr "Neue Aufgabe schließen"
 
+#: src/components/agent-tool-card.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/image-preview-modal.tsx
@@ -1100,6 +1366,10 @@ msgstr "Menü schließen"
 #: src/components/simfarm-stage.tsx
 msgid "Close the simulator"
 msgstr "Simulator schließen"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Close this terminal on its computer. Safe terminal closing from Home is not supported yet."
+msgstr "Schließe dieses Terminal auf seinem Computer. Sicheres Schließen von Terminals auf der Startseite wird noch nicht unterstützt"
 
 #: src/components/session-artifacts.tsx
 msgid "Code"
@@ -1143,6 +1413,8 @@ msgid "Colour mode"
 msgstr "Farbmodus"
 
 #: src/app/commands.tsx
+#: src/components/task-result-sheet.tsx
+#: src/lib/demo-gateway.ts
 msgid "Command"
 msgstr "Befehl"
 
@@ -1154,6 +1426,7 @@ msgstr "Befehl kopiert"
 msgid "Command mode"
 msgstr "Befehlsmodus"
 
+#: src/components/agent-context-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Commit"
 msgstr "Commit"
@@ -1170,21 +1443,21 @@ msgstr "Kompakt"
 msgid "Compact context"
 msgstr "Kontext verdichten"
 
-#: src/components/agent-composer.tsx
+#: src/components/agent-compaction-pill.tsx
 msgid "Compacting context automatically…"
 msgstr "Kontext wird automatisch verdichtet…"
 
-#: src/components/agent-composer.tsx
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 msgid "Compacting context…"
 msgstr "Kontext wird verdichtet…"
 
-#: src/components/agent-composer.tsx
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 msgid "Compaction failed"
 msgstr "Verdichtung fehlgeschlagen"
 
-#: src/components/agent-composer.tsx
+#: src/components/agent-compaction-pill.tsx
 msgid "Compaction failed — tap to dismiss"
 msgstr "Verdichtung fehlgeschlagen — zum Ausblenden tippen"
 
@@ -1192,17 +1465,75 @@ msgstr "Verdichtung fehlgeschlagen — zum Ausblenden tippen"
 msgid "Compared with {base}"
 msgstr "Verglichen mit {base}"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/tool-call-detail-sheet.tsx
+#: src/i18n/labels.ts
 msgid "Completed"
 msgstr "Abgeschlossen"
+
+#: src/app/agent-guide.tsx
+#: src/app/artifacts.tsx
+#: src/app/panels.tsx
+#: src/components/app-drawer.tsx
+#: src/components/home-composer-options.tsx
+#: src/components/home-recent-sessions.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Computer"
+msgstr "Computer"
+
+#: src/components/computer-map/screen.tsx
+msgid "Computer details"
+msgstr "Computerdetails"
+
+#: src/app/explore.tsx
+#: src/components/settings-servers.tsx
+msgid "Computer name"
+msgstr "Computername"
+
+#: src/app/servers/[serverId].tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Computer not found"
+msgstr "Computer nicht gefunden"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Computer offline"
+msgstr "Computer offline"
+
+#: src/components/home-composer-dock.tsx
+#: src/components/server-terminal-workspace.tsx
+#: src/hooks/use-server-tasks.ts
+msgid "Computer unavailable."
+msgstr "Computer nicht erreichbar"
+
+#: src/app/settings-servers.tsx
+#: src/app/settings.tsx
+#: src/components/app-drawer-content.tsx
+#: src/components/file-mention-panel.tsx
+#: src/components/home-editorial-layout.tsx
+#: src/components/home-overview.tsx
+#: src/components/session-map.tsx
+msgid "Computers"
+msgstr "Computer"
+
+#: src/components/task-row.tsx
+msgid "Confirm cancel"
+msgstr "Abbrechen bestätigen"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
 msgstr "Leeren des Caches bestätigen"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Confirm delete"
+msgstr "Löschen bestätigen"
+
 #: src/app/explore.tsx
 msgid "Confirm pairing"
 msgstr "Kopplung bestätigen"
+
+#: src/components/task-row.tsx
+msgid "Confirm removal"
+msgstr "Entfernen bestätigen"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm remove unused themes"
@@ -1242,6 +1573,7 @@ msgstr "Verbinden"
 #: src/app/explore.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
+#: src/components/settings-server-capabilities.tsx
 msgid "Connected"
 msgstr "Verbunden"
 
@@ -1280,7 +1612,12 @@ msgstr "Verbinde mit {address}"
 msgid "Connecting…"
 msgstr "Verbindungsaufbau…"
 
+#: src/components/computer-map/screen.tsx
+msgid "Connection map"
+msgstr "Verbindungskarte"
+
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "Verbindungen"
@@ -1298,10 +1635,12 @@ msgstr "Kontext"
 msgid "Context {0}% full"
 msgstr "Kontext zu {0}% gefüllt"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 msgid "Context compacted · auto"
 msgstr "Kontext verdichtet · automatisch"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 msgid "Context compacted · manual"
 msgstr "Kontext verdichtet · manuell"
@@ -1311,15 +1650,23 @@ msgid "Context used"
 msgstr "Kontext belegt"
 
 #: src/app/explore.tsx
-#: src/components/home-editorial-layout.tsx
+#: src/components/launch-intro.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "Weiter"
 
+#: src/components/agent-workbench.tsx
+msgid "Continue in the linked terminal. Your draft stays here."
+msgstr "Mach im verknüpften Terminal weiter. Dein Entwurf bleibt hier"
+
 #: src/i18n/labels.ts
 msgid "Continue task"
 msgstr "Aufgabe fortsetzen"
+
+#: src/components/pane-history-sheet.tsx
+msgid "Continued on another page"
+msgstr "Fortsetzung auf einer anderen Seite"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Control"
@@ -1441,10 +1788,11 @@ msgstr "Steuerung"
 msgid "Conversational help and open-ended project questions."
 msgstr "Hilfe im Gespräch und offene Fragen zum Projekt"
 
-#: src/components/agent-guide-sheet.tsx
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
+#: src/components/guide-command.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Copied"
 msgstr "Kopiert"
@@ -1477,6 +1825,7 @@ msgstr "Eingabe kopieren"
 msgid "Copy message"
 msgstr "Nachricht kopieren"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Copy output"
 msgstr "Ausgabe kopieren"
@@ -1489,7 +1838,7 @@ msgstr "Pfad kopieren"
 msgid "Copy public key"
 msgstr "Öffentlichen Schlüssel kopieren"
 
-#: src/components/agent-guide-sheet.tsx
+#: src/components/guide-command.tsx
 msgid "Copy the command"
 msgstr "Befehl kopieren"
 
@@ -1510,18 +1859,33 @@ msgid "Copying…"
 msgstr "Wird kopiert…"
 
 #: src/components/agent-composer.tsx
-#: src/components/new-task-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
 msgstr "Datei konnte nicht hinzugefügt werden"
+
+#: src/components/task-row.tsx
+msgid "Could not cancel the task"
+msgstr "Aufgabe konnte nicht abgebrochen werden"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not change delivery"
 msgstr "Zustellung konnte nicht geändert werden"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "Could not change this setting"
+msgstr "Diese Einstellung konnte nicht geändert werden"
+
+#: src/components/update-status-banner.tsx
+msgid "Could not check download size. Try again."
+msgstr "Downloadgröße konnte nicht geprüft werden. Erneut versuchen"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not compact"
 msgstr "Verdichtung nicht möglich"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not confirm submission"
+msgstr "Übermittlung konnte nicht bestätigt werden"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not connect"
@@ -1547,6 +1911,10 @@ msgstr "Worktree konnte nicht erstellt werden"
 msgid "Could not delete"
 msgstr "Löschen fehlgeschlagen"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Could not delete this session. Reconnect to its computer and refresh Home before trying again."
+msgstr "Diese Sitzung konnte nicht gelöscht werden. Verbinde dich erneut mit ihrem Computer und aktualisiere die Startseite, bevor du es erneut versuchst"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not detach"
 msgstr "Konnte nicht losgelöst werden"
@@ -1568,6 +1936,14 @@ msgstr "Download fehlgeschlagen. Link und Verbindung prüfen"
 msgid "Could not enable App Lock"
 msgstr "App-Sperre konnte nicht aktiviert werden"
 
+#: src/components/task-row.tsx
+msgid "Could not follow this task on {computer}"
+msgstr "Diese Aufgabe auf {computer} konnte nicht verfolgt werden"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not fork"
+msgstr "Verzweigen fehlgeschlagen"
+
 #: src/components/ssh-host-form.tsx
 msgid "Could not generate a key"
 msgstr "Schlüssel konnte nicht erzeugt werden"
@@ -1577,8 +1953,20 @@ msgid "Could not keep it"
 msgstr "Konnte nicht beibehalten werden"
 
 #: src/components/new-task-sheet.tsx
-msgid "Could not list this server's agents."
-msgstr "Die Agents dieses Servers konnten nicht aufgelistet werden"
+msgid "Could not list this computer's agents."
+msgstr "Die Agents dieses Computers konnten nicht aufgelistet werden"
+
+#: src/components/changes-worktree-list.tsx
+msgid "Could not list worktrees. Refresh to try again."
+msgstr "Worktrees konnten nicht aufgelistet werden. Zum Wiederholen aktualisieren"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Could not load capabilities"
+msgstr "Funktionen konnten nicht geladen werden"
+
+#: src/components/computer-map/screen.tsx
+msgid "Could not load computers. Open Computers to try again."
+msgstr "Computer konnten nicht geladen werden. Öffne „Computer“, um es erneut zu versuchen"
 
 #: src/components/session-artifacts.tsx
 msgid "Could not load files."
@@ -1591,6 +1979,14 @@ msgstr "Modelle konnten nicht geladen werden"
 #: src/lib/terminal-history-pull.ts
 msgid "Could not load older history from this terminal"
 msgstr "Ältere Ausgaben dieses Terminals konnten nicht geladen werden"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Could not load sessions"
+msgstr "Sitzungen konnten nicht geladen werden"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Could not load tasks"
+msgstr "Aufgaben konnten nicht geladen werden"
 
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/agent-workbench.tsx
@@ -1605,13 +2001,30 @@ msgstr "Die Änderungen dieser Datei konnten nicht geladen werden"
 msgid "Could not load what is running."
 msgstr "Konnte nicht laden, was gerade läuft"
 
+#: src/components/task-row.tsx
+msgid "Could not mark the task done"
+msgstr "Aufgabe konnte nicht als erledigt markiert werden"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not move this session"
 msgstr "Sitzung konnte nicht verschoben werden"
 
+#: src/components/guide-command.tsx
+msgid "Could not open a terminal on this computer."
+msgstr "Auf diesem Computer konnte kein Terminal geöffnet werden"
+
 #: src/hooks/use-home-commands.ts
 msgid "Could not open destination"
 msgstr "Ziel konnte nicht geöffnet werden"
+
+#: src/components/agent-workbench.tsx
+#: src/components/inline-file-link.tsx
+msgid "Could not open file"
+msgstr "Datei konnte nicht geöffnet werden"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not open terminal"
+msgstr "Terminal konnte nicht geöffnet werden"
 
 #: src/hooks/use-theme-file-open.ts
 msgid "Could not open that theme"
@@ -1621,7 +2034,7 @@ msgstr "Dieses Theme konnte nicht geöffnet werden"
 msgid "Could not open the file"
 msgstr "Datei konnte nicht geöffnet werden"
 
-#: src/app/settings.tsx
+#: src/app/settings-about.tsx
 msgid "Could not open the guide"
 msgstr "Anleitung konnte nicht geöffnet werden"
 
@@ -1645,34 +2058,54 @@ msgstr "SSH-Tunnel konnte nicht geöffnet werden"
 msgid "Could not open this file."
 msgstr "Diese Datei konnte nicht geöffnet werden"
 
+#: src/components/pdf-asset-preview.tsx
+msgid "Could not open this PDF."
+msgstr "Diese PDF konnte nicht geöffnet werden"
+
 #: src/components/asset-viewer.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not open this theme."
 msgstr "Dieses Theme konnte nicht geöffnet werden"
+
+#: src/components/audio-asset-preview.tsx
+msgid "Could not play this audio file."
+msgstr "Diese Audiodatei konnte nicht abgespielt werden"
+
+#: src/components/video-asset-preview.tsx
+msgid "Could not play this video file."
+msgstr "Diese Videodatei konnte nicht abgespielt werden"
+
+#: src/components/task-row.tsx
+msgid "Could not reach {computer}"
+msgstr "{computer} war nicht erreichbar"
 
 #: src/app/explore.tsx
 msgid "Could not reach that address. Check it and make sure the Gateway is running."
 msgstr "Diese Adresse ist nicht erreichbar. Überprüfe sie und stelle sicher, dass das Gateway läuft"
 
 #: src/app/explore.tsx
-msgid "Could not reach the gateway."
-msgstr "Gateway ist nicht erreichbar"
+msgid "Could not reach the computer."
+msgstr "Der Computer ist nicht erreichbar"
 
 #: src/app/explore.tsx
-msgid "Could not reach the gateway. Make sure it is running, then refresh the QR and scan again."
-msgstr "Gateway ist nicht erreichbar. Stelle sicher, dass es läuft, aktualisiere den QR-Code und scanne erneut"
+msgid "Could not reach the computer. Make sure it is running, then refresh the QR and scan again."
+msgstr "Der Computer ist nicht erreichbar. Stelle sicher, dass er läuft, aktualisiere den QR-Code und scanne erneut"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Could not reach the theme catalogue"
 msgstr "Theme-Katalog nicht erreichbar"
 
 #: src/app/new-task.tsx
-msgid "Could not reach this server."
-msgstr "Dieser Server war nicht erreichbar"
+msgid "Could not reach this computer."
+msgstr "Dieser Computer war nicht erreichbar"
 
 #: src/components/gateway-storage-error.tsx
-msgid "Could not read saved servers. Your saved data has not been changed. Unlock this device and retry."
-msgstr "Gespeicherte Server konnten nicht gelesen werden. Deine gespeicherten Daten wurden nicht geändert. Entsperre dieses Gerät und versuche es erneut"
+msgid "Could not read saved computers. Your saved data has not been changed. Unlock this device and retry."
+msgstr "Gespeicherte Computer konnten nicht gelesen werden. Deine gespeicherten Daten wurden nicht geändert. Entsperre dieses Gerät und versuche es erneut"
+
+#: src/components/pane-history-sheet.tsx
+msgid "Could not read saved terminal history."
+msgstr "Der gespeicherte Terminalverlauf konnte nicht gelesen werden"
 
 #: src/components/changes-sheet.tsx
 msgid "Could not read the changes."
@@ -1683,9 +2116,21 @@ msgstr "Die Änderungen konnten nicht gelesen werden"
 msgid "Could not read the terminal."
 msgstr "Terminal konnte nicht gelesen werden"
 
+#: src/components/home-composer-dock.tsx
+msgid "Could not read this computer's model list, so nothing was sent. Pick a model or try again."
+msgstr "Die Modellliste dieses Computers konnte nicht gelesen werden, daher wurde nichts gesendet. Wähle ein Modell oder versuche es erneut"
+
 #: src/components/changes-sheet.tsx
 msgid "Could not read this file."
 msgstr "Diese Datei konnte nicht gelesen werden"
+
+#: src/app/settings-voice.tsx
+msgid "Could not read voice settings. Save your configuration again."
+msgstr "Spracheinstellungen konnten nicht gelesen werden. Speichere die Konfiguration erneut"
+
+#: src/components/computer-map/screen.tsx
+msgid "Could not refresh. This report may be outdated."
+msgstr "Aktualisierung fehlgeschlagen. Dieser Bericht kann veraltet sein"
 
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
@@ -1723,6 +2168,10 @@ msgstr "Skill konnte nicht ausgeführt werden"
 msgid "Could not save changes"
 msgstr "Änderungen konnten nicht gespeichert werden"
 
+#: src/hooks/use-file-actions.tsx
+msgid "Could not save file"
+msgstr "Datei konnte nicht gespeichert werden"
+
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Could not save Home layout"
 msgstr "Home-Layout konnte nicht gespeichert werden"
@@ -1743,7 +2192,13 @@ msgstr "Design konnte nicht gespeichert werden"
 msgid "Could not save this setting. Try again."
 msgstr "Diese Einstellung konnte nicht gespeichert werden. Bitte erneut versuchen"
 
+#: src/app/settings-voice.tsx
+msgid "Could not save voice settings. Please try again."
+msgstr "Spracheinstellungen konnten nicht gespeichert werden. Versuche es erneut"
+
+#: src/components/home-composer-dock.tsx
 #: src/components/ssh-terminal-workspace.tsx
+#: src/components/task-row.tsx
 msgid "Could not send"
 msgstr "Senden fehlgeschlagen"
 
@@ -1763,6 +2218,10 @@ msgstr "Taste konnte nicht gesendet werden"
 msgid "Could not send shortcut."
 msgstr "Shortcut konnte nicht gesendet werden"
 
+#: src/components/task-row.tsx
+msgid "Could not send. Tap to retry"
+msgstr "Konnte nicht gesendet werden. Zum Wiederholen tippen"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not stage the rollback"
 msgstr "Rollback konnte nicht vorbereitet werden"
@@ -1772,9 +2231,11 @@ msgid "Could not start a session"
 msgstr "Sitzung konnte nicht gestartet werden"
 
 #: src/app/commands.tsx
+#: src/hooks/use-lazygit.ts
 msgid "Could not start a terminal."
 msgstr "Terminal konnte nicht gestartet werden"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Could not start the task."
 msgstr "Die Aufgabe konnte nicht gestartet werden"
@@ -1801,7 +2262,7 @@ msgid "Could not undo"
 msgstr "Rückgängig nicht möglich"
 
 #: src/components/settings-servers.tsx
-msgid "Could not unpair server"
+msgid "Could not unpair computer"
 msgstr "Kopplung konnte nicht aufgehoben werden"
 
 #: src/components/session-map.tsx
@@ -1811,10 +2272,6 @@ msgstr "Die Session konnte nicht aktualisiert werden"
 #: src/lib/attachments.ts
 msgid "Could not upload the file."
 msgstr "Datei konnte nicht hochgeladen werden"
-
-#: src/components/launch-intro.tsx
-msgid "Cover Courier comes built in. Install a theme or pick a colour pack, and the whole app follows."
-msgstr "Cover Courier ist eingebaut. Installiere ein Theme oder wähle ein Farbpaket, und die ganze App zieht mit"
 
 #: src/lib/release-notes.ts
 msgid "Cover Courier is built in and worn until you pick a theme, and Interface background opacity now reaches every sheet and notice."
@@ -1828,7 +2285,16 @@ msgstr "Erstellen und wechseln"
 msgid "Creating session…"
 msgstr "Sitzung wird erstellt…"
 
+#: src/components/agent-tool-card.tsx
+#: src/components/attachment-image.tsx
+#: src/components/content-image.tsx
+#: src/components/gateway-image-thumbnail.tsx
+#: src/components/transcript-block-image.tsx
+msgid "Cropped preview · Open full image"
+msgstr "Beschnittene Vorschau · Vollständiges Bild öffnen"
+
 #: src/components/custom-theme-library.tsx
+#: src/components/file-mention-panel.tsx
 msgid "Current"
 msgstr "Aktuell"
 
@@ -1836,9 +2302,14 @@ msgstr "Aktuell"
 msgid "Current agent"
 msgstr "Aktueller Agent"
 
+#: src/components/changes-worktree-list.tsx
+#: src/components/git-diff-view.tsx
+msgid "Current checkout"
+msgstr "Aktueller Checkout"
+
 #: src/components/session-map.tsx
-msgid "Current machine"
-msgstr "Aktueller Rechner"
+msgid "Current computer"
+msgstr "Aktueller Computer"
 
 #: src/i18n/labels.ts
 msgid "Current path"
@@ -1884,6 +2355,10 @@ msgstr "Standardmäßig theme.json im Stammverzeichnis des Repositorys"
 msgid "Delete"
 msgstr "Löschen"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "Delete “{title}”?"
+msgstr "„{title}“ löschen?"
+
 #: src/components/changes-sheet.tsx
 msgid "Delete {discardName}?"
 msgstr "{discardName} löschen?"
@@ -1891,6 +2366,10 @@ msgstr "{discardName} löschen?"
 #: src/app/commands.tsx
 msgid "Delete {name}"
 msgstr "{name} löschen"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Delete session"
+msgstr "Sitzung löschen"
 
 #: src/i18n/labels.ts
 msgid "Delete this line"
@@ -1901,6 +2380,10 @@ msgctxt "git file status"
 msgid "Deleted"
 msgstr "Gelöscht"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Deleting session…"
+msgstr "Sitzung wird gelöscht…"
+
 #: src/components/agent-composer.tsx
 msgid "Delivery mode: Queue. Tap to switch to Steer."
 msgstr "Sendemodus: Warteschlange. Tippen zum Umschalten auf Steer"
@@ -1909,13 +2392,23 @@ msgstr "Sendemodus: Warteschlange. Tippen zum Umschalten auf Steer"
 msgid "Delivery mode: Steer (real-time). Tap to switch to Queue."
 msgstr "Sendemodus: Steer (Echtzeit). Tippen zum Umschalten auf Warteschlange"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/components/task-row.tsx
 msgid "Delivery not confirmed"
 msgstr "Zustellung nicht bestätigt"
+
+#: src/components/task-row.tsx
+msgid "Delivery not confirmed. Tap to check status"
+msgstr "Zustellung nicht bestätigt. Zum Prüfen tippen"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Demo catalogue. Leave the demo to download themes."
 msgstr "Demo-Katalog. Beende die Demo, um Themes herunterzuladen"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Demo sessions cannot be deleted. Open a paired computer to manage its sessions."
+msgstr "Demo-Sitzungen können nicht gelöscht werden. Öffne einen gekoppelten Computer, um seine Sitzungen zu verwalten"
 
 #: src/lib/demo-ssh.ts
 msgid "Demo shell"
@@ -1943,14 +2436,19 @@ msgid "detached at {head}"
 msgstr "losgelöst bei {head}"
 
 #: src/components/changes-sheet.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "Detached at {head}"
 msgstr "Losgelöst bei {head}"
+
+#: src/components/embedded-terminal-tool-block.tsx
+#: src/components/in-app-notification-host.tsx
+msgid "Details"
+msgstr "Details"
 
 #: src/lib/demo-gateway.ts
 msgid "Development"
 msgstr "Entwicklung"
 
-#: src/components/settings-security.tsx
 #: src/lib/local-authentication.ts
 msgid "device authentication"
 msgstr "Geräteauthentifizierung"
@@ -1993,8 +2491,10 @@ msgstr "Getrennt · {0}"
 msgid "Disconnected."
 msgstr "Getrennt"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
+#: src/components/task-row.tsx
 msgid "Dismiss"
 msgstr "Ausblenden"
 
@@ -2015,10 +2515,6 @@ msgstr "Dieses Theme verwerfen"
 msgid "Dismiss what happened while you were away"
 msgstr "Ausblenden, was während deiner Abwesenheit passiert ist"
 
-#: src/components/whats-new-card.tsx
-msgid "Dismiss what's new"
-msgstr "Neuigkeiten ausblenden"
-
 #: src/app/custom-theme.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
@@ -2026,6 +2522,11 @@ msgstr "Neuigkeiten ausblenden"
 #: src/i18n/labels.ts
 msgid "Done"
 msgstr "Fertig"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Done"
+msgstr "Erledigt"
 
 #: src/app/commands.tsx
 msgid "Done editing shortcuts"
@@ -2040,9 +2541,18 @@ msgstr "Pfeil nach unten"
 msgid "Download"
 msgstr "Herunterladen"
 
+#. placeholder {0}: asset.src.split('/').pop() ?? asset.src
+#: src/components/agent-message-block.tsx
+msgid "Download {0}"
+msgstr "{0} herunterladen"
+
 #: src/components/theme-link-import.tsx
 msgid "Download and preview"
 msgstr "Herunterladen und Vorschau"
+
+#: src/components/update-status-banner.tsx
+msgid "Download size: {fullPackage}"
+msgstr "Downloadgröße: {fullPackage}"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Downloading"
@@ -2071,9 +2581,9 @@ msgstr "Wird heruntergeladen …"
 msgid "Draft the notes for the next build"
 msgstr "Entwirft die Notizen für den nächsten Build"
 
-#: src/components/launch-intro.tsx
-msgid "Drawn on the GPU with Skia, with real keys and full tmux control. nvim, less and REPLs behave."
-msgstr "Mit Skia auf der GPU gezeichnet, mit echten Tasten und voller tmux-Steuerung. nvim, less und REPLs verhalten sich, wie sie sollen"
+#: src/components/computer-map/screen.tsx
+msgid "Drag to rotate · Pinch to zoom · Tap to select"
+msgstr "Ziehen zum Drehen · Zwei Finger zum Zoomen · Tippen zum Auswählen"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -2104,8 +2614,12 @@ msgid "Edit SSH host"
 msgstr "SSH-Host bearbeiten"
 
 #: src/components/settings-servers.tsx
-msgid "Edit this server"
-msgstr "Diesen Server bearbeiten"
+msgid "Edit this computer"
+msgstr "Diesen Computer bearbeiten"
+
+#: src/components/pane-history-sheet.tsx
+msgid "Editor changed"
+msgstr "Editor gewechselt"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
@@ -2118,8 +2632,8 @@ msgid "Effects · {0}"
 msgstr "Effekte · {0}"
 
 #: src/i18n/labels.ts
-msgid "Enable deepseek in the gateway config, start DeepSeek Harness on the host, then restart the gateway."
-msgstr "Aktivieren Sie deepseek in der Gateway-Konfiguration, starten Sie DeepSeek Harness auf dem Host und starten Sie dann das Gateway neu"
+msgid "Encryption was turned on for this computer. Pair it again to keep using it."
+msgstr "Für diesen Computer wurde die Verschlüsselung eingeschaltet. Erneut koppeln, um ihn weiter zu nutzen"
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -2133,6 +2647,14 @@ msgstr "Gib eine Gateway-URL ein"
 #: src/components/settings-servers.tsx
 msgid "Enter a name."
 msgstr "Gib einen Namen ein"
+
+#: src/app/settings-voice.tsx
+msgid "Enter a valid HTTPS API URL. API key and model are optional."
+msgstr "Gib eine gültige HTTPS-API-URL ein. API-Schlüssel und Modell sind optional"
+
+#: src/app/settings-voice.tsx
+msgid "Enter a valid WSS realtime URL. API key and model are optional."
+msgstr "Gib eine gültige WSS-Echtzeit-URL ein. API-Schlüssel und Modell sind optional"
 
 #: src/app/explore.tsx
 msgid "Enter the {PAIRING_CODE_CHARACTER_COUNT}-character code."
@@ -2167,17 +2689,14 @@ msgstr "Escape zweimal"
 msgid "Estimated cost"
 msgstr "Geschätzte Kosten"
 
-#: src/components/launch-intro.tsx
-msgid "Every agent on your computer, in your hand."
-msgstr "Jeder Agent auf deinem Rechner, in deiner Hand"
-
-#: src/components/launch-intro.tsx
-msgid "Every changed file in one folder tree with line totals. Open a patch, or discard a file from its menu."
-msgstr "Jede geänderte Datei in einem Ordnerbaum mit Zeilensummen. Öffne einen Patch oder verwirf eine Datei über ihr Menü"
-
 #: src/components/settings-font-sheet.tsx
 msgid "Every screen in the app."
 msgstr "Jeder Bildschirm der App"
+
+#: src/components/task-result-sheet.tsx
+#: src/components/task-row.tsx
+msgid "exit {code}"
+msgstr "Exit {code}"
 
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
@@ -2223,6 +2742,12 @@ msgid "Export theme"
 msgstr "Design exportieren"
 
 #: src/components/tool-call-detail-sheet.tsx
+#: src/i18n/labels.ts
+msgid "Failed"
+msgstr "Fehlgeschlagen"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
 msgid "Failed"
 msgstr "Fehlgeschlagen"
 
@@ -2240,8 +2765,8 @@ msgid "Failed to switch project"
 msgstr "Projekt konnte nicht gewechselt werden"
 
 #: src/components/settings-home-layout-sheet.tsx
-msgid "Familiar server cards and quick actions."
-msgstr "Vertraute Serverkarten und Schnellaktionen"
+msgid "Familiar computer cards and quick actions."
+msgstr "Vertraute Computerkarten und Schnellaktionen"
 
 #: src/components/agent-composer.tsx
 msgid "Fast agent specialized for exploring codebases."
@@ -2251,13 +2776,9 @@ msgstr "Schneller Agent für Codebase-Erkundung"
 msgid "Fetch a web page"
 msgstr "Eine Webseite abrufen"
 
-#: src/components/file-mention-panel.tsx
-msgid "File mentions"
-msgstr "Dateierwähnungen"
-
 #: src/lib/attachments.ts
-msgid "File too large (25MB max)"
-msgstr "Datei zu groß (max. 25 MB)"
+msgid "File too large ({mb} MB max)"
+msgstr "Datei zu groß (max. {mb} MB)"
 
 #: src/lib/attachments.ts
 msgid "File type not allowed"
@@ -2291,6 +2812,10 @@ msgstr "Datei nach Namen suchen"
 msgid "Fingerprint"
 msgstr "Fingerabdruck"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "Finished"
+msgstr "Abgeschlossen"
+
 #: src/components/new-task-sheet.tsx
 msgid "First prompt"
 msgstr "Erster Auftrag"
@@ -2311,6 +2836,10 @@ msgstr "Korrekturen für Terminals, die auf ihrem Ladelogo hängen blieben, unte
 msgid "Fold the tool steps away"
 msgstr "Tool-Schritte einklappen"
 
+#: src/components/home-composer-options.tsx
+msgid "Folder"
+msgstr "Ordner"
+
 #: src/components/agent-workspace-sheet.tsx
 msgid "Folder is missing"
 msgstr "Ordner fehlt"
@@ -2319,9 +2848,17 @@ msgstr "Ordner fehlt"
 msgid "Folders"
 msgstr "Ordner"
 
+#: src/app/settings-voice.tsx
+msgid "Follow App language"
+msgstr "App-Sprache übernehmen"
+
 #: src/components/settings-language-sheet.tsx
 msgid "Follow the language your phone is set to"
 msgstr "Der Sprache des Telefons folgen"
+
+#: src/i18n/labels.ts
+msgid "Follow up"
+msgstr "Nachfassen"
 
 #: src/components/settings-language-sheet.tsx
 msgid "Following your phone"
@@ -2339,6 +2876,10 @@ msgstr "Adresse der Schriftdatei"
 #: src/components/settings-appearance.tsx
 msgid "Font, {fontValue}"
 msgstr "Schrift, {fontValue}"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Fork session"
+msgstr "Sitzung verzweigen"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"
@@ -2362,9 +2903,25 @@ msgstr "Schafft Kontext frei, indem die bisherige Unterhaltung zusammengefasst w
 msgid "Frequent"
 msgstr "Häufig verwendet"
 
+#: src/components/task-row.tsx
+msgid "from {requester}"
+msgstr "von {requester}"
+
+#: src/components/launch-intro.tsx
+msgid "From a goal to work in motion."
+msgstr "Vom Ziel zur laufenden Arbeit"
+
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "Frontkamera. Halte den QR-Code vor den Bildschirm"
+
+#: src/components/update-status-banner.tsx
+msgid "Full package size. File reuse may reduce the download."
+msgstr "Größe des vollständigen Pakets. Wiederverwendete Dateien können den Download verkleinern"
+
+#: src/components/video-asset-preview.tsx
+msgid "Fullscreen"
+msgstr "Vollbild"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Function keys"
@@ -2390,6 +2947,14 @@ msgstr "Gateway-Benachrichtigungen"
 msgid "Gateway port on that host"
 msgstr "Gateway-Port auf diesem Host"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Gateway restarted"
+msgstr "Gateway neu gestartet"
+
+#: src/i18n/labels.ts
+msgid "Gateway starts or joins DeepSeek Harness on the computer (default http://127.0.0.1:3080, override deepseek.endpoint)."
+msgstr "Das Gateway startet oder verbindet DeepSeek Harness auf dem Rechner (Standard http://127.0.0.1:3080, überschreibbar mit deepseek.endpoint)"
+
 #: src/lib/notifications.ts
 msgid "Gateway updates"
 msgstr "Gateway-Updates"
@@ -2403,6 +2968,10 @@ msgstr "Gateway-URL"
 #: src/components/settings-servers.tsx
 msgid "Gateway URL is not valid."
 msgstr "Die Gateway-URL ist ungültig"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "gateway v{gatewayVersion}"
+msgstr "Gateway v{gatewayVersion}"
 
 #: src/components/ssh-host-form.tsx
 msgid "Gateways reached through this host"
@@ -2428,6 +2997,14 @@ msgstr "Wird erzeugt…"
 msgid "Get started"
 msgstr "Los geht's"
 
+#: src/components/git-diff-view.tsx
+msgid "Git"
+msgstr "Git"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Git snapshot"
+msgstr "Git-Snapshot"
+
 #: src/i18n/labels.ts
 msgid "Git status"
 msgstr "Git-Status"
@@ -2446,8 +3023,8 @@ msgid "Go to the top of the file"
 msgstr "Zum Anfang der Datei springen"
 
 #: src/app/+not-found.tsx
-msgid "Go to your servers"
-msgstr "Zu deinen Servern"
+msgid "Go to your computers"
+msgstr "Zu deinen Computern"
 
 #: src/components/agent-message-block.tsx
 msgid "Goal continuation"
@@ -2467,7 +3044,7 @@ msgctxt "agent slash command"
 msgid "Guided AGENTS.md setup"
 msgstr "Geführte AGENTS.md-Einrichtung"
 
-#: src/app/settings.tsx
+#: src/app/settings-about.tsx
 msgid "Guides for pairing, the terminal, agents and themes"
 msgstr "Anleitungen zu Kopplung, Terminal, Agents und Themes"
 
@@ -2495,27 +3072,41 @@ msgstr "{name} ausblenden"
 msgid "Hide keyboard"
 msgstr "Tastatur ausblenden"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Hide output"
 msgstr "Ausgabe ausblenden"
 
 #: src/components/app-drawer.tsx
-msgid "Hide the server list"
-msgstr "Serverliste ausblenden"
+msgid "Hide the computer list"
+msgstr "Computerliste ausblenden"
 
 #: src/app/commands.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Hide the simulator"
 msgstr "Simulator ausblenden"
 
-#: src/components/pad-server-rail.tsx
+#: src/app/settings-voice.tsx
+msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
+msgstr "Halte die Sendetaste gedrückt, um zu sprechen. Beende die Aufnahme, um den Text zum Entwurf hinzuzufügen. Danach kannst du ihn bearbeiten und senden"
+
 #: src/components/simfarm-stage.tsx
 msgid "Home"
 msgstr "Home"
 
+#: src/components/home-agent-sheet.tsx
+#: src/components/settings-servers.tsx
+msgid "Home agent"
+msgstr "Home-Agent"
+
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Home effects · development only"
 msgstr "Home-Effekte · nur Entwicklung"
+
+#: src/app/agent-workspace.tsx
+#: src/components/home-composer-dock.tsx
+msgid "Home folder"
+msgstr "Benutzerordner"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
@@ -2550,7 +3141,7 @@ msgstr "Host-Schlüssel hat sich geändert"
 msgid "Host key trusted"
 msgstr "Host-Schlüssel vertraut"
 
-#: src/app/settings.tsx
+#: src/app/settings-about.tsx
 msgid "How to use Muqun"
 msgstr "Muqun verwenden"
 
@@ -2564,15 +3155,31 @@ msgid "If this continues, restart the app or check the app installation"
 msgstr "Wenn das Problem weiterhin besteht, starte die App neu oder prüfe die App-Installation"
 
 #: src/components/agent-message-block.tsx
-#: src/components/asset-viewer.tsx
+#: src/components/agent-tool-card.tsx
+#: src/components/transcript-block-image.tsx
+msgid "Image"
+msgstr "Bild"
+
+#: src/components/image-preview-modal.tsx
+msgid "Image preview"
+msgstr "Bildvorschau"
+
+#: src/components/agent-message-block.tsx
+#: src/components/file-text-body.tsx
+#: src/components/gateway-image-thumbnail.tsx
+#: src/components/transcript-block-image.tsx
 msgid "Image unavailable"
 msgstr "Bild nicht verfügbar"
 
 #. placeholder {0}: alt.trim()
 #: src/components/agent-message-block.tsx
-#: src/components/asset-viewer.tsx
+#: src/components/file-text-body.tsx
 msgid "Image unavailable: {0}"
 msgstr "Bild nicht verfügbar: {0}"
+
+#: src/components/transcript-block-image.tsx
+msgid "Image unavailable: {alt}"
+msgstr "Bild nicht verfügbar: {alt}"
 
 #: src/components/session-artifacts.tsx
 #: src/components/settings-storage.tsx
@@ -2599,6 +3206,10 @@ msgstr "Datei importieren"
 msgid "Import link"
 msgstr "Link importieren"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "In progress"
+msgstr "In Arbeit"
+
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Increase {label}"
 msgstr "{label} erhöhen"
@@ -2612,13 +3223,13 @@ msgstr "Eingabe"
 msgid "Input copied to clipboard"
 msgstr "Eingabe in die Zwischenablage kopiert"
 
-#. placeholder {0}: row.label
+#. placeholder {0}: item.label
 #: src/components/composer-popup.tsx
 msgid "Insert {0}"
 msgstr "{0} einfügen"
 
-#. placeholder {0}: row.label
-#. placeholder {1}: row.hint
+#. placeholder {0}: item.label
+#. placeholder {1}: item.hint
 #: src/components/composer-popup.tsx
 msgid "Insert {0} {1}"
 msgstr "{0} {1} einfügen"
@@ -2631,6 +3242,18 @@ msgstr "Einfügemodus"
 msgid "Install a package"
 msgstr "Ein Paket installieren"
 
+#: src/components/audio-asset-preview.tsx
+msgid "Install an app build with audio support to preview this file."
+msgstr "Installiere eine App-Version mit Audiounterstützung, um diese Datei anzuhören"
+
+#: src/app/settings-voice.tsx
+msgid "Install an app build with voice recording support to use the microphone."
+msgstr "Installiere eine App-Version mit Sprachaufnahme, um das Mikrofon zu verwenden"
+
+#: src/components/voice-input-button.tsx
+msgid "Install an updated app build to use realtime transcription."
+msgstr "Installiere eine aktuelle App-Version, um Echtzeit-Transkription zu nutzen"
+
 #: src/app/explore.tsx
 msgid "Install command copied"
 msgstr "Installationsbefehl kopiert"
@@ -2641,6 +3264,7 @@ msgid "Installed"
 msgstr "Installiert"
 
 #: src/app/+not-found.tsx
+#: src/app/custom-theme.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Installing images"
 msgstr "Bilder werden installiert"
@@ -2652,6 +3276,10 @@ msgstr "Wird installiert…"
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Intensity"
 msgstr "Intensität"
+
+#: src/i18n/labels.ts
+msgid "Interacted"
+msgstr "Ausgetauscht"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Interface"
@@ -2702,8 +3330,8 @@ msgid "Its details could not be written to secure storage."
 msgstr "Seine Daten konnten nicht im sicheren Speicher abgelegt werden"
 
 #: src/components/settings-servers.tsx
-msgid "Its paired devices are listed once it is the server in use."
-msgstr "Seine gekoppelten Geräte erscheinen, sobald es der genutzte Server ist"
+msgid "Its paired devices are listed once it is the computer in use."
+msgstr "Seine gekoppelten Geräte erscheinen, sobald er der genutzte Computer ist"
 
 #: src/components/skia-terminal.tsx
 msgid "Jump to latest output"
@@ -2711,6 +3339,7 @@ msgstr "Zur neuesten Ausgabe springen"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/hooks/use-relative-time.ts
+#: src/hooks/use-task-age.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "just now"
 msgstr "gerade eben"
@@ -2752,6 +3381,10 @@ msgstr "Weitertippen, um einzugrenzen"
 msgid "Keys"
 msgstr "Tasten"
 
+#: src/components/launch-intro.tsx
+msgid "Know what is coming next."
+msgstr "Vorher wissen, was als Nächstes kommt"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
 msgid "Language"
@@ -2789,6 +3422,23 @@ msgstr "Zuletzt verbunden vor {minutes} Min"
 msgid "Last connected just now"
 msgstr "Zuletzt verbunden: gerade eben"
 
+#: src/app/agent-workspace.tsx
+#: src/components/home-composer-dock.tsx
+msgid "Last folder"
+msgstr "Letzter Ordner"
+
+#: src/components/home-computer-cards.tsx
+msgid "Last known activity"
+msgstr "Zuletzt bekannte Aktivität"
+
+#: src/components/computer-map/screen.tsx
+msgid "Last reported by this computer"
+msgstr "Letzter Bericht dieses Computers"
+
+#: src/components/task-row.tsx
+msgid "last seen {ago}"
+msgstr "zuletzt gesehen {ago}"
+
 #: src/components/settings-servers.tsx
 msgid "Last seen {days}d ago"
 msgstr "Zuletzt gesehen vor {days} T"
@@ -2805,10 +3455,22 @@ msgstr "Zuletzt gesehen vor {minutes} Min"
 msgid "Last seen just now"
 msgstr "Zuletzt gesehen: gerade eben"
 
+#: src/components/update-status-banner.tsx
+msgid "Later"
+msgstr "Später"
+
 #: src/components/agent-workbench.tsx
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "Neueste"
+
+#: src/app/commands.tsx
+msgid "Lazygit"
+msgstr "Lazygit"
+
+#: src/hooks/use-lazygit.ts
+msgid "Lazygit startup could not be confirmed"
+msgstr "Der Start von Lazygit konnte nicht bestätigt werden"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "Leave it empty and the agent picks a name."
@@ -2827,14 +3489,34 @@ msgstr "Pfeil nach links"
 msgid "Letters"
 msgstr "Buchstaben"
 
-#: src/components/agent-session-tree-sheet.tsx
-msgid "Level {depth}"
-msgstr "Ebene {depth}"
-
 #: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
 msgid "Light"
 msgstr "Hell"
+
+#: src/components/computer-map/screen.tsx
+msgid "Lines: this app. Dashed arrows: last reported computer links."
+msgstr "Linien: diese App. Gestrichelte Pfeile: zuletzt gemeldete Computerverbindungen"
+
+#: src/components/file-mention-panel.tsx
+msgid "Link revoked · re-linking…"
+msgstr "Verbindung widerrufen · wird neu verbunden…"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Link to {name} was revoked · re-linking…"
+msgstr "Die Verbindung zu {name} wurde widerrufen · wird neu verbunden…"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Linked with: {linkedNames}"
+msgstr "Verbunden mit: {linkedNames}"
+
+#: src/components/computer-map/screen.tsx
+msgid "List"
+msgstr "Liste"
+
+#: src/i18n/labels.ts
+msgid "List agents"
+msgstr "Agenten auflisten"
 
 #: src/app/commands.tsx
 msgid "List branches"
@@ -2848,9 +3530,17 @@ msgstr "Listet jedes Panel, mit oder ohne Agent"
 msgid "List only the panes running a recognised agent."
 msgstr "Listet nur Panels mit einem erkannten Agenten"
 
+#: src/components/voice-input-button.tsx
+msgid "Listening…"
+msgstr "Höre zu…"
+
 #: src/components/settings-alerts.tsx
 msgid "Live Activity"
 msgstr "Live-Aktivität"
+
+#: src/components/agent-workbench.tsx
+msgid "Live control is unavailable for this saved history. Your draft stays here."
+msgstr "Diese gespeicherte Historie lässt sich nicht live steuern. Dein Entwurf bleibt hier"
 
 #: src/components/list-load-more-footer.tsx
 msgid "Load more"
@@ -2858,6 +3548,7 @@ msgstr "Mehr laden"
 
 #: src/components/gateway-storage-error.tsx
 #: src/components/list-load-more-footer.tsx
+#: src/components/pdf-asset-preview.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
 #: src/components/theme-link-import.tsx
@@ -2868,16 +3559,22 @@ msgstr "Wird geladen"
 msgid "Loading commands"
 msgstr "Befehle werden geladen"
 
-#: src/components/settings-servers.tsx
-msgid "Loading paired devices…"
-msgstr "Gekoppelte Geräte werden geladen…"
-
 #: src/app/servers/[serverId].tsx
+#: src/components/computer-map/screen.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/settings-servers.tsx
-msgid "Loading servers"
-msgstr "Server werden geladen"
+msgid "Loading computers"
+msgstr "Computer werden geladen"
+
+#: src/components/computer-map/gpu-map.native.tsx
+#: src/components/computer-map/screen.tsx
+msgid "Loading map…"
+msgstr "Karte wird geladen…"
+
+#: src/components/settings-servers.tsx
+msgid "Loading paired devices…"
+msgstr "Gekoppelte Geräte werden geladen…"
 
 #: src/components/app-lock-gate.tsx
 msgid "Loading settings"
@@ -2895,6 +3592,12 @@ msgstr "Transkript wird geladen"
 #: src/components/theme-browse-sheet.tsx
 msgid "Loading themes…"
 msgstr "Themes werden geladen …"
+
+#: src/app/settings-voice.tsx
+#: src/components/home-composer-dock.tsx
+#: src/components/transcript-block-image.tsx
+msgid "Loading…"
+msgstr "Wird geladen…"
 
 #: src/lib/demo-gateway.ts
 msgid "Logs"
@@ -2917,29 +3620,33 @@ msgstr "Simulator wird gesucht"
 msgid "Mac mini · Office"
 msgstr "Mac mini · Büro"
 
-#: src/components/session-map.tsx
-msgid "Machines"
-msgstr "Rechner"
-
-#: src/components/launch-intro.tsx
-msgid "Make it yours"
-msgstr "Mach es zu deinem"
+#: src/components/settings-fleet-peers.tsx
+msgid "Make sure the computer is reachable, then try again."
+msgstr "Stelle sicher, dass der Computer erreichbar ist, und versuche es erneut"
 
 #: src/components/home-overview.tsx
 msgid "Manage"
 msgstr "Verwalten"
 
+#: src/components/session-map.tsx
+msgid "Manage computers"
+msgstr "Computer verwalten"
+
 #: src/components/home-connections.tsx
 msgid "Manage connections"
 msgstr "Verbindungen verwalten"
 
-#: src/components/session-map.tsx
-msgid "Manage machines"
-msgstr "Rechner verwalten"
-
 #: src/components/home-overview.tsx
 msgid "Manage SSH hosts"
 msgstr "SSH-Hosts verwalten"
+
+#: src/components/computer-map/screen.tsx
+msgid "Map"
+msgstr "Karte"
+
+#: src/components/task-row.tsx
+msgid "Mark done"
+msgstr "Als erledigt markieren"
 
 #: src/components/collaboration-notice.tsx
 msgid "Mark reviewed"
@@ -2949,18 +3656,28 @@ msgstr "Als geprüft markieren"
 msgid "Mascot"
 msgstr "Maskottchen"
 
+#. placeholder {0}: computer.name
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
 msgid "Mention {0}"
 msgstr "{0} erwähnen"
+
+#: src/components/file-mention-panel.tsx
+msgid "Mentions"
+msgstr "Erwähnungen"
 
 #: src/components/agent-message-block.tsx
 msgid "Message copied to clipboard"
 msgstr "Nachricht in Zwischenablage kopiert"
 
 #: src/components/agent-workbench.tsx
+#: src/components/server-terminal-workspace.tsx
 msgid "Message not sent"
 msgstr "Nachricht nicht gesendet"
+
+#: src/components/home-composer-options.tsx
+msgid "Mode"
+msgstr "Modus"
 
 #. placeholder {0}: part.mode
 #: src/components/agent-message-block.tsx
@@ -2973,8 +3690,12 @@ msgstr "Modus · {0}"
 msgid "Mode · {0} → {1}"
 msgstr "Modus · {0} → {1}"
 
+#: src/app/settings-voice.tsx
+#: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/home-composer-dock.tsx
+#: src/components/home-composer-options.tsx
 msgid "Model"
 msgstr "Modell"
 
@@ -2986,6 +3707,10 @@ msgstr "Modell · {0} → {next}"
 #: src/components/agent-message-block.tsx
 msgid "Model · {next}"
 msgstr "Modell · {next}"
+
+#: src/app/settings-voice.tsx
+msgid "Model (optional)"
+msgstr "Modell (optional)"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Modes of {agentName}"
@@ -3008,10 +3733,6 @@ msgstr "Feste Breite"
 msgid "More actions"
 msgstr "Weitere Aktionen"
 
-#: src/components/home-launch-actions.tsx
-msgid "More agents"
-msgstr "Weitere Agenten"
-
 #: src/components/virtual-keyboard.tsx
 msgid "More symbols"
 msgstr "Weitere Symbole"
@@ -3031,7 +3752,6 @@ msgstr "In einen Worktree verschieben"
 
 #: src/components/app-drawer-content.tsx
 #: src/components/in-app-notification-host.tsx
-#: src/components/pad-server-rail.tsx
 msgid "Muqun"
 msgstr "Muqun"
 
@@ -3067,10 +3787,6 @@ msgstr "Muqun bringt keine eigenen Schriften mit. Eine hinzugefügte bleibt auf 
 msgid "Muqun is locked"
 msgstr "Muqun ist gesperrt"
 
-#: src/components/launch-intro.tsx
-msgid "Muqun pairs with a Gateway on your own machine and puts its coding agents and terminals on your phone or tablet."
-msgstr "Muqun koppelt sich mit einem Gateway auf deinem eigenen Rechner und bringt dessen Coding-Agenten und Terminals auf dein Smartphone oder Tablet"
-
 #: src/components/pairing-camera.tsx
 msgid "Muqun reads the Gateway's QR code through the camera. Nothing is recorded."
 msgstr "Muqun liest den QR-Code des Gateways über die Kamera. Es wird nichts aufgezeichnet"
@@ -3083,10 +3799,9 @@ msgstr "Die Einstellungen von Muqun bleiben auf diesem Gerät"
 msgid "Muqun stays in this language whatever the phone is set to."
 msgstr "Muqun bleibt bei dieser Sprache, egal was auf dem Telefon eingestellt ist"
 
-#. placeholder {0}: availability.label
 #: src/components/settings-security.tsx
-msgid "Muqun will use {0} when the app opens."
-msgstr "Muqun verwendet {0}, wenn die App geöffnet wird"
+msgid "Muqun will use {methodName} when the app opens."
+msgstr "Muqun verwendet {methodName}, wenn die App geöffnet wird"
 
 #: src/components/custom-theme-library.tsx
 msgid "My themes"
@@ -3102,6 +3817,11 @@ msgstr "Name"
 msgid "Name it, then enter the code shown by the Gateway."
 msgstr "Gib ihm einen Namen und dann den Code ein, den das Gateway anzeigt"
 
+#: src/components/agent-session-tree-sheet.tsx
+#: src/i18n/labels.ts
+msgid "Needs input"
+msgstr "Eingabe erforderlich"
+
 #: src/i18n/labels.ts
 msgid "Needs setup"
 msgstr "Einrichtung nötig"
@@ -3110,10 +3830,22 @@ msgstr "Einrichtung nötig"
 msgid "Needs update"
 msgstr "Update nötig"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "Needs you"
+msgstr "Braucht dich"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Needs you"
+msgstr "Braucht dich"
+
 #: src/components/collaboration-notice.tsx
 msgid "Needs your attention"
 msgstr "Deine Hilfe ist nötig"
 
+#: src/components/home-recent-sessions.tsx
+#: src/components/in-app-notification-host.tsx
+#: src/components/server-agent-rows.tsx
 #: src/lib/notifications.ts
 msgid "Needs your input"
 msgstr "Braucht deine Eingabe"
@@ -3134,6 +3866,10 @@ msgstr "Neue Gruppe"
 #: src/components/ssh-host-key-dialog.tsx
 msgid "New host key"
 msgstr "Neuer Host-Schlüssel"
+
+#: src/components/launch-intro.tsx
+msgid "New in 4.0"
+msgstr "Neu in 4.0"
 
 #: src/components/collaboration-notice.tsx
 msgid "New output available · refresh"
@@ -3174,9 +3910,17 @@ msgstr "Neuer Workspace"
 msgid "New worktree…"
 msgstr "Neuer Worktree…"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Newer"
+msgstr "Neuer"
+
 #: src/components/agent-composer.tsx
 msgid "Next"
 msgstr "Weiter"
+
+#: src/components/image-preview-modal.tsx
+msgid "Next image"
+msgstr "Nächstes Bild"
 
 #: src/components/in-app-notification-host.tsx
 #: src/components/notice-deck.tsx
@@ -3195,7 +3939,7 @@ msgstr "Keine Agenten aktiv"
 msgid "No app on this phone opens web pages."
 msgstr "Auf diesem Telefon öffnet keine App Webseiten"
 
-#: src/app/settings.tsx
+#: src/app/settings-about.tsx
 msgid "No app on this phone opens web pages. The guide is at muqun.dev/support."
 msgstr "Auf diesem Telefon öffnet keine App Webseiten. Die Anleitung steht unter muqun.dev/support"
 
@@ -3206,6 +3950,14 @@ msgstr "Keine Kamera zum Scannen"
 #: src/components/pairing-camera.tsx
 msgid "No camera was found on this device."
 msgstr "Auf diesem Gerät wurde keine Kamera gefunden"
+
+#: src/components/pane-history-sheet.tsx
+msgid "No captured history yet."
+msgstr "Noch kein aufgezeichneter Verlauf"
+
+#: src/components/update-status-banner.tsx
+msgid "No changelog was provided for this update."
+msgstr "Für dieses Update wurden keine Änderungsnotizen bereitgestellt"
 
 #: src/components/change-tree-rows.tsx
 #: src/components/changes-sheet.tsx
@@ -3221,8 +3973,22 @@ msgid "no commits yet"
 msgstr "noch keine Commits"
 
 #: src/components/changes-sheet.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "No commits yet"
 msgstr "Noch keine Commits"
+
+#: src/components/home-composer-dock.tsx
+msgid "No computer online"
+msgstr "Kein Computer online"
+
+#: src/app/new-task.tsx
+msgid "No computer to start a task on."
+msgstr "Kein Computer, auf dem eine Aufgabe starten könnte"
+
+#: src/components/computer-map/screen.tsx
+#: src/components/settings-servers.tsx
+msgid "No computers paired yet"
+msgstr "Noch keine Computer gekoppelt"
 
 #: src/components/session-artifacts.tsx
 msgid "No files match."
@@ -3239,6 +4005,10 @@ msgstr "Noch kein Gateway?"
 #: src/components/tool-call-code-rows.tsx
 msgid "No input"
 msgstr "Keine Eingabe"
+
+#: src/components/task-row.tsx
+msgid "No longer linked with {computer}"
+msgstr "Nicht mehr mit {computer} verbunden"
 
 #: src/app/commands.tsx
 msgid "No matching commands. Try another word."
@@ -3257,10 +4027,15 @@ msgstr "Keine Modelle passen zu „{0}“"
 msgid "No models on this host."
 msgstr "Keine Modelle auf diesem Host"
 
+#: src/components/pane-history-sheet.tsx
+msgid "No older captured output."
+msgstr "Keine ältere aufgezeichnete Ausgabe"
+
 #: src/components/agent-assignment-bar.tsx
 msgid "No other assistants in this session yet."
 msgstr "In dieser Sitzung gibt es noch keine weiteren Assistenten"
 
+#: src/components/task-result-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
 msgid "No output"
 msgstr "Keine Ausgabe"
@@ -3278,13 +4053,17 @@ msgstr "Keine Ausgabe"
 msgid "No password or key is saved for this host."
 msgstr "Für diesen Host ist kein Passwort und kein Schlüssel gespeichert"
 
+#: src/components/computer-map/screen.tsx
+msgid "No peer report available."
+msgstr "Kein Bericht zu Computerverbindungen verfügbar"
+
 #: src/components/custom-theme-library.tsx
 msgid "No personal themes yet. Import one, or browse the published themes."
 msgstr "Noch keine eigenen Themes. Importiere eines oder durchsuche die veröffentlichten Themes"
 
 #: src/components/asset-viewer.tsx
-msgid "No preview for this kind of file. It stays on the server."
-msgstr "Für diesen Dateityp gibt es keine Vorschau. Sie bleibt auf dem Server"
+msgid "No preview for this kind of file. It stays on the computer."
+msgstr "Für diesen Dateityp gibt es keine Vorschau. Sie bleibt auf dem Computer"
 
 #: src/components/simfarm-preview.tsx
 msgid "No preview on this connection"
@@ -3299,13 +4078,9 @@ msgstr "Hier gibt es noch keine Projekte. Gib oben einen Pfad ein, um eines zu �
 msgid "No projects match “{0}”."
 msgstr "Keine Projekte passen zu „{0}“"
 
-#: src/app/new-task.tsx
-msgid "No server to start a task on."
-msgstr "Kein Server, auf dem eine Aufgabe starten könnte"
-
-#: src/components/settings-servers.tsx
-msgid "No servers paired yet"
-msgstr "Noch keine Server gekoppelt"
+#: src/components/computer-map/screen.tsx
+msgid "No reported links."
+msgstr "Keine Verbindungen gemeldet"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "No sessions in this project yet. Start one from the + button."
@@ -3323,6 +4098,10 @@ msgstr "Kein Simulator auf Port {port}"
 msgid "No simulators on that machine."
 msgstr "Keine Simulatoren auf diesem Rechner"
 
+#: src/components/voice-input-button.tsx
+msgid "No speech detected. Please try again."
+msgstr "Keine Sprache erkannt. Bitte erneut versuchen"
+
 #: src/app/explore.tsx
 msgid "No SSH hosts saved yet."
 msgstr "Noch keine SSH-Hosts gespeichert"
@@ -3339,9 +4118,14 @@ msgstr "Keine Einzelbilder"
 msgid "No tasks in this session yet."
 msgstr "In dieser Sitzung gibt es noch keine Aufgaben"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "No tasks yet"
+msgstr "Noch keine Aufgaben"
+
+#: src/components/guide-command.tsx
 #: src/hooks/use-home-commands.ts
-msgid "No terminal session is available on this server."
-msgstr "Auf diesem Server ist keine Terminalsitzung verfügbar"
+msgid "No terminal session is available on this computer."
+msgstr "Auf diesem Computer ist keine Terminalsitzung verfügbar"
 
 #: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
@@ -3366,19 +4150,33 @@ msgid "No worktrees yet. Make one below to work on a branch without disturbing t
 msgstr "Noch keine Worktrees. Erstelle unten einen, um an einem Branch zu arbeiten, ohne diesen Checkout zu stören"
 
 #: src/components/changes-sheet.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "Not a git repository"
 msgstr "Kein Git-Repository"
+
+#: src/components/computer-map/screen.tsx
+msgid "Not accepting work"
+msgstr "Nimmt keine Aufgaben an"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "Nicht verfügbar"
 
+#: src/components/home-agent-sheet.tsx
+msgid "Not available on this computer"
+msgstr "Auf diesem Computer nicht verfügbar"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Not configured"
+msgstr "Nicht konfiguriert"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "not connected"
 msgstr "nicht verbunden"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Not connected"
 msgstr "Nicht verbunden"
@@ -3386,6 +4184,11 @@ msgstr "Nicht verbunden"
 #: src/i18n/labels.ts
 msgid "NOT CONNECTED"
 msgstr "NICHT VERBUNDEN"
+
+#: src/components/agent-composer.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Not every file was added"
+msgstr "Nicht alle Dateien wurden hinzugefügt"
 
 #: src/app/+not-found.tsx
 #: src/app/custom-theme.tsx
@@ -3411,6 +4214,10 @@ msgstr "Nicht gesetzt"
 #: src/components/agent-model-sheet.tsx
 msgid "Not signed in on the host"
 msgstr "Auf dem Host nicht angemeldet"
+
+#: src/components/home-computer-cards.tsx
+msgid "Not updating from here. Open this computer to see its tasks."
+msgstr "Wird von hier aus nicht aktualisiert. Öffne diesen Computer, um seine Aufgaben zu sehen"
 
 #: src/components/ssh-host-form.tsx
 msgid "Not valid."
@@ -3457,10 +4264,17 @@ msgstr "Es wurde nichts geändert"
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
 msgstr "Noch nichts – eine Antwort „Immer erlauben“ landet hier, für dieses Projekt"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Observation started"
+msgstr "Beobachtung gestartet"
+
+#: src/components/settings-storage.tsx
 #: src/components/toggle.tsx
 msgid "Off"
 msgstr "Aus"
 
+#: src/components/home-composer-options.tsx
+#: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Offline"
 msgstr "Offline"
@@ -3473,6 +4287,10 @@ msgstr "OFFLINE"
 msgid "Offline, not answering"
 msgstr "Offline, antwortet nicht"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Older"
+msgstr "Älter"
+
 #: src/components/toggle.tsx
 msgid "On"
 msgstr "Ein"
@@ -3481,14 +4299,11 @@ msgstr "Ein"
 msgid "On a tablet, Home is a two-page spread, work sheets fill the screen, and the on-screen keyboard is a whole keyboard with F-keys and sticky modifiers."
 msgstr "Auf dem Tablet ist Home eine Doppelseite, Arbeits-Sheets füllen den Bildschirm, und die Bildschirmtastatur ist eine vollständige Tastatur mit F-Tasten und feststellbaren Modifikatoren"
 
-#: src/components/launch-intro.tsx
-msgid "On a tablet, Home opens as a two-page spread and the on-screen keyboard is a whole keyboard."
-msgstr "Auf dem Tablet öffnet sich Home als Doppelseite, und die Bildschirmtastatur ist eine vollständige Tastatur"
-
 #: src/lib/release-notes.ts
 msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
 msgstr "Ein Änderungen-Sheet für Terminals und Agentensitzungen: geänderte Dateien als Baum mit Zeilensummen, der Branch unter dem Titel und Verwerfen im Menü einer Datei"
 
+#: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Online"
 msgstr "Online"
@@ -3497,16 +4312,27 @@ msgstr "Online"
 msgid "ONLINE"
 msgstr "ONLINE"
 
+#: src/lib/attachments.ts
+msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."
+msgstr "Nur die ersten {MAX_ATTACHMENTS_PER_PICK} Dateien wurden hinzugefügt; {dropped} ausgelassen"
+
+#: src/components/task-row.tsx
+msgid "Only this Home row is hidden. The task and its history remain available. Running work is not stopped."
+msgstr "Nur dieser Eintrag auf der Startseite wird ausgeblendet. Die Aufgabe und ihr Verlauf bleiben verfügbar. Laufende Arbeit wird nicht gestoppt"
+
+#: src/components/home-connections.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
+#: src/components/task-row.tsx
 msgid "Open"
 msgstr "Öffnen"
 
 #. placeholder {0}: asset.name
+#. placeholder {0}: file.name
 #. placeholder {0}: file.name ?? basename(file.uri)
-#. placeholder {0}: part.fallback_text || part.asset_id
 #: src/components/agent-tool-card.tsx
 #: src/components/home-overview.tsx
+#: src/components/inline-file-link.tsx
 #: src/components/pane-chat-blocks.tsx
 #: src/components/session-artifacts.tsx
 msgid "Open {0}"
@@ -3515,6 +4341,10 @@ msgstr "{0} öffnen"
 #: src/components/new-task-action.tsx
 msgid "Open {agentName} Agent on {label}"
 msgstr "{agentName}-Agent auf {label} öffnen"
+
+#: src/components/task-row.tsx
+msgid "Open {mirrorName} on this phone first"
+msgstr "Öffne {mirrorName} zuerst auf diesem Telefon"
 
 #: src/components/new-task-action.tsx
 msgid "Open {name} Agent on {label}"
@@ -3537,6 +4367,7 @@ msgid "Open as file"
 msgstr "Als Datei öffnen"
 
 #: src/components/agent-message-block.tsx
+#: src/components/pane-chat-blocks.tsx
 msgid "Open attachment"
 msgstr "Anhang öffnen"
 
@@ -3544,13 +4375,13 @@ msgstr "Anhang öffnen"
 msgid "Open background tasks"
 msgstr "Hintergrundaufgaben öffnen"
 
-#: src/components/git-diff-button.tsx
-msgid "Open changes"
-msgstr "Änderungen öffnen"
-
 #: src/components/artifacts-button.tsx
 msgid "Open files"
 msgstr "Dateiliste öffnen"
+
+#: src/components/git-diff-button.tsx
+msgid "Open Git"
+msgstr "Git öffnen"
 
 #: src/components/agent-tool-card.tsx
 msgid "Open image"
@@ -3577,6 +4408,7 @@ msgstr "Im Browser öffnen – über den SSH-Tunnel nicht verfügbar"
 msgid "Open installation guide"
 msgstr "Installationsanleitung öffnen"
 
+#: src/app/commands.tsx
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
 msgstr "Lazygit öffnen"
@@ -3591,6 +4423,7 @@ msgid "Open on-screen keyboard"
 msgstr "Bildschirmtastatur öffnen"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/task-result-sheet.tsx
 msgid "Open parent"
 msgstr "Übergeordnete Sitzung öffnen"
 
@@ -3616,10 +4449,12 @@ msgid "Open SSH host {0}"
 msgstr "SSH-Host {0} öffnen"
 
 #: src/i18n/labels.ts
-msgid "Open T3 Code on the gateway host (or run t3 service install), then check again."
-msgstr "Öffnen Sie T3 Code auf dem Gateway-Host (oder führen Sie t3 service install aus) und prüfen Sie dann erneut"
+msgid "Open T3 Code on the computer (or run t3 service install), then check again."
+msgstr "Öffne T3 Code auf dem Computer (oder führe t3 service install aus) und prüfe dann erneut"
 
+#: src/components/agent-runtime-notice.tsx
 #: src/components/collaboration-notice.tsx
+#: src/hooks/use-lazygit.ts
 msgid "Open terminal"
 msgstr "Terminal öffnen"
 
@@ -3656,9 +4491,9 @@ msgstr "Details des Toolaufrufs öffnen"
 msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
 msgstr "Arbeitsbereich {0} öffnen, {panelCount, plural, one {# aktiv} other {# aktiv}}. Lange drücken zum Schließen"
 
-#: src/components/launch-intro.tsx
-msgid "OpenCode, DeepSeek and T3 Code side by side, each with its own tile, sessions and workbench."
-msgstr "OpenCode, DeepSeek und T3 Code nebeneinander, jeder mit eigener Kachel, eigenen Sitzungen und eigener Werkbank"
+#: src/app/settings-voice.tsx
+msgid "OpenAI requires an API key and model. Compatible services may provide their own defaults. Your API key is stored securely on this device."
+msgstr "OpenAI erfordert einen API-Schlüssel und ein Modell. Kompatible Dienste können eigene Standardwerte bereitstellen. Dein API-Schlüssel wird sicher auf diesem Gerät gespeichert"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -3670,8 +4505,8 @@ msgid "Opening that file"
 msgstr "Diese Datei wird geöffnet"
 
 #: src/app/explore.tsx
-msgid "Opening the server."
-msgstr "Der Server wird geöffnet"
+msgid "Opening the computer."
+msgstr "Der Computer wird geöffnet"
 
 #: src/app/explore.tsx
 msgid "Opening tunnel"
@@ -3682,11 +4517,15 @@ msgstr "Tunnel wird geöffnet"
 msgid "Opening…"
 msgstr "Wird geöffnet…"
 
+#: src/components/home-computer-cards.tsx
+msgid "Opens its tasks."
+msgstr "Öffnet seine Aufgaben"
+
 #: src/components/editor-controls.tsx
 msgid "Opens the keyboard, the editor keys and the composer over this editor. Drag to move."
 msgstr "Öffnet Tastatur, Editor-Tasten und Eingabefeld über diesem Editor. Zum Verschieben ziehen"
 
-#: src/app/settings.tsx
+#: src/app/settings-about.tsx
 msgid "Opens the Muqun issue tracker on GitHub."
 msgstr "Öffnet den Muqun-Issue-Tracker auf GitHub"
 
@@ -3703,49 +4542,70 @@ msgstr "Öffnet das Terminal dieses Agenten"
 msgid "Options for {0}"
 msgstr "Optionen für {0}"
 
-#: src/components/settings-storage.tsx
-msgid "Other"
-msgstr "Sonstiges"
+#: src/components/settings-fleet-peers.tsx
+msgid "Other computers"
+msgstr "Andere Computer"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/task-result-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
 msgid "Output"
 msgstr "Ausgabe"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Output copied to clipboard"
 msgstr "Ausgabe in die Zwischenablage kopiert"
 
-#: src/components/home-launch-actions.tsx
-msgid "Pair a gateway"
-msgstr "Gateway koppeln"
+#: src/components/pdf-asset-preview.tsx
+msgid "Page {page} of {pageCount}"
+msgstr "Seite {page} von {pageCount}"
+
+#: src/components/pane-history-sheet.tsx
+msgid "Page {pageNumber} · {lines} lines"
+msgstr "Seite {pageNumber} · {lines} Zeilen"
+
+#. placeholder {0}: server.label
+#: src/components/pair-again-notice.tsx
+msgid "Pair {0} again"
+msgstr "{0} erneut koppeln"
 
 #: src/components/app-drawer-content.tsx
+#: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
-msgid "Pair a server"
-msgstr "Server koppeln"
+msgid "Pair a computer"
+msgstr "Computer koppeln"
 
+#: src/components/pair-again-notice.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Pair again"
 msgstr "Erneut koppeln"
+
+#: src/i18n/labels.ts
+msgid "PAIR AGAIN"
+msgstr "ERNEUT KOPPELN"
+
+#: src/app/explore.tsx
+msgid "Pair computer"
+msgstr "Computer koppeln"
 
 #: src/components/settings-servers.tsx
 msgid "Pair one below."
 msgstr "Kopple unten einen"
 
-#: src/app/explore.tsx
-msgid "Pair server"
-msgstr "Server koppeln"
-
 #: src/components/server-terminal-workspace.tsx
-msgid "Pair this server again"
-msgstr "Diesen Server erneut koppeln"
+msgid "Pair this computer again"
+msgstr "Diesen Computer erneut koppeln"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Pair this computer again before deleting its sessions."
+msgstr "Kopple diesen Computer erneut, bevor du seine Sitzungen löschst"
 
 #: src/lib/network-error.ts
-msgid "Pair this server again."
-msgstr "Diesen Server erneut koppeln"
+msgid "Pair this computer again."
+msgstr "Diesen Computer erneut koppeln"
 
 #. placeholder {0}: host.label
 #: src/app/explore.tsx
@@ -3757,8 +4617,8 @@ msgid "Pair through an SSH host"
 msgstr "Über einen SSH-Host koppeln"
 
 #: src/components/home-overview.tsx
-msgid "Pair your first server"
-msgstr "Ersten Server koppeln"
+msgid "Pair your first computer"
+msgstr "Ersten Computer koppeln"
 
 #: src/app/explore.tsx
 msgid "Pairing"
@@ -3772,6 +4632,14 @@ msgstr "Kopplungscode"
 msgid "Pairing code expired. Scan again for a new code."
 msgstr "Der Kopplungscode ist abgelaufen. Scanne erneut für einen neuen Code"
 
+#: src/components/computer-map/screen.tsx
+msgid "Pairing expired"
+msgstr "Kopplung abgelaufen"
+
+#: src/i18n/labels.ts
+msgid "PAIRING EXPIRED"
+msgstr "KOPPLUNG ABGELAUFEN"
+
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "Kopplung fehlgeschlagen"
@@ -3781,12 +4649,8 @@ msgid "Palette (up to 4)"
 msgstr "Palette (bis zu 4)"
 
 #: src/components/settings-servers.tsx
-msgid "Panes on server cards"
-msgstr "Panels auf Server-Karten"
-
-#: src/components/agent-session-tree-sheet.tsx
-msgid "Parent: {parentTitle}"
-msgstr "Übergeordnet: {parentTitle}"
+msgid "Panes on computer cards"
+msgstr "Panels auf Computer-Karten"
 
 #: src/components/ssh-host-form.tsx
 msgid "Passphrase (optional)"
@@ -3825,6 +4689,23 @@ msgstr "Patch zu lang; der Anfang wird angezeigt"
 msgid "Path"
 msgstr "Pfad"
 
+#: src/components/video-asset-preview.tsx
+msgid "Pause"
+msgstr "Pause"
+
+#: src/components/audio-asset-preview.tsx
+msgid "Pause audio"
+msgstr "Audio pausieren"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Paused"
+msgstr "Pausiert"
+
+#: src/components/pdf-asset-preview.tsx
+msgid "PDF preview supports files up to {ceiling}. Open this file on your computer."
+msgstr "Die PDF-Vorschau unterstützt Dateien bis zu {ceiling}. Öffne diese Datei auf deinem Computer"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Permission"
 msgstr "Berechtigung"
@@ -3845,7 +4726,21 @@ msgstr "Festgelegter Commit"
 msgid "Plan"
 msgstr "Planen"
 
+#: src/components/video-asset-preview.tsx
+msgid "Play"
+msgstr "Abspielen"
+
+#: src/components/audio-asset-preview.tsx
+msgid "Play audio"
+msgstr "Audio abspielen"
+
+#: src/components/audio-asset-preview.tsx
+#: src/components/video-asset-preview.tsx
+msgid "Playback position"
+msgstr "Wiedergabeposition"
+
 #: src/components/agent-composer.tsx
+#: src/lib/attachments.ts
 msgid "Please retry or remove failed attachments."
 msgstr "Bitte wiederholen Sie den Vorgang oder entfernen Sie fehlgeschlagene Anhänge"
 
@@ -3859,6 +4754,10 @@ msgstr "Port"
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
 msgstr "Bilder werden vorbereitet"
+
+#: src/components/voice-input-button.tsx
+msgid "Preparing microphone…"
+msgstr "Mikrofon wird vorbereitet…"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Presented now"
@@ -3894,6 +4793,10 @@ msgstr "Ansehen und anwenden"
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "Zuerst die Vorschau ansehen. Dein aktuelles Theme bleibt unverändert"
 
+#: src/components/image-preview-modal.tsx
+msgid "Previous image"
+msgstr "Vorheriges Bild"
+
 #: src/components/agent-title-pill.tsx
 msgid "Previous session"
 msgstr "Vorherige Sitzung"
@@ -3902,7 +4805,7 @@ msgstr "Vorherige Sitzung"
 msgid "Primary"
 msgstr "Primär"
 
-#: src/app/settings.tsx
+#: src/app/settings-about.tsx
 msgid "Privacy policy"
 msgstr "Datenschutzrichtlinie"
 
@@ -3917,7 +4820,6 @@ msgstr "Privater Schlüssel (leer lassen, um den gespeicherten zu behalten)"
 #: src/app/agent.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
-#: src/components/composer-popup.tsx
 msgid "Project"
 msgstr "Projekt"
 
@@ -3944,8 +4846,8 @@ msgid "Prompt"
 msgstr "Prompt"
 
 #: src/components/settings-security.tsx
-msgid "Protect paired servers and terminal sessions."
-msgstr "Schützt gekoppelte Server und Terminal-Sessions"
+msgid "Protect paired computers and terminal sessions."
+msgstr "Schützt gekoppelte Computer und Terminal-Sessions"
 
 #: src/components/ssh-host-form.tsx
 msgid "Public key copied"
@@ -3965,6 +4867,11 @@ msgstr "Nachricht für Agent in Warteschlange einreihen"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-message-block.tsx
+msgid "Queued"
+msgstr "In Warteschlange"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
 msgid "Queued"
 msgstr "In Warteschlange"
 
@@ -3995,6 +4902,10 @@ msgstr "Beenden"
 msgid "Reach the network"
 msgstr "Auf das Netzwerk zugreifen"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "Reachable"
+msgstr "Erreichbar"
+
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Reached through SSH host {host}"
 msgstr "Erreicht über SSH-Host {host}"
@@ -4010,6 +4921,10 @@ msgstr "Eine Datei lesen"
 #: src/i18n/labels.ts
 msgid "Read outside the workspace"
 msgstr "Außerhalb des Workspace lesen"
+
+#: src/components/launch-intro.tsx
+msgid "Read release notes before downloading. Follow real download progress, then restart when the update is ready—or leave it for later."
+msgstr "Lies die Versionshinweise vor dem Download. Verfolge den tatsächlichen Downloadfortschritt und starte neu, sobald das Update bereit ist – oder erst später"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Read-only: symbol search, file discovery, dependency tracing."
@@ -4040,6 +4955,14 @@ msgstr "Wartet auf Eingabe"
 msgid "Ready to preview. Nothing is applied until you say so."
 msgstr "Bereit zur Ansicht. Nichts wird angewendet, bevor du es sagst"
 
+#: src/app/settings-voice.tsx
+msgid "Realtime"
+msgstr "In Echtzeit"
+
+#: src/components/voice-input-button.tsx
+msgid "Realtime transcription disconnected. Check your connection and speech service, then try again."
+msgstr "Die Echtzeit-Transkription wurde unterbrochen. Prüfe deine Verbindung und deinen Sprachdienst und versuche es erneut"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Reasoning"
 msgstr "Gedankengang"
@@ -4049,6 +4972,8 @@ msgid "Receive agent blocks and gateway updates."
 msgstr "Empfange Meldungen, wenn ein Agent blockiert, und Gateway-Updates"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/home-editorial-layout.tsx
+#: src/components/home-overview.tsx
 msgid "Recent"
 msgstr "Zuletzt"
 
@@ -4063,6 +4988,10 @@ msgstr "Letzte Ausgabe"
 #: src/components/agent-model-sheet.tsx
 msgid "Recently used"
 msgstr "Zuletzt verwendet"
+
+#: src/app/settings-voice.tsx
+msgid "Recognition language"
+msgstr "Erkennungssprache"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Recommended minimum for readable text: {minimumPercent}%"
@@ -4087,8 +5016,27 @@ msgstr "Neu mit {0} verbinden"
 msgid "Reconnecting · {0}"
 msgstr "Neuer Verbindungsversuch · {0}"
 
+#: src/i18n/labels.ts
+msgid "Reconnecting…"
+msgstr "Verbinde neu…"
+
+#: src/i18n/labels.ts
+msgid "RECONNECTING…"
+msgstr "VERBINDE NEU…"
+
+#: src/components/voice-input-button.tsx
+msgid "Recording failed."
+msgstr "Aufnahme fehlgeschlagen"
+
+#: src/components/computer-map/screen.tsx
+msgid "Reduced motion: list view."
+msgstr "Reduzierte Bewegung: Listenansicht"
+
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/demo-streaming-transcript.tsx
+#: src/components/pane-history-sheet.tsx
+#: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "Aktualisieren"
@@ -4101,13 +5049,38 @@ msgstr "Änderungen aktualisieren"
 msgid "Refresh files"
 msgstr "Dateien aktualisieren"
 
+#: src/components/agent-runtime-notice.tsx
+msgid "Refresh history"
+msgstr "Verlauf aktualisieren"
+
+#: src/lib/terminal-history-pull.ts
+msgid "Refresh history to load the current snapshot."
+msgstr "Aktualisiere den Verlauf, um den aktuellen Stand zu laden"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Refresh Home to identify this session’s provider before deleting it."
+msgstr "Aktualisiere die Startseite, um den Anbieter dieser Sitzung zu ermitteln, bevor du sie löschst"
+
 #: src/components/collaboration-notice.tsx
 msgid "Refresh output"
 msgstr "Ausgabe aktualisieren"
 
+#: src/components/server-terminal-workspace.tsx
+msgid "Refresh terminal history"
+msgstr "Terminalverlauf aktualisieren"
+
+#: src/components/pane-history-sheet.tsx
+msgid "Refresh to see new saved output."
+msgstr "Aktualisieren, um neu gespeicherte Ausgabe zu sehen"
+
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/git-diff-view.tsx
 msgid "Refresh worktrees"
 msgstr "Worktrees aktualisieren"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Refreshing history…"
+msgstr "Verlauf wird aktualisiert…"
 
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
@@ -4131,6 +5104,10 @@ msgstr "Trotzdem entfernen"
 #: src/components/collaboration-notice.tsx
 msgid "Remove from history?"
 msgstr "Aus dem Verlauf entfernen?"
+
+#: src/components/task-row.tsx
+msgid "Remove from Home"
+msgstr "Von der Startseite entfernen"
 
 #: src/components/ssh-host-form.tsx
 msgid "Remove host"
@@ -4189,18 +5166,39 @@ msgstr "Umbenannt"
 msgid "Replace key"
 msgstr "Schlüssel ersetzen"
 
-#: src/app/settings.tsx
+#: src/components/audio-asset-preview.tsx
+msgid "Replay audio"
+msgstr "Audio erneut abspielen"
+
+#: src/app/settings-about.tsx
 msgid "Report a bug or request a feature"
 msgstr "Fehler melden oder Funktion vorschlagen"
+
+#: src/components/computer-map/screen.tsx
+msgid "Reported reachable"
+msgstr "Als erreichbar gemeldet"
+
+#: src/components/computer-map/screen.tsx
+msgid "Reported unreachable"
+msgstr "Als nicht erreichbar gemeldet"
 
 #: src/lib/network-error.ts
 msgid "Request failed."
 msgstr "Anfrage fehlgeschlagen"
 
+#: src/components/agent-permission-card.tsx
+msgid "Requested permissions"
+msgstr "Angeforderte Berechtigungen"
+
+#: src/components/agent-composer.tsx
+msgid "Requesting queued delivery…"
+msgstr "Zustellung in die Warteschlange wird angefordert…"
+
 #: src/components/settings-security.tsx
 msgid "Required on launch and after 30 seconds in the background."
 msgstr "Erforderlich beim Start und nach 30 Sekunden im Hintergrund"
 
+#: src/app/settings-voice.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Required."
 msgstr "Erforderlich"
@@ -4209,9 +5207,21 @@ msgstr "Erforderlich"
 msgid "Requires iOS 16.1 or later."
 msgstr "Erfordert iOS 16.1 oder neuer"
 
+#: src/components/computer-map/screen.tsx
+msgid "Reset view"
+msgstr "Ansicht zurücksetzen"
+
+#: src/components/image-preview-modal.tsx
+msgid "Reset zoom"
+msgstr "Zoom zurücksetzen"
+
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
 msgstr "Muqun neu starten, um das Update abzuschließen"
+
+#: src/components/update-status-banner.tsx
+msgid "Restarting Muqun…"
+msgstr "Muqun wird neu gestartet…"
 
 #: src/app/commands.tsx
 msgid "Restore hidden default commands"
@@ -4221,11 +5231,18 @@ msgstr "Ausgeblendete Standardbefehle wiederherstellen"
 msgid "Restore hidden defaults"
 msgstr "Ausgeblendete Standards wiederherstellen"
 
+#: src/i18n/labels.ts
+msgid "Resume"
+msgstr "Fortsetzen"
+
 #: src/components/agent-model-sheet.tsx
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/gateway-storage-error.tsx
+#: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
+#: src/components/update-status-banner.tsx
 #: src/hooks/use-home-commands.ts
 msgid "Retry"
 msgstr "Wiederholen"
@@ -4242,14 +5259,14 @@ msgstr "Terminal erneut zeichnen"
 msgid "Retry loading earlier output"
 msgstr "Frühere Ausgabe erneut laden"
 
-#: src/components/server-terminal-workspace.tsx
-msgid "Retry the ones marked in red, or remove them, then send again."
-msgstr "Wiederhole die rot markierten oder entferne sie und sende dann erneut"
+#: src/components/update-status-banner.tsx
+msgid "Retry size check"
+msgstr "Größenprüfung wiederholen"
 
 #. placeholder {0}: attachment.name
 #: src/components/attachment-strip.tsx
-msgid "Retry uploading {0}"
-msgstr "Upload von {0} wiederholen"
+msgid "Retry uploading {0}: {reason}"
+msgstr "{0} erneut hochladen: {reason}"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
@@ -4267,14 +5284,14 @@ msgstr "Zur Aufgabe zurückkehren"
 
 #: src/app/servers/[serverId].tsx
 #: src/components/server-terminal-workspace.tsx
-msgid "Return to the server list and pair again."
-msgstr "Zurück zur Serverliste und erneut koppeln"
+msgid "Return to the computer list and pair again."
+msgstr "Zurück zur Computerliste und erneut koppeln"
 
 #: src/components/collaboration-notice.tsx
 #: src/hooks/use-agent-command-delivery.ts
 #: src/hooks/use-collaboration-output.ts
-msgid "Return to this server to continue."
-msgstr "Kehre zu diesem Server zurück, um fortzufahren"
+msgid "Return to this computer to continue."
+msgstr "Kehre zu diesem Computer zurück, um fortzufahren"
 
 #: src/lib/demo-gateway.ts
 msgid "Review"
@@ -4364,6 +5381,14 @@ msgid "Run it under systemd or tmux to keep it up after you log out."
 msgstr "Starte es unter systemd oder tmux, damit es nach dem Abmelden weiterläuft"
 
 #: src/i18n/labels.ts
+msgid "Run muqun-gateway agent setup codex on the computer for setup instructions. Gateway starts its own Codex connection using the host's existing configuration and sign-in."
+msgstr "Führe muqun-gateway agent setup codex auf dem Computer aus, um die Einrichtungsanleitung zu sehen. Gateway startet eine eigene Codex-Verbindung mit der vorhandenen Konfiguration und Anmeldung des Hosts"
+
+#: src/components/guide-command.tsx
+msgid "Run on {computerLabel}"
+msgstr "Auf {computerLabel} ausführen"
+
+#: src/i18n/labels.ts
 msgid "Run relevant tests"
 msgstr "Relevante Tests ausführen"
 
@@ -4381,6 +5406,7 @@ msgstr "Starte das Gateway auf deinem Rechner und scanne den QR-Code, den es aus
 msgid "Running"
 msgstr "Läuft"
 
+#: src/app/settings-voice.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
@@ -4403,9 +5429,21 @@ msgstr "Speichere einen Prompt, den du diesem Agent oft schickst"
 msgid "Save changes to {0}"
 msgstr "Änderungen an {0} speichern"
 
+#: src/components/asset-viewer.tsx
+#: src/components/audio-asset-preview.tsx
+#: src/components/video-asset-preview.tsx
+#: src/hooks/use-file-actions.tsx
+msgid "Save file"
+msgstr "Datei speichern"
+
 #: src/components/ssh-host-form.tsx
 msgid "Save host"
 msgstr "Host speichern"
+
+#: src/components/image-preview-modal.tsx
+#: src/hooks/use-file-actions.tsx
+msgid "Save image"
+msgstr "Bild speichern"
 
 #: src/app/commands.tsx
 msgid "Save shortcut"
@@ -4427,13 +5465,31 @@ msgstr "Gespeichert"
 msgid "Saved commands"
 msgstr "Gespeicherte Befehle"
 
+#: src/components/agent-runtime-notice.tsx
+msgid "Saved history · Live status unavailable"
+msgstr "Gespeicherter Verlauf · Live-Status nicht verfügbar"
+
+#: src/components/pane-history-sheet.tsx
+msgid "Saved observations"
+msgstr "Gespeicherte Beobachtungen"
+
 #: src/app/commands.tsx
 msgid "Saved prompts"
 msgstr "Gespeicherte Aufträge"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Saved segment"
+msgstr "Gespeicherter Abschnitt"
+
 #: src/components/home-connections.tsx
 msgid "Saved SSH host"
 msgstr "Gespeicherter SSH-Host"
+
+#: src/app/commands.tsx
+#: src/app/pane-history.tsx
+#: src/components/pane-history-sheet.tsx
+msgid "Saved terminal history"
+msgstr "Gespeicherter Terminalverlauf"
 
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
@@ -4458,10 +5514,6 @@ msgstr "Scanne den Gateway-QR-Code"
 #: src/components/settings-servers.tsx
 msgid "Scan the Gateway’s QR code, or enter its address."
 msgstr "Scanne den QR-Code des Gateways oder gib seine Adresse ein"
-
-#: src/components/launch-intro.tsx
-msgid "Scan the QR code of a Gateway on your own computer. No account, no relay, end-to-end encrypted."
-msgstr "Scanne den QR-Code eines Gateways auf deinem eigenen Rechner. Kein Konto, kein Relay, Ende-zu-Ende-verschlüsselt"
 
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
@@ -4543,9 +5595,14 @@ msgstr "Alles auswählen"
 msgid "Select model: {modelDisplayName}"
 msgstr "Modell auswählen: {modelDisplayName}"
 
+#: src/components/computer-map/screen.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Selected"
 msgstr "Ausgewählt"
+
+#: src/i18n/labels.ts
+msgid "Send"
+msgstr "Senden"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -4557,8 +5614,12 @@ msgid "Send a message"
 msgstr "Nachricht senden"
 
 #: src/components/agent-composer.tsx
-msgid "Send a message, type / for commands, @ for files…"
-msgstr "Nachricht senden, / für Befehle, @ für Dateien…"
+msgid "Send a message, type / for commands, $ for skills, @ for files…"
+msgstr "Nachricht senden, / für Befehle, $ für Skills, @ für Dateien…"
+
+#: src/components/agent-composer.tsx
+msgid "Send a message…"
+msgstr "Nachricht senden…"
 
 #: src/components/agent-composer.tsx
 msgid "Send message"
@@ -4580,6 +5641,10 @@ msgstr "Diese Aufgabe an {assignmentLabel} senden"
 msgid "Send to agent"
 msgstr "An den Agenten senden"
 
+#: src/components/agent-composer.tsx
+msgid "Sending attachment message…"
+msgstr "Nachricht mit Anhängen wird gesendet…"
+
 #. placeholder {0}: inboxItemText(item) || item.type
 #: src/components/agent-composer.tsx
 msgid "Sending next: {0}"
@@ -4589,36 +5654,21 @@ msgstr "Wird als Nächstes gesendet: {0}"
 msgid "Sending to"
 msgstr "Senden an"
 
-#: src/app/agent-guide.tsx
-#: src/app/artifacts.tsx
-#: src/app/panels.tsx
-#: src/components/app-drawer.tsx
-#: src/components/server-terminal-workspace.tsx
-msgid "Server"
-msgstr "Server"
+#: src/components/home-computer-cards.tsx
+msgid "Sends your next goal here."
+msgstr "Sendet dein nächstes Ziel hierhin"
 
-#: src/app/explore.tsx
-#: src/components/settings-servers.tsx
-msgid "Server name"
-msgstr "Servername"
+#: src/components/home-connections.tsx
+msgid "Sends your next goal here. Long press to open it."
+msgstr "Sendet dein nächstes Ziel hierhin. Lange drücken zum Öffnen"
 
-#: src/app/servers/[serverId].tsx
-#: src/components/server-terminal-workspace.tsx
-msgid "Server not found"
-msgstr "Server nicht gefunden"
+#: src/components/task-row.tsx
+msgid "Sent · no reply yet"
+msgstr "Gesendet · noch keine Antwort"
 
-#: src/components/server-terminal-workspace.tsx
-msgid "Server offline"
-msgstr "Server offline"
-
-#: src/components/server-terminal-workspace.tsx
-msgid "Server unavailable."
-msgstr "Server nicht erreichbar"
-
-#: src/app/settings.tsx
-#: src/components/app-drawer-content.tsx
-msgid "Servers"
-msgstr "Server"
+#: src/components/task-row.tsx
+msgid "Sent · waiting for {computer}"
+msgstr "Gesendet · wartet auf {computer}"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "Session name"
@@ -4639,7 +5689,6 @@ msgstr "Sitzung nicht verfügbar"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/home-launch-actions.tsx
-#: src/components/home-recent-sessions.tsx
 #: src/components/session-map.tsx
 msgid "Sessions"
 msgstr "Sitzungen"
@@ -4666,20 +5715,17 @@ msgstr "Auf deinem Rechner einrichten"
 msgid "Set the AI model for Claude Code"
 msgstr "Legt das KI-Modell für Claude Code fest"
 
-#. placeholder {0}: authAvailability.label
-#. placeholder {0}: availability.label
-#: src/components/settings-security.tsx
-msgid "Set up {0} in system settings first."
-msgstr "Richte {0} zuerst in den Systemeinstellungen ein"
-
-#. placeholder {0}: availability.label
-#: src/components/app-lock-gate.tsx
-msgid "Set up {0} in system settings to unlock Muqun."
-msgstr "Richte {0} in den Systemeinstellungen ein, um Muqun zu entsperren"
-
 #: src/components/app-lock-gate.tsx
 msgid "Set up {label} in system settings first."
 msgstr "Richte {label} zuerst in den Systemeinstellungen ein"
+
+#: src/components/settings-security.tsx
+msgid "Set up {methodName} in system settings first."
+msgstr "Richte {methodName} zuerst in den Systemeinstellungen ein"
+
+#: src/components/app-lock-gate.tsx
+msgid "Set up {methodName} in system settings to unlock Muqun."
+msgstr "Richte {methodName} in den Systemeinstellungen ein, um Muqun zu entsperren"
 
 #: src/app/explore.tsx
 msgid "Set up a Gateway on your computer"
@@ -4695,10 +5741,6 @@ msgstr "Auf dem Host einrichten"
 #: src/components/pad-server-rail.tsx
 msgid "Settings"
 msgstr "Einstellungen"
-
-#: src/components/launch-intro.tsx
-msgid "Several agents, one computer"
-msgstr "Mehrere Agenten, ein Rechner"
 
 #: src/components/agent-tool-card.tsx
 msgid "Several answers"
@@ -4753,6 +5795,11 @@ msgstr "Artwork auf der Startseite anzeigen"
 msgid "Show camera details"
 msgstr "Kameradetails anzeigen"
 
+#: src/components/agent-compaction-pill.tsx
+#: src/components/in-app-notification-host.tsx
+msgid "Show details"
+msgstr "Details anzeigen"
+
 #: src/components/settings-terminal.tsx
 msgid "Show Esc, Tab, Ctrl and navigation keys above input."
 msgstr "Zeigt Esc, Tab, Ctrl und die Navigationstasten über der Eingabe"
@@ -4769,13 +5816,17 @@ msgstr "Logo auf der Startseite anzeigen"
 msgid "Show Home text"
 msgstr "Text auf der Startseite anzeigen"
 
-#: src/components/home-recent-sessions.tsx
+#: src/components/home-fold-link.tsx
+#: src/components/in-app-notification-host.tsx
+#: src/components/server-agent-rows.tsx
 msgid "Show less"
 msgstr "Weniger anzeigen"
 
 #: src/components/agent-tool-card.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/diff-rows.tsx
+#: src/components/home-fold-link.tsx
+#: src/components/server-agent-rows.tsx
 msgid "Show more"
 msgstr "Mehr anzeigen"
 
@@ -4795,6 +5846,10 @@ msgstr "Mehr von diesem Diff anzeigen"
 msgid "Show the app background behind terminal text"
 msgstr "App-Hintergrund hinter dem Terminaltext anzeigen"
 
+#: src/components/app-drawer.tsx
+msgid "Show the computer list"
+msgstr "Computerliste einblenden"
+
 #: src/components/editor-controls.tsx
 msgid "Show the editor keyboard"
 msgstr "Editor-Tastatur einblenden"
@@ -4802,10 +5857,6 @@ msgstr "Editor-Tastatur einblenden"
 #: src/components/agent-tool-card.tsx
 msgid "Show the rest of this output"
 msgstr "Restliche Ausgabe anzeigen"
-
-#: src/components/app-drawer.tsx
-msgid "Show the server list"
-msgstr "Serverliste einblenden"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Show theme effects only while Home is visible. Turn off to reduce battery use."
@@ -4877,12 +5928,17 @@ msgid "Skill loaded · {0}"
 msgstr "Skill geladen · {0}"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Skill started"
 msgstr "Skill gestartet"
 
 #: src/components/launch-intro.tsx
 msgid "Skip intro"
 msgstr "Einführung überspringen"
+
+#: src/components/computer-map/screen.tsx
+msgid "Some connections are omitted from the map."
+msgstr "Einige Verbindungen sind auf der Karte ausgelassen"
 
 #: src/components/settings-storage.tsx
 msgid "Some files could not be removed · {clearable}"
@@ -4896,13 +5952,14 @@ msgstr "Einige Dateien wurden nicht hochgeladen"
 msgid "Some theme colors need more contrast"
 msgstr "Einige Theme-Farben benötigen mehr Kontrast"
 
+#: src/app/diagram-viewer.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/theme-link-import.tsx
 msgid "Something went wrong"
 msgstr "Etwas ist schiefgelaufen"
 
-#: src/app/settings.tsx
+#: src/app/settings-about.tsx
 msgid "Source code"
 msgstr "Quellcode"
 
@@ -4949,6 +6006,10 @@ msgstr "Vorgemerkt und nicht vorgemerkt"
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
 msgstr "veraltet · {age}"
+
+#: src/i18n/labels.ts
+msgid "Start"
+msgstr "Starten"
 
 #: src/components/agent-guide-sheet.tsx
 msgid "Start {agentName}"
@@ -4997,16 +6058,37 @@ msgid "Start task"
 msgstr "Aufgabe starten"
 
 #: src/i18n/labels.ts
-msgid "Start the agent on the gateway host, then check again."
-msgstr "Starten Sie den Agenten auf dem Gateway-Host und prüfen Sie dann erneut"
+msgid "Start the agent on the computer, then check again."
+msgstr "Starte den Agenten auf dem Computer und prüfe dann erneut"
 
 #: src/i18n/labels.ts
-msgid "Start the OpenCode service on the gateway host, then check again."
-msgstr "Starten Sie den OpenCode-Dienst auf dem Gateway-Host und prüfen Sie dann erneut"
+msgid "Start the OpenCode service on the computer, then check again."
+msgstr "Starte den OpenCode-Dienst auf dem Computer und prüfe dann erneut"
+
+#: src/i18n/labels.ts
+msgid "Started"
+msgstr "Gestartet"
+
+#: src/components/pane-history-sheet.tsx
+msgid "Started {started}"
+msgstr "Gestartet: {started}"
 
 #: src/components/agent-workbench.tsx
 msgid "Started with a clean context."
 msgstr "Mit leerem Kontext gestartet"
+
+#: src/i18n/labels.ts
+msgid "Starting"
+msgstr "Wird gestartet"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Starting"
+msgstr "Wird gestartet"
+
+#: src/components/task-row.tsx
+msgid "Starting {agent}…"
+msgstr "{agent} wird gestartet…"
 
 #: src/components/simfarm-stage.tsx
 msgid "Starting {name}"
@@ -5021,6 +6103,10 @@ msgstr "Kamera wird gestartet"
 #: src/components/simfarm-stage.tsx
 msgid "Starting…"
 msgstr "Wird gestartet…"
+
+#: src/components/home-agent-sheet.tsx
+msgid "Starts in a terminal"
+msgstr "Startet in einem Terminal"
 
 #: src/components/collaboration-notice.tsx
 msgid "Status unavailable"
@@ -5041,9 +6127,17 @@ msgstr "Steuern"
 msgid "Steer running agent"
 msgstr "Laufenden Agenten in Echtzeit steuern"
 
+#: src/components/launch-intro.tsx
+msgid "Step {position} of {count}"
+msgstr "Schritt {position} von {count}"
+
 #: src/components/tool-call-code-rows.tsx
 msgid "Still arriving"
 msgstr "Wird noch übertragen"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Still linked to {gone}; will unlink when it is reachable"
+msgstr "Noch mit {gone} verbunden; wird getrennt, sobald es erreichbar ist"
 
 #: src/components/pane-chat-blocks.tsx
 msgid "Still running…"
@@ -5054,14 +6148,13 @@ msgstr "Läuft noch…"
 msgid "Stop"
 msgstr "Stoppen"
 
-#: src/app/agent.tsx
-#: src/components/pad-agent-detail.tsx
-msgid "Stop agent"
-msgstr "Agent beenden"
-
 #: src/components/agent-composer.tsx
 msgid "Stop agent execution"
 msgstr "Agentenausführung anhalten"
+
+#: src/components/voice-input-button.tsx
+msgid "Stop and transcribe"
+msgstr "Stoppen und transkribieren"
 
 #: src/components/agent-assignment-bar.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -5082,18 +6175,28 @@ msgstr "Diesen Befehl stoppen"
 msgid "Stopped"
 msgstr "Gestoppt"
 
+#: src/app/settings-storage.tsx
 #: src/app/settings.tsx
 msgid "Storage"
 msgstr "Speicher"
 
+#: src/app/settings-voice.tsx
+msgid "Streams speech while you talk. Requires an OpenAI Realtime-compatible transcription endpoint."
+msgstr "Überträgt Sprache, während du sprichst. Erfordert einen mit OpenAI Realtime kompatiblen Transkriptionsendpunkt"
+
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/demo-streaming-transcript.tsx
 msgid "Subagent"
 msgstr "Subagent"
 
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "Absenden"
+
+#: src/components/agent-composer.tsx
+msgid "Submitting follow-up…"
+msgstr "Folgenachricht wird übermittelt…"
 
 #: src/i18n/labels.ts
 msgid "Summarise progress"
@@ -5166,6 +6269,7 @@ msgstr "Symbole"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
+#: src/components/settings-server-capabilities.tsx
 msgid "System"
 msgstr "System"
 
@@ -5211,9 +6315,17 @@ msgstr "Zum Ansehen und Anpassen tippen"
 msgid "Tap to refresh this session."
 msgstr "Tippen, um diese Sitzung neu zu laden"
 
+#: src/components/task-row.tsx
+msgid "tap to retry"
+msgstr "zum Wiederholen tippen"
+
 #: src/components/session-map.tsx
 msgid "Tap to retry"
 msgstr "Zum Wiederholen tippen"
+
+#: src/components/home-composer-dock.tsx
+msgid "Task accepted. Send status could not be saved."
+msgstr "Aufgabe angenommen. Der Sendestatus konnte nicht gespeichert werden"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for {assignmentLabel}"
@@ -5224,9 +6336,15 @@ msgstr "Aufgabe für {assignmentLabel}"
 msgid "Task for a new {0}"
 msgstr "Aufgabe für einen neuen {0}"
 
+#: src/components/home-composer-dock.tsx
+msgid "Task options"
+msgstr "Aufgabenoptionen"
+
 #: src/components/agent-composer.tsx
 #: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-todo-block.tsx
+#: src/components/server-tasks-sheet.tsx
+#: src/components/task-result-sheet.tsx
 msgid "Tasks"
 msgstr "Aufgaben"
 
@@ -5245,12 +6363,39 @@ msgid "Temporary files"
 msgstr "Temporäre Dateien"
 
 #: src/app/commands.tsx
+#: src/app/settings-terminal.tsx
 #: src/app/settings.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
+#: src/components/settings-server-capabilities.tsx
+#: src/components/task-row.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
 msgstr "Terminal"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Terminal · Completed"
+msgstr "Terminal · Abgeschlossen"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Terminal · Idle"
+msgstr "Terminal · Inaktiv"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Terminal · Needs input"
+msgstr "Terminal · Eingabe erforderlich"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Terminal · Starting"
+msgstr "Terminal · Wird gestartet"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Terminal · Status unavailable"
+msgstr "Terminal · Status nicht verfügbar"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Terminal · Working"
+msgstr "Terminal · Arbeitet"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Terminal background opacity"
@@ -5269,10 +6414,19 @@ msgstr "Terminalbefehle"
 msgid "Terminal commands and key combinations"
 msgstr "Terminalbefehle und Tastenkombinationen"
 
+#: src/lib/terminal-history-pull.ts
+msgid "Terminal history changed"
+msgstr "Terminalverlauf geändert"
+
 #: src/components/settings-terminal.tsx
 msgid "Terminal key row"
 msgstr "Terminal-Tastenleiste"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Terminal resized"
+msgstr "Terminalgröße geändert"
+
+#: src/components/agent-workbench.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-home-commands.ts
 msgid "Terminal unavailable"
@@ -5328,8 +6482,8 @@ msgid "That simulator cannot be started from here. Start it on the machine and i
 msgstr "Dieser Simulator lässt sich von hier aus nicht starten. Starte ihn auf dem Rechner, dann erscheint er in der Liste"
 
 #: src/components/settings-servers.tsx
-msgid "The address is where this paired server is reached. Changing it does not unpair the device."
-msgstr "Die Adresse ist der Ort, unter dem dieser gekoppelte Server erreicht wird. Sie zu ändern hebt die Kopplung des Geräts nicht auf"
+msgid "The address is where this paired computer is reached. Changing it does not unpair the device."
+msgstr "Die Adresse ist der Ort, unter dem dieser gekoppelte Computer erreicht wird. Sie zu ändern hebt die Kopplung des Geräts nicht auf"
 
 #: src/app/explore.tsx
 msgid "The address the Gateway prints when it starts."
@@ -5347,6 +6501,14 @@ msgstr "Der Agent wartet nicht mehr"
 msgid "The agent is offline"
 msgstr "Der Agent ist offline"
 
+#: src/components/agent-workbench.tsx
+msgid "The agent is still running"
+msgstr "Der Agent arbeitet noch"
+
+#: src/lib/network-error.ts
+msgid "The agent is waiting for an answer. Use the question's controls or the terminal keyboard to respond. Your message has not been sent."
+msgstr "Der Agent wartet auf eine Antwort. Antworte über die Steuerelemente der Frage oder die Terminaltastatur. Deine Nachricht wurde nicht gesendet"
+
 #: src/components/agent-context-sheet.tsx
 msgid "The agent stops asking; irreversibly destructive commands stay blocked"
 msgstr "Der Agent fragt nicht mehr nach; unwiderruflich zerstörerische Befehle bleiben blockiert"
@@ -5362,6 +6524,26 @@ msgstr "Die Kamera ist nicht gestartet"
 #: src/components/pairing-camera.tsx
 msgid "The camera reported an error."
 msgstr "Die Kamera hat einen Fehler gemeldet"
+
+#: src/components/changes-sheet.tsx
+msgid "The computer could not be reached."
+msgstr "Der Computer konnte nicht erreicht werden"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "The computer did not return it."
+msgstr "Der Computer hat sie nicht zurückgegeben"
+
+#: src/app/commands.tsx
+msgid "The computer did not say which terminal it made."
+msgstr "Der Computer hat nicht gesagt, welches Terminal er erstellt hat"
+
+#: src/components/settings-servers.tsx
+msgid "The computer was kept on this device. Make sure its Gateway is running, then try again."
+msgstr "Der Computer bleibt auf diesem Gerät gespeichert. Stelle sicher, dass sein Gateway läuft, und versuche es erneut"
+
+#: src/components/pane-history-sheet.tsx
+msgid "The connection changed. Close and reopen history for this computer."
+msgstr "Die Verbindung hat sich geändert. Schließe den Verlauf für diesen Computer und öffne ihn erneut"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "The connection dropped."
@@ -5383,10 +6565,6 @@ msgstr "Dieses Ziel konnte nicht geöffnet werden"
 msgid "The font file is missing. Add it again."
 msgstr "Die Schriftdatei fehlt. Erneut hinzufügen"
 
-#: src/components/changes-sheet.tsx
-msgid "The gateway could not be reached."
-msgstr "Das Gateway ist nicht erreichbar"
-
 #: src/components/agent-worktree-sheet.tsx
 msgid "The host made a worktree but did not say where."
 msgstr "Der Host hat einen Worktree erstellt, aber nicht gesagt, wo"
@@ -5404,45 +6582,37 @@ msgstr "Das Symbol auf deinem Startbildschirm. Android schließt die App, um es 
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "Der Schlüssel konnte nicht gelesen werden ({0}). Prüfe den Schlüssel und seine Passphrase"
 
+#: src/components/agent-workbench.tsx
+msgid "The linked agent is no longer in that terminal."
+msgstr "Der verknüpfte Agent ist nicht mehr in diesem Terminal"
+
 #: src/components/session-map.tsx
 msgid "The new terminal was created, but could not open it."
 msgstr "Das neue Terminal wurde erstellt, konnte aber nicht geöffnet werden"
 
-#: src/components/launch-intro.tsx
-msgid "The question comes to you"
-msgstr "Die Frage kommt zu dir"
+#: src/components/home-composer-dock.tsx
+msgid "The previous send could not be checked."
+msgstr "Der vorherige Versand konnte nicht geprüft werden"
 
 #: src/i18n/labels.ts
 msgid "The raw pane, on its grid and in its own colours."
 msgstr "Das rohe Panel, auf seinem Raster und in seinen eigenen Farben"
 
-#: src/components/launch-intro.tsx
-msgid "The real terminal"
-msgstr "Das echte Terminal"
-
 #: src/components/app-error-boundary.tsx
-msgid "The screen hit an error. Try again — your servers stay paired."
-msgstr "Auf diesem Bildschirm ist ein Fehler aufgetreten. Versuche es erneut — deine Server bleiben gekoppelt"
+msgid "The screen hit an error. Try again — your computers stay paired."
+msgstr "Auf diesem Bildschirm ist ein Fehler aufgetreten. Versuche es erneut — deine Computer bleiben gekoppelt"
+
+#: src/components/changes-worktree-list.tsx
+msgid "The selected worktree is no longer available. Choose another checkout."
+msgstr "Der ausgewählte Worktree ist nicht mehr verfügbar. Wähle einen anderen Checkout"
 
 #: src/components/ssh-host-form.tsx
 msgid "The server asks its own questions when you connect, a password or a one-time code, and nothing is stored on this device."
 msgstr "Der Server stellt beim Verbinden seine eigenen Fragen, ein Passwort oder einen Einmalcode, und auf diesem Gerät wird nichts gespeichert"
 
-#: src/components/server-terminal-workspace.tsx
-msgid "The server did not return it."
-msgstr "Der Server hat sie nicht zurückgegeben"
-
-#: src/app/commands.tsx
-msgid "The server did not say which terminal it made."
-msgstr "Der Server hat nicht gesagt, welches Terminal er erstellt hat"
-
 #: src/components/ssh-host-key-dialog.tsx
 msgid "The server is asking for more before it lets you in."
 msgstr "Der Server verlangt noch etwas, bevor er dich hereinlässt"
-
-#: src/components/settings-servers.tsx
-msgid "The server was kept on this device. Make sure its Gateway is running, then try again."
-msgstr "Der Server bleibt auf diesem Gerät gespeichert. Stelle sicher, dass sein Gateway läuft, und versuche es erneut"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "The shell exited."
@@ -5468,9 +6638,17 @@ msgstr "Der Simulator ist nicht rechtzeitig hochgekommen"
 msgid "The simulator did not shut down in time."
 msgstr "Der Simulator wurde nicht rechtzeitig heruntergefahren"
 
+#: src/components/voice-input-button.tsx
+msgid "The speech service returned an invalid transcript."
+msgstr "Der Sprachdienst hat ein ungültiges Transkript zurückgegeben"
+
 #: src/app/commands.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "Der SSH-Tunnel trägt den Port des Gateways und keinen anderen, der Simulator und der Browser sind von hier also nicht erreichbar. Verbinde dich über das lokale Netz oder Tailscale"
+
+#: src/components/guide-command.tsx
+msgid "The terminal opened, but the command could not be typed."
+msgstr "Das Terminal wurde geöffnet, aber der Befehl konnte nicht eingegeben werden"
 
 #: src/components/session-map.tsx
 msgid "The terminal request may have succeeded. Refresh the list and check it before trying again."
@@ -5527,10 +6705,6 @@ msgstr "Theme-URL"
 msgid "Theme, {0}"
 msgstr "Theme, {0}"
 
-#: src/components/theme-browse-sheet.tsx
-msgid "Themes published at muqun.dev. Nothing downloads until you open one."
-msgstr "Auf muqun.dev veröffentlichte Themes. Es wird nichts geladen, bis du eines öffnest"
-
 #: src/components/agent-workbench.tsx
 msgid "There is no rollback waiting to be applied."
 msgstr "Es wartet kein Rollback darauf, angewendet zu werden"
@@ -5539,21 +6713,103 @@ msgstr "Es wartet kein Rollback darauf, angewendet zu werden"
 msgid "Thinking…"
 msgstr "Denkt nach…"
 
+#: src/components/agent-composer.tsx
+msgid "This agent accepts messages after its turn ends. Your draft stays here."
+msgstr "Dieser Agent nimmt Nachrichten nach Ende seines Durchlaufs an. Dein Entwurf bleibt hier"
+
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
 msgstr "Dieser Agent hat diese Antwort nicht angeboten"
 
+#: src/components/computer-map/screen.tsx
+msgid "This app"
+msgstr "Diese App"
+
 #: src/components/changes-sheet.tsx
 msgid "This cannot be undone."
 msgstr "Dies kann nicht rückgängig gemacht werden"
+
+#: src/hooks/use-agent-command-delivery.ts
+msgid "This computer cannot run that command yet."
+msgstr "Dieser Computer kann diesen Befehl noch nicht ausführen"
+
+#: src/lib/network-error.ts
+msgid "This computer cannot use this device's stored key. Pair it again to reconnect."
+msgstr "Dieser Computer kann den auf diesem Gerät gespeicherten Schlüssel nicht verwenden. Koppel es erneut, um die Verbindung wiederherzustellen"
+
+#: src/lib/network-error.ts
+msgid "This computer could not read the request. Check this device's date and time."
+msgstr "Dieser Computer konnte die Anfrage nicht lesen. Prüfe Datum und Uhrzeit dieses Geräts"
+
+#: src/components/new-task-sheet.tsx
+msgid "This computer did not name any agents it can start."
+msgstr "Dieser Computer hat keine Agents genannt, die er starten kann"
+
+#: src/components/agent-guide-sheet.tsx
+msgid "This computer does not advertise {agentName} sessions."
+msgstr "Dieser Computer bietet keine {agentName}-Sessions an"
+
+#: src/components/agent-workbench.tsx
+msgid "This computer does not expand ~. Type the full path, starting with /."
+msgstr "Dieser Computer löst ~ nicht auf. Gib den vollständigen Pfad ein, beginnend mit /"
+
+#: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
+msgid "This computer does not know {agentName}. Refresh the agent list and try again."
+msgstr "Dieser Computer kennt {agentName} nicht. Aktualisiere die Agentenliste und versuche es erneut"
+
+#: src/components/session-artifacts.tsx
+msgid "This computer does not serve files yet. Update the Muqun gateway plugin to browse what a session writes."
+msgstr "Dieser Computer liefert noch keine Dateien. Aktualisiere das Muqun-Gateway-Plugin, um zu sehen, was eine Session schreibt"
+
+#: src/lib/network-error.ts
+msgid "This computer had a problem answering."
+msgstr "Bei der Antwort dieses Computers ist ein Problem aufgetreten"
+
+#: src/lib/network-error.ts
+msgid "This computer has already handled that request."
+msgstr "Dieser Computer hat diese Anfrage bereits bearbeitet"
+
+#: src/app/new-task.tsx
+#: src/components/home-composer-dock.tsx
+msgid "This computer has no session to start an agent in."
+msgstr "Dieser Computer hat keine Session, in der ein Agent starten könnte"
+
+#: src/components/settings-servers.tsx
+msgid "This computer has not listed any paired devices."
+msgstr "Dieser Computer hat keine gekoppelten Geräte aufgelistet"
+
+#: src/app/agent-guide.tsx
+#: src/app/new-task.tsx
+#: src/app/simfarm.tsx
+#: src/app/web-service.tsx
+msgid "This computer is no longer paired."
+msgstr "Dieser Computer ist nicht mehr gekoppelt"
+
+#: src/components/agent-guide-sheet.tsx
+msgid "This computer is not answering. Check the computer connection, then try again."
+msgstr "Dieser Computer antwortet nicht. Prüfe die Verbindung zum Computer und versuche es dann erneut"
+
+#: src/i18n/labels.ts
+msgid "This computer no longer recognises this device. Pair again."
+msgstr "Dieser Computer kennt dieses Gerät nicht mehr. Erneut koppeln"
+
+#: src/components/settings-fleet-peers.tsx
+#: src/lib/network-error.ts
+msgid "This computer no longer recognises this device. Pair it again to reconnect."
+msgstr "Dieser Computer kennt dieses Gerät nicht mehr. Koppel es erneut, um die Verbindung wiederherzustellen"
+
+#: src/lib/network-error.ts
+msgid "This computer refused the request."
+msgstr "Dieser Computer hat die Anfrage abgelehnt"
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
 msgstr "Dieses Gerät hat keine verfügbare Kamera"
 
 #: src/components/asset-viewer.tsx
-msgid "This file is {size}. Muqun opens text files up to {ceiling}; larger ones stay on the server."
-msgstr "Diese Datei ist {size} groß. Muqun öffnet Textdateien bis {ceiling}; größere bleiben auf dem Server"
+msgid "This file is {size}. Muqun opens text files up to {ceiling}; larger ones stay on the computer."
+msgstr "Diese Datei ist {size} groß. Muqun öffnet Textdateien bis {ceiling}; größere bleiben auf dem Computer"
 
 #: src/components/asset-viewer.tsx
 #: src/components/settings-font-sheet.tsx
@@ -5576,33 +6832,13 @@ msgstr "Diese Datei ist zu groß"
 msgid "This font could not be read."
 msgstr "Diese Schrift konnte nicht gelesen werden"
 
-#: src/components/agent-guide-sheet.tsx
-msgid "This gateway does not advertise {agentName} sessions."
-msgstr "Dieses Gateway bietet keine {agentName}-Sitzungen an"
-
 #: src/lib/network-error.ts
 msgid "This Gateway does not answer to that address."
 msgstr "Dieses Gateway antwortet nicht auf diese Adresse"
 
-#: src/components/agent-workbench.tsx
-msgid "This gateway does not expand ~. Type the full path, starting with /."
-msgstr "Dieses Gateway erweitert ~ nicht. Gib den vollständigen Pfad ein, beginnend mit /"
-
-#: src/components/agent-workbench.tsx
-msgid "This gateway does not know {agentName}. Refresh the agent list and try again."
-msgstr "Dieses Gateway kennt {agentName} nicht. Aktualisieren Sie die Agentenliste und versuchen Sie es erneut"
-
-#: src/components/session-artifacts.tsx
-msgid "This gateway does not serve files yet. Update the Muqun gateway plugin to browse what a session writes."
-msgstr "Dieses Gateway liefert noch keine Dateien. Aktualisiere das Muqun-Gateway-Plugin, um zu sehen, was eine Session schreibt"
-
-#: src/components/settings-servers.tsx
-msgid "This gateway has not listed any paired devices."
-msgstr "Dieses Gateway hat keine gekoppelten Geräte aufgelistet"
-
-#: src/components/agent-guide-sheet.tsx
-msgid "This gateway is not answering. Check the server connection, then try again."
-msgstr "Dieses Gateway antwortet nicht. Prüfen Sie die Serververbindung und versuchen Sie es dann erneut"
+#: src/components/pane-history-sheet.tsx
+msgid "This Gateway no longer offers saved segments. The pages already read are kept here."
+msgstr "Dieses Gateway bietet keine gespeicherten Abschnitte mehr an. Bereits gelesene Seiten bleiben hier erhalten"
 
 #: src/components/session-map.tsx
 msgid "This group has no terminals."
@@ -5636,10 +6872,22 @@ msgstr "Dieser Link führt ins Leere"
 msgid "This one is required."
 msgstr "Dieses Feld ist erforderlich"
 
+#: src/components/pdf-asset-preview.tsx
+msgid "This PDF cannot be previewed. Save it to open with a PDF reader."
+msgstr "Diese PDF kann nicht in der Vorschau angezeigt werden. Speichere sie, um sie mit einem PDF-Reader zu öffnen"
+
+#: src/components/pdf-asset-preview.tsx
+msgid "This PDF is password-protected. Save it to open with a PDF reader."
+msgstr "Diese PDF ist passwortgeschützt. Speichere sie, um sie mit einem PDF-Reader zu öffnen"
+
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
 msgid "This project"
 msgstr "Dieses Projekt"
+
+#: src/components/home-recent-sessions.tsx
+msgid "This provider cannot delete sessions. Open the session to stop a running turn or manage it on its computer."
+msgstr "Dieser Anbieter kann keine Sitzungen löschen. Öffne die Sitzung, um einen laufenden Durchgang zu stoppen, oder verwalte sie auf ihrem Computer"
 
 #: src/app/explore.tsx
 msgid "This QR code is not valid."
@@ -5653,49 +6901,6 @@ msgstr "Diese Frage lässt sich erst mit einer neueren App beantworten"
 msgid "this rule"
 msgstr "diese Regel"
 
-#: src/hooks/use-agent-command-delivery.ts
-msgid "This server cannot run that command yet."
-msgstr "Dieser Server kann diesen Befehl noch nicht ausführen"
-
-#: src/lib/network-error.ts
-msgid "This server cannot use this device's stored key. Pair it again to reconnect."
-msgstr "Dieser Server kann den auf diesem Gerät gespeicherten Schlüssel nicht verwenden. Koppel es erneut, um die Verbindung wiederherzustellen"
-
-#: src/lib/network-error.ts
-msgid "This server could not read the request. Check this device's date and time."
-msgstr "Dieser Server konnte die Anfrage nicht lesen. Prüfe Datum und Uhrzeit dieses Geräts"
-
-#: src/components/new-task-sheet.tsx
-msgid "This server did not name any agents it can start."
-msgstr "Dieser Server hat keine Agents genannt, die er starten kann"
-
-#: src/lib/network-error.ts
-msgid "This server had a problem answering."
-msgstr "Bei der Antwort dieses Servers ist ein Problem aufgetreten"
-
-#: src/lib/network-error.ts
-msgid "This server has already handled that request."
-msgstr "Dieser Server hat diese Anfrage bereits bearbeitet"
-
-#: src/app/new-task.tsx
-msgid "This server has no session to start an agent in."
-msgstr "Dieser Server hat keine Session, in der ein Agent starten könnte"
-
-#: src/app/agent-guide.tsx
-#: src/app/new-task.tsx
-#: src/app/simfarm.tsx
-#: src/app/web-service.tsx
-msgid "This server is no longer paired."
-msgstr "Dieser Server ist nicht mehr gekoppelt"
-
-#: src/lib/network-error.ts
-msgid "This server no longer recognises this device. Pair it again to reconnect."
-msgstr "Dieser Server kennt dieses Gerät nicht mehr. Koppel es erneut, um die Verbindung wiederherzustellen"
-
-#: src/lib/network-error.ts
-msgid "This server refused the request."
-msgstr "Dieser Server hat die Anfrage abgelehnt"
-
 #: src/components/agent-context-sheet.tsx
 msgid "This session"
 msgstr "Diese Sitzung"
@@ -5704,9 +6909,17 @@ msgstr "Diese Sitzung"
 msgid "This session has no message to roll back to."
 msgstr "In dieser Sitzung gibt es keine Nachricht, zu der zurückgesetzt werden könnte"
 
+#: src/components/home-recent-sessions.tsx
+msgid "This session is no longer available in this service. Refresh Home before trying again."
+msgstr "Diese Sitzung ist in diesem Dienst nicht mehr verfügbar. Aktualisiere die Startseite, bevor du es erneut versuchst"
+
 #: src/components/agent-workbench.tsx
 msgid "This session no longer exists"
 msgstr "Diese Sitzung existiert nicht mehr"
+
+#: src/components/pane-history-sheet.tsx
+msgid "This snapshot can no longer be extended. Refresh to read the latest saved output; the current page is kept until then."
+msgstr "Dieser gespeicherte Stand kann nicht weiter geladen werden. Aktualisiere, um die neueste gespeicherte Ausgabe zu lesen. Die aktuelle Seite bleibt bis dahin erhalten"
 
 #: src/components/virtual-keyboard.tsx
 msgid "This terminal can't send {chord}"
@@ -5744,6 +6957,10 @@ msgstr "Dieses Design enthält Bilder, die vor dem Anwenden installiert werden m
 msgid "This tool call is no longer available."
 msgstr "Dieser Toolaufruf ist nicht mehr verfügbar"
 
+#: src/components/update-status-banner.tsx
+msgid "This update is required to continue using Muqun. Read what's new, then update when you're ready."
+msgstr "Dieses Update ist erforderlich, um Muqun weiter zu verwenden. Lies die Änderungen und aktualisiere, wenn du bereit bist"
+
 #: src/components/session-map.tsx
 msgid "This workspace has no groups yet."
 msgstr "Dieser Arbeitsbereich hat noch keine Gruppen"
@@ -5778,7 +6995,12 @@ msgstr "Tokens in dieser Sitzung"
 msgid "Tokens usage and cost"
 msgstr "Token-Nutzung und Kosten"
 
-#: src/components/asset-viewer.tsx
+#. placeholder {0}: uploadLimitMb(attachmentLimitBytes(entry))
+#: src/lib/attachments.ts
+msgid "Too large ({0} MB max)"
+msgstr "Zu groß (max. {0} MB)"
+
+#: src/components/file-text-body.tsx
 msgid "Too large to highlight — showing plain text."
 msgstr "Zu groß für Syntaxhervorhebung — als einfacher Text angezeigt"
 
@@ -5794,6 +7016,19 @@ msgstr "Toolaufruf"
 msgid "tracking {upstream}"
 msgstr "folgt {upstream}"
 
+#: src/components/voice-input-button.tsx
+msgid "Transcribing…"
+msgstr "Transkription läuft…"
+
+#: src/components/voice-input-button.tsx
+msgid "Transcription failed. Check your speech service and try again."
+msgstr "Die Transkription ist fehlgeschlagen. Prüfe deinen Sprachdienst und versuche es erneut"
+
+#: src/app/settings-voice.tsx
+msgid "Transcription mode"
+msgstr "Transkriptionsmodus"
+
+#: src/components/agent-tool-card.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/tool-call-code-rows.tsx
@@ -5806,16 +7041,24 @@ msgstr "Vertrauen"
 
 #: src/app/new-task.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/agent-workbench.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
+#: src/components/audio-asset-preview.tsx
 #: src/components/changes-sheet.tsx
+#: src/components/inline-file-link.tsx
+#: src/components/pdf-asset-preview.tsx
 #: src/components/theme-browse-sheet.tsx
+#: src/components/video-asset-preview.tsx
+#: src/components/voice-input-button.tsx
+#: src/hooks/use-file-actions.tsx
 msgid "Try again"
 msgstr "Erneut versuchen"
 
+#: src/components/settings-server-capabilities.tsx
 #: src/components/settings-servers.tsx
-msgid "Try again once the gateway responds."
-msgstr "Versuche es erneut, sobald das Gateway antwortet"
+msgid "Try again once the computer responds."
+msgstr "Versuche es erneut, sobald der Computer antwortet"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Try searching for another name or tag."
@@ -5842,6 +7085,10 @@ msgstr "Typ"
 msgid "Type a line and press Enter; it is echoed back."
 msgstr "Tippe eine Zeile und drücke Enter; sie wird zurückgegeben"
 
+#: src/app/explore.tsx
+msgid "Type a pairing code only on a network you trust."
+msgstr "Geben Sie einen Kopplungscode nur in einem vertrauenswürdigen Netzwerk ein"
+
 #: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Type changed"
@@ -5863,6 +7110,13 @@ msgstr "Tippe ihn ein oder nutze die Diktiertaste deiner Tastatur"
 #: src/components/simfarm-stage.tsx
 msgid "Type on the simulator"
 msgstr "Auf dem Simulator tippen"
+
+#: src/app/pane-history.tsx
+#: src/components/settings-server-capabilities.tsx
+#: src/components/task-result-sheet.tsx
+#: src/i18n/labels.ts
+msgid "Unavailable"
+msgstr "Nicht verfügbar"
 
 #: src/components/changes-sheet.tsx
 msgid "Uncommitted changes"
@@ -5911,14 +7165,13 @@ msgstr "Datum unbekannt"
 msgid "Unlock Muqun"
 msgstr "Muqun entsperren"
 
-#. placeholder {0}: authAvailability?.label ?? t`device authentication`
-#: src/components/settings-security.tsx
-msgid "Unlock with {0}"
-msgstr "Mit {0} entsperren"
-
 #: src/components/app-lock-gate.tsx
 msgid "Unlock with {authLabel}"
 msgstr "Mit {authLabel} entsperren"
+
+#: src/components/settings-security.tsx
+msgid "Unlock with {methodName}"
+msgstr "Mit {methodName} entsperren"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Unpacking…"
@@ -5932,9 +7185,13 @@ msgstr "Kopplung aufheben"
 msgid "Unpair {label}"
 msgstr "{label} entkoppeln"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "Unpair needs a newer gateway on {thisLabel}"
+msgstr "Zum Entkoppeln braucht {thisLabel} ein neueres Gateway"
+
 #: src/components/settings-servers.tsx
-msgid "Unpair this server"
-msgstr "Diesen Server entkoppeln"
+msgid "Unpair this computer"
+msgstr "Diesen Computer entkoppeln"
 
 #: src/components/settings-servers.tsx
 msgid "Unpairing {label}"
@@ -5943,6 +7200,11 @@ msgstr "{label} wird entkoppelt"
 #: src/components/settings-servers.tsx
 msgid "Unpairing…"
 msgstr "Wird entkoppelt …"
+
+#: src/components/file-mention-panel.tsx
+#: src/components/task-row.tsx
+msgid "Unreachable"
+msgstr "Nicht erreichbar"
 
 #: src/components/diff-rows.tsx
 msgid "Unstaged"
@@ -5971,16 +7233,29 @@ msgid "Up arrow"
 msgstr "Pfeil nach oben"
 
 #: src/components/theme-browse-sheet.tsx
+#: src/components/update-status-banner.tsx
 msgid "Update"
 msgstr "Aktualisieren"
 
-#: src/components/agent-assignment-bar.tsx
-msgid "Update Herdr on the server to 0.9.0 or newer, then restart the session, to assign a task to another assistant"
-msgstr "Aktualisiere Herdr auf dem Server auf 0.9.0 oder neuer und starte die Sitzung neu, um einem anderen Assistenten eine Aufgabe zuzuweisen"
+#: src/components/update-status-banner.tsx
+msgid "Update available"
+msgstr "Update verfügbar"
+
+#: src/components/update-status-banner.tsx
+msgid "Update download failed. Try again."
+msgstr "Das Update konnte nicht heruntergeladen werden. Versuche es erneut"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Update Gateway on this computer, then reconnect to enable deleting sessions from Home."
+msgstr "Aktualisiere Gateway auf diesem Computer und verbinde dich erneut, um Sitzungen von der Startseite aus löschen zu können"
 
 #: src/components/agent-assignment-bar.tsx
-msgid "Update Muqun Gateway on the server, then restart it, to assign a task to another assistant"
-msgstr "Aktualisiere Muqun Gateway auf dem Server und starte es neu, um einem anderen Assistenten eine Aufgabe zuzuweisen"
+msgid "Update Herdr on the computer to 0.9.0 or newer, then restart the session, to assign a task to another assistant"
+msgstr "Aktualisiere Herdr auf dem Computer auf 0.9.0 oder neuer und starte die Sitzung neu, um einem anderen Assistenten eine Aufgabe zuzuweisen"
+
+#: src/components/agent-assignment-bar.tsx
+msgid "Update Muqun Gateway on the computer, then restart it, to assign a task to another assistant"
+msgstr "Aktualisiere Muqun Gateway auf dem Computer und starte es neu, um einem anderen Assistenten eine Aufgabe zuzuweisen"
 
 #: src/components/agent-guide-sheet.tsx
 #: src/components/new-task-action.tsx
@@ -5988,12 +7263,36 @@ msgid "Update Muqun Gateway on this host to use {agentName}."
 msgstr "Aktualisiere Muqun Gateway auf diesem Host, um {agentName} zu nutzen"
 
 #: src/components/update-status-banner.tsx
-msgid "Update ready · restarting…"
-msgstr "Update bereit · Neustart…"
+msgid "Update now"
+msgstr "Jetzt aktualisieren"
 
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"
 msgstr "Aktualisiere die App, um öffentliche Theme-Links zu importieren. Dateien kannst du weiterhin importieren"
+
+#: src/components/agent-workbench.tsx
+msgid "Update the Gateway to load earlier remote history."
+msgstr "Aktualisiere das Gateway, um ältere Verlaufsdaten vom Computer zu laden"
+
+#: src/components/asset-viewer.tsx
+#: src/components/inline-file-link.tsx
+#: src/components/pdf-asset-preview.tsx
+#: src/components/server-terminal-workspace.tsx
+#: src/hooks/use-file-actions.tsx
+msgid "Update the Gateway to open or save this file."
+msgstr "Aktualisiere das Gateway, um diese Datei zu öffnen oder zu speichern"
+
+#: src/components/audio-asset-preview.tsx
+msgid "Update the Gateway to preview audio output."
+msgstr "Aktualisiere das Gateway, um Audioausgaben anzuhören"
+
+#: src/components/video-asset-preview.tsx
+msgid "Update the Gateway to preview video output."
+msgstr "Aktualisiere das Gateway, um Videoausgaben anzusehen"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Updates when you reopen"
+msgstr "Aktualisiert beim erneuten Öffnen"
 
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
@@ -6006,6 +7305,10 @@ msgstr "Upload fehlgeschlagen"
 #: src/components/agent-composer.tsx
 msgid "Upload failed"
 msgstr "Upload fehlgeschlagen"
+
+#: src/lib/attachments.ts
+msgid "Upload failed. Tap to retry."
+msgstr "Hochladen fehlgeschlagen. Zum Wiederholen tippen"
 
 #: src/components/attachment-strip.tsx
 msgid "uploaded"
@@ -6024,6 +7327,10 @@ msgstr "{0} verwenden"
 msgid "Use device passcode"
 msgstr "Gerätecode verwenden"
 
+#: src/components/server-terminal-workspace.tsx
+msgid "Use Shift+Left on the terminal keyboard to answer the pending question."
+msgstr "Beantworte die offene Frage mit Umschalt+Links auf der Terminal-Tastatur"
+
 #: src/components/settings-font-sheet.tsx
 msgid "Use system font"
 msgstr "Systemschrift verwenden"
@@ -6041,8 +7348,8 @@ msgid "Use theme defaults"
 msgstr "Theme-Standardwerte verwenden"
 
 #: src/components/settings-servers.tsx
-msgid "Use this server"
-msgstr "Diesen Server verwenden"
+msgid "Use this computer"
+msgstr "Diesen Computer verwenden"
 
 #: src/components/settings-appearance.tsx
 msgid "Use your own font for the app and the terminal."
@@ -6060,6 +7367,11 @@ msgstr "Zeigt das Home-Motiv des Themes an der vom Home-Layout festgelegten Posi
 msgid "Using"
 msgstr "In Verwendung"
 
+#. placeholder {0}: fontAxesSummary(axes)
+#: src/components/settings-font-sheet.tsx
+msgid "Variable · {0}"
+msgstr "Variabel · {0}"
+
 #. placeholder {0}: build ? ` (${build})` : ''
 #: src/app/settings.tsx
 msgid "Version {version}{0}"
@@ -6069,6 +7381,14 @@ msgstr "Version {version}{0}"
 msgid "View file changes"
 msgstr "Dateiänderungen anzeigen"
 
+#: src/components/image-preview-modal.tsx
+msgid "View original"
+msgstr "Originalbild ansehen"
+
+#: src/components/git-diff-view.tsx
+msgid "Viewing another checkout. Changes are read-only."
+msgstr "Ein anderer Checkout wird angezeigt. Änderungen sind schreibgeschützt"
+
 #: src/i18n/labels.ts
 msgid "Visual mode"
 msgstr "Visueller Modus"
@@ -6077,13 +7397,39 @@ msgstr "Visueller Modus"
 msgid "Visualise current context usage as a coloured grid"
 msgstr "Stellt die aktuelle Kontextnutzung als farbiges Raster dar"
 
+#: src/app/settings-voice.tsx
+#: src/app/settings.tsx
+#: src/components/terminal-composer.tsx
+msgid "Voice to text"
+msgstr "Sprache zu Text"
+
+#: src/app/settings-voice.tsx
+msgid "Voice to text disabled"
+msgstr "Sprache zu Text deaktiviert"
+
+#: src/i18n/labels.ts
+msgid "Wait"
+msgstr "Warten"
+
+#: src/components/agent-workbench.tsx
+msgid "Wait for the turn to end before choosing a model."
+msgstr "Warte mit der Modellauswahl, bis der Durchlauf beendet ist"
+
 #: src/components/skia-terminal.web.tsx
 msgid "Waiting for output…"
 msgstr "Warten auf Ausgabe…"
 
+#: src/components/agent-composer.tsx
+msgid "Waiting for the current turn to end"
+msgstr "Warten auf das Ende des aktuellen Durchlaufs"
+
 #: src/lib/network-error.ts
 msgid "Waiting for the network."
 msgstr "Warten auf das Netzwerk"
+
+#: src/components/home-composer-dock.tsx
+msgid "Waiting for this computer's model list. Send again in a moment."
+msgstr "Die Modellliste dieses Computers wird noch geladen. Sende gleich noch einmal"
 
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -6102,17 +7448,18 @@ msgstr "Wartet auf den Versand"
 msgid "Welcome to {agentName}"
 msgstr "Willkommen bei {agentName}"
 
+#: src/components/home-agent-sheet.tsx
+msgid "What Home starts when you send from here"
+msgstr "Was Home startet, wenn du von hier sendest"
+
 #: src/components/session-map.tsx
 msgid "What is running"
 msgstr "Was gerade läuft"
 
+#: src/components/update-status-banner.tsx
 #: src/lib/release-notes.ts
 msgid "What's new"
 msgstr "Neuigkeiten"
-
-#: src/components/launch-intro.tsx
-msgid "When an agent stops for a decision, it arrives as a push. Approve or deny from the Lock Screen."
-msgstr "Wartet ein Agent auf eine Entscheidung, kommt sie als Push. Genehmige oder lehne direkt vom Sperrbildschirm ab"
 
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
@@ -6123,7 +7470,11 @@ msgstr "Während du weg warst"
 msgid "Working"
 msgstr "Arbeitet"
 
-#: src/components/composer-popup.tsx
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Working"
+msgstr "Läuft"
+
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "Workspace"
@@ -6133,6 +7484,7 @@ msgid "Workspaces"
 msgstr "Workspaces"
 
 #: src/components/changes-sheet.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "Worktree {name}"
 msgstr "Worktree namens {name}"
 
@@ -6196,18 +7548,34 @@ msgstr "Du"
 
 #: src/components/app-drawer-content.tsx
 #: src/components/home-overview.tsx
-#: src/components/pad-server-rail.tsx
 msgid "Your agents, anywhere."
 msgstr "Deine Agenten, überall dabei"
 
 #: src/components/launch-intro.tsx
-msgid "Your machine, your rules"
-msgstr "Dein Rechner, deine Regeln"
+msgid "Your checkout, in one workspace."
+msgstr "Dein Checkout in einem Arbeitsbereich"
+
+#. placeholder {0}: agentErrorRef.current(err)
+#: src/components/agent-workbench.tsx
+msgid "Your draft is kept. Check the conversation before sending again. {0}"
+msgstr "Dein Entwurf bleibt erhalten. Prüfe die Unterhaltung, bevor du erneut sendest. {0}"
 
 #: src/components/agent-message-block.tsx
 msgid "Your message"
 msgstr "Deine Nachricht"
 
 #: src/components/app-drawer-content.tsx
-msgid "Your paired gateways"
-msgstr "Deine gekoppelten Gateways"
+msgid "Your paired computers"
+msgstr "Deine gekoppelten Computer"
+
+#: src/lib/network-error.ts
+msgid "Your phone's clock is off by {minutes} minutes. Fix the date and time, then try again."
+msgstr "Die Uhr dieses Telefons geht um {minutes} Minuten falsch. Datum und Uhrzeit korrigieren und erneut versuchen"
+
+#: src/components/image-preview-modal.tsx
+msgid "Zoom in"
+msgstr "Vergrößern"
+
+#: src/components/image-preview-modal.tsx
+msgid "Zoom out"
+msgstr "Verkleinern"

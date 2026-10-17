@@ -1,8 +1,7 @@
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { memo, useCallback, useEffect, useRef, useState, type ComponentType } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import Animated, {
   Easing,
   ReduceMotion,
@@ -12,7 +11,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { feedback } from '@/lib/feedback';
@@ -58,6 +56,13 @@ export interface TwoStepActionProps {
   onArmedChange?: (armed: boolean) => void;
   /** When supplied, the parent owns whether this action is armed. */
   armed?: boolean;
+  /**
+   * Stay armed until the reader confirms or dismisses it, with no window: for
+   * an action raised in a menu that may sit open while the reader reads (a
+   * task's Cancel), where a timer that quietly disarms reads as a tap that
+   * did nothing.
+   */
+  persist?: boolean;
   disabled?: boolean;
   /** A compact icon action that expands only for its second, destructive tap. */
   presentation?: 'default' | 'compact';
@@ -75,6 +80,7 @@ export const TwoStepAction = memo(function TwoStepAction({
   onConfirm,
   onArmedChange,
   armed: controlledArmed,
+  persist = false,
   disabled = false,
   presentation = 'default',
   accessibilityLabel,
@@ -117,6 +123,10 @@ export const TwoStepAction = memo(function TwoStepAction({
     }
 
     arm.value = withTiming(1, timing('toggle'));
+    if (persist) {
+      drain.value = 1;
+      return () => clearTimeout(timer.current);
+    }
     // Linear, and exempt from reduced motion's collapse only in the sense that
     // it has nothing to collapse to: a drained line is the window having shut,
     // and a line that jumped to empty at once would say the window had.
@@ -128,7 +138,7 @@ export const TwoStepAction = memo(function TwoStepAction({
     });
     timer.current = setTimeout(() => setArmed(false), CONFIRM_WINDOW_MS);
     return () => clearTimeout(timer.current);
-  }, [arm, armed, disabled, drain, setArmed]);
+  }, [arm, armed, disabled, drain, persist, setArmed]);
 
   const handlePress = useCallback(() => {
     if (disabled) return;

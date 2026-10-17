@@ -1,6 +1,6 @@
 import { useIsFocused } from 'expo-router';
 import { useCallback, useEffect, useRef, type RefObject } from 'react';
-import type { View } from 'react-native';
+import type { ViewInstance } from 'react-native';
 
 import type { FeatherRect, FeatherSize } from '@/lib/hero-feather';
 import { launchArtworkRect, publishLaunchArtworkRect } from '@/lib/launch-artwork-rect';
@@ -13,7 +13,7 @@ export function useLaunchHomeArtwork({
   intrinsic,
   cropped = false,
 }: {
-  view: RefObject<View | null>;
+  view: RefObject<ViewInstance | null>;
   source: string;
   image: FeatherRect | null;
   intrinsic: FeatherSize | null;

@@ -1,13 +1,16 @@
 import { useLingui } from '@lingui/react/macro';
-import { Icon, Spinner, useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { Icon, Spinner, useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { Image } from 'expo-image';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { isImageAttachment, type PendingAttachment } from '@/lib/attachments';
+import {
+  describeAttachmentFailure,
+  isImageAttachment,
+  type PendingAttachment,
+} from '@/lib/attachments';
+import { isPdfFile } from '@/lib/session-assets';
 import { DURATION, fadeIn, fadeOut, listLayout, zoomIn, zoomOut } from '@/lib/motion';
 
 const TILE_SIZE = 62;
@@ -25,12 +28,15 @@ export function AttachmentStrip({
   onRetry,
   onPreview,
   textColor,
+  readOnly = false,
 }: {
   attachments: PendingAttachment[];
   onRemove: (id: string) => void;
   onRetry: (id: string) => void;
   onPreview: (id: string) => void;
   textColor: string;
+  /** Submission previews remain inspectable, but cannot mutate the in-flight files. */
+  readOnly?: boolean;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -61,13 +67,19 @@ export function AttachmentStrip({
       contentContainerStyle={styles.strip}>
       {attachments.map((attachment) => {
         const failed = attachment.status === 'error';
+        // A file over the cap has nothing to retry: the tile says so and takes no tap.
+        const retryable = failed && attachment.failure !== 'too-large';
+        const reason = failed ? describeAttachmentFailure(attachment) : null;
         const isImage = isImageAttachment(attachment.mime);
+        const previewable = isImage || isPdfFile(attachment);
         // A tap means retry on a failed tile and preview on anything else worth
         // looking at, so the label has to say which of the two it is.
         const status = describeStatus(attachment.status);
         const label = failed
-          ? t`Retry uploading ${attachment.name}`
-          : isImage
+          ? retryable
+            ? t`Retry uploading ${attachment.name}: ${reason}`
+            : `${attachment.name}: ${reason}`
+          : previewable
             ? t`Preview ${attachment.name}, ${status}`
             : `${attachment.name}, ${status}`;
 
@@ -85,7 +97,7 @@ export function AttachmentStrip({
             style={styles.tileWrap}>
             <PressableScale
               accessibilityLabel={label}
-              disabled={!failed && !isImage}
+              disabled={(!failed && !previewable) || (failed && (!retryable || readOnly))}
               pressedScale={0.94}
               onPress={() => (failed ? onRetry(attachment.id) : onPreview(attachment.id))}
               style={[
@@ -101,7 +113,7 @@ export function AttachmentStrip({
                 <Image
                   source={{ uri: attachment.localUri }}
                   style={styles.thumbnail}
-                  contentFit="cover"
+                  contentFit="contain"
                   // The decode's own fade. It was 100 ms, which is not a step
                   // on any scale this app uses; `micro` is the token for a
                   // state flip you should barely notice, which is what this is.
@@ -147,10 +159,24 @@ export function AttachmentStrip({
                   entering={fadeIn('micro')}
                   exiting={fadeOut('micro')}
                   style={[styles.overlay, styles.failedOverlay]}>
-                  <Icon name="RotateCcw" size={17} color="#FFFFFF" />
+                  <Icon name={retryable ? 'RotateCcw' : 'Ban'} size={17} color="#FFFFFF" />
                 </Animated.View>
               ) : null}
             </PressableScale>
+            {/* The reason, where the tile is: a red rim and an icon said that
+                something was wrong and nothing said what, and a file over the
+                cap stayed red with a retry arrow that could not help. */}
+            {reason ? (
+              <Animated.View entering={fadeIn('micro')} exiting={fadeOut('micro')}>
+                <Text
+                  variant="caption"
+                  color={theme.colors.danger}
+                  numberOfLines={2}
+                  style={styles.reason}>
+                  {reason}
+                </Text>
+              </Animated.View>
+            ) : null}
             {/* Ready is worth its own mark rather than just the absence of an
                 overlay, because Send waiting on a tile only makes sense if the
                 user can see which tiles it is waiting for. It lands rather than
@@ -167,14 +193,16 @@ export function AttachmentStrip({
                 <Icon name="Check" size={9} color="#FFFFFF" strokeWidth={3} />
               </Animated.View>
             ) : null}
-            <PressableScale
-              accessibilityLabel={t`Remove ${attachment.name}`}
-              hitSlop={6}
-              pressedScale={0.9}
-              onPress={() => onRemove(attachment.id)}
-              style={[styles.remove, { backgroundColor: surfaceBackground(theme.colors.text) }]}>
-              <Icon name="X" size={11} color={theme.colors.background} strokeWidth={3} />
-            </PressableScale>
+            {!readOnly ? (
+              <PressableScale
+                accessibilityLabel={t`Remove ${attachment.name}`}
+                hitSlop={6}
+                pressedScale={0.9}
+                onPress={() => onRemove(attachment.id)}
+                style={[styles.remove, { backgroundColor: surfaceBackground(theme.colors.text) }]}>
+                <Icon name="X" size={11} color={theme.colors.background} strokeWidth={3} />
+              </PressableScale>
+            ) : null}
           </Animated.View>
         );
       })}
@@ -193,8 +221,9 @@ const styles = StyleSheet.create({
   },
   tileWrap: {
     width: TILE_SIZE,
-    height: TILE_SIZE,
+    minHeight: TILE_SIZE,
   },
+  reason: { fontSize: 9, textAlign: 'center', paddingTop: 2 },
   tile: {
     width: TILE_SIZE,
     height: TILE_SIZE,

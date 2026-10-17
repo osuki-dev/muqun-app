@@ -8,18 +8,21 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { useThemeTokens, useToast } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import { plural } from '@lingui/core/macro';
 import { type MarkdownStyle } from 'react-native-enriched-markdown';
 import { DiagramMarkdown } from '@/components/diagram-markdown';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { usePaneChatColors } from '@/components/pane-chat-blocks';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { isSafeExternalLink } from '@/lib/safe-link';
-import { MARKDOWN_CHUNK_CHARS, MARKDOWN_NATIVE_CEILING, capMarkdown } from '@/lib/markdown-cap';
+import {
+  MARKDOWN_CHUNK_CHARS,
+  MARKDOWN_NATIVE_CEILING,
+  capMarkdown,
+  inlineMarkdown,
+} from '@/lib/markdown-cap';
 import { AGENT_TYPE } from '@/constants/agent-type';
 
 /**
@@ -105,6 +108,8 @@ export interface BoundedMarkdownProps {
   /** Links are opened by the caller's rule, never by this component's guess. */
   openLinks?: boolean;
   latexMath?: boolean;
+  /** Live assistant output: native measurement and display commit complete table rows together. */
+  streaming?: boolean;
   /**
    * The selection tint, when a surface wants its own.
    *
@@ -121,6 +126,12 @@ export interface BoundedMarkdownProps {
   imageRequestHeaders?: Record<string, string>;
   /** A tapped image, by the URL it was loaded from. Images are inert without it. */
   onImagePress?: (url: string) => void;
+  /**
+   * The row variant: one inline run (`inlineMarkdown`) clamped to this many
+   * lines with a tail ellipsis, not selectable, links drawn as text and
+   * touches passed to the row underneath. For a task's title or state line.
+   */
+  clampLines?: number;
   testID?: string;
 }
 
@@ -131,9 +142,11 @@ export const BoundedMarkdown = memo(function BoundedMarkdown({
   containerStyle,
   openLinks = true,
   latexMath = false,
+  streaming = false,
   selectionColor,
   imageRequestHeaders,
   onImagePress,
+  clampLines,
   testID,
 }: BoundedMarkdownProps) {
   const { t } = useLingui();
@@ -161,6 +174,23 @@ export const BoundedMarkdown = memo(function BoundedMarkdown({
         showMoreLabel={t`Show more`}
       />
     ) : null;
+
+  if (clampLines) {
+    return (
+      <View pointerEvents="none" style={containerStyle} testID={testID}>
+        <DiagramMarkdown
+          flavor="commonmark"
+          markdown={inlineMarkdown(capped.text)}
+          markdownStyle={markdownStyle}
+          numberOfLines={clampLines}
+          ellipsizeMode="tail"
+          selectable={false}
+          streamingAnimation={false}
+          textBreakStrategy="simple"
+        />
+      </View>
+    );
+  }
 
   if (plain) {
     return (
@@ -190,7 +220,11 @@ export const BoundedMarkdown = memo(function BoundedMarkdown({
         selectable
         selectionColor={selectionColor ?? theme.colors.primary}
         selectionHandleColor={theme.colors.primary}
-        streamingAnimation={false}
+        // The native renderer fades appended text/new rows only, and checks
+        // the platform's Reduce Motion setting itself. Its progressive filter
+        // must stay enabled for stable measurement even with motion reduced.
+        streamingAnimation={streaming}
+        streamingConfig={PROGRESSIVE_STREAMING}
         textBreakStrategy="simple"
         // The copy button belongs to the renderer's own code-block header; all
         // this adds is the confirmation the rest of the app gives.
@@ -218,6 +252,8 @@ export const BoundedMarkdown = memo(function BoundedMarkdown({
     </View>
   );
 });
+
+const PROGRESSIVE_STREAMING = { tableMode: 'progressive', codeBlockMode: 'progressive' } as const;
 
 const styles = StyleSheet.create({
   stretch: {

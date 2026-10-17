@@ -5,8 +5,7 @@ import type { MessageDescriptor } from '@lingui/core';
 // turns a `msg` descriptor into a sentence in the active locale.
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { ArrowBigUp, Delete, Keyboard as KeyboardIcon } from 'lucide-react-native';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
@@ -710,10 +709,20 @@ function WideKeyCap({
   const glyph = item.label.length === 1 && item.kind === 'key';
   const cap = item.kind === 'char' && shift ? (item.shiftLabel ?? item.label) : item.label;
   const named = item.kind === 'key' && !glyph;
+  // Glyphs are keycaps, not meaningful names for VoiceOver or TalkBack.
+  const keyLabels: Record<string, string> = {
+    enter: t`Return`,
+    backspace: t`Backspace`,
+    left: t`Left arrow`,
+    right: t`Right arrow`,
+    up: t`Up arrow`,
+    down: t`Down arrow`,
+    ' ': t`Space`,
+  };
   return (
     <VirtualKey
       testID={`virtual-key-${item.id}`}
-      accessibilityLabel={item.value === ' ' ? t`Space` : cap}
+      accessibilityLabel={keyLabels[item.value] ?? cap}
       disabled={disabled}
       hitSlop={item.kind === 'key' && glyph ? { top: 2, bottom: 2 } : undefined}
       onPress={onPress}

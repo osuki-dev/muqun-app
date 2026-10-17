@@ -1,8 +1,7 @@
 import { t } from '@lingui/core/macro';
 import { I18nProvider as LinguiProvider } from '@lingui/react';
 import { Trans } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
 import { RefreshCw, ShieldAlert } from 'lucide-react-native';
 import { Component, useEffect, type ReactNode } from 'react';
 import { SplashScreen } from '@osuki-dev/react-native-splash';
@@ -71,7 +70,7 @@ function ErrorRecovery({ onRetry }: { onRetry: () => void }) {
           <Trans>Something went wrong</Trans>
         </Text>
         <Text variant="bodySmall" style={[styles.detail, { color: colors.textMuted }]}>
-          <Trans>The screen hit an error. Try again — your servers stay paired.</Trans>
+          <Trans>The screen hit an error. Try again — your computers stay paired.</Trans>
         </Text>
         <Pressable
           accessibilityRole="button"

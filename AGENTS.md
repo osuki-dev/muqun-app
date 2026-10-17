@@ -1,320 +1,123 @@
-# Expo HAS CHANGED
+# Contributing to Muqun
 
-Write all repository documentation, architecture notes, release notes, and
-bundled agent skill instructions in English. UI localization is separate.
+- Read the [Expo SDK 58 documentation](https://docs.expo.dev/versions/v58.0.0/)
+  before changing code.
+- Write repository documentation, release notes, and bundled skill instructions
+  in English. UI localization is separate.
+- Work on a branch. Complete development and the checks below before opening a
+  ready pull request; report failures or unavailable checks accurately.
+- Never commit credentials, private logs, personal paths, or workstation setup.
 
-Read the exact versioned docs at https://docs.expo.dev/versions/v57.0.0/ before writing any code.
+## Validation
 
-## Working on this
-
-Branch, work, run the checks below, open a pull request. That is the whole
-process.
-
-The maintainers use a card tracker and a branch tool of their own, and its
-configuration is not in this repository. Nothing about it is needed to
-contribute here, and nothing in this file assumes you have it.
-
-Complete local development and all five checks below before opening a PR.
-If a check is blocked or fails, report it and continue fixing it; do not open
-a PR claiming the change is ready.
-
-## Releases and Android signing
-
-- Release from a reviewed, tested commit using a `vX.Y.Z` tag. Do not create or
-  push a release tag unless the user requested a release.
-- Every GitHub Release must include human-written release notes: user-visible
-  changes, fixes, compatibility requirements (App/Gateway/Herdr), and upgrade
-  instructions. Commit them at `release-notes/vX.Y.Z.md` before tagging. An APK
-  attachment or an automatically generated commit list is not sufficient.
-- Android and iOS signing credentials are managed in Expo. The team's current
-  workflow builds locally with EAS `--local` and uses EAS Submit for submission.
-  GitHub CI should run the same local APK build on its runner using the
-  `production-apk` profile and existing Expo-managed credentials. `EXPO_TOKEN`
-  authenticates CI; it is not a replacement signing key.
-- Preserve `dev.osuki.muqun`, the Expo project, and the existing Android
-  keystore. Never generate or rotate a keystore to make CI pass. Missing
-  credentials are a configuration problem to report, not permission to create
-  new signing identity. Never commit or print private signing credentials.
-- APK and Play builds share the package name and must not become separate
-  apps. Cross-channel in-place upgrades additionally require the same signing
-  certificate and increasing versionCode. Verify the actual Play App Signing
-  certificate against the APK certificate before claiming this works; an
-  upload key is not necessarily Google's distribution signing key.
-- Run `.github/workflows/android-apk.yml` on version tags. Attach the APK and
-  its SHA-256 checksum to the matching GitHub Release, built from that exact
-  tag. A manual run without a tag is build-only. Do not submit to Play or
-  publish a release as an incidental part of developing a feature.
-
-## Installing behind a proxy
-
-```sh
-NODE_USE_ENV_PROXY=1 bun install
-```
-
-The variable is not belt-and-braces, and "behind a proxy" is not on its own
-the explanation. `curl`, `git` and `bun`'s own registry client read
-`http_proxy` / `https_proxy` and go through the proxy. Node's global `fetch`
-does not read them at all unless `NODE_USE_ENV_PROXY=1` is set. Measured here
-on Node v26.8.1, with the proxy up and the variables exported, against the
-RaTeX release asset the postinstall wants:
-
-```
-node -e "fetch(<url>, {method:'HEAD'})"                    # hangs; no answer in 15s
-NODE_USE_ENV_PROXY=1 node -e "fetch(<url>, {method:'HEAD'})"  # status 200
-```
-
-So a proxy that works for everything else still leaves every `fetch`-based
-postinstall reaching for the open internet. `vendor-ratex.mjs` in
-`react-native-enriched-markdown` is one of those: it pulls RaTeX in two pieces
--- the prebuilt XCFramework, then the tarball holding the four Swift sources
-and the KaTeX fonts -- and both go through `fetch`.
-
-It does not fail the install. The postinstall warns and exits zero when a
-vendor step fails, so `bun install` reports success over an incomplete tree.
-The podspec then decides whether to compile math by checking for the
-XCFramework _only_, so a tree with the framework and not the sources compiles
-a Swift bridge whose types are missing, and the whole thing surfaces hundreds
-of lines into an Xcode build as
-
-```
-ENRMRaTeXBridge.swift:18:25: error: cannot find type 'RaTeXRenderer' in scope
-```
-
-Filed upstream as software-mansion/enriched-markdown#745.
-
-`scripts/check-vendored-ratex.ts` runs on `postinstall` and turns that into a
-sentence naming the missing files, at install time rather than at build time.
-If it fires, the recovery is one command:
-
-```sh
-NODE_USE_ENV_PROXY=1 node node_modules/react-native-enriched-markdown/postinstall.mjs
-```
-
-The same variable belongs on any `bunx expo prebuild` or CI install step that
-runs behind a proxy.
-
-An EAS **local** build is one of those steps, and it is easy to miss because it
-does not look like an install. `eas build --local` copies the project to a temp
-directory and runs `bun install --frozen-lockfile` there, in an environment that
-is not the shell you typed in. Without the variable that install reaches the
-vendor step, fails to fetch, and `check-vendored-ratex.ts` stops the build in the
-`INSTALL_DEPENDENCIES` phase -- which is the guard working, but a long way from
-the Android output you were waiting for, and on a platform that does not use
-RaTeX at all. So every `*:local` build script in `package.json` now carries
-`NODE_USE_ENV_PROXY=1` itself rather than relying on the caller's environment.
-
-One more thing about that failure: when a local build fails, `eas-cli` prints
-the job payload it was invoked with, and that payload contains the Android
-keystore and its passwords in base64. Do not paste a failed local-build log
-anywhere, and delete any file it was captured into.
-
-## The built-in default theme
-
-The `cover-courier` pack from the muqun-themes repository ships inside the app
-and is worn while the reader has neither installed a theme nor picked a colour pack
-(`ThemeRepository.activeInstalled`). Its copy in `assets/themes/cover-courier/`
-and `src/theme/builtin-theme.generated.ts` (`BUILTIN_THEME_VERSION` and the
-`require` map that registers each file with Metro's asset registry on both
-platforms) are generated; do not edit them by hand. `bun scripts/sync-builtin-theme.ts`
-packs the theme with `@osuki-dev/muqun-theme@2` from `$MUQUN_THEMES_DIR` or a
-`../themes` checkout, or downloads the published package and checks it against
-the gallery index's SHA-256, validates it with the app's own `unpackTheme`,
-keeps only the files the manifest names, and is idempotent. Commit its output.
-
-## End-to-end test gate
-
-Optional Gateway features use capability detection, not a guessed Gateway version.
-Agent collaboration requires `agent_collaboration` and a connected Herdr 0.9.0+
-backend for the selected session. An older Gateway or Herdr must retain ordinary
-terminal use and show an actionable upgrade explanation for collaboration.
-Agent status is not proof of task completion; never display fabricated progress
-percentages or treat an idle agent as a successfully completed assignment.
-Bind current assignments to the Gateway's opaque agent instance identity, not a
-reusable pane id. Keep earlier assignments as history; marking or removing history
-must work offline and must not stop an agent. New output must not move the reader's
-viewport or replace the snapshot until they choose to refresh it.
-
-Changes to agent startup or task delivery also need a real, paired App-to-Gateway-to-agent
-check; offline demo fixtures alone cannot prove delivery. Use an isolated Herdr session
-and a dedicated test device, never a user's active workspace. On the development Mac,
-enable `proxy_on` in a new terminal before launching AI agents. Verify existing-agent
-assignment, new-agent startup, follow-up delivery, actual returned output, and status
-changes without automatic terminal navigation. Ask before answering agent trust or
-approval prompts, and never retry an ambiguous delivery automatically.
-
-Finishing a feature means the whole app still works, not just the screen that was touched.
-
-- During development, run the affected unit tests and the narrowest relevant native flow or domain
-  tag. The runner accepts one tag per invocation: `themes`, `settings`, `terminal`, `files`, `agents`,
-  `workspace`, `connection`, or `localization`. Run multiple tags sequentially when a change crosses
-  domains. Examples:
-
-  ```sh
-  bash scripts/e2e.sh --list
-  bash scripts/e2e.sh --tag terminal --device "$QA_DEVICE" --platform android
-  bash scripts/e2e.sh --flow large-file-preview --device "$QA_DEVICE" --platform android
-  ```
-
-  `--list` prints every flow's domain membership. Shared navigation, theme-provider, persistence,
-  or broad integration changes may need more than one domain before the final gate. A targeted run
-  is iteration evidence, never proof that the full gate passed.
-
-- `bash scripts/e2e.sh --smoke` runs only `demo-tour` for a quick integration check. It does not
-  close a card or replace a relevant domain run.
-- Run the complete suite once on the final candidate before opening or updating a pull request that
-  is ready to land: `bash scripts/e2e.sh`. It needs a dedicated, unpaired emulator or simulator with
-  the app installed and English selected; the flows drive offline demo mode, so no gateway, no
-  network and no pairing. The default `full` selection remains the landing gate.
-- Reports land in `dist/e2e-reports/` (JUnit XML plus the run's screenshots, native command results and view hierarchies).
-  The directory is build output and is not committed.
-- A flow that covers a new surface belongs in `e2e/agent-device/` as native `.ad` actions, registered
-  with the `full` tag in `suite.json` in the same change as the feature. A flow without that tag is
-  not enforced by the gate. Use agent-device 0.21.12 and the native runner; do not introduce another
-  test-driver format. `bash scripts/e2e.sh --check` validates native syntax and manifest references
-  without driving a device. The runner's own tests run before the device suite.
-- The suite relaunches the app without erasing user data. Never run it on a simulator with real
-  paired servers or SSH hosts. Pass `--device ID --platform ios|android` when several devices exist.
-  For development builds, set `E2E_AD_METRO_HOST` and `E2E_AD_METRO_PORT`. Test full suites on each
-  supported platform before claiming platform-specific coverage.
-- Run `bash scripts/e2e.sh` and quote the result in the pull request. The gate is the suite
-  passing, not a tool remembering that it did.
-
-## The checks
-
-These five are the final-candidate gate, in this order. During iteration, run focused tests first;
-the first four are the integration checkpoint, and the complete fifth check is required once before
-the change is declared ready to land.
+Run focused tests during development, then these checks on the final candidate:
 
 ```sh
 npx tsc --noEmit
-bun run lint          # oxlint --deny-warnings: a warning fails the run
-bun run format:check  # oxfmt --check; `bun run format` rewrites
+bun run lint
+bun run format:check
 bun test src
 bash scripts/e2e.sh
 ```
 
-Linting is `oxlint` and formatting is `oxfmt` (the same pair as the org's `kit` repo), configured in
-`.oxlintrc.json` and `.oxfmtrc.json`. There is no ESLint in this tree any more: a suppression is
-`// oxlint-disable-next-line <rule> -- <reason>`, and the rule names are oxlint's (`react/refs`,
-`typescript/no-require-imports`, ...). `bun run lint` fails on warnings deliberately, so the gate
-cannot quietly grow a new baseline the way it did before card #611.
+Lint uses oxlint with warnings denied; formatting uses oxfmt. Use
+`// oxlint-disable-next-line <rule> -- <reason>` only for a justified exception.
 
-## React Compiler and performance
+Tests: only core modules need unit tests. Those are wire and protocol
+contracts (transport envelopes, pairing, sockets and streams, agent and task
+ledger shapes, upload bodies, OTA metadata, route parameters), security rules
+(who gets which credential, what is refused, path and URL fences) and logic
+with real failure modes (history paging and cursors, ordering and dedupe,
+state machines, timeline compaction, diff parsing). Do not write tests for
+constants, layout numbers, labels, one-line helpers, rendering or catalogs;
+the end-to-end suite is the device acceptance for those. A reviewer may delete
+a test that does not meet this rule.
 
-Every component and hook must compile under React Compiler (`app.json`
-`experiments.reactCompiler`). A component the compiler skips ships with no
-automatic memoization and re-renders everything under it on every update, and
-nothing at runtime says so. `muqun/react-compiler` (`tooling/oxlint/react-compiler.ts`)
-enforces this in `bun run lint`. It runs the build's own pipeline, the Lingui
-macro and then `babel-plugin-react-compiler`, and reports each bailout at its
-line. Results are cached by content in `node_modules/.cache`, so a warm lint is
-about a second.
+Native tests use agent-device 0.21.12 and the existing `.ad` runner. Add new
+surface coverage to `e2e/agent-device/suite.json` with the `full` tag. Use
+`bash scripts/e2e.sh --check` for syntax validation, `--list` for flows, and
+`--tag <domain>` or `--flow <name>` for focused runs. A smoke or domain run does
+not replace the complete suite. Quote actual results in the PR; reports under
+`dist/e2e-reports/` are uncommitted output.
 
-React Doctor's `react-hooks-js/*` findings come from the same compiler, but it
-reads source before the Lingui macro runs. It flags `` t`…${x}` `` templates the
-build never shows the compiler, and it only covers files a PR touched. Trust
-the lint rule for whether something compiles.
+Use a dedicated, unpaired QA device with the app installed and English selected.
+Never automate a user's device or paired workspace. Reuse available QA devices,
+serialize access, and verify device identity before every run. Pass explicit
+`--device ID --platform android|ios` to the runner and `--serial` or `--udid` to
+all direct agent-device commands. Run `agent-device --version` and read
+`agent-device help workflow` plus the relevant debugging help first. Resolve
+installed tooling rather than silently installing an unpinned version. For
+React Native development builds, set `E2E_AD_METRO_HOST` and
+`E2E_AD_METRO_PORT` as needed. Claim platform coverage only for tested platforms.
 
-The usual fixes keep behaviour identical:
+## Agent integration
 
-- **A Reanimated shared value written with `.value =`:** use `.set()` and
-  `.get()`. The two are not identical: `.set(fn)` treats a plain function as an
-  updater and stores `fn(current)`. For a shared value that holds a function,
-  write `.set(() => fn)`.
-- **A shared value read with `.value` inside a callback, worklet or gesture:**
-  use `.get()`. The compiler keys the surrounding memo on `x.value`, so every
-  render reads the shared value and the memo is rebuilt whenever it moves.
-  Only a read that runs later can change this way. A read during render (in
-  the component body or a `useMemo` body) must stay as it is: as `x.get()` the
-  compiler would key it on the stable `x` and keep serving the first value.
-- **A `Gesture.*()` builder:** build it in `useMemo`. A new gesture object on
-  every render makes gesture-handler re-send every worklet handler to the UI
-  thread. Set relations such as `requireExternalGestureToFail` inside the
-  same memo, never on a memoized gesture afterwards, which would append them
-  again on every render.
-- **`try`/`finally`, a `try` without `catch`, a `throw` inside `try`, or
-  `?:`/`&&`/`?.` inside a `try` block:** call through
-  `@/lib/compiler-safe-control-flow` (`settleAfter`, `recoverWith`, `rethrow`),
-  or hoist a pure expression out of the `try`.
-- **A ref read or written during render:**
-  - For a callback built once, use `useStableHandler` or `useLatestReader` from
-    `@/hooks/use-render-refs`.
-  - For rows reused from the previous render, use `carryBox`/`carryForward`
-    from `@/lib/carry-forward`.
-  - For deliberate render-time work, extract it verbatim into its own hook
-    marked `'use no memo'` and call it from the same place.
-- **A disabled `react-hooks/exhaustive-deps`:** use `useEffectEvent` for what the
-  effect reads without reacting to, and keep the dependency list.
-- **Other patterns:**
-  - A counter incremented inside `.map` callbacks: use the callback's index.
-  - A ref read in a parameter default: move the default into the body.
-  - A value used above its declaration: declare it first.
+Detect optional Gateway capabilities rather than guessing from versions.
+Collaboration requires `agent_collaboration` and a connected Herdr 0.9.0+
+backend; preserve ordinary terminal use and explain missing capabilities.
+Bind assignments to opaque agent instance identities, not reusable pane IDs.
+Idle status is not completion, and progress must not be fabricated. Historical
+assignments remain manageable offline without stopping agents. New output must
+not replace snapshots or move the reader's viewport until they refresh.
 
-`'use no memo'` is for documented escape hatches only, with the reason written
-beside it. Today those are the Android widget layout, the render-time ref hooks
-in `use-render-refs`, `use-frozen-value` and `use-coalesced-value`, and
-`usePaneEvents`.
+Startup or delivery changes also require a real paired App-to-Gateway-to-agent
+check in an isolated session: existing-agent assignment, new-agent startup,
+follow-up, returned output, and status changes without stealing terminal focus.
+Ask before answering agent trust/approval prompts. Never retry ambiguous
+prompt delivery automatically.
 
-Measure performance on Release builds, never on a Debug run. Xcode's memory
-gauge on a Debug build is hundreds of megabytes of Hermes compiler state.
+## React Compiler and native rendering
 
-- **The ●/■ profiling control** records Hermes sampling profiles.
-  - Debug builds link it: iOS Debug, and the Android debug build type.
-  - A Release profiling build needs `MUQUN_RELEASE_PROFILER=1` at
-    `pod install`/Gradle time and `EXPO_PUBLIC_RELEASE_PROFILER=1` at bundle
-    time.
-  - Store builds contain neither the native module nor the JS.
-  - `plugins/with-release-profiler-stub.cjs` keeps Android release compiling.
-  - Rerun `pod install` without the variable after a profiling build.
-- **`scripts/perf/`:**
-  - `android-profile-scenarios.sh` records one profile per interaction.
-  - `analyze-profile.py` summarises a profile's JS self and inclusive time.
-  - `ios-theme-memory.sh` and `android-theme-memory.sh` measure footprint, PSS
-    and frames.
-- **Comparisons:** compare builds with the same script, on the same QA device,
-  from the same app state. Run each side at least twice before calling a
-  difference.
+Every component and hook must pass the `muqun/react-compiler` lint rule, which
+uses the build's Lingui and React Compiler pipeline.
 
-Skia is `react-native-skia` 3.x (the unscoped successor of
-`@shopify/react-native-skia`) on the Graphite backend: Vulkan on Android, which
-needs minSdk 26. Paths are immutable; build them with `Skia.PathBuilder` and
-`detach()`. The old Canvas recorder patch is gone: in 3.x the native view owns
-the recorder and releases the recording when it is replaced or torn down.
+- Use Reanimated `.set()` for writes and `.get()` in callbacks/worklets. Keep
+  render-time `.value` reads reactive; store function values with `.set(() => fn)`.
+- Build gestures and their relations together in `useMemo`.
+- Use `compiler-safe-control-flow` helpers for unsupported control flow.
+- Use `useStableHandler`, `useLatestReader`, or carry-forward helpers for
+  render-time ref patterns; do not disable dependency checks to hide them.
+- Use `useEffectEvent` for effect reads that must not trigger the effect.
+- Limit `'use no memo'` to documented escape hatches with a reason beside them.
 
-`bun install` re-extracting the package removes Skia's prebuilt `libs/`, which
-`pod install` copies back. Run it before the next iOS build.
+Measure performance in Release builds on the same QA device and state, with at
+least two runs per side. Profiling builds use `MUQUN_RELEASE_PROFILER=1` at
+native build time and `EXPO_PUBLIC_RELEASE_PROFILER=1` at bundle time; store
+builds must contain neither profiling module nor profiling JS. Clear the native
+flag and rerun pod installation before an iOS store build.
 
-## Patched dependencies
+Skia is `react-native-skia` 3.x with Graphite (Android Vulkan, minSdk 26).
+Paths are immutable: use `Skia.PathBuilder` and `detach()`. Rerun `pod install`
+after dependency installation when Skia's prebuilt iOS libraries are missing.
 
-`package.json` `patchedDependencies` holds the patches bun applies on
-`bun install` (files in `patches/`, paths relative to the package). Each patch
-file starts with a comment block that says what is wrong and when to drop it.
+## Generated assets and dependency patches
 
-- `react-native-enriched-markdown@1.1.1` (Android): `LineHeightSpan` now leaves
-  spacer lines alone. `MarginBottomSpan` and `LineHeightSpan` both edit the
-  line's font metrics, and Android runs them in a different order for the
-  shadow-node measure than for the TextView's own layout, so a blank line before
-  a code block was measured 10 px and drawn 56 px. The markdown view came out
-  short and the last line overflowed its plate. Not a font problem: measurement
-  does use the spans' typeface. iOS measures the attributed string it draws and
-  needs no change. To regenerate: `bun patch react-native-enriched-markdown`,
-  edit, `bun patch --commit`, then strip the generated build-dir hunks and the
-  `node_modules/<pkg>/` path prefixes by hand, as the existing file does.
+Do not hand-edit `assets/themes/cover-courier/` or
+`src/theme/builtin-theme.generated.ts`. Run `bun scripts/sync-builtin-theme.ts`
+and commit its validated output. Sources come from `$MUQUN_THEMES_DIR`, a
+sibling themes checkout, or the checksum-verified published pack.
 
-## agent-device
+Bun applies `patchedDependencies` from `patches/`; each patch must explain its
+purpose and removal condition. Keep generated build files out of patches.
+The postinstall RaTeX check must pass before an iOS build; rerun the dependency's
+postinstall if its vendored files are incomplete.
 
-Reuse the existing Android QA AVD `muqun_collaboration_qa` and iOS simulator
-`muqun-collaboration-tests`. Do not create a simulator or AVD for each feature
-unless the user explicitly asks. Serialize access to a shared QA device, discover
-its current port or UDID on every run, and never use the user's own devices or
-paired sessions for automation.
+## Releases
 
-Carry the explicit Android `--serial` or iOS `--udid` on every direct agent-device
-command. A session name alone is not device identity: the suite closes sessions,
-and a later capture or open may create a new session on another running device.
-After a suite or close, verify the returned device identity before any install or
-UI action; never let automatic device discovery choose a user's device.
+Release only when requested, from a reviewed, tested `vX.Y.Z` commit. Write
+human-readable `release-notes/vX.Y.Z.md` covering user-visible changes,
+compatibility, and upgrade steps before tagging. Do not publish or submit to a
+store incidentally during development.
 
-Use agent-device only for app/device automation tasks. Before planning commands, run `agent-device --version` and read `agent-device help workflow`. For TV, Fire TV, or Vega OS tasks, read `agent-device help tv`. For exploratory QA, read `agent-device help dogfood`. For logs, network, audio, traces, or runtime failures, read `agent-device help debugging`. For React Native component trees, props/state/hooks, slow renders, or rerenders, read `agent-device help react-devtools`. For React Native JavaScript heap growth, heap snapshots, or retained-object leaks, read `agent-device help cdp`. For React Native apps, overlays, Metro/Fast Refresh blockers, and routing to React DevTools or debugging evidence, read `agent-device help react-native`.
+Preserve `dev.osuki.muqun`, the Expo project, and existing signing identity.
+Credentials are managed through Expo; `EXPO_TOKEN` authenticates EAS and is not
+an Android signing key. Never generate or rotate a keystore to bypass a build
+failure. Treat build logs as sensitive; never print signing payloads.
 
-Use MCP tools or the CLI in the integrated terminal. If `agent-device` is not on PATH but the user installed it globally in another shell, resolve the command the same way the user would from a normal terminal session and run that absolute path instead. This may require inspecting shell startup behavior or package-manager/global bin locations; do not assume the agent process `PATH` is the user's `PATH`. Do not silently fall back to `npx -y agent-device@latest`; ask or use an exact version. MCP exposes structured tools backed by the agent-device client; it does not expose generic shell execution. Prefer `open -> snapshot -i -> act -> re-snapshot -> verify -> close` where the target supports capture and selectors; otherwise follow target-specific help. Use current refs such as `@e3` for exploration and selectors for durable replay. Keep mutating commands against one session serial. Capture screenshots, logs, network, audio, perf, traces, recordings, and `.ad` replay scripts only when they add evidence.
+Use the explicit preview/production commands in
+`infrastructure/store-release.md`: local EAS builds produce Android AAB or iOS
+IPA artifacts, then EAS Submit uploads the exact artifact. Validate Android
+through Play internal testing and promote the tested production-channel binary.
+Store-track changes do not change the embedded Hot Updater channel. Keep
+versionCodes increasing; upload and Play distribution certificates differ.
+There is no separate APK distribution or tag-triggered binary build.

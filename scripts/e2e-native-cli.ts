@@ -68,9 +68,6 @@ for (let i = 0; i < args.length; i++) {
     case '--list':
       list = true;
       break;
-    case '--test':
-    case '--replay':
-      break;
     case '--env': {
       const input = value();
       const separator = input.indexOf('=');
@@ -81,7 +78,7 @@ for (let i = 0; i < args.length; i++) {
     case '--help':
     case '-h':
       console.log(
-        'bash scripts/e2e.sh [--smoke|--full|--tag capture] [--flow name] [--device ID] [--platform ios|android] [--check|--list] [--env NAME=value]'
+        'bash scripts/e2e.sh [--smoke|--full|--tag domain] [--flow name|--script file] [--device ID] [--platform ios|android] [--check|--list] [--env NAME=value]'
       );
       process.exit(0);
     default:

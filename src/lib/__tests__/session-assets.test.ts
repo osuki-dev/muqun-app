@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
+  assertAssetGateway,
+  assetFromLocalPdf,
+  assetFromUploadedPdf,
+  assetFromToolFile,
+  isPdfFile,
   assetFromContentHeaders,
   assetKindQuery,
   findAssetById,
@@ -221,5 +226,60 @@ describe('assetKindQuery', () => {
     // so a narrow question would come back answered with the whole listing.
     expect(assetKindQuery(['nonsense' as never])).toBe('nonsense');
     expect(assetKindQuery(['nonsense' as never, 'image'])).toBe('image,nonsense');
+  });
+});
+
+describe('PDF entry points', () => {
+  test('recognizes missing-MIME output and picker files by extension', () => {
+    expect(isPdfFile({ uri: './out/report.PDF' })).toBe(true);
+    expect(isPdfFile({ mime: 'application/pdf; charset=binary' })).toBe(true);
+    expect(isPdfFile({ name: 'report.pdf.zip' })).toBe(false);
+    expect(assetFromToolFile({ uri: '/workspace/report.pdf' })?.kind).toBe('pdf');
+  });
+
+  test('only explicit device-picked file/content URIs become local assets', () => {
+    const picked = { id: 'picked', name: 'report.pdf', mime: 'application/octet-stream', size: 4 };
+    for (const localUri of ['file:///cache/report.pdf', 'content://documents/42']) {
+      expect(assetFromLocalPdf({ ...picked, localUri })?.localUri).toBe(localUri);
+    }
+    for (const localUri of ['/workspace/report.pdf', 'https://host/report.pdf']) {
+      expect(assetFromLocalPdf({ ...picked, localUri })).toBeNull();
+    }
+    const [remote] = sessionAssetsFromResponse([
+      {
+        id: 'remote',
+        path: '/workspace/report.pdf',
+        localUri: 'file:///private/report.pdf',
+        uploadName: 'secret.pdf',
+        gatewayServerId: 'forged',
+      },
+    ]);
+    expect(remote?.localUri).toBeUndefined();
+    expect(remote?.uploadName).toBeUndefined();
+    expect(remote?.gatewayServerId).toBeUndefined();
+  });
+
+  test('resolves uploaded PDFs independently of the workspace without accepting URLs or traversal', () => {
+    const upload = assetFromUploadedPdf(
+      '/home/test/.local/share/muqun-gateway/uploads/abc-123.pdf',
+      'owner'
+    );
+    expect(upload?.uploadName).toBe('abc-123.pdf');
+    expect(upload?.localUri).toBeUndefined();
+    expect(upload?.gatewayServerId).toBe('owner');
+    for (const path of [
+      'https://host/muqun-gateway/uploads/abc.pdf',
+      '//host/muqun-gateway/uploads/abc.pdf',
+      '/muqun-gateway/uploads/../secret.pdf',
+      '/workspace/report.pdf',
+    ]) {
+      expect(assetFromUploadedPdf(path, 'owner')).toBeNull();
+    }
+  });
+
+  test('a file listed or resolved on one Gateway cannot download from the next', () => {
+    expect(() => assertAssetGateway({ gatewayServerId: 'owner' }, 'owner')).not.toThrow();
+    expect(() => assertAssetGateway({ gatewayServerId: 'owner' }, 'other')).toThrow();
+    expect(() => assertAssetGateway({ gatewayServerId: 'owner' }, null)).toThrow();
   });
 });

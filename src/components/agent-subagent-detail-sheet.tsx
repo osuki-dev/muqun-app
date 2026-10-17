@@ -1,12 +1,13 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
 import { useRouter } from 'expo-router';
 import { RefreshCw } from 'lucide-react-native';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AgentTranscriptList } from '@/components/agent-transcript-list';
+import { ImagePreviewModal, type PreviewImage } from '@/components/image-preview-modal';
 import { usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
 import {
   SheetScene,
@@ -15,9 +16,8 @@ import {
   SheetSceneQuietControl,
   sheetSceneStyles,
 } from '@/components/sheet-scene';
-import { Text } from '@/components/text';
 import { TRANSCRIPT_ROW_GAP, type AgentToolActions } from '@/components/agent-message-block';
-import { demoAgentSessionSnapshot, isDemoActive } from '@/lib/demo-gateway';
+import { demoAgentSessionSnapshot, demoAgentSessionTree, isDemoActive } from '@/lib/demo-gateway';
 import {
   agentSubagentDetailContentState,
   agentSubagentDetailScopeKey,
@@ -30,10 +30,14 @@ import {
   type AgentSessionSnapshot,
 } from '@/lib/agent-session';
 import { contextTokenTotal, formatModelName } from '@/lib/agent-protocol';
+import { gatewayAuthHeaders, gatewayUrl, isGatewayConfigured } from '@/lib/gateway-client';
+import { subagentSessionState } from '@/lib/agent-subagent-presentation';
+import { subagentStateWord } from '@/i18n/labels';
 import { createAgentTranscriptStore } from '@/stores/agent-transcript';
 import { useAgentSheetBridge } from '@/stores/agent-sheet-bridge';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useToolCallDetailStore } from '@/stores/tool-call-detail';
+import { useServerCapabilities } from '@/stores/server-capabilities';
 
 const doNothing = () => {};
 
@@ -60,7 +64,7 @@ export function AgentSubagentDetailSheet({
   fallbackInfo?: AgentSessionInfo;
   onOpenChild: (asid: string) => void;
 }) {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   const { colors } = useThemeTokens();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -72,7 +76,8 @@ export function AgentSubagentDetailSheet({
   const scopeKey = agentSubagentDetailScopeKey({ serverId, sessionId, ownerSessionId, asid });
   const [store] = useState(createAgentTranscriptStore);
   const [loaded, setLoaded] = useState<LoadedDetail | null>(null);
-  const [attempt, setAttempt] = useState(0);
+  const [preview, setPreview] = useState<{ scopeKey: string; uri: string } | null>(null);
+  const [attempt, setAttempt] = useState<{ scopeKey: string; sequence: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const requestRef = useRef(0);
@@ -82,6 +87,7 @@ export function AgentSubagentDetailSheet({
     const request = ++requestRef.current;
     // react-doctor-disable-next-line react-hooks-js/set-state-in-effect -- scope changes intentionally retain only a snapshot owned by the new target before loading it.
     setLoaded((current) => retainAgentSubagentDetail(current, scopeKey));
+    setPreview((current) => retainAgentSubagentDetail(current, scopeKey));
     setLoading(true);
     setError('');
 
@@ -100,7 +106,12 @@ export function AgentSubagentDetailSheet({
 
     const load = async () => {
       const demo = isDemoActive() ? demoAgentSessionSnapshot(asid) : null;
-      const snapshot = demo ?? (await getAgentSessionSnapshot(sessionId, asid));
+      const snapshot =
+        demo ??
+        (await getAgentSessionSnapshot(sessionId, asid, {
+          refresh: attempt?.scopeKey === scopeKey,
+          capabilities: serverId ? useServerCapabilities.getState().byServer[serverId] : undefined,
+        }));
       if (!current()) return;
       const transcript = store.getState();
       transcript.configure({
@@ -124,11 +135,44 @@ export function AgentSubagentDetailSheet({
   }, [asid, attempt, ownerSessionId, scopeKey, serverId, sessionId, store, t]);
 
   const activeLoaded = retainAgentSubagentDetail(loaded, scopeKey);
+  const activePreview = retainAgentSubagentDetail(preview, scopeKey);
+  const previewImage = useCallback((uri: string) => setPreview({ scopeKey, uri }), [scopeKey]);
+  const closePreview = useCallback(() => setPreview(null), []);
+  // The same URI/auth path as workbench previews; data/local/external URLs
+  // never inherit Gateway credentials. Scope masking precedes the load effect.
+  const previewImages = useMemo<PreviewImage[] | null>(() => {
+    if (!activePreview) return null;
+    const { uri } = activePreview;
+    return [
+      {
+        id: uri,
+        uri,
+        ...(isGatewayConfigured() && uri.startsWith(gatewayUrl('/'))
+          ? { headers: gatewayAuthHeaders() }
+          : {}),
+      },
+    ];
+  }, [activePreview]);
   const info = activeLoaded?.snapshot.info ?? fallbackInfo;
   const title = info ? sessionTitleOr(info, t`Untitled session`) : t`Subagent`;
+  const demoActive = isDemoActive();
   const actions = useMemo<AgentToolActions>(
     () => ({
+      audioSessionId: asid,
+      // A completed dispatch is not the child's status. Only the offline demo
+      // supplies its known children here; non-demo snapshot actions are unchanged.
+      ...(demoActive && asid
+        ? {
+            childSessions: Object.fromEntries(
+              (demoAgentSessionTree().childrenByParent[asid] ?? []).map((child) => [
+                child.asid,
+                child,
+              ])
+            ),
+          }
+        : {}),
       onOpenChildSession: onOpenChild,
+      onPreviewImage: previewImage,
       onOpenToolDetail: (part) => {
         useToolCallDetailStore.getState().open({
           part,
@@ -139,19 +183,19 @@ export function AgentSubagentDetailSheet({
         router.push('/agent-tool-detail');
       },
     }),
-    [info?.directory, onOpenChild, router, sessionId, store]
+    [asid, demoActive, info?.directory, onOpenChild, previewImage, router, sessionId, store]
   );
   const rowProps = useMemo(
     () => ({
       showReasoning,
       markdownStyle,
-      onPreviewImage: doNothing,
+      onPreviewImage: previewImage,
       onEditQueued: doNothing,
       onCancelQueued: doNothing,
       actions,
       readOnly: true,
     }),
-    [actions, markdownStyle, showReasoning]
+    [actions, markdownStyle, previewImage, showReasoning]
   );
   const childModel = info?.model;
   const catalogName = models.find(
@@ -168,6 +212,16 @@ export function AgentSubagentDetailSheet({
       caption={title}
       header={
         <View style={styles.metadata}>
+          {info ? (
+            <Text testID="agent-subagent-detail-status" variant="caption" color={colors.textMuted}>
+              {i18n._(subagentStateWord[subagentSessionState(info)])}
+            </Text>
+          ) : null}
+          {info?.agent_name || info?.agent_role ? (
+            <Text variant="caption" color={colors.textMuted}>
+              {[info.agent_name, info.agent_role].filter(Boolean).join(' · ')}
+            </Text>
+          ) : null}
           {childModelName ? (
             <Text testID="agent-subagent-detail-model" variant="caption" color={colors.textMuted}>
               {t`Model`}: {childModelName}
@@ -193,7 +247,9 @@ export function AgentSubagentDetailSheet({
           testID="agent-subagent-detail-refresh"
           accessibilityLabel={t`Refresh`}
           busy={loading}
-          onPress={() => setAttempt((value) => value + 1)}>
+          onPress={() =>
+            setAttempt((value) => ({ scopeKey, sequence: (value?.sequence ?? 0) + 1 }))
+          }>
           <RefreshCw size={17} color={colors.textMuted} />
         </SheetSceneQuietControl>
       }>
@@ -209,7 +265,9 @@ export function AgentSubagentDetailSheet({
           <SheetSceneAction
             testID="agent-subagent-detail-retry"
             label={t`Try again`}
-            onPress={() => setAttempt((value) => value + 1)}
+            onPress={() =>
+              setAttempt((value) => ({ scopeKey, sequence: (value?.sequence ?? 0) + 1 }))
+            }
           />
         </View>
       ) : (
@@ -236,6 +294,14 @@ export function AgentSubagentDetailSheet({
           contentContainerStyle={styles.transcriptContent}
         />
       )}
+      {previewImages ? (
+        <ImagePreviewModal
+          key={scopeKey}
+          images={previewImages}
+          initialIndex={0}
+          onClose={closePreview}
+        />
+      ) : null}
     </SheetScene>
   );
 }

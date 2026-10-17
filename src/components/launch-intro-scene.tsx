@@ -23,10 +23,12 @@ import {
   type LayoutChangeEvent,
 } from 'react-native';
 import Animated, {
+  cancelAnimation,
   Easing,
   Extrapolation,
   interpolate,
   ReduceMotion,
+  useAnimatedReaction,
   useAnimatedStyle,
   useDerivedValue,
   useReducedMotion,
@@ -38,11 +40,14 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { HERO_TRAIL_EFFECT, HeroDustTrail } from '@/components/launch-dust-trail';
 import { SNAP_DUST_EFFECT, SnapDust } from '@/components/launch-snap';
 import { useAppliedCustomTheme } from '@/components/theme-candidate';
 import { useLaunchHandoff } from '@/stores/launch-handoff';
 import { useLaunchArtwork, useLaunchBackground } from '@/hooks/use-launch-artwork';
+import { useAppActive } from '@/hooks/use-app-active';
 import { useLaunchHeroEdge } from '@/hooks/use-launch-hero-edge';
 import {
   LAUNCH_ARTWORK_MAX_WIDTH,
@@ -58,7 +63,13 @@ import {
 } from '@/lib/ink-bloom-shader';
 import { useSharedSkiaImage } from '@/lib/skia-image-cache';
 import { recoverWithSync } from '@/lib/compiler-safe-control-flow';
-import { containedImageRect, coveredImageRect } from '@/lib/hero-feather';
+import { containedImageRect, coveredImageRect, type FeatherSize } from '@/lib/hero-feather';
+import {
+  launchArtworkDeparture,
+  launchArtworkDepartureLimit,
+  launchArtworkDepartureOffset,
+  launchArtworkLanding,
+} from '@/lib/launch-artwork-landing';
 import {
   heroEdgeAmount,
   HERO_EDGE_REST_FRACTION,
@@ -73,6 +84,7 @@ import {
   reducedLaunchIntroTimeline,
   WORLD_ARRIVAL_ZOOM,
 } from '@/lib/launch-intro-timeline';
+import { HERO_TRAIL_CLOCK_SECONDS } from '@/lib/hero-dust-trail';
 import { bloomRadius, chooseLaunchWorld, launchWorldHole } from '@/lib/launch-intro-world';
 import { DURATION, RISE_DISTANCE, timing } from '@/lib/motion';
 import { THEME_ARTWORK_REGULAR_MIN_WIDTH } from '@/lib/responsive-layout';
@@ -116,6 +128,13 @@ import { isRenderableThemeAsset } from '@/theme/renderable-asset';
  * 3. **The hero travels.** It lifts out of the middle of the launch frame into
  *    the exact band Home keeps it in, with two ghost copies trailing a beat
  *    behind it at falling opacity -- an anime-register smear, not a particle.
+ *    And from the moment the front passes it, ash lifts off its outline: a
+ *    sparse, continuous drift of the same fine grains the exit will blow the
+ *    frame away in, floating up and to the right the way the exit's ash goes
+ *    (`launch-dust-trail.tsx`, arithmetic in `hero-dust-trail.ts`). The
+ *    drawing itself never changes; the air around it is already moving the
+ *    way everything will move at the end, so the exit arrives as more of the
+ *    same rather than as a new effect.
  * 4. **The prompt types.** In the lower third, a monospace line spells out the
  *    pack's name behind a block cursor. It is the one element that could only
  *    belong to a terminal app, and it is deliberately small.
@@ -176,8 +195,8 @@ import { isRenderableThemeAsset } from '@/theme/renderable-asset';
  * block some packs hide, plus a banner slot. When Home has not reported one --
  * no servers paired yet, the hero switched off, the lock gate up, a
  * notification deep-linking past Home -- there is nothing to land in, so the
- * hero holds where it is and the opening ends with it coming apart where it
- * stands (or, without the snap, on a cross-fade). That is the documented
+ * theme figure lifts a little within its safe area and comes apart there
+ * (or, without the snap, cross-fades). The default logo stays still. That is the
  * fallback, not a failure; the world still blooms, because the world arriving
  * is true of every first screen.
  *
@@ -306,6 +325,7 @@ export function LaunchSceneIntro({
   const nativeMirror = useSplashMirror();
   const launchArtwork = useLaunchArtwork();
   const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const artworkBox = Math.min(width * LAUNCH_ARTWORK_WIDTH_FRACTION, LAUNCH_ARTWORK_MAX_WIDTH);
   // Native keeps the image from process startup. A theme applied later must
   // still use its own launch artwork when this scene mounts again.
@@ -323,11 +343,17 @@ export function LaunchSceneIntro({
         },
       }
     : nativeMirror;
+  // Decode this launch picture itself: an explicit launch override can have a
+  // different aspect ratio from Home. Compiled drawables keep the mirror view.
+  const heroUri = mirror.logo.source?.uri;
+  const heroDrawable = mirror.hasLogo && isMeasurableHeroUri(heroUri);
+  const heroImage = useSharedSkiaImage(heroDrawable ? heroUri : null);
   const packBackground = useLaunchBackground();
   const { theme: pack, assets } = useAppliedCustomTheme();
   const theme = useThemeTokens();
   const { resolvedMode } = useThemeMode();
   const reduced = useReducedMotion();
+  const active = useAppActive();
   const fonts = useMarkdownFonts();
   const packLabel = useThemePack().label;
 
@@ -341,29 +367,32 @@ export function LaunchSceneIntro({
   // after the opening starts.
   const latestHomeRect = useRef<LaunchArtworkRect | null>(null);
   const startedAt = useRef(0);
-  const [homeRect, setHomeRect] = useState<LaunchArtworkRect | null>(null);
+  const [landing, setLanding] = useState<{
+    home: LaunchArtworkRect | null;
+    intrinsic: FeatherSize | null;
+  } | null>(null);
+  const captureLanding = useEffectEvent((rect: LaunchArtworkRect | null) => {
+    if (phase !== 'visible' || reduced) return;
+    if (startedAt.current > 0 && Date.now() - startedAt.current > beats.hero.at) return;
+    setLanding({
+      home: rect,
+      intrinsic: heroImage ? { width: heroImage.width(), height: heroImage.height() } : null,
+    });
+  });
   useEffect(
     () =>
       subscribeLaunchArtworkRect((rect) => {
         latestHomeRect.current = rect;
-        // A cold image decode may complete after the native handover. Accept
-        // it before departure, but never redirect an artwork already in flight.
-        if (
-          phase === 'visible' &&
-          !reduced &&
-          startedAt.current > 0 &&
-          Date.now() - startedAt.current <= beats.hero.at
-        ) {
-          setHomeRect(rect);
-        }
+        captureLanding(rect);
       }),
-    [phase, reduced, beats.hero.at]
+    []
   );
   // Capture before scheduling travel. The animation is armed only after this
   // snapshot has committed, so a delayed JS render cannot redirect it mid-flight.
   useEffect(() => {
-    if (phase === 'visible' && !reduced) setHomeRect(latestHomeRect.current);
-  }, [phase, reduced]);
+    captureLanding(latestHomeRect.current);
+  }, [phase, reduced, heroImage]);
+  const homeRect = landing?.home ?? null;
 
   // The picture's box on the launch screen the OS drew. The mirror centres it
   // in the window, so this is a size rather than a rectangle.
@@ -391,39 +420,41 @@ export function LaunchSceneIntro({
     width: heroBox.width,
     height: heroBox.height,
   };
-  // Exact matches can land without a dissolve. Cropped or independent artwork
-  // still travels toward Home, then dissolves into its actual composition.
-  const canLand = Boolean(
-    !reduced &&
-    homeRect &&
-    !homeRect.cropped &&
-    homeRect.source === mirror.logo.source?.uri &&
-    homeRect.intrinsicWidth &&
-    homeRect.intrinsicHeight
-  );
-  const canTravel = !reduced && Boolean(homeRect);
-  const landingCentre =
-    canTravel && homeRect
-      ? { x: homeRect.x + homeRect.width / 2, y: homeRect.y + homeRect.height / 2 }
-      : launchCentre;
-  const launchDrawing = containedImageRect(heroBox, {
-    width: homeRect?.intrinsicWidth ?? 0,
-    height: homeRect?.intrinsicHeight ?? 0,
+  // Same-image travel uses its decoded contain bounds and Home's safe area.
+  // An independent launch figure keeps its scale and only lifts a little:
+  // Home's scene is a different picture, with no corresponding sprite position.
+  const safeViewport = {
+    x: insets.left,
+    y: insets.top,
+    width: width - insets.left - insets.right,
+    height: height - insets.top - insets.bottom,
+  };
+  const destination = launchArtworkLanding({
+    box: heroBox,
+    intrinsic: landing?.intrinsic ?? null,
+    source: heroUri,
+    home: reduced ? null : homeRect,
+    viewport: safeViewport,
+    centre: launchCentre,
   });
-  const landingScale =
-    canLand && homeRect
-      ? homeRect.width / launchDrawing.width
-      : canTravel && homeRect
-        ? Math.min(homeRect.width / heroBox.width, homeRect.height / heroBox.height)
-        : 1;
+  const departureY = launchArtworkDeparture({
+    enabled: launchUri !== undefined && homeRect?.source !== heroUri,
+    reducedMotion: reduced,
+    box: heroBox,
+    viewport: safeViewport,
+    centre: launchCentre,
+  });
+  const canLand = destination.exact;
+  const landingCentre = destination.centre;
+  const landingScale = destination.scale;
 
   const paper = packBackground ?? theme.colors.background;
   const handoffPaper = useSharedValue(1);
   const handoffPaperStyle = useAnimatedStyle(() => ({ opacity: handoffPaper.value }));
   useEffect(() => {
-    if (phase !== 'visible') return;
+    if (phase !== 'visible' || !active) return;
     handoffPaper.set(withTiming(0, { duration: reduced ? 0 : 220 }));
-  }, [phase, reduced, handoffPaper]);
+  }, [phase, active, reduced, handoffPaper]);
   const widthClass = width >= THEME_ARTWORK_REGULAR_MIN_WIDTH ? 'regular' : 'compact';
 
   // The pack's own world, resolved exactly the way Home resolves it, so what
@@ -459,10 +490,10 @@ export function LaunchSceneIntro({
   // The budget is read when the timer is armed, not a reason to re-arm it.
   const readWorldDeadline = useEffectEvent(() => beats.worldDeadlineAt);
   useEffect(() => {
-    if (phase !== 'visible' || reduced || !hasArtwork) return;
+    if (phase !== 'visible' || !active || reduced || !hasArtwork) return;
     const timer = setTimeout(() => setDeadlinePassed(true), readWorldDeadline());
     return () => clearTimeout(timer);
-  }, [phase, hasArtwork, reduced]);
+  }, [phase, active, hasArtwork, reduced]);
 
   // The reveal, once chosen, may only become more conservative. `irisLatched`
   // is the one-way door: see `LaunchWorldInput`.
@@ -482,22 +513,16 @@ export function LaunchSceneIntro({
   // Whether the world is drawn by the canvas -- everything but the iris, which
   // is the fallback built from views for a painting that came too late.
   const canvasWorld = INK_BLOOM_EFFECT !== null && world.kind !== 'iris';
-  // The picture, decoded for the canvas. Only a file the canvas can open: a
-  // compiled launch drawable stays the splash mirror's view throughout, and
-  // that launch ends on the cross-fade.
-  const heroUri = mirror.logo.source?.uri;
-  const heroDrawable = mirror.hasLogo && isMeasurableHeroUri(heroUri);
-  const heroImage = useSharedSkiaImage(heroDrawable ? heroUri : null);
   // The exit is planned as the snap whenever motion is allowed and the canvas
   // draws the whole picture; otherwise it is the cross-fade from the start.
   const snapAhead =
     !reduced && canvasWorld && SNAP_DUST_EFFECT !== null && (heroDrawable || !mirror.hasLogo);
   const [heroSwapped, setHeroSwapped] = useState(false);
   useEffect(() => {
-    if (phase !== 'visible' || !heroImage || heroSwapped) return;
+    if (phase !== 'visible' || !active || !heroImage || heroSwapped) return;
     const timer = setTimeout(() => setHeroSwapped(true), HERO_SWAP_MS);
     return () => clearTimeout(timer);
-  }, [phase, heroImage, heroSwapped]);
+  }, [phase, active, heroImage, heroSwapped]);
   const heroInCanvas = canvasWorld && heroImage !== null && heroSwapped;
 
   // The far corner from wherever the hero is, taken over both ends of its
@@ -548,6 +573,25 @@ export function LaunchSceneIntro({
   const bloom = useSharedValue(0);
   const settle = useSharedValue(0);
   const hero = useSharedValue(0);
+  // The ash lifting off the picture: a clock in seconds for the grains, and
+  // the drift's strength, 0 until the front has passed the picture.
+  const trailTime = useSharedValue(0);
+  const trailFade = useSharedValue(0);
+  const departure = useSharedValue(0);
+  const departureLimit = useSharedValue(departureY);
+  useAnimatedReaction(
+    () => departureY,
+    (allowed) => {
+      departureLimit.set(launchArtworkDepartureLimit(departureLimit.get(), allowed));
+    }
+  );
+  const departureOffset = useDerivedValue(() =>
+    launchArtworkDepartureOffset(
+      departure.get(),
+      hero.get(),
+      launchArtworkDepartureLimit(departureLimit.get(), departureY)
+    )
+  );
   const type = useSharedValue(0);
   const blink = useSharedValue(0);
   const hold = useSharedValue(0);
@@ -563,11 +607,36 @@ export function LaunchSceneIntro({
   // under the cross-fade it keeps its own.
   const setRevealDriver = useLaunchHandoff((state) => state.setRevealDriver);
   useEffect(() => {
-    setRevealDriver(snapAhead ? snapProgress : null);
-  }, [snapAhead, snapProgress, setRevealDriver]);
+    setRevealDriver(active && snapAhead ? snapProgress : null);
+    return () => setRevealDriver(null);
+  }, [active, snapAhead, snapProgress, setRevealDriver]);
   const [snapImage, setSnapImage] = useState<SkImage | null>(null);
   // The snapshot is the scene's to release, once nothing is drawing it.
   useEffect(() => () => snapImage?.dispose(), [snapImage]);
+
+  // A backgrounded opening has nothing left to present. Stop its clocks so
+  // resuming cannot replay it or leave a reveal driver running offscreen.
+  const stopMotion = useEffectEvent(() => {
+    for (const value of [
+      handoffPaper,
+      ignite,
+      bloom,
+      settle,
+      hero,
+      trailTime,
+      trailFade,
+      type,
+      blink,
+      hold,
+      exit,
+      sheetFade,
+      snapProgress,
+    ]) {
+      cancelAnimation(value);
+    }
+    setRevealDriver(null);
+  });
+  useEffect(() => () => stopMotion(), []);
 
   const skip = useCallback(() => {
     if (!canSkipLaunchIntro(Date.now() - startedAt.current, beats)) return;
@@ -599,6 +668,15 @@ export function LaunchSceneIntro({
   // callbacks are read when it changes rather than being reasons to run, and
   // the shared values are stable -- which is what an effect event is for.
   const followPhase = useEffectEvent(() => {
+    if (!active) {
+      if (phase !== 'native') {
+        stopMotion();
+        setSnapImage(null);
+        onDone();
+        finish();
+      }
+      return;
+    }
     if (phase === 'visible') {
       startedAt.current = Date.now();
       if (reduced) {
@@ -677,10 +755,10 @@ export function LaunchSceneIntro({
   const homeRevealed = useLaunchHandoff((state) => state.ready);
   const [homeWaitOver, setHomeWaitOver] = useState(false);
   useEffect(() => {
-    if (!snapImage) return;
+    if (!snapImage || !active) return;
     const timer = setTimeout(() => setHomeWaitOver(true), HOME_REVEAL_PATIENCE_MS);
     return () => clearTimeout(timer);
-  }, [snapImage]);
+  }, [snapImage, active]);
   const swept = useRef(false);
   // Read when the moment comes; not reasons to schedule it again.
   const sweep = useEffectEvent(() => {
@@ -700,7 +778,7 @@ export function LaunchSceneIntro({
     );
   });
   useEffect(() => {
-    if (!dustReady || !(homeRevealed || homeWaitOver)) return;
+    if (!active || !dustReady || !(homeRevealed || homeWaitOver)) return;
     let frames = 0;
     let request = 0;
     const tick = () => {
@@ -713,19 +791,55 @@ export function LaunchSceneIntro({
     };
     request = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(request);
-  }, [dustReady, homeRevealed, homeWaitOver]);
+  }, [active, dustReady, homeRevealed, homeWaitOver]);
   useEffect(() => {
     followPhase();
-  }, [phase]);
+  }, [phase, active]);
 
+  const captureDeparture = useEffectEvent(() => {
+    // Keep the original journey and clock. The derived offset only projects
+    // already-travelled distance if the current safe viewport becomes smaller.
+    departure.set(departureY);
+  });
   useEffect(() => {
-    if (phase !== 'visible' || reduced) return;
+    if (phase !== 'visible' || !active || reduced) return;
     const elapsed = Date.now() - startedAt.current;
     // Missing the scheduled departure chooses the dissolve, never a late flight
     // or a longer splash. The rest of the opening keeps its original timeline.
     if (elapsed > beats.hero.at) return;
+    captureDeparture();
     hero.set(withDelay(beats.hero.at - elapsed, withTiming(1, timing(beats.hero.ms))));
-  }, [phase, reduced, homeRect, beats.hero.at, beats.hero.ms, hero]);
+  }, [phase, active, reduced, homeRect, beats.hero.at, beats.hero.ms, hero]);
+
+  // The trail needs only the canvas's copy of the picture, not the swap: the
+  // copy is drawn under the view at the same rectangle from the moment it
+  // decodes, and the grains leave the outline outwards, into the margin the
+  // view does not cover, so they show around the view's picture while the
+  // swap is still pending. From there the drift fades in on the timeline's
+  // beat and the grain clock runs linearly until the exit cuts the frame up
+  // -- the snapshot keeps whatever grains are in the air, and the exit's own
+  // ash takes them with everything else. A decode that lands after the hold
+  // has ended skips the beat.
+  const followTrail = useEffectEvent(() => {
+    if (phase !== 'visible' || !active || reduced || !canvasWorld || !heroImage) return;
+    if (!HERO_TRAIL_EFFECT) return;
+    const elapsed = Date.now() - startedAt.current;
+    if (elapsed > beats.holdUntil) return;
+    const delay = Math.max(0, beats.trail.at - elapsed);
+    trailFade.set(withDelay(delay, withTiming(1, timing(DURATION.short))));
+    trailTime.set(
+      withDelay(
+        delay,
+        withTiming(HERO_TRAIL_CLOCK_SECONDS, {
+          duration: HERO_TRAIL_CLOCK_SECONDS * 1000,
+          easing: Easing.linear,
+        })
+      )
+    );
+  });
+  useEffect(() => {
+    followTrail();
+  }, [phase, active, reduced, canvasWorld, heroImage]);
 
   // The bloom is the one beat driven by something other than the clock: it
   // leaves when the world behind it exists. Until then it breathes in place,
@@ -733,7 +847,7 @@ export function LaunchSceneIntro({
   // Driven by the phase, the reveal and the setting; the beats and
   // `onFrontGone` are read when those change, not reasons to run.
   const followBloom = useEffectEvent(() => {
-    if (phase !== 'visible' || reduced) return;
+    if (phase !== 'visible' || !active || reduced) return;
     if (!revealReady) {
       bloom.set(
         withRepeat(
@@ -765,7 +879,7 @@ export function LaunchSceneIntro({
   });
   useEffect(() => {
     followBloom();
-  }, [phase, revealReady, reduced]);
+  }, [phase, active, revealReady, reduced]);
 
   const paperVector = useMemo(() => colorVector(paper), [paper]);
   const primaryVector = useMemo(() => colorVector(theme.colors.primary), [theme.colors.primary]);
@@ -794,7 +908,7 @@ export function LaunchSceneIntro({
       // the hero while the hero travels.
       centre: {
         x: launchCentre.x + (landingCentre.x - launchCentre.x) * hero.value,
-        y: launchCentre.y + (landingCentre.y - launchCentre.y) * hero.value,
+        y: launchCentre.y + (landingCentre.y - launchCentre.y) * hero.value + departureOffset.get(),
       },
       front,
       // The drift rides the bloom rather than a clock, so the canvas stops
@@ -837,7 +951,7 @@ export function LaunchSceneIntro({
   const heroStyle = useAnimatedStyle(() => ({
     transform: [
       { translateX: (landingCentre.x - launchCentre.x) * hero.value },
-      { translateY: (landingCentre.y - launchCentre.y) * hero.value },
+      { translateY: (landingCentre.y - launchCentre.y) * hero.value + departureOffset.get() },
       { scale: 1 + (landingScale - 1) * hero.value },
     ],
   }));
@@ -860,7 +974,7 @@ export function LaunchSceneIntro({
   ]);
   const heroTransform = useDerivedValue(() => [
     { translateX: (landingCentre.x - launchCentre.x) * hero.value },
-    { translateY: (landingCentre.y - launchCentre.y) * hero.value },
+    { translateY: (landingCentre.y - launchCentre.y) * hero.value + departureOffset.get() },
     { scale: 1 + (landingScale - 1) * hero.value },
   ]);
   // The view's copy goes once the canvas's is the one on screen.
@@ -885,6 +999,8 @@ export function LaunchSceneIntro({
   // are in it.
   const showCover =
     world.kind === 'palette' || (world.kind === 'painted' && !(frontGone && world.ready));
+
+  if (!active && phase !== 'native') return null;
 
   return (
     <Animated.View
@@ -983,14 +1099,28 @@ export function LaunchSceneIntro({
                       ))
                     : null}
                   <Group origin={launchCentre} transform={heroTransform}>
-                    <SkiaImage
-                      fit="contain"
-                      height={heroFrame.height}
-                      image={heroImage}
-                      width={heroFrame.width}
-                      x={heroFrame.left}
-                      y={heroFrame.top}
-                    />
+                    {/*
+                      Through the trail when the device compiled it: the
+                      same picture at the same rectangle, with ash lifting
+                      off its outline once `trailFade` rises.
+                    */}
+                    {HERO_TRAIL_EFFECT ? (
+                      <HeroDustTrail
+                        frame={heroFrame}
+                        image={heroImage}
+                        time={trailTime}
+                        fade={trailFade}
+                      />
+                    ) : (
+                      <SkiaImage
+                        fit="contain"
+                        height={heroFrame.height}
+                        image={heroImage}
+                        width={heroFrame.width}
+                        x={heroFrame.left}
+                        y={heroFrame.top}
+                      />
+                    )}
                   </Group>
                 </>
               ) : null}

@@ -1,7 +1,6 @@
 import { Paperclip } from 'lucide-react-native';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { PressableScale } from '@/components/pressable-scale';
 import { ThemeIcon } from '@/components/theme-icon';
 import { composerStyles } from '@/components/terminal-composer';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
@@ -38,7 +37,7 @@ export function ComposerAttachmentButton({
         composerStyles.button,
         { borderRadius: profile.chrome.roundControl },
         expanded && { backgroundColor: background(theme.colors.primarySubtle) },
-        disabled && { opacity: 0.5 },
+        disabled && composerStyles.disabledButton,
       ]}>
       <ThemeIcon name="chrome.attach" fallback={Paperclip} size={size} color={color} />
     </PressableScale>

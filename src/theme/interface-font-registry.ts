@@ -10,7 +10,9 @@
  * `resolveFontStyle` is allowed to return.
  */
 
-import type { FontDefinition } from '@osuki-dev/ui';
+import type { FontDefinition, VariableFontAxes } from '@osuki-dev/ui';
+
+import type { FontAxis } from '@/theme/user-font-file';
 
 /**
  * The highest native weight the app may ask a reader's font for, and why there
@@ -36,7 +38,14 @@ import type { FontDefinition } from '@osuki-dev/ui';
  * wordmark, the kit's own `hero` and `dataLarge`. Invisible in a screenshot of
  * any one of them, obvious the moment a title sits above its own subtitle.
  *
- * 600 is the highest weight below the threshold, so it is the ceiling.
+ * 600 is the highest weight below the threshold, so it is the ceiling -- for a
+ * static face. A variable face is still registered once, but React Native 0.88
+ * added `fontVariationSettings` to `Text` and `TextInput` on both platforms
+ * ("Variable fonts", https://reactnative.dev/blog/2026/10/19/react-native-0.88):
+ * the face is asked for at 400, which finds the registered typeface, and the
+ * weight travels as its `wght` axis instead (the role declares its `axes` and
+ * the kit resolves them). That is the font's own bold rather than a synthetic
+ * one, so the ceiling is lifted.
  */
 export const USER_FONT_MAX_NATIVE_WEIGHT = 600;
 
@@ -54,9 +63,50 @@ export const USER_FONT_MAX_NATIVE_WEIGHT = 600;
  * somebody else's face is not this font in bold, it is a different font.
  *
  * `family` stays as the backstop for any weight the ladder cannot satisfy.
+ *
+ * A variable face declares its `wght` axis, and the kit then skips the ladder:
+ * every weight resolves to the face at native 400 with the weight on `wght`.
+ *
+ * `trailingSlack` because the app cannot vouch for a reader's file: it may be
+ * an italic or a wide face that draws past its last advance, which Android
+ * clips at the line edge. Every kit `Text` in the role then carries a trailing
+ * thin space on Android, including the labels inside kit components.
  */
-export function userFontDefinition(family: string): FontDefinition {
-  return { light: family, regular: family, medium: family, semibold: family, family };
+export function userFontDefinition(
+  family: string,
+  axes?: readonly FontAxis[] | null
+): FontDefinition {
+  const variable = variableFontAxes(axes);
+  return {
+    light: family,
+    regular: family,
+    medium: family,
+    semibold: family,
+    family,
+    trailingSlack: true,
+    ...(variable ? { axes: variable } : {}),
+  };
+}
+
+/**
+ * The kit's axes declaration for a face with a `wght` axis, or `undefined` for
+ * a static one.
+ *
+ * Only `wght`. The app has always drawn a reader's face at its default
+ * instance on every other axis; declaring `opsz` would have the kit follow the
+ * text size on it (CSS `font-optical-sizing: auto`) and redraw every glyph.
+ */
+function variableFontAxes(axes?: readonly FontAxis[] | null): VariableFontAxes | undefined {
+  const wght = axes?.find((axis) => axis.tag === 'wght');
+  return wght ? { wght: { min: wght.min, max: wght.max, default: wght.default } } : undefined;
+}
+
+/** Five weights spread across a `wght` axis, ends included, for a preview line. */
+export function weightPreviewStops(axis: FontAxis): number[] {
+  const stops = [0, 0.25, 0.5, 0.75, 1].map((at) =>
+    Math.round(axis.min + (axis.max - axis.min) * at)
+  );
+  return [...new Set(stops)];
 }
 
 /**
@@ -71,15 +121,15 @@ export function userFontDefinition(family: string): FontDefinition {
  * system face, and that is exactly how the segmented controls and the
  * instrument headings came to be in a different font from the rows they label.
  */
-export const KIT_FONT_ROLES = ['display', 'body', 'label'] as const;
+const KIT_FONT_ROLES = ['display', 'body', 'label'] as const;
 
-export type KitFontRole = (typeof KIT_FONT_ROLES)[number];
+type KitFontRole = (typeof KIT_FONT_ROLES)[number];
 
 /** The whole registry for one interface face: every role, one file. */
-export function userFontRegistry(family: string): Record<KitFontRole, FontDefinition> {
-  return {
-    display: userFontDefinition(family),
-    body: userFontDefinition(family),
-    label: userFontDefinition(family),
-  };
+export function userFontRegistry(
+  family: string,
+  axes?: readonly FontAxis[] | null
+): Record<KitFontRole, FontDefinition> {
+  const definition = userFontDefinition(family, axes);
+  return { display: definition, body: definition, label: definition };
 }

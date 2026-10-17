@@ -14,8 +14,7 @@ import { useGatewayTunnel } from '@/hooks/use-gateway-tunnel';
  * Firing the picker off against whichever server was selected last would ask
  * the wrong machine what it can run -- and then start an agent on it.
  */
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, Button, Text } from '@osuki-dev/ui';
 import { LogoLoader } from '@/components/logo-loader';
 import { useLingui } from '@lingui/react/macro';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
@@ -23,7 +22,6 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { NewTaskSheet } from '@/components/new-task-sheet';
-import { Button } from '@/components/themed-button';
 import { loadSessions, type SpawnedAgent } from '@/lib/gateway-client';
 import { describeGatewayFailure } from '@/lib/network-error';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
@@ -74,7 +72,7 @@ export default function NewTaskScreen() {
       return recoverWith(
         async () => {
           if (needsSelect && !(await selectRecord(serverId))) {
-            if (!cancelled) setError(t`This server is no longer paired.`);
+            if (!cancelled) setError(t`This computer is no longer paired.`);
             return;
           }
           if (cancelled || needsSelect || tunnel.phase !== 'open' || sessionId) return;
@@ -85,14 +83,14 @@ export default function NewTaskScreen() {
           const first = sessions.sessions?.[0]?.id;
           if (cancelled) return;
           if (!first) {
-            setError(t`This server has no session to start an agent in.`);
+            setError(t`This computer has no session to start an agent in.`);
             return;
           }
           setSessionId(first);
         },
         (failure) => {
           if (!cancelled) {
-            setError(describeGatewayFailure(failure, t`Could not reach this server.`).message);
+            setError(describeGatewayFailure(failure, t`Could not reach this computer.`).message);
           }
         }
       );
@@ -134,8 +132,8 @@ export default function NewTaskScreen() {
           style={{ textAlign: 'center' }}>
           {error ??
             (tunnelFailed
-              ? tunnel.reason || t`Could not reach this server.`
-              : t`No server to start a task on.`)}
+              ? tunnel.reason || t`Could not reach this computer.`
+              : t`No computer to start a task on.`)}
         </Text>
         {serverId ? (
           <Button

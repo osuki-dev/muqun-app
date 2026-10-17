@@ -1,8 +1,7 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { LegendList, type LegendListRenderItemProps } from '@legendapp/list/react-native';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, Skeleton, PressableScale, Text } from '@osuki-dev/ui';
 import { ChevronsDownUp, ChevronsUpDown } from 'lucide-react-native';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { RefreshControl, StyleSheet, View } from 'react-native';
@@ -16,8 +15,6 @@ import {
   usePaneChatColors,
   usePaneChatMarkdownStyle,
 } from '@/components/pane-chat-blocks';
-import { PressableScale } from '@/components/pressable-scale';
-import { Skeleton } from '@/components/themed-skeleton';
 import { buildPaneChatItems, type PaneChatDetail, type PaneChatItem } from '@/lib/pane-chat';
 import { fadeIn, fadeOut } from '@/lib/motion';
 import type { PanePart } from '@/lib/pane-parts';
@@ -84,6 +81,7 @@ export const PaneChatView = memo(function PaneChatView({
   awaitingFirstParts = false,
   onLoadEarlier,
   onOpenAsset,
+  onOpenFile,
   onToggleDetail,
 }: {
   parts: PanePart[];
@@ -108,6 +106,7 @@ export const PaneChatView = memo(function PaneChatView({
   onLoadEarlier?: () => void;
   /** A file part was tapped; the screen resolves it and opens the viewer. */
   onOpenAsset?: (assetId: string) => void;
+  onOpenFile?: (path: string) => void;
   /** Switches every run of tool calls between folded and shown. */
   onToggleDetail?: () => void;
 }) {
@@ -145,7 +144,10 @@ export const PaneChatView = memo(function PaneChatView({
 
   const renderItem = useCallback(
     ({ item }: LegendListRenderItemProps<PaneChatItem>) => {
-      if (item.kind === 'prompt') return <PaneChatPromptRow text={item.text} colors={colors} />;
+      if (item.kind === 'prompt')
+        return (
+          <PaneChatPromptRow text={item.text} attachments={item.part.attachments} colors={colors} />
+        );
       if (item.kind === 'label') return <PaneChatLabelRow text={item.text} colors={colors} />;
       if (item.kind === 'activity') {
         return (
@@ -165,10 +167,11 @@ export const PaneChatView = memo(function PaneChatView({
           expanded={expandedIds.has(item.id)}
           onToggle={toggleExpanded}
           onOpenAsset={onOpenAsset}
+          onOpenFile={onOpenFile}
         />
       );
     },
-    [colors, expandedIds, markdownStyle, onOpenAsset, toggleExpanded]
+    [colors, expandedIds, markdownStyle, onOpenAsset, onOpenFile, toggleExpanded]
   );
 
   function requestEarlier() {

@@ -66,6 +66,7 @@ export interface PumpAgentStreamOptions {
   isCancelled: () => boolean;
   /** Absent on a cleartext stream, where a frame is already the frame. */
   openFrame?: AgentStreamFrameOpener;
+  onHeard?: () => void;
 }
 
 /**
@@ -78,13 +79,14 @@ export interface PumpAgentStreamOptions {
  * the connection rather than of one frame.
  */
 export async function pumpAgentStream(options: PumpAgentStreamOptions): Promise<AgentStreamEnd> {
-  const { reader, decoder, onEvent, isCancelled, openFrame } = options;
+  const { reader, decoder, onEvent, isCancelled, openFrame, onHeard } = options;
   const parser = new ServerSentEventParser();
 
   while (!isCancelled()) {
     const { done, value } = await reader.read();
     if (isCancelled()) return 'cancelled';
     if (done) return 'closed';
+    onHeard?.();
     if (!value) continue;
 
     const text = decoder.decode(value, { stream: true });
@@ -158,6 +160,8 @@ export interface ConnectAgentStreamOptions {
   isCancelled: () => boolean;
   onEvent: (event: AgentDomainEvent) => void;
   onConnected?: () => void;
+  /** The connection delivered bytes, a keep-alive comment included; a watchdog reads this. */
+  onHeard?: () => void;
 }
 
 /**
@@ -229,6 +233,7 @@ export async function connectAgentStream(
       decoder: options.newDecoder(),
       onEvent: options.onEvent,
       isCancelled: options.isCancelled,
+      ...(options.onHeard ? { onHeard: options.onHeard } : {}),
       ...(decryptor
         ? {
             // Fail closed: on an encrypted stream a plaintext frame is nothing

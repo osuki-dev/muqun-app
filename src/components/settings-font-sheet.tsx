@@ -26,8 +26,7 @@
  * Download buttons on one ground.
  */
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, Text, TextField } from '@osuki-dev/ui';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
@@ -63,12 +62,16 @@ import {
   type FontInstallEvent,
   type FontInstallState,
 } from '@/theme/font-install-phase';
+import { weightPreviewStops } from '@/theme/interface-font-registry';
 import {
   downloadUserFont,
+  fontAxesSummary,
   importUserFont,
   isDownloadableFontUrl,
   loadUserFont,
   removeUserFontFile,
+  slotFontFamily,
+  slotWeightAxis,
   SYSTEM_FONT_SLOT,
   UserFontError,
   userFontSource,
@@ -77,7 +80,6 @@ import {
   type FontSlotId,
   type UserFontProblem,
 } from '@/theme/user-fonts';
-import { FontedTextInput } from '@/components/fonted-text-input';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
 /** The focused field's clearance above the keyboard: the URL field. */
@@ -467,6 +469,15 @@ function FontSlotGroup({
   const notMonospace = id === 'mono' && installed?.isMonospace === false;
 
   /**
+   * What a variable face can be set to, from its `fvar` table, and a line of
+   * the face across its weight axis -- the one thing about a variable font a
+   * reader cannot see from the row's title. Nothing for a static face.
+   */
+  const axes = installed?.axes ?? [];
+  const weightAxis = installed ? slotWeightAxis(installed) : null;
+  const installedFamily = installed ? slotFontFamily(installed, id) : null;
+
+  /**
    * Why a file was not installed, as one sentence the reader can act on.
    *
    * Sentence case, and no vocabulary the app invented. The three that name a
@@ -639,6 +650,37 @@ function FontSlotGroup({
                 </Text>
               </Animated.View>
             ) : null}
+            {axes.length > 0 ? (
+              <Animated.View key={installed?.file} entering={fadeIn('short')}>
+                <Text variant="caption" color={colors.textMuted} testID={`font-axes-${id}`}>
+                  {
+                    // react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs.
+                    t`Variable · ${fontAxesSummary(axes)}`
+                  }
+                </Text>
+                {weightAxis && installedFamily ? (
+                  <View
+                    style={styles.weights}
+                    accessibilityElementsHidden
+                    importantForAccessibility="no-hide-descendants"
+                    testID={`font-weights-${id}`}>
+                    {weightPreviewStops(weightAxis).map((wght) => (
+                      <Text
+                        key={wght}
+                        variant="subheading"
+                        hugSlack={false}
+                        style={{
+                          fontFamily: installedFamily,
+                          fontWeight: '400',
+                          fontVariationSettings: { wght },
+                        }}>
+                        Aa
+                      </Text>
+                    ))}
+                  </View>
+                ) : null}
+              </Animated.View>
+            ) : null}
           </View>
         }
       />
@@ -656,7 +698,7 @@ function FontSlotGroup({
           <SheetSceneField
             label={t`Font file address`}
             hint={t`A direct link to a .ttf or .otf file.`}>
-            <FontedTextInput
+            <TextField
               autoCapitalize="none"
               autoCorrect={false}
               autoFocus
@@ -729,4 +771,6 @@ const styles = StyleSheet.create({
   meta: { flexDirection: 'row', alignItems: 'center', gap: SHEET_LADDER.tight },
   /** A count that must not reflow the row as it changes. */
   measure: { fontVariant: ['tabular-nums'] },
+  /** The variable face's weight preview: one `Aa` per stop, left to right. */
+  weights: { flexDirection: 'row', gap: SHEET_LADDER.tight },
 });

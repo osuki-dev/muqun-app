@@ -3,6 +3,10 @@
 export class ComposerSendGuard {
   private pending: symbol | null = null;
 
+  isPending(): boolean {
+    return this.pending !== null;
+  }
+
   acquire(): symbol | null {
     if (this.pending !== null) return null;
     this.pending = Symbol('composer-send');

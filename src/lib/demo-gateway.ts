@@ -1,3 +1,19 @@
+import { demoPdfBytes } from './demo-pdf';
+import {
+  demoCompactionLogSnapshot,
+  isDemoCompactionLogAsid,
+  startDemoCompactionLog,
+  stopDemoCompactionLogs,
+  subscribeDemoCompactionLog,
+} from './demo-compaction-log-native';
+import {
+  demoNoticeSnapshot,
+  demoNoticeTasks,
+  isDemoNoticeAsid,
+  stopDemoNoticeFixture,
+  subscribeDemoNotice,
+} from './demo-notification-native';
+import { DEMO_VIDEO_BASE64, DEMO_VIDEO_POSTER } from '@/lib/demo-video.generated';
 import { i18n } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
 import { Image } from 'react-native';
@@ -9,8 +25,15 @@ import { DEMO_REFUSED_LOG_BYTES, demoBundleText, demoChangelogText } from '@/lib
 import { normalizeGatewayEntities, type GatewayEntity } from '@/lib/gateway-entities';
 import type { SessionAsset } from '@/lib/gateway-client';
 import type { GatewayRecord } from '@/lib/gateway-storage';
-import type { AgentSessionInfo, AgentSessionSnapshot, TimelineItem } from '@/lib/agent-protocol';
+import type {
+  AgentDomainEvent,
+  AgentSessionInfo,
+  AgentSessionSnapshot,
+  TimelineItem,
+} from '@/lib/agent-protocol';
 import { DEMO_PAIRING_SERVER_ID } from '@/lib/pairing';
+import { parseTaskList, type TaskView } from '@/lib/task-ledger';
+import { PANE_CAPTURED_HISTORY_SEGMENTS_CAPABILITY } from '@/lib/terminal-history-segments';
 import {
   buildDemoTerminalRows,
   demoTerminalRange,
@@ -63,6 +86,62 @@ import {
  * string.
  */
 export const DEMO_SERVER_ID = DEMO_PAIRING_SERVER_ID;
+export const DEMO_STREAMING_ASID = 'demo-streaming-markdown';
+export const DEMO_COMPACTION_ASID = 'demo-compaction-layout';
+export const DEMO_NATIVE_PREVIEW_ASID = 'demo-native-preview';
+export const DEMO_NATIVE_PREVIEW_CHILD_ASID = 'demo-native-preview-child';
+export const DEMO_ITALIC_BOUNDARY_ASID = 'demo-italic-boundary';
+
+/** Finite, fictional native transcript coverage; never part of a live gateway. */
+export const DEMO_STREAMING_MARKDOWN =
+  'Streaming output keeps **earlier paragraphs** readable while the answer grows.\n\n' +
+  '| 项目 / Item | 型号 / Configuration |\n| --- | --- |\n' +
+  Array.from(
+    { length: 36 },
+    (_, index) =>
+      `| 部件 ${String(index + 1).padStart(2, '0')} | Fictional component ${index + 1}: **24 cores / 24 threads**, 64 GB memory; a long wrapped description arriving progressively. |\n`
+  ).join('') +
+  '\nTable complete.\n\n```diff\n-old value\n+new value\n```\n\nDEMO_STREAM_COMPLETE';
+
+const DEMO_STREAMING_HISTORY: TimelineItem[] = Array.from({ length: 12 }, (_, index) => ({
+  id: `demo-stream-history-${index}`,
+  message_id: `demo-stream-history-${index}`,
+  order: String(index).padStart(3, '0'),
+  role: 'assistant',
+  ordinal: 0,
+  seq: index + 1,
+  updated_ms: 1,
+  part: {
+    type: 'text',
+    text: `History anchor ${String(index + 1).padStart(2, '0')}. This previously read paragraph must remain still while new output arrives below it.`,
+  },
+}));
+const DEMO_STREAMING_PROMPT: TimelineItem = {
+  id: 'demo-stream-prompt',
+  message_id: 'demo-stream-prompt',
+  order: '100',
+  role: 'user',
+  ordinal: 0,
+  seq: 13,
+  updated_ms: 1,
+  part: { type: 'text', text: 'Show a long table of fictional computer components.' },
+};
+export function demoStreamingTimeline(characters: number): TimelineItem[] {
+  return [
+    ...DEMO_STREAMING_HISTORY,
+    DEMO_STREAMING_PROMPT,
+    {
+      id: 'demo-stream-answer',
+      message_id: 'demo-stream-answer',
+      order: '101',
+      role: 'assistant',
+      ordinal: 0,
+      seq: 14 + characters,
+      updated_ms: 1,
+      part: { type: 'text', text: DEMO_STREAMING_MARKDOWN.slice(0, characters) },
+    },
+  ];
+}
 
 export const demoRecord: GatewayRecord = {
   serverId: DEMO_SERVER_ID,
@@ -80,6 +159,14 @@ export const demoRecord: GatewayRecord = {
 };
 
 let active = false;
+let demoLazygit = false;
+let demoLazygitCwd = '~/code/muqun';
+
+export function demoLaunchLazygit(worktree?: string): string {
+  demoLazygit = true;
+  demoLazygitCwd = worktree ?? '~/code/muqun';
+  return 'pane-lazygit';
+}
 let demoAssistant: { kind: string; prompt: string; startedAt: number; instanceId: string } | null =
   null;
 
@@ -94,7 +181,14 @@ export function demoSendAgentText(target: string, text: string): void {
 }
 
 export function setDemoActive(value: boolean): void {
-  if (!value) demoAssistant = null;
+  if (!value) {
+    demoAssistant = null;
+    demoLazygit = false;
+    demoCompactionListeners.clear();
+    demoCompactionStep = 0;
+    stopDemoNoticeFixture();
+    stopDemoCompactionLogs();
+  }
   active = value;
 }
 
@@ -102,8 +196,159 @@ export function isDemoActive(): boolean {
   return active;
 }
 
+export function demoNotificationSnapshot(asid: string): AgentSessionSnapshot | null {
+  return active && isDemoNoticeAsid(asid) ? demoNoticeSnapshot(asid) : null;
+}
+
+export function demoCompactionLogsSnapshot(asid: string): AgentSessionSnapshot | null {
+  return active && isDemoCompactionLogAsid(asid)
+    ? demoCompactionLogSnapshot(asid, demoCompactionSnapshot())
+    : null;
+}
+
+export function advanceDemoCompactionLogs(asid: string) {
+  if (!active || !isDemoCompactionLogAsid(asid))
+    throw new Error('Not an exact offline compaction log fixture');
+  startDemoCompactionLog(asid);
+}
+
+export function subscribeDemoCompactionLogs(
+  asid: string,
+  onEvent: (event: AgentDomainEvent) => void
+) {
+  if (!active || !isDemoCompactionLogAsid(asid))
+    throw new Error('Not an exact offline compaction log fixture');
+  return subscribeDemoCompactionLog(asid, onEvent);
+}
+
+export function subscribeDemoNotification(
+  asid: string,
+  onEvent: (event: AgentDomainEvent) => void
+) {
+  if (!active || !isDemoNoticeAsid(asid))
+    throw new Error('Not an exact offline notification fixture');
+  return subscribeDemoNotice(asid, onEvent);
+}
+
 export function isDemoRecord(record: GatewayRecord | null): boolean {
   return record?.serverId === DEMO_SERVER_ID;
+}
+
+// The real Workbench consumes these snapshots/events. No alternate composer,
+// timer, provider, or direct UI state setter participates in this fixture.
+const demoCompactionListeners = new Set<(event: AgentDomainEvent) => void>();
+let demoCompactionStep = 0;
+
+export function demoCompactionSnapshot(): AgentSessionSnapshot {
+  const timeline: TimelineItem[] = Array.from({ length: 32 }, (_, index) => ({
+    id: `demo-compaction-history-${index}`,
+    message_id: `demo-compaction-history-${index}`,
+    // Explicit chronological keys survive the normal live-boundary merge.
+    order: `demo-compaction-${String(index + 1).padStart(3, '0')}`,
+    role: 'assistant',
+    ordinal: 0,
+    part: {
+      type: 'text',
+      text:
+        index === 31
+          ? 'DEMO_COMPACTION_TAIL — keep this final paragraph and the real Thinking footer above the dock.'
+          : `History ${index + 1}. An offline layout sample keeps the transcript longer than the viewport. This paragraph is fixed while the dock changes height.`,
+    },
+    seq: index + 1,
+    updated_ms: index + 1,
+  }));
+  return {
+    info: {
+      asid: DEMO_COMPACTION_ASID,
+      backend_session_id: DEMO_COMPACTION_ASID,
+      agent_id: 'opencode',
+      title: 'Compaction layout sample',
+      directory: '/demo/muqun',
+      status: 'busy',
+      updated_ms: 1,
+      mode: 'build',
+      model: { provider_id: 'openai', model_id: 'gpt-5.4' },
+      tokens: { input: 1200, output: 100, reasoning: 0, cache_read: 0, cache_write: 0 },
+    },
+    timeline,
+    permissions: [],
+    forms: [],
+    inbox: [],
+    seq: 32 + demoCompactionStep,
+  };
+}
+
+function demoCompactionEvent(): AgentDomainEvent {
+  const phase = (demoCompactionStep - 1) % 4;
+  return {
+    type: 'agent.compaction.changed',
+    asid: DEMO_COMPACTION_ASID,
+    seq: 32 + demoCompactionStep,
+    status: phase === 1 ? 'completed' : phase === 3 ? 'failed' : 'running',
+    reason: phase >= 2 ? 'auto' : 'manual',
+  };
+}
+
+/** Each existing Context → Compact action advances one held phase, never a clock. */
+export function advanceDemoCompaction(): void {
+  if (!active || demoCompactionListeners.size === 0)
+    throw new Error('The offline compaction session is not open');
+  demoCompactionStep += 1;
+  const event = demoCompactionEvent();
+  for (const listener of [...demoCompactionListeners]) {
+    if (active && demoCompactionListeners.has(listener)) listener(event);
+  }
+}
+
+/** Closing the last owner resets the sample; cancelling cannot leave a timer/event behind. */
+export function subscribeDemoCompaction(onEvent: (event: AgentDomainEvent) => void): () => void {
+  if (!active) return () => {};
+  demoCompactionListeners.add(onEvent);
+  if (demoCompactionStep > 0) onEvent(demoCompactionEvent());
+  return () => {
+    if (demoCompactionListeners.delete(onEvent) && demoCompactionListeners.size === 0)
+      demoCompactionStep = 0;
+  };
+}
+
+/** Saved command tails whose remote or reused terminal bindings must never open. */
+export function demoTasks(): TaskView[] {
+  return (
+    parseTaskList({
+      tasks: [
+        {
+          task_id: 'demo-command-peer',
+          kind: 'command',
+          origin: 'peer',
+          state: 'done',
+          goal: 'date -u',
+          title: i18n._(msg`Command`),
+          summary: '2030-04-12 08:30:00 UTC',
+          exit_code: 0,
+          updated_ms: 1,
+          peer_reachable: false,
+          binding: {
+            kind: 'peer',
+            peer_id: 'demo-offline-peer',
+            remote_task_id: 'closed-command',
+          },
+        },
+        {
+          task_id: 'demo-command-pane',
+          kind: 'command',
+          origin: 'peer',
+          state: 'done',
+          goal: 'date -u',
+          title: i18n._(msg`Command`),
+          summary: '2030-04-12 08:31:00 UTC',
+          exit_code: 0,
+          updated_ms: 0,
+          // pane-1 exists in the demo but belongs to another shell now.
+          binding: { kind: 'pane', session_id: SESSION_ID, pane_id: 'pane-1', shell_pid: -1 },
+        },
+      ],
+    }) ?? []
+  ).concat(demoNoticeTasks());
 }
 
 /** Native E2E fixture for the recursive session-tree sheet; never used by live gateways. */
@@ -126,12 +371,22 @@ export function demoAgentSessionTree(): {
   });
   const root = session('demo-tree-root', undefined, 'Root session');
   const branch = session('demo-tree-branch', root.asid, 'Research branch');
-  const nested = session('demo-tree-nested', branch.asid, 'Nested investigation');
+  const nested = {
+    ...session('demo-tree-nested', branch.asid, 'Nested investigation'),
+    agent_name: 'Demo researcher',
+    agent_role: 'research',
+  };
   const leaves = Array.from({ length: 24 }, (_, index) =>
     session(
       `demo-tree-leaf-${index + 1}`,
       nested.asid,
-      index === 23 ? 'Diagram examples' : index === 22 ? 'Diagram stress test' : `Leaf ${index + 1}`
+      index === 23
+        ? 'Diagram examples'
+        : index === 22
+          ? 'Diagram stress test'
+          : index === 21
+            ? 'Audio output preview'
+            : `Leaf ${index + 1}`
     )
   );
   return {
@@ -141,6 +396,240 @@ export function demoAgentSessionTree(): {
       [branch.asid]: [nested],
       [nested.asid]: leaves,
     },
+  };
+}
+
+/** Independent native-preview session: never replace compaction history or old tool fixtures. */
+export function demoNativePreviewSnapshot(asid: string): AgentSessionSnapshot | null {
+  if (asid === DEMO_ITALIC_BOUNDARY_ASID) {
+    return {
+      info: {
+        asid,
+        backend_session_id: asid,
+        agent_id: 'opencode',
+        title: 'System italic boundary sample',
+        mode: 'build',
+        model: { provider_id: 'openai', model_id: 'gpt-5.4' },
+        tokens: { input: 0, output: 0, reasoning: 0, cache_read: 0, cache_write: 0 },
+        status: 'idle',
+        directory: '/demo/muqun',
+        updated_ms: 1,
+      },
+      timeline: [
+        {
+          id: 'demo-italic-plain',
+          message_id: 'demo-italic-plain',
+          role: 'user',
+          ordinal: 0,
+          part: { type: 'text', text: 'Synthetic ending 末字测' },
+          seq: 1,
+          updated_ms: 1,
+        },
+        {
+          id: 'demo-italic-emphasis',
+          message_id: 'demo-italic-emphasis',
+          role: 'user',
+          ordinal: 0,
+          part: { type: 'text', text: '*Synthetic ending 末字测*' },
+          seq: 2,
+          updated_ms: 2,
+        },
+      ],
+      permissions: [],
+      forms: [],
+      inbox: [],
+      seq: 2,
+    };
+  }
+  if (asid !== DEMO_NATIVE_PREVIEW_ASID && asid !== DEMO_NATIVE_PREVIEW_CHILD_ASID) return null;
+  const child = asid === DEMO_NATIVE_PREVIEW_CHILD_ASID;
+  const prefix = child ? 'demo-preview-child' : 'demo-preview-main';
+  const timeline: TimelineItem[] = [
+    {
+      id: `${prefix}-request`,
+      message_id: `${prefix}-request`,
+      role: 'user',
+      ordinal: 0,
+      part: { type: 'text', text: 'Inspect the synthetic offline native previews.' },
+      seq: 1,
+      updated_ms: 1,
+    },
+  ];
+  if (!child) {
+    timeline.push(
+      {
+        id: `${prefix}-question`,
+        message_id: `${prefix}-question`,
+        role: 'assistant',
+        ordinal: 0,
+        part: {
+          type: 'tool',
+          id: `${prefix}-question-call`,
+          name: 'question',
+          title: 'QA_EMPTY_QUESTION',
+          input: { questions: [] },
+          output: '',
+          content: [],
+          metadata: {},
+          state: 'completed',
+          time: { ran: 1000, completed: 1011 },
+        },
+        seq: 2,
+        updated_ms: 2,
+      },
+      {
+        id: `${prefix}-task`,
+        message_id: `${prefix}-task`,
+        role: 'assistant',
+        ordinal: 0,
+        part: {
+          type: 'tool',
+          id: `${prefix}-task-call`,
+          name: 'subagent',
+          input: {
+            description:
+              'Inspect the synthetic offline title wrapping fixture across a narrow viewport and large system font while preserving the child session status and disclosure action',
+            agent: 'QA synthetic reader',
+          },
+          output: '',
+          content: [],
+          metadata: { status: 'idle' },
+          state: 'completed',
+          child_session_id: DEMO_NATIVE_PREVIEW_CHILD_ASID,
+          time: { ran: 2000, completed: 2031 },
+        },
+        seq: 3,
+        updated_ms: 3,
+      }
+    );
+  }
+  const cases = [
+    {
+      suffix: 'markdown',
+      path: '/demo/read-preview/guide.md',
+      content: [
+        '# QA_READ_DOCUMENT',
+        '',
+        '- First sample item',
+        '- Second sample item',
+        '',
+        '```ts',
+        'const sample = 1;',
+        '```',
+        '',
+        '| Key | Value |',
+        '| --- | --- |',
+        '| QA_TABLE_END | 1 |',
+      ].join('\n'),
+      truncated: false,
+      duration: 71,
+    },
+    {
+      suffix: 'code',
+      path: '/demo/read-preview/sample.ts',
+      content:
+        'const example = "# literal code";\n// QA_READ_CODE_COPY\nconst wide = "' +
+        'sample '.repeat(180) +
+        '";',
+      truncated: false,
+      duration: 73,
+    },
+    {
+      suffix: 'large',
+      path: '/demo/read-preview/large.txt',
+      content: Array.from({ length: 600 }, (_, index) =>
+        index === 599 ? 'QA_READ_LAST_AVAILABLE' : `available row ${index + 1}`
+      ).join('\n'),
+      truncated: true,
+      duration: 79,
+    },
+    {
+      suffix: 'small',
+      path: '/demo/read-preview/small.ts',
+      content: 'const small = "# QA_SMALL_CODE_END";',
+      truncated: false,
+      duration: 83,
+    },
+    {
+      suffix: 'small-document',
+      path: '/demo/read-preview/small.md',
+      content: [
+        '# QA_SHORT_HEADING',
+        '',
+        '| Key | Value |',
+        '| --- | --- |',
+        '| QA_SHORT_TABLE | 1 |',
+        '```ts',
+        'const inline = 1;',
+        '```',
+      ].join('\n'),
+      truncated: false,
+      duration: 89,
+    },
+  ];
+  for (const [index, sample] of cases.entries()) {
+    const id = `${prefix}-${sample.suffix}`;
+    const lines = sample.content.split('\n');
+    const output =
+      `Read file ${sample.path}, lines 1-${lines.length}\n` +
+      lines.map((line, row) => `${row + 1}: ${line}`).join('\n');
+    const seq = timeline.length + 1;
+    timeline.push({
+      id,
+      message_id: id,
+      role: 'assistant',
+      ordinal: 0,
+      part: {
+        type: 'tool',
+        id: `${id}-call`,
+        name: 'read',
+        input: { filePath: sample.path },
+        output,
+        content: [{ type: 'text', text: output }],
+        metadata: {},
+        state: 'completed',
+        truncated: sample.truncated,
+        time: { ran: 4000 + index * 100, completed: 4000 + index * 100 + sample.duration },
+      },
+      seq,
+      updated_ms: seq,
+    });
+  }
+  const seq = timeline.length + 1;
+  timeline.push({
+    id: `${prefix}-tail`,
+    message_id: `${prefix}-tail`,
+    role: 'assistant',
+    ordinal: 0,
+    part: { type: 'text', text: 'QA_PREVIEW_TRANSCRIPT_TAIL' },
+    seq,
+    updated_ms: seq,
+  });
+  return {
+    info: {
+      asid,
+      backend_session_id: asid,
+      agent_id: 'opencode',
+      title: child ? 'Native preview child' : 'Native preview acceptance',
+      mode: 'build',
+      model: { provider_id: 'openai', model_id: 'gpt-5.4' },
+      tokens: { input: 0, output: 0, reasoning: 0, cache_read: 0, cache_write: 0 },
+      status: 'idle',
+      directory: '/demo/muqun',
+      ...(child
+        ? {
+            parent_id: DEMO_NATIVE_PREVIEW_ASID,
+            agent_name: 'QA synthetic reader',
+            agent_role: 'reader',
+          }
+        : {}),
+      updated_ms: 1,
+    },
+    timeline,
+    permissions: [],
+    forms: [],
+    inbox: [],
+    seq,
   };
 }
 
@@ -186,10 +675,190 @@ const DEMO_DIAGRAM_OUTPUT = [
 
 /** Read-only transcript fixture for the detail sheet reached from the tree above. */
 export function demoAgentSessionSnapshot(asid: string): AgentSessionSnapshot | null {
+  const preview = demoNativePreviewSnapshot(asid);
+  if (preview) return preview;
   const tree = demoAgentSessionTree();
   const sessions = [tree.root, ...Object.values(tree.childrenByParent).flat()];
   const info = sessions.find((session) => session.asid === asid);
   if (!info) return null;
+  if (asid === 'demo-tree-leaf-20') {
+    // Distinct messages keep these calls out of routine-tool grouping. They
+    // exercise the real disclosure, detail and image renderer without a host.
+    const timeline: TimelineItem[] = [
+      {
+        id: 'demo-tool-request',
+        message_id: 'demo-tool-request',
+        role: 'user',
+        ordinal: 0,
+        part: { type: 'text', text: 'Inspect the offline tool disclosures.' },
+        seq: 1,
+        updated_ms: 1,
+      },
+      {
+        id: 'demo-tool-shell',
+        message_id: 'demo-tool-shell',
+        role: 'assistant',
+        ordinal: 0,
+        part: {
+          type: 'tool',
+          id: 'demo-tool-shell-call',
+          name: 'bash',
+          input: { command: 'printf QA_TOOL_OUTPUT', workdir: 'fixtures' },
+          output: 'QA_TOOL_OUTPUT',
+          content: [{ type: 'text', text: 'QA_TOOL_OUTPUT' }],
+          metadata: { exit: 0 },
+          state: 'completed',
+          time: { ran: 1000, completed: 1042 },
+        },
+        seq: 2,
+        updated_ms: 2,
+      },
+      {
+        id: 'demo-tool-read',
+        message_id: 'demo-tool-read',
+        role: 'assistant',
+        ordinal: 0,
+        part: {
+          type: 'tool',
+          id: 'demo-tool-read-call',
+          name: 'read',
+          input: { filePath: 'fixtures/qa-image.webp' },
+          output: 'QA_READ_IMAGE_OUTPUT',
+          content: [
+            { type: 'text', text: 'QA_READ_IMAGE_OUTPUT' },
+            {
+              type: 'file',
+              uri: demoAssetContentUri('as-demo-shot'),
+              mime: 'image/webp',
+              name: 'QA read image',
+            },
+          ],
+          metadata: {},
+          state: 'completed',
+          time: { ran: 2000, completed: 2053 },
+        },
+        seq: 3,
+        updated_ms: 3,
+      },
+      {
+        id: 'demo-tool-failure',
+        message_id: 'demo-tool-failure',
+        role: 'assistant',
+        ordinal: 0,
+        part: {
+          type: 'tool',
+          id: 'demo-tool-failure-call',
+          name: 'bash',
+          input: { command: 'false', workdir: 'fixtures' },
+          output: 'QA_FAILURE_OUTPUT',
+          content: [{ type: 'text', text: 'QA_FAILURE_OUTPUT' }],
+          metadata: { exit: 1 },
+          state: 'failed',
+          error: { name: 'DemoToolError', message: 'QA_TOOL_FAILURE' },
+          time: { ran: 3000, completed: 3061 },
+        },
+        seq: 4,
+        updated_ms: 4,
+      },
+    ];
+    return { info, timeline, permissions: [], forms: [], inbox: [], seq: timeline.length };
+  }
+  if (asid === 'demo-tree-leaf-21') {
+    const timeline: TimelineItem[] = [
+      {
+        id: 'demo-pdf-attachment',
+        message_id: 'pdf-request',
+        role: 'user',
+        ordinal: 0,
+        part: { type: 'text', text: 'Review the attached PDF.' },
+        attachments: ['/demo/muqun-gateway/uploads/design-spec.pdf'],
+        seq: 1,
+        updated_ms: 1,
+      },
+      {
+        id: 'demo-pdf-link',
+        message_id: 'pdf-result',
+        role: 'assistant',
+        ordinal: 0,
+        part: { type: 'text', text: '[PDF output](./docs/design-spec.pdf)' },
+        seq: 2,
+        updated_ms: 2,
+      },
+      {
+        id: 'demo-pdf-tool',
+        message_id: 'pdf-tool',
+        role: 'assistant',
+        ordinal: 0,
+        part: {
+          type: 'tool',
+          id: 'demo-pdf-call',
+          name: 'document',
+          input: {},
+          output: '',
+          content: [
+            {
+              type: 'file',
+              uri: './docs/design-spec.pdf',
+              mime: 'application/pdf',
+              name: 'Tool PDF',
+            },
+          ],
+          metadata: { status: 'completed' },
+          state: 'completed',
+        },
+        seq: 3,
+        updated_ms: 3,
+      },
+    ];
+    return { info, timeline, permissions: [], forms: [], inbox: [], seq: timeline.length };
+  }
+  if (asid === 'demo-tree-leaf-22') {
+    const timeline: TimelineItem[] = [
+      {
+        id: 'demo-audio-request',
+        message_id: 'audio-request',
+        role: 'user',
+        ordinal: 0,
+        part: { type: 'text', text: 'Create a short audio sample for playback.' },
+        seq: 1,
+        updated_ms: 1,
+      },
+      {
+        id: 'demo-audio-result',
+        message_id: 'audio-result',
+        role: 'assistant',
+        ordinal: 0,
+        part: { type: 'text', text: '[sample-tone.wav](./out/sample-tone.wav)' },
+        seq: 2,
+        updated_ms: 2,
+      },
+      {
+        id: 'demo-video-result',
+        message_id: 'video-result',
+        role: 'assistant',
+        ordinal: 0,
+        part: {
+          type: 'text',
+          text: `![Video cover](${DEMO_VIDEO_POSTER})\n\n[sample-video.mp4](./out/sample-video.mp4)`,
+        },
+        seq: 3,
+        updated_ms: 3,
+      },
+      ...Array.from({ length: 40 }, (_, index): TimelineItem => ({
+        id: `audio-note-${index}`,
+        message_id: `audio-note-${index}`,
+        role: index % 2 ? 'assistant' : 'user',
+        ordinal: 0,
+        part: {
+          type: 'text',
+          text: `Playback note ${index + 1}: scroll away from the audio output to stop playback. Returning to it requires pressing Play again.`,
+        },
+        seq: index + 4,
+        updated_ms: index + 4,
+      })),
+    ];
+    return { info, timeline, permissions: [], forms: [], inbox: [], seq: timeline.length };
+  }
   const child = tree.childrenByParent[asid]?.[0];
   const timeline: TimelineItem[] = [
     {
@@ -235,6 +904,7 @@ export function demoAgentSessionSnapshot(asid: string): AgentSessionSnapshot | n
         metadata: { status: 'completed' },
         state: 'completed',
         child_session_id: child.asid,
+        time: { ran: 1000, completed: 1031 },
       },
       seq: 3,
       updated_ms: 3,
@@ -277,6 +947,9 @@ const workspacesRaw: RawEntity[] = [
  */
 function tabsRaw(): RawEntity[] {
   return [
+    ...(demoLazygit
+      ? [{ id: 'tab-lazygit', tab_id: 'tab-lazygit', workspace_id: 'ws-1', label: 'lazygit' }]
+      : []),
     {
       id: 'tab-1',
       tab_id: 'tab-1',
@@ -440,6 +1113,16 @@ function demoPaneRows(paneId: string, advance: boolean): string[] {
         : i18n._(msg`Review finished. The theme fallback has test coverage. No changes were made.`),
     ].flatMap((line) => line.split('\n'));
   }
+  if (paneId === 'pane-lazygit')
+    return [
+      'lazygit · offline demo',
+      'Branch: fix/settings',
+      'Files                         Diff',
+      ' M src/app/settings.tsx       + Unified settings entries',
+      ' M src/components/composer.tsx',
+      '',
+      'Tab: next panel   Enter: open   ?: help   q: quit',
+    ];
   if (paneId === 'pane-2') return NVIM_OUTPUT;
   if (paneId === 'pane-3') return ZSH_OUTPUT;
   if (paneId === 'pane-4') return GIT_OUTPUT;
@@ -598,6 +1281,15 @@ function editorCommands() {
 }
 
 export function demoShortcuts(paneId: string) {
+  if (paneId === 'pane-lazygit')
+    return {
+      version: 8,
+      profile: 'lazygit',
+      configured: false,
+      keys: [...BASE_KEYS, { label: 'q', key: 'q', description: 'Quit' }, ...NAV_KEYS],
+      keyActions: [],
+      commands: [],
+    };
   if (paneId === 'pane-1') {
     return {
       version: 3,
@@ -769,6 +1461,28 @@ export function demoSessionAssets(): SessionAsset[] {
   const origin = { session_id: SESSION_ID, pane_id: 'pane-1', workspace_id: 'ws-1' };
   return [
     {
+      id: 'as-demo-video',
+      path: '~/code/muqun/out/sample-video.mp4',
+      name: 'sample-video.mp4',
+      kind: 'video',
+      mime: 'video/mp4',
+      size: 94150,
+      modified_unix_ms: Date.now(),
+      previewable: true,
+      ...origin,
+    },
+    {
+      id: 'as-demo-audio',
+      path: '~/code/muqun/out/sample-tone.wav',
+      name: 'sample-tone.wav',
+      kind: 'audio',
+      mime: 'audio/wav',
+      size: 256_044,
+      modified_unix_ms: demoAssetModifiedAt('as-demo-audio'),
+      origin,
+      previewable: true,
+    },
+    {
       id: 'as-demo-report',
       path: '~/code/muqun/notes/dark-mode.md',
       name: 'dark-mode.md',
@@ -822,7 +1536,7 @@ export function demoSessionAssets(): SessionAsset[] {
       name: 'design-spec.pdf',
       kind: 'pdf',
       mime: 'application/pdf',
-      size: 2_411_008,
+      size: demoPdfBytes().length,
       modified_unix_ms: demoAssetModifiedAt('as-demo-spec'),
       origin,
       previewable: false,
@@ -1066,18 +1780,9 @@ export function demoAssetText(assetId: string): string {
  * demo mode never makes a request.
  *
  * `Image.resolveAssetSource` rather than `Asset.fromModule(...).uri`, because
- * the latter has never produced a loadable URI in an Android release build.
- * With `expo-updates` installed, the `Asset` constructor looks the module's
- * hash up in the embedded asset map and, when that answer starts with
- * `file:///android_res/`, overwrites `uri` with it and clears `localUri`
- * (`expo-asset/build/Asset.js`). `expo-image` then sees a `file:` scheme,
- * treats the URI as a filesystem path (`SourceMap.kt`, `isLocalFileUri`), and
- * logs `FileNotFoundException` -- `/android_res/...` is a resource-table name,
- * not a file, and `enableShrinkResourcesInReleaseBuilds` has renamed the
- * packaged file to something like `res/W3.png` anyway. `downloadAsync()` is no
- * escape: the same file then sets `localUri = uri` and `downloaded = true` for
- * any Android image module, so the call returns immediately over the same
- * broken path.
+ * Android release assets may be drawable resources rather than files. A
+ * `file:///android_res/...` URI is not a filesystem path, and resource shrinking
+ * may rename the packaged file independently of its resource-table entry.
  *
  * The resolver instead yields the bare drawable identifier
  * (`resourceIdentifierWithoutScale`), which `expo-image` resolves through
@@ -1086,6 +1791,46 @@ export function demoAssetText(assetId: string): string {
  * detour `expo-asset`'s own `Asset.fx` transformer makes React Native's
  * `<Image source={require(...)}>` take for exactly this case.
  */
+/** A quiet eight-second tone sequence for offline playback, with real WAV bytes. */
+export function demoAudioBytes(assetId: string): Uint8Array | null {
+  if (assetId === 'as-demo-spec') return demoPdfBytes();
+  if (assetId === 'as-demo-video')
+    return Uint8Array.from(atob(DEMO_VIDEO_BASE64), (char) => char.charCodeAt(0));
+  if (assetId !== 'as-demo-audio') return null;
+  const rate = 16_000;
+  const samples = rate * 8;
+  const bytes = new Uint8Array(44 + samples * 2);
+  const view = new DataView(bytes.buffer);
+  const writeTag = (offset: number, tag: string) => {
+    for (let index = 0; index < tag.length; index++) bytes[offset + index] = tag.charCodeAt(index);
+  };
+  writeTag(0, 'RIFF');
+  view.setUint32(4, bytes.length - 8, true);
+  writeTag(8, 'WAVE');
+  writeTag(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, rate, true);
+  view.setUint32(28, rate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeTag(36, 'data');
+  view.setUint32(40, samples * 2, true);
+  for (let index = 0; index < samples; index++) {
+    const time = index / rate;
+    const beat = time % 2;
+    const envelope = Math.max(0, Math.min(1, beat / 0.05, (1.5 - beat) / 0.15));
+    const frequency = [261.63, 329.63, 392, 523.25][Math.floor(time / 2)];
+    view.setInt16(
+      44 + index * 2,
+      Math.round(Math.sin(time * frequency * Math.PI * 2) * envelope * 2000),
+      true
+    );
+  }
+  return bytes;
+}
+
 export function demoAssetContentUri(assetId: string): string {
   if (assetId !== 'as-demo-shot') return '';
   // The `?.` is not belt-and-braces: React Native's `.d.ts` declares a
@@ -1119,6 +1864,11 @@ export function demoHealth() {
       'agent_collaboration',
       PANE_CONTEXT_CAPABILITY,
       GIT_DIFF_CAPABILITY,
+      'git_worktrees',
+      'pane_lazygit',
+      'pane_lazygit_worktree',
+      'agent_audio_assets',
+      PANE_CAPTURED_HISTORY_SEGMENTS_CAPABILITY,
     ],
     // The per-session capability list a current gateway answers with. The demo
     // session is a Herdr 0.9.0, so it carries collaboration; a demo that only
@@ -1158,21 +1908,36 @@ export function demoTabs(): GatewayEntity[] {
 }
 export function demoPanes(): GatewayEntity[] {
   return normalizeGatewayEntities(
-    demoAssistant
-      ? [
-          ...panesRaw,
-          {
-            id: 'pane-assistant',
-            pane_id: 'pane-assistant',
-            tab_id: 'tab-1',
-            workspace_id: 'ws-1',
-            label: i18n._(msg`Review assistant`),
-            agent: demoAssistant.kind,
-            agent_status: demoAssistantStatus(),
-            cwd: '~/code/muqun',
-          },
-        ]
-      : panesRaw,
+    [
+      ...(demoLazygit
+        ? [
+            {
+              id: 'pane-lazygit',
+              pane_id: 'pane-lazygit',
+              tab_id: 'tab-lazygit',
+              workspace_id: 'ws-1',
+              label: 'lazygit',
+              foreground_command: 'lazygit',
+              cwd: demoLazygitCwd,
+            },
+          ]
+        : []),
+      ...(demoAssistant
+        ? [
+            ...panesRaw,
+            {
+              id: 'pane-assistant',
+              pane_id: 'pane-assistant',
+              tab_id: 'tab-1',
+              workspace_id: 'ws-1',
+              label: i18n._(msg`Review assistant`),
+              agent: demoAssistant.kind,
+              agent_status: demoAssistantStatus(),
+              cwd: '~/code/muqun',
+            },
+          ]
+        : panesRaw),
+    ],
     []
   );
 }
@@ -1633,9 +2398,56 @@ export function demoPaneContext(paneId: string): Record<string, unknown> {
   });
 }
 
+const DEMO_LINKED_WORKTREE = '/Users/demo/code/muqun-worktrees/linked-checkout';
+
+export function demoGitWorktrees(paneId: string): Record<string, unknown> {
+  return demoContentEnvelope({
+    current: paneId === DEMO_GIT_PANE ? DEMO_GIT_REPO.toplevel : null,
+    worktrees:
+      paneId === DEMO_GIT_PANE
+        ? [
+            {
+              path: DEMO_GIT_REPO.toplevel,
+              branch: DEMO_GIT_REPO.branch,
+              head: DEMO_GIT_REPO.head,
+              detached: false,
+            },
+            {
+              path: DEMO_LINKED_WORKTREE,
+              branch: 'feat/linked-checkout',
+              head: DEMO_GIT_REPO.head,
+              detached: false,
+            },
+          ]
+        : [],
+  });
+}
+
 /** `GET …/panes/{pane_id}/git/status`. */
-export function demoGitStatus(paneId: string): Record<string, unknown> {
+export function demoGitStatus(paneId: string, worktree?: string): Record<string, unknown> {
   const inRepo = paneId === DEMO_GIT_PANE;
+  if (inRepo && worktree === DEMO_LINKED_WORKTREE) {
+    return demoContentEnvelope({
+      repo: {
+        ...DEMO_GIT_REPO,
+        toplevel: worktree,
+        branch: 'feat/linked-checkout',
+        changed_files: 1,
+      },
+      truncated: false,
+      files: [
+        {
+          path: 'linked-worktree.txt',
+          status: 'untracked',
+          staged: false,
+          unstaged: true,
+          binary: false,
+          added: 1,
+          removed: 0,
+        },
+      ],
+    });
+  }
   return demoContentEnvelope({
     session_id: SESSION_ID,
     pane_id: paneId,
@@ -1650,8 +2462,25 @@ export function demoGitDiff(
   paneId: string,
   path: string,
   from: number,
-  lines: number
+  lines: number,
+  worktree?: string
 ): Record<string, unknown> {
+  if (
+    paneId === DEMO_GIT_PANE &&
+    worktree === DEMO_LINKED_WORKTREE &&
+    path === 'linked-worktree.txt'
+  ) {
+    return demoContentEnvelope({
+      path,
+      binary: false,
+      from: 0,
+      end: 5,
+      total_lines: 5,
+      truncated: false,
+      patch:
+        'diff --git a/linked-worktree.txt b/linked-worktree.txt\n--- /dev/null\n+++ b/linked-worktree.txt\n@@ -0,0 +1 @@\n+Written in the linked checkout.\n',
+    });
+  }
   if (paneId !== DEMO_GIT_PANE) {
     return demoContentEnvelope({
       session_id: SESSION_ID,

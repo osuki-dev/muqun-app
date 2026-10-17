@@ -31,7 +31,6 @@
     "muqun/pane-cache-shape": "error",
     "muqun/composer-delivery": "error",
     "muqun/ssh-dialog-contract": "error",
-    "muqun/input-adapter-contract": "error",
     "muqun/home-model-boundary": "error",
     "lingui/t-call-in-function": "error",
     "lingui/no-single-tag-to-translate": "error",
@@ -141,6 +140,28 @@
     "unicorn/no-useless-spread": "off"
   },
   "overrides": [
+    {
+      // R3F intrinsic elements are Three objects, not DOM nodes. Keep DOM checks
+      // enabled and allow only the typed scene properties used by this one file.
+      "files": ["src/components/computer-map/scene.tsx"],
+      "rules": {
+        "react/no-unknown-property": [
+          "error",
+          {
+            "ignore": [
+              "position",
+              "userData",
+              "args",
+              "wireframe",
+              "transparent",
+              "opacity",
+              "quaternion",
+              "attach"
+            ]
+          }
+        ]
+      }
+    },
     {
       // TypeScript already reports unresolved names, and it knows the ambient globals (Buffer,
       // NodeJS, the RN globals) far better than a hand-kept list; the Expo ESLint config made the

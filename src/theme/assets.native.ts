@@ -1,3 +1,4 @@
+import { protectCacheDirectory, releaseCacheDirectory } from '@/lib/cache-cleanup';
 import { throwIfThemeAborted } from '@/theme/abort';
 import { Directory, File, Paths } from 'expo-file-system';
 import { Image } from 'expo-image';
@@ -35,8 +36,8 @@ function collectThemeAssetGarbage(): void {
         entry.delete();
     }
   } catch {
-    // Cleanup failure must not undo a durable theme selection. The quota still
-    // counts unreclaimed bytes, and the next library change retries collection.
+    // Cleanup failure must not undo a durable theme selection. Unreclaimed
+    // bytes still occupy disk, and the next library change retries collection.
   }
 }
 
@@ -122,7 +123,14 @@ async function prepareAssetStream(
     Paths.cache,
     `theme-stage-${QuickCrypto.randomBytes(12).toString('hex')}`
   );
-  stage.create();
+  await protectCacheDirectory(stage.name);
+  try {
+    throwIfThemeAborted(options.signal);
+    stage.create();
+  } catch (error) {
+    releaseCacheDirectory(stage.name);
+    throw error;
+  }
   const staged = new Map<string, File>();
   let disposed = false;
   let installing = false;
@@ -142,6 +150,7 @@ async function prepareAssetStream(
     } catch {
       /* Cache eviction can reclaim abandoned staging. */
     }
+    releaseCacheDirectory(stage.name);
     collectThemeAssetGarbage();
   };
   try {
@@ -156,7 +165,7 @@ async function prepareAssetStream(
           requireThemeDiskSpace(bytes.length, Paths.availableDiskSpace);
           const file = new File(stage, name);
           file.create();
-          file.write(bytes);
+          await file.write(bytes);
           // Persist before requesting the next chunk. Release the native decoder
           // reference even if canceled while the asynchronous decode was running.
           const decoded = await Image.loadAsync(file.uri);
@@ -185,7 +194,7 @@ async function prepareAssetStream(
         throwIfThemeAborted(options.signal);
         if (disposed || disposalRequested) throw new Error('Theme preview is no longer available');
         if (installing) throw new Error('Theme installation is already in progress');
-        // Reclaim abandoned owned files before quota planning, not only after a
+        // Reclaim abandoned owned files before install planning, not only after a
         // failed attempt. Other previews and queued installs remain protected.
         collectThemeAssetGarbage();
         installing = true;
@@ -202,8 +211,7 @@ async function prepareAssetStream(
             const needed = new Set(
               planThemeAssetInstall(
                 inventory,
-                [...staged.values()].map((file) => ({ name: file.name, bytes: file.size })),
-                policy
+                [...staged.values()].map((file) => ({ name: file.name, bytes: file.size }))
               )
             );
             releaseReservation ??= lifecycle.reserve(

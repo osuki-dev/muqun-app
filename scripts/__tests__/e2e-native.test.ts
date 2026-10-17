@@ -21,6 +21,7 @@ import {
   validateTarget,
   isNotificationFixtureCommand,
   runWithCleanup,
+  restoreAndroidIme,
   type Suite,
 } from '../e2e-native';
 
@@ -36,6 +37,145 @@ const suite: Suite = {
 const node = { index: 1, ref: 'e2', label: 'Done', rect: { x: 0, y: 0, width: 20, height: 20 } };
 
 describe('native end-to-end gate', () => {
+  test('real IME restoration is explicit and rejects other platforms/devices before IO', async () => {
+    let calls = 0;
+    for (const config of [
+      { platform: 'ios', serial: 'emulator-5560', component: 'installed.keyboard/.Ime' },
+      ...['emulator-5554', 'emulator-5556', 'emulator-5558', undefined].map((serial) => ({
+        platform: 'android',
+        serial,
+        component: 'installed.keyboard/.Ime',
+      })),
+      ...[
+        undefined,
+        '',
+        'not installed',
+        'com.callstack.agentdevice.imehelper/.TestInputMethodService',
+      ].map((component) => ({
+        platform: 'android',
+        serial: 'emulator-5560',
+        component,
+      })),
+    ]) {
+      await expect(
+        restoreAndroidIme(config, async () => {
+          calls++;
+          return '';
+        })
+      ).rejects.toThrow();
+    }
+    expect(calls).toBe(0);
+  });
+  test('real IME restoration verifies actual serial, AVD, installed list and selected component', async () => {
+    const config = {
+      platform: 'android',
+      serial: 'emulator-5560',
+      component: 'installed.keyboard/.Ime',
+    };
+    const expected = [
+      ['get-serialno'],
+      ['emu', 'avd', 'name'],
+      ['shell', 'ime', 'list', '-s'],
+      ['shell', 'ime', 'set', config.component],
+      ['shell', 'settings', 'get', 'secure', 'default_input_method'],
+    ];
+    const replies = [
+      'emulator-5560\n',
+      'muqun_ui_clean_qa_20261015\nOK\n',
+      `another.keyboard/.Ime\n${config.component}\n`,
+      'Input method selected\n',
+      `${config.component}\n`,
+    ];
+    const calls: string[][] = [];
+    const result = await restoreAndroidIme(config, async (args) => {
+      calls.push(args);
+      return replies[calls.length - 1];
+    });
+    expect(calls).toEqual(expected);
+    expect(result.component).toBe(config.component);
+    for (const [at, value, message] of [
+      [0, 'emulator-5558', 'serial mismatch'],
+      [1, 'muqun_theme_parallel_qa\nOK', 'AVD mismatch'],
+      [2, 'another.keyboard/.Ime', 'not installed'],
+      [4, 'another.keyboard/.Ime', 'not observed'],
+    ] as const) {
+      let count = 0;
+      await expect(
+        restoreAndroidIme(config, async () => {
+          const index = count++;
+          return index === at ? value : replies[index];
+        })
+      ).rejects.toThrow(message);
+      expect(count).toBe(at + 1);
+    }
+    let count = 0;
+    await expect(
+      restoreAndroidIme(config, async () => {
+        const index = count++;
+        if (index === 3) throw new Error('actual adb exit 1');
+        return replies[index];
+      })
+    ).rejects.toThrow('actual adb exit 1');
+    expect(count).toBe(4);
+  });
+  test('keyboard require-visible uses the actual native status and never passes an absent keyboard', async () => {
+    const base = await mkdtemp(path.join(tmpdir(), 'muqun-real-keyboard-'));
+    try {
+      await writeFile(path.join(base, 'keyboard.ad'), 'keyboard require-visible\n');
+      for (const visible of [true, false, undefined]) {
+        const calls: string[][] = [];
+        const runner = new NativeRunner(
+          suite,
+          base,
+          base,
+          async (args) => {
+            calls.push(args);
+            return {
+              platform: 'android',
+              visible,
+              inputOwner: 'app',
+              focusedPackage: 'dev.osuki.muqun',
+            };
+          },
+          {}
+        );
+        if (visible) await runner.runSection('keyboard.ad', { PLATFORM: 'android' });
+        else
+          await expect(runner.runSection('keyboard.ad', { PLATFORM: 'android' })).rejects.toThrow(
+            'not visible'
+          );
+        expect(calls).toEqual([['keyboard', 'status']]);
+      }
+      const runner = new NativeRunner(
+        suite,
+        base,
+        base,
+        async () => {
+          throw new Error('must not invoke');
+        },
+        {}
+      );
+      await expect(runner.runSection('keyboard.ad', { PLATFORM: 'ios' })).rejects.toThrow(
+        'requires Android'
+      );
+      for (const status of [
+        {
+          platform: 'android',
+          visible: true,
+          inputOwner: 'ime',
+          focusedPackage: 'dev.osuki.muqun',
+        },
+        { platform: 'android', visible: true, inputOwner: 'app', focusedPackage: 'other.app' },
+      ]) {
+        const wrongOwner = new NativeRunner(suite, base, base, async () => status, {});
+        await expect(wrongOwner.runSection('keyboard.ad', { PLATFORM: 'android' })).rejects.toThrow(
+          'not visible'
+        );
+      }
+    } finally {
+      await rm(base, { recursive: true, force: true });
+    }
+  });
   test('sheet list rows must have their tap center inside the visible scroll viewport', () => {
     const app = {
       ref: 'e1',
@@ -160,63 +300,6 @@ describe('native end-to-end gate', () => {
     ])
       expect(isNotificationFixtureCommand(args)).toBe(false);
   });
-  test('controlled replacements verify the actual value before another edit or navigation', async () => {
-    const base = path.resolve(
-      fileURLToPath(new URL('../../e2e/agent-device/flows/', import.meta.url))
-    );
-    for (const [file, value] of [
-      ['slash-commands.ad', 'draft'],
-      ['agent-shortcuts.ad', 'Keep this custom instruction draft while I inspect the terminal'],
-    ]) {
-      const lines = (await readFile(path.join(base, file), 'utf8')).split('\n');
-      const filled = lines.findIndex((line) => line.startsWith('fill ') && line.includes(value));
-      expect(filled >= 0).toBe(true);
-      expect(lines[filled + 1].startsWith('wait ')).toBe(true);
-      expect(lines[filled + 1].includes(value)).toBe(true);
-      expect(lines.some((line) => line.startsWith('is visible ') && line.includes(value))).toBe(
-        true
-      );
-    }
-  });
-  test('reopening a dismissed slash query observes trigger deletion before typing a new one', async () => {
-    const base = path.resolve(fileURLToPath(new URL('../../e2e/agent-device/', import.meta.url)));
-    const manifest = JSON.parse(await readFile(path.join(base, 'suite.json'), 'utf8')) as Suite;
-    for (const cleared of [true, false]) {
-      let value = '/rel';
-      let typed = 0;
-      const runner = new NativeRunner(
-        manifest,
-        base,
-        '/unused',
-        async (args) => {
-          if (args[0] === 'fill') {
-            if (args[2] === '/mod') typed++;
-            if (cleared) value = args[2];
-          }
-          if (args[0] === 'snapshot') {
-            return {
-              nodes: [
-                {
-                  ...node,
-                  type: 'android.widget.EditText',
-                  identifier: 'terminal-composer-input',
-                  label: value || 'Send a message',
-                  value,
-                },
-              ],
-            };
-          }
-          return { pass: args[0] !== 'is' || value === 'draft' };
-        },
-        {}
-      );
-      const result = runner.run([{ run: 'flows/slash-commands.ad#s30' }], {});
-      if (cleared) await result;
-      else await expect(result).rejects.toThrow();
-      expect(typed).toBe(cleared ? 1 : 0);
-      expect(value).toBe(cleared ? '/mod' : '/rel');
-    }
-  });
   test('manifest targets reject unsupported constraints instead of broadening a match', () => {
     expect(() => validateTarget({ text: 'Osuki', role: 'radiobutton' })).toThrow(
       'Unsupported native target key: role'
@@ -236,48 +319,6 @@ describe('native end-to-end gate', () => {
       validateTarget({ id: 'settings-selection:(on|off):theme-osuki', selected: false })
     ).not.toThrow();
     expect(() => validateTarget({ text: 'Osuki', checked: true })).not.toThrow();
-  });
-  test('Android slash recovery types only into an observed empty composer, never partial input', async () => {
-    const base = path.resolve(fileURLToPath(new URL('../../e2e/agent-device/', import.meta.url)));
-    const manifest = JSON.parse(await readFile(path.join(base, 'suite.json'), 'utf8')) as Suite;
-    const reset = manifest.programs['flows/slash-commands'].find(
-      (step) => step.steps?.[0]?.run === 'flows/slash-commands.ad#s16'
-    )!;
-    for (const initial of ['/', 'Send a message', '/co/', 'capture-error']) {
-      let value = initial;
-      let typed = 0;
-      const runner = new NativeRunner(
-        manifest,
-        base,
-        '/unused',
-        async (args) => {
-          if (args[0] === 'snapshot') {
-            if (initial === 'capture-error') throw new Error('capture failed');
-            return {
-              nodes: [
-                {
-                  ...node,
-                  type: 'android.widget.EditText',
-                  identifier: 'terminal-composer-input',
-                  label: value,
-                  value,
-                },
-              ],
-            };
-          }
-          if (args[0] === 'type') {
-            typed++;
-            value = args[1];
-          }
-          return { pass: !args[2]?.includes('value="/"') || value === '/' };
-        },
-        {}
-      );
-      const result = runner.run([reset], { PLATFORM: 'android' });
-      if (initial === '/co/' || initial === 'capture-error') await expect(result).rejects.toThrow();
-      else await result;
-      expect(typed).toBe(initial === 'Send a message' ? 1 : 0);
-    }
   });
   test('private AX Other settings state requires a unique leaf and preserves native precedence', () => {
     const off = {
@@ -884,32 +925,6 @@ describe('native end-to-end gate', () => {
     expect(interpolate('${TARGET}', { TARGET: 'label="Use spaces"' })).toBe('label="Use spaces"');
     expect(() => interpolate('${MISSING}', {})).toThrow('Missing test input');
   });
-  test('the iPad visual press records evidence and cannot bypass guards on other devices', async () => {
-    const directory = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-visual-'));
-    try {
-      await writeFile(path.join(directory, 'visual.ad'), '# section tap\npress 605 778 --visual\n');
-      const calls: string[][] = [];
-      const runner = new NativeRunner(
-        suite,
-        directory,
-        directory,
-        async (args) => {
-          calls.push(args);
-          return {};
-        },
-        {}
-      );
-      await runner.runSection('visual.ad#tap', { DEVICE_KIND: 'ipad' });
-      expect(calls.map((args) => args[0])).toEqual(['screenshot', 'press']);
-      expect(calls[1]).toEqual(['press', '605', '778']);
-      await expect(runner.runSection('visual.ad#tap', { DEVICE_KIND: 'iphone' })).rejects.toThrow(
-        'Visual press requires iPad'
-      );
-      expect(calls).toHaveLength(2);
-    } finally {
-      await rm(directory, { recursive: true, force: true });
-    }
-  });
   test('a landscape form sheet dismisses outside the keyboard-reduced viewport', async () => {
     const directory = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-popover-'));
     try {
@@ -973,6 +988,36 @@ describe('native end-to-end gate', () => {
       await runner.runSection('dismiss.ad#close', { PLATFORM: 'android' });
       expect(calls.filter((args) => args[0] === 'back')).toEqual([['back', '--system']]);
       expect(calls.some((args) => args[0] === 'press')).toBe(false);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+  test('a small-phone sheet dismissal stays within the screen', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-phone-dismiss-'));
+    try {
+      await writeFile(path.join(directory, 'dismiss.ad'), 'back --system\n');
+      const calls: string[][] = [];
+      const runner = new NativeRunner(
+        suite,
+        directory,
+        directory,
+        async (args) => {
+          calls.push(args);
+          if (args[0] === 'snapshot')
+            return {
+              nodes: [
+                { ...node, type: 'Application', rect: { x: 0, y: 0, width: 390, height: 844 } },
+                { ...node, label: 'Sheet Grabber', rect: { x: 0, y: 0, width: 390, height: 844 } },
+              ],
+            };
+          return {};
+        },
+        {}
+      );
+      await runner.runSection('dismiss.ad', { PLATFORM: 'ios' });
+      const gesture = calls.find((args) => args[0] === 'gesture')!;
+      expect(Number(gesture[3]) + Number(gesture[5])).toBeLessThan(844);
+      expect(Number(gesture[5])).toBeGreaterThan(0);
     } finally {
       await rm(directory, { recursive: true, force: true });
     }
@@ -1195,6 +1240,160 @@ describe('native end-to-end gate', () => {
         { when: { target: { text: 'Missing' }, absent: true }, steps: [{ include: 'missing' }] },
       ])
     ).rejects.toThrow('Missing program');
+  });
+  test('settings group seeking rechecks arriving rows before swiping but still finds offscreen rows', async () => {
+    const base = path.resolve(fileURLToPath(new URL('../../e2e/agent-device/', import.meta.url)));
+    const settingsSuite = JSON.parse(
+      await readFile(path.join(base, 'suite.json'), 'utf8')
+    ) as Suite;
+    const seek = settingsSuite.programs['subflows/open-settings-sheet'][0];
+    for (const initiallyOffscreen of [false, true]) {
+      let settled = false;
+      let scrolled = false;
+      const calls: string[][] = [];
+      const runner = new NativeRunner(
+        settingsSuite,
+        base,
+        '/unused',
+        async (args) => {
+          calls.push(args);
+          if (args[0] === 'wait') settled = true;
+          if (args[0] === 'scroll') scrolled = true;
+          if (args[0] === 'snapshot') {
+            const arrived = settled && (!initiallyOffscreen || scrolled);
+            return {
+              nodes: [
+                {
+                  ...node,
+                  type: 'Button',
+                  identifier: arrived ? 'settings-terminal-row' : 'settings-header',
+                },
+              ],
+              androidSnapshot: {},
+            };
+          }
+          if (args[0] === 'alert') return { kind: 'alertStatus', alert: null };
+          return { pass: true };
+        },
+        {}
+      );
+      await runner.run([seek], { SETTINGS_GROUP: 'terminal' });
+      expect(settled).toBe(true);
+      expect(scrolled).toBe(initiallyOffscreen);
+      expect(calls.filter((args) => args[0] === 'press')).toHaveLength(0);
+      expect(calls.filter((args) => args[0] === 'scroll')).toHaveLength(initiallyOffscreen ? 1 : 0);
+    }
+  });
+  test('explicit voice waits handle a late microphone prompt and already-authorized recording', async () => {
+    const base = await mkdtemp(path.join(tmpdir(), 'muqun-voice-permission-'));
+    await writeFile(
+      path.join(base, 'voice.ad'),
+      'wait "id=\\"voice-visual-recording\\"" 3000 --allow-microphone-prompt\n'
+    );
+    try {
+      for (const platform of ['android', 'ios'])
+        for (const firstUse of [false, true]) {
+          let captures = 0;
+          let accepted = false;
+          const calls: string[][] = [];
+          const runner = new NativeRunner(
+            suite,
+            base,
+            '/unused',
+            async (args) => {
+              calls.push(args);
+              if (args[0] === 'snapshot') {
+                captures++;
+                return {
+                  nodes:
+                    !firstUse || accepted
+                      ? [{ ...node, identifier: 'voice-visual-recording' }]
+                      : [node],
+                  ...(platform === 'android' ? { androidSnapshot: {} } : {}),
+                };
+              }
+              if (args[0] === 'alert' && args[1] === 'accept') {
+                accepted = true;
+                return {};
+              }
+              if (args[0] === 'alert')
+                return {
+                  kind: 'alertStatus',
+                  alert:
+                    firstUse && !accepted && captures > 1
+                      ? {
+                          title:
+                            platform === 'android'
+                              ? 'Allow Muqun to record audio?'
+                              : '“Muqun” Would Like to Access the Microphone',
+                          source: 'permission',
+                          packageName: 'com.android.permissioncontroller',
+                          buttons:
+                            platform === 'android'
+                              ? ['While using the app', 'Don’t allow']
+                              : ['Don’t Allow', 'OK'],
+                        }
+                      : null,
+                };
+              return {};
+            },
+            {}
+          );
+          await runner.runSection('voice.ad', { PLATFORM: platform });
+          expect(accepted).toBe(firstUse);
+          expect(calls.filter((args) => args[0] === 'alert' && args[1] === 'accept')).toHaveLength(
+            firstUse ? 1 : 0
+          );
+          expect(calls.filter((args) => args[0] === 'wait' && args[1] !== 'stable')).toEqual([
+            ['wait', 'id="voice-visual-recording"', '3000'],
+          ]);
+        }
+    } finally {
+      await rm(base, { recursive: true });
+    }
+  });
+  test('voice permission opt-in rejects other apps, permissions, and untrusted Android surfaces', async () => {
+    const base = await mkdtemp(path.join(tmpdir(), 'muqun-voice-permission-deny-'));
+    await writeFile(
+      path.join(base, 'voice.ad'),
+      'wait "id=\\"voice-visual-error\\"" 3000 --allow-microphone-prompt\n'
+    );
+    try {
+      for (const [title, packageName] of [
+        ['Allow AnotherApp to record audio?', 'com.android.permissioncontroller'],
+        ['Allow Muqun to take pictures and record video?', 'com.android.permissioncontroller'],
+        ['Allow Muqun to access location?', 'com.android.permissioncontroller'],
+        ['Allow Muqun to send notifications?', 'com.android.permissioncontroller'],
+        ['Allow Muqun to record audio?', 'untrusted.dialog'],
+      ]) {
+        let accepted = false;
+        const runner = new NativeRunner(
+          suite,
+          base,
+          '/unused',
+          async (args) => {
+            if (args[0] === 'snapshot') return { nodes: [], androidSnapshot: {} };
+            if (args[1] === 'accept') accepted = true;
+            return {
+              kind: 'alertStatus',
+              alert: {
+                title,
+                packageName,
+                source: 'permission',
+                buttons: ['While using the app', 'Don’t allow'],
+              },
+            };
+          },
+          {}
+        );
+        await expect(runner.runSection('voice.ad', { PLATFORM: 'android' })).rejects.toThrow(
+          'Unexpected alert'
+        );
+        expect(accepted).toBe(false);
+      }
+    } finally {
+      await rm(base, { recursive: true });
+    }
   });
   test('reports failures with escaped evidence', () => {
     const report = junit([{ name: 'a&b', seconds: 1, error: '<failed>' }]);
@@ -1435,4 +1634,447 @@ describe('a foreground the app has not filled yet', () => {
       await rm(base, { recursive: true, force: true });
     }
   }, 20000);
+});
+
+describe('scoped native-ref press host contract (no App render simulation)', () => {
+  const identity = 'id=agent-tool-toggle label="read · 71ms · Expand tool call"';
+  const command = `press ${JSON.stringify(identity)} --within-id "child-card"\n`;
+  const capture = () => ({
+    appBundleId: 'dev.osuki.muqun',
+    truncated: false,
+    refsGeneration: 41,
+    androidSnapshot: {},
+    nodes: [
+      {
+        index: 0,
+        ref: 'e1',
+        bundleId: 'dev.osuki.muqun',
+        type: 'android.widget.ScrollView',
+        rect: { x: 0, y: 400, width: 1000, height: 1600 },
+      },
+      { index: 1, ref: 'e2', parentIndex: 0, identifier: 'main-card', bundleId: 'dev.osuki.muqun' },
+      {
+        index: 2,
+        ref: 'e3',
+        parentIndex: 1,
+        identifier: 'agent-tool-toggle',
+        label: 'read · 71ms · Expand tool call',
+        type: 'android.widget.Button',
+        bundleId: 'dev.osuki.muqun',
+        hittable: false,
+        visibleToUser: true,
+        interactionBlocked: 'covered',
+        rect: { x: 20, y: 900, width: 320, height: 118 },
+      },
+      {
+        index: 3,
+        ref: 'e4',
+        parentIndex: 0,
+        identifier: 'child-card',
+        bundleId: 'dev.osuki.muqun',
+      },
+      {
+        index: 4,
+        ref: 'e5',
+        parentIndex: 3,
+        identifier: 'agent-tool-toggle',
+        label: 'read · 71ms · Expand tool call',
+        type: 'android.widget.Button',
+        bundleId: 'dev.osuki.muqun',
+        hittable: true,
+        visibleToUser: true,
+        rect: { x: 53, y: 758, width: 320, height: 118 },
+      },
+    ],
+  });
+  const run = async (
+    text: string,
+    invoke: (args: string[]) => Promise<Record<string, unknown>>
+  ) => {
+    const base = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-scoped-ref-'));
+    try {
+      await writeFile(path.join(base, 'scope.ad'), text);
+      await new NativeRunner(suite, base, '/unused', invoke, {}).runSection('scope.ad', {});
+    } finally {
+      await rm(base, { recursive: true, force: true });
+    }
+  };
+
+  test('actual parser uses a fresh guarded capture per press, ancestry and generation pin', async () => {
+    const calls: string[][] = [];
+    let snapshots = 0;
+    await run(command + command, async (args) => {
+      calls.push(args);
+      if (args[0] === 'snapshot') {
+        const data = capture();
+        data.refsGeneration += snapshots++;
+        data.nodes[4].ref = `e${100 + snapshots}`;
+        return data;
+      }
+      return args[0] === 'alert' ? { kind: 'alertStatus', alert: null } : {};
+    });
+    expect(calls).toEqual([
+      ['snapshot'],
+      ['alert', 'get'],
+      ['press', '@e101~s41'],
+      ['snapshot'],
+      ['alert', 'get'],
+      ['press', '@e102~s42'],
+    ]);
+  });
+
+  test('malformed scoped grammar rejects before any IO', async () => {
+    for (const text of [
+      `scroll up --within-id child-card`,
+      `press --within-id child-card ${JSON.stringify(identity)}`,
+      `press ${JSON.stringify(identity)} --within-id ""`,
+      `press ${JSON.stringify(identity)} --within-id child-card --count 2`,
+    ]) {
+      let calls = 0;
+      await expect(
+        run(text, async () => {
+          calls++;
+          return {};
+        })
+      ).rejects.toThrow('Scoped press requires');
+      expect(calls).toBe(0);
+    }
+  });
+
+  test('missing, ambiguous, cyclic, stale, covered, offscreen and incomplete captures never press', async () => {
+    const bad: ((data: ReturnType<typeof capture>) => void)[] = [
+      (d) => {
+        d.nodes[3].identifier = 'missing';
+      },
+      (d) => {
+        d.nodes.push({ ...d.nodes[3], index: 5 });
+      },
+      (d) => {
+        d.nodes[4].label = 'Different';
+      },
+      (d) => {
+        d.nodes.push({ ...d.nodes[4], index: 5, ref: 'e6' });
+      },
+      (d) => {
+        d.nodes[4].parentIndex = 99;
+      },
+      (d) => {
+        d.nodes[4].parentIndex = 4;
+      },
+      (d) => {
+        d.nodes[2].index = 4;
+      },
+      (d) => {
+        d.nodes[4].ref = 'e5~s40';
+      },
+      (d) => {
+        d.nodes[4].ref = '';
+      },
+      (d) => {
+        d.nodes[2].ref = d.nodes[4].ref;
+      },
+      (d) => {
+        d.refsGeneration = Number.NaN;
+      },
+      (d) => {
+        d.nodes[4].hittable = false;
+      },
+      (d) => {
+        d.nodes[4].visibleToUser = false;
+      },
+      (d) => {
+        d.nodes[4].interactionBlocked = 'covered';
+      },
+      (d) => {
+        d.nodes[4].rect!.y = 2100;
+      },
+      (d) => {
+        d.truncated = true;
+      },
+      (d) => {
+        d.appBundleId = 'other.app';
+      },
+      (d) => {
+        d.nodes[4].bundleId = 'other.app';
+      },
+    ];
+    for (const change of bad) {
+      const data = capture();
+      change(data);
+      const calls: string[][] = [];
+      await expect(
+        run(command, async (args) => {
+          calls.push(args);
+          return args[0] === 'snapshot' ? data : { kind: 'alertStatus', alert: null };
+        })
+      ).rejects.toThrow('Scoped press');
+      expect(calls.some((args) => args[0] === 'press' || args[0] === 'gesture')).toBe(false);
+    }
+  });
+
+  test('unexpected foreground alert blocks scope resolution and press', async () => {
+    const calls: string[][] = [];
+    await expect(
+      run(command, async (args) => {
+        calls.push(args);
+        return args[0] === 'snapshot'
+          ? capture()
+          : { kind: 'alertStatus', alert: { title: 'Trust this computer?', buttons: ['Allow'] } };
+      })
+    ).rejects.toThrow('Unexpected Android alert');
+    expect(calls).toEqual([['snapshot'], ['alert', 'get']]);
+  });
+
+  const brokenUpperChains: [string, (data: ReturnType<typeof capture>) => void][] = [
+    [
+      'scope missing parent',
+      (d) => {
+        d.nodes[3].parentIndex = 99;
+      },
+    ],
+    [
+      'scope self cycle',
+      (d) => {
+        d.nodes[3].parentIndex = 3;
+      },
+    ],
+    [
+      'root missing parent',
+      (d) => {
+        d.nodes[0].parentIndex = 99;
+      },
+    ],
+    [
+      'root self cycle',
+      (d) => {
+        d.nodes[0].parentIndex = 0;
+      },
+    ],
+    [
+      'scope upper missing parent',
+      (d) => {
+        d.nodes[3].parentIndex = 5;
+        d.nodes.push({
+          index: 5,
+          ref: 'e6',
+          parentIndex: 99,
+          identifier: 'upper-scope',
+          bundleId: 'dev.osuki.muqun',
+        });
+      },
+    ],
+    [
+      'scope upper cycle',
+      (d) => {
+        d.nodes[3].parentIndex = 5;
+        d.nodes.push({
+          index: 5,
+          ref: 'e6',
+          parentIndex: 3,
+          identifier: 'upper-scope',
+          bundleId: 'dev.osuki.muqun',
+        });
+      },
+    ],
+    [
+      'negative scope parent',
+      (d) => {
+        d.nodes[3].parentIndex = -1;
+      },
+    ],
+    [
+      'noninteger scope parent',
+      (d) => {
+        d.nodes[3].parentIndex = 0.5;
+      },
+    ],
+    [
+      'nonfinite scope index',
+      (d) => {
+        d.nodes[3].index = Number.NaN;
+      },
+    ],
+    [
+      'negative target index',
+      (d) => {
+        d.nodes[4].index = -1;
+      },
+    ],
+    [
+      'noninteger root index',
+      (d) => {
+        d.nodes[0].index = 0.5;
+      },
+    ],
+  ];
+  for (const [name, change] of brokenUpperChains) {
+    test(`complete chain regression: ${name} fails before mutation`, async () => {
+      const data = capture();
+      data.nodes[2].label = 'Unrelated parent control';
+      change(data);
+      const calls: string[][] = [];
+      await expect(
+        run(command, async (args) => {
+          calls.push(args);
+          return args[0] === 'snapshot' ? data : { kind: 'alertStatus', alert: null };
+        })
+      ).rejects.toThrow('Scoped press');
+      expect(calls).toEqual([['snapshot'], ['alert', 'get']]);
+    });
+  }
+
+  test('approved permission dismissal selects from the POST-dismiss capture only', async () => {
+    let snapshots = 0,
+      alerts = 0;
+    const presses: string[][] = [];
+    await run(command, async (args) => {
+      if (args[0] === 'snapshot') {
+        const data = capture();
+        data.refsGeneration += snapshots++;
+        return data;
+      }
+      if (args[0] === 'alert' && args[1] === 'get')
+        return {
+          kind: 'alertStatus',
+          alert:
+            alerts++ === 0
+              ? {
+                  title: 'Allow Muqun notifications?',
+                  source: 'permission',
+                  packageName: 'com.android.permissioncontroller',
+                  buttons: ["Don't allow", 'Allow'],
+                }
+              : null,
+        };
+      if (args[0] === 'press') presses.push(args);
+      return {};
+    });
+    expect(snapshots).toBe(2);
+    expect(presses).toEqual([['press', '@e5~s42']]);
+  });
+
+  test('native stale-ref rejection propagates once without selector/coordinate fallback', async () => {
+    const stale = new NativeCommandError({
+      code: 'STALE_REF',
+      message: 'snapshot generation changed',
+    });
+    const presses: string[][] = [];
+    const failure = await run(command, async (args) => {
+      if (args[0] === 'snapshot') return capture();
+      if (args[0] === 'alert') return { kind: 'alertStatus', alert: null };
+      presses.push(args);
+      throw stale;
+    }).catch((error) => error);
+    expect(failure).toBe(stale);
+    expect(presses).toEqual([['press', '@e5~s41']]);
+  });
+});
+
+describe('stable wait capture recovery', () => {
+  const stalled = (captures: number) =>
+    new NativeCommandError({
+      code: 'COMMAND_FAILED',
+      details: { reason: 'wait_stable_timeout', captureStalled: true, captures },
+    });
+  const run = async (
+    commands: string,
+    invoke: (args: string[]) => Promise<Record<string, unknown>>
+  ) => {
+    const base = await mkdtemp(path.join(tmpdir(), 'e2e-stable-capture-'));
+    try {
+      await writeFile(path.join(base, 'probe.ad'), commands);
+      const runner = new NativeRunner(suite, base, '/unused', invoke, {});
+      await runner.runSection('probe.ad', {});
+    } finally {
+      await rm(base, { recursive: true, force: true });
+    }
+  };
+
+  for (const captures of [0, 1, 3]) {
+    test(`reacquires a stable verdict after a stalled capture with ${captures} earlier trees`, async () => {
+      const calls: string[][] = [];
+      let waits = 0;
+      await run('open dev.osuki.muqun --relaunch\nwait stable 400 5000\n', async (args) => {
+        calls.push(args);
+        if (args[0] === 'wait' && ++waits === 1) throw stalled(captures);
+        return { waitedMs: 451, captures: 2, nodeCount: 14 };
+      });
+      expect(calls).toEqual([
+        ['open', 'dev.osuki.muqun', '--relaunch'],
+        ['wait', 'stable', '400', '5000'],
+        ['wait', 'stable', '400', '5000'],
+      ]);
+    });
+  }
+
+  test('the second stalled capture fails without a third attempt', async () => {
+    let attempts = 0;
+    const second = stalled(2);
+    const result = await run('wait stable 400 5000\n', async () => {
+      attempts++;
+      throw attempts === 1 ? stalled(3) : second;
+    }).catch((error) => error);
+    expect(result).toBe(second);
+    expect(attempts).toBe(2);
+  });
+
+  test('ordinary instability and unrelated errors fail without retry', async () => {
+    for (const error of [
+      new NativeCommandError({
+        code: 'COMMAND_FAILED',
+        details: { reason: 'wait_stable_timeout', captures: 8 },
+      }),
+      new NativeCommandError({
+        code: 'COMMAND_FAILED',
+        details: { reason: 'wait_stable_timeout', captureStalled: false, captures: 3 },
+      }),
+      new NativeCommandError({
+        code: 'COMMAND_FAILED',
+        details: { reason: 'predicate_failed', captureStalled: true },
+      }),
+      new NativeCommandError({
+        code: 'INVALID_ARGS',
+        details: { reason: 'wait_stable_timeout', captureStalled: true },
+      }),
+      new Error('captureStalled'),
+    ]) {
+      let attempts = 0;
+      const result = await run('wait stable 400 5000\n', async () => {
+        attempts++;
+        throw error;
+      }).catch((failure) => failure);
+      expect(result).toBe(error);
+      expect(attempts).toBe(1);
+    }
+  });
+
+  test('a stable verdict does not bypass the following assertion', async () => {
+    let waits = 0;
+    await expect(
+      run('wait stable 400 5000\nis visible id="required"\n', async (args) => {
+        if (args[0] === 'wait') {
+          if (++waits === 1) throw stalled(3);
+          return { waitedMs: 451, captures: 2, nodeCount: 14 };
+        }
+        return { pass: false };
+      })
+    ).rejects.toThrow();
+    expect(waits).toBe(2);
+  });
+
+  test('capture recovery never repeats a mutation or another observation command', async () => {
+    for (const command of ['press id="done"', 'snapshot', 'wait id="done" 5000']) {
+      let attempts = 0;
+      const error = stalled(3);
+      const result = await run(`${command}\n`, async (args) => {
+        // A mutation's normal foreground guard is allowed to inspect first.
+        if (command.startsWith('press') && args[0] === 'snapshot')
+          return { nodes: [{ ...node, type: 'Button', identifier: 'done' }] };
+        attempts++;
+        throw error;
+      }).catch((failure) => failure);
+      expect(result).toBe(error);
+      expect(attempts).toBe(1);
+    }
+  });
 });

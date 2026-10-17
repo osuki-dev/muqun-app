@@ -95,6 +95,12 @@ export interface PaneWindow {
   rangeUnsupported: boolean;
   /** The last read's envelope, which `paneReadRange` addresses the next page from. */
   lastRead: unknown;
+  /**
+   * The caller's own state for the history above this window (the captured
+   * history's cursor, for one), opaque here: kept and dropped with the window
+   * it belongs to, so it is never restored without that window.
+   */
+  captured?: unknown;
 }
 
 export interface PaneCacheEntry extends PaneWindow {

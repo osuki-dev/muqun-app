@@ -6,6 +6,7 @@ import {
   classifyTransportRefusal,
   GatewayTransportRefusalError,
   type TransportRefusal,
+  clockSkewMinutes,
 } from './gateway-refusal';
 
 export type GatewayFailureKind = 'timeout' | 'network' | 'auth' | 'server' | 'request' | 'backend';
@@ -68,13 +69,13 @@ function describeTransportRefusal(refusal: TransportRefusal): GatewayFailure {
     case 'not-paired':
       return {
         kind: 'auth',
-        message: t`This server no longer recognises this device. Pair it again to reconnect.`,
+        message: t`This computer no longer recognises this device. Pair it again to reconnect.`,
         ...shared,
       };
     case 'stored-key-unusable':
       return {
         kind: 'auth',
-        message: t`This server cannot use this device's stored key. Pair it again to reconnect.`,
+        message: t`This computer cannot use this device's stored key. Pair it again to reconnect.`,
         ...shared,
       };
     case 'unknown-host':
@@ -86,17 +87,33 @@ function describeTransportRefusal(refusal: TransportRefusal): GatewayFailure {
     case 'unreadable-request':
       return {
         kind: 'request',
-        message: t`This server could not read the request. Check this device's date and time.`,
+        message: t`This computer could not read the request. Check this device's date and time.`,
         ...shared,
       };
+    case 'clock-skew': {
+      // The gateway says the clock is off; with its own time on the answer it
+      // can be said by how much, which is what makes the fix obvious.
+      if (refusal.serverTimeMs === undefined)
+        return {
+          kind: 'request',
+          message: t`This computer could not read the request. Check this device's date and time.`,
+          ...shared,
+        };
+      const minutes = clockSkewMinutes(refusal.serverTimeMs);
+      return {
+        kind: 'request',
+        message: t`Your phone's clock is off by ${minutes} minutes. Fix the date and time, then try again.`,
+        ...shared,
+      };
+    }
     case 'already-handled':
       return {
         kind: 'request',
-        message: t`This server has already handled that request.`,
+        message: t`This computer has already handled that request.`,
         ...shared,
       };
     case 'server-fault':
-      return { kind: 'server', message: t`This server had a problem answering.`, ...shared };
+      return { kind: 'server', message: t`This computer had a problem answering.`, ...shared };
     case 'refused':
       // Everything this build cannot name: a code from a newer gateway, a
       // captive portal's HTML, an empty body. Still better than the sentence
@@ -104,7 +121,7 @@ function describeTransportRefusal(refusal: TransportRefusal): GatewayFailure {
       // who could do nothing whatsoever with that.
       return {
         kind: refusal.status >= 500 ? 'server' : 'request',
-        message: t`This server refused the request.`,
+        message: t`This computer refused the request.`,
         ...shared,
       };
   }
@@ -146,6 +163,14 @@ export function describeGatewayFailure(
   const status = Number(raw.match(/^HTTP (\d+):/)?.[1] ?? 0);
   const normalized = raw.toLowerCase();
 
+  if (apiCode === 'agent_blocked') {
+    return {
+      kind: 'request',
+      message: t`The agent is waiting for an answer. Use the question's controls or the terminal keyboard to respond. Your message has not been sent.`,
+      retryable: false,
+      needsPairing: false,
+    };
+  }
   if (apiCode && PAIRING_ERROR_CODES.has(apiCode)) {
     return {
       kind: 'request',
@@ -160,7 +185,7 @@ export function describeGatewayFailure(
     // as well -- so this carries the flag that puts the action on screen.
     return {
       kind: 'auth',
-      message: t`Pair this server again.`,
+      message: t`Pair this computer again.`,
       retryable: false,
       needsPairing: true,
     };

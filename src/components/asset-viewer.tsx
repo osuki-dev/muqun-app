@@ -1,50 +1,41 @@
 import * as Clipboard from 'expo-clipboard';
+import { AudioPlaybackError } from '@/lib/audio-playback-session';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, Skeleton, Button, PressableScale, Text } from '@osuki-dev/ui';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { Button } from '@/components/themed-button';
-import { Skeleton } from '@/components/themed-skeleton';
-import { Check, Copy, X } from 'lucide-react-native';
-import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
+import { Check, Copy, Download, X } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  Linking,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Modal, ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useMarkdownFonts } from '@/hooks/use-user-fonts';
-import { createMarkdownStyle, markdownImageStyle } from '@/lib/markdown-style';
+import { useMarkdownStyle } from '@/hooks/use-markdown-style';
+import type { createMarkdownStyle } from '@/lib/markdown-style';
 import { ImagePreviewModal } from '@/components/image-preview-modal';
+import { PdfAssetPreview } from '@/components/pdf-asset-preview';
+import { VideoAssetPreview } from '@/components/video-asset-preview';
+import { AudioAssetPreview } from '@/components/audio-asset-preview';
+import { useFileActions } from '@/hooks/use-file-actions';
+import { saveSessionAsset } from '@/lib/save-file';
 import { SheetFrame } from '@/components/sheet-ground';
-import { PressableScale } from '@/components/pressable-scale';
 import { formatAssetSize } from '@/lib/asset-display';
-import { fenceLanguageForFile, fencedFile } from '@/lib/code-language';
 import { useLatestRef } from '@/hooks/use-render-refs';
 import { useRelativeTime } from '@/hooks/use-relative-time';
 import { fadeIn, fadeOut } from '@/lib/motion';
 import {
   assetImageSource,
+  assetPreviewImage,
   readAssetImageSource,
   readAssetText,
   type AssetImageSource,
   type SessionAsset,
   readAssetBytes,
 } from '@/lib/gateway-client';
-import { CodeLinesView } from '@/components/code-lines-view';
-import { MarkdownDocumentView } from '@/components/markdown-document-view';
-import { MAX_ASSET_TEXT_BYTES, indexTextLines } from '@/lib/text-preview';
+import { FileTextBody } from '@/components/file-text-body';
+import { MAX_ASSET_TEXT_BYTES } from '@/lib/text-preview';
 import { assetPresentation, type AssetPresentation } from '@/lib/asset-viewer-layout';
 import { describeGatewayFailure } from '@/lib/network-error';
-import { isSafeExternalLink } from '@/lib/safe-link';
 import { CustomThemeLibrary, type ThemePrimaryAction } from '@/components/custom-theme-library';
 import { SHEET_LADDER, SheetSceneAction, SheetSceneHeading } from '@/components/sheet-scene';
 import { ThemeImportProgress } from '@/components/theme-import-progress';
@@ -55,41 +46,22 @@ import { THEME_LIMITS } from '@/theme/schema';
 import type { ThemeEditorCandidate } from '@/theme/draft-session';
 import { themeFromDocument } from '@/theme/file-preview';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
-import {
-  escapeMarkdownText,
-  messageImageResolver,
-  rewriteMessageImages,
-} from '@/lib/message-images';
-
-/**
- * A document's images that name a path on the gateway host. The phone cannot
- * load those, so each says so in words rather than drawing an empty box.
- *
- * TODO: resolve a relative image against the document's own directory. The
- * content route only serves ids the gateway has indexed or listed, and the
- * exact-path lookup that would list a sibling is scoped to a terminal tab,
- * which a file opened from an agent session does not have.
- */
-const NO_IMAGE_URIS: ReadonlyMap<string, string> = new Map();
-const NO_PENDING_IMAGES: ReadonlySet<string> = new Set();
-const documentImageResolver = messageImageResolver(NO_IMAGE_URIS, NO_PENDING_IMAGES);
 
 /**
  * Read-only view of one artifact the agent produced.
  *
- * Every kind is displayed straight from the gateway rather than copied to a
- * cache file first: an image is fetched by the image library, which sends the
- * bearer token itself and owns the decode and the disk cache, and text is read
- * into a string because that is what the renderers want anyway. Nothing here
- * holds a whole file in the JS heap except text, which is size-capped by
- * `readAssetText` -- and that cap is now the only one: what arrives is drawn,
- * a block or a line at a time.
+ * Images use the image library's authenticated fetch and decode. Text is read
+ * through the bounded text reader. Audio is downloaded through the same
+ * authenticated transport into an owned temporary file, with a 10 MiB ceiling,
+ * so the native player can seek without exposing Gateway credentials to it.
  */
 export function AssetViewer({ asset, onClose }: { asset: SessionAsset; onClose: () => void }) {
   // A picture goes to the lightbox and its black matte; everything else is
   // text or a description of a file, on the frosted ground below. See
   // `asset-viewer-layout.ts`.
   if (assetPresentation(asset) === 'lightbox') {
+    const preview = assetPreviewImage(asset);
+    if (preview) return <ImagePreviewModal images={[preview]} initialIndex={0} onClose={onClose} />;
     const source = assetImageSource(asset);
     if (!source) return <EncryptedImageViewer asset={asset} onClose={onClose} />;
     return (
@@ -181,6 +153,7 @@ const COPIED_FEEDBACK_MS = 1_600;
 /** Everything that is not an image: a document, some text, or a file we can only describe. */
 function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => void }) {
   const surfaceBackground = useSurfaceBackground();
+  const fileActions = useFileActions(asset.name, () => saveSessionAsset(asset));
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
   //
   // React Compiler is enabled, and it will memoize a global `t` call whose
@@ -194,15 +167,7 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
 
   const theme = useThemeTokens();
   const insets = useSafeAreaInsets();
-  const markdownFonts = useMarkdownFonts();
-  const { height: viewportHeight } = useWindowDimensions();
-  const markdownStyle = useMemo(() => {
-    const base = createMarkdownStyle(theme.colors, markdownFonts);
-    return {
-      ...base,
-      image: markdownImageStyle(viewportHeight, base.codeBlock?.borderRadius ?? 0),
-    };
-  }, [theme.colors, markdownFonts, viewportHeight]);
+  const markdownStyle = useMarkdownStyle();
   const [content, setContent] = useState<string | null>(null);
   /**
    * Which body this file gets. `too-large` is the one ceiling left, and it is
@@ -293,6 +258,8 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
       async () => {
         try {
           const bytes = await readAssetBytes(asset, {
+            // Theme archives are downloadable files, not Gateway previews.
+            download: true,
             signal: request.signal,
             maxBytes: THEME_LIMITS.packageBytes,
             onProgress: (done, total) => {
@@ -308,7 +275,11 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
           // A read this screen itself cancelled is not a failure to report: there is
           // no longer a screen to report it on.
           if (mounted.current && !request.isCanceled)
-            setError(describeGatewayFailure(failure, t`Could not open this theme.`).message);
+            setError(
+              failure instanceof AudioPlaybackError
+                ? t`Update the Gateway to open or save this file.`
+                : describeGatewayFailure(failure, t`Could not open this theme.`).message
+            );
         }
       },
       () => {
@@ -426,6 +397,15 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
                   caption={subtitle}
                   trailing={
                     <View style={styles.headerControls}>
+                      <PressableScale
+                        accessibilityLabel={t`Save file`}
+                        onPress={fileActions.show}
+                        style={[
+                          styles.close,
+                          { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                        ]}>
+                        <Download size={18} color={theme.colors.text} />
+                      </PressableScale>
                       {content ? (
                         <PressableScale
                           accessibilityLabel={t`Copy`}
@@ -456,6 +436,7 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
               </View>
             </View>
 
+            {fileActions.menu}
             {pack ? (
               <ScrollView contentContainerStyle={styles.themePreview}>
                 <CustomThemeLibrary
@@ -573,42 +554,6 @@ function AssetBody({
 
   const theme = useThemeTokens();
 
-  /** A markdown file is a document; everything else is code, whatever it is called. */
-  const document = presentation === 'document';
-  const documentText = useMemo(
-    () =>
-      content === null || !document
-        ? content
-        : rewriteMessageImages(content, documentImageResolver, (alt) => {
-            const label = alt.trim() ? t`Image unavailable: ${alt.trim()}` : t`Image unavailable`;
-            return `*${escapeMarkdownText(label)}*`;
-          }),
-    [content, document, t]
-  );
-
-  /**
-   * What the highlighted renderer is handed, when it is the one drawing.
-   *
-   * Source, config, a log, a diff, a `.txt` -- wrapped in one fenced block
-   * named after its extension, and highlighted natively. There is no JavaScript
-   * tokenizer here and never was: this is the only path in the app that
-   * colours code, and above `HIGHLIGHT_MAX_CHARS` it is not the path taken.
-   */
-  const source = useMemo(() => {
-    if (content === null || presentation !== 'code') return '';
-    return fencedFile(content, fenceLanguageForFile(asset.name));
-  }, [asset.name, content, presentation]);
-
-  /**
-   * The same file as rows, when it is past the size one native pass can lay
-   * out. Built once per file rather than per render: a megabyte is split on
-   * newlines exactly once, and `CodeLinesView` reads the result.
-   */
-  const index = useMemo(() => {
-    if (content === null || presentation !== 'lines') return null;
-    return indexTextLines(content);
-  }, [content, presentation]);
-
   /**
    * The path, for a file the reader has to go and open somewhere else.
    *
@@ -631,6 +576,9 @@ function AssetBody({
   // one down rather than reusing it, and the two overlap for the length of a
   // short fade -- which is what makes a document read as having arrived rather
   // than as having replaced something.
+  if (presentation === 'pdf') return <PdfAssetPreview asset={asset} />;
+  if (presentation === 'audio') return <AudioAssetPreview asset={asset} />;
+  if (presentation === 'video') return <VideoAssetPreview asset={asset} />;
   if (tooLarge) {
     // The one refusal left, and the only one that says a number. It is reached
     // before a byte is read, so what it offers is the way to the file rather
@@ -642,7 +590,7 @@ function AssetBody({
         <View style={styles.centerState}>
           <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.centerText}>
             {/* react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs. */}
-            {t`This file is ${size}. Muqun opens text files up to ${ceiling}; larger ones stay on the server.`}
+            {t`This file is ${size}. Muqun opens text files up to ${ceiling}; larger ones stay on the computer.`}
           </Text>
           <Text variant="caption" color={theme.colors.textMuted} selectable>
             {asset.path}
@@ -737,69 +685,9 @@ function AssetBody({
     );
   }
 
-  if (document) {
-    // A document of any length, a block at a time. A README is one cell; a
-    // 300 KB changelog is eighty, and only the ones near the viewport exist.
-    return (
-      <AssetBodyLayer id="document">
-        <MarkdownDocumentView
-          testID="asset-document"
-          markdown={documentText ?? content}
-          markdownStyle={markdownStyle}
-          selectionColor={theme.colors.primarySubtle}
-          contentInsets={DOCUMENT_INSETS}
-        />
-      </AssetBodyLayer>
-    );
-  }
-
-  if (index) {
-    // Past the size one native layout pass stays linear at. Rows, numbered,
-    // pannable, and on screen in the time it takes to split a string.
-    return (
-      <AssetBodyLayer id="lines">
-        <CodeLinesView
-          testID="asset-lines"
-          lines={index.lines}
-          longest={index.longest}
-          markdownStyle={markdownStyle}
-          inset={SHEET_LADDER.gutter}
-          note={t`Too large to highlight — showing plain text.`}
-        />
-      </AssetBodyLayer>
-    );
-  }
-
   return (
-    <AssetBodyLayer id="code">
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.documentContent}
-        showsVerticalScrollIndicator={false}>
-        {/* github flavor, and it is doing two jobs here. Tables are a GFM
-            extension and the commonmark renderer runs their cells together as
-            inline text -- and a fenced block is a component of its own under
-            this flavor, with a header naming the language, a copy button, and a
-            code pane that scrolls sideways instead of wrapping. Wrapping is
-            what breaks the column alignment a log or a diff is read for, so
-            that last part is not a detail. Static content, so the streaming
-            guidance for commonmark does not apply here. */}
-        <EnrichedMarkdownText
-          flavor="github"
-          markdown={source}
-          markdownStyle={markdownStyle}
-          containerStyle={styles.markdown}
-          selectable
-          selectionColor={theme.colors.primarySubtle}
-          selectionHandleColor={theme.colors.primary}
-          streamingAnimation={false}
-          textBreakStrategy="simple"
-          md4cFlags={{ latexMath: true }}
-          onLinkPress={({ url }) => {
-            if (isSafeExternalLink(url)) void Linking.openURL(url);
-          }}
-        />
-      </ScrollView>
+    <AssetBodyLayer id={presentation}>
+      <FileTextBody file={asset} content={content} markdownStyle={markdownStyle} />
     </AssetBodyLayer>
   );
 }
@@ -824,7 +712,7 @@ function AssetBodyLayer({ id, children }: { id: string; children: React.ReactNod
 }
 
 /**
- * For a PDF, a video or a binary: say what it is and where it stays, and stop
+ * For an unsupported file: say what it is and where it stays, and stop
  * there.
  *
  * Label and value straight on the frosted ground, a hairline between one fact
@@ -846,7 +734,7 @@ function AssetDetails({ asset }: { asset: SessionAsset }) {
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.detailsContent}>
       <Text variant="bodySmall" color={theme.colors.textMuted}>
-        <Trans>No preview for this kind of file. It stays on the server.</Trans>
+        <Trans>No preview for this kind of file. It stays on the computer.</Trans>
       </Text>
       <View>
         {rows.map((row, index) => (
@@ -870,13 +758,6 @@ function AssetDetails({ asset }: { asset: SessionAsset }) {
     </ScrollView>
   );
 }
-
-/**
- * The document's insets: the sheet's gutter either side, no lead above -- the
- * heading's own bottom room is the lead -- and room to scroll the last block
- * clear of the gesture bar.
- */
-const DOCUMENT_INSETS = { top: 0, bottom: 40, horizontal: SHEET_LADDER.gutter };
 
 const styles = StyleSheet.create({
   sheet: {
@@ -931,15 +812,6 @@ const styles = StyleSheet.create({
   },
   scroll: {
     flex: 1,
-  },
-  // The fenced listing on the sheet's gutter. The fence draws its own code
-  // fill and pans sideways inside it, so lines are never wrapped.
-  documentContent: {
-    paddingHorizontal: SHEET_LADDER.gutter,
-    paddingBottom: 40,
-  },
-  markdown: {
-    width: '100%',
   },
   detailsContent: {
     paddingHorizontal: SHEET_LADDER.gutter,

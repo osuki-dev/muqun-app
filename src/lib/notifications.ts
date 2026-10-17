@@ -31,28 +31,53 @@ import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
 import {
   forgetRegisteredPushToken,
   pushTokenNeedsSending,
+  pushPairingIdentity,
   registeredPushToken,
   rememberRegisteredPushToken,
 } from '@/lib/push-token-registry';
+import { PUSH_TOKEN_OWNER_BINDING_CAPABILITY } from '@/lib/push-token-rule';
 import { directGatewayBaseUrl } from '@/lib/ssh-tunnel';
 import { useAppSettings } from '@/stores/app-settings';
+import { pairingFaultOf, usePairingFaults } from '@/stores/pairing-faults';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
-import { noticeFromPush, noticePresentation } from '@/lib/in-app-notifications';
+import { useServerTasksStore } from '@/stores/server-tasks';
+import { useServerCapabilities } from '@/stores/server-capabilities';
+import { attributePush, noticeFromPush, noticePresentation } from '@/lib/in-app-notifications';
 import { useInAppNotifications } from '@/stores/in-app-notifications';
+import { useGatewayGeneration } from '@/stores/gateway-connection-generation';
 import { isDemoRecord } from '@/lib/demo-gateway';
 import { getActiveLocale } from '@/i18n/active-locale';
 import { recoverWith } from '@/lib/compiler-safe-control-flow';
 
+/** The paired computer whose task ledger bound agent session `asid`, if one has. */
+function ledgerOwnerOf(asid: string): string | undefined {
+  const { records } = useGatewayConnectionStore.getState();
+  const { index } = useServerTasksStore.getState();
+  return records.find((record) =>
+    index[record.serverId]?.tasks.some(
+      (task) => task.binding.kind === 'agent_session' && task.binding.asid === asid
+    )
+  )?.serverId;
+}
+
 Notifications.setNotificationHandler({
   handleNotification: async (notification) => {
+    const content = attributePush(
+      notification.request.content,
+      useGatewayConnectionStore.getState().records,
+      ledgerOwnerOf
+    );
     const presentation = noticePresentation(
-      useAppSettings.getState().notificationsEnabled,
+      useAppSettings.getState().notificationsEnabled && content !== null,
       AppState.currentState === 'active'
     );
-    if (presentation.inApp) {
-      const notice = noticeFromPush(notification.request.identifier, notification.request.content, {
+    if (presentation.inApp && content) {
+      const source = content.data?.server_id ?? content.data?.serverId;
+      const notice = noticeFromPush(notification.request.identifier, content, {
         isPad: windowIsPad(),
         questionTitle: i18n._(msg`Needs your input`),
+        gatewayGeneration:
+          typeof source === 'string' ? useGatewayGeneration.getState().byServer[source] : undefined,
       });
       if (notice) useInAppNotifications.getState().enqueue(notice);
     }
@@ -178,65 +203,124 @@ export function useNotificationObserver() {
   }, []);
 }
 
+// Expo registration belongs to this installation, even across selected computers.
+// An older Off must finish before a later On obtains and publishes its token.
+let pushOperation: Promise<void> = Promise.resolve();
+function serializePushOperation(operation: () => Promise<void>): Promise<void> {
+  const next = pushOperation.then(operation);
+  pushOperation = next.catch(() => undefined);
+  return pushOperation;
+}
+
 export function useGatewayPushRegistration(record: GatewayRecord | null) {
   const notificationsEnabled = useAppSettings((state) => state.notificationsEnabled);
   // A dependency of the effect below, so choosing a language re-registers at
   // once instead of at the next foreground.
   const language = useAppSettings((state) => state.language);
+  const bindsOwner = useServerCapabilities((state) =>
+    record
+      ? state.byServer[record.serverId]?.includes(PUSH_TOKEN_OWNER_BINDING_CAPABILITY) === true
+      : false
+  );
+  // A computer that refused this pairing will refuse the token too, on every
+  // foreground, until the reader pairs again -- which writes a new record and
+  // runs this effect afresh.
+  const fault = usePairingFaults((state) =>
+    record ? pairingFaultOf(state, record.serverId) : undefined
+  );
 
   useEffect(() => {
     // Demo is offline, including when notifications are disabled. Neither
     // registration nor removal may look up an Expo/APNs/FCM token for it.
     // Local notification handlers and the in-app queue remain independent.
-    if (isDemoRecord(record)) return;
-    if (!notificationsEnabled) {
-      void unregisterPushNotificationsAsync(Boolean(record)).catch(() => undefined);
-      return;
-    }
-    if (!record) return;
-    const { serverId } = record;
+    if (isDemoRecord(record) || Platform.OS === 'web') return;
     let cancelled = false;
-
-    async function register() {
-      return recoverWith(
-        async () => {
-          const token = await registerForPushNotificationsAsync();
-          if (cancelled || !token) return;
-          // What this device has already told *this server*, read from disk
-          // rather than from a local. The local was reset every time this effect
-          // re-ran, and it re-runs on a new `record` object -- which
-          // `stores/gateway-connection` produces on select, rename and edit -- so
-          // renaming a server re-posted a token the gateway already had. The rule
-          // for when a post is owed is in `lib/push-token-registry`.
-          const build = appBuildIdentity();
-          // Read at the moment of the post, not captured by the effect: the
-          // language can change between the effect running and the token
-          // arriving, and what is sent has to be what is remembered.
-          const locale = getActiveLocale();
-          if (
-            !pushTokenNeedsSending(registeredPushToken(serverId), token, build, Date.now(), locale)
-          ) {
-            return;
-          }
-          await registerDevicePushToken({
-            token,
-            platform: Platform.OS === 'ios' ? 'ios' : 'android',
-            device_name: Device.deviceName ?? Device.modelName ?? undefined,
-            // Named in the body rather than left to the request's headers: the
-            // gateway prefers a body that names a language, and this is the one
-            // request whose whole point is to tell it which.
-            locale,
-          });
-          if (cancelled) return;
-          // Written only now: a post that failed has told the gateway nothing,
-          // and must be retried on the next foreground rather than remembered.
-          rememberRegisteredPushToken(serverId, { token, build, locale });
-        },
-        (error) => {
-          // Registration is retried when the app next enters the foreground.
-          if (__DEV__) console.warn('Push notification registration failed.', error);
-        }
+    if (!notificationsEnabled) {
+      void serializePushOperation(async () => {
+        if (cancelled || useAppSettings.getState().notificationsEnabled) return;
+        await unregisterPushNotificationsAsync(record);
+      });
+      return () => {
+        cancelled = true;
+      };
+    }
+    if (!record || fault) return;
+    const ownerRecord = record;
+    const { serverId } = ownerRecord;
+    const identity = pushPairingIdentity(ownerRecord);
+    const ownerBinding = bindsOwner
+      ? { revision: 1 as const, identity, deviceId: ownerRecord.deviceId }
+      : undefined;
+    const owns = () => {
+      const current = useGatewayConnectionStore.getState().record;
+      return (
+        !cancelled &&
+        useAppSettings.getState().notificationsEnabled &&
+        current !== null &&
+        pushPairingIdentity(current) === identity
       );
+    };
+    let registering = false;
+
+    function register() {
+      if (registering || cancelled) return;
+      registering = true;
+      void serializePushOperation(async () => {
+        if (!owns()) return;
+        await recoverWith(
+          async () => {
+            const token = await registerForPushNotificationsAsync();
+            if (!owns() || !token) return;
+            // What this device has already told *this server*, read from disk
+            // rather than from a local. The local was reset every time this effect
+            // re-ran, and it re-runs on a new `record` object -- which
+            // `stores/gateway-connection` produces on select, rename and edit -- so
+            // renaming a server re-posted a token the gateway already had. The rule
+            // for when a post is owed is in `lib/push-token-registry`.
+            const build = appBuildIdentity();
+            // Read at the moment of the post, not captured by the effect: the
+            // language can change between the effect running and the token
+            // arriving, and what is sent has to be what is remembered.
+            const locale = getActiveLocale();
+            if (
+              !pushTokenNeedsSending(
+                registeredPushToken(serverId),
+                token,
+                build,
+                Date.now(),
+                locale,
+                ownerBinding
+              )
+            ) {
+              return;
+            }
+            await registerDevicePushToken(ownerRecord, {
+              token,
+              platform: Platform.OS === 'ios' ? 'ios' : 'android',
+              device_name: Device.deviceName ?? Device.modelName ?? undefined,
+              // Named in the body rather than left to the request's headers: the
+              // gateway prefers a body that names a language, and this is the one
+              // request whose whole point is to tell it which.
+              locale,
+            });
+            if (!owns()) return;
+            // Written only now: a post that failed has told the gateway nothing,
+            // and must be retried on the next foreground rather than remembered.
+            rememberRegisteredPushToken(serverId, {
+              token,
+              build,
+              locale,
+              ...(ownerBinding ? { ownerBinding } : {}),
+            });
+          },
+          (error) => {
+            // Registration is retried when the app next enters the foreground.
+            if (__DEV__) console.warn('Push notification registration failed.', error);
+          }
+        );
+      }).finally(() => {
+        registering = false;
+      });
     }
 
     void register();
@@ -251,22 +335,23 @@ export function useGatewayPushRegistration(record: GatewayRecord | null) {
     // `language` is read inside through `getActiveLocale()`; it is listed so that
     // choosing a language runs this again.
     // oxlint-disable-next-line react-hooks/exhaustive-deps -- a trigger, not an input
-  }, [notificationsEnabled, record, language]);
+  }, [notificationsEnabled, record, language, bindsOwner, fault]);
 }
 
-async function unregisterPushNotificationsAsync(removeFromGateway: boolean): Promise<void> {
+async function unregisterPushNotificationsAsync(record: GatewayRecord | null): Promise<void> {
   if (process.env.EXPO_OS === 'web') return;
-  if (removeFromGateway) {
+  if (record) {
     const token = await currentExpoPushTokenAsync();
     if (token) {
-      await unregisterDevicePushToken(token).catch(() => undefined);
+      // A legacy unowned token can refuse DELETE with 409. Local Off still
+      // completes; migration on the next On is an authenticated POST, not a delete/retry loop.
+      await unregisterDevicePushToken(record, token).catch(() => undefined);
     }
   }
-  await Notifications.unregisterForNotificationsAsync();
   // Every server, not just the one that was told: the device token is revoked
   // at the OS level here, so nothing any gateway is holding is valid any more.
   // Turning notifications back on has to tell all of them again.
-  forgetRegisteredPushToken();
+  await Notifications.unregisterForNotificationsAsync().finally(() => forgetRegisteredPushToken());
 }
 
 /**

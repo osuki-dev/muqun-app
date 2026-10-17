@@ -248,10 +248,10 @@ export function homeServerListLayout(
       mode: 'pad',
       contentGutter: 32,
       contentMaxWidth: HOME_LIST_MEASURE,
-      cardGap: 24,
-      cardPadding: 22,
-      cardRadius: 24,
-      listGap: 30,
+      cardGap: 12,
+      cardPadding: 16,
+      cardRadius: 18,
+      listGap: 18,
       rowMinHeight: 44,
       brand: homeBrandWeight(serverCount),
     };
@@ -264,10 +264,10 @@ export function homeServerListLayout(
     // Never binds below the pad threshold; the field stays a number so callers
     // do not have to branch on whether there is a cap at all.
     contentMaxWidth: safeWidth,
-    cardGap: 24,
-    cardPadding: spacious ? 18 : 14,
-    cardRadius: 20,
-    listGap: spacious ? 28 : 22,
+    cardGap: 12,
+    cardPadding: spacious ? 14 : 12,
+    cardRadius: 16,
+    listGap: spacious ? 16 : 12,
     rowMinHeight: spacious ? 40 : 34,
     brand: homeBrandWeight(serverCount),
   };
@@ -302,4 +302,10 @@ export function homeHeroMaxHeight(availableWidth: number): number {
   return safeWidth >= THEME_ARTWORK_REGULAR_MIN_WIDTH
     ? HOME_HERO_MAX_HEIGHT.regular
     : HOME_HERO_MAX_HEIGHT.compact;
+}
+
+/** Shared cover proportion for both Home layouts; standard illustrations keep their own band. */
+export function homeCoverArtworkHeight(availableWidth: number): number {
+  const width = Number.isFinite(availableWidth) ? Math.max(0, availableWidth) : 0;
+  return Math.min(640, width * 0.9);
 }

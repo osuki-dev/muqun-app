@@ -55,6 +55,8 @@ export function dedupeKey(
   const method = (init?.method ?? 'GET').toUpperCase();
   if (method !== 'GET') return null;
   if (init?.body != null) return null;
+  // Independently cancellable owners must not inherit one another's abort.
+  if (init?.signal) return null;
   if (isStreamingRequest(init)) return null;
   if ((init as { upload?: unknown } | undefined)?.upload === true) return null;
 

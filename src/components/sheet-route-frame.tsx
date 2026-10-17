@@ -1,12 +1,77 @@
 import { useThemeTokens } from '@osuki-dev/ui';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { createContext, useContext, type ReactNode } from 'react';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { useRouter, type NativeStackNavigationOptions } from 'expo-router';
+import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { PAD_SETTINGS_SHEET_WIDTH } from '@/lib/route-presentation';
 import {
   SafeAreaProvider,
   useSafeAreaInsets,
   useSafeAreaFrame,
 } from 'react-native-safe-area-context';
+
+/**
+ * Android keeps the native sheet host full width even when its content is a
+ * centered card. Put dismiss targets in that host's transparent side gutters.
+ * The card stays first for native scroll discovery; the absolute gutters cost
+ * no height, so fitToContents still measures only the scene's own column.
+ */
+export function SheetRouteFrame({
+  children,
+  detents,
+}: {
+  children: ReactNode;
+  detents: NativeStackNavigationOptions['sheetAllowedDetents'];
+}) {
+  const router = useRouter();
+  const profile = useAppearanceProfile();
+  const sizing = detents === 'fitToContents' ? undefined : routeFrameStyles.fill;
+  return (
+    <View collapsable={false} pointerEvents="box-none" style={sizing}>
+      <View
+        collapsable={false}
+        style={[
+          routeFrameStyles.card,
+          sizing,
+          {
+            borderTopLeftRadius: profile.chrome.sheet,
+            borderTopRightRadius: profile.chrome.sheet,
+          },
+        ]}>
+        {children}
+      </View>
+      {/* Invisible hit regions are not extra screen-reader controls. Native
+          back/dismiss remains available, without reading two empty buttons. */}
+      <Pressable
+        testID="sheet-dismiss-left-gutter"
+        accessible={false}
+        importantForAccessibility="no"
+        style={[routeFrameStyles.gutter, routeFrameStyles.leftGutter]}
+        onPress={() => router.back()}
+      />
+      <Pressable
+        testID="sheet-dismiss-right-gutter"
+        accessible={false}
+        importantForAccessibility="no"
+        style={[routeFrameStyles.gutter, routeFrameStyles.rightGutter]}
+        onPress={() => router.back()}
+      />
+    </View>
+  );
+}
+
+const routeFrameStyles = StyleSheet.create({
+  fill: { flex: 1 },
+  card: {
+    width: '100%',
+    maxWidth: PAD_SETTINGS_SHEET_WIDTH,
+    alignSelf: 'center',
+    overflow: 'hidden',
+  },
+  gutter: { position: 'absolute', top: 0, bottom: 0 },
+  leftGutter: { left: 0, right: '50%', marginRight: PAD_SETTINGS_SHEET_WIDTH / 2 },
+  rightGutter: { right: 0, left: '50%', marginLeft: PAD_SETTINGS_SHEET_WIDTH / 2 },
+});
 
 /** Native full-screen modals own a measured safe-area coordinate space. */
 export function FullscreenRouteSafeArea({ children }: { children: ReactNode }) {
@@ -22,8 +87,8 @@ export function FullscreenRouteSafeArea({ children }: { children: ReactNode }) {
 /**
  * Whether the sheet under this subtree is being shown full-screen.
  *
- * Set by the root stack's `screenLayout` for a sheet route that a Pad presents
- * as a `fullScreenModal` (`isFullscreenSheetRoute`). A full-screen modal has no
+ * Set by the root stack's `screenLayout` from the native presentation, including
+ * explicit full-screen routes and sheets promoted on a Pad. A full-screen modal has no
  * grabber and no swipe, so the scene draws a close button and status-bar
  * clearance instead, and `SheetHandle` draws nothing.
  */

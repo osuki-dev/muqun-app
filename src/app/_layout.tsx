@@ -1,13 +1,15 @@
+import { cleanupPreviousMediaCache, scheduleAutomaticCacheCleanup } from '@/lib/cache-cleanup';
+import { useAppSettings } from '@/stores/app-settings';
 import { AppDiagramProvider } from '@/components/app-diagram-provider';
 import { RouteScene } from '@/components/route-scene';
 import {
-  isFullscreenSheetRoute,
+  isCenteredSettingsSheetRoute,
   sheetPresentationOptions,
   sheetRouteOptions as resolveSheetRouteOptions,
   sheetRoutePresentations,
 } from '@/lib/route-presentation';
 import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
-import { SheetFullscreenProvider } from '@/components/sheet-route-frame';
+import { SheetFullscreenProvider, SheetRouteFrame } from '@/components/sheet-route-frame';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as Device from 'expo-device';
 import * as ScreenOrientation from 'expo-screen-orientation';
@@ -31,7 +33,11 @@ import { useReducedMotion } from 'react-native-reanimated';
 import { SplashScreen } from '@osuki-dev/react-native-splash';
 
 import { LaunchOverlay } from '@/components/launch-overlay';
-import { ReskinSurface, ReskinTransitionProvider } from '@/components/reskin-transition';
+import {
+  ReskinSurface,
+  ReskinTransitionProvider,
+  useReskinActivity,
+} from '@/components/reskin-transition';
 import { AppErrorBoundary } from '@/components/app-error-boundary';
 import {
   AppearanceProfileProvider,
@@ -39,22 +45,28 @@ import {
 } from '@/components/appearance-profile-provider';
 import { profileNavigationOptions } from '@/lib/appearance-profile';
 import { AppLockGate } from '@/components/app-lock-gate';
-import { HugSlackProvider } from '@/components/text';
+import { KitProviders } from '@/components/kit-providers';
 import { SshConnectPromptGate } from '@/components/ssh-connect-prompt-gate';
 import { UpdateStatusBanner } from '@/components/update-status-banner';
+import { checkForAppUpdate, checkForAppUpdateOnLaunch } from '@/lib/app-updates';
 import { InAppNotificationHost } from '@/components/in-app-notification-host';
 import { useNotificationSurfaceStyle } from '@/components/notification-surface';
-import { WhatsNewCard } from '@/components/whats-new-card';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useLaunchImageSync } from '@/hooks/use-launch-image-sync';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useThemePack, useThemePalette } from '@/hooks/use-theme-pack';
 import { useUserFontsReady } from '@/hooks/use-user-fonts';
 import { useThemeLibrary } from '@/stores/theme-library';
 import { AppI18nProvider } from '@/i18n/provider';
 import { useGatewayPushRegistration, useNotificationObserver } from '@/lib/notifications';
+import { startNetworkReactions } from '@/lib/gateway-socket-runtime';
 import { useSshTunnelsStore } from '@/stores/ssh-tunnels';
 import { useThemeFileOpen } from '@/hooks/use-theme-file-open';
+import { useGatewayConnectionStore } from '@/stores/gateway-connection';
+import { useHomeRecentsStore } from '@/stores/home-recents';
+import { useServerAgents } from '@/stores/server-agents';
+import { useServerCapabilities } from '@/stores/server-capabilities';
+import { useServerLastViewed } from '@/stores/server-last-viewed';
+import { useSshHostsStore } from '@/stores/ssh-hosts';
 
 /**
  * One library warning, silenced, because LogBox answers it by covering the
@@ -77,7 +89,21 @@ import { useThemeFileOpen } from '@/hooks/use-theme-file-open';
  * text and nothing else, so every other warning still raises the notification
  * the way it always did.
  */
-LogBox.ignoreLogs(['[Reanimated] dependencies should only be used in web implementation.']);
+LogBox.ignoreLogs([
+  '[Reanimated] dependencies should only be used in web implementation.',
+  /*
+   * Legend List's two development diagnostics. The first says a transcript
+   * needed one more row container than its pool held and made one, which it
+   * calls a minor performance issue; the second that its first scroll to the
+   * end did not settle in its own budget. Both describe the list's internals,
+   * neither is an error in this app, and both fired on the demo transcript a
+   * few seconds after it opened, with the notification landing on the files
+   * sheet's bottom row. The console still carries them; only the notification
+   * is kept off the screen.
+   */
+  '[legend-list] No unused container available',
+  'LegendList bootstrap initial scroll aborted',
+]);
 
 /*
  * Keep the native launch screen up until `LaunchOverlay` has painted its copy
@@ -136,6 +162,7 @@ function ThemeFileOpener() {
 
 /**
  * The profiling control, in a Debug bundle or a Release profiling bundle only.
+ * Set EXPO_PUBLIC_RELEASE_PROFILER=0 to keep native QA controls unobstructed.
  *
  * A `require` behind a condition Metro can fold, not an import: `__DEV__` and
  * `process.env.EXPO_PUBLIC_*` are inlined when a bundle is built, so a store
@@ -145,13 +172,36 @@ function ThemeFileOpener() {
 type ProfilerControlModule = typeof import('@/components/release-profiler-control');
 
 const ReleaseProfilerControl =
-  __DEV__ || process.env.EXPO_PUBLIC_RELEASE_PROFILER === '1'
+  (__DEV__ && process.env.EXPO_PUBLIC_RELEASE_PROFILER !== '0') ||
+  process.env.EXPO_PUBLIC_RELEASE_PROFILER === '1'
     ? // oxlint-disable-next-line typescript/no-require-imports
       (require('@/components/release-profiler-control') as ProfilerControlModule)
         .ReleaseProfilerControl
     : null;
 
 export default function RootLayout() {
+  useEffect(() => {
+    // Local reads can overlap font registration and the native launch screen.
+    // Both Home compositions consume these same stores; their effects join the
+    // existing hydration flights. Home network owners still mount inside the lock
+    // gate, after the configured record's credentials have been read.
+    void Promise.allSettled([
+      useGatewayConnectionStore.getState().hydrate(),
+      useHomeRecentsStore.getState().hydrate(),
+      useServerAgents.getState().hydrate(),
+      useServerCapabilities.getState().hydrate(),
+      useServerLastViewed.getState().hydrate(),
+      useSshHostsStore.getState().hydrate(),
+    ]);
+  }, []);
+
+  useEffect(() => {
+    void checkForAppUpdateOnLaunch();
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void checkForAppUpdate();
+    });
+    return () => subscription.remove();
+  }, []);
   /**
    * The settings are read and the reader's fonts are registered before this
    * returns true, and the router below does not mount until it does.
@@ -170,6 +220,32 @@ export default function RootLayout() {
    * at either way, and it holds for longer than the registration takes.
    */
   const fontsReady = useUserFontsReady();
+
+  useEffect(() => {
+    void cleanupPreviousMediaCache();
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    let cancelCleanup: (() => void) | undefined;
+    void useAppSettings
+      .getState()
+      .hydrate()
+      .then(() => {
+        if (!cancelled) cancelCleanup = scheduleAutomaticCacheCleanup(undefined, 5000);
+      })
+      .catch(() => {
+        // Optional maintenance must never make a settings read failure fatal.
+      });
+    return () => {
+      cancelled = true;
+      cancelCleanup?.();
+    };
+  }, []);
+
+  // A network change reopens the gateway sockets and re-asks the selected
+  // computer, instead of leaving them on a route that has gone.
+  useEffect(() => startNetworkReactions(), []);
 
   // The system bar overlays the app under edge-to-edge (targetSdk 36) and its
   // strip swallows every touch in it -- on a three-button device that strip sat
@@ -224,15 +300,13 @@ export default function RootLayout() {
           storageAdapter={themeModeStorage}
           theme={theme}>
           {/*
-            Outside the error boundary because the boundary's own fallback is
-            reader-facing copy like any other, and it is drawn in the reader's
-            face: the slack an oblique needs on its trailing edge is not a
-            thing to lose on the one screen that appears when something has
-            already gone wrong. It publishes a context and nothing else, so
-            there is no state here that could be the fault.
+            Outside the error boundary so the boundary's own fallback is drawn
+            on the same surfaces and plates as every other screen. Both publish
+            contexts and nothing else, so there is no state here that could be
+            the fault.
           */}
           <AppearanceProfileProvider>
-            <HugSlackProvider>
+            <KitProviders>
               {/*
               Wraps everything except the theme provider the fallback's <Text>
               needs, so a render throw in the toast host, lock gate, nav theme,
@@ -262,7 +336,7 @@ export default function RootLayout() {
                   ) : null}
                 </AppI18nProvider>
               </AppErrorBoundary>
-            </HugSlackProvider>
+            </KitProviders>
           </AppearanceProfileProvider>
         </OsukiThemeProvider>
       </KeyboardProvider>
@@ -271,24 +345,22 @@ export default function RootLayout() {
 }
 
 function RootContent() {
+  // Blurred screens thaw for the length of a theme change; see `freezeOnBlur` below.
+  const reskinActive = useReskinActivity((state) => state.active);
   const reduceMotion = useReducedMotion();
   const profile = useAppearanceProfile();
   const notificationSurfaceStyle = useNotificationSurfaceStyle();
   const pageOptions = profileNavigationOptions(profile, reduceMotion);
-  const modalOptions = profileNavigationOptions(profile, reduceMotion, true);
   // A Pad is a window width, not a device: the same test the workspace uses to
   // draw its rail. On a Pad the sheets that are work surfaces open full-screen
-  // (`sheetRouteKinds`) and take the modal transition the full-screen routes
-  // already have; phones never cross the threshold, so nothing changes there.
+  // (`sheetRouteKinds`) with their native default transition; phones never
+  // cross the threshold, so nothing changes there.
   const { width: windowWidth } = useWindowDimensions();
   const isPad = responsiveWorkspaceLayout(windowWidth).mode === 'pad';
-  const sheetRouteOptions = (route: string) => {
-    const options = resolveSheetRouteOptions(route, profile, reduceMotion, isPad);
-    return options.presentation === 'fullScreenModal' ? { ...options, ...modalOptions } : options;
-  };
+  const sheetRouteOptions = (route: string) =>
+    resolveSheetRouteOptions(route, profile, reduceMotion, isPad);
   const { resolvedMode } = useThemeMode();
   const { colors } = useThemeTokens();
-  const surfaceBackground = useSurfaceBackground();
   const { record } = useGatewayRecord();
   useNotificationObserver();
   useGatewayPushRegistration(record);
@@ -328,23 +400,15 @@ function RootContent() {
       }}>
       {/*
         The toast card is a colored plane over whatever screen raised it, so it
-        answers the pack's background opacity like every other surface. Stated
-        once here rather than per call: kit 1.1.0 fills all four variants with
-        the `surface` token and separates them by icon and accent instead, so a
-        single `toastStyle` changes no variant's colour. The reader's slider is
-        the applied theme's, not a candidate's -- this sits above the router and
-        outside `CandidateThemeProvider`, which is where a toast belongs.
+        answers the pack's background opacity like every other surface: the
+        kit paints it through the root surface decorator. The reader's slider
+        is the applied theme's, not a candidate's -- this sits above the router
+        and outside `CandidateThemeProvider`, which is where a toast belongs.
       */}
       <ToastProvider
         maxWidth={480}
         defaultDurationMs={2000}
-        toastStyle={[
-          notificationSurfaceStyle,
-          {
-            backgroundColor: surfaceBackground(colors.surface),
-            borderWidth: StyleSheet.hairlineWidth,
-          },
-        ]}>
+        toastStyle={[notificationSurfaceStyle, { borderWidth: StyleSheet.hairlineWidth }]}>
         {/*
           The re-skin transitions live here, inside the toast provider and
           around everything the reader can see, because a theme or a font
@@ -362,23 +426,18 @@ function RootContent() {
               <Stack
                 screenLayout={({ children, options, route }) =>
                   options.presentation === 'formSheet' ? (
-                    <>{children}</>
+                    isCenteredSettingsSheetRoute(route.name, isPad) ? (
+                      <SheetRouteFrame detents={options.sheetAllowedDetents}>
+                        {children}
+                      </SheetRouteFrame>
+                    ) : (
+                      <>{children}</>
+                    )
                   ) : (
-                    <RouteScene
-                      modal={options.presentation === 'fullScreenModal'}
-                      sceneType={
-                        options.presentation === 'fullScreenModal'
-                          ? 'modal'
-                          : route.name === 'agent'
-                            ? 'agent'
-                            : route.name.startsWith('servers') || route.name.startsWith('ssh')
-                              ? 'terminal'
-                              : 'plain'
-                      }
-                      animated={route.name !== 'index'}>
-                      {/* A sheet a Pad shows full-screen draws its own close
-                          button: there is no grabber to drag. */}
-                      <SheetFullscreenProvider value={isFullscreenSheetRoute(route.name, isPad)}>
+                    <RouteScene modal={options.presentation === 'fullScreenModal'}>
+                      {/* Native full-screen modals have no sheet grabber. Scenes
+                          using SheetScene need safe-area clearance and a close button. */}
+                      <SheetFullscreenProvider value={options.presentation === 'fullScreenModal'}>
                         {children}
                       </SheetFullscreenProvider>
                     </RouteScene>
@@ -394,7 +453,10 @@ function RootContent() {
                   // server card keep the UI thread at vsync the whole time. Work
                   // that must outlive a blur already lives in a store rather than
                   // in a screen, so nothing here depends on rendering while hidden.
-                  freezeOnBlur: true,
+                  // Except for the length of a theme change: a Home frozen under
+                  // Settings would re-render under the new theme during the
+                  // transition back to it, which is where that stuttered.
+                  freezeOnBlur: !reskinActive,
                 }}>
                 <Stack.Screen
                   name="index"
@@ -482,7 +544,7 @@ function RootContent() {
                   name="custom-theme"
                   options={{
                     ...sheetPresentationOptions(sheetRoutePresentations['custom-theme']),
-                    ...modalOptions,
+                    ...pageOptions,
                   }}
                 />
                 <Stack.Screen
@@ -496,6 +558,7 @@ function RootContent() {
                 <Stack.Screen name="new-task" options={sheetRouteOptions('new-task')} />
                 <Stack.Screen name="home-target" options={sheetRouteOptions('home-target')} />
                 <Stack.Screen name="home-agents" options={sheetRouteOptions('home-agents')} />
+                <Stack.Screen name="home-agent" options={sheetRouteOptions('home-agent')} />
                 <Stack.Screen name="web-service" options={sheetRouteOptions('web-service')} />
                 {/*
               A full-screen modal, not a sheet, and the route file says why at
@@ -512,13 +575,16 @@ function RootContent() {
                   name="simfarm"
                   options={{
                     ...sheetPresentationOptions(sheetRoutePresentations['simfarm']),
-                    ...modalOptions,
+                    ...pageOptions,
                   }}
                 />
                 <Stack.Screen name="explore" options={sheetRouteOptions('explore')} />
                 <Stack.Screen
                   name="diagram-viewer"
-                  options={sheetPresentationOptions(sheetRoutePresentations['diagram-viewer'])}
+                  options={{
+                    ...sheetPresentationOptions(sheetRoutePresentations['diagram-viewer']),
+                    ...pageOptions,
+                  }}
                 />
                 {/*
               The agent surface's pickers. They were `<Modal transparent>`
@@ -549,9 +615,23 @@ function RootContent() {
                   options={sheetRouteOptions('agent-workspace')}
                 />
                 <Stack.Screen name="agent-worktree" options={sheetRouteOptions('agent-worktree')} />
+                <Stack.Screen name="settings-voice" options={sheetRouteOptions('settings-voice')} />
+                <Stack.Screen
+                  name="voice-input"
+                  options={{
+                    ...sheetRouteOptions('voice-input'),
+                    sheetElevation: 0,
+                  }}
+                />
                 <Stack.Screen name="agent-context" options={sheetRouteOptions('agent-context')} />
+                <Stack.Screen
+                  name="pane-history"
+                  dangerouslySingular
+                  options={sheetRouteOptions('pane-history')}
+                />
                 <Stack.Screen name="agent-vcs-diff" options={sheetRouteOptions('agent-vcs-diff')} />
                 <Stack.Screen name="agent-tasks" options={sheetRouteOptions('agent-tasks')} />
+                <Stack.Screen name="server-tasks" options={sheetRouteOptions('server-tasks')} />
                 <Stack.Screen name="agent-shells" options={sheetRouteOptions('agent-shells')} />
                 <Stack.Screen name="agent-guide" options={sheetRouteOptions('agent-guide')} />
               </Stack>
@@ -559,7 +639,6 @@ function RootContent() {
             </AppLockGate>
             <SshConnectPromptGate />
             <UpdateStatusBanner />
-            <WhatsNewCard />
           </ReskinSurface>
         </ReskinTransitionProvider>
         {/* Outside the re-skin surface so a transition never photographs it. */}

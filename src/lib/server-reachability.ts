@@ -13,12 +13,46 @@
  * to stand in for the other.
  */
 
+import type { PairingFault } from './pairing-faults';
+
 /**
  * Three states, not two. "We asked and got nothing" and "we never asked" are
  * different facts about the world, and collapsing them into one grey dot is how
  * a list ends up implying that an idle machine is down.
  */
 export type ServerReachability = 'live' | 'offline' | 'unknown';
+
+/**
+ * What a computer's row says, which is one step richer than what the rest of
+ * the app decides with.
+ *
+ * - `reconnecting` -- the selected computer's live channel dropped and a
+ *   reconnect is under way. Logically `unknown`; saying so is the difference
+ *   between "nothing is happening" and "the app is on it".
+ * - `unauthorized` -- the gateway answered and refused this device's pairing.
+ *   Logically `offline` (nothing can be sent there), but the remedy is pairing
+ *   again, not waiting, so it is never shown as a network problem.
+ * - `repair` -- the gateway requires encrypted transport and this device's
+ *   record has no key for it (paired before encryption was turned on). Also
+ *   logically `offline`, and also remedied by pairing again; said apart from
+ *   `unauthorized` because the reader did nothing to lose the pairing.
+ */
+export type ConnectionStatus = ServerReachability | 'reconnecting' | 'unauthorized' | 'repair';
+
+/** Pairing again is the remedy for this status, and the screen should offer it. */
+export function statusNeedsPairing(status: ConnectionStatus): status is 'repair' | 'unauthorized' {
+  return status === 'repair' || status === 'unauthorized';
+}
+
+/** The terminal event stream: up, or down with a retry scheduled. Absent when not wanted. */
+export type StreamChannelPhase = 'open' | 'retrying';
+
+/** The live channels held to one computer, as `stores/server-channels` reports them. */
+export type ServerChannels = {
+  /** The agent event socket (`GatewaySocketState`). */
+  socket?: string;
+  stream?: StreamChannelPhase;
+};
 
 /** The connection state for the one gateway currently owned by a workspace. */
 export type ActiveServerConnection = {
@@ -64,6 +98,17 @@ export type ReachabilityProbe = {
    * types; `stores/server-reachability` is where the shape is established.
    */
   health?: unknown;
+  /**
+   * The gateway answered 401/403: it no longer accepts this device's pairing.
+   * Kept until a later probe says otherwise -- a revoked pairing does not
+   * expire back into a working one.
+   */
+  unauthorized?: boolean;
+  /**
+   * The HTTP status *this* probe heard; `null` when it got no answer. Unlike
+   * `unauthorized`, never carried over from an earlier probe.
+   */
+  status?: number | null;
   /**
    * A newer probe of this server is in flight. A stale answer keeps speaking
    * until it lands rather than dropping to `unknown` for the length of the
@@ -180,17 +225,114 @@ export function resolveServerReachability(
   serverId: string,
   probe: ReachabilityProbe | undefined,
   activeConnection?: ActiveServerConnection,
-  nowMs: number = Date.now()
+  nowMs: number = Date.now(),
+  channels?: ServerChannels
 ): ServerReachability {
-  const probedReachability = reachabilityFromProbe(probe, nowMs);
-  if (activeConnection?.serverId === serverId) {
-    if (activeConnection.phase === 'connected') return 'live';
-    if (activeConnection.phase === 'offline' && probedReachability === 'unknown') {
-      return 'offline';
-    }
-  }
-  return probedReachability;
+  return reachabilityOfStatus(
+    resolveConnectionStatus({ serverId, probe, activeConnection, channels, nowMs })
+  );
 }
+
+/**
+ * The status for one computer, from every piece of evidence the app holds.
+ *
+ * In order of strength:
+ *
+ * 1. A live channel -- the agent socket past its handshake, the terminal
+ *    stream up, or the workspace's own connection -- is `live`. The gateway is
+ *    talking to us right now; no probe can know better.
+ * 2. A fault held against the pairing (`stores/pairing-faults`): `repair` or
+ *    `unauthorized`. Remembered from a refusal the gateway gave, cleared only
+ *    by pairing again or by the gateway accepting the token once more -- so
+ *    it outranks a probe, which is not even sent while it stands.
+ * 3. A fresh probe that answered is `live`.
+ * 4. A refusal of the pairing, from the socket or the probe, is
+ *    `unauthorized`.
+ * 5. A fresh probe that failed, or the workspace's channel giving up, is
+ *    `offline`.
+ * 6. For the selected computer only, a channel that is mid-reconnect is
+ *    `reconnecting`: the app is trying, and saying "Not connected" beside a
+ *    session it is about to resume would be the wrong word.
+ * 7. Otherwise `unknown` -- nobody asked recently, which is not "down".
+ */
+export function resolveConnectionStatus(input: {
+  serverId: string;
+  probe: ReachabilityProbe | undefined;
+  activeConnection?: ActiveServerConnection;
+  channels?: ServerChannels;
+  /** What is held against this computer's pairing, if anything. */
+  fault?: PairingFault;
+  /** The computer the app is pointed at; only it is ever `reconnecting`. */
+  selected?: boolean;
+  nowMs?: number;
+}): ConnectionStatus {
+  const { serverId, probe, channels, fault, selected = false, nowMs = Date.now() } = input;
+  const active =
+    input.activeConnection?.serverId === serverId ? input.activeConnection.phase : undefined;
+  if (channels?.socket === 'open' || channels?.stream === 'open' || active === 'connected') {
+    return 'live';
+  }
+  if (fault) return fault;
+  const probed = reachabilityFromProbe(probe, nowMs);
+  if (probed === 'live') return 'live';
+  if (channels?.socket === 'unauthorized' || probe?.unauthorized) return 'unauthorized';
+  if (probed === 'offline' || active === 'offline') return 'offline';
+  if (
+    selected &&
+    (channels?.socket === 'connecting' ||
+      channels?.socket === 'backoff' ||
+      channels?.stream === 'retrying' ||
+      active === 'reconnecting')
+  ) {
+    return 'reconnecting';
+  }
+  return 'unknown';
+}
+
+/** A gateway refusing this device's pairing, rather than failing to answer. */
+export function statusRefusesPairing(status: number | null | undefined): boolean {
+  return status === 401 || status === 403;
+}
+
+/**
+ * Whether a probe says the computer is down. One that answered and refused
+ * the token it was asked with (401/403) is not: it is there, and that token
+ * may be one a re-pair has replaced since.
+ */
+export function probeSaysDown(
+  probe: Pick<ReachabilityProbe, 'ok' | 'unauthorized'> | undefined
+): boolean {
+  return probe?.ok === false && probe.unauthorized !== true;
+}
+
+/**
+ * What one forced probe says about this device's pairing, for the socket's
+ * authorization check. Only an answer the probe just produced counts: a
+ * probe that timed out keeps an earlier 401 in `unauthorized`, and that must
+ * not stand down a socket now.
+ */
+export function authorizationFromProbe(
+  checkedAtBeforeMs: number | undefined,
+  probe: ReachabilityProbe | undefined
+): 'authorized' | 'unauthorized' | 'unknown' {
+  if (!probe || probe.checkedAtMs === checkedAtBeforeMs) return 'unknown';
+  if (probe.ok) return 'authorized';
+  return statusRefusesPairing(probe.status) ? 'unauthorized' : 'unknown';
+}
+
+/** What the rest of the app decides with: a row's richer word, folded back. */
+export function reachabilityOfStatus(status: ConnectionStatus): ServerReachability {
+  if (status === 'reconnecting') return 'unknown';
+  if (statusNeedsPairing(status)) return 'offline';
+  return status;
+}
+
+/**
+ * How often Home re-reads freshness while it is on screen. Without a tick a
+ * probe's 45 s window ran out only when something else re-rendered the list,
+ * and a selected computer was never asked again until the next focus.
+ */
+export const REACHABILITY_TICK_MS = 15 * 1000;
 
 /**
  * What the probe has to say to the workspace prewarm.

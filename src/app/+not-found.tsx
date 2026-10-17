@@ -1,9 +1,7 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { ThemeArtwork } from '@/components/theme-artwork';
+import { SHELL_WALLPAPER_FALLBACK, ThemeArtwork } from '@/components/theme-artwork';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
-import { Button } from '@/components/themed-button';
+import { useThemeTokens, Button, Text } from '@osuki-dev/ui';
 import { Stack, useRouter } from 'expo-router';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
@@ -50,7 +48,7 @@ export default function NotFoundScreen() {
       <Stack.Screen options={{ title: stage ? t`Opening` : t`Not found` }} />
       <View
         style={[styles.screen, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
-        <ThemeArtwork slot="shell.wallpaper" />
+        <ThemeArtwork slot="shell.wallpaper" fallbackSlot={SHELL_WALLPAPER_FALLBACK} />
         {stage ? (
           <>
             <ActivityIndicator color={theme.colors.primary} />
@@ -88,7 +86,7 @@ export default function NotFoundScreen() {
                 through a link leaves nothing behind to go back to, and a dead
                 button on the screen that tells you something is dead reads as a
                 second failure. */}
-            <Button onPress={() => router.dismissTo('/')}>{t`Go to your servers`}</Button>
+            <Button onPress={() => router.dismissTo('/')}>{t`Go to your computers`}</Button>
           </>
         )}
       </View>

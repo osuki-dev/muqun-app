@@ -1,8 +1,7 @@
 import { plural } from '@lingui/core/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, Skeleton, Input, Button, PressableScale, Text } from '@osuki-dev/ui';
 import { Bot, Plus, RefreshCw, SquareTerminal } from 'lucide-react-native';
 import {
   type ReactNode,
@@ -24,9 +23,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { agentStatusWord } from '@/i18n/labels';
 import { appChrome } from '@/constants/appearance';
-import { Button } from '@/components/themed-button';
-import { Input } from '@/components/themed-input';
-import { PressableScale } from '@/components/pressable-scale';
 import { RowActionMenu } from '@/components/row-action-menu';
 import {
   SHEET_LADDER,
@@ -39,7 +35,6 @@ import {
   SheetSceneRow,
   sheetSceneStyles,
 } from '@/components/sheet-scene';
-import { Skeleton } from '@/components/themed-skeleton';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLatestRef, useLazyRef } from '@/hooks/use-render-refs';
 import { fadeIn, fadeOut, listLayout, PULSE_PERIOD, riseIn, STAGGER, timing } from '@/lib/motion';
@@ -263,7 +258,7 @@ export function SessionMap({
     if (busy) return t`Connecting`;
     switch (reach) {
       case 'current':
-        return t`Current machine`;
+        return t`Current computer`;
       case 'connected':
         return t`Connected`;
       case 'unreachable':
@@ -739,7 +734,7 @@ export function SessionMap({
           So the chip reports where this phone has got to with that machine --
           the dot -- and the rail below it is the question, when there is one.
         */}
-        <SheetSceneGroupHeading title={t`Machines`} first />
+        <SheetSceneGroupHeading title={t`Computers`} first />
         <View testID="machines-rail" style={styles.rail}>
           <ScrollView
             horizontal
@@ -934,7 +929,7 @@ export function SessionMap({
             */}
             <PressableScale
               accessibilityLabel={t`Group ${group.tab.title}. Long press for actions.`}
-              feedback={false}
+              feedback="none"
               onLongPress={() =>
                 setMenuFor({ kind: 'tab', id: group.tab.id, label: group.tab.title })
               }>
@@ -1012,13 +1007,13 @@ export function SessionMap({
         <View style={styles.machineActions}>
           <SheetSceneQuietAction
             testID="add-machine"
-            label={t`Add machine`}
+            label={t`Add computer`}
             onPress={onAddMachine}
             disabled={pendingId !== null}
           />
           <SheetSceneQuietAction
             testID="manage-machines"
-            label={t`Manage machines`}
+            label={t`Manage computers`}
             onPress={onManageMachines}
             disabled={pendingId !== null}
           />

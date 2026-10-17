@@ -1,11 +1,9 @@
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import { Bot, Plus, X } from 'lucide-react-native';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { StatusDot } from '@/components/status-dot';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { sameTarget, type AssignmentTarget } from '@/hooks/use-composer-assignment';
@@ -188,8 +186,8 @@ export function AgentAssignmentBar({
                 that the message is not to be trusted. */}
             <Text variant="caption" color={theme.colors.textMuted}>
               {upgrade === 'gateway'
-                ? t`Update Muqun Gateway on the server, then restart it, to assign a task to another assistant`
-                : t`Update Herdr on the server to 0.9.0 or newer, then restart the session, to assign a task to another assistant`}
+                ? t`Update Muqun Gateway on the computer, then restart it, to assign a task to another assistant`
+                : t`Update Herdr on the computer to 0.9.0 or newer, then restart the session, to assign a task to another assistant`}
             </Text>
           </View>
         ) : candidates.length === 0 && kinds.length === 0 ? (

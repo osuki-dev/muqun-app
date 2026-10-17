@@ -6,12 +6,26 @@ import {
   classifyAgentRequestError,
   classifyAgentSessionGone,
   isAgentOfflineError,
+  paneGoneError,
 } from '../agent-request-error';
 
 const refusal = (status: number, code: string, message: string) =>
   new Error(
     `Failed to create agent session: ${status} ${JSON.stringify({ error: { code, message } })}`
   );
+
+test('a pane read the gateway answers "no such pane" is gone; nothing else is', () => {
+  const answered = (status: number, code: string) =>
+    new Error(`HTTP ${status}: ${JSON.stringify({ error: { code, message: 'x' } })}`);
+  const cases: [Error, boolean][] = [
+    [answered(404, 'backend_target_not_found'), true],
+    [answered(404, 'unknown_pane'), true],
+    [answered(404, 'workspace_missing'), false],
+    [answered(500, 'backend_target_not_found'), false],
+    [new Error('Network request failed'), false],
+  ];
+  expect(cases.map(([err]) => paneGoneError(err))).toEqual(cases.map(([, gone]) => gone));
+});
 
 describe('classifyAgentRequestError', () => {
   test("a 502 agent_error is the agent refusing, in the gateway's own words", () => {
@@ -46,6 +60,42 @@ describe('classifyAgentRequestError', () => {
   test('a request that got no answer is offline', () => {
     expect(isAgentOfflineError(new TypeError('Network request failed'))).toBe(true);
     expect(isAgentOfflineError(new Error('Timed out waiting for the server.'))).toBe(true);
+    // Android: a native exception relayed as text, or a transport code on the error.
+    expect(
+      isAgentOfflineError(
+        new Error('java.lang.RuntimeException: Cronet failed: net::ERR_ADDRESS_UNREACHABLE')
+      )
+    ).toBe(true);
+    expect(
+      isAgentOfflineError(new Error('javax.net.ssl.SSLHandshakeException: Chain validation failed'))
+    ).toBe(true);
+    expect(
+      isAgentOfflineError(Object.assign(new Error('connect failed'), { code: 'ECONNREFUSED' }))
+    ).toBe(true);
+    // A file or a permission is not the network: it says its own thing.
+    expect(isAgentOfflineError(Object.assign(new Error('open failed'), { code: 'ENOENT' }))).toBe(
+      false
+    );
+    expect(
+      isAgentOfflineError(new Error('java.io.FileNotFoundException: /data/x (No such file)'))
+    ).toBe(false);
+  });
+
+  test('a message it cannot read is one short line, never a stack trace', () => {
+    const reading = classifyAgentRequestError(
+      new Error('Something odd happened\n  at com.example.Thing.run(Thing.java:12)\n  at x.y(z)')
+    );
+    expect(reading).toEqual({ kind: 'other', message: 'Something odd happened' });
+    // A sentence that says "at foo(" itself is not a stack frame.
+    expect(classifyAgentRequestError(new Error('Stopped at parse(line 3) in config'))).toEqual({
+      kind: 'other',
+      message: 'Stopped at parse(line 3) in config',
+    });
+    expect(
+      classifyAgentRequestError(
+        refusal(400, 'invalid_request', 'attachment is not a file uploaded to this gateway')
+      )
+    ).toEqual({ kind: 'other', message: 'attachment is not a file uploaded to this gateway' });
   });
 
   test('the refusal is bounded and flattened', () => {

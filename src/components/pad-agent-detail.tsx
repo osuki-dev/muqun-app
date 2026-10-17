@@ -4,12 +4,12 @@ import { type Href, useIsFocused, usePathname, useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { SessionActionIcon } from '@/components/agent-header-morph';
+import { NewSessionIcon } from '@/components/agent-header-morph';
 import { AgentWorkbench } from '@/components/agent-workbench';
 import { DETAIL_HEADER_HEIGHT } from '@/components/detail-header';
 import { LogoLoader } from '@/components/logo-loader';
 import { navHeaderButtonStyle } from '@/components/nav-header';
-import { PressableScale } from '@/components/pressable-scale';
+import { PressableScale } from '@osuki-dev/ui';
 import { hasRealSessionTitle } from '@/lib/agent-protocol';
 import { consumeNewAgentIntent, type HomeAgentEntry } from '@/lib/home-commands';
 import { padAgentRouteParams, type PadDetail, type PadShellEvent } from '@/lib/pad-detail';
@@ -24,13 +24,11 @@ import { useAgentSessionState } from '@/stores/agent-session-state';
 /** The workbench's header controls, shared by the shell header and the workbench. */
 export type PadAgentSessionControls = {
   createNewSessionRef: MutableRefObject<(() => void) | null>;
-  abortSessionRef: MutableRefObject<(() => void) | null>;
 };
 
 export function usePadAgentSessionControls(): PadAgentSessionControls {
   const createNewSessionRef = useRef<(() => void) | null>(null);
-  const abortSessionRef = useRef<(() => void) | null>(null);
-  return { createNewSessionRef, abortSessionRef };
+  return { createNewSessionRef };
 }
 
 type Props = {
@@ -89,7 +87,6 @@ export function PadAgentDetail({ detail, ready, visible, controls }: Props) {
           topInset={insets.top + DETAIL_HEADER_HEIGHT}
           bottomInset={insets.bottom}
           createNewSessionRef={controls.createNewSessionRef}
-          abortSessionRef={controls.abortSessionRef}
         />
       ) : (
         <View style={styles.wait}>
@@ -122,23 +119,19 @@ function usePadAgentRouteVisible(): boolean {
 }
 
 /**
- * The header's "+" that becomes Stop while the session runs -- the control
- * `/agent` carries beside its title pill.
+ * The header's "+" -- the control `/agent` carries beside its title pill.
+ * Always a new session; Stop lives on the composer row.
  */
 export function PadAgentSessionAction({ controls }: { controls: PadAgentSessionControls }) {
   const { t } = useLingui();
-  const running = useAgentSessionState((s) => s.running);
   return (
     <PressableScale
       testID="agent-header-new-session"
       accessibilityRole="button"
-      accessibilityLabel={running ? t`Stop agent` : t`New session`}
-      onPress={() => {
-        if (running) controls.abortSessionRef.current?.();
-        else controls.createNewSessionRef.current?.();
-      }}
+      accessibilityLabel={t`New session`}
+      onPress={() => controls.createNewSessionRef.current?.()}
       style={navHeaderButtonStyle}>
-      <SessionActionIcon running={running} />
+      <NewSessionIcon />
     </PressableScale>
   );
 }
