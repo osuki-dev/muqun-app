@@ -194,12 +194,9 @@ export function ThemeLinkImport({
               setError(null);
             }}
           />
-          {/*
-            Composed rather than `helper`: the kit sets a hint in `textDisabled`,
-            and this one is an instruction the reader needs, so it is held to
-            the muted tier like the app's other helper text.
-          */}
-          <Input.Root
+          <Input
+            label={t`Theme file (optional)`}
+            helper={t`Defaults to theme.json at the repository root`}
             testID="theme-link-manifest-path"
             variant="outline"
             value={manifestPath}
@@ -212,13 +209,8 @@ export function ThemeLinkImport({
               setManifestPath(value);
               setReview(null);
               setError(null);
-            }}>
-            <Input.Label>{t`Theme file (optional)`}</Input.Label>
-            <Input.Control />
-            <Text variant="caption" colorKey="textMuted" plated>
-              {t`Defaults to theme.json at the repository root`}
-            </Text>
-          </Input.Root>
+            }}
+          />
         </View>
       ) : null}
       {!themeLinkImportAvailable ? (
