@@ -476,6 +476,10 @@ msgstr "已關機的模擬器可能需要一分鐘才能啟動"
 msgid "A terminal was created. Check it before sending again — your task is still here."
 msgstr "已經建立了一個終端機。再次傳送前先查看一下——你的任務還在"
 
+#: src/hooks/use-lazygit.ts
+msgid "A terminal was created. Open it to inspect startup; launching again could create a duplicate."
+msgstr "已建立終端機。請開啟查看啟動情況；再次啟動可能產生重複終端機"
+
 #: src/app/settings-about.tsx
 #: src/app/settings.tsx
 msgid "About"
@@ -1055,6 +1059,7 @@ msgstr "需要相機存取權"
 #: src/components/theme-link-import.tsx
 #: src/components/voice-input-button.tsx
 #: src/hooks/use-file-actions.tsx
+#: src/hooks/use-lazygit.ts
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "取消"
@@ -1142,6 +1147,10 @@ msgstr "請檢查裝置的驗證設定後再試一次"
 #: src/components/task-row.tsx
 msgid "Check status"
 msgstr "核對狀態"
+
+#: src/hooks/use-lazygit.ts
+msgid "Check that lazygit is installed on this computer and this pane is in a Git repository."
+msgstr "請確認這台電腦已安裝 lazygit，且此窗格位於 Git 儲存庫中"
 
 #: src/hooks/use-agent-command-delivery.ts
 msgid "Check the assistant before sending again; it may have received the request."
@@ -2222,6 +2231,7 @@ msgid "Could not start a session"
 msgstr "無法開始工作階段"
 
 #: src/app/commands.tsx
+#: src/hooks/use-lazygit.ts
 msgid "Could not start a terminal."
 msgstr "無法啟動終端機"
 
@@ -3454,6 +3464,14 @@ msgstr "稍後"
 msgid "Latest"
 msgstr "最新"
 
+#: src/app/commands.tsx
+msgid "Lazygit"
+msgstr ""
+
+#: src/hooks/use-lazygit.ts
+msgid "Lazygit startup could not be confirmed"
+msgstr "無法確認 Lazygit 是否已啟動"
+
 #: src/components/agent-worktree-sheet.tsx
 msgid "Leave it empty and the agent picks a name."
 msgstr "留空則由 Agent 自動命名"
@@ -4390,6 +4408,7 @@ msgstr "在瀏覽器開啟，透過 SSH 通道時無法使用"
 msgid "Open installation guide"
 msgstr "開啟安裝指南"
 
+#: src/app/commands.tsx
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
 msgstr "開啟 Lazygit"
@@ -4435,6 +4454,7 @@ msgstr "請在電腦上開啟 T3 Code（或執行 t3 service install），然後
 
 #: src/components/agent-runtime-notice.tsx
 #: src/components/collaboration-notice.tsx
+#: src/hooks/use-lazygit.ts
 msgid "Open terminal"
 msgstr "查看終端"
 

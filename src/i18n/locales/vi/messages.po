@@ -476,6 +476,10 @@ msgstr "Trình giả lập đã tắt có thể mất một phút để khởi �
 msgid "A terminal was created. Check it before sending again — your task is still here."
 msgstr "Một terminal đã được tạo. Hãy kiểm tra trước khi gửi lại — tác vụ của bạn vẫn còn đây"
 
+#: src/hooks/use-lazygit.ts
+msgid "A terminal was created. Open it to inspect startup; launching again could create a duplicate."
+msgstr "Đã tạo một terminal. Mở để kiểm tra việc khởi động; khởi động lại có thể tạo bản trùng"
+
 #: src/app/settings-about.tsx
 #: src/app/settings.tsx
 msgid "About"
@@ -1055,6 +1059,7 @@ msgstr "Cần quyền truy cập camera"
 #: src/components/theme-link-import.tsx
 #: src/components/voice-input-button.tsx
 #: src/hooks/use-file-actions.tsx
+#: src/hooks/use-lazygit.ts
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "Hủy"
@@ -1142,6 +1147,10 @@ msgstr "Hãy kiểm tra cài đặt xác thực của thiết bị và thử l�
 #: src/components/task-row.tsx
 msgid "Check status"
 msgstr "Kiểm tra trạng thái"
+
+#: src/hooks/use-lazygit.ts
+msgid "Check that lazygit is installed on this computer and this pane is in a Git repository."
+msgstr "Hãy kiểm tra lazygit đã được cài trên máy tính này và pane này nằm trong một kho Git"
 
 #: src/hooks/use-agent-command-delivery.ts
 msgid "Check the assistant before sending again; it may have received the request."
@@ -2222,6 +2231,7 @@ msgid "Could not start a session"
 msgstr "Không thể bắt đầu phiên"
 
 #: src/app/commands.tsx
+#: src/hooks/use-lazygit.ts
 msgid "Could not start a terminal."
 msgstr "Không thể khởi động terminal"
 
@@ -3454,6 +3464,14 @@ msgstr "Để sau"
 msgid "Latest"
 msgstr "Mới nhất"
 
+#: src/app/commands.tsx
+msgid "Lazygit"
+msgstr ""
+
+#: src/hooks/use-lazygit.ts
+msgid "Lazygit startup could not be confirmed"
+msgstr "Không thể xác nhận Lazygit đã khởi động"
+
 #: src/components/agent-worktree-sheet.tsx
 msgid "Leave it empty and the agent picks a name."
 msgstr "Để trống và tác nhân sẽ tự đặt tên"
@@ -4390,6 +4408,7 @@ msgstr "Mở trong trình duyệt của bạn, không khả dụng qua đường
 msgid "Open installation guide"
 msgstr "Mở hướng dẫn cài đặt"
 
+#: src/app/commands.tsx
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
 msgstr "Mở Lazygit"
@@ -4435,6 +4454,7 @@ msgstr "Hãy mở T3 Code trên máy tính (hoặc chạy t3 service install) r�
 
 #: src/components/agent-runtime-notice.tsx
 #: src/components/collaboration-notice.tsx
+#: src/hooks/use-lazygit.ts
 msgid "Open terminal"
 msgstr "Mở terminal"
 

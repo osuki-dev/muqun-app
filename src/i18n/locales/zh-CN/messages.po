@@ -476,6 +476,10 @@ msgstr "已关机的模拟器可能需要一分钟才能启动"
 msgid "A terminal was created. Check it before sending again — your task is still here."
 msgstr "已经创建了一个终端。再次发送前先查看一下——你的任务还在"
 
+#: src/hooks/use-lazygit.ts
+msgid "A terminal was created. Open it to inspect startup; launching again could create a duplicate."
+msgstr "已创建终端。请打开查看启动情况；再次启动可能产生重复终端"
+
 #: src/app/settings-about.tsx
 #: src/app/settings.tsx
 msgid "About"
@@ -1055,6 +1059,7 @@ msgstr "需要相机访问权限"
 #: src/components/theme-link-import.tsx
 #: src/components/voice-input-button.tsx
 #: src/hooks/use-file-actions.tsx
+#: src/hooks/use-lazygit.ts
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "取消"
@@ -1142,6 +1147,10 @@ msgstr "请检查设备的验证设置后重试"
 #: src/components/task-row.tsx
 msgid "Check status"
 msgstr "核对状态"
+
+#: src/hooks/use-lazygit.ts
+msgid "Check that lazygit is installed on this computer and this pane is in a Git repository."
+msgstr "请确认这台电脑已安装 lazygit，且此窗格位于 Git 仓库中"
 
 #: src/hooks/use-agent-command-delivery.ts
 msgid "Check the assistant before sending again; it may have received the request."
@@ -2222,6 +2231,7 @@ msgid "Could not start a session"
 msgstr "无法开始会话"
 
 #: src/app/commands.tsx
+#: src/hooks/use-lazygit.ts
 msgid "Could not start a terminal."
 msgstr "无法启动终端"
 
@@ -3454,6 +3464,14 @@ msgstr "稍后"
 msgid "Latest"
 msgstr "最新"
 
+#: src/app/commands.tsx
+msgid "Lazygit"
+msgstr ""
+
+#: src/hooks/use-lazygit.ts
+msgid "Lazygit startup could not be confirmed"
+msgstr "无法确认 Lazygit 是否已启动"
+
 #: src/components/agent-worktree-sheet.tsx
 msgid "Leave it empty and the agent picks a name."
 msgstr "留空则由 Agent 自动命名"
@@ -4390,6 +4408,7 @@ msgstr "在浏览器中打开，通过 SSH 隧道时不可用"
 msgid "Open installation guide"
 msgstr "打开安装指南"
 
+#: src/app/commands.tsx
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
 msgstr "打开 Lazygit"
@@ -4435,6 +4454,7 @@ msgstr "请在电脑上打开 T3 Code（或运行 t3 service install），然后
 
 #: src/components/agent-runtime-notice.tsx
 #: src/components/collaboration-notice.tsx
+#: src/hooks/use-lazygit.ts
 msgid "Open terminal"
 msgstr "查看终端"
 

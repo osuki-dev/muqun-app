@@ -476,6 +476,10 @@ msgstr "เครื่องจำลองที่ปิดไปแล้ว
 msgid "A terminal was created. Check it before sending again — your task is still here."
 msgstr "สร้างเทอร์มินัลแล้ว ตรวจสอบก่อนส่งอีกครั้ง งานของคุณยังอยู่ที่นี่"
 
+#: src/hooks/use-lazygit.ts
+msgid "A terminal was created. Open it to inspect startup; launching again could create a duplicate."
+msgstr "สร้างเทอร์มินัลแล้ว เปิดเพื่อตรวจสอบการเริ่มทำงาน การเปิดอีกครั้งอาจสร้างรายการซ้ำ"
+
 #: src/app/settings-about.tsx
 #: src/app/settings.tsx
 msgid "About"
@@ -1055,6 +1059,7 @@ msgstr "ต้องเข้าถึงกล้อง"
 #: src/components/theme-link-import.tsx
 #: src/components/voice-input-button.tsx
 #: src/hooks/use-file-actions.tsx
+#: src/hooks/use-lazygit.ts
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "ยกเลิก"
@@ -1142,6 +1147,10 @@ msgstr "ตรวจสอบการตั้งค่าการยืนย
 #: src/components/task-row.tsx
 msgid "Check status"
 msgstr "ตรวจสอบสถานะ"
+
+#: src/hooks/use-lazygit.ts
+msgid "Check that lazygit is installed on this computer and this pane is in a Git repository."
+msgstr "ตรวจสอบว่าติดตั้ง lazygit บนคอมพิวเตอร์เครื่องนี้แล้ว และแพนนี้อยู่ในที่เก็บ Git"
 
 #: src/hooks/use-agent-command-delivery.ts
 msgid "Check the assistant before sending again; it may have received the request."
@@ -2222,6 +2231,7 @@ msgid "Could not start a session"
 msgstr "เริ่มเซสชันไม่สำเร็จ"
 
 #: src/app/commands.tsx
+#: src/hooks/use-lazygit.ts
 msgid "Could not start a terminal."
 msgstr "เริ่มเทอร์มินัลไม่ได้"
 
@@ -3454,6 +3464,14 @@ msgstr "ภายหลัง"
 msgid "Latest"
 msgstr "ล่าสุด"
 
+#: src/app/commands.tsx
+msgid "Lazygit"
+msgstr ""
+
+#: src/hooks/use-lazygit.ts
+msgid "Lazygit startup could not be confirmed"
+msgstr "ไม่สามารถยืนยันการเริ่มทำงานของ Lazygit"
+
 #: src/components/agent-worktree-sheet.tsx
 msgid "Leave it empty and the agent picks a name."
 msgstr "เว้นว่างไว้ แล้วเอเจนต์จะตั้งชื่อให้"
@@ -4390,6 +4408,7 @@ msgstr "เปิดในเบราว์เซอร์ ไม่พร้�
 msgid "Open installation guide"
 msgstr "เปิดคู่มือการติดตั้ง"
 
+#: src/app/commands.tsx
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
 msgstr "เปิด Lazygit"
@@ -4435,6 +4454,7 @@ msgstr "เปิด T3 Code บนคอมพิวเตอร์ (หรื�
 
 #: src/components/agent-runtime-notice.tsx
 #: src/components/collaboration-notice.tsx
+#: src/hooks/use-lazygit.ts
 msgid "Open terminal"
 msgstr "เปิดเทอร์มินัล"
 
