@@ -1,8 +1,7 @@
 import { Input } from '@/components/themed-input';
-import { Textarea } from '@/components/themed-textarea';
+import { Textarea, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { useThemeTokens, useToast } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { SegmentedControl } from '@/components/themed-segmented-control';
 import * as Clipboard from 'expo-clipboard';
