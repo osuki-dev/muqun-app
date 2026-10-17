@@ -5,11 +5,10 @@ import {
 } from '@/constants/home-toolbar';
 import { useAppActive } from '@/hooks/use-app-active';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
-import { useThemeMode, useThemeTokens, Card } from '@osuki-dev/ui';
+import { useThemeMode, useThemeTokens, Card, Skeleton } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Button } from '@/components/themed-button';
-import { Skeleton } from '@/components/themed-skeleton';
 import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import {

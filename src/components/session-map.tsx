@@ -1,7 +1,7 @@
 import { plural } from '@lingui/core/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, Skeleton } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { Bot, Plus, RefreshCw, SquareTerminal } from 'lucide-react-native';
 import {
@@ -39,7 +39,6 @@ import {
   SheetSceneRow,
   sheetSceneStyles,
 } from '@/components/sheet-scene';
-import { Skeleton } from '@/components/themed-skeleton';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLatestRef, useLazyRef } from '@/hooks/use-render-refs';
 import { fadeIn, fadeOut, listLayout, PULSE_PERIOD, riseIn, STAGGER, timing } from '@/lib/motion';
