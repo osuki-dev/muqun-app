@@ -4,6 +4,7 @@ import type { RadiusToken, ThemeDensity, ThemeOverride, ThemeShape } from '@osuk
 import type { HomeLayout } from '@/lib/home-layout';
 import { resolveHomeLayout } from '@/lib/home-layout';
 import { appAppearanceConfig, appChrome } from '@/constants/appearance';
+import { EASE_OUT } from '@/lib/motion';
 
 export type AppearanceProfileId = HomeLayout;
 
@@ -182,8 +183,9 @@ export function resolveAppearanceProfile(value: unknown): AppearanceProfile {
  * Component radii are token names, not numbers, so each chrome radius is named
  * by the step of the profile's own ladder that holds it. Every `Card` follows
  * `chrome.card` whatever its `radius` prop asks for, as the app's cards always
- * have. `Tabs` keeps the kit's pill: the profile's segmented radii belong to
- * the app's own segmented controls, which draw their selection themselves.
+ * have. Pill `Tabs` and `SegmentedControl` take the profile's segmented radii:
+ * the track's corner, and a selection corner that can differ from it
+ * (Editorial: 2pt inside a 4pt track).
  *
  * `decorated` is a custom theme pack being worn: its artwork or a translucent
  * ground can sit under a ghost button, so the ghost keeps a raised base under
@@ -192,6 +194,8 @@ export function resolveAppearanceProfile(value: unknown): AppearanceProfile {
 export function profileThemeOverride(profile: AppearanceProfile, decorated = false): ThemeOverride {
   const token = (value: number) => radiusToken(profile, value);
   const card = token(profile.chrome.card);
+  const track = token(profile.chrome.segmentedTrack);
+  const option = token(profile.chrome.segmentedOption);
   return {
     radius: profile.radius,
     components: {
@@ -200,11 +204,16 @@ export function profileThemeOverride(profile: AppearanceProfile, decorated = fal
         ...(decorated ? { ghost: { background: 'surfaceRaised' } } : {}),
       },
       Card: { radius: { none: card, xs: card, sm: card, md: card, lg: card } },
+      Tabs: { radius: track, optionRadius: option },
+      SegmentedControl: { radius: track, optionRadius: option },
     },
     // The kit's press timings (`motion.press.inMs`/`outMs`) are the app's
-    // `PRESS`, and its Button springs are the ones the app's button used; only
-    // the resting scale differs by profile.
-    motion: { press: { surface: profile.motion.pressedScale } },
+    // `PRESS`, and its Button springs are the ones the app's button used. The
+    // dip eases on the app's own curve, segments settle at 0.96, and only the
+    // resting scale differs by profile.
+    motion: {
+      press: { surface: profile.motion.pressedScale, segment: 0.96, easing: EASE_OUT },
+    },
   } satisfies ThemeOverride;
 }
 

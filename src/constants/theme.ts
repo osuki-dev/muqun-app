@@ -102,6 +102,9 @@ export function buildTheme(
         // on a field. Placeholder text here names the agent being messaged, so
         // it is content, and content is held to the muted tier.
         placeholder: 'textMuted',
+        // The helper line under a field is an instruction the reader needs,
+        // held to the same muted tier rather than the kit's `textDisabled`.
+        hint: 'textMuted',
       },
     },
   };
