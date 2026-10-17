@@ -104,8 +104,6 @@ export function GitDiffButton({
             sessionId,
             paneId,
             serverId,
-            canLazygit: capabilities?.includes('pane_lazygit') ? '1' : '0',
-            canLazygitWorktree: capabilities?.includes('pane_lazygit_worktree') ? '1' : '0',
             vcsFiles: gatewaySupportsPaneVcsFiles(capabilities) ? '1' : '0',
             worktrees: gatewaySupportsGitWorktrees(capabilities) ? '1' : '0',
           },

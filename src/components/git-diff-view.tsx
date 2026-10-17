@@ -3,14 +3,9 @@ import { StyleSheet, View } from 'react-native';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { ChevronDown, ChevronUp, RefreshCw } from 'lucide-react-native';
-import {
-  SheetSceneQuietAction,
-  SheetSceneQuietControl,
-  SHEET_LADDER,
-} from '@/components/sheet-scene';
+import { SheetSceneQuietControl, SHEET_LADDER } from '@/components/sheet-scene';
 import { PressableScale } from '@/components/pressable-scale';
 import { Text } from '@/components/text';
-import { useLazygit } from '@/hooks/use-lazygit';
 
 import { ChangesSheet } from '@/components/changes-sheet';
 import { ChangesWorktreeList } from '@/components/changes-worktree-list';
@@ -54,8 +49,6 @@ export function GitDiffView({
   paneId,
   vcsFiles,
   serverId,
-  canLazygit = false,
-  canLazygitWorktree = false,
   worktreesSupported = false,
 }: {
   sessionId: string;
@@ -63,8 +56,6 @@ export function GitDiffView({
   /** The gateway advertised `pane_vcs_files`. */
   vcsFiles: boolean;
   serverId?: string;
-  canLazygit?: boolean;
-  canLazygitWorktree?: boolean;
   worktreesSupported?: boolean;
 }) {
   const { t } = useLingui();
@@ -99,13 +90,6 @@ export function GitDiffView({
       controller.abort();
     };
   }, [sessionId, paneId, worktreesSupported, revision]);
-  const lazygit = useLazygit({
-    enabled: canLazygit && (!worktree || canLazygitWorktree),
-    sessionId,
-    paneId,
-    serverId,
-    worktree,
-  });
   const api = useMemo(
     () => paneChangesApi({ sessionId, paneId, vcsFiles, worktree }, PANE_CLIENT),
     [paneId, sessionId, vcsFiles, worktree]
@@ -141,30 +125,6 @@ export function GitDiffView({
       ) : null}
     </View>
   ) : undefined;
-  const header = (
-    <View style={styles.navigation}>
-      {!worktreesOpen && lazygit.available ? (
-        <SheetSceneQuietAction
-          testID="changes-lazygit"
-          label={lazygit.busy ? t`Opening Lazygit…` : t`Open Lazygit`}
-          disabled={lazygit.busy}
-          onPress={() => void lazygit.open()}
-        />
-      ) : !worktreesOpen && worktree && canLazygit && !canLazygitWorktree ? (
-        <View style={styles.checkout}>
-          <SheetSceneQuietAction
-            testID="changes-lazygit"
-            label={t`Open Lazygit`}
-            disabled
-            onPress={() => void lazygit.open()}
-          />
-          <Text variant="caption" color={theme.colors.textMuted}>
-            {t`Update the Gateway to open Lazygit in another worktree.`}
-          </Text>
-        </View>
-      ) : null}
-    </View>
-  );
   const overview =
     worktreesOpen && worktreesSupported ? (
       <ChangesWorktreeList
@@ -185,7 +145,6 @@ export function GitDiffView({
       title={t`Git`}
       checkoutControl={checkoutControl}
       api={api}
-      navigation={header}
       overview={overview}
       headingActions={
         overview ? (
@@ -203,11 +162,6 @@ export function GitDiffView({
 }
 
 const styles = StyleSheet.create({
-  navigation: {
-    gap: SHEET_LADDER.gap,
-    paddingHorizontal: SHEET_LADDER.gutter,
-    paddingBottom: SHEET_LADDER.gap,
-  },
   checkout: { gap: SHEET_LADDER.tight },
   checkoutPicker: {
     flexDirection: 'row',

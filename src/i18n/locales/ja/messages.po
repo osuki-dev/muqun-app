@@ -476,10 +476,6 @@ msgstr "終了していたシミュレータは、起動に1分ほどかかる�
 msgid "A terminal was created. Check it before sending again — your task is still here."
 msgstr "ターミナルが作成されました。もう一度送る前に確認してください。タスクはそのまま残っています"
 
-#: src/hooks/use-lazygit.ts
-msgid "A terminal was created. Open it to inspect startup; launching again could create a duplicate."
-msgstr "ターミナルを作成しました。開いて起動状態を確認してください。再起動すると重複する可能性があります"
-
 #: src/app/settings-about.tsx
 #: src/app/settings.tsx
 msgid "About"
@@ -1059,7 +1055,6 @@ msgstr "カメラへのアクセスが必要です"
 #: src/components/theme-link-import.tsx
 #: src/components/voice-input-button.tsx
 #: src/hooks/use-file-actions.tsx
-#: src/hooks/use-lazygit.ts
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "キャンセル"
@@ -1147,10 +1142,6 @@ msgstr "デバイスの認証設定を確認して、もう一度お試しくだ
 #: src/components/task-row.tsx
 msgid "Check status"
 msgstr "状態を確認"
-
-#: src/hooks/use-lazygit.ts
-msgid "Check that lazygit is installed on this computer and this pane is in a Git repository."
-msgstr "このコンピュータに lazygit がインストールされていて、このペインが Git リポジトリ内にあることを確認してください"
 
 #: src/hooks/use-agent-command-delivery.ts
 msgid "Check the assistant before sending again; it may have received the request."
@@ -2231,7 +2222,6 @@ msgid "Could not start a session"
 msgstr "セッションを開始できませんでした"
 
 #: src/app/commands.tsx
-#: src/hooks/use-lazygit.ts
 msgid "Could not start a terminal."
 msgstr "ターミナルを開始できませんでした"
 
@@ -3464,10 +3454,6 @@ msgstr "後で"
 msgid "Latest"
 msgstr "最新"
 
-#: src/hooks/use-lazygit.ts
-msgid "Lazygit startup could not be confirmed"
-msgstr "Lazygit の起動を確認できませんでした"
-
 #: src/components/agent-worktree-sheet.tsx
 msgid "Leave it empty and the agent picks a name."
 msgstr "空のままにすると、エージェントが名前を付けます"
@@ -4404,7 +4390,6 @@ msgstr "ブラウザーで開く（SSH トンネル経由では利用できま�
 msgid "Open installation guide"
 msgstr "インストールガイドを開く"
 
-#: src/components/git-diff-view.tsx
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
 msgstr "Lazygit を開く"
@@ -4450,7 +4435,6 @@ msgstr "コンピュータで T3 Code を開いて（または t3 service instal
 
 #: src/components/agent-runtime-notice.tsx
 #: src/components/collaboration-notice.tsx
-#: src/hooks/use-lazygit.ts
 msgid "Open terminal"
 msgstr "ターミナルを見る"
 
@@ -4494,10 +4478,6 @@ msgstr "OpenAI には API キーとモデルの指定が必要です。互換サ
 #: src/app/+not-found.tsx
 msgid "Opening"
 msgstr "開いています"
-
-#: src/components/git-diff-view.tsx
-msgid "Opening Lazygit…"
-msgstr "Lazygit を開いています…"
 
 #: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
@@ -7273,10 +7253,6 @@ msgstr "公開リンクからテーマをインポートするにはアプリを
 #: src/components/agent-workbench.tsx
 msgid "Update the Gateway to load earlier remote history."
 msgstr "リモートの過去の履歴を読み込むには Gateway を更新してください"
-
-#: src/components/git-diff-view.tsx
-msgid "Update the Gateway to open Lazygit in another worktree."
-msgstr "別のワークツリーで Lazygit を開くには Gateway を更新してください"
 
 #: src/components/asset-viewer.tsx
 #: src/components/inline-file-link.tsx

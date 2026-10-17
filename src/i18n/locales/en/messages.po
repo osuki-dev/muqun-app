@@ -476,10 +476,6 @@ msgstr "A simulator that was shut down can take a minute to come up"
 msgid "A terminal was created. Check it before sending again — your task is still here."
 msgstr "A terminal was created. Check it before sending again — your task is still here"
 
-#: src/hooks/use-lazygit.ts
-msgid "A terminal was created. Open it to inspect startup; launching again could create a duplicate."
-msgstr "A terminal was created. Open it to inspect startup; launching again could create a duplicate"
-
 #: src/app/settings-about.tsx
 #: src/app/settings.tsx
 msgid "About"
@@ -1059,7 +1055,6 @@ msgstr "Camera access needed"
 #: src/components/theme-link-import.tsx
 #: src/components/voice-input-button.tsx
 #: src/hooks/use-file-actions.tsx
-#: src/hooks/use-lazygit.ts
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "Cancel"
@@ -1147,10 +1142,6 @@ msgstr "Check device authentication settings and try again"
 #: src/components/task-row.tsx
 msgid "Check status"
 msgstr "Check status"
-
-#: src/hooks/use-lazygit.ts
-msgid "Check that lazygit is installed on this computer and this pane is in a Git repository."
-msgstr "Check that lazygit is installed on this computer and this pane is in a Git repository"
 
 #: src/hooks/use-agent-command-delivery.ts
 msgid "Check the assistant before sending again; it may have received the request."
@@ -2231,7 +2222,6 @@ msgid "Could not start a session"
 msgstr "Could not start a session"
 
 #: src/app/commands.tsx
-#: src/hooks/use-lazygit.ts
 msgid "Could not start a terminal."
 msgstr "Could not start a terminal"
 
@@ -3464,10 +3454,6 @@ msgstr "Later"
 msgid "Latest"
 msgstr "Latest"
 
-#: src/hooks/use-lazygit.ts
-msgid "Lazygit startup could not be confirmed"
-msgstr "Lazygit startup could not be confirmed"
-
 #: src/components/agent-worktree-sheet.tsx
 msgid "Leave it empty and the agent picks a name."
 msgstr "Leave it empty and the agent picks a name"
@@ -4404,7 +4390,6 @@ msgstr "Open in your browser, unavailable over the SSH tunnel"
 msgid "Open installation guide"
 msgstr "Open installation guide"
 
-#: src/components/git-diff-view.tsx
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
 msgstr "Open Lazygit"
@@ -4450,7 +4435,6 @@ msgstr "Open T3 Code on the computer (or run t3 service install), then check aga
 
 #: src/components/agent-runtime-notice.tsx
 #: src/components/collaboration-notice.tsx
-#: src/hooks/use-lazygit.ts
 msgid "Open terminal"
 msgstr "Open terminal"
 
@@ -4494,10 +4478,6 @@ msgstr "OpenAI requires an API key and model. Compatible services may provide th
 #: src/app/+not-found.tsx
 msgid "Opening"
 msgstr "Opening"
-
-#: src/components/git-diff-view.tsx
-msgid "Opening Lazygit…"
-msgstr "Opening Lazygit…"
 
 #: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
@@ -7273,10 +7253,6 @@ msgstr "Update the app to import public theme links. You can still import a file
 #: src/components/agent-workbench.tsx
 msgid "Update the Gateway to load earlier remote history."
 msgstr "Update the Gateway to load earlier remote history"
-
-#: src/components/git-diff-view.tsx
-msgid "Update the Gateway to open Lazygit in another worktree."
-msgstr "Update the Gateway to open Lazygit in another worktree"
 
 #: src/components/asset-viewer.tsx
 #: src/components/inline-file-link.tsx
