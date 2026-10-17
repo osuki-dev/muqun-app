@@ -63,7 +63,7 @@
  */
 import { Text as KitText, useThemeTokens, type TextProps } from '@osuki-dev/ui';
 import { createContext, useContext, type ReactNode } from 'react';
-import { StyleSheet, type TextStyle } from 'react-native';
+import { Platform, Text as NativeText, StyleSheet, type TextStyle } from 'react-native';
 
 import { useAppSettings } from '@/stores/app-settings';
 import {
@@ -172,10 +172,41 @@ function useVariableWeight(props: TextProps): TextStyle | null {
   return { ...flat, ...variableWeightStyle(family, axis, weight) };
 }
 
+/**
+ * The caller's axes moved off the paragraph and onto one run inside it.
+ *
+ * Android measures a paragraph with a paint that already carries the
+ * paragraph's `fontVariationSettings`, then lets each run's span swap the
+ * typeface back to the plain face and set the same settings again. `Paint`
+ * returns early when the settings string has not changed, so the run is
+ * measured on the face's default instance (`wght` 400 for most families) while
+ * it is drawn at the requested weight. Anything heavier than the default then
+ * draws wider than its box: a bold heading loses its last letters to a wrap the
+ * box is too short to show, and the font sheet's `Aa` weight row read
+ * `Aa Aa A A A`. With the axes only on the inner run, the paragraph paint has
+ * none, the span's settings differ from it, and the run is measured as drawn.
+ */
+function splitVariation(props: AppTextProps): {
+  props: AppTextProps;
+  axes: TextStyle['fontVariationSettings'];
+} {
+  if (Platform.OS !== 'android') return { props, axes: undefined };
+  const flat = StyleSheet.flatten(props.style);
+  if (flat?.fontVariationSettings === undefined) return { props, axes: undefined };
+  const { fontVariationSettings, ...paragraph } = flat;
+  return { props: { ...props, style: paragraph }, axes: fontVariationSettings };
+}
+
 export function Text({ children, hugSlack = true, ...rest }: AppTextProps) {
   const slack = useContext(HugSlackContext);
   const variableStyle = useVariableWeight(rest);
-  const props = variableStyle ? { ...rest, style: variableStyle } : rest;
+  const { props, axes } = splitVariation(variableStyle ? { ...rest, style: variableStyle } : rest);
+  const content =
+    axes === undefined ? (
+      children
+    ) : (
+      <NativeText style={{ fontVariationSettings: axes }}>{children}</NativeText>
+    );
   /*
    * `selectable` is the one exemption, and it is not about layout. The reader
    * selects this text in order to copy it -- a server URL, a session id, a
@@ -184,11 +215,11 @@ export function Text({ children, hugSlack = true, ...rest }: AppTextProps) {
    * reason, one the app has already given room to.
    */
   if (!slack || !hugSlack || props.selectable || !hasContent(children)) {
-    return <KitText {...props}>{children}</KitText>;
+    return <KitText {...props}>{content}</KitText>;
   }
   return (
     <KitText {...props}>
-      <HugSlackContext.Provider value="">{children}</HugSlackContext.Provider>
+      <HugSlackContext.Provider value="">{content}</HugSlackContext.Provider>
       {slack}
     </KitText>
   );
