@@ -1,7 +1,7 @@
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { memo, useCallback, useEffect, useRef, useState, type ComponentType } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import Animated, {
   Easing,
@@ -12,7 +12,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { feedback } from '@/lib/feedback';

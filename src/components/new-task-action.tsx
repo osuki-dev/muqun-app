@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
@@ -17,7 +17,6 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
-import { PressableScale } from '@/components/pressable-scale';
 import { AgentMark } from '@/components/agent-mark';
 import { useSelectedAgent } from '@/hooks/use-agent-features';
 import { useHomeCommands } from '@/hooks/use-home-commands';

@@ -2,7 +2,7 @@ import { isHostPathSource } from '@/lib/message-images';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { ChevronDown, ChevronRight, FileText } from 'lucide-react-native';
 import { EnrichedMarkdownText, type MarkdownStyle } from 'react-native-enriched-markdown';
@@ -12,7 +12,6 @@ import { ActivityIndicator, Linking, ScrollView, StyleSheet, View } from 'react-
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { useMarkdownStyle } from '@/hooks/use-markdown-style';
 import { markdownPaletteKey } from '@/lib/markdown-palette';
-import { PressableScale } from '@/components/pressable-scale';
 import { AttachmentImage } from '@/components/attachment-image';
 import { ImagePreviewModal } from '@/components/image-preview-modal';
 import { InlineDiffRows } from '@/components/diff-rows';

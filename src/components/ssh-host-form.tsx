@@ -1,4 +1,11 @@
-import { Input, Textarea, useThemeTokens, useToast, SegmentedControl } from '@osuki-dev/ui';
+import {
+  Input,
+  Textarea,
+  useThemeTokens,
+  useToast,
+  SegmentedControl,
+  PressableScale,
+} from '@osuki-dev/ui';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Text } from '@/components/text';
@@ -6,7 +13,6 @@ import * as Clipboard from 'expo-clipboard';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View, type TextStyle } from 'react-native';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { appChrome } from '@/constants/appearance';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { feedback } from '@/lib/feedback';

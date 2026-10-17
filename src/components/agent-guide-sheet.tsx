@@ -1,13 +1,12 @@
 import { memo, useState, useCallback } from 'react';
 import { View, StyleSheet, ActivityIndicator, Linking } from 'react-native';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useLingui } from '@lingui/react/macro';
 import { ExternalLink, RefreshCw, Terminal } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GuideCommand, useGuideCommandRuns } from '@/components/guide-command';
-import { PressableScale } from '@/components/pressable-scale';
 import { SheetScene, SHEET_LADDER } from '@/components/sheet-scene';
 import { appChrome } from '@/constants/appearance';
 import { feedback } from '@/lib/feedback';

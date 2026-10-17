@@ -3,7 +3,7 @@ import { Text } from '@/components/text';
 import { Component, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { PressableScale } from '@/components/pressable-scale';
+import { PressableScale } from '@osuki-dev/ui';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 
 /**

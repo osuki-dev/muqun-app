@@ -4,7 +4,7 @@ import { useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
 import { surfaceBackgroundFill } from '@/theme/surface-background';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { useStableHandler } from '@/hooks/use-render-refs';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { router, usePathname, type Href } from 'expo-router';
 import { Bell, ChevronRight } from 'lucide-react-native';
@@ -47,8 +47,6 @@ import { noticeDragOffset, noticeSwipeEnd } from '@/lib/notice-swipe';
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { useAppSettings } from '@/stores/app-settings';
 import { useInAppNotifications } from '@/stores/in-app-notifications';
-
-import { PressableScale } from './pressable-scale';
 
 /**
  * How far below the safe-area inset a notice starts.

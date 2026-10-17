@@ -50,7 +50,7 @@ import {
 } from 'react-native';
 import { useIsFocused, usePathname, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { Dialog, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { Dialog, useThemeTokens, useToast, PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
@@ -64,7 +64,6 @@ import {
   X,
 } from 'lucide-react-native';
 import { type LegendListRef } from '@legendapp/list/react-native';
-import { PressableScale } from '@/components/pressable-scale';
 import { GlassChrome } from '@/components/glass-chrome';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';

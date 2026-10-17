@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens, Button } from '@osuki-dev/ui';
+import { useThemeTokens, Button, PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { CameraOff, ScanLine } from 'lucide-react-native';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
@@ -13,7 +13,6 @@ import {
 } from 'react-native-vision-camera';
 
 import { LogoLoader } from '@/components/logo-loader';
-import { PressableScale } from '@/components/pressable-scale';
 import { QrCamera, qrCameraSupport } from '@/components/qr-camera';
 import { fadeIn, fadeOut } from '@/lib/motion';
 import {

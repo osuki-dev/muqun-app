@@ -7,7 +7,7 @@ import { TerminalNotice, terminalNoticeStyles } from '@/components/terminal-noti
 import { NoticeDeck } from '@/components/notice-deck';
 import { revealableSubtreeImportance } from '@/lib/hidden-subtree';
 import { ComposerSendGuard } from '@/lib/composer-send-guard';
-import { Spinner, useThemeMode, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { Spinner, useThemeMode, useThemeTokens, useToast, PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { resolvePanelPick } from '@/lib/resolve-panel-pick';
 import { paneChipRevealOffset } from '@/lib/pane-chip-reveal';
@@ -104,7 +104,6 @@ import {
 import { usePadDetail } from '@/hooks/use-pad-detail';
 import { phoneAgentParams } from '@/lib/pad-detail';
 import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
-import { PressableScale } from '@/components/pressable-scale';
 import { StatusDot } from '@/components/status-dot';
 import { SwitchIndicator } from '@/components/switch-indicator';
 import { TerminalBoundary } from '@/components/terminal-boundary';

@@ -8,7 +8,7 @@ import { Folder, FolderOpen, MoreHorizontal, Trash2 } from 'lucide-react-native'
 import { AgentActionMenu } from '@/components/agent-action-menu';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import type { PaneChatColors } from '@/components/pane-chat-blocks';
-import { PressableScale } from '@/components/pressable-scale';
+import { PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { gitFileStatusWord } from '@/i18n/labels';
 import {

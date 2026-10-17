@@ -3,13 +3,12 @@
 // turns a `msg` descriptor into a sentence in the active locale.
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
-import { useThemeTokens, Surface } from '@osuki-dev/ui';
+import { useThemeTokens, Surface, PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { History, X } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { StatusDot } from '@/components/status-dot';
 import { appChrome } from '@/constants/appearance';
 import { useRelativeTime } from '@/hooks/use-relative-time';

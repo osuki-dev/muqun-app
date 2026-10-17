@@ -7,7 +7,7 @@ import { InlineAudioFile } from '@/components/audio-asset-preview';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { Modal, StyleSheet, View, type ViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { plural } from '@lingui/core/macro';
@@ -15,7 +15,6 @@ import { Check, FileText, Play, X } from 'lucide-react-native';
 import { EnrichedMarkdownText, type MarkdownStyle } from 'react-native-enriched-markdown';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { PressableScale } from '@/components/pressable-scale';
 import { BoundedMarkdown, TruncationFooter } from '@/components/bounded-markdown';
 import { StatusDot } from '@/components/status-dot';
 import { AgentTodoBlock } from '@/components/agent-todo-block';

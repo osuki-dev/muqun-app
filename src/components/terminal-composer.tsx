@@ -3,7 +3,7 @@ import { useVoiceInputTrigger } from '@/components/voice-input-button';
 import { useLingui } from '@lingui/react/macro';
 import { useLatestReader } from '@/hooks/use-render-refs';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { Spinner, useThemeTokens } from '@osuki-dev/ui';
+import { Spinner, useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { Mic, Send } from 'lucide-react-native';
 import { Canvas, Group, Path, Skia } from 'react-native-skia';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -26,7 +26,6 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { PressableScale } from '@/components/pressable-scale';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { ThemeIcon } from '@/components/theme-icon';
 import { appChrome } from '@/constants/appearance';

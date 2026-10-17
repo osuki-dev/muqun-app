@@ -4,7 +4,7 @@ import type { ToolExpansionIntent } from '@/components/embedded-terminal-tool-bl
 import { goalContinuationSummary } from '@/lib/agent-goal-message';
 import { Fragment, memo, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View, type ViewInstance } from 'react-native';
-import { useThemeTokens, useToast } from '@osuki-dev/ui';
+import { useThemeTokens, useToast, PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { plural } from '@lingui/core/macro';
@@ -39,7 +39,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { AttachmentImage } from '@/components/attachment-image';
 import {
   GatewayImageThumbnail,

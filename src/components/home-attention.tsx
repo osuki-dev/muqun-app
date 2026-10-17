@@ -1,12 +1,11 @@
 import { useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { ChevronRight, CircleAlert } from 'lucide-react-native';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { LayoutAnimationConfig } from 'react-native-reanimated';
 
 import { useTaskIndexFor } from '@/components/use-task-index';
-import { PressableScale } from '@/components/pressable-scale';
 import {
   ArrivalPulse,
   RowMarkdown,

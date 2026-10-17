@@ -8,14 +8,13 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { useThemeTokens, useToast } from '@osuki-dev/ui';
+import { useThemeTokens, useToast, PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useLingui } from '@lingui/react/macro';
 import { plural } from '@lingui/core/macro';
 import { type MarkdownStyle } from 'react-native-enriched-markdown';
 import { DiagramMarkdown } from '@/components/diagram-markdown';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { usePaneChatColors } from '@/components/pane-chat-blocks';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { isSafeExternalLink } from '@/lib/safe-link';

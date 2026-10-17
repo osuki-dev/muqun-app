@@ -22,7 +22,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
  * path and not on `/`, and a check that blocked would be wrong more often than
  * it was right.
  */
-import { KeyboardToolbar, useThemeTokens } from '@osuki-dev/ui';
+import { KeyboardToolbar, useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useEffect, useRef, useState } from 'react';
@@ -30,7 +30,6 @@ import { Linking, Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated from 'react-native-reanimated';
 
-import { PressableScale } from '@/components/pressable-scale';
 import {
   SheetScene,
   SheetSceneAction,

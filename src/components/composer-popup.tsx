@@ -1,5 +1,4 @@
-import { Card, useThemeTokens } from '@osuki-dev/ui';
-import { PressableScale } from '@/components/pressable-scale';
+import { Card, useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import { Text } from '@/components/text';
 import { LegendList, type LegendListRenderItemProps } from '@legendapp/list/react-native';

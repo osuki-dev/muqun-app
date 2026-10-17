@@ -1,6 +1,6 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import type { DrawerContentComponentProps } from 'expo-router/drawer';
 import { type Href, usePathname, useRouter } from 'expo-router';
@@ -8,7 +8,6 @@ import { Bot, ChevronRight, LayoutGrid, ScanLine, Settings } from 'lucide-react-
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { isDrawerPermanent } from '@/constants/navigation';
 
 /**

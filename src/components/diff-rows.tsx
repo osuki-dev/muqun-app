@@ -25,7 +25,7 @@ import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import { Text } from '@/components/text';
 import { ChevronDown, ChevronUp } from 'lucide-react-native';
 
-import { PressableScale } from '@/components/pressable-scale';
+import { PressableScale } from '@osuki-dev/ui';
 // A type-only import, so this module never holds a runtime reference back to
 // `pane-chat-blocks` -- which imports `InlineDiffRows` from here.
 import type { PaneChatColors } from '@/components/pane-chat-blocks';

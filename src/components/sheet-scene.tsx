@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { useRouter } from 'expo-router';
 import { Text, type TextProps } from '@/components/text';
 import { Search, X } from 'lucide-react-native';
@@ -26,7 +26,6 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { appChrome } from '@/constants/appearance';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';

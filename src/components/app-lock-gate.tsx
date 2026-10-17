@@ -1,5 +1,5 @@
 import { Trans, useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { Image } from 'expo-image';
 import * as ScreenCapture from 'expo-screen-capture';
@@ -31,7 +31,6 @@ import {
 import { useAppSettings } from '@/stores/app-settings';
 
 import { LogoLoader } from './logo-loader';
-import { PressableScale } from './pressable-scale';
 import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
 
 const APP_LOCK_CAPTURE_KEY = 'muqun-app-lock';

@@ -2,7 +2,7 @@ import { HOME_TOOLBAR_PAIR_WIDTH, HOME_TOOLBAR_ICON_INSET } from '@/constants/ho
 import { homeDockTargetId } from '@/lib/home-composer';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import {
   ArrowUpRight,
   ChevronDown,
@@ -22,7 +22,6 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { AgentMark } from '@/components/agent-mark';
-import { PressableScale } from '@/components/pressable-scale';
 import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useAppActive } from '@/hooks/use-app-active';

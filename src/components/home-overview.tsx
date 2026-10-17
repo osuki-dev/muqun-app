@@ -13,6 +13,7 @@ import {
   Surface,
   SurfaceDecoration,
   Button,
+  PressableScale,
 } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
@@ -69,7 +70,6 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 
 import AppDrawer from '@/components/app-drawer';
 import { NewTaskAction } from '@/components/new-task-action';
-import { PressableScale } from '@/components/pressable-scale';
 import { SectionLabel } from '@/components/settings-chrome';
 import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
 import { HomeArtwork } from '@/components/home-artwork';

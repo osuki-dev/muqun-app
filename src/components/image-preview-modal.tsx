@@ -41,7 +41,7 @@ import Animated, {
 import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { PressableScale } from '@/components/pressable-scale';
+import { PressableScale } from '@osuki-dev/ui';
 import { DURATION, fadeIn, fadeOut, timing, zoomIn } from '@/lib/motion';
 
 const AXIS_LOCK_DISTANCE = 8;

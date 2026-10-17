@@ -2,14 +2,13 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { appChrome } from '@/constants/appearance';
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { plural } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
 import { Undo2 } from 'lucide-react-native';
 import Animated from 'react-native-reanimated';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { usePaneChatColors } from '@/components/pane-chat-blocks';
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';

@@ -1,4 +1,4 @@
-import { useThemeTokens, Button } from '@osuki-dev/ui';
+import { useThemeTokens, Button, PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useLingui } from '@lingui/react/macro';
 import { Palette, X } from 'lucide-react-native';
@@ -15,7 +15,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { GlassChrome } from '@/components/glass-chrome';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { appChrome } from '@/constants/appearance';

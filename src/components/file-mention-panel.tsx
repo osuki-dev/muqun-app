@@ -11,12 +11,11 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
  * looks like an `@` that has not offered anything yet, and typing carries on.
  */
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Icon, useThemeTokens, type IconName } from '@osuki-dev/ui';
+import { Icon, useThemeTokens, type IconName, PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { PressableScale } from '@/components/pressable-scale';
 import { appChrome } from '@/constants/appearance';
 import type { MentionComputer } from '@/lib/composer-mentions';
 import { FILE_MENTION_VISIBLE_ROWS, type FileMentionHit } from '@/lib/file-mentions';

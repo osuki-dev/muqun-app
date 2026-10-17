@@ -1,12 +1,11 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, ScrollView, type ScrollViewInstance } from 'react-native';
-import { Spinner, useThemeTokens } from '@osuki-dev/ui';
+import { Spinner, useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useLingui } from '@lingui/react/macro';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated from 'react-native-reanimated';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { SettingsSegmented } from '@/components/settings-segmented';
 import {
   SheetScene,

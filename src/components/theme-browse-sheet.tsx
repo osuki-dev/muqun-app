@@ -1,6 +1,6 @@
 import { LegendList } from '@legendapp/list/react-native';
 import { useLingui } from '@lingui/react/macro';
-import { Tag, useThemeTokens, Button } from '@osuki-dev/ui';
+import { Tag, useThemeTokens, Button, PressableScale } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,7 +17,6 @@ import {
   SHEET_LADDER,
   sheetSceneStyles,
 } from '@/components/sheet-scene';
-import { PressableScale } from '@/components/pressable-scale';
 import { ListLoadMoreFooter } from '@/components/list-load-more-footer';
 import { ThemeImportProgress } from '@/components/theme-import-progress';
 import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';

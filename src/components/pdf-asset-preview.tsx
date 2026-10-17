@@ -1,11 +1,10 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { File, Paths } from 'expo-file-system';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { PdfView, type PdfErrorCode } from 'react-native-better-pdf';
 import { Text } from '@/components/text';
-import { PressableScale } from '@/components/pressable-scale';
 import { readAssetBytes, type SessionAsset } from '@/lib/gateway-client';
 import { AudioPlaybackError } from '@/lib/audio-playback-session';
 import { formatAssetSize } from '@/lib/asset-display';

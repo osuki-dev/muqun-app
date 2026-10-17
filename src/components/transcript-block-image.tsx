@@ -4,7 +4,7 @@ import { ContentImage } from '@/components/content-image';
 import { contentImageIdentity, type ContentImagePreviewState } from '@/lib/content-image-layout';
 import { useLingui } from '@lingui/react/macro';
 import { Text } from '@/components/text';
-import { PressableScale } from '@/components/pressable-scale';
+import { PressableScale } from '@osuki-dev/ui';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 
 /** Images own their layout so asynchronous decoding cannot resize a native text span. */
