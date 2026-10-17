@@ -1063,6 +1063,7 @@ export default function QuickCommandsScreen() {
                     : t`Save a command or key combo you reach for.`}
                 </Text>
 
+                {/* Fully round on every profile, like the delivery picker. */}
                 {mode === 'terminal' ? (
                   <Tabs
                     options={[
@@ -1071,6 +1072,8 @@ export default function QuickCommandsScreen() {
                     ]}
                     value={kind}
                     variant="pill"
+                    radius="pill"
+                    optionRadius="pill"
                     layering={pillLayering}
                     size="compact"
                     onChange={(next) => setKind(next as QuickCommandKind)}
