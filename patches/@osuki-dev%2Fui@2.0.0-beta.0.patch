@@ -1,10 +1,15 @@
-@osuki-dev/ui 2.0.0-beta.0: three places where beta.0 draws differently from
-1.x, kept at the 1.x look until the kit ships the same (beta.1 changesets).
+@osuki-dev/ui 2.0.0-beta.0: four places where beta.0 draws differently from
+1.x, kept at the 1.x look until the kit ships an equivalent (beta.1 changesets).
 
 - Text (Android): the trailing slack sat inside the fontVariationSettings run,
   so its advance followed the requested weight and centred labels in a
   variable reader face moved by a point. It is appended after the run, at the
   paragraph's face, as the app's own Text did.
+- Button, Tabs.Label, Tag: with `trailingSlack` on the reader's font roles
+  every kit Text gets the slack, including these centred or shrink-wrapped
+  labels, which never had it; they moved by half a thin space and chips grew.
+  Their labels opt out (`hugSlack={false}`; a Button.Label caller can still
+  pass `hugSlack`). The kit has no per-component default for the slack.
 - Button: the root became a row in 2.0. Inside a wrapping column (the theme
   preview's export actions) a row root measured its label row against the
   parent and the buttons grew to twice their width with off-centre labels.
@@ -13,10 +18,10 @@
   ghost given a protective base (components.Button.ghost.background while a
   pack is worn) gained the pill shadow it never had. A ghost stays flat.
 
-Remove each hunk when the kit releases the matching fix.
+Remove each hunk when the kit releases the matching change.
 
 diff --git a/src/components/button.tsx b/src/components/button.tsx
-index a7fa5c3c4b0d5b90f620191e157ce3fb7e6458f5..f4e7fbee1efae87c4ba2e64e7070a976bd59ed86 100644
+index a7fa5c3c4b0d5b90f620191e157ce3fb7e6458f5..331651c3446ce778405eca650c827f36bf38aa3a 100644
 --- a/src/components/button.tsx
 +++ b/src/components/button.tsx
 @@ -57,7 +57,9 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -44,6 +49,53 @@ index a7fa5c3c4b0d5b90f620191e157ce3fb7e6458f5..f4e7fbee1efae87c4ba2e64e7070a976
  
  	return (
  		<View
+@@ -277,6 +284,7 @@ export function ButtonLabel({ style, children, ...props }: ButtonLabelProps) {
+ 
+ 	return (
+ 		<Text
++			hugSlack={false}
+ 			variant="button"
+ 			color={textColor}
+ 			transform="inherit"
+diff --git a/src/components/tabs.tsx b/src/components/tabs.tsx
+index 9aa681b6f2e76ff1285372eaea04a365f0dba926..97fb078bc3cecdad360114cbe1a0de032363fcd6 100644
+--- a/src/components/tabs.tsx
++++ b/src/components/tabs.tsx
+@@ -357,6 +357,7 @@ export function TabsLabel({
+ 	const selected = useContext(TabsTriggerContext);
+ 	return (
+ 		<Text
++			hugSlack={false}
+ 			variant="label"
+ 			color={
+ 				selected
+diff --git a/src/components/tag.tsx b/src/components/tag.tsx
+index 1b31705fe67a6ac618cadcd54ffd4a873dfa9403..91a23465a0ead0b1f1885061d863f1981400dea6 100644
+--- a/src/components/tag.tsx
++++ b/src/components/tag.tsx
+@@ -123,7 +123,7 @@ export const TagRoot: React.FC<Omit<TagProps, "children"> & { children?: React.R
+ export function TagLabel({ children }: { children?: React.ReactNode }) {
+ 	const { colors } = useThemeTokens();
+ 	return (
+-		<Text variant="caption" color={colors.text} transform="uppercase">
++		<Text variant="caption" color={colors.text} transform="uppercase" hugSlack={false}>
+ 			{children}
+ 		</Text>
+ 	);
+@@ -134,7 +134,12 @@ function TagFacade({ children, variant = "default", ...props }: TagProps) {
+ 	const muted = variant !== "active";
+ 	return (
+ 		<TagRoot variant={variant} {...props}>
+-			<Text variant="caption" color={muted ? colors.textMuted : colors.text} transform="uppercase">
++			<Text
++				variant="caption"
++				color={muted ? colors.textMuted : colors.text}
++				transform="uppercase"
++				hugSlack={false}
++			>
+ 				{children}
+ 			</Text>
+ 		</TagRoot>
 diff --git a/src/components/text.tsx b/src/components/text.tsx
 index f199aee04b3a516c3bd39d68578153eeb29d3997..aa070f285869258ff1658dfb107ae51c9c0011d3 100644
 --- a/src/components/text.tsx
