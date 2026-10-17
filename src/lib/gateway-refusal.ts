@@ -44,6 +44,15 @@ export class GatewayTransportRefusalError extends Error {
   }
 }
 
+/** A known credential refusal permits forgetting a local pairing, not other HTTP failures. */
+export function isExpiredGatewayPairing(error: unknown): boolean {
+  const http = error instanceof Error ? error.message.match(/^HTTP (\d{3}): ([\s\S]*)$/) : null;
+  const status = error instanceof GatewayTransportRefusalError ? error.status : Number(http?.[1]);
+  const body = error instanceof GatewayTransportRefusalError ? error.body : http?.[2];
+  if (![401, 403, 426].includes(status) || body === undefined) return false;
+  return classifyTransportRefusal(status, body).reason === 'not-paired';
+}
+
 /**
  * Native HTTP clients can resend a GET after losing its response. Its sealed
  * nonce has already been consumed, so issue one fresh read. Never repeat a
