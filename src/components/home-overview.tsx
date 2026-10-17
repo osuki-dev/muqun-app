@@ -974,6 +974,10 @@ export function HomeOverview({
 
   function openDemo() {
     enterDemo();
+    if (embedded && activeConnection?.serverId === DEMO_SERVER_ID && onExitOverview) {
+      onExitOverview();
+      return;
+    }
     router.navigate({
       pathname: '/servers/[serverId]',
       params: { serverId: DEMO_SERVER_ID },
