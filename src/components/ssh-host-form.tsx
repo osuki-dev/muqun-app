@@ -1,8 +1,7 @@
-import { Input, Textarea, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { Input, Textarea, useThemeTokens, useToast, SegmentedControl } from '@osuki-dev/ui';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Text } from '@/components/text';
-import { SegmentedControl } from '@/components/themed-segmented-control';
 import * as Clipboard from 'expo-clipboard';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View, type TextStyle } from 'react-native';
