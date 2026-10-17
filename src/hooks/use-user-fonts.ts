@@ -24,18 +24,12 @@
  * the app complaining about its own state -- and the Font sheet is where it is
  * said, next to the row it is about.
  */
-import { resolveFontStyle, type FontRegistry, type FontWeight } from '@osuki-dev/ui';
 import { useEffect, useMemo, useState } from 'react';
 import { Platform } from 'react-native';
 import { create } from 'zustand';
 
 import type { MarkdownFonts } from '@/lib/markdown-style';
 import { useAppSettings } from '@/stores/app-settings';
-import {
-  registryWeightAxis,
-  variableWeightStyle,
-  type UserFontStyle,
-} from '@/theme/interface-font-registry';
 import {
   FONT_SLOT_IDS,
   readUserFontAxes,
@@ -233,22 +227,6 @@ export const SYSTEM_MONO_FAMILY = Platform.OS === 'ios' ? 'Menlo' : 'monospace';
  * which for an input style that already came from the registry means not
  * layering it, since the registry has already answered.
  */
-/**
- * The kit's `resolveFontStyle`, with a variable reader face's weight set on
- * its `wght` axis -- for a `TextInput`, which takes no variant and so does not
- * pass through the app's `Text`. Static and system faces get the kit's answer.
- */
-export function resolveUserFontStyle(
-  registry: FontRegistry,
-  role: string,
-  weight: FontWeight = 'regular'
-): UserFontStyle {
-  const axis = registryWeightAxis(registry, role);
-  const family = registry[role]?.family;
-  if (!axis || !family) return resolveFontStyle(registry, role, weight);
-  return variableWeightStyle(family, axis, weight);
-}
-
 export function useInterfaceFontFamily(): string | null {
   const interfaceFont = useAppSettings((state) => state.interfaceFont);
   return slotFontFamily(interfaceFont, 'interface');

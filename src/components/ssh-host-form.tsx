@@ -5,10 +5,10 @@ import {
   useToast,
   SegmentedControl,
   PressableScale,
+  Text,
 } from '@osuki-dev/ui';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Text } from '@/components/text';
 import * as Clipboard from 'expo-clipboard';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View, type TextStyle } from 'react-native';

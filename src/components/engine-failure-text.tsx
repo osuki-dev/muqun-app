@@ -1,7 +1,6 @@
 import { memo } from 'react';
 import { StyleSheet } from 'react-native';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
 
 import { BoundedMarkdown } from '@/components/bounded-markdown';
 import { useCompactMarkdownStyle } from '@/hooks/use-markdown-style';

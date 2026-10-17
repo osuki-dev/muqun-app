@@ -1,6 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens, Button } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, Button, Text } from '@osuki-dev/ui';
 
 import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
 import { sheetFrostAlpha, surfaceBackgroundFill } from '@/theme/surface-background';

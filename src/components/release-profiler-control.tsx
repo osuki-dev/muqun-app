@@ -13,7 +13,7 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Text } from '@/components/text';
+import { Text } from '@osuki-dev/ui';
 import {
   isReleaseProfilerLinked,
   startReleaseProfile,

@@ -1,8 +1,7 @@
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { Linking, View, StyleSheet, Switch, ActivityIndicator } from 'react-native';
-import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, PressableScale, resolveFontStyle, Text } from '@osuki-dev/ui';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import { ExternalLink, FormInput, Send, Check } from 'lucide-react-native';
 import { BoundedMarkdown } from '@/components/bounded-markdown';
@@ -20,7 +19,6 @@ import {
 } from '@/lib/agent-session';
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { FontedTextInput } from '@/components/fonted-text-input';
-import { resolveUserFontStyle } from '@/hooks/use-user-fonts';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
 export interface AgentFormCardProps {
@@ -60,7 +58,7 @@ export const AgentFormCard = memo(function AgentFormCard({
    * field here and a field on a sheet cannot drift apart; the weight stays at
    * regular for the Android reason in `interface-font-registry.ts`.
    */
-  const inputFont = resolveUserFontStyle(theme.fonts, theme.typeStyles.body.fontFamily, 'regular');
+  const inputFont = resolveFontStyle(theme.fonts, theme.typeStyles.body.fontFamily, 'regular');
   const [submitting, setSubmitting] = useState(false);
 
   // Initialize form state

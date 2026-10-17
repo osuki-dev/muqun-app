@@ -1,8 +1,7 @@
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useState, useMemo, memo } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
   CheckSquare,

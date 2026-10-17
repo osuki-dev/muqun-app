@@ -9,8 +9,8 @@ import {
   useThemeTokens,
   type IconName,
   Card,
+  Text,
 } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useEffect } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';

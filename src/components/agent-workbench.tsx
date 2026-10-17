@@ -50,8 +50,7 @@ import {
 } from 'react-native';
 import { useIsFocused, usePathname, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { Dialog, useThemeTokens, useToast, PressableScale } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { Dialog, useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {

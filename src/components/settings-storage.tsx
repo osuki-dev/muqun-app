@@ -31,8 +31,7 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
  */
 import { plural } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Spinner, useThemeTokens, PressableScale } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { Spinner, useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { Directory, Paths } from 'expo-file-system';
 import { useFocusEffect } from 'expo-router';
 import { ChevronRight, FileClock, Images, Palette, Trash2 } from 'lucide-react-native';

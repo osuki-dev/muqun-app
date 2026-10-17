@@ -1,9 +1,8 @@
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { Input, Spinner, useThemeTokens, useToast, PressableScale } from '@osuki-dev/ui';
+import { Input, Spinner, useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
-import { Text } from '@/components/text';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Bot, Check, ChevronDown, ChevronRight, Pencil, Trash2 } from 'lucide-react-native';
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';

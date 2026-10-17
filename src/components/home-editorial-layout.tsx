@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
 import { useEffect, useState, type ReactNode } from 'react';
 import {
   KeyboardAwareScrollView,
@@ -27,13 +27,12 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 
-import { Text } from '@/components/text';
 import { homeScrollFadeOpacity } from '@/lib/home-scroll-fade';
 import { useLaunchHandoff } from '@/stores/launch-handoff';
 import { launchEntryProgress } from '@/lib/launch-handoff';
 import { useHomeScenePlate } from '@/hooks/use-home-scene-plate';
 import { useInterfaceFontFamily } from '@/hooks/use-user-fonts';
-import { registryWeightAxis, USER_FONT_MAX_NATIVE_WEIGHT } from '@/theme/interface-font-registry';
+import { USER_FONT_MAX_NATIVE_WEIGHT } from '@/theme/interface-font-registry';
 
 import {
   EDITORIAL_MAX_WIDTH,
@@ -288,11 +287,9 @@ export function HomeEditorialLayout({
   const chromeFontFamily =
     interfaceFontFamily ?? (Platform.OS === 'android' ? 'sans-serif-condensed' : undefined);
   // A static reader face is capped below Android's bold lookup; a variable one
-  // takes 900 on its `wght` axis through the app's `Text`.
+  // takes 900 on its `wght` axis through the kit's `Text`.
   const titleWeight =
-    interfaceFontFamily && !registryWeightAxis(theme.fonts, 'display')
-      ? USER_FONT_MAX_NATIVE_WEIGHT
-      : 900;
+    interfaceFontFamily && !theme.fonts.display?.axes?.wght ? USER_FONT_MAX_NATIVE_WEIGHT : 900;
   const titleKey = `${coverTitle ?? ''}:${chromeFontFamily ?? 'system'}:${titleWeight}`;
   const { fontScale: windowFontScale } = useWindowDimensions();
   const fontScale = fontScaleProp ?? windowFontScale;

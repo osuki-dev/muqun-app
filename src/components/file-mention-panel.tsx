@@ -11,8 +11,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
  * looks like an `@` that has not offered anything yet, and typing carries on.
  */
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Icon, useThemeTokens, type IconName, PressableScale } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { Icon, useThemeTokens, type IconName, PressableScale, Text } from '@osuki-dev/ui';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';

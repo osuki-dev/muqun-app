@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { Download, Pause, Play, RotateCcw } from 'lucide-react-native';
 import { useFileActions } from '@/hooks/use-file-actions';
 import { saveSessionAsset } from '@/lib/save-file';
@@ -8,7 +8,6 @@ import { useStore } from 'zustand';
 import { AppState, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useInlineMediaVisibility } from '@/hooks/use-inline-media-visibility';
-import { Text } from '@/components/text';
 import { AudioProgress } from '@/components/audio-progress';
 import { resolveAgentAudioAsset } from '@/lib/gateway-client';
 import { audioWaveform } from '@/lib/audio-waveform';

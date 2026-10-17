@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
-import { Text } from '@/components/text';
+import { Text } from '@osuki-dev/ui';
 import { Image } from 'expo-image';
 import { View } from 'react-native';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';

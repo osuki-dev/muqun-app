@@ -1,6 +1,6 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens, useToast, PressableScale } from '@osuki-dev/ui';
+import { useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
 import {
   ArrowRight,
   Check,
@@ -25,7 +25,6 @@ import Animated, {
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { AgentMark } from '@/components/agent-mark';
 import { BoundedMarkdown } from '@/components/bounded-markdown';
-import { Text } from '@/components/text';
 import { useTaskAction } from '@/hooks/use-server-tasks';
 import { useRowMarkdownStyle } from '@/hooks/use-markdown-style';
 import { useTaskAge, useTaskElapsed } from '@/hooks/use-task-age';

@@ -1,8 +1,7 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { SHELL_WALLPAPER_FALLBACK, ThemeArtwork } from '@/components/theme-artwork';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { LogoLoader } from '@/components/logo-loader';
 import { useRouter } from 'expo-router';
 import { Plus, SquareTerminal } from 'lucide-react-native';

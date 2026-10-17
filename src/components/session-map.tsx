@@ -1,8 +1,7 @@
 import { plural } from '@lingui/core/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
-import { useThemeTokens, Skeleton, Input, Button, PressableScale } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, Skeleton, Input, Button, PressableScale, Text } from '@osuki-dev/ui';
 import { Bot, Plus, RefreshCw, SquareTerminal } from 'lucide-react-native';
 import {
   type ReactNode,

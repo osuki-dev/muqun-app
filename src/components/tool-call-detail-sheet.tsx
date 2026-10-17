@@ -3,11 +3,10 @@ import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens, useToast } from '@osuki-dev/ui';
+import { useThemeTokens, useToast, Text } from '@osuki-dev/ui';
 
 import { AssetViewer } from '@/components/asset-viewer';
 import { SheetScene, SheetSceneQuietAction, SHEET_LADDER } from '@/components/sheet-scene';
-import { Text } from '@/components/text';
 import { ToolCallCodeRows } from '@/components/tool-call-code-rows';
 import { basename } from '@/lib/agent-tool-output';
 import { assetFromToolFile, type SessionAsset } from '@/lib/session-assets';

@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { ChevronDown, ChevronUp, RefreshCw } from 'lucide-react-native';
 import { SheetSceneQuietControl, SHEET_LADDER } from '@/components/sheet-scene';
-import { Text } from '@/components/text';
 
 import { ChangesSheet } from '@/components/changes-sheet';
 import { ChangesWorktreeList } from '@/components/changes-worktree-list';

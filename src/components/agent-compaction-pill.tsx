@@ -13,12 +13,11 @@ import Animated, {
 import { AlertCircle, ChevronDown, Layers, Loader, X } from 'lucide-react-native';
 import { useLingui } from '@lingui/react/macro';
 import * as Clipboard from 'expo-clipboard';
-import { useThemeTokens, useToast, PressableScale } from '@osuki-dev/ui';
+import { useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { BoundedMarkdown } from '@/components/bounded-markdown';
 import { usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
-import { Text } from '@/components/text';
 import { useAppActive } from '@/hooks/use-app-active';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import type { CompactionActivity } from '@/lib/agent-compaction';

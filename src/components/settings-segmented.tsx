@@ -12,8 +12,7 @@
  * What is left here is what the kit has no opinion about: sentence-case labels
  * with room for tall scripts, and test identifiers that carry the selection.
  */
-import { Tabs, useThemeTokens } from '@osuki-dev/ui';
-import { Text, type TextProps } from '@/components/text';
+import { Tabs, useThemeTokens, Text, type TextProps } from '@osuki-dev/ui';
 import { StyleSheet } from 'react-native';
 
 import { useRenderTally } from '@/lib/render-tally';

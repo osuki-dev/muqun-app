@@ -10,14 +10,7 @@
  * `resolveFontStyle` is allowed to return.
  */
 
-import type {
-  FontAxisRange,
-  FontDefinition,
-  FontRegistry,
-  FontWeight,
-  ResolvedFontStyle,
-  VariableFontAxes,
-} from '@osuki-dev/ui';
+import type { FontDefinition, VariableFontAxes } from '@osuki-dev/ui';
 
 import type { FontAxis } from '@/theme/user-font-file';
 
@@ -50,8 +43,9 @@ import type { FontAxis } from '@/theme/user-font-file';
  * added `fontVariationSettings` to `Text` and `TextInput` on both platforms
  * ("Variable fonts", https://reactnative.dev/blog/2026/10/19/react-native-0.88):
  * the face is asked for at 400, which finds the registered typeface, and the
- * weight travels as its `wght` axis instead (`variableWeightStyle`). That is
- * the font's own bold rather than a synthetic one, so the ceiling is lifted.
+ * weight travels as its `wght` axis instead (the role declares its `axes` and
+ * the kit resolves them). That is the font's own bold rather than a synthetic
+ * one, so the ceiling is lifted.
  */
 export const USER_FONT_MAX_NATIVE_WEIGHT = 600;
 
@@ -103,72 +97,12 @@ function variableFontAxes(axes?: readonly FontAxis[] | null): VariableFontAxes |
   ) as VariableFontAxes;
 }
 
-/** A resolved style that may set the `wght` axis. */
-export type UserFontStyle = ResolvedFontStyle;
-
-/** The native weight each kit weight name asks for. */
-const KIT_WEIGHTS: Record<FontWeight, number> = {
-  light: 300,
-  regular: 400,
-  medium: 500,
-  semibold: 600,
-  bold: 700,
-};
-
 /** Five weights spread across a `wght` axis, ends included, for a preview line. */
 export function weightPreviewStops(axis: FontAxis): number[] {
   const stops = [0, 0.25, 0.5, 0.75, 1].map((at) =>
     Math.round(axis.min + (axis.max - axis.min) * at)
   );
   return [...new Set(stops)];
-}
-
-/** React Native's named weights, as numbers. */
-const NAMED_WEIGHTS: Record<string, number> = {
-  thin: 100,
-  ultralight: 200,
-  light: 300,
-  normal: 400,
-  regular: 400,
-  medium: 500,
-  semibold: 600,
-  bold: 700,
-  condensedBold: 700,
-  heavy: 800,
-  black: 900,
-};
-
-/** A style's `fontWeight` as a number, or `null` when it sets none. */
-export function numericFontWeight(value: string | number | undefined): number | null {
-  if (value === undefined) return null;
-  if (typeof value === 'number') return value;
-  return NAMED_WEIGHTS[value] ?? (Number.isFinite(Number(value)) ? Number(value) : null);
-}
-
-/** A role's `wght` axis, when its registry entry is a variable reader face. */
-export function registryWeightAxis(registry: FontRegistry, role: string): FontAxisRange | null {
-  return registry[role]?.axes?.wght ?? null;
-}
-
-/**
- * The style for one weight of a variable face: the registered typeface at
- * 400 and the requested weight as its `wght` axis, clamped to the font's range.
- *
- * 400 because it is the weight `expo-font`'s single registration answers to on
- * Android, and it is below the 600 at which Android's text stack starts faking
- * a bold; the axis does the rest. `weight` is a native number or a kit name.
- */
-export function variableWeightStyle(
-  family: string,
-  axis: FontAxisRange,
-  weight: number | FontWeight
-): Required<UserFontStyle> {
-  const requested = typeof weight === 'number' ? weight : KIT_WEIGHTS[weight];
-  return {
-    fontFamily: family,
-    fontWeight: '400',
-    fontVariationSettings: { wght: Math.min(axis.max, Math.max(axis.min, requested)) },
-  };
 }
 
 /**
@@ -183,9 +117,9 @@ export function variableWeightStyle(
  * system face, and that is exactly how the segmented controls and the
  * instrument headings came to be in a different font from the rows they label.
  */
-export const KIT_FONT_ROLES = ['display', 'body', 'label'] as const;
+const KIT_FONT_ROLES = ['display', 'body', 'label'] as const;
 
-export type KitFontRole = (typeof KIT_FONT_ROLES)[number];
+type KitFontRole = (typeof KIT_FONT_ROLES)[number];
 
 /** The whole registry for one interface face: every role, one file. */
 export function userFontRegistry(

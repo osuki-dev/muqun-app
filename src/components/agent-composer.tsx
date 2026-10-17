@@ -16,8 +16,7 @@ import {
   type TextInputInstance,
   type TextInputSelectionChangeEvent,
 } from 'react-native';
-import { Spinner, useThemeTokens, useToast, PressableScale } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { Spinner, useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {

@@ -8,8 +8,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { useThemeTokens, useToast, PressableScale } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import { plural } from '@lingui/core/macro';
 import { type MarkdownStyle } from 'react-native-enriched-markdown';

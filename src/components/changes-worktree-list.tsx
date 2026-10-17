@@ -1,10 +1,9 @@
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
 import { GitBranch } from 'lucide-react-native';
 
 import { SheetSceneRow, SHEET_LADDER } from '@/components/sheet-scene';
-import { Text } from '@/components/text';
 import type { GitWorktreeInventory } from '@/lib/git-worktrees';
 
 /** Git's verified linked checkouts; selecting one changes only this reader. */

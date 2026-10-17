@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { FileImage, FileText } from 'lucide-react-native';
-import { useThemeTokens, useToast, PressableScale } from '@osuki-dev/ui';
+import { useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
-import { Text } from '@/components/text';
 import { AssetViewer } from '@/components/asset-viewer';
 import { GatewayImageThumbnail } from '@/components/gateway-image-thumbnail';
 import { configuredGatewayServerId, resolveAgentFileAsset } from '@/lib/gateway-client';
