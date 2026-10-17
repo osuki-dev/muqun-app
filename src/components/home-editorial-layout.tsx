@@ -40,6 +40,7 @@ import {
   getEditorialLayoutGeometry,
   editorialScenePlacement,
 } from '@/lib/home-editorial-layout';
+import { LAUNCH_ENTRY_HEIGHT, LAUNCH_GRID_GAP } from '@/lib/home-launch-model';
 import { entryRise, listLayout, resolveDuration, riseIn } from '@/lib/motion';
 import {
   PAD_COLUMN_GAP,
@@ -197,7 +198,7 @@ function EditorialSection({
           </Text>
         )}
       </View>
-      <View style={[styles.sectionContent, { marginTop: 8 }]}>{children}</View>
+      <View style={styles.sectionContent}>{children}</View>
     </Animated.View>
   );
 }
@@ -1000,7 +1001,15 @@ export function HomeEditorialLayout({
 
       {hasArtwork ? (
         <Animated.View
-          style={[{ marginHorizontal: -geometry.gutter, marginBottom: 12 }, animatedArtworkStyle]}>
+          style={[
+            {
+              marginHorizontal: -geometry.gutter,
+              // The launch entries rise one entry's height into the artwork,
+              // over its foot, so the page starts where the picture ends.
+              marginBottom: hasSlot(launches) ? 12 - LAUNCH_ENTRY_HEIGHT : 12,
+            },
+            animatedArtworkStyle,
+          ]}>
           {artwork}
         </Animated.View>
       ) : null}
@@ -1231,12 +1240,14 @@ const styles = StyleSheet.create({
   },
   // No rule under a heading: the title plate and the card below it already
   // say where a section starts, and a hairline across the wallpaper read as a
-  // third edge between them.
+  // third edge between them. A heading sits as close to its content as the
+  // launch tiles sit to each other (`LAUNCH_GRID_GAP`): the gap inside a
+  // section is the one inside the launch block, and only sections are apart.
   sectionHeader: {
     minWidth: 0,
     flexDirection: 'row',
     alignItems: 'baseline',
-    paddingBottom: 8,
+    paddingBottom: LAUNCH_GRID_GAP,
   },
   sectionContent: {
     minWidth: 0,

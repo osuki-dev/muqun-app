@@ -272,6 +272,9 @@ export function groupLaunchCells(entries: readonly LaunchEntry[]): LaunchCell[] 
 
 export const LAUNCH_GRID_GAP = 8;
 
+/** One launch entry's height: a tile row, and how far the editorial page rises into its artwork. */
+export const LAUNCH_ENTRY_HEIGHT = 44;
+
 /**
  * Phone mosaic only. The Pad grid keeps `LAUNCH_GRID_GAP`; these two chips
  * share a column, so the same 8-point gap reads as a slot of beach between

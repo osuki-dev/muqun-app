@@ -46,7 +46,9 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     minHeight: 44,
     justifyContent: 'center',
-    marginTop: 4,
+    // The 44-point target reaches up into the list's gap, so the label sits
+    // the section's 8 points under the list rather than 17.
+    marginTop: -4,
     paddingVertical: 8,
   },
 });
