@@ -29,13 +29,13 @@ screenshot "shots/tool-task-compact.png"
 wait "id=agent-tool-open-detail" 10000
 is visible "id=agent-tool-open-child"
 is visible "text=\"Demo researcher\""
-is visible "text=\"Continue in demo-tree-nested\""
+is visible "text=\"research · Nested investigation\""
 snapshot
 screenshot "shots/tool-task-expanded.png"
 # Consecutive toggles must end expanded with the real child state and action intact.
-press "id=agent-tool-toggle label=\"Continue in demo-tree-nested · Idle · Collapse tool call\""
-press "id=agent-tool-toggle label=\"Continue in demo-tree-nested · Idle · Expand tool call\""
-is visible "id=agent-tool-toggle label=\"Continue in demo-tree-nested · Idle · Collapse tool call\""
+press "id=agent-tool-toggle label=\"research · Nested investigation · Idle · Collapse tool call\""
+press "id=agent-tool-toggle label=\"research · Nested investigation · Idle · Expand tool call\""
+is visible "id=agent-tool-toggle label=\"research · Nested investigation · Idle · Collapse tool call\""
 is visible "id=agent-tool-open-child"
 is visible "text=\"Demo researcher\""
 snapshot
@@ -61,7 +61,7 @@ screenshot "shots/tool-dispatch-details.png"
 
 # section open-child
 # Expand inline to reveal identity and the session action, without opening dispatch details.
-press "id=agent-tool-toggle label=\"Continue in demo-tree-nested · Idle · Expand tool call\""
+press "id=agent-tool-toggle label=\"research · Nested investigation · Idle · Expand tool call\""
 wait "id=agent-tool-open-child" 10000
 is visible "text=\"Demo researcher\""
 press "id=agent-tool-open-child"

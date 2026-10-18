@@ -4867,6 +4867,7 @@ msgid "Projects"
 msgstr "โปรเจกต์"
 
 #: src/app/commands.tsx
+#: src/components/agent-tool-card.tsx
 msgid "Prompt"
 msgstr "พรอมต์"
 
@@ -6737,6 +6738,14 @@ msgstr "ไม่มีการย้อนกลับที่รอนำไ
 #: src/components/agent-workbench.tsx
 msgid "Thinking…"
 msgstr "กำลังคิด…"
+
+#: src/components/agent-tool-card.tsx
+msgid "This activity has no result attached."
+msgstr "กิจกรรมนี้ไม่มีผลลัพธ์แนบมา"
+
+#: src/components/agent-tool-card.tsx
+msgid "This activity has no result attached. Open session to read the conversation."
+msgstr "กิจกรรมนี้ไม่มีผลลัพธ์แนบมา เปิดเซสชันเพื่ออ่านการสนทนา"
 
 #: src/components/agent-composer.tsx
 msgid "This agent accepts messages after its turn ends. Your draft stays here."

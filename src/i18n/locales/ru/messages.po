@@ -4867,6 +4867,7 @@ msgid "Projects"
 msgstr "Проекты"
 
 #: src/app/commands.tsx
+#: src/components/agent-tool-card.tsx
 msgid "Prompt"
 msgstr "Промпт"
 
@@ -6737,6 +6738,14 @@ msgstr "Нет отката, ожидающего применения"
 #: src/components/agent-workbench.tsx
 msgid "Thinking…"
 msgstr "Думает…"
+
+#: src/components/agent-tool-card.tsx
+msgid "This activity has no result attached."
+msgstr "К этой записи об активности не приложен результат"
+
+#: src/components/agent-tool-card.tsx
+msgid "This activity has no result attached. Open session to read the conversation."
+msgstr "К этой записи об активности не приложен результат. Откройте сеанс, чтобы прочитать переписку"
 
 #: src/components/agent-composer.tsx
 msgid "This agent accepts messages after its turn ends. Your draft stays here."

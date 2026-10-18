@@ -4867,6 +4867,7 @@ msgid "Projects"
 msgstr "项目"
 
 #: src/app/commands.tsx
+#: src/components/agent-tool-card.tsx
 msgid "Prompt"
 msgstr "提示词"
 
@@ -6737,6 +6738,14 @@ msgstr "没有等待应用的回滚"
 #: src/components/agent-workbench.tsx
 msgid "Thinking…"
 msgstr "正在思考…"
+
+#: src/components/agent-tool-card.tsx
+msgid "This activity has no result attached."
+msgstr "此活动记录未附带结果"
+
+#: src/components/agent-tool-card.tsx
+msgid "This activity has no result attached. Open session to read the conversation."
+msgstr "此活动记录未附带结果。打开会话即可查看完整对话"
 
 #: src/components/agent-composer.tsx
 msgid "This agent accepts messages after its turn ends. Your draft stays here."
