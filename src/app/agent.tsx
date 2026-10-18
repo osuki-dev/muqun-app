@@ -1,9 +1,8 @@
-import { useRootRouteName } from '@/hooks/use-root-route-name';
 import { useEffect, useRef } from 'react';
 import type { Href } from 'expo-router';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeMode, useThemeTokens, PressableScale } from '@osuki-dev/ui';
-import { useIsFocused, useLocalSearchParams, usePathname, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -34,10 +33,6 @@ import { useAgentSessionState } from '@/stores/agent-session-state';
 import { hasRealSessionTitle } from '@/lib/agent-session';
 import { consumeNewAgentIntent } from '@/lib/home-commands';
 import { padAgentRedirectParams } from '@/lib/pad-detail';
-import {
-  isAgentWorkbenchOwnedOverlayPath,
-  isAgentWorkbenchOwnedRootRoute,
-} from '@/lib/agent-workbench-global-owner';
 
 /**
  * Dedicated OpenCode Agent Screen.
@@ -54,9 +49,6 @@ export default function AgentScreen() {
   const { width } = useWindowDimensions();
   const isPad = responsiveWorkspaceLayout(width).mode === 'pad';
   const router = useRouter();
-  const routeFocused = useIsFocused();
-  const pathname = usePathname();
-  const rootRouteName = useRootRouteName();
   const theme = useThemeTokens();
   const { resolvedMode } = useThemeMode();
   const insets = useSafeAreaInsets();
@@ -111,10 +103,6 @@ export default function AgentScreen() {
   const activeDirectory = useAgentSessionState((s) => s.directory);
   const activeProject = useAgentSessionState((s) => s.project);
   const activeWorktree = useAgentSessionState((s) => s.worktree);
-  const workbenchVisible =
-    routeFocused ||
-    isAgentWorkbenchOwnedRootRoute(rootRouteName) ||
-    isAgentWorkbenchOwnedOverlayPath(pathname);
 
   const createNewSessionRef = useRef<(() => void) | null>(null);
 
@@ -180,7 +168,6 @@ export default function AgentScreen() {
             initialDirectory={params.directory}
             initialAgentId={typeof params.agentId === 'string' ? params.agentId : undefined}
             initialIntent={newSessionIntent ? 'new' : undefined}
-            visible={workbenchVisible}
             topInset={insets.top + DETAIL_HEADER_HEIGHT}
             bottomInset={insets.bottom}
             createNewSessionRef={createNewSessionRef}

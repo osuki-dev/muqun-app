@@ -41,16 +41,18 @@ export function agentWorkbenchNavigationScope(input: {
   rootRouteName?: string;
   routeFocused: boolean;
   visible: boolean;
+  /** Fresh navigator reads at an effect boundary override rendered snapshots. */
+  currentRootRouteName?: string;
+  currentRouteFocused?: boolean;
 }): 'focused' | 'owned-overlay' | 'release' {
-  // `visible` is an explicit lifecycle signal for embedded workbenches. A
-  // route-owned workbench computes it from the same root route below, so a
-  // focus transition cannot be mistaken for an intentional hide.
+  // Only explicit embedded visibility belongs here. Parent-derived route
+  // visibility can lag behind the navigator during a blur transition.
   if (!input.visible) return 'release';
-  if (input.routeFocused && input.visible) return 'focused';
-  if (input.rootRouteName !== undefined) {
-    if (isAgentWorkbenchOwnedRootRoute(input.rootRouteName)) return 'owned-overlay';
-    if (!input.routeFocused) return 'release';
-  }
+  const rootRouteName = input.currentRootRouteName ?? input.rootRouteName;
+  const routeFocused = input.currentRouteFocused ?? input.routeFocused;
+  if (isAgentWorkbenchOwnedRootRoute(rootRouteName)) return 'owned-overlay';
+  if (routeFocused) return 'focused';
+  if (rootRouteName !== undefined) return 'release';
   if (input.visible && isAgentWorkbenchOwnedOverlayPath(input.pathname)) {
     return 'owned-overlay';
   }
