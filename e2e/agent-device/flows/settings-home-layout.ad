@@ -41,7 +41,7 @@ is hidden "${TARGET}"
 
 # section relaunch-editorial
 open "dev.osuki.muqun" --relaunch
-wait stable 400 8000
+wait "id=home-editorial-layout" 15000
 
 # section editorial-relaunched
 is visible "${TARGET}"

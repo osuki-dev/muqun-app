@@ -73,23 +73,25 @@ The target matcher preserves whole-string regular expressions, including
 trailing spaces in composer insertion assertions. A missing target is established
 only by a readable capture; capture errors fail even optional steps. Selected
 and checked state remain assertions, not screenshots. Native selectors perform
-mutations and reject ambiguous controls. Coordinates are reserved for the Skia
-canvas gestures and the two historical motion-capture touches.
+mutations and reject ambiguous controls. Prefer semantic controls; coordinates
+are reserved for canvas gestures and bounded drags within observed content.
 
-The default suite covers the demo tour, manual pairing, terminal interactions,
-SSH, file mentions, attachments, artifacts, the git diff viewer, settings, away
-digest, slash commands, and responsive workspace navigation. The `git-diff` flow
-opens the demo checkout, expands its six-thousand-line file, pages it with
-`Show more`, and refreshes -- all against the bundled fixtures, so it proves the
-rows and the paging rather than anything about a real `git`. The
-`large-file-preview` flow opens the three demo fixtures that sit past the sizes
-the asset viewer routes on -- a 100 KB changelog, a 140 KB bundle with a
-six-thousand-character line in it, and an 8 MB log -- and asserts that the first
-draws headings rather than its own source, that the second draws numbered rows
-under the note saying why they are not coloured, and that only the third is
-refused, by a sentence naming both sizes. Pad-specific rail assertions execute when
-the persistent Servers rail is present. Run on a landscape tablet to verify
-those branches; passing a phone suite does not prove tablet coverage.
+The full gate is the device acceptance and holds only core flows: a flow stays
+only if it proves a core user path or a contract that unit tests cannot. Its 20
+flows cover the demo tour, manual pairing, SSH, terminal interactions, the soft
+keyboard, slash commands, file mentions, attachments, the git diff viewer,
+settings and the Home layout, Home continue and search, notifications, custom
+themes, the agent transcript, tool detail, session tree and task result, and the
+personal and pad workspaces. The `git-diff` flow opens the demo checkout,
+expands its six-thousand-line file, pages it with `Show more`, and refreshes --
+all against the bundled fixtures, so it proves the rows and the paging rather
+than anything about a real `git`. Pad-specific rail assertions execute when
+the persistent Servers rail is present. Run on a tablet to verify those
+branches; passing a phone suite does not prove tablet coverage. Tablet Home
+retains its editorial spread when Classic is selected. Home search checks
+filtering, clearing and opening a result without fixed pagination counts or
+repeated popup query permutations. The keyboard flow checks the phone's
+symbol pages or the tablet's wide keys, plus contextual editor actions.
 
 Capture-only flows retain their `capture` tag and run only when requested:
 `--tag capture` or `--flow <name>`. They include themes, languages, store images

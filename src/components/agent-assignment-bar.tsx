@@ -1,11 +1,9 @@
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import { Bot, Plus, X } from 'lucide-react-native';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { StatusDot } from '@/components/status-dot';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { sameTarget, type AssignmentTarget } from '@/hooks/use-composer-assignment';

@@ -2,7 +2,7 @@ import { HOME_TOOLBAR_PAIR_WIDTH, HOME_TOOLBAR_ICON_INSET } from '@/constants/ho
 import { homeDockTargetId } from '@/lib/home-composer';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import {
   ArrowUpRight,
   ChevronDown,
@@ -22,8 +22,6 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { AgentMark } from '@/components/agent-mark';
-import { PressableScale } from '@/components/pressable-scale';
-import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useAppActive } from '@/hooks/use-app-active';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
@@ -48,6 +46,7 @@ import {
   type ServerReachability,
 } from '@/lib/server-reachability';
 import { useHomeTargetPicker } from '@/stores/home-target-picker';
+import { useHomeTaskCards } from '@/stores/home-task-cards';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
 import { HOME_CONTINUE_REFRESH_MS, homeRefreshDue } from '@/lib/home-refresh-schedule';
@@ -72,6 +71,7 @@ export function useHomeLaunchController({
 }) {
   const router = useRouter();
   const [chosenId, setChosenId] = useState<string | null>(null);
+  const rememberedId = useHomeTaskCards((state) => state.deckFront);
   const [pickerRequestId, setPickerRequestId] = useState<number | null>(null);
   // This is visual feedback only; the shared command controller owns the
   // operation guard across layouts, buttons, and unmounts.
@@ -90,6 +90,7 @@ export function useHomeLaunchController({
   const chosenTargetId = homeDockTargetId({
     serverIds: servers.map((server) => server.serverId),
     pickedId: returnedServerId ?? chosenId,
+    rememberedId,
     ...(selectedServerId ? { selectedId: selectedServerId } : {}),
   });
   const chosen = servers.find((server) => server.serverId === chosenTargetId);
@@ -212,10 +213,7 @@ export function HomeLaunchTarget({
         !bare &&
           servers.length > 0 && { width: HOME_TOOLBAR_PAIR_WIDTH, paddingHorizontal: 8, gap: 4 },
         wide && { width: undefined, minWidth: 160, maxWidth: 300, paddingHorizontal: 16, gap: 12 },
-        chip && [
-          styles.targetChip,
-          { borderColor: theme.colors.border, backgroundColor: background(theme.colors.surface) },
-        ],
+        chip && [styles.targetChip, { backgroundColor: background(theme.colors.surface) }],
         bare && { minWidth: 0 },
         bare && { paddingHorizontal: HOME_TOOLBAR_ICON_INSET },
         {
@@ -702,7 +700,12 @@ function LaunchTile({
         ]}>
         <View style={styles.compactIcon}>{icon}</View>
         <View style={styles.compactCopy}>
-          <Text variant="caption" weight="semibold" color={ink} style={styles.tileTitle}>
+          <Text
+            variant="caption"
+            weight="semibold"
+            color={ink}
+            numberOfLines={1}
+            style={styles.tileTitle}>
             {title}
           </Text>
           {caption ? (
@@ -811,7 +814,6 @@ const styles = StyleSheet.create({
     minHeight: 44,
     paddingVertical: 0,
     paddingHorizontal: 14,
-    borderWidth: StyleSheet.hairlineWidth,
   },
   chip: {
     flex: 1,

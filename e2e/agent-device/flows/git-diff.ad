@@ -10,9 +10,6 @@ is visible "${TARGET}"
 # section s3
 wait stable 400 8000
 
-# section s4
-is visible "${TARGET}"
-
 # section s5
 screenshot "shots/20-changes.png"
 

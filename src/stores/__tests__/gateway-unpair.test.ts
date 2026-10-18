@@ -30,6 +30,7 @@ import { beforeEach, describe, expect, mock, test } from 'bun:test';
 
 import { fakeQuickCrypto, fakeSecureStore, resetVault } from '@/lib/__tests__/gateway-vault';
 import type { GatewayRecord } from '@/lib/gateway-storage';
+import { GatewayTransportRefusalError } from '@/lib/gateway-refusal';
 
 const SERVER_ID = 'gone-1';
 
@@ -58,6 +59,14 @@ mock.module('@lingui/core/macro', () => ({
 
 mock.module('expo-secure-store', () => fakeSecureStore);
 mock.module('react-native-quick-crypto', () => fakeQuickCrypto);
+
+// Unpairing also forgets the native push-token cache. Keep its unavailable-
+// storage fallback real without loading React Native's Flow entry under Bun.
+mock.module('react-native-mmkv', () => ({
+  createMMKV: () => {
+    throw new Error('no native MMKV in tests');
+  },
+}));
 
 // The offline demo is a bundled asset the store only reaches through
 // `enterDemo`, which nothing here calls; importing it for real would drag in
@@ -190,17 +199,54 @@ describe('the revoke that precedes forgetting a gateway', () => {
     expect(await storedIds()).toEqual([]);
   });
 
-  test('a gateway that is there and says no still blocks the removal', async () => {
+  for (const [status, code, transportRefusal] of [
+    [401, 'invalid_token', false],
+    [403, 'invalid_token', true],
+    [426, 'device_repair_required', true],
+  ] as const) {
+    test(`an expired pairing is forgotten locally (${status} ${code})`, async () => {
+      revoke = async () => {
+        const body = JSON.stringify({ error: { code } });
+        throw transportRefusal
+          ? new GatewayTransportRefusalError(status, body)
+          : new Error(`HTTP ${status}: ${body}`);
+      };
+
+      await useGatewayConnectionStore.getState().removeRecord(SERVER_ID);
+
+      expect(revokedFor).toEqual([SERVER_ID]);
+      expect(remainingIds()).toEqual([]);
+      expect(await storedIds()).toEqual([]);
+      expect(useGatewayConnectionStore.getState().record).toBeNull();
+    });
+  }
+
+  test('an unrecognised auth refusal still blocks the removal', async () => {
     revoke = async () => {
-      throw new Error('HTTP 401: {"code":"invalid_token"}');
+      throw new Error('HTTP 403: {"error":{"code":"forbidden"}}');
     };
 
     await expect(useGatewayConnectionStore.getState().removeRecord(SERVER_ID)).rejects.toThrow();
-    // Still listed, and still sealed in the keychain: a server that answered
-    // and refused is not one whose token can be quietly abandoned.
+    // A refusal alone does not establish that this credential expired.
     expect(remainingIds()).toEqual([SERVER_ID]);
     expect(await storedIds()).toEqual([SERVER_ID]);
   });
+
+  for (const [status, code] of [
+    [403, 'clock_skew'],
+    [500, 'transport_key_unavailable'],
+    [500, 'invalid_token'],
+  ] as const) {
+    test(`other transport refusals keep the pairing (${status} ${code})`, async () => {
+      revoke = async () => {
+        throw new GatewayTransportRefusalError(status, JSON.stringify({ error: { code } }));
+      };
+
+      await expect(useGatewayConnectionStore.getState().removeRecord(SERVER_ID)).rejects.toThrow();
+      expect(remainingIds()).toEqual([SERVER_ID]);
+      expect(await storedIds()).toEqual([SERVER_ID]);
+    });
+  }
 
   test('a server fault blocks the removal too', async () => {
     revoke = async () => {

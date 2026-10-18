@@ -1,6 +1,6 @@
 import { type MutableRefObject, useEffect, useRef } from 'react';
 import { useLingui } from '@lingui/react/macro';
-import { type Href, useIsFocused, usePathname, useRouter } from 'expo-router';
+import { type Href, useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -9,16 +9,11 @@ import { AgentWorkbench } from '@/components/agent-workbench';
 import { DETAIL_HEADER_HEIGHT } from '@/components/detail-header';
 import { LogoLoader } from '@/components/logo-loader';
 import { navHeaderButtonStyle } from '@/components/nav-header';
-import { PressableScale } from '@/components/pressable-scale';
+import { PressableScale } from '@osuki-dev/ui';
 import { hasRealSessionTitle } from '@/lib/agent-protocol';
 import { consumeNewAgentIntent, type HomeAgentEntry } from '@/lib/home-commands';
 import { padAgentRouteParams, type PadDetail, type PadShellEvent } from '@/lib/pad-detail';
 import { homeWorkspaceHandoffStore } from '@/lib/home-workspace-handoff';
-import { useRootRouteName } from '@/hooks/use-root-route-name';
-import {
-  isAgentWorkbenchOwnedOverlayPath,
-  isAgentWorkbenchOwnedRootRoute,
-} from '@/lib/agent-workbench-global-owner';
 import { useAgentSessionState } from '@/stores/agent-session-state';
 
 /** The workbench's header controls, shared by the shell header and the workbench. */
@@ -62,8 +57,6 @@ export function PadAgentDetail({ detail, ready, visible, controls }: Props) {
     consumeNewAgentIntent(intentServerId, intentDirectory);
   }, [intentDirectory, intentNonce, intentServerId, newIntent]);
 
-  const routeVisible = usePadAgentRouteVisible();
-
   return (
     <View testID="pad-agent-detail" style={StyleSheet.absoluteFill}>
       {ready ? (
@@ -83,7 +76,7 @@ export function PadAgentDetail({ detail, ready, visible, controls }: Props) {
           initialDirectory={detail.directory}
           initialAgentId={detail.agentId}
           initialIntent={detail.intent}
-          visible={visible && routeVisible}
+          visible={visible}
           topInset={insets.top + DETAIL_HEADER_HEIGHT}
           bottomInset={insets.bottom}
           createNewSessionRef={controls.createNewSessionRef}
@@ -94,27 +87,6 @@ export function PadAgentDetail({ detail, ready, visible, controls }: Props) {
         </View>
       )}
     </View>
-  );
-}
-
-/**
- * Whether the workbench is on screen as far as navigation is concerned: the
- * same test `/agent` makes for `workbenchVisible`.
- *
- * Focused, or covered only by one of the workbench's own sheets. Under any
- * other pushed screen (Settings, Pair, SSH) the workbench stays mounted --
- * a draft or a session switched from the Sessions sheet survives the trip --
- * and `visible=false` hands back its global bridges and stops its foreground
- * work until the route is focused again.
- */
-function usePadAgentRouteVisible(): boolean {
-  const isFocused = useIsFocused();
-  const pathname = usePathname();
-  const rootRouteName = useRootRouteName();
-  return (
-    isFocused ||
-    isAgentWorkbenchOwnedRootRoute(rootRouteName) ||
-    isAgentWorkbenchOwnedOverlayPath(pathname)
   );
 }
 

@@ -1,13 +1,15 @@
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Text } from '@/components/text';
+import { Text, PressableScale } from '@osuki-dev/ui';
 import { Image } from 'expo-image';
 import { X } from 'lucide-react-native';
-import { useEffect, useEffectEvent, useMemo, useState } from 'react';
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import { useFileActions } from '@/hooks/use-file-actions';
 import { useStableHandler } from '@/hooks/use-render-refs';
 import { savePreviewImage } from '@/lib/save-file';
 import {
   failedPreviewLoad,
+  resolvedPreviewLoad,
+  type PreviewImageSource,
   saveOriginalPreview,
   shouldLoadImagePreview,
   type PreviewImageDescriptor,
@@ -41,7 +43,6 @@ import Animated, {
 import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { DURATION, fadeIn, fadeOut, timing, zoomIn } from '@/lib/motion';
 
 const AXIS_LOCK_DISTANCE = 8;
@@ -193,13 +194,18 @@ function PreviewSurface({
   const insets = useSafeAreaInsets();
   const viewport = useMemo(() => ({ width, height }), [width, height]);
   const count = images.length;
-  const [originalPages, setOriginalPages] = useState<ReadonlySet<number>>(new Set());
+  const [originalPages, setOriginalPages] = useState<ReadonlyMap<number, number>>(new Map());
+  const [loadedOriginalPages, setLoadedOriginalPages] = useState<ReadonlySet<number>>(new Set());
   const canViewOriginal = Boolean(
+    !loadedOriginalPages.has(activeIndex) &&
     images[activeIndex]?.resolveOriginal &&
     images[activeIndex]?.original &&
     images[activeIndex]?.uri !== images[activeIndex]?.original?.uri
   );
-  const viewOriginal = () => setOriginalPages((current) => new Set(current).add(activeIndex));
+  const viewOriginal = () =>
+    setOriginalPages((current) =>
+      new Map(current).set(activeIndex, (current.get(activeIndex) ?? 0) + 1)
+    );
   const pagerX = useSharedValue(-activeIndex * width);
   const dragY = useSharedValue(0);
   const transform = useSharedValue(RESTING_PREVIEW);
@@ -503,9 +509,7 @@ function PreviewSurface({
   const accessibility: PreviewAccessibility = {
     onAccessibilityEscape: close,
     accessibilityActions: [
-      ...(canViewOriginal && !originalPages.has(activeIndex)
-        ? [{ name: 'viewOriginal', label: t`View original` }]
-        : []),
+      ...(canViewOriginal ? [{ name: 'viewOriginal', label: t`View original` }] : []),
       { name: 'increment', label: t`Zoom in` },
       { name: 'decrement', label: t`Zoom out` },
       { name: 'resetZoom', label: t`Reset zoom` },
@@ -586,7 +590,16 @@ function PreviewSurface({
                 transform={transform}
                 sizes={sizes}
                 pageIndex={pageIndex}
-                originalRequested={originalPages.has(index)}
+                originalRequested={originalPages.get(index) ?? 0}
+                onOriginalLoaded={(loaded) =>
+                  setLoadedOriginalPages((current) => {
+                    if (current.has(index) === loaded) return current;
+                    const next = new Set(current);
+                    if (loaded) next.add(index);
+                    else next.delete(index);
+                    return next;
+                  })
+                }
               />
             ))}
           </Animated.View>
@@ -607,7 +620,7 @@ function PreviewSurface({
         style={[styles.close, { top: insets.top + 10 }]}>
         <X size={20} color="#FFFFFF" />
       </PressableScale>
-      {canViewOriginal && !originalPages.has(activeIndex) ? (
+      {canViewOriginal ? (
         <PressableScale
           accessibilityLabel={t`View original`}
           onPress={viewOriginal}
@@ -643,6 +656,7 @@ function PreviewPage({
   sizes,
   pageIndex,
   originalRequested,
+  onOriginalLoaded,
 }: {
   image: PreviewImage;
   index: number;
@@ -653,7 +667,8 @@ function PreviewPage({
   transform: SharedValue<typeof RESTING_PREVIEW>;
   sizes: SharedValue<PreviewSize[]>;
   pageIndex: SharedValue<number>;
-  originalRequested: boolean;
+  originalRequested: number;
+  onOriginalLoaded: (loaded: boolean) => void;
 }) {
   const { t } = useLingui();
   const [load, setLoad] = useState<PreviewLoadState>(() => ({
@@ -662,38 +677,57 @@ function PreviewPage({
     original: false,
   }));
   const { status, original } = load;
-  const wantsOriginal = original || originalRequested;
-  useEffect(() => {
-    if (originalRequested)
-      setLoad((current) =>
-        current.original && current.status === 'loading'
-          ? current
-          : { source: null, status: 'loading', original: true }
-      );
-  }, [originalRequested]);
+  const wantsPreview = Boolean(load.previewFallback && (load.request ?? 0) === originalRequested);
+  const wantsOriginal = !wantsPreview && (original || originalRequested > 0);
   const asynchronous = Boolean(image.resolveSource);
-  const resolve = useEffectEvent((signal: AbortSignal, original: boolean) =>
-    original
-      ? (image.resolveOriginal?.(signal) ?? Promise.resolve(image.original ?? image))
-      : (image.resolveSource?.(signal) ?? Promise.resolve(image))
+  const resolve = useEffectEvent((signal: AbortSignal, original: boolean, preview: boolean) =>
+    preview && image.resolvePreview
+      ? image.resolvePreview(signal)
+      : original
+        ? (image.resolveOriginal?.(signal) ?? Promise.resolve(image.original ?? image))
+        : (image.resolveSource?.(signal) ?? Promise.resolve(image))
   );
   useEffect(() => {
     if (!active || !asynchronous) return;
     const controller = new AbortController();
-    resolve(controller.signal, wantsOriginal).then(
+    resolve(controller.signal, wantsOriginal, wantsPreview).then(
       (source) => {
         if (!controller.signal.aborted)
-          setLoad({ source, status: 'loading', original: wantsOriginal });
+          setLoad((current) =>
+            resolvedPreviewLoad(current, source, wantsOriginal, wantsPreview, originalRequested)
+          );
         else source.dispose?.();
       },
       () => {
         if (!controller.signal.aborted)
-          setLoad({ source: null, status: 'failed', original: wantsOriginal });
+          setLoad((current) =>
+            current.readySource
+              ? { ...current, source: current.readySource, status: 'loaded' }
+              : { ...current, status: 'failed' }
+          );
       }
     );
     return () => controller.abort();
-  }, [active, asynchronous, wantsOriginal, originalRequested]);
-  useEffect(() => () => load.source?.dispose?.(), [load.source]);
+  }, [active, asynchronous, wantsOriginal, wantsPreview, originalRequested]);
+  // Keep the last decoded preview leased while a replacement is decoding. A
+  // failed original can restore it without referring to an already-deleted file.
+  const owned = useRef(new Set<PreviewImageSource>());
+  useEffect(() => {
+    const next = new Set(
+      [load.source, load.readySource].filter((source): source is PreviewImageSource =>
+        Boolean(source)
+      )
+    );
+    for (const source of owned.current) if (!next.has(source)) source.dispose?.();
+    owned.current = next;
+  }, [load.source, load.readySource]);
+  useEffect(
+    () => () => {
+      for (const source of owned.current) source.dispose?.();
+      owned.current.clear();
+    },
+    []
+  );
   const zoomStyle = useAnimatedStyle(() => {
     // Clamp even during timed zooms: an axis may not overflow until halfway through.
     const current =
@@ -738,13 +772,17 @@ function PreviewPage({
             // does, the wait is stated by the frame below rather than guessed at.
             transition={DURATION.micro}
             onLoad={({ source }) => {
+              onOriginalLoaded(Boolean(load.source?.originalLoaded));
               sizes.set((current) =>
                 current.map((size, page) =>
                   page === index ? { width: source.width, height: source.height } : size
                 )
               );
               setLoad((current) =>
-                current.source === load.source ? { ...current, status: 'loaded' } : current
+                current.source === load.source &&
+                (current.status !== 'loaded' || current.readySource !== current.source)
+                  ? { ...current, status: 'loaded', readySource: current.source ?? undefined }
+                  : current
               );
             }}
             onError={() => {

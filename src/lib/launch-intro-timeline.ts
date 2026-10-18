@@ -74,6 +74,17 @@ export type LaunchIntroTimeline = {
   settle: IntroBeat;
   /** The hero lifting out of the launch frame and landing in Home's hero rect. */
   hero: IntroBeat;
+  /**
+   * Ash lifting off the hero's outline (`hero-dust-trail.ts`): a sparse
+   * drift of the exit's grains that starts once the front has passed the
+   * picture and keeps going until the exit takes the frame.
+   *
+   * `at` is when the drift fades in; `ms` is how long it runs, to the hold's
+   * end, which is where the exit begins. The scene starts it only once the
+   * canvas is drawing the picture (the view-to-canvas swap), so on a slow
+   * decode it begins late rather than on the view.
+   */
+  trail: IntroBeat;
   /** The prompt in the lower third typing the pack's name, one character at a time. */
   type: IntroBeat;
   /** The block cursor's single blink, once the name is spelled out. */
@@ -165,6 +176,7 @@ export function launchIntroTimeline(d: MotionDurations): LaunchIntroTimeline {
     worldDeadlineAt: bloom.at + d.medium,
     settle: { at: d.micro, ms: d.long + d.long },
     hero: { at: d.short, ms: d.long + d.short },
+    trail: { at: bloom.at + d.micro, ms: holdUntil - (bloom.at + d.micro) },
     type,
     blink,
     skipArmedAt: d.long,
@@ -199,6 +211,7 @@ export function reducedLaunchIntroTimeline(d: MotionDurations): LaunchIntroTimel
     worldDeadlineAt: 0,
     settle: still,
     hero: still,
+    trail: still,
     type: still,
     blink: still,
     skipArmedAt: 0,

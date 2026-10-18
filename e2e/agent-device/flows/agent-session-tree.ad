@@ -18,7 +18,19 @@ press "id=agent-session-tree-row-demo-tree-branch"
 wait "id=agent-subagent-detail-transcript" 10000
 is visible "text=\"Research branch\""
 is visible "id=agent-subagent-detail-status label=Idle"
+wait "text=\"Snapshot output for demo-tree-branch.\"" 10000
 is visible "text=\"Snapshot output for demo-tree-branch.\""
+# The legacy Codex activity has four null input fields but no returned result.
+# It must explain the missing inline result and keep the real conversation reachable.
+press "id=agent-tool-toggle"
+wait "id=agent-subagent-activity-body" 5000
+is visible "text=\"This activity has no result attached. Open session to read the conversation\""
+press "id=agent-tool-open-child"
+wait "text=\"Snapshot output for demo-tree-nested.\"" 10000
+# OpenCode's actual subagent result remains inline, without its wire envelope.
+press "id=agent-tool-toggle"
+wait "text=\"QA_SUBAGENT_RESULT: The parser review found an ordering issue.\"" 5000
+is hidden "id=agent-subagent-activity-body"
 back --system
 wait "id=agent-session-tree-row-demo-tree-branch" 10000
 is visible "id=agent-session-tree-row-demo-tree-root"
@@ -55,3 +67,25 @@ back --system
 
 # section closed
 is hidden "${TARGET}"
+
+# section context-ownership
+# Use the ordinary workbench, not the standalone streaming transcript fixture.
+open "muqun://agent?asid=demo-compaction-layout&agentId=opencode"
+wait "label=\"Context 4% full\"" 15000
+wait stable 600 5000
+# The development warning overlay can intercept the bottom composer controls.
+react-native dismiss-overlay
+press "label=\"Context 4% full\""
+wait "id=agent-context-sheet" 10000
+wait "text=\"1,300\"" 10000
+is visible "text=\"GPT 5.4\""
+is visible "text=\"/demo/muqun\""
+screenshot "shots/context-owner-retained.png"
+back --system
+wait "label=\"Sessions: Compaction layout sample\"" 10000
+is visible "label=\"Context 4% full\""
+wait stable 600 5000
+press "label=\"Context 4% full\""
+wait "text=\"1,300\"" 10000
+back --system
+wait "label=\"Sessions: Compaction layout sample\"" 10000

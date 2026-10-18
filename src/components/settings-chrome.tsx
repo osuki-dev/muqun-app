@@ -16,8 +16,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
  * two transitions telling the same story. Motion on this screen is spent only
  * where a state changes under the finger.
  */
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, Surface, PressableScale, Text } from '@osuki-dev/ui';
 import { ChevronRight, type LucideIcon } from 'lucide-react-native';
 import { Children, Fragment, isValidElement, type ReactNode } from 'react';
 import { StyleSheet, type TextStyle, View } from 'react-native';
@@ -30,9 +29,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { PressableScale } from '@/components/pressable-scale';
 import { Toggle } from '@/components/toggle';
-import { ThemedSurface } from '@/components/themed-surface';
 import { useSheetGroundPlate } from '@/components/sheet-ground';
 import { listLayout, PRESS, timing } from '@/lib/motion';
 import { useRenderTally } from '@/lib/render-tally';
@@ -194,8 +191,9 @@ export function SectionLabel({
    * ink stopped at the identical pixel in all three. What the padding did do
    * was make the plate lopsided, which is what it was really being judged on.
    *
-   * The clip is fixed where it can be, in `components/text.tsx`, by making the
-   * line itself longer than the glyphs. The plate is symmetrical again.
+   * The clip is fixed where it can be, by the kit `Text`'s trailing slack
+   * (`trailingSlack` on the reader's font roles), which makes the line itself
+   * longer than the glyphs. The plate is symmetrical again.
    */
   return (
     <Text
@@ -282,7 +280,6 @@ export function SettingsCard({
   flush?: boolean;
 }) {
   const profile = useAppearanceProfile();
-  const theme = useThemeTokens();
   const items = Children.toArray(children);
   const rows = items.map((row, position) => {
     const key = isValidElement(row) && row.key != null ? row.key : `settings-row-${position}`;
@@ -304,12 +301,11 @@ export function SettingsCard({
   });
   if (flush) return <View style={styles.sectionBodyFlush}>{rows}</View>;
   return (
-    <ThemedSurface
+    <Surface
       slot="cards.decoration"
-      baseColor={theme.colors.surface}
       style={[styles.sectionBody, { borderRadius: profile.chrome.surface }]}>
       {rows}
-    </ThemedSurface>
+    </Surface>
   );
 }
 

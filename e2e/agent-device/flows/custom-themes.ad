@@ -14,9 +14,8 @@ scroll down --pixels 300
 # theme could reach this app: the two routes that remain are a system file
 # picker and the network gallery, and this suite is required to run with
 # neither. So the theme comes from the document the demo workspace already
-# ships -- the same file `theme-document` previews without applying -- and this
-# flow applies it, which is what puts a custom theme in the library for
-# everything below to work on.
+# ships, and this flow applies it, which is what puts a custom theme in the
+# library for everything below to work on.
 #
 # Raw selectors rather than manifest targets: closing the viewer is addressed by
 # accessibility label, and the manifest's target vocabulary is text and id only.
@@ -27,8 +26,7 @@ press "text=\"Open muqun.muqun-theme.json\""
 wait "id=asset-preview-theme" 15000
 press "id=asset-preview-theme"
 wait "id=custom-theme-preview" 15000
-# Same fold as `theme-document`: the confirm sits under the appearance
-# settings in the asset viewer.
+# The confirm sits under the appearance settings in the asset viewer.
 scroll down --pixels 900
 press "id=theme-apply"
 wait "label=\"Close file\"" 15000
@@ -40,29 +38,8 @@ wait "label=\"Refresh files\"" 10000
 back --system
 wait stable 400 5000
 
-# section install-ipad
-# XCUITest 0.21.12 can stall while reading the landscape theme preview tree.
-# The preview screenshot is retained, then the known bottom Apply button is
-# tapped at its visible centre on the dedicated 1210x834 landscape QA iPad.
-press "text=\"Open files\""
-wait stable 400 5000
-scroll down --pixels 350
-press "text=\"Open muqun.muqun-theme.json\""
-wait "id=asset-preview-theme" 15000
-press "id=asset-preview-theme"
-press 605 778 --visual
-wait "label=\"Close file\"" 15000
-press "label=\"Close file\""
-wait "label=\"Refresh files\"" 10000
-back --system
-wait stable 400 5000
-
 # section install-back
-# The workspace stack unwinds differently per form factor: a phone pushes the
-# demo workspace over Home and offers the way back, while a pad rail keeps
-# Servers beside the workspace and offers no back button at all. The manifest
-# presses this only when it is there (optional, like demo-tour's return), so
-# the flow continues from the workspace on a rail and from Home on a phone.
+# Phones return to Home here; tablets reach Settings through the retained rail.
 press "${TARGET}"
 wait stable 400 5000
 

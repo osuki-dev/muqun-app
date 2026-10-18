@@ -7,8 +7,7 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { LegendList, type LegendListRenderItemProps } from '@legendapp/list/react-native';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
 import type { MarkdownStyle } from 'react-native-enriched-markdown';
 
 import { AGENT_TYPE } from '@/constants/agent-type';
@@ -244,6 +243,12 @@ export function CodeLinesView({
     ),
     [rowStyles, scrollX, theme.colors.text, theme.colors.textSubtle]
   );
+  // LegendList caches mounted row elements independently of renderItem.
+  // Geometry and palette changes must also invalidate unchanged line data.
+  const rowExtraData = useMemo(
+    () => ({ rowStyles, text: theme.colors.text, subtle: theme.colors.textSubtle }),
+    [rowStyles, theme.colors.text, theme.colors.textSubtle]
+  );
 
   const rowSize = useCallback(() => lineHeight, [lineHeight]);
   // Lines repeat -- a file is full of `}` and of blank lines -- so the line's
@@ -301,6 +306,7 @@ export function CodeLinesView({
             data={lines as string[]}
             keyExtractor={keyOfLine}
             renderItem={renderRow}
+            extraData={rowExtraData}
             // One monospaced line, one exact height: the list never re-measures,
             // so a hundred thousand rows cost the same as a hundred.
             getFixedItemSize={rowSize}

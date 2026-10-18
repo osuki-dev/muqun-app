@@ -1,9 +1,8 @@
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Text } from '@/components/text';
+import { Text, PressableScale } from '@osuki-dev/ui';
 import { Component, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 
 /**

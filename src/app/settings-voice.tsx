@@ -1,13 +1,11 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, Text, TextField } from '@osuki-dev/ui';
 import { useNavigation } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Keyboard, StyleSheet, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text } from '@/components/text';
 import { SettingsSegmented } from '@/components/settings-segmented';
-import { FontedTextInput } from '@/components/fonted-text-input';
 import {
   SHEET_LADDER,
   SheetScene,
@@ -197,7 +195,7 @@ function VoiceSettingsForm() {
           )}
         </View>
         <SheetSceneField label={t`API URL`}>
-          <FontedTextInput
+          <TextField
             testID="voice-service-url"
             accessibilityLabel={t`API URL`}
             value={url}
@@ -214,7 +212,7 @@ function VoiceSettingsForm() {
         <SheetSceneField
           label={official ? t`API key` : t`API key (optional)`}
           error={attemptedSave && missing.includes('apiKey') ? t`Required.` : undefined}>
-          <FontedTextInput
+          <TextField
             testID="voice-service-key"
             accessibilityLabel={official ? t`API key` : t`API key (optional)`}
             value={apiKey}
@@ -231,7 +229,7 @@ function VoiceSettingsForm() {
         <SheetSceneField
           label={official ? t`Model` : t`Model (optional)`}
           error={attemptedSave && missing.includes('model') ? t`Required.` : undefined}>
-          <FontedTextInput
+          <TextField
             testID="voice-service-model"
             accessibilityLabel={t`Model`}
             value={model}

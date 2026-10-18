@@ -1,11 +1,10 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens, useToast } from '@osuki-dev/ui';
+import { useThemeTokens, useToast, Text } from '@osuki-dev/ui';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { Download, X } from 'lucide-react-native';
 import { AgentActionMenu } from '@/components/agent-action-menu';
-import { Text } from '@/components/text';
 import { AudioPlaybackError } from '@/lib/audio-playback-session';
 
 /** Uses the same themed action menu as transcript and attachment controls. */

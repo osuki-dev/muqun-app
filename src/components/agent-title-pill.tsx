@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   type AccessibilityActionEvent,
@@ -19,7 +19,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { feedback } from '@/lib/feedback';
 import { INSTANT, settleTo, timing } from '@/lib/motion';
 import {

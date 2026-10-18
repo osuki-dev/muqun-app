@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
 import { useEffect, useState, type ReactNode } from 'react';
 import {
   KeyboardAwareScrollView,
@@ -27,13 +27,12 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 
-import { Text } from '@/components/text';
 import { homeScrollFadeOpacity } from '@/lib/home-scroll-fade';
 import { useLaunchHandoff } from '@/stores/launch-handoff';
 import { launchEntryProgress } from '@/lib/launch-handoff';
 import { useHomeScenePlate } from '@/hooks/use-home-scene-plate';
 import { useInterfaceFontFamily } from '@/hooks/use-user-fonts';
-import { registryWeightAxis, USER_FONT_MAX_NATIVE_WEIGHT } from '@/theme/interface-font-registry';
+import { USER_FONT_MAX_NATIVE_WEIGHT } from '@/theme/interface-font-registry';
 
 import {
   EDITORIAL_MAX_WIDTH,
@@ -41,6 +40,7 @@ import {
   getEditorialLayoutGeometry,
   editorialScenePlacement,
 } from '@/lib/home-editorial-layout';
+import { LAUNCH_ENTRY_HEIGHT, LAUNCH_GRID_GAP } from '@/lib/home-launch-model';
 import { entryRise, listLayout, resolveDuration, riseIn } from '@/lib/motion';
 import {
   PAD_COLUMN_GAP,
@@ -169,7 +169,6 @@ type EditorialSectionProps = {
   entering?: ReturnType<typeof entryRise>;
   heading?: ReactNode;
   children: ReactNode;
-  borderColor: string;
   textColor: string;
   spacing: {
     md: number;
@@ -182,7 +181,6 @@ function EditorialSection({
   title,
   heading,
   children,
-  borderColor,
   textColor,
   spacing,
   first = false,
@@ -193,14 +191,14 @@ function EditorialSection({
     <Animated.View
       entering={entering}
       style={[styles.section, { marginTop: first ? 0 : spacing.lg, marginBottom: 0 }]}>
-      <View style={[styles.sectionHeader, { borderBottomColor: borderColor }]}>
+      <View style={styles.sectionHeader}>
         {heading ?? (
           <Text variant="heading" color={textColor} accessibilityRole="header" style={plate}>
             {title}
           </Text>
         )}
       </View>
-      <View style={[styles.sectionContent, { marginTop: 8 }]}>{children}</View>
+      <View style={styles.sectionContent}>{children}</View>
     </Animated.View>
   );
 }
@@ -290,11 +288,9 @@ export function HomeEditorialLayout({
   const chromeFontFamily =
     interfaceFontFamily ?? (Platform.OS === 'android' ? 'sans-serif-condensed' : undefined);
   // A static reader face is capped below Android's bold lookup; a variable one
-  // takes 900 on its `wght` axis through the app's `Text`.
+  // takes 900 on its `wght` axis through the kit's `Text`.
   const titleWeight =
-    interfaceFontFamily && !registryWeightAxis(theme.fonts, 'display')
-      ? USER_FONT_MAX_NATIVE_WEIGHT
-      : 900;
+    interfaceFontFamily && !theme.fonts.display?.axes?.wght ? USER_FONT_MAX_NATIVE_WEIGHT : 900;
   const titleKey = `${coverTitle ?? ''}:${chromeFontFamily ?? 'system'}:${titleWeight}`;
   const { fontScale: windowFontScale } = useWindowDimensions();
   const fontScale = fontScaleProp ?? windowFontScale;
@@ -473,7 +469,18 @@ export function HomeEditorialLayout({
     const bandArrival = bandSettled
       ? undefined
       : riseIn(resolveDuration('medium'), resolveDuration('medium'));
-    const titleFontSize = coverBlock.titleSize;
+    const titleFontSize =
+      coverKind === 'artwork'
+        ? titleMeasurement && titleMeasurement.title === titleKey && titleMeasurement.width > 0
+          ? Math.min(columns.cover * 0.48, ((columns.cover - 4) * 100) / titleMeasurement.width)
+          : columns.cover * 0.3
+        : coverBlock.titleSize;
+    const titleHeight = titleFontSize * PAD_COVER_TITLE_LINE_HEIGHT;
+    const scenePlacement = editorialScenePlacement(
+      coverTitle ? titleHeight : 0,
+      0,
+      artworkTopInset
+    );
     const titleStyle = {
       fontSize: titleFontSize,
       lineHeight: titleFontSize * PAD_COVER_TITLE_LINE_HEIGHT,
@@ -568,7 +575,7 @@ export function HomeEditorialLayout({
                 <Animated.View
                   testID="home-pad-cover"
                   layout={coverLayout}
-                  style={[styles.coverScene, { height: coverBlock.height }]}>
+                  style={styles.coverScene}>
                   {titleMeasure}
                   {coverTitle ? (
                     <Animated.View
@@ -585,13 +592,23 @@ export function HomeEditorialLayout({
                       </Text>
                     </Animated.View>
                   ) : null}
-                  {/* Scenes sit behind the title; portraits retain foreground
-                      depth within the title-safe geometry. The frame snaps so
-                      an old crop cannot overflow while the canvas re-measures. */}
+                  {/* Keep the phone composition inside this column: full-width
+                      artwork in flow, with scenes behind type and portraits overlapping it. */}
                   <Animated.View
                     onLayout={artworkStage.onLayout}
                     pointerEvents="none"
-                    style={[styles.padCoverArtwork, coverBlock.artwork, artworkStage.style]}>
+                    style={[
+                      {
+                        marginTop: !artworkForeground
+                          ? scenePlacement.marginTop
+                          : coverTitle
+                            ? -titleHeight * 0.35 - artworkTopInset
+                            : 0,
+                        marginBottom: !artworkForeground ? scenePlacement.marginBottom : 0,
+                        zIndex: 1,
+                      },
+                      artworkStage.style,
+                    ]}>
                     {artwork}
                   </Animated.View>
                 </Animated.View>
@@ -824,7 +841,6 @@ export function HomeEditorialLayout({
             ) : null}
             {hasProgress ? (
               <EditorialSection
-                borderColor={theme.colors.border}
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
                 title={t`Computers`}
@@ -835,7 +851,6 @@ export function HomeEditorialLayout({
             ) : null}
             {hasSlot(recent) ? (
               <EditorialSection
-                borderColor={theme.colors.border}
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
                 title={t`Recent`}
@@ -847,7 +862,6 @@ export function HomeEditorialLayout({
             ) : null}
             {hasSlot(connections) ? (
               <EditorialSection
-                borderColor={theme.colors.border}
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
                 title={t`Connections`}
@@ -923,7 +937,6 @@ export function HomeEditorialLayout({
             ) : null}
             {hasProgress ? (
               <EditorialSection
-                borderColor={theme.colors.border}
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
                 title={t`Computers`}
@@ -934,7 +947,6 @@ export function HomeEditorialLayout({
             ) : null}
             {hasSlot(recent) ? (
               <EditorialSection
-                borderColor={theme.colors.border}
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
                 title={t`Recent`}
@@ -946,7 +958,6 @@ export function HomeEditorialLayout({
             ) : null}
             {geometry.mode === 'one-column' && hasSlot(connections) ? (
               <EditorialSection
-                borderColor={theme.colors.border}
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
                 title={t`Connections`}
@@ -960,7 +971,6 @@ export function HomeEditorialLayout({
             <View style={[styles.aside, { width: geometry.asideWidth }]}>
               {hasSlot(connections) ? (
                 <EditorialSection
-                  borderColor={theme.colors.border}
                   textColor={theme.colors.text}
                   spacing={theme.spacing}
                   title={t`Connections`}
@@ -1012,7 +1022,15 @@ export function HomeEditorialLayout({
 
       {hasArtwork ? (
         <Animated.View
-          style={[{ marginHorizontal: -geometry.gutter, marginBottom: 12 }, animatedArtworkStyle]}>
+          style={[
+            {
+              marginHorizontal: -geometry.gutter,
+              // The launch entries rise one entry's height into the artwork,
+              // over its foot, so the page starts where the picture ends.
+              marginBottom: hasSlot(launches) ? 12 - LAUNCH_ENTRY_HEIGHT : 12,
+            },
+            animatedArtworkStyle,
+          ]}>
           {artwork}
         </Animated.View>
       ) : null}
@@ -1051,7 +1069,6 @@ export function HomeEditorialLayout({
           ) : null}
           {hasProgress ? (
             <EditorialSection
-              borderColor={theme.colors.border}
               textColor={theme.colors.text}
               spacing={theme.spacing}
               title={t`Computers`}
@@ -1062,7 +1079,6 @@ export function HomeEditorialLayout({
           ) : null}
           {hasSlot(recent) ? (
             <EditorialSection
-              borderColor={theme.colors.border}
               textColor={theme.colors.text}
               spacing={theme.spacing}
               first={!hasArtwork && !hasProgress}
@@ -1074,7 +1090,6 @@ export function HomeEditorialLayout({
           ) : null}
           {geometry.mode === 'one-column' && hasSlot(connections) ? (
             <EditorialSection
-              borderColor={theme.colors.border}
               textColor={theme.colors.text}
               spacing={theme.spacing}
               title={t`Connections`}
@@ -1088,7 +1103,6 @@ export function HomeEditorialLayout({
           <View style={[styles.aside, { width: geometry.asideWidth }]}>
             {hasSlot(connections) ? (
               <EditorialSection
-                borderColor={theme.colors.border}
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
                 first
@@ -1126,8 +1140,6 @@ const styles = StyleSheet.create({
     gap: 24,
     marginBottom: 16,
   },
-  // Anchored right, so the title's start stays clear at the block's left.
-  padCoverArtwork: { position: 'absolute', right: 0, bottom: 0, zIndex: 1 },
   padColumns: { flex: 1, minHeight: 0, flexDirection: 'row', gap: PAD_COLUMN_GAP },
   padWorkColumn: { flex: 1, minWidth: 0 },
   padScroll: { flex: 1 },
@@ -1245,12 +1257,16 @@ const styles = StyleSheet.create({
   section: {
     minWidth: 0,
   },
+  // No rule under a heading: the title plate and the card below it already
+  // say where a section starts, and a hairline across the wallpaper read as a
+  // third edge between them. A heading sits as close to its content as the
+  // launch tiles sit to each other (`LAUNCH_GRID_GAP`): the gap inside a
+  // section is the one inside the launch block, and only sections are apart.
   sectionHeader: {
     minWidth: 0,
     flexDirection: 'row',
     alignItems: 'baseline',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    paddingBottom: 8,
+    paddingBottom: LAUNCH_GRID_GAP,
   },
   sectionContent: {
     minWidth: 0,

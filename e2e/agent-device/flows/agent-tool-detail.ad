@@ -29,13 +29,13 @@ screenshot "shots/tool-task-compact.png"
 wait "id=agent-tool-open-detail" 10000
 is visible "id=agent-tool-open-child"
 is visible "text=\"Demo researcher\""
-is visible "text=\"Continue in demo-tree-nested\""
+is visible "text=\"research · Nested investigation\""
 snapshot
 screenshot "shots/tool-task-expanded.png"
 # Consecutive toggles must end expanded with the real child state and action intact.
-press "id=agent-tool-toggle label=\"Continue in demo-tree-nested · Idle · Collapse tool call\""
-press "id=agent-tool-toggle label=\"Continue in demo-tree-nested · Idle · Expand tool call\""
-is visible "id=agent-tool-toggle label=\"Continue in demo-tree-nested · Idle · Collapse tool call\""
+press "id=agent-tool-toggle label=\"research · Nested investigation · Idle · Collapse tool call\""
+press "id=agent-tool-toggle label=\"research · Nested investigation · Idle · Expand tool call\""
+is visible "id=agent-tool-toggle label=\"research · Nested investigation · Idle · Collapse tool call\""
 is visible "id=agent-tool-open-child"
 is visible "text=\"Demo researcher\""
 snapshot
@@ -61,14 +61,14 @@ screenshot "shots/tool-dispatch-details.png"
 
 # section open-child
 # Expand inline to reveal identity and the session action, without opening dispatch details.
-press "id=agent-tool-toggle label=\"Continue in demo-tree-nested · Idle · Expand tool call\""
+press "id=agent-tool-toggle label=\"research · Nested investigation · Idle · Expand tool call\""
 wait "id=agent-tool-open-child" 10000
 is visible "text=\"Demo researcher\""
 press "id=agent-tool-open-child"
 wait "id=agent-subagent-detail-transcript" 10000
 is visible "text=\"Nested investigation\""
 is visible "id=agent-subagent-detail-status label=Idle"
-is visible "text=\"Snapshot output for demo-tree-nested.\""
+wait "text=\"Snapshot output for demo-tree-nested.\"" 5000
 snapshot
 screenshot "shots/tool-child-session.png"
 back --system
@@ -130,6 +130,8 @@ is visible "label=\"QA read image\""
 wait stable 400 5000
 snapshot
 screenshot "shots/tool-read-preview-close-return.png"
+
+# section read-preview-back
 # Android Back must dismiss the native modal, not navigate out of the sheet.
 press "label=\"QA read image\""
 wait "label=\"Close preview\"" 10000

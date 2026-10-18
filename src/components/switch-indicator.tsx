@@ -1,6 +1,5 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -51,7 +50,6 @@ export function SwitchIndicator({ address, testID }: { address: PaneAddress; tes
           notificationSurfaceStyle,
           {
             backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-            borderColor: theme.colors.border,
           },
         ]}>
         <Text
@@ -85,7 +83,6 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
   },
   // A pane address is `2:3` -- numbers the reader compares against the pill in
   // the header and against the panels sheet -- so it is a literal, and it now

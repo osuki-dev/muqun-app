@@ -1,9 +1,14 @@
+import { Tabs } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
-import { Tabs } from '@/components/themed-tabs';
 
+import { usePillTabsLayering } from '@/hooks/use-surface-background';
 import type { QuickCommandDelivery } from '@/lib/quick-commands';
 
-/** Reused when creating a shortcut and changing an existing custom shortcut. */
+/**
+ * Reused when creating a shortcut and changing an existing custom shortcut.
+ * Fully round on every profile, as the quick-action kind tabs are: the
+ * profile's segmented radii are for the settings controls.
+ */
 export function AgentCommandDeliveryPicker({
   value,
   onChange,
@@ -16,6 +21,7 @@ export function AgentCommandDeliveryPicker({
   disabled?: boolean;
 }) {
   const { t } = useLingui();
+  const layering = usePillTabsLayering();
   return (
     <Tabs
       testID={testID}
@@ -25,6 +31,9 @@ export function AgentCommandDeliveryPicker({
       ]}
       value={value}
       variant="pill"
+      radius="pill"
+      optionRadius="pill"
+      layering={layering}
       size="compact"
       onChange={(next) => {
         if (next === 'current-agent' || next === 'collaboration') onChange(next);

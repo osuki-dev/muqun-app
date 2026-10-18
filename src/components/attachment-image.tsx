@@ -1,12 +1,11 @@
 import { memo, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { FileText } from 'lucide-react-native';
 import { ContentImage } from '@/components/content-image';
 import { contentImageIdentity, type ContentImagePreviewState } from '@/lib/content-image-layout';
 import { useLingui } from '@lingui/react/macro';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { PressableScale } from '@/components/pressable-scale';
 import {
   readUploadImageSource,
   uploadImageSource,

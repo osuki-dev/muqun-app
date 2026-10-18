@@ -1,8 +1,7 @@
 import { plural } from '@lingui/core/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, Skeleton, Input, Button, PressableScale, Text } from '@osuki-dev/ui';
 import { Bot, Plus, RefreshCw, SquareTerminal } from 'lucide-react-native';
 import {
   type ReactNode,
@@ -24,9 +23,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { agentStatusWord } from '@/i18n/labels';
 import { appChrome } from '@/constants/appearance';
-import { Button } from '@/components/themed-button';
-import { Input } from '@/components/themed-input';
-import { PressableScale } from '@/components/pressable-scale';
 import { RowActionMenu } from '@/components/row-action-menu';
 import {
   SHEET_LADDER,
@@ -39,7 +35,6 @@ import {
   SheetSceneRow,
   sheetSceneStyles,
 } from '@/components/sheet-scene';
-import { Skeleton } from '@/components/themed-skeleton';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLatestRef, useLazyRef } from '@/hooks/use-render-refs';
 import { fadeIn, fadeOut, listLayout, PULSE_PERIOD, riseIn, STAGGER, timing } from '@/lib/motion';
@@ -934,7 +929,7 @@ export function SessionMap({
             */}
             <PressableScale
               accessibilityLabel={t`Group ${group.tab.title}. Long press for actions.`}
-              feedback={false}
+              feedback="none"
               onLongPress={() =>
                 setMenuFor({ kind: 'tab', id: group.tab.id, label: group.tab.title })
               }>

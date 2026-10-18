@@ -5,7 +5,7 @@ import { PanResponder, PixelRatio, StyleSheet, View } from 'react-native';
 import { Canvas, importDevice, type CanvasRef } from 'react-native-webgpu';
 import { Skia } from 'react-native-skia';
 import { PerspectiveCamera, Vector3, WebGPURenderer } from 'three/webgpu';
-import { Text } from '@/components/text';
+import { Text } from '@osuki-dev/ui';
 import { createSceneLifetimes } from '@/lib/scene-lifetime';
 import { useLatestReader } from '@/hooks/use-render-refs';
 import { ComputerScene } from './scene';

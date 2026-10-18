@@ -1,8 +1,6 @@
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useLingui } from '@lingui/react/macro';
-import { Tag, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
-import { Button } from '@/components/themed-button';
+import { Tag, useThemeMode, useThemeTokens, Button, PressableScale, Text } from '@osuki-dev/ui';
 import { Image } from 'expo-image';
 import { useNavigation, useRouter } from 'expo-router';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
@@ -28,7 +26,6 @@ import {
 } from '@/lib/motion';
 import { loadThemeTab, saveThemeTab, type ThemeTab } from '@/lib/theme-tab-preference';
 import { effectiveThemeManifest, type InstalledTheme } from '@/theme/repository';
-import { PressableScale } from '@/components/pressable-scale';
 import { useSheetGroundPlate } from '@/components/sheet-ground';
 import { ThemePaletteStrip } from '@/components/theme-palette-strip';
 import { useThemePack } from '@/hooks/use-theme-pack';

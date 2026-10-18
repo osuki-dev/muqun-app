@@ -1,3 +1,4 @@
+import { protectTemporaryCacheEntry } from './cache-cleanup';
 import { File, Paths } from 'expo-file-system';
 import { fetch } from 'expo/fetch';
 import { PermissionsAndroid, Platform } from 'react-native';
@@ -20,6 +21,7 @@ import {
 export type { VoiceState } from '@/lib/voice-input-session';
 
 function recordingRuntime(config: VoiceServiceConfig, language: string): VoiceRecordingRuntime {
+  let disposeCache: (() => void) | undefined;
   let sound: ReturnType<typeof createSound> | undefined;
   const audioOwner = {};
   const file = new File(Paths.cache, `dictation-${Date.now()}.m4a`);
@@ -37,6 +39,8 @@ function recordingRuntime(config: VoiceServiceConfig, language: string): VoiceRe
         }
       }
       if (signal.aborted) throw new Error('Operation cancelled.');
+      disposeCache = await protectTemporaryCacheEntry(file);
+      if (signal.aborted) throw new Error('Operation cancelled');
       sound = createSound();
       sound.setSubscriptionDuration(0.08);
       sound.addRecordBackListener(({ currentMetering = -60, currentPosition }) => {
@@ -102,11 +106,17 @@ function recordingRuntime(config: VoiceServiceConfig, language: string): VoiceRe
     },
 
     release() {
-      sound?.removeRecordBackListener();
-      sound?.dispose();
-      sound = undefined;
-      releaseRecordingAudio(audioOwner);
-      if (file.exists) file.delete();
+      try {
+        sound?.removeRecordBackListener();
+        sound?.dispose();
+        sound = undefined;
+      } finally {
+        try {
+          releaseRecordingAudio(audioOwner);
+        } finally {
+          disposeCache?.();
+        }
+      }
     },
   };
 }

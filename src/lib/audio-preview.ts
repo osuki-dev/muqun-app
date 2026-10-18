@@ -1,3 +1,4 @@
+import { protectTemporaryCacheEntry } from './cache-cleanup';
 import { File, Paths } from 'expo-file-system';
 import { createSound } from 'react-native-nitro-sound';
 import { readAssetBytes, type SessionAsset } from '@/lib/gateway-client';
@@ -25,12 +26,15 @@ export function audioPreviewRuntime(
       'audio/flac': 'flac',
     }[asset.mime] ?? 'audio';
   const file = new File(Paths.cache, `audio-preview-${Date.now()}-${fileSequence++}.${extension}`);
+  let disposeCache: (() => void) | undefined;
   let sound: ReturnType<typeof createSound> | undefined;
   return {
     async prepare(signal) {
       const resolved = options.resolve ? await options.resolve(signal) : asset;
       const bytes = await readAssetBytes(resolved, { signal, maxBytes: MAX_AUDIO_PREVIEW_BYTES });
       if (signal.aborted) throw new Error('Operation cancelled.');
+      disposeCache = await protectTemporaryCacheEntry(file);
+      if (signal.aborted) throw new Error('Operation cancelled');
       file.create();
       await file.write(bytes);
       options.onPrepared?.(bytes);
@@ -62,9 +66,12 @@ export function audioPreviewRuntime(
       await sound?.stopPlayer();
     },
     release() {
-      sound?.dispose();
-      sound = undefined;
-      if (file.exists) file.delete();
+      try {
+        sound?.dispose();
+        sound = undefined;
+      } finally {
+        disposeCache?.();
+      }
     },
   };
 }

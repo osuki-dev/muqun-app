@@ -1,6 +1,6 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale, Text, TextField } from '@osuki-dev/ui';
 import { ChevronRight, Trash2, X } from 'lucide-react-native';
 import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import {
@@ -15,9 +15,7 @@ import { useFocusEffect } from 'expo-router';
 
 import { AgentMark } from '@/components/agent-mark';
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
-import { FontedTextInput } from '@/components/fonted-text-input';
-import { PressableScale } from '@/components/pressable-scale';
-import { Text } from '@/components/text';
+import { HomeFoldLink } from '@/components/home-fold-link';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLatestReader, useStableHandler } from '@/hooks/use-render-refs';
@@ -154,7 +152,7 @@ export function HomeContinueSearch({
           borderRadius: profile.chrome.surface,
         },
       ]}>
-      <FontedTextInput
+      <TextField
         testID="home-continue-search"
         accessibilityLabel={t`Search sessions`}
         placeholder={t`Search sessions`}
@@ -452,16 +450,12 @@ export function HomeRecentSessions({
         </Text>
       ) : null}
       {!searching && shouldShowHomeContinueOverflow(available, collapsedLimit) ? (
-        <PressableScale
+        <HomeFoldLink
           testID="home-recent-sessions-more"
-          accessibilityRole="button"
-          accessibilityState={{ expanded }}
+          expanded={expanded}
           onPress={() => setExpanded(!expanded)}
-          style={[styles.more, linkStyle]}>
-          <Text variant="bodySmall" color={theme.colors.primary}>
-            {expanded ? t`Show less` : t`Show more`}
-          </Text>
-        </PressableScale>
+          style={linkStyle}
+        />
       ) : null}
     </View>
   );
@@ -950,11 +944,4 @@ const styles = StyleSheet.create({
   // Centred on the title's first line (bodySmall's 20pt line box).
   titleMark: { height: 20, justifyContent: 'center' },
   title: { minWidth: 0, flex: 1 },
-  more: {
-    alignSelf: 'flex-start',
-    minHeight: 44,
-    justifyContent: 'center',
-    marginTop: 4,
-    paddingVertical: 8,
-  },
 });

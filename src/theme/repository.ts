@@ -235,10 +235,17 @@ export class ThemeRepository {
         }
       }
       const previous = readableSelection(raw.previous, themes);
+      // A stored `null` is the reader's own choice: the built-in theme, after
+      // `resetToDefault`. Only a selection that is no longer readable -- its
+      // theme removed, or failing the contrast audit -- falls back to the one
+      // before it. Treating the explicit null as unreadable put the previous
+      // theme back on every launch, so choosing the built-in one never lasted.
+      const stored =
+        raw.selection === null ? null : (readableSelection(raw.selection, themes) ?? previous);
       this.state = {
         version: 1,
         themes,
-        selection: readableSelection(raw.selection, themes) ?? previous,
+        selection: stored,
         previous,
       };
       this.compiled.clear();

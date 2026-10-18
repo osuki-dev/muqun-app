@@ -1,11 +1,9 @@
 import { TerminalNotice, terminalNoticeStyles } from '@/components/terminal-notice';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { Waypoints } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { StatusDot } from '@/components/status-dot';
 import { useGatewayTunnel } from '@/hooks/use-gateway-tunnel';
 import type { GatewayRecord } from '@/lib/gateway-storage';

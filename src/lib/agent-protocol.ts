@@ -26,22 +26,14 @@ import { parseLedgerDelivery, type LedgerDelivery } from './task-ledger';
 import { parseKeyboardVocabulary, type KeyboardVocabulary } from './key-vocabulary';
 import { parseMessageImageAssets, type MessageImageAsset } from './message-images';
 import { stripTaskInstruction } from './task-plumbing';
-import { asRecord } from './record';
+import { asFiniteNumber, asRecord, asString } from './record';
 import type { UploadLimits } from './attachment-queue';
 
-export { asRecord } from './record';
+export { asFiniteNumber, asRecord, asString } from './record';
 
 // ---------------------------------------------------------------------------
 // Primitives
 // ---------------------------------------------------------------------------
-
-export function asString(value: unknown): string | undefined {
-  return typeof value === 'string' ? value : undefined;
-}
-
-export function asFiniteNumber(value: unknown): number | undefined {
-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
-}
 
 export function asBool(value: unknown): boolean | undefined {
   return typeof value === 'boolean' ? value : undefined;

@@ -70,8 +70,10 @@ type GlassChromeProps = {
   surface?: ThemeSurface;
   /** Semantic geometry owned by the active appearance profile. */
   shape?: keyof AppearanceProfile['chrome'] | 'pill' | 'none';
-  /** Hide a decorative edge without changing the stable native border width. */
+  /** Default chrome is borderless; keep the native border width stable. */
   borderless?: boolean;
+  /** Shared input docks keep their material without Home's decorative imagery. */
+  artworkEnabled?: boolean;
   /**
    * The face's own shape -- size, radius, padding, shadow. The material is this
    * component's business; where the surface is and how big it is stays with the
@@ -108,7 +110,8 @@ export function GlassChrome({
   face = 'floating',
   surface = 'actions',
   shape,
-  borderless = false,
+  borderless = true,
+  artworkEnabled = true,
   style,
   entering,
   exiting,
@@ -151,20 +154,9 @@ export function GlassChrome({
               resolvedShape === 'pill' ? profile.radius.pill : profile.chrome[resolvedShape],
           };
   /**
-   * An edge, wherever a pack has made surfaces translucent.
-   *
-   * Chrome is drawn from `surfaceRaised` and it usually sits on `background` or
-   * `surface` -- three tokens a pack is free to make nearly the same colour, and
-   * several do. At full opacity the kit's own shadow separates them; once a pack
-   * sets a surface opacity the fill thins towards whatever is behind it and the
-   * control stops having a shape. That is how a header button became two loose
-   * glyphs on a panel and a close button became a smudge.
-   *
-   * `border` is the one token every theme defines for exactly this, and it
-   * holds whatever the fill underneath ends up being. On `chromeStyle` rather
-   * than in the five branches below, because every one of them needs it and a
-   * rule that has to be repeated five times is a rule that will be repeated
-   * four.
+   * Chrome uses its material, shape and shadow for separation. Its border is
+   * transparent by default, including when a theme makes the fill translucent.
+   * A caller may explicitly request an edge for a surface that needs one.
    *
    * The width is always declared and only the colour turns the edge on and off.
    * That is not style: on Android, taking `borderWidth` *off* a view that keeps
@@ -200,7 +192,7 @@ export function GlassChrome({
   );
   const content = (
     <>
-      {hasImage ? (
+      {artworkEnabled && hasImage ? (
         <View
           pointerEvents="none"
           accessible={false}
@@ -242,7 +234,7 @@ export function GlassChrome({
     // The composer is a plate like the content cards around it -- Home's dock
     // under the computer cards, the session composer under the transcript --
     // so a solid pack draws it as they are drawn: `surface` at the reader's
-    // surface opacity, with the `border` hairline. Raised chrome (pills,
+    // surface opacity. Raised chrome (pills,
     // buttons) keeps `surfaceRaised` and a frosted floor under the slider.
     const plate =
       surface === 'composer'

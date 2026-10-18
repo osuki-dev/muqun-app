@@ -5,12 +5,18 @@ import {
 } from '@/constants/home-toolbar';
 import { useAppActive } from '@/hooks/use-app-active';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
-import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
-import { Card } from '@/components/themed-card';
+import {
+  useThemeMode,
+  useThemeTokens,
+  Card,
+  Skeleton,
+  Surface,
+  SurfaceDecoration,
+  Button,
+  PressableScale,
+  Text,
+} from '@osuki-dev/ui';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { Button } from '@/components/themed-button';
-import { Skeleton } from '@/components/themed-skeleton';
 import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import {
@@ -64,7 +70,6 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 
 import AppDrawer from '@/components/app-drawer';
 import { NewTaskAction } from '@/components/new-task-action';
-import { PressableScale } from '@/components/pressable-scale';
 import { SectionLabel } from '@/components/settings-chrome';
 import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
 import { HomeArtwork } from '@/components/home-artwork';
@@ -188,7 +193,6 @@ import type {
   ThemeEffectColorRole,
   ThemeEffectDirection,
 } from '@/theme/schema';
-import { ThemedSurface, ThemedSurfaceArtwork } from '@/components/themed-surface';
 import { useBrandMark } from '@/components/brand-mark';
 import { forgetWarmWorkspace } from '@/lib/server-warm-cache';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
@@ -970,6 +974,10 @@ export function HomeOverview({
 
   function openDemo() {
     enterDemo();
+    if (embedded && activeConnection?.serverId === DEMO_SERVER_ID && onExitOverview) {
+      onExitOverview();
+      return;
+    }
     router.navigate({
       pathname: '/servers/[serverId]',
       params: { serverId: DEMO_SERVER_ID },
@@ -1119,6 +1127,7 @@ export function HomeOverview({
         activeConnection={activeConnection}
         skipEntering={cardsSkipEntering}
         gridWidth={cardGridWidth}
+        deck={!isPad}
         onSelectServer={targetComposer}
         onOpenHistory={(serverId) =>
           router.push({ pathname: '/server-tasks', params: { serverId } })
@@ -1296,10 +1305,8 @@ export function HomeOverview({
                 hasEditorialArtwork && editorialArtworkResolution ? (
                   <HomeEditorialArtwork
                     cover={coverHeader}
-                    fullBleed={coverHeader && !isPad}
+                    fullBleed={coverHeader && (!isPad || padLaunch)}
                     onForegroundChange={reportArtworkForeground}
-                    // The Pad cover block sizes the painting; elsewhere it keeps its own proportion.
-                    fill={padLaunch && coverHeader}
                     resolution={editorialArtworkResolution}
                     onVisibleTopChange={reportEditorialArtworkTop}
                     onAvailabilityChange={(available) => {
@@ -1574,16 +1581,21 @@ export function HomeOverview({
           points below *is* the title, and repeating it up here is what made the
           batch4 header read as chrome. Past 82pt of scroll the brand walks up
           into the bar and the bar earns its left half. The controls never move,
-          so the only thing that changes is where the brand is. */}
+          so the only thing that changes is where the brand is.
+
+          The bar has no surface of its own, so only its buttons take touches:
+          the page scrolls under it, and a drag or tap on its empty half
+          reaches the page that shows through it. */}
       <Animated.View
+        pointerEvents="box-none"
         style={[styles.topBar, barFoldStyle]}
         onLayout={(event: LayoutChangeEvent) => {
           const { height } = event.nativeEvent.layout;
           barHeightValue.set(height);
           setBarHeight(height);
         }}>
-        <SafeAreaView edges={['top']}>
-          <View style={styles.topBarRow}>
+        <SafeAreaView edges={['top']} pointerEvents="box-none">
+          <View pointerEvents="box-none" style={styles.topBarRow}>
             {identity.showBrand ? (
               <Animated.View
                 testID="home-brand-compact"
@@ -1610,7 +1622,7 @@ export function HomeOverview({
                       overflow: 'hidden',
                     },
                   ]}>
-                  <ThemedSurfaceArtwork
+                  <SurfaceDecoration
                     slot="navigation.background"
                     baseColor={theme.colors.surface}
                   />
@@ -1648,7 +1660,9 @@ export function HomeOverview({
             selected server's avatar and loom (card #629) and to the empty
             state's one button; a coral control in the corner is exactly the
             batch4 `ADD` pill under a different icon. */}
-            <Animated.View style={[styles.headerActions, headerActionsStyle]}>
+            <Animated.View
+              pointerEvents="box-none"
+              style={[styles.headerActions, headerActionsStyle]}>
               {/* Two doors that are only here until the first server is
               paired. After that they are things done once a month, standing in
               the most-used corner of the most-used screen; both live in
@@ -1842,7 +1856,7 @@ export function HomeOverview({
                       },
                   ]}>
                   {hasScene && !classicCover ? (
-                    <ThemedSurfaceArtwork
+                    <SurfaceDecoration
                       slot="navigation.background"
                       baseColor={theme.colors.background}
                     />
@@ -2171,9 +2185,7 @@ function HeaderButton({
           borderRadius: profile.chrome.control,
         },
       ]}>
-      {!bare && (
-        <ThemedSurfaceArtwork slot="navigation.background" baseColor={theme.colors.surface} />
-      )}
+      {!bare && <SurfaceDecoration slot="navigation.background" baseColor={theme.colors.surface} />}
       {children}
     </PressableScale>
   );
@@ -2213,10 +2225,9 @@ function ServerCard({
 
   return (
     <View collapsable={false}>
-      <ThemedSurface
+      <Surface
         collapsable={false}
         slot="cards.decoration"
-        baseColor={theme.colors.surface}
         style={[
           styles.serverSection,
           {
@@ -2314,7 +2325,7 @@ function ServerCard({
         {reachability === 'live' || Boolean(server.sshTunnel) ? (
           <NewTaskAction server={server} serverId={server.serverId} label={server.label} />
         ) : null}
-      </ThemedSurface>
+      </Surface>
     </View>
   );
 }
@@ -2351,7 +2362,10 @@ function EmptyState({
     // card vanish on one frame while the new one faded in underneath it -- the
     // one moment in the app where two things are meant to hand over cleanly.
     <Animated.View entering={fadeIn('medium')} exiting={fadeOut('short')}>
-      <Card padding="none" style={[styles.emptyCard, isPad && styles.padEmptyCard]}>
+      <Card
+        slot="cards.plain"
+        padding="none"
+        style={[styles.emptyCard, isPad && styles.padEmptyCard]}>
         {/* The same mark as the pairing screen's aperture, in the same colour,
             at a sixth of the size: this is the shape the reader is about to
             point at their machine. It is drawn in `borderStrong` rather than
@@ -2689,7 +2703,6 @@ const styles = StyleSheet.create({
   padEmptyCard: {
     paddingHorizontal: 44,
     paddingVertical: 40,
-    borderRadius: 28,
     borderCurve: 'continuous',
     gap: 20,
     boxShadow: '0 16px 44px rgba(0, 0, 0, 0.08)',

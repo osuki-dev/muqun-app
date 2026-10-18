@@ -1,4 +1,4 @@
-import { asFiniteNumber, asRecord, asString } from './agent-protocol';
+import { asFiniteNumber, asRecord, asString } from './record';
 
 /** The gateway announces this when it keeps a task ledger. */
 export const TASK_LEDGER_CAPABILITY = 'task_ledger';

@@ -18,16 +18,14 @@ export const PAD_DOCK_FIELD_LINES = 3;
 export const HOME_DOCK_OUTER_INSET = 12;
 export const HOME_DOCK_OUTER_BOTTOM_INSET = 8;
 
-/** The widest phone the dock's field is drawn for; the Pad dock is capped at its width. */
-const HOME_DOCK_PHONE_WIDTH = 430;
+/** Phone-width content cap shared by the Pad cover, launch controls and dock. */
+export const HOME_PHONE_MAX_WIDTH = 430;
 
 /**
- * The widest the Home dock gets anywhere: the phone's dock, gutters taken
- * off. The Pad cover column is half again as wide, and a dock stretched to
- * it drew the theme's composer decoration -- fit to the field's width -- half
- * again as large as on the phone, so the field read as a different field.
+ * The widest Home dock field on either layout: phone width minus its gutters.
+ * This keeps the field and theme decoration at the same scale on Pad.
  */
-export const HOME_COMPOSER_MAX_FIELD_WIDTH = HOME_DOCK_PHONE_WIDTH - 2 * HOME_DOCK_OUTER_INSET;
+export const HOME_COMPOSER_MAX_FIELD_WIDTH = HOME_PHONE_MAX_WIDTH - 2 * HOME_DOCK_OUTER_INSET;
 
 /**
  * The inset on each side that centres a dock no wider than the phone's in a
@@ -63,13 +61,13 @@ export function padCoverAvailableHeight(
 const PAD_CARD_MIN_WIDTH = 320;
 
 /**
- * The two Pad columns (design §8 Pad, revised): the cover, the tiles and
- * Recent take about 55% of the page on the left; the work -- Needs you, the
- * computer cards and the dock -- the rest on the right.
+ * The cover, launch controls and dock occupy at most a phone's width at the
+ * page's leading gutter. Narrow layouts retain their original 55% allocation;
+ * the work column receives all remaining space after the gap.
  */
 export function padHomeColumns(innerWidth: number): { cover: number; work: number } {
   const room = Math.max(0, innerWidth - PAD_COLUMN_GAP);
-  const cover = Math.round(room * 0.55);
+  const cover = Math.min(Math.round(room * 0.55), HOME_PHONE_MAX_WIDTH);
   return { cover, work: room - cover };
 }
 
@@ -78,11 +76,8 @@ export function padHomeColumns(innerWidth: number): { cover: number; work: numbe
  * one wide card with the larger budget; two to four sit two abreast when each
  * still has a card's width, else they stack.
  *
- * Since the columns swapped, the work column is 45 % of at most
- * `EDITORIAL_PAD_MAX_WIDTH` -- about 620 dp, short of the 652 two cards need
- * -- so today it always stacks. The rule is kept, not deleted, because the
- * card grid it drives is the one the work column takes back if the page
- * widens.
+ * Capping the cover column leaves more room for work on wide Pads. The same
+ * minimum card width determines when that remaining space can hold two cards.
  */
 export function padCardColumns(workWidth: number, cards: number): 1 | 2 {
   return cards >= 2 && workWidth >= PAD_CARD_MIN_WIDTH * 2 + PAD_CARD_GAP ? 2 : 1;

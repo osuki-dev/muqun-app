@@ -119,7 +119,7 @@ msgid "{0} did not upload. Retry it or remove it to send."
 msgstr "{0} n'a pas été envoyé. Réessayez ou retirez-le pour envoyer"
 
 #. placeholder {0}: failed.name
-#. placeholder {1}: uploadLimitMb(maxUploadBytesFor(failed.mime))
+#. placeholder {1}: uploadLimitMb(attachmentLimitBytes(failed))
 #: src/lib/attachments.ts
 msgid "{0} is too large ({1} MB max). Remove it to send."
 msgstr "{0} est trop volumineux ({1} Mo max). Retirez-le pour envoyer"
@@ -299,6 +299,10 @@ msgstr "Dernière observation : {count} requêtes"
 msgid "{done} of {0} done"
 msgstr "{done} sur {0} terminées"
 
+#: src/components/home-computer-deck.tsx
+msgid "{failed, plural, one {# failed} other {# failed}}"
+msgstr "{failed, plural, one {# en échec} other {# en échec}}"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "{from} still lists an older {name}. Remove that entry on {from}."
 msgstr "{from} répertorie encore une ancienne entrée {name}. Supprimez cette entrée sur {from}"
@@ -375,6 +379,10 @@ msgstr "{providerName} (dans le terminal)"
 msgid "{removeLabel}: {label}"
 msgstr "{removeLabel} : {label}"
 
+#: src/components/home-computer-deck.tsx
+msgid "{running, plural, one {# running} other {# running}}"
+msgstr "{running, plural, one {# en cours} other {# en cours}}"
+
 #. placeholder {0}: shells.length
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
@@ -393,6 +401,10 @@ msgstr "{total, plural, one {# sous-tâche} other {# sous-tâches}}"
 #: src/components/task-row.tsx
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, one {# sous-tâche} other {# sous-tâches}} ({waiting, plural, one {# en attente} other {# en attente}})"
+
+#: src/components/home-computer-deck.tsx
+msgid "{waiting, plural, one {# needs you} other {# need you}}"
+msgstr "{waiting, plural, one {# requiert votre action} other {# requièrent votre action}}"
 
 #: src/components/task-row.tsx
 msgid "→ {name}"
@@ -1003,6 +1015,11 @@ msgstr "Branche ou commit (facultatif)"
 #: src/components/agent-worktree-sheet.tsx
 msgid "Branch to start from"
 msgstr "Branche à partir de laquelle commencer"
+
+#. placeholder {0}: server.label
+#: src/components/home-computer-deck.tsx
+msgid "Bring {0} to the front"
+msgstr "Mettre {0} au premier plan"
 
 #: src/components/custom-theme-library.tsx
 #: src/components/theme-browse-sheet.tsx
@@ -2551,8 +2568,8 @@ msgid "Download and preview"
 msgstr "Télécharger et prévisualiser"
 
 #: src/components/update-status-banner.tsx
-msgid "Download size: {fullPackage}"
-msgstr "Taille du téléchargement : {fullPackage}"
+msgid "Full package size: {fullPackage}"
+msgstr "Taille du paquet complet : {fullPackage}"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Downloading"
@@ -2795,6 +2812,10 @@ msgstr "Fichiers de ce projet"
 #: src/components/file-mention-panel.tsx
 msgid "Files in this workspace"
 msgstr "Fichiers de cet espace de travail"
+
+#: src/components/settings-storage.tsx
+msgid "Files in use and managed caches are kept."
+msgstr "Les fichiers utilisés et les caches gérés sont conservés"
 
 #: src/components/agent-workspace-sheet.tsx
 msgid "Filter projects or type a path"
@@ -3464,6 +3485,10 @@ msgstr "Plus tard"
 msgid "Latest"
 msgstr "Dernière"
 
+#: src/app/commands.tsx
+msgid "Lazygit"
+msgstr "Lazygit"
+
 #: src/hooks/use-lazygit.ts
 msgid "Lazygit startup could not be confirmed"
 msgstr "Le démarrage de Lazygit n’a pas pu être confirmé"
@@ -3913,6 +3938,10 @@ msgstr "Plus récent"
 #: src/components/agent-composer.tsx
 msgid "Next"
 msgstr "Suivant"
+
+#: src/components/home-computer-deck.tsx
+msgid "Next computer"
+msgstr "Ordinateur suivant"
 
 #: src/components/image-preview-modal.tsx
 msgid "Next image"
@@ -4404,7 +4433,7 @@ msgstr "Ouvrir dans le navigateur — indisponible via le tunnel SSH"
 msgid "Open installation guide"
 msgstr "Ouvrir le guide d’installation"
 
-#: src/components/git-diff-view.tsx
+#: src/app/commands.tsx
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
 msgstr "Ouvrir Lazygit"
@@ -4495,10 +4524,6 @@ msgstr "OpenAI nécessite une clé API et un modèle. Les services compatibles p
 msgid "Opening"
 msgstr "Ouverture"
 
-#: src/components/git-diff-view.tsx
-msgid "Opening Lazygit…"
-msgstr "Ouverture de Lazygit…"
-
 #: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Opening that file"
@@ -4516,6 +4541,10 @@ msgstr "Ouverture du tunnel"
 #: src/components/server-terminal-workspace.tsx
 msgid "Opening…"
 msgstr "Ouverture…"
+
+#: src/components/home-computer-cards.tsx
+msgid "Opens its tasks."
+msgstr "Ouvre ses tâches"
 
 #: src/components/editor-controls.tsx
 msgid "Opens the keyboard, the editor keys and the composer over this editor. Drag to move."
@@ -4789,6 +4818,10 @@ msgstr "Aperçu et application"
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "Consultez d’abord l’aperçu. Votre thème actuel reste inchangé"
 
+#: src/components/home-computer-deck.tsx
+msgid "Previous computer"
+msgstr "Ordinateur précédent"
+
 #: src/components/image-preview-modal.tsx
 msgid "Previous image"
 msgstr "Image précédente"
@@ -4838,6 +4871,7 @@ msgid "Projects"
 msgstr "Projets"
 
 #: src/app/commands.tsx
+#: src/components/agent-tool-card.tsx
 msgid "Prompt"
 msgstr "Prompt"
 
@@ -5812,8 +5846,7 @@ msgstr "Afficher le logo sur l’accueil"
 msgid "Show Home text"
 msgstr "Afficher le texte sur l’accueil"
 
-#: src/components/home-computer-cards.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/components/home-fold-link.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Show less"
@@ -5822,8 +5855,7 @@ msgstr "Afficher moins"
 #: src/components/agent-tool-card.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/diff-rows.tsx
-#: src/components/home-computer-cards.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/components/home-fold-link.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Show more"
 msgstr "Afficher plus"
@@ -6334,11 +6366,6 @@ msgstr "Tâche pour {assignmentLabel}"
 msgid "Task for a new {0}"
 msgstr "Tâche pour un nouvel {0}"
 
-#. placeholder {0}: server.label
-#: src/components/home-computer-cards.tsx
-msgid "Task history for {0}"
-msgstr "Historique des tâches de {0}"
-
 #: src/components/home-composer-dock.tsx
 msgid "Task options"
 msgstr "Options de la tâche"
@@ -6716,6 +6743,14 @@ msgstr "Aucun retour en arrière n’attend d’être appliqué"
 msgid "Thinking…"
 msgstr "Réflexion en cours…"
 
+#: src/components/agent-tool-card.tsx
+msgid "This activity has no result attached."
+msgstr "Aucun résultat n’est joint à cette activité"
+
+#: src/components/agent-tool-card.tsx
+msgid "This activity has no result attached. Open session to read the conversation."
+msgstr "Aucun résultat n’est joint à cette activité. Ouvrez la session pour lire la conversation"
+
 #: src/components/agent-composer.tsx
 msgid "This agent accepts messages after its turn ends. Your draft stays here."
 msgstr "Cet agent accepte les messages à la fin de son tour. Votre brouillon reste ici"
@@ -6998,7 +7033,7 @@ msgstr "Tokens de cette session"
 msgid "Tokens usage and cost"
 msgstr "Utilisation des jetons et coût"
 
-#. placeholder {0}: uploadLimitMb(maxUploadBytesFor(entry.mime))
+#. placeholder {0}: uploadLimitMb(attachmentLimitBytes(entry))
 #: src/lib/attachments.ts
 msgid "Too large ({0} MB max)"
 msgstr "Trop volumineux ({0} Mo max)"
@@ -7276,10 +7311,6 @@ msgstr "Mettez l’app à jour pour importer des thèmes depuis des liens public
 #: src/components/agent-workbench.tsx
 msgid "Update the Gateway to load earlier remote history."
 msgstr "Mettez à jour le Gateway pour charger l’historique distant plus ancien"
-
-#: src/components/git-diff-view.tsx
-msgid "Update the Gateway to open Lazygit in another worktree."
-msgstr "Mettez à jour le Gateway pour ouvrir Lazygit dans un autre worktree"
 
 #: src/components/asset-viewer.tsx
 #: src/components/inline-file-link.tsx

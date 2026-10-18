@@ -1,7 +1,6 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { formatAssetSize } from '@/lib/asset-display';
 import { measuredUpdateProgress } from '@/lib/update-progress-shader';
 import { deferAppUpdate, updateAppNow, useAppUpdateStore } from '@/lib/app-updates';
@@ -13,7 +12,6 @@ import { UpdateReleaseNotes } from '@/components/update-release-notes';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useNotificationSurfaceStyle } from '@/components/notification-surface';
-import { PressableScale } from '@/components/pressable-scale';
 import { fadeIn } from '@/lib/motion';
 
 export function UpdateStatusBanner() {
@@ -155,7 +153,7 @@ export function UpdateStatusBanner() {
                     ? t`Checking download size…`
                     : downloadSizeStatus === 'failed'
                       ? t`Could not check download size. Try again.`
-                      : t`Download size: ${fullPackage}`}
+                      : t`Full package size: ${fullPackage}`}
                 </Text>
                 {fullPackage ? (
                   <Text variant="caption" color={theme.colors.textMuted}>

@@ -1,8 +1,7 @@
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useEffect, useRef, useState, memo } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import { ChevronDown } from 'lucide-react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';

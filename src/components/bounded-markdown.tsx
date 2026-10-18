@@ -8,14 +8,12 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { useThemeTokens, useToast } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import { plural } from '@lingui/core/macro';
 import { type MarkdownStyle } from 'react-native-enriched-markdown';
 import { DiagramMarkdown } from '@/components/diagram-markdown';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { usePaneChatColors } from '@/components/pane-chat-blocks';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { isSafeExternalLink } from '@/lib/safe-link';
@@ -81,11 +79,7 @@ export const TruncationFooter = memo(function TruncationFooter({
           accessibilityRole="button"
           accessibilityLabel={showMoreLabel}
           onPress={onShowMore}
-          style={[
-            styles.moreChip,
-            { borderRadius: profile.chrome.control },
-            { borderColor: colors.border },
-          ]}>
+          style={[styles.moreChip, { borderRadius: profile.chrome.control }]}>
           <Text variant="caption" color={colors.accent} style={styles.moreChipText}>
             {showMoreLabel}
           </Text>
@@ -302,7 +296,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 10,
     borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
   },
   moreChipText: {
     fontSize: AGENT_TYPE.micro.size,

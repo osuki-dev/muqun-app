@@ -48,10 +48,9 @@ import {
   Share,
   useWindowDimensions,
 } from 'react-native';
-import { useIsFocused, usePathname, useRouter } from 'expo-router';
+import { useIsFocused, useNavigation, usePathname, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { Dialog, useThemeTokens, useToast } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { Dialog, useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
@@ -64,7 +63,6 @@ import {
   X,
 } from 'lucide-react-native';
 import { type LegendListRef } from '@legendapp/list/react-native';
-import { PressableScale } from '@/components/pressable-scale';
 import { GlassChrome } from '@/components/glass-chrome';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
@@ -345,6 +343,8 @@ const SCREEN_NOTICE_DWELL_MS = 4200;
  * 4pt the terminal's notice stack leaves -- and never reaches the pills.
  */
 const SCREEN_NOTICE_HEADER_GAP = 4;
+/** How long the "no earlier history" caption stays before it fades (ms). */
+const EARLIER_UNAVAILABLE_NOTICE_MS = 4000;
 
 /** A catalog that has not answered yet, as one object rather than a new `{}`. */
 const NO_CATALOG_DEFAULTS: CatalogDefaults = {};
@@ -423,7 +423,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   initialDirectory,
   initialAgentId,
   initialIntent,
-  visible = true,
+  visible: workspaceVisible = true,
   topInset = 0,
   bottomInset = 0,
   createNewSessionRef,
@@ -444,6 +444,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const routeFocused = useIsFocused();
   const pathname = usePathname();
   const rootRouteName = useRootRouteName();
+  const navigation = useNavigation();
+  const rootNavigation = useNavigation('/');
+  const visible =
+    agentWorkbenchNavigationScope({
+      pathname,
+      rootRouteName,
+      routeFocused,
+      visible: workspaceVisible,
+    }) !== 'release';
   const { width } = useWindowDimensions();
   const globalOwnerRef = useRef<AgentWorkbenchGlobalOwner | null>(null);
   const [globalOwnerEpoch, setGlobalOwnerEpoch] = useState(0);
@@ -475,11 +484,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       currentOwner.serverId === serverId &&
       currentOwner.sessionId === sessionId &&
       ownsAgentWorkbenchGlobalOwner(currentOwner);
+    // Blur can render before the subscribed root-route snapshot updates.
+    // Read the current navigator state before releasing shared sheet data.
+    const rootState = rootNavigation.getState();
     const navigationScope = agentWorkbenchNavigationScope({
       pathname,
       rootRouteName,
       routeFocused,
-      visible,
+      visible: workspaceVisible,
+      currentRootRouteName: rootState?.routes[rootState.index]?.name,
+      currentRouteFocused: navigation.isFocused(),
     });
     if (navigationScope === 'focused') {
       if (!ownsCurrentScope) {
@@ -494,7 +508,17 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     // bridge merely because every route observes the same pathname.
     if (navigationScope === 'owned-overlay' && ownsCurrentScope) return;
     releaseGlobalOwner();
-  }, [pathname, releaseGlobalOwner, rootRouteName, routeFocused, serverId, sessionId, visible]);
+  }, [
+    navigation,
+    pathname,
+    releaseGlobalOwner,
+    rootNavigation,
+    rootRouteName,
+    routeFocused,
+    serverId,
+    sessionId,
+    workspaceVisible,
+  ]);
   useEffect(() => () => releaseGlobalOwner(), [releaseGlobalOwner]);
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
@@ -658,6 +682,28 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     historyCapabilities,
     findAgent(agentChoice.agents, activeAgentId)?.features
   );
+  /**
+   * The "no earlier history here" caption is a note on arrival, not a fixture:
+   * it says its piece for a few seconds when a session opens and then leaves
+   * the top of the transcript to the first message. The session it has
+   * already said it for is remembered, so a re-render does not bring it back;
+   * a different session, or a reason that changes under the reader, gets its
+   * own few seconds.
+   */
+  const [earlierNoticeDoneFor, setEarlierNoticeDoneFor] = useState<string | null>(null);
+  const earlierNoticeKey = activeAsid ? `${activeAsid}:${earlierUnavailableReason ?? ''}` : null;
+  useEffect(() => {
+    if (!earlierNoticeKey || !earlierUnavailableReason) return;
+    const timer = setTimeout(
+      () => setEarlierNoticeDoneFor(earlierNoticeKey),
+      EARLIER_UNAVAILABLE_NOTICE_MS
+    );
+    return () => clearTimeout(timer);
+  }, [earlierNoticeKey, earlierUnavailableReason]);
+  const earlierNoticeShown =
+    earlierUnavailableReason !== null &&
+    earlierNoticeKey !== null &&
+    earlierNoticeDoneFor !== earlierNoticeKey;
   /**
    * The agent every catalog and project read names, or none on a gateway
    * without discovery (it drives one agent and predates the parameter).
@@ -5439,7 +5485,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 styles.emptyContainer,
                 {
                   backgroundColor: surfaceBackground(theme.colors.surface),
-                  borderColor: theme.colors.border,
                   borderRadius: profile.chrome.transcriptPlate,
                 },
               ]}>
@@ -5538,7 +5583,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                         styles.emptySecondaryBtn,
                         {
                           backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                          borderColor: theme.colors.border,
                         },
                       ]}>
                       <FolderGit2 size={14} color={theme.colors.text} />
@@ -5644,12 +5688,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               showsVerticalScrollIndicator={false}
               refreshControl={timelineRefresh}
               ListHeaderComponent={
-                windowStart === 0 && earlierUnavailableReason ? (
-                  <Text variant="caption" color={theme.colors.textMuted}>
-                    {earlierUnavailableReason === 'gateway-upgrade'
-                      ? t`Update the Gateway to load earlier remote history.`
-                      : t`${agentName} does not support loading earlier remote history.`}
-                  </Text>
+                windowStart === 0 && earlierNoticeShown ? (
+                  <Animated.View entering={fadeInDown('short')} exiting={fadeOutUp('short')}>
+                    <Text variant="caption" color={theme.colors.textMuted}>
+                      {earlierUnavailableReason === 'gateway-upgrade'
+                        ? t`Update the Gateway to load earlier remote history.`
+                        : t`${agentName} does not support loading earlier remote history.`}
+                    </Text>
+                  </Animated.View>
                 ) : null
               }
               ListFooterComponent={listFooter}
@@ -5955,7 +6001,7 @@ const JumpToLatestPill = memo(function JumpToLatestPill({
       entering={fadeIn('micro')}
       exiting={fadeOut('micro')}
       style={[styles.jumpToLatestWrap, { bottom }]}>
-      <GlassChrome surface="navigation" shape="pill" style={styles.jumpToLatestPill}>
+      <GlassChrome surface="navigation" shape="navigationPill" style={styles.jumpToLatestPill}>
         <PressableScale
           testID="agent-jump-to-latest-btn"
           accessibilityRole="button"
@@ -6071,7 +6117,6 @@ const styles = StyleSheet.create({
     paddingVertical: 36,
     paddingHorizontal: 20,
     marginHorizontal: 8,
-    borderWidth: StyleSheet.hairlineWidth,
     gap: 10,
   },
   // Size only; the weight is the kit's prop on both titles that wear this.
@@ -6112,7 +6157,6 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     paddingHorizontal: 14,
     borderRadius: 999,
-    borderWidth: StyleSheet.hairlineWidth,
   },
   emptyNewBtnText: {
     fontWeight: '600',
