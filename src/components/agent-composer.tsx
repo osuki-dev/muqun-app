@@ -21,6 +21,7 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
   ArrowLeft,
+  Check,
   CheckSquare,
   ChevronDown,
   Cpu,
@@ -31,6 +32,7 @@ import {
   Terminal,
   Square,
   Trash2,
+  X,
   Zap,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -2290,6 +2292,36 @@ export const AgentComposer = memo(function AgentComposer({
               </Animated.View>
             ) : null}
 
+            {pendingAttachmentSend?.submittedAttachments ? (
+              <View
+                testID="agent-composer-attachment-acknowledged"
+                accessibilityLiveRegion="polite"
+                style={[
+                  styles.uploadWait,
+                  flushField && {
+                    backgroundColor: surfaceBackground(theme.colors.surface),
+                    borderRadius: profile.chrome.noticeBanner,
+                  },
+                ]}>
+                <Check size={16} color={theme.colors.textMuted} />
+                <Text variant="caption" color={theme.colors.textMuted} style={styles.noticeText}>
+                  {pendingAttachmentSend.delivery === 'queue' ? (
+                    <Trans>Submitted to queue</Trans>
+                  ) : (
+                    <Trans>Submitted</Trans>
+                  )}
+                </Text>
+                <PressableScale
+                  accessibilityRole="button"
+                  accessibilityLabel={t`Dismiss`}
+                  hitSlop={8}
+                  style={styles.dismissSubmission}
+                  onPress={() => setPendingAttachmentSend(null)}>
+                  <X size={16} color={theme.colors.textMuted} />
+                </PressableScale>
+              </View>
+            ) : null}
+
             {!promptAllowed ? (
               <Text variant="caption" color={theme.colors.textMuted}>
                 {interactionBlockedReason ?? (
@@ -2511,6 +2543,9 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 6,
     marginBottom: 4,
+  },
+  dismissSubmission: {
+    padding: 6,
   },
   noticeText: {
     flex: 1,

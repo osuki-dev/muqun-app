@@ -393,6 +393,7 @@ msgid "{providerName} (terminal)"
 msgstr "{providerName}（终端）"
 
 #: src/components/agent-account-limits-section.tsx
+#: src/components/agent-sleep-tool-body.tsx
 msgid "{remaining} remaining"
 msgstr "剩余 {remaining}"
 
@@ -484,10 +485,6 @@ msgstr "杂志风格的首页，展示待处理事项和最近会话"
 #: src/components/server-terminal-workspace.tsx
 msgid "a new {0}"
 msgstr "新的 {0}"
-
-#: src/components/settings-servers.tsx
-msgid "A plain shell on any machine you can reach. No Gateway needed."
-msgstr "在任何你能连上的机器上开一个普通 shell，不需要 Gateway"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "A second checkout of this repository"
@@ -1520,6 +1517,7 @@ msgid "Compared with {base}"
 msgstr "与 {base} 比较"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/agent-sleep-tool-body.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Completed"
@@ -1673,6 +1671,7 @@ msgstr "连接图"
 #: src/components/home-editorial-layout.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-servers.tsx
 msgid "Connections"
 msgstr "连接"
 
@@ -1847,6 +1846,7 @@ msgstr "对话式帮助，以及关于项目的开放式问题"
 #: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/guide-command.tsx
+#: src/components/settings-servers.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Copied"
 msgstr "已复制"
@@ -1867,6 +1867,7 @@ msgstr "复制命令，可直接粘贴到终端"
 
 #: src/app/diagram-viewer.tsx
 #: src/components/asset-viewer.tsx
+#: src/components/settings-servers.tsx
 #: src/components/skia-terminal.tsx
 msgid "Copy"
 msgstr "复制"
@@ -2559,6 +2560,7 @@ msgid "Disconnected."
 msgstr "连接已断开"
 
 #: src/components/agent-compaction-pill.tsx
+#: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/task-row.tsx
@@ -2809,6 +2811,7 @@ msgstr "导出颜色"
 msgid "Export theme"
 msgstr "导出主题"
 
+#: src/components/agent-sleep-tool-body.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Failed"
@@ -3232,6 +3235,8 @@ msgstr "如果问题仍然存在，请重启 App 或检查 App 安装"
 
 #: src/components/agent-message-block.tsx
 #: src/components/agent-tool-card.tsx
+#: src/components/attachment-image.tsx
+#: src/components/gateway-image-thumbnail.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image"
 msgstr "图片"
@@ -5659,10 +5664,6 @@ msgstr "重新扫描"
 msgid "Scan the Gateway QR."
 msgstr "扫描 Gateway 的二维码"
 
-#: src/components/settings-servers.tsx
-msgid "Scan the Gateway’s QR code, or enter its address."
-msgstr "扫描 Gateway 的二维码，或输入它的地址"
-
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
 msgstr "扫描需要相机，而这个浏览器没有提供"
@@ -5745,6 +5746,7 @@ msgstr "选择模型：{modelDisplayName}"
 
 #: src/components/computer-map/screen.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-servers.tsx
 msgid "Selected"
 msgstr "已选择"
 
@@ -6349,6 +6351,14 @@ msgstr "子代理"
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "提交"
+
+#: src/components/agent-composer.tsx
+msgid "Submitted"
+msgstr "已提交"
+
+#: src/components/agent-composer.tsx
+msgid "Submitted to queue"
+msgstr "已提交到队列"
 
 #: src/components/agent-composer.tsx
 msgid "Submitting follow-up…"
@@ -7535,10 +7545,6 @@ msgstr "用户名"
 msgid "Uses the theme's Home artwork in the position chosen by your Home layout. Themes without Home artwork show no illustration."
 msgstr "按首页布局指定的位置显示主题首页图稿。未提供首页图稿的主题不显示插图"
 
-#: src/components/settings-servers.tsx
-msgid "Using"
-msgstr "使用中"
-
 #. placeholder {0}: fontAxesSummary(axes)
 #: src/components/settings-font-sheet.tsx
 msgid "Variable · {0}"
@@ -7579,13 +7585,22 @@ msgstr "语音转文字"
 msgid "Voice to text disabled"
 msgstr "已关闭语音转文字"
 
+#: src/components/agent-tool-card.tsx
 #: src/i18n/labels.ts
 msgid "Wait"
 msgstr "等待"
 
+#: src/components/agent-sleep-tool-body.tsx
+msgid "Wait for {duration}"
+msgstr "等待 {duration}"
+
 #: src/components/agent-workbench.tsx
 msgid "Wait for the turn to end before choosing a model."
 msgstr "请等待本轮结束后再选择模型"
+
+#: src/components/agent-sleep-tool-body.tsx
+msgid "Waiting for completion…"
+msgstr "等待完成…"
 
 #: src/components/skia-terminal.web.tsx
 msgid "Waiting for output…"

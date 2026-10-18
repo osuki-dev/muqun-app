@@ -393,6 +393,7 @@ msgid "{providerName} (terminal)"
 msgstr "{providerName}(터미널)"
 
 #: src/components/agent-account-limits-section.tsx
+#: src/components/agent-sleep-tool-body.tsx
 msgid "{remaining} remaining"
 msgstr "{remaining} 남음"
 
@@ -484,10 +485,6 @@ msgstr "주의 사항과 최근 세션을 보여주는 잡지 스타일의 Home"
 #: src/components/server-terminal-workspace.tsx
 msgid "a new {0}"
 msgstr "새 {0}"
-
-#: src/components/settings-servers.tsx
-msgid "A plain shell on any machine you can reach. No Gateway needed."
-msgstr "접속할 수 있는 어떤 기기에서든 쓰는 일반 셸입니다. Gateway가 필요 없습니다"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "A second checkout of this repository"
@@ -1520,6 +1517,7 @@ msgid "Compared with {base}"
 msgstr "{base}와(과) 비교"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/agent-sleep-tool-body.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Completed"
@@ -1673,6 +1671,7 @@ msgstr "연결 지도"
 #: src/components/home-editorial-layout.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-servers.tsx
 msgid "Connections"
 msgstr "연결"
 
@@ -1847,6 +1846,7 @@ msgstr "대화형 도움말과 프로젝트에 대한 자유로운 질문"
 #: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/guide-command.tsx
+#: src/components/settings-servers.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Copied"
 msgstr "복사됨"
@@ -1867,6 +1867,7 @@ msgstr "복사합니다. 터미널에 바로 붙여넣을 수 있습니다"
 
 #: src/app/diagram-viewer.tsx
 #: src/components/asset-viewer.tsx
+#: src/components/settings-servers.tsx
 #: src/components/skia-terminal.tsx
 msgid "Copy"
 msgstr "복사"
@@ -2559,6 +2560,7 @@ msgid "Disconnected."
 msgstr "연결이 끊겼습니다"
 
 #: src/components/agent-compaction-pill.tsx
+#: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/task-row.tsx
@@ -2809,6 +2811,7 @@ msgstr "색상 내보내기"
 msgid "Export theme"
 msgstr "테마 내보내기"
 
+#: src/components/agent-sleep-tool-body.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Failed"
@@ -3232,6 +3235,8 @@ msgstr "문제가 계속되면 앱을 다시 시작하거나 앱 설치 상태�
 
 #: src/components/agent-message-block.tsx
 #: src/components/agent-tool-card.tsx
+#: src/components/attachment-image.tsx
+#: src/components/gateway-image-thumbnail.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image"
 msgstr "이미지"
@@ -5659,10 +5664,6 @@ msgstr "다시 스캔"
 msgid "Scan the Gateway QR."
 msgstr "Gateway QR 코드를 스캔하세요"
 
-#: src/components/settings-servers.tsx
-msgid "Scan the Gateway’s QR code, or enter its address."
-msgstr "Gateway의 QR 코드를 스캔하거나 주소를 입력하세요"
-
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
 msgstr "스캔하려면 카메라가 필요하지만 이 브라우저에서는 쓸 수 없습니다"
@@ -5745,6 +5746,7 @@ msgstr "모델 선택: {modelDisplayName}"
 
 #: src/components/computer-map/screen.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-servers.tsx
 msgid "Selected"
 msgstr "선택됨"
 
@@ -6349,6 +6351,14 @@ msgstr "서브에이전트"
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "제출"
+
+#: src/components/agent-composer.tsx
+msgid "Submitted"
+msgstr "제출됨"
+
+#: src/components/agent-composer.tsx
+msgid "Submitted to queue"
+msgstr "대기열에 제출됨"
 
 #: src/components/agent-composer.tsx
 msgid "Submitting follow-up…"
@@ -7535,10 +7545,6 @@ msgstr "사용자 이름"
 msgid "Uses the theme's Home artwork in the position chosen by your Home layout. Themes without Home artwork show no illustration."
 msgstr "홈 레이아웃에서 지정한 위치에 테마의 홈 이미지를 표시합니다. 홈 이미지가 없는 테마에서는 일러스트를 표시하지 않습니다"
 
-#: src/components/settings-servers.tsx
-msgid "Using"
-msgstr "사용 중"
-
 #. placeholder {0}: fontAxesSummary(axes)
 #: src/components/settings-font-sheet.tsx
 msgid "Variable · {0}"
@@ -7579,13 +7585,22 @@ msgstr "음성을 텍스트로"
 msgid "Voice to text disabled"
 msgstr "음성 텍스트 변환 비활성화됨"
 
+#: src/components/agent-tool-card.tsx
 #: src/i18n/labels.ts
 msgid "Wait"
 msgstr "대기"
 
+#: src/components/agent-sleep-tool-body.tsx
+msgid "Wait for {duration}"
+msgstr "{duration} 대기"
+
 #: src/components/agent-workbench.tsx
 msgid "Wait for the turn to end before choosing a model."
 msgstr "턴이 끝난 후 모델을 선택하세요"
+
+#: src/components/agent-sleep-tool-body.tsx
+msgid "Waiting for completion…"
+msgstr "완료를 기다리는 중…"
 
 #: src/components/skia-terminal.web.tsx
 msgid "Waiting for output…"

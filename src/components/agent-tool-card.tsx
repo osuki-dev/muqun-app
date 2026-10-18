@@ -17,6 +17,8 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { BoundedMarkdown, TruncationFooter } from '@/components/bounded-markdown';
 import { StatusDot } from '@/components/status-dot';
 import { AgentTodoBlock } from '@/components/agent-todo-block';
+import { AgentSleepToolBody } from '@/components/agent-sleep-tool-body';
+import { formatToolDuration } from '@/lib/tool-call-detail';
 import { FileTextBody } from '@/components/file-text-body';
 import {
   GatewayImageThumbnail,
@@ -480,6 +482,7 @@ export const AgentToolCard = memo(function AgentToolCard({
   const input = useMemo(() => toolInputRecord(inputSource), [inputSource]);
   const target = useMemo(() => extractTarget(kind, inputSource), [kind, inputSource]);
   const caption = useMemo(() => extractCaption(kind, inputSource), [kind, inputSource]);
+  const sleepDuration = sleepDurationMs(part.name, input);
 
   // `content` is the real result; `output` is the same text flattened and is
   // what an older gateway sends on its own.
@@ -866,11 +869,13 @@ export const AgentToolCard = memo(function AgentToolCard({
     <EmbeddedTerminalToolBlock
       testID={`agent-tool-${part.id}`}
       toolName={
-        part.name === 'image_generation'
-          ? t`Image`
-          : child?.action
-            ? i18n._(subagentActionWord[child.action])
-            : part.name
+        sleepDuration !== undefined
+          ? `${t`Wait`} · ${formatToolDuration(sleepDuration)}`
+          : part.name === 'image_generation'
+            ? t`Image`
+            : child?.action
+              ? i18n._(subagentActionWord[child.action])
+              : part.name
       }
       kind={kind}
       taskSummary={
@@ -914,7 +919,16 @@ export const AgentToolCard = memo(function AgentToolCard({
             }
           : undefined
       }
-      title={headerTitle}
+      title={
+        sleepDuration !== undefined || (kind === 'shell' && headerTitle === target)
+          ? undefined
+          : headerTitle
+      }
+      headerAccessory={
+        sleepDuration !== undefined && pending ? (
+          <AgentSleepToolBody durationMs={sleepDuration} part={part} compact />
+        ) : undefined
+      }
       caption={headerCaption}
       status={!pending && resultFailed ? 'failed' : part.state}
       {...(durationMs === undefined ? {} : { durationMs })}
@@ -929,7 +943,7 @@ export const AgentToolCard = memo(function AgentToolCard({
       preview={
         // While the input is still arriving there is no result to preview and
         // the arguments are the only thing there is to say.
-        pending && argumentLine ? (
+        pending && argumentLine && sleepDuration === undefined && !(kind === 'shell' && target) ? (
           <StreamingArguments text={argumentLine} />
         ) : kind === 'edit' || kind === 'patch' ? (
           body
@@ -1116,6 +1130,16 @@ interface ToolBodyArgs {
 function renderToolBody(args: ToolBodyArgs): React.ReactNode {
   const { kind, part, input, target, outputText, markdownStyle } = args;
 
+  const sleepDuration = sleepDurationMs(part.name, input);
+  if (sleepDuration !== undefined) {
+    return (
+      <>
+        <AgentSleepToolBody durationMs={sleepDuration} part={part} />
+        <GenericToolBody input={undefined} outputText={outputText} />
+      </>
+    );
+  }
+
   switch (kind) {
     case 'shell':
       return (
@@ -1283,9 +1307,33 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
       // with its own line breaks.
       const prompt = imageGenerationPrompt(part.name, input);
       if (prompt) return <ImagePrompt text={prompt} />;
-      return <GenericToolBody input={part.input} outputText={outputText} />;
+      // The structured image/path preview already represents image-view input.
+      // Keep raw arguments in Details, while preserving returned text and errors.
+      const imageView = part.name === 'image_view' || part.name === 'view_image';
+      const hasImageViewPreview =
+        imageView &&
+        (args.files.length > 0 ||
+          part.image_attachments?.some((uri) =>
+            part.image_assets?.some((asset) => asset.src === uri && asset.mime.startsWith('image/'))
+          ));
+      return (
+        <GenericToolBody
+          input={hasImageViewPreview ? undefined : part.input}
+          outputText={outputText}
+        />
+      );
     }
   }
+}
+
+function sleepDurationMs(name: string, input: Record<string, unknown> | null): number | undefined {
+  const duration = input?.durationMs ?? input?.duration_ms;
+  return name === 'sleep' &&
+    typeof duration === 'number' &&
+    Number.isFinite(duration) &&
+    duration >= 0
+    ? duration
+    : undefined;
 }
 
 function imageGenerationPrompt(name: string, input: Record<string, unknown> | null): string {
