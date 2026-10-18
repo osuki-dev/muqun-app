@@ -79,11 +79,7 @@ export const TruncationFooter = memo(function TruncationFooter({
           accessibilityRole="button"
           accessibilityLabel={showMoreLabel}
           onPress={onShowMore}
-          style={[
-            styles.moreChip,
-            { borderRadius: profile.chrome.control },
-            { borderColor: colors.border },
-          ]}>
+          style={[styles.moreChip, { borderRadius: profile.chrome.control }]}>
           <Text variant="caption" color={colors.accent} style={styles.moreChipText}>
             {showMoreLabel}
           </Text>
@@ -300,7 +296,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 10,
     borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
   },
   moreChipText: {
     fontSize: AGENT_TYPE.micro.size,

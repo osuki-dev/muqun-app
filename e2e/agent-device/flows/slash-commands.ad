@@ -8,6 +8,7 @@ wait "label=\"Insert /release-notes\"" 10000
 is hidden "label=\"Insert /compact [instructions]\""
 press "label=\"Insert /release-notes\""
 wait "id=terminal-composer-input value=\"/release-notes \"" 10000
+wait stable 400 5000
 is hidden "id=slash-command"
 is visible "label=\"Send to agent\""
 # Removing the trigger resets dismissal without depending on native key events.
@@ -15,6 +16,7 @@ fill id="terminal-composer-input" "draft"
 fill id="terminal-composer-input" "/mod"
 wait "label=\"Insert /model [model]\"" 10000
 press "label=\"Close the command list\""
+wait stable 400 5000
 is hidden "id=slash-command"
 fill id="terminal-composer-input" "look at /rel"
 is hidden "id=slash-command"

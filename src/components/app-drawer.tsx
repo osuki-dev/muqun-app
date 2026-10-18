@@ -239,7 +239,6 @@ export default function AppDrawer({
                   styles.railHandle,
                   {
                     backgroundColor: surfaceBackground(theme.colors.surface),
-                    borderColor: theme.colors.border,
                   },
                 ]}>
                 <PanelsTopLeft size={18} color={theme.colors.textMuted} />
@@ -362,7 +361,6 @@ const styles = StyleSheet.create({
     width: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 22,
     borderCurve: 'continuous',
     boxShadow: appChrome.shadow.workspaceRail,

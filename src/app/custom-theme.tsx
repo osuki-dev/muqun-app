@@ -5,7 +5,7 @@ import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-s
 import { sheetFrostAlpha, surfaceBackgroundFill } from '@/theme/surface-background';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { ScrollView, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -207,8 +207,6 @@ function CustomThemeScene({
                 paddingVertical: theme.spacing.sm,
                 borderRadius: profile.chrome.noticeCard,
                 borderCurve: 'continuous',
-                borderWidth: StyleSheet.hairlineWidth,
-                borderColor: theme.colors.border,
                 // A plate over live content: the theme's own opacity, never
                 // thinner than the floor a sheet keeps for reading.
                 backgroundColor: surfaceBackgroundFill(

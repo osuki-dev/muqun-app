@@ -1305,10 +1305,8 @@ export function HomeOverview({
                 hasEditorialArtwork && editorialArtworkResolution ? (
                   <HomeEditorialArtwork
                     cover={coverHeader}
-                    fullBleed={coverHeader && !isPad}
+                    fullBleed={coverHeader && (!isPad || padLaunch)}
                     onForegroundChange={reportArtworkForeground}
-                    // The Pad cover block sizes the painting; elsewhere it keeps its own proportion.
-                    fill={padLaunch && coverHeader}
                     resolution={editorialArtworkResolution}
                     onVisibleTopChange={reportEditorialArtworkTop}
                     onAvailabilityChange={(available) => {

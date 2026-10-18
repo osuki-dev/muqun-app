@@ -1503,9 +1503,6 @@ const styles = StyleSheet.create({
    * 38 and half of it, which is the disc every other sheet in this app gives a
    * header button. `GlassChrome` draws the material and nothing else, so the
    * shape is stated here and the pressable inside fills it.
-   *
-   * `GlassChrome` draws the edge these need when a pack has thinned its own
-   * fill; see the note on `chromeStyle` there.
    */
   headerButton: {
     width: 38,

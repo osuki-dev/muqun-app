@@ -3,7 +3,7 @@ import { useLingui } from '@lingui/react/macro';
 import { Spinner, useThemeTokens, Button, PressableScale, Text } from '@osuki-dev/ui';
 import { ChevronDown, ChevronUp } from 'lucide-react-native';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { TerminalTranscript } from '@/components/terminal-transcript';
 import { appChrome } from '@/constants/appearance';
 import { useCollaborationOutput } from '@/hooks/use-collaboration-output';
@@ -95,8 +95,6 @@ export function CollaborationNotice({
         gap: 6,
         borderRadius: appChrome.radius.control,
         backgroundColor: surfaceBackground(theme.colors.surface),
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: theme.colors.border,
       }}>
       <PressableScale
         testID="collaboration-notice-expand"

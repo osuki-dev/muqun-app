@@ -3360,7 +3360,6 @@ export function SkiaTerminal({
               borderRadius: profile.chrome.roundControl,
               top: historyIndicatorTopInset,
               backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-              borderColor: theme.colors.border,
             },
             pullIndicatorStyle,
           ]}>
@@ -3389,7 +3388,6 @@ export function SkiaTerminal({
               borderRadius: profile.chrome.noticeBanner,
               bottom: 14 + bottomInset,
               backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-              borderColor: theme.colors.border,
             },
           ]}>
           <Button
@@ -3440,7 +3438,6 @@ export function SkiaTerminal({
               {
                 borderRadius: profile.chrome.roundControl,
                 backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                borderColor: theme.colors.border,
               },
             ]}>
             <Text
@@ -4163,7 +4160,6 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: 28,
     height: 28,
-    borderWidth: StyleSheet.hairlineWidth,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
@@ -4178,7 +4174,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 4,
     boxShadow: appChrome.shadow.selectionBar,
   },
@@ -4200,7 +4195,6 @@ const styles = StyleSheet.create({
     minHeight: 38,
     paddingHorizontal: 14,
     borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
     justifyContent: 'center',
     boxShadow: appChrome.shadow.controlTray,

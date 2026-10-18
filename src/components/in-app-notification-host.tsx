@@ -225,12 +225,14 @@ export function InAppNotificationHost() {
     else pan.activeOffsetY(-DRAG_SLOP).failOffsetY(DRAG_SLOP);
     return pan
       .onUpdate((event) => {
+        'worklet';
         if (dismissing.get() || gestureNoticeId.get() !== noticeId) return;
         const offset = noticeDragOffset(event);
         dragX.set(offset.x);
         dragY.set(offset.y);
       })
       .onEnd((event, success) => {
+        'worklet';
         if (dismissing.get() || gestureNoticeId.get() !== noticeId) return;
         // Native cancellation also calls onEnd; it must never dismiss a notice.
         const end = success ? noticeSwipeEnd(event) : { dismissed: false as const };

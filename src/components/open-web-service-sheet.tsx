@@ -222,7 +222,6 @@ export function OpenWebServiceSheet({
                     style={[
                       styles.chip,
                       {
-                        borderColor: theme.colors.border,
                         backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
                       },
                     ]}>
@@ -289,6 +288,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: SHEET_LADDER.snug,
     borderRadius: appChrome.radius.control,
     borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
   },
 });

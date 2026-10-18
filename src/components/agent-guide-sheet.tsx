@@ -134,7 +134,7 @@ export const AgentGuideSheet = memo(function AgentGuideSheet({
             accessibilityRole="link"
             accessibilityLabel={t`Open the ${agentName} installation guide`}
             onPress={() => void Linking.openURL(installUrl)}
-            style={[styles.command, { borderColor: theme.colors.border }]}>
+            style={styles.command}>
             <ExternalLink size={15} color={theme.colors.primary} strokeWidth={2.2} />
             <Text
               variant="bodySmall"
@@ -172,12 +172,7 @@ export const AgentGuideSheet = memo(function AgentGuideSheet({
           disabled={checking}
           onPress={handleCheckAgain}
           // Beside "Run on <computer>", which leads, it is the second action.
-          style={[
-            styles.action,
-            runs
-              ? { borderColor: theme.colors.border, borderWidth: StyleSheet.hairlineWidth }
-              : { backgroundColor: theme.colors.primary },
-          ]}>
+          style={[styles.action, !runs && { backgroundColor: theme.colors.primary }]}>
           {checking ? (
             <ActivityIndicator size="small" color={checkInk} />
           ) : (
@@ -199,8 +194,7 @@ const styles = StyleSheet.create({
     gap: SHEET_LADDER.snug,
   },
   blurb: { lineHeight: 18 },
-  // A hairline box, not a filled card: the command is a line of text on the
-  // ground with a tap target around it.
+  // The link is a line of text on the ground with a tap target around it.
   command: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -209,7 +203,6 @@ const styles = StyleSheet.create({
     paddingVertical: SHEET_LADDER.snug,
     borderRadius: appChrome.radius.control,
     borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
   },
   commandText: { flex: 1, letterSpacing: 0.2 },
   tip: { flexDirection: 'row', alignItems: 'center', gap: SHEET_LADDER.gap },
