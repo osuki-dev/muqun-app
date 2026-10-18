@@ -393,6 +393,7 @@ msgid "{providerName} (terminal)"
 msgstr "{providerName} (เทอร์มินัล)"
 
 #: src/components/agent-account-limits-section.tsx
+#: src/components/agent-sleep-tool-body.tsx
 msgid "{remaining} remaining"
 msgstr "เหลือ {remaining}"
 
@@ -484,10 +485,6 @@ msgstr "หน้าแรกสไตล์นิตยสารพร้อม
 #: src/components/server-terminal-workspace.tsx
 msgid "a new {0}"
 msgstr "{0} ใหม่"
-
-#: src/components/settings-servers.tsx
-msgid "A plain shell on any machine you can reach. No Gateway needed."
-msgstr "เชลล์ธรรมดาบนเครื่องใดก็ได้ที่คุณเข้าถึงได้ ไม่ต้องใช้ Gateway"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "A second checkout of this repository"
@@ -1520,6 +1517,7 @@ msgid "Compared with {base}"
 msgstr "เทียบกับ {base}"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/agent-sleep-tool-body.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Completed"
@@ -1673,6 +1671,7 @@ msgstr "แผนผังการเชื่อมต่อ"
 #: src/components/home-editorial-layout.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-servers.tsx
 msgid "Connections"
 msgstr "การเชื่อมต่อ"
 
@@ -1847,6 +1846,7 @@ msgstr "ความช่วยเหลือแบบสนทนาและ
 #: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/guide-command.tsx
+#: src/components/settings-servers.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Copied"
 msgstr "คัดลอกแล้ว"
@@ -1867,6 +1867,7 @@ msgstr "คัดลอกให้พร้อมวางในเทอร์
 
 #: src/app/diagram-viewer.tsx
 #: src/components/asset-viewer.tsx
+#: src/components/settings-servers.tsx
 #: src/components/skia-terminal.tsx
 msgid "Copy"
 msgstr "คัดลอก"
@@ -2559,6 +2560,7 @@ msgid "Disconnected."
 msgstr "ตัดการเชื่อมต่อแล้ว"
 
 #: src/components/agent-compaction-pill.tsx
+#: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/task-row.tsx
@@ -2809,6 +2811,7 @@ msgstr "ส่งออกสี"
 msgid "Export theme"
 msgstr "ส่งออกธีม"
 
+#: src/components/agent-sleep-tool-body.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Failed"
@@ -3232,6 +3235,8 @@ msgstr "หากยังเกิดปัญหา ให้เริ่ม�
 
 #: src/components/agent-message-block.tsx
 #: src/components/agent-tool-card.tsx
+#: src/components/attachment-image.tsx
+#: src/components/gateway-image-thumbnail.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image"
 msgstr "รูปภาพ"
@@ -5659,10 +5664,6 @@ msgstr "สแกนอีกครั้ง"
 msgid "Scan the Gateway QR."
 msgstr "สแกน QR ของ Gateway"
 
-#: src/components/settings-servers.tsx
-msgid "Scan the Gateway’s QR code, or enter its address."
-msgstr "สแกน QR code ของ Gateway หรือพิมพ์ที่อยู่"
-
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
 msgstr "การสแกนต้องใช้กล้อง ซึ่งเบราว์เซอร์นี้ไม่รองรับ"
@@ -5745,6 +5746,7 @@ msgstr "เลือกโมเดล: {modelDisplayName}"
 
 #: src/components/computer-map/screen.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-servers.tsx
 msgid "Selected"
 msgstr "เลือกแล้ว"
 
@@ -6349,6 +6351,14 @@ msgstr "เอเจนต์ย่อย"
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "ส่ง"
+
+#: src/components/agent-composer.tsx
+msgid "Submitted"
+msgstr "ส่งแล้ว"
+
+#: src/components/agent-composer.tsx
+msgid "Submitted to queue"
+msgstr "ส่งเข้าคิวแล้ว"
 
 #: src/components/agent-composer.tsx
 msgid "Submitting follow-up…"
@@ -7535,10 +7545,6 @@ msgstr "ชื่อผู้ใช้"
 msgid "Uses the theme's Home artwork in the position chosen by your Home layout. Themes without Home artwork show no illustration."
 msgstr "แสดงภาพประกอบหน้าแรกของธีมในตำแหน่งที่เค้าโครงหน้าแรกกำหนด ธีมที่ไม่มีภาพประกอบหน้าแรกจะไม่แสดงภาพประกอบ"
 
-#: src/components/settings-servers.tsx
-msgid "Using"
-msgstr "กำลังใช้"
-
 #. placeholder {0}: fontAxesSummary(axes)
 #: src/components/settings-font-sheet.tsx
 msgid "Variable · {0}"
@@ -7579,13 +7585,22 @@ msgstr "เสียงเป็นข้อความ"
 msgid "Voice to text disabled"
 msgstr "ปิดการแปลงเสียงเป็นข้อความแล้ว"
 
+#: src/components/agent-tool-card.tsx
 #: src/i18n/labels.ts
 msgid "Wait"
 msgstr "รอ"
 
+#: src/components/agent-sleep-tool-body.tsx
+msgid "Wait for {duration}"
+msgstr "รอ {duration}"
+
 #: src/components/agent-workbench.tsx
 msgid "Wait for the turn to end before choosing a model."
 msgstr "รอให้จบรอบก่อนเลือกโมเดล"
+
+#: src/components/agent-sleep-tool-body.tsx
+msgid "Waiting for completion…"
+msgstr "กำลังรอให้เสร็จสิ้น…"
 
 #: src/components/skia-terminal.web.tsx
 msgid "Waiting for output…"

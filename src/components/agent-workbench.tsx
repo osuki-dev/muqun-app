@@ -229,7 +229,11 @@ import {
   subtaskSummary,
   type SubtaskBlocks,
 } from '@/lib/agent-subtasks';
-import { agentPromptUsesOptimisticRow, upsertTimelineItems } from '@/lib/agent-timeline-upsert';
+import {
+  agentPromptUsesOptimisticRow,
+  reconcileAgentSnapshotPending,
+  upsertTimelineItems,
+} from '@/lib/agent-timeline-upsert';
 import {
   applyCompactionEvent,
   beginCompaction,
@@ -1915,7 +1919,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               const fresh = freshSessionRef.current === asid;
               const timeline = fresh
                 ? upsertTimelineItems(transcriptStore.getState().timeline, snap.timeline)
-                : snap.timeline;
+                : reconcileAgentSnapshotPending(
+                    transcriptStore.getState().timeline,
+                    snap.timeline,
+                    Boolean(snap.info?.deleted || snap.info?.revert)
+                  );
               const pendingFirstPrompt =
                 fresh && timeline.some((item) => item.id.startsWith('temp_'));
               if (fresh && !pendingFirstPrompt && !promptDispatchRef.current) {

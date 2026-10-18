@@ -1,7 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 import { AGENT_STREAM_BATCH_MS, createAgentStreamBatch } from '../agent-stream-batch';
 import { sortTimeline, type AgentDomainEvent, type TimelineItem } from '../agent-protocol';
-import { agentPromptUsesOptimisticRow, upsertTimelineItems } from '../agent-timeline-upsert';
+import {
+  agentPromptUsesOptimisticRow,
+  reconcileAgentSnapshotPending,
+  upsertTimelineItems,
+} from '../agent-timeline-upsert';
 
 function item(id: string, seq: number, extra: Partial<TimelineItem> = {}): TimelineItem {
   return {
@@ -252,4 +256,47 @@ test('a new-session snapshot cannot erase the first prompt or rewind arriving ou
   });
   expect(confirmed[1]).toEqual(answer);
   expect(upsertTimelineItems(confirmed, snapshot)).toEqual(confirmed);
+});
+
+describe('snapshot and local send races', () => {
+  const pending = item('temp_usr_pending', 21, {
+    role: 'user',
+    part: { type: 'text', text: 'Repeat this request' },
+    row_key: 'temp_usr_pending',
+    order: 'msg_021',
+  });
+
+  test('snapshots cannot erase an unconfirmed send before or after ACK', () => {
+    const previous = [item('deleted_history', 10), pending];
+    const beforeAck = reconcileAgentSnapshotPending(previous, []);
+    expect(beforeAck).toEqual([pending]);
+    // An unrelated later event does not prove the user-message echo has arrived.
+    const unrelated = item('later_output', 30);
+    const afterAck = reconcileAgentSnapshotPending(beforeAck, [unrelated]);
+    expect(afterAck.find((row) => row.id === pending.id)).toEqual(pending);
+    expect(afterAck.find((row) => row.id === unrelated.id)).toEqual(unrelated);
+    // Repeated snapshots can replace canonical history without erasing the send.
+    expect(reconcileAgentSnapshotPending(afterAck, [])).toEqual([pending]);
+  });
+
+  test('a historical identical prompt cannot acknowledge a new send', () => {
+    const older = { ...pending, id: 'historical', seq: 5, row_key: undefined };
+    const result = reconcileAgentSnapshotPending([pending], [older]);
+    expect(result.map((row) => row.id).sort()).toEqual(['historical', 'temp_usr_pending']);
+  });
+
+  test('a canonical snapshot acknowledgment retains the visible row identity', () => {
+    const confirmed = { ...pending, id: 'confirmed', seq: 22, row_key: undefined };
+    const result = reconcileAgentSnapshotPending([pending], [confirmed]);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('confirmed');
+    expect(result[0].row_key).toBe(pending.row_key);
+    expect(result[0].order).toBe(pending.order);
+  });
+
+  test('rollback, deletion and explicit local removal cannot resurrect pending rows', () => {
+    expect(reconcileAgentSnapshotPending([pending], [], true)).toEqual([]);
+    expect(reconcileAgentSnapshotPending([], [])).toEqual([]);
+    expect(reconcileAgentSnapshotPending([item('removed_canonical', 10)], [])).toEqual([]);
+  });
 });

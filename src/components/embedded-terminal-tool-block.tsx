@@ -86,6 +86,8 @@ export interface EmbeddedTerminalProps {
   status: ToolCallState;
   /** `time.completed - time.ran`, when the engine reported both. */
   durationMs?: number;
+  /** Isolated live metadata, such as a wait countdown. */
+  headerAccessory?: ReactNode;
   /** The reader is looking at a clipped result. */
   truncated?: boolean;
   /** OpenCode's own message, shown as it came, on a failed call. */
@@ -137,6 +139,7 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
   caption,
   status,
   durationMs,
+  headerAccessory,
   truncated,
   error,
   background,
@@ -307,6 +310,7 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
               ) : failed ? (
                 <AlertCircle size={12} color={statusColor} />
               ) : null}
+              {headerAccessory}
               {durationMs !== undefined ? (
                 <Text variant="caption" color={theme.colors.textSubtle} style={styles.duration}>
                   {formatToolDuration(durationMs)}
