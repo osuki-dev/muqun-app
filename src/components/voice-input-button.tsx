@@ -37,7 +37,15 @@ import {
 
 const enter = fadeIn('short');
 const exit = fadeOut('short');
-function LiveTranscript({ text }: { text: string }) {
+const REALTIME_TOP_INSET = 28;
+const REALTIME_BOTTOM_INSET = 48;
+function LiveTranscript({
+  text,
+  onHeightChange,
+}: {
+  text: string;
+  onHeightChange?: (height: number) => void;
+}) {
   const theme = useThemeTokens();
   const scroll = useRef<ScrollViewInstance>(null);
   const following = useRef(true);
@@ -61,7 +69,16 @@ function LiveTranscript({ text }: { text: string }) {
         testID="voice-live-transcript"
         weight="regular"
         color={theme.colors.text}
-        style={styles.liveText}>
+        style={styles.liveText}
+        onTextLayout={({ nativeEvent }) => {
+          // Measure the untruncated text, not the capped viewport, so the
+          // composer can grow without feeding its own height back into itself.
+          const bottom = nativeEvent.lines.reduce(
+            (height, line) => Math.max(height, line.y + line.height),
+            0
+          );
+          onHeightChange?.(Math.ceil(bottom));
+        }}>
         {text}
       </Text>
     </ScrollView>
@@ -74,12 +91,14 @@ function VoiceRecording({
   onText,
   onClose,
   onRetry,
+  onHeightChange,
 }: {
   config: VoiceServiceConfig;
   language: string;
   onText: (text: string) => void;
   onClose: () => void;
   onRetry: () => void;
+  onHeightChange?: (height: number) => void;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -90,7 +109,7 @@ function VoiceRecording({
   const [partial, setPartial] = useState('');
   const { fontScale } = useWindowDimensions();
   const [height, setHeight] = useState(0);
-  const compact = height < 96 * fontScale;
+  const compact = config.mode !== 'realtime' && height < 96 * fontScale;
   const [meter] = useState(() => new VoiceMeterHistory());
   const history = useSharedValue(Array<number>(VOICE_METER_SAMPLES).fill(0));
   const latest = useLatestReader({ onText, onClose });
@@ -225,7 +244,6 @@ function VoiceRecording({
               styles.pending,
               compact && styles.compactPending,
               realtime && styles.realtimePending,
-              realtime && compact && styles.compactRealtimePending,
             ]}>
             {realtime ? (
               // The transcript, or until the first words the status, each
@@ -236,28 +254,12 @@ function VoiceRecording({
                 entering={fadeIn('micro')}
                 exiting={fadeOut('micro')}
                 style={styles.realtimeField}>
-                {partial ? (
-                  compact ? (
-                    <Text
-                      testID="voice-live-transcript"
-                      numberOfLines={2}
-                      weight="regular"
-                      color={theme.colors.text}
-                      style={styles.realtimeLine}>
-                      {partial}
-                    </Text>
-                  ) : (
-                    <LiveTranscript text={partial} />
-                  )
-                ) : (
-                  <Text
-                    numberOfLines={1}
-                    weight="regular"
-                    color={theme.colors.textMuted}
-                    style={styles.realtimeLine}>
-                    {status}
-                  </Text>
-                )}
+                <LiveTranscript
+                  text={partial || status}
+                  onHeightChange={(textHeight) =>
+                    onHeightChange?.(textHeight + REALTIME_TOP_INSET + REALTIME_BOTTOM_INSET)
+                  }
+                />
               </Animated.View>
             ) : (
               <VoiceRecordingWaveform history={history} processing={!recording} compact={compact} />
@@ -340,10 +342,12 @@ export function useVoiceInputTrigger({
   context,
   onText,
   disabled,
+  onHeightChange,
 }: {
   context?: string;
   onText: (text: string) => void;
   disabled: boolean;
+  onHeightChange?: (height: number) => void;
 }) {
   const focused = useIsFocused();
   const [owner] = useState(() => ({}));
@@ -379,6 +383,7 @@ export function useVoiceInputTrigger({
       <VoiceInputPanel
         onText={(text) => deliverVoiceInput(current, text)}
         onClose={() => clearVoiceInput(owner)}
+        onHeightChange={onHeightChange}
       />
     ) : null,
   };
@@ -387,9 +392,11 @@ export function useVoiceInputTrigger({
 export function VoiceInputPanel({
   onText,
   onClose,
+  onHeightChange,
 }: {
   onText: (text: string) => void;
   onClose: () => void;
+  onHeightChange?: (height: number) => void;
 }) {
   const appLocale = useResolvedLocale();
   const [attempt, setAttempt] = useState(0);
@@ -403,6 +410,7 @@ export function VoiceInputPanel({
       onText={onText}
       onClose={onClose}
       onRetry={() => setAttempt((value) => value + 1)}
+      onHeightChange={onHeightChange}
     />
   );
 }
@@ -429,10 +437,12 @@ const styles = StyleSheet.create({
   compactPending: { paddingHorizontal: 48, paddingVertical: 4, gap: 4 },
   // Realtime: the transcript takes the field, clear of the timer at the top
   // right and of the cancel and stop controls at either side.
-  realtimePending: { paddingTop: 28, paddingBottom: 12, alignItems: 'stretch' },
-  compactRealtimePending: { paddingTop: 2, paddingBottom: 2, paddingLeft: 48, paddingRight: 92 },
+  realtimePending: {
+    paddingTop: REALTIME_TOP_INSET,
+    paddingBottom: REALTIME_BOTTOM_INSET,
+    alignItems: 'stretch',
+  },
   realtimeField: { flex: 1, alignSelf: 'stretch', justifyContent: 'center' },
-  realtimeLine: { fontSize: 14, lineHeight: 20 },
   pendingLabel: {
     position: 'absolute',
     top: '50%',

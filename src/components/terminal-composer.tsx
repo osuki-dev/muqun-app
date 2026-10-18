@@ -139,8 +139,10 @@ export function TerminalComposer({
 }: TerminalComposerProps) {
   const readInput = useLatestReader(inputProps);
   const { t } = useLingui();
+  const [voiceHeight, setVoiceHeight] = useState(0);
   const voice = useVoiceInputTrigger({
     context: voiceContext,
+    onHeightChange: setVoiceHeight,
     disabled: send.sending || inputProps.editable === false,
     onText: (transcript) => {
       const current = readInput();
@@ -151,6 +153,7 @@ export function TerminalComposer({
   const voiceActive = voice.panel !== null;
   useEffect(() => {
     onVoiceActiveChange?.(voiceActive);
+    if (!voiceActive) setVoiceHeight(0);
   }, [voiceActive, onVoiceActiveChange]);
   const contentReveal = useSharedValue(1);
   const previousVoiceActive = useRef(voiceActive);
@@ -205,6 +208,7 @@ export function TerminalComposer({
   const fieldFont = { color: chromeText, fontFamily: mono };
   const { fontScale } = useWindowDimensions();
   const [wrapped, setWrapped] = useState(false);
+  const [contentHeight, setContentHeight] = useState(0);
   const hasText = Boolean(inputProps.value ?? inputProps.defaultValue);
   // A field set taller than one line is laid out expanded from the start --
   // the text full width, the controls in the row beneath -- so a draft that
@@ -227,6 +231,17 @@ export function TerminalComposer({
           Math.min(fieldTextTopInset, typeof bottomPadding === 'number' ? bottomPadding : 10)
         )
       : 0;
+  // The native field can retain its single-line intrinsic size when the
+  // action row moves below it. Size it from content events in both layouts.
+  const minimumInputHeight = Math.max(
+    40,
+    (minLines ?? 1) * lineHeight * fontScale + verticalPadding
+  );
+  const maximumInputHeight = Math.max(126, minimumInputHeight);
+  const measuredInputHeight = Math.min(
+    maximumInputHeight,
+    Math.max(minimumInputHeight, hasText ? contentHeight : 0)
+  );
   const outsideBackground = !voiceActive && fieldBackground && fieldBackgroundOutset;
   const backgroundColor = fieldBackgroundColor ?? surfaceBackground(chromeGlassQuiet);
   const controls = (
@@ -297,6 +312,7 @@ export function TerminalComposer({
           composerStyles.fieldShell,
           fieldRadius,
           { backgroundColor: outsideBackground ? 'transparent' : backgroundColor },
+          voiceActive && { minHeight: Math.min(190, Math.max(96, voiceHeight)) },
         ]}>
         {!voiceActive && !outsideBackground ? fieldBackground : null}
         {/* Keep the draft mounted so recording inherits this exact field height. */}
@@ -321,6 +337,7 @@ export function TerminalComposer({
               {...inputProps}
               textBreakStrategy={inputProps.textBreakStrategy ?? 'simple'}
               onContentSizeChange={(event) => {
+                setContentHeight(Math.ceil(event.nativeEvent.contentSize.height));
                 // Keep the expanded layout until the draft clears. Collapsing as soon
                 // as wider text fits would oscillate between the two widths.
                 if (
@@ -343,8 +360,12 @@ export function TerminalComposer({
                   paddingBottom:
                     (typeof bottomPadding === 'number' ? bottomPadding : 10) - textInset,
                 },
-                minLines !== undefined && { minHeight: minLines * lineHeight + verticalPadding },
                 expanded && composerStyles.expandedInput,
+                {
+                  height: measuredInputHeight,
+                  minHeight: minimumInputHeight,
+                  maxHeight: maximumInputHeight,
+                },
               ]}>
               {spans}
             </TextField>
@@ -528,7 +549,6 @@ export const composerStyles = StyleSheet.create({
   fieldShell: { borderCurve: 'continuous', overflow: 'hidden' },
   composer: {
     minHeight: 50,
-    maxHeight: 150,
     borderCurve: 'continuous',
     overflow: 'hidden',
     paddingHorizontal: 0,
@@ -557,7 +577,6 @@ export const composerStyles = StyleSheet.create({
   expandedComposer: {
     flexDirection: 'column',
     alignItems: 'stretch',
-    maxHeight: 190,
   },
   expandedInput: {
     flex: 0,
