@@ -1,3 +1,4 @@
+import { nativeImageCache } from './native-image-cache';
 import { parseGitWorktrees, type GitWorktreeInventory } from './git-worktrees';
 import * as TransportSecureStore from 'expo-secure-store';
 import { TransportNegotiation, type TransportVersion } from './transport-negotiation';
@@ -198,7 +199,7 @@ import { GatewayTunnelUnavailableError, directGatewayBaseUrl } from './ssh-tunne
 import { MAX_ASSET_TEXT_BYTES } from './text-preview';
 import { noteGatewayGeneration } from '@/stores/gateway-connection-generation';
 import { useServerCapabilities } from '@/stores/server-capabilities';
-import { downloadOriginalImageFile } from './image-original-file';
+import { copyCachedOriginalImageFile, downloadOriginalImageFile } from './image-original-file';
 import {
   IMAGE_RANGE_BYTES,
   readLimitedImageBody,
@@ -211,7 +212,7 @@ import type { MessageImageAsset } from './message-images';
 import {
   gatewayImagePlan,
   IMAGE_PREVIEWS_CAPABILITY,
-  readPreviewWithFallback,
+  readOriginalFirst,
   readThumbnailOnly,
   type PreviewImageDescriptor,
   type PreviewImageSource,
@@ -1127,6 +1128,14 @@ function configureApi(
   transportKey: string | null = null,
   transport: typeof GATEWAY_TRANSPORT | null = null
 ): void {
+  if (
+    currentBaseUrl !== baseUrl ||
+    currentToken !== token ||
+    currentDeviceId !== deviceId ||
+    currentTransportKey !== transportKey ||
+    currentTransport !== transport
+  )
+    nativeImageCache.invalidate();
   currentBaseUrl = baseUrl;
   currentToken = token;
   currentDeviceId = deviceId;
@@ -1370,31 +1379,66 @@ export function gatewayImageBinding(asset: MessageImageAsset, capabilities?: rea
     assertCurrent();
     if (signal?.aborted) throw new Error('Image read cancelled');
     if (rangedOriginal && (source.uri === plan.original.uri || source.uri === plan.fallback.uri)) {
-      let fixedSource = source;
-      return downloadOriginalImageFile({
+      const epoch = nativeImageCache.epoch();
+      const versionResponse = plan.version
+        ? await requestImage(plan.version, signal, IMAGE_VERSION_BYTES)
+        : null;
+      const fixed = versionResponse
+        ? await readOriginalImageVersion(versionResponse, asset.asset_id, signal)
+        : undefined;
+      assertCurrent();
+      if (signal?.aborted) throw new Error('Image read cancelled');
+      const fixedSource = fixed
+        ? {
+            uri: `${baseUrl.replace(/\/$/, '')}${fixed.download_url}`,
+            headers: source.headers,
+            cacheKey: JSON.stringify([source.cacheKey, fixed.version]),
+          }
+        : source;
+      const cacheKey = fixed
+        ? QuickCrypto.createHash('sha256').update(fixedSource.cacheKey!).digest('hex')
+        : null;
+      if (cacheKey && fixed) {
+        let cached: PreviewImageSource | null = null;
+        try {
+          const path = await nativeImageCache.path(cacheKey);
+          if (path) cached = await copyCachedOriginalImageFile(path, fixed);
+        } catch {
+          // Native eviction/Clear cache can race the lookup and copy: use the authenticated reader.
+        }
+        if (cached) {
+          try {
+            assertCurrent();
+            if (signal?.aborted) throw new Error('Image read cancelled');
+            return cached;
+          } catch (error) {
+            cached.dispose?.();
+            throw error;
+          }
+        }
+      }
+      const downloaded = await downloadOriginalImageFile({
         signal,
         size: asset.size,
         assertCurrent,
-        acquireVersion: plan.version
-          ? async (versionSignal) => {
-              const response = await requestImage(
-                plan.version!,
-                versionSignal,
-                IMAGE_VERSION_BYTES
-              );
-              const fixed = await readOriginalImageVersion(response, asset.asset_id, versionSignal);
-              assertCurrent();
-              fixedSource = {
-                uri: `${baseUrl.replace(/\/$/, '')}${fixed.download_url}`,
-                headers: source.headers,
-                cacheKey: JSON.stringify([source.cacheKey, fixed.version]),
-              };
-              return fixed;
-            }
-          : undefined,
+        acquireVersion: fixed ? async () => fixed : undefined,
         request: (rangeHeaders, rangeSignal) =>
           requestImage(fixedSource, rangeSignal, IMAGE_RANGE_BYTES, rangeHeaders),
       });
+      try {
+        assertCurrent();
+        if (signal?.aborted) throw new Error('Image read cancelled');
+        // iOS seeds via Data(contentsOf:), so large originals keep the bounded streaming path.
+        if (cacheKey && fixed && fixed.size <= 64 * 1024 * 1024) {
+          await nativeImageCache.seed(downloaded.uri, cacheKey, epoch).catch(() => undefined);
+        }
+        assertCurrent();
+        if (signal?.aborted) throw new Error('Image read cancelled');
+      } catch (error) {
+        downloaded.dispose?.();
+        throw error;
+      }
+      return downloaded;
     }
     const key = source.cacheKey ?? source.uri;
     const limit = source.uri.endsWith('/thumbnail')
@@ -1450,14 +1494,13 @@ export function gatewayImageBinding(asset: MessageImageAsset, capabilities?: rea
     fallback: plan.fallback,
     deferred: true,
     resolveSource: (signal: AbortSignal) =>
-      readPreviewWithFallback(
-        plan,
-        (source) => read(source, signal),
-        (error) =>
-          error instanceof Error ? Number(error.message.match(/^HTTP (\d+)/)?.[1] ?? 0) : 0,
-        signal
-      ),
-    resolveOriginal: (signal) => read(plan.original, signal),
+      readOriginalFirst(plan, (source) => read(source, signal), signal),
+    resolvePreview:
+      plan.preview.uri !== plan.original.uri ? (signal) => read(plan.preview, signal) : undefined,
+    resolveOriginal: async (signal) => ({
+      ...(await read(plan.original, signal)),
+      originalLoaded: true,
+    }),
   };
   return {
     image,
