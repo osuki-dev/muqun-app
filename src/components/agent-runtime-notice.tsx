@@ -1,9 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 
-import { PressableScale } from './pressable-scale';
-import { Text } from './text';
 import type { AgentSessionRuntime } from '@/lib/agent-session-runtime';
 
 /** Terminal observations do not claim ownership of native turns or approvals. */

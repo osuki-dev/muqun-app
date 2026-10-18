@@ -71,6 +71,11 @@ export function MarkdownDocumentView({
     ),
     [markdownStyle, selectionColor]
   );
+  // A new renderItem closure alone does not refresh cached chunk elements.
+  const chunkExtraData = useMemo(
+    () => [markdownStyle, selectionColor],
+    [markdownStyle, selectionColor]
+  );
 
   // A chunk is not its own identity: a document repeats itself, and two
   // identical paragraphs are two cells. Its place in the document is.
@@ -92,6 +97,7 @@ export function MarkdownDocumentView({
         data={chunks}
         keyExtractor={keyOfChunk}
         renderItem={renderChunk}
+        extraData={chunkExtraData}
         getItemType={typeOfChunk}
         estimatedItemSize={ESTIMATED_CELL_HEIGHT}
         // Never. Each cell is a native markdown view with its own parse behind

@@ -131,6 +131,19 @@ export interface ImageRangeSink<T> {
   abort(): void | Promise<void>;
 }
 
+/** SDK 58 writes asynchronously; do not inspect the advanced offset or close early. */
+export async function writeOriginalImageChunk(
+  handle: { offset: number | null; writeBytes: (bytes: Uint8Array) => Promise<void> },
+  bytes: Uint8Array,
+  written: number
+): Promise<number> {
+  if (handle.offset !== written) throw new Error('Invalid image file offset');
+  await handle.writeBytes(bytes);
+  const next = written + bytes.length;
+  if (handle.offset !== next) throw new Error('Incomplete image file write');
+  return next;
+}
+
 function cancelled(signal?: AbortSignal) {
   if (signal?.aborted) throw new Error('Image download cancelled');
 }

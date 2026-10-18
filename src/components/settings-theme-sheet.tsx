@@ -22,8 +22,7 @@
  * `themeSwatch`, so a preview can never drift from the theme it advertises.
  */
 import { useLingui } from '@lingui/react/macro';
-import { useThemeMode } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeMode, Text } from '@osuki-dev/ui';
 import { useState } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';

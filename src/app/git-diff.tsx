@@ -26,8 +26,6 @@ export default function GitDiffScreen() {
     vcsFiles?: string;
     worktrees?: string;
     serverId?: string;
-    canLazygit?: string;
-    canLazygitWorktree?: string;
   }>();
 
   return (
@@ -38,8 +36,6 @@ export default function GitDiffScreen() {
       vcsFiles={params.vcsFiles === '1'}
       worktreesSupported={params.worktrees === '1'}
       serverId={params.serverId}
-      canLazygit={params.canLazygit === '1'}
-      canLazygitWorktree={params.canLazygitWorktree === '1'}
     />
   );
 }

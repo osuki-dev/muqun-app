@@ -1,11 +1,8 @@
-import { Input } from '@/components/themed-input';
+import { Input, Spinner, useThemeTokens, Button, PressableScale, Text } from '@osuki-dev/ui';
 import { GuideCommand } from '@/components/guide-command';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Spinner, useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
-import { Button } from '@/components/themed-button';
 import { Lock, MonitorSmartphone, X } from 'lucide-react-native';
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -13,7 +10,6 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GlassChrome } from '@/components/glass-chrome';
-import { PressableScale } from '@/components/pressable-scale';
 import { SimfarmStage } from '@/components/simfarm-stage';
 import { SIMFARM_DEFAULT_PORT, SIMFARM_RUN_COMMAND, simfarmSocketUrl } from '@/lib/simfarm';
 import { probeSimfarm, type SimfarmProbe } from '@/lib/simfarm-client';

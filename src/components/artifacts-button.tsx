@@ -1,12 +1,11 @@
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { useRouter, type Href } from 'expo-router';
 import { FolderOpen } from 'lucide-react-native';
 import { Keyboard, StyleSheet } from 'react-native';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { KEY_ROW_HEIGHT } from '@/constants/key-row';
 
 /**

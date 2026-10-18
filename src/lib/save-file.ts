@@ -1,3 +1,4 @@
+import { protectTemporaryCacheEntry } from './cache-cleanup';
 import { Directory, File, Paths } from 'expo-file-system';
 import { Asset, requestPermissionsAsync } from 'expo-media-library';
 import * as Sharing from 'expo-sharing';
@@ -37,9 +38,10 @@ export async function exportFile(
     return;
   }
   const directory = new Directory(Paths.cache, `file-export-${Date.now()}-${sequence++}`);
-  directory.create();
+  const disposeCache = await protectTemporaryCacheEntry(directory);
   const file = new File(directory, safeName);
   try {
+    directory.create();
     file.create();
     await file.write(bytes);
     if (photos) {
@@ -52,11 +54,9 @@ export async function exportFile(
       assertSaveActive(signal);
       await Sharing.shareAsync(file.uri, { mimeType: mime });
     }
-  } catch (error) {
-    directory.delete();
-    throw error;
+  } finally {
+    disposeCache();
   }
-  directory.delete();
 }
 
 export async function saveSessionAsset(asset: SessionAsset, photos = asset.kind === 'image') {

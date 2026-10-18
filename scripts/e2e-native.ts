@@ -999,22 +999,6 @@ export class NativeRunner {
       }
       // A launch reopens the window; every other step spends it down.
       this.stepsSinceLaunch = args[0] === 'open' ? 0 : this.stepsSinceLaunch + 1;
-      // The landscape iPad theme preview stalls XCUITest accessibility capture.
-      // Permit one screenshot-backed coordinate press there, without asking the
-      // stalled tree for another verdict. The next assertion checks its result.
-      const visualPress =
-        args[0] === 'press' &&
-        args[3] === '--visual' &&
-        /^\d+$/.test(args[1] ?? '') &&
-        /^\d+$/.test(args[2] ?? '') &&
-        env.DEVICE_KIND === 'ipad';
-      if (args.includes('--visual') && !visualPress)
-        throw new Error('Visual press requires iPad and numeric coordinates');
-      if (visualPress) {
-        const screenshot = path.join(this.artifacts, 'visual-press-before.png');
-        await this.invoke(['screenshot', screenshot]);
-        args.pop();
-      }
       let guardedNodes: Node[] | undefined;
       if (scopeId !== undefined) {
         const capture = await this.readyCapture(true);
@@ -1023,8 +1007,7 @@ export class NativeRunner {
         await this.invoke(['press', scopedNativeRef(capture, args[1], scopeId)]);
         continue;
       }
-      if (guardedMutations.has(args[0]) && !visualPress)
-        guardedNodes = await this.readySnapshot(true);
+      if (guardedMutations.has(args[0])) guardedNodes = await this.readySnapshot(true);
       if (args[0] === 'alert' && args[1] === 'dismiss') {
         const status = await this.invoke(['alert', 'get']);
         const alert = status.alert as { title?: string; buttons?: string[] } | null;
@@ -1098,7 +1081,7 @@ export class NativeRunner {
         const goBack = guardedNodes?.find(
           (node) => nodeRole(node) === 'button' && /^(?:go back|back)$/i.test(node.label ?? '')
         );
-        if (goBack) {
+        if (goBack && !args.includes('--in-app')) {
           await this.invoke(['press', selector(goBack)]);
           continue;
         }

@@ -22,10 +22,9 @@ import {
 } from '@legendapp/list/react-native';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
-import { Text } from '@/components/text';
+import { Text, PressableScale } from '@osuki-dev/ui';
 import { ChevronDown, ChevronUp } from 'lucide-react-native';
 
-import { PressableScale } from '@/components/pressable-scale';
 // A type-only import, so this module never holds a runtime reference back to
 // `pane-chat-blocks` -- which imports `InlineDiffRows` from here.
 import type { PaneChatColors } from '@/components/pane-chat-blocks';
@@ -582,11 +581,7 @@ const ShowMoreRow = memo(function ShowMoreRow({
       onPress={() => onPress(row.path)}
       style={[styles.moreRow, { width }]}>
       <Animated.View style={[styles.pinned, styles.moreBody, pinned, { width: pinnedWidth }]}>
-        <View
-          style={[
-            styles.moreChip,
-            { borderRadius: profile.chrome.control, borderColor: colors.border },
-          ]}>
+        <View style={[styles.moreChip, { borderRadius: profile.chrome.control }]}>
           {row.loading ? (
             <ActivityIndicator size="small" color={colors.accent} />
           ) : (
@@ -957,10 +952,7 @@ export function InlineDiffRows({
               accessibilityRole="button"
               accessibilityLabel={t`Show more of this diff`}
               onPress={showMore}
-              style={[
-                styles.inlineMore,
-                { borderRadius: profile.chrome.control, borderColor: colors.border },
-              ]}>
+              style={[styles.inlineMore, { borderRadius: profile.chrome.control }]}>
               <Text variant="caption" color={colors.accent}>
                 <Plural value={capped.hidden} one="# more line" other="# more lines" />
               </Text>
@@ -972,10 +964,7 @@ export function InlineDiffRows({
               accessibilityRole="button"
               accessibilityLabel={t`Open this diff in the changes viewer`}
               onPress={() => onOpenFullDiff(targetPath)}
-              style={[
-                styles.inlineMore,
-                { borderRadius: profile.chrome.control, borderColor: colors.border },
-              ]}>
+              style={[styles.inlineMore, { borderRadius: profile.chrome.control }]}>
               <Text variant="caption" color={colors.accent}>
                 <Trans>Open in changes</Trans>
               </Text>
@@ -1041,7 +1030,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 10,
     borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
   },
   // Every row is laid out at the full content width so its background spans the
   // panned area; only what sits inside `pinned` is held at the viewport.
@@ -1140,7 +1128,6 @@ const styles = StyleSheet.create({
     minHeight: 30,
     paddingHorizontal: 12,
     borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
   },
   rulerBox: {
     position: 'absolute',

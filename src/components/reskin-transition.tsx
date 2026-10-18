@@ -23,9 +23,7 @@ import {
   type ReactNode,
   type RefObject,
 } from 'react';
-import { importDevice } from 'react-native-webgpu';
 import {
-  PixelRatio,
   Platform,
   StyleSheet,
   View,
@@ -47,6 +45,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { DURATION, RESKIN_MOTION, timing } from '@/lib/motion';
+import { disposeViewPhotograph, photographView } from '@/lib/view-photograph';
 import {
   denormalizeOrigin,
   halftoneCell,
@@ -359,60 +358,13 @@ async function photographSurfaces(
   return { shots: shots.size > 0 ? shots : null, ms: elapsed, outcome };
 }
 
-/**
- * A picture of one surface, taken by React Native WebGPU.
- *
- * Skia 3.6 removed `makeImageFromView`; the platform now rasterizes the view
- * into a texture on Skia's own device (`queue.drawElementImageToTexture`), and
- * `MakeImageFromGPUTexture` wraps that texture without a copy. The image keeps
- * the texture alive only by reference, so {@link disposeImage} destroys the
- * texture when the picture goes. The capture is a promise, which is what lets
- * the budget race in {@link photographSurfaces} cut a slow one short.
- */
-async function photograph(entry: SurfaceEntry): Promise<SkImage | null> {
+/** A picture of one surface (`photographView`). */
+function photograph(entry: SurfaceEntry): Promise<SkImage | null> {
   const { width, height } = entry.size.current;
-  if (!entry.ref.current || width <= 0 || height <= 0) return null;
-  const scale = PixelRatio.get();
-  const texture = sharedDevice().createTexture({
-    size: [Math.max(1, Math.round(width * scale)), Math.max(1, Math.round(height * scale))],
-    format: 'rgba8unorm',
-    usage:
-      GPUTextureUsage.COPY_DST |
-      GPUTextureUsage.RENDER_ATTACHMENT |
-      GPUTextureUsage.TEXTURE_BINDING,
-  });
-  try {
-    // Skia images are premultiplied.
-    await sharedDevice().queue.drawElementImageToTexture(
-      { source: entry.ref },
-      { texture, premultipliedAlpha: true }
-    );
-    const image = Skia.Image.MakeImageFromGPUTexture(texture);
-    textures.set(image, texture);
-    return image;
-  } catch (error) {
-    texture.destroy();
-    throw error;
-  }
+  return photographView(entry.ref, width, height);
 }
 
-let device: GPUDevice | null = null;
-
-/** Skia's render device, wrapped once; the two libraries share one Dawn. */
-function sharedDevice(): GPUDevice {
-  device ??= importDevice(Skia.getNativeDevice());
-  return device;
-}
-
-/** The texture each photograph samples, destroyed with the photograph. */
-const textures = new Map<SkImage, GPUTexture>();
-
-/** Give an image back to Skia, and its texture back to the device. */
-function disposeImage(image: SkImage): void {
-  image.dispose();
-  textures.get(image)?.destroy();
-  textures.delete(image);
-}
+const disposeImage = disposeViewPhotograph;
 
 /** Share the cover's upload with its on-screen and readiness canvases. */
 function uploadCover(image: SkImage | null): SkImage | null {

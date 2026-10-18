@@ -1,13 +1,11 @@
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { memo, useMemo, useState } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { Check, ShieldAlert, ShieldCheck, XCircle } from 'lucide-react-native';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { BoundedMarkdown } from '@/components/bounded-markdown';
 import { InlineDiffRows } from '@/components/diff-rows';
 import { usePaneChatColors } from '@/components/pane-chat-blocks';

@@ -1,7 +1,16 @@
 import { SheetHandle } from '@/components/sheet-route-frame';
-import { Input } from '@/components/themed-input';
-import { Card } from '@/components/themed-card';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import {
+  Input,
+  Card,
+  Spinner,
+  useThemeTokens,
+  Skeleton,
+  Button,
+  PressableScale,
+  Tabs,
+  Text,
+} from '@osuki-dev/ui';
+import { usePillTabsLayering, useSurfaceBackground } from '@/hooks/use-surface-background';
 import { SheetFrame } from '@/components/sheet-ground';
 import { SettingsSegmented } from '@/components/settings-segmented';
 import {
@@ -68,11 +77,6 @@ import {
  * whole reading it switched to, because this sheet was the only way in. See
  * `src/lib/pane-view-mode.ts`.
  */
-import { Spinner, useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
-import { Tabs } from '@/components/themed-tabs';
-import { Button } from '@/components/themed-button';
-import { Skeleton } from '@/components/themed-skeleton';
 // Two hooks of the same name and they are not interchangeable: the macro one
 // expands `t` at build time, and only the runtime one hands back the `_` that
 // turns a `msg` descriptor into a sentence in the active locale.
@@ -81,6 +85,7 @@ import { useLingui } from '@lingui/react/macro';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import {
   Check,
+  GitBranch,
   Globe,
   MonitorSmartphone,
   PanelsTopLeft,
@@ -96,7 +101,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AgentCommandDeliveryPicker } from '@/components/agent-command-delivery-picker';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { PressableScale } from '@/components/pressable-scale';
 import { LADDER, SettingsCard } from '@/components/settings-chrome';
 import { useAgentCommandDelivery } from '@/hooks/use-agent-command-delivery';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
@@ -114,6 +118,7 @@ import {
 } from '@/lib/gateway-client';
 import { describeGatewayFailure } from '@/lib/network-error';
 import { quickActionAvailability } from '@/lib/quick-actions';
+import { useLazygit } from '@/hooks/use-lazygit';
 import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
 import { slashArgumentRequired } from '@/lib/slash-argument';
 import { SIMFARM_DEFAULT_PORT, simfarmSocketUrl } from '@/lib/simfarm';
@@ -166,6 +171,7 @@ const MONO_TEXT = {
 export default function QuickCommandsScreen() {
   const profile = useAppearanceProfile();
   const surfaceBackground = useSurfaceBackground();
+  const pillLayering = usePillTabsLayering();
   const router = useRouter();
   const theme = useThemeTokens();
   // `t` from the hook, never the global `t` from `@lingui/core/macro`: React
@@ -208,6 +214,8 @@ export default function QuickCommandsScreen() {
      * server -- the one place the rows are missing.
      */
     canSpawn?: string;
+    /** Whether this gateway advertised `pane_lazygit`: the Lazygit tile. */
+    canLazygit?: string;
     /**
      * Whether this connection is one where opening a plain URL is honest.
      *
@@ -232,6 +240,12 @@ export default function QuickCommandsScreen() {
   );
   const mode: QuickCommandMode = params.mode === 'agent' ? 'agent' : 'terminal';
   const manageOnly = params.manage === '1';
+  const lazygit = useLazygit({
+    enabled: !manageOnly && params.canLazygit === '1',
+    sessionId: params.sessionId,
+    paneId: params.paneId,
+    serverId: params.serverId,
+  });
   const agentDelivery = useAgentCommandDelivery({
     ...params,
     enabled: mode === 'agent' && !manageOnly,
@@ -427,7 +441,7 @@ export default function QuickCommandsScreen() {
    */
   async function create(focus: boolean) {
     const serverId = params.serverId;
-    if (!available.canCreate || creating || !serverId) return;
+    if (!available.canCreate || creating || lazygit.busy || !serverId) return;
     setCreating(focus ? 'tab' : 'panel');
     setError(null);
     return recoverWith(
@@ -664,15 +678,25 @@ export default function QuickCommandsScreen() {
               measure needs anyway. A connection that offers neither
               machine-scoped tile draws the two it has at half width apiece,
               which reads as the row it is rather than as a row with holes. */}
-          {available.hasTiles ? (
+          {available.hasTiles || lazygit.available ? (
             <View style={styles.tiles}>
+              {lazygit.available ? (
+                <ActionTile
+                  icon={GitBranch}
+                  label={t`Lazygit`}
+                  accessibilityLabel={t`Open Lazygit`}
+                  busy={lazygit.busy}
+                  disabled={creating !== null || lazygit.busy}
+                  onPress={() => void lazygit.open()}
+                />
+              ) : null}
               {available.canCreate ? (
                 <ActionTile
                   icon={SquareTerminal}
                   label={t`Terminal`}
                   accessibilityLabel={t`New terminal`}
                   busy={creating === 'panel'}
-                  disabled={creating !== null}
+                  disabled={creating !== null || lazygit.busy}
                   onPress={() => void create(false)}
                 />
               ) : null}
@@ -682,7 +706,7 @@ export default function QuickCommandsScreen() {
                   label={t`Group`}
                   accessibilityLabel={t`New group`}
                   busy={creating === 'tab'}
-                  disabled={creating !== null}
+                  disabled={creating !== null || lazygit.busy}
                   onPress={() => void create(true)}
                 />
               ) : null}
@@ -804,7 +828,7 @@ export default function QuickCommandsScreen() {
                 name={t`New task`}
                 detail={t`Start an agent and send it the first thing to do.`}
                 detailColor={theme.colors.textMuted}
-                disabled={creating !== null}
+                disabled={creating !== null || lazygit.busy}
                 onPress={startTask}
               />
             </SettingsCard>
@@ -1032,13 +1056,14 @@ export default function QuickCommandsScreen() {
               layout={listLayout('short')}
               style={styles.section}>
               <SectionHeading title={t`New shortcut`} />
-              <Card variant="flat" padding="md" style={styles.addCard}>
+              <Card slot="cards.plain" variant="flat" padding="md" style={styles.addCard}>
                 <Text variant="caption" color={theme.colors.textMuted}>
                   {mode === 'agent'
                     ? t`Save a prompt you send this agent often.`
                     : t`Save a command or key combo you reach for.`}
                 </Text>
 
+                {/* Fully round on every profile, like the delivery picker. */}
                 {mode === 'terminal' ? (
                   <Tabs
                     options={[
@@ -1047,6 +1072,9 @@ export default function QuickCommandsScreen() {
                     ]}
                     value={kind}
                     variant="pill"
+                    radius="pill"
+                    optionRadius="pill"
+                    layering={pillLayering}
                     size="compact"
                     onChange={(next) => setKind(next as QuickCommandKind)}
                   />
@@ -1475,9 +1503,6 @@ const styles = StyleSheet.create({
    * 38 and half of it, which is the disc every other sheet in this app gives a
    * header button. `GlassChrome` draws the material and nothing else, so the
    * shape is stated here and the pressable inside fills it.
-   *
-   * `GlassChrome` draws the edge these need when a pack has thinned its own
-   * fill; see the note on `chromeStyle` there.
    */
   headerButton: {
     width: 38,

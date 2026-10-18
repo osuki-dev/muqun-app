@@ -15,14 +15,12 @@
  * Theme and colour mode stay together, followed by font, app icon, and language.
  */
 import { useLingui } from '@lingui/react/macro';
-import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeMode, useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Appearance, ScrollView, StyleSheet, View } from 'react-native';
 
 import { SettingsBlock, SettingsChoiceRow, SettingsCard } from '@/components/settings-chrome';
-import { PressableScale } from '@/components/pressable-scale';
 import { useReskinTransition } from '@/components/reskin-transition';
 import { SettingsSegmented } from '@/components/settings-segmented';
 import { appChrome } from '@/constants/appearance';

@@ -1,7 +1,7 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { ThemeArtwork } from '@/components/theme-artwork';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { useRouter } from 'expo-router';
 import { PanelsTopLeft } from 'lucide-react-native';
 import { isValidElement, useEffect, useState, type ReactNode } from 'react';
@@ -18,7 +18,6 @@ import {
   navHeaderTitlePillStyle,
   navHeaderTitleTextStyle,
 } from '@/components/nav-header';
-import { PressableScale } from '@/components/pressable-scale';
 import { DetailHeader } from '@/components/detail-header';
 import { appChrome } from '@/constants/appearance';
 import { isDrawerPermanent } from '@/constants/navigation';
@@ -240,7 +239,6 @@ export default function AppDrawer({
                   styles.railHandle,
                   {
                     backgroundColor: surfaceBackground(theme.colors.surface),
-                    borderColor: theme.colors.border,
                   },
                 ]}>
                 <PanelsTopLeft size={18} color={theme.colors.textMuted} />
@@ -363,7 +361,6 @@ const styles = StyleSheet.create({
     width: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 22,
     borderCurve: 'continuous',
     boxShadow: appChrome.shadow.workspaceRail,

@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
 import { useEffect, useEffectEvent, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,7 +11,6 @@ import {
   SheetSceneQuietAction,
   sheetSceneStyles,
 } from '@/components/sheet-scene';
-import { Text } from '@/components/text';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { readPaneHistorySegments } from '@/lib/gateway-client';
 import type { GatewayRecord } from '@/lib/gateway-storage';

@@ -8,6 +8,7 @@ import { seedDemoAgentRecent } from '@/lib/demo-recents';
 import { forgetRegisteredPushToken } from '@/lib/push-token-registry';
 import { forgetWarmWorkspace } from '@/lib/server-warm-cache';
 import { describeGatewayFailure } from '@/lib/network-error';
+import { isExpiredGatewayPairing } from '@/lib/gateway-refusal';
 import { GatewayTunnelUnavailableError } from '@/lib/ssh-tunnel';
 import {
   clearGateway,
@@ -267,9 +268,9 @@ export const useGatewayConnectionStore = create<GatewayConnectionState>((set, ge
     // out -- can never answer that request; it times out, every time,
     // forever. Refusing to ever forget a pairing nothing will ever ask about
     // again is worse than the server-side state it would otherwise be
-    // guarding, so only unreachability gets this pass. A gateway that is
-    // there and says no -- bad auth, a real server error -- still blocks the
-    // removal below exactly as before.
+    // guarding. A known expired credential also permits local removal: the
+    // gateway has already stopped accepting this pairing. Other refusals and
+    // server errors still keep the local record so removal can be retried.
     try {
       // The revoke is two requests, each with the standard 8 s budget. A
       // gateway that is simply gone burns all sixteen seconds before we
@@ -293,7 +294,8 @@ export const useGatewayConnectionStore = create<GatewayConnectionState>((set, ge
       // `GatewayTunnelUnavailableError`.
       if (!(error instanceof GatewayTunnelUnavailableError)) {
         const { kind } = describeGatewayFailure(error);
-        if (kind !== 'timeout' && kind !== 'network') throw error;
+        if (kind !== 'timeout' && kind !== 'network' && !isExpiredGatewayPairing(error))
+          throw error;
       }
     }
 

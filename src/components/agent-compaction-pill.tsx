@@ -13,13 +13,11 @@ import Animated, {
 import { AlertCircle, ChevronDown, Layers, Loader, X } from 'lucide-react-native';
 import { useLingui } from '@lingui/react/macro';
 import * as Clipboard from 'expo-clipboard';
-import { useThemeTokens, useToast } from '@osuki-dev/ui';
+import { useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { BoundedMarkdown } from '@/components/bounded-markdown';
 import { usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
-import { PressableScale } from '@/components/pressable-scale';
-import { Text } from '@/components/text';
 import { useAppActive } from '@/hooks/use-app-active';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import type { CompactionActivity } from '@/lib/agent-compaction';
@@ -92,7 +90,7 @@ export function CompactionPill({
           {
             borderRadius: profile.chrome.control,
             backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-            borderColor: failed ? theme.colors.danger : theme.colors.border,
+            borderColor: failed ? theme.colors.danger : 'transparent',
           },
         ]}>
         <View style={styles.header}>

@@ -22,7 +22,7 @@ export function cacheCleanupIsDue(
 /** Manual callers join the same operation; automatic callers never start a second one. */
 export function createCacheCleanupFlight() {
   let flight: Promise<boolean> | null = null;
-  const protectedDirectories = new Set<string>();
+  const protectedDirectories = new Map<string, number>();
   const run = (clean: () => Promise<boolean>): Promise<boolean> => {
     if (flight) return flight;
     flight = clean().finally(() => {
@@ -33,10 +33,55 @@ export function createCacheCleanupFlight() {
   return {
     run,
     async protect(name: string): Promise<void> {
-      protectedDirectories.add(name);
+      protectedDirectories.set(name, (protectedDirectories.get(name) ?? 0) + 1);
       await flight;
     },
-    release: (name: string) => protectedDirectories.delete(name),
+    release: (name: string) => {
+      const count = protectedDirectories.get(name) ?? 0;
+      if (count > 1) protectedDirectories.set(name, count - 1);
+      else protectedDirectories.delete(name);
+    },
     isProtected: (name: string) => protectedDirectories.has(name),
+  };
+}
+
+/** A failed native deletion must relinquish ownership so cleanup can retry. */
+export function createCacheEntryDisposer(remove: () => void, release: () => void): () => void {
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    try {
+      remove();
+    } catch {
+      // The now-idle entry remains eligible for the next cleanup.
+    } finally {
+      release();
+    }
+  };
+}
+
+/** Order native cache mutations; a cleared/changed connection rejects late writes. */
+export function createCacheMutationQueue() {
+  let epoch = 0;
+  let tail: Promise<unknown> = Promise.resolve();
+  const run = <T>(operation: () => Promise<T>): Promise<T> => {
+    const next = tail.then(operation);
+    tail = next.catch(() => undefined);
+    return next;
+  };
+  return {
+    epoch: () => epoch,
+    invalidate: () => {
+      epoch++;
+    },
+    write: (expected: number, write: () => Promise<void>) =>
+      run(async () => {
+        if (expected === epoch) await write();
+      }),
+    clear: (clear: () => Promise<boolean>) => {
+      epoch++;
+      return run(clear);
+    },
   };
 }

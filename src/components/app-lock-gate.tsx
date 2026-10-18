@@ -1,6 +1,5 @@
 import { Trans, useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { Image } from 'expo-image';
 import * as ScreenCapture from 'expo-screen-capture';
 import { Fingerprint, LockKeyhole, ScanFace } from 'lucide-react-native';
@@ -31,7 +30,6 @@ import {
 import { useAppSettings } from '@/stores/app-settings';
 
 import { LogoLoader } from './logo-loader';
-import { PressableScale } from './pressable-scale';
 import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
 
 const APP_LOCK_CAPTURE_KEY = 'muqun-app-lock';

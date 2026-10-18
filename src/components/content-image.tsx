@@ -2,9 +2,8 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
 import { FileImage } from 'lucide-react-native';
-import { Text } from '@/components/text';
 import { useLatestReader } from '@/hooks/use-render-refs';
 import {
   contentImageIdentity,

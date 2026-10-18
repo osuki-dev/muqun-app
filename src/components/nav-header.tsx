@@ -1,5 +1,4 @@
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { ChevronLeft } from 'lucide-react-native';
 
 import { ThemeIcon } from '@/components/theme-icon';
@@ -7,7 +6,6 @@ import { type ReactNode } from 'react';
 import { StyleSheet, type StyleProp, View, type ViewStyle } from 'react-native';
 
 import { GlassChrome } from '@/components/glass-chrome';
-import { PressableScale } from '@/components/pressable-scale';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
 
 /**

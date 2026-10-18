@@ -22,15 +22,13 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
  * path and not on `/`, and a check that blocked would be wrong more often than
  * it was right.
  */
-import { KeyboardToolbar, useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { KeyboardToolbar, useThemeTokens, PressableScale, Text, TextField } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useEffect, useRef, useState } from 'react';
 import { Linking, Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated from 'react-native-reanimated';
 
-import { PressableScale } from '@/components/pressable-scale';
 import {
   SheetScene,
   SheetSceneAction,
@@ -47,7 +45,6 @@ import { describeWebServiceUrl, parsePort, webServiceUrl } from '@/lib/web-servi
 import { probeWebService } from '@/lib/web-service-probe';
 import { useRenderTally } from '@/lib/render-tally';
 import { useServerWebPorts } from '@/stores/server-web-ports';
-import { FontedTextInput } from '@/components/fonted-text-input';
 
 export function OpenWebServiceSheet({
   serverId,
@@ -179,7 +176,7 @@ export function OpenWebServiceSheet({
             label={t`Port`}
             hint={target ? describeWebServiceUrl(target) : undefined}
             error={error ?? undefined}>
-            <FontedTextInput
+            <TextField
               accessibilityLabel={t`Port`}
               testID="open-web-service-port"
               value={portText}
@@ -225,7 +222,6 @@ export function OpenWebServiceSheet({
                     style={[
                       styles.chip,
                       {
-                        borderColor: theme.colors.border,
                         backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
                       },
                     ]}>
@@ -292,6 +288,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: SHEET_LADDER.snug,
     borderRadius: appChrome.radius.control,
     borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
   },
 });

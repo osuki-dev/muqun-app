@@ -119,7 +119,7 @@ msgid "{0} did not upload. Retry it or remove it to send."
 msgstr "{0} 未能上传。重试或移除后再发送"
 
 #. placeholder {0}: failed.name
-#. placeholder {1}: uploadLimitMb(maxUploadBytesFor(failed.mime))
+#. placeholder {1}: uploadLimitMb(attachmentLimitBytes(failed))
 #: src/lib/attachments.ts
 msgid "{0} is too large ({1} MB max). Remove it to send."
 msgstr "{0} 过大（最大 {1} MB）。移除后再发送"
@@ -299,6 +299,10 @@ msgstr "最近观察到 {count} 个请求"
 msgid "{done} of {0} done"
 msgstr "已完成 {done}/{0}"
 
+#: src/components/home-computer-deck.tsx
+msgid "{failed, plural, one {# failed} other {# failed}}"
+msgstr "{failed, plural, other {# 个失败}}"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "{from} still lists an older {name}. Remove that entry on {from}."
 msgstr "{from} 上仍有一条旧的 {name} 记录，请在 {from} 上删除这条记录"
@@ -375,6 +379,10 @@ msgstr "{providerName}（终端）"
 msgid "{removeLabel}: {label}"
 msgstr "{removeLabel}：{label}"
 
+#: src/components/home-computer-deck.tsx
+msgid "{running, plural, one {# running} other {# running}}"
+msgstr "{running, plural, other {# 个运行中}}"
+
 #. placeholder {0}: shells.length
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
@@ -393,6 +401,10 @@ msgstr "{total, plural, other {# 个子任务}}"
 #: src/components/task-row.tsx
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, other {# 个子任务}}（{waiting, plural, other {# 个等待中}}）"
+
+#: src/components/home-computer-deck.tsx
+msgid "{waiting, plural, one {# needs you} other {# need you}}"
+msgstr "{waiting, plural, other {# 个需要你处理}}"
 
 #: src/components/task-row.tsx
 msgid "→ {name}"
@@ -1003,6 +1015,11 @@ msgstr "分支或提交（可选）"
 #: src/components/agent-worktree-sheet.tsx
 msgid "Branch to start from"
 msgstr "作为起点的分支"
+
+#. placeholder {0}: server.label
+#: src/components/home-computer-deck.tsx
+msgid "Bring {0} to the front"
+msgstr "将 {0} 移到最前"
 
 #: src/components/custom-theme-library.tsx
 #: src/components/theme-browse-sheet.tsx
@@ -2551,8 +2568,8 @@ msgid "Download and preview"
 msgstr "下载并预览"
 
 #: src/components/update-status-banner.tsx
-msgid "Download size: {fullPackage}"
-msgstr "下载大小：{fullPackage}"
+msgid "Full package size: {fullPackage}"
+msgstr "完整包大小：{fullPackage}"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Downloading"
@@ -2795,6 +2812,10 @@ msgstr "本项目的文件"
 #: src/components/file-mention-panel.tsx
 msgid "Files in this workspace"
 msgstr "此工作区的文件"
+
+#: src/components/settings-storage.tsx
+msgid "Files in use and managed caches are kept."
+msgstr "保留正在使用的文件和受管理的缓存"
 
 #: src/components/agent-workspace-sheet.tsx
 msgid "Filter projects or type a path"
@@ -3464,6 +3485,10 @@ msgstr "稍后"
 msgid "Latest"
 msgstr "最新"
 
+#: src/app/commands.tsx
+msgid "Lazygit"
+msgstr "Lazygit"
+
 #: src/hooks/use-lazygit.ts
 msgid "Lazygit startup could not be confirmed"
 msgstr "无法确认 Lazygit 是否已启动"
@@ -3913,6 +3938,10 @@ msgstr "较新"
 #: src/components/agent-composer.tsx
 msgid "Next"
 msgstr "下一步"
+
+#: src/components/home-computer-deck.tsx
+msgid "Next computer"
+msgstr "下一台电脑"
 
 #: src/components/image-preview-modal.tsx
 msgid "Next image"
@@ -4404,7 +4433,7 @@ msgstr "在浏览器中打开，通过 SSH 隧道时不可用"
 msgid "Open installation guide"
 msgstr "打开安装指南"
 
-#: src/components/git-diff-view.tsx
+#: src/app/commands.tsx
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
 msgstr "打开 Lazygit"
@@ -4495,10 +4524,6 @@ msgstr "OpenAI 需要 API 密钥和模型。兼容服务可能提供自己的默
 msgid "Opening"
 msgstr "正在打开"
 
-#: src/components/git-diff-view.tsx
-msgid "Opening Lazygit…"
-msgstr "正在打开 Lazygit…"
-
 #: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Opening that file"
@@ -4516,6 +4541,10 @@ msgstr "正在打开隧道"
 #: src/components/server-terminal-workspace.tsx
 msgid "Opening…"
 msgstr "正在打开…"
+
+#: src/components/home-computer-cards.tsx
+msgid "Opens its tasks."
+msgstr "打开这台电脑的任务"
 
 #: src/components/editor-controls.tsx
 msgid "Opens the keyboard, the editor keys and the composer over this editor. Drag to move."
@@ -4789,6 +4818,10 @@ msgstr "预览并应用"
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "先预览，当前主题保持不变"
 
+#: src/components/home-computer-deck.tsx
+msgid "Previous computer"
+msgstr "上一台电脑"
+
 #: src/components/image-preview-modal.tsx
 msgid "Previous image"
 msgstr "上一张图片"
@@ -4838,6 +4871,7 @@ msgid "Projects"
 msgstr "项目"
 
 #: src/app/commands.tsx
+#: src/components/agent-tool-card.tsx
 msgid "Prompt"
 msgstr "提示词"
 
@@ -5812,8 +5846,7 @@ msgstr "显示首页 Logo"
 msgid "Show Home text"
 msgstr "显示首页文字"
 
-#: src/components/home-computer-cards.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/components/home-fold-link.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Show less"
@@ -5822,8 +5855,7 @@ msgstr "显示更少"
 #: src/components/agent-tool-card.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/diff-rows.tsx
-#: src/components/home-computer-cards.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/components/home-fold-link.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Show more"
 msgstr "显示更多"
@@ -6334,11 +6366,6 @@ msgstr "给 {assignmentLabel} 的任务"
 msgid "Task for a new {0}"
 msgstr "给新的 {0} 的任务"
 
-#. placeholder {0}: server.label
-#: src/components/home-computer-cards.tsx
-msgid "Task history for {0}"
-msgstr "{0} 的任务历史"
-
 #: src/components/home-composer-dock.tsx
 msgid "Task options"
 msgstr "任务参数"
@@ -6716,6 +6743,14 @@ msgstr "没有等待应用的回滚"
 msgid "Thinking…"
 msgstr "正在思考…"
 
+#: src/components/agent-tool-card.tsx
+msgid "This activity has no result attached."
+msgstr "此活动记录未附带结果"
+
+#: src/components/agent-tool-card.tsx
+msgid "This activity has no result attached. Open session to read the conversation."
+msgstr "此活动记录未附带结果。打开会话即可查看完整对话"
+
 #: src/components/agent-composer.tsx
 msgid "This agent accepts messages after its turn ends. Your draft stays here."
 msgstr "此智能体在本轮结束后接受消息。草稿会保留在这里"
@@ -6998,7 +7033,7 @@ msgstr "本次会话的 token"
 msgid "Tokens usage and cost"
 msgstr "Token 用量与花费"
 
-#. placeholder {0}: uploadLimitMb(maxUploadBytesFor(entry.mime))
+#. placeholder {0}: uploadLimitMb(attachmentLimitBytes(entry))
 #: src/lib/attachments.ts
 msgid "Too large ({0} MB max)"
 msgstr "过大（最大 {0} MB）"
@@ -7276,10 +7311,6 @@ msgstr "更新 App 后即可从公开链接导入主题，你仍然可以从文�
 #: src/components/agent-workbench.tsx
 msgid "Update the Gateway to load earlier remote history."
 msgstr "更新 Gateway 以加载更早的远程历史"
-
-#: src/components/git-diff-view.tsx
-msgid "Update the Gateway to open Lazygit in another worktree."
-msgstr "更新 Gateway 后即可在其他工作树中打开 Lazygit"
 
 #: src/components/asset-viewer.tsx
 #: src/components/inline-file-link.tsx

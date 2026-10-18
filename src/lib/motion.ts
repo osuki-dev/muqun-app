@@ -10,9 +10,8 @@
  *
  * The design system's own rule applies throughout -- "percussive, mechanical
  * precision -- no spring, no bounce" -- so everything here is `withTiming` on
- * the system ease-out. `settleTo` is critically damped; `kitButtonPressMotion`
- * preserves the existing kit Button's press feedback without inventing a
- * different interaction when a theme adds artwork.
+ * the system ease-out. `settleTo` is critically damped. Press feedback is the
+ * kit's (`motion.press` in the theme), whose timings are `PRESS` below.
  */
 import { motion as tokens } from '@osuki-dev/ui';
 import { entryDelay } from '@/lib/stagger';
@@ -409,17 +408,6 @@ export function settleTo(
 ) {
   'worklet';
   value.value = withSpring(to, { ...SETTLE, velocity }, onRest);
-}
-
-/** Compatibility with @osuki-dev/ui 1.0.1 Button, not a general spring preset. */
-export function kitButtonPressMotion(pressed: boolean): number {
-  'worklet';
-  return withSpring(pressed ? 1 : 0, {
-    ...(pressed
-      ? { stiffness: 520, damping: 34, mass: 0.72 }
-      : { stiffness: 420, damping: 30, mass: 0.78 }),
-    reduceMotion: ReduceMotion.System,
-  });
 }
 
 /**
