@@ -10,7 +10,9 @@ import { ImagePreviewModal } from '@/components/image-preview-modal';
 import { configuredGatewayServerId, gatewayImageBinding } from '@/lib/gateway-client';
 import type { MessageImageAsset } from '@/lib/message-images';
 import type { PreviewImageSource, PreviewImageDescriptor } from '@/lib/gateway-image-previews';
-import { deferUnmappedImage } from '@/lib/gateway-image-previews';
+import { deferUnmappedImage, saveOriginalPreview } from '@/lib/gateway-image-previews';
+import { savePreviewImage } from '@/lib/save-file';
+import { useFileActions } from '@/hooks/use-file-actions';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 
 const NO_CAPABILITIES: string[] = [];
@@ -60,7 +62,7 @@ export function UnmappedImageThumbnail({
   );
 }
 
-/** A thumbnail failure stays tappable; only an opened preview can fetch an original. */
+/** A thumbnail failure stays tappable; originals load only for preview or explicit save. */
 export function GatewayImageThumbnail({
   asset,
   label,
@@ -98,6 +100,14 @@ export function GatewayImageThumbnail({
     asset.gatewayServerId && asset.gatewayServerId !== serverId
       ? null
       : gatewayImageBinding(asset, capabilities);
+  const fileActions = useFileActions(
+    label || t`Image`,
+    async () => {
+      if (!binding) throw new Error('Image unavailable');
+      await saveOriginalPreview(binding.image, savePreviewImage);
+    },
+    true
+  );
   const key =
     binding?.plan.thumbnail?.cacheKey ?? (binding ? `${binding.plan.id}:no-thumbnail` : '');
   const [held, setHeld] = useState<{ key: string; source: PreviewImageSource | null }>({
@@ -173,13 +183,11 @@ export function GatewayImageThumbnail({
               : undefined
           }
           disabled={!binding}
-          onLongPress={
-            onLongPress
-              ? () => {
-                  if (binding) onLongPress(binding.image);
-                }
-              : undefined
-          }
+          onLongPress={() => {
+            if (!binding) return;
+            if (onLongPress) onLongPress(binding.image);
+            else fileActions.show();
+          }}
           onPress={() => {
             if (binding && onPreview) onPreview(binding.image);
             else setOpen(true);
@@ -190,6 +198,7 @@ export function GatewayImageThumbnail({
       ) : (
         <View style={frame}>{content}</View>
       )}
+      {interactive ? fileActions.menu : null}
       {open && binding ? (
         <ImagePreviewModal
           images={[binding.image]}

@@ -540,7 +540,15 @@ export function HomeEditorialLayout({
         <View
           style={styles.padColumns}
           onLayout={(event) => setPadColumnHeight(event.nativeEvent.layout.height)}>
-          <View testID="home-pad-cover-column" style={{ width: columns.cover }}>
+          <View
+            testID="home-pad-cover-column"
+            style={[
+              { width: columns.cover },
+              // Right-side toolbar actions must not reserve an empty row above the cover.
+              hasHeaderRow && !hasHeaderLeading && !(wordmark && hasSlot(coverMark))
+                ? { marginTop: -(styles.padToolbar.minHeight + styles.padToolbar.marginBottom) }
+                : null,
+            ]}>
             {/* Keyboard-aware on its own: the page's view only lifts fields
                 whose nearest scroll view it is, and Recent's search is here. */}
             <KeyboardAwareScrollView
@@ -628,7 +636,11 @@ export function HomeEditorialLayout({
                   onLayout={(event) => setPadLaunchesHeight(event.nativeEvent.layout.height)}
                   entering={rise(0)}
                   layout={coverLayout}
-                  style={styles.padLaunchSection}>
+                  style={[
+                    styles.padLaunchSection,
+                    // Portraits fade into empty space at the foot; bring the entries into it.
+                    coverKind === 'artwork' && artworkForeground ? { marginTop: -16 } : null,
+                  ]}>
                   {launches}
                 </Animated.View>
               ) : null}

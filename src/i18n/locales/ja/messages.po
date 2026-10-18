@@ -49,6 +49,8 @@ msgid "{0, plural, one {# character not shown} other {# characters not shown}}"
 msgstr "{0, plural, other {# 文字は非表示}}"
 
 #. placeholder {0}: away.value
+#. placeholder {0}: minutes / 1440
+#: src/components/agent-account-limits-section.tsx
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# day} other {# days}}"
 msgstr "{0, plural, other {# 日}}"
@@ -66,6 +68,8 @@ msgid "{0, plural, one {# file} other {# files}} · +{1} −{2}"
 msgstr "{0, plural, other {# 件のファイル}} · +{1} −{2}"
 
 #. placeholder {0}: away.value
+#. placeholder {0}: minutes / 60
+#: src/components/agent-account-limits-section.tsx
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# hour} other {# hours}}"
 msgstr "{0, plural, other {# 時間}}"
@@ -92,6 +96,11 @@ msgstr "{0, plural, other {# 件の操作}}"
 #: src/components/settings-storage.tsx
 msgid "{0, plural, one {# theme} other {# themes}} · {1}"
 msgstr "{0, plural, other {# 件のテーマ}} · {1}"
+
+#. placeholder {0}: minutes / 10080
+#: src/components/agent-account-limits-section.tsx
+msgid "{0, plural, one {# week} other {# weeks}}"
+msgstr "{0, plural, other {# 週間}}"
 
 #. placeholder {0}: digest.otherAgents
 #: src/components/away-digest-card.tsx
@@ -258,6 +267,10 @@ msgstr "{agentName} のインストールを確認できませんでした。イ
 msgid "{ahead} ahead"
 msgstr "{ahead} 件先行"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "{amount} remaining"
+msgstr "残り {amount}"
+
 #: src/components/away-digest-card.tsx
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
 msgstr "{asked, plural, other {· # 回確認あり}}"
@@ -339,6 +352,10 @@ msgstr "{lead}: {title} — 離れている間に完了しました"
 msgid "{messages, plural, one {# message} other {# messages}}"
 msgstr "{messages, plural, other {# 件のメッセージ}}"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "{minutes, plural, one {# minute} other {# minutes}}"
+msgstr "{minutes, plural, other {# 分}}"
+
 #: src/components/virtual-keyboard.tsx
 msgid "{modifierKeys} combinations need the program in this terminal to enable extended keys"
 msgstr "{modifierKeys} の組み合わせを使うには、このターミナルのプログラムが拡張キーを有効にする必要があります"
@@ -374,6 +391,10 @@ msgstr "{panelCount, plural, one {# 実行中} other {# 実行中}}"
 #: src/components/home-composer-dock.tsx
 msgid "{providerName} (terminal)"
 msgstr "{providerName}（ターミナル）"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "{remaining} remaining"
+msgstr "残り {remaining}"
 
 #: src/components/row-action-menu.tsx
 msgid "{removeLabel}: {label}"
@@ -504,6 +525,14 @@ msgstr "ほかのコンピュータからの作業を受け付ける"
 #: src/components/computer-map/screen.tsx
 msgid "Accepting work"
 msgstr "作業を受け付け中"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Account limits"
+msgstr "アカウントの上限"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Account limits temporarily unavailable"
+msgstr "アカウントの上限は一時的に取得できません"
 
 #: src/components/task-row.tsx
 msgid "Acknowledge"
@@ -912,9 +941,17 @@ msgstr "キャッシュの自動削除"
 msgid "Autonomous software engineering: edits files, runs commands, tests."
 msgstr "自律的なソフトウェア開発。ファイル編集、コマンド実行、テストを行います"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Available"
+msgstr "利用可能"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Available modes"
 msgstr "利用できるモード"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Available resets"
+msgstr "利用可能なリセット回数"
 
 #: src/components/launch-intro.tsx
 #: src/components/pad-server-rail.tsx
@@ -2116,6 +2153,10 @@ msgstr "テーマカタログに接続できませんでした"
 msgid "Could not reach this computer."
 msgstr "このコンピュータに接続できませんでした"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Could not read account limits"
+msgstr "アカウントの上限を読み取れませんでした"
+
 #: src/components/gateway-storage-error.tsx
 msgid "Could not read saved computers. Your saved data has not been changed. Unlock this device and retry."
 msgstr "保存済みコンピュータを読み取れませんでした。保存データは変更されていません。デバイスのロックを解除して再試行してください"
@@ -2302,6 +2343,14 @@ msgstr "作成して移動"
 msgid "Creating session…"
 msgstr "セッションを作成中…"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Credits"
+msgstr "クレジット"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Credits used"
+msgstr "使用済みクレジット"
+
 #: src/components/agent-tool-card.tsx
 #: src/components/attachment-image.tsx
 #: src/components/content-image.tsx
@@ -2457,6 +2506,7 @@ msgstr "{head} で切り離し"
 msgid "Detached at {head}"
 msgstr "{head} で切り離し"
 
+#: src/components/agent-account-limits-section.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Details"
@@ -2566,10 +2616,6 @@ msgstr "{0} をダウンロード"
 #: src/components/theme-link-import.tsx
 msgid "Download and preview"
 msgstr "ダウンロードしてプレビュー"
-
-#: src/components/update-status-banner.tsx
-msgid "Full package size: {fullPackage}"
-msgstr "完全パッケージのサイズ：{fullPackage}"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Downloading"
@@ -2739,6 +2785,11 @@ msgstr "タスクを展開"
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Expand tool call"
 msgstr "ツール呼び出しを展開"
+
+#. placeholder {0}: new Date(credit.expires_at_ms).toLocaleString()
+#: src/components/agent-account-limits-section.tsx
+msgid "Expires at {0}"
+msgstr "有効期限：{0}"
 
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
@@ -2935,6 +2986,10 @@ msgstr "目標から、動き出す仕事へ"
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "フロントカメラです。QR コードを画面に向けてください"
+
+#: src/components/update-status-banner.tsx
+msgid "Full package size: {fullPackage}"
+msgstr "完全パッケージのサイズ：{fullPackage}"
 
 #: src/components/update-status-banner.tsx
 msgid "Full package size. File reuse may reduce the download."
@@ -3231,6 +3286,14 @@ msgstr "リンクからインポート"
 msgid "In progress"
 msgstr "進行中"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Included usage"
+msgstr "プランに含まれる利用枠"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Included usage is restricted. Paid or alternative usage may still be available."
+msgstr "プランに含まれる利用枠は制限されています。有料または別の利用方法は引き続き利用できる場合があります"
+
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Increase {label}"
 msgstr "{label}を上げる"
@@ -3419,6 +3482,10 @@ msgstr "言語、{languageName}"
 msgid "Large"
 msgstr "大"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Last checked"
+msgstr "最終確認"
+
 #: src/components/home-attention.tsx
 msgid "Last checked {when}"
 msgstr "最終確認 {when}"
@@ -3514,6 +3581,10 @@ msgstr "英字"
 #: src/components/settings-appearance.tsx
 msgid "Light"
 msgstr "ライト"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Limit reached"
+msgstr "上限に達しました"
 
 #: src/components/computer-map/screen.tsx
 msgid "Lines: this app. Dashed arrows: last reported computer links."
@@ -3712,6 +3783,7 @@ msgid "Mode · {0} → {1}"
 msgstr "モード · {0} → {1}"
 
 #: src/app/settings-voice.tsx
+#: src/components/agent-account-limits-section.tsx
 #: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -3749,6 +3821,10 @@ msgstr "変更"
 #: src/components/settings-font-sheet.tsx
 msgid "Monospace"
 msgstr "等幅"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Monthly credit limit"
+msgstr "月間クレジット上限"
 
 #: src/components/custom-theme-library.tsx
 msgid "More actions"
@@ -4103,6 +4179,10 @@ msgstr "まだプロジェクトがありません。上にパスを入力して
 msgid "No projects match “{0}”."
 msgstr "「{0}」に一致するプロジェクトはありません"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "No quota values reported"
+msgstr "利用枠の値は未報告"
+
 #: src/components/computer-map/screen.tsx
 msgid "No reported links."
 msgstr "報告された接続はありません"
@@ -4183,6 +4263,7 @@ msgstr "Git リポジトリではありません"
 msgid "Not accepting work"
 msgstr "作業の受け付け停止中"
 
+#: src/components/agent-account-limits-section.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -4228,6 +4309,10 @@ msgstr "未インストール"
 msgid "Not monospace — the terminal may look uneven"
 msgstr "等幅ではありません — ターミナルの表示が乱れることがあります"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Not reported"
+msgstr "未報告"
+
 #: src/components/simfarm-stage.tsx
 msgid "Not running"
 msgstr "起動していません"
@@ -4236,6 +4321,7 @@ msgstr "起動していません"
 msgid "Not set"
 msgstr "未設定"
 
+#: src/components/agent-account-limits-section.tsx
 #: src/components/agent-model-sheet.tsx
 msgid "Not signed in on the host"
 msgstr "ホストでサインインしていません"
@@ -4731,6 +4817,10 @@ msgstr "一時停止"
 msgid "PDF preview supports files up to {ceiling}. Open this file on your computer."
 msgstr "PDFプレビューは{ceiling}までのファイルに対応しています。このファイルはコンピュータで開いてください"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Period not reported"
+msgstr "期間は未報告"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Permission"
 msgstr "権限"
@@ -4747,6 +4837,7 @@ msgstr "フォトライブラリ"
 msgid "Pinned commit"
 msgstr "固定したコミット"
 
+#: src/components/agent-account-limits-section.tsx
 #: src/components/agent-mode-sheet.tsx
 msgid "Plan"
 msgstr "計画 (Plan)"
@@ -4928,6 +5019,11 @@ msgstr "クイックアクション"
 msgid "Quit"
 msgstr "終了"
 
+#. placeholder {0}: index + 1
+#: src/components/agent-account-limits-section.tsx
+msgid "Quota {0}"
+msgstr "利用枠 {0}"
+
 #: src/i18n/labels.ts
 msgid "Reach the network"
 msgstr "ネットワークにアクセスする"
@@ -5071,6 +5167,10 @@ msgstr "視差効果を減らす：リスト表示"
 msgid "Refresh"
 msgstr "更新"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Refresh account limits"
+msgstr "アカウントの上限を更新"
+
 #: src/components/changes-sheet.tsx
 msgid "Refresh changes"
 msgstr "変更点を再読み込み"
@@ -5111,6 +5211,10 @@ msgstr "ワークツリーを更新"
 #: src/components/agent-runtime-notice.tsx
 msgid "Refreshing history…"
 msgstr "履歴を更新中…"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Remaining unknown"
+msgstr "残量不明"
 
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
@@ -5237,6 +5341,14 @@ msgstr "必須です"
 msgid "Requires iOS 16.1 or later."
 msgstr "iOS 16.1 以降が必要です"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Reset credit"
+msgstr "リセットクレジット"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Reset time not reported"
+msgstr "リセット時刻は未報告"
+
 #: src/components/computer-map/screen.tsx
 msgid "Reset view"
 msgstr "視点をリセット"
@@ -5244,6 +5356,12 @@ msgstr "視点をリセット"
 #: src/components/image-preview-modal.tsx
 msgid "Reset zoom"
 msgstr "ズームをリセット"
+
+#. placeholder {0}: new Date(monthly.resets_at_ms).toLocaleString()
+#. placeholder {0}: new Date(window.resets_at_ms).toLocaleString()
+#: src/components/agent-account-limits-section.tsx
+msgid "Resets at {0}"
+msgstr "リセット日時：{0}"
 
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
@@ -5785,6 +5903,10 @@ msgctxt "agent slash command"
 msgid "Share this session's transcript"
 msgstr "このセッションの記録を共有"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Shared across sessions. Refresh to update."
+msgstr "セッション間で共有されます。更新すると最新情報を取得します"
+
 #: src/components/agent-background-tray.tsx
 msgid "Shells"
 msgstr "シェル"
@@ -6000,6 +6122,10 @@ msgstr "スペース"
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Speed"
 msgstr "速度"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Spend control"
+msgstr "支出管理"
 
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -7199,6 +7325,10 @@ msgstr "不明なコマンド"
 msgid "Unknown date"
 msgstr "日付不明"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Unlimited"
+msgstr "無制限"
+
 #: src/lib/local-authentication.ts
 msgid "Unlock Muqun"
 msgstr "牧群（ぼくぐん）のロックを解除"
@@ -7355,6 +7485,10 @@ msgstr "アップロード済み"
 #: src/components/attachment-strip.tsx
 msgid "uploading"
 msgstr "アップロード中"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Usage snapshot is stale"
+msgstr "使用量の情報が古くなっています"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx

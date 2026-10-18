@@ -6,6 +6,8 @@ import { ContentImage } from '@/components/content-image';
 import { contentImageIdentity, type ContentImagePreviewState } from '@/lib/content-image-layout';
 import { useLingui } from '@lingui/react/macro';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
+import { useFileActions } from '@/hooks/use-file-actions';
+import { savePreviewImage } from '@/lib/save-file';
 import {
   readUploadImageSource,
   uploadImageSource,
@@ -39,6 +41,14 @@ export const AttachmentImage = memo(function AttachmentImage({
   );
   const [failed, setFailed] = useState(false);
   const [previewState, setPreviewState] = useState<ContentImagePreviewState>();
+  const fileActions = useFileActions(
+    label || t`Image`,
+    async () => {
+      if (!source) throw new Error('Image unavailable');
+      await savePreviewImage(source);
+    },
+    true
+  );
   useEffect(() => {
     if (!uploadName || source) return;
     const controller = new AbortController();
@@ -56,23 +66,27 @@ export const AttachmentImage = memo(function AttachmentImage({
     );
   }
   return (
-    <PressableScale
-      accessibilityRole="imagebutton"
-      accessibilityLabel={label}
-      accessibilityHint={
-        previewState?.identity === contentImageIdentity(source) && previewState.cropped
-          ? t`Cropped preview · Open full image`
-          : undefined
-      }
-      onPress={() => onPreviewImage(source.uri)}
-      style={[styles.attachmentImageWrapper, { borderRadius: profile.chrome.surface }]}>
-      <ContentImage
-        source={source}
-        previewable
-        onError={() => setFailed(true)}
-        onPreviewStateChange={setPreviewState}
-      />
-    </PressableScale>
+    <>
+      <PressableScale
+        accessibilityRole="imagebutton"
+        accessibilityLabel={label}
+        accessibilityHint={
+          previewState?.identity === contentImageIdentity(source) && previewState.cropped
+            ? t`Cropped preview · Open full image`
+            : undefined
+        }
+        onPress={() => onPreviewImage(source.uri)}
+        onLongPress={fileActions.show}
+        style={[styles.attachmentImageWrapper, { borderRadius: profile.chrome.surface }]}>
+        <ContentImage
+          source={source}
+          previewable
+          onError={() => setFailed(true)}
+          onPreviewStateChange={setPreviewState}
+        />
+      </PressableScale>
+      {fileActions.menu}
+    </>
   );
 });
 
