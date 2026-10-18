@@ -6724,7 +6724,8 @@
         },
         "mode": "hidden",
         "run": "flows/agent-session-tree.ad#closed"
-      }
+      },
+      { "run": "flows/agent-session-tree.ad#context-ownership" }
     ],
     "flows/agent-tool-detail": [
       { "include": "subflows/open-demo" },
@@ -6744,7 +6745,7 @@
       {
         "target": {
           "id": "agent-tool-toggle",
-          "text": "Continue in demo-tree-nested · Idle · Expand tool call"
+          "text": "research · Nested investigation · Idle · Expand tool call"
         },
         "mode": "visible",
         "run": "flows/agent-tool-detail.ad#transcript-visible"
@@ -6760,7 +6761,7 @@
       {
         "target": {
           "id": "agent-tool-toggle",
-          "text": "Continue in demo-tree-nested · Idle · Expand tool call"
+          "text": "research · Nested investigation · Idle · Expand tool call"
         },
         "mode": "visible",
         "timeout": 10000,
@@ -6769,7 +6770,7 @@
       {
         "target": {
           "id": "agent-tool-toggle",
-          "text": "Continue in demo-tree-nested · Idle · Expand tool call"
+          "text": "research · Nested investigation · Idle · Expand tool call"
         },
         "mode": "press",
         "run": "flows/agent-tool-detail.ad#open-tool"
@@ -6814,7 +6815,7 @@
       {
         "target": {
           "id": "agent-tool-toggle",
-          "text": "Continue in demo-tree-nested · Idle · Collapse tool call"
+          "text": "research · Nested investigation · Idle · Collapse tool call"
         },
         "mode": "visible",
         "run": "flows/agent-tool-detail.ad#transcript-visible"
@@ -6824,7 +6825,7 @@
       {
         "target": {
           "id": "agent-tool-toggle",
-          "text": "Continue in demo-tree-nested · Idle · Collapse tool call"
+          "text": "research · Nested investigation · Idle · Collapse tool call"
         },
         "mode": "press",
         "run": "flows/agent-tool-detail.ad#open-tool"

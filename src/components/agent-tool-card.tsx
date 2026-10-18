@@ -77,7 +77,6 @@ import {
   skillDirectoryFromMetadata,
   skillNameFromMetadata,
   splitUrl,
-  stripSubagentEnvelope,
   textFromContent,
   toolArgumentLine,
   toolInputJson,
@@ -87,7 +86,7 @@ import {
 } from '@/lib/agent-tool-output';
 import { toolDurationMs, type AgentSessionInfo, type ToolPart } from '@/lib/agent-session';
 import { AGENT_TYPE } from '@/constants/agent-type';
-import { subagentPresentation } from '@/lib/agent-subagent-presentation';
+import { subagentInlineContent, subagentPresentation } from '@/lib/agent-subagent-presentation';
 import { subagentActionWord, subagentStateWord } from '@/i18n/labels';
 
 /**
@@ -208,10 +207,7 @@ const CodeBody = memo(function CodeBody({
                 accessibilityRole="button"
                 accessibilityLabel={t`Open in viewer`}
                 onPress={onOpenInViewer}
-                style={[
-                  styles.moreChip,
-                  { borderRadius: profile.chrome.control, borderColor: colors.border },
-                ]}>
+                style={[styles.moreChip, { borderRadius: profile.chrome.control }]}>
                 <Text variant="caption" color={colors.accent}>
                   {t`Open in viewer`}
                 </Text>
@@ -259,10 +255,7 @@ const OutputLines = memo(function OutputLines({ text }: { text: string }) {
           onPress={() =>
             setBudget((prev) => (prev === 0 ? TOOL_BODY_MAX_LINES : prev + TOOL_BODY_MAX_LINES))
           }
-          style={[
-            styles.moreChip,
-            { borderRadius: profile.chrome.control, borderColor: colors.border },
-          ]}>
+          style={[styles.moreChip, { borderRadius: profile.chrome.control }]}>
           <Text variant="caption" color={colors.accent}>
             {t`${plural(capped.hidden, { one: '# more line', other: '# more lines' })}`}
           </Text>
@@ -574,8 +567,8 @@ export const AgentToolCard = memo(function AgentToolCard({
     [kind, outputText]
   );
   const subagent = useMemo(
-    () => (kind === 'subagent' ? stripSubagentEnvelope(outputText) : null),
-    [kind, outputText]
+    () => (kind === 'subagent' ? subagentInlineContent(part.input, outputText) : null),
+    [kind, part.input, outputText]
   );
   const child = useMemo(
     () =>
@@ -818,6 +811,8 @@ export const AgentToolCard = memo(function AgentToolCard({
         questions,
         answers,
         subagentText: subagent?.text ?? '',
+        subagentPrompt: subagent?.prompt ?? '',
+        canOpenSession: Boolean(part.child_session_id && onOpenChildSession),
         writeContent,
         oldString,
         newString,
@@ -842,6 +837,7 @@ export const AgentToolCard = memo(function AgentToolCard({
       questions,
       answers,
       subagent,
+      onOpenChildSession,
       writeContent,
       oldString,
       newString,
@@ -1105,6 +1101,8 @@ interface ToolBodyArgs {
   questions: readonly ToolQuestion[];
   answers: readonly string[][];
   subagentText: string;
+  subagentPrompt: string;
+  canOpenSession: boolean;
   writeContent?: string;
   oldString?: string;
   newString?: string;
@@ -1236,10 +1234,13 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
           />
         );
       }
-      // A subagent that failed returned nothing to render, and a card with no
-      // body has no chevron -- the one case where the reader most wants to
-      // open it. The prompt it was given is what there is to show.
-      return <GenericToolBody input={part.input} outputText={outputText} />;
+      return (
+        <SubagentActivityBody
+          prompt={args.subagentPrompt}
+          canOpenSession={args.canOpenSession}
+          markdownStyle={markdownStyle}
+        />
+      );
 
     case 'skill': {
       const description =
@@ -1742,13 +1743,36 @@ const ImagePrompt = memo(function ImagePrompt({ text }: { text: string }) {
   );
 });
 
-/**
- * A tool nothing in this build recognises.
- *
- * Its input as readable JSON -- depth-capped and byte-capped, so an MCP result
- * with a base64 image in it cannot put megabytes into one `<Text>` -- and its
- * text result under it. Never `JSON.stringify` of the whole payload.
- */
+/** A child activity is not a returned transcript or a generic tool payload. */
+function SubagentActivityBody({
+  prompt,
+  canOpenSession,
+  markdownStyle,
+}: {
+  prompt: string;
+  canOpenSession: boolean;
+  markdownStyle: MarkdownStyle;
+}) {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  return (
+    <View testID="agent-subagent-activity-body" style={styles.stretch}>
+      {prompt ? (
+        <>
+          <Text variant="caption" color={theme.colors.textMuted}>{t`Prompt`}</Text>
+          <BoundedMarkdown markdown={prompt} markdownStyle={markdownStyle} openLinks={false} />
+        </>
+      ) : null}
+      <Text variant="caption" color={theme.colors.textMuted}>
+        {canOpenSession
+          ? t`This activity has no result attached. Open session to read the conversation.`
+          : t`This activity has no result attached.`}
+      </Text>
+    </View>
+  );
+}
+
+/** Unknown tools retain their bounded readable arguments and returned text. */
 const GenericToolBody = memo(function GenericToolBody({
   input,
   outputText,
@@ -1816,7 +1840,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 10,
     borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
   },
   action: {
     flexDirection: 'row',

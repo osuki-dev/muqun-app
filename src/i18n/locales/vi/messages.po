@@ -4867,6 +4867,7 @@ msgid "Projects"
 msgstr "Dự án"
 
 #: src/app/commands.tsx
+#: src/components/agent-tool-card.tsx
 msgid "Prompt"
 msgstr "Prompt"
 
@@ -6737,6 +6738,14 @@ msgstr "Không có thao tác hoàn tác nào đang chờ áp dụng"
 #: src/components/agent-workbench.tsx
 msgid "Thinking…"
 msgstr "Đang suy nghĩ…"
+
+#: src/components/agent-tool-card.tsx
+msgid "This activity has no result attached."
+msgstr "Hoạt động này không kèm theo kết quả"
+
+#: src/components/agent-tool-card.tsx
+msgid "This activity has no result attached. Open session to read the conversation."
+msgstr "Hoạt động này không kèm theo kết quả. Mở phiên để đọc cuộc trò chuyện"
 
 #: src/components/agent-composer.tsx
 msgid "This agent accepts messages after its turn ends. Your draft stays here."

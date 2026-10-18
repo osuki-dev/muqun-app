@@ -1,4 +1,15 @@
 import { asRecord, type AgentSessionInfo, type ToolPart } from './agent-protocol';
+import { stripSubagentEnvelope, toolInputRecord } from './agent-tool-output';
+
+/** Activity notifications carry identity/status, not the child's transcript.
+ * Only returned content/output is a result; a supplied prompt remains a prompt.
+ */
+export function subagentInlineContent(input: unknown, outputText: string) {
+  const result = stripSubagentEnvelope(outputText);
+  const argumentsRecord = toolInputRecord(input);
+  const prompt = typeof argumentsRecord?.prompt === 'string' ? argumentsRecord.prompt.trim() : '';
+  return { ...result, prompt };
+}
 
 export type SubagentAction =
   | 'start'

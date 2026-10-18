@@ -4867,6 +4867,7 @@ msgid "Projects"
 msgstr "プロジェクト"
 
 #: src/app/commands.tsx
+#: src/components/agent-tool-card.tsx
 msgid "Prompt"
 msgstr "プロンプト"
 
@@ -6737,6 +6738,14 @@ msgstr "適用待ちのロールバックはありません"
 #: src/components/agent-workbench.tsx
 msgid "Thinking…"
 msgstr "思考中…"
+
+#: src/components/agent-tool-card.tsx
+msgid "This activity has no result attached."
+msgstr "この活動記録には結果が含まれていません"
+
+#: src/components/agent-tool-card.tsx
+msgid "This activity has no result attached. Open session to read the conversation."
+msgstr "この活動記録には結果が含まれていません。「セッションを開く」で会話を確認できます"
 
 #: src/components/agent-composer.tsx
 msgid "This agent accepts messages after its turn ends. Your draft stays here."

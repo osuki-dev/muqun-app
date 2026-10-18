@@ -898,8 +898,16 @@ export function demoAgentSessionSnapshot(asid: string): AgentSessionSnapshot | n
         type: 'tool',
         id: `${asid}-child-call`,
         name: 'subagent',
-        input: { description: `Continue in ${child.asid}` },
-        output: '',
+        // Preserve the legacy Codex activity shape seen by existing Apps;
+        // a sibling OpenCode result proves that real output still renders.
+        input:
+          asid === 'demo-tree-branch'
+            ? { model: null, operation: null, prompt: null, reasoningEffort: null }
+            : { description: `Continue in ${child.asid}` },
+        output:
+          asid === 'demo-tree-nested'
+            ? `<subagent sessionID="${child.asid}" state="completed">QA_SUBAGENT_RESULT: The parser review found an ordering issue.</subagent>`
+            : '',
         content: [],
         metadata: { status: 'completed' },
         state: 'completed',

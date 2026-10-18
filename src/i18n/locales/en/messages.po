@@ -4867,6 +4867,7 @@ msgid "Projects"
 msgstr "Projects"
 
 #: src/app/commands.tsx
+#: src/components/agent-tool-card.tsx
 msgid "Prompt"
 msgstr "Prompt"
 
@@ -6737,6 +6738,14 @@ msgstr "There is no rollback waiting to be applied"
 #: src/components/agent-workbench.tsx
 msgid "Thinking…"
 msgstr "Thinking…"
+
+#: src/components/agent-tool-card.tsx
+msgid "This activity has no result attached."
+msgstr "This activity has no result attached"
+
+#: src/components/agent-tool-card.tsx
+msgid "This activity has no result attached. Open session to read the conversation."
+msgstr "This activity has no result attached. Open session to read the conversation"
 
 #: src/components/agent-composer.tsx
 msgid "This agent accepts messages after its turn ends. Your draft stays here."

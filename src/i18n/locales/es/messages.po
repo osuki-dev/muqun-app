@@ -4867,6 +4867,7 @@ msgid "Projects"
 msgstr "Proyectos"
 
 #: src/app/commands.tsx
+#: src/components/agent-tool-card.tsx
 msgid "Prompt"
 msgstr "Prompt"
 
@@ -6737,6 +6738,14 @@ msgstr "No hay ninguna reversión esperando a aplicarse"
 #: src/components/agent-workbench.tsx
 msgid "Thinking…"
 msgstr "Pensando…"
+
+#: src/components/agent-tool-card.tsx
+msgid "This activity has no result attached."
+msgstr "Esta actividad no incluye ningún resultado"
+
+#: src/components/agent-tool-card.tsx
+msgid "This activity has no result attached. Open session to read the conversation."
+msgstr "Esta actividad no incluye ningún resultado. Abre la sesión para leer la conversación"
 
 #: src/components/agent-composer.tsx
 msgid "This agent accepts messages after its turn ends. Your draft stays here."

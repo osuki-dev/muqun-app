@@ -4867,6 +4867,7 @@ msgid "Projects"
 msgstr "Projekte"
 
 #: src/app/commands.tsx
+#: src/components/agent-tool-card.tsx
 msgid "Prompt"
 msgstr "Prompt"
 
@@ -6737,6 +6738,14 @@ msgstr "Es wartet kein Rollback darauf, angewendet zu werden"
 #: src/components/agent-workbench.tsx
 msgid "Thinking…"
 msgstr "Denkt nach…"
+
+#: src/components/agent-tool-card.tsx
+msgid "This activity has no result attached."
+msgstr "Dieser Aktivität ist kein Ergebnis beigefügt"
+
+#: src/components/agent-tool-card.tsx
+msgid "This activity has no result attached. Open session to read the conversation."
+msgstr "Dieser Aktivität ist kein Ergebnis beigefügt. Öffne die Sitzung, um das Gespräch zu lesen"
 
 #: src/components/agent-composer.tsx
 msgid "This agent accepts messages after its turn ends. Your draft stays here."

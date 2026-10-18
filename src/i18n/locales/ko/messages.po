@@ -4867,6 +4867,7 @@ msgid "Projects"
 msgstr "프로젝트"
 
 #: src/app/commands.tsx
+#: src/components/agent-tool-card.tsx
 msgid "Prompt"
 msgstr "프롬프트"
 
@@ -6737,6 +6738,14 @@ msgstr "적용을 기다리는 롤백이 없습니다"
 #: src/components/agent-workbench.tsx
 msgid "Thinking…"
 msgstr "생각 중…"
+
+#: src/components/agent-tool-card.tsx
+msgid "This activity has no result attached."
+msgstr "이 활동 기록에는 결과가 포함되어 있지 않습니다"
+
+#: src/components/agent-tool-card.tsx
+msgid "This activity has no result attached. Open session to read the conversation."
+msgstr "이 활동 기록에는 결과가 포함되어 있지 않습니다. 세션을 열어 대화를 확인하세요"
 
 #: src/components/agent-composer.tsx
 msgid "This agent accepts messages after its turn ends. Your draft stays here."
