@@ -49,6 +49,8 @@ msgid "{0, plural, one {# character not shown} other {# characters not shown}}"
 msgstr "{0, plural, one {# символ не показан} few {# символа не показано} many {# символов не показано} other {# символа не показано}}"
 
 #. placeholder {0}: away.value
+#. placeholder {0}: minutes / 1440
+#: src/components/agent-account-limits-section.tsx
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# day} other {# days}}"
 msgstr "{0, plural, one {# день} few {# дня} many {# дней} other {# дня}}"
@@ -66,6 +68,8 @@ msgid "{0, plural, one {# file} other {# files}} · +{1} −{2}"
 msgstr "{0, plural, one {# файл} few {# файла} many {# файлов} other {# файла}} · +{1} −{2}"
 
 #. placeholder {0}: away.value
+#. placeholder {0}: minutes / 60
+#: src/components/agent-account-limits-section.tsx
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# hour} other {# hours}}"
 msgstr "{0, plural, one {# час} few {# часа} many {# часов} other {# часа}}"
@@ -92,6 +96,11 @@ msgstr "{0, plural, one {# операция} few {# операции} many {# о
 #: src/components/settings-storage.tsx
 msgid "{0, plural, one {# theme} other {# themes}} · {1}"
 msgstr "{0, plural, one {# тема} few {# темы} many {# тем} other {# темы}} · {1}"
+
+#. placeholder {0}: minutes / 10080
+#: src/components/agent-account-limits-section.tsx
+msgid "{0, plural, one {# week} other {# weeks}}"
+msgstr "{0, plural, one {# неделя} few {# недели} many {# недель} other {# недели}}"
 
 #. placeholder {0}: digest.otherAgents
 #: src/components/away-digest-card.tsx
@@ -258,6 +267,10 @@ msgstr "Не удалось подтвердить установку {agentName
 msgid "{ahead} ahead"
 msgstr "впереди на {ahead}"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "{amount} remaining"
+msgstr "Осталось {amount}"
+
 #: src/components/away-digest-card.tsx
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
 msgstr "{asked, plural, one {· спрашивал # раз} few {· спрашивал # раза} many {· спрашивал # раз} other {· спрашивал # раза}}"
@@ -339,6 +352,10 @@ msgstr "{lead}: {title} — завершилось, пока вас не был�
 msgid "{messages, plural, one {# message} other {# messages}}"
 msgstr "{messages, plural, one {# сообщение} few {# сообщения} many {# сообщений} other {# сообщения}}"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "{minutes, plural, one {# minute} other {# minutes}}"
+msgstr "{minutes, plural, one {# минута} few {# минуты} many {# минут} other {# минуты}}"
+
 #: src/components/virtual-keyboard.tsx
 msgid "{modifierKeys} combinations need the program in this terminal to enable extended keys"
 msgstr "Сочетания с {modifierKeys} работают, только если программа в этом терминале включила расширенные клавиши"
@@ -374,6 +391,10 @@ msgstr "{panelCount, plural, one {# в работе} few {# в работе} man
 #: src/components/home-composer-dock.tsx
 msgid "{providerName} (terminal)"
 msgstr "{providerName} (терминал)"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "{remaining} remaining"
+msgstr "Осталось {remaining}"
 
 #: src/components/row-action-menu.tsx
 msgid "{removeLabel}: {label}"
@@ -504,6 +525,14 @@ msgstr "Принимать работу от других компьютеров
 #: src/components/computer-map/screen.tsx
 msgid "Accepting work"
 msgstr "Принимает работу"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Account limits"
+msgstr "Лимиты аккаунта"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Account limits temporarily unavailable"
+msgstr "Лимиты аккаунта временно недоступны"
 
 #: src/components/task-row.tsx
 msgid "Acknowledge"
@@ -912,9 +941,17 @@ msgstr "Автоматическая очистка кеша"
 msgid "Autonomous software engineering: edits files, runs commands, tests."
 msgstr "Автономная разработка: правит файлы, запускает команды, тестирует"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Available"
+msgstr "Доступно"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Available modes"
 msgstr "Доступные режимы"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Available resets"
+msgstr "Доступные сбросы"
 
 #: src/components/launch-intro.tsx
 #: src/components/pad-server-rail.tsx
@@ -2116,6 +2153,10 @@ msgstr "Не удалось связаться с каталогом тем"
 msgid "Could not reach this computer."
 msgstr "Не удалось связаться с этим компьютером"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Could not read account limits"
+msgstr "Не удалось прочитать лимиты аккаунта"
+
 #: src/components/gateway-storage-error.tsx
 msgid "Could not read saved computers. Your saved data has not been changed. Unlock this device and retry."
 msgstr "Не удалось прочитать сохранённые компьютеры. Сохранённые данные не изменены. Разблокируйте устройство и повторите попытку"
@@ -2302,6 +2343,14 @@ msgstr "Создать и перейти"
 msgid "Creating session…"
 msgstr "Создание сессии…"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Credits"
+msgstr "Кредиты"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Credits used"
+msgstr "Использовано кредитов"
+
 #: src/components/agent-tool-card.tsx
 #: src/components/attachment-image.tsx
 #: src/components/content-image.tsx
@@ -2457,6 +2506,7 @@ msgstr "отсоединён на {head}"
 msgid "Detached at {head}"
 msgstr "Отсоединён на {head}"
 
+#: src/components/agent-account-limits-section.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Details"
@@ -2566,10 +2616,6 @@ msgstr "Загрузить {0}"
 #: src/components/theme-link-import.tsx
 msgid "Download and preview"
 msgstr "Скачать и просмотреть"
-
-#: src/components/update-status-banner.tsx
-msgid "Full package size: {fullPackage}"
-msgstr "Размер полного пакета: {fullPackage}"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Downloading"
@@ -2739,6 +2785,11 @@ msgstr "Развернуть задачи"
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Expand tool call"
 msgstr "Развернуть вызов инструмента"
+
+#. placeholder {0}: new Date(credit.expires_at_ms).toLocaleString()
+#: src/components/agent-account-limits-section.tsx
+msgid "Expires at {0}"
+msgstr "Истекает {0}"
 
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
@@ -2935,6 +2986,10 @@ msgstr "От цели к работе"
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "Фронтальная камера. Поднесите QR-код к экрану"
+
+#: src/components/update-status-banner.tsx
+msgid "Full package size: {fullPackage}"
+msgstr "Размер полного пакета: {fullPackage}"
 
 #: src/components/update-status-banner.tsx
 msgid "Full package size. File reuse may reduce the download."
@@ -3231,6 +3286,14 @@ msgstr "Импорт по ссылке"
 msgid "In progress"
 msgstr "В работе"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Included usage"
+msgstr "Включённое использование"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Included usage is restricted. Paid or alternative usage may still be available."
+msgstr "Включённое использование ограничено. Платные или другие варианты могут оставаться доступными"
+
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Increase {label}"
 msgstr "Увеличить {label}"
@@ -3419,6 +3482,10 @@ msgstr "Язык, {languageName}"
 msgid "Large"
 msgstr "Крупный"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Last checked"
+msgstr "Последняя проверка"
+
 #: src/components/home-attention.tsx
 msgid "Last checked {when}"
 msgstr "Последняя проверка: {when}"
@@ -3514,6 +3581,10 @@ msgstr "Буквы"
 #: src/components/settings-appearance.tsx
 msgid "Light"
 msgstr "Светлая"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Limit reached"
+msgstr "Лимит достигнут"
 
 #: src/components/computer-map/screen.tsx
 msgid "Lines: this app. Dashed arrows: last reported computer links."
@@ -3712,6 +3783,7 @@ msgid "Mode · {0} → {1}"
 msgstr "Режим · {0} → {1}"
 
 #: src/app/settings-voice.tsx
+#: src/components/agent-account-limits-section.tsx
 #: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -3749,6 +3821,10 @@ msgstr "Изменён"
 #: src/components/settings-font-sheet.tsx
 msgid "Monospace"
 msgstr "Моноширинный"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Monthly credit limit"
+msgstr "Месячный лимит кредитов"
 
 #: src/components/custom-theme-library.tsx
 msgid "More actions"
@@ -4103,6 +4179,10 @@ msgstr "Здесь пока нет проектов. Введите путь в�
 msgid "No projects match “{0}”."
 msgstr "Нет проектов, подходящих под «{0}»"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "No quota values reported"
+msgstr "Значения квот не указаны"
+
 #: src/components/computer-map/screen.tsx
 msgid "No reported links."
 msgstr "Нет сообщений о связях"
@@ -4183,6 +4263,7 @@ msgstr "Не Git-репозиторий"
 msgid "Not accepting work"
 msgstr "Не принимает работу"
 
+#: src/components/agent-account-limits-section.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -4228,6 +4309,10 @@ msgstr "Не установлен"
 msgid "Not monospace — the terminal may look uneven"
 msgstr "Не моноширинный — терминал может выглядеть неровно"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Not reported"
+msgstr "Не указано"
+
 #: src/components/simfarm-stage.tsx
 msgid "Not running"
 msgstr "Выключен"
@@ -4236,6 +4321,7 @@ msgstr "Выключен"
 msgid "Not set"
 msgstr "Не задано"
 
+#: src/components/agent-account-limits-section.tsx
 #: src/components/agent-model-sheet.tsx
 msgid "Not signed in on the host"
 msgstr "Вход на хосте не выполнен"
@@ -4731,6 +4817,10 @@ msgstr "На паузе"
 msgid "PDF preview supports files up to {ceiling}. Open this file on your computer."
 msgstr "Предпросмотр PDF поддерживает файлы размером до {ceiling}. Откройте этот файл на компьютере"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Period not reported"
+msgstr "Период не указан"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Permission"
 msgstr "Разрешение"
@@ -4747,6 +4837,7 @@ msgstr "Медиатека"
 msgid "Pinned commit"
 msgstr "Зафиксированный коммит"
 
+#: src/components/agent-account-limits-section.tsx
 #: src/components/agent-mode-sheet.tsx
 msgid "Plan"
 msgstr "Планирование"
@@ -4928,6 +5019,11 @@ msgstr "Быстрые действия"
 msgid "Quit"
 msgstr "Выйти"
 
+#. placeholder {0}: index + 1
+#: src/components/agent-account-limits-section.tsx
+msgid "Quota {0}"
+msgstr "Квота {0}"
+
 #: src/i18n/labels.ts
 msgid "Reach the network"
 msgstr "Выйти в сеть"
@@ -5071,6 +5167,10 @@ msgstr "Уменьшение движения: вид списком"
 msgid "Refresh"
 msgstr "Обновить"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Refresh account limits"
+msgstr "Обновить лимиты аккаунта"
+
 #: src/components/changes-sheet.tsx
 msgid "Refresh changes"
 msgstr "Обновить изменения"
@@ -5111,6 +5211,10 @@ msgstr "Обновить worktree"
 #: src/components/agent-runtime-notice.tsx
 msgid "Refreshing history…"
 msgstr "Обновление истории…"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Remaining unknown"
+msgstr "Остаток неизвестен"
 
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
@@ -5237,6 +5341,14 @@ msgstr "Обязательно"
 msgid "Requires iOS 16.1 or later."
 msgstr "Требуется iOS 16.1 или новее"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Reset credit"
+msgstr "Кредит сброса"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Reset time not reported"
+msgstr "Время сброса не указано"
+
 #: src/components/computer-map/screen.tsx
 msgid "Reset view"
 msgstr "Сбросить вид"
@@ -5244,6 +5356,12 @@ msgstr "Сбросить вид"
 #: src/components/image-preview-modal.tsx
 msgid "Reset zoom"
 msgstr "Сбросить масштаб"
+
+#. placeholder {0}: new Date(monthly.resets_at_ms).toLocaleString()
+#. placeholder {0}: new Date(window.resets_at_ms).toLocaleString()
+#: src/components/agent-account-limits-section.tsx
+msgid "Resets at {0}"
+msgstr "Сброс {0}"
 
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
@@ -5785,6 +5903,10 @@ msgctxt "agent slash command"
 msgid "Share this session's transcript"
 msgstr "Поделиться расшифровкой этой сессии"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Shared across sessions. Refresh to update."
+msgstr "Общее для всех сеансов. Обновите для получения новых данных"
+
 #: src/components/agent-background-tray.tsx
 msgid "Shells"
 msgstr "Оболочки"
@@ -6000,6 +6122,10 @@ msgstr "Пробел"
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Speed"
 msgstr "Скорость"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Spend control"
+msgstr "Контроль расходов"
 
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -7199,6 +7325,10 @@ msgstr "Неизвестная команда"
 msgid "Unknown date"
 msgstr "Дата неизвестна"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Unlimited"
+msgstr "Без ограничений"
+
 #: src/lib/local-authentication.ts
 msgid "Unlock Muqun"
 msgstr "Разблокировать Muqun"
@@ -7355,6 +7485,10 @@ msgstr "загружено"
 #: src/components/attachment-strip.tsx
 msgid "uploading"
 msgstr "загружается"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Usage snapshot is stale"
+msgstr "Данные об использовании устарели"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx

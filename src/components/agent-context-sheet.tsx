@@ -14,6 +14,7 @@ import {
   SHEET_LADDER,
   sheetSceneStyles,
 } from '@/components/sheet-scene';
+import { AgentAccountLimitsSection } from '@/components/agent-account-limits-section';
 import { Toggle } from '@/components/toggle';
 import { appChrome } from '@/constants/appearance';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
@@ -42,6 +43,8 @@ import { TwoStepAction } from '@/components/two-step-action';
  */
 export interface AgentContextSheetProps {
   session?: AgentSessionInfo;
+  serverId?: string;
+  agentId?: string;
   /** The session's total spend, which a compaction does not reduce. */
   tokens?: TokensUsage;
   /** What the model can still see, from `GET …/context`. */
@@ -75,6 +78,8 @@ function compact(n?: number): string {
 
 export const AgentContextSheet = memo(function AgentContextSheet({
   session,
+  serverId,
+  agentId,
   tokens,
   contextUsage,
   contextLimit,
@@ -250,6 +255,7 @@ export const AgentContextSheet = memo(function AgentContextSheet({
         </View>
 
         <SheetSceneGroupRule />
+        <AgentAccountLimitsSection serverId={serverId} agentId={agentId} />
         <SheetSceneGroupHeading title={t`This session`} />
         <SheetSceneRow
           title={t`Estimated cost`}

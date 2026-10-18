@@ -1,17 +1,15 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens, useToast, Text } from '@osuki-dev/ui';
+import { Modal, Text, useToast } from '@osuki-dev/ui';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useState } from 'react';
-import { View } from 'react-native';
 import { Download, X } from 'lucide-react-native';
 import { AgentActionMenu } from '@/components/agent-action-menu';
 import { AudioPlaybackError } from '@/lib/audio-playback-session';
 
-/** Uses the same themed action menu as transcript and attachment controls. */
+/** File actions float above content so a long press never reflows the transcript. */
 export function useFileActions(name: string, save: () => Promise<void>, image = false) {
   const { t } = useLingui();
   const { showToast } = useToast();
-  const theme = useThemeTokens();
   const profile = useAppearanceProfile();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -37,31 +35,35 @@ export function useFileActions(name: string, save: () => Promise<void>, image = 
       if (!busy) setOpen((value) => !value);
     },
     menu: open ? (
-      <View
-        style={{
-          gap: 8,
-          padding: 12,
-          borderRadius: profile.chrome.popover,
-          backgroundColor: theme.colors.surface,
-        }}>
-        <Text variant="caption" numberOfLines={1}>
-          {name}
-        </Text>
-        <AgentActionMenu
-          surface="ground"
-          testID="file-actions-menu"
-          items={[
-            {
-              id: 'save',
-              label: image ? t`Save image` : t`Save file`,
-              Icon: Download,
-              onPress: run,
-              testID: 'file-actions-save',
-            },
-            { id: 'cancel', label: t`Cancel`, Icon: X, onPress: () => setOpen(false) },
-          ]}
-        />
-      </View>
+      <Modal.Root open onOpenChange={(value) => setOpen(value)}>
+        <Modal.Content
+          closeLabel={t`Cancel`}
+          contentStyle={{
+            borderWidth: 0,
+            borderRadius: profile.chrome.popover,
+            maxWidth: 320,
+            padding: 12,
+            gap: 4,
+          }}>
+          <Text variant="caption" numberOfLines={1} style={{ paddingHorizontal: 14 }}>
+            {name}
+          </Text>
+          <AgentActionMenu
+            surface="ground"
+            testID="file-actions-menu"
+            items={[
+              {
+                id: 'save',
+                label: image ? t`Save image` : t`Save file`,
+                Icon: Download,
+                onPress: run,
+                testID: 'file-actions-save',
+              },
+              { id: 'cancel', label: t`Cancel`, Icon: X, onPress: () => setOpen(false) },
+            ]}
+          />
+        </Modal.Content>
+      </Modal.Root>
     ) : null,
   };
 }
