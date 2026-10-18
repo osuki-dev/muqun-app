@@ -100,6 +100,10 @@ export const useAgents = create<AgentsState>((set) => ({
     if (!serverId) return;
     set((state) => {
       const mirrored: MirroredServerDiscovery = mirrorDiscovery(discovery, nowMs);
+      // The same answer again is not news: no new index for every agent
+      // selector to re-render on, and no write. Nothing reads when it was asked.
+      const previous = state.index.servers[serverId];
+      if (previous && sameMirroredDiscovery(previous, mirrored)) return state;
       const index = withMirroredDiscovery(state.index, serverId, mirrored);
       save(index);
       return { index };
@@ -174,4 +178,13 @@ export function homeAgentsFor(serverId: string): HomeAgentEntry[] {
 
 export function lastUsedAgentOn(serverId: string): string | undefined {
   return lastUsedAgent(useAgents.getState().index, serverId);
+}
+
+function sameMirroredDiscovery(
+  left: MirroredServerDiscovery,
+  right: MirroredServerDiscovery
+): boolean {
+  const { observedAtMs: _left, ...leftContent } = left;
+  const { observedAtMs: _right, ...rightContent } = right;
+  return JSON.stringify(leftContent) === JSON.stringify(rightContent);
 }

@@ -1,4 +1,5 @@
 import { HOME_TOOLBAR_PAIR_WIDTH, HOME_TOOLBAR_ICON_INSET } from '@/constants/home-toolbar';
+import { homeDockTargetId } from '@/lib/home-composer';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
@@ -41,27 +42,32 @@ import { useAgents } from '@/stores/agents';
 import { useHomeAgentPicker } from '@/stores/home-agent-picker';
 import { PRESS, timing } from '@/lib/motion';
 import type { GatewayRecord } from '@/lib/gateway-storage';
-import { agentLaunchCaption, reachabilityDescription } from '@/i18n/labels';
-import type { ServerReachability } from '@/lib/server-reachability';
+import { agentLaunchCaption, connectionStatusDescription } from '@/i18n/labels';
+import {
+  reachabilityOfStatus,
+  type ConnectionStatus,
+  type ServerReachability,
+} from '@/lib/server-reachability';
 import { useHomeTargetPicker } from '@/stores/home-target-picker';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
+import { HOME_CONTINUE_REFRESH_MS, homeRefreshDue } from '@/lib/home-refresh-schedule';
+import { useServerChannels } from '@/stores/server-channels';
 
 /** Agent chips and utility rows in the wide Pad cover's launch dock share one height. */
 const DOCK_ROW_HEIGHT = 56;
-
-/** Discovery is refreshed on the same cadence Continue uses. */
-const HOME_AGENTS_REFRESH_MS = 30_000;
 
 /** Target choice is local to Home; a selection alone never switches a live connection. */
 export function useHomeLaunchController({
   servers,
   selectedServerId,
+  connectionStatuses,
   reachabilityByServer,
   onPair,
 }: {
   servers: readonly GatewayRecord[];
   selectedServerId?: string;
+  connectionStatuses: Readonly<Record<string, ConnectionStatus | undefined>>;
   reachabilityByServer: Readonly<Record<string, ServerReachability | undefined>>;
   onPair: () => Promise<unknown>;
 }) {
@@ -82,14 +88,14 @@ export function useHomeLaunchController({
     pickerRequestId !== null && pickerCompletedRequestId === pickerRequestId
       ? pickerCompletedServerId
       : null;
-  const chosen =
-    servers.find((server) => server.serverId === (returnedServerId ?? chosenId)) ??
-    servers.find((server) => server.serverId === selectedServerId) ??
-    (servers.length === 1 ? servers[0] : undefined);
-  const chosenReachability = chosen
-    ? (reachabilityByServer[chosen.serverId] ?? 'unknown')
-    : undefined;
-  const chosenOffline = chosenReachability === 'offline';
+  const chosenTargetId = homeDockTargetId({
+    serverIds: servers.map((server) => server.serverId),
+    pickedId: returnedServerId ?? chosenId,
+    ...(selectedServerId ? { selectedId: selectedServerId } : {}),
+  });
+  const chosen = servers.find((server) => server.serverId === chosenTargetId);
+  const chosenConnection = chosen ? (connectionStatuses[chosen.serverId] ?? 'unknown') : undefined;
+  const chosenOffline = reachabilityOfStatus(chosenConnection ?? 'unknown') === 'offline';
 
   useEffect(() => {
     if (pickerRequestId === null || pickerCompletedRequestId !== pickerRequestId) return;
@@ -135,9 +141,24 @@ export function useHomeLaunchController({
     else void launch(onPair);
   }
 
+  /** Choose a target directly, as Home's composer does from an `@` mention. */
+  function choose(serverId: string) {
+    if (servers.some((server) => server.serverId === serverId)) setChosenId(serverId);
+  }
+  /**
+   * Keep the dock on the computer it names now, before something else (opening
+   * a task on another computer) moves the app's selection.
+   */
+  function pinTarget() {
+    if (chosen) setChosenId(chosen.serverId);
+  }
+
   return {
+    choose,
+    pinTarget,
     chosen,
     chosenOffline,
+    chosenConnection,
     launchOnChosen,
     openTargetPicker,
     opening,
@@ -211,12 +232,12 @@ export function HomeLaunchTarget({
         style={styles.targetName}
         pointerEvents="none">
         {loading
-          ? t`Loading servers`
+          ? t`Loading computers`
           : chosen
             ? chosen.label
             : servers.length
-              ? t`Choose a gateway`
-              : t`Pair a gateway`}
+              ? t`Choose a computer`
+              : t`Pair a computer`}
       </Text>
       {hasMultiple ? (
         <Animated.View style={pickerChevronStyle} pointerEvents="none">
@@ -244,7 +265,6 @@ export function HomeLaunchActions({
   grid = false,
   newOnly = false,
   dock = false,
-  dockAccessory,
 }: {
   controller: HomeLaunchController;
   /**
@@ -259,8 +279,6 @@ export function HomeLaunchActions({
    * one row of equal chips, then the utilities as full-width rows.
    */
   dock?: boolean;
-  /** Drawn beside the dock's terminal pill (the Gateway chip, when there is a choice). */
-  dockAccessory?: ReactNode;
   onNewAgent: (serverId: string, directory?: string, agentId?: string) => Promise<unknown>;
   onOpenAgent: (serverId: string) => Promise<unknown>;
   onNewTerminal: (serverId: string) => Promise<unknown>;
@@ -272,7 +290,7 @@ export function HomeLaunchActions({
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
   const router = useRouter();
-  const { chosen, chosenOffline, launchOnChosen, opening, run } = controller;
+  const { chosen, chosenOffline, chosenConnection, launchOnChosen, opening, run } = controller;
   const [availableWidth, setAvailableWidth] = useState(0);
 
   // The row is a projection of what the chosen gateway said about itself; a
@@ -307,10 +325,16 @@ export function HomeLaunchActions({
   const appActive = useAppActive();
   useEffect(() => {
     if (!chosen || chosenOffline || !focused || !appActive || isDemoRecord(chosen)) return;
+    let askedAtMs = Date.now();
     void refreshAgentServerDiscovery(chosen);
     const timer = setInterval(() => {
+      // Continue's cadence: half as often while the task socket is open.
+      const nowMs = Date.now();
+      const live = useServerChannels.getState().sockets[chosen.serverId] === 'open';
+      if (!homeRefreshDue({ atMs: askedAtMs, failures: 0 }, nowMs, live)) return;
+      askedAtMs = nowMs;
       void refreshAgentServerDiscovery(chosen);
-    }, HOME_AGENTS_REFRESH_MS);
+    }, HOME_CONTINUE_REFRESH_MS);
     return () => clearInterval(timer);
   }, [appActive, chosen, chosenOffline, focused]);
 
@@ -481,13 +505,16 @@ export function HomeLaunchActions({
       testID="home-launch-actions"
       onLayout={(event) => setAvailableWidth(event.nativeEvent.layout.width)}
       style={styles.root}>
-      {chosenOffline ? (
+      {chosen &&
+      chosenConnection &&
+      chosenConnection !== 'live' &&
+      chosenConnection !== 'unknown' ? (
         <Text
           testID="home-launch-unavailable"
           accessibilityLiveRegion="polite"
           variant="caption"
           color={theme.colors.textMuted}>
-          {_(reachabilityDescription.offline)}
+          {`${chosen.label} · ${_(connectionStatusDescription[chosenConnection])}`}
         </Text>
       ) : null}
       {onDemo ? (
@@ -510,10 +537,7 @@ export function HomeLaunchActions({
           {agentEntries.length ? (
             <View style={styles.dockChips}>{agentEntries.map((entry) => renderEntry(entry))}</View>
           ) : null}
-          <View style={styles.dockPills}>
-            {utilityEntries.map((entry) => renderEntry(entry))}
-            {dockAccessory}
-          </View>
+          <View style={styles.dockPills}>{utilityEntries.map((entry) => renderEntry(entry))}</View>
         </View>
       ) : layout.mode === 'grid' ? (
         <View testID="home-launch-actions-grid" style={styles.grid}>

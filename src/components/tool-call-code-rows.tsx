@@ -35,7 +35,7 @@ import type { ToolCallDetail, ToolCallRow } from '@/lib/tool-call-detail';
  * they stay at the left edge at any pan; the scroll indicator shown only when
  * there is something to pan to; the gutter as wide as the largest number.
  *
- * A mono surface (`interface-font-reach.test.ts`): each coloured run is a
+ * A mono surface: each coloured run is a
  * nested React Native `Text`. The app's `Text` is the kit's, a component with
  * its own state, theme reads and marquee machinery -- one per token, a few
  * thousand on screen in a fling, for a span that only needs a colour.

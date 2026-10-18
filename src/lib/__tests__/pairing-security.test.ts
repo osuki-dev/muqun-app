@@ -4,9 +4,78 @@ import {
   normalizeGatewayUrl,
   normalizePairingCode,
   validateClaimedPairing,
+  validateGatewayUrl,
+  validatePairingTransport,
+  validateServerId,
   type PairingPayload,
   type ResolvedPairingOffer,
 } from '../pairing';
+import { isSafeExternalLink } from '../safe-link';
+
+test('untrusted output can open only HTTP links', () => {
+  for (const value of ['http://example.com', 'https://example.com/a?b=c']) {
+    expect(isSafeExternalLink(value)).toBe(true);
+  }
+  for (const value of [
+    'intent://scan/#Intent;scheme=zxing;package=com.example;end',
+    'javascript:alert(1)',
+    'file:///etc/passwd',
+    'muqun://pair?u=http%3A%2F%2Fevil',
+    'not a url',
+    '',
+  ]) {
+    expect(isSafeExternalLink(value)).toBe(false);
+  }
+});
+
+test('gateway addresses reject credentials, unsupported schemes, queries and fragments', () => {
+  for (const value of [
+    'ftp://100.64.0.1/file',
+    'http://user:password@100.64.0.1:7347',
+    'http://100.64.0.1:7347?token=secret',
+    'http://100.64.0.1:7347/#fragment',
+  ]) {
+    expect(() => validateGatewayUrl(value)).toThrow();
+  }
+});
+
+test('server identities reject paths and malformed identifiers', () => {
+  for (const value of ['', '../other-server', 'server id', 'x'.repeat(81)]) {
+    expect(() => validateServerId(value)).toThrow();
+  }
+});
+
+describe('pairing transport boundary', () => {
+  test('manual and QR pairing accept HTTP and HTTPS without host allowlists', () => {
+    for (const url of [
+      'https://gateway.invalid:7347',
+      'https://192.168.1.2:7347',
+      'http://127.0.0.1:51234',
+      'http://127.2.3.4:51234',
+      'http://[::1]:51234',
+      'http://gateway.invalid:7347',
+      'http://192.168.1.2:7347',
+      'http://10.0.0.2:7347',
+      'http://100.64.0.1:7347',
+      'http://gateway.tailnet.ts.net:7347',
+      'http://gateway:7347',
+      'http://localhost:7347',
+      'http://127.gateway.invalid:7347',
+      'http://127.0.0.1.gateway.invalid:7347',
+    ]) {
+      expect(validatePairingTransport(url)).toBe(url);
+      expect(validatePairingTransport(url, 'k'.repeat(43))).toBe(url);
+    }
+  });
+
+  test('a supplied QR bootstrap key must be valid', () => {
+    const url = 'http://gateway.invalid:7347';
+    expect(validatePairingTransport(url, 'k'.repeat(43))).toBe(url);
+    for (const key of ['', 'x'.repeat(42), 'x'.repeat(43), 'k'.repeat(43) + '=']) {
+      expect(() => validatePairingTransport(url, key)).toThrow('invalid encryption key');
+    }
+  });
+});
 
 const token = 't'.repeat(43);
 const transportKey = 'k'.repeat(43);

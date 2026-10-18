@@ -41,6 +41,7 @@ import {
   useSheetSceneInputStyle,
 } from '@/components/sheet-scene';
 import { LADDER } from '@/components/settings-chrome';
+import { terminalPromptWithAttachments } from '@/lib/agent-spawn';
 import {
   agentSpawnRequest,
   canSpawnAgent,
@@ -192,7 +193,9 @@ export function NewTaskSheet({
         if (cancelled) return;
         setProfiles([]);
         setLoadingProfiles(false);
-        setError(describeGatewayFailure(failure, t`Could not list this server's agents.`).message);
+        setError(
+          describeGatewayFailure(failure, t`Could not list this computer's agents.`).message
+        );
       });
     return () => {
       cancelled = true;
@@ -229,7 +232,7 @@ export function NewTaskSheet({
             const paths = await uploads.awaitUploads();
             if (!mounted.current || useGatewayConnectionStore.getState().record !== owner) return;
             if (paths === null) rethrow(new Error(t`Could not add a file`));
-            const firstPrompt = [prompt.trim(), ...paths].filter(Boolean).join(' ');
+            const firstPrompt = terminalPromptWithAttachments(prompt, paths);
             const spawned = await spawnAgent(
               sessionId,
               agentSpawnRequest({ agent, cwd, tabId, prompt: firstPrompt })
@@ -282,15 +285,15 @@ export function NewTaskSheet({
                 <View style={styles.loadingRow}>
                   <LogoLoader
                     size={28}
-                    accessibilityLabel={t`Asking the server what it can run…`}
+                    accessibilityLabel={t`Asking the computer what it can run…`}
                   />
                   <Text variant="caption" color={theme.colors.textMuted}>
-                    <Trans>Asking the server what it can run…</Trans>
+                    <Trans>Asking the computer what it can run…</Trans>
                   </Text>
                 </View>
               ) : profiles.length === 0 ? (
                 <Text variant="caption" color={theme.colors.textMuted}>
-                  <Trans>This server did not name any agents it can start.</Trans>
+                  <Trans>This computer did not name any agents it can start.</Trans>
                 </Text>
               ) : (
                 <ScrollView
@@ -375,6 +378,7 @@ export function NewTaskSheet({
                   />
                 </View>
                 <TerminalComposer
+                  voiceContext={`new-task:${sessionId}`}
                   inputRef={promptInput}
                   leading={
                     <ComposerAttachmentButton
@@ -469,7 +473,7 @@ function AgentPill({
       accessibilityRole="radio"
       accessibilityState={{ selected }}
       accessibilityLabel={
-        profile.available ? profile.kind : t`${profile.kind}, not found on this server's PATH`
+        profile.available ? profile.kind : t`${profile.kind}, not found on this computer's PATH`
       }
       onPress={onSelect}
       style={[

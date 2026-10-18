@@ -82,8 +82,8 @@ describe('reading a typed port', () => {
 
 describe('building the URL to open', () => {
   test('keeps the host and swaps the gateway port for the typed one', () => {
-    expect(webServiceUrl('http://osk.example.ts.net:23847', 3000)).toBe(
-      'http://osk.example.ts.net:3000/'
+    expect(webServiceUrl('http://desk.example.ts.net:23847', 3000)).toBe(
+      'http://desk.example.ts.net:3000/'
     );
   });
 
@@ -112,8 +112,8 @@ describe('building the URL to open', () => {
   });
 
   test('the gateway own port is not special: it answers, which is a true answer', () => {
-    expect(webServiceUrl('http://osk.example.ts.net:23847', 23847)).toBe(
-      'http://osk.example.ts.net:23847/'
+    expect(webServiceUrl('http://desk.example.ts.net:23847', 23847)).toBe(
+      'http://desk.example.ts.net:23847/'
     );
   });
 
@@ -121,11 +121,11 @@ describe('building the URL to open', () => {
     // The output goes to `Linking.openURL`; a builder that kept a path or
     // userinfo would be one stored-record change away from aiming the browser
     // somewhere nobody typed.
-    expect(webServiceUrl('http://osk.ts.net:23847/api/v1?token=secret#frag', 3000)).toBe(
-      'http://osk.ts.net:3000/'
+    expect(webServiceUrl('http://desk.ts.net:23847/api/v1?token=secret#frag', 3000)).toBe(
+      'http://desk.ts.net:3000/'
     );
-    expect(webServiceUrl('http://user:pass@osk.ts.net:23847', 3000)).toBe(
-      'http://osk.ts.net:3000/'
+    expect(webServiceUrl('http://user:pass@desk.ts.net:23847', 3000)).toBe(
+      'http://desk.ts.net:3000/'
     );
   });
 
@@ -136,23 +136,23 @@ describe('building the URL to open', () => {
 
   test('an unparseable or non-web gateway URL has nothing honest to open', () => {
     expect(webServiceUrl('not a url', 3000)).toBeNull();
-    expect(webServiceUrl('ftp://osk.ts.net', 3000)).toBeNull();
+    expect(webServiceUrl('ftp://desk.ts.net', 3000)).toBeNull();
     expect(webServiceUrl('muqun://pair?u=x', 3000)).toBeNull();
   });
 
   test('a port outside the range never becomes a URL', () => {
-    expect(webServiceUrl('http://osk.ts.net:23847', 0)).toBeNull();
-    expect(webServiceUrl('http://osk.ts.net:23847', 65536)).toBeNull();
-    expect(webServiceUrl('http://osk.ts.net:23847', -1)).toBeNull();
-    expect(webServiceUrl('http://osk.ts.net:23847', 3000.5)).toBeNull();
-    expect(webServiceUrl('http://osk.ts.net:23847', Number.NaN)).toBeNull();
+    expect(webServiceUrl('http://desk.ts.net:23847', 0)).toBeNull();
+    expect(webServiceUrl('http://desk.ts.net:23847', 65536)).toBeNull();
+    expect(webServiceUrl('http://desk.ts.net:23847', -1)).toBeNull();
+    expect(webServiceUrl('http://desk.ts.net:23847', 3000.5)).toBeNull();
+    expect(webServiceUrl('http://desk.ts.net:23847', Number.NaN)).toBeNull();
   });
 });
 
 describe('naming the URL on screen', () => {
   test('drops the scheme, because the machine and the port are what is being checked', () => {
-    expect(describeWebServiceUrl('http://osk.example.ts.net:3000/')).toBe(
-      'osk.example.ts.net:3000'
+    expect(describeWebServiceUrl('http://desk.example.ts.net:3000/')).toBe(
+      'desk.example.ts.net:3000'
     );
   });
 

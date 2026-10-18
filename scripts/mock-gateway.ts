@@ -129,7 +129,7 @@ const panes: Entity[] = [
     tab_id: 'tab-1',
     workspace_id: 'workspace-1',
     cwd: '/workspace/muqun',
-    terminal_title_stripped: 'okk@mac-mini:~/muqun',
+    terminal_title_stripped: 'user@workstation:~/project',
     scroll: paneScroll,
   },
   {
@@ -580,7 +580,7 @@ function rootPaneFor(tab: Entity) {
     tab_id: tab.id,
     workspace_id: workspaceId,
     cwd: String(tab.cwd ?? '/workspace/muqun'),
-    terminal_title_stripped: 'okk@mac-mini:~/muqun',
+    terminal_title_stripped: 'user@workstation:~/project',
     scroll: paneScroll,
   };
   panes.push(pane);

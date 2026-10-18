@@ -111,6 +111,29 @@ describe('homeServerModel', () => {
     expect(emptyPaneId.rows[0]?.key).toBe(JSON.stringify(['server-1', 'row', 'empty-pane-id']));
   });
 
+  test('native question attention keeps work status and follows the current instance only', () => {
+    const pending = agent('codex', {
+      paneId: 'pane',
+      instanceId: 'native-instance',
+      pendingUserInput: true,
+      status: 'working',
+    });
+    const current = model({ snapshot: snapshot('server-1', [pending]) });
+    expect(current.rows[0]).toMatchObject({
+      pendingUserInput: true,
+      key: JSON.stringify(['server-1', 'instance', 'native-instance']),
+      agent: { status: 'working' },
+    });
+    for (const status of ['blocked', 'unknown'] as const) {
+      const changed = model({ snapshot: snapshot('server-1', [{ ...pending, status }]) });
+      expect(changed.rows[0]?.pendingUserInput).toBe(true);
+    }
+    const stale = model({
+      snapshot: snapshot('server-1', [pending], NOW - SERVER_AGENTS_STALE_AFTER_MS - 1),
+    });
+    expect(stale.rows[0]?.pendingUserInput).toBeUndefined();
+  });
+
   test('shows recent blocked status, but does not fabricate status for plain panes', () => {
     const blocked = agent('blocked', { status: 'blocked' });
     const plain = agent('shell', { hasAgent: false, status: 'blocked', cwd: '/work' });

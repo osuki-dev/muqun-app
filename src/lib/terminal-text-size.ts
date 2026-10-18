@@ -7,9 +7,10 @@ import { TERMINAL_GRID_HORIZONTAL_PADDING, TERMINAL_TEXT_SIZES } from '@/termina
  * remembered for opens at it. The pinch scales the canvas on top of that, and
  * it is a per-pane memory rather than a session-only look: it survives leaving
  * the service screen, and it survives the app being killed and relaunched,
- * because leaving is the moment the pinch is written down
- * (`terminalScaleOnScreenLeave`) and opening is the moment it is read back
- * (`terminalScaleOnPaneOpen`), both keyed on the pane's own id.
+ * because the end of the pinch is the moment it is written down
+ * (`terminalScaleOnPinchEnd`) and opening is the moment it is read back
+ * (`terminalScaleOnPaneOpen`), both keyed on the pane's id and its column
+ * count (`terminalScaleKey`).
  *
  * It does not survive the id itself going stale -- a tmux server restart hands
  * out fresh pane ids, so a pane reopened after one starts over at the
@@ -52,13 +53,6 @@ export type TerminalTextSize = 'compact' | 'default' | 'large';
 // re-tuned scale reaches the pinch logic without a second table to forget.
 export const TERMINAL_TEXT_SIZE_POINTS: Record<TerminalTextSize, number> = TERMINAL_TEXT_SIZES;
 
-/** What the pinch indicator calls each size, matching the settings row. */
-export const TERMINAL_TEXT_SIZE_NAMES: Record<TerminalTextSize, string> = {
-  compact: 'Compact',
-  default: 'Default',
-  large: 'Large',
-};
-
 /**
  * How far out a pinch may zoom.
  *
@@ -93,7 +87,7 @@ export const TERMINAL_MAX_SCALE = 2.4;
  * default that opens at the outer limit of the gesture that overrides it
  * leaves the reader nowhere to go. At 1.6 the pinch still has room in both
  * directions -- 0.62 below, 1.8 above -- so a reader who disagrees with the
- * fit can say so and be remembered (see `terminalScaleOnScreenLeave`).
+ * fit can say so and be remembered (see `terminalScaleOnPinchEnd`).
  *
  * A pane narrow enough to hit the cap keeps some empty width on the right.
  * That is the honest answer rather than a failure: at that point filling the
@@ -232,6 +226,24 @@ export function terminalFontSize(size: TerminalTextSize): number {
 export type TerminalPaneScales = Readonly<Record<string, number>>;
 
 /**
+ * Where a pane's pinch is filed: its id and the column count it was pinched
+ * at (home-dispatch-ux §10). A pinch is a statement about this pane at this
+ * width; when tmux reports another width the entry no longer matches, the
+ * pane opens at the fit again (`terminalFitToWidthScale`), and the next pinch
+ * replaces the old entry. A pane whose width was never reported files under
+ * its id alone.
+ */
+export function terminalScaleKey(paneId: string, columns?: number): string {
+  return columns !== undefined && Number.isFinite(columns) && columns > 0
+    ? `${paneId}@${columns}`
+    : paneId;
+}
+
+function isPaneKey(key: string, paneId: string): boolean {
+  return key === paneId || key.startsWith(`${paneId}@`);
+}
+
+/**
  * Long enough that nobody working across a dozen panes today loses one before
  * it is asked for again; short enough that the table backing it cannot grow
  * without bound. The same number `pane-view-mode`'s per-pane memory uses, for
@@ -277,8 +289,12 @@ export const TERMINAL_MAX_REMEMBERED_PANE_SCALES = 64;
  * pane whose columns do not reach the edge, which has no reason to be drawn
  * small and cannot be panned to fix it.
  */
-export function terminalScaleOnPaneOpen(paneId: string, remembered: TerminalPaneScales): number {
-  const value = remembered[paneId];
+export function terminalScaleOnPaneOpen(
+  paneId: string,
+  remembered: TerminalPaneScales,
+  columns?: number
+): number {
+  const value = remembered[terminalScaleKey(paneId, columns)];
   if (typeof value !== 'number' || !Number.isFinite(value)) return 1;
   return Math.max(TERMINAL_MIN_SCALE, Math.min(TERMINAL_MAX_SCALE, value));
 }
@@ -305,16 +321,14 @@ export interface TerminalOpenScaleInput {
  * this pane should be has said it about this pane, and a default that argued
  * with them would be the app changing its mind every time they came back.
  *
- * **A fit is never written down, and that is the whole answer to "does a pane's
- * column count changing reset a remembered scale".** The fit is recomputed from
- * the pane's current width every time the pane is opened, so a reader who never
- * pinched gets a new fit the moment tmux reports a new width -- re-split the
- * window on the Mac and the phone re-fits, with nothing to invalidate, because
- * there was never a stored number to be wrong. A reader who *did* pinch has an
- * entry, and it survives the re-split, because it was a statement about how big
- * they wanted this pane's text and not about how wide the pane happened to be.
+ * **A fit is never written down**, and a pinch is filed with the column count
+ * it was made at (`terminalScaleKey`). So a width change -- the window re-split
+ * on the Mac, `tmux resize-window` -- reaches neither: the fit is recomputed
+ * from the pane's new width, and a pinch made at the old width no longer
+ * matches and is not applied (home-dispatch-ux §10). The reader pinches again
+ * if the new width wants another size.
  *
- * `terminalScaleOnScreenLeave` is what keeps that true: handed the same default
+ * `terminalScaleOnPinchEnd` is what keeps that true: handed the same default
  * this function just produced, it drops rather than stores a scale that has come
  * back to it (see its own note). So the one ambiguous case -- a reader who
  * pinches to within half a percent of the fit -- resolves as a fit, which draws
@@ -327,9 +341,9 @@ export function terminalOpenScale({
   fit,
   paneColumns,
 }: TerminalOpenScaleInput): number {
-  const value = remembered[paneId];
+  const value = remembered[terminalScaleKey(paneId, paneColumns)];
   if (typeof value === 'number' && Number.isFinite(value)) {
-    return terminalScaleOnPaneOpen(paneId, remembered);
+    return terminalScaleOnPaneOpen(paneId, remembered, paneColumns);
   }
   return terminalFitToWidthScale(fit, paneColumns);
 }
@@ -356,75 +370,38 @@ export function terminalPanMinX(viewportWidth: number, textWidth: number, scale:
 }
 
 /**
- * Leaving the service screen remembers the pinch this pane is showing right
- * now -- keyed on the pane's id -- so the next time this exact pane is opened,
- * whether later in this session or after the app has been killed and
- * relaunched, it opens at this size instead of back at the setting's.
+ * The end of a pinch remembers the scale the reader chose for this pane at
+ * this width, and nothing else ever writes the table (home-dispatch-ux §10).
+ * Leaving the screen, switching panes and unmounting used to write whatever
+ * scale the canvas held, which could be an incidental one -- a fit, or a
+ * scale carried over from another pane before the switch render applied --
+ * and was sometimes filed under the next pane's id. Only the gesture knows
+ * the reader meant it.
  *
- * A separate moment from opening a pane, and still worth its own name for the
- * reason it always was: the canvas is deliberately never remounted on a pane
- * switch (the pane carousel would flash), so nothing about the component's
- * lifetime marks "the reader is done with this pane" on its own. Leaving the
- * screen is the moment -- and `skia-terminal.tsx` calls this from two places
- * because "leaving" is two different events depending on where the reader
- * goes: Settings and the panels sheet push over this screen and leave it
- * mounted-but-blurred, so a render with `screenFocused: false` is the moment;
- * going back to the server list pops this screen's own route instead, which
- * unmounts it without ever rendering `screenFocused: false` first (confirmed
- * live), so an unmount cleanup is the moment there. Both call sites hand the
- * same scale to the same function, so a pane the reader left twice in a row
- * -- blurred, then actually torn down -- is just this function agreeing with
- * itself.
- *
- * Pure, like its counterpart above: handed the table the canvas has, it hands
- * back the table to keep, and never touches a disk. At the setting's own size
- * there is nothing worth remembering, so the entry is dropped rather than
- * written as 1 -- a pane pinched back to default earns its slot back
- * immediately instead of occupying one with a number that would only ever
- * have been read as the fallback anyway.
- *
- * `defaultScale` is which number counts as "the size it would have opened at
- * anyway", and it is 1 -- the setting's own size, byte for byte the rule this
- * function has always applied -- for every pane except one the fit has scaled
- * up (`terminalFitToWidthScale`). For those it is the fit, and dropping there
- * rather than storing is what makes a fit a default instead of a decision: a
- * narrow pane the reader only looked at leaves nothing behind, so it is fitted
- * again from whatever width tmux reports next time, while a narrow pane the
- * reader actually pinched leaves the number they chose and keeps it through a
- * re-split. See `terminalOpenScale`, which is handed the same default. Otherwise the pane is re-inserted at
- * the end of the table, so trimming to `TERMINAL_MAX_REMEMBERED_PANE_SCALES`
- * drops whichever pane has gone longest untouched, not whichever was pinched
- * first.
- *
- * This used to reset the scale back to the setting's size instead of writing
- * it down, which was deliberate while a pane still opened fitted to its own
- * width (see the fit `terminalScaleOnPaneOpen` used to do): a remembered
- * number on top of a per-pane fit would have been two answers to the same
- * question. With the fit gone and every pane opening at 1:1, a wide pane
- * overflowing the screen is the common case rather than the rare one, and the
- * 8% between the compact and default steps of the setting is not enough of an
- * answer to it -- so the owner's answer was to pinch, once, by hand, to the
- * size a given pane actually needs, and have the app keep that answer the way
- * it keeps every other one. It still cannot survive an uninstall -- nothing
- * app-local can -- only being left, backgrounded, or killed and reopened.
+ * Pure: handed the table, it hands back the table to keep. Every earlier
+ * entry for this pane goes (any width), so a pane has one remembered pinch.
+ * A scale at the pane's resting size (`defaultScale`: 1, or the fit for a
+ * narrow pane) is not remembered, so pinching back to it hands the pane back
+ * to the fit. The newest entry goes last, so trimming to
+ * `TERMINAL_MAX_REMEMBERED_PANE_SCALES` drops the longest-untouched pane.
  */
-export function terminalScaleOnScreenLeave(
+export function terminalScaleOnPinchEnd(
   paneId: string,
   scale: number,
   remembered: TerminalPaneScales,
-  defaultScale = 1
+  defaultScale = 1,
+  columns?: number
 ): TerminalPaneScales {
   if (!paneId) return remembered;
   const clamped =
     Math.round(Math.max(TERMINAL_MIN_SCALE, Math.min(TERMINAL_MAX_SCALE, scale)) * 100) / 100;
-  const { [paneId]: _dropped, ...rest } = remembered;
+  const rest = Object.entries(remembered).filter(([key]) => !isPaneKey(key, paneId));
   const resting = Number.isFinite(defaultScale) && defaultScale > 0 ? defaultScale : 1;
-  if (Math.abs(clamped - Math.round(resting * 100) / 100) < 0.005) return rest;
-  const entries = Object.entries(rest);
-  const kept = entries.slice(
-    Math.max(0, entries.length - (TERMINAL_MAX_REMEMBERED_PANE_SCALES - 1))
-  );
-  return { ...Object.fromEntries(kept), [paneId]: clamped };
+  if (Math.abs(clamped - Math.round(resting * 100) / 100) < 0.005) {
+    return rest.length === Object.keys(remembered).length ? remembered : Object.fromEntries(rest);
+  }
+  const kept = rest.slice(Math.max(0, rest.length - (TERMINAL_MAX_REMEMBERED_PANE_SCALES - 1)));
+  return { ...Object.fromEntries(kept), [terminalScaleKey(paneId, columns)]: clamped };
 }
 
 /**
@@ -470,28 +447,6 @@ export function terminalZoomPercent(scale: number): number {
  * pill simply stayed on screen.
  */
 export type TerminalPinchPhase = 'idle' | 'began' | 'active';
-
-/**
- * What the size pill should read, or `null` for "not shown".
- *
- * The whole rule in one place, so the answer cannot drift from the phase: only
- * an active pinch says anything. A worklet -- the pinch's reaction reads it on
- * the UI thread, once per frame.
- */
-export function terminalZoomIndicatorPercent(
-  phase: TerminalPinchPhase,
-  scale: number
-): number | null {
-  'worklet';
-  if (phase !== 'active') return null;
-  return terminalZoomPercent(scale);
-}
-
-/** "Large · 124%" -- the transient pinch indicator's whole text. */
-export function terminalZoomLabel(size: TerminalTextSize, scale: number): string {
-  const name = TERMINAL_TEXT_SIZE_NAMES[size] ?? TERMINAL_TEXT_SIZE_NAMES.default;
-  return `${name} · ${terminalZoomPercent(scale)}%`;
-}
 
 /** Where a pane should be sitting when it opens, in the pane's own cells. */
 export interface TerminalOpenViewInput {

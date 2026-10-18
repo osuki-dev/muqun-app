@@ -13,6 +13,7 @@ import {
   MAX_PROBED_SERVERS,
   needsReachabilityProbe,
   prewarmGate,
+  probeSaysDown,
   reachabilityFromProbe,
   REACHABILITY_FRESH_MS,
   REACHABILITY_RECHECK_MS,
@@ -26,6 +27,16 @@ const NOW = 1_700_000_000_000;
 function probe(ok: boolean, checkedAtMs = NOW): ReachabilityProbe {
   return { serverId: 's1', ok, checkedAtMs };
 }
+
+test('a computer that refused our token is not down; one that did not answer is', () => {
+  const cases: [ReachabilityProbe | undefined, boolean][] = [
+    [probe(false), true],
+    [{ ...probe(false), unauthorized: true }, false],
+    [probe(true), false],
+    [undefined, false],
+  ];
+  expect(cases.map(([held]) => probeSaysDown(held))).toEqual(cases.map(([, down]) => down));
+});
 
 describe('what a probe entitles the card to say', () => {
   test('a server that answered just now is live', () => {

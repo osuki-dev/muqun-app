@@ -212,7 +212,7 @@ async function readBody(res: { json: () => Promise<unknown> }): Promise<unknown>
 }
 
 /** `readScoped` for the reads that have nothing to say about a missing folder. */
-async function readJson<T>(
+export async function readJson<T>(
   path: string,
   parse: (value: unknown, envelope: unknown) => T,
   fallback: T,
@@ -228,7 +228,7 @@ async function readJson<T>(
  * bare `void`. The message carries the gateway's body because
  * `formatAgentErrorMessage` reads it to recognise an offline engine.
  */
-async function writeJson(
+export async function writeJson(
   path: string,
   what: string,
   body?: unknown,
@@ -396,6 +396,38 @@ export async function createAgentSession(
   const info = parseAgentSessionInfo(data);
   if (!info) throw new Error('Failed to create agent session: unreadable response');
   return info;
+}
+
+/**
+ * A session's snapshot from the computer it runs on, whatever this device has
+ * selected; `null` when it did not answer.
+ */
+export async function readAgentSessionAt(
+  endpoint: {
+    url: string;
+    token: string;
+    deviceId?: string;
+    transportKey?: string;
+    transport?: string;
+  },
+  sessionId: string | undefined,
+  asid: string
+): Promise<AgentSessionSnapshot | null> {
+  try {
+    const base = endpoint.url.replace(/\/$/, '');
+    const res = await gatewayEndpointFetch(
+      endpoint as GatewayEndpoint,
+      `${base}${sessionRoute(asid, '', sessionId, true)}`,
+      {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${endpoint.token}` },
+      }
+    );
+    if (!res.ok) return null;
+    return parseAgentSessionSnapshot(envelopeData(await res.json()));
+  } catch {
+    return null;
+  }
 }
 
 export async function getAgentSessionSnapshot(
@@ -1327,7 +1359,7 @@ export function openAgentSessionStream(options: {
       // per-stream key to it, so a recording of an earlier stream can never
       // answer a later one. Null on a cleartext pairing, which is every pairing
       // whose gateway does not encrypt the transport.
-      const sealed = encryptedEventStreamRequest(url);
+      const sealed = await encryptedEventStreamRequest(url);
       const ending = await connectAgentStream({
         url,
         seal: sealed ? { ...sealed, crypto: streamRecordCrypto } : null,

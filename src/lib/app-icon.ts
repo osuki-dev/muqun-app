@@ -8,7 +8,15 @@
  * Pure, so the mapping between what the picker shows and what the OS reports
  * can be tested without the native module.
  */
-export type AppIconId = 'default' | 'Classic' | 'Mascot' | 'Cyber' | 'Anime' | 'Arcade';
+export type AppIconId =
+  | 'default'
+  | 'Classic'
+  | 'Mascot'
+  | 'Cyber'
+  | 'Anime'
+  | 'Arcade'
+  | 'Mint'
+  | 'Sakura';
 
 export const APP_ICONS: readonly AppIconId[] = [
   'default',
@@ -17,6 +25,8 @@ export const APP_ICONS: readonly AppIconId[] = [
   'Cyber',
   'Anime',
   'Arcade',
+  'Mint',
+  'Sakura',
 ];
 
 /** What the native module is told: `null` restores the compiled icon. */

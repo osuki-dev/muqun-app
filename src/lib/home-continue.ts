@@ -2,7 +2,6 @@ import { hasRealSessionTitle, type AgentSessionInfo } from './agent-protocol';
 import type { HomeCommand } from './home-commands';
 import {
   homeTargetAgentId,
-  homeTargetKey,
   type HomeRecentEntry,
   type HomeSessionObservation,
   type HomeTarget,
@@ -23,21 +22,84 @@ import type { ServerReachability } from './server-reachability';
 
 type HomeContinueAge = NonNullable<HomeServerModel['age']>;
 
+/**
+ * Where a newer confirmation of an observation lands without the Continue list
+ * being rebuilt: a pass that only says "still the same" moves a timestamp in
+ * one of these, and only the row that shows the age reads it.
+ */
+export type HomeContinueSeen = {
+  /** The computer whose pane mirror (`server-agents`) confirmed it. */
+  panesOf?: string;
+  /** The remembered recent (`home-recents` `seenAtMs`). */
+  recentKey?: string;
+  /** The computer whose agent-session list (`home-agent-sessions`) confirmed it. */
+  listedBy?: string;
+};
+
+/**
+ * The gateway's last word on a row, as of when the list was built. How old it
+ * is -- and so whether its status may still be shown -- is the row's to work
+ * out against the clock: see {@link homeContinueObservationNow}.
+ */
 export type HomeContinueObservation =
   | {
       kind: 'gateway-agent';
-      /** Present only while the shared Home model considers the mirrored status current. */
       status?: ServerAgent['status'];
+      pendingUserInput?: boolean;
+      observedAtMs: number;
+      seen: HomeContinueSeen;
+    }
+  | {
+      kind: 'agent-session';
+      status?: HomeSessionObservation['status'];
+      observedAtMs: number;
+      seen: HomeContinueSeen;
+    };
+
+/** An observation as the row shows it: its age, and its status only while current. */
+export type HomeContinueObservationView =
+  | {
+      kind: 'gateway-agent';
+      status?: ServerAgent['status'];
+      pendingUserInput?: boolean;
       age: HomeContinueAge;
       stale: boolean;
     }
   | {
       kind: 'agent-session';
-      /** Present only while the Gateway's observation remains current and not known offline. */
       status?: HomeSessionObservation['status'];
       age: HomeContinueAge;
       stale: boolean;
     };
+
+/**
+ * What a row says about its observation now. `confirmedAtMs` is the newest
+ * "still the same" from the row's {@link HomeContinueSeen} sources.
+ */
+export function homeContinueObservationNow(
+  observation: HomeContinueObservation,
+  confirmedAtMs: number,
+  nowMs: number
+): HomeContinueObservationView {
+  const atMs = Math.max(observation.observedAtMs, confirmedAtMs);
+  const stale = nowMs - atMs > SERVER_AGENTS_STALE_AFTER_MS;
+  const age = observationAgeParts(atMs, nowMs);
+  if (observation.kind === 'gateway-agent') {
+    return {
+      kind: observation.kind,
+      age,
+      stale,
+      ...(!stale && observation.status ? { status: observation.status } : {}),
+      ...(!stale && observation.pendingUserInput === true ? { pendingUserInput: true } : {}),
+    };
+  }
+  return {
+    kind: observation.kind,
+    age,
+    stale,
+    ...(!stale && observation.status ? { status: observation.status } : {}),
+  };
+}
 
 export type HomeContinueEntry = {
   key: string;
@@ -57,8 +119,8 @@ export type HomeContinueEntry = {
 type HomeAgentSessionTarget = Extract<HomeTarget, { kind: 'agent-session' }>;
 
 /** The identity a gone agent session is remembered by: one gateway's one session. */
-export function goneSessionKey(serverId: string, asid: string): string {
-  return JSON.stringify([serverId, asid]);
+export function goneSessionKey(serverId: string, asid: string, agentId?: string): string {
+  return JSON.stringify(agentId ? [serverId, asid, agentId] : [serverId, asid]);
 }
 
 /** How many of the gateway's most recently updated agent sessions Continue merges in. */
@@ -213,7 +275,6 @@ export function homeContinueEntries({
   recents,
   reachabilityByServer,
   paneMode,
-  nowMs,
   gatewaySessions,
   goneSessions,
 }: {
@@ -223,15 +284,15 @@ export function homeContinueEntries({
   recents: readonly HomeRecentEntry[];
   reachabilityByServer: Readonly<Record<string, ServerReachability | undefined>>;
   paneMode: HomeServerPaneMode;
-  nowMs: number;
   /** The selected gateway's agent sessions; an offline or unpaired one contributes nothing. */
   gatewaySessions?: GatewayAgentSessionsSnapshot;
   /** Sessions the gateway answered gone for (`goneSessionKey`); they are neither recents nor new rows. */
   goneSessions?: ReadonlySet<string>;
 }): HomeContinueEntry[] {
   const rows: HomeContinueEntry[] = [];
-  const isGone = (serverId: string, asid: string) =>
-    goneSessions?.has(goneSessionKey(serverId, asid)) === true;
+  const isGone = (serverId: string, asid: string, agentId: string) =>
+    goneSessions?.has(goneSessionKey(serverId, asid)) === true ||
+    goneSessions?.has(goneSessionKey(serverId, asid, agentId)) === true;
   const listed =
     gatewaySessions &&
     serverIds.includes(gatewaySessions.serverId) &&
@@ -240,19 +301,22 @@ export function homeContinueEntries({
       : undefined;
   const unclaimed = new Map(
     listed?.sessions
-      .filter((session) => !isGone(listed.serverId, session.asid))
-      .map((session) => [session.asid, session])
+      .filter((session) => !isGone(listed.serverId, session.asid, session.agentId))
+      .map((session) => [goneSessionKey(listed.serverId, session.asid, session.agentId), session])
   );
   for (const serverId of serverIds) {
     if (reachabilityByServer[serverId] === 'offline') continue;
+    // Read as of the snapshot itself, so the row keeps the status it reported;
+    // whether that is still current is the row's to say (`homeContinueObservationNow`).
+    const snapshot = snapshots[serverId];
     const model = homeServerModel({
       serverId,
-      snapshot: snapshots[serverId],
+      snapshot,
       reachability: reachabilityByServer[serverId] ?? 'unknown',
       paneMode,
-      nowMs,
+      nowMs: snapshot?.checkedAtMs ?? 0,
     });
-    for (const { key, agent, spokenCaption } of model.rows) {
+    for (const { key, agent, spokenCaption, pendingUserInput } of model.rows) {
       const visited = recents.find(
         ({ target }) =>
           target.kind === 'gateway-terminal' &&
@@ -266,12 +330,13 @@ export function homeContinueEntries({
         atMs: visited?.atMs ?? 0,
         ...(agent.agentLabel ? { agentLabel: agent.agentLabel } : {}),
         observation:
-          agent.hasAgent && model.age
+          agent.hasAgent && model.snapshot
             ? {
                 kind: 'gateway-agent',
-                age: model.age,
-                stale: model.stale,
+                observedAtMs: model.snapshot.checkedAtMs,
+                seen: { panesOf: serverId },
                 ...(spokenCaption?.kind === 'status' ? { status: spokenCaption.status } : {}),
+                ...(pendingUserInput ? { pendingUserInput: true } : {}),
               }
             : undefined,
         destination: { type: 'pane', serverId, paneId: agent.paneId, cwd: agent.cwd },
@@ -287,17 +352,28 @@ export function homeContinueEntries({
     )
       continue;
     if (target.kind !== 'ssh-host' && reachabilityByServer[target.serverId] === 'offline') continue;
-    if (target.kind === 'agent-session' && isGone(target.serverId, target.asid)) continue;
+    if (
+      target.kind === 'agent-session' &&
+      isGone(target.serverId, target.asid, homeTargetAgentId(target))
+    )
+      continue;
     if (
       target.kind === 'gateway-terminal' &&
       supersededTerminalRecent(target, snapshots[target.serverId], paneMode)
     )
       continue;
-    const reported =
+    const matching =
       listed && target.kind === 'agent-session' && target.serverId === listed.serverId
-        ? unclaimed.get(target.asid)
-        : undefined;
-    if (reported) unclaimed.delete(reported.asid);
+        ? [...unclaimed.values()].filter(
+            (session) =>
+              session.asid === target.asid &&
+              (!target.agentId || session.agentId === homeTargetAgentId(target))
+          )
+        : [];
+    // A legacy recent without a provider may be repaired only by one unambiguous owner.
+    const reported = matching.length === 1 ? matching[0] : undefined;
+    if (reported && listed)
+      unclaimed.delete(goneSessionKey(listed.serverId, reported.asid, reported.agentId));
     const stored = entry.sessionObservation;
     const sessionObservation =
       reported && listed && (!stored || stored.observedAtMs <= listed.observedAtMs)
@@ -309,11 +385,12 @@ export function homeContinueEntries({
       atMs: reported ? Math.max(entry.atMs, reported.updatedMs) : entry.atMs,
       observation:
         target.kind === 'agent-session' && sessionObservation
-          ? openCodeObservation(
-              sessionObservation,
-              reachabilityByServer[target.serverId] ?? 'unknown',
-              nowMs
-            )
+          ? {
+              kind: 'agent-session',
+              status: sessionObservation.status,
+              observedAtMs: sessionObservation.observedAtMs,
+              seen: { recentKey: entry.key, ...(reported ? { listedBy: target.serverId } : {}) },
+            }
           : undefined,
       destination: {
         type: 'recent',
@@ -325,7 +402,6 @@ export function homeContinueEntries({
     });
   }
   if (listed) {
-    const reachability = reachabilityByServer[listed.serverId] ?? 'unknown';
     for (const session of unclaimed.values()) {
       const target: HomeAgentSessionTarget = {
         kind: 'agent-session',
@@ -336,14 +412,15 @@ export function homeContinueEntries({
         agentId: session.agentId,
       };
       rows.push({
-        key: homeTargetKey(target),
+        key: goneSessionKey(listed.serverId, session.asid, session.agentId),
         title: reportedTitle(session),
         atMs: session.updatedMs,
-        observation: openCodeObservation(
-          { status: session.status, observedAtMs: listed.observedAtMs },
-          reachability,
-          nowMs
-        ),
+        observation: {
+          kind: 'agent-session',
+          status: session.status,
+          observedAtMs: listed.observedAtMs,
+          seen: { listedBy: listed.serverId },
+        },
         destination: { type: 'agent-session', target },
       });
     }
@@ -391,24 +468,39 @@ function reportedTitle(session: GatewayAgentSession): string {
   return hasRealSessionTitle(session) ? session.title.trim() : '';
 }
 
-function openCodeObservation(
-  observation: HomeSessionObservation,
-  reachability: ServerReachability,
-  nowMs: number
-): HomeContinueObservation {
-  const stale = nowMs - observation.observedAtMs > SERVER_AGENTS_STALE_AFTER_MS;
-  return {
-    kind: 'agent-session',
-    age: observationAgeParts(observation.observedAtMs, nowMs),
-    stale,
-    ...(!stale && reachability !== 'offline' ? { status: observation.status } : {}),
-  };
-}
-
 function observationAgeParts(observedAtMs: number, nowMs: number): HomeContinueAge {
   const seconds = Math.max(0, Math.round((nowMs - observedAtMs) / 1000));
   if (seconds < 90) return { unit: 'now', value: 0 };
   if (seconds < 3600) return { unit: 'minute', value: Math.floor(seconds / 60) };
   if (seconds < 86400) return { unit: 'hour', value: Math.floor(seconds / 3600) };
   return { unit: 'day', value: Math.floor(seconds / 86400) };
+}
+
+/** The computer a Recent row belongs to; `undefined` for an SSH host. */
+export function homeContinueServerId(entry: HomeContinueEntry): string | undefined {
+  if (entry.destination.type === 'pane') return entry.destination.serverId;
+  const target = entry.destination.target;
+  return target.kind === 'ssh-host' ? undefined : target.serverId;
+}
+
+/**
+ * The computers Recent offers a filter chip for, in the reader's own order:
+ * only those with a row, and none at all unless there are two to choose from.
+ */
+export function homeRecentFilterIds(
+  entries: readonly HomeContinueEntry[],
+  serverIds: readonly string[]
+): string[] {
+  const present = new Set(entries.map(homeContinueServerId));
+  const ids = serverIds.filter((serverId) => present.has(serverId));
+  return ids.length > 1 ? ids : [];
+}
+
+/** Recent narrowed to one computer; every row when no chip is picked. */
+export function filterHomeRecent(
+  entries: readonly HomeContinueEntry[],
+  serverId: string | null
+): readonly HomeContinueEntry[] {
+  if (!serverId) return entries;
+  return entries.filter((entry) => homeContinueServerId(entry) === serverId);
 }

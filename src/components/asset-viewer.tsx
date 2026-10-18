@@ -1,11 +1,12 @@
 import * as Clipboard from 'expo-clipboard';
+import { AudioPlaybackError } from '@/lib/audio-playback-session';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Button } from '@/components/themed-button';
 import { Skeleton } from '@/components/themed-skeleton';
-import { Check, Copy, X } from 'lucide-react-native';
+import { Check, Copy, Download, X } from 'lucide-react-native';
 import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -24,6 +25,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMarkdownFonts } from '@/hooks/use-user-fonts';
 import { createMarkdownStyle, markdownImageStyle } from '@/lib/markdown-style';
 import { ImagePreviewModal } from '@/components/image-preview-modal';
+import { VideoAssetPreview } from '@/components/video-asset-preview';
+import { AudioAssetPreview } from '@/components/audio-asset-preview';
+import { useFileActions } from '@/hooks/use-file-actions';
+import { saveSessionAsset } from '@/lib/save-file';
 import { SheetFrame } from '@/components/sheet-ground';
 import { PressableScale } from '@/components/pressable-scale';
 import { formatAssetSize } from '@/lib/asset-display';
@@ -77,13 +82,10 @@ const documentImageResolver = messageImageResolver(NO_IMAGE_URIS, NO_PENDING_IMA
 /**
  * Read-only view of one artifact the agent produced.
  *
- * Every kind is displayed straight from the gateway rather than copied to a
- * cache file first: an image is fetched by the image library, which sends the
- * bearer token itself and owns the decode and the disk cache, and text is read
- * into a string because that is what the renderers want anyway. Nothing here
- * holds a whole file in the JS heap except text, which is size-capped by
- * `readAssetText` -- and that cap is now the only one: what arrives is drawn,
- * a block or a line at a time.
+ * Images use the image library's authenticated fetch and decode. Text is read
+ * through the bounded text reader. Audio is downloaded through the same
+ * authenticated transport into an owned temporary file, with a 10 MiB ceiling,
+ * so the native player can seek without exposing Gateway credentials to it.
  */
 export function AssetViewer({ asset, onClose }: { asset: SessionAsset; onClose: () => void }) {
   // A picture goes to the lightbox and its black matte; everything else is
@@ -181,6 +183,7 @@ const COPIED_FEEDBACK_MS = 1_600;
 /** Everything that is not an image: a document, some text, or a file we can only describe. */
 function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => void }) {
   const surfaceBackground = useSurfaceBackground();
+  const fileActions = useFileActions(asset.name, () => saveSessionAsset(asset));
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
   //
   // React Compiler is enabled, and it will memoize a global `t` call whose
@@ -293,6 +296,8 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
       async () => {
         try {
           const bytes = await readAssetBytes(asset, {
+            // Theme archives are downloadable files, not Gateway previews.
+            download: true,
             signal: request.signal,
             maxBytes: THEME_LIMITS.packageBytes,
             onProgress: (done, total) => {
@@ -308,7 +313,11 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
           // A read this screen itself cancelled is not a failure to report: there is
           // no longer a screen to report it on.
           if (mounted.current && !request.isCanceled)
-            setError(describeGatewayFailure(failure, t`Could not open this theme.`).message);
+            setError(
+              failure instanceof AudioPlaybackError
+                ? t`Update the Gateway to open or save this file.`
+                : describeGatewayFailure(failure, t`Could not open this theme.`).message
+            );
         }
       },
       () => {
@@ -426,6 +435,15 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
                   caption={subtitle}
                   trailing={
                     <View style={styles.headerControls}>
+                      <PressableScale
+                        accessibilityLabel={t`Save file`}
+                        onPress={fileActions.show}
+                        style={[
+                          styles.close,
+                          { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                        ]}>
+                        <Download size={18} color={theme.colors.text} />
+                      </PressableScale>
                       {content ? (
                         <PressableScale
                           accessibilityLabel={t`Copy`}
@@ -456,6 +474,7 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
               </View>
             </View>
 
+            {fileActions.menu}
             {pack ? (
               <ScrollView contentContainerStyle={styles.themePreview}>
                 <CustomThemeLibrary
@@ -631,6 +650,8 @@ function AssetBody({
   // one down rather than reusing it, and the two overlap for the length of a
   // short fade -- which is what makes a document read as having arrived rather
   // than as having replaced something.
+  if (presentation === 'audio') return <AudioAssetPreview asset={asset} />;
+  if (presentation === 'video') return <VideoAssetPreview asset={asset} />;
   if (tooLarge) {
     // The one refusal left, and the only one that says a number. It is reached
     // before a byte is read, so what it offers is the way to the file rather
@@ -642,7 +663,7 @@ function AssetBody({
         <View style={styles.centerState}>
           <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.centerText}>
             {/* react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs. */}
-            {t`This file is ${size}. Muqun opens text files up to ${ceiling}; larger ones stay on the server.`}
+            {t`This file is ${size}. Muqun opens text files up to ${ceiling}; larger ones stay on the computer.`}
           </Text>
           <Text variant="caption" color={theme.colors.textMuted} selectable>
             {asset.path}
@@ -846,7 +867,7 @@ function AssetDetails({ asset }: { asset: SessionAsset }) {
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.detailsContent}>
       <Text variant="bodySmall" color={theme.colors.textMuted}>
-        <Trans>No preview for this kind of file. It stays on the server.</Trans>
+        <Trans>No preview for this kind of file. It stays on the computer.</Trans>
       </Text>
       <View>
         {rows.map((row, index) => (

@@ -65,9 +65,9 @@ const SYNTHETIC_PANES: readonly (readonly [string, string])[] = [
 ];
 
 describe('flat fast path equivalence', () => {
-  test.each(SYNTHETIC_PANES)('%s', (_name, input) => {
-    expect(snapshotQualifiesForFlatPath(input)).toBe(true);
-    expectSamePath(input);
+  test('every synthetic pane takes the flat path and draws what the emulator draws', () => {
+    expect(SYNTHETIC_PANES.filter(([, input]) => !snapshotQualifiesForFlatPath(input))).toEqual([]);
+    for (const [, input] of SYNTHETIC_PANES) expectSamePath(input);
   });
 });
 
@@ -93,9 +93,9 @@ const EMULATOR_ONLY: readonly (readonly [string, string])[] = [
 ];
 
 describe('flat fast path fallback', () => {
-  test.each(EMULATOR_ONLY)('%s falls back to the emulator', (_name, input) => {
-    expect(snapshotQualifiesForFlatPath(input)).toBe(false);
-    expectSamePath(input);
+  test('everything the flat model does not describe falls back to the emulator', () => {
+    expect(EMULATOR_ONLY.filter(([, input]) => snapshotQualifiesForFlatPath(input))).toEqual([]);
+    for (const [, input] of EMULATOR_ONLY) expectSamePath(input);
   });
 
   test('a pane wider than the column cap falls back', () => {

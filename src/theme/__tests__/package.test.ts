@@ -24,6 +24,27 @@ test('declared packaged artwork round-trips byte for byte', () => {
   expect(output.assets.paper).toEqual(bytes);
 });
 
+test.each(['home.composer.background', 'home.composer.decoration'] as const)(
+  '%s preserves responsive placement through packaging',
+  (slot) => {
+    const manifest = createThemeStarter();
+    manifest.assets = { frame: { path: 'assets/frame.png' } };
+    manifest.decoration = {
+      [slot]: {
+        asset: 'frame',
+        fit: 'contain',
+        focalPoint: { x: 1, y: 0.5 },
+        compact: { asset: 'frame', fit: 'contain', opacity: 0.2 },
+        regular: null,
+      },
+    };
+    const output = unpackTheme(packTheme({ manifest, assets: { frame: new Uint8Array([1]) } }));
+    expect(output.manifest.decoration).toEqual(manifest.decoration);
+    manifest.assets.frame = { path: 'assets/../frame.png' };
+    expect(() => packTheme({ manifest, assets: { frame: new Uint8Array([1]) } })).toThrow();
+  }
+);
+
 test('paths, undeclared entries and symlinks are rejected before installation', () => {
   for (const path of [
     '../theme.json',

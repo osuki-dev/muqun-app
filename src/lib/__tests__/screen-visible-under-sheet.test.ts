@@ -1,5 +1,4 @@
 import { expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
 
 import { seenThroughRoutes } from '../route-presentation';
 
@@ -30,19 +29,4 @@ test('a full-screen route takes the screen away', () => {
 test('a work surface a Pad shows full-screen takes it away; a picker does not', () => {
   expect(seenThroughRoutes(['git-diff'], true)).toBe(false);
   expect(seenThroughRoutes(['commands'], true)).toBe(true);
-});
-
-test('the pane output path follows visibility, not focus', () => {
-  const source = readFileSync(
-    new URL('../../components/server-terminal-workspace.tsx', import.meta.url),
-    'utf8'
-  );
-  expect(/const watching =[^;]*screenVisible/.test(source)).toBe(true);
-  expect(/const watching =[^;]*isFocused/.test(source)).toBe(false);
-  // The stream, its safety-net poll and the read they trigger.
-  expect(source).toContain("appActive && watching && connection.phase === 'connected',");
-  expect(/!appActive \|\| !watching \|\| connection\.phase/.test(source)).toBe(true);
-  expect(
-    /const refreshOutput = useCallback\(async \(\) => \{\s*if \(\s*!watching/.test(source)
-  ).toBe(true);
 });

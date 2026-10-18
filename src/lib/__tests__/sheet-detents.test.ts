@@ -1,5 +1,4 @@
 import { expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
 
 import {
   resolveDetents,
@@ -79,37 +78,6 @@ test('the largest detent is the highest value, not the last one written', () => 
   expect(resolveDetents([1, 0.6], 'list', 'android')).toEqual([1]);
 });
 
-test('the platform is read once, from the bundler, not from a Platform import', () => {
-  const source = readFileSync('src/lib/route-presentation.ts', 'utf8');
-  // `process.env.EXPO_OS` is inlined per platform bundle, so the branch costs
-  // nothing at runtime and the other platform's value is not even shipped. The
-  // same mechanism `sheet-route-frame.tsx` uses for the Android grabber.
-  expect(source).toContain('platform: string | undefined = process.env.EXPO_OS');
-  expect(source).not.toContain("from 'react-native'");
-});
-
-/**
- * The reasoning is load-bearing, so it has to stay in the file.
- *
- * This fix looks like a downgrade -- Android loses the drag -- and the only
- * thing that stops someone restoring the second detent in good faith is the
- * record of what was checked. Each of these is a documented escape that does
- * not work, cited where it lives.
- */
-test('the file still says which documented escapes were ruled out, and where', () => {
-  const source = readFileSync('src/lib/route-presentation.ts', 'utf8');
-  for (const citation of [
-    'FormSheetDimensionsCoordinator.kt:75-81', // the largest-detent layout is by design
-    'findScrollingChild', // nesting is not the problem
-    'sheetExpandsWhenScrolledToEdge', // iOS only; read nowhere on Android
-    'sheetInitialDetentIndex', // moves the sheet, not the layout
-    'unstable_sheetFooter', // an overlay; cannot size a viewport
-    'BottomSheetBehaviorExt.kt:19-34', // useSingleDetent, which is the fix
-  ]) {
-    expect({ citation, kept: source.includes(citation) }).toEqual({ citation, kept: true });
-  }
-});
-
 test('presentation options carry the resolved detents, not the raw ones', () => {
   const options = sheetPresentationOptions('sheet', 'expandable');
   expect(options.presentation).toBe('formSheet');
@@ -150,64 +118,4 @@ test('every sheet route declares its height and its content, and only here', () 
   // The two full-screen routes are not sheets and have no detents to declare.
   expect(sheetRouteDetents['custom-theme']).toBeUndefined();
   expect(sheetRouteDetents['simfarm']).toBeUndefined();
-});
-
-test('the sheets the owner reported are the ones that open tall', () => {
-  // Named rather than merely counted: these are the lists whose last row was
-  // unreachable, and a change that quietly reclassifies one fails here.
-  for (const route of [
-    'agent-model',
-    'agent-workspace',
-    'agent-sessions',
-    'agent-worktree',
-    'panels',
-    'sessions',
-    'artifacts',
-    'git-diff',
-    'agent-vcs-diff',
-    'settings-theme-browse',
-    // The owner's second round: long content opens tall, whether or not it is
-    // a list. Pairing and the context sheet were both found cut off at the
-    // first detent, and the rest are the same shape.
-    'explore',
-    'agent-context',
-    'agent-mode',
-    'settings-language',
-    'settings-font',
-    'agent-guide',
-  ]) {
-    expect({ route, content: sheetRouteContent[route] }).toEqual({ route, content: 'list' });
-  }
-
-  // And a short form stays short, which is the other half of the judgement.
-  for (const route of ['new-task', 'web-service']) {
-    expect({ route, content: sheetRouteContent[route] }).toEqual({ route, content: 'short' });
-  }
-});
-
-test('the layout asks the table for a sheet route rather than spelling a height', () => {
-  const layout = readFileSync('src/app/_layout.tsx', 'utf8');
-
-  // No detent literal survives in the layout: that duplication is what let the
-  // table claim to be the only place a height is chosen while it was not.
-  expect(layout).not.toContain("'expandable'");
-  expect(layout).not.toContain("'fitToContents'");
-  expect(/sheetPresentationOptions\([^)]*\[[\d.,\s]+\]/.test(layout)).toBe(false);
-
-  for (const route of Object.keys(sheetRouteDetents)) {
-    expect({ route, wired: layout.includes(`sheetRouteOptions('${route}')`) }).toEqual({
-      route,
-      wired: true,
-    });
-  }
-
-  // The two full-screen routes keep the explicit call, because each also
-  // overrides its animation duration -- and `sheet-scene-contract.test.ts`
-  // greps for exactly that spelling.
-  for (const route of ['custom-theme', 'simfarm']) {
-    expect({ route, explicit: layout.includes(`sheetRoutePresentations['${route}']`) }).toEqual({
-      route,
-      explicit: true,
-    });
-  }
 });

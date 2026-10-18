@@ -23,6 +23,7 @@
 
 import { parseKeyboardVocabulary, type KeyboardVocabulary } from './key-vocabulary';
 import { parseMessageImageAssets, type MessageImageAsset } from './message-images';
+import { stripTaskInstruction } from './task-plumbing';
 
 // ---------------------------------------------------------------------------
 // Primitives
@@ -1381,7 +1382,12 @@ export function parseInboxItems(value: unknown): InboxItem[] {
 }
 
 /** The one line an inbox item shows: the prompt text it is carrying. */
+/** A queued prompt's text, without the completion request an older gateway appends. */
 export function inboxItemText(item: InboxItem): string {
+  return stripTaskInstruction(inboxPayloadText(item));
+}
+
+function inboxPayloadText(item: InboxItem): string {
   const payload = asRecord(item.payload);
   if (!payload) return asString(item.payload) ?? '';
   const direct = pickString(payload, ['text', 'prompt', 'message', 'content']);
@@ -2169,9 +2175,19 @@ export interface WebSocketTransportDiscovery {
   protocol?: number;
 }
 
+/** The MCP endpoint, as discovery's `transports.mcp` states it. */
+export interface McpTransportDiscovery {
+  /** An absolute path on the gateway. */
+  path: string;
+  loopbackOnly: boolean;
+  /** The helper a pane runs to obtain its token, when the gateway names one. */
+  tokenHelper?: string;
+}
+
 /** The App-facing transports beyond plain HTTP, keyed by name. */
 export interface TransportsDiscovery {
   websocket?: WebSocketTransportDiscovery;
+  mcp?: McpTransportDiscovery;
 }
 
 /** Every plane of one `GET /api/discovery` answer this app reads. */
@@ -2207,7 +2223,37 @@ export function parseTransportsDiscovery(value: unknown): TransportsDiscovery | 
       ...(typeof protocol === 'number' && Number.isInteger(protocol) ? { protocol } : {}),
     };
   }
+  const mcp = asRecord(rec.mcp);
+  if (mcp && isGatewayPath(mcp.path)) {
+    // The wire spells it snake_case; the app's own mirror stores camelCase.
+    const tokenHelper = pickString(mcp, ['token_helper', 'tokenHelper']);
+    transports.mcp = {
+      path: mcp.path,
+      loopbackOnly: pickBool(mcp, ['loopback_only', 'loopbackOnly']) ?? true,
+      ...(tokenHelper ? { tokenHelper } : {}),
+    };
+  }
   return transports;
+}
+
+/** One terminal backend of the terminal plane or of the fleet manifest. */
+export function parseTerminalBackendSummary(value: unknown): TerminalBackendSummary | null {
+  const backend = asRecord(value);
+  if (!backend) return null;
+  const sessionId = pickString(backend, ['sessionId']);
+  if (!sessionId) return null;
+  const keyboard = parseKeyboardVocabulary(backend.keyboard);
+  const backendFeatures = asRecord(backend.features);
+  const pagedHistory = backendFeatures ? pickBool(backendFeatures, ['pagedHistory']) : undefined;
+  return {
+    sessionId,
+    label: pickString(backend, ['label']) ?? sessionId,
+    kind: pickString(backend, ['kind']) ?? '',
+    connected: backend.connected === true,
+    capabilities: asStringArray(backend.capabilities),
+    ...(keyboard ? { keyboard } : {}),
+    ...(pagedHistory !== undefined ? { pagedHistory } : {}),
+  };
 }
 
 export function parseTerminalDiscovery(value: unknown): TerminalDiscovery | null {
@@ -2215,22 +2261,8 @@ export function parseTerminalDiscovery(value: unknown): TerminalDiscovery | null
   if (!rec || !Array.isArray(rec.backends)) return null;
   const backends: TerminalBackendSummary[] = [];
   for (const entry of rec.backends) {
-    const backend = asRecord(entry);
-    if (!backend) continue;
-    const sessionId = pickString(backend, ['sessionId']);
-    if (!sessionId) continue;
-    const keyboard = parseKeyboardVocabulary(backend.keyboard);
-    const backendFeatures = asRecord(backend.features);
-    const pagedHistory = backendFeatures ? pickBool(backendFeatures, ['pagedHistory']) : undefined;
-    backends.push({
-      sessionId,
-      label: pickString(backend, ['label']) ?? sessionId,
-      kind: pickString(backend, ['kind']) ?? '',
-      connected: backend.connected === true,
-      capabilities: asStringArray(backend.capabilities),
-      ...(keyboard ? { keyboard } : {}),
-      ...(pagedHistory !== undefined ? { pagedHistory } : {}),
-    });
+    const backend = parseTerminalBackendSummary(entry);
+    if (backend) backends.push(backend);
   }
   const activeBackend = pickString(rec, ['activeBackend']);
   const degradedReason = pickString(rec, ['degradedReason']);

@@ -1055,6 +1055,7 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
 
   const composer = (
     <TerminalComposer
+      voiceContext={`ssh:${hostId}`}
       // With the key row switched off there is no row to carry the
       // keyboard toggle, so it rides in front of the field instead --
       // the seat the gateway's paperclip has. Never over the keyboard

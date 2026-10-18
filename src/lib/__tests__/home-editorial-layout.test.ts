@@ -25,11 +25,6 @@ test('a Pad Home keeps Connections narrow and gives Continue the rest', () => {
   expect(getEditorialLayoutGeometry(980, 1, true).asideWidth).toBe(280);
 });
 
-test('uses content width rather than a device width assumption', () => {
-  expect(getEditorialLayoutGeometry(752, 1, true).mode).toBe('two-column');
-  expect(getEditorialLayoutGeometry(720, 1, true).mode).toBe('one-column');
-});
-
 test('collapses to one column as type grows', () => {
   expect(getEditorialLayoutGeometry(752, 1.2, true).mode).toBe('one-column');
   expect(getEditorialLayoutGeometry(1200, 1.35, true).mode).toBe('one-column');

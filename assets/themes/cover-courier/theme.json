@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "id": "cover-courier",
   "name": "Cover Courier",
-  "version": "1.0.6",
+  "version": "1.0.9",
   "author": "Muqun",
   "license": "CC0-1.0",
   "description": "Layered manga courier artwork over ivory or midnight railway paper. Transparent character art, quiet city wallpaper, and readable work surfaces.",
@@ -123,7 +123,8 @@
   },
   "assets": {
     "preview": {
-      "path": "assets/preview.webp"
+      "path": "assets/preview.webp",
+      "sha256": "3c53f4ab016e6f86712fd90ccdbe82581de99ec3c649ebfd87c002d683949f6d"
     },
     "paper-light": {
       "path": "assets/paper-light.webp"
@@ -151,6 +152,14 @@
     },
     "icon-settings": {
       "path": "assets/icon-settings.webp"
+    },
+    "icon-create": {
+      "path": "assets/icon-create.webp",
+      "sha256": "05c07c2c03fabc2c22caf897f738816069ea4fdec2ae276efdf6d24fa71b304a"
+    },
+    "icon-arrow": {
+      "path": "assets/icon-arrow.webp",
+      "sha256": "12eda6e14a45ee80cc25c1927cfb999a5258d68fed2c4c36089ac151440be477"
     }
   },
   "decoration": {},
@@ -174,7 +183,23 @@
     "chrome.settings": {
       "asset": "icon-settings",
       "render": "template"
+    },
+    "chrome.parameters": {
+      "asset": "icon-settings",
+      "render": "template"
+    },
+    "chrome.create": {
+      "asset": "icon-create",
+      "render": "template"
+    },
+    "home.arrow": {
+      "asset": "icon-arrow",
+      "render": "template"
     }
+  },
+  "iconDirections": {
+    "home.arrow": "up-right",
+    "chrome.back": "left"
   },
   "variantDecorations": {
     "light": {
@@ -182,50 +207,113 @@
         "asset": "courier-light",
         "fit": "contain",
         "opacity": 1,
+        "focalPoint": {
+          "x": 0.5,
+          "y": 0.5
+        },
         "compact": {
           "asset": "courier-light",
           "fit": "contain",
-          "opacity": 1
+          "opacity": 1,
+          "focalPoint": {
+            "x": 0.5,
+            "y": 0.5
+          }
         },
         "regular": {
           "asset": "courier-light",
           "fit": "contain",
-          "opacity": 1
+          "opacity": 1,
+          "focalPoint": {
+            "x": 0.5,
+            "y": 0.5
+          }
         }
       },
       "shell.wallpaper": {
         "asset": "paper-light",
         "fit": "cover",
-        "opacity": 0.5,
+        "opacity": 0.18,
+        "focalPoint": {
+          "x": 0.5,
+          "y": 0.5
+        },
         "compact": {
           "asset": "paper-light",
           "fit": "cover",
-          "opacity": 0.5
+          "opacity": 0.18,
+          "focalPoint": {
+            "x": 0.5,
+            "y": 0.5
+          }
         },
         "regular": {
           "asset": "paper-light",
           "fit": "cover",
-          "opacity": 0.5
+          "opacity": 0.18,
+          "focalPoint": {
+            "x": 0.5,
+            "y": 0.5
+          }
         }
       },
       "home.wallpaper": {
         "asset": "paper-light",
         "fit": "cover",
-        "opacity": 0.8,
+        "opacity": 0.35,
+        "focalPoint": {
+          "x": 0.5,
+          "y": 0.5
+        },
         "compact": {
           "asset": "paper-light",
           "fit": "cover",
-          "opacity": 0.8
+          "opacity": 0.35,
+          "focalPoint": {
+            "x": 0.5,
+            "y": 0.5
+          }
         },
         "regular": {
           "asset": "paper-light",
           "fit": "cover",
-          "opacity": 0.8
+          "opacity": 0.35,
+          "focalPoint": {
+            "x": 0.5,
+            "y": 0.5
+          }
         }
       },
       "home.artwork": {
         "asset": "courier-light",
-        "fit": "cover",
+        "fit": "contain",
+        "opacity": 1,
+        "focalPoint": {
+          "x": 0.62,
+          "y": 0.35
+        },
+        "compact": {
+          "asset": "courier-light",
+          "fit": "contain",
+          "opacity": 1,
+          "focalPoint": {
+            "x": 0.62,
+            "y": 0.35
+          }
+        },
+        "regular": {
+          "asset": "courier-light",
+          "fit": "contain",
+          "opacity": 1,
+          "focalPoint": {
+            "x": 0.62,
+            "y": 0.35
+          }
+        }
+      },
+      "launch.artwork": {
+        "asset": "courier-light",
+        "fit": "contain",
         "opacity": 1,
         "focalPoint": {
           "x": 0.6,
@@ -256,50 +344,113 @@
         "asset": "courier-dark",
         "fit": "contain",
         "opacity": 1,
+        "focalPoint": {
+          "x": 0.5,
+          "y": 0.5
+        },
         "compact": {
           "asset": "courier-dark",
           "fit": "contain",
-          "opacity": 1
+          "opacity": 1,
+          "focalPoint": {
+            "x": 0.5,
+            "y": 0.5
+          }
         },
         "regular": {
           "asset": "courier-dark",
           "fit": "contain",
-          "opacity": 1
+          "opacity": 1,
+          "focalPoint": {
+            "x": 0.5,
+            "y": 0.5
+          }
         }
       },
       "shell.wallpaper": {
         "asset": "paper-dark",
         "fit": "cover",
-        "opacity": 0.5,
+        "opacity": 0.18,
+        "focalPoint": {
+          "x": 0.5,
+          "y": 0.5
+        },
         "compact": {
           "asset": "paper-dark",
           "fit": "cover",
-          "opacity": 0.5
+          "opacity": 0.18,
+          "focalPoint": {
+            "x": 0.5,
+            "y": 0.5
+          }
         },
         "regular": {
           "asset": "paper-dark",
           "fit": "cover",
-          "opacity": 0.5
+          "opacity": 0.18,
+          "focalPoint": {
+            "x": 0.5,
+            "y": 0.5
+          }
         }
       },
       "home.wallpaper": {
         "asset": "paper-dark",
         "fit": "cover",
-        "opacity": 0.8,
+        "opacity": 0.35,
+        "focalPoint": {
+          "x": 0.5,
+          "y": 0.5
+        },
         "compact": {
           "asset": "paper-dark",
           "fit": "cover",
-          "opacity": 0.8
+          "opacity": 0.35,
+          "focalPoint": {
+            "x": 0.5,
+            "y": 0.5
+          }
         },
         "regular": {
           "asset": "paper-dark",
           "fit": "cover",
-          "opacity": 0.8
+          "opacity": 0.35,
+          "focalPoint": {
+            "x": 0.5,
+            "y": 0.5
+          }
         }
       },
       "home.artwork": {
         "asset": "courier-dark",
-        "fit": "cover",
+        "fit": "contain",
+        "opacity": 1,
+        "focalPoint": {
+          "x": 0.62,
+          "y": 0.35
+        },
+        "compact": {
+          "asset": "courier-dark",
+          "fit": "contain",
+          "opacity": 1,
+          "focalPoint": {
+            "x": 0.62,
+            "y": 0.35
+          }
+        },
+        "regular": {
+          "asset": "courier-dark",
+          "fit": "contain",
+          "opacity": 1,
+          "focalPoint": {
+            "x": 0.62,
+            "y": 0.35
+          }
+        }
+      },
+      "launch.artwork": {
+        "asset": "courier-dark",
+        "fit": "contain",
         "opacity": 1,
         "focalPoint": {
           "x": 0.6,

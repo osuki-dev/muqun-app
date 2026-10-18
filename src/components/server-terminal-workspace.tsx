@@ -1,11 +1,15 @@
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
+import { AudioPlaybackError } from '@/lib/audio-playback-session';
+import { GuideCommand } from '@/components/guide-command';
 import { ComposerAttachmentButton } from '@/components/composer-attachment-button';
 import { TerminalNotice, terminalNoticeStyles } from '@/components/terminal-notice';
 import { NoticeDeck } from '@/components/notice-deck';
+import { revealableSubtreeImportance } from '@/lib/hidden-subtree';
 import { ComposerSendGuard } from '@/lib/composer-send-guard';
 import { Spinner, useThemeMode, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { resolvePanelPick } from '@/lib/resolve-panel-pick';
+import { paneChipRevealOffset } from '@/lib/pane-chip-reveal';
 import {
   type Href,
   useFocusEffect,
@@ -14,6 +18,7 @@ import {
   useRouter,
 } from 'expo-router';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
+import { useActiveConnection } from '@/stores/active-connection';
 import { noteGatewayGeneration, onGatewayRestart } from '@/stores/gateway-connection-generation';
 import { useScreenVisible } from '@/hooks/use-screen-visible';
 import { DeliveryOwnership, DeliverySelection } from '@/lib/bound-delivery';
@@ -39,6 +44,7 @@ import {
 } from 'react';
 import {
   AppState,
+  BackHandler,
   Keyboard,
   type LayoutChangeEvent,
   Pressable,
@@ -136,8 +142,10 @@ import { GatewayStorageError } from '@/components/gateway-storage-error';
 import { useGatewayTunnel } from '@/hooks/use-gateway-tunnel';
 import { usePaneApproval } from '@/hooks/use-pane-approval';
 import { usePaneEvents } from '@/hooks/use-pane-events';
+import { layoutNeedsRefresh, type PaneLayout } from '@/lib/pane-event-names';
 import {
   useLatestRef,
+  useLatestReader,
   useLazyRef,
   useResetSignal,
   useStableHandler,
@@ -173,8 +181,10 @@ import {
   gatewaySupportsAgentEvents,
   gatewaySupportsAgentSpawn,
   gatewaySupportsApprovals,
+  loadPanes,
   readPaneOutput,
   readPaneRange,
+  readPaneHistory,
   readPaneTail,
   resolveAssetById,
   resolveAssetByPath,
@@ -200,16 +210,24 @@ import { composerBackdropBottom } from '@/lib/composer-popup';
 import { withAlpha } from '@/lib/color';
 import { slashCommandTrigger, type PaneSlashCommand } from '@/lib/pane-composer';
 import { asAgentWidgetStatus, syncAgentWidget } from '@/lib/agent-widget';
+import { paneGoneError } from '@/lib/agent-request-error';
 import { describeGatewayFailure, type GatewayFailure } from '@/lib/network-error';
 import {
   backendPagesHistory,
   canOfferHistoryPull,
   historyExhaustedNotice,
+  historyRefreshNotice,
   historyPullUsesRange,
   tailPageFoundNothing,
   historyPullBlockedAfter,
   historyPullNotice,
   pullEarlierPage,
+  capturedProbeDue,
+  capturedProbeState,
+  capturedReprobeDelay,
+  capturedTraversalNeedsRefresh,
+  PANE_CAPTURED_HISTORY_CAPABILITY,
+  type CapturedCursor,
   type HistoryPullNotice,
 } from '@/lib/terminal-history-pull';
 import { DEMO_SERVER_ID, demoRecord, isDemoRecord } from '@/lib/demo-gateway';
@@ -235,6 +253,7 @@ import {
   paneWindowWorthFiling,
   recallPaneWindow,
   rememberPaneWindow,
+  forgetPaneWindow,
   retainPanes,
   warmPaneWindow,
   type PaneCache,
@@ -321,6 +340,7 @@ import {
   paneVocabulary,
   vocabularyForSession,
 } from '@/lib/key-vocabulary';
+import { useServerChannels } from '@/stores/server-channels';
 import { useServerReachability } from '@/stores/server-reachability';
 import { useServerSession } from '@/stores/server-session';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
@@ -328,8 +348,10 @@ import { homeWorkspaceHandoffStore } from '@/lib/home-workspace-handoff';
 import {
   type TerminalKey,
   isFullScreenTuiPane,
+  isLazygitPane,
   keyCap,
   parseNvimMode,
+  terminalShortcutTestId,
   keyboardCombinationKeys,
   terminalKeysFromGateway,
   withCommonTerminalCombinations,
@@ -338,6 +360,8 @@ import {
 import { parseTerminalSnapshot, terminalFrameText } from '@/terminal/terminal-core';
 import {
   foldPaneRead,
+  foldPaneWindow,
+  type PaneReadWindow,
   forgetPaneReadSettling,
   hasEarlierAfterPage,
   hasEarlierTerminalOutput,
@@ -472,6 +496,22 @@ const initialData: ServerData = {
 };
 
 const MAX_RECONNECT_DELAY_MS = 8_000;
+/** One pane's captured-history state, filed with its window (`PaneWindow.captured`). */
+type CapturedPaneState = {
+  generation: number;
+  rows: number;
+  refreshRequired: boolean;
+  empty: boolean;
+  cursor: CapturedCursor | null;
+  off: boolean;
+  exhausted: boolean;
+  open: boolean;
+};
+
+/** How often a pane with nothing captured yet asks again while its output grows. */
+const CAPTURED_REPROBE_MS = 30_000;
+/** At most one pane-list read per this long, however fast `layout_updated` comes. */
+const LAYOUT_CHECK_MS = 2_000;
 
 /**
  * How long a selection has to stand still before its neighbours are warmed.
@@ -716,6 +756,7 @@ function usePaneWindowHandoff(
   paneSwitched: boolean,
   {
     output,
+    capturedRows,
     paneId,
     outputShape,
     paneCacheRef,
@@ -727,11 +768,13 @@ function usePaneWindowHandoff(
     earlierOutputRowsRef,
     rangeUnsupportedRef,
     lastReadRef,
+    capturedHereRef,
     setOutput,
     setCanLoadEarlierOutput,
     setPaneRevision,
   }: {
     output: string;
+    capturedRows: number;
     paneId: string;
     outputShape: string;
     paneCacheRef: { current: PaneCache };
@@ -743,7 +786,8 @@ function usePaneWindowHandoff(
     earlierOutputRowsRef: { readonly current: number };
     rangeUnsupportedRef: { readonly current: boolean };
     lastReadRef: { readonly current: unknown };
-    setOutput: (value: string) => void;
+    capturedHereRef: { readonly current: CapturedPaneState | null };
+    setOutput: (value: string, capturedRows?: number) => void;
     setCanLoadEarlierOutput: (value: boolean) => void;
     setPaneRevision: (value: number) => void;
   }
@@ -786,6 +830,20 @@ function usePaneWindowHandoff(
             earlierRows: earlierOutputRowsRef.current,
             rangeUnsupported: rangeUnsupportedRef.current,
             lastRead: lastReadRef.current,
+            captured: capturedHereRef.current
+              ? { ...capturedHereRef.current, rows: capturedRows }
+              : capturedRows > 0
+                ? {
+                    generation: -1,
+                    rows: capturedRows,
+                    cursor: null,
+                    refreshRequired: false,
+                    empty: false,
+                    off: false,
+                    exhausted: false,
+                    open: false,
+                  }
+                : undefined,
           }
         : null;
     const remembered = held ? rememberPaneWindow(cache, leaving, held) : cache;
@@ -797,7 +855,10 @@ function usePaneWindowHandoff(
     const restored = recallPaneWindow(remembered, paneId, outputShape);
     paneCacheRef.current = remembered;
     paneWindowOwnerRef.current = paneId;
-    setOutput(restored?.output ?? '');
+    setOutput(
+      restored?.output ?? '',
+      (restored?.captured as CapturedPaneState | undefined)?.rows ?? 0
+    );
     setCanLoadEarlierOutput(restored?.canLoadEarlier ?? false);
     setPaneRevision(restored?.revision ?? -1);
   }
@@ -996,6 +1057,7 @@ export function ServerTerminalWorkspace({
     awaitUploads,
   } = useAttachmentUploads(record, attachmentDestination);
   const panelPick = usePanelPickerStore((state) => state.pick);
+  const panelReturn = usePanelPickerStore((state) => state.returnTarget);
   const clearPanelPick = usePanelPickerStore((state) => state.clearPick);
   /**
    * Which of this gateway's sessions the reader is in, and how they said so.
@@ -1156,7 +1218,14 @@ export function ServerTerminalWorkspace({
   // frame after it. The poll below corrects or confirms whatever this paints,
   // exactly as it does for `data`.
   const [warmSeed] = useState(() => warmPaneSeed(serverId));
-  const [output, setOutput] = useState(warmSeed.output);
+  const [outputWindow, setOutputWindow] = useState<PaneReadWindow>(() => ({
+    output: warmSeed.output,
+    capturedRows: 0,
+  }));
+  const output = outputWindow.output;
+  const setOutput = (value: string, capturedRows = 0) =>
+    setOutputWindow({ output: value, capturedRows });
+  const readOutputWindow = useLatestReader(outputWindow);
   const [draft, setDraft] = useState('');
   // Where the caret is in the draft, which is half of what decides whether an
   // `@` mention is open. Tracked rather than assumed, so moving the caret back
@@ -1334,10 +1403,74 @@ export function ServerTerminalWorkspace({
   // honour it rather than on every pull, and `loadEarlierOutput` falls back to
   // widening the tail -- exactly what every pane did before this feature
   // existed -- for the rest of the session.
-  // TEMPORARY measurement scaffold, not for merge: forces the widening-tail
-  // paging path that herdr panes always take (herdr ignores start/end), which
-  // the tmux backend would otherwise avoid by serving a real range page.
   const rangeUnsupportedRef = useRef(false);
+  // The gateway's captured history for this pane (`pullEarlierPage`): where the
+  // next page starts, and whether the pane turned out not to be captured.
+  // Per pane and per connection; never persisted.
+  // Panes the gateway said are gone (`404 backend_target_not_found`, or a
+  // `pane.closed` event), by the snapshot generation they were marked at: never
+  // read again -- the streaming poll stopped asking about a pane closed on the
+  // host, every 10 s, for as long as the screen stayed open -- unless a pane
+  // list taken after the mark shows the id again.
+  const gonePanesRef = useRef(new Map<string, number>());
+  const [goneVersion, setGoneVersion] = useState(0);
+  const capturedCursorRef = useRef<CapturedCursor | null>(null);
+  const paneScreenRowsRef = useRef(0);
+  const capturedOffRef = useRef(false);
+  const capturedRefreshRequiredRef = useRef(false);
+  const capturedRefreshApprovedRef = useRef(false);
+  // Whether the captured history has rows above the window to give: asked
+  // once when the pane opens (`capturedProbe` bumps ask again), and again
+  // while output grows on a pane that had none yet. The pull is offered on its
+  // account even where the window's own metrics say nothing is above it (an
+  // alternate-screen pane's always do), and never when it has nothing.
+  const [capturedOpen, setCapturedOpen] = useState(false);
+  const [capturedProbe, setCapturedProbe] = useState(0);
+  const capturedProbedAtRef = useRef(0);
+  // The pane's captured history gave its last page (or the window reached its
+  // cap): nothing more is offered, and it is not asked again.
+  const capturedExhaustedRef = useRef(false);
+  // The probe already asked for this pane at this `capturedProbe`: a focus
+  // return or an overview toggle does not ask again.
+  const capturedProbedKeyRef = useRef('');
+  // What the open pane's captured history came to -- its cursor, whether it
+  // is off, exhausted, on offer -- filed with the pane's window when the pane
+  // is left and restored only with that window, so going back to a pane picks
+  // up where it was, and a cursor never comes back without the rows it was
+  // read against. `generation` drops what was filed before a reconnect.
+  const capturedHereRef = useRef<CapturedPaneState | null>(null);
+  const capturedGenerationRef = useRef(0);
+  // The last probe found the capture empty: worth asking again as output grows.
+  const capturedEmptyRef = useRef(false);
+  const [capturedEmptyProbe, setCapturedEmptyProbe] = useState<{ output: string } | null>(null);
+  const offerCaptured = (paneId: string | null | undefined, open: boolean) => {
+    setCapturedOpen(open);
+    if (!paneId || activePaneRef.current !== paneId) return;
+    capturedHereRef.current = {
+      generation: capturedGenerationRef.current,
+      rows: 0, // The window transition files the rendered provenance with this state.
+      refreshRequired: capturedRefreshRequiredRef.current,
+      empty: capturedEmptyRef.current,
+      cursor: capturedCursorRef.current,
+      off: capturedOffRef.current,
+      exhausted: capturedExhaustedRef.current,
+      open,
+    };
+  };
+  /** Forget every pane's captured state and ask the open pane again. */
+  const restartCaptured = () => {
+    capturedGenerationRef.current += 1;
+    capturedHereRef.current = null;
+    capturedCursorRef.current = null;
+    capturedRefreshRequiredRef.current = false;
+    capturedRefreshApprovedRef.current = false;
+    capturedEmptyRef.current = false;
+    setCapturedEmptyProbe(null);
+    capturedOffRef.current = false;
+    capturedExhaustedRef.current = false;
+    setCapturedOpen(false);
+    setCapturedProbe((probe) => probe + 1);
+  };
   const earlierPartsRowsRef = useRef(0);
   const loadingEarlierPartsRef = useRef(false);
   const appliedNotificationTargetRef = useRef<string | null>(null);
@@ -1578,6 +1711,8 @@ export function ServerTerminalWorkspace({
     earlierOutputRowsRef.current = 0;
     lastReadRef.current = null;
     rangeUnsupportedRef.current = false;
+    restartCaptured();
+    gonePanesRef.current.clear();
     loadingEarlierOutputRef.current = false;
     appliedNotificationTargetRef.current = null;
     setLoadingEarlierOutput(false);
@@ -1649,6 +1784,7 @@ export function ServerTerminalWorkspace({
     earlierOutputRowsRef.current = 0;
     lastReadRef.current = null;
     rangeUnsupportedRef.current = false;
+    restartCaptured();
     loadingEarlierOutputRef.current = false;
     setLoadingEarlierOutput(false);
     setHistoryNotice(null);
@@ -1735,7 +1871,7 @@ export function ServerTerminalWorkspace({
                   serverId,
                   sessionId,
                   checkedAtMs: Date.now(),
-                  agents: mirroredServerPanes(next.panes, next.agents),
+                  agents: mirroredServerPanes(next.panes, next.agents, next.health?.capabilities),
                 });
               }
               const nextSnapshotGeneration = snapshotGenerationRef.current + 1;
@@ -1783,7 +1919,7 @@ export function ServerTerminalWorkspace({
               if (!isCurrentRequest()) return null;
               return {
                 ok: false,
-                failure: describeGatewayFailure(failure, t`Server unavailable.`),
+                failure: describeGatewayFailure(failure, t`Computer unavailable.`),
               };
             }
           );
@@ -1881,6 +2017,77 @@ export function ServerTerminalWorkspace({
       refreshDataRef.current = () => {};
     };
   }, [refreshData]);
+
+  // A pane the gateway says is gone: stop asking about it, read the workspace
+  // again so the selection moves to a pane that exists, and say so where the
+  // reader was looking.
+  const markPaneGoneRef = useRef<(paneId: string) => void>(() => {});
+  useEffect(() => {
+    markPaneGoneRef.current = (paneId) => {
+      if (gonePanesRef.current.has(paneId)) return;
+      gonePanesRef.current.set(paneId, snapshotGenerationRef.current);
+      // Its window, and the captured history filed with it, go with it.
+      paneCacheRef.current = forgetPaneWindow(paneCacheRef.current, paneId);
+      if (activePaneRef.current === paneId) restartCaptured();
+      setGoneVersion((version) => version + 1);
+      if (activePaneRef.current === paneId) {
+        setError(t`This terminal is no longer available. Choose another terminal.`);
+      }
+      refreshDataRef.current();
+    };
+  }, [t]);
+  // A pane list taken after the mark that shows the id again (a backend that
+  // reused it): it is a pane again.
+  useEffect(() => {
+    for (const [paneId, markedAt] of gonePanesRef.current) {
+      if (snapshotGeneration > markedAt && data.panes.some((pane) => pane.id === paneId)) {
+        gonePanesRef.current.delete(paneId);
+        setGoneVersion((version) => version + 1);
+      }
+    }
+  }, [data.panes, snapshotGeneration]);
+
+  // tmux's `layout_updated` is its only activity event: it carries every
+  // window and pane created, closed or moved, and also moves with every title
+  // or command change on the host, every 500 ms next to a working agent. So it
+  // is answered with one pane-list read -- at once after a quiet spell, at most
+  // every LAYOUT_CHECK_MS while it keeps coming -- and the workspace is read
+  // again only when that list shows structure or an open-pane resize.
+  const layoutCheckRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    let handle: ReturnType<typeof setTimeout> | undefined;
+    let lastCheckAt = 0;
+    const sessionId = data.sessionId;
+    const layoutOf = (pane: HerdrEntity): PaneLayout => ({
+      id: pane.id,
+      tab: field(pane, 'tab_id'),
+      workspace: field(pane, 'workspace_id'),
+      width: numberField(pane, 'width'),
+      height: numberField(pane, 'height'),
+    });
+    layoutCheckRef.current = () => {
+      if (handle || !sessionId) return;
+      const wait = Math.max(0, lastCheckAt + LAYOUT_CHECK_MS - Date.now());
+      handle = setTimeout(() => {
+        handle = undefined;
+        lastCheckAt = Date.now();
+        const held = panesRef.current.map(layoutOf);
+        loadPanes(sessionId).then(
+          (fresh) => {
+            if (layoutNeedsRefresh(held, fresh.map(layoutOf), activePaneRef.current)) {
+              refreshDataRef.current();
+            }
+          },
+          // The 12 s poll still reads the workspace; a failed check is not news.
+          () => {}
+        );
+      }, wait);
+    };
+    return () => {
+      if (handle) clearTimeout(handle);
+      layoutCheckRef.current = () => {};
+    };
+  }, [data.sessionId]);
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (state) => {
@@ -2315,10 +2522,95 @@ export function ServerTerminalWorkspace({
   // than drawing one, and a reader who turned the agent rows off did not ask to
   // lose a menu item.
   const recordServerCapabilities = useServerCapabilities((state) => state.record);
+  // Whether this gateway serves captured pane history (`pullEarlierPage`).
+  const servesCapturedHistory = useServerCapabilities(
+    (state) => state.byServer[serverId]?.includes(PANE_CAPTURED_HISTORY_CAPABILITY) === true
+  );
   useEffect(() => {
     if (!selectedServer || !record || isDemoRecord(record) || !data.health) return;
     void recordServerCapabilities(record.serverId, data.health.capabilities);
   }, [data.health, record, recordServerCapabilities, selectedServer]);
+
+  // The pane's viewport height separates the served historical prefix from
+  // its mutable screen. A missing metric keeps ordinary reads on their fallback.
+  const selectedPaneScreenRows = terminalViewportRows(selectedPane?.raw.scroll) ?? 0;
+  const capturedViewportReady = selectedPaneScreenRows > 0;
+  // Does the open pane have captured rows above the window? One row is asked
+  // for: both `not_captured` and an empty capture can precede the first sample.
+  // Keep the native-scrollback fallback and probe again after output advances.
+  useEffect(() => {
+    const paneId = selection.paneId;
+    const sessionId = data.sessionId;
+    if (!ready || !servesCapturedHistory || !paneId || !sessionId) return;
+    // Once per pane and per ask: a pull already under way, or a history
+    // already given in full, knows more than this would.
+    // Boundary discovery is a new ask even when the first probe already saw
+    // rows. Otherwise an early successful probe could leave history hidden.
+    const key = `${paneId}\u0000${capturedProbe}\u0000${capturedViewportReady}`;
+    if (
+      !capturedProbeDue({
+        off: capturedOffRef.current,
+        exhausted: capturedExhaustedRef.current,
+        cursor: capturedCursorRef.current,
+        askedAlready: capturedProbedKeyRef.current === key,
+      })
+    ) {
+      return;
+    }
+    capturedProbedKeyRef.current = key;
+    let current = true;
+    capturedProbedAtRef.current = Date.now();
+    const probedOutput = readOutputWindow().output;
+    void readPaneHistory(sessionId, paneId, null, 1).then((answer) => {
+      if (!current || activePaneRef.current !== paneId) return;
+      // A pull landed meanwhile: its answer stands.
+      if (
+        loadingEarlierOutputRef.current ||
+        capturedExhaustedRef.current ||
+        capturedCursorRef.current ||
+        capturedRefreshRequiredRef.current
+      )
+        return;
+      const probe = capturedProbeState(answer);
+      capturedOffRef.current = probe.off;
+      // Empty, or no answer: worth asking again as output grows.
+      capturedEmptyRef.current = probe.empty;
+      setCapturedEmptyProbe(capturedEmptyRef.current ? { output: probedOutput } : null);
+      // A window already at its cap has no room for more above it.
+      offerCaptured(
+        paneId,
+        probe.hasRows &&
+          paneScreenRowsRef.current > 0 &&
+          outputLineLimitRef.current < MAX_PANE_OUTPUT_LINES
+      );
+    });
+    return () => {
+      current = false;
+    };
+  }, [
+    capturedProbe,
+    data.sessionId,
+    ready,
+    selection.paneId,
+    servesCapturedHistory,
+    capturedViewportReady,
+    readOutputWindow,
+  ]);
+  // A pane with nothing captured yet gains rows as its output scrolls: ask
+  // again, at most every CAPTURED_REPROBE_MS, while output keeps coming.
+  useEffect(() => {
+    if (capturedOpen || !servesCapturedHistory) return;
+    const remaining = capturedReprobeDelay(
+      capturedEmptyProbe?.output ?? null,
+      output,
+      capturedProbedAtRef.current,
+      Date.now(),
+      CAPTURED_REPROBE_MS
+    );
+    if (remaining === null) return;
+    const timer = setTimeout(() => setCapturedProbe((probe) => probe + 1), remaining);
+    return () => clearTimeout(timer);
+  }, [output, capturedOpen, capturedEmptyProbe, servesCapturedHistory]);
 
   // Whether this pane is an editor, which is what "is this a full-screen
   // program" means until `alternate_on` is plumbed through -- see
@@ -2356,6 +2648,11 @@ export function ServerTerminalWorkspace({
     pane, exactly as before, so a reader who opened the panel keeps it open for
     as long as they are on this pane.
   */
+  const lazygitPane = isLazygitPane(
+    shortcuts?.profile,
+    field(selectedPane, 'terminal_title_stripped'),
+    field(selectedPane, 'foreground_command')
+  );
   const autoKeyboardPaneRef = useRef<string | null>(null);
   useEffect(() => {
     const paneId = selection.paneId;
@@ -2414,13 +2711,6 @@ export function ServerTerminalWorkspace({
    * is a question about what the reader is driving.
    */
   const paneOwnsScreenRef = useRef(false);
-  const paneScreenRowsRef = useRef(0);
-  // The pane's own viewport, off the scroll metric every pane entity carries.
-  // This is what separates the ring-buffer history in the served window from
-  // the live screen at its tail: a full-screen program repaints exactly its
-  // viewport, so the last `viewport_rows` rows are the screen. 0 (unknown)
-  // keeps the terminal on its old arithmetic.
-  const selectedPaneScreenRows = terminalViewportRows(selectedPane?.raw.scroll) ?? 0;
   // Whether the pane's program has taken the whole screen, which is a different
   // question from whether it is an editor and has to be asked separately.
   // `alternate_on` is 1 for an agent as well as for nvim, so this is true of
@@ -2566,7 +2856,7 @@ export function ServerTerminalWorkspace({
     // authoritative for both the dock and the virtual keyboard.
     const base =
       shortcuts?.keyActions === undefined
-        ? fullScreenPane
+        ? fullScreenPane && !lazygitPane
           ? withEditorActions(withCommonTerminalCombinations(resolved))
           : withCommonTerminalCombinations(resolved)
         : resolved;
@@ -2576,7 +2866,7 @@ export function ServerTerminalWorkspace({
       scope ? loadUsage()[scope] : undefined,
       (item) => item.key
     );
-  }, [deliverableKey, fullScreenPane, nvimMode, serverId, shortcuts]);
+  }, [deliverableKey, fullScreenPane, lazygitPane, nvimMode, serverId, shortcuts]);
   const keyScope = shortcuts ? usageScope(serverId, shortcuts.profile, 'keys') : null;
   // Typing "/" in an agent pane offers what that agent actually accepts.
   //
@@ -2927,6 +3217,8 @@ export function ServerTerminalWorkspace({
     earlierOutputRowsRef,
     rangeUnsupportedRef,
     lastReadRef,
+    capturedHereRef,
+    capturedRows: outputWindow.capturedRows,
     setOutput,
     setCanLoadEarlierOutput,
     setPaneRevision,
@@ -2962,11 +3254,28 @@ export function ServerTerminalWorkspace({
     earlierOutputRowsRef.current = restored?.earlierRows ?? 0;
     lastReadRef.current = restored?.lastRead ?? null;
     rangeUnsupportedRef.current = restored?.rangeUnsupported ?? false;
+    // The pane's captured history as it was left, only with the window it was
+    // filed with, and only from this connection; otherwise it is asked again.
+    const filed = restored?.output
+      ? (restored.captured as CapturedPaneState | undefined)
+      : undefined;
+    const captured =
+      filed && filed.generation === capturedGenerationRef.current ? filed : undefined;
+    capturedHereRef.current = captured ?? null;
+    capturedCursorRef.current = captured?.cursor ?? null;
+    capturedOffRef.current = captured?.off ?? false;
+    capturedRefreshRequiredRef.current = captured?.refreshRequired ?? false;
+    capturedRefreshApprovedRef.current = false;
+    capturedEmptyRef.current = captured?.empty ?? false;
+    setCapturedEmptyProbe(captured?.empty ? { output: restored?.output ?? '' } : null);
+    capturedExhaustedRef.current = captured?.exhausted ?? false;
+    setCapturedOpen(captured?.open ?? false);
+    if (!captured) setCapturedProbe((probe) => probe + 1);
     loadingEarlierOutputRef.current = false;
     setLoadingEarlierOutput(false);
-    setHistoryNotice(null);
-    historyPullBlockedRef.current = false;
-    setHistoryPullBlocked(false);
+    setHistoryNotice(captured?.refreshRequired ? historyRefreshNotice() : null);
+    historyPullBlockedRef.current = captured?.refreshRequired ?? false;
+    setHistoryPullBlocked(historyPullBlockedRef.current);
     setHistoryRevision(0);
     // The revision the restored window was folded to, so the refresh that
     // follows is a reconciliation rather than a repeat, and an event merely
@@ -3135,7 +3444,7 @@ export function ServerTerminalWorkspace({
       .catch((failure: unknown) => {
         if (cancelled()) return;
         clearPanelPick();
-        setError(describeGatewayFailure(failure, t`Server unavailable.`).message);
+        setError(describeGatewayFailure(failure, t`Computer unavailable.`).message);
       });
     return () => {
       disposed = true;
@@ -3250,7 +3559,7 @@ export function ServerTerminalWorkspace({
       // the top of `src/terminal/history.ts`. Cards #675 (a screen replacing a
       // window), #712 (a length taken for authority) and #721 (a refresh
       // replacing a window it is not as deep as) all died here.
-      setOutput((current) => {
+      setOutputWindow((current) => {
         // A screen-owning pane's read is the whole of its current screen, not
         // a tail of a growing log, so it replaces rather than folds against
         // the placement heuristics built for the latter (card #795, defect 2
@@ -3259,7 +3568,7 @@ export function ServerTerminalWorkspace({
         // paired with the pane's height so only the rows the program drew are
         // drawn; see `paneOwnsScreenRef`. Refs rather than the render-time
         // values because this updater is built once.
-        return foldPaneRead(
+        return foldPaneWindow(
           current,
           value,
           origin,
@@ -3290,6 +3599,7 @@ export function ServerTerminalWorkspace({
       !watching ||
       connection.phase !== 'connected' ||
       !selection.paneId ||
+      gonePanesRef.current.has(selection.paneId) ||
       loadingEarlierOutputRef.current
     )
       return;
@@ -3324,6 +3634,10 @@ export function ServerTerminalWorkspace({
         );
       },
       (failure) => {
+        if (paneGoneError(failure)) {
+          markPaneGoneRef.current(requestPaneId);
+          return;
+        }
         if (isCurrentRequest()) {
           const description = describeGatewayFailure(failure, t`Could not read the terminal.`);
           if (!description.retryable) setError(description.message);
@@ -3362,6 +3676,7 @@ export function ServerTerminalWorkspace({
       activePaneRef.current === requestPaneId &&
       outputRequestIdRef.current === requestId;
 
+    const refreshApproved = capturedRefreshApprovedRef.current;
     loadingEarlierOutputRef.current = true;
     setLoadingEarlierOutput(true);
     setHistoryNotice(null);
@@ -3411,6 +3726,23 @@ export function ServerTerminalWorkspace({
             // -F`), and the one retry a transient failure gets are all decided in
             // `pullEarlierPage`, where they can be tested without a screen.
             const outcome = await pullEarlierPage({
+              // The gateway's captured history first, where it serves it and
+              // this pane has not turned out uncaptured; a shell pane answers
+              // `not_captured` and the range/tail reads below serve it as before.
+              ...(servesCapturedHistory && !capturedOffRef.current && paneScreenRowsRef.current > 0
+                ? {
+                    captured: {
+                      cursor: capturedCursorRef.current,
+                      read: (before: string | null) =>
+                        readPaneHistory(
+                          data.sessionId,
+                          requestPaneId,
+                          before,
+                          PANE_OUTPUT_PAGE_LINES
+                        ),
+                    },
+                  }
+                : {}),
               page,
               readRange: (start, end) =>
                 readPaneRange(
@@ -3435,6 +3767,54 @@ export function ServerTerminalWorkspace({
             // Remembered so the range is asked at most once, on this pull or any
             // later one: every page after it goes straight to the tail.
             if (outcome.rangeUnsupported) rangeUnsupportedRef.current = true;
+            const captured = outcome.captured;
+            const heldWindow = readOutputWindow();
+            const heldHistoricalRows =
+              captured?.kind === 'page' && paneScreenRowsRef.current > 0
+                ? Math.max(
+                    heldWindow.capturedRows,
+                    terminalOutputLineCount(heldWindow.output) - paneScreenRowsRef.current
+                  )
+                : heldWindow.capturedRows;
+            if (capturedTraversalNeedsRefresh(captured, heldHistoricalRows, refreshApproved)) {
+              // A new first page has no coordinates relative to the old prefix.
+              // Preserve the held text and scroll anchor until the reader refreshes.
+              capturedRefreshRequiredRef.current = true;
+              capturedEmptyRef.current = false;
+              setCapturedEmptyProbe(null);
+              offerCaptured(requestPaneId, false);
+              historyPullBlockedRef.current = true;
+              setHistoryPullBlocked(true);
+              setHistoryNotice(historyRefreshNotice());
+              return;
+            }
+            if (captured?.kind === 'notCaptured') {
+              if (refreshApproved && outcome.kind === 'page') {
+                capturedRefreshRequiredRef.current = false;
+                capturedRefreshApprovedRef.current = false;
+              }
+              capturedCursorRef.current = null;
+              capturedEmptyRef.current = true;
+              capturedProbedAtRef.current = Date.now();
+              setCapturedEmptyProbe({ output: readOutputWindow().output });
+              offerCaptured(requestPaneId, false);
+            } else if (captured?.kind === 'page') {
+              capturedRefreshRequiredRef.current = false;
+              capturedRefreshApprovedRef.current = false;
+              capturedEmptyRef.current = false;
+              setCapturedEmptyProbe(null);
+              capturedCursorRef.current = captured.cursor;
+              // The last page, or a window at its cap: a page more would be
+              // trimmed away as it landed, so the pull is not offered again.
+              if (!captured.hasMore || nextLimit >= MAX_PANE_OUTPUT_LINES) {
+                capturedExhaustedRef.current = true;
+              }
+              offerCaptured(requestPaneId, !capturedExhaustedRef.current);
+            } else if (servesCapturedHistory && !capturedOffRef.current) {
+              // The captured read refused or failed: not offered on its account
+              // until a reconnect.
+              offerCaptured(requestPaneId, false);
+            }
             const blocked = historyPullBlockedAfter(outcome.kind);
             historyPullBlockedRef.current = blocked;
             setHistoryPullBlocked(blocked);
@@ -3448,8 +3828,10 @@ export function ServerTerminalWorkspace({
             setHistoryNotice(null);
             const { origin } = outcome;
             const { output: value, read } = outcome.fetched;
+            const capturedPage = captured?.kind === 'page' ? captured : null;
             outputLineLimitRef.current = nextLimit;
-            lastReadRef.current = read;
+            // A captured page carries no served range; the last one stays the fallback.
+            if (!capturedPage) lastReadRef.current = read;
             // Through the same door as everything else. A page is the one source
             // allowed to claim depth, and it only gets it when the read demonstrably
             // reaches past the window's own head. Where Herdr plateaus below what its
@@ -3462,23 +3844,28 @@ export function ServerTerminalWorkspace({
             // its own `'rangePage'` origin rather than `'page'`: the two may look
             // alike at this call site, but only a genuine range read may be believed
             // with zero overlap. See the origin's own doc in `history.ts`.
-            setOutput((current) => {
-              const next = foldPaneRead(
+            setOutputWindow((current) => {
+              const next = foldPaneWindow(
                 current,
                 value,
                 origin,
                 nextLimit,
                 paneOwnsScreenRef.current,
-                paneScreenRowsRef.current
+                paneScreenRowsRef.current,
+                captured?.reset
               );
               return next;
             });
             const scroll = panesRef.current.find((pane) => pane.id === requestPaneId)?.raw.scroll;
             const reachedRows = earlierOutputRowsRef.current;
-            earlierOutputRowsRef.current = terminalOutputLineCount(value);
-            // A tail read no deeper than the last one: nothing more is coming,
-            // so say so once rather than leave a pull that does nothing.
-            if (tailPageFoundNothing(outcome, earlierOutputRowsRef.current, reachedRows)) {
+            if (!capturedPage) earlierOutputRowsRef.current = terminalOutputLineCount(value);
+            // A tail read no deeper than the last one, or the last captured
+            // page: nothing more is coming, so say so once rather than leave a
+            // pull that does nothing.
+            if (
+              tailPageFoundNothing(outcome, earlierOutputRowsRef.current, reachedRows) ||
+              (capturedPage && !capturedPage.hasMore)
+            ) {
               setHistoryNotice(historyExhaustedNotice());
             }
             setCanLoadEarlierOutput(
@@ -3488,7 +3875,8 @@ export function ServerTerminalWorkspace({
                 MAX_PANE_OUTPUT_LINES,
                 scroll,
                 reachedRows,
-                read
+                read,
+                capturedPage?.hasMore
               )
             );
             setHistoryRevision((revision) => revision + 1);
@@ -3522,13 +3910,15 @@ export function ServerTerminalWorkspace({
     ready,
     selection.paneId,
     serverId,
+    servesCapturedHistory,
     terminalPlane,
+    readOutputWindow,
   ]);
 
   // A pull's notice is news about one gesture, not a state of the pane: it
   // leaves on its own, and a Retry pressed in the meantime replaces it.
   useEffect(() => {
-    if (!historyNotice) return;
+    if (!historyNotice || historyNotice.dismissMs === 0) return;
     const timer = setTimeout(() => setHistoryNotice(null), historyNotice.dismissMs);
     return () => clearTimeout(timer);
   }, [historyNotice]);
@@ -3540,12 +3930,20 @@ export function ServerTerminalWorkspace({
     const previous = pullPhaseRef.current;
     pullPhaseRef.current = connection.phase;
     if (connection.phase !== 'connected' || previous === 'connected') return;
+    // The gateway on the far side may have restarted: its captured history
+    // starts over, and the cursor means nothing there.
+    restartCaptured();
     historyPullBlockedRef.current = historyPullBlockedAfter('reconnected');
     setHistoryPullBlocked(historyPullBlockedRef.current);
   }, [connection.phase]);
 
   const retryEarlierOutput = useCallback(() => {
-    // The one explicit way through a closed gate: the reader asked.
+    // Refresh is explicit: start without a cursor and replace only the prefix.
+    if (capturedRefreshRequiredRef.current) {
+      capturedRefreshApprovedRef.current = true;
+      capturedCursorRef.current = null;
+      capturedExhaustedRef.current = false;
+    }
     setHistoryNotice(null);
     historyPullBlockedRef.current = false;
     setHistoryPullBlocked(false);
@@ -3575,16 +3973,9 @@ export function ServerTerminalWorkspace({
   const revealActivePaneChip = useCallback(() => {
     const layout = paneChipLayouts.current[selection.paneId];
     const viewport = paneStripViewportRef.current;
-    if (!layout || viewport <= 0) return;
     const offset = paneStripOffsetRef.current;
-    const left = layout.x - PANE_CHIP_REVEAL_MARGIN;
-    const right = layout.x + layout.width + PANE_CHIP_REVEAL_MARGIN;
-    if (left >= offset && right <= offset + viewport) return;
-    // Centred rather than nudged to the nearest edge: arriving here usually
-    // means a swipe several panes along, and the neighbours on both sides are
-    // what say where in the strip the pane sits. `scrollTo` clamps the far end
-    // itself, so only the near end needs guarding.
-    const target = Math.max(0, layout.x + layout.width / 2 - viewport / 2);
+    const target = paneChipRevealOffset(layout, viewport, offset, PANE_CHIP_REVEAL_MARGIN);
+    if (target === null) return;
     paneStripRef.current?.scrollTo({ x: target, animated: true });
   }, [selection.paneId]);
 
@@ -3605,6 +3996,8 @@ export function ServerTerminalWorkspace({
 
   useEffect(() => {
     if (!appActive || !watching || connection.phase !== 'connected' || !selection.paneId) return;
+    // A pane the gateway said is gone is not asked about again, on any cadence.
+    if (gonePanesRef.current.has(selection.paneId)) return;
     // First read on selecting the pane; after that the event stream drives it.
     // The interval is a safety net for a missed event or a cursor-only
     // change that does not bump the revision -- not the primary path.
@@ -3624,7 +4017,15 @@ export function ServerTerminalWorkspace({
       streamUp ? OUTPUT_POLL_STREAMING_MS : OUTPUT_POLL_FALLBACK_MS
     );
     return () => clearInterval(timer);
-  }, [appActive, connection.phase, refreshOutput, selection.paneId, streamUp, watching]);
+  }, [
+    appActive,
+    connection.phase,
+    goneVersion,
+    refreshOutput,
+    selection.paneId,
+    streamUp,
+    watching,
+  ]);
 
   /**
    * Warm the two panes a swipe can reach, so the switch onto them is a paint
@@ -3829,6 +4230,32 @@ export function ServerTerminalWorkspace({
     return () => clearTimeout(timer);
   }, [selection.paneId, streamPaneId]);
 
+  // Whether the stream below is wanted, and so whether its state is evidence
+  // the Home dot may read (`stores/server-channels`).
+  const streamWanted =
+    selectedServer &&
+    Boolean(tunnel.baseUrl && record?.token && data.sessionId) &&
+    appActive &&
+    watching &&
+    connection.phase === 'connected';
+  const setStreamChannel = useServerChannels((state) => state.setStream);
+  useEffect(() => {
+    if (!streamWanted) return;
+    return () => setStreamChannel(serverId, null);
+  }, [serverId, setStreamChannel, streamWanted]);
+  useEffect(() => {
+    if (!streamWanted) return;
+    if (streamUp) {
+      setStreamChannel(serverId, 'open');
+      return;
+    }
+    // `retrying` only once the stream has been up while wanted: the first
+    // connect is not a reconnect, and the selected row would flash
+    // "Reconnecting…" on every visit. The entry is cleared when the stream
+    // stops being wanted, so its presence is that "been up once".
+    if (useServerChannels.getState().streams[serverId]) setStreamChannel(serverId, 'retrying');
+  }, [serverId, setStreamChannel, streamUp, streamWanted]);
+
   // The live event stream. `pane_updated` for the selected pane reads its
   // output; structural events refresh the navigator. A (re)connect forces a
   // full read, because the stream has no replay and anything during the gap is
@@ -3872,6 +4299,14 @@ export function ServerTerminalWorkspace({
         },
         onPaneOutput: (paneId: string, revision: number, text: string) => {
           if (paneId !== watchedPaneRef.current) {
+            const captured = paneCacheRef.current.entries.find((entry) => entry.paneId === paneId)
+              ?.captured as CapturedPaneState | undefined;
+            if (captured?.rows) {
+              // Keep the captured provenance filed with this snapshot. The next
+              // selected read reconciles its live segment using foldPaneWindow.
+              paneCacheRef.current = notePaneRevision(paneCacheRef.current, paneId, revision);
+              return;
+            }
             // For the short interval after a switch the stream is still
             // inlining the pane just left -- the one pane other than the
             // selected one whose text is ever on the wire (see
@@ -3895,6 +4330,8 @@ export function ServerTerminalWorkspace({
           applyPaneOutputRef.current(paneId, text, revision, 'frame');
         },
         onStructureChanged: () => refreshDataRef.current(),
+        onPaneClosed: (paneId) => markPaneGoneRef.current(paneId),
+        onLayoutChanged: () => layoutCheckRef.current(),
         onDisconnected: () => setStreamUp(false),
         onConnected: () => {
           setStreamUp(true);
@@ -4032,6 +4469,31 @@ export function ServerTerminalWorkspace({
     },
     [announceSwitch, data]
   );
+
+  const canReturnToPane = Boolean(
+    padDetailIsPane &&
+    !overviewVisible &&
+    panelReturn &&
+    panelReturn.serverId === serverId &&
+    panelReturn.sessionId === data.sessionId &&
+    panelReturn.paneId === selection.paneId &&
+    selectionForPane(data, panelReturn.previousPaneId).paneId === panelReturn.previousPaneId
+  );
+  const returnToPreviousPane = useCallback(() => {
+    if (!canReturnToPane || !panelReturn) return false;
+    usePanelPickerStore.getState().choosePanel({
+      serverId,
+      paneId: panelReturn.previousPaneId,
+    });
+    setKeyboardMode(false);
+    return true;
+  }, [canReturnToPane, panelReturn, serverId]);
+
+  useEffect(() => {
+    if (!isFocused || overviewVisible || !padDetailIsPane || !canReturnToPane) return;
+    const subscription = BackHandler.addEventListener('hardwareBackPress', returnToPreviousPane);
+    return () => subscription.remove();
+  }, [canReturnToPane, isFocused, overviewVisible, padDetailIsPane, returnToPreviousPane]);
 
   /**
    * Leaving the demo is leaving the screen (card #672).
@@ -4189,6 +4651,13 @@ export function ServerTerminalWorkspace({
   // The gateway's phase for the status lights: a backend that is down is not
   // a gateway that is down. See `gatewayConnectionPhase`.
   const gatewayPhase = gatewayConnectionPhase(connection.phase, connection.backendUnavailable);
+  // Published for the guides this workspace presents (their Run decision).
+  useEffect(() => {
+    useActiveConnection
+      .getState()
+      .set(selectedServer && serverId ? { serverId, phase: gatewayPhase } : undefined);
+  }, [selectedServer, serverId, gatewayPhase]);
+  useEffect(() => () => useActiveConnection.getState().set(undefined), []);
 
   const railReachabilityByServer = useMemo<Record<string, ServerReachability>>(
     () =>
@@ -4377,7 +4846,12 @@ export function ServerTerminalWorkspace({
           },
           (failure) => {
             if (isCurrentSend()) {
-              setError(describeGatewayFailure(failure, t`Could not send input.`).message);
+              showToast({
+                variant: 'danger',
+                title: t`Message not sent`,
+                message: describeGatewayFailure(failure, t`Could not send input.`).message,
+                durationMs: 6000,
+              });
             }
           }
         );
@@ -4476,6 +4950,7 @@ export function ServerTerminalWorkspace({
         // The health answer this screen is already holding. A gateway that
         // cannot spawn gets a sheet with neither New task nor Stop in it.
         canSpawn: gatewaySupportsAgentSpawn(data.health?.capabilities) ? '1' : '',
+        canLazygit: data.health?.capabilities?.includes('pane_lazygit') ? '1' : '',
         // Whether opening a plain URL on this machine is honest. The demo is
         // excluded before the transport is even consulted: its record points
         // at an address that does not exist, so every port on it is a page
@@ -4550,7 +5025,7 @@ export function ServerTerminalWorkspace({
           showToast({
             variant: 'danger',
             title: t`Could not open the file`,
-            message: describeGatewayFailure(failure, t`The server did not return it.`).message,
+            message: describeGatewayFailure(failure, t`The computer did not return it.`).message,
           });
         })
         .finally(() => {
@@ -4591,6 +5066,8 @@ export function ServerTerminalWorkspace({
             );
             if (!asset) rethrow(new Error(t`This file is not among the session artifacts.`));
             const bytes = await readAssetBytes(asset, {
+              // Theme archives are downloadable files, not Gateway previews.
+              download: true,
               signal: request.signal,
               maxBytes: THEME_LIMITS.packageBytes,
               onProgress: (received, total) => {
@@ -4619,7 +5096,10 @@ export function ServerTerminalWorkspace({
               setThemeDrop({
                 phase: 'failed',
                 name,
-                message: describeGatewayFailure(failure, t`Could not open this theme.`).message,
+                message:
+                  failure instanceof AudioPlaybackError
+                    ? t`Update the Gateway to open or save this file.`
+                    : describeGatewayFailure(failure, t`Could not open this theme.`).message,
               });
           }
         },
@@ -4676,7 +5156,7 @@ export function ServerTerminalWorkspace({
         serverId,
         sessionId: data.sessionId,
         paneId: selection.paneId,
-        label: routeRecord?.label ?? record?.label ?? t`Server`,
+        label: routeRecord?.label ?? record?.label ?? t`Computer`,
         embedded: providedServerId === undefined ? '0' : '1',
         sessions: encodeSessionChoices(sessions),
       },
@@ -4701,10 +5181,10 @@ export function ServerTerminalWorkspace({
       <AppDrawer>
         <View style={styles.centerState}>
           <Text variant="heading">
-            <Trans>Server not found</Trans>
+            <Trans>Computer not found</Trans>
           </Text>
           <Text variant="bodySmall" color={theme.colors.textMuted}>
-            <Trans>Return to the server list and pair again.</Trans>
+            <Trans>Return to the computer list and pair again.</Trans>
           </Text>
         </View>
       </AppDrawer>
@@ -4717,10 +5197,10 @@ export function ServerTerminalWorkspace({
   // naming it twice spent the width the pane name needs.
   const detailTitle = selectedPane
     ? panelTitle(selectedPane, selectedAgent)
-    : (routeRecord?.label ?? record?.label ?? t`Server`);
+    : (routeRecord?.label ?? record?.label ?? t`Computer`);
   const shellTitle = padDetailIsPane
     ? detailTitle
-    : (padAgentTitle ?? routeRecord?.label ?? record?.label ?? t`Server`);
+    : (padAgentTitle ?? routeRecord?.label ?? record?.label ?? t`Computer`);
 
   // The pane's two entries: what goes into the session, and what came out of
   // it. Written once because they are the same two buttons whether they sit in
@@ -4903,8 +5383,18 @@ export function ServerTerminalWorkspace({
       />
     ) : null;
 
+  const pendingQuestionHint =
+    data.health?.capabilities?.includes('terminal_pending_user_input') &&
+    (selectedAgent?.status === 'working' || selectedAgent?.status === 'idle') &&
+    selectedAgent?.raw.pending_user_input === true ? (
+      <Text testID="terminal-pending-question-hint" variant="caption" color={theme.colors.warning}>
+        {t`Use Shift+Left on the terminal keyboard to answer the pending question.`}
+      </Text>
+    ) : null;
+
   const composerField = (
     <TerminalComposer
+      voiceContext={`${serverId}:${data.sessionId}:${selection.paneId}`}
       entering={fadeInDown('short')}
       exiting={fadeOutDown('short')}
       layout={dockRowLayout}
@@ -5070,6 +5560,7 @@ export function ServerTerminalWorkspace({
           <AttachmentMenu onSelect={chooseAttachmentSource} textColor={chromeText} />
         </View>
       ) : null}
+      {dock.composer ? pendingQuestionHint : null}
       {dock.composer ? composerField : null}
     </>
   );
@@ -5097,7 +5588,7 @@ export function ServerTerminalWorkspace({
       <ArtifactsButton
         sessionId={data.sessionId}
         tabId={selection.tabId}
-        label={routeRecord?.label ?? record?.label ?? t`Server`}
+        label={routeRecord?.label ?? record?.label ?? t`Computer`}
         disabled={!targetReady || !selectedPane}
         background={fill}
         compact={isPadLayout}
@@ -5106,6 +5597,7 @@ export function ServerTerminalWorkspace({
           all unless the gateway has the routes and this pane's directory is a
           checkout, so the row is unchanged on an older server. */}
       <GitDiffButton
+        serverId={serverId}
         sessionId={data.sessionId}
         paneId={selection.paneId}
         cwd={field(selectedPane, 'cwd')}
@@ -5221,7 +5713,7 @@ export function ServerTerminalWorkspace({
       }
       // The header stays mounted under Home; the overlay covers it.
       detailTitle={shellTitle}
-      onDetailBack={demoMode ? leaveDetail : undefined}
+      onDetailBack={canReturnToPane ? returnToPreviousPane : demoMode ? leaveDetail : undefined}
       detailFadeColor={padDetailIsPane ? terminalBackground : theme.colors.background}
       detailTitleSlot={
         !padDetailIsPane ? undefined : (
@@ -5281,7 +5773,7 @@ export function ServerTerminalWorkspace({
         <View
           pointerEvents={paneHidden ? 'none' : 'auto'}
           accessibilityElementsHidden={paneHidden}
-          importantForAccessibility={paneHidden ? 'no-hide-descendants' : 'auto'}
+          importantForAccessibility={revealableSubtreeImportance(paneHidden)}
           style={[StyleSheet.absoluteFill, { opacity: paneHidden ? 0 : 1 }]}>
           <View style={styles.workspaceSplit}>
             {/* No background and no wallpaper of its own. `AppDrawer` wraps this
@@ -5399,10 +5891,13 @@ export function ServerTerminalWorkspace({
                   <Animated.View style={styles.terminalSwipeArea}>
                     {targetUnavailable ? (
                       <View style={styles.missingTargetState}>
-                        <Text variant="heading">
+                        <Text variant="heading" style={styles.unavailableText}>
                           <Trans>Terminal unavailable</Trans>
                         </Text>
-                        <Text variant="bodySmall" color={theme.colors.textMuted}>
+                        <Text
+                          variant="bodySmall"
+                          color={theme.colors.textMuted}
+                          style={styles.unavailableText}>
                           <Trans>
                             This terminal was removed. Choose another terminal to continue.
                           </Trans>
@@ -5424,6 +5919,7 @@ export function ServerTerminalWorkspace({
                       </View>
                     ) : backendState.kind === 'down' ? (
                       <TerminalBackendDown
+                        serverId={serverId}
                         state={backendState}
                         retrying={connection.phase === 'connecting'}
                         onRetry={retryBackend}
@@ -5556,13 +6052,15 @@ export function ServerTerminalWorkspace({
                           // `false` here, but a screen-owning pane must never be
                           // able to arm this gesture on the strength of a metric
                           // alone).
-                          canLoadEarlier={
-                            !fullScreenPane &&
-                            canOfferHistoryPull({
-                              canLoadEarlier: canLoadEarlierOutput,
-                              blocked: historyPullBlocked,
-                            })
-                          }
+                          // Captured history is the exception: the gateway kept what
+                          // an alternate-screen pane drew, so the pull is offered on
+                          // its account while it has more to give.
+                          canLoadEarlier={canOfferHistoryPull({
+                            canLoadEarlier:
+                              (servesCapturedHistory && capturedOpen) ||
+                              (!fullScreenPane && canLoadEarlierOutput),
+                            blocked: historyPullBlocked,
+                          })}
                           historyRevision={historyRevision}
                           loadingEarlier={loadingEarlierOutput}
                           onLoadEarlier={loadEarlierOutput}
@@ -5964,6 +6462,7 @@ export function ServerTerminalWorkspace({
                 places, and it accounts for the approval, the keyboard and the
                 editor alike. */}
                       {assignmentBar}
+                      {dock.composer ? pendingQuestionHint : null}
                       {dock.composer ? composerField : null}
                     </Animated.View>
                   </GlassChrome>
@@ -6003,7 +6502,7 @@ export function ServerTerminalWorkspace({
           <View
             pointerEvents={overviewVisible ? 'none' : 'auto'}
             accessibilityElementsHidden={overviewVisible}
-            importantForAccessibility={overviewVisible ? 'no-hide-descendants' : 'auto'}
+            importantForAccessibility={revealableSubtreeImportance(overviewVisible)}
             style={[StyleSheet.absoluteFill, { opacity: overviewVisible ? 0 : 1 }]}>
             <PadAgentDetail
               detail={padDetail}
@@ -6205,7 +6704,12 @@ function TerminalKeyButton({
 
   return (
     <PressableScale
+      // Spelled out: a chip with only a label never reached the accessibility
+      // tree on the Pad, so neither a screen reader nor automation could press it.
+      accessible
+      accessibilityRole="button"
       accessibilityLabel={t`Send ${spoken}`}
+      testID={terminalShortcutTestId(item.key)}
       disabled={disabled}
       pressedScale={0.94}
       hitSlop={{ top: 8, bottom: 8, left: 2, right: 2 }}
@@ -6282,11 +6786,13 @@ function TerminalKeyButton({
  * backend started on the host is picked up without it.
  */
 function TerminalBackendDown({
+  serverId,
   state,
   retrying,
   onRetry,
   onBack,
 }: {
+  serverId: string;
   state: Extract<TerminalBackendState, { kind: 'down' }>;
   retrying: boolean;
   onRetry: () => void;
@@ -6295,31 +6801,29 @@ function TerminalBackendDown({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
-  const mono = useMonoFontFamily();
   const copy = terminalBackendCopy(state.backend);
   return (
     <View style={styles.missingTargetState} testID="terminal-backend-down">
       <Text variant="heading">
         <Trans>Terminal unavailable</Trans>
       </Text>
-      <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.backendDownText}>
+      <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.unavailableText}>
         {copy.reason}
       </Text>
-      <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.backendDownText}>
+      <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.unavailableText}>
         {copy.hint}
       </Text>
       {copy.command ? (
-        <Text
-          selectable
-          variant="bodySmall"
-          color={theme.colors.text}
-          testID="terminal-backend-down-command"
-          style={[
-            styles.backendDownCommand,
-            { fontFamily: mono, backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-          ]}>
-          {copy.command}
-        </Text>
+        // The shared guide row: the command to copy. Run is never offered
+        // here -- the terminal it would open a pane in is the one that is down.
+        <View style={styles.backendDownCommand}>
+          <GuideCommand
+            serverId={serverId}
+            command={copy.command}
+            terminalDown
+            testID="terminal-backend-down-command"
+          />
+        </View>
       ) : null}
       {state.backends.map((backend) => (
         <View
@@ -6415,12 +6919,16 @@ function HistoryPullNoticeView({
         </View>
         {notice.retry ? (
           <PressableScale
-            accessibilityLabel={t`Retry loading earlier output`}
+            accessibilityLabel={
+              notice.kind === 'refresh'
+                ? t`Refresh terminal history`
+                : t`Retry loading earlier output`
+            }
             onPress={onRetry}
             style={terminalNoticeStyles.action}
             hitSlop={8}>
             <Text variant="caption" color={theme.colors.primary}>
-              <Trans>Retry</Trans>
+              {notice.kind === 'refresh' ? <Trans>Refresh</Trans> : <Trans>Retry</Trans>}
             </Text>
           </PressableScale>
         ) : null}
@@ -6474,11 +6982,11 @@ function ConnectionNotice({
         ? t`Connecting`
         : status.phase === 'reconnecting'
           ? t`Reconnecting · ${status.attempt}`
-          : t`Server offline`;
+          : t`Computer offline`;
 
   // One shape for every phase, and the colour only on the dot. The state is
   // carried by the words -- a status that is legible by hue alone is not
-  // legible -- so what changes between "Connecting" and "Server offline" is the
+  // legible -- so what changes between "Connecting" and "Computer offline" is the
   // sentence and a 7pt light, not the object the sentence arrives in.
   const light = connected
     ? theme.colors.success
@@ -6525,7 +7033,7 @@ function ConnectionNotice({
             device has a record on it again. */}
         {!connected && status.needsPairing ? (
           <PressableScale
-            accessibilityLabel={t`Pair this server again`}
+            accessibilityLabel={t`Pair this computer again`}
             onPress={onPairAgain}
             style={terminalNoticeStyles.action}
             hitSlop={8}>
@@ -6594,6 +7102,11 @@ function entitySignature(entities: HerdrEntity[]): string {
         // Without it here, the poll that is supposed to carry the fresh
         // command to the render is the one thing that throws it away first.
         field(entity, 'foreground_command'),
+        // A pane's own size, which the canvas fits its drawing to: without it
+        // a resize (tmux `resize-window`, a re-split) was "no news" and the
+        // old width stayed on screen until the pane was opened again.
+        numberField(entity, 'width'),
+        numberField(entity, 'height'),
         field(entity, 'workspace_id'),
         field(entity, 'tab_id'),
         field(entity, 'pane_id'),
@@ -6703,15 +7216,10 @@ const styles = StyleSheet.create({
     gap: 10,
     padding: 24,
   },
-  backendDownText: {
+  unavailableText: {
     textAlign: 'center',
   },
-  backendDownCommand: {
-    borderRadius: appChrome.radius.control,
-    overflow: 'hidden',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
+  backendDownCommand: { alignSelf: 'stretch' },
   backendDownActions: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -6759,7 +7267,7 @@ const styles = StyleSheet.create({
     // size is its content's size, so without `minWidth: 0` the wrapper keeps
     // its full intrinsic width, the sentence never wraps to the second line it
     // is allowed, and the pill's `overflow: hidden` takes the end of it off
-    // mid-word with no ellipsis to admit it -- which is how "Server offline ·
+    // mid-word with no ellipsis to admit it -- which is how "Computer offline ·
     // Waiting for the network" reached a phone as "Waiting for the".
     minWidth: 0,
   },
@@ -6904,7 +7412,6 @@ const styles = StyleSheet.create({
   keyRowToggle: {
     width: 40,
     height: KEY_ROW_HEIGHT,
-    borderRadius: 12,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
@@ -6912,7 +7419,6 @@ const styles = StyleSheet.create({
   padKeyRowEntry: {
     width: 34,
     height: 34,
-    borderRadius: 10,
   },
   terminalKeyGrid: {
     flex: 1,
@@ -6966,12 +7472,10 @@ const styles = StyleSheet.create({
     flexShrink: 0,
     overflow: 'hidden',
     paddingHorizontal: 12,
-    borderRadius: 11,
     borderCurve: 'continuous',
   },
   // The chip's rounded fill, drawn under its content so it can fade on its own.
   paneChipFill: {
-    borderRadius: 11,
     borderCurve: 'continuous',
   },
   // Sized to the glyph so the selected copy laid over the resting one lands on
@@ -6996,13 +7500,11 @@ const styles = StyleSheet.create({
     height: KEY_ROW_HEIGHT,
     minWidth: 40,
     paddingHorizontal: 12,
-    borderRadius: 12,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
   },
   terminalKeyFill: {
-    borderRadius: 12,
     borderCurve: 'continuous',
   },
   terminalKeyGlyph: {

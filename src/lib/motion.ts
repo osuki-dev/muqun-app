@@ -15,6 +15,7 @@
  * different interaction when a theme adds artwork.
  */
 import { motion as tokens } from '@osuki-dev/ui';
+import { entryDelay } from '@/lib/stagger';
 import {
   Easing,
   FadeIn,
@@ -26,6 +27,7 @@ import {
   FadeOutLeft,
   FadeOutRight,
   FadeOutUp,
+  Keyframe,
   LinearTransition,
   ReduceMotion,
   withSpring,
@@ -102,19 +104,23 @@ export const STAGGER = {
   card: 28,
   /** Between pane rows filling in under one card. */
   row: 18,
+  /**
+   * Between the rows of a page's own entry list arriving once, on first mount.
+   *
+   * Longer than `row`: these are the page, not a list growing inside it, and
+   * the beat is what lets the eye run down them. `ENTRY_BUDGET_MS` bounds the
+   * whole sequence, so more rows tighten the beat instead of taking longer.
+   */
+  entry: 32,
 } as const;
 
-/** Muqun navigation: fluid cyber-mechanical transitions, depth reveals, and responsive header arrival. */
-export const NAVIGATION_MOTION = {
-  pageMs: 240,
-  pageScale: 1.04,
-  depthScale: 0.975,
-  terminalScale: 0.985,
-  agentScale: 0.97,
-  headerMs: 180,
-  headerDistance: 4,
-  modalMs: 260,
-} as const;
+/**
+ * The time by which the last row of an entry list has finished arriving.
+ *
+ * Under half a second, so a page that animates in is never a page the reader
+ * waits for.
+ */
+export const ENTRY_BUDGET_MS = 400;
 
 /**
  * The two re-skin transitions, which are longer than anything else the app
@@ -127,10 +133,9 @@ export const NAVIGATION_MOTION = {
  * happened. At 400 ms a front crossing a phone is moving fast enough to read
  * as a wipe; the extra beats are what make it a wash.
  *
- * They are the app's own numbers for the same reason `NAVIGATION_MOTION`'s
- * are, and they are here rather than at the call site for the same reason
- * too: the two transitions are one family and retuning them should be one
- * edit. The reduced-motion fallback is not here because it has a token --
+ * They are the app's own numbers: the two transitions are one family and
+ * retuning them should be one edit. The reduced-motion fallback is not here
+ * because it has a token --
  * `DURATION.short` -- and a dissolve with no travel in it is exactly what that
  * token is for.
  *
@@ -364,11 +369,7 @@ export const INSTANT: WithTimingConfig = {
  * velocity being absorbed. The design system's sentence is honoured on the
  * screen, which is where it is about.
  *
- * It lives here, as a function that applies the spring itself, so that no
- * screen ever writes one: `motion-tokens.test.ts` scans every other file in
- * `src/**` for the primitive and exempts this one alone -- then reads the
- * damping ratio back out of the source below to check the exemption is still
- * the bounce-free thing it was granted for.
+ * Keep the spring configuration here so screens share the same damping.
  */
 export const SETTLE: WithSpringConfig = {
   // Critically damped: fastest approach with zero overshoot. Not negotiable --
@@ -474,12 +475,47 @@ export const zoomOut = (duration: DurationToken | PresetToken | number = 'micro'
  * Takes its delay in milliseconds because that is what a stagger produces --
  * `index * STAGGER.card` -- and there is no token for the seventh card.
  */
-export const riseIn = (delay = 0) =>
+export const riseIn = (delay = 0, maxDelay = 120) =>
   FadeInDown.duration(DURATION.short)
-    .delay(Math.min(delay, 120))
+    .delay(Math.min(delay, maxDelay))
     .easing(EASE_OUT)
     .reduceMotion(ReduceMotion.System)
     .withInitialValues({ transform: [{ translateY: RISE_DISTANCE }] });
+
+/**
+ * One row of a page's entry list rising in on first mount.
+ *
+ * `riseIn` on the `STAGGER.entry` beat, with the beat compressed by
+ * `staggerDelay` so that the last of `count` rows has landed inside
+ * `ENTRY_BUDGET_MS`. `after` shifts the whole sequence, for a group that
+ * should follow one already on its way; `entryDelay` clamps the result so every
+ * caller, offset or not, has landed inside the budget.
+ */
+export const entryRise = (index: number, count: number, after = 0) =>
+  riseIn(
+    entryDelay(index, count, after, STAGGER.entry, DURATION.short, ENTRY_BUDGET_MS),
+    ENTRY_BUDGET_MS - DURATION.short
+  );
+
+/** How long {@link pulseOnce} runs; the overlay it drives unmounts after it. */
+export const PULSE_ONCE_MS = DURATION.short * 3;
+
+/**
+ * One gentle pulse when something arrives that needs the reader: an overlay
+ * fades in and back out to nothing, and its owner then unmounts it, so
+ * nothing stays behind (home-dispatch-ux §10). An entering animation rather
+ * than an effect, so inside a `LayoutAnimationConfig skipEntering` it does not
+ * play for a screen that merely mounted again (the overlay's resting opacity
+ * is 0). Skipped under reduce-motion.
+ */
+export const pulseOnce = () =>
+  new Keyframe({
+    0: { opacity: 0 },
+    35: { opacity: 1, easing: EASE_OUT },
+    100: { opacity: 0, easing: EASE_OUT },
+  })
+    .duration(PULSE_ONCE_MS)
+    .reduceMotion(ReduceMotion.System);
 
 /**
  * The list/stack reflow: rows closing the gap after a delete, a banner column
@@ -490,63 +526,3 @@ export const listLayout = (duration: DurationToken | PresetToken | number = 'sho
   LinearTransition.duration(resolveDuration(duration))
     .easing(EASE_OUT)
     .reduceMotion(ReduceMotion.System);
-
-/**
- * Route scene archetypes for targeted cyber-mechanical navigation:
- * - 'terminal': preserves text grid geometry with micro optical depth (scale 0.985 -> 1.0, opacity 0.3 -> 1.0)
- * - 'agent': neural telemetry aperture reveal (scale 0.97 -> 1.0, translateY 4 -> 0, opacity 0.2 -> 1.0)
- * - 'modal': cassette tray upward dock (translateY 16 -> 0, opacity 0.2 -> 1.0)
- * - 'plain': crisp optical aperture focus (scale 0.975 -> 1.0, opacity 0.25 -> 1.0)
- */
-export type RouteSceneType = 'terminal' | 'agent' | 'modal' | 'plain';
-
-export const routeSceneEnter = (sceneType: RouteSceneType | number = 'plain', delay = 0) => {
-  const resolvedType: RouteSceneType = typeof sceneType === 'number' ? 'plain' : sceneType;
-  const resolvedDelay = typeof sceneType === 'number' ? sceneType : delay;
-
-  if (resolvedType === 'terminal') {
-    return ZoomIn.duration(NAVIGATION_MOTION.pageMs)
-      .delay(resolvedDelay)
-      .easing(EASE_OUT)
-      .reduceMotion(ReduceMotion.System)
-      .withInitialValues({
-        transform: [{ scale: NAVIGATION_MOTION.terminalScale }],
-      });
-  }
-
-  if (resolvedType === 'agent') {
-    return FadeInDown.duration(NAVIGATION_MOTION.pageMs)
-      .delay(resolvedDelay)
-      .easing(EASE_OUT)
-      .reduceMotion(ReduceMotion.System)
-      .withInitialValues({
-        opacity: 0.2,
-        transform: [{ translateY: 4 }],
-      });
-  }
-
-  if (resolvedType === 'modal') {
-    return FadeInDown.duration(NAVIGATION_MOTION.modalMs)
-      .delay(resolvedDelay)
-      .easing(EASE_OUT)
-      .reduceMotion(ReduceMotion.System)
-      .withInitialValues({
-        opacity: 0.2,
-        transform: [{ translateY: 16 }],
-      });
-  }
-
-  return ZoomIn.duration(NAVIGATION_MOTION.pageMs)
-    .delay(resolvedDelay)
-    .easing(EASE_OUT)
-    .reduceMotion(ReduceMotion.System)
-    .withInitialValues({
-      transform: [{ scale: NAVIGATION_MOTION.depthScale }],
-    });
-};
-
-/**
- * Modal scene entrance layout animation for fullScreenModal tools.
- * Elegant upward slide with the design system ease-out.
- */
-export const modalSceneEnter = (delay = 0) => routeSceneEnter('modal', delay);

@@ -174,6 +174,24 @@ describe('frames', () => {
       all: true,
     });
     expect(parseAgentSocketFrame('{"t":"resync","asid":""}')).toEqual({ t: 'resync', asid: '' });
+    expect(parseAgentSocketFrame('{"t":"resync","asid":"","tasks":true}')).toEqual({
+      t: 'resync',
+      asid: '',
+      tasks: true,
+    });
+    // `tasks` only narrows an every-session resync; a session's own stays a session's.
+    expect(parseAgentSocketFrame('{"t":"resync","asid":"ses_1","tasks":true}')).toEqual({
+      t: 'resync',
+      asid: 'ses_1',
+    });
+    expect(parseAgentSocketFrame('{"t":"defaults","default_cwd":"~"}')).toEqual({
+      t: 'defaults',
+      defaultCwd: '~',
+    });
+    expect(parseAgentSocketFrame('{"t":"defaults","default_cwd":null}')).toEqual({
+      t: 'defaults',
+      defaultCwd: null,
+    });
     expect(parseAgentSocketFrame('{"t":"pong"}')).toEqual({ t: 'pong' });
     expect(parseAgentSocketFrame('{"t":"error","code":"superseded"}')).toEqual({
       t: 'error',
@@ -191,6 +209,44 @@ describe('frames', () => {
       seq: 12,
       event: { type: 'agent.status.changed', asid: 'ses_1', seq: 12, status: 'busy' },
     });
+  });
+
+  test('task.updated on no session becomes a task frame', () => {
+    const task = {
+      task_id: 't1',
+      state: 'working',
+      kind: 'command',
+      goal: 'g',
+      binding: { kind: 'none' },
+      updated_ms: 7,
+    };
+    expect(
+      parseAgentSocketFrame(
+        JSON.stringify({ t: 'event', asid: null, seq: 3, event: 'task.updated', data: task })
+      )
+    ).toEqual({
+      t: 'task',
+      seq: 3,
+      task: {
+        taskId: 't1',
+        state: 'working',
+        kind: 'command',
+        goal: 'g',
+        binding: { kind: 'none' },
+        updatedMs: 7,
+      },
+    });
+  });
+
+  test('any other event on no session, or a task with an unknown state, is ignored', () => {
+    expect(
+      parseAgentSocketFrame('{"t":"event","asid":null,"seq":1,"event":"fleet.changed","data":{}}')
+    ).toBeNull();
+    expect(
+      parseAgentSocketFrame(
+        '{"t":"event","asid":null,"seq":1,"event":"task.updated","data":{"task_id":"t","state":"nope"}}'
+      )
+    ).toBeNull();
   });
 
   test('an unknown frame is ignored and rubbish throws', () => {

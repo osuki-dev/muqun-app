@@ -18,9 +18,6 @@
  * proves the app reads real gzip and not merely its own round trip.
  */
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
 import {
@@ -56,36 +53,6 @@ describe('what the request advertises', () => {
     expect(ENVELOPE_ACCEPT_HEADER).toBe('X-Muqun-Envelope-Accept');
     expect(ENVELOPE_ACCEPT_HEADER.toLowerCase()).not.toBe('accept-encoding');
     expect(ENVELOPE_ACCEPT_ENCODINGS).toBe('gzip');
-  });
-});
-
-/**
- * The transport itself cannot be imported under bun -- it reaches react-native
- * through the generated API client -- so the two lines that wire this into it
- * are read off the source. Weak on its own; it is here because the failure it
- * catches is silent: an app that inflates correctly and never advertises gets
- * an uncompressed answer forever and nothing ever says so.
- */
-const CLIENT = join(dirname(fileURLToPath(import.meta.url)), '..', 'gateway-client.ts');
-
-describe('the transport is actually wired to it', () => {
-  const source = readFileSync(CLIENT, 'utf8');
-
-  test('every sealed request advertises what it can inflate', () => {
-    expect(source).toContain('[ENVELOPE_ACCEPT_HEADER]: ENVELOPE_ACCEPT_ENCODINGS');
-  });
-
-  test('every sealed answer is decoded before the response is rebuilt', () => {
-    expect(source).toContain('decodeSealedBody(fromBase64Url(payload.body), payload)');
-    // The rebuilt response carries the decoded body's headers, not the sealed
-    // payload's -- otherwise it would announce a compression it no longer has.
-    expect(source).toContain('headers: answerHeaders,');
-  });
-
-  test('nothing sets Accept-Encoding by hand', () => {
-    // Cronet and NSURLSession send it and decompress transparently. An app that
-    // sets it itself takes ownership of a decode the platform then stops doing.
-    expect(/['"]accept-encoding['"]/i.test(source)).toBe(false);
   });
 });
 

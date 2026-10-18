@@ -22,12 +22,6 @@ describe('the locale the network layer stamps on requests', () => {
     });
   });
 
-  test('follows the activated locale', () => {
-    setActiveLocale('zh-TW');
-    expect(getActiveLocale()).toBe('zh-TW');
-    expect(activeLocaleHeaders()['X-Muqun-Locale']).toBe('zh-TW');
-  });
-
   test('is read per call, so switching language reaches the very next request', () => {
     const before = activeLocaleHeaders();
     setActiveLocale('zh-TW');

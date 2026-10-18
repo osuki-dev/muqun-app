@@ -3,7 +3,7 @@
  * and -- the reason this file exists at all -- which of it Muqun is allowed to
  * delete.
  *
- * The Storage section reports three buckets and offers to empty two of them.
+ * The cache walk measures three buckets; Storage shows the two reclaimable ones.
  * The dangerous half of that sentence is the emptying, so the rule is stated
  * here as an *allow-list of names* rather than as "everything under the cache
  * except the ones we know about". The two readings differ the moment a
@@ -125,11 +125,23 @@ export const DELETABLE_CACHE_DIRECTORIES = [
   ...TEMPORARY_CACHE_DIRECTORIES,
 ] as const;
 
+/** Timestamped copies owned by Muqun, never the original attachment or export. */
+export function temporaryMediaCreatedAt(name: string): number | null {
+  const match =
+    /^(?:(?:audio-preview|video-preview)-([0-9]+)-[0-9]+\.[a-z0-9]+|dictation-([0-9]+)\.m4a|file-export-([0-9]+)-[0-9]+)$/.exec(
+      name
+    );
+  if (!match) return null;
+  const timestamp = Number(match[1] ?? match[2] ?? match[3]);
+  return Number.isSafeInteger(timestamp) && timestamp > 0 ? timestamp : null;
+}
+
 /** Which bucket one cache-root entry belongs to, by name alone. */
 export function classifyCacheEntry(name: string): CacheBucket {
   if ((IMAGE_CACHE_DIRECTORIES as readonly string[]).includes(name)) return 'images';
   if ((TEMPORARY_CACHE_DIRECTORIES as readonly string[]).includes(name)) return 'temporary';
   if (TEMPORARY_CACHE_PREFIXES.some((prefix) => name.startsWith(prefix))) return 'temporary';
+  if (temporaryMediaCreatedAt(name) !== null) return 'temporary';
   return 'other';
 }
 
@@ -196,11 +208,16 @@ export function isInsideCacheRoot(uri: string, rootUri: string): boolean {
  */
 export function planCacheDeletions(
   entries: readonly CacheRootEntry[],
-  rootUri: string
+  rootUri: string,
+  mediaCreatedBefore = 0
 ): CacheRootEntry[] {
-  return entries.filter(
-    (entry) => isDeletableCacheEntry(entry.name) && isInsideCacheRoot(entry.uri, rootUri)
-  );
+  return entries.filter((entry) => {
+    const createdAt = temporaryMediaCreatedAt(entry.name);
+    const staleMedia = createdAt !== null && createdAt < mediaCreatedBefore;
+    return (
+      (isDeletableCacheEntry(entry.name) || staleMedia) && isInsideCacheRoot(entry.uri, rootUri)
+    );
+  });
 }
 
 /**

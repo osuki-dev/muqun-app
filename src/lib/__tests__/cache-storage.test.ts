@@ -253,3 +253,39 @@ describe('formatCacheSize', () => {
     expect(formatCacheSize(5 * 1024 * 1024)).toBe('5.0 MB');
   });
 });
+
+describe('temporary media recovery', () => {
+  test('media copies are temporary rather than system data', () => {
+    for (const name of [
+      'video-preview-100-0.mp4',
+      'audio-preview-100-1.mp3',
+      'dictation-100.m4a',
+      'file-export-100-0',
+    ]) {
+      expect(classifyCacheEntry(name)).toBe('temporary');
+    }
+  });
+
+  test('only prior-process copies can be reclaimed, not paused or active media', () => {
+    const old = entry('video-preview-100-0.mp4', 100);
+    const active = entry('audio-preview-200-0.mp3', 100);
+    const newer = entry('file-export-300-0', 100);
+    expect(planCacheDeletions([old, active, newer], CACHE_ROOT, 200)).toEqual([old]);
+    expect(planCacheDeletions([old], CACHE_ROOT)).toEqual([]);
+  });
+
+  test('recovery never reaches persistent data or dependency caches', () => {
+    const entries = [
+      entry('video-preview-100-0.mp4', 100, DOCUMENT_ROOT),
+      entry('nitro_cronet_cache', 100),
+      entry('oat_primary', 100),
+      entry('ExponentAsset-font.ttf', 100),
+      entry('video-preview-100-0.mp4/../keys', 100),
+      entry('video-preview-NaN-0.mp4', 100),
+      entry('dictation-99999999999999999999.m4a', 100),
+      entry('mmkv', 100),
+      entry('theme-assets-v1', 100),
+    ];
+    expect(planCacheDeletions(entries, CACHE_ROOT, 200)).toEqual([]);
+  });
+});

@@ -582,8 +582,6 @@ export function ThemeBrowseSheet({
       testID="settings-sheet-scene"
       title={t`Browse themes`}
       topInset={insets.top}
-      captionLines={0}
-      caption={t`Themes published at muqun.dev. Nothing downloads until you open one.`}
       header={header}>
       <LegendList
         nestedScrollEnabled

@@ -16,6 +16,21 @@ const item = (id: string, extra: Partial<TimelineItem> = {}): TimelineItem => ({
 });
 
 describe('agent transcript ownership', () => {
+  test('thinking split by an empty reply part is one Thought row', () => {
+    const store = createAgentTranscriptStore();
+    const thought = (id: string) => item(id, { part: { type: 'reasoning', text: id } });
+    store
+      .getState()
+      .setTimeline([
+        thought('a'),
+        item('blank', { part: { type: 'text', text: ' ' } }),
+        thought('b'),
+      ]);
+    const state = store.getState();
+    expect(state.keys.map((key) => state.rows[key].items.map((row) => row.id))).toEqual([
+      ['a', 'b'],
+    ]);
+  });
   test('31 diagrams become independently virtualized rows without changing the canonical message', () => {
     const store = createAgentTranscriptStore();
     const text = Array.from(

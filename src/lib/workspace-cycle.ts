@@ -15,8 +15,6 @@
 import {
   canCycle,
   cycleDirectionBetween,
-  ringPosition,
-  stepRing,
   stepRingFrom,
   type CycleDirection,
   type CycleTarget,
@@ -56,33 +54,6 @@ function asWorkspaceTarget(target: CycleTarget | null): WorkspaceCycleTarget | n
  */
 export function canCycleWorkspaces(workspaces: CyclableWorkspace[]): boolean {
   return canCycle(workspaces);
-}
-
-/**
- * Where the current workspace sits, for the indicator. `null` when the
- * selection names a workspace this session no longer has, which is the same
- * answer as "nothing to show".
- */
-export function workspacePosition(
-  workspaces: CyclableWorkspace[],
-  workspaceId: string
-): WorkspaceCycleTarget | null {
-  return asWorkspaceTarget(ringPosition(workspaces, workspaceId));
-}
-
-/**
- * The workspace one step in `direction`, wrapping at either end.
- *
- * An unknown current workspace is not an error: a swipe then lands on the first
- * one going forward and the last one going back, which is what a user who just
- * had a workspace closed under them expects from the next swipe.
- */
-export function cycleWorkspace(
-  workspaces: CyclableWorkspace[],
-  workspaceId: string,
-  direction: WorkspaceCycleDirection
-): WorkspaceCycleTarget | null {
-  return asWorkspaceTarget(stepRing(workspaces, workspaceId, direction));
 }
 
 /**

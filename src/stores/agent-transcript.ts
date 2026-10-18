@@ -1,43 +1,61 @@
 import { createStore } from 'zustand/vanilla';
 import type { AgentRunStatus, TimelineItem } from '@/lib/agent-protocol';
-import {
-  reconcileInjectedContext,
-  reconcileShellParts,
-  type TimelineRenderGroup,
-} from '@/lib/agent-timeline-groups';
+import { reconcileShellParts, type TimelineRenderGroup } from '@/lib/agent-timeline-groups';
 import { classifyTool } from '@/lib/agent-tool-output';
 import { splitDiagramMarkdown } from '@/lib/diagram-markdown';
+import { withoutTaskPlumbing } from '@/lib/task-plumbing';
 
 /** One canonical timeline per mounted workbench; rows are derived, never mirrored back. */
 export function createAgentTranscriptStore() {
   return createStore<AgentTranscriptState>((set, get) => {
     const markdownRows = new WeakMap<TimelineItem, TimelineItem[]>();
-    const renderItems = (item: TimelineItem): TimelineItem[] => {
+    /** The rows one drawn item becomes: each diagram virtualized on its own. */
+    const splitRows = (item: TimelineItem): TimelineItem[] => {
       if (item.role !== 'assistant' || item.part.type !== 'text') return [item];
-      const cached = markdownRows.get(item);
-      if (cached) return cached;
+      // A reply part with nothing in it draws nothing, and as a row of its own
+      // it split one stretch of thinking into a Thought block per part.
+      if (!item.part.text.trim() && !item.attachments?.length && !item.image_assets?.length)
+        return [];
       const parts = splitDiagramMarkdown(item.part.text);
       // Virtualize each diagram in the existing list, never nest another list
       // inside a message. Keep the canonical timeline intact for sync/copy.
-      const rows =
-        parts.length > 1 && parts.some((part) => part.source !== undefined)
-          ? parts
-              .filter((part) => part.markdown.trim().length > 0)
-              .map((part) => ({
-                ...item,
-                row_key:
-                  part.start === 0
-                    ? (item.row_key ?? item.id)
-                    : `${item.row_key ?? item.id}:markdown:${part.start}`,
-                part: { type: 'text' as const, text: part.markdown },
-              }))
-          : [item];
-      markdownRows.set(item, rows);
+      return parts.length > 1 && parts.some((part) => part.source !== undefined)
+        ? parts
+            .filter((part) => part.markdown.trim().length > 0)
+            .map((part) => ({
+              ...item,
+              row_key:
+                part.start === 0
+                  ? (item.row_key ?? item.id)
+                  : `${item.row_key ?? item.id}:markdown:${part.start}`,
+              part: { type: 'text' as const, text: part.markdown },
+            }))
+        : [item];
+    };
+    /**
+     * The gateway's task plumbing (a synthetic part, its completion request,
+     * the agent's marker line) is never drawn. See `task-plumbing.ts`.
+     *
+     * `streaming`: the part still arriving. While its last line could still
+     * become a marker it is drawn without that line, uncached; otherwise it
+     * is the same cached rows it settles to.
+     */
+    const renderItems = (canonical: TimelineItem, streaming: boolean): TimelineItem[] => {
+      if (streaming) {
+        const held = withoutTaskPlumbing(canonical, true);
+        if (shownText(held) !== shownText(withoutTaskPlumbing(canonical)))
+          return held ? splitRows(held) : [];
+      }
+      const cached = markdownRows.get(canonical);
+      if (cached) return cached;
+      const item = withoutTaskPlumbing(canonical);
+      const rows = item ? splitRows(item) : [];
+      markdownRows.set(canonical, rows);
       return rows;
     };
     const rebuild = (timeline: TimelineItem[], config = get().config) => {
       const previous = get();
-      const reconciled = reconcileInjectedContext(reconcileShellParts(timeline));
+      const reconciled = reconcileShellParts(timeline);
       // windowStart indexes the canonical timeline, not the deduplicated list.
       // Shell copies can occupy the entire newest page; keep a real page visible
       // instead of slicing beyond the end after those copies are removed.
@@ -55,7 +73,8 @@ export function createAgentTranscriptStore() {
         const visibleStart = anchor >= 0 ? Math.min(anchor, fallbackStart) : fallbackStart;
         visible = reconciled.slice(visibleStart);
       }
-      visible = visible.flatMap(renderItems);
+      const streaming = config.status === 'busy' ? visible.at(-1) : undefined;
+      visible = visible.flatMap((item) => renderItems(item, item === streaming));
       const nextRows: Record<string, TimelineRenderGroup> = {};
       const keys: string[] = [];
       let preceding: TimelineItem | undefined;
@@ -169,3 +188,7 @@ export interface AgentTranscriptState {
   configure: (config: TranscriptConfig) => void;
 }
 export type AgentTranscriptStore = ReturnType<typeof createAgentTranscriptStore>;
+
+function shownText(item: TimelineItem | null): string | null {
+  return item?.part.type === 'text' ? item.part.text : null;
+}

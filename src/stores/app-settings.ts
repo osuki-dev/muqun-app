@@ -14,6 +14,11 @@ import {
   resolveHomeLayout,
   type HomeLayout,
 } from '@/lib/home-layout';
+import {
+  isCacheCleanupIntervalDays,
+  isCacheCleanupTimestamp,
+  type CacheCleanupIntervalDays,
+} from '@/lib/cache-cleanup-policy';
 import type { TerminalTextSize } from '@/lib/terminal-text-size';
 import { parseFontSlot, SYSTEM_FONT_SLOT, type FontSlot } from '@/theme/user-font-file';
 
@@ -44,6 +49,9 @@ type PersistedSettings = {
   agentDefaultView: PaneViewMode;
   androidWidgetEnabled: boolean;
   appLockEnabled: boolean;
+  cacheCleanupIntervalDays: CacheCleanupIntervalDays;
+  cacheCleanupEnabledAt: number;
+  cacheCleanupLastSuccessAt: number;
   hapticsEnabled: boolean;
   // The sole appearance preference: also derives global chrome and motion.
   // Theme choice remains independent and owns only colours and artwork.
@@ -96,6 +104,9 @@ const defaults: PersistedSettings = {
   // read them, so it waits to be asked for, exactly like the Lock Screen card.
   androidWidgetEnabled: false,
   appLockEnabled: false,
+  cacheCleanupIntervalDays: 0,
+  cacheCleanupEnabledAt: 0,
+  cacheCleanupLastSuccessAt: 0,
   hapticsEnabled: true,
   homeLayout: DEFAULT_HOME_LAYOUT,
   themeEffectsEnabled: true,
@@ -210,6 +221,15 @@ function parseSettings(value: string): Partial<PersistedSettings> {
       ...(typeof parsed.appLockEnabled === 'boolean'
         ? { appLockEnabled: parsed.appLockEnabled }
         : {}),
+      ...(isCacheCleanupIntervalDays(parsed.cacheCleanupIntervalDays)
+        ? { cacheCleanupIntervalDays: parsed.cacheCleanupIntervalDays }
+        : {}),
+      ...(isCacheCleanupTimestamp(parsed.cacheCleanupEnabledAt)
+        ? { cacheCleanupEnabledAt: parsed.cacheCleanupEnabledAt }
+        : {}),
+      ...(isCacheCleanupTimestamp(parsed.cacheCleanupLastSuccessAt)
+        ? { cacheCleanupLastSuccessAt: parsed.cacheCleanupLastSuccessAt }
+        : {}),
       ...(typeof parsed.hapticsEnabled === 'boolean'
         ? { hapticsEnabled: parsed.hapticsEnabled }
         : {}),
@@ -278,6 +298,9 @@ function pickPersisted(state: AppSettingsState): PersistedSettings {
     agentDefaultView: state.agentDefaultView,
     androidWidgetEnabled: state.androidWidgetEnabled,
     appLockEnabled: state.appLockEnabled,
+    cacheCleanupIntervalDays: state.cacheCleanupIntervalDays,
+    cacheCleanupEnabledAt: state.cacheCleanupEnabledAt,
+    cacheCleanupLastSuccessAt: state.cacheCleanupLastSuccessAt,
     hapticsEnabled: state.hapticsEnabled,
     homeLayout: state.homeLayout,
     themeEffectsEnabled: state.themeEffectsEnabled,

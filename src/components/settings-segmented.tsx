@@ -21,7 +21,7 @@
  * `Tabs` changes.
  */
 import { Tabs, useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { Text, type TextProps } from '@/components/text';
 import { useEffect, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -61,6 +61,7 @@ export function SettingsSegmented({
   onChange,
   testID,
   textCase = 'sentence',
+  labelWeight,
 }: {
   options: SegmentedOption[];
   value: string;
@@ -68,6 +69,8 @@ export function SettingsSegmented({
   testID?: string;
   /** @default 'sentence' */
   textCase?: SegmentedCase;
+  /** Override sentence-case labels; uppercase labels keep the kit typography. */
+  labelWeight?: TextProps['weight'];
 }) {
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
@@ -190,7 +193,7 @@ export function SettingsSegmented({
               <Text
                 variant="label"
                 transform="none"
-                weight="semibold"
+                weight={labelWeight ?? 'semibold'}
                 numberOfLines={1}
                 maxFontSizeMultiplier={1.18}
                 color={option.value === value ? theme.colors.text : theme.colors.textMuted}

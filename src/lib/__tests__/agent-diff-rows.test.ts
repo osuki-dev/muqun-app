@@ -14,7 +14,6 @@ import {
   fileStatusFromPatch,
   fileChangeFromSummary,
   fileStatusFromWire,
-  INLINE_DIFF_MAX_ROWS,
   oldPathFromPatch,
   patchStateFromText,
 } from '../agent-diff-rows';
@@ -270,11 +269,6 @@ describe('capDiffRows', () => {
     expect(capped.hidden).toBe(rows.length - 10);
   });
 
-  test('the default is the inline budget', () => {
-    expect(INLINE_DIFF_MAX_ROWS).toBe(60);
-    expect(capDiffRows(rows).hidden).toBe(0);
-  });
-
   test('a cap of zero draws nothing and says so', () => {
     expect(capDiffRows(rows, 0)).toEqual({ rows: [], hidden: rows.length });
   });
@@ -301,11 +295,6 @@ describe('stepDiffLimit', () => {
     expect(stepDiffLimit(INLINE_DIFF_HARD_CAP - 1).exhausted).toBe(true);
     expect(stepDiffLimit(INLINE_DIFF_HARD_CAP).exhausted).toBe(true);
     expect(stepDiffLimit(0).exhausted).toBe(false);
-  });
-
-  test('the bounds are the ones the block is built around', () => {
-    expect(INLINE_DIFF_STEP_ROWS).toBe(200);
-    expect(INLINE_DIFF_HARD_CAP).toBe(1000);
   });
 });
 

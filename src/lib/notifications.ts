@@ -37,20 +37,37 @@ import {
 import { directGatewayBaseUrl } from '@/lib/ssh-tunnel';
 import { useAppSettings } from '@/stores/app-settings';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
-import { noticeFromPush, noticePresentation } from '@/lib/in-app-notifications';
+import { useServerTasksStore } from '@/stores/server-tasks';
+import { attributePush, noticeFromPush, noticePresentation } from '@/lib/in-app-notifications';
 import { useInAppNotifications } from '@/stores/in-app-notifications';
 import { isDemoRecord } from '@/lib/demo-gateway';
 import { getActiveLocale } from '@/i18n/active-locale';
 import { recoverWith } from '@/lib/compiler-safe-control-flow';
 
+/** The paired computer whose task ledger bound agent session `asid`, if one has. */
+function ledgerOwnerOf(asid: string): string | undefined {
+  const { records } = useGatewayConnectionStore.getState();
+  const { index } = useServerTasksStore.getState();
+  return records.find((record) =>
+    index[record.serverId]?.tasks.some(
+      (task) => task.binding.kind === 'agent_session' && task.binding.asid === asid
+    )
+  )?.serverId;
+}
+
 Notifications.setNotificationHandler({
   handleNotification: async (notification) => {
+    const content = attributePush(
+      notification.request.content,
+      useGatewayConnectionStore.getState().records,
+      ledgerOwnerOf
+    );
     const presentation = noticePresentation(
-      useAppSettings.getState().notificationsEnabled,
+      useAppSettings.getState().notificationsEnabled && content !== null,
       AppState.currentState === 'active'
     );
-    if (presentation.inApp) {
-      const notice = noticeFromPush(notification.request.identifier, notification.request.content, {
+    if (presentation.inApp && content) {
+      const notice = noticeFromPush(notification.request.identifier, content, {
         isPad: windowIsPad(),
         questionTitle: i18n._(msg`Needs your input`),
       });

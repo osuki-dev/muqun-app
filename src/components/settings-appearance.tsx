@@ -194,6 +194,14 @@ const ICON_ART: Record<AppIconId, { light: number; dark: number }> = {
     light: require('@/assets/icons/arcade/preview-light.png'),
     dark: require('@/assets/icons/arcade/preview-dark.png'),
   },
+  Mint: {
+    light: require('@/assets/icons/mint/preview-light.png'),
+    dark: require('@/assets/icons/mint/preview-light.png'),
+  },
+  Sakura: {
+    light: require('@/assets/icons/sakura/preview-light.png'),
+    dark: require('@/assets/icons/sakura/preview-light.png'),
+  },
 };
 
 function AppIconPicker() {
@@ -209,6 +217,8 @@ function AppIconPicker() {
     Cyber: 'Cyber',
     Anime: 'Anime',
     Arcade: 'Arcade',
+    Mint: 'Neon',
+    Sakura: 'Mecha',
   };
   return (
     <SettingsBlock

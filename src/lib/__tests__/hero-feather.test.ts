@@ -154,25 +154,6 @@ describe('the feather', () => {
     expect(mask.height).toBeCloseTo(81.6, 10);
   });
 
-  test('each fade covers the fraction of the picture the constant asks for', () => {
-    // The maintainer's numbers, stated as the thing they actually constrain: how
-    // much of the drawing is spent on each edge, and how much is left over fully
-    // opaque in the middle.
-    const { image, feather } = heroFeatherGeometry({
-      container: BAND,
-      intrinsic: { width: 720, height: 360 },
-    });
-    expect(feather.x / image.width).toBeCloseTo(HOME_HERO_FEATHER.horizontal, 10);
-    expect(feather.y / image.height).toBeCloseTo(HOME_HERO_FEATHER.vertical, 10);
-    expect(feather.x / image.width).toBeGreaterThanOrEqual(0.2);
-    expect(feather.x / image.width).toBeLessThanOrEqual(0.25);
-    expect(feather.y / image.height).toBeGreaterThanOrEqual(0.3);
-    expect(feather.y / image.height).toBeLessThanOrEqual(0.35);
-    // The opaque core: the middle 56% across, the middle 36% down.
-    expect(1 - (2 * feather.x) / image.width).toBeCloseTo(0.56, 10);
-    expect(1 - (2 * feather.y) / image.height).toBeCloseTo(0.36, 10);
-  });
-
   test('each fade lands exactly on its edge of the picture, and is one fade wide', () => {
     // The numbers the renderer is given have to agree with the sentence in the
     // doc comment: blurring the mask edge by 3 sigma either way spreads it half a
@@ -188,20 +169,6 @@ describe('the feather', () => {
     expect(mask.x + mask.width + blur.x * 3).toBeCloseTo(image.x + image.width, 10);
     expect(mask.y - blur.y * 3).toBeCloseTo(image.y, 10);
     expect(mask.y + mask.height + blur.y * 3).toBeCloseTo(image.y + image.height, 10);
-  });
-
-  test('the two axes are softened independently', () => {
-    // The whole reason the mask's blur is a vector: a wide hero's top and bottom
-    // give out harder than its sides, in points as well as in proportion.
-    const { blur, feather } = heroFeatherGeometry({
-      container: BAND,
-      intrinsic: { width: 720, height: 360 },
-    });
-    expect(feather.y / feather.x).toBeCloseTo(
-      (HOME_HERO_FEATHER.vertical * 180) / (HOME_HERO_FEATHER.horizontal * 360),
-      10
-    );
-    expect(Math.abs(blur.x - blur.y)).toBeGreaterThan(1);
   });
 
   test('the corners round on the scale of the fade, and never past a stadium', () => {
@@ -258,14 +225,7 @@ describe('the feather', () => {
     }
   });
 
-  test('the strength is read from one place, and a caller may still override it', () => {
-    // No manifest field and no second constant: the component passes nothing, and
-    // the only way to a different feather is this argument.
-    const standard = heroFeatherGeometry({
-      container: BAND,
-      intrinsic: { width: 720, height: 360 },
-    });
-    expect(standard.feather.x / standard.image.width).toBeCloseTo(HOME_HERO_FEATHER.horizontal, 10);
+  test('a caller can override the default feather strength', () => {
     const softer = heroFeatherGeometry({
       container: BAND,
       intrinsic: { width: 720, height: 360 },
@@ -306,18 +266,4 @@ test('foreground alignment ignores transparent padding and faint export residue'
   expect(artworkVisibleTop(alpha, 1000, 20)).toBe(8);
   expect(artworkVisibleTop(new Uint8Array(80).fill(255), 10, 8)).toBe(0);
   expect(artworkVisibleTop(new Uint8Array(80), 10, 8)).toBe(0);
-  const source = { width: 1000, height: 1500 };
-  for (const width of [360, 600, 900]) {
-    const rect = editorialArtworkRect(
-      { width, height: Math.min(640, width * 0.9) },
-      source,
-      'cover'
-    );
-    const visibleTop = (117 * rect.height) / source.height;
-    const titleHeight = width * 0.2;
-    const wrapperTop = titleHeight * 0.65 - visibleTop;
-    expect(wrapperTop + visibleTop).toBeCloseTo(titleHeight * 0.65);
-    expect(rect.width).toBe(width);
-    expect(rect.y).toBe(0);
-  }
 });

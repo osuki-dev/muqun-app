@@ -2,7 +2,9 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { Text } from '@/components/text';
 import { Image } from 'expo-image';
 import { X } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useFileActions } from '@/hooks/use-file-actions';
+import { savePreviewImage } from '@/lib/save-file';
 import { ActivityIndicator, Modal, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -70,6 +72,14 @@ export function ImagePreviewModal({
   const gestureStartScale = useSharedValue(1);
   const panAxis = useSharedValue(AXIS_UNDECIDED);
   const pageIndex = useSharedValue(initialIndex);
+  const fileActions = useFileActions(
+    t`Save image`,
+    async () => {
+      const image = images[pageIndex.get()];
+      if (image) await savePreviewImage(image);
+    },
+    true
+  );
 
   // A rotation, or opening a different image, changes what "page 3" means in
   // pixels. Re-resting the pager keeps the visible page put.
@@ -181,10 +191,20 @@ export function ImagePreviewModal({
       if (success) scheduleOnRN(onClose);
     });
 
-  const gesture = Gesture.Exclusive(
-    doubleTapGesture,
-    singleTapGesture,
-    Gesture.Simultaneous(panGesture, pinchGesture)
+  const gesture = useMemo(
+    () =>
+      Gesture.Exclusive(
+        Gesture.LongPress()
+          .minDuration(450)
+          .maxDistance(12)
+          .onEnd((_event, success) => {
+            if (success) scheduleOnRN(fileActions.show);
+          }),
+        doubleTapGesture,
+        singleTapGesture,
+        Gesture.Simultaneous(panGesture, pinchGesture)
+      ),
+    [fileActions, doubleTapGesture, singleTapGesture, panGesture, pinchGesture]
   );
 
   const backdropStyle = useAnimatedStyle(() => ({
@@ -242,6 +262,11 @@ export function ImagePreviewModal({
             Android hit-tests by Z before draw order, and this is the control
             that has to stay reachable no matter what the pager is doing or
             failing to do underneath it. */}
+        {fileActions.menu && (
+          <View style={{ position: 'absolute', bottom: insets.bottom + 24, left: 24, right: 24 }}>
+            {fileActions.menu}
+          </View>
+        )}
         <PressableScale
           accessibilityLabel={t`Close preview`}
           onPress={onClose}

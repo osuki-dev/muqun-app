@@ -54,6 +54,42 @@ function ports(overrides: Partial<HomeCommandPorts> = {}) {
 }
 
 describe('home command boundary', () => {
+  test('opens a created task session while its destination snapshot is still loading', async () => {
+    const snapshot = deferred<void>();
+    let snapshotLoaded = false;
+    const adapter = ports({
+      prepareNewAgent: () => {
+        throw new Error('Opening an existing session must not prepare another agent');
+      },
+      loadTerminalSelection: () => {
+        throw new Error('An agent session does not need a terminal selection');
+      },
+      navigate: (destination) => {
+        adapter.navigations.push(destination);
+        // The mounted destination owns this slow read, independently of Home.
+        void snapshot.promise.then(() => {
+          snapshotLoaded = true;
+        });
+      },
+    });
+    const controller = createHomeCommandController(adapter);
+    const target = {
+      kind: 'agent-session' as const,
+      serverId: 'server-a',
+      asid: 'created-task-session',
+      agentId: 'opencode',
+    };
+
+    const result = await controller.dispatch({ type: 'open-agent', target });
+
+    expect(result.status).toBe('dispatched');
+    expect(adapter.navigations).toEqual([{ type: 'agent', target, intent: 'existing' }]);
+    expect(snapshotLoaded).toBe(false);
+    snapshot.resolve();
+    await snapshot.promise;
+    expect(snapshotLoaded).toBe(true);
+  });
+
   test('a stale request failure does not surface over the newer destination', async () => {
     const load = deferred<Awaited<ReturnType<HomeCommandPorts['loadTerminalSelection']>>>();
     const adapter = ports({ loadTerminalSelection: () => load.promise });

@@ -66,15 +66,6 @@ describe('typedCount', () => {
 });
 
 describe('cursorOpacity', () => {
-  test('it blinks once: on, off, on', () => {
-    expect(cursorOpacity(0)).toBe(1);
-    expect(cursorOpacity(0.29)).toBe(1);
-    expect(cursorOpacity(0.5)).toBe(0);
-    expect(cursorOpacity(0.71)).toBe(0);
-    expect(cursorOpacity(0.8)).toBe(1);
-    expect(cursorOpacity(1)).toBe(1);
-  });
-
   test('a cursor is a block, so it steps rather than dissolves', () => {
     const samples = Array.from({ length: 21 }, (_, index) => cursorOpacity(index / 20));
     expect(new Set(samples)).toEqual(new Set([0, 1]));

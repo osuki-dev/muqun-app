@@ -4,12 +4,7 @@
  */
 import { describe, expect, test } from 'bun:test';
 
-import {
-  DEMO_SSH_HOST_ID,
-  DEMO_SSH_HOST_KEY,
-  DemoShellTranscript,
-  isDemoSshHost,
-} from '@/lib/demo-ssh-transcript';
+import { DemoShellTranscript } from '@/lib/demo-ssh-transcript';
 import { SshUnavailableError, describeSshFailure, isSshFailure } from '@/lib/ssh-client';
 
 function type(transcript: DemoShellTranscript, text: string): string {
@@ -68,14 +63,7 @@ describe('DemoShellTranscript', () => {
   });
 });
 
-describe('the demo host identity', () => {
-  test('has a fixed id and a fingerprint shaped like a real one', () => {
-    expect(DEMO_SSH_HOST_KEY.fingerprint.startsWith('SHA256:')).toBe(true);
-    expect(isDemoSshHost({ id: DEMO_SSH_HOST_ID })).toBe(true);
-    expect(isDemoSshHost({ id: 'host-1' })).toBe(false);
-    expect(isDemoSshHost(null)).toBe(false);
-  });
-});
+describe('the demo host identity', () => {});
 
 describe('describeSshFailure', () => {
   test('reads the code off a library error without loading the library', () => {

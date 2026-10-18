@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { AgentModelSheet } from '@/components/agent-model-sheet';
 import { useAgentSheetBridge } from '@/stores/agent-sheet-bridge';
+import { useHomeComposerSheet } from '@/stores/home-composer-sheet';
 
 /**
  * The model picker's route. The gateway session is a param, because that is
@@ -14,23 +15,31 @@ export default function AgentModelScreen() {
     sessionId?: string;
     directory?: string;
     agentId?: string;
+    /** `home`: opened from Home's dock, which has no session behind it. */
+    owner?: string;
   }>();
   /** The agent whose models are listed; see `catalogAgentId` in the bridge. */
   const bridgeAgentId = useAgentSheetBridge((state) => state.catalogAgentId);
   const bridgeSessionId = useAgentSheetBridge((state) => state.sessionId);
   /** The workspace to read the catalog for; see `agent-mode.tsx`. */
   const bridgeDirectory = useAgentSheetBridge((state) => state.activeDirectory);
-  const selectedModel = useAgentSheetBridge((state) => state.selectedModel);
-  const selectModel = useAgentSheetBridge((state) => state.actions.selectModel);
+  const bridgeModel = useAgentSheetBridge((state) => state.selectedModel);
+  const bridgeSelect = useAgentSheetBridge((state) => state.actions.selectModel);
+  const homeModel = useHomeComposerSheet((state) => state.selectedModel);
+  const homeSelect = useHomeComposerSheet((state) => state.onSelectModel);
+  // Home names everything in the params; nothing of the bridge's applies.
+  const fromHome = params.owner === 'home';
+  const selectedModel = fromHome ? homeModel : bridgeModel;
 
   return (
     <AgentModelSheet
-      sessionId={params.sessionId || bridgeSessionId || undefined}
-      directory={params.directory || bridgeDirectory || undefined}
-      agentId={params.agentId || bridgeAgentId || undefined}
+      sessionId={params.sessionId || (fromHome ? undefined : bridgeSessionId) || undefined}
+      directory={params.directory || (fromHome ? undefined : bridgeDirectory) || undefined}
+      agentId={params.agentId || (fromHome ? undefined : bridgeAgentId) || undefined}
       selectedModel={selectedModel}
       onSelectModel={(model) => {
-        selectModel(model);
+        if (fromHome) homeSelect?.(model);
+        else bridgeSelect(model);
         router.back();
       }}
       onClose={() => router.back()}

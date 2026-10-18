@@ -131,7 +131,7 @@ export default function SimfarmScreen() {
       {!record ? (
         <View style={[styles.notice, { backgroundColor: surfaceBackground(theme.colors.surface) }]}>
           <Text selectable variant="bodySmall" color={theme.colors.danger}>
-            {t`This server is no longer paired.`}
+            {t`This computer is no longer paired.`}
           </Text>
         </View>
       ) : (

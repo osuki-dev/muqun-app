@@ -13,14 +13,14 @@ import { goneSessionKey } from '@/lib/home-continue';
  */
 interface GoneAgentSessionsState {
   keys: ReadonlySet<string>;
-  markGone: (serverId: string, asid: string) => void;
+  markGone: (serverId: string, asid: string, agentId?: string) => void;
 }
 
 export const useGoneAgentSessions = create<GoneAgentSessionsState>((set) => ({
   keys: new Set(),
-  markGone(serverId, asid) {
+  markGone(serverId, asid, agentId) {
     set((state) => {
-      const key = goneSessionKey(serverId, asid);
+      const key = goneSessionKey(serverId, asid, agentId);
       return state.keys.has(key) ? state : { keys: new Set(state.keys).add(key) };
     });
   },

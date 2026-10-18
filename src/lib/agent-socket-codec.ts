@@ -20,6 +20,7 @@
  */
 import { parseAgentDomainEvent, type AgentDomainEvent } from './agent-protocol';
 import { streamRecordNonce } from './sse-record';
+import { parseTaskView, type TaskView } from './task-ledger';
 
 export const AGENT_SOCKET_PATH = '/api/ws';
 /** The frame vocabulary this build speaks; `hello` must name the same. */
@@ -205,10 +206,27 @@ export type AgentSocketServerFrame =
   | { t: 'hello'; connectionId: string; protocol: number; generation?: string }
   | { t: 'subscribed'; asid: string }
   | { t: 'subscribed'; all: true }
+  /** `subscribe_tasks` is in effect: task frames only from here on. */
+  | { t: 'subscribed'; tasks: true }
   /** `event` already parsed; null when this build has no branch for it. */
   | { t: 'event'; asid: string; seq: number; event: AgentDomainEvent | null }
-  /** `asid` "" means every session. */
-  | { t: 'resync'; asid: string }
+  /**
+   * `task.updated`, which the gateway sends on no session: as an `event` frame
+   * with no `asid` under `subscribe_all`, as a `task` frame under `subscribe_tasks`.
+   */
+  | { t: 'task'; seq: number; task: TaskView }
+  /**
+   * `asid` "" means every session. `tasks` with an empty `asid` is the task
+   * channel alone falling behind: refresh the task list, not every timeline.
+   */
+  | { t: 'resync'; asid: string; tasks?: true }
+  /**
+   * Under `subscribe_tasks`: the folder a task this device opens without a
+   * `cwd` runs in (`~` for the home directory), `null` when the gateway
+   * cannot say. Sent after `subscribed`, after a task resync, and when a task
+   * the device opened changes it (Gateway Task 20).
+   */
+  | { t: 'defaults'; defaultCwd: string | null }
   | { t: 'pong' }
   | { t: 'error'; code: string };
 
@@ -216,6 +234,7 @@ export type AgentSocketClientFrame =
   | { t: 'subscribe'; asid: string }
   | { t: 'unsubscribe'; asid: string }
   | { t: 'subscribe_all' }
+  | { t: 'subscribe_tasks' }
   | { t: 'ping' };
 
 function str(value: unknown): string | null {
@@ -251,22 +270,40 @@ export function parseAgentSocketFrame(plaintext: string): AgentSocketServerFrame
     }
     case 'subscribed': {
       if (rec.all === true) return { t: 'subscribed', all: true };
+      if (rec.tasks === true) return { t: 'subscribed', tasks: true };
       const asid = str(rec.asid);
       return asid ? { t: 'subscribed', asid } : null;
     }
     case 'event': {
       const asid = str(rec.asid);
       const name = str(rec.event);
-      if (asid === null || name === null) return null;
+      if (name === null) return null;
       const seq = typeof rec.seq === 'number' && Number.isFinite(rec.seq) ? rec.seq : 0;
+      if (asid === null) {
+        // Not about a session. The one event this build reads is a task's.
+        if (name !== 'task.updated') return null;
+        const task = parseTaskView(rec.data);
+        return task ? { t: 'task', seq, task } : null;
+      }
       // `data` is the SSE `data:` payload embedded as JSON; the parser the SSE
       // path uses takes it from here unchanged.
       return { t: 'event', asid, seq, event: parseAgentDomainEvent(name, rec.data) };
     }
+    case 'task': {
+      if (rec.event !== 'task.updated') return null;
+      const seq = typeof rec.seq === 'number' && Number.isFinite(rec.seq) ? rec.seq : 0;
+      const task = parseTaskView(rec.data);
+      return task ? { t: 'task', seq, task } : null;
+    }
     case 'resync': {
       const asid = str(rec.asid);
-      return asid === null ? null : { t: 'resync', asid };
+      if (asid === null) return null;
+      return rec.tasks === true && !asid
+        ? { t: 'resync', asid, tasks: true }
+        : { t: 'resync', asid };
     }
+    case 'defaults':
+      return { t: 'defaults', defaultCwd: str(rec.default_cwd) || null };
     case 'pong':
       return { t: 'pong' };
     case 'error': {

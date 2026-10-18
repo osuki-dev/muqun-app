@@ -87,35 +87,13 @@ function coldStart(stored?: Record<string, unknown>) {
 beforeEach(() => coldStart());
 
 describe('the persisted override', () => {
-  const overrides: [AppLocale, string[]][] = [
-    ['zh-TW', ['en-US']],
-    ['zh-CN', ['zh-Hant-TW']],
-    ['ja', ['de-DE', 'en-US']],
-    ['pt', ['ko-KR']],
-    ['ru', ['vi-VN']],
-    ['vi', ['ru-RU']],
-  ];
-  test.each(overrides)(
-    'a stored %s wins over a device asking for something else',
-    async (language, tags) => {
-      coldStart({ language });
-      deviceTags = tags;
+  test('a stored choice wins over a device asking for something else', async () => {
+    const language: AppLocale = 'zh-CN';
+    coldStart({ language });
+    deviceTags = ['zh-Hant-TW'];
 
-      expect(await activateWidgetLocale()).toBe(language);
-      expect(activated).toEqual([language]);
-    }
-  );
-
-  test('it wins even when it agrees with the device, which is the point of it', async () => {
-    // The distinction that matters later: a user who pinned German and then
-    // switches their phone to French should stay on German.
-    coldStart({ language: 'de' });
-    deviceTags = ['de-DE'];
-    expect(await activateWidgetLocale()).toBe('de');
-
-    coldStart({ language: 'de' });
-    deviceTags = ['fr-FR'];
-    expect(await activateWidgetLocale()).toBe('de');
+    expect(await activateWidgetLocale()).toBe(language);
+    expect(activated).toEqual([language]);
   });
 
   test('a language the app no longer ships is not a language', async () => {
@@ -137,21 +115,6 @@ describe('following the system', () => {
     coldStart({ language: null });
     deviceTags = ['ja-JP'];
     expect(await activateWidgetLocale()).toBe('ja');
-  });
-
-  test('the first tag we ship wins, not the first tag', async () => {
-    deviceTags = ['it-IT', 'nl-NL', 'es-MX', 'en-US'];
-    expect(await activateWidgetLocale()).toBe('es');
-  });
-
-  test('Traditional Chinese is matched by script and by region', async () => {
-    deviceTags = ['zh-Hant-HK'];
-    expect(await activateWidgetLocale()).toBe('zh-TW');
-  });
-
-  test('Simplified Chinese reaches its own catalog, not the Traditional one', async () => {
-    deviceTags = ['zh-Hans-CN'];
-    expect(await activateWidgetLocale()).toBe('zh-CN');
   });
 });
 

@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
 
 import {
   gatewaySupportsPaneVcsFiles,
@@ -186,6 +185,44 @@ describe('agentChangesApi', () => {
 });
 
 describe('paneChangesApi', () => {
+  test('other checkouts use only selected read routes even when pane_vcs_files exists', async () => {
+    const calls: Call[] = [];
+    const client = paneClient(FILES, calls);
+    const status = client.status;
+    client.status = async (...args) => {
+      calls.push(['selected-status', ...args]);
+      return status(...args);
+    };
+    const api = paneChangesApi(
+      { sessionId: 's', paneId: '%1', vcsFiles: true, worktree: '/linked checkout' },
+      client
+    );
+    expect(api.discard).toBeUndefined();
+    const listing = await api.listing('working');
+    expect(listing.source).toBe('paged');
+    expect(calls[0]).toEqual(['selected-status', 's', '%1', undefined, '/linked checkout']);
+    await api.page?.(listing.changes[0], 40);
+    expect(calls.at(-1)?.[4]).toMatchObject({ worktree: '/linked checkout', from: 40 });
+    expect(calls.some((call) => call[0] === 'files')).toBe(false);
+    expect((await api.listing('branch')).reason).toBe('no_default_branch');
+    await expect(api.file({ mode: 'working', path: 'src/a.ts', context: 3 })).rejects.toThrow(
+      'read-only'
+    );
+  });
+  test('a refused selected checkout never falls back to the pane checkout', async () => {
+    const calls: Call[] = [];
+    const api = paneChangesApi(
+      { sessionId: 's', paneId: '%1', vcsFiles: true, worktree: '/removed' },
+      {
+        ...paneClient(FILES, calls),
+        status: async () => {
+          throw new Error('HTTP 403 invalid_worktree');
+        },
+      }
+    );
+    await expect(api.listing('working')).rejects.toThrow('invalid_worktree');
+    expect(calls).toEqual([]);
+  });
   test('lists through the pane …/vcs/files, fetches one patch, and discards, all for this pane', async () => {
     const calls: Call[] = [];
     const api = paneChangesApi(
@@ -252,14 +289,6 @@ describe('a pane that is gone', () => {
     expect(listing.reason).toBe('unknown_pane');
     expect(listing.changes).toEqual([]);
     expect(calls.map((call) => call[0])).toEqual(['files']);
-  });
-
-  test('the sheet names it, and the gateway client answers it from a 404 unknown_pane', () => {
-    const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8');
-    expect(read('../../components/changes-sheet.tsx')).toContain(
-      "listing.reason === 'unknown_pane'"
-    );
-    expect(read('../gateway-client.ts')).toContain("reason: 'unknown_pane'");
   });
 });
 

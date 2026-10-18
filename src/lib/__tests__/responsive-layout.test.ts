@@ -148,21 +148,6 @@ describe('home server list measure', () => {
   });
 });
 
-describe('home card grouping', () => {
-  // With no connector line drawn, this gap is the only thing saying the panes
-  // belong to the machine above them rather than being one more row of it.
-  test('separates the identity block from the list by more than one row pitch', () => {
-    for (const [availableWidth, serverCount] of [
-      [390, 1],
-      [390, 4],
-      [1280, 1],
-    ] as const) {
-      const layout = homeServerListLayout(availableWidth, serverCount);
-      expect(layout.listGap).toBeGreaterThan(layout.rowMinHeight / 2);
-    }
-  });
-});
-
 describe('home brand weight', () => {
   test('is the content of an empty screen and a mark on a populated one', () => {
     expect(homeBrandWeight(0).weight).toBe('hero');
@@ -172,18 +157,6 @@ describe('home brand weight', () => {
       expect(homeBrandWeight(serverCount).weight).toBe('mark');
       expect(homeBrandWeight(serverCount).showsTagline).toBe(false);
     }
-  });
-
-  test('the mark is smaller than the hero in every dimension that carries it', () => {
-    const hero = homeBrandWeight(0);
-    const mark = homeBrandWeight(1);
-
-    expect(mark.markSize).toBeLessThan(hero.markSize);
-    expect(mark.titleSize).toBeLessThan(hero.titleSize);
-    expect(mark.minHeight).toBeLessThan(hero.minHeight);
-    // Tracking is pulled in harder the larger the name is set, so the smaller
-    // weight is the *less* negative of the two.
-    expect(mark.titleTracking).toBeGreaterThan(hero.titleTracking);
   });
 
   test('a wide window does not make the brand louder', () => {

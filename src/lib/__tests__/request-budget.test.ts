@@ -11,9 +11,6 @@
 // same hole, which is what these cover.
 /// <reference types="node" />
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import {
   answerHasNoBody,
@@ -229,35 +226,6 @@ describe('streams are exempt, because a stream is not a slow request', () => {
     expect(isStreamingRequest({})).toBe(false);
     expect(isStreamingRequest({ headers: { Accept: 'application/json' } })).toBe(false);
     expect(isStreamingRequest({ stream: false } as RequestInit)).toBe(false);
-  });
-});
-
-describe('the words a budget runs out with', () => {
-  // `describeGatewayFailure` decides what kind of failure it is looking at by
-  // reading the message, and only "abort"/"timeout"/"timed out" earn the
-  // translated, retryable "Gateway did not respond in time." Anything else is
-  // filed as a plain request error: shown to the user verbatim -- in English,
-  // in every locale -- and marked not worth retrying. So the phrasing passed to
-  // `fetchWithin` is a contract, not a wording choice, and it is one nothing at
-  // run time would complain about breaking.
-  //
-  // Scanned from the source because that classifier imports the Lingui macro,
-  // which needs the Babel transform this suite does not run. The precedent is
-  // `i18n/macro-expansion.test.ts`, which reads source for the same reason: the
-  // failure is silent, ships, and is invisible in review.
-  const CLIENT = join(dirname(fileURLToPath(import.meta.url)), '..', 'gateway-client.ts');
-  const TIMEOUT_WORDS = /abort|timeout|timed out/i;
-
-  test('every deadline in the gateway client says it timed out', () => {
-    const source = readFileSync(CLIENT, 'utf8');
-    const messages = [
-      ...source.matchAll(/fetchWithin\(\s*[\w.]+,\s*(?:\/\/[^\n]*\n\s*)*'([^']+)'/g),
-    ].map((match) => match[1]);
-
-    // If this is empty the regex has drifted, and an empty list would pass the
-    // assertion below while checking nothing at all.
-    expect(messages.length).toBeGreaterThanOrEqual(3);
-    expect(messages.filter((message) => !TIMEOUT_WORDS.test(message))).toEqual([]);
   });
 });
 
