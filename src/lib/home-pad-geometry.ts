@@ -39,8 +39,8 @@ export function padDockOuterInset(coverWidth: number): number {
 /** The gap between the two Pad columns, and between two cards in the grid. */
 export const PAD_COLUMN_GAP = 24;
 export const PAD_CARD_GAP = 12;
-export const PAD_LAUNCH_GAP = 16;
-export const PAD_LAUNCH_BOTTOM_SPACE = 24;
+export const PAD_LAUNCH_GAP = 8;
+export const PAD_LAUNCH_BOTTOM_SPACE = 12;
 
 /** Reserve the measured controls before giving the cover its preferred height.
  * Column height excludes the toolbar and stays fixed while the keyboard rises.

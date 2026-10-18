@@ -5,6 +5,8 @@ import { contentImageIdentity, type ContentImagePreviewState } from '@/lib/conte
 import { useLingui } from '@lingui/react/macro';
 import { Text, PressableScale } from '@osuki-dev/ui';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
+import { useFileActions } from '@/hooks/use-file-actions';
+import { savePreviewImage } from '@/lib/save-file';
 
 /** Images own their layout so asynchronous decoding cannot resize a native text span. */
 export function TranscriptBlockImage({
@@ -28,6 +30,11 @@ export function TranscriptBlockImage({
   const profile = useAppearanceProfile();
   const [failed, setFailed] = useState(false);
   const [previewState, setPreviewState] = useState<ContentImagePreviewState>();
+  const fileActions = useFileActions(
+    alt || t`Image`,
+    () => savePreviewImage({ uri, headers }),
+    true
+  );
   if (pending || failed)
     return (
       <Text variant="caption">
@@ -46,6 +53,7 @@ export function TranscriptBlockImage({
         }
         disabled={!onPress}
         onPress={() => onPress?.(uri)}
+        onLongPress={fileActions.show}
         style={[
           styles.image,
           {
@@ -61,6 +69,7 @@ export function TranscriptBlockImage({
           onPreviewStateChange={setPreviewState}
         />
       </PressableScale>
+      {fileActions.menu}
     </View>
   );
 }

@@ -49,6 +49,8 @@ msgid "{0, plural, one {# character not shown} other {# characters not shown}}"
 msgstr "{0, plural, other {未顯示 # 個字元}}"
 
 #. placeholder {0}: away.value
+#. placeholder {0}: minutes / 1440
+#: src/components/agent-account-limits-section.tsx
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# day} other {# days}}"
 msgstr "{0, plural, other {# 天}}"
@@ -66,6 +68,8 @@ msgid "{0, plural, one {# file} other {# files}} · +{1} −{2}"
 msgstr "{0, plural, other {# 個檔案}} · +{1} −{2}"
 
 #. placeholder {0}: away.value
+#. placeholder {0}: minutes / 60
+#: src/components/agent-account-limits-section.tsx
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# hour} other {# hours}}"
 msgstr "{0, plural, other {# 小時}}"
@@ -92,6 +96,11 @@ msgstr "{0, plural, other {# 項工具操作}}"
 #: src/components/settings-storage.tsx
 msgid "{0, plural, one {# theme} other {# themes}} · {1}"
 msgstr "{0, plural, other {# 個主題}} · {1}"
+
+#. placeholder {0}: minutes / 10080
+#: src/components/agent-account-limits-section.tsx
+msgid "{0, plural, one {# week} other {# weeks}}"
+msgstr "{0, plural, other {# 週}}"
 
 #. placeholder {0}: digest.otherAgents
 #: src/components/away-digest-card.tsx
@@ -258,6 +267,10 @@ msgstr "無法確認 {agentName} 的安裝狀況。如果已安裝，請在主�
 msgid "{ahead} ahead"
 msgstr "領先 {ahead}"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "{amount} remaining"
+msgstr "剩餘 {amount}"
+
 #: src/components/away-digest-card.tsx
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
 msgstr "{asked, plural, other {· 詢問 # 次}}"
@@ -339,6 +352,10 @@ msgstr "{lead}：{title} — 在你離開時完成"
 msgid "{messages, plural, one {# message} other {# messages}}"
 msgstr "{messages, plural, other {# 則訊息}}"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "{minutes, plural, one {# minute} other {# minutes}}"
+msgstr "{minutes, plural, other {# 分鐘}}"
+
 #: src/components/virtual-keyboard.tsx
 msgid "{modifierKeys} combinations need the program in this terminal to enable extended keys"
 msgstr "{modifierKeys} 組合鍵需要此終端機中的程式啟用延伸按鍵"
@@ -374,6 +391,10 @@ msgstr "{panelCount, plural, one {# 個執行中} other {# 個執行中}}"
 #: src/components/home-composer-dock.tsx
 msgid "{providerName} (terminal)"
 msgstr "{providerName}（終端機）"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "{remaining} remaining"
+msgstr "剩餘 {remaining}"
 
 #: src/components/row-action-menu.tsx
 msgid "{removeLabel}: {label}"
@@ -504,6 +525,14 @@ msgstr "接受其他電腦的任務"
 #: src/components/computer-map/screen.tsx
 msgid "Accepting work"
 msgstr "接受工作"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Account limits"
+msgstr "帳戶額度"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Account limits temporarily unavailable"
+msgstr "帳戶額度暫時無法取得"
 
 #: src/components/task-row.tsx
 msgid "Acknowledge"
@@ -912,9 +941,17 @@ msgstr "自動清理快取"
 msgid "Autonomous software engineering: edits files, runs commands, tests."
 msgstr "自主軟體工程：編輯檔案、執行指令、執行測試"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Available"
+msgstr "可用"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Available modes"
 msgstr "可用模式"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Available resets"
+msgstr "可用重設次數"
 
 #: src/components/launch-intro.tsx
 #: src/components/pad-server-rail.tsx
@@ -2116,6 +2153,10 @@ msgstr "無法連線至佈景主題目錄"
 msgid "Could not reach this computer."
 msgstr "無法連線到這台電腦"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Could not read account limits"
+msgstr "無法讀取帳戶額度"
+
 #: src/components/gateway-storage-error.tsx
 msgid "Could not read saved computers. Your saved data has not been changed. Unlock this device and retry."
 msgstr "無法讀取已儲存的電腦，儲存的資料未被修改，請解鎖此裝置後重試"
@@ -2302,6 +2343,14 @@ msgstr "建立並移動"
 msgid "Creating session…"
 msgstr "正在建立工作階段…"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Credits"
+msgstr "點數"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Credits used"
+msgstr "已用點數"
+
 #: src/components/agent-tool-card.tsx
 #: src/components/attachment-image.tsx
 #: src/components/content-image.tsx
@@ -2457,6 +2506,7 @@ msgstr "分離於 {head}"
 msgid "Detached at {head}"
 msgstr "分離於 {head}"
 
+#: src/components/agent-account-limits-section.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Details"
@@ -2566,10 +2616,6 @@ msgstr "下載 {0}"
 #: src/components/theme-link-import.tsx
 msgid "Download and preview"
 msgstr "下載並預覽"
-
-#: src/components/update-status-banner.tsx
-msgid "Full package size: {fullPackage}"
-msgstr "完整套件大小：{fullPackage}"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Downloading"
@@ -2739,6 +2785,11 @@ msgstr "展開工作"
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Expand tool call"
 msgstr "展開工具呼叫"
+
+#. placeholder {0}: new Date(credit.expires_at_ms).toLocaleString()
+#: src/components/agent-account-limits-section.tsx
+msgid "Expires at {0}"
+msgstr "到期時間：{0}"
 
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
@@ -2935,6 +2986,10 @@ msgstr "從一個目標，開始推進工作"
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "前鏡頭。將 QR code 朝向螢幕"
+
+#: src/components/update-status-banner.tsx
+msgid "Full package size: {fullPackage}"
+msgstr "完整套件大小：{fullPackage}"
 
 #: src/components/update-status-banner.tsx
 msgid "Full package size. File reuse may reduce the download."
@@ -3231,6 +3286,14 @@ msgstr "從連結匯入"
 msgid "In progress"
 msgstr "進行中"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Included usage"
+msgstr "方案內用量"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Included usage is restricted. Paid or alternative usage may still be available."
+msgstr "方案內用量受限，付費或其他使用方式可能仍可用"
+
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Increase {label}"
 msgstr "提高{label}"
@@ -3419,6 +3482,10 @@ msgstr "語言，{languageName}"
 msgid "Large"
 msgstr "大"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Last checked"
+msgstr "上次檢查"
+
 #: src/components/home-attention.tsx
 msgid "Last checked {when}"
 msgstr "上次檢查時間：{when}"
@@ -3514,6 +3581,10 @@ msgstr "字母"
 #: src/components/settings-appearance.tsx
 msgid "Light"
 msgstr "淺色"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Limit reached"
+msgstr "已達上限"
 
 #: src/components/computer-map/screen.tsx
 msgid "Lines: this app. Dashed arrows: last reported computer links."
@@ -3712,6 +3783,7 @@ msgid "Mode · {0} → {1}"
 msgstr "模式 · {0} → {1}"
 
 #: src/app/settings-voice.tsx
+#: src/components/agent-account-limits-section.tsx
 #: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -3749,6 +3821,10 @@ msgstr "修改"
 #: src/components/settings-font-sheet.tsx
 msgid "Monospace"
 msgstr "等寬"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Monthly credit limit"
+msgstr "每月點數上限"
 
 #: src/components/custom-theme-library.tsx
 msgid "More actions"
@@ -4103,6 +4179,10 @@ msgstr "這裡還沒有專案。在上方輸入路徑即可開啟一個"
 msgid "No projects match “{0}”."
 msgstr "沒有符合「{0}」的專案"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "No quota values reported"
+msgstr "未提供額度數值"
+
 #: src/components/computer-map/screen.tsx
 msgid "No reported links."
 msgstr "未回報任何連線"
@@ -4183,6 +4263,7 @@ msgstr "不是 Git 儲存庫"
 msgid "Not accepting work"
 msgstr "不接受工作"
 
+#: src/components/agent-account-limits-section.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -4228,6 +4309,10 @@ msgstr "未安裝"
 msgid "Not monospace — the terminal may look uneven"
 msgstr "不是等寬字型 — 終端機可能顯示不齊"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Not reported"
+msgstr "未提供"
+
 #: src/components/simfarm-stage.tsx
 msgid "Not running"
 msgstr "未執行"
@@ -4236,6 +4321,7 @@ msgstr "未執行"
 msgid "Not set"
 msgstr "未設定"
 
+#: src/components/agent-account-limits-section.tsx
 #: src/components/agent-model-sheet.tsx
 msgid "Not signed in on the host"
 msgstr "未在主機上登入"
@@ -4731,6 +4817,10 @@ msgstr "已暫停"
 msgid "PDF preview supports files up to {ceiling}. Open this file on your computer."
 msgstr "PDF 預覽支援最大 {ceiling} 的檔案。請在電腦上開啟此檔案"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Period not reported"
+msgstr "未提供週期"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Permission"
 msgstr "權限"
@@ -4747,6 +4837,7 @@ msgstr "照片圖庫"
 msgid "Pinned commit"
 msgstr "固定提交"
 
+#: src/components/agent-account-limits-section.tsx
 #: src/components/agent-mode-sheet.tsx
 msgid "Plan"
 msgstr "規劃 (Plan)"
@@ -4928,6 +5019,11 @@ msgstr "快速動作"
 msgid "Quit"
 msgstr "離開"
 
+#. placeholder {0}: index + 1
+#: src/components/agent-account-limits-section.tsx
+msgid "Quota {0}"
+msgstr "額度 {0}"
+
 #: src/i18n/labels.ts
 msgid "Reach the network"
 msgstr "存取網路"
@@ -5071,6 +5167,10 @@ msgstr "減少動態效果：清單檢視"
 msgid "Refresh"
 msgstr "重新整理"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Refresh account limits"
+msgstr "重新整理帳戶額度"
+
 #: src/components/changes-sheet.tsx
 msgid "Refresh changes"
 msgstr "重新整理變更"
@@ -5111,6 +5211,10 @@ msgstr "重新整理工作樹"
 #: src/components/agent-runtime-notice.tsx
 msgid "Refreshing history…"
 msgstr "正在重新整理歷史記錄…"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Remaining unknown"
+msgstr "剩餘額度未知"
 
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
@@ -5237,6 +5341,14 @@ msgstr "必填"
 msgid "Requires iOS 16.1 or later."
 msgstr "需要 iOS 16.1 或以上版本"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Reset credit"
+msgstr "重設點數"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Reset time not reported"
+msgstr "未提供重設時間"
+
 #: src/components/computer-map/screen.tsx
 msgid "Reset view"
 msgstr "重設視角"
@@ -5244,6 +5356,12 @@ msgstr "重設視角"
 #: src/components/image-preview-modal.tsx
 msgid "Reset zoom"
 msgstr "重設縮放"
+
+#. placeholder {0}: new Date(monthly.resets_at_ms).toLocaleString()
+#. placeholder {0}: new Date(window.resets_at_ms).toLocaleString()
+#: src/components/agent-account-limits-section.tsx
+msgid "Resets at {0}"
+msgstr "重設時間：{0}"
 
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
@@ -5785,6 +5903,10 @@ msgctxt "agent slash command"
 msgid "Share this session's transcript"
 msgstr "分享這個工作階段的記錄"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Shared across sessions. Refresh to update."
+msgstr "各工作階段共用，重新整理以更新"
+
 #: src/components/agent-background-tray.tsx
 msgid "Shells"
 msgstr "Shell"
@@ -6000,6 +6122,10 @@ msgstr "空白鍵"
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Speed"
 msgstr "速度"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Spend control"
+msgstr "支出控制"
 
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -7199,6 +7325,10 @@ msgstr "未知指令"
 msgid "Unknown date"
 msgstr "日期不明"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Unlimited"
+msgstr "無上限"
+
 #: src/lib/local-authentication.ts
 msgid "Unlock Muqun"
 msgstr "解鎖牧群"
@@ -7355,6 +7485,10 @@ msgstr "已上傳"
 #: src/components/attachment-strip.tsx
 msgid "uploading"
 msgstr "上傳中"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Usage snapshot is stale"
+msgstr "用量快照已過期"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx

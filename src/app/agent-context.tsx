@@ -10,6 +10,8 @@ import { useAgentSheetBridge } from '@/stores/agent-sheet-bridge';
 export default function AgentContextScreen() {
   const router = useRouter();
   const sessionInfo = useAgentSheetBridge((state) => state.sessionInfo);
+  const serverId = useAgentSheetBridge((state) => state.serverId);
+  const agentId = useAgentSheetBridge((state) => state.agentId);
   const tokens = useAgentSheetBridge((state) => state.tokens);
   const contextUsage = useAgentSheetBridge((state) => state.contextUsage);
   const contextLimit = useAgentSheetBridge((state) => state.contextLimit);
@@ -22,6 +24,8 @@ export default function AgentContextScreen() {
 
   return (
     <AgentContextSheet
+      serverId={serverId}
+      agentId={agentId}
       session={sessionInfo}
       tokens={tokens}
       contextUsage={contextUsage}
