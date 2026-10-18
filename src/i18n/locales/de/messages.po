@@ -2568,8 +2568,8 @@ msgid "Download and preview"
 msgstr "Herunterladen und Vorschau"
 
 #: src/components/update-status-banner.tsx
-msgid "Download size: {fullPackage}"
-msgstr "Downloadgröße: {fullPackage}"
+msgid "Full package size: {fullPackage}"
+msgstr "Vollständige Paketgröße: {fullPackage}"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Downloading"

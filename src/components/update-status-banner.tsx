@@ -153,7 +153,7 @@ export function UpdateStatusBanner() {
                     ? t`Checking download size…`
                     : downloadSizeStatus === 'failed'
                       ? t`Could not check download size. Try again.`
-                      : t`Download size: ${fullPackage}`}
+                      : t`Full package size: ${fullPackage}`}
                 </Text>
                 {fullPackage ? (
                   <Text variant="caption" color={theme.colors.textMuted}>
