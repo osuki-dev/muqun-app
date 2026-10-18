@@ -33,6 +33,7 @@ import {
   lastKnownActivityCaption,
   pendingShown,
   taskRowRank,
+  taskRollup,
   type ComputerCard,
   HOME_CARD_INSET,
   FINISHED_ROWS_SHOWN,
@@ -244,6 +245,9 @@ export function HomeComputerCards({
   onOpenHistory?: (serverId: string) => void;
 }) {
   const serverIds = servers.map((server) => server.serverId);
+  const selectedId = useGatewayConnectionStore((state) => state.record?.serverId);
+  const statuses = useConnectionStatuses(serverIds, selectedId, activeConnection);
+  const { i18n } = useLinguiRuntime();
   const entries = useServerTasksStore(
     useShallow((state) => serverIds.map((serverId) => state.index[serverId]))
   );
@@ -324,7 +328,12 @@ export function HomeComputerCards({
             signatures={Object.fromEntries(
               cards.map((card) => [
                 card.serverId,
-                cardSignature(card, followedIds.includes(card.serverId)),
+                cardSignature(
+                  card,
+                  followedIds.includes(card.serverId),
+                  statuses[card.serverId] ?? 'unknown',
+                  i18n.locale
+                ),
               ])
             )}
           />
@@ -538,13 +547,36 @@ function ComputerCardView({
 }
 
 /** What a card shows, as far as its height goes: its rows and whether it lists them. */
-function cardSignature(card: ComputerCard, followed: boolean): string {
-  return [
-    followed ? 'f' : 'u',
-    ...card.now.map((row) => `${row.task.taskId}:${row.children.length}`),
-    ...card.pending.map((item) => item.id),
-    ...card.finished.slice(0, DECK_CARD_ROWS).map((task) => task.taskId),
-  ].join('|');
+function cardSignature(
+  card: ComputerCard,
+  followed: boolean,
+  status: ConnectionStatus,
+  locale: string
+): string {
+  // The header's status and pairing notice can add height even while its
+  // ledger is hidden. Unfollowed cards show only the explanatory paragraph.
+  const header = [followed, status, locale];
+  if (!followed) return JSON.stringify(header);
+  const taskShape = (task: TaskView, childRows = 0) => [
+    task.taskId,
+    childRows,
+    Boolean(taskRollup(task)),
+  ];
+  // Match the displayed order, including pending rows ahead of paused work.
+  // Offscreen fourth-and-later rows must not remount a measurement card.
+  const open = [
+    ...card.now
+      .filter((row) => taskRowRank(row.task.state) < 2)
+      .map((row) => taskShape(row.task, row.children.length)),
+    ...card.pending.map((item) => [item.id]),
+    ...card.now
+      .filter((row) => taskRowRank(row.task.state) >= 2)
+      .map((row) => taskShape(row.task, row.children.length)),
+  ].slice(0, DECK_CARD_ROWS);
+  const finished = card.finished
+    .slice(0, DECK_CARD_ROWS - open.length)
+    .map((task) => taskShape(task));
+  return JSON.stringify([header, open, finished]);
 }
 
 /**

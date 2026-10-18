@@ -225,11 +225,13 @@ export function HomeComputerDeck({
     minHeight: cardHeight,
     onContentHeight: (height) => reportHeight(serverId, height),
   });
+  const frontMeasured = frontId !== undefined && heights[frontId] !== undefined;
   useEffect(() => {
     // The first height is set, not animated: the deck arrives at its size.
-    if (!frontId || heights[frontId] === undefined) return;
+    // A new signature at the same height does not restart this animation.
+    if (!frontMeasured) return;
     frontHeight.set(frontHeight.get() === 0 ? cardHeight : withTiming(cardHeight, timing('short')));
-  }, [cardHeight, frontHeight, frontId, heights]);
+  }, [cardHeight, frontHeight, frontMeasured]);
 
   // A move has ended on the UI thread: React takes the new order, and the
   // canvas goes in the same commit the new front card is shown in.
@@ -456,8 +458,10 @@ export function HomeComputerDeck({
     () =>
       Gesture.Pan()
         // Sideways only: past `failOffsetY` the page's scroll has the touch.
-        .activeOffsetX([-8, 8])
-        .failOffsetY([-12, 12])
+        // Let vertical scrolling win before a diagonal drag can start
+        // photographing cards. Once this pan activates, it cannot yield back.
+        .activeOffsetX([-16, 16])
+        .failOffsetY([-8, 8])
         .onStart(() => {
           const count = ring.get().split('\n').length;
           if (busy.get() === 1 || count < 2) {
@@ -483,18 +487,17 @@ export function HomeComputerDeck({
             reduced ? 0 : deckScrub(event.translationX, deckWidth.get(), direction.get())
           );
         })
-        .onEnd((event) => {
+        .onEnd((event, success) => {
           if (skip.get() === 1) return;
           if (direction.get() === 0) {
             busy.set(0);
             return;
           }
-          const commit = deckCommits(
-            event.translationX,
-            event.velocityX,
-            deckWidth.get(),
-            direction.get()
-          );
+          // An interrupted active gesture also ends here, but must never
+          // change the computer receiving the reader's next goal.
+          const commit =
+            success &&
+            deckCommits(event.translationX, event.velocityX, deckWidth.get(), direction.get());
           // Not drawing yet: wait for the photographs (or cross-fade).
           if (ready.get() !== 1) {
             scheduleOnRN(releasedEarly, commit);
@@ -916,7 +919,9 @@ function DeckSlotCard({
     if (shootToken === null || !size) return;
     let live = true;
     const frame = requestAnimationFrame(() => {
-      photographView(ref, size.width, size.height)
+      // Do not retry a gesture capture with a GPU-to-CPU readback; use the
+      // existing cross-fade when this device cannot share the texture.
+      photographView(ref, size.width, size.height, { allowReadback: false })
         .then((image) => (image ? { image, width: size.width, height: size.height } : null))
         .catch(() => null)
         .then((shot) => {

@@ -1,7 +1,19 @@
 import { Skia, type SkImage } from 'react-native-skia';
 import { importDevice } from 'react-native-webgpu';
-import { PixelRatio, type ViewInstance } from 'react-native';
+import { PixelRatio, Platform, type ViewInstance } from 'react-native';
 import type { RefObject } from 'react';
+
+import { isViewPhotographImportFailure } from '@/lib/view-photograph-policy';
+
+export interface ViewPhotographOptions {
+  /**
+   * Allow an explicit CPU readback retry. Defaults to true for occasional
+   * captures such as re-skin. False skips Android below API 33 and known
+   * import failures, so a gesture can cross-fade instead. The native library
+   * may still fall back internally when hardware rendering fails.
+   */
+  allowReadback?: boolean;
+}
 
 /**
  * A picture of one native view, taken by React Native WebGPU.
@@ -19,19 +31,24 @@ import type { RefObject } from 'react';
 export async function photographView(
   ref: RefObject<ViewInstance | null>,
   width: number,
-  height: number
+  height: number,
+  { allowReadback = true }: ViewPhotographOptions = {}
 ): Promise<SkImage | null> {
   if (!ref.current || width <= 0 || height <= 0) return null;
+  if (!allowReadback && (zeroCopyFailed || (Platform.OS === 'android' && Platform.Version < 33))) {
+    return null;
+  }
   if (!zeroCopyFailed) {
     try {
       return await capture(ref, width, height, true);
-    } catch {
-      // The device could not import the renderer's buffer (an emulator
-      // without shared AHardwareBuffer memory): read the pixels back instead,
-      // from now on.
+    } catch (error) {
+      // An unmounted or not-yet-laid-out view is not evidence that this
+      // device cannot import GPU buffers. Let its caller abandon the move.
+      if (!isViewPhotographImportFailure(error)) throw error;
       zeroCopyFailed = true;
     }
   }
+  if (!allowReadback) return null;
   return capture(ref, width, height, false);
 }
 
