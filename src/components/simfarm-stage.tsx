@@ -695,7 +695,6 @@ export function SimfarmStage({
                 maxHeight: menuAt.maxHeight,
                 maxWidth: Math.max(0, viewport.width - MENU_MARGIN * 2),
                 backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                borderColor: theme.colors.border,
               },
             ]}>
             {/* The header is the device and the picker: its name, the one
@@ -1002,7 +1001,6 @@ const styles = StyleSheet.create({
     width: 280,
     borderRadius: appChrome.radius.popover,
     borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
     boxShadow: appChrome.shadow.popover,
   },

@@ -49,7 +49,6 @@ export const AgentModeMenu = memo(function AgentModeMenu({
         { borderRadius: profile.chrome.popover },
         {
           backgroundColor: surfaceBackground(theme.colors.surface),
-          borderColor: theme.colors.border,
         },
       ]}>
       {agents.map((ag) => {
@@ -98,7 +97,6 @@ const styles = StyleSheet.create({
     maxWidth: 300,
     paddingVertical: 5,
     borderRadius: appChrome.radius.popover,
-    borderWidth: StyleSheet.hairlineWidth,
     boxShadow: appChrome.shadow.popover,
   },
   option: {

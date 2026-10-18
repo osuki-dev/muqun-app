@@ -246,11 +246,7 @@ export const ChangeTreeContextRowView = memo(function ChangeTreeContextRowView({
       onPress={() => onPress(row.path)}
       style={{ width }}>
       <Animated.View style={[styles.row, styles.contextRow, pinned, { width: pinnedWidth }]}>
-        <View
-          style={[
-            styles.chip,
-            { borderRadius: profile.chrome.control, borderColor: colors.border },
-          ]}>
+        <View style={[styles.chip, { borderRadius: profile.chrome.control }]}>
           {row.loading ? (
             <ActivityIndicator size="small" color={colors.accent} />
           ) : (
@@ -344,6 +340,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 12,
     borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
   },
 });

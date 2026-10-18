@@ -350,7 +350,7 @@ export function NewTaskAction({
               styles.buttonFace,
               {
                 backgroundColor: surfaceBackground(theme.colors.primarySubtle),
-                borderColor: surfaceBackground(theme.colors.border),
+                borderColor: 'transparent',
               },
             ]}>
             {/* The light first, so the glyph is drawn over it. */}
@@ -441,7 +441,7 @@ function AgentRowButton({
           ready
             ? {
                 backgroundColor: surfaceBackground(theme.colors.primarySubtle),
-                borderColor: surfaceBackground(theme.colors.border),
+                borderColor: 'transparent',
               }
             : {
                 backgroundColor: surfaceBackground(withAlpha(theme.colors.warning, 0.12)),

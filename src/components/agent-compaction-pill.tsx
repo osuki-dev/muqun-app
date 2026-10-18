@@ -90,7 +90,7 @@ export function CompactionPill({
           {
             borderRadius: profile.chrome.control,
             backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-            borderColor: failed ? theme.colors.danger : theme.colors.border,
+            borderColor: failed ? theme.colors.danger : 'transparent',
           },
         ]}>
         <View style={styles.header}>

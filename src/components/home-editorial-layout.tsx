@@ -469,7 +469,18 @@ export function HomeEditorialLayout({
     const bandArrival = bandSettled
       ? undefined
       : riseIn(resolveDuration('medium'), resolveDuration('medium'));
-    const titleFontSize = coverBlock.titleSize;
+    const titleFontSize =
+      coverKind === 'artwork'
+        ? titleMeasurement && titleMeasurement.title === titleKey && titleMeasurement.width > 0
+          ? Math.min(columns.cover * 0.48, ((columns.cover - 4) * 100) / titleMeasurement.width)
+          : columns.cover * 0.3
+        : coverBlock.titleSize;
+    const titleHeight = titleFontSize * PAD_COVER_TITLE_LINE_HEIGHT;
+    const scenePlacement = editorialScenePlacement(
+      coverTitle ? titleHeight : 0,
+      0,
+      artworkTopInset
+    );
     const titleStyle = {
       fontSize: titleFontSize,
       lineHeight: titleFontSize * PAD_COVER_TITLE_LINE_HEIGHT,
@@ -564,7 +575,7 @@ export function HomeEditorialLayout({
                 <Animated.View
                   testID="home-pad-cover"
                   layout={coverLayout}
-                  style={[styles.coverScene, { height: coverBlock.height }]}>
+                  style={styles.coverScene}>
                   {titleMeasure}
                   {coverTitle ? (
                     <Animated.View
@@ -581,13 +592,23 @@ export function HomeEditorialLayout({
                       </Text>
                     </Animated.View>
                   ) : null}
-                  {/* Scenes sit behind the title; portraits retain foreground
-                      depth within the title-safe geometry. The frame snaps so
-                      an old crop cannot overflow while the canvas re-measures. */}
+                  {/* Keep the phone composition inside this column: full-width
+                      artwork in flow, with scenes behind type and portraits overlapping it. */}
                   <Animated.View
                     onLayout={artworkStage.onLayout}
                     pointerEvents="none"
-                    style={[styles.padCoverArtwork, coverBlock.artwork, artworkStage.style]}>
+                    style={[
+                      {
+                        marginTop: !artworkForeground
+                          ? scenePlacement.marginTop
+                          : coverTitle
+                            ? -titleHeight * 0.35 - artworkTopInset
+                            : 0,
+                        marginBottom: !artworkForeground ? scenePlacement.marginBottom : 0,
+                        zIndex: 1,
+                      },
+                      artworkStage.style,
+                    ]}>
                     {artwork}
                   </Animated.View>
                 </Animated.View>
@@ -1119,8 +1140,6 @@ const styles = StyleSheet.create({
     gap: 24,
     marginBottom: 16,
   },
-  // Anchored right, so the title's start stays clear at the block's left.
-  padCoverArtwork: { position: 'absolute', right: 0, bottom: 0, zIndex: 1 },
   padColumns: { flex: 1, minHeight: 0, flexDirection: 'row', gap: PAD_COLUMN_GAP },
   padWorkColumn: { flex: 1, minWidth: 0 },
   padScroll: { flex: 1 },

@@ -279,7 +279,6 @@ export function GuideCommand({
         style={[
           styles.command,
           {
-            borderColor: theme.colors.border,
             borderRadius: profile.chrome.control,
             backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
           },
@@ -332,7 +331,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: SHEET_LADDER.snug,
     paddingVertical: SHEET_LADDER.snug,
     borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
   },
   commandText: { flex: 1, letterSpacing: 0.2 },
 });
