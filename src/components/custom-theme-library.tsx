@@ -812,6 +812,15 @@ export function CustomThemeLibrary({
                 width: wideDetail ? undefined : '100%',
                 minWidth: 0,
               }}>
+              {isRenderableThemeAsset(assets?.[candidate.manifest.preview ?? '']) ? (
+                <Image
+                  source={{ uri: assets![candidate.manifest.preview!] }}
+                  contentFit="contain"
+                  cachePolicy="memory"
+                  accessible={false}
+                  style={{ width: '100%', aspectRatio: 8 / 5, marginBottom: 12 }}
+                />
+              ) : null}
               <CustomThemePreview
                 manifest={appearance ? effectiveThemeManifest(appearance) : candidate.manifest}
                 assets={assets}

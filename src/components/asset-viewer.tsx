@@ -4,7 +4,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { useThemeTokens, Skeleton, Button, PressableScale, Text } from '@osuki-dev/ui';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Check, Copy, Download, X } from 'lucide-react-native';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Modal, ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
@@ -41,7 +41,7 @@ import { SHEET_LADDER, SheetSceneAction, SheetSceneHeading } from '@/components/
 import { ThemeImportProgress } from '@/components/theme-import-progress';
 import { prepareThemeAssets, type PreparedThemeAssets } from '@/theme/assets';
 import { ThemeImportRequest } from '@/theme/import-request';
-import { unpackTheme } from '@/theme/package';
+import { unpackThemeAsync } from '@/theme/package';
 import { THEME_LIMITS } from '@/theme/schema';
 import type { ThemeEditorCandidate } from '@/theme/draft-session';
 import { themeFromDocument } from '@/theme/file-preview';
@@ -80,7 +80,13 @@ export function AssetViewer({ asset, onClose }: { asset: SessionAsset; onClose: 
     );
   }
 
-  return <AssetSheet asset={asset} onClose={onClose} />;
+  return (
+    <AssetSheet
+      key={`${asset.gatewayServerId}:${asset.id}:${asset.modified_unix_ms}`}
+      asset={asset}
+      onClose={onClose}
+    />
+  );
 }
 
 function EncryptedImageViewer({ asset, onClose }: { asset: SessionAsset; onClose: () => void }) {
@@ -183,7 +189,7 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
   const [error, setError] = useState<string | null>(null);
   /** Bumped by "Try again"; the only thing that re-runs the read. */
   const [attempt, setAttempt] = useState(0);
-  const [previewedThemeDocument, setPreviewedThemeDocument] = useState<string | null>(null);
+  const [closedThemeDocument, setClosedThemeDocument] = useState<string | null>(null);
   /**
    * The one decision a previewed theme offers, pinned rather than scrolled to.
    *
@@ -266,7 +272,7 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
               if (mounted.current && !request.signal.aborted) setPackProgress({ done, total });
             },
           });
-          const unpacked = unpackTheme(bytes);
+          const unpacked = await unpackThemeAsync(bytes, { signal: request.signal });
           prepared = await prepareThemeAssets(unpacked, { signal: request.signal });
           const candidate = { manifest: unpacked.manifest, prepared };
           request.handoff(() => setPack(candidate));
@@ -289,6 +295,13 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
       }
     );
   }
+
+  const openInitialTheme = useEffectEvent(() => {
+    void openPackagedTheme();
+  });
+  useEffect(() => {
+    if (packaged) openInitialTheme();
+  }, [packaged]);
 
   useEffect(() => {
     if (!readable) return;
@@ -450,13 +463,13 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
                   onPrimaryActionChange={setPrimary}
                 />
               </ScrollView>
-            ) : previewedThemeDocument === themeDocumentIdentity && themeManifest ? (
+            ) : closedThemeDocument !== themeDocumentIdentity && themeManifest ? (
               <ScrollView contentContainerStyle={styles.themePreview}>
                 <CustomThemeLibrary
                   key={themeDocumentIdentity}
                   initialManifest={themeManifest}
                   detail
-                  onClosePreview={() => setPreviewedThemeDocument(null)}
+                  onClosePreview={() => setClosedThemeDocument(themeDocumentIdentity)}
                   onPrimaryActionChange={setPrimary}
                 />
               </ScrollView>
@@ -466,9 +479,7 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
                   <View style={styles.themeEntry}>
                     <Button
                       testID="asset-preview-theme"
-                      onPress={() =>
-                        setPreviewedThemeDocument(themeDocumentIdentity)
-                      }>{t`Preview`}</Button>
+                      onPress={() => setClosedThemeDocument(null)}>{t`Preview`}</Button>
                   </View>
                 ) : packaged ? (
                   <View style={styles.themeEntry}>
