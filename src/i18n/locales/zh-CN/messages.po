@@ -2813,6 +2813,10 @@ msgstr "本项目的文件"
 msgid "Files in this workspace"
 msgstr "此工作区的文件"
 
+#: src/components/settings-storage.tsx
+msgid "Files in use and managed caches are kept."
+msgstr "保留正在使用的文件和受管理的缓存"
+
 #: src/components/agent-workspace-sheet.tsx
 msgid "Filter projects or type a path"
 msgstr "筛选项目或输入路径"

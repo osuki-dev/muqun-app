@@ -2813,6 +2813,10 @@ msgstr "Tệp trong dự án này"
 msgid "Files in this workspace"
 msgstr "Tệp trong không gian làm việc này"
 
+#: src/components/settings-storage.tsx
+msgid "Files in use and managed caches are kept."
+msgstr "Các tệp đang sử dụng và bộ nhớ đệm được quản lý sẽ được giữ lại"
+
 #: src/components/agent-workspace-sheet.tsx
 msgid "Filter projects or type a path"
 msgstr "Lọc dự án hoặc nhập đường dẫn"

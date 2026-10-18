@@ -1,4 +1,8 @@
-import { clearCache, scheduleAutomaticCacheCleanup } from '@/lib/cache-cleanup';
+import {
+  clearCache,
+  isCacheEntryProtected,
+  scheduleAutomaticCacheCleanup,
+} from '@/lib/cache-cleanup';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 /**
  * How much room Muqun's cache is taking, and the two buttons that give some of
@@ -174,6 +178,7 @@ export function SettingsStorage() {
   const selection = useThemeLibrary((state) => state.library.selection);
 
   const [totals, setTotals] = useState<CacheTotals | null>(null);
+  const [reclaimableBytes, setReclaimableBytes] = useState(0);
   const [themeFiles, setThemeFiles] = useState<ThemeAssetFile[] | null>(null);
   /** Which of the two actions is armed, because never both at once. */
   const [armed, setArmed] = useState<'cache' | 'themes' | null>(null);
@@ -193,13 +198,19 @@ export function SettingsStorage() {
 
   const measure = useCallback(async () => {
     try {
-      const { entries } = await readCacheRoot();
-      if (mounted.current) setTotals(measureCache(entries));
+      const { root, entries } = await readCacheRoot();
+      if (mounted.current) {
+        setTotals(measureCache(entries));
+        setReclaimableBytes(clearableCacheBytes(entries, root, isCacheEntryProtected));
+      }
     } catch {
       // A platform with no readable cache directory -- web, or an OS that has
       // taken the whole thing away under us -- reports an empty cache rather
       // than a permanently spinning row.
-      if (mounted.current) setTotals(measureCache([]));
+      if (mounted.current) {
+        setTotals(measureCache([]));
+        setReclaimableBytes(0);
+      }
     }
   }, []);
 
@@ -327,7 +338,8 @@ export function SettingsStorage() {
   const calculating = t`Calculating…`;
   const images = totals ? formatCacheSize(totals.images) : calculating;
   const temporary = totals ? formatCacheSize(totals.temporary) : calculating;
-  const clearable = totals ? formatCacheSize(clearableCacheBytes(totals)) : calculating;
+  const clearable = totals ? formatCacheSize(reclaimableBytes) : calculating;
+  const hasRetainedCache = totals !== null && totals.images + totals.temporary > reclaimableBytes;
   const clearDetail = incomplete ? t`Some files could not be removed · ${clearable}` : clearable;
   // The count comes from the library and the bytes from the walk, so this is
   // recomputed rather than held in state: a removal updates the library on the
@@ -377,6 +389,11 @@ export function SettingsStorage() {
         detail={temporary}
         testID="settings-storage-temporary-row"
       />
+      {hasRetainedCache ? (
+        <Text variant="caption" color={theme.colors.textMuted} style={styles.retainedHint}>
+          <Trans>Files in use and managed caches are kept.</Trans>
+        </Text>
+      ) : null}
       <StorageActionTransition mode={armed === 'cache' ? 'confirm' : 'idle'}>
         {armed === 'cache' ? (
           // Two taps, never one, and the confirm stays inside the card the way
@@ -519,6 +536,10 @@ export function SettingsStorage() {
 }
 
 const styles = StyleSheet.create({
+  retainedHint: {
+    paddingHorizontal: LADDER.gutter,
+    paddingVertical: LADDER.gap,
+  },
   // The same measurements the servers section's own two-tap control uses, so
   // the armed pair reads as one control the app has rather than two.
   armedRow: {

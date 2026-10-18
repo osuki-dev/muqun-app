@@ -176,8 +176,26 @@ export function measureCache(entries: readonly CacheRootEntry[]): CacheTotals {
  * What the button is offering to reclaim: the two buckets it empties, and never
  * `other`.
  */
-export function clearableCacheBytes(totals: CacheTotals): number {
-  return totals.images + totals.temporary;
+export function clearableCacheBytes(
+  entries: readonly CacheRootEntry[],
+  rootUri: string,
+  isProtected: (name: string) => boolean
+): number {
+  const deletable = new Set(
+    planCacheDeletions(entries, rootUri, Number.MAX_SAFE_INTEGER).map((entry) => entry.uri)
+  );
+  return entries.reduce((bytes, entry) => {
+    const nativeImageCache =
+      entry.name === 'image_manager_disk_cache' || entry.name === 'com.hackemist.SDImageCache';
+    return isInsideCacheRoot(entry.uri, rootUri) &&
+      !isProtected(entry.name) &&
+      entry.name !== 'enrm_image_cache' &&
+      (nativeImageCache || deletable.has(entry.uri)) &&
+      Number.isFinite(entry.bytes) &&
+      entry.bytes > 0
+      ? bytes + entry.bytes
+      : bytes;
+  }, 0);
 }
 
 /**
