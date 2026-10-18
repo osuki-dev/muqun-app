@@ -3,7 +3,6 @@ import { useAppSettings } from '@/stores/app-settings';
 import { AppDiagramProvider } from '@/components/app-diagram-provider';
 import { RouteScene } from '@/components/route-scene';
 import {
-  isFullscreenSheetRoute,
   isCenteredSettingsSheetRoute,
   sheetPresentationOptions,
   sheetRouteOptions as resolveSheetRouteOptions,
@@ -34,7 +33,11 @@ import { useReducedMotion } from 'react-native-reanimated';
 import { SplashScreen } from '@osuki-dev/react-native-splash';
 
 import { LaunchOverlay } from '@/components/launch-overlay';
-import { ReskinSurface, ReskinTransitionProvider } from '@/components/reskin-transition';
+import {
+  ReskinSurface,
+  ReskinTransitionProvider,
+  useReskinActivity,
+} from '@/components/reskin-transition';
 import { AppErrorBoundary } from '@/components/app-error-boundary';
 import {
   AppearanceProfileProvider,
@@ -146,6 +149,7 @@ function ThemeFileOpener() {
 
 /**
  * The profiling control, in a Debug bundle or a Release profiling bundle only.
+ * Set EXPO_PUBLIC_RELEASE_PROFILER=0 to keep native QA controls unobstructed.
  *
  * A `require` behind a condition Metro can fold, not an import: `__DEV__` and
  * `process.env.EXPO_PUBLIC_*` are inlined when a bundle is built, so a store
@@ -155,7 +159,8 @@ function ThemeFileOpener() {
 type ProfilerControlModule = typeof import('@/components/release-profiler-control');
 
 const ReleaseProfilerControl =
-  __DEV__ || process.env.EXPO_PUBLIC_RELEASE_PROFILER === '1'
+  (__DEV__ && process.env.EXPO_PUBLIC_RELEASE_PROFILER !== '0') ||
+  process.env.EXPO_PUBLIC_RELEASE_PROFILER === '1'
     ? // oxlint-disable-next-line typescript/no-require-imports
       (require('@/components/release-profiler-control') as ProfilerControlModule)
         .ReleaseProfilerControl
@@ -329,6 +334,8 @@ export default function RootLayout() {
 }
 
 function RootContent() {
+  // Blurred screens thaw for the length of a theme change; see `freezeOnBlur` below.
+  const reskinActive = useReskinActivity((state) => state.active);
   const reduceMotion = useReducedMotion();
   const profile = useAppearanceProfile();
   const notificationSurfaceStyle = useNotificationSurfaceStyle();
@@ -426,9 +433,9 @@ function RootContent() {
                     )
                   ) : (
                     <RouteScene modal={options.presentation === 'fullScreenModal'}>
-                      {/* A sheet a Pad shows full-screen draws its own close
-                          button: there is no grabber to drag. */}
-                      <SheetFullscreenProvider value={isFullscreenSheetRoute(route.name, isPad)}>
+                      {/* Native full-screen modals have no sheet grabber. Scenes
+                          using SheetScene need safe-area clearance and a close button. */}
+                      <SheetFullscreenProvider value={options.presentation === 'fullScreenModal'}>
                         {children}
                       </SheetFullscreenProvider>
                     </RouteScene>
@@ -444,7 +451,10 @@ function RootContent() {
                   // server card keep the UI thread at vsync the whole time. Work
                   // that must outlive a blur already lives in a store rather than
                   // in a screen, so nothing here depends on rendering while hidden.
-                  freezeOnBlur: true,
+                  // Except for the length of a theme change: a Home frozen under
+                  // Settings would re-render under the new theme during the
+                  // transition back to it, which is where that stuttered.
+                  freezeOnBlur: !reskinActive,
                 }}>
                 <Stack.Screen
                   name="index"
@@ -612,6 +622,11 @@ function RootContent() {
                   }}
                 />
                 <Stack.Screen name="agent-context" options={sheetRouteOptions('agent-context')} />
+                <Stack.Screen
+                  name="pane-history"
+                  dangerouslySingular
+                  options={sheetRouteOptions('pane-history')}
+                />
                 <Stack.Screen name="agent-vcs-diff" options={sheetRouteOptions('agent-vcs-diff')} />
                 <Stack.Screen name="agent-tasks" options={sheetRouteOptions('agent-tasks')} />
                 <Stack.Screen name="server-tasks" options={sheetRouteOptions('server-tasks')} />

@@ -65,8 +65,9 @@ is visible "${TARGET}"
 is hidden "${TARGET}"
 
 # section home-navigation
-# Home covers the whole window; the rail belongs to the workspace.
-press "id=\"pad-server-rail-workbench\""
+# Back restores Home across the whole window; the workspace stays retained.
+is visible "role=button label=\"Back to Home\""
+press "id=\"pad-server-rail-back\""
 wait "id=\"home-overview-overlay\"" 10000
 wait stable 400 5000
 is visible "id=\"home-pad-toolbar-actions\""
@@ -111,6 +112,6 @@ wait absent "id=\"pad-agent-detail\"" 10000
 wait "label=\"Switch to nvim\"" 10000
 is visible "label=\"Switch to nvim\""
 is visible "id=\"pad-server-rail-container\""
-press "id=\"pad-server-rail-workbench\""
+press "id=\"pad-server-rail-back\""
 wait "id=\"home-overview-overlay\"" 10000
 is visible "id=\"home-pad-toolbar-actions\""

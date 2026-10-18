@@ -113,6 +113,12 @@ export interface GatewaySocketOptions {
    * refused with 401 usually reaches the socket only as an opaque error.
    */
   checkAuthorization?: () => Promise<SocketAuthorization>;
+  /**
+   * The socket stood down because the gateway refused this device, and why:
+   * a demand to pair again (426) is told apart from a dead token so the
+   * reader is shown the right remedy.
+   */
+  onRefused?: (refusal: SocketRefusal) => void;
   /** `Math.random` unless a test pins the backoff jitter. */
   random?: () => number;
 }
@@ -145,6 +151,25 @@ export function socketFailureIsUnauthorized(failure: SocketFailure): boolean {
     /\b40[13] (Unauthori[sz]ed|Forbidden)\b/i.test(message)
   );
 }
+
+/**
+ * Whether a failed open was the gateway demanding this device pair again:
+ * HTTP 426 on the upgrade (encryption was turned on after this device paired
+ * and its record has no transport key -- `device_repair_required`), or the
+ * 4426 close convention after it. The gateway uses that status for nothing
+ * else, and no middlebox answers it, so the status alone is enough.
+ */
+export function socketFailureNeedsRepair(failure: SocketFailure): boolean {
+  if (failure.closeCode === 4426) return true;
+  const message = failure.message ?? '';
+  return (
+    /\b(HTTP|status|response)\b[^0-9]{0,20}\b426\b/i.test(message) ||
+    /\b426 Upgrade Required\b/i.test(message)
+  );
+}
+
+/** Why a socket stood down as refused: the pairing is dead, or it has to be made again. */
+export type SocketRefusal = 'unauthorized' | 'repair';
 
 /** Failed opens in a row before the gateway is asked whether it still knows this device. */
 export const AUTH_CHECK_AFTER_FAILURES = 2;
@@ -494,7 +519,10 @@ export class GatewaySocket {
             if (this.preparation === preparation) this.openPrepared(ready);
           },
           () => {
-            if (this.preparation === preparation) this.unavailable();
+            // A sealing that failed -- a negotiation read that timed out, a
+            // network blip -- is a failed open, not a socket this build cannot
+            // use: retried on the backoff like a dropped connection.
+            if (this.preparation === preparation) this.openFailed();
           }
         );
       } else {
@@ -683,15 +711,35 @@ export class GatewaySocket {
     const reachedHello = connection.hello;
     this.drop();
     if (!reachedHello) {
-      if (socketFailureIsUnauthorized(failure)) {
-        this.refused();
+      if (socketFailureNeedsRepair(failure)) {
+        this.refused('repair');
         return;
       }
-      this.failures += 1;
-      const failures = this.failures;
-      this.allListeners((l) => l.onOpenFailed?.(failures));
-      if (failures >= AUTH_CHECK_AFTER_FAILURES) this.checkAuthorization();
+      if (socketFailureIsUnauthorized(failure)) {
+        this.refused('unauthorized');
+        return;
+      }
+      this.countOpenFailure();
     }
+    this.scheduleRetry();
+  }
+
+  /** An attempt that never reached `hello`, before or after a transport existed. */
+  private openFailed(): void {
+    this.drop();
+    this.countOpenFailure();
+    this.scheduleRetry();
+  }
+
+  private countOpenFailure(): void {
+    this.failures += 1;
+    const failures = this.failures;
+    this.allListeners((l) => l.onOpenFailed?.(failures));
+    if (failures >= AUTH_CHECK_AFTER_FAILURES) this.checkAuthorization();
+  }
+
+  /** Connect again on the backoff, or rest if nothing wants it or the app is away. */
+  private scheduleRetry(): void {
     if (!this.hasDemand()) {
       this.setState('idle');
       return;
@@ -728,17 +776,18 @@ export class GatewaySocket {
         // reason, is left as it is.
         if (answer !== 'unauthorized' || !this.hasDemand()) return;
         if (this.currentState !== 'backoff' && this.currentState !== 'connecting') return;
-        this.refused();
+        this.refused('unauthorized');
       });
   }
 
-  /** The gateway refused this device: stop, and say so. */
-  private refused(): void {
+  /** The gateway refused this device: stop, and say so -- and say why. */
+  private refused(refusal: SocketRefusal): void {
     this.drop();
     this.attempts = 0;
     this.failures = 0;
     this.authChecked = false;
     this.setState('unauthorized');
+    this.options.onRefused?.(refusal);
     this.allListeners((l) => l.onUnavailable?.());
   }
 

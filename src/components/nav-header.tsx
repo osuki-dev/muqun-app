@@ -167,9 +167,11 @@ export function NavHeaderBackButton({
 export function NavHeaderTitlePill({
   title,
   style,
+  textAlign = 'center',
 }: {
   title: string;
   style?: StyleProp<ViewStyle>;
+  textAlign?: 'left' | 'center';
 }) {
   const theme = useThemeTokens();
   return (
@@ -178,7 +180,7 @@ export function NavHeaderTitlePill({
         variant="bodySmall"
         numberOfLines={1}
         color={theme.colors.text}
-        style={styles.titleText}>
+        style={[styles.titleText, { textAlign }]}>
         {title}
       </Text>
     </GlassChrome>

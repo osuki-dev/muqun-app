@@ -33,18 +33,22 @@ import { useLaunchHandoff } from '@/stores/launch-handoff';
 import { launchEntryProgress } from '@/lib/launch-handoff';
 import { useHomeScenePlate } from '@/hooks/use-home-scene-plate';
 import { useInterfaceFontFamily } from '@/hooks/use-user-fonts';
-import { USER_FONT_MAX_NATIVE_WEIGHT } from '@/theme/interface-font-registry';
+import { registryWeightAxis, USER_FONT_MAX_NATIVE_WEIGHT } from '@/theme/interface-font-registry';
 
 import {
   EDITORIAL_MAX_WIDTH,
   EDITORIAL_PAD_MAX_WIDTH,
   getEditorialLayoutGeometry,
+  editorialScenePlacement,
 } from '@/lib/home-editorial-layout';
 import { entryRise, listLayout, resolveDuration, riseIn } from '@/lib/motion';
 import {
   PAD_COLUMN_GAP,
   PAD_COVER_TITLE_LINE_HEIGHT,
+  PAD_LAUNCH_GAP,
+  PAD_LAUNCH_BOTTOM_SPACE,
   padCover,
+  padCoverAvailableHeight,
   padCoverKind,
   padHomeColumns,
   padLaunchLayoutEnabled,
@@ -73,6 +77,10 @@ export type HomeEditorialLayoutProps = {
   artwork?: ReactNode;
   /** Rendered offset to visible foreground; preserves transparent source pixels. */
   artworkTopInset?: number;
+  /** Transparent portraits may overlap the title; scenic covers sit behind it. */
+  artworkForeground?: boolean;
+  /** Safe-area space above the phone composition, available to scenic artwork only. */
+  topInset?: number;
   /** Scroll position drives reversible cover fades and pull-down stretch. */
   scrollY?: SharedValue<number>;
   cover?: boolean;
@@ -251,6 +259,8 @@ export function HomeEditorialLayout({
   artwork,
   scrollY,
   artworkTopInset = 0,
+  artworkForeground = true,
+  topInset = 0,
   cover = false,
   coverTitle,
   headerAction,
@@ -279,7 +289,12 @@ export function HomeEditorialLayout({
   const interfaceFontFamily = useInterfaceFontFamily();
   const chromeFontFamily =
     interfaceFontFamily ?? (Platform.OS === 'android' ? 'sans-serif-condensed' : undefined);
-  const titleWeight = interfaceFontFamily ? USER_FONT_MAX_NATIVE_WEIGHT : 900;
+  // A static reader face is capped below Android's bold lookup; a variable one
+  // takes 900 on its `wght` axis through the app's `Text`.
+  const titleWeight =
+    interfaceFontFamily && !registryWeightAxis(theme.fonts, 'display')
+      ? USER_FONT_MAX_NATIVE_WEIGHT
+      : 900;
   const titleKey = `${coverTitle ?? ''}:${chromeFontFamily ?? 'system'}:${titleWeight}`;
   const { fontScale: windowFontScale } = useWindowDimensions();
   const fontScale = fontScaleProp ?? windowFontScale;
@@ -289,6 +304,8 @@ export function HomeEditorialLayout({
   // The Pad work column's headings take the same plate as the phone's sections.
   const scenePlate = useHomeScenePlate();
   const [measuredWidth, setMeasuredWidth] = useState(0);
+  const [padColumnHeight, setPadColumnHeight] = useState(0);
+  const [padLaunchesHeight, setPadLaunchesHeight] = useState(0);
   // Whether the Pad lower band (cards or connections) was already showing
   // when Home mounted: one that arrives later (the first card) waits for the
   // cover to finish shrinking, or it would land over the tiles still moving
@@ -423,8 +440,8 @@ export function HomeEditorialLayout({
 
   if (padLaunchLayout) {
     // Two columns (design §8 Pad, revised). The left one is the cover block --
-    // the pack's title and painting, or the app's wordmark, at a fixed share
-    // of the page with nothing over it -- then the tiles and Recent, in one
+    // the pack's title and painting, or the app's wordmark, capped to leave
+    // room for the measured launch controls -- then the tiles in one
     // scroll. The right one is the work: Needs you and the computer cards in a
     // scroll of their own, and the dock fixed at its foot. The page itself
     // does not scroll.
@@ -442,6 +459,13 @@ export function HomeEditorialLayout({
       measuredTitleWidth:
         titleMeasurement && titleMeasurement.title === titleKey ? titleMeasurement.width : 0,
       wordmark,
+      foreground: artworkForeground,
+      hasTitle: Boolean(coverTitle),
+      availableHeight: padCoverAvailableHeight(
+        padColumnHeight,
+        padComposerHeight,
+        hasSlot(launches) ? padLaunchesHeight : 0
+      ),
     });
     // What follows a section that grows or goes moves with it. Instant under
     // reduce-motion (`listLayout`).
@@ -506,7 +530,9 @@ export function HomeEditorialLayout({
             {hasHeaderAction ? <View style={styles.headerAction}>{headerAction}</View> : null}
           </View>
         ) : null}
-        <View style={styles.padColumns}>
+        <View
+          style={styles.padColumns}
+          onLayout={(event) => setPadColumnHeight(event.nativeEvent.layout.height)}>
           <View testID="home-pad-cover-column" style={{ width: columns.cover }}>
             {/* Keyboard-aware on its own: the page's view only lifts fields
                 whose nearest scroll view it is, and Recent's search is here. */}
@@ -545,7 +571,9 @@ export function HomeEditorialLayout({
                   style={[styles.coverScene, { height: coverBlock.height }]}>
                   {titleMeasure}
                   {coverTitle ? (
-                    <Animated.View onLayout={titleStage.onLayout} style={titleStage.style}>
+                    <Animated.View
+                      onLayout={titleStage.onLayout}
+                      style={[titleStage.style, { zIndex: coverBlock.titleZIndex }]}>
                       <Text
                         accessibilityRole="header"
                         color={theme.colors.text}
@@ -557,12 +585,9 @@ export function HomeEditorialLayout({
                       </Text>
                     </Animated.View>
                   ) : null}
-                  {/* The figure stands on the block's foot at the right and
-                      rises over the title, as the phone cover's drawing
-                      overlaps its title; nothing is drawn over it. Its frame
-                      takes the new size at once, with the painting's new
-                      crop: an animated frame would show the old crop
-                      overflowing it until the canvas re-measures. */}
+                  {/* Scenes sit behind the title; portraits retain foreground
+                      depth within the title-safe geometry. The frame snaps so
+                      an old crop cannot overflow while the canvas re-measures. */}
                   <Animated.View
                     onLayout={artworkStage.onLayout}
                     pointerEvents="none"
@@ -583,9 +608,10 @@ export function HomeEditorialLayout({
               {hasSlot(launches) ? (
                 <Animated.View
                   testID="home-pad-launch-dock"
+                  onLayout={(event) => setPadLaunchesHeight(event.nativeEvent.layout.height)}
                   entering={rise(0)}
                   layout={coverLayout}
-                  style={styles.padSection}>
+                  style={styles.padLaunchSection}>
                   {launches}
                 </Animated.View>
               ) : null}
@@ -687,6 +713,12 @@ export function HomeEditorialLayout({
         ? Math.min(coverWidth * 0.48, ((coverWidth - 4) * 100) / titleMeasurement.width)
         : coverWidth * 0.3;
     const titleHeight = titleFontSize * 1.08;
+    const fullBleedScene = !pad && !split && !artworkForeground;
+    const scenePlacement = editorialScenePlacement(
+      coverTitle ? titleHeight : 0,
+      topInset + styles.root.paddingTop,
+      artworkTopInset
+    );
     return (
       <View
         key="cover"
@@ -727,7 +759,9 @@ export function HomeEditorialLayout({
                 </View>
               ) : null}
               {coverTitle ? (
-                <Animated.View onLayout={titleStage.onLayout} style={titleStage.style}>
+                <Animated.View
+                  onLayout={titleStage.onLayout}
+                  style={[titleStage.style, fullBleedScene && { zIndex: 2 }]}>
                   <Text
                     accessibilityRole="header"
                     color={theme.colors.text}
@@ -750,7 +784,13 @@ export function HomeEditorialLayout({
                 pointerEvents="none"
                 style={[
                   {
-                    marginTop: coverTitle ? -titleHeight * 0.35 - artworkTopInset : 0,
+                    marginTop: fullBleedScene
+                      ? scenePlacement.marginTop
+                      : coverTitle
+                        ? -titleHeight * 0.35 - artworkTopInset
+                        : 0,
+                    // Keep the launch tiles and reading sections at their existing positions.
+                    marginBottom: fullBleedScene ? scenePlacement.marginBottom : 0,
                     marginHorizontal: split ? 0 : -geometry.gutter,
                     zIndex: 1,
                   },
@@ -1091,7 +1131,8 @@ const styles = StyleSheet.create({
   padColumns: { flex: 1, minHeight: 0, flexDirection: 'row', gap: PAD_COLUMN_GAP },
   padWorkColumn: { flex: 1, minWidth: 0 },
   padScroll: { flex: 1 },
-  padCoverContent: { paddingBottom: 24 },
+  padCoverContent: { paddingBottom: PAD_LAUNCH_BOTTOM_SPACE },
+  padLaunchSection: { marginTop: PAD_LAUNCH_GAP },
   padSection: { marginTop: 16 },
   padWorkContent: { paddingBottom: 24 },
   padWorkSections: { gap: 32 },

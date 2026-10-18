@@ -35,7 +35,10 @@ function terminal(serverId: string, paneId = `${serverId}-pane`): HomeTarget {
   };
 }
 
-function opencode(serverId: string, asid = `${serverId}-asid`): HomeTarget {
+function opencode(
+  serverId: string,
+  asid = `${serverId}-asid`
+): Extract<HomeTarget, { kind: 'agent-session' }> {
   return {
     kind: 'agent-session',
     serverId,
@@ -58,6 +61,42 @@ function entry(target: HomeTarget, title = 'Terminal', atMs = 1): HomeRecentEntr
 }
 
 describe('home recents domain', () => {
+  test('cold visits preserve persisted provider metadata, while explicit owner changes and unknown sessions stay honest', async () => {
+    const codex = { ...opencode('server-a'), agentId: 'codex' };
+    let saved = serializeHomeRecents([entry(codex, 'Codex session', 1)]);
+    const store = createHomeRecentsStore({
+      load: async () => saved,
+      save: async (value) => {
+        saved = value;
+      },
+    });
+    await store.getState().hydrate();
+    await store.getState().visit(opencode('server-a'), 'Cold visit', 2);
+    expect(store.getState().entries[0]?.target).toEqual(codex);
+    expect(parseHomeRecentsDocument(saved).entries[0]?.target).toEqual(codex);
+
+    const changed = { ...codex, agentId: 'deepseek' };
+    await store.getState().visit(changed, 'Reported owner', 3);
+    expect(store.getState().entries[0]?.target).toEqual(changed);
+    await store.getState().visit(opencode('server-a', 'unknown'), 'Unowned', 4);
+    expect(store.getState().entries[0]?.target).toEqual(opencode('server-a', 'unknown'));
+  });
+
+  test('an untagged visit racing cold hydration keeps the persisted provider but explicit ownership wins', async () => {
+    for (const agentId of [undefined, 'deepseek']) {
+      const load = deferred<string | null>();
+      const store = createHomeRecentsStore({ load: () => load.promise, save: async () => {} });
+      const target = { ...opencode('server-a'), ...(agentId ? { agentId } : {}) };
+      const visiting = store.getState().visit(target, 'Cold visit', 2);
+      load.resolve(serializeHomeRecents([entry({ ...target, agentId: 'codex' }, 'Stored', 1)]));
+      await visiting;
+      expect(store.getState().entries[0]?.target).toEqual({
+        ...target,
+        agentId: agentId ?? 'codex',
+      });
+    }
+  });
+
   test('keys every target field with a structured discriminant', () => {
     expect(homeTargetKey(terminal('server:one', 'pane/two'))).not.toBe(
       homeTargetKey(terminal('server', 'one:pane/two'))

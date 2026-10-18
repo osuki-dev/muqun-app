@@ -1,22 +1,26 @@
+import { assetFromLocalPdf } from '@/lib/session-assets';
+import { useQuestionComposerDraft } from '@/hooks/use-question-composer-draft';
+import { AssetViewer } from '@/components/asset-viewer';
 import type { HomeComposerOutset } from '@/theme/home-composer-outset';
 import { ComposerAttachmentButton } from '@/components/composer-attachment-button';
+import { CompactionPill } from '@/components/agent-compaction-pill';
+import type { CompactionActivity } from '@/lib/agent-compaction';
 import { memo, useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import {
-  NativeSyntheticEvent,
   Pressable,
   ScrollView,
   StyleSheet,
-  TextInput,
-  TextInputSelectionChangeEventData,
   useWindowDimensions,
   View,
+  type ScrollViewInstance,
+  type TextInputInstance,
+  type TextInputSelectionChangeEvent,
 } from 'react-native';
 import { Spinner, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
-  AlertCircle,
   ArrowLeft,
   CheckSquare,
   ChevronDown,
@@ -25,7 +29,6 @@ import {
   GitFork,
   Inbox,
   Layers,
-  Loader,
   Terminal,
   Square,
   Trash2,
@@ -61,6 +64,7 @@ import { ComposerPopup } from '@/components/composer-popup';
 import { useComposerPopup } from '@/hooks/use-composer-popup';
 import { useLatestReader } from '@/hooks/use-render-refs';
 import { composerChipIds } from '@/lib/agent-composer-chips';
+import { canSendAgentPrompt } from '@/lib/agent-runtime-controls';
 import { slashCommandTrigger, type PaneSlashCommand } from '@/lib/pane-composer';
 import {
   findFileMentionTrigger,
@@ -87,15 +91,28 @@ import {
   describePickerFailure,
   isImageAttachment,
   type AttachmentSource,
+  type PendingAttachment,
+  describeBlockedSend,
+  takePickTruncationNotice,
 } from '@/lib/attachments';
-import { DURATION, fadeIn, fadeOut, fadeOutDown, listLayout, timing } from '@/lib/motion';
+import {
+  DURATION,
+  RISE_DISTANCE,
+  fadeIn,
+  fadeOut,
+  fadeOutDown,
+  listLayout,
+  timing,
+} from '@/lib/motion';
 import { appChrome } from '@/constants/appearance';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { withAlpha } from '@/lib/color';
 import type { SessionNode } from '@/lib/agent-session-tree';
 import {
   AGENT_CLIENT_COMMANDS,
+  readSkillInvocation,
   readSlashCommand,
+  skillPopupTrigger,
   type AgentClientCommandId,
 } from '@/lib/agent-commands';
 import { agentClientCommandDescription, agentHostCommandDescription } from '@/i18n/labels';
@@ -114,7 +131,6 @@ import {
   type InboxItem,
   type AgentProject,
   type AgentSessionInfo,
-  type CompactionReason,
   type FileDiffItem,
   type ModelRef,
   type SkillInfo,
@@ -123,6 +139,11 @@ import {
 } from '@/lib/agent-session';
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
+import { ComposerSendGuard } from '@/lib/composer-send-guard';
+import {
+  deliverAgentAttachmentPrompt,
+  type AgentAttachmentSendRequest,
+} from '@/lib/agent-attachment-send';
 
 /** What a root's subtasks are doing; `blocked` ones are waiting on the reader. */
 export interface SubtaskActivity {
@@ -325,10 +346,20 @@ const SessionChip = memo(function SessionChip({
 });
 
 /** See `AgentComposerProps.injectDraftRef`. */
-export type DraftInjector = (text: string, options?: { ifEmpty?: boolean }) => boolean;
+export type DraftInjector = (
+  text: string,
+  options?: { ifEmpty?: boolean; expiredQuestionOwner?: string }
+) => boolean;
 
 export interface AgentComposerProps {
   running: boolean;
+  /** Ordinary prompt delivery only; request reply controls are independent. */
+  canSendWhileRunning?: boolean;
+  /** Queue support is independent of steering into the current turn. */
+  canQueueWhileRunning?: boolean;
+  canMentionFiles?: boolean;
+  /** A session observed elsewhere keeps its draft, but cannot send through this runtime. */
+  interactionBlockedReason?: string;
   /** Row 1 contains roots only. Descendants belong in the tree sheet. */
   sessionStrip?: readonly SessionNode[];
   selectedRootAsid?: string;
@@ -387,8 +418,8 @@ export interface AgentComposerProps {
   onCommitRevert?: () => void;
   onKeepRevert?: () => void;
   revertBusy?: boolean;
-  /** A compaction in flight, or one that failed and has not been read yet. */
-  compaction?: { status: 'running' | 'failed'; reason: CompactionReason } | null;
+  /** A running compaction, or terminal details not yet handed back to history. */
+  compaction?: CompactionActivity | null;
   onDismissCompaction?: () => void;
   cost?: number;
   sessionTitle?: string;
@@ -404,6 +435,8 @@ export interface AgentComposerProps {
     attachments?: string[],
     delivery?: 'steer' | 'queue'
   ) => Promise<boolean | void>;
+  /** Bind attachment delivery before uploads settle; the workbench can advance its own create. */
+  captureAttachmentSend?: () => AgentAttachmentSendRequest;
   onAbort: () => Promise<void>;
   onSelectSession?: (asid: string) => void;
   onSelectAgentMode?: (agent: string) => void;
@@ -466,6 +499,7 @@ export interface AgentComposerProps {
    * since); answers whether it did.
    */
   injectDraftRef?: React.MutableRefObject<DraftInjector | null>;
+  draftOwnerKey?: string;
   /**
    * Empties the field, files included, if it still holds `text` -- what a
    * send from elsewhere (Home's failed row) just delivered.
@@ -501,6 +535,8 @@ export interface AgentComposerProps {
   fieldBackgroundOutset?: HomeComposerOutset;
   fieldDecoration?: React.ReactNode;
   fieldDecorationOverhang?: number;
+  /** The shadow the field's own plate casts; see `TerminalComposer`. */
+  fieldShadow?: string;
   hideFieldDecoration?: boolean;
   fieldTextTopInset?: number;
   hideParameterRow?: boolean;
@@ -536,6 +572,8 @@ export interface AgentComposerProps {
   autoHide?: DockAutoHide;
   /** Told when the field gains or loses focus (the Pad cover keeps its left column still). */
   onFieldFocus?: (focused: boolean) => void;
+  /** Home measures the mounted dock before revealing it after its computers. */
+  revealed?: boolean;
   /**
    * The field's and Send's test ids. Home hosts this same dock beside a Pad
    * workspace whose own composers keep the defaults, so it names its own.
@@ -546,6 +584,10 @@ export interface AgentComposerProps {
 
 export const AgentComposer = memo(function AgentComposer({
   running,
+  canSendWhileRunning = true,
+  canQueueWhileRunning = true,
+  canMentionFiles = true,
+  interactionBlockedReason,
   sessionStrip = EMPTY_STRIP,
   selectedRootAsid,
   onOpenSessionTree,
@@ -577,6 +619,7 @@ export const AgentComposer = memo(function AgentComposer({
   cost,
   sessionTitle,
   onSend,
+  captureAttachmentSend,
   onAbort,
   onSelectSession,
   onSelectAgentMode,
@@ -605,6 +648,7 @@ export const AgentComposer = memo(function AgentComposer({
   onSetInboxDelivery,
   onPressTokens,
   injectDraftRef,
+  draftOwnerKey,
   clearDraftRef,
   holdStagedAttachments,
   onDockHeight,
@@ -616,6 +660,7 @@ export const AgentComposer = memo(function AgentComposer({
   fieldBackgroundOutset,
   fieldDecoration,
   fieldDecorationOverhang = 0,
+  fieldShadow,
   hideFieldDecoration = false,
   fieldTextTopInset,
   hideParameterRow = false,
@@ -627,6 +672,7 @@ export const AgentComposer = memo(function AgentComposer({
   fieldLines,
   autoHide,
   onFieldFocus,
+  revealed = true,
   inputTestID = 'agent-composer-input',
   sendTestID,
 }: AgentComposerProps) {
@@ -644,10 +690,10 @@ export const AgentComposer = memo(function AgentComposer({
    * monospace slot on its own `TextInput`, correctly: a shell line is a
    * literal and its alignment is part of what it says. This composer reuses
    * the same component for something else entirely. "Send a message, type /
-   * for commands, @ for files…" is a sentence, and it was being drawn in a
-   * typewriter face beside a transcript set in the reader's own. The
-   * placeholder is where a reader meets that first, for the ordinary reason
-   * that an empty field is nothing but its placeholder.
+   * for commands, $ for skills, @ for files…" is a sentence, and it was
+   * being drawn in a typewriter face beside a transcript set in the reader's
+   * own. The placeholder is where a reader meets that first, for the ordinary
+   * reason that an empty field is nothing but its placeholder.
    *
    * The composer merges its family ahead of `inputProps.style` precisely so a
    * caller can say otherwise, and this is the caller that has to. A family and
@@ -659,7 +705,7 @@ export const AgentComposer = memo(function AgentComposer({
    * out would let the mono family underneath stand.
    */
   const interfaceFontFamily = useInterfaceFontFamily() ?? undefined;
-  const [text, setText] = useState('');
+  const { text, setText, appendAnswer } = useQuestionComposerDraft(draftOwnerKey ?? 'shared');
   /**
    * One answer to "what is this agent called", for the chip strip and the
    * action row alike. The catalogue's name when the host publishes one, the id
@@ -677,7 +723,17 @@ export const AgentComposer = memo(function AgentComposer({
     [availableAgentsProp]
   );
   const [sending, setSending] = useState(false);
-  const [deliveryMode, setDeliveryMode] = useState<'steer' | 'queue'>('steer');
+  const [attachmentSendGuard] = useState(() => new ComposerSendGuard());
+  const [pendingAttachmentSend, setPendingAttachmentSend] = useState<{
+    request: AgentAttachmentSendRequest;
+    token: symbol;
+    delivery: 'steer' | 'queue' | undefined;
+    submittedAttachments?: PendingAttachment[];
+  } | null>(null);
+  const promptAllowed =
+    !interactionBlockedReason && canSendAgentPrompt(running, canSendWhileRunning);
+  const [requestedDeliveryMode, setDeliveryMode] = useState<'steer' | 'queue'>('steer');
+  const deliveryMode = canQueueWhileRunning ? requestedDeliveryMode : 'steer';
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
   const [inboxOpen, setInboxOpen] = useState(false);
@@ -687,15 +743,19 @@ export const AgentComposer = memo(function AgentComposer({
   // Session spend cannot substitute for the latest context measurement.
   const contextPill = useMemo(() => {
     const live = contextUsage?.tokens ?? null;
-    const total = contextTokenTotal(live);
+    const total = contextUsage?.total_tokens ?? contextTokenTotal(live);
     if (total <= 0) return null;
-    const ratio = live ? contextFillRatio(live, contextLimit) : null;
+    const ratio = contextFillRatio(
+      live,
+      contextUsage?.limit?.context ?? contextLimit,
+      contextUsage?.total_tokens
+    );
     let tokStr = `${total}`;
     if (total >= 1_000_000) tokStr = `${(total / 1_000_000).toFixed(1)}M`;
     else if (total >= 1_000) tokStr = `${(total / 1_000).toFixed(1)}k`;
     const costStr =
-      cost === undefined || cost === null || cost === 0 ? t`Free` : `$${cost.toFixed(2)}`;
-    return { label: `${tokStr} • ${costStr}`, ratio };
+      cost === undefined || cost === null ? null : cost === 0 ? t`Free` : `$${cost.toFixed(2)}`;
+    return { label: costStr === null ? tokStr : `${tokStr} • ${costStr}`, ratio };
   }, [contextUsage, contextLimit, cost, t]);
 
   const modelDisplayName = useMemo(
@@ -703,7 +763,7 @@ export const AgentComposer = memo(function AgentComposer({
     [modelName, selectedModel, t]
   );
 
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<TextInputInstance>(null);
   const [caret, setCaret] = useState<number | undefined>(undefined);
   const [mentionHits, setMentionHits] = useState<FileMentionHit[]>([]);
 
@@ -712,21 +772,61 @@ export const AgentComposer = memo(function AgentComposer({
 
   const record = useGatewayConnectionStore((state) => state.record);
   const attachmentUploads = useAttachmentUploads(record, undefined, holdStagedAttachments);
+  const { clearAttachments } = attachmentUploads;
+  const readStagedAttachments = useLatestReader(attachmentUploads.attachments);
+  const submittingAttachments = Boolean(
+    sending && pendingAttachmentSend && !pendingAttachmentSend.submittedAttachments
+  );
+  // Only staged files belong in the composer. An ACK clears them through the
+  // owned submission callback; it does not establish a canonical timeline row.
+  const visibleAttachments = attachmentUploads.attachments;
 
-  // Staged image preview, the same viewer the terminal dock uses: only images
-  // can open full screen, so the tapped chip's position is resolved within
-  // that subset.
+  // Staged images page in the lightbox; device-picked PDFs use the file viewer.
   const [previewAttachmentId, setPreviewAttachmentId] = useState<string | null>(null);
   const previewImages = useMemo<PreviewImage[]>(
     () =>
-      attachmentUploads.attachments
+      visibleAttachments
         .filter((item) => isImageAttachment(item.mime))
         .map((item) => ({ id: item.id, uri: item.localUri })),
-    [attachmentUploads.attachments]
+    [visibleAttachments]
+  );
+  const previewPdf = assetFromLocalPdf(
+    visibleAttachments.find((item) => item.id === previewAttachmentId)
   );
   const previewIndex = previewAttachmentId
     ? previewImages.findIndex((item) => item.id === previewAttachmentId)
     : -1;
+
+  useEffect(() => {
+    // A source change discards only this still-locked source's staged files. Its late
+    // ACK/error cannot clear a replacement draft or end a newer request. An
+    // owned first-session create advances the captured owner and keeps it.
+    if (!pendingAttachmentSend || pendingAttachmentSend.request.isCurrent()) return;
+    const wasSending = attachmentSendGuard.release(pendingAttachmentSend.token);
+    if (wasSending || pendingAttachmentSend.submittedAttachments) {
+      setPendingAttachmentSend(null);
+      setPreviewAttachmentId(null);
+      if (wasSending) {
+        setSending(false);
+        clearAttachments();
+      }
+    }
+  }, [
+    draftOwnerKey,
+    activeDirectory,
+    record,
+    pendingAttachmentSend,
+    attachmentSendGuard,
+    clearAttachments,
+  ]);
+  useEffect(() => () => attachmentSendGuard.reset(), [attachmentSendGuard]);
+
+  const removeStagedAttachment = (id: string) => {
+    if (!attachmentSendGuard.isPending()) attachmentUploads.removeAttachment(id);
+  };
+  const retryStagedAttachment = (id: string) => {
+    if (!attachmentSendGuard.isPending()) attachmentUploads.retryUpload(id);
+  };
 
   /**
    * The app's own commands, and the host's.
@@ -787,10 +887,17 @@ export const AgentComposer = memo(function AgentComposer({
     [skills]
   );
 
-  const slashCatalog = useMemo(
-    () => [...builtinCommands, ...serverCommands, ...skillCommands],
-    [builtinCommands, serverCommands, skillCommands]
-  );
+  const slashCatalog = useMemo(() => {
+    const seen = new Set<string>();
+    const rows = [];
+    for (const command of [...builtinCommands, ...serverCommands, ...skillCommands]) {
+      const key = command.name.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      rows.push(command);
+    }
+    return rows;
+  }, [builtinCommands, serverCommands, skillCommands]);
   const slashTrigger = useMemo(() => slashCommandTrigger(slashCatalog), [slashCatalog]);
 
   /**
@@ -814,6 +921,8 @@ export const AgentComposer = memo(function AgentComposer({
           hasContextPill: Boolean(contextPill),
           hasDiffs: Boolean(hasDiffs),
           running,
+          canSendWhileRunning,
+          canQueueWhileRunning,
         })
       ),
     [
@@ -828,6 +937,8 @@ export const AgentComposer = memo(function AgentComposer({
       contextPill,
       hasDiffs,
       running,
+      canSendWhileRunning,
+      canQueueWhileRunning,
     ]
   );
 
@@ -835,6 +946,14 @@ export const AgentComposer = memo(function AgentComposer({
     draft: text,
     onDraftChange: setText,
     trigger: slashTrigger,
+  });
+  // Every skill the screen was given, not only the slash menu's subset. An
+  // empty list leaves `$` as a plain character.
+  const skillTrigger = useMemo(() => skillPopupTrigger(skills ?? []), [skills]);
+  const skillPopup = useComposerPopup({
+    draft: text,
+    onDraftChange: setText,
+    trigger: skillTrigger,
   });
 
   // File mentions (@) trigger
@@ -846,7 +965,7 @@ export const AgentComposer = memo(function AgentComposer({
   const mentionQuery = mentionTrigger?.query ?? null;
 
   useEffect(() => {
-    if (mentionQuery === null) {
+    if (mentionQuery === null || !canMentionFiles) {
       setMentionHits([]);
       return;
     }
@@ -861,7 +980,7 @@ export const AgentComposer = memo(function AgentComposer({
     return () => {
       active = false;
     };
-  }, [mentionQuery, sessionId, activeAsid]);
+  }, [mentionQuery, sessionId, activeAsid, canMentionFiles]);
 
   // Which words of the draft are mentions: every computer this composer
   // offers (typed by hand or picked) and the file paths picked in this draft.
@@ -918,7 +1037,7 @@ export const AgentComposer = memo(function AgentComposer({
   const selection =
     heldCaret && heldCaret.draft === text
       ? { start: heldCaret.caret, end: heldCaret.caret }
-      : slashPopup.inputProps.selection;
+      : (skillPopup.inputProps.selection ?? slashPopup.inputProps.selection);
   // Span mode starts as soon as a mention can appear (an `@` or a token in the
   // draft), so the field switches from `value` to spans on a keystroke rather
   // than in the same commit as a pick -- Android drops the first colouring
@@ -946,7 +1065,7 @@ export const AgentComposer = memo(function AgentComposer({
       setFileTokens((current) => (current.includes(hit.path) ? current : [...current, hit.path]));
       setMentionHits([]);
     },
-    [text, mentionTrigger]
+    [text, mentionTrigger, setText]
   );
   const chooseComputer = (computer: MentionComputer) => {
     if (!mentionTrigger || !computer.reachable) return;
@@ -957,7 +1076,7 @@ export const AgentComposer = memo(function AgentComposer({
   };
 
   const handleSelectionChange = useCallback(
-    (event: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => {
+    (event: TextInputSelectionChangeEvent) => {
       const next = event.nativeEvent.selection.start;
       // A held caret stays until the field reports it: Android applies the
       // new text after the selection of the same commit and moves its own
@@ -970,8 +1089,9 @@ export const AgentComposer = memo(function AgentComposer({
       setCaret(next);
       setHeldCaret(null);
       slashPopup.inputProps.onSelectionChange(event);
+      skillPopup.inputProps.onSelectionChange(event);
     },
-    [slashPopup.inputProps]
+    [slashPopup.inputProps, skillPopup.inputProps]
   );
 
   const chooseAttachmentSource = useCallback(
@@ -985,7 +1105,12 @@ export const AgentComposer = memo(function AgentComposer({
       const picker = attachmentUploads.capturePicker();
       if (!picker.isCurrent()) return;
       void pickAttachments(source)
-        .then(picker.addFiles)
+        .then((files) => {
+          picker.addFiles(files);
+          const cut = takePickTruncationNotice();
+          if (cut && picker.isCurrent())
+            showToast({ variant: 'warning', title: t`Not every file was added`, message: cut });
+        })
         .catch((failure: unknown) => {
           if (!picker.isCurrent()) return;
           showToast({
@@ -1002,18 +1127,24 @@ export const AgentComposer = memo(function AgentComposer({
   useEffect(() => {
     if (injectDraftRef) {
       injectDraftRef.current = (draftText, options) => {
+        if (options?.expiredQuestionOwner) {
+          if (options.expiredQuestionOwner !== draftOwnerKey) return false;
+          appendAnswer(draftText);
+          return true;
+        }
         if (options?.ifEmpty && readText().trim()) return false;
         setText(draftText);
         setTimeout(() => inputRef.current?.focus(), 50);
         return true;
       };
     }
-  }, [injectDraftRef, readText]);
+  }, [injectDraftRef, readText, draftOwnerKey, appendAnswer, setText]);
 
   const handleSend = useCallback(async () => {
     const trimmed = text.trim();
     const hasAttachments = attachmentUploads.attachments.length > 0;
-    if ((!trimmed && !hasAttachments) || sending) return;
+    if ((!trimmed && !hasAttachments) || sending || interactionBlockedReason) return;
+    setPendingAttachmentSend((previous) => (previous?.submittedAttachments ? null : previous));
 
     // A slash command is a command. It used to be sent as the literal text it
     // was typed as, and whatever the model made of it was the result.
@@ -1024,14 +1155,19 @@ export const AgentComposer = memo(function AgentComposer({
         setText('');
         return;
       }
-      if (parsed?.kind === 'skill' && onInvokeSkill) {
+      const skillCall =
+        parsed?.kind === 'skill'
+          ? { name: parsed.name, args: parsed.args }
+          : readSkillInvocation(trimmed, skills);
+      if (skillCall && onInvokeSkill) {
         // The draft stays put until the engine has taken it: a skill the
         // gateway refused with the composer already emptied is a line the
-        // reader has to remember and retype.
+        // reader has to remember and retype. `$id` and `$id args` use this
+        // same path; `/` still only matches skills the catalog marks slash.
         setSending(true);
         await settleAfter(
           async () => {
-            const accepted = await onInvokeSkill(parsed.name, parsed.args);
+            const accepted = await onInvokeSkill(skillCall.name, skillCall.args);
             if (accepted === false) return;
             setText('');
           },
@@ -1048,6 +1184,59 @@ export const AgentComposer = memo(function AgentComposer({
       }
     }
 
+    if (!promptAllowed || disabled) return;
+    if (hasAttachments && captureAttachmentSend) {
+      const token = attachmentSendGuard.acquire();
+      if (!token) return;
+      const captured = captureAttachmentSend();
+      const request = {
+        ...captured,
+        isCurrent: () => attachmentSendGuard.owns(token) && captured.isCurrent(),
+      };
+      const delivery = running ? deliveryMode : undefined;
+      setPendingAttachmentSend({ request: captured, token, delivery });
+      setSending(true);
+      return settleAfter(
+        async () => {
+          const result = await deliverAgentAttachmentPrompt(
+            request,
+            trimmed,
+            attachmentUploads.awaitUploads,
+            () => {
+              const submittedAttachments = readStagedAttachments().map((item) =>
+                item.status === 'done' ? item : { ...item, status: 'done' as const }
+              );
+              setPendingAttachmentSend((previous) =>
+                previous?.token === token ? { ...previous, submittedAttachments } : previous
+              );
+              setText((current) => (current.trim() === trimmed ? '' : current));
+              attachmentUploads.clearAttachments();
+            },
+            delivery
+          );
+          if (result === 'upload-failed') {
+            showToast({
+              variant: 'danger',
+              title: t`Upload failed`,
+              message: t`Please retry or remove failed attachments.`,
+            });
+          } else if (result === 'obsolete' && attachmentSendGuard.owns(token)) {
+            // A late result can beat the source-change effect. The field is
+            // still locked by this request, so discard only its old staged files.
+            attachmentUploads.clearAttachments();
+            setPreviewAttachmentId(null);
+          }
+        },
+        () => {
+          if (attachmentSendGuard.release(token)) {
+            setPendingAttachmentSend((previous) =>
+              previous?.token === token && !previous.submittedAttachments ? null : previous
+            );
+            setSending(false);
+          }
+        }
+      );
+    }
     setSending(true);
     return settleAfter(
       async () => {
@@ -1058,7 +1247,7 @@ export const AgentComposer = memo(function AgentComposer({
             showToast({
               variant: 'danger',
               title: t`Upload failed`,
-              message: t`Please retry or remove failed attachments.`,
+              message: describeBlockedSend(attachmentUploads.attachments),
             });
             return;
           }
@@ -1090,11 +1279,19 @@ export const AgentComposer = memo(function AgentComposer({
     );
   }, [
     text,
+    setText,
     attachmentUploads,
     attachmentTargetId,
     record,
     sending,
+    promptAllowed,
+    interactionBlockedReason,
+    disabled,
     onSend,
+    captureAttachmentSend,
+    attachmentSendGuard,
+    readStagedAttachments,
+    setPreviewAttachmentId,
     showToast,
     t,
     running,
@@ -1116,7 +1313,7 @@ export const AgentComposer = memo(function AgentComposer({
     return () => {
       clearDraftRef.current = null;
     };
-  }, [clearDraftRef, readText, attachmentUploads]);
+  }, [clearDraftRef, readText, attachmentUploads, setText]);
 
   /**
    * What can be done to one queued prompt.
@@ -1206,7 +1403,7 @@ export const AgentComposer = memo(function AgentComposer({
    * chip reports where it sits; when the active one changes, the strip scrolls
    * it to the left edge.
    */
-  const sessionStripRef = useRef<ScrollView>(null);
+  const sessionStripRef = useRef<ScrollViewInstance>(null);
   const chipOffsetsRef = useRef<Record<string, { x: number; width: number }>>({});
   const measureChip = useCallback((asid: string, x: number, width: number) => {
     chipOffsetsRef.current[asid] = { x, width };
@@ -1229,8 +1426,21 @@ export const AgentComposer = memo(function AgentComposer({
   }, [selectedRootAsid]);
 
   const { height: keyboardOffset } = useReanimatedKeyboardAnimation();
+  const revealProgress = useSharedValue(revealed ? 1 : 0);
+  useEffect(() => {
+    const target = revealed ? 1 : 0;
+    if (revealProgress.get() !== target) revealProgress.set(withTiming(target, timing('micro')));
+  }, [revealed, revealProgress]);
   const composerKeyboardStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: keyboardOffset.get() + (autoHide?.offset.get() ?? 0) }],
+    opacity: revealProgress.get(),
+    transform: [
+      {
+        translateY:
+          keyboardOffset.get() +
+          (autoHide?.offset.get() ?? 0) +
+          (1 - revealProgress.get()) * RISE_DISTANCE,
+      },
+    ],
   }));
 
   /**
@@ -1247,6 +1457,8 @@ export const AgentComposer = memo(function AgentComposer({
   const safeAreaFoot = flushField && keyboardHeight === 0 ? bottomInset : 0;
   const dockFoot = safeAreaFoot + (outerInsets?.bottom ?? 0);
   const [surfaceHeight, setSurfaceHeight] = useState(0);
+  const [compactionRowHeight, setCompactionRowHeight] = useState(0);
+  const compactionClearance = compaction ? compactionRowHeight : 0;
   const [voiceActive, setVoiceActive] = useState(false);
   const decorationHidden =
     hideFieldDecoration ||
@@ -1255,12 +1467,14 @@ export const AgentComposer = memo(function AgentComposer({
     modeMenuOpen ||
     inboxOpen ||
     slashPopup.open ||
+    skillPopup.open ||
     Boolean(mentionTrigger);
   const decorationClearance =
     fieldDecoration && !decorationHidden && !voiceActive ? fieldDecorationOverhang : 0;
   const dockHeight = surfaceHeight + dockFoot;
+  // The status row occupies transcript space, but does not move the material's clip edge.
   const reportDockHeight = useEffectEvent((height: number, clipHeight: number) =>
-    onDockHeight?.(height, clipHeight)
+    onDockHeight?.(height + compactionClearance, clipHeight)
   );
   // Local height still bounds popups. Forwarding each animated accessory frame
   // to Home also changes its scroll padding and clipping, feeding the reveal
@@ -1268,11 +1482,17 @@ export const AgentComposer = memo(function AgentComposer({
   useEffect(() => {
     if (surfaceHeight > 0 && !accessoryHeightAnimating)
       reportDockHeight(dockHeight + decorationClearance, dockHeight);
-  }, [surfaceHeight, dockHeight, decorationClearance, accessoryHeightAnimating]);
+  }, [
+    surfaceHeight,
+    dockHeight,
+    decorationClearance,
+    compactionClearance,
+    accessoryHeightAnimating,
+  ]);
   const [inputRowHeight, setInputRowHeight] = useState(0);
   const popupMaxHeight = Math.max(
     POPUP_MIN_HEIGHT,
-    windowHeight - keyboardHeight - dockHeight - topInset - POPUP_HEADER_GAP
+    windowHeight - keyboardHeight - dockHeight - compactionClearance - topInset - POPUP_HEADER_GAP
   );
   // The compact dock's second line holds the two choices that define a new
   // turn and nothing else; Home has no running turn, queue or diff to show.
@@ -1315,6 +1535,9 @@ export const AgentComposer = memo(function AgentComposer({
 
   return (
     <Animated.View
+      pointerEvents={revealed ? 'auto' : 'none'}
+      accessibilityElementsHidden={!revealed}
+      importantForAccessibility={revealed ? 'auto' : 'no-hide-descendants'}
       style={[
         styles.dockOuter,
         composerKeyboardStyle,
@@ -1485,10 +1708,11 @@ export const AgentComposer = memo(function AgentComposer({
       ) : null}
 
       {/* File mention (@) floating list */}
-      {mentionTrigger && (offeredComputers.length > 0 || mentionHits.length > 0) ? (
+      {mentionTrigger &&
+      (offeredComputers.length > 0 || (canMentionFiles && mentionHits.length > 0)) ? (
         <View style={styles.composerFloatingContent}>
           <FileMentionPanel
-            hits={mentionHits}
+            hits={canMentionFiles ? mentionHits : []}
             computers={offeredComputers}
             onSelectComputer={chooseComputer}
             query={mentionTrigger.query}
@@ -1511,6 +1735,19 @@ export const AgentComposer = memo(function AgentComposer({
         </View>
       ) : null}
 
+      {/* Skills ($) floating list. `#` can take this same slot later. */}
+      {skillPopup.open ? (
+        <View style={styles.composerPopup}>
+          <ComposerPopup
+            rows={skillPopup.rows}
+            onPick={skillPopup.pick}
+            maxHeight={popupMaxHeight}
+            testIDPrefix="skill"
+            scope="project"
+          />
+        </View>
+      ) : null}
+
       {/* What a staged rollback would take, and the two words that decide it.
           Above the dock, where the reader's hands already are. */}
       {revert && onCommitRevert && onKeepRevert ? (
@@ -1523,15 +1760,21 @@ export const AgentComposer = memo(function AgentComposer({
         />
       ) : null}
 
-      {/* A compaction in flight. Transient, above the dock, and gone the
-          moment the boundary lands in the timeline as a row of its own. */}
-      {compaction ? (
-        <CompactionPill
-          status={compaction.status}
-          reason={compaction.reason}
-          {...(onDismissCompaction ? { onDismiss: onDismissCompaction } : {})}
-        />
-      ) : null}
+      {/* Real streamed details stay accessible until the completed summary
+          lands in the timeline, or the reader dismisses the terminal notice. */}
+      <View
+        onLayout={(event) => {
+          const { height } = event.nativeEvent.layout;
+          setCompactionRowHeight(height);
+        }}>
+        {compaction ? (
+          <CompactionPill
+            key={compaction.startedSeq}
+            activity={compaction}
+            {...(onDismissCompaction ? { onDismiss: onDismissCompaction } : {})}
+          />
+        ) : null}
+      </View>
 
       {/* The wrapper is here to be measured: `GlassChrome` is a material and
           takes no `onLayout` of its own. */}
@@ -1553,6 +1796,7 @@ export const AgentComposer = memo(function AgentComposer({
         <ComposerSurface
           flushField={flushField}
           surface="composer"
+          borderless
           shape={flushField ? 'composerField' : bar ? 'none' : 'sheet'}
           style={[
             styles.composerDock,
@@ -1560,13 +1804,6 @@ export const AgentComposer = memo(function AgentComposer({
               !flushField && {
                 borderTopLeftRadius: profile.chrome.surface,
                 borderTopRightRadius: profile.chrome.surface,
-                borderTopWidth: StyleSheet.hairlineWidth,
-                borderTopColor: theme.colors.border,
-                // The material draws a hairline on every side on a translucent
-                // pack; the bar's only edge is its top.
-                borderLeftColor: 'transparent',
-                borderRightColor: 'transparent',
-                borderBottomColor: 'transparent',
               },
           ]}>
           <View
@@ -1986,7 +2223,7 @@ export const AgentComposer = memo(function AgentComposer({
             )}
 
             {/* Attachment staged preview strip */}
-            {attachmentUploads.attachments.length > 0 ? (
+            {visibleAttachments.length > 0 ? (
               <Animated.View
                 entering={fadeIn('micro')}
                 // Home restores field artwork on removal; do not leave a native
@@ -2000,18 +2237,20 @@ export const AgentComposer = memo(function AgentComposer({
                   },
                 ]}>
                 <AttachmentStrip
-                  attachments={attachmentUploads.attachments}
-                  onRemove={attachmentUploads.removeAttachment}
-                  onRetry={attachmentUploads.retryUpload}
+                  attachments={visibleAttachments}
+                  onRemove={removeStagedAttachment}
+                  onRetry={retryStagedAttachment}
                   onPreview={setPreviewAttachmentId}
                   textColor={chromeText}
+                  readOnly={submittingAttachments}
                 />
               </Animated.View>
             ) : null}
 
-            {/* Uploading wait banner */}
-            {sending && attachmentUploads.uploading ? (
+            {/* Submission feedback stays outside the canonical transcript. */}
+            {(sending && attachmentUploads.uploading) || submittingAttachments ? (
               <Animated.View
+                testID="agent-composer-attachment-submission"
                 entering={fadeIn('micro')}
                 exiting={fadeOut('micro')}
                 style={[
@@ -2022,10 +2261,28 @@ export const AgentComposer = memo(function AgentComposer({
                   },
                 ]}>
                 <Spinner size="sm" color={theme.colors.textMuted} />
-                <Text variant="caption" color={theme.colors.textMuted}>
-                  <Trans>Waiting for uploads to finish…</Trans>
+                <Text variant="caption" color={theme.colors.textMuted} style={styles.noticeText}>
+                  {attachmentUploads.uploading ? (
+                    <Trans>Waiting for uploads to finish…</Trans>
+                  ) : pendingAttachmentSend?.delivery === 'queue' ? (
+                    <Trans>Requesting queued delivery…</Trans>
+                  ) : pendingAttachmentSend?.delivery === 'steer' ? (
+                    <Trans>Submitting follow-up…</Trans>
+                  ) : (
+                    <Trans>Sending attachment message…</Trans>
+                  )}
                 </Text>
               </Animated.View>
+            ) : null}
+
+            {!promptAllowed ? (
+              <Text variant="caption" color={theme.colors.textMuted}>
+                {interactionBlockedReason ?? (
+                  <Trans>
+                    This agent accepts messages after its turn ends. Your draft stays here.
+                  </Trans>
+                )}
+              </Text>
             ) : null}
 
             {/* TerminalComposer reused for agent prompt */}
@@ -2036,6 +2293,7 @@ export const AgentComposer = memo(function AgentComposer({
                 fieldBackgroundOutset={fieldBackgroundOutset}
                 fieldDecoration={decorationHidden ? undefined : fieldDecoration}
                 fieldTextTopInset={fieldTextTopInset}
+                fieldShadow={fieldShadow}
                 onVoiceActiveChange={setVoiceActive}
                 spans={spans}
                 compact={compact}
@@ -2074,32 +2332,40 @@ export const AgentComposer = memo(function AgentComposer({
                     ? agentName
                       ? t`${agentName} is offline`
                       : t`The agent is offline`
-                    : (placeholder ?? t`Send a message, type / for commands, @ for files…`),
-                  ...(compact ? { shortPlaceholder: t`Send a message…` } : {}),
+                    : (placeholder ??
+                      t`Send a message, type / for commands, $ for skills, @ for files…`),
+                  shortPlaceholder: t`Send a message…`,
                   editable: !sending && !disabled,
                   testID: inputTestID,
                   selection,
                   onSelectionChange: handleSelectionChange,
-                  onKeyPress: slashPopup.inputProps.onKeyPress,
+                  onKeyPress: (event) => {
+                    slashPopup.inputProps.onKeyPress(event);
+                    skillPopup.inputProps.onKeyPress(event);
+                  },
                   onSubmitEditing: handleSend,
                   onFocus: () => setFocused(true),
                   onBlur: () => setFocused(false),
                   style: { fontFamily: interfaceFontFamily },
                 }}
                 send={{
-                  accessibilityLabel: running
-                    ? deliveryMode === 'steer'
-                      ? t`Steer running agent`
-                      : t`Queue message for agent`
-                    : t`Send message`,
+                  accessibilityLabel: !promptAllowed
+                    ? (interactionBlockedReason ?? t`Waiting for the current turn to end`)
+                    : running
+                      ? deliveryMode === 'steer'
+                        ? t`Steer running agent`
+                        : t`Queue message for agent`
+                      : t`Send message`,
                   armed:
                     (Boolean(text.trim()) || attachmentUploads.attachments.length > 0) &&
                     !sending &&
-                    !disabled,
+                    !disabled &&
+                    promptAllowed,
                   sending,
                   disabled:
                     sending ||
                     disabled ||
+                    !promptAllowed ||
                     (!text.trim() && attachmentUploads.attachments.length === 0),
                   onPress: handleSend,
                   ...(sendTestID ? { testID: sendTestID } : {}),
@@ -2109,6 +2375,9 @@ export const AgentComposer = memo(function AgentComposer({
           </View>
         </ComposerSurface>
       </View>
+      {previewPdf ? (
+        <AssetViewer asset={previewPdf} onClose={() => setPreviewAttachmentId(null)} />
+      ) : null}
       {previewIndex >= 0 ? (
         <ImagePreviewModal
           images={previewImages}
@@ -2135,86 +2404,6 @@ function ComposerSurface({
     );
   return <View style={[style, styles.flushSurface]}>{children}</View>;
 }
-
-/**
- * "Compacting context…", while it is happening.
- *
- * `agent.compaction.changed` is the only thing that knows a compaction is
- * running: the boundary does not reach the timeline until it finishes, so
- * without this the reader watches a quiet agent and wonders what it is doing.
- */
-const CompactionPill = memo(function CompactionPill({
-  status,
-  reason,
-  onDismiss,
-}: {
-  status: 'running' | 'failed';
-  reason: CompactionReason;
-  onDismiss?: () => void;
-}) {
-  const { t } = useLingui();
-  const theme = useThemeTokens();
-  const profile = useAppearanceProfile();
-  const surfaceBackground = useSurfaceBackground();
-  const failed = status === 'failed';
-
-  const pulse = useSharedValue(failed ? 1 : 0.4);
-  useEffect(() => {
-    pulse.set(
-      failed
-        ? withTiming(1, timing('micro'))
-        : withRepeat(
-            withSequence(withTiming(1, timing('long')), withTiming(0.4, timing('long'))),
-            -1
-          )
-    );
-    // An endless repeat must not outlive the pill: a view that is gone while
-    // its animation still writes props is the SurfaceMountingManager noise
-    // in logcat, not a harmless leftover.
-    return () => cancelAnimation(pulse);
-  }, [failed, pulse]);
-  const pulseStyle = useAnimatedStyle(() => ({ opacity: pulse.value }));
-
-  return (
-    <Animated.View
-      entering={fadeIn('micro')}
-      exiting={fadeOut('micro')}
-      style={styles.compactionPillWrap}>
-      <PressableScale
-        testID="agent-composer-compaction-pill"
-        accessibilityRole={failed ? 'button' : 'progressbar'}
-        accessibilityLabel={failed ? t`Compaction failed — tap to dismiss` : t`Compacting context…`}
-        disabled={!failed || !onDismiss}
-        onPress={onDismiss}
-        style={[
-          styles.compactionPill,
-          { borderRadius: profile.chrome.control },
-          {
-            backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-            borderColor: failed ? theme.colors.danger : theme.colors.border,
-          },
-        ]}>
-        <Animated.View style={pulseStyle}>
-          {failed ? (
-            <AlertCircle size={12} color={theme.colors.danger} />
-          ) : (
-            <Loader size={12} color={theme.colors.primary} />
-          )}
-        </Animated.View>
-        <Text
-          variant="caption"
-          weight="semibold"
-          color={failed ? theme.colors.danger : theme.colors.text}>
-          {failed
-            ? t`Compaction failed`
-            : reason === 'manual'
-              ? t`Compacting context…`
-              : t`Compacting context automatically…`}
-        </Text>
-      </PressableScale>
-    </Animated.View>
-  );
-});
 
 /** The least room a popup is given, even on a short window with the keyboard up. */
 const POPUP_MIN_HEIGHT = 120;
@@ -2307,6 +2496,10 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 6,
     marginBottom: 4,
+  },
+  noticeText: {
+    flex: 1,
+    minWidth: 0,
   },
   sessionStripViewport: {
     marginBottom: 6,
@@ -2472,20 +2665,6 @@ const styles = StyleSheet.create({
   contextFill: {
     height: '100%',
     borderRadius: 2,
-  },
-  compactionPillWrap: {
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    marginBottom: 6,
-  },
-  compactionPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
   },
   diffIndicator: {
     position: 'absolute',

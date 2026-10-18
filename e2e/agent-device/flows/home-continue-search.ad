@@ -1,14 +1,14 @@
-# Opt-in offline Home inventory; suite must open the demo and choose Editorial first.
+# Opt-in offline Home inventory; the suite runs the same checks in both layouts.
 # Existing demo-tree leaves remain navigable. No live inventory or progress is fabricated.
 
-# section choose-editorial
+# section choose-layout
 open "muqun:///settings-home-layout"
 wait stable 400 5000
 
 # section picker-ready
 is visible "${TARGET}"
 
-# section select-editorial
+# section select-layout
 press "${TARGET}"
 
 # section picker-closed
@@ -24,6 +24,10 @@ is visible "${TARGET}"
 # section assert-hidden
 is hidden "${TARGET}"
 
+# section press
+press "${TARGET}"
+wait stable 300 5000
+
 # section sixteen
 open "muqun:///?homeContinueFixture=16"
 wait stable 400 5000
@@ -34,10 +38,12 @@ wait stable 300 5000
 
 # section hidden-match
 fill id="home-continue-search" "  HIDDEN   LEAF  "
+keyboard dismiss
 wait stable 300 5000
 
 # section no-match
 fill id="home-continue-search" "no-such-demo-session"
+keyboard dismiss
 wait stable 300 5000
 
 # section session-menu
@@ -52,19 +58,23 @@ wait stable 300 5000
 
 # section clear
 press id="home-continue-search-clear"
+keyboard dismiss
 wait stable 300 5000
 
 # section whitespace
 # The native CLI rejects whitespace-only fill; hidden-match covers trimmed spaces.
 fill id="home-continue-search" ""
+keyboard dismiss
 wait stable 300 5000
 
 # section provider
 fill id="home-continue-search" "OPENCODE"
+keyboard dismiss
 wait stable 300 5000
 
 # section directory
 fill id="home-continue-search" "/DEMO/MUQUN"
+keyboard dismiss
 wait stable 300 5000
 
 # section open-hidden-match
@@ -73,10 +83,3 @@ press "${TARGET}"
 # section cleanup
 open "muqun:///"
 wait stable 400 5000
-
-# section restore-layout
-open "muqun:///settings-home-layout"
-wait stable 400 5000
-
-# section select-classic
-press "${TARGET}"

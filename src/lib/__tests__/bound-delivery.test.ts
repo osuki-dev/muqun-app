@@ -377,6 +377,9 @@ function uploads() {
       },
     },
     useVoiceInput: { getState: () => ({ request: voiceRequest }) },
+    // No discovery in the fixture: every file is held to the app's own cap.
+    useAgents: (select: (state: { index: { servers: Record<string, never> } }) => unknown) =>
+      select({ index: { servers: {} } }),
     compressPickedImage: () => compression.promise,
     uploadAttachment: (destination: GatewayRecord) => {
       calls.push(destination);

@@ -6,6 +6,9 @@ import {
   dismissSessionNotices,
   dismissSessionQuestions,
   enqueueNotice,
+  resolveQuestionNotice,
+  reopenQuestionNotice,
+  type QuestionNoticeIdentity,
   type InAppNotice,
   type NoticeKind,
   type NoticeQueue,
@@ -16,7 +19,9 @@ interface NoticeState extends NoticeQueue {
   enqueue: (notice: InAppNotice) => void;
   dismiss: (id: string) => void;
   dismissKind: (kind: NoticeKind) => void;
-  dismissQuestions: (asid: string) => void;
+  dismissQuestions: (asid: string, serverId: string) => void;
+  resolveQuestion: (question: QuestionNoticeIdentity) => void;
+  reopenQuestion: (question: QuestionNoticeIdentity) => void;
   dismissSession: (asid: string) => void;
   clear: () => void;
 }
@@ -37,7 +42,10 @@ export const useInAppNotifications = create<NoticeState>((set) => ({
   enqueue: (notice) => set((state) => enqueueNotice(state, notice)),
   dismiss: (id) => set((state) => dismissNotice(state, id)),
   dismissKind: (kind) => set((state) => dismissNoticeKind(state, kind)),
-  dismissQuestions: (asid) => set((state) => dismissSessionQuestions(state, asid)),
+  dismissQuestions: (asid, serverId) =>
+    set((state) => dismissSessionQuestions(state, asid, serverId)),
+  resolveQuestion: (question) => set((state) => resolveQuestionNotice(state, question)),
+  reopenQuestion: (question) => set((state) => reopenQuestionNotice(state, question)),
   dismissSession: (asid) => set((state) => dismissSessionNotices(state, asid)),
   // Retain bounded receipt IDs so late duplicate callbacks stay dismissed.
   clear: () => set({ items: [] }),

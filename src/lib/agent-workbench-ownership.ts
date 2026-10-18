@@ -74,3 +74,29 @@ export function advanceAgentWorkbenchOwnerAfterCreate(
   if (!agentWorkbenchOwnerMatches(captured, current)) return null;
   return { ...captured, asid: createdAsid };
 }
+
+/** One attachment submission, captured before uploads; observed source loss cannot revive it. */
+export function captureAgentPromptOwnership(
+  captured: AgentWorkbenchOwner,
+  readCurrent: () => AgentWorkbenchOwner,
+  isAvailable: () => boolean
+) {
+  let owner = captured;
+  let current = true;
+  const isCurrent = () => {
+    current &&= isAvailable() && agentWorkbenchOwnerMatches(owner, readCurrent());
+    return current;
+  };
+  return {
+    isCurrent,
+    advanceAfterCreate(asid: string, directory: string | undefined): boolean {
+      if (!isCurrent() || owner.asid !== undefined) return false;
+      const advanced = advanceAgentWorkbenchOwnerAfterCreate(owner, readCurrent(), asid);
+      if (!advanced) return false;
+      owner = { ...advanced, directory };
+      return true;
+    },
+  };
+}
+
+export type AgentPromptOwnership = ReturnType<typeof captureAgentPromptOwnership>;

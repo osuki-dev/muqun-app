@@ -1,0 +1,21 @@
+# The production frozen-history sheet, backed by bounded offline Gateway pages.
+
+# section open
+open "muqun://pane-history?serverId=muqun-demo&sessionId=demo-captured-history&paneId=demo-history-pane"
+wait stable 400 5000
+
+# section visible
+is visible "${TARGET}"
+
+# section press
+press "${TARGET}"
+wait stable 400 5000
+
+# section scroll
+scroll down --pixels 300
+
+# section close
+back --system
+
+# section closed
+is hidden "${TARGET}"

@@ -41,6 +41,9 @@
 //
 //     A stored time in the future -- a clock moved back, a restored backup --
 //     counts as overdue rather than as six days of credit.
+//  5. **The Gateway advertises device-owned tokens, without a matching receipt.**
+//     A legacy token needs one authenticated registration for this pairing;
+//     only a successful reply writes that receipt. The weekly repair still applies.
 //
 // Everything else is silence. A re-render, a rename, a reselect, a return to
 // the foreground: the token and the server are the same, the gateway already
@@ -48,6 +51,15 @@
 
 /** How long a confirmed registration speaks for the present -- see rule 4. */
 export const PUSH_TOKEN_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+export const PUSH_TOKEN_OWNER_BINDING_CAPABILITY = 'push_token_owner_binding_v1';
+
+/** Confirmed under this capability and this pairing; never inferred from Gateway versions. */
+export interface PushTokenOwnerBinding {
+  revision: 1;
+  deviceId?: string;
+  /** SHA-256 pairing identity, including legacy records that have no device ID. No credential bytes. */
+  identity: string;
+}
 
 /** What was last successfully posted, for one server. */
 export interface RegisteredPushToken {
@@ -67,6 +79,7 @@ export interface RegisteredPushToken {
    * existed, which reads as "unknown" and is sent again once.
    */
   locale?: string;
+  ownerBinding?: PushTokenOwnerBinding;
 }
 
 /**
@@ -81,7 +94,8 @@ export function pushTokenNeedsSending(
   token: string,
   build: string,
   nowMs: number = Date.now(),
-  locale?: string
+  locale?: string,
+  ownerBinding?: PushTokenOwnerBinding
 ): boolean {
   if (!token) return false;
   if (!stored) return true;
@@ -89,6 +103,13 @@ export function pushTokenNeedsSending(
   // Only compared when the caller names one, so an older caller keeps the
   // behaviour it was written against.
   if (locale !== undefined && stored.locale !== locale) return true;
+  if (
+    ownerBinding &&
+    (stored.ownerBinding?.revision !== ownerBinding.revision ||
+      stored.ownerBinding.identity !== ownerBinding.identity ||
+      stored.ownerBinding.deviceId !== ownerBinding.deviceId)
+  )
+    return true;
   // Rule 4. Written as "is this age inside the window" rather than "is it past
   // it" so that a negative age -- a clock moved back, a restored backup -- is
   // overdue rather than a week of credit.

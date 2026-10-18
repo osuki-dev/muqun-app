@@ -15,6 +15,10 @@ import { diffRowsFromPatches } from '@/lib/agent-diff-rows';
 import { diffFilesFromMetadata } from '@/lib/agent-tool-output';
 import { permissionActionPhrase, permissionDecisionLabel } from '@/i18n/labels';
 import { permissionSubject } from '@/lib/agent-engine-text';
+import {
+  permissionOptionLabel,
+  requestedPermissionsText,
+} from '@/lib/agent-permission-presentation';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useCompactMarkdownStyle } from '@/hooks/use-markdown-style';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
@@ -56,10 +60,9 @@ function spellOutAction(action: string): string {
  * What the agent is asking to do, and the answers it offered.
  *
  * OpenCode sends `options[]` -- an index, a label and a decision each -- so a
- * permission with a menu of its own keeps its order here. The *wording* is not
- * taken from the wire: a label the gateway sent in English would be English in
- * all twelve languages, and the three answers are one vocabulary across this
- * card, the push notification and the tray. An empty `options[]` is not a
+ * permission with a menu of its own keeps its order and authorization scope.
+ * Known labels are localized; unfamiliar scopes retain the provider's words.
+ * An empty `options[]` is not a
  * request with no answers; it is a payload that did not list the three every
  * permission has, which come from `DEFAULT_PERMISSION_DECISIONS`.
  *
@@ -106,7 +109,17 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
 
   const options: readonly PermissionOption[] = (
     request.options.length > 0 ? request.options : DEFAULT_PERMISSION_DECISIONS.map(asOption)
-  ).map((option) => ({ ...option, label: _(permissionDecisionLabel[option.decision]) }));
+  ).map((option) => ({
+    ...option,
+    label: permissionOptionLabel(option, {
+      allow: _(permissionDecisionLabel.allow),
+      allow_always: _(permissionDecisionLabel.allow_always),
+      deny: _(permissionDecisionLabel.deny),
+      once: t`Allow once`,
+      turn: t`Allow for this turn`,
+    }),
+  }));
+  const permissions = requestedPermissionsText(request);
 
   /** The rule the engine tripped, as a phrase; the key spelled out when it has none. */
   const phrase = request.action ? permissionActionPhrase[request.action] : undefined;
@@ -183,6 +196,17 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
           </Text>
         </View>
       </View>
+
+      {permissions ? (
+        <View style={styles.diff}>
+          <Text variant="caption" color={theme.colors.textMuted}>
+            {t`Requested permissions`}
+          </Text>
+          <Text selectable style={[styles.subject, { color: theme.colors.text, fontFamily: mono }]}>
+            {permissions}
+          </Text>
+        </View>
+      ) : null}
 
       <View
         style={[
@@ -266,7 +290,6 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
                     <Icon size={14} color={primary ? theme.colors.onPrimary : color} />
                     <Text
                       variant="caption"
-                      numberOfLines={1}
                       color={primary ? theme.colors.onPrimary : color}
                       style={styles.btnText}>
                       {option.label}
@@ -389,6 +412,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: AGENT_TYPE.meta.size,
     flexShrink: 1,
+    textAlign: 'center',
   },
   saveText: {
     fontSize: AGENT_TYPE.micro.size,

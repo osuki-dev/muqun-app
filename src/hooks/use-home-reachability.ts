@@ -9,6 +9,7 @@ import {
   type ServerChannels,
   type ServerReachability,
 } from '@/lib/server-reachability';
+import { pairingFaultOf, usePairingFaults } from '@/stores/pairing-faults';
 import { useServerChannels } from '@/stores/server-channels';
 import { useServerReachability } from '@/stores/server-reachability';
 
@@ -59,6 +60,10 @@ function useFoldedStatuses<T>(
       )
     )
   );
+  // What is held against each pairing; a refusal remembered across launches.
+  const faults = usePairingFaults(
+    useShallow((state) => serverIds.map((serverId) => pairingFaultOf(state, serverId)))
+  );
   return useServerReachability(
     useShallow((state) =>
       serverIds.map((serverId, index) =>
@@ -68,6 +73,7 @@ function useFoldedStatuses<T>(
             probe: state.probes[serverId],
             activeConnection,
             channels: channelsOf(channels[index]),
+            fault: faults[index],
             selected: serverId === selectedId,
             nowMs: state.freshnessNowMs,
           })

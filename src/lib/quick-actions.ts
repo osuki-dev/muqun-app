@@ -24,6 +24,8 @@ export interface QuickActionParams {
   spawnSupported: boolean;
   /** Whether opening a plain URL on the machine behind the pane is honest. */
   webServiceSupported: boolean;
+  /** Gateway offers a separate, frozen reader of captured terminal segments. */
+  savedHistorySupported?: boolean;
   /**
    * Whether the only thing standing in the way is that this gateway is reached
    * through an SSH tunnel.
@@ -49,6 +51,7 @@ export interface QuickActionAvailability {
   canStartTask: boolean;
   canStopAgent: boolean;
   canOpenWebService: boolean;
+  canOpenSavedHistory: boolean;
   /** Show the two rows, greyed out, with the tunnel as the stated reason. */
   webServiceBlockedByTunnel: boolean;
   /**
@@ -123,6 +126,7 @@ export function quickActionAvailability(params: QuickActionParams): QuickActionA
     canStartTask,
     canStopAgent,
     canOpenWebService,
+    canOpenSavedHistory: canCreate && params.savedHistorySupported === true,
     canPreviewSimulator,
     // Both machine-scoped tiles are counted even though they currently answer
     // together. This decides whether the shortcut list is pushed down by a gap,

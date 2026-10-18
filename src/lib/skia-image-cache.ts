@@ -1,4 +1,4 @@
-import { AlphaType, ColorType, Skia, type SkImage } from 'react-native-skia';
+import { Skia, type SkImage } from 'react-native-skia';
 import { useEffect, useEffectEvent, useState } from 'react';
 
 import { createRefCountedCache } from '@/lib/ref-counted-cache';
@@ -14,12 +14,10 @@ import { createRefCountedCache } from '@/lib/ref-counted-cache';
  * and decoded once, into a raster image, and that one instance is what every
  * caller gets: the tiles and the page under them are the same pixels.
  *
- * What is not shared is the GPU copy. Under Graphite each canvas has its own
- * recorder, and each recorder uploads a raster image into its own texture
- * cache; Skia's public API has no texture-backed image a second canvas can
- * draw without that upload (the WebGPU texture interop transfers ownership to
- * `react-native-webgpu` and would leak here). So: one file read, one decode,
- * one upload per canvas.
+ * Keep the shared copy on the CPU: Home also samples its alpha to choose the
+ * layout and mask. Each Graphite canvas uploads it for drawing. A renderer
+ * needing a shared GPU upload can explicitly use makeTextureImage, as the
+ * transition cover does, without turning Home's alpha probes into readbacks.
  *
  * Lifetime is `ref-counted-cache.ts`: an image is never disposed while a
  * component that uses it is mounted, and one nobody uses is disposed a second
@@ -36,23 +34,15 @@ async function decodeOnce(uri: string): Promise<SkImage | null> {
   const data = await Skia.Data.fromURI(uri);
   const lazy = Skia.Image.MakeImageFromEncoded(data);
   if (!lazy) return null;
-  const width = lazy.width();
-  const height = lazy.height();
-  const info = {
-    width,
-    height,
-    colorType: ColorType.RGBA_8888,
-    alphaType: AlphaType.Premul,
-  };
-  // The one decode: into memory now, rather than into every canvas that
-  // draws it later. A picture that will not read back stays lazy, which is
-  // what every caller had before.
-  const pixels = lazy.readPixels(0, 0, info);
-  if (!(pixels instanceof Uint8Array)) return lazy;
-  const raster = Skia.Image.MakeImage(info, Skia.Data.fromBytes(pixels), width * 4);
-  if (!raster) return lazy;
-  lazy.dispose();
-  return raster;
+  let raster: SkImage | undefined;
+  try {
+    // Skia 3 decodes on its worker. readPixels decoded the full hero on JS,
+    // preventing navigation and the already-started ripple from committing.
+    raster = await lazy.makeRasterImage();
+    return raster;
+  } finally {
+    if (raster !== lazy) lazy.dispose();
+  }
 }
 
 /**
@@ -84,4 +74,11 @@ export function useSharedSkiaImage(
   if (loaded?.uri === uri) return loaded.image;
   // Already decoded for somebody else: draw it on the first frame.
   return cache.peek(uri);
+}
+
+/** Hold decoded images until the newly mounted artwork has acquired its own lease. */
+export async function prepareSharedSkiaImages(uris: readonly string[]): Promise<() => void> {
+  const handles = [...new Set(uris)].map((uri) => cache.acquire(uri));
+  await Promise.all(handles.map((handle) => handle.promise));
+  return () => handles.forEach((handle) => handle.release());
 }

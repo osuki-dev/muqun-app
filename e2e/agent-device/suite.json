@@ -2,6 +2,44 @@
   "version": 1,
   "flows": [
     {
+      "name": "compaction-protocol-logs",
+      "program": "flows/compaction-protocol-logs",
+      "cleanup": "subflows/compaction-log-cleanup",
+      "tags": ["full", "agents", "composer"],
+      "platforms": ["android"]
+    },
+    {
+      "name": "notifications-compact-lifecycle",
+      "program": "flows/notifications-compact-lifecycle",
+      "cleanup": "subflows/notifications-compact-cleanup",
+      "tags": ["full", "settings", "notifications"],
+      "platforms": ["android"]
+    },
+    {
+      "name": "read-files-preview",
+      "program": "flows/read-files-preview",
+      "tags": ["full", "agents", "files"],
+      "platforms": ["android"]
+    },
+    {
+      "name": "agent-transcript-streaming",
+      "program": "flows/agent-transcript-streaming",
+      "tags": ["full", "agents"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "pdf-preview",
+      "program": "flows/pdf-preview",
+      "tags": ["full", "files"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "release-intro",
+      "program": "flows/release-intro",
+      "tags": ["full", "settings"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "inline-video",
       "program": "flows/inline-video",
       "tags": ["full", "agents", "files"],
@@ -85,6 +123,12 @@
       "name": "agent-collaboration",
       "program": "flows/agent-collaboration",
       "tags": ["full", "agents"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "pane-history",
+      "program": "flows/pane-history",
+      "tags": ["full", "terminal", "workspace"],
       "platforms": ["ios", "android"]
     },
     {
@@ -287,6 +331,296 @@
     }
   ],
   "programs": {
+    "flows/compaction-protocol-logs": [
+      { "include": "subflows/open-demo" },
+      {
+        "include": "subflows/compaction-log-complete",
+        "env": { "ASID": "demo-compaction-log-complete", "CASE": "complete" }
+      },
+      {
+        "include": "subflows/compaction-log-failed",
+        "env": { "ASID": "demo-compaction-log-failed", "CASE": "failed" }
+      },
+      {
+        "include": "subflows/compaction-log-empty",
+        "env": { "ASID": "demo-compaction-log-empty-failed", "CASE": "empty-failed" }
+      }
+    ],
+    "subflows/compaction-log-begin": [
+      { "run": "flows/compaction-protocol-logs.ad#open" },
+      { "run": "flows/composer-wrap.ad#compaction-advance" }
+    ],
+    "subflows/compaction-log-complete": [
+      { "include": "subflows/compaction-log-begin" },
+      { "run": "flows/compaction-protocol-logs.ad#blank" },
+      { "run": "flows/compaction-protocol-logs.ad#expanded" },
+      { "run": "flows/compaction-protocol-logs.ad#keyboard" },
+      { "run": "flows/compaction-protocol-logs.ad#appended" },
+      { "run": "flows/compaction-protocol-logs.ad#complete" },
+      { "run": "flows/composer-wrap.ad#compaction-clear" }
+    ],
+    "subflows/compaction-log-failed": [
+      { "include": "subflows/compaction-log-begin" },
+      { "run": "flows/compaction-protocol-logs.ad#failed-log" },
+      { "run": "flows/composer-wrap.ad#compaction-clear" }
+    ],
+    "subflows/compaction-log-empty": [
+      { "include": "subflows/compaction-log-begin" },
+      { "run": "flows/compaction-protocol-logs.ad#failed-empty" },
+      { "run": "flows/composer-wrap.ad#compaction-clear" }
+    ],
+    "subflows/compaction-log-cleanup": [
+      {
+        "when": { "target": { "id": "agent-composer-input" } },
+        "steps": [{ "run": "flows/composer-wrap.ad#compaction-clear" }]
+      },
+      { "run": "flows/compaction-protocol-logs.ad#home" }
+    ],
+    "flows/notifications-compact-lifecycle": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/notifications-compact-lifecycle.ad#begin" },
+      {
+        "include": "subflows/notice-native-case",
+        "env": { "CASE": "one", "COUNT": "1", "SHOT": "one" }
+      },
+      { "run": "flows/notifications-compact-lifecycle.ad#single" },
+      { "include": "subflows/notice-native-clear", "env": { "SHOT": "one" } },
+      { "include": "subflows/notice-native-canonical", "env": { "SHOT": "one" } },
+      {
+        "include": "subflows/notice-native-case",
+        "env": { "CASE": "duplicate", "COUNT": "0", "SHOT": "duplicate-one" }
+      },
+      { "include": "subflows/notice-native-duplicate", "env": { "SHOT": "one" } },
+      {
+        "include": "subflows/notice-native-case",
+        "env": { "CASE": "five", "COUNT": "5", "SHOT": "five" }
+      },
+      { "run": "flows/notifications-compact-lifecycle.ad#cycle-open" },
+      {
+        "target": {
+          "text": "\\{\"at\":[0-9]+,\"source\":\"notice-store\",\"ids\":\\[\"(notice-[a-z0-9]+-[0-9]+)-five-0\",\"\\1-five-2\",\"\\1-five-3\",\"\\1-five-4\"\\],\"seen\":\\[(?:\"\\1-one-0\",)?\"\\1-five-0\",\"\\1-five-1\",\"\\1-five-2\",\"\\1-five-3\",\"\\1-five-4\"\\],\"resolved\":\\[\\],\"task\":\"waiting\",\"permissionIds\":\\[[^\\]]*\\]\\},?"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 30000,
+        "run": "flows/notifications-compact-lifecycle.ad#seek-open-receipt"
+      },
+      { "run": "flows/notifications-compact-lifecycle.ad#exact-open-receipt" },
+      { "include": "subflows/notice-native-clear", "env": { "SHOT": "five" } },
+      {
+        "include": "subflows/notice-native-case",
+        "env": { "CASE": "duplicate", "COUNT": "0", "SHOT": "duplicate-five" }
+      },
+      { "include": "subflows/notice-native-duplicate", "env": { "SHOT": "five" } },
+      {
+        "include": "subflows/notice-native-case",
+        "env": { "CASE": "short", "COUNT": "1", "SHOT": "short" }
+      },
+      { "run": "flows/notifications-compact-lifecycle.ad#no-route" },
+      { "include": "subflows/notice-native-clear", "env": { "SHOT": "short" } },
+      {
+        "include": "subflows/notice-native-case",
+        "env": { "CASE": "known", "COUNT": "1", "SHOT": "known" }
+      },
+      { "run": "flows/notifications-compact-lifecycle.ad#known" },
+      { "include": "subflows/notice-native-clear", "env": { "SHOT": "known" } },
+      {
+        "include": "subflows/notice-native-case",
+        "env": { "CASE": "unknown", "COUNT": "1", "SHOT": "unknown" }
+      },
+      { "run": "flows/notifications-compact-lifecycle.ad#unknown" },
+      { "include": "subflows/notice-native-clear", "env": { "SHOT": "unknown" } },
+      { "run": "flows/notifications-compact-lifecycle.ad#expire" },
+      { "run": "flows/notifications-compact-lifecycle.ad#info-clear-open" },
+      { "include": "subflows/notice-native-clear", "env": { "SHOT": "info-clear" } },
+      {
+        "include": "subflows/notice-native-case",
+        "env": { "CASE": "fresh", "COUNT": "1", "SHOT": "fresh" }
+      },
+      { "run": "flows/notifications-compact-lifecycle.ad#fresh-survives" },
+      { "include": "subflows/notice-native-clear", "env": { "SHOT": "fresh" } },
+      {
+        "include": "subflows/notice-native-case",
+        "env": { "CASE": "reopen", "COUNT": "1", "SHOT": "reopen" }
+      },
+      { "run": "flows/notifications-compact-lifecycle.ad#reopened" },
+      { "include": "subflows/notice-native-clear", "env": { "SHOT": "reopen" } },
+      { "include": "subflows/notice-native-canonical", "env": { "SHOT": "reopen" } }
+    ],
+    "subflows/notice-native-case": [{ "run": "flows/notifications-compact-lifecycle.ad#case" }],
+    "subflows/notice-native-clear": [{ "run": "flows/notifications-compact-lifecycle.ad#clear" }],
+    "subflows/notice-native-canonical": [
+      { "run": "flows/notifications-compact-lifecycle.ad#canonical-in-place" }
+    ],
+    "subflows/notice-native-duplicate": [
+      { "run": "flows/notifications-compact-lifecycle.ad#duplicate" }
+    ],
+    "subflows/notifications-compact-cleanup": [
+      { "run": "flows/notifications-compact-lifecycle.ad#cleanup-receipts" },
+      {
+        "when": { "target": { "text": "QA_NOTICE_FOREIGN 0" } },
+        "steps": [
+          {
+            "when": { "target": { "id": "in-app-notification" } },
+            "steps": [{ "include": "subflows/notice-native-clear", "env": { "SHOT": "cleanup" } }]
+          }
+        ]
+      },
+      { "run": "flows/notifications-compact-lifecycle.ad#finish" }
+    ],
+    "flows/read-files-preview": [
+      { "include": "subflows/open-demo" },
+      {
+        "include": "subflows/read-files-preview-open-host",
+        "env": { "URL": "muqun://agent?asid=demo-native-preview&agentId=opencode" }
+      },
+      { "run": "flows/read-files-preview.ad#question-and-task" },
+      {
+        "include": "subflows/read-files-preview-host",
+        "env": { "URL": "muqun://agent?asid=demo-native-preview&agentId=opencode", "HOST": "main" }
+      },
+      {
+        "include": "subflows/read-files-preview-host",
+        "env": {
+          "URL": "muqun://agent-subagent-detail?asid=demo-native-preview-child",
+          "HOST": "child"
+        }
+      },
+      { "run": "flows/read-files-preview.ad#close" }
+    ],
+    "subflows/read-files-preview-open-host": [{ "run": "flows/read-files-preview.ad#host" }],
+    "subflows/read-files-preview-host": [
+      { "run": "flows/read-files-preview.ad#host" },
+      { "run": "flows/read-files-preview.ad#document" },
+      {
+        "when": { "env": "HOST", "equals": "main" },
+        "steps": [{ "run": "flows/read-files-preview.ad#reposition" }]
+      },
+      { "run": "flows/read-files-preview.ad#document-collapse" },
+      { "run": "flows/read-files-preview.ad#code" },
+      {
+        "when": { "env": "HOST", "equals": "main" },
+        "steps": [{ "run": "flows/read-files-preview.ad#reposition" }]
+      },
+      { "run": "flows/read-files-preview.ad#code-collapse" },
+      { "run": "flows/read-files-preview.ad#large" },
+      {
+        "when": { "env": "HOST", "equals": "main" },
+        "steps": [{ "run": "flows/read-files-preview.ad#reposition" }]
+      },
+      { "run": "flows/read-files-preview.ad#large-collapse" },
+      { "run": "flows/read-files-preview.ad#small" },
+      { "run": "flows/read-files-preview.ad#small-document" }
+    ],
+    "flows/agent-transcript-streaming": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/agent-transcript-streaming.ad" }
+    ],
+    "flows/pdf-preview": [{ "include": "subflows/open-demo" }, { "run": "flows/pdf-preview.ad" }],
+    "flows/release-intro": [
+      {
+        "run": "subflows/launch-home.ad#s1"
+      },
+      {
+        "run": "subflows/launch-home.ad#s8"
+      },
+      { "include": "subflows/dismiss-immersive" },
+      {
+        "target": {
+          "text": "(?i)(Skip intro|Try the demo)"
+        },
+        "mode": "visible",
+        "timeout": 20000,
+        "run": "subflows/launch-home.ad#startup-ready"
+      },
+      {
+        "when": {
+          "target": {
+            "id": "launch-intro-skip"
+          },
+          "absent": false
+        },
+        "steps": [
+          {
+            "target": {
+              "id": "launch-intro-feature-home"
+            },
+            "mode": "visible",
+            "run": "flows/release-intro.ad#visible"
+          },
+          {
+            "target": {
+              "id": "launch-intro-next"
+            },
+            "mode": "press",
+            "run": "flows/release-intro.ad#press"
+          },
+          {
+            "target": {
+              "id": "launch-intro-feature-git"
+            },
+            "mode": "visible",
+            "run": "flows/release-intro.ad#visible"
+          },
+          {
+            "target": {
+              "id": "launch-intro-back"
+            },
+            "mode": "press",
+            "run": "flows/release-intro.ad#press"
+          },
+          {
+            "target": {
+              "id": "launch-intro-feature-home"
+            },
+            "mode": "visible",
+            "run": "flows/release-intro.ad#visible"
+          },
+          {
+            "target": {
+              "id": "launch-intro-next"
+            },
+            "mode": "press",
+            "run": "flows/release-intro.ad#press"
+          },
+          {
+            "target": {
+              "id": "launch-intro-next"
+            },
+            "mode": "press",
+            "run": "flows/release-intro.ad#press"
+          },
+          {
+            "target": {
+              "id": "launch-intro-feature-updates"
+            },
+            "mode": "visible",
+            "run": "flows/release-intro.ad#visible"
+          },
+          {
+            "target": {
+              "id": "launch-intro-skip"
+            },
+            "mode": "visible",
+            "run": "flows/release-intro.ad#visible"
+          },
+          {
+            "target": {
+              "id": "launch-intro-start"
+            },
+            "mode": "press",
+            "run": "flows/release-intro.ad#press"
+          },
+          {
+            "target": {
+              "id": "launch-intro-skip"
+            },
+            "mode": "hidden",
+            "run": "flows/release-intro.ad#dismissed"
+          }
+        ]
+      }
+    ],
     "flows/git-worktrees": [
       { "include": "subflows/open-demo" },
       { "run": "flows/git-worktrees.ad#open" },
@@ -460,7 +794,12 @@
     ],
     "flows/home-continue-search": [
       { "include": "subflows/open-demo" },
-      { "run": "flows/home-continue-search.ad#choose-editorial" },
+      { "include": "subflows/home-continue-search", "env": { "HOME_LAYOUT": "editorial" } },
+      { "include": "subflows/home-continue-search", "env": { "HOME_LAYOUT": "classic" } },
+      { "run": "flows/home-continue-search.ad#cleanup" }
+    ],
+    "subflows/home-continue-search": [
+      { "run": "flows/home-continue-search.ad#choose-layout" },
       {
         "target": { "id": "settings-home-layout-sheet" },
         "mode": "visible",
@@ -468,10 +807,10 @@
         "run": "flows/home-continue-search.ad#picker-ready"
       },
       {
-        "target": { "id": "settings-selection:(on|off):home-layout-editorial" },
+        "target": { "id": "settings-selection:(on|off):home-layout-${HOME_LAYOUT}" },
         "mode": "press",
         "timeout": 15000,
-        "run": "flows/home-continue-search.ad#select-editorial"
+        "run": "flows/home-continue-search.ad#select-layout"
       },
       {
         "target": { "id": "settings-home-layout-sheet" },
@@ -481,19 +820,13 @@
       },
       { "run": "flows/home-continue-search.ad#fifteen" },
       {
-        "target": { "id": "home-editorial" },
-        "mode": "visible",
-        "timeout": 15000,
-        "run": "flows/home-continue-search.ad#assert-visible"
-      },
-      {
-        "target": { "text": "Recent" },
+        "target": { "text": "^(?:Recent|RECENT)$" },
         "mode": "scroll",
         "direction": "down",
         "run": "flows/settings-home-layout.ad#seek-down"
       },
       {
-        "target": { "text": "Recent" },
+        "target": { "text": "^(?:Recent|RECENT)$" },
         "mode": "visible",
         "run": "flows/home-continue-search.ad#assert-visible"
       },
@@ -503,25 +836,68 @@
         "run": "flows/home-continue-search.ad#assert-hidden"
       },
       {
-        "target": { "text": "Show all" },
+        "target": { "id": "home-recent-sessions-more" },
         "mode": "scroll",
         "direction": "down",
         "run": "flows/settings-home-layout.ad#seek-down"
       },
       {
-        "target": { "text": "Show all" },
+        "target": { "id": "home-recent-sessions-more" },
         "mode": "visible",
         "run": "flows/home-continue-search.ad#assert-visible"
+      },
+      {
+        "target": { "text": "Demo search leaf 6" },
+        "mode": "hidden",
+        "run": "flows/home-continue-search.ad#assert-hidden"
+      },
+      {
+        "target": { "id": "home-recent-sessions-more" },
+        "mode": "press",
+        "run": "flows/home-continue-search.ad#press"
+      },
+      {
+        "target": { "text": "Demo search leaf 15" },
+        "mode": "scroll",
+        "direction": "down",
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": { "text": "Demo search leaf 15" },
+        "mode": "visible",
+        "run": "flows/home-continue-search.ad#assert-visible"
+      },
+      {
+        "target": { "text": "Show less" },
+        "mode": "scroll",
+        "direction": "down",
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": { "text": "Show less" },
+        "mode": "press",
+        "run": "flows/home-continue-search.ad#press"
+      },
+      { "run": "flows/home-continue-search.ad#scroll-top" },
+      {
+        "target": { "text": "^(?:Recent|RECENT)$" },
+        "mode": "scroll",
+        "direction": "down",
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": { "text": "^(?:Recent|RECENT)$" },
+        "mode": "visible",
+        "run": "flows/home-continue-search.ad#assert-visible"
+      },
+      {
+        "target": { "text": "Demo search leaf 6" },
+        "mode": "hidden",
+        "run": "flows/home-continue-search.ad#assert-hidden"
       },
       { "run": "flows/home-continue-search.ad#scroll-top" },
       { "run": "flows/home-continue-search.ad#sixteen" },
       {
-        "target": { "id": "home-editorial" },
-        "mode": "visible",
-        "timeout": 15000,
-        "run": "flows/home-continue-search.ad#assert-visible"
-      },
-      {
         "target": { "id": "home-continue-search" },
         "mode": "scroll",
         "direction": "down",
@@ -532,8 +908,9 @@
         "mode": "visible",
         "run": "flows/home-continue-search.ad#assert-visible"
       },
+      { "run": "flows/home-continue-search.ad#whitespace" },
       {
-        "target": { "text": "Recent" },
+        "target": { "text": "^(?:Recent|RECENT)$" },
         "mode": "hidden",
         "run": "flows/home-continue-search.ad#assert-hidden"
       },
@@ -543,6 +920,13 @@
         "run": "flows/home-continue-search.ad#assert-hidden"
       },
       { "run": "flows/home-continue-search.ad#hidden-match" },
+      {
+        "target": { "text": "Demo search hidden leaf" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 15000,
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
       {
         "target": { "text": "Demo search hidden leaf" },
         "mode": "visible",
@@ -591,10 +975,24 @@
       },
       {
         "target": { "text": "Demo search hidden leaf" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 15000,
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": { "text": "Demo search hidden leaf" },
         "mode": "visible",
         "run": "flows/home-continue-search.ad#assert-visible"
       },
       { "run": "flows/home-continue-search.ad#no-match" },
+      {
+        "target": { "id": "home-continue-no-matches" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 15000,
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
       {
         "target": { "id": "home-continue-no-matches" },
         "mode": "visible",
@@ -605,6 +1003,13 @@
         "target": { "id": "home-continue-no-matches" },
         "mode": "hidden",
         "run": "flows/home-continue-search.ad#assert-hidden"
+      },
+      {
+        "target": { "text": "Demo search leaf 1" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 15000,
+        "run": "flows/settings-home-layout.ad#seek-down"
       },
       {
         "target": { "text": "Demo search leaf 1" },
@@ -619,6 +1024,13 @@
       { "run": "flows/home-continue-search.ad#whitespace" },
       {
         "target": { "text": "Demo search leaf 1" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 15000,
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": { "text": "Demo search leaf 1" },
         "mode": "visible",
         "run": "flows/home-continue-search.ad#assert-visible"
       },
@@ -630,16 +1042,37 @@
       { "run": "flows/home-continue-search.ad#provider" },
       {
         "target": { "text": "Demo search leaf 1" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 15000,
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": { "text": "Demo search leaf 1" },
         "mode": "visible",
         "run": "flows/home-continue-search.ad#assert-visible"
       },
       { "run": "flows/home-continue-search.ad#directory" },
       {
         "target": { "text": "Demo search leaf 1" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 15000,
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": { "text": "Demo search leaf 1" },
         "mode": "visible",
         "run": "flows/home-continue-search.ad#assert-visible"
       },
       { "run": "flows/home-continue-search.ad#hidden-match" },
+      {
+        "target": { "text": "Demo search hidden leaf.*" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 15000,
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
       {
         "target": { "text": "Demo search hidden leaf.*" },
         "mode": "press",
@@ -650,27 +1083,7 @@
         "mode": "visible",
         "timeout": 10000,
         "run": "flows/home-continue-search.ad#assert-visible"
-      },
-      { "run": "flows/home-continue-search.ad#restore-layout" },
-      {
-        "target": { "id": "settings-home-layout-sheet" },
-        "mode": "visible",
-        "timeout": 15000,
-        "run": "flows/home-continue-search.ad#picker-ready"
-      },
-      {
-        "target": { "id": "settings-selection:(on|off):home-layout-classic" },
-        "mode": "press",
-        "timeout": 15000,
-        "run": "flows/home-continue-search.ad#select-classic"
-      },
-      {
-        "target": { "id": "settings-home-layout-sheet" },
-        "mode": "hidden",
-        "timeout": 15000,
-        "run": "flows/home-continue-search.ad#picker-closed"
-      },
-      { "run": "flows/home-continue-search.ad#cleanup" }
+      }
     ],
     "flows/agent-changes-worktree": [
       { "include": "subflows/open-demo" },
@@ -753,6 +1166,7 @@
         "timeout": 15000,
         "run": "flows/mermaid-output.ad#visible"
       },
+      { "run": "flows/mermaid-output.ad#fullscreen-evidence" },
       {
         "target": {
           "id": "diagram-actual-size"
@@ -793,6 +1207,7 @@
         "timeout": 15000,
         "run": "flows/mermaid-output.ad#visible"
       },
+      { "run": "flows/mermaid-output.ad#viewer-closed" },
       {
         "run": "flows/mermaid-output.ad#close"
       }
@@ -1267,6 +1682,7 @@
         "timeout": 8000,
         "run": "flows/custom-themes.ad#visible"
       },
+      { "run": "flows/custom-themes.ad#selected-builtin" },
       {
         "include": "subflows/close-settings-sheet",
         "env": {
@@ -1843,6 +2259,7 @@
         "mode": "visible",
         "run": "flows/artifacts.ad#s22"
       },
+      { "run": "flows/attachments-ui.ad#artifact-image-preview" },
       {
         "target": {
           "text": "Open dark-mode.md"
@@ -2064,45 +2481,11 @@
       },
       {
         "target": {
-          "text": "No preview for this kind of file. It stays on the computer"
+          "text": "Page 1 of 3"
         },
         "mode": "visible",
+        "timeout": 15000,
         "run": "flows/artifacts.ad#s57"
-      },
-      {
-        "target": {
-          "text": "Type"
-        },
-        "mode": "visible",
-        "run": "flows/artifacts.ad#s58"
-      },
-      {
-        "target": {
-          "text": "Size"
-        },
-        "mode": "visible",
-        "run": "flows/artifacts.ad#s59"
-      },
-      {
-        "target": {
-          "text": "Modified"
-        },
-        "mode": "visible",
-        "run": "flows/artifacts.ad#s60"
-      },
-      {
-        "target": {
-          "text": "Path"
-        },
-        "mode": "visible",
-        "run": "flows/artifacts.ad#s61"
-      },
-      {
-        "target": {
-          "text": "~/code/muqun/docs/design-spec.pdf"
-        },
-        "mode": "visible",
-        "run": "flows/artifacts.ad#s62"
       },
       {
         "target": {
@@ -3828,7 +4211,7 @@
       },
       {
         "when": {
-          "target": { "id": "pad-server-rail-workbench" },
+          "target": { "id": "pad-server-rail-back" },
           "absent": false
         },
         "steps": [
@@ -5835,7 +6218,7 @@
       },
       {
         "target": {
-          "text": "(?i)workspace"
+          "text": "Draft the notes for the next build"
         },
         "mode": "visible",
         "run": "flows/slash-commands.ad#s23"
@@ -6169,6 +6552,7 @@
       {
         "run": "flows/ssh.ad#s11"
       },
+      { "run": "flows/ssh.ad#composer-radius-evidence" },
       {
         "include": "subflows/dismiss-logbox"
       },
@@ -7786,6 +8170,20 @@
         ]
       }
     ],
+    "subflows/dismiss-immersive": [
+      {
+        "when": { "env": "PLATFORM", "equals": "android" },
+        "steps": [
+          {
+            "when": {
+              "target": { "id": "com.android.systemui:id/immersive_cling_title" },
+              "absent": false
+            },
+            "steps": [{ "run": "subflows/dismiss-immersive.ad" }]
+          }
+        ]
+      }
+    ],
     "subflows/launch-home": [
       {
         "run": "subflows/launch-home.ad#s1"
@@ -7793,6 +8191,7 @@
       {
         "run": "subflows/launch-home.ad#s8"
       },
+      { "include": "subflows/dismiss-immersive" },
       {
         "target": { "text": "(?i)(Skip intro|Try the demo)" },
         "mode": "visible",
@@ -7802,14 +8201,6 @@
       {
         "target": {
           "id": "launch-intro-skip"
-        },
-        "mode": "press",
-        "optional": true,
-        "run": "subflows/launch-home.ad#s9"
-      },
-      {
-        "target": {
-          "text": "Got it"
         },
         "mode": "press",
         "optional": true,
@@ -8425,6 +8816,88 @@
         "run": "flows/task-result.ad#closed"
       }
     ],
+    "flows/pane-history": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/pane-history.ad#open" },
+      {
+        "target": { "id": "pane-history-sheet" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/pane-history.ad#visible"
+      },
+      {
+        "target": { "text": "Page 1.*240 lines" },
+        "mode": "visible",
+        "run": "flows/pane-history.ad#visible"
+      },
+      {
+        "target": { "text": "Observation started" },
+        "mode": "visible",
+        "run": "flows/pane-history.ad#visible"
+      },
+      {
+        "target": { "text": "Gateway restarted" },
+        "mode": "scroll",
+        "direction": "down",
+        "run": "flows/pane-history.ad#scroll"
+      },
+      {
+        "target": { "text": "Gateway restarted" },
+        "mode": "visible",
+        "run": "flows/pane-history.ad#visible"
+      },
+      {
+        "target": { "id": "pane-history-older" },
+        "mode": "press",
+        "run": "flows/pane-history.ad#press"
+      },
+      {
+        "target": { "text": "Page 2.*240 lines" },
+        "mode": "visible",
+        "run": "flows/pane-history.ad#visible"
+      },
+      {
+        "target": { "text": ".*Continued on another page" },
+        "mode": "visible",
+        "run": "flows/pane-history.ad#visible"
+      },
+      {
+        "target": { "id": "pane-history-older" },
+        "mode": "press",
+        "run": "flows/pane-history.ad#press"
+      },
+      {
+        "target": { "text": "Page 3.*40 lines" },
+        "mode": "visible",
+        "run": "flows/pane-history.ad#visible"
+      },
+      {
+        "target": { "id": "pane-history-newer" },
+        "mode": "press",
+        "run": "flows/pane-history.ad#press"
+      },
+      {
+        "target": { "text": "Page 2.*240 lines" },
+        "mode": "visible",
+        "run": "flows/pane-history.ad#visible"
+      },
+      {
+        "target": { "id": "pane-history-refresh" },
+        "mode": "press",
+        "run": "flows/pane-history.ad#press"
+      },
+      {
+        "target": { "text": "Page 1.*240 lines" },
+        "mode": "visible",
+        "run": "flows/pane-history.ad#visible"
+      },
+      { "run": "flows/pane-history.ad#close" },
+      {
+        "target": { "id": "pane-history-sheet" },
+        "mode": "hidden",
+        "run": "flows/pane-history.ad#closed"
+      }
+    ],
     "flows/agent-session-tree": [
       { "include": "subflows/open-demo" },
       {
@@ -8438,6 +8911,37 @@
         "timeout": 10000,
         "run": "flows/agent-session-tree.ad#visible"
       },
+      {
+        "target": {
+          "id": "agent-session-tree-row-demo-tree-root",
+          "text": "(Root session, )?build · Idle"
+        },
+        "mode": "visible",
+        "run": "flows/agent-session-tree.ad#visible"
+      },
+      {
+        "target": {
+          "id": "agent-session-tree-row-demo-tree-branch",
+          "text": "(Research branch, )?build · Idle"
+        },
+        "mode": "visible",
+        "run": "flows/agent-session-tree.ad#visible"
+      },
+      {
+        "target": {
+          "id": "agent-session-tree-row-demo-tree-nested",
+          "text": "(Nested investigation, )?Demo researcher · research · Idle"
+        },
+        "mode": "visible",
+        "run": "flows/agent-session-tree.ad#visible"
+      },
+      {
+        "target": { "text": "(?i).*(Level|Parent).*" },
+        "mode": "hidden",
+        "run": "flows/agent-session-tree.ad#closed"
+      },
+      { "run": "flows/agent-session-tree.ad#root-and-child" },
+      { "run": "flows/agent-session-tree.ad#branch-detail" },
       {
         "target": {
           "id": "agent-session-tree-row-demo-tree-leaf-24"
@@ -8518,6 +9022,41 @@
         "run": "flows/agent-tool-detail.ad#transcript-visible"
       },
       {
+        "target": {
+          "id": "agent-tool-toggle",
+          "text": "Continue in demo-tree-nested · Idle · Expand tool call"
+        },
+        "mode": "visible",
+        "run": "flows/agent-tool-detail.ad#transcript-visible"
+      },
+      { "run": "flows/agent-tool-detail.ad#compact-task" },
+      { "include": "subflows/no-task-dispatch-duration" },
+      { "run": "flows/agent-tool-detail.ad#open-child" },
+      {
+        "target": { "id": "agent-session-tree-row-demo-tree-branch" },
+        "mode": "press",
+        "run": "flows/agent-tool-detail.ad#open-branch"
+      },
+      {
+        "target": {
+          "id": "agent-tool-toggle",
+          "text": "Continue in demo-tree-nested · Idle · Expand tool call"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/agent-tool-detail.ad#transcript-visible"
+      },
+      {
+        "target": {
+          "id": "agent-tool-toggle",
+          "text": "Continue in demo-tree-nested · Idle · Expand tool call"
+        },
+        "mode": "press",
+        "run": "flows/agent-tool-detail.ad#open-tool"
+      },
+      { "run": "flows/agent-tool-detail.ad#expanded-task" },
+      { "include": "subflows/no-task-dispatch-duration" },
+      {
         "target": { "id": "agent-tool-open-detail" },
         "mode": "press",
         "timeout": 10000,
@@ -8530,7 +9069,7 @@
         "run": "flows/agent-tool-detail.ad#sheet-visible"
       },
       {
-        "target": { "text": "Completed" },
+        "target": { "id": "agent-tool-detail-status", "text": "Completed · 31ms" },
         "mode": "visible",
         "run": "flows/agent-tool-detail.ad#status"
       },
@@ -8539,6 +9078,7 @@
         "mode": "visible",
         "run": "flows/agent-tool-detail.ad#input"
       },
+      { "run": "flows/agent-tool-detail.ad#dispatch-detail-shot" },
       {
         "target": { "id": "agent-tool-detail-copy-input" },
         "mode": "press",
@@ -8551,8 +9091,236 @@
         "timeout": 10000,
         "run": "flows/agent-tool-detail.ad#transcript-restored"
       },
+      {
+        "target": {
+          "id": "agent-tool-toggle",
+          "text": "Continue in demo-tree-nested · Idle · Collapse tool call"
+        },
+        "mode": "visible",
+        "run": "flows/agent-tool-detail.ad#transcript-visible"
+      },
+      { "run": "flows/agent-tool-detail.ad#task-expanded-restored" },
+      { "include": "subflows/no-task-dispatch-duration" },
+      {
+        "target": {
+          "id": "agent-tool-toggle",
+          "text": "Continue in demo-tree-nested · Idle · Collapse tool call"
+        },
+        "mode": "press",
+        "run": "flows/agent-tool-detail.ad#open-tool"
+      },
+      { "run": "flows/agent-tool-detail.ad#task-collapsed-restored" },
+      { "include": "subflows/no-task-dispatch-duration" },
       { "run": "flows/agent-tool-detail.ad#close-detail" },
-      { "run": "flows/agent-tool-detail.ad#close-tree" }
+      { "run": "flows/agent-tool-detail.ad#close-tree" },
+      { "run": "flows/agent-tool-detail.ad#open-logs" },
+      {
+        "include": "subflows/tool-log-disclosure",
+        "env": {
+          "TOOL_NAME": "shell",
+          "TOOL_HEADER": "bash",
+          "TOOL_DURATION": "42ms",
+          "TOOL_TARGET": "printf QA_TOOL_OUTPUT",
+          "TOOL_OUTPUT": "QA_TOOL_OUTPUT",
+          "TOOL_DETAIL_INPUT": ".*printf QA_TOOL_OUTPUT.*",
+          "TOOL_STATUS": "Completed · 42ms"
+        }
+      },
+      {
+        "include": "subflows/tool-log-disclosure",
+        "env": {
+          "TOOL_NAME": "read",
+          "TOOL_HEADER": "read",
+          "TOOL_DURATION": "53ms",
+          "TOOL_TARGET": "qa-image.webp",
+          "TOOL_OUTPUT": "QA_READ_IMAGE_OUTPUT",
+          "TOOL_DETAIL_INPUT": ".*fixtures/qa-image\\.webp.*",
+          "TOOL_STATUS": "Completed · 53ms"
+        }
+      },
+      {
+        "include": "subflows/tool-log-disclosure",
+        "env": {
+          "TOOL_NAME": "failure",
+          "TOOL_HEADER": "bash",
+          "TOOL_DURATION": "61ms",
+          "TOOL_TARGET": "false",
+          "TOOL_OUTPUT": "QA_FAILURE_OUTPUT",
+          "TOOL_DETAIL_INPUT": "false",
+          "TOOL_STATUS": "Failed · 61ms"
+        }
+      },
+      { "run": "flows/agent-tool-detail.ad#close-detail" }
+    ],
+    "subflows/no-task-dispatch-duration": [
+      {
+        "target": { "text": "[\\s\\S]*31ms[\\s\\S]*" },
+        "mode": "hidden",
+        "run": "flows/agent-tool-detail.ad#hidden"
+      }
+    ],
+    "subflows/tool-log-disclosure": [
+      {
+        "target": {
+          "id": "agent-tool-toggle",
+          "text": "${TOOL_HEADER} · ${TOOL_DURATION} · Expand tool call"
+        },
+        "mode": "visible",
+        "run": "flows/agent-tool-detail.ad#transcript-visible"
+      },
+      {
+        "target": { "text": "${TOOL_TARGET}" },
+        "mode": "hidden",
+        "run": "flows/agent-tool-detail.ad#hidden"
+      },
+      {
+        "target": { "text": "${TOOL_OUTPUT}" },
+        "mode": "hidden",
+        "run": "flows/agent-tool-detail.ad#hidden"
+      },
+      {
+        "when": { "env": "TOOL_NAME", "equals": "read" },
+        "steps": [
+          {
+            "target": { "text": "QA read image" },
+            "mode": "hidden",
+            "run": "flows/agent-tool-detail.ad#hidden"
+          }
+        ]
+      },
+      {
+        "when": { "env": "TOOL_NAME", "equals": "failure" },
+        "steps": [
+          {
+            "target": { "text": "QA_TOOL_FAILURE" },
+            "mode": "hidden",
+            "run": "flows/agent-tool-detail.ad#hidden"
+          }
+        ]
+      },
+      { "run": "flows/agent-tool-detail.ad#log-collapsed" },
+      {
+        "target": {
+          "id": "agent-tool-toggle",
+          "text": "${TOOL_HEADER} · ${TOOL_DURATION} · Expand tool call"
+        },
+        "mode": "press",
+        "run": "flows/agent-tool-detail.ad#open-tool"
+      },
+      {
+        "target": { "text": "${TOOL_TARGET}" },
+        "mode": "visible",
+        "run": "flows/agent-tool-detail.ad#transcript-visible"
+      },
+      {
+        "target": { "text": "${TOOL_OUTPUT}" },
+        "mode": "visible",
+        "run": "flows/agent-tool-detail.ad#transcript-visible"
+      },
+      {
+        "when": { "env": "TOOL_NAME", "equals": "read" },
+        "steps": [{ "run": "flows/agent-tool-detail.ad#read-preview" }]
+      },
+      {
+        "when": { "env": "TOOL_NAME", "equals": "failure" },
+        "steps": [
+          {
+            "target": { "text": "QA_TOOL_FAILURE" },
+            "mode": "visible",
+            "run": "flows/agent-tool-detail.ad#transcript-visible"
+          }
+        ]
+      },
+      { "run": "flows/agent-tool-detail.ad#log-expanded" },
+      {
+        "target": { "id": "agent-tool-open-detail" },
+        "mode": "press",
+        "run": "flows/agent-tool-detail.ad#open-tool"
+      },
+      {
+        "target": { "id": "agent-tool-detail-sheet" },
+        "mode": "visible",
+        "run": "flows/agent-tool-detail.ad#sheet-visible"
+      },
+      {
+        "target": { "id": "agent-tool-detail-status", "text": "${TOOL_STATUS}" },
+        "mode": "visible",
+        "run": "flows/agent-tool-detail.ad#status"
+      },
+      {
+        "target": { "text": "${TOOL_DETAIL_INPUT}" },
+        "mode": "visible",
+        "run": "flows/agent-tool-detail.ad#input"
+      },
+      {
+        "target": { "text": "${TOOL_OUTPUT}" },
+        "mode": "visible",
+        "run": "flows/agent-tool-detail.ad#input"
+      },
+      {
+        "when": { "env": "TOOL_NAME", "equals": "failure" },
+        "steps": [
+          {
+            "target": { "id": "agent-tool-detail-error", "text": "QA_TOOL_FAILURE" },
+            "mode": "visible",
+            "run": "flows/agent-tool-detail.ad#input"
+          }
+        ]
+      },
+      { "run": "flows/agent-tool-detail.ad#log-detail-shot" },
+      { "run": "flows/agent-tool-detail.ad#close-tool" },
+      {
+        "target": { "id": "agent-subagent-detail-transcript" },
+        "mode": "visible",
+        "run": "flows/agent-tool-detail.ad#transcript-restored"
+      },
+      {
+        "target": {
+          "id": "agent-tool-toggle",
+          "text": "${TOOL_HEADER} · ${TOOL_DURATION} · Collapse tool call"
+        },
+        "mode": "visible",
+        "run": "flows/agent-tool-detail.ad#transcript-visible"
+      },
+      {
+        "target": {
+          "id": "agent-tool-toggle",
+          "text": "${TOOL_HEADER} · ${TOOL_DURATION} · Collapse tool call"
+        },
+        "mode": "press",
+        "run": "flows/agent-tool-detail.ad#open-tool"
+      },
+      {
+        "target": { "text": "${TOOL_TARGET}" },
+        "mode": "hidden",
+        "run": "flows/agent-tool-detail.ad#hidden"
+      },
+      {
+        "target": { "text": "${TOOL_OUTPUT}" },
+        "mode": "hidden",
+        "run": "flows/agent-tool-detail.ad#hidden"
+      },
+      {
+        "when": { "env": "TOOL_NAME", "equals": "read" },
+        "steps": [
+          {
+            "target": { "text": "QA read image" },
+            "mode": "hidden",
+            "run": "flows/agent-tool-detail.ad#hidden"
+          }
+        ]
+      },
+      {
+        "when": { "env": "TOOL_NAME", "equals": "failure" },
+        "steps": [
+          {
+            "target": { "text": "QA_TOOL_FAILURE" },
+            "mode": "hidden",
+            "run": "flows/agent-tool-detail.ad#hidden"
+          }
+        ]
+      },
+      { "run": "flows/agent-tool-detail.ad#log-restored" }
     ],
     "flows/thai-language": [
       {
@@ -8960,6 +9728,7 @@
     ],
     "flows/composer-wrap": [
       { "include": "subflows/open-demo" },
+      { "run": "flows/composer-wrap.ad#compact-shot" },
       {
         "target": {
           "id": "terminal-composer-input"
@@ -9005,9 +9774,115 @@
         "timeout": 15000,
         "run": "flows/composer-wrap.ad#hidden"
       },
+      { "run": "flows/composer-wrap.ad#restored-shot" },
       {
         "run": "flows/composer-wrap.ad#close"
+      },
+      {
+        "when": { "env": "PLATFORM", "equals": "android" },
+        "steps": [{ "include": "subflows/compaction-layout" }]
       }
+    ],
+    "subflows/compaction-samples-closed": [
+      {
+        "run": "flows/composer-wrap.ad#compaction-samples",
+        "point": [0.5, 0.45],
+        "delta": [0, -0.27]
+      }
+    ],
+    "subflows/compaction-samples-keyboard": [
+      {
+        "run": "flows/composer-wrap.ad#compaction-samples",
+        "point": [0.5, 0.22],
+        "delta": [0, -0.1]
+      }
+    ],
+    "subflows/compaction-layout": [
+      { "run": "flows/composer-wrap.ad#compaction-open" },
+      { "run": "flows/composer-wrap.ad#compaction-draft" },
+      {
+        "target": { "id": "agent-composer-compaction-pill" },
+        "mode": "hidden",
+        "run": "flows/composer-wrap.ad#hidden"
+      },
+      {
+        "include": "subflows/compaction-samples-closed",
+        "env": { "STATE": "baseline" }
+      },
+      { "run": "flows/composer-wrap.ad#compaction-advance" },
+      {
+        "target": { "id": "agent-composer-compaction-pill", "text": "Compacting context…" },
+        "mode": "visible",
+        "run": "flows/composer-wrap.ad#visible"
+      },
+      {
+        "include": "subflows/compaction-samples-closed",
+        "env": { "STATE": "manual" }
+      },
+      { "run": "flows/composer-wrap.ad#compaction-keyboard-open" },
+      {
+        "include": "subflows/compaction-samples-keyboard",
+        "env": { "STATE": "manual-keyboard" }
+      },
+      { "run": "flows/composer-wrap.ad#compaction-keyboard-close" },
+      {
+        "include": "subflows/compaction-samples-closed",
+        "env": { "STATE": "manual-return" }
+      },
+      { "run": "flows/composer-wrap.ad#compaction-advance" },
+      {
+        "target": { "id": "agent-composer-compaction-pill" },
+        "mode": "hidden",
+        "run": "flows/composer-wrap.ad#hidden"
+      },
+      {
+        "include": "subflows/compaction-samples-closed",
+        "env": { "STATE": "completed" }
+      },
+      { "run": "flows/composer-wrap.ad#compaction-advance" },
+      {
+        "target": { "text": "Compacting context automatically…" },
+        "mode": "visible",
+        "run": "flows/composer-wrap.ad#visible"
+      },
+      {
+        "include": "subflows/compaction-samples-closed",
+        "env": { "STATE": "auto" }
+      },
+      { "run": "flows/composer-wrap.ad#compaction-keyboard-open" },
+      {
+        "include": "subflows/compaction-samples-keyboard",
+        "env": { "STATE": "auto-keyboard" }
+      },
+      { "run": "flows/composer-wrap.ad#compaction-keyboard-close" },
+      {
+        "include": "subflows/compaction-samples-closed",
+        "env": { "STATE": "auto-return" }
+      },
+      { "run": "flows/composer-wrap.ad#compaction-advance" },
+      {
+        "target": {
+          "id": "agent-composer-compaction-pill",
+          "text": "Compaction failed — tap to dismiss"
+        },
+        "mode": "visible",
+        "run": "flows/composer-wrap.ad#visible"
+      },
+      {
+        "include": "subflows/compaction-samples-closed",
+        "env": { "STATE": "failed" }
+      },
+      { "run": "flows/composer-wrap.ad#compaction-dismiss" },
+      {
+        "target": { "id": "agent-composer-compaction-pill" },
+        "mode": "hidden",
+        "run": "flows/composer-wrap.ad#hidden"
+      },
+      {
+        "include": "subflows/compaction-samples-closed",
+        "env": { "STATE": "dismissed" }
+      },
+      { "run": "flows/composer-wrap.ad#compaction-clear" }
     ]
   }
 }

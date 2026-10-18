@@ -27,7 +27,12 @@ import {
   type ThemeAppearance,
 } from '@/constants/theme-packs';
 import { userFontRegistry } from '@/theme/interface-font-registry';
-import { slotFontFamily, SYSTEM_FONT_SLOT, type FontSlot } from '@/theme/user-font-file';
+import {
+  slotFontFamily,
+  slotWeightAxis,
+  SYSTEM_FONT_SLOT,
+  type FontSlot,
+} from '@/theme/user-font-file';
 
 /**
  * The shape of the app, independent of its colours: density, corner radius and
@@ -78,7 +83,7 @@ export function buildTheme(
    */
   const interfaceFamily = slotFontFamily(interfaceFont, 'interface');
   const fonts = interfaceFamily
-    ? { ...preset.fonts, ...userFontRegistry(interfaceFamily) }
+    ? { ...preset.fonts, ...userFontRegistry(interfaceFamily, slotWeightAxis(interfaceFont)) }
     : preset.fonts;
 
   return {

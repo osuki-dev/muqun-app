@@ -17,8 +17,11 @@ import {
   reachabilityFromProbe,
   REACHABILITY_FRESH_MS,
   REACHABILITY_RECHECK_MS,
+  reachabilityOfStatus,
+  resolveConnectionStatus,
   resolveServerReachability,
   serversToProbe,
+  statusNeedsPairing,
   type ReachabilityProbe,
 } from '../server-reachability';
 
@@ -308,5 +311,56 @@ describe('gatewayConnectionPhase', () => {
     expect(gatewayConnectionPhase('offline')).toBe('offline');
     expect(gatewayConnectionPhase('reconnecting')).toBe('reconnecting');
     expect(gatewayConnectionPhase('connecting', false)).toBe('connecting');
+  });
+});
+
+describe('a fault held against the pairing', () => {
+  test('a repair demand outranks every probe, fresh or stale', () => {
+    expect(
+      resolveConnectionStatus({ serverId: 's1', probe: probe(true), fault: 'repair', nowMs: NOW })
+    ).toBe('repair');
+    expect(
+      resolveConnectionStatus({ serverId: 's1', probe: undefined, fault: 'repair', nowMs: NOW })
+    ).toBe('repair');
+    // The socket stood down as refused for the same reason; the fault names it.
+    expect(
+      resolveConnectionStatus({
+        serverId: 's1',
+        probe: undefined,
+        channels: { socket: 'unauthorized' },
+        fault: 'repair',
+        nowMs: NOW,
+      })
+    ).toBe('repair');
+  });
+
+  test('a live channel is the one thing that beats it: the gateway is talking to us', () => {
+    expect(
+      resolveConnectionStatus({
+        serverId: 's1',
+        probe: undefined,
+        channels: { socket: 'open' },
+        fault: 'repair',
+        nowMs: NOW,
+      })
+    ).toBe('live');
+  });
+
+  test('without a fault nothing changes', () => {
+    expect(resolveConnectionStatus({ serverId: 's1', probe: probe(true), nowMs: NOW })).toBe(
+      'live'
+    );
+    expect(resolveConnectionStatus({ serverId: 's1', probe: probe(false), nowMs: NOW })).toBe(
+      'offline'
+    );
+  });
+
+  test('both pairing states fold to offline for the rest of the app, and both want the action', () => {
+    expect(reachabilityOfStatus('repair')).toBe('offline');
+    expect(reachabilityOfStatus('unauthorized')).toBe('offline');
+    expect(statusNeedsPairing('repair')).toBe(true);
+    expect(statusNeedsPairing('unauthorized')).toBe(true);
+    expect(statusNeedsPairing('offline')).toBe(false);
+    expect(statusNeedsPairing('reconnecting')).toBe(false);
   });
 });

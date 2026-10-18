@@ -696,6 +696,8 @@ describe('captured traversal recovery', () => {
       data: { sessionId: 'session' },
       ready: true,
       servesCapturedHistory: true,
+      servesSegmentedHistory: false,
+      record: { serverId: 'server' },
       capturedProbe: 0,
       capturedViewportReady: false,
       capturedOffRef: { current: false },
@@ -725,12 +727,14 @@ describe('captured traversal recovery', () => {
       | undefined;
     const cleanup = effect();
     await Promise.resolve();
+    await Promise.resolve();
     expect(offers).toEqual([false]);
     expect(reads).toBe(1);
     cleanup?.();
     viewport.current = 24;
     globals.capturedViewportReady = true;
     effect();
+    await Promise.resolve();
     await Promise.resolve();
     expect(offers).toEqual([false, true]);
     expect(reads).toBe(2);

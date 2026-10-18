@@ -22,7 +22,7 @@ function createServer(env: WorkerEnvironment) {
   return createHotUpdater({
     database: d1Database(env.DB),
     storage,
-    plugins: [apiKeys(), insights(), remoteConfig(), localizedReleaseNotes(storage)],
+    plugins: [apiKeys(), insights(), remoteConfig(), localizedReleaseNotes()],
   });
 }
 const servers = new WeakMap<WorkerEnvironment, ReturnType<typeof createServer>>();

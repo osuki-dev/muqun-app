@@ -7,7 +7,7 @@ import { configuredGatewayServerId } from '@/lib/gateway-client';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { WS_EVENTS_CAPABILITY, type GatewaySocketState } from '@/lib/gateway-socket';
 import { gatewaySocketFor } from '@/lib/gateway-socket-runtime';
-import { applyListAnswer, isTaskChannelLive, sessionsLeftWaiting } from '@/lib/server-tasks-state';
+import { applyListAnswer, isTaskChannelLive } from '@/lib/server-tasks-state';
 import {
   cancelTask,
   completeTask,
@@ -23,23 +23,9 @@ import { peerServerIdOf } from '@/lib/fleet-peers';
 import { useFleetPeers } from '@/stores/fleet-peers';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useServerCapabilities } from '@/stores/server-capabilities';
-import { useInAppNotifications } from '@/stores/in-app-notifications';
 import { useServerTasksStore } from '@/stores/server-tasks';
 
 const NO_TASKS: TaskView[] = [];
-
-/**
- * Apply a ledger update for `serverId`, then retire the question notices
- * ("Agent blocked") of sessions whose task left `waiting` in it: answered,
- * working again, or finished.
- */
-function settlingQuestions(serverId: string, update: () => void): void {
-  const tasksOf = () => useServerTasksStore.getState().index[serverId]?.tasks ?? NO_TASKS;
-  const before = tasksOf();
-  update();
-  const notices = useInAppNotifications.getState();
-  for (const asid of sessionsLeftWaiting(before, tasksOf())) notices.dismissQuestions(asid);
-}
 
 /** How a computer's ledger is reached from here, if at all. */
 export function taskRouteFor(
@@ -105,6 +91,9 @@ export type ServerTasks = {
  * `ws_events`, the demo, or a socket closed in the background all still get a
  * list that is true as of the moment the sheet opened (review focus 1).
  */
+/** A list read this recently is what a socket subscribing now would read again. */
+const TASK_LIST_FRESH_MS = 2_000;
+
 export function useServerTasks(serverId: string | null): ServerTasks {
   const tasks = useServerTasksStore((state) =>
     serverId ? (state.index[serverId]?.tasks ?? NO_TASKS) : NO_TASKS
@@ -127,6 +116,8 @@ export function useServerTasks(serverId: string | null): ServerTasks {
   const [error, setError] = useState<string | null>(null);
   /** A slower answer for an earlier request must not overwrite a newer one. */
   const requestRef = useRef(0);
+  /** When the list was last read back, so a socket subscribing right after mount does not read it again. */
+  const readAtRef = useRef(0);
 
   const refresh = useCallback(async () => {
     if (isDemoActive() && serverId === DEMO_SERVER_ID) {
@@ -159,10 +150,10 @@ export function useServerTasks(serverId: string | null): ServerTasks {
     try {
       const list = await fetchTaskList(query);
       if (request !== requestRef.current) return;
+      readAtRef.current = Date.now();
       // A failed read keeps the list already held and says so.
       applyListAnswer(list, {
-        replace: (tasks) =>
-          settlingQuestions(serverId, () => replace(serverId, tasks, requestedAtMs)),
+        replace: (tasks) => replace(serverId, tasks, requestedAtMs),
         ok: () => setError(null),
         fail: () => setError('unavailable'),
       });
@@ -196,9 +187,15 @@ export function useServerTasks(serverId: string | null): ServerTasks {
     if (!socket || !serverId) return;
     return socket.watchTasks(
       {
-        onTaskUpdated: (task) => settlingQuestions(serverId, () => upsert(serverId, task)),
-        // After every (re)connect: whatever changed while it was down.
-        onSubscribed: () => void refresh(),
+        // Task state does not resolve forms: async questions can remain open
+        // while the agent works. Only the form's own resolution clears it.
+        onTaskUpdated: (task) => upsert(serverId, task),
+        // After every (re)connect: whatever changed while it was down. Not
+        // after the first connect on the heels of the mount read, which
+        // asked the same list a moment ago.
+        onSubscribed: () => {
+          if (Date.now() - readAtRef.current > TASK_LIST_FRESH_MS) void refresh();
+        },
         // The gateway dropped frames for this socket; a task may have changed
         // in them, and the frame that said so is gone.
         onResync: () => void refresh(),

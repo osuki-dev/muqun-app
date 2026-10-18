@@ -304,7 +304,7 @@ export function toolCallDetail(part: ToolPart, context: ToolCallContext = {}): T
 
   const startedAt = part.time?.ran ?? part.time?.created;
   const durationMs =
-    toolDurationMs(part.time) ??
+    toolDurationMs(part.time, part.metadata) ??
     (part.time?.created !== undefined && part.time.completed !== undefined
       ? Math.max(0, part.time.completed - part.time.created)
       : undefined);

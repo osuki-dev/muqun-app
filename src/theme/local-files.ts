@@ -20,7 +20,7 @@ const shareFile = createThemeFileSharer({
     try {
       const file = new File(directory, name);
       file.create();
-      file.write(data);
+      file.writeSync(data);
       return { uri: file.uri, dispose: () => directory.delete() };
     } catch (error) {
       try {

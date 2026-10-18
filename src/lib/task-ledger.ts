@@ -8,6 +8,24 @@ export const TASK_LEDGER_CAPABILITY = 'task_ledger';
  * serves the task tree: `parent_task_id`, `children`, `origin`, `?root=`.
  */
 export const TASK_LEDGER_CREATE_CAPABILITY = 'task_ledger_create';
+/**
+ * `POST /api/tasks` takes `delivery: "session" | "pane"`, and each agent in
+ * `/api/discovery` lists the deliveries it offers (`ledger_delivery`). The
+ * reader's pick in the dock -- the provider's session entry or its terminal
+ * entry -- is what names the delivery; the app holds no rule by agent name.
+ */
+export const TASK_LEDGER_DELIVERY_CAPABILITY = 'task_ledger_delivery';
+
+/** How a ledger task is carried out: as a native agent session, or in a terminal pane. */
+export type LedgerDelivery = 'session' | 'pane';
+
+export function parseLedgerDelivery(value: unknown): LedgerDelivery[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const listed = value.filter(
+    (entry): entry is LedgerDelivery => entry === 'session' || entry === 'pane'
+  );
+  return listed.length > 0 ? [...new Set(listed)] : undefined;
+}
 
 /**
  * `POST /api/tasks` also takes a terminal agent (Codex, Claude Code, ...): the
@@ -277,6 +295,13 @@ export function hasTaskLedgerCreate(capabilities: readonly string[] | undefined)
   return capabilities?.includes(TASK_LEDGER_CREATE_CAPABILITY) === true;
 }
 
+export function hasTaskLedgerDelivery(capabilities: readonly string[] | undefined): boolean {
+  return (
+    hasTaskLedgerCreate(capabilities) &&
+    capabilities?.includes(TASK_LEDGER_DELIVERY_CAPABILITY) === true
+  );
+}
+
 /**
  * Whether the reader can say a task is done, on a gateway that takes the
  * confirmation: one this device's owner opened, stopped without saying it
@@ -311,6 +336,12 @@ export interface LedgerTaskRequest {
    * its agent; sent only to a computer that advertises `fleet_peers`.
    */
   mentions?: string[];
+  /**
+   * How the task is carried out, as the reader picked it: the provider's
+   * session entry or its terminal entry. Sent only to a gateway that
+   * advertises `task_ledger_delivery` and lists that delivery for the agent.
+   */
+  delivery?: LedgerDelivery;
 }
 
 export function ledgerTaskBody(request: LedgerTaskRequest): Record<string, string | string[]> {
@@ -324,6 +355,7 @@ export function ledgerTaskBody(request: LedgerTaskRequest): Record<string, strin
     ...(request.model && request.variant ? { variant: request.variant } : {}),
     ...(request.label?.trim() ? { label: request.label.trim() } : {}),
     ...(request.mentions?.length ? { mentions: request.mentions } : {}),
+    ...(request.delivery ? { delivery: request.delivery } : {}),
   };
 }
 
@@ -334,14 +366,18 @@ export type LedgerTaskDelivery =
   | { kind: 'rejected'; failure: unknown }
   | { kind: 'unknown'; clientRef: string };
 
-/** Only a definite HTTP rejection allows another creation. A 5xx may follow acceptance. */
+/** Only an explicit pre-creation refusal allows another send; other 5xx may follow acceptance. */
 export function isLedgerTaskRejection(failure: unknown): boolean {
   const message = failure instanceof Error ? failure.message : '';
   const match = message.match(/^Open task: (\d{3}) (.*)$/s);
   const status = Number(match?.[1]);
-  if (status < 400 || status >= 500 || status === 408 || !match) return false;
+  if (!match || status < 400 || status === 408) return false;
   try {
     const code = asString(asRecord(asRecord(JSON.parse(match[2] ?? ''))?.error)?.code);
+    // These task-create readiness checks happen before a task or session exists.
+    // A generic 503 (or an engine failure after dispatch) remains uncertain.
+    if (status === 503) return code === 'no_terminal' || code === 'agent_unavailable';
+    if (status >= 500) return false;
     return [
       'invalid_request',
       'invalid_directory',

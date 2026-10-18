@@ -5,8 +5,9 @@ requires the Android SDK/JDK; local iOS builds require macOS and Xcode. Authenti
 with EAS and configure the existing Expo-managed signing and store submission
 credentials first. Never generate replacement signing identities.
 
-Keep `.env.hotupdater` local and ignored. Native builds read only its public
-`EXPO_PUBLIC_HOT_UPDATER_API_KEY`; they use the committed OTA public signing key.
+Keep `.env.hotupdater` local and ignored. Native builds and submissions pass only its
+public `EXPO_PUBLIC_HOT_UPDATER_API_KEY` to EAS, which evaluates app configuration
+for both commands. Native builds use the committed OTA public signing key.
 Provider credentials and the private OTA signing key are for OTA publishing only.
 Both native release channels enable Hot Updater explicitly.
 
@@ -24,6 +25,15 @@ submission logs are deleted because EAS failures can contain signing credentials
 The artifact and native `fingerprint.json` remain together in a unique directory
 under `dist/eas-builds/`. A submission failure never triggers a rebuild or retry;
 check its status in Expo before submitting the retained artifact again.
+
+Local Android builds use a per-invocation temporary directory under
+`~/.cache/muqun-store-builds` for EAS and Java. It must stay outside the checkout:
+EAS copies the project into its own temporary directory, which fails when that
+directory is inside the project. The home filesystem is used instead of the system
+temporary filesystem, which may be a small tmpfs. The wrapper preserves existing
+`_JAVA_OPTIONS`, appends the Java temporary path, and disables reusable Gradle
+daemons for that build. Temporary files are removed when the command finishes;
+ensure that filesystem has build space.
 
 For build-only, use the same command with `build` instead of `release`:
 

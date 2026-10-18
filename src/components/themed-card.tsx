@@ -1,5 +1,6 @@
 import { Card as BaseCard, useThemeTokens, type CardProps } from '@osuki-dev/ui';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, type ViewStyle } from 'react-native';
+import { flattenStyle } from '@/lib/flatten-style';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 
@@ -8,7 +9,7 @@ export function Card({ style, variant = 'default', border = 'none', ...props }: 
   const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
-  const override = StyleSheet.flatten(style)?.backgroundColor;
+  const override = flattenStyle<ViewStyle>(style)?.backgroundColor;
   const base =
     typeof override === 'string'
       ? override

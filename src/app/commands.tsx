@@ -217,6 +217,7 @@ export default function QuickCommandsScreen() {
      * this is the demo.
      */
     canOpenWeb?: string;
+    canSavedHistory?: string;
     webBlockedBy?: string;
     /** This pane's agent, and what it is doing, for the Stop row. */
     agentTarget?: string;
@@ -287,11 +288,20 @@ export default function QuickCommandsScreen() {
     serverId: params.serverId,
     spawnSupported: params.canSpawn === '1',
     webServiceSupported: params.canOpenWeb === '1',
+    savedHistorySupported: params.canSavedHistory === '1',
     webServiceBlockedByTunnel: params.webBlockedBy === 'tunnel',
     agentTarget: params.agentTarget,
     agentStatus: params.agentStatus,
     manageOnly,
   });
+
+  function openSavedHistory() {
+    if (!available.canOpenSavedHistory) return;
+    router.replace({
+      pathname: '/pane-history',
+      params: { serverId: params.serverId, sessionId: params.sessionId, paneId: params.paneId },
+    });
+  }
 
   useEffect(() => {
     void loadQuickCommands(mode).then(setCommands);
@@ -796,6 +806,16 @@ export default function QuickCommandsScreen() {
                 detailColor={theme.colors.textMuted}
                 disabled={creating !== null}
                 onPress={startTask}
+              />
+            </SettingsCard>
+          ) : null}
+
+          {available.canOpenSavedHistory ? (
+            <SettingsCard flush>
+              <ActionRow
+                accessibilityLabel={t`Saved terminal history`}
+                name={t`Saved terminal history`}
+                onPress={openSavedHistory}
               />
             </SettingsCard>
           ) : null}

@@ -27,8 +27,29 @@ test('stable references reach the wire; only known gateway validation errors all
     'Open task: 409 {"error":{"code":"already_accepted"}}',
     'Open task: 400 <html>proxy timeout</html>',
     'Open task: 504 {"error":{"code":"invalid_request"}}',
+    'Open task: 503 {"error":{"code":"agent_error"}}',
+    'Open task: 502 {"error":{"code":"agent_unavailable"}}',
+    'Open task: 503 <html>service unavailable</html>',
   ])
     expect(isLedgerTaskRejection(new Error(failure))).toBe(false);
+});
+
+test('a pre-creation readiness refusal allows the same goal after the computer recovers', async () => {
+  for (const code of ['agent_unavailable', 'no_terminal']) {
+    let posts = 0;
+    const home = caller({
+      create: async (request) => {
+        posts++;
+        if (posts === 1) throw new Error(`Open task: 503 ${JSON.stringify({ error: { code } })}`);
+        return task(request.clientRef!);
+      },
+    });
+    expect((await home.send()).kind).toBe('rejected');
+    expect(home.pending()).toEqual([]);
+    expect(posts).toBe(1);
+    expect((await home.send()).kind).toBe('accepted');
+    expect(posts).toBe(2);
+  }
 });
 
 const task = (clientRef: string, state = 'working', deviceId = 'phone-a'): CreatedLedgerTask => {

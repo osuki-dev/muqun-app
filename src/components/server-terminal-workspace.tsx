@@ -1,3 +1,4 @@
+import { assetFromLocalPdf } from '@/lib/session-assets';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { AudioPlaybackError } from '@/lib/audio-playback-session';
 import { GuideCommand } from '@/components/guide-command';
@@ -49,6 +50,7 @@ import {
   type LayoutChangeEvent,
   Pressable,
   ScrollView,
+  type ScrollViewInstance,
   StyleSheet,
   useWindowDimensions,
   View,
@@ -159,6 +161,8 @@ import {
   isImageAttachment,
   pickAttachments,
   type AttachmentSource,
+  describeBlockedSend,
+  takePickTruncationNotice,
 } from '@/lib/attachments';
 import {
   ATTACHMENT_CONNECTION_GENERATION,
@@ -230,6 +234,7 @@ import {
   type CapturedCursor,
   type HistoryPullNotice,
 } from '@/lib/terminal-history-pull';
+import { PANE_CAPTURED_HISTORY_SEGMENTS_CAPABILITY } from '@/lib/terminal-history-segments';
 import { DEMO_SERVER_ID, demoRecord, isDemoRecord } from '@/lib/demo-gateway';
 import type { HomeServerEntry } from '@/lib/home-commands';
 import { demoSshHost } from '@/lib/demo-ssh';
@@ -1541,7 +1546,7 @@ export function ServerTerminalWorkspace({
   // its right-hand end used to leave the strip highlighting nothing: the
   // active chip was simply somewhere the user could not see, so the only
   // indicator of which pane is open pointed at empty space.
-  const paneStripRef = useRef<ScrollView>(null);
+  const paneStripRef = useRef<ScrollViewInstance>(null);
   const paneChipLayouts = useRef<Record<string, { x: number; width: number }>>({});
   const paneStripViewportRef = useRef(0);
   const paneStripOffsetRef = useRef(0);
@@ -2526,6 +2531,10 @@ export function ServerTerminalWorkspace({
   const servesCapturedHistory = useServerCapabilities(
     (state) => state.byServer[serverId]?.includes(PANE_CAPTURED_HISTORY_CAPABILITY) === true
   );
+  const servesSegmentedHistory = useServerCapabilities(
+    (state) =>
+      state.byServer[serverId]?.includes(PANE_CAPTURED_HISTORY_SEGMENTS_CAPABILITY) === true
+  );
   useEffect(() => {
     if (!selectedServer || !record || isDemoRecord(record) || !data.health) return;
     void recordServerCapabilities(record.serverId, data.health.capabilities);
@@ -2541,12 +2550,20 @@ export function ServerTerminalWorkspace({
   useEffect(() => {
     const paneId = selection.paneId;
     const sessionId = data.sessionId;
-    if (!ready || !servesCapturedHistory || !paneId || !sessionId) return;
+    if (
+      !ready ||
+      !servesCapturedHistory ||
+      servesSegmentedHistory ||
+      !paneId ||
+      !sessionId ||
+      !record
+    )
+      return;
     // Once per pane and per ask: a pull already under way, or a history
     // already given in full, knows more than this would.
     // Boundary discovery is a new ask even when the first probe already saw
     // rows. Otherwise an early successful probe could leave history hidden.
-    const key = `${paneId}\u0000${capturedProbe}\u0000${capturedViewportReady}`;
+    const key = `${paneId}\u0000${capturedProbe}\u0000${capturedViewportReady}\u0000${servesSegmentedHistory}`;
     if (
       !capturedProbeDue({
         off: capturedOffRef.current,
@@ -2561,7 +2578,8 @@ export function ServerTerminalWorkspace({
     let current = true;
     capturedProbedAtRef.current = Date.now();
     const probedOutput = readOutputWindow().output;
-    void readPaneHistory(sessionId, paneId, null, 1).then((answer) => {
+    const probeRead = readPaneHistory(sessionId, paneId, null, 1).then(capturedProbeState);
+    void probeRead.then((probe) => {
       if (!current || activePaneRef.current !== paneId) return;
       // A pull landed meanwhile: its answer stands.
       if (
@@ -2571,7 +2589,6 @@ export function ServerTerminalWorkspace({
         capturedRefreshRequiredRef.current
       )
         return;
-      const probe = capturedProbeState(answer);
       capturedOffRef.current = probe.off;
       // Empty, or no answer: worth asking again as output grows.
       capturedEmptyRef.current = probe.empty;
@@ -2593,13 +2610,15 @@ export function ServerTerminalWorkspace({
     ready,
     selection.paneId,
     servesCapturedHistory,
+    servesSegmentedHistory,
     capturedViewportReady,
     readOutputWindow,
+    record,
   ]);
   // A pane with nothing captured yet gains rows as its output scrolls: ask
   // again, at most every CAPTURED_REPROBE_MS, while output keeps coming.
   useEffect(() => {
-    if (capturedOpen || !servesCapturedHistory) return;
+    if (capturedOpen || !servesCapturedHistory || servesSegmentedHistory) return;
     const remaining = capturedReprobeDelay(
       capturedEmptyProbe?.output ?? null,
       output,
@@ -2610,7 +2629,7 @@ export function ServerTerminalWorkspace({
     if (remaining === null) return;
     const timer = setTimeout(() => setCapturedProbe((probe) => probe + 1), remaining);
     return () => clearTimeout(timer);
-  }, [output, capturedOpen, capturedEmptyProbe, servesCapturedHistory]);
+  }, [output, capturedOpen, capturedEmptyProbe, servesCapturedHistory, servesSegmentedHistory]);
 
   // Whether this pane is an editor, which is what "is this a full-screen
   // program" means until `alternate_on` is plumbed through -- see
@@ -2803,7 +2822,7 @@ export function ServerTerminalWorkspace({
   // re-ask while the backend is down. The nonce restarts the poller, whose
   // first read is immediate and whose result updates the state.
   const retryBackend = useCallback(() => {
-    void refreshAgentsDiscovery(serverId);
+    void refreshAgentsDiscovery(serverId, undefined, { force: true });
     setRetryNonce((value) => value + 1);
   }, [serverId]);
   // Narrowed by the pane's own answer: tmux can speak extended keys and the
@@ -3100,7 +3119,7 @@ export function ServerTerminalWorkspace({
       candidate.instanceId ? [candidate] : []
     );
   }, [data.agents, data.panes, selection.paneId, selection.workspaceId, selectedPane]);
-  // Only images can be opened full screen, and the viewer pages between them,
+  // PDFs use the shared document viewer. The image viewer pages between images,
   // so the tapped tile's position is resolved within that subset.
   const previewImages = useMemo<PreviewImage[]>(
     () =>
@@ -3109,6 +3128,7 @@ export function ServerTerminalWorkspace({
         .map((item) => ({ id: item.id, uri: item.localUri })),
     [attachments]
   );
+  const previewPdf = assetFromLocalPdf(attachments.find((item) => item.id === previewAttachmentId));
   const previewIndex = previewAttachmentId
     ? previewImages.findIndex((item) => item.id === previewAttachmentId)
     : -1;
@@ -3729,7 +3749,10 @@ export function ServerTerminalWorkspace({
               // The gateway's captured history first, where it serves it and
               // this pane has not turned out uncaptured; a shell pane answers
               // `not_captured` and the range/tail reads below serve it as before.
-              ...(servesCapturedHistory && !capturedOffRef.current && paneScreenRowsRef.current > 0
+              ...(servesCapturedHistory &&
+              !servesSegmentedHistory &&
+              !capturedOffRef.current &&
+              paneScreenRowsRef.current > 0
                 ? {
                     captured: {
                       cursor: capturedCursorRef.current,
@@ -3911,6 +3934,7 @@ export function ServerTerminalWorkspace({
     selection.paneId,
     serverId,
     servesCapturedHistory,
+    servesSegmentedHistory,
     terminalPlane,
     readOutputWindow,
   ]);
@@ -4766,7 +4790,7 @@ export function ServerTerminalWorkspace({
               showToast({
                 variant: 'danger',
                 title: t`Some files did not upload`,
-                message: t`Retry the ones marked in red, or remove them, then send again.`,
+                message: describeBlockedSend(attachments),
               });
               return;
             }
@@ -4951,6 +4975,11 @@ export function ServerTerminalWorkspace({
         // cannot spawn gets a sheet with neither New task nor Stop in it.
         canSpawn: gatewaySupportsAgentSpawn(data.health?.capabilities) ? '1' : '',
         canLazygit: data.health?.capabilities?.includes('pane_lazygit') ? '1' : '',
+        canSavedHistory: data.health?.capabilities?.includes(
+          PANE_CAPTURED_HISTORY_SEGMENTS_CAPABILITY
+        )
+          ? '1'
+          : '',
         // Whether opening a plain URL on this machine is honest. The demo is
         // excluded before the transport is even consulted: its record points
         // at an address that does not exist, so every port on it is a page
@@ -4986,7 +5015,12 @@ export function ServerTerminalWorkspace({
     const picker = capturePicker();
     if (!picker.isCurrent()) return;
     void pickAttachments(source)
-      .then(picker.addFiles)
+      .then((files) => {
+        picker.addFiles(files);
+        const cut = takePickTruncationNotice();
+        if (cut && picker.isCurrent())
+          showToast({ variant: 'warning', title: t`Not every file was added`, message: cut });
+      })
       .catch((failure: unknown) => {
         if (!picker.isCurrent()) return;
         showToast({
@@ -5683,7 +5717,7 @@ export function ServerTerminalWorkspace({
           selectedAsid={padDetail.kind === 'agent' ? padDetail.asid : undefined}
           workbenchSelected={false}
           commandOptions={{ embedded: true, routeBound, sourceRouteActive, openAgentInPlace }}
-          onOpenWorkbench={() => setOverviewVisible(true)}
+          onBack={() => setOverviewVisible(true)}
           onSelectServer={selectPadServer}
           onPairServer={() => router.push('/explore')}
           onOpenSettings={() => router.push('/settings')}
@@ -5713,6 +5747,7 @@ export function ServerTerminalWorkspace({
       }
       // The header stays mounted under Home; the overlay covers it.
       detailTitle={shellTitle}
+      expandDetailTitle={!padDetailIsPane}
       onDetailBack={canReturnToPane ? returnToPreviousPane : demoMode ? leaveDetail : undefined}
       detailFadeColor={padDetailIsPane ? terminalBackground : theme.colors.background}
       detailTitleSlot={
@@ -5977,6 +6012,7 @@ export function ServerTerminalWorkspace({
                           loadingEarlier={loadingEarlierParts}
                           onLoadEarlier={loadEarlierParts}
                           onOpenAsset={openAssetById}
+                          onOpenFile={openFileLink}
                           onToggleDetail={paneView.toggleDetail}
                         />
                       )
@@ -6052,12 +6088,12 @@ export function ServerTerminalWorkspace({
                           // `false` here, but a screen-owning pane must never be
                           // able to arm this gesture on the strength of a metric
                           // alone).
-                          // Captured history is the exception: the gateway kept what
-                          // an alternate-screen pane drew, so the pull is offered on
-                          // its account while it has more to give.
+                          // Legacy continuous capture can also extend this window.
+                          // Segmented snapshots belong to the explicit history reader,
+                          // never to a pull that promises more output in this terminal.
                           canLoadEarlier={canOfferHistoryPull({
                             canLoadEarlier:
-                              (servesCapturedHistory && capturedOpen) ||
+                              (servesCapturedHistory && !servesSegmentedHistory && capturedOpen) ||
                               (!fullScreenPane && canLoadEarlierOutput),
                             blocked: historyPullBlocked,
                           })}
@@ -6261,8 +6297,9 @@ export function ServerTerminalWorkspace({
                       {
                         borderTopLeftRadius: profile.chrome.composerDock,
                         borderTopRightRadius: profile.chrome.composerDock,
+                        borderBottomLeftRadius: 0,
+                        borderBottomRightRadius: 0,
                       },
-                      isPadLayout && { borderRadius: profile.chrome.composerDock },
                     ]}>
                     {/*
               The dock's own height is a moving thing: an approval banner, the
@@ -6469,6 +6506,9 @@ export function ServerTerminalWorkspace({
                 </Animated.View>
               ) : null}
 
+              {previewPdf ? (
+                <AssetViewer asset={previewPdf} onClose={() => setPreviewAttachmentId(null)} />
+              ) : null}
               {previewIndex >= 0 ? (
                 <ImagePreviewModal
                   images={previewImages}

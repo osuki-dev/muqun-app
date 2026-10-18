@@ -16,6 +16,63 @@ const item = (id: string, extra: Partial<TimelineItem> = {}): TimelineItem => ({
 });
 
 describe('agent transcript ownership', () => {
+  test('streaming a long table preserves the initial prompt, history identities and measured row keys', () => {
+    const store = createAgentTranscriptStore();
+    const prompt = item('user', { role: 'user', message_id: 'prompt', order: '002' });
+    const history = item('history', { message_id: 'history', order: '001' });
+    store.getState().setTimeline([history, prompt]);
+    store.getState().configure({ windowStart: 0, status: 'busy' });
+    expect(store.getState().streamingKey).toBeUndefined();
+    const historyRow = store.getState().rows.grp_history;
+    const promptRow = store.getState().rows.grp_user;
+    const answer =
+      '本机配置如下：\n\n| 项目 | 配置 |\n| --- | --- |\n' +
+      Array.from(
+        { length: 30 },
+        (_, i) => `| 部件 ${i} | Streaming fixture with **long wrapped text** ${i} |\n`
+      ).join('');
+    let keys: string[] | undefined;
+    for (let end = 1; end <= answer.length; end += 23) {
+      store.getState().setTimeline((previous) =>
+        upsertTimelineItems(previous, [
+          item('answer', {
+            message_id: 'answer',
+            order: '003',
+            seq: end,
+            part: { type: 'text', text: answer.slice(0, end) },
+          }),
+        ])
+      );
+      const state = store.getState();
+      expect(state.rows.grp_history).toBe(historyRow);
+      expect(state.rows.grp_user).toBe(promptRow);
+      expect(state.streamingKey).toBe('grp_answer');
+      if (keys) expect(state.keys).toBe(keys);
+      keys = state.keys;
+    }
+    store.getState().configure({ windowStart: 0, status: 'idle' });
+    expect(store.getState().streamingKey).toBeUndefined();
+    expect(store.getState().keys).toBe(keys!);
+    expect(store.getState().rows.grp_user).toBe(promptRow);
+  });
+
+  test('only the live text tail streams; reasoning, tools and replaced sessions clear the flag', () => {
+    const store = createAgentTranscriptStore();
+    store.getState().configure({ windowStart: 0, status: 'busy' });
+    store.getState().setTimeline([item('text')]);
+    expect(store.getState().streamingKey).toBe('grp_text');
+    store
+      .getState()
+      .setTimeline([
+        item('text'),
+        item('thought', { part: { type: 'reasoning', text: 'thinking' } }),
+      ]);
+    expect(store.getState().streamingKey).toBeUndefined();
+    expect(store.getState().reasoningKey).toBe('grp_thought');
+    store.getState().setTimeline([item('user', { role: 'user' })], 0);
+    expect(store.getState().streamingKey).toBeUndefined();
+  });
+
   test('thinking split by an empty reply part is one Thought row', () => {
     const store = createAgentTranscriptStore();
     const thought = (id: string) => item(id, { part: { type: 'reasoning', text: id } });

@@ -32,7 +32,7 @@ export function audioPreviewRuntime(
       const bytes = await readAssetBytes(resolved, { signal, maxBytes: MAX_AUDIO_PREVIEW_BYTES });
       if (signal.aborted) throw new Error('Operation cancelled.');
       file.create();
-      file.write(bytes);
+      await file.write(bytes);
       options.onPrepared?.(bytes);
     },
     async start(onProgress, onEnd) {

@@ -165,7 +165,7 @@ async function prepareAssetStream(
           requireThemeDiskSpace(bytes.length, Paths.availableDiskSpace);
           const file = new File(stage, name);
           file.create();
-          file.write(bytes);
+          await file.write(bytes);
           // Persist before requesting the next chunk. Release the native decoder
           // reference even if canceled while the asynchronous decode was running.
           const decoded = await Image.loadAsync(file.uri);

@@ -142,6 +142,28 @@
   },
   "overrides": [
     {
+      // R3F intrinsic elements are Three objects, not DOM nodes. Keep DOM checks
+      // enabled and allow only the typed scene properties used by this one file.
+      "files": ["src/components/computer-map/scene.tsx"],
+      "rules": {
+        "react/no-unknown-property": [
+          "error",
+          {
+            "ignore": [
+              "position",
+              "userData",
+              "args",
+              "wireframe",
+              "transparent",
+              "opacity",
+              "quaternion",
+              "attach"
+            ]
+          }
+        ]
+      }
+    },
+    {
       // TypeScript already reports unresolved names, and it knows the ambient globals (Buffer,
       // NodeJS, the RN globals) far better than a hand-kept list; the Expo ESLint config made the
       // same call.

@@ -1,0 +1,37 @@
+# The finite offline fixture exercises the real list/native Markdown in release too.
+open "muqun://agent?asid=demo-streaming-markdown"
+wait "id=\"demo-streaming-transcript\"" 15000
+# Start a fresh finite stream, then enter the live tail explicitly.
+press "id=\"demo-stream-restart\""
+scroll bottom
+wait "text=\"部件 08\" visible=true" 15000
+is hidden "text=\"部件 20\""
+is hidden "text=\"DEMO_STREAM_COMPLETE\""
+screenshot "shots/transcript-stream-follow-before.png"
+# No further scroll: a later row must become visible as Markdown grows.
+wait "text=\"部件 20\" visible=true" 15000
+is hidden "text=\"DEMO_STREAM_COMPLETE\""
+screenshot "shots/transcript-stream-follow-after.png"
+# A reader who moves above the live table must retain their place while it grows.
+scroll top
+wait 750
+is visible "text=\"History anchor 01. This previously read paragraph must remain still while new output arrives below it.\""
+snapshot
+screenshot "shots/transcript-stream-reading-before.png"
+wait 4000
+is visible "text=\"History anchor 01. This previously read paragraph must remain still while new output arrives below it.\""
+snapshot
+screenshot "shots/transcript-stream-reading-after.png"
+# Completion cannot steal the viewport either. An explicit restart tests another run.
+wait 25000
+scroll bottom
+is visible "text=\"DEMO_STREAM_COMPLETE\""
+# Preserve native pixels of the completed table and diff, not a reconstructed
+# renderer. This does not assert animation identity or real protocol streaming.
+snapshot
+screenshot "shots/transcript-stream-complete-diff.png"
+press "id=\"demo-stream-restart\""
+wait 2000
+is visible "id=\"demo-streaming-list\""
+back --system
+is hidden "id=\"demo-streaming-transcript\""

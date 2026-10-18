@@ -1,5 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 import { createStore } from 'zustand/vanilla';
+import { runInNewContext } from 'node:vm';
+import { productionSource, transpile, walk } from '../../test-support/production-source';
+import { dismissSessionQuestions, type NoticeQueue } from '../in-app-notifications';
 
 import {
   activeTaskCount,
@@ -7,12 +10,58 @@ import {
   createServerTasksState,
   isTaskChannelLive,
   replaceTasks,
-  sessionsLeftWaiting,
   taskAgeParts,
   upsertTask,
   type ServerTasksIndex,
 } from '@/lib/server-tasks-state';
 import type { TaskState, TaskView } from '@/lib/task-ledger';
+
+test('a task resuming work does not resolve its still-pending nonblocking question', () => {
+  const source = productionSource('src/hooks/use-server-tasks.ts');
+  let code = '';
+  walk(source.program, (node) => {
+    if (
+      node.type === 'Property' &&
+      node.key.type === 'Identifier' &&
+      node.key.name === 'onTaskUpdated'
+    )
+      code = source.code(node.value);
+  });
+  expect(code).not.toBe('');
+  let queue: NoticeQueue = {
+    items: [
+      {
+        id: 'pending',
+        title: 'Question',
+        body: '',
+        kind: 'approval',
+        route: null,
+        question: { serverId: 'server', asid: 'session', formId: 'question' },
+      },
+    ],
+    seen: [],
+  };
+  const upserts: unknown[] = [];
+  const update = runInNewContext(transpile(code), {
+    serverId: 'server',
+    upsert: (...args: unknown[]) => upserts.push(args),
+    useInAppNotifications: {
+      getState: () => ({
+        dismissQuestions: (asid: string, serverId: string) => {
+          queue = dismissSessionQuestions(queue, asid, serverId);
+        },
+      }),
+    },
+  });
+  const working = {
+    taskId: 'task',
+    state: 'working',
+    binding: { kind: 'agent_session', asid: 'session' },
+  };
+  update(working);
+  expect(upserts).toEqual([['server', working]]);
+  expect(queue.items.map((item) => item.id)).toEqual(['pending']);
+});
 
 function task(taskId: string, state: TaskState, updatedMs: number): TaskView {
   return {
@@ -106,23 +155,6 @@ describe('replaceTasks', () => {
     const before: ServerTasksIndex = { s1: { tasks: held, fetchedAt: null } };
     const index = replaceTasks(before, 's1', list, 200, 100);
     expect(index.s1?.tasks.map((t) => [t.taskId, t.state])).toEqual(kept);
-  });
-});
-
-describe('sessionsLeftWaiting', () => {
-  const at = (state: TaskState): TaskView => ({
-    ...task('t1', state, 1),
-    binding: { kind: 'agent_session', agentId: 'opencode', asid: 'ses_1' },
-  });
-  // stored before -> stored after -> sessions whose question is stale
-  test.each<[string, TaskState | null, TaskState, string[]]>([
-    ['answered: waiting -> working', 'waiting', 'working', ['ses_1']],
-    ['finished: waiting -> done', 'waiting', 'done', ['ses_1']],
-    ['still waiting', 'waiting', 'waiting', []],
-    ['never seen waiting (the push came first)', 'working', 'working', []],
-    ['new to the ledger', null, 'working', []],
-  ])('%s', (_name, before, after, stale) => {
-    expect(sessionsLeftWaiting(before ? [at(before)] : [], [at(after)])).toEqual(stale);
   });
 });
 
