@@ -4,7 +4,19 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Bot, Check, ChevronDown, ChevronRight, Pencil, Trash2 } from 'lucide-react-native';
+import * as Clipboard from 'expo-clipboard';
+import {
+  Bot,
+  Check,
+  ChevronDown,
+  ChevronRight,
+  Copy,
+  Monitor,
+  Pencil,
+  ScanLine,
+  Terminal,
+  Trash2,
+} from 'lucide-react-native';
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -13,10 +25,10 @@ import { PairAgainNotice } from '@/components/pair-again-notice';
 import {
   LADDER,
   SettingsBlock,
-  SettingsChoiceRow,
   SettingsCard,
   SettingsNavRow,
   SettingsSeparator,
+  SectionLabel,
 } from '@/components/settings-chrome';
 import { FleetPeersSection } from '@/components/settings-fleet-peers';
 import { ServerCapabilities } from '@/components/settings-server-capabilities';
@@ -74,7 +86,7 @@ export function SettingsServers({ initialOpenId }: { initialOpenId?: string } = 
   const refreshReachabilityMany = useServerReachability((state) => state.refreshMany);
   const serverCardPanes = useAppSettings((state) => state.serverCardPanes);
   const update = useAppSettings((state) => state.update);
-  // The one piece of history a record the app is not attached to still has:
+  // Connection history remains useful when any paired computer is offline:
   // the last time `/servers/[serverId]` actually heard back from it, mirrored
   // to disk for the home screen's agent chips (`stores/server-agents.ts`).
   // "Unknown" and "never once answered" read as the same hollow dot on this
@@ -180,7 +192,7 @@ export function SettingsServers({ initialOpenId }: { initialOpenId?: string } = 
                   // One nobody asked recently is `unknown` -- "never asked" is
                   // not "offline" -- but one that answered is online.
                   reachability={statuses[server.serverId] ?? 'unknown'}
-                  lastConnected={current ? undefined : agentsByServer[server.serverId]}
+                  lastConnected={agentsByServer[server.serverId]}
                   open={openId === server.serverId}
                   onToggle={() =>
                     setOpenId((id) => (id === server.serverId ? null : server.serverId))
@@ -194,38 +206,24 @@ export function SettingsServers({ initialOpenId }: { initialOpenId?: string } = 
         </View>
       )}
 
-      {/* The two ways onto a machine, always here. Home carries them as header
-          buttons only until the first server is paired: after that they are
-          things done once a month in a corner used every minute, and this is
-          the page a reader goes to for "add another". Unconditional, so there
-          is one place that never moves. */}
-      <SettingsChoiceRow
-        label={t`Pair a computer`}
-        value=""
-        detail={t`Scan the Gateway’s QR code, or enter its address.`}
-        accessibilityLabel={t`Pair a computer`}
-        testID="settings-pair-row"
-        onPress={() => router.push('/explore')}
-      />
-      <SettingsChoiceRow
-        label={t`SSH hosts`}
-        value=""
-        detail={t`A plain shell on any machine you can reach. No Gateway needed.`}
-        accessibilityLabel={t`SSH hosts`}
-        testID="settings-ssh-row"
-        onPress={() => router.push('/ssh')}
-      />
+      <View style={styles.managementGroup}>
+        <SectionLabel title={t`Connections`} />
+        <SettingsNavRow
+          icon={ScanLine}
+          label={t`Pair a computer`}
+          trailing={ChevronRight}
+          testID="settings-pair-row"
+          onPress={() => router.push('/explore')}
+        />
+        <SettingsNavRow
+          icon={Terminal}
+          label={t`SSH hosts`}
+          trailing={ChevronRight}
+          testID="settings-ssh-row"
+          onPress={() => router.push('/ssh')}
+        />
+      </View>
 
-      {/* The preference that governs how the home screen draws this same list,
-          under the list it is about rather than in a one-row section of its
-          own further down the page.
-
-          A choice with two named states, not a switch: "on" and "off" answer
-          "show anything at all", which is not the question here -- a card
-          always lists something, and what changed under the owner's own
-          machine was that a tmux window/pane and a herdr tab/pane are the
-          same concept, so filtering to "agents" was hiding windows that were
-          just as reachable as the ones running one. */}
       <SettingsBlock
         label={t`Panes on computer cards`}
         caption={
@@ -276,11 +274,8 @@ function ServerRow({
   current: boolean;
   reachability: ConnectionStatus;
   /**
-   * What `/servers/[serverId]` last mirrored for this record, or `undefined`
-   * for `current` -- the live probe already says everything worth saying
-   * about the server the app is attached to. For every other record this is
-   * the only history there is: a snapshot with no entry means this pairing
-   * has never once heard back.
+   * The last successful response mirrored for this record. Only shown while
+   * offline or unknown; live status already tells the reader it is reachable.
    */
   lastConnected: ServerAgentsSnapshot | undefined;
   open: boolean;
@@ -294,6 +289,7 @@ function ServerRow({
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   useRenderTally('SettingsServerRow');
+  const { showToast } = useToast();
 
   /**
    * The rough bucket a record's last confirmed answer falls into.
@@ -350,65 +346,50 @@ function ServerRow({
         accessibilityRole="button"
         testID={`settings-server-row-${server.serverId}`}
         accessibilityLabel={t`Options for ${server.label}`}
-        accessibilityState={{ expanded: open }}
+        accessibilityState={{ expanded: open, selected: current }}
         onPress={onToggle}
         style={[styles.rowHeader, { paddingVertical: profile.settingsRowPaddingVertical }]}>
+        <View
+          style={[
+            styles.computerGlyph,
+            {
+              borderRadius: profile.chrome.control,
+              backgroundColor: surfaceBackground(
+                current ? theme.colors.primarySubtle : theme.colors.surfaceRaised
+              ),
+            },
+          ]}>
+          <Monitor size={20} color={current ? theme.colors.primary : theme.colors.textMuted} />
+        </View>
         <View style={styles.rowCopy}>
           <View style={styles.nameLine}>
-            <Text variant="bodySmall" numberOfLines={1} style={styles.name}>
+            <Text variant="bodySmall" weight="semibold" numberOfLines={1} style={styles.name}>
               {server.label}
             </Text>
-            {/* The only chip on the screen, and it marks the one fact a list of
-                servers has to answer first: which of these is the app talking
-                to. */}
             {current ? (
-              <View
-                style={[
-                  styles.usingChip,
-                  { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
-                ]}>
-                <Text
-                  variant="caption"
-                  weight="semibold"
-                  color={theme.colors.primary}
-                  style={styles.usingText}>
-                  <Trans>Using</Trans>
-                </Text>
-              </View>
+              <Text variant="caption" weight="semibold" color={theme.colors.primary}>
+                <Trans>Selected</Trans>
+              </Text>
             ) : null}
           </View>
-          {/* Always, unlike the home card. This is the screen a reader comes to
-              when the address is what they are after. */}
-          <Text selectable variant="caption" color={theme.colors.textSubtle} numberOfLines={1}>
-            {server.url}
-          </Text>
           <View
             accessibilityLabel={_(connectionStatusDescription[reachability])}
             style={styles.statusLine}>
             <StatusDot
               color={statusColor}
               filled={reachability !== 'unknown' && reachability !== 'reconnecting'}
-              pulse={reachability === 'live'}
             />
-            <Text variant="caption" color={statusColor} style={styles.statusText}>
+            <Text variant="caption" color={statusColor}>
               {_(connectionStatusLabel[reachability])}
             </Text>
+            {reachability === 'offline' || reachability === 'unknown' ? (
+              <Text variant="caption" color={theme.colors.textSubtle} style={styles.historyText}>
+                {lastConnected
+                  ? lastConnectedText(lastConnected.checkedAtMs, nowMs)
+                  : t`Never connected`}
+              </Text>
+            ) : null}
           </View>
-          {/* Only for a record the list just called `unknown` about -- `current`
-              is covered by the live probe above, and there is nothing this line
-              could add to `live` or `offline` that the dot has not already
-              said. This is the fact the probe cannot reach: not "is it up right
-              now" but "has this pairing ever once worked", which is what tells
-              a real machine that is merely asleep apart from a dead pairing
-              nothing will ever revive. */}
-          {!current ? (
-            <Text variant="caption" color={theme.colors.textSubtle} style={styles.historyText}>
-              {lastConnected
-                ? lastConnectedText(lastConnected.checkedAtMs, nowMs)
-                : t`Never connected`}
-            </Text>
-          ) : null}
-          {/* Which SSH host this gateway rides on, if any. */}
           <GatewayTunnelBadge record={server} />
         </View>
         <Animated.View style={chevronStyle}>
@@ -427,6 +408,34 @@ function ServerRow({
           exiting={fadeOut('micro')}
           layout={listLayout()}
           style={styles.actions}>
+          <View
+            style={[
+              styles.addressPanel,
+              {
+                borderRadius: profile.chrome.control,
+                backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+              },
+            ]}>
+            <View style={styles.flexOne}>
+              <Text variant="caption" color={theme.colors.textMuted}>
+                <Trans>Gateway URL</Trans>
+              </Text>
+              <Text selectable variant="caption">
+                {server.url}
+              </Text>
+            </View>
+            <PressableScale
+              accessibilityRole="button"
+              accessibilityLabel={t`Copy`}
+              onPress={() => {
+                void Clipboard.setStringAsync(server.url).then(() =>
+                  showToast({ variant: 'info', title: t`Copied`, message: server.url })
+                );
+              }}
+              style={styles.copyAction}>
+              <Copy size={18} color={theme.colors.textMuted} />
+            </PressableScale>
+          </View>
           {current ? (
             <>
               <HomeAgentNavRow serverId={server.serverId} />
@@ -763,7 +772,7 @@ function UnpairAction({ label, onUnpair }: { label: string; onUnpair: () => Prom
         )}
         {/* Semibold through the prop rather than a stylesheet `fontWeight: '700'`,
             which on Android rounds past the only style `expo-font` registered and
-            lands on the system face. See `usingText`. */}
+            lands on the system face. Use the kit weight prop. */}
         <Text variant="caption" weight="semibold" color={theme.colors.onPrimary}>
           {view.confirm.phase === 'working' ? <Trans>Unpairing…</Trans> : <Trans>Unpair</Trans>}
         </Text>
@@ -946,7 +955,7 @@ function PairedDevices({ server }: { server: GatewayRecord }) {
                 { borderRadius: profile.radius.sm },
                 { backgroundColor: surfaceBackground(theme.colors.danger) },
               ]}>
-              {/* Semibold through the prop, for the Android reason at `usingText`. */}
+              {/* Semibold through the prop, for the Android reason described above. */}
               <Text variant="caption" weight="semibold" color={theme.colors.onPrimary}>
                 <Trans>Revoke</Trans>
               </Text>
@@ -981,29 +990,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: LADDER.snug,
   },
-  rowCopy: { flex: 1, minWidth: 0, gap: 2 },
-  nameLine: { flexDirection: 'row', alignItems: 'center', gap: LADDER.gap },
-  name: { flexShrink: 1 },
-  usingChip: {
-    paddingHorizontal: LADDER.gap,
-    paddingVertical: 2,
-    borderRadius: LADDER.gap,
+  computerGlyph: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderCurve: 'continuous',
   },
-  // Tracking only. The weight is asked for through the kit's prop instead,
-  // because `expo-font` files a reader's face under Typeface.NORMAL alone and
-  // Android rounds 700 and over up to BOLD, finds nothing, and resolves against
-  // the system font list, which does not contain the family. The prop is capped
-  // at semibold; a style `fontWeight` is applied after the kit's resolved font
-  // style and would defeat that cap. The armed labels below carry the same prop
-  // for the same reason.
-  usingText: { letterSpacing: 0.9 },
-  statusLine: { flexDirection: 'row', alignItems: 'center', gap: LADDER.gap, paddingTop: 2 },
-  statusText: { letterSpacing: 0.9 },
-  // Under the status line rather than beside it: the dot already owns that
-  // row, and a second fact crowded onto the same line reads as a correction
-  // to the first rather than as history alongside it.
-  historyText: { paddingTop: 2 },
+  rowCopy: { flex: 1, minWidth: 0, gap: LADDER.tight },
+  nameLine: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: LADDER.gap },
+  name: { flexShrink: 1 },
+  statusLine: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    columnGap: LADDER.gap,
+    rowGap: LADDER.tight,
+  },
+  historyText: { flexShrink: 1 },
+  managementGroup: { paddingTop: LADDER.gutter, paddingBottom: LADDER.gap },
+  addressPanel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingStart: LADDER.snug,
+    paddingVertical: LADDER.gap,
+    gap: LADDER.gap,
+  },
+  copyAction: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   actions: { paddingBottom: LADDER.gutter, gap: LADDER.gap },
   editForm: { gap: LADDER.snug },
   editButtons: { flexDirection: 'row', gap: LADDER.gap },
