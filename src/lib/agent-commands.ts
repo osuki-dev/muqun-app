@@ -1,3 +1,4 @@
+import type { ComposerTrigger } from './composer-popup';
 import { isSlashSkill, type CommandInfo, type SkillInfo } from './agent-protocol';
 
 /**
@@ -100,4 +101,60 @@ export function readSlashCommand(
 /** Whether a name is one the app answers itself. */
 export function isClientCommand(name: string): name is AgentClientCommandId {
   return AGENT_CLIENT_COMMANDS.some((command) => command.id === name);
+}
+
+/**
+ * A `$` line the reader typed to run a catalog skill.
+ *
+ * Same split as a slash command: the first word is the skill id, the rest are
+ * arguments. Every skill the screen was given counts, including the ones the
+ * slash menu hides. A `$` that names nothing is a prompt, the way an unknown
+ * slash is. `#` can grow a reader of its own beside this one; it is not parsed
+ * here.
+ */
+export function readSkillInvocation(
+  text: string,
+  skills: readonly SkillInfo[]
+): { name: string; args: string } | null {
+  const trimmed = text.trim();
+  if (!trimmed.startsWith('$')) return null;
+  const body = trimmed.slice(1);
+  const space = body.search(/\s/);
+  const key = (space < 0 ? body : body.slice(0, space)).toLowerCase();
+  if (!key) return null;
+  const args = space < 0 ? '' : body.slice(space).trim();
+  const skill = skills.find((entry) => entry.id.toLowerCase() === key);
+  if (!skill) return null;
+  return { name: skill.id, args };
+}
+
+function skillRowDescription(skill: SkillInfo): string {
+  if (skill.name && skill.description && skill.name.toLowerCase() !== skill.id.toLowerCase()) {
+    return `${skill.name} · ${skill.description}`;
+  }
+  return skill.description || skill.name;
+}
+
+/**
+ * `$` at the start of the draft, over every skill the screen was given.
+ *
+ * An empty list is not a popup: `readComposerPopup` treats that as a plain
+ * character. The row inserts `$<id>` and the shared pick adds one trailing
+ * space, because a skill can take arguments after its name.
+ */
+export function skillPopupTrigger(skills: readonly SkillInfo[]): ComposerTrigger<SkillInfo> {
+  return {
+    char: '$',
+    anchor: 'start',
+    items: skills,
+    present: (skill) => ({
+      id: skill.id,
+      label: `$${skill.id}`,
+      description: skillRowDescription(skill),
+      hint: '',
+      badge: '',
+      insert: `$${skill.id}`,
+    }),
+    searchText: (skill) => [skill.id, skill.name, skill.description],
+  };
 }

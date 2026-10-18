@@ -1,13 +1,19 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
-import { Monitor } from 'lucide-react-native';
-import { useLayoutEffect } from 'react';
+import { History, Monitor } from 'lucide-react-native';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { LayoutAnimationConfig } from 'react-native-reanimated';
+import Animated, {
+  LayoutAnimationConfig,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import { useShallow } from 'zustand/react/shallow';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
+import { PairAgainNotice } from '@/components/pair-again-notice';
 import { PressableScale } from '@/components/pressable-scale';
 import { StatusDot } from '@/components/status-dot';
 import { SentTaskRow, TaskRow } from '@/components/task-row';
@@ -17,22 +23,24 @@ import { useServerTasks } from '@/hooks/use-server-tasks';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { connectionStatusDescription, connectionStatusLabel } from '@/i18n/labels';
 import type { GatewayRecord } from '@/lib/gateway-storage';
+import { HOME_CONTINUE_INITIAL_LIMIT } from '@/lib/home-continue';
 import {
   buildComputerCards,
   heldCardOrder,
+  lastKnownActivityCaption,
   pendingShown,
   taskRowRank,
   type ComputerCard,
   HOME_CARD_INSET,
-  RECENT_FINISHED_MS,
+  FINISHED_ROWS_SHOWN,
 } from '@/lib/home-computer-cards';
-import { isTerminalTaskState } from '@/lib/task-ledger';
 import { useDeadlineNow } from '@/hooks/use-deadline-now';
 import { useMinuteNow } from '@/hooks/use-minute-now';
 import { PAD_CARD_GAP, padCardColumns } from '@/lib/home-pad-geometry';
-import { fadeOut, listLayout, riseIn } from '@/lib/motion';
+import { fadeOut, listLayout, riseIn, timing } from '@/lib/motion';
 import { useConnectionStatuses, useHomeReachability } from '@/hooks/use-home-reachability';
 import {
+  statusNeedsPairing,
   type ActiveServerConnection,
   type ConnectionStatus,
   type ServerReachability,
@@ -45,7 +53,9 @@ import { useServerReachability } from '@/stores/server-reachability';
 import { useHomeSortHold } from '@/stores/home-sort-hold';
 import { useServerTasksStore } from '@/stores/server-tasks';
 import { useServerAgents } from '@/stores/server-agents';
+import { useHomeAttention } from '@/stores/home-attention';
 import { useServerChannels } from '@/stores/server-channels';
+import { FINISHED_TASKS_SHOWN } from '@/lib/server-tasks-state';
 
 /**
  * Keeps the ledgers of these computers live while Home is up: a list read on
@@ -97,24 +107,15 @@ const subscribeCardDeadlines = (onChange: () => void) => {
 };
 
 /**
- * The first instant after `afterMs` at which time alone could take a card
- * away: a Sent row outliving `PENDING_DISPATCH_TTL_MS`, or a finished task
- * leaving the `RECENT_FINISHED_MS` window.
+ * The first instant after `afterMs` at which time alone changes a card: a
+ * Sent row outliving `PENDING_DISPATCH_TTL_MS`, which stops counting as work
+ * and reads as delivery unconfirmed. Nothing leaves a card by time any more.
  */
 function nextCardExpiry(afterMs: number): number | undefined {
   let next: number | undefined;
-  const consider = (atMs: number) => {
+  for (const item of useHomeTaskCards.getState().pending) {
+    const atMs = item.atMs + PENDING_DISPATCH_TTL_MS;
     if (atMs > afterMs && (next === undefined || atMs < next)) next = atMs;
-  };
-  for (const item of useHomeTaskCards.getState().pending)
-    consider(item.atMs + PENDING_DISPATCH_TTL_MS);
-  for (const entry of Object.values(useServerTasksStore.getState().index)) {
-    for (const task of entry?.tasks ?? []) {
-      if (!isTerminalTaskState(task.state)) continue;
-      consider(
-        Math.max(task.updatedMs, task.settledAtMs ?? task.updatedMs) + RECENT_FINISHED_MS + 1
-      );
-    }
   }
   return next;
 }
@@ -172,12 +173,14 @@ export function ComputerCardsPresence({
   const hiddenList = useHomeTaskCards((state) => state.hidden);
   const hidden = new Set(hiddenList);
   const panesByServer = useServerAgents((state) => state.byServer);
+  const requests = useHomeAttention((state) => state.byTarget);
   const hasCards = useServerTasksStore(
     (state) =>
       buildComputerCards({
         servers,
         index: state.index,
         panesByServer,
+        requests,
         reachability: (serverId) => reachabilityByServer[serverId],
         dismissed,
         hidden,
@@ -211,6 +214,7 @@ export function HomeComputerCards({
   gridWidth,
   onSelectServer,
   onOpenTask,
+  onOpenHistory,
 }: {
   servers: readonly GatewayRecord[];
   /**
@@ -229,6 +233,8 @@ export function HomeComputerCards({
   gridWidth?: number;
   onSelectServer: (serverId: string) => void;
   onOpenTask: (target: CardTaskTarget) => void;
+  /** The computer's task history, everything the card no longer lists. */
+  onOpenHistory?: (serverId: string) => void;
 }) {
   const serverIds = servers.map((server) => server.serverId);
   const entries = useServerTasksStore(
@@ -240,6 +246,7 @@ export function HomeComputerCards({
   const nowMs = useMinuteNow(probeNowMs);
   const inputs = useCardInputs(nowMs);
   const panesByServer = useServerAgents((state) => state.byServer);
+  const requests = useHomeAttention((state) => state.byTarget);
   // The same fold Home's presence check uses, so a card and the section agree;
   // it moves only when a computer goes live, offline or unknown.
   const reachability = useHomeReachability(serverIds, activeConnection);
@@ -249,9 +256,13 @@ export function HomeComputerCards({
     if (entry) index[serverId] = entry;
   });
   const sorted = buildComputerCards({
+    // Expand the currently held task page, bounded like the Tasks sheet.
+    // The toggle never promises to fetch the computer's entire history.
+    limits: { now: 100, finished: FINISHED_TASKS_SHOWN },
     servers,
     index,
     panesByServer,
+    requests,
     reachability: (serverId) => reachability[serverId],
     followed: new Set(followedIds),
     dismissed: inputs.dismissed,
@@ -293,6 +304,7 @@ export function HomeComputerCards({
                   onOpenTask={(task, tree) =>
                     onOpenTask({ serverId: card.serverId, task, ...(tree ? { tree } : {}) })
                   }
+                  onOpenHistory={onOpenHistory ? () => onOpenHistory(card.serverId) : undefined}
                 />
               </Animated.View>
             );
@@ -311,6 +323,7 @@ function ComputerCardView({
   nowMs,
   onSelect,
   onOpenTask,
+  onOpenHistory,
 }: {
   card: ComputerCard;
   server: GatewayRecord;
@@ -319,8 +332,16 @@ function ComputerCardView({
   nowMs: number;
   onSelect: () => void;
   onOpenTask: (task: TaskView, tree?: boolean) => void;
+  onOpenHistory?: () => void;
 }) {
   const { t } = useLingui();
+  const [expanded, setExpanded] = useState(false);
+  // Open work is shown up to the usual limit; finished work shows three
+  // rows and keeps the rest behind Show more, since it no longer expires.
+  const openRows = card.now.length + card.pending.length;
+  const shownOpen = Math.min(openRows, HOME_CONTINUE_INITIAL_LIMIT);
+  const shownFinished = Math.min(card.finished.length, FINISHED_ROWS_SHOWN);
+  const hasMore = openRows + card.finished.length > shownOpen + shownFinished;
   // This card's own status: a probe or a retry against another computer
   // re-renders only the card whose status moved.
   const selectedId = useGatewayConnectionStore((state) => state.record?.serverId);
@@ -335,16 +356,20 @@ function ComputerCardView({
   // A followed ledger can retain a list while its socket is reconnecting or
   // unavailable. Keep that history, but do not animate its remembered status
   // as current activity merely because a health probe or terminal stream is up.
-  const taskChannelLive = useServerChannels((state) => state.sockets[server.serverId] === 'open');
-  const statusCurrent = followed && taskChannelLive;
+  const taskSocket = useServerChannels((state) => state.sockets[server.serverId]);
+  const statusCurrent = followed && taskSocket === 'open';
+  const cachedCaption = lastKnownActivityCaption({
+    followed,
+    socket: taskSocket,
+    rows: card.now.length + card.finished.length,
+  });
   // A card says its computer's connection only when something is wrong with
   // it; a reachable computer is just its name (§3a).
-  const statusColor =
-    status === 'unauthorized'
-      ? theme.colors.warning
-      : status === 'offline' || status === 'reconnecting'
-        ? theme.colors.textSubtle
-        : null;
+  const statusColor = statusNeedsPairing(status)
+    ? theme.colors.warning
+    : status === 'offline' || status === 'reconnecting'
+      ? theme.colors.textSubtle
+      : null;
   // Sent goals sit among the open work by the same urgency (after working,
   // before paused), and finished rows under all of it, with no group headers:
   // each row's icon and time say which it is. Open and finished rows share
@@ -384,7 +409,7 @@ function ComputerCardView({
         onPress={onSelect}
         style={styles.header}>
         <Monitor size={18} color={theme.colors.primary} />
-        <View style={styles.headerCopy}>
+        <View style={[styles.headerCopy, styles.fill]}>
           <Text variant="bodySmall" weight="semibold" numberOfLines={1}>
             {server.label}
           </Text>
@@ -398,48 +423,71 @@ function ComputerCardView({
             </View>
           ) : null}
         </View>
+        {onOpenHistory ? (
+          <PressableScale
+            testID={`home-card-history-${server.serverId}`}
+            accessibilityRole="button"
+            accessibilityLabel={t`Task history for ${server.label}`}
+            hitSlop={8}
+            onPress={onOpenHistory}
+            style={styles.history}>
+            <History size={16} color={theme.colors.textMuted} />
+          </PressableScale>
+        ) : null}
       </PressableScale>
+      <PairAgainNotice
+        testID={`home-card-pair-again-${server.serverId}`}
+        status={status}
+        server={server}
+      />
 
       {followed ? (
         <View style={styles.block}>
-          {!statusCurrent && card.now.length + card.finished.length > 0 ? (
-            <Text
+          {cachedCaption !== 'none' ? (
+            <LastKnownActivityCaption
+              shown={cachedCaption === 'shown'}
               testID={`home-card-cached-${server.serverId}`}
-              variant="caption"
-              color={theme.colors.textMuted}>
-              {t`Last known activity`}
-            </Text>
+            />
           ) : null}
           {/* One keyed list, not one per section: a task moving between Now
               and Just finished (it finished, or it was reopened) is the same
               row element, moved by its layout transition, never re-created. */}
           {[
-            ...urgentNow.map(nowRow),
-            ...card.pending.map((item) => (
-              <SentTaskRow key={item.id} item={item} computer={server.label} nowMs={nowMs} />
-            )),
-            ...restNow.map(nowRow),
-            ...(card.nowTotal > card.now.length
-              ? [
-                  <Text key="more" variant="caption" color={theme.colors.textMuted}>
-                    {t`+${card.nowTotal - card.now.length} more`}
-                  </Text>,
-                ]
-              : []),
-            ...card.finished.map((task) => (
-              <TaskRow
-                key={task.taskId}
-                task={task}
-                inComputerCard
-                statusCurrent={statusCurrent}
-                serverId={server.serverId}
-                discovery={discovery}
-                nowMs={nowMs}
-                onOpen={(finished) => onOpenTask(finished)}
-                onOpenTree={(finished) => onOpenTask(finished, true)}
-              />
-            )),
+            ...[
+              ...urgentNow.map(nowRow),
+              ...card.pending.map((item) => (
+                <SentTaskRow key={item.id} item={item} computer={server.label} nowMs={nowMs} />
+              )),
+              ...restNow.map(nowRow),
+            ].slice(0, expanded ? undefined : shownOpen),
+            ...card.finished
+              .slice(0, expanded ? undefined : shownFinished)
+              .map((task) => (
+                <TaskRow
+                  key={task.taskId}
+                  task={task}
+                  inComputerCard
+                  statusCurrent={statusCurrent}
+                  serverId={server.serverId}
+                  discovery={discovery}
+                  nowMs={nowMs}
+                  onOpen={(finished) => onOpenTask(finished)}
+                  onOpenTree={(finished) => onOpenTask(finished, true)}
+                />
+              )),
           ]}
+          {hasMore ? (
+            <PressableScale
+              testID={`home-card-more-${server.serverId}`}
+              accessibilityRole="button"
+              accessibilityState={{ expanded }}
+              onPress={() => setExpanded((shown) => !shown)}
+              style={styles.more}>
+              <Text variant="bodySmall" color={theme.colors.primary}>
+                {expanded ? t`Show less` : t`Show more`}
+              </Text>
+            </PressableScale>
+          ) : null}
         </View>
       ) : (
         <View style={styles.block}>
@@ -449,6 +497,39 @@ function ComputerCardView({
         </View>
       )}
     </View>
+  );
+}
+
+/**
+ * "Last known activity", in a slot that is always there once the card has
+ * rows. The caption used to mount above the keyed task rows the moment the
+ * socket closed and leave by unmounting, so every arrival pushed the rows
+ * down through a layout transition -- and in the app switcher, where
+ * Reanimated has stopped, the snapshot caught the first frame of that move
+ * with the caption drawn across the first row's title. The text now keeps its
+ * line and only fades, so nothing around it ever moves.
+ */
+function LastKnownActivityCaption({ shown, testID }: { shown: boolean; testID: string }) {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  const opacity = useSharedValue(shown ? 1 : 0);
+  useEffect(() => {
+    opacity.set(withTiming(shown ? 1 : 0, timing('micro')));
+  }, [opacity, shown]);
+  const fade = useAnimatedStyle(() => ({ opacity: opacity.get() }));
+  return (
+    <Animated.View
+      style={fade}
+      accessibilityElementsHidden={!shown}
+      importantForAccessibility={shown ? 'auto' : 'no-hide-descendants'}>
+      <Text
+        testID={shown ? testID : undefined}
+        variant="caption"
+        color={theme.colors.textMuted}
+        numberOfLines={1}>
+        {t`Last known activity`}
+      </Text>
+    </Animated.View>
   );
 }
 
@@ -478,6 +559,8 @@ const styles = StyleSheet.create({
   },
   headerCopy: { flexShrink: 1, minWidth: 0, gap: 2 },
   statusLine: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  history: { minWidth: 32, minHeight: 32, alignItems: 'center', justifyContent: 'center' },
   block: { gap: 4, paddingBottom: 8 },
+  more: { minHeight: 44, justifyContent: 'center' },
   fill: { flexGrow: 1 },
 });

@@ -25,7 +25,7 @@ import { useLingui } from '@lingui/react/macro';
 import { useThemeMode } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -51,12 +51,13 @@ import { useThemeLibrary } from '@/stores/theme-library';
 import { useThemePack } from '@/hooks/use-theme-pack';
 import { useOpenThemeEditor } from '@/hooks/use-open-theme-editor';
 import { useReskinTransition } from '@/components/reskin-transition';
+import { prepareThemeArtwork } from '@/theme/prepare-artwork';
 import { BUILTIN_THEME_INSTALLATION_ID } from '@/theme/repository';
 
 /** The focused field's clearance above the keyboard: the import link's input. */
 const KEYBOARD_BOTTOM_OFFSET = 88;
 
-export function SettingsThemeSheet({ onClose }: { onClose: () => void }) {
+export function SettingsThemeSheet({ onClose }: { onClose: () => void | Promise<void> }) {
   // `t` from the hook, not the global `t` from `@lingui/core/macro` -- see the
   // note at the top of the settings screen for why.
   const { t } = useLingui();
@@ -67,52 +68,62 @@ export function SettingsThemeSheet({ onClose }: { onClose: () => void }) {
   const themePack = useThemePack();
   const { resolvedMode } = useThemeMode();
   const reskin = useReskinTransition();
+  const { width: artworkWidth } = useWindowDimensions();
   const [error, setError] = useState<string | null>(null);
 
   /**
-   * Apply, then leave.
+   * Apply under the cover, then leave once the new theme has painted.
    *
-   * The write goes in before the dismissal rather than after it, so the rule
-   * has somewhere to travel to while the sheet is on its way out and the app
-   * behind it is already repainted when it lands. Tapping the pack that is
-   * already chosen writes nothing and still closes: in a sheet that is a
-   * confirmation, not a no-op.
+   * Closing in the same turn as the write made the sheet dismissal and the
+   * ripple reveal fight, and Home showed through while it was still painting.
+   * The write stays in `apply`; the sheet leaves in `settle`, one frame
+   * before the cover lifts.
    */
   function choose(id: ThemePackId) {
     // The new pack's primary is resolved before it is applied -- the packs are
     // pure data, so a theme can be asked its colours without wearing them --
     // and it is what the wash's front is lit in. That light is the one moment
     // in the transition that tells the reader in colour what they just chose.
-    void reskin.run({
-      kind: 'theme',
-      accent: themeVariant(resolveThemePack(id), resolvedMode).colors.primary,
-      apply: () => {
-        try {
+    setError(null);
+    void reskin
+      .run({
+        kind: 'theme',
+        accent: themeVariant(resolveThemePack(id), resolvedMode).colors.primary,
+        apply: () => {
           useThemeLibrary.getState().apply({ kind: 'builtin', id });
-          onClose();
-        } catch {
-          setError(t`Could not save theme`);
-        }
-      },
-    });
+        },
+        settle: onClose,
+      })
+      .catch(() => {
+        // A rejected apply skips settle; show the error after the cover is removed.
+        setError(t`Could not save theme`);
+      });
   }
 
   /** The same apply-then-leave as `choose`, back to the bundled default. */
   function chooseDefault() {
     const builtin = useThemeLibrary.getState().defaultTheme;
     if (!builtin) return;
-    void reskin.run({
-      kind: 'theme',
-      accent: themeVariant(builtin, resolvedMode).colors.primary,
-      apply: () => {
-        try {
+    setError(null);
+    void reskin
+      .run({
+        kind: 'theme',
+        accent: themeVariant(builtin, resolvedMode).colors.primary,
+        prepare: () =>
+          prepareThemeArtwork(
+            builtin.manifest,
+            useThemeLibrary.getState().defaultAssets,
+            resolvedMode,
+            artworkWidth
+          ),
+        apply: () => {
           useThemeLibrary.getState().resetToDefault();
-          onClose();
-        } catch {
-          setError(t`Could not save theme`);
-        }
-      },
-    });
+        },
+        settle: onClose,
+      })
+      .catch(() => {
+        setError(t`Could not save theme`);
+      });
   }
 
   return (

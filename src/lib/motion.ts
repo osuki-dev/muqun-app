@@ -122,6 +122,9 @@ export const STAGGER = {
  */
 export const ENTRY_BUDGET_MS = 400;
 
+/** One decorative pass between Home's composer choices; never a request timer. */
+export const HOME_COMPOSER_TRANSITION_MS = DURATION.long + DURATION.micro;
+
 /**
  * The two re-skin transitions, which are longer than anything else the app
  * animates and are allowed to be.

@@ -4,18 +4,17 @@ import { useIsFocused, useRouter } from 'expo-router';
 import { SlidersHorizontal } from 'lucide-react-native';
 import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { AppState, StyleSheet, View } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
 
 import { AgentComposer, type DraftInjector } from '@/components/agent-composer';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import type { HomeLaunchController } from '@/components/home-launch-actions';
 import type { DockAutoHide } from '@/hooks/use-dock-auto-hide';
 import { HomeComposerOptions } from '@/components/home-composer-options';
+import {
+  HomeComposerTransition,
+  type HomeComposerPulse,
+  type HomeComposerTransitionKind,
+} from '@/components/home-composer-transition';
 import {
   HomeComposerBackground,
   useHomeComposerBackgroundOutset,
@@ -39,6 +38,7 @@ import {
   createAgentSession,
   formatModelName,
   getAgentCatalog,
+  peekAgentCatalog,
   listAgentSessions,
   invokeAgentSkill,
   normalizeAgentId,
@@ -78,13 +78,18 @@ import { markPromptedSession } from '@/lib/prompted-agent-sessions';
 import { loadTerminalCatalog, useTerminalAgentCatalog } from '@/hooks/use-terminal-agent-catalog';
 import { agentSpawnRequest, terminalPromptWithAttachments } from '@/lib/agent-spawn';
 import { loadSessions, spawnAgent } from '@/lib/gateway-client';
-import { homeAgentOptions, resolveHomeAgent } from '@/lib/home-agent-choice';
+import {
+  homeAgentNeedsTerminalLabel,
+  homeAgentOptions,
+  resolveHomeAgent,
+} from '@/lib/home-agent-choice';
 import { describeGatewayFailure } from '@/lib/network-error';
 import {
-  hasTaskLedgerCreate,
   TASK_DEFAULTS_CAPABILITY,
   TASK_LEDGER_PANE_CAPABILITY,
   type LedgerTaskRequest,
+  hasTaskLedgerDelivery,
+  type LedgerDelivery,
 } from '@/lib/task-ledger';
 import {
   createHomeLedgerTask,
@@ -96,6 +101,8 @@ import {
 import { useHomeAgentChoice } from '@/stores/home-agent-choice';
 import { useHomeTaskCards } from '@/stores/home-task-cards';
 import { useServerCapabilities } from '@/stores/server-capabilities';
+import { gatewaySocketFor } from '@/lib/gateway-socket-runtime';
+import { WS_EVENTS_CAPABILITY } from '@/lib/gateway-socket';
 import { useFleetPeers } from '@/stores/fleet-peers';
 import { fetchFleetPeers, hasFleetPeers } from '@/lib/fleet-peers';
 import { recordEndpoint } from '@/hooks/use-server-tasks';
@@ -105,9 +112,8 @@ import type { ServerReachability } from '@/lib/server-reachability';
 import { useAgents } from '@/stores/agents';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useHomeComposerSheet } from '@/stores/home-composer-sheet';
-
-const FLASH_IN_MS = 120;
-const FLASH_OUT_MS = 600;
+import { markHomeComposerRevealed } from '@/lib/home-first-entry';
+import { appChrome } from '@/constants/appearance';
 
 const NO_COMMANDS: AgentCatalog['commands'] = [];
 const NO_SKILLS: AgentCatalog['skills'] = [];
@@ -124,8 +130,8 @@ const NO_SKILLS: AgentCatalog['skills'] = [];
  * The target computer is the selected gateway record (one connection at a
  * time), so the catalog, the attachment uploads and the file mentions all go
  * to the computer the bar names. Send does what the workbench does for a new
- * session -- `createAgentSession`, then the prompt -- and only then opens that
- * session as an existing one. A failure keeps the draft and the staged files
+ * session -- `createAgentSession`, then the prompt -- and binds Home's status
+ * row to the returned session. A failure keeps the draft and the staged files
  * in the dock and says why under the bar; nothing is retried by itself.
  */
 /** How many of the target's recent sessions are read for models it refused. */
@@ -134,6 +140,7 @@ const REFUSAL_SESSIONS_READ = 30;
 const MENTIONS_READ_TIMEOUT_MS = 2_000;
 
 export function HomeComposerDock({
+  revealed,
   controller,
   reachabilityByServer,
   targetPulse = 0,
@@ -147,11 +154,12 @@ export function HomeComposerDock({
   onDockHeight,
   onOpenAgent,
 }: {
+  revealed: boolean;
   controller: HomeLaunchController;
   reachabilityByServer: Readonly<Record<string, ServerReachability | undefined>>;
   /**
    * Bumped when Home sets the target from outside the dock (a tap on a
-   * computer row); each bump flashes the assignment bar.
+   * computer row); each bump plays the composer's choice transition.
    */
   targetPulse?: number;
   bottomInset?: number;
@@ -176,6 +184,9 @@ export function HomeComposerDock({
   ) => Promise<HomeCommandResult>;
 }) {
   const { t } = useLingui();
+  useEffect(() => {
+    if (revealed) markHomeComposerRevealed();
+  }, [revealed]);
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
   const decorationOverhang = useHomeComposerDecorationOverhang();
@@ -183,6 +194,10 @@ export function HomeComposerDock({
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [optionsVisible, setOptionsVisible] = useState(false);
   const [optionsHeightAnimating, setOptionsHeightAnimating] = useState(false);
+  const [transitionPulse, setTransitionPulse] = useState<HomeComposerPulse | null>(null);
+  const playTransition = useStableHandler((kind: HomeComposerTransitionKind) => {
+    setTransitionPulse((previous) => ({ id: (previous?.id ?? 0) + 1, kind }));
+  });
   const background = useSurfaceBackground();
   const router = useRouter();
   const { showToast } = useToast();
@@ -198,19 +213,11 @@ export function HomeComposerDock({
   } | null>(null);
   const [checkingDelivery, setCheckingDelivery] = useState(false);
 
-  // The assignment bar lights up for a moment whenever the target is set by
-  // hand, so the change is seen, not inferred.
-  const flash = useSharedValue(0);
+  // The composer marks an externally selected target with its choice transition.
   useEffect(() => {
     if (targetPulse === 0) return;
-    flash.set(
-      withSequence(
-        withTiming(1, { duration: FLASH_IN_MS }),
-        withTiming(0, { duration: FLASH_OUT_MS })
-      )
-    );
-  }, [targetPulse, flash]);
-  const flashStyle = useAnimatedStyle(() => ({ opacity: flash.get() }));
+    playTransition('choice');
+  }, [targetPulse, playTransition]);
 
   const target = resolveHomeComposerTarget({ servers, chosen, reachabilityByServer });
   const targetServer = target.kind === 'none' ? undefined : target.server;
@@ -347,11 +354,8 @@ export function HomeComposerDock({
   const chosenAgentKey = useHomeAgentChoice((state) =>
     targetId ? state.byServer[targetId] : undefined
   );
-  const agent = resolveHomeAgent(
-    homeAgentOptions(discovery, terminalCatalog),
-    chosenAgentKey,
-    terminalCatalog !== undefined
-  );
+  const agentOptions = homeAgentOptions(discovery, terminalCatalog);
+  const agent = resolveHomeAgent(agentOptions, chosenAgentKey, terminalCatalog !== undefined);
   const terminalAgent = agent?.kind === 'terminal' ? agent : null;
   // Where the goal runs on this computer: the folder last picked here, if
   // any. Sent as `cwd` (ledger, spawn) or `directory` (session).
@@ -376,13 +380,27 @@ export function HomeComposerDock({
     last: t`Last folder`,
     home: t`Home folder`,
   });
-  const agentName = agent?.name ?? '';
+  const providerName = agent?.name ?? '';
+  const agentName = homeAgentNeedsTerminalLabel(agent, agentOptions)
+    ? t`${providerName} (terminal)`
+    : providerName;
   const agentLabel = agentName || computerLabel;
-  // A gateway that opens ledger tasks gets the goal as one: Home's cards then
-  // see the work, and the work it delegates, live.
-  const ledgerCreate = useServerCapabilities((state) =>
-    targetId ? hasTaskLedgerCreate(state.byServer[targetId]) : false
+  // A gateway that takes the delivery by name lets the reader's pick decide
+  // how a goal is carried: the provider's session entry sends a session
+  // task, its terminal entry a pane task, each only where that provider
+  // lists the delivery. No agent is named here; the data is.
+  const ledgerDelivery = useServerCapabilities((state) =>
+    targetId ? hasTaskLedgerDelivery(state.byServer[targetId]) : false
   );
+  /** The discovery entry a picked option stands for, if the computer listed one. */
+  const discoveredAgent = (option: {
+    kind: 'session' | 'terminal';
+    agentId?: string;
+    agentKind: string;
+  }) =>
+    discovery?.agents?.agents.find((entry) =>
+      option.kind === 'session' ? entry.id === option.agentId : entry.kind === option.agentKind
+    );
   // ... and a terminal agent's goal as one too: the gateway opens the pane,
   // types the goal and follows the agent as the task's state.
   const ledgerPane = useServerCapabilities((state) =>
@@ -408,6 +426,8 @@ export function HomeComposerDock({
   useEffect(() => {
     if (!ready || !selected || terminalAgent) return;
     let current = true;
+    const peeked = peekAgentCatalog(HOME_AGENT_SESSION_ID, agentId ? { agentId } : undefined);
+    if (peeked) setCatalogRead({ key: catalogKey, catalog: peeked });
     getAgentCatalog(HOME_AGENT_SESSION_ID, undefined, agentId ? { agentId } : undefined)
       .then((catalog) => {
         if (current) setCatalogRead({ key: catalogKey, catalog });
@@ -456,6 +476,19 @@ export function HomeComposerDock({
     catalogRead: catalog !== undefined,
   });
   const selectedModel = shown.model;
+  // Only a picker opened here can animate its changed choice on returning.
+  // Catalog refreshes and initial preference hydration are not user steps.
+  const pendingChoiceRef = useRef<string | null>(null);
+  const choiceSignature = JSON.stringify([targetId, chosenAgentKey, folder, picked]);
+  useEffect(() => {
+    if (!focused || pendingChoiceRef.current === null) return;
+    const previous = pendingChoiceRef.current;
+    pendingChoiceRef.current = null;
+    if (previous !== choiceSignature) playTransition('choice');
+  }, [focused, choiceSignature, playTransition]);
+  function beginChoice() {
+    pendingChoiceRef.current = choiceSignature;
+  }
   const modelInfo = selectedModel
     ? models.find(
         (model) =>
@@ -480,6 +513,7 @@ export function HomeComposerDock({
   });
   useEffect(() => () => useHomeComposerSheet.getState().release(selectModel), [selectModel]);
   function openModelSheet() {
+    beginChoice();
     useHomeComposerSheet.getState().open(selectedModel, selectModel);
     router.push({
       pathname: '/agent-model',
@@ -495,7 +529,10 @@ export function HomeComposerDock({
   // that names none keeps the model the reader picked.
   function selectMode(mode: string) {
     const bringsModel = modes.find((entry) => entry.id === mode)?.model !== undefined;
-    if (targetId) chooseMode(targetId, agentId, mode, bringsModel);
+    if (targetId) {
+      chooseMode(targetId, agentId, mode, bringsModel);
+      if (mode !== shown.mode) playTransition('choice');
+    }
   }
 
   /** The workbench's own sentences for a failed request, in this agent's name. */
@@ -610,7 +647,15 @@ export function HomeComposerDock({
         const key = `${serverId}\u0000${params.agentId ?? ''}\u0000${sendFolder ?? ''}`;
         // The selection moved while this was in flight: the session and its
         // prompt would go to a computer the bar no longer names.
-        const owns = () => useGatewayConnectionStore.getState().record?.serverId === serverId;
+        const owner = useGatewayConnectionStore.getState().record;
+        const owns = () => {
+          const current = useGatewayConnectionStore.getState().record;
+          return (
+            owner?.serverId === serverId &&
+            sameComputer(current, owner) &&
+            current?.deviceId === owner.deviceId
+          );
+        };
         let creating = false;
         return recoverWith(
           async () => {
@@ -623,6 +668,7 @@ export function HomeComposerDock({
             if (plan.kind === 'reuse') {
               const { asid } = plan.started;
               if (plan.switchMode) await switchAgentMode(asid, plan.switchMode);
+              if (!owns()) throw new Error(t`Computer unavailable.`);
               if (plan.switchModel)
                 await switchAgentModel(HOME_AGENT_SESSION_ID, asid, plan.switchModel);
               started = { ...plan.started, params };
@@ -803,7 +849,10 @@ export function HomeComposerDock({
     );
   });
 
-  async function openLedgerTask(text: string): Promise<boolean> {
+  async function openLedgerTask(
+    text: string,
+    carried?: { delivery: LedgerDelivery; agentId?: string }
+  ): Promise<boolean> {
     if (inFlightRef.current) return false;
     inFlightRef.current = true;
     let pendingId: string | null = null;
@@ -814,7 +863,15 @@ export function HomeComposerDock({
         const serverId = await sendTarget();
         if (!serverId) return false;
         const params = sessionParams;
-        const owns = () => useGatewayConnectionStore.getState().record?.serverId === serverId;
+        const owner = useGatewayConnectionStore.getState().record;
+        const owns = () => {
+          const current = useGatewayConnectionStore.getState().record;
+          return (
+            owner?.serverId === serverId &&
+            sameComputer(current, owner) &&
+            current?.deviceId === owner.deviceId
+          );
+        };
         return recoverWith(
           async () => {
             if (!owns()) {
@@ -828,13 +885,18 @@ export function HomeComposerDock({
               {
                 goal: text,
                 ...(mentions.length ? { mentions } : {}),
-                ...(params.agentId ? { agentId: params.agentId } : {}),
+                ...(carried?.agentId
+                  ? { agentId: carried.agentId }
+                  : params.agentId
+                    ? { agentId: params.agentId }
+                    : {}),
                 ...(folder ? { cwd: folder } : {}),
                 ...(params.mode ? { mode: params.mode } : {}),
                 ...(params.model ? { model: ledgerModelId(params.model) } : {}),
                 // Applied at session creation by a gateway that takes it (Gateway
                 // Task 15); an older one ignores it, and the switch below sets it.
                 ...(params.model?.variant ? { variant: params.model.variant } : {}),
+                ...(carried ? { delivery: carried.delivery } : {}),
               },
               owns,
               pendingId
@@ -864,7 +926,9 @@ export function HomeComposerDock({
             // takes the picked variant for every turn after. On one that
             // applied it, this sets what is already set.
             const pickedModel = params.model;
-            if (pickedModel?.variant) {
+            // Creation may finish after the reader selected another computer.
+            // The shared client's fallback write still belongs to this one.
+            if (pickedModel?.variant && owns()) {
               void switchAgentModel(HOME_AGENT_SESSION_ID, asid, pickedModel).catch(
                 (failure: unknown) => console.warn('Home could not set the model variant:', failure)
               );
@@ -1038,8 +1102,8 @@ export function HomeComposerDock({
     return Promise.resolve(true);
   }
 
-  /** A goal with files, to a session; `again` sends a failed row's payload as it was. */
-  function sendWithFiles(
+  /** A goal, with or without files; `again` preserves the failed row's destination. */
+  function sendSessionPrompt(
     text: string,
     attachments: string[],
     again?: { serverId: string; params: HomeSessionParams; folder?: string }
@@ -1053,6 +1117,24 @@ export function HomeComposerDock({
 
   function sendPrompt(text: string, attachments?: string[]): Promise<boolean> {
     if (terminalAgent) {
+      if (!inFlightRef.current && ready) playTransition('send');
+      // The terminal entry of a provider whose ledger carries goals into a
+      // pane: the task is the computer's, with the pane as its delivery.
+      const paneEntry = ledgerDelivery ? discoveredAgent(terminalAgent) : undefined;
+      const paneListed =
+        paneEntry?.ledgerDelivery?.includes('pane') ||
+        (ledgerDelivery &&
+          terminalCatalog
+            ?.find((profile) => profile.kind === terminalAgent.agentKind)
+            ?.ledgerDelivery?.includes('pane'));
+      if (paneListed && !attachments?.length) {
+        return dispatchTask(text, () =>
+          openLedgerTask(text, {
+            delivery: 'pane',
+            agentId: paneEntry?.id ?? terminalAgent.agentKind,
+          })
+        );
+      }
       const start = () =>
         startTerminalAgent(
           terminalAgent.agentKind,
@@ -1067,19 +1149,24 @@ export function HomeComposerDock({
       return attachments?.length ? start() : dispatchTask(text, start);
     }
     if (heldByModelGate()) return Promise.resolve(false);
-    // Attachments ride on a prompt to a session; the ledger route takes text
-    // only, so a send with files keeps the session path. So does a retry onto
-    // the session a failed send left. Either way Home stays put.
-    if (ledgerCreate && !attachments?.length && !startedRef.current) {
-      return dispatchTask(text, () => openLedgerTask(text));
+    if (!inFlightRef.current && ready) playTransition('send');
+    // A session entry: a ledger task bound to the provider's native session
+    // where the gateway takes the delivery by name and the provider lists it,
+    // which is what lets the card follow the work and keep it across this
+    // device's restarts. A gateway without that answer, or a provider that
+    // does not list it, gets the session opened by Home directly -- the
+    // path files and retries take too.
+    const sessionEntry = ledgerDelivery && agent ? discoveredAgent(agent) : undefined;
+    if (
+      sessionEntry?.ledgerDelivery?.includes('session') &&
+      !attachments?.length &&
+      !startedRef.current
+    ) {
+      return dispatchTask(text, () => openLedgerTask(text, { delivery: 'session' }));
     }
-    // Attachments cannot be put back once the field lets them go, so a send
-    // with files is answered for real: a failure leaves text and files where
-    // they are, and the row keeps them to send again.
-    if (attachments?.length) return sendWithFiles(text, attachments);
-    return dispatchTask(text, () =>
-      startSession((asid) => sendAgentPrompt(HOME_AGENT_SESSION_ID, asid, { text }))
-    );
+    // Wait for acceptance so any failure retains the complete draft. Passing
+    // the goal also binds Home's status row without opening another screen.
+    return sendSessionPrompt(text, attachments ?? []);
   }
   // The composer empties the field as it hands a command over, so a command
   // that did not run puts its line back.
@@ -1118,7 +1205,7 @@ export function HomeComposerDock({
     retrySwitchBegins();
     void settleAfterAsync(
       async () => {
-        const sent = await sendWithFiles(resend.text, resend.attachments, {
+        const sent = await sendSessionPrompt(resend.text, resend.attachments, {
           serverId: item.serverId,
           params: resend.params,
           ...(resend.folder ? { folder: resend.folder } : {}),
@@ -1151,39 +1238,81 @@ export function HomeComposerDock({
       .join(',')
   );
   useEffect(() => {
-    if (!followedBound) return;
-    const read = () => {
-      if (AppState.currentState !== 'active') return;
-      for (const item of useHomeTaskCards.getState().pending) {
-        if (!item.asid || item.failed || item.reply?.state === 'done') continue;
-        if (item.reply?.state === 'failed') continue;
-        const record = useGatewayConnectionStore
-          .getState()
-          .records.find((entry) => entry.serverId === item.serverId);
-        if (!record) continue;
-        const asid = item.asid;
-        void readAgentSessionAt(recordEndpoint(record), HOME_AGENT_SESSION_ID, asid).then(
-          (snapshot) => {
-            if (!snapshot) return;
-            const state = boundSessionState(snapshot);
-            if (state !== 'waiting')
-              useHomeTaskCards.getState().replied(item.id, state, Date.now());
-          }
-        );
-      }
+    if (!followedBound || !focused) return;
+    // One read per row at a time: a snapshot takes up to the request budget,
+    // which is longer than the poll, and the poll used to stack reads behind
+    // a slow one. Where the row's computer has `ws_events`, its session's
+    // socket says when something changed and the poll is not run at all.
+    const inFlight = new Set<string>();
+    const readOne = (item: PendingDispatch) => {
+      if (AppState.currentState !== 'active' || inFlight.has(item.id) || !item.asid) return;
+      const record = useGatewayConnectionStore
+        .getState()
+        .records.find((entry) => entry.serverId === item.serverId);
+      if (!record) return;
+      inFlight.add(item.id);
+      void readAgentSessionAt(recordEndpoint(record), HOME_AGENT_SESSION_ID, item.asid)
+        .then((snapshot) => {
+          if (!snapshot) return;
+          const state = boundSessionState(snapshot);
+          if (state !== 'waiting') useHomeTaskCards.getState().replied(item.id, state, Date.now());
+        })
+        .finally(() => inFlight.delete(item.id));
     };
-    read();
-    const timer = setInterval(read, BOUND_SESSION_READ_MS);
-    return () => clearInterval(timer);
-  }, [followedBound]);
+    const rows = useHomeTaskCards
+      .getState()
+      .pending.filter(
+        (item) =>
+          item.asid &&
+          !item.failed &&
+          item.reply?.state !== 'done' &&
+          item.reply?.state !== 'failed'
+      );
+    const capabilities = useServerCapabilities.getState().byServer;
+    const watched = rows.filter((item) =>
+      capabilities[item.serverId]?.includes(WS_EVENTS_CAPABILITY)
+    );
+    const polled = rows.filter((item) => !watched.includes(item));
+    for (const item of rows) readOne(item);
+    // A turn's events arrive in bursts; one read a moment after the last of them.
+    const settle = new Map<string, ReturnType<typeof setTimeout>>();
+    const releases = watched.map((item) =>
+      gatewaySocketFor(item.serverId).watch(item.asid!, {
+        onEvent: () => {
+          const pending = settle.get(item.id);
+          if (pending) clearTimeout(pending);
+          settle.set(
+            item.id,
+            setTimeout(() => {
+              settle.delete(item.id);
+              readOne(item);
+            }, BOUND_SESSION_SETTLE_MS)
+          );
+        },
+        onSubscribed: () => readOne(item),
+      })
+    );
+    const timer =
+      polled.length > 0
+        ? setInterval(() => {
+            for (const item of polled) readOne(item);
+          }, BOUND_SESSION_READ_MS)
+        : null;
+    return () => {
+      if (timer) clearInterval(timer);
+      for (const pending of settle.values()) clearTimeout(pending);
+      for (const release of releases) release();
+    };
+  }, [followedBound, focused]);
   const openRow = useStableHandler((item: PendingDispatch) => {
     if (item.asid) void onOpenAgent(item.serverId, item.asid, undefined, HOME_AGENT_SESSION_ID);
   });
+  const checkRow = useStableHandler((_item: PendingDispatch) => void checkDelivery());
   useEffect(() => {
     const { setRowActions } = useHomeTaskCards.getState();
-    setRowActions({ retry: retryRow, open: openRow });
+    setRowActions({ retry: retryRow, open: openRow, check: checkRow });
     return () => setRowActions(null);
-  }, [retryRow, openRow]);
+  }, [retryRow, openRow, checkRow]);
   function clientCommand(name: AgentClientCommandId) {
     if (name === 'models') openModelSheet();
   }
@@ -1236,19 +1365,25 @@ export function HomeComposerDock({
         mode={shown.mode ?? 'build'}
         modes={modes}
         offline={!ready}
-        onComputer={openTargetPicker}
+        onComputer={() => {
+          beginChoice();
+          openTargetPicker();
+        }}
         onAgent={
           targetServer
-            ? () =>
+            ? () => {
+                beginChoice();
                 router.push({
                   pathname: '/home-agent',
                   params: { serverId: targetServer.serverId },
-                })
+                });
+              }
             : undefined
         }
         onFolder={
           targetServer && ready && selected
-            ? () =>
+            ? () => {
+                beginChoice();
                 router.push({
                   pathname: '/agent-workspace',
                   params: {
@@ -1257,7 +1392,8 @@ export function HomeComposerDock({
                     sessionId: HOME_AGENT_SESSION_ID,
                     ...(agentId ? { agentId } : {}),
                   },
-                })
+                });
+              }
             : undefined
         }
         onModel={features.modelSelection && !terminalAgent ? openModelSheet : undefined}
@@ -1273,22 +1409,7 @@ export function HomeComposerDock({
       accessibilityHint={t`Choose computer, agent, folder, mode and model`}
       accessibilityState={{ expanded: optionsOpen }}
       onPress={() => setOptionsOpen((open) => !open)}
-      style={[
-        composerStyles.button,
-        { borderRadius: profile.chrome.roundControl },
-        optionsOpen && { backgroundColor: background(theme.colors.primarySubtle) },
-      ]}>
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          StyleSheet.absoluteFill,
-          {
-            borderRadius: profile.chrome.roundControl,
-            backgroundColor: background(theme.colors.primarySubtle),
-          },
-          flashStyle,
-        ]}
-      />
+      style={[composerStyles.button, { borderRadius: profile.chrome.roundControl }]}>
       <ThemeIcon
         name="chrome.parameters"
         fallback={SlidersHorizontal}
@@ -1300,9 +1421,30 @@ export function HomeComposerDock({
 
   return (
     <AgentComposer
+      revealed={revealed}
       accessory={bar}
       accessoryHeightAnimating={optionsHeightAnimating || optionsOpen !== optionsVisible}
-      fieldBackground={<HomeComposerBackground />}
+      fieldBackground={
+        <>
+          <HomeComposerBackground />
+          <View
+            pointerEvents="none"
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                left: backgroundOutset?.left ?? 0,
+                right: backgroundOutset?.right ?? 0,
+                bottom: backgroundOutset?.bottom ?? 0,
+              },
+            ]}>
+            <HomeComposerTransition
+              pulse={transitionPulse}
+              focused={focused}
+              radius={profile.chrome.composerField}
+            />
+          </View>
+        </>
+      }
       fieldBackgroundOutset={backgroundOutset ?? undefined}
       fieldBackgroundColor={background(theme.colors.surface)}
       fieldDecoration={decorationOverhang > 0 ? <HomeComposerDecoration /> : undefined}
@@ -1311,6 +1453,9 @@ export function HomeComposerDock({
         optionsOpen || optionsVisible || Boolean(error) || Boolean(visibleUnknownDelivery)
       }
       fieldTextTopInset={6}
+      // Home's field is the dock's only painted surface, on both the phone
+      // bar and the Pad cover, so it casts the edge a dock's glass would.
+      fieldShadow={appChrome.shadow.homeComposerField}
       toolbarLeading={parameterButton}
       hideParameterRow
       flushField
@@ -1370,6 +1515,8 @@ export function HomeComposerDock({
 
 /** How often a row bound to its session reads that session, while it waits or works. */
 const BOUND_SESSION_READ_MS = 5_000;
+/** How long after a session's last event its snapshot is read, so a burst costs one read. */
+const BOUND_SESSION_SETTLE_MS = 1_500;
 
 /** Failed rows' retries under way: their switch of the selection holds the staged files. */
 let retrySwitches = 0;

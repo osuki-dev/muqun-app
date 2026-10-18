@@ -4,7 +4,7 @@ import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import * as Clipboard from 'expo-clipboard';
 import * as Device from 'expo-device';
-import { type Href, useRouter } from 'expo-router';
+import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
 import {
   Check,
   Copy as CopyIcon,
@@ -55,6 +55,8 @@ import {
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { GATEWAY_INSTALL_COMMAND, GATEWAY_SETUP_URL } from '@/constants/links';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
+import { pairAgainAddress } from '@/lib/pair-again-target';
+import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { GATEWAY_DEFAULT_PORT } from '@/lib/ssh-tunnel';
@@ -236,6 +238,15 @@ export default function PairModal() {
   // Scanning is the default path. Manual address entry is a peer mode rather
   // than a disclosure under the camera, so switching replaces the preview
   // instead of stacking a form below it.
+  // Opened to pair a computer again (`PairAgainNotice`): the screen still
+  // starts on the scanner -- the QR is the path nobody on the network can
+  // steer -- and the stored address of the record this device holds for that
+  // id is typed in only once the reader opens the manual form themselves.
+  // Only the id travels on the route; the address comes from storage
+  // (`pairAgainAddress`), never from a parameter.
+  const params = useLocalSearchParams<{ serverId?: string }>();
+  const records = useGatewayConnectionStore((state) => state.records);
+  const [pairAgainUrl] = useState(() => pairAgainAddress(params, records));
   const [manualOpen, setManualOpen] = useState(false);
   const [manualUrl, setManualUrl] = useState('');
   // The third way in: a gateway that only listens on its own machine, reached
@@ -783,6 +794,12 @@ export default function PairModal() {
                         style={[inputStyle, { fontFamily: mono }]}
                       />
                     </SheetSceneField>
+                    {/* A typed address is the one way in that something on the
+                        path could have steered the reader to; the code they
+                        type next is what it would be after. */}
+                    <Text variant="caption" color={theme.colors.textMuted}>
+                      {t`Type a pairing code only on a network you trust.`}
+                    </Text>
                     <SheetSceneAction
                       label={busy ? t`Connecting` : t`Continue`}
                       busy={busy}
@@ -884,6 +901,8 @@ export default function PairModal() {
                   onPress={() => {
                     setSshOpen(false);
                     setManualOpen((value) => !value);
+                    // The computer being paired again, if the field is still empty.
+                    setManualUrl((value) => value || pairAgainUrl);
                     // The mode switch is below the viewfinder on compact sheets.
                     // Reveal the replacement form instead of keeping it above the viewport.
                     scrollRef.current?.scrollTo({ y: 0, animated: true });

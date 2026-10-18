@@ -222,6 +222,20 @@ wait stable 300 5000
 press "${TARGET}"
 wait stable 400 5000
 
+# section selected-builtin
+# Successful selection must close, and reopening must show the actual active
+# row. The durable-write failure/retry path requires a separate QA fault build.
+wait absent "id=settings-theme-sheet" 10000
+press "id=settings-theme-row"
+wait "id=settings-theme-sheet" 10000
+press "id=\"settings-selection:on:theme-tab-builtin\""
+scroll down --until "id=\"settings-selection:on:theme-osuki\""
+is visible "id=\"settings-selection:on:theme-osuki\""
+screenshot "shots/theme-osuki-selected.png"
+back --system
+wait absent "id=settings-theme-sheet" 10000
+is visible "label=\"Theme, Osuki\""
+
 # section storage-anchor
 # Where the taps below are made from, and never the position the flick above
 # happened to stop at. A scroll that stops the moment a row enters the tree

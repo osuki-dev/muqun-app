@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useLingui } from '@lingui/react/macro';
@@ -155,7 +155,7 @@ export const AgentWorktreeSheet = memo(function AgentWorktreeSheet({
   const [branchDraft, setBranchDraft] = useState('');
   const [createError, setCreateError] = useState<string | null>(null);
 
-  const scrollerRef = useRef<ScrollView>(null);
+  const scrollerRef = useRef<ScrollViewInstance>(null);
   const createOffset = useRef(0);
 
   /**

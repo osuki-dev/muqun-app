@@ -21,19 +21,19 @@
  * OpenCode's payloads and stay camelCase.
  */
 
+import { parseAgentSessionRuntime, type AgentSessionRuntime } from './agent-session-runtime';
+import { parseLedgerDelivery, type LedgerDelivery } from './task-ledger';
 import { parseKeyboardVocabulary, type KeyboardVocabulary } from './key-vocabulary';
 import { parseMessageImageAssets, type MessageImageAsset } from './message-images';
 import { stripTaskInstruction } from './task-plumbing';
+import { asRecord } from './record';
+import type { UploadLimits } from './attachment-queue';
+
+export { asRecord } from './record';
 
 // ---------------------------------------------------------------------------
 // Primitives
 // ---------------------------------------------------------------------------
-
-export function asRecord(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : null;
-}
 
 export function asString(value: unknown): string | undefined {
   return typeof value === 'string' ? value : undefined;
@@ -284,9 +284,15 @@ export interface AgentSessionInfo {
    */
   model: ModelRef | null;
   status: AgentRunStatus;
+  /** Which runtime observed this session and accepts interaction. */
+  runtime?: AgentSessionRuntime;
   directory?: string;
   cost?: number;
   tokens?: TokensUsage;
+  context_usage?: AgentContextUsage;
+  git_info?: { sha?: string; branch?: string; origin_url?: string };
+  agent_name?: string;
+  agent_role?: string;
   limit?: ContextLimit;
   parent_id?: string;
   project_id?: string;
@@ -318,6 +324,9 @@ export function parseAgentSessionInfo(value: unknown): AgentSessionInfo | null {
     updated_ms: asFiniteNumber(rec.updated_ms) ?? 0,
   };
 
+  const runtime = parseAgentSessionRuntime(rec.runtime);
+  if (runtime) info.runtime = runtime;
+
   const mode = pickString(rec, ['mode']);
   if (mode) info.mode = mode;
   const directory = pickString(rec, ['directory']);
@@ -326,6 +335,22 @@ export function parseAgentSessionInfo(value: unknown): AgentSessionInfo | null {
   if (cost !== undefined) info.cost = cost;
   const tokens = parseTokensUsage(rec.tokens);
   if (tokens) info.tokens = tokens;
+  if (asRecord(rec.context_usage)) info.context_usage = parseAgentContextUsage(rec.context_usage);
+  const git = asRecord(rec.git_info);
+  if (git) {
+    const sha = pickString(git, ['sha']);
+    const branch = pickString(git, ['branch']);
+    const origin = pickString(git, ['origin_url']);
+    info.git_info = {
+      ...(sha ? { sha } : {}),
+      ...(branch ? { branch } : {}),
+      ...(origin ? { origin_url: origin } : {}),
+    };
+  }
+  const agentName = pickString(rec, ['agent_name']);
+  if (agentName) info.agent_name = agentName;
+  const agentRole = pickString(rec, ['agent_role']);
+  if (agentRole) info.agent_role = agentRole;
   const limit = parseContextLimit(rec.limit);
   if (limit) info.limit = limit;
   const parentId = pickString(rec, ['parent_id', 'parentID']);
@@ -567,6 +592,8 @@ export type FormField =
   | (FormFieldBase & { type: 'unknown'; raw_type: string });
 
 export interface FormRequest {
+  /** An optional answer while the agent continues working. Absent means blocking. */
+  nonblocking?: boolean;
   id: string;
   asid: string;
   title: string;
@@ -701,6 +728,7 @@ export function parseFormRequest(value: unknown): FormRequest | null {
     id,
     asid: pickString(rec, ['asid', 'session_id', 'sessionID']) ?? '',
     title: asString(rec.title) ?? '',
+    ...(rec.nonblocking === true ? { nonblocking: true } : {}),
     fields,
   };
 }
@@ -881,6 +909,9 @@ export interface ToolPart {
   input_partial?: string;
   output?: unknown;
   content: ToolContent[];
+  /** Client carry-through of the timeline envelope's typed image metadata. */
+  image_assets?: MessageImageAsset[];
+  image_attachments?: string[];
   /** OpenCode's own metadata, verbatim and camelCase. */
   metadata: Record<string, unknown>;
   state: ToolCallState;
@@ -1020,9 +1051,14 @@ function parseToolTiming(value: unknown): ToolTiming | undefined {
     : timing;
 }
 
-/** How long a tool ran, in milliseconds, when both ends are known. */
-export function toolDurationMs(time: ToolTiming | undefined): number | undefined {
-  if (!time || time.ran === undefined || time.completed === undefined) return undefined;
+/** Elapsed tool time from timestamps, or the provider’s reported duration. */
+export function toolDurationMs(
+  time: ToolTiming | undefined,
+  metadata?: Record<string, unknown>
+): number | undefined {
+  const reported = asFiniteNumber(metadata?.durationMs);
+  if (!time || time.ran === undefined || time.completed === undefined)
+    return reported !== undefined && reported >= 0 ? reported : undefined;
   const elapsed = time.completed - time.ran;
   return elapsed >= 0 ? elapsed : undefined;
 }
@@ -1269,7 +1305,14 @@ export function parseTimelineItem(value: unknown): TimelineItem | null {
     message_id: asString(rec.message_id) ?? id,
     role: parseTimelineRole(rec.role),
     ordinal: asFiniteNumber(rec.ordinal) ?? 0,
-    part,
+    part:
+      part.type === 'tool' && imageAssets.length > 0
+        ? {
+            ...part,
+            image_assets: imageAssets,
+            ...(attachments.length ? { image_attachments: attachments } : {}),
+          }
+        : part,
     seq: asFiniteNumber(rec.seq) ?? 0,
     updated_ms: asFiniteNumber(rec.updated_ms) ?? 0,
     ...(attachments.length > 0 ? { attachments } : {}),
@@ -1443,15 +1486,22 @@ export function parseAgentSessionSnapshot(value: unknown): AgentSessionSnapshot 
 
 /** What `GET …/context` answers: everything still in the model's context. */
 export interface AgentContextUsage {
-  messages: number;
+  messages?: number;
   tokens: TokensUsage | null;
+  total_tokens?: number;
+  limit?: ContextLimit;
 }
 
 export function parseAgentContextUsage(value: unknown): AgentContextUsage {
   const rec = asRecord(value) ?? {};
+  const messages = asFiniteNumber(rec.messages);
+  const total = asFiniteNumber(rec.total_tokens);
+  const limit = parseContextLimit(rec.limit);
   return {
-    messages: asFiniteNumber(rec.messages) ?? 0,
+    ...(messages !== undefined && messages >= 0 ? { messages } : {}),
     tokens: parseTokensUsage(rec.tokens) ?? null,
+    ...(total !== undefined && total >= 0 ? { total_tokens: total } : {}),
+    ...(limit ? { limit } : {}),
   };
 }
 
@@ -1470,10 +1520,11 @@ export function contextTokenTotal(tokens: TokensUsage | null | undefined): numbe
 /** 0…1, or `null` when there is no limit to measure against. */
 export function contextFillRatio(
   tokens: TokensUsage | null | undefined,
-  limit: number | undefined
+  limit: number | undefined,
+  reportedTotal?: number
 ): number | null {
-  if (!tokens || !limit || limit <= 0) return null;
-  const used = contextTokenTotal(tokens);
+  if ((!tokens && reportedTotal === undefined) || !limit || limit <= 0) return null;
+  const used = reportedTotal ?? contextTokenTotal(tokens);
   if (used <= 0) return 0;
   return Math.min(1, used / limit);
 }
@@ -1857,7 +1908,7 @@ export function parseAgentAvailability(value: unknown): AgentAvailability {
 /**
  * What an agent can do, as the gateway's `AgentFeatures` (camelCase on the
  * wire, like the whole discovery document). Every flag is the gateway's to
- * state; a flag it does not send reads `true` -- see `parseAgentFeatures`.
+ * state; legacy flags it does not send read `true` -- see `parseAgentFeatures`.
  */
 export interface AgentFeatures {
   streaming: boolean;
@@ -1885,6 +1936,8 @@ export interface AgentFeatures {
   slashCommands: boolean;
   /** Files and images attached to a prompt. */
   attachments: boolean;
+  /** Older remote timeline pages; unlike legacy controls, requires explicit opt-in. */
+  timelineEarlier: boolean;
   /** Every other key the gateway sent, untouched, for a reader that knows one. */
   extra: Record<string, unknown>;
 }
@@ -1905,12 +1958,13 @@ const AGENT_FEATURE_KEYS = [
   'skills',
   'slashCommands',
   'attachments',
+  'timelineEarlier',
 ] as const;
 
 /**
- * Every control on, which is what the app assumed before it could ask: a
+ * Legacy controls on, which is what the app assumed before it could ask: a
  * gateway without discovery drives the one agent every surface here was built
- * on, and silence must not take a control away.
+ * on, and silence must not take a control away. New remote history is opt-in.
  */
 export const LEGACY_AGENT_FEATURES: Readonly<AgentFeatures> = Object.freeze({
   streaming: true,
@@ -1927,11 +1981,12 @@ export const LEGACY_AGENT_FEATURES: Readonly<AgentFeatures> = Object.freeze({
   skills: true,
   slashCommands: true,
   attachments: true,
+  timelineEarlier: false,
   extra: Object.freeze({}) as Record<string, unknown>,
 });
 
 /**
- * What to assume of an agent whose features nobody has stated: everything.
+ * What to assume of an agent whose features nobody has stated: legacy controls.
  *
  * No agent kind is special here. The gateway states each agent's features in
  * discovery; this is only the answer for a gateway that has no discovery at
@@ -1953,10 +2008,11 @@ function pickBool(rec: Record<string, unknown>, keys: readonly string[]): boolea
 /**
  * `features` of one agent, as the gateway stated them.
  *
- * A flag the gateway did not send reads `true`: an older gateway predates the
+ * A legacy flag the gateway did not send reads `true`: an older gateway predates the
  * flag, and taking a control away because nobody mentioned it would break the
  * agent those gateways drive. Whatever a flag leaves open, the screen still
  * narrows by what the agent's catalog lists -- no modes, no mode button.
+ * `timelineEarlier` instead defaults off until the provider explicitly opts in.
  */
 export function parseAgentFeatures(value: unknown): AgentFeatures {
   const defaults = defaultAgentFeatures();
@@ -1985,6 +2041,7 @@ export function parseAgentFeatures(value: unknown): AgentFeatures {
     skills: flag('skills'),
     slashCommands: flag('slashCommands'),
     attachments: flag('attachments'),
+    timelineEarlier: flag('timelineEarlier'),
     extra,
   };
 }
@@ -2020,6 +2077,12 @@ export interface AgentInfo {
   models: AgentModelSummary[];
   modes: AgentModeSummary[];
   features: AgentFeatures;
+  /**
+   * The ledger deliveries this agent offers: `ledgerDelivery` on a discovery
+   * entry, like the rest of that document; `ledger_delivery` on a terminal
+   * catalog entry. Absent on an older gateway.
+   */
+  ledgerDelivery?: LedgerDelivery[];
 }
 
 /** The agents plane, as `AgentPlaneDiscovery` on the gateway. */
@@ -2078,6 +2141,7 @@ export function parseAgentInfo(value: unknown): AgentInfo | null {
       if (mode) modes.push(mode);
     }
   }
+  const ledgerDelivery = parseLedgerDelivery(rec.ledgerDelivery ?? rec.ledger_delivery);
   return {
     id,
     kind,
@@ -2092,6 +2156,7 @@ export function parseAgentInfo(value: unknown): AgentInfo | null {
     models,
     modes,
     features: parseAgentFeatures(rec.features),
+    ...(ledgerDelivery ? { ledgerDelivery } : {}),
   };
 }
 
@@ -2197,6 +2262,27 @@ export interface GatewayDiscovery {
   ssh: SshDiscovery | null;
   /** Absent on a gateway that predates `transports`. */
   transports?: TransportsDiscovery;
+  /** What `POST /api/uploads` takes, in bytes; absent on a gateway that does not say. */
+  uploads?: UploadLimits;
+}
+
+/**
+ * `uploads` from discovery: `{ maxBytes, maxVideoBytes }`, each a positive
+ * whole number of bytes. A number that is not one is left out, and the
+ * app's own cap stands for that type.
+ */
+export function parseUploadLimits(value: unknown): UploadLimits | undefined {
+  const rec = asRecord(value);
+  if (!rec) return undefined;
+  const bytes = (entry: unknown) =>
+    typeof entry === 'number' && Number.isSafeInteger(entry) && entry > 0 ? entry : undefined;
+  const maxBytes = bytes(rec.maxBytes);
+  const maxVideoBytes = bytes(rec.maxVideoBytes);
+  if (maxBytes === undefined && maxVideoBytes === undefined) return undefined;
+  return {
+    ...(maxBytes !== undefined ? { maxBytes } : {}),
+    ...(maxVideoBytes !== undefined ? { maxVideoBytes } : {}),
+  };
 }
 
 /**
@@ -2299,11 +2385,13 @@ export function parseGatewayDiscovery(value: unknown): GatewayDiscovery {
   }
   const planes = asRecord(rec.planes) ?? {};
   const transports = parseTransportsDiscovery(rec.transports);
+  const uploads = parseUploadLimits(rec.uploads);
   return {
     agents: parseAgentsDiscovery(rec),
     terminal: parseTerminalDiscovery(planes.terminal),
     ssh: parseSshDiscovery(planes.ssh),
     ...(transports ? { transports } : {}),
+    ...(uploads ? { uploads } : {}),
   };
 }
 
@@ -2970,7 +3058,13 @@ export type AgentDomainEvent =
   | { type: 'agent.permission.pending'; asid: string; seq: number; request: PermissionRequest }
   | { type: 'agent.permission.resolved'; asid: string; seq: number; request_id: string }
   | { type: 'agent.form.pending'; asid: string; seq: number; request: FormRequest }
-  | { type: 'agent.form.resolved'; asid: string; seq: number; form_id: string }
+  | {
+      type: 'agent.form.resolved';
+      asid: string;
+      seq: number;
+      form_id: string;
+      reason?: 'answered' | 'expired';
+    }
   | {
       type: 'agent.compaction.changed';
       asid: string;
@@ -3097,7 +3191,8 @@ export function parseAgentDomainEvent(eventName: string, data: unknown): AgentDo
     }
     case 'agent.form.resolved': {
       const formId = pickString(rec, ['form_id', 'formID', 'id']);
-      return formId ? { type, asid, seq, form_id: formId } : null;
+      const reason = rec.reason === 'answered' || rec.reason === 'expired' ? rec.reason : undefined;
+      return formId ? { type, asid, seq, form_id: formId, ...(reason ? { reason } : {}) } : null;
     }
     case 'agent.compaction.changed': {
       const delta = asString(rec.delta);

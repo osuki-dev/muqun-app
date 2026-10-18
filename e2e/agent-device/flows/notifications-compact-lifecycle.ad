@@ -1,0 +1,181 @@
+# Offline real-store/native contract subset. This registered full flow does NOT
+# replace six old VM cases: manual AX, exact-room, drag/cancel/race, long-tail,
+# profile pixels and old-short-card baseline remain explicit acceptance gates.
+# Every navigation here follows released press/scroll commands, NEVER a held
+# pointer. Never treat deeplink injection as a held-gesture clear/arrival test.
+
+# section begin
+open "muqun://agent?asid=demo-notice-begin&agentId=opencode"
+scroll up --pixels 1000 --until "text=\"QA_NOTICE_READY begin\""
+wait "text=\"QA_NOTICE_READY begin\"" 15000
+wait "text=\"QA_NOTICE_COUNT 0\"" 10000
+snapshot
+screenshot "shots/notice-begin-real-namespace.png"
+
+# section case
+open "muqun://agent?asid=demo-notice-${CASE}&agentId=opencode"
+# Existing pinned native scroll supports a shorter, centred finger band.
+# On QA5560 the default band starts inside the floating notice; 1000px starts
+# below it in the transcript. No host gesture engine/coordinates/fallback added.
+scroll up --pixels 1000 --until "text=\"QA_NOTICE_READY ${CASE}\""
+wait "text=\"QA_NOTICE_READY ${CASE}\"" 15000
+wait "text=\"QA_NOTICE_COUNT ${COUNT}\"" 10000
+is visible "text=\"QA_NOTICE_FOREIGN 0\""
+is visible "text=\"QA_NOTICE_LOG_OVERFLOW no\""
+snapshot
+screenshot "shots/notice-${SHOT}-initial.png"
+
+# section single
+is visible "id=in-app-notification"
+is visible "id=in-app-notification-open"
+is hidden "id=in-app-notification-next"
+press "id=in-app-notification-details"
+wait "label=\"Show less\"" 10000
+snapshot
+screenshot "shots/notice-single-expanded.png"
+press "id=in-app-notification-details"
+wait "label=\"Show details\"" 10000
+
+# section clear
+press "id=in-app-notification-clear-all"
+wait absent "id=in-app-notification" 10000
+scroll up --pixels 1000 --until "text=\"QA_NOTICE_COUNT 0\""
+wait "text=\"QA_NOTICE_COUNT 0\"" 10000
+is visible "text=\"QA_NOTICE_RECEIPTS_RETAINED yes\""
+is visible "text=\"QA_NOTICE_TASK_WAITING yes\""
+snapshot
+screenshot "shots/notice-${SHOT}-after-clear.png"
+
+# section canonical-in-place
+# No reload/deeplink between Clear all and these actual canonical UI checks.
+scroll up --pixels 1000 --until "text=QA_NOTICE_ORIGINAL_MESSAGE"
+is visible "text=QA_NOTICE_ORIGINAL_MESSAGE"
+scroll down --pixels 1000 --until "text=QA_NOTICE_FORM_CANONICAL"
+is visible "text=QA_NOTICE_FORM_CANONICAL"
+snapshot
+screenshot "shots/notice-${SHOT}-actual-form-same-workbench-after-clear.png"
+scroll up --pixels 1000 --until "text=\"QA_NOTICE_PERMISSION_PRESENT yes\""
+wait "text=\"QA_NOTICE_PERMISSION_PRESENT yes\"" 10000
+snapshot
+screenshot "shots/notice-${SHOT}-canonical-same-workbench.png"
+
+# section cycle-open
+is visible "text=\"QA_NOTICE_BATCH_INTACT yes\""
+press "id=in-app-notification-next"
+wait "text=\"2 / 5\"" 10000
+is text "text=\"Needs your input · Computer 2\" role=textview" "Needs your input · Computer 2"
+is visible "text=\"QA_NOTICE_COUNT 5\""
+is visible "text=\"QA_NOTICE_BATCH_INTACT yes\""
+snapshot
+screenshot "shots/notice-cycle-preserves-actual-batch.png"
+press "id=in-app-notification-open"
+# Bounded real pre-positioning through the long unchanged log paragraph;
+# the existing --until detector can report no progress on clipped giant AX text.
+scroll up --pixels 1000
+scroll up --pixels 1000
+scroll up --pixels 1000 --until "text=\"QA_NOTICE_ASID demo-notice-target-1\""
+wait "text=\"QA_NOTICE_ASID demo-notice-target-1\"" 15000
+wait "text=\"QA_NOTICE_COUNT 4\"" 10000
+is visible "text=\"QA_NOTICE_RECEIPTS_RETAINED yes\""
+snapshot
+screenshot "shots/notice-open-exact-destination-and-only-current.png"
+
+# section exact-open-receipt
+# The manifest first locates the complete real notice-store JSON paragraph.
+# Its regex binds all remaining IDs AND all original seen IDs to one run prefix.
+# This is a transition receipt, not a claim that a screenshot reads current IDs.
+snapshot
+screenshot "shots/notice-open-exact-original-minus-selected.png"
+scroll up --pixels 1000 --until "text=\"QA_NOTICE_ASID demo-notice-target-1\""
+wait "text=\"QA_NOTICE_ASID demo-notice-target-1\"" 10000
+is visible "text=\"QA_NOTICE_COUNT 4\""
+is visible "text=\"QA_NOTICE_FOREIGN 0\""
+is visible "text=\"QA_NOTICE_LOG_OVERFLOW no\""
+
+# section seek-open-receipt
+scroll down --pixels 600
+
+# section no-route
+is hidden "id=in-app-notification-open"
+is visible "id=in-app-notification-details"
+is visible "id=in-app-notification-clear-all"
+snapshot
+screenshot "shots/notice-short-no-route.png"
+
+# section known
+is visible "text=\"Edit a file\""
+is text "text=\"Edit a file\" role=textview" "Edit a file"
+# Native is text uses fail-closed unique resolution, unlike is visible/exists.
+# Exact full subject must resolve once, not a truncated/duplicated subject node.
+is visible "text=\"/fixture/permission-tail.ts\""
+is text "text=\"/fixture/permission-tail.ts\" role=textview" "/fixture/permission-tail.ts"
+is hidden "text=\"edit: /fixture/permission-tail.ts\""
+is hidden "text=edit:"
+snapshot
+screenshot "shots/notice-known-localized-action.png"
+
+# section unknown
+# Assert the complete unknown key AND subject, not just a capture command.
+is visible "text=\"unknown_fixture_rule: /fixture/permission-tail.ts\""
+is text "text=\"unknown_fixture_rule: /fixture/permission-tail.ts\" role=textview" "unknown_fixture_rule: /fixture/permission-tail.ts"
+snapshot
+screenshot "shots/notice-unknown-context.png"
+# These short wording assertions do not cover the separate 80-line drag case.
+
+# section duplicate
+is hidden "id=in-app-notification"
+is visible "text=\"QA_NOTICE_RECEIPTS_RETAINED yes\""
+snapshot
+screenshot "shots/notice-${SHOT}-same-run-duplicate-rejected.png"
+
+# section expire
+open "muqun://agent?asid=demo-notice-info&agentId=opencode"
+wait "id=in-app-notification" 1000
+snapshot
+screenshot "shots/notice-general-first-observed-visible.png"
+wait absent "id=in-app-notification" 5000
+scroll up --pixels 1000 --until "text=\"QA_NOTICE_COUNT 0\""
+wait "text=\"QA_NOTICE_COUNT 0\"" 10000
+snapshot
+screenshot "shots/notice-general-actually-expired.png"
+# Above observes actual production expiry; enqueue is NOT its effect start.
+# Restored FULL 2s delay/clear-before-expiry require separate native timestamp
+# receipts. A wait or source contract alone is never that timing proof.
+
+# section info-clear-open
+open "muqun://agent?asid=demo-notice-info-clear&agentId=opencode"
+wait "id=in-app-notification" 1000
+# Go directly to the REAL clear action; avoid spending the actual 2s lifetime
+# on generic report/screenshot setup. External timestamps still decide whether
+# this conservatively qualifies as clear-before-enqueue+2s.
+
+# section fresh-survives
+wait "id=in-app-notification" 10000
+wait stable 2500 5000
+is visible "id=in-app-notification"
+is visible "text=\"QA_NOTICE_COUNT 1\""
+snapshot
+screenshot "shots/notice-fresh-survives-past-old-general-window.png"
+
+# section reopened
+wait "text=\"QA_NOTICE_REOPEN barrier-reopened\"" 10000
+wait "text=\"QA_NOTICE_COUNT 1\"" 10000
+is visible "id=in-app-notification"
+snapshot
+screenshot "shots/notice-authoritative-typed-reopen.png"
+
+# section finish
+open "muqun://agent?asid=demo-notice-finish&agentId=opencode"
+scroll up --pixels 1000
+scroll up --pixels 1000
+scroll up --pixels 1000 --until "text=\"QA_NOTICE_READY finish\""
+wait "text=\"QA_NOTICE_READY finish\"" 10000
+snapshot
+screenshot "shots/notice-final-log-segment.png"
+open "muqun:///"
+wait stable 600 10000
+
+# section cleanup-receipts
+# Reveal the existing same-run ownership receipt before the existing conditional
+# Clear all. If no readable receipt exists, fail closed; never clear foreign data.
+scroll up --pixels 1000 --until "text=\"QA_NOTICE_FOREIGN 0\""

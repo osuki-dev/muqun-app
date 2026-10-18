@@ -210,13 +210,44 @@ export function pairingCodeBody(
 const DEFAULT_CODE_LIFETIME_MS = 60_000;
 
 /**
+ * A code minted on one computer for another to claim.
+ *
+ * `pairingKey` is the key material a computer in `required` encryption mode
+ * mints beside the code (`pairing_key`, base64url): the claiming computer
+ * needs it to pair with encrypted transport from its first request. Absent
+ * from a gateway that does not require encryption, and from every gateway
+ * before the field; carried verbatim and never read here.
+ */
+export type MintedPairingCode = {
+  requestId: string;
+  code: string;
+  expiresInMs: number;
+  pairingKey?: string;
+};
+
+/** `POST /api/pair/pending`'s answer, or `null` when it names no code. */
+export function parseMintedPairingCode(value: unknown): MintedPairingCode | null {
+  const rec = asRecord(value);
+  const requestId = asString(rec?.request_id);
+  const code = asString(rec?.code);
+  if (!requestId || !code) return null;
+  const pairingKey = asString(rec?.pairing_key);
+  return {
+    requestId,
+    code,
+    expiresInMs: asFiniteNumber(rec?.expires_in_ms) ?? DEFAULT_CODE_LIFETIME_MS,
+    ...(pairingKey ? { pairingKey } : {}),
+  };
+}
+
+/**
  * A pairing code on this computer for another one (`kind: gateway`), and how
  * long it lives (`expires_in_ms`): after that it is gone, never used again.
  */
 export async function mintPairingCode(
   endpoint: FleetEndpoint,
   forComputer: { name: string; serverId: string }
-): Promise<{ requestId: string; code: string; expiresInMs: number }> {
+): Promise<MintedPairingCode> {
   const response = await expectOk(
     await endpointRequest(
       endpoint,
@@ -226,15 +257,9 @@ export async function mintPairingCode(
     ),
     'Mint pairing code'
   );
-  const rec = asRecord(await response.json());
-  const requestId = asString(rec?.request_id);
-  const code = asString(rec?.code);
-  if (!requestId || !code) throw new Error('Mint pairing code: no code in the answer');
-  return {
-    requestId,
-    code,
-    expiresInMs: asFiniteNumber(rec?.expires_in_ms) ?? DEFAULT_CODE_LIFETIME_MS,
-  };
+  const minted = parseMintedPairingCode(await response.json());
+  if (!minted) throw new Error('Mint pairing code: no code in the answer');
+  return minted;
 }
 
 /**
@@ -266,19 +291,41 @@ export async function fetchSelfLabel(endpoint: FleetEndpoint): Promise<string | 
   }
 }
 
+/** What one computer is told to pair with another: where, as whom, with which code. */
+export type PeerLink = {
+  url: string;
+  name: string;
+  requestId: string;
+  code: string;
+  /** The target's `pairing_key`, when it minted one; passed through verbatim. */
+  pairingKey?: string;
+};
+
+/**
+ * The `POST /api/peers` body. `pairing_key` is present exactly when the target
+ * minted one -- an older gateway ignores the field, and a target that did not
+ * mint a key must not be sent an empty one.
+ */
+export function peerLinkBody(link: PeerLink): {
+  url: string;
+  name: string;
+  request_id: string;
+  code: string;
+  pairing_key?: string;
+} {
+  return {
+    url: link.url,
+    name: link.name,
+    request_id: link.requestId,
+    code: link.code,
+    ...(link.pairingKey ? { pairing_key: link.pairingKey } : {}),
+  };
+}
+
 /** Ask this computer to pair itself with the one at `url` through its code. */
-export async function linkPeer(
-  endpoint: FleetEndpoint,
-  link: { url: string; name: string; requestId: string; code: string }
-): Promise<void> {
+export async function linkPeer(endpoint: FleetEndpoint, link: PeerLink): Promise<void> {
   await expectOk(
-    await endpointRequest(
-      endpoint,
-      '/api/peers',
-      'POST',
-      { url: link.url, name: link.name, request_id: link.requestId, code: link.code },
-      LINK_TIMEOUT_MS
-    ),
+    await endpointRequest(endpoint, '/api/peers', 'POST', peerLinkBody(link), LINK_TIMEOUT_MS),
     'Link peer'
   );
 }

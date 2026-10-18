@@ -1,13 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
-import {
-  Bot,
-  Cpu,
-  Hammer,
-  SquareTerminal,
-  TriangleAlert,
-  type LucideIcon,
-} from 'lucide-react-native';
+import { Bot, Cpu, SquareTerminal, TriangleAlert, type LucideIcon } from 'lucide-react-native';
 import { useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -26,7 +19,7 @@ type Load =
 
 /**
  * What this computer can do for the reader's agents, as its gateway reports it:
- * system, detected toolchains, agents and terminal backends.
+ * system, agents and terminal backends.
  *
  * Absent entirely on a gateway without `fleet`: an older gateway would 404 here,
  * and a section that can only ever say "could not load" is worse than none.
@@ -123,27 +116,6 @@ function CapabilityRows({ manifest }: { manifest: FleetManifest }) {
           <Text variant="caption" color={theme.colors.textMuted}>
             {system}
           </Text>
-        </CapabilityGroup>
-      ) : null}
-      {manifest.toolchains.length > 0 ? (
-        <CapabilityGroup
-          icon={Hammer}
-          label={t`Toolchains`}
-          testID="server-capabilities-toolchains">
-          <View style={styles.lines}>
-            {manifest.toolchains.map((toolchain) => (
-              <View key={toolchain.id} style={styles.line}>
-                <Text variant="caption" style={styles.lineText}>
-                  {toolchain.id}
-                </Text>
-                {toolchain.version ? (
-                  <Text variant="caption" color={theme.colors.textMuted} style={styles.valueText}>
-                    {toolchain.version}
-                  </Text>
-                ) : null}
-              </View>
-            ))}
-          </View>
         </CapabilityGroup>
       ) : null}
       {manifest.agents.length > 0 ? (

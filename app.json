@@ -333,9 +333,6 @@
       [
         "expo-build-properties",
         {
-          "ios": {
-            "enableSceneSupport": true
-          },
           "android": {
             "minSdkVersion": 26,
             "buildArchs": ["arm64-v8a"],
@@ -400,7 +397,12 @@
           "granularPermissions": [],
           "isAccessMediaLocationEnabled": false
         }
-      ]
+      ],
+      "react-native-webgpu",
+      "expo-font",
+      "expo-image",
+      "expo-localization",
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true,

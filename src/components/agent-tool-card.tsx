@@ -1,13 +1,17 @@
+import { InlineFileLink } from '@/components/inline-file-link';
+import { ContentImage } from '@/components/content-image';
+import { contentImageIdentity, type ContentImagePreviewState } from '@/lib/content-image-layout';
+import { isPdfFile } from '@/lib/session-assets';
 import { InlineVideoFile } from '@/components/video-asset-preview';
 import { InlineAudioFile } from '@/components/audio-asset-preview';
 import { memo, useCallback, useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Modal, StyleSheet, View, type ViewInstance } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { plural } from '@lingui/core/macro';
-import { Check, FileText, GitFork, Play } from 'lucide-react-native';
-import { Image } from 'expo-image';
+import { Check, FileText, Play, X } from 'lucide-react-native';
 import { EnrichedMarkdownText, type MarkdownStyle } from 'react-native-enriched-markdown';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -15,9 +19,23 @@ import { PressableScale } from '@/components/pressable-scale';
 import { BoundedMarkdown, TruncationFooter } from '@/components/bounded-markdown';
 import { StatusDot } from '@/components/status-dot';
 import { AgentTodoBlock } from '@/components/agent-todo-block';
+import { FileTextBody } from '@/components/file-text-body';
+import {
+  GatewayImageThumbnail,
+  UnmappedImageThumbnail,
+} from '@/components/gateway-image-thumbnail';
+import {
+  messageImageForSource,
+  withMessageImageFiles,
+  unavailableMessageImage,
+} from '@/lib/gateway-image-previews';
+import type { MessageImageAsset } from '@/lib/message-images';
+import { SheetFrame } from '@/components/sheet-ground';
+import { canInlineFileText, readFilePreview, toolFileForPath } from '@/lib/file-text-preview';
 import {
   EmbeddedTerminalToolBlock,
   isToolPending,
+  type ToolExpansionIntent,
 } from '@/components/embedded-terminal-tool-block';
 import { InlineDiffRows } from '@/components/diff-rows';
 import { usePaneChatColors, usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
@@ -61,9 +79,7 @@ import {
   skillDirectoryFromMetadata,
   skillNameFromMetadata,
   splitUrl,
-  stripReadLineNumbers,
   stripSubagentEnvelope,
-  subagentStatusFromMetadata,
   textFromContent,
   toolArgumentLine,
   toolInputJson,
@@ -71,13 +87,10 @@ import {
   type ToolKind,
   type ToolQuestion,
 } from '@/lib/agent-tool-output';
-import {
-  isBusyStatus,
-  toolDurationMs,
-  type AgentRunStatus,
-  type ToolPart,
-} from '@/lib/agent-session';
+import { toolDurationMs, type AgentSessionInfo, type ToolPart } from '@/lib/agent-session';
 import { AGENT_TYPE } from '@/constants/agent-type';
+import { subagentPresentation } from '@/lib/agent-subagent-presentation';
+import { subagentActionWord, subagentStateWord } from '@/i18n/labels';
 
 /**
  * One tool call, drawn as what it actually is.
@@ -101,8 +114,8 @@ export interface AgentToolCardProps {
   audioSessionId?: string;
   part: ToolPart;
   markdownStyle: MarkdownStyle;
-  /** The live status of the session a subagent started, if it is being watched. */
-  childStatus?: AgentRunStatus;
+  /** The observed identity and state of this exact child session. */
+  childSession?: AgentSessionInfo;
   onOpenChildSession?: (asid: string) => void;
   /** `POST …/background`, offered while a foreground tool is still running. */
   onRunInBackground?: () => void;
@@ -115,8 +128,9 @@ export interface AgentToolCardProps {
   onOpenFile?: (file: { uri: string; mime?: string; name?: string }) => void;
   /** The virtualised changes viewer, for a patch too big to draw in a cell. */
   onOpenFullDiff?: (path?: string) => void;
-  /** The whole call in its own sheet; the header opens it. */
+  /** The whole call in its own sheet, offered inside expanded content. */
   onOpenDetail?: () => void;
+  onExpand?: (header: ViewInstance) => ToolExpansionIntent | undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -267,14 +281,50 @@ function isImageFile(file: { mime?: string }): boolean {
   return (file.mime ?? '').startsWith(IMAGE_MIME_PREFIX);
 }
 
+function LegacyToolImage({
+  uri,
+  label,
+  onPreviewImage,
+}: {
+  uri: string;
+  label: string;
+  onPreviewImage?: (uri: string) => void;
+}) {
+  const { t } = useLingui();
+  const profile = useAppearanceProfile();
+  const [previewState, setPreviewState] = useState<ContentImagePreviewState>();
+  return (
+    <PressableScale
+      accessibilityRole="imagebutton"
+      accessibilityLabel={label}
+      accessibilityHint={
+        previewState?.identity === contentImageIdentity({ uri }) && previewState.cropped
+          ? t`Cropped preview · Open full image`
+          : undefined
+      }
+      onPress={() => onPreviewImage?.(uri)}
+      style={[styles.fileThumbWrap, { borderRadius: profile.chrome.surface }]}>
+      <ContentImage
+        source={{ uri }}
+        previewable={Boolean(onPreviewImage)}
+        onPreviewStateChange={setPreviewState}
+      />
+    </PressableScale>
+  );
+}
+
 /** The files a tool returned: images inline, everything else as a chip. */
 const ToolFiles = memo(function ToolFiles({
   files,
+  imageAssets,
+  imageAttachments,
   audioSessionId,
   onPreviewImage,
   onOpenFile,
 }: {
   files: readonly { uri: string; mime?: string; name?: string }[];
+  imageAssets?: readonly MessageImageAsset[];
+  imageAttachments?: readonly string[];
   audioSessionId?: string;
   onPreviewImage?: (uri: string) => void;
   onOpenFile?: (file: { uri: string; mime?: string; name?: string }) => void;
@@ -283,10 +333,33 @@ const ToolFiles = memo(function ToolFiles({
   const theme = useThemeTokens();
   const raised = useTranscriptPlate('raised');
   const profile = useAppearanceProfile();
+  const displayedFiles = useMemo(
+    () => withMessageImageFiles(files, imageAssets, imageAttachments),
+    [files, imageAssets, imageAttachments]
+  );
 
   return (
     <View style={styles.fileRow}>
-      {files.map((file) => {
+      {displayedFiles.map((file) => {
+        const image = messageImageForSource(imageAssets, file.uri);
+        if (image)
+          return (
+            <GatewayImageThumbnail
+              key={file.uri}
+              asset={image}
+              label={file.name ?? t`Open image`}
+              style={{ borderRadius: profile.chrome.surface }}
+            />
+          );
+        if (audioSessionId && isPdfFile(file)) {
+          return (
+            <InlineFileLink
+              key={`${audioSessionId}:${file.uri}`}
+              asid={audioSessionId}
+              file={{ uri: file.uri, name: file.name ?? basename(file.uri) }}
+            />
+          );
+        }
         if (audioSessionId && file.mime?.startsWith('video/')) {
           return (
             <InlineVideoFile
@@ -307,14 +380,19 @@ const ToolFiles = memo(function ToolFiles({
         }
         if (isImageFile(file)) {
           return (
-            <PressableScale
+            <UnmappedImageThumbnail
               key={file.uri}
-              accessibilityRole="imagebutton"
-              accessibilityLabel={file.name ?? t`Open image`}
-              onPress={() => onPreviewImage?.(file.uri)}
-              style={[styles.fileThumbWrap, { borderRadius: profile.chrome.surface }]}>
-              <Image source={{ uri: file.uri }} style={styles.fileThumb} contentFit="cover" />
-            </PressableScale>
+              uri={file.uri}
+              unavailable={unavailableMessageImage(imageAssets, file.uri)}
+              label={file.name ?? t`Open image`}
+              style={[styles.fileThumb, { borderRadius: profile.chrome.surface }]}
+              onPreviewImage={onPreviewImage}>
+              <LegacyToolImage
+                uri={file.uri}
+                label={file.name ?? t`Open image`}
+                onPreviewImage={onPreviewImage}
+              />
+            </UnmappedImageThumbnail>
           );
         }
         return (
@@ -373,7 +451,7 @@ const PatchBody = memo(function PatchBody({
 export const AgentToolCard = memo(function AgentToolCard({
   audioSessionId,
   part,
-  childStatus,
+  childSession,
   onOpenChildSession,
   onRunInBackground,
   onOpenBackgroundTray,
@@ -381,8 +459,9 @@ export const AgentToolCard = memo(function AgentToolCard({
   onOpenFile,
   onOpenFullDiff,
   onOpenDetail,
+  onExpand,
 }: AgentToolCardProps) {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   const theme = useThemeTokens();
   // Read from the theme here, not from a prop: the timeline's memoised cells
   // skip re-renders the list cannot see, and a style handed down through
@@ -390,7 +469,6 @@ export const AgentToolCard = memo(function AgentToolCard({
   // subscribes this card to the theme itself, so a colour-mode switch reaches
   // it whatever the list decides.
   const markdownStyle = usePaneChatMarkdownStyle();
-  const profile = useAppearanceProfile();
   const colors = usePaneChatColors();
 
   const kind = useMemo(() => classifyTool(part.name), [part.name]);
@@ -419,6 +497,13 @@ export const AgentToolCard = memo(function AgentToolCard({
     return fromContent || parseToolOutput(part.output).stdout;
   }, [part.content, part.output]);
   const files = useMemo(() => filesFromContent(part.content), [part.content]);
+  const hasFiles =
+    files.length > 0 ||
+    Boolean(
+      part.image_attachments?.some((uri) =>
+        part.image_assets?.some((asset) => asset.src === uri && asset.mime.startsWith('image/'))
+      )
+    );
   const parsed = useMemo(() => parseToolOutput(part.output), [part.output]);
 
   /**
@@ -438,8 +523,13 @@ export const AgentToolCard = memo(function AgentToolCard({
   // Only while it is pending: once the call has run, the result is what the
   // card is about and its arguments are in the body.
   const argumentLine = useMemo(() => (pending ? toolArgumentLine(input) : ''), [pending, input]);
-  const durationMs = toolDurationMs(part.time);
+  const durationMs = toolDurationMs(part.time, part.metadata);
   const truncated = part.truncated === true || parsed.truncated;
+  const shellExit = shellExitFromMetadata(part.metadata) ?? parsed.exitCode;
+  const resultFailed =
+    (kind === 'shell' &&
+      ((shellExit !== undefined && shellExit !== 0) || shellTimedOutFromMetadata(part.metadata))) ||
+    (kind === 'execute' && executeErrored(part.metadata));
 
   /** The tray, opened on this call's own shell when the engine named one. */
   const handleOpenTray = useCallback(() => {
@@ -489,6 +579,15 @@ export const AgentToolCard = memo(function AgentToolCard({
     () => (kind === 'subagent' ? stripSubagentEnvelope(outputText) : null),
     [kind, outputText]
   );
+  const child = useMemo(
+    () =>
+      kind === 'subagent' ? subagentPresentation(part, childSession, subagent?.state) : undefined,
+    [kind, part, childSession, subagent?.state]
+  );
+  const childWorking =
+    child?.state === 'working' || child?.state === 'starting' || child?.state === 'retrying';
+  const childStatusLabel =
+    kind === 'subagent' ? i18n._(subagentStateWord[child?.state ?? 'unknown']) : '';
   const questions = useMemo(
     () => (kind === 'question' ? parseToolQuestions(part.input) : []),
     [kind, part.input]
@@ -579,12 +678,6 @@ export const AgentToolCard = memo(function AgentToolCard({
         nodes.push(<Chip key="provider" text={provider} color={theme.colors.textMuted} />);
       }
     }
-    if (kind === 'subagent') {
-      const status = subagentStatusFromMetadata(part.metadata) ?? subagent?.state;
-      if (status) {
-        nodes.push(<Chip key="sub" text={status} color={theme.colors.textMuted} />);
-      }
-    }
     return nodes.length > 0 ? nodes : null;
   }, [
     kind,
@@ -597,7 +690,6 @@ export const AgentToolCard = memo(function AgentToolCard({
     newString,
     oldString,
     writeContent,
-    subagent,
     theme.colors.textMuted,
     t,
   ]);
@@ -616,10 +708,7 @@ export const AgentToolCard = memo(function AgentToolCard({
           accessibilityRole="button"
           accessibilityLabel={t`Run in background`}
           onPress={onRunInBackground}
-          style={[
-            styles.action,
-            { borderRadius: profile.chrome.control, borderColor: colors.border },
-          ]}>
+          style={styles.action}>
           <Play size={11} color={colors.accent} />
           <Text variant="caption" color={colors.accent} style={styles.actionText}>
             <Trans>Run in background</Trans>
@@ -638,10 +727,7 @@ export const AgentToolCard = memo(function AgentToolCard({
           accessibilityRole="button"
           accessibilityLabel={t`Open background tasks`}
           onPress={handleOpenTray}
-          style={[
-            styles.action,
-            { borderRadius: profile.chrome.control, borderColor: colors.border },
-          ]}>
+          style={styles.action}>
           <Text variant="caption" color={colors.accent} style={styles.actionText}>
             <Trans>Background tasks</Trans>
           </Text>
@@ -656,25 +742,7 @@ export const AgentToolCard = memo(function AgentToolCard({
           accessibilityRole="button"
           accessibilityLabel={t`Open the subagent's session`}
           onPress={handleOpenChild}
-          style={[
-            styles.action,
-            { borderRadius: profile.chrome.control, borderColor: colors.border },
-          ]}>
-          {/* The child's own status, not the tool's: a subagent can still be
-              working after the call that started it has returned. */}
-          <StatusDot
-            size={7}
-            filled
-            pulse={isBusyStatus(childStatus)}
-            color={
-              childStatus === 'failed'
-                ? theme.colors.danger
-                : isBusyStatus(childStatus)
-                  ? theme.colors.warning
-                  : theme.colors.success
-            }
-          />
-          <GitFork size={11} color={colors.accent} />
+          style={styles.action}>
           <Text variant="caption" color={colors.accent} style={styles.actionText}>
             <Trans>Open session</Trans>
           </Text>
@@ -692,10 +760,7 @@ export const AgentToolCard = memo(function AgentToolCard({
     onOpenChildSession,
     handleOpenTray,
     handleOpenChild,
-    childStatus,
     colors,
-    theme.colors,
-    profile.chrome.control,
     t,
   ]);
 
@@ -709,8 +774,10 @@ export const AgentToolCard = memo(function AgentToolCard({
       return { headerTitle: basename(target) || target, headerCaption: dirname(caption) };
     }
     if (kind === 'subagent') {
-      const agent = typeof input?.agent === 'string' ? input.agent : undefined;
-      return { headerTitle: agent ? `${agent} · ${target}` : target, headerCaption: '' };
+      return {
+        headerTitle: child?.title || part.title || target,
+        headerCaption: child?.caption ?? '',
+      };
     }
     if (kind === 'skill') {
       // `metadata.name` is the skill; `input.id` is the file it lives in. The
@@ -731,7 +798,7 @@ export const AgentToolCard = memo(function AgentToolCard({
       return { headerTitle: part.title ?? target, headerCaption: '' };
     }
     return { headerTitle: part.title ?? target, headerCaption: caption };
-  }, [kind, target, caption, part.title, part.metadata, input]);
+  }, [kind, target, caption, part.title, part.metadata, child]);
 
   // ---- body --------------------------------------------------------------
 
@@ -743,6 +810,7 @@ export const AgentToolCard = memo(function AgentToolCard({
         input,
         target,
         outputText,
+        outputTruncated: truncated,
         files,
         editFiles,
         patchSections,
@@ -766,6 +834,7 @@ export const AgentToolCard = memo(function AgentToolCard({
       input,
       target,
       outputText,
+      truncated,
       files,
       editFiles,
       patchSections,
@@ -799,30 +868,70 @@ export const AgentToolCard = memo(function AgentToolCard({
       : part.error.message
     : '';
 
-  // A todo list is a checklist, not a tool row: OpenCode's own UI draws it
-  // that way and there is nothing about the call worth a header.
-  if (kind === 'todo') {
-    const items = readTodoItems(input);
-    if (items.length > 0) return <AgentTodoBlock items={items} />;
-  }
-
   return (
     <EmbeddedTerminalToolBlock
       testID={`agent-tool-${part.id}`}
-      toolName={part.name}
+      toolName={
+        part.name === 'image_generation'
+          ? t`Image`
+          : child?.action
+            ? i18n._(subagentActionWord[child.action])
+            : part.name
+      }
       kind={kind}
+      taskSummary={
+        kind === 'subagent'
+          ? {
+              title:
+                (typeof input?.description === 'string' && input.description.trim()) ||
+                (typeof input?.prompt === 'string' && input.prompt.trim().split('\n')[0]) ||
+                headerCaption ||
+                headerTitle ||
+                part.name,
+              identity: headerTitle,
+              role:
+                childSession && childSession.asid === part.child_session_id
+                  ? childSession.agent_role
+                  : undefined,
+              statusLabel: childStatusLabel,
+              busy: childWorking,
+              status: (
+                <View style={styles.taskState}>
+                  <StatusDot
+                    size={7}
+                    filled
+                    pulse={childWorking}
+                    color={
+                      child?.state === 'failed'
+                        ? theme.colors.danger
+                        : childWorking || child?.state === 'blocked'
+                          ? theme.colors.warning
+                          : theme.colors.textMuted
+                    }
+                  />
+                  <Text
+                    variant="caption"
+                    color={theme.colors.textMuted}
+                    style={[styles.actionText, styles.taskStateText]}>
+                    {childStatusLabel}
+                  </Text>
+                </View>
+              ),
+            }
+          : undefined
+      }
       title={headerTitle}
       caption={headerCaption}
-      status={part.state}
+      status={!pending && resultFailed ? 'failed' : part.state}
       {...(durationMs === undefined ? {} : { durationMs })}
       truncated={truncated}
       {...(errorLine ? { error: errorLine } : {})}
       background={detached}
       {...(onOpenDetail ? { onOpenDetail } : {})}
+      onExpand={onExpand}
       chips={chips}
       actions={actions}
-      // An edit's diff and a read's images are the content, not a detail
-      // behind an expand.
+      // Every rich result mounts only after disclosure, including images and diffs.
       preview={
         // While the input is still arriving there is no result to preview and
         // the arguments are the only thing there is to say.
@@ -830,9 +939,11 @@ export const AgentToolCard = memo(function AgentToolCard({
           <StreamingArguments text={argumentLine} />
         ) : kind === 'edit' || kind === 'patch' ? (
           body
-        ) : files.length > 0 ? (
+        ) : hasFiles ? (
           <ToolFiles
             files={files}
+            imageAssets={part.image_assets}
+            imageAttachments={part.image_attachments}
             audioSessionId={audioSessionId}
             onPreviewImage={onPreviewImage}
             onOpenFile={onOpenFile}
@@ -844,15 +955,118 @@ export const AgentToolCard = memo(function AgentToolCard({
   );
 });
 
-/** Drops `data:…;base64,…` runs and bare base64 walls from a text body. */
-function stripDataUris(text: string): string {
-  return text
-    .replace(/data:[a-z0-9.+-]+\/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=\s]+/gi, '')
-    .split('\n')
-    .filter((line) => !(line.length > 120 && /^[A-Za-z0-9+/=]+$/.test(line.trim())))
-    .join('\n')
-    .trim();
-}
+/** Small complete runs fit their content using the Files cell/code renderer.
+ * Larger bodies keep an explicit non-scrolling viewport and a snapshot viewer:
+ * no unbounded list or competing vertical gestures inside the transcript.
+ */
+const ReadFileBody = memo(function ReadFileBody({
+  preview,
+  markdownStyle,
+  truncated,
+}: {
+  preview: Extract<ReturnType<typeof readFilePreview>, { type: 'file' }>;
+  markdownStyle: MarkdownStyle;
+  truncated: boolean;
+}) {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  const insets = useSafeAreaInsets();
+  const [open, setOpen] = useState(false);
+  if (canInlineFileText(preview.file, preview.content)) {
+    return (
+      <FileTextBody
+        file={preview.file}
+        content={preview.content}
+        markdownStyle={markdownStyle}
+        testID="agent-read"
+        layout="inline"
+        showsHorizontalScrollIndicator={false}
+      />
+    );
+  }
+  return (
+    <View style={styles.stretch}>
+      <PressableScale
+        testID="agent-read-preview"
+        accessibilityRole="button"
+        accessibilityLabel={t`Open in viewer`}
+        onPress={() => setOpen(true)}>
+        <View style={readStyles.viewport} pointerEvents="none">
+          {open ? null : (
+            <FileTextBody
+              file={preview.file}
+              content={preview.content}
+              markdownStyle={markdownStyle}
+              testID="agent-read"
+              showsHorizontalScrollIndicator={false}
+            />
+          )}
+        </View>
+        <Text variant="caption" color={theme.colors.primary} style={readStyles.openLabel}>
+          {t`Open in viewer`}
+        </Text>
+      </PressableScale>
+      {open ? (
+        <Modal
+          visible
+          transparent
+          statusBarTranslucent
+          navigationBarTranslucent
+          animationType="fade"
+          onRequestClose={() => setOpen(false)}>
+          <View style={readStyles.fullscreen}>
+            <SheetFrame tint="background" frosted>
+              <View
+                style={[
+                  readStyles.fullscreen,
+                  { paddingTop: insets.top, paddingBottom: insets.bottom },
+                ]}>
+                <View style={readStyles.header}>
+                  <Text
+                    variant="bodySmall"
+                    weight="semibold"
+                    numberOfLines={2}
+                    style={readStyles.title}>
+                    {preview.file.name}
+                  </Text>
+                  {truncated ? (
+                    <Text variant="caption" color={theme.colors.warning}>
+                      {t`Truncated`}
+                    </Text>
+                  ) : null}
+                  <PressableScale
+                    testID="agent-read-close-preview"
+                    accessibilityRole="button"
+                    accessibilityLabel={t`Close preview`}
+                    onPress={() => setOpen(false)}
+                    style={readStyles.close}>
+                    <X size={20} color={theme.colors.text} />
+                  </PressableScale>
+                </View>
+                <FileTextBody
+                  file={preview.file}
+                  content={preview.content}
+                  markdownStyle={markdownStyle}
+                  testID="agent-read-full"
+                  showsHorizontalScrollIndicator={false}
+                />
+              </View>
+            </SheetFrame>
+          </View>
+        </Modal>
+      ) : null}
+    </View>
+  );
+});
+
+const readStyles = StyleSheet.create({
+  viewport: { height: 280, overflow: 'hidden' },
+  fullscreen: { flex: 1, minHeight: 0 },
+  openLabel: { paddingHorizontal: 16, paddingVertical: 8 },
+  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 8 },
+  title: { flex: 1 },
+  close: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+});
 
 function readTodoItems(input: Record<string, unknown> | null): { text: string; done: boolean }[] {
   const raw = input?.todos ?? input?.items;
@@ -883,6 +1097,7 @@ interface ToolBodyArgs {
   input: Record<string, unknown> | null;
   target: string;
   outputText: string;
+  outputTruncated: boolean;
   files: readonly { uri: string; mime?: string; name?: string }[];
   editFiles: ReturnType<typeof editFilesFromMetadata>;
   patchSections: ReturnType<typeof parsePatchSections>;
@@ -915,18 +1130,14 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
       );
 
     case 'read': {
-      const language = fenceLanguageForPath(target);
-      // An image read comes back as a file item (drawn above) and, on some
-      // engines, the same bytes again as a data URI in the text. The picture
-      // is the content; the base64 never is.
-      const body = stripDataUris(stripReadLineNumbers(outputText));
-      if (!body) return null;
+      const preview = readFilePreview(outputText, target, args.files);
+      if (preview.type === 'empty') return null;
+      if (preview.type === 'output') return <OutputLines text={preview.text} />;
       return (
-        <CodeBody
-          body={body}
-          language={language}
+        <ReadFileBody
+          preview={preview}
           markdownStyle={markdownStyle}
-          {...viewerAction(target, args.onOpenFile)}
+          truncated={args.outputTruncated}
         />
       );
     }
@@ -1048,6 +1259,15 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
         <QuestionBody questions={args.questions} answers={args.answers} fallback={outputText} />
       );
 
+    case 'todo': {
+      const items = readTodoItems(input);
+      return items.length > 0 ? (
+        <AgentTodoBlock items={items} />
+      ) : (
+        <GenericToolBody input={part.input} outputText={outputText} />
+      );
+    }
+
     case 'execute':
       return (
         <>
@@ -1059,9 +1279,20 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
         </>
       );
 
-    default:
+    default: {
+      // Codex's picture brief is the `prompt` string. Print that string,
+      // with its own line breaks.
+      const prompt = imageGenerationPrompt(part.name, input);
+      if (prompt) return <ImagePrompt text={prompt} />;
       return <GenericToolBody input={part.input} outputText={outputText} />;
+    }
   }
+}
+
+function imageGenerationPrompt(name: string, input: Record<string, unknown> | null): string {
+  if (name !== 'image_generation') return '';
+  const prompt = input?.prompt;
+  return typeof prompt === 'string' ? prompt.trim() : '';
 }
 
 /**
@@ -1075,16 +1306,7 @@ function viewerAction(
   onOpenFile?: (file: { uri: string; mime?: string; name?: string }) => void
 ): { onOpenInViewer?: () => void } {
   if (!onOpenFile || !target.startsWith('/')) return {};
-  return { onOpenInViewer: () => onOpenFile(viewerFile(target)) };
-}
-
-/** One file, in the shape the asset viewer takes. */
-function viewerFile(path: string): { uri: string; mime: string; name: string } {
-  return {
-    uri: path,
-    mime: /\.mdx?$/i.test(path) ? 'text/markdown' : 'text/plain',
-    name: basename(path),
-  };
+  return { onOpenInViewer: () => onOpenFile(toolFileForPath(target)) };
 }
 
 /** A `+`/`-` patch made from a before and an after, when no real one came. */
@@ -1209,7 +1431,7 @@ const GlobFiles = memo(function GlobFiles({
                 accessibilityRole="button"
                 accessibilityLabel={name}
                 disabled={!onOpenFile}
-                onPress={() => onOpenFile?.(viewerFile(path))}
+                onPress={() => onOpenFile?.(toolFileForPath(path))}
                 style={styles.globRow}>
                 <FileText size={11} color={colors.subtle} />
                 <Text
@@ -1393,6 +1615,7 @@ const QuestionBody = memo(function QuestionBody({
                     key={option.label}
                     style={[
                       styles.optionPill,
+                      option.description ? styles.optionWithDescription : null,
                       {
                         borderRadius: profile.chrome.control,
                         borderColor: chosen ? colors.accent : colors.border,
@@ -1400,22 +1623,23 @@ const QuestionBody = memo(function QuestionBody({
                       },
                     ]}>
                     {chosen ? <Check size={11} color={colors.accent} /> : null}
-                    <Text
-                      variant="caption"
-                      weight={chosen ? 'semibold' : 'regular'}
-                      color={chosen ? colors.accent : theme.colors.text}
-                      style={styles.optionLabel}>
-                      {plainFromMarkdown(option.label)}
-                    </Text>
-                    {option.description ? (
+                    <View style={styles.optionCopy}>
                       <Text
                         variant="caption"
-                        numberOfLines={1}
-                        color={theme.colors.textSubtle}
-                        style={styles.optionDescription}>
-                        {plainFromMarkdown(option.description)}
+                        weight={chosen ? 'semibold' : 'regular'}
+                        color={chosen ? colors.accent : theme.colors.text}
+                        style={styles.optionLabel}>
+                        {plainFromMarkdown(option.label)}
                       </Text>
-                    ) : null}
+                      {option.description ? (
+                        <Text
+                          variant="caption"
+                          color={theme.colors.textSubtle}
+                          style={styles.optionDescription}>
+                          {plainFromMarkdown(option.description)}
+                        </Text>
+                      ) : null}
+                    </View>
                   </View>
                 );
               })}
@@ -1510,6 +1734,16 @@ const ExecuteCalls = memo(function ExecuteCalls({
 /** Calls a card draws before it says how many more there were. */
 const EXECUTE_CALL_MAX = 12;
 
+/** The picture brief, as the sentences Codex wrote. */
+const ImagePrompt = memo(function ImagePrompt({ text }: { text: string }) {
+  const theme = useThemeTokens();
+  return (
+    <Text selectable variant="bodySmall" color={theme.colors.text}>
+      {text}
+    </Text>
+  );
+});
+
 /**
  * A tool nothing in this build recognises.
  *
@@ -1590,14 +1824,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    minHeight: 28,
-    paddingHorizontal: 10,
-    borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
+    minHeight: 44,
+    minWidth: 44,
+    maxWidth: '100%',
+    flexShrink: 1,
+    paddingHorizontal: 4,
+    justifyContent: 'center',
   },
   actionText: {
     fontSize: AGENT_TYPE.micro.size,
     fontWeight: '600',
+    flexShrink: 1,
+  },
+  taskState: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    flexShrink: 1,
+  },
+  taskStateText: {
+    flexShrink: 1,
   },
   fileRow: {
     flexDirection: 'row',
@@ -1605,6 +1851,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   fileThumbWrap: {
+    maxWidth: '100%',
+    minWidth: 44,
+    minHeight: 44,
     borderCurve: 'continuous',
     overflow: 'hidden',
   },
@@ -1691,13 +1940,21 @@ const styles = StyleSheet.create({
   /** The same pill the form card offers, with nothing left to press. */
   optionPill: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 4,
     paddingVertical: 3,
     paddingHorizontal: 8,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
     maxWidth: '100%',
+  },
+  optionWithDescription: {
+    width: '100%',
+  },
+  optionCopy: {
+    flexShrink: 1,
+    minWidth: 0,
+    gap: 2,
   },
   optionLabel: {
     fontSize: AGENT_TYPE.micro.size,

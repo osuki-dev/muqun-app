@@ -66,10 +66,6 @@ export function UpdateStatusBanner() {
   const transferred =
     downloadedBytes === undefined ? undefined : formatAssetSize(downloadedBytes) || '0 B';
   const total = totalBytes === undefined ? undefined : formatAssetSize(totalBytes) || '0 B';
-  const estimate =
-    downloadSize?.estimatedBytes == null
-      ? undefined
-      : formatAssetSize(downloadSize.estimatedBytes) || '0 B';
   const fullPackage = downloadSize?.fullBytes ? formatAssetSize(downloadSize.fullBytes) : undefined;
 
   return (
@@ -159,18 +155,11 @@ export function UpdateStatusBanner() {
                     ? t`Checking download size…`
                     : downloadSizeStatus === 'failed'
                       ? t`Could not check download size. Try again.`
-                      : estimate
-                        ? t`Download size: about ${estimate}`
-                        : t`Download size: ${fullPackage}`}
+                      : t`Download size: ${fullPackage}`}
                 </Text>
-                {estimate && fullPackage ? (
+                {fullPackage ? (
                   <Text variant="caption" color={theme.colors.textMuted}>
-                    {t`Full package: ${fullPackage}`}
-                  </Text>
-                ) : null}
-                {estimate || fullPackage ? (
-                  <Text variant="caption" color={theme.colors.textMuted}>
-                    {t`Size covers update files. File reuse or fallback can change the download.`}
+                    {t`Full package size. File reuse may reduce the download.`}
                   </Text>
                 ) : null}
               </View>

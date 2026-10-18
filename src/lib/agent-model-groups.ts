@@ -34,6 +34,17 @@ export interface ProviderGroupSource {
   available?: boolean;
 }
 
+/** Count the complete catalog, before search/free filters or recent-model sections. */
+export function hasMultipleModelProviders(
+  models: readonly ProviderGroupModel[],
+  providers: readonly ProviderGroupSource[]
+): boolean {
+  const ids = new Set(providers.map((provider) => provider.id));
+  // Older catalogs can publish flat models without provider metadata.
+  for (const model of models) ids.add(model.provider_id || 'other');
+  return ids.size > 1;
+}
+
 export interface ModelProviderGroup<Model extends ProviderGroupModel> {
   providerId: string;
   title: string;

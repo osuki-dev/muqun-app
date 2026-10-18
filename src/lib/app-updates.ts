@@ -3,6 +3,7 @@ import Constants from 'expo-constants';
 import { getActiveLocale } from '../i18n/active-locale';
 import { fetchOtaReleaseNotes } from './ota-release-notes';
 import { fetchOtaDownloadSize } from './ota-download-size';
+import { createOtaUpdateMetadata } from './ota-update-metadata';
 import { Platform, TurboModuleRegistry } from 'react-native';
 import { create } from 'zustand';
 
@@ -25,20 +26,33 @@ function createClient(): UpdateClient | null {
     const { HotUpdater } =
       // oxlint-disable-next-line typescript/no-require-imports -- the SDK enforces its native module at import time
       require('@hot-updater/react-native') as typeof import('@hot-updater/react-native');
+    const metadata = createOtaUpdateMetadata();
     const instance: HotUpdaterInstance = HotUpdater.init({
       baseURL: 'https://updates.muqun.dev',
       requestHeaders: { 'x-api-key': settings.clientApiKey },
       requestTimeout: 5000,
+      plugins: [metadata.plugin],
       onError: () => {
         /* Checks report failure through the controller; never block launch. */
       },
     });
     return {
-      checkForUpdate: instance.checkForUpdate,
+      checkForUpdate: (options) =>
+        metadata.check(
+          () => instance.checkForUpdate(options),
+          instance.getManifest().bundleId,
+          instance.getChannel()
+        ),
       getReleaseNotes: (releaseId) =>
         fetchOtaReleaseNotes(releaseId, getActiveLocale(), settings.clientApiKey),
-      getDownloadSize: (releaseId) =>
-        fetchOtaDownloadSize(releaseId, instance.getManifest().bundleId, settings.clientApiKey),
+      getDownloadSize: (releaseId) => {
+        const target = metadata.getTarget(
+          releaseId,
+          instance.getManifest().bundleId,
+          instance.getChannel()
+        );
+        return target ? fetchOtaDownloadSize(target, settings.clientApiKey) : Promise.resolve(null);
+      },
       addListener: instance.addListener,
       reload: instance.reload,
       getRunningReleaseId: async () =>

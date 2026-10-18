@@ -11,6 +11,8 @@ import {
   parseServerCapabilitiesIndex,
   sameCapabilities,
   withMirroredCapabilities,
+  envelopeCapabilityNames,
+  hasObservedCapability,
 } from '../server-capabilities';
 
 describe('reading a health answer', () => {
@@ -19,9 +21,9 @@ describe('reading a health answer', () => {
     expect(normalizeCapabilities(names)).toEqual(names);
   });
 
-  test('bounds a hostile list at 128, keeping the first in order', () => {
-    const names = Array.from({ length: 200 }, (_, i) => `cap_${i}`);
-    expect(normalizeCapabilities(names)).toEqual(names.slice(0, 128));
+  test('bounds a hostile list at 512, keeping the first in order', () => {
+    const names = Array.from({ length: 600 }, (_, i) => `cap_${i}`);
+    expect(normalizeCapabilities(names)).toEqual(names.slice(0, 512));
   });
 
   test('keeps the names, in order, once each', () => {
@@ -107,5 +109,34 @@ describe('reading the mirror back', () => {
   test('corrupt storage is an empty mirror, not a crash on launch', () => {
     expect(parseServerCapabilitiesIndex('not json')).toEqual({});
     expect(parseServerCapabilitiesIndex('[1,2]')).toEqual({});
+  });
+});
+
+describe('what a content envelope advertises', () => {
+  test('a name is on when its value is true or names a strategy', () => {
+    expect(
+      envelopeCapabilityNames({
+        parts: true,
+        assets: 'dictionary',
+        session_descendants: true,
+        composer: false,
+        image_upload: 'none',
+        pane_context: '',
+        odd: 1,
+      })
+    ).toEqual(['parts', 'assets', 'session_descendants']);
+  });
+
+  test('anything but an object advertises nothing', () => {
+    expect(envelopeCapabilityNames(undefined)).toEqual([]);
+    expect(envelopeCapabilityNames(['session_descendants'])).toEqual([]);
+    expect(envelopeCapabilityNames('session_descendants')).toEqual([]);
+  });
+
+  test('an observed name is asked about per server', () => {
+    const observed = { osk: ['parts', 'session_descendants'] };
+    expect(hasObservedCapability(observed, 'osk', 'session_descendants')).toBe(true);
+    expect(hasObservedCapability(observed, 'mini', 'session_descendants')).toBe(false);
+    expect(hasObservedCapability(observed, null, 'session_descendants')).toBe(false);
   });
 });

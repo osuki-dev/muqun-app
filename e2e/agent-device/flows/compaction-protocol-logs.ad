@@ -1,0 +1,101 @@
+# Genuine typed compaction deltas + timeline boundaries through normal offline
+# Workbench stream, NOT ordinary assistant text masquerading as API logs.
+# Real finite elapsed timers begin only with ONE existing Context→Compact action.
+# Native video/OS reduced-motion, AX/44dp/dock bounds, full clipboard bytes and
+# background/unmount cleanup remain external evidence gates, NOT comments-as-pass.
+
+# section open
+open "muqun://agent?asid=${ASID}&agentId=opencode"
+wait "id=agent-composer-tokens-pill" 15000
+# Reuse the existing verified input helper ONLY for seeding an unsent draft;
+# restore the captured real IME before compaction or native keyboard evidence.
+open "dev.osuki.muqun" --test-ime
+press "id=agent-composer-input"
+fill "id=agent-composer-input" "Offline compaction log draft. Do not send."
+keyboard dismiss
+keyboard restore-ime
+keyboard dismiss
+wait stable 400 5000
+
+# section blank
+wait "id=agent-composer-compaction-pill" 10000
+# Android native AX appends the actual accessibilityState.busy to this label.
+# Assert that state AND the unchanged rendered caption; do not strip busy.
+is visible "id=agent-composer-compaction-pill label=\"Compacting context…, busy\""
+is visible "text=\"Compacting context…\""
+is hidden "id=agent-compaction-details"
+is hidden "id=agent-compaction-copy"
+snapshot
+screenshot "shots/compaction-${CASE}-whitespace-no-panel.png"
+
+# section expanded
+wait "id=agent-composer-compaction-pill label=\"Compacting context… · Show details, busy\"" 12000
+press "id=agent-composer-compaction-pill"
+wait "id=agent-compaction-output" 10000
+is visible "text=QA_STREAM_HEAD"
+snapshot
+screenshot "shots/compaction-stream-A-expanded.png"
+
+# section keyboard
+press "id=agent-composer-input"
+wait stable 400 5000
+keyboard require-visible
+is visible "id=agent-compaction-copy"
+snapshot
+screenshot "shots/compaction-expanded-real-keyboard.png"
+keyboard dismiss
+wait stable 400 5000
+snapshot
+screenshot "shots/compaction-expanded-keyboard-closed.png"
+
+# section appended
+# No user transcript/output pan, collapse, re-open, request restart or source
+# state mutation between the original HEAD sample and this post-delta sample.
+wait 14000
+is visible "text=QA_STREAM_HEAD"
+is visible "id=agent-compaction-output"
+snapshot
+screenshot "shots/compaction-ABC-head-not-forced-to-end.png"
+press "id=agent-compaction-copy"
+wait "text=\"Output copied to clipboard\"" 10000
+# Toast proves callback completion ONLY, never full clipboard byte equality.
+
+# section complete
+wait "id=agent-composer-compaction-pill label=\"Context compacted · manual · Hide output\"" 18000
+is visible "id=agent-compaction-dismiss"
+snapshot
+screenshot "shots/compaction-completed-retains-raw-before-boundary.png"
+wait absent "id=agent-composer-compaction-pill" 15000
+scroll down --until "id=agent-compaction-row label=\"Context compacted · manual\""
+press "id=agent-compaction-row label=\"Context compacted · manual\""
+scroll down --until "text=QA_STREAM_APPEND_C"
+is visible "text=QA_STREAM_APPEND_C"
+snapshot
+screenshot "shots/compaction-matching-real-boundary-handoff.png"
+
+# section failed-log
+wait "id=agent-composer-compaction-pill label=\"Compaction failed · Show details\"" 45000
+press "id=agent-composer-compaction-pill"
+wait "id=agent-compaction-output" 10000
+is visible "text=QA_STREAM_HEAD"
+is visible "id=agent-compaction-dismiss"
+is visible "id=agent-compaction-copy"
+snapshot
+screenshot "shots/compaction-failed-real-log-and-separate-dismiss.png"
+press "id=agent-compaction-dismiss"
+wait absent "id=agent-composer-compaction-pill" 10000
+
+# section failed-empty
+wait "id=agent-composer-compaction-pill label=\"Compaction failed — tap to dismiss\"" 10000
+is hidden "id=agent-compaction-details"
+is hidden "id=agent-compaction-copy"
+is hidden "id=agent-compaction-dismiss"
+snapshot
+screenshot "shots/compaction-failed-no-log-single-dismiss.png"
+press "id=agent-composer-compaction-pill"
+wait absent "id=agent-composer-compaction-pill" 10000
+
+# section home
+keyboard restore-ime
+open "muqun:///"
+wait stable 400 5000

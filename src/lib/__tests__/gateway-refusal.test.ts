@@ -126,6 +126,30 @@ describe('refusals that pairing cannot fix', () => {
   });
 });
 
+describe('a clock the gateway disagrees with', () => {
+  test("`clock_skew` carries the gateway's clock as `server_time_ms`", () => {
+    // `src/platform/http.rs`: `403 {"error":{"code":"clock_skew","server_time_ms":…}}`.
+    const refusal = classifyTransportRefusal(
+      403,
+      JSON.stringify({
+        error: {
+          code: 'clock_skew',
+          message: "this device's clock and the gateway's disagree by more than five minutes",
+          server_time_ms: 1760616000000,
+        },
+      })
+    );
+    expect(refusal.reason).toBe('clock-skew');
+    expect(refusal.needsPairing).toBe(false);
+    expect(refusal.serverTimeMs).toBe(1760616000000);
+    const camel = classifyTransportRefusal(
+      403,
+      JSON.stringify({ error: { code: 'clock_skew', serverTimeMs: 1760616000000 } })
+    );
+    expect(camel.serverTimeMs).toBe(1760616000000);
+  });
+});
+
 describe('transient refusals', () => {
   test('a replayed nonce is worth another attempt', () => {
     const refusal = classifyTransportRefusal(

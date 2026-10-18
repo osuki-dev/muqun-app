@@ -6,6 +6,8 @@ import {
   gatewaySocketPath,
   MAX_RECONNECT_DELAY_MS,
   socketFailureIsUnauthorized,
+  socketFailureNeedsRepair,
+  type SocketRefusal,
   socketReconnectDelay,
   type SocketAuthorization,
   type GatewaySocketListener,
@@ -101,6 +103,7 @@ function harness(
     sealed?: boolean;
     prepare?: () => GatewaySocketUpgrade | null | Promise<GatewaySocketUpgrade | null>;
     checkAuthorization?: () => Promise<SocketAuthorization>;
+    onRefused?: (refusal: SocketRefusal) => void;
   } = {}
 ) {
   const transports: FakeTransport[] = [];
@@ -128,6 +131,7 @@ function harness(
     // The top of each jitter window, so the schedule below reads in whole numbers.
     random: () => 1,
     checkAuthorization: options.checkAuthorization,
+    onRefused: options.onRefused,
   });
   const result: Harness = {
     socket,
@@ -630,12 +634,50 @@ describe('unauthorized', () => {
     expect(socketFailureIsUnauthorized({})).toBe(false);
   });
 
+  test('classifies a demand to pair again apart from a dead token and from the network', () => {
+    for (const message of [
+      "Expected HTTP 101 response but was '426 Upgrade Required'",
+      'Invalid HTTP status 426',
+      'Unexpected response code: 426',
+      '426 Upgrade Required',
+    ]) {
+      expect(socketFailureNeedsRepair({ message })).toBe(true);
+      expect(socketFailureIsUnauthorized({ message })).toBe(false);
+    }
+    expect(socketFailureNeedsRepair({ closeCode: 4426 })).toBe(true);
+    for (const message of [
+      "Expected HTTP 101 response but was '401 Unauthorized'",
+      'connect to 192.0.2.4:426 timed out',
+      'read 426 bytes then EOF',
+      '',
+    ]) {
+      expect(socketFailureNeedsRepair({ message })).toBe(false);
+    }
+    expect(socketFailureNeedsRepair({ closeCode: 4401 })).toBe(false);
+  });
+
+  test('an upgrade refused with 426 stands the socket down and says the pairing must be made again', () => {
+    const refusals: SocketRefusal[] = [];
+    const h = harness({ onRefused: (refusal) => refusals.push(refusal) });
+    const r = recorder();
+    h.socket.watch('ses_1', r.listener);
+    h.latest().onerror?.("Expected HTTP 101 response but was '426 Upgrade Required'");
+    expect(h.socket.state).toBe('unauthorized');
+    expect(refusals).toEqual(['repair']);
+    expect(r.log).toEqual(['unavailable']);
+    // No retry on its own: the gateway will answer 426 until the device pairs again.
+    h.clock.advance(120_000);
+    expect(h.transports).toHaveLength(1);
+  });
+
   test('a refused upgrade stops retrying and tells the listener', () => {
-    const h = harness();
+    const refusals: SocketRefusal[] = [];
+    const h = harness({ onRefused: (refusal) => refusals.push(refusal) });
     const r = recorder();
     h.socket.watch('ses_1', r.listener);
     h.latest().onerror?.("Expected HTTP 101 response but was '401 Unauthorized'");
     expect(h.socket.state).toBe('unauthorized');
+    expect(refusals).toEqual(['unauthorized']);
     expect(r.log).toEqual(['unavailable']);
     h.clock.advance(120_000);
     expect(h.transports).toHaveLength(1);

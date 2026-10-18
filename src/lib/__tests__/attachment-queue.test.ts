@@ -49,9 +49,32 @@ describe('staging', () => {
   test('an oversized pick fails at staging without opening a socket', () => {
     const queue = stage(pick('huge.jpg', MAX_UPLOAD_BYTES + 1));
     expect(queue[0].status).toBe('error');
-    expect(queue[0].error).toContain('10MB');
+    expect(queue[0].failure).toBe('too-large');
     expect(startableIds(queue)).toEqual([]);
     expect(isBusy(queue)).toBe(false);
+  });
+
+  test('a file is held to the cap the gateway named for its type', () => {
+    const limits = { maxBytes: 25 * 1024 * 1024, maxVideoBytes: 64 * 1024 * 1024 };
+    const video: PickedFile = {
+      uri: 'file:///local/clip.mp4',
+      name: 'clip.mp4',
+      mime: 'video/mp4',
+      size: 60 * 1024 * 1024,
+    };
+    const queue = stageFiles(
+      [],
+      [video, pick('huge.jpg', MAX_UPLOAD_BYTES + 1)],
+      undefined,
+      limits
+    );
+    expect(statuses(queue)).toEqual(['pending', 'error']);
+    expect(queue[0].limitBytes).toBe(limits.maxVideoBytes);
+    expect(queue[1].limitBytes).toBe(limits.maxBytes);
+    // The cap it was staged against is the one a retry is held to.
+    expect(requeue(queue, queue[1].id)[1].failure).toBe('too-large');
+    // Without the gateway's word, a video is held to the app's own cap.
+    expect(stage(video)[0].status).toBe('error');
   });
 
   test('a pick of unknown size is trusted, since the picker did not measure it', () => {

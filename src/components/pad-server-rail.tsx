@@ -2,9 +2,8 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { Image, type ImageSource } from 'expo-image';
-import { ChevronRight, House, ScanLine, Settings, SquareTerminal } from 'lucide-react-native';
-import { useEffect, useMemo, useState } from 'react';
+import { ChevronLeft, ChevronRight, ScanLine, Settings, SquareTerminal } from 'lucide-react-native';
+import { useEffect, useState } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,13 +16,14 @@ import { SectionLabel } from '@/components/settings-chrome';
 import { HomeConnections } from '@/components/home-connections';
 import { ThemedSurfaceArtwork } from '@/components/themed-surface';
 import { useThemeLibrary } from '@/stores/theme-library';
-import { resolveHomeIdentity } from '@/theme/resolve';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { type ActiveServerConnection, type ServerReachability } from '@/lib/server-reachability';
 import type { SshHostRecord } from '@/lib/ssh-hosts';
-import { useBrandMark } from '@/components/brand-mark';
 import { homeArtworkPreference } from '@/theme/repository';
 import { resolvePadRailArtwork } from '@/theme/pad-rail-artwork';
+import { Canvas, Image, LinearGradient, Mask, Rect, useImage, vec } from 'react-native-skia';
+import { coveredImageRect } from '@/lib/hero-feather';
+import { withAlpha } from '@/lib/color';
 
 export type PadServerRailProps = {
   /** Paired servers in the order the rail should display them. */
@@ -35,8 +35,8 @@ export type PadServerRailProps = {
   activeConnection?: ActiveServerConnection;
   /** Whether the retained task owner is currently showing its overview. */
   workbenchSelected?: boolean;
-  /** Opens the retained task owner's overview surface. */
-  onOpenWorkbench?: () => void;
+  /** Returns to the retained Home overview without discarding the detail. */
+  onBack: () => void;
   onSelectServer: (server: GatewayRecord) => void;
   onPairServer: () => void;
   onOpenSettings: () => void;
@@ -63,17 +63,6 @@ export type PadServerRailProps = {
   commandOptions?: HomeCommandOptions;
   style?: StyleProp<ViewStyle>;
   testID?: string;
-  /**
-   * An identity the caller has already resolved, for a caller that has one.
-   *
-   * Omitting it no longer means "use the product's own name". This used to be
-   * a home-only override, and the result on a tablet was one rail wearing two
-   * identities: the home screen said what the pack asked it to say, and the
-   * moment the reader opened a terminal the same strip beside them went back
-   * to the Muqun mark and the Muqun name. The rail resolves the pack itself
-   * now, so every rail agrees without the caller having to remember.
-   */
-  homeBrand?: { name: string | null; logo: ImageSource | number | null; visible: boolean };
 };
 
 /**
@@ -92,7 +81,7 @@ export function PadServerRail({
   selectedAsid,
   activeConnection,
   workbenchSelected = false,
-  onOpenWorkbench,
+  onBack,
   onSelectServer,
   onPairServer,
   onOpenSettings,
@@ -103,7 +92,6 @@ export function PadServerRail({
   nowMs = Date.now(),
   style,
   testID = 'pad-server-rail',
-  homeBrand,
   commandOptions,
 }: PadServerRailProps) {
   const { t } = useLingui();
@@ -124,23 +112,6 @@ export function PadServerRail({
     activeConnection,
     reachabilityByServer,
   });
-  const activeTheme = useThemeLibrary((state) => state.active);
-  const themeAssets = useThemeLibrary((state) => state.activeAssets);
-  const [failedLogo, setFailedLogo] = useState<string | null>(null);
-  const brandMark = useBrandMark();
-  // The caller's answer when it has one, the pack's otherwise. Resolved here so
-  // the workspace rail cannot differ from the home rail by omission.
-  const brand = useMemo(() => {
-    if (homeBrand) return homeBrand;
-    const identity = resolveHomeIdentity(activeTheme?.manifest);
-    const custom =
-      identity.logo?.mode === 'custom' ? themeAssets?.[identity.logo.asset] : undefined;
-    return {
-      name: identity.name,
-      logo: identity.logo ? (custom && custom !== failedLogo ? { uri: custom } : brandMark) : null,
-      visible: identity.showBrand,
-    };
-  }, [homeBrand, activeTheme, themeAssets, failedLogo, brandMark]);
 
   return (
     <SafeAreaView
@@ -157,88 +128,7 @@ export function PadServerRail({
         style,
       ]}>
       <ThemedSurfaceArtwork slot="navigation.background" baseColor={theme.colors.surface} />
-      {brand.visible !== false ? (
-        <View testID={homeBrand ? 'home-brand-rail' : undefined} style={styles.brand}>
-          {brand.logo !== null ? (
-            <View
-              style={[
-                styles.brandIconFrame,
-                { backgroundColor: background(theme.colors.surfaceRaised) },
-                { borderRadius: profile.rail.brandIconRadius },
-              ]}>
-              <Image
-                source={brand.logo ?? brandMark}
-                onError={() => {
-                  const uri = brand.logo;
-                  if (uri && typeof uri === 'object' && 'uri' in uri && uri.uri)
-                    setFailedLogo(uri.uri);
-                }}
-                contentFit="contain"
-                style={styles.brandIcon}
-              />
-            </View>
-          ) : null}
-          {brand.name !== null ? (
-            <View style={styles.brandCopy}>
-              <Text
-                variant="heading"
-                style={{
-                  fontSize: profile.rail.brandTitleFontSize,
-                  lineHeight: profile.rail.brandTitleLineHeight,
-                  letterSpacing: profile.rail.brandTitleLetterSpacing,
-                }}>
-                {brand.name ?? <Trans>Muqun</Trans>}
-              </Text>
-              {profile.rail.showsTagline ? (
-                <Text variant="caption" color={theme.colors.textMuted}>
-                  <Trans>Your agents, anywhere.</Trans>
-                </Text>
-              ) : null}
-            </View>
-          ) : null}
-        </View>
-      ) : null}
-
-      <PadRailArtwork />
-
-      {onOpenWorkbench ? (
-        <Pressable
-          testID={`${testID}-workbench`}
-          accessibilityRole="button"
-          accessibilityLabel={t`Home`}
-          accessibilityState={{ selected: workbenchSelected }}
-          onPress={onOpenWorkbench}
-          style={({ pressed }) => [
-            styles.serverPill,
-            { marginBottom: 12 },
-            { marginHorizontal: profile.rail.workbenchMarginHorizontal },
-            { borderRadius: profile.chrome.railItem },
-            {
-              borderLeftWidth: profile.rail.selectionBarWidth,
-              borderLeftColor: workbenchSelected ? theme.colors.primary : 'transparent',
-              paddingLeft: profile.rail.selectionPaddingLeft,
-            },
-            {
-              backgroundColor: background(
-                workbenchSelected || pressed ? theme.colors.primarySubtle : 'transparent'
-              ),
-            },
-          ]}>
-          <View
-            style={[
-              styles.serverIcon,
-              { backgroundColor: background(theme.colors.surfaceRaised) },
-              { borderRadius: profile.rail.itemIconRadius },
-            ]}>
-            <House size={17} color={theme.colors.primary} strokeWidth={2} />
-          </View>
-          <View style={styles.serverCopy}>
-            <Text variant="bodySmall" numberOfLines={1}>
-              <Trans>Home</Trans>
-            </Text>
-          </View>
-        </Pressable>
-      ) : null}
+      <PadRailHeader onBack={onBack} testID={`${testID}-back`} />
 
       <ScrollView
         style={styles.scroll}
@@ -346,8 +236,11 @@ export function PadServerRail({
   );
 }
 
-/** Static decoration only: no duplicate Home motion owner or navigation target. */
-function PadRailArtwork() {
+/** Full-bleed theme art fades into the rail; Back keeps its own readable surface. */
+function PadRailHeader({ onBack, testID }: { onBack: () => void; testID: string }) {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
   const active = useThemeLibrary((state) => state.active);
   const assets = useThemeLibrary((state) => state.activeAssets);
   const preference = useThemeLibrary((state) => {
@@ -356,6 +249,7 @@ function PadRailArtwork() {
   });
   const { resolvedMode } = useThemeMode();
   const { height } = useWindowDimensions();
+  const [width, setWidth] = useState(0);
   const [failedSource, setFailedSource] = useState<string | null>(null);
   const artwork = resolvePadRailArtwork({
     manifest: active?.manifest,
@@ -363,31 +257,81 @@ function PadRailArtwork() {
     mode: resolvedMode,
     preference,
   });
-  if (!artwork || artwork.source === failedSource) return null;
-  const { source, image, foreground } = artwork;
+  const source = artwork && artwork.source !== failedSource ? artwork.source : null;
+  const image = useImage(source, () => setFailedSource(source));
+  const artworkHeight = Math.min(220, height * 0.26);
+  const box = { width, height: artworkHeight };
+  const imageRect = image
+    ? coveredImageRect(
+        box,
+        { width: image.width(), height: image.height() },
+        artwork?.image.focalPoint
+      )
+    : null;
   return (
     <View
-      testID="pad-rail-artwork"
-      pointerEvents="none"
-      accessible={false}
-      importantForAccessibility="no-hide-descendants"
-      style={[styles.railArtwork, { height: Math.min(foreground ? 144 : 112, height * 0.18) }]}>
-      <Image
-        key={source}
-        source={{ uri: source }}
-        recyclingKey={source}
-        contentFit={foreground ? 'contain' : 'cover'}
-        contentPosition={
-          !foreground && image.focalPoint
-            ? { left: `${image.focalPoint.x * 100}%`, top: `${image.focalPoint.y * 100}%` }
-            : 'center'
-        }
-        cachePolicy="memory"
-        autoplay={false}
-        accessible={false}
-        onError={() => setFailedSource(source)}
-        style={[StyleSheet.absoluteFill, { opacity: image.opacity ?? 1 }]}
-      />
+      onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
+      style={[
+        styles.railHeader,
+        {
+          height: source ? artworkHeight : 68,
+          borderTopLeftRadius: profile.chrome.workspaceRail,
+          borderTopRightRadius: profile.chrome.workspaceRail,
+        },
+      ]}>
+      {image && imageRect ? (
+        <View
+          testID="pad-rail-artwork"
+          pointerEvents="none"
+          accessible={false}
+          importantForAccessibility="no-hide-descendants"
+          style={StyleSheet.absoluteFill}>
+          <Canvas style={StyleSheet.absoluteFill}>
+            <Mask
+              mode="alpha"
+              mask={
+                <Rect x={0} y={0} width={width} height={artworkHeight}>
+                  <LinearGradient
+                    start={vec(0, 0)}
+                    end={vec(0, artworkHeight)}
+                    colors={['white', 'white', 'transparent']}
+                    positions={[0, 0.35, 1]}
+                  />
+                </Rect>
+              }>
+              <Image
+                image={image}
+                x={imageRect.x}
+                y={imageRect.y}
+                width={imageRect.width}
+                height={imageRect.height}
+                fit="fill"
+                opacity={artwork?.image.opacity ?? 1}
+              />
+            </Mask>
+          </Canvas>
+        </View>
+      ) : null}
+      <Pressable
+        testID={testID}
+        accessibilityRole="button"
+        accessibilityLabel={t`Back to Home`}
+        onPress={onBack}
+        style={({ pressed }) => [
+          styles.backButton,
+          { borderRadius: profile.chrome.railItem },
+          {
+            backgroundColor: withAlpha(
+              pressed ? theme.colors.surfaceRaised : theme.colors.surface,
+              0.94
+            ),
+          },
+        ]}>
+        <ChevronLeft size={20} color={theme.colors.text} strokeWidth={2} />
+        <Text variant="bodySmall" color={theme.colors.text}>
+          <Trans>Back</Trans>
+        </Text>
+      </Pressable>
     </View>
   );
 }
@@ -481,43 +425,21 @@ const styles = StyleSheet.create({
     minWidth: 0,
     borderCurve: 'continuous',
   },
-  // 12, not 16: `SectionLabel` carries the remaining 4 itself, so the rail's
-  // eyebrow starts on the same x it always did -- and starts there with a
-  // wallpaper as well as without one, because the plate gives its extra
-  // padding back as a negative margin rather than moving the word.
-  brand: {
+  railHeader: {
+    width: '100%',
+    overflow: 'hidden',
+    marginBottom: 12,
+    borderCurve: 'continuous',
+  },
+  backButton: {
+    alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 10,
-  },
-  brandIconFrame: {
-    width: 48,
-    height: 48,
-    borderRadius: 15,
+    minHeight: 44,
+    gap: 4,
+    margin: 12,
+    paddingHorizontal: 12,
     borderCurve: 'continuous',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  brandIcon: {
-    width: '70%',
-    height: '70%',
-  },
-  brandCopy: {
-    flex: 1,
-    minWidth: 0,
-    gap: 2,
-  },
-  railArtwork: {
-    marginHorizontal: 16,
-    marginTop: 4,
-    marginBottom: 12,
-    borderRadius: 12,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
   },
   scroll: {
     flex: 1,
@@ -573,37 +495,4 @@ const styles = StyleSheet.create({
     minWidth: 0,
     gap: 1,
   },
-  // Inset to the pill's own text edge, so the eyebrow sits over the names
-  // rather than over the icons. 2 here plus `SectionLabel`'s own 4 is the 6 it
-  // was before the label started carrying its own indent, and a pack's plate
-  // does not add to it: the plate's padding is cancelled by its own margin.
-  // The pill insets its own icon by `serverPill.paddingHorizontal`, so the pane
-  // lights below have to be inset by the same amount to share that left edge.
-  // With no loom drawn between the two, that shared edge is the only thing
-  // saying the panes belong to the server above them.
-  serverPill: {
-    minHeight: 58,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderCurve: 'continuous',
-  },
-  serverIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  serverCopy: {
-    flex: 1,
-    minWidth: 0,
-    gap: 2,
-  },
-  // Both gaps are clearance for the live dot's ring rather than optical
-  // spacing: `StatusDot` sends it out to 2.6x the dot, past its own box on
-  // every side, so at 8 and 5 it crossed the machine's name on one side and the
-  // first letter of ONLINE on the other every two and a half seconds.
 });

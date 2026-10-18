@@ -14,9 +14,50 @@ export function padLaunchLayoutEnabled(
 /** The Pad cover dock's field, empty: room for a paragraph, not one line. */
 export const PAD_DOCK_FIELD_LINES = 3;
 
+/** The phone dock's gutter outside its field and its shadow, on each side and below. */
+export const HOME_DOCK_OUTER_INSET = 12;
+export const HOME_DOCK_OUTER_BOTTOM_INSET = 8;
+
+/** The widest phone the dock's field is drawn for; the Pad dock is capped at its width. */
+const HOME_DOCK_PHONE_WIDTH = 430;
+
+/**
+ * The widest the Home dock gets anywhere: the phone's dock, gutters taken
+ * off. The Pad cover column is half again as wide, and a dock stretched to
+ * it drew the theme's composer decoration -- fit to the field's width -- half
+ * again as large as on the phone, so the field read as a different field.
+ */
+export const HOME_COMPOSER_MAX_FIELD_WIDTH = HOME_DOCK_PHONE_WIDTH - 2 * HOME_DOCK_OUTER_INSET;
+
+/**
+ * The inset on each side that centres a dock no wider than the phone's in a
+ * Pad cover column of `coverWidth`; nothing when the column is no wider.
+ */
+export function padDockOuterInset(coverWidth: number): number {
+  if (!Number.isFinite(coverWidth) || coverWidth <= HOME_COMPOSER_MAX_FIELD_WIDTH) return 0;
+  return Math.floor((coverWidth - HOME_COMPOSER_MAX_FIELD_WIDTH) / 2);
+}
+
 /** The gap between the two Pad columns, and between two cards in the grid. */
 export const PAD_COLUMN_GAP = 24;
 export const PAD_CARD_GAP = 12;
+export const PAD_LAUNCH_GAP = 16;
+export const PAD_LAUNCH_BOTTOM_SPACE = 24;
+
+/** Reserve the measured controls before giving the cover its preferred height.
+ * Column height excludes the toolbar and stays fixed while the keyboard rises.
+ */
+export function padCoverAvailableHeight(
+  columnHeight: number,
+  composerHeight: number,
+  launchesHeight: number
+): number | undefined {
+  if (columnHeight <= 0 || launchesHeight <= 0) return undefined;
+  return Math.max(
+    0,
+    columnHeight - composerHeight - launchesHeight - PAD_LAUNCH_GAP - PAD_LAUNCH_BOTTOM_SPACE
+  );
+}
 
 /** Narrower than this a card's rows wrap their titles to stubs; it takes the column alone. */
 const PAD_CARD_MIN_WIDTH = 320;
@@ -89,18 +130,22 @@ const COVER_ARTWORK_RATIO = 0.9;
 /** The cover block's share of the viewport. */
 export const PAD_COVER_SHARE = 0.45;
 
+/** Keep the theme legible in a short window; the launch pane can scroll. */
+export const PAD_COVER_MIN_HEIGHT = 200;
+
 /**
  * The Pad cover block at the top of the left column: the pack's title and
- * painting, or the app's wordmark, always at `PAD_COVER_SHARE` of the
- * viewport -- the work sits in the other column, so nothing makes it smaller.
+ * painting, or the app's wordmark, prefers `PAD_COVER_SHARE` of the viewport.
+ * The measured launch controls and composer take priority when space is tight.
  *
  * - `titleSize`: the cover title as wide as the column allows (the 38% cap
  *   and measured fit the cover has always used), and never taller than its
  *   share of the block: 40% of it over a painting, the whole block (with the
  *   descender) for the wordmark.
- * - `artwork`: the painting at its own proportion in the full block,
- *   standing on the block's foot at the right, as wide as 85% of the column
- *   at most, so the title's start stays clear at its left.
+ * - `artwork`: the painting at its own proportion, standing on the block's
+ *   foot at the right. Portraits beside long titles leave most of the type
+ *   clear while still overlapping its lower edge. Short-title portraits keep
+ *   their original frame; scenic rectangles stay behind the title.
  *
  * `measuredTitleWidth` is the title's width at 100pt, 0 until measured.
  */
@@ -109,13 +154,30 @@ export function padCover({
   coverWidth,
   measuredTitleWidth,
   wordmark,
+  foreground = true,
+  hasTitle = true,
+  availableHeight,
 }: {
   viewportHeight: number;
   coverWidth: number;
   measuredTitleWidth: number;
   wordmark: boolean;
-}): { height: number; titleSize: number; artwork: { width: number; height: number } } {
-  const height = Math.round(viewportHeight * PAD_COVER_SHARE);
+  /** Scenic backgrounds sit behind type; cutout portraits may overlap its lower edge. */
+  foreground?: boolean;
+  hasTitle?: boolean;
+  /** Space left after the toolbar, measured launch controls, and composer. */
+  availableHeight?: number;
+}): {
+  height: number;
+  titleSize: number;
+  titleZIndex: number;
+  artwork: { width: number; height: number };
+} {
+  const preferredHeight = Math.round(viewportHeight * PAD_COVER_SHARE);
+  const height = Math.min(
+    preferredHeight,
+    Math.max(PAD_COVER_MIN_HEIGHT, availableHeight ?? preferredHeight)
+  );
   const byWidth =
     measuredTitleWidth > 0
       ? Math.min(coverWidth * 0.38, ((coverWidth - 4) * 100) / measuredTitleWidth)
@@ -123,10 +185,21 @@ export function padCover({
   const byHeight = wordmark
     ? height / (PAD_COVER_TITLE_LINE_HEIGHT + PAD_WORDMARK_DESCENDER)
     : (height * 0.4) / PAD_COVER_TITLE_LINE_HEIGHT;
-  const artworkHeight = Math.min(height, coverWidth * 0.85 * COVER_ARTWORK_RATIO);
+  const titleSize = Math.max(0, Math.min(byWidth, byHeight));
+  const naturalArtworkHeight = Math.min(height, coverWidth * 0.85 * COVER_ARTWORK_RATIO);
+  const naturalArtworkWidth = naturalArtworkHeight / COVER_ARTWORK_RATIO;
+  const titleWidth = measuredTitleWidth > 0 ? (titleSize * measuredTitleWidth) / 100 : coverWidth;
+  // A short title ends before the portrait's centre and keeps the authored
+  // side-by-side composition. Long titles may pass behind a silhouette, but
+  // most of every letter must remain above it, even for wide heads or ears.
+  const sharesTitle =
+    !wordmark && hasTitle && foreground && titleWidth > coverWidth - naturalArtworkWidth / 2;
+  const clearTitleHeight = sharesTitle ? titleSize * PAD_COVER_TITLE_LINE_HEIGHT * 0.78 : 0;
+  const artworkHeight = Math.min(naturalArtworkHeight, Math.max(0, height - clearTitleHeight));
   return {
     height,
-    titleSize: Math.max(0, Math.min(byWidth, byHeight)),
+    titleSize,
+    titleZIndex: foreground ? 0 : 2,
     artwork: {
       width: Math.round(artworkHeight / COVER_ARTWORK_RATIO),
       height: Math.round(artworkHeight),

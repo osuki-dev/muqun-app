@@ -29,6 +29,18 @@ const AGENT_SESSION_LIST_LIMIT = 50;
  * `/api/agent-sessions` list, from which every remembered session's title,
  * status and agent are read. One list per computer, never one per folder.
  */
+/** The merged root listing Continue reads, the same path whoever starts it. */
+export function homeAgentSessionsListPath(agentSessionLimit = HOME_CONTINUE_GATEWAY_SESSION_LIMIT) {
+  // No `agent_id` and no `directory`: a multi-agent gateway merges every
+  // agent's list and tags each row with its owner and folder.
+  const query = new URLSearchParams({
+    roots: 'true',
+    limit: String(Math.max(AGENT_SESSION_LIST_LIMIT, agentSessionLimit)),
+    order: 'desc',
+  });
+  return `/api/agent-sessions?${query}`;
+}
+
 export async function refreshHomeContinue({
   serverId,
   sessionId,
@@ -43,6 +55,7 @@ export async function refreshHomeContinue({
   servesSnapshot = false,
   capabilities,
   agentSessionLimit = HOME_CONTINUE_GATEWAY_SESSION_LIMIT,
+  agentSessionsList,
 }: {
   serverId: string;
   sessionId: string;
@@ -63,6 +76,13 @@ export async function refreshHomeContinue({
   servesSnapshot?: boolean;
   capabilities?: readonly string[];
   agentSessionLimit?: number;
+  /**
+   * The listing (`homeAgentSessionsListPath`) already on its way, started
+   * before the Herdr session was resolved: the list does not depend on it,
+   * and waiting for `/api/sessions` first put a round trip in front of every
+   * Continue refresh for nothing.
+   */
+  agentSessionsList?: Promise<unknown>;
 }) {
   const repair = async (target: HomeTarget, agentId: string) => {
     if (repairAgent && target.kind === 'agent-session' && target.agentId !== agentId)
@@ -101,14 +121,9 @@ export async function refreshHomeContinue({
     ...(remembered.length > 0 || recordAgentSessions
       ? [
           (async () => {
-            // No `agent_id` and no `directory`: a multi-agent gateway merges
-            // every agent's list and tags each row with its owner and folder.
-            const query = new URLSearchParams({
-              roots: 'true',
-              limit: String(Math.max(AGENT_SESSION_LIST_LIMIT, agentSessionLimit)),
-              order: 'desc',
-            });
-            const list = listedSessions(await read(`/api/agent-sessions?${query}`));
+            const list = listedSessions(
+              await (agentSessionsList ?? read(homeAgentSessionsListPath(agentSessionLimit)))
+            );
             if (!isCurrent()) return;
             const observedAtMs = Date.now();
             if (recordAgentSessions) {

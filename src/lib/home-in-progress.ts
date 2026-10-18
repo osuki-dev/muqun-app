@@ -7,6 +7,8 @@
  */
 
 import type { ServerTasksIndex } from './server-tasks-state';
+import { taskHasPendingInput, type TaskAttentionInput } from './task-attention';
+import type { ServerAgentsIndex } from './server-agents';
 import { isRemoteCommandTask, isTerminalTaskState, type TaskView } from './task-ledger';
 
 export type HomeTaskRow = { serverId: string; task: TaskView };
@@ -28,50 +30,33 @@ function rowsWhere(
 /** An agent session Needs you already lists for its own pending request. */
 export type PendingSessionTarget = { serverId: string; asid: string };
 
-/**
- * Tasks waiting on the reader, newest first: they belong with Needs you.
- *
- * The gateway moves a delegation to `waiting` exactly when its bound session
- * raises a permission or form request, and Needs you lists that request
- * already, as a row that opens the session where it can be answered. A task
- * bound to such a session is that same request again, so it is left out.
- */
+/** Confirmed requests only; recorded waiting status is not an input request. */
 export function homeWaitingTasks(
   index: ServerTasksIndex,
   serverIds: readonly string[],
   pending: readonly PendingSessionTarget[] = [],
-  peerServerOf: (binding: { peerId: string; peerServerId?: string }) => string = (binding) =>
-    binding.peerServerId ?? binding.peerId
+  attention: {
+    panesByServer?: ServerAgentsIndex;
+    requests?: TaskAttentionInput['requests'];
+    nowMs: number;
+  } = { nowMs: Date.now() }
 ): HomeTaskRow[] {
   const listed = new Set(pending.map((target) => `${target.serverId}\n${target.asid}`));
-  const fresh = new Set(serverIds);
   const rows: HomeTaskRow[] = [];
-  for (const row of rowsWhere(
-    index,
-    serverIds,
-    (task) => task.state === 'waiting' && !isRemoteCommandTask(task)
-  )) {
+  for (const row of rowsWhere(index, serverIds, (task) => !isRemoteCommandTask(task))) {
+    if (
+      !taskHasPendingInput({
+        task: row.task,
+        serverId: row.serverId,
+        panes: attention.panesByServer?.[row.serverId],
+        requests: attention.requests,
+        nowMs: attention.nowMs,
+      })
+    )
+      continue;
     const { binding } = row.task;
     if (binding.kind === 'agent_session' && listed.has(`${row.serverId}\n${binding.asid}`)) {
       continue;
-    }
-    // A question is listed once: a mirror of work on another computer whose
-    // real task this phone also holds fresh, and waiting, is that task's
-    // question again. The mirror stays when that computer's own ledger is not
-    // here, or the real task there has not reached `waiting` (or has left it).
-    // With the mirror hidden, only the running computer has the question, so
-    // the top section (two or more computers) stays closed and its card lists it.
-    if (binding.kind === 'peer' && binding.remoteTaskId) {
-      const there = peerServerOf(binding);
-      const held =
-        fresh.has(there) &&
-        index[there]?.tasks.some(
-          (task) =>
-            task.taskId === binding.remoteTaskId &&
-            task.state === 'waiting' &&
-            !isRemoteCommandTask(task)
-        ) === true;
-      if (held) continue;
     }
     rows.push(row);
   }

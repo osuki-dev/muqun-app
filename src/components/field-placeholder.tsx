@@ -48,7 +48,7 @@ export function FieldPlaceholder({
       pointerEvents="none"
       color={color ?? colors.textSubtle}
       onTextLayout={onTextLayout}
-      style={StyleSheet.flatten([styles.placeholder, style])}>
+      style={StyleSheet.flatten([styles.placeholder, style]) ?? undefined}>
       {text}
     </Text>
   );

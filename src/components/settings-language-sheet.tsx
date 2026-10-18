@@ -1,11 +1,6 @@
 /**
  * The language picker.
  *
- * Nine options -- follow the phone, or one of the eight languages Muqun speaks
- * -- and on the page they were a wrapping `RadioGroup` of nine bordered boxes,
- * about a third of the settings card, permanently open. Nobody opens Settings
- * to look at it twice.
- *
  * In the sheet it is what a language picker should be: one option per line,
  * scanned rather than compared, on the same frosted ground and with the same
  * left rule as every other sheet in the app -- see `sheet-scene.tsx`. Each
@@ -19,7 +14,7 @@
  * this and cannot read the headings on the way down to it.
  */
 import { useLingui } from '@lingui/react/macro';
-import { View } from 'react-native';
+import { ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -58,11 +53,16 @@ export function SettingsLanguageSheet({ onClose }: { onClose: () => void }) {
       testID="settings-language-sheet"
       title={t`Language`}
       caption={language ? LOCALE_LABELS[language] : t`Following your phone`}
-      contentSized>
-      <View style={sheetSceneStyles.scrollerContent}>
+      fitsContent>
+      <ScrollView
+        nestedScrollEnabled
+        style={sheetSceneStyles.fitScroller}
+        contentContainerStyle={sheetSceneStyles.scrollerContent}
+        contentInsetAdjustmentBehavior="never"
+        keyboardShouldPersistTaps="handled">
         {/* First, and the default, so the app follows the phone until someone
             has a reason for it not to. `null` is what the store keeps -- it is
-            the absence of a choice, not a tenth language. */}
+            the absence of an explicit language choice. */}
         <SheetSceneRow
           title={t`System`}
           caption={t`Follow the language your phone is set to`}
@@ -81,8 +81,8 @@ export function SettingsLanguageSheet({ onClose }: { onClose: () => void }) {
             onPress={() => choose(locale)}
           />
         ))}
-        <SheetSceneFooter bottomInset={insets.bottom} />
-      </View>
+        <SheetSceneFooter bottomInset={insets.bottom} contentSized />
+      </ScrollView>
     </SheetScene>
   );
 }

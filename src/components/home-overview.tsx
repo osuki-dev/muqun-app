@@ -66,7 +66,6 @@ import AppDrawer from '@/components/app-drawer';
 import { NewTaskAction } from '@/components/new-task-action';
 import { PressableScale } from '@/components/pressable-scale';
 import { SectionLabel } from '@/components/settings-chrome';
-import { ServerAgentRows } from '@/components/server-agent-rows';
 import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
 import { HomeArtwork } from '@/components/home-artwork';
 import { ThemeIcon } from '@/components/theme-icon';
@@ -102,10 +101,15 @@ import {
 import { homeContinueSearchEnabled } from '@/lib/home-continue-search';
 import { demoContinueSearchEntries } from '@/lib/demo-recents';
 import { useScreenVisible } from '@/hooks/use-screen-visible';
-import { claimHomeFirstEntry } from '@/lib/home-first-entry';
+import { claimHomeFirstEntry, hasHomeComposerRevealed } from '@/lib/home-first-entry';
+import { useThemePack } from '@/hooks/use-theme-pack';
+import { useLaunchHandoff } from '@/stores/launch-handoff';
 import {
+  HOME_DOCK_OUTER_BOTTOM_INSET,
+  HOME_DOCK_OUTER_INSET,
   nextRestingInset,
   PAD_DOCK_FIELD_LINES,
+  padDockOuterInset,
   padHomeColumns,
   padLaunchLayoutEnabled,
   type RestingInset,
@@ -137,11 +141,11 @@ import {
 } from '@/lib/motion';
 import {
   homeServerListLayout,
+  homeCoverArtworkHeight,
   THEME_ARTWORK_REGULAR_MIN_WIDTH,
   type HomeServerListLayout,
 } from '@/lib/responsive-layout';
 import { serverIdsNeedingAddress } from '@/lib/server-address';
-import type { ServerAgent } from '@/lib/server-agents';
 import {
   reachabilityOfStatus,
   REACHABILITY_TICK_MS,
@@ -159,7 +163,6 @@ import { GatewayStorageError } from '@/components/gateway-storage-error';
 import { useServerAgents } from '@/stores/server-agents';
 import { retryHomeRefresh } from '@/lib/home-refresh-schedule';
 import { useConnectionStatuses } from '@/hooks/use-home-reachability';
-import { useMinuteNow } from '@/hooks/use-minute-now';
 import { useHomeRecentsStore } from '@/stores/home-recents';
 import { useHomeAgentChoice } from '@/stores/home-agent-choice';
 import { useHomeAttention } from '@/stores/home-attention';
@@ -292,11 +295,23 @@ export function HomeOverview({
   const [refreshing, setRefreshing] = useState(false);
   const profile = useAppearanceProfile();
   const homeLayout = profile.id;
+  const classicLayout = homeLayout === 'classic' && !isPad;
   const [editorialWidth, setEditorialWidth] = useState(0);
   const [editorialArtworkTop, setEditorialArtworkTop] = useState<{
     source: string;
     top: number;
   } | null>(null);
+  const [artworkForeground, setArtworkForeground] = useState<{
+    source: string;
+    foreground: boolean;
+  } | null>(null);
+  const reportArtworkForeground = useCallback((source: string, foreground: boolean) => {
+    setArtworkForeground((current) =>
+      current?.source === source && current.foreground === foreground
+        ? current
+        : { source, foreground }
+    );
+  }, []);
   const reportEditorialArtworkTop = useCallback((source: string, top: number) => {
     setEditorialArtworkTop((current) =>
       current?.source === source && current.top === top ? current : { source, top }
@@ -390,6 +405,10 @@ export function HomeOverview({
   const restoredScroll = useRef<React.ComponentRef<typeof KeyboardAwareScrollView>>(null);
   const savedScrollY = useRef(0);
   const [composerPulse, setComposerPulse] = useState(0);
+  const [composerRevealed, setComposerRevealed] = useState(hasHomeComposerRevealed);
+  const [initialProbeSettled, setInitialProbeSettled] = useState(false);
+  const [viewportReady, setViewportReady] = useState(false);
+  const launchSettled = useLaunchHandoff((state) => state.settled);
   // The phone dock floats over the page; the page's foot clears it.
   const [dockHeight, setDockHeight] = useState(0);
   const [dockClipHeight, setDockClipHeight] = useState(0);
@@ -397,6 +416,8 @@ export function HomeOverview({
   const [dockFocused, setDockFocused] = useState(false);
   // Classic: the pack artwork's measured slot, which the work block overlaps.
   const [classicArtworkHeight, setClassicArtworkHeight] = useState(0);
+  const [classicBrandHeight, setClassicBrandHeight] = useState(0);
+  const [failedClassicArtworkSource, setFailedClassicArtworkSource] = useState<string | null>(null);
   // On the phone the dock slides out of the way while the page scrolls down.
   // The Pad cover's dock stays fixed at the foot of its column.
   const pageDockHide = useDockAutoHide(dockHeight);
@@ -422,6 +443,7 @@ export function HomeOverview({
   // `homeServerListLayout` for why room, not server count alone, decides it.
   const metrics = homeServerListLayout(width, records.length);
 
+  const serverAgentsHydrated = useServerAgents((state) => state.hydrated);
   const hydrateServerAgents = useServerAgents((state) => state.hydrate);
   const keepServerAgents = useServerAgents((state) => state.keepOnly);
 
@@ -470,6 +492,13 @@ export function HomeOverview({
   // A scroll view that leaves mid-drag never reports its end: let go with Home.
   useEffect(() => resetSortHold, []);
   const [entering, setEntering] = useState(claimHomeFirstEntry);
+  const wornTheme = useThemePack();
+  const wornThemeRef = useRef(wornTheme);
+  useEffect(() => {
+    if (wornThemeRef.current === wornTheme) return;
+    wornThemeRef.current = wornTheme;
+    setEntering(false);
+  }, [wornTheme]);
   useEffect(() => {
     if (!entering || loading) return;
     const timer = setTimeout(() => setEntering(false), ENTRY_BUDGET_MS);
@@ -563,14 +592,71 @@ export function HomeOverview({
       // The initial focus runs under LaunchOverlay: hydrate cached home data
       // and establish reachability without holding the splash for the network.
       // Re-entry and foreground resume reuse fresh results and refresh stale ones.
-      void refreshReachabilityMany(probeTargets, {
-        shouldContinue: () => current && AppState.currentState === 'active',
-      });
+      const finishInitialProbe = () => {
+        if (current) setInitialProbeSettled(true);
+      };
+      const shouldContinue = () => current && AppState.currentState === 'active';
+      // The dock waits on the selected computer alone: the one the next goal
+      // goes to. The others used to be asked first, one after another at up
+      // to four seconds each, and the composer waited on all of them; they
+      // are asked alongside it now, and their dots fill in as they answer.
+      const selected = probeTargets.find((target) => target.serverId === record?.serverId);
+      void (selected ? refreshReachability(selected, { shouldContinue }) : Promise.resolve()).then(
+        finishInitialProbe,
+        finishInitialProbe
+      );
+      void refreshReachabilityMany(
+        probeTargets.filter((target) => target !== selected),
+        { shouldContinue }
+      );
       return () => {
         current = false;
       };
-    }, [appActive, loading, hydrationError, probeTargets, refreshReachabilityMany])
+    }, [
+      appActive,
+      loading,
+      hydrationError,
+      probeTargets,
+      record?.serverId,
+      refreshReachability,
+      refreshReachabilityMany,
+    ])
   );
+
+  // The computers arrive first. Reuse their bounded initial probe, cached
+  // rows and native viewport layout, then one frame so that page can commit
+  // before the dock rises. This gate never closes on a refresh, reconnect
+  // or return; an empty inventory needs no probe.
+  const initialComputersReady =
+    !loading &&
+    (Boolean(hydrationError) ||
+      (serverAgentsHydrated && (records.length === 0 || initialProbeSettled)));
+  useEffect(() => {
+    if (
+      composerRevealed ||
+      !initialComputersReady ||
+      !viewportReady ||
+      (records.length > 0 && !hydrationError && dockHeight === 0) ||
+      !launchSettled ||
+      !isFocused ||
+      !appActive
+    )
+      return;
+    const frame = requestAnimationFrame(() => {
+      setComposerRevealed(true);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [
+    composerRevealed,
+    initialComputersReady,
+    viewportReady,
+    records.length,
+    hydrationError,
+    dockHeight,
+    launchSettled,
+    isFocused,
+    appActive,
+  ]);
 
   // While Home is on screen: re-read freshness every tick, and ask the
   // selected computer again. The store's own limit (one probe per server per
@@ -820,6 +906,8 @@ export function HomeOverview({
   });
 
   const availableRecentEntries = useHomeRecentEntries({
+    // Every layout keeps its pane inventory in Continue; Classic's computer
+    // cards below are entry points, not a second list of those panes.
     servers: records,
     hosts: sshRows,
     selectedServerId: launchController.chosen?.serverId,
@@ -917,11 +1005,15 @@ export function HomeOverview({
   // optional chain in a conditional's test.
   const editorialArtworkTopCurrent =
     editorialArtworkTop?.source === editorialArtworkResolution?.source;
+  const editorialArtworkSource = editorialArtworkResolution?.source;
+  const editorialArtworkForeground =
+    artworkForeground === null ||
+    artworkForeground.source !== editorialArtworkSource ||
+    artworkForeground.foreground;
   // Every layout gets the same dispatch surface -- the dock, Needs you and the
   // computer cards -- built once here; a layout only decides where they go.
   // Classic keeps its own look on the phone; a Pad always takes the editorial
   // spread, and so does any layout added later.
-  const classicLayout = homeLayout === 'classic' && !isPad;
   // Same width and predicate the layout resolves for itself: the Pad cover
   // spread lists eight Continue rows in its work column; other layouts keep theirs.
   // On the Pad the page's height does not follow the keyboard: the bottom
@@ -952,17 +1044,29 @@ export function HomeOverview({
     ) : undefined;
   const dock = showDock ? (
     <HomeComposerDock
+      revealed={composerRevealed}
       controller={launchController}
       reachabilityByServer={padReachabilityByServer}
       targetPulse={composerPulse}
       bottomInset={padLaunch ? 0 : insets.bottom}
       topInset={insets.top}
-      outerInsets={isPad ? undefined : { horizontal: 12, bottom: 8 }}
       // Phone Home has a small gutter outside the field and its shadow.
-      // On the Pad cover, the same bar as wide as the work column, its rows
-      // padded like the cards' rows, and a field with room for a paragraph.
-      // A Pad too narrow for the cover (portrait, large text) keeps the
-      // phone's full-width bar.
+      // On the Pad cover, the bar is capped at the phone dock's width and
+      // centred in the cover column (`padDockOuterInset`), so the field and
+      // the theme's decoration fit to it keep the phone's proportions; its
+      // rows are padded like the cards' rows, and the field has room for a
+      // paragraph. A Pad too narrow for the cover (portrait, large text)
+      // keeps the phone's full-width bar.
+      outerInsets={
+        padLaunch
+          ? {
+              horizontal: padDockOuterInset(padHomeColumns(padGeometry.innerWidth).cover),
+              bottom: 0,
+            }
+          : isPad
+            ? undefined
+            : { horizontal: HOME_DOCK_OUTER_INSET, bottom: HOME_DOCK_OUTER_BOTTOM_INSET }
+      }
       edgeBar={
         padLaunch
           ? { inset: HOME_CARD_INSET }
@@ -1016,6 +1120,9 @@ export function HomeOverview({
         skipEntering={cardsSkipEntering}
         gridWidth={cardGridWidth}
         onSelectServer={targetComposer}
+        onOpenHistory={(serverId) =>
+          router.push({ pathname: '/server-tasks', params: { serverId } })
+        }
         onOpenTask={({ serverId, task, tree }) => {
           // A row opens the session or pane the task runs in; only
           // the sub-task count opens the list of the work under it.
@@ -1036,6 +1143,44 @@ export function HomeOverview({
         }}
       />
     ) : undefined;
+  // Continue keeps the full inventory in every layout. Classic uses compact
+  // rows above entry-only computer cards; Editorial uses numbered rows.
+  const recentSection =
+    !loading && !hydrationError && recentEntries.length > 0 ? (
+      <HomeRecentSessions
+        compact={classicLayout}
+        pad={isPad}
+        limit={5}
+        linkStyle={padLaunch ? PAD_WORK_LINK : undefined}
+        selectedServerId={launchController.chosen?.serverId}
+        servers={records}
+        hosts={sshRows}
+        available={recentShown}
+        query={recentQuery}
+        header={
+          recentFilterIds.length > 0 ? (
+            <HomeRecentChips
+              servers={records}
+              serverIds={recentFilterIds}
+              value={recentFilter}
+              onChange={setRecentServerId}
+            />
+          ) : undefined
+        }
+        onOpen={(command) => {
+          // QA-only leaves already have read-only snapshots in the demo
+          // detail sheet; never send them to a live agent workbench.
+          if (demoSearchEntries && command.type === 'open-agent') {
+            router.push({
+              pathname: '/agent-subagent-detail',
+              params: { asid: command.target.asid, sessionId: 'demo' },
+            });
+            return;
+          }
+          void commands.dispatch(command);
+        }}
+      />
+    ) : undefined;
   if (!classicLayout) {
     const editorialContent = (
       <View
@@ -1046,6 +1191,7 @@ export function HomeOverview({
         style={[styles.page, { backgroundColor: background(theme.colors.background) }]}>
         <ThemeArtwork
           slot="home.wallpaper"
+          waitForTransition
           fallbackSlot="shell.wallpaper"
           effectsEnabled={!hasDevEffectOverride}
         />
@@ -1057,7 +1203,7 @@ export function HomeOverview({
           onChange={setHasComputerCards}
         />
         <HomeScrollViewport
-          dockHeight={dock && !padLaunch ? dockClipHeight : 0}
+          dockHeight={dock && !padLaunch && composerRevealed ? dockClipHeight : 0}
           dockOffset={isPad ? undefined : pageDockHide.dock.offset}
           ref={overviewScroll}
           keyboardShouldPersistTaps="handled"
@@ -1069,9 +1215,11 @@ export function HomeOverview({
           // keyboard.
           bottomOffset={dock && !padLaunch ? dockHeight : undefined}
           onContentSizeChange={restoreScroll}
-          onLayout={(event) =>
-            pageDockHide.settle({ viewportHeight: event.nativeEvent.layout.height })
-          }
+          onLayout={(event) => {
+            pageDockHide.settle({ viewportHeight: event.nativeEvent.layout.height });
+            if (event.nativeEvent.layout.height > 0 && event.nativeEvent.layout.width > 0)
+              setViewportReady(true);
+          }}
           onScrollBeginDrag={() => {
             sortHoldScroll.onScrollBeginDrag();
             pageDockHide.beginDrag();
@@ -1114,6 +1262,8 @@ export function HomeOverview({
               viewportHeight={editorialViewportHeight}
               scrollY={scrollY}
               cover={coverHeader}
+              artworkForeground={editorialArtworkForeground}
+              topInset={insets.top}
               coverTitle={showsEditorialBrand ? (identity.name ?? undefined) : undefined}
               pad={isPad}
               typographicCover={themeLibraryHydrated && !customTheme}
@@ -1146,6 +1296,8 @@ export function HomeOverview({
                 hasEditorialArtwork && editorialArtworkResolution ? (
                   <HomeEditorialArtwork
                     cover={coverHeader}
+                    fullBleed={coverHeader && !isPad}
+                    onForegroundChange={reportArtworkForeground}
                     // The Pad cover block sizes the painting; elsewhere it keeps its own proportion.
                     fill={padLaunch && coverHeader}
                     resolution={editorialArtworkResolution}
@@ -1235,43 +1387,7 @@ export function HomeOverview({
                   </View>
                 )
               }
-              recent={
-                !loading && !hydrationError && recentEntries.length > 0 ? (
-                  <HomeRecentSessions
-                    pad={isPad}
-                    limit={3}
-                    moreLabel="show-all"
-                    linkStyle={padLaunch ? PAD_WORK_LINK : undefined}
-                    selectedServerId={launchController.chosen?.serverId}
-                    servers={records}
-                    hosts={sshRows}
-                    available={recentShown}
-                    query={recentQuery}
-                    header={
-                      recentFilterIds.length > 0 ? (
-                        <HomeRecentChips
-                          servers={records}
-                          serverIds={recentFilterIds}
-                          value={recentFilter}
-                          onChange={setRecentServerId}
-                        />
-                      ) : undefined
-                    }
-                    onOpen={(command) => {
-                      // QA-only leaves already have read-only snapshots in the demo
-                      // detail sheet; never send them to a live agent workbench.
-                      if (demoSearchEntries && command.type === 'open-agent') {
-                        router.push({
-                          pathname: '/agent-subagent-detail',
-                          params: { asid: command.target.asid, sessionId: 'demo' },
-                        });
-                        return;
-                      }
-                      void commands.dispatch(command);
-                    }}
-                  />
-                ) : undefined
-              }
+              recent={recentSection}
               recentHeading={recentHeading}
               hasAttention={!loading && !hydrationError && hasAttention}
               attention={attentionSection}
@@ -1393,13 +1509,47 @@ export function HomeOverview({
   }
 
   const classicArtwork =
-    !loading && !hydrationError && records.length > 0 && artworkResolution
+    !loading &&
+    !hydrationError &&
+    records.length > 0 &&
+    isHomeArtworkAvailable(artworkResolution, failedClassicArtworkSource)
       ? artworkResolution
       : undefined;
+  const classicCover = Boolean(classicArtwork && coverHeader);
+  const classicBareToolbar =
+    classicCover && customTheme?.manifest.homePresentation?.toolbarBackground === false;
+  const classicCoverHeight = homeCoverArtworkHeight(Math.min(windowWidth, metrics.contentMaxWidth));
+  const classicBrandBlockHeight = identity.showBrand
+    ? classicBrandHeight || metrics.brand.minHeight
+    : 0;
+  const classicArtworkSource = classicArtwork?.source;
+  const classicScene =
+    classicCover &&
+    artworkForeground !== null &&
+    artworkForeground.source === classicArtworkSource &&
+    !artworkForeground.foreground;
+  // Large or wrapped wordmarks stand above the painting instead of covering
+  // its subject. Ordinary type shares the theme's quiet header sky.
+  const classicCoverTop =
+    fontScale >= 1.35 || classicBrandBlockHeight > metrics.brand.minHeight
+      ? barHeight + styles.content.paddingTop + classicBrandBlockHeight
+      : insets.top;
+  // The quiet sky begins below the status bar, behind the fixed controls and
+  // the existing wordmark. Its measured wordmark leaves room for large type.
+  const classicCoverRemainder = Math.max(
+    0,
+    classicCoverHeight +
+      classicCoverTop -
+      barHeight -
+      styles.content.paddingTop -
+      classicBrandBlockHeight
+  );
   // The work block rises over the artwork slot's bottom third; with no
   // artwork it keeps the list's own spacing.
   const artworkOverlap =
-    classicArtwork && classicArtworkHeight > 0 ? Math.round(classicArtworkHeight / 3) : 0;
+    classicArtwork && classicArtworkHeight > 0
+      ? Math.round((classicCover ? classicCoverRemainder : classicArtworkHeight) / 3)
+      : 0;
   const classicContent = (
     <View
       // Any finger on the page holds the cards' order (design §9).
@@ -1407,6 +1557,7 @@ export function HomeOverview({
       style={[styles.page, { backgroundColor: background(theme.colors.background) }]}>
       <ThemeArtwork
         slot="home.wallpaper"
+        waitForTransition
         fallbackSlot="shell.wallpaper"
         effectsEnabled={!hasDevEffectOverride}
       />
@@ -1510,12 +1661,14 @@ export function HomeOverview({
               herdr, so it is the one door here that is not about a gateway. */}
                   <HeaderButton
                     testID="home-open-ssh"
+                    bare={classicBareToolbar}
                     label={t`SSH`}
                     onPress={() => void commands.openSsh()}>
                     <SquareTerminal size={20} color={theme.colors.textMuted} strokeWidth={2} />
                   </HeaderButton>
                   <HeaderButton
                     label={t`Scan a gateway QR`}
+                    bare={classicBareToolbar}
                     onPress={() => void commands.pairGateway()}>
                     {/* The same mark as the empty card's corner brackets, at a fifth of
                 the size: the one productive gesture on this screen looks the
@@ -1531,7 +1684,10 @@ export function HomeOverview({
                   </HeaderButton>
                 </>
               )}
-              <HeaderButton label={t`Settings`} onPress={() => void commands.manageConnections()}>
+              <HeaderButton
+                bare={classicBareToolbar}
+                label={t`Settings`}
+                onPress={() => void commands.manageConnections()}>
                 <ThemeIcon
                   name="chrome.settings"
                   fallback={Settings}
@@ -1546,13 +1702,15 @@ export function HomeOverview({
       </Animated.View>
 
       <HomeScrollViewport
-        dockHeight={dock ? dockClipHeight : 0}
+        dockHeight={dock && composerRevealed ? dockClipHeight : 0}
         dockOffset={pageDockHide.dock.offset}
         ref={overviewScroll}
         onContentSizeChange={restoreScroll}
-        onLayout={(event) =>
-          pageDockHide.settle({ viewportHeight: event.nativeEvent.layout.height })
-        }
+        onLayout={(event) => {
+          pageDockHide.settle({ viewportHeight: event.nativeEvent.layout.height });
+          if (event.nativeEvent.layout.height > 0 && event.nativeEvent.layout.width > 0)
+            setViewportReady(true);
+        }}
         onScrollBeginDrag={() => {
           sortHoldScroll.onScrollBeginDrag();
           pageDockHide.beginDrag();
@@ -1599,6 +1757,27 @@ export function HomeOverview({
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}>
         {returnToTask ? <View style={styles.embeddedReturnRow}>{returnToTask}</View> : null}
+        {classicCover && classicArtwork ? (
+          <View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              top: classicScene ? 0 : classicCoverTop,
+              left: 0,
+              right: 0,
+            }}>
+            <HomeArtwork
+              resolution={classicArtwork}
+              scrollY={scrollY}
+              cover
+              onForegroundChange={reportArtworkForeground}
+              maxHeight={classicCoverHeight}
+              onAvailabilityChange={(available) => {
+                if (!available) setFailedClassicArtworkSource(classicArtwork.source);
+              }}
+            />
+          </View>
+        ) : null}
         {/* The app's name, at the weight the screen's own content leaves for
             it. On an empty screen this block *is* the content and is set as
             such; once a machine is paired the card below is what the reader
@@ -1617,12 +1796,24 @@ export function HomeOverview({
           <Animated.View
             testID="home-brand-expanded"
             entering={riseIn()}
-            layout={listLayout('medium')}>
+            layout={listLayout('medium')}
+            onLayout={(event) => {
+              const height = event.nativeEvent.layout.height;
+              setClassicBrandHeight((current) => (current === height ? current : height));
+            }}>
             <Animated.View
               style={[
                 styles.brandBlock,
                 expandedBrandStyle,
                 { minHeight: metrics.brand.minHeight, gap: metrics.brand.gap },
+                // Full-bleed scenes begin at the status bar. Keep their title
+                // in the toolbar's quiet left area rather than on the subject
+                // below it. The existing flow reservation still positions cards.
+                classicScene && {
+                  transform: [{ translateY: insets.top - barHeight }],
+                  paddingRight:
+                    (hasPairedServer ? 1 : 3) * (HEADER_BUTTON_SIZE + HEADER_BUTTON_GAP),
+                },
               ]}>
               {/* The mark alone, on the page. The rounded tile it used to sit in
               gave a shape the mark already has, and cost it 30% of its own
@@ -1640,16 +1831,17 @@ export function HomeOverview({
                 <View
                   style={[
                     styles.titleCopy,
-                    hasScene && {
-                      flex: 0,
-                      flexShrink: 1,
-                      backgroundColor: background(theme.colors.background),
-                      padding: 10,
-                      borderRadius: 14,
-                      overflow: 'hidden',
-                    },
+                    hasScene &&
+                      !classicCover && {
+                        flex: 0,
+                        flexShrink: 1,
+                        backgroundColor: background(theme.colors.background),
+                        padding: 10,
+                        borderRadius: 14,
+                        overflow: 'hidden',
+                      },
                   ]}>
-                  {hasScene ? (
+                  {hasScene && !classicCover ? (
                     <ThemedSurfaceArtwork
                       slot="navigation.background"
                       baseColor={theme.colors.background}
@@ -1706,11 +1898,20 @@ export function HomeOverview({
             theme looks like. */}
         {classicArtwork ? (
           <View
+            style={classicCover ? { height: classicCoverRemainder } : undefined}
             onLayout={(event) => {
               const height = event.nativeEvent.layout.height;
               setClassicArtworkHeight((current) => (current === height ? current : height));
             }}>
-            <HomeArtwork resolution={classicArtwork} scrollY={scrollY} />
+            {classicCover ? null : (
+              <HomeArtwork
+                resolution={classicArtwork}
+                scrollY={scrollY}
+                onAvailabilityChange={(available) => {
+                  if (!available) setFailedClassicArtworkSource(classicArtwork.source);
+                }}
+              />
+            )}
           </View>
         ) : null}
 
@@ -1785,10 +1986,8 @@ export function HomeOverview({
         <Animated.View
           layout={listLayout()}
           style={artworkOverlap ? { marginTop: -artworkOverlap } : undefined}>
-          {/* The dispatch surface every layout has (see `classicLayout`): Needs
-              you, then the computers with work, then this layout's own server
-              cards as its Recent. Below the spacer, so each label sits on what
-              it labels. */}
+          {/* The shared work and session sections keep their actions in both
+              layouts. Classic's connection cards remain underneath them. */}
           {/* Mounted while empty, as on the editorial page, so its first row
               arrives with its pulse; spaced only with a row. */}
           {attentionSection ? (
@@ -1809,9 +2008,23 @@ export function HomeOverview({
               {progressSection}
             </View>
           ) : null}
-          {progressSection && records.length > 0 ? (
+          {recentSection ? (
+            <View style={{ marginBottom: metrics.cardGap }}>
+              <View style={{ marginBottom: theme.spacing.sm }}>
+                {recentHeading ?? (
+                  <SectionLabel
+                    title={<Trans>Recent</Trans>}
+                    color={theme.colors.textMuted}
+                    style={styles.classicLabel}
+                  />
+                )}
+              </View>
+              {recentSection}
+            </View>
+          ) : null}
+          {(progressSection || recentSection) && records.length > 0 ? (
             <SectionLabel
-              title={<Trans>Recent</Trans>}
+              title={<Trans>Connections</Trans>}
               color={theme.colors.textMuted}
               style={[styles.classicLabel, { marginBottom: theme.spacing.sm }]}
             />
@@ -1835,7 +2048,6 @@ export function HomeOverview({
                 showAddress={addressNeeded.has(server.serverId)}
                 reachability={padReachabilityByServer[server.serverId] ?? 'unknown'}
                 onOpen={() => openServer(server.serverId)}
-                onOpenAgent={(agent) => openServer(server.serverId, agent.paneId)}
               />
             ))}
           </View>
@@ -1948,7 +2160,10 @@ function HeaderButton({
       onPress={onPress}
       style={[
         styles.headerButton,
-        { backgroundColor: background(theme.colors.surface), overflow: 'hidden' },
+        {
+          backgroundColor: bare ? 'transparent' : background(theme.colors.surface),
+          overflow: 'hidden',
+        },
         editorial && {
           backgroundColor: bare ? 'transparent' : background(theme.colors.surface),
           width: HOME_TOOLBAR_BUTTON_SIZE,
@@ -1964,20 +2179,7 @@ function HeaderButton({
   );
 }
 
-/**
- * One machine, then the panes running on it.
- *
- * The card is an identity block and a list, and nothing draws the relationship
- * between them. It used to: a coral trunk grew out of the status dot and turned
- * into each pane row through a rounded elbow, which made the card read as a
- * process tree. The line was saying what the card's own surface already says --
- * these panes are on this machine -- and at nine rows it was the loudest thing
- * on the screen. What replaces it is arrangement: the identity block is the only
- * thing on the card with an icon and 18pt type, the panes below it share one
- * left edge and one column of status lights, and the gap between the two is the
- * largest on the card. The reader gets the same hierarchy without anything
- * being drawn to assert it.
- */
+/** Classic's computer and agent entry points; individual panes live in Continue. */
 function ServerCard({
   server,
   metrics,
@@ -1985,7 +2187,6 @@ function ServerCard({
   showAddress,
   reachability,
   onOpen,
-  onOpenAgent,
 }: {
   server: GatewayRecord;
   /** Card geometry and row density for the current window and server count. */
@@ -1999,7 +2200,6 @@ function ServerCard({
   showAddress: boolean;
   reachability: ServerReachability;
   onOpen: () => void;
-  onOpenAgent: (agent: ServerAgent) => void;
 }) {
   const { t } = useLingui();
   // The runtime `_`, for the message descriptors in `@/i18n/labels`. Same
@@ -2009,19 +2209,9 @@ function ServerCard({
 
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
-
-  // The card's own mirror, read here rather than handed down: a pass that only
-  // re-confirms the panes moves `checkedAtMs`, and that re-renders this card,
-  // not the screen. Undefined when the server has never been opened.
-  const agents = useServerAgents((state) => state.byServer[server.serverId]);
-  // Freshness is relative to now: a card sitting untouched keeps telling the
-  // truth about a snapshot ageing under it, a minute at a time.
-  const nowMs = useMinuteNow();
+  const { fontScale } = useWindowDimensions();
 
   return (
-    // The header and asynchronously refreshed pane rows share one native
-    // layout. Do not animate their frames independently or flatten the hosts
-    // that establish the rows' offset below the identity block.
     <View collapsable={false}>
       <ThemedSurface
         collapsable={false}
@@ -2044,7 +2234,7 @@ function ServerCard({
             accessibilityRole="button"
             accessibilityLabel={t`Open ${server.label}`}
             onPress={onOpen}
-            style={styles.identityMain}>
+            style={[styles.identityMain, { flexBasis: 160 * Math.max(1, fontScale) }]}>
             {/* The one place the accent is spent on this card. It used to be
                 spent twice -- here and on the loom -- and with the loom gone the
                 avatar is the whole answer to "which machine is the app attached
@@ -2064,63 +2254,41 @@ function ServerCard({
                 },
               ]}>
               {selected ? (
-                <SquareTerminal size={20} color={theme.colors.onPrimary} strokeWidth={2} />
+                <SquareTerminal size={18} color={theme.colors.onPrimary} strokeWidth={2} />
               ) : (
                 // The pack's primary, like every other glyph on this screen. The
                 // difference between the two tiles is the fill, not the ink: a
                 // grey glyph beside rows of accent-coloured ones read as a
                 // machine that was switched off, and this one is online.
-                <Monitor size={19} color={theme.colors.primary} strokeWidth={2} />
+                <Monitor size={17} color={theme.colors.primary} strokeWidth={2} />
               )}
             </View>
 
             <View style={styles.serverCopy}>
-              {/* Sentence case on purpose: a machine's name is a proper noun,
-                  and the ALL-CAPS register on this screen is reserved for the
-                  one instrument label, which is the status.
-
-                  18/600 against the panes' 14 and the address's 12. It used to
-                  be 16 against 14 against a 14 all-caps status, which is three
-                  sizes inside two points of each other and therefore no
-                  hierarchy at all -- the machine has to outrank the things
-                  running on it. */}
+              {/* A machine's name is a proper noun; keep its sentence case. */}
               <Text variant="subheading" weight="semibold" numberOfLines={1}>
                 {server.label}
               </Text>
 
-              {/* The status is the machine's subtitle now, not a row of its own.
-                  It was a row because it was the root the tree grew out of, and
-                  with no tree that row was a line of 12pt caps sitting alone
-                  between the name above it and the list below -- belonging to
-                  neither, and pushing the two things that do belong together
-                  apart. Under the name it is what it always was: one fact about
-                  this machine, said at the smallest size on the card.
-
-                  The dot never speaks alone: `OFFLINE` and `NOT CONNECTED` are
-                  the same grey on purpose, and the words and the hollow ring are
-                  what tell them apart. It is said only when something is wrong
-                  (§3a): a reachable machine is just its name, and nothing on
-                  the card pulses. */}
-              {reachability === 'live' ? null : (
-                <View
-                  accessibilityLabel={_(reachabilityDescription[reachability])}
-                  style={styles.statusLine}>
-                  <StatusDot
-                    color={theme.colors.textSubtle}
-                    filled={reachability !== 'unknown'}
-                    pulse={false}
-                    size={STATUS_DOT_SIZE}
-                  />
-                  <Text
-                    variant="caption"
-                    color={theme.colors.textSubtle}
-                    style={styles.statusLabel}>
-                    {_(reachabilityLabel[reachability])}
-                  </Text>
-                  {/* No count: the rows below are the count, and saying it here as
-                      well would be the same fact twice on one card. */}
-                </View>
-              )}
+              {/* The connection is a quiet subtitle, paired with a still dot
+                  so colour alone never has to explain the machine's state. */}
+              <View
+                accessibilityLabel={_(reachabilityDescription[reachability])}
+                style={styles.statusLine}>
+                <StatusDot
+                  color={reachability === 'live' ? theme.colors.success : theme.colors.textSubtle}
+                  filled={reachability !== 'unknown'}
+                  pulse={false}
+                  size={STATUS_DOT_SIZE}
+                />
+                <Text
+                  variant="caption"
+                  color={theme.colors.textSubtle}
+                  numberOfLines={1}
+                  style={styles.statusLabel}>
+                  {_(reachabilityLabel[reachability])}
+                </Text>
+              </View>
 
               {/* Only when a second machine answers to the same name. On every
                   other install this line was a constant the reader had already
@@ -2142,37 +2310,10 @@ function ServerCard({
               <GatewayTunnelBadge record={server} />
             </View>
           </PressableScale>
-
-          {/* The one action a card still offers directly: everything else
-              that used to live behind the `...` menu -- rename, unpair -- now
-              lives in Settings > Computers, but New Task has no equivalent
-              there. It is not a fact about the server's identity the way a
-              name or an address is; it is a shortcut to starting work on it
-              without opening it first, which only makes sense from a list of
-              servers. `NewTaskAction` renders nothing at all unless this
-              gateway has told the app it can spawn one, so most cards spend
-              nothing on this slot. When capabilities finish loading, the
-              action and identity are measured together by native flex layout. */}
-          <View style={styles.serverTrailing}>
-            {reachability === 'live' || Boolean(server.sshTunnel) ? (
-              <NewTaskAction server={server} serverId={server.serverId} label={server.label} />
-            ) : null}
-          </View>
         </View>
-
-        {/* `listGap` is the whole grouping device now, so it belongs to the
-            list rather than to a spacer between the two: a machine with no
-            mirrored panes renders no rows, and a standalone spacer would leave
-            that card with a gap under its name separating it from nothing. */}
-        <ServerAgentRows
-          serverId={server.serverId}
-          style={{ marginTop: metrics.listGap }}
-          snapshot={agents}
-          reachability={reachability}
-          rowMinHeight={metrics.rowMinHeight}
-          nowMs={nowMs}
-          onOpenAgent={onOpenAgent}
-        />
+        {reachability === 'live' || Boolean(server.sshTunnel) ? (
+          <NewTaskAction server={server} serverId={server.serverId} label={server.label} />
+        ) : null}
       </ThemedSurface>
     </View>
   );
@@ -2278,10 +2419,9 @@ function EmptyState({
 }
 
 /**
- * The machine's tile. Big enough to be the card's one piece of iconography, so
- * the identity block outranks the list under it on weight alone.
+ * A quiet machine mark; the name and connection subtitle carry its identity.
  */
-const AVATAR_SIZE = 44;
+const AVATAR_SIZE = 36;
 
 /**
  * The machine's status light, in the identity block.
@@ -2290,7 +2430,7 @@ const AVATAR_SIZE = 44;
  * because it was the root the tree grew out of and had to read as a different
  * kind of mark from the bullets hanging off it. There is no tree, so there is
  * nothing to be the root of: the machine is already told apart from its panes by
- * a 44pt tile and 18pt type, and a dot two points wider than the ones below it
+ * a 36pt tile and 18pt type, and a dot two points wider than the ones below it
  * was hierarchy asserted twice.
  */
 const STATUS_DOT_SIZE = 7;
@@ -2641,21 +2781,24 @@ const styles = StyleSheet.create({
   },
   identityRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
-    gap: 10,
+    columnGap: 8,
+    rowGap: 4,
   },
   identityMain: {
     flex: 1,
+    minHeight: 44,
     minWidth: 0,
     alignSelf: 'stretch',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
   },
   serverAvatar: {
     width: AVATAR_SIZE,
     height: AVATAR_SIZE,
-    borderRadius: 14,
+    borderRadius: 11,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
@@ -2668,23 +2811,12 @@ const styles = StyleSheet.create({
   statusLine: {
     flexDirection: 'row',
     alignItems: 'center',
-    // Clearance for the live dot's ring, which is the one thing on this card
-    // that paints outside its own box: `StatusDot` sends it out to 2.6x the
-    // dot, so a subtitle gap sized by eye for a static dot has the ring
-    // crossing the first letter of ONLINE every two and a half seconds.
-    gap: 12,
+    gap: 6,
   },
   statusLabel: {
-    letterSpacing: 0.9,
-  },
-  // A right-aligned row rather than the default stretch column: the slot's
-  // width travels between nothing and a 36pt button as `NewTaskAction`'s
-  // capability check resolves, and it has to stay pinned to the card's
-  // trailing edge while that width changes rather than stretch to fill it.
-  serverTrailing: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
+    letterSpacing: 0.3,
+    flexShrink: 1,
+    minWidth: 0,
   },
   // The gap above comes from `cardGap` at the call site, and only when there
   // is a card above to gap from.

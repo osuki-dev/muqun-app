@@ -1,11 +1,27 @@
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AgentSessionsSheet } from '@/components/agent-sessions-sheet';
-import { canMoveSessionToWorktree } from '@/lib/agent-discovery';
-import { listAgentSessions, type AgentSessionInfo } from '@/lib/agent-session';
+import { agentFeaturesFor, canMoveSessionToWorktree } from '@/lib/agent-discovery';
+import { canMutateAgentSession, type AgentSessionAction } from '@/lib/agent-runtime-controls';
+import { listAgentSessionPage, type AgentSessionInfo } from '@/lib/agent-session';
 import { useAgentSheetBridge } from '@/stores/agent-sheet-bridge';
 import { useAgents } from '@/stores/agents';
+import { useServerCapabilities } from '@/stores/server-capabilities';
+import {
+  createSessionPageLoader,
+  mergeSessionPageTree,
+  supportsAgentSessionPages,
+  type SessionPagesState,
+} from '@/lib/agent-session-page';
+import { useLatestReader, useStableHandler } from '@/hooks/use-render-refs';
+
+const EMPTY_PAGE: SessionPagesState = {
+  sessions: [],
+  nextCursor: null,
+  loading: true,
+  failed: false,
+};
 
 /**
  * How many of the host's root sessions the sheet asks for.
@@ -29,9 +45,21 @@ const HOST_SESSION_LIMIT = 200;
  * above it. See that store for why.
  */
 export default function AgentSessionsScreen() {
+  const serverId = useAgentSheetBridge((state) => state.serverId);
+  const sessionId = useAgentSheetBridge((state) => state.sessionId);
+  const agentId = useAgentSheetBridge((state) => state.listAgentId);
+  const directory = useAgentSheetBridge((state) => state.activeDirectory);
+  return (
+    <OwnedAgentSessionsScreen key={JSON.stringify([serverId, sessionId, agentId, directory])} />
+  );
+}
+
+function OwnedAgentSessionsScreen() {
   const router = useRouter();
   const sessions = useAgentSheetBridge((state) => state.sessions);
+  const childrenByParent = useAgentSheetBridge((state) => state.childrenByParent);
   const activeAsid = useAgentSheetBridge((state) => state.activeAsid);
+  const sessionInfo = useAgentSheetBridge((state) => state.sessionInfo);
   const knownProjects = useAgentSheetBridge((state) => state.knownProjects);
   const activeDirectory = useAgentSheetBridge((state) => state.activeDirectory);
   const activeProject = useAgentSheetBridge((state) => state.activeProject);
@@ -39,6 +67,10 @@ export default function AgentSessionsScreen() {
   const actions = useAgentSheetBridge((state) => state.actions);
   const sessionId = useAgentSheetBridge((state) => state.sessionId);
   const serverId = useAgentSheetBridge((state) => state.serverId);
+  const agentId = useAgentSheetBridge((state) => state.listAgentId);
+  const capabilities = useServerCapabilities((state) =>
+    serverId ? state.byServer[serverId] : undefined
+  );
   // Each row asks of its own session's agent: the list spans agents, and only
   // one that reports `worktrees` can have a session moved into one.
   const discoveredAgents = useAgents(
@@ -52,41 +84,98 @@ export default function AgentSessionsScreen() {
     [discoveredAgents]
   );
 
-  // The bridge carries the workbench's list, which is one workspace's. "All
-  // workspaces" showed exactly that list and so never showed another
-  // workspace at all. The host-wide listing is read here, once per opening;
-  // it is ETag-cached, so a second opening costs a 304.
-  const [hostSessions, setHostSessions] = useState<readonly AgentSessionInfo[]>([]);
-  useEffect(() => {
-    let live = true;
-    void listAgentSessions(sessionId || undefined, {
-      roots: true,
-      limit: HOST_SESSION_LIMIT,
-      order: 'desc',
-    }).then((list) => {
-      if (live) setHostSessions(list);
-    });
-    return () => {
-      live = false;
-    };
-  }, [sessionId]);
+  const canMutateSession = useCallback(
+    (action: AgentSessionAction, session: AgentSessionInfo) =>
+      canMutateAgentSession(
+        action,
+        sessionInfo?.asid === session.asid ? sessionInfo : session,
+        agentFeaturesFor(discoveredAgents, session.agent_id),
+        capabilities
+      ),
+    [sessionInfo, discoveredAgents, capabilities]
+  );
 
-  // The workbench's rows first: they are live (renames, deletes and streamed
-  // titles land there), and the sheet keeps the first row it sees per session.
-  // A session the workbench has just deleted must not come back from the
-  // host listing taken a moment earlier, so rows of the workspace on screen
-  // are taken from the workbench alone.
+  const features = discoveredAgents?.find((agent) => agent.id === agentId)?.features;
+  const paginated = supportsAgentSessionPages(capabilities, features, agentId);
+  const readSupport = useLatestReader({ capabilities, features });
+  const [search, setSearch] = useState('');
+  const [directory, setDirectory] = useState(activeDirectory);
+  const queryKey = JSON.stringify([
+    serverId,
+    sessionId,
+    agentId,
+    paginated,
+    paginated ? search.trim() : '',
+    paginated ? directory : '',
+  ]);
+  const [result, setResult] = useState<{ key: string; page: SessionPagesState }>({
+    key: queryKey,
+    page: EMPTY_PAGE,
+  });
+  const loaderRef = useRef<ReturnType<typeof createSessionPageLoader> | null>(null);
+  useEffect(() => {
+    const support = readSupport();
+    const loader = createSessionPageLoader(
+      (cursor, signal) =>
+        listAgentSessionPage(
+          sessionId || undefined,
+          {
+            roots: true,
+            limit: paginated ? 50 : HOST_SESSION_LIMIT,
+            order: 'desc',
+            ...(agentId ? { agentId } : {}),
+            ...(paginated && directory ? { directory } : {}),
+            ...(paginated && search.trim() ? { search: search.trim() } : {}),
+            ...(cursor ? { cursor } : {}),
+          },
+          { serverId: serverId ?? '', ...support, signal }
+        ),
+      (page) => setResult({ key: queryKey, page })
+    );
+    loaderRef.current = loader;
+    setResult({ key: queryKey, page: EMPTY_PAGE });
+    // Debounce provider search; changing scope disposes and aborts the previous owner.
+    const timer = setTimeout(
+      () => {
+        void loader.load();
+      },
+      paginated && search.trim() ? 250 : 0
+    );
+    return () => {
+      clearTimeout(timer);
+      loader.dispose();
+    };
+  }, [serverId, sessionId, agentId, paginated, search, directory, queryKey, readSupport]);
+  const page = result.key === queryKey ? result.page : EMPTY_PAGE;
+  const loadMore = useStableHandler(() => {
+    void loaderRef.current?.load();
+  });
+  const updateHostSessions = useStableHandler(
+    (update: (rows: readonly AgentSessionInfo[]) => readonly AgentSessionInfo[]) => {
+      loaderRef.current?.updateSessions(update);
+    }
+  );
   const merged = useMemo(() => {
-    if (hostSessions.length === 0) return sessions;
-    const others = hostSessions.filter(
+    if (paginated) {
+      return mergeSessionPageTree(page.sessions, sessions, childrenByParent);
+    }
+    const others = page.sessions.filter(
       (session) => !activeDirectory || session.directory !== activeDirectory
     );
     return [...sessions, ...others];
-  }, [activeDirectory, hostSessions, sessions]);
+  }, [activeDirectory, page.sessions, paginated, sessions, childrenByParent]);
 
   return (
     <AgentSessionsSheet
       sessions={merged}
+      remoteSearch={paginated}
+      preserveOrder={paginated}
+      loading={page.loading}
+      loadFailed={page.failed}
+      hasMore={page.nextCursor !== null}
+      onLoadMore={loadMore}
+      onSearchQueryChange={paginated ? setSearch : undefined}
+      onDirectoryFilterChange={paginated ? setDirectory : undefined}
       activeAsid={activeAsid}
       knownProjects={knownProjects}
       activeDirectory={activeDirectory}
@@ -98,16 +187,24 @@ export default function AgentSessionsScreen() {
       // to one has to land on the copy too: a deleted session from another
       // project stayed on screen until the sheet was reopened, because only
       // the workbench's list heard about it.
+      canMutateSession={canMutateSession}
+      onForkSession={actions.forkSession}
       onRenameSession={(asid, title) => {
-        setHostSessions((rows) => rows.map((row) => (row.asid === asid ? { ...row, title } : row)));
-        actions.renameSession(asid, title);
+        const session = merged.find((row) => row.asid === asid);
+        if (!session || !canMutateSession('rename', session)) return;
+        updateHostSessions((rows) =>
+          rows.map((row) => (row.asid === asid ? { ...row, title } : row))
+        );
+        actions.renameSession(asid, title, session);
       }}
       onDeleteSession={(asid) => {
+        const session = merged.find((row) => row.asid === asid);
+        if (!session || !canMutateSession('delete', session)) return;
         // The session and everything under it: OpenCode removes the children.
-        setHostSessions((rows) =>
+        updateHostSessions((rows) =>
           rows.filter((row) => row.asid !== asid && row.parent_id !== asid)
         );
-        actions.deleteSession(asid);
+        actions.deleteSession(asid, session);
       }}
       // Replaces rather than stacks: two form sheets deep is two grabbers and
       // one question, and the reader asked to go from this list to that one.

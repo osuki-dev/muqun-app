@@ -61,10 +61,16 @@
  * on an upright face is a fifth of an em of trailing air on a shrink-wrapped
  * label, which reads as the pill's own padding.
  */
-import { Text as KitText, type TextProps } from '@osuki-dev/ui';
+import { Text as KitText, useThemeTokens, type TextProps } from '@osuki-dev/ui';
 import { createContext, useContext, type ReactNode } from 'react';
+import { StyleSheet, type TextStyle } from 'react-native';
 
 import { useAppSettings } from '@/stores/app-settings';
+import {
+  numericFontWeight,
+  registryWeightAxis,
+  variableWeightStyle,
+} from '@/theme/interface-font-registry';
 
 export type { TextProps };
 
@@ -141,8 +147,35 @@ export type AppTextProps = TextProps & {
   hugSlack?: boolean;
 };
 
-export function Text({ children, hugSlack = true, ...props }: AppTextProps) {
+/**
+ * The caller's style with a variable reader face's weight set on its `wght`
+ * axis, or `null` when the kit's own resolution stands.
+ *
+ * The kit resolves weight through a ladder that never reports 700 for a
+ * reader's file (`interface-font-registry.ts`), which is right for a static
+ * face and needlessly caps a variable one at semibold. Layered after the
+ * caller's style, so it takes the weight the kit would have used -- the
+ * style's `fontWeight`, else `weight`, else the variant's -- and restates it as
+ * the axis. A style that names another family or sets its own axes is left
+ * alone.
+ */
+function useVariableWeight(props: TextProps): TextStyle | null {
+  const { fonts, typeStyles } = useThemeTokens();
+  const typeStyle = typeStyles[props.variant ?? 'body'];
+  const axis = typeStyle ? registryWeightAxis(fonts, typeStyle.fontFamily) : null;
+  const family = typeStyle ? fonts[typeStyle.fontFamily]?.family : undefined;
+  if (!axis || !family) return null;
+  const flat = StyleSheet.flatten(props.style);
+  if (flat?.fontVariationSettings !== undefined) return null;
+  if (flat?.fontFamily && flat.fontFamily !== family) return null;
+  const weight = numericFontWeight(flat?.fontWeight) ?? props.weight ?? typeStyle.fontWeight;
+  return { ...flat, ...variableWeightStyle(family, axis, weight) };
+}
+
+export function Text({ children, hugSlack = true, ...rest }: AppTextProps) {
   const slack = useContext(HugSlackContext);
+  const variableStyle = useVariableWeight(rest);
+  const props = variableStyle ? { ...rest, style: variableStyle } : rest;
   /*
    * `selectable` is the one exemption, and it is not about layout. The reader
    * selects this text in order to copy it -- a server URL, a session id, a

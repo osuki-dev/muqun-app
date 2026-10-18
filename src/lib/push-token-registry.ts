@@ -8,8 +8,10 @@
 // only as part of the full run.
 
 import { createMMKV } from 'react-native-mmkv';
+import QuickCrypto from 'react-native-quick-crypto';
 
 import type { RegisteredPushToken } from '@/lib/push-token-rule';
+import type { GatewayRecord } from '@/lib/gateway-storage';
 
 export {
   PUSH_TOKEN_MAX_AGE_MS,
@@ -40,10 +42,43 @@ export function registeredPushToken(serverId: string): RegisteredPushToken | nul
     // long overdue. That is the safe direction: one request, rather than a
     // registration that can never expire.
     const atMs = typeof parsed.atMs === 'number' && Number.isFinite(parsed.atMs) ? parsed.atMs : 0;
-    return { token: parsed.token, build: parsed.build, atMs };
+    const binding = parsed.ownerBinding;
+    const ownerBinding =
+      binding?.revision === 1 &&
+      typeof binding.identity === 'string' &&
+      /^[a-f0-9]{64}$/.test(binding.identity) &&
+      (binding.deviceId === undefined || typeof binding.deviceId === 'string')
+        ? { revision: 1 as const, identity: binding.identity, deviceId: binding.deviceId }
+        : undefined;
+    return {
+      token: parsed.token,
+      build: parsed.build,
+      atMs,
+      ...(typeof parsed.locale === 'string' ? { locale: parsed.locale } : {}),
+      ...(ownerBinding ? { ownerBinding } : {}),
+    };
   } catch {
     return null;
   }
+}
+
+/** Renames do not re-register. Re-pairing or changing an endpoint never inherits an old receipt. */
+export function pushPairingIdentity(record: GatewayRecord): string {
+  return QuickCrypto.createHash('sha256')
+    .update(
+      JSON.stringify([
+        record.serverId,
+        record.url,
+        record.token,
+        record.deviceId,
+        record.transportKey,
+        record.transport,
+        record.sshTunnel?.hostId,
+        record.sshTunnel?.remoteHost,
+        record.sshTunnel?.remotePort,
+      ])
+    )
+    .digest('hex');
 }
 
 /**

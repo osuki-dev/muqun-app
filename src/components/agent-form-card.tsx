@@ -1,7 +1,7 @@
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { Linking, View, StyleSheet, Switch, ActivityIndicator } from 'react-native';
-import { resolveFontStyle, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import { ExternalLink, FormInput, Send, Check } from 'lucide-react-native';
@@ -21,6 +21,7 @@ import {
 } from '@/lib/agent-session';
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { FontedTextInput } from '@/components/fonted-text-input';
+import { resolveUserFontStyle } from '@/hooks/use-user-fonts';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
 export interface AgentFormCardProps {
@@ -28,12 +29,14 @@ export interface AgentFormCardProps {
   onSubmit: (answers: Record<string, unknown>) => Promise<void>;
   /** A text field took focus: the host scrolls the card above the keyboard. */
   onFieldFocus?: () => void;
+  onDraftChange?: (field: string, value: unknown) => void;
 }
 
 export const AgentFormCard = memo(function AgentFormCard({
   request,
   onSubmit,
   onFieldFocus,
+  onDraftChange,
 }: AgentFormCardProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -58,7 +61,7 @@ export const AgentFormCard = memo(function AgentFormCard({
    * field here and a field on a sheet cannot drift apart; the weight stays at
    * regular for the Android reason in `interface-font-registry.ts`.
    */
-  const inputFont = resolveFontStyle(theme.fonts, theme.typeStyles.body.fontFamily, 'regular');
+  const inputFont = resolveUserFontStyle(theme.fonts, theme.typeStyles.body.fontFamily, 'regular');
   const [submitting, setSubmitting] = useState(false);
 
   // Initialize form state
@@ -80,16 +83,20 @@ export const AgentFormCard = memo(function AgentFormCard({
 
   const [violations, setViolations] = useState<Record<string, FormFieldViolation>>({});
 
-  const setValue = useCallback((key: string, val: unknown) => {
-    setValues((prev) => ({ ...prev, [key]: val }));
-    // A field the reader is fixing stops complaining while they fix it.
-    setViolations((prev) => {
-      if (!(key in prev)) return prev;
-      const next = { ...prev };
-      delete next[key];
-      return next;
-    });
-  }, []);
+  const setValue = useCallback(
+    (key: string, val: unknown) => {
+      setValues((prev) => ({ ...prev, [key]: val }));
+      onDraftChange?.(key, val);
+      // A field the reader is fixing stops complaining while they fix it.
+      setViolations((prev) => {
+        if (!(key in prev)) return prev;
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+    },
+    [onDraftChange]
+  );
 
   /**
    * A field is hidden unless every one of its `when` conditions holds against
@@ -201,6 +208,25 @@ export const AgentFormCard = memo(function AgentFormCard({
     switch (field.type) {
       case 'string': {
         const currentVal = (values[field.key] as string) ?? '';
+        const input = (
+          <FontedTextInput
+            value={field.options?.some((option) => option.value === currentVal) ? '' : currentVal}
+            onChangeText={(text) => setValue(field.key, text)}
+            placeholder={field.placeholder ?? t`Type here…`}
+            placeholderTextColor={theme.colors.textSubtle}
+            onFocus={onFieldFocus}
+            style={[
+              styles.textInput,
+              { borderRadius: profile.chrome.control },
+              inputFont,
+              {
+                color: theme.colors.text,
+                borderColor: theme.colors.border,
+                backgroundColor: surfaceBackground(withAlpha(theme.colors.surface, 0.5)),
+              },
+            ]}
+          />
+        );
         if (field.options && field.options.length > 0) {
           return (
             <View key={field.key} style={styles.fieldRow}>
@@ -212,9 +238,12 @@ export const AgentFormCard = memo(function AgentFormCard({
                   return (
                     <PressableScale
                       key={opt.value}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected }}
                       onPress={() => setValue(field.key, opt.value)}
                       style={[
                         styles.optionPill,
+                        opt.description ? styles.optionWithDescription : null,
                         { borderRadius: profile.chrome.control },
                         {
                           backgroundColor: selected
@@ -224,15 +253,23 @@ export const AgentFormCard = memo(function AgentFormCard({
                         },
                       ]}>
                       {selected ? <Check size={12} color={theme.colors.primary} /> : null}
-                      <Text
-                        variant="caption"
-                        color={selected ? theme.colors.primary : theme.colors.text}>
-                        {plainFromMarkdown(opt.label)}
-                      </Text>
+                      <View style={styles.optionCopy}>
+                        <Text
+                          variant="caption"
+                          color={selected ? theme.colors.primary : theme.colors.text}>
+                          {plainFromMarkdown(opt.label)}
+                        </Text>
+                        {opt.description ? (
+                          <Text variant="caption" color={theme.colors.textSubtle}>
+                            {plainFromMarkdown(opt.description)}
+                          </Text>
+                        ) : null}
+                      </View>
                     </PressableScale>
                   );
                 })}
               </View>
+              {field.custom === true ? input : null}
               <FieldProblem fieldKey={field.key} />
             </View>
           );
@@ -242,23 +279,7 @@ export const AgentFormCard = memo(function AgentFormCard({
           <View key={field.key} style={styles.fieldRow}>
             <FieldTitle field={field} />
             <FieldDescription field={field} />
-            <FontedTextInput
-              value={currentVal}
-              onChangeText={(text) => setValue(field.key, text)}
-              placeholder={field.placeholder ?? t`Type here…`}
-              placeholderTextColor={theme.colors.textSubtle}
-              onFocus={onFieldFocus}
-              style={[
-                styles.textInput,
-                { borderRadius: profile.chrome.control },
-                inputFont,
-                {
-                  color: theme.colors.text,
-                  borderColor: theme.colors.border,
-                  backgroundColor: surfaceBackground(withAlpha(theme.colors.surface, 0.5)),
-                },
-              ]}
-            />
+            {input}
             <FieldProblem fieldKey={field.key} />
           </View>
         );
@@ -319,6 +340,8 @@ export const AgentFormCard = memo(function AgentFormCard({
                 return (
                   <PressableScale
                     key={opt.value}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: selected }}
                     onPress={() => {
                       if (selected) {
                         setValue(
@@ -331,6 +354,7 @@ export const AgentFormCard = memo(function AgentFormCard({
                     }}
                     style={[
                       styles.optionPill,
+                      opt.description ? styles.optionWithDescription : null,
                       { borderRadius: profile.chrome.control },
                       {
                         backgroundColor: selected
@@ -340,11 +364,18 @@ export const AgentFormCard = memo(function AgentFormCard({
                       },
                     ]}>
                     {selected ? <Check size={12} color={theme.colors.primary} /> : null}
-                    <Text
-                      variant="caption"
-                      color={selected ? theme.colors.primary : theme.colors.text}>
-                      {plainFromMarkdown(opt.label)}
-                    </Text>
+                    <View style={styles.optionCopy}>
+                      <Text
+                        variant="caption"
+                        color={selected ? theme.colors.primary : theme.colors.text}>
+                        {plainFromMarkdown(opt.label)}
+                      </Text>
+                      {opt.description ? (
+                        <Text variant="caption" color={theme.colors.textSubtle}>
+                          {plainFromMarkdown(opt.description)}
+                        </Text>
+                      ) : null}
+                    </View>
                   </PressableScale>
                 );
               })}
@@ -529,11 +560,20 @@ const styles = StyleSheet.create({
   },
   optionPill: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     paddingVertical: 5,
     paddingHorizontal: 9,
     borderWidth: StyleSheet.hairlineWidth,
     gap: 4,
+    maxWidth: '100%',
+  },
+  optionWithDescription: {
+    width: '100%',
+  },
+  optionCopy: {
+    flexShrink: 1,
+    minWidth: 0,
+    gap: 2,
   },
   externalBtn: {
     flexDirection: 'row',
