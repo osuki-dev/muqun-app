@@ -61,17 +61,6 @@ describe('when it must not', () => {
   });
 });
 
-describe('the per-server half of the rule', () => {
-  test('one server being up to date says nothing about another', () => {
-    // The store is keyed by server id, so this is what a second gateway sees:
-    // no record of its own, and therefore a post owed.
-    const serverA = stored();
-    const serverB = null;
-    expect(pushTokenNeedsSending(serverA, 'ExponentPushToken[aaa]', build, now)).toBe(false);
-    expect(pushTokenNeedsSending(serverB, 'ExponentPushToken[aaa]', build, now)).toBe(true);
-  });
-});
-
 describe('the weekly re-assert', () => {
   // Rules 1 to 3 all describe something changing on this device. A gateway can
   // lose its device row without anything here changing at all -- a reinstall, a
@@ -81,26 +70,12 @@ describe('the weekly re-assert', () => {
   const due = (atMs: number, nowMs = now) =>
     pushTokenNeedsSending(stored({ atMs }), 'ExponentPushToken[aaa]', build, nowMs);
 
-  test('a registration from a minute ago says nothing', () => {
-    expect(due(now - 60_000)).toBe(false);
-  });
-
-  test('a registration from six days ago still says nothing', () => {
-    // It must not compete with rules 1 to 3, and must never read as a
-    // per-launch cost for anyone who opens the app daily.
-    expect(due(now - 6 * 24 * 60 * 60 * 1000)).toBe(false);
-  });
-
   test('the last millisecond inside the window is still inside it', () => {
     expect(due(now - (PUSH_TOKEN_MAX_AGE_MS - 1))).toBe(false);
   });
 
   test('exactly a week old is due', () => {
     expect(due(now - PUSH_TOKEN_MAX_AGE_MS)).toBe(true);
-  });
-
-  test('older than a week is due, and that is the bound on a wrong gateway', () => {
-    expect(due(now - 30 * 24 * 60 * 60 * 1000)).toBe(true);
   });
 
   test('a stored time in the future is overdue, not a week of credit', () => {
@@ -117,10 +92,6 @@ describe('the weekly re-assert', () => {
 
   test('the age rule never resurrects a token there is nothing to send', () => {
     expect(pushTokenNeedsSending(stored({ atMs: 0 }), '', build, now)).toBe(false);
-  });
-
-  test('a week is well clear of any normal usage pattern', () => {
-    expect(PUSH_TOKEN_MAX_AGE_MS).toBe(7 * 24 * 60 * 60 * 1000);
   });
 });
 

@@ -9,7 +9,7 @@
  */
 
 /** What the gateway sniffed the file to be; decides which viewer opens. */
-export type AssetKind = 'image' | 'markdown' | 'text' | 'pdf' | 'binary';
+export type AssetKind = 'image' | 'audio' | 'video' | 'markdown' | 'text' | 'pdf' | 'binary';
 
 export interface SessionAsset {
   id: string;
@@ -28,7 +28,15 @@ export interface SessionAsset {
   previewable: boolean;
 }
 
-const ASSET_KINDS: readonly AssetKind[] = ['image', 'markdown', 'text', 'pdf', 'binary'];
+const ASSET_KINDS: readonly AssetKind[] = [
+  'image',
+  'audio',
+  'video',
+  'markdown',
+  'text',
+  'pdf',
+  'binary',
+];
 
 /**
  * The `kind=` value for a listing request, or null for "ask for everything".
@@ -177,6 +185,8 @@ export function assetFromContentHeaders(
 
 function assetKindFromMime(mime: string): AssetKind {
   if (mime.startsWith('image/')) return 'image';
+  if (mime.startsWith('audio/')) return 'audio';
+  if (mime.startsWith('video/')) return 'video';
   if (mime === 'application/pdf') return 'pdf';
   if (mime === 'text/markdown') return 'markdown';
   if (mime.startsWith('text/') || mime === 'application/json') return 'text';
@@ -220,15 +230,17 @@ export function assetFromToolFile(
   const path = uri.startsWith('file://') ? decodeURI(uri.slice('file://'.length)) : uri;
   if (!path.startsWith('/')) return null;
   const mime = file.mime ?? '';
-  const kind: AssetKind = mime.startsWith('image/')
-    ? 'image'
-    : mime === 'application/pdf'
-      ? 'pdf'
-      : mime === 'text/markdown'
-        ? 'markdown'
-        : mime.startsWith('text/')
-          ? 'text'
-          : 'binary';
+  const kind: AssetKind = mime.startsWith('audio/')
+    ? 'audio'
+    : mime.startsWith('image/')
+      ? 'image'
+      : mime === 'application/pdf'
+        ? 'pdf'
+        : mime === 'text/markdown'
+          ? 'markdown'
+          : mime.startsWith('text/')
+            ? 'text'
+            : 'binary';
   return {
     id: path,
     path,

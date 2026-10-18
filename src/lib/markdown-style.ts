@@ -139,6 +139,35 @@ export function createCompactMarkdownStyle(
 }
 
 /**
+ * A task row's markdown: one inline run in the row's own type, a title in the
+ * prose size at semibold, a second line in the meta size. Links are drawn as
+ * their text in the row's ink: the row itself is what a tap opens.
+ */
+export function createRowMarkdownStyle(
+  colors: Colors,
+  ink: string,
+  kind: 'title' | 'line',
+  fonts?: MarkdownFonts
+): MarkdownStyle {
+  const base = createCompactMarkdownStyle(colors, ink, fonts);
+  const type = kind === 'title' ? AGENT_TYPE.prose : AGENT_TYPE.meta;
+  const text = {
+    color: ink,
+    fontSize: type.size,
+    lineHeight: type.lineHeight,
+    marginBottom: 0,
+    ...(kind === 'title' ? { fontWeight: '600' as const } : {}),
+  };
+  return {
+    ...base,
+    paragraph: { ...base.paragraph, ...text },
+    strong: { color: ink },
+    em: { color: ink },
+    link: { color: ink, underline: false },
+  };
+}
+
+/**
  * The style a thought block reads its reasoning in: the compact style, muted.
  *
  * Named because a thought is the one of these the reader knows by name, and

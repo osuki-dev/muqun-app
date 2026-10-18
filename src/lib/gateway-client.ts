@@ -1,3 +1,7 @@
+import { parseGitWorktrees, type GitWorktreeInventory } from './git-worktrees';
+import * as TransportSecureStore from 'expo-secure-store';
+import { TransportNegotiation, type TransportVersion } from './transport-negotiation';
+import { AudioPlaybackError } from '@/lib/audio-playback-session';
 import { File, Paths } from 'expo-file-system';
 import { fetch as nitroFetch, Response as NitroResponse } from 'react-native-nitro-fetch';
 import QuickCrypto from 'react-native-quick-crypto';
@@ -41,6 +45,7 @@ import {
   setToken,
 } from '@/api';
 import { activeLocaleHeaders } from '@/i18n/active-locale';
+import type { CapturedHistoryPage, CapturedHistoryRead } from './terminal-history-pull';
 import {
   answerHasNoBody,
   headerRecord,
@@ -53,7 +58,11 @@ import {
   normalizeGatewayEntity,
   type GatewayEntity,
 } from './gateway-entities';
-import { GatewayTransportRefusalError, retryReplayedRead } from './gateway-refusal';
+import {
+  GatewayTransportRefusalError,
+  retryReplayedRead,
+  classifyTransportRefusal,
+} from './gateway-refusal';
 import {
   decodeSealedBody,
   ENVELOPE_ACCEPT_ENCODINGS,
@@ -128,8 +137,10 @@ import {
   demoAgents,
   demoGitDiff,
   demoGitStatus,
+  demoGitWorktrees,
   demoSendAgentText,
   demoAssetContentUri,
+  demoAudioBytes,
   demoAssetText,
   demoHealth,
   demoPanes,
@@ -143,6 +154,7 @@ import {
   demoSessions,
   demoSpawnedAgent,
   demoShortcuts,
+  demoLaunchLazygit,
   demoTabs,
   demoWorkspaces,
   isDemoActive,
@@ -151,7 +163,7 @@ import {
 } from './demo-gateway';
 import type { GatewayRecord } from './gateway-storage';
 import { withSessionAvailability } from './session-switcher';
-import type { PairingPayload } from './pairing';
+import { validatePairingTransport, type PairingPayload } from './pairing';
 import {
   CODE_PAIRING_CLAIM_AAD,
   GATEWAY_TRANSPORT,
@@ -387,13 +399,59 @@ async function encryptedGatewayFetch(
   );
 }
 
+const transportNegotiation = new TransportNegotiation();
+
+function transportPinIdentity(deviceId: string, transportKey: string): string {
+  return `muqun.transport-min.${QuickCrypto.createHash('sha256')
+    .update(JSON.stringify([deviceId, transportKey]))
+    .digest('hex')}`;
+}
+
+async function negotiatedTransportVersion(
+  endpoint: GatewayEndpoint,
+  timeoutMs = REQUEST_TIMEOUT_MS,
+  isCurrent: () => boolean = () => true
+): Promise<TransportVersion> {
+  if (!endpoint.deviceId || !endpoint.transportKey)
+    throw new Error('Missing Gateway encryption credentials.');
+  const identity = transportPinIdentity(endpoint.deviceId, endpoint.transportKey);
+  const started = Date.now();
+  return transportNegotiation.version(identity, {
+    requiresV2: (error) =>
+      error instanceof GatewayTransportRefusalError &&
+      error.status === 426 &&
+      classifyTransportRefusal(error.status, error.body).code === 'transport_version_required',
+    readPin: (key) => TransportSecureStore.getItemAsync(key),
+    writePin: (key) =>
+      TransportSecureStore.setItemAsync(key, '2', {
+        keychainAccessible: TransportSecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+      }),
+    probe: async (version) => {
+      assertDeliveryCurrent(isCurrent);
+      const response = await sendEncryptedGatewayRequest(
+        `${endpoint.url.replace(/\/$/, '')}/health`,
+        { method: 'GET' },
+        Math.max(1, timeoutMs - (Date.now() - started)),
+        endpoint,
+        isCurrent,
+        version
+      );
+      if (!response.ok)
+        throw new Error(`Gateway transport negotiation failed: HTTP ${response.status}`);
+      return response.json();
+    },
+  });
+}
+
 async function sendEncryptedGatewayRequest(
   input: RequestInfo | URL,
   init: RequestInit = {},
   timeoutMs = REQUEST_TIMEOUT_MS,
   endpoint?: GatewayEndpoint,
-  isCurrent: () => boolean = () => true
+  isCurrent: () => boolean = () => true,
+  negotiatedVersion?: TransportVersion
 ): Promise<Response> {
+  const requestStarted = Date.now();
   const token = endpoint ? endpoint.token : currentToken;
   const deviceId = endpoint ? endpoint.deviceId : currentDeviceId;
   const transportKey = endpoint ? endpoint.transportKey : currentTransportKey;
@@ -415,7 +473,15 @@ async function sendEncryptedGatewayRequest(
     body: base64Url(serialized.bytes),
   };
   const material = transportKeyMaterial(transportKey);
-  const envelope = encryptJson(material, 'request', aad, plaintext);
+  const version =
+    negotiatedVersion ??
+    (await negotiatedTransportVersion(
+      endpoint ?? { url: currentBaseUrl, token, deviceId, transportKey },
+      timeoutMs,
+      isCurrent
+    ));
+  assertDeliveryCurrent(isCurrent);
+  const envelope = encryptJson(material, 'request', aad, plaintext, version);
   const envelopeJson = JSON.stringify(envelope);
   const bodylessMethod = method === 'GET' || method === 'HEAD';
   const outerHeaders = { ...headers };
@@ -424,28 +490,33 @@ async function sendEncryptedGatewayRequest(
       delete outerHeaders[name];
     }
   }
-  const response = await fetchWithin(timeoutMs, 'Timed out waiting for the server.', input, {
-    ...init,
-    method,
-    headers: {
-      ...outerHeaders,
-      'Content-Type': 'application/json',
-      'X-Muqun-Transport': '1',
-      'X-Muqun-Device': deviceId,
-      // Compression cannot happen outside the envelope -- the body on the wire
-      // is ciphertext, and ciphertext does not compress -- so it is offered
-      // for the inside of it. A gateway that has never heard of this header
-      // answers exactly as it always did. Deliberately not `Accept-Encoding`:
-      // Cronet and NSURLSession own that one and decompress transparently, and
-      // setting it by hand is how an app ends up holding a body the platform
-      // has stopped decoding for it.
-      [ENVELOPE_ACCEPT_HEADER]: ENVELOPE_ACCEPT_ENCODINGS,
-      ...(bodylessMethod
-        ? { 'X-Muqun-Envelope': base64Url(QuickCrypto.Buffer.from(envelopeJson, 'utf8')) }
-        : {}),
-    },
-    body: bodylessMethod ? undefined : envelopeJson,
-  });
+  const response = await fetchWithin(
+    Math.max(1, timeoutMs - (Date.now() - requestStarted)),
+    'Timed out waiting for the server.',
+    input,
+    {
+      ...init,
+      method,
+      headers: {
+        ...outerHeaders,
+        'Content-Type': 'application/json',
+        'X-Muqun-Transport': '1',
+        'X-Muqun-Device': deviceId,
+        // Compression cannot happen outside the envelope -- the body on the wire
+        // is ciphertext, and ciphertext does not compress -- so it is offered
+        // for the inside of it. A gateway that has never heard of this header
+        // answers exactly as it always did. Deliberately not `Accept-Encoding`:
+        // Cronet and NSURLSession own that one and decompress transparently, and
+        // setting it by hand is how an app ends up holding a body the platform
+        // has stopped decoding for it.
+        [ENVELOPE_ACCEPT_HEADER]: ENVELOPE_ACCEPT_ENCODINGS,
+        ...(bodylessMethod
+          ? { 'X-Muqun-Envelope': base64Url(QuickCrypto.Buffer.from(envelopeJson, 'utf8')) }
+          : {}),
+      },
+      body: bodylessMethod ? undefined : envelopeJson,
+    }
+  );
   if (response.headers.get('x-muqun-transport') !== '1') {
     // Not a mystery, and not a transport fault. The gateway's middleware seals
     // a response only once the request has authenticated, so every refusal on
@@ -462,7 +533,8 @@ async function sendEncryptedGatewayRequest(
     material,
     'response',
     `${aad}\n${envelope.nonce}`,
-    sealed
+    sealed,
+    version
   );
   if (
     !Number.isInteger(payload.status) ||
@@ -573,6 +645,7 @@ export interface HealthResponse {
   apiMajor?: number;
   minimumCompatibleApiVersion?: string;
   legacyUnversionedApi?: boolean;
+  transport_versions?: number[];
   capabilities?: string[];
   serverId: string;
   label: string;
@@ -1463,16 +1536,101 @@ export async function readAssetText(
  * server that under-declares cannot spend more of the phone's memory than the
  * importer would ever accept.
  */
+export async function resolveAgentAudioAsset(
+  asid: string,
+  uri: string,
+  signal: AbortSignal
+): Promise<SessionAsset> {
+  if (isDemoActive()) {
+    const asset = demoSessionAssets().find((entry) => entry.id === 'as-demo-audio');
+    if (!asset || !uri.endsWith('sample-tone.wav')) throw new Error('Audio output unavailable.');
+    return asset;
+  }
+  const health = await gatewayFetch(gatewayUrl('/health'), {
+    headers: gatewayAuthHeaders(),
+    signal,
+  });
+  if (!health.ok) throw new Error(`HTTP ${health.status}`);
+  const capabilities = (await health.json()).capabilities;
+  if (!Array.isArray(capabilities) || !capabilities.includes('agent_audio_assets')) {
+    throw new AudioPlaybackError('unsupported');
+  }
+  const response = await gatewayFetch(
+    gatewayUrl(
+      `/api/agent-sessions/${encodeURIComponent(asid)}/audio-asset?uri=${encodeURIComponent(uri)}`
+    ),
+    { headers: gatewayAuthHeaders(), signal }
+  );
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const envelope = await response.json();
+  const asset = sessionAssetsFromResponse({ data: { assets: [envelope?.data?.asset] } })[0];
+  if (!asset || asset.kind !== 'audio' || !asset.previewable)
+    throw new Error('Audio output unavailable.');
+  return asset;
+}
+
+export async function resolveAgentFileAsset(
+  asid: string,
+  uri: string,
+  signal: AbortSignal
+): Promise<SessionAsset> {
+  if (isDemoActive()) {
+    const asset = demoSessionAssets().find((entry) => uri.endsWith(entry.name));
+    if (!asset) throw new Error('File output unavailable.');
+    return asset;
+  }
+  const health = await gatewayFetch(gatewayUrl('/health'), {
+    headers: gatewayAuthHeaders(),
+    signal,
+  });
+  if (!health.ok) throw new Error(`HTTP ${health.status}`);
+  const capabilities = (await health.json()).capabilities;
+  if (!Array.isArray(capabilities) || !capabilities.includes('agent_file_assets')) {
+    throw new AudioPlaybackError('unsupported');
+  }
+  const response = await gatewayFetch(
+    gatewayUrl(
+      `/api/agent-sessions/${encodeURIComponent(asid)}/file-asset?uri=${encodeURIComponent(uri)}`
+    ),
+    { headers: gatewayAuthHeaders(), signal }
+  );
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const envelope = await response.json();
+  const asset = sessionAssetsFromResponse({ data: { assets: [envelope?.data?.asset] } })[0];
+  if (!asset) throw new Error('File output unavailable.');
+  return asset;
+}
+
 export async function readAssetBytes(
   asset: SessionAsset,
   options: {
     signal?: AbortSignal;
+    download?: boolean;
     maxBytes: number;
     onProgress?: (received: number, total: number | null) => void;
   }
 ): Promise<Uint8Array> {
   if (asset.size > options.maxBytes) throw new Error('HTTP 413: This file is too large to open.');
-  const url = assetContentUrl(asset.id);
+  if (options.signal?.aborted) throw new Error('Operation cancelled.');
+  const demoBytes = isDemoActive() ? demoAudioBytes(asset.id) : null;
+  if (demoBytes) {
+    if (demoBytes.length > options.maxBytes) throw new Error('HTTP 413: This file is too large.');
+    options.onProgress?.(demoBytes.length, demoBytes.length);
+    return demoBytes;
+  }
+  if (options.download) {
+    const health = await gatewayFetch(gatewayUrl('/health'), {
+      headers: gatewayAuthHeaders(),
+      signal: options.signal,
+    });
+    if (!health.ok) throw new Error(`HTTP ${health.status}`);
+    const capabilities = (await health.json()).capabilities;
+    if (!Array.isArray(capabilities) || !capabilities.includes('asset_download'))
+      throw new AudioPlaybackError('unsupported');
+  }
+  const url = options.download
+    ? assetContentUrl(asset.id).replace(/\/content$/, '/download')
+    : assetContentUrl(asset.id);
   const init = { headers: gatewayAuthHeaders(), signal: options.signal };
   const response =
     currentTransport === GATEWAY_TRANSPORT
@@ -1785,6 +1943,29 @@ export async function loadPaneContext(
   return paneContextFromResponse(await response.json());
 }
 
+/** Only Git-linked checkouts of this pane's authorized repository are offered. */
+export async function loadGitWorktrees(
+  sessionId: string,
+  paneId: string,
+  signal?: AbortSignal
+): Promise<GitWorktreeInventory> {
+  if (isDemoActive()) {
+    const inventory = parseGitWorktrees(demoGitWorktrees(paneId));
+    if (!inventory) throw new Error('Invalid worktree inventory');
+    return inventory;
+  }
+  const response = await gatewayFetch(
+    gatewayUrl(
+      `/api/sessions/${encodeURIComponent(sessionId)}/panes/${encodeURIComponent(paneId)}/git/worktrees`
+    ),
+    { headers: gatewayAuthHeaders(), signal }
+  );
+  if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+  const inventory = parseGitWorktrees(await response.json());
+  if (!inventory) throw new Error('Invalid worktree inventory');
+  return inventory;
+}
+
 /**
  * Which files in this pane's checkout have changed, and by how much.
  *
@@ -1800,15 +1981,16 @@ export async function loadPaneContext(
 export async function loadGitStatus(
   sessionId: string,
   paneId: string,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  worktree?: string
 ): Promise<GitStatus> {
-  if (isDemoActive()) return gitStatusFromResponse(demoGitStatus(paneId));
+  if (isDemoActive()) return gitStatusFromResponse(demoGitStatus(paneId, worktree));
 
   const response = await gatewayFetch(
     gatewayUrl(
       `/api/sessions/${encodeURIComponent(sessionId)}/panes/${encodeURIComponent(
         paneId
-      )}/git/status`
+      )}/git/status${worktree ? `?worktree=${encodeURIComponent(worktree)}` : ''}`
     ),
     { headers: gatewayAuthHeaders(), signal }
   );
@@ -1840,6 +2022,7 @@ export async function loadGitFileDiff(
     oldPath?: string | null;
     /** Absent: working tree against HEAD. `true`: index against HEAD. `false`: working tree against index. */
     staged?: boolean;
+    worktree?: string;
   } = {},
   signal?: AbortSignal
 ): Promise<GitFilePatchPage> {
@@ -1851,7 +2034,7 @@ export async function loadGitFileDiff(
   const context = Math.max(0, Math.min(25, Math.round(options.context ?? DIFF_CONTEXT_LINES)));
 
   if (isDemoActive()) {
-    return gitDiffPageFromResponse(demoGitDiff(paneId, path, from, lines), path);
+    return gitDiffPageFromResponse(demoGitDiff(paneId, path, from, lines, options.worktree), path);
   }
 
   // Assembled by hand rather than through URLSearchParams, whose React Native
@@ -1867,6 +2050,7 @@ export async function loadGitFileDiff(
   // reader is shown a thousand added lines where one line actually changed.
   if (options.oldPath) query.push(`old_path=${encodeURIComponent(options.oldPath)}`);
   if (options.staged !== undefined) query.push(`staged=${options.staged ? 'true' : 'false'}`);
+  if (options.worktree) query.push(`worktree=${encodeURIComponent(options.worktree)}`);
   const response = await gatewayFetch(
     gatewayUrl(
       `/api/sessions/${encodeURIComponent(sessionId)}/panes/${encodeURIComponent(
@@ -1891,6 +2075,51 @@ function paneEnvelopeData(json: unknown): unknown {
     return (json as { data: unknown }).data;
   }
   return json;
+}
+
+/** Optional `pane_lazygit`: observe before offering the host's Git TUI. */
+export async function paneLazygitAvailable(
+  sessionId: string,
+  paneId: string,
+  worktree?: string
+): Promise<boolean> {
+  if (isDemoActive()) return Boolean(paneId);
+  const response = await gatewayFetch(
+    gatewayUrl(
+      `/api/sessions/${encodeURIComponent(sessionId)}/panes/${encodeURIComponent(paneId)}/lazygit${worktree ? `?worktree=${encodeURIComponent(worktree)}` : ''}`
+    ),
+    { headers: gatewayAuthHeaders() }
+  );
+  if (!response.ok) return false;
+  const data = paneEnvelopeData(await response.json());
+  return Boolean(
+    data && typeof data === 'object' && 'available' in data && data.available === true
+  );
+}
+
+export async function launchPaneLazygit(
+  sessionId: string,
+  paneId: string,
+  worktree?: string
+): Promise<{
+  paneId: string;
+  started: boolean;
+}> {
+  if (isDemoActive()) return { paneId: demoLaunchLazygit(worktree), started: true };
+  const response = await gatewayFetch(
+    gatewayUrl(
+      `/api/sessions/${encodeURIComponent(sessionId)}/panes/${encodeURIComponent(paneId)}/lazygit${worktree ? `?worktree=${encodeURIComponent(worktree)}` : ''}`
+    ),
+    { method: 'POST', headers: gatewayAuthHeaders() }
+  );
+  if (!response.ok) throw new Error('Could not start lazygit on the Gateway host.');
+  const data = paneEnvelopeData(await response.json()) as {
+    target?: { pane_id?: unknown };
+    started?: unknown;
+  };
+  if (typeof data?.target?.pane_id !== 'string' || !data.target.pane_id)
+    throw new Error('The computer did not say which terminal it made.');
+  return { paneId: data.target.pane_id, started: data.started === true };
 }
 
 /**
@@ -2046,11 +2275,12 @@ export interface GatewayEndpoint {
 export function gatewayEndpointFetch(
   endpoint: GatewayEndpoint,
   input: string,
-  init: RequestInit = {}
+  init: RequestInit = {},
+  timeoutMs = REQUEST_TIMEOUT_MS
 ) {
   return endpoint.transport === GATEWAY_TRANSPORT && endpoint.deviceId && endpoint.transportKey
-    ? encryptedGatewayFetch(input, init, REQUEST_TIMEOUT_MS, endpoint)
-    : gatewayFetch(input, init);
+    ? encryptedGatewayFetch(input, init, timeoutMs, endpoint)
+    : gatewayFetchWithin(timeoutMs, input, init);
 }
 
 function approvalPath(sessionId: string, paneId: string): string {
@@ -2191,26 +2421,32 @@ export interface EncryptedStreamRequest {
  * stream that never ends cannot ride the one-envelope response path. Answers
  * null when the connected gateway does not use the encrypted transport.
  */
-export function encryptedEventStreamRequest(url: string): EncryptedStreamRequest | null {
-  if (
-    !currentToken ||
-    !currentDeviceId ||
-    !currentTransportKey ||
-    currentTransport !== GATEWAY_TRANSPORT
-  ) {
+export async function encryptedEventStreamRequest(
+  url: string,
+  /** Another paired computer's stored credentials; the selected one's when omitted. */
+  endpoint?: GatewayEndpoint
+): Promise<EncryptedStreamRequest | null> {
+  const token = endpoint ? endpoint.token : currentToken;
+  const deviceId = endpoint ? endpoint.deviceId : currentDeviceId;
+  const transportKey = endpoint ? endpoint.transportKey : currentTransportKey;
+  const transport = endpoint ? endpoint.transport : currentTransport;
+  if (!token || !deviceId || !transportKey || transport !== GATEWAY_TRANSPORT) {
     return null;
   }
+  const version = await negotiatedTransportVersion(
+    endpoint ?? { url: currentBaseUrl, token, deviceId, transportKey }
+  );
   const aad = requestAad(url, 'GET');
-  const material = transportKeyMaterial(currentTransportKey);
+  const material = transportKeyMaterial(transportKey);
   const plaintext: EncryptedRequestPayload = {
-    token: currentToken,
+    token,
     body: base64Url(QuickCrypto.Buffer.alloc(0)),
   };
-  const envelope = encryptJson(material, 'request', aad, plaintext);
+  const envelope = encryptJson(material, 'request', aad, plaintext, version);
   return {
     headers: {
       'X-Muqun-Transport': '1',
-      'X-Muqun-Device': currentDeviceId,
+      'X-Muqun-Device': deviceId,
       'X-Muqun-Envelope': base64Url(QuickCrypto.Buffer.from(JSON.stringify(envelope), 'utf8')),
     },
     requestAad: aad,
@@ -2249,8 +2485,9 @@ function looksLikeEncryptedEnvelope(value: unknown): value is EncryptedEnvelope 
  * is worth sealing (see `codePairingMaterial` and `CODE_PAIRING_CLAIM_AAD`).
  * The request that carries the code stays in the clear either way. Response
  * sealing prevents an accidental plaintext credential response, but it does
- * not make manual pairing over untrusted HTTP resistant to observation: that
- * requires HTTPS, a private encrypted network, or a future PAKE protocol.
+ * not conceal the submitted code. Manual pairing supports HTTP and HTTPS,
+ * including LAN and Tailscale addresses, without inferring network protection
+ * from a hostname or IP range.
  */
 async function pairingRequest<T>(
   gatewayUrl: string,
@@ -2260,14 +2497,22 @@ async function pairingRequest<T>(
   codeMaterial?: Uint8Array,
   requireCodeEncryption = false
 ): Promise<T> {
+  const pairingUrl = validatePairingTransport(gatewayUrl, transportKey);
   const aad = `POST ${path}`;
   const material = transportKey ? pairingKeyMaterial(transportKey) : null;
   const requestEnvelope = material ? encryptJson(material, 'pairing-request', aad, body) : null;
-  const response = await gatewayFetch(`${gatewayUrl}${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(requestEnvelope ?? body),
-  });
+  const response = await fetchWithin(
+    REQUEST_TIMEOUT_MS,
+    'Timed out waiting for the server.',
+    `${pairingUrl}${path}`,
+    {
+      method: 'POST',
+      headers: { ...activeLocaleHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestEnvelope ?? body),
+      credentials: 'omit',
+      redirect: 'error',
+    }
+  );
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}: ${await response.text()}`);
   }
@@ -2368,7 +2613,9 @@ export async function claimPairing(
 export async function probeGatewayReachable(
   endpoint: GatewayEndpoint,
   timeoutMs: number,
-  onHealth?: (health: unknown) => void
+  onHealth?: (health: unknown) => void,
+  /** The HTTP status the gateway answered with, when it answered at all. */
+  onStatus?: (status: number) => void
 ): Promise<boolean> {
   const base = endpoint.url.replace(/\/$/, '');
   if (!base) return false;
@@ -2391,6 +2638,7 @@ export async function probeGatewayReachable(
             },
             signal: controller.signal,
           });
+    onStatus?.(response.status);
     if (response.ok && onHealth) {
       try {
         onHealth(await response.json());
@@ -2400,7 +2648,10 @@ export async function probeGatewayReachable(
       }
     }
     return response.ok;
-  } catch {
+  } catch (error) {
+    // A sealed request refused before it authenticated comes back in the
+    // clear and is thrown with its status; that status is the answer.
+    if (error instanceof GatewayTransportRefusalError) onStatus?.(error.status);
     return false;
   } finally {
     clearTimeout(timeout);
@@ -2445,6 +2696,25 @@ export async function readGatewayRecordJson(record: GatewayRecord, path: string)
         : await fetchWithin(REQUEST_TIMEOUT_MS, 'Timed out waiting for the server.', url, init);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return response.json();
+  });
+}
+
+/** Delete on the named computer, without repointing the active terminal or retrying the write. */
+export async function deleteGatewayRecordJson(record: GatewayRecord, path: string): Promise<void> {
+  if (!path.startsWith('/api/') || path.includes('://'))
+    throw new Error('Invalid Gateway delete path');
+  if (isDemoRecord(record)) throw new Error('Demo sessions cannot be closed remotely.');
+  const captured = { ...record, sshTunnel: record.sshTunnel ? { ...record.sshTunnel } : undefined };
+  await withRecordBaseUrl(captured, async (baseUrl) => {
+    const response = await gatewayEndpointFetch(
+      { ...captured, url: baseUrl },
+      `${baseUrl}${path}`,
+      {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${captured.token}`, ...activeLocaleHeaders() },
+      }
+    );
+    if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
   });
 }
 
@@ -2600,12 +2870,23 @@ export async function loadAgents(sessionId: string): Promise<HerdrEntity[]> {
  * per-session, because what is installed on a machine is a fact about the
  * machine.
  */
-export async function loadAgentProfiles(): Promise<AgentProfile[]> {
+export async function loadAgentProfiles(
+  /** Another paired computer, asked through its stored address. */
+  endpoint?: GatewayEndpoint
+): Promise<AgentProfile[]> {
   if (isDemoActive()) return agentProfilesFromResponse(demoAgentProfiles());
 
-  const response = await gatewayFetch(gatewayUrl('/api/agents/catalog'), {
-    headers: gatewayAuthHeaders(),
-  });
+  const response = endpoint
+    ? await gatewayEndpointFetch(
+        endpoint,
+        `${endpoint.url.replace(/\/$/, '')}/api/agents/catalog`,
+        {
+          headers: { Authorization: `Bearer ${endpoint.token}` },
+        }
+      )
+    : await gatewayFetch(gatewayUrl('/api/agents/catalog'), {
+        headers: gatewayAuthHeaders(),
+      });
   if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
 
   return agentProfilesFromResponse(await response.json());
@@ -2691,6 +2972,21 @@ export async function spawnBoundAgent(
     if (acknowledged) return acknowledged;
     throw failure;
   }
+}
+
+/**
+ * `POST /api/tasks` on the selected computer. The gateway creates the agent
+ * session and sends the goal before it answers, so this gets the spawn's
+ * budget rather than the ordinary read's.
+ */
+export async function postLedgerTask(body: Record<string, string | string[]>): Promise<unknown> {
+  const response = await gatewayFetchWithin(60_000, gatewayUrl('/api/tasks'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...gatewayAuthHeaders() },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) throw new Error(`Open task: ${response.status} ${await response.text()}`);
+  return response.json();
 }
 
 export async function spawnAgent(
@@ -3000,6 +3296,74 @@ export async function readPaneRange(
   return { output: extractPaneOutput(value), read: extractPaneReadEnvelope(value) };
 }
 
+/** `data` of a `/history` answer, as the pull needs it; `null` when it is not one. */
+export function parseCapturedHistoryPage(value: unknown): CapturedHistoryPage | null {
+  if (!value || typeof value !== 'object') return null;
+  const data = value as Record<string, unknown>;
+  if (!Array.isArray(data.rows)) return null;
+  return {
+    rows: data.rows.filter((row): row is string => typeof row === 'string'),
+    hasMore: data.has_more === true,
+    nextBefore: typeof data.next_before === 'string' && data.next_before ? data.next_before : null,
+    captureEpoch: data.capture_epoch ?? null,
+    snapshotId: typeof data.snapshot_id === 'string' ? data.snapshot_id : null,
+    generation: typeof data.generation === 'string' ? data.generation : null,
+    availability: data.availability === 'not_captured' ? 'not_captured' : 'captured',
+  };
+}
+
+/**
+ * A page of the pane's captured history (`GET .../panes/{p}/history`):
+ * output the gateway kept as it served it, oldest first, for the panes it
+ * keeps (alternate-screen ones, and those without native scrollback). Never
+ * throws: a refusal comes back with its status, for the pull to decide on.
+ */
+export async function readPaneHistory(
+  sessionId: string,
+  paneId: string,
+  before: string | null,
+  limit = 200
+): Promise<CapturedHistoryRead> {
+  if (isDemoActive()) {
+    return {
+      ok: true,
+      page: {
+        rows: [],
+        hasMore: false,
+        nextBefore: null,
+        captureEpoch: null,
+        availability: 'not_captured',
+      },
+    };
+  }
+  const query = new URLSearchParams({
+    format: 'ansi',
+    limit: String(Math.max(1, Math.min(500, limit))),
+  });
+  if (before) query.set('before', before);
+  const path = `/api/sessions/${encodeURIComponent(sessionId)}/panes/${encodeURIComponent(paneId)}/history?${query.toString()}`;
+  try {
+    const res = await gatewayFetch(gatewayUrl(path), {
+      method: 'GET',
+      headers: gatewayAuthHeaders(),
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      return { ok: false, status: res.status, error: new Error(`HTTP ${res.status}: ${body}`) };
+    }
+    const json = (await res.json()) as unknown;
+    const data =
+      json && typeof json === 'object' && 'data' in json ? (json as { data: unknown }).data : json;
+    const page = parseCapturedHistoryPage(data);
+    if (!page) {
+      return { ok: false, status: 502, error: new Error('HTTP 502: unreadable history page') };
+    }
+    return { ok: true, page };
+  } catch (error) {
+    return { ok: false, status: null, error };
+  }
+}
+
 /**
  * The key row and slash commands for whatever this pane is running, resolved by
  * the gateway. Keeping the table on the gateway means a newly supported agent
@@ -3124,6 +3488,8 @@ export interface PairedDevice {
   last_seen_unix_ms: number;
   /** True for the device making the request, which must not revoke itself by accident. */
   current: boolean;
+  /** `gateway` for another of the owner's computers (a linked peer's login). */
+  kind?: string;
 }
 
 export async function loadPairedDevices(): Promise<PairedDevice[]> {

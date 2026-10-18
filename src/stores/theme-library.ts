@@ -50,7 +50,7 @@ type ThemeLibraryState = {
   hydrate: () => void;
   save: (text: string, assets?: Record<string, string>) => InstalledTheme;
   apply: (selection: ThemeSelection) => void;
-  /** Clear the reader's pick, so the bundled default shows while no theme is installed. */
+  /** Clear the reader's pick and show the bundled default, keeping installed themes. */
   resetToDefault: () => void;
   undo: () => void;
   remove: (id: string) => void;

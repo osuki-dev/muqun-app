@@ -46,6 +46,8 @@ echo "$label demo=$(footprint_mb)MB"
 
 quiet ad press 'label="Settings"'
 quiet ad wait stable 800 8000
+ad press 'id=settings-appearance-row' >/dev/null
+ad wait 'id=settings-appearance-sheet' 8000 >/dev/null
 current=$(ad snapshot -i | grep -oE '"Theme, [^"]+"' | head -1 | sed 's/"Theme, //; s/"//')
 for i in $(seq 1 "$switches"); do
   if [[ "$current" == "Osuki" ]]; then next=Dracula; else next=Osuki; fi
@@ -61,6 +63,8 @@ done
 
 sleep 15
 echo "$label settings_idle15s=$(footprint_mb)MB CGRaster=$(category 'CG Raster') Untagged=$(category 'Untagged')"
+ad back --system >/dev/null
+quiet ad wait stable 400 5000
 quiet ad press 'role=button label="Go back"'
 quiet ad wait stable 800 8000
 sleep 15

@@ -1,5 +1,4 @@
 import { expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
 
 import {
   agentCommandDestination,
@@ -7,7 +6,6 @@ import {
   type AgentCommandDestination,
 } from '../agent-command-delivery';
 import { normalizeGatewayEntities } from '../gateway-entities';
-import { supportsExistingAgentDelivery } from '../agent-collaboration';
 
 const agents = (instance = 'first', status = 'idle') =>
   normalizeGatewayEntities(
@@ -15,53 +13,6 @@ const agents = (instance = 'first', status = 'idle') =>
     []
   );
 const destination = agentCommandDestination('server', 'session', 'pane', agents())!;
-
-test('agent command entry points do not bypass the unavailable bound-delivery contract', () => {
-  const hook = readFileSync(
-    new URL('../../hooks/use-agent-command-delivery.ts', import.meta.url),
-    'utf8'
-  );
-  const collaboration = readFileSync(
-    new URL('../../hooks/use-composer-assignment.ts', import.meta.url),
-    'utf8'
-  );
-  const commands = readFileSync(new URL('../../app/commands.tsx', import.meta.url), 'utf8');
-  // Two different questions, and they used to have one answer between them.
-  //
-  // The command sheet acts on the pane the reader has open. It sends, and it
-  // must: holding it closed made the whole catalogue dead -- `/status` on the
-  // agent on screen answered "Update Muqun Gateway". It goes through
-  // `sendAgentText`, the same endpoint the composer directly above it uses for
-  // the same agent, after re-verifying the instance.
-  expect(hook).toContain('sendAgentText(sessionId, target.target');
-  expect(hook).toContain('supportsBoundDelivery: async () => true');
-  expect(commands).toContain('agentDelivery.send(command.value)');
-  expect(commands).toContain('agentDelivery.send(entry.command)');
-
-  // Collaboration is the other question -- dispatch to an agent that is not
-  // on screen. It sends too now, and what it does about the replacement race
-  // is the same fresh-instance check, made before the write and never retried.
-  expect(supportsExistingAgentDelivery()).toBe(true);
-  expect(collaboration).toContain("field(agent, 'instance_id') !== target.instanceId");
-  expect(collaboration).toContain("field(agent, 'target') || target.paneId");
-  const code = collaboration
-    .split('\n')
-    .filter((line) => !line.trim().startsWith('//') && !line.trim().startsWith('*'))
-    .join('\n');
-  expect(/retry|attempt/i.test(code)).toBe(false);
-});
-
-test('a command sheet send is still bound to the agent it was opened for', () => {
-  // Sending is not the same as sending anywhere. The destination is captured
-  // when the sheet opens and re-checked against a fresh read: a pane whose
-  // agent has been replaced must not inherit a sheet someone left open.
-  const hook = readFileSync(
-    new URL('../../hooks/use-agent-command-delivery.ts', import.meta.url),
-    'utf8'
-  );
-  expect(hook).toContain('agentCommandDestination(serverId, sessionId, paneId, agents)');
-  expect(hook).toContain('destination.paneId === paneId');
-});
 
 function setup() {
   const sent: { destination: AgentCommandDestination; text: string }[] = [];

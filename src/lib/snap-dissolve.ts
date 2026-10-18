@@ -30,10 +30,7 @@
  * through it as its drift grows, so the eye reads grains flowing rather than
  * squares blinking.
  *
- * `snapDustAt` below is the same arithmetic in TypeScript, for the tests: the
- * shader is generated from the constants in this file and is a line-for-line
- * port of it. Free of React, React Native, Reanimated and Skia so `bun test`
- * can load it.
+ * The shader uses the shared constants below.
  */
 
 /** Grain edge in points: fine enough to read as dust. */
@@ -144,91 +141,13 @@ export function snapCellSize(width: number, height: number, pixelRatio: number):
   return Math.max(1, Math.round(grid.tile * ratio)) / ratio;
 }
 
-function fract(value: number): number {
-  return value - Math.floor(value);
-}
-
-/**
- * A cell's number in [0, 1), the shader's hash (Dave Hoskins' `hash12`),
- * evaluated here in doubles: the same distribution, not bit-identical values.
- */
-export function snapCellHash(x: number, y: number): number {
-  let a = fract(x * 0.1031);
-  let b = fract(y * 0.1031);
-  let c = fract(x * 0.1031);
-  const d = a * (b + 33.33) + b * (c + 33.33) + c * (a + 33.33);
-  a += d;
-  b += d;
-  c += d;
-  return fract((a + b) * c);
-}
-
 /** The cell's further numbers, from offsets the shader uses too. */
 const HASH2_OFFSET = [41, 289] as const;
 const HASH3_OFFSET = [173, 37] as const;
 const HASH4_OFFSET = [59, 131] as const;
 
-/** What the shader draws at one point: where in the picture it samples, and how solid. */
-export type SnapDustSample = { sx: number; sy: number; alpha: number };
-
 /**
- * The shader's answer for the point (`x`, `y`) in points at exit progress `p`:
- * the point of the picture to sample there and its alpha, or null where no
- * grain covers it (Home shows through).
- */
-export function snapDustAt(
-  x: number,
-  y: number,
-  p: number,
-  size: { width: number; height: number },
-  cell: number
-): SnapDustSample | null {
-  const tau = Math.PI * 2;
-  const kx = Math.floor(x / cell);
-  const ky = Math.floor(y / cell);
-  const h = snapCellHash(kx, ky);
-  const h2 = snapCellHash(kx + HASH2_OFFSET[0], ky + HASH2_OFFSET[1]);
-  const cx = (kx + 0.5) * cell;
-  const cy = (ky + 0.5) * cell;
-  const sweep = Math.min(1, Math.max(0, cx / Math.max(1, size.width)));
-  const start = SNAP_SWEEP * sweep + SNAP_JITTER * h;
-  const q = Math.min(1, Math.max(0, (p * SNAP_END - start) / SNAP_TILE_SPAN));
-  if (q <= 0) return { sx: x, sy: y, alpha: 1 };
-  const left = 1 - q;
-  const e = 1 - left * left * left;
-  const speed = SNAP_SPEED.base + SNAP_SPEED.range * h2;
-  const dx =
-    e * speed * (SNAP_DRIFT.x.base + SNAP_DRIFT.x.range * h) +
-    SNAP_TURBULENCE.slow.x *
-      (Math.sin(tau * (SNAP_TURBULENCE.slow.frequency * e + h2)) - Math.sin(tau * h2)) +
-    SNAP_TURBULENCE.fast.x *
-      (Math.sin(tau * (SNAP_TURBULENCE.fast.frequency * e + h)) - Math.sin(tau * h));
-  const dy =
-    -e * speed * (SNAP_DRIFT.y.base + SNAP_DRIFT.y.range * h) +
-    SNAP_TURBULENCE.lift.y *
-      (Math.cos(tau * (SNAP_TURBULENCE.lift.frequency * e + h)) - Math.cos(tau * h));
-  const scale = 1 - SNAP_SHRINK * e;
-  const theta = (h - 0.5) * SNAP_TURN * e;
-  // As a grain shrinks it also wanders inside its cell, so the dust is not a
-  // lattice of dots each sitting on its cell's centre.
-  const slack = (1 - scale) * cell * 0.5;
-  const ox = (snapCellHash(kx + HASH3_OFFSET[0], ky + HASH3_OFFSET[1]) - 0.5) * 2 * slack;
-  const oy = (snapCellHash(kx + HASH4_OFFSET[0], ky + HASH4_OFFSET[1]) - 0.5) * 2 * slack;
-  const lx = x - cx - ox;
-  const ly = y - cy - oy;
-  const cos = Math.cos(theta);
-  const sin = Math.sin(theta);
-  const ux = (cos * lx + sin * ly) / scale;
-  const uy = (-sin * lx + cos * ly) / scale;
-  if (Math.abs(ux) > cell / 2 || Math.abs(uy) > cell / 2) return null;
-  const fade = q <= SNAP_HOLD ? 0 : (q - SNAP_HOLD) / (1 - SNAP_HOLD);
-  const alpha = (1 - fade) * (1 - fade);
-  if (alpha <= 0) return null;
-  return { sx: cx - dx + ux, sy: cy - dy + uy, alpha };
-}
-
-/**
- * The shader: {@link snapDustAt}, line for line, in SkSL. Uniforms are the
+ * The SkSL shader. Uniforms are the
  * snapshot (`image`, sampled in points), the sheet's `size` in points, the
  * grain `cell` in points and `progress`.
  */

@@ -35,21 +35,30 @@ export interface AgentActionMenuItem {
   /** `danger` for the one that throws something away. */
   tone?: 'default' | 'danger';
   onPress: () => void;
+  disabled?: boolean;
   /**
    * Ask twice, in the row, before `onPress` runs. For the item that throws
    * something away: the first tap arms it and says what is lost, the second
    * does it. See `two-step-action.tsx`.
    */
-  confirm?: { label: string; detail?: string };
+  confirm?: {
+    label: string;
+    detail?: string;
+    /** Stays armed until confirmed or dismissed (`TwoStepAction` `persist`). */
+    persist?: boolean;
+  };
   testID?: string;
 }
 
 export const AgentActionMenu = memo(function AgentActionMenu({
   items,
   surface = 'popover',
+  error,
   testID,
 }: {
   items: readonly AgentActionMenuItem[];
+  /** What the last action could not do, said here, under the items. */
+  error?: string | null;
   /**
    * `popover` for a menu raised over live content; `ground` for one opened
    * inside a sheet, which has a ground of its own already.
@@ -87,6 +96,8 @@ export const AgentActionMenu = memo(function AgentActionMenu({
               confirmLabel={item.confirm.label}
               detail={item.confirm.detail}
               Icon={item.Icon}
+              persist={item.confirm.persist === true}
+              disabled={item.disabled}
               onConfirm={item.onPress}
             />
           );
@@ -100,6 +111,7 @@ export const AgentActionMenu = memo(function AgentActionMenu({
             accessibilityRole="button"
             accessibilityLabel={item.label}
             onPress={item.onPress}
+            disabled={item.disabled}
             style={styles.option}>
             {item.Icon ? (
               <View style={styles.optionIcon}>
@@ -112,11 +124,22 @@ export const AgentActionMenu = memo(function AgentActionMenu({
           </PressableScale>
         );
       })}
+      {error ? (
+        <Text
+          testID={testID ? `${testID}-error` : undefined}
+          variant="caption"
+          color={theme.colors.danger}
+          accessibilityLiveRegion="polite"
+          style={styles.error}>
+          {error}
+        </Text>
+      ) : null}
     </Animated.View>
   );
 });
 
 const styles = StyleSheet.create({
+  error: { paddingHorizontal: 12, paddingVertical: 6 },
   menu: { alignSelf: 'stretch', paddingVertical: 4 },
   popover: {
     alignSelf: 'flex-start',

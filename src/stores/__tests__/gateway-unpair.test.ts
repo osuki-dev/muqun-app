@@ -112,7 +112,7 @@ beforeEach(async () => {
     kind: 'muqun-gateway',
     server_id: SERVER_ID,
     label: 'a gateway that is no longer there',
-    url: 'http://10.0.0.1:23947',
+    url: 'http://192.0.2.1:23947',
     token: 'a'.repeat(43),
     device_id: 'device-1',
     transport_key: 'k'.repeat(43),

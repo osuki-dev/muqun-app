@@ -180,11 +180,33 @@ test('a theme that is applied stays applied when it is re-imported', () => {
   const starter = createThemeStarter();
   const installed = repository.save(JSON.stringify(starter));
   repository.apply({ kind: 'custom', id: installed.id });
+  // Home has already read the active theme before the reader imports an update.
+  const previous = repository.active();
   repository.save(JSON.stringify({ ...starter, name: 'Updated live' }));
   // The selection points at the installation, so an update lands on screen
   // rather than orphaning the choice the reader already made.
   expect(repository.active()?.installationId).toBe(installed.id);
   expect(repository.active()?.manifest.name).toBe('Updated live');
+  expect(repository.active()).not.toBe(previous);
+  expect(repository.active()).toBe(repository.active());
+});
+
+test('a failed re-import preserves the compiled appearance and stored theme', () => {
+  const { repository, storage, fail } = setup();
+  const starter = createThemeStarter();
+  const installed = repository.save(JSON.stringify(starter));
+  repository.apply({ kind: 'custom', id: installed.id });
+  const previous = repository.active();
+  const snapshot = repository.snapshot();
+  const persisted = storage.read();
+  fail();
+  expect(() => repository.save(JSON.stringify({ ...starter, name: 'Unsaved update' }))).toThrow(
+    'Disk full'
+  );
+  expect(repository.active()).toBe(previous);
+  expect(repository.active()?.manifest.name).toBe(starter.name);
+  expect(repository.snapshot()).toEqual(snapshot);
+  expect(storage.read()).toBe(persisted);
 });
 
 test('the reader appearance preferences survive a re-import', () => {

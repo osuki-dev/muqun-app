@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
 import {
   assignmentStripState,
   collaborationSpawnOutcome,
@@ -111,15 +110,6 @@ describe('collaboration compatibility', () => {
       expect(assignmentStripState(availability, nothing)).toEqual({ toggle: false });
     }
   });
-  test('the demo gateway answers the way a current one does', () => {
-    // The offline e2e flow drives the strip, so the fixture has to satisfy the
-    // same gate a real gateway does -- and satisfy it by the same route, with a
-    // per-session list rather than only the gateway-wide array. Read from the
-    // source because importing `demo-gateway` pulls in the Lingui macro, which
-    // this suite does not run a Babel pass for.
-    const source = readFileSync(new URL('../demo-gateway.ts', import.meta.url), 'utf8');
-    expect(source).toContain("capabilities: ['agent_collaboration']");
-  });
   test('does not enable a disconnected or mismatched backend', () => {
     for (const backend of [
       { sessionId: 'herdr', kind: 'herdr', connected: false, version: '0.9.0' },
@@ -173,15 +163,6 @@ test('the assistant picker excludes the caller and prioritizes the same workspac
     'elsewhere',
   ]);
   expect(collaborationAgents(agents, panes, 'self', 'w1')[0].name).toBe('Reviewer');
-});
-
-test('assignment chips keep the opaque agent instance as their React identity', () => {
-  const source = readFileSync(
-    new URL('../../components/agent-assignment-bar.tsx', import.meta.url),
-    'utf8'
-  );
-  expect(source).toContain('key={candidate.instanceId}');
-  expect(source).not.toContain('key={candidate.paneId}');
 });
 
 test('busy, blocked and unknown agents cannot receive a new tracked assignment', () => {

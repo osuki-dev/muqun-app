@@ -25,6 +25,9 @@ import { HIGHLIGHT_MAX_CHARS, MAX_ASSET_TEXT_BYTES } from './text-preview';
 export type AssetPresentation =
   /** A previewable image: the lightbox. */
   | 'lightbox'
+  /** Audio uses the shared sheet with an explicit native playback control. */
+  | 'audio'
+  | 'video'
   /** Markdown, as a document a block at a time. */
   | 'document'
   /** Text inside the highlighting budget: one fenced, coloured listing. */
@@ -33,7 +36,7 @@ export type AssetPresentation =
   | 'lines'
   /** Text past the size the app will hold; nothing is read. */
   | 'too-large'
-  /** A PDF, a video, a binary -- anything with no preview: what it is and where. */
+  /** A PDF or a binary -- anything with no preview: what it is and where. */
   | 'details';
 
 /**
@@ -50,6 +53,8 @@ export function assetPresentation(
 ): AssetPresentation {
   if (!asset.previewable) return 'details';
   if (asset.kind === 'image') return 'lightbox';
+  if (asset.kind === 'audio') return 'audio';
+  if (asset.kind === 'video') return 'video';
   if (asset.kind !== 'markdown' && asset.kind !== 'text') return 'details';
   if (asset.size > MAX_ASSET_TEXT_BYTES) return 'too-large';
   if (asset.kind === 'markdown') return 'document';

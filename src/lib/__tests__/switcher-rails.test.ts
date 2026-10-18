@@ -36,14 +36,14 @@ const agents = [entity('a1', { pane_id: 'p1' }, { title: 'opencode', status: 'wo
 const herdr = { id: 'default', label: 'Herdr', kind: 'herdr' };
 const tmux = { id: 'shell', label: 'Shell', kind: 'tmux' };
 
-const osk: MachineChoice = { id: 'osk', label: 'osk', sessions: [herdr, tmux] };
-const mini: MachineChoice = { id: 'mini', label: 'mini', sessions: [herdr] };
+const desk: MachineChoice = { id: 'desk', label: 'desk', sessions: [herdr, tmux] };
+const laptop: MachineChoice = { id: 'laptop', label: 'laptop', sessions: [herdr] };
 const unseen: MachineChoice = { id: 'pad', label: 'pad' };
 
 function rails(input: Partial<SwitcherRailsInput> = {}) {
   return switcherRails({
-    machines: [osk, mini, unseen],
-    serverId: 'osk',
+    machines: [desk, laptop, unseen],
+    serverId: 'desk',
     sessionId: 'default',
     workspaces,
     workspaceId: 'w1',
@@ -57,9 +57,9 @@ function rails(input: Partial<SwitcherRailsInput> = {}) {
 
 describe('the machines rail', () => {
   test('the machine you are on leads it, however the records are ordered', () => {
-    expect(rails({ serverId: 'mini' }).machines.map((machine) => machine.id)).toEqual([
-      'mini',
-      'osk',
+    expect(rails({ serverId: 'laptop' }).machines.map((machine) => machine.id)).toEqual([
+      'laptop',
+      'desk',
       'pad',
     ]);
   });
@@ -68,12 +68,12 @@ describe('the machines rail', () => {
     const reach = Object.fromEntries(
       rails().machines.map((machine) => [machine.id, machine.reach])
     );
-    expect(reach).toEqual({ osk: 'current', mini: 'connected', pad: 'unreached' });
+    expect(reach).toEqual({ desk: 'current', laptop: 'connected', pad: 'unreached' });
   });
 
   test('a machine that stopped answering is unreachable, not still connected', () => {
-    const stale: MachineChoice = { ...mini, error: 'Could not connect' };
-    const [, second] = rails({ machines: [osk, stale] }).machines;
+    const stale: MachineChoice = { ...laptop, error: 'Could not connect' };
+    const [, second] = rails({ machines: [desk, stale] }).machines;
     expect({ reach: second.reach, error: second.error }).toEqual({
       reach: 'unreachable',
       error: 'Could not connect',
@@ -89,17 +89,17 @@ describe('the machines rail', () => {
 
 describe('the sessions rail', () => {
   test('one backend is not a choice, so there is no rail', () => {
-    const one = rails({ machines: [mini], serverId: 'mini' });
+    const one = rails({ machines: [laptop], serverId: 'laptop' });
     expect(one.sessions).toEqual([]);
     expect(one.sessionsOn).toBeUndefined();
   });
 
   test('it belongs to the machine that was tapped, and says which', () => {
-    const asked = rails({ serverId: 'mini', focusedId: 'osk', machines: [mini, osk] });
+    const asked = rails({ serverId: 'laptop', focusedId: 'desk', machines: [laptop, desk] });
     expect(asked.sessions.map((session) => session.id)).toEqual(['default', 'shell']);
-    expect(asked.sessionsOn).toBe('osk');
+    expect(asked.sessionsOn).toBe('desk');
     // Nothing is selected on a machine the terminal is not reading: the ids are
-    // server-scoped, and `default` on `mini` is not `default` on `osk`.
+    // server-scoped, and `default` on `laptop` is not `default` on `desk`.
     expect(asked.sessions.some((session) => session.selected)).toBe(false);
   });
 
@@ -122,9 +122,9 @@ describe('the sessions rail', () => {
     // The caption at the top of the sheet already says which machine you are
     // on, one heading above the rail.
     expect(rails().sessionsOn).toBeUndefined();
-    expect(rails({ serverId: 'mini', focusedId: 'osk', machines: [mini, osk] }).sessionsOn).toBe(
-      'osk'
-    );
+    expect(
+      rails({ serverId: 'laptop', focusedId: 'desk', machines: [laptop, desk] }).sessionsOn
+    ).toBe('desk');
   });
 });
 

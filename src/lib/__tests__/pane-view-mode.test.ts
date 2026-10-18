@@ -16,7 +16,6 @@ import {
   CHAT_VIEW_ENABLED,
   availablePaneViewModes,
   canCyclePaneViewModes,
-  isPaneViewMode,
   nextPaneViewMode,
   resolvePaneViewMode,
   storedAgentDefaultView,
@@ -42,17 +41,6 @@ describe('what a pane can show', () => {
     expect(availablePaneViewModes({ agent: true, parts: true })).toEqual(
       CHAT_VIEW_ENABLED ? ['chat', 'terminal'] : ['terminal']
     );
-  });
-
-  test('nothing offers the reflowed-text reading any more', () => {
-    for (const capabilities of [
-      { agent: false, parts: false },
-      { agent: false, parts: true },
-      { agent: true, parts: false },
-      { agent: true, parts: true },
-    ]) {
-      expect(availablePaneViewModes(capabilities)).not.toContain('text' as PaneViewMode);
-    }
   });
 
   test('one mode is nothing to cycle', () => {
@@ -89,12 +77,6 @@ describe('resolving what to draw', () => {
 });
 
 describe('the reflowed-text reading is gone', () => {
-  test('it is not a mode any more', () => {
-    expect(isPaneViewMode('text')).toBe(false);
-    expect(isPaneViewMode('terminal')).toBe(true);
-    expect(isPaneViewMode('chat')).toBe(true);
-  });
-
   test('a pane that remembers it is drawn as a terminal, not as nothing', () => {
     // The store is not type-checked at rest -- it survives a hot reload, and an
     // install that switched a pane to text before the upgrade still holds the

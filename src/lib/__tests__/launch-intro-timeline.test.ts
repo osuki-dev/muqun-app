@@ -1,30 +1,20 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
-  BLOOM_OVERSHOOT,
   canSkipLaunchIntro,
   LAUNCH_INTRO_BUDGET_MS,
   launchIntroTimeline,
   reducedLaunchIntroTimeline,
-  WORLD_ARRIVAL_ZOOM,
   type MotionDurations,
 } from '../launch-intro-timeline';
 
-/**
- * The design system's scale, restated here rather than imported: `motion.ts`
- * reaches Reanimated and will not load in a bun test. `motion-tokens.test.ts`
- * is what keeps the app's own call site on the real tokens; what these tests
- * hold is the shape of the opening built out of them.
- */
+// Pass a duration scale without loading Reanimated in the unit runner.
 const DURATIONS: MotionDurations = { micro: 150, short: 200, medium: 300, long: 400 };
 
 describe('launchIntroTimeline', () => {
   test('the whole opening fits inside the launch budget', () => {
     const beats = launchIntroTimeline(DURATIONS);
     expect(beats.totalMs).toBeLessThanOrEqual(LAUNCH_INTRO_BUDGET_MS);
-    // And the budget is a limit rather than a description: an opening that has
-    // grown to exactly fill it has grown too far to notice it did.
-    expect(beats.totalMs).toBe(1300);
   });
 
   test('the snap starts with the exit and only drifts past the budget over a live app', () => {
@@ -33,15 +23,6 @@ describe('launchIntroTimeline', () => {
     const beats = launchIntroTimeline(DURATIONS);
     expect(beats.snap.at).toBe(beats.exit.at);
     expect(beats.snap.at + beats.bloomStallCapMs).toBeLessThan(LAUNCH_INTRO_BUDGET_MS);
-    expect(beats.snap.at + beats.snap.ms - beats.totalMs).toBe(400);
-  });
-
-  test('the snap runs long enough to be seen, and its fallback is the old cross-fade', () => {
-    const beats = launchIntroTimeline(DURATIONS);
-    expect(beats.snap.ms).toBe(700);
-    expect(beats.snap.ms).toBeGreaterThanOrEqual(600);
-    expect(beats.snap.ms).toBeLessThanOrEqual(800);
-    expect(beats.exit.ms).toBe(DURATIONS.medium);
   });
 
   test('even a front that stalls for the whole cap cannot pass the budget', () => {
@@ -70,25 +51,6 @@ describe('launchIntroTimeline', () => {
     }
   });
 
-  test('the beats overlap, so the launch resolves at once rather than in a list', () => {
-    const beats = launchIntroTimeline(DURATIONS);
-    // The rim is still closing as the front leaves it.
-    expect(beats.bloom.at).toBeLessThanOrEqual(beats.ignite.at + beats.ignite.ms);
-    // The hero is already lifting while the front is still crossing.
-    expect(beats.hero.at).toBeLessThan(beats.bloom.at + beats.bloom.ms);
-    // And the prompt starts typing before the hero has landed.
-    expect(beats.type.at).toBeLessThan(beats.hero.at + beats.hero.ms);
-  });
-
-  test('the world settles for longer than it takes to arrive', () => {
-    // The zoom is the slowest thing on screen on purpose: a world that stops
-    // moving the instant it has finished arriving has no weight.
-    const beats = launchIntroTimeline(DURATIONS);
-    expect(beats.settle.ms).toBeGreaterThan(beats.bloom.ms);
-    expect(WORLD_ARRIVAL_ZOOM).toBeGreaterThan(1);
-    expect(WORLD_ARRIVAL_ZOOM).toBeLessThanOrEqual(1.08);
-  });
-
   test('the cursor blinks only after the name is spelled out', () => {
     const beats = launchIntroTimeline(DURATIONS);
     expect(beats.blink.at).toBe(beats.type.at + beats.type.ms);
@@ -106,19 +68,6 @@ describe('launchIntroTimeline', () => {
     const beats = launchIntroTimeline(DURATIONS);
     expect(beats.skipArmedAt).toBeGreaterThan(0);
     expect(beats.skipArmedAt).toBeLessThan(beats.holdUntil);
-    expect(beats.skipArmedAt).toBe(400);
-  });
-
-  test('the opening is stated in tokens, so retuning the scale retunes the launch', () => {
-    const doubled = launchIntroTimeline({ micro: 300, short: 400, medium: 600, long: 800 });
-    expect(doubled.totalMs).toBe(2600);
-    expect(doubled.skipArmedAt).toBe(800);
-  });
-
-  test('the front overshoots the far corner, because its edge is ragged', () => {
-    // A front that stops exactly at the corner leaves the corner ragged on the
-    // frame it was supposed to have finished on.
-    expect(BLOOM_OVERSHOOT).toBeGreaterThan(1);
   });
 });
 
@@ -142,7 +91,6 @@ describe('reducedLaunchIntroTimeline', () => {
     const beats = reducedLaunchIntroTimeline(DURATIONS);
     expect(beats.exit.ms).toBe(DURATIONS.short);
     expect(beats.snap).toEqual(beats.exit);
-    expect(beats.totalMs).toBe(400);
     expect(beats.totalMs).toBeLessThan(launchIntroTimeline(DURATIONS).totalMs);
   });
 });

@@ -3,13 +3,23 @@ import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 
 import { Button } from '@/components/themed-button';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
+import { sheetFrostAlpha, surfaceBackgroundFill } from '@/theme/surface-background';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ScrollView, useWindowDimensions, View } from 'react-native';
+import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { CustomThemeLibrary, type ThemePrimaryAction } from '@/components/custom-theme-library';
+import {
+  CustomThemeLibrary,
+  type ThemePrimaryAction,
+  type ThemeStatus,
+} from '@/components/custom-theme-library';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
+import { ThemeImportProgress } from '@/components/theme-import-progress';
+import { appChrome } from '@/constants/appearance';
+import { fadeIn, fadeOut } from '@/lib/motion';
+import Animated from 'react-native-reanimated';
 import { ScreenHeader } from '@/components/screen-header';
 import { ThemeArtwork } from '@/components/theme-artwork';
 import { CandidateThemeProvider } from '@/components/theme-candidate';
@@ -53,9 +63,7 @@ import type { InstalledTheme } from '@/theme/repository';
  * So it stays full-screen, and the way out is drawn rather than gestured:
  * `ScreenHeader`'s back arrow (`Go back`) at the top, and the pinned button at
  * the foot that is Done until there is a theme to apply. Neither scrolls away.
- * `sheetRoutePresentations` carries this route as `fullscreen` and
- * `sheet-scene-contract.test.ts` holds that list to two entries, so this is an
- * allowlisted exception with a reason rather than a route nobody converted.
+ * `sheetRoutePresentations` keeps this preview fullscreen.
  */
 export default function CustomThemeScreen() {
   const { draft } = useLocalSearchParams<{ draft?: string }>();
@@ -125,6 +133,16 @@ function CustomThemeScene({
    * the button is what it has always been: Done, which closes.
    */
   const [primary, setPrimary] = useState<ThemePrimaryAction | null>(null);
+  /**
+   * What the apply is doing, shown over the screen just above the button
+   * rather than above the theme: drawn in the scroll it pushed the preview and
+   * the sliders down the moment Apply was tapped. It takes no room, so nothing
+   * on the screen moves; a successful apply closes the screen anyway.
+   */
+  const [status, setStatus] = useState<ThemeStatus | null>(null);
+  const [footerHeight, setFooterHeight] = useState(0);
+  const profile = useAppearanceProfile();
+  const surfaceOpacity = useSurfaceBackgroundOpacity();
   return (
     // Opacity audit: floor -- the screen's opaque base, exempt from the slider.
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -146,6 +164,7 @@ function CustomThemeScene({
               ownsPreparedAssets={false}
               onClosePreview={close}
               onPrimaryActionChange={setPrimary}
+              onStatusChange={setStatus}
             />
           ) : (
             <Text>{t`Not found`}</Text>
@@ -159,8 +178,56 @@ function CustomThemeScene({
           middle of the page with content on both sides of it. It keeps the
           `custom-theme-done` id through the change of label: it is still the
           same control, the one that ends the visit. */}
+      {status ? (
+        <View
+          pointerEvents="box-none"
+          style={{
+            position: 'absolute',
+            left: 20,
+            right: 20,
+            bottom: footerHeight + theme.spacing.sm,
+          }}>
+          <View style={{ width: '100%', maxWidth: 1120, alignSelf: 'center' }}>
+            {/* The plate and its words arrive and leave together: the label's own
+                fade must never outlive the plate behind it. */}
+            <Animated.View
+              entering={fadeIn('micro')}
+              exiting={fadeOut('micro')}
+              testID={status.kind === 'installing' ? undefined : 'theme-status-message'}
+              style={{
+                paddingHorizontal: theme.spacing.md,
+                paddingVertical: theme.spacing.sm,
+                borderRadius: profile.chrome.noticeCard,
+                borderCurve: 'continuous',
+                borderWidth: StyleSheet.hairlineWidth,
+                borderColor: theme.colors.border,
+                // A plate over live content: the theme's own opacity, never
+                // thinner than the floor a sheet keeps for reading.
+                backgroundColor: surfaceBackgroundFill(
+                  theme.colors.surfaceRaised,
+                  sheetFrostAlpha(surfaceOpacity)
+                ),
+                boxShadow: appChrome.shadow.notice,
+              }}>
+              {status.kind === 'installing' ? (
+                <ThemeImportProgress testID="theme-install-progress" label={t`Installing images`} />
+              ) : (
+                <Text
+                  selectable
+                  {...(status.kind === 'error'
+                    ? { accessibilityRole: 'alert' as const }
+                    : { accessibilityLiveRegion: 'polite' as const })}
+                  color={status.kind === 'error' ? theme.colors.danger : theme.colors.text}>
+                  {status.text}
+                </Text>
+              )}
+            </Animated.View>
+          </View>
+        </View>
+      ) : null}
       {candidate ? (
         <View
+          onLayout={(event) => setFooterHeight(event.nativeEvent.layout.height)}
           style={{
             paddingHorizontal: 20,
             paddingTop: 12,

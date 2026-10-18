@@ -263,7 +263,7 @@ export function SessionMap({
     if (busy) return t`Connecting`;
     switch (reach) {
       case 'current':
-        return t`Current machine`;
+        return t`Current computer`;
       case 'connected':
         return t`Connected`;
       case 'unreachable':
@@ -739,7 +739,7 @@ export function SessionMap({
           So the chip reports where this phone has got to with that machine --
           the dot -- and the rail below it is the question, when there is one.
         */}
-        <SheetSceneGroupHeading title={t`Machines`} first />
+        <SheetSceneGroupHeading title={t`Computers`} first />
         <View testID="machines-rail" style={styles.rail}>
           <ScrollView
             horizontal
@@ -1012,13 +1012,13 @@ export function SessionMap({
         <View style={styles.machineActions}>
           <SheetSceneQuietAction
             testID="add-machine"
-            label={t`Add machine`}
+            label={t`Add computer`}
             onPress={onAddMachine}
             disabled={pendingId !== null}
           />
           <SheetSceneQuietAction
             testID="manage-machines"
-            label={t`Manage machines`}
+            label={t`Manage computers`}
             onPress={onManageMachines}
             disabled={pendingId !== null}
           />

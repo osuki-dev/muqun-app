@@ -19,24 +19,24 @@ describe('serverIdsNeedingAddress', () => {
   });
 
   test('one server never shows its address', () => {
-    expect(serverIdsNeedingAddress(servers(['a', 'mac-mini'])).size).toBe(0);
+    expect(serverIdsNeedingAddress(servers(['a', 'tower'])).size).toBe(0);
   });
 
   test('distinct names stay quiet however many there are', () => {
     const needed = serverIdsNeedingAddress(
-      servers(['a', 'mac-mini'], ['b', 'studio'], ['c', 'thinkpad'])
+      servers(['a', 'tower'], ['b', 'studio'], ['c', 'thinkpad'])
     );
     expect(needed.size).toBe(0);
   });
 
   test('both halves of a collision show their address, not just the second', () => {
-    const needed = serverIdsNeedingAddress(servers(['a', 'mac-mini'], ['b', 'mac-mini']));
+    const needed = serverIdsNeedingAddress(servers(['a', 'tower'], ['b', 'tower']));
     expect([...needed].sort()).toEqual(['a', 'b']);
   });
 
   test('a collision does not drag the unambiguous names in with it', () => {
     const needed = serverIdsNeedingAddress(
-      servers(['a', 'mac-mini'], ['b', 'mac-mini'], ['c', 'studio'])
+      servers(['a', 'tower'], ['b', 'tower'], ['c', 'studio'])
     );
     expect([...needed].sort()).toEqual(['a', 'b']);
   });
@@ -49,12 +49,12 @@ describe('serverIdsNeedingAddress', () => {
   // `===` says these differ. A reader scanning the list cannot tell them apart,
   // and the list is what the rule is about.
   test('case is not a distinction a reader can see', () => {
-    const needed = serverIdsNeedingAddress(servers(['a', 'mac-mini'], ['b', 'Mac-Mini']));
+    const needed = serverIdsNeedingAddress(servers(['a', 'tower'], ['b', 'Tower']));
     expect([...needed].sort()).toEqual(['a', 'b']);
   });
 
   test('neither is trailing whitespace', () => {
-    const needed = serverIdsNeedingAddress(servers(['a', 'mac-mini '], ['b', ' mac-mini']));
+    const needed = serverIdsNeedingAddress(servers(['a', 'tower '], ['b', ' tower']));
     expect([...needed].sort()).toEqual(['a', 'b']);
   });
 

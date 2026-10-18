@@ -236,29 +236,42 @@ export interface PaneChangesClient {
     options: { mode: VcsFilesMode; path: string; context: number }
   ): Promise<AgentVcsFilePatch>;
   discard(sessionId: string, paneId: string, path: string): Promise<unknown>;
-  status(sessionId: string, paneId: string, signal?: AbortSignal): Promise<GitStatus>;
+  status(
+    sessionId: string,
+    paneId: string,
+    signal?: AbortSignal,
+    worktree?: string
+  ): Promise<GitStatus>;
   diff(
     sessionId: string,
     paneId: string,
     path: string,
-    options: { from: number; lines: number; context: number; oldPath: string | null },
+    options: {
+      from: number;
+      lines: number;
+      context: number;
+      oldPath: string | null;
+      worktree?: string;
+    },
     signal?: AbortSignal
   ): Promise<GitFilePatchPage>;
 }
 
 export function paneChangesApi(
-  target: { sessionId: string; paneId: string; vcsFiles: boolean },
+  target: { sessionId: string; paneId: string; vcsFiles: boolean; worktree?: string },
   client: PaneChangesClient
 ): ChangesApi {
-  const { sessionId, paneId, vcsFiles } = target;
+  const { sessionId, paneId, vcsFiles, worktree } = target;
+  const status = (signal?: AbortSignal) =>
+    worktree
+      ? client.status(sessionId, paneId, signal, worktree)
+      : client.status(sessionId, paneId, signal);
   return {
     async listing(mode, signal) {
-      if (vcsFiles) {
+      if (vcsFiles && !worktree) {
         const answer = await client.files(sessionId, paneId, mode);
         if (answer) {
-          return withPaneRepo(listingFromVcsFiles(answer), () =>
-            client.status(sessionId, paneId, signal)
-          );
+          return withPaneRepo(listingFromVcsFiles(answer), () => status(signal));
         }
       }
       // `…/git/status` has no comparison with a base; the sheet only asks for
@@ -273,9 +286,10 @@ export function paneChangesApi(
           reason: 'no_default_branch',
         };
       }
-      return listingFromGitStatus(await client.status(sessionId, paneId, signal));
+      return listingFromGitStatus(await status(signal));
     },
     async file(args) {
+      if (worktree) throw new Error('Linked checkout patches use the read-only paged API');
       return filePatchOf(await client.file(sessionId, paneId, args));
     },
     page(file, from, signal) {
@@ -289,10 +303,13 @@ export function paneChangesApi(
           context: DIFF_CONTEXT_LINES,
           // Both ends of a rename, or git renders the move as a brand-new file.
           oldPath: file.oldPath,
+          ...(worktree ? { worktree } : {}),
         },
         signal
       );
     },
-    ...(vcsFiles ? { discard: (path: string) => client.discard(sessionId, paneId, path) } : {}),
+    ...(vcsFiles && !worktree
+      ? { discard: (path: string) => client.discard(sessionId, paneId, path) }
+      : {}),
   };
 }

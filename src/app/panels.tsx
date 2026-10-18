@@ -180,7 +180,7 @@ export default function PanelPickerScreen() {
   return (
     <SessionMap
       sessionId={params.sessionId || 'default'}
-      label={params.label || record?.label || t`Server`}
+      label={params.label || record?.label || t`Computer`}
       activePaneId={params.paneId}
       onChoosePane={openPane}
       onCreatedPane={params.intent === 'new-terminal' ? openPane : undefined}

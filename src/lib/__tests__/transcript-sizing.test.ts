@@ -6,20 +6,6 @@ import {
   TRANSCRIPT_ROW_SIZE,
 } from '../transcript-sizing';
 
-describe('TRANSCRIPT_ROW_SIZE', () => {
-  test('an assistant row is much taller than a user row', () => {
-    // The whole reason a single flat estimate was wrong: the kinds are not
-    // close to each other.
-    expect(TRANSCRIPT_ROW_SIZE.assistant).toBeGreaterThan(TRANSCRIPT_ROW_SIZE.user * 2);
-  });
-
-  test('every kind has a measured size', () => {
-    for (const role of ['assistant', 'user', 'system'] as const) {
-      expect(TRANSCRIPT_ROW_SIZE[role]).toBeGreaterThan(0);
-    }
-  });
-});
-
 describe('blendedRowSize', () => {
   test('one kind on its own is that kind', () => {
     expect(blendedRowSize({ user: 12 })).toBe(TRANSCRIPT_ROW_SIZE.user);

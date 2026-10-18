@@ -7,6 +7,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 
+import { protectCacheDirectory } from './cache-cleanup';
 import { MAX_ATTACHMENTS_PER_PICK, type PickedFile } from './attachment-queue';
 import { planImageCompression } from './image-compression';
 import { describeGatewayFailure } from './network-error';
@@ -110,6 +111,7 @@ export async function compressPickedImage(file: PickedFile): Promise<PickedFile>
   const plan = planImageCompression(file);
   if (!plan) return file;
 
+  await protectCacheDirectory('ImageManipulator');
   const context = ImageManipulator.manipulate(file.uri);
   try {
     if (plan.resize) context.resize(plan.resize);
@@ -146,6 +148,7 @@ export async function compressPickedImage(file: PickedFile): Promise<PickedFile>
  * never reported as a failure.
  */
 export async function pickCameraPhoto(): Promise<PickedFile[]> {
+  await protectCacheDirectory('ImagePicker');
   const permission = await ImagePicker.requestCameraPermissionsAsync();
   if (!permission.granted) {
     throw new AttachmentPickerError(
@@ -165,6 +168,7 @@ export async function pickPhotoLibrary(): Promise<PickedFile[]> {
   // No permission request: both platforms now answer through a system picker
   // that hands back only what was chosen, so asking for library access would be
   // a prompt for an authorisation the app does not need.
+  await protectCacheDirectory('ImagePicker');
   const result = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ['images'],
     allowsMultipleSelection: true,
@@ -182,6 +186,7 @@ export async function pickPhotoLibrary(): Promise<PickedFile[]> {
  * multipart uploader needs a URI it can read immediately after this promise.
  */
 export async function pickFiles(): Promise<PickedFile[]> {
+  await protectCacheDirectory('DocumentPicker');
   const result = await DocumentPicker.getDocumentAsync({
     type: '*/*',
     copyToCacheDirectory: true,

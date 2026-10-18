@@ -70,7 +70,7 @@ export function CollaborationNotice({
         try {
           const assertConnection = () => {
             if (useGatewayConnectionStore.getState().record?.serverId !== task.serverId)
-              throw new Error(t`Return to this server to continue.`);
+              throw new Error(t`Return to this computer to continue.`);
           };
           assertConnection();
           const fresh = await loadAgents(task.sessionId);

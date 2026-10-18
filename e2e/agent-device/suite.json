@@ -2,6 +2,56 @@
   "version": 1,
   "flows": [
     {
+      "name": "inline-video",
+      "program": "flows/inline-video",
+      "tags": ["full", "agents", "files"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "inline-audio",
+      "program": "flows/inline-audio",
+      "tags": ["full", "agents", "files"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "voice-recording",
+      "program": "flows/voice-recording",
+      "cleanup": "subflows/clear-voice-recording",
+      "tags": ["full", "settings", "terminal"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "voice-realtime",
+      "program": "flows/voice-realtime",
+      "cleanup": "subflows/clear-voice-recording",
+      "tags": ["full", "settings", "terminal"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "audio-preview",
+      "program": "flows/audio-preview",
+      "tags": ["full", "files", "agents"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "voice-settings",
+      "program": "flows/voice-settings",
+      "tags": ["full", "settings", "terminal"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "git-single-entry",
+      "program": "flows/git-single-entry",
+      "tags": ["full", "terminal", "files"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "lazygit-changes",
+      "program": "flows/lazygit-changes",
+      "tags": ["full", "terminal", "files"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "home-continue-search",
       "program": "flows/home-continue-search",
       "tags": ["full", "workspace", "agents"],
@@ -41,6 +91,12 @@
       "name": "agent-session-tree",
       "program": "flows/agent-session-tree",
       "tags": ["full", "agents", "workspace"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "task-result",
+      "program": "flows/task-result",
+      "tags": ["full", "workspace", "agents"],
       "platforms": ["ios", "android"]
     },
     {
@@ -104,6 +160,12 @@
       "platforms": ["ios", "android"]
     },
     {
+      "name": "git-worktrees",
+      "program": "flows/git-worktrees",
+      "tags": ["full", "files", "terminal"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "settings",
       "program": "flows/settings",
       "tags": ["full", "settings"],
@@ -144,13 +206,6 @@
       "program": "flows/light-shots",
       "tags": ["capture"],
       "platforms": ["ios", "android"]
-    },
-    {
-      "name": "new-task",
-      "program": "flows/new-task",
-      "tags": [],
-      "platforms": ["ios", "android"],
-      "disabled": "flows/new-task.ad is an unconverted stub: every step still targets ${TARGET} and no section table supplies it. Rewrite it against real selectors, then give it the full tag."
     },
     {
       "name": "pad-workspace",
@@ -201,12 +256,6 @@
       "platforms": ["ios", "android"]
     },
     {
-      "name": "switcher-sheet",
-      "program": "flows/switcher-sheet",
-      "tags": ["full", "workspace"],
-      "platforms": ["ios", "android"]
-    },
-    {
       "name": "soft-keyboard",
       "program": "flows/soft-keyboard",
       "tags": ["full", "terminal"],
@@ -238,6 +287,177 @@
     }
   ],
   "programs": {
+    "flows/git-worktrees": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/git-worktrees.ad#open" },
+      {
+        "target": { "text": "Choose worktree" },
+        "mode": "press",
+        "run": "flows/git-worktrees.ad#press"
+      },
+      {
+        "target": {
+          "id": "changes-worktree-%2FUsers%2Fdemo%2Fcode%2Fmuqun-worktrees%2Flinked-checkout"
+        },
+        "mode": "press",
+        "run": "flows/git-worktrees.ad#press"
+      },
+      {
+        "target": { "text": "Viewing another checkout\\. Changes are read-only" },
+        "mode": "visible",
+        "run": "flows/git-worktrees.ad#visible"
+      },
+      {
+        "target": { "text": "linked-worktree.txt" },
+        "mode": "visible",
+        "run": "flows/git-worktrees.ad#visible"
+      },
+      {
+        "target": { "text": "Written in the linked checkout." },
+        "mode": "visible",
+        "run": "flows/git-worktrees.ad#visible"
+      },
+      {
+        "target": { "text": "Open Lazygit" },
+        "mode": "visible",
+        "run": "flows/git-worktrees.ad#visible"
+      },
+      {
+        "target": { "text": "Refresh changes" },
+        "mode": "press",
+        "run": "flows/git-worktrees.ad#press"
+      },
+      {
+        "target": { "text": "linked-worktree.txt" },
+        "mode": "visible",
+        "run": "flows/git-worktrees.ad#visible"
+      },
+      {
+        "target": { "text": "Choose worktree" },
+        "mode": "press",
+        "run": "flows/git-worktrees.ad#press"
+      },
+      {
+        "target": { "id": "changes-worktree-current" },
+        "mode": "press",
+        "run": "flows/git-worktrees.ad#press"
+      },
+      {
+        "target": { "text": "linked-worktree.txt" },
+        "mode": "hidden",
+        "run": "flows/git-worktrees.ad#hidden"
+      },
+      {
+        "target": { "text": "Choose worktree" },
+        "mode": "visible",
+        "run": "flows/git-worktrees.ad#visible"
+      },
+      { "run": "flows/git-worktrees.ad#close" }
+    ],
+    "flows/inline-video": [
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "run": "flows/inline-video.ad#open-output"
+      },
+      {
+        "target": {
+          "id": "agent-subagent-detail-transcript"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/inline-video.ad#arrived"
+      },
+      {
+        "run": "flows/inline-video.ad#playback"
+      }
+    ],
+    "flows/inline-audio": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/inline-audio.ad#open-output" },
+      {
+        "target": { "id": "agent-subagent-detail-transcript" },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/inline-audio.ad#arrived"
+      },
+      { "run": "flows/inline-audio.ad#playback" }
+    ],
+    "subflows/open-voice-settings": [
+      { "include": "subflows/launch-home" },
+      {
+        "target": { "text": "Settings" },
+        "mode": "press",
+        "timeout": 15000,
+        "run": "flows/settings-sheets.ad#press"
+      },
+      {
+        "target": { "id": "settings-voice-row" },
+        "mode": "press",
+        "run": "flows/settings-sheets.ad#press"
+      }
+    ],
+    "subflows/clear-voice-recording": [
+      { "include": "subflows/open-voice-settings" },
+      { "run": "flows/voice-recording.ad#clear" }
+    ],
+    "subflows/select-voice-mode": [
+      { "run": "flows/voice-recording.ad#mode-ready" },
+      {
+        "when": { "target": { "id": "settings-selection:off:voice-service-mode-${VOICE_MODE}" } },
+        "steps": [{ "run": "flows/voice-recording.ad#select-mode" }]
+      },
+      { "run": "flows/voice-recording.ad#confirm-mode" }
+    ],
+    "flows/voice-recording": [
+      { "include": "subflows/open-voice-settings" },
+      { "include": "subflows/select-voice-mode", "env": { "VOICE_MODE": "file" } },
+      { "run": "flows/voice-recording.ad#configure" },
+      { "include": "subflows/open-demo" },
+      { "run": "flows/voice-recording.ad#record" },
+      {
+        "when": { "env": "PLATFORM", "equals": "android" },
+        "steps": [{ "run": "flows/voice-recording.ad#back" }]
+      }
+    ],
+    "flows/voice-realtime": [
+      { "include": "subflows/open-voice-settings" },
+      { "include": "subflows/select-voice-mode", "env": { "VOICE_MODE": "realtime" } },
+      { "run": "flows/voice-realtime.ad#configure" },
+      { "include": "subflows/open-demo" },
+      { "run": "flows/voice-realtime.ad#disconnected" }
+    ],
+    "flows/audio-preview": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/audio-preview.ad" }
+    ],
+    "flows/voice-settings": [
+      {
+        "include": "subflows/launch-home"
+      },
+      {
+        "target": {
+          "text": "Settings"
+        },
+        "mode": "press",
+        "timeout": 15000,
+        "run": "flows/settings-sheets.ad#press"
+      },
+      {
+        "target": {
+          "id": "settings-voice-row"
+        },
+        "mode": "press",
+        "run": "flows/settings-sheets.ad#press"
+      },
+      {
+        "run": "flows/voice-settings.ad#verify"
+      },
+      {
+        "run": "flows/voice-settings.ad#close"
+      }
+    ],
     "flows/home-continue-search": [
       { "include": "subflows/open-demo" },
       { "run": "flows/home-continue-search.ad#choose-editorial" },
@@ -267,13 +487,13 @@
         "run": "flows/home-continue-search.ad#assert-visible"
       },
       {
-        "target": { "text": "Continue" },
+        "target": { "text": "Recent" },
         "mode": "scroll",
         "direction": "down",
         "run": "flows/settings-home-layout.ad#seek-down"
       },
       {
-        "target": { "text": "Continue" },
+        "target": { "text": "Recent" },
         "mode": "visible",
         "run": "flows/home-continue-search.ad#assert-visible"
       },
@@ -283,13 +503,13 @@
         "run": "flows/home-continue-search.ad#assert-hidden"
       },
       {
-        "target": { "text": "Sessions \\(15\\)" },
+        "target": { "text": "Show all" },
         "mode": "scroll",
         "direction": "down",
         "run": "flows/settings-home-layout.ad#seek-down"
       },
       {
-        "target": { "text": "Sessions \\(15\\)" },
+        "target": { "text": "Show all" },
         "mode": "visible",
         "run": "flows/home-continue-search.ad#assert-visible"
       },
@@ -313,7 +533,7 @@
         "run": "flows/home-continue-search.ad#assert-visible"
       },
       {
-        "target": { "text": "Continue" },
+        "target": { "text": "Recent" },
         "mode": "hidden",
         "run": "flows/home-continue-search.ad#assert-hidden"
       },
@@ -332,6 +552,47 @@
         "target": { "text": "Demo search leaf 1" },
         "mode": "hidden",
         "run": "flows/home-continue-search.ad#assert-hidden"
+      },
+      { "run": "flows/home-continue-search.ad#session-menu" },
+      {
+        "target": { "id": "home-recent-actions" },
+        "mode": "visible",
+        "run": "flows/home-continue-search.ad#assert-visible"
+      },
+      {
+        "target": { "text": "Open" },
+        "mode": "hidden",
+        "run": "flows/home-continue-search.ad#assert-hidden"
+      },
+      { "run": "flows/home-continue-search.ad#session-menu" },
+      {
+        "target": { "id": "home-recent-actions" },
+        "mode": "hidden",
+        "run": "flows/home-continue-search.ad#assert-hidden"
+      },
+      { "run": "flows/home-continue-search.ad#session-menu" },
+      {
+        "target": { "id": "home-recent-delete" },
+        "mode": "hidden",
+        "run": "flows/home-continue-search.ad#assert-hidden"
+      },
+      {
+        "target": {
+          "text": "Update Gateway on this computer, then reconnect to enable deleting sessions from Home"
+        },
+        "mode": "visible",
+        "run": "flows/home-continue-search.ad#assert-visible"
+      },
+      { "run": "flows/home-continue-search.ad#close-menu" },
+      {
+        "target": { "id": "home-recent-actions" },
+        "mode": "hidden",
+        "run": "flows/home-continue-search.ad#assert-hidden"
+      },
+      {
+        "target": { "text": "Demo search hidden leaf" },
+        "mode": "visible",
+        "run": "flows/home-continue-search.ad#assert-visible"
       },
       { "run": "flows/home-continue-search.ad#no-match" },
       {
@@ -621,7 +882,7 @@
       },
       {
         "target": {
-          "text": "Back to servers"
+          "text": "Back to computers"
         },
         "mode": "press",
         "optional": true,
@@ -797,6 +1058,76 @@
         "env": {
           "SETTINGS_GROUP": "storage"
         }
+      },
+      {
+        "target": {
+          "id": "settings-selection:(on|off):settings-cache-cleanup-interval-10"
+        },
+        "mode": "scroll",
+        "direction": "up",
+        "timeout": 30000,
+        "run": "flows/settings.ad#storage-seek"
+      },
+      {
+        "target": {
+          "id": "settings-selection:(on|off):settings-cache-cleanup-interval-10"
+        },
+        "mode": "press",
+        "run": "flows/settings.ad#storage-press"
+      },
+      {
+        "target": {
+          "id": "settings-selection:on:settings-cache-cleanup-interval-10"
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#storage-visible"
+      },
+      {
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "storage"
+        }
+      },
+      {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "storage"
+        }
+      },
+      {
+        "target": {
+          "id": "settings-selection:on:settings-cache-cleanup-interval-10"
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#storage-visible"
+      },
+      {
+        "target": {
+          "id": "settings-selection:off:settings-cache-cleanup-interval-30"
+        },
+        "mode": "press",
+        "run": "flows/settings.ad#storage-press"
+      },
+      {
+        "target": {
+          "id": "settings-selection:on:settings-cache-cleanup-interval-30"
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#storage-visible"
+      },
+      {
+        "target": {
+          "id": "settings-selection:off:settings-cache-cleanup-interval-0"
+        },
+        "mode": "press",
+        "run": "flows/settings.ad#storage-press"
+      },
+      {
+        "target": {
+          "id": "settings-selection:on:settings-cache-cleanup-interval-0"
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#storage-visible"
       },
       {
         "target": {
@@ -1086,6 +1417,19 @@
         ]
       }
     ],
+    "flows/git-single-entry": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/lazygit.ad#quick-actions" },
+      { "run": "flows/lazygit.ad#changes" },
+      { "run": "flows/lazygit.ad#verify" },
+      { "run": "flows/lazygit.ad#close" }
+    ],
+    "flows/lazygit-changes": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/lazygit.ad#changes" },
+      { "run": "flows/lazygit.ad#verify" },
+      { "run": "flows/lazygit.ad#close-header" }
+    ],
     "flows/agent-collaboration": [
       { "include": "subflows/open-demo" },
       { "include": "subflows/restore-key-row" },
@@ -1308,7 +1652,7 @@
       },
       {
         "target": {
-          "text": "This file is 8\\.0 MB\\. Muqun opens text files up to 5\\.0 MB; larger ones stay on the server"
+          "text": "This file is 8\\.0 MB\\. Muqun opens text files up to 5\\.0 MB; larger ones stay on the computer"
         },
         "mode": "visible",
         "run": "flows/large-file-preview.ad#visible"
@@ -1720,7 +2064,7 @@
       },
       {
         "target": {
-          "text": "No preview for this kind of file. It stays on the server"
+          "text": "No preview for this kind of file. It stays on the computer"
         },
         "mode": "visible",
         "run": "flows/artifacts.ad#s57"
@@ -1803,7 +2147,7 @@
       },
       {
         "target": {
-          "text": "Open changes"
+          "text": "Open Git"
         },
         "mode": "press",
         "run": "flows/git-diff.ad#s1"
@@ -1933,7 +2277,7 @@
       },
       {
         "target": {
-          "text": "Changes"
+          "text": "Git"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -1944,7 +2288,7 @@
       },
       {
         "target": {
-          "text": "Open changes"
+          "text": "Open Git"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -2100,164 +2444,6 @@
       },
       {
         "run": "flows/away-digest.ad#s8"
-      }
-    ],
-    "flows/away-digest-enabled": [
-      {
-        "include": "subflows/launch-home"
-      },
-      {
-        "target": {
-          "text": "Try the demo"
-        },
-        "mode": "press",
-        "run": "flows/away-digest.ad#s1"
-      },
-      {
-        "target": {
-          "text": "Claude Code"
-        },
-        "mode": "visible",
-        "timeout": 15000,
-        "run": "flows/away-digest.ad#s2"
-      },
-      {
-        "run": "flows/away-digest.ad#s3"
-      },
-      {
-        "include": "subflows/dismiss-logbox"
-      },
-      {
-        "target": {
-          "text": "(?i)While you were away"
-        },
-        "mode": "visible",
-        "timeout": 8000,
-        "run": "flows/away-digest.ad#s4"
-      },
-      {
-        "target": {
-          "text": "claude"
-        },
-        "mode": "visible",
-        "run": "flows/away-digest.ad#s5"
-      },
-      {
-        "target": {
-          "text": "nvim"
-        },
-        "mode": "visible",
-        "run": "flows/away-digest.ad#s6"
-      },
-      {
-        "target": {
-          "text": "codex"
-        },
-        "mode": "visible",
-        "run": "flows/away-digest.ad#s7"
-      },
-      {
-        "run": "flows/away-digest.ad#s8"
-      },
-      {
-        "target": {
-          "text": "Open quick actions"
-        },
-        "mode": "visible",
-        "run": "flows/away-digest.ad#s9"
-      },
-      {
-        "target": {
-          "id": "away-digest-dismiss"
-        },
-        "mode": "press",
-        "run": "flows/away-digest.ad#s10"
-      },
-      {
-        "run": "flows/away-digest.ad#s11"
-      },
-      {
-        "target": {
-          "text": "(?i)While you were away"
-        },
-        "mode": "hidden",
-        "run": "flows/away-digest.ad#s12"
-      },
-      {
-        "include": "subflows/dismiss-logbox"
-      },
-      {
-        "target": {
-          "text": "Back to servers"
-        },
-        "mode": "press",
-        "optional": true,
-        "run": "flows/away-digest.ad#s13"
-      },
-      {
-        "target": {
-          "text": "Settings"
-        },
-        "mode": "visible",
-        "timeout": 8000,
-        "run": "flows/away-digest.ad#s14"
-      },
-      {
-        "target": {
-          "text": "Settings"
-        },
-        "mode": "press",
-        "run": "flows/away-digest.ad#s15"
-      },
-      {
-        "target": {
-          "id": "settings-appearance-row"
-        },
-        "mode": "visible",
-        "timeout": 8000,
-        "run": "flows/away-digest.ad#s16"
-      },
-      {
-        "target": {
-          "text": "Go back"
-        },
-        "mode": "press",
-        "run": "flows/away-digest.ad#s17"
-      },
-      {
-        "when": {
-          "target": {
-            "text": "Try the demo"
-          },
-          "absent": false
-        },
-        "steps": [
-          {
-            "target": {
-              "text": "Try the demo"
-            },
-            "mode": "press",
-            "run": "flows/away-digest.ad#s18"
-          }
-        ]
-      },
-      {
-        "target": {
-          "text": "Claude Code"
-        },
-        "mode": "visible",
-        "timeout": 15000,
-        "run": "flows/away-digest.ad#s19"
-      },
-      {
-        "run": "flows/away-digest.ad#s20"
-      },
-      {
-        "target": {
-          "text": "(?i)While you were away"
-        },
-        "mode": "hidden",
-        "run": "flows/away-digest.ad#s21"
       }
     ],
     "flows/demo-tour": [
@@ -2451,7 +2637,7 @@
       },
       {
         "target": {
-          "text": "Back to servers"
+          "text": "Back to computers"
         },
         "mode": "press",
         "optional": true,
@@ -3043,7 +3229,7 @@
       },
       {
         "target": {
-          "text": "Back to servers"
+          "text": "Back to computers"
         },
         "mode": "press",
         "run": "flows/i18n-shots.ad#s25"
@@ -3560,333 +3746,6 @@
         "run": "flows/light-shots.ad#s38"
       }
     ],
-    "flows/new-task": [
-      { "include": "subflows/open-demo" },
-      {
-        "target": {
-          "text": "Claude Code"
-        },
-        "mode": "visible",
-        "run": "flows/new-task.ad#s1"
-      },
-      {
-        "target": {
-          "text": "Open quick actions"
-        },
-        "mode": "press",
-        "run": "flows/new-task.ad#s2"
-      },
-      {
-        "target": {
-          "text": "Close quick actions"
-        },
-        "mode": "visible",
-        "timeout": 8000,
-        "run": "flows/new-task.ad#s3"
-      },
-      {
-        "run": "flows/new-task.ad#s4"
-      },
-      {
-        "include": "subflows/dismiss-logbox"
-      },
-      {
-        "target": {
-          "text": "New task"
-        },
-        "mode": "visible",
-        "run": "flows/new-task.ad#s5"
-      },
-      {
-        "target": {
-          "text": "Stop this agent"
-        },
-        "mode": "visible",
-        "run": "flows/new-task.ad#s6"
-      },
-      {
-        "run": "flows/new-task.ad#s7"
-      },
-      {
-        "target": {
-          "text": "Stop this agent"
-        },
-        "mode": "press",
-        "run": "flows/new-task.ad#s8"
-      },
-      {
-        "run": "flows/new-task.ad#s9"
-      },
-      {
-        "target": {
-          "text": "Close quick actions"
-        },
-        "mode": "hidden",
-        "run": "flows/new-task.ad#s10"
-      },
-      {
-        "target": {
-          "text": "Claude Code"
-        },
-        "mode": "visible",
-        "run": "flows/new-task.ad#s11"
-      },
-      {
-        "include": "subflows/dismiss-logbox"
-      },
-      {
-        "target": {
-          "text": "Open quick actions"
-        },
-        "mode": "press",
-        "run": "flows/new-task.ad#s12"
-      },
-      {
-        "target": {
-          "text": "Close quick actions"
-        },
-        "mode": "visible",
-        "timeout": 8000,
-        "run": "flows/new-task.ad#s13"
-      },
-      {
-        "target": {
-          "text": "New task"
-        },
-        "mode": "press",
-        "run": "flows/new-task.ad#s14"
-      },
-      {
-        "target": {
-          "text": "Close new task"
-        },
-        "mode": "visible",
-        "timeout": 8000,
-        "run": "flows/new-task.ad#s15"
-      },
-      {
-        "run": "flows/new-task.ad#s16"
-      },
-      {
-        "include": "subflows/dismiss-logbox"
-      },
-      {
-        "target": {
-          "text": "Close quick actions"
-        },
-        "mode": "hidden",
-        "run": "flows/new-task.ad#s17"
-      },
-      {
-        "target": {
-          "text": "AGENT"
-        },
-        "mode": "visible",
-        "run": "flows/new-task.ad#s18"
-      },
-      {
-        "target": {
-          "text": "DIRECTORY"
-        },
-        "mode": "visible",
-        "run": "flows/new-task.ad#s19"
-      },
-      {
-        "target": {
-          "text": "FIRST PROMPT"
-        },
-        "mode": "visible",
-        "run": "flows/new-task.ad#s20"
-      },
-      {
-        "target": {
-          "text": "claude"
-        },
-        "mode": "visible",
-        "timeout": 8000,
-        "run": "flows/new-task.ad#s21"
-      },
-      {
-        "target": {
-          "text": "codex"
-        },
-        "mode": "visible",
-        "run": "flows/new-task.ad#s22"
-      },
-      {
-        "target": {
-          "text": "opencode"
-        },
-        "mode": "visible",
-        "run": "flows/new-task.ad#s23"
-      },
-      {
-        "target": {
-          "text": "gemini, not found on this server's PATH"
-        },
-        "mode": "visible",
-        "run": "flows/new-task.ad#s24"
-      },
-      {
-        "run": "flows/new-task.ad#s25"
-      },
-      {
-        "target": {
-          "text": "~/code/herdr-gateway"
-        },
-        "mode": "visible",
-        "run": "flows/new-task.ad#s26"
-      },
-      {
-        "target": {
-          "text": "Leave it empty to start where the session already is"
-        },
-        "mode": "visible",
-        "run": "flows/new-task.ad#s27"
-      },
-      {
-        "target": {
-          "text": "Type it, or use your keyboard's dictation key"
-        },
-        "mode": "visible",
-        "run": "flows/new-task.ad#s28"
-      },
-      {
-        "target": {
-          "text": "codex"
-        },
-        "mode": "press",
-        "run": "flows/new-task.ad#s29"
-      },
-      {
-        "run": "flows/new-task.ad#s30"
-      },
-      {
-        "target": {
-          "text": "~/code/herdr-gateway"
-        },
-        "mode": "press",
-        "run": "flows/new-task.ad#s31"
-      },
-      {
-        "run": "flows/new-task.ad#s32"
-      },
-      {
-        "target": {
-          "text": "Review the failing test and fix it"
-        },
-        "mode": "press",
-        "run": "flows/new-task.ad#s33"
-      },
-      {
-        "run": "flows/new-task.ad#s34"
-      },
-      {
-        "run": "flows/new-task.ad#s35"
-      },
-      {
-        "include": "subflows/dismiss-logbox"
-      },
-      {
-        "run": "flows/new-task.ad#s36"
-      },
-      {
-        "target": {
-          "text": "Done"
-        },
-        "mode": "press",
-        "run": "flows/new-task.ad#s37"
-      },
-      {
-        "run": "flows/new-task.ad#s38"
-      },
-      {
-        "target": {
-          "text": "Start task"
-        },
-        "mode": "press",
-        "run": "flows/new-task.ad#s39"
-      },
-      {
-        "target": {
-          "text": "Close new task"
-        },
-        "mode": "hidden",
-        "timeout": 12000,
-        "run": "flows/new-task.ad#s40"
-      },
-      {
-        "run": "flows/new-task.ad#s41"
-      },
-      {
-        "include": "subflows/dismiss-logbox"
-      },
-      {
-        "target": {
-          "text": "Claude Code"
-        },
-        "mode": "visible",
-        "timeout": 10000,
-        "run": "flows/new-task.ad#s42"
-      },
-      {
-        "run": "flows/new-task.ad#s43"
-      },
-      {
-        "target": {
-          "text": "Open quick actions"
-        },
-        "mode": "press",
-        "run": "flows/new-task.ad#s44"
-      },
-      {
-        "target": {
-          "text": "Close quick actions"
-        },
-        "mode": "visible",
-        "timeout": 8000,
-        "run": "flows/new-task.ad#s45"
-      },
-      {
-        "target": {
-          "text": "New task"
-        },
-        "mode": "press",
-        "run": "flows/new-task.ad#s46"
-      },
-      {
-        "target": {
-          "text": "Close new task"
-        },
-        "mode": "visible",
-        "timeout": 8000,
-        "run": "flows/new-task.ad#s47"
-      },
-      {
-        "target": {
-          "text": "Close new task"
-        },
-        "mode": "press",
-        "run": "flows/new-task.ad#s48"
-      },
-      {
-        "run": "flows/new-task.ad#s49"
-      },
-      {
-        "target": {
-          "text": "Close new task"
-        },
-        "mode": "hidden",
-        "run": "flows/new-task.ad#s50"
-      },
-      {
-        "target": {
-          "text": "Claude Code"
-        },
-        "mode": "visible",
-        "run": "flows/new-task.ad#s51"
-      }
-    ],
     "flows/pad-workspace": [
       { "include": "subflows/open-demo" },
       {
@@ -3932,7 +3791,7 @@
       {
         "when": {
           "target": {
-            "text": "Servers"
+            "text": "Computers"
           },
           "absent": false
         },
@@ -3946,7 +3805,7 @@
           },
           {
             "target": {
-              "text": "Pair a server"
+              "text": "Pair a computer"
             },
             "mode": "visible",
             "run": "flows/pad-workspace.ad#s8"
@@ -3975,8 +3834,8 @@
         "steps": [
           { "run": "flows/pad-workspace.ad#home-navigation" },
           {
-            "point": [0.82, 0.8],
-            "delta": [0, -0.6],
+            "point": [0.78, 0.6],
+            "delta": [0, -0.4],
             "run": "flows/pad-workspace.ad#home-navigation-work-column"
           },
           {
@@ -4020,7 +3879,7 @@
       {
         "when": {
           "target": {
-            "text": "Servers"
+            "text": "Computers"
           },
           "absent": false
         },
@@ -4265,7 +4124,7 @@
       },
       {
         "target": {
-          "text": "No servers paired yet"
+          "text": "No computers paired yet"
         },
         "mode": "visible",
         "run": "flows/settings.ad#s3"
@@ -4279,7 +4138,7 @@
       },
       {
         "target": {
-          "text": "Panes on server cards"
+          "text": "Panes on computer cards"
         },
         "mode": "visible",
         "run": "flows/settings.ad#s5"
@@ -4959,22 +4818,6 @@
       {
         "target": {
           "text": "Temporary files"
-        },
-        "mode": "visible",
-        "run": "flows/settings.ad#storage-visible"
-      },
-      {
-        "target": {
-          "text": "Other"
-        },
-        "mode": "scroll",
-        "direction": "up",
-        "timeout": 30000,
-        "run": "flows/settings.ad#storage-seek"
-      },
-      {
-        "target": {
-          "text": "Other"
         },
         "mode": "visible",
         "run": "flows/settings.ad#storage-visible"
@@ -6871,7 +6714,7 @@
       },
       {
         "target": {
-          "text": "Back to servers"
+          "text": "Back to computers"
         },
         "mode": "press",
         "optional": true,
@@ -7877,7 +7720,7 @@
       },
       {
         "target": {
-          "text": "Back to servers"
+          "text": "Back to computers"
         },
         "mode": "press",
         "run": "subflows/capture-theme.ad#s20"
@@ -7951,6 +7794,20 @@
         "run": "subflows/launch-home.ad#s8"
       },
       {
+        "target": { "text": "(?i)(Skip intro|Try the demo)" },
+        "mode": "visible",
+        "timeout": 20000,
+        "run": "subflows/launch-home.ad#startup-ready"
+      },
+      {
+        "target": {
+          "id": "launch-intro-skip"
+        },
+        "mode": "press",
+        "optional": true,
+        "run": "subflows/launch-home.ad#s9"
+      },
+      {
         "target": {
           "text": "Got it"
         },
@@ -8002,14 +7859,6 @@
       },
       {
         "include": "subflows/dismiss-logbox"
-      },
-      {
-        "target": {
-          "id": "launch-intro-skip"
-        },
-        "mode": "press",
-        "optional": true,
-        "run": "subflows/launch-home.ad#s9"
       }
     ],
     "subflows/motion-618-close-capture": [
@@ -8281,7 +8130,7 @@
       },
       {
         "target": {
-          "text": "Back to servers"
+          "text": "Back to computers"
         },
         "mode": "press",
         "optional": true,
@@ -8377,7 +8226,7 @@
     "subflows/restore-key-row": [
       {
         "target": {
-          "text": "Back to servers"
+          "text": "Back to computers"
         },
         "mode": "press",
         "optional": true,
@@ -8487,12 +8336,6 @@
         "run": "flows/agent-shortcuts.ad"
       }
     ],
-    "flows/switcher-sheet": [
-      { "include": "subflows/open-demo" },
-      {
-        "run": "flows/switcher-sheet.ad"
-      }
-    ],
     "flows/soft-keyboard": [
       {
         "include": "subflows/launch-home"
@@ -8509,6 +8352,77 @@
       { "include": "subflows/open-demo" },
       {
         "run": "flows/personal-workspace.ad"
+      }
+    ],
+    "flows/task-result": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/task-result.ad#open" },
+      {
+        "target": { "id": "task-row-demo-command-peer" },
+        "mode": "press",
+        "run": "flows/task-result.ad#peer"
+      },
+      {
+        "target": { "text": "2030-04-12 08:30:00 UTC" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/task-result.ad#output"
+      },
+      {
+        "target": { "text": "exit 0" },
+        "mode": "visible",
+        "run": "flows/task-result.ad#exit"
+      },
+      {
+        "target": { "id": "task-result-tasks" },
+        "mode": "press",
+        "run": "flows/task-result.ad#return"
+      },
+      {
+        "target": { "id": "task-row-demo-command-pane" },
+        "mode": "press",
+        "run": "flows/task-result.ad#pane"
+      },
+      {
+        "target": { "text": "2030-04-12 08:31:00 UTC" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/task-result.ad#output"
+      },
+      {
+        "target": { "id": "task-result-tasks" },
+        "mode": "press",
+        "run": "flows/task-result.ad#return"
+      },
+      { "run": "flows/task-result.ad#close" },
+      {
+        "target": { "id": "task-row-demo-command-peer" },
+        "mode": "hidden",
+        "run": "flows/task-result.ad#closed"
+      },
+      { "run": "flows/task-result.ad#unavailable-open" },
+      {
+        "target": { "id": "task-result-unavailable" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/task-result.ad#unavailable"
+      },
+      {
+        "target": { "id": "task-result-tasks" },
+        "mode": "press",
+        "run": "flows/task-result.ad#return"
+      },
+      {
+        "target": { "id": "task-row-demo-command-peer" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/task-result.ad#list"
+      },
+      { "run": "flows/task-result.ad#close" },
+      {
+        "target": { "id": "task-row-demo-command-peer" },
+        "mode": "hidden",
+        "run": "flows/task-result.ad#closed"
       }
     ],
     "flows/agent-session-tree": [
@@ -8825,7 +8739,7 @@
       },
       {
         "target": {
-          "text": "Panes on server cards"
+          "text": "Panes on computer cards"
         },
         "mode": "visible",
         "timeout": 15000,
@@ -9011,7 +8925,7 @@
         },
         "mode": "scroll",
         "timeout": 15000,
-        "run": "flows/settings-sheets.ad#seek",
+        "run": "flows/settings-sheets.ad#seek-group",
         "direction": "down"
       },
       {

@@ -229,6 +229,11 @@ export function canSpawnAgent(request: { agent: string }): boolean {
   return request.agent.trim().length > 0;
 }
 
+/** Terminal agents receive uploaded files as host paths in their first prompt. */
+export function terminalPromptWithAttachments(prompt: string, paths: readonly string[]): string {
+  return [prompt.trim(), ...paths].filter(Boolean).join(' ');
+}
+
 /** Drops the optional fields nobody filled in, so the body says what it means. */
 export function agentSpawnRequest(fields: {
   agent: string;

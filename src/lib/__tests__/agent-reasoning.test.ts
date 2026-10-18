@@ -116,10 +116,6 @@ describe('buildTimelineEntries', () => {
     ]);
   });
 
-  test('nothing is nothing', () => {
-    expect(buildTimelineEntries([])).toEqual([]);
-  });
-
   test('only some parts reporting a duration still sums the ones that did', () => {
     const entries = buildTimelineEntries([
       item('r1', thinking('a', 500)),

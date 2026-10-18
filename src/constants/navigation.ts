@@ -2,7 +2,7 @@
  * Whether the left drawer is reachable at all (card #664).
  *
  * The drawer held three rows: `Servers`, which navigated to the screen it was
- * opened from; `Pair a server`; and `Settings`. One was a no-op and the other
+ * opened from; `Pair a computer`; and `Settings`. One was a no-op and the other
  * two are now a single tap away in the home header, so the drawer was a gesture
  * and a hamburger spent on nothing.
  *

@@ -18,7 +18,7 @@ export function normalizeCatalog(source: string): string {
   });
 }
 
-if (import.meta.main) {
+if ((import.meta as ImportMeta & { main?: boolean }).main) {
   const root = new URL('../src/i18n/locales/', import.meta.url).pathname;
   let changed = 0;
   for (const locale of await readdir(root, { withFileTypes: true })) {

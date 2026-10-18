@@ -26,7 +26,7 @@ const KEY = { algorithm: 'ssh-ed25519', fingerprint: 'SHA256:abc', publicKey: 'A
 const RECORD: SshHostRecord = {
   id: 'host-1',
   label: 'Build box',
-  host: '10.0.0.5',
+  host: '192.0.2.5',
   port: 2222,
   username: 'ci',
   auth: { type: 'password' },
@@ -38,7 +38,7 @@ describe('validateSshHostDraft', () => {
     const result = validateSshHostDraft({
       ...EMPTY_SSH_HOST_DRAFT,
       label: '  Build box ',
-      host: ' 10.0.0.5 ',
+      host: ' 192.0.2.5 ',
       port: '2222',
       username: ' ci ',
       password: 'hunter2',
@@ -47,7 +47,7 @@ describe('validateSshHostDraft', () => {
     if (!result.ok) return;
     expect(result.value).toEqual({
       label: 'Build box',
-      host: '10.0.0.5',
+      host: '192.0.2.5',
       port: 2222,
       username: 'ci',
       authType: 'password',
@@ -189,7 +189,7 @@ describe('sshHostDraftFrom', () => {
     expect(draft).toEqual({
       ...EMPTY_SSH_HOST_DRAFT,
       label: 'Build box',
-      host: '10.0.0.5',
+      host: '192.0.2.5',
       port: '2222',
       username: 'ci',
       authType: 'privateKey',
@@ -233,8 +233,8 @@ describe('normalizeSshHostRecord', () => {
     });
     expect(record).toEqual({
       id: 'host-1',
-      label: '10.0.0.5',
-      host: '10.0.0.5',
+      label: '192.0.2.5',
+      host: '192.0.2.5',
       port: SSH_DEFAULT_PORT,
       username: 'ci',
       auth: { type: 'password' },
@@ -288,8 +288,8 @@ describe('sortSshHosts', () => {
 
 describe('sshHostAddress', () => {
   test('omits the default port and shows any other', () => {
-    expect(sshHostAddress({ ...RECORD, port: 22 })).toBe('ci@10.0.0.5');
-    expect(sshHostAddress(RECORD)).toBe('ci@10.0.0.5:2222');
+    expect(sshHostAddress({ ...RECORD, port: 22 })).toBe('ci@192.0.2.5');
+    expect(sshHostAddress(RECORD)).toBe('ci@192.0.2.5:2222');
   });
 });
 

@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
 
 import {
   HOME_RECENTS_STORAGE_VERSION,
@@ -424,6 +423,25 @@ describe('home recents state', () => {
 });
 
 describe('agents on a target', () => {
+  test('stored visits to the same agent session collapse across routing and directory changes', () => {
+    const target = opencode('srv');
+    const newer = { ...target, sessionId: 'new-routing', directory: '/new/worktree' };
+    expect(homeTargetKey(newer)).toBe(homeTargetKey(target));
+    const parsed = parseHomeRecentsDocument(
+      JSON.stringify({
+        version: HOME_RECENTS_STORAGE_VERSION,
+        entries: [
+          { target: newer, title: 'Latest', atMs: 20 },
+          { target, title: 'Earlier', atMs: 10 },
+          { target: { ...target, asid: 'another-session' }, title: 'Latest', atMs: 5 },
+          { target: { ...target, serverId: 'another-gateway' }, title: 'Latest', atMs: 4 },
+        ],
+      })
+    );
+    expect(parsed.entries).toHaveLength(3);
+    expect(parsed.entries[0]).toMatchObject({ target: newer, title: 'Latest', atMs: 20 });
+  });
+
   test('a target written as `opencode-session` reads as the default agent under the new kind', () => {
     const doc = JSON.stringify({
       version: HOME_RECENTS_STORAGE_VERSION,
@@ -547,15 +565,4 @@ describe('isLiveHomeTerminalVisit', () => {
   test('a pane id from another Herdr session is not live', () => {
     expect(isLiveHomeTerminalVisit(target, 'other', [pane('p1')])).toBe(false);
   });
-});
-
-test('the terminal visit effect re-runs once a refresh confirms the session it gates on', () => {
-  // A session pick clears the non-reactive `resolvedSessionRef`; when the
-  // confirming refresh leaves `data` unchanged, only the snapshot generation
-  // changes, so without it the open pane is never stamped for Home.
-  const source = readFileSync('src/components/server-terminal-workspace.tsx', 'utf8');
-  const body = source.indexOf('const observed = resolvedSessionRef.current;');
-  expect(body).toBeGreaterThan(-1);
-  const deps = source.slice(source.indexOf('}, [', body), source.indexOf(']);', body));
-  expect(deps).toContain('snapshotGeneration');
 });

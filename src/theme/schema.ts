@@ -166,6 +166,14 @@ const imageSchema = z.strictObject({
   asset: identifier,
   fit: z.enum(['cover', 'contain', 'tile']).optional(),
   opacity: z.number().min(0).max(1).optional(),
+  // Only home.composer.background consumes this bounded, noninteractive envelope.
+  outset: z
+    .strictObject({
+      left: z.number().min(0).max(12).optional(),
+      right: z.number().min(0).max(12).optional(),
+      bottom: z.number().min(0).max(8).optional(),
+    })
+    .optional(),
   focalPoint: z
     .strictObject({ x: z.number().min(0).max(1), y: z.number().min(0).max(1) })
     .optional(),
@@ -195,6 +203,7 @@ export const THEME_ICONS = [
   'chrome.create',
   'chrome.scan',
   'chrome.settings',
+  'chrome.parameters',
   'home.arrow',
 ] as const;
 export type ThemeIconName = (typeof THEME_ICONS)[number];
@@ -255,6 +264,8 @@ export const THEME_SLOTS = [
   'shell.wallpaper',
   'home.wallpaper',
   'home.artwork',
+  'home.composer.background',
+  'home.composer.decoration',
   'navigation.background',
   'composer.background',
   'actions.background',

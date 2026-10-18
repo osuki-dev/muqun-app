@@ -42,6 +42,58 @@ const UNREACHABLE_AGENT = [
 const NO_RESPONSE = ['network request failed', 'network error', 'timed out', 'timeout', 'abort'];
 
 /**
+ * A native exception relayed as a message: its first line is a Java class
+ * name (`java.lang.RuntimeException: Cronet failed: ...`).
+ */
+const NATIVE_EXCEPTION = /^(?:[a-z][\w$]*\.)+[A-Z][\w$]*(?:Exception|Error)\b/;
+
+/**
+ * What makes a native exception a transport failure -- no computer answered --
+ * read off its first line: the network stack's own words, never a file or a
+ * permission (`FileNotFoundException`, `EACCES`), which say their own thing.
+ */
+const TRANSPORT_WORDS =
+  /network|timeout|timed ?out|connect|socket|unknownhost|cronet|net::err_|sslhandshake/i;
+
+/** A transport error code on the thrown object itself. */
+const TRANSPORT_CODES = new Set([
+  'ECONNREFUSED',
+  'ECONNRESET',
+  'ECONNABORTED',
+  'ETIMEDOUT',
+  'ENETUNREACH',
+  'EHOSTUNREACH',
+  'ERR_NETWORK',
+]);
+
+/** Whether a request that got no HTTP status failed in the transport, by the error's shape. */
+function transportFailure(err: unknown, raw: string): boolean {
+  const shape = (typeof err === 'object' && err !== null ? err : {}) as {
+    name?: unknown;
+    code?: unknown;
+  };
+  if (shape.name === 'NetworkError' || shape.name === 'AbortError') return true;
+  if (typeof shape.code === 'string' && TRANSPORT_CODES.has(shape.code)) return true;
+  const first = raw.trimStart().split(/\r?\n/)[0] ?? '';
+  if (NATIVE_EXCEPTION.test(first)) return TRANSPORT_WORDS.test(first);
+  const lower = raw.toLowerCase();
+  return NO_RESPONSE.some((needle) => lower.includes(needle));
+}
+
+/**
+ * A message the classifier could not read, made fit for one line under a
+ * bar: its first line only -- never a stack trace -- bounded. The whole text
+ * goes to the debug log.
+ */
+function oneLine(raw: string): string {
+  // A stack trace starts on its own line; a sentence may say "at foo(" itself.
+  const first = raw.trimStart().split(/\r?\n/)[0] ?? '';
+  const line = bound(first);
+  if (line !== raw.trim()) console.debug('Agent request failed:', raw);
+  return line;
+}
+
+/**
  * `<what>: <status> <body>` (agent-session), `HTTP <status>: <body>`
  * (gateway-client) or `<what> (<status>)`.
  */
@@ -127,11 +179,19 @@ export function classifyAgentRequestError(err: unknown): AgentRequestError {
     const said = message ?? (match ? raw.slice(match[0].length) : raw);
     return said.trim() ? { kind: 'refused', message: bound(said) } : { kind: 'offline' };
   }
-  if (!status) {
-    const lower = raw.toLowerCase();
-    if (NO_RESPONSE.some((needle) => lower.includes(needle))) return { kind: 'offline' };
-  }
-  return { kind: 'other', message: raw };
+  if (!status && transportFailure(err, raw)) return { kind: 'offline' };
+  // The gateway's own sentence where it sent one, not the JSON it came in.
+  return { kind: 'other', message: oneLine(message ?? raw) };
+}
+
+/**
+ * Whether a pane read failed because the pane no longer exists: the gateway's
+ * `404 backend_target_not_found` (the backend has no such pane) or
+ * `404 unknown_pane`. An answer about the pane, never worth asking again.
+ */
+export function paneGoneError(err: unknown): boolean {
+  const { status, code } = readAgentRequestError(err);
+  return status === 404 && (code === 'backend_target_not_found' || code === 'unknown_pane');
 }
 
 /** Whether a failed read should put the screen into its offline state. */

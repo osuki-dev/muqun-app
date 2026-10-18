@@ -1,0 +1,784 @@
+import { asFiniteNumber, asRecord, asString } from './agent-protocol';
+import { normalizeCapabilities } from './server-capabilities';
+import type { TaskEndpoint } from './task-ledger';
+
+/**
+ * The reader's computers linked to each other (`GET/POST /api/peers`,
+ * `POST /api/pair/pending`, `PUT /api/fleet/settings`). A gateway without it is
+ * never asked and shows nothing new.
+ */
+export const FLEET_PEERS_CAPABILITY = 'fleet_peers';
+
+export function hasFleetPeers(capabilities: readonly string[] | undefined): boolean {
+  return capabilities?.includes(FLEET_PEERS_CAPABILITY) ?? false;
+}
+
+/**
+ * One computer another one is linked with. `peerId` is the linking gateway's
+ * own id for the link (what `PATCH`/`DELETE /api/peers/{id}` take); `serverId`
+ * is the peer's own server id, which is this phone's `GatewayRecord.serverId`
+ * for it.
+ */
+export interface PeerView {
+  peerId: string;
+  serverId: string;
+  name: string;
+  url: string;
+  reachable: boolean;
+  lastSeenMs?: number;
+  /**
+   * The peer no longer takes this computer's token (it revoked the link). The
+   * row is kept until a new link replaces it; an older gateway forgets the
+   * peer instead, which reads the same to the reconciler: not linked.
+   */
+  unauthorized?: true;
+}
+
+export interface FleetPeers {
+  acceptDelegations: boolean;
+  peers: PeerView[];
+  /**
+   * Rows with no `server_id` (linked before gateways sent one): not peers
+   * the app can name or plan with, but rows an unpair must still take off,
+   * matched by name ({@link fleetNameMatches}).
+   */
+  unidentified?: { peerId: string; name: string }[];
+}
+
+function parsePeer(value: unknown): PeerView | null {
+  const rec = asRecord(value);
+  const peerId = asString(rec?.peer_id);
+  const serverId = asString(rec?.server_id);
+  if (!rec || !peerId || !serverId) return null;
+  const lastSeenMs = asFiniteNumber(rec.last_seen_ms);
+  return {
+    peerId,
+    serverId,
+    name: asString(rec.name) ?? '',
+    url: asString(rec.url) ?? '',
+    reachable: rec.reachable === true,
+    ...(lastSeenMs !== undefined ? { lastSeenMs } : {}),
+    ...(rec.unauthorized === true ? { unauthorized: true as const } : {}),
+  };
+}
+
+/** `GET /api/peers`; a body without a `peers` array is no answer. */
+export function parseFleetPeers(value: unknown): FleetPeers | null {
+  const rec = asRecord(value);
+  if (!rec || !Array.isArray(rec.peers)) return null;
+  const unidentified = rec.peers.flatMap((entry) => {
+    const row = asRecord(entry);
+    const peerId = asString(row?.peer_id);
+    return peerId && !asString(row?.server_id) ? [{ peerId, name: asString(row?.name) ?? '' }] : [];
+  });
+  return {
+    acceptDelegations: rec.accept_delegations !== false,
+    peers: rec.peers.map(parsePeer).filter((peer): peer is PeerView => peer !== null),
+    ...(unidentified.length ? { unidentified } : {}),
+  };
+}
+
+/** Two computer names that are the same name, as people type them. */
+export function sameFleetName(a: string, b: string): boolean {
+  return a.trim().toLocaleLowerCase() === b.trim().toLocaleLowerCase();
+}
+
+export type FleetEndpoint = TaskEndpoint;
+
+/** Linking runs Argon2 on both computers and a round trip between them. */
+const LINK_TIMEOUT_MS = 30_000;
+
+async function endpointRequest(
+  endpoint: FleetEndpoint,
+  path: string,
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
+  body?: unknown,
+  timeoutMs?: number
+): Promise<Response> {
+  const { gatewayEndpointFetch } = await import('./gateway-client');
+  const base = endpoint.url.replace(/\/$/, '');
+  return gatewayEndpointFetch(
+    endpoint as Parameters<typeof gatewayEndpointFetch>[0],
+    `${base}${path}`,
+    {
+      method,
+      headers: {
+        Authorization: `Bearer ${endpoint.token}`,
+        ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
+      },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    },
+    timeoutMs
+  );
+}
+
+/** A refusal from a fleet route: its status and the gateway's `error.code`. */
+export class FleetRequestError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly code: string | undefined
+  ) {
+    super(message);
+  }
+}
+
+async function expectOk(response: Response, what: string): Promise<Response> {
+  if (response.ok) return response;
+  const text = await response.text().catch(() => '');
+  let code: string | undefined;
+  try {
+    code = asString(asRecord(asRecord(JSON.parse(text))?.error)?.code);
+  } catch {
+    code = undefined;
+  }
+  throw new FleetRequestError(`${what}: ${response.status} ${text}`, response.status, code);
+}
+
+/** The gateway code a failed fleet request carried, if any. */
+export function fleetErrorCode(failure: unknown): string | undefined {
+  return failure instanceof FleetRequestError ? failure.code : undefined;
+}
+
+/** `POST`/`PATCH /api/peers` refused the name: it is the computer's own, or another peer's. */
+export function nameConflictOf(failure: unknown): 'self' | 'peer' | null {
+  const code = fleetErrorCode(failure);
+  return code === 'name_conflict' ? 'self' : code === 'peer_name_taken' ? 'peer' : null;
+}
+
+/** An address that means the phone itself (adb reverse, an emulator), never another computer. */
+export function isLoopbackUrl(url: string): boolean {
+  const host = /^[a-z][a-z0-9+.-]*:\/\/(\[[^\]]*\]|[^/:?#]*)/i.exec(url.trim())?.[1]?.toLowerCase();
+  if (!host) return false;
+  return (
+    host === 'localhost' ||
+    host === '[::1]' ||
+    host === '10.0.2.2' ||
+    host.startsWith('127.') ||
+    host.endsWith('.localhost')
+  );
+}
+
+/**
+ * How a `GET /api/peers` went: the answer, or why there is none -- an HTTP
+ * status (a refusal included), no answer at all, or a body that was not one.
+ */
+export type FleetPeersFetch =
+  | { ok: true; peers: FleetPeers }
+  | { ok: false; reason: 'http'; status: number }
+  | { ok: false; reason: 'network' }
+  | { ok: false; reason: 'parse' };
+
+/** The computer no longer accepts this phone: what the phone knew of its links is void. */
+export function refusesPhone(result: FleetPeersFetch): boolean {
+  return !result.ok && result.reason === 'http' && (result.status === 401 || result.status === 403);
+}
+
+export async function fetchFleetPeers(
+  endpoint: FleetEndpoint,
+  timeoutMs?: number
+): Promise<FleetPeersFetch> {
+  let response: Response;
+  try {
+    response = await endpointRequest(endpoint, '/api/peers', 'GET', undefined, timeoutMs);
+  } catch (error) {
+    // The encrypted transport turns a plaintext refusal into an error that
+    // still carries the status.
+    const status = (error as { status?: unknown } | null)?.status;
+    return typeof status === 'number'
+      ? { ok: false, reason: 'http', status }
+      : { ok: false, reason: 'network' };
+  }
+  if (!response.ok) return { ok: false, reason: 'http', status: response.status };
+  const peers = parseFleetPeers(await response.json().catch(() => null));
+  return peers ? { ok: true, peers } : { ok: false, reason: 'parse' };
+}
+
+/**
+ * What `POST /api/pair/pending` takes for another computer: its name, and its
+ * server id, so the device record made for it can be revoked when that
+ * computer's link goes (an older gateway ignores the field).
+ */
+export function pairingCodeBody(
+  deviceName: string,
+  serverId: string
+): { device_name: string; kind: 'gateway'; server_id: string } {
+  return { device_name: deviceName.trim(), kind: 'gateway', server_id: serverId };
+}
+
+/** How long a minted code lives when the gateway does not say (older gateways: 5 min). */
+const DEFAULT_CODE_LIFETIME_MS = 60_000;
+
+/**
+ * A pairing code on this computer for another one (`kind: gateway`), and how
+ * long it lives (`expires_in_ms`): after that it is gone, never used again.
+ */
+export async function mintPairingCode(
+  endpoint: FleetEndpoint,
+  forComputer: { name: string; serverId: string }
+): Promise<{ requestId: string; code: string; expiresInMs: number }> {
+  const response = await expectOk(
+    await endpointRequest(
+      endpoint,
+      '/api/pair/pending',
+      'POST',
+      pairingCodeBody(forComputer.name, forComputer.serverId)
+    ),
+    'Mint pairing code'
+  );
+  const rec = asRecord(await response.json());
+  const requestId = asString(rec?.request_id);
+  const code = asString(rec?.code);
+  if (!requestId || !code) throw new Error('Mint pairing code: no code in the answer');
+  return {
+    requestId,
+    code,
+    expiresInMs: asFiniteNumber(rec?.expires_in_ms) ?? DEFAULT_CODE_LIFETIME_MS,
+  };
+}
+
+/**
+ * Give back a minted code the other computer never claimed, so its single
+ * pending slot is free at once (`DELETE /api/pair/pending/{id}`, with the
+ * token that minted it). Best effort: a 404 is a code already gone; a 403
+ * (`peer_forbidden`) is logged.
+ */
+export async function cancelPairingCode(endpoint: FleetEndpoint, requestId: string): Promise<void> {
+  const response = await endpointRequest(
+    endpoint,
+    `/api/pair/pending/${encodeURIComponent(requestId)}`,
+    'DELETE'
+  ).catch(() => null);
+  if (response?.status === 403) {
+    console.warn('[fleet] cancel pairing code refused', await response.text().catch(() => ''));
+  }
+}
+
+/** The computer's own label (`GET /api/fleet/self`), the name its peers know it by. */
+export async function fetchSelfLabel(endpoint: FleetEndpoint): Promise<string | null> {
+  try {
+    const response = await endpointRequest(endpoint, '/api/fleet/self', 'GET');
+    if (!response.ok) return null;
+    const label = asString(asRecord(await response.json())?.label)?.trim();
+    return label || null;
+  } catch {
+    return null;
+  }
+}
+
+/** Ask this computer to pair itself with the one at `url` through its code. */
+export async function linkPeer(
+  endpoint: FleetEndpoint,
+  link: { url: string; name: string; requestId: string; code: string }
+): Promise<void> {
+  await expectOk(
+    await endpointRequest(
+      endpoint,
+      '/api/peers',
+      'POST',
+      { url: link.url, name: link.name, request_id: link.requestId, code: link.code },
+      LINK_TIMEOUT_MS
+    ),
+    'Link peer'
+  );
+}
+
+/** Forget a peer; one this computer does not know is already forgotten. */
+/**
+ * What a removal answered means for revoking a computer this device unpaired:
+ * `done` only when it is confirmed gone -- the delete succeeded, or the
+ * computer says there is no such peer or login (404). Anything else -- a
+ * refusal of this device's own token (401/403), a server error, no answer --
+ * is `retry`: the computer may still hold the link, so it is asked again.
+ */
+export function removalOutcome(status: number | 'network'): 'done' | 'retry' {
+  if (status === 'network') return 'retry';
+  return (status >= 200 && status < 300) || status === 404 ? 'done' : 'retry';
+}
+
+async function removal(endpoint: FleetEndpoint, path: string, timeoutMs?: number): Promise<void> {
+  const response = await endpointRequest(endpoint, path, 'DELETE', undefined, timeoutMs);
+  if (removalOutcome(response.status) === 'done') return;
+  await expectOk(response, `DELETE ${path}`);
+}
+
+export async function unlinkPeer(endpoint: FleetEndpoint, peerId: string): Promise<void> {
+  await removal(endpoint, `/api/peers/${encodeURIComponent(peerId)}`, LINK_TIMEOUT_MS);
+}
+
+/**
+ * Tell this computer a peer's new address. The gateway proves it first and
+ * keeps the old one when nothing there knows the link.
+ */
+export async function movePeer(
+  endpoint: FleetEndpoint,
+  peerId: string,
+  url: string
+): Promise<void> {
+  await expectOk(
+    await endpointRequest(
+      endpoint,
+      `/api/peers/${encodeURIComponent(peerId)}`,
+      'PATCH',
+      { url },
+      LINK_TIMEOUT_MS
+    ),
+    'Move peer'
+  );
+}
+
+/** The public capability list, or `null` when the computer did not answer. */
+export async function fetchCapabilities(endpoint: FleetEndpoint): Promise<string[] | null> {
+  try {
+    const response = await endpointRequest(endpoint, '/api/capabilities', 'GET');
+    if (!response.ok) return null;
+    return normalizeCapabilities(asRecord(await response.json())?.capabilities);
+  } catch {
+    return null;
+  }
+}
+
+/** Write the switch; what the computer now says it is. */
+export async function setAcceptDelegations(
+  endpoint: FleetEndpoint,
+  accept: boolean
+): Promise<boolean> {
+  const response = await expectOk(
+    await endpointRequest(endpoint, '/api/fleet/settings', 'PUT', {
+      accept_delegations: accept,
+    }),
+    'Fleet settings'
+  );
+  return asRecord(await response.json())?.accept_delegations !== false;
+}
+
+/**
+ * The server id of the computer a mirror runs on: the one the mirror names,
+ * else the one a linked computer lists under that link id, else the link id.
+ * Link ids are minted per link, so any computer's list will do.
+ */
+export function peerServerIdOf(
+  byServer: Readonly<Record<string, FleetPeers>>,
+  binding: { peerId: string; peerServerId?: string }
+): string {
+  if (binding.peerServerId) return binding.peerServerId;
+  for (const answer of Object.values(byServer)) {
+    const peer = answer.peers.find((entry) => entry.peerId === binding.peerId);
+    if (peer) return peer.serverId;
+  }
+  return binding.peerId;
+}
+
+/**
+ * A paired device that is another computer: the server id it gave (newer
+ * gateways; `null` where the list does not say) and the name it paired as.
+ */
+export type PairedGateway = { deviceId: string; serverId: string | null; name: string };
+
+/** A gateway that lists and revokes its paired devices (`GET`/`DELETE /api/pairings`). */
+export const DEVICE_REVOCATION_CAPABILITY = 'device_revocation';
+
+/**
+ * `GET /api/pairings`: the other computers' logins here; `'no-route'` for a
+ * 404, which `pairingsAnswer` judges; `null` when it did not answer.
+ */
+export async function fetchPairedGateways(
+  endpoint: FleetEndpoint
+): Promise<PairedGateway[] | 'no-route' | null> {
+  try {
+    const response = await endpointRequest(endpoint, '/api/pairings', 'GET');
+    if (response.status === 404) return 'no-route';
+    if (!response.ok) return null;
+    const devices = asRecord(await response.json())?.devices;
+    if (!Array.isArray(devices)) return null;
+    return devices.flatMap((entry): PairedGateway[] => {
+      const rec = asRecord(entry);
+      const deviceId = asString(rec?.id);
+      if (rec?.kind !== 'gateway' || !deviceId) return [];
+      return [
+        { deviceId, serverId: asString(rec.server_id) ?? null, name: asString(rec.name) ?? '' },
+      ];
+    });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * What a pairings read means for the cleanup: the logins, or nothing to
+ * revoke when the 404 came from a gateway that says (in this run's
+ * `/api/capabilities`) it has no such list. A 404 from anything else -- a
+ * proxy in front of a gateway that has the list -- is no answer: retried.
+ */
+export function pairingsAnswer(
+  listed: PairedGateway[] | 'no-route' | null,
+  capabilities: readonly string[] | null
+): PairedGateway[] | null {
+  if (listed !== 'no-route') return listed;
+  return capabilities !== null && !capabilities.includes(DEVICE_REVOCATION_CAPABILITY) ? [] : null;
+}
+
+/**
+ * The rows or logins on one computer that are `serverId`'s, and whether that
+ * can be told at all. An entry's own server id decides. Where the list gives
+ * none (gateways before `server_id` was listed), an entry is taken by name
+ * only when exactly one entry there carries a name `serverId` goes by and no
+ * other entry shares it; anything else is `undecided` -- the step stays
+ * pending and Settings says the computer needs a newer gateway -- so a label
+ * that differs never reads as done and a namesake is never removed.
+ */
+export function ownedBy<T extends { serverId?: string | null; name: string }>(
+  entries: readonly T[],
+  serverId: string,
+  names: readonly string[]
+): { matched: T[]; undecided: boolean } {
+  const byId = entries.filter((entry) => entry.serverId === serverId);
+  if (byId.length > 0) return { matched: byId, undecided: false };
+  const unidentified = entries.filter((entry) => !entry.serverId);
+  if (unidentified.length === 0) return { matched: [], undecided: false };
+  const named = unidentified.filter(
+    (entry) => entry.name.trim() !== '' && names.some((name) => sameFleetName(name, entry.name))
+  );
+  const only = named.length === 1 ? named[0]! : null;
+  if (only && entries.filter((entry) => sameFleetName(entry.name, only.name)).length === 1) {
+    return { matched: [only], undecided: false };
+  }
+  return { matched: [], undecided: true };
+}
+
+/** Revoke one paired device; one already gone is revoked. */
+export async function revokePairing(endpoint: FleetEndpoint, deviceId: string): Promise<void> {
+  await removal(endpoint, `/api/pairings/${encodeURIComponent(deviceId)}`);
+}
+
+/** What one computer said, as the reconciler saw it this run. */
+export type FleetComputer = {
+  serverId: string;
+  label: string;
+  url: string;
+  peers: FleetPeers | null;
+};
+
+/** How long a link that failed is left alone before it is tried again. */
+export const LINK_RETRY_MS = 10 * 60_000;
+
+export function failureKey(from: string, to: string): string {
+  return `${from}\n${to}`;
+}
+
+/**
+ * Whether `computer` holds a working link to `serverId`, matched by server id,
+ * never by name (each device labels computers its own way). A link the other
+ * side revoked does not count: the next pass links the pair again.
+ */
+function lists(computer: FleetComputer, serverId: string): boolean {
+  return (
+    computer.peers?.peers.some((peer) => peer.serverId === serverId && !peer.unauthorized) ?? false
+  );
+}
+
+function failedRecently(
+  failures: Readonly<Record<string, number>>,
+  from: string,
+  to: string,
+  nowMs: number
+): boolean {
+  const failedAt = failures[failureKey(from, to)];
+  return failedAt !== undefined && nowMs - failedAt < LINK_RETRY_MS;
+}
+
+/**
+ * Two computers whose names collide where one would be linked to the other:
+ * `name` (B's own label) is A's own label (`against: 'self'`) or the name of
+ * a peer A already has (`'peer'`, `with` naming it). Not retried until one of
+ * the names changes.
+ */
+export type NameConflict = {
+  name: string;
+  against: 'self' | 'peer';
+  with: string;
+  /** A's own label, for the Settings line. */
+  fromName?: string;
+  /**
+   * The peer A holds under that name is no computer this device knows: an
+   * older entry for the same machine (a reinstall gave it a new server id).
+   * The remedy is removing that entry on A, not renaming anything.
+   */
+  stale?: boolean;
+};
+
+/**
+ * Every ordered pair (A, B) of computers that both answered, where B takes
+ * work and A does not list B yet, unless linking A to B failed within the
+ * retry window or its names collide (`conflicts`). A peer A lists but cannot
+ * reach stays linked (`planPeerMoves` handles a moved one). B at a loopback
+ * address is never handed to A: it would mean A itself.
+ */
+export function planFleetLinks(
+  computers: readonly FleetComputer[],
+  failures: Readonly<Record<string, number>>,
+  nowMs: number,
+  conflicts: Readonly<Record<string, NameConflict>> = {}
+): { from: string; to: string }[] {
+  const steps: { from: string; to: string }[] = [];
+  for (const from of computers) {
+    if (!from.peers) continue;
+    for (const to of computers) {
+      if (to.serverId === from.serverId || !to.peers?.acceptDelegations) continue;
+      if (lists(from, to.serverId) || isLoopbackUrl(to.url)) continue;
+      if (failureKey(from.serverId, to.serverId) in conflicts) continue;
+      if (failedRecently(failures, from.serverId, to.serverId, nowMs)) continue;
+      steps.push({ from: from.serverId, to: to.serverId });
+    }
+  }
+  return steps;
+}
+
+/**
+ * The lines Settings shows for `serverId`: the computers it is linked with
+ * and answering, those of them that take no work, those it is linked with but
+ * cannot reach or failed to link, and the pairs whose names collide. Named by
+ * this phone's label, else the gateway's name.
+ */
+export function linkLines(
+  serverId: string,
+  computers: readonly FleetComputer[],
+  failures: Readonly<Record<string, number>>,
+  nowMs: number,
+  conflicts: Readonly<Record<string, NameConflict>> = {}
+): {
+  linked: string[];
+  noWork: string[];
+  /** Linked, but the other side revoked the link: being linked again. */
+  revoked: string[];
+  cannotReach: string[];
+  sameName: { name: string; with: string; from: string; stale: boolean }[];
+} {
+  const self = computers.find((entry) => entry.serverId === serverId);
+  const labelOf = (peer: PeerView) =>
+    computers.find((entry) => entry.serverId === peer.serverId)?.label || peer.name;
+  const linked: string[] = [];
+  const noWork: string[] = [];
+  const revoked: string[] = [];
+  const cannotReach: string[] = [];
+  const sameName: { name: string; with: string; from: string; stale: boolean }[] = [];
+  for (const peer of self?.peers?.peers ?? []) {
+    if (peer.unauthorized) {
+      revoked.push(labelOf(peer));
+      continue;
+    }
+    if (!peer.reachable) {
+      cannotReach.push(labelOf(peer));
+      continue;
+    }
+    linked.push(labelOf(peer));
+    const own = computers.find((entry) => entry.serverId === peer.serverId)?.peers;
+    if (own && !own.acceptDelegations) noWork.push(labelOf(peer));
+  }
+  for (const other of computers) {
+    if (other.serverId === serverId || (self && lists(self, other.serverId))) continue;
+    if (revoked.includes(other.label)) continue;
+    const conflict = conflicts[failureKey(serverId, other.serverId)];
+    if (conflict) {
+      // The computers' own labels: the clash is between those, not this
+      // device's names for them.
+      sameName.push({
+        name: conflict.name,
+        with: conflict.with,
+        from: conflict.fromName ?? self?.label ?? '',
+        stale: conflict.stale === true,
+      });
+    } else if (failedRecently(failures, serverId, other.serverId, nowMs)) {
+      cannotReach.push(other.label);
+    }
+  }
+  return { linked, noWork, revoked, cannotReach, sameName };
+}
+
+/** An address as a link compares it: scheme and host in lower case, no trailing slash. */
+function sameUrl(a: string, b: string): boolean {
+  const normal = (url: string) =>
+    url
+      .trim()
+      .replace(/\/+$/, '')
+      .replace(/^([a-z][a-z0-9+.-]*:\/\/[^/?#]*)/i, (head) => head.toLowerCase());
+  return normal(a) === normal(b);
+}
+
+/**
+ * Every peer a computer lists but cannot reach whose address on this phone is
+ * another (it moved: a new lease, a new tailnet address): that computer is
+ * told the new one -- only when the moved computer answered this device this
+ * pass, so the gateway's proof of the new address has something to reach. A
+ * peer that answers is never touched, so a link that works over another route
+ * stays as it is; a loopback address is never handed on; addresses are
+ * compared normalized (a trailing slash is no move); and a move that failed
+ * waits out the retry window.
+ */
+export function planPeerMoves(
+  computers: readonly FleetComputer[],
+  failures: Readonly<Record<string, number>>,
+  nowMs: number
+): { from: string; peerId: string; url: string }[] {
+  const moves: { from: string; peerId: string; url: string }[] = [];
+  for (const from of computers) {
+    for (const peer of from.peers?.peers ?? []) {
+      if (peer.reachable || peer.unauthorized) continue;
+      const moved = computers.find((entry) => entry.serverId === peer.serverId);
+      if (!moved?.peers) continue;
+      const url = moved.url;
+      if (!url || sameUrl(url, peer.url) || isLoopbackUrl(url)) continue;
+      if (failedRecently(failures, from.serverId, peer.peerId, nowMs)) continue;
+      moves.push({ from: from.serverId, peerId: peer.peerId, url });
+    }
+  }
+  return moves;
+}
+
+/**
+ * What one unpairing on this device left unfinished (A5 D6). This device
+ * finishing its own unpair, never a set difference: only the computers named
+ * here, each once.
+ */
+export type UnpairRecord = {
+  /** The computer this device unpaired. */
+  serverId: string;
+  /** What this device called it. */
+  label: string;
+  atMs: number;
+  /** Other computers that were down or refused when its rows and login were taken off them. */
+  pending: string[];
+  /** Other computers it still lists: its own rows could not be removed before its token went. */
+  stillListedBy: string[];
+  /** Per pending computer: which steps are confirmed there, and how the rest went. */
+  progress?: Record<string, UnpairProgress>;
+  /**
+   * Per pending computer, the names this device itself gave that link when
+   * it made it: what an older gateway's rows and logins without a server id
+   * are matched by. Never a name learned from an answer.
+   */
+  linkNames?: Record<string, LinkNames>;
+};
+
+/**
+ * The names this device gave one link when it made it, as seen from one of
+ * its two computers: the peer row it created there (`row`, the other's name
+ * as `POST /api/peers` was given it) and the login it minted there for the
+ * other (`login`, the name `POST /api/pair/pending` was given).
+ */
+export type LinkNames = { row?: string; login?: string };
+
+/**
+ * The names a row or login of `gone` on one computer may be matched by when
+ * it carries no server id: the one name this device recorded for that link
+ * there, and nothing else -- not even this device's own label for `gone`,
+ * which a namesake whose twin already left could still carry. Nothing
+ * recorded: nothing to match by.
+ */
+export function recordedNames(recorded: string | undefined): string[] {
+  return recorded ? [recorded] : [];
+}
+
+/** The two things an unpair takes off another computer: its peer rows, and its login. */
+export type UnpairStep = 'rows' | 'logins';
+export const UNPAIR_STEPS: readonly UnpairStep[] = ['rows', 'logins'];
+/** Passes in a row a step may fail before it waits for the computer to change. */
+export const UNPAIR_STEP_ATTEMPTS = 5;
+
+export type UnpairProgress = {
+  /** Confirmed steps: never run again. */
+  done: UnpairStep[];
+  /** Passes in a row that confirmed nothing new. */
+  failures: number;
+  /**
+   * Its logins there carry no server id and none can be told apart by name
+   * ({@link loginsOf}): Settings says the computer needs a newer gateway.
+   */
+  needsNewerGateway?: true;
+  /**
+   * Set after {@link UNPAIR_STEP_ATTEMPTS} failures: the `pairedAt` of the
+   * record it kept failing with. Nothing more is tried until that computer is
+   * paired again or is seen down (`unpairSeenDown`), so this device does not
+   * delete, pass after pass, what another device keeps re-creating.
+   */
+  parkedOn?: number;
+};
+
+/** What a follow-up runs on one computer now; nothing while parked on this pairing. */
+export function unpairStepsDue(
+  progress: UnpairProgress | undefined,
+  pairedAt: number
+): UnpairStep[] {
+  if (progress?.parkedOn !== undefined && progress.parkedOn === pairedAt) return [];
+  return UNPAIR_STEPS.filter((step) => !progress?.done.includes(step));
+}
+
+/** The progress after one pass on a computer confirmed `passDone`. */
+export function unpairProgressAfter(
+  progress: UnpairProgress | undefined,
+  passDone: readonly UnpairStep[],
+  pairedAt: number,
+  needsNewerGateway = false
+): UnpairProgress {
+  const done = UNPAIR_STEPS.filter(
+    (step) => progress?.done.includes(step) || passDone.includes(step)
+  );
+  if (done.length === UNPAIR_STEPS.length) return { done, failures: 0 };
+  const flag = needsNewerGateway ? { needsNewerGateway: true as const } : {};
+  // A pass that confirmed a step is progress; a parked computer that runs
+  // again changed state. Either way the count starts over.
+  const grew = done.length > (progress?.done.length ?? 0);
+  if (grew) return { done, failures: 0, ...flag };
+  const failures = (progress?.parkedOn !== undefined ? 0 : (progress?.failures ?? 0)) + 1;
+  return failures >= UNPAIR_STEP_ATTEMPTS
+    ? { done, failures, parkedOn: pairedAt, ...flag }
+    : { done, failures, ...flag };
+}
+
+/** The computer did not answer: when it does again, a parked step is tried again. */
+export function unpairSeenDown(progress: UnpairProgress | undefined): UnpairProgress | undefined {
+  if (progress?.parkedOn === undefined) return progress;
+  return { done: progress.done, failures: 0 };
+}
+
+export function unpairComplete(progress: UnpairProgress | undefined): boolean {
+  return UNPAIR_STEPS.every((step) => progress?.done.includes(step));
+}
+
+/** How long an unfinished unpairing is followed up. */
+export const UNPAIR_FOLLOW_UP_MS = 30 * 24 * 60 * 60_000;
+
+/**
+ * The unpairings still worth following up: none finished (nothing pending and
+ * nothing to tell), none older than a month, and none about a computer this
+ * device paired again (its links are the reconciler's business once more).
+ */
+export function keptUnpairs(
+  entries: readonly UnpairRecord[],
+  pairedIds: readonly string[],
+  nowMs: number
+): UnpairRecord[] {
+  const paired = new Set(pairedIds);
+  return entries.filter(
+    (entry) =>
+      !paired.has(entry.serverId) &&
+      nowMs - entry.atMs < UNPAIR_FOLLOW_UP_MS &&
+      (entry.pending.length > 0 || entry.stillListedBy.length > 0)
+  );
+}
+
+/** What Settings says on `serverId`'s section about this device's unfinished unpairings. */
+export function unpairLines(
+  serverId: string,
+  entries: readonly UnpairRecord[]
+): { stillLinked: string[]; stillListedBy: string[]; needsNewerGateway: boolean } {
+  const pendingHere = entries.filter((entry) => entry.pending.includes(serverId));
+  const undecided = (entry: UnpairRecord) => entry.progress?.[serverId]?.needsNewerGateway === true;
+  return {
+    stillLinked: pendingHere.filter((entry) => !undecided(entry)).map((e) => e.label),
+    stillListedBy: entries
+      .filter((entry) => entry.stillListedBy.includes(serverId))
+      .map((e) => e.label),
+    needsNewerGateway: pendingHere.some(undecided),
+  };
+}

@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useState } from 'react';
+import { forwardRef, useCallback, useState, type ReactNode } from 'react';
 import {
   StyleSheet,
   TextInput,
@@ -119,14 +119,36 @@ export function splitFieldStyle(style: TextInputProps['style']): {
   };
 }
 
-export const FontedTextInput = forwardRef<TextInput, TextInputProps>(function FontedTextInput(
+/** Whether a placeholder wrapped when last measured, by its text. */
+const lastWrap = new Map<string, boolean>();
+
+/** A field's props, with the placeholder's one-line stand-in. */
+export type FontedTextInputProps = TextInputProps & {
+  /**
+   * Shown instead of `placeholder` when that would wrap at the field's width,
+   * so an empty field stays one line high.
+   */
+  shortPlaceholder?: string;
+  /**
+   * The draft drawn as nested spans (mentions tinted), the same string as
+   * `value`: rendered as the input's children in its place. `value` still
+   * decides whether the field is empty.
+   */
+  spans?: ReactNode;
+};
+
+export const FontedTextInput = forwardRef<TextInput, FontedTextInputProps>(function FontedTextInput(
   {
     style,
-    placeholder,
+    placeholder: fullPlaceholder,
+    shortPlaceholder,
+    spans,
     placeholderTextColor,
     value,
     defaultValue,
     onChangeText,
+    onFocus,
+    onBlur,
     multiline,
     ...rest
   },
@@ -142,6 +164,16 @@ export const FontedTextInput = forwardRef<TextInput, TextInputProps>(function Fo
     [onChangeText]
   );
   const empty = (value ?? typed).length === 0;
+  // Whether the full placeholder wraps, measured by an invisible copy of it
+  // laid out exactly as the visible one is. The copy always holds the full
+  // text, so switching to the short one cannot switch it back.
+  // Seeded from the last measure of the same text, so a field that remounts
+  // (Home after a sub-screen) does not show the long text for a frame first.
+  const [placeholderWraps, setPlaceholderWraps] = useState(
+    () => (fullPlaceholder && lastWrap.get(fullPlaceholder)) ?? false
+  );
+  const probing = Boolean(shortPlaceholder && fullPlaceholder && empty);
+  const placeholder = probing && placeholderWraps ? shortPlaceholder : fullPlaceholder;
   const parts = splitFieldStyle(style);
   /*
    * The placeholder's line box, and room for it.
@@ -172,18 +204,21 @@ export const FontedTextInput = forwardRef<TextInput, TextInputProps>(function Fo
         ref={ref}
         {...rest}
         multiline={multiline}
-        value={value}
+        {...(spans === undefined ? { value } : {})}
         defaultValue={defaultValue}
         onChangeText={handleChangeText}
+        onFocus={onFocus}
+        onBlur={onBlur}
         placeholder={placeholder}
         placeholderTextColor="transparent"
-        style={parts.input}
-      />
+        style={parts.input}>
+        {spans}
+      </TextInput>
       {/* A single line is centred in its box by the platform; a multiline field
           starts at the top. The overlay does the same. */}
       <View
         pointerEvents="none"
-        style={[StyleSheet.absoluteFill, multiline ? styles.top : styles.centre]}>
+        style={[StyleSheet.absoluteFill, multiline ? styles.top : styles.centre, styles.caretGap]}>
         <FieldPlaceholder
           text={placeholder}
           visible={empty}
@@ -191,6 +226,25 @@ export const FontedTextInput = forwardRef<TextInput, TextInputProps>(function Fo
           style={placeholderStyle}
         />
       </View>
+      {probing ? (
+        <View
+          pointerEvents="none"
+          accessible={false}
+          importantForAccessibility="no-hide-descendants"
+          style={[StyleSheet.absoluteFill, styles.top, styles.caretGap, styles.probe]}>
+          <FieldPlaceholder
+            text={fullPlaceholder}
+            visible
+            color="transparent"
+            style={placeholderStyle}
+            onTextLayout={(event) => {
+              const wraps = event.nativeEvent.lines.length > 1;
+              if (fullPlaceholder) lastWrap.set(fullPlaceholder, wraps);
+              setPlaceholderWraps(wraps);
+            }}
+          />
+        </View>
+      ) : null}
     </View>
   );
 });
@@ -198,4 +252,8 @@ export const FontedTextInput = forwardRef<TextInput, TextInputProps>(function Fo
 const styles = StyleSheet.create({
   top: { justifyContent: 'flex-start' },
   centre: { justifyContent: 'center' },
+  // Room for the native caret beside the separately drawn hint. Applied in every
+  // state, never only on focus, so the placeholder does not move when focused.
+  caretGap: { paddingLeft: 3 },
+  probe: { opacity: 0 },
 });

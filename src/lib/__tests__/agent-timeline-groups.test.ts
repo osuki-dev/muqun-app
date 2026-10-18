@@ -6,7 +6,6 @@ import {
   buildTimelineGroupsCached,
   createTimelineGroupCache,
   reconcileShellParts,
-  reconcileInjectedContext,
 } from '../agent-timeline-groups';
 
 function item(id: string, messageId: string, extra: Partial<TimelineItem> = {}): TimelineItem {
@@ -42,10 +41,6 @@ describe('buildTimelineGroups', () => {
     const groups = buildTimelineGroups([item('a', 'msg_1'), item('b', 'msg_2')]);
     expect(groups[0].prevItem).toBeUndefined();
     expect(groups[1].prevItem?.id).toBe('a');
-  });
-
-  test('nothing is nothing', () => {
-    expect(buildTimelineGroups([])).toEqual([]);
   });
 });
 
@@ -286,24 +281,5 @@ describe('row keys across the optimistic send', () => {
       item('temp_usr_2', 'msg_b', { role: 'user', row_key: 'temp_usr_2' }),
     ]);
     expect(new Set(groups.map((group) => group.key)).size).toBe(2);
-  });
-});
-
-describe('reconcileInjectedContext', () => {
-  test('hides known internal producers while preserving other system and user notices', () => {
-    const internal = ['runtime-context', 'skill-catalog', 'time-context'].map((description) =>
-      item(description, description, { role: 'system', part: { type: 'synthetic', description } })
-    );
-    const notice = item('notice', 'notice', {
-      role: 'system',
-      part: { type: 'synthetic', description: 'skill-invocation' },
-    });
-    const user = item('user', 'user', {
-      role: 'user',
-      part: { type: 'synthetic', description: 'runtime-context' },
-    });
-    expect(reconcileInjectedContext([...internal, notice, user])).toEqual([notice, user]);
-    const retained = [notice, user];
-    expect(reconcileInjectedContext(retained)).toBe(retained);
   });
 });

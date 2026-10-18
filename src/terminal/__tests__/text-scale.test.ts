@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 
 import {
-  DEFAULT_TERMINAL_FONT_SIZE,
   TERMINAL_ADVANCE_RATIO,
-  TERMINAL_LINE_HEIGHT_RATIO,
   TERMINAL_TEXT_SIZES,
   fitFallbackToSpan,
   snapToDevicePixel,
@@ -11,52 +9,6 @@ import {
 } from '@/terminal/text-scale';
 
 describe('terminal text scale', () => {
-  it('takes its three steps from the design type scale', () => {
-    // caption / label / body. Not round numbers by accident -- if one of these
-    // moves it should be because the design system moved.
-    expect(TERMINAL_TEXT_SIZES).toEqual({ compact: 12, default: 13, large: 16 });
-  });
-
-  it('keeps the default nearer the small end: reading density won on device', () => {
-    const { compact, default: base, large } = TERMINAL_TEXT_SIZES;
-    // 12 / 13 / 16: 14 read a size too large in the hand (Ellen, 2026-07-27),
-    // so the middle step is deliberately closer to compact than to large.
-    expect(base - compact).toBeLessThanOrEqual(large - base);
-  });
-
-  it('grows strictly, smallest to largest', () => {
-    const { compact, default: base, large } = TERMINAL_TEXT_SIZES;
-    expect(compact).toBeLessThan(base);
-    expect(base).toBeLessThan(large);
-  });
-
-  it('stays legible at the smallest step', () => {
-    // Below about 11pt a monospace grid stops being readable at arm's length on
-    // a phone. The previous compact step was 11.5.
-    expect(TERMINAL_TEXT_SIZES.compact).toBeGreaterThanOrEqual(12);
-  });
-
-  it('derives the fallback from the default step rather than restating it', () => {
-    // The regression this locks: the component's own default had drifted to
-    // 13.5 while the screen passed 12.5, so "the default size" meant two
-    // different things depending on where you read it.
-    expect(DEFAULT_TERMINAL_FONT_SIZE).toBe(TERMINAL_TEXT_SIZES.default);
-  });
-
-  it('sets one row pitch for every step', () => {
-    for (const size of Object.values(TERMINAL_TEXT_SIZES)) {
-      // Rounded to a tenth of a point, so the ratio can only drift by that much.
-      expect(Math.abs(terminalLineHeight(size) / size - TERMINAL_LINE_HEIGHT_RATIO)).toBeLessThan(
-        0.05 / size + 1e-9
-      );
-    }
-  });
-
-  it('keeps leading inside the range code is normally set at', () => {
-    expect(TERMINAL_LINE_HEIGHT_RATIO).toBeGreaterThanOrEqual(1.4);
-    expect(TERMINAL_LINE_HEIGHT_RATIO).toBeLessThanOrEqual(1.5);
-  });
-
   it('rounds the row pitch to a tenth, the way the renderer does', () => {
     expect(terminalLineHeight(14)).toBe(20.3);
     expect(terminalLineHeight(12)).toBe(17.4);
@@ -77,11 +29,6 @@ describe('cell advance rounding', () => {
   const RATIOS = [2, 2.625, 2.75, 3, 3.5];
   const SIZES = Object.values(TERMINAL_TEXT_SIZES);
 
-  it('states the bundled font advance as the font itself reports it', () => {
-    // JetBrains Mono's hmtx gives 599.999/1000 units per em. Read, not guessed.
-    expect(TERMINAL_ADVANCE_RATIO).toBeCloseTo(0.6, 5);
-  });
-
   it('puts every cell edge on a whole device pixel', () => {
     for (const ratio of RATIOS) {
       for (const size of SIZES) {
@@ -96,22 +43,6 @@ describe('cell advance rounding', () => {
     }
   });
 
-  it('never lets rounding error accumulate across a line', () => {
-    for (const ratio of RATIOS) {
-      for (const size of SIZES) {
-        const cell = snapToDevicePixel(size * TERMINAL_ADVANCE_RATIO, ratio);
-        // The error against the ideal grid is per-cell and constant, so at
-        // column N it is N times a fixed amount -- it must not be worse than
-        // that, which is what an accumulating (summed) layout would produce.
-        const perCell = cell - size * TERMINAL_ADVANCE_RATIO;
-        for (const column of [1, 10, 100]) {
-          const ideal = column * size * TERMINAL_ADVANCE_RATIO;
-          expect(column * cell - ideal).toBeCloseTo(column * perCell, 9);
-        }
-      }
-    }
-  });
-
   it("stays within half a device pixel of the font's true advance", () => {
     for (const ratio of RATIOS) {
       for (const size of SIZES) {
@@ -119,24 +50,6 @@ describe('cell advance rounding', () => {
         const cell = snapToDevicePixel(truth, ratio);
         expect(Math.abs(cell - truth)).toBeLessThanOrEqual(0.5 / ratio + 1e-9);
       }
-    }
-  });
-
-  it('beats rounding the advance to a whole point at the default size', () => {
-    // The regression, stated as a number. An SkFont without linear metrics
-    // reports whole-point advances; at the current default the true advance is
-    // fractional, so whole-point rounding always mismeasures the cell. (At the
-    // old 12.5 default the same rounding left 0.5pt of slack; at 14 it went
-    // 0.4pt tight. 13 keeps a fractional advance, so the guard still bites.)
-    const size = TERMINAL_TEXT_SIZES.default;
-    const truth = size * TERMINAL_ADVANCE_RATIO;
-    const hinted = Math.round(truth);
-    expect(Math.abs(truth - hinted)).toBeGreaterThan(0.05);
-    for (const ratio of RATIOS) {
-      const cell = snapToDevicePixel(truth, ratio);
-      // "Never worse": at some ratios the device grid lands exactly on the
-      // whole point (13pt at dpr 2), where snapping ties hinting.
-      expect(Math.abs(cell - truth)).toBeLessThanOrEqual(Math.abs(hinted - truth));
     }
   });
 

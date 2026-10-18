@@ -1,7 +1,7 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
-import { Server } from 'lucide-react-native';
+import { Monitor } from 'lucide-react-native';
 import { ScrollView, View } from 'react-native';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useIsFocused, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
@@ -113,7 +113,7 @@ export function HomeTargetSheet() {
         selected={requestIsActive && server.serverId === selectedServerId}
         accessibilityLabel={`${server.label}, ${_(reachabilityDescription[reachability])}`}
         leading={
-          <Server
+          <Monitor
             size={20}
             color={reachability === 'live' ? theme.colors.success : theme.colors.textMuted}
           />
@@ -126,7 +126,7 @@ export function HomeTargetSheet() {
   return (
     <SheetScene
       testID="home-target-sheet"
-      title={t`Choose a gateway`}
+      title={t`Choose a computer`}
       caption={selected?.label}
       contentSized={contentSized}>
       {contentSized ? (

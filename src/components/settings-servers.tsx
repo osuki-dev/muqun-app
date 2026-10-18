@@ -6,8 +6,8 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Spinner, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Check, ChevronDown, Pencil, Trash2 } from 'lucide-react-native';
-import { Fragment, useCallback, useEffect, useState } from 'react';
+import { Bot, Check, ChevronDown, ChevronRight, Pencil, Trash2 } from 'lucide-react-native';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
@@ -17,15 +17,19 @@ import {
   SettingsBlock,
   SettingsChoiceRow,
   SettingsCard,
+  SettingsNavRow,
   SettingsSeparator,
 } from '@/components/settings-chrome';
+import { FleetPeersSection } from '@/components/settings-fleet-peers';
+import { ServerCapabilities } from '@/components/settings-server-capabilities';
 import { SettingsSegmented } from '@/components/settings-segmented';
 import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
 import { StatusDot } from '@/components/status-dot';
+import { reconcileFleet } from '@/hooks/use-fleet-link';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { GatewayStorageError } from '@/components/gateway-storage-error';
-import { reachabilityDescription, reachabilityLabel } from '@/i18n/labels';
+import { connectionStatusDescription, connectionStatusLabel } from '@/i18n/labels';
 import { DEMO_SERVER_ID } from '@/lib/demo-gateway';
 import { feedback } from '@/lib/feedback';
 import { loadPairedDevices, revokePairedDevice, type PairedDevice } from '@/lib/gateway-client';
@@ -35,15 +39,22 @@ import { acceptsCancel, acceptsConfirm, unpairView } from '@/lib/unpair-action';
 import { useRenderTally } from '@/lib/render-tally';
 import { describeGatewayFailure } from '@/lib/network-error';
 import { normalizeGatewayUrl } from '@/lib/pairing';
-import { reachabilityFromProbe, type ServerReachability } from '@/lib/server-reachability';
+import { serversToProbe, type ConnectionStatus } from '@/lib/server-reachability';
 import { useAppSettings, type ServerCardPanes } from '@/stores/app-settings';
 import { useServerAgents } from '@/stores/server-agents';
+import { retryHomeRefresh } from '@/lib/home-refresh-schedule';
+import { useConnectionStatuses } from '@/hooks/use-home-reachability';
+import { useServerLastViewed } from '@/stores/server-last-viewed';
 import { useServerReachability } from '@/stores/server-reachability';
 import type { ServerAgentsSnapshot } from '@/lib/server-agents';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
+import { useAgents } from '@/stores/agents';
+import { useHomeAgentChoice } from '@/stores/home-agent-choice';
+import { useTerminalAgentCatalog } from '@/hooks/use-terminal-agent-catalog';
+import { homeAgentOptions, resolveHomeAgent } from '@/lib/home-agent-choice';
 
 /** Server management is mounted only when its settings sheet opens. */
-export function SettingsServers() {
+export function SettingsServers({ initialOpenId }: { initialOpenId?: string } = {}) {
   // `t` from the hook, not the global `t` from `@lingui/core/macro` -- see the
   // note at the top of the settings screen for why.
   const { t } = useLingui();
@@ -54,8 +65,11 @@ export function SettingsServers() {
   const { showToast } = useToast();
   const { record, records, loading, hydrationError, retryHydration, selectRecord, removeRecord } =
     useGatewayRecord();
-  const probes = useServerReachability((state) => state.probes);
-  const refreshReachability = useServerReachability((state) => state.refresh);
+  // Every row's status, re-rendering this page only when one changes (a
+  // probe landing or going stale), not on every probe write.
+  const recordIds = useMemo(() => records.map((server) => server.serverId), [records]);
+  const statuses = useConnectionStatuses(recordIds, record?.serverId);
+  const refreshReachabilityMany = useServerReachability((state) => state.refreshMany);
   const serverCardPanes = useAppSettings((state) => state.serverCardPanes);
   const update = useAppSettings((state) => state.update);
   // The one piece of history a record the app is not attached to still has:
@@ -73,24 +87,32 @@ export function SettingsServers() {
   // One row is open at a time. Two open rows on a settings screen is a list of
   // panels rather than a list of servers, and only one of them can ever be the
   // one in use anyway.
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(initialOpenId ?? null);
+  // Opening a computer's settings is the reader asking about it: Home stops
+  // waiting out its backoff and asks again.
+  useEffect(() => {
+    if (openId) retryHomeRefresh(openId);
+  }, [openId]);
 
-  // The same question the home screen asks, asked the same way: only of the
-  // server the app is already configured for, because every other record's
-  // token would have to go on the wire to answer it. See
-  // `stores/server-reachability.ts`.
+  // The same question the home screen asks, of the same computers it asks
+  // (the configured one first, at most four): a list that says "Not
+  // connected" beside a computer Home heard a minute ago is only a stale
+  // answer, and this screen is where the reader looks for the real one.
   useFocusEffect(
     useCallback(() => {
-      if (!record || record.serverId === DEMO_SERVER_ID || record.sshTunnel) return;
-      void refreshReachability({
-        serverId: record.serverId,
-        url: record.url,
-        token: record.token,
-        deviceId: record.deviceId,
-        transportKey: record.transportKey,
-        transport: record.transport,
+      // Opening Settings › Computers is a reconciler trigger (spec §4.1),
+      // run on the capabilities the reachability probe just refreshed.
+      const eligible = records.filter(
+        (server) => server.serverId !== DEMO_SERVER_ID && !server.sshTunnel
+      );
+      void refreshReachabilityMany(
+        // The same computers Home asks, in Home's order; read once per focus,
+        // so a last-viewed write does not run the probe and reconcile again.
+        serversToProbe(eligible, useServerLastViewed.getState().byServer, record?.serverId)
+      ).finally(() => {
+        void reconcileFleet({ reason: 'settings' });
       });
-    }, [record, refreshReachability])
+    }, [record?.serverId, records, refreshReachabilityMany])
   );
 
   async function use(server: GatewayRecord) {
@@ -107,29 +129,29 @@ export function SettingsServers() {
     } catch (error) {
       showToast({
         variant: 'danger',
-        title: t`Could not unpair server`,
+        title: t`Could not unpair computer`,
         message: describeGatewayFailure(
           error,
-          t`The server was kept on this device. Make sure its Gateway is running, then try again.`
+          t`The computer was kept on this device. Make sure its Gateway is running, then try again.`
         ).message,
       });
     }
   }
 
   return (
-    <SettingsCard flush>
+    <SettingsCard flush reflow>
       {hydrationError ? (
         <GatewayStorageError busy={loading} onRetry={retryHydration} />
       ) : loading ? (
         <View style={styles.note}>
           <Text variant="caption" color={theme.colors.textMuted}>
-            <Trans>Loading servers</Trans>
+            <Trans>Loading computers</Trans>
           </Text>
         </View>
       ) : records.length === 0 ? (
         <View style={styles.note}>
           <Text variant="bodySmall">
-            <Trans>No servers paired yet</Trans>
+            <Trans>No computers paired yet</Trans>
           </Text>
           <Text variant="caption" color={theme.colors.textMuted}>
             <Trans>Pair one below.</Trans>
@@ -141,18 +163,21 @@ export function SettingsServers() {
             const current = server.serverId === record?.serverId;
             return (
               <Fragment key={server.serverId}>
-                {index > 0 ? <SettingsSeparator /> : null}
+                {/* On the rows' own layout transition, or it would stay where
+                    it was while the row above it opened. */}
+                {index > 0 ? (
+                  <Animated.View layout={listLayout()}>
+                    <SettingsSeparator />
+                  </Animated.View>
+                ) : null}
                 <ServerRow
                   server={server}
                   current={current}
-                  reachability={
-                    current
-                      ? reachabilityFromProbe(probes[server.serverId])
-                      : // A record the app is not attached to has not been
-                        // asked, and "never asked" is not "offline". The home
-                        // screen draws the same distinction with a hollow dot.
-                        'unknown'
-                  }
+                  // Every computer from the same evidence Home uses: its own
+                  // channels and the fresh probe this screen just asked for.
+                  // One nobody asked recently is `unknown` -- "never asked" is
+                  // not "offline" -- but one that answered is online.
+                  reachability={statuses[server.serverId] ?? 'unknown'}
                   lastConnected={current ? undefined : agentsByServer[server.serverId]}
                   open={openId === server.serverId}
                   onToggle={() =>
@@ -173,10 +198,10 @@ export function SettingsServers() {
           the page a reader goes to for "add another". Unconditional, so there
           is one place that never moves. */}
       <SettingsChoiceRow
-        label={t`Pair a server`}
+        label={t`Pair a computer`}
         value=""
         detail={t`Scan the Gateway’s QR code, or enter its address.`}
-        accessibilityLabel={t`Pair a server`}
+        accessibilityLabel={t`Pair a computer`}
         testID="settings-pair-row"
         onPress={() => router.push('/explore')}
       />
@@ -200,7 +225,7 @@ export function SettingsServers() {
           same concept, so filtering to "agents" was hiding windows that were
           just as reachable as the ones running one. */}
       <SettingsBlock
-        label={t`Panes on server cards`}
+        label={t`Panes on computer cards`}
         caption={
           <Text variant="caption" color={theme.colors.textSubtle}>
             {serverCardPanes === 'all'
@@ -247,7 +272,7 @@ function ServerRow({
   server: GatewayRecord;
   /** The server the app is attached to, which is the one with a device list. */
   current: boolean;
-  reachability: ServerReachability;
+  reachability: ConnectionStatus;
   /**
    * What `/servers/[serverId]` last mirrored for this record, or `undefined`
    * for `current` -- the live probe already says everything worth saying
@@ -300,10 +325,17 @@ function ServerRow({
     turn.set(withTiming(open ? 1 : 0, timing('short')));
   }, [open, turn]);
   const chevronStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${turn.value * 180}deg` }],
+    transform: [{ rotate: `${turn.get() * 180}deg` }],
   }));
 
-  const statusColor = reachability === 'live' ? theme.colors.success : theme.colors.textSubtle;
+  // A refused pairing needs the reader to act, so it is not the same quiet
+  // grey as "not asked".
+  const statusColor =
+    reachability === 'live'
+      ? theme.colors.success
+      : reachability === 'unauthorized'
+        ? theme.colors.warning
+        : theme.colors.textSubtle;
   // Read at render, like `PairedDevices`' own `nowMs` below: "last connected"
   // is relative to *now*, and a value captured once in state would go stale
   // the moment the row sat open for a minute.
@@ -314,6 +346,7 @@ function ServerRow({
     <Animated.View layout={listLayout()} style={styles.row}>
       <PressableScale
         accessibilityRole="button"
+        testID={`settings-server-row-${server.serverId}`}
         accessibilityLabel={t`Options for ${server.label}`}
         accessibilityState={{ expanded: open }}
         onPress={onToggle}
@@ -348,15 +381,15 @@ function ServerRow({
             {server.url}
           </Text>
           <View
-            accessibilityLabel={_(reachabilityDescription[reachability])}
+            accessibilityLabel={_(connectionStatusDescription[reachability])}
             style={styles.statusLine}>
             <StatusDot
               color={statusColor}
-              filled={reachability !== 'unknown'}
+              filled={reachability !== 'unknown' && reachability !== 'reconnecting'}
               pulse={reachability === 'live'}
             />
             <Text variant="caption" color={statusColor} style={styles.statusText}>
-              {_(reachabilityLabel[reachability])}
+              {_(connectionStatusLabel[reachability])}
             </Text>
           </View>
           {/* Only for a record the list just called `unknown` about -- `current`
@@ -388,9 +421,16 @@ function ServerRow({
           layout={listLayout()}
           style={styles.actions}>
           {current ? (
-            <PairedDevices server={server} />
+            <>
+              <HomeAgentNavRow serverId={server.serverId} />
+              <FleetPeersSection server={server} />
+              <PairedDevices server={server} />
+              <ServerCapabilities serverId={server.serverId} />
+            </>
           ) : (
             <>
+              <HomeAgentNavRow serverId={server.serverId} />
+              <FleetPeersSection server={server} />
               <PressableScale
                 accessibilityRole="button"
                 accessibilityLabel={t`Use ${server.label}`}
@@ -403,14 +443,14 @@ function ServerRow({
                 ]}>
                 <Check size={16} color={theme.colors.primary} strokeWidth={2.2} />
                 <Text variant="caption" color={theme.colors.primary}>
-                  <Trans>Use this server</Trans>
+                  <Trans>Use this computer</Trans>
                 </Text>
               </PressableScale>
               {/* Said rather than hidden: the device list is missing for a
                   reason, and a row that silently offers one server more than
                   another is a bug the reader has to guess at. */}
               <Text variant="caption" color={theme.colors.textMuted}>
-                <Trans>Its paired devices are listed once it is the server in use.</Trans>
+                <Trans>Its paired devices are listed once it is the computer in use.</Trans>
               </Text>
             </>
           )}
@@ -418,6 +458,33 @@ function ServerRow({
         </Animated.View>
       ) : null}
     </Animated.View>
+  );
+}
+
+/**
+ * Which agent Home's dock starts work with on this computer. The reader's
+ * choice, or the first agent the computer says is ready.
+ */
+function HomeAgentNavRow({ serverId }: { serverId: string }) {
+  const { t } = useLingui();
+  const router = useRouter();
+  const discovery = useAgents((state) => state.index.servers[serverId]);
+  const terminal = useTerminalAgentCatalog(serverId);
+  const chosenKey = useHomeAgentChoice((state) => state.byServer[serverId]);
+  const agent = resolveHomeAgent(
+    homeAgentOptions(discovery, terminal),
+    chosenKey,
+    terminal !== undefined
+  );
+  return (
+    <SettingsNavRow
+      testID="settings-server-home-agent"
+      icon={Bot}
+      label={t`Home agent`}
+      detail={agent?.name}
+      trailing={ChevronRight}
+      onPress={() => router.push({ pathname: '/home-agent', params: { serverId } })}
+    />
   );
 }
 
@@ -461,7 +528,7 @@ function ServerRowEditor({
         ]}>
         <Pencil size={15} color={theme.colors.text} strokeWidth={2} />
         <Text variant="caption" color={theme.colors.text}>
-          <Trans>Edit this server</Trans>
+          <Trans>Edit this computer</Trans>
         </Text>
       </PressableScale>
       <UnpairAction label={server.label} onUnpair={onUnpair} />
@@ -559,7 +626,7 @@ function ServerEditForm({ server, onDone }: { server: GatewayRecord; onDone: () 
   return (
     <View style={styles.editForm}>
       <Input
-        label={t`Server name`}
+        label={t`Computer name`}
         value={label}
         onChangeText={(value) => {
           setLabel(value);
@@ -590,7 +657,7 @@ function ServerEditForm({ server, onDone }: { server: GatewayRecord; onDone: () 
       />
       <Text variant="caption" color={theme.colors.textMuted}>
         <Trans>
-          The address is where this paired server is reached. Changing it does not unpair the
+          The address is where this paired computer is reached. Changing it does not unpair the
           device.
         </Trans>
       </Text>
@@ -726,7 +793,7 @@ function UnpairAction({ label, onUnpair }: { label: string; onUnpair: () => Prom
       ]}>
       <Trash2 size={15} color={theme.colors.danger} strokeWidth={2} />
       <Text variant="caption" color={theme.colors.danger}>
-        <Trans>Unpair this server</Trans>
+        <Trans>Unpair this computer</Trans>
       </Text>
     </PressableScale>
   );
@@ -803,7 +870,8 @@ function PairedDevices({ server }: { server: GatewayRecord }) {
           showToast({
             variant: 'danger',
             title: t`Could not revoke device`,
-            message: describeGatewayFailure(error, t`Try again once the gateway responds.`).message,
+            message: describeGatewayFailure(error, t`Try again once the computer responds.`)
+              .message,
           });
         }
       },
@@ -824,7 +892,7 @@ function PairedDevices({ server }: { server: GatewayRecord }) {
   if (devices.length === 0) {
     return (
       <Text variant="caption" color={theme.colors.textMuted}>
-        <Trans>This gateway has not listed any paired devices.</Trans>
+        <Trans>This computer has not listed any paired devices.</Trans>
       </Text>
     );
   }
@@ -846,7 +914,11 @@ function PairedDevices({ server }: { server: GatewayRecord }) {
         <View key={device.id} style={styles.deviceRow}>
           <View style={styles.flexOne}>
             <Text variant="caption" numberOfLines={1}>
-              {device.current ? t`${device.name} (this device)` : device.name}
+              {device.current
+                ? t`${device.name} (this device)`
+                : device.kind === 'gateway'
+                  ? t`${device.name} (gateway)`
+                  : device.name}
             </Text>
             <Text variant="caption" color={theme.colors.textSubtle}>
               {lastSeen(device.last_seen_unix_ms, nowMs)}

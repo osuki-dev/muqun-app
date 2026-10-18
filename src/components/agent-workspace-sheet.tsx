@@ -74,6 +74,11 @@ export interface AgentWorkspaceSheetProps {
   /** The agent whose projects are listed; absent on a gateway without discovery. */
   agentId?: string;
   initialProjects?: readonly AgentProject[];
+  /**
+   * A first row standing for "no folder picked", selected while
+   * `activeDirectory` is unset; choosing it answers an empty directory.
+   */
+  defaultRow?: { label: string };
   onSelectWorkspace: (directory: string, project?: AgentProject) => void;
   onClose: () => void;
 }
@@ -87,6 +92,7 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
   sessionId,
   agentId,
   initialProjects,
+  defaultRow,
   onSelectWorkspace,
   onClose,
 }: AgentWorkspaceSheetProps) {
@@ -302,6 +308,20 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
               title={t`Projects`}
               first={!showTypedPath && suggestions.length === 0}
             />
+            {defaultRow && !searchQuery.trim() ? (
+              <SheetSceneRow
+                testID="agent-workspace-default-row"
+                title={defaultRow.label}
+                selected={!activeDirectory}
+                leading={
+                  <Folder
+                    size={16}
+                    color={activeDirectory ? theme.colors.textSubtle : theme.colors.primary}
+                  />
+                }
+                onPress={() => choose('')}
+              />
+            ) : null}
             {filtered.length === 0 ? (
               <View style={styles.empty}>
                 <Text variant="caption" color={theme.colors.textMuted} style={styles.emptyText}>

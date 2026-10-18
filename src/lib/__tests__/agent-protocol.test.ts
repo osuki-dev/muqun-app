@@ -107,7 +107,7 @@ describe('parseAgentSessionInfo', () => {
     mode: 'build',
     model: { provider_id: 'opencode', model_id: 'union-alpha', variant: 'default' },
     status: 'busy',
-    directory: '/home/ryu/Work/muqun/app',
+    directory: '/home/me/Work/muqun/app',
     cost: 0.1,
     tokens: { input: 1, output: 2, reasoning: 3, cache_read: 4, cache_write: 5 },
     limit: { context: 200000 },

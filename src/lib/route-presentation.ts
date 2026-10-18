@@ -34,9 +34,7 @@ export type SheetDetents = 'full' | 'expandable' | 'fitToContents' | readonly nu
  * sheets that are work surfaces are shown full-screen (`sheetRouteKinds`), and
  * `SheetScene` draws them the close button a full-screen route needs.
  *
- * The entries on `fullscreen` are not sheets and never were. Each one
- * says why here, because this table is the allowlist
- * `sheet-scene-contract.test.ts` holds the app to.
+ * Fullscreen entries document why their content needs the whole screen.
  */
 export const sheetRoutePresentations: Readonly<Record<string, SheetPresentation>> = {
   // The diagram canvas owns pan/pinch gestures and provides its own close control.
@@ -71,8 +69,11 @@ export const sheetRoutePresentations: Readonly<Record<string, SheetPresentation>
   // The Skia farm: a canvas that takes every touch on it, edge to edge.
   simfarm: 'fullscreen',
   'new-task': 'sheet',
+  'voice-input': 'sheet',
+  'settings-voice': 'sheet',
   'home-target': 'sheet',
   'home-agents': 'sheet',
+  'home-agent': 'sheet',
   // The agent's pickers. Every one of them is a destination -- pick a model,
   // pick a workspace, read a diff -- so every one is a route rather than a
   // `<Modal>` the workbench keeps mounted whether it is open or not.
@@ -87,6 +88,7 @@ export const sheetRoutePresentations: Readonly<Record<string, SheetPresentation>
   'agent-context': 'sheet',
   'agent-vcs-diff': 'sheet',
   'agent-tasks': 'sheet',
+  'server-tasks': 'sheet',
   'agent-shells': 'sheet',
   'agent-guide': 'sheet',
 };
@@ -155,11 +157,15 @@ export const sheetRouteKinds: Readonly<Record<string, SheetKind>> = {
   'settings-home-layout': 'picker',
   'home-target': 'picker',
   'home-agents': 'picker',
+  'home-agent': 'picker',
   // Short forms and inspectors: a few fields, a meter, a short list.
   'new-task': 'picker',
   'web-service': 'picker',
   'agent-context': 'picker',
+  'voice-input': 'picker',
+  'settings-voice': 'picker',
   'agent-tasks': 'picker',
+  'server-tasks': 'picker',
   'agent-shells': 'picker',
   'agent-guide': 'picker',
 };
@@ -214,13 +220,19 @@ export const sheetRouteDetents: Readonly<Record<string, SheetDetents>> = {
   // whole screen.
   'settings-theme': 'expandable',
   'settings-theme-browse': 'expandable',
-  // Settings groups retain a bounded, scrollable window as text size grows.
+  // A machine's row opens into an edit form: room above the keyboard.
   'settings-servers': 'expandable',
-  'settings-terminal': 'expandable',
+  // Settings groups without text fields are as tall as their rows: three
+  // alert switches are a short sheet, not a tall one with a band of ground
+  // under them. A group longer than the expandable window stops there and
+  // scrolls (`SheetScene`'s `fitsContent`).
+  'settings-terminal': 'fitToContents',
+  // Its rows are taller than the fitted cap: the tall sheet Computers uses,
+  // so it opens with every row showing instead of scrolling.
   'settings-appearance': 'expandable',
-  'settings-alerts': 'expandable',
-  'settings-storage': 'expandable',
-  'settings-about': 'expandable',
+  'settings-alerts': 'fitToContents',
+  'settings-storage': 'fitToContents',
+  'settings-about': 'fitToContents',
   // Two font groups, including a URL field that needs room above the keyboard.
   'settings-font': 'expandable',
   // One short list of languages: as tall as it is, and no taller.
@@ -231,6 +243,7 @@ export const sheetRouteDetents: Readonly<Record<string, SheetDetents>> = {
   'new-task': 'expandable',
   'home-target': 'fitToContents',
   'home-agents': 'fitToContents',
+  'home-agent': 'fitToContents',
   // Open a web service (card #829). One field with a row of shortcuts over it:
   // a full-height sheet for a port number would be the app implying the task is
   // bigger than typing four digits.
@@ -257,10 +270,16 @@ export const sheetRouteDetents: Readonly<Record<string, SheetDetents>> = {
   // have somewhere to come up to.
   'agent-worktree': 'expandable',
   'agent-context': 'expandable',
+  'voice-input': 'fitToContents',
+  // Three fields: room above the keyboard, like the font sheet.
+  'settings-voice': 'expandable',
   'agent-vcs-diff': 'expandable',
   // A short list with its own scroll root, so it takes a bounded viewport rather
   // than circular fit-to-content sizing.
   'agent-tasks': [0.65, 0.9],
+  // The selected server's task ledger: grouped rows and one task's detail in
+  // place of them, so it reaches nearly the full height for a long summary.
+  'server-tasks': [0.65, 0.95],
   // What is still running after the agent moved on: a short list with one
   // expandable output box, so it takes a bounded viewport for the same reason.
   'agent-shells': [0.65, 0.9],
@@ -269,10 +288,16 @@ export const sheetRouteDetents: Readonly<Record<string, SheetDetents>> = {
   'agent-guide': 'fitToContents',
 };
 
+/**
+ * Where an expandable sheet opens, as a share of the window -- and the tallest
+ * a content-sized settings sheet grows before its rows scroll.
+ */
+export const EXPANDABLE_DETENT = 0.82;
+
 /** The named windows, spelled out. Ascending, which `highest` relies on. */
 const NAMED_DETENTS: Readonly<Record<'full' | 'expandable', readonly number[]>> = {
   full: [1],
-  expandable: [0.82, 1],
+  expandable: [EXPANDABLE_DETENT, 1],
 };
 
 /**
@@ -302,12 +327,9 @@ export type SheetContent = 'list' | 'short';
  * taller or shorter than it wants, never a row nobody can reach.
  */
 export const sheetRouteContent: Readonly<Record<string, SheetContent>> = {
-  'settings-servers': 'list',
-  'settings-terminal': 'list',
   'settings-appearance': 'list',
-  'settings-alerts': 'list',
-  'settings-storage': 'list',
-  'settings-about': 'list',
+  'settings-servers': 'list',
+  'settings-voice': 'list',
   // The quick actions: tiles, then a grouped list that grows with the machine.
   commands: 'list',
   // Machines, backends, workspaces and panels in one column -- "what is
@@ -335,6 +357,7 @@ export const sheetRouteContent: Readonly<Record<string, SheetContent>> = {
   // What is still running after the agent moved on.
   'agent-shells': 'list',
   'agent-tasks': 'list',
+  'server-tasks': 'list',
   // Pairing is not a list, but it is as tall as one: a camera the size of the
   // sheet's width, two other ways in, and the install command under them. At
   // its first detent the last of those was below the fold with nothing to
@@ -348,6 +371,7 @@ export const sheetRouteContent: Readonly<Record<string, SheetContent>> = {
   // language sheet is twelve languages; the agent list grows with whatever the
   // reader has defined under `.opencode/agent`; the guide is a page of prose.
   'agent-context': 'list',
+  'voice-input': 'short',
   'agent-mode': 'list',
   'settings-font': 'list',
   'settings-language': 'list',
@@ -359,8 +383,14 @@ export const sheetRouteContent: Readonly<Record<string, SheetContent>> = {
   'new-task': 'short',
   'home-target': 'short',
   'home-agents': 'short',
+  'home-agent': 'short',
   'settings-home-layout': 'short',
   'web-service': 'short',
+  // The settings groups are content-sized, capped by `SheetScene`'s `fitsContent`.
+  'settings-terminal': 'short',
+  'settings-alerts': 'short',
+  'settings-storage': 'short',
+  'settings-about': 'short',
 };
 
 /**
@@ -446,7 +476,7 @@ export function sheetPresentationOptions(
   if (presentation === 'fullscreen')
     return {
       presentation: 'fullScreenModal',
-      animation: 'slide_from_bottom',
+      animation: 'default',
       gestureEnabled: false,
     };
   return {
@@ -464,10 +494,8 @@ export function sheetPresentationOptions(
 /**
  * The options for a sheet route, both halves read from the tables above.
  *
- * The two `fullscreen` routes keep their explicit
- * `sheetPresentationOptions(sheetRoutePresentations[...])` call in
- * `_layout.tsx`, because each of them also overrides the animation duration --
- * and because the contract test greps for exactly that spelling.
+ * Explicit full-screen routes and Pad work surfaces keep their native
+ * presentation and gesture policy with the default navigation animation.
  */
 export function sheetRouteOptions(
   route: string,
@@ -477,7 +505,8 @@ export function sheetRouteOptions(
    * Whether the window is a Pad (`responsiveWorkspaceLayout(width).mode`). A
    * work surface is full-screen there; see `sheetRouteKinds`.
    */
-  isPad = false
+  isPad = false,
+  platform: string | undefined = process.env.EXPO_OS
 ): NativeStackNavigationOptions {
   if (isFullscreenSheetRoute(route, isPad))
     return {
@@ -489,12 +518,38 @@ export function sheetRouteOptions(
     sheetRouteDetents[route] ?? 'full',
     sheetRouteContent[route] ?? 'short'
   );
+  const centeredSettings = isCenteredSettingsSheetRoute(route, isPad, platform);
   return {
     ...options,
     ...(profile ? { sheetCornerRadius: profile.chrome.sheet } : {}),
+    ...(centeredSettings
+      ? {
+          // The transparent native host still spans the window. Its full-width
+          // elevation would outline invisible side gutters rather than the card.
+          sheetElevation: 0,
+          // Keep the content host full-width so SheetRouteFrame can receive
+          // side-gutter taps. The frame caps and clips only its painted child.
+        }
+      : {}),
     // Duration alone does not disable native Android transitions.
     ...(reduceMotion ? { animation: 'none', animationDuration: 0 } : {}),
   };
+}
+
+export const PAD_SETTINGS_SHEET_WIDTH = 640;
+
+/** UIKit already owns its card and outside dismissal; Android needs both. */
+export function isCenteredSettingsSheetRoute(
+  route: string,
+  isPad: boolean,
+  platform: string | undefined = process.env.EXPO_OS
+): boolean {
+  return (
+    platform === 'android' &&
+    isPad &&
+    route.startsWith('settings-') &&
+    sheetRouteKinds[route] === 'picker'
+  );
 }
 
 /**

@@ -24,9 +24,10 @@ import type { AgentClientCommandId } from '@/lib/agent-commands';
 import type { GitFileStatus } from '@/lib/git-diff';
 import type { NamedApprovalDecision } from '@/lib/pane-approval';
 import type { PaneViewMode } from '@/lib/pane-view-mode';
-import type { ServerReachability } from '@/lib/server-reachability';
+import type { ConnectionStatus, ServerReachability } from '@/lib/server-reachability';
 import type { LaunchAgentCaption } from '@/lib/home-launch-model';
 import type { AgentSessionStatusWord } from '@/lib/home-continue';
+import type { TaskState } from '@/lib/task-ledger';
 import { OPENCODE_INSTALL_URL } from '@/constants/links';
 
 /**
@@ -47,6 +48,23 @@ export const reachabilityDescription: Record<ServerReachability, MessageDescript
   live: msg`Online`,
   offline: msg`Offline, not answering`,
   unknown: msg`Not connected`,
+};
+
+/**
+ * A computer row's status, which can also say the app is reconnecting to the
+ * selected computer, or that the computer refused this device's pairing --
+ * neither of which is a network outage, so neither borrows its words.
+ */
+export const connectionStatusLabel: Record<ConnectionStatus, MessageDescriptor> = {
+  ...reachabilityLabel,
+  reconnecting: msg`RECONNECTING…`,
+  unauthorized: msg`PAIRING EXPIRED`,
+};
+
+export const connectionStatusDescription: Record<ConnectionStatus, MessageDescriptor> = {
+  ...reachabilityDescription,
+  reconnecting: msg`Reconnecting…`,
+  unauthorized: msg`Pairing expired — pair again`,
 };
 
 export const paneViewModeLabel: Record<PaneViewMode, MessageDescriptor> = {
@@ -386,6 +404,18 @@ export const agentSessionStatusWord: Record<AgentSessionStatusWord, MessageDescr
   unknown: msg`Status unknown`,
 };
 
+/** A ledger task's state, as the tasks sheet says it. */
+export const taskStateWord: Record<TaskState, MessageDescriptor> = {
+  queued: msg({ message: 'Queued', context: 'task state' }),
+  dispatching: msg({ message: 'Starting', context: 'task state' }),
+  working: msg({ message: 'Working', context: 'task state' }),
+  waiting: msg({ message: 'Needs you', context: 'task state' }),
+  idle_unconfirmed: msg({ message: 'Paused', context: 'task state' }),
+  done: msg({ message: 'Done', context: 'task state' }),
+  failed: msg({ message: 'Failed', context: 'task state' }),
+  cancelled: msg({ message: 'Cancelled', context: 'task state' }),
+};
+
 export const agentLaunchCaption: Record<LaunchAgentCaption, MessageDescriptor> = {
   'new-session': msg`New session`,
   'not-installed': msg`Not installed`,
@@ -421,7 +451,7 @@ export type AgentGuideCopy = {
  */
 export const agentGuideCopy: Record<string, AgentGuideCopy> = {
   opencode: {
-    start: msg`Start the OpenCode service on the gateway host, then check again.`,
+    start: msg`Start the OpenCode service on the computer, then check again.`,
     command: 'opencode service start',
     installUrl: OPENCODE_INSTALL_URL,
   },
@@ -434,7 +464,7 @@ export const agentGuideCopy: Record<string, AgentGuideCopy> = {
   // (`needs-setup`) gets the pairing sentence and `t3 pair`. Never both at once: pasted as two lines, `t3 pair` would wait
   // behind the server.
   t3: {
-    start: msg`Open T3 Code on the gateway host (or run t3 service install), then check again.`,
+    start: msg`Open T3 Code on the computer (or run t3 service install), then check again.`,
     setupStart: msg`Run t3 pair on the host, set the printed token as t3.pairing_token in the gateway config, and restart the gateway within 5 minutes.`,
     command: 't3 service install',
     setupCommand: 't3 pair',
@@ -443,7 +473,7 @@ export const agentGuideCopy: Record<string, AgentGuideCopy> = {
 
 /** The guide for a kind this build has never heard of. */
 export const agentGuideFallback: AgentGuideCopy = {
-  start: msg`Start the agent on the gateway host, then check again.`,
+  start: msg`Start the agent on the computer, then check again.`,
 };
 
 export function agentGuideFor(kind: string | undefined): AgentGuideCopy {

@@ -12,6 +12,17 @@
  * Pure, so the grouping and its order are tested without the sheet.
  */
 
+import { isFreeModel } from '@/lib/agent-protocol';
+
+/**
+ * Whether the "Free only" segment has anything to show. A catalog with no free
+ * model gets no segmented control at all: a filter that can only empty the
+ * list is noise. Decided by the same `isFreeModel` the filter applies.
+ */
+export function hasFreeModel(models: readonly Parameters<typeof isFreeModel>[0][]): boolean {
+  return models.some((model) => isFreeModel(model));
+}
+
 export interface ProviderGroupModel {
   id: string;
   provider_id: string;
@@ -31,13 +42,26 @@ export interface ModelProviderGroup<Model extends ProviderGroupModel> {
   models: Model[];
 }
 
-/** The order for providers the catalog did not list itself. */
-const PREFERRED_ORDER = ['opencode', 'deepseek', 'openai', 'anthropic', 'google'];
+/**
+ * A provider's heading: the name the catalog gives it, else its raw id.
+ * Nothing is invented -- no spelling table, no title-casing (the owner's
+ * rule): the gateway's catalog is the only source of a provider's name.
+ */
+export function providerTitle(
+  providers: readonly ProviderGroupSource[],
+  providerId: string
+): string {
+  const name = providers.find((entry) => entry.id === providerId)?.name?.trim();
+  return name || providerId;
+}
 
+/**
+ * The groups in the catalog's own provider order; a provider the catalog did
+ * not list follows, in the order its models came, under its raw id.
+ */
 export function groupModelsByProvider<Model extends ProviderGroupModel>(
   models: readonly Model[],
   providers: readonly ProviderGroupSource[],
-  fallbackName: (providerId: string) => string,
   options: { includeEmptyUnavailable?: boolean } = {}
 ): ModelProviderGroup<Model>[] {
   const byProvider = new Map<string, Model[]>();
@@ -48,16 +72,7 @@ export function groupModelsByProvider<Model extends ProviderGroupModel>(
     byProvider.set(provider, list);
   }
   const listed = providers.map((provider) => provider.id);
-  const unlisted = Array.from(byProvider.keys())
-    .filter((id) => !listed.includes(id))
-    .sort((a, b) => {
-      const ia = PREFERRED_ORDER.indexOf(a);
-      const ib = PREFERRED_ORDER.indexOf(b);
-      if (ia !== -1 && ib !== -1) return ia - ib;
-      if (ia !== -1) return -1;
-      if (ib !== -1) return 1;
-      return a.localeCompare(b);
-    });
+  const unlisted = Array.from(byProvider.keys()).filter((id) => !listed.includes(id));
   const groups: ModelProviderGroup<Model>[] = [];
   for (const id of [...listed, ...unlisted]) {
     if (groups.some((group) => group.providerId === id)) continue;
@@ -65,10 +80,9 @@ export function groupModelsByProvider<Model extends ProviderGroupModel>(
     const available = provider?.available !== false;
     const groupModels = byProvider.get(id) ?? [];
     if (groupModels.length === 0 && (available || !options.includeEmptyUnavailable)) continue;
-    const name = provider?.name?.trim();
     groups.push({
       providerId: id,
-      title: name && name !== id ? name : fallbackName(id),
+      title: providerTitle(providers, id),
       available,
       models: groupModels,
     });

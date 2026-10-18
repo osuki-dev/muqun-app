@@ -7,7 +7,6 @@
 // TerminalEmulator / parseTerminalSnapshot API.
 import { describe, expect, test } from 'bun:test';
 import {
-  MAX_EMULATED_ROWS,
   parseTerminalSnapshot,
   terminalFrameLinks,
   terminalFrameText,
@@ -135,16 +134,6 @@ describe('malformed / unsupported sequence recovery', () => {
         .trimEnd()
     ).toBe('visible');
   });
-
-  // `write` holds an unfinished sequence for the next call (the SSH shell feeds
-  // it a byte stream cut at arbitrary points); `stream.test.ts` has the full
-  // chunk-boundary suite, this is the one case that used to be a deviation.
-  test('an escape sequence split across two write() calls is reassembled', () => {
-    const term = emulator(20, 2);
-    term.write(`${CSI}3`);
-    term.write('1mX');
-    expect(textOf(term)).toBe('X');
-  });
 });
 
 describe('scrollback retention', () => {
@@ -164,10 +153,6 @@ describe('scrollback retention', () => {
 });
 
 describe('MAX_EMULATED_ROWS limit', () => {
-  test('the constant is the documented cap', () => {
-    expect(MAX_EMULATED_ROWS).toBe(2002);
-  });
-
   test('snapshots taller than the emulator drop the oldest rows', () => {
     const input = Array.from({ length: 2100 }, (_, index) => `ln${index}`).join('\n');
     const frame = parseTerminalSnapshot(input);

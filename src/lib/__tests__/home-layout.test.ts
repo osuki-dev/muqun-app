@@ -1,18 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 
-import {
-  DEFAULT_HOME_LAYOUT,
-  isHomeLayout,
-  resolveHomeLayout,
-  type HomeLayout,
-} from '@/lib/home-layout';
+import { isHomeLayout, resolveHomeLayout } from '@/lib/home-layout';
 
 describe('home layout resolution', () => {
-  test('editorial is the default for users without a saved choice', () => {
-    expect(DEFAULT_HOME_LAYOUT satisfies HomeLayout).toBe('editorial');
-    expect(resolveHomeLayout(undefined)).toBe('editorial');
-  });
-
   test('accepts only released layouts', () => {
     expect(isHomeLayout('classic')).toBe(true);
     expect(isHomeLayout('editorial')).toBe(true);
@@ -21,12 +11,11 @@ describe('home layout resolution', () => {
     expect(isHomeLayout({ id: 'classic' })).toBe(false);
   });
 
-  test.each([undefined, null, '', 'studio', 42, { id: 'editorial' }])(
-    'falls back to editorial for unknown input %#',
-    (value) => {
+  test('falls back to editorial for unknown input', () => {
+    for (const value of [undefined, 'studio', { id: 'editorial' }]) {
       expect(resolveHomeLayout(value)).toBe('editorial');
     }
-  );
+  });
 
   test('keeps an explicitly selected released layout', () => {
     expect(resolveHomeLayout('editorial')).toBe('editorial');

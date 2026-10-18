@@ -51,9 +51,6 @@ export async function beginPairingTransaction(
 ): Promise<PairingRequest> {
   const requestId = createRequestId();
   const installId = await getInstallId();
-  // A QR without a bootstrap key means the owner explicitly disabled
-  // application transport encryption on the Gateway. Keep supporting that
-  // token-only mode; the Gateway manager is responsible for the warning.
   const response = await requestPairing(
     offer.url,
     requestId,
@@ -70,13 +67,12 @@ export async function beginPairingTransaction(
       ...offer,
       serverId,
       verifyAdvertisedUrl: offer.serverId !== undefined,
-      // Follow the server's transport encryption setting: if the gateway explicitly
-      // configured 'disabled', allow plaintext pairing without forcing encryption.
-      transportRequired:
-        response.transport_encryption === 'disabled' ? false : Boolean(offer.transportKey),
+      // Honor the Gateway's explicit disabled mode; an absent policy keeps
+      // the encrypted-claim default for both manual and QR offers.
+      transportRequired: response.transport_encryption !== 'disabled',
     },
     requestId,
-    serverLabel: response.server_label || 'Server',
+    serverLabel: response.server_label || 'Computer',
     expiresAt: response.expires_in_ms ? Date.now() + response.expires_in_ms : undefined,
   };
 }

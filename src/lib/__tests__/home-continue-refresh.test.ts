@@ -13,6 +13,39 @@ const entries: HomeRecentEntry[] = [
   { key: 'chosen', target, title: 'Original', atMs: 1 },
   { key: 'other', target: { ...target, serverId: 'other' }, title: 'Other', atMs: 1 },
 ];
+
+test('a refresh cannot retag or overwrite a conversation from another provider with the same ID', async () => {
+  const titles: string[] = [];
+  const repaired: string[] = [];
+  await refreshHomeContinue({
+    serverId: 'chosen',
+    sessionId: 'dev',
+    entries: [
+      { key: 'owned', target: { ...target, agentId: 't3' }, title: 'Original', atMs: 1 },
+      { key: 'legacy', target, title: 'Unknown owner', atMs: 1 },
+    ],
+    read: async (path) =>
+      path.includes('agent-sessions')
+        ? {
+            data: [
+              { asid: 'agent-1', agent_id: 't3', title: 'T3 conversation' },
+              { asid: 'agent-1', agent_id: 'opencode', title: 'OpenCode conversation' },
+            ],
+          }
+        : { items: [] },
+    isCurrent: () => true,
+    recordPanes: async () => {},
+    observe: async () => {},
+    updateTitle: async (target, title) => {
+      titles.push(title);
+    },
+    repairAgent: async (target, agentId) => {
+      repaired.push(agentId);
+    },
+  });
+  expect(titles).toEqual(['T3 conversation']);
+  expect(repaired).toEqual([]);
+});
 function setup(read: (path: string) => Promise<unknown>, isCurrent = () => true) {
   const writes: unknown[] = [];
   return {
@@ -47,7 +80,6 @@ test('refreshes the selected inventory and observations without changing visits 
   });
   await run();
   expect(paths).toHaveLength(3);
-  expect(paths.every((path) => path.startsWith('/api/sessions/dev/'))).toBe(true);
   expect(
     writes.some((value) => JSON.stringify(value) === JSON.stringify({ target, title: 'Updated' }))
   ).toBe(true);
@@ -59,6 +91,95 @@ test('refreshes the selected inventory and observations without changing visits 
   expect(observation.value.observedAtMs).toBeGreaterThan(0);
   expect(entries[0].atMs).toBe(1);
   expect(writes.every((value) => !JSON.stringify(value).includes('other'))).toBe(true);
+});
+
+test('one computer costs at most two reads: its panes and agents, and one session list', async () => {
+  const list = '/api/agent-sessions?roots=true&limit=50&order=desc';
+  const cases: {
+    name: string;
+    entries: HomeRecentEntry[];
+    /** What the merged list carries. */
+    listed?: string[];
+    selected: boolean;
+    servesSnapshot: boolean;
+    snapshotMissing?: boolean;
+    paths: string[];
+  }[] = [
+    {
+      name: 'remembered sessions in two folders, both in the merged list',
+      listed: ['agent-1', 'agent-2'],
+      entries: [
+        entries[0],
+        {
+          key: 'second',
+          target: { ...target, directory: '/else', asid: 'agent-2' },
+          title: '',
+          atMs: 1,
+        },
+      ],
+      selected: false,
+      servesSnapshot: false,
+      paths: ['/api/sessions/dev/panes', '/api/sessions/dev/agents', list],
+    },
+    {
+      name: 'one of them older than the merged list: its folder is read',
+      entries: [
+        entries[0],
+        { key: 'old', target: { ...target, directory: '/else', asid: 'old' }, title: '', atMs: 1 },
+      ],
+      listed: ['agent-1'],
+      selected: false,
+      servesSnapshot: true,
+      paths: [
+        '/api/sessions/dev/snapshot',
+        list,
+        '/api/sessions/dev/agent-sessions?roots=true&directory=%2Felse&limit=50&order=desc',
+      ],
+    },
+    {
+      name: 'nothing remembered, not selected',
+      entries: [],
+      selected: false,
+      servesSnapshot: true,
+      paths: ['/api/sessions/dev/snapshot'],
+    },
+    {
+      name: 'selected, snapshot route missing',
+      entries: [],
+      selected: true,
+      servesSnapshot: true,
+      snapshotMissing: true,
+      paths: [
+        '/api/sessions/dev/snapshot',
+        '/api/sessions/dev/panes',
+        '/api/sessions/dev/agents',
+        list,
+      ],
+    },
+  ];
+  for (const testCase of cases) {
+    const paths: string[] = [];
+    await refreshHomeContinue({
+      serverId: 'chosen',
+      sessionId: 'dev',
+      entries: testCase.entries,
+      read: async (path) => {
+        paths.push(path);
+        if (testCase.snapshotMissing && path.endsWith('/snapshot')) throw new Error('HTTP 404');
+        return { data: (testCase.listed ?? []).map((asid) => ({ asid, status: 'idle' })) };
+      },
+      isCurrent: () => true,
+      recordPanes: async () => {},
+      observe: async () => {},
+      updateTitle: async () => {},
+      recordAgentSessions: testCase.selected ? () => {} : undefined,
+      servesSnapshot: testCase.servesSnapshot,
+    });
+    expect({ name: testCase.name, paths: paths.sort() }).toEqual({
+      name: testCase.name,
+      paths: [...testCase.paths].sort(),
+    });
+  }
 });
 
 test('a late response after switching target publishes nothing', async () => {
@@ -183,7 +304,7 @@ test("the selected gateway's merged agent sessions are recorded and repair a rec
     },
     recordAgentSessions: (snapshot) => recorded.push(snapshot),
   });
-  expect(paths).toContain('/api/agent-sessions?roots=true&limit=8&order=desc');
+  expect(paths).toContain('/api/agent-sessions?roots=true&limit=50&order=desc');
   expect(recorded).toHaveLength(1);
   expect(recorded[0]).toMatchObject({
     serverId: 'chosen',
@@ -195,14 +316,4 @@ test("the selected gateway's merged agent sessions are recorded and repair a rec
   });
   expect(JSON.stringify(repaired)).toContain('{"asid":"agent-1","agentId":"t3"}');
   expect(repaired.every((value) => (value as { agentId: string }).agentId === 't3')).toBe(true);
-});
-
-test('a gateway that is not selected lists no agent sessions', async () => {
-  const paths: string[] = [];
-  const { run } = setup(async (path) => {
-    paths.push(path);
-    return { items: [] };
-  });
-  await run();
-  expect(paths.some((path) => path.startsWith('/api/agent-sessions'))).toBe(false);
 });

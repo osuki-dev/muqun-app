@@ -287,10 +287,23 @@ export function isFullScreenTuiPane(
   paneTitle?: string | null,
   foregroundCommand?: string | null
 ): boolean {
+  if (isLazygitPane(profile, paneTitle, foregroundCommand)) return true;
   if (profile === 'editor') return true;
   if (foregroundCommand && EDITOR_TITLES.test(foregroundCommand.trim())) return true;
   if (profile) return false;
   return Boolean(paneTitle && EDITOR_TITLES.test(paneTitle.trim()));
+}
+
+/** Git TUIs own the screen but must never receive Vim editing commands. */
+export function isLazygitPane(
+  profile: string | null | undefined,
+  paneTitle?: string | null,
+  foregroundCommand?: string | null
+): boolean {
+  if (profile === 'lazygit') return true;
+  const program = foregroundCommand?.trim().split(/\s+/)[0]?.split('/').pop();
+  if (program === 'lazygit') return true;
+  return !profile && Boolean(paneTitle && /^(?:.*\/)?lazygit(?:\s|$)/.test(paneTitle.trim()));
 }
 
 /**
@@ -437,6 +450,66 @@ const MODIFIER_WORDS: Record<string, string> = {
   cmd: 'Cmd',
   meta: 'Cmd',
 };
+
+/** Names for the punctuation a key can be, so two chips never share an id. */
+const PUNCTUATION_NAMES: Readonly<Record<string, string>> = {
+  '-': 'minus',
+  '=': 'equal',
+  '+': 'plus',
+  ':': 'colon',
+  ';': 'semicolon',
+  '/': 'slash',
+  '\\': 'backslash',
+  '.': 'period',
+  ',': 'comma',
+  "'": 'quote',
+  '"': 'dquote',
+  '`': 'backtick',
+  '[': 'lbracket',
+  ']': 'rbracket',
+  '{': 'lbrace',
+  '}': 'rbrace',
+  '(': 'lparen',
+  ')': 'rparen',
+  '<': 'lt',
+  '>': 'gt',
+  '!': 'bang',
+  '?': 'question',
+  '@': 'at',
+  '#': 'hash',
+  $: 'dollar',
+  '%': 'percent',
+  '^': 'caret',
+  '&': 'amp',
+  '*': 'star',
+  _: 'underscore',
+  '|': 'pipe',
+  '~': 'tilde',
+  ' ': 'space',
+};
+
+/**
+ * A shortcut chip's stable test id: `terminal-shortcut-shift-tab` for
+ * `shift+tab`, `terminal-shortcut-nvim-colon-w` for `nvim:w`,
+ * `terminal-shortcut-ctrl-minus` for `ctrl+-`. A `+` between two parts is the
+ * chord's joint and reads as `-`; every other non-alphanumeric is named (or
+ * spelled by code point), so distinct keys never share an id.
+ */
+export function terminalShortcutTestId(key: string): string {
+  const parts = key.toLowerCase().split(/(?<=.)\+(?=.)/);
+  const spelled = parts.map((part) =>
+    Array.from(part)
+      .map((char) =>
+        /[a-z0-9]/.test(char)
+          ? char
+          : `-${PUNCTUATION_NAMES[char] ?? `u${(char.codePointAt(0) ?? 0).toString(16)}`}-`
+      )
+      .join('')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+  );
+  return `terminal-shortcut-${spelled.join('-') || 'key'}`;
+}
 
 export function keyCap(key: string, cap?: string): string {
   // An action that types characters already knows what it looks like: `:w` is

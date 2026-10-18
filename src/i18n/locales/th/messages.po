@@ -23,12 +23,17 @@ msgid "“{0}” has changes that have not been committed. Removing it throws th
 msgstr "“{0}” มีการเปลี่ยนแปลงที่ยังไม่ได้คอมมิต ถ้าลบออกจะหายไปทั้งหมด"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "“{args}” was not sent: a skill takes no arguments."
 msgstr "ไม่ได้ส่ง “{args}” เพราะสกิลไม่รับอาร์กิวเมนต์"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "“{title}” and any subagent sessions under it are removed from the host. This cannot be undone."
 msgstr "“{title}” และเซสชันของซับเอเจนต์ที่อยู่ข้างใต้จะถูกลบออกจากโฮสต์ และย้อนกลับไม่ได้"
+
+#: src/components/home-recent-sessions.tsx
+msgid "“{title}” and its conversation history will be deleted in {provider} on {computer}. The service may also delete its subagent sessions. This cannot be undone."
+msgstr "“{title}” และประวัติการสนทนาจะถูกลบใน {provider} บน {computer} บริการอาจลบเซสชันของเอเจนต์ย่อยด้วย การดำเนินการนี้ย้อนกลับไม่ได้"
 
 #: src/lib/demo-gateway.ts
 msgid "[instructions]"
@@ -102,10 +107,10 @@ msgstr "{0, plural, other {และอีก # เอเจนต์}}"
 msgid "{0, plural, one {Question} other {Questions}}"
 msgstr "{0, plural, other {คำถาม}}"
 
-#. placeholder {0}: formatCacheSize(totals.other)
-#: src/components/settings-storage.tsx
-msgid "{0} · Managed by the system. Clear cache leaves it alone."
-msgstr "{0} · จัดการโดยระบบ การล้างแคชจะไม่กระทบส่วนนี้"
+#. placeholder {0}: device.name
+#: src/components/settings-servers.tsx
+msgid "{0} (gateway)"
+msgstr "{0} (เกตเวย์)"
 
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
@@ -144,37 +149,64 @@ msgstr "{0} โทเค็นที่โมเดลอ่านครั้�
 
 #. placeholder {0}: profile.kind
 #: src/components/new-task-sheet.tsx
-msgid "{0}, not found on this server's PATH"
-msgstr "{0} ไม่พบใน PATH ของเซิร์ฟเวอร์นี้"
+msgid "{0}, not found on this computer's PATH"
+msgstr "{0} ไม่พบใน PATH ของคอมพิวเตอร์นี้"
 
+#. placeholder {0}: age.value
+#: src/hooks/use-task-age.ts
+msgid "{0}d"
+msgstr "{0} วัน"
+
+#. placeholder {0}: age.value
 #. placeholder {0}: parts.value
 #: src/hooks/use-relative-time.ts
+#: src/hooks/use-task-age.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}d ago"
 msgstr "{0} วันที่แล้ว"
 
+#. placeholder {0}: age.value
+#: src/hooks/use-task-age.ts
+msgid "{0}h"
+msgstr "{0} ชั่วโมง"
+
+#. placeholder {0}: age.value
 #. placeholder {0}: parts.value
 #: src/hooks/use-relative-time.ts
+#: src/hooks/use-task-age.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}h ago"
 msgstr "{0} ชั่วโมงที่แล้ว"
 
+#. placeholder {0}: age.value
+#: src/hooks/use-task-age.ts
+msgid "{0}m"
+msgstr "{0} นาที"
+
+#. placeholder {0}: age.value
 #. placeholder {0}: parts.value
 #: src/hooks/use-relative-time.ts
+#: src/hooks/use-task-age.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}m ago"
 msgstr "{0} นาทีที่แล้ว"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "{agentId} service"
+msgstr "บริการ {agentId}"
 
 #: src/components/agent-workbench.tsx
 msgid "{agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone."
 msgstr "{agentName} แสดงตัวอย่างการย้อนกลับไม่ได้ การดำเนินการนี้จะลบข้อความนี้และทุกอย่างหลังจากนั้นทั้งรอบ และเลิกทำไม่ได้"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "{agentName} does not support that action."
 msgstr "{agentName} ไม่รองรับการดำเนินการนี้"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "{agentName} is offline"
 msgstr "{agentName} ออฟไลน์"
 
@@ -191,16 +223,13 @@ msgid "{agentName} ready"
 msgstr "{agentName} พร้อมแล้ว"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "{agentName} refused the request: {message}"
 msgstr "{agentName} ปฏิเสธคำขอ: {message}"
 
 #: src/components/new-task-action.tsx
 msgid "{agentName} service offline. Tap for setup instructions"
 msgstr "บริการ {agentName} ออฟไลน์ แตะเพื่อดูวิธีตั้งค่า"
-
-#: src/components/home-recent-sessions.tsx
-msgid "{agentName} session"
-msgstr "เซสชัน {agentName}"
 
 #: src/components/new-task-action.tsx
 msgid "{agentName} sessions are not supported. Tap for details"
@@ -238,9 +267,21 @@ msgstr "ตามหลัง {behind}"
 msgid "{commandName} · sending to"
 msgstr "{commandName} · กำลังส่งไปยัง"
 
+#: src/components/task-row.tsx
+msgid "{computer} never confirmed this task"
+msgstr "{computer} ไม่เคยยืนยันงานนี้"
+
+#: src/components/task-row.tsx
+msgid "{computer} no longer has this task"
+msgstr "{computer} ไม่มีงานนี้แล้ว"
+
 #: src/components/agent-tool-card.tsx
 msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, other {# รายการ}}"
+
+#: src/components/home-connections.tsx
+msgid "{count} in progress"
+msgstr "กำลังทำ {count} รายการ"
 
 #: src/components/home-attention.tsx
 msgid "{count} requests last observed"
@@ -250,6 +291,14 @@ msgstr "พบคำขอ {count} รายการในการตรวจ
 #: src/components/agent-tasks-sheet.tsx
 msgid "{done} of {0} done"
 msgstr "เสร็จ {done} จาก {0}"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "{from} still lists an older {name}. Remove that entry on {from}."
+msgstr "{from} ยังมีรายการ {name} อันเก่าอยู่ ลบรายการนั้นบน {from}"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "{gone} still lists {thisLabel}; remove it on {gone}'s Manage screen"
+msgstr "{gone} ยังมี {thisLabel} อยู่ ลบออกที่หน้าจัดการของ {gone}"
 
 #: src/components/home-launch-actions.tsx
 msgid "{hidden} more"
@@ -287,6 +336,14 @@ msgstr "{messages, plural, other {# ข้อความ}}"
 msgid "{modifierKeys} combinations need the program in this terminal to enable extended keys"
 msgstr "การกดร่วมกับ {modifierKeys} ต้องให้โปรแกรมในเทอร์มินัลนี้เปิดใช้คีย์แบบขยายก่อน"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "{name} does not take work from other computers."
+msgstr "{name} ไม่รับงานจากคอมพิวเตอร์เครื่องอื่น"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "{name} has the same name as {other}; rename one of them."
+msgstr "{name} มีชื่อเดียวกับ {other} โปรดเปลี่ยนชื่อเครื่องใดเครื่องหนึ่ง"
+
 #: src/components/new-task-action.tsx
 msgid "{name} needs setup. Tap for setup instructions"
 msgstr "{name} ต้องตั้งค่าก่อน แตะเพื่อดูวิธีตั้งค่า"
@@ -318,13 +375,42 @@ msgstr "กำลังทำงาน {running} จาก {0}"
 msgid "{title} — finished while you were away"
 msgstr "{title} — ทำงานเสร็จตอนที่คุณไม่อยู่"
 
+#: src/components/task-row.tsx
+msgid "{total, plural, one {# sub-task} other {# sub-tasks}}"
+msgstr "{total, plural, other {งานย่อย # งาน}}"
+
+#: src/components/task-row.tsx
+msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
+msgstr "{total, plural, other {งานย่อย # งาน}} ({waiting, plural, other {รอ # งาน}})"
+
+#: src/components/task-row.tsx
+msgid "→ {name}"
+msgstr "→ {name}"
+
+#. placeholder {0}: card.nowTotal - card.now.length
+#: src/components/home-computer-cards.tsx
+msgid "+{0} more"
+msgstr "อีก {0} รายการ"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "อีก +{overflow} รายการ"
 
+#: src/hooks/use-task-age.ts
+msgid "<1m"
+msgstr "<1 นาที"
+
 #: src/components/dev-home-ambient-controls.tsx
 msgid "0 speed pauses motion. Theme default restores the theme."
 msgstr "ความเร็ว 0 จะหยุดการเคลื่อนไหว ค่าเริ่มต้นของธีมจะคืนค่าเอฟเฟกต์"
+
+#: src/components/settings-storage.tsx
+msgid "10 days"
+msgstr "10 วัน"
+
+#: src/components/settings-storage.tsx
+msgid "30 days"
+msgstr "30 วัน"
 
 #. placeholder {0}: Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))
 #: src/components/settings-font-sheet.tsx
@@ -384,9 +470,22 @@ msgstr "หน้าคู่บนแท็บเล็ต"
 msgid "A terminal was created. Check it before sending again — your task is still here."
 msgstr "สร้างเทอร์มินัลแล้ว ตรวจสอบก่อนส่งอีกครั้ง งานของคุณยังอยู่ที่นี่"
 
+#: src/hooks/use-lazygit.ts
+msgid "A terminal was created. Open it to inspect startup; launching again could create a duplicate."
+msgstr "สร้างเทอร์มินัลแล้ว เปิดเพื่อตรวจสอบการเริ่มทำงาน การเปิดอีกครั้งอาจสร้างรายการซ้ำ"
+
+#: src/app/settings-about.tsx
 #: src/app/settings.tsx
 msgid "About"
 msgstr "เกี่ยวกับ"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Accept work from other computers"
+msgstr "รับงานจากคอมพิวเตอร์เครื่องอื่น"
+
+#: src/components/task-row.tsx
+msgid "Acknowledge"
+msgstr "ทำเครื่องหมายว่ารับทราบ"
 
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send it a command"
@@ -395,6 +494,11 @@ msgstr "สั่งงานเทอร์มินัลนี้ หรื�
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send its agent a prompt"
 msgstr "สั่งงานเทอร์มินัลนี้ หรือส่งคำสั่งให้เอเจนต์ของมัน"
+
+#: src/components/home-recent-sessions.tsx
+#: src/components/task-row.tsx
+msgid "Actions"
+msgstr "การทำงาน"
 
 #. placeholder {0}: row.name
 #. placeholder {0}: sessionTitleOr(session, t`Untitled session`)
@@ -410,8 +514,8 @@ msgid "Actual size"
 msgstr "ขนาดจริง"
 
 #: src/components/home-connections.tsx
-msgid "Add a gateway or an SSH host to start working."
-msgstr "เพิ่ม Gateway หรือโฮสต์ SSH เพื่อเริ่มทำงาน"
+msgid "Add a computer or an SSH host to start working."
+msgstr "เพิ่มคอมพิวเตอร์หรือโฮสต์ SSH เพื่อเริ่มทำงาน"
 
 #: src/components/ssh-host-list.tsx
 msgid "Add a host"
@@ -431,8 +535,8 @@ msgid "Add commands and custom key combinations."
 msgstr "เพิ่มคำสั่งและชุดปุ่มลัดที่กำหนดเอง"
 
 #: src/components/session-map.tsx
-msgid "Add machine"
-msgstr "เพิ่มเครื่อง"
+msgid "Add computer"
+msgstr "เพิ่มคอมพิวเตอร์"
 
 #: src/app/explore.tsx
 msgid "Add one first"
@@ -447,9 +551,22 @@ msgctxt "git file status"
 msgid "Added"
 msgstr "เพิ่มแล้ว"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Advanced agent access"
+msgstr "การเข้าถึงขั้นสูงของเอเจนต์"
+
+#: src/app/settings-voice.tsx
+msgid "After recording"
+msgstr "หลังบันทึกเสียง"
+
+#: src/components/home-composer-options.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Agent"
 msgstr "เอเจนต์"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Agent access"
+msgstr "การเข้าถึงของเอเจนต์"
 
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
@@ -471,14 +588,20 @@ msgid "Agent panes open in"
 msgstr "เปิดพาเนลเอเจนต์ใน"
 
 #: src/components/app-drawer-content.tsx
+#: src/components/settings-server-capabilities.tsx
 #: src/components/settings-servers.tsx
 msgid "Agents"
 msgstr "เอเจนต์"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Agents on your other computers can hand part of a task to this one."
+msgstr "เอเจนต์บนคอมพิวเตอร์เครื่องอื่นของคุณสามารถส่งงานบางส่วนมาให้เครื่องนี้ได้"
 
 #: src/components/app-drawer-content.tsx
 msgid "AI coding assistant"
 msgstr "ผู้ช่วยเขียนโค้ด AI"
 
+#: src/app/settings-alerts.tsx
 #: src/app/settings.tsx
 msgid "Alerts"
 msgstr "การแจ้งเตือน"
@@ -487,6 +610,7 @@ msgstr "การแจ้งเตือน"
 msgid "Align the QR inside the frame"
 msgstr "จัด QR ให้อยู่ในกรอบ"
 
+#: src/components/home-recent-chips.tsx
 #: src/components/session-artifacts.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "All"
@@ -519,6 +643,10 @@ msgstr "อนุญาต"
 #: src/components/pairing-camera.tsx
 msgid "Allow camera"
 msgstr "อนุญาตกล้อง"
+
+#: src/components/voice-input-button.tsx
+msgid "Allow microphone access in system settings."
+msgstr "อนุญาตการเข้าถึงไมโครโฟนในการตั้งค่าระบบ"
 
 #: src/app/explore.tsx
 msgid "Allow the camera, or enter the address instead."
@@ -565,6 +693,10 @@ msgstr "อนุญาตเสมอ"
 msgid "and {rest} more"
 msgstr "และอีก {rest}"
 
+#: src/components/task-row.tsx
+msgid "another computer"
+msgstr "คอมพิวเตอร์เครื่องอื่น"
+
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
 msgstr "คำตอบ"
@@ -573,6 +705,18 @@ msgstr "คำตอบ"
 #: src/components/approval-banner.tsx
 msgid "Answer: {0}"
 msgstr "คำตอบ: {0}"
+
+#: src/app/settings-voice.tsx
+msgid "API key"
+msgstr "คีย์ API"
+
+#: src/app/settings-voice.tsx
+msgid "API key (optional)"
+msgstr "คีย์ API (ไม่บังคับ)"
+
+#: src/app/settings-voice.tsx
+msgid "API URL"
+msgstr "URL ของ API"
 
 #: src/components/settings-appearance.tsx
 msgid "App icon"
@@ -595,6 +739,7 @@ msgstr "การล็อกแอปไม่พร้อมใช้งาน
 msgid "App name and tagline"
 msgstr "ชื่อแอปและคำโปรย"
 
+#: src/app/settings-appearance.tsx
 #: src/app/settings.tsx
 msgid "Appearance"
 msgstr "รูปลักษณ์"
@@ -615,6 +760,7 @@ msgid "Apply theme"
 msgstr "ใช้ธีม"
 
 #: src/components/terminal-theme-drop.tsx
+#: src/components/update-status-banner.tsx
 msgid "Applying…"
 msgstr "กำลังใช้…"
 
@@ -642,13 +788,13 @@ msgstr "ถามคำถาม ดูไฟล์ หรือรันคำ�
 msgid "Ask you a question"
 msgstr "ถามคำถามคุณ"
 
+#: src/components/new-task-sheet.tsx
+msgid "Asking the computer what it can run…"
+msgstr "กำลังสอบถามคอมพิวเตอร์ว่าสามารถเรียกใช้อะไรได้บ้าง…"
+
 #: src/app/explore.tsx
 msgid "Asking the Gateway about that code."
 msgstr "กำลังสอบถาม Gateway เกี่ยวกับรหัสนี้"
-
-#: src/components/new-task-sheet.tsx
-msgid "Asking the server what it can run…"
-msgstr "กำลังสอบถามเซิร์ฟเวอร์ว่าสามารถเรียกใช้อะไรได้บ้าง…"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Assign this to an assistant"
@@ -691,6 +837,14 @@ msgstr "แนบไฟล์"
 msgid "Attachment"
 msgstr "ไฟล์แนบ"
 
+#: src/components/session-artifacts.tsx
+msgid "Audio"
+msgstr "เสียง"
+
+#: src/components/audio-asset-preview.tsx
+msgid "Audio preview supports files up to {ceiling}."
+msgstr "ตัวอย่างเสียงรองรับไฟล์ขนาดไม่เกิน {ceiling}"
+
 #: src/components/app-lock-gate.tsx
 msgid "Authenticate with {authLabel} to continue."
 msgstr "ยืนยันตัวตนด้วย {authLabel} เพื่อดำเนินการต่อ"
@@ -719,9 +873,17 @@ msgstr "การยืนยันตัวตนไม่พร้อมใช
 msgid "Auto-approve every action"
 msgstr "อนุมัติทุกการกระทำอัตโนมัติ"
 
+#: src/app/settings-voice.tsx
+msgid "Auto-detect"
+msgstr "ตรวจหาอัตโนมัติ"
+
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Automatic"
 msgstr "อัตโนมัติ"
+
+#: src/components/settings-storage.tsx
+msgid "Automatic cache cleanup"
+msgstr "ล้างแคชอัตโนมัติ"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Autonomous software engineering: edits files, runs commands, tests."
@@ -740,13 +902,13 @@ msgstr "ย้อนกลับ"
 msgid "Back one word"
 msgstr "ย้อนกลับหนึ่งคำ"
 
+#: src/components/app-drawer.tsx
+msgid "Back to computers"
+msgstr "กลับไปยังคอมพิวเตอร์"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Back to Home"
 msgstr "กลับไปหน้าแรก"
-
-#: src/components/app-drawer.tsx
-msgid "Back to servers"
-msgstr "กลับไปยังเซิร์ฟเวอร์"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back to SSH hosts"
@@ -873,6 +1035,9 @@ msgstr "ต้องเข้าถึงกล้อง"
 #: src/components/ssh-host-form.tsx
 #: src/components/ssh-host-key-dialog.tsx
 #: src/components/theme-link-import.tsx
+#: src/components/voice-input-button.tsx
+#: src/hooks/use-file-actions.tsx
+#: src/hooks/use-lazygit.ts
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "ยกเลิก"
@@ -891,6 +1056,10 @@ msgstr "ยกเลิกการแก้ไข {0}"
 msgid "Cancel queued message"
 msgstr "ยกเลิกข้อความในคิว"
 
+#: src/components/task-row.tsx
+msgid "Cancel task"
+msgstr "ยกเลิกงาน"
+
 #: src/components/agent-composer.tsx
 msgid "Cancel this queued message"
 msgstr "ยกเลิกข้อความที่อยู่ในคิวนี้"
@@ -899,6 +1068,19 @@ msgstr "ยกเลิกข้อความที่อยู่ในคิ
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Cancelled"
 msgstr "ยกเลิกแล้ว"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Cancelled"
+msgstr "ยกเลิกแล้ว"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Cannot reach {quietNames}"
+msgstr "เข้าถึง {quietNames} ไม่ได้"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Capabilities"
+msgstr "ความสามารถ"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
@@ -930,6 +1112,14 @@ msgstr "ตรวจสอบอีกครั้ง"
 msgid "Check device authentication settings and try again."
 msgstr "ตรวจสอบการตั้งค่าการยืนยันตัวตนของอุปกรณ์แล้วลองอีกครั้ง"
 
+#: src/components/home-composer-dock.tsx
+msgid "Check status"
+msgstr "ตรวจสอบสถานะ"
+
+#: src/hooks/use-lazygit.ts
+msgid "Check that lazygit is installed on this computer and this pane is in a Git repository."
+msgstr "ตรวจสอบว่าติดตั้ง lazygit บนคอมพิวเตอร์เครื่องนี้แล้ว และแพนนี้อยู่ในที่เก็บ Git"
+
 #: src/hooks/use-agent-command-delivery.ts
 msgid "Check the assistant before sending again; it may have received the request."
 msgstr "ตรวจสอบผู้ช่วยก่อนส่งอีกครั้ง เพราะอาจได้รับคำขอแล้ว"
@@ -938,14 +1128,23 @@ msgstr "ตรวจสอบผู้ช่วยก่อนส่งอีก
 msgid "Check the repository URL, branch and theme file"
 msgstr "ตรวจสอบ URL ที่เก็บโค้ด สาขา และไฟล์ธีม"
 
+#: src/components/home-composer-dock.tsx
+msgid "Check this computer's tasks. This request has not been sent again."
+msgstr "ตรวจสอบงานบนคอมพิวเตอร์เครื่องนี้ คำขอนี้ไม่ได้ถูกส่งซ้ำ"
+
 #: src/components/theme-browse-sheet.tsx
 msgid "Check your connection and try again."
 msgstr "ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง"
+
+#: src/components/update-status-banner.tsx
+msgid "Checking download size…"
+msgstr "กำลังตรวจสอบขนาดดาวน์โหลด…"
 
 #: src/components/settings-security.tsx
 msgid "Checking system authentication…"
 msgstr "กำลังตรวจสอบการยืนยันตัวตนของระบบ…"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/settings-font-sheet.tsx
 msgid "Checking…"
@@ -953,8 +1152,8 @@ msgstr "กำลังตรวจสอบ…"
 
 #: src/components/home-launch-actions.tsx
 #: src/components/home-target-sheet.tsx
-msgid "Choose a gateway"
-msgstr "เลือก Gateway"
+msgid "Choose a computer"
+msgstr "เลือกคอมพิวเตอร์"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Choose a mode"
@@ -989,6 +1188,10 @@ msgstr "เลือกโฮสต์ SSH"
 msgid "Choose another terminal"
 msgstr "เลือกเทอร์มินัลอื่น"
 
+#: src/components/home-composer-dock.tsx
+msgid "Choose computer, agent, folder, mode and model"
+msgstr "เลือกคอมพิวเตอร์ เอเจนต์ โฟลเดอร์ โหมด และโมเดล"
+
 #: src/components/attachment-menu.tsx
 msgid "Choose files"
 msgstr "เลือกไฟล์"
@@ -1009,6 +1212,10 @@ msgstr "เลือกการเปลี่ยนแปลงที่จะ
 msgid "Choose which simulator to show"
 msgstr "เลือกเครื่องจำลองที่จะแสดง"
 
+#: src/components/git-diff-view.tsx
+msgid "Choose worktree"
+msgstr "เลือกเวิร์กทรี"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Classic"
@@ -1021,6 +1228,10 @@ msgstr "ล้าง"
 #: src/components/settings-storage.tsx
 msgid "Clear cache"
 msgstr "ล้างแคช"
+
+#: src/app/settings-voice.tsx
+msgid "Clear configuration"
+msgstr "ล้างการตั้งค่า"
 
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
@@ -1056,6 +1267,10 @@ msgstr "กำลังล้างแคช"
 msgid "Clearing…"
 msgstr "กำลังล้าง…"
 
+#: src/components/settings-storage.tsx
+msgid "Clears cache when due after opening Muqun. Saved themes are kept."
+msgstr "ล้างแคชเมื่อเปิด Muqun หลังครบกำหนด โดยเก็บธีมที่บันทึกไว้"
+
 #: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
 msgid "Close"
@@ -1068,6 +1283,11 @@ msgstr "ปิดเอฟเฟกต์"
 #: src/components/asset-viewer.tsx
 msgid "Close file"
 msgstr "ปิดไฟล์"
+
+#: src/components/home-recent-sessions.tsx
+#: src/components/task-row.tsx
+msgid "Close menu"
+msgstr "ปิดเมนู"
 
 #: src/app/new-task.tsx
 msgid "Close new task"
@@ -1100,6 +1320,10 @@ msgstr "ปิดเมนู"
 #: src/components/simfarm-stage.tsx
 msgid "Close the simulator"
 msgstr "ปิดเครื่องจำลอง"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Close this terminal on its computer. Safe terminal closing from Home is not supported yet."
+msgstr "ปิดเทอร์มินัลนี้บนคอมพิวเตอร์ที่เกี่ยวข้อง ยังไม่รองรับการปิดเทอร์มินัลอย่างปลอดภัยจากหน้าหลัก"
 
 #: src/components/session-artifacts.tsx
 msgid "Code"
@@ -1143,6 +1367,8 @@ msgid "Colour mode"
 msgstr "โหมดสี"
 
 #: src/app/commands.tsx
+#: src/components/task-result-sheet.tsx
+#: src/lib/demo-gateway.ts
 msgid "Command"
 msgstr "คำสั่ง"
 
@@ -1196,13 +1422,65 @@ msgstr "เทียบกับ {base}"
 msgid "Completed"
 msgstr "เสร็จสิ้น"
 
+#: src/app/agent-guide.tsx
+#: src/app/artifacts.tsx
+#: src/app/panels.tsx
+#: src/components/app-drawer.tsx
+#: src/components/home-composer-options.tsx
+#: src/components/home-recent-sessions.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Computer"
+msgstr "คอมพิวเตอร์"
+
+#: src/app/explore.tsx
+#: src/components/settings-servers.tsx
+msgid "Computer name"
+msgstr "ชื่อคอมพิวเตอร์"
+
+#: src/app/servers/[serverId].tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Computer not found"
+msgstr "ไม่พบคอมพิวเตอร์"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Computer offline"
+msgstr "คอมพิวเตอร์ออฟไลน์"
+
+#: src/components/home-composer-dock.tsx
+#: src/components/server-terminal-workspace.tsx
+#: src/hooks/use-server-tasks.ts
+msgid "Computer unavailable."
+msgstr "คอมพิวเตอร์ไม่พร้อมใช้งาน"
+
+#: src/app/settings-servers.tsx
+#: src/app/settings.tsx
+#: src/components/app-drawer-content.tsx
+#: src/components/file-mention-panel.tsx
+#: src/components/home-editorial-layout.tsx
+#: src/components/home-overview.tsx
+#: src/components/session-map.tsx
+msgid "Computers"
+msgstr "คอมพิวเตอร์"
+
+#: src/components/task-row.tsx
+msgid "Confirm cancel"
+msgstr "ยืนยันการยกเลิก"
+
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
 msgstr "ยืนยันการล้างแคช"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Confirm delete"
+msgstr "ยืนยันการลบ"
+
 #: src/app/explore.tsx
 msgid "Confirm pairing"
 msgstr "ยืนยันการจับคู่"
+
+#: src/components/task-row.tsx
+msgid "Confirm removal"
+msgstr "ยืนยันการนำออก"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm remove unused themes"
@@ -1217,6 +1495,10 @@ msgstr "ยืนยันการลบ {0}"
 #: src/components/settings-servers.tsx
 msgid "Confirm revoke {0}"
 msgstr "ยืนยันการเพิกถอน {0}"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Confirm revoke {title}"
+msgstr "ยืนยันการเพิกถอน {title}"
 
 #: src/components/settings-alerts.tsx
 msgid "Confirm taps, pairing, and gateway events."
@@ -1242,6 +1524,7 @@ msgstr "เชื่อมต่อ"
 #: src/app/explore.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
+#: src/components/settings-server-capabilities.tsx
 msgid "Connected"
 msgstr "เชื่อมต่อแล้ว"
 
@@ -1311,7 +1594,6 @@ msgid "Context used"
 msgstr "บริบทที่ใช้ไป"
 
 #: src/app/explore.tsx
-#: src/components/home-editorial-layout.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
@@ -1441,10 +1723,10 @@ msgstr "การควบคุม"
 msgid "Conversational help and open-ended project questions."
 msgstr "ความช่วยเหลือแบบสนทนาและคำถามปลายเปิดเกี่ยวกับโปรเจกต์"
 
-#: src/components/agent-guide-sheet.tsx
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
+#: src/components/guide-command.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Copied"
 msgstr "คัดลอกแล้ว"
@@ -1489,7 +1771,7 @@ msgstr "คัดลอกพาธ"
 msgid "Copy public key"
 msgstr "คัดลอกคีย์สาธารณะ"
 
-#: src/components/agent-guide-sheet.tsx
+#: src/components/guide-command.tsx
 msgid "Copy the command"
 msgstr "คัดลอกคำสั่ง"
 
@@ -1515,9 +1797,21 @@ msgstr "กำลังคัดลอก…"
 msgid "Could not add a file"
 msgstr "เพิ่มไฟล์ไม่ได้"
 
+#: src/components/task-row.tsx
+msgid "Could not cancel the task"
+msgstr "ยกเลิกงานไม่ได้"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not change delivery"
 msgstr "เปลี่ยนวิธีส่งไม่ได้"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Could not change this setting"
+msgstr "เปลี่ยนการตั้งค่านี้ไม่ได้"
+
+#: src/components/update-status-banner.tsx
+msgid "Could not check download size. Try again."
+msgstr "ตรวจสอบขนาดดาวน์โหลดไม่ได้ โปรดลองอีกครั้ง"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not compact"
@@ -1547,6 +1841,10 @@ msgstr "สร้างเวิร์กทรีนั้นไม่ได้
 msgid "Could not delete"
 msgstr "ลบไม่ได้"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Could not delete this session. Reconnect to its computer and refresh Home before trying again."
+msgstr "ลบเซสชันนี้ไม่ได้ เชื่อมต่อกับคอมพิวเตอร์ที่เกี่ยวข้องอีกครั้งและรีเฟรชหน้าหลักก่อนลองใหม่"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not detach"
 msgstr "ย้ายไปเบื้องหลังไม่สำเร็จ"
@@ -1568,6 +1866,10 @@ msgstr "ดาวน์โหลดไม่สำเร็จ ตรวจส�
 msgid "Could not enable App Lock"
 msgstr "เปิดใช้การล็อกแอปไม่ได้"
 
+#: src/components/task-row.tsx
+msgid "Could not follow this task on {computer}"
+msgstr "ติดตามงานนี้บน {computer} ไม่ได้"
+
 #: src/components/ssh-host-form.tsx
 msgid "Could not generate a key"
 msgstr "สร้างคีย์ไม่ได้"
@@ -1577,8 +1879,20 @@ msgid "Could not keep it"
 msgstr "เก็บไว้ไม่ได้"
 
 #: src/components/new-task-sheet.tsx
-msgid "Could not list this server's agents."
-msgstr "แสดงรายการเอเจนต์ของเซิร์ฟเวอร์นี้ไม่ได้"
+msgid "Could not list this computer's agents."
+msgstr "แสดงรายการเอเจนต์ของคอมพิวเตอร์นี้ไม่ได้"
+
+#: src/components/changes-worktree-list.tsx
+msgid "Could not list worktrees. Refresh to try again."
+msgstr "ไม่สามารถแสดงรายการเวิร์กทรีได้ รีเฟรชเพื่อลองอีกครั้ง"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Could not load agent access"
+msgstr "โหลดสิทธิ์เข้าถึงของเอเจนต์ไม่ได้"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Could not load capabilities"
+msgstr "โหลดความสามารถไม่ได้"
 
 #: src/components/session-artifacts.tsx
 msgid "Could not load files."
@@ -1591,6 +1905,10 @@ msgstr "ไม่สามารถโหลดโมเดลได้"
 #: src/lib/terminal-history-pull.ts
 msgid "Could not load older history from this terminal"
 msgstr "โหลดประวัติก่อนหน้าของเทอร์มินัลนี้ไม่ได้"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Could not load tasks"
+msgstr "โหลดงานไม่ได้"
 
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/agent-workbench.tsx
@@ -1605,13 +1923,25 @@ msgstr "ไม่สามารถโหลดการเปลี่ยนแ
 msgid "Could not load what is running."
 msgstr "โหลดรายการที่กำลังทำงานไม่ได้"
 
+#: src/components/task-row.tsx
+msgid "Could not mark the task done"
+msgstr "ทำเครื่องหมายว่างานเสร็จไม่ได้"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not move this session"
 msgstr "ย้ายเซสชันนี้ไม่ได้"
 
+#: src/components/guide-command.tsx
+msgid "Could not open a terminal on this computer."
+msgstr "เปิดเทอร์มินัลบนคอมพิวเตอร์นี้ไม่ได้"
+
 #: src/hooks/use-home-commands.ts
 msgid "Could not open destination"
 msgstr "เปิดปลายทางไม่ได้"
+
+#: src/components/inline-file-link.tsx
+msgid "Could not open file"
+msgstr "เปิดไฟล์ไม่ได้"
 
 #: src/hooks/use-theme-file-open.ts
 msgid "Could not open that theme"
@@ -1621,7 +1951,7 @@ msgstr "เปิดธีมนั้นไม่ได้"
 msgid "Could not open the file"
 msgstr "เปิดไฟล์ไม่ได้"
 
-#: src/app/settings.tsx
+#: src/app/settings-about.tsx
 msgid "Could not open the guide"
 msgstr "เปิดคู่มือไม่ได้"
 
@@ -1650,29 +1980,41 @@ msgstr "เปิดไฟล์นี้ไม่ได้"
 msgid "Could not open this theme."
 msgstr "เปิดธีมนี้ไม่ได้"
 
+#: src/components/audio-asset-preview.tsx
+msgid "Could not play this audio file."
+msgstr "ไม่สามารถเล่นไฟล์เสียงนี้ได้"
+
+#: src/components/video-asset-preview.tsx
+msgid "Could not play this video file."
+msgstr "ไม่สามารถเล่นไฟล์วิดีโอนี้ได้"
+
+#: src/components/task-row.tsx
+msgid "Could not reach {computer}"
+msgstr "ติดต่อ {computer} ไม่ได้"
+
 #: src/app/explore.tsx
 msgid "Could not reach that address. Check it and make sure the Gateway is running."
 msgstr "ติดต่อที่อยู่นั้นไม่ได้ ตรวจสอบที่อยู่และตรวจว่า Gateway กำลังทำงาน"
 
 #: src/app/explore.tsx
-msgid "Could not reach the gateway."
-msgstr "ติดต่อ Gateway ไม่ได้"
+msgid "Could not reach the computer."
+msgstr "ติดต่อคอมพิวเตอร์ไม่ได้"
 
 #: src/app/explore.tsx
-msgid "Could not reach the gateway. Make sure it is running, then refresh the QR and scan again."
-msgstr "ติดต่อ Gateway ไม่ได้ ตรวจว่ากำลังทำงานอยู่ จากนั้นรีเฟรช QR แล้วสแกนอีกครั้ง"
+msgid "Could not reach the computer. Make sure it is running, then refresh the QR and scan again."
+msgstr "ติดต่อคอมพิวเตอร์ไม่ได้ ตรวจสอบว่าเครื่องเปิดอยู่ จากนั้นรีเฟรช QR แล้วสแกนอีกครั้ง"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Could not reach the theme catalogue"
 msgstr "ติดต่อแค็ตตาล็อกธีมไม่ได้"
 
 #: src/app/new-task.tsx
-msgid "Could not reach this server."
-msgstr "ติดต่อเซิร์ฟเวอร์นี้ไม่ได้"
+msgid "Could not reach this computer."
+msgstr "ติดต่อคอมพิวเตอร์นี้ไม่ได้"
 
 #: src/components/gateway-storage-error.tsx
-msgid "Could not read saved servers. Your saved data has not been changed. Unlock this device and retry."
-msgstr "อ่านเซิร์ฟเวอร์ที่บันทึกไว้ไม่ได้ ข้อมูลที่บันทึกยังไม่เปลี่ยนแปลง ปลดล็อกอุปกรณ์นี้แล้วลองอีกครั้ง"
+msgid "Could not read saved computers. Your saved data has not been changed. Unlock this device and retry."
+msgstr "อ่านคอมพิวเตอร์ที่บันทึกไว้ไม่ได้ ข้อมูลที่บันทึกยังไม่เปลี่ยนแปลง ปลดล็อกอุปกรณ์นี้แล้วลองอีกครั้ง"
 
 #: src/components/changes-sheet.tsx
 msgid "Could not read the changes."
@@ -1683,9 +2025,17 @@ msgstr "อ่านการเปลี่ยนแปลงไม่ได้
 msgid "Could not read the terminal."
 msgstr "อ่านเทอร์มินัลไม่ได้"
 
+#: src/components/home-composer-dock.tsx
+msgid "Could not read this computer's model list, so nothing was sent. Pick a model or try again."
+msgstr "อ่านรายการโมเดลของคอมพิวเตอร์เครื่องนี้ไม่ได้ จึงยังไม่ได้ส่งอะไร เลือกโมเดลหรือลองอีกครั้ง"
+
 #: src/components/changes-sheet.tsx
 msgid "Could not read this file."
 msgstr "อ่านไฟล์นี้ไม่ได้"
+
+#: src/app/settings-voice.tsx
+msgid "Could not read voice settings. Save your configuration again."
+msgstr "ไม่สามารถอ่านการตั้งค่าเสียงได้ โปรดบันทึกการตั้งค่าอีกครั้ง"
 
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
@@ -1711,6 +2061,10 @@ msgstr "เพิกถอนไม่ได้"
 msgid "Could not revoke device"
 msgstr "เพิกถอนอุปกรณ์ไม่ได้"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Could not revoke token"
+msgstr "เพิกถอนโทเค็นไม่ได้"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not run that"
 msgstr "เรียกใช้ไม่ได้"
@@ -1722,6 +2076,10 @@ msgstr "เรียกใช้สกิลนี้ไม่ได้"
 #: src/components/settings-servers.tsx
 msgid "Could not save changes"
 msgstr "บันทึกการเปลี่ยนแปลงไม่ได้"
+
+#: src/hooks/use-file-actions.tsx
+msgid "Could not save file"
+msgstr "บันทึกไฟล์ไม่ได้"
 
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Could not save Home layout"
@@ -1743,7 +2101,13 @@ msgstr "บันทึกธีมไม่ได้"
 msgid "Could not save this setting. Try again."
 msgstr "บันทึกการตั้งค่านี้ไม่ได้ โปรดลองอีกครั้ง"
 
+#: src/app/settings-voice.tsx
+msgid "Could not save voice settings. Please try again."
+msgstr "ไม่สามารถบันทึกการตั้งค่าเสียงได้ โปรดลองอีกครั้ง"
+
+#: src/components/home-composer-dock.tsx
 #: src/components/ssh-terminal-workspace.tsx
+#: src/components/task-row.tsx
 msgid "Could not send"
 msgstr "ส่งไม่ได้"
 
@@ -1763,6 +2127,10 @@ msgstr "ส่งปุ่มไม่ได้"
 msgid "Could not send shortcut."
 msgstr "ส่งปุ่มลัดไม่ได้"
 
+#: src/components/task-row.tsx
+msgid "Could not send. Tap to retry"
+msgstr "ส่งไม่สำเร็จ แตะเพื่อลองอีกครั้ง"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not stage the rollback"
 msgstr "เตรียมการย้อนกลับไม่ได้"
@@ -1772,9 +2140,11 @@ msgid "Could not start a session"
 msgstr "เริ่มเซสชันไม่สำเร็จ"
 
 #: src/app/commands.tsx
+#: src/hooks/use-lazygit.ts
 msgid "Could not start a terminal."
 msgstr "เริ่มเทอร์มินัลไม่ได้"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Could not start the task."
 msgstr "เริ่มงานไม่ได้"
@@ -1801,8 +2171,8 @@ msgid "Could not undo"
 msgstr "ย้อนกลับไม่ได้"
 
 #: src/components/settings-servers.tsx
-msgid "Could not unpair server"
-msgstr "เลิกจับคู่เซิร์ฟเวอร์ไม่ได้"
+msgid "Could not unpair computer"
+msgstr "เลิกจับคู่คอมพิวเตอร์ไม่ได้"
 
 #: src/components/session-map.tsx
 msgid "Could not update the session."
@@ -1829,6 +2199,7 @@ msgid "Creating session…"
 msgstr "กำลังสร้างเซสชัน…"
 
 #: src/components/custom-theme-library.tsx
+#: src/components/file-mention-panel.tsx
 msgid "Current"
 msgstr "ปัจจุบัน"
 
@@ -1836,9 +2207,14 @@ msgstr "ปัจจุบัน"
 msgid "Current agent"
 msgstr "เอเจนต์ปัจจุบัน"
 
+#: src/components/changes-worktree-list.tsx
+#: src/components/git-diff-view.tsx
+msgid "Current checkout"
+msgstr "เช็กเอาต์ปัจจุบัน"
+
 #: src/components/session-map.tsx
-msgid "Current machine"
-msgstr "เครื่องปัจจุบัน"
+msgid "Current computer"
+msgstr "คอมพิวเตอร์ปัจจุบัน"
 
 #: src/i18n/labels.ts
 msgid "Current path"
@@ -1892,6 +2268,10 @@ msgstr "ลบ {discardName} ใช่ไหม"
 msgid "Delete {name}"
 msgstr "ลบ {name}"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Delete session"
+msgstr "ลบเซสชัน"
+
 #: src/i18n/labels.ts
 msgid "Delete this line"
 msgstr "ลบบรรทัดนี้"
@@ -1901,6 +2281,10 @@ msgctxt "git file status"
 msgid "Deleted"
 msgstr "ลบแล้ว"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Deleting session…"
+msgstr "กำลังลบเซสชัน…"
+
 #: src/components/agent-composer.tsx
 msgid "Delivery mode: Queue. Tap to switch to Steer."
 msgstr "โหมดการส่ง: เข้าคิว แตะเพื่อเปลี่ยนเป็นการแทรกแซง (Steer)"
@@ -1909,6 +2293,7 @@ msgstr "โหมดการส่ง: เข้าคิว แตะเพื
 msgid "Delivery mode: Steer (real-time). Tap to switch to Queue."
 msgstr "โหมดการส่ง: แทรกแซงแบบเรียลไทม์ (Steer) แตะเพื่อเปลี่ยนเป็นการเข้าคิว"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Delivery not confirmed"
 msgstr "ยังไม่ยืนยันการส่ง"
@@ -1916,6 +2301,10 @@ msgstr "ยังไม่ยืนยันการส่ง"
 #: src/components/theme-browse-sheet.tsx
 msgid "Demo catalogue. Leave the demo to download themes."
 msgstr "แค็ตตาล็อกสาธิต ออกจากการสาธิตเพื่อดาวน์โหลดธีม"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Demo sessions cannot be deleted. Open a paired computer to manage its sessions."
+msgstr "ลบเซสชันสาธิตไม่ได้ เปิดคอมพิวเตอร์ที่จับคู่แล้วเพื่อจัดการเซสชัน"
 
 #: src/lib/demo-ssh.ts
 msgid "Demo shell"
@@ -1943,6 +2332,7 @@ msgid "detached at {head}"
 msgstr "แยกออกที่ {head}"
 
 #: src/components/changes-sheet.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "Detached at {head}"
 msgstr "แยกออกที่ {head}"
 
@@ -1995,6 +2385,7 @@ msgstr "ตัดการเชื่อมต่อแล้ว"
 
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
+#: src/components/task-row.tsx
 msgid "Dismiss"
 msgstr "ปิด"
 
@@ -2015,10 +2406,6 @@ msgstr "ปิดธีมนี้"
 msgid "Dismiss what happened while you were away"
 msgstr "ปิดสรุปเหตุการณ์ขณะที่คุณไม่อยู่"
 
-#: src/components/whats-new-card.tsx
-msgid "Dismiss what's new"
-msgstr "ปิดข่าวสารล่าสุด"
-
 #: src/app/custom-theme.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
@@ -2026,6 +2413,11 @@ msgstr "ปิดข่าวสารล่าสุด"
 #: src/i18n/labels.ts
 msgid "Done"
 msgstr "เสร็จสิ้น"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Done"
+msgstr "เสร็จแล้ว"
 
 #: src/app/commands.tsx
 msgid "Done editing shortcuts"
@@ -2043,6 +2435,14 @@ msgstr "ดาวน์โหลด"
 #: src/components/theme-link-import.tsx
 msgid "Download and preview"
 msgstr "ดาวน์โหลดและดูตัวอย่าง"
+
+#: src/components/update-status-banner.tsx
+msgid "Download size: {fullPackage}"
+msgstr "ขนาดดาวน์โหลด: {fullPackage}"
+
+#: src/components/update-status-banner.tsx
+msgid "Download size: about {estimate}"
+msgstr "ขนาดดาวน์โหลด: ประมาณ {estimate}"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Downloading"
@@ -2104,8 +2504,8 @@ msgid "Edit SSH host"
 msgstr "แก้ไขโฮสต์ SSH"
 
 #: src/components/settings-servers.tsx
-msgid "Edit this server"
-msgstr "แก้ไขเซิร์ฟเวอร์นี้"
+msgid "Edit this computer"
+msgstr "แก้ไขคอมพิวเตอร์นี้"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
@@ -2133,6 +2533,14 @@ msgstr "ป้อน URL ของ Gateway"
 #: src/components/settings-servers.tsx
 msgid "Enter a name."
 msgstr "ป้อนชื่อ"
+
+#: src/app/settings-voice.tsx
+msgid "Enter a valid HTTPS API URL. API key and model are optional."
+msgstr "ป้อน URL ของ API แบบ HTTPS ที่ถูกต้อง ไม่จำเป็นต้องระบุคีย์ API และโมเดล"
+
+#: src/app/settings-voice.tsx
+msgid "Enter a valid WSS realtime URL. API key and model are optional."
+msgstr "ป้อน URL WSS สำหรับเรียลไทม์ที่ถูกต้อง ไม่จำเป็นต้องระบุคีย์ API และโมเดล"
 
 #: src/app/explore.tsx
 msgid "Enter the {PAIRING_CODE_CHARACTER_COUNT}-character code."
@@ -2179,6 +2587,11 @@ msgstr "ทุกไฟล์ที่เปลี่ยนแปลงรวม
 msgid "Every screen in the app."
 msgstr "ทุกหน้าจอในแอป"
 
+#: src/components/task-result-sheet.tsx
+#: src/components/task-row.tsx
+msgid "exit {code}"
+msgstr "ออก {code}"
+
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
 msgid "Expand {0}"
@@ -2204,11 +2617,27 @@ msgstr "ขยายงาน"
 msgid "Expand tool call"
 msgstr "ขยายการเรียกใช้เครื่องมือ"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Expired"
+msgstr "หมดอายุแล้ว"
+
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
 #: src/app/explore.tsx
 msgid "Expires in {0}:{1}"
 msgstr "หมดอายุใน {0}:{1}"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Expires in {days}d"
+msgstr "หมดอายุใน {days} วัน"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Expires in {hours}h"
+msgstr "หมดอายุใน {hours} ชม"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Expires in {minutes}m"
+msgstr "หมดอายุใน {minutes} นาที"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Explore"
@@ -2226,6 +2655,11 @@ msgstr "ส่งออกธีม"
 msgid "Failed"
 msgstr "ล้มเหลว"
 
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Failed"
+msgstr "ล้มเหลว"
+
 #. placeholder {0}: status.code
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Failed · {0}"
@@ -2240,8 +2674,8 @@ msgid "Failed to switch project"
 msgstr "สลับโปรเจกต์ไม่สำเร็จ"
 
 #: src/components/settings-home-layout-sheet.tsx
-msgid "Familiar server cards and quick actions."
-msgstr "การ์ดเซิร์ฟเวอร์และการดำเนินการด่วนที่คุ้นเคย"
+msgid "Familiar computer cards and quick actions."
+msgstr "การ์ดคอมพิวเตอร์และการดำเนินการด่วนที่คุ้นเคย"
 
 #: src/components/agent-composer.tsx
 msgid "Fast agent specialized for exploring codebases."
@@ -2250,10 +2684,6 @@ msgstr "เอเจนต์ความเร็วสูงสำหรับ
 #: src/i18n/labels.ts
 msgid "Fetch a web page"
 msgstr "ดึงหน้าเว็บ"
-
-#: src/components/file-mention-panel.tsx
-msgid "File mentions"
-msgstr "การอ้างถึงไฟล์"
 
 #: src/lib/attachments.ts
 msgid "File too large (25MB max)"
@@ -2291,6 +2721,10 @@ msgstr "ค้นหาไฟล์ตามชื่อ"
 msgid "Fingerprint"
 msgstr "ลายนิ้วมือ"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "Finished"
+msgstr "เสร็จสิ้น"
+
 #: src/components/new-task-sheet.tsx
 msgid "First prompt"
 msgstr "คำสั่งแรก"
@@ -2311,6 +2745,10 @@ msgstr "แก้ไขเทอร์มินัลที่ค้างอย
 msgid "Fold the tool steps away"
 msgstr "ซ่อนขั้นตอนการใช้เครื่องมือ"
 
+#: src/components/home-composer-options.tsx
+msgid "Folder"
+msgstr "โฟลเดอร์"
+
 #: src/components/agent-workspace-sheet.tsx
 msgid "Folder is missing"
 msgstr "ไม่พบโฟลเดอร์"
@@ -2318,6 +2756,10 @@ msgstr "ไม่พบโฟลเดอร์"
 #: src/components/agent-workspace-sheet.tsx
 msgid "Folders"
 msgstr "โฟลเดอร์"
+
+#: src/app/settings-voice.tsx
+msgid "Follow App language"
+msgstr "ตามภาษาของแอป"
 
 #: src/components/settings-language-sheet.tsx
 msgid "Follow the language your phone is set to"
@@ -2362,9 +2804,21 @@ msgstr "เพิ่มพื้นที่บริบทโดยสรุป
 msgid "Frequent"
 msgstr "ใช้บ่อย"
 
+#: src/components/task-row.tsx
+msgid "from {requester}"
+msgstr "จาก {requester}"
+
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "กล้องหน้า ถือ QR หันเข้าหาหน้าจอ"
+
+#: src/components/update-status-banner.tsx
+msgid "Full package: {fullPackage}"
+msgstr "แพ็กเกจเต็ม: {fullPackage}"
+
+#: src/components/video-asset-preview.tsx
+msgid "Fullscreen"
+msgstr "เต็มหน้าจอ"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Function keys"
@@ -2404,6 +2858,10 @@ msgstr "URL ของ Gateway"
 msgid "Gateway URL is not valid."
 msgstr "URL ของ Gateway ไม่ถูกต้อง"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "gateway v{gatewayVersion}"
+msgstr "Gateway v{gatewayVersion}"
+
 #: src/components/ssh-host-form.tsx
 msgid "Gateways reached through this host"
 msgstr "Gateway ที่เข้าถึงผ่านโฮสต์นี้"
@@ -2428,6 +2886,10 @@ msgstr "กำลังสร้าง…"
 msgid "Get started"
 msgstr "เริ่มต้นใช้งาน"
 
+#: src/components/git-diff-view.tsx
+msgid "Git"
+msgstr "Git"
+
 #: src/i18n/labels.ts
 msgid "Git status"
 msgstr "สถานะ Git"
@@ -2446,8 +2908,8 @@ msgid "Go to the top of the file"
 msgstr "ไปที่ต้นไฟล์"
 
 #: src/app/+not-found.tsx
-msgid "Go to your servers"
-msgstr "ไปยังเซิร์ฟเวอร์ของคุณ"
+msgid "Go to your computers"
+msgstr "ไปยังคอมพิวเตอร์ของคุณ"
 
 #: src/components/agent-message-block.tsx
 msgid "Goal continuation"
@@ -2467,7 +2929,7 @@ msgctxt "agent slash command"
 msgid "Guided AGENTS.md setup"
 msgstr "ตั้งค่า AGENTS.md แบบมีคำแนะนำ"
 
-#: src/app/settings.tsx
+#: src/app/settings-about.tsx
 msgid "Guides for pairing, the terminal, agents and themes"
 msgstr "คู่มือการจับคู่ เทอร์มินัล เอเจนต์ และธีม"
 
@@ -2500,22 +2962,36 @@ msgid "Hide output"
 msgstr "ซ่อนเอาต์พุต"
 
 #: src/components/app-drawer.tsx
-msgid "Hide the server list"
-msgstr "ซ่อนรายการเซิร์ฟเวอร์"
+msgid "Hide the computer list"
+msgstr "ซ่อนรายการคอมพิวเตอร์"
 
 #: src/app/commands.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Hide the simulator"
 msgstr "ซ่อนเครื่องจำลอง"
 
+#: src/app/settings-voice.tsx
+msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
+msgstr "กดปุ่มส่งค้างไว้เพื่อพูด หยุดบันทึกเพื่อเพิ่มข้อความลงในฉบับร่าง จากนั้นแก้ไขและส่ง"
+
 #: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Home"
 msgstr "หน้าแรก"
 
+#: src/components/home-agent-sheet.tsx
+#: src/components/settings-servers.tsx
+msgid "Home agent"
+msgstr "เอเจนต์ของหน้าแรก"
+
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Home effects · development only"
 msgstr "เอฟเฟกต์หน้าหลัก · สำหรับการพัฒนาเท่านั้น"
+
+#: src/app/agent-workspace.tsx
+#: src/components/home-composer-dock.tsx
+msgid "Home folder"
+msgstr "โฟลเดอร์หลัก"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
@@ -2550,7 +3026,7 @@ msgstr "คีย์โฮสต์เปลี่ยนไป"
 msgid "Host key trusted"
 msgstr "เชื่อถือคีย์โฮสต์แล้ว"
 
-#: src/app/settings.tsx
+#: src/app/settings-about.tsx
 msgid "How to use Muqun"
 msgstr "วิธีใช้ Muqun"
 
@@ -2563,8 +3039,13 @@ msgstr "ว่าง"
 msgid "If this continues, restart the app or check the app installation"
 msgstr "หากยังเกิดปัญหา ให้เริ่มแอปใหม่หรือตรวจสอบการติดตั้งแอป"
 
+#: src/components/transcript-block-image.tsx
+msgid "Image"
+msgstr "รูปภาพ"
+
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
+#: src/components/transcript-block-image.tsx
 msgid "Image unavailable"
 msgstr "ไม่สามารถแสดงรูปภาพ"
 
@@ -2573,6 +3054,10 @@ msgstr "ไม่สามารถแสดงรูปภาพ"
 #: src/components/asset-viewer.tsx
 msgid "Image unavailable: {0}"
 msgstr "ไม่สามารถแสดงรูปภาพ: {0}"
+
+#: src/components/transcript-block-image.tsx
+msgid "Image unavailable: {alt}"
+msgstr "ไม่สามารถแสดงรูปภาพ: {alt}"
 
 #: src/components/session-artifacts.tsx
 #: src/components/settings-storage.tsx
@@ -2598,6 +3083,10 @@ msgstr "นำเข้าไฟล์"
 #: src/components/custom-theme-library.tsx
 msgid "Import link"
 msgstr "นำเข้าลิงก์"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "In progress"
+msgstr "กำลังดำเนินการ"
 
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Increase {label}"
@@ -2631,6 +3120,18 @@ msgstr "โหมดแทรก"
 msgid "Install a package"
 msgstr "ติดตั้งแพ็กเกจ"
 
+#: src/components/audio-asset-preview.tsx
+msgid "Install an app build with audio support to preview this file."
+msgstr "ติดตั้งแอปเวอร์ชันที่รองรับเสียงเพื่อฟังไฟล์นี้"
+
+#: src/app/settings-voice.tsx
+msgid "Install an app build with voice recording support to use the microphone."
+msgstr "ติดตั้งแอปเวอร์ชันที่รองรับการบันทึกเสียงเพื่อใช้ไมโครโฟน"
+
+#: src/components/voice-input-button.tsx
+msgid "Install an updated app build to use realtime transcription."
+msgstr "ติดตั้งแอปรุ่นใหม่เพื่อใช้การถอดเสียงแบบเรียลไทม์"
+
 #: src/app/explore.tsx
 msgid "Install command copied"
 msgstr "คัดลอกคำสั่งติดตั้งแล้ว"
@@ -2641,6 +3142,7 @@ msgid "Installed"
 msgstr "ติดตั้งแล้ว"
 
 #: src/app/+not-found.tsx
+#: src/app/custom-theme.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Installing images"
 msgstr "กำลังติดตั้งรูปภาพ"
@@ -2702,8 +3204,8 @@ msgid "Its details could not be written to secure storage."
 msgstr "เขียนรายละเอียดลงที่เก็บข้อมูลที่ปลอดภัยไม่ได้"
 
 #: src/components/settings-servers.tsx
-msgid "Its paired devices are listed once it is the server in use."
-msgstr "อุปกรณ์ที่จับคู่จะแสดงเมื่อเลือกใช้เซิร์ฟเวอร์นี้"
+msgid "Its paired devices are listed once it is the computer in use."
+msgstr "อุปกรณ์ที่จับคู่จะแสดงเมื่อเลือกใช้คอมพิวเตอร์นี้"
 
 #: src/components/skia-terminal.tsx
 msgid "Jump to latest output"
@@ -2711,6 +3213,7 @@ msgstr "ข้ามไปยังเอาต์พุตล่าสุด"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/hooks/use-relative-time.ts
+#: src/hooks/use-task-age.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "just now"
 msgstr "เมื่อสักครู่"
@@ -2789,6 +3292,19 @@ msgstr "เชื่อมต่อล่าสุด {minutes} นาทีท�
 msgid "Last connected just now"
 msgstr "เชื่อมต่อล่าสุดเมื่อสักครู่"
 
+#: src/app/agent-workspace.tsx
+#: src/components/home-composer-dock.tsx
+msgid "Last folder"
+msgstr "โฟลเดอร์ล่าสุด"
+
+#: src/components/home-computer-cards.tsx
+msgid "Last known activity"
+msgstr "กิจกรรมล่าสุดที่ทราบ"
+
+#: src/components/task-row.tsx
+msgid "last seen {ago}"
+msgstr "พบล่าสุด {ago}"
+
 #: src/components/settings-servers.tsx
 msgid "Last seen {days}d ago"
 msgstr "พบล่าสุด {days} วันที่แล้ว"
@@ -2805,10 +3321,22 @@ msgstr "พบล่าสุด {minutes} นาทีที่แล้ว"
 msgid "Last seen just now"
 msgstr "พบล่าสุดเมื่อสักครู่"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Last used {when}"
+msgstr "ใช้ล่าสุด {when}"
+
+#: src/components/update-status-banner.tsx
+msgid "Later"
+msgstr "ภายหลัง"
+
 #: src/components/agent-workbench.tsx
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "ล่าสุด"
+
+#: src/hooks/use-lazygit.ts
+msgid "Lazygit startup could not be confirmed"
+msgstr "ไม่สามารถยืนยันการเริ่มทำงานของ Lazygit"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "Leave it empty and the agent picks a name."
@@ -2836,6 +3364,18 @@ msgstr "ระดับ {depth}"
 msgid "Light"
 msgstr "สว่าง"
 
+#: src/components/file-mention-panel.tsx
+msgid "Link revoked · re-linking…"
+msgstr "ลิงก์ถูกเพิกถอน · กำลังลิงก์ใหม่…"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Link to {name} was revoked · re-linking…"
+msgstr "ลิงก์ไปยัง {name} ถูกเพิกถอน · กำลังลิงก์ใหม่…"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Linked with: {linkedNames}"
+msgstr "เชื่อมกับ: {linkedNames}"
+
 #: src/app/commands.tsx
 msgid "List branches"
 msgstr "แสดงสาขา"
@@ -2847,6 +3387,10 @@ msgstr "แสดงทุกพาเนล ไม่ว่าจะมีเ�
 #: src/components/settings-servers.tsx
 msgid "List only the panes running a recognised agent."
 msgstr "แสดงเฉพาะพาเนลที่กำลังเรียกใช้เอเจนต์ที่รู้จัก"
+
+#: src/components/voice-input-button.tsx
+msgid "Listening…"
+msgstr "กำลังฟัง…"
 
 #: src/components/settings-alerts.tsx
 msgid "Live Activity"
@@ -2868,16 +3412,16 @@ msgstr "กำลังโหลด"
 msgid "Loading commands"
 msgstr "กำลังโหลดคำสั่ง"
 
-#: src/components/settings-servers.tsx
-msgid "Loading paired devices…"
-msgstr "กำลังโหลดอุปกรณ์ที่จับคู่…"
-
 #: src/app/servers/[serverId].tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/settings-servers.tsx
-msgid "Loading servers"
-msgstr "กำลังโหลดเซิร์ฟเวอร์"
+msgid "Loading computers"
+msgstr "กำลังโหลดคอมพิวเตอร์"
+
+#: src/components/settings-servers.tsx
+msgid "Loading paired devices…"
+msgstr "กำลังโหลดอุปกรณ์ที่จับคู่…"
 
 #: src/components/app-lock-gate.tsx
 msgid "Loading settings"
@@ -2895,6 +3439,12 @@ msgstr "กำลังโหลดบันทึกการสนทนา"
 #: src/components/theme-browse-sheet.tsx
 msgid "Loading themes…"
 msgstr "กำลังโหลดธีม…"
+
+#: src/app/settings-voice.tsx
+#: src/components/home-composer-dock.tsx
+#: src/components/transcript-block-image.tsx
+msgid "Loading…"
+msgstr "กำลังโหลด…"
 
 #: src/lib/demo-gateway.ts
 msgid "Logs"
@@ -2917,29 +3467,37 @@ msgstr "กำลังค้นหาเครื่องจำลอง"
 msgid "Mac mini · Office"
 msgstr "Mac mini · สำนักงาน"
 
-#: src/components/session-map.tsx
-msgid "Machines"
-msgstr "เครื่อง"
-
 #: src/components/launch-intro.tsx
 msgid "Make it yours"
 msgstr "ทำให้เป็นของคุณ"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Make sure the computer is reachable, then try again."
+msgstr "ตรวจสอบว่าเข้าถึงคอมพิวเตอร์ได้ แล้วลองอีกครั้ง"
 
 #: src/components/home-overview.tsx
 msgid "Manage"
 msgstr "จัดการ"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Manage access granted to coding agents through MCP. Revoking access stops that agent from using this computer's tools."
+msgstr "จัดการสิทธิ์เข้าถึงที่ให้แก่เอเจนต์เขียนโค้ดผ่าน MCP เมื่อเพิกถอนสิทธิ์ เอเจนต์นั้นจะใช้เครื่องมือของคอมพิวเตอร์เครื่องนี้ไม่ได้"
+
+#: src/components/session-map.tsx
+msgid "Manage computers"
+msgstr "จัดการคอมพิวเตอร์"
+
 #: src/components/home-connections.tsx
 msgid "Manage connections"
 msgstr "จัดการการเชื่อมต่อ"
 
-#: src/components/session-map.tsx
-msgid "Manage machines"
-msgstr "จัดการเครื่อง"
-
 #: src/components/home-overview.tsx
 msgid "Manage SSH hosts"
 msgstr "จัดการโฮสต์ SSH"
+
+#: src/components/task-row.tsx
+msgid "Mark done"
+msgstr "ทำเครื่องหมายว่าเสร็จ"
 
 #: src/components/collaboration-notice.tsx
 msgid "Mark reviewed"
@@ -2949,18 +3507,28 @@ msgstr "ทำเครื่องหมายว่าตรวจแล้ว
 msgid "Mascot"
 msgstr "มาสคอต"
 
+#. placeholder {0}: computer.name
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
 msgid "Mention {0}"
 msgstr "อ้างถึง {0}"
+
+#: src/components/file-mention-panel.tsx
+msgid "Mentions"
+msgstr "การกล่าวถึง"
 
 #: src/components/agent-message-block.tsx
 msgid "Message copied to clipboard"
 msgstr "คัดลอกข้อความไปยังคลิปบอร์ดแล้ว"
 
 #: src/components/agent-workbench.tsx
+#: src/components/server-terminal-workspace.tsx
 msgid "Message not sent"
 msgstr "ยังไม่ได้ส่งข้อความ"
+
+#: src/components/home-composer-options.tsx
+msgid "Mode"
+msgstr "โหมด"
 
 #. placeholder {0}: part.mode
 #: src/components/agent-message-block.tsx
@@ -2973,8 +3541,12 @@ msgstr "โหมด · {0}"
 msgid "Mode · {0} → {1}"
 msgstr "โหมด · {0} → {1}"
 
+#: src/app/settings-voice.tsx
+#: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/home-composer-dock.tsx
+#: src/components/home-composer-options.tsx
 msgid "Model"
 msgstr "โมเดล"
 
@@ -2986,6 +3558,10 @@ msgstr "โมเดล · {0} → {next}"
 #: src/components/agent-message-block.tsx
 msgid "Model · {next}"
 msgstr "โมเดล · {next}"
+
+#: src/app/settings-voice.tsx
+msgid "Model (optional)"
+msgstr "โมเดล (ไม่บังคับ)"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Modes of {agentName}"
@@ -3110,10 +3686,22 @@ msgstr "ต้องตั้งค่า"
 msgid "Needs update"
 msgstr "ต้องอัปเดต"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "Needs you"
+msgstr "รอคุณ"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Needs you"
+msgstr "รอคุณ"
+
 #: src/components/collaboration-notice.tsx
 msgid "Needs your attention"
 msgstr "ต้องการความสนใจจากคุณ"
 
+#: src/components/home-recent-sessions.tsx
+#: src/components/server-agent-rows.tsx
+#: src/components/task-row.tsx
 #: src/lib/notifications.ts
 msgid "Needs your input"
 msgstr "ต้องการคำตอบจากคุณ"
@@ -3123,9 +3711,17 @@ msgstr "ต้องการคำตอบจากคุณ"
 msgid "Never connected"
 msgstr "ยังไม่เคยเชื่อมต่อ"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Never expires"
+msgstr "ไม่มีวันหมดอายุ"
+
 #: src/components/settings-servers.tsx
 msgid "Never seen"
 msgstr "ยังไม่เคยพบ"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Never used"
+msgstr "ยังไม่เคยใช้"
 
 #: src/app/commands.tsx
 msgid "New group"
@@ -3187,6 +3783,10 @@ msgstr "การแจ้งเตือนถัดไป"
 msgid "Next session"
 msgstr "เซสชันถัดไป"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "No agent access grants"
+msgstr "ยังไม่มีการให้สิทธิ์เข้าถึงแก่เอเจนต์"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
 msgstr "ไม่มีเอเจนต์กำลังทำงาน"
@@ -3195,7 +3795,7 @@ msgstr "ไม่มีเอเจนต์กำลังทำงาน"
 msgid "No app on this phone opens web pages."
 msgstr "ไม่มีแอปบนโทรศัพท์นี้ที่เปิดหน้าเว็บได้"
 
-#: src/app/settings.tsx
+#: src/app/settings-about.tsx
 msgid "No app on this phone opens web pages. The guide is at muqun.dev/support."
 msgstr "ไม่มีแอปบนโทรศัพท์นี้ที่เปิดหน้าเว็บได้ คู่มืออยู่ที่ muqun.dev/support"
 
@@ -3206,6 +3806,10 @@ msgstr "ไม่มีกล้องสำหรับสแกน"
 #: src/components/pairing-camera.tsx
 msgid "No camera was found on this device."
 msgstr "ไม่พบกล้องบนอุปกรณ์นี้"
+
+#: src/components/update-status-banner.tsx
+msgid "No changelog was provided for this update."
+msgstr "ไม่มีบันทึกการเปลี่ยนแปลงสำหรับการอัปเดตนี้"
 
 #: src/components/change-tree-rows.tsx
 #: src/components/changes-sheet.tsx
@@ -3221,8 +3825,21 @@ msgid "no commits yet"
 msgstr "ยังไม่มีคอมมิต"
 
 #: src/components/changes-sheet.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "No commits yet"
 msgstr "ยังไม่มีคอมมิต"
+
+#: src/components/home-composer-dock.tsx
+msgid "No computer online"
+msgstr "ไม่มีคอมพิวเตอร์ที่ออนไลน์"
+
+#: src/app/new-task.tsx
+msgid "No computer to start a task on."
+msgstr "ไม่มีคอมพิวเตอร์ให้เริ่มงาน"
+
+#: src/components/settings-servers.tsx
+msgid "No computers paired yet"
+msgstr "ยังไม่ได้จับคู่คอมพิวเตอร์"
 
 #: src/components/session-artifacts.tsx
 msgid "No files match."
@@ -3239,6 +3856,10 @@ msgstr "ยังไม่มี Gateway ใช่ไหม?"
 #: src/components/tool-call-code-rows.tsx
 msgid "No input"
 msgstr "ไม่มีอินพุต"
+
+#: src/components/task-row.tsx
+msgid "No longer linked with {computer}"
+msgstr "ไม่ได้เชื่อมโยงกับ {computer} แล้ว"
 
 #: src/app/commands.tsx
 msgid "No matching commands. Try another word."
@@ -3261,6 +3882,7 @@ msgstr "ไม่มีโมเดลบนโฮสต์นี้"
 msgid "No other assistants in this session yet."
 msgstr "ยังไม่มีผู้ช่วยอื่นในเซสชันนี้"
 
+#: src/components/task-result-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
 msgid "No output"
 msgstr "ไม่มีเอาต์พุต"
@@ -3283,8 +3905,8 @@ msgid "No personal themes yet. Import one, or browse the published themes."
 msgstr "ยังไม่มีธีมส่วนตัว นำเข้าธีมหรือเลือกดูธีมที่เผยแพร่แล้ว"
 
 #: src/components/asset-viewer.tsx
-msgid "No preview for this kind of file. It stays on the server."
-msgstr "ไม่มีตัวอย่างสำหรับไฟล์ประเภทนี้ ไฟล์ยังอยู่บนเซิร์ฟเวอร์"
+msgid "No preview for this kind of file. It stays on the computer."
+msgstr "ไม่มีตัวอย่างสำหรับไฟล์ประเภทนี้ ไฟล์ยังอยู่บนคอมพิวเตอร์"
 
 #: src/components/simfarm-preview.tsx
 msgid "No preview on this connection"
@@ -3298,14 +3920,6 @@ msgstr "ยังไม่มีโปรเจกต์ที่นี่ พ�
 #: src/components/agent-workspace-sheet.tsx
 msgid "No projects match “{0}”."
 msgstr "ไม่มีโปรเจกต์ที่ตรงกับ “{0}”"
-
-#: src/app/new-task.tsx
-msgid "No server to start a task on."
-msgstr "ไม่มีเซิร์ฟเวอร์ให้เริ่มงาน"
-
-#: src/components/settings-servers.tsx
-msgid "No servers paired yet"
-msgstr "ยังไม่ได้จับคู่เซิร์ฟเวอร์"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "No sessions in this project yet. Start one from the + button."
@@ -3323,6 +3937,10 @@ msgstr "ไม่มีเครื่องจำลองที่พอร์
 msgid "No simulators on that machine."
 msgstr "ไม่มีเครื่องจำลองบนเครื่องนั้น"
 
+#: src/components/voice-input-button.tsx
+msgid "No speech detected. Please try again."
+msgstr "ไม่พบเสียงพูด โปรดลองอีกครั้ง"
+
 #: src/app/explore.tsx
 msgid "No SSH hosts saved yet."
 msgstr "ยังไม่มีโฮสต์ SSH ที่บันทึกไว้"
@@ -3339,9 +3957,14 @@ msgstr "ไม่มีภาพนิ่ง"
 msgid "No tasks in this session yet."
 msgstr "ยังไม่มีงานในเซสชันนี้"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "No tasks yet"
+msgstr "ยังไม่มีงาน"
+
+#: src/components/guide-command.tsx
 #: src/hooks/use-home-commands.ts
-msgid "No terminal session is available on this server."
-msgstr "เซิร์ฟเวอร์นี้ไม่มีเซสชันเทอร์มินัลที่พร้อมใช้งาน"
+msgid "No terminal session is available on this computer."
+msgstr "คอมพิวเตอร์นี้ไม่มีเซสชันเทอร์มินัลที่พร้อมใช้งาน"
 
 #: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
@@ -3366,6 +3989,7 @@ msgid "No worktrees yet. Make one below to work on a branch without disturbing t
 msgstr "ยังไม่มีเวิร์กทรี สร้างสักอันด้านล่างเพื่อทำงานบนสาขาโดยไม่รบกวนสำเนานี้"
 
 #: src/components/changes-sheet.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "Not a git repository"
 msgstr "ไม่ใช่ที่เก็บโค้ด Git"
 
@@ -3374,11 +3998,16 @@ msgstr "ไม่ใช่ที่เก็บโค้ด Git"
 msgid "Not available"
 msgstr "ไม่พร้อมใช้งาน"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "Not configured"
+msgstr "ยังไม่ได้กำหนดค่า"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "not connected"
 msgstr "ไม่ได้เชื่อมต่อ"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Not connected"
 msgstr "ไม่ได้เชื่อมต่อ"
@@ -3411,6 +4040,10 @@ msgstr "ยังไม่ได้ตั้ง"
 #: src/components/agent-model-sheet.tsx
 msgid "Not signed in on the host"
 msgstr "ยังไม่ได้ลงชื่อเข้าใช้บนโฮสต์"
+
+#: src/components/home-computer-cards.tsx
+msgid "Not updating from here. Open this computer to see its tasks."
+msgstr "ไม่อัปเดตจากที่นี่ เปิดคอมพิวเตอร์เครื่องนี้เพื่อดูงานของมัน"
 
 #: src/components/ssh-host-form.tsx
 msgid "Not valid."
@@ -3457,10 +4090,13 @@ msgstr "ไม่มีการเปลี่ยนแปลงใด"
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
 msgstr "ยังไม่มี — คำตอบ “อนุญาตเสมอ” จะมาอยู่ที่นี่ สำหรับโปรเจกต์นี้"
 
+#: src/components/settings-storage.tsx
 #: src/components/toggle.tsx
 msgid "Off"
 msgstr "ปิด"
 
+#: src/components/home-composer-options.tsx
+#: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Offline"
 msgstr "ออฟไลน์"
@@ -3489,6 +4125,7 @@ msgstr "บนแท็บเล็ต หน้าแรกจะเปิด�
 msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
 msgstr "ชีตการเปลี่ยนแปลงเดียวสำหรับเทอร์มินัลและเซสชันเอเจนต์: ไฟล์ที่เปลี่ยนแสดงเป็นต้นไม้พร้อมจำนวนบรรทัด สาขาอยู่ใต้ชื่อเรื่อง และมีละทิ้งในเมนูของไฟล์"
 
+#: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Online"
 msgstr "ออนไลน์"
@@ -3497,16 +4134,23 @@ msgstr "ออนไลน์"
 msgid "ONLINE"
 msgstr "ออนไลน์"
 
+#: src/components/task-row.tsx
+msgid "Only this Home row is hidden. The task and its history remain available. Running work is not stopped."
+msgstr "ซ่อนเฉพาะรายการนี้จากหน้าหลัก งานและประวัติยังคงเข้าถึงได้ งานที่กำลังทำจะไม่หยุด"
+
+#: src/components/home-connections.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
+#: src/components/task-row.tsx
 msgid "Open"
 msgstr "เปิด"
 
 #. placeholder {0}: asset.name
+#. placeholder {0}: file.name
 #. placeholder {0}: file.name ?? basename(file.uri)
-#. placeholder {0}: part.fallback_text || part.asset_id
 #: src/components/agent-tool-card.tsx
 #: src/components/home-overview.tsx
+#: src/components/inline-file-link.tsx
 #: src/components/pane-chat-blocks.tsx
 #: src/components/session-artifacts.tsx
 msgid "Open {0}"
@@ -3515,6 +4159,10 @@ msgstr "เปิด {0}"
 #: src/components/new-task-action.tsx
 msgid "Open {agentName} Agent on {label}"
 msgstr "เปิดเอเจนต์ {agentName} บน {label}"
+
+#: src/components/task-row.tsx
+msgid "Open {mirrorName} on this phone first"
+msgstr "เปิด {mirrorName} บนโทรศัพท์นี้ก่อน"
 
 #: src/components/new-task-action.tsx
 msgid "Open {name} Agent on {label}"
@@ -3544,13 +4192,13 @@ msgstr "เปิดไฟล์แนบ"
 msgid "Open background tasks"
 msgstr "เปิดงานเบื้องหลัง"
 
-#: src/components/git-diff-button.tsx
-msgid "Open changes"
-msgstr "เปิดการเปลี่ยนแปลง"
-
 #: src/components/artifacts-button.tsx
 msgid "Open files"
 msgstr "เปิดไฟล์"
+
+#: src/components/git-diff-button.tsx
+msgid "Open Git"
+msgstr "เปิด Git"
 
 #: src/components/agent-tool-card.tsx
 msgid "Open image"
@@ -3577,6 +4225,7 @@ msgstr "เปิดในเบราว์เซอร์ ไม่พร้�
 msgid "Open installation guide"
 msgstr "เปิดคู่มือการติดตั้ง"
 
+#: src/components/git-diff-view.tsx
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
 msgstr "เปิด Lazygit"
@@ -3591,6 +4240,7 @@ msgid "Open on-screen keyboard"
 msgstr "เปิดแป้นพิมพ์บนหน้าจอ"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/task-result-sheet.tsx
 msgid "Open parent"
 msgstr "เปิดเซสชันหลัก"
 
@@ -3616,10 +4266,11 @@ msgid "Open SSH host {0}"
 msgstr "เปิดโฮสต์ SSH {0}"
 
 #: src/i18n/labels.ts
-msgid "Open T3 Code on the gateway host (or run t3 service install), then check again."
-msgstr "เปิด T3 Code บนโฮสต์ของเกตเวย์ (หรือรัน t3 service install) แล้วตรวจสอบอีกครั้ง"
+msgid "Open T3 Code on the computer (or run t3 service install), then check again."
+msgstr "เปิด T3 Code บนคอมพิวเตอร์ (หรือรัน t3 service install) แล้วตรวจสอบอีกครั้ง"
 
 #: src/components/collaboration-notice.tsx
+#: src/hooks/use-lazygit.ts
 msgid "Open terminal"
 msgstr "เปิดเทอร์มินัล"
 
@@ -3656,6 +4307,10 @@ msgstr "เปิดรายละเอียดการเรียกใช
 msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
 msgstr "เปิดพื้นที่ทำงาน {0} {panelCount, plural, other {กำลังทำงาน # รายการ}} กดค้างเพื่อปิด"
 
+#: src/app/settings-voice.tsx
+msgid "OpenAI requires an API key and model. Compatible services may provide their own defaults. Your API key is stored securely on this device."
+msgstr "OpenAI ต้องใช้คีย์ API และโมเดล บริการที่รองรับอาจมีค่าเริ่มต้นของตัวเอง คีย์ API ของคุณจะถูกจัดเก็บอย่างปลอดภัยบนอุปกรณ์นี้"
+
 #: src/components/launch-intro.tsx
 msgid "OpenCode, DeepSeek and T3 Code side by side, each with its own tile, sessions and workbench."
 msgstr "OpenCode, DeepSeek และ T3 Code อยู่เคียงข้างกัน แต่ละตัวมีไทล์ เซสชัน และพื้นที่ทำงานของตัวเอง"
@@ -3664,14 +4319,18 @@ msgstr "OpenCode, DeepSeek และ T3 Code อยู่เคียงข้�
 msgid "Opening"
 msgstr "กำลังเปิด"
 
+#: src/components/git-diff-view.tsx
+msgid "Opening Lazygit…"
+msgstr "กำลังเปิด Lazygit…"
+
 #: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Opening that file"
 msgstr "กำลังเปิดไฟล์นั้น"
 
 #: src/app/explore.tsx
-msgid "Opening the server."
-msgstr "กำลังเปิดเซิร์ฟเวอร์"
+msgid "Opening the computer."
+msgstr "กำลังเปิดคอมพิวเตอร์"
 
 #: src/app/explore.tsx
 msgid "Opening tunnel"
@@ -3686,7 +4345,7 @@ msgstr "กำลังเปิด…"
 msgid "Opens the keyboard, the editor keys and the composer over this editor. Drag to move."
 msgstr "เปิดแป้นพิมพ์ ปุ่มตัวแก้ไข และช่องเขียนข้อความเหนือตัวแก้ไขนี้ ลากเพื่อย้าย"
 
-#: src/app/settings.tsx
+#: src/app/settings-about.tsx
 msgid "Opens the Muqun issue tracker on GitHub."
 msgstr "เปิดหน้าติดตามปัญหาของ Muqun บน GitHub"
 
@@ -3703,11 +4362,12 @@ msgstr "เปิดเทอร์มินัลของเอเจนต์
 msgid "Options for {0}"
 msgstr "ตัวเลือกสำหรับ {0}"
 
-#: src/components/settings-storage.tsx
-msgid "Other"
-msgstr "อื่นๆ"
+#: src/components/settings-fleet-peers.tsx
+msgid "Other computers"
+msgstr "คอมพิวเตอร์เครื่องอื่น"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/task-result-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
 msgid "Output"
 msgstr "เอาต์พุต"
@@ -3716,36 +4376,37 @@ msgstr "เอาต์พุต"
 msgid "Output copied to clipboard"
 msgstr "คัดลอกเอาต์พุตไปยังคลิปบอร์ดแล้ว"
 
-#: src/components/home-launch-actions.tsx
-msgid "Pair a gateway"
-msgstr "จับคู่ Gateway"
-
 #: src/components/app-drawer-content.tsx
+#: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
-msgid "Pair a server"
-msgstr "จับคู่เซิร์ฟเวอร์"
+msgid "Pair a computer"
+msgstr "จับคู่คอมพิวเตอร์"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Pair again"
 msgstr "จับคู่อีกครั้ง"
 
+#: src/app/explore.tsx
+msgid "Pair computer"
+msgstr "จับคู่คอมพิวเตอร์"
+
 #: src/components/settings-servers.tsx
 msgid "Pair one below."
 msgstr "จับคู่ได้ที่ด้านล่าง"
 
-#: src/app/explore.tsx
-msgid "Pair server"
-msgstr "จับคู่เซิร์ฟเวอร์"
-
 #: src/components/server-terminal-workspace.tsx
-msgid "Pair this server again"
-msgstr "จับคู่เซิร์ฟเวอร์นี้อีกครั้ง"
+msgid "Pair this computer again"
+msgstr "จับคู่คอมพิวเตอร์นี้อีกครั้ง"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Pair this computer again before deleting its sessions."
+msgstr "จับคู่คอมพิวเตอร์นี้อีกครั้งก่อนลบเซสชันของเครื่อง"
 
 #: src/lib/network-error.ts
-msgid "Pair this server again."
-msgstr "จับคู่เซิร์ฟเวอร์นี้อีกครั้ง"
+msgid "Pair this computer again."
+msgstr "จับคู่คอมพิวเตอร์นี้อีกครั้ง"
 
 #. placeholder {0}: host.label
 #: src/app/explore.tsx
@@ -3757,8 +4418,8 @@ msgid "Pair through an SSH host"
 msgstr "จับคู่ผ่านโฮสต์ SSH"
 
 #: src/components/home-overview.tsx
-msgid "Pair your first server"
-msgstr "จับคู่เซิร์ฟเวอร์แรกของคุณ"
+msgid "Pair your first computer"
+msgstr "จับคู่คอมพิวเตอร์แรกของคุณ"
 
 #: src/app/explore.tsx
 msgid "Pairing"
@@ -3772,6 +4433,14 @@ msgstr "รหัสจับคู่"
 msgid "Pairing code expired. Scan again for a new code."
 msgstr "รหัสจับคู่หมดอายุ สแกนอีกครั้งเพื่อรับรหัสใหม่"
 
+#: src/i18n/labels.ts
+msgid "PAIRING EXPIRED"
+msgstr "การจับคู่หมดอายุ"
+
+#: src/i18n/labels.ts
+msgid "Pairing expired — pair again"
+msgstr "การจับคู่หมดอายุ — จับคู่อีกครั้ง"
+
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "จับคู่ไม่สำเร็จ"
@@ -3780,9 +4449,13 @@ msgstr "จับคู่ไม่สำเร็จ"
 msgid "Palette (up to 4)"
 msgstr "ชุดสี (สูงสุด 4 สี)"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Pane {paneId}"
+msgstr "เพน {paneId}"
+
 #: src/components/settings-servers.tsx
-msgid "Panes on server cards"
-msgstr "พาเนลบนการ์ดเซิร์ฟเวอร์"
+msgid "Panes on computer cards"
+msgstr "พาเนลบนการ์ดคอมพิวเตอร์"
 
 #: src/components/agent-session-tree-sheet.tsx
 msgid "Parent: {parentTitle}"
@@ -3825,6 +4498,19 @@ msgstr "แพตช์ยาวเกินไป แสดงเฉพาะ�
 msgid "Path"
 msgstr "พาธ"
 
+#: src/components/video-asset-preview.tsx
+msgid "Pause"
+msgstr "หยุดชั่วคราว"
+
+#: src/components/audio-asset-preview.tsx
+msgid "Pause audio"
+msgstr "หยุดเสียงชั่วคราว"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Paused"
+msgstr "หยุดชั่วคราว"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Permission"
 msgstr "สิทธิ์"
@@ -3845,6 +4531,19 @@ msgstr "คอมมิตที่ตรึงไว้"
 msgid "Plan"
 msgstr "วางแผน (Plan)"
 
+#: src/components/video-asset-preview.tsx
+msgid "Play"
+msgstr "เล่น"
+
+#: src/components/audio-asset-preview.tsx
+msgid "Play audio"
+msgstr "เล่นเสียง"
+
+#: src/components/audio-asset-preview.tsx
+#: src/components/video-asset-preview.tsx
+msgid "Playback position"
+msgstr "ตำแหน่งการเล่น"
+
 #: src/components/agent-composer.tsx
 msgid "Please retry or remove failed attachments."
 msgstr "โปรดลองอีกครั้งหรือนำไฟล์แนบที่ไม่สำเร็จออก"
@@ -3859,6 +4558,10 @@ msgstr "พอร์ต"
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
 msgstr "กำลังเตรียมรูปภาพ"
+
+#: src/components/voice-input-button.tsx
+msgid "Preparing microphone…"
+msgstr "กำลังเตรียมไมโครโฟน…"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Presented now"
@@ -3902,7 +4605,7 @@ msgstr "เซสชันก่อนหน้า"
 msgid "Primary"
 msgstr "หลัก"
 
-#: src/app/settings.tsx
+#: src/app/settings-about.tsx
 msgid "Privacy policy"
 msgstr "นโยบายความเป็นส่วนตัว"
 
@@ -3944,8 +4647,8 @@ msgid "Prompt"
 msgstr "พรอมต์"
 
 #: src/components/settings-security.tsx
-msgid "Protect paired servers and terminal sessions."
-msgstr "ปกป้องเซิร์ฟเวอร์ที่จับคู่และเซสชันเทอร์มินัล"
+msgid "Protect paired computers and terminal sessions."
+msgstr "ปกป้องคอมพิวเตอร์ที่จับคู่และเซสชันเทอร์มินัล"
 
 #: src/components/ssh-host-form.tsx
 msgid "Public key copied"
@@ -3965,6 +4668,11 @@ msgstr "จัดคิวข้อความสำหรับเอเจน
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-message-block.tsx
+msgid "Queued"
+msgstr "อยู่ในคิว"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
 msgid "Queued"
 msgstr "อยู่ในคิว"
 
@@ -3994,6 +4702,10 @@ msgstr "ออก"
 #: src/i18n/labels.ts
 msgid "Reach the network"
 msgstr "เข้าถึงเครือข่าย"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Reachable"
+msgstr "เข้าถึงได้"
 
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Reached through SSH host {host}"
@@ -4040,6 +4752,14 @@ msgstr "พร้อมรับอินพุต"
 msgid "Ready to preview. Nothing is applied until you say so."
 msgstr "พร้อมดูตัวอย่าง ยังไม่ใช้จนกว่าคุณจะอนุญาต"
 
+#: src/app/settings-voice.tsx
+msgid "Realtime"
+msgstr "แบบเรียลไทม์"
+
+#: src/components/voice-input-button.tsx
+msgid "Realtime transcription disconnected. Check your connection and speech service, then try again."
+msgstr "การถอดเสียงแบบเรียลไทม์ขาดการเชื่อมต่อ ตรวจสอบเครือข่ายและบริการเสียงแล้วลองอีกครั้ง"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Reasoning"
 msgstr "กระบวนการคิด"
@@ -4049,6 +4769,8 @@ msgid "Receive agent blocks and gateway updates."
 msgstr "รับแจ้งเมื่อเอเจนต์ติดขัดและเมื่อ Gateway มีอัปเดต"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/home-editorial-layout.tsx
+#: src/components/home-overview.tsx
 msgid "Recent"
 msgstr "ล่าสุด"
 
@@ -4063,6 +4785,10 @@ msgstr "เอาต์พุตล่าสุด"
 #: src/components/agent-model-sheet.tsx
 msgid "Recently used"
 msgstr "ใช้ล่าสุด"
+
+#: src/app/settings-voice.tsx
+msgid "Recognition language"
+msgstr "ภาษาที่รู้จำ"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Recommended minimum for readable text: {minimumPercent}%"
@@ -4087,8 +4813,21 @@ msgstr "เชื่อมต่อกับ {0} ใหม่"
 msgid "Reconnecting · {0}"
 msgstr "กำลังเชื่อมต่อใหม่ · {0}"
 
+#: src/i18n/labels.ts
+msgid "Reconnecting…"
+msgstr "กำลังเชื่อมต่อใหม่…"
+
+#: src/i18n/labels.ts
+msgid "RECONNECTING…"
+msgstr "กำลังเชื่อมต่อใหม่…"
+
+#: src/components/voice-input-button.tsx
+msgid "Recording failed."
+msgstr "บันทึกเสียงไม่สำเร็จ"
+
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "รีเฟรช"
@@ -4101,11 +4840,24 @@ msgstr "รีเฟรชการเปลี่ยนแปลง"
 msgid "Refresh files"
 msgstr "รีเฟรชไฟล์"
 
+#: src/lib/terminal-history-pull.ts
+msgid "Refresh history to load the current snapshot."
+msgstr "รีเฟรชประวัติเพื่อโหลดสแนปช็อตปัจจุบัน"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Refresh Home to identify this session’s provider before deleting it."
+msgstr "รีเฟรชหน้าหลักเพื่อระบุผู้ให้บริการของเซสชันนี้ก่อนลบ"
+
 #: src/components/collaboration-notice.tsx
 msgid "Refresh output"
 msgstr "รีเฟรชเอาต์พุต"
 
+#: src/components/server-terminal-workspace.tsx
+msgid "Refresh terminal history"
+msgstr "รีเฟรชประวัติเทอร์มินัล"
+
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/git-diff-view.tsx
 msgid "Refresh worktrees"
 msgstr "รีเฟรชเวิร์กทรี"
 
@@ -4131,6 +4883,10 @@ msgstr "ลบอยู่ดี"
 #: src/components/collaboration-notice.tsx
 msgid "Remove from history?"
 msgstr "ลบออกจากประวัติหรือไม่?"
+
+#: src/components/task-row.tsx
+msgid "Remove from Home"
+msgstr "นำออกจากหน้าหลัก"
 
 #: src/components/ssh-host-form.tsx
 msgid "Remove host"
@@ -4189,7 +4945,11 @@ msgstr "เปลี่ยนชื่อแล้ว"
 msgid "Replace key"
 msgstr "แทนที่คีย์"
 
-#: src/app/settings.tsx
+#: src/components/audio-asset-preview.tsx
+msgid "Replay audio"
+msgstr "เล่นเสียงอีกครั้ง"
+
+#: src/app/settings-about.tsx
 msgid "Report a bug or request a feature"
 msgstr "รายงานข้อผิดพลาดหรือเสนอฟีเจอร์"
 
@@ -4201,6 +4961,7 @@ msgstr "คำขอไม่สำเร็จ"
 msgid "Required on launch and after 30 seconds in the background."
 msgstr "ต้องยืนยันเมื่อเปิดแอปและหลังอยู่เบื้องหลัง 30 วินาที"
 
+#: src/app/settings-voice.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Required."
 msgstr "จำเป็น"
@@ -4211,7 +4972,11 @@ msgstr "ต้องใช้ iOS 16.1 ขึ้นไป"
 
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
-msgstr "เริ่ม Muqun ใหม่เพื่ออัปเดตให้เสร็จ"
+msgstr "เริ่ม Muqun ใหม่เพื่ออัปเดตให้เสร็จสมบูรณ์"
+
+#: src/components/update-status-banner.tsx
+msgid "Restarting Muqun…"
+msgstr "กำลังเริ่ม Muqun ใหม่…"
 
 #: src/app/commands.tsx
 msgid "Restore hidden default commands"
@@ -4226,6 +4991,7 @@ msgstr "คืนค่ารายการเริ่มต้นที่ซ
 #: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
+#: src/components/update-status-banner.tsx
 #: src/hooks/use-home-commands.ts
 msgid "Retry"
 msgstr "ลองอีกครั้ง"
@@ -4241,6 +5007,10 @@ msgstr "ลองแสดงเทอร์มินัลอีกครั้
 #: src/components/server-terminal-workspace.tsx
 msgid "Retry loading earlier output"
 msgstr "ลองโหลดเอาต์พุตก่อนหน้าอีกครั้ง"
+
+#: src/components/update-status-banner.tsx
+msgid "Retry size check"
+msgstr "ตรวจสอบขนาดอีกครั้ง"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Retry the ones marked in red, or remove them, then send again."
@@ -4267,14 +5037,14 @@ msgstr "กลับไปที่งาน"
 
 #: src/app/servers/[serverId].tsx
 #: src/components/server-terminal-workspace.tsx
-msgid "Return to the server list and pair again."
-msgstr "กลับไปยังรายการเซิร์ฟเวอร์แล้วจับคู่อีกครั้ง"
+msgid "Return to the computer list and pair again."
+msgstr "กลับไปยังรายการคอมพิวเตอร์แล้วจับคู่อีกครั้ง"
 
 #: src/components/collaboration-notice.tsx
 #: src/hooks/use-agent-command-delivery.ts
 #: src/hooks/use-collaboration-output.ts
-msgid "Return to this server to continue."
-msgstr "กลับไปยังเซิร์ฟเวอร์นี้เพื่อดำเนินการต่อ"
+msgid "Return to this computer to continue."
+msgstr "กลับไปยังคอมพิวเตอร์นี้เพื่อดำเนินการต่อ"
 
 #: src/lib/demo-gateway.ts
 msgid "Review"
@@ -4313,6 +5083,7 @@ msgid "Reviewing the changes and checking the tests…"
 msgstr "กำลังตรวจทานการเปลี่ยนแปลงและตรวจสอบการทดสอบ…"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke"
 msgstr "เพิกถอน"
@@ -4324,6 +5095,11 @@ msgstr "เพิกถอน"
 msgid "Revoke {0}"
 msgstr "เพิกถอน {0}"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Revoke {title}"
+msgstr "เพิกถอน {title}"
+
+#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoking…"
 msgstr "กำลังเพิกถอน…"
@@ -4363,6 +5139,10 @@ msgstr "รันเบื้องหลัง"
 msgid "Run it under systemd or tmux to keep it up after you log out."
 msgstr "รันใต้ systemd หรือ tmux เพื่อให้ทำงานต่อหลังออกจากระบบ"
 
+#: src/components/guide-command.tsx
+msgid "Run on {computerLabel}"
+msgstr "รันบน {computerLabel}"
+
 #: src/i18n/labels.ts
 msgid "Run relevant tests"
 msgstr "เรียกใช้การทดสอบที่เกี่ยวข้อง"
@@ -4381,6 +5161,7 @@ msgstr "เรียกใช้ Gateway บนเครื่องของค
 msgid "Running"
 msgstr "กำลังทำงาน"
 
+#: src/app/settings-voice.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
@@ -4403,9 +5184,21 @@ msgstr "บันทึกพรอมต์ที่ส่งให้เอเ
 msgid "Save changes to {0}"
 msgstr "บันทึกการเปลี่ยนแปลงใน {0}"
 
+#: src/components/asset-viewer.tsx
+#: src/components/audio-asset-preview.tsx
+#: src/components/video-asset-preview.tsx
+#: src/hooks/use-file-actions.tsx
+msgid "Save file"
+msgstr "บันทึกไฟล์"
+
 #: src/components/ssh-host-form.tsx
 msgid "Save host"
 msgstr "บันทึกโฮสต์"
+
+#: src/components/image-preview-modal.tsx
+#: src/hooks/use-file-actions.tsx
+msgid "Save image"
+msgstr "บันทึกรูปภาพ"
 
 #: src/app/commands.tsx
 msgid "Save shortcut"
@@ -4561,6 +5354,10 @@ msgid "Send a message, type / for commands, @ for files…"
 msgstr "ส่งข้อความ พิมพ์ / เพื่อดูคำสั่ง, @ เพื่อเลือกไฟล์…"
 
 #: src/components/agent-composer.tsx
+msgid "Send a message…"
+msgstr "ส่งข้อความ…"
+
+#: src/components/agent-composer.tsx
 msgid "Send message"
 msgstr "ส่งข้อความ"
 
@@ -4589,36 +5386,21 @@ msgstr "จะส่งถัดไป: {0}"
 msgid "Sending to"
 msgstr "กำลังส่งไปยัง"
 
-#: src/app/agent-guide.tsx
-#: src/app/artifacts.tsx
-#: src/app/panels.tsx
-#: src/components/app-drawer.tsx
-#: src/components/server-terminal-workspace.tsx
-msgid "Server"
-msgstr "เซิร์ฟเวอร์"
+#: src/components/home-computer-cards.tsx
+msgid "Sends your next goal here."
+msgstr "ส่งเป้าหมายถัดไปมาที่นี่"
 
-#: src/app/explore.tsx
-#: src/components/settings-servers.tsx
-msgid "Server name"
-msgstr "ชื่อเซิร์ฟเวอร์"
+#: src/components/home-connections.tsx
+msgid "Sends your next goal here. Long press to open it."
+msgstr "ส่งเป้าหมายถัดไปมาที่นี่ กดค้างเพื่อเปิด"
 
-#: src/app/servers/[serverId].tsx
-#: src/components/server-terminal-workspace.tsx
-msgid "Server not found"
-msgstr "ไม่พบเซิร์ฟเวอร์"
+#: src/components/task-row.tsx
+msgid "Sent · no reply yet"
+msgstr "ส่งแล้ว · ยังไม่มีการตอบกลับ"
 
-#: src/components/server-terminal-workspace.tsx
-msgid "Server offline"
-msgstr "เซิร์ฟเวอร์ออฟไลน์"
-
-#: src/components/server-terminal-workspace.tsx
-msgid "Server unavailable."
-msgstr "เซิร์ฟเวอร์ไม่พร้อมใช้งาน"
-
-#: src/app/settings.tsx
-#: src/components/app-drawer-content.tsx
-msgid "Servers"
-msgstr "เซิร์ฟเวอร์"
+#: src/components/task-row.tsx
+msgid "Sent · waiting for {computer}"
+msgstr "ส่งแล้ว · รอ {computer}"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "Session name"
@@ -4745,6 +5527,10 @@ msgstr "แสดง {0}"
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "แสดงเอเจนต์และสถานะบนหน้าจอหลัก อัปเดตขณะ Muqun เปิดอยู่"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Show all"
+msgstr "แสดงทั้งหมด"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Show artwork on Home"
 msgstr "แสดงอาร์ตเวิร์กในหน้าแรก"
@@ -4795,6 +5581,10 @@ msgstr "แสดง diff นี้เพิ่มเติม"
 msgid "Show the app background behind terminal text"
 msgstr "แสดงพื้นหลังแอปหลังข้อความเทอร์มินัล"
 
+#: src/components/app-drawer.tsx
+msgid "Show the computer list"
+msgstr "แสดงรายการคอมพิวเตอร์"
+
 #: src/components/editor-controls.tsx
 msgid "Show the editor keyboard"
 msgstr "แสดงแป้นพิมพ์ตัวแก้ไข"
@@ -4802,10 +5592,6 @@ msgstr "แสดงแป้นพิมพ์ตัวแก้ไข"
 #: src/components/agent-tool-card.tsx
 msgid "Show the rest of this output"
 msgstr "แสดงผลลัพธ์ส่วนที่เหลือ"
-
-#: src/components/app-drawer.tsx
-msgid "Show the server list"
-msgstr "แสดงรายการเซิร์ฟเวอร์"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Show theme effects only while Home is visible. Turn off to reduce battery use."
@@ -4871,12 +5657,17 @@ msgstr "ตัวควบคุมเครื่องจำลอง"
 msgid "Size"
 msgstr "ขนาด"
 
+#: src/components/update-status-banner.tsx
+msgid "Size covers update files. File reuse or fallback can change the download."
+msgstr "ขนาดนี้รวมเฉพาะไฟล์อัปเดต การใช้ไฟล์เดิมหรือการดาวน์โหลดสำรองอาจทำให้ขนาดเปลี่ยนไป"
+
 #. placeholder {0}: part.name ?? part.skill
 #: src/components/agent-message-block.tsx
 msgid "Skill loaded · {0}"
 msgstr "โหลดสกิลแล้ว · {0}"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Skill started"
 msgstr "เริ่มสกิลแล้ว"
 
@@ -4896,13 +5687,14 @@ msgstr "ไฟล์บางรายการอัปโหลดไม่ส
 msgid "Some theme colors need more contrast"
 msgstr "สีบางสีของธีมต้องเพิ่มความต่างระดับสี"
 
+#: src/app/diagram-viewer.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/theme-link-import.tsx
 msgid "Something went wrong"
 msgstr "เกิดข้อผิดพลาด"
 
-#: src/app/settings.tsx
+#: src/app/settings-about.tsx
 msgid "Source code"
 msgstr "ซอร์สโค้ด"
 
@@ -4997,16 +5789,25 @@ msgid "Start task"
 msgstr "เริ่มงาน"
 
 #: src/i18n/labels.ts
-msgid "Start the agent on the gateway host, then check again."
-msgstr "เริ่มเอเจนต์บนโฮสต์เกตเวย์ แล้วตรวจสอบอีกครั้ง"
+msgid "Start the agent on the computer, then check again."
+msgstr "เริ่มเอเจนต์บนคอมพิวเตอร์ แล้วตรวจสอบอีกครั้ง"
 
 #: src/i18n/labels.ts
-msgid "Start the OpenCode service on the gateway host, then check again."
-msgstr "เริ่มบริการ OpenCode บนโฮสต์ของเกตเวย์ แล้วตรวจสอบอีกครั้ง"
+msgid "Start the OpenCode service on the computer, then check again."
+msgstr "เริ่มบริการ OpenCode บนคอมพิวเตอร์ แล้วตรวจสอบอีกครั้ง"
 
 #: src/components/agent-workbench.tsx
 msgid "Started with a clean context."
 msgstr "เริ่มต้นด้วยบริบทที่ว่างเปล่า"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Starting"
+msgstr "กำลังเริ่ม"
+
+#: src/components/task-row.tsx
+msgid "Starting {agent}…"
+msgstr "กำลังเริ่ม {agent}…"
 
 #: src/components/simfarm-stage.tsx
 msgid "Starting {name}"
@@ -5021,6 +5822,10 @@ msgstr "กำลังเริ่มกล้อง"
 #: src/components/simfarm-stage.tsx
 msgid "Starting…"
 msgstr "กำลังเริ่ม…"
+
+#: src/components/home-agent-sheet.tsx
+msgid "Starts in a terminal"
+msgstr "เริ่มในเทอร์มินัล"
 
 #: src/components/collaboration-notice.tsx
 msgid "Status unavailable"
@@ -5045,6 +5850,10 @@ msgstr "แทรกแซงเอเจนต์ที่กำลังทำ
 msgid "Still arriving"
 msgstr "กำลังรับข้อมูล"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "Still linked to {gone}; will unlink when it is reachable"
+msgstr "ยังลิงก์กับ {gone} อยู่ จะยกเลิกเมื่อเข้าถึงได้"
+
 #: src/components/pane-chat-blocks.tsx
 msgid "Still running…"
 msgstr "ยังทำงานอยู่…"
@@ -5062,6 +5871,10 @@ msgstr "หยุดเอเจนต์"
 #: src/components/agent-composer.tsx
 msgid "Stop agent execution"
 msgstr "หยุดการทำงานของเอเจนต์"
+
+#: src/components/voice-input-button.tsx
+msgid "Stop and transcribe"
+msgstr "หยุดและถอดเสียง"
 
 #: src/components/agent-assignment-bar.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -5082,9 +5895,14 @@ msgstr "หยุดคำสั่งนี้"
 msgid "Stopped"
 msgstr "หยุดแล้ว"
 
+#: src/app/settings-storage.tsx
 #: src/app/settings.tsx
 msgid "Storage"
 msgstr "พื้นที่จัดเก็บ"
+
+#: src/app/settings-voice.tsx
+msgid "Streams speech while you talk. Requires an OpenAI Realtime-compatible transcription endpoint."
+msgstr "สตรีมเสียงขณะที่คุณพูด ต้องใช้ปลายทางการถอดเสียงที่รองรับ OpenAI Realtime"
 
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -5166,6 +5984,7 @@ msgstr "สัญลักษณ์"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
+#: src/components/settings-server-capabilities.tsx
 msgid "System"
 msgstr "ระบบ"
 
@@ -5211,9 +6030,17 @@ msgstr "แตะเพื่อดูตัวอย่างและปรั
 msgid "Tap to refresh this session."
 msgstr "แตะเพื่อรีเฟรชเซสชันนี้"
 
+#: src/components/task-row.tsx
+msgid "tap to retry"
+msgstr "แตะเพื่อลองอีกครั้ง"
+
 #: src/components/session-map.tsx
 msgid "Tap to retry"
 msgstr "แตะเพื่อลองใหม่"
+
+#: src/components/home-composer-dock.tsx
+msgid "Task accepted. Send status could not be saved."
+msgstr "รับงานแล้ว แต่ไม่สามารถบันทึกสถานะการส่งได้"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for {assignmentLabel}"
@@ -5224,9 +6051,15 @@ msgstr "งานสำหรับ {assignmentLabel}"
 msgid "Task for a new {0}"
 msgstr "งานสำหรับ {0} ใหม่"
 
+#: src/components/home-composer-dock.tsx
+msgid "Task options"
+msgstr "ตัวเลือกงาน"
+
 #: src/components/agent-composer.tsx
 #: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-todo-block.tsx
+#: src/components/server-tasks-sheet.tsx
+#: src/components/task-result-sheet.tsx
 msgid "Tasks"
 msgstr "งาน"
 
@@ -5245,9 +6078,12 @@ msgid "Temporary files"
 msgstr "ไฟล์ชั่วคราว"
 
 #: src/app/commands.tsx
+#: src/app/settings-terminal.tsx
 #: src/app/settings.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
+#: src/components/settings-server-capabilities.tsx
+#: src/components/task-row.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
 msgstr "เทอร์มินัล"
@@ -5268,6 +6104,10 @@ msgstr "คำสั่งเทอร์มินัล"
 #: src/app/commands.tsx
 msgid "Terminal commands and key combinations"
 msgstr "คำสั่งเทอร์มินัลและคีย์ผสม"
+
+#: src/lib/terminal-history-pull.ts
+msgid "Terminal history changed"
+msgstr "ประวัติเทอร์มินัลเปลี่ยนแปลงแล้ว"
 
 #: src/components/settings-terminal.tsx
 msgid "Terminal key row"
@@ -5328,8 +6168,8 @@ msgid "That simulator cannot be started from here. Start it on the machine and i
 msgstr "เริ่มเครื่องจำลองนั้นจากที่นี่ไม่ได้ เริ่มบนเครื่องแล้วจะปรากฏในรายการ"
 
 #: src/components/settings-servers.tsx
-msgid "The address is where this paired server is reached. Changing it does not unpair the device."
-msgstr "ที่อยู่นี้ใช้เข้าถึงเซิร์ฟเวอร์ที่จับคู่ การเปลี่ยนที่อยู่จะไม่ยกเลิกการจับคู่อุปกรณ์"
+msgid "The address is where this paired computer is reached. Changing it does not unpair the device."
+msgstr "ที่อยู่นี้ใช้เข้าถึงคอมพิวเตอร์ที่จับคู่ การเปลี่ยนที่อยู่จะไม่ยกเลิกการจับคู่อุปกรณ์"
 
 #: src/app/explore.tsx
 msgid "The address the Gateway prints when it starts."
@@ -5347,6 +6187,10 @@ msgstr "เอเจนต์ไม่ได้รอแล้ว"
 msgid "The agent is offline"
 msgstr "เอเจนต์ออฟไลน์"
 
+#: src/lib/network-error.ts
+msgid "The agent is waiting for an answer. Use the question's controls or the terminal keyboard to respond. Your message has not been sent."
+msgstr "เอเจนต์กำลังรอคำตอบ ใช้ตัวควบคุมของคำถามหรือแป้นพิมพ์เทอร์มินัลเพื่อตอบ ยังไม่ได้ส่งข้อความของคุณ"
+
 #: src/components/agent-context-sheet.tsx
 msgid "The agent stops asking; irreversibly destructive commands stay blocked"
 msgstr "เอเจนต์จะเลิกถาม แต่คำสั่งที่ทำลายอย่างกู้คืนไม่ได้ยังถูกบล็อกอยู่"
@@ -5362,6 +6206,22 @@ msgstr "กล้องไม่เริ่มทำงาน"
 #: src/components/pairing-camera.tsx
 msgid "The camera reported an error."
 msgstr "กล้องรายงานข้อผิดพลาด"
+
+#: src/components/changes-sheet.tsx
+msgid "The computer could not be reached."
+msgstr "ติดต่อคอมพิวเตอร์ไม่ได้"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "The computer did not return it."
+msgstr "คอมพิวเตอร์ไม่ได้ส่งกลับมา"
+
+#: src/app/commands.tsx
+msgid "The computer did not say which terminal it made."
+msgstr "คอมพิวเตอร์ไม่ได้ระบุว่าได้สร้างเทอร์มินัลใด"
+
+#: src/components/settings-servers.tsx
+msgid "The computer was kept on this device. Make sure its Gateway is running, then try again."
+msgstr "ยังเก็บคอมพิวเตอร์ไว้บนอุปกรณ์นี้ ตรวจว่า Gateway ทำงานอยู่แล้วลองอีกครั้ง"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "The connection dropped."
@@ -5382,10 +6242,6 @@ msgstr "เปิดปลายทางนี้ไม่ได้"
 #: src/components/settings-font-sheet.tsx
 msgid "The font file is missing. Add it again."
 msgstr "ไม่พบไฟล์ฟอนต์ กรุณาเพิ่มอีกครั้ง"
-
-#: src/components/changes-sheet.tsx
-msgid "The gateway could not be reached."
-msgstr "ไม่สามารถเชื่อมต่อเกตเวย์"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "The host made a worktree but did not say where."
@@ -5408,6 +6264,10 @@ msgstr "อ่านคีย์ไม่ได้ ({0}) ตรวจสอบ�
 msgid "The new terminal was created, but could not open it."
 msgstr "สร้างเทอร์มินัลใหม่แล้ว แต่เปิดไม่ได้"
 
+#: src/components/home-composer-dock.tsx
+msgid "The previous send could not be checked."
+msgstr "ไม่สามารถตรวจสอบการส่งครั้งก่อนได้"
+
 #: src/components/launch-intro.tsx
 msgid "The question comes to you"
 msgstr "คำถามส่งตรงถึงคุณ"
@@ -5421,28 +6281,20 @@ msgid "The real terminal"
 msgstr "เทอร์มินัลจริง"
 
 #: src/components/app-error-boundary.tsx
-msgid "The screen hit an error. Try again — your servers stay paired."
-msgstr "หน้าจอเกิดข้อผิดพลาด ลองอีกครั้ง เซิร์ฟเวอร์ของคุณยังจับคู่อยู่"
+msgid "The screen hit an error. Try again — your computers stay paired."
+msgstr "หน้าจอเกิดข้อผิดพลาด ลองอีกครั้ง คอมพิวเตอร์ของคุณยังจับคู่อยู่"
+
+#: src/components/changes-worktree-list.tsx
+msgid "The selected worktree is no longer available. Choose another checkout."
+msgstr "worktree ที่เลือกไม่พร้อมใช้งานแล้ว เลือก checkout อื่น"
 
 #: src/components/ssh-host-form.tsx
 msgid "The server asks its own questions when you connect, a password or a one-time code, and nothing is stored on this device."
 msgstr "เซิร์ฟเวอร์จะถามเมื่อคุณเชื่อมต่อ เช่น รหัสผ่านหรือรหัสใช้ครั้งเดียว และจะไม่เก็บข้อมูลไว้บนอุปกรณ์นี้"
 
-#: src/components/server-terminal-workspace.tsx
-msgid "The server did not return it."
-msgstr "เซิร์ฟเวอร์ไม่ได้ส่งกลับมา"
-
-#: src/app/commands.tsx
-msgid "The server did not say which terminal it made."
-msgstr "เซิร์ฟเวอร์ไม่ได้ระบุว่าได้สร้างเทอร์มินัลใด"
-
 #: src/components/ssh-host-key-dialog.tsx
 msgid "The server is asking for more before it lets you in."
 msgstr "เซิร์ฟเวอร์ต้องการข้อมูลเพิ่มเติมก่อนให้คุณเข้าใช้งาน"
-
-#: src/components/settings-servers.tsx
-msgid "The server was kept on this device. Make sure its Gateway is running, then try again."
-msgstr "ยังเก็บเซิร์ฟเวอร์ไว้บนอุปกรณ์นี้ ตรวจว่า Gateway ทำงานอยู่แล้วลองอีกครั้ง"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "The shell exited."
@@ -5468,9 +6320,17 @@ msgstr "เครื่องจำลองไม่เริ่มภายใ
 msgid "The simulator did not shut down in time."
 msgstr "เครื่องจำลองไม่ปิดภายในเวลาที่กำหนด"
 
+#: src/components/voice-input-button.tsx
+msgid "The speech service returned an invalid transcript."
+msgstr "บริการเสียงส่งข้อความถอดเสียงที่ไม่ถูกต้องกลับมา"
+
 #: src/app/commands.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "อุโมงค์ SSH ส่งผ่านเฉพาะพอร์ตของ Gateway จึงเข้าถึงเครื่องจำลองและเบราว์เซอร์จากที่นี่ไม่ได้ โปรดเชื่อมต่อผ่านเครือข่ายภายในหรือ Tailscale"
+
+#: src/components/guide-command.tsx
+msgid "The terminal opened, but the command could not be typed."
+msgstr "เปิดเทอร์มินัลแล้ว แต่พิมพ์คำสั่งไม่ได้"
 
 #: src/components/session-map.tsx
 msgid "The terminal request may have succeeded. Refresh the list and check it before trying again."
@@ -5527,10 +6387,6 @@ msgstr "URL ของธีม"
 msgid "Theme, {0}"
 msgstr "ธีม {0}"
 
-#: src/components/theme-browse-sheet.tsx
-msgid "Themes published at muqun.dev. Nothing downloads until you open one."
-msgstr "ธีมที่เผยแพร่บน muqun.dev จะไม่มีการดาวน์โหลดจนกว่าคุณจะเปิดธีม"
-
 #: src/components/agent-workbench.tsx
 msgid "There is no rollback waiting to be applied."
 msgstr "ไม่มีการย้อนกลับที่รอนำไปใช้"
@@ -5547,13 +6403,83 @@ msgstr "เอเจนต์นี้ไม่ได้เสนอตัวเ
 msgid "This cannot be undone."
 msgstr "การดำเนินการนี้ย้อนกลับไม่ได้"
 
+#: src/hooks/use-agent-command-delivery.ts
+msgid "This computer cannot run that command yet."
+msgstr "คอมพิวเตอร์นี้ยังเรียกใช้คำสั่งนั้นไม่ได้"
+
+#: src/lib/network-error.ts
+msgid "This computer cannot use this device's stored key. Pair it again to reconnect."
+msgstr "คอมพิวเตอร์นี้ใช้คีย์ที่เก็บไว้ของอุปกรณ์ไม่ได้ จับคู่อีกครั้งเพื่อเชื่อมต่อใหม่"
+
+#: src/lib/network-error.ts
+msgid "This computer could not read the request. Check this device's date and time."
+msgstr "คอมพิวเตอร์นี้อ่านคำขอไม่ได้ ตรวจสอบวันที่และเวลาของอุปกรณ์นี้"
+
+#: src/components/new-task-sheet.tsx
+msgid "This computer did not name any agents it can start."
+msgstr "คอมพิวเตอร์นี้ไม่ได้ระบุเอเจนต์ที่เริ่มได้"
+
+#: src/components/agent-guide-sheet.tsx
+msgid "This computer does not advertise {agentName} sessions."
+msgstr "คอมพิวเตอร์เครื่องนี้ไม่มีเซสชัน {agentName} ให้ใช้"
+
+#: src/components/agent-workbench.tsx
+msgid "This computer does not expand ~. Type the full path, starting with /."
+msgstr "คอมพิวเตอร์เครื่องนี้ไม่ขยาย ~ โปรดพิมพ์พาธแบบเต็มที่ขึ้นต้นด้วย /"
+
+#: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
+msgid "This computer does not know {agentName}. Refresh the agent list and try again."
+msgstr "คอมพิวเตอร์เครื่องนี้ไม่รู้จัก {agentName} รีเฟรชรายการเอเจนต์แล้วลองอีกครั้ง"
+
+#: src/components/session-artifacts.tsx
+msgid "This computer does not serve files yet. Update the Muqun gateway plugin to browse what a session writes."
+msgstr "คอมพิวเตอร์เครื่องนี้ยังไม่ให้บริการไฟล์ อัปเดตปลั๊กอิน Muqun Gateway เพื่อเรียกดูสิ่งที่เซสชันเขียนไว้"
+
+#: src/lib/network-error.ts
+msgid "This computer had a problem answering."
+msgstr "คอมพิวเตอร์นี้มีปัญหาในการตอบกลับ"
+
+#: src/lib/network-error.ts
+msgid "This computer has already handled that request."
+msgstr "คอมพิวเตอร์นี้จัดการคำขอนั้นไปแล้ว"
+
+#: src/app/new-task.tsx
+#: src/components/home-composer-dock.tsx
+msgid "This computer has no session to start an agent in."
+msgstr "คอมพิวเตอร์นี้ไม่มีเซสชันสำหรับเริ่มเอเจนต์"
+
+#: src/components/settings-servers.tsx
+msgid "This computer has not listed any paired devices."
+msgstr "คอมพิวเตอร์เครื่องนี้ไม่ได้แสดงรายการอุปกรณ์ที่จับคู่ไว้"
+
+#: src/app/agent-guide.tsx
+#: src/app/new-task.tsx
+#: src/app/simfarm.tsx
+#: src/app/web-service.tsx
+msgid "This computer is no longer paired."
+msgstr "คอมพิวเตอร์นี้ไม่ได้จับคู่อีกต่อไป"
+
+#: src/components/agent-guide-sheet.tsx
+msgid "This computer is not answering. Check the computer connection, then try again."
+msgstr "คอมพิวเตอร์เครื่องนี้ไม่ตอบสนอง ตรวจสอบการเชื่อมต่อกับคอมพิวเตอร์ แล้วลองอีกครั้ง"
+
+#: src/components/settings-fleet-peers.tsx
+#: src/lib/network-error.ts
+msgid "This computer no longer recognises this device. Pair it again to reconnect."
+msgstr "คอมพิวเตอร์นี้ไม่รู้จักอุปกรณ์นี้แล้ว จับคู่อีกครั้งเพื่อเชื่อมต่อใหม่"
+
+#: src/lib/network-error.ts
+msgid "This computer refused the request."
+msgstr "คอมพิวเตอร์นี้ปฏิเสธคำขอ"
+
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
 msgstr "อุปกรณ์นี้ไม่มีกล้องที่พร้อมใช้งาน"
 
 #: src/components/asset-viewer.tsx
-msgid "This file is {size}. Muqun opens text files up to {ceiling}; larger ones stay on the server."
-msgstr "ไฟล์นี้มีขนาด {size} Muqun เปิดไฟล์ข้อความได้ถึง {ceiling} ไฟล์ที่ใหญ่กว่านั้นจะอยู่บนเซิร์ฟเวอร์"
+msgid "This file is {size}. Muqun opens text files up to {ceiling}; larger ones stay on the computer."
+msgstr "ไฟล์นี้มีขนาด {size} Muqun เปิดไฟล์ข้อความได้ถึง {ceiling} ไฟล์ที่ใหญ่กว่านั้นจะอยู่บนคอมพิวเตอร์"
 
 #: src/components/asset-viewer.tsx
 #: src/components/settings-font-sheet.tsx
@@ -5576,33 +6502,9 @@ msgstr "ไฟล์นี้ใหญ่เกินไป"
 msgid "This font could not be read."
 msgstr "อ่านฟอนต์นี้ไม่ได้"
 
-#: src/components/agent-guide-sheet.tsx
-msgid "This gateway does not advertise {agentName} sessions."
-msgstr "เกตเวย์นี้ไม่ได้ให้บริการเซสชัน {agentName}"
-
 #: src/lib/network-error.ts
 msgid "This Gateway does not answer to that address."
 msgstr "Gateway นี้ไม่ตอบกลับที่ที่อยู่นั้น"
-
-#: src/components/agent-workbench.tsx
-msgid "This gateway does not expand ~. Type the full path, starting with /."
-msgstr "เกตเวย์นี้ไม่ขยาย ~ พิมพ์พาธเต็มที่ขึ้นต้นด้วย /"
-
-#: src/components/agent-workbench.tsx
-msgid "This gateway does not know {agentName}. Refresh the agent list and try again."
-msgstr "เกตเวย์นี้ไม่รู้จัก {agentName} รีเฟรชรายการเอเจนต์แล้วลองอีกครั้ง"
-
-#: src/components/session-artifacts.tsx
-msgid "This gateway does not serve files yet. Update the Muqun gateway plugin to browse what a session writes."
-msgstr "Gateway นี้ยังไม่ให้บริการไฟล์ อัปเดตปลั๊กอิน Muqun Gateway เพื่อดูไฟล์ที่เซสชันเขียน"
-
-#: src/components/settings-servers.tsx
-msgid "This gateway has not listed any paired devices."
-msgstr "Gateway นี้ยังไม่แสดงรายการอุปกรณ์ที่จับคู่"
-
-#: src/components/agent-guide-sheet.tsx
-msgid "This gateway is not answering. Check the server connection, then try again."
-msgstr "เกตเวย์นี้ไม่ตอบสนอง ตรวจสอบการเชื่อมต่อเซิร์ฟเวอร์แล้วลองอีกครั้ง"
 
 #: src/components/session-map.tsx
 msgid "This group has no terminals."
@@ -5641,6 +6543,10 @@ msgstr "ต้องกรอกช่องนี้"
 msgid "This project"
 msgstr "โปรเจกต์นี้"
 
+#: src/components/home-recent-sessions.tsx
+msgid "This provider cannot delete sessions. Open the session to stop a running turn or manage it on its computer."
+msgstr "ผู้ให้บริการนี้ไม่รองรับการลบเซสชัน เปิดเซสชันเพื่อหยุดรอบที่กำลังทำงาน หรือจัดการบนคอมพิวเตอร์ที่เกี่ยวข้อง"
+
 #: src/app/explore.tsx
 msgid "This QR code is not valid."
 msgstr "QR นี้ไม่ถูกต้อง"
@@ -5653,49 +6559,6 @@ msgstr "คำถามนี้ต้องใช้แอปเวอร์ช
 msgid "this rule"
 msgstr "กฎนี้"
 
-#: src/hooks/use-agent-command-delivery.ts
-msgid "This server cannot run that command yet."
-msgstr "เซิร์ฟเวอร์นี้ยังเรียกใช้คำสั่งนั้นไม่ได้"
-
-#: src/lib/network-error.ts
-msgid "This server cannot use this device's stored key. Pair it again to reconnect."
-msgstr "เซิร์ฟเวอร์นี้ใช้คีย์ที่เก็บไว้ของอุปกรณ์ไม่ได้ จับคู่อีกครั้งเพื่อเชื่อมต่อใหม่"
-
-#: src/lib/network-error.ts
-msgid "This server could not read the request. Check this device's date and time."
-msgstr "เซิร์ฟเวอร์นี้อ่านคำขอไม่ได้ ตรวจสอบวันที่และเวลาของอุปกรณ์นี้"
-
-#: src/components/new-task-sheet.tsx
-msgid "This server did not name any agents it can start."
-msgstr "เซิร์ฟเวอร์นี้ไม่ได้ระบุเอเจนต์ที่เริ่มได้"
-
-#: src/lib/network-error.ts
-msgid "This server had a problem answering."
-msgstr "เซิร์ฟเวอร์นี้มีปัญหาในการตอบกลับ"
-
-#: src/lib/network-error.ts
-msgid "This server has already handled that request."
-msgstr "เซิร์ฟเวอร์นี้จัดการคำขอนั้นไปแล้ว"
-
-#: src/app/new-task.tsx
-msgid "This server has no session to start an agent in."
-msgstr "เซิร์ฟเวอร์นี้ไม่มีเซสชันสำหรับเริ่มเอเจนต์"
-
-#: src/app/agent-guide.tsx
-#: src/app/new-task.tsx
-#: src/app/simfarm.tsx
-#: src/app/web-service.tsx
-msgid "This server is no longer paired."
-msgstr "เซิร์ฟเวอร์นี้ไม่ได้จับคู่อีกต่อไป"
-
-#: src/lib/network-error.ts
-msgid "This server no longer recognises this device. Pair it again to reconnect."
-msgstr "เซิร์ฟเวอร์นี้ไม่รู้จักอุปกรณ์นี้แล้ว จับคู่อีกครั้งเพื่อเชื่อมต่อใหม่"
-
-#: src/lib/network-error.ts
-msgid "This server refused the request."
-msgstr "เซิร์ฟเวอร์นี้ปฏิเสธคำขอ"
-
 #: src/components/agent-context-sheet.tsx
 msgid "This session"
 msgstr "เซสชันนี้"
@@ -5703,6 +6566,10 @@ msgstr "เซสชันนี้"
 #: src/components/agent-workbench.tsx
 msgid "This session has no message to roll back to."
 msgstr "เซสชันนี้ไม่มีข้อความให้ย้อนกลับไป"
+
+#: src/components/home-recent-sessions.tsx
+msgid "This session is no longer available in this service. Refresh Home before trying again."
+msgstr "เซสชันนี้ไม่พร้อมใช้งานในบริการดังกล่าวแล้ว รีเฟรชหน้าหลักก่อนลองใหม่"
 
 #: src/components/agent-workbench.tsx
 msgid "This session no longer exists"
@@ -5743,6 +6610,10 @@ msgstr "ธีมนี้มีรูปภาพที่ต้องติด
 #: src/components/tool-call-detail-sheet.tsx
 msgid "This tool call is no longer available."
 msgstr "การเรียกใช้เครื่องมือนี้ไม่มีอยู่แล้ว"
+
+#: src/components/update-status-banner.tsx
+msgid "This update is required to continue using Muqun. Read what's new, then update when you're ready."
+msgstr "ต้องอัปเดตครั้งนี้เพื่อใช้ Muqun ต่อ อ่านสิ่งที่เปลี่ยนแปลง แล้วอัปเดตเมื่อคุณพร้อม"
 
 #: src/components/session-map.tsx
 msgid "This workspace has no groups yet."
@@ -5790,9 +6661,25 @@ msgstr "มีการเปลี่ยนแปลงมากเกินก
 msgid "Tool call"
 msgstr "การเรียกใช้เครื่องมือ"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "Toolchains"
+msgstr "ชุดเครื่องมือ"
+
 #: src/components/changes-sheet.tsx
 msgid "tracking {upstream}"
 msgstr "ติดตาม {upstream}"
+
+#: src/components/voice-input-button.tsx
+msgid "Transcribing…"
+msgstr "กำลังถอดเสียง…"
+
+#: src/components/voice-input-button.tsx
+msgid "Transcription failed. Check your speech service and try again."
+msgstr "ถอดเสียงไม่สำเร็จ ตรวจสอบบริการเสียงแล้วลองอีกครั้ง"
+
+#: src/app/settings-voice.tsx
+msgid "Transcription mode"
+msgstr "โหมดถอดเสียง"
 
 #: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx
@@ -5808,14 +6695,21 @@ msgstr "เชื่อถือ"
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
+#: src/components/audio-asset-preview.tsx
 #: src/components/changes-sheet.tsx
+#: src/components/inline-file-link.tsx
 #: src/components/theme-browse-sheet.tsx
+#: src/components/video-asset-preview.tsx
+#: src/components/voice-input-button.tsx
+#: src/hooks/use-file-actions.tsx
 msgid "Try again"
 msgstr "ลองอีกครั้ง"
 
+#: src/components/settings-mcp-tokens.tsx
+#: src/components/settings-server-capabilities.tsx
 #: src/components/settings-servers.tsx
-msgid "Try again once the gateway responds."
-msgstr "ลองอีกครั้งเมื่อ Gateway ตอบกลับ"
+msgid "Try again once the computer responds."
+msgstr "ลองอีกครั้งเมื่อคอมพิวเตอร์ตอบสนอง"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Try searching for another name or tag."
@@ -5863,6 +6757,11 @@ msgstr "พิมพ์หรือใช้ปุ่มป้อนตามค
 #: src/components/simfarm-stage.tsx
 msgid "Type on the simulator"
 msgstr "พิมพ์บนเครื่องจำลอง"
+
+#: src/components/settings-server-capabilities.tsx
+#: src/components/task-result-sheet.tsx
+msgid "Unavailable"
+msgstr "ไม่พร้อมใช้งาน"
 
 #: src/components/changes-sheet.tsx
 msgid "Uncommitted changes"
@@ -5932,9 +6831,13 @@ msgstr "เลิกจับคู่"
 msgid "Unpair {label}"
 msgstr "เลิกจับคู่ {label}"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "Unpair needs a newer gateway on {thisLabel}"
+msgstr "การยกเลิกการจับคู่ต้องใช้เกตเวย์ที่ใหม่กว่าบน {thisLabel}"
+
 #: src/components/settings-servers.tsx
-msgid "Unpair this server"
-msgstr "เลิกจับคู่เซิร์ฟเวอร์นี้"
+msgid "Unpair this computer"
+msgstr "เลิกจับคู่คอมพิวเตอร์นี้"
 
 #: src/components/settings-servers.tsx
 msgid "Unpairing {label}"
@@ -5943,6 +6846,11 @@ msgstr "กำลังเลิกจับคู่ {label}"
 #: src/components/settings-servers.tsx
 msgid "Unpairing…"
 msgstr "กำลังเลิกจับคู่…"
+
+#: src/components/file-mention-panel.tsx
+#: src/components/task-row.tsx
+msgid "Unreachable"
+msgstr "เข้าถึงไม่ได้"
 
 #: src/components/diff-rows.tsx
 msgid "Unstaged"
@@ -5971,16 +6879,29 @@ msgid "Up arrow"
 msgstr "ลูกศรขึ้น"
 
 #: src/components/theme-browse-sheet.tsx
+#: src/components/update-status-banner.tsx
 msgid "Update"
 msgstr "อัปเดต"
 
-#: src/components/agent-assignment-bar.tsx
-msgid "Update Herdr on the server to 0.9.0 or newer, then restart the session, to assign a task to another assistant"
-msgstr "อัปเดต Herdr บนเซิร์ฟเวอร์เป็น 0.9.0 ขึ้นไป แล้วเริ่มเซสชันใหม่เพื่อมอบหมายงานให้ผู้ช่วยอื่น"
+#: src/components/update-status-banner.tsx
+msgid "Update available"
+msgstr "มีอัปเดตพร้อมใช้งาน"
+
+#: src/components/update-status-banner.tsx
+msgid "Update download failed. Try again."
+msgstr "ดาวน์โหลดอัปเดตไม่สำเร็จ โปรดลองอีกครั้ง"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Update Gateway on this computer, then reconnect to enable deleting sessions from Home."
+msgstr "อัปเดต Gateway บนคอมพิวเตอร์นี้แล้วเชื่อมต่ออีกครั้งเพื่อเปิดใช้การลบเซสชันจากหน้าหลัก"
 
 #: src/components/agent-assignment-bar.tsx
-msgid "Update Muqun Gateway on the server, then restart it, to assign a task to another assistant"
-msgstr "อัปเดต Muqun Gateway บนเซิร์ฟเวอร์แล้วเริ่มใหม่ เพื่อมอบหมายงานให้ผู้ช่วยอื่น"
+msgid "Update Herdr on the computer to 0.9.0 or newer, then restart the session, to assign a task to another assistant"
+msgstr "อัปเดต Herdr บนคอมพิวเตอร์เป็น 0.9.0 ขึ้นไป แล้วเริ่มเซสชันใหม่เพื่อมอบหมายงานให้ผู้ช่วยอื่น"
+
+#: src/components/agent-assignment-bar.tsx
+msgid "Update Muqun Gateway on the computer, then restart it, to assign a task to another assistant"
+msgstr "อัปเดต Muqun Gateway บนคอมพิวเตอร์แล้วเริ่มใหม่ เพื่อมอบหมายงานให้ผู้ช่วยอื่น"
 
 #: src/components/agent-guide-sheet.tsx
 #: src/components/new-task-action.tsx
@@ -5988,12 +6909,35 @@ msgid "Update Muqun Gateway on this host to use {agentName}."
 msgstr "อัปเดต Muqun Gateway บนโฮสต์นี้เพื่อใช้ {agentName}"
 
 #: src/components/update-status-banner.tsx
-msgid "Update ready · restarting…"
-msgstr "อัปเดตพร้อมแล้ว · กำลังเริ่มใหม่…"
+msgid "Update now"
+msgstr "อัปเดตตอนนี้"
 
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"
 msgstr "อัปเดตแอปเพื่อนำเข้าลิงก์ธีมสาธารณะ คุณยังนำเข้าไฟล์ได้"
+
+#: src/components/git-diff-view.tsx
+msgid "Update the Gateway to open Lazygit in another worktree."
+msgstr "อัปเดต Gateway เพื่อเปิด Lazygit ใน worktree อื่น"
+
+#: src/components/asset-viewer.tsx
+#: src/components/inline-file-link.tsx
+#: src/components/server-terminal-workspace.tsx
+#: src/hooks/use-file-actions.tsx
+msgid "Update the Gateway to open or save this file."
+msgstr "อัปเดต Gateway เพื่อเปิดหรือบันทึกไฟล์นี้"
+
+#: src/components/audio-asset-preview.tsx
+msgid "Update the Gateway to preview audio output."
+msgstr "อัปเดต Gateway เพื่อฟังตัวอย่างเอาต์พุตเสียง"
+
+#: src/components/video-asset-preview.tsx
+msgid "Update the Gateway to preview video output."
+msgstr "อัปเดต Gateway เพื่อดูตัวอย่างวิดีโอ"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Updates when you reopen"
+msgstr "อัปเดตเมื่อเปิดใหม่"
 
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
@@ -6024,6 +6968,10 @@ msgstr "ใช้ {0}"
 msgid "Use device passcode"
 msgstr "ใช้รหัสผ่านอุปกรณ์"
 
+#: src/components/server-terminal-workspace.tsx
+msgid "Use Shift+Left on the terminal keyboard to answer the pending question."
+msgstr "ใช้ Shift+ลูกศรซ้ายบนแป้นพิมพ์เทอร์มินัลเพื่อตอบคำถามที่รออยู่"
+
 #: src/components/settings-font-sheet.tsx
 msgid "Use system font"
 msgstr "ใช้ฟอนต์ระบบ"
@@ -6041,8 +6989,8 @@ msgid "Use theme defaults"
 msgstr "ใช้ค่าเริ่มต้นของธีม"
 
 #: src/components/settings-servers.tsx
-msgid "Use this server"
-msgstr "ใช้เซิร์ฟเวอร์นี้"
+msgid "Use this computer"
+msgstr "ใช้คอมพิวเตอร์นี้"
 
 #: src/components/settings-appearance.tsx
 msgid "Use your own font for the app and the terminal."
@@ -6069,6 +7017,10 @@ msgstr "เวอร์ชัน {version}{0}"
 msgid "View file changes"
 msgstr "ดูการเปลี่ยนแปลงของไฟล์"
 
+#: src/components/git-diff-view.tsx
+msgid "Viewing another checkout. Changes are read-only."
+msgstr "กำลังดูเช็กเอาต์อื่น การเปลี่ยนแปลงเป็นแบบอ่านอย่างเดียว"
+
 #: src/i18n/labels.ts
 msgid "Visual mode"
 msgstr "โหมดเลือกข้อความ"
@@ -6077,6 +7029,16 @@ msgstr "โหมดเลือกข้อความ"
 msgid "Visualise current context usage as a coloured grid"
 msgstr "แสดงการใช้บริบทปัจจุบันเป็นกริดสี"
 
+#: src/app/settings-voice.tsx
+#: src/app/settings.tsx
+#: src/components/terminal-composer.tsx
+msgid "Voice to text"
+msgstr "เสียงเป็นข้อความ"
+
+#: src/app/settings-voice.tsx
+msgid "Voice to text disabled"
+msgstr "ปิดการแปลงเสียงเป็นข้อความแล้ว"
+
 #: src/components/skia-terminal.web.tsx
 msgid "Waiting for output…"
 msgstr "กำลังรอเอาต์พุต…"
@@ -6084,6 +7046,10 @@ msgstr "กำลังรอเอาต์พุต…"
 #: src/lib/network-error.ts
 msgid "Waiting for the network."
 msgstr "กำลังรอเครือข่าย"
+
+#: src/components/home-composer-dock.tsx
+msgid "Waiting for this computer's model list. Send again in a moment."
+msgstr "กำลังรอรายการโมเดลของคอมพิวเตอร์เครื่องนี้ ส่งอีกครั้งในอีกสักครู่"
 
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -6102,10 +7068,15 @@ msgstr "รอส่ง"
 msgid "Welcome to {agentName}"
 msgstr "ยินดีต้อนรับสู่ {agentName}"
 
+#: src/components/home-agent-sheet.tsx
+msgid "What Home starts when you send from here"
+msgstr "สิ่งที่หน้าแรกเริ่มเมื่อคุณส่งจากที่นี่"
+
 #: src/components/session-map.tsx
 msgid "What is running"
 msgstr "สิ่งที่กำลังทำงาน"
 
+#: src/components/update-status-banner.tsx
 #: src/lib/release-notes.ts
 msgid "What's new"
 msgstr "มีอะไรใหม่"
@@ -6123,6 +7094,11 @@ msgstr "ขณะที่คุณไม่อยู่"
 msgid "Working"
 msgstr "กำลังทำงาน"
 
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Working"
+msgstr "กำลังทำงาน"
+
 #: src/components/composer-popup.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"
@@ -6133,6 +7109,7 @@ msgid "Workspaces"
 msgstr "พื้นที่ทำงาน"
 
 #: src/components/changes-sheet.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "Worktree {name}"
 msgstr "เวิร์กทรี {name}"
 
@@ -6209,5 +7186,5 @@ msgid "Your message"
 msgstr "ข้อความของคุณ"
 
 #: src/components/app-drawer-content.tsx
-msgid "Your paired gateways"
-msgstr "Gateway ที่คุณจับคู่ไว้"
+msgid "Your paired computers"
+msgstr "คอมพิวเตอร์ที่คุณจับคู่ไว้"

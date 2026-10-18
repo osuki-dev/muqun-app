@@ -104,3 +104,22 @@ export function capToolBody(
     hidden: byLines.hidden + (rest ? rest.split('\n').length : 0),
   };
 }
+
+/**
+ * Agent-written markdown made one inline run for a row: line breaks become
+ * spaces, and a line that would open a block (a heading, a list item, a quote,
+ * a fence, a rule) has its marker escaped, so the renderer draws it as the
+ * text it is -- inline code, emphasis and link text survive.
+ */
+export function inlineMarkdown(text: string): string {
+  const joined = text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join(' ');
+  // Joined, only the start can open a block. CommonMark escapes punctuation,
+  // not digits, so a numbered line has its `.`/`)` escaped, not its number.
+  return joined
+    .replace(/^(\d+)([.)])(\s)/, '$1\\$2$3')
+    .replace(/^(#{1,6}\s|>|[-*+]\s|```|~~~|[-*_]{3,}$)/, '\\$1');
+}

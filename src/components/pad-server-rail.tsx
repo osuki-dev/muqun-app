@@ -1,12 +1,12 @@
 import { Trans, useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Image, type ImageSource } from 'expo-image';
 import { ChevronRight, House, ScanLine, Settings, SquareTerminal } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -22,6 +22,8 @@ import type { GatewayRecord } from '@/lib/gateway-storage';
 import { type ActiveServerConnection, type ServerReachability } from '@/lib/server-reachability';
 import type { SshHostRecord } from '@/lib/ssh-hosts';
 import { useBrandMark } from '@/components/brand-mark';
+import { homeArtworkPreference } from '@/theme/repository';
+import { resolvePadRailArtwork } from '@/theme/pad-rail-artwork';
 
 export type PadServerRailProps = {
   /** Paired servers in the order the rail should display them. */
@@ -197,6 +199,8 @@ export function PadServerRail({
         </View>
       ) : null}
 
+      <PadRailArtwork />
+
       {onOpenWorkbench ? (
         <Pressable
           testID={`${testID}-workbench`}
@@ -300,7 +304,7 @@ export function PadServerRail({
               paddingTop: profile.rail.actionsPaddingTop,
             },
           ]}>
-          <RailGlyphAction label={t`Pair a server`} icon={ScanLine} onPress={onPairServer} />
+          <RailGlyphAction label={t`Pair a computer`} icon={ScanLine} onPress={onPairServer} />
           {onOpenSsh ? (
             <RailGlyphAction label={t`SSH`} icon={SquareTerminal} onPress={onOpenSsh} />
           ) : null}
@@ -317,7 +321,7 @@ export function PadServerRail({
             },
           ]}>
           <RailAction
-            label={t`Pair a server`}
+            label={t`Pair a computer`}
             detail={t`Scan a gateway QR`}
             icon={ScanLine}
             onPress={onPairServer}
@@ -339,6 +343,52 @@ export function PadServerRail({
         </View>
       )}
     </SafeAreaView>
+  );
+}
+
+/** Static decoration only: no duplicate Home motion owner or navigation target. */
+function PadRailArtwork() {
+  const active = useThemeLibrary((state) => state.active);
+  const assets = useThemeLibrary((state) => state.activeAssets);
+  const preference = useThemeLibrary((state) => {
+    const installed = state.library.themes.find((entry) => entry.id === active?.installationId);
+    return installed ? homeArtworkPreference(installed) : 'theme';
+  });
+  const { resolvedMode } = useThemeMode();
+  const { height } = useWindowDimensions();
+  const [failedSource, setFailedSource] = useState<string | null>(null);
+  const artwork = resolvePadRailArtwork({
+    manifest: active?.manifest,
+    assets,
+    mode: resolvedMode,
+    preference,
+  });
+  if (!artwork || artwork.source === failedSource) return null;
+  const { source, image, foreground } = artwork;
+  return (
+    <View
+      testID="pad-rail-artwork"
+      pointerEvents="none"
+      accessible={false}
+      importantForAccessibility="no-hide-descendants"
+      style={[styles.railArtwork, { height: Math.min(foreground ? 144 : 112, height * 0.18) }]}>
+      <Image
+        key={source}
+        source={{ uri: source }}
+        recyclingKey={source}
+        contentFit={foreground ? 'contain' : 'cover'}
+        contentPosition={
+          !foreground && image.focalPoint
+            ? { left: `${image.focalPoint.x * 100}%`, top: `${image.focalPoint.y * 100}%` }
+            : 'center'
+        }
+        cachePolicy="memory"
+        autoplay={false}
+        accessible={false}
+        onError={() => setFailedSource(source)}
+        style={[StyleSheet.absoluteFill, { opacity: image.opacity ?? 1 }]}
+      />
+    </View>
   );
 }
 
@@ -460,6 +510,14 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     gap: 2,
+  },
+  railArtwork: {
+    marginHorizontal: 16,
+    marginTop: 4,
+    marginBottom: 12,
+    borderRadius: 12,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
   },
   scroll: {
     flex: 1,

@@ -1,6 +1,5 @@
 import { expect, test } from 'bun:test';
 import crypto from 'node:crypto';
-import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { productionSource, transpile, walk } from '../../test-support/production-source';
 import type { GatewayRecord } from '../gateway-storage';
@@ -225,15 +224,7 @@ test('Home cache pruning is disabled on hydration error, including after its spi
   }
 });
 
-test('storage errors take precedence over empty and not-found UI, with only explicit retry', () => {
-  const home = readFileSync('src/components/home-overview.tsx', 'utf8');
-  const settings = readFileSync('src/components/settings-servers.tsx', 'utf8');
-  const terminal = readFileSync('src/components/server-terminal-workspace.tsx', 'utf8');
-  expect(home).toContain('!loading && !hydrationError && records.length === 0');
-  expect(/hydrationError \? \(\s*<GatewayStorageError/.test(settings)).toBe(true);
-  expect(terminal.indexOf('if (hydrationError)')).toBeLessThan(
-    terminal.indexOf('if (!loading && !routeRecord)')
-  );
+test('a failed hydration is retried only by explicit action', () => {
   const h = hydrationHarness();
   const hook = evaluate(moduleSource('src/hooks/use-gateway-record.ts') + '\nuseGatewayRecord', {
     useCallback: (callback: unknown) => callback,

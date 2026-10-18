@@ -110,14 +110,14 @@ describe('holding many servers', () => {
 
 describe('reading the mirror back off the device', () => {
   test('round-trips what was written', () => {
-    const index = withMirroredPorts({}, 'osk', [3000, 8080]);
+    const index = withMirroredPorts({}, 'studio', [3000, 8080]);
     expect(parseServerWebPortsIndex(JSON.stringify(index))).toEqual(index);
   });
 
   test('re-validates every entry rather than trusting the blob', () => {
     expect(
-      parseServerWebPortsIndex('{"osk":[3000,0,"8080",70000,5173],"":[3000],"quiet":[]}')
-    ).toEqual({ osk: [3000, 5173] });
+      parseServerWebPortsIndex('{"studio":[3000,0,"8080",70000,5173],"":[3000],"quiet":[]}')
+    ).toEqual({ studio: [3000, 5173] });
   });
 
   test('a mirror that cannot be read is simply no shortcuts', () => {

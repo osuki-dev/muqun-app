@@ -24,8 +24,8 @@ import { switcherRails } from '../switcher-rails';
 /** The sessions rail one machine's backends produce, by id. */
 function rail(sessions: ReturnType<typeof sessionChoices>): string[] {
   return switcherRails({
-    machines: [{ id: 'osk', label: 'osk', sessions }],
-    serverId: 'osk',
+    machines: [{ id: 'desk', label: 'desk', sessions }],
+    serverId: 'desk',
     sessionId: sessions[0]?.id ?? '',
     workspaces: [],
     workspaceId: '',

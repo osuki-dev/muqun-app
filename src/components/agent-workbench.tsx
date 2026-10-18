@@ -2,6 +2,9 @@ import { PAD_LAYOUT_MIN_WIDTH } from '@/lib/responsive-layout';
 import { useRootRouteName } from '@/hooks/use-root-route-name';
 import { useStore } from 'zustand';
 import { createAgentTranscriptStore } from '@/stores/agent-transcript';
+import { GuideCommand } from '@/components/guide-command';
+import { useFleetPeers } from '@/stores/fleet-peers';
+import type { MentionComputer } from '@/lib/composer-mentions';
 import { useToolCallDetailStore } from '@/stores/tool-call-detail';
 import { AgentTranscriptList } from '@/components/agent-transcript-list';
 import { useLatestRef } from '@/hooks/use-render-refs';
@@ -224,7 +227,7 @@ import { TRANSCRIPT_ESTIMATED_ITEM_SIZE } from '@/lib/transcript-sizing';
 
 import { AgentPermissionCard } from './agent-permission-card';
 import { AgentFormCard } from './agent-form-card';
-import { AgentComposer } from './agent-composer';
+import { AgentComposer, type DraftInjector } from './agent-composer';
 import { runningShellCount } from '@/components/agent-background-tray';
 import { ThinkingIndicator } from './agent-thinking-indicator';
 import { AGENT_TYPE } from '@/constants/agent-type';
@@ -247,6 +250,7 @@ import {
 } from '@/lib/agent-workbench-ownership';
 import { isHomeRelativePath, settledWorkspaceDirectory } from '@/lib/agent-directory-suggest';
 import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
+import { promptedSessionWaitMs } from '@/lib/prompted-agent-sessions';
 
 /**
  * How many history timeline items the workbench reveals per page. The gateway
@@ -264,6 +268,14 @@ const HISTORY_PAGE_SIZE = 40;
  * agent screen fetches.
  */
 const SESSION_LIST_LIMIT = 50;
+
+/**
+ * How long a session that fell back to SSE waits before trying the event
+ * socket again. The fallback used to last until the session was left, so one
+ * bad minute on the network pinned a long session to a connection per
+ * session for the rest of its life.
+ */
+const SOCKET_RETRY_AFTER_FALLBACK_MS = 30_000;
 
 /**
  * How long the screen's own notice stays before it fades out by itself.
@@ -442,7 +454,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const markdownStyle = usePaneChatMarkdownStyle();
   const listRef = useRef<LegendListRef>(null);
   const [scrollToSentRow, setScrollToSentRow] = useState<string>();
-  const injectDraftRef = useRef<((text: string) => void) | null>(null);
+  const injectDraftRef = useRef<DraftInjector | null>(null);
 
   /**
    * The screen's own notice, under the header rather than over it.
@@ -616,12 +628,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * one -- the setup step for an agent that is running but needs setup.
    */
   const guideStatus = activeAgentEntry?.readiness ?? 'offline';
-  const startAdvice = [
-    _(agentGuideStart(agentGuide, guideStatus)),
-    agentGuideCommand(agentGuide, guideStatus),
-  ]
-    .filter(Boolean)
-    .join('\n');
+  const startSentence = _(agentGuideStart(agentGuide, guideStatus));
+  const startCommand = agentGuideCommand(agentGuide, guideStatus);
+  const startAdvice = [startSentence, startCommand].filter(Boolean).join('\n');
   const offlineFallback = t`${agentName} is offline`;
   /** What each kind of failed request says, in this agent's name. */
   const agentErrorSentences = useMemo<AgentErrorSentences>(
@@ -629,7 +638,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       offline: `${offlineFallback}\n${startAdvice}`,
       refused: (message) => t`${agentName} refused the request: ${message}`,
       unsupported: t`${agentName} does not support that action.`,
-      unknownAgent: t`This gateway does not know ${agentName}. Refresh the agent list and try again.`,
+      unknownAgent: t`This computer does not know ${agentName}. Refresh the agent list and try again.`,
     }),
     [agentName, offlineFallback, startAdvice, t]
   );
@@ -656,6 +665,19 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     if (initialAgentId) selectAgent(initialAgentId);
   }, [initialAgentId, selectAgent]);
   const [transcriptStore] = useState(createAgentTranscriptStore);
+  // `@` offers this computer's linked peers: the computers it can hand part of
+  // the work to. The prompt goes to the session as typed; the session's own
+  // instructions already name them.
+  const linkedPeers = useFleetPeers((state) => state.byServer[serverId]?.peers);
+  const mentionComputers: MentionComputer[] =
+    linkedPeers?.map((peer) => ({
+      serverId: peer.serverId,
+      // The name this computer knows the peer by: the one delegation takes.
+      name: peer.name,
+      reachable: peer.reachable && !peer.unauthorized,
+      current: false,
+      ...(peer.unauthorized ? { revoked: true } : {}),
+    })) ?? [];
   const setTimeline = transcriptStore.getState().setTimeline;
   const timelineEmpty = useStore(transcriptStore, (state) => state.timeline.length === 0);
   const toolIds = useStore(transcriptStore, (state) => state.toolIds);
@@ -854,6 +876,24 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     [setTimeline]
   );
   const [loading, setLoading] = useState(true);
+  /**
+   * Home's dock opened this session right after creating it and sending its
+   * first prompt. Its first snapshot can be empty -- the engine has not
+   * mirrored the prompt yet -- and an empty timeline is not a new session, so
+   * the transcript keeps its loading shape until a row arrives or the short
+   * wait runs out (`prompted-agent-sessions.ts`).
+   */
+  const [awaitingFirstRow, setAwaitingFirstRow] = useState(
+    () => promptedSessionWaitMs(serverId, initialAsid) > 0
+  );
+  useEffect(() => {
+    if (!awaitingFirstRow) return;
+    const timer = setTimeout(
+      () => setAwaitingFirstRow(false),
+      promptedSessionWaitMs(serverId, initialAsid)
+    );
+    return () => clearTimeout(timer);
+  }, [awaitingFirstRow, serverId, initialAsid]);
   const [hasDiffs, setHasDiffs] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
   const [checkingHealth, setCheckingHealth] = useState(false);
@@ -2342,7 +2382,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
        * session sat there looking current while the engine moved on.
        */
       const scheduleReconnect = () => {
-        if (!mounted) return;
+        // Back on the socket: the stream it closed is not to be reopened.
+        if (!mounted || onSocket) return;
         streamBatch.flush();
         // Quiet reconnect. Mobile streams drop often; keep the gap short so
         // a dropped connection costs at most a couple of seconds, not a poll.
@@ -2376,27 +2417,58 @@ export const AgentWorkbench = memo(function AgentWorkbench({
      * The socket owns its own reconnects and re-subscribes after each one; its
      * `subscribed` is this session's connect, and the catch-up runs there.
      * Two failed opens in a row, or a socket that cannot be used at all, put
-     * this session back on SSE until it is left -- never permanently.
+     * this session on SSE -- and not for good: every
+     * `SOCKET_RETRY_AFTER_FALLBACK_MS` the socket is tried again beside the
+     * stream, and the first `subscribed` moves the session back onto it and
+     * closes the stream. A refused pairing (`unauthorized`) or an unusable
+     * socket (`unavailable`) is not retried.
      */
     let releaseSocket: (() => void) | null = null;
+    let socketRetryTimer: ReturnType<typeof setTimeout> | null = null;
     let onSocket = wsEvents;
+    const scheduleSocketRetry = () => {
+      if (socketRetryTimer) clearTimeout(socketRetryTimer);
+      socketRetryTimer = null;
+      const state = gatewaySocketFor(serverId).state;
+      // Neither a refused pairing nor a socket this build cannot use comes
+      // back on a timer.
+      if (!mounted || state === 'unauthorized' || state === 'unavailable') return;
+      socketRetryTimer = setTimeout(() => {
+        socketRetryTimer = null;
+        if (mounted && !onSocket && !releaseSocket) watchSocket();
+      }, SOCKET_RETRY_AFTER_FALLBACK_MS);
+    };
     const fallBackToSse = () => {
-      if (!mounted || !onSocket) return;
+      if (!mounted) return;
+      const leaving = onSocket;
       onSocket = false;
       // Can fire inside `watch()` itself, before its release is in hand.
       queueMicrotask(() => {
         releaseSocket?.();
         releaseSocket = null;
         if (!mounted) return;
-        streamBatch.flush();
-        connectSse();
+        if (leaving) {
+          streamBatch.flush();
+          connectSse();
+        }
+        // Already on SSE, this was a retry of the socket that failed again.
+        scheduleSocketRetry();
       });
     };
-    if (wsEvents) {
+    const watchSocket = () => {
       const asid = activeAsid;
       releaseSocket = gatewaySocketFor(serverId).watch(asid, {
         onSubscribed: () => {
-          if (!mounted || !onSocket) return;
+          if (!mounted) return;
+          if (!onSocket) {
+            // Recovered: the socket carries this session again.
+            onSocket = true;
+            attempts = 0;
+            if (reconnectTimer) clearTimeout(reconnectTimer);
+            reconnectTimer = null;
+            closeStream();
+            closeStream = () => {};
+          }
           streamBatch.flush();
           catchUpRef.current();
         },
@@ -2411,6 +2483,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         },
         onUnavailable: fallBackToSse,
       });
+    };
+    if (wsEvents) {
+      watchSocket();
     } else {
       connectSse();
     }
@@ -2418,6 +2493,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     return () => {
       mounted = false;
       streamBatch.cancel();
+      if (socketRetryTimer) clearTimeout(socketRetryTimer);
       releaseSocket?.();
       closeStream();
       if (reconnectTimer) clearTimeout(reconnectTimer);
@@ -2779,6 +2855,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           variant: 'danger',
           title: t`Message not sent`,
           message: agentErrorRef.current(err),
+          durationMs: 6000,
         });
         return false;
       }
@@ -3295,7 +3372,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               // sentence for that does not say what to type instead.
               message:
                 typedHome && agentRequestErrorDetail(err).code === 'invalid_directory'
-                  ? t`This gateway does not expand ~. Type the full path, starting with /.`
+                  ? t`This computer does not expand ~. Type the full path, starting with /.`
                   : agentErrorRef.current(err, t`Failed to switch project`),
             });
           }
@@ -3811,6 +3888,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const canRunInBackground = agentFeatures.backgroundShells;
   const toolActions = useMemo<AgentToolActions>(
     () => ({
+      audioSessionId: activeAsid ?? undefined,
       onOpenChildSession: openSubagentDetail,
       ...(canRunInBackground ? { onRunInBackground: handleRunInBackground } : {}),
       onPreviewImage: setPreviewImageUri,
@@ -3821,6 +3899,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       childStatuses,
     }),
     [
+      activeAsid,
       canRunInBackground,
       handleRunInBackground,
       handleOpenToolFile,
@@ -4678,7 +4757,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               <Trans>Creating session…</Trans>
             </Text>
           </View>
-        ) : loading ? (
+        ) : loading ||
+          (awaitingFirstRow &&
+            activeAsid === initialAsid &&
+            timelineEmpty &&
+            permissions.length === 0 &&
+            forms.length === 0) ? (
           /*
             The shape of what is coming, which is what every other surface in
             this app answers a wait with. This branch is also the whole of the
@@ -4730,8 +4814,17 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                     variant="caption"
                     color={theme.colors.textMuted}
                     style={styles.emptySubtitle}>
-                    {startAdvice}
+                    {startSentence}
                   </Text>
+                  {startCommand ? (
+                    <View style={styles.emptyCommand}>
+                      <GuideCommand
+                        serverId={serverId}
+                        command={startCommand}
+                        testID="agent-offline-cmd"
+                      />
+                    </View>
+                  ) : null}
                   <PressableScale
                     testID="agent-offline-retry-btn"
                     onPress={async () => {
@@ -5054,7 +5147,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         <Animated.View
           entering={fadeIn('micro')}
           exiting={fadeOut('micro')}
-          style={[styles.agentPickerWrap, { bottom: latestBottom + 42 }]}
+          style={[styles.agentPickerWrap, { top: topInset + 4 }]}
           pointerEvents="box-none">
           <AgentActionMenu testID="agent-new-session-picker" items={agentPickerItems} />
         </Animated.View>
@@ -5062,6 +5155,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
       {/* Floating Glass Composer at Bottom */}
       <AgentComposer
+        voiceContext={visible ? JSON.stringify([serverId, sessionId, activeAsid ?? 'new']) : ''}
+        mentionComputers={mentionComputers}
         disabled={isOffline}
         agentName={agentName}
         running={isRunning}
@@ -5324,6 +5419,7 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 16,
   },
+  emptyCommand: { alignSelf: 'stretch' },
   emptySubtitle: {
     fontSize: AGENT_TYPE.meta.size,
     textAlign: 'center',

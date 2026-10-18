@@ -1,6 +1,6 @@
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
-import { StyleSheet, type StyleProp, type TextStyle } from 'react-native';
+import { StyleSheet, type StyleProp, type TextProps, type TextStyle } from 'react-native';
 
 /**
  * A field's placeholder, drawn as text rather than as the platform's hint.
@@ -28,6 +28,7 @@ export function FieldPlaceholder({
   visible,
   color,
   style,
+  onTextLayout,
 }: {
   text: string | undefined;
   visible: boolean;
@@ -35,6 +36,8 @@ export function FieldPlaceholder({
   color: string | undefined;
   /** The field's own text metrics and padding, so the two lines coincide. */
   style: StyleProp<TextStyle>;
+  /** For a probe that measures how the text would lay out. */
+  onTextLayout?: TextProps['onTextLayout'];
 }) {
   const { colors } = useThemeTokens();
   if (!visible || !text) return null;
@@ -44,6 +47,7 @@ export function FieldPlaceholder({
       importantForAccessibility="no"
       pointerEvents="none"
       color={color ?? colors.textSubtle}
+      onTextLayout={onTextLayout}
       style={StyleSheet.flatten([styles.placeholder, style])}>
       {text}
     </Text>

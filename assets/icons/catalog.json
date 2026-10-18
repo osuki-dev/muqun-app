@@ -34,5 +34,19 @@
     "directory": "arcade",
     "light": "#EEE8FF",
     "dark": "#17112B"
+  },
+  {
+    "id": "Mint",
+    "directory": "mint",
+    "light": "#0C101E",
+    "dark": "#0C101E",
+    "fullBleed": true
+  },
+  {
+    "id": "Sakura",
+    "directory": "sakura",
+    "light": "#090B27",
+    "dark": "#090B27",
+    "fullBleed": true
   }
 ]
