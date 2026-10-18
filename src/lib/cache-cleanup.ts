@@ -2,12 +2,16 @@ import { nativeImageCache } from './native-image-cache';
 import { Paths } from 'expo-file-system';
 import { cacheDirectory, deleteAsync, readDirectoryAsync } from 'expo-file-system/legacy';
 import { AppState } from 'react-native';
-import { cacheCleanupIsDue, createCacheCleanupFlight } from '@/lib/cache-cleanup-policy';
+import {
+  cacheCleanupIsDue,
+  createCacheCleanupFlight,
+  createCacheEntryDisposer,
+} from '@/lib/cache-cleanup-policy';
 import { useAppSettings } from '@/stores/app-settings';
 import { planCacheDeletions, temporaryMediaCreatedAt } from '@/lib/cache-storage';
 
 // Imported by RootLayout before any user interaction can create a media copy.
-// Keep every file from this process, including paused players and active exports.
+// Startup recovery only removes previous-process copies; normal cleanup uses live leases.
 export const CACHE_PROCESS_STARTED_AT = Date.now();
 
 /** Recover media copies left behind when the previous process was killed. */
@@ -56,7 +60,8 @@ export function clearCache(shouldContinue: () => boolean = () => true): Promise<
       if (!root) return false;
       const names = await readDirectoryAsync(root);
       const entries = names.map((name) => ({ name, uri: root + name, bytes: 0 }));
-      for (const entry of planCacheDeletions(entries, root, CACHE_PROCESS_STARTED_AT)) {
+      // Live producers hold leases; abandoned copies from this process are safe too.
+      for (const entry of planCacheDeletions(entries, root, Number.MAX_SAFE_INTEGER)) {
         if (!shouldContinue()) return false;
         if (cleanupFlight.isProtected(entry.name)) continue;
         // This downloader has no library-owned clear API or active-write guard.
@@ -80,6 +85,8 @@ export function clearCache(shouldContinue: () => boolean = () => true): Promise<
 
 const cleanupFlight = createCacheCleanupFlight();
 
+export const isCacheEntryProtected = cleanupFlight.isProtected;
+
 /** Mark before producing files, then wait out any already-started deletion. */
 export async function protectCacheDirectory(name: string): Promise<void> {
   await cleanupFlight.protect(name);
@@ -88,6 +95,22 @@ export async function protectCacheDirectory(name: string): Promise<void> {
 /** Theme stages release protection only after their own disposal finishes. */
 export function releaseCacheDirectory(name: string): void {
   cleanupFlight.release(name);
+}
+
+/** Acquire before creating a media copy. Disposal always relinquishes ownership,
+ * including when deletion fails so a later Clear cache can retry the file. */
+export async function protectTemporaryCacheEntry(entry: {
+  name: string;
+  readonly exists: boolean;
+  delete(): void;
+}): Promise<() => void> {
+  await protectCacheDirectory(entry.name);
+  return createCacheEntryDisposer(
+    () => {
+      if (entry.exists) entry.delete();
+    },
+    () => releaseCacheDirectory(entry.name)
+  );
 }
 
 export function automaticCacheCleanupIsDue(): boolean {

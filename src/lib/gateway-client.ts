@@ -1,3 +1,4 @@
+import { protectTemporaryCacheEntry } from './cache-cleanup';
 import { nativeImageCache } from './native-image-cache';
 import { parseGitWorktrees, type GitWorktreeInventory } from './git-worktrees';
 import * as TransportSecureStore from 'expo-secure-store';
@@ -1466,25 +1467,20 @@ export function gatewayImageBinding(asset: MessageImageAsset, capabilities?: rea
       Paths.cache,
       `file-export-${Date.now()}-${Math.floor(Math.random() * 2 ** 32)}`
     );
-    directory.create();
+    const disposeCache = await protectTemporaryCacheEntry(directory);
     const cachedFile = new File(directory, `preview.${extension}`);
     try {
+      directory.create();
       cachedFile.create();
       await cachedFile.write(bytes);
     } catch (error) {
-      directory.delete();
+      disposeCache();
       throw error;
     }
     return {
       uri: cachedFile.uri,
       cacheKey: key,
-      dispose: () => {
-        try {
-          if (directory.exists) directory.delete();
-        } catch {
-          console.warn('[image-preview] Temporary image cleanup deferred to startup');
-        }
-      },
+      dispose: disposeCache,
     };
   };
   const image: PreviewImageDescriptor = {

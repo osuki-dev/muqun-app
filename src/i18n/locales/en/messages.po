@@ -2813,6 +2813,10 @@ msgstr "Files in this project"
 msgid "Files in this workspace"
 msgstr "Files in this workspace"
 
+#: src/components/settings-storage.tsx
+msgid "Files in use and managed caches are kept."
+msgstr "Files in use and managed caches are kept"
+
 #: src/components/agent-workspace-sheet.tsx
 msgid "Filter projects or type a path"
 msgstr "Filter projects or type a path"

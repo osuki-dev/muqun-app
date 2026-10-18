@@ -1,3 +1,4 @@
+import { protectTemporaryCacheEntry } from './cache-cleanup';
 import { File, Paths } from 'expo-file-system';
 import { VideoPlayer } from 'react-native-video';
 import { readAssetBytes, type SessionAsset } from '@/lib/gateway-client';
@@ -17,6 +18,7 @@ export function videoPreviewRuntime(
     Paths.cache,
     `video-preview-${Date.now()}-${sequence++}.${asset.mime === 'video/quicktime' ? 'mov' : 'mp4'}`
   );
+  let disposeCache: (() => void) | undefined;
   let player: VideoPlayer | undefined;
   let initialized = false;
   let subscriptions: { remove: () => void }[] = [];
@@ -24,6 +26,8 @@ export function videoPreviewRuntime(
     async prepare(signal) {
       const resolved = options.resolve ? await options.resolve(signal) : asset;
       const bytes = await readAssetBytes(resolved, { signal, maxBytes: VIDEO_CONTENT_LIMIT });
+      if (signal.aborted) throw new Error('Operation cancelled');
+      disposeCache = await protectTemporaryCacheEntry(file);
       if (signal.aborted) throw new Error('Operation cancelled');
       file.create();
       await file.write(bytes);
@@ -60,11 +64,14 @@ export function videoPreviewRuntime(
       player?.seekTo(0);
     },
     release() {
-      subscriptions.forEach((subscription) => subscription.remove());
-      subscriptions = [];
-      player?.release();
-      player = undefined;
-      if (file.exists) file.delete();
+      try {
+        subscriptions.forEach((subscription) => subscription.remove());
+        subscriptions = [];
+        player?.release();
+        player = undefined;
+      } finally {
+        disposeCache?.();
+      }
     },
   };
 }
