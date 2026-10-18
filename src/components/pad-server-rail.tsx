@@ -265,7 +265,7 @@ function PadRailArtwork() {
         box,
         { width: image.width(), height: image.height() },
         artwork?.image.fit,
-        artwork?.image.focalPoint,
+        { x: artwork?.image.focalPoint?.x ?? 0.5, y: 0 },
         artwork?.foreground
       )
     : null;

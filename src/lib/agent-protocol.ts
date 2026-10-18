@@ -1930,6 +1930,8 @@ export interface AgentFeatures {
   attachments: boolean;
   /** Older remote timeline pages; unlike legacy controls, requires explicit opt-in. */
   timelineEarlier: boolean;
+  /** Optional account quota inspection; requires explicit provider opt-in. */
+  accountLimits: boolean;
   /** Every other key the gateway sent, untouched, for a reader that knows one. */
   extra: Record<string, unknown>;
 }
@@ -1951,6 +1953,7 @@ const AGENT_FEATURE_KEYS = [
   'slashCommands',
   'attachments',
   'timelineEarlier',
+  'accountLimits',
 ] as const;
 
 /**
@@ -1974,6 +1977,7 @@ export const LEGACY_AGENT_FEATURES: Readonly<AgentFeatures> = Object.freeze({
   slashCommands: true,
   attachments: true,
   timelineEarlier: false,
+  accountLimits: false,
   extra: Object.freeze({}) as Record<string, unknown>,
 });
 
@@ -2034,6 +2038,7 @@ export function parseAgentFeatures(value: unknown): AgentFeatures {
     slashCommands: flag('slashCommands'),
     attachments: flag('attachments'),
     timelineEarlier: flag('timelineEarlier'),
+    accountLimits: flag('accountLimits'),
     extra,
   };
 }

@@ -49,6 +49,8 @@ msgid "{0, plural, one {# character not shown} other {# characters not shown}}"
 msgstr "{0, plural, one {# character not shown} other {# characters not shown}}"
 
 #. placeholder {0}: away.value
+#. placeholder {0}: minutes / 1440
+#: src/components/agent-account-limits-section.tsx
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# day} other {# days}}"
 msgstr "{0, plural, one {# day} other {# days}}"
@@ -66,6 +68,8 @@ msgid "{0, plural, one {# file} other {# files}} · +{1} −{2}"
 msgstr "{0, plural, one {# file} other {# files}} · +{1} −{2}"
 
 #. placeholder {0}: away.value
+#. placeholder {0}: minutes / 60
+#: src/components/agent-account-limits-section.tsx
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# hour} other {# hours}}"
 msgstr "{0, plural, one {# hour} other {# hours}}"
@@ -92,6 +96,11 @@ msgstr "{0, plural, one {# operation} other {# operations}}"
 #: src/components/settings-storage.tsx
 msgid "{0, plural, one {# theme} other {# themes}} · {1}"
 msgstr "{0, plural, one {# theme} other {# themes}} · {1}"
+
+#. placeholder {0}: minutes / 10080
+#: src/components/agent-account-limits-section.tsx
+msgid "{0, plural, one {# week} other {# weeks}}"
+msgstr "{0, plural, one {# week} other {# weeks}}"
 
 #. placeholder {0}: digest.otherAgents
 #: src/components/away-digest-card.tsx
@@ -258,6 +267,10 @@ msgstr "{agentName}'s installation could not be confirmed. If it is installed, s
 msgid "{ahead} ahead"
 msgstr "{ahead} ahead"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "{amount} remaining"
+msgstr "{amount} remaining"
+
 #: src/components/away-digest-card.tsx
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
 msgstr "{asked, plural, one {· asked once} other {· asked # times}}"
@@ -339,6 +352,10 @@ msgstr "{lead}: {title} — finished while you were away"
 msgid "{messages, plural, one {# message} other {# messages}}"
 msgstr "{messages, plural, one {# message} other {# messages}}"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "{minutes, plural, one {# minute} other {# minutes}}"
+msgstr "{minutes, plural, one {# minute} other {# minutes}}"
+
 #: src/components/virtual-keyboard.tsx
 msgid "{modifierKeys} combinations need the program in this terminal to enable extended keys"
 msgstr "{modifierKeys} combinations need the program in this terminal to enable extended keys"
@@ -374,6 +391,10 @@ msgstr "{panelCount, plural, one {# running} other {# running}}"
 #: src/components/home-composer-dock.tsx
 msgid "{providerName} (terminal)"
 msgstr "{providerName} (terminal)"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "{remaining} remaining"
+msgstr "{remaining} remaining"
 
 #: src/components/row-action-menu.tsx
 msgid "{removeLabel}: {label}"
@@ -504,6 +525,14 @@ msgstr "Accept work from other computers"
 #: src/components/computer-map/screen.tsx
 msgid "Accepting work"
 msgstr "Accepting work"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Account limits"
+msgstr "Account limits"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Account limits temporarily unavailable"
+msgstr "Account limits temporarily unavailable"
 
 #: src/components/task-row.tsx
 msgid "Acknowledge"
@@ -912,9 +941,17 @@ msgstr "Automatic cache cleanup"
 msgid "Autonomous software engineering: edits files, runs commands, tests."
 msgstr "Autonomous software engineering: edits files, runs commands, tests"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Available"
+msgstr "Available"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Available modes"
 msgstr "Available modes"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Available resets"
+msgstr "Available resets"
 
 #: src/components/launch-intro.tsx
 #: src/components/pad-server-rail.tsx
@@ -2116,6 +2153,10 @@ msgstr "Could not reach the theme catalogue"
 msgid "Could not reach this computer."
 msgstr "Could not reach this computer"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Could not read account limits"
+msgstr "Could not read account limits"
+
 #: src/components/gateway-storage-error.tsx
 msgid "Could not read saved computers. Your saved data has not been changed. Unlock this device and retry."
 msgstr "Could not read saved computers. Your saved data has not been changed. Unlock this device and retry"
@@ -2302,6 +2343,14 @@ msgstr "Create and move"
 msgid "Creating session…"
 msgstr "Creating session…"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Credits"
+msgstr "Credits"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Credits used"
+msgstr "Credits used"
+
 #: src/components/agent-tool-card.tsx
 #: src/components/attachment-image.tsx
 #: src/components/content-image.tsx
@@ -2457,6 +2506,7 @@ msgstr "detached at {head}"
 msgid "Detached at {head}"
 msgstr "Detached at {head}"
 
+#: src/components/agent-account-limits-section.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Details"
@@ -2566,10 +2616,6 @@ msgstr "Download {0}"
 #: src/components/theme-link-import.tsx
 msgid "Download and preview"
 msgstr "Download and preview"
-
-#: src/components/update-status-banner.tsx
-msgid "Full package size: {fullPackage}"
-msgstr "Full package size: {fullPackage}"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Downloading"
@@ -2739,6 +2785,11 @@ msgstr "Expand tasks"
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Expand tool call"
 msgstr "Expand tool call"
+
+#. placeholder {0}: new Date(credit.expires_at_ms).toLocaleString()
+#: src/components/agent-account-limits-section.tsx
+msgid "Expires at {0}"
+msgstr "Expires at {0}"
 
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
@@ -2935,6 +2986,10 @@ msgstr "From a goal to work in motion"
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "Front camera. Hold the QR up to the screen"
+
+#: src/components/update-status-banner.tsx
+msgid "Full package size: {fullPackage}"
+msgstr "Full package size: {fullPackage}"
 
 #: src/components/update-status-banner.tsx
 msgid "Full package size. File reuse may reduce the download."
@@ -3231,6 +3286,14 @@ msgstr "Import link"
 msgid "In progress"
 msgstr "In progress"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Included usage"
+msgstr "Included usage"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Included usage is restricted. Paid or alternative usage may still be available."
+msgstr "Included usage is restricted. Paid or alternative usage may still be available"
+
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Increase {label}"
 msgstr "Increase {label}"
@@ -3419,6 +3482,10 @@ msgstr "Language, {languageName}"
 msgid "Large"
 msgstr "Large"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Last checked"
+msgstr "Last checked"
+
 #: src/components/home-attention.tsx
 msgid "Last checked {when}"
 msgstr "Last checked {when}"
@@ -3514,6 +3581,10 @@ msgstr "Letters"
 #: src/components/settings-appearance.tsx
 msgid "Light"
 msgstr "Light"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Limit reached"
+msgstr "Limit reached"
 
 #: src/components/computer-map/screen.tsx
 msgid "Lines: this app. Dashed arrows: last reported computer links."
@@ -3712,6 +3783,7 @@ msgid "Mode · {0} → {1}"
 msgstr "Mode · {0} → {1}"
 
 #: src/app/settings-voice.tsx
+#: src/components/agent-account-limits-section.tsx
 #: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -3749,6 +3821,10 @@ msgstr "Modified"
 #: src/components/settings-font-sheet.tsx
 msgid "Monospace"
 msgstr "Monospace"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Monthly credit limit"
+msgstr "Monthly credit limit"
 
 #: src/components/custom-theme-library.tsx
 msgid "More actions"
@@ -4103,6 +4179,10 @@ msgstr "No projects here yet. Type a path above to open one"
 msgid "No projects match “{0}”."
 msgstr "No projects match “{0}”"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "No quota values reported"
+msgstr "No quota values reported"
+
 #: src/components/computer-map/screen.tsx
 msgid "No reported links."
 msgstr "No reported links"
@@ -4183,6 +4263,7 @@ msgstr "Not a git repository"
 msgid "Not accepting work"
 msgstr "Not accepting work"
 
+#: src/components/agent-account-limits-section.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -4228,6 +4309,10 @@ msgstr "Not installed"
 msgid "Not monospace — the terminal may look uneven"
 msgstr "Not monospace — the terminal may look uneven"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Not reported"
+msgstr "Not reported"
+
 #: src/components/simfarm-stage.tsx
 msgid "Not running"
 msgstr "Not running"
@@ -4236,6 +4321,7 @@ msgstr "Not running"
 msgid "Not set"
 msgstr "Not set"
 
+#: src/components/agent-account-limits-section.tsx
 #: src/components/agent-model-sheet.tsx
 msgid "Not signed in on the host"
 msgstr "Not signed in on the host"
@@ -4731,6 +4817,10 @@ msgstr "Paused"
 msgid "PDF preview supports files up to {ceiling}. Open this file on your computer."
 msgstr "PDF preview supports files up to {ceiling}. Open this file on your computer"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Period not reported"
+msgstr "Period not reported"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Permission"
 msgstr "Permission"
@@ -4747,6 +4837,7 @@ msgstr "Photo library"
 msgid "Pinned commit"
 msgstr "Pinned commit"
 
+#: src/components/agent-account-limits-section.tsx
 #: src/components/agent-mode-sheet.tsx
 msgid "Plan"
 msgstr "Plan"
@@ -4928,6 +5019,11 @@ msgstr "Quick actions"
 msgid "Quit"
 msgstr "Quit"
 
+#. placeholder {0}: index + 1
+#: src/components/agent-account-limits-section.tsx
+msgid "Quota {0}"
+msgstr "Quota {0}"
+
 #: src/i18n/labels.ts
 msgid "Reach the network"
 msgstr "Reach the network"
@@ -5071,6 +5167,10 @@ msgstr "Reduced motion: list view"
 msgid "Refresh"
 msgstr "Refresh"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Refresh account limits"
+msgstr "Refresh account limits"
+
 #: src/components/changes-sheet.tsx
 msgid "Refresh changes"
 msgstr "Refresh changes"
@@ -5111,6 +5211,10 @@ msgstr "Refresh worktrees"
 #: src/components/agent-runtime-notice.tsx
 msgid "Refreshing history…"
 msgstr "Refreshing history…"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Remaining unknown"
+msgstr "Remaining unknown"
 
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
@@ -5237,6 +5341,14 @@ msgstr "Required"
 msgid "Requires iOS 16.1 or later."
 msgstr "Requires iOS 16.1 or later"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Reset credit"
+msgstr "Reset credit"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Reset time not reported"
+msgstr "Reset time not reported"
+
 #: src/components/computer-map/screen.tsx
 msgid "Reset view"
 msgstr "Reset view"
@@ -5244,6 +5356,12 @@ msgstr "Reset view"
 #: src/components/image-preview-modal.tsx
 msgid "Reset zoom"
 msgstr "Reset zoom"
+
+#. placeholder {0}: new Date(monthly.resets_at_ms).toLocaleString()
+#. placeholder {0}: new Date(window.resets_at_ms).toLocaleString()
+#: src/components/agent-account-limits-section.tsx
+msgid "Resets at {0}"
+msgstr "Resets at {0}"
 
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
@@ -5785,6 +5903,10 @@ msgctxt "agent slash command"
 msgid "Share this session's transcript"
 msgstr "Share this session's transcript"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Shared across sessions. Refresh to update."
+msgstr "Shared across sessions. Refresh to update"
+
 #: src/components/agent-background-tray.tsx
 msgid "Shells"
 msgstr "Shells"
@@ -6000,6 +6122,10 @@ msgstr "Space"
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Speed"
 msgstr "Speed"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Spend control"
+msgstr "Spend control"
 
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -7199,6 +7325,10 @@ msgstr "Unknown command"
 msgid "Unknown date"
 msgstr "Unknown date"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Unlimited"
+msgstr "Unlimited"
+
 #: src/lib/local-authentication.ts
 msgid "Unlock Muqun"
 msgstr "Unlock Muqun"
@@ -7355,6 +7485,10 @@ msgstr "uploaded"
 #: src/components/attachment-strip.tsx
 msgid "uploading"
 msgstr "uploading"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Usage snapshot is stale"
+msgstr "Usage snapshot is stale"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx

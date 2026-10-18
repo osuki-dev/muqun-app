@@ -49,6 +49,8 @@ msgid "{0, plural, one {# character not shown} other {# characters not shown}}"
 msgstr "{0, plural, other {# ký tự không hiển thị}}"
 
 #. placeholder {0}: away.value
+#. placeholder {0}: minutes / 1440
+#: src/components/agent-account-limits-section.tsx
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# day} other {# days}}"
 msgstr "{0, plural, other {# ngày}}"
@@ -66,6 +68,8 @@ msgid "{0, plural, one {# file} other {# files}} · +{1} −{2}"
 msgstr "{0, plural, other {# tệp}} · +{1} −{2}"
 
 #. placeholder {0}: away.value
+#. placeholder {0}: minutes / 60
+#: src/components/agent-account-limits-section.tsx
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# hour} other {# hours}}"
 msgstr "{0, plural, other {# giờ}}"
@@ -92,6 +96,11 @@ msgstr "{0, plural, other {# thao tác}}"
 #: src/components/settings-storage.tsx
 msgid "{0, plural, one {# theme} other {# themes}} · {1}"
 msgstr "{0, plural, other {# giao diện}} · {1}"
+
+#. placeholder {0}: minutes / 10080
+#: src/components/agent-account-limits-section.tsx
+msgid "{0, plural, one {# week} other {# weeks}}"
+msgstr "{0, plural, other {# tuần}}"
 
 #. placeholder {0}: digest.otherAgents
 #: src/components/away-digest-card.tsx
@@ -258,6 +267,10 @@ msgstr "Không thể xác nhận việc cài đặt {agentName}. Nếu đã cài
 msgid "{ahead} ahead"
 msgstr "đi trước {ahead}"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "{amount} remaining"
+msgstr "Còn lại {amount}"
+
 #: src/components/away-digest-card.tsx
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
 msgstr "{asked, plural, other {· đã hỏi # lần}}"
@@ -339,6 +352,10 @@ msgstr "{lead}: {title} — đã xong khi bạn đi vắng"
 msgid "{messages, plural, one {# message} other {# messages}}"
 msgstr "{messages, plural, other {# tin nhắn}}"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "{minutes, plural, one {# minute} other {# minutes}}"
+msgstr "{minutes, plural, other {# phút}}"
+
 #: src/components/virtual-keyboard.tsx
 msgid "{modifierKeys} combinations need the program in this terminal to enable extended keys"
 msgstr "Tổ hợp {modifierKeys} cần chương trình trong terminal này bật phím mở rộng"
@@ -374,6 +391,10 @@ msgstr "{panelCount, plural, other {# đang chạy}}"
 #: src/components/home-composer-dock.tsx
 msgid "{providerName} (terminal)"
 msgstr "{providerName} (trong terminal)"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "{remaining} remaining"
+msgstr "Còn lại {remaining}"
 
 #: src/components/row-action-menu.tsx
 msgid "{removeLabel}: {label}"
@@ -504,6 +525,14 @@ msgstr "Nhận việc từ máy tính khác"
 #: src/components/computer-map/screen.tsx
 msgid "Accepting work"
 msgstr "Nhận công việc"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Account limits"
+msgstr "Giới hạn tài khoản"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Account limits temporarily unavailable"
+msgstr "Giới hạn tài khoản tạm thời không khả dụng"
 
 #: src/components/task-row.tsx
 msgid "Acknowledge"
@@ -912,9 +941,17 @@ msgstr "Tự động dọn bộ nhớ đệm"
 msgid "Autonomous software engineering: edits files, runs commands, tests."
 msgstr "Kỹ thuật phần mềm tự chủ: sửa tệp, chạy lệnh, kiểm thử"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Available"
+msgstr "Khả dụng"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Available modes"
 msgstr "Các chế độ có sẵn"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Available resets"
+msgstr "Số lượt đặt lại khả dụng"
 
 #: src/components/launch-intro.tsx
 #: src/components/pad-server-rail.tsx
@@ -2116,6 +2153,10 @@ msgstr "Không thể kết nối tới danh mục giao diện"
 msgid "Could not reach this computer."
 msgstr "Không thể kết nối đến máy tính này"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Could not read account limits"
+msgstr "Không thể đọc giới hạn tài khoản"
+
 #: src/components/gateway-storage-error.tsx
 msgid "Could not read saved computers. Your saved data has not been changed. Unlock this device and retry."
 msgstr "Không thể đọc các máy tính đã lưu. Dữ liệu đã lưu không bị thay đổi. Hãy mở khóa thiết bị rồi thử lại"
@@ -2302,6 +2343,14 @@ msgstr "Tạo và chuyển sang"
 msgid "Creating session…"
 msgstr "Đang tạo phiên…"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Credits"
+msgstr "Tín dụng"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Credits used"
+msgstr "Tín dụng đã dùng"
+
 #: src/components/agent-tool-card.tsx
 #: src/components/attachment-image.tsx
 #: src/components/content-image.tsx
@@ -2457,6 +2506,7 @@ msgstr "tách rời tại {head}"
 msgid "Detached at {head}"
 msgstr "Tách rời tại {head}"
 
+#: src/components/agent-account-limits-section.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Details"
@@ -2566,10 +2616,6 @@ msgstr "Tải xuống {0}"
 #: src/components/theme-link-import.tsx
 msgid "Download and preview"
 msgstr "Tải xuống và xem trước"
-
-#: src/components/update-status-banner.tsx
-msgid "Full package size: {fullPackage}"
-msgstr "Kích thước gói đầy đủ: {fullPackage}"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Downloading"
@@ -2739,6 +2785,11 @@ msgstr "Mở rộng nhiệm vụ"
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Expand tool call"
 msgstr "Mở rộng lệnh gọi công cụ"
+
+#. placeholder {0}: new Date(credit.expires_at_ms).toLocaleString()
+#: src/components/agent-account-limits-section.tsx
+msgid "Expires at {0}"
+msgstr "Hết hạn lúc {0}"
 
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
@@ -2935,6 +2986,10 @@ msgstr "Từ mục tiêu đến công việc đang chạy"
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "Camera trước. Giơ mã QR lên trước màn hình"
+
+#: src/components/update-status-banner.tsx
+msgid "Full package size: {fullPackage}"
+msgstr "Kích thước gói đầy đủ: {fullPackage}"
 
 #: src/components/update-status-banner.tsx
 msgid "Full package size. File reuse may reduce the download."
@@ -3231,6 +3286,14 @@ msgstr "Nhập từ liên kết"
 msgid "In progress"
 msgstr "Đang chạy"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Included usage"
+msgstr "Mức sử dụng bao gồm trong gói"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Included usage is restricted. Paid or alternative usage may still be available."
+msgstr "Mức sử dụng bao gồm trong gói bị hạn chế. Cách sử dụng trả phí hoặc thay thế có thể vẫn khả dụng"
+
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Increase {label}"
 msgstr "Tăng {label}"
@@ -3419,6 +3482,10 @@ msgstr "Ngôn ngữ, {languageName}"
 msgid "Large"
 msgstr "Lớn"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Last checked"
+msgstr "Kiểm tra gần nhất"
+
 #: src/components/home-attention.tsx
 msgid "Last checked {when}"
 msgstr "Kiểm tra lần cuối lúc {when}"
@@ -3514,6 +3581,10 @@ msgstr "Chữ cái"
 #: src/components/settings-appearance.tsx
 msgid "Light"
 msgstr "Sáng"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Limit reached"
+msgstr "Đã đạt giới hạn"
 
 #: src/components/computer-map/screen.tsx
 msgid "Lines: this app. Dashed arrows: last reported computer links."
@@ -3712,6 +3783,7 @@ msgid "Mode · {0} → {1}"
 msgstr "Chế độ · {0} → {1}"
 
 #: src/app/settings-voice.tsx
+#: src/components/agent-account-limits-section.tsx
 #: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -3749,6 +3821,10 @@ msgstr "Đã sửa"
 #: src/components/settings-font-sheet.tsx
 msgid "Monospace"
 msgstr "Đơn cách"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Monthly credit limit"
+msgstr "Giới hạn tín dụng hằng tháng"
 
 #: src/components/custom-theme-library.tsx
 msgid "More actions"
@@ -4103,6 +4179,10 @@ msgstr "Chưa có dự án nào ở đây. Nhập đường dẫn ở trên đ�
 msgid "No projects match “{0}”."
 msgstr "Không có dự án nào khớp “{0}”"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "No quota values reported"
+msgstr "Chưa báo cáo giá trị hạn mức"
+
 #: src/components/computer-map/screen.tsx
 msgid "No reported links."
 msgstr "Chưa có liên kết nào được báo cáo"
@@ -4183,6 +4263,7 @@ msgstr "Không phải kho mã Git"
 msgid "Not accepting work"
 msgstr "Không nhận công việc"
 
+#: src/components/agent-account-limits-section.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -4228,6 +4309,10 @@ msgstr "Chưa cài đặt"
 msgid "Not monospace — the terminal may look uneven"
 msgstr "Không phải đơn cách — terminal có thể trông không đều"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Not reported"
+msgstr "Chưa báo cáo"
+
 #: src/components/simfarm-stage.tsx
 msgid "Not running"
 msgstr "Đã tắt"
@@ -4236,6 +4321,7 @@ msgstr "Đã tắt"
 msgid "Not set"
 msgstr "Chưa đặt"
 
+#: src/components/agent-account-limits-section.tsx
 #: src/components/agent-model-sheet.tsx
 msgid "Not signed in on the host"
 msgstr "Chưa đăng nhập trên máy chủ"
@@ -4731,6 +4817,10 @@ msgstr "Tạm dừng"
 msgid "PDF preview supports files up to {ceiling}. Open this file on your computer."
 msgstr "Xem trước PDF hỗ trợ tệp tối đa {ceiling}. Hãy mở tệp này trên máy tính của bạn"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Period not reported"
+msgstr "Chưa báo cáo chu kỳ"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Permission"
 msgstr "Quyền"
@@ -4747,6 +4837,7 @@ msgstr "Thư viện ảnh"
 msgid "Pinned commit"
 msgstr "Commit đã ghim"
 
+#: src/components/agent-account-limits-section.tsx
 #: src/components/agent-mode-sheet.tsx
 msgid "Plan"
 msgstr "Kế hoạch"
@@ -4928,6 +5019,11 @@ msgstr "Thao tác nhanh"
 msgid "Quit"
 msgstr "Thoát"
 
+#. placeholder {0}: index + 1
+#: src/components/agent-account-limits-section.tsx
+msgid "Quota {0}"
+msgstr "Hạn mức {0}"
+
 #: src/i18n/labels.ts
 msgid "Reach the network"
 msgstr "Truy cập mạng"
@@ -5071,6 +5167,10 @@ msgstr "Giảm chuyển động: chế độ danh sách"
 msgid "Refresh"
 msgstr "Làm mới"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Refresh account limits"
+msgstr "Làm mới giới hạn tài khoản"
+
 #: src/components/changes-sheet.tsx
 msgid "Refresh changes"
 msgstr "Làm mới thay đổi"
@@ -5111,6 +5211,10 @@ msgstr "Làm mới worktree"
 #: src/components/agent-runtime-notice.tsx
 msgid "Refreshing history…"
 msgstr "Đang làm mới lịch sử…"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Remaining unknown"
+msgstr "Chưa rõ số còn lại"
 
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
@@ -5237,6 +5341,14 @@ msgstr "Bắt buộc"
 msgid "Requires iOS 16.1 or later."
 msgstr "Yêu cầu iOS 16.1 trở lên"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Reset credit"
+msgstr "Tín dụng đặt lại"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Reset time not reported"
+msgstr "Chưa báo cáo thời gian đặt lại"
+
 #: src/components/computer-map/screen.tsx
 msgid "Reset view"
 msgstr "Đặt lại góc nhìn"
@@ -5244,6 +5356,12 @@ msgstr "Đặt lại góc nhìn"
 #: src/components/image-preview-modal.tsx
 msgid "Reset zoom"
 msgstr "Đặt lại mức thu phóng"
+
+#. placeholder {0}: new Date(monthly.resets_at_ms).toLocaleString()
+#. placeholder {0}: new Date(window.resets_at_ms).toLocaleString()
+#: src/components/agent-account-limits-section.tsx
+msgid "Resets at {0}"
+msgstr "Đặt lại lúc {0}"
 
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
@@ -5785,6 +5903,10 @@ msgctxt "agent slash command"
 msgid "Share this session's transcript"
 msgstr "Chia sẻ bản ghi của phiên này"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Shared across sessions. Refresh to update."
+msgstr "Dùng chung giữa các phiên. Làm mới để cập nhật"
+
 #: src/components/agent-background-tray.tsx
 msgid "Shells"
 msgstr "Shell"
@@ -6000,6 +6122,10 @@ msgstr "Space"
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Speed"
 msgstr "Tốc độ"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Spend control"
+msgstr "Kiểm soát chi tiêu"
 
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -7199,6 +7325,10 @@ msgstr "Lệnh không xác định"
 msgid "Unknown date"
 msgstr "Không rõ ngày"
 
+#: src/components/agent-account-limits-section.tsx
+msgid "Unlimited"
+msgstr "Không giới hạn"
+
 #: src/lib/local-authentication.ts
 msgid "Unlock Muqun"
 msgstr "Mở khóa Muqun"
@@ -7355,6 +7485,10 @@ msgstr "đã tải lên"
 #: src/components/attachment-strip.tsx
 msgid "uploading"
 msgstr "đang tải lên"
+
+#: src/components/agent-account-limits-section.tsx
+msgid "Usage snapshot is stale"
+msgstr "Dữ liệu sử dụng đã cũ"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
