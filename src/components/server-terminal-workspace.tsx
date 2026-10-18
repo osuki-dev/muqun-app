@@ -6295,6 +6295,7 @@ export function ServerTerminalWorkspace({
             */}
                   <GlassChrome
                     surface="composer"
+                    artworkEnabled={false}
                     shape="composerDock"
                     style={[
                       styles.composerDock,
