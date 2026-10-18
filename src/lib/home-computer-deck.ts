@@ -26,10 +26,10 @@ export const DECK_CARD_ROWS = 3;
 export const DECK_CARD_MIN_HEIGHT = 8 + 36 + DECK_CARD_ROWS * 44 + 8;
 /** At most this many sheets peek out; the rest are counted on the last one. */
 export const DECK_MAX_PEEKS = 3;
-/** The pull, as a share of the card's width, that commits on release. */
-export const DECK_COMMIT_SHARE = 0.35;
-/** A flick faster than this commits whatever the distance, in pt/s. */
-export const DECK_FLICK_VELOCITY = 800;
+/** The proportional release distance, bounded to a short thumb movement below. */
+export const DECK_COMMIT_SHARE = 0.14;
+/** A flick faster than this commits after a deliberate 12-point pull, in pt/s. */
+export const DECK_FLICK_VELOCITY = 500;
 /** The largest tilt a sheet behind the front is given, in degrees. */
 export const DECK_MAX_TILT = 0.6;
 /**
@@ -126,7 +126,9 @@ export function deckSwipeMove(direction: number, count: number): DeckMove {
 export function deckScrub(dx: number, width: number, direction: number): number {
   'worklet';
   const along = Math.max(0, dx * direction);
-  const d = along / Math.max(1, width * DECK_COMMIT_SHARE);
+  // Keep this arithmetic in the worklet: no forward-declared worklet capture.
+  const distance = Math.max(32, Math.min(48, width * DECK_COMMIT_SHARE));
+  const d = along / distance;
   const k = -Math.log(1 - DECK_SCRUB_AT_COMMIT / DECK_SCRUB_CEILING);
   return DECK_SCRUB_CEILING * (1 - Math.exp(-k * d));
 }
@@ -135,8 +137,8 @@ export function deckScrub(dx: number, width: number, direction: number): number 
 export function deckCommits(dx: number, vx: number, width: number, direction: number): boolean {
   'worklet';
   const along = dx * direction;
-  if (Math.abs(vx) > DECK_FLICK_VELOCITY) return vx * direction > 0 && along > 0;
-  return along >= width * DECK_COMMIT_SHARE;
+  if (Math.abs(vx) > DECK_FLICK_VELOCITY) return vx * direction > 0 && along >= 12;
+  return along >= Math.max(32, Math.min(48, width * DECK_COMMIT_SHARE));
 }
 
 /**

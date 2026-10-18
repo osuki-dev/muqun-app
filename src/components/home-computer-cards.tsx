@@ -1,7 +1,7 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
-import { Monitor } from 'lucide-react-native';
+import { ArrowUpRight, Monitor } from 'lucide-react-native';
 import { useEffect, useLayoutEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
@@ -446,6 +446,42 @@ function ComputerCardView({
       onOpenTree={(task) => onOpenTask(task, true)}
     />
   );
+  const cardHeader = (
+    <PressableScale
+      testID={`home-card-header-${server.serverId}`}
+      accessibilityRole="button"
+      accessibilityLabel={`${server.label}, ${_(connectionStatusDescription[status])}`}
+      accessibilityHint={onOpenHistory ? t`Opens its tasks.` : t`Sends your next goal here.`}
+      onPress={onOpenHistory ?? onSelect}
+      accessibilityActions={deckActions?.accessibilityActions}
+      onAccessibilityAction={deckActions?.onAccessibilityAction}
+      style={[styles.header, deckLayout ? styles.historyLink : null]}>
+      {deckLayout ? null : <Monitor size={18} color={theme.colors.primary} />}
+      <View style={[styles.headerCopy, styles.fill]}>
+        <Text variant="bodySmall" weight="medium" numberOfLines={1}>
+          {deckLayout ? t`Tasks` : server.label}
+        </Text>
+        {statusColor ? (
+          <View style={styles.statusLine}>
+            {/* No ripple: every card rippling forever keeps Home's UI thread busy. */}
+            <StatusDot color={statusColor} filled pulse={false} />
+            <Text variant="caption" color={statusColor} numberOfLines={1}>
+              {_(connectionStatusLabel[status])}
+            </Text>
+          </View>
+        ) : null}
+      </View>
+      {/* The caption sits in the header's spare right half, so it never
+            takes a line of its own and nothing below it moves when it fades. */}
+      {cachedCaption !== 'none' ? (
+        <LastKnownActivityCaption
+          shown={cachedCaption === 'shown'}
+          testID={`home-card-cached-${server.serverId}`}
+        />
+      ) : null}
+      {deckLayout ? <ArrowUpRight size={16} color={theme.colors.primary} /> : null}
+    </PressableScale>
+  );
   return (
     <View
       testID={`home-card-${server.serverId}`}
@@ -455,6 +491,7 @@ function ComputerCardView({
         {
           backgroundColor: background(theme.colors.surface),
           borderRadius: profile.chrome.surface,
+          borderTopLeftRadius: deckLayout ? 0 : profile.chrome.surface,
           minHeight: deckLayout?.minHeight,
         },
       ]}>
@@ -465,39 +502,7 @@ function ComputerCardView({
                 deckLayout.onContentHeight(event.nativeEvent.layout.height + CARD_PADDING_TOP)
             : undefined
         }>
-        <PressableScale
-          testID={`home-card-header-${server.serverId}`}
-          accessibilityRole="button"
-          accessibilityLabel={`${server.label}, ${_(connectionStatusDescription[status])}`}
-          accessibilityHint={onOpenHistory ? t`Opens its tasks.` : t`Sends your next goal here.`}
-          onPress={onOpenHistory ?? onSelect}
-          accessibilityActions={deckActions?.accessibilityActions}
-          onAccessibilityAction={deckActions?.onAccessibilityAction}
-          style={styles.header}>
-          <Monitor size={18} color={theme.colors.primary} />
-          <View style={[styles.headerCopy, styles.fill]}>
-            <Text variant="bodySmall" weight="semibold" numberOfLines={1}>
-              {server.label}
-            </Text>
-            {statusColor ? (
-              <View style={styles.statusLine}>
-                {/* No ripple: every card rippling forever keeps Home's UI thread busy. */}
-                <StatusDot color={statusColor} filled pulse={false} />
-                <Text variant="caption" color={statusColor} numberOfLines={1}>
-                  {_(connectionStatusLabel[status])}
-                </Text>
-              </View>
-            ) : null}
-          </View>
-          {/* The caption sits in the header's spare right half, so it never
-            takes a line of its own and nothing below it moves when it fades. */}
-          {cachedCaption !== 'none' ? (
-            <LastKnownActivityCaption
-              shown={cachedCaption === 'shown'}
-              testID={`home-card-cached-${server.serverId}`}
-            />
-          ) : null}
-        </PressableScale>
+        {deckLayout ? null : cardHeader}
         <PairAgainNotice
           testID={`home-card-pair-again-${server.serverId}`}
           status={status}
@@ -541,6 +546,7 @@ function ComputerCardView({
             </Text>
           </View>
         )}
+        {deckLayout ? cardHeader : null}
       </View>
     </View>
   );
@@ -639,6 +645,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
+  historyLink: { paddingBottom: 4 },
   headerCopy: { flexShrink: 1, minWidth: 0, gap: 2 },
   statusLine: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   block: { gap: 4, paddingBottom: 8 },

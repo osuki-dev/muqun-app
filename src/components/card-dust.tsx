@@ -1,5 +1,6 @@
 import { Canvas, Fill, Group, ImageShader, Shader, Skia, type SkImage } from 'react-native-skia';
 import { useEffect } from 'react';
+import { useThemeTokens } from '@osuki-dev/ui';
 import { StyleSheet } from 'react-native';
 import { useDerivedValue, type SharedValue } from 'react-native-reanimated';
 
@@ -59,6 +60,8 @@ export function CardDust({
   /** The canvas has had time to present its first frame. */
   onDrawn: (token: number) => void;
 }) {
+  const theme = useThemeTokens();
+  const tint = Array.from(Skia.Color(theme.colors.primary));
   // Two frames: one for the canvas to commit, one for it to have drawn.
   useEffect(() => {
     let second = 0;
@@ -80,6 +83,7 @@ export function CardDust({
   const outUniforms = useDerivedValue(() => ({
     size: [outWidth, outHeight],
     cell: outCell,
+    tint,
     progress: outProgress.get(),
     direction,
   }));
@@ -88,6 +92,7 @@ export function CardDust({
   const inUniforms = useDerivedValue(() => ({
     size: [inWidth, inHeight],
     cell: inCell,
+    tint,
     progress: inProgress.get(),
     direction: -direction,
   }));

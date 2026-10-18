@@ -29,6 +29,8 @@ export function HomeRecentChips({
   return (
     <ScrollView
       horizontal
+      bounces={false}
+      style={styles.viewport}
       testID="home-recent-chips"
       showsHorizontalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
@@ -88,6 +90,7 @@ function Chip({
 }
 
 const styles = StyleSheet.create({
+  viewport: { flexGrow: 0, minWidth: 0, width: '100%' },
   row: { gap: 8, paddingBottom: 8 },
   chip: {
     minHeight: 32,

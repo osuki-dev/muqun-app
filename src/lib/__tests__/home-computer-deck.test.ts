@@ -16,9 +16,12 @@ describe('home computer deck', () => {
   test('a release commits past the distance or on a flick that way, never on a flick back', () => {
     const width = 360;
     expect(deckCommits(-0.36 * width, 0, width, -1)).toBe(true);
-    expect(deckCommits(-0.3 * width, -200, width, -1)).toBe(false);
+    expect(deckCommits(-24, -200, width, -1)).toBe(false);
     expect(deckCommits(-40, -900, width, -1)).toBe(true);
     expect(deckCommits(-0.5 * width, 900, width, -1)).toBe(false);
     expect(deckCommits(0.4 * width, 0, width, 1)).toBe(true);
+    expect(deckCommits(-50, 0, 1200, -1)).toBe(true);
+    expect(deckCommits(-20, -550, width, -1)).toBe(true);
+    expect(deckCommits(-5, -550, width, -1)).toBe(false);
   });
 });

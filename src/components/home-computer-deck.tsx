@@ -1,11 +1,11 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
-import { plural } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
 import { PressableScale, Text, useThemeTokens } from '@osuki-dev/ui';
-import { Monitor } from 'lucide-react-native';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
+  ScrollView,
   StyleSheet,
+  type ScrollViewInstance,
   View,
   type AccessibilityActionEvent,
   type LayoutChangeEvent,
@@ -27,55 +27,37 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { CARD_DUST_EFFECT, CardDust, type CardShot } from '@/components/card-dust';
-import { StatusDot } from '@/components/status-dot';
-import { appChrome } from '@/constants/appearance';
 import { useConnectionStatuses } from '@/hooks/use-home-reachability';
 import { useStableHandler } from '@/hooks/use-render-refs';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { connectionStatusLabel } from '@/i18n/labels';
 import type { GatewayRecord } from '@/lib/gateway-storage';
-import { FINISHED_ROWS_SHOWN, HOME_CARD_INSET, type ComputerCard } from '@/lib/home-computer-cards';
+import type { ComputerCard } from '@/lib/home-computer-cards';
 import {
   DECK_AT_REST,
-  DECK_CARD_MIN_HEIGHT,
-  DECK_ENTRY_DROP,
-  DECK_ENTRY_SCALE,
-  DECK_MAX_PEEKS,
-  DECK_PEEK_STRIP,
   deckCommits,
-  deckLevelPose,
-  deckIncomingLevel,
   deckMoved,
   deckMovedKey,
   deckOrder,
-  deckPeekBand,
   deckReform,
   deckScrub,
-  deckSheetLevel,
   deckSwipeMove,
-  deckTilt,
   type DeckMove,
 } from '@/lib/home-computer-deck';
 import { riseIn, timing } from '@/lib/motion';
-import {
-  statusNeedsPairing,
-  type ActiveServerConnection,
-  type ConnectionStatus,
-} from '@/lib/server-reachability';
+import { type ActiveServerConnection } from '@/lib/server-reachability';
 import { disposeViewPhotograph, photographView } from '@/lib/view-photograph';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useHomeTaskCards } from '@/stores/home-task-cards';
 
 /** The rest of the dissolve after a commit, and a whole one for a peek tap. */
-const DUST_COMMIT_MS = 360;
+const DUST_COMMIT_MS = 280;
 /** The ash flowing back into the card when the pull is let go short. */
 const DUST_CANCEL_SPRING = { stiffness: 220, damping: 24, reduceMotion: ReduceMotion.Never };
 /** How long a commit let go before its photographs waits for them. */
 const EARLY_RELEASE_WAIT_MS = 400;
 /** The cross-fade that stands in for the dust. */
 const CROSS_FADE_MS = 200;
-/** Between one sheet arriving and the one in front of it, back to front. */
-const ENTRY_STAGGER_MS = 40;
 /** Room the ash may blow into around the card: sideways and upwards. */
 const DUST_SIDE = 56;
 const DUST_TOP = 72;
@@ -116,23 +98,7 @@ export type DeckCardActions = {
   onAccessibilityAction: (event: AccessibilityActionEvent) => void;
 };
 
-/**
- * The phone's Computers section with two or more computers: the front card
- * whole, and the others peeking out behind it as sheets of the same paper,
- * each showing only its header line.
- *
- * A sideways pull on the front card scrubs it into ash from the edge the
- * finger pulls towards, while the next card reforms in its place; the sheets
- * behind move up one level with it. Past the commit distance, or on a flick,
- * the rest blows away; short of it, the ash flows back. Left brings the next
- * computer, right the previous. A peek brings its computer forward the same
- * way. The front computer is the composer's target and is remembered.
- *
- * Only the front card renders rows; during a move the incoming one is
- * rendered, unseen, long enough to be photographed. Every frame of a move is
- * shared values and one shader; React renders when a move starts, when its
- * photographs land and when it ends, never per frame.
- */
+/** A horizontal computer selector above one card, retaining the dust transition. */
 export function HomeComputerDeck({
   cards,
   servers,
@@ -191,7 +157,6 @@ export function HomeComputerDeck({
   const crossIn = useSharedValue('');
   const deckWidth = useSharedValue(0);
   const frontHeight = useSharedValue(0);
-  const band = useSharedValue(deckPeekBand(count));
   const token = useSharedValue(0);
   // A commit or a cross-fade is under way: a second request for one is ignored.
   const playing = useSharedValue(0);
@@ -199,9 +164,6 @@ export function HomeComputerDeck({
   useLayoutEffect(() => {
     if (busy.get() === 0) ring.set(orderKey);
   }, [busy, orderKey, ring]);
-  useEffect(() => {
-    band.set(withTiming(deckPeekBand(count), timing('short')));
-  }, [band, count]);
 
   const outProgress = useDerivedValue(() =>
     settled.get() === 1 ? 1 : Math.max(0, progress.get())
@@ -211,7 +173,7 @@ export function HomeComputerDeck({
   );
 
   const cardOf = (serverId: string) => cards.find((card) => card.serverId === serverId);
-  const cardHeight = Math.max(DECK_CARD_MIN_HEIGHT, ...ids.map((id) => heights[id]?.height ?? 0));
+  const cardHeight = Math.max(96, heights[frontId ?? '']?.height ?? 0);
   const reportHeight = (serverId: string, height: number) => {
     const rounded = Math.ceil(height);
     const signature = signatures[serverId] ?? '';
@@ -248,6 +210,7 @@ export function HomeComputerDeck({
     });
   });
   const cancelled = useStableHandler(() => {
+    token.set(token.get() + 1);
     busy.set(0);
     playing.set(0);
     ready.set(0);
@@ -388,6 +351,10 @@ export function HomeComputerDeck({
     move.set(next);
     beginMove(next, towards, true);
   });
+  const selectComputer = useStableHandler((id: string) => {
+    const position = order.indexOf(id);
+    if (position > 0) startMove(position, -1);
+  });
 
   // The commit's worklets, built once over stable shared values and handlers.
   const { playCommit } = useMemo(() => {
@@ -443,102 +410,39 @@ export function HomeComputerDeck({
       crossFade(commit);
       return;
     }
-    const waiting = scrub.token;
     setScrub({ ...scrub, auto: true });
-    setTimeout(() => {
-      if (token.get() !== waiting || playing.get() === 1) return;
-      // Still nothing to reform: blow the card away regardless, or, with no
-      // dust drawing at all, cross-fade.
+  });
+
+  // Both taps and released swipes must finish if a GPU capture never lands.
+  // Otherwise `drawing` can leave the real card hidden and untappable forever.
+  const waitingToken = scrub?.auto ? scrub.token : null;
+  useEffect(() => {
+    if (waitingToken === null) return;
+    const timer = setTimeout(() => {
+      if (token.get() !== waitingToken || playing.get() === 1) return;
       if (ready.get() === 1) commitUnderAsh();
       else crossFade(true);
     }, EARLY_RELEASE_WAIT_MS);
-  });
+    return () => clearTimeout(timer);
+  }, [waitingToken, token, playing, ready, commitUnderAsh, crossFade]);
 
-  const gesture = useMemo(
-    () =>
-      Gesture.Pan()
-        // Sideways only: past `failOffsetY` the page's scroll has the touch.
-        // Let vertical scrolling win before a diagonal drag can start
-        // photographing cards. Once this pan activates, it cannot yield back.
-        .activeOffsetX([-16, 16])
-        .failOffsetY([-8, 8])
-        .onStart(() => {
-          const count = ring.get().split('\n').length;
-          if (busy.get() === 1 || count < 2) {
-            skip.set(1);
-            return;
-          }
-          skip.set(0);
-          busy.set(1);
-          direction.set(0);
-        })
-        .onUpdate((event) => {
-          if (skip.get() === 1) return;
-          // The side is the one the pull first goes towards, latched for the move.
-          if (direction.get() === 0) {
-            if (event.translationX === 0) return;
-            const towards = event.translationX < 0 ? -1 : 1;
-            const next = deckSwipeMove(towards, ring.get().split('\n').length);
-            direction.set(towards);
-            move.set(next);
-            scheduleOnRN(beginMove, next, towards, false);
-          }
-          progress.set(
-            reduced ? 0 : deckScrub(event.translationX, deckWidth.get(), direction.get())
-          );
-        })
-        .onEnd((event, success) => {
-          if (skip.get() === 1) return;
-          if (direction.get() === 0) {
-            busy.set(0);
-            return;
-          }
-          // An interrupted active gesture also ends here, but must never
-          // change the computer receiving the reader's next goal.
-          const commit =
-            success &&
-            deckCommits(event.translationX, event.velocityX, deckWidth.get(), direction.get());
-          // Not drawing yet: wait for the photographs (or cross-fade).
-          if (ready.get() !== 1) {
-            scheduleOnRN(releasedEarly, commit);
-            return;
-          }
-          // Nothing to reform from yet: the real card fades in under the ash.
-          if (commit && incomingReady.get() !== 1) {
-            scheduleOnRN(commitUnderAsh);
-            return;
-          }
-          if (commit) {
-            playCommit();
-            return;
-          }
-          progress.set(
-            withSpring(0, DUST_CANCEL_SPRING, (finished) => {
-              'worklet';
-              if (!finished) return;
-              move.set(DECK_AT_REST);
-              scheduleOnRN(cancelled);
-            })
-          );
-        }),
-    [
-      beginMove,
-      busy,
-      cancelled,
-      commitUnderAsh,
-      releasedEarly,
-      deckWidth,
-      direction,
-      incomingReady,
-      move,
-      playCommit,
-      progress,
-      ready,
-      reduced,
-      ring,
-      skip,
-    ]
-  );
+  const gesture = useComputerGesture({
+    beginMove,
+    busy,
+    cancelled,
+    commitUnderAsh,
+    releasedEarly,
+    deckWidth,
+    direction,
+    incomingReady,
+    move,
+    playCommit,
+    progress,
+    ready,
+    reduced,
+    ring,
+    skip,
+  });
 
   // A tap or an accessibility action plays once both photographs are in.
   useEffect(() => {
@@ -568,14 +472,14 @@ export function HomeComputerDeck({
   };
 
   const deckStyle = useAnimatedStyle(() => ({
-    height: band.get() + frontHeight.get(),
+    height: frontHeight.get(),
   }));
   // The ash may blow above and beside the card, never below the deck.
   const dustStyle = useAnimatedStyle(() => ({
     height: DUST_TOP + frontHeight.get() + DUST_BOTTOM,
   }));
   const slotStyle = useAnimatedStyle(() => ({
-    top: band.get(),
+    top: 0,
     height: frontHeight.get(),
   }));
   // The front card's own shadow, which its photograph does not carry: it
@@ -587,7 +491,6 @@ export function HomeComputerDeck({
     ),
   }));
 
-  const visibleLevels = Math.min(count - 1, DECK_MAX_PEEKS);
   const incomingKey = scrub?.incomingId ?? '';
   const unmeasured = cards.filter(
     (card) =>
@@ -599,118 +502,87 @@ export function HomeComputerDeck({
   const frontCard = frontId ? cardOf(frontId) : undefined;
   const hideFront = Boolean(scrub?.drawing);
   const canvasHeight = Math.max(scrub?.outgoing?.height ?? 0, scrub?.incoming?.height ?? 0);
-  const serverOf = (serverId: string) => servers.find((server) => server.serverId === serverId);
 
   return (
-    <Animated.View
-      testID="home-computer-deck"
-      onLayout={onDeckLayout}
-      style={[styles.deck, deckStyle]}>
-      {order.map((serverId, position) => {
-        const card = cardOf(serverId);
-        const server = serverOf(serverId);
-        if (!card || !server) return null;
-        return (
-          <DeckSheet
-            key={serverId}
-            entering={riseIn(
-              Math.max(0, visibleLevels - Math.min(position, visibleLevels)) * ENTRY_STAGGER_MS,
-              ENTRY_STAGGER_MS * DECK_MAX_PEEKS
-            )}
-            serverId={serverId}
-            position={position}
-            band={band}
-            ring={ring}
-            move={move}
-            progress={progress}
-            frontHeight={frontHeight}>
-            {/* The front's own strip waits under it, unseen, for when it goes to the back. */}
-            <PeekStrip
-              card={card}
-              server={server}
-              activeConnection={activeConnection}
-              more={
-                position === DECK_MAX_PEEKS && count > DECK_MAX_PEEKS + 1
-                  ? count - DECK_MAX_PEEKS - 1
-                  : 0
-              }
-              onPress={() => startMove(position, -1)}
-            />
-          </DeckSheet>
-        );
-      })}
+    <View style={styles.computers}>
+      <ComputerTabs
+        servers={servers.filter((server) => ids.includes(server.serverId))}
+        selectedId={frontId}
+        activeConnection={activeConnection}
+        onSelect={selectComputer}
+        ring={ring}
+        move={move}
+        progress={progress}
+      />
       <Animated.View
-        entering={riseIn(visibleLevels * ENTRY_STAGGER_MS, ENTRY_STAGGER_MS * DECK_MAX_PEEKS)}
-        pointerEvents="box-none"
-        style={[styles.slot, slotStyle]}>
+        testID="home-computer-deck"
+        onLayout={onDeckLayout}
+        style={[styles.deck, deckStyle]}>
         <Animated.View
-          pointerEvents="none"
-          style={[styles.plate, { borderRadius: profile.chrome.surface }, plateStyle]}
-        />
-        <GestureDetector gesture={gesture}>
-          <View style={[styles.slotCards, { borderRadius: profile.chrome.surface }]}>
-            {frontCard ? (
-              <DeckSlotCard
-                key={frontCard.serverId}
-                serverId={frontCard.serverId}
-                role="front"
-                hidden={hideFront}
-                cross={cross}
-                crossFrom={crossFrom}
-                crossIn={crossIn}
-                shootToken={scrub && !scrub.failed ? scrub.token : null}
-                onShot={shot}>
-                {renderCard(frontCard, actions, layoutOf(frontCard.serverId))}
-              </DeckSlotCard>
-            ) : null}
-            {incomingCard && incomingCard.serverId !== frontId ? (
-              <DeckSlotCard
-                key={incomingCard.serverId}
-                serverId={incomingCard.serverId}
-                role="incoming"
-                hidden
-                crossing={Boolean(scrub?.crossing)}
-                cross={cross}
-                crossFrom={crossFrom}
-                crossIn={crossIn}
-                shootToken={scrub && !scrub.failed ? scrub.token : null}
-                onShot={shot}>
-                {renderCard(incomingCard, actions, layoutOf(incomingCard.serverId))}
-              </DeckSlotCard>
-            ) : null}
-            {/* Cards not measured yet, laid out once unseen so the deck knows
+          entering={riseIn()}
+          pointerEvents="box-none"
+          style={[styles.slot, slotStyle]}>
+          <Animated.View
+            pointerEvents="none"
+            style={[styles.plate, { borderRadius: profile.chrome.surface }, plateStyle]}
+          />
+          <GestureDetector gesture={gesture}>
+            <View
+              style={[
+                styles.slotCards,
+                { borderRadius: profile.chrome.surface, borderTopLeftRadius: 0 },
+              ]}>
+              {[frontCard, incomingCard]
+                .filter((card): card is ComputerCard => Boolean(card))
+                .map((card) => (
+                  <DeckSlotCard
+                    key={card.serverId}
+                    serverId={card.serverId}
+                    role={card.serverId === frontId ? 'front' : 'incoming'}
+                    hidden={card.serverId === frontId ? hideFront : true}
+                    crossing={Boolean(scrub?.crossing)}
+                    cross={cross}
+                    crossFrom={crossFrom}
+                    crossIn={crossIn}
+                    shootToken={scrub && !scrub.failed ? scrub.token : null}
+                    onShot={shot}>
+                    {renderCard(card, actions, layoutOf(card.serverId))}
+                  </DeckSlotCard>
+                ))}
+              {/* Cards not measured yet, laid out once unseen so the deck knows
                 the tallest before anyone moves to them. */}
-            {unmeasured.map((card) => (
-              <View
-                key={`measure-${card.serverId}`}
-                pointerEvents="none"
-                accessibilityElementsHidden
-                importantForAccessibility="no-hide-descendants"
-                style={[styles.slotCard, styles.unseen]}>
-                {renderCard(card, undefined, layoutOf(card.serverId))}
-              </View>
-            ))}
-          </View>
-        </GestureDetector>
-        {scrub?.outgoing ? (
-          <Animated.View pointerEvents="none" style={[styles.dust, dustStyle]}>
-            <CardDust
-              direction={scrub.direction}
-              height={canvasHeight + DUST_TOP + DUST_BOTTOM}
-              incoming={scrub.incoming}
-              inProgress={inProgress}
-              offsetX={DUST_SIDE}
-              offsetY={DUST_TOP}
-              outgoing={scrub.outgoing}
-              outProgress={outProgress}
-              token={scrub.token}
-              width={width + DUST_SIDE * 2}
-              onDrawn={drawn}
-            />
-          </Animated.View>
-        ) : null}
+              {unmeasured.map((card) => (
+                <View
+                  key={`measure-${card.serverId}`}
+                  pointerEvents="none"
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                  style={[styles.slotCard, styles.unseen]}>
+                  {renderCard(card, undefined, layoutOf(card.serverId))}
+                </View>
+              ))}
+            </View>
+          </GestureDetector>
+          {scrub?.outgoing ? (
+            <Animated.View pointerEvents="none" style={[styles.dust, dustStyle]}>
+              <CardDust
+                direction={scrub.direction}
+                height={canvasHeight + DUST_TOP + DUST_BOTTOM}
+                incoming={scrub.incoming}
+                inProgress={inProgress}
+                offsetX={DUST_SIDE}
+                offsetY={DUST_TOP}
+                outgoing={scrub.outgoing}
+                outProgress={outProgress}
+                token={scrub.token}
+                width={width + DUST_SIDE * 2}
+                onDrawn={drawn}
+              />
+            </Animated.View>
+          ) : null}
+        </Animated.View>
       </Animated.View>
-    </Animated.View>
+    </View>
   );
 }
 
@@ -719,161 +591,123 @@ function disposeLater(shot: CardShot) {
   requestAnimationFrame(() => requestAnimationFrame(() => disposeViewPhotograph(shot.image)));
 }
 
-/**
- * One sheet of the sheaf, as tall as the front card, at the level the ring
- * and the move in progress put it. Its stacking follows the level it is
- * headed for, so a sheet never passes over the one it is moving behind.
- */
-function DeckSheet({
-  entering,
-  serverId,
-  position,
-  band,
+function ComputerTabs({
+  servers,
+  selectedId,
+  activeConnection,
+  onSelect,
   ring,
   move,
   progress,
-  frontHeight,
-  children,
 }: {
-  entering: ReturnType<typeof riseIn>;
-  serverId: string;
-  position: number;
-  band: SharedValue<number>;
-  /** The order on the UI thread, ids joined by a newline. */
   ring: SharedValue<string>;
   move: SharedValue<DeckMove>;
   progress: SharedValue<number>;
-  frontHeight: SharedValue<number>;
-  children: ReactNode;
-}) {
-  const profile = useAppearanceProfile();
-  const theme = useThemeTokens();
-  const background = useSurfaceBackground();
-  const tilt = deckTilt(serverId);
-  const sheetStyle = useAnimatedStyle(() => {
-    const order = ring.get().split('\n');
-    const at = order.indexOf(serverId);
-    const current = move.get();
-    // Eased, so a sheet settles into its level rather than stopping there.
-    const raw = Math.min(1, Math.max(0, progress.get()));
-    const p = 1 - (1 - raw) * (1 - raw);
-    const sheet = deckSheetLevel(Math.max(0, at), order.length, p, current);
-    const pose = deckLevelPose(sheet.level);
-    const enter = sheet.enter;
-    const scale =
-      enter < 1 ? DECK_ENTRY_SCALE + (pose.scale - DECK_ENTRY_SCALE) * enter : pose.scale;
-    return {
-      top: band.get(),
-      height: frontHeight.get(),
-      opacity: at < 0 ? 0 : pose.opacity * sheet.fade,
-      transform: [
-        { translateY: pose.translateY + DECK_ENTRY_DROP * (1 - enter) },
-        { scale },
-        { rotate: `${tilt * Math.min(1, sheet.level)}deg` },
-      ],
-    };
-  });
-  // On the sheet's outermost view, so it orders it among its siblings.
-  const layerStyle = useAnimatedStyle(() => {
-    const order = ring.get().split('\n');
-    const at = order.indexOf(serverId);
-    const current = move.get();
-    const sheet = deckSheetLevel(Math.max(0, at), order.length, 0, current);
-    const incoming = current !== DECK_AT_REST && at === deckIncomingLevel(current);
-    return { zIndex: incoming ? 0 : 50 - sheet.rest * 10 };
-  });
-  return (
-    <Animated.View pointerEvents="box-none" style={[styles.sheetLayer, layerStyle]}>
-      <Animated.View entering={entering} pointerEvents="box-none" style={styles.sheetLayer}>
-        <Animated.View
-          pointerEvents={position === 0 ? 'none' : 'box-none'}
-          accessibilityElementsHidden={position === 0 || position > DECK_MAX_PEEKS}
-          importantForAccessibility={
-            position === 0 || position > DECK_MAX_PEEKS ? 'no-hide-descendants' : 'auto'
-          }
-          style={[
-            styles.sheet,
-            {
-              backgroundColor: background(theme.colors.surface),
-              borderRadius: profile.chrome.surface,
-            },
-            sheetStyle,
-          ]}>
-          {children}
-        </Animated.View>
-      </Animated.View>
-    </Animated.View>
-  );
-}
-
-/**
- * The header line a sheet behind the front shows: the computer, its
- * connection and what is open on it. A button that brings it forward.
- */
-function PeekStrip({
-  card,
-  server,
-  activeConnection,
-  more,
-  onPress,
-}: {
-  card: ComputerCard;
-  server: GatewayRecord;
+  servers: readonly GatewayRecord[];
+  selectedId: string | undefined;
   activeConnection?: ActiveServerConnection;
-  /** Computers further back than the last peek, counted on it. */
-  more: number;
-  onPress: () => void;
+  onSelect: (id: string) => void;
 }) {
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
   const background = useSurfaceBackground();
-  const selectedId = useGatewayConnectionStore((state) => state.record?.serverId);
-  const status: ConnectionStatus =
-    useConnectionStatuses([server.serverId], selectedId, activeConnection)[server.serverId] ??
-    'unknown';
-  const statusColor = statusNeedsPairing(status)
-    ? theme.colors.warning
-    : status === 'offline' || status === 'reconnecting' || status === 'unknown'
-      ? theme.colors.textSubtle
-      : theme.colors.success;
-  const waiting = card.now.filter((row) => row.task.state === 'waiting').length;
-  const running = card.now.filter((row) => row.task.state === 'working').length;
-  const failed =
-    card.finished.slice(0, FINISHED_ROWS_SHOWN).filter((task) => task.state === 'failed').length +
-    card.pending.filter((item) => item.failed).length;
-  const counts = [
-    waiting > 0 ? t`${plural(waiting, { one: '# needs you', other: '# need you' })}` : null,
-    running > 0 ? t`${plural(running, { one: '# running', other: '# running' })}` : null,
-    failed > 0 ? t`${plural(failed, { one: '# failed', other: '# failed' })}` : null,
-  ].filter((part): part is string => part !== null);
+  const currentId = useGatewayConnectionStore((state) => state.record?.serverId);
+  const statuses = useConnectionStatuses(
+    servers.map((server) => server.serverId),
+    currentId,
+    activeConnection
+  );
+  const scroll = useRef<ScrollViewInstance>(null);
+  const offset = useRef(0);
+  const [width, setWidth] = useState(0);
+  const [frames, setFrames] = useState<Record<string, { x: number; width: number }>>({});
+  useEffect(() => {
+    const frame = selectedId ? frames[selectedId] : undefined;
+    if (!frame || !width) return;
+    const left = Math.max(0, frame.x - 8);
+    const right = frame.x + frame.width + 8;
+    if (left < offset.current) scroll.current?.scrollTo({ x: left, animated: true });
+    else if (right > offset.current + width)
+      scroll.current?.scrollTo({ x: right - width, animated: true });
+  }, [selectedId, frames, width]);
+  const indicatorStyle = useAnimatedStyle(() => {
+    const current = ring.get();
+    const from = frames[current.split('\n')[0] ?? ''];
+    const next = move.get();
+    const to =
+      next === DECK_AT_REST ? from : frames[deckMovedKey(current, next).split('\n')[0] ?? ''];
+    const amount = Math.max(0, Math.min(1, progress.get()));
+    return {
+      opacity: from ? 1 : 0,
+      left: (from?.x ?? 0) + ((to?.x ?? from?.x ?? 0) - (from?.x ?? 0)) * amount + 12,
+      width: Math.max(
+        0,
+        (from?.width ?? 24) + ((to?.width ?? from?.width ?? 24) - (from?.width ?? 24)) * amount - 24
+      ),
+    };
+  });
   return (
-    <PressableScale
-      testID={`home-deck-peek-${server.serverId}`}
-      accessibilityRole="button"
-      accessibilityLabel={t`Bring ${server.label} to the front`}
-      accessibilityHint={_(connectionStatusLabel[status])}
-      onPress={onPress}
-      style={styles.strip}>
-      <Monitor size={13} color={theme.colors.primary} />
-      <Text variant="caption" weight="semibold" numberOfLines={1} style={styles.stripName}>
-        {server.label}
-      </Text>
-      <StatusDot color={statusColor} filled={status !== 'unknown'} pulse={false} />
-      <View style={styles.fill} />
-      {counts.length > 0 ? (
-        <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
-          {counts.join(' · ')}
-        </Text>
-      ) : null}
-      {more > 0 ? (
-        <View style={[styles.more, { backgroundColor: background(theme.colors.surfaceRaised) }]}>
-          <Text variant="caption" color={theme.colors.textMuted}>
-            {`+${more}`}
-          </Text>
-        </View>
-      ) : null}
-    </PressableScale>
+    <ScrollView
+      ref={scroll}
+      testID="home-computer-tabs"
+      horizontal
+      style={[
+        styles.tabViewport,
+        {
+          backgroundColor: background(theme.colors.surface),
+          borderTopLeftRadius: profile.chrome.surface,
+          borderTopRightRadius: profile.chrome.surface,
+        },
+      ]}
+      showsHorizontalScrollIndicator={false}
+      bounces={false}
+      keyboardShouldPersistTaps="handled"
+      onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
+      onScroll={(event) => {
+        offset.current = event.nativeEvent.contentOffset.x;
+      }}
+      scrollEventThrottle={16}
+      contentContainerStyle={styles.tabs}>
+      {servers.map((server) => {
+        const selected = server.serverId === selectedId;
+        const status = statuses[server.serverId] ?? 'unknown';
+        const ink = selected ? theme.colors.primary : theme.colors.textMuted;
+        return (
+          <PressableScale
+            key={server.serverId}
+            testID={`home-deck-peek-${server.serverId}`}
+            accessibilityRole="button"
+            accessibilityLabel={t`Bring ${server.label} to the front`}
+            accessibilityHint={_(connectionStatusLabel[status])}
+            accessibilityState={{ selected }}
+            onPress={() => onSelect(server.serverId)}
+            onLayout={(event) => {
+              const { x, width } = event.nativeEvent.layout;
+              setFrames((current) =>
+                current[server.serverId]?.x === x && current[server.serverId]?.width === width
+                  ? current
+                  : { ...current, [server.serverId]: { x, width } }
+              );
+            }}
+            style={styles.tab}>
+            <Text
+              variant="bodySmall"
+              weight={selected ? 'semibold' : 'medium'}
+              color={ink}
+              numberOfLines={1}
+              style={styles.tabName}>
+              {server.label}
+            </Text>
+          </PressableScale>
+        );
+      })}
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.tabAccent, { backgroundColor: theme.colors.primary }, indicatorStyle]}
+      />
+    </ScrollView>
   );
 }
 
@@ -964,31 +798,23 @@ function DeckSlotCard({
 }
 
 const styles = StyleSheet.create({
-  deck: { minWidth: 0 },
-  sheetLayer: { ...StyleSheet.absoluteFill },
-  sheet: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    overflow: 'hidden',
-    // From the top-left corner, so every sheet's edge lines up with the section's label.
-    transformOrigin: '0% 0%',
-    boxShadow: appChrome.shadow.deckSheet,
-  },
-  strip: {
-    height: DECK_PEEK_STRIP,
+  deck: { minWidth: 0, minHeight: 96 },
+  computers: { minWidth: 0 },
+  tabViewport: { flexGrow: 0, minWidth: 0, width: '100%' },
+  tabs: { gap: 2, paddingHorizontal: 4 },
+  tabAccent: { position: 'absolute', bottom: 0, height: 2, borderRadius: 1 },
+  tab: {
+    minHeight: 36,
+    maxWidth: 200,
+    paddingHorizontal: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: HOME_CARD_INSET,
+    gap: 8,
   },
-  stripName: { flexShrink: 1, minWidth: 0 },
-  more: { borderRadius: 999, paddingHorizontal: 6, paddingVertical: 1 },
-  fill: { flexGrow: 1 },
+  tabName: { minWidth: 0, flexShrink: 1 },
   slot: { position: 'absolute', left: 0, right: 0, zIndex: 100 },
   plate: {
     ...StyleSheet.absoluteFill,
-    boxShadow: appChrome.shadow.deckSheet,
   },
   // Clipped to the deck's height, so a taller card is revealed as the deck grows.
   slotCards: { flex: 1, overflow: 'hidden' },
@@ -1002,3 +828,123 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
 });
+
+function useComputerGesture({
+  beginMove,
+  busy,
+  cancelled,
+  commitUnderAsh,
+  releasedEarly,
+  deckWidth,
+  direction,
+  incomingReady,
+  move,
+  playCommit,
+  progress,
+  ready,
+  reduced,
+  ring,
+  skip,
+}: {
+  beginMove: (next: DeckMove, towards: number, auto: boolean) => void;
+  busy: SharedValue<number>;
+  cancelled: () => void;
+  commitUnderAsh: () => void;
+  releasedEarly: (commit: boolean) => void;
+  deckWidth: SharedValue<number>;
+  direction: SharedValue<number>;
+  incomingReady: SharedValue<number>;
+  move: SharedValue<number>;
+  playCommit: () => void;
+  progress: SharedValue<number>;
+  ready: SharedValue<number>;
+  reduced: boolean;
+  ring: SharedValue<string>;
+  skip: SharedValue<number>;
+}) {
+  return useMemo(
+    () =>
+      Gesture.Pan()
+        // Sideways only: past `failOffsetY` the page's scroll has the touch.
+        // Let vertical scrolling win before a diagonal drag can start
+        // photographing cards. Once this pan activates, it cannot yield back.
+        .activeOffsetX([-12, 12])
+        .failOffsetY([-8, 8])
+        .onStart(() => {
+          const count = ring.get().split('\n').length;
+          if (busy.get() === 1 || count < 2) {
+            skip.set(1);
+            return;
+          }
+          skip.set(0);
+          busy.set(1);
+          direction.set(0);
+        })
+        .onUpdate((event) => {
+          if (skip.get() === 1) return;
+          // The side is the one the pull first goes towards, latched for the move.
+          if (direction.get() === 0) {
+            if (event.translationX === 0) return;
+            const towards = event.translationX < 0 ? -1 : 1;
+            const next = deckSwipeMove(towards, ring.get().split('\n').length);
+            direction.set(towards);
+            move.set(next);
+            scheduleOnRN(beginMove, next, towards, false);
+          }
+          progress.set(
+            reduced ? 0 : deckScrub(event.translationX, deckWidth.get(), direction.get())
+          );
+        })
+        .onEnd((event, success) => {
+          if (skip.get() === 1) return;
+          if (direction.get() === 0) {
+            busy.set(0);
+            return;
+          }
+          // An interrupted active gesture also ends here, but must never
+          // change the computer receiving the reader's next goal.
+          const commit =
+            success &&
+            deckCommits(event.translationX, event.velocityX, deckWidth.get(), direction.get());
+          // Not drawing yet: wait for the photographs (or cross-fade).
+          if (ready.get() !== 1) {
+            scheduleOnRN(releasedEarly, commit);
+            return;
+          }
+          // Nothing to reform from yet: the real card fades in under the ash.
+          if (commit && incomingReady.get() !== 1) {
+            scheduleOnRN(commitUnderAsh);
+            return;
+          }
+          if (commit) {
+            playCommit();
+            return;
+          }
+          progress.set(
+            withSpring(0, DUST_CANCEL_SPRING, (finished) => {
+              'worklet';
+              if (!finished) return;
+              move.set(DECK_AT_REST);
+              scheduleOnRN(cancelled);
+            })
+          );
+        }),
+    [
+      beginMove,
+      busy,
+      cancelled,
+      commitUnderAsh,
+      releasedEarly,
+      deckWidth,
+      direction,
+      incomingReady,
+      move,
+      playCommit,
+      progress,
+      ready,
+      reduced,
+      ring,
+      skip,
+    ]
+  );
+}

@@ -14,6 +14,7 @@ uniform float2 size;
 uniform float cell;
 uniform float progress;
 uniform float direction;
+uniform float4 tint;
 
 float hash12(float2 p) {
   float3 p3 = fract(float3(p.xyx) * 0.1031);
@@ -60,8 +61,8 @@ half4 main(float2 pos) {
   float dust = (grain * 0.62 + cloud * cloud * 0.28) * life;
   half4 original = image.eval(pos);
   half4 sample = image.eval(source);
-  half grey = mix(dot(sample.rgb, half3(0.2126, 0.7152, 0.0722)), sample.a * 0.52, 0.5);
-  half3 colour = mix(sample.rgb, half3(grey), 0.72);
+  // Keep premultiplied alpha while tinting grains with the active theme.
+  half3 colour = mix(sample.rgb, half3(tint.rgb) * sample.a, 0.45);
   half dustAlpha = half((1.0 - intact) * dust);
   return original * half(intact) + half4(colour, sample.a) * dustAlpha;
 }
