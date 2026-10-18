@@ -393,6 +393,7 @@ msgid "{providerName} (terminal)"
 msgstr "{providerName}（ターミナル）"
 
 #: src/components/agent-account-limits-section.tsx
+#: src/components/agent-sleep-tool-body.tsx
 msgid "{remaining} remaining"
 msgstr "残り {remaining}"
 
@@ -484,10 +485,6 @@ msgstr "注意事項と最近のセッションを備えた雑誌風のホーム
 #: src/components/server-terminal-workspace.tsx
 msgid "a new {0}"
 msgstr "新しい {0}"
-
-#: src/components/settings-servers.tsx
-msgid "A plain shell on any machine you can reach. No Gateway needed."
-msgstr "接続できるどのマシンでも使える普通のシェル。Gateway は不要です"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "A second checkout of this repository"
@@ -1520,6 +1517,7 @@ msgid "Compared with {base}"
 msgstr "{base} と比較"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/agent-sleep-tool-body.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Completed"
@@ -1673,6 +1671,7 @@ msgstr "接続マップ"
 #: src/components/home-editorial-layout.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-servers.tsx
 msgid "Connections"
 msgstr "接続"
 
@@ -1847,6 +1846,7 @@ msgstr "対話形式のヘルプと、プロジェクトに関する自由な質
 #: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/guide-command.tsx
+#: src/components/settings-servers.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Copied"
 msgstr "コピー完了"
@@ -1867,6 +1867,7 @@ msgstr "コピーします。ターミナルにそのまま貼り付けられま
 
 #: src/app/diagram-viewer.tsx
 #: src/components/asset-viewer.tsx
+#: src/components/settings-servers.tsx
 #: src/components/skia-terminal.tsx
 msgid "Copy"
 msgstr "コピー"
@@ -2559,6 +2560,7 @@ msgid "Disconnected."
 msgstr "切断しました"
 
 #: src/components/agent-compaction-pill.tsx
+#: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/task-row.tsx
@@ -2809,6 +2811,7 @@ msgstr "色をエクスポート"
 msgid "Export theme"
 msgstr "テーマをエクスポート"
 
+#: src/components/agent-sleep-tool-body.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Failed"
@@ -3232,6 +3235,8 @@ msgstr "問題が続く場合は、アプリを再起動するか、インスト
 
 #: src/components/agent-message-block.tsx
 #: src/components/agent-tool-card.tsx
+#: src/components/attachment-image.tsx
+#: src/components/gateway-image-thumbnail.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image"
 msgstr "画像"
@@ -5659,10 +5664,6 @@ msgstr "もう一度スキャン"
 msgid "Scan the Gateway QR."
 msgstr "Gateway の QR コードをスキャンしてください"
 
-#: src/components/settings-servers.tsx
-msgid "Scan the Gateway’s QR code, or enter its address."
-msgstr "Gateway の QR コードをスキャンするか、アドレスを入力します"
-
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
 msgstr "スキャンにはカメラが必要ですが、このブラウザでは使えません"
@@ -5745,6 +5746,7 @@ msgstr "モデルを選択: {modelDisplayName}"
 
 #: src/components/computer-map/screen.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-servers.tsx
 msgid "Selected"
 msgstr "選択中"
 
@@ -6349,6 +6351,14 @@ msgstr "サブエージェント"
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "送信"
+
+#: src/components/agent-composer.tsx
+msgid "Submitted"
+msgstr "送信済み"
+
+#: src/components/agent-composer.tsx
+msgid "Submitted to queue"
+msgstr "キューに送信済み"
 
 #: src/components/agent-composer.tsx
 msgid "Submitting follow-up…"
@@ -7535,10 +7545,6 @@ msgstr "ユーザー名"
 msgid "Uses the theme's Home artwork in the position chosen by your Home layout. Themes without Home artwork show no illustration."
 msgstr "ホームレイアウトで指定された位置にテーマのホーム画像を表示します。ホーム画像のないテーマではイラストを表示しません"
 
-#: src/components/settings-servers.tsx
-msgid "Using"
-msgstr "使用中"
-
 #. placeholder {0}: fontAxesSummary(axes)
 #: src/components/settings-font-sheet.tsx
 msgid "Variable · {0}"
@@ -7579,13 +7585,22 @@ msgstr "音声を文字に変換"
 msgid "Voice to text disabled"
 msgstr "音声の文字変換は無効です"
 
+#: src/components/agent-tool-card.tsx
 #: src/i18n/labels.ts
 msgid "Wait"
 msgstr "待機"
 
+#: src/components/agent-sleep-tool-body.tsx
+msgid "Wait for {duration}"
+msgstr "{duration} 待機"
+
 #: src/components/agent-workbench.tsx
 msgid "Wait for the turn to end before choosing a model."
 msgstr "ターンが終了してからモデルを選択してください"
+
+#: src/components/agent-sleep-tool-body.tsx
+msgid "Waiting for completion…"
+msgstr "完了を待っています…"
 
 #: src/components/skia-terminal.web.tsx
 msgid "Waiting for output…"

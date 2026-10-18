@@ -393,6 +393,7 @@ msgid "{providerName} (terminal)"
 msgstr "{providerName} (en terminal)"
 
 #: src/components/agent-account-limits-section.tsx
+#: src/components/agent-sleep-tool-body.tsx
 msgid "{remaining} remaining"
 msgstr "{remaining} restantes"
 
@@ -484,10 +485,6 @@ msgstr "Un Home con estilo de revista, avisos y sesiones recientes"
 #: src/components/server-terminal-workspace.tsx
 msgid "a new {0}"
 msgstr "un nuevo {0}"
-
-#: src/components/settings-servers.tsx
-msgid "A plain shell on any machine you can reach. No Gateway needed."
-msgstr "Una shell sencilla en cualquier máquina a la que llegues. No hace falta Gateway"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "A second checkout of this repository"
@@ -1520,6 +1517,7 @@ msgid "Compared with {base}"
 msgstr "Comparado con {base}"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/agent-sleep-tool-body.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Completed"
@@ -1673,6 +1671,7 @@ msgstr "Mapa de conexiones"
 #: src/components/home-editorial-layout.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-servers.tsx
 msgid "Connections"
 msgstr "Conexiones"
 
@@ -1847,6 +1846,7 @@ msgstr "Ayuda conversacional y preguntas abiertas sobre el proyecto"
 #: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/guide-command.tsx
+#: src/components/settings-servers.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Copied"
 msgstr "Copiado"
@@ -1867,6 +1867,7 @@ msgstr "Lo copia, listo para pegar en un terminal"
 
 #: src/app/diagram-viewer.tsx
 #: src/components/asset-viewer.tsx
+#: src/components/settings-servers.tsx
 #: src/components/skia-terminal.tsx
 msgid "Copy"
 msgstr "Copiar"
@@ -2559,6 +2560,7 @@ msgid "Disconnected."
 msgstr "Desconectado"
 
 #: src/components/agent-compaction-pill.tsx
+#: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/task-row.tsx
@@ -2809,6 +2811,7 @@ msgstr "Exportar colores"
 msgid "Export theme"
 msgstr "Exportar tema"
 
+#: src/components/agent-sleep-tool-body.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Failed"
@@ -3232,6 +3235,8 @@ msgstr "Si el problema persiste, reinicia la app o comprueba su instalación"
 
 #: src/components/agent-message-block.tsx
 #: src/components/agent-tool-card.tsx
+#: src/components/attachment-image.tsx
+#: src/components/gateway-image-thumbnail.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image"
 msgstr "Imagen"
@@ -5659,10 +5664,6 @@ msgstr "Escanear de nuevo"
 msgid "Scan the Gateway QR."
 msgstr "Escanea el código QR del Gateway"
 
-#: src/components/settings-servers.tsx
-msgid "Scan the Gateway’s QR code, or enter its address."
-msgstr "Escanea el código QR del Gateway o escribe su dirección"
-
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
 msgstr "Escanear necesita una cámara, y este navegador no la ofrece"
@@ -5745,6 +5746,7 @@ msgstr "Seleccionar modelo: {modelDisplayName}"
 
 #: src/components/computer-map/screen.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-servers.tsx
 msgid "Selected"
 msgstr "Seleccionado"
 
@@ -6349,6 +6351,14 @@ msgstr "Subagente"
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "Enviar"
+
+#: src/components/agent-composer.tsx
+msgid "Submitted"
+msgstr "Enviado"
+
+#: src/components/agent-composer.tsx
+msgid "Submitted to queue"
+msgstr "Enviado a la cola"
 
 #: src/components/agent-composer.tsx
 msgid "Submitting follow-up…"
@@ -7535,10 +7545,6 @@ msgstr "Usuario"
 msgid "Uses the theme's Home artwork in the position chosen by your Home layout. Themes without Home artwork show no illustration."
 msgstr "Muestra la ilustración de inicio del tema en la posición definida por el diseño de inicio. Los temas sin ilustración de inicio no muestran ninguna ilustración"
 
-#: src/components/settings-servers.tsx
-msgid "Using"
-msgstr "En uso"
-
 #. placeholder {0}: fontAxesSummary(axes)
 #: src/components/settings-font-sheet.tsx
 msgid "Variable · {0}"
@@ -7579,13 +7585,22 @@ msgstr "Voz a texto"
 msgid "Voice to text disabled"
 msgstr "Voz a texto desactivada"
 
+#: src/components/agent-tool-card.tsx
 #: src/i18n/labels.ts
 msgid "Wait"
 msgstr "Esperar"
 
+#: src/components/agent-sleep-tool-body.tsx
+msgid "Wait for {duration}"
+msgstr "Esperar {duration}"
+
 #: src/components/agent-workbench.tsx
 msgid "Wait for the turn to end before choosing a model."
 msgstr "Espera a que termine el turno antes de elegir un modelo"
+
+#: src/components/agent-sleep-tool-body.tsx
+msgid "Waiting for completion…"
+msgstr "Esperando a que termine…"
 
 #: src/components/skia-terminal.web.tsx
 msgid "Waiting for output…"

@@ -393,6 +393,7 @@ msgid "{providerName} (terminal)"
 msgstr "{providerName} (trong terminal)"
 
 #: src/components/agent-account-limits-section.tsx
+#: src/components/agent-sleep-tool-body.tsx
 msgid "{remaining} remaining"
 msgstr "Còn lại {remaining}"
 
@@ -484,10 +485,6 @@ msgstr "Home theo phong cách tạp chí với mục cần chú ý và các phi�
 #: src/components/server-terminal-workspace.tsx
 msgid "a new {0}"
 msgstr "một {0} mới"
-
-#: src/components/settings-servers.tsx
-msgid "A plain shell on any machine you can reach. No Gateway needed."
-msgstr "Một shell thường trên bất kỳ máy nào bạn kết nối được. Không cần Gateway"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "A second checkout of this repository"
@@ -1520,6 +1517,7 @@ msgid "Compared with {base}"
 msgstr "So với {base}"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/agent-sleep-tool-body.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Completed"
@@ -1673,6 +1671,7 @@ msgstr "Sơ đồ kết nối"
 #: src/components/home-editorial-layout.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-servers.tsx
 msgid "Connections"
 msgstr "Kết nối"
 
@@ -1847,6 +1846,7 @@ msgstr "Trợ giúp dạng hội thoại và các câu hỏi mở về dự án"
 #: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/guide-command.tsx
+#: src/components/settings-servers.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Copied"
 msgstr "Đã sao chép"
@@ -1867,6 +1867,7 @@ msgstr "Sao chép lệnh, sẵn sàng dán vào terminal"
 
 #: src/app/diagram-viewer.tsx
 #: src/components/asset-viewer.tsx
+#: src/components/settings-servers.tsx
 #: src/components/skia-terminal.tsx
 msgid "Copy"
 msgstr "Sao chép"
@@ -2559,6 +2560,7 @@ msgid "Disconnected."
 msgstr "Đã ngắt kết nối"
 
 #: src/components/agent-compaction-pill.tsx
+#: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/task-row.tsx
@@ -2809,6 +2811,7 @@ msgstr "Xuất màu sắc"
 msgid "Export theme"
 msgstr "Xuất giao diện"
 
+#: src/components/agent-sleep-tool-body.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Failed"
@@ -3232,6 +3235,8 @@ msgstr "Nếu sự cố vẫn tiếp diễn, hãy khởi động lại ứng d�
 
 #: src/components/agent-message-block.tsx
 #: src/components/agent-tool-card.tsx
+#: src/components/attachment-image.tsx
+#: src/components/gateway-image-thumbnail.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image"
 msgstr "Hình ảnh"
@@ -5659,10 +5664,6 @@ msgstr "Quét lại"
 msgid "Scan the Gateway QR."
 msgstr "Quét mã QR của Gateway"
 
-#: src/components/settings-servers.tsx
-msgid "Scan the Gateway’s QR code, or enter its address."
-msgstr "Quét mã QR của Gateway hoặc nhập địa chỉ"
-
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
 msgstr "Quét cần camera, mà trình duyệt này không cung cấp"
@@ -5745,6 +5746,7 @@ msgstr "Chọn mô hình: {modelDisplayName}"
 
 #: src/components/computer-map/screen.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-servers.tsx
 msgid "Selected"
 msgstr "Đã chọn"
 
@@ -6349,6 +6351,14 @@ msgstr "Tác nhân phụ"
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "Gửi"
+
+#: src/components/agent-composer.tsx
+msgid "Submitted"
+msgstr "Đã gửi"
+
+#: src/components/agent-composer.tsx
+msgid "Submitted to queue"
+msgstr "Đã gửi vào hàng đợi"
 
 #: src/components/agent-composer.tsx
 msgid "Submitting follow-up…"
@@ -7535,10 +7545,6 @@ msgstr "Tên người dùng"
 msgid "Uses the theme's Home artwork in the position chosen by your Home layout. Themes without Home artwork show no illustration."
 msgstr "Hiển thị hình minh họa trang chủ của chủ đề tại vị trí do bố cục trang chủ quy định. Chủ đề không có hình minh họa trang chủ sẽ không hiển thị hình minh họa"
 
-#: src/components/settings-servers.tsx
-msgid "Using"
-msgstr "Đang dùng"
-
 #. placeholder {0}: fontAxesSummary(axes)
 #: src/components/settings-font-sheet.tsx
 msgid "Variable · {0}"
@@ -7579,13 +7585,22 @@ msgstr "Giọng nói thành văn bản"
 msgid "Voice to text disabled"
 msgstr "Đã tắt chuyển giọng nói thành văn bản"
 
+#: src/components/agent-tool-card.tsx
 #: src/i18n/labels.ts
 msgid "Wait"
 msgstr "Chờ"
 
+#: src/components/agent-sleep-tool-body.tsx
+msgid "Wait for {duration}"
+msgstr "Chờ {duration}"
+
 #: src/components/agent-workbench.tsx
 msgid "Wait for the turn to end before choosing a model."
 msgstr "Đợi lượt kết thúc trước khi chọn mô hình"
+
+#: src/components/agent-sleep-tool-body.tsx
+msgid "Waiting for completion…"
+msgstr "Đang chờ hoàn tất…"
 
 #: src/components/skia-terminal.web.tsx
 msgid "Waiting for output…"

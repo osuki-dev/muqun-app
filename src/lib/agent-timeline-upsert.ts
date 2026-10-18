@@ -66,6 +66,7 @@ export function upsertTimelineItems(
           it.id.startsWith('temp_') &&
           it.role === 'user' &&
           it.part.type === 'text' &&
+          item.seq >= it.seq &&
           acknowledgeAttachments(item, it) !== undefined
       );
       if (optimistic >= 0) {
@@ -93,4 +94,20 @@ export function upsertTimelineItems(
   }
   if (!dirty) return previous as TimelineItem[];
   return reordered ? sortTimeline(next) : next;
+}
+
+/** Replace canonical history without losing a send that raced a stale snapshot. */
+export function reconcileAgentSnapshotPending(
+  previous: readonly TimelineItem[],
+  snapshot: readonly TimelineItem[],
+  invalidated = false
+): TimelineItem[] {
+  const pending = invalidated
+    ? []
+    : previous.filter((item) => item.id.startsWith('temp_') && item.role === 'user');
+  // Do not carry canonical history into a replacement: rollback/deletion can
+  // deliberately remove it. The normal upsert preserves an acknowledged row's key.
+  // ACK can precede the user-message event, and unrelated events advance the
+  // snapshot sequence. Neither absence nor idle status proves send failure.
+  return upsertTimelineItems(pending, snapshot);
 }
