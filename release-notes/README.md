@@ -5,8 +5,8 @@ tested commit. Use it as the GitHub Release description. Include user-visible
 improvements, fixes, required App/Gateway/Herdr versions, and store upgrade steps;
 an automated commit list is not a substitute.
 
-The next native release is [v4.0.0](v4.0.0.md). Earlier version notes remain
-historical records, including builds already submitted with those versions.
+The next native release is [v4.0.0](v4.0.0.md). It includes the work originally
+planned for 3.1; there is no separate 3.1 release-notes document.
 
 Android distribution uses AAB through Play; iOS uses IPA through TestFlight and
 App Store Connect. There is no separate APK publication or tag-triggered binary

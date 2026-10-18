@@ -14,7 +14,11 @@ import {
 } from '@/components/sheet-scene';
 import { agentLaunchCaption } from '@/i18n/labels';
 import { useTerminalAgentCatalog } from '@/hooks/use-terminal-agent-catalog';
-import { homeAgentOptions, resolveHomeAgent } from '@/lib/home-agent-choice';
+import {
+  homeAgentNeedsTerminalLabel,
+  homeAgentOptions,
+  resolveHomeAgent,
+} from '@/lib/home-agent-choice';
 import { useAgents } from '@/stores/agents';
 import { useHomeAgentChoice } from '@/stores/home-agent-choice';
 
@@ -38,16 +42,22 @@ export function HomeAgentSheet() {
     current && !listed.some((option) => option.key === current.key) ? [current, ...listed] : listed;
 
   const rows = options.map((option) => {
+    const name = option.name;
+    const title = homeAgentNeedsTerminalLabel(option, options) ? t`${name} (terminal)` : name;
     const caption =
-      option.kind === 'terminal' ? t`Starts in a terminal` : _(agentLaunchCaption[option.caption]);
+      option.kind === 'terminal'
+        ? option.ready
+          ? t`Starts in a terminal`
+          : t`Not available on this computer`
+        : _(agentLaunchCaption[option.caption]);
     return (
       <SheetSceneRow
         key={option.key}
         testID={`home-agent-option-${option.key.replace(':', '-')}`}
-        title={option.name}
+        title={title}
         caption={caption}
         selected={option.key === current?.key}
-        accessibilityLabel={`${option.name}, ${caption}`}
+        accessibilityLabel={`${title}, ${caption}`}
         leading={
           <AgentMark
             kind={option.agentKind}

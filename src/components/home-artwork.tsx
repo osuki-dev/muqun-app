@@ -2,6 +2,7 @@ import {
   AlphaType,
   Blur,
   Canvas,
+  useCanvasRef,
   ColorType,
   LinearGradient,
   Mask,
@@ -10,8 +11,13 @@ import {
   vec,
   Image as SkiaImage,
 } from 'react-native-skia';
-import { useCallback, useMemo, useRef, useState } from 'react';
-import { StyleSheet, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  StyleSheet,
+  useWindowDimensions,
+  type LayoutChangeEvent,
+  type ViewInstance,
+} from 'react-native';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -20,11 +26,18 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { useSharedSkiaImage } from '@/lib/skia-image-cache';
-import { heroFeatherGeometry } from '@/lib/hero-feather';
+import { useSkiaDrawReady, useThemeRenderReady } from '@/hooks/use-theme-render-ready';
+import {
+  HOME_COVER_BOTTOM_FEATHER_START,
+  homeCoverArtworkRect,
+  homeCoverSceneRect,
+  heroFeatherGeometry,
+} from '@/lib/hero-feather';
 import { hasTransparentArtworkEdges } from '@/lib/artwork-edge-alpha';
+import { useHomeArtworkForeground } from '@/hooks/use-home-artwork-foreground';
 import { useLaunchHomeArtwork } from '@/hooks/use-launch-home-artwork';
 import { fadeIn, listLayout } from '@/lib/motion';
-import { homeHeroMaxHeight } from '@/lib/responsive-layout';
+import { homeCoverArtworkHeight, homeHeroMaxHeight } from '@/lib/responsive-layout';
 import type { ResolvedHomeArtwork, ResolvedHomeArtworkAsset } from '@/theme/home-artwork';
 
 export type { ResolvedHomeArtworkAsset } from '@/theme/home-artwork';
@@ -95,15 +108,20 @@ export function HomeArtwork({
   resolution,
   onAvailabilityChange,
   maxHeight,
+  cover = false,
+  onForegroundChange,
 }: {
   scrollY: SharedValue<number>;
   resolution: ResolvedHomeArtworkAsset;
   onAvailabilityChange?: (available: boolean) => void;
+  onForegroundChange?: (source: string, foreground: boolean) => void;
   /** A composition may use a smaller illustration without changing the theme asset. */
   maxHeight?: number;
+  /** A theme's cover scene fills the header; ordinary illustrations keep the legacy band. */
+  cover?: boolean;
 }) {
   const { width } = useWindowDimensions();
-  const defaultBand = homeHeroMaxHeight(width);
+  const defaultBand = cover ? homeCoverArtworkHeight(width) : homeHeroMaxHeight(width);
   const band =
     maxHeight !== undefined && Number.isFinite(maxHeight) && maxHeight > 0
       ? Math.min(defaultBand, maxHeight)
@@ -116,6 +134,8 @@ export function HomeArtwork({
       resolved={resolution.resolved}
       source={resolution.source}
       band={band}
+      cover={cover}
+      onForegroundChange={onForegroundChange}
       scrollY={scrollY}
       onAvailabilityChange={onAvailabilityChange}
     />
@@ -126,12 +146,16 @@ function HomeArtworkImage({
   resolved,
   source,
   band,
+  cover,
+  onForegroundChange,
   scrollY,
   onAvailabilityChange,
 }: {
   resolved: ResolvedHomeArtwork;
   source: string;
   band: number;
+  cover: boolean;
+  onForegroundChange?: (source: string, foreground: boolean) => void;
   scrollY: SharedValue<number>;
   onAvailabilityChange?: (available: boolean) => void;
 }) {
@@ -139,6 +163,9 @@ function HomeArtworkImage({
     opacity: interpolate(scrollY.value, [0, band], [1, 0], Extrapolation.CLAMP),
   }));
   const [failed, setFailed] = useState<string | null>(null);
+  const canvas = useCanvasRef();
+  const [drawn, setDrawn] = useState(false);
+  useThemeRenderReady(source, failed === source || drawn);
   // The hero's own box, measured rather than assumed. The band's height is
   // known up front but its width is the content column's, which carries the
   // screen's gutter and its pad max-width -- and the feather is computed in the
@@ -167,12 +194,16 @@ function HomeArtworkImage({
         })?.[0]
     );
   }, [image]);
+  const coverForeground = useHomeArtworkForeground(image);
+  useEffect(() => {
+    if (image) onForegroundChange?.(source, coverForeground);
+  }, [image, source, coverForeground, onForegroundChange]);
   // The band in window coordinates, for the launch opening to land in. The
   // layout event carries the box in the scroll content's coordinates, which is
   // not where the overlay draws -- it sits above the router with the whole
   // window to itself -- so the position has to be measured against the window
   // rather than derived from a header height the overlay cannot see.
-  const view = useRef<View | null>(null);
+  const view = useRef<ViewInstance | null>(null);
   const onLayout = useCallback((event: LayoutChangeEvent) => {
     const { width: measuredWidth, height: measuredHeight } = event.nativeEvent.layout;
     setBox((previous) =>
@@ -199,10 +230,28 @@ function HomeArtworkImage({
     () => (image ? { width: image.width(), height: image.height() } : null),
     [image]
   );
+  const coverRect = useMemo(() => {
+    if (!cover || !box || !intrinsic) return null;
+    // Cutouts keep their whole figure. An opaque scene uses its authored fit
+    // and focal point, including responsive overrides from the resolver.
+    if (!coverForeground)
+      return homeCoverSceneRect(box, intrinsic, resolved.image.fit, resolved.image.focalPoint);
+    return homeCoverArtworkRect(
+      box,
+      intrinsic,
+      resolved.image.fit,
+      resolved.image.focalPoint,
+      coverForeground
+    );
+  }, [cover, box, intrinsic, coverForeground, resolved.image]);
+  const imageRect = coverRect ?? geometry?.image;
+  useSkiaDrawReady(canvas, imageRect, Boolean(image && geometry && imageRect && box), () =>
+    setDrawn(true)
+  );
   useLaunchHomeArtwork({
     view,
     source,
-    image: failed === source ? null : (geometry?.image ?? null),
+    image: failed === source ? null : (imageRect ?? null),
     intrinsic,
     // Neither mask can be reproduced by the unmasked launch sprite. Hand off
     // by cross-fading to the actual Home drawing instead of changing its edges.
@@ -221,7 +270,7 @@ function HomeArtworkImage({
       layout={listLayout('medium')}
       onLayout={onLayout}
       ref={view}
-      style={[styles.hero, { height: band }]}>
+      style={[styles.hero, cover && styles.cover, { height: band }]}>
       {/*
         The scroll fade is a node inside the animated one, never the same node.
         Reanimated says so itself -- `Property "opacity" of
@@ -231,12 +280,21 @@ function HomeArtworkImage({
         scroll position owns it the rest of the time. Two owners, one property.
       */}
       <Animated.View style={[StyleSheet.absoluteFill, scrollStyle]}>
-        {image && geometry ? (
-          <Canvas style={StyleSheet.absoluteFill}>
+        {image && geometry && imageRect && box ? (
+          <Canvas ref={canvas} style={StyleSheet.absoluteFill}>
             <Mask
               mode="alpha"
               mask={
-                foreground ? (
+                cover ? (
+                  <Rect x={0} y={0} width={box.width} height={box.height}>
+                    <LinearGradient
+                      start={vec(0, 0)}
+                      end={vec(0, box.height)}
+                      colors={['white', 'white', 'transparent']}
+                      positions={[0, HOME_COVER_BOTTOM_FEATHER_START, 1]}
+                    />
+                  </Rect>
+                ) : foreground ? (
                   <Rect {...geometry.image}>
                     <LinearGradient
                       start={vec(0, geometry.image.y)}
@@ -271,11 +329,11 @@ function HomeArtworkImage({
               }>
               <SkiaImage
                 image={image}
-                x={geometry.image.x}
-                y={geometry.image.y}
-                width={geometry.image.width}
-                height={geometry.image.height}
-                // The rect already *is* the contain-fit result, focal point and
+                x={imageRect.x}
+                y={imageRect.y}
+                width={imageRect.width}
+                height={imageRect.height}
+                // The rect already *is* the fit result, focal point and
                 // all, so there is nothing left to fit. Letting Skia fit it again
                 // would be a second opinion about the same rectangle, and the
                 // mask is aligned to this one.
@@ -292,4 +350,5 @@ function HomeArtworkImage({
 
 const styles = StyleSheet.create({
   hero: { width: '100%', alignSelf: 'center' },
+  cover: { overflow: 'hidden' },
 });

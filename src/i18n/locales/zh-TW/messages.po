@@ -27,10 +27,6 @@ msgstr "「{0}」有尚未提交的變更。移除它就會把這些變更丟掉
 msgid "“{args}” was not sent: a skill takes no arguments."
 msgstr "「{args}」未送出：技能不接受參數"
 
-#: src/components/agent-sessions-sheet.tsx
-msgid "“{title}” and any subagent sessions under it are removed from the host. This cannot be undone."
-msgstr "「{title}」及其下的子代理工作階段都會從主機移除，且無法復原"
-
 #: src/components/home-recent-sessions.tsx
 msgid "“{title}” and its conversation history will be deleted in {provider} on {computer}. The service may also delete its subagent sessions. This cannot be undone."
 msgstr "將刪除{computer}上{provider}中的「{title}」及其對話記錄。服務也可能刪除其子代理工作階段。此操作無法復原"
@@ -117,6 +113,17 @@ msgstr "{0}（閘道）"
 msgid "{0} (this device)"
 msgstr "{0}（這台裝置）"
 
+#. placeholder {0}: failed.name
+#: src/lib/attachments.ts
+msgid "{0} did not upload. Retry it or remove it to send."
+msgstr "{0} 未能上傳。重試或移除後再傳送"
+
+#. placeholder {0}: failed.name
+#. placeholder {1}: uploadLimitMb(maxUploadBytesFor(failed.mime))
+#: src/lib/attachments.ts
+msgid "{0} is too large ({1} MB max). Remove it to send."
+msgstr "{0} 過大（最大 {1} MB）。移除後再傳送"
+
 #. placeholder {0}: contextUsage.messages
 #: src/components/agent-context-sheet.tsx
 msgid "{0} messages in context"
@@ -191,13 +198,13 @@ msgstr "{0} 分鐘"
 msgid "{0}m ago"
 msgstr "{0} 分鐘前"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "{agentId} service"
-msgstr "{agentId} 服務"
-
 #: src/components/agent-workbench.tsx
 msgid "{agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone."
 msgstr "{agentName} 無法預覽回溯。這會刪除這則訊息及其之後的所有內容，也就是整輪對話，且無法還原"
+
+#: src/components/agent-workbench.tsx
+msgid "{agentName} does not support loading earlier remote history."
+msgstr "{agentName} 不支援載入更早的遠端歷史"
 
 #: src/components/agent-workbench.tsx
 #: src/components/home-composer-dock.tsx
@@ -300,10 +307,6 @@ msgstr "{from} 上仍有一筆舊的 {name} 紀錄，請在 {from} 上刪除這�
 msgid "{gone} still lists {thisLabel}; remove it on {gone}'s Manage screen"
 msgstr "{gone} 仍列出 {thisLabel}，請在 {gone} 的管理畫面中移除"
 
-#: src/components/home-launch-actions.tsx
-msgid "{hidden} more"
-msgstr "另外 {hidden} 個"
-
 #: src/components/bounded-markdown.tsx
 msgid "{hiddenKb} KB not shown"
 msgstr "未顯示 {hiddenKb} KB"
@@ -336,6 +339,10 @@ msgstr "{messages, plural, other {# 則訊息}}"
 msgid "{modifierKeys} combinations need the program in this terminal to enable extended keys"
 msgstr "{modifierKeys} 組合鍵需要此終端機中的程式啟用延伸按鍵"
 
+#: src/components/home-agent-sheet.tsx
+msgid "{name} (terminal)"
+msgstr "{name}（終端機）"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "{name} does not take work from other computers."
 msgstr "{name} 不接受其他電腦的任務"
@@ -359,6 +366,10 @@ msgstr "找不到 {name}。點一下查看安裝說明"
 #: src/components/session-map.tsx
 msgid "{panelCount, plural, one {# running} other {# running}}"
 msgstr "{panelCount, plural, one {# 個執行中} other {# 個執行中}}"
+
+#: src/components/home-composer-dock.tsx
+msgid "{providerName} (terminal)"
+msgstr "{providerName}（終端機）"
 
 #: src/components/row-action-menu.tsx
 msgid "{removeLabel}: {label}"
@@ -387,11 +398,6 @@ msgstr "{total, plural, other {# 個子任務}}（{waiting, plural, other {# 個
 msgid "→ {name}"
 msgstr "→ {name}"
 
-#. placeholder {0}: card.nowTotal - card.now.length
-#: src/components/home-computer-cards.tsx
-msgid "+{0} more"
-msgstr "還有 {0} 個"
-
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "還有 {overflow} 個"
@@ -411,6 +417,10 @@ msgstr "10 天"
 #: src/components/settings-storage.tsx
 msgid "30 days"
 msgstr "30 天"
+
+#: src/components/computer-map/screen.tsx
+msgid "3D unavailable. Connections are listed below."
+msgstr "無法顯示 3D。連線已列於下方"
 
 #. placeholder {0}: Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))
 #: src/components/settings-font-sheet.tsx
@@ -462,10 +472,6 @@ msgstr "模擬器不只是看，還能操作，因此預覽只在 Tailscale 或 
 msgid "A simulator that was shut down can take a minute to come up."
 msgstr "已關機的模擬器可能需要一分鐘才能啟動"
 
-#: src/components/launch-intro.tsx
-msgid "A spread on the Pad"
-msgstr "平板上的雙頁版面"
-
 #: src/components/server-terminal-workspace.tsx
 msgid "A terminal was created. Check it before sending again — your task is still here."
 msgstr "已經建立了一個終端機。再次傳送前先查看一下——你的任務還在"
@@ -482,6 +488,10 @@ msgstr "關於"
 #: src/components/settings-fleet-peers.tsx
 msgid "Accept work from other computers"
 msgstr "接受其他電腦的任務"
+
+#: src/components/computer-map/screen.tsx
+msgid "Accepting work"
+msgstr "接受工作"
 
 #: src/components/task-row.tsx
 msgid "Acknowledge"
@@ -551,10 +561,6 @@ msgctxt "git file status"
 msgid "Added"
 msgstr "新增"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Advanced agent access"
-msgstr "進階智能體存取權限"
-
 #: src/app/settings-voice.tsx
 msgid "After recording"
 msgstr "錄完轉錄"
@@ -563,10 +569,6 @@ msgstr "錄完轉錄"
 #: src/components/new-task-sheet.tsx
 msgid "Agent"
 msgstr "Agent"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Agent access"
-msgstr "智能體存取權限"
 
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
@@ -588,6 +590,7 @@ msgid "Agent panes open in"
 msgstr "代理程式面板的預設檢視"
 
 #: src/components/app-drawer-content.tsx
+#: src/components/new-task-action.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/settings-servers.tsx
 msgid "Agents"
@@ -644,9 +647,17 @@ msgstr "允許"
 msgid "Allow camera"
 msgstr "允許相機"
 
+#: src/components/agent-permission-card.tsx
+msgid "Allow for this turn"
+msgstr "允許本輪使用"
+
 #: src/components/voice-input-button.tsx
 msgid "Allow microphone access in system settings."
 msgstr "請在系統設定中允許存取麥克風"
+
+#: src/components/agent-permission-card.tsx
+msgid "Allow once"
+msgstr "允許一次"
 
 #: src/app/explore.tsx
 msgid "Allow the camera, or enter the address instead."
@@ -850,8 +861,8 @@ msgid "Authenticate with {authLabel} to continue."
 msgstr "請使用 {authLabel} 驗證以繼續"
 
 #: src/lib/local-authentication.ts
-msgid "Authenticate with {method} to continue"
-msgstr "請使用 {method} 驗證以繼續"
+msgid "Authenticate with {name} to continue"
+msgstr "請使用 {name} 驗證以繼續"
 
 #: src/components/app-lock-gate.tsx
 msgid "Authenticating"
@@ -893,6 +904,8 @@ msgstr "自主軟體工程：編輯檔案、執行指令、執行測試"
 msgid "Available modes"
 msgstr "可用模式"
 
+#: src/components/launch-intro.tsx
+#: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back"
@@ -906,6 +919,7 @@ msgstr "往回一個字詞"
 msgid "Back to computers"
 msgstr "回到電腦列表"
 
+#: src/components/pad-server-rail.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Back to Home"
 msgstr "返回主畫面"
@@ -962,6 +976,10 @@ msgstr "等待回應"
 msgid "Blocked by agent safety"
 msgstr "已被代理安全機制攔截"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Branch"
+msgstr "分支"
+
 #: src/components/changes-sheet.tsx
 msgid "Branch {branch}"
 msgstr "分支 {branch}"
@@ -1006,6 +1024,10 @@ msgstr "內建"
 #: src/components/agent-context-sheet.tsx
 msgid "Cache read"
 msgstr "快取讀取"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Cache write"
+msgstr "快取寫入"
 
 #: src/components/settings-storage.tsx
 msgid "Calculating…"
@@ -1082,18 +1104,27 @@ msgstr "無法連線到 {quietNames}"
 msgid "Capabilities"
 msgstr "功能"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Capture changed"
+msgstr "擷取設定已變更"
+
+#: src/components/pane-history-sheet.tsx
+msgid "Capture restarted"
+msgstr "擷取已重新開始"
+
 #: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Changed"
 msgstr "已變更"
 
+#: src/components/agent-message-block.tsx
 #: src/components/changes-sheet.tsx
 msgid "Changes"
 msgstr "變更"
 
 #: src/components/launch-intro.tsx
-msgid "Changes as a tree"
-msgstr "變更一目了然"
+msgid "Changes and Lazygit now live together. Move between linked worktrees when your Gateway supports them."
+msgstr "變更與 Lazygit 現在整合在一起。Gateway 支援時，還可切換關聯的工作樹"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Changes coloured backgrounds, not text, icons or artwork"
@@ -1113,6 +1144,7 @@ msgid "Check device authentication settings and try again."
 msgstr "請檢查裝置的驗證設定後再試一次"
 
 #: src/components/home-composer-dock.tsx
+#: src/components/task-row.tsx
 msgid "Check status"
 msgstr "核對狀態"
 
@@ -1154,6 +1186,10 @@ msgstr "檢查中…"
 #: src/components/home-target-sheet.tsx
 msgid "Choose a computer"
 msgstr "選擇電腦"
+
+#: src/components/launch-intro.tsx
+msgid "Choose a computer and an agent, then send your goal from Home. Follow tasks and decisions in the same place."
+msgstr "選擇電腦和代理，直接從首頁傳送目標。在同一處追蹤任務和待處理的決策"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Choose a mode"
@@ -1225,6 +1261,10 @@ msgstr "經典"
 msgid "Clear"
 msgstr "清除"
 
+#: src/components/in-app-notification-host.tsx
+msgid "Clear all"
+msgstr "全部清除"
+
 #: src/components/settings-storage.tsx
 msgid "Clear cache"
 msgstr "清除快取"
@@ -1271,8 +1311,13 @@ msgstr "正在清除…"
 msgid "Clears cache when due after opening Muqun. Saved themes are kept."
 msgstr "到期後開啟 Muqun 時清理快取，保留已儲存的主題"
 
+#: src/components/in-app-notification-host.tsx
+msgid "Clears notifications only. Pending tasks still need your attention."
+msgstr "僅清除通知。待處理任務仍需你處理"
+
 #: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
+#: src/i18n/labels.ts
 msgid "Close"
 msgstr "關閉"
 
@@ -1293,6 +1338,7 @@ msgstr "收起"
 msgid "Close new task"
 msgstr "關閉新增任務"
 
+#: src/components/agent-tool-card.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/image-preview-modal.tsx
@@ -1380,6 +1426,7 @@ msgstr "已複製指令"
 msgid "Command mode"
 msgstr "命令模式"
 
+#: src/components/agent-context-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Commit"
 msgstr "提交"
@@ -1396,21 +1443,21 @@ msgstr "緊湊"
 msgid "Compact context"
 msgstr "壓縮上下文"
 
-#: src/components/agent-composer.tsx
+#: src/components/agent-compaction-pill.tsx
 msgid "Compacting context automatically…"
 msgstr "正在自動壓縮脈絡…"
 
-#: src/components/agent-composer.tsx
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 msgid "Compacting context…"
 msgstr "正在壓縮脈絡…"
 
-#: src/components/agent-composer.tsx
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 msgid "Compaction failed"
 msgstr "壓縮失敗"
 
-#: src/components/agent-composer.tsx
+#: src/components/agent-compaction-pill.tsx
 msgid "Compaction failed — tap to dismiss"
 msgstr "壓縮失敗 — 點按關閉"
 
@@ -1418,7 +1465,9 @@ msgstr "壓縮失敗 — 點按關閉"
 msgid "Compared with {base}"
 msgstr "與 {base} 比較"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/tool-call-detail-sheet.tsx
+#: src/i18n/labels.ts
 msgid "Completed"
 msgstr "已完成"
 
@@ -1431,6 +1480,10 @@ msgstr "已完成"
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer"
 msgstr "電腦"
+
+#: src/components/computer-map/screen.tsx
+msgid "Computer details"
+msgstr "電腦詳細資訊"
 
 #: src/app/explore.tsx
 #: src/components/settings-servers.tsx
@@ -1496,10 +1549,6 @@ msgstr "確認移除 {0}"
 msgid "Confirm revoke {0}"
 msgstr "確認撤銷 {0}"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Confirm revoke {title}"
-msgstr "確認撤銷 {title}"
-
 #: src/components/settings-alerts.tsx
 msgid "Confirm taps, pairing, and gateway events."
 msgstr "為點按、配對與 Gateway 事件提供觸覺回饋"
@@ -1563,7 +1612,12 @@ msgstr "正在連線至 {address}"
 msgid "Connecting…"
 msgstr "連線中…"
 
+#: src/components/computer-map/screen.tsx
+msgid "Connection map"
+msgstr "連線圖"
+
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "連線"
@@ -1581,10 +1635,12 @@ msgstr "上下文"
 msgid "Context {0}% full"
 msgstr "脈絡已用 {0}%"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 msgid "Context compacted · auto"
 msgstr "脈絡已壓縮 · 自動"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 msgid "Context compacted · manual"
 msgstr "脈絡已壓縮 · 手動"
@@ -1594,14 +1650,23 @@ msgid "Context used"
 msgstr "上下文佔用"
 
 #: src/app/explore.tsx
+#: src/components/launch-intro.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "繼續"
 
+#: src/components/agent-workbench.tsx
+msgid "Continue in the linked terminal. Your draft stays here."
+msgstr "請在連結的終端機中繼續。草稿會保留在這裡"
+
 #: src/i18n/labels.ts
 msgid "Continue task"
 msgstr "繼續任務"
+
+#: src/components/pane-history-sheet.tsx
+msgid "Continued on another page"
+msgstr "內容接續於其他頁面"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Control"
@@ -1723,6 +1788,7 @@ msgstr "控制"
 msgid "Conversational help and open-ended project questions."
 msgstr "對話式協助，以及關於專案的開放式問題"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
@@ -1759,6 +1825,7 @@ msgstr "複製輸入"
 msgid "Copy message"
 msgstr "複製訊息"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Copy output"
 msgstr "複製輸出"
@@ -1792,7 +1859,6 @@ msgid "Copying…"
 msgstr "複製中…"
 
 #: src/components/agent-composer.tsx
-#: src/components/new-task-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
 msgstr "無法加入檔案"
@@ -1816,6 +1882,10 @@ msgstr "無法檢查下載大小，請重試"
 #: src/components/agent-workbench.tsx
 msgid "Could not compact"
 msgstr "無法壓縮"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not confirm submission"
+msgstr "無法確認提交"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not connect"
@@ -1870,6 +1940,10 @@ msgstr "無法啟用 App 鎖定"
 msgid "Could not follow this task on {computer}"
 msgstr "無法在 {computer} 上追蹤此任務"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not fork"
+msgstr "無法建立分支"
+
 #: src/components/ssh-host-form.tsx
 msgid "Could not generate a key"
 msgstr "無法產生金鑰"
@@ -1886,13 +1960,13 @@ msgstr "無法取得這台電腦的代理程式清單"
 msgid "Could not list worktrees. Refresh to try again."
 msgstr "無法列出工作樹。請重新整理後再試"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Could not load agent access"
-msgstr "無法載入智能體存取權限"
-
 #: src/components/settings-server-capabilities.tsx
 msgid "Could not load capabilities"
 msgstr "無法載入功能"
+
+#: src/components/computer-map/screen.tsx
+msgid "Could not load computers. Open Computers to try again."
+msgstr "無法載入電腦。請開啟「電腦」重試"
 
 #: src/components/session-artifacts.tsx
 msgid "Could not load files."
@@ -1905,6 +1979,10 @@ msgstr "無法載入模型"
 #: src/lib/terminal-history-pull.ts
 msgid "Could not load older history from this terminal"
 msgstr "無法載入此終端機更早的歷史"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Could not load sessions"
+msgstr "無法載入工作階段"
 
 #: src/components/server-tasks-sheet.tsx
 msgid "Could not load tasks"
@@ -1939,9 +2017,14 @@ msgstr "無法在這台電腦上開啟終端機"
 msgid "Could not open destination"
 msgstr "無法開啟目的地"
 
+#: src/components/agent-workbench.tsx
 #: src/components/inline-file-link.tsx
 msgid "Could not open file"
 msgstr "無法開啟檔案"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not open terminal"
+msgstr "無法開啟終端機"
 
 #: src/hooks/use-theme-file-open.ts
 msgid "Could not open that theme"
@@ -1974,6 +2057,10 @@ msgstr "無法開啟 SSH 通道"
 #: src/components/asset-viewer.tsx
 msgid "Could not open this file."
 msgstr "無法開啟這個檔案"
+
+#: src/components/pdf-asset-preview.tsx
+msgid "Could not open this PDF."
+msgstr "無法開啟這份 PDF"
 
 #: src/components/asset-viewer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -2016,6 +2103,10 @@ msgstr "無法連線到這台電腦"
 msgid "Could not read saved computers. Your saved data has not been changed. Unlock this device and retry."
 msgstr "無法讀取已儲存的電腦，儲存的資料未被修改，請解鎖此裝置後重試"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Could not read saved terminal history."
+msgstr "無法讀取已儲存的終端機歷史記錄"
+
 #: src/components/changes-sheet.tsx
 msgid "Could not read the changes."
 msgstr "無法讀取變更"
@@ -2036,6 +2127,10 @@ msgstr "無法讀取這個檔案"
 #: src/app/settings-voice.tsx
 msgid "Could not read voice settings. Save your configuration again."
 msgstr "無法讀取語音設定，請重新儲存設定"
+
+#: src/components/computer-map/screen.tsx
+msgid "Could not refresh. This report may be outdated."
+msgstr "重新整理失敗。此報告可能已過期"
 
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
@@ -2060,10 +2155,6 @@ msgstr "無法撤銷授權"
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
 msgstr "無法撤銷裝置"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Could not revoke token"
-msgstr "無法撤銷權杖"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not run that"
@@ -2182,10 +2273,6 @@ msgstr "無法更新工作階段"
 msgid "Could not upload the file."
 msgstr "無法上傳檔案"
 
-#: src/components/launch-intro.tsx
-msgid "Cover Courier comes built in. Install a theme or pick a colour pack, and the whole app follows."
-msgstr "內建 Cover Courier 主題。安裝一個主題或選一套配色，整個應用程式隨之改變"
-
 #: src/lib/release-notes.ts
 msgid "Cover Courier is built in and worn until you pick a theme, and Interface background opacity now reaches every sheet and notice."
 msgstr "內建 Cover Courier 主題，在你選定主題前預設使用；介面背景不透明度現在也作用於所有面板和通知"
@@ -2197,6 +2284,14 @@ msgstr "建立並移動"
 #: src/components/agent-workbench.tsx
 msgid "Creating session…"
 msgstr "正在建立工作階段…"
+
+#: src/components/agent-tool-card.tsx
+#: src/components/attachment-image.tsx
+#: src/components/content-image.tsx
+#: src/components/gateway-image-thumbnail.tsx
+#: src/components/transcript-block-image.tsx
+msgid "Cropped preview · Open full image"
+msgstr "局部預覽 · 查看完整圖片"
 
 #: src/components/custom-theme-library.tsx
 #: src/components/file-mention-panel.tsx
@@ -2260,6 +2355,10 @@ msgstr "預設為儲存庫根目錄下的 theme.json"
 msgid "Delete"
 msgstr "刪除"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "Delete “{title}”?"
+msgstr "刪除「{title}」？"
+
 #: src/components/changes-sheet.tsx
 msgid "Delete {discardName}?"
 msgstr "刪除 {discardName}？"
@@ -2295,8 +2394,13 @@ msgstr "傳送模式：即時插話。點擊切換為排隊"
 
 #: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/components/task-row.tsx
 msgid "Delivery not confirmed"
 msgstr "傳送未確認"
+
+#: src/components/task-row.tsx
+msgid "Delivery not confirmed. Tap to check status"
+msgstr "傳送未確認。點按檢查狀態"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Demo catalogue. Leave the demo to download themes."
@@ -2336,11 +2440,15 @@ msgstr "分離於 {head}"
 msgid "Detached at {head}"
 msgstr "分離於 {head}"
 
+#: src/components/embedded-terminal-tool-block.tsx
+#: src/components/in-app-notification-host.tsx
+msgid "Details"
+msgstr "詳情"
+
 #: src/lib/demo-gateway.ts
 msgid "Development"
 msgstr "開發"
 
-#: src/components/settings-security.tsx
 #: src/lib/local-authentication.ts
 msgid "device authentication"
 msgstr "裝置驗證"
@@ -2383,6 +2491,7 @@ msgstr "已中斷 · {0}"
 msgid "Disconnected."
 msgstr "已中斷連線"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/task-row.tsx
@@ -2432,6 +2541,11 @@ msgstr "向下鍵"
 msgid "Download"
 msgstr "下載"
 
+#. placeholder {0}: asset.src.split('/').pop() ?? asset.src
+#: src/components/agent-message-block.tsx
+msgid "Download {0}"
+msgstr "下載 {0}"
+
 #: src/components/theme-link-import.tsx
 msgid "Download and preview"
 msgstr "下載並預覽"
@@ -2439,10 +2553,6 @@ msgstr "下載並預覽"
 #: src/components/update-status-banner.tsx
 msgid "Download size: {fullPackage}"
 msgstr "下載大小：{fullPackage}"
-
-#: src/components/update-status-banner.tsx
-msgid "Download size: about {estimate}"
-msgstr "下載大小：約 {estimate}"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Downloading"
@@ -2471,9 +2581,9 @@ msgstr "正在下載…"
 msgid "Draft the notes for the next build"
 msgstr "草擬下一版的發行說明"
 
-#: src/components/launch-intro.tsx
-msgid "Drawn on the GPU with Skia, with real keys and full tmux control. nvim, less and REPLs behave."
-msgstr "由 Skia 在 GPU 上繪製，按鍵真實，完整掌控 tmux。nvim、less 和各種 REPL 都能正常使用"
+#: src/components/computer-map/screen.tsx
+msgid "Drag to rotate · Pinch to zoom · Tap to select"
+msgstr "拖曳旋轉 · 雙指縮放 · 點選選取"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -2507,6 +2617,10 @@ msgstr "編輯 SSH 主機"
 msgid "Edit this computer"
 msgstr "編輯這台電腦"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Editor changed"
+msgstr "編輯器已切換"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Editorial"
@@ -2518,8 +2632,8 @@ msgid "Effects · {0}"
 msgstr "效果 · {0}"
 
 #: src/i18n/labels.ts
-msgid "Enable deepseek in the gateway config, start DeepSeek Harness on the host, then restart the gateway."
-msgstr "請在閘道設定中啟用 deepseek，在主機上啟動 DeepSeek Harness，然後重新啟動閘道"
+msgid "Encryption was turned on for this computer. Pair it again to keep using it."
+msgstr "這台電腦已開啟加密。請重新配對以繼續使用"
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -2575,14 +2689,6 @@ msgstr "按兩次 Escape"
 msgid "Estimated cost"
 msgstr "預估費用"
 
-#: src/components/launch-intro.tsx
-msgid "Every agent on your computer, in your hand."
-msgstr "電腦上的每個代理，盡在掌中"
-
-#: src/components/launch-intro.tsx
-msgid "Every changed file in one folder tree with line totals. Open a patch, or discard a file from its menu."
-msgstr "所有變更的檔案匯成一棵目錄樹，附帶增刪行數。打開查看修補，或從檔案選單裡捨棄變更"
-
 #: src/components/settings-font-sheet.tsx
 msgid "Every screen in the app."
 msgstr "App 的每一個畫面"
@@ -2617,27 +2723,11 @@ msgstr "展開工作"
 msgid "Expand tool call"
 msgstr "展開工具呼叫"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Expired"
-msgstr "已過期"
-
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
 #: src/app/explore.tsx
 msgid "Expires in {0}:{1}"
 msgstr "將於 {0}:{1} 後過期"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Expires in {days}d"
-msgstr "{days} 天後過期"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Expires in {hours}h"
-msgstr "{hours} 小時後過期"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Expires in {minutes}m"
-msgstr "{minutes} 分鐘後過期"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Explore"
@@ -2652,6 +2742,7 @@ msgid "Export theme"
 msgstr "匯出主題"
 
 #: src/components/tool-call-detail-sheet.tsx
+#: src/i18n/labels.ts
 msgid "Failed"
 msgstr "失敗"
 
@@ -2686,8 +2777,8 @@ msgid "Fetch a web page"
 msgstr "擷取網頁"
 
 #: src/lib/attachments.ts
-msgid "File too large (25MB max)"
-msgstr "檔案太大（上限 25MB）"
+msgid "File too large ({mb} MB max)"
+msgstr "檔案過大（最大 {mb} MB）"
 
 #: src/lib/attachments.ts
 msgid "File type not allowed"
@@ -2765,6 +2856,10 @@ msgstr "跟隨 App 語言"
 msgid "Follow the language your phone is set to"
 msgstr "跟隨手機的語言"
 
+#: src/i18n/labels.ts
+msgid "Follow up"
+msgstr "跟進"
+
 #: src/components/settings-language-sheet.tsx
 msgid "Following your phone"
 msgstr "跟隨手機"
@@ -2781,6 +2876,10 @@ msgstr "字型檔案位址"
 #: src/components/settings-appearance.tsx
 msgid "Font, {fontValue}"
 msgstr "字型，{fontValue}"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Fork session"
+msgstr "分支工作階段"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"
@@ -2808,13 +2907,17 @@ msgstr "常用"
 msgid "from {requester}"
 msgstr "來自 {requester}"
 
+#: src/components/launch-intro.tsx
+msgid "From a goal to work in motion."
+msgstr "從一個目標，開始推進工作"
+
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "前鏡頭。將 QR code 朝向螢幕"
 
 #: src/components/update-status-banner.tsx
-msgid "Full package: {fullPackage}"
-msgstr "完整更新套件：{fullPackage}"
+msgid "Full package size. File reuse may reduce the download."
+msgstr "完整更新套件的大小，檔案重用可能減少實際下載量"
 
 #: src/components/video-asset-preview.tsx
 msgid "Fullscreen"
@@ -2843,6 +2946,14 @@ msgstr "Gateway 通知"
 #: src/app/explore.tsx
 msgid "Gateway port on that host"
 msgstr "該主機上的 Gateway 連接埠"
+
+#: src/components/pane-history-sheet.tsx
+msgid "Gateway restarted"
+msgstr "Gateway 已重新啟動"
+
+#: src/i18n/labels.ts
+msgid "Gateway starts or joins DeepSeek Harness on the computer (default http://127.0.0.1:3080, override deepseek.endpoint)."
+msgstr "Gateway 在電腦上啟動或接入 DeepSeek Harness（預設 http://127.0.0.1:3080，可用 deepseek.endpoint 覆寫）"
 
 #: src/lib/notifications.ts
 msgid "Gateway updates"
@@ -2889,6 +3000,10 @@ msgstr "開始使用"
 #: src/components/git-diff-view.tsx
 msgid "Git"
 msgstr "Git"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Git snapshot"
+msgstr "Git 快照"
 
 #: src/i18n/labels.ts
 msgid "Git status"
@@ -2957,6 +3072,7 @@ msgstr "隱藏 {name}"
 msgid "Hide keyboard"
 msgstr "隱藏鍵盤"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Hide output"
 msgstr "收起輸出"
@@ -2974,7 +3090,6 @@ msgstr "隱藏模擬器"
 msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
 msgstr "長按傳送按鈕開始說話。停止錄音後，文字會加入草稿，編輯後再傳送"
 
-#: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Home"
 msgstr "主畫面"
@@ -3039,19 +3154,26 @@ msgstr "閒置"
 msgid "If this continues, restart the app or check the app installation"
 msgstr "如果問題仍然存在，請重新啟動 App 或檢查 App 安裝"
 
+#: src/components/agent-message-block.tsx
+#: src/components/agent-tool-card.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image"
 msgstr "圖片"
 
+#: src/components/image-preview-modal.tsx
+msgid "Image preview"
+msgstr "圖片預覽"
+
 #: src/components/agent-message-block.tsx
-#: src/components/asset-viewer.tsx
+#: src/components/file-text-body.tsx
+#: src/components/gateway-image-thumbnail.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image unavailable"
 msgstr "圖片無法顯示"
 
 #. placeholder {0}: alt.trim()
 #: src/components/agent-message-block.tsx
-#: src/components/asset-viewer.tsx
+#: src/components/file-text-body.tsx
 msgid "Image unavailable: {0}"
 msgstr "圖片無法顯示：{0}"
 
@@ -3101,13 +3223,13 @@ msgstr "輸入"
 msgid "Input copied to clipboard"
 msgstr "輸入已複製到剪貼簿"
 
-#. placeholder {0}: row.label
+#. placeholder {0}: item.label
 #: src/components/composer-popup.tsx
 msgid "Insert {0}"
 msgstr "插入 {0}"
 
-#. placeholder {0}: row.label
-#. placeholder {1}: row.hint
+#. placeholder {0}: item.label
+#. placeholder {1}: item.hint
 #: src/components/composer-popup.tsx
 msgid "Insert {0} {1}"
 msgstr "插入 {0} {1}"
@@ -3154,6 +3276,10 @@ msgstr "安裝中…"
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Intensity"
 msgstr "強度"
+
+#: src/i18n/labels.ts
+msgid "Interacted"
+msgstr "已互動"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Interface"
@@ -3255,6 +3381,10 @@ msgstr "繼續輸入以縮小範圍"
 msgid "Keys"
 msgstr "按鍵"
 
+#: src/components/launch-intro.tsx
+msgid "Know what is coming next."
+msgstr "更新之前，先了解新變化"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
 msgid "Language"
@@ -3301,6 +3431,10 @@ msgstr "上次的資料夾"
 msgid "Last known activity"
 msgstr "上次記錄的活動"
 
+#: src/components/computer-map/screen.tsx
+msgid "Last reported by this computer"
+msgstr "此電腦上次回報"
+
 #: src/components/task-row.tsx
 msgid "last seen {ago}"
 msgstr "上次連線 {ago}"
@@ -3320,10 +3454,6 @@ msgstr "上次連線於 {minutes} 分鐘前"
 #: src/components/settings-servers.tsx
 msgid "Last seen just now"
 msgstr "剛剛連線過"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Last used {when}"
-msgstr "上次使用 {when}"
 
 #: src/components/update-status-banner.tsx
 msgid "Later"
@@ -3355,14 +3485,14 @@ msgstr "向左鍵"
 msgid "Letters"
 msgstr "字母"
 
-#: src/components/agent-session-tree-sheet.tsx
-msgid "Level {depth}"
-msgstr "第 {depth} 層"
-
 #: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
 msgid "Light"
 msgstr "淺色"
+
+#: src/components/computer-map/screen.tsx
+msgid "Lines: this app. Dashed arrows: last reported computer links."
+msgstr "連線：此應用程式。虛線箭頭：上次回報的電腦間連線"
 
 #: src/components/file-mention-panel.tsx
 msgid "Link revoked · re-linking…"
@@ -3375,6 +3505,14 @@ msgstr "與 {name} 的連結已被撤銷 · 正在重新連結…"
 #: src/components/settings-fleet-peers.tsx
 msgid "Linked with: {linkedNames}"
 msgstr "已連結：{linkedNames}"
+
+#: src/components/computer-map/screen.tsx
+msgid "List"
+msgstr "清單"
+
+#: src/i18n/labels.ts
+msgid "List agents"
+msgstr "列出智慧體"
 
 #: src/app/commands.tsx
 msgid "List branches"
@@ -3396,12 +3534,17 @@ msgstr "正在聆聽…"
 msgid "Live Activity"
 msgstr "即時動態"
 
+#: src/components/agent-workbench.tsx
+msgid "Live control is unavailable for this saved history. Your draft stays here."
+msgstr "這份已儲存的歷史記錄不支援即時控制。草稿會保留在這裡"
+
 #: src/components/list-load-more-footer.tsx
 msgid "Load more"
 msgstr "載入更多"
 
 #: src/components/gateway-storage-error.tsx
 #: src/components/list-load-more-footer.tsx
+#: src/components/pdf-asset-preview.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
 #: src/components/theme-link-import.tsx
@@ -3413,11 +3556,17 @@ msgid "Loading commands"
 msgstr "正在載入指令"
 
 #: src/app/servers/[serverId].tsx
+#: src/components/computer-map/screen.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading computers"
 msgstr "正在載入電腦"
+
+#: src/components/computer-map/gpu-map.native.tsx
+#: src/components/computer-map/screen.tsx
+msgid "Loading map…"
+msgstr "正在載入連線圖…"
 
 #: src/components/settings-servers.tsx
 msgid "Loading paired devices…"
@@ -3467,10 +3616,6 @@ msgstr "正在尋找模擬器"
 msgid "Mac mini · Office"
 msgstr "Mac mini · 辦公室"
 
-#: src/components/launch-intro.tsx
-msgid "Make it yours"
-msgstr "打造你的專屬風格"
-
 #: src/components/settings-fleet-peers.tsx
 msgid "Make sure the computer is reachable, then try again."
 msgstr "請確認這台電腦可以連線，然後再試一次"
@@ -3478,10 +3623,6 @@ msgstr "請確認這台電腦可以連線，然後再試一次"
 #: src/components/home-overview.tsx
 msgid "Manage"
 msgstr "管理"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Manage access granted to coding agents through MCP. Revoking access stops that agent from using this computer's tools."
-msgstr "管理透過 MCP 授予程式開發智能體的存取權限。撤銷授權後，該智能體將無法使用此電腦上的工具"
 
 #: src/components/session-map.tsx
 msgid "Manage computers"
@@ -3494,6 +3635,10 @@ msgstr "管理連線"
 #: src/components/home-overview.tsx
 msgid "Manage SSH hosts"
 msgstr "管理 SSH 主機"
+
+#: src/components/computer-map/screen.tsx
+msgid "Map"
+msgstr "圖示"
 
 #: src/components/task-row.tsx
 msgid "Mark done"
@@ -3584,10 +3729,6 @@ msgstr "等寬"
 msgid "More actions"
 msgstr "更多操作"
 
-#: src/components/home-launch-actions.tsx
-msgid "More agents"
-msgstr "更多代理程式"
-
 #: src/components/virtual-keyboard.tsx
 msgid "More symbols"
 msgstr "更多符號"
@@ -3607,7 +3748,6 @@ msgstr "移動到工作樹"
 
 #: src/components/app-drawer-content.tsx
 #: src/components/in-app-notification-host.tsx
-#: src/components/pad-server-rail.tsx
 msgid "Muqun"
 msgstr "牧群"
 
@@ -3643,10 +3783,6 @@ msgstr "Muqun 自己不提供字型。加入後會保存在本機"
 msgid "Muqun is locked"
 msgstr "牧群已鎖定"
 
-#: src/components/launch-intro.tsx
-msgid "Muqun pairs with a Gateway on your own machine and puts its coding agents and terminals on your phone or tablet."
-msgstr "Muqun 與你自己電腦上的 Gateway 配對，把那裡的程式設計代理和終端機搬到你的手機或平板上"
-
 #: src/components/pairing-camera.tsx
 msgid "Muqun reads the Gateway's QR code through the camera. Nothing is recorded."
 msgstr "Muqun 透過相機讀取 Gateway 的 QR 碼，不會錄下任何內容"
@@ -3659,10 +3795,9 @@ msgstr "牧群的設定只留在這台裝置上"
 msgid "Muqun stays in this language whatever the phone is set to."
 msgstr "無論手機設定為何，牧群都維持這個語言"
 
-#. placeholder {0}: availability.label
 #: src/components/settings-security.tsx
-msgid "Muqun will use {0} when the app opens."
-msgstr "開啟 App 時，牧群會使用 {0}"
+msgid "Muqun will use {methodName} when the app opens."
+msgstr "開啟 App 時，牧群會使用 {methodName}"
 
 #: src/components/custom-theme-library.tsx
 msgid "My themes"
@@ -3677,6 +3812,11 @@ msgstr "名稱"
 #: src/app/explore.tsx
 msgid "Name it, then enter the code shown by the Gateway."
 msgstr "為它命名，然後輸入 Gateway 顯示的代碼"
+
+#: src/components/agent-session-tree-sheet.tsx
+#: src/i18n/labels.ts
+msgid "Needs input"
+msgstr "需要輸入"
 
 #: src/i18n/labels.ts
 msgid "Needs setup"
@@ -3700,8 +3840,8 @@ msgid "Needs your attention"
 msgstr "需要你處理"
 
 #: src/components/home-recent-sessions.tsx
+#: src/components/in-app-notification-host.tsx
 #: src/components/server-agent-rows.tsx
-#: src/components/task-row.tsx
 #: src/lib/notifications.ts
 msgid "Needs your input"
 msgstr "需要你的輸入"
@@ -3711,17 +3851,9 @@ msgstr "需要你的輸入"
 msgid "Never connected"
 msgstr "從未連接過"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Never expires"
-msgstr "永不過期"
-
 #: src/components/settings-servers.tsx
 msgid "Never seen"
 msgstr "從未連線"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "Never used"
-msgstr "從未使用"
 
 #: src/app/commands.tsx
 msgid "New group"
@@ -3730,6 +3862,10 @@ msgstr "新增群組"
 #: src/components/ssh-host-key-dialog.tsx
 msgid "New host key"
 msgstr "新的主機金鑰"
+
+#: src/components/launch-intro.tsx
+msgid "New in 4.0"
+msgstr "4.0 新亮點"
 
 #: src/components/collaboration-notice.tsx
 msgid "New output available · refresh"
@@ -3770,9 +3906,17 @@ msgstr "新增工作區"
 msgid "New worktree…"
 msgstr "新增工作樹…"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Newer"
+msgstr "較新"
+
 #: src/components/agent-composer.tsx
 msgid "Next"
 msgstr "下一步"
+
+#: src/components/image-preview-modal.tsx
+msgid "Next image"
+msgstr "下一張圖片"
 
 #: src/components/in-app-notification-host.tsx
 #: src/components/notice-deck.tsx
@@ -3782,10 +3926,6 @@ msgstr "下一則通知"
 #: src/components/agent-title-pill.tsx
 msgid "Next session"
 msgstr "下一個會話"
-
-#: src/components/settings-mcp-tokens.tsx
-msgid "No agent access grants"
-msgstr "尚無智能體存取授權"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
@@ -3806,6 +3946,10 @@ msgstr "沒有可掃描的相機"
 #: src/components/pairing-camera.tsx
 msgid "No camera was found on this device."
 msgstr "在這台裝置上找不到相機"
+
+#: src/components/pane-history-sheet.tsx
+msgid "No captured history yet."
+msgstr "尚未擷取到歷史記錄"
 
 #: src/components/update-status-banner.tsx
 msgid "No changelog was provided for this update."
@@ -3837,6 +3981,7 @@ msgstr "沒有在線的電腦"
 msgid "No computer to start a task on."
 msgstr "沒有可以開始任務的電腦"
 
+#: src/components/computer-map/screen.tsx
 #: src/components/settings-servers.tsx
 msgid "No computers paired yet"
 msgstr "尚未配對任何電腦"
@@ -3878,6 +4023,10 @@ msgstr "沒有與「{0}」相符的模型"
 msgid "No models on this host."
 msgstr "此主機上沒有模型"
 
+#: src/components/pane-history-sheet.tsx
+msgid "No older captured output."
+msgstr "沒有更早的已擷取輸出"
+
 #: src/components/agent-assignment-bar.tsx
 msgid "No other assistants in this session yet."
 msgstr "這個工作階段裡還沒有其他助理"
@@ -3900,6 +4049,10 @@ msgstr "沒有輸出"
 msgid "No password or key is saved for this host."
 msgstr "此主機沒有儲存密碼或金鑰"
 
+#: src/components/computer-map/screen.tsx
+msgid "No peer report available."
+msgstr "尚無電腦間連線報告"
+
 #: src/components/custom-theme-library.tsx
 msgid "No personal themes yet. Import one, or browse the published themes."
 msgstr "還沒有自己的佈景主題。可以匯入一個，或瀏覽已發布的佈景主題"
@@ -3920,6 +4073,10 @@ msgstr "這裡還沒有專案。在上方輸入路徑即可開啟一個"
 #: src/components/agent-workspace-sheet.tsx
 msgid "No projects match “{0}”."
 msgstr "沒有符合「{0}」的專案"
+
+#: src/components/computer-map/screen.tsx
+msgid "No reported links."
+msgstr "未回報任何連線"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "No sessions in this project yet. Start one from the + button."
@@ -3993,10 +4150,18 @@ msgstr "還沒有工作樹。在下面建立一個，就能在某個分支上工
 msgid "Not a git repository"
 msgstr "不是 Git 儲存庫"
 
+#: src/components/computer-map/screen.tsx
+msgid "Not accepting work"
+msgstr "不接受工作"
+
 #: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "無法使用"
+
+#: src/components/home-agent-sheet.tsx
+msgid "Not available on this computer"
+msgstr "此電腦上無法使用"
 
 #: src/components/settings-server-capabilities.tsx
 msgid "Not configured"
@@ -4015,6 +4180,11 @@ msgstr "未連線"
 #: src/i18n/labels.ts
 msgid "NOT CONNECTED"
 msgstr "未連線"
+
+#: src/components/agent-composer.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Not every file was added"
+msgstr "部分檔案未加入"
 
 #: src/app/+not-found.tsx
 #: src/app/custom-theme.tsx
@@ -4090,6 +4260,10 @@ msgstr "沒有做任何變更"
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
 msgstr "還沒有內容——選擇「一律允許」後，規則會出現在這裡，屬於本專案"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Observation started"
+msgstr "開始觀察"
+
 #: src/components/settings-storage.tsx
 #: src/components/toggle.tsx
 msgid "Off"
@@ -4109,6 +4283,10 @@ msgstr "離線"
 msgid "Offline, not answering"
 msgstr "離線，沒有回應"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Older"
+msgstr "更早"
+
 #: src/components/toggle.tsx
 msgid "On"
 msgstr "開啟"
@@ -4116,10 +4294,6 @@ msgstr "開啟"
 #: src/lib/release-notes.ts
 msgid "On a tablet, Home is a two-page spread, work sheets fill the screen, and the on-screen keyboard is a whole keyboard with F-keys and sticky modifiers."
 msgstr "在平板上，主畫面以雙頁展開，工作面板鋪滿全螢幕，螢幕鍵盤也成了帶 F 鍵和黏滯修飾鍵的完整鍵盤"
-
-#: src/components/launch-intro.tsx
-msgid "On a tablet, Home opens as a two-page spread and the on-screen keyboard is a whole keyboard."
-msgstr "在平板上，主畫面以雙頁展開，螢幕鍵盤也是一整副完整的鍵盤"
 
 #: src/lib/release-notes.ts
 msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
@@ -4133,6 +4307,10 @@ msgstr "線上"
 #: src/i18n/labels.ts
 msgid "ONLINE"
 msgstr "線上"
+
+#: src/lib/attachments.ts
+msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."
+msgstr "僅加入了前 {MAX_ATTACHMENTS_PER_PICK} 個檔案，{dropped} 個未加入"
 
 #: src/components/task-row.tsx
 msgid "Only this Home row is hidden. The task and its history remain available. Running work is not stopped."
@@ -4185,6 +4363,7 @@ msgid "Open as file"
 msgstr "以檔案開啟"
 
 #: src/components/agent-message-block.tsx
+#: src/components/pane-chat-blocks.tsx
 msgid "Open attachment"
 msgstr "開啟附件"
 
@@ -4269,6 +4448,7 @@ msgstr "開啟 SSH 主機 {0}"
 msgid "Open T3 Code on the computer (or run t3 service install), then check again."
 msgstr "請在電腦上開啟 T3 Code（或執行 t3 service install），然後重新檢查"
 
+#: src/components/agent-runtime-notice.tsx
 #: src/components/collaboration-notice.tsx
 #: src/hooks/use-lazygit.ts
 msgid "Open terminal"
@@ -4310,10 +4490,6 @@ msgstr "開啟工作區 {0}，{panelCount, plural, one {# 個執行中} other {#
 #: src/app/settings-voice.tsx
 msgid "OpenAI requires an API key and model. Compatible services may provide their own defaults. Your API key is stored securely on this device."
 msgstr "OpenAI 需要 API 金鑰和模型。相容服務可能提供自己的預設值。API 金鑰會安全地儲存在此裝置上"
-
-#: src/components/launch-intro.tsx
-msgid "OpenCode, DeepSeek and T3 Code side by side, each with its own tile, sessions and workbench."
-msgstr "OpenCode、DeepSeek 和 T3 Code 並排登場，各有自己的啟動磚、工作階段和工作台"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -4372,9 +4548,23 @@ msgstr "其他電腦"
 msgid "Output"
 msgstr "輸出"
 
+#: src/components/agent-compaction-pill.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Output copied to clipboard"
 msgstr "輸出已複製到剪貼簿"
+
+#: src/components/pdf-asset-preview.tsx
+msgid "Page {page} of {pageCount}"
+msgstr "第 {page} 頁，共 {pageCount} 頁"
+
+#: src/components/pane-history-sheet.tsx
+msgid "Page {pageNumber} · {lines} lines"
+msgstr "第 {pageNumber} 頁 · {lines} 行"
+
+#. placeholder {0}: server.label
+#: src/components/pair-again-notice.tsx
+msgid "Pair {0} again"
+msgstr "重新配對 {0}"
 
 #: src/components/app-drawer-content.tsx
 #: src/components/home-launch-actions.tsx
@@ -4384,9 +4574,14 @@ msgstr "輸出已複製到剪貼簿"
 msgid "Pair a computer"
 msgstr "配對電腦"
 
+#: src/components/pair-again-notice.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Pair again"
 msgstr "重新配對"
+
+#: src/i18n/labels.ts
+msgid "PAIR AGAIN"
+msgstr "需要重新配對"
 
 #: src/app/explore.tsx
 msgid "Pair computer"
@@ -4433,13 +4628,13 @@ msgstr "配對碼"
 msgid "Pairing code expired. Scan again for a new code."
 msgstr "配對碼已過期。請重新掃描取得新的代碼"
 
+#: src/components/computer-map/screen.tsx
+msgid "Pairing expired"
+msgstr "配對已過期"
+
 #: src/i18n/labels.ts
 msgid "PAIRING EXPIRED"
 msgstr "配對已失效"
-
-#: src/i18n/labels.ts
-msgid "Pairing expired — pair again"
-msgstr "配對已失效 — 請重新配對"
 
 #: src/app/explore.tsx
 msgid "Pairing failed."
@@ -4449,17 +4644,9 @@ msgstr "配對失敗"
 msgid "Palette (up to 4)"
 msgstr "配色（最多 4 色）"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Pane {paneId}"
-msgstr "窗格 {paneId}"
-
 #: src/components/settings-servers.tsx
 msgid "Panes on computer cards"
 msgstr "電腦卡片上的面板"
-
-#: src/components/agent-session-tree-sheet.tsx
-msgid "Parent: {parentTitle}"
-msgstr "上層工作階段：{parentTitle}"
 
 #: src/components/ssh-host-form.tsx
 msgid "Passphrase (optional)"
@@ -4511,6 +4698,10 @@ msgctxt "task state"
 msgid "Paused"
 msgstr "已暫停"
 
+#: src/components/pdf-asset-preview.tsx
+msgid "PDF preview supports files up to {ceiling}. Open this file on your computer."
+msgstr "PDF 預覽支援最大 {ceiling} 的檔案。請在電腦上開啟此檔案"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Permission"
 msgstr "權限"
@@ -4545,6 +4736,7 @@ msgid "Playback position"
 msgstr "播放進度"
 
 #: src/components/agent-composer.tsx
+#: src/lib/attachments.ts
 msgid "Please retry or remove failed attachments."
 msgstr "請重試或移除上傳失敗的附件"
 
@@ -4597,6 +4789,10 @@ msgstr "預覽並套用"
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "先預覽，目前的主題保持不變"
 
+#: src/components/image-preview-modal.tsx
+msgid "Previous image"
+msgstr "上一張圖片"
+
 #: src/components/agent-title-pill.tsx
 msgid "Previous session"
 msgstr "上一個會話"
@@ -4620,7 +4816,6 @@ msgstr "私密金鑰（留空以保留已儲存的金鑰）"
 #: src/app/agent.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
-#: src/components/composer-popup.tsx
 msgid "Project"
 msgstr "專案"
 
@@ -4722,6 +4917,10 @@ msgstr "讀取檔案"
 #: src/i18n/labels.ts
 msgid "Read outside the workspace"
 msgstr "讀取工作區之外的內容"
+
+#: src/components/launch-intro.tsx
+msgid "Read release notes before downloading. Follow real download progress, then restart when the update is ready—or leave it for later."
+msgstr "下載前先閱讀更新說明。查看實際下載進度，準備好後重新啟動，也可以留待稍後"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Read-only: symbol search, file discovery, dependency tracing."
@@ -4825,8 +5024,14 @@ msgstr "重新連線中…"
 msgid "Recording failed."
 msgstr "錄音失敗"
 
+#: src/components/computer-map/screen.tsx
+msgid "Reduced motion: list view."
+msgstr "減少動態效果：清單檢視"
+
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/demo-streaming-transcript.tsx
+#: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
@@ -4839,6 +5044,10 @@ msgstr "重新整理變更"
 #: src/components/session-artifacts.tsx
 msgid "Refresh files"
 msgstr "重新整理檔案"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Refresh history"
+msgstr "重新整理歷史記錄"
 
 #: src/lib/terminal-history-pull.ts
 msgid "Refresh history to load the current snapshot."
@@ -4856,10 +5065,18 @@ msgstr "重新整理輸出"
 msgid "Refresh terminal history"
 msgstr "重新整理終端機歷史記錄"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Refresh to see new saved output."
+msgstr "重新整理以查看新儲存的輸出"
+
 #: src/components/agent-worktree-sheet.tsx
 #: src/components/git-diff-view.tsx
 msgid "Refresh worktrees"
 msgstr "重新整理工作樹"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Refreshing history…"
+msgstr "正在重新整理歷史記錄…"
 
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
@@ -4953,9 +5170,25 @@ msgstr "重播音訊"
 msgid "Report a bug or request a feature"
 msgstr "回報問題或提出功能建議"
 
+#: src/components/computer-map/screen.tsx
+msgid "Reported reachable"
+msgstr "回報為可連線"
+
+#: src/components/computer-map/screen.tsx
+msgid "Reported unreachable"
+msgstr "回報為無法連線"
+
 #: src/lib/network-error.ts
 msgid "Request failed."
 msgstr "請求失敗"
+
+#: src/components/agent-permission-card.tsx
+msgid "Requested permissions"
+msgstr "要求的權限"
+
+#: src/components/agent-composer.tsx
+msgid "Requesting queued delivery…"
+msgstr "正在請求排隊投遞…"
 
 #: src/components/settings-security.tsx
 msgid "Required on launch and after 30 seconds in the background."
@@ -4969,6 +5202,14 @@ msgstr "必填"
 #: src/components/settings-alerts.tsx
 msgid "Requires iOS 16.1 or later."
 msgstr "需要 iOS 16.1 或以上版本"
+
+#: src/components/computer-map/screen.tsx
+msgid "Reset view"
+msgstr "重設視角"
+
+#: src/components/image-preview-modal.tsx
+msgid "Reset zoom"
+msgstr "重設縮放"
 
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
@@ -4986,9 +5227,15 @@ msgstr "還原隱藏的預設指令"
 msgid "Restore hidden defaults"
 msgstr "還原隱藏的預設"
 
+#: src/i18n/labels.ts
+msgid "Resume"
+msgstr "恢復"
+
 #: src/components/agent-model-sheet.tsx
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/gateway-storage-error.tsx
+#: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
 #: src/components/update-status-banner.tsx
@@ -5012,14 +5259,10 @@ msgstr "重試載入更早的輸出"
 msgid "Retry size check"
 msgstr "重試大小檢查"
 
-#: src/components/server-terminal-workspace.tsx
-msgid "Retry the ones marked in red, or remove them, then send again."
-msgstr "請重試標為紅色的項目，或移除它們後再送出"
-
 #. placeholder {0}: attachment.name
 #: src/components/attachment-strip.tsx
-msgid "Retry uploading {0}"
-msgstr "重試上傳 {0}"
+msgid "Retry uploading {0}: {reason}"
+msgstr "重新上傳 {0}：{reason}"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
@@ -5083,7 +5326,6 @@ msgid "Reviewing the changes and checking the tests…"
 msgstr "正在審查改動並檢查測試…"
 
 #: src/components/agent-context-sheet.tsx
-#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke"
 msgstr "撤銷"
@@ -5095,11 +5337,6 @@ msgstr "撤銷"
 msgid "Revoke {0}"
 msgstr "撤銷 {0}"
 
-#: src/components/settings-mcp-tokens.tsx
-msgid "Revoke {title}"
-msgstr "撤銷 {title}"
-
-#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoking…"
 msgstr "撤銷中…"
@@ -5138,6 +5375,10 @@ msgstr "轉入背景執行"
 #: src/components/agent-guide-sheet.tsx
 msgid "Run it under systemd or tmux to keep it up after you log out."
 msgstr "用 systemd 或 tmux 執行，登出後它才會繼續跑"
+
+#: src/i18n/labels.ts
+msgid "Run muqun-gateway agent setup codex on the computer for setup instructions. Gateway starts its own Codex connection using the host's existing configuration and sign-in."
+msgstr "在電腦上執行 muqun-gateway agent setup codex 查看設定說明。Gateway 使用主機現有的設定和登入資訊建立自己的 Codex 連線"
 
 #: src/components/guide-command.tsx
 msgid "Run on {computerLabel}"
@@ -5220,13 +5461,31 @@ msgstr "已儲存"
 msgid "Saved commands"
 msgstr "已儲存的指令"
 
+#: src/components/agent-runtime-notice.tsx
+msgid "Saved history · Live status unavailable"
+msgstr "已儲存的歷史記錄 · 無法取得即時狀態"
+
+#: src/components/pane-history-sheet.tsx
+msgid "Saved observations"
+msgstr "已儲存的觀察記錄"
+
 #: src/app/commands.tsx
 msgid "Saved prompts"
 msgstr "已儲存的指令"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Saved segment"
+msgstr "已儲存的片段"
+
 #: src/components/home-connections.tsx
 msgid "Saved SSH host"
 msgstr "已儲存的 SSH 主機"
+
+#: src/app/commands.tsx
+#: src/app/pane-history.tsx
+#: src/components/pane-history-sheet.tsx
+msgid "Saved terminal history"
+msgstr "已儲存的終端機歷史記錄"
 
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
@@ -5251,10 +5510,6 @@ msgstr "掃描 Gateway 的 QR code"
 #: src/components/settings-servers.tsx
 msgid "Scan the Gateway’s QR code, or enter its address."
 msgstr "掃描 Gateway 的 QR code，或輸入它的位址"
-
-#: src/components/launch-intro.tsx
-msgid "Scan the QR code of a Gateway on your own computer. No account, no relay, end-to-end encrypted."
-msgstr "掃描你自己電腦上 Gateway 的 QR 碼即可。無需帳號，沒有中繼，端對端加密"
 
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
@@ -5336,9 +5591,14 @@ msgstr "全選"
 msgid "Select model: {modelDisplayName}"
 msgstr "選擇模型：{modelDisplayName}"
 
+#: src/components/computer-map/screen.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Selected"
 msgstr "已選取"
+
+#: src/i18n/labels.ts
+msgid "Send"
+msgstr "傳送"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -5350,8 +5610,8 @@ msgid "Send a message"
 msgstr "傳送訊息"
 
 #: src/components/agent-composer.tsx
-msgid "Send a message, type / for commands, @ for files…"
-msgstr "發送訊息，輸入 / 檢視指令，@ 引用檔案…"
+msgid "Send a message, type / for commands, $ for skills, @ for files…"
+msgstr "發送訊息，輸入 / 檢視指令，$ 檢視技能，@ 引用檔案…"
 
 #: src/components/agent-composer.tsx
 msgid "Send a message…"
@@ -5376,6 +5636,10 @@ msgstr "把這個任務傳給 {assignmentLabel}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
 msgstr "傳送給代理程式"
+
+#: src/components/agent-composer.tsx
+msgid "Sending attachment message…"
+msgstr "正在傳送附件訊息…"
 
 #. placeholder {0}: inboxItemText(item) || item.type
 #: src/components/agent-composer.tsx
@@ -5421,7 +5685,6 @@ msgstr "工作階段無法使用"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/home-launch-actions.tsx
-#: src/components/home-recent-sessions.tsx
 #: src/components/session-map.tsx
 msgid "Sessions"
 msgstr "工作階段"
@@ -5448,20 +5711,17 @@ msgstr "在你的電腦上裝一個"
 msgid "Set the AI model for Claude Code"
 msgstr "設定 Claude Code 使用的 AI 模型"
 
-#. placeholder {0}: authAvailability.label
-#. placeholder {0}: availability.label
-#: src/components/settings-security.tsx
-msgid "Set up {0} in system settings first."
-msgstr "請先到系統設定裡設定 {0}"
-
-#. placeholder {0}: availability.label
-#: src/components/app-lock-gate.tsx
-msgid "Set up {0} in system settings to unlock Muqun."
-msgstr "請先到系統設定中設定 {0}，才能解鎖牧群"
-
 #: src/components/app-lock-gate.tsx
 msgid "Set up {label} in system settings first."
 msgstr "請先在系統設定中設定 {label}"
+
+#: src/components/settings-security.tsx
+msgid "Set up {methodName} in system settings first."
+msgstr "請先在系統設定中設定 {methodName}"
+
+#: src/components/app-lock-gate.tsx
+msgid "Set up {methodName} in system settings to unlock Muqun."
+msgstr "請先到系統設定中設定 {methodName}，才能解鎖牧群"
 
 #: src/app/explore.tsx
 msgid "Set up a Gateway on your computer"
@@ -5477,10 +5737,6 @@ msgstr "請在主機上設定"
 #: src/components/pad-server-rail.tsx
 msgid "Settings"
 msgstr "設定"
-
-#: src/components/launch-intro.tsx
-msgid "Several agents, one computer"
-msgstr "一台電腦，多個代理"
 
 #: src/components/agent-tool-card.tsx
 msgid "Several answers"
@@ -5527,10 +5783,6 @@ msgstr "顯示 {0}"
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "在主畫面顯示代理程式與其狀態。牧群開啟時會持續更新"
 
-#: src/components/home-recent-sessions.tsx
-msgid "Show all"
-msgstr "顯示全部"
-
 #: src/components/theme-appearance-settings.tsx
 msgid "Show artwork on Home"
 msgstr "在首頁顯示圖稿"
@@ -5538,6 +5790,11 @@ msgstr "在首頁顯示圖稿"
 #: src/components/pairing-camera.tsx
 msgid "Show camera details"
 msgstr "顯示相機詳細資訊"
+
+#: src/components/agent-compaction-pill.tsx
+#: src/components/in-app-notification-host.tsx
+msgid "Show details"
+msgstr "顯示詳情"
 
 #: src/components/settings-terminal.tsx
 msgid "Show Esc, Tab, Ctrl and navigation keys above input."
@@ -5555,13 +5812,19 @@ msgstr "顯示首頁 Logo"
 msgid "Show Home text"
 msgstr "顯示首頁文字"
 
+#: src/components/home-computer-cards.tsx
 #: src/components/home-recent-sessions.tsx
+#: src/components/in-app-notification-host.tsx
+#: src/components/server-agent-rows.tsx
 msgid "Show less"
 msgstr "顯示較少"
 
 #: src/components/agent-tool-card.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/diff-rows.tsx
+#: src/components/home-computer-cards.tsx
+#: src/components/home-recent-sessions.tsx
+#: src/components/server-agent-rows.tsx
 msgid "Show more"
 msgstr "顯示更多"
 
@@ -5657,10 +5920,6 @@ msgstr "模擬器控制項"
 msgid "Size"
 msgstr "大小"
 
-#: src/components/update-status-banner.tsx
-msgid "Size covers update files. File reuse or fallback can change the download."
-msgstr "大小僅包含更新檔案，檔案重用或備援下載可能改變實際下載量"
-
 #. placeholder {0}: part.name ?? part.skill
 #: src/components/agent-message-block.tsx
 msgid "Skill loaded · {0}"
@@ -5674,6 +5933,10 @@ msgstr "技能已啟動"
 #: src/components/launch-intro.tsx
 msgid "Skip intro"
 msgstr "略過介紹"
+
+#: src/components/computer-map/screen.tsx
+msgid "Some connections are omitted from the map."
+msgstr "部分連線未在圖中顯示"
 
 #: src/components/settings-storage.tsx
 msgid "Some files could not be removed · {clearable}"
@@ -5742,6 +6005,10 @@ msgstr "已暫存和未暫存"
 msgid "stale · {age}"
 msgstr "資料過舊 · {age}"
 
+#: src/i18n/labels.ts
+msgid "Start"
+msgstr "啟動"
+
 #: src/components/agent-guide-sheet.tsx
 msgid "Start {agentName}"
 msgstr "啟動 {agentName}"
@@ -5796,9 +6063,21 @@ msgstr "請在電腦上啟動代理程式，然後重新檢查"
 msgid "Start the OpenCode service on the computer, then check again."
 msgstr "請在電腦上啟動 OpenCode 服務，然後重新檢查"
 
+#: src/i18n/labels.ts
+msgid "Started"
+msgstr "已啟動"
+
+#: src/components/pane-history-sheet.tsx
+msgid "Started {started}"
+msgstr "開始於 {started}"
+
 #: src/components/agent-workbench.tsx
 msgid "Started with a clean context."
 msgstr "已以全新的上下文開始"
+
+#: src/i18n/labels.ts
+msgid "Starting"
+msgstr "正在啟動"
 
 #: src/i18n/labels.ts
 msgctxt "task state"
@@ -5846,6 +6125,10 @@ msgstr "插話"
 msgid "Steer running agent"
 msgstr "對執行中的代理進行插話指導"
 
+#: src/components/launch-intro.tsx
+msgid "Step {position} of {count}"
+msgstr "第 {position} 步，共 {count} 步"
+
 #: src/components/tool-call-code-rows.tsx
 msgid "Still arriving"
 msgstr "仍在接收"
@@ -5862,11 +6145,6 @@ msgstr "仍在執行…"
 #: src/components/agent-composer.tsx
 msgid "Stop"
 msgstr "停止"
-
-#: src/app/agent.tsx
-#: src/components/pad-agent-detail.tsx
-msgid "Stop agent"
-msgstr "停止代理"
 
 #: src/components/agent-composer.tsx
 msgid "Stop agent execution"
@@ -5906,12 +6184,17 @@ msgstr "邊說邊傳輸音訊。需要相容 OpenAI Realtime 的語音轉文字�
 
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/demo-streaming-transcript.tsx
 msgid "Subagent"
 msgstr "子代理"
 
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "提交"
+
+#: src/components/agent-composer.tsx
+msgid "Submitting follow-up…"
+msgstr "正在提交後續訊息…"
 
 #: src/i18n/labels.ts
 msgid "Summarise progress"
@@ -6051,6 +6334,11 @@ msgstr "給 {assignmentLabel} 的任務"
 msgid "Task for a new {0}"
 msgstr "給新的 {0} 的任務"
 
+#. placeholder {0}: server.label
+#: src/components/home-computer-cards.tsx
+msgid "Task history for {0}"
+msgstr "{0} 的任務歷史"
+
 #: src/components/home-composer-dock.tsx
 msgid "Task options"
 msgstr "任務參數"
@@ -6088,6 +6376,30 @@ msgstr "暫存檔案"
 msgid "Terminal"
 msgstr "終端機"
 
+#: src/components/agent-runtime-notice.tsx
+msgid "Terminal · Completed"
+msgstr "終端機 · 已完成"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Terminal · Idle"
+msgstr "終端機 · 閒置"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Terminal · Needs input"
+msgstr "終端機 · 需要輸入"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Terminal · Starting"
+msgstr "終端機 · 正在啟動"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Terminal · Status unavailable"
+msgstr "終端機 · 無法取得狀態"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Terminal · Working"
+msgstr "終端機 · 工作中"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Terminal background opacity"
 msgstr "終端背景不透明度"
@@ -6113,6 +6425,11 @@ msgstr "終端機歷史記錄已變更"
 msgid "Terminal key row"
 msgstr "終端機按鍵列"
 
+#: src/components/pane-history-sheet.tsx
+msgid "Terminal resized"
+msgstr "終端機大小已變更"
+
+#: src/components/agent-workbench.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-home-commands.ts
 msgid "Terminal unavailable"
@@ -6187,6 +6504,10 @@ msgstr "代理程式已經不再等待了"
 msgid "The agent is offline"
 msgstr "Agent 已離線"
 
+#: src/components/agent-workbench.tsx
+msgid "The agent is still running"
+msgstr "代理仍在執行"
+
 #: src/lib/network-error.ts
 msgid "The agent is waiting for an answer. Use the question's controls or the terminal keyboard to respond. Your message has not been sent."
 msgstr "Agent 正在等待回答。請使用問題中的控制項或終端鍵盤回覆。你的訊息尚未傳送"
@@ -6222,6 +6543,10 @@ msgstr "電腦沒有說明它建立了哪一個終端機"
 #: src/components/settings-servers.tsx
 msgid "The computer was kept on this device. Make sure its Gateway is running, then try again."
 msgstr "這台電腦仍保留在裝置上。請確認它的 Gateway 正在執行，然後再試一次"
+
+#: src/components/pane-history-sheet.tsx
+msgid "The connection changed. Close and reopen history for this computer."
+msgstr "連線已變更。請關閉並重新開啟這部電腦的歷史記錄"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "The connection dropped."
@@ -6260,6 +6585,10 @@ msgstr "顯示在主畫面上的圖示。Android 會關閉 App 以套用變更"
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "無法讀取金鑰（{0}）。請檢查金鑰及其通行密語"
 
+#: src/components/agent-workbench.tsx
+msgid "The linked agent is no longer in that terminal."
+msgstr "連結的代理已不在該終端機中"
+
 #: src/components/session-map.tsx
 msgid "The new terminal was created, but could not open it."
 msgstr "已建立新的終端機，但無法開啟"
@@ -6268,17 +6597,9 @@ msgstr "已建立新的終端機，但無法開啟"
 msgid "The previous send could not be checked."
 msgstr "無法核對上次傳送的狀態"
 
-#: src/components/launch-intro.tsx
-msgid "The question comes to you"
-msgstr "問題會來找你"
-
 #: src/i18n/labels.ts
 msgid "The raw pane, on its grid and in its own colours."
 msgstr "原始面板，保留它的字元格線與色彩"
-
-#: src/components/launch-intro.tsx
-msgid "The real terminal"
-msgstr "真正的終端機"
 
 #: src/components/app-error-boundary.tsx
 msgid "The screen hit an error. Try again — your computers stay paired."
@@ -6395,9 +6716,17 @@ msgstr "沒有等待套用的回溯"
 msgid "Thinking…"
 msgstr "正在思考…"
 
+#: src/components/agent-composer.tsx
+msgid "This agent accepts messages after its turn ends. Your draft stays here."
+msgstr "此代理在本輪結束後接受訊息。草稿會保留在這裡"
+
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
 msgstr "這個代理程式沒有提供那個選項"
+
+#: src/components/computer-map/screen.tsx
+msgid "This app"
+msgstr "此應用程式"
 
 #: src/components/changes-sheet.tsx
 msgid "This cannot be undone."
@@ -6464,6 +6793,10 @@ msgstr "這台電腦已經解除配對"
 msgid "This computer is not answering. Check the computer connection, then try again."
 msgstr "這台電腦沒有回應。請檢查與電腦的連線，然後重試"
 
+#: src/i18n/labels.ts
+msgid "This computer no longer recognises this device. Pair again."
+msgstr "這台電腦已不再識別此裝置。請重新配對"
+
 #: src/components/settings-fleet-peers.tsx
 #: src/lib/network-error.ts
 msgid "This computer no longer recognises this device. Pair it again to reconnect."
@@ -6506,6 +6839,10 @@ msgstr "無法讀取這個字型"
 msgid "This Gateway does not answer to that address."
 msgstr "這個 Gateway 不接受這個位址"
 
+#: src/components/pane-history-sheet.tsx
+msgid "This Gateway no longer offers saved segments. The pages already read are kept here."
+msgstr "這個 Gateway 已不再提供已儲存的片段。已讀取的頁面仍會保留在這裡"
+
 #: src/components/session-map.tsx
 msgid "This group has no terminals."
 msgstr "這個群組沒有終端機"
@@ -6537,6 +6874,14 @@ msgstr "這個連結沒有指向任何地方"
 #: src/components/agent-form-card.tsx
 msgid "This one is required."
 msgstr "此項為必填"
+
+#: src/components/pdf-asset-preview.tsx
+msgid "This PDF cannot be previewed. Save it to open with a PDF reader."
+msgstr "無法預覽這份 PDF。請儲存後使用 PDF 閱讀器開啟"
+
+#: src/components/pdf-asset-preview.tsx
+msgid "This PDF is password-protected. Save it to open with a PDF reader."
+msgstr "這份 PDF 受密碼保護。請儲存後使用 PDF 閱讀器開啟"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
@@ -6574,6 +6919,10 @@ msgstr "此工作階段在對應服務中已無法使用。請重新整理首頁
 #: src/components/agent-workbench.tsx
 msgid "This session no longer exists"
 msgstr "此工作階段已不存在"
+
+#: src/components/pane-history-sheet.tsx
+msgid "This snapshot can no longer be extended. Refresh to read the latest saved output; the current page is kept until then."
+msgstr "此快照已無法繼續載入。請重新整理以讀取最新儲存的輸出；目前頁面會保留到重新整理為止"
 
 #: src/components/virtual-keyboard.tsx
 msgid "This terminal can't send {chord}"
@@ -6649,7 +6998,12 @@ msgstr "本次工作階段的 token"
 msgid "Tokens usage and cost"
 msgstr "Token 用量與費用"
 
-#: src/components/asset-viewer.tsx
+#. placeholder {0}: uploadLimitMb(maxUploadBytesFor(entry.mime))
+#: src/lib/attachments.ts
+msgid "Too large ({0} MB max)"
+msgstr "過大（最大 {0} MB）"
+
+#: src/components/file-text-body.tsx
 msgid "Too large to highlight — showing plain text."
 msgstr "檔案太大，無法上色，顯示為純文字"
 
@@ -6660,10 +7014,6 @@ msgstr "變更太多，無法全部列出。這只是開頭，不是全部"
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Tool call"
 msgstr "工具呼叫"
-
-#: src/components/settings-server-capabilities.tsx
-msgid "Toolchains"
-msgstr "工具鏈"
 
 #: src/components/changes-sheet.tsx
 msgid "tracking {upstream}"
@@ -6681,6 +7031,7 @@ msgstr "轉寫失敗。請檢查語音服務後重試"
 msgid "Transcription mode"
 msgstr "轉錄模式"
 
+#: src/components/agent-tool-card.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/tool-call-code-rows.tsx
@@ -6693,11 +7044,13 @@ msgstr "信任"
 
 #: src/app/new-task.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/agent-workbench.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/audio-asset-preview.tsx
 #: src/components/changes-sheet.tsx
 #: src/components/inline-file-link.tsx
+#: src/components/pdf-asset-preview.tsx
 #: src/components/theme-browse-sheet.tsx
 #: src/components/video-asset-preview.tsx
 #: src/components/voice-input-button.tsx
@@ -6705,7 +7058,6 @@ msgstr "信任"
 msgid "Try again"
 msgstr "再試一次"
 
-#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/settings-servers.tsx
 msgid "Try again once the computer responds."
@@ -6736,6 +7088,10 @@ msgstr "類型"
 msgid "Type a line and press Enter; it is echoed back."
 msgstr "輸入一行並按 Enter，它會被原樣回傳"
 
+#: src/app/explore.tsx
+msgid "Type a pairing code only on a network you trust."
+msgstr "僅在你信任的網路上輸入配對碼"
+
 #: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Type changed"
@@ -6758,8 +7114,10 @@ msgstr "可以直接打字，或用鍵盤上的語音輸入鍵"
 msgid "Type on the simulator"
 msgstr "在模擬器上輸入"
 
+#: src/app/pane-history.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/task-result-sheet.tsx
+#: src/i18n/labels.ts
 msgid "Unavailable"
 msgstr "無法使用"
 
@@ -6810,14 +7168,13 @@ msgstr "日期不明"
 msgid "Unlock Muqun"
 msgstr "解鎖牧群"
 
-#. placeholder {0}: authAvailability?.label ?? t`device authentication`
-#: src/components/settings-security.tsx
-msgid "Unlock with {0}"
-msgstr "使用 {0} 解鎖"
-
 #: src/components/app-lock-gate.tsx
 msgid "Unlock with {authLabel}"
 msgstr "使用 {authLabel} 解鎖"
+
+#: src/components/settings-security.tsx
+msgid "Unlock with {methodName}"
+msgstr "使用 {methodName} 解鎖"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Unpacking…"
@@ -6916,12 +7273,17 @@ msgstr "立即更新"
 msgid "Update the app to import public theme links. You can still import a file"
 msgstr "更新 App 後即可從公開連結匯入主題，你仍然可以從檔案匯入"
 
+#: src/components/agent-workbench.tsx
+msgid "Update the Gateway to load earlier remote history."
+msgstr "更新 Gateway 以載入更早的遠端歷史"
+
 #: src/components/git-diff-view.tsx
 msgid "Update the Gateway to open Lazygit in another worktree."
 msgstr "更新 Gateway 後即可在其他工作樹中開啟 Lazygit"
 
 #: src/components/asset-viewer.tsx
 #: src/components/inline-file-link.tsx
+#: src/components/pdf-asset-preview.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-file-actions.tsx
 msgid "Update the Gateway to open or save this file."
@@ -6950,6 +7312,10 @@ msgstr "上傳失敗"
 #: src/components/agent-composer.tsx
 msgid "Upload failed"
 msgstr "上傳失敗"
+
+#: src/lib/attachments.ts
+msgid "Upload failed. Tap to retry."
+msgstr "上傳失敗。點按重試"
 
 #: src/components/attachment-strip.tsx
 msgid "uploaded"
@@ -7008,6 +7374,11 @@ msgstr "依首頁版面配置指定的位置顯示主題首頁圖稿。未提供
 msgid "Using"
 msgstr "使用中"
 
+#. placeholder {0}: fontAxesSummary(axes)
+#: src/components/settings-font-sheet.tsx
+msgid "Variable · {0}"
+msgstr "可變 · {0}"
+
 #. placeholder {0}: build ? ` (${build})` : ''
 #: src/app/settings.tsx
 msgid "Version {version}{0}"
@@ -7016,6 +7387,10 @@ msgstr "版本 {version}{0}"
 #: src/components/agent-composer.tsx
 msgid "View file changes"
 msgstr "查看檔案變更"
+
+#: src/components/image-preview-modal.tsx
+msgid "View original"
+msgstr "查看原圖"
 
 #: src/components/git-diff-view.tsx
 msgid "Viewing another checkout. Changes are read-only."
@@ -7039,9 +7414,21 @@ msgstr "語音轉文字"
 msgid "Voice to text disabled"
 msgstr "已關閉語音轉文字"
 
+#: src/i18n/labels.ts
+msgid "Wait"
+msgstr "等待"
+
+#: src/components/agent-workbench.tsx
+msgid "Wait for the turn to end before choosing a model."
+msgstr "請等待本輪結束後再選擇模型"
+
 #: src/components/skia-terminal.web.tsx
 msgid "Waiting for output…"
 msgstr "等待輸出中…"
+
+#: src/components/agent-composer.tsx
+msgid "Waiting for the current turn to end"
+msgstr "正在等待目前輪次結束"
 
 #: src/lib/network-error.ts
 msgid "Waiting for the network."
@@ -7081,10 +7468,6 @@ msgstr "正在執行的項目"
 msgid "What's new"
 msgstr "新功能"
 
-#: src/components/launch-intro.tsx
-msgid "When an agent stops for a decision, it arrives as a push. Approve or deny from the Lock Screen."
-msgstr "代理停下來等你決定時，問題會以推播送達。在鎖定畫面上就能核准或拒絕"
-
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
 msgstr "離開期間"
@@ -7099,7 +7482,6 @@ msgctxt "task state"
 msgid "Working"
 msgstr "執行中"
 
-#: src/components/composer-popup.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "工作區"
@@ -7173,13 +7555,17 @@ msgstr "你"
 
 #: src/components/app-drawer-content.tsx
 #: src/components/home-overview.tsx
-#: src/components/pad-server-rail.tsx
 msgid "Your agents, anywhere."
 msgstr "你的代理程式，隨時隨地"
 
 #: src/components/launch-intro.tsx
-msgid "Your machine, your rules"
-msgstr "你的電腦，你說了算"
+msgid "Your checkout, in one workspace."
+msgstr "一個工作區，掌握目前的檢出"
+
+#. placeholder {0}: agentErrorRef.current(err)
+#: src/components/agent-workbench.tsx
+msgid "Your draft is kept. Check the conversation before sending again. {0}"
+msgstr "草稿已保留。再次傳送前，請先檢查對話。{0}"
 
 #: src/components/agent-message-block.tsx
 msgid "Your message"
@@ -7188,3 +7574,15 @@ msgstr "你的訊息"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "你已配對的電腦"
+
+#: src/lib/network-error.ts
+msgid "Your phone's clock is off by {minutes} minutes. Fix the date and time, then try again."
+msgstr "手機時鐘偏差了 {minutes} 分鐘。請校正日期和時間後重試"
+
+#: src/components/image-preview-modal.tsx
+msgid "Zoom in"
+msgstr "放大"
+
+#: src/components/image-preview-modal.tsx
+msgid "Zoom out"
+msgstr "縮小"

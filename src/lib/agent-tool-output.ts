@@ -1,4 +1,5 @@
 import { asRecord, type FileDiffItem, type ToolContent } from './agent-protocol';
+import { isHiddenMuqunExecuteCall } from './internal-muqun-tools';
 
 /**
  * What a tool call is, and what is worth showing of what it said.
@@ -722,8 +723,8 @@ export function editFilesFromMetadata(metadata: Record<string, unknown>): FileDi
     out.push({
       path,
       patch,
-      additions: typeof rec.additions === 'number' ? rec.additions : 0,
-      deletions: typeof rec.deletions === 'number' ? rec.deletions : 0,
+      additions: typeof rec.additions === 'number' ? rec.additions : countMarkedLines(patch, '+'),
+      deletions: typeof rec.deletions === 'number' ? rec.deletions : countMarkedLines(patch, '-'),
       ...(status ? { status } : {}),
     });
   }
@@ -877,6 +878,7 @@ export function executeToolCalls(metadata: Record<string, unknown>): ExecuteTool
   if (!Array.isArray(raw)) return [];
   const out: ExecuteToolCall[] = [];
   for (const entry of raw) {
+    if (isHiddenMuqunExecuteCall(entry)) continue;
     if (typeof entry === 'string') {
       if (entry) out.push({ name: entry, status: 'completed' });
       continue;

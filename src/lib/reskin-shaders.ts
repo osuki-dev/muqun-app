@@ -23,7 +23,7 @@ import {
  * Even the clean case is a hard cut -- the reader taps a row and the world
  * they were reading is replaced between two frames with no account of itself.
  *
- * So the app takes a picture of the old screen first (`makeImageFromView`),
+ * So the app takes a picture of the old screen first (a view snapshot),
  * holds that picture over the top, lets the live interface underneath change
  * and settle unwatched, and then *erases the picture*. The reflow happens
  * behind a still image, and what the reader sees is one deliberate move.

@@ -4,16 +4,15 @@ import {
   buildComputerCards,
   buildTaskTree,
   cardLimits,
-  acknowledgementsHeld,
   dismissedKey,
   hiddenTaskKey,
   groupTaskTree,
   PENDING_CLOCK_SKEW_MS,
   PENDING_DISPATCH_TTL_MS,
+  pendingUnconfirmed,
   boundSessionState,
   pendingShown,
   pendingWorking,
-  RECENT_FINISHED_MS,
   type BoundSessionState,
   type PendingDispatch,
   taskResultLine,
@@ -23,7 +22,6 @@ import {
   taskRowTitle,
   taskRowDestination,
   heldCardOrder,
-  openTaskWork,
 } from '../home-computer-cards';
 import type { ServerTasksIndex } from '../server-tasks-state';
 import {
@@ -264,7 +262,7 @@ describe('buildComputerCards', () => {
     }
   });
 
-  test('Gateway-confirmed pane closures disappear from Home without losing history', () => {
+  test('Gateway-confirmed pane closures stay on Home as finished work', () => {
     const closed = [
       'the pane closed',
       'the pane closed: notes.md does not exist',
@@ -287,8 +285,11 @@ describe('buildComputerCards', () => {
       dismissed: new Set(),
       pending: [{ id: 'send', serverId: 'coding', goal: closed[0]!.goal, atMs: NOW }],
       nowMs: NOW,
+      limits: { now: 5, finished: 5 },
     });
-    expect(cards[0]!.finished).toEqual([origin]);
+    // A closed pane's task is finished work with its saved summary, not a
+    // row that vanished; the send that became it is settled by it.
+    expect(cards[0]!.finished).toEqual([...closed, origin]);
     expect(cards[0]!.pending).toEqual([]);
     expect(ledger.coding!.tasks).toEqual([...closed, origin]);
     expect(taskRowDestination(origin)).toEqual({
@@ -363,7 +364,7 @@ describe('buildComputerCards', () => {
     }
   });
 
-  test('completed pane tasks and orphan children use the same Home filter', () => {
+  test('a task whose pane closed stays as finished work, its open child still under it', () => {
     const root = task('root', 'working', NOW - 1, {
       binding: { kind: 'pane', sessionId: 'routing', paneId: 'gone' },
     });
@@ -387,8 +388,14 @@ describe('buildComputerCards', () => {
       dismissed: new Set(),
       nowMs: NOW,
     });
-    expect(cards[0]!.now.map((row) => row.task)).toEqual([child]);
-    expect(cards[0]!.finished).toEqual([]);
+    // The root's pane is gone, so it reads as done; it stays in Now only
+    // because the work it started is still open, and that child is under it.
+    expect(cards[0]!.now.map((row) => row.task)).toEqual([
+      { ...root, state: 'done', settledAtMs: NOW },
+    ]);
+    expect(cards[0]!.now[0]!.children).toEqual([child]);
+    // A finished command whose pane closed keeps its saved result on the card.
+    expect(cards[0]!.finished).toEqual([finished]);
     expect(ledger.coding!.tasks).toEqual([root, child, finished]);
     expect(taskRowDestination(finished)).toEqual({ kind: 'result' });
   });
@@ -451,11 +458,30 @@ describe('buildComputerCards', () => {
 
   test('sorted needs-you, working, paused, idle; offline gets no card', () => {
     const cards = buildComputerCards({
+      requests: {
+        request: {
+          target: {
+            kind: 'agent-session',
+            serverId: 'asks',
+            asid: 'session',
+            sessionId: 'session',
+            directory: '/work',
+          },
+          requestIds: ['request'],
+          observedAt: NOW,
+        },
+      },
       servers: [...servers, { serverId: 'paused' }],
       index: index({
         idle: [task('d', 'done', 1)],
         busy: [task('w', 'working', 2)],
-        asks: [task('r', 'working', 3), task('c', 'waiting', 4, { parentTaskId: 'r' })],
+        asks: [
+          task('r', 'working', 3),
+          task('c', 'waiting', 4, {
+            parentTaskId: 'r',
+            binding: { kind: 'agent_session', agentId: 'agent', asid: 'session' },
+          }),
+        ],
         off: [task('w2', 'working', 5)],
         paused: [task('p', 'idle_unconfirmed', 6)],
       }),
@@ -514,9 +540,9 @@ describe('buildComputerCards', () => {
     expect(card!.finished.map((done) => done.taskId)).toEqual(['f2', 'f3']);
   });
 
-  test('one computer gets more room', () => {
+  test('one computer gets more finished rows', () => {
     expect(cardLimits(1)).toEqual({ now: 5, finished: 3 });
-    expect(cardLimits(3)).toEqual({ now: 3, finished: 2 });
+    expect(cardLimits(3)).toEqual({ now: 5, finished: 2 });
   });
 
   test('a sent goal shows until a task with that goal arrives', () => {
@@ -572,94 +598,6 @@ describe('buildComputerCards', () => {
   });
 });
 
-describe('which computers get a card', () => {
-  const done = (id: string, at: number, extra: Partial<TaskView> = {}) =>
-    task(id, 'done', at, extra);
-  test.each([
-    ['finished just now', [done('f', NOW - 60_000)], new Set<string>(), true],
-    ['finished an hour ago', [done('f', NOW - 3_600_000)], new Set<string>(), true],
-    ['finished just under a day ago', [done('f', NOW - 86_400_000 + 1)], new Set<string>(), true],
-    ['finished exactly a day ago', [done('f', NOW - 86_400_000)], new Set<string>(), true],
-    ['finished over a day ago', [done('f', NOW - 86_400_000 - 1)], new Set<string>(), false],
-    [
-      'finished long ago, settled here just now',
-      [done('f', NOW - 2 * 86_400_000, { settledAtMs: NOW })],
-      new Set<string>(),
-      true,
-    ],
-    [
-      'finished, acknowledged',
-      [done('f', NOW)],
-      new Set([dismissedKey('a', { taskId: 'f' })]),
-      false,
-    ],
-    // Acknowledged once, reopened and finished again: the new finish is news.
-    [
-      'finished again after a reopen',
-      [done('f', NOW, { reopenCount: 1 })],
-      new Set([dismissedKey('a', { taskId: 'f' })]),
-      true,
-    ],
-    [
-      'the second finish acknowledged on its own',
-      [done('f', NOW, { reopenCount: 1 })],
-      new Set([dismissedKey('a', { taskId: 'f', reopenCount: 1 })]),
-      false,
-    ],
-    ['no ledger (nothing read)', undefined, new Set<string>(), false],
-  ] as const)('%s', (_name, tasks, dismissed, shown) => {
-    const cards = buildComputerCards({
-      servers: [{ serverId: 'a' }],
-      index: tasks ? index({ a: [...tasks] }) : {},
-      reachability: () => 'live',
-      dismissed,
-      nowMs: NOW,
-    });
-    expect(cards.length > 0).toBe(shown);
-  });
-
-  test('an acknowledgement goes when its task is back at work, and only then', () => {
-    const acked = [
-      dismissedKey('a', { taskId: 'w' }),
-      dismissedKey('a', { taskId: 'c' }),
-      dismissedKey('a', { taskId: 'gone' }),
-    ];
-    const ledgers = index({
-      a: [task('w', 'working', NOW), task('c', 'cancelled', NOW)],
-    });
-    // Back at work (an older gateway's only sign): let go. Cancelled, or not
-    // in view: kept.
-    expect(acknowledgementsHeld(acked, ledgers)).toEqual([acked[1], acked[2]]);
-    // Nothing back at work: the same list, untouched.
-    const quiet = index({ a: [task('c', 'cancelled', NOW)] });
-    expect(acknowledgementsHeld(acked, quiet)).toBe(acked);
-  });
-
-  test('repeated cancelled attempts at one goal show once; acknowledging it takes the group', () => {
-    const finishedIds = (dismissed: Set<string>) =>
-      buildComputerCards({
-        servers: [{ serverId: 'a' }],
-        index: index({
-          a: [
-            task('old', 'cancelled', 1, { goal: 'retry it' }),
-            task('new', 'cancelled', 2, { goal: 'retry it' }),
-            task('untitled-1', 'cancelled', 3, { goal: '' }),
-            task('untitled-2', 'cancelled', 4, { goal: '' }),
-          ],
-        }),
-        reachability: () => 'live',
-        dismissed,
-        nowMs: NOW,
-        limits: { now: 5, finished: 5 },
-      })[0]?.finished.map((t) => t.taskId) ?? [];
-    expect(finishedIds(new Set())).toEqual(['untitled-2', 'untitled-1', 'new']);
-    expect(finishedIds(new Set([dismissedKey('a', { taskId: 'new' })]))).toEqual([
-      'untitled-2',
-      'untitled-1',
-    ]);
-  });
-});
-
 describe('work that outlives its root', () => {
   test('a finished root with a working child stays in Now and the card is working', () => {
     const [card] = buildComputerCards({
@@ -690,7 +628,7 @@ describe('work that outlives its root', () => {
     });
     expect(card!.now.map((row) => row.task.taskId)).toEqual(['root']);
     expect(card!.finished).toEqual([]);
-    expect(card!.activity).toBe('needs-you');
+    expect(card!.activity).toBe('paused');
   });
 
   test('an open child known only from the count makes the card working', () => {
@@ -724,13 +662,18 @@ describe('the Sent row', () => {
     );
   });
 
-  test('a plain one goes after two minutes; a failed or session-bound one stays until acted on', () => {
+  test('every Sent row stays until acted on; a plain one reads as unconfirmed after two minutes', () => {
     const at = 1_000;
     const later = at + PENDING_DISPATCH_TTL_MS;
     const sent = { id: 's', serverId: 'a', goal: 'g', atMs: at };
+    expect(pendingUnconfirmed(sent, at + 1)).toBe(false);
+    expect(pendingUnconfirmed(sent, later)).toBe(true);
+    expect(pendingUnconfirmed({ ...sent, asid: 'as-1' }, later)).toBe(false);
+    expect(pendingUnconfirmed({ ...sent, failed: true }, later)).toBe(false);
     const cases: [PendingDispatch, number, shown: boolean, working: boolean][] = [
       [sent, at + 1, true, true],
-      [sent, later, false, false],
+      // Still shown, as delivery not confirmed; no longer work.
+      [sent, later, true, false],
       // A failed send holds its draft: shown, never work.
       [{ ...sent, failed: true }, later, true, false],
       // Sent to its session and no task yet: shown ("no reply yet"), no longer work.
@@ -739,12 +682,12 @@ describe('the Sent row', () => {
       // The agent replied: the row follows its session's run, however long.
       [{ ...sent, asid: 'as-1', reply: { state: 'working', atMs: at } }, later, true, true],
       [{ ...sent, asid: 'as-1', reply: { state: 'done', atMs: at } }, later, true, false],
-      // A finished one stays through the full day, as a finished task does.
+      // A finished one stays however long, until dismissed, as a finished task does.
       [{ ...sent, asid: 'as-1', reply: { state: 'done', atMs: at } }, at + 86_400_000, true, false],
       [
         { ...sent, asid: 'as-1', reply: { state: 'done', atMs: at } },
-        at + RECENT_FINISHED_MS + 1,
-        false,
+        at + 30 * 86_400_000,
+        true,
         false,
       ],
     ];
@@ -960,134 +903,6 @@ describe('taskRowVisual: the rules the state table carries', () => {
     ],
   ] as const)('%s', (_name, input, opts, expected) => {
     expect(taskRowVisual(input, opts)).toMatchObject(expected);
-  });
-});
-
-describe('openTaskWork on a mirror', () => {
-  const mirror = task('m', 'working', 1, {
-    binding: { kind: 'peer', peerId: 'peer-1', remoteTaskId: 'r' },
-  });
-  const there = task('r', 'working', 1, {
-    binding: { kind: 'agent_session', agentId: 'opencode', asid: 'ses_9' },
-  });
-  const known = async (): Promise<TaskView | null> => there;
-  test.each([
-    [
-      'opens the session on the computer that runs it',
-      known,
-      'srv-cedar',
-      [['agent', 'srv-cedar', 'ses_9']],
-    ],
-    [
-      'without a mapping, the link id is taken as the computer',
-      known,
-      undefined,
-      [['agent', 'peer-1', 'ses_9']],
-    ],
-    [
-      'opens that computer when its task there cannot be read',
-      async (): Promise<TaskView | null> => null,
-      'srv-cedar',
-      [['server', 'srv-cedar']],
-    ],
-    ['does nothing without a resolver', undefined, 'srv-cedar', []],
-  ] as const)('%s', async (_name, resolveTask, mapped, expected) => {
-    const opened: string[][] = [];
-    const asked: string[] = [];
-    openTaskWork(
-      {
-        openTaskResult: (serverId, task) => opened.push(['result', serverId, task.taskId]),
-        openAgent: (serverId, asid) => opened.push(['agent', serverId, asid ?? '']),
-        openServer: (serverId) => opened.push(['server', serverId]),
-        ...(resolveTask
-          ? {
-              resolveTask: (serverId: string, taskId: string) => {
-                asked.push(`${serverId}/${taskId}`);
-                return resolveTask();
-              },
-            }
-          : {}),
-        ...(mapped ? { peerServerId: () => mapped } : {}),
-      },
-      'srv-atlas',
-      mirror
-    );
-    await Promise.resolve();
-    await Promise.resolve();
-    expect(opened).toEqual(expected.map((entry) => [...entry]));
-    if (resolveTask) expect(asked).toEqual([`${mapped ?? 'peer-1'}/r`]);
-  });
-});
-
-describe('command task destinations', () => {
-  test.each(['done', 'failed', 'cancelled'] as const)(
-    '%s opens the local saved result even when the peer is offline',
-    async (state) => {
-      const finished = task('command', state, 1, {
-        kind: 'command',
-        summary: 'saved output\nlast line',
-        peerReachable: false,
-        binding: { kind: 'peer', peerId: 'offline-peer', remoteTaskId: 'remote-command' },
-      });
-      const opened: [string, TaskView][] = [];
-      await openTaskWork(
-        {
-          openTaskResult: (serverId, result) => opened.push([serverId, result]),
-          openAgent: () => {
-            throw new Error('a finished command must not open an agent');
-          },
-          openServer: () => {
-            throw new Error('a finished command must not open a computer or stale pane');
-          },
-          resolveTask: () => {
-            throw new Error('the saved result must not require a peer read');
-          },
-        },
-        'source',
-        finished
-      );
-      expect(opened).toEqual([['source', finished]]);
-    }
-  );
-
-  test('a receiver command with a closed or reused pane opens its saved result', async () => {
-    const finished = task('command', 'done', 1, {
-      kind: 'command',
-      origin: 'peer',
-      exitCode: 0,
-      binding: { kind: 'pane', paneId: 'reused', sessionId: 'temporary', shellPid: 123 },
-    });
-    const opened: TaskView[] = [];
-    await openTaskWork(
-      {
-        openTaskResult: (_serverId, result) => opened.push(result),
-        openServer: () => {
-          throw new Error('the old pane binding is history');
-        },
-        openAgent: () => {
-          throw new Error('the command has no agent');
-        },
-      },
-      'receiver',
-      finished
-    );
-    expect(opened).toEqual([finished]);
-  });
-
-  test('open commands and agent delegations retain their original destinations', () => {
-    const pane = { kind: 'pane', paneId: 'live', sessionId: 'session' } as const;
-    expect(taskRowDestination(task('c', 'working', 1, { kind: 'command', binding: pane }))).toEqual(
-      pane
-    );
-    for (const state of ['working', 'done'] as const) {
-      expect(
-        taskRowDestination(
-          task('agent', state, 1, {
-            binding: { kind: 'agent_session', agentId: 'codex', asid: 'original' },
-          })
-        )
-      ).toEqual({ kind: 'session', agentId: 'codex', asid: 'original' });
-    }
   });
 });
 

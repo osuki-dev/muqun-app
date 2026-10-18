@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { AGENT_STREAM_BATCH_MS, createAgentStreamBatch } from '../agent-stream-batch';
-import type { AgentDomainEvent, TimelineItem } from '../agent-protocol';
-import { upsertTimelineItems } from '../agent-timeline-upsert';
+import { sortTimeline, type AgentDomainEvent, type TimelineItem } from '../agent-protocol';
+import { agentPromptUsesOptimisticRow, upsertTimelineItems } from '../agent-timeline-upsert';
 
 function item(id: string, seq: number, extra: Partial<TimelineItem> = {}): TimelineItem {
   return {
@@ -120,6 +120,66 @@ describe('stream presentation batches', () => {
 });
 
 describe('timeline revision merge', () => {
+  test('upload-path optimistic images duplicate data-URI exports; attachment sends must not add them', () => {
+    const optimistic = item('temp_photo', 1, {
+      role: 'user',
+      part: { type: 'text', text: 'Look at this' },
+      attachments: ['/uploads/photo.png'],
+    });
+    const canonical = item('native_photo', 2, {
+      role: 'user',
+      part: optimistic.part,
+      attachments: ['data:image/png;base64,QUFB'],
+    });
+    // Retain the exact matcher: widening it would claim unrelated real images.
+    expect(upsertTimelineItems([optimistic], [canonical])).toHaveLength(2);
+    const pendingTimeline = agentPromptUsesOptimisticRow(optimistic.attachments)
+      ? [optimistic]
+      : [];
+    expect(upsertTimelineItems(pendingTimeline, [canonical])).toEqual([canonical]);
+    expect(agentPromptUsesOptimisticRow()).toBe(true);
+    expect(agentPromptUsesOptimisticRow([])).toBe(true);
+    // Paths alone cannot establish attachment MIME; non-images use the same
+    // explicit composer pending UI, not a guessed suffix classification.
+    expect(agentPromptUsesOptimisticRow(['/uploads/file.bin'])).toBe(false);
+  });
+
+  test('same text, different images, identical repeats and incomplete exports retain every native ID', () => {
+    const text = { type: 'text' as const, text: 'Look at this' };
+    const originals = [
+      item('native_1', 1, {
+        role: 'user',
+        part: text,
+        attachments: ['data:image/png;base64,QUFB'],
+      }),
+      item('native_2', 2, {
+        role: 'user',
+        part: text,
+        attachments: ['data:image/png;base64,QUFC'],
+      }),
+      item('native_3', 3, {
+        role: 'user',
+        part: text,
+        attachments: ['data:image/png;base64,QUFB'],
+      }),
+      item('native_4', 4, {
+        role: 'user',
+        part: text,
+        attachments: ['data:image/png;base64,QUFB', 'data:image/png;base64,QUFC'],
+      }),
+      item('native_partial', 5, {
+        role: 'user',
+        part: text,
+        attachments: ['data:image/png;base64,QUFB'],
+      }),
+      item('native_no_export', 6, { role: 'user', part: text }),
+    ];
+    let timeline: TimelineItem[] = [];
+    for (const native of originals) timeline = upsertTimelineItems(timeline, [native]);
+    expect(timeline).toEqual(sortTimeline(originals));
+    expect(upsertTimelineItems(timeline, originals)).toEqual(timeline);
+    expect(timeline.every((row) => row.part === text)).toBe(true);
+  });
   test('updating a part preserves history identities and does not mutate the previous snapshot', () => {
     const previous = [item('a', 1), item('b', 1)];
     const next = upsertTimelineItems(previous, [item('b', 2)]);

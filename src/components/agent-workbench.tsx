@@ -1,3 +1,22 @@
+import { AgentRuntimeNotice } from '@/components/agent-runtime-notice';
+import { createQuestionDrafts } from '@/lib/agent-question-drafts';
+import {
+  matchesRuntimeTerminal,
+  nativeAgentInteraction,
+  replaceAgentTranscript,
+  type AgentSessionRuntime,
+} from '@/lib/agent-session-runtime';
+import { useGatewayGeneration } from '@/stores/gateway-connection-generation';
+import {
+  canMutateAgentSession,
+  type AgentSessionAction,
+  canSendAgentPrompt,
+  canReplyAgentForm,
+  hasBlockingAgentForm,
+  confirmedAgentModel,
+  stagedAgentModelFor,
+  type StagedAgentModel,
+} from '@/lib/agent-runtime-controls';
 import { PAD_LAYOUT_MIN_WIDTH } from '@/lib/responsive-layout';
 import { useRootRouteName } from '@/hooks/use-root-route-name';
 import { useStore } from 'zustand';
@@ -7,7 +26,7 @@ import { useFleetPeers } from '@/stores/fleet-peers';
 import type { MentionComputer } from '@/lib/composer-mentions';
 import { useToolCallDetailStore } from '@/stores/tool-call-detail';
 import { AgentTranscriptList } from '@/components/agent-transcript-list';
-import { useLatestRef } from '@/hooks/use-render-refs';
+import { useLatestReader, useLatestRef } from '@/hooks/use-render-refs';
 import {
   memo,
   useCallback,
@@ -50,7 +69,12 @@ import { GlassChrome } from '@/components/glass-chrome';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import { withAlpha } from '@/lib/color';
 import { DURATION, fadeIn, fadeInDown, fadeOut, fadeOutUp, riseIn, timing } from '@/lib/motion';
 import { emptyCardBottomReserve, emptyCardTopReserve } from '@/lib/agent-empty-layout';
@@ -67,7 +91,7 @@ import {
   sessionWorktreeName,
   listAgentWorktrees,
   listAgentSessions,
-  listAgentSessionsObserved,
+  listAgentSessionPage,
   sameDirectory,
   createAgentSession,
   sendAgentPrompt,
@@ -77,7 +101,10 @@ import {
   replyAgentPermission,
   replyAgentForm,
   getAgentVcsDiff,
+  getAgentVcsFiles,
   getAgentCatalog,
+  peekAgentCatalog,
+  loadEarlierAgentTimeline,
   getAgentProjects,
   openAgentSessionStream,
   getAgentTimelineDelta,
@@ -85,9 +112,11 @@ import {
   compactAgentSession,
   deleteAgentSession,
   renameAgentSession,
+  forkAgentSession,
   invokeAgentSkill,
   getAgentContext,
   listAgentSessionChildrenObserved,
+  listAgentSessionDescendantsObserved,
   listAgentShells,
   listAgentInbox,
   markAgentSessionViewed,
@@ -115,7 +144,6 @@ import {
   type CommandInfo,
   type FileDiffItem,
   type ShellInfo,
-  type CompactionReason,
   type InboxItem,
   type TimelineItem,
   type ToolPart,
@@ -144,7 +172,14 @@ import {
   stagingUnsupported,
   type OneStepRevertRequest,
 } from '@/lib/agent-revert';
-import { hiddenClientCommands, normalizeAgentId } from '@/lib/agent-discovery';
+import {
+  agentFeaturesFor,
+  canLoadEarlierAgentTimeline,
+  findAgent,
+  hiddenClientCommands,
+  normalizeAgentId,
+  timelineEarlierUnavailableReason,
+} from '@/lib/agent-discovery';
 import {
   useAgentFeatures,
   useAgentsDiscoveryRefresh,
@@ -162,6 +197,8 @@ import { agentGuideCommand, agentGuideStart } from '@/lib/home-agent-readiness';
 import { hasAgentsDiscoveryFor, useAgents } from '@/stores/agents';
 import { sessionChipLead } from '@/lib/agent-session-chip';
 import { useServerCapabilities } from '@/stores/server-capabilities';
+import { describeGatewayFailure } from '@/lib/network-error';
+import { hasObservedCapability, SESSION_DESCENDANTS_CAPABILITY } from '@/lib/server-capabilities';
 import { socketReconnectDelay, WS_EVENTS_CAPABILITY } from '@/lib/gateway-socket';
 import { gatewaySocketFor } from '@/lib/gateway-socket-runtime';
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
@@ -194,7 +231,14 @@ import {
   subtaskSummary,
   type SubtaskBlocks,
 } from '@/lib/agent-subtasks';
-import { upsertTimelineItems } from '@/lib/agent-timeline-upsert';
+import { agentPromptUsesOptimisticRow, upsertTimelineItems } from '@/lib/agent-timeline-upsert';
+import {
+  applyCompactionEvent,
+  beginCompaction,
+  reconcileCompactionTimeline,
+  type CompactionActivity,
+} from '@/lib/agent-compaction';
+import type { AgentAttachmentSendRequest } from '@/lib/agent-attachment-send';
 import { windowStartForSnapshot } from '@/lib/agent-timeline-window';
 import { createAgentStreamBatch } from '@/lib/agent-stream-batch';
 import { useAgentSessionState } from '@/stores/agent-session-state';
@@ -205,6 +249,7 @@ import { useGoneAgentSessions } from '@/stores/gone-agent-sessions';
 import { useHomeRecentsStore } from '@/stores/home-recents';
 import {
   isRootSessionRecent,
+  recentSessionAgentId,
   removeChildSessionRecents,
   rootSessionWithStatus,
 } from '@/lib/agent-home-recents';
@@ -220,7 +265,7 @@ import {
 } from '@/stores/agent-sheet-bridge';
 import { ImagePreviewModal, type PreviewImage } from '@/components/image-preview-modal';
 import { AssetViewer } from '@/components/asset-viewer';
-import { assetFromToolFile } from '@/lib/session-assets';
+import { assetFromToolFile, isPdfFile } from '@/lib/session-assets';
 import { type AgentToolActions } from './agent-message-block';
 import { createTranscriptFollow, type TranscriptFollow } from '@/lib/transcript-follow';
 import { TRANSCRIPT_ESTIMATED_ITEM_SIZE } from '@/lib/transcript-sizing';
@@ -231,7 +276,12 @@ import { AgentComposer, type DraftInjector } from './agent-composer';
 import { runningShellCount } from '@/components/agent-background-tray';
 import { ThinkingIndicator } from './agent-thinking-indicator';
 import { AGENT_TYPE } from '@/constants/agent-type';
-import { gatewayAuthHeaders, gatewayUrl } from '@/lib/gateway-client';
+import {
+  gatewayAuthHeaders,
+  gatewayUrl,
+  loadAgents,
+  resolveAgentFileAsset,
+} from '@/lib/gateway-client';
 import { appChrome } from '@/constants/appearance';
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
 import {
@@ -243,10 +293,12 @@ import {
 } from '@/lib/agent-workbench-global-owner';
 import {
   advanceAgentWorkbenchOwnerAfterCreate,
+  captureAgentPromptOwnership,
   agentWorkbenchOwnerMatches,
   agentWorkbenchRouteMatches,
   shouldPreserveNewSessionDraft,
   type AgentWorkbenchOwner,
+  type AgentPromptOwnership,
 } from '@/lib/agent-workbench-ownership';
 import { isHomeRelativePath, settledWorkspaceDirectory } from '@/lib/agent-directory-suggest';
 import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
@@ -362,8 +414,6 @@ export interface AgentWorkbenchProps {
   topInset?: number;
   bottomInset?: number;
   createNewSessionRef?: React.MutableRefObject<(() => void) | null>;
-  /** Wired to the workbench's abort call so a header can expose a Stop control. */
-  abortSessionRef?: React.MutableRefObject<(() => void) | null>;
 }
 
 export const AgentWorkbench = memo(function AgentWorkbench({
@@ -377,7 +427,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   topInset = 0,
   bottomInset = 0,
   createNewSessionRef,
-  abortSessionRef,
 }: AgentWorkbenchProps) {
   const mountedRef = useRef(true);
   const ownerGenerationRef = useRef(0);
@@ -552,6 +601,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     sessionsRef.current = sessions;
   }, [sessions]);
   const sessionListRequestRef = useRef(0);
+  const sessionListAbortRef = useRef<AbortController | null>(null);
+  useEffect(() => () => sessionListAbortRef.current?.abort(), [serverId, sessionId]);
   const workspaceSelectionRef = useRef(0);
   const [availableAgents, setAvailableAgents] = useState<ModeInfo[]>([]);
   /**
@@ -580,6 +631,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     if (freshSessionRef.current !== activeAsid) freshSessionRef.current = undefined;
   }, [activeAsid]);
   const [sessionInfo, setSessionInfo] = useState<AgentSessionInfo | null>(null);
+  const readSessionInfo = useLatestReader(sessionInfo);
+  const runtime = sessionInfo?.runtime;
+  const readRenderedRuntime = useLatestReader(runtime);
+  const canInteractNatively = nativeAgentInteraction(runtime);
+  const externalRuntime = runtime?.source !== 'native' ? runtime : undefined;
+  const supportsHistoryRefresh = useServerCapabilities(
+    (state) => state.byServer[serverId]?.includes('agent_session_refresh_v1') === true
+  );
+  const [refreshingHistory, setRefreshingHistory] = useState(false);
   /**
    * Which agent this screen is on, and which a new session would go to.
    *
@@ -592,6 +652,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const agentChoice = useSelectedAgent(serverId);
   const activeAgentId = sessionInfo?.agent_id ?? agentChoice.selected;
   const agentFeatures = useAgentFeatures(serverId, activeAgentId);
+  const historyCapabilities = useServerCapabilities((state) => state.byServer[serverId]);
+  const supportsRemoteEarlier = canLoadEarlierAgentTimeline(historyCapabilities, agentFeatures);
+  const earlierUnavailableReason = timelineEarlierUnavailableReason(
+    historyCapabilities,
+    findAgent(agentChoice.agents, activeAgentId)?.features
+  );
   /**
    * The agent every catalog and project read names, or none on a gateway
    * without discovery (it drives one agent and predates the parameter).
@@ -686,6 +752,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const [windowStart, setWindowStart] = useState(0);
   // Whether a pull for earlier history is still being answered.
   const [loadingEarlier, setLoadingEarlier] = useState(false);
+  const [earlierExhausted, setEarlierExhausted] = useState(false);
   /**
    * Where the rendered window starts, mirrored for the resync path.
    *
@@ -706,13 +773,27 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * another's.
    */
   const activeAsidRef = useRef<string | undefined>(initialAsid);
+  // Metadata and timeline events can arrive in one batch before React commits.
+  // Their imperative guard must see the last observed owner immediately.
+  const observedRuntimeRef = useRef<{
+    serverId: string;
+    asid: string;
+    runtime?: AgentSessionRuntime;
+  } | null>(null);
+  const readRuntime = useCallback(() => {
+    const observed = observedRuntimeRef.current;
+    return observed?.serverId === serverId && observed.asid === activeAsidRef.current
+      ? observed.runtime
+      : readRenderedRuntime();
+  }, [readRenderedRuntime, serverId]);
   useEffect(() => {
     activeAsidRef.current = activeAsid;
+    setEarlierExhausted(false);
   }, [activeAsid]);
   // Opening a session answers its question notices: the form is on screen now.
   useEffect(() => {
-    if (activeAsid) useInAppNotifications.getState().dismissQuestions(activeAsid);
-  }, [activeAsid]);
+    if (activeAsid) useInAppNotifications.getState().dismissQuestions(activeAsid, serverId);
+  }, [activeAsid, serverId]);
   /**
    * Whether the app is in front, for the stream handler.
    *
@@ -753,7 +834,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const homeTargetFor = useCallback(
     (
       asid: string | undefined,
-      directory: string | undefined
+      directory: string | undefined,
+      reportedAgentId?: string
     ): Extract<HomeTarget, { kind: 'agent-session' }> | null => {
       if (
         !serverId ||
@@ -764,9 +846,22 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       ) {
         return null;
       }
-      return { kind: 'agent-session', serverId, sessionId, directory, asid };
+      const agentId = recentSessionAgentId(
+        asid,
+        readSessionInfo(),
+        sessionsRef.current,
+        reportedAgentId
+      );
+      return {
+        kind: 'agent-session',
+        serverId,
+        sessionId,
+        directory,
+        asid,
+        ...(agentId ? { agentId } : {}),
+      };
     },
-    [serverId, sessionId]
+    [serverId, sessionId, readSessionInfo]
   );
   /**
    * An auto-title or explicit rename changes display metadata only. Updating a
@@ -774,14 +869,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * it ahead of targets the reader opened later.
    */
   const syncHomeRecentTitle = useCallback(
-    (asid: string, title: string, directory?: string) => {
+    (asid: string, title: string, directory?: string, agentId?: string) => {
       if (!hasRealSessionTitle({ asid, title })) return;
       const knownDirectory =
         directory ??
         (asid === activeAsidRef.current
           ? activeDirectoryRef.current
           : sessionsRef.current.find((session) => session.asid === asid)?.directory);
-      const target = homeTargetFor(asid, knownDirectory);
+      const target = homeTargetFor(asid, knownDirectory, agentId);
       if (target) void useHomeRecentsStore.getState().updateTitle(target, title);
     },
     [homeTargetFor]
@@ -789,7 +884,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const syncHomeRecentObservation = useCallback(
     (info: AgentSessionInfo, observedAtMs: number = Date.now()) => {
       if (!isRootSessionRecent(info)) return;
-      const target = homeTargetFor(info.asid, info.directory);
+      const target = homeTargetFor(info.asid, info.directory, info.agent_id);
       if (!target) return;
       void useHomeRecentsStore.getState().observeSession(target, {
         status: info.status,
@@ -846,10 +941,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const [oneStepRevert, setOneStepRevert] = useState<OneStepRevertRequest | null>(null);
   // A compaction in flight, which is a pill above the composer rather than a
   // row: the row lands in the timeline when the boundary is reached.
-  const [compaction, setCompaction] = useState<{
-    status: 'running' | 'failed';
-    reason: CompactionReason;
-  } | null>(null);
+  const [compactionState, setCompaction] = useState<CompactionActivity | null>(null);
+  const compaction = compactionState?.asid === activeAsid ? compactionState : null;
   /**
    * Where this session is in the gateway's event sequence, and whether a
    * catch-up is owed. See `lib/agent-catch-up.ts`: the marker is raised, never
@@ -869,6 +962,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       setPermissions([]);
       setForms([]);
       setInbox([]);
+      setCompaction(null);
       syncRef.current = CATCH_UP_START;
       activeAsidRef.current = nextAsid;
       setActiveAsid(nextAsid);
@@ -910,14 +1004,45 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     so exactly one view subscribes. See `lib/transcript-follow.ts`.
   */
   const follow = useMemo(() => createTranscriptFollow(), []);
+  const reducedMotion = useReducedMotion();
+  const maintainTranscriptEnd = useMemo(() => ({ animated: !reducedMotion }), [reducedMotion]);
 
   // Attachment image preview. The shared lightbox, not a second copy of it:
   // `ImagePreviewModal` already owns pinch, drag-to-dismiss and the paging.
-  const [previewImageUri, setPreviewImageUri] = useState<string | null>(null);
+  const [previewAlbum, setPreviewAlbum] = useState<{
+    uris: readonly string[];
+    index: number;
+  } | null>(null);
+  const previewImage = useCallback((uri: string, album?: readonly string[]) => {
+    const uris = album && album.length > 0 ? album : [uri];
+    setPreviewAlbum({ uris, index: Math.max(0, uris.indexOf(uri)) });
+  }, []);
   // A file a tool returned -- a PDF from `read`, say -- opened in the same
   // viewer the artifacts list uses rather than in a second one.
   const [openToolAsset, setOpenToolAsset] = useState<SessionAsset | null>(null);
 
+  const gatewayGeneration = useGatewayGeneration((state) => state.byServer[serverId]);
+  const questionDraftOwner = JSON.stringify([serverId, sessionId, activeAsid, gatewayGeneration]);
+  const [questionDrafts] = useState(createQuestionDrafts);
+  useEffect(() => {
+    questionDrafts.enter(questionDraftOwner);
+  }, [questionDrafts, questionDraftOwner]);
+  const handleQuestionDraftChange = useCallback(
+    (request: FormRequest, field: string, value: unknown) => {
+      if (activeAsidRef.current !== activeAsid || !canReplyAgentForm(request, readRuntime()))
+        return;
+      questionDrafts.edit(questionDraftOwner, request, field, value);
+    },
+    [activeAsid, readRuntime, questionDrafts, questionDraftOwner]
+  );
+  const [stagedModels, setStagedModels] = useState<Record<string, StagedAgentModel>>({});
+  const nextTurnModel = stagedAgentModelFor(
+    activeAsid ? stagedModels[activeAsid] : undefined,
+    serverId,
+    activeAsid,
+    gatewayGeneration
+  );
+  const stagesNextTurnModel = agentFeatures.extra.modelSelectionScope === 'next_turn';
   const [selectedModel, setSelectedModel] = useState<ModelRef | undefined>(undefined);
   /**
    * The agent the session runs, and whether the *reader* chose it.
@@ -1028,7 +1153,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * in total: a compaction drops the first and leaves the second alone, and a
    * gauge drawn from the spend would never come down.
    */
-  const [contextUsage, setContextUsage] = useState<AgentContextUsage | null>(null);
+  const [fetchedContextUsage, setContextUsage] = useState<{
+    serverId: string;
+    asid: string;
+    usage: AgentContextUsage;
+  } | null>(null);
+  const contextUsage =
+    sessionInfo?.context_usage ??
+    (fetchedContextUsage?.serverId === serverId && fetchedContextUsage.asid === activeAsid
+      ? fetchedContextUsage.usage
+      : null);
   /**
    * The subagent sessions under whichever root is open, keyed by parent.
    *
@@ -1180,6 +1314,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     const previous = catalogScopeRef.current;
     if (!shouldRefetchAgentCatalog(previous, scope)) return;
     catalogScopeRef.current = scope;
+    const peeked = peekAgentCatalog(sessionId, {
+      ...(scope.directory ? { directory: scope.directory } : {}),
+      ...(scope.agentId ? { agentId: scope.agentId } : {}),
+    });
+    if (peeked?.skills.length) setSkills(peeked.skills);
+    if (peeked?.commands.length) setCommands(peeked.commands);
     const agentChanged = previous !== null && (previous.agentId ?? '') !== (scope.agentId ?? '');
     if (agentChanged && !activeAsidRef.current) {
       // A new session on another agent: what was picked or applied for the
@@ -1311,6 +1451,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       const directory =
         requestedDirectory === undefined ? activeDirectoryRef.current : requestedDirectory;
       const request = ++sessionListRequestRef.current;
+      sessionListAbortRef.current?.abort();
+      const controller = new AbortController();
+      sessionListAbortRef.current = controller;
       const capturedOwner: AgentWorkbenchOwner = {
         serverId,
         sessionId,
@@ -1332,18 +1475,35 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               // that reads this list sorts by recency: `desc` is newest first, so
               // what the limit cuts is the oldest.
               const agentId = listAgentIdRef.current;
-              const observation = await listAgentSessionsObserved(sessionId, {
-                roots: true,
-                limit: SESSION_LIST_LIMIT,
-                order: 'desc',
-                ...(directory ? { directory } : {}),
-                ...(agentId ? { agentId } : {}),
-              });
+              const observation = await listAgentSessionPage(
+                sessionId,
+                {
+                  roots: true,
+                  limit: SESSION_LIST_LIMIT,
+                  order: 'desc',
+                  ...(directory ? { directory } : {}),
+                  ...(agentId ? { agentId } : {}),
+                },
+                {
+                  serverId,
+                  capabilities: useServerCapabilities.getState().byServer[serverId],
+                  features: useAgents
+                    .getState()
+                    .index.servers[serverId]?.agents?.agents.find((agent) => agent.id === agentId)
+                    ?.features,
+                  signal: controller.signal,
+                }
+              );
               const list = observation.sessions;
               if (!ownsList()) return;
               setIsOffline(false);
               if (list) {
-                if (!directory) hostListCompleteRef.current = list.length < SESSION_LIST_LIMIT;
+                if (!directory)
+                  hostListCompleteRef.current =
+                    observation.authoritative &&
+                    (observation.paginated
+                      ? observation.nextCursor === null
+                      : list.length < SESSION_LIST_LIMIT);
                 const fresh = freshSessionRef.current;
                 setSessions((previous) => {
                   const local = previous.find((item) => item.asid === fresh);
@@ -1359,7 +1519,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 );
                 const observedAtMs = observation.observedAtMs;
                 for (const info of list) {
-                  syncHomeRecentTitle(info.asid, info.title, info.directory);
+                  syncHomeRecentTitle(info.asid, info.title, info.directory, info.agent_id);
                   if (observedAtMs !== undefined) syncHomeRecentObservation(info, observedAtMs);
                 }
                 void removeChildSessionRecents(useHomeRecentsStore.getState, serverId, list);
@@ -1422,9 +1582,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const listedScopeRef = useRef<string | undefined>(undefined);
   /** The agent the listing in hand was asked for; another agent is another list. */
   const listedAgentRef = useRef<string | undefined>(undefined);
+  const listedOwnerRef = useRef<string | undefined>(undefined);
   useEffect(() => {
     const scope = activeDirectory ?? '';
-    if (listedScopeRef.current !== undefined && listedAgentRef.current === listAgentId) {
+    const owner = JSON.stringify([serverId, sessionId]);
+    if (
+      listedOwnerRef.current === owner &&
+      listedScopeRef.current !== undefined &&
+      listedAgentRef.current === listAgentId
+    ) {
       if (listedScopeRef.current === scope) return;
       // A directory that arrived from the session we just opened is a directory
       // the listing already covers -- but only when the listing in hand is the
@@ -1446,8 +1612,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     }
     listedScopeRef.current = scope;
     listedAgentRef.current = listAgentId;
+    listedOwnerRef.current = owner;
     void refreshSessions(scope || undefined).catch(() => {});
-  }, [activeDirectory, listAgentId, refreshSessions]);
+  }, [activeDirectory, listAgentId, refreshSessions, serverId, sessionId]);
 
   const handleTimelineScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -1480,6 +1647,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   // destructive commands — this is the only honesty YOLO mode has.
   const handleAutoPermission = useCallback(
     (req: PermissionRequest) => {
+      if (!nativeAgentInteraction(readRuntime())) return;
       const asid = req.asid;
       if (!asid) return;
       const sourceAsid = activeAsidRef.current;
@@ -1512,7 +1680,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         });
       }
     },
-    [captureWorkbenchOwner, homeTargetFor, ownsWorkbench, sessionId, showToast, t]
+    [readRuntime, captureWorkbenchOwner, homeTargetFor, ownsWorkbench, sessionId, showToast, t]
   );
 
   /**
@@ -1549,7 +1717,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const refreshShells = useCallback(async () => {
     const request = ++shellRequestRef.current;
     const directory = activeDirectory;
-    if (!badgeLoads) {
+    if (!badgeLoads || !agentFeatures.backgroundShells) {
       if (request === shellRequestRef.current) setShells([]);
       return;
     }
@@ -1558,7 +1726,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     // let the old response put its shells back under the new directory.
     if (request !== shellRequestRef.current || directory !== activeDirectoryRef.current) return;
     setShells(list);
-  }, [activeDirectory, badgeLoads]);
+  }, [activeDirectory, badgeLoads, agentFeatures.backgroundShells]);
 
   /**
    * Whether there is anything to open the changes sheet on.
@@ -1573,22 +1741,45 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       setHasDiffs(false);
       return;
     }
-    try {
-      const answer = await getAgentVcsDiff(sessionId, activeAsid);
-      noteWorkspaceMissing(answer.missing, activeAsid);
-      setHasDiffs(answer.files.length > 0);
-    } catch {
-      setHasDiffs(false);
-    }
-  }, [sessionId, activeAsid, badgeLoads, noteWorkspaceMissing]);
+    await recoverWith(
+      async () => {
+        const supportsFiles = useServerCapabilities
+          .getState()
+          .byServer[serverId]?.includes('agent_vcs_files');
+        const files = supportsFiles ? await getAgentVcsFiles(sessionId, activeAsid) : null;
+        const answer =
+          files ??
+          (agentFeatures.extra.legacyVcsDiff !== false
+            ? await getAgentVcsDiff(sessionId, activeAsid)
+            : null);
+        if (activeAsidRef.current !== activeAsid) return;
+        if (!answer) {
+          setHasDiffs(false);
+          return;
+        }
+        noteWorkspaceMissing(answer.missing, activeAsid);
+        setHasDiffs(answer.files.length > 0);
+      },
+      () => {
+        if (activeAsidRef.current === activeAsid) setHasDiffs(false);
+      }
+    );
+  }, [
+    sessionId,
+    serverId,
+    activeAsid,
+    badgeLoads,
+    noteWorkspaceMissing,
+    agentFeatures.extra.legacyVcsDiff,
+  ]);
 
   const refreshInbox = useCallback(async () => {
-    if (!activeAsid) {
+    if (!activeAsid || !agentFeatures.inbox) {
       setInbox([]);
       return;
     }
     setInbox(await listAgentInbox(activeAsid));
-  }, [activeAsid]);
+  }, [activeAsid, agentFeatures.inbox]);
 
   /**
    * What the model can still see, read from the engine rather than guessed.
@@ -1601,8 +1792,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const refreshContext = useCallback(async () => {
     if (!activeAsid || !badgeLoads) return;
     const usage = await getAgentContext(activeAsid);
-    setContextUsage(usage);
-  }, [activeAsid, badgeLoads]);
+    setContextUsage({ serverId, asid: activeAsid, usage });
+  }, [activeAsid, badgeLoads, serverId]);
 
   /**
    * The four reads that feed the composer's chips, reachable without being
@@ -1649,7 +1840,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * already at the bottom.
    */
   const loadSnapshot = useCallback(
-    async (mode: 'enter' | 'silent' = 'enter') => {
+    async (mode: 'enter' | 'silent' | 'refresh' = 'enter') => {
       const asid = activeAsid;
       if (!asid) {
         if (initialCheckDoneRef.current) {
@@ -1670,7 +1861,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         async () => {
           return recoverWith(
             async () => {
-              const snap = await getAgentSessionSnapshot(sessionId, asid);
+              const snap = await getAgentSessionSnapshot(sessionId, asid, {
+                refresh: mode === 'refresh',
+                capabilities: useServerCapabilities.getState().byServer[serverId],
+              });
               if (!ownsSnapshot()) return;
               const fresh = freshSessionRef.current === asid;
               const timeline = fresh
@@ -1683,6 +1877,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               }
               const info = snap.info;
               if (info) {
+                observedRuntimeRef.current = { serverId, asid: info.asid, runtime: info.runtime };
                 setSessionInfo((previous) =>
                   pendingFirstPrompt && previous?.status === 'busy' && info.status === 'idle'
                     ? { ...info, status: 'busy' }
@@ -1691,7 +1886,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 if (info.parent_id)
                   setChildrenByParent((previous) => applyChildInfo(previous, info));
                 void removeChildSessionRecents(useHomeRecentsStore.getState, serverId, [info]);
-                syncHomeRecentTitle(info.asid, info.title, info.directory);
+                syncHomeRecentTitle(info.asid, info.title, info.directory, info.agent_id);
                 syncHomeRecentObservation(info);
                 if (info.directory) {
                   snapshotDirectoryRef.current = info.directory;
@@ -1700,11 +1895,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 }
               }
               setInbox(snap.inbox);
+              setCompaction((current) => reconcileCompactionTimeline(current, timeline, asid));
               // A rollback staged before the app was opened is still staged.
               setStagedRevert(info?.revert ?? null);
 
               if (ownsSnapshot() && info?.asid === asid && !info.deleted && info.directory) {
-                const target = homeTargetFor(asid, info.directory);
+                const target = homeTargetFor(asid, info.directory, info.agent_id);
                 if (target) {
                   const observedAt = Date.now();
                   // This is the only entry visit publisher: silent resyncs and
@@ -1743,7 +1939,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 setTimeline(timeline, nextWindow);
                 setWindowStart(nextWindow);
                 follow.reset();
-              } else {
+              } else if (replaceAgentTranscript(mode, info?.runtime ?? readRuntime())) {
                 // Hold the reader's place across the correction. The row that was at
                 // the top of the window is the anchor: its index has moved, because
                 // that is what a resync means, so the window start moves with it.
@@ -1758,7 +1954,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 setWindowStart(nextWindow);
               }
 
-              if (yoloModeRef.current) {
+              if (yoloModeRef.current && nativeAgentInteraction(info?.runtime)) {
                 // Auto-answer everything the engine raised while we were away — the
                 // safety list still denies its share.
                 for (const perm of snap.permissions) void handleAutoPermission(perm);
@@ -1791,7 +1987,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                * between this call leaving and landing is still unread afterwards,
                * which is the honest answer.
                */
-              if (info && appActiveRef.current) {
+              if (info && appActiveRef.current && replaceAgentTranscript(mode, info.runtime)) {
                 const idle = info.time_idle;
                 const viewedAsid = info.asid;
                 void (
@@ -1888,6 +2084,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       sessionId,
       activeAsid,
       applySelectedModel,
+      readRuntime,
       applyViewed,
       follow,
       handleAutoPermission,
@@ -1953,11 +2150,22 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       // Unscoped, a multi-agent gateway asks every agent for these children,
       // and an adapter without a parent filter answers with all its roots.
       const agentId = listAgentIdRef.current;
+      const query = agentId ? { agentId } : undefined;
+      // One request for the whole subtree where the gateway has said it can
+      // (`session_descendants` in the snapshot's envelope); the per-parent
+      // walk, one request per branch, everywhere else.
+      const descendantsInOne = hasObservedCapability(
+        useServerCapabilities.getState().observed,
+        serverId,
+        SESSION_DESCENDANTS_CAPABILITY
+      );
       await loadSessionDescendants({
         rootAsid,
         known: observedChildren,
-        listChildren: (asid) =>
-          listAgentSessionChildrenObserved(asid, agentId ? { agentId } : undefined),
+        listChildren: (asid) => listAgentSessionChildrenObserved(asid, query),
+        ...(descendantsInOne
+          ? { listDescendants: (asid) => listAgentSessionDescendantsObserved(asid, query) }
+          : {}),
         isCurrent,
         onChildren: (parent, inventory) => {
           if (!isCurrent()) return;
@@ -2006,7 +2214,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
       switch (event.type) {
         case 'agent.timeline.upsert':
+          if (!replaceAgentTranscript('silent', readRuntime())) break;
           setTimeline((prev) => upsertTimelineItems(prev, event.items));
+          setCompaction((current) =>
+            reconcileCompactionTimeline(current, event.items, event.asid || activeAsid || '')
+          );
           // Pinning to the latest message while the reader is at the bottom is
           // LegendList's `maintainScrollAtEnd` job (threshold-guarded); a
           // manual scrollToEnd here would start a new animation on every
@@ -2014,6 +2226,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           break;
 
         case 'agent.timeline.removed':
+          if (!replaceAgentTranscript('silent', readRuntime())) break;
           /**
            * Rows the gateway says are gone. A committed rollback is the one
            * that sends many at once: OpenCode deletes the boundary message and
@@ -2037,6 +2250,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
           // The transcript takes it only when it is the transcript's own.
           if (!forActiveSession) break;
+          if (isBusyStatus(event.status)) {
+            // An observed turn consumes the staged choice, including turns
+            // started by another client. The model itself still comes from
+            // session metadata, never this status notification.
+            setStagedModels((previous) => {
+              const asid = event.asid || activeAsid;
+              if (!asid || !previous[asid]) return previous;
+              const next = { ...previous };
+              delete next[asid];
+              return next;
+            });
+          }
           // The status the engine reports is the status shown -- `failed`
           // keeps its error, `interrupted` says so, and nothing here forces
           // idle on the way past.
@@ -2050,7 +2275,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             setTimeline((prev) => prev.map((it) => (it.queued ? { ...it, queued: false } : it)));
             // A turn that ended under the reader's eyes has been read. The
             // dot is for the sessions they were not looking at.
-            if (appActiveRef.current && event.asid) {
+            if (
+              appActiveRef.current &&
+              event.asid &&
+              replaceAgentTranscript('silent', readRuntime())
+            ) {
               const viewedAsid = event.asid;
               void markAgentSessionViewed(viewedAsid)
                 .then((viewed) => applyViewed(viewedAsid, viewed))
@@ -2080,7 +2309,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           if (info.deleted) {
             // A late inventory reply must not resurrect an explicitly deleted node.
             childrenRequestRef.current++;
-            const deletedTarget = homeTargetFor(info.asid, info.directory);
+            const deletedTarget = homeTargetFor(info.asid, info.directory, info.agent_id);
             if (deletedTarget) {
               void useHomeRecentsStore.getState().remove(deletedTarget);
               useHomeAttention.getState().observe(deletedTarget, [], Date.now());
@@ -2100,9 +2329,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             break;
           }
 
-          syncHomeRecentTitle(info.asid, info.title, info.directory);
+          syncHomeRecentTitle(info.asid, info.title, info.directory, info.agent_id);
 
           if (forActiveSession) {
+            observedRuntimeRef.current = { serverId, asid: info.asid, runtime: info.runtime };
             setSessionInfo((prev) =>
               prev && prev.asid !== info.asid ? prev : prev ? { ...prev, ...info } : info
             );
@@ -2110,6 +2340,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             // A reply delivered to the foreground conversation has been read.
             if (
               appActiveRef.current &&
+              replaceAgentTranscript('silent', info.runtime) &&
               info.status === 'idle' &&
               info.time_idle !== undefined &&
               info.time_idle > (info.time_viewed ?? 0)
@@ -2170,14 +2401,30 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         }
 
         case 'agent.form.pending':
+          useInAppNotifications.getState().reopenQuestion({
+            serverId,
+            asid: event.asid || activeAsid || '',
+            formId: event.request.id,
+            generation: gatewayGeneration,
+          });
           setForms((prev) =>
             prev.some((f) => f.id === event.request.id) ? prev : [...prev, event.request]
           );
           break;
 
-        case 'agent.form.resolved':
+        case 'agent.form.resolved': {
+          useInAppNotifications.getState().resolveQuestion({
+            serverId,
+            asid: event.asid || activeAsid || '',
+            formId: event.form_id,
+            generation: gatewayGeneration,
+          });
+          if (!forActiveSession || activeAsidRef.current !== activeAsid) break;
+          const draft = questionDrafts.resolve(questionDraftOwner, event.form_id, event.reason);
+          if (draft) injectDraftRef.current?.(draft, { expiredQuestionOwner: questionDraftOwner });
           setForms((prev) => prev.filter((f) => f.id !== event.form_id));
           break;
+        }
 
         case 'agent.revert.changed':
           // A subagent's own rollback is not the plate above this composer.
@@ -2197,12 +2444,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           // Likewise: a subagent compacting its own context is not this
           // session's pill.
           if (!forActiveSession) break;
-          setCompaction(
-            event.status === 'completed'
-              ? null
-              : event.status === 'failed'
-                ? { status: 'failed', reason: event.reason }
-                : { status: 'running', reason: event.reason }
+          setCompaction((current) =>
+            reconcileCompactionTimeline(
+              applyCompactionEvent(
+                current,
+                { ...event, asid: event.asid || activeAsid || '' },
+                transcriptStore.getState().timeline
+              ),
+              transcriptStore.getState().timeline,
+              activeAsid ?? ''
+            )
           );
           // The boundary itself arrives in the timeline; what changed here is
           // how much of the window is left.
@@ -2227,7 +2478,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     [
       setTimeline,
       activeAsid,
+      transcriptStore,
       loadSnapshot,
+      questionDrafts,
+      questionDraftOwner,
+      gatewayGeneration,
+      readRuntime,
       refreshSessions,
       refreshContext,
       refreshShells,
@@ -2278,8 +2534,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           void loadSnapshot('silent');
           return;
         }
-        if (delta.items.length > 0) {
+        if (delta.items.length > 0 && replaceAgentTranscript('silent', readRuntime())) {
           setTimeline((prev) => upsertTimelineItems(prev, delta.items));
+          setCompaction((current) => reconcileCompactionTimeline(current, delta.items, asid));
         }
         // Bound out of the union rather than asserted: there is no `!` on
         // anything that came off the wire anywhere in this surface.
@@ -2288,7 +2545,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           setSessionInfo((prev) => (prev ? { ...prev, status: nextStatus } : prev));
           // A reconnect may recover the reply without replaying its idle event.
           // A foreground reader has read that recovered conversation too.
-          if (nextStatus === 'idle' && appActiveRef.current) {
+          if (
+            nextStatus === 'idle' &&
+            appActiveRef.current &&
+            replaceAgentTranscript('silent', readRuntime())
+          ) {
             void markAgentSessionViewed(asid)
               .then((viewed) => applyViewed(asid, viewed))
               .catch(() => {});
@@ -2297,7 +2558,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         syncRef.current = advanceSeq(syncRef.current, delta.latest_seq);
       })
       .catch(() => {});
-  }, [setTimeline, sessionId, loadSnapshot, applyViewed]);
+  }, [setTimeline, sessionId, loadSnapshot, applyViewed, readRuntime]);
 
   useEffect(() => {
     catchUpRef.current = catchUp;
@@ -2325,12 +2586,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   useEffect(() => {
     const returned = appActive && !wasForegroundRef.current;
     wasForegroundRef.current = appActive;
-    if (!returned || !activeAsid) return;
+    if (!returned || !activeAsid || !replaceAgentTranscript('silent', readRuntime())) return;
     const viewedAsid = activeAsid;
     void markAgentSessionViewed(viewedAsid)
       .then((viewed) => applyViewed(viewedAsid, viewed))
       .catch(() => {});
-  }, [appActive, activeAsid, applyViewed]);
+  }, [appActive, activeAsid, applyViewed, readRuntime]);
 
   /**
    * The stream handler, behind a ref for the same reason the sequence is.
@@ -2502,6 +2763,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
   const handleSelectModel = useCallback(
     (model: ModelRef) => {
+      if (activeAsid && !nativeAgentInteraction(readRuntime())) return;
       const owner = captureWorkbenchOwner(activeAsid, activeDirectoryRef.current);
       const applyModel = () => {
         if (!ownsWorkbench(owner)) return;
@@ -2514,8 +2776,28 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         applyModel();
         return;
       }
+      if (stagesNextTurnModel && isBusyStatus(sessionInfo?.status)) {
+        showToast({
+          variant: 'info',
+          title: t`The agent is still running`,
+          message: t`Wait for the turn to end before choosing a model.`,
+        });
+        return;
+      }
+      const generation = useGatewayGeneration.getState().byServer[serverId];
       void switchAgentModel(sessionId, activeAsid, model)
-        .then(applyModel)
+        .then(() => {
+          if (!ownsWorkbench(owner)) return;
+          if (stagesNextTurnModel) {
+            if (useGatewayGeneration.getState().byServer[serverId] !== generation) return;
+            setStagedModels((previous) => ({
+              ...previous,
+              [activeAsid]: { serverId, asid: activeAsid, gatewayGeneration: generation, model },
+            }));
+          } else {
+            applyModel();
+          }
+        })
         .catch((err) => {
           if (!ownsWorkbench(owner)) return;
           showToast({
@@ -2527,7 +2809,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     },
     [
       applySelectedModel,
+      readRuntime,
       sessionId,
+      serverId,
+      stagesNextTurnModel,
+      sessionInfo?.status,
       activeAsid,
       activeAgentId,
       captureWorkbenchOwner,
@@ -2547,17 +2833,23 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    */
   const handleCompactContext = useCallback(() => {
     if (!activeAsid) return;
-    setCompaction({ status: 'running', reason: 'manual' });
+    const requested = beginCompaction(
+      activeAsid,
+      'manual',
+      syncRef.current.seq,
+      transcriptStore.getState().timeline
+    );
+    setCompaction(requested);
     compactAgentSession(activeAsid).catch((err) => {
       console.warn('Failed to compact session:', err);
-      setCompaction(null);
+      setCompaction((current) => (current === requested ? null : current));
       showToast({
         variant: 'danger',
         title: t`Could not compact`,
         message: agentErrorRef.current(err),
       });
     });
-  }, [activeAsid, showToast, t]);
+  }, [activeAsid, showToast, t, transcriptStore]);
 
   /**
    * Clearing the context is starting a session, not typing `/clear`.
@@ -2626,9 +2918,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     [activeAsid, sessionId, showScreenNotice, t]
   );
 
-  /** A failed compaction stays until the reader has seen it. */
+  /** A failed notice or a completed stream awaiting its boundary can be dismissed. */
   const dismissCompaction = useCallback(() => {
-    setCompaction((current) => (current?.status === 'failed' ? null : current));
+    setCompaction((current) => (current?.status !== 'running' ? null : current));
   }, []);
 
   const handleCancelInboxItem = useCallback(
@@ -2715,13 +3007,29 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const dispatchPrompt = async (
     text: string,
     attachments?: string[],
-    delivery?: 'steer' | 'queue'
+    delivery?: 'steer' | 'queue',
+    attachmentOwnership?: AgentPromptOwnership
   ): Promise<boolean> => {
+    if (attachmentOwnership && !attachmentOwnership.isCurrent()) return false;
+    const running = isBusyStatus(sessionInfo?.status);
+    if (
+      !canInteractNatively ||
+      !canSendAgentPrompt(
+        running,
+        agentFeatures.inbox,
+        agentFeatures.extra.promptSteering === true,
+        delivery
+      )
+    )
+      return false;
+    const promptDelivery = running ? (delivery ?? 'steer') : undefined;
     const sourceAsid = activeAsidRef.current;
+    const stagedChoice = sourceAsid ? stagedModels[sourceAsid] : undefined;
     let directory = activeDirectoryRef.current ?? sessionInfo?.directory;
     let requestOwner = captureWorkbenchOwner(sourceAsid, directory);
     const ownsRoute = () =>
       mountedRef.current &&
+      (!attachmentOwnership || attachmentOwnership.isCurrent()) &&
       agentWorkbenchRouteMatches(
         requestOwner,
         captureWorkbenchOwner(activeAsidRef.current, activeDirectoryRef.current)
@@ -2756,6 +3064,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               );
               if (!advancedOwner) return false;
               directory = created.directory ?? directory;
+              if (
+                attachmentOwnership &&
+                !attachmentOwnership.advanceAfterCreate(created.asid, directory)
+              )
+                return false;
               activeDirectoryRef.current = directory;
               setActiveDirectory(directory);
               freshSessionRef.current = created.asid;
@@ -2794,7 +3107,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     // inside the create above, so closures below read this narrowed copy.
     const promptAsid = currentAsid;
 
-    const isQueued = isBusyStatus(sessionInfo?.status) && delivery === 'queue';
+    const isQueued = promptDelivery === 'queue';
 
     // Optimistically add user text item.
     //
@@ -2819,16 +3132,23 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       queued: isQueued,
       order: orderKeyAfter(transcriptStore.getState().timeline),
     };
-    setTimeline((prev) => [...prev, tempUserItem]);
-    setScrollToSentRow(`grp_${tempKey}`);
+    // All attachments stay in the composer's explicit submission UI. Upload
+    // paths are not message identities (images may export as data URIs), and
+    // a submission ACK carries no canonical message ID. Do not guess a match.
+    const optimistic = agentPromptUsesOptimisticRow(attachments);
+    if (optimistic) {
+      setTimeline((prev) => [...prev, tempUserItem]);
+      setScrollToSentRow(`grp_${tempKey}`);
+    }
 
     // No optimistic title. Auto-titling happens on the engine's first turn and
     // arrives as `agent.session.updated`; a client-side guess made from the
     // first thirty characters was only ever replaced a few seconds later, and
     // it is what put a truncated prompt in the strip instead of a real title.
-    setSessionInfo((previous) =>
-      previous?.asid === promptAsid ? { ...previous, status: 'busy' } : previous
-    );
+    if (optimistic)
+      setSessionInfo((previous) =>
+        previous?.asid === promptAsid ? { ...previous, status: 'busy' } : previous
+      );
 
     return recoverWith(
       async () => {
@@ -2838,23 +3158,44 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         await sendAgentPrompt(sessionId, promptAsid, {
           text,
           attachments,
-          delivery,
+          delivery: promptDelivery,
         });
         if (!ownsRoute() || activeAsidRef.current !== promptAsid) return false;
+        // Starting a new turn consumes staging; steering the current turn does not.
+        // Session metadata confirms the resulting model and effort.
+        if (stagedChoice && !running) {
+          setStagedModels((previous) => {
+            if (previous[promptAsid] !== stagedChoice) return previous;
+            const next = { ...previous };
+            delete next[promptAsid];
+            return next;
+          });
+        }
         return true;
       },
       (err) => {
         console.warn('Failed to send prompt:', err);
         if (!ownsRoute() || activeAsidRef.current !== promptAsid) return false;
-        // The row goes with the failure. A message that was never delivered has
-        // no business sitting in the transcript, and the draft comes back so the
-        // reader can try again rather than retype it.
-        setTimeline((prev) => prev.filter((item) => item.id !== tempUserItem.id));
-        setSessionInfo((prev) => (prev ? { ...prev, status: 'idle' } : prev));
+        // A deadline is not a refusal: the gateway may have delivered the
+        // prompt and answered too late, and a message the reader resends on
+        // that reading arrives twice. The row stays until the snapshot says
+        // whether it landed, and the toast says to check before sending again.
+        const unconfirmed = describeGatewayFailure(err).kind === 'timeout';
+        const delivered = optimistic && !unconfirmed;
+        // Otherwise the row goes with the failure. A message that was never
+        // delivered has no business sitting in the transcript, and the draft
+        // comes back so the reader can try again rather than retype it.
+        if (delivered) setTimeline((prev) => prev.filter((item) => item.id !== tempUserItem.id));
+        // Only text changed status optimistically. An attachment error is
+        // ambiguous: do not replace an already-arrived native row with a
+        // possibly older snapshot. Its native status/events remain authoritative.
+        if (optimistic) void loadSnapshot('silent');
         showToast({
           variant: 'danger',
-          title: t`Message not sent`,
-          message: agentErrorRef.current(err),
+          title: delivered ? t`Message not sent` : t`Could not confirm submission`,
+          message: delivered
+            ? agentErrorRef.current(err)
+            : t`Your draft is kept. Check the conversation before sending again. ${agentErrorRef.current(err)}`,
           durationMs: 6000,
         });
         return false;
@@ -2894,7 +3235,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * said out loud rather than papered over.
    */
   const handleAbort = useCallback(async () => {
-    if (!activeAsid) return;
+    if (!activeAsid || !nativeAgentInteraction(readRuntime())) return;
     try {
       await abortAgentSession(sessionId, activeAsid);
     } catch (err) {
@@ -2905,7 +3246,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         message: agentErrorRef.current(err),
       });
     }
-  }, [activeAsid, sessionId, showToast, t]);
+  }, [activeAsid, sessionId, showToast, t, readRuntime]);
 
   /**
    * The agent mode, switched on the session rather than in a local variable.
@@ -2999,6 +3340,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
   const handlePermissionDecision = useCallback(
     async (permId: string, decision: PermissionDecision) => {
+      if (!nativeAgentInteraction(readRuntime())) return;
       const request = permissions.find((permission) => permission.id === permId);
       const asid = request?.asid || activeAsidRef.current;
       if (!asid) return;
@@ -3031,7 +3373,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       if (decision === 'allow_always') setSavedPermissionsRevision((count) => count + 1);
       setPermissions((prev) => prev.filter((p) => p.id !== permId));
     },
-    [captureWorkbenchOwner, homeTargetFor, ownsWorkbench, permissions, sessionId, showToast, t]
+    [
+      readRuntime,
+      captureWorkbenchOwner,
+      homeTargetFor,
+      ownsWorkbench,
+      permissions,
+      sessionId,
+      showToast,
+      t,
+    ]
   );
 
   const handleToggleYoloMode = useCallback(() => {
@@ -3040,7 +3391,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
   const handleFormSubmit = useCallback(
     async (formId: string, answers: Record<string, unknown>) => {
-      if (!activeAsid) return;
+      const request = forms.find((form) => form.id === formId);
+      if (!request || !canReplyAgentForm(request, readRuntime())) return;
+      if (!activeAsid || activeAsidRef.current !== activeAsid) return;
+      const ownsReply = () =>
+        activeAsidRef.current === activeAsid &&
+        useGatewayGeneration.getState().byServer[serverId] === gatewayGeneration &&
+        useGatewayConnectionStore.getState().record?.serverId === serverId;
+      if (!ownsReply()) return;
       try {
         await replyAgentForm(sessionId, activeAsid, formId, answers);
       } catch (err) {
@@ -3052,9 +3410,26 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         });
         return;
       }
-      setForms((prev) => prev.filter((f) => f.id !== formId));
+      if (ownsReply()) {
+        useInAppNotifications
+          .getState()
+          .resolveQuestion({ serverId, asid: activeAsid, formId, generation: gatewayGeneration });
+        questionDrafts.resolve(questionDraftOwner, formId, 'answered');
+        setForms((prev) => prev.filter((f) => f.id !== formId));
+      }
     },
-    [activeAsid, sessionId, showToast, t]
+    [
+      readRuntime,
+      activeAsid,
+      forms,
+      serverId,
+      sessionId,
+      showToast,
+      t,
+      questionDrafts,
+      questionDraftOwner,
+      gatewayGeneration,
+    ]
   );
 
   const handleCreateNewSession = useCallback(
@@ -3174,13 +3549,67 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     }
   }, [createNewSessionRef, handleCreateNewSession]);
 
-  useEffect(() => {
-    if (abortSessionRef) {
-      abortSessionRef.current = () => {
-        void handleAbort();
-      };
-    }
-  }, [abortSessionRef, handleAbort]);
+  const canMutateSession = useCallback(
+    (action: AgentSessionAction, asid: string, supplied?: AgentSessionInfo) => {
+      const info =
+        (sessionInfo?.asid === asid ? sessionInfo : undefined) ??
+        sessions.find((session) => session.asid === asid) ??
+        Object.values(childrenByParent)
+          .flat()
+          .find((session) => session.asid === asid) ??
+        supplied;
+      if (!info || info.asid !== asid) return false;
+      const current = asid === activeAsidRef.current ? { ...info, runtime: readRuntime() } : info;
+      return canMutateAgentSession(
+        action,
+        current,
+        agentFeaturesFor(
+          useAgents.getState().index.servers[serverId]?.agents?.agents,
+          info.agent_id
+        ),
+        useServerCapabilities.getState().byServer[serverId]
+      );
+    },
+    [sessionInfo, sessions, childrenByParent, readRuntime, serverId]
+  );
+
+  const handleForkSession = useCallback(
+    async (source: AgentSessionInfo) => {
+      if (
+        newSessionCreationRef.current ||
+        promptDispatchRef.current ||
+        !canMutateSession('fork', source.asid, source)
+      )
+        return;
+      const owner = captureWorkbenchOwner(activeAsidRef.current, activeDirectoryRef.current);
+      if (!ownsWorkbench(owner)) return;
+      newSessionCreationRef.current = true;
+      setCreatingSession(true);
+      return settleAfter(
+        async () => {
+          try {
+            const created = await forkAgentSession(source.asid, source.agent_id);
+            if (!ownsWorkbench(owner)) return;
+            setSessions((previous) => [
+              created,
+              ...previous.filter((item) => item.asid !== created.asid),
+            ]);
+            // Navigation follows the accepted fork. A failure leaves the original
+            // transcript, scroll position, and composer draft untouched.
+            selectAsid(created.asid);
+          } catch (error) {
+            if (ownsWorkbench(owner))
+              showScreenNotice(t`Could not fork`, agentErrorRef.current(error));
+          }
+        },
+        () => {
+          newSessionCreationRef.current = false;
+          setCreatingSession(false);
+        }
+      );
+    },
+    [canMutateSession, captureWorkbenchOwner, ownsWorkbench, selectAsid, showScreenNotice, t]
+  );
 
   /**
    * A new name for a session, everywhere it is shown, before the engine has
@@ -3193,7 +3622,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * they all read the same lists.
    */
   const handleRenameSession = useCallback(
-    (asid: string, title: string) => {
+    (asid: string, title: string, supplied?: AgentSessionInfo) => {
+      if (!canMutateSession('rename', asid, supplied)) return;
       const next = title.trim();
       if (!asid || !next) return;
       const previous =
@@ -3205,7 +3635,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           ? (activeDirectoryRef.current ??
             (sessionInfo?.asid === asid ? sessionInfo.directory : undefined))
           : sessions.find((session) => session.asid === asid)?.directory;
-      const renameTarget = homeTargetFor(asid, renameDirectory);
+      const renameTarget = homeTargetFor(asid, renameDirectory, supplied?.agent_id);
 
       const apply = (value: string) => {
         setSessions((prev) =>
@@ -3230,7 +3660,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           showScreenNotice(t`Could not rename`, agentErrorRef.current(err));
         });
     },
-    [homeTargetFor, sessions, sessionInfo, showScreenNotice, t]
+    [canMutateSession, homeTargetFor, sessions, sessionInfo, showScreenNotice, t]
   );
 
   /**
@@ -3241,8 +3671,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * confirmation is the caller's; by the time this runs it has been given.
    */
   const handleDeleteSession = useCallback(
-    (asid: string) => {
-      if (!asid) return;
+    (asid: string, supplied?: AgentSessionInfo) => {
+      if (!asid || !canMutateSession('delete', asid, supplied)) return;
       const previousSessions = sessions;
       const previousChildren = childrenByParent;
       childrenRequestRef.current++;
@@ -3253,7 +3683,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           .flat()
           .find((session) => session.asid === asid);
       // Capture identity before the optimistic navigation changes the active session.
-      const deletedTarget = homeTargetFor(asid, deletedInfo?.directory);
+      const deletedTarget = homeTargetFor(asid, deletedInfo?.directory, deletedInfo?.agent_id);
 
       const remaining = sessions.filter((session) => session.asid !== asid);
       setSessions(remaining);
@@ -3289,7 +3719,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           showScreenNotice(t`Could not delete`, agentErrorRef.current(err));
         });
     },
-    [setTimeline, sessions, childrenByParent, activeAsid, homeTargetFor, showScreenNotice, t]
+    [
+      canMutateSession,
+      setTimeline,
+      sessions,
+      childrenByParent,
+      activeAsid,
+      homeTargetFor,
+      showScreenNotice,
+      t,
+    ]
   );
 
   const handleSelectWorkspace = useCallback(
@@ -3783,6 +4222,24 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     (...args: Parameters<typeof handleSendPrompt>) => sendPromptLatest.current(...args),
     [sendPromptLatest]
   );
+  const captureAttachmentSend = useCallback((): AgentAttachmentSendRequest => {
+    const record = useGatewayConnectionStore.getState().record;
+    const generation = useGatewayGeneration.getState().byServer[serverId];
+    const ownership = captureAgentPromptOwnership(
+      captureWorkbenchOwner(activeAsidRef.current, activeDirectoryRef.current),
+      () => captureWorkbenchOwner(activeAsidRef.current, activeDirectoryRef.current),
+      () =>
+        mountedRef.current &&
+        record?.serverId === serverId &&
+        useGatewayConnectionStore.getState().record === record &&
+        useGatewayGeneration.getState().byServer[serverId] === generation
+    );
+    return {
+      isCurrent: ownership.isCurrent,
+      send: (text, attachments, delivery) =>
+        sendPromptLatest.current(text, attachments, delivery, ownership),
+    };
+  }, [captureWorkbenchOwner, sendPromptLatest, serverId]);
   const commandFromComposer = useCallback(
     (name: AgentClientCommandId) => clientCommandLatest.current(name),
     [clientCommandLatest]
@@ -3846,10 +4303,30 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
   const handleOpenToolFile = useCallback(
     (file: { uri: string; mime?: string; name?: string }) => {
+      if (activeAsid && isPdfFile(file)) {
+        const owner = captureWorkbenchOwner(activeAsid, activeDirectory);
+        void resolveAgentFileAsset(activeAsid, file.uri, new AbortController().signal, serverId)
+          .then((asset) => {
+            if (ownsWorkbench(owner)) setOpenToolAsset(asset);
+          })
+          .catch(() => {
+            if (ownsWorkbench(owner)) showScreenNotice(t`Could not open file`, t`Try again`);
+          });
+        return;
+      }
       const asset = assetFromToolFile(file, sessionId);
-      if (asset) setOpenToolAsset(asset);
+      if (asset) setOpenToolAsset({ ...asset, gatewayServerId: serverId });
     },
-    [sessionId]
+    [
+      activeAsid,
+      activeDirectory,
+      captureWorkbenchOwner,
+      ownsWorkbench,
+      serverId,
+      sessionId,
+      showScreenNotice,
+      t,
+    ]
   );
 
   /**
@@ -3859,14 +4336,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * started it returns long before the child is finished, and `agent.status.changed`
    * for the child arrives on the same list this is read from.
    */
-  const childStatuses = useMemo(() => {
-    const statuses: Record<string, AgentRunStatus> = {};
+  const childSessions = useMemo(() => {
+    const sessions: Record<string, AgentSessionInfo> = {};
     // Out of the fetched tree, not out of the session list: the list is roots
     // only, so a subagent is never in it and this map would always be empty.
     for (const children of Object.values(childrenByParent)) {
-      for (const child of children) statuses[child.asid] = child.status;
+      for (const child of children) sessions[child.asid] = child;
     }
-    return statuses;
+    return sessions;
   }, [childrenByParent]);
 
   /**
@@ -3891,12 +4368,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       audioSessionId: activeAsid ?? undefined,
       onOpenChildSession: openSubagentDetail,
       ...(canRunInBackground ? { onRunInBackground: handleRunInBackground } : {}),
-      onPreviewImage: setPreviewImageUri,
+      onPreviewImage: previewImage,
       onOpenFile: handleOpenToolFile,
       ...(canRunInBackground ? { onOpenBackgroundTray: openBackgroundTray } : {}),
       onOpenFullDiff: openDiffSheet,
       onOpenToolDetail: openToolDetail,
-      childStatuses,
+      childSessions,
     }),
     [
       activeAsid,
@@ -3906,8 +4383,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       openBackgroundTray,
       openDiffSheet,
       openToolDetail,
-      childStatuses,
+      childSessions,
       openSubagentDetail,
+      previewImage,
     ]
   );
 
@@ -3930,7 +4408,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     () => ({
       showReasoning,
       markdownStyle,
-      onPreviewImage: setPreviewImageUri,
+      onPreviewImage: previewImage,
       onEditQueued: handleEditQueuedItem,
       onCancelQueued: handleCancelQueuedItem,
       // Roll-back is offered on any agent that can revert; one that cannot
@@ -3946,6 +4424,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       handleStageRevert,
       agentFeatures.revert,
       toolActions,
+      previewImage,
     ]
   );
 
@@ -4051,10 +4530,47 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * a guess at how long the prepend would take.
    */
   const handleLoadEarlier = useCallback(() => {
-    if (windowStart <= 0) return;
+    if (windowStart > 0) {
+      setLoadingEarlier(true);
+      setWindowStart((prev) => Math.max(0, prev - HISTORY_PAGE_SIZE));
+      return;
+    }
+    if (!activeAsid || earlierExhausted || !supportsRemoteEarlier) return;
     setLoadingEarlier(true);
-    setWindowStart((prev) => Math.max(0, prev - HISTORY_PAGE_SIZE));
-  }, [windowStart]);
+    const owner = activeAsid;
+    void loadEarlierAgentTimeline(sessionId, owner)
+      .then(async (page) => {
+        // The adapter lost the cursor this paging read from (a restart, an
+        // eviction): the snapshot is read again, which gives it one, and the
+        // same pull goes on from there. It is not the end of the history.
+        if (!page.cursorLost || activeAsidRef.current !== owner) return page;
+        await loadSnapshot('refresh');
+        if (activeAsidRef.current !== owner) return page;
+        return loadEarlierAgentTimeline(sessionId, owner);
+      })
+      .then((page) => {
+        if (activeAsidRef.current !== owner || page.cursorLost) return;
+        if (page.exhausted || page.items.length === 0) {
+          setEarlierExhausted(true);
+          return;
+        }
+        setTimeline((prev) => upsertTimelineItems(prev, page.items));
+      })
+      .catch((err) => {
+        console.warn('Failed to load earlier messages:', err);
+      })
+      .finally(() => {
+        if (activeAsidRef.current === owner) setLoadingEarlier(false);
+      });
+  }, [
+    activeAsid,
+    earlierExhausted,
+    loadSnapshot,
+    sessionId,
+    setTimeline,
+    supportsRemoteEarlier,
+    windowStart,
+  ]);
 
   // The window grew (or there was nothing left to grow into), so the pull is
   // answered and the indicator can retract.
@@ -4073,6 +4589,68 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * offered a switch to a model id (`opencode/union-alpha`) that appears
    * nowhere else in this app or in any catalog it fetches.
    */
+  const historyRefreshInFlight = useRef(false);
+  const refreshHistory = useCallback(async () => {
+    if (historyRefreshInFlight.current) return;
+    historyRefreshInFlight.current = true;
+    setRefreshingHistory(true);
+    await settleAfter(
+      () => loadSnapshot('refresh'),
+      () => {
+        historyRefreshInFlight.current = false;
+        setRefreshingHistory(false);
+      }
+    );
+  }, [loadSnapshot]);
+  const openRuntimeTerminal = useCallback(async () => {
+    const terminal = readRuntime()?.terminal;
+    if (!terminal || readRuntime()?.interaction !== 'terminal') return;
+    const owner = captureWorkbenchOwner(activeAsid, activeDirectoryRef.current);
+    if (!ownsWorkbench(owner)) return;
+    await recoverWith(
+      async () => {
+        const agents = await loadAgents(terminal.session_id);
+        if (!ownsWorkbench(owner)) return;
+        const current = readRuntime();
+        if (
+          current?.interaction !== 'terminal' ||
+          current.terminal?.session_id !== terminal.session_id ||
+          current.terminal.pane_id !== terminal.pane_id ||
+          current.terminal.instance_id !== terminal.instance_id ||
+          !matchesRuntimeTerminal(terminal, agents)
+        ) {
+          showToast({
+            variant: 'info',
+            title: t`Terminal unavailable`,
+            message: t`The linked agent is no longer in that terminal.`,
+          });
+          return;
+        }
+        router.push({
+          pathname: '/servers/[serverId]',
+          params: { serverId, sessionId: terminal.session_id, paneId: terminal.pane_id },
+        });
+      },
+      (error) => {
+        if (!ownsWorkbench(owner)) return;
+        showToast({
+          variant: 'danger',
+          title: t`Could not open terminal`,
+          message: agentErrorRef.current(error),
+        });
+      }
+    );
+  }, [
+    activeAsid,
+    captureWorkbenchOwner,
+    ownsWorkbench,
+    readRuntime,
+    router,
+    serverId,
+    showToast,
+    t,
+  ]);
+
   const statusPlate = useTranscriptPlate();
   const [retryNoticeDismissed, setRetryNoticeDismissed] = useState(false);
   useEffect(() => {
@@ -4081,6 +4659,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     setRetryNoticeDismissed(false);
   }, [activeAsid, sessionInfo?.status, sessionInfo?.error?.message]);
   const statusNotice = useMemo(() => {
+    if (externalRuntime) return null;
     const status = sessionInfo?.status;
     if (status === 'failed') {
       const detail = sessionInfo?.error?.message ?? '';
@@ -4131,7 +4710,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       };
     }
     return null;
-  }, [sessionInfo?.status, sessionInfo?.error?.message, retryNoticeDismissed, theme.colors, t]);
+  }, [
+    externalRuntime,
+    sessionInfo?.status,
+    sessionInfo?.error?.message,
+    retryNoticeDismissed,
+    theme.colors,
+    t,
+  ]);
 
   // A form field in the footer took focus: once the keyboard has risen, bring
   // the card up above the composer. The inset at the end of the list is what
@@ -4170,7 +4756,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     () => (
       <RefreshControl
         refreshing={loadingEarlier}
-        enabled={windowStart > 0}
+        enabled={windowStart > 0 || (supportsRemoteEarlier && !!activeAsid && !earlierExhausted)}
         onRefresh={handleLoadEarlier}
         progressViewOffset={topInset}
         // The same three colours the terminal transcript's own pull uses,
@@ -4181,6 +4767,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       />
     ),
     [
+      earlierExhausted,
+      supportsRemoteEarlier,
+      activeAsid,
       loadingEarlier,
       windowStart,
       handleLoadEarlier,
@@ -4191,19 +4780,34 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     ]
   );
 
+  const replyableForms = useMemo(
+    () => forms.filter((form) => canReplyAgentForm(form, runtime)),
+    [forms, runtime]
+  );
   const listFooter = useMemo(() => {
-    const hasFormsOrPerms = footerPermissions.length > 0 || forms.length > 0;
-    if (!hasFormsOrPerms && !isRunning && !statusNotice) return null;
+    const hasFormsOrPerms = footerPermissions.length > 0 || replyableForms.length > 0;
+    if (!hasFormsOrPerms && !isRunning && !statusNotice && !externalRuntime) return null;
     /*
       A turn blocked on a question is still `running`, and the footer said
       "Thinking…" over a form whose only blocker was the reader. The agent is
       not thinking; it is waiting, and saying so is what tells them the next
       move is theirs.
      */
-    const waitingOnReader = forms.length > 0;
+    const waitingOnReader = hasBlockingAgentForm(replyableForms);
     return (
       <View style={styles.footerContainer}>
-        {isRunning ? (
+        {externalRuntime ? (
+          <AgentRuntimeNotice
+            runtime={externalRuntime}
+            offline={isOffline}
+            refreshing={refreshingHistory}
+            onOpenTerminal={
+              externalRuntime.interaction === 'terminal' ? openRuntimeTerminal : undefined
+            }
+            onRefresh={supportsHistoryRefresh ? refreshHistory : undefined}
+          />
+        ) : null}
+        {isRunning && !externalRuntime ? (
           <View style={styles.thinkingRow}>
             <View
               style={[
@@ -4211,7 +4815,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 {
                   borderRadius: profile.chrome.control,
                   backgroundColor: surfaceBackground(theme.colors.surface),
-                  borderColor: theme.colors.border,
                 },
               ]}>
               <ThinkingIndicator size={13} color={theme.colors.primary} />
@@ -4233,7 +4836,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             accessibilityLabel={statusNotice.label}
             disabled={!statusNotice.refresh}
             onPress={() => {
-              void loadSnapshot('silent');
+              void refreshHistory();
             }}
             style={[
               styles.statusNotice,
@@ -4302,11 +4905,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             onDecision={(dec) => handlePermissionDecision(p.id, dec)}
           />
         ))}
-        {forms.map((f) => (
+        {replyableForms.map((f) => (
           <AgentFormCard
             key={f.id}
             request={f}
             onSubmit={(answers) => handleFormSubmit(f.id, answers)}
+            onDraftChange={(field, value) => handleQuestionDraftChange(f, field, value)}
             onFieldFocus={scrollFooterAboveKeyboard}
           />
         ))}
@@ -4314,10 +4918,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     );
   }, [
     footerPermissions,
-    forms,
+    replyableForms,
+    handleQuestionDraftChange,
     isRunning,
     statusNotice,
-    loadSnapshot,
+    externalRuntime,
+    isOffline,
+    refreshingHistory,
+    supportsHistoryRefresh,
+    refreshHistory,
+    openRuntimeTerminal,
     openModelSheet,
     handlePermissionDecision,
     handleFormSubmit,
@@ -4444,6 +5054,26 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     }, 500);
   });
   /**
+   * One descendant's children, read again after its socket (re)subscribed:
+   * what it may have spawned while its channel was down. The whole tree was
+   * walked for this before, once per descendant, which on a tree of fifty
+   * was fifty walks on every reconnect.
+   */
+  const refreshNodeChildren = useEffectEvent(async (asid: string) => {
+    const generation = childrenRequestRef.current;
+    const agentId = listAgentIdRef.current;
+    const observed = childrenByParentRef.current[asid] ?? [];
+    const inventory = await listAgentSessionChildrenObserved(
+      asid,
+      agentId ? { agentId } : undefined
+    );
+    if (generation !== childrenRequestRef.current) return;
+    setChildrenByParent((previous) =>
+      mergeSessionChildren(previous, asid, inventory.children, inventory.authoritative, observed)
+    );
+    void removeChildSessionRecents(useHomeRecentsStore.getState, serverId, inventory.children);
+  });
+  /**
    * Follow every descendant while its ancestor is open.
    *
    * The event socket is strictly per session (`subscribe` names one asid) and
@@ -4464,7 +5094,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     const socket = gatewaySocketFor(serverId);
     const releases = watched.map((asid) =>
       socket.watch(asid, {
-        onSubscribed: () => refreshSubtasksSoon(),
+        onSubscribed: () => void refreshNodeChildren(asid),
         onResync: () => refreshSubtasksSoon(),
         onEvent: (event) => {
           if (event.asid === asid) applyDescendantEvent(event);
@@ -4538,7 +5168,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     childrenRootRef.current = activeRootAsid;
     // react-doctor-disable-next-line react-doctor/no-pass-live-state-to-parent -- refreshChildren loads the workbench-owned child index; it is not a parent state callback.
     void refreshChildren(activeRootAsid).catch(() => {});
-  }, [refreshChildren, activeRootAsid, isRunning, activeDirectory]);
+    // Not on `activeDirectory`: a workspace change re-keys the roots and
+    // arrives here as a new root; on its own it re-walked the same tree.
+  }, [refreshChildren, activeRootAsid, isRunning]);
 
   const currentSession = useMemo(() => {
     return sessions.find((s) => s.asid === activeAsid) ?? sessionInfo;
@@ -4558,13 +5190,17 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     availableAgents.find((entry) => entry.id === activeAgent)?.model,
     catalogModels
   );
-  const activeModelRef = manualModelOverride
-    ? selectedModel
-    : (activeAgentModel ??
-      selectedModel ??
-      currentSession?.model ??
-      sessionInfo?.model ??
-      undefined);
+  const activeModelRef = nextTurnModel
+    ? nextTurnModel
+    : stagesNextTurnModel && activeAsid
+      ? confirmedAgentModel(activeAsid, sessionInfo, currentSession)
+      : manualModelOverride
+        ? selectedModel
+        : (activeAgentModel ??
+          selectedModel ??
+          currentSession?.model ??
+          sessionInfo?.model ??
+          undefined);
   const activeModelInfo = useMemo(() => {
     if (!activeModelRef?.model_id) return undefined;
     return catalogModels.find(
@@ -4574,7 +5210,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     );
   }, [catalogModels, activeModelRef]);
 
-  /** The catalogue's name for it, which is the one the reader chose from. */
   const activeModelName = formatModelName(activeModelRef, '', activeModelInfo?.name);
 
   /**
@@ -4585,7 +5220,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * "window not reported" was this app declining to read a number it already
    * had in hand.
    */
-  const contextLimit = sessionInfo?.limit?.context ?? activeModelInfo?.limit?.context;
+  const contextLimit =
+    contextUsage?.limit?.context ?? sessionInfo?.limit?.context ?? activeModelInfo?.limit?.context;
 
   /**
    * How many things the Background tasks sheet can actually show.
@@ -4631,6 +5267,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       catalogAgentId,
       activeAsid,
       sessions: allSessions,
+      listAgentId,
       childrenByParent,
       knownProjects,
       activeDirectory,
@@ -4646,7 +5283,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       yoloMode,
       todos: activeTodos ?? EMPTY_TODOS,
       inbox,
-      compaction,
+      compaction:
+        compaction && compaction.status !== 'completed'
+          ? { status: compaction.status, reason: compaction.reason }
+          : null,
       contextUsage,
       commands,
       savedPermissionsRevision,
@@ -4658,6 +5298,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     sessionId,
     serverId,
     activeAgentId,
+    listAgentId,
     catalogAgentId,
     activeAsid,
     allSessions,
@@ -4693,6 +5334,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       },
       renameSession: handleRenameSession,
       deleteSession: handleDeleteSession,
+      forkSession: handleForkSession,
       selectModel: handleSelectModel,
       selectAgentMode: handleSelectAgentMode,
       selectWorkspace: (directory, project) => {
@@ -4708,6 +5350,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     }),
     [
       handleCreateNewSession,
+      handleForkSession,
       handleRenameSession,
       handleDeleteSession,
       handleSelectModel,
@@ -4733,18 +5376,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * stream tick, which would reset its pager.
    */
   const previewImages = useMemo<PreviewImage[] | null>(() => {
-    if (!previewImageUri) return null;
+    if (!previewAlbum) return null;
     // A thumbnail served by the gateway was loaded with the device's token;
     // the lightbox fetches the same URL itself and needs the same headers.
-    const fromGateway = previewImageUri.startsWith(gatewayUrl('/'));
-    return [
-      {
-        id: previewImageUri,
-        uri: previewImageUri,
+    return previewAlbum.uris.map((uri) => {
+      const fromGateway = uri.startsWith(gatewayUrl('/'));
+      return {
+        id: uri,
+        uri,
         ...(fromGateway ? { headers: gatewayAuthHeaders() } : {}),
-      },
-    ];
-  }, [previewImageUri]);
+      };
+    });
+  }, [previewAlbum]);
 
   return (
     <View style={styles.root}>
@@ -4774,7 +5417,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             replaced by another between two frames.
           */
           <AgentTranscriptSkeleton paddingTop={topInset + 20} />
-        ) : timelineEmpty && permissions.length === 0 && forms.length === 0 ? (
+        ) : timelineEmpty && permissions.length === 0 && forms.length === 0 && !externalRuntime ? (
           <Animated.View
             style={[
               styles.emptyScrollWrapper,
@@ -4943,6 +5586,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               rowProps={rowProps}
               ref={listRef}
               scrollToSentRow={scrollToSentRow}
+              toolScrollTopInset={topInset}
               /*
             Lift only for a reader at the latest message. Someone who has
             scrolled up to read is not moved by a keyboard any more than by
@@ -4988,7 +5632,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             of someone who has scrolled up, which is also why there is no manual
             `scrollToEnd` on a stream tick.
           */
-              maintainScrollAtEnd={true}
+              maintainScrollAtEnd={maintainTranscriptEnd}
               maintainScrollAtEndThreshold={0.1}
               onScroll={handleTimelineScroll}
               /*
@@ -4999,6 +5643,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           */
               showsVerticalScrollIndicator={false}
               refreshControl={timelineRefresh}
+              ListHeaderComponent={
+                windowStart === 0 && earlierUnavailableReason ? (
+                  <Text variant="caption" color={theme.colors.textMuted}>
+                    {earlierUnavailableReason === 'gateway-upgrade'
+                      ? t`Update the Gateway to load earlier remote history.`
+                      : t`${agentName} does not support loading earlier remote history.`}
+                  </Text>
+                ) : null
+              }
               ListFooterComponent={listFooter}
               style={styles.timelineScroll}
               contentContainerStyle={timelineContentStyle}
@@ -5091,11 +5744,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       ) : null}
 
       {/*
-        The one thing the transcript does about output that landed behind the
-        reader: offer the way back. Never a scroll of its own -- a viewport
-        that moves under someone reading is the behaviour this whole screen is
-        built to avoid -- and never a standing button either: it appears when
-        something has actually arrived, and goes when they are level with it.
+        Offer the way back whenever the reader browses history, even when no
+        new output has arrived. The button disappears when they reach the
+        latest message; only their explicit tap requests a scroll.
       */}
       <JumpToLatestPill
         follow={follow}
@@ -5159,7 +5810,17 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         mentionComputers={mentionComputers}
         disabled={isOffline}
         agentName={agentName}
-        running={isRunning}
+        running={isRunning && canInteractNatively}
+        interactionBlockedReason={
+          canInteractNatively
+            ? undefined
+            : runtime?.interaction === 'terminal'
+              ? t`Continue in the linked terminal. Your draft stays here.`
+              : t`Live control is unavailable for this saved history. Your draft stays here.`
+        }
+        canSendWhileRunning={agentFeatures.inbox || agentFeatures.extra.promptSteering === true}
+        canQueueWhileRunning={agentFeatures.inbox}
+        canMentionFiles={agentFeatures.extra.fileMentions !== false}
         sessionStrip={rootStrip.nodes}
         selectedRootAsid={rootStrip.selectedRootAsid}
         onOpenSessionTree={openSessionTree}
@@ -5191,6 +5852,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         cost={sessionInfo?.cost}
         sessionTitle={sessionInfo?.title}
         onSend={sendFromComposer}
+        captureAttachmentSend={captureAttachmentSend}
         onAbort={handleAbort}
         onSelectSession={selectAsid}
         onSelectAgentMode={handleSelectAgentMode}
@@ -5199,7 +5861,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         canPickMode={canPickMode}
         canAttach={agentFeatures.attachments}
         sessionLead={sessionLead}
-        onOpenModelSheet={agentFeatures.modelSelection ? openModelSheet : undefined}
+        onOpenModelSheet={
+          canInteractNatively && agentFeatures.modelSelection ? openModelSheet : undefined
+        }
         onOpenDiffSheet={openDiffSheet}
         onOpenSessionsSheet={openSessionsSheet}
         onOpenTasksSheet={activeTodos && activeTodos.length > 0 ? openTasksSheet : undefined}
@@ -5215,6 +5879,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         onSetInboxDelivery={handleSetInboxDelivery}
         onPressTokens={openContextSheet}
         injectDraftRef={injectDraftRef}
+        draftOwnerKey={questionDraftOwner}
       />
 
       {/*
@@ -5226,8 +5891,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       {previewImages ? (
         <ImagePreviewModal
           images={previewImages}
-          initialIndex={0}
-          onClose={() => setPreviewImageUri(null)}
+          initialIndex={previewAlbum?.index ?? 0}
+          onClose={() => setPreviewAlbum(null)}
         />
       ) : null}
 
@@ -5464,7 +6129,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
   },
   emptyScrollWrapper: {
     flex: 1,

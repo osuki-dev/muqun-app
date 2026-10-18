@@ -1,5 +1,6 @@
 import { Bot } from 'lucide-react-native';
 
+import { CodexIcon } from '@/components/codex-icon';
 import { DeepSeekIcon } from '@/components/deepseek-icon';
 import { OpenCodeIcon } from '@/components/opencode-icon';
 import { T3Icon } from '@/components/t3-icon';
@@ -13,6 +14,8 @@ import { agentMarkKind } from '@/lib/agent-mark-kind';
  */
 export function AgentMark({ kind, size, color }: { kind: string; size: number; color: string }) {
   switch (agentMarkKind(kind)) {
+    case 'codex':
+      return <CodexIcon size={size} color={color} />;
     case 'opencode':
       return <OpenCodeIcon size={size} color={color} />;
     case 'deepseek':

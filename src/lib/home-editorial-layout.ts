@@ -66,3 +66,15 @@ export function getEditorialLayoutGeometry(
     asideWidth,
   };
 }
+
+/** Move a scenic cover behind the safe-area title without moving the work below it. */
+export function editorialScenePlacement(
+  titleHeight: number,
+  topInset: number,
+  artworkTopInset = 0
+) {
+  return {
+    marginTop: -titleHeight - topInset,
+    marginBottom: topInset + titleHeight * 0.65 - (titleHeight > 0 ? artworkTopInset : 0),
+  };
+}

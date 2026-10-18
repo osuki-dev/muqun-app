@@ -9,6 +9,7 @@
  */
 
 import type { HomeSessionParams } from '@/lib/home-composer';
+import { taskAttentionView, type TaskAttentionInput } from './task-attention';
 import type { ServerReachability } from './server-reachability';
 import {
   isServerAgentsStale,
@@ -104,19 +105,23 @@ export type PendingResend = {
 export const PENDING_DISPATCH_TTL_MS = 2 * 60_000;
 
 /**
- * Whether a Sent row is still shown. A plain one goes when it outlives
- * PENDING_DISPATCH_TTL_MS. A failed one holds a draft and stays until it is
- * sent again or dismissed. One that went to its session stays too, until that
- * session's task appears or it is dismissed -- and once its session finished,
- * for RECENT_FINISHED_MS, as a finished task does.
+ * Whether a Sent row is still shown: always, until something settles it.
+ * A plain one the gateway never answered used to go after
+ * PENDING_DISPATCH_TTL_MS, which read as the work vanishing; it stays as
+ * "delivery not confirmed" until the gateway's task appears
+ * (`settlesPending`) or the reader dismisses it. A failed one holds a draft
+ * and stays until it is sent again or dismissed; one that went to its
+ * session stays until that session's task appears or it is dismissed.
  */
-export function pendingShown(item: PendingDispatch, nowMs: number): boolean {
-  if (item.failed === true) return true;
-  if (item.asid !== undefined) {
-    const ended = item.reply?.state === 'done' || item.reply?.state === 'failed';
-    return !ended || nowMs - (item.reply?.atMs ?? item.atMs) <= RECENT_FINISHED_MS;
-  }
-  return nowMs - item.atMs < PENDING_DISPATCH_TTL_MS;
+export function pendingShown(_item: PendingDispatch, _nowMs: number): boolean {
+  return true;
+}
+
+/** A plain Sent row the gateway has not answered within the TTL: delivery unconfirmed. */
+export function pendingUnconfirmed(item: PendingDispatch, nowMs: number): boolean {
+  return (
+    item.failed !== true && item.asid === undefined && nowMs - item.atMs >= PENDING_DISPATCH_TTL_MS
+  );
 }
 
 /**
@@ -193,9 +198,9 @@ export type ComputerCard = {
 
 export type CardLimits = { now: number; finished: number };
 
-/** One computer gets the room; several share it. */
+/** Show five current tasks per computer; one computer gets an extra finished row. */
 export function cardLimits(computers: number): CardLimits {
-  return computers === 1 ? { now: 5, finished: 3 } : { now: 3, finished: 2 };
+  return { now: 5, finished: computers === 1 ? 3 : 2 };
 }
 
 /** Acknowledged tasks are remembered by computer and task id. */
@@ -408,14 +413,6 @@ export function treeRowIsOpen(row: CardTaskRow): boolean {
   return Boolean(counts && counts.active + counts.waiting > 0);
 }
 
-/** Whether a root row, or work under it, is running or asking (not only paused). */
-function treeRowIsActive(row: CardTaskRow): boolean {
-  if (ACTIVE.has(row.task.state)) return true;
-  if (row.children.some((child) => ACTIVE.has(child.state))) return true;
-  const counts = row.task.children;
-  return Boolean(counts && counts.active + counts.waiting > 0);
-}
-
 /** How urgent a root row is: its most urgent open work, by {@link taskRowRank}. */
 function treeRowRank(row: CardTaskRow): number {
   if (treeRowIsWaiting(row)) return 0;
@@ -443,7 +440,10 @@ export function treeRowIsWaiting(row: CardTaskRow): boolean {
  * it waits on the reader, In progress while any of it is open, else Finished
  * (capped as the flat list was). Newest first within each.
  */
-export function groupTaskTree(rows: readonly CardTaskRow[]): {
+export function groupTaskTree(
+  rows: readonly CardTaskRow[],
+  needsInput?: (task: TaskView) => boolean
+): {
   attention: TaskView[];
   active: TaskView[];
   finished: TaskView[];
@@ -452,7 +452,10 @@ export function groupTaskTree(rows: readonly CardTaskRow[]): {
   const active: TaskView[] = [];
   const finished: TaskView[] = [];
   for (const row of byUrgency(rows)) {
-    if (treeRowIsWaiting(row)) attention.push(row.task);
+    const waiting = needsInput
+      ? [row.task, ...row.children].some(needsInput)
+      : treeRowIsWaiting(row);
+    if (waiting) attention.push(row.task);
     else if (treeRowIsOpen(row) || !isTerminalTaskState(row.task.state)) active.push(row.task);
     else if (finished.length < FINISHED_TASKS_SHOWN) finished.push(row.task);
   }
@@ -484,8 +487,8 @@ function settlesPending(tasks: readonly TaskView[], item: PendingDispatch): bool
   );
 }
 
-/** Keep unacknowledged finished tasks on Home for 24 hours, including the boundary. */
-export const RECENT_FINISHED_MS = 24 * 60 * 60_000;
+/** How many finished rows a card shows before "Show more"; the rest wait behind it. */
+export const FINISHED_ROWS_SHOWN = 3;
 
 /**
  * Repeated cancelled attempts at one goal say one thing: only the newest of
@@ -551,10 +554,11 @@ function hasClosedTaskPane(
  * paused → idle (the reader's own order within each).
  *
  * A computer gets a card only while it has something to show: an open task,
- * a goal just sent, or a finished task not yet acknowledged from the last
- * {@link RECENT_FINISHED_MS}. One that is offline, idle with nothing recent,
- * or keeps no ledger gets none; Settings and the dock's target picker list
- * every computer. The room each card gets follows how many are shown.
+ * a goal sent, or a finished task the reader has not yet dismissed -- time
+ * alone never takes a row off a card. One that is offline, idle with nothing
+ * to show, or keeps no ledger gets none; Settings and the dock's target
+ * picker list every computer. The room each card gets follows how many are
+ * shown.
  */
 export function buildComputerCards(input: {
   servers: readonly { serverId: string }[];
@@ -574,6 +578,7 @@ export function buildComputerCards(input: {
   followed?: ReadonlySet<string>;
   /** Confirmed pane inventories; absence without one never hides a task. */
   panesByServer?: ServerAgentsIndex;
+  requests?: TaskAttentionInput['requests'];
 }): ComputerCard[] {
   const all = input.servers.map((server, order): ComputerCard & { order: number } => {
     const entry = input.index[server.serverId];
@@ -581,18 +586,38 @@ export function buildComputerCards(input: {
     // originating conversation. Keep the ledger; omit this duplicate Home row.
     const ledgerTasks = entry?.tasks ?? [];
     const byId = new Map(ledgerTasks.map((task) => [task.taskId, task]));
-    const tasks = ledgerTasks.filter(
-      (task) =>
-        !isRemoteCommandTask(task) &&
-        !hiddenTask(task, server.serverId, input.hidden, byId) &&
-        !hasClosedTaskPane(
+    // A task whose terminal pane is gone is not dropped: the ledger keeps its
+    // summary and result, and the card shows it as finished work. Only the
+    // reader's own hidden and dismissed sets omit a row.
+    const tasks = ledgerTasks
+      .filter(
+        (task) =>
+          !isRemoteCommandTask(task) && !hiddenTask(task, server.serverId, input.hidden, byId)
+      )
+      .map((task) =>
+        !isTerminalTaskState(task.state) &&
+        hasClosedTaskPane(
           task,
           server.serverId,
           input.panesByServer?.[server.serverId],
           input.nowMs
         )
+          ? { ...task, state: 'done' as const, settledAtMs: task.settledAtMs ?? input.nowMs }
+          : task
+      );
+    // The rows are rebuilt from the tasks as shown, so a closed pane's task
+    // keeps the finished state given above rather than the ledger's.
+    const shownById = new Map(tasks.map((task) => [task.taskId, task]));
+    const displayTasks = tasks.map((task) =>
+      taskAttentionView({
+        task,
+        serverId: server.serverId,
+        panes: input.panesByServer?.[server.serverId],
+        requests: input.requests,
+        nowMs: input.nowMs,
+      })
     );
-    const tree = buildTaskTree(tasks);
+    const tree = buildTaskTree(displayTasks);
     // A root stays in Now while any work it started is still open, even after
     // the root itself finished: a delegating turn can end before its
     // sub-tasks do, and an idle parent is not finished work.
@@ -601,23 +626,19 @@ export function buildComputerCards(input: {
       tree
         .filter((row) => !treeRowIsOpen(row) && isTerminalTaskState(row.task.state))
         .map((row) => row.task)
-    ).filter(
-      (task) =>
-        !input.dismissed.has(dismissedKey(server.serverId, task)) &&
-        // A row the reader just settled counts from that moment, so an old
-        // paused task marked done does not vanish until the gateway answers
-        // with its own fresh time.
-        input.nowMs - Math.max(task.updatedMs, task.settledAtMs ?? task.updatedMs) <=
-          RECENT_FINISHED_MS
-    );
+      // Finished work stays until the reader dismisses it; time alone never
+      // takes a row off the card. The card shows a few and the rest wait
+      // behind "Show more".
+    ).filter((task) => !input.dismissed.has(dismissedKey(server.serverId, task)));
     const pending = (input.pending ?? []).filter(
       (item) => item.serverId === server.serverId && !settlesPending(ledgerTasks, item)
     );
     // The same predicates Now uses, so work known only from the gateway's
     // child counts moves the card as well as listing it.
-    const waiting = tasks.some((task) => task.state === 'waiting') || tree.some(treeRowIsWaiting);
+    const waiting = displayTasks.some((task) => task.state === 'waiting');
     const working =
-      tree.some(treeRowIsActive) || pending.some((item) => pendingWorking(item, input.nowMs));
+      displayTasks.some((task) => ACTIVE.has(task.state) || (task.children?.active ?? 0) > 0) ||
+      pending.some((item) => pendingWorking(item, input.nowMs));
     const activity: CardActivity =
       input.reachability(server.serverId) === 'offline'
         ? 'offline'
@@ -636,8 +657,10 @@ export function buildComputerCards(input: {
       activity,
       pending,
       now: open.map((row) => ({
-        task: row.task,
-        children: row.children.filter((child) => !isTerminalTaskState(child.state)),
+        task: shownById.get(row.task.taskId) ?? row.task,
+        children: row.children
+          .filter((child) => !isTerminalTaskState(child.state))
+          .map((child) => shownById.get(child.taskId) ?? child),
       })),
       nowTotal: open.length,
       finished,
@@ -1008,4 +1031,40 @@ export function heldCardOrder<T extends { serverId: string }>(
     .filter((card) => place.has(card.serverId))
     .sort((a, b) => place.get(a.serverId)! - place.get(b.serverId)!);
   return [...kept, ...cards.filter((card) => !place.has(card.serverId))];
+}
+
+/**
+ * Whether a followed card's rows are its computer's current activity or the
+ * last it heard, and so whether the "Last known activity" caption is wanted.
+ *
+ * - `none`: no caption and no room for one -- the card is not followed, or
+ *   has no rows for the caption to describe.
+ * - `hidden`: the rows are current (the task socket is open), or about to be
+ *   again: a socket connecting, backing off to reconnect, or paused for the
+ *   background is the app on its way back, and announcing the rows as stale
+ *   for the length of a reconnect -- or in the app switcher's snapshot --
+ *   would call every backgrounding a loss. The caption's room is kept so
+ *   its arrival moves nothing.
+ * - `shown`: the socket is gone with nothing scheduled to bring it back
+ *   (idle, refused, unusable, superseded, or never opened), so the rows are
+ *   history and say so.
+ */
+export type LastKnownActivityCaption = 'shown' | 'hidden' | 'none';
+
+export function lastKnownActivityCaption(input: {
+  followed: boolean;
+  /** The task socket's state (`GatewaySocketState`), or `undefined` before one exists. */
+  socket: string | undefined;
+  rows: number;
+}): LastKnownActivityCaption {
+  if (!input.followed || input.rows <= 0) return 'none';
+  switch (input.socket) {
+    case 'open':
+    case 'connecting':
+    case 'backoff':
+    case 'paused':
+      return 'hidden';
+    default:
+      return 'shown';
+  }
 }

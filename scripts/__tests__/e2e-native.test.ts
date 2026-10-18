@@ -21,6 +21,7 @@ import {
   validateTarget,
   isNotificationFixtureCommand,
   runWithCleanup,
+  restoreAndroidIme,
   type Suite,
 } from '../e2e-native';
 
@@ -36,6 +37,145 @@ const suite: Suite = {
 const node = { index: 1, ref: 'e2', label: 'Done', rect: { x: 0, y: 0, width: 20, height: 20 } };
 
 describe('native end-to-end gate', () => {
+  test('real IME restoration is explicit and rejects other platforms/devices before IO', async () => {
+    let calls = 0;
+    for (const config of [
+      { platform: 'ios', serial: 'emulator-5560', component: 'installed.keyboard/.Ime' },
+      ...['emulator-5554', 'emulator-5556', 'emulator-5558', undefined].map((serial) => ({
+        platform: 'android',
+        serial,
+        component: 'installed.keyboard/.Ime',
+      })),
+      ...[
+        undefined,
+        '',
+        'not installed',
+        'com.callstack.agentdevice.imehelper/.TestInputMethodService',
+      ].map((component) => ({
+        platform: 'android',
+        serial: 'emulator-5560',
+        component,
+      })),
+    ]) {
+      await expect(
+        restoreAndroidIme(config, async () => {
+          calls++;
+          return '';
+        })
+      ).rejects.toThrow();
+    }
+    expect(calls).toBe(0);
+  });
+  test('real IME restoration verifies actual serial, AVD, installed list and selected component', async () => {
+    const config = {
+      platform: 'android',
+      serial: 'emulator-5560',
+      component: 'installed.keyboard/.Ime',
+    };
+    const expected = [
+      ['get-serialno'],
+      ['emu', 'avd', 'name'],
+      ['shell', 'ime', 'list', '-s'],
+      ['shell', 'ime', 'set', config.component],
+      ['shell', 'settings', 'get', 'secure', 'default_input_method'],
+    ];
+    const replies = [
+      'emulator-5560\n',
+      'muqun_ui_clean_qa_20261015\nOK\n',
+      `another.keyboard/.Ime\n${config.component}\n`,
+      'Input method selected\n',
+      `${config.component}\n`,
+    ];
+    const calls: string[][] = [];
+    const result = await restoreAndroidIme(config, async (args) => {
+      calls.push(args);
+      return replies[calls.length - 1];
+    });
+    expect(calls).toEqual(expected);
+    expect(result.component).toBe(config.component);
+    for (const [at, value, message] of [
+      [0, 'emulator-5558', 'serial mismatch'],
+      [1, 'muqun_theme_parallel_qa\nOK', 'AVD mismatch'],
+      [2, 'another.keyboard/.Ime', 'not installed'],
+      [4, 'another.keyboard/.Ime', 'not observed'],
+    ] as const) {
+      let count = 0;
+      await expect(
+        restoreAndroidIme(config, async () => {
+          const index = count++;
+          return index === at ? value : replies[index];
+        })
+      ).rejects.toThrow(message);
+      expect(count).toBe(at + 1);
+    }
+    let count = 0;
+    await expect(
+      restoreAndroidIme(config, async () => {
+        const index = count++;
+        if (index === 3) throw new Error('actual adb exit 1');
+        return replies[index];
+      })
+    ).rejects.toThrow('actual adb exit 1');
+    expect(count).toBe(4);
+  });
+  test('keyboard require-visible uses the actual native status and never passes an absent keyboard', async () => {
+    const base = await mkdtemp(path.join(tmpdir(), 'muqun-real-keyboard-'));
+    try {
+      await writeFile(path.join(base, 'keyboard.ad'), 'keyboard require-visible\n');
+      for (const visible of [true, false, undefined]) {
+        const calls: string[][] = [];
+        const runner = new NativeRunner(
+          suite,
+          base,
+          base,
+          async (args) => {
+            calls.push(args);
+            return {
+              platform: 'android',
+              visible,
+              inputOwner: 'app',
+              focusedPackage: 'dev.osuki.muqun',
+            };
+          },
+          {}
+        );
+        if (visible) await runner.runSection('keyboard.ad', { PLATFORM: 'android' });
+        else
+          await expect(runner.runSection('keyboard.ad', { PLATFORM: 'android' })).rejects.toThrow(
+            'not visible'
+          );
+        expect(calls).toEqual([['keyboard', 'status']]);
+      }
+      const runner = new NativeRunner(
+        suite,
+        base,
+        base,
+        async () => {
+          throw new Error('must not invoke');
+        },
+        {}
+      );
+      await expect(runner.runSection('keyboard.ad', { PLATFORM: 'ios' })).rejects.toThrow(
+        'requires Android'
+      );
+      for (const status of [
+        {
+          platform: 'android',
+          visible: true,
+          inputOwner: 'ime',
+          focusedPackage: 'dev.osuki.muqun',
+        },
+        { platform: 'android', visible: true, inputOwner: 'app', focusedPackage: 'other.app' },
+      ]) {
+        const wrongOwner = new NativeRunner(suite, base, base, async () => status, {});
+        await expect(wrongOwner.runSection('keyboard.ad', { PLATFORM: 'android' })).rejects.toThrow(
+          'not visible'
+        );
+      }
+    } finally {
+      await rm(base, { recursive: true, force: true });
+    }
+  });
   test('sheet list rows must have their tap center inside the visible scroll viewport', () => {
     const app = {
       ref: 'e1',
@@ -1601,6 +1741,379 @@ describe('a foreground the app has not filled yet', () => {
       await rm(base, { recursive: true, force: true });
     }
   }, 20000);
+});
+
+describe('scoped native-ref press host contract (no App render simulation)', () => {
+  const identity = 'id=agent-tool-toggle label="read · 71ms · Expand tool call"';
+  const command = `press ${JSON.stringify(identity)} --within-id "child-card"\n`;
+  const capture = () => ({
+    appBundleId: 'dev.osuki.muqun',
+    truncated: false,
+    refsGeneration: 41,
+    androidSnapshot: {},
+    nodes: [
+      {
+        index: 0,
+        ref: 'e1',
+        bundleId: 'dev.osuki.muqun',
+        type: 'android.widget.ScrollView',
+        rect: { x: 0, y: 400, width: 1000, height: 1600 },
+      },
+      { index: 1, ref: 'e2', parentIndex: 0, identifier: 'main-card', bundleId: 'dev.osuki.muqun' },
+      {
+        index: 2,
+        ref: 'e3',
+        parentIndex: 1,
+        identifier: 'agent-tool-toggle',
+        label: 'read · 71ms · Expand tool call',
+        type: 'android.widget.Button',
+        bundleId: 'dev.osuki.muqun',
+        hittable: false,
+        visibleToUser: true,
+        interactionBlocked: 'covered',
+        rect: { x: 20, y: 900, width: 320, height: 118 },
+      },
+      {
+        index: 3,
+        ref: 'e4',
+        parentIndex: 0,
+        identifier: 'child-card',
+        bundleId: 'dev.osuki.muqun',
+      },
+      {
+        index: 4,
+        ref: 'e5',
+        parentIndex: 3,
+        identifier: 'agent-tool-toggle',
+        label: 'read · 71ms · Expand tool call',
+        type: 'android.widget.Button',
+        bundleId: 'dev.osuki.muqun',
+        hittable: true,
+        visibleToUser: true,
+        rect: { x: 53, y: 758, width: 320, height: 118 },
+      },
+    ],
+  });
+  const run = async (
+    text: string,
+    invoke: (args: string[]) => Promise<Record<string, unknown>>
+  ) => {
+    const base = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-scoped-ref-'));
+    try {
+      await writeFile(path.join(base, 'scope.ad'), text);
+      await new NativeRunner(suite, base, '/unused', invoke, {}).runSection('scope.ad', {});
+    } finally {
+      await rm(base, { recursive: true, force: true });
+    }
+  };
+
+  test('actual parser uses a fresh guarded capture per press, ancestry and generation pin', async () => {
+    const calls: string[][] = [];
+    let snapshots = 0;
+    await run(command + command, async (args) => {
+      calls.push(args);
+      if (args[0] === 'snapshot') {
+        const data = capture();
+        data.refsGeneration += snapshots++;
+        data.nodes[4].ref = `e${100 + snapshots}`;
+        return data;
+      }
+      return args[0] === 'alert' ? { kind: 'alertStatus', alert: null } : {};
+    });
+    expect(calls).toEqual([
+      ['snapshot'],
+      ['alert', 'get'],
+      ['press', '@e101~s41'],
+      ['snapshot'],
+      ['alert', 'get'],
+      ['press', '@e102~s42'],
+    ]);
+  });
+
+  test('malformed scoped grammar rejects before any IO', async () => {
+    for (const text of [
+      `scroll up --within-id child-card`,
+      `press --within-id child-card ${JSON.stringify(identity)}`,
+      `press ${JSON.stringify(identity)} --within-id ""`,
+      `press ${JSON.stringify(identity)} --within-id child-card --count 2`,
+    ]) {
+      let calls = 0;
+      await expect(
+        run(text, async () => {
+          calls++;
+          return {};
+        })
+      ).rejects.toThrow('Scoped press requires');
+      expect(calls).toBe(0);
+    }
+  });
+
+  test('missing, ambiguous, cyclic, stale, covered, offscreen and incomplete captures never press', async () => {
+    const bad: ((data: ReturnType<typeof capture>) => void)[] = [
+      (d) => {
+        d.nodes[3].identifier = 'missing';
+      },
+      (d) => {
+        d.nodes.push({ ...d.nodes[3], index: 5 });
+      },
+      (d) => {
+        d.nodes[4].label = 'Different';
+      },
+      (d) => {
+        d.nodes.push({ ...d.nodes[4], index: 5, ref: 'e6' });
+      },
+      (d) => {
+        d.nodes[4].parentIndex = 99;
+      },
+      (d) => {
+        d.nodes[4].parentIndex = 4;
+      },
+      (d) => {
+        d.nodes[2].index = 4;
+      },
+      (d) => {
+        d.nodes[4].ref = 'e5~s40';
+      },
+      (d) => {
+        d.nodes[4].ref = '';
+      },
+      (d) => {
+        d.nodes[2].ref = d.nodes[4].ref;
+      },
+      (d) => {
+        d.refsGeneration = Number.NaN;
+      },
+      (d) => {
+        d.nodes[4].hittable = false;
+      },
+      (d) => {
+        d.nodes[4].visibleToUser = false;
+      },
+      (d) => {
+        d.nodes[4].interactionBlocked = 'covered';
+      },
+      (d) => {
+        d.nodes[4].rect!.y = 2100;
+      },
+      (d) => {
+        d.truncated = true;
+      },
+      (d) => {
+        d.appBundleId = 'other.app';
+      },
+      (d) => {
+        d.nodes[4].bundleId = 'other.app';
+      },
+    ];
+    for (const change of bad) {
+      const data = capture();
+      change(data);
+      const calls: string[][] = [];
+      await expect(
+        run(command, async (args) => {
+          calls.push(args);
+          return args[0] === 'snapshot' ? data : { kind: 'alertStatus', alert: null };
+        })
+      ).rejects.toThrow('Scoped press');
+      expect(calls.some((args) => args[0] === 'press' || args[0] === 'gesture')).toBe(false);
+    }
+  });
+
+  test('unexpected foreground alert blocks scope resolution and press', async () => {
+    const calls: string[][] = [];
+    await expect(
+      run(command, async (args) => {
+        calls.push(args);
+        return args[0] === 'snapshot'
+          ? capture()
+          : { kind: 'alertStatus', alert: { title: 'Trust this computer?', buttons: ['Allow'] } };
+      })
+    ).rejects.toThrow('Unexpected Android alert');
+    expect(calls).toEqual([['snapshot'], ['alert', 'get']]);
+  });
+
+  const brokenUpperChains: [string, (data: ReturnType<typeof capture>) => void][] = [
+    [
+      'scope missing parent',
+      (d) => {
+        d.nodes[3].parentIndex = 99;
+      },
+    ],
+    [
+      'scope self cycle',
+      (d) => {
+        d.nodes[3].parentIndex = 3;
+      },
+    ],
+    [
+      'root missing parent',
+      (d) => {
+        d.nodes[0].parentIndex = 99;
+      },
+    ],
+    [
+      'root self cycle',
+      (d) => {
+        d.nodes[0].parentIndex = 0;
+      },
+    ],
+    [
+      'scope upper missing parent',
+      (d) => {
+        d.nodes[3].parentIndex = 5;
+        d.nodes.push({
+          index: 5,
+          ref: 'e6',
+          parentIndex: 99,
+          identifier: 'upper-scope',
+          bundleId: 'dev.osuki.muqun',
+        });
+      },
+    ],
+    [
+      'scope upper cycle',
+      (d) => {
+        d.nodes[3].parentIndex = 5;
+        d.nodes.push({
+          index: 5,
+          ref: 'e6',
+          parentIndex: 3,
+          identifier: 'upper-scope',
+          bundleId: 'dev.osuki.muqun',
+        });
+      },
+    ],
+    [
+      'negative scope parent',
+      (d) => {
+        d.nodes[3].parentIndex = -1;
+      },
+    ],
+    [
+      'noninteger scope parent',
+      (d) => {
+        d.nodes[3].parentIndex = 0.5;
+      },
+    ],
+    [
+      'nonfinite scope index',
+      (d) => {
+        d.nodes[3].index = Number.NaN;
+      },
+    ],
+    [
+      'negative target index',
+      (d) => {
+        d.nodes[4].index = -1;
+      },
+    ],
+    [
+      'noninteger root index',
+      (d) => {
+        d.nodes[0].index = 0.5;
+      },
+    ],
+  ];
+  for (const [name, change] of brokenUpperChains) {
+    test(`complete chain regression: ${name} fails before mutation`, async () => {
+      const data = capture();
+      data.nodes[2].label = 'Unrelated parent control';
+      change(data);
+      const calls: string[][] = [];
+      await expect(
+        run(command, async (args) => {
+          calls.push(args);
+          return args[0] === 'snapshot' ? data : { kind: 'alertStatus', alert: null };
+        })
+      ).rejects.toThrow('Scoped press');
+      expect(calls).toEqual([['snapshot'], ['alert', 'get']]);
+    });
+  }
+
+  test('approved permission dismissal selects from the POST-dismiss capture only', async () => {
+    let snapshots = 0,
+      alerts = 0;
+    const presses: string[][] = [];
+    await run(command, async (args) => {
+      if (args[0] === 'snapshot') {
+        const data = capture();
+        data.refsGeneration += snapshots++;
+        return data;
+      }
+      if (args[0] === 'alert' && args[1] === 'get')
+        return {
+          kind: 'alertStatus',
+          alert:
+            alerts++ === 0
+              ? {
+                  title: 'Allow Muqun notifications?',
+                  source: 'permission',
+                  packageName: 'com.android.permissioncontroller',
+                  buttons: ["Don't allow", 'Allow'],
+                }
+              : null,
+        };
+      if (args[0] === 'press') presses.push(args);
+      return {};
+    });
+    expect(snapshots).toBe(2);
+    expect(presses).toEqual([['press', '@e5~s42']]);
+  });
+
+  test('native stale-ref rejection propagates once without selector/coordinate fallback', async () => {
+    const stale = new NativeCommandError({
+      code: 'STALE_REF',
+      message: 'snapshot generation changed',
+    });
+    const presses: string[][] = [];
+    const failure = await run(command, async (args) => {
+      if (args[0] === 'snapshot') return capture();
+      if (args[0] === 'alert') return { kind: 'alertStatus', alert: null };
+      presses.push(args);
+      throw stale;
+    }).catch((error) => error);
+    expect(failure).toBe(stale);
+    expect(presses).toEqual([['press', '@e5~s41']]);
+  });
+
+  test('actual suite composition repositions ONLY main after each original return section', async () => {
+    const manifest = JSON.parse(
+      await readFile(new URL('../../e2e/agent-device/suite.json', import.meta.url), 'utf8')
+    ) as Suite;
+    for (const host of ['main', 'child']) {
+      const refs: string[] = [];
+      const runner = new NativeRunner(
+        manifest,
+        '/unused',
+        '/unused',
+        async () => {
+          throw new Error('No UI simulation in composition test');
+        },
+        {}
+      );
+      runner.runSection = async (ref) => {
+        refs.push(ref.split('#')[1]);
+      };
+      await runner.run(manifest.programs['subflows/read-files-preview-host'], { HOST: host });
+      expect(refs).toEqual([
+        'host',
+        'document',
+        ...(host === 'main' ? ['reposition'] : []),
+        'document-collapse',
+        'code',
+        ...(host === 'main' ? ['reposition'] : []),
+        'code-collapse',
+        'large',
+        ...(host === 'main' ? ['reposition'] : []),
+        'large-collapse',
+        'small',
+        'small-document',
+      ]);
+    }
+    expect(selectFlows(manifest, 'full', 'android').map((flow) => flow.name)).toContain(
+      'read-files-preview'
+    );
+  });
 });
 
 describe('stable wait capture recovery', () => {

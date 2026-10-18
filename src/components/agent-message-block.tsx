@@ -1,7 +1,9 @@
+import { isPdfFile } from '@/lib/session-assets';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
+import type { ToolExpansionIntent } from '@/components/embedded-terminal-tool-block';
 import { goalContinuationSummary } from '@/lib/agent-goal-message';
 import { Fragment, memo, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View, type ViewInstance } from 'react-native';
 import { useThemeTokens, useToast } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { Trans, useLingui } from '@lingui/react/macro';
@@ -26,7 +28,6 @@ import {
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import * as Clipboard from 'expo-clipboard';
-import { Image } from 'expo-image';
 import { type MarkdownStyle } from 'react-native-enriched-markdown';
 import Animated, {
   cancelAnimation,
@@ -39,6 +40,19 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
+import { AttachmentImage } from '@/components/attachment-image';
+import {
+  GatewayImageThumbnail,
+  UnmappedImageThumbnail,
+} from '@/components/gateway-image-thumbnail';
+import { ImagePreviewModal } from '@/components/image-preview-modal';
+import { gatewayImageBinding } from '@/lib/gateway-client';
+import {
+  messageImageForSource,
+  unavailableMessageImage,
+  type PreviewImageDescriptor,
+  type PreviewImageSource,
+} from '@/lib/gateway-image-previews';
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { BoundedMarkdown } from '@/components/bounded-markdown';
 import { TranscriptBlockImage } from '@/components/transcript-block-image';
@@ -58,14 +72,9 @@ import { useRelativeTime } from '@/hooks/use-relative-time';
 import { useCompactMarkdownStyle } from '@/hooks/use-markdown-style';
 import { buildTimelineEntries, type ReasoningRun, type TimelineEntry } from '@/lib/agent-reasoning';
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
-import {
-  readUploadImageSource,
-  uploadImageSource,
-  uploadNameFromPath,
-  type AssetImageSource,
-} from '@/lib/gateway-client';
 import { fadeIn, timing } from '@/lib/motion';
 import { plainFromMarkdown } from '@/lib/markdown-text';
+import { hasSidewaysBlock } from '@/lib/markdown-blocks';
 import { normalizeAssistantMarkdown } from '@/lib/assistant-markdown';
 import {
   escapeMarkdownText,
@@ -79,7 +88,7 @@ import { countMarked, diffRowsForFence } from '@/lib/agent-diff-rows';
 import {
   formatModelName,
   type AgentPart,
-  type AgentRunStatus,
+  type AgentSessionInfo,
   type PermissionDecision,
   type TimelineItem,
   type ToolPart,
@@ -95,74 +104,15 @@ function isImageAttachment(uri: string): boolean {
   return uri.startsWith(IMAGE_DATA_URI_PREFIX) || /\.(png|jpg|jpeg|gif|webp)(\?.*)?$/i.test(uri);
 }
 
-/**
- * What the reader attached, under what they said.
- *
- * A row of chips and thumbnails rather than a grid above the text: the text is
- * the message and the files are what came with it, which is the order the
- * composer stages them in and the order the TUI prints them.
- */
-/**
- * One attached image. A data URI or a URL is shown as it is; a host path under
- * the gateway's upload folder is fetched back from the gateway with the
- * device's credentials (streamed by expo-image on a plain transport, decoded
- * from authenticated bytes on an encrypted one). Anything that cannot load
- * stays a quiet placeholder rather than an empty box.
- */
-const AttachmentImage = memo(function AttachmentImage({
-  uri,
-  label,
-  onPreviewImage,
-}: {
-  uri: string;
-  label: string;
-  onPreviewImage: (uri: string) => void;
-}) {
-  const theme = useThemeTokens();
-  const profile = useAppearanceProfile();
-  const uploadName =
-    uri.startsWith('data:') || /^https?:/.test(uri) ? null : uploadNameFromPath(uri);
-  const [source, setSource] = useState<AssetImageSource | null>(() =>
-    uploadName ? uploadImageSource(uploadName) : { uri, cacheKey: uri }
-  );
-  const [failed, setFailed] = useState(false);
-  useEffect(() => {
-    if (!uploadName || source) return;
-    const controller = new AbortController();
-    readUploadImageSource(uploadName, { signal: controller.signal })
-      .then((resolved) => setSource(resolved))
-      .catch(() => setFailed(true));
-    return () => controller.abort();
-  }, [uploadName, source]);
-
-  if (failed || !source) {
-    return (
-      <View style={[styles.attachmentThumbnail, styles.attachmentPlaceholder]}>
-        <FileText size={16} color={theme.colors.textSubtle} />
-      </View>
-    );
-  }
-  return (
-    <PressableScale
-      accessibilityRole="imagebutton"
-      accessibilityLabel={label}
-      onPress={() => onPreviewImage(source.uri)}
-      style={[styles.attachmentImageWrapper, { borderRadius: profile.chrome.surface }]}>
-      <Image
-        source={source}
-        style={styles.attachmentThumbnail}
-        contentFit="cover"
-        onError={() => setFailed(true)}
-      />
-    </PressableScale>
-  );
-});
-
 const MessageAttachments = memo(function MessageAttachments({
   attachments,
+  imageAssets,
   onPreviewImage,
+  asid,
 }: {
   attachments: readonly string[];
+  imageAssets?: readonly MessageImageAsset[];
+  asid?: string;
   onPreviewImage: (uri: string) => void;
 }) {
   const { t } = useLingui();
@@ -172,17 +122,43 @@ const MessageAttachments = memo(function MessageAttachments({
   return (
     <View style={styles.attachmentRow}>
       {attachments.map((att, attIdx) => {
+        const image = messageImageForSource(imageAssets, att);
+        if (image)
+          return (
+            <GatewayImageThumbnail
+              key={`${att}-${attIdx}`}
+              asset={image}
+              label={t`Open attachment`}
+            />
+          );
         if (isImageAttachment(att)) {
           return (
-            <AttachmentImage
+            <UnmappedImageThumbnail
               key={`${att}-${attIdx}`}
               uri={att}
+              unavailable={unavailableMessageImage(imageAssets, att)}
               label={t`Open attachment`}
-              onPreviewImage={onPreviewImage}
-            />
+              style={{ width: 160, height: 110 }}
+              onPreviewImage={onPreviewImage}>
+              <AttachmentImage
+                key={`${att}-${attIdx}`}
+                uri={att}
+                label={t`Open attachment`}
+                onPreviewImage={onPreviewImage}
+              />
+            </UnmappedImageThumbnail>
           );
         }
         const fileName = att.split('/').filter(Boolean).pop() || t`Attachment`;
+        if (asid && isPdfFile({ uri: att })) {
+          return (
+            <InlineFileLink
+              key={`${att}-${attIdx}`}
+              asid={asid}
+              file={{ uri: att, name: fileName }}
+            />
+          );
+        }
         return (
           <View key={`${att}-${attIdx}`} style={[styles.attachmentChip, raised]}>
             <FileText size={13} color={theme.colors.primary} />
@@ -351,14 +327,15 @@ export interface AgentToolActions {
   onOpenChildSession?: (asid: string) => void;
   onRunInBackground?: (toolCallId: string) => void;
   onOpenBackgroundTray?: (shellId?: string) => void;
-  onPreviewImage?: (uri: string) => void;
+  onPreviewImage?: (uri: string, album?: readonly string[]) => void;
   onOpenFile?: (file: { uri: string; mime?: string; name?: string }) => void;
   /** The virtualised changes viewer, for a patch too big to draw in a cell. */
   onOpenFullDiff?: (path?: string) => void;
   /** Live status per child session, from that session's own status events. */
-  childStatuses?: Readonly<Record<string, AgentRunStatus>>;
+  childSessions?: Readonly<Record<string, AgentSessionInfo>>;
   /** The whole call in the tool detail sheet. */
   onOpenToolDetail?: (part: ToolPart) => void;
+  onExpandTool?: (toolId: string, header: ViewInstance) => ToolExpansionIntent | undefined;
 }
 
 const NO_TOOL_ACTIONS: AgentToolActions = Object.freeze({});
@@ -499,21 +476,21 @@ export const AgentCompactionRow = memo(function AgentCompactionRow({
  * fences would otherwise degrade to plain code; here they are rendered by the
  * same red/green patch rows the `diff` timeline part uses.
  */
-function splitDiffFences(markdown: string): { kind: 'md' | 'diff'; text: string }[] {
-  const segments: { kind: 'md' | 'diff'; text: string }[] = [];
+function splitDiffFences(markdown: string): { kind: 'md' | 'diff'; text: string; start: number }[] {
+  const segments: { kind: 'md' | 'diff'; text: string; start: number }[] = [];
   const fence = /```diff\s*\n([\s\S]*?)```/g;
   let last = 0;
   let match: RegExpExecArray | null;
   while ((match = fence.exec(markdown)) !== null) {
     if (match.index > last) {
-      segments.push({ kind: 'md', text: markdown.slice(last, match.index) });
+      segments.push({ kind: 'md', text: markdown.slice(last, match.index), start: last });
     }
-    segments.push({ kind: 'diff', text: match[1] });
+    segments.push({ kind: 'diff', text: match[1], start: match.index });
     last = match.index + match[0].length;
   }
-  if (segments.length === 0) return [{ kind: 'md', text: markdown }];
+  if (segments.length === 0) return [{ kind: 'md', text: markdown, start: 0 }];
   if (last < markdown.length) {
-    segments.push({ kind: 'md', text: markdown.slice(last) });
+    segments.push({ kind: 'md', text: markdown.slice(last), start: last });
   }
   return segments;
 }
@@ -567,7 +544,9 @@ const AgentDiffBlock = memo(function AgentDiffBlock({
   diff: string;
   onOpenFullDiff?: (path?: string) => void;
 }) {
+  const { t } = useLingui();
   const theme = useThemeTokens();
+  const label = file || t`Changes`;
   const colors = usePaneChatColors();
   const [expanded, setExpanded] = useState(true);
 
@@ -589,7 +568,7 @@ const AgentDiffBlock = memo(function AgentDiffBlock({
       <PressableScale
         testID="agent-diff-toggle"
         accessibilityRole="button"
-        accessibilityLabel={file}
+        accessibilityLabel={label}
         onPress={() => setExpanded((prev) => !prev)}
         style={styles.diffHeader}>
         <FileDiff size={12} color={theme.colors.primary} />
@@ -599,7 +578,7 @@ const AgentDiffBlock = memo(function AgentDiffBlock({
           color={theme.colors.text}
           numberOfLines={1}
           style={styles.diffFile}>
-          {file}
+          {label}
         </Text>
         <Text variant="caption" weight="semibold" color={colors.added} style={styles.diffStat}>
           +{stats.added}
@@ -620,7 +599,7 @@ const AgentDiffBlock = memo(function AgentDiffBlock({
               one above it, which is the only thing a diff is read for. */}
           <InlinePatch
             patch={diff}
-            targetPath={file}
+            targetPath={file || undefined}
             {...(onOpenFullDiff ? { onOpenFullDiff } : {})}
           />
         </Animated.View>
@@ -641,6 +620,8 @@ const MessageTextPart = memo(function MessageTextPart({
   imageAssets,
   audioSessionId,
   onPreviewImage,
+  onOpenFile,
+  streaming = false,
 }: {
   text: string;
   role: TimelineItem['role'];
@@ -648,10 +629,46 @@ const MessageTextPart = memo(function MessageTextPart({
   /** The gateway's resolution of the images this text embeds by host path. */
   imageAssets?: readonly MessageImageAsset[];
   audioSessionId?: string;
-  onPreviewImage?: (uri: string) => void;
+  onPreviewImage?: (uri: string, album?: readonly string[]) => void;
+  onOpenFile?: (file: { uri: string; mime?: string; name?: string }) => void;
+  streaming?: boolean;
 }) {
   const { t } = useLingui();
   const images = useMessageImages(imageAssets);
+  const [preview, setPreview] = useState<{
+    images: PreviewImageDescriptor[];
+    index: number;
+  } | null>(null);
+  const openGatewayPreview = (
+    image: PreviewImageDescriptor,
+    assets: readonly MessageImageAsset[]
+  ) => {
+    const album = [
+      ...new Map(
+        assets.flatMap((asset) => {
+          const bound = gatewayImageBinding(asset);
+          return bound ? [[bound.image.id, bound.image] as const] : [];
+        })
+      ).values(),
+    ];
+    const index = album.findIndex((entry) => entry.id === image.id);
+    setPreview({ images: index >= 0 ? album : [image], index: Math.max(0, index) });
+  };
+  const previewMessageImage = (uri: string, album?: readonly string[]) => {
+    const asset = imageAssets?.find(
+      (entry) => entry.src === uri || images.uris.get(entry.src) === uri
+    );
+    const bound = asset ? gatewayImageBinding(asset) : null;
+    if (asset && bound) openGatewayPreview(bound.image, [asset]);
+    else onPreviewImage?.(uri, album);
+  };
+  const blockSources = useMemo(
+    () =>
+      new Set(
+        splitBlockImages(written).flatMap((block) => (block.kind === 'image' ? [block.uri] : []))
+      ),
+    [written]
+  );
   // The text as drawn: each image the gateway can serve loads from it, and one
   // that names a host path nothing can serve says so in words rather than
   // leaving an empty box. The agent's own text -- what copy and export use --
@@ -660,13 +677,16 @@ const MessageTextPart = memo(function MessageTextPart({
     () =>
       rewriteMessageImages(
         role === 'assistant' ? normalizeAssistantMarkdown(written) : written,
-        messageImageResolver(images.uris, images.pending),
+        (src) =>
+          blockSources.has(src) && messageImageForSource(imageAssets, src) && !images.uris.has(src)
+            ? { kind: 'keep' }
+            : messageImageResolver(images.uris, images.pending)(src),
         (alt) => {
           const label = alt.trim() ? t`Image unavailable: ${alt.trim()}` : t`Image unavailable`;
           return `*${escapeMarkdownText(label)}*`;
         }
       ),
-    [written, role, images, t]
+    [written, role, images, t, blockSources, imageAssets]
   );
   const segments = useMemo(
     () => splitDiffFences(text).filter((seg) => seg.kind === 'diff' || seg.text.trim().length > 0),
@@ -681,25 +701,82 @@ const MessageTextPart = memo(function MessageTextPart({
             (block) => block.kind === 'image' && /cover|poster|封面/i.test(block.alt)
           )
         : undefined;
+    const coverMetadata = imageAssets?.find(
+      (asset) =>
+        asset.src === (cover?.kind === 'image' ? cover.uri : '') ||
+        images.uris.get(asset.src) === (cover?.kind === 'image' ? cover.uri : '')
+    );
     const coverUri =
-      cover?.kind === 'image' && !images.pending.has(cover.uri) ? cover.uri : undefined;
-    const coverMetadata = imageAssets?.find((asset) => images.uris.get(asset.src) === coverUri);
+      cover?.kind === 'image' &&
+      !images.pending.has(cover.uri) &&
+      (!coverMetadata || images.uris.has(coverMetadata.src))
+        ? cover.uri
+        : undefined;
     const renderText = (partKey: string, content: string) => {
-      const blocks = splitBlockImages(content);
+      const blocks = groupBlockImages(splitBlockImages(content));
       return blocks.map((block) => {
-        if (block.kind === 'image') {
-          if (block.uri === coverUri) return null;
-          const metadata = imageAssets?.find((asset) => images.uris.get(asset.src) === block.uri);
+        if (block.kind === 'images') {
+          const shown = block.images.filter((image) => image.uri !== coverUri);
+          if (shown.length === 0) return null;
+          if (shown.length === 1) {
+            const image = shown[0]!;
+            const metadata = imageAssets?.find(
+              (asset) => asset.src === image.uri || images.uris.get(asset.src) === image.uri
+            );
+            if (metadata && metadata.mime.startsWith('image/'))
+              return (
+                <GatewayImageThumbnail
+                  key={`${partKey}:${image.start}:${metadata.asset_id}`}
+                  asset={metadata}
+                  label={image.alt || t`Image`}
+                  block
+                  sourceOverride={images.sources.get(metadata.src) ?? null}
+                  onPreview={(opened) => openGatewayPreview(opened, [metadata])}
+                />
+              );
+            return (
+              <TranscriptBlockImage
+                key={`${partKey}:${image.start}:${image.uri}`}
+                uri={image.uri}
+                alt={image.alt}
+                headers={metadata ? images.headers : undefined}
+                pending={images.pending.has(image.uri)}
+                width={metadata?.width}
+                height={metadata?.height}
+                onPress={
+                  onPreviewImage
+                    ? (uri) =>
+                        onPreviewImage(
+                          uri,
+                          shown.map((entry) => entry.uri)
+                        )
+                    : undefined
+                }
+              />
+            );
+          }
           return (
-            <TranscriptBlockImage
-              key={`${partKey}:${block.start}:${block.uri}`}
-              uri={block.uri}
-              alt={block.alt}
-              headers={metadata ? images.headers : undefined}
-              pending={images.pending.has(block.uri)}
-              width={metadata?.width}
-              height={metadata?.height}
+            <ImageAlbum
+              key={`${partKey}:${shown[0]!.start}`}
+              images={shown.map((image) => ({
+                uri: image.uri,
+                alt: image.alt,
+                pending: images.pending.has(image.uri),
+                asset: imageAssets?.find(
+                  (asset) => asset.src === image.uri || images.uris.get(asset.src) === image.uri
+                ),
+                source:
+                  images.sources.get(
+                    imageAssets?.find(
+                      (asset) => asset.src === image.uri || images.uris.get(asset.src) === image.uri
+                    )?.src ?? ''
+                  ) ?? null,
+                headers: imageAssets?.some((asset) => images.uris.get(asset.src) === image.uri)
+                  ? images.headers
+                  : undefined,
+              }))}
               onPress={onPreviewImage}
+              onGatewayPreview={openGatewayPreview}
             />
           );
         }
@@ -711,8 +788,8 @@ const MessageTextPart = memo(function MessageTextPart({
             markdownStyle={markdownStyle}
             containerStyle={styles.markdownContainer}
             latexMath
-            {...(images.headers ? { imageRequestHeaders: images.headers } : {})}
-            {...(onPreviewImage ? { onImagePress: onPreviewImage } : {})}
+            streaming={streaming}
+            onImagePress={(uri: string) => previewMessageImage(uri)}
           />
         );
       });
@@ -741,6 +818,8 @@ const MessageTextPart = memo(function MessageTextPart({
               key={part.start}
               asid={audioSessionId}
               file={{ uri: part.uri, name: part.name }}
+              imageAsset={messageImageForSource(imageAssets, part.uri)}
+              imageSource={images.sources.get(part.uri) ?? null}
             />
           ) : part.kind === 'audio' ? (
             <InlineAudioFile
@@ -756,21 +835,120 @@ const MessageTextPart = memo(function MessageTextPart({
     );
   };
 
-  if (segments.length === 1 && segments[0].kind === 'md') {
-    return renderMarkdown('body', text);
-  }
+  // Keep the same parent and offset keys when a streamed diff fence closes.
+  // Reparenting the preceding Markdown would discard its native measurement.
+  const files = (imageAssets ?? []).filter(
+    (asset) => !asset.unavailable_reason && !asset.mime.startsWith('image/')
+  );
   return (
     <View style={styles.markdownSegments}>
-      {segments.map((seg, segIdx) =>
+      {segments.map((seg) =>
         seg.kind === 'md' ? (
-          renderMarkdown(`md-${segIdx}`, seg.text)
+          <Fragment key={seg.start}>{renderMarkdown(`md:${seg.start}`, seg.text)}</Fragment>
         ) : (
-          <InlinePatch key={`diff-${segIdx}`} patch={seg.text} />
+          <InlinePatch key={seg.start} patch={seg.text} />
         )
       )}
+      {files.map((asset) => (
+        <PressableScale
+          key={asset.asset_id}
+          accessibilityRole="button"
+          accessibilityLabel={t`Download ${asset.src.split('/').pop() ?? asset.src}`}
+          onPress={() =>
+            onOpenFile?.({
+              uri: asset.src.startsWith('file://') ? asset.src : `file://${asset.src}`,
+              mime: asset.mime,
+              name: asset.src.split('/').pop(),
+            })
+          }
+          style={styles.fileRow}>
+          <Text variant="bodySmall" numberOfLines={1}>
+            {asset.src.split('/').pop() ?? asset.src}
+          </Text>
+        </PressableScale>
+      ))}
+      {preview ? (
+        <ImagePreviewModal
+          images={preview.images}
+          initialIndex={preview.index}
+          onClose={() => setPreview(null)}
+        />
+      ) : null}
     </View>
   );
 });
+
+type GroupedBlock =
+  | { kind: 'images'; images: { uri: string; alt: string; start: number }[] }
+  | { kind: 'markdown'; text: string; start: number };
+
+function groupBlockImages(blocks: ReturnType<typeof splitBlockImages>): GroupedBlock[] {
+  const grouped: GroupedBlock[] = [];
+  let images: { uri: string; alt: string; start: number }[] = [];
+  const flush = () => {
+    if (images.length === 0) return;
+    grouped.push({ kind: 'images', images });
+    images = [];
+  };
+  for (const block of blocks) {
+    if (block.kind === 'image') images.push(block);
+    else {
+      flush();
+      grouped.push(block);
+    }
+  }
+  flush();
+  return grouped;
+}
+
+function ImageAlbum({
+  images,
+  onPress,
+  onGatewayPreview,
+}: {
+  images: {
+    uri: string;
+    alt: string;
+    pending: boolean;
+    headers?: Record<string, string>;
+    asset?: MessageImageAsset;
+    source?: PreviewImageSource | null;
+  }[];
+  onPress?: (uri: string, album?: readonly string[]) => void;
+  onGatewayPreview?: (image: PreviewImageDescriptor, assets: readonly MessageImageAsset[]) => void;
+}) {
+  const uris = images.map((image) => image.uri);
+  return (
+    <View style={styles.album}>
+      {images.map((image) => (
+        <View key={image.uri} style={styles.albumCell}>
+          {image.asset ? (
+            <GatewayImageThumbnail
+              asset={image.asset}
+              label={image.alt || image.asset.src}
+              block
+              sourceOverride={image.source ?? null}
+              onPreview={(opened) =>
+                onGatewayPreview?.(
+                  opened,
+                  images.flatMap((entry) => (entry.asset ? [entry.asset] : []))
+                )
+              }
+            />
+          ) : (
+            <TranscriptBlockImage
+              uri={image.uri}
+              alt={image.alt}
+              headers={image.headers}
+              pending={image.pending}
+              onPress={onPress ? (uri) => onPress(uri, uris) : undefined}
+            />
+          )}
+        </View>
+      ))}
+    </View>
+  );
+}
 
 /**
  * The drawn item before this one, skipping merged thinking.
@@ -806,6 +984,7 @@ function renderTimelinePart(
     prevItem?: TimelineItem;
     actions: AgentToolActions;
     readOnly: boolean;
+    streaming?: boolean;
   }
 ): ReactNode {
   const part = item.part;
@@ -869,10 +1048,12 @@ function renderTimelinePart(
           role={item.role}
           markdownStyle={options.markdownStyle}
           audioSessionId={options.actions.audioSessionId}
+          streaming={options.streaming}
           {...(item.image_assets ? { imageAssets: item.image_assets } : {})}
           {...(options.actions.onPreviewImage
             ? { onPreviewImage: options.actions.onPreviewImage }
             : {})}
+          {...(options.actions.onOpenFile ? { onOpenFile: options.actions.onOpenFile } : {})}
         />
       );
     default:
@@ -905,10 +1086,15 @@ const ToolPartCard = memo(function ToolPartCard({
     () => (runInBackground ? () => runInBackground(part.id) : undefined),
     [runInBackground, part.id]
   );
-  const childStatus = part.child_session_id
-    ? actions.childStatuses?.[part.child_session_id]
+  const childSession = part.child_session_id
+    ? actions.childSessions?.[part.child_session_id]
     : undefined;
   const openToolDetail = actions.onOpenToolDetail;
+  const expandTool = actions.onExpandTool;
+  const handleExpand = useMemo(
+    () => (expandTool ? (header: ViewInstance) => expandTool(part.id, header) : undefined),
+    [expandTool, part.id]
+  );
   const handleOpenDetail = useMemo(
     () => (openToolDetail ? () => openToolDetail(part) : undefined),
     [openToolDetail, part]
@@ -933,7 +1119,7 @@ const ToolPartCard = memo(function ToolPartCard({
         audioSessionId={actions.audioSessionId}
         part={part}
         markdownStyle={markdownStyle}
-        {...(childStatus ? { childStatus } : {})}
+        {...(childSession ? { childSession } : {})}
         {...(actions.onOpenChildSession ? { onOpenChildSession: actions.onOpenChildSession } : {})}
         {...(handleRunInBackground ? { onRunInBackground: handleRunInBackground } : {})}
         {...(actions.onOpenBackgroundTray
@@ -943,6 +1129,7 @@ const ToolPartCard = memo(function ToolPartCard({
         {...(actions.onOpenFile ? { onOpenFile: actions.onOpenFile } : {})}
         {...(actions.onOpenFullDiff ? { onOpenFullDiff: actions.onOpenFullDiff } : {})}
         {...(handleOpenDetail ? { onOpenDetail: handleOpenDetail } : {})}
+        onExpand={handleExpand}
       />
       {attachedPermission && handleDecision ? (
         <AgentPermissionCard attached request={attachedPermission} onDecision={handleDecision} />
@@ -1299,7 +1486,12 @@ export const AgentUserMessage = memo(function AgentUserMessage({
         )}
 
       {attachments.length > 0 ? (
-        <MessageAttachments attachments={attachments} onPreviewImage={onPreviewImage} />
+        <MessageAttachments
+          attachments={attachments}
+          imageAssets={group.items.flatMap((item) => item.image_assets ?? [])}
+          onPreviewImage={onPreviewImage}
+          asid={actions.audioSessionId}
+        />
       ) : null}
 
       {menuOpen ? (
@@ -1324,12 +1516,15 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
   group,
   showReasoning,
   reasoningLive = false,
+  streamingItemId,
   actions = NO_TOOL_ACTIONS,
   readOnly = false,
 }: {
   group: TimelineRenderGroup;
   showReasoning: boolean;
   reasoningLive?: boolean;
+  /** Exact live part identity; earlier text in the same message stays settled. */
+  streamingItemId?: string;
   markdownStyle: MarkdownStyle;
   actions?: AgentToolActions;
   /** Historical/peek surfaces show content without permission controls. */
@@ -1389,7 +1584,7 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
     if (displayEntry.kind === 'tool-group') {
       flush();
       rows.push(
-        <View key={displayEntry.key} style={styles.standaloneRow}>
+        <View key={displayEntry.key} style={styles.toolRow}>
           <AgentToolGroup
             entries={displayEntry.entries}
             markdownStyle={markdownStyle}
@@ -1416,12 +1611,19 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
       prevItem: previousItemAt(entries, sourceIndex) ?? group.prevItem,
       actions,
       readOnly,
+      streaming: entry.item.id === streamingItemId,
     });
     if (drawn === null) return;
     if (STANDALONE_PART_TYPES.has(entry.item.part.type)) {
       flush();
       rows.push(
-        <View key={`row:${entry.item.id}`} style={styles.standaloneRow}>
+        <View
+          key={`row:${entry.item.id}`}
+          style={
+            entry.item.part.type === 'tool' || entry.item.part.type === 'shell'
+              ? styles.toolRow
+              : styles.standaloneRow
+          }>
           {drawn}
         </View>
       );
@@ -1434,7 +1636,13 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
         splitDiagramMarkdown(entry.item.part.text).some((part) => part.source !== undefined) ||
         splitBlockImages(entry.item.part.text).some((part) => part.kind === 'image') ||
         (Boolean(actions.audioSessionId) &&
-          splitAudioMarkdown(entry.item.part.text).some((part) => part.kind !== 'markdown'));
+          splitAudioMarkdown(entry.item.part.text).some((part) => part.kind !== 'markdown')) ||
+        // A fence or a table is scrolled sideways and so cannot measure inside a
+        // plate that hugs its contents. The `diff` fences are the patch rows'
+        // to draw, not the markdown renderer's, so they do not count here.
+        splitDiffFences(entry.item.part.text).some(
+          (part) => part.kind !== 'diff' && hasSidewaysBlock(part.text)
+        );
     const audioParts =
       entry.item.part.type === 'text' && actions.audioSessionId
         ? splitAudioMarkdown(entry.item.part.text)
@@ -1472,11 +1680,12 @@ const STANDALONE_PART_TYPES: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * The one gap between two rows of the transcript, whether they belong to the
- * same message or not.
+ * The general gap for prose, thoughts and notices, whether they belong to the
+ * same message or not. Tool rows already reserve a 44dp transparent touch
+ * boundary and omit this additional margin; expanded tool bodies keep their
+ * own trailing separation.
  *
- * Each row carries half of it above and half below, so a tool card has the
- * same air over it as under it -- it used to have ten points above and twenty
+ * Each ordinary row carries half above and half below -- it used to have ten points above and twenty
  * below, because the list put its own gap between messages on top of the
  * rows' own margins. The list's gap is zero now; this is the only spacing.
  */
@@ -1511,6 +1720,10 @@ const styles = StyleSheet.create({
     width: '100%',
     marginVertical: TRANSCRIPT_ROW_GAP / 2,
   },
+  toolRow: {
+    alignSelf: 'stretch',
+    width: '100%',
+  },
   toolGroup: { gap: TRANSCRIPT_ROW_GAP },
   toolGroupHeader: {
     minHeight: 44,
@@ -1524,7 +1737,7 @@ const styles = StyleSheet.create({
   marker: { width: TRANSCRIPT_GRID.markerWidth, alignItems: 'center' },
   toolGroupCopy: { flex: 1, minWidth: 0, gap: 1 },
   toolGroupNames: { fontSize: AGENT_TYPE.micro.size },
-  toolGroupItems: { gap: TRANSCRIPT_ROW_GAP },
+  toolGroupItems: { gap: 0 },
   goalMessage: { alignSelf: 'stretch', width: '100%' },
   goalDisclosure: {
     alignSelf: 'stretch',
@@ -1545,10 +1758,6 @@ const styles = StyleSheet.create({
   },
   roleLabel: {
     fontSize: AGENT_TYPE.meta.size,
-  },
-  attachmentPlaceholder: {
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   roleStamp: {
     fontSize: AGENT_TYPE.micro.size,
@@ -1573,14 +1782,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-  },
-  attachmentImageWrapper: {
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-  },
-  attachmentThumbnail: {
-    width: 160,
-    height: 110,
   },
   attachmentChip: {
     flexDirection: 'row',
@@ -1651,6 +1852,20 @@ const styles = StyleSheet.create({
   markdownSegments: {
     gap: 6,
     alignSelf: 'stretch',
+  },
+  album: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    alignSelf: 'stretch',
+  },
+  albumCell: {
+    width: '48%',
+    flexGrow: 1,
+  },
+  fileRow: {
+    alignSelf: 'stretch',
+    paddingVertical: 8,
   },
   statusRow: {
     paddingVertical: 2,

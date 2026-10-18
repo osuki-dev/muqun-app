@@ -52,6 +52,10 @@ export interface ComposerChipState {
   hasDiffs: boolean;
   /** Whether a turn is in flight. */
   running: boolean;
+  /** Whether a running turn accepts steering/queued prompts. Absent means yes. */
+  canSendWhileRunning?: boolean;
+  /** The delivery switch requires both steering and queue support. */
+  canQueueWhileRunning?: boolean;
 }
 
 /** The chips, in the order the row draws them. */
@@ -66,7 +70,8 @@ export function composerChipIds(state: ComposerChipState): ComposerChipId[] {
   if (state.inboxCount > 0) ids.push('inbox');
   if (state.backgroundCount > 0 && state.canOpenBackground) ids.push('background');
   if (state.canOpenTasks || state.taskCount > 0) ids.push('tasks');
-  if (state.running) ids.push('delivery');
+  if (state.running && state.canSendWhileRunning !== false && state.canQueueWhileRunning !== false)
+    ids.push('delivery');
   if (state.hasContextPill) ids.push('context');
   if (state.hasDiffs) ids.push('diff');
   // Keep the destructive action beyond the everyday controls.

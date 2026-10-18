@@ -13,6 +13,8 @@
  * to stand in for the other.
  */
 
+import type { PairingFault } from './pairing-faults';
+
 /**
  * Three states, not two. "We asked and got nothing" and "we never asked" are
  * different facts about the world, and collapsing them into one grey dot is how
@@ -30,8 +32,17 @@ export type ServerReachability = 'live' | 'offline' | 'unknown';
  * - `unauthorized` -- the gateway answered and refused this device's pairing.
  *   Logically `offline` (nothing can be sent there), but the remedy is pairing
  *   again, not waiting, so it is never shown as a network problem.
+ * - `repair` -- the gateway requires encrypted transport and this device's
+ *   record has no key for it (paired before encryption was turned on). Also
+ *   logically `offline`, and also remedied by pairing again; said apart from
+ *   `unauthorized` because the reader did nothing to lose the pairing.
  */
-export type ConnectionStatus = ServerReachability | 'reconnecting' | 'unauthorized';
+export type ConnectionStatus = ServerReachability | 'reconnecting' | 'unauthorized' | 'repair';
+
+/** Pairing again is the remedy for this status, and the screen should offer it. */
+export function statusNeedsPairing(status: ConnectionStatus): status is 'repair' | 'unauthorized' {
+  return status === 'repair' || status === 'unauthorized';
+}
 
 /** The terminal event stream: up, or down with a retry scheduled. Absent when not wanted. */
 export type StreamChannelPhase = 'open' | 'retrying';
@@ -230,31 +241,38 @@ export function resolveServerReachability(
  * 1. A live channel -- the agent socket past its handshake, the terminal
  *    stream up, or the workspace's own connection -- is `live`. The gateway is
  *    talking to us right now; no probe can know better.
- * 2. A fresh probe that answered is `live`.
- * 3. A refusal of the pairing, from the socket or the probe, is
+ * 2. A fault held against the pairing (`stores/pairing-faults`): `repair` or
+ *    `unauthorized`. Remembered from a refusal the gateway gave, cleared only
+ *    by pairing again or by the gateway accepting the token once more -- so
+ *    it outranks a probe, which is not even sent while it stands.
+ * 3. A fresh probe that answered is `live`.
+ * 4. A refusal of the pairing, from the socket or the probe, is
  *    `unauthorized`.
- * 4. A fresh probe that failed, or the workspace's channel giving up, is
+ * 5. A fresh probe that failed, or the workspace's channel giving up, is
  *    `offline`.
- * 5. For the selected computer only, a channel that is mid-reconnect is
+ * 6. For the selected computer only, a channel that is mid-reconnect is
  *    `reconnecting`: the app is trying, and saying "Not connected" beside a
  *    session it is about to resume would be the wrong word.
- * 6. Otherwise `unknown` -- nobody asked recently, which is not "down".
+ * 7. Otherwise `unknown` -- nobody asked recently, which is not "down".
  */
 export function resolveConnectionStatus(input: {
   serverId: string;
   probe: ReachabilityProbe | undefined;
   activeConnection?: ActiveServerConnection;
   channels?: ServerChannels;
+  /** What is held against this computer's pairing, if anything. */
+  fault?: PairingFault;
   /** The computer the app is pointed at; only it is ever `reconnecting`. */
   selected?: boolean;
   nowMs?: number;
 }): ConnectionStatus {
-  const { serverId, probe, channels, selected = false, nowMs = Date.now() } = input;
+  const { serverId, probe, channels, fault, selected = false, nowMs = Date.now() } = input;
   const active =
     input.activeConnection?.serverId === serverId ? input.activeConnection.phase : undefined;
   if (channels?.socket === 'open' || channels?.stream === 'open' || active === 'connected') {
     return 'live';
   }
+  if (fault) return fault;
   const probed = reachabilityFromProbe(probe, nowMs);
   if (probed === 'live') return 'live';
   if (channels?.socket === 'unauthorized' || probe?.unauthorized) return 'unauthorized';
@@ -305,7 +323,7 @@ export function authorizationFromProbe(
 /** What the rest of the app decides with: a row's richer word, folded back. */
 export function reachabilityOfStatus(status: ConnectionStatus): ServerReachability {
   if (status === 'reconnecting') return 'unknown';
-  if (status === 'unauthorized') return 'offline';
+  if (statusNeedsPairing(status)) return 'offline';
   return status;
 }
 

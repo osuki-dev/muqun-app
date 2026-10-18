@@ -18,6 +18,7 @@ import type { SshHostRecord } from '@/lib/ssh-hosts';
 import { activeTaskCount } from '@/lib/server-tasks-state';
 import { hasTaskLedger } from '@/lib/task-ledger';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
+import { pairingFaultOf, usePairingFaults } from '@/stores/pairing-faults';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useServerChannels } from '@/stores/server-channels';
 import { useServerReachability } from '@/stores/server-reachability';
@@ -173,11 +174,13 @@ function GatewayConnectionRow({
   const socket = useServerChannels((state) => state.sockets[server.serverId]);
   const stream = useServerChannels((state) => state.streams[server.serverId]);
   const selected = useGatewayConnectionStore((state) => state.record?.serverId === server.serverId);
+  const fault = usePairingFaults((state) => pairingFaultOf(state, server.serverId));
   const connection = resolveConnectionStatus({
     serverId: server.serverId,
     probe,
     activeConnection,
     channels: { socket, stream },
+    fault,
     selected,
     nowMs: Math.max(nowMs ?? 0, freshnessNowMs),
   });

@@ -52,7 +52,9 @@ function sameAgentSessions(
         session.title === other.title &&
         session.directory === other.directory &&
         session.status === other.status &&
-        session.updatedMs === other.updatedMs
+        session.updatedMs === other.updatedMs &&
+        session.terminal?.sessionId === other.terminal?.sessionId &&
+        session.terminal?.paneId === other.terminal?.paneId
       );
     })
   );

@@ -21,8 +21,7 @@ export function searchedHomeContinueEntries(
 ): readonly HomeContinueEntry[] {
   const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
   if (!words.length) {
-    const visible = visibleHomeContinueEntries(entries, expanded);
-    return limit !== undefined && !expanded ? visible.slice(0, limit) : visible;
+    return visibleHomeContinueEntries(entries, expanded, limit);
   }
   return entries.filter((entry) => {
     const target = homeContinueTarget(entry.destination);
@@ -76,6 +75,8 @@ export function homeProviderTextColor(
 ): string {
   const brand = agentMarkKind(kind.trim().toLowerCase().split(/\s+/)[0]);
   if (!brand) return colors.textMuted;
+  // Codex uses its monochrome official mark and the theme's normal text ink.
+  if (brand === 'codex') return colors.text;
   const authored = { opencode: colors.primary, deepseek: colors.info, t3: colors.success };
   const contrastSurface = providerContrastSurface(surface, colors.surface);
   // Authored theme inks are opaque #RRGGBB (themeColorsSchema). A runtime token

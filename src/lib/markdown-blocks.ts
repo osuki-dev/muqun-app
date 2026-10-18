@@ -39,6 +39,8 @@ export const MARKDOWN_BLOCK_CHUNK_CHARS = 4_000;
 const FENCE_OPEN = /^ {0,3}(`{3,}|~{3,})/;
 /** A closing fence carries nothing but the marker. */
 const FENCE_CLOSE = /^ {0,3}(`{3,}|~{3,})\s*$/;
+/** A GFM table's delimiter row: pipes, dashes, colons and spaces, with both a dash and a pipe. */
+const TABLE_DELIMITER = /^[ \t]*\|?[ \t:|-]*-[ \t:|-]*\|[ \t:|-]*$/;
 /** A bullet or an ordered marker, which is what makes the lines around it one list. */
 const LIST_ITEM = /^ {0,3}([-*+]|\d{1,9}[.)])(\s|$)/;
 /** An ATX heading, which is the one line a chunk would rather start with than end on. */
@@ -46,6 +48,28 @@ const HEADING = /^ {0,3}#{1,6}(\s|$)/;
 
 function isBlank(line: string): boolean {
   return line.trim().length === 0;
+}
+
+/**
+ * Whether a document holds a block the renderer scrolls sideways: a fence or a table.
+ *
+ * Both are drawn by `react-native-enriched-markdown` with their own horizontal
+ * scroller, so their width comes from their longest line rather than from the
+ * view around them. A transcript plate hugs its content (`messageBlock` in
+ * `agent-message-block`), and one of these inside it inflates the plate past
+ * the screen: the end of the line is cut off at the window edge instead of
+ * scrolling. So a plate that holds one takes the full width first, which is
+ * what `runNeedsFullWidth` asks this.
+ *
+ * Line-based and deliberately forgiving. A false positive costs a plate the
+ * width of the screen; a false negative is the clipping this exists to stop.
+ */
+export function hasSidewaysBlock(markdown: string): boolean {
+  if (!markdown.includes('|') && !markdown.includes('`') && !markdown.includes('~')) return false;
+  for (const line of markdown.split('\n')) {
+    if (FENCE_OPEN.test(line) || TABLE_DELIMITER.test(line)) return true;
+  }
+  return false;
 }
 
 /** Leading indent in columns, counting a tab as four. */

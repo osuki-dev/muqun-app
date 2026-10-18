@@ -2,14 +2,6 @@
  * Where the reader is in the transcript, and whether anything has arrived
  * under them.
  *
- * Two facts, both of which the workbench got wrong. The distance from the
- * bottom was computed with its terms the wrong way round --
- * `offset + viewport - content`, which is zero at the bottom and *negative*
- * everywhere above it, so "less than 120" was true no matter how far up the
- * reader had scrolled and the jump-to-latest affordance never appeared. And
- * the affordance, once it did appear, said nothing about whether there was
- * anything new to jump to.
- *
  * Pure, so the arithmetic is stated once and tested once.
  */
 
@@ -39,12 +31,11 @@ export function isAtBottom(geometry: ScrollGeometry, threshold = NEAR_BOTTOM_PX)
 /**
  * Whether to offer the way back to the newest row.
  *
- * Only to a reader who has left the end *and* has something waiting there:
- * scrolling up to read something is not by itself a reason to put a button
- * over the transcript.
+ * Browsing history always needs a way back, even in an idle conversation.
+ * Pending output also keeps the action available until it has been read.
  */
 export function showJumpToLatest(atBottom: boolean, unseenRows: number): boolean {
-  return !atBottom && unseenRows > 0;
+  return !atBottom || unseenRows > 0;
 }
 
 /**

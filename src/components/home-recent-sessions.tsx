@@ -26,6 +26,7 @@ import {
   HOME_CONTINUE_REFRESH_MS,
   refreshHomeContinue,
   refreshHomeGateways,
+  homeAgentSessionsListPath,
 } from '@/lib/home-continue-refresh';
 import {
   endHomeRefresh,
@@ -34,6 +35,7 @@ import {
   onHomeRefreshRetry,
   retryHomeRefresh,
   startHomeRefresh,
+  forgetHomeRefresh,
 } from '@/lib/home-refresh-schedule';
 import { onNetworkChange } from '@/lib/network-events';
 import { snapshotServesAgents } from '@/lib/session-snapshot';
@@ -54,6 +56,8 @@ import { findAgent } from '@/lib/agent-discovery';
 import { agentDisplayName } from '@/lib/home-launch-model';
 import { useAgents } from '@/stores/agents';
 import { useHomeAgentSessions } from '@/stores/home-agent-sessions';
+import { useHomeAttention } from '@/stores/home-attention';
+import { taskAttentionView } from '@/lib/task-attention';
 import {
   agentSessionStatusPresentation,
   homeContinueCommand,
@@ -64,6 +68,7 @@ import {
   type HomeContinueObservationView,
   homeContinueTarget,
   shouldShowHomeContinueOverflow,
+  HOME_CONTINUE_INITIAL_LIMIT,
   type HomeContinueEntry,
 } from '@/lib/home-continue';
 import { agentSessionStatusWord, agentStatusWord, taskStateWord } from '@/i18n/labels';
@@ -138,8 +143,17 @@ export function HomeContinueSearch({
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
   return (
-    <View style={styles.search}>
+    <View
+      style={[
+        styles.search,
+        {
+          backgroundColor: theme.colors.surface,
+          borderColor: theme.colors.border,
+          borderRadius: profile.chrome.surface,
+        },
+      ]}>
       <FontedTextInput
         testID="home-continue-search"
         accessibilityLabel={t`Search sessions`}
@@ -174,12 +188,14 @@ export function useHomeRecentEntries({
   reachabilityByServer,
   activeConnection,
   selectedServerId,
+  connectionShortcutsElsewhere = false,
 }: {
   servers: readonly GatewayRecord[];
   hosts: readonly SshHostRecord[];
   reachabilityByServer: Readonly<Record<string, ServerReachability | undefined>>;
   activeConnection?: ActiveServerConnection;
   selectedServerId?: string;
+  connectionShortcutsElsewhere?: boolean;
 }) {
   const entries = useHomeRecentsStore((state) => state.entries);
   const hydrated = useHomeRecentsStore((state) => state.hydrated);
@@ -199,14 +215,28 @@ export function useHomeRecentEntries({
   }, [appActive]);
   // Read at each tick, not reacted to: a probe landing must not restart the loop.
   const readReachability = useLatestReader(reachabilityByServer);
+  // The computer the dock points at, as of the last run: a newly chosen one
+  // is read now rather than when its last cadence comes round.
+  const refreshTargetRef = useRef<string | undefined>(undefined);
   useFocusEffect(
     useCallback(() => {
       if (!appActive || !hydrated) return;
+      if (refreshTargetRef.current !== targetId) {
+        refreshTargetRef.current = targetId;
+        if (targetId) forgetHomeRefresh(targetId);
+      }
       let current = true;
       let pending = false;
       let again = false;
       const isCurrent = () => current && AppState.currentState === 'active';
       const refreshOne = async (record: GatewayRecord): Promise<boolean | undefined> => {
+        // The selected computer's listing does not need the Herdr session,
+        // so it goes out beside that lookup rather than after it.
+        const agentSessionsList =
+          record.serverId === targetId
+            ? readGatewayRecordJson(record, homeAgentSessionsListPath())
+            : undefined;
+        agentSessionsList?.catch(() => undefined);
         const choices = await homeSessionChoices(record);
         if (!isCurrent()) return undefined;
         const sessionId = resolveSessionId(
@@ -232,6 +262,7 @@ export function useHomeRecentEntries({
             capabilities: useServerCapabilities.getState().byServer[record.serverId],
           }),
           capabilities: useServerCapabilities.getState().byServer[record.serverId],
+          agentSessionsList,
         });
         // The panes read failing while the list answered is the session the
         // cached choice names having gone: ask `/api/sessions` again next pass.
@@ -318,6 +349,7 @@ export function useHomeRecentEntries({
     paneMode,
     gatewaySessions: agentSessions,
     goneSessions,
+    connectionShortcutsElsewhere,
   });
   return available;
 }
@@ -336,7 +368,6 @@ export function HomeRecentSessions({
   onOpen,
   query = '',
   pad = false,
-  moreLabel = 'count',
   header,
 }: {
   servers: readonly GatewayRecord[];
@@ -344,7 +375,7 @@ export function HomeRecentSessions({
   available: readonly HomeContinueEntry[];
   selectedServerId?: string;
   compact?: boolean;
-  /** Rows shown before the `Sessions (N)` toggle; compact lists default to four. */
+  /** Rows shown before the inline expansion toggle; defaults to five. */
   limit?: number;
   /** Overrides the `Sessions (N)` link's box, e.g. to inset it like the rows. */
   linkStyle?: StyleProp<ViewStyle>;
@@ -355,8 +386,6 @@ export function HomeRecentSessions({
   query?: string;
   /** Pad keeps the large ordinal; a phone shrinks it so the title has the row. */
   pad?: boolean;
-  /** What the collapsed list's toggle says: `Sessions (N)` or Home's `Show all`. */
-  moreLabel?: 'count' | 'show-all';
   /** Drawn above the rows, e.g. Home's per-computer filter chips. */
   header?: ReactNode;
 }) {
@@ -374,7 +403,7 @@ export function HomeRecentSessions({
     theme.typography.caption.fontSize * fontScale
   );
   const discovery = useAgents((state) => state.index.servers);
-  const collapsedLimit = limit ?? (compact ? 4 : undefined);
+  const collapsedLimit = limit ?? HOME_CONTINUE_INITIAL_LIMIT;
   const searching = query.trim().length > 0;
   const displayed = searchedHomeContinueEntries(
     available,
@@ -422,20 +451,15 @@ export function HomeRecentSessions({
           {t`No matching sessions`}
         </Text>
       ) : null}
-      {!searching &&
-      (shouldShowHomeContinueOverflow(available) ||
-        (collapsedLimit !== undefined && available.length > collapsedLimit)) ? (
+      {!searching && shouldShowHomeContinueOverflow(available, collapsedLimit) ? (
         <PressableScale
           testID="home-recent-sessions-more"
           accessibilityRole="button"
+          accessibilityState={{ expanded }}
           onPress={() => setExpanded(!expanded)}
           style={[styles.more, linkStyle]}>
           <Text variant="bodySmall" color={theme.colors.primary}>
-            {expanded
-              ? t`Show less`
-              : moreLabel === 'show-all'
-                ? t`Show all`
-                : `${t`Sessions`} (${available.length})`}
+            {expanded ? t`Show less` : t`Show more`}
           </Text>
         </PressableScale>
       ) : null}
@@ -593,7 +617,13 @@ function RecentSessionRow({
         : entry.title || kind;
   const path = terminal ? terminalRowPath(title, cwd) : cwd ? homePathLabel(cwd) : undefined;
   const observation = useObservationNow(entry.observation);
-  const taskState = task?.state;
+  const requests = useHomeAttention((state) => state.byTarget);
+  const nowMs = useMinuteNow();
+  const displayTask =
+    task && target?.kind === 'agent-session'
+      ? taskAttentionView({ task, serverId: target.serverId, requests, nowMs })
+      : undefined;
+  const taskState = displayTask?.state;
   const status = taskState ?? observation?.status;
   const sessionStatus =
     !taskState && observation?.kind === 'agent-session' && observation.status
@@ -611,8 +641,8 @@ function RecentSessionRow({
       ? [stateLabel, t`Needs your input`].filter(Boolean).join(META_SEPARATOR)
       : stateLabel;
   // The task's tone is the one its card and Needs you row wear.
-  const statusTone = task
-    ? taskRowVisual(task, { canComplete: false, acknowledged: false }).tone
+  const statusTone = displayTask
+    ? taskRowVisual(displayTask, { canComplete: false, acknowledged: false }).tone
     : sessionStatus
       ? sessionStatus.tone
       : agentStatusTone(observation?.status);
@@ -885,6 +915,8 @@ function RecentSessionRow({
 
 const styles = StyleSheet.create({
   search: {
+    paddingHorizontal: 12,
+    // borderWidth: StyleSheet.hairlineWidth,
     width: '100%',
     minWidth: 0,
     minHeight: 44,

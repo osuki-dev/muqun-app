@@ -43,6 +43,7 @@ import {
   pendingWorking,
   type PendingDispatch,
   type TaskRowVisual,
+  pendingUnconfirmed,
 } from '@/lib/home-computer-cards';
 import { fadeIn, fadeOut, listLayout, PULSE_ONCE_MS, pulseOnce, travelTiming } from '@/lib/motion';
 import Svg, { Path } from 'react-native-svg';
@@ -57,7 +58,8 @@ import { dismissTaskNotices } from '@/stores/in-app-notifications';
 import { taskOpeningKey, useHomeTaskCards } from '@/stores/home-task-cards';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useServerAgents } from '@/stores/server-agents';
-import { terminalPendingUserInput } from '@/lib/terminal-input-attention';
+import { taskAttentionView } from '@/lib/task-attention';
+import { useHomeAttention } from '@/stores/home-attention';
 import { plural } from '@lingui/core/macro';
 
 /** Inline markup worth the markdown renderer: code, emphasis, links, escapes, html. */
@@ -413,12 +415,25 @@ function useRequesterName() {
   };
 }
 
-/**
- * What one task row shows and does, shared by the full row and the child row
- * under its parent: the state visual, the line (or, for a mirror whose
- * computer this phone is not paired with, why it does not open), the clock,
- * the open guard and the long-press menu of the state's actions.
- */
+/** Share confirmed attention and quiet recorded blockers across task rows. */
+export function useTaskAttentionView(
+  task: TaskView,
+  serverId: string,
+  nowMs: number,
+  statusCurrent = true
+) {
+  const panes = useServerAgents((state) => state.byServer[serverId]);
+  const requests = useHomeAttention((state) => state.byTarget);
+  return taskAttentionView({
+    task,
+    serverId,
+    panes: statusCurrent ? panes : undefined,
+    requests: statusCurrent ? requests : {},
+    nowMs,
+  });
+}
+
+/** Shared row state, work navigation and the existing long-press actions. */
 function useTaskRowModel({
   task,
   serverId,
@@ -452,10 +467,11 @@ function useTaskRowModel({
   const peerName = usePeerName();
   const pairedHere = useIsPairedHere();
   const requesterName = useRequesterName();
+  const displayTask = useTaskAttentionView(task, serverId, nowMs, statusCurrent);
   const [menuOpen, setMenuOpen] = useState(false);
   // What the last action from the menu could not do, said in the menu.
   const [menuError, setMenuError] = useState<string | null>(null);
-  const visual = taskRowVisual(task, {
+  const visual = taskRowVisual(displayTask, {
     canComplete: canMarkTaskDone(task, capabilities),
     acknowledged,
     statusCurrent,
@@ -468,7 +484,7 @@ function useTaskRowModel({
     taskRowDestination(task).kind !== 'result' && mirror !== null && !pairedHere(mirror);
   const line: TaskRowLineView = unpaired
     ? lineView('', theme.colors.textMuted, t`Open ${mirrorName} on this phone first`)
-    : rowLine(task, visual, '', nowMs);
+    : rowLine(displayTask, visual, '', nowMs);
   const requester = requesterName(task.requestedBy);
   const fromText = requester ? t`from ${requester}` : '';
   const open = () => {
@@ -585,6 +601,8 @@ function useTaskRowModel({
     mirrorName,
     fromText,
     open,
+    press: open,
+    unpaired,
     trailingAge,
     menuItems,
     menuShown: menuOpen && menuItems.length > 0,
@@ -596,7 +614,8 @@ function useTaskRowModel({
 /**
  * One task: its state icon, the goal as typed, its age, and the line saying
  * what became of it, all from `taskRowVisual`. Tapping opens the session or
- * pane it runs in -- for a mirror, on the computer that runs it; a long press
+ * pane it runs in, or expands a recorded waiting reason when no request is
+ * observed. For a mirror, work opens on the computer that runs it; a long press
  * lists what the reader can do with it (Open, Cancel, Mark done,
  * Acknowledge); the sub-task count opens the work under it. The same row on
  * Home's cards and in the Tasks list.
@@ -640,21 +659,6 @@ export function TaskRow({
     inComputerCard,
     statusCurrent,
   });
-  const pendingUserInput = useServerAgents((state) =>
-    statusCurrent &&
-    task.state === 'working' &&
-    task.binding.kind === 'pane' &&
-    Boolean(task.binding.agentId)
-      ? terminalPendingUserInput(
-          state.byServer[serverId],
-          task.binding.sessionId,
-          task.binding.paneId,
-          nowMs,
-          task.binding.shellPid
-        )
-      : false
-  );
-  const { t } = useLingui();
   const { visual, line, mirror, fromText, trailingAge } = row;
   const ownTitle = taskRowTitle(task);
   const title = ownTitle || whereName(task) || line.text;
@@ -695,15 +699,16 @@ export function TaskRow({
           mirror && ownTitle ? whereName(task) : '',
           fromText,
           line.text,
-          pendingUserInput ? t`Needs your input` : '',
           trailingAge,
           rollupText,
         ]
           .filter(Boolean)
           .join(', ')}
-        accessibilityState={{ busy: opening }}
+        accessibilityState={{
+          busy: opening,
+        }}
         {...row.menuProps}
-        onPress={row.open}
+        onPress={row.press}
         style={[styles.row, inComputerCard ? styles.cardRow : undefined]}>
         <View style={[styles.titleLine, inComputerCard ? styles.cardTitleLine : undefined]}>
           <RowMarkdown text={title} ink={theme.colors.text} kind="title" />
@@ -745,14 +750,6 @@ export function TaskRow({
           />
           {inComputerCard ? null : rollup}
         </Animated.View>
-        {pendingUserInput ? (
-          <Text
-            testID={`task-row-input-${task.taskId}`}
-            variant="caption"
-            color={theme.colors.warning}>
-            {t`Needs your input`}
-          </Text>
-        ) : null}
         {inComputerCard && rollup ? <View style={styles.cardMetadata}>{rollup}</View> : null}
       </PressableScale>
       {row.menuShown ? (
@@ -825,7 +822,7 @@ function SubTaskRow({
           .filter(Boolean)
           .join(', ')}
         {...row.menuProps}
-        onPress={row.open}
+        onPress={row.press}
         style={styles.child}>
         <WhereMark task={task} discovery={discovery} />
         {mirror ? (
@@ -893,6 +890,9 @@ export function SentTaskRow({
     acknowledged: true,
   });
   const noReply = !failed && !replied && item.asid !== undefined && !pendingWorking(item, nowMs);
+  // A plain send the gateway never answered within the TTL stays, says so,
+  // and a tap asks the computer whether it has the task after all.
+  const unconfirmed = pendingUnconfirmed(item, nowMs);
   const line = failed
     ? lineView(
         t`Could not send`,
@@ -901,10 +901,25 @@ export function SentTaskRow({
       )
     : noReply
       ? lineView('', theme.colors.textMuted, t`Sent · no reply yet`)
-      : rowLine(replied, visual, computer, nowMs);
-  const press = !actions ? null : failed ? actions.retry : item.asid ? actions.open : null;
+      : unconfirmed
+        ? lineView(
+            t`Delivery not confirmed`,
+            theme.colors.textMuted,
+            actions?.check ? t`Check status` : ''
+          )
+        : rowLine(replied, visual, computer, nowMs);
+  const press = !actions
+    ? null
+    : failed
+      ? actions.retry
+      : item.asid
+        ? actions.open
+        : unconfirmed
+          ? (actions.check ?? null)
+          : null;
   // Rows that stay until acted on can be let go; the field keeps its own draft.
-  const dismissible = failed || noReply || (replied !== null && replied.state !== 'working');
+  const dismissible =
+    failed || noReply || unconfirmed || (replied !== null && replied.state !== 'working');
   return (
     <Animated.View
       testID="home-card-pending"
@@ -917,7 +932,13 @@ export function SentTaskRow({
         disabled={!press}
         onPress={() => press?.(item)}
         accessibilityRole={press ? 'button' : undefined}
-        accessibilityLabel={failed ? t`Could not send. Tap to retry` : undefined}
+        accessibilityLabel={
+          failed
+            ? t`Could not send. Tap to retry`
+            : unconfirmed
+              ? t`Delivery not confirmed. Tap to check status`
+              : undefined
+        }
         style={[styles.sentBody, styles.grow]}>
         <View style={styles.titleLine}>
           <RowMarkdown text={goalTitle(item.goal)} ink={theme.colors.text} kind="title" />

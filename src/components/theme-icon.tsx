@@ -59,7 +59,10 @@ export function ThemeIcon({
       style={{
         width: size,
         height: size,
-        transform: rotation ? [{ rotate: `${rotation}deg` }] : undefined,
+        // ExpoImage forwards this as both a native prop and a style field.
+        // Reset a previous rotation explicitly; undefined becomes null in the
+        // native diff and React Native's transform processor cannot read it.
+        transform: [{ rotate: `${rotation}deg` }],
       }}
       tintColor={icon.render === 'template' ? color : undefined}
     />

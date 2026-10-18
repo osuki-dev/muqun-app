@@ -1,4 +1,4 @@
-import type { PanePart, PanePartStatus } from './pane-parts';
+import { promptAttachmentsKey, type PanePart, type PanePartStatus } from './pane-parts';
 
 /**
  * The conversation model behind the chat view: the gateway's ordered parts,
@@ -75,7 +75,7 @@ interface PaneChatItemCommon {
 
 export type PaneChatItem = PaneChatItemCommon &
   (
-    | { kind: 'prompt'; text: string; part: PanePart }
+    | { kind: 'prompt'; text: string; part: Extract<PanePart, { type: 'prompt' }> }
     | { kind: 'part'; part: PanePart }
     /**
      * A heading the pane drew out of rule characters -- `──── Analysis ────`.
@@ -504,8 +504,9 @@ export function buildPaneChatItems(
       if (part.type === 'status' && index !== newestStatus) continue;
       if (part.type === 'prompt') {
         const text = part.text.trim();
-        if (text && text === echoedPrompt) continue;
-        echoedPrompt = text;
+        // An image-bearing turn cannot be identified as an echo by text alone.
+        if (!part.attachments?.length && text && text === echoedPrompt) continue;
+        echoedPrompt = part.attachments?.length ? '' : text;
       } else {
         echoedPrompt = '';
       }
@@ -718,6 +719,9 @@ export function signatureOfPart(part: PanePart): string {
       return `${base}~${part.rows.length}`;
     case 'asset-ref':
       return `${base}~${part.asset_id}`;
+    case 'prompt':
+      // Bytes may arrive after the text, or change without changing its label.
+      return `${base}${promptAttachmentsKey(part.attachments)}`;
     default:
       return base;
   }

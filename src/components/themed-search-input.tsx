@@ -16,8 +16,9 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { Icon, resolveFontStyle, useThemeTokens } from '@osuki-dev/ui';
+import { Icon, useThemeTokens } from '@osuki-dev/ui';
 import { FontedTextInput } from '@/components/fonted-text-input';
+import { resolveUserFontStyle } from '@/hooks/use-user-fonts';
 
 export interface SearchInputProps extends Omit<TextInputProps, 'style'> {
   value: string;
@@ -88,7 +89,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
       minWidth: 0,
       paddingVertical: 0,
       height: 22,
-      ...resolveFontStyle(theme.fonts, theme.typeStyles.body.fontFamily, 'regular'),
+      ...resolveUserFontStyle(theme.fonts, theme.typeStyles.body.fontFamily, 'regular'),
       fontSize: 16,
       lineHeight: 22,
       color: theme.colors[input.foreground],

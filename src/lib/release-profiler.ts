@@ -12,8 +12,9 @@
  *   anything else only with `MUQUN_RELEASE_PROFILER=1` at build time (see
  *   react-native.config.js).
  * - The control, this module and the library's JS are pulled in by one
- *   `require` in the root layout behind `__DEV__ ||
- *   process.env.EXPO_PUBLIC_RELEASE_PROFILER === '1'`. Both are inlined when a
+ *   `require` in the root layout, enabled for Debug unless
+ *   `EXPO_PUBLIC_RELEASE_PROFILER=0`, or explicitly enabled with
+ *   `EXPO_PUBLIC_RELEASE_PROFILER=1`. These values are inlined when a
  *   Release bundle is built, so the condition folds to `false` and Metro drops
  *   the `require` before it collects dependencies.
  * - The control only appears where the native half is actually linked.

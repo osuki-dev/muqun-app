@@ -1,0 +1,5 @@
+# Android's first immersive launch is a system tutorial, not an app permission.
+# The manifest guards on its System UI ID before touching its confirmation.
+press "id=com.android.systemui:id/ok"
+wait absent "id=com.android.systemui:id/immersive_cling_title" 10000
+wait stable 400 5000

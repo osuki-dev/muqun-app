@@ -1,3 +1,5 @@
+import { parseLedgerDelivery, type LedgerDelivery } from './task-ledger';
+
 /**
  * Starting an agent from the phone, and stopping one that is running.
  *
@@ -67,6 +69,8 @@ export function gatewaySupportsAgentSpawn(capabilities: string[] | undefined | n
 export interface AgentProfile {
   /** What to send back as `agent`. The gateway's own word for this agent. */
   kind: string;
+  /** The ledger deliveries the task API offers for this kind (`ledger_delivery`). */
+  ledgerDelivery?: LedgerDelivery[];
   /** The executable it looks for on `PATH`. Equal to `kind` unless remapped. */
   command: string;
   /**
@@ -117,8 +121,10 @@ export function agentProfilesFromResponse(value: unknown): AgentProfile[] {
     const kind = stringField(raw.kind) ?? stringField(raw.agent) ?? stringField(raw.id);
     if (!kind || seen.has(kind)) continue;
     seen.add(kind);
+    const ledgerDelivery = parseLedgerDelivery(raw.ledger_delivery ?? raw.ledgerDelivery);
     profiles.push({
       kind,
+      ...(ledgerDelivery ? { ledgerDelivery } : {}),
       command: stringField(raw.command) ?? kind,
       // Absent means "the gateway did not probe", which is not the same as "not
       // there". Only an explicit `false` dims a row.

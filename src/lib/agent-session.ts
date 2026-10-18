@@ -1,5 +1,13 @@
+import { agentSnapshotRefreshQuery } from './agent-session-runtime';
+import { DEMO_COMPACTION_LOG_ASIDS, isDemoCompactionLogAsid } from './demo-compaction-log-native';
+import { DEMO_NOTICE_ASIDS, isDemoNoticeAsid } from './demo-notification-native';
 import { fetch as nitroFetch } from 'react-native-nitro-fetch';
 import { agentSessionListQuery, type ListAgentSessionsQuery } from './agent-session-list-query';
+import {
+  parseAgentSessionPage,
+  supportsAgentSessionPages,
+  type AgentSessionPage,
+} from './agent-session-page';
 import { TextDecoder } from 'react-native-nitro-text-decoder';
 import {
   configuredGatewayServerId,
@@ -7,12 +15,15 @@ import {
   gatewayAuthHeaders,
   gatewayEndpointFetch,
   gatewayFetch,
+  gatewayWriteFetch,
   gatewayUrl,
   isGatewayConfigured,
   type GatewayEndpoint,
 } from './gateway-client';
 import { streamRecordCrypto } from './gateway-transport';
+import { STREAM_WATCHDOG_TICK_MS, streamIsStalled } from './stream-watchdog';
 import { noteGatewayGeneration } from '@/stores/gateway-connection-generation';
+import { useServerCapabilities } from '@/stores/server-capabilities';
 import { connectAgentStream, type AgentStreamResponse } from './agent-stream';
 import { isShellNotFoundError } from './agent-shell-errors';
 import type { FileMentionHit } from './file-mentions';
@@ -22,6 +33,23 @@ import {
   type DirectoryListing,
 } from './agent-directory-suggest';
 import { activeLocaleHeaders } from '@/i18n/active-locale';
+import {
+  advanceDemoCompaction,
+  DEMO_COMPACTION_ASID,
+  DEMO_ITALIC_BOUNDARY_ASID,
+  DEMO_NATIVE_PREVIEW_ASID,
+  DEMO_NATIVE_PREVIEW_CHILD_ASID,
+  DEMO_SERVER_ID,
+  demoCompactionSnapshot,
+  demoNativePreviewSnapshot,
+  demoCompactionLogsSnapshot,
+  advanceDemoCompactionLogs,
+  subscribeDemoCompactionLogs,
+  demoNotificationSnapshot,
+  subscribeDemoNotification,
+  isDemoActive,
+  subscribeDemoCompaction,
+} from './demo-gateway';
 import {
   buildAgentCacheKey,
   CATALOG_TTL_MS,
@@ -72,6 +100,7 @@ import {
   parseWorktreeList,
   sortTimeline,
   type AgentCatalog,
+  type AgentFeatures,
   type AgentContextUsage,
   type AgentProject,
   type AgentDomainEvent,
@@ -98,6 +127,7 @@ import {
   type WorkspaceMissing,
   type WorktreeDirectory,
 } from './agent-protocol';
+import { readApiError } from './gateway-refusal';
 
 export { getCachedAgentCatalogSync, getCachedAgentProjectsSync, buildAgentCacheKey };
 
@@ -139,6 +169,25 @@ function jsonHeaders(): Record<string, string> {
   return { ...gatewayAuthHeaders(), 'Content-Type': 'application/json' };
 }
 
+/** A selected offline record never uses a live agent transport, even for auxiliary reads. */
+function usesOfflineDemo(endpoint?: { url?: string }): boolean {
+  return (
+    configuredGatewayServerId() === DEMO_SERVER_ID &&
+    isDemoActive() &&
+    (!endpoint?.url || endpoint.url.replace(/\/$/, '') === gatewayUrl(''))
+  );
+}
+
+/**
+ * What the envelope says the gateway can do, filed under the configured
+ * server so the next screen can act on it without asking (`observe`).
+ */
+function observeEnvelopeCapabilities(json: unknown): void {
+  const capabilities = asRecord(json)?.capabilities;
+  if (capabilities === undefined) return;
+  useServerCapabilities.getState().observe(configuredGatewayServerId(), capabilities);
+}
+
 /** The `data` of the gateway's envelope, or the body when it has none. */
 function envelopeData(json: unknown): unknown {
   if (json && typeof json === 'object' && !Array.isArray(json) && 'data' in json) {
@@ -166,6 +215,7 @@ async function readScoped<T>(
   fallback: T,
   init?: { headers?: Record<string, string>; signal?: AbortSignal }
 ): Promise<{ value: T; missing?: WorkspaceMissing }> {
+  if (usesOfflineDemo()) return { value: fallback };
   const url = gatewayUrl(path);
   /**
    * One request per path in flight, and everyone waits on the same answer.
@@ -234,7 +284,27 @@ export async function writeJson(
   body?: unknown,
   method: 'POST' | 'DELETE' = 'POST'
 ): Promise<unknown> {
-  const res = await gatewayFetch(gatewayUrl(path), {
+  if (usesOfflineDemo()) {
+    if (method === 'POST' && path === sessionRoute(DEMO_COMPACTION_ASID, '/view')) return null;
+    if (
+      method === 'POST' &&
+      [
+        DEMO_NATIVE_PREVIEW_ASID,
+        DEMO_NATIVE_PREVIEW_CHILD_ASID,
+        DEMO_ITALIC_BOUNDARY_ASID,
+        ...DEMO_NOTICE_ASIDS,
+        ...DEMO_COMPACTION_LOG_ASIDS,
+      ].some((asid) => path === sessionRoute(asid, '/view'))
+    )
+      return null;
+    throw new Error('Agent writes are not available in the offline demo');
+  }
+  // Creating a session, prompting and commanding wait on the agent; every
+  // other write is a lookup-sized bookkeeping call.
+  const fetch = /\/agent-sessions$|\/(prompt|command)$/.test(path)
+    ? gatewayWriteFetch
+    : gatewayFetch;
+  const res = await fetch(gatewayUrl(path), {
     method,
     headers: body === undefined ? gatewayAuthHeaders() : jsonHeaders(),
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
@@ -260,6 +330,7 @@ export interface ObservedAgentSessionList {
   sessions: AgentSessionInfo[];
   /** Last successful Gateway confirmation; cached fallbacks keep their original time. */
   observedAtMs?: number;
+  authoritative?: boolean;
 }
 
 /**
@@ -275,18 +346,22 @@ export interface ObservedAgentSessionList {
  */
 export async function listAgentSessionsObserved(
   sessionId?: string,
-  query?: ListAgentSessionsQuery
+  query?: ListAgentSessionsQuery,
+  signal?: AbortSignal
 ): Promise<ObservedAgentSessionList> {
+  if (usesOfflineDemo()) return { sessions: [], authoritative: true };
   const search = agentSessionListQuery(query);
   const path = sessionId
     ? `/api/sessions/${encodeURIComponent(sessionId)}/agent-sessions${search}`
     : `/api/agent-sessions${search}`;
   // The query is part of the key: a listing scoped to one workspace is not the
   // same resource as the unscoped one, and they must not share an ETag.
-  const cacheKey = buildAgentCacheKey('sessions', null, sessionId, search || 'all');
+  const url = gatewayUrl(path);
+  const headers: Record<string, string> = gatewayAuthHeaders();
+  const cacheKey = buildAgentCacheKey('sessions', gatewayUrl(''), sessionId, search || 'all');
   const cached = getCachedEntry<AgentSessionInfo[]>(cacheKey);
 
-  return dedupeInFlight(`GET observed ${path}`, async () => {
+  const read = async () => {
     try {
       if (!isGatewayConfigured()) {
         return {
@@ -294,13 +369,13 @@ export async function listAgentSessionsObserved(
           ...(cached ? { observedAtMs: cached.timestamp } : {}),
         };
       }
-      const headers: Record<string, string> = gatewayAuthHeaders();
       if (cached?.etag) headers['If-None-Match'] = cached.etag;
 
-      const res = await gatewayFetch(gatewayUrl(path), { method: 'GET', headers });
+      const res = await gatewayFetch(url, { method: 'GET', headers, signal });
+      if (signal?.aborted) throw new Error('Session list cancelled');
       if (res.status === 304 && cached) {
         touchCacheEntryTimestamp(cacheKey);
-        return { sessions: cached.data, observedAtMs: Date.now() };
+        return { sessions: cached.data, observedAtMs: Date.now(), authoritative: true };
       }
       if (!res.ok) {
         return {
@@ -311,15 +386,65 @@ export async function listAgentSessionsObserved(
 
       const etag = res.headers.get('etag') ?? undefined;
       const list = parseAgentSessionList(envelopeData(await res.json()));
+      if (signal?.aborted) throw new Error('Session list cancelled');
       setCachedEntry(cacheKey, list, etag);
-      return { sessions: list, observedAtMs: Date.now() };
+      return { sessions: list, observedAtMs: Date.now(), authoritative: true };
     } catch {
       return {
         sessions: cached?.data ?? [],
         ...(cached ? { observedAtMs: cached.timestamp } : {}),
       };
     }
-  });
+  };
+  return signal ? read() : dedupeInFlight(`GET observed ${url}`, read);
+}
+
+/** Provider-scoped pagination, with the legacy array reader for unsupported gateways. */
+export async function listAgentSessionPage(
+  sessionId: string | undefined,
+  query: ListAgentSessionsQuery,
+  options: {
+    serverId: string;
+    capabilities?: readonly string[];
+    features?: AgentFeatures;
+    signal?: AbortSignal;
+  }
+): Promise<AgentSessionPage> {
+  if (configuredGatewayServerId() !== options.serverId || options.signal?.aborted)
+    throw new Error('Session list owner changed');
+  if (
+    usesOfflineDemo() ||
+    !supportsAgentSessionPages(options.capabilities, options.features, query.agentId)
+  ) {
+    // A provider cursor is never sent to the legacy merged inventory.
+    const { cursor: _cursor, ...legacyQuery } = query;
+    const result = await listAgentSessionsObserved(sessionId, legacyQuery, options.signal);
+    return {
+      ...result,
+      nextCursor: null,
+      previousCursor: null,
+      paginated: false,
+      authoritative: result.authoritative === true,
+    };
+  }
+  const path = `/api/agent-sessions/page${agentSessionListQuery(query)}`;
+  const url = gatewayUrl(path);
+  const headers = gatewayAuthHeaders();
+  const cacheKey = buildAgentCacheKey('sessions', gatewayUrl(''), sessionId, `page:${path}`);
+  const cached = getCachedEntry<AgentSessionPage>(cacheKey);
+  if (cached?.etag) headers['If-None-Match'] = cached.etag;
+  const response = await gatewayFetch(url, { method: 'GET', headers, signal: options.signal });
+  if (options.signal?.aborted) throw new Error('Session page cancelled');
+  if (response.status === 304 && cached) {
+    touchCacheEntryTimestamp(cacheKey);
+    return { ...cached.data, authoritative: true, observedAtMs: Date.now() };
+  }
+  if (!response.ok) throw new Error('Session page unavailable');
+  const page = parseAgentSessionPage(envelopeData(await response.json()));
+  if (options.signal?.aborted) throw new Error('Session page cancelled');
+  const result = { ...page, paginated: true, authoritative: true, observedAtMs: Date.now() };
+  setCachedEntry(cacheKey, result, response.headers.get('etag') ?? undefined);
+  return result;
 }
 
 export async function listAgentSessions(
@@ -340,6 +465,7 @@ export async function listAgentSessionChildrenObserved(
   asid: string,
   query?: Omit<ListAgentSessionsQuery, 'parent_id' | 'roots'>
 ): Promise<AgentSessionChildrenInventory> {
+  if (usesOfflineDemo()) return { children: [], authoritative: true };
   if (!asid || !isGatewayConfigured()) return { children: [], authoritative: false };
   const path = `${sessionRoute(asid, '/children')}${agentSessionListQuery(query)}`;
   // Capture endpoint and credentials together. `gatewayFetch` already dedupes
@@ -350,12 +476,58 @@ export async function listAgentSessionChildrenObserved(
   try {
     const res = await gatewayFetch(url, { method: 'GET', headers });
     if (!res.ok) return { children: [], authoritative: false };
+    const json = await res.json();
+    observeEnvelopeCapabilities(json);
     return {
-      children: parseAgentSessionList(envelopeData(await res.json())),
+      children: parseAgentSessionList(envelopeData(json)),
       authoritative: true,
     };
   } catch {
     return { children: [], authoritative: false };
+  }
+}
+
+export interface AgentSessionDescendantsInventory {
+  /** Every session under the one asked about, at every depth, flat. */
+  descendants: AgentSessionInfo[];
+  /** True only when the Gateway successfully answered this exact request. */
+  authoritative: boolean;
+  /** The gateway stopped short of the whole subtree; deeper levels are unlisted. */
+  truncated: boolean;
+}
+
+/**
+ * A session's whole subtree in one request
+ * (`GET /api/agent-sessions/{asid}/descendants`): the same query, auth,
+ * envelope and list shape as `/children`, flattened over every depth, with
+ * an optional `truncated: true` beside the list when the gateway cut it
+ * short. Only for a gateway that advertised `session_descendants`
+ * (`SESSION_DESCENDANTS_CAPABILITY`); an older one answers 404, which is
+ * reported as not authoritative so the caller walks instead.
+ */
+export async function listAgentSessionDescendantsObserved(
+  asid: string,
+  query?: Omit<ListAgentSessionsQuery, 'parent_id' | 'roots'>
+): Promise<AgentSessionDescendantsInventory> {
+  const none = { descendants: [], authoritative: false, truncated: false };
+  if (usesOfflineDemo()) return { ...none, authoritative: true };
+  if (!asid || !isGatewayConfigured()) return none;
+  const path = `${sessionRoute(asid, '/descendants')}${agentSessionListQuery(query)}`;
+  const url = gatewayUrl(path);
+  const headers = gatewayAuthHeaders();
+  try {
+    const res = await gatewayFetch(url, { method: 'GET', headers });
+    if (!res.ok) return none;
+    const json = await res.json();
+    observeEnvelopeCapabilities(json);
+    const data = envelopeData(json);
+    // `truncated` sits beside the list: inside `data` when the list is wrapped
+    // (`{ sessions, truncated }`), beside `data` when the list is `data` itself.
+    const truncated =
+      (Array.isArray(data) ? asRecord(json)?.truncated : asRecord(data)?.truncated) === true;
+    return { descendants: parseAgentSessionList(data), authoritative: true, truncated };
+  } catch {
+    return none;
   }
 }
 
@@ -413,6 +585,12 @@ export async function readAgentSessionAt(
   sessionId: string | undefined,
   asid: string
 ): Promise<AgentSessionSnapshot | null> {
+  if (usesOfflineDemo(endpoint))
+    return asid === DEMO_COMPACTION_ASID
+      ? demoCompactionSnapshot()
+      : (demoCompactionLogsSnapshot(asid) ??
+          demoNotificationSnapshot(asid) ??
+          demoNativePreviewSnapshot(asid));
   try {
     const base = endpoint.url.replace(/\/$/, '');
     const res = await gatewayEndpointFetch(
@@ -432,16 +610,32 @@ export async function readAgentSessionAt(
 
 export async function getAgentSessionSnapshot(
   sessionId: string | undefined,
-  asid: string
+  asid: string,
+  options?: { refresh?: boolean; capabilities?: readonly string[] }
 ): Promise<AgentSessionSnapshot> {
-  const res = await gatewayFetch(gatewayUrl(sessionRoute(asid, '', sessionId, true)), {
+  if (usesOfflineDemo()) {
+    if (asid === DEMO_COMPACTION_ASID) return demoCompactionSnapshot();
+    const compactionLogs = demoCompactionLogsSnapshot(asid);
+    if (compactionLogs) return compactionLogs;
+    const notification = demoNotificationSnapshot(asid);
+    if (notification) return notification;
+    const preview = demoNativePreviewSnapshot(asid);
+    if (preview) return preview;
+    throw new Error('This agent session is not available in the offline demo');
+  }
+  const query = agentSnapshotRefreshQuery(options?.refresh === true, options?.capabilities);
+  const res = await gatewayFetch(gatewayUrl(sessionRoute(asid, '', sessionId, true) + query), {
     method: 'GET',
     headers: gatewayAuthHeaders(),
   });
   if (!res.ok) {
     throw new Error(`Failed to get agent session: ${res.status} ${await res.text()}`);
   }
-  return parseAgentSessionSnapshot(envelopeData(await res.json()));
+  const json = await res.json();
+  // The snapshot is the first agent-session answer a workbench reads, so
+  // what its envelope advertises decides how the subtree is fetched next.
+  observeEnvelopeCapabilities(json);
+  return parseAgentSessionSnapshot(envelopeData(json));
 }
 
 export async function deleteAgentSession(asid: string): Promise<void> {
@@ -450,6 +644,17 @@ export async function deleteAgentSession(asid: string): Promise<void> {
 
 export async function renameAgentSession(asid: string, title: string): Promise<void> {
   await writeJson(sessionRoute(asid, '/rename'), 'Failed to rename session', { title });
+}
+
+/** Whole-session fork; item boundaries require a separate advertised contract. */
+export async function forkAgentSession(asid: string, agentId?: string): Promise<AgentSessionInfo> {
+  const path = agentId
+    ? `/api/agents/${encodeURIComponent(agentId)}/sessions/${encodeURIComponent(asid)}/fork`
+    : sessionRoute(asid, '/fork');
+  const data = await writeJson(path, 'Failed to fork session', {});
+  const info = parseAgentSessionInfo(data);
+  if (!info) throw new Error('Failed to fork session: unreadable response');
+  return info;
 }
 
 /**
@@ -529,6 +734,43 @@ export async function sendAgentCommand(
  * `resume` asks the engine to continue the run the skill was part of rather
  * than starting a turn of its own; it is omitted unless the caller says so.
  */
+/**
+ * The next older history page. An empty `items` list means there is no
+ * further page.
+ *
+ * `409 history_cursor_lost` is the adapter saying it no longer holds the
+ * cursor this paging was reading from -- it restarted, or evicted it -- which
+ * is not the end of the history. `cursorLost` tells the caller to re-read the
+ * snapshot, which gives the adapter a cursor again, and page on from there.
+ */
+export async function loadEarlierAgentTimeline(
+  sessionId: string | undefined,
+  asid: string
+): Promise<{ items: TimelineItem[]; exhausted: boolean; cursorLost?: boolean }> {
+  if (usesOfflineDemo()) throw new Error('Agent writes are not available in the offline demo');
+  const res = await gatewayFetch(
+    gatewayUrl(sessionRoute(asid, '/timeline/earlier', sessionId, false)),
+    { method: 'POST', headers: jsonHeaders(), body: '{}' }
+  );
+  if (!res.ok) {
+    const text = await res.text();
+    if (res.status === 409 && readApiError(text).code === 'history_cursor_lost') {
+      return { items: [], exhausted: false, cursorLost: true };
+    }
+    throw new Error(`Failed to load earlier messages: ${res.status} ${text}`);
+  }
+  let data: unknown = null;
+  try {
+    data = envelopeData(await res.json());
+  } catch {
+    data = null;
+  }
+  const record =
+    data && typeof data === 'object' ? (data as { items?: unknown; exhausted?: unknown }) : {};
+  const items = parseTimelineItems(record.items);
+  return { items, exhausted: record.exhausted === true || items.length === 0 };
+}
+
 export async function invokeAgentSkill(
   sessionId: string | undefined,
   asid: string,
@@ -629,11 +871,27 @@ export async function compactAgentSession(
   asid: string,
   delivery: AgentDelivery = 'steer'
 ): Promise<void> {
+  if (usesOfflineDemo()) {
+    if (isDemoCompactionLogAsid(asid)) {
+      advanceDemoCompactionLogs(asid);
+      return;
+    }
+    if (asid !== DEMO_COMPACTION_ASID) throw new Error('Not the offline compaction session');
+    advanceDemoCompaction();
+    return;
+  }
   await writeJson(sessionRoute(asid, '/compact'), 'Failed to compact session', { delivery });
 }
 
 /** Everything still in the model's context, i.e. after the last compaction. */
 export async function getAgentContext(asid: string): Promise<AgentContextUsage> {
+  if (usesOfflineDemo() && isDemoCompactionLogAsid(asid))
+    return {
+      tokens: demoCompactionLogsSnapshot(asid)?.info?.tokens ?? null,
+      limit: { context: 32768 },
+    };
+  if (usesOfflineDemo() && asid === DEMO_COMPACTION_ASID)
+    return { tokens: demoCompactionSnapshot().info?.tokens ?? null, limit: { context: 32768 } };
   return readJson(sessionRoute(asid, '/context'), parseAgentContextUsage, {
     messages: 0,
     tokens: null,
@@ -857,11 +1115,53 @@ export async function discardAgentVcsFile(
  *
  * A caller with no directory keeps the behaviour and the cache entry it had.
  */
+/** The last catalog this device stored for the scope, including a stale one. */
+export function peekAgentCatalog(
+  sessionId?: string,
+  options?: { directory?: string; agentId?: string }
+): AgentCatalog | null {
+  const directory = normalizeCatalogDirectory(options?.directory);
+  const cacheKey = buildAgentCacheKey(
+    'catalog',
+    undefined,
+    sessionId,
+    agentCatalogCacheVariant(directory, options?.agentId)
+  );
+  return getCachedAgentCatalogSync(cacheKey);
+}
+
+/**
+ * A stored record's address and credentials for the catalog loaders, which
+ * otherwise read through the shared client. Everything the record carries is
+ * taken, not only its URL and token: a record with a transport key must be
+ * sealed with it, whichever computer the client is pointed at.
+ */
+export type CatalogEndpoint = Partial<Omit<GatewayEndpoint, 'token'>> & {
+  token?: string | null;
+};
+
+/** The request a stored record is read through; the shared client when none is named. */
+function catalogFetch(endpoint: CatalogEndpoint | undefined, url: string, init: RequestInit) {
+  if (!endpoint?.url) return gatewayFetch(url, init);
+  return gatewayEndpointFetch(
+    {
+      url: endpoint.url,
+      token: endpoint.token ?? '',
+      ...(endpoint.deviceId ? { deviceId: endpoint.deviceId } : {}),
+      ...(endpoint.transportKey ? { transportKey: endpoint.transportKey } : {}),
+      ...(endpoint.transport ? { transport: endpoint.transport } : {}),
+    },
+    url,
+    init
+  );
+}
+
 export async function getAgentCatalog(
   sessionId?: string,
-  endpoint?: { url?: string; token?: string | null },
+  endpoint?: CatalogEndpoint,
   options?: { directory?: string; forceRefresh?: boolean; requireFresh?: boolean; agentId?: string }
 ): Promise<AgentCatalog> {
+  if (usesOfflineDemo(endpoint)) return EMPTY_CATALOG;
   const directory = normalizeCatalogDirectory(options?.directory);
   const cacheKey = buildAgentCacheKey(
     'catalog',
@@ -896,7 +1196,7 @@ export async function getAgentCatalog(
         headers['If-None-Match'] = cached.etag;
       }
 
-      const res = await gatewayFetch(url, { method: 'GET', headers });
+      const res = await catalogFetch(endpoint, url, { method: 'GET', headers });
 
       if (res.status === 304 && cached) {
         touchCacheEntryTimestamp(cacheKey);
@@ -930,9 +1230,10 @@ export async function getAgentCatalog(
 
 export async function getAgentProjects(
   sessionId?: string,
-  endpoint?: { url?: string; token?: string | null },
+  endpoint?: CatalogEndpoint,
   options?: { forceRefresh?: boolean; agentId?: string }
 ): Promise<AgentProject[]> {
+  if (usesOfflineDemo(endpoint)) return [];
   const cacheKey = buildAgentCacheKey(
     'projects',
     endpoint?.url,
@@ -968,7 +1269,7 @@ export async function getAgentProjects(
         headers['If-None-Match'] = cached.etag;
       }
 
-      const res = await gatewayFetch(url, { method: 'GET', headers });
+      const res = await catalogFetch(endpoint, url, { method: 'GET', headers });
 
       if (res.status === 304 && cached) {
         touchCacheEntryTimestamp(cacheKey);
@@ -1192,6 +1493,7 @@ export async function getAgentStatus(
     stream_connected: false,
     autostart: true,
   };
+  if (usesOfflineDemo(endpoint)) return fallback;
   const path = withAgentIdQuery('/api/agent-status', agentId);
   if (!endpoint) return readJson(path, parseAgentStatusInfo, fallback);
 
@@ -1233,6 +1535,7 @@ export async function getAgentsDiscovery(options: {
    */
   serverId?: string;
 }): Promise<GatewayDiscovery | null> {
+  if (usesOfflineDemo(options.endpoint)) return null;
   if (!hasMultiAgent(options.capabilities)) return null;
   const serverId = options.serverId ?? (options.endpoint ? null : configuredGatewayServerId());
   try {
@@ -1289,6 +1592,7 @@ export async function getAgentTimelineDelta(
   afterSeq: number
 ): Promise<AgentTimelineDelta> {
   const empty: AgentTimelineDelta = { items: [], resync: false, latest_seq: afterSeq };
+  if (usesOfflineDemo()) return empty;
   try {
     if (!isGatewayConfigured()) return empty;
     const res = await gatewayFetch(
@@ -1344,8 +1648,28 @@ export function openAgentSessionStream(options: {
   onClose?: () => void;
   onConnected?: () => void;
 }): () => void {
+  if (usesOfflineDemo()) {
+    if (isDemoCompactionLogAsid(options.asid))
+      return subscribeDemoCompactionLogs(options.asid, options.onEvent);
+    if (isDemoNoticeAsid(options.asid))
+      return subscribeDemoNotification(options.asid, options.onEvent);
+    // No SSE, socket retry or timer. The real Workbench batches these typed
+    // events through its normal handler; only the existing Compact action advances them.
+    return options.asid === DEMO_COMPACTION_ASID
+      ? subscribeDemoCompaction(options.onEvent)
+      : () => {};
+  }
   let cancelled = false;
   const controller = new AbortController();
+  // The same watchdog the pane stream keeps: a half-open connection delivers
+  // nothing and never errors, and the session sat on it looking current. Past
+  // the idle limit it is aborted, which reaches `onError` and the caller's
+  // reconnect like any other failure. The gateway's keep-alives count as
+  // heard, so a quiet session is not mistaken for a dead one.
+  let lastHeardAt = Date.now();
+  const watchdog = setInterval(() => {
+    if (!cancelled && streamIsStalled(lastHeardAt, Date.now())) controller.abort();
+  }, STREAM_WATCHDOG_TICK_MS);
 
   const connect = async () => {
     try {
@@ -1374,7 +1698,17 @@ export function openAgentSessionStream(options: {
         abort: () => controller.abort(),
         isCancelled: () => cancelled,
         onEvent: options.onEvent,
-        ...(options.onConnected ? { onConnected: options.onConnected } : {}),
+        onHeard: () => {
+          lastHeardAt = Date.now();
+        },
+        ...(options.onConnected
+          ? {
+              onConnected: () => {
+                lastHeardAt = Date.now();
+                options.onConnected?.();
+              },
+            }
+          : {}),
       });
 
       // The one line this whole split exists for.
@@ -1383,6 +1717,8 @@ export function openAgentSessionStream(options: {
       if (!cancelled) {
         options.onError?.(err);
       }
+    } finally {
+      clearInterval(watchdog);
     }
   };
 
@@ -1392,6 +1728,7 @@ export function openAgentSessionStream(options: {
 
   return () => {
     cancelled = true;
+    clearInterval(watchdog);
     controller.abort();
   };
 }

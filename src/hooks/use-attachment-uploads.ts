@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { DeliveryOwnership } from '@/lib/bound-delivery';
 import type { GatewayRecord } from '@/lib/gateway-storage';
+import { useAgents } from '@/stores/agents';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useVoiceInput } from '@/stores/voice-input';
 
@@ -173,6 +174,11 @@ export function useAttachmentUploads(
     };
   }, [releaseWaiters, ownership]);
 
+  // The caps the computer named in discovery, so a staged file is held to
+  // what this gateway takes rather than to the app's own number.
+  const limits = useAgents((state) =>
+    record ? state.index.servers[record.serverId]?.uploads : undefined
+  );
   const capturePicker = useCallback(() => {
     const currentRecord = record;
     const isCurrent = ownership.capture(
@@ -192,14 +198,14 @@ export function useAttachmentUploads(
       addFiles: (files: PickedFile[]) => {
         if (!captured || !isCurrent() || files.length === 0) return;
         const previous = attachmentsRef.current;
-        const next = stageFiles(previous, files, destination?.());
+        const next = stageFiles(previous, files, destination?.(), limits);
         for (const entry of next.slice(previous.length))
           destinations.current.set(entry.id, { record: captured, isCurrent });
         commit(next);
         pump();
       },
     };
-  }, [record, ownership, commit, pump, destination]);
+  }, [record, ownership, commit, pump, destination, limits]);
   const addFiles = useCallback(
     (files: PickedFile[]) => capturePicker().addFiles(files),
     [capturePicker]

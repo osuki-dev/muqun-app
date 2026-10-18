@@ -48,6 +48,8 @@ type AppDrawerProps = {
    */
   padRailCollapsed?: boolean;
   detailTitle?: string;
+  /** Pad conversations use the row width and align the title with their content. */
+  expandDetailTitle?: boolean;
   onDetailAction?: () => void;
   /**
    * Replaces what the back button does, for a screen that has something to
@@ -92,6 +94,7 @@ export default function AppDrawer({
   padRail,
   padRailCollapsed = false,
   detailTitle,
+  expandDetailTitle = false,
   onDetailAction,
   onDetailBack,
   detailFadeColor,
@@ -126,6 +129,7 @@ export default function AppDrawer({
   // server, and a rail that stayed out would have taken back the width the
   // preview was opened for.
   const [railPeeked, setRailPeeked] = useState(false);
+  const expandsDetailTitle = hasPadRail && expandDetailTitle;
   const showsPadRail = hasPadRail && !padRailCollapsed;
   const peeksPadRail = hasPadRail && padRailCollapsed && railPeeked;
   // A rail that is not in the layout must not keep a stale peek alive: closing
@@ -260,7 +264,8 @@ export default function AppDrawer({
             {detailTitleSlot ?? (
               <NavHeaderTitlePill
                 title={detailTitle ?? record?.label ?? t`Computer`}
-                style={styles.detailHeaderTitleMeasure}
+                style={expandsDetailTitle ? undefined : styles.detailHeaderTitleMeasure}
+                textAlign={expandsDetailTitle ? 'left' : 'center'}
               />
             )}
             {detailAccessories.map((accessory, slot) => (
@@ -284,9 +289,9 @@ export default function AppDrawer({
                   <PanelsTopLeft size={18} color={theme.colors.text} strokeWidth={2} />
                 </PressableScale>
               </NavHeaderCircle>
-            ) : (
+            ) : !expandsDetailTitle ? (
               <NavHeaderSpacer />
-            )}
+            ) : null}
           </DetailHeader>
         ) : null}
       </Animated.View>

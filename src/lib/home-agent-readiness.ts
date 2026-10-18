@@ -246,11 +246,22 @@ export function checkAgentServer(
     // This lets command and readiness tests run in Bun without React Native,
     // while this adapter still uses the real server-scoped APIs.
     try {
-      const [gatewayClient, agentSession, agentsStore] = await Promise.all([
+      const [gatewayClient, agentSession, agentsStore, faults] = await Promise.all([
         import('@/lib/gateway-client'),
         import('@/lib/agent-session'),
         import('@/stores/agents'),
+        import('@/stores/pairing-faults'),
       ]);
+      // A computer that refused this pairing is not asked five questions it
+      // will refuse one by one; it is offline until the reader pairs again.
+      if (faults.pairingFaultOf(faults.usePairingFaults.getState(), record.serverId)) {
+        return {
+          status: 'offline',
+          capabilities: [],
+          agentId: agentId ? normalizeAgentId(agentId) : DEFAULT_AGENT_ID,
+          cause: 'health',
+        };
+      }
       const endpoint: GatewayEndpoint = {
         url: gatewayClient.effectiveGatewayBaseUrl(record),
         token: record.token,
@@ -258,11 +269,12 @@ export function checkAgentServer(
         ...(record.transportKey ? { transportKey: record.transportKey } : {}),
         ...(record.transport ? { transport: record.transport } : {}),
       };
-      // The catalog loaders accept an explicit URL/token endpoint; health is
-      // the transport-aware probe above. Home's command path selects this
-      // record before awaiting the loaders, so encrypted gateway requests use
-      // the same configured record as the health check.
-      const catalogEndpoint = { url: endpoint.url, token: endpoint.token };
+      // Health, discovery, the catalog and the projects all read through this
+      // one endpoint, credentials included: a record with a transport key is
+      // sealed with it whichever computer the shared client is pointed at.
+      // The catalog loaders used to be handed only the URL and token, which
+      // sent this record's bearer token in the clear whenever it was not the
+      // selected record.
       const result = await checkAgentReadiness(
         {
           probeHealth: async () => {
@@ -281,13 +293,13 @@ export function checkAgentServer(
           loadDiscovery: (capabilities) =>
             agentSession.getAgentsDiscovery({ endpoint, capabilities }),
           loadCatalog: () =>
-            agentSession.getAgentCatalog(undefined, catalogEndpoint, {
+            agentSession.getAgentCatalog(undefined, endpoint, {
               forceRefresh: true,
               requireFresh: true,
               ...(agentId ? { agentId } : {}),
             }),
           loadProjects: () =>
-            agentSession.getAgentProjects(undefined, catalogEndpoint, {
+            agentSession.getAgentProjects(undefined, endpoint, {
               forceRefresh: true,
               ...(agentId ? { agentId } : {}),
             }),

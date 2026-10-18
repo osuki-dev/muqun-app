@@ -6,6 +6,7 @@ import {
   classifyTransportRefusal,
   GatewayTransportRefusalError,
   type TransportRefusal,
+  clockSkewMinutes,
 } from './gateway-refusal';
 
 export type GatewayFailureKind = 'timeout' | 'network' | 'auth' | 'server' | 'request' | 'backend';
@@ -89,6 +90,22 @@ function describeTransportRefusal(refusal: TransportRefusal): GatewayFailure {
         message: t`This computer could not read the request. Check this device's date and time.`,
         ...shared,
       };
+    case 'clock-skew': {
+      // The gateway says the clock is off; with its own time on the answer it
+      // can be said by how much, which is what makes the fix obvious.
+      if (refusal.serverTimeMs === undefined)
+        return {
+          kind: 'request',
+          message: t`This computer could not read the request. Check this device's date and time.`,
+          ...shared,
+        };
+      const minutes = clockSkewMinutes(refusal.serverTimeMs);
+      return {
+        kind: 'request',
+        message: t`Your phone's clock is off by ${minutes} minutes. Fix the date and time, then try again.`,
+        ...shared,
+      };
+    }
     case 'already-handled':
       return {
         kind: 'request',

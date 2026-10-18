@@ -16,6 +16,7 @@
  */
 
 import type { AgentClientCommandId } from './agent-commands';
+import { parseLedgerDelivery } from './task-ledger';
 import {
   DEFAULT_AGENT_ID,
   defaultAgentFeatures,
@@ -23,6 +24,7 @@ import {
   parseAgentAvailability,
   parseAgentFeatures,
   parseTransportsDiscovery,
+  parseUploadLimits,
   type AgentAvailability,
   type AgentFeatures,
   type AgentInfo,
@@ -33,6 +35,7 @@ import {
   type TransportsDiscovery,
 } from './agent-protocol';
 import { parseKeyboardVocabulary } from './key-vocabulary';
+import type { UploadLimits } from './attachment-queue';
 
 export { DEFAULT_AGENT_ID, normalizeAgentId };
 
@@ -42,6 +45,27 @@ export const MULTI_AGENT_CAPABILITY = 'multi_agent';
 /** Whether a health answer's capability list says discovery is worth asking for. */
 export function hasMultiAgent(capabilities: readonly string[] | undefined | null): boolean {
   return Boolean(capabilities?.includes(MULTI_AGENT_CAPABILITY));
+}
+
+/** Remote history needs both Gateway and provider opt-in; cached history does not. */
+export function canLoadEarlierAgentTimeline(
+  capabilities: readonly string[] | undefined | null,
+  features: Pick<AgentFeatures, 'timelineEarlier'> | undefined | null
+): boolean {
+  return (
+    capabilities?.includes('agent_timeline_earlier_v1') === true &&
+    features?.timelineEarlier === true
+  );
+}
+
+/** The remote-history limitation worth explaining, if discovery is known. */
+export function timelineEarlierUnavailableReason(
+  capabilities: readonly string[] | undefined | null,
+  features: Pick<AgentFeatures, 'timelineEarlier'> | undefined | null
+): 'gateway-upgrade' | 'provider-unsupported' | null {
+  if (!capabilities) return null;
+  if (!capabilities.includes('agent_timeline_earlier_v1')) return 'gateway-upgrade';
+  return features?.timelineEarlier === false ? 'provider-unsupported' : null;
 }
 
 /**
@@ -182,9 +206,9 @@ const SHARED_DEFAULT_FEATURES: AgentFeatures = defaultAgentFeatures();
  * What an agent can do, for a screen that must answer whether or not
  * discovery ever happened.
  *
- * No discovery, or an agent discovery does not list, answers every control
+ * No discovery, or an agent discovery does not list, answers legacy controls
  * on: a gateway too old to be asked loses nothing, and no agent kind is
- * treated differently from another.
+ * treated differently from another. New remote history still requires opt-in.
  *
  * The answer is the same object for the same input: this runs as a zustand
  * selector, and a fresh default on every call is a snapshot that never
@@ -283,6 +307,8 @@ export interface MirroredServerDiscovery {
   ssh: SshDiscovery | null;
   /** The transports it advertised; absent from a gateway that predates them. */
   transports?: TransportsDiscovery;
+  /** The upload caps it named; absent from a gateway that does not say. */
+  uploads?: UploadLimits;
   /** When the answer was taken, so a reader can say how old it is. */
   observedAtMs: number;
 }
@@ -317,6 +343,7 @@ export function mirrorAgent(info: AgentInfo): MirroredAgent {
     enabled: info.enabled,
     ...(info.reason ? { reason: info.reason } : {}),
     features: info.features,
+    ...(info.ledgerDelivery ? { ledgerDelivery: info.ledgerDelivery } : {}),
   };
 }
 
@@ -331,6 +358,7 @@ export function mirrorDiscovery(
     terminal: discovery.terminal,
     ssh: discovery.ssh,
     ...(discovery.transports ? { transports: discovery.transports } : {}),
+    ...(discovery.uploads ? { uploads: discovery.uploads } : {}),
     observedAtMs,
   };
 }
@@ -369,6 +397,9 @@ function parseMirroredAgent(value: unknown): MirroredAgent | null {
       ? { reason: value.reason.trim() }
       : {}),
     features: parseAgentFeatures(value.features),
+    ...(parseLedgerDelivery(value.ledgerDelivery)
+      ? { ledgerDelivery: parseLedgerDelivery(value.ledgerDelivery) }
+      : {}),
   };
 }
 
@@ -443,7 +474,15 @@ function parseMirroredServer(value: unknown): MirroredServerDiscovery | null {
   const ssh = parseMirroredSsh(value.ssh);
   if (!agents && !terminal && !ssh) return null;
   const transports = parseTransportsDiscovery(value.transports);
-  return { agents, terminal, ssh, ...(transports ? { transports } : {}), observedAtMs };
+  const uploads = parseUploadLimits(value.uploads);
+  return {
+    agents,
+    terminal,
+    ssh,
+    ...(transports ? { transports } : {}),
+    ...(uploads ? { uploads } : {}),
+    observedAtMs,
+  };
 }
 
 function parseIdMap(value: unknown): Record<string, string> {

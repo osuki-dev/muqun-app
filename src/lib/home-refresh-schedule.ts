@@ -69,6 +69,11 @@ export function homeRefreshAttempt(serverId: string): HomeRefreshAttempt | undef
   return attempts.get(serverId);
 }
 
+/** `serverId` is due now whatever its last attempt said: the reader just chose it. */
+export function forgetHomeRefresh(serverId: string): void {
+  attempts.delete(serverId);
+}
+
 /** A refresh of `serverId` starts now: it is not due again until its delay has passed. */
 export function startHomeRefresh(serverId: string, atMs: number): void {
   attempts.set(serverId, { atMs, failures: attempts.get(serverId)?.failures ?? 0 });

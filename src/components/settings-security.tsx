@@ -21,6 +21,7 @@ import { feedback } from '@/lib/feedback';
 import {
   authenticateForAppUnlock,
   getLocalAuthAvailability,
+  localAuthMethodLabel,
   type LocalAuthAvailability,
 } from '@/lib/local-authentication';
 import { useRenderTally } from '@/lib/render-tally';
@@ -72,22 +73,23 @@ export function SettingsSecurity({ title }: { title: string }) {
           async () => {
             const availability = authAvailability ?? (await getLocalAuthAvailability());
             if (!authAvailability) setAuthAvailability(availability);
+            const methodName = localAuthMethodLabel(availability.method);
             if (!availability.available || !availability.enrolled) {
               showToast({
                 variant: 'warning',
                 title: t`App Lock unavailable`,
-                message: t`Set up ${availability.label} in system settings first.`,
+                message: t`Set up ${methodName} in system settings first.`,
               });
               return;
             }
-            const result = await authenticateForAppUnlock(availability.label);
+            const result = await authenticateForAppUnlock(availability.method);
             if (!result.success) return;
             await update({ appLockEnabled: true });
             await feedback('success');
             showToast({
               variant: 'success',
               title: t`App Lock enabled`,
-              message: t`Muqun will use ${availability.label} when the app opens.`,
+              message: t`Muqun will use ${methodName} when the app opens.`,
             });
           },
           () => {
@@ -105,17 +107,18 @@ export function SettingsSecurity({ title }: { title: string }) {
     );
   }
 
+  const methodName = localAuthMethodLabel(authAvailability?.method ?? 'device');
   return (
     <SettingsSection title={title}>
       <SettingsToggleRow
-        label={t`Unlock with ${authAvailability?.label ?? t`device authentication`}`}
+        label={t`Unlock with ${methodName}`}
         detail={
           appLockEnabled
             ? t`Required on launch and after 30 seconds in the background.`
             : authAvailability?.available && authAvailability.enrolled
               ? t`Protect paired computers and terminal sessions.`
               : authAvailability
-                ? t`Set up ${authAvailability.label} in system settings first.`
+                ? t`Set up ${methodName} in system settings first.`
                 : t`Checking system authentication…`
         }
         disabled={changing || !authAvailability}

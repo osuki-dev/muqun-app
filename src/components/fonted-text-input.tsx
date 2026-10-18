@@ -3,6 +3,7 @@ import {
   StyleSheet,
   TextInput,
   View,
+  type TextInputInstance,
   type TextInputProps,
   type TextStyle,
   type ViewStyle,
@@ -63,6 +64,7 @@ const TYPE_KEYS = [
   'fontSize',
   'fontStyle',
   'fontWeight',
+  'fontVariationSettings',
   'letterSpacing',
   'lineHeight',
   'textAlign',
@@ -137,117 +139,123 @@ export type FontedTextInputProps = TextInputProps & {
   spans?: ReactNode;
 };
 
-export const FontedTextInput = forwardRef<TextInput, FontedTextInputProps>(function FontedTextInput(
-  {
-    style,
-    placeholder: fullPlaceholder,
-    shortPlaceholder,
-    spans,
-    placeholderTextColor,
-    value,
-    defaultValue,
-    onChangeText,
-    onFocus,
-    onBlur,
-    multiline,
-    ...rest
-  },
-  ref
-) {
-  // An uncontrolled field still has to know when it is empty.
-  const [typed, setTyped] = useState(defaultValue ?? '');
-  const handleChangeText = useCallback(
-    (next: string) => {
-      setTyped(next);
-      onChangeText?.(next);
+export const FontedTextInput = forwardRef<TextInputInstance, FontedTextInputProps>(
+  function FontedTextInput(
+    {
+      style,
+      placeholder: fullPlaceholder,
+      shortPlaceholder,
+      spans,
+      placeholderTextColor,
+      value,
+      defaultValue,
+      onChangeText,
+      onFocus,
+      onBlur,
+      multiline,
+      ...rest
     },
-    [onChangeText]
-  );
-  const empty = (value ?? typed).length === 0;
-  // Whether the full placeholder wraps, measured by an invisible copy of it
-  // laid out exactly as the visible one is. The copy always holds the full
-  // text, so switching to the short one cannot switch it back.
-  // Seeded from the last measure of the same text, so a field that remounts
-  // (Home after a sub-screen) does not show the long text for a frame first.
-  const [placeholderWraps, setPlaceholderWraps] = useState(
-    () => (fullPlaceholder && lastWrap.get(fullPlaceholder)) ?? false
-  );
-  const probing = Boolean(shortPlaceholder && fullPlaceholder && empty);
-  const placeholder = probing && placeholderWraps ? shortPlaceholder : fullPlaceholder;
-  const parts = splitFieldStyle(style);
-  /*
-   * The placeholder's line box, and room for it.
-   *
-   * A kit `Text` brings its variant's line height with it; a bare `TextInput`
-   * has none, and with `includeFontPadding: false` it is only as tall as its
-   * glyphs. So on a field that named no line height the drawn placeholder stood
-   * taller than the box it lay over, and whatever was under the field painted
-   * over its descenders -- the project sheet's "Filter projects, or type a path"
-   * lost its lower third to the list below it. The placeholder now takes the
-   * field's own line height, or one derived from its size, and a single-line
-   * field is never shorter than that line.
-   */
-  const fieldSize =
-    typeof parts.placeholder.fontSize === 'number' ? parts.placeholder.fontSize : 14;
-  const lineHeight =
-    typeof parts.placeholder.lineHeight === 'number'
-      ? parts.placeholder.lineHeight
-      : Math.ceil(fieldSize * PLACEHOLDER_LINE_RATIO);
-  const placeholderStyle = { ...parts.placeholder, lineHeight };
-  const wrapperStyle = multiline
-    ? parts.wrapper
-    : [parts.wrapper, { minHeight: lineHeight, justifyContent: 'center' as const }];
+    ref
+  ) {
+    // An uncontrolled field still has to know when it is empty.
+    const [typed, setTyped] = useState(defaultValue ?? '');
+    const handleChangeText = useCallback(
+      (next: string) => {
+        setTyped(next);
+        onChangeText?.(next);
+      },
+      [onChangeText]
+    );
+    const empty = (value ?? typed).length === 0;
+    // Whether the full placeholder wraps, measured by an invisible copy of it
+    // laid out exactly as the visible one is. The copy always holds the full
+    // text, so switching to the short one cannot switch it back.
+    // Seeded from the last measure of the same text, so a field that remounts
+    // (Home after a sub-screen) does not show the long text for a frame first.
+    const [placeholderWraps, setPlaceholderWraps] = useState(
+      () => (fullPlaceholder && lastWrap.get(fullPlaceholder)) ?? false
+    );
+    const probing = Boolean(shortPlaceholder && fullPlaceholder && empty);
+    const placeholder = probing && placeholderWraps ? shortPlaceholder : fullPlaceholder;
+    const parts = splitFieldStyle(style);
+    /*
+     * The placeholder's line box, and room for it.
+     *
+     * A kit `Text` brings its variant's line height with it; a bare `TextInput`
+     * has none, and with `includeFontPadding: false` it is only as tall as its
+     * glyphs. So on a field that named no line height the drawn placeholder stood
+     * taller than the box it lay over, and whatever was under the field painted
+     * over its descenders -- the project sheet's "Filter projects, or type a path"
+     * lost its lower third to the list below it. The placeholder now takes the
+     * field's own line height, or one derived from its size, and a single-line
+     * field is never shorter than that line.
+     */
+    const fieldSize =
+      typeof parts.placeholder.fontSize === 'number' ? parts.placeholder.fontSize : 14;
+    const lineHeight =
+      typeof parts.placeholder.lineHeight === 'number'
+        ? parts.placeholder.lineHeight
+        : Math.ceil(fieldSize * PLACEHOLDER_LINE_RATIO);
+    const placeholderStyle = { ...parts.placeholder, lineHeight };
+    const wrapperStyle = multiline
+      ? parts.wrapper
+      : [parts.wrapper, { minHeight: lineHeight, justifyContent: 'center' as const }];
 
-  return (
-    <View style={wrapperStyle}>
-      <TextInput
-        ref={ref}
-        {...rest}
-        multiline={multiline}
-        {...(spans === undefined ? { value } : {})}
-        defaultValue={defaultValue}
-        onChangeText={handleChangeText}
-        onFocus={onFocus}
-        onBlur={onBlur}
-        placeholder={placeholder}
-        placeholderTextColor="transparent"
-        style={parts.input}>
-        {spans}
-      </TextInput>
-      {/* A single line is centred in its box by the platform; a multiline field
+    return (
+      <View style={wrapperStyle}>
+        <TextInput
+          ref={ref}
+          {...rest}
+          multiline={multiline}
+          {...(spans === undefined ? { value } : {})}
+          defaultValue={defaultValue}
+          onChangeText={handleChangeText}
+          onFocus={onFocus}
+          onBlur={onBlur}
+          placeholder={placeholder}
+          placeholderTextColor="transparent"
+          style={parts.input}>
+          {spans}
+        </TextInput>
+        {/* A single line is centred in its box by the platform; a multiline field
           starts at the top. The overlay does the same. */}
-      <View
-        pointerEvents="none"
-        style={[StyleSheet.absoluteFill, multiline ? styles.top : styles.centre, styles.caretGap]}>
-        <FieldPlaceholder
-          text={placeholder}
-          visible={empty}
-          color={typeof placeholderTextColor === 'string' ? placeholderTextColor : undefined}
-          style={placeholderStyle}
-        />
-      </View>
-      {probing ? (
         <View
           pointerEvents="none"
-          accessible={false}
-          importantForAccessibility="no-hide-descendants"
-          style={[StyleSheet.absoluteFill, styles.top, styles.caretGap, styles.probe]}>
+          style={[
+            StyleSheet.absoluteFill,
+            multiline ? styles.top : styles.centre,
+            styles.caretGap,
+          ]}>
           <FieldPlaceholder
-            text={fullPlaceholder}
-            visible
-            color="transparent"
+            text={placeholder}
+            visible={empty}
+            color={typeof placeholderTextColor === 'string' ? placeholderTextColor : undefined}
             style={placeholderStyle}
-            onTextLayout={(event) => {
-              const wraps = event.nativeEvent.lines.length > 1;
-              if (fullPlaceholder) lastWrap.set(fullPlaceholder, wraps);
-              setPlaceholderWraps(wraps);
-            }}
           />
         </View>
-      ) : null}
-    </View>
-  );
-});
+        {probing ? (
+          <View
+            pointerEvents="none"
+            accessible={false}
+            importantForAccessibility="no-hide-descendants"
+            style={[StyleSheet.absoluteFill, styles.top, styles.caretGap, styles.probe]}>
+            <FieldPlaceholder
+              text={fullPlaceholder}
+              visible
+              color="transparent"
+              style={placeholderStyle}
+              onTextLayout={(event) => {
+                const wraps = event.nativeEvent.lines.length > 1;
+                if (fullPlaceholder) lastWrap.set(fullPlaceholder, wraps);
+                setPlaceholderWraps(wraps);
+              }}
+            />
+          </View>
+        ) : null}
+      </View>
+    );
+  }
+);
 
 const styles = StyleSheet.create({
   top: { justifyContent: 'flex-start' },

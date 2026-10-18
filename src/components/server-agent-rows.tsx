@@ -10,6 +10,7 @@ import { ThemeIcon } from '@/components/theme-icon';
 import { Bot, ChevronRight, SquareTerminal } from 'lucide-react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { agentStatusWord } from '@/i18n/labels';
@@ -46,14 +47,9 @@ const ROW_BLEED = 8;
  * here rather than upstream in what gets written. Reading the setting here
  * means a change made in Settings is on screen the moment this re-renders --
  * no visit to a server screen required to rewrite the mirror in the newly
- * chosen shape, which is what the old write-side branch cost. There used to
- * be a cap and a `+N more` tail below the (then unfiltered) list, and the
- * tail was the wrong answer twice over: it hid the agent you were looking for
- * behind a row that only re-opened the same server, and it made the card's
- * height a lie about how much was running on the machine. A card that grows
- * with its agents is the honest shape, and the mirror already caps what it
- * stores at `MAX_SERVER_AGENTS`, so the list has a bound without the screen
- * inventing one.
+ * chosen shape, which is what the old write-side branch cost. Home can show
+ * a compact preview; its toggle expands this same list without navigating
+ * away or changing the pane inventory. Other surfaces keep the full list.
  *
  * There is no live connection behind any of it, so nothing here claims to be
  * one: a snapshot past its freshness window is dimmed, labelled with its age,
@@ -70,6 +66,7 @@ export function ServerAgentRows({
   selectedPaneId,
   showsPressBackground = true,
   compactLabels = false,
+  initialLimit,
   style,
   // Only a fallback: the list passes one clock down so every card ages against
   // the same instant. Nothing is rendered from the value read here -- it only
@@ -102,6 +99,8 @@ export function ServerAgentRows({
    * the visual list does not discard the fact that distinguishes two shells.
    */
   compactLabels?: boolean;
+  /** Optional collapsed preview; expansion reveals the same rows in place. */
+  initialLimit?: number;
   /**
    * Whatever separates this list from what sits above it. The component renders
    * nothing at all when there are no panes, so a gap carried here disappears
@@ -114,6 +113,7 @@ export function ServerAgentRows({
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
+  const [expanded, setExpanded] = useState(false);
 
   // The setting the mirror no longer decides for itself -- see the module
   // doc above. `snapshot.agents` always holds every pane; this is the one
@@ -127,6 +127,10 @@ export function ServerAgentRows({
     paneMode: serverCardPanes,
     nowMs,
   });
+  const rows =
+    !expanded && initialLimit !== undefined
+      ? presentation.rows.slice(0, initialLimit)
+      : presentation.rows;
 
   if (presentation.rows.length === 0) return null;
   if (!presentation.age) return null;
@@ -146,7 +150,7 @@ export function ServerAgentRows({
 
   return (
     <View collapsable={false} style={[style, presentation.stale ? styles.stale : null]}>
-      {presentation.rows.map((row) => {
+      {rows.map((row) => {
         const { agent } = row;
         const selected = Boolean(agent.paneId && agent.paneId === selectedPaneId);
         const status = _(agentStatusWord[agent.status ?? ''] ?? agentStatusWord.unknown);
@@ -229,6 +233,19 @@ export function ServerAgentRows({
           </AgentRow>
         );
       })}
+
+      {initialLimit !== undefined && presentation.rows.length > initialLimit ? (
+        <Pressable
+          testID={`server-agents-more-${serverId}`}
+          accessibilityRole="button"
+          accessibilityState={{ expanded }}
+          onPress={() => setExpanded((shown) => !shown)}
+          style={{ minHeight: rowMinHeight, justifyContent: 'center' }}>
+          <Text variant="caption" color={theme.colors.primary}>
+            {expanded ? t`Show less` : t`Show more`}
+          </Text>
+        </Pressable>
+      ) : null}
 
       {presentation.stale ? (
         <Text variant="caption" color={theme.colors.textSubtle} style={styles.age}>

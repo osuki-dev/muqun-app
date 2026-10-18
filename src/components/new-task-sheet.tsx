@@ -8,6 +8,7 @@ import { Text } from '@/components/text';
 import { TerminalComposer } from '@/components/terminal-composer';
 import { AttachmentMenu } from '@/components/attachment-menu';
 import { AttachmentStrip } from '@/components/attachment-strip';
+import { AssetViewer } from '@/components/asset-viewer';
 import { ImagePreviewModal } from '@/components/image-preview-modal';
 import { LogoLoader } from '@/components/logo-loader';
 import { useAttachmentUploads } from '@/hooks/use-attachment-uploads';
@@ -18,11 +19,20 @@ import {
   describePickerFailure,
   isImageAttachment,
   type AttachmentSource,
+  describeBlockedSend,
+  takePickTruncationNotice,
 } from '@/lib/attachments';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Bot, Check, FolderOpen } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
-import { Keyboard, Platform, ScrollView, StyleSheet, View, type TextInput } from 'react-native';
+import {
+  Keyboard,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+  type TextInputInstance,
+} from 'react-native';
 import {
   KeyboardAwareScrollView,
   KeyboardController,
@@ -42,6 +52,7 @@ import {
 } from '@/components/sheet-scene';
 import { LADDER } from '@/components/settings-chrome';
 import { terminalPromptWithAttachments } from '@/lib/agent-spawn';
+import { assetFromLocalPdf } from '@/lib/session-assets';
 import {
   agentSpawnRequest,
   canSpawnAgent,
@@ -139,7 +150,7 @@ export function NewTaskSheet({
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
   const [menuKeyboardPadding, setMenuKeyboardPadding] = useState(0);
   const [previewId, setPreviewId] = useState<string | null>(null);
-  const promptInput = useRef<TextInput>(null);
+  const promptInput = useRef<TextInputInstance>(null);
   const sheetScroll = useRef<KeyboardAwareScrollViewRef>(null);
   const sending = useRef(false);
   const mounted = useRef(true);
@@ -161,12 +172,17 @@ export function NewTaskSheet({
   const previewImages = uploads.attachments
     .filter((item) => isImageAttachment(item.mime))
     .map((item) => ({ id: item.id, uri: item.localUri }));
+  const previewPdf = assetFromLocalPdf(uploads.attachments.find((item) => item.id === previewId));
   function chooseAttachmentSource(source: AttachmentSource) {
     setAttachmentMenuOpen(false);
     const picker = uploads.capturePicker();
     if (!picker.isCurrent() || sending.current) return;
     void pickAttachments(source)
-      .then(picker.addFiles)
+      .then((files) => {
+        picker.addFiles(files);
+        const cut = takePickTruncationNotice();
+        if (cut && picker.isCurrent()) setError(cut);
+      })
       .catch((failure: unknown) => {
         if (picker.isCurrent()) setError(describePickerFailure(source, failure));
       });
@@ -231,7 +247,7 @@ export function NewTaskSheet({
           async () => {
             const paths = await uploads.awaitUploads();
             if (!mounted.current || useGatewayConnectionStore.getState().record !== owner) return;
-            if (paths === null) rethrow(new Error(t`Could not add a file`));
+            if (paths === null) rethrow(new Error(describeBlockedSend(uploads.attachments)));
             const firstPrompt = terminalPromptWithAttachments(prompt, paths);
             const spawned = await spawnAgent(
               sessionId,
@@ -433,6 +449,9 @@ export function NewTaskSheet({
               onPress={() => void start()}
             />
 
+            {previewPdf ? (
+              <AssetViewer asset={previewPdf} onClose={() => setPreviewId(null)} />
+            ) : null}
             {previewId && previewImages.some((item) => item.id === previewId) ? (
               <ImagePreviewModal
                 images={previewImages}

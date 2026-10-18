@@ -146,7 +146,11 @@ export default function SettingsScreen() {
 
   return (
     <View style={[styles.page, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
-      <ThemeArtwork slot="shell.wallpaper" fallbackSlot={SHELL_WALLPAPER_FALLBACK} />
+      <ThemeArtwork
+        slot="shell.wallpaper"
+        fallbackSlot={SHELL_WALLPAPER_FALLBACK}
+        waitForTransition
+      />
       <StatusBar animated style={resolvedMode === 'dark' ? 'light' : 'dark'} />
 
       <RenderTally id="settings">

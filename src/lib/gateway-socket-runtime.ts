@@ -249,6 +249,21 @@ async function checkAuthorization(serverId: string): Promise<SocketAuthorization
   return authorizationFromProbe(before, useServerReachability.getState().probes[serverId]);
 }
 
+/**
+ * A socket refused on the upgrade said why with a status and nothing else,
+ * and a status alone is not evidence about the pairing: it is exactly what a
+ * forged answer looks like. Either refusal is put to the `/health` probe
+ * instead, forced, so the gateway's reason is read off a body it wrote --
+ * `device_repair_required` or `invalid_token` count, a captive portal's page
+ * or an `unknown_host` do not (`stores/pairing-faults`). The probe is one
+ * flight per server, so a socket that already asked through
+ * `checkAuthorization` is not asking twice.
+ */
+function probeAfterSocketRefusal(serverId: string): void {
+  const record = directRecord(serverId);
+  if (record) void useServerReachability.getState().refresh(record, { force: true });
+}
+
 let watchingProbes = false;
 
 /**
@@ -278,6 +293,7 @@ export function gatewaySocketFor(serverId: string): GatewaySocket {
       appState,
       onHello: (hello) => noteGatewayGeneration(serverId, hello),
       checkAuthorization: () => checkAuthorization(serverId),
+      onRefused: () => probeAfterSocketRefusal(serverId),
     });
     // The Home dot reads the socket as evidence the computer is answering.
     created.onStateChange((state) => useServerChannels.getState().setSocket(serverId, state));

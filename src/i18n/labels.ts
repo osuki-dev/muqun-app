@@ -59,12 +59,19 @@ export const connectionStatusLabel: Record<ConnectionStatus, MessageDescriptor> 
   ...reachabilityLabel,
   reconnecting: msg`RECONNECTING…`,
   unauthorized: msg`PAIRING EXPIRED`,
+  repair: msg`PAIR AGAIN`,
 };
 
+/**
+ * The full sentence, which for the two states a reader has to act on is also
+ * the explanation shown under the status with the "Pair again" action
+ * (`PairAgainNotice`).
+ */
 export const connectionStatusDescription: Record<ConnectionStatus, MessageDescriptor> = {
   ...reachabilityDescription,
   reconnecting: msg`Reconnecting…`,
-  unauthorized: msg`Pairing expired — pair again`,
+  unauthorized: msg`This computer no longer recognises this device. Pair again.`,
+  repair: msg`Encryption was turned on for this computer. Pair it again to keep using it.`,
 };
 
 export const paneViewModeLabel: Record<PaneViewMode, MessageDescriptor> = {
@@ -138,6 +145,34 @@ export const agentStatusWord: Record<string, MessageDescriptor> = {
   done: msg`Done`,
   idle: msg`Idle`,
   unknown: msg`Unknown`,
+};
+
+/** Historical collaboration operations and observed child state are separate facts. */
+export const subagentActionWord = {
+  start: msg`Start`,
+  send: msg`Send`,
+  resume: msg`Resume`,
+  wait: msg`Wait`,
+  close: msg`Close`,
+  interrupt: msg`Interrupt`,
+  followup: msg`Follow up`,
+  list: msg`List agents`,
+  started: msg`Started`,
+  interacted: msg`Interacted`,
+  completed: msg`Completed`,
+  interrupted: msg`Stopped`,
+};
+export const subagentStateWord = {
+  starting: msg`Starting`,
+  working: msg`Working`,
+  idle: msg`Idle`,
+  completed: msg`Completed`,
+  failed: msg`Failed`,
+  stopped: msg`Stopped`,
+  blocked: msg`Needs input`,
+  unknown: msg`Status unknown`,
+  retrying: msg`Retrying…`,
+  unavailable: msg`Unavailable`,
 };
 
 /**
@@ -450,14 +485,19 @@ export type AgentGuideCopy = {
  * more useful to say.
  */
 export const agentGuideCopy: Record<string, AgentGuideCopy> = {
+  codex: {
+    start: msg`Run muqun-gateway agent setup codex on the computer for setup instructions. Gateway starts its own Codex connection using the host's existing configuration and sign-in.`,
+    command: 'muqun-gateway agent setup codex',
+    installUrl: 'https://developers.openai.com/codex/cli/',
+  },
   opencode: {
     start: msg`Start the OpenCode service on the computer, then check again.`,
     command: 'opencode service start',
     installUrl: OPENCODE_INSTALL_URL,
   },
   deepseek: {
-    start: msg`Enable deepseek in the gateway config, start DeepSeek Harness on the host, then restart the gateway.`,
-    command: 'bunx @deepseek-ai/dsh web --no-open',
+    start: msg`Gateway starts or joins DeepSeek Harness on the computer (default http://127.0.0.1:3080, override deepseek.endpoint).`,
+    command: 'muqun-gateway agent setup deepseek',
   },
   // T3 is not `connected` until the gateway holds a pairing token. A stopped T3
   // is offered the command that starts it; one that is running but unpaired

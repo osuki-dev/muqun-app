@@ -40,6 +40,7 @@ import { useFleetPeers } from '@/stores/fleet-peers';
 import { useFleetUnpairs } from '@/stores/fleet-unpairs';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useServerCapabilities } from '@/stores/server-capabilities';
+import { pairingFaultOf, usePairingFaults } from '@/stores/pairing-faults';
 import { useServerReachability } from '@/stores/server-reachability';
 import { probeSaysDown } from '@/lib/server-reachability';
 
@@ -104,9 +105,15 @@ export function reconcileFleet(opts: { reason: Reason }): Promise<void> {
 }
 
 function linkable(): GatewayRecord[] {
-  return useGatewayConnectionStore
-    .getState()
-    .records.filter((record) => !record.sshTunnel && !isDemoRecord(record));
+  const faults = usePairingFaults.getState();
+  return useGatewayConnectionStore.getState().records.filter(
+    (record) =>
+      !record.sshTunnel &&
+      !isDemoRecord(record) &&
+      // A computer that refused this pairing cannot be asked for a code or
+      // a peer list until the reader pairs again.
+      !pairingFaultOf(faults, record.serverId)
+  );
 }
 
 /** The record for `serverId` if the device still holds it right now. */
@@ -299,6 +306,8 @@ async function linkPair(
         name: toName,
         requestId: minted.requestId,
         code: minted.code,
+        // The target's key for encrypted transport, when it minted one.
+        ...(minted.pairingKey ? { pairingKey: minted.pairingKey } : {}),
       });
       return 'linked';
     },

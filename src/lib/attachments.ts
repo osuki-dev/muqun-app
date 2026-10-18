@@ -8,7 +8,14 @@ import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 
 import { protectCacheDirectory } from './cache-cleanup';
-import { MAX_ATTACHMENTS_PER_PICK, type PickedFile } from './attachment-queue';
+import {
+  MAX_ATTACHMENTS_PER_PICK,
+  type PickedFile,
+  attachmentLimitBytes,
+  uploadLimitMb,
+  type PendingAttachment,
+  MAX_UPLOAD_BYTES,
+} from './attachment-queue';
 import { planImageCompression } from './image-compression';
 import { describeGatewayFailure } from './network-error';
 import { pickedFilesFromDocuments } from './picked-files';
@@ -177,7 +184,7 @@ export async function pickPhotoLibrary(): Promise<PickedFile[]> {
     exif: false,
   });
   if (result.canceled) return [];
-  return toPickedFiles(result.assets).slice(0, MAX_ATTACHMENTS_PER_PICK);
+  return keepPickLimit(toPickedFiles(result.assets));
 }
 
 /**
@@ -195,7 +202,51 @@ export async function pickFiles(): Promise<PickedFile[]> {
     base64: false,
   });
   if (result.canceled) return [];
-  return pickedFilesFromDocuments(result.assets).slice(0, MAX_ATTACHMENTS_PER_PICK);
+  return keepPickLimit(pickedFilesFromDocuments(result.assets));
+}
+
+/** How many files the last pick had to leave behind, read once. */
+let lastPickDropped = 0;
+
+function keepPickLimit(files: PickedFile[]): PickedFile[] {
+  lastPickDropped = Math.max(0, files.length - MAX_ATTACHMENTS_PER_PICK);
+  return files.slice(0, MAX_ATTACHMENTS_PER_PICK);
+}
+
+/**
+ * What the last pick could not take, for the one notice the composer shows
+ * about it; `null` when it took everything. A pick that is cut to the limit
+ * used to be cut silently, and the reader counted their photos twice.
+ */
+export function takePickTruncationNotice(): string | null {
+  const dropped = lastPickDropped;
+  lastPickDropped = 0;
+  if (dropped === 0) return null;
+  return i18n._(
+    msg`Only the first ${MAX_ATTACHMENTS_PER_PICK} files were added; ${dropped} left out.`
+  );
+}
+
+/**
+ * Why a staged file failed, as the strip says it under the tile and as send
+ * says it when the file blocks a message. A file over the cap names the cap
+ * and offers no retry; an upload that failed says so and that a tap retries.
+ */
+export function describeAttachmentFailure(entry: PendingAttachment): string {
+  if (entry.failure === 'too-large')
+    return i18n._(msg`Too large (${uploadLimitMb(attachmentLimitBytes(entry))} MB max)`);
+  return entry.error ?? i18n._(msg`Upload failed. Tap to retry.`);
+}
+
+/** Why Send is held: the first failed file, by name, and what to do about it. */
+export function describeBlockedSend(queue: readonly PendingAttachment[]): string {
+  const failed = queue.find((entry) => entry.status === 'error');
+  if (!failed) return i18n._(msg`Please retry or remove failed attachments.`);
+  return failed.failure === 'too-large'
+    ? i18n._(
+        msg`${failed.name} is too large (${uploadLimitMb(attachmentLimitBytes(failed))} MB max). Remove it to send.`
+      )
+    : i18n._(msg`${failed.name} did not upload. Retry it or remove it to send.`);
 }
 
 export function pickAttachments(source: AttachmentSource): Promise<PickedFile[]> {
@@ -225,7 +276,13 @@ export function describePickerFailure(source: AttachmentSource, error: unknown):
 export function describeUploadFailure(error: unknown): string {
   const raw = error instanceof Error ? error.message : String(error ?? '');
   const status = Number(raw.match(/^HTTP (\d+):/)?.[1] ?? 0);
-  if (status === 413) return i18n._(msg`File too large (25MB max)`);
+  if (status === 413) {
+    // The gateway names its limit when it has one to name; otherwise the cap
+    // this app already applies is the best answer there is.
+    const named = Number(raw.match(/"(?:max_bytes|limit_bytes|max_size|limit)"\s*:\s*(\d+)/)?.[1]);
+    const mb = uploadLimitMb(Number.isFinite(named) && named > 0 ? named : MAX_UPLOAD_BYTES);
+    return i18n._(msg`File too large (${mb} MB max)`);
+  }
   if (status === 415) return i18n._(msg`File type not allowed`);
   return describeGatewayFailure(error, i18n._(msg`Could not upload the file.`)).message;
 }

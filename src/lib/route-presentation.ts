@@ -39,6 +39,9 @@ export type SheetDetents = 'full' | 'expandable' | 'fitToContents' | readonly nu
 export const sheetRoutePresentations: Readonly<Record<string, SheetPresentation>> = {
   // The diagram canvas owns pan/pinch gestures and provides its own close control.
   'diagram-viewer': 'fullscreen',
+  // The screen file is parked and not routed. This only records how it presents
+  // if the route is registered again; it does not import the map.
+  'computer-map': 'fullscreen',
   commands: 'sheet',
   panels: 'sheet',
   // The machines sheet's old address. It renders the same screen as `panels`
@@ -46,6 +49,7 @@ export const sheetRoutePresentations: Readonly<Record<string, SheetPresentation>
   // stays only so the deep link keeps landing on the sheet it always meant.
   sessions: 'sheet',
   artifacts: 'sheet',
+  'pane-history': 'sheet',
   'git-diff': 'sheet',
   'settings-servers': 'sheet',
   'settings-terminal': 'sheet',
@@ -123,6 +127,7 @@ export const sheetRouteKinds: Readonly<Record<string, SheetKind>> = {
   'agent-vcs-diff': 'workSurface',
   // The files a session produced, and the viewer opened from them.
   artifacts: 'workSurface',
+  'pane-history': 'workSurface',
   // A tree of subagents, and the transcript of one of them.
   'agent-session-tree': 'workSurface',
   'agent-subagent-detail': 'workSurface',
@@ -214,6 +219,7 @@ export const sheetRouteDetents: Readonly<Record<string, SheetDetents>> = {
   // was a list of its own.
   sessions: 'expandable',
   artifacts: 'expandable',
+  'pane-history': 'expandable',
   'git-diff': 'expandable',
   // Both are lists the reader scrolls -- thirty-two packs, or a catalogue -- so
   // both take the expandable window every other list sheet has rather than the
@@ -339,6 +345,7 @@ export const sheetRouteContent: Readonly<Record<string, SheetContent>> = {
   sessions: 'list',
   // The files a session produced.
   artifacts: 'list',
+  'pane-history': 'list',
   // A diff: one row per line, so it is a list by definition.
   'git-diff': 'list',
   'agent-vcs-diff': 'list',

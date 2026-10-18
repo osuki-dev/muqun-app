@@ -1,6 +1,21 @@
 import type { AgentRunStatus, AgentSessionInfo } from './agent-protocol';
 import type { HomeRecentsState } from './home-recents-state';
 
+/** Resolve ownership only from metadata for this exact session, never the selected agent. */
+export function recentSessionAgentId(
+  asid: string,
+  current: Pick<AgentSessionInfo, 'asid' | 'agent_id'> | null,
+  inventory: readonly Pick<AgentSessionInfo, 'asid' | 'agent_id'>[],
+  reportedAgentId?: string
+): string | undefined {
+  return (
+    reportedAgentId?.trim() ||
+    (current?.asid === asid ? current.agent_id.trim() : undefined) ||
+    inventory.find((info) => info.asid === asid)?.agent_id.trim() ||
+    undefined
+  );
+}
+
 /** Parent identity, never a title or pane mirror, excludes a subagent visit. */
 export function isRootSessionRecent(
   info: Pick<AgentSessionInfo, 'parent_id' | 'deleted'>
