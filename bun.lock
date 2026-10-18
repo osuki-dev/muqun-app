@@ -9,14 +9,14 @@
         "@formatjs/intl-getcanonicallocales": "^3.2.12",
         "@formatjs/intl-locale": "^5.3.12",
         "@formatjs/intl-pluralrules": "^6.3.15",
-        "@hot-updater/react-native": "1.0.7",
+        "@hot-updater/react-native": "1.0.8",
         "@legendapp/list": "^3.6.0",
         "@lingui/core": "^6.10.0",
         "@lingui/react": "^6.10.0",
         "@osuki-dev/react-native-splash": "0.4.0",
         "@osuki-dev/react-native-ssh": "0.3.0",
         "@osuki-dev/skia-diagrams": "0.2.0",
-        "@osuki-dev/ui": "^2.0.0-beta.2",
+        "@osuki-dev/ui": "2.0.0-beta.3",
         "@react-three/fiber": "9.8.2",
         "expo": "~58.0.14",
         "expo-alternate-app-icons": "^8.0.0",
@@ -54,7 +54,7 @@
         "expo-web-browser": "~58.0.6",
         "expo-widgets": "~58.0.20",
         "fflate": "0.8.3",
-        "lucide-react-native": "1.58.0",
+        "lucide-react-native": "1.59.0",
         "react": "19.3.1",
         "react-dom": "19.3.1",
         "react-native": "0.88.0",
@@ -75,13 +75,13 @@
         "react-native-reanimated": "4.7.1",
         "react-native-safe-area-context": "~5.10.1",
         "react-native-screens": "4.30.0",
-        "react-native-skia": "3.6.1",
+        "react-native-skia": "3.6.3",
         "react-native-svg": "15.16.0",
         "react-native-video": "7.0.0-beta.12",
         "react-native-vision-camera": "^5.2.3",
         "react-native-vision-camera-barcode-scanner": "^5.2.3",
         "react-native-web": "~0.21.4",
-        "react-native-webgpu": "0.16.0",
+        "react-native-webgpu": "0.16.1",
         "react-native-webview": "14.0.1",
         "react-native-worklets": "0.13.0",
         "three": "0.186.1",
@@ -90,10 +90,10 @@
       },
       "devDependencies": {
         "@expo/fingerprint": "0.21.5",
-        "@hot-updater/cloudflare": "1.0.7",
-        "@hot-updater/expo": "1.0.7",
-        "@hot-updater/plugin-core": "1.0.7",
-        "@hot-updater/server": "1.0.7",
+        "@hot-updater/cloudflare": "1.0.8",
+        "@hot-updater/expo": "1.0.8",
+        "@hot-updater/plugin-core": "1.0.8",
+        "@hot-updater/server": "1.0.8",
         "@lingui/babel-plugin-lingui-macro": "^6.10.0",
         "@lingui/cli": "^6.10.0",
         "@lingui/format-po": "^6.10.0",
@@ -102,7 +102,7 @@
         "@types/react": "~19.3.0",
         "@types/three": "0.186.0",
         "eslint-plugin-lingui": "^0.16.0",
-        "hot-updater": "1.0.7",
+        "hot-updater": "1.0.8",
         "oxc-parser": "^0.154.0",
         "oxfmt": "^0.73.0",
         "oxlint": "^1.88.0",
@@ -473,35 +473,35 @@
 
     "@hono/node-server": ["@hono/node-server@2.1.4", "", { "peerDependencies": { "hono": "^4 || ^5.0.0-0" } }, "sha512-2g1qeHl4BduwDn6L8nkAvDrPUWPMlkQ//a5NhP/zIyaXKMjZNRV+cG9Csu+BiJFf6+68pqzjf4Hi5sJGKHuS1g=="],
 
-    "@hot-updater/android-helper": ["@hot-updater/android-helper@1.0.7", "", { "dependencies": { "@hot-updater/cli-tools": "1.0.7", "@hot-updater/plugin-core": "1.0.7", "@hot-updater/protocol": "1.0.7", "execa": "9.5.2" } }, "sha512-sUt9Eb9Xxi2Jo8rJvV3g9HaUKeXTCdHLz+AGFS/Ye6A+bKAIZeYjjxV2RNubQGYqzVwsrmP2Ruel9tZsdp3yOA=="],
+    "@hot-updater/android-helper": ["@hot-updater/android-helper@1.0.8", "", { "dependencies": { "@hot-updater/cli-tools": "1.0.8", "@hot-updater/plugin-core": "1.0.8", "@hot-updater/protocol": "1.0.8", "execa": "9.5.2" } }, "sha512-dkJoCpt5CQiTBSzPkPA/ArwnIaC1sAzRWezEr3MDFrfdyHvOjq+DC1Fv/9alOa1jsQntfXh+GkQuZnKE02UYgQ=="],
 
-    "@hot-updater/apple-helper": ["@hot-updater/apple-helper@1.0.7", "", { "dependencies": { "@hot-updater/cli-tools": "1.0.7", "@hot-updater/plugin-core": "1.0.7", "execa": "9.5.2", "fast-xml-parser": "5.8.0" } }, "sha512-/E84L6rScaKukBj1FpatfnSRxrhVaqLJzYBGyHEwl1kjTOtw9/xYEQRWlq/EwaPeIjPZ9a17N4xXZJuw8OeHMA=="],
+    "@hot-updater/apple-helper": ["@hot-updater/apple-helper@1.0.8", "", { "dependencies": { "@hot-updater/cli-tools": "1.0.8", "@hot-updater/plugin-core": "1.0.8", "execa": "9.5.2", "fast-xml-parser": "5.8.0" } }, "sha512-6XGzU8BfxZqrV7605keDidV6eD4Ad5vZweH+j/yi2mpzIV8GglUki5iFTkYVZ3Y3EIy3qGRPCptX08JoONNkrw=="],
 
-    "@hot-updater/bare": ["@hot-updater/bare@1.0.7", "", { "dependencies": { "@hot-updater/cli-tools": "1.0.7", "@hot-updater/plugin-core": "1.0.7", "uuidv7": "^1.0.2" } }, "sha512-YmeLuWhXMAB1YsG/MIRa1JnQcSElYh1waNbtzEarWk/+c8j51krXKoyRnSLWXQN50EzOHdO4LQ+2iQov0mWqUQ=="],
+    "@hot-updater/bare": ["@hot-updater/bare@1.0.8", "", { "dependencies": { "@hot-updater/cli-tools": "1.0.8", "@hot-updater/plugin-core": "1.0.8", "uuidv7": "^1.0.2" } }, "sha512-IHvAuDyyuV6+Eh+OhqpfdDf1prCNFtwlFHRgr1gptqAZjzKUbUaF6okyeUaAXu/cAtz1om33NHimu0XK7KJfVQ=="],
 
-    "@hot-updater/bsdiff": ["@hot-updater/bsdiff@1.0.7", "", {}, "sha512-r/5069gefkgmVEWcNzARW0wcD/KwLynA0QBut7/jo04mC9JKnQfFGX+xVCC6+IRfO6xe/kHQMGB6dzRPNfkERw=="],
+    "@hot-updater/bsdiff": ["@hot-updater/bsdiff@1.0.8", "", {}, "sha512-x0asdvodig7YueoPQ1PtXJEcWxhGIox9BiQ0aU55nTouHRvYOwRsNyI6uvpHqH+gC5c06PqohnivaBxL/rkP1A=="],
 
-    "@hot-updater/cli-tools": ["@hot-updater/cli-tools@1.0.7", "", { "dependencies": { "@hot-updater/plugin-core": "1.0.7", "@hot-updater/protocol": "1.0.7", "@hot-updater/server": "1.0.7", "oxc-parser": "0.141.0", "oxc-transform": "0.141.0", "unconfig": "7.5.0" } }, "sha512-M74WgKfBERn+UPNjc8rnG3Om0mWN0CnRuV7y4uoCoqE/Evfij8QmtHpOIw/vzXEUZGhHNOKTkOw+vVvj5DOQ9A=="],
+    "@hot-updater/cli-tools": ["@hot-updater/cli-tools@1.0.8", "", { "dependencies": { "@hot-updater/plugin-core": "1.0.8", "@hot-updater/protocol": "1.0.8", "@hot-updater/server": "1.0.8", "oxc-parser": "0.141.0", "oxc-transform": "0.141.0", "unconfig": "7.5.0" } }, "sha512-E7xU9FBisqPmozJWFis2NkDT6r5lCVWC8oTydV6d1s6anJzIcxuPmlsb2NQEf0pO7jm2Z4eLOtPr+ng28FMF8g=="],
 
-    "@hot-updater/cloudflare": ["@hot-updater/cloudflare@1.0.7", "", { "dependencies": { "@aws-sdk/client-s3": "3.1066.0", "@aws-sdk/lib-storage": "3.1008.0", "@aws-sdk/s3-request-presigner": "3.1066.0", "@hot-updater/cli-tools": "1.0.7", "@hot-updater/plugin-core": "1.0.7", "@hot-updater/protocol": "1.0.7", "@hot-updater/server": "1.0.7", "cloudflare": "4.2.0", "hono": "4.12.34", "uuidv7": "^1.0.2" } }, "sha512-5aoili2U+aoxhD+ixXv7Ohglivjr1kaqjM5K9n8GG2vlONMPDAQd7wGp1N4vxVQmsaBYoGnxT5WDmiK4SL8FIw=="],
+    "@hot-updater/cloudflare": ["@hot-updater/cloudflare@1.0.8", "", { "dependencies": { "@aws-sdk/client-s3": "3.1066.0", "@aws-sdk/lib-storage": "3.1008.0", "@aws-sdk/s3-request-presigner": "3.1066.0", "@hot-updater/cli-tools": "1.0.8", "@hot-updater/plugin-core": "1.0.8", "@hot-updater/protocol": "1.0.8", "@hot-updater/server": "1.0.8", "cloudflare": "4.2.0", "hono": "4.12.34", "uuidv7": "^1.0.2" } }, "sha512-VnBxSbMUAR4W1ZRHgXFouOT+4ghtsFnHNouBHSkd9ewqq7PpDZ1raQSb7y0ngBdCt78R3wWvRdzM8kgsh1LNew=="],
 
-    "@hot-updater/console": ["@hot-updater/console@1.0.7", "", { "dependencies": { "@base-ui/react": "^1.3.0", "@fontsource-variable/inter": "^5.2.8", "@hot-updater/bsdiff": "1.0.7", "@hot-updater/plugin-core": "1.0.7", "@hot-updater/protocol": "1.0.7", "@hot-updater/server": "1.0.7", "@tailwindcss/vite": "^4.2.1", "@tanstack/react-devtools": "^0.10.0", "@tanstack/react-query": "^5.104.0", "@tanstack/react-router": "^1.170.44", "@tanstack/react-router-devtools": "^1.167.2", "@tanstack/react-router-ssr-query": "^1.167.3", "@tanstack/react-start": "^1.169.1", "@vitejs/plugin-react": "^6.0.1", "class-variance-authority": "^0.7.1", "clsx": "^2.1.1", "dayjs": "^1.11.20", "lucide-react": "^0.577.0", "next-themes": "^0.4.6", "nitro": "3.0.260610-beta", "react-grab": "^0.1.28", "recharts": "3.8.0", "shadcn": "^4.0.8", "sonner": "^2.0.7", "tailwind-merge": "^3.5.0", "tailwindcss": "^4.2.1", "tw-animate-css": "^1.4.0", "verkit": "0.4.0" }, "peerDependencies": { "@hot-updater/cli-tools": "*", "react": "^19.0.0", "react-dom": "^19.0.0", "vite": "^8.0.0" }, "optionalPeers": ["@hot-updater/cli-tools"] }, "sha512-hBYr4yu05VpACZ39Oi/Kwh6PcxSApixX50vXvV+b8QuJfUzfXinvv4ljW7vbi5WIcyhtDbo8nET294E/Wzwdvw=="],
+    "@hot-updater/console": ["@hot-updater/console@1.0.8", "", { "dependencies": { "@base-ui/react": "^1.3.0", "@fontsource-variable/inter": "^5.2.8", "@hot-updater/bsdiff": "1.0.8", "@hot-updater/plugin-core": "1.0.8", "@hot-updater/protocol": "1.0.8", "@hot-updater/server": "1.0.8", "@tailwindcss/vite": "^4.2.1", "@tanstack/react-devtools": "^0.10.0", "@tanstack/react-query": "^5.104.0", "@tanstack/react-router": "^1.170.44", "@tanstack/react-router-devtools": "^1.167.2", "@tanstack/react-router-ssr-query": "^1.167.3", "@tanstack/react-start": "^1.169.1", "@vitejs/plugin-react": "^6.0.1", "class-variance-authority": "^0.7.1", "clsx": "^2.1.1", "dayjs": "^1.11.20", "lucide-react": "^0.577.0", "next-themes": "^0.4.6", "nitro": "3.0.260610-beta", "react-grab": "^0.1.28", "recharts": "3.8.0", "shadcn": "^4.0.8", "sonner": "^2.0.7", "tailwind-merge": "^3.5.0", "tailwindcss": "^4.2.1", "tw-animate-css": "^1.4.0", "verkit": "0.4.0" }, "peerDependencies": { "@hot-updater/cli-tools": "*", "react": "^19.0.0", "react-dom": "^19.0.0", "vite": "^8.0.0" }, "optionalPeers": ["@hot-updater/cli-tools"] }, "sha512-HCv2FqisXPpI9TosWi56wYWuSo7tvdNIUI7pGCkk4NBrmpEHGYWUm2vV/8EIw1F5VBPVuiRPvYaihZH6Wx2AWA=="],
 
-    "@hot-updater/expo": ["@hot-updater/expo@1.0.7", "", { "dependencies": { "@babel/core": "7.26.0", "@babel/types": "7.26.0", "@hot-updater/bare": "1.0.7", "@hot-updater/cli-tools": "1.0.7", "@hot-updater/plugin-core": "1.0.7", "uuidv7": "^1.0.2" }, "peerDependencies": { "expo": ">=50.0.0", "hot-updater": "*" }, "optionalPeers": ["expo", "hot-updater"] }, "sha512-hoRKliCYQrcBPglshw9w4tIV0LQLcO0eVJiR/dINiPTQ2KhUOfLzBMDc8Q0noAscORpEEj5rZXwgu3k9AwUxzw=="],
+    "@hot-updater/expo": ["@hot-updater/expo@1.0.8", "", { "dependencies": { "@babel/core": "7.26.0", "@babel/types": "7.26.0", "@hot-updater/bare": "1.0.8", "@hot-updater/cli-tools": "1.0.8", "@hot-updater/plugin-core": "1.0.8", "uuidv7": "^1.0.2" }, "peerDependencies": { "expo": ">=50.0.0", "hot-updater": "*" }, "optionalPeers": ["expo", "hot-updater"] }, "sha512-QU+8QGtMjDAdCp5ipK7G8opCaIf4bqDKtr0yCLVBk6t4ZgeOD8MIfUkIP4Iu3M3dpsH5YrLc1GeXDHnAmQx6sw=="],
 
-    "@hot-updater/plugin-api-keys": ["@hot-updater/plugin-api-keys@1.0.7", "", { "peerDependencies": { "@hot-updater/plugin-core": "^1.0.7" } }, "sha512-Vyu0L5L5xcn4Cir06Kn3w9PdrtI5TBFu0otZCb0YPO8rcLTaJjUZ8vc56YKtbkDS4ngGsESCfLK7IZu7ZksFXw=="],
+    "@hot-updater/plugin-api-keys": ["@hot-updater/plugin-api-keys@1.0.8", "", { "peerDependencies": { "@hot-updater/plugin-core": "^1.0.8" } }, "sha512-ekakYM4qNm10azQqwt6lmvJxHK1wKS0jxVEUe1SipNblE4p4RMxxK9H6LN5kd3uXWTAmaW/XtXwfiwnVhvRZMA=="],
 
-    "@hot-updater/plugin-core": ["@hot-updater/plugin-core@1.0.7", "", { "dependencies": { "@hot-updater/protocol": "1.0.7", "es-toolkit": "^1.32.0", "mime": "^4.0.4", "verkit": "0.4.0" } }, "sha512-i+6wWt6UaVR85/UUfC8I7mZr+J7a2869GoQ28YG6upxa/SSnXJu68O03NbZ6IS2Z/xPSu0jmEPA61zLVz2APUw=="],
+    "@hot-updater/plugin-core": ["@hot-updater/plugin-core@1.0.8", "", { "dependencies": { "@hot-updater/protocol": "1.0.8", "es-toolkit": "^1.32.0", "mime": "^4.0.4", "verkit": "0.4.0" } }, "sha512-IJPfgT7hgePXu73/ZUrfo6UdEJBMh/kKHNtFry1MUykkm/gKkT971PR+o6LC3l+0AoyTuhU94H7JnGpWbCArkw=="],
 
-    "@hot-updater/plugin-insights": ["@hot-updater/plugin-insights@1.0.7", "", { "dependencies": { "@hot-updater/protocol": "1.0.7" }, "peerDependencies": { "@hot-updater/plugin-core": "^1.0.7" }, "optionalPeers": ["@hot-updater/plugin-core"] }, "sha512-CrYyX7fLU7XPUTvJPre+5xTvjPFSiCxuYIwYIDhTt8VfemsjUMB5SJGONorGQWjBunF3WJq1+BbS8mDaioVmHA=="],
+    "@hot-updater/plugin-insights": ["@hot-updater/plugin-insights@1.0.8", "", { "dependencies": { "@hot-updater/protocol": "1.0.8" }, "peerDependencies": { "@hot-updater/plugin-core": "^1.0.8" }, "optionalPeers": ["@hot-updater/plugin-core"] }, "sha512-36WHDivCIcnVWZkcphNoW0nHhkxJ5GjvYH63aMgdxVNmX94/dxvbcJ+jdk9glkiK+WbyoSLch8GEJ5fouh88Ew=="],
 
-    "@hot-updater/plugin-remote-config": ["@hot-updater/plugin-remote-config@1.0.7", "", { "dependencies": { "@hot-updater/protocol": "1.0.7", "verkit": "0.4.0" }, "peerDependencies": { "@hot-updater/plugin-core": "^1.0.7" }, "optionalPeers": ["@hot-updater/plugin-core"] }, "sha512-XB54AzIRanZHOju1xs4aVTvog0QACHW8/adkFIpV/ShxJoNUm4fOErN/H/Q41Vx7s+SEZnhrwqf5aj2A9ueD7w=="],
+    "@hot-updater/plugin-remote-config": ["@hot-updater/plugin-remote-config@1.0.8", "", { "dependencies": { "@hot-updater/protocol": "1.0.8", "verkit": "0.4.0" }, "peerDependencies": { "@hot-updater/plugin-core": "^1.0.8" }, "optionalPeers": ["@hot-updater/plugin-core"] }, "sha512-y0+8RwTUBpn94HUyByUOZoSE94j1GtoGNwmZuwCF+TifhAv7MVlUC+v/+X4TXVh6fo8wOGBe3v9mIJH5X/Sscg=="],
 
-    "@hot-updater/protocol": ["@hot-updater/protocol@1.0.7", "", {}, "sha512-odTIcxLbumg44IgJRqauI3PSKaBHiUHq2K6CHUF25mZlCvtALU6zoMJKBGrzrjxkBQT84VVpxTOxY2zmRU2WsA=="],
+    "@hot-updater/protocol": ["@hot-updater/protocol@1.0.8", "", {}, "sha512-8nYhocUNp6cW0K643k9dcYKqzYtSOdNEIaurFOuFiz8l4ZmH1xXuBzsTnYsaaq9y7T5wYhTaKD6c9/t7JYzWew=="],
 
-    "@hot-updater/react-native": ["@hot-updater/react-native@1.0.7", "", { "dependencies": { "@hot-updater/plugin-insights": "1.0.7", "@hot-updater/plugin-remote-config": "1.0.7", "@hot-updater/protocol": "1.0.7", "use-sync-external-store": "1.5.0" }, "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-kqlKWcobAkY/EGynFv3DgvZzid0BentxseIyo+E9ErZpEA5KT7Nm3BZOn/S52yIDGZLZjbfeLzjLl8q7vkreoQ=="],
+    "@hot-updater/react-native": ["@hot-updater/react-native@1.0.8", "", { "dependencies": { "@hot-updater/plugin-insights": "1.0.8", "@hot-updater/plugin-remote-config": "1.0.8", "@hot-updater/protocol": "1.0.8", "use-sync-external-store": "1.5.0" }, "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-3790Hcyb7GUYSbi2uHISs0h8xxqA+ZOJAnKy3j8zi5z+zVoiuzb6Q3PxNlwRnyc44M0cCUxrLVwzqU57Sx9/Dw=="],
 
-    "@hot-updater/server": ["@hot-updater/server@1.0.7", "", { "dependencies": { "@hot-updater/plugin-api-keys": "1.0.7", "@hot-updater/plugin-core": "1.0.7", "@hot-updater/plugin-insights": "1.0.7", "@hot-updater/plugin-remote-config": "1.0.7", "@hot-updater/protocol": "1.0.7", "rou3": "0.7.9", "verkit": "0.4.0" }, "peerDependencies": { "@prisma/client": "*", "drizzle-orm": "*", "kysely": "*", "mongodb": "*" }, "optionalPeers": ["@prisma/client", "drizzle-orm", "kysely", "mongodb"] }, "sha512-HeyXrRw2mO3l/qE75nRLBoWKtLUzHwEthjf0K6CGf6txKDC+ooTBaQYzIxMXKkYb6QVIOqaO2BQF0oOK4iNBNw=="],
+    "@hot-updater/server": ["@hot-updater/server@1.0.8", "", { "dependencies": { "@hot-updater/plugin-api-keys": "1.0.8", "@hot-updater/plugin-core": "1.0.8", "@hot-updater/plugin-insights": "1.0.8", "@hot-updater/plugin-remote-config": "1.0.8", "@hot-updater/protocol": "1.0.8", "rou3": "0.7.9", "verkit": "0.4.0" }, "peerDependencies": { "@prisma/client": "*", "drizzle-orm": "*", "kysely": "*", "mongodb": "*" }, "optionalPeers": ["@prisma/client", "drizzle-orm", "kysely", "mongodb"] }, "sha512-ZyhSfSRF6dppGN4sgR5p7rkAW4pEqiraLn9hv2JBEHVmAefnzMb6N4zSe5Lr4JhSmD5LgcKEKP97Pk+qbXHM5g=="],
 
     "@humanfs/core": ["@humanfs/core@0.19.2", "", { "dependencies": { "@humanfs/types": "^0.15.0" } }, "sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA=="],
 
@@ -629,7 +629,7 @@
 
     "@osuki-dev/skia-diagrams": ["@osuki-dev/skia-diagrams@0.2.0", "", { "dependencies": { "@dagrejs/dagre": "^3.1.1", "@mermaid-js/parser": "2.0.1", "js-yaml": "5.4.3" }, "peerDependencies": { "react": ">=19", "react-native": ">=0.83", "react-native-gesture-handler": ">=3.3", "react-native-reanimated": ">=4", "react-native-skia": ">=3.3.0" }, "optionalPeers": ["react", "react-native", "react-native-gesture-handler", "react-native-reanimated", "react-native-skia"] }, "sha512-I9aqXAQutYDpG0Vim54lulsVKKlAxvN9KTMWZKNPGVXLqY5Th3BO/qYUYGeSpnW6v10jKlfkipDjwb9ltLIKOQ=="],
 
-    "@osuki-dev/ui": ["@osuki-dev/ui@2.0.0-beta.2", "", { "peerDependencies": { "@expo/ui": ">=58.0.0", "expo-blur": ">=58.0.0", "expo-font": ">=58.0.0", "expo-glass-effect": ">=58.0.0", "expo-image": ">=58.0.0", "expo-router": ">=58.0.0", "lucide-react-native": "^0.487.0 || ^1.0.0", "react": ">=19.3.0", "react-native": ">=0.88.0", "react-native-keyboard-controller": ">=1.22.0", "react-native-nano-icons": ">=1.0.0", "react-native-reanimated": ">=4.7.0", "react-native-safe-area-context": ">=5.10.0", "react-native-svg": ">=15.16.0" }, "optionalPeers": ["expo-blur", "expo-glass-effect", "lucide-react-native", "react-native-nano-icons", "react-native-svg"] }, "sha512-Tv8uhWiY+gYIfLEJUYPQv4dp7INctdc1mPPiGqIr7vNq/SWwj0jYvHYlFSDVCdI3JUVZAWEBbINshd6/6G8h4A=="],
+    "@osuki-dev/ui": ["@osuki-dev/ui@2.0.0-beta.3", "", { "peerDependencies": { "@expo/ui": ">=58.0.0", "expo-blur": ">=58.0.0", "expo-font": ">=58.0.0", "expo-glass-effect": ">=58.0.0", "expo-image": ">=58.0.0", "expo-router": ">=58.0.0", "lucide-react-native": "^0.487.0 || ^1.0.0", "react": ">=19.3.0", "react-native": ">=0.88.0", "react-native-keyboard-controller": ">=1.22.0", "react-native-nano-icons": ">=1.0.0", "react-native-reanimated": ">=4.7.0", "react-native-safe-area-context": ">=5.10.0", "react-native-svg": ">=15.16.0" }, "optionalPeers": ["expo-blur", "expo-glass-effect", "lucide-react-native", "react-native-nano-icons", "react-native-svg"] }, "sha512-8csZe/pXC70uvYEFf7YY4988XnDdXP0G6Ybxpm9MSA6sai7E2fyNii2jzWIzXnqAOI73xzd3lR8rloxWiYzVPg=="],
 
     "@oxc-parser/binding-android-arm-eabi": ["@oxc-parser/binding-android-arm-eabi@0.154.0", "", { "os": "android", "cpu": "arm" }, "sha512-sDdEtDl7vKdCvf54j72RJbowE3jCmyRz/+oOB6IAwQxAHZ0eI+Dcj4hvVnm0b9Dy31plUkdmfds9C+/Zt895Tg=="],
 
@@ -1801,7 +1801,7 @@
 
     "hosted-git-info": ["hosted-git-info@7.0.2", "", { "dependencies": { "lru-cache": "^10.0.1" } }, "sha512-puUZAUKT5m8Zzvs72XWy3HtvVbTWljRE66cP60bxJzAqf2DgICo7lYTY2IHUmLnNpjYvw5bvmoHvPc0QO2a62w=="],
 
-    "hot-updater": ["hot-updater@1.0.7", "", { "dependencies": { "@hot-updater/android-helper": "1.0.7", "@hot-updater/apple-helper": "1.0.7", "@hot-updater/bsdiff": "1.0.7", "@hot-updater/cli-tools": "1.0.7", "@hot-updater/console": "1.0.7", "@hot-updater/plugin-core": "1.0.7", "@hot-updater/protocol": "1.0.7", "@hot-updater/server": "1.0.7", "@iarna/toml": "2.2.5", "jiti": "2.6.1" }, "peerDependencies": { "@aws-sdk/client-kms": "^3.1066.0", "@expo/fingerprint": "*", "@google-cloud/kms": "^6.0.0", "@hot-updater/aws": "^1.0.7", "@hot-updater/azure": "^1.0.7", "@hot-updater/cloudflare": "^1.0.7", "@hot-updater/firebase": "^1.0.7", "@hot-updater/supabase": "^1.0.7", "@hot-updater/vercel": "^1.0.7" }, "optionalPeers": ["@aws-sdk/client-kms", "@expo/fingerprint", "@google-cloud/kms", "@hot-updater/aws", "@hot-updater/azure", "@hot-updater/cloudflare", "@hot-updater/firebase", "@hot-updater/supabase", "@hot-updater/vercel"], "bin": { "hot-updater": "./dist/index.mjs" } }, "sha512-hhqIGurFIgioffqCJMvBgb6141ktktpHxatgUJ9S+c/PE5jFtJ9Sss2tnAdRvQdkVboI8k2kMoVbKeSrRhzW7w=="],
+    "hot-updater": ["hot-updater@1.0.8", "", { "dependencies": { "@hot-updater/android-helper": "1.0.8", "@hot-updater/apple-helper": "1.0.8", "@hot-updater/bsdiff": "1.0.8", "@hot-updater/cli-tools": "1.0.8", "@hot-updater/console": "1.0.8", "@hot-updater/plugin-core": "1.0.8", "@hot-updater/protocol": "1.0.8", "@hot-updater/server": "1.0.8", "@iarna/toml": "2.2.5", "jiti": "2.6.1" }, "peerDependencies": { "@aws-sdk/client-kms": "^3.1066.0", "@expo/fingerprint": "*", "@google-cloud/kms": "^6.0.0", "@hot-updater/aws": "^1.0.8", "@hot-updater/azure": "^1.0.8", "@hot-updater/cloudflare": "^1.0.8", "@hot-updater/firebase": "^1.0.8", "@hot-updater/supabase": "^1.0.8", "@hot-updater/vercel": "^1.0.8" }, "optionalPeers": ["@aws-sdk/client-kms", "@expo/fingerprint", "@google-cloud/kms", "@hot-updater/aws", "@hot-updater/azure", "@hot-updater/cloudflare", "@hot-updater/firebase", "@hot-updater/supabase", "@hot-updater/vercel"], "bin": { "hot-updater": "./dist/index.mjs" } }, "sha512-T0XhfVIwXgHu40AWk8KGhiuz2oKQgYJ24IqCduYxFAMUhqasGK5MEG9qIoeYg6t6kA1fG9Ex7Wx04umc4A0DkA=="],
 
     "http-errors": ["http-errors@2.0.1", "", { "dependencies": { "depd": "~2.0.0", "inherits": "~2.0.4", "setprototypeof": "~1.2.0", "statuses": "~2.0.2", "toidentifier": "~1.0.1" } }, "sha512-4FbRdAX+bSdmo4AUFuS0WNiPz8NgFt+r8ThgNWmlrjQjt1Q7ZR9+zTlce2859x4KSXrwIsaeTqDoKQmtP8pLmQ=="],
 
@@ -1987,7 +1987,7 @@
 
     "lucide-react": ["lucide-react@0.577.0", "", { "peerDependencies": { "react": "^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0" } }, "sha512-4LjoFv2eEPwYDPg/CUdBJQSDfPyzXCRrVW1X7jrx/trgxnxkHFjnVZINbzvzxjN70dxychOfg+FTYwBiS3pQ5A=="],
 
-    "lucide-react-native": ["lucide-react-native@1.58.0", "", { "peerDependencies": { "@types/react": "*", "react": "^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0", "react-native": "*", "react-native-svg": "^12.0.0 || ^13.0.0 || ^14.0.0 || ^15.0.0" }, "optionalPeers": ["@types/react"] }, "sha512-ETnPz9jj88LIEFxx+K+J0Qnu9ivpY/wMY6qT4GcqnpWLV3DRFnazJXPsp5BTb1PZuWHVq4mmL25PMzm1m6bg/g=="],
+    "lucide-react-native": ["lucide-react-native@1.59.0", "", { "peerDependencies": { "@types/react": "*", "react": "^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0", "react-native": "*", "react-native-svg": "^12.0.0 || ^13.0.0 || ^14.0.0 || ^15.0.0" }, "optionalPeers": ["@types/react"] }, "sha512-gH31vo01WDzeQLRTuMDmNVUYePYHwSK3fEnNoLZ12PoMyVcc+KeHoX9FHcJKUudO1vsu9Eon5ZxQhlRAj+ruIA=="],
 
     "magic-string": ["magic-string@0.30.21", "", { "dependencies": { "@jridgewell/sourcemap-codec": "^1.5.5" } }, "sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ=="],
 
@@ -2287,7 +2287,7 @@
 
     "react-native-screens": ["react-native-screens@4.30.0", "", { "dependencies": { "react-freeze": "^1.0.0", "warn-once": "^0.1.0" }, "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-FrZG/Q5gqoDu0SgP4d2Ly0qdio5DR1KdGPEYImhkz7tmrhpML4C39m6RYLGd5TVLHZwcCh8NPvW9rylevjD0uQ=="],
 
-    "react-native-skia": ["react-native-skia@3.6.1", "", { "dependencies": { "canvaskit-wasm": "0.41.1", "react-native-skia-graphite-android": "154.3.0", "react-native-skia-graphite-apple-ios": "154.3.0", "react-native-skia-graphite-apple-macos": "154.3.0", "react-native-skia-graphite-apple-tvos": "154.3.0", "react-native-webgpu-dawn": "154.3.0", "react-reconciler": "0.31.0" }, "peerDependencies": { "react": ">=19.0", "react-native": ">=0.79", "react-native-reanimated": ">=4.0.0", "react-native-worklets": ">=0.7.0" }, "optionalPeers": ["react-native", "react-native-reanimated", "react-native-worklets"], "bin": { "setup-skia-web": "scripts/setup-canvaskit.js" } }, "sha512-WTrBprrhAkoteTm9f+6E73MZIRZPlPtxWxWxOdREMxTHqZxWWQEJ537otFzNCC88eHjSMPYPxbEE5MW1ls8jRQ=="],
+    "react-native-skia": ["react-native-skia@3.6.3", "", { "dependencies": { "canvaskit-wasm": "0.41.1", "react-native-skia-graphite-android": "154.3.0", "react-native-skia-graphite-apple-ios": "154.3.0", "react-native-skia-graphite-apple-macos": "154.3.0", "react-native-skia-graphite-apple-tvos": "154.3.0", "react-native-webgpu-dawn": "154.3.0", "react-reconciler": "0.31.0" }, "peerDependencies": { "react": ">=19.0", "react-native": ">=0.79", "react-native-reanimated": ">=4.0.0", "react-native-worklets": ">=0.7.0" }, "optionalPeers": ["react-native", "react-native-reanimated", "react-native-worklets"], "bin": { "setup-skia-web": "scripts/setup-canvaskit.js" } }, "sha512-wRL1hduE/PGtkhAMIp1FWl2qS2iWi+vXHPYyhLw5VHj1ORAgD+qLzsfuFjGBJzPT78z87QIEM6Ks5iQkAfcEgw=="],
 
     "react-native-skia-graphite-android": ["react-native-skia-graphite-android@154.3.0", "", {}, "sha512-jJ1X3gLikN4TJdVhZ2xuxHOvvfC8cYr+QN14baKUUBY4B3CgfMrLr4XuqzPDNX0chizO6AXIrzc83AIq9Al3xQ=="],
 
@@ -2307,7 +2307,7 @@
 
     "react-native-web": ["react-native-web@0.21.4", "", { "dependencies": { "@babel/runtime": "^7.18.6", "@react-native/normalize-colors": "^0.74.1", "fbjs": "^3.0.4", "inline-style-prefixer": "^7.0.1", "memoize-one": "^6.0.0", "nullthrows": "^1.1.1", "postcss-value-parser": "^4.2.0", "styleq": "^0.1.3" }, "peerDependencies": { "react": "^18.0.0 || ^19.0.0", "react-dom": "^18.0.0 || ^19.0.0" } }, "sha512-77B6KlalB4osNIck91TNFixPkYPsTbuNEvw8P7IV+4v4/5wZSBRKZnw0Zhx6YjuauDTz71gc8IW+fVhcBMjr5A=="],
 
-    "react-native-webgpu": ["react-native-webgpu@0.16.0", "", { "dependencies": { "react-native-webgpu-dawn": "154.3.0" }, "peerDependencies": { "react": "*", "react-native": ">=0.81.0", "react-native-reanimated": ">=4.2.1", "react-native-worklets": ">=0.7.2" }, "optionalPeers": ["react-native-reanimated", "react-native-worklets"] }, "sha512-nzOL3kOhhpDP+c21wRvGEIAbmIN7h9OHoUhY7tcfXnn9uQk9QiXt+LLCvyITvbJaGvvdIgnvVhLuJFJUOf11ew=="],
+    "react-native-webgpu": ["react-native-webgpu@0.16.1", "", { "dependencies": { "react-native-webgpu-dawn": "154.3.0" }, "peerDependencies": { "react": "*", "react-native": ">=0.81.0", "react-native-reanimated": ">=4.2.1", "react-native-worklets": ">=0.7.2" }, "optionalPeers": ["react-native-reanimated", "react-native-worklets"] }, "sha512-bFz7fL2yJ++mUEu3D269lfRQtDIciJzrZ1qY+tBlg52tesydDTS3o8iPYPA3xqDPSl2KJtDnoPLjyNIhJ+hAaw=="],
 
     "react-native-webgpu-dawn": ["react-native-webgpu-dawn@154.3.0", "", {}, "sha512-qxGm5H0Ox04bZ8L6V92SdVLz3WNNDGgXDPEczE/Znpgs3rmfNJHIZ+VUq+lQPBrS3AUhKpn55tvu8woPtT1n9g=="],
 
