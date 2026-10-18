@@ -1610,7 +1610,11 @@ export const AgentComposer = memo(function AgentComposer({
           entering={fadeIn('micro')}
           exiting={fadeOut('micro')}
           style={styles.popupWrapper}>
-          <GlassChrome surface="composer" shape="popover" style={styles.inboxCard}>
+          <GlassChrome
+            surface="composer"
+            artworkEnabled={false}
+            shape="popover"
+            style={styles.inboxCard}>
             {/* The strip said nothing about itself: three lines of text over
                 the transcript, in the same ink as a sent message, floating
                 across the thinking pill. It says what it is. */}
@@ -1807,6 +1811,7 @@ export const AgentComposer = memo(function AgentComposer({
         <ComposerSurface
           flushField={flushField}
           surface="composer"
+          artworkEnabled={false}
           borderless
           shape={flushField ? 'composerField' : bar ? 'none' : 'sheet'}
           style={[

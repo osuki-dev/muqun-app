@@ -72,6 +72,8 @@ type GlassChromeProps = {
   shape?: keyof AppearanceProfile['chrome'] | 'pill' | 'none';
   /** Default chrome is borderless; keep the native border width stable. */
   borderless?: boolean;
+  /** Shared input docks keep their material without Home's decorative imagery. */
+  artworkEnabled?: boolean;
   /**
    * The face's own shape -- size, radius, padding, shadow. The material is this
    * component's business; where the surface is and how big it is stays with the
@@ -109,6 +111,7 @@ export function GlassChrome({
   surface = 'actions',
   shape,
   borderless = true,
+  artworkEnabled = true,
   style,
   entering,
   exiting,
@@ -189,7 +192,7 @@ export function GlassChrome({
   );
   const content = (
     <>
-      {hasImage ? (
+      {artworkEnabled && hasImage ? (
         <View
           pointerEvents="none"
           accessible={false}

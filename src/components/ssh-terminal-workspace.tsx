@@ -1218,6 +1218,7 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
           style={[styles.dockOverlay, dockKeyboardStyle]}>
           <GlassChrome
             surface="composer"
+            artworkEnabled={false}
             shape="composerDock"
             style={[
               styles.dock,
