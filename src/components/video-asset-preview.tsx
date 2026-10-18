@@ -1,13 +1,11 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { useEffect, useRef, useState } from 'react';
 import { AppState, BackHandler, Platform, StyleSheet, View } from 'react-native';
 import { Image, type ImageSource } from 'expo-image';
 import Animated from 'react-native-reanimated';
 import { VideoView, type VideoPlayer, type VideoViewRef } from 'react-native-video';
 import { Download, Maximize2, Pause, Play } from 'lucide-react-native';
-import { Text } from '@/components/text';
-import { PressableScale } from '@/components/pressable-scale';
 import { AudioProgress } from '@/components/audio-progress';
 import { useInlineMediaVisibility } from '@/hooks/use-inline-media-visibility';
 import { useFileActions } from '@/hooks/use-file-actions';

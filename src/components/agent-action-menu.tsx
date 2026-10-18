@@ -1,11 +1,9 @@
 import { memo, type ComponentType } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import Animated from 'react-native-reanimated';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { PressableScale } from '@/components/pressable-scale';
 import { TwoStepAction } from '@/components/two-step-action';
 import { appChrome } from '@/constants/appearance';
 import { AGENT_TYPE } from '@/constants/agent-type';

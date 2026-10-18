@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useLingui } from '@lingui/react/macro';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Spinner, useThemeTokens } from '@osuki-dev/ui';
+import { Spinner, useThemeTokens, Text } from '@osuki-dev/ui';
 import { StyleSheet, View } from 'react-native';
 
 import AppDrawer from '@/components/app-drawer';
 import { ServerTerminalWorkspace } from '@/components/server-terminal-workspace';
-import { Text } from '@/components/text';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { homeWorkspaceHostStore, homeWorkspaceRouteMode } from '@/lib/home-workspace-owner';
 import { homeWorkspaceHandoffStore } from '@/lib/home-workspace-handoff';

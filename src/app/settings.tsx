@@ -6,8 +6,7 @@ import {
   useHasThemeArtwork,
 } from '@/components/theme-artwork';
 import { brandMark } from '@/components/brand-mark';
-import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeMode, useThemeTokens, Text } from '@osuki-dev/ui';
 import * as Application from 'expo-application';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';

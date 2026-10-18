@@ -1,6 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
 import { useIsFocused, useRouter } from 'expo-router';
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, TurboModuleRegistry, View } from 'react-native';
@@ -9,7 +9,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SettingsChoiceRow } from '@/components/settings-chrome';
 import { SettingsSegmented } from '@/components/settings-segmented';
 import { SheetScene, SheetSceneFooter } from '@/components/sheet-scene';
-import { Text } from '@/components/text';
 import { DEFAULT_MAP_POSE } from '@/components/computer-map/types';
 import { MapErrorBoundary } from '@/components/computer-map/error-boundary';
 import { useAppActive } from '@/hooks/use-app-active';

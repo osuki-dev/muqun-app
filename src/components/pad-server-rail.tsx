@@ -1,11 +1,10 @@
 import { Trans, useLingui } from '@lingui/react/macro';
-import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useThemeMode, useThemeTokens, SurfaceDecoration, Text } from '@osuki-dev/ui';
+import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
 import { ChevronLeft, ChevronRight, ScanLine, Settings, SquareTerminal } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
-import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -14,7 +13,6 @@ import { useHomeCommands, type HomeCommandOptions } from '@/hooks/use-home-comma
 import { useHomeRecentsStore } from '@/stores/home-recents';
 import { SectionLabel } from '@/components/settings-chrome';
 import { HomeConnections } from '@/components/home-connections';
-import { ThemedSurfaceArtwork } from '@/components/themed-surface';
 import { useThemeLibrary } from '@/stores/theme-library';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { type ActiveServerConnection, type ServerReachability } from '@/lib/server-reachability';
@@ -22,8 +20,10 @@ import type { SshHostRecord } from '@/lib/ssh-hosts';
 import { homeArtworkPreference } from '@/theme/repository';
 import { resolvePadRailArtwork } from '@/theme/pad-rail-artwork';
 import { Canvas, Image, LinearGradient, Mask, Rect, useImage, vec } from 'react-native-skia';
-import { coveredImageRect } from '@/lib/hero-feather';
+import { homeCoverArtworkRect } from '@/lib/hero-feather';
 import { withAlpha } from '@/lib/color';
+import { safeArtworkOpacity } from '@/theme/artwork-contrast';
+import { jointArtworkOpacity } from '@/theme/opacity-policy';
 
 export type PadServerRailProps = {
   /** Paired servers in the order the rail should display them. */
@@ -127,52 +127,55 @@ export function PadServerRail({
         },
         style,
       ]}>
-      <ThemedSurfaceArtwork slot="navigation.background" baseColor={theme.colors.surface} />
+      <SurfaceDecoration slot="navigation.background" baseColor={theme.colors.surface} />
       <PadRailHeader onBack={onBack} testID={`${testID}-back`} />
 
-      <ScrollView
-        style={styles.scroll}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.content, { gap: profile.rail.contentGap }]}
-        keyboardShouldPersistTaps="handled">
-        {recentEntries.length > 0 ? (
-          <>
-            <SectionLabel title={<Trans>Continue</Trans>} color={theme.colors.textMuted} />
-            <HomeRecentSessions
-              compact
-              servers={servers}
-              hosts={sshHosts ?? []}
-              selectedServerId={selectedServerId ?? undefined}
-              selectedPaneId={workbenchSelected ? undefined : (selectedPaneId ?? undefined)}
-              selectedAsid={workbenchSelected ? undefined : selectedAsid}
-              available={recentEntries}
-              onOpen={(command) => {
-                void commands.dispatch(command);
-              }}
-            />
-          </>
-        ) : null}
-        {compactActions ? (
-          <>
-            <SectionLabel title={<Trans>Connections</Trans>} color={theme.colors.textMuted} />
-            <HomeConnections
-              servers={servers}
-              hosts={sshHosts ?? []}
-              onOpenServer={(serverId) => {
-                const server = servers.find((item) => item.serverId === serverId);
-                if (server) onSelectServer(server);
-              }}
-              onOpenHost={(hostId) => {
-                const host = sshHosts?.find((item) => item.id === hostId);
-                if (host && onSelectSshHost) onSelectSshHost(host);
-              }}
-              onManage={() => void commands.manageConnections()}
-              nowMs={nowMs}
-              activeConnection={activeConnection}
-            />
-          </>
-        ) : null}
-      </ScrollView>
+      <View style={styles.scroll}>
+        <PadRailArtwork />
+        <ScrollView
+          style={styles.scroll}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={[styles.content, { gap: profile.rail.contentGap }]}
+          keyboardShouldPersistTaps="handled">
+          {recentEntries.length > 0 ? (
+            <>
+              <SectionLabel title={<Trans>Continue</Trans>} color={theme.colors.textMuted} />
+              <HomeRecentSessions
+                compact
+                servers={servers}
+                hosts={sshHosts ?? []}
+                selectedServerId={selectedServerId ?? undefined}
+                selectedPaneId={workbenchSelected ? undefined : (selectedPaneId ?? undefined)}
+                selectedAsid={workbenchSelected ? undefined : selectedAsid}
+                available={recentEntries}
+                onOpen={(command) => {
+                  void commands.dispatch(command);
+                }}
+              />
+            </>
+          ) : null}
+          {compactActions ? (
+            <>
+              <SectionLabel title={<Trans>Connections</Trans>} color={theme.colors.textMuted} />
+              <HomeConnections
+                servers={servers}
+                hosts={sshHosts ?? []}
+                onOpenServer={(serverId) => {
+                  const server = servers.find((item) => item.serverId === serverId);
+                  if (server) onSelectServer(server);
+                }}
+                onOpenHost={(hostId) => {
+                  const host = sshHosts?.find((item) => item.id === hostId);
+                  if (host && onSelectSshHost) onSelectSshHost(host);
+                }}
+                onManage={() => void commands.manageConnections()}
+                nowMs={nowMs}
+                activeConnection={activeConnection}
+              />
+            </>
+          ) : null}
+        </ScrollView>
+      </View>
 
       {/* Three explained rows while the rail is empty, three glyphs once it is
           not.
@@ -236,11 +239,10 @@ export function PadServerRail({
   );
 }
 
-/** Full-bleed theme art fades into the rail; Back keeps its own readable surface. */
-function PadRailHeader({ onBack, testID }: { onBack: () => void; testID: string }) {
-  const { t } = useLingui();
+/** A noninteractive background takes no list height and stays clear of Back. */
+function PadRailArtwork() {
   const theme = useThemeTokens();
-  const profile = useAppearanceProfile();
+  const backgroundOpacity = useSurfaceBackgroundOpacity();
   const active = useThemeLibrary((state) => state.active);
   const assets = useThemeLibrary((state) => state.activeAssets);
   const preference = useThemeLibrary((state) => {
@@ -248,8 +250,7 @@ function PadRailHeader({ onBack, testID }: { onBack: () => void; testID: string 
     return installed ? homeArtworkPreference(installed) : 'theme';
   });
   const { resolvedMode } = useThemeMode();
-  const { height } = useWindowDimensions();
-  const [width, setWidth] = useState(0);
+  const [box, setBox] = useState({ width: 0, height: 0 });
   const [failedSource, setFailedSource] = useState<string | null>(null);
   const artwork = resolvePadRailArtwork({
     manifest: active?.manifest,
@@ -259,59 +260,74 @@ function PadRailHeader({ onBack, testID }: { onBack: () => void; testID: string 
   });
   const source = artwork && artwork.source !== failedSource ? artwork.source : null;
   const image = useImage(source, () => setFailedSource(source));
-  const artworkHeight = Math.min(220, height * 0.26);
-  const box = { width, height: artworkHeight };
   const imageRect = image
-    ? coveredImageRect(
+    ? homeCoverArtworkRect(
         box,
         { width: image.width(), height: image.height() },
-        artwork?.image.focalPoint
+        artwork?.image.fit,
+        artwork?.image.focalPoint,
+        artwork?.foreground
       )
     : null;
+  const opacity = jointArtworkOpacity(
+    safeArtworkOpacity(theme.colors.surface, [
+      { color: theme.colors.text, minimum: 4.5 },
+      { color: theme.colors.textMuted, minimum: 4.5 },
+      { color: theme.colors.primary, minimum: 3 },
+    ]),
+    backgroundOpacity,
+    artwork?.image.opacity ?? 1
+  );
   return (
     <View
-      onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
-      style={[
-        styles.railHeader,
-        {
-          height: source ? artworkHeight : 68,
-          borderTopLeftRadius: profile.chrome.workspaceRail,
-          borderTopRightRadius: profile.chrome.workspaceRail,
-        },
-      ]}>
+      testID="pad-rail-artwork"
+      pointerEvents="none"
+      accessible={false}
+      importantForAccessibility="no-hide-descendants"
+      onLayout={(event) => {
+        const { width, height } = event.nativeEvent.layout;
+        setBox((current) =>
+          current.width === width && current.height === height ? current : { width, height }
+        );
+      }}
+      style={[StyleSheet.absoluteFill, styles.artwork]}>
       {image && imageRect ? (
-        <View
-          testID="pad-rail-artwork"
-          pointerEvents="none"
-          accessible={false}
-          importantForAccessibility="no-hide-descendants"
-          style={StyleSheet.absoluteFill}>
-          <Canvas style={StyleSheet.absoluteFill}>
-            <Mask
-              mode="alpha"
-              mask={
-                <Rect x={0} y={0} width={width} height={artworkHeight}>
-                  <LinearGradient
-                    start={vec(0, 0)}
-                    end={vec(0, artworkHeight)}
-                    colors={['white', 'white', 'transparent']}
-                    positions={[0, 0.35, 1]}
-                  />
-                </Rect>
-              }>
-              <Image
-                image={image}
-                x={imageRect.x}
-                y={imageRect.y}
-                width={imageRect.width}
-                height={imageRect.height}
-                fit="fill"
-                opacity={artwork?.image.opacity ?? 1}
-              />
-            </Mask>
-          </Canvas>
-        </View>
+        <Canvas style={StyleSheet.absoluteFill}>
+          <Mask
+            mode="alpha"
+            mask={
+              <Rect x={0} y={0} width={box.width} height={box.height}>
+                <LinearGradient
+                  start={vec(0, 0)}
+                  end={vec(0, box.height)}
+                  colors={['white', 'white', 'transparent']}
+                  positions={[0, 0.35, 1]}
+                />
+              </Rect>
+            }>
+            <Image
+              image={image}
+              x={imageRect.x}
+              y={imageRect.y}
+              width={imageRect.width}
+              height={imageRect.height}
+              fit="fill"
+              opacity={opacity}
+            />
+          </Mask>
+        </Canvas>
       ) : null}
+    </View>
+  );
+}
+
+/** Only Back reserves layout height; the list can scroll over the artwork below. */
+function PadRailHeader({ onBack, testID }: { onBack: () => void; testID: string }) {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
+  return (
+    <View style={styles.railHeader}>
       <Pressable
         testID={testID}
         accessibilityRole="button"
@@ -427,9 +443,10 @@ const styles = StyleSheet.create({
   },
   railHeader: {
     width: '100%',
-    overflow: 'hidden',
-    marginBottom: 12,
     borderCurve: 'continuous',
+  },
+  artwork: {
+    overflow: 'hidden',
   },
   backButton: {
     alignSelf: 'flex-start',

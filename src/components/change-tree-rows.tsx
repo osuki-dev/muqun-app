@@ -8,8 +8,7 @@ import { Folder, FolderOpen, MoreHorizontal, Trash2 } from 'lucide-react-native'
 import { AgentActionMenu } from '@/components/agent-action-menu';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import type { PaneChatColors } from '@/components/pane-chat-blocks';
-import { PressableScale } from '@/components/pressable-scale';
-import { Text } from '@/components/text';
+import { PressableScale, Text } from '@osuki-dev/ui';
 import { gitFileStatusWord } from '@/i18n/labels';
 import {
   CHANGE_TREE_DIR_ROW_HEIGHT,
@@ -247,11 +246,7 @@ export const ChangeTreeContextRowView = memo(function ChangeTreeContextRowView({
       onPress={() => onPress(row.path)}
       style={{ width }}>
       <Animated.View style={[styles.row, styles.contextRow, pinned, { width: pinnedWidth }]}>
-        <View
-          style={[
-            styles.chip,
-            { borderRadius: profile.chrome.control, borderColor: colors.border },
-          ]}>
+        <View style={[styles.chip, { borderRadius: profile.chrome.control }]}>
           {row.loading ? (
             <ActivityIndicator size="small" color={colors.accent} />
           ) : (
@@ -345,6 +340,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 12,
     borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
   },
 });

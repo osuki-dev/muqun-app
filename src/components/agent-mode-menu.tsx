@@ -1,12 +1,10 @@
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { Bot, Check, Compass, Sparkles } from 'lucide-react-native';
 import Animated from 'react-native-reanimated';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { PressableScale } from '@/components/pressable-scale';
 import { appChrome } from '@/constants/appearance';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { withAlpha } from '@/lib/color';
@@ -51,7 +49,6 @@ export const AgentModeMenu = memo(function AgentModeMenu({
         { borderRadius: profile.chrome.popover },
         {
           backgroundColor: surfaceBackground(theme.colors.surface),
-          borderColor: theme.colors.border,
         },
       ]}>
       {agents.map((ag) => {
@@ -100,7 +97,6 @@ const styles = StyleSheet.create({
     maxWidth: 300,
     paddingVertical: 5,
     borderRadius: appChrome.radius.popover,
-    borderWidth: StyleSheet.hairlineWidth,
     boxShadow: appChrome.shadow.popover,
   },
   option: {

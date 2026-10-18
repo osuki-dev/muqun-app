@@ -1,8 +1,5 @@
-import { Card } from '@/components/themed-card';
-import { PressableScale } from '@/components/pressable-scale';
+import { Card, useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
 import { LegendList, type LegendListRenderItemProps } from '@legendapp/list/react-native';
 import { memo, useCallback, useState } from 'react';
 import { StyleSheet } from 'react-native';
@@ -92,7 +89,7 @@ export function ComposerPopup({
       entering={fadeInDown('dropdown')}
       exiting={fadeOutDown('micro')}
       testID={testIDPrefix}>
-      <Card variant="raised" radius="md" padding="xs">
+      <Card slot="cards.plain" variant="raised" radius="md" padding="xs">
         <LegendList
           data={rows}
           dataKey={testIDPrefix}

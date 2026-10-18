@@ -272,6 +272,9 @@ export function groupLaunchCells(entries: readonly LaunchEntry[]): LaunchCell[] 
 
 export const LAUNCH_GRID_GAP = 8;
 
+/** One launch entry's height: a tile row, and how far the editorial page rises into its artwork. */
+export const LAUNCH_ENTRY_HEIGHT = 44;
+
 /**
  * Phone mosaic only. The Pad grid keeps `LAUNCH_GRID_GAP`; these two chips
  * share a column, so the same 8-point gap reads as a slot of beach between
@@ -279,9 +282,12 @@ export const LAUNCH_GRID_GAP = 8;
  */
 export const LAUNCH_MOSAIC_GAP = 3;
 
-/** Wide enough for an icon and a name; a landscape phone must not stretch the chip. */
-export const LAUNCH_MOSAIC_COLUMN_MIN = 126;
-export const LAUNCH_MOSAIC_COLUMN_MAX = 136;
+/**
+ * Leave room for a localized utility name beside its icon, number and arrow.
+ * The cap still keeps a landscape phone from stretching each column.
+ */
+export const LAUNCH_MOSAIC_COLUMN_MIN = 160;
+export const LAUNCH_MOSAIC_COLUMN_MAX = 176;
 
 export type LaunchMosaicCell = { indices: number[]; width: number; featured: boolean };
 export type LaunchRowLayout = {
@@ -316,7 +322,6 @@ function columnWidth(width: number, columns: number): number {
 export function launchRowLayout({
   width,
   agentCount,
-  utilityCount,
   grid = false,
 }: {
   width: number;
@@ -368,6 +373,6 @@ export function launchRowLayout({
   return {
     mode: 'grid',
     agentRows,
-    utilityWidth: columnWidth(measured, Math.max(1, Math.min(utilityCount, maxColumns))),
+    utilityWidth: columnWidth(measured, Math.min(maxColumns, 2)),
   };
 }

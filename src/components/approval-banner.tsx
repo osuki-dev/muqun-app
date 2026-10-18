@@ -8,9 +8,9 @@ import {
   Tag,
   useThemeTokens,
   type IconName,
+  Card,
+  Text,
 } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
-import { Card } from '@/components/themed-card';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useEffect } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -120,7 +120,7 @@ export function ApprovalBanner({
       // terminal's inset with it.
       layout={listLayout('short')}
       testID="approval-banner">
-      <Card variant="raised" radius="md" padding="sm">
+      <Card slot="cards.plain" variant="raised" radius="md" padding="sm">
         <Stack gap="sm">
           <Stack direction="horizontal" gap="sm" align="flex-start">
             <View style={{ paddingTop: 1 }}>

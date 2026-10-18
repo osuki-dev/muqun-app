@@ -1,12 +1,10 @@
 import { useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { ChevronRight, Monitor, SquareTerminal } from 'lucide-react-native';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useHomeScenePlate } from '@/hooks/use-home-scene-plate';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';

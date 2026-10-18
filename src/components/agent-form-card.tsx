@@ -1,11 +1,9 @@
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { Linking, View, StyleSheet, Switch, ActivityIndicator } from 'react-native';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, PressableScale, resolveFontStyle, Text, TextField } from '@osuki-dev/ui';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import { ExternalLink, FormInput, Send, Check } from 'lucide-react-native';
-import { PressableScale } from '@/components/pressable-scale';
 import { BoundedMarkdown } from '@/components/bounded-markdown';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useCompactMarkdownStyle } from '@/hooks/use-markdown-style';
@@ -20,8 +18,6 @@ import {
   type FormRequest,
 } from '@/lib/agent-session';
 import { AGENT_TYPE } from '@/constants/agent-type';
-import { FontedTextInput } from '@/components/fonted-text-input';
-import { resolveUserFontStyle } from '@/hooks/use-user-fonts';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
 export interface AgentFormCardProps {
@@ -57,11 +53,11 @@ export const AgentFormCard = memo(function AgentFormCard({
    * title that is not is the most visible version of that mismatch the app
    * has.
    *
-   * `body` at `'regular'` is the same lookup `themed-input.tsx` does, so a
+   * `body` at `'regular'` is the same lookup the kit's `Input` does, so a
    * field here and a field on a sheet cannot drift apart; the weight stays at
    * regular for the Android reason in `interface-font-registry.ts`.
    */
-  const inputFont = resolveUserFontStyle(theme.fonts, theme.typeStyles.body.fontFamily, 'regular');
+  const inputFont = resolveFontStyle(theme.fonts, theme.typeStyles.body.fontFamily, 'regular');
   const [submitting, setSubmitting] = useState(false);
 
   // Initialize form state
@@ -209,7 +205,7 @@ export const AgentFormCard = memo(function AgentFormCard({
       case 'string': {
         const currentVal = (values[field.key] as string) ?? '';
         const input = (
-          <FontedTextInput
+          <TextField
             value={field.options?.some((option) => option.value === currentVal) ? '' : currentVal}
             onChangeText={(text) => setValue(field.key, text)}
             placeholder={field.placeholder ?? t`Type here…`}
@@ -308,7 +304,7 @@ export const AgentFormCard = memo(function AgentFormCard({
         return (
           <View key={field.key} style={styles.fieldRow}>
             <FieldTitle field={field} />
-            <FontedTextInput
+            <TextField
               keyboardType="numeric"
               value={currentVal}
               onChangeText={(text) => setValue(field.key, Number(text) || 0)}

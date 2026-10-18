@@ -3,7 +3,7 @@ import { useLocalSearchParams } from 'expo-router';
 
 import { PaneHistorySheet } from '@/components/pane-history-sheet';
 import { SheetScene } from '@/components/sheet-scene';
-import { Text } from '@/components/text';
+import { Text } from '@osuki-dev/ui';
 import { DEMO_SERVER_ID, demoHealth, demoRecord, isDemoActive } from '@/lib/demo-gateway';
 import { PANE_CAPTURED_HISTORY_SEGMENTS_CAPABILITY } from '@/lib/terminal-history-segments';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';

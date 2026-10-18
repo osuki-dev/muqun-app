@@ -4,8 +4,7 @@ import { useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
 import { surfaceBackgroundFill } from '@/theme/surface-background';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { useStableHandler } from '@/hooks/use-render-refs';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { router, usePathname, type Href } from 'expo-router';
 import { Bell, ChevronRight } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
@@ -47,8 +46,6 @@ import { noticeDragOffset, noticeSwipeEnd } from '@/lib/notice-swipe';
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { useAppSettings } from '@/stores/app-settings';
 import { useInAppNotifications } from '@/stores/in-app-notifications';
-
-import { PressableScale } from './pressable-scale';
 
 /**
  * How far below the safe-area inset a notice starts.
@@ -228,12 +225,14 @@ export function InAppNotificationHost() {
     else pan.activeOffsetY(-DRAG_SLOP).failOffsetY(DRAG_SLOP);
     return pan
       .onUpdate((event) => {
+        'worklet';
         if (dismissing.get() || gestureNoticeId.get() !== noticeId) return;
         const offset = noticeDragOffset(event);
         dragX.set(offset.x);
         dragY.set(offset.y);
       })
       .onEnd((event, success) => {
+        'worklet';
         if (dismissing.get() || gestureNoticeId.get() !== noticeId) return;
         // Native cancellation also calls onEnd; it must never dismiss a notice.
         const end = success ? noticeSwipeEnd(event) : { dismissed: false as const };

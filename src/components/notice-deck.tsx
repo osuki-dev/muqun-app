@@ -1,11 +1,9 @@
 import { Children, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import { ChevronRight } from 'lucide-react-native';
-import { PressableScale } from '@/components/pressable-scale';
 import { useNotificationSurfaceStyle } from '@/components/notification-surface';
 import { fadeIn, listLayout } from '@/lib/motion';
 import { noticeDeckPage } from '@/lib/notice-deck';

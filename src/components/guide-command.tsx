@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter, type Href } from 'expo-router';
 import { Check, Copy, Play } from 'lucide-react-native';
@@ -7,9 +7,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { PressableScale } from '@/components/pressable-scale';
 import { SHEET_LADDER } from '@/components/sheet-scene';
-import { Text } from '@/components/text';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
@@ -281,7 +279,6 @@ export function GuideCommand({
         style={[
           styles.command,
           {
-            borderColor: theme.colors.border,
             borderRadius: profile.chrome.control,
             backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
           },
@@ -334,7 +331,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: SHEET_LADDER.snug,
     paddingVertical: SHEET_LADDER.snug,
     borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
   },
   commandText: { flex: 1, letterSpacing: 0.2 },
 });

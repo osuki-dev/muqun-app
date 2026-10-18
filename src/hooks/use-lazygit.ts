@@ -7,7 +7,7 @@ import { launchPaneLazygit, paneLazygitAvailable } from '@/lib/gateway-client';
 import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
 import { usePanelPickerStore } from '@/stores/panel-picker';
 
-/** Capability-gated launch from the Git workspace into its selected checkout. */
+/** Capability-gated launch of the host's Git TUI next to the current pane. */
 export function useLazygit({
   enabled,
   sessionId,

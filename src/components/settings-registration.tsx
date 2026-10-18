@@ -1,14 +1,12 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens, useToast } from '@osuki-dev/ui';
+import { useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
 import { useLocales } from 'expo-localization';
 import { openBrowserAsync, WebBrowserPresentationStyle } from 'expo-web-browser';
 import { ExternalLink } from 'lucide-react-native';
 import { StyleSheet } from 'react-native';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { PressableScale } from '@/components/pressable-scale';
 import { LADDER } from '@/components/settings-chrome';
-import { Text } from '@/components/text';
 import { SHELL_WALLPAPER_FALLBACK, useHasThemeArtwork } from '@/components/theme-artwork';
 import { ICP_REGISTRATION_URL } from '@/constants/links';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';

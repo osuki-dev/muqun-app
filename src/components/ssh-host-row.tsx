@@ -1,8 +1,7 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useMinuteNow } from '@/hooks/use-minute-now';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import {
   ChevronRight,
   Fingerprint,
@@ -13,7 +12,6 @@ import {
 } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { type SshHomeAge, sshHomeAge, sshHomeSubtitle } from '@/lib/ssh-home';
 import type { SshHostRecord } from '@/lib/ssh-hosts';

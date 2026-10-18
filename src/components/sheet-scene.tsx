@@ -1,7 +1,14 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import {
+  useThemeTokens,
+  PressableScale,
+  resolveFontStyle,
+  type ResolvedFontStyle,
+  Text,
+  type TextProps,
+  TextField,
+} from '@osuki-dev/ui';
 import { useRouter } from 'expo-router';
-import { Text, type TextProps } from '@/components/text';
 import { Search, X } from 'lucide-react-native';
 import { useEffect, useRef, type ReactNode } from 'react';
 import {
@@ -26,7 +33,6 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { appChrome } from '@/constants/appearance';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -35,9 +41,6 @@ import { SheetHandle, useSheetIsFullscreen } from '@/components/sheet-route-fram
 import { KeyboardInset } from '@/components/keyboard-inset';
 import { fadeIn, PRESET, timing } from '@/lib/motion';
 import { EXPANDABLE_DETENT } from '@/lib/route-presentation';
-import { FontedTextInput } from '@/components/fonted-text-input';
-import { resolveUserFontStyle } from '@/hooks/use-user-fonts';
-import type { UserFontStyle } from '@/theme/interface-font-registry';
 
 /**
  * The furniture every bottom sheet in Muqun is built from.
@@ -385,9 +388,9 @@ export function SheetSceneHeading({
  * registered only under `Typeface.NORMAL` falls through to a system lookup
  * that has never heard of it.
  */
-function useSheetSceneFieldFont(): UserFontStyle {
+function useSheetSceneFieldFont(): ResolvedFontStyle {
   const { fonts, typeStyles } = useThemeTokens();
-  return resolveUserFontStyle(fonts, typeStyles.body.fontFamily, 'regular');
+  return resolveFontStyle(fonts, typeStyles.body.fontFamily, 'regular');
 }
 
 /**
@@ -422,7 +425,7 @@ export function SheetSceneSearch({
   return (
     <View style={[styles.searchRow, { borderBottomColor: colors.border }]}>
       <Search size={16} color={colors.textSubtle} />
-      <FontedTextInput
+      <TextField
         testID={testID}
         accessibilityLabel={accessibilityLabel}
         value={value}

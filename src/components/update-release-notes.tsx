@@ -1,7 +1,6 @@
 import { useLingui } from '@lingui/react';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
 import { StyleSheet, View } from 'react-native';
-import { Text } from '@/components/text';
 import { BoundedMarkdown } from '@/components/bounded-markdown';
 import { useCompactMarkdownStyle } from '@/hooks/use-markdown-style';
 import { RELEASE_NOTES } from '@/lib/release-notes';

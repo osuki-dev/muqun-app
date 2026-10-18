@@ -1,7 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, ScrollView, type ScrollViewInstance } from 'react-native';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, PressableScale, Text, TextField } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import {
   ChevronRight,
@@ -19,7 +18,6 @@ import Animated from 'react-native-reanimated';
 
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { AgentUnreadDot } from '@/components/agent-unread-dot';
-import { PressableScale } from '@/components/pressable-scale';
 import { SettingsSegmented } from '@/components/settings-segmented';
 import {
   SheetScene,
@@ -57,7 +55,6 @@ import {
 } from '@/lib/agent-session';
 import { AGENT_TYPE } from '@/constants/agent-type';
 import type { AgentSessionAction } from '@/lib/agent-runtime-controls';
-import { FontedTextInput } from '@/components/fonted-text-input';
 import { ListLoadMoreFooter } from '@/components/list-load-more-footer';
 import { flattenSessionTree } from '@/lib/agent-session-tree';
 
@@ -532,7 +529,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
           exiting={fadeOutDown('micro')}
           style={styles.rename}>
           <SheetSceneField label={t`Session name`}>
-            <FontedTextInput
+            <TextField
               testID={`agent-session-rename-input-${session.asid}`}
               accessibilityLabel={t`Session name`}
               value={renameDraft}

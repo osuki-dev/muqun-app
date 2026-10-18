@@ -1,7 +1,6 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { useThemeTokens, PressableScale, Text, TextField } from '@osuki-dev/ui';
 import * as Clipboard from 'expo-clipboard';
 import * as Device from 'expo-device';
 import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
@@ -39,7 +38,6 @@ import Animated, {
 import { LogoLoader } from '@/components/logo-loader';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { SshConnectPromptGate } from '@/components/ssh-connect-prompt-gate';
-import { PressableScale } from '@/components/pressable-scale';
 import {
   SheetScene,
   SheetSceneAction,
@@ -95,7 +93,6 @@ import {
   SCAN_REJECT_HOLD_MS,
   type ScanReading,
 } from '@/lib/pairing-scan';
-import { FontedTextInput } from '@/components/fonted-text-input';
 import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
 
 type Step = 'scan' | 'confirm' | 'success';
@@ -746,7 +743,7 @@ export default function PairModal() {
                       </View>
                     )}
                     <SheetSceneField label={t`Gateway port on that host`}>
-                      <FontedTextInput
+                      <TextField
                         accessibilityLabel={t`Gateway port on that host`}
                         testID="pairing-ssh-port"
                         value={sshPort}
@@ -778,7 +775,7 @@ export default function PairModal() {
                         drew no edge at all -- a label and a placeholder
                         floating in a box with nothing to tap at. */}
                     <SheetSceneField label={t`Gateway URL`}>
-                      <FontedTextInput
+                      <TextField
                         accessibilityLabel={t`Gateway URL`}
                         testID="pairing-manual-url"
                         value={manualUrl}
@@ -1075,7 +1072,7 @@ export default function PairModal() {
                   </Text>
                 </View>
                 <SheetSceneField label={t`Computer name`}>
-                  <FontedTextInput
+                  <TextField
                     accessibilityLabel={t`Computer name`}
                     value={serverName}
                     onChangeText={(value) => setServerName(value.slice(0, 48))}
@@ -1105,7 +1102,7 @@ export default function PairModal() {
                       text before onChangeText, so a leading space would consume
                       one slot and discard the final real code character before
                       normalization. */}
-                  <FontedTextInput
+                  <TextField
                     accessibilityLabel={t`Pairing code`}
                     value={code}
                     onChangeText={(value) => setCode(normalizePairingCode(value))}

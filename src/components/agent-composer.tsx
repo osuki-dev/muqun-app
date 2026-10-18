@@ -16,8 +16,7 @@ import {
   type TextInputInstance,
   type TextInputSelectionChangeEvent,
 } from 'react-native';
-import { Spinner, useThemeTokens, useToast } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { Spinner, useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
@@ -46,7 +45,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useKeyboardState, useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
 
-import { PressableScale } from '@/components/pressable-scale';
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { AgentRevertPlate } from '@/components/agent-revert-plate';
 import { AgentUnreadDot } from '@/components/agent-unread-dot';
@@ -286,8 +284,6 @@ const SessionChip = memo(function SessionChip({
             ? { backgroundColor: theme.colors.primary }
             : {
                 backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                borderColor: surfaceBackground(theme.colors.border),
-                borderWidth: StyleSheet.hairlineWidth,
               },
         ]}>
         {/* On a lit chip the primary ink is the chip itself, so the dot takes
@@ -1457,6 +1453,13 @@ export const AgentComposer = memo(function AgentComposer({
   const safeAreaFoot = flushField && keyboardHeight === 0 ? bottomInset : 0;
   const dockFoot = safeAreaFoot + (outerInsets?.bottom ?? 0);
   const [surfaceHeight, setSurfaceHeight] = useState(0);
+  const latestSurfaceHeight = useRef(0);
+  const [inputRowHeight, setInputRowHeight] = useState(0);
+  // Yoga still reports every accessory animation frame. Keep its latest
+  // measurement without re-rendering the whole composer for every frame.
+  useEffect(() => {
+    if (!accessoryHeightAnimating) setSurfaceHeight(latestSurfaceHeight.current);
+  }, [accessoryHeightAnimating]);
   const [compactionRowHeight, setCompactionRowHeight] = useState(0);
   const compactionClearance = compaction ? compactionRowHeight : 0;
   const [voiceActive, setVoiceActive] = useState(false);
@@ -1472,6 +1475,9 @@ export const AgentComposer = memo(function AgentComposer({
   const decorationClearance =
     fieldDecoration && !decorationHidden && !voiceActive ? fieldDecorationOverhang : 0;
   const dockHeight = surfaceHeight + dockFoot;
+  // Home paints only the input plate. Its options/notice overlays must not
+  // erase the foreground behind their transparent or rounded edges.
+  const dockClipHeight = flushField ? inputRowHeight + dockFoot : dockHeight;
   // The status row occupies transcript space, but does not move the material's clip edge.
   const reportDockHeight = useEffectEvent((height: number, clipHeight: number) =>
     onDockHeight?.(height + compactionClearance, clipHeight)
@@ -1480,16 +1486,20 @@ export const AgentComposer = memo(function AgentComposer({
   // to Home also changes its scroll padding and clipping, feeding the reveal
   // through another React/layout pass. Publish the latest height once it lands.
   useEffect(() => {
-    if (surfaceHeight > 0 && !accessoryHeightAnimating)
-      reportDockHeight(dockHeight + decorationClearance, dockHeight);
+    if (
+      surfaceHeight > 0 &&
+      !accessoryHeightAnimating &&
+      surfaceHeight === latestSurfaceHeight.current
+    )
+      reportDockHeight(dockHeight + decorationClearance, dockClipHeight);
   }, [
     surfaceHeight,
     dockHeight,
+    dockClipHeight,
     decorationClearance,
     compactionClearance,
     accessoryHeightAnimating,
   ]);
-  const [inputRowHeight, setInputRowHeight] = useState(0);
   const popupMaxHeight = Math.max(
     POPUP_MIN_HEIGHT,
     windowHeight - keyboardHeight - dockHeight - compactionClearance - topInset - POPUP_HEADER_GAP
@@ -1600,7 +1610,11 @@ export const AgentComposer = memo(function AgentComposer({
           entering={fadeIn('micro')}
           exiting={fadeOut('micro')}
           style={styles.popupWrapper}>
-          <GlassChrome surface="composer" shape="popover" style={styles.inboxCard}>
+          <GlassChrome
+            surface="composer"
+            artworkEnabled={false}
+            shape="popover"
+            style={styles.inboxCard}>
             {/* The strip said nothing about itself: three lines of text over
                 the transcript, in the same ink as a sent message, floating
                 across the thinking pill. It says what it is. */}
@@ -1781,7 +1795,8 @@ export const AgentComposer = memo(function AgentComposer({
       <View
         onLayout={(event) => {
           const { height } = event.nativeEvent.layout;
-          setSurfaceHeight(height);
+          latestSurfaceHeight.current = height;
+          if (!accessoryHeightAnimating) setSurfaceHeight(height);
         }}
         // Enclosing bars cast their shadow outside the clipped material.
         // Home's field owns its plate; leave the ornament above it transparent.
@@ -1796,6 +1811,7 @@ export const AgentComposer = memo(function AgentComposer({
         <ComposerSurface
           flushField={flushField}
           surface="composer"
+          artworkEnabled={false}
           borderless
           shape={flushField ? 'composerField' : bar ? 'none' : 'sheet'}
           style={[
@@ -1836,7 +1852,6 @@ export const AgentComposer = memo(function AgentComposer({
                       { borderRadius: profile.chrome.navigationPill },
                       {
                         backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                        borderColor: surfaceBackground(theme.colors.border),
                       },
                     ]}>
                     <ArrowLeft size={13} color={theme.colors.primary} />
@@ -2544,7 +2559,6 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
   },
   // No `fontWeight` here: the badge asks for its weight through the kit's prop,
   // which the app's font registry caps at semibold. `expo-font` files a reader's

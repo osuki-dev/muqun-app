@@ -45,7 +45,7 @@ import {
 } from '@/components/appearance-profile-provider';
 import { profileNavigationOptions } from '@/lib/appearance-profile';
 import { AppLockGate } from '@/components/app-lock-gate';
-import { HugSlackProvider } from '@/components/text';
+import { KitProviders } from '@/components/kit-providers';
 import { SshConnectPromptGate } from '@/components/ssh-connect-prompt-gate';
 import { UpdateStatusBanner } from '@/components/update-status-banner';
 import { checkForAppUpdate, checkForAppUpdateOnLaunch } from '@/lib/app-updates';
@@ -53,7 +53,6 @@ import { InAppNotificationHost } from '@/components/in-app-notification-host';
 import { useNotificationSurfaceStyle } from '@/components/notification-surface';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useLaunchImageSync } from '@/hooks/use-launch-image-sync';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useThemePack, useThemePalette } from '@/hooks/use-theme-pack';
 import { useUserFontsReady } from '@/hooks/use-user-fonts';
 import { useThemeLibrary } from '@/stores/theme-library';
@@ -90,7 +89,21 @@ import { useSshHostsStore } from '@/stores/ssh-hosts';
  * text and nothing else, so every other warning still raises the notification
  * the way it always did.
  */
-LogBox.ignoreLogs(['[Reanimated] dependencies should only be used in web implementation.']);
+LogBox.ignoreLogs([
+  '[Reanimated] dependencies should only be used in web implementation.',
+  /*
+   * Legend List's two development diagnostics. The first says a transcript
+   * needed one more row container than its pool held and made one, which it
+   * calls a minor performance issue; the second that its first scroll to the
+   * end did not settle in its own budget. Both describe the list's internals,
+   * neither is an error in this app, and both fired on the demo transcript a
+   * few seconds after it opened, with the notification landing on the files
+   * sheet's bottom row. The console still carries them; only the notification
+   * is kept off the screen.
+   */
+  '[legend-list] No unused container available',
+  'LegendList bootstrap initial scroll aborted',
+]);
 
 /*
  * Keep the native launch screen up until `LaunchOverlay` has painted its copy
@@ -287,15 +300,13 @@ export default function RootLayout() {
           storageAdapter={themeModeStorage}
           theme={theme}>
           {/*
-            Outside the error boundary because the boundary's own fallback is
-            reader-facing copy like any other, and it is drawn in the reader's
-            face: the slack an oblique needs on its trailing edge is not a
-            thing to lose on the one screen that appears when something has
-            already gone wrong. It publishes a context and nothing else, so
-            there is no state here that could be the fault.
+            Outside the error boundary so the boundary's own fallback is drawn
+            on the same surfaces and plates as every other screen. Both publish
+            contexts and nothing else, so there is no state here that could be
+            the fault.
           */}
           <AppearanceProfileProvider>
-            <HugSlackProvider>
+            <KitProviders>
               {/*
               Wraps everything except the theme provider the fallback's <Text>
               needs, so a render throw in the toast host, lock gate, nav theme,
@@ -325,7 +336,7 @@ export default function RootLayout() {
                   ) : null}
                 </AppI18nProvider>
               </AppErrorBoundary>
-            </HugSlackProvider>
+            </KitProviders>
           </AppearanceProfileProvider>
         </OsukiThemeProvider>
       </KeyboardProvider>
@@ -350,7 +361,6 @@ function RootContent() {
     resolveSheetRouteOptions(route, profile, reduceMotion, isPad);
   const { resolvedMode } = useThemeMode();
   const { colors } = useThemeTokens();
-  const surfaceBackground = useSurfaceBackground();
   const { record } = useGatewayRecord();
   useNotificationObserver();
   useGatewayPushRegistration(record);
@@ -390,23 +400,15 @@ function RootContent() {
       }}>
       {/*
         The toast card is a colored plane over whatever screen raised it, so it
-        answers the pack's background opacity like every other surface. Stated
-        once here rather than per call: kit 1.1.0 fills all four variants with
-        the `surface` token and separates them by icon and accent instead, so a
-        single `toastStyle` changes no variant's colour. The reader's slider is
-        the applied theme's, not a candidate's -- this sits above the router and
-        outside `CandidateThemeProvider`, which is where a toast belongs.
+        answers the pack's background opacity like every other surface: the
+        kit paints it through the root surface decorator. The reader's slider
+        is the applied theme's, not a candidate's -- this sits above the router
+        and outside `CandidateThemeProvider`, which is where a toast belongs.
       */}
       <ToastProvider
         maxWidth={480}
         defaultDurationMs={2000}
-        toastStyle={[
-          notificationSurfaceStyle,
-          {
-            backgroundColor: surfaceBackground(colors.surface),
-            borderWidth: StyleSheet.hairlineWidth,
-          },
-        ]}>
+        toastStyle={[notificationSurfaceStyle, { borderWidth: StyleSheet.hairlineWidth }]}>
         {/*
           The re-skin transitions live here, inside the toast provider and
           around everything the reader can see, because a theme or a font

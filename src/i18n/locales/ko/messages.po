@@ -119,7 +119,7 @@ msgid "{0} did not upload. Retry it or remove it to send."
 msgstr "{0}을(를) 업로드하지 못했습니다. 다시 시도하거나 제거한 뒤 보내세요"
 
 #. placeholder {0}: failed.name
-#. placeholder {1}: uploadLimitMb(maxUploadBytesFor(failed.mime))
+#. placeholder {1}: uploadLimitMb(attachmentLimitBytes(failed))
 #: src/lib/attachments.ts
 msgid "{0} is too large ({1} MB max). Remove it to send."
 msgstr "{0}이(가) 너무 큽니다(최대 {1} MB). 제거한 뒤 보내세요"
@@ -299,6 +299,10 @@ msgstr "최근 확인된 요청 {count}개"
 msgid "{done} of {0} done"
 msgstr "{0}개 중 {done}개 완료"
 
+#: src/components/home-computer-deck.tsx
+msgid "{failed, plural, one {# failed} other {# failed}}"
+msgstr "{failed, plural, other {#개 실패}}"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "{from} still lists an older {name}. Remove that entry on {from}."
 msgstr "{from}에 이전 {name} 항목이 아직 남아 있습니다. {from}에서 그 항목을 삭제하세요"
@@ -375,6 +379,10 @@ msgstr "{providerName}(터미널)"
 msgid "{removeLabel}: {label}"
 msgstr "{removeLabel}: {label}"
 
+#: src/components/home-computer-deck.tsx
+msgid "{running, plural, one {# running} other {# running}}"
+msgstr "{running, plural, other {#개 실행 중}}"
+
 #. placeholder {0}: shells.length
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
@@ -393,6 +401,10 @@ msgstr "{total, plural, other {하위 작업 #개}}"
 #: src/components/task-row.tsx
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, other {하위 작업 #개}} ({waiting, plural, other {#개 대기 중}})"
+
+#: src/components/home-computer-deck.tsx
+msgid "{waiting, plural, one {# needs you} other {# need you}}"
+msgstr "{waiting, plural, other {#개 확인 필요}}"
 
 #: src/components/task-row.tsx
 msgid "→ {name}"
@@ -1003,6 +1015,11 @@ msgstr "브랜치 또는 커밋 (선택 사항)"
 #: src/components/agent-worktree-sheet.tsx
 msgid "Branch to start from"
 msgstr "시작점으로 삼을 브랜치"
+
+#. placeholder {0}: server.label
+#: src/components/home-computer-deck.tsx
+msgid "Bring {0} to the front"
+msgstr "{0}을(를) 앞으로 가져오기"
 
 #: src/components/custom-theme-library.tsx
 #: src/components/theme-browse-sheet.tsx
@@ -2551,8 +2568,8 @@ msgid "Download and preview"
 msgstr "다운로드 후 미리 보기"
 
 #: src/components/update-status-banner.tsx
-msgid "Download size: {fullPackage}"
-msgstr "다운로드 크기: {fullPackage}"
+msgid "Full package size: {fullPackage}"
+msgstr "전체 패키지 크기: {fullPackage}"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Downloading"
@@ -2795,6 +2812,10 @@ msgstr "이 프로젝트의 파일"
 #: src/components/file-mention-panel.tsx
 msgid "Files in this workspace"
 msgstr "이 워크스페이스의 파일"
+
+#: src/components/settings-storage.tsx
+msgid "Files in use and managed caches are kept."
+msgstr "사용 중인 파일과 관리되는 캐시는 유지됩니다"
 
 #: src/components/agent-workspace-sheet.tsx
 msgid "Filter projects or type a path"
@@ -3464,6 +3485,10 @@ msgstr "나중에"
 msgid "Latest"
 msgstr "최신"
 
+#: src/app/commands.tsx
+msgid "Lazygit"
+msgstr "Lazygit"
+
 #: src/hooks/use-lazygit.ts
 msgid "Lazygit startup could not be confirmed"
 msgstr "Lazygit 시작을 확인할 수 없습니다"
@@ -3913,6 +3938,10 @@ msgstr "이후 기록"
 #: src/components/agent-composer.tsx
 msgid "Next"
 msgstr "다음"
+
+#: src/components/home-computer-deck.tsx
+msgid "Next computer"
+msgstr "다음 컴퓨터"
 
 #: src/components/image-preview-modal.tsx
 msgid "Next image"
@@ -4404,7 +4433,7 @@ msgstr "브라우저에서 열기, SSH 터널에서는 사용할 수 없음"
 msgid "Open installation guide"
 msgstr "설치 가이드 열기"
 
-#: src/components/git-diff-view.tsx
+#: src/app/commands.tsx
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
 msgstr "Lazygit 열기"
@@ -4495,10 +4524,6 @@ msgstr "OpenAI에는 API 키와 모델이 필요합니다. 호환 서비스는 �
 msgid "Opening"
 msgstr "여는 중"
 
-#: src/components/git-diff-view.tsx
-msgid "Opening Lazygit…"
-msgstr "Lazygit 여는 중…"
-
 #: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Opening that file"
@@ -4516,6 +4541,10 @@ msgstr "터널 여는 중"
 #: src/components/server-terminal-workspace.tsx
 msgid "Opening…"
 msgstr "여는 중…"
+
+#: src/components/home-computer-cards.tsx
+msgid "Opens its tasks."
+msgstr "이 컴퓨터의 작업을 엽니다"
 
 #: src/components/editor-controls.tsx
 msgid "Opens the keyboard, the editor keys and the composer over this editor. Drag to move."
@@ -4789,6 +4818,10 @@ msgstr "미리 보고 적용"
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "먼저 미리 보세요. 현재 테마는 변경되지 않습니다"
 
+#: src/components/home-computer-deck.tsx
+msgid "Previous computer"
+msgstr "이전 컴퓨터"
+
 #: src/components/image-preview-modal.tsx
 msgid "Previous image"
 msgstr "이전 이미지"
@@ -4838,6 +4871,7 @@ msgid "Projects"
 msgstr "프로젝트"
 
 #: src/app/commands.tsx
+#: src/components/agent-tool-card.tsx
 msgid "Prompt"
 msgstr "프롬프트"
 
@@ -5812,8 +5846,7 @@ msgstr "홈 로고 표시"
 msgid "Show Home text"
 msgstr "홈 텍스트 표시"
 
-#: src/components/home-computer-cards.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/components/home-fold-link.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Show less"
@@ -5822,8 +5855,7 @@ msgstr "간단히 보기"
 #: src/components/agent-tool-card.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/diff-rows.tsx
-#: src/components/home-computer-cards.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/components/home-fold-link.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Show more"
 msgstr "더 보기"
@@ -6334,11 +6366,6 @@ msgstr "{assignmentLabel}에게 줄 작업"
 msgid "Task for a new {0}"
 msgstr "새 {0}에게 줄 작업"
 
-#. placeholder {0}: server.label
-#: src/components/home-computer-cards.tsx
-msgid "Task history for {0}"
-msgstr "{0}의 작업 기록"
-
 #: src/components/home-composer-dock.tsx
 msgid "Task options"
 msgstr "작업 설정"
@@ -6716,6 +6743,14 @@ msgstr "적용을 기다리는 롤백이 없습니다"
 msgid "Thinking…"
 msgstr "생각 중…"
 
+#: src/components/agent-tool-card.tsx
+msgid "This activity has no result attached."
+msgstr "이 활동 기록에는 결과가 포함되어 있지 않습니다"
+
+#: src/components/agent-tool-card.tsx
+msgid "This activity has no result attached. Open session to read the conversation."
+msgstr "이 활동 기록에는 결과가 포함되어 있지 않습니다. 세션을 열어 대화를 확인하세요"
+
 #: src/components/agent-composer.tsx
 msgid "This agent accepts messages after its turn ends. Your draft stays here."
 msgstr "이 에이전트는 턴이 끝난 후 메시지를 받습니다. 초안은 여기에 남아 있습니다"
@@ -6998,7 +7033,7 @@ msgstr "이 세션의 토큰"
 msgid "Tokens usage and cost"
 msgstr "토큰 사용량 및 비용"
 
-#. placeholder {0}: uploadLimitMb(maxUploadBytesFor(entry.mime))
+#. placeholder {0}: uploadLimitMb(attachmentLimitBytes(entry))
 #: src/lib/attachments.ts
 msgid "Too large ({0} MB max)"
 msgstr "너무 큽니다(최대 {0} MB)"
@@ -7276,10 +7311,6 @@ msgstr "공개 링크로 테마를 가져오려면 앱을 업데이트하세요.
 #: src/components/agent-workbench.tsx
 msgid "Update the Gateway to load earlier remote history."
 msgstr "이전 원격 기록을 불러오려면 Gateway를 업데이트하세요"
-
-#: src/components/git-diff-view.tsx
-msgid "Update the Gateway to open Lazygit in another worktree."
-msgstr "다른 워크트리에서 Lazygit을 열려면 Gateway를 업데이트하세요"
 
 #: src/components/asset-viewer.tsx
 #: src/components/inline-file-link.tsx

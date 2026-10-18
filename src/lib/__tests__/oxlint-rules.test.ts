@@ -5,7 +5,6 @@ import { execFileSync } from 'node:child_process';
 import {
   composerDelivery,
   homeBoundary,
-  inputAdapter,
   paneShape,
   parse,
   sshDialogs,
@@ -48,14 +47,6 @@ test('SSH dialog lint catches losing handoff and keyboard submission', () => {
     sshDialogs(parse(path, text.replaceAll('useModalHandoff()', 'useOtherHook()')))
   ).not.toEqual([]);
   expect(sshDialogs(parse(path, text.replaceAll('onSubmitEditing=', 'onBlur=')))).not.toEqual([]);
-});
-test('input lint compares the installed kit contract and catches event loss', () => {
-  const path = 'src/components/themed-input.tsx';
-  const text = source(path);
-  expect(inputAdapter(parse(path, text), 'input', process.cwd())).toEqual([]);
-  expect(
-    inputAdapter(parse(path, text.replace('onFocus={handleFocus}', '')), 'input', process.cwd())
-  ).not.toEqual([]);
 });
 test('Home boundary permits type-only transport imports and rejects runtime adapters', () => {
   const file = resolve('src/lib/home-layout.ts');

@@ -1,4 +1,4 @@
-import { useThemeMode } from '@osuki-dev/ui';
+import { useThemeMode, type TabsLayering } from '@osuki-dev/ui';
 import { useCallback } from 'react';
 
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
@@ -39,4 +39,17 @@ export function useSurfaceBackgroundOpacity() {
 export function useSurfaceBackground() {
   const opacity = useSurfaceBackgroundOpacity();
   return useCallback((color: string) => surfaceBackgroundFill(color, opacity), [opacity]);
+}
+
+/**
+ * How a pill `Tabs` lays its fills at the theme's surface opacity.
+ *
+ * Opaque, the kit paints the track once and the selection over it. Below full
+ * opacity a selection stacked on a translucent track shows the wallpaper at
+ * `(1 - a)²` against the track's `1 - a`, so the selected pill reads as the one
+ * control that ignored the setting; `segments` leaves the list clear and each
+ * trigger carries one fill, which `AppSurfaceDecorator` thins like any surface.
+ */
+export function usePillTabsLayering(): TabsLayering {
+  return useSurfaceBackgroundOpacity() === 1 ? 'overlay' : 'segments';
 }

@@ -1,3 +1,4 @@
+# section open
 # Complete combinations share one row with contextual editor actions.
 wait "label=\"Open on-screen keyboard\"" 10000
 press "label=\"Open on-screen keyboard\""
@@ -10,6 +11,8 @@ is visible "label=\"Return\""
 is hidden "label=\"Send Enter\""
 is hidden "label=\"Send Escape\""
 is visible "label=\"Send Shift Tab\""
+
+# section phone
 # Shift is explicit and one-shot, with no automatic capitalization afterward.
 press "label=\"Shift\""
 is visible "id=\"virtual-key-q\" label=\"Q\""
@@ -47,6 +50,25 @@ screenshot "shots/soft-keyboard-qwerty.png"
 press "label=\"Hide keyboard\""
 wait "label=\"Open on-screen keyboard\"" 10000
 
+
+# section wide
+# The tablet has persistent character keys and modifiers, without symbol pages.
+is visible "label=\"Return\""
+is visible "label=\"Backspace\""
+press "id=virtual-key-mod-shift-left"
+is visible "id=virtual-key-char-q label=Q"
+press "id=virtual-key-char-q"
+is visible "id=virtual-key-char-q label=q"
+press "id=virtual-key-mod-ctrl-left"
+is visible "label=\"Control ✓\""
+press "id=virtual-key-char-a"
+is hidden "label=\"Control ✓\""
+is visible "id=virtual-key-key-enter label=Return"
+screenshot "shots/soft-keyboard-wide.png"
+press "label=\"Hide keyboard\""
+wait "label=\"Open on-screen keyboard\"" 10000
+
+# section editor
 # The editor uses the same first row, with its contextual macros at the front.
 press "label=\"Switch to nvim\""
 wait "role=button label=\"Show the editor keyboard\"" 10000
@@ -58,5 +80,4 @@ is visible "label=\"Send Search\""
 is visible "label=\"Send Command mode\""
 is visible "label=\"Send Write the file\""
 is hidden "label=\"Send Enter\""
-is visible "id=\"virtual-key-q\""
 screenshot "shots/soft-keyboard-nvim.png"

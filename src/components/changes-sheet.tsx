@@ -1,8 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { type LegendListRef } from '@legendapp/list/react-native';
-import { Dialog, useThemeTokens, useToast } from '@osuki-dev/ui';
-import { Text } from '@/components/text';
+import { Dialog, useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
 import { plural } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Check, ChevronDown, ChevronUp, GitBranch, RefreshCw } from 'lucide-react-native';
@@ -11,7 +10,6 @@ import { AgentActionMenu } from '@/components/agent-action-menu';
 import type { ChangeTreeHandlers } from '@/components/change-tree-rows';
 import { DiffRowList } from '@/components/diff-rows';
 import { usePaneChatColors } from '@/components/pane-chat-blocks';
-import { PressableScale } from '@/components/pressable-scale';
 import { SheetScene, SheetSceneQuietControl, SHEET_LADDER } from '@/components/sheet-scene';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
