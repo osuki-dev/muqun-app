@@ -25,6 +25,7 @@ export interface PreviewImageSource {
   headers?: Record<string, string>;
   cacheKey?: string;
   dispose?: () => void;
+  originalLoaded?: boolean;
   verifiedOriginal?: { size: number; mime: string };
 }
 
@@ -36,6 +37,7 @@ export interface PreviewImageDescriptor extends PreviewImageSource {
   deferred?: boolean;
   resolveSource?: (signal: AbortSignal) => Promise<PreviewImageSource>;
   resolveOriginal?: (signal?: AbortSignal) => Promise<PreviewImageSource>;
+  resolvePreview?: (signal: AbortSignal) => Promise<PreviewImageSource>;
 }
 
 export interface GatewayImageScope {
@@ -240,6 +242,20 @@ export function readThumbnailOnly(
   return plan.thumbnail ? read(plan.thumbnail) : Promise.resolve(null);
 }
 
+/** Opening a thumbnail requests original bytes; a failed original keeps a usable preview. */
+export async function readOriginalFirst(
+  plan: GatewayImagePlan,
+  read: (source: PreviewImageSource) => Promise<PreviewImageSource>,
+  signal: AbortSignal
+): Promise<PreviewImageSource> {
+  try {
+    return { ...(await read(plan.original)), originalLoaded: true };
+  } catch (error) {
+    if (signal.aborted || plan.preview.uri === plan.original.uri) throw error;
+  }
+  return read(plan.preview);
+}
+
 /** The displayed derivative can fall back once; an original failure is terminal. */
 export function previewFallbackSource(
   image: PreviewImageDescriptor,
@@ -256,6 +272,34 @@ export interface PreviewLoadState {
   source: PreviewImageSource | null;
   status: 'loading' | 'loaded' | 'failed';
   original: boolean;
+  readySource?: PreviewImageSource;
+  previewFallback?: boolean;
+  request?: number;
+}
+
+export function samePreviewSource(a: PreviewImageSource, b: PreviewImageSource): boolean {
+  const headers = (source: PreviewImageSource) =>
+    JSON.stringify(Object.entries(source.headers ?? {}).sort(([a], [b]) => a.localeCompare(b)));
+  return a.uri === b.uri && a.cacheKey === b.cacheKey && headers(a) === headers(b);
+}
+
+export function resolvedPreviewLoad(
+  state: PreviewLoadState,
+  source: PreviewImageSource,
+  original: boolean,
+  previewFallback: boolean,
+  request: number
+): PreviewLoadState {
+  const ready = state.readySource ?? (state.status === 'loaded' ? state.source : null);
+  const same = ready && samePreviewSource(ready, source);
+  return {
+    source,
+    status: same ? 'loaded' : 'loading',
+    original,
+    readySource: same ? source : (ready ?? undefined),
+    previewFallback,
+    request,
+  };
 }
 
 export function failedPreviewLoad(
@@ -264,6 +308,11 @@ export function failedPreviewLoad(
   failed: PreviewImageSource
 ): PreviewLoadState {
   if (state.source !== failed) return state;
+  if (state.readySource && state.readySource !== failed)
+    return { ...state, source: state.readySource, status: 'loaded', original: false };
+  if (failed.originalLoaded && image.resolvePreview && !state.previewFallback)
+    return { ...state, source: null, status: 'loading', original: false, previewFallback: true };
+  if (image.resolvePreview) return { ...state, status: 'failed' };
   const fallback = state.original ? null : previewFallbackSource(image, failed);
   const deferred = fallback && image.resolveSource && image.resolveOriginal;
   return {

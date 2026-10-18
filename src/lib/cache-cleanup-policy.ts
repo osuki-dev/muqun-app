@@ -40,3 +40,28 @@ export function createCacheCleanupFlight() {
     isProtected: (name: string) => protectedDirectories.has(name),
   };
 }
+
+/** Order native cache mutations; a cleared/changed connection rejects late writes. */
+export function createCacheMutationQueue() {
+  let epoch = 0;
+  let tail: Promise<unknown> = Promise.resolve();
+  const run = <T>(operation: () => Promise<T>): Promise<T> => {
+    const next = tail.then(operation);
+    tail = next.catch(() => undefined);
+    return next;
+  };
+  return {
+    epoch: () => epoch,
+    invalidate: () => {
+      epoch++;
+    },
+    write: (expected: number, write: () => Promise<void>) =>
+      run(async () => {
+        if (expected === epoch) await write();
+      }),
+    clear: (clear: () => Promise<boolean>) => {
+      epoch++;
+      return run(clear);
+    },
+  };
+}
