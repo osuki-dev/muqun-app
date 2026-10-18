@@ -48,7 +48,7 @@ import {
   Share,
   useWindowDimensions,
 } from 'react-native';
-import { useIsFocused, usePathname, useRouter } from 'expo-router';
+import { useIsFocused, useNavigation, usePathname, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Dialog, useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
@@ -423,7 +423,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   initialDirectory,
   initialAgentId,
   initialIntent,
-  visible = true,
+  visible: workspaceVisible = true,
   topInset = 0,
   bottomInset = 0,
   createNewSessionRef,
@@ -444,6 +444,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const routeFocused = useIsFocused();
   const pathname = usePathname();
   const rootRouteName = useRootRouteName();
+  const navigation = useNavigation();
+  const rootNavigation = useNavigation('/');
+  const visible =
+    agentWorkbenchNavigationScope({
+      pathname,
+      rootRouteName,
+      routeFocused,
+      visible: workspaceVisible,
+    }) !== 'release';
   const { width } = useWindowDimensions();
   const globalOwnerRef = useRef<AgentWorkbenchGlobalOwner | null>(null);
   const [globalOwnerEpoch, setGlobalOwnerEpoch] = useState(0);
@@ -475,11 +484,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       currentOwner.serverId === serverId &&
       currentOwner.sessionId === sessionId &&
       ownsAgentWorkbenchGlobalOwner(currentOwner);
+    // Blur can render before the subscribed root-route snapshot updates.
+    // Read the current navigator state before releasing shared sheet data.
+    const rootState = rootNavigation.getState();
     const navigationScope = agentWorkbenchNavigationScope({
       pathname,
       rootRouteName,
       routeFocused,
-      visible,
+      visible: workspaceVisible,
+      currentRootRouteName: rootState?.routes[rootState.index]?.name,
+      currentRouteFocused: navigation.isFocused(),
     });
     if (navigationScope === 'focused') {
       if (!ownsCurrentScope) {
@@ -494,7 +508,17 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     // bridge merely because every route observes the same pathname.
     if (navigationScope === 'owned-overlay' && ownsCurrentScope) return;
     releaseGlobalOwner();
-  }, [pathname, releaseGlobalOwner, rootRouteName, routeFocused, serverId, sessionId, visible]);
+  }, [
+    navigation,
+    pathname,
+    releaseGlobalOwner,
+    rootNavigation,
+    rootRouteName,
+    routeFocused,
+    serverId,
+    sessionId,
+    workspaceVisible,
+  ]);
   useEffect(() => () => releaseGlobalOwner(), [releaseGlobalOwner]);
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
@@ -5461,7 +5485,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 styles.emptyContainer,
                 {
                   backgroundColor: surfaceBackground(theme.colors.surface),
-                  borderColor: theme.colors.border,
                   borderRadius: profile.chrome.transcriptPlate,
                 },
               ]}>
@@ -5560,7 +5583,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                         styles.emptySecondaryBtn,
                         {
                           backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                          borderColor: theme.colors.border,
                         },
                       ]}>
                       <FolderGit2 size={14} color={theme.colors.text} />
@@ -5979,7 +6001,7 @@ const JumpToLatestPill = memo(function JumpToLatestPill({
       entering={fadeIn('micro')}
       exiting={fadeOut('micro')}
       style={[styles.jumpToLatestWrap, { bottom }]}>
-      <GlassChrome surface="navigation" shape="pill" style={styles.jumpToLatestPill}>
+      <GlassChrome surface="navigation" shape="navigationPill" style={styles.jumpToLatestPill}>
         <PressableScale
           testID="agent-jump-to-latest-btn"
           accessibilityRole="button"
@@ -6095,7 +6117,6 @@ const styles = StyleSheet.create({
     paddingVertical: 36,
     paddingHorizontal: 20,
     marginHorizontal: 8,
-    borderWidth: StyleSheet.hairlineWidth,
     gap: 10,
   },
   // Size only; the weight is the kit's prop on both titles that wear this.
@@ -6136,7 +6157,6 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     paddingHorizontal: 14,
     borderRadius: 999,
-    borderWidth: StyleSheet.hairlineWidth,
   },
   emptyNewBtnText: {
     fontWeight: '600',
