@@ -57,9 +57,16 @@ describe('classifyAgentRequestError', () => {
     ).toEqual({ kind: 'offline' });
   });
 
-  test('a request that got no answer is offline', () => {
+  test('an unreachable transport is offline but a deadline is not readiness evidence', () => {
     expect(isAgentOfflineError(new TypeError('Network request failed'))).toBe(true);
-    expect(isAgentOfflineError(new Error('Timed out waiting for the server.'))).toBe(true);
+    expect(isAgentOfflineError(new Error('Timed out waiting for the server.'))).toBe(false);
+    expect(classifyAgentRequestError(new Error('Timed out waiting for the server.'))).toEqual({
+      kind: 'other',
+      message: 'Timed out waiting for the server.',
+    });
+    expect(
+      isAgentOfflineError(Object.assign(new Error('connect failed'), { code: 'ETIMEDOUT' }))
+    ).toBe(false);
     // Android: a native exception relayed as text, or a transport code on the error.
     expect(
       isAgentOfflineError(
