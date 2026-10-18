@@ -188,8 +188,8 @@ export function AgentAssignmentBar({
                 that the message is not to be trusted. */}
             <Text variant="caption" color={theme.colors.textMuted}>
               {upgrade === 'gateway'
-                ? t`Update Muqun Gateway on the server, then restart it, to assign a task to another assistant`
-                : t`Update Herdr on the server to 0.9.0 or newer, then restart the session, to assign a task to another assistant`}
+                ? t`Update Muqun Gateway on the computer, then restart it, to assign a task to another assistant`
+                : t`Update Herdr on the computer to 0.9.0 or newer, then restart the session, to assign a task to another assistant`}
             </Text>
           </View>
         ) : candidates.length === 0 && kinds.length === 0 ? (

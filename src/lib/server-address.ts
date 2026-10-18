@@ -25,7 +25,7 @@ export type NamedServer = {
 
 /**
  * Two names collide when they are the same word, which is not the same question
- * as whether they are the same string. `mac-mini` and `Mac-Mini ` are one
+ * as whether they are the same string. `tower` and `Tower ` are one
  * machine's name typed twice, and a reader scanning the list cannot tell them
  * apart -- so both cards need their address, even though `===` says they differ.
  */

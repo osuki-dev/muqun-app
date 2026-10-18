@@ -7,9 +7,8 @@
  * with a block cursor that blinks once and goes out. It is small, it is the
  * pack's own colours, and it says what the app is without a word of marketing.
  *
- * Free of React, React Native and Reanimated imports on purpose, so `bun test`
- * can load it -- see the note atop `motion-tokens.test.ts`. The functions the
- * component drives per frame carry the `'worklet'` directive, so they run on
+ * Free of React, React Native and Reanimated imports so `bun test` can load it.
+ * Functions driven per frame carry the `'worklet'` directive, so they run on
  * the UI thread inside `useAnimatedStyle`; outside Metro the directive is an
  * inert string literal and the arithmetic is ordinary, which is exactly what
  * makes them testable.

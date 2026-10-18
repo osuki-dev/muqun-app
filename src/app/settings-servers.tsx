@@ -1,4 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
+import { useLocalSearchParams } from 'expo-router';
 import { ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -9,15 +10,17 @@ import { SheetScene, SheetSceneFooter } from '@/components/sheet-scene';
 export default function SettingsServersScreen() {
   const { t } = useLingui();
   const insets = useSafeAreaInsets();
+  // `?serverId=` opens that computer's row: Home's card footer comes here.
+  const { serverId } = useLocalSearchParams<{ serverId?: string }>();
 
   return (
-    <SheetScene testID="settings-servers-sheet" title={t`Servers`}>
+    <SheetScene testID="settings-servers-sheet" title={t`Computers`}>
       <ScrollView
         contentInsetAdjustmentBehavior="never"
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag">
-        <SettingsServers />
+        <SettingsServers initialOpenId={typeof serverId === 'string' ? serverId : undefined} />
         <SheetSceneFooter bottomInset={insets.bottom} />
       </ScrollView>
     </SheetScene>

@@ -19,6 +19,7 @@
  * | HTTP refresh (`'refresh'`) | window *or* screen -- see below | place | the tail it re-sends |
  * | HTTP pagination (`'page'`) | a window read at a wider limit | place, may deepen | depth, when it actually reaches deeper |
  * | HTTP range page (`'rangePage'`) | a disjoint absolute span, `[start, end)` | place, may prepend | the exact span it was asked for |
+ * | captured history page (`'capturedPage'`) | rows the gateway kept of output it served, oldest first, never the live screen | prepend within one pinned traversal; explicitly refresh its prefix through `foldPaneWindow` | its pinned traversal, separate from mutable output |
  * | SSE inline frame (`'frame'`) | the raw screen alone | place, may never deepen | the tail it re-sends |
  * | agent/chat parts | a spliceable stream, not a rectangle | extend | its own seam ({@link mergeTerminalWindow}) |
  *
@@ -166,7 +167,7 @@
  * read that legitimately found no overlap would have been prepended as if it
  * were older, reversing chronological order. See {@link foldPaneRead}.
  */
-export type PaneReadOrigin = 'refresh' | 'page' | 'rangePage' | 'frame';
+export type PaneReadOrigin = 'refresh' | 'page' | 'rangePage' | 'capturedPage' | 'frame';
 
 /**
  * Extend the window with a spliceable stream -- the agent/chat parts source.
@@ -384,6 +385,12 @@ export function foldPaneRead(
   ownsScreen = false,
   screenRows = 0
 ): string {
+  // Captured history is older than everything held, by construction: it goes
+  // above the window, on a screen-owning pane above its frame, and never
+  // replaces anything. See {@link foldCapturedPage}.
+  if (origin === 'capturedPage') {
+    return foldCapturedPage(currentOutput, sanitizePaneRead(latestOutput), maximumLines);
+  }
   // A screen-owning read is a picture and keeps every row of it; a read
   // folded as scrollback has the room its program left on the screen taken
   // out first, so it is never drawn as transcript. See {@link collapseScreenGaps}.
@@ -413,7 +420,7 @@ export function foldPaneRead(
   // drew, with two rows of the shell it was launched from still on top. A read
   // is not authoritative about how tall the screen is; the pane is. See
   // {@link altScreenFrame}.
-  if (ownsScreen) return altScreenFrame(incoming, screenRows);
+  if (ownsScreen) return screenOverCapturedHistory(currentOutput, incoming, screenRows);
 
   // A fold failure must degrade to showing the fresh read, never to killing the
   // app: in a release build an exception escaping a state updater is fatal, and
@@ -598,6 +605,149 @@ export function foldPaneRead(
     return trimTerminalWindow(collapseRepeat(merged).join('\n'), maximumLines);
   } catch {
     return trimTerminalWindow(incoming, maximumLines);
+  }
+}
+
+/** Captured provenance belongs to a pane window, not to matching row text. */
+export interface PaneReadWindow {
+  output: string;
+  capturedRows: number;
+}
+
+/**
+ * Fold pinned pages separately from mutable output. A cursor-less traversal
+ * replaces only the captured prefix after an explicit refresh. Pages in the
+ * same traversal are disjoint, even when every line has identical text.
+ */
+export function foldPaneWindow(
+  current: PaneReadWindow,
+  latestOutput: string,
+  origin: PaneReadOrigin,
+  maximumLines: number,
+  ownsScreen = false,
+  screenRows = 0,
+  capturedReset = false
+): PaneReadWindow {
+  if (current.capturedRows > 0 && screenRows <= 0 && origin !== 'capturedPage' && !capturedReset) {
+    // Topology can briefly omit the viewport metric. Preserve the snapshot
+    // until the boundary returns rather than mixing an unclassified read in.
+    return current;
+  }
+  const held = current.output ? terminalLines(current.output) : [];
+  const prefix = held.slice(0, current.capturedRows);
+  const live = held.slice(current.capturedRows).join('\n');
+  let nextPrefix = capturedReset ? [] : prefix;
+  let nextLive = live;
+  if (origin === 'capturedPage') {
+    const rows = latestOutput ? terminalLines(latestOutput) : [];
+    nextPrefix = [...rows, ...(capturedReset ? [] : prefix)];
+    // A captured page excludes the live viewport. The pane's own height is
+    // its boundary; older accumulated App rows belong to the snapshot being
+    // explicitly replaced, not to the mutable screen below this prefix.
+    nextLive = altScreenFrame(live, screenRows);
+  } else {
+    const viewportOnly = current.capturedRows > 0 && !capturedReset && latestOutput !== '';
+    nextLive = foldPaneRead(
+      viewportOnly ? '' : live,
+      viewportOnly ? altScreenFrame(latestOutput, screenRows) : latestOutput,
+      origin,
+      maximumLines,
+      ownsScreen,
+      screenRows
+    );
+  }
+  const liveRows = nextLive ? terminalLines(nextLive) : [];
+  const rows = [...nextPrefix, ...liveRows].slice(-Math.max(1, maximumLines));
+  return {
+    output: rows.join('\n'),
+    capturedRows: Math.max(0, rows.length - liveRows.length),
+  };
+}
+
+/**
+ * How many rows at the top of a window are captured history rather than the
+ * screen, keyed by the window string -- the same bookkeeping
+ * {@link resizeSettling} keeps. A screen-owning pane's every read replaces
+ * its frame ({@link altScreenFrame}); the captured rows above it must not go
+ * with it. Forgetting an entry only means the next repaint drops the captured
+ * rows, and the next pull brings them back.
+ */
+const capturedAbove = new Map<string, number>();
+const CAPTURED_ABOVE_WINDOWS = 16;
+
+function rememberCapturedAbove(window: string, rows: number): void {
+  if (rows <= 0) return;
+  if (capturedAbove.size >= CAPTURED_ABOVE_WINDOWS) capturedAbove.clear();
+  capturedAbove.set(window, rows);
+}
+
+/**
+ * A screen-owning pane's read: its frame replaces the frame held, and the
+ * captured history above the frame, if any, stays where it is.
+ */
+function screenOverCapturedHistory(
+  currentOutput: string,
+  incoming: string,
+  screenRows: number
+): string {
+  const frame = altScreenFrame(incoming, screenRows);
+  const above = capturedAbove.get(currentOutput) ?? 0;
+  if (above <= 0) return frame;
+  const kept = terminalLines(currentOutput).slice(0, above);
+  const window = [...kept, ...terminalLines(frame)].join('\n');
+  capturedAbove.delete(currentOutput);
+  rememberCapturedAbove(window, above);
+  return window;
+}
+
+/** Whether every row of `run` appears, in order and adjacent, somewhere in `rows`. */
+function containsRun(rows: readonly string[], run: readonly string[]): boolean {
+  if (run.length === 0 || run.length > rows.length) return false;
+  for (let start = 0; start + run.length <= rows.length; start += 1) {
+    let same = true;
+    for (let step = 0; step < run.length; step += 1) {
+      if (rows[start + step] !== run[step]) {
+        same = false;
+        break;
+      }
+    }
+    if (same) return true;
+  }
+  return false;
+}
+
+/**
+ * A page of the gateway's captured history, folded into the window.
+ *
+ * The rows are output the gateway kept as it served it, oldest first, and
+ * never the live screen (`includes_live_viewport: false`), so the whole page
+ * is older than the window: it goes on top, like a genuine `'rangePage'`,
+ * with its tail placed against the window's head by text first
+ * ({@link pageSeam}) so a row shared at the seam is not written twice. It
+ * never replaces the window. A page the window already holds whole -- the
+ * first page again, after the cursor was lost (`410`) and the pull started
+ * over -- adds nothing. On a screen-owning pane the rows sit above the frame
+ * and stay there through its repaints ({@link screenOverCapturedHistory}).
+ */
+function foldCapturedPage(currentOutput: string, page: string, maximumLines: number): string {
+  if (!page) return trimTerminalWindow(currentOutput, maximumLines);
+  if (!currentOutput) return trimTerminalWindow(page, maximumLines);
+  try {
+    const held = terminalLines(currentOutput);
+    const rows = terminalLines(page);
+    const heldText = held.map(rowText);
+    const rowsText = rows.map(rowText);
+    if (containsRun(heldText, rowsText)) return trimTerminalWindow(currentOutput, maximumLines);
+    const shared = pageSeam(heldText, rowsText);
+    const added = rows.slice(0, rows.length - shared);
+    const merged = collapseRepeat([...added, ...held]);
+    const window = trimTerminalWindow(merged.join('\n'), maximumLines);
+    const frameRows = held.length - (capturedAbove.get(currentOutput) ?? 0);
+    capturedAbove.delete(currentOutput);
+    rememberCapturedAbove(window, terminalLines(window).length - frameRows);
+    return window;
+  } catch {
+    return trimTerminalWindow(currentOutput, maximumLines);
   }
 }
 
@@ -1320,8 +1470,13 @@ export function hasEarlierAfterPage(
   maximumLines: number,
   scroll: unknown,
   previousRows: number,
-  read?: unknown
+  read?: unknown,
+  /** A captured-history page's own `has_more`: the answer, when there is one. */
+  capturedHasMore?: boolean
 ): boolean {
+  // A captured page answers for itself, but never past the window's cap:
+  // whatever lands above a full window is trimmed off as it lands.
+  if (capturedHasMore !== undefined) return capturedHasMore && requestedLines < maximumLines;
   const range = paneReadRange(read);
   if (range) return range.start > 0;
 

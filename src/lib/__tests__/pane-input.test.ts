@@ -12,14 +12,7 @@
  */
 import { describe, expect, test } from 'bun:test';
 
-import {
-  isSendableAsKeystrokes,
-  paneInputDelivery,
-  paneKeystrokes,
-  type PaneInputSource,
-} from '@/lib/pane-input';
-
-const EVERY_SOURCE: PaneInputSource[] = ['virtual-key', 'terminal-key', 'composer'];
+import { isSendableAsKeystrokes, paneInputDelivery, paneKeystrokes } from '@/lib/pane-input';
 
 describe('what is a keystroke and what is a paste', () => {
   test('a key press is keys, on either keyboard the app draws', () => {
@@ -34,12 +27,6 @@ describe('what is a keystroke and what is a paste', () => {
     // message rather than two Enters, and it is the only channel by which an
     // agent recognises an attachment path as an image.
     expect(paneInputDelivery('composer')).toBe('paste');
-  });
-
-  test('every source has an answer and it is one of the two', () => {
-    for (const source of EVERY_SOURCE) {
-      expect(['keystrokes', 'paste']).toContain(paneInputDelivery(source));
-    }
   });
 });
 

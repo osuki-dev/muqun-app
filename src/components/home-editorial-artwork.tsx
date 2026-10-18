@@ -28,11 +28,14 @@ const BOTTOM_FEATHER_START = 0.68;
 export function HomeEditorialArtwork({
   resolution,
   cover = false,
+  fill = false,
   onAvailabilityChange,
   onVisibleTopChange,
 }: {
   resolution: ResolvedHomeArtworkAsset;
   cover?: boolean;
+  /** Take the height the layout gives it (the Pad cover block) instead of its own proportion. */
+  fill?: boolean;
   onAvailabilityChange?: (available: boolean) => void;
   onVisibleTopChange?: (source: string, top: number) => void;
 }) {
@@ -41,6 +44,7 @@ export function HomeEditorialArtwork({
       key={resolution.source}
       resolution={resolution}
       cover={cover}
+      fill={fill}
       onAvailabilityChange={onAvailabilityChange}
       onVisibleTopChange={onVisibleTopChange}
     />
@@ -50,17 +54,24 @@ export function HomeEditorialArtwork({
 function HomeEditorialArtworkImage({
   resolution,
   cover,
+  fill,
   onAvailabilityChange,
   onVisibleTopChange,
 }: {
   resolution: ResolvedHomeArtworkAsset;
   cover: boolean;
+  fill: boolean;
   onAvailabilityChange?: (available: boolean) => void;
   onVisibleTopChange?: (source: string, top: number) => void;
 }) {
   const [width, setWidth] = useState(0);
-  const height = cover ? Math.min(640, width * 0.9) : Math.min(280, width / 2);
-  const box = useMemo(() => (width > 0 ? { width, height } : null), [width, height]);
+  const [filledHeight, setFilledHeight] = useState(0);
+  const height = fill
+    ? filledHeight
+    : cover
+      ? Math.min(640, width * 0.9)
+      : Math.min(280, width / 2);
+  const box = useMemo(() => (width > 0 && height > 0 ? { width, height } : null), [width, height]);
   const [failed, setFailed] = useState(false);
   const onError = useCallback(() => {
     setFailed(true);
@@ -115,9 +126,10 @@ function HomeEditorialArtworkImage({
     (event: LayoutChangeEvent) => {
       const next = event.nativeEvent.layout;
       setWidth((current) => (current === next.width ? current : next.width));
+      if (fill) setFilledHeight((current) => (current === next.height ? current : next.height));
       measureArtwork();
     },
-    [measureArtwork]
+    [fill, measureArtwork]
   );
   if (failed) return null;
   return (
@@ -129,9 +141,10 @@ function HomeEditorialArtworkImage({
       accessible={false}
       importantForAccessibility="no-hide-descendants"
       entering={fadeIn('medium')}
-      layout={listLayout('medium')}
+      // A filled painting's size is its parent's, which snaps (see the Pad cover).
+      layout={fill ? undefined : listLayout('medium')}
       onLayout={onLayout}
-      style={[styles.root, { height }]}>
+      style={[styles.root, fill ? styles.fill : { height }]}>
       {image && imageRect && box ? (
         <Canvas style={StyleSheet.absoluteFill}>
           <Mask
@@ -164,4 +177,5 @@ function HomeEditorialArtworkImage({
 
 const styles = StyleSheet.create({
   root: { width: '100%', alignSelf: 'stretch', overflow: 'hidden' },
+  fill: { height: '100%' },
 });

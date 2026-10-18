@@ -9,6 +9,7 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
+  terminalShortcutTestId,
   EDITOR_ACTIONS,
   INSERT_MODE_KEYS,
   isFullScreenTuiPane,
@@ -73,7 +74,7 @@ describe('isFullScreenTuiPane', () => {
 
   // Card #795, defect 1: a shell running under tmux never rewrites its OSC
   // pane title when a foreground program takes over, so a real nvim pane's
-  // title is still the shell's -- `ryu@osk:~/.osuki/draw`, measured on the
+  // title is still the shell's -- `me@desk:~/.osuki/draw`, measured on the
   // reporting device -- and the gateway resolves the same stale title into a
   // `shell` profile (`muqun-gateway/src/shortcuts.rs`, title-based itself).
   // Both signals agree and both are wrong. `foreground_command`
@@ -81,7 +82,7 @@ describe('isFullScreenTuiPane', () => {
   // already on the wire (`muqun-gateway/src/backend/compat.rs`'s `pane()`) --
   // nothing new needs fetching, only reading.
   test('a foreground command overrules a stale shell profile or title', () => {
-    expect(isFullScreenTuiPane('shell', 'ryu@osk:~/.osuki/draw', 'nvim')).toBe(true);
+    expect(isFullScreenTuiPane('shell', 'me@desk:~/.osuki/draw', 'nvim')).toBe(true);
     expect(isFullScreenTuiPane('shell', null, 'nvim')).toBe(true);
     expect(isFullScreenTuiPane(undefined, null, 'nvim')).toBe(true);
     expect(isFullScreenTuiPane(undefined, 'you@mac:~/code/muqun', 'vim')).toBe(true);
@@ -100,7 +101,7 @@ describe('isFullScreenTuiPane', () => {
   test('agent panes are unaffected by the foreground-command signal', () => {
     expect(isFullScreenTuiPane('claude', null, 'claude')).toBe(false);
     expect(isFullScreenTuiPane('claude', null, 'node')).toBe(false);
-    expect(isFullScreenTuiPane(undefined, 'ryu@osk:~/Work', 'codex')).toBe(false);
+    expect(isFullScreenTuiPane(undefined, 'me@desk:~/Work', 'codex')).toBe(false);
   });
 });
 
@@ -288,5 +289,23 @@ describe('INSERT_MODE_KEYS', () => {
     expect(INSERT_MODE_KEYS[0].key).toBe('esc');
     expect(INSERT_MODE_KEYS[0].emphasis).toBe(true);
     expect(INSERT_MODE_KEYS.slice(1).every((item) => !item.emphasis)).toBe(true);
+  });
+});
+
+describe('terminalShortcutTestId', () => {
+  test('slugs the key so automation can find each chip', () => {
+    expect(terminalShortcutTestId('enter')).toBe('terminal-shortcut-enter');
+    expect(terminalShortcutTestId('shift+tab')).toBe('terminal-shortcut-shift-tab');
+    expect(terminalShortcutTestId('ctrl+j')).toBe('terminal-shortcut-ctrl-j');
+    expect(terminalShortcutTestId('nvim:w')).toBe('terminal-shortcut-nvim-colon-w');
+  });
+
+  test('punctuation keys get ids of their own', () => {
+    expect(terminalShortcutTestId('ctrl+-')).toBe('terminal-shortcut-ctrl-minus');
+    expect(terminalShortcutTestId('ctrl+=')).toBe('terminal-shortcut-ctrl-equal');
+    expect(terminalShortcutTestId('ctrl++')).toBe('terminal-shortcut-ctrl-plus');
+    expect(terminalShortcutTestId('::')).toBe('terminal-shortcut-colon-colon');
+    expect(terminalShortcutTestId('é')).toBe('terminal-shortcut-ue9');
+    expect(terminalShortcutTestId('')).toBe('terminal-shortcut-key');
   });
 });

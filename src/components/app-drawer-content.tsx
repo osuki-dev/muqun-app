@@ -17,7 +17,7 @@ import { isDrawerPermanent } from '@/constants/navigation';
  * places -- servers, pairing, settings -- not for picking a server.
  *
  * Unreachable while `HOME_DRAWER_ENABLED` is false (card #664): `Servers` was
- * the screen it opened from, and `Pair a server` and `Settings` are now the two
+ * the screen it opened from, and `Pair a computer` and `Settings` are now the two
  * controls in the home header. Kept intact so flipping the switch back restores
  * a working panel rather than an empty one.
  */
@@ -58,8 +58,8 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
   }[] = [
     {
       key: 'servers',
-      label: t`Servers`,
-      detail: t`Your paired gateways`,
+      label: t`Computers`,
+      detail: t`Your paired computers`,
       icon: LayoutGrid,
       href: '/' as Href,
       active: pathname === '/' || pathname.startsWith('/servers'),
@@ -74,7 +74,7 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
     },
     {
       key: 'pair',
-      label: t`Pair a server`,
+      label: t`Pair a computer`,
       detail: t`Scan a gateway QR`,
       icon: ScanLine,
       href: '/explore' as Href,

@@ -9,11 +9,7 @@ test('scroll stages retain visible artwork until its last strip reaches the top'
   expect(homeScrollFadeOpacity(1000, 600, 160)).toBe(0);
 });
 
-test('the same scroll position restores the same frame in either direction', () => {
-  const offsets = [0, 460, 500, 540, 600];
-  const forward = offsets.map((y) => homeScrollFadeOpacity(y, 600, 160));
-  const backward = [...offsets].reverse().map((y) => homeScrollFadeOpacity(y, 600, 160));
-  expect(backward.reverse()).toEqual(forward);
+test('the fade follows the measured section height', () => {
   expect(homeScrollFadeOpacity(80, 120, 120)).toBeLessThan(homeScrollFadeOpacity(80, 600, 160));
 });
 

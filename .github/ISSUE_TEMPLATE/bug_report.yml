@@ -98,12 +98,12 @@ body:
     attributes:
       label: Where did you install it from?
       description: >-
-        The sideloaded APK and the Play build are the same code, but they are
-        signed differently, so it is worth knowing which one you are on.
+        Choose the store or testing channel where you installed this build.
       options:
         - App Store
         - Google Play
-        - APK from a GitHub release
+        - TestFlight
+        - Google Play internal testing
         - Built it myself from source
     validations:
       required: true

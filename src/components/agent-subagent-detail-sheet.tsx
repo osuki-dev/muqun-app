@@ -128,6 +128,7 @@ export function AgentSubagentDetailSheet({
   const title = info ? sessionTitleOr(info, t`Untitled session`) : t`Subagent`;
   const actions = useMemo<AgentToolActions>(
     () => ({
+      audioSessionId: asid,
       onOpenChildSession: onOpenChild,
       onOpenToolDetail: (part) => {
         useToolCallDetailStore.getState().open({
@@ -139,7 +140,7 @@ export function AgentSubagentDetailSheet({
         router.push('/agent-tool-detail');
       },
     }),
-    [info?.directory, onOpenChild, router, sessionId, store]
+    [asid, info?.directory, onOpenChild, router, sessionId, store]
   );
   const rowProps = useMemo(
     () => ({

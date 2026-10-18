@@ -6,10 +6,13 @@ import { assertSupportedHerdr } from '@/lib/herdr-compatibility';
 import { directGatewayBaseUrl } from '@/lib/ssh-tunnel';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { useServerCapabilities } from '@/stores/server-capabilities';
+import { retryHomeRefresh } from '@/lib/home-refresh-schedule';
 import {
   needsReachabilityProbe,
   prewarmGate,
+  REACHABILITY_FRESH_MS,
   REACHABILITY_TIMEOUT_MS,
+  statusRefusesPairing,
   type ReachabilityProbe,
 } from '@/lib/server-reachability';
 
@@ -38,6 +41,14 @@ import {
  */
 type ServerReachabilityState = {
   probes: Record<string, ReachabilityProbe>;
+  /**
+   * The instant probe freshness is resolved against. It advances only when
+   * some probe goes stale (`REACHABILITY_FRESH_MS` after it answered), so a
+   * selector that resolves reachability with it re-runs exactly then -- and a
+   * screen re-renders only if an answer moved -- instead of on a ticking clock.
+   * It may lag the wall clock, but never across an expiry.
+   */
+  freshnessNowMs: number;
   /**
    * Probe one server unless a recent enough answer is already on hand.
    * Safe to call on every focus; it is its own rate limiter.
@@ -92,6 +103,7 @@ const inFlight = new Map<string, Promise<void>>();
 
 export const useServerReachability = create<ServerReachabilityState>((set, get) => ({
   probes: {},
+  freshnessNowMs: Date.now(),
 
   async refresh(endpoint, options) {
     if (options?.shouldContinue?.() === false) return;
@@ -112,6 +124,8 @@ export const useServerReachability = create<ServerReachabilityState>((set, get) 
     if (!options?.force && !needsReachabilityProbe(get().probes[serverId])) return;
 
     const previous = get().probes[serverId];
+    // A re-check is in flight. Subscribers that only care about the answer
+    // select it, so marking the probe re-renders nothing that draws a dot.
     if (previous) {
       set((state) => ({
         probes: { ...state.probes, [serverId]: { ...previous, rechecking: true } },
@@ -119,31 +133,56 @@ export const useServerReachability = create<ServerReachabilityState>((set, get) 
     }
     const flight = (async () => {
       let health: HealthResponse | null = null;
-      const ok = await probeGatewayReachable(endpoint, REACHABILITY_TIMEOUT_MS, (body) => {
-        const answer = body as HealthResponse & Parameters<typeof assertSupportedHerdr>[0];
-        noteGatewayGeneration(serverId, answer);
-        if (answer?.capabilities) {
-          void useServerCapabilities.getState().record(serverId, answer.capabilities);
-        }
-        // Kept for the warm only once it passes the same gate `loadHealth`
-        // applies. A gateway whose terminal backend is down is reachable -- the
-        // dot stays green and that is correct -- but its health must not become
-        // a licence for the prewarm to go on and ask for workspaces. Leaving
-        // `health` null there sends the warm back through `loadHealth`, which
-        // raises the real reason and is caught where it always was.
-        try {
-          assertSupportedHerdr(answer);
-          health = answer;
-        } catch {
-          health = null;
-        }
-      });
+      // Held in a box: TypeScript does not see a closure assign a `let`.
+      const heard: { status: number | null } = { status: null };
+      const onStatus = (status: number) => {
+        heard.status = status;
+      };
+      const ok = await probeGatewayReachable(
+        endpoint,
+        REACHABILITY_TIMEOUT_MS,
+        (body) => {
+          const answer = body as HealthResponse & Parameters<typeof assertSupportedHerdr>[0];
+          noteGatewayGeneration(serverId, answer);
+          if (answer?.capabilities) {
+            void useServerCapabilities.getState().record(serverId, answer.capabilities);
+          }
+          // Kept for the warm only once it passes the same gate `loadHealth`
+          // applies. A gateway whose terminal backend is down is reachable -- the
+          // dot stays green and that is correct -- but its health must not become
+          // a licence for the prewarm to go on and ask for workspaces. Leaving
+          // `health` null there sends the warm back through `loadHealth`, which
+          // raises the real reason and is caught where it always was.
+          try {
+            assertSupportedHerdr(answer);
+            health = answer;
+          } catch {
+            health = null;
+          }
+        },
+        onStatus
+      );
+      // A timeout or a reset says nothing about the pairing; only an answer
+      // does, so an earlier refusal stands until the gateway says otherwise.
+      const unauthorized =
+        heard.status === null
+          ? (previous?.unauthorized ?? false)
+          : statusRefusesPairing(heard.status);
       set((state) => ({
         probes: {
           ...state.probes,
-          [serverId]: { serverId, ok, checkedAtMs: Date.now(), health: ok ? health : null },
+          [serverId]: {
+            serverId,
+            ok,
+            checkedAtMs: Date.now(),
+            health: ok ? health : null,
+            status: heard.status,
+            ...(unauthorized ? { unauthorized } : {}),
+          },
         },
       }));
+      // An answer is contact: Continue stops backing off from this computer.
+      if (ok) retryHomeRefresh(serverId);
     })();
     inFlight.set(serverId, flight);
     try {
@@ -185,6 +224,33 @@ export const useServerReachability = create<ServerReachabilityState>((set, get) 
     set({ probes });
   },
 }));
+
+let expiryTimer: ReturnType<typeof setTimeout> | undefined;
+
+/** Schedules the next `freshnessNowMs` step: the first probe expiry after it. */
+function scheduleProbeExpiry(): void {
+  if (expiryTimer !== undefined) clearTimeout(expiryTimer);
+  expiryTimer = undefined;
+  const { probes, freshnessNowMs } = useServerReachability.getState();
+  let next: number | undefined;
+  for (const probe of Object.values(probes)) {
+    const expiresAtMs = probe.checkedAtMs + REACHABILITY_FRESH_MS + 1;
+    if (expiresAtMs > freshnessNowMs && (next === undefined || expiresAtMs < next)) {
+      next = expiresAtMs;
+    }
+  }
+  if (next === undefined) return;
+  expiryTimer = setTimeout(
+    () => useServerReachability.setState({ freshnessNowMs: Date.now() }),
+    Math.max(0, next - Date.now())
+  );
+}
+
+useServerReachability.subscribe((state, previous) => {
+  if (state.probes !== previous.probes || state.freshnessNowMs !== previous.freshnessNowMs) {
+    scheduleProbeExpiry();
+  }
+});
 
 /**
  * What this store can tell the workspace prewarm about one server.

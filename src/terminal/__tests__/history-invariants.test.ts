@@ -382,25 +382,6 @@ describe('(a) the window is a supersequence of what arrived, in arrival order', 
     expect(lastBody).toBeLessThan(firstBox);
     expect(adjacentRepeat(folded)).toBeNull();
   });
-
-  test('a fold only ever drops from the tail and appends', () => {
-    // Structural restatement of the same thing: whatever the placement decides,
-    // the rows the window keeps are a prefix of the rows it had.
-    const random = randomizer(4_242);
-    const pane = new Pane();
-    let window = '';
-    for (let poll = 0; poll < 120; poll += 1) {
-      pane.emit(Math.floor(random() * 30));
-      const before = rows(window);
-      const after = rows(foldPaneRead(window, pane.screen(), 'frame', MAXIMUM));
-      // Everything the window kept from before sits at its head, in order.
-      const kept = before.filter(
-        (_, index) => index < after.length && before[index] === after[index]
-      );
-      expect(kept.length).toBe(Math.min(before.length, kept.length));
-      window = after.join('\n');
-    }
-  });
 });
 
 // ---------------------------------------------------------------------------

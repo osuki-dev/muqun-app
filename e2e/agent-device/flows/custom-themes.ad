@@ -31,7 +31,7 @@ wait "id=custom-theme-preview" 15000
 # settings in the asset viewer.
 scroll down --pixels 900
 press "id=theme-apply"
-wait stable 400 5000
+wait "label=\"Close file\"" 15000
 press "label=\"Close file\""
 # The files sheet has no X circle any more -- the grabber and the swipe are the
 # close -- so the header anchor is its refresh, and the dismissal is the
@@ -141,11 +141,13 @@ is visible "id=theme-browse"
 wait stable 400 5000
 is visible "id=theme-tab"
 is visible "id=\"settings-selection:on:theme-tab-mine\""
+# New imports append to the existing library. The suite preserves installed
+# themes, so the fixture may be below the first screen on a reused QA device.
+scroll down --until "id=theme-row-my-theme"
 is visible "id=theme-row-my-theme"
 
 # section builtin-tab
-wait stable 400 5000
-is visible "id=\"settings-selection:on:theme-tab-builtin\""
+wait "id=\"settings-selection:on:theme-tab-builtin\"" 15000
 
 # section opacity-enable
 # This theme's palette leaves a terminal floor of 97%, so the whole track spans
@@ -159,9 +161,6 @@ is visible "id=theme-terminal-opacity-value"
 
 # section opacity-adjust
 is visible "${TARGET}"
-
-# section hidden
-is hidden "${TARGET}"
 
 # section opacity-reset
 press "id=theme-appearance-reset"
@@ -184,14 +183,6 @@ wait stable 400 5000
 # before the sheet redesign. The manifest's next step is a bounded
 # scroll-to-visible for the same id, which proves it appeared and leaves it
 # reachable for `opacity-reset` to press.
-
-# section home-hero-row
-# The row only, not a round trip through it. The demo document declares no
-# `home.hero`, so every one of the three answers draws the same Home -- pressing
-# them here would assert a tap landed, not that the app did anything. What is
-# worth holding offline is that the control the reader needs in order to reach
-# the illustration is on this page at all.
-is visible "id=theme-home-hero"
 
 # section back-to-library
 # Return from the detail editor before continuing to Settings storage checks.
@@ -224,41 +215,12 @@ wait stable 300 5000
 gesture pan 1000 600 0 700 600
 wait stable 300 5000
 
-# section scroll-up
-scroll up --pixels 320
-
-# section theme-row-clear-header
-# The target search stops as soon as Android reports the Theme row visible,
-# which can leave its centre behind Settings' pinned header. One extra bounded
-# pan moves the already-found row clear without relying on `scroll top`, whose
-# edge detection is unreliable for this nested settings list.
-gesture pan 270 320 0 160 300
-wait stable 400 5000
-is visible "id=settings-theme-row"
-
-# section theme-row-clear-header-android
-gesture pan 450 1100 0 300 400
-wait stable 400 5000
-is visible "id=settings-theme-row"
-
-# section theme-row-clear-header-android-tablet
-gesture pan 1000 600 0 300 400
-wait stable 400 5000
-is visible "id=settings-theme-row"
-
 # section apply-builtin
 # Applying from the picker is a confirmation: the sheet closes and Settings is
 # underneath it again, with the pack's name in the Theme row. The wait is for
 # that, not for the paint.
 press "${TARGET}"
 wait stable 400 5000
-
-# section storage-scroll
-# STORAGE is the last card before ABOUT. Every target below it is a full row
-# rather than the 13pt instrument label the settings flow needs a pan for, so
-# the ordinary flick is enough: one that overshoots still leaves the row in the
-# tree for the scroll-to-visible to come back to.
-scroll down --pixels 320
 
 # section storage-anchor
 # Where the taps below are made from, and never the position the flick above

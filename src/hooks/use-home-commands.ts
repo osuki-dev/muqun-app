@@ -8,6 +8,7 @@ import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useLatestRef, useLazyRef } from '@/hooks/use-render-refs';
 import { loadRecordSessions } from '@/lib/gateway-client';
 import type { GatewayRecord } from '@/lib/gateway-storage';
+import type { TaskView } from '@/lib/task-ledger';
 import { checkAgentServer } from '@/lib/home-agent-readiness';
 import { loadWorkspaceSnapshot } from '@/lib/workspace-snapshot';
 import {
@@ -27,6 +28,7 @@ import { encodeSessionChoices, resolveSessionId, sessionChoices } from '@/lib/se
 import { terminalBackendRows, terminalBackendState } from '@/lib/terminal-backend-state';
 import { terminalBackendCopy } from '@/lib/terminal-backend-copy';
 import { refreshAgentsDiscovery } from '@/hooks/use-agent-features';
+import { peerServerId, resolveTask } from '@/hooks/use-server-tasks';
 import { useAgents } from '@/stores/agents';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { isDemoRecord } from '@/lib/demo-gateway';
@@ -35,6 +37,7 @@ import { homeAgentHref } from '@/lib/pad-detail';
 import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
 import { homeWorkspaceHandoffStore } from '@/lib/home-workspace-handoff';
+import { useServerTasksStore } from '@/stores/server-tasks';
 
 /**
  * Adapter for the existing Home server open path.
@@ -61,6 +64,7 @@ export type HomeCommandOptions = {
 };
 
 export type HomeCommands = {
+  openTaskResult: (serverId: string, task: TaskView) => void;
   dispatch: (command: HomeCommand) => Promise<HomeCommandResult>;
   resumeServer: (target: HomeServerEntry) => Promise<HomeCommandResult>;
   resumeTarget: (target: HomeTarget) => Promise<HomeCommandResult>;
@@ -83,6 +87,10 @@ export type HomeCommands = {
   openSsh: (hostId?: string) => Promise<HomeCommandResult>;
   pairGateway: () => Promise<HomeCommandResult>;
   manageConnections: () => Promise<HomeCommandResult>;
+  /** A task on another computer as this phone can see it (a mirror's row opens there). */
+  resolveTask: (serverId: string, taskId: string) => Promise<TaskView | null>;
+  /** The computer a mirror runs on, by this phone's server id for it. */
+  peerServerId: (binding: { peerId: string; peerServerId?: string }) => string;
 };
 
 /** Long enough to read the reason and copy the command; Retry stays on it. */
@@ -243,7 +251,7 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
           showToast({
             variant: 'danger',
             title: t`Could not open destination`,
-            message: t`No terminal session is available on this server.`,
+            message: t`No terminal session is available on this computer.`,
           });
         }
       } else if (result.status === 'failed') {
@@ -332,8 +340,17 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
   );
   const pairGateway = useCallback(() => dispatch({ type: 'pair-gateway' }), [dispatch]);
   const manageConnections = useCallback(() => dispatch({ type: 'manage-connections' }), [dispatch]);
+  const openTaskResult = useCallback(
+    (serverId: string, task: TaskView) => {
+      // Keep the local mirror's output; reading it never requires the peer.
+      useServerTasksStore.getState().upsert(serverId, task);
+      router.push({ pathname: '/server-tasks', params: { serverId, result: task.taskId } });
+    },
+    [router]
+  );
 
   return {
+    openTaskResult,
     dispatch,
     resumeServer,
     resumeTarget,
@@ -344,6 +361,8 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
     openSsh,
     pairGateway,
     manageConnections,
+    resolveTask,
+    peerServerId,
   };
 }
 

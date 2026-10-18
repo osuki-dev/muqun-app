@@ -4,7 +4,10 @@ import type { AgentDomainEvent } from '../agent-protocol';
 import {
   GatewaySocket,
   gatewaySocketPath,
+  MAX_RECONNECT_DELAY_MS,
+  socketFailureIsUnauthorized,
   socketReconnectDelay,
+  type SocketAuthorization,
   type GatewaySocketListener,
   type GatewaySocketTransport,
   type GatewaySocketUpgrade,
@@ -93,7 +96,13 @@ interface Harness {
   latest(): FakeTransport;
 }
 
-function harness(options: { sealed?: boolean; prepare?: () => GatewaySocketUpgrade | null } = {}) {
+function harness(
+  options: {
+    sealed?: boolean;
+    prepare?: () => GatewaySocketUpgrade | null | Promise<GatewaySocketUpgrade | null>;
+    checkAuthorization?: () => Promise<SocketAuthorization>;
+  } = {}
+) {
   const transports: FakeTransport[] = [];
   const clock = new Clock();
   const appState = new FakeAppState();
@@ -116,6 +125,9 @@ function harness(options: { sealed?: boolean; prepare?: () => GatewaySocketUpgra
     crypto: socketTestCrypto,
     appState,
     schedule: clock.schedule,
+    // The top of each jitter window, so the schedule below reads in whole numbers.
+    random: () => 1,
+    checkAuthorization: options.checkAuthorization,
   });
   const result: Harness = {
     socket,
@@ -214,6 +226,123 @@ describe('subscribing', () => {
     expect(r.log).toEqual(['subscribed', 'event:ses_9:1']);
   });
 
+  test('watchTasks subscribes to all and only its listener hears task.updated', () => {
+    const h = harness();
+    const tasks: string[] = [];
+    const session = recorder();
+    const all = recorder();
+    h.socket.watch('ses_1', session.listener);
+    h.socket.watchAll(all.listener);
+    const release = h.socket.watchTasks({
+      onTaskUpdated: (task, seq) => tasks.push(`${task.taskId}:${task.state}:${seq}`),
+    });
+    h.latest().deliver(hello());
+    expect(h.latest().sent).toContain('{"t":"subscribe_all"}');
+    h.latest().deliver(
+      JSON.stringify({
+        t: 'event',
+        asid: null,
+        seq: 9,
+        event: 'task.updated',
+        data: { task_id: 't1', state: 'done', kind: 'command', goal: 'g', updated_ms: 1 },
+      })
+    );
+    expect(tasks).toEqual(['t1:done:9']);
+    expect(session.log).toEqual([]);
+    expect(all.log).toEqual([]);
+    release();
+    h.latest().deliver(
+      JSON.stringify({
+        t: 'event',
+        asid: null,
+        seq: 10,
+        event: 'task.updated',
+        data: { task_id: 't1', state: 'done', kind: 'command', goal: 'g', updated_ms: 2 },
+      })
+    );
+    expect(tasks).toHaveLength(1);
+  });
+
+  test('a gateway with task_ws_subscription gets task frames alone until a session is watched', () => {
+    const h = harness();
+    const heard: string[] = [];
+    h.socket.watchTasks(
+      {
+        onSubscribed: () => heard.push('subscribed'),
+        onTaskUpdated: (task) => heard.push(task.taskId),
+      },
+      { tasksOnly: true }
+    );
+    h.latest().deliver(hello());
+    h.latest().deliver('{"t":"subscribed","tasks":true}');
+    h.latest().deliver(
+      JSON.stringify({
+        t: 'task',
+        asid: null,
+        seq: 4,
+        event: 'task.updated',
+        data: { task_id: 't8', state: 'idle_unconfirmed', kind: 'delegation', goal: 'g' },
+      })
+    );
+    expect(heard).toEqual(['subscribed', 't8']);
+    // `subscribe` alone would end the task delivery: widen first, then narrow back.
+    const release = h.socket.watch('ses_1', recorder().listener);
+    release();
+    expect(h.latest().sent).toEqual([
+      '{"t":"subscribe_tasks"}',
+      '{"t":"subscribe_all"}',
+      '{"t":"subscribe","asid":"ses_1"}',
+      '{"t":"unsubscribe","asid":"ses_1"}',
+      '{"t":"subscribe_tasks"}',
+    ]);
+  });
+
+  test('a task-only resync refreshes tasks and leaves session timelines alone', () => {
+    const h = harness();
+    const session = recorder();
+    const all = recorder();
+    const tasks: string[] = [];
+    h.socket.watch('ses_1', session.listener);
+    h.socket.watchAll(all.listener);
+    h.socket.watchTasks({ onResync: () => tasks.push('resync') });
+    h.latest().deliver(hello());
+    h.latest().deliver('{"t":"resync","asid":"","tasks":true}');
+    expect(tasks).toEqual(['resync']);
+    expect(session.log).toEqual([]);
+    expect(all.log).toEqual([]);
+    // A plain every-session resync still reaches both.
+    h.latest().deliver('{"t":"resync","asid":""}');
+    expect(tasks).toEqual(['resync', 'resync']);
+    expect(session.log).toEqual(['resync']);
+    expect(all.log).toEqual(['resync']);
+  });
+
+  test('a task-only socket drops session frames and closes when the cards let go', () => {
+    const h = harness();
+    const tasks: string[] = [];
+    const release = h.socket.watchTasks({
+      onTaskUpdated: (task) => tasks.push(task.taskId),
+    });
+    h.latest().deliver(hello());
+    expect(h.latest().sent).toEqual(['{"t":"subscribe_all"}']);
+    // subscribe_all carries every session's events too; nothing listens to them.
+    expect(() => h.latest().deliver(statusEvent('ses_9', 1))).not.toThrow();
+    h.latest().deliver(
+      JSON.stringify({
+        t: 'event',
+        asid: null,
+        seq: 3,
+        event: 'task.updated',
+        data: { task_id: 't7', state: 'working', kind: 'delegation', goal: 'g', updated_ms: 1 },
+      })
+    );
+    expect(tasks).toEqual(['t7']);
+    release();
+    h.clock.advance(1_500);
+    expect(h.latest().closed).toBe(true);
+    expect(h.socket.state).toBe('idle');
+  });
+
   test('an unwatched socket lingers, then closes', () => {
     const h = harness();
     const release = h.socket.watch('ses_1', recorder().listener);
@@ -253,7 +382,7 @@ describe('sealed connection', () => {
     expect(r.events).toHaveLength(0);
     expect(h.transports[0]?.closed).toBe(true);
     expect(h.socket.state).toBe('backoff');
-    h.clock.advance(socketReconnectDelay(0));
+    h.clock.advance(socketReconnectDelay(0, () => 1));
     expect(h.transports).toHaveLength(2);
   });
 
@@ -271,7 +400,7 @@ describe('sealed connection', () => {
     const h = harness({ sealed: true });
     h.socket.watch('ses_1', recorder().listener);
     h.latest().drop();
-    h.clock.advance(socketReconnectDelay(0));
+    h.clock.advance(socketReconnectDelay(0, () => 1));
     const gateway = new GatewayFrameSealer(material, 'conn-2', 'nonce-1');
     h.latest().deliver(gateway.seal(hello('conn-2')));
     expect(h.socket.connected).toBe(true);
@@ -308,10 +437,20 @@ describe('reconnecting', () => {
     expect(h.transports).toHaveLength(4);
   });
 
-  test('the delay is capped at five seconds', () => {
-    expect([0, 1, 2, 3, 4, 5, 9].map(socketReconnectDelay)).toEqual([
-      400, 800, 1600, 3200, 5000, 5000, 5000,
-    ]);
+  test('jitter keeps every delay between half and all of its window', () => {
+    for (let attempt = 0; attempt < 12; attempt += 1) {
+      const ceiling = Math.min(400 * 2 ** attempt, MAX_RECONNECT_DELAY_MS);
+      expect(socketReconnectDelay(attempt, () => 0)).toBe(ceiling / 2);
+      expect(socketReconnectDelay(attempt, () => 1)).toBe(ceiling);
+      for (let sample = 0; sample < 50; sample += 1) {
+        const delay = socketReconnectDelay(attempt);
+        expect(delay).toBeGreaterThanOrEqual(ceiling / 2);
+        expect(delay).toBeLessThanOrEqual(ceiling);
+      }
+    }
+    // A random source out of range cannot push the delay outside the window.
+    expect(socketReconnectDelay(0, () => 7)).toBe(400);
+    expect(socketReconnectDelay(0, () => -1)).toBe(200);
   });
 
   test('an attempt that never says hello times out as a failure', () => {
@@ -461,4 +600,199 @@ describe('the upgrade path', () => {
   test('a protocol this build does not speak means no socket at all', () => {
     expect(gatewaySocketPath({ websocket: { path: '/api/ws', protocol: 2 } })).toBeNull();
   });
+});
+
+describe('unauthorized', () => {
+  test('classifies a refused upgrade apart from a network failure', () => {
+    for (const message of [
+      "Expected HTTP 101 response but was '401 Unauthorized'",
+      'Invalid HTTP status 403',
+      'Unexpected response code: 401',
+      '403 Forbidden',
+    ]) {
+      expect(socketFailureIsUnauthorized({ message })).toBe(true);
+    }
+    expect(socketFailureIsUnauthorized({ closeCode: 4401 })).toBe(true);
+    expect(socketFailureIsUnauthorized({ closeCode: 4403, message: '' })).toBe(true);
+    for (const message of [
+      '',
+      'Connection reset by peer',
+      "Expected HTTP 101 response but was '502 Bad Gateway'",
+      // A bare number or a proxy's prose is not an HTTP status.
+      'connect to 192.0.2.4:401 timed out',
+      'read 401 bytes then EOF',
+      'forbidden by policy',
+      'unauthorized network',
+    ]) {
+      expect(socketFailureIsUnauthorized({ message })).toBe(false);
+    }
+    expect(socketFailureIsUnauthorized({ closeCode: 1006, message: '' })).toBe(false);
+    expect(socketFailureIsUnauthorized({})).toBe(false);
+  });
+
+  test('a refused upgrade stops retrying and tells the listener', () => {
+    const h = harness();
+    const r = recorder();
+    h.socket.watch('ses_1', r.listener);
+    h.latest().onerror?.("Expected HTTP 101 response but was '401 Unauthorized'");
+    expect(h.socket.state).toBe('unauthorized');
+    expect(r.log).toEqual(['unavailable']);
+    h.clock.advance(120_000);
+    expect(h.transports).toHaveLength(1);
+    // Coming back to the foreground does not re-pair the device.
+    h.appState.set(false);
+    h.appState.set(true);
+    expect(h.transports).toHaveLength(1);
+    // A user action does try again.
+    h.socket.reconnect();
+    expect(h.transports).toHaveLength(2);
+  });
+
+  test('opaque failures ask the gateway once per run of failures', async () => {
+    let asked = 0;
+    let answer: SocketAuthorization = 'unknown';
+    const h = harness({
+      checkAuthorization: async () => {
+        asked += 1;
+        return answer;
+      },
+    });
+    h.socket.watch('ses_1', recorder().listener);
+    h.latest().drop();
+    expect(asked).toBe(0);
+    h.clock.advance(400);
+    h.latest().drop();
+    expect(asked).toBe(1);
+    await Promise.resolve();
+    await Promise.resolve();
+    // Not a refusal: the backoff carries on, and the run is not asked again.
+    expect(h.socket.state).toBe('backoff');
+    answer = 'unauthorized';
+    for (const delay of [800, 1600, 3200, 6400]) {
+      h.clock.advance(delay);
+      h.latest().drop();
+    }
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(asked).toBe(1);
+    expect(h.socket.state).toBe('backoff');
+
+    // `hello` ends the run; the next run gets its own ask, and its refusal stops the socket.
+    h.clock.advance(12_800);
+    h.latest().deliver(hello());
+    h.latest().drop();
+    h.clock.advance(400);
+    h.latest().drop();
+    h.clock.advance(800);
+    h.latest().drop();
+    expect(asked).toBe(2);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(h.socket.state).toBe('unauthorized');
+    const opened = h.transports.length;
+    h.clock.advance(120_000);
+    expect(h.transports).toHaveLength(opened);
+  });
+
+  test('a refused socket comes back on evidence the refusal no longer holds', () => {
+    const h = harness();
+    h.socket.watch('ses_1', recorder().listener);
+    h.latest().onerror?.('Invalid HTTP status 403');
+    expect(h.socket.state).toBe('unauthorized');
+    h.socket.retryAfterRefusal();
+    expect(h.transports).toHaveLength(2);
+    expect(h.socket.state).toBe('connecting');
+    // Only a refused socket is touched.
+    h.socket.retryAfterRefusal();
+    expect(h.transports).toHaveLength(2);
+  });
+
+  test('one network change retries a refusal once, until hello says the route is back', () => {
+    const h = harness();
+    h.socket.watch('ses_1', recorder().listener);
+    h.latest().onerror?.('Invalid HTTP status 401');
+    expect(h.socket.state).toBe('unauthorized');
+    // The ok-probe after a network change asks for a retry...
+    h.socket.retryAfterRefusal();
+    expect(h.transports).toHaveLength(2);
+    // ...and the upgrade flaps back to 401 on the new route.
+    h.latest().onerror?.('Invalid HTTP status 401');
+    expect(h.socket.state).toBe('unauthorized');
+    // The same change's second call is not a second reconnect.
+    h.socket.retryAfterRefusal();
+    expect(h.transports).toHaveLength(2);
+    expect(h.socket.state).toBe('unauthorized');
+    // A user action still reopens, and a hello ends the retry.
+    h.socket.reconnect();
+    expect(h.transports).toHaveLength(3);
+    h.latest().deliver(hello());
+    expect(h.socket.state).toBe('open');
+    h.latest().drop();
+    h.clock.advance(400);
+    h.latest().onerror?.('Invalid HTTP status 401');
+    expect(h.socket.state).toBe('unauthorized');
+    h.socket.retryAfterRefusal();
+    expect(h.transports).toHaveLength(5);
+    expect(h.socket.state).toBe('connecting');
+  });
+
+  test('a refused socket nothing wants stands down to idle', () => {
+    const h = harness();
+    const release = h.socket.watch('ses_1', recorder().listener);
+    h.latest().onerror?.('Invalid HTTP status 401');
+    release();
+    expect(h.socket.state).toBe('unauthorized');
+    h.socket.retryAfterRefusal();
+    expect(h.socket.state).toBe('idle');
+    expect(h.transports).toHaveLength(1);
+  });
+
+  test('a socket that reached hello meanwhile ignores a late refusal', async () => {
+    let settle: (answer: SocketAuthorization) => void = () => {};
+    const h = harness({
+      checkAuthorization: () =>
+        new Promise<SocketAuthorization>((resolve) => {
+          settle = resolve;
+        }),
+    });
+    h.socket.watch('ses_1', recorder().listener);
+    h.latest().drop();
+    h.clock.advance(400);
+    h.latest().drop();
+    h.clock.advance(800);
+    h.latest().deliver(hello());
+    expect(h.socket.state).toBe('open');
+    settle('unauthorized');
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(h.socket.state).toBe('open');
+  });
+});
+
+test('a negotiated socket upgrade does not open after the app backgrounds', async () => {
+  let resolve!: (value: GatewaySocketUpgrade) => void;
+  const ready = new Promise<GatewaySocketUpgrade>((yes) => {
+    resolve = yes;
+  });
+  const h = harness({ prepare: () => ready });
+  h.socket.watch('ses_1', recorder().listener);
+  expect(h.transports).toHaveLength(0);
+  h.appState.set(false);
+  resolve({ url: 'ws://gateway.test/api/ws', headers: {}, seal: null });
+  await ready;
+  await Promise.resolve();
+  expect(h.transports).toHaveLength(0);
+  expect(h.socket.state).toBe('paused');
+});
+
+test('an asynchronous negotiated upgrade opens once ready', async () => {
+  const h = harness({
+    prepare: async () => ({ url: 'ws://gateway.test/api/ws', headers: {}, seal: null }),
+  });
+  h.socket.watch('ses_1', recorder().listener);
+  expect(h.transports).toHaveLength(0);
+  await Promise.resolve();
+  expect(h.transports).toHaveLength(1);
+  h.latest().deliver(hello());
+  expect(h.socket.state).toBe('open');
 });

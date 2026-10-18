@@ -9,7 +9,7 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { PressableScale } from '@/components/pressable-scale';
 import { LADDER } from '@/components/settings-chrome';
 import { Text } from '@/components/text';
-import { useHasThemeArtwork } from '@/components/theme-artwork';
+import { SHELL_WALLPAPER_FALLBACK, useHasThemeArtwork } from '@/components/theme-artwork';
 import { ICP_REGISTRATION_URL } from '@/constants/links';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { icpRegistration } from '@/lib/icp-registration';
@@ -27,7 +27,7 @@ function RegistrationLink({ number }: { number: string }) {
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
   const background = useSurfaceBackground();
-  const hasWallpaper = useHasThemeArtwork('shell.wallpaper');
+  const hasWallpaper = useHasThemeArtwork('shell.wallpaper', SHELL_WALLPAPER_FALLBACK);
   const { showToast } = useToast();
 
   async function openRegistration() {

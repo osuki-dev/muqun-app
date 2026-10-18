@@ -67,7 +67,7 @@ export function buildTheme(
    *
    * `display` and `body` are the app's *reading*: a title, a row, a caption, a
    * message. `label` is the 11pt all-caps instrument style the section
-   * headings are set in -- SERVERS, APPEARANCE, TERMINAL -- and it was left on
+   * headings are set in -- COMPUTERS, APPEARANCE, TERMINAL -- and it was left on
    * the system face for a while on the argument that it is chrome rather than
    * content. It reads as two fonts in one line, so it follows the reader now:
    * the instrument style (size, tracking, case) is the role's, the face is

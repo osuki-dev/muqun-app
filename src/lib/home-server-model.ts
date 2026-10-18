@@ -24,6 +24,7 @@ export type HomeServerRow = {
   key: string;
   caption?: HomeServerCaption;
   spokenCaption?: HomeServerCaption;
+  pendingUserInput?: boolean;
 };
 
 export type HomeServerModelInput = {
@@ -97,10 +98,16 @@ export function homeServerModel({
 
       return {
         agent,
+        ...(agent.hasAgent &&
+        agentStatusesCurrent &&
+        agent.instanceId &&
+        agent.pendingUserInput === true
+          ? { pendingUserInput: true }
+          : {}),
         key: JSON.stringify([
           serverId,
-          agent.paneId ? 'pane' : 'row',
-          agent.paneId ? agent.paneId : agent.id,
+          agent.instanceId ? 'instance' : agent.paneId ? 'pane' : 'row',
+          agent.instanceId || agent.paneId || agent.id,
         ]),
         caption: blockedCaption ?? locationCaption,
         spokenCaption:

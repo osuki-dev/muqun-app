@@ -8,9 +8,8 @@
  * budget below is that promise, and `bun test` holds us to it.
  *
  * The second is mechanical: anything that reaches Reanimated cannot be
- * imported by a bun test at all (see the note atop `motion-tokens.test.ts`),
- * so a timeline expressed inside the component is a timeline nobody can
- * assert on. Taking the four design-system durations as an argument rather
+ * imported by a bun test, so the timeline stays in this pure module.
+ * Taking the four design-system durations as an argument rather
  * than importing them keeps this module loadable in a test while the values
  * themselves still come from one place at the call site.
  *

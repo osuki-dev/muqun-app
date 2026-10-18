@@ -23,6 +23,7 @@ import { DetailHeader } from '@/components/detail-header';
 import { appChrome } from '@/constants/appearance';
 import { isDrawerPermanent } from '@/constants/navigation';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
+import { revealableSubtreeImportance } from '@/lib/hidden-subtree';
 import { fadeIn, fadeInLeft, fadeOut, fadeOutLeft, listLayout } from '@/lib/motion';
 import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
 
@@ -155,7 +156,7 @@ export default function AppDrawer({
         <Animated.View
           testID="pad-server-rail-container"
           accessibilityElementsHidden={overlayVisible}
-          importantForAccessibility={overlayVisible ? 'no-hide-descendants' : 'auto'}
+          importantForAccessibility={revealableSubtreeImportance(overlayVisible)}
           entering={fadeInLeft()}
           exiting={fadeOutLeft()}
           style={[
@@ -183,7 +184,7 @@ export default function AppDrawer({
             pointerEvents="auto">
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={t`Hide the server list`}
+              accessibilityLabel={t`Hide the computer list`}
               onPress={() => setRailPeeked(false)}
               style={StyleSheet.absoluteFill}
             />
@@ -211,7 +212,7 @@ export default function AppDrawer({
         style={styles.main}
         layout={listLayout()}
         accessibilityElementsHidden={overlayVisible}
-        importantForAccessibility={overlayVisible ? 'no-hide-descendants' : 'auto'}>
+        importantForAccessibility={revealableSubtreeImportance(overlayVisible)}>
         {children}
 
         {/*
@@ -229,7 +230,7 @@ export default function AppDrawer({
             <SafeAreaView edges={['top']} pointerEvents="box-none">
               <PressableScale
                 accessibilityRole="button"
-                accessibilityLabel={t`Show the server list`}
+                accessibilityLabel={t`Show the computer list`}
                 onPress={() => setRailPeeked(true)}
                 style={[
                   styles.railHandle,
@@ -248,7 +249,7 @@ export default function AppDrawer({
           <DetailHeader fadeColor={detailFadeColor}>
             {!permanent && !showsPadRail ? (
               <NavHeaderBackButton
-                accessibilityLabel={t`Back to servers`}
+                accessibilityLabel={t`Back to computers`}
                 onPress={
                   onDetailBack ?? (() => (router.canGoBack() ? router.back() : router.replace('/')))
                 }
@@ -258,7 +259,7 @@ export default function AppDrawer({
             ) : null}
             {detailTitleSlot ?? (
               <NavHeaderTitlePill
-                title={detailTitle ?? record?.label ?? t`Server`}
+                title={detailTitle ?? record?.label ?? t`Computer`}
                 style={styles.detailHeaderTitleMeasure}
               />
             )}

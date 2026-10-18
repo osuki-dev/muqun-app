@@ -111,6 +111,11 @@ export function ThemeCover({
  * including the leave that follows an apply.
  */
 export type ThemePrimaryAction = { applies: boolean; disabled: boolean; run: () => void };
+/** What the library has to say while it works, for a host that shows it itself. */
+export type ThemeStatus =
+  | { kind: 'installing' }
+  | { kind: 'error'; text: string }
+  | { kind: 'notice'; text: string };
 type DraftAppearance = Pick<
   InstalledTheme,
   | 'terminalBackgroundOpacity'
@@ -128,6 +133,7 @@ export function CustomThemeLibrary({
   ownsPreparedAssets = true,
   onClosePreview,
   onPrimaryActionChange,
+  onStatusChange,
   mode = 'manage',
   onPreviewAppearanceChange,
   tabs = false,
@@ -156,6 +162,15 @@ export function CustomThemeLibrary({
    * `null` means there is no candidate on screen and so nothing to confirm.
    */
   onPrimaryActionChange?: (action: ThemePrimaryAction | null) => void;
+  /**
+   * Hand the status line to the host instead of drawing it above the theme.
+   *
+   * Drawn here, the progress of an apply ("Installing images") and its error
+   * or notice appear above the preview and push it and the sliders down the
+   * moment Apply is tapped. A host that pins its own button shows them where
+   * they take no room; this component then stops drawing them.
+   */
+  onStatusChange?: (status: ThemeStatus | null) => void;
   /**
    * Split `children` and the personal library into two tabs.
    *
@@ -409,6 +424,19 @@ export function CustomThemeLibrary({
   // A host holding the description in state would otherwise keep a button alive
   // for a screen that has gone.
   useEffect(() => () => onPrimaryActionChange?.(null), [onPrimaryActionChange]);
+  useEffect(() => {
+    if (!onStatusChange) return;
+    onStatusChange(
+      error
+        ? { kind: 'error', text: error }
+        : step
+          ? { kind: 'installing' }
+          : notice
+            ? { kind: 'notice', text: notice }
+            : null
+    );
+  }, [onStatusChange, error, step, notice]);
+  useEffect(() => () => onStatusChange?.(null), [onStatusChange]);
 
   function chooseTab(next: ThemeTab) {
     setPendingRemoval(null);
@@ -700,7 +728,7 @@ export function CustomThemeLibrary({
           )}
         </View>
       ) : null}
-      {step ? (
+      {step && !onStatusChange ? (
         <ThemeImportProgress testID="theme-install-progress" label={t`Installing images`} />
       ) : null}
       {readStage ? (
@@ -717,7 +745,7 @@ export function CustomThemeLibrary({
           total={readStage.phase === 'staging' ? readStage.total : undefined}
         />
       ) : null}
-      {error || notice ? (
+      {(error || notice) && !onStatusChange ? (
         <View
           testID="theme-status-message"
           style={{

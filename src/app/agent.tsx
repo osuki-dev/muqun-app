@@ -15,7 +15,7 @@ import {
   navHeaderButtonStyle,
 } from '@/components/nav-header';
 import { DETAIL_HEADER_HEIGHT, DetailHeader } from '@/components/detail-header';
-import { ThemeArtwork } from '@/components/theme-artwork';
+import { SHELL_WALLPAPER_FALLBACK, ThemeArtwork } from '@/components/theme-artwork';
 import { AgentWorkbench } from '@/components/agent-workbench';
 import AppDrawer from '@/components/app-drawer';
 import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
@@ -152,7 +152,7 @@ export default function AgentScreen() {
   return (
     <AppDrawer>
       <View style={[styles.page, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
-        <ThemeArtwork slot="shell.wallpaper" />
+        <ThemeArtwork slot="shell.wallpaper" fallbackSlot={SHELL_WALLPAPER_FALLBACK} />
         <StatusBar animated style={resolvedMode === 'dark' ? 'light' : 'dark'} />
 
         {connectionReady ? (

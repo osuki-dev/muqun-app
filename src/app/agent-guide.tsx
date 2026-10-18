@@ -33,6 +33,11 @@ export default function AgentGuideScreen() {
     status?: string;
     cause?: string;
     agentId?: string;
+    /**
+     * `home`: opened by Home's dock after a create failed. The draft is still
+     * in the dock, so "Open" goes back to it rather than to an empty session.
+     */
+    origin?: string;
   }>();
   const serverId = params.serverId;
   const agentId =
@@ -87,6 +92,10 @@ export default function AgentGuideScreen() {
 
   const openAgent = () => {
     if (!serverId) return;
+    if (params.origin === 'home') {
+      router.back();
+      return;
+    }
     router.replace({
       pathname: '/agent',
       params: {
@@ -102,7 +111,7 @@ export default function AgentGuideScreen() {
     return (
       <View style={[styles.notice, { backgroundColor: surfaceBackground(theme.colors.surface) }]}>
         <Text selectable variant="bodySmall" color={theme.colors.danger}>
-          {t`This server is no longer paired.`}
+          {t`This computer is no longer paired.`}
         </Text>
       </View>
     );
@@ -110,7 +119,8 @@ export default function AgentGuideScreen() {
 
   return (
     <AgentGuideSheet
-      serverLabel={params.label || t`Server`}
+      serverId={serverId}
+      serverLabel={params.label || t`Computer`}
       agentName={agentName}
       agentKind={agentKind}
       onClose={() => router.back()}

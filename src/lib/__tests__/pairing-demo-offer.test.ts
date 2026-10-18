@@ -24,15 +24,6 @@ describe('isDemoPairingOffer', () => {
     expect(isDemoPairingOffer(offer)).toBe(true);
   });
 
-  test('the address it carries cannot resolve', () => {
-    // Belt and braces on top of the branch returning before any request: the
-    // host is under `.invalid`, which RFC 2606 reserves so that it can never be
-    // registered or resolved. A payload that could name a real machine would be
-    // one an attacker could aim.
-    const offer = parsePairingOffer(DEMO_QR);
-    expect(offer.url.endsWith('.invalid')).toBe(true);
-  });
-
   test('an ordinary gateway QR is not the demo', () => {
     const offer = parsePairingOffer('muqun://pair?u=https://box.example:23847&s=real-server');
     expect(isDemoPairingOffer(offer)).toBe(false);

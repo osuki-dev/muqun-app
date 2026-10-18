@@ -1,0 +1,29 @@
+# An assistant returns a local WAV link into a conversation, using the live renderer.
+# section open-output
+open "muqun://agent-subagent-detail?asid=demo-tree-leaf-22"
+
+# section arrived
+is visible "${TARGET}"
+
+# section playback
+# Split the long transcript into bounded searches without pulling the sheet header.
+scroll up 0.3 --until "text=\"Playback note 20: scroll away from the audio output to stop playback. Returning to it requires pressing Play again.\""
+scroll up 0.3 --until "id=\"inline-audio-output\""
+wait "id=\"inline-audio-output\"" 10000
+wait "id=\"audio-playback-toggle\" label=\"Play audio\"" 10000
+press "id=\"audio-playback-toggle\" label=\"Play audio\""
+wait "id=\"audio-playback-toggle\" label=\"Pause audio\"" 10000
+wait "id=\"audio-playback-duration\" text=\"0:08\"" 10000
+# Rows can remain buffered after scrolling. Pause them while retaining duration and progress.
+scroll down 0.3 --until "text=\"Playback note 20: scroll away from the audio output to stop playback. Returning to it requires pressing Play again.\""
+scroll down 0.3 --until "text=\"Playback note 40: scroll away from the audio output to stop playback. Returning to it requires pressing Play again.\""
+is hidden "id=\"audio-playback-toggle\" label=\"Pause audio\""
+scroll up 0.3 --until "text=\"Playback note 20: scroll away from the audio output to stop playback. Returning to it requires pressing Play again.\""
+scroll up 0.3 --until "id=\"inline-audio-output\""
+wait "id=\"audio-playback-toggle\"" 10000
+is hidden "id=\"audio-playback-toggle\" label=\"Pause audio\""
+wait "id=\"audio-playback-duration\" text=\"0:08\"" 10000
+screenshot "shots/inline-audio-returned.png"
+press "id=\"audio-playback-toggle\""
+wait "id=\"audio-playback-toggle\" label=\"Pause audio\"" 10000
+back --system

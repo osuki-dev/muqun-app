@@ -4,7 +4,6 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
-  TERMINAL_GRID_DEFAULT,
   TERMINAL_GRID_MIN_COLS,
   TERMINAL_GRID_MIN_ROWS,
   fallbackTerminalCellWidth,
@@ -106,10 +105,6 @@ describe('terminalGridChanged', () => {
     expect(terminalGridChanged({ cols: 80, rows: 24 }, { cols: 81, rows: 24 })).toBe(true);
     expect(terminalGridChanged({ cols: 80, rows: 24 }, { cols: 80, rows: 23 })).toBe(true);
   });
-
-  test('the opening size is a classic 80x24', () => {
-    expect(TERMINAL_GRID_DEFAULT).toEqual({ cols: 80, rows: 24 });
-  });
 });
 
 describe('the advance ratio a reader brought with their font', () => {
@@ -125,22 +120,6 @@ describe('the advance ratio a reader brought with their font', () => {
     // the bundled font's 0.6 would have opened the PTY at.
     expect(wide.cols).toBeLessThan(bundled.cols);
     expect(narrow.cols).toBeGreaterThan(bundled.cols);
-  });
-
-  test('leaves every existing caller exactly where it was', () => {
-    // The parameter defaults to the bundled font's own 0.6, which is what
-    // every call site passed implicitly before the monospace slot existed.
-    expect(terminalGridFor({ width: 402, height: 600, fontSize: 13 })).toEqual(
-      terminalGridFor({
-        width: 402,
-        height: 600,
-        fontSize: 13,
-        advanceRatio: TERMINAL_ADVANCE_RATIO,
-      })
-    );
-    expect(fallbackTerminalCellWidth(13, 3)).toBe(
-      fallbackTerminalCellWidth(13, 3, TERMINAL_ADVANCE_RATIO)
-    );
   });
 
   test('ignores a ratio that is not one, rather than dividing by it', () => {

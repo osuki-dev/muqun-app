@@ -55,6 +55,39 @@ function entity(
 }
 
 describe('mirroredServerAgents', () => {
+  test('native ordinary-question attention requires its capability and an exact true fact', () => {
+    const agent = entity('agent-1', 'Codex', {
+      status: 'working',
+      raw: {
+        pane_id: 'pane-1',
+        instance_id: 'instance-1',
+        shell_pid: 4242,
+        pending_user_input: true,
+      },
+    });
+    expect(mirroredServerAgents([agent], [])[0].pendingUserInput).toBeUndefined();
+    const [pending] = mirroredServerAgents([agent], [], ['terminal_pending_user_input']);
+    expect(pending).toMatchObject({
+      status: 'working',
+      pendingUserInput: true,
+      instanceId: 'instance-1',
+      shellPid: 4242,
+    });
+    const pane = entity('pane-1', 'Codex');
+    expect(mirroredServerPanes([pane], [agent], ['terminal_pending_user_input'])[0]).toMatchObject({
+      pendingUserInput: true,
+      status: 'working',
+    });
+    agent.raw.pending_user_input = 'true';
+    expect(
+      mirroredServerAgents([agent], [], ['terminal_pending_user_input'])[0].pendingUserInput
+    ).toBeUndefined();
+    for (const shellPid of [0, -1, 1.5, 0x100000000, '4242']) {
+      agent.raw.shell_pid = shellPid;
+      expect(mirroredServerAgents([agent], [])[0].shellPid).toBeUndefined();
+    }
+  });
+
   // The bug this exists to stop: rename a panel on the server screen, go back
   // to the home screen, and the row still says what the agent was called when
   // it started. A rename sets the pane's label; the agents endpoint never
@@ -232,7 +265,7 @@ describe('normalizeServerAgents', () => {
       ...snapshot('s1', [{ id: 'a', name: 'claude' }]),
       // A caller handing over a whole gateway entity must not leak the rest of
       // it into storage.
-      ...({ url: 'http://10.0.0.2:24847', token: 'secret' } as Record<string, unknown>),
+      ...({ url: 'http://192.0.2.2:24847', token: 'secret' } as Record<string, unknown>),
     } as ServerAgentsSnapshot);
     expect(Object.keys(written).sort()).toEqual(['agents', 'checkedAtMs', 'serverId']);
     expect(Object.keys(written.agents[0]).sort()).toEqual(['hasAgent', 'id', 'name', 'status']);
@@ -546,14 +579,14 @@ describe("a plain pane's cwd", () => {
 // it twice is what made those rows half again as tall as the rows around them.
 describe('the location shown under a pane name', () => {
   test('is the cwd when the name says nothing about where the pane is', () => {
-    expect(paneLocationCaption('zsh', '/home/ryu/.osuki/draw')).toBe('/home/ryu/.osuki/draw');
-    expect(paneLocationCaption('osk', '/home/ryu/.osuki/Muqun')).toBe('/home/ryu/.osuki/Muqun');
+    expect(paneLocationCaption('zsh', '/home/me/.osuki/draw')).toBe('/home/me/.osuki/draw');
+    expect(paneLocationCaption('studio', '/home/me/.osuki/Muqun')).toBe('/home/me/.osuki/Muqun');
   });
 
   test('drops out when a shell prompt already spells the same path', () => {
-    expect(paneLocationCaption('ryu@osk:~/.osuki/draw', '/home/ryu/.osuki/draw')).toBeUndefined();
+    expect(paneLocationCaption('me@desk:~/.osuki/draw', '/home/me/.osuki/draw')).toBeUndefined();
     expect(
-      paneLocationCaption('ryu@osk:~/.osuki/muqun-gateway', '/home/ryu/.osuki/muqun-gateway')
+      paneLocationCaption('me@desk:~/.osuki/muqun-gateway', '/home/me/.osuki/muqun-gateway')
     ).toBeUndefined();
   });
 
@@ -562,13 +595,13 @@ describe('the location shown under a pane name', () => {
   });
 
   test('keeps a cwd the prompt only partly agrees with', () => {
-    expect(paneLocationCaption('ryu@osk:~/.osuki/draw', '/home/ryu/.osuki/draw/src')).toBe(
-      '/home/ryu/.osuki/draw/src'
+    expect(paneLocationCaption('me@desk:~/.osuki/draw', '/home/me/.osuki/draw/src')).toBe(
+      '/home/me/.osuki/draw/src'
     );
   });
 
   test('reads a tilde at the root of the home directory', () => {
-    expect(paneLocationCaption('ryu@osk:~', '/home/ryu')).toBe('/home/ryu');
+    expect(paneLocationCaption('me@desk:~', '/home/me')).toBe('/home/me');
   });
 
   test('says nothing for an agent pane, which never carries a cwd', () => {
@@ -577,7 +610,7 @@ describe('the location shown under a pane name', () => {
   });
 
   test('ignores a trailing slash rather than treating it as a different place', () => {
-    expect(paneLocationCaption('ryu@osk:~/.osuki/draw', '/home/ryu/.osuki/draw/')).toBeUndefined();
+    expect(paneLocationCaption('me@desk:~/.osuki/draw', '/home/me/.osuki/draw/')).toBeUndefined();
     expect(paneLocationCaption('zsh', '/srv/app/')).toBe('/srv/app');
     expect(paneLocationCaption('zsh', '/')).toBe('/');
   });

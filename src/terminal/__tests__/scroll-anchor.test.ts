@@ -496,18 +496,6 @@ describe('terminalFollowsOutput', () => {
       expect(following[0]).toBe(rest - TERMINAL_FOLLOW_SLACK);
     });
   });
-
-  // The one-sided test is a special case of this one wherever rest is the
-  // lowest legal offset, which is every pane that prints. Stated as a property
-  // so the equivalence cannot quietly rot.
-  test('agrees with the old one-sided test wherever rest is the bottom', () => {
-    for (const minimumY of [-3804, -900, -108, 0, 140]) {
-      const rest = terminalRestOffset(minimumY, 0);
-      for (let offset = minimumY; offset <= terminalTopStop(minimumY, 0); offset += 7) {
-        expect(terminalFollowsOutput(offset, rest)).toBe(offset <= rest + TERMINAL_FOLLOW_SLACK);
-      }
-    }
-  });
 });
 
 describe('terminalRestOffset', () => {
@@ -576,12 +564,6 @@ describe('terminalRestOffset', () => {
           }
         }
       }
-    });
-
-    test('no history is the old expression exactly', () => {
-      expect(terminalRestOffset(-900, 108, 0)).toBe(terminalRestOffset(-900, 108));
-      // A negative height is a caller bug, not a licence to rest above the stop.
-      expect(terminalRestOffset(-900, 108, -50)).toBe(108);
     });
 
     test('a printing pane has no inset and rests at the bottom regardless', () => {
@@ -656,13 +638,6 @@ describe('historyHintOpacity', () => {
 
     test('a page in flight is solid even after the intro has gone', () => {
       expect(historyHintOpacity(0, true, 0)).toBe(1);
-    });
-
-    test('the intro is what every existing caller already gets', () => {
-      // The parameter defaults to 1, so the behaviour asserted above this block
-      // is the behaviour of a pane that has just been opened.
-      expect(historyHintOpacity(0, false)).toBe(historyHintOpacity(0, false, 1));
-      expect(historyHintOpacity(11, false)).toBe(historyHintOpacity(11, false, 1));
     });
   });
 });

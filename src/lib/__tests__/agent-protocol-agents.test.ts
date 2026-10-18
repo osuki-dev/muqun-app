@@ -295,6 +295,27 @@ describe('the transports', () => {
     expect(parseTransportsDiscovery({ websocket: 'yes' })).toEqual({});
   });
 
+  test('keeps the MCP endpoint, wire snake_case or mirrored camelCase', () => {
+    const expected = { mcp: { path: '/mcp', loopbackOnly: true, tokenHelper: 'muqun-mcp-token' } };
+    expect(
+      parseTransportsDiscovery({
+        mcp: { path: '/mcp', loopback_only: true, token_helper: 'muqun-mcp-token' },
+      })
+    ).toEqual(expected);
+    expect(
+      parseTransportsDiscovery({
+        mcp: { path: '/mcp', loopbackOnly: true, tokenHelper: 'muqun-mcp-token' },
+      })
+    ).toEqual(expected);
+    expect(parseTransportsDiscovery({ mcp: { path: '//evil' } })).toEqual({});
+    expect(
+      parseTransportsDiscovery({
+        websocket: { path: '/ws' },
+        mcp: { path: '/mcp', loopback_only: false },
+      })
+    ).toEqual({ websocket: { path: '/ws' }, mcp: { path: '/mcp', loopbackOnly: false } });
+  });
+
   test('an older gateway has no transports, and no key for them', () => {
     expect('transports' in parseGatewayDiscovery({ ok: true, planes: {} })).toBe(false);
   });

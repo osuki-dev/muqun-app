@@ -27,7 +27,7 @@ export function GatewayStorageError({
         borderRadius: 12,
       }}>
       <Text variant="bodySmall" selectable accessibilityRole="alert">
-        {t`Could not read saved servers. Your saved data has not been changed. Unlock this device and retry.`}
+        {t`Could not read saved computers. Your saved data has not been changed. Unlock this device and retry.`}
       </Text>
       <Text variant="caption" color={theme.colors.textMuted}>
         {t`If this continues, restart the app or check the app installation`}

@@ -2,8 +2,12 @@ import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { useEffect, useState, type ReactNode } from 'react';
 import {
+  KeyboardAwareScrollView,
+  useReanimatedKeyboardAnimation,
+} from 'react-native-keyboard-controller';
+import {
+  type ScrollViewProps,
   StyleSheet,
-  ScrollView,
   Platform,
   useWindowDimensions,
   View,
@@ -26,6 +30,7 @@ import Animated, {
 import { Text } from '@/components/text';
 import { homeScrollFadeOpacity } from '@/lib/home-scroll-fade';
 import { useLaunchHandoff } from '@/stores/launch-handoff';
+import { launchEntryProgress } from '@/lib/launch-handoff';
 import { useHomeScenePlate } from '@/hooks/use-home-scene-plate';
 import { useInterfaceFontFamily } from '@/hooks/use-user-fonts';
 import { USER_FONT_MAX_NATIVE_WEIGHT } from '@/theme/interface-font-registry';
@@ -35,14 +40,14 @@ import {
   EDITORIAL_PAD_MAX_WIDTH,
   getEditorialLayoutGeometry,
 } from '@/lib/home-editorial-layout';
+import { entryRise, listLayout, resolveDuration, riseIn } from '@/lib/motion';
 import {
+  PAD_COLUMN_GAP,
   PAD_COVER_TITLE_LINE_HEIGHT,
-  PAD_WORDMARK_DESCENDER,
+  padCover,
   padCoverKind,
-  padFirstRunPlacement,
+  padHomeColumns,
   padLaunchLayoutEnabled,
-  padWordmarkFontSize,
-  padWorkColumnWidth,
 } from '@/lib/home-pad-geometry';
 export {
   EDITORIAL_MAX_WIDTH,
@@ -78,36 +83,82 @@ export type HomeEditorialLayoutProps = {
   headerLeading?: ReactNode;
   /** Start-new-work actions, already wired by the parent. */
   launches?: ReactNode;
+  /**
+   * Home's dock on the two-column Pad page, at the foot of the left column:
+   * the work stops `padComposerHeight` above it. Every other layout draws the
+   * dock over the page itself.
+   */
+  padComposer?: ReactNode;
+  /**
+   * The Pad cover's work column when there is no work to show at all (nothing
+   * paired): the pairing call to action, so the column is never blank.
+   */
+  padWorkEmpty?: ReactNode;
+  /** The dock's measured height, which the left column's foot clears. */
+  padComposerHeight?: number;
+  /**
+   * Whether the left column's scroll may lift a focused field above the
+   * keyboard. Off while the dock's own field has focus: on the Pad only the
+   * dock reacts to the keyboard, and nothing in the left column moves.
+   */
+  coverPaneKeyboardAware?: boolean;
+  /** Scroll events of the Pad work column, where the computer cards scroll. */
+  workScrollEvents?: {
+    onScrollBeginDrag?: () => void;
+    onScrollEndDrag?: () => void;
+    onMomentumScrollBegin?: () => void;
+    onMomentumScrollEnd?: () => void;
+    /** An animated scroll handler and the sizes the dock's hide-on-scroll reads. */
+    onScroll?: ScrollViewProps['onScroll'];
+    onContentSizeChange?: ScrollViewProps['onContentSizeChange'];
+    onLayout?: ScrollViewProps['onLayout'];
+  };
+  /**
+   * Home's first mount: the sections rise in on the entry stagger. False on
+   * every later mount, so a return from a sub-screen does not replay it.
+   */
+  entering?: boolean;
   /** Recent sessions or panes, already wired by the parent. */
   recent?: ReactNode;
   /** Replaces the Continue heading with a search control when inventory is large. */
   recentHeading?: ReactNode;
   /** Genuine pending approvals or requests, already wired by the parent. */
   attention?: ReactNode;
+  /**
+   * Whether `attention` has a row. Its slot stays filled while it is empty (it
+   * keeps its arrival pulse), so the Pad cover and spacing ask this instead.
+   */
+  hasAttention?: boolean;
+  /**
+   * The computer cards, already wired by the parent; the layout gives them
+   * their "Computers" heading, between needs-you and Recent.
+   */
+  progress?: ReactNode;
   /** Reachable gateways and saved SSH hosts, already wired by the parent. */
   connections?: ReactNode;
   /** Secondary scan or pair controls, already wired by the parent. */
   controls?: ReactNode;
   /**
-   * No theme pack: the Pad cover has no painting, so it sets `coverTitle` as a
-   * large wordmark instead. Ignored wherever a pack's artwork is showing.
+   * No theme pack: the Pad cover block sets `coverTitle` as the app's wordmark.
+   * Ignored wherever a pack's artwork is showing.
    */
   typographicCover?: boolean;
-  /** The brand mark, at the toolbar's leading edge above the wordmark cover. */
+  /** The brand mark, in the Pad toolbar over the wordmark cover. */
   coverMark?: ReactNode;
-  /** A quiet texture painted behind the wordmark cover. */
+  /** A quiet texture painted behind the Pad wordmark cover. */
   coverBackdrop?: ReactNode;
-  /**
-   * Nothing is paired yet and `launches` is the pair card: on the wordmark
-   * cover (and a pack's cover in portrait) it is the page's one action, centred
-   * under the title, not docked.
-   */
-  firstRun?: boolean;
   style?: StyleProp<ViewStyle>;
 };
 
+/**
+ * Home's sections in the order they arrive on first mount: launches, needs
+ * you, Computers, Recent, Connections. Absent ones keep their beat.
+ */
+const HOME_SECTION_COUNT = 5;
+
 type EditorialSectionProps = {
   title: ReactNode;
+  entering?: ReturnType<typeof entryRise>;
   heading?: ReactNode;
   children: ReactNode;
   borderColor: string;
@@ -127,10 +178,13 @@ function EditorialSection({
   textColor,
   spacing,
   first = false,
+  entering,
 }: EditorialSectionProps) {
   const plate = useHomeScenePlate();
   return (
-    <View style={[styles.section, { marginTop: first ? 0 : spacing.lg, marginBottom: 0 }]}>
+    <Animated.View
+      entering={entering}
+      style={[styles.section, { marginTop: first ? 0 : spacing.lg, marginBottom: 0 }]}>
       <View style={[styles.sectionHeader, { borderBottomColor: borderColor }]}>
         {heading ?? (
           <Text variant="heading" color={textColor} accessibilityRole="header" style={plate}>
@@ -139,7 +193,7 @@ function EditorialSection({
         )}
       </View>
       <View style={[styles.sectionContent, { marginTop: 8 }]}>{children}</View>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -155,6 +209,7 @@ function EditorialSection({
  *   launches={<HomeLaunches />}
  *   recent={<HomeRecent />}
  *   attention={<HomeAttention />}
+ *   progress={<HomeComputerCards />}
  *   connections={<HomeConnections />}
  *   controls={<HomeControls />}
  * />
@@ -201,15 +256,22 @@ export function HomeEditorialLayout({
   headerAction,
   headerLeading,
   launches,
+  padComposer,
+  padWorkEmpty,
+  padComposerHeight = 0,
+  coverPaneKeyboardAware = true,
+  workScrollEvents,
+  entering = false,
   recent,
   recentHeading,
   attention,
+  hasAttention = false,
+  progress,
   connections,
   controls,
   typographicCover = false,
   coverMark,
   coverBackdrop,
-  firstRun = false,
   style,
 }: HomeEditorialLayoutProps) {
   const { t } = useLingui();
@@ -221,15 +283,25 @@ export function HomeEditorialLayout({
   const titleKey = `${coverTitle ?? ''}:${chromeFontFamily ?? 'system'}:${titleWeight}`;
   const { fontScale: windowFontScale } = useWindowDimensions();
   const fontScale = fontScaleProp ?? windowFontScale;
-  const hasAside = hasSlot(attention) || hasSlot(connections);
+  // Needs-you leads the main column on every layout, so only Computers is aside.
+  const hasAside = hasSlot(connections);
+  const hasProgress = hasSlot(progress);
   // The Pad work column's headings take the same plate as the phone's sections.
   const scenePlate = useHomeScenePlate();
   const [measuredWidth, setMeasuredWidth] = useState(0);
+  // Whether the Pad lower band (cards or connections) was already showing
+  // when Home mounted: one that arrives later (the first card) waits for the
+  // cover to finish shrinking, or it would land over the tiles still moving
+  // up. Reset when the band goes, so its next arrival is one too.
+  const hasConnections = hasSlot(connections);
+  const hasBand = hasProgress || hasConnections;
+  const [bandSettled, setBandSettled] = useState(hasBand);
+  useEffect(() => {
+    if (!hasBand) setBandSettled(false);
+  }, [hasBand]);
   const [titleMeasurement, setTitleMeasurement] = useState<{ title: string; width: number } | null>(
     null
   );
-  const [padPaneHeight, setPadPaneHeight] = useState(0);
-  const [padLaunchHeight, setPadLaunchHeight] = useState(0);
   const maxWidth = pad ? EDITORIAL_PAD_MAX_WIDTH : EDITORIAL_MAX_WIDTH;
   const geometry = getEditorialLayoutGeometry(
     measuredWidth || Math.min(contentWidth, maxWidth),
@@ -237,6 +309,14 @@ export function HomeEditorialLayout({
     hasAside,
     pad
   );
+  // The dock's slot at the foot of the Pad work column grows by the keyboard
+  // as it rises (the dock rides it up), so the launch pane above ends at the dock's
+  // new top and nothing else on the page moves; a floating or hardware
+  // keyboard (no inset) changes nothing.
+  const { height: keyboardOffset } = useReanimatedKeyboardAnimation();
+  const padComposerStyle = useAnimatedStyle(() => ({
+    height: padComposerHeight + Math.max(0, -keyboardOffset.get()),
+  }));
   const padLaunchLayout =
     pad && padLaunchLayoutEnabled(geometry.contentWidth, fontScale, viewportHeight);
   const scrollPosition = scrollY;
@@ -248,15 +328,25 @@ export function HomeEditorialLayout({
   const reducedMotion = useReducedMotion();
   const sceneOrigin = useSharedValue(0);
   const animateCover = cover && hasArtwork && !reducedMotion;
+  // The phone cover's reading column already arrives with the launch reveal;
+  // everywhere else the sections rise in on the entry stagger, once.
+  const sectionEntering = entering && (padLaunchLayout || !animateCover);
+  const rise = (slot: number) =>
+    sectionEntering ? entryRise(slot, HOME_SECTION_COUNT) : undefined;
   const revealing = useLaunchHandoff((state) => state.revealing);
+  const launchSettled = useLaunchHandoff((state) => state.settled);
   // Under the launch snap, Home's entrance rides the snap's own progress, so
   // it starts on the frame the first tile leaves and is complete with the
   // last; under the cross-fade it keeps its own clock.
   const revealDriver = useLaunchHandoff((state) => state.driver);
   const markRevealReady = useLaunchHandoff((state) => state.markReady);
-  const entryProgress = useSharedValue(revealing || reducedMotion ? 1 : 0);
+  const entryProgress = useSharedValue(launchSettled || revealing || reducedMotion ? 1 : 0);
   const timelineEnd = useSharedValue(0);
   useEffect(() => {
+    if (launchSettled) {
+      entryProgress.set(1);
+      return;
+    }
     if (revealing && revealDriver) {
       // Laid out and waiting: the snap may start.
       markRevealReady();
@@ -266,15 +356,14 @@ export function HomeEditorialLayout({
       entryProgress.set(withTiming(1, { duration: reducedMotion ? 0 : 520 }));
     }
     return () => cancelAnimation(entryProgress);
-  }, [revealing, revealDriver, reducedMotion, entryProgress, markRevealReady]);
+  }, [launchSettled, revealing, revealDriver, reducedMotion, entryProgress, markRevealReady]);
   useAnimatedReaction(
-    () => (revealDriver ? revealDriver.get() : -1),
+    () => launchEntryProgress(revealDriver ? revealDriver.get() : -1, launchSettled),
     (progress) => {
       if (progress < 0) return;
       // Ease-out: three quarters in by the middle of the sweep, so what shows
       // through the gaps is Home arriving rather than a page already there.
-      const t = Math.min(1, Math.max(0, progress));
-      entryProgress.set(1 - (1 - t) * (1 - t));
+      entryProgress.set(progress);
     }
   );
   const titleStage = useScrollStage(
@@ -333,18 +422,13 @@ export function HomeEditorialLayout({
   });
 
   if (padLaunchLayout) {
-    // A cover spread: the cover fills the left column top to bottom with the
-    // New-session block docked at its foot; the work column beside it (Continue,
-    // Connections) scrolls on its own. The page itself does not scroll.
-    const launchWidth = padWorkColumnWidth(geometry.innerWidth);
-    const coverWidth = geometry.innerWidth - launchWidth - 24;
-    const titleFontSize =
-      titleMeasurement && titleMeasurement.title === titleKey && titleMeasurement.width > 0
-        ? Math.min(coverWidth * 0.38, ((coverWidth - 4) * 100) / titleMeasurement.width)
-        : coverWidth * 0.25;
-    const titleHeight = titleFontSize * 1.08;
-    const hasRecent = hasSlot(recent);
-    const hasConnections = hasSlot(connections);
+    // Two columns (design §8 Pad, revised). The left one is the cover block --
+    // the pack's title and painting, or the app's wordmark, at a fixed share
+    // of the page with nothing over it -- then the tiles and Recent, in one
+    // scroll. The right one is the work: Needs you and the computer cards in a
+    // scroll of their own, and the dock fixed at its foot. The page itself
+    // does not scroll.
+    const columns = padHomeColumns(geometry.innerWidth);
     const coverKind = padCoverKind({
       cover,
       hasArtwork,
@@ -352,27 +436,28 @@ export function HomeEditorialLayout({
       hasTitle: Boolean(coverTitle),
     });
     const wordmark = coverKind === 'wordmark';
-    const launchWidthInCover = Math.min(coverWidth - geometry.gutter, 560);
-    // The pair card is the first-run page's whole purpose, so on the wordmark
-    // cover, and on a pack's cover in portrait, it stands in the open under the
-    // title; the dock stays at the foot. See `padFirstRunPlacement`.
-    const centredLaunches =
-      padFirstRunPlacement({
-        coverKind,
-        firstRun,
-        coverWidth,
-        paneHeight: padPaneHeight,
-      }) === 'centred';
-    const wordmarkFontSize = padWordmarkFontSize({
-      coverWidth,
-      measuredWidth:
+    const coverBlock = padCover({
+      viewportHeight: viewportHeight ?? 0,
+      coverWidth: columns.cover,
+      measuredTitleWidth:
         titleMeasurement && titleMeasurement.title === titleKey ? titleMeasurement.width : 0,
-      paneHeight: padPaneHeight,
-      reservedHeight: padLaunchHeight > 0 ? padLaunchHeight + 48 : 0,
+      wordmark,
     });
-    const onLaunchLayout = wordmark
-      ? (event: LayoutChangeEvent) => setPadLaunchHeight(event.nativeEvent.layout.height)
-      : undefined;
+    // What follows a section that grows or goes moves with it. Instant under
+    // reduce-motion (`listLayout`).
+    const coverLayout = listLayout('medium');
+    const bandArrival = bandSettled
+      ? undefined
+      : riseIn(resolveDuration('medium'), resolveDuration('medium'));
+    const titleFontSize = coverBlock.titleSize;
+    const titleStyle = {
+      fontSize: titleFontSize,
+      lineHeight: titleFontSize * PAD_COVER_TITLE_LINE_HEIGHT,
+      fontFamily: chromeFontFamily,
+      fontWeight: titleWeight,
+      letterSpacing: -titleFontSize * 0.05,
+    } as const;
+    const hasRecent = hasSlot(recent);
     const titleMeasure = coverTitle ? (
       <View
         pointerEvents="none"
@@ -422,158 +507,173 @@ export function HomeEditorialLayout({
           </View>
         ) : null}
         <View style={styles.padColumns}>
-          <View
-            testID="home-pad-theme-pane"
-            onLayout={(event) => setPadPaneHeight(event.nativeEvent.layout.height)}
-            style={[styles.padThemePane, { width: coverWidth }]}>
-            {wordmark ? (
-              <>
-                {hasSlot(coverBackdrop) ? (
-                  <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-                    {coverBackdrop}
-                  </View>
-                ) : null}
-                {titleMeasure}
-                <Text
-                  testID="home-pad-wordmark"
-                  accessibilityRole="header"
-                  color={theme.colors.text}
-                  numberOfLines={1}
-                  allowFontScaling={false}
-                  style={{
-                    fontSize: wordmarkFontSize,
-                    lineHeight: wordmarkFontSize * PAD_COVER_TITLE_LINE_HEIGHT,
-                    fontFamily: chromeFontFamily,
-                    fontWeight: titleWeight,
-                    letterSpacing: -wordmarkFontSize * 0.05,
-                  }}>
-                  {coverTitle}
-                </Text>
-              </>
-            ) : cover && hasArtwork ? (
-              <View style={[styles.coverScene, styles.padCoverScene]}>
-                {titleMeasure}
-                {coverTitle ? (
-                  <Animated.View onLayout={titleStage.onLayout} style={titleStage.style}>
-                    <Text
-                      accessibilityRole="header"
-                      color={theme.colors.text}
-                      adjustsFontSizeToFit
-                      numberOfLines={1}
-                      allowFontScaling={false}
-                      style={{
-                        fontSize: titleFontSize,
-                        lineHeight: titleHeight,
-                        fontFamily: chromeFontFamily,
-                        fontWeight: titleWeight,
-                        letterSpacing: -titleFontSize * 0.05,
-                      }}>
-                      {coverTitle}
-                    </Text>
-                  </Animated.View>
-                ) : null}
-                {/* The figure stands on the column's bottom edge and rises over
-                    the title, as the phone cover's drawing overlaps its title. */}
+          <View testID="home-pad-cover-column" style={{ width: columns.cover }}>
+            {/* Keyboard-aware on its own: the page's view only lifts fields
+                whose nearest scroll view it is, and Recent's search is here. */}
+            <KeyboardAwareScrollView
+              testID="home-pad-launch-pane"
+              enabled={coverPaneKeyboardAware}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              style={styles.padScroll}
+              contentContainerStyle={styles.padCoverContent}>
+              {wordmark ? (
                 <Animated.View
-                  onLayout={artworkStage.onLayout}
-                  pointerEvents="none"
-                  style={[
-                    styles.padCoverArtwork,
-                    // Anchored right, so the figure stands clear of the dock's leading edge.
-                    { left: Math.round(coverWidth * 0.15) },
-                    animatedArtworkStyle,
-                    artworkStage.style,
-                  ]}>
-                  {artwork}
+                  testID="home-pad-cover"
+                  layout={coverLayout}
+                  style={{ height: coverBlock.height }}>
+                  {hasSlot(coverBackdrop) ? (
+                    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+                      {coverBackdrop}
+                    </View>
+                  ) : null}
+                  {titleMeasure}
+                  <Text
+                    testID="home-pad-wordmark"
+                    accessibilityRole="header"
+                    color={theme.colors.text}
+                    numberOfLines={1}
+                    allowFontScaling={false}
+                    style={titleStyle}>
+                    {coverTitle}
+                  </Text>
                 </Animated.View>
-              </View>
-            ) : (
-              <View>
-                {hasIdentity ? <View style={styles.identity}>{identity}</View> : null}
-                {hasArtwork ? (
-                  <Animated.View pointerEvents="none" style={animatedArtworkStyle}>
+              ) : coverKind === 'artwork' ? (
+                <Animated.View
+                  testID="home-pad-cover"
+                  layout={coverLayout}
+                  style={[styles.coverScene, { height: coverBlock.height }]}>
+                  {titleMeasure}
+                  {coverTitle ? (
+                    <Animated.View onLayout={titleStage.onLayout} style={titleStage.style}>
+                      <Text
+                        accessibilityRole="header"
+                        color={theme.colors.text}
+                        adjustsFontSizeToFit
+                        numberOfLines={1}
+                        allowFontScaling={false}
+                        style={titleStyle}>
+                        {coverTitle}
+                      </Text>
+                    </Animated.View>
+                  ) : null}
+                  {/* The figure stands on the block's foot at the right and
+                      rises over the title, as the phone cover's drawing
+                      overlaps its title; nothing is drawn over it. Its frame
+                      takes the new size at once, with the painting's new
+                      crop: an animated frame would show the old crop
+                      overflowing it until the canvas re-measures. */}
+                  <Animated.View
+                    onLayout={artworkStage.onLayout}
+                    pointerEvents="none"
+                    style={[styles.padCoverArtwork, coverBlock.artwork, artworkStage.style]}>
                     {artwork}
                   </Animated.View>
-                ) : null}
-              </View>
-            )}
-            {hasSlot(launches) && centredLaunches ? (
-              <View
-                testID="home-pad-first-run"
-                style={[
-                  styles.padFirstRunStage,
-                  wordmark
-                    ? { paddingTop: wordmarkFontSize * PAD_WORDMARK_DESCENDER }
-                    : // Over the artwork cover, which fills the column: the
-                      // stage is what the title leaves, and the figure stays
-                      // anchored at the foot behind the card.
-                      {
-                        position: 'absolute',
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        top: coverTitle ? titleHeight : 0,
-                        paddingTop: coverTitle ? titleFontSize * PAD_WORDMARK_DESCENDER : 0,
-                        zIndex: 2,
-                      },
-                ]}>
-                <View onLayout={onLaunchLayout} style={{ width: launchWidthInCover }}>
-                  {launches}
+                </Animated.View>
+              ) : (
+                <View testID="home-pad-cover">
+                  {hasIdentity ? <View style={styles.identity}>{identity}</View> : null}
+                  {hasArtwork ? (
+                    <Animated.View pointerEvents="none" style={animatedArtworkStyle}>
+                      {artwork}
+                    </Animated.View>
+                  ) : null}
                 </View>
-              </View>
-            ) : hasSlot(launches) ? (
-              // Capped so the tiles stay near phone size and the figure's torso
-              // at the column's right stays clear of the dock.
-              <View
-                testID="home-pad-launch-dock"
-                onLayout={onLaunchLayout}
-                style={[
-                  styles.padLaunchDock,
-                  { bottom: geometry.gutter, width: launchWidthInCover },
-                ]}>
-                {launches}
-              </View>
+              )}
+              {hasSlot(launches) ? (
+                <Animated.View
+                  testID="home-pad-launch-dock"
+                  entering={rise(0)}
+                  layout={coverLayout}
+                  style={styles.padSection}>
+                  {launches}
+                </Animated.View>
+              ) : null}
+            </KeyboardAwareScrollView>
+            {/* In flow under the launch pane, sized to the measured dock: the column
+                ends where the dock begins, so no row can sit under it. */}
+            {hasSlot(padComposer) ? (
+              <Animated.View testID="home-pad-composer" style={padComposerStyle}>
+                {padComposer}
+              </Animated.View>
             ) : null}
           </View>
-          <ScrollView
-            testID="home-pad-launch-pane"
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            style={{ width: launchWidth, flexGrow: 0, flexShrink: 0 }}
-            contentContainerStyle={styles.padWorkContent}>
-            {hasRecent || hasConnections ? (
-              <View testID="home-pad-lower-band" style={styles.padWorkSections}>
-                {hasRecent ? (
-                  <View testID="home-pad-continue">
-                    {recentHeading ? (
-                      <View style={styles.padWorkTitle}>{recentHeading}</View>
-                    ) : (
+          <View testID="home-pad-work-column" style={styles.padWorkColumn}>
+            <Animated.ScrollView
+              testID="home-pad-work-pane"
+              scrollEventThrottle={16}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              style={styles.padScroll}
+              contentContainerStyle={styles.padWorkContent}
+              {...workScrollEvents}>
+              {hasSlot(padWorkEmpty) ? (
+                <Animated.View entering={rise(1)} style={styles.padSection}>
+                  {padWorkEmpty}
+                </Animated.View>
+              ) : null}
+              {hasSlot(attention) ? (
+                // Mounted while empty (its arrival pulse); spaced only with a row.
+                <Animated.View
+                  entering={rise(1)}
+                  layout={coverLayout}
+                  style={hasAttention ? styles.padSection : undefined}>
+                  {attention}
+                </Animated.View>
+              ) : null}
+              {hasBand ? (
+                <Animated.View
+                  testID="home-pad-lower-band"
+                  entering={bandArrival}
+                  layout={coverLayout}
+                  style={[styles.padSection, styles.padWorkSections]}>
+                  {hasProgress ? (
+                    <Animated.View testID="home-pad-in-progress" entering={rise(2)}>
                       <Text
                         variant="heading"
                         accessibilityRole="header"
                         color={theme.colors.text}
                         style={[styles.padWorkTitle, scenePlate]}>
-                        {t`Continue`}
+                        {t`Computers`}
                       </Text>
-                    )}
-                    {recent}
-                  </View>
-                ) : null}
-                {hasConnections ? (
-                  <View testID="home-pad-connections">
+                      {progress}
+                    </Animated.View>
+                  ) : null}
+                  {hasConnections ? (
+                    <Animated.View testID="home-pad-connections" entering={rise(4)}>
+                      <Text
+                        variant="heading"
+                        accessibilityRole="header"
+                        color={theme.colors.text}
+                        style={[styles.padWorkTitle, scenePlate]}>
+                        {t`Connections`}
+                      </Text>
+                      {connections}
+                    </Animated.View>
+                  ) : null}
+                </Animated.View>
+              ) : null}
+              {hasRecent ? (
+                <Animated.View
+                  testID="home-pad-continue"
+                  entering={rise(3)}
+                  style={styles.padSection}>
+                  {recentHeading ? (
+                    <View style={styles.padWorkTitle}>{recentHeading}</View>
+                  ) : (
                     <Text
                       variant="heading"
                       accessibilityRole="header"
                       color={theme.colors.text}
                       style={[styles.padWorkTitle, scenePlate]}>
-                      {t`Connections`}
+                      {t`Recent`}
                     </Text>
-                    {connections}
-                  </View>
-                ) : null}
-              </View>
-            ) : null}
-          </ScrollView>
+                  )}
+                  {recent}
+                </Animated.View>
+              ) : null}
+            </Animated.ScrollView>
+          </View>
         </View>
       </View>
     );
@@ -679,24 +779,39 @@ export function HomeEditorialLayout({
             ) : null}
           </View>
           <Animated.View style={[split ? styles.coverReadingColumn : undefined, readingEntryStyle]}>
+            {hasSlot(attention) ? (
+              <Animated.View entering={rise(1)}>{attention}</Animated.View>
+            ) : null}
+            {hasProgress ? (
+              <EditorialSection
+                borderColor={theme.colors.border}
+                textColor={theme.colors.text}
+                spacing={theme.spacing}
+                title={t`Computers`}
+                entering={rise(2)}
+                first={split}>
+                {progress}
+              </EditorialSection>
+            ) : null}
             {hasSlot(recent) ? (
               <EditorialSection
                 borderColor={theme.colors.border}
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
-                title={t`Continue`}
+                title={t`Recent`}
+                entering={rise(3)}
                 heading={recentHeading}
-                first={split}>
+                first={split && !hasProgress}>
                 {recent}
               </EditorialSection>
             ) : null}
-            {attention}
             {hasSlot(connections) ? (
               <EditorialSection
                 borderColor={theme.colors.border}
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
-                title={t`Connections`}>
+                title={t`Connections`}
+                entering={rise(4)}>
                 {connections}
               </EditorialSection>
             ) : null}
@@ -743,7 +858,11 @@ export function HomeEditorialLayout({
 
         {hasIdentity ? <View style={styles.noArtworkIdentity}>{identity}</View> : null}
 
-        {hasSlot(launches) ? <View style={styles.launches}>{launches}</View> : null}
+        {hasSlot(launches) ? (
+          <Animated.View entering={rise(0)} style={styles.launches}>
+            {launches}
+          </Animated.View>
+        ) : null}
 
         <View
           style={[
@@ -759,15 +878,29 @@ export function HomeEditorialLayout({
               styles.main,
               geometry.mode === 'two-column' ? { width: geometry.mainWidth } : styles.fullWidth,
             ]}>
-            {geometry.mode === 'one-column' && hasSlot(attention) ? attention : null}
+            {hasSlot(attention) ? (
+              <Animated.View entering={rise(1)}>{attention}</Animated.View>
+            ) : null}
+            {hasProgress ? (
+              <EditorialSection
+                borderColor={theme.colors.border}
+                textColor={theme.colors.text}
+                spacing={theme.spacing}
+                title={t`Computers`}
+                entering={rise(2)}
+                first>
+                {progress}
+              </EditorialSection>
+            ) : null}
             {hasSlot(recent) ? (
               <EditorialSection
                 borderColor={theme.colors.border}
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
-                title={t`Continue`}
+                title={t`Recent`}
+                entering={rise(3)}
                 heading={recentHeading}
-                first>
+                first={!hasProgress}>
                 {recent}
               </EditorialSection>
             ) : null}
@@ -776,7 +909,8 @@ export function HomeEditorialLayout({
                 borderColor={theme.colors.border}
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
-                title={t`Connections`}>
+                title={t`Connections`}
+                entering={rise(4)}>
                 {connections}
               </EditorialSection>
             ) : null}
@@ -784,13 +918,13 @@ export function HomeEditorialLayout({
 
           {geometry.mode === 'two-column' ? (
             <View style={[styles.aside, { width: geometry.asideWidth }]}>
-              {hasSlot(attention) ? attention : null}
               {hasSlot(connections) ? (
                 <EditorialSection
                   borderColor={theme.colors.border}
                   textColor={theme.colors.text}
                   spacing={theme.spacing}
                   title={t`Connections`}
+                  entering={rise(4)}
                   first>
                   {connections}
                 </EditorialSection>
@@ -843,7 +977,11 @@ export function HomeEditorialLayout({
         </Animated.View>
       ) : null}
 
-      {!hasArtwork && hasSlot(launches) ? <View style={styles.launches}>{launches}</View> : null}
+      {!hasArtwork && hasSlot(launches) ? (
+        <Animated.View entering={rise(0)} style={styles.launches}>
+          {launches}
+        </Animated.View>
+      ) : null}
 
       <View
         style={[
@@ -854,20 +992,42 @@ export function HomeEditorialLayout({
             columnGap: geometry.gap,
           },
         ]}>
+        {/* Retain the sections' native coordinate parent: artwork gains its
+            measured height during entry, and flattened ancestors can leave a
+            child's entering animation at the pre-artwork window origin. */}
         <View
+          collapsable={false}
           style={[
             styles.main,
             geometry.mode === 'two-column' ? { width: geometry.mainWidth } : styles.fullWidth,
           ]}>
-          {hasArtwork && hasSlot(launches) ? <View style={styles.launches}>{launches}</View> : null}
-          {geometry.mode === 'one-column' && hasSlot(attention) ? attention : null}
+          {hasArtwork && hasSlot(launches) ? (
+            <Animated.View entering={rise(0)} style={styles.launches}>
+              {launches}
+            </Animated.View>
+          ) : null}
+          {hasSlot(attention) ? (
+            <Animated.View entering={rise(1)}>{attention}</Animated.View>
+          ) : null}
+          {hasProgress ? (
+            <EditorialSection
+              borderColor={theme.colors.border}
+              textColor={theme.colors.text}
+              spacing={theme.spacing}
+              title={t`Computers`}
+              entering={rise(2)}
+              first={!hasArtwork}>
+              {progress}
+            </EditorialSection>
+          ) : null}
           {hasSlot(recent) ? (
             <EditorialSection
               borderColor={theme.colors.border}
               textColor={theme.colors.text}
               spacing={theme.spacing}
-              first={!hasArtwork}
-              title={t`Continue`}
+              first={!hasArtwork && !hasProgress}
+              title={t`Recent`}
+              entering={rise(3)}
               heading={recentHeading}>
               {recent}
             </EditorialSection>
@@ -877,7 +1037,8 @@ export function HomeEditorialLayout({
               borderColor={theme.colors.border}
               textColor={theme.colors.text}
               spacing={theme.spacing}
-              title={t`Connections`}>
+              title={t`Connections`}
+              entering={rise(4)}>
               {connections}
             </EditorialSection>
           ) : null}
@@ -885,14 +1046,14 @@ export function HomeEditorialLayout({
 
         {geometry.mode === 'two-column' ? (
           <View style={[styles.aside, { width: geometry.asideWidth }]}>
-            {hasSlot(attention) ? attention : null}
             {hasSlot(connections) ? (
               <EditorialSection
                 borderColor={theme.colors.border}
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
                 first
-                title={t`Connections`}>
+                title={t`Connections`}
+                entering={rise(4)}>
                 {connections}
               </EditorialSection>
             ) : null}
@@ -923,15 +1084,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 24,
-    marginBottom: 24,
+    marginBottom: 16,
   },
-  padColumns: { flex: 1, minHeight: 0, flexDirection: 'row', gap: 24 },
-  padThemePane: { flexShrink: 0, minWidth: 0 },
-  padCoverScene: { flex: 1 },
+  // Anchored right, so the title's start stays clear at the block's left.
   padCoverArtwork: { position: 'absolute', right: 0, bottom: 0, zIndex: 1 },
-  padLaunchDock: { position: 'absolute', left: 0, zIndex: 2 },
-  padFirstRunStage: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: 24 },
-  padWorkContent: { paddingTop: 16, paddingBottom: 24, gap: 24 },
+  padColumns: { flex: 1, minHeight: 0, flexDirection: 'row', gap: PAD_COLUMN_GAP },
+  padWorkColumn: { flex: 1, minWidth: 0 },
+  padScroll: { flex: 1 },
+  padCoverContent: { paddingBottom: 24 },
+  padSection: { marginTop: 16 },
+  padWorkContent: { paddingBottom: 24 },
   padWorkSections: { gap: 32 },
   // The phone editorial section's heading, without its rule: title, 12, card.
   padWorkTitle: { marginBottom: 12 },

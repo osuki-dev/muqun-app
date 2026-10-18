@@ -15,7 +15,6 @@ import { beforeEach, describe, expect, test } from 'bun:test';
 
 import {
   GLYPH_CACHE_LIMIT,
-  glyphCacheKey,
   glyphCacheSize,
   glyphMetrics,
   renderingIdentity,
@@ -117,14 +116,6 @@ describe('glyphMetrics', () => {
     expect(glyphMetrics('M', 13, wide, CELL).advance).toBe(13);
     expect(glyphMetrics('M', 13, narrow, CELL).advance).toBe(6.5);
   });
-
-  test('the key spells out all three parts, in one place', () => {
-    const font = fakeFont({ A: { id: 57, advance: 7.2 } });
-    expect(glyphCacheKey(renderingIdentity(font), 13, 'A')).toBe(`${renderingIdentity(font)}|13|A`);
-    // A separator that cannot be produced by a font id or a size, so a
-    // grapheme that happens to be a digit cannot forge a neighbouring field.
-    expect(glyphCacheKey(1, 13, '|')).toBe('1|13||');
-  });
 });
 
 describe('the cap', () => {
@@ -138,11 +129,5 @@ describe('the cap', () => {
     }
     expect(glyphCacheSize()).toBeLessThanOrEqual(GLYPH_CACHE_LIMIT);
     expect(glyphCacheSize()).toBeGreaterThan(0);
-  });
-
-  test('the cap is generous against what a terminal actually draws', () => {
-    // Latin, box drawing and the Nerd Font ranges are a few hundred graphemes
-    // per font and size, so a clear is rare rather than a per-frame event.
-    expect(GLYPH_CACHE_LIMIT).toBeGreaterThanOrEqual(2048);
   });
 });

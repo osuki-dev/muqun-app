@@ -1,4 +1,5 @@
 import * as bunTest from 'bun:test';
+import { fakeSecureStore } from '@/lib/__tests__/gateway-vault';
 
 const { beforeEach, expect, mock, test } = bunTest;
 
@@ -6,6 +7,10 @@ type Call = { kind: string; sessionId?: string; paneId?: string };
 let calls: Call[] = [];
 let sessionList: { id: string; name?: string }[] = [];
 let failOn: string | null = null;
+let readOutput: (() => Promise<string>) | null = null;
+let readSessions: (() => Promise<{ sessions: typeof sessionList }>) | null = null;
+
+mock.module('expo-secure-store', () => fakeSecureStore);
 /**
  * Which of the three gateways the fake is being this test.
  *
@@ -41,6 +46,7 @@ mock.module('@/lib/gateway-client', () => ({
   readPaneOutput: async (sessionId: string, paneId: string) => {
     calls.push({ kind: 'paneOutput', sessionId, paneId });
     if (failOn === 'paneOutput') throw new Error('gateway is away');
+    if (readOutput) return readOutput();
     return `screen of ${paneId}`;
   },
   configureGateway: () => {},
@@ -55,6 +61,7 @@ mock.module('@/lib/gateway-client', () => ({
     loadSessions: async () => {
       calls.push({ kind: 'sessions' });
       if (failOn === 'sessions') throw new Error('gateway is away');
+      if (readSessions) return readSessions();
       return { sessions: sessionList };
     },
     // The batched answer. `null` is how a gateway with no such route reports
@@ -98,14 +105,20 @@ function health() {
 }
 
 const { loadWorkspaceSnapshot, warmConfiguredWorkspace } = await import('@/lib/workspace-snapshot');
-const { forgetWarmWorkspace, warmWorkspace } = await import('@/lib/server-warm-cache');
+const { forgetWarmWorkspace, rememberWarmWorkspace, warmWorkspace } =
+  await import('@/lib/server-warm-cache');
+const { useServerAgents } = await import('@/stores/server-agents');
 
-beforeEach(() => {
+beforeEach(async () => {
   calls = [];
   failOn = null;
+  readOutput = null;
+  readSessions = null;
   gateway = 'announced';
   sessionList = [{ id: 'alpha' }, { id: 'beta' }];
   forgetWarmWorkspace();
+  await useServerAgents.getState().hydrate();
+  useServerAgents.setState({ byServer: {} });
 });
 
 test('a preference that names a live session is honoured', async () => {
@@ -205,6 +218,72 @@ test('the choices come back alongside the snapshot, in the gateway order', async
 test('warming stores a snapshot the workspace can paint from', async () => {
   await warmConfiguredWorkspace('s1', 'beta');
   expect(warmWorkspace('s1')?.sessionId).toBe('beta');
+});
+
+test('Home inventory arrives while the terminal output is still pending', async () => {
+  const output = Promise.withResolvers<string>();
+  const started = Promise.withResolvers<void>();
+  readOutput = () => {
+    started.resolve();
+    return output.promise;
+  };
+  const warming = warmConfiguredWorkspace('s1', 'beta');
+  await started.promise;
+  expect(useServerAgents.getState().byServer.s1?.sessionId).toBe('beta');
+  expect(useServerAgents.getState().byServer.s1?.agents.map((pane) => pane.id)).toEqual(['p:beta']);
+  expect(warmWorkspace('s1')).toBeNull();
+  output.resolve('screen');
+  await warming;
+  expect(warmWorkspace('s1')?.firstPane?.output).toBe('screen');
+});
+
+test('a failed terminal output read still leaves the successful Home inventory visible', async () => {
+  failOn = 'paneOutput';
+  await warmConfiguredWorkspace('s1', 'beta');
+  expect(useServerAgents.getState().byServer.s1?.sessionId).toBe('beta');
+  expect(warmWorkspace('s1')).toBeNull();
+});
+
+test('a changed selected record cannot publish the old snapshot to Home', async () => {
+  let current = true;
+  const sessions = Promise.withResolvers<{ sessions: typeof sessionList }>();
+  const started = Promise.withResolvers<void>();
+  readSessions = () => {
+    started.resolve();
+    return sessions.promise;
+  };
+  const warming = warmConfiguredWorkspace('s1', 'beta', () => current);
+  await started.promise;
+  current = false;
+  sessions.resolve({ sessions: sessionList });
+  await warming;
+  expect(useServerAgents.getState().byServer.s1).toBeUndefined();
+  expect(warmWorkspace('s1')).toBeNull();
+  expect(calls.some((call) => call.kind === 'paneOutput')).toBe(false);
+});
+
+test('a newer terminal load wins over the pending Home prefetch', async () => {
+  const sessions = Promise.withResolvers<{ sessions: typeof sessionList }>();
+  const started = Promise.withResolvers<void>();
+  readSessions = () => {
+    started.resolve();
+    return sessions.promise;
+  };
+  const warming = warmConfiguredWorkspace('s1', 'beta');
+  await started.promise;
+  rememberWarmWorkspace('s1', {
+    health: health() as never,
+    sessionId: 'alpha',
+    workspaces: [],
+    tabs: [],
+    panes: [],
+    agents: [],
+  });
+  sessions.resolve({ sessions: sessionList });
+  await warming;
+  expect(warmWorkspace('s1')?.sessionId).toBe('alpha');
+  expect(useServerAgents.getState().byServer.s1).toBeUndefined();
+  expect(calls.some((call) => call.kind === 'paneOutput')).toBe(false);
 });
 
 test('the warmed screen records the one shape the prefetch reads it under', async () => {

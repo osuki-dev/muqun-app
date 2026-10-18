@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { useThemeTokens } from '@osuki-dev/ui';
 import type { MarkdownStyle } from 'react-native-enriched-markdown';
 
-import { createCompactMarkdownStyle } from '@/lib/markdown-style';
+import { createCompactMarkdownStyle, createRowMarkdownStyle } from '@/lib/markdown-style';
 
 /**
  * The ink a compact markdown block is set in, named rather than passed as a
@@ -38,4 +38,10 @@ export function useCompactMarkdownStyle(tone: MarkdownTone = 'muted'): MarkdownS
       table: { ...base.table, borderRadius: profile.chrome.surface },
     };
   }, [theme.colors, tone, profile.chrome.surface]);
+}
+
+/** A task row's title or second line, in `ink` (a theme token's colour). */
+export function useRowMarkdownStyle(ink: string, kind: 'title' | 'line'): MarkdownStyle {
+  const theme = useThemeTokens();
+  return useMemo(() => createRowMarkdownStyle(theme.colors, ink, kind), [theme.colors, ink, kind]);
 }

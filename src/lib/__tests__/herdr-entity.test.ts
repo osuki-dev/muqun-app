@@ -2,7 +2,14 @@ import { describe, expect, test } from 'bun:test';
 
 import type { GatewayEntity } from '@/lib/gateway-entities';
 
-import { numberField, optionalNumberField, panelTitle } from '../herdr-entity';
+import {
+  agentBrandName,
+  isCommandPathTitle,
+  isLaunchCommandTitle,
+  numberField,
+  optionalNumberField,
+  panelTitle,
+} from '../herdr-entity';
 
 function entity(overrides: Partial<GatewayEntity>): GatewayEntity {
   return { id: 'pane-1', title: '', subtitle: '', raw: {}, ...overrides };
@@ -40,6 +47,45 @@ describe('panelTitle', () => {
     expect(panelTitle(entity({ id: 'pane-9', title: '   ' }))).toBe('pane-9');
     expect(panelTitle()).toBe('Panel');
   });
+
+  test("an agent's pane is named by the agent, never by its binary's path", () => {
+    const codex = entity({ id: 'a1', title: "'/opt/homebrew/bin/codex'", raw: { agent: 'codex' } });
+    expect(panelTitle(entity({ title: "'/opt/homebrew/bin/codex'" }), codex)).toBe('Codex');
+    expect(
+      panelTitle(
+        entity({ title: '/usr/local/bin/claude' }),
+        entity({ title: '', raw: { display_agent: 'Claude Code' } })
+      )
+    ).toBe('Claude Code');
+    // A real title the agent set still wins.
+    expect(panelTitle(entity({ title: '/opt/bin/codex' }), entity({ title: 'Fix login' }))).toBe(
+      'Fix login'
+    );
+    // A pane with no agent keeps whatever it is called.
+    expect(panelTitle(entity({ title: '/opt/bin/codex' }))).toBe('/opt/bin/codex');
+  });
+});
+
+describe('isCommandPathTitle', () => {
+  test('a bare or quoted path is a command title; words are not', () => {
+    expect(isCommandPathTitle("'/opt/homebrew/bin/codex'")).toBe(true);
+    expect(isCommandPathTitle('"/usr/bin/claude"')).toBe(true);
+    expect(isCommandPathTitle('~/bin/pi')).toBe(true);
+    expect(isCommandPathTitle('./run')).toBe(true);
+    expect(isCommandPathTitle('Fix the login bug')).toBe(false);
+    expect(isCommandPathTitle('codex')).toBe(false);
+    expect(isCommandPathTitle('/opt/bin/codex --yolo')).toBe(false);
+  });
+});
+
+describe('agentBrandName', () => {
+  test('known ids get their brand spelling, others pass through', () => {
+    expect(agentBrandName('codex')).toBe('Codex');
+    expect(agentBrandName('claude')).toBe('Claude Code');
+    expect(agentBrandName('Claude Code')).toBe('Claude Code');
+    expect(agentBrandName('nvim')).toBe('nvim');
+    expect(agentBrandName('  ')).toBe('');
+  });
 });
 
 describe('optionalNumberField', () => {
@@ -63,5 +109,17 @@ describe('optionalNumberField', () => {
       optionalNumberField(entity({ raw: { cursor_x: Number.NaN } }), 'cursor_x')
     ).toBeUndefined();
     expect(optionalNumberField(entity({ raw: { cursor_x: null } }), 'cursor_x')).toBeUndefined();
+  });
+});
+
+describe('isLaunchCommandTitle', () => {
+  test.each([
+    ['/usr/local/bin/codex --dangerously-bypass-approvals-and-sandbox', true],
+    ["'/opt/homebrew/bin/claude' --permission-mode bypassPermissions", true],
+    ['Codex · /usr/bin/codex --dangerously-bypass-approvals-and-sandbox', true],
+    ['fix the flaky login test', false],
+    ['/home/me/project', false],
+  ] as const)('%s', (title, expected) => {
+    expect(isLaunchCommandTitle(title)).toBe(expected);
   });
 });

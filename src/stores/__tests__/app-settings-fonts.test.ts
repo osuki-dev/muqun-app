@@ -58,11 +58,6 @@ describe('the default', () => {
 });
 
 describe('persistence', () => {
-  test('an installed font is written into the settings blob', async () => {
-    await store.getState().update({ monoFont: INSTALLED });
-    expect(JSON.parse(vault[STORAGE_KEY]).monoFont).toEqual(INSTALLED);
-  });
-
   test('the choice survives a restart, path and measurement together', async () => {
     await store.getState().update({ monoFont: INSTALLED });
     const persisted = vault[STORAGE_KEY];

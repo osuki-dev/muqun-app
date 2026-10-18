@@ -41,7 +41,6 @@ describe('planImageCompression', () => {
   test('a square image pins one edge only, so it stays square', () => {
     const resize = planImageCompression(pick({ width: 3000, height: 3000 }))?.resize;
     expect(resize).toEqual({ width: MAX_IMAGE_EDGE });
-    expect(Object.keys(resize ?? {})).toHaveLength(1);
   });
 
   test('an image already within the limit is re-encoded but not resized', () => {

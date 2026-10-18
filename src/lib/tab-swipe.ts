@@ -16,7 +16,6 @@
 import {
   canCycle,
   ringPosition,
-  stepRing,
   stepRingFrom,
   type CycleDirection,
   type RingItem,
@@ -234,15 +233,6 @@ export function canCycleTabs(tabs: CyclableTab[]): boolean {
 /** Where the current tab sits, for the indicator. */
 export function tabPosition(tabs: CyclableTab[], tabId: string): TabCycleTarget | null {
   return asTabTarget(ringPosition(tabs, tabId));
-}
-
-/** The tab one step in `direction`, wrapping at either end. */
-export function cycleTab(
-  tabs: CyclableTab[],
-  tabId: string,
-  direction: TabCycleDirection
-): TabCycleTarget | null {
-  return asTabTarget(stepRing(tabs, tabId, direction));
 }
 
 /**

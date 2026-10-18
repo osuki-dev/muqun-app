@@ -52,8 +52,6 @@ export type AppearanceProfile = Readonly<{
   settingsRowPaddingVertical: number;
   navigation: Readonly<Pick<NativeStackNavigationOptions, 'animation'>>;
   motion: Readonly<{
-    pageMs: number;
-    modalMs: number;
     revealMs: number;
     revealDistance: number;
     pressedScale: number;
@@ -101,8 +99,8 @@ const classic: AppearanceProfile = {
     showsTagline: true,
   },
   settingsRowPaddingVertical: 12,
-  navigation: { animation: 'fade' },
-  motion: { pageMs: 240, modalMs: 260, revealMs: 240, revealDistance: 8, pressedScale: 0.985 },
+  navigation: { animation: 'default' },
+  motion: { revealMs: 240, revealDistance: 8, pressedScale: 0.985 },
   rowPaddingVertical: 8,
 };
 
@@ -151,7 +149,7 @@ const editorial: AppearanceProfile = {
   settingsRowPaddingVertical: 10,
   // Native presentation owns route motion, duration and back gestures.
   navigation: { animation: 'default' },
-  motion: { pageMs: 200, modalMs: 220, revealMs: 200, revealDistance: 4, pressedScale: 0.99 },
+  motion: { revealMs: 200, revealDistance: 4, pressedScale: 0.99 },
   rowPaddingVertical: 10,
 };
 
@@ -184,13 +182,8 @@ export function profileThemeOverride(profile: AppearanceProfile): ThemeOverride 
 /** Native options only: profiles never replace Stack ownership or gestures. */
 export function profileNavigationOptions(
   profile: AppearanceProfile,
-  reduceMotion: boolean,
-  modal = false
+  reduceMotion: boolean
 ): Pick<NativeStackNavigationOptions, 'animation' | 'animationDuration'> {
   if (reduceMotion) return { animation: 'none', animationDuration: 0 };
-  if (profile.navigation.animation === 'default') return { animation: 'default' };
-  return {
-    animation: modal ? 'slide_from_bottom' : profile.navigation.animation,
-    animationDuration: modal ? profile.motion.modalMs : profile.motion.pageMs,
-  };
+  return { animation: profile.navigation.animation };
 }

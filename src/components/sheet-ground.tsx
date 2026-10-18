@@ -50,7 +50,11 @@ import { useThemeTokens } from '@osuki-dev/ui';
 import { createContext, useContext, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { ThemeArtwork, useHasThemeArtwork } from '@/components/theme-artwork';
+import {
+  SHELL_WALLPAPER_FALLBACK,
+  ThemeArtwork,
+  useHasThemeArtwork,
+} from '@/components/theme-artwork';
 import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
 import { withAlpha } from '@/lib/color';
 import { sheetFrostAlpha } from '@/theme/surface-background';
@@ -106,7 +110,7 @@ export function SheetGround({
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   const opacity = useSurfaceBackgroundOpacity();
-  const hasShell = useHasThemeArtwork('shell.wallpaper');
+  const hasShell = useHasThemeArtwork('shell.wallpaper', SHELL_WALLPAPER_FALLBACK);
   return (
     <View
       testID={testID}
@@ -126,7 +130,7 @@ export function SheetGround({
           { backgroundColor: surfaceBackground(sheetGroundTintColor(theme.colors, tint)) },
         ]}
       />
-      <ThemeArtwork slot="shell.wallpaper" />
+      <ThemeArtwork slot="shell.wallpaper" fallbackSlot={SHELL_WALLPAPER_FALLBACK} />
       {frosted && hasShell ? (
         <View
           style={[
@@ -263,7 +267,7 @@ export const SHEET_GROUND_PLATE_PADDING_VERTICAL = 4;
 export function useSheetGroundPlate(tint?: SheetGroundTint): SheetGroundPlate {
   const profile = useAppearanceProfile();
   const theme = useThemeTokens();
-  const hasShell = useHasThemeArtwork('shell.wallpaper');
+  const hasShell = useHasThemeArtwork('shell.wallpaper', SHELL_WALLPAPER_FALLBACK);
   const ground = useSheetGroundTint();
   if (!hasShell) return EMPTY_PLATE;
   return {

@@ -3,7 +3,7 @@ import QuickCrypto from 'react-native-quick-crypto';
 import type { SseRecordCrypto } from './sse-record';
 
 export const GATEWAY_TRANSPORT = 'muqun-aes-256-gcm-v1' as const;
-export const GATEWAY_TRANSPORT_VERSION = 1 as const;
+export type GatewayTransportVersion = 1 | 2;
 const TAG_BYTES = 16;
 const MAX_CLOCK_SKEW_MS = 5 * 60 * 1000;
 
@@ -24,7 +24,7 @@ const CODE_KDF_OUTPUT_LEN = 32;
 export type TransportDirection = 'request' | 'response' | 'pairing-request' | 'pairing-response';
 
 export interface EncryptedEnvelope {
-  version: 1;
+  version: GatewayTransportVersion;
   timestamp_ms: number;
   nonce: string;
   ciphertext: string;
@@ -32,6 +32,17 @@ export interface EncryptedEnvelope {
 
 function fromBase64Url(value: string) {
   return QuickCrypto.Buffer.from(value.replace(/-/g, '+').replace(/_/g, '/'), 'base64');
+}
+
+function canonicalBase64Url(value: string) {
+  if (!/^[A-Za-z0-9_-]+$/.test(value)) throw new Error('Invalid encrypted encoding.');
+  const decoded = fromBase64Url(value);
+  if (toBase64Url(decoded) !== value) throw new Error('Invalid encrypted encoding.');
+  return decoded;
+}
+
+function envelopeAad(aad: string, version: GatewayTransportVersion, timestampMs: number): string {
+  return version === 2 ? `muqun-transport-v2\n${timestampMs}\n${aad}` : aad;
 }
 
 function toBase64Url(value: Uint8Array): string {
@@ -63,22 +74,24 @@ export function encryptBytes(
   direction: TransportDirection,
   aad: string,
   plaintext: Uint8Array,
-  timestampMs = Date.now()
+  timestampMs = Date.now(),
+  version: GatewayTransportVersion = 1
 ): EncryptedEnvelope {
+  if (!Number.isSafeInteger(timestampMs)) throw new Error('Invalid encryption timestamp.');
   const nonce = QuickCrypto.randomBytes(12);
   const cipher = QuickCrypto.createCipheriv(
     'aes-256-gcm',
     directionKey(material, direction),
     nonce
   );
-  cipher.setAAD(QuickCrypto.Buffer.from(aad, 'utf8'));
+  cipher.setAAD(QuickCrypto.Buffer.from(envelopeAad(aad, version, timestampMs), 'utf8'));
   const ciphertext = QuickCrypto.Buffer.concat([
     cipher.update(QuickCrypto.Buffer.from(plaintext)),
     cipher.final(),
     cipher.getAuthTag(),
   ]);
   return {
-    version: GATEWAY_TRANSPORT_VERSION,
+    version,
     timestamp_ms: timestampMs,
     nonce: toBase64Url(nonce),
     ciphertext: toBase64Url(ciphertext),
@@ -89,9 +102,10 @@ export function decryptBytes(
   material: Uint8Array,
   direction: TransportDirection,
   aad: string,
-  envelope: EncryptedEnvelope
+  envelope: EncryptedEnvelope,
+  expectedVersion: GatewayTransportVersion = 1
 ) {
-  if (envelope.version !== GATEWAY_TRANSPORT_VERSION) {
+  if (envelope.version !== expectedVersion || (envelope.version !== 1 && envelope.version !== 2)) {
     throw new Error('Gateway uses an unsupported encryption version.');
   }
   if (
@@ -100,8 +114,8 @@ export function decryptBytes(
   ) {
     throw new Error('Gateway returned an expired encrypted response.');
   }
-  const nonce = fromBase64Url(envelope.nonce);
-  const sealed = fromBase64Url(envelope.ciphertext);
+  const nonce = canonicalBase64Url(envelope.nonce);
+  const sealed = canonicalBase64Url(envelope.ciphertext);
   if (nonce.length !== 12 || sealed.length < TAG_BYTES) {
     throw new Error('Gateway returned an invalid encrypted response.');
   }
@@ -112,7 +126,9 @@ export function decryptBytes(
     directionKey(material, direction),
     nonce
   );
-  decipher.setAAD(QuickCrypto.Buffer.from(aad, 'utf8'));
+  decipher.setAAD(
+    QuickCrypto.Buffer.from(envelopeAad(aad, envelope.version, envelope.timestamp_ms), 'utf8')
+  );
   decipher.setAuthTag(tag);
   return QuickCrypto.Buffer.concat([decipher.update(ciphertext), decipher.final()]);
 }
@@ -121,13 +137,16 @@ export function encryptJson(
   material: Uint8Array,
   direction: TransportDirection,
   aad: string,
-  value: unknown
+  value: unknown,
+  version: GatewayTransportVersion = 1
 ): EncryptedEnvelope {
   return encryptBytes(
     material,
     direction,
     aad,
-    QuickCrypto.Buffer.from(JSON.stringify(value), 'utf8')
+    QuickCrypto.Buffer.from(JSON.stringify(value), 'utf8'),
+    Date.now(),
+    version
   );
 }
 
@@ -135,9 +154,12 @@ export function decryptJson<T>(
   material: Uint8Array,
   direction: TransportDirection,
   aad: string,
-  envelope: EncryptedEnvelope
+  envelope: EncryptedEnvelope,
+  expectedVersion: GatewayTransportVersion = 1
 ): T {
-  return JSON.parse(decryptBytes(material, direction, aad, envelope).toString('utf8')) as T;
+  return JSON.parse(
+    decryptBytes(material, direction, aad, envelope, expectedVersion).toString('utf8')
+  ) as T;
 }
 
 /**

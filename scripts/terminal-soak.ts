@@ -152,7 +152,13 @@ async function main(): Promise<void> {
   let lineLimit = INITIAL_LINES;
   let depthFloor = 0;
   let folds = 0;
-  const counts: Record<PaneReadOrigin, number> = { refresh: 0, page: 0, rangePage: 0, frame: 0 };
+  const counts: Record<PaneReadOrigin, number> = {
+    refresh: 0,
+    page: 0,
+    rangePage: 0,
+    capturedPage: 0,
+    frame: 0,
+  };
   const violations: Violation[] = [];
   const seen = new Set<string>();
 

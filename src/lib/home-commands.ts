@@ -55,7 +55,12 @@ export type HomeCommand =
   | { type: 'resume-server'; target: HomeServerEntry }
   | { type: 'resume-target'; target: HomeTarget }
   | { type: 'open-agent'; target: HomeAgentEntry }
-  | { type: 'new-agent'; serverId: string; directory?: string; agentId?: string }
+  | {
+      type: 'new-agent';
+      serverId: string;
+      directory?: string;
+      agentId?: string;
+    }
   | { type: 'new-terminal'; serverId: string; workspaceId?: string }
   | { type: 'open-ssh'; hostId?: string }
   | { type: 'pair-gateway' }
@@ -388,6 +393,9 @@ export function createHomeCommandController(ports: HomeCommandPorts) {
           if (selection) return selection;
           const ownership = selectedServerStillOwns(operation, command.target.serverId);
           if (ownership) return ownership;
+          // The card already names the session. Open it now; the destination
+          // owns its snapshot, loading and missing/offline states. Probing the
+          // same snapshot here delayed navigation and fetched it twice.
           ports.navigate({ type: 'agent', target: command.target, intent: 'existing' });
           finish(operation);
           return { status: 'dispatched', operationId: operation.id };

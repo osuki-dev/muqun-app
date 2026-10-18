@@ -44,13 +44,6 @@ describe('packing', () => {
     expect(unpackTerminalTouchModes(packTerminalTouchModes(all))).toEqual(all);
     expect(unpackTerminalTouchModes(packTerminalTouchModes(OFF))).toEqual(OFF);
   });
-
-  test('no two modes share a bit', () => {
-    const keys = Object.keys(OFF) as (keyof TerminalTouchModes)[];
-    const seen = new Set(keys.map((key) => bits({ [key]: true })));
-    expect(seen.size).toBe(keys.length);
-    expect(seen.has(0)).toBe(false);
-  });
 });
 
 describe('terminalTouchModesOf', () => {

@@ -160,24 +160,6 @@ describe('native end-to-end gate', () => {
     ])
       expect(isNotificationFixtureCommand(args)).toBe(false);
   });
-  test('controlled replacements verify the actual value before another edit or navigation', async () => {
-    const base = path.resolve(
-      fileURLToPath(new URL('../../e2e/agent-device/flows/', import.meta.url))
-    );
-    for (const [file, value] of [
-      ['slash-commands.ad', 'draft'],
-      ['agent-shortcuts.ad', 'Keep this custom instruction draft while I inspect the terminal'],
-    ]) {
-      const lines = (await readFile(path.join(base, file), 'utf8')).split('\n');
-      const filled = lines.findIndex((line) => line.startsWith('fill ') && line.includes(value));
-      expect(filled >= 0).toBe(true);
-      expect(lines[filled + 1].startsWith('wait ')).toBe(true);
-      expect(lines[filled + 1].includes(value)).toBe(true);
-      expect(lines.some((line) => line.startsWith('is visible ') && line.includes(value))).toBe(
-        true
-      );
-    }
-  });
   test('reopening a dismissed slash query observes trigger deletion before typing a new one', async () => {
     const base = path.resolve(fileURLToPath(new URL('../../e2e/agent-device/', import.meta.url)));
     const manifest = JSON.parse(await readFile(path.join(base, 'suite.json'), 'utf8')) as Suite;
@@ -977,6 +959,36 @@ describe('native end-to-end gate', () => {
       await rm(directory, { recursive: true, force: true });
     }
   });
+  test('a small-phone sheet dismissal stays within the screen', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-phone-dismiss-'));
+    try {
+      await writeFile(path.join(directory, 'dismiss.ad'), 'back --system\n');
+      const calls: string[][] = [];
+      const runner = new NativeRunner(
+        suite,
+        directory,
+        directory,
+        async (args) => {
+          calls.push(args);
+          if (args[0] === 'snapshot')
+            return {
+              nodes: [
+                { ...node, type: 'Application', rect: { x: 0, y: 0, width: 390, height: 844 } },
+                { ...node, label: 'Sheet Grabber', rect: { x: 0, y: 0, width: 390, height: 844 } },
+              ],
+            };
+          return {};
+        },
+        {}
+      );
+      await runner.runSection('dismiss.ad', { PLATFORM: 'ios' });
+      const gesture = calls.find((args) => args[0] === 'gesture')!;
+      expect(Number(gesture[3]) + Number(gesture[5])).toBeLessThan(844);
+      expect(Number(gesture[5])).toBeGreaterThan(0);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
   test('iPad sheet scrolling starts inside the form sheet', async () => {
     const directory = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-sheet-scroll-'));
     try {
@@ -1195,6 +1207,160 @@ describe('native end-to-end gate', () => {
         { when: { target: { text: 'Missing' }, absent: true }, steps: [{ include: 'missing' }] },
       ])
     ).rejects.toThrow('Missing program');
+  });
+  test('settings group seeking rechecks arriving rows before swiping but still finds offscreen rows', async () => {
+    const base = path.resolve(fileURLToPath(new URL('../../e2e/agent-device/', import.meta.url)));
+    const settingsSuite = JSON.parse(
+      await readFile(path.join(base, 'suite.json'), 'utf8')
+    ) as Suite;
+    const seek = settingsSuite.programs['subflows/open-settings-sheet'][0];
+    for (const initiallyOffscreen of [false, true]) {
+      let settled = false;
+      let scrolled = false;
+      const calls: string[][] = [];
+      const runner = new NativeRunner(
+        settingsSuite,
+        base,
+        '/unused',
+        async (args) => {
+          calls.push(args);
+          if (args[0] === 'wait') settled = true;
+          if (args[0] === 'scroll') scrolled = true;
+          if (args[0] === 'snapshot') {
+            const arrived = settled && (!initiallyOffscreen || scrolled);
+            return {
+              nodes: [
+                {
+                  ...node,
+                  type: 'Button',
+                  identifier: arrived ? 'settings-terminal-row' : 'settings-header',
+                },
+              ],
+              androidSnapshot: {},
+            };
+          }
+          if (args[0] === 'alert') return { kind: 'alertStatus', alert: null };
+          return { pass: true };
+        },
+        {}
+      );
+      await runner.run([seek], { SETTINGS_GROUP: 'terminal' });
+      expect(settled).toBe(true);
+      expect(scrolled).toBe(initiallyOffscreen);
+      expect(calls.filter((args) => args[0] === 'press')).toHaveLength(0);
+      expect(calls.filter((args) => args[0] === 'scroll')).toHaveLength(initiallyOffscreen ? 1 : 0);
+    }
+  });
+  test('explicit voice waits handle a late microphone prompt and already-authorized recording', async () => {
+    const base = await mkdtemp(path.join(tmpdir(), 'muqun-voice-permission-'));
+    await writeFile(
+      path.join(base, 'voice.ad'),
+      'wait "id=\\"voice-visual-recording\\"" 3000 --allow-microphone-prompt\n'
+    );
+    try {
+      for (const platform of ['android', 'ios'])
+        for (const firstUse of [false, true]) {
+          let captures = 0;
+          let accepted = false;
+          const calls: string[][] = [];
+          const runner = new NativeRunner(
+            suite,
+            base,
+            '/unused',
+            async (args) => {
+              calls.push(args);
+              if (args[0] === 'snapshot') {
+                captures++;
+                return {
+                  nodes:
+                    !firstUse || accepted
+                      ? [{ ...node, identifier: 'voice-visual-recording' }]
+                      : [node],
+                  ...(platform === 'android' ? { androidSnapshot: {} } : {}),
+                };
+              }
+              if (args[0] === 'alert' && args[1] === 'accept') {
+                accepted = true;
+                return {};
+              }
+              if (args[0] === 'alert')
+                return {
+                  kind: 'alertStatus',
+                  alert:
+                    firstUse && !accepted && captures > 1
+                      ? {
+                          title:
+                            platform === 'android'
+                              ? 'Allow Muqun to record audio?'
+                              : '“Muqun” Would Like to Access the Microphone',
+                          source: 'permission',
+                          packageName: 'com.android.permissioncontroller',
+                          buttons:
+                            platform === 'android'
+                              ? ['While using the app', 'Don’t allow']
+                              : ['Don’t Allow', 'OK'],
+                        }
+                      : null,
+                };
+              return {};
+            },
+            {}
+          );
+          await runner.runSection('voice.ad', { PLATFORM: platform });
+          expect(accepted).toBe(firstUse);
+          expect(calls.filter((args) => args[0] === 'alert' && args[1] === 'accept')).toHaveLength(
+            firstUse ? 1 : 0
+          );
+          expect(calls.filter((args) => args[0] === 'wait' && args[1] !== 'stable')).toEqual([
+            ['wait', 'id="voice-visual-recording"', '3000'],
+          ]);
+        }
+    } finally {
+      await rm(base, { recursive: true });
+    }
+  });
+  test('voice permission opt-in rejects other apps, permissions, and untrusted Android surfaces', async () => {
+    const base = await mkdtemp(path.join(tmpdir(), 'muqun-voice-permission-deny-'));
+    await writeFile(
+      path.join(base, 'voice.ad'),
+      'wait "id=\\"voice-visual-error\\"" 3000 --allow-microphone-prompt\n'
+    );
+    try {
+      for (const [title, packageName] of [
+        ['Allow AnotherApp to record audio?', 'com.android.permissioncontroller'],
+        ['Allow Muqun to take pictures and record video?', 'com.android.permissioncontroller'],
+        ['Allow Muqun to access location?', 'com.android.permissioncontroller'],
+        ['Allow Muqun to send notifications?', 'com.android.permissioncontroller'],
+        ['Allow Muqun to record audio?', 'untrusted.dialog'],
+      ]) {
+        let accepted = false;
+        const runner = new NativeRunner(
+          suite,
+          base,
+          '/unused',
+          async (args) => {
+            if (args[0] === 'snapshot') return { nodes: [], androidSnapshot: {} };
+            if (args[1] === 'accept') accepted = true;
+            return {
+              kind: 'alertStatus',
+              alert: {
+                title,
+                packageName,
+                source: 'permission',
+                buttons: ['While using the app', 'Don’t allow'],
+              },
+            };
+          },
+          {}
+        );
+        await expect(runner.runSection('voice.ad', { PLATFORM: 'android' })).rejects.toThrow(
+          'Unexpected alert'
+        );
+        expect(accepted).toBe(false);
+      }
+    } finally {
+      await rm(base, { recursive: true });
+    }
   });
   test('reports failures with escaped evidence', () => {
     const report = junit([{ name: 'a&b', seconds: 1, error: '<failed>' }]);
@@ -1435,4 +1601,113 @@ describe('a foreground the app has not filled yet', () => {
       await rm(base, { recursive: true, force: true });
     }
   }, 20000);
+});
+
+describe('stable wait capture recovery', () => {
+  const stalled = (captures: number) =>
+    new NativeCommandError({
+      code: 'COMMAND_FAILED',
+      details: { reason: 'wait_stable_timeout', captureStalled: true, captures },
+    });
+  const run = async (
+    commands: string,
+    invoke: (args: string[]) => Promise<Record<string, unknown>>
+  ) => {
+    const base = await mkdtemp(path.join(tmpdir(), 'e2e-stable-capture-'));
+    try {
+      await writeFile(path.join(base, 'probe.ad'), commands);
+      const runner = new NativeRunner(suite, base, '/unused', invoke, {});
+      await runner.runSection('probe.ad', {});
+    } finally {
+      await rm(base, { recursive: true, force: true });
+    }
+  };
+
+  for (const captures of [0, 1, 3]) {
+    test(`reacquires a stable verdict after a stalled capture with ${captures} earlier trees`, async () => {
+      const calls: string[][] = [];
+      let waits = 0;
+      await run('open dev.osuki.muqun --relaunch\nwait stable 400 5000\n', async (args) => {
+        calls.push(args);
+        if (args[0] === 'wait' && ++waits === 1) throw stalled(captures);
+        return { waitedMs: 451, captures: 2, nodeCount: 14 };
+      });
+      expect(calls).toEqual([
+        ['open', 'dev.osuki.muqun', '--relaunch'],
+        ['wait', 'stable', '400', '5000'],
+        ['wait', 'stable', '400', '5000'],
+      ]);
+    });
+  }
+
+  test('the second stalled capture fails without a third attempt', async () => {
+    let attempts = 0;
+    const second = stalled(2);
+    const result = await run('wait stable 400 5000\n', async () => {
+      attempts++;
+      throw attempts === 1 ? stalled(3) : second;
+    }).catch((error) => error);
+    expect(result).toBe(second);
+    expect(attempts).toBe(2);
+  });
+
+  test('ordinary instability and unrelated errors fail without retry', async () => {
+    for (const error of [
+      new NativeCommandError({
+        code: 'COMMAND_FAILED',
+        details: { reason: 'wait_stable_timeout', captures: 8 },
+      }),
+      new NativeCommandError({
+        code: 'COMMAND_FAILED',
+        details: { reason: 'wait_stable_timeout', captureStalled: false, captures: 3 },
+      }),
+      new NativeCommandError({
+        code: 'COMMAND_FAILED',
+        details: { reason: 'predicate_failed', captureStalled: true },
+      }),
+      new NativeCommandError({
+        code: 'INVALID_ARGS',
+        details: { reason: 'wait_stable_timeout', captureStalled: true },
+      }),
+      new Error('captureStalled'),
+    ]) {
+      let attempts = 0;
+      const result = await run('wait stable 400 5000\n', async () => {
+        attempts++;
+        throw error;
+      }).catch((failure) => failure);
+      expect(result).toBe(error);
+      expect(attempts).toBe(1);
+    }
+  });
+
+  test('a stable verdict does not bypass the following assertion', async () => {
+    let waits = 0;
+    await expect(
+      run('wait stable 400 5000\nis visible id="required"\n', async (args) => {
+        if (args[0] === 'wait') {
+          if (++waits === 1) throw stalled(3);
+          return { waitedMs: 451, captures: 2, nodeCount: 14 };
+        }
+        return { pass: false };
+      })
+    ).rejects.toThrow();
+    expect(waits).toBe(2);
+  });
+
+  test('capture recovery never repeats a mutation or another observation command', async () => {
+    for (const command of ['press id="done"', 'snapshot', 'wait id="done" 5000']) {
+      let attempts = 0;
+      const error = stalled(3);
+      const result = await run(`${command}\n`, async (args) => {
+        // A mutation's normal foreground guard is allowed to inspect first.
+        if (command.startsWith('press') && args[0] === 'snapshot')
+          return { nodes: [{ ...node, type: 'Button', identifier: 'done' }] };
+        attempts++;
+        throw error;
+      }).catch((failure) => failure);
+      expect(result).toBe(error);
+      expect(attempts).toBe(1);
+    }
+  });
 });

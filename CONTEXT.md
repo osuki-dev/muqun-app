@@ -90,3 +90,30 @@ The shared `VirtualKeyboard` emits characters or validated named keys; Gateway a
 SSH workspaces own dispatch. Contextual combinations and nvim actions share one
 shortcut strip. See [Terminal soft keyboard](docs/terminal-soft-keyboard.md) for
 modifier state, exact sequence semantics and device validation.
+
+## Linked checkout changes
+
+The terminal Changes route passes the explicit `git_worktrees` capability to
+`GitDiffView`. Its inventory comes from the pane's authenticated `git/worktrees`
+route, with canonical `current` and `worktrees` (`path`, `branch`, `head`,
+`detached`). The App validates the response and offers only inventory entries.
+Selected reads add `worktree` to `git/status` and `git/diff`; Gateway revalidates
+Git membership and common-directory identity on every read.
+
+Other checkouts use the existing paged Changes adapter, without Discard, Lazygit
+or default-branch comparison. Changing the checkout remounts `ChangesSheet` to
+drop prior listings and patches. A removed selection fails explicitly until
+the reader chooses again; refreshing the inventory never silently changes it.
+Agent-session runtime-managed worktree context remains a separate contract.
+
+## Encrypted transport negotiation
+
+Paired traffic negotiates envelope v2 through an authenticated, read-only `/health`
+probe (`transport_versions`), followed by an authenticated read-only v2 proof.
+A device-only minimum-version pin is persisted after that proof and before
+application operations are sent. The existing token, key family, HKDF, and transport marker stay
+unchanged. V2 authenticates `muqun-transport-v2\n<timestamp_ms>\n<existing AAD>`;
+responses must match the request version. Pinned credentials never fall back to
+v1. SSE/WebSocket opening envelopes use the same negotiation; stream records and
+pairing bootstrap remain compatible. See `gateway-transport.ts` and
+`transport-negotiation.ts` for the protocol and upgrade boundaries.

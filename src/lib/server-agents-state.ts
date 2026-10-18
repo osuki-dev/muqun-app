@@ -253,3 +253,21 @@ function sameIndexForMemory(a: ServerAgentsIndex, b: ServerAgentsIndex): boolean
     );
   });
 }
+
+let shownContent: ServerAgentsIndex = {};
+
+/**
+ * `byServer` for a screen that draws the rows and not their age: the same
+ * object until some computer's rows change. Every Continue pass re-confirms
+ * each computer's panes, which moves its `checkedAtMs` and so replaces the map;
+ * a selector of the whole map turned each of those into a whole-Home render.
+ * Whatever shows the age reads `checkedAtMs` from the store itself.
+ */
+export function selectServerAgentsContent(
+  state: Pick<ServerAgentsState, 'byServer'>
+): ServerAgentsIndex {
+  if (state.byServer !== shownContent && !sameIndexForPersistence(shownContent, state.byServer)) {
+    shownContent = state.byServer;
+  }
+  return shownContent;
+}

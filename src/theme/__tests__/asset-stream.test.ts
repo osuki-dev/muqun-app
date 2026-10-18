@@ -180,20 +180,19 @@ test('unknown, duplicate, missing, corrupt and checksum-mismatched images fail c
   await expect(stageThemeAssetStream(manifest(['first']), bad(), corrupt.port)).rejects.toThrow();
 });
 
-test('streamed install planning is not capped by legacy aggregate bytes or file counts', () => {
+test('persistent install planning does not apply archive limits to the installed library', () => {
   const inventory = Array.from({ length: 300 }, (_, index) => ({
     name: `owned-${index}`,
     bytes: 1024 * 1024,
   }));
-  expect(
-    planThemeAssetInstall(inventory, [{ name: 'new', bytes: 8 * 1024 * 1024 }], 'streamed')
-  ).toEqual(['new']);
-  expect(() => planThemeAssetInstall(inventory, [], 'legacy-package')).toThrow();
+  expect(planThemeAssetInstall(inventory, [{ name: 'new', bytes: 8 * 1024 * 1024 }])).toEqual([
+    'new',
+  ]);
+  expect(planThemeAssetInstall(inventory, [])).toEqual([]);
   expect(() =>
     planThemeAssetInstall(
       [{ name: 'a', bytes: Number.MAX_SAFE_INTEGER }],
-      [{ name: 'b', bytes: 1 }],
-      'streamed'
+      [{ name: 'b', bytes: 1 }]
     )
   ).toThrow('safe integer');
 });

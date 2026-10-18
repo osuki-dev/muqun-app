@@ -3,6 +3,7 @@ import { useFocusEffect } from 'expo-router';
 import { DeliveryOwnership } from '@/lib/bound-delivery';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
+import { useVoiceInput } from '@/stores/voice-input';
 
 import {
   isBusy,
@@ -69,7 +70,15 @@ export function useAttachmentUploads(
    * Omitting it leaves entries unbound, and an unbound entry is refused by that
    * check rather than treated as bindable anywhere.
    */
-  destination?: () => AttachmentDestination | undefined
+  destination?: () => AttachmentDestination | undefined,
+  /**
+   * Leaving the screen (`blur`) or a change of the selected computer
+   * (`switch`) clears the staged files, except while this says to hold them:
+   * Home's dock keeps them while a failed send still holds them, over the
+   * setup guide it opened itself, and across the switch a failed row's retry
+   * makes to its own computer and back.
+   */
+  holdStaged?: (reason: 'blur' | 'switch') => boolean
 ): AttachmentUploads {
   const [attachments, setAttachments] = useState<PendingAttachment[]>([]);
   const attachmentsRef = useRef<PendingAttachment[]>([]);
@@ -221,13 +230,22 @@ export function useAttachmentUploads(
     commit([]);
   }, [commit, ownership]);
 
-  useFocusEffect(useCallback(() => () => clearAttachments(), [clearAttachments]));
+  useFocusEffect(
+    useCallback(
+      () => () => {
+        // Dictation temporarily covers the same composer; it is not a new destination.
+        if (useVoiceInput.getState().request || holdStaged?.('blur')) return;
+        clearAttachments();
+      },
+      [clearAttachments, holdStaged]
+    )
+  );
   useEffect(
     () =>
       useGatewayConnectionStore.subscribe((next, previous) => {
-        if (next.record !== previous.record) clearAttachments();
+        if (next.record !== previous.record && !holdStaged?.('switch')) clearAttachments();
       }),
-    [clearAttachments]
+    [clearAttachments, holdStaged]
   );
 
   const awaitUploads = useCallback(

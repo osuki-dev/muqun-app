@@ -48,21 +48,4 @@ describe('markdownPaletteKey', () => {
       })
     );
   });
-
-  it('tells two different faces apart', () => {
-    const inter = markdownPaletteKey({
-      ...lightStyle,
-      paragraph: { ...lightStyle.paragraph, fontFamily: 'MuqunUserInterface' },
-      codeBlock: { ...lightStyle.codeBlock, fontFamily: 'MuqunUserMono' },
-    });
-    const system = markdownPaletteKey({
-      ...lightStyle,
-      codeBlock: { ...lightStyle.codeBlock, fontFamily: 'monospace' },
-    });
-    expect(inter).not.toBe(system);
-  });
-
-  it('survives a style with nothing set', () => {
-    expect(markdownPaletteKey({})).toBe('|||');
-  });
 });

@@ -1,79 +1,10 @@
-// Terminal core micro-benchmark (bun run scripts/bench-terminal.ts).
-//
-// Six scenarios; 1-3 run on a 2000-row snapshot with CJK, colour and truecolor:
-//   1. full parse       -- cold parse of the whole snapshot into a frame
-//   2. append one line  -- one write + frame() on a warm, pre-filled emulator
-//   3. full-screen scroll -- one scrolling line feed + frame() at the bottom
-//   4. real panes       -- recorded gateway output, both parse paths (see below)
-//   5. block recording  -- card #561's planning half on synthetic refreshes
-//   6. streaming scroll -- card #626: a full window sliding a row at a time
-//
-// Scenarios 2 and 3 are the ones card #560 targets: on a persistent emulator
-// they must cost O(changed rows), not O(whole screen). The numbers below are the
-// wall-clock baselines measured on this machine (bun 1.4, Apple Silicon) against
-// the pre-#560 object-tree model, kept so the typed-array rewrite can be compared
-// against them:
-//
-//   BASELINE (object-tree screen model, pre-#560):
-//     full parse:            29.34 ms/op
-//     append one line:        5.04 ms/op
-//     full-screen scroll:     5.91 ms/op
-//
-//   AFTER (typed-array grid + ring scroll + per-slot line cache):
-//     full parse:            29.42 ms/op   (unchanged: dominated by grapheme
-//                                           segmentation + VT parsing, not the
-//                                           cell model)
-//     append one line:        0.04 ms/op   (~130x: only the changed row is
-//                                           re-materialised; the rest of the
-//                                           frame is reused from the line cache)
-//     full-screen scroll:     0.29 ms/op   (~20x: scroll is an O(1) ring head
-//                                           rotation; the residual cost is
-//                                           frame()'s O(rows) trailing-blank scan
-//                                           once the screen fills with blank rows)
-//
-//   AFTER #572 (flat snapshot fast path):
-//     full parse:             7.05 ms/op   (~4.2x: the synthetic snapshot is
-//                                           flat -- text, line ends and SGR --
-//                                           so it now skips the VT state machine
-//                                           and segments only the CJK lines)
-//     append one line:        0.04 ms/op   (unchanged: a warm emulator, not a
-//     full-screen scroll:     0.28 ms/op    snapshot parse; the path is not used)
-//
-//   WITH #561 (per-row signature in buildLine + block planning):
-//     plan blocks:            0.008 ms/op  (folding 2000 row signatures into 32
-//                                           block keys, once per refresh)
-//     unchanged output:       0 of 32 blocks re-recorded (signatures survive the
-//                                           fresh emulator a refresh parses into)
-//     append one line:        1 of 32
-//     scroll by one row:     32 of 32      (every row moved, so under fixed
-//                                           slices every block was different
-//                                           content -- which made the cache
-//                                           useless for the whole of a stream)
-//
-//   AFTER #626 (content-cut blocks, content-keyed, drawn by translation):
-//     plan blocks:            0.011 ms/op  (the boundary scan costs a mix and a
-//                                           mask per row on top of the fold)
-//     scroll by one row:      0 of 31      (the head re-uses its recording an
-//                                           `overhang` rows higher; the tail was
-//                                           already recorded a frame earlier)
-//     streaming scroll:      19 of 105 blocks, 379 of 4750 rows, over 19
-//                                           single-row scrolls of a 250-row
-//                                           window. Against the release/2.0
-//                                           planner, the same scenario measured
-//                                           76 of 76 blocks and 4750 of 4750
-//                                           rows: the cache never hit once.
-//                                           What is left is one block per
-//                                           scroll -- the tail, which holds the
-//                                           row that just arrived.
-//
-// Scenario 4 measures the flat fast path on real panes rather than a synthetic
-// snapshot: set MUQUN_TERMINAL_FIXTURES to a directory of `pane-*.json` gateway
-// read responses and it parses each one both ways. The fixtures are private
-// captures and are never committed, so the scenario is skipped without it.
-//
-//   REAL PANES (five captures, 111 B .. 113 kB):
-//     full emulator:  45.0 ms summed over the five
-//     flat fast path: 12.8 ms summed over the five   (3.53x, per-pane 3.3-5.0x)
+// Run with `bun scripts/bench-terminal.ts` to measure terminal parsing, warm
+// updates, chunk planning, streaming redraws, and retained-history costs.
+// Synthetic snapshots include CJK, ANSI colours, and truecolour at up to 2000 rows.
+// Set MUQUN_TERMINAL_FIXTURES to a private directory of `pane-*.json` Gateway
+// responses to compare both parser paths on captured output; otherwise it skips.
+// Compare revisions on the same host and Bun version. This measures JavaScript
+// core work, not native Skia rendering, device frame rate, or live Gateway delivery.
 
 import {
   __recordedChunkCount,

@@ -32,7 +32,7 @@ export function SettingsHomeLayoutSheet({ onClose }: { onClose: () => void }) {
     {
       id: 'classic',
       title: t`Classic`,
-      detail: t`Familiar server cards and quick actions.`,
+      detail: t`Familiar computer cards and quick actions.`,
     },
     {
       id: 'editorial',

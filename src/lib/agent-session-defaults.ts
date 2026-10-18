@@ -203,7 +203,7 @@ export function unsupportedModelRefs(sessions: readonly AgentSessionInfo[]): Set
  * preference, though -- it is a failed turn waiting to happen -- so it falls
  * through to the next rung rather than ending the chain.
  */
-function usableCatalogDefaultModel(
+export function usableCatalogDefaultModel(
   ref: ModelRef | undefined,
   refused: ReadonlySet<string>
 ): ModelRef | undefined {

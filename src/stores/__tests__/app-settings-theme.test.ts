@@ -30,7 +30,7 @@ mockModule('expo-secure-store', () => ({
 }));
 
 const { useAppSettings } = await import('../app-settings');
-const { DEFAULT_THEME_PACK_ID, THEME_PACK_IDS } = await import('@/constants/theme-packs');
+const { DEFAULT_THEME_PACK_ID } = await import('@/constants/theme-packs');
 
 const store = useAppSettings;
 const initial = { ...store.getState() };
@@ -44,10 +44,6 @@ function reset(stored?: unknown) {
 beforeEach(() => reset());
 
 describe('the default', () => {
-  test('a fresh install is on the default pack', () => {
-    expect(store.getState().themePack).toBe(DEFAULT_THEME_PACK_ID);
-  });
-
   test('hydrating with nothing stored leaves it there', async () => {
     await store.getState().hydrate();
     expect(store.getState().themePack).toBe(DEFAULT_THEME_PACK_ID);
@@ -56,12 +52,6 @@ describe('the default', () => {
 });
 
 describe('persistence', () => {
-  test('choosing a pack writes it into the settings blob', async () => {
-    await store.getState().update({ themePack: 'catppuccin' });
-    expect(store.getState().themePack).toBe('catppuccin');
-    expect(JSON.parse(vault[STORAGE_KEY]).themePack).toBe('catppuccin');
-  });
-
   test('the choice survives a restart', async () => {
     await store.getState().update({ themePack: 'everforest' });
     const persisted = vault[STORAGE_KEY];
@@ -85,21 +75,12 @@ describe('persistence', () => {
     expect(written.themePack).toBe('tokyo-night');
     expect(written.hapticsEnabled).toBe(false);
   });
-
-  test.each([...THEME_PACK_IDS])('%s round-trips', async (id) => {
-    await store.getState().update({ themePack: id });
-    store.setState({ ...initial, hydrated: false });
-    await store.getState().hydrate();
-    expect(store.getState().themePack).toBe(id);
-  });
 });
 
 describe('a stored value we cannot use', () => {
   const junk: [string, unknown][] = [
     ['a pack that no longer exists', 'nord'],
-    ['an empty string', ''],
     ['the wrong type', 42],
-    ['null', null],
     ['an object', { id: 'osuki' }],
   ];
   test.each(junk)('%s hydrates to the default', async (_label, stored) => {

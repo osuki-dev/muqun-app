@@ -1,7 +1,7 @@
 import { useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useThemeTokens } from '@osuki-dev/ui';
-import { ChevronRight, Server, SquareTerminal } from 'lucide-react-native';
+import { ChevronRight, Monitor, SquareTerminal } from 'lucide-react-native';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { PressableScale } from '@/components/pressable-scale';
@@ -10,18 +10,25 @@ import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useHomeScenePlate } from '@/hooks/use-home-scene-plate';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { reachabilityDescription } from '@/i18n/labels';
+import { connectionStatusDescription } from '@/i18n/labels';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { serverIdsNeedingAddress } from '@/lib/server-address';
-import { resolveServerReachability, type ActiveServerConnection } from '@/lib/server-reachability';
+import { resolveConnectionStatus, type ActiveServerConnection } from '@/lib/server-reachability';
 import type { SshHostRecord } from '@/lib/ssh-hosts';
+import { activeTaskCount } from '@/lib/server-tasks-state';
+import { hasTaskLedger } from '@/lib/task-ledger';
+import { useGatewayConnectionStore } from '@/stores/gateway-connection';
+import { useServerCapabilities } from '@/stores/server-capabilities';
+import { useServerChannels } from '@/stores/server-channels';
 import { useServerReachability } from '@/stores/server-reachability';
+import { useServerTasksStore } from '@/stores/server-tasks';
 
 /** Saved destinations, independent of task status and the selected Home layout. */
 export function HomeConnections({
   servers,
   hosts,
   onOpenServer,
+  onSelectServer,
   onOpenHost,
   onManage,
   activeConnection,
@@ -31,6 +38,11 @@ export function HomeConnections({
   servers: readonly GatewayRecord[];
   hosts: readonly SshHostRecord[];
   onOpenServer: (serverId: string) => void;
+  /**
+   * When given, a tap makes the computer the composer's target and a long
+   * press opens it; without it (the Pad rail) a tap opens it, as before.
+   */
+  onSelectServer?: (serverId: string) => void;
   onOpenHost: (hostId: string) => void;
   onManage: () => void;
   activeConnection?: ActiveServerConnection;
@@ -57,6 +69,7 @@ export function HomeConnections({
               showAddress={addresses.has(server.serverId)}
               hasSeparator={index < servers.length + hosts.length - 1}
               onOpen={onOpenServer}
+              onSelect={onSelectServer}
               activeConnection={activeConnection}
               nowMs={nowMs}
             />
@@ -102,7 +115,7 @@ export function HomeConnections({
       <View style={hasConnections ? undefined : emptyPlate}>
         {hasConnections ? null : (
           <Text variant="bodySmall" color={theme.colors.textMuted}>
-            {t`Add a gateway or an SSH host to start working.`}
+            {t`Add a computer or an SSH host to start working.`}
           </Text>
         )}
         <PressableScale
@@ -136,6 +149,7 @@ function GatewayConnectionRow({
   showAddress,
   hasSeparator,
   onOpen,
+  onSelect,
   activeConnection,
   nowMs,
 }: {
@@ -143,21 +157,51 @@ function GatewayConnectionRow({
   showAddress: boolean;
   hasSeparator: boolean;
   onOpen: (serverId: string) => void;
+  onSelect?: (serverId: string) => void;
   activeConnection?: ActiveServerConnection;
   nowMs?: number;
 }) {
+  const { t } = useLingui();
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
   const probe = useServerReachability((state) => state.probes[server.serverId]);
-  const reachability = resolveServerReachability(server.serverId, probe, activeConnection, nowMs);
-  const status = _(reachabilityDescription[reachability]);
+  // Steps when a probe goes stale, so the row stops saying Online on time.
+  const freshnessNowMs = useServerReachability((state) => state.freshnessNowMs);
+  // The live channels count as much as the probe: a computer streaming a
+  // session right now is online whatever a 45-second-old probe says.
+  const socket = useServerChannels((state) => state.sockets[server.serverId]);
+  const stream = useServerChannels((state) => state.streams[server.serverId]);
+  const selected = useGatewayConnectionStore((state) => state.record?.serverId === server.serverId);
+  const connection = resolveConnectionStatus({
+    serverId: server.serverId,
+    probe,
+    activeConnection,
+    channels: { socket, stream },
+    selected,
+    nowMs: Math.max(nowMs ?? 0, freshnessNowMs),
+  });
+  const status = _(connectionStatusDescription[connection]);
   return (
     <PressableScale
       testID={`home-connection-gateway-${server.serverId}`}
       accessibilityRole="button"
       accessibilityLabel={`${server.label}, ${status}`}
-      onPress={() => onOpen(server.serverId)}
+      accessibilityHint={
+        onSelect ? t`Sends your next goal here. Long press to open it.` : undefined
+      }
+      onPress={() => (onSelect ? onSelect(server.serverId) : onOpen(server.serverId))}
+      onLongPress={onSelect ? () => onOpen(server.serverId) : undefined}
+      // The long press as a named action, so a screen reader can reach it
+      // without performing the gesture.
+      accessibilityActions={onSelect ? [{ name: 'longpress', label: t`Open` }] : undefined}
+      onAccessibilityAction={
+        onSelect
+          ? (event) => {
+              if (event.nativeEvent.actionName === 'longpress') onOpen(server.serverId);
+            }
+          : undefined
+      }
       style={[
         styles.row,
         hasSeparator && {
@@ -168,7 +212,7 @@ function GatewayConnectionRow({
           backgroundColor: background(theme.colors.surface),
         },
       ]}>
-      <Server size={21} color={theme.colors.primary} />
+      <Monitor size={21} color={theme.colors.primary} />
       <View style={styles.copy}>
         <Text weight="semibold" variant="bodySmall" numberOfLines={2}>
           {server.label}
@@ -181,6 +225,7 @@ function GatewayConnectionRow({
             {server.url}
           </Text>
         ) : null}
+        <GatewayTasksPill serverId={server.serverId} />
       </View>
       <ThemeIcon
         name="home.arrow"
@@ -192,7 +237,41 @@ function GatewayConnectionRow({
   );
 }
 
+/**
+ * How many tasks the selected server's ledger has open, as last seen.
+ *
+ * A store read only: Home does not fetch the ledger. The pill appears once the
+ * tasks sheet or a socket frame has filled the store, only for the selected
+ * server, and only on a gateway that keeps a ledger.
+ */
+function GatewayTasksPill({ serverId }: { serverId: string }) {
+  const { t } = useLingui();
+  const profile = useAppearanceProfile();
+  const theme = useThemeTokens();
+  const background = useSurfaceBackground();
+  const selected = useGatewayConnectionStore((state) => state.record?.serverId === serverId);
+  const ledger = useServerCapabilities((state) => hasTaskLedger(state.byServer[serverId]));
+  const count = useServerTasksStore((state) => activeTaskCount(state.index[serverId]?.tasks ?? []));
+  if (!selected || !ledger || count === 0) return null;
+  return (
+    <View
+      testID={`home-connection-tasks-${serverId}`}
+      style={[
+        styles.pill,
+        {
+          borderRadius: profile.chrome.control,
+          backgroundColor: background(theme.colors.primarySubtle),
+        },
+      ]}>
+      <Text variant="caption" weight="semibold" color={theme.colors.primary}>
+        {t`${count} in progress`}
+      </Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  pill: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2 },
   list: { minWidth: 0 },
   connectionGroup: { minWidth: 0, overflow: 'hidden' },
   row: {

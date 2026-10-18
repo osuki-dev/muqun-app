@@ -8,6 +8,16 @@ import { ENCRYPTED_SSE_EVENT, EncryptedEventStreamDecryptor } from '@/lib/sse-re
 import { streamRecordCrypto } from '@/lib/gateway-transport';
 import { encryptedEventStreamRequest, gatewayUsesEncryptedTransport } from '@/lib/gateway-client';
 import { rethrow } from '@/lib/compiler-safe-control-flow';
+import { onNetworkChange } from '@/lib/network-events';
+import { STREAM_WATCHDOG_TICK_MS, streamIsStalled } from '@/lib/stream-watchdog';
+import {
+  APPROVAL_EVENTS,
+  paneEventRole,
+  SUBSCRIBED_EVENTS,
+  type ApprovalEventName,
+} from '@/lib/pane-event-names';
+
+export type { ApprovalEventName };
 
 /**
  * A live event feed for one session, replacing the output poll.
@@ -20,7 +30,9 @@ import { rethrow } from '@/lib/compiler-safe-control-flow';
  *    which is how we read output only when it actually changed instead of every
  *    1.2 s regardless.
  *  - structural events -- a workspace, tab or pane appeared, vanished, was
- *    renamed, or an agent attached. These change the navigator, not the output.
+ *    renamed, an agent attached, or a pane was resized (`layout_updated`).
+ *    These change the navigator and the panes' sizes, not the output. The
+ *    names and their roles live in `lib/pane-event-names`.
  *
  * An encrypted-transport record gets the same stream over the same route; the
  * connection is opened by a sealed request envelope and every event arrives as
@@ -32,36 +44,13 @@ import { rethrow } from '@/lib/compiler-safe-control-flow';
  * A dropped connection is normal on a phone: the OS suspends the socket in the
  * background. The caller must do a full read on every (re)connect, since any
  * event during the gap is lost -- the stream has no replay.
+ *
+ * A *silent* connection is the harder case: half-open after a network change,
+ * it errors never and delivers nothing. The gateway sends a keep-alive every
+ * 15 s, so a stream that hears nothing at all for `STREAM_IDLE_LIMIT_MS` is
+ * aborted and reopened through the same retry path; a network change does the
+ * same at once, with the retry delay reset.
  */
-const OUTPUT_EVENTS = ['pane.updated'];
-
-/**
- * An agent blocking on a permission menu is the one thing a client cannot
- * discover by watching output go by, so the gateway publishes it as its own
- * event rather than as pane churn. A gateway that has never heard of these
- * names simply never matches them, which is what makes asking for them safe.
- */
-const APPROVAL_EVENTS = ['approval.pending', 'approval.resolved'] as const;
-
-export type ApprovalEventName = (typeof APPROVAL_EVENTS)[number];
-
-const STRUCTURE_EVENTS = [
-  'pane.created',
-  'pane.closed',
-  'pane.moved',
-  'pane.exited',
-  'pane.agent_detected',
-  'pane.agent_status_changed',
-  'tab.created',
-  'tab.closed',
-  'tab.renamed',
-  'tab.moved',
-  'workspace.created',
-  'workspace.closed',
-  'workspace.renamed',
-  'workspace.focused',
-];
-
 type PaneEventHandlers = {
   /** A pane printed. `revision` lets the caller ignore a repeat of what it has. */
   onPaneRevision: (paneId: string, revision: number) => void;
@@ -74,6 +63,10 @@ type PaneEventHandlers = {
   onPaneOutput: (paneId: string, revision: number, text: string) => void;
   /** The set of workspaces, tabs, panes or agents changed. */
   onStructureChanged: () => void;
+  /** `pane.closed` named the pane that went: it is never read again. */
+  onPaneClosed?: (paneId: string) => void;
+  /** tmux's layout fingerprint moved: maybe a resize, maybe only title churn. */
+  onLayoutChanged?: () => void;
   /** Connected or reconnected. Everything since the last event is unknown. */
   onConnected: () => void;
   /**
@@ -133,7 +126,7 @@ export function usePaneEvents(
       return () => {};
     }
 
-    const types = [...OUTPUT_EVENTS, ...STRUCTURE_EVENTS, ...APPROVAL_EVENTS].join(',');
+    const types = SUBSCRIBED_EVENTS.join(',');
     const base = gatewayUrl.replace(/\/$/, '');
     const params = new URLSearchParams({ types });
     // Ask the gateway to inline this pane's output into its update events. A
@@ -146,12 +139,15 @@ export function usePaneEvents(
     }
     const url = `${base}/api/sessions/${encodeURIComponent(sessionId)}/events?${params.toString()}`;
 
-    const outputNames = new Set(OUTPUT_EVENTS.map((name) => name.replace('.', '_')));
     const approvalNames = new Set<string>(APPROVAL_EVENTS);
     let cancelled = false;
     let controller: AbortController | null = null;
     let retryTimer: ReturnType<typeof setTimeout> | undefined;
     let retryAttempt = 0;
+    /** When the current connection last delivered anything, keep-alives included. */
+    let lastHeardAt = 0;
+    /** Set while a connection is open; the watchdog and a network change act on it. */
+    let restart: (() => void) | null = null;
 
     const handleHerdrEvent = (data: string) => {
       let payload: HerdrEventPayload;
@@ -162,7 +158,8 @@ export function usePaneEvents(
       }
       const name = payload.event;
       if (!name) return;
-      if (outputNames.has(name)) {
+      const role = paneEventRole(name);
+      if (role === 'output') {
         const pane = payload.data?.pane;
         if (pane?.pane_id) {
           const revision = pane.revision ?? 0;
@@ -176,8 +173,16 @@ export function usePaneEvents(
         }
         return;
       }
-      // Anything else we subscribed to is structural.
-      handlersRef.current.onStructureChanged();
+      // A structural change: the pane list is read again.
+      if (role === 'structure') {
+        const closed = payload.data?.pane?.pane_id;
+        if (closed && name.replace(/\./g, '_') === 'pane_closed') {
+          handlersRef.current.onPaneClosed?.(closed);
+        }
+        handlersRef.current.onStructureChanged();
+      }
+      // The layout fingerprint: the caller checks the open pane's size first.
+      if (role === 'layout') handlersRef.current.onLayoutChanged?.();
     };
 
     // Approvals are the gateway's own events, not forwarded Herdr lines, so
@@ -200,23 +205,30 @@ export function usePaneEvents(
     };
 
     const connect = async (): Promise<void> => {
-      controller = new AbortController();
+      retryTimer = undefined;
+      const attempt = new AbortController();
+      controller = attempt;
+      /** Torn down on purpose to reopen at once, not a failure to back off from. */
+      let restarting = false;
       const decoder = new TextDecoder();
       const parser = new ServerSentEventParser();
       // Sealed fresh for every attempt: the gateway replay-caches the request
       // envelope's nonce, and the per-stream key is bound to it, so a
       // reconnect can never be answered by a recording of the last stream.
-      const sealed = gatewayUsesEncryptedTransport(token) ? encryptedEventStreamRequest(url) : null;
-      const decryptor = sealed
-        ? new EncryptedEventStreamDecryptor({
-            crypto: streamRecordCrypto,
-            material: sealed.material,
-            requestAad: sealed.requestAad,
-            requestNonce: sealed.requestNonce,
-          })
-        : null;
-
       try {
+        const sealed = gatewayUsesEncryptedTransport(token)
+          ? await encryptedEventStreamRequest(url)
+          : null;
+        const decryptor = sealed
+          ? new EncryptedEventStreamDecryptor({
+              crypto: streamRecordCrypto,
+              material: sealed.material,
+              requestAad: sealed.requestAad,
+              requestNonce: sealed.requestNonce,
+            })
+          : null;
+
+        if (attempt.signal.aborted) return;
         const response = await nitroFetch(url, {
           headers: {
             // Read at connect time rather than captured once: the stream is
@@ -251,11 +263,20 @@ export function usePaneEvents(
         if (!reader) rethrow(new Error('Event stream has no readable body'));
 
         retryAttempt = 0;
+        lastHeardAt = Date.now();
+        restart = () => {
+          restart = null;
+          restarting = true;
+          attempt.abort();
+          // An abort does not reliably wake a read parked on a dead socket.
+          void reader.cancel().catch(() => {});
+        };
         handlersRef.current.onConnected();
 
         while (!cancelled) {
           const { done, value } = await reader.read();
           if (done) break;
+          lastHeardAt = Date.now();
           if (!value) continue;
 
           const text = decoder.decode(value, { stream: true });
@@ -275,25 +296,53 @@ export function usePaneEvents(
           }
         }
       } catch (error) {
-        if (cancelled || (error instanceof Error && error.name === 'AbortError')) return;
+        const aborted = error instanceof Error && error.name === 'AbortError';
+        if (cancelled || (aborted && !restarting)) return;
         // A record that failed to open leaves a healthy socket behind it, and
         // the retry below opens a second one. One connection at a time: the
         // poisoned stream is torn down before its replacement is scheduled.
-        controller?.abort();
+        attempt.abort();
       }
+      restart = null;
 
       if (cancelled) return;
       handlersRef.current.onDisconnected?.();
+      if (restarting) {
+        // Stalled or rerouted: reopen now, and let the reopen's full read
+        // (`onConnected`) bump the pane rather than waiting for the poll.
+        void connect();
+        return;
+      }
       const delay = Math.min(1000 * 2 ** retryAttempt, MAX_RECONNECT_DELAY_MS);
       retryAttempt += 1;
       retryTimer = setTimeout(() => void connect(), delay);
     };
+
+    const watchdog = setInterval(() => {
+      if (restart && streamIsStalled(lastHeardAt, Date.now())) restart();
+    }, STREAM_WATCHDOG_TICK_MS);
+
+    const releaseNetwork = onNetworkChange(() => {
+      retryAttempt = 0;
+      if (restart) {
+        // The open stream rides the old route; drop it and come straight back.
+        restart();
+        return;
+      }
+      if (retryTimer === undefined) return;
+      clearTimeout(retryTimer);
+      retryTimer = undefined;
+      void connect();
+    });
 
     void connect();
 
     return () => {
       cancelled = true;
       clearTimeout(retryTimer);
+      clearInterval(watchdog);
+      releaseNetwork();
+      restart = null;
       controller?.abort();
     };
   }, [enabled, gatewayUrl, restartKey, sessionId, streamPaneId, token]);

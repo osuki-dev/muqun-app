@@ -240,8 +240,8 @@ describe('naming a decision', () => {
 describe('an approval push payload', () => {
   const push = {
     type: 'approval.pending',
-    url: '/servers/mac-mini',
-    server_id: 'mac-mini',
+    url: '/servers/tower',
+    server_id: 'tower',
     session_id: 'default',
     pane_id: 'pane-7',
     categoryId: 'approval',
@@ -255,7 +255,7 @@ describe('an approval push payload', () => {
 
   test('carries everything an action needs to answer without opening a screen', () => {
     expect(approvalPushTarget(push)).toEqual({
-      serverId: 'mac-mini',
+      serverId: 'tower',
       sessionId: 'default',
       paneId: 'pane-7',
       fingerprint: 'a1b2c3d4e5f60718',
@@ -276,7 +276,7 @@ describe('an approval push payload', () => {
   });
 
   test('an ordinary push is not an approval', () => {
-    expect(approvalPushTarget({ type: 'agent.blocked', server_id: 'mac-mini' })).toBeNull();
+    expect(approvalPushTarget({ type: 'agent.blocked', server_id: 'tower' })).toBeNull();
     expect(approvalPushTarget(undefined)).toBeNull();
   });
 

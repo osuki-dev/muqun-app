@@ -14,8 +14,8 @@ import {
 
 /** The inventory as 2.0.1 gives it: the project root first, with no strategy. */
 const INVENTORY = [
-  { directory: '/home/ryu/repo' },
-  { directory: '/home/ryu/.local/share/opencode/worktree/016d5f/probe', strategy: 'git' },
+  { directory: '/home/me/repo' },
+  { directory: '/home/me/.local/share/opencode/worktree/016d5f/probe', strategy: 'git' },
 ];
 
 describe('parseWorktreeDirectory', () => {
@@ -89,18 +89,18 @@ describe('parseCreatedWorktree', () => {
 
 describe('worktreeDisplayName and sameDirectory', () => {
   test('the name is the last segment, trailing separator or not', () => {
-    expect(worktreeDisplayName('/home/ryu/.local/share/opencode/worktree/016d5f/probe')).toBe(
+    expect(worktreeDisplayName('/home/me/.local/share/opencode/worktree/016d5f/probe')).toBe(
       'probe'
     );
-    expect(worktreeDisplayName('/home/ryu/repo/')).toBe('repo');
+    expect(worktreeDisplayName('/home/me/repo/')).toBe('repo');
     expect(worktreeDisplayName('probe')).toBe('probe');
     expect(worktreeDisplayName('/')).toBe('/');
     expect(worktreeDisplayName(undefined)).toBe('');
   });
 
   test('a trailing separator does not make two directories', () => {
-    expect(sameDirectory('/home/ryu/repo', '/home/ryu/repo/')).toBe(true);
-    expect(sameDirectory('/home/ryu/repo', '/home/ryu/repo2')).toBe(false);
+    expect(sameDirectory('/home/me/repo', '/home/me/repo/')).toBe(true);
+    expect(sameDirectory('/home/me/repo', '/home/me/repo2')).toBe(false);
     expect(sameDirectory(undefined, undefined)).toBe(false);
     expect(sameDirectory('', '')).toBe(false);
   });
@@ -108,30 +108,30 @@ describe('worktreeDisplayName and sameDirectory', () => {
 
 describe('sessionWorktreeName', () => {
   test('a session in the project root is in no worktree, however deep the path', () => {
-    expect(sessionWorktreeName('/home/ryu/repo', '/home/ryu/repo', INVENTORY)).toBeUndefined();
+    expect(sessionWorktreeName('/home/me/repo', '/home/me/repo', INVENTORY)).toBeUndefined();
     // The list decides it: the root is listed and carries no strategy, so even
     // a project directory the caller got wrong cannot turn it into a worktree.
-    expect(sessionWorktreeName('/home/ryu/repo', '/elsewhere', INVENTORY)).toBeUndefined();
+    expect(sessionWorktreeName('/home/me/repo', '/elsewhere', INVENTORY)).toBeUndefined();
   });
 
   test('a session in a managed worktree is named by its basename', () => {
     expect(
       sessionWorktreeName(
-        '/home/ryu/.local/share/opencode/worktree/016d5f/probe',
-        '/home/ryu/repo',
+        '/home/me/.local/share/opencode/worktree/016d5f/probe',
+        '/home/me/repo',
         INVENTORY
       )
     ).toBe('probe');
   });
 
   test('with no inventory loaded, anything but the project directory is a worktree', () => {
-    expect(sessionWorktreeName('/home/ryu/wt/probe', '/home/ryu/repo')).toBe('probe');
-    expect(sessionWorktreeName('/home/ryu/repo/', '/home/ryu/repo')).toBeUndefined();
+    expect(sessionWorktreeName('/home/me/wt/probe', '/home/me/repo')).toBe('probe');
+    expect(sessionWorktreeName('/home/me/repo/', '/home/me/repo')).toBeUndefined();
   });
 
   test('says nothing when there is nothing to compare against', () => {
-    expect(sessionWorktreeName(undefined, '/home/ryu/repo', INVENTORY)).toBeUndefined();
-    expect(sessionWorktreeName('/home/ryu/wt/probe', undefined)).toBeUndefined();
+    expect(sessionWorktreeName(undefined, '/home/me/repo', INVENTORY)).toBeUndefined();
+    expect(sessionWorktreeName('/home/me/wt/probe', undefined)).toBeUndefined();
   });
 });
 
@@ -157,7 +157,7 @@ describe('isWorktreeForceRequired', () => {
       'Failed to remove worktree: 502 {"error":{"code":"agent_engine_error",' +
       '"message":"Agent request failed: HTTP 400 Bad Request: ' +
       '{\\"name\\":\\"WorktreeError\\",\\"data\\":{\\"message\\":\\"fatal: ' +
-      "'/home/ryu/.local/share/opencode/worktree/fcb725/probe' contains modified " +
+      "'/home/me/.local/share/opencode/worktree/fcb725/probe' contains modified " +
       'or untracked files, use --force to delete it\\",\\"forceRequired\\":true}}"}}';
     expect(isWorktreeForceRequired(new Error(body))).toBe(true);
   });
@@ -186,7 +186,7 @@ describe('agent.worktree.changed', () => {
     const event = parseAgentDomainEvent('agent.worktree.changed', {
       type: 'agent.worktree.changed',
       state: 'updated',
-      directory: '/home/ryu/repo',
+      directory: '/home/me/repo',
       project_id: '016d5ff1',
     });
     expect(event).toEqual({
@@ -194,7 +194,7 @@ describe('agent.worktree.changed', () => {
       asid: '',
       seq: 0,
       state: 'updated',
-      directory: '/home/ryu/repo',
+      directory: '/home/me/repo',
       project_id: '016d5ff1',
     });
   });
@@ -202,7 +202,7 @@ describe('agent.worktree.changed', () => {
   test('`ready` describes what was prepared', () => {
     const event = parseAgentDomainEvent('agent.worktree.changed', {
       state: 'ready',
-      directory: '/home/ryu/repo',
+      directory: '/home/me/repo',
       name: 'probe',
       branch: 'main',
     });
@@ -215,7 +215,7 @@ describe('agent.worktree.changed', () => {
   test('`failed` carries the message, and no other state does', () => {
     const failed = parseAgentDomainEvent('agent.worktree.changed', {
       state: 'failed',
-      directory: '/home/ryu/repo',
+      directory: '/home/me/repo',
       error: 'fatal: invalid reference: nope',
     });
     expect(failed && failed.type === 'agent.worktree.changed' ? failed.error : undefined).toBe(

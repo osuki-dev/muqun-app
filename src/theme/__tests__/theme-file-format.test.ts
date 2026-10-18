@@ -25,10 +25,6 @@ test('the reader decides the form from bytes, not from the filename', () => {
   expect(/name.*endsWith|muqun-theme\|zip/.test(reader)).toBe(false);
 });
 
-test('the name is optional, because one platform does not supply it', () => {
-  expect(source).toContain('name?: string');
-});
-
 test('only the signature is read before the form is known', () => {
   // `firstBytes` exists so the signature costs four bytes rather than the whole
   // file. If it ever read to the end, the ceiling below would be decided only

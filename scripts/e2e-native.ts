@@ -96,6 +96,8 @@ type Node = {
   value?: string;
   selected?: boolean;
   checked?: boolean;
+  /** Android's native snapshot visibility; iOS may omit it. */
+  visibleToUser?: boolean;
   bundleId?: string;
   rect?: { x: number; y: number; width: number; height: number };
 };
@@ -770,6 +772,69 @@ export class NativeRunner {
       if (!active || !line.trim() || line.trim().startsWith('#') || line.startsWith('context '))
         continue;
       const args = tokenize(line).map((arg) => interpolate(arg, env));
+      if (args.includes('--allow-microphone-prompt')) {
+        args.splice(args.indexOf('--allow-microphone-prompt'), 1);
+        if (args[0] !== 'wait' || !/^id="voice-visual-(?:recording|error)"$/.test(args[1] ?? ''))
+          throw new Error('Microphone prompt handling requires an explicit voice-state wait');
+        const timeout = Number(args[2] ?? 15000);
+        if (!Number.isFinite(timeout) || timeout <= 0)
+          throw new Error('Microphone prompt wait requires a positive timeout');
+        const deadline = Date.now() + timeout;
+        let accepted = false;
+        let arrived = false;
+        while (Date.now() < deadline) {
+          const capture = await this.readCapture();
+          const status = await this.invoke(['alert', 'get']);
+          if (status.kind !== 'alertStatus' || status.alert === undefined)
+            throw new Error('Invalid microphone alert status');
+          const alert = status.alert as {
+            title?: string;
+            message?: string;
+            source?: string;
+            packageName?: string;
+            buttons?: string[];
+          } | null;
+          if (alert) {
+            const copy = `${alert.title ?? ''} ${alert.message ?? ''}`;
+            if (
+              accepted ||
+              !/\bMuqun\b/i.test(copy) ||
+              !/microphone|record audio/i.test(copy) ||
+              /camera|location|notifications?|contacts/i.test(copy) ||
+              (capture.androidSnapshot &&
+                (alert.source !== 'permission' ||
+                  !/^com\.(?:google\.)?android\.permissioncontroller$/.test(
+                    alert.packageName ?? ''
+                  ))) ||
+              !alert.buttons?.some((button) =>
+                /^(?:while using the app|only this time|allow|ok)$/i.test(button)
+              )
+            )
+              throw new Error('Unexpected alert during the explicit microphone request');
+            await this.invoke(['alert', 'accept']);
+            accepted = true;
+            await this.invoke(['wait', 'stable', '300', '5000']);
+            const after = await this.invoke(['alert', 'get']);
+            if (after.kind !== 'alertStatus' || after.alert !== null)
+              throw new Error('Microphone permission alert did not dismiss');
+          } else if (
+            snapshotNodes(capture).some(
+              (node) => exactSelectorMatches(node, args[1]) && node.visibleToUser !== false
+            )
+          ) {
+            // Retain the native state assertion after the permission branch.
+            await this.invoke(args);
+            arrived = true;
+            break;
+          }
+          if (Date.now() >= deadline)
+            throw new Error(`Voice state did not arrive after microphone request: ${args[1]}`);
+          await new Promise((resolve) => setTimeout(resolve, 200));
+        }
+        if (!arrived)
+          throw new Error(`Voice state did not arrive after microphone request: ${args[1]}`);
+        continue;
+      }
       // Visibility means at least one visible exact match, not unique identity.
       // Native is visible uses readUnique and mistakes duplicate headings for
       // absence; exists + visible=true uses the identical visibility predicate.
@@ -917,10 +982,12 @@ export class NativeRunner {
           }
         }
         const grabber = guardedNodes?.find((node) => node.label === 'Sheet Grabber');
-        if (grabber?.rect) {
+        if (grabber?.rect && guardedNodes) {
           const x = Math.round(grabber.rect.x + grabber.rect.width / 2);
           const y = Math.round(grabber.rect.y + grabber.rect.height / 2);
-          await this.invoke(['gesture', 'pan', String(x), String(y), '0', '500', '350']);
+          const viewport = appViewport(guardedNodes);
+          const distance = Math.max(1, Math.min(500, viewport.y + viewport.height - y - 24));
+          await this.invoke(['gesture', 'pan', String(x), String(y), '0', String(distance), '350']);
           continue;
         }
         const goBack = guardedNodes?.find(
@@ -956,17 +1023,17 @@ export class NativeRunner {
               result = await this.invoke(retry);
             }
           } else {
-            // Right after a relaunch the accessibility backend can stall before
-            // it has read a single tree: agent-device reports `captureStalled`
-            // with zero captures and calls it retriable. The app is up (the
-            // failure screenshot shows it); only the capture is. One more try
-            // before it counts as the flow's failure.
-            const detail = error instanceof NativeCommandError ? error.details.details : undefined;
+            // A capture can stall after earlier trees were read, leaving no
+            // stable verdict. Retry only this read once; prior capture count
+            // does not prove stability. Ordinary UI instability still fails,
+            // and a second stalled capture propagates without another retry.
+            const detail = error instanceof NativeCommandError ? error.details : undefined;
             if (
               args[0] !== 'wait' ||
               args[1] !== 'stable' ||
-              detail?.captureStalled !== true ||
-              (typeof detail.captures === 'number' && detail.captures > 0)
+              detail?.code !== 'COMMAND_FAILED' ||
+              detail.details?.reason !== 'wait_stable_timeout' ||
+              detail.details.captureStalled !== true
             )
               throw error;
             result = await this.invoke(args);
