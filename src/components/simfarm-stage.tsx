@@ -605,7 +605,7 @@ export function SimfarmStage({
             the theme's colour, before anything else is: the empty and booting
             states then sit on the same ground as every other screen, and the
             ground under a short picture is that ground rather than a hole. */}
-        <Canvas style={styles.fill} opaque>
+        <Canvas style={styles.fill} android={{ backingView: 'TextureView', opaque: true }}>
           <Fill color={theme.colors.background} />
           {/* The image, its rectangle and the turn's centre are all shared
               values: a frame, a pinch or a drag reaches this node on the UI

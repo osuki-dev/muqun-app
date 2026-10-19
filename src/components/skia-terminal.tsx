@@ -3289,11 +3289,12 @@ export function SkiaTerminal({
             it, each pixel meets a different colour and no single fill can stand
             in, so the translucent path is taken and paid for.
 
-            The kind is fixed for as long as the app theme is: it never follows
-            the pane theme, because changing `opaque` replaces the native view
-            (SurfaceView <-> TextureView) and the replacement's first frame is
-            blank. See `terminalCanvasPaint`. */}
-        <Canvas opaque={canvasIsOpaque} style={styles.canvas}>
+            Keep the TextureView backing stable so parent clipping, transforms
+            and sibling overlays remain correct. Skia applies opacity changes
+            in place without replacing the native view. See `terminalCanvasPaint`. */}
+        <Canvas
+          android={{ backingView: 'TextureView', opaque: canvasIsOpaque }}
+          style={styles.canvas}>
           <Fill color={canvasFill} />
           <Group transform={contentTransform}>
             {chunkDraws.map((chunk) => (

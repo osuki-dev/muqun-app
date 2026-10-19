@@ -8,3 +8,11 @@ Kit's built-in controls are translated at `src/icons/kit-resolver.tsx`.
 This keeps Metro from resolving an unused SVG peer. No generated library
 output is patched. Remove the patch when Kit supports disabling its optional
 Lucide lookup or ships a resolver-only icon implementation.
+
+## @hot-updater/react-native 1.1.0
+
+Call `ReactRootView.getRootViewTag()` explicitly in Android recovery attribution.
+React Native 0.88 exposes this method in a way Kotlin does not resolve through
+the synthetic `rootViewTag` property, which prevents release compilation.
+This preserves the same root identifier and recovery behavior. Remove this
+source-only patch when Hot Updater includes the explicit getter call upstream.
