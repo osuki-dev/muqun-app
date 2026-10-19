@@ -2,6 +2,7 @@ import { InlineFileLink } from '@/components/inline-file-link';
 import { ContentImage } from '@/components/content-image';
 import { contentImageIdentity, type ContentImagePreviewState } from '@/lib/content-image-layout';
 import { isPdfFile } from '@/lib/session-assets';
+import { isThemeFilePath } from '@/lib/audio-markdown';
 import { InlineVideoFile } from '@/components/video-asset-preview';
 import { InlineAudioFile } from '@/components/audio-asset-preview';
 import { memo, useCallback, useMemo, useState } from 'react';
@@ -10,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { plural } from '@lingui/core/macro';
-import { DoneIcon, DocumentIcon, StartIcon, CloseIcon } from '@/icons';
+import { AppearanceIcon, DoneIcon, DocumentIcon, StartIcon, CloseIcon } from '@/icons';
 import { EnrichedMarkdownText, type MarkdownStyle } from 'react-native-enriched-markdown';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -605,6 +606,25 @@ export const AgentToolCard = memo(function AgentToolCard({
         ? input.new_string
         : undefined;
 
+  /**
+   * A theme the call wrote, previewed from the header in one tap.
+   *
+   * The skill has agents write `<slug>.muqun-theme.json` or a `.muqun-theme`
+   * package; the reader should not have to expand the card and find the file.
+   * The gateway resolves the path (relative ones against the session), exactly
+   * as a tapped link does.
+   */
+  const themeFile = useMemo(() => {
+    if (pending || part.error || !onOpenFile) return undefined;
+    if (kind !== 'write' && kind !== 'edit' && kind !== 'patch') return undefined;
+    const paths = [
+      target,
+      ...patchFiles.map((file) => file.path),
+      ...patchSections.map((section) => section.path),
+    ];
+    return paths.find((path) => path && isThemeFilePath(path));
+  }, [pending, part.error, onOpenFile, kind, target, patchFiles, patchSections]);
+
   // ---- chips -------------------------------------------------------------
 
   const chips = useMemo(() => {
@@ -927,6 +947,19 @@ export const AgentToolCard = memo(function AgentToolCard({
       headerAccessory={
         sleepDuration !== undefined && pending ? (
           <AgentSleepToolBody durationMs={sleepDuration} part={part} compact />
+        ) : themeFile && onOpenFile ? (
+          <PressableScale
+            testID="agent-tool-preview-theme"
+            accessibilityRole="button"
+            accessibilityLabel={t`Preview theme ${basename(themeFile)}`}
+            hitSlop={10}
+            onPress={() => onOpenFile(toolFileForPath(themeFile))}
+            style={[styles.themePreview, { backgroundColor: theme.colors.surfaceRaised }]}>
+            <AppearanceIcon size={11} color={colors.accent} />
+            <Text variant="caption" color={colors.accent} style={styles.actionText}>
+              <Trans>Preview theme</Trans>
+            </Text>
+          </PressableScale>
         ) : undefined
       }
       caption={headerCaption}
@@ -1899,6 +1932,15 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     paddingHorizontal: 4,
     justifyContent: 'center',
+  },
+  themePreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    minHeight: 24,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    borderCurve: 'continuous',
   },
   actionText: {
     fontSize: AGENT_TYPE.micro.size,

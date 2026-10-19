@@ -268,6 +268,7 @@ import {
 import { ImagePreviewModal, type PreviewImage } from '@/components/image-preview-modal';
 import { AssetViewer } from '@/components/asset-viewer';
 import { assetFromToolFile, isPdfFile } from '@/lib/session-assets';
+import { isThemeFilePath } from '@/lib/audio-markdown';
 import { type AgentToolActions } from './agent-message-block';
 import { createTranscriptFollow, type TranscriptFollow } from '@/lib/transcript-follow';
 import { TRANSCRIPT_ESTIMATED_ITEM_SIZE } from '@/lib/transcript-sizing';
@@ -4357,7 +4358,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
   const handleOpenToolFile = useCallback(
     (file: { uri: string; mime?: string; name?: string }) => {
-      if (activeAsid && isPdfFile(file)) {
+      // A theme is resolved by the gateway like a PDF: the path may be relative to
+      // the session, and the viewer needs its real name and size to preview it.
+      if (activeAsid && (isPdfFile(file) || isThemeFilePath(file.uri))) {
         const owner = captureWorkbenchOwner(activeAsid, activeDirectory);
         void resolveAgentFileAsset(activeAsid, file.uri, new AbortController().signal, serverId)
           .then((asset) => {
