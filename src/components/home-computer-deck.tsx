@@ -18,6 +18,7 @@ import Animated, {
   cancelAnimation,
   Easing,
   ReduceMotion,
+  useAnimatedReaction,
   useAnimatedStyle,
   useDerivedValue,
   useReducedMotion,
@@ -45,7 +46,9 @@ import {
   deckReform,
   deckScrub,
   deckSwipeMove,
+  deckWatch,
   type DeckMove,
+  type DeckWatch,
 } from '@/lib/home-computer-deck';
 import { riseIn, timing } from '@/lib/motion';
 import { type ActiveServerConnection } from '@/lib/server-reachability';
@@ -59,6 +62,8 @@ const DUST_COMMIT_MS = 280;
 const DUST_CANCEL_SPRING = { stiffness: 220, damping: 24, reduceMotion: ReduceMotion.Never };
 /** How long a commit let go before its photographs waits for them. */
 const EARLY_RELEASE_WAIT_MS = 400;
+/** How often the watchdog looks at a deck that a move holds. */
+const DECK_WATCH_EVERY_MS = 250;
 /** The cross-fade that stands in for the dust. */
 const CROSS_FADE_MS = 200;
 /** Room the ash may blow into around the card: sideways and upwards. */
@@ -127,6 +132,21 @@ export function HomeComputerDeck({
   const setDeckFront = useHomeTaskCards((state) => state.setDeckFront);
   const [held, setHeld] = useState<string[] | null>(null);
   const [scrub, setScrub] = useState<Scrub | null>(null);
+  // The move as it is now, ahead of React: every handler reads and changes it
+  // here, never from the closure of the last render (which, between a
+  // handler's update and the next render, still holds a move that ended).
+  const [cell] = useState(createDeckCell);
+  const changeScrub = (next: Scrub | null) => {
+    cell.writeScrub(next);
+    setScrub(next);
+  };
+  /** Changes the move `forToken` only if it is still the live one. */
+  const patchScrub = (forToken: number, patch: Partial<Scrub>) => {
+    const current = cell.readScrub();
+    if (!current || current.token !== forToken) return false;
+    changeScrub({ ...current, ...patch });
+    return true;
+  };
   const [width, setWidth] = useState(0);
   // Each card's own height, as it last laid out, and what it showed then. The
   // deck is as tall as the tallest, so moving between computers never makes
@@ -164,6 +184,8 @@ export function HomeComputerDeck({
   const token = useSharedValue(0);
   // A commit or a cross-fade is under way: a second request for one is ignored.
   const playing = useSharedValue(0);
+  // A finger is on the card: a move may rest under it as long as it likes.
+  const holding = useSharedValue(0);
 
   useLayoutEffect(() => {
     if (busy.get() === 0) ring.set(orderKey);
@@ -207,14 +229,19 @@ export function HomeComputerDeck({
 
   // A move has ended on the UI thread: React takes the new order, and the
   // canvas goes in the same commit the new front card is shown in.
+  // The move is over: its token goes, so a timer, a photograph or a frame
+  // still in flight for it finds nothing to act on.
   const moved = useStableHandler((next: string) => {
+    token.set(token.get() + 1);
     busy.set(0);
     playing.set(0);
     ready.set(0);
     setHeld(next.split('\n'));
-    setScrub(null);
-    // After the commit that shows the new front: it may have faded in.
+    changeScrub(null);
+    // After the commit that shows the new front: it may have faded in. Never
+    // under a cross-fade begun since, which would be cut off and never end.
     requestAnimationFrame(() => {
+      if (playing.get() === 1) return;
       cross.set(0);
       crossIn.set('');
     });
@@ -234,7 +261,7 @@ export function HomeComputerDeck({
     busy.set(0);
     playing.set(0);
     ready.set(0);
-    setScrub(null);
+    changeScrub(null);
   });
   // A retained Home can lose focus or enter a hidden Activity mid-transition.
   // Restore live card hit targets even when native animation completion never runs.
@@ -255,8 +282,9 @@ export function HomeComputerDeck({
   });
   // Switch at once: no photographs, no dissolve, no cross-fade.
   const snapTo = useStableHandler((next: DeckMove) => {
-    const nextOrder = deckMoved(order, next);
+    const nextOrder = deckMoved(ring.get().split('\n'), next);
     cancelled();
+    ring.set(nextOrder.join('\n'));
     setHeld(nextOrder);
     committed(nextOrder[0]!);
   });
@@ -266,11 +294,15 @@ export function HomeComputerDeck({
   // (Reduce Motion, a photograph that failed, a release before the
   // photographs were in, or no shader on this device). Under Reduce Motion
   // the sheets take their new levels without travelling.
-  const faded = useStableHandler((next: string) => {
+  const faded = useStableHandler((next: string, forToken: number) => {
+    if (token.get() !== forToken) return;
+    token.set(forToken + 1);
+    const after = forToken + 1;
     playing.set(0);
     setHeld(next.split('\n'));
-    setScrub(null);
+    changeScrub(null);
     requestAnimationFrame(() => {
+      if (token.get() !== after) return;
       cross.set(0);
       crossFrom.set('');
       crossIn.set('');
@@ -278,10 +310,16 @@ export function HomeComputerDeck({
       ready.set(0);
     });
   });
-  const crossFade = useStableHandler((commit: boolean) => {
+  // `forToken`: only for that move, if it is still the live one.
+  const crossFade = useStableHandler((commit: boolean, forToken?: number) => {
+    // A commit is already playing: neither a second one nor a cancel may cut it off.
+    if (playing.get() === 1) return;
+    const current = cell.readScrub();
+    if (forToken !== undefined && current?.token !== forToken) return;
     token.set(token.get() + 1);
-    if (!commit || !scrub) {
-      setScrub(null);
+    const at = token.get();
+    if (!commit || !current) {
+      changeScrub(null);
       progress.set(
         withSpring(0, DUST_CANCEL_SPRING, () => {
           'worklet';
@@ -291,31 +329,35 @@ export function HomeComputerDeck({
       );
       return;
     }
-    if (playing.get() === 1) return;
     playing.set(1);
-    const next = deckMoved(scrub.order, scrub.move);
+    const next = deckMoved(current.order, current.move);
     committed(next[0]!);
     const key = next.join('\n');
-    crossFrom.set(scrub.order[0]!);
-    crossIn.set(scrub.incomingId);
-    setScrub({ ...scrub, crossing: true });
+    crossFrom.set(current.order[0]!);
+    crossIn.set(current.incomingId);
+    patchScrub(current.token, { crossing: true });
     progress.set(withTiming(1, timing(CROSS_FADE_MS)));
     cross.set(
-      withTiming(1, timing(CROSS_FADE_MS, { reduceMotion: ReduceMotion.Never }), (finished) => {
+      withTiming(1, timing(CROSS_FADE_MS, { reduceMotion: ReduceMotion.Never }), () => {
         'worklet';
-        if (!finished) return;
+        // Finished or cut short, the fade ends the move: the new computer is
+        // already chosen, and nothing may be left playing. Only a reset
+        // (`cancelled`, which moves the token on) has already ended it.
+        if (token.get() !== at) return;
         ring.set(key);
         move.set(DECK_AT_REST);
         progress.set(0);
-        scheduleOnRN(faded, key);
+        scheduleOnRN(faded, key, at);
       })
     );
   });
 
   /** Start a move: freeze the order, mount the incoming card, ask for photographs. */
   const beginMove = useStableHandler((next: DeckMove, towards: number, auto: boolean) => {
-    const id = deckMoved(order, next)[0];
-    if (!id || id === frontId) {
+    // The order on the UI thread: React's may not have caught up with a move just ended.
+    const base = ring.get().split('\n');
+    const id = deckMoved(base, next)[0];
+    if (!id || id === base[0]) {
       busy.set(0);
       return;
     }
@@ -323,10 +365,10 @@ export function HomeComputerDeck({
     token.set(nextToken);
     incomingReady.set(0);
     const dust = CARD_DUST_EFFECT !== null && !reduced;
-    setScrub({
+    changeScrub({
       token: nextToken,
       move: next,
-      order,
+      order: base,
       incomingId: id,
       direction: towards,
       outgoing: null,
@@ -342,27 +384,22 @@ export function HomeComputerDeck({
       if (image) disposeLater(image);
       return;
     }
-    const incoming = serverId === scrub?.incomingId;
-    // Too late: the real card is already fading in under the ash.
-    if (incoming && scrub?.crossing) {
+    const current = cell.readScrub();
+    const incoming = serverId === current?.incomingId;
+    // Too late: the move has gone, or the real card is already fading in under the ash.
+    if (!current || current.token !== forToken || (incoming && current.crossing)) {
       if (image) disposeLater(image);
       return;
     }
     if (incoming && image) incomingReady.set(1);
-    setScrub((current) => {
-      if (!current || current.token !== forToken) return current;
-      const role = serverId === current.incomingId ? 'incoming' : 'outgoing';
-      return { ...current, [role]: image, failed: current.failed || !image };
-    });
+    const failed = current.failed || !image;
+    patchScrub(forToken, incoming ? { incoming: image, failed } : { outgoing: image, failed });
   });
 
   // The canvas has its first frame: hide the real card under it.
   const drawn = useStableHandler((forToken: number) => {
     if (token.get() !== forToken) return;
-    setScrub((current) =>
-      current && current.token === forToken ? { ...current, drawing: true } : current
-    );
-    ready.set(1);
+    if (patchScrub(forToken, { drawing: true })) ready.set(1);
   });
 
   // The photographs go a frame after the canvas that drew them.
@@ -397,7 +434,7 @@ export function HomeComputerDeck({
     beginMove(next, towards, true);
   });
   const selectComputer = useStableHandler((id: string) => {
-    const position = order.indexOf(id);
+    const position = ring.get().split('\n').indexOf(id);
     if (position > 0) startMove(position, -1);
   });
 
@@ -440,9 +477,14 @@ export function HomeComputerDeck({
   // A commit whose incoming photograph has not landed: the outgoing card
   // still blows away, and the real incoming card fades in beneath it.
   const commitUnderAsh = useStableHandler(() => {
-    if (!scrub || playing.get() === 1) return;
-    crossIn.set(scrub.incomingId);
-    setScrub({ ...scrub, crossing: true });
+    if (playing.get() === 1) return;
+    const current = cell.readScrub();
+    if (!current) {
+      cancelled();
+      return;
+    }
+    crossIn.set(current.incomingId);
+    patchScrub(current.token, { crossing: true });
     cross.set(withTiming(1, timing(DUST_COMMIT_MS, { reduceMotion: ReduceMotion.Never })));
     playCommit();
   });
@@ -451,11 +493,12 @@ export function HomeComputerDeck({
   // plays the dust once the photographs land, or cross-fades if they do not
   // land soon.
   const releasedEarly = useStableHandler((commit: boolean) => {
-    if (!commit || !scrub || scrub.failed) {
+    const current = cell.readScrub();
+    if (!commit || !current || current.failed) {
       crossFade(commit);
       return;
     }
-    setScrub({ ...scrub, auto: true });
+    patchScrub(current.token, { auto: true });
   });
 
   // Both taps and released swipes must finish if a GPU capture never lands.
@@ -465,14 +508,44 @@ export function HomeComputerDeck({
     if (waitingToken === null) return;
     const timer = setTimeout(() => {
       if (token.get() !== waitingToken || playing.get() === 1) return;
+      // The move it waited for has ended, even if React has not drawn that yet.
+      if (cell.readScrub()?.token !== waitingToken) return;
       if (ready.get() === 1) commitUnderAsh();
-      else crossFade(true);
+      else crossFade(true, waitingToken);
     }, EARLY_RELEASE_WAIT_MS);
     return () => clearTimeout(timer);
-  }, [waitingToken, token, playing, ready, commitUnderAsh, crossFade]);
+  }, [waitingToken, token, playing, ready, cell, commitUnderAsh, crossFade]);
+
+  // The last word on a move that never ends (a completion that never ran, a
+  // photograph that never came): if the deck stays taken, finger up, with
+  // nothing moving for `DECK_STALL_MS`, it is reset so tabs and swipes work.
+  const watchStep = useStableHandler(() => {
+    const engaged = busy.get() === 1 || playing.get() === 1;
+    const sample = `${token.get()}|${progress.get().toFixed(3)}|${cross.get().toFixed(3)}`;
+    const { watch, stalled } = deckWatch(
+      cell.readWatch(),
+      { engaged, holding: holding.get() === 1, sample },
+      Date.now()
+    );
+    cell.writeWatch(watch);
+    if (stalled) cancelled();
+    if (!engaged || stalled) cell.stopWatching();
+  });
+  const watchDeck = useStableHandler((engaged: boolean) => {
+    if (engaged) cell.startWatching(watchStep);
+    else cell.stopWatching();
+  });
+  useAnimatedReaction(
+    () => busy.get() === 1 || playing.get() === 1,
+    (engaged, was) => {
+      if (engaged !== was && (engaged || was !== null)) scheduleOnRN(watchDeck, engaged);
+    }
+  );
+  useEffect(() => () => cell.stopWatching(), [cell]);
 
   const gesture = useComputerGesture({
     instant: DECK_MOTION_OFF,
+    holding,
     snapTo,
     beginMove,
     busy,
@@ -492,14 +565,18 @@ export function HomeComputerDeck({
   });
 
   // A tap or an accessibility action plays once both photographs are in.
+  const autoToken = scrub?.auto ? scrub.token : null;
+  const autoFailed = Boolean(scrub?.failed);
+  const autoLoaded = Boolean(scrub?.drawing && scrub.incoming);
   useEffect(() => {
-    if (!scrub?.auto) return;
-    if (scrub.failed) {
-      crossFade(true);
+    // The move this render drew may have ended since: act only on the live one.
+    if (autoToken === null || cell.readScrub()?.token !== autoToken) return;
+    if (autoFailed) {
+      crossFade(true, autoToken);
       return;
     }
-    if (scrub.drawing && scrub.incoming) playCommit();
-  }, [scrub?.auto, scrub?.failed, scrub?.drawing, scrub?.incoming, crossFade, playCommit]);
+    if (autoLoaded) playCommit();
+  }, [autoToken, autoFailed, autoLoaded, cell, crossFade, playCommit]);
 
   const actions: DeckCardActions = {
     accessibilityActions: [
@@ -639,6 +716,35 @@ export function HomeComputerDeck({
  * after switching are investigated; flip back to bring them back.
  */
 const DECK_MOTION_OFF = true;
+
+/**
+ * What the deck's handlers share outside React: the live move, and the
+ * watchdog's last look and timer. Made once per deck.
+ */
+function createDeckCell() {
+  let scrub: Scrub | null = null;
+  let watch: DeckWatch | null = null;
+  let timer: ReturnType<typeof setInterval> | null = null;
+  const stopWatching = () => {
+    if (timer !== null) clearInterval(timer);
+    timer = null;
+    watch = null;
+  };
+  return {
+    readScrub: () => scrub,
+    writeScrub: (next: Scrub | null) => {
+      scrub = next;
+    },
+    readWatch: () => watch,
+    writeWatch: (next: DeckWatch | null) => {
+      watch = next;
+    },
+    startWatching: (step: () => void) => {
+      if (timer === null) timer = setInterval(step, DECK_WATCH_EVERY_MS);
+    },
+    stopWatching,
+  };
+}
 
 function disposeLater(shot: CardShot) {
   // A frame later: a draw already in flight may still be sampling it.
@@ -893,6 +999,7 @@ const styles = StyleSheet.create({
 
 function useComputerGesture({
   instant,
+  holding,
   snapTo,
   beginMove,
   busy,
@@ -911,6 +1018,7 @@ function useComputerGesture({
   skip,
 }: {
   beginMove: (next: DeckMove, towards: number, auto: boolean) => void;
+  holding: SharedValue<number>;
   busy: SharedValue<number>;
   cancelled: () => void;
   commitUnderAsh: () => void;
@@ -948,6 +1056,7 @@ function useComputerGesture({
           }
           skip.set(0);
           busy.set(1);
+          holding.set(1);
           direction.set(0);
         })
         .onUpdate((event) => {
@@ -1018,11 +1127,13 @@ function useComputerGesture({
           );
         })
         .onFinalize((_event, success) => {
+          holding.set(0);
           // Cancellation can bypass onEnd when the native recognizer is interrupted.
           if (!success && skip.get() === 0 && busy.get() === 1) scheduleOnRN(cancelled);
         }),
     [
       instant,
+      holding,
       snapTo,
       beginMove,
       busy,

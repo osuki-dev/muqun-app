@@ -202,3 +202,29 @@ export function deckSheetLevel(
   if (position < incoming) return { level: position + p, fade: 1, enter: 1, rest: position + 1 };
   return { level: position, fade: 1, enter: 1, rest: position };
 }
+
+/** How long a move may stand still, finger up, before the deck gives it up. */
+export const DECK_STALL_MS = 1500;
+
+/** What the deck's watchdog last saw, and since when it has not changed. */
+export type DeckWatch = { sample: string; sinceMs: number };
+
+/**
+ * One look by the deck's watchdog. `engaged`: a move or a commit holds the
+ * deck; `holding`: a finger is on it, which may rest as long as it likes;
+ * `sample`: everything a live move changes (its token, progress, fade). A
+ * move whose sample has not changed for `DECK_STALL_MS` is stuck: the deck is
+ * reset rather than left ignoring every tab and swipe.
+ */
+export function deckWatch(
+  previous: DeckWatch | null,
+  look: { engaged: boolean; holding: boolean; sample: string },
+  nowMs: number
+): { watch: DeckWatch | null; stalled: boolean } {
+  if (!look.engaged || look.holding) return { watch: null, stalled: false };
+  if (!previous || previous.sample !== look.sample) {
+    return { watch: { sample: look.sample, sinceMs: nowMs }, stalled: false };
+  }
+  if (nowMs - previous.sinceMs < DECK_STALL_MS) return { watch: previous, stalled: false };
+  return { watch: null, stalled: true };
+}
