@@ -55,6 +55,7 @@ import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useLaunchImageSync } from '@/hooks/use-launch-image-sync';
 import { useThemePack, useThemePalette } from '@/hooks/use-theme-pack';
 import { useUserFontsReady } from '@/hooks/use-user-fonts';
+import { AppIconsReady } from '@/icons/app-icon';
 import { useThemeLibrary } from '@/stores/theme-library';
 import { AppI18nProvider } from '@/i18n/provider';
 import { useGatewayPushRegistration, useNotificationObserver } from '@/lib/notifications';
@@ -330,9 +331,11 @@ export default function RootLayout() {
                 the system font for anything to cache.
               */}
                   {fontsReady ? (
-                    <AppDiagramProvider>
-                      <RootContent />
-                    </AppDiagramProvider>
+                    <AppIconsReady>
+                      <AppDiagramProvider>
+                        <RootContent />
+                      </AppDiagramProvider>
+                    </AppIconsReady>
                   ) : null}
                 </AppI18nProvider>
               </AppErrorBoundary>

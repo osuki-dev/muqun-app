@@ -12,7 +12,7 @@ import {
   withTiming,
 } from 'react-native-reanimated';
 import { scheduleOnUI } from 'react-native-worklets';
-import { GitFork, Layers3, Workflow } from 'lucide-react-native';
+import { ForkIcon, StackIcon, WorkflowIcon } from '@/icons';
 import { useAppActive } from '@/hooks/use-app-active';
 import {
   introParticlePositions,
@@ -130,7 +130,7 @@ export function ReleaseIntroArt({ scene, visible }: { scene: number; visible: bo
   const theme = useThemeTokens();
   const active = useAppActive();
   const motion = useDecorativeMotion();
-  const Icon = [Workflow, GitFork, Layers3][scene] ?? Workflow;
+  const Icon = [WorkflowIcon, ForkIcon, StackIcon][scene] ?? WorkflowIcon;
   return (
     <View
       style={styles.art}
@@ -141,7 +141,7 @@ export function ReleaseIntroArt({ scene, visible }: { scene: number; visible: bo
         <IntroParticles scene={scene} animate={motion === 'animate'} />
       ) : null}
       <View style={styles.emblem}>
-        <Icon size={36} color={theme.colors.primary} strokeWidth={1.4} />
+        <Icon size={36} color={theme.colors.primary} />
       </View>
     </View>
   );

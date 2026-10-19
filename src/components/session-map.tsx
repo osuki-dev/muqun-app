@@ -2,7 +2,7 @@ import { plural } from '@lingui/core/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import { useThemeTokens, Skeleton, Input, Button, PressableScale, Text } from '@osuki-dev/ui';
-import { Bot, Plus, RefreshCw, SquareTerminal } from 'lucide-react-native';
+import { AgentIcon, CreateIcon, RefreshIcon, TerminalWindowIcon } from '@/icons';
 import {
   type ReactNode,
   useCallback,
@@ -681,7 +681,7 @@ export function SessionMap({
           accessibilityLabel={t`Refresh`}
           busy={loading}
           onPress={() => void refresh()}>
-          <RefreshCw size={17} color={theme.colors.textMuted} />
+          <RefreshIcon size={17} color={theme.colors.textMuted} />
         </SheetSceneQuietControl>
       }>
       <ScrollView
@@ -883,7 +883,7 @@ export function SessionMap({
                 styles.createChip,
                 { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
               ]}>
-              <Plus size={16} color={theme.colors.textMuted} />
+              <CreateIcon size={16} color={theme.colors.textMuted} />
               <Text variant="caption" color={theme.colors.text}>
                 <Trans>Workspace</Trans>
               </Text>
@@ -992,7 +992,7 @@ export function SessionMap({
           title={t`New terminal`}
           accessibilityLabel={t`New terminal`}
           disabled={busy || unknownCreateOutcome || !workspaceId}
-          leading={<Plus size={17} color={theme.colors.textMuted} />}
+          leading={<CreateIcon size={17} color={theme.colors.textMuted} />}
           onPress={() =>
             void createAndSelect(() =>
               createTab(sessionId, { workspace_id: workspaceId, focus: false })
@@ -1334,14 +1334,14 @@ function PanelRow({
         trailing={trailing}
         leading={
           hasAgent ? (
-            <Bot size={15} color={statusColor(status)} />
+            <AgentIcon size={15} color={statusColor(status)} />
           ) : (
             <View style={styles.rowGlyph}>
               <Animated.View style={restingStyle}>
-                <SquareTerminal size={15} color={theme.colors.textMuted} />
+                <TerminalWindowIcon size={15} color={theme.colors.textMuted} />
               </Animated.View>
               <Animated.View style={[StyleSheet.absoluteFill, selectedStyle]}>
-                <SquareTerminal size={15} color={theme.colors.primary} />
+                <TerminalWindowIcon size={15} color={theme.colors.primary} />
               </Animated.View>
             </View>
           )

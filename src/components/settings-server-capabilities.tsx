@@ -1,6 +1,12 @@
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, Skeleton, Text } from '@osuki-dev/ui';
-import { Bot, Cpu, SquareTerminal, TriangleAlert, type LucideIcon } from 'lucide-react-native';
+import {
+  AgentIcon,
+  ProcessorIcon,
+  TerminalWindowIcon,
+  WarningIcon,
+  type AppIconComponent,
+} from '@/icons';
 import { useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -54,7 +60,7 @@ function CapabilitiesSection() {
           <CapabilitiesSkeleton />
         ) : load.status === 'error' ? (
           <CapabilityGroup
-            icon={TriangleAlert}
+            icon={WarningIcon}
             label={t`Could not load capabilities`}
             testID="server-capabilities-error">
             <Text variant="caption">{t`Try again once the computer responds.`}</Text>
@@ -110,14 +116,14 @@ function CapabilityRows({ manifest }: { manifest: FleetManifest }) {
   return (
     <>
       {system ? (
-        <CapabilityGroup icon={Cpu} label={t`System`} testID="server-capabilities-system">
+        <CapabilityGroup icon={ProcessorIcon} label={t`System`} testID="server-capabilities-system">
           <Text variant="caption" color={theme.colors.textMuted}>
             {system}
           </Text>
         </CapabilityGroup>
       ) : null}
       {manifest.agents.length > 0 ? (
-        <CapabilityGroup icon={Bot} label={t`Agents`} testID="server-capabilities-agents">
+        <CapabilityGroup icon={AgentIcon} label={t`Agents`} testID="server-capabilities-agents">
           <View style={styles.lines}>
             {manifest.agents.map((agent) => {
               const up = agent.status === 'connected' || agent.status === 'reachable';
@@ -143,7 +149,7 @@ function CapabilityRows({ manifest }: { manifest: FleetManifest }) {
       ) : null}
       {manifest.terminal.length > 0 ? (
         <CapabilityGroup
-          icon={SquareTerminal}
+          icon={TerminalWindowIcon}
           label={t`Terminal`}
           testID="server-capabilities-terminal">
           <View style={styles.lines}>
@@ -174,7 +180,7 @@ function CapabilityGroup({
   testID,
   children,
 }: {
-  icon: LucideIcon;
+  icon: AppIconComponent;
   label: string;
   testID: string;
   children: ReactNode;

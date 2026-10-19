@@ -3,9 +3,10 @@ import { AudioPlaybackError } from '@/lib/audio-playback-session';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useThemeTokens, Skeleton, Button, PressableScale, Text } from '@osuki-dev/ui';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { Check, Copy, Download, X } from 'lucide-react-native';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { DoneIcon, CopyIcon, DownloadIcon, CloseIcon } from '@/icons';
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Modal, ScrollView, StyleSheet, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated from 'react-native-reanimated';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -41,7 +42,7 @@ import { SHEET_LADDER, SheetSceneAction, SheetSceneHeading } from '@/components/
 import { ThemeImportProgress } from '@/components/theme-import-progress';
 import { prepareThemeAssets, type PreparedThemeAssets } from '@/theme/assets';
 import { ThemeImportRequest } from '@/theme/import-request';
-import { unpackTheme } from '@/theme/package';
+import { unpackThemeAsync } from '@/theme/package';
 import { THEME_LIMITS } from '@/theme/schema';
 import type { ThemeEditorCandidate } from '@/theme/draft-session';
 import { themeFromDocument } from '@/theme/file-preview';
@@ -80,7 +81,13 @@ export function AssetViewer({ asset, onClose }: { asset: SessionAsset; onClose: 
     );
   }
 
-  return <AssetSheet asset={asset} onClose={onClose} />;
+  return (
+    <AssetSheet
+      key={`${asset.gatewayServerId}:${asset.id}:${asset.modified_unix_ms}`}
+      asset={asset}
+      onClose={onClose}
+    />
+  );
 }
 
 function EncryptedImageViewer({ asset, onClose }: { asset: SessionAsset; onClose: () => void }) {
@@ -126,15 +133,17 @@ function EncryptedImageViewer({ asset, onClose }: { asset: SessionAsset; onClose
         navigationBarTranslucent
         animationType="fade"
         onRequestClose={onClose}>
-        <View style={styles.encryptedLoading}>
-          <ActivityIndicator size="small" color="#FFFFFF" />
-          <PressableScale
-            accessibilityLabel={t`Close preview`}
-            onPress={onClose}
-            style={[styles.encryptedLoadingClose, { top: insets.top + 10 }]}>
-            <X size={20} color="#FFFFFF" />
-          </PressableScale>
-        </View>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <View style={styles.encryptedLoading}>
+            <ActivityIndicator size="small" color="#FFFFFF" />
+            <PressableScale
+              accessibilityLabel={t`Close preview`}
+              onPress={onClose}
+              style={[styles.encryptedLoadingClose, { top: insets.top + 10 }]}>
+              <CloseIcon size={20} color="#FFFFFF" />
+            </PressableScale>
+          </View>
+        </GestureHandlerRootView>
       </Modal>
     );
   }
@@ -183,7 +192,7 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
   const [error, setError] = useState<string | null>(null);
   /** Bumped by "Try again"; the only thing that re-runs the read. */
   const [attempt, setAttempt] = useState(0);
-  const [previewedThemeDocument, setPreviewedThemeDocument] = useState<string | null>(null);
+  const [closedThemeDocument, setClosedThemeDocument] = useState<string | null>(null);
   /**
    * The one decision a previewed theme offers, pinned rather than scrolled to.
    *
@@ -266,7 +275,7 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
               if (mounted.current && !request.signal.aborted) setPackProgress({ done, total });
             },
           });
-          const unpacked = unpackTheme(bytes);
+          const unpacked = await unpackThemeAsync(bytes, { signal: request.signal });
           prepared = await prepareThemeAssets(unpacked, { signal: request.signal });
           const candidate = { manifest: unpacked.manifest, prepared };
           request.handoff(() => setPack(candidate));
@@ -289,6 +298,13 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
       }
     );
   }
+
+  const openInitialTheme = useEffectEvent(() => {
+    void openPackagedTheme();
+  });
+  useEffect(() => {
+    if (packaged) openInitialTheme();
+  }, [packaged]);
 
   useEffect(() => {
     if (!readable) return;
@@ -353,178 +369,178 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
       navigationBarTranslucent
       animationType="fade"
       onRequestClose={onClose}>
-      {/* Both insets are paid here rather than per body: the fill is on this
-          view, so padding it keeps the colour edge to edge while the content
-          stays clear of the status bar and the gesture bar.
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        {/* Both insets are paid here rather than per body: the fill is on this
+            view, so padding it keeps the colour edge to edge while the content
+            stays clear of the status bar and the gesture bar.
 
-          `SheetFrame` rather than a flat `colors.background`: this is the one
-          themed surface in the app that was painting its own floor, so a pack
-          with a `shell.background` had a wallpaper everywhere except here. It
-          stays a `Modal` and not a route because it is opened from *inside* the
-          files form sheet, where it would be a third subview of a layout that
-          lays out two -- the constraint the comment over `AssetViewer` in
-          `session-artifacts.tsx` records. And it keeps square corners and no
-          grabber, for the same reason `SheetHandle` draws nothing inside a
-          fullscreen frame: this is a full-bleed viewer, not a sheet that can be
-          dragged away, and rounding the top of something that fills the screen
-          is a corner over nothing.
+            `SheetFrame` rather than a flat `colors.background`: this is the one
+            themed surface in the app that was painting its own floor, so a pack
+            with a `shell.background` had a wallpaper everywhere except here. It
+            stays a `Modal` and not a route because it is opened from *inside* the
+            files form sheet, where it would be a third subview of a layout that
+            lays out two -- the constraint the comment over `AssetViewer` in
+            `session-artifacts.tsx` records. And it keeps square corners and no
+            grabber, for the same reason `SheetHandle` draws nothing inside a
+            fullscreen frame: this is a full-bleed viewer, not a sheet that can be
+            dragged away, and rounding the top of something that fills the screen
+            is a corner over nothing.
 
-          `frosted`, like every other sheet. Without it the wallpaper showed at
-          full strength under whatever was open -- a README's paragraphs, a
-          file's details -- and a full-cover pack made them unreadable. The
-          veil follows the reader's opacity slider down to its floor, exactly
-          as the files sheet this opened from does. A picture never lands here:
-          it opens in the lightbox, on its own black matte. */}
-      <View style={styles.sheet}>
-        <SheetFrame tint="background" frosted>
-          <View style={[styles.sheetColumn, { paddingBottom: insets.bottom }]}>
-            {/* SafeAreaView reports zero insets inside a native Modal, so pad from
-            the root provider's insets instead.
+            `frosted`, like every other sheet. Without it the wallpaper showed at
+            full strength under whatever was open -- a README's paragraphs, a
+            file's details -- and a full-cover pack made them unreadable. The
+            veil follows the reader's opacity slider down to its floor, exactly
+            as the files sheet this opened from does. A picture never lands here:
+            it opens in the lightbox, on its own black matte. */}
+        <View style={styles.sheet}>
+          <SheetFrame tint="background" frosted>
+            <View style={[styles.sheetColumn, { paddingBottom: insets.bottom }]}>
+              {/* SafeAreaView reports zero insets inside a native Modal, so pad from
+              the root provider's insets instead.
 
-            `zIndex` and `elevation` are not decoration: the way out of this
-            screen lives in here, and it has to stay on top of, and ahead of,
-            whatever the body puts on the screen -- including a loading state
-            that fills the rest of it. A viewer you cannot leave while it is
-            loading is worse than one that fails. */}
-            <View style={[styles.headerLayer, { paddingTop: insets.top }]}>
-              {/* The sheet's own heading, on the sheet's gutter: the file's name
-                  is the title and its size and age are the caption, and the
-                  two round controls are its trailing edge. Every body below
-                  starts on the same left edge as this name. */}
-              <View style={styles.header}>
-                <SheetSceneHeading
-                  title={asset.name}
-                  caption={subtitle}
-                  trailing={
-                    <View style={styles.headerControls}>
-                      <PressableScale
-                        accessibilityLabel={t`Save file`}
-                        onPress={fileActions.show}
-                        style={[
-                          styles.close,
-                          { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-                        ]}>
-                        <Download size={18} color={theme.colors.text} />
-                      </PressableScale>
-                      {content ? (
+              `zIndex` and `elevation` are not decoration: the way out of this
+              screen lives in here, and it has to stay on top of, and ahead of,
+              whatever the body puts on the screen -- including a loading state
+              that fills the rest of it. A viewer you cannot leave while it is
+              loading is worse than one that fails. */}
+              <View style={[styles.headerLayer, { paddingTop: insets.top }]}>
+                {/* The sheet's own heading, on the sheet's gutter: the file's name
+                    is the title and its size and age are the caption, and the
+                    two round controls are its trailing edge. Every body below
+                    starts on the same left edge as this name. */}
+                <View style={styles.header}>
+                  <SheetSceneHeading
+                    title={asset.name}
+                    caption={subtitle}
+                    trailing={
+                      <View style={styles.headerControls}>
                         <PressableScale
-                          accessibilityLabel={t`Copy`}
-                          onPress={copy}
+                          accessibilityLabel={t`Save file`}
+                          onPress={fileActions.show}
                           style={[
                             styles.close,
                             { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
                           ]}>
-                          {copied ? (
-                            <Check size={18} color={theme.colors.success} />
-                          ) : (
-                            <Copy size={18} color={theme.colors.text} />
-                          )}
+                          <DownloadIcon size={18} color={theme.colors.text} />
                         </PressableScale>
-                      ) : null}
-                      <PressableScale
-                        accessibilityLabel={t`Close file`}
-                        onPress={onClose}
-                        style={[
-                          styles.close,
-                          { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-                        ]}>
-                        <X size={18} color={theme.colors.text} />
-                      </PressableScale>
-                    </View>
-                  }
-                />
-              </View>
-            </View>
-
-            {fileActions.menu}
-            {pack ? (
-              <ScrollView contentContainerStyle={styles.themePreview}>
-                <CustomThemeLibrary
-                  key={`${themeDocumentIdentity}:pack`}
-                  initialCandidate={pack}
-                  detail
-                  // The prepared artwork belongs to this screen, which disposes it
-                  // when the reader closes the file.
-                  ownsPreparedAssets={false}
-                  onClosePreview={() => setPack(null)}
-                  onPrimaryActionChange={setPrimary}
-                />
-              </ScrollView>
-            ) : previewedThemeDocument === themeDocumentIdentity && themeManifest ? (
-              <ScrollView contentContainerStyle={styles.themePreview}>
-                <CustomThemeLibrary
-                  key={themeDocumentIdentity}
-                  initialManifest={themeManifest}
-                  detail
-                  onClosePreview={() => setPreviewedThemeDocument(null)}
-                  onPrimaryActionChange={setPrimary}
-                />
-              </ScrollView>
-            ) : (
-              <>
-                {themeManifest ? (
-                  <View style={styles.themeEntry}>
-                    <Button
-                      testID="asset-preview-theme"
-                      onPress={() =>
-                        setPreviewedThemeDocument(themeDocumentIdentity)
-                      }>{t`Preview`}</Button>
-                  </View>
-                ) : packaged ? (
-                  <View style={styles.themeEntry}>
-                    <Button
-                      testID="asset-open-theme-package"
-                      disabled={Boolean(packProgress)}
-                      onPress={() => void openPackagedTheme()}>{t`Preview`}</Button>
-                    {packProgress ? (
-                      <ThemeImportProgress
-                        label={t`Downloading theme`}
-                        receivedBytes={packProgress.done}
-                        completed={packProgress.done}
-                        total={packProgress.total ?? undefined}
-                      />
-                    ) : null}
-                  </View>
-                ) : null}
-                <AssetBody
-                  asset={asset}
-                  presentation={presentation}
-                  readable={readable}
-                  tooLarge={tooLarge}
-                  content={content}
-                  error={error}
-                  markdownStyle={markdownStyle}
-                  onRetry={() => setAttempt((previous) => previous + 1)}
-                />
-              </>
-            )}
-
-            {/* Pinned, for the same reason the detail route pins its own: the
-                confirm for a theme sits under a preview and a column of
-                appearance settings, and one you have to go looking for is one
-                the reader has already decided against. `KeyboardStickyView`
-                rather than a plain bar because this viewer is the one place a
-                theme is read next to a file: nothing here opens a keyboard
-                today, and if something does the button rides above it instead
-                of underneath. The column already pays the bottom inset. */}
-            {primary ? (
-              <KeyboardStickyView offset={{ closed: 0, opened: -insets.bottom }}>
-                <View style={styles.themeAction}>
-                  <SheetSceneAction
-                    // The id belongs to the apply: `theme-document` looks for it
-                    // on a theme that is not the current one, and
-                    // `custom-themes` presses it and then checks it has gone.
-                    testID={primary.applies ? 'theme-apply' : undefined}
-                    label={primary.applies ? t`Apply theme` : t`Done`}
-                    disabled={primary.disabled}
-                    onPress={primary.run}
+                        {content ? (
+                          <PressableScale
+                            accessibilityLabel={t`Copy`}
+                            onPress={copy}
+                            style={[
+                              styles.close,
+                              { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                            ]}>
+                            {copied ? (
+                              <DoneIcon size={18} color={theme.colors.success} />
+                            ) : (
+                              <CopyIcon size={18} color={theme.colors.text} />
+                            )}
+                          </PressableScale>
+                        ) : null}
+                        <PressableScale
+                          accessibilityLabel={t`Close file`}
+                          onPress={onClose}
+                          style={[
+                            styles.close,
+                            { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                          ]}>
+                          <CloseIcon size={18} color={theme.colors.text} />
+                        </PressableScale>
+                      </View>
+                    }
                   />
                 </View>
-              </KeyboardStickyView>
-            ) : null}
-          </View>
-        </SheetFrame>
-      </View>
+              </View>
+
+              {fileActions.menu}
+              {pack ? (
+                <ScrollView contentContainerStyle={styles.themePreview}>
+                  <CustomThemeLibrary
+                    key={`${themeDocumentIdentity}:pack`}
+                    initialCandidate={pack}
+                    detail
+                    // The prepared artwork belongs to this screen, which disposes it
+                    // when the reader closes the file.
+                    ownsPreparedAssets={false}
+                    onClosePreview={() => setPack(null)}
+                    onPrimaryActionChange={setPrimary}
+                  />
+                </ScrollView>
+              ) : closedThemeDocument !== themeDocumentIdentity && themeManifest ? (
+                <ScrollView contentContainerStyle={styles.themePreview}>
+                  <CustomThemeLibrary
+                    key={themeDocumentIdentity}
+                    initialManifest={themeManifest}
+                    detail
+                    onClosePreview={() => setClosedThemeDocument(themeDocumentIdentity)}
+                    onPrimaryActionChange={setPrimary}
+                  />
+                </ScrollView>
+              ) : (
+                <>
+                  {themeManifest ? (
+                    <View style={styles.themeEntry}>
+                      <Button
+                        testID="asset-preview-theme"
+                        onPress={() => setClosedThemeDocument(null)}>{t`Preview`}</Button>
+                    </View>
+                  ) : packaged ? (
+                    <View style={styles.themeEntry}>
+                      <Button
+                        testID="asset-open-theme-package"
+                        disabled={Boolean(packProgress)}
+                        onPress={() => void openPackagedTheme()}>{t`Preview`}</Button>
+                      {packProgress ? (
+                        <ThemeImportProgress
+                          label={t`Downloading theme`}
+                          receivedBytes={packProgress.done}
+                          completed={packProgress.done}
+                          total={packProgress.total ?? undefined}
+                        />
+                      ) : null}
+                    </View>
+                  ) : null}
+                  <AssetBody
+                    asset={asset}
+                    presentation={presentation}
+                    readable={readable}
+                    tooLarge={tooLarge}
+                    content={content}
+                    error={error}
+                    markdownStyle={markdownStyle}
+                    onRetry={() => setAttempt((previous) => previous + 1)}
+                  />
+                </>
+              )}
+
+              {/* Pinned, for the same reason the detail route pins its own: the
+                  confirm for a theme sits under a preview and a column of
+                  appearance settings, and one you have to go looking for is one
+                  the reader has already decided against. `KeyboardStickyView`
+                  rather than a plain bar because this viewer is the one place a
+                  theme is read next to a file: nothing here opens a keyboard
+                  today, and if something does the button rides above it instead
+                  of underneath. The column already pays the bottom inset. */}
+              {primary ? (
+                <KeyboardStickyView offset={{ closed: 0, opened: -insets.bottom }}>
+                  <View style={styles.themeAction}>
+                    <SheetSceneAction
+                      // The id belongs to the apply: `theme-document` looks for it
+                      // on a theme that is not the current one, and
+                      // `custom-themes` presses it and then checks it has gone.
+                      testID={primary.applies ? 'theme-apply' : undefined}
+                      label={primary.applies ? t`Apply theme` : t`Done`}
+                      disabled={primary.disabled}
+                      onPress={primary.run}
+                    />
+                  </View>
+                </KeyboardStickyView>
+              ) : null}
+            </View>
+          </SheetFrame>
+        </View>
+      </GestureHandlerRootView>
     </Modal>
   );
 }

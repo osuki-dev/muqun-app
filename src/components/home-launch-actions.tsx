@@ -4,13 +4,13 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import {
-  ArrowUpRight,
-  ChevronDown,
-  Link,
-  MessagesSquare,
-  Play,
-  SquareTerminal,
-} from 'lucide-react-native';
+  OpenIcon,
+  DisclosureDownIcon,
+  LinkIcon,
+  SessionsIcon,
+  StartIcon,
+  TerminalWindowIcon,
+} from '@/icons';
 import { useIsFocused, useRouter } from 'expo-router';
 import { useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -240,7 +240,7 @@ export function HomeLaunchTarget({
         <Animated.View style={pickerChevronStyle} pointerEvents="none">
           <ThemeIcon
             name="home.arrow"
-            fallback={ChevronDown}
+            fallback={DisclosureDownIcon}
             size={16}
             color={theme.colors.primary}
             direction="down"
@@ -415,7 +415,7 @@ export function HomeLaunchActions({
             aliasTestID={entry.aliasTestID}
             compact
             title={t`Sessions`}
-            icon={<MessagesSquare size={16} color={theme.colors.primary} />}
+            icon={<SessionsIcon size={16} color={theme.colors.primary} />}
             disabled={opening || chosenOffline}
             onPress={() => launchOnChosen(onOpenAgent)}
           />
@@ -427,7 +427,7 @@ export function HomeLaunchActions({
             {...common}
             compact
             title={t`Terminal`}
-            icon={<SquareTerminal size={16} color={theme.colors.primary} />}
+            icon={<TerminalWindowIcon size={16} color={theme.colors.primary} />}
             disabled={opening || chosenOffline}
             onPress={() => launchOnChosen(onOpenTerminal)}
           />
@@ -441,7 +441,7 @@ export function HomeLaunchActions({
             title={t`New terminal`}
             caption={entry.backend}
             icon={
-              <SquareTerminal
+              <TerminalWindowIcon
                 size={dock ? 18 : utilityCompact ? 16 : 22}
                 color={theme.colors.primary}
               />
@@ -458,7 +458,7 @@ export function HomeLaunchActions({
             compact={utilityCompact}
             title={t`SSH`}
             caption={t`SSH hosts`}
-            icon={<Link size={utilityCompact ? 16 : 22} color={theme.colors.primary} />}
+            icon={<LinkIcon size={utilityCompact ? 16 : 22} color={theme.colors.primary} />}
             disabled={opening}
             onPress={() => {
               void run(onSsh);
@@ -494,7 +494,7 @@ export function HomeLaunchActions({
           disabled={opening}
           onPress={onDemo}
           style={styles.demoAction}>
-          <Play size={14} color={theme.colors.textMuted} strokeWidth={2.2} />
+          <StartIcon size={14} color={theme.colors.textMuted} />
           <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.demoLabel}>
             {t`Try the demo`}
           </Text>
@@ -721,7 +721,7 @@ function LaunchTile({
           <ThemeIcon
             name="home.arrow"
             direction="up-right"
-            fallback={ArrowUpRight}
+            fallback={OpenIcon}
             size={15}
             color={ink}
           />
@@ -764,7 +764,7 @@ function LaunchTile({
             <ThemeIcon
               name="home.arrow"
               direction="up-right"
-              fallback={ArrowUpRight}
+              fallback={OpenIcon}
               size={16}
               color={ink}
             />

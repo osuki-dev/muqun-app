@@ -1,7 +1,7 @@
 import { useLingui } from '@lingui/react/macro';
 import { useToast } from '@osuki-dev/ui';
 import { openBrowserAsync, WebBrowserPresentationStyle } from 'expo-web-browser';
-import { BookOpen, Code, ExternalLink, MessageSquare, ShieldCheck } from 'lucide-react-native';
+import { GuideIcon, CodeIcon, OpenExternalIcon, SessionIcon, TrustedIcon } from '@/icons';
 import { ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -74,8 +74,8 @@ export default function SettingsAboutScreen() {
                         glyph like every other row in this card, so the four
                         labels keep one left edge. */}
           <SettingsNavRow
-            icon={BookOpen}
-            trailing={ExternalLink}
+            icon={GuideIcon}
+            trailing={OpenExternalIcon}
             accessibilityRole="link"
             label={t`How to use Muqun`}
             detail={t`Guides for pairing, the terminal, agents and themes`}
@@ -83,21 +83,21 @@ export default function SettingsAboutScreen() {
             onPress={() => void openGuide()}
           />
           <SettingsNavRow
-            icon={MessageSquare}
-            trailing={ExternalLink}
+            icon={SessionIcon}
+            trailing={OpenExternalIcon}
             label={t`Report a bug or request a feature`}
             detail={t`Opens the Muqun issue tracker on GitHub.`}
             onPress={() => void openFeedback()}
           />
           <SettingsNavRow
-            icon={Code}
-            trailing={ExternalLink}
+            icon={CodeIcon}
+            trailing={OpenExternalIcon}
             label={t`Source code`}
             onPress={() => void openSource()}
           />
           <SettingsNavRow
-            icon={ShieldCheck}
-            trailing={ExternalLink}
+            icon={TrustedIcon}
+            trailing={OpenExternalIcon}
             label={t`Privacy policy`}
             onPress={() => void openPrivacyPolicy()}
           />

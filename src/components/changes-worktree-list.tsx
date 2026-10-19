@@ -1,7 +1,7 @@
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, Text } from '@osuki-dev/ui';
-import { GitBranch } from 'lucide-react-native';
+import { BranchIcon } from '@/icons';
 
 import { SheetSceneRow, SHEET_LADDER } from '@/components/sheet-scene';
 import type { GitWorktreeInventory } from '@/lib/git-worktrees';
@@ -54,7 +54,7 @@ export function ChangesWorktreeList({
             title={branch}
             caption={item.path}
             captionKind="path"
-            leading={<GitBranch size={16} color={theme.colors.textMuted} />}
+            leading={<BranchIcon size={16} color={theme.colors.textMuted} />}
             selected={item.path === selectedPath}
             accessibilityLabel={`${current ? t`Current checkout` : t`Worktree ${name}`}, ${branch}, ${item.path}`}
             meta={

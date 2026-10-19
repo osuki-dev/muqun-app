@@ -3,7 +3,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { useRouter, type Href } from 'expo-router';
-import { FolderOpen } from 'lucide-react-native';
+import { OpenFolderIcon } from '@/icons';
 import { Keyboard, StyleSheet } from 'react-native';
 
 import { KEY_ROW_HEIGHT } from '@/constants/key-row';
@@ -96,7 +96,7 @@ export function ArtifactsButton({
         { borderRadius: profile.chrome.control },
         { backgroundColor: surfaceBackground(background) },
       ]}>
-      <FolderOpen size={compact ? 15 : 16} color={theme.colors.primary} />
+      <OpenFolderIcon size={compact ? 15 : 16} color={theme.colors.primary} />
     </PressableScale>
   );
 }

@@ -3,7 +3,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Folder, FolderOpen, MoreHorizontal, Trash2 } from 'lucide-react-native';
+import { FolderIcon, OpenFolderIcon, MoreIcon, DeleteIcon } from '@/icons';
 
 import { AgentActionMenu } from '@/components/agent-action-menu';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -63,7 +63,7 @@ export const ChangeTreeDirRowView = memo(function ChangeTreeDirRowView({
   onToggle: (path: string) => void;
 }) {
   const { t } = useLingui();
-  const Icon = row.collapsed ? Folder : FolderOpen;
+  const Icon = row.collapsed ? FolderIcon : OpenFolderIcon;
   return (
     <PressableScale
       testID={`agent-changes-dir-${row.path}`}
@@ -211,7 +211,7 @@ export const ChangeTreeFileRowView = memo(function ChangeTreeFileRowView({
             hitSlop={8}
             onPress={() => onActions(row.path)}
             style={styles.overflow}>
-            <MoreHorizontal size={16} color={colors.subtle} />
+            <MoreIcon size={16} color={colors.subtle} />
           </PressableScale>
         ) : null}
       </Animated.View>
@@ -284,7 +284,7 @@ export const ChangeTreeActionsRowView = memo(function ChangeTreeActionsRowView({
             {
               id: 'discard',
               label: t`Discard changes`,
-              Icon: Trash2,
+              Icon: DeleteIcon,
               tone: 'danger',
               onPress: () => onDiscard(row.path),
               testID: 'agent-changes-discard',

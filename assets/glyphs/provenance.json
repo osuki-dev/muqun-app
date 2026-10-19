@@ -1,0 +1,802 @@
+{
+  "notice": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "circle-alert"
+    }
+  },
+  "shift": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "arrow-big-up"
+    }
+  },
+  "move-down": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "arrow-down"
+    }
+  },
+  "back": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "continue": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "move-up": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "arrow-up"
+    }
+  },
+  "open": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "arrow-up-right"
+    }
+  },
+  "blocked": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "ban"
+    }
+  },
+  "notifications": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "binary-file": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "binary"
+    }
+  },
+  "guide": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "book-open"
+    }
+  },
+  "agent": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "json": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "braces"
+    }
+  },
+  "reasoning": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "brain"
+    }
+  },
+  "calendar": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "calendar"
+    }
+  },
+  "camera": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "camera"
+    }
+  },
+  "camera-disabled": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "camera-off"
+    }
+  },
+  "done": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "completed": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "task": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "disclosure-down": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "previous": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "next": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "disclosure-up": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "collapse": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "chevrons-down-up"
+    }
+  },
+  "first-page": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "chevrons-left"
+    }
+  },
+  "last-page": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "chevrons-right"
+    }
+  },
+  "reorder": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "chevrons-up-down"
+    }
+  },
+  "pending": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "circle"
+    }
+  },
+  "help": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "circle-question-mark"
+    }
+  },
+  "time": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "clock"
+    }
+  },
+  "code": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "code"
+    }
+  },
+  "explore": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "compass"
+    }
+  },
+  "copy": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "copy"
+    }
+  },
+  "indent": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "corner-down-right"
+    }
+  },
+  "reply": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "corner-up-left"
+    }
+  },
+  "processor": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "cpu"
+    }
+  },
+  "backspace": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "delete"
+    }
+  },
+  "download": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "download"
+    }
+  },
+  "edit": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "open-external": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "external-link"
+    }
+  },
+  "file": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "file-history": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "file-clock"
+    }
+  },
+  "source-file": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "file-changes": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "file-diff"
+    }
+  },
+  "photo-file": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "file-image"
+    }
+  },
+  "edit-file": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "file-pen"
+    }
+  },
+  "add-file": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "file-plus"
+    }
+  },
+  "document": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "document-type": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "file-type"
+    }
+  },
+  "upload-file": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "file-up"
+    }
+  },
+  "video": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "film"
+    }
+  },
+  "fingerprint": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "fingerprint-pattern"
+    }
+  },
+  "folder": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "repository": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "open-folder": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "text-input": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "rectangle-ellipsis"
+    }
+  },
+  "branch": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "compare": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "fork": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "network": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "globe"
+    }
+  },
+  "storage": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "hard-drive"
+    }
+  },
+  "audio": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "headphones"
+    }
+  },
+  "history": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "rotate-ccw-clock"
+    }
+  },
+  "home": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "house"
+    }
+  },
+  "photo": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "image"
+    }
+  },
+  "photos": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "images"
+    }
+  },
+  "inbox": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "inbox"
+    }
+  },
+  "information": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "info"
+    }
+  },
+  "credential": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "key-round"
+    }
+  },
+  "keyboard": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "keyboard"
+    }
+  },
+  "stack": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "layers"
+    }
+  },
+  "grid": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "layout-grid"
+    }
+  },
+  "link": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "link"
+    }
+  },
+  "task-list": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "loading": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "loader"
+    }
+  },
+  "locked": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "fullscreen": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "maximize"
+    }
+  },
+  "session": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "sessions": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "microphone": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "remove": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "minus"
+    }
+  },
+  "computer": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "devices": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "more": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "appearance": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "palette"
+    }
+  },
+  "workspace": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "attachment": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "pause": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "pause"
+    }
+  },
+  "start": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "create": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "add-item": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "circle-plus"
+    }
+  },
+  "power": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "power"
+    }
+  },
+  "refresh": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "refresh-cw"
+    }
+  },
+  "regular-expression": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "regex"
+    }
+  },
+  "undo": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "rotate-ccw"
+    }
+  },
+  "redo": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "rotate-cw"
+    }
+  },
+  "pair-scan": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "face-scan": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "scan-face"
+    }
+  },
+  "search": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "message-send": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "settings": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "trust-warning": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "shield-alert"
+    }
+  },
+  "trusted": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "shield-check"
+    }
+  },
+  "controls": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "phone": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "suggested": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "sparkles"
+    }
+  },
+  "stop": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "session-stack": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "square-stack"
+    }
+  },
+  "terminal-window": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "terminal": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "delete": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "warning": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "triangle-alert"
+    }
+  },
+  "restore": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "undo-2"
+    }
+  },
+  "disconnect": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "unplug"
+    }
+  },
+  "connection-graph": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "waypoints"
+    }
+  },
+  "workflow": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "workflow"
+    }
+  },
+  "tool": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "wrench"
+    }
+  },
+  "close": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "dismiss": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "circle-x"
+    }
+  },
+  "quick-action": {
+    "source": "Muqun",
+    "design": "Redrawn 24-grid drawing; rounded 2-unit outline; conventional semantic symbol",
+    "replaces": {
+      "source": "Lucide 1.59.0",
+      "icon": "zap"
+    }
+  },
+  "choice": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  },
+  "approval-always": {
+    "source": "Muqun",
+    "design": "Original 24-grid drawing; rounded 2-unit outline"
+  }
+}

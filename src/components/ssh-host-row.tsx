@@ -3,13 +3,13 @@ import { useMinuteNow } from '@/hooks/use-minute-now';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import {
-  ChevronRight,
-  Fingerprint,
-  KeyRound,
-  Lock,
-  Pencil,
-  ShieldCheck,
-} from 'lucide-react-native';
+  NextIcon,
+  FingerprintIcon,
+  CredentialIcon,
+  LockedIcon,
+  EditIcon,
+  TrustedIcon,
+} from '@/icons';
 import { StyleSheet, View } from 'react-native';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -132,11 +132,11 @@ export function SshHostRow({
             { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
           ]}>
           {record.auth.type === 'privateKey' ? (
-            <KeyRound size={18} color={theme.colors.primary} strokeWidth={2} />
+            <CredentialIcon size={18} color={theme.colors.primary} />
           ) : record.auth.type === 'keyboardInteractive' ? (
-            <Fingerprint size={18} color={theme.colors.primary} strokeWidth={2} />
+            <FingerprintIcon size={18} color={theme.colors.primary} />
           ) : (
-            <Lock size={18} color={theme.colors.primary} strokeWidth={2} />
+            <LockedIcon size={18} color={theme.colors.primary} />
           )}
         </View>
         <View style={styles.rowCopy}>
@@ -147,7 +147,7 @@ export function SshHostRow({
             {trusted ? (
               // Spoken through the hint above; the glyph itself is decoration.
               <View importantForAccessibility="no" accessibilityElementsHidden>
-                <ShieldCheck size={14} color={theme.colors.success} strokeWidth={2.2} />
+                <TrustedIcon size={14} color={theme.colors.success} />
               </View>
             ) : null}
           </View>
@@ -160,7 +160,7 @@ export function SshHostRow({
             {lastConnected}
           </Text>
         </View>
-        {onEdit ? null : <ChevronRight size={18} color={theme.colors.textSubtle} />}
+        {onEdit ? null : <NextIcon size={18} color={theme.colors.textSubtle} />}
       </PressableScale>
       {onEdit ? (
         <PressableScale
@@ -172,7 +172,7 @@ export function SshHostRow({
             styles.rowAction,
             { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
           ]}>
-          <Pencil size={16} color={theme.colors.text} strokeWidth={2} />
+          <EditIcon size={16} color={theme.colors.text} />
         </PressableScale>
       ) : null}
     </View>

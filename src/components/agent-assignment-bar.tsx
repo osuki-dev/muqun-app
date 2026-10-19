@@ -1,6 +1,6 @@
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
-import { Bot, Plus, X } from 'lucide-react-native';
+import { AgentIcon, CreateIcon, CloseIcon } from '@/icons';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -112,7 +112,7 @@ export function AgentAssignmentBar({
           accessibilityLabel={t`Stop assigning a task`}
           onPress={onClose}
           style={styles.close}>
-          <X size={15} color={theme.colors.textMuted} />
+          <CloseIcon size={15} color={theme.colors.textMuted} />
         </PressableScale>
       </View>
       <ScrollView
@@ -171,7 +171,7 @@ export function AgentAssignmentBar({
               disabled={disabled}
               onPress={() => onChoose({ type: 'new', kind: profile.kind })}
               style={chipStyle(selected)}>
-              <Plus size={14} color={theme.colors.primary} />
+              <CreateIcon size={14} color={theme.colors.primary} />
               <Text variant="bodySmall" numberOfLines={1} style={styles.chipLabel}>
                 {profile.kind}
               </Text>
@@ -180,7 +180,7 @@ export function AgentAssignmentBar({
         })}
         {upgrade ? (
           <View style={styles.empty}>
-            <Bot size={15} color={theme.colors.textMuted} />
+            <AgentIcon size={15} color={theme.colors.textMuted} />
             {/* Named separately, because they are different machines to go and
                 update and a reader told to update the wrong one learns only
                 that the message is not to be trusted. */}
@@ -192,7 +192,7 @@ export function AgentAssignmentBar({
           </View>
         ) : candidates.length === 0 && kinds.length === 0 ? (
           <View style={styles.empty}>
-            <Bot size={15} color={theme.colors.textMuted} />
+            <AgentIcon size={15} color={theme.colors.textMuted} />
             <Text variant="caption" color={theme.colors.textMuted}>
               {t`No other assistants in this session yet.`}
             </Text>

@@ -6,17 +6,17 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useFocusEffect, useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import {
-  Bot,
-  Check,
-  ChevronDown,
-  ChevronRight,
-  Copy,
-  Monitor,
-  Pencil,
-  ScanLine,
-  Terminal,
-  Trash2,
-} from 'lucide-react-native';
+  AgentIcon,
+  DoneIcon,
+  DisclosureDownIcon,
+  NextIcon,
+  CopyIcon,
+  ComputerIcon,
+  EditIcon,
+  PairScanIcon,
+  TerminalIcon,
+  DeleteIcon,
+} from '@/icons';
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -209,16 +209,16 @@ export function SettingsServers({ initialOpenId }: { initialOpenId?: string } = 
       <View style={styles.managementGroup}>
         <SectionLabel title={t`Connections`} />
         <SettingsNavRow
-          icon={ScanLine}
+          icon={PairScanIcon}
           label={t`Pair a computer`}
-          trailing={ChevronRight}
+          trailing={NextIcon}
           testID="settings-pair-row"
           onPress={() => router.push('/explore')}
         />
         <SettingsNavRow
-          icon={Terminal}
+          icon={TerminalIcon}
           label={t`SSH hosts`}
-          trailing={ChevronRight}
+          trailing={NextIcon}
           testID="settings-ssh-row"
           onPress={() => router.push('/ssh')}
         />
@@ -359,7 +359,7 @@ function ServerRow({
               ),
             },
           ]}>
-          <Monitor size={20} color={current ? theme.colors.primary : theme.colors.textMuted} />
+          <ComputerIcon size={20} color={current ? theme.colors.primary : theme.colors.textMuted} />
         </View>
         <View style={styles.rowCopy}>
           <View style={styles.nameLine}>
@@ -393,7 +393,7 @@ function ServerRow({
           <GatewayTunnelBadge record={server} />
         </View>
         <Animated.View style={chevronStyle}>
-          <ChevronDown size={18} color={theme.colors.textMuted} />
+          <DisclosureDownIcon size={18} color={theme.colors.textMuted} />
         </Animated.View>
       </PressableScale>
       <PairAgainNotice
@@ -433,7 +433,7 @@ function ServerRow({
                 );
               }}
               style={styles.copyAction}>
-              <Copy size={18} color={theme.colors.textMuted} />
+              <CopyIcon size={18} color={theme.colors.textMuted} />
             </PressableScale>
           </View>
           {current ? (
@@ -457,7 +457,7 @@ function ServerRow({
                   { borderRadius: profile.chrome.control },
                   { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
                 ]}>
-                <Check size={16} color={theme.colors.primary} strokeWidth={2.2} />
+                <DoneIcon size={16} color={theme.colors.primary} />
                 <Text variant="caption" color={theme.colors.primary}>
                   <Trans>Use this computer</Trans>
                 </Text>
@@ -495,10 +495,10 @@ function HomeAgentNavRow({ serverId }: { serverId: string }) {
   return (
     <SettingsNavRow
       testID="settings-server-home-agent"
-      icon={Bot}
+      icon={AgentIcon}
       label={t`Home agent`}
       detail={agent?.name}
-      trailing={ChevronRight}
+      trailing={NextIcon}
       onPress={() => router.push({ pathname: '/home-agent', params: { serverId } })}
     />
   );
@@ -542,7 +542,7 @@ function ServerRowEditor({
           { borderRadius: profile.chrome.control },
           { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
         ]}>
-        <Pencil size={15} color={theme.colors.text} strokeWidth={2} />
+        <EditIcon size={15} color={theme.colors.text} />
         <Text variant="caption" color={theme.colors.text}>
           <Trans>Edit this computer</Trans>
         </Text>
@@ -768,7 +768,7 @@ function UnpairAction({ label, onUnpair }: { label: string; onUnpair: () => Prom
         {view.confirm.icon === 'spinner' ? (
           <Spinner size="sm" color={theme.colors.onPrimary} />
         ) : (
-          <Trash2 size={15} color={theme.colors.onPrimary} strokeWidth={2.2} />
+          <DeleteIcon size={15} color={theme.colors.onPrimary} />
         )}
         {/* Semibold through the prop rather than a stylesheet `fontWeight: '700'`,
             which on Android rounds past the only style `expo-font` registered and
@@ -807,7 +807,7 @@ function UnpairAction({ label, onUnpair }: { label: string; onUnpair: () => Prom
         { borderRadius: profile.chrome.control },
         { backgroundColor: surfaceBackground(theme.colors.dangerSubtle) },
       ]}>
-      <Trash2 size={15} color={theme.colors.danger} strokeWidth={2} />
+      <DeleteIcon size={15} color={theme.colors.danger} />
       <Text variant="caption" color={theme.colors.danger}>
         <Trans>Unpair this computer</Trans>
       </Text>

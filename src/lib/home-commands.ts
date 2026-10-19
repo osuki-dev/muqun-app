@@ -1,3 +1,4 @@
+import { createStore } from 'zustand/vanilla';
 import { homeTargetKey, type HomeTarget } from '@/lib/home-recents';
 import type { TerminalBackendState } from '@/lib/terminal-backend-state';
 import type { AgentReadiness } from '@/lib/home-agent-readiness';
@@ -182,14 +183,23 @@ export type HomeCommandResult =
   | { status: 'setup-required'; operationId: number; readiness: AgentReadiness }
   | { status: 'failed'; operationId: number; message: string };
 
-type PendingOperation = { id: number; key: string; owner: symbol; survivesDispose: boolean };
+type PendingOperation = {
+  id: number;
+  key: string;
+  owner: symbol;
+  survivesDispose: boolean;
+  isActive: () => boolean;
+};
 
 // The coordinator belongs to the module rather than a React hook instance.
 // Home has several layouts and cards, and one can unmount while another is
 // still resolving a selection. Keeping ownership here makes those entry
 // points share the same pending action without retaining a component ref.
 let nextOperationId = 0;
-let pendingOperation: PendingOperation | null = null;
+// Transient coordination only: never persisted and never contains credentials.
+export const homeCommandStore = createStore<{ pending: PendingOperation | null }>(() => ({
+  pending: null,
+}));
 
 /**
  * Route intent claims bridge the short gap between Home dispatch and the
@@ -216,32 +226,46 @@ export function createHomeCommandController(ports: HomeCommandPorts) {
   const owner = Symbol('home-command-owner');
 
   function begin(key: string, survivesDispose: boolean): PendingOperation | HomeCommandResult {
-    if (pendingOperation?.key === key)
+    const pendingOperation = homeCommandStore.getState().pending;
+    if (pendingOperation?.key === key && pendingOperation.isActive())
       return { status: 'duplicate', operationId: pendingOperation.id };
     homeWorkspaceHandoffStore.getState().clear();
-    const operation = { id: ++nextOperationId, key, owner, survivesDispose };
-    pendingOperation = operation;
+    const operation = {
+      id: ++nextOperationId,
+      key,
+      owner,
+      survivesDispose,
+      isActive: () => ports.sourceRouteActive?.() ?? true,
+    };
+    homeCommandStore.setState({ pending: operation });
     return operation;
   }
 
   function current(operation: PendingOperation): boolean {
-    return pendingOperation?.id === operation.id && (ports.sourceRouteActive?.() ?? true);
+    return homeCommandStore.getState().pending?.id === operation.id && operation.isActive();
   }
 
   function owns(operation: PendingOperation): boolean {
+    const pendingOperation = homeCommandStore.getState().pending;
     return pendingOperation?.id === operation.id && pendingOperation.owner === owner;
   }
 
   function finish(operation: PendingOperation): void {
-    if (owns(operation)) pendingOperation = null;
+    if (owns(operation)) homeCommandStore.setState({ pending: null });
+  }
+
+  function cancel(): void {
+    if (homeCommandStore.getState().pending?.owner === owner)
+      homeCommandStore.setState({ pending: null });
   }
 
   function dispose(): void {
+    const pendingOperation = homeCommandStore.getState().pending;
     if (
       pendingOperation?.owner === owner &&
       (!pendingOperation.survivesDispose || !(ports.sourceRouteActive?.() ?? true))
     )
-      pendingOperation = null;
+      homeCommandStore.setState({ pending: null });
   }
 
   function superseded(operation: PendingOperation): HomeCommandResult {
@@ -487,7 +511,7 @@ export function createHomeCommandController(ports: HomeCommandPorts) {
     }
   }
 
-  return { dispatch, dispose };
+  return { dispatch, dispose, cancel };
 }
 
 function isOperation(value: PendingOperation | HomeCommandResult): value is PendingOperation {

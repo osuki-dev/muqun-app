@@ -219,7 +219,9 @@ import {
   type PreviewImageSource,
 } from './gateway-image-previews';
 
-const REQUEST_TIMEOUT_MS = 8_000;
+// Remote gateways may need time to establish a tunnel and answer an agent read.
+// Allow a full minute before reporting that the gateway did not answer.
+const REQUEST_TIMEOUT_MS = 60_000;
 /**
  * A write that starts or steers an agent turn -- creating a session, a
  * prompt, a command -- waits on the agent, not on a lookup: OpenCode has to
@@ -227,7 +229,7 @@ const REQUEST_TIMEOUT_MS = 8_000;
  * answer. Cut off at the read budget, the app gave up on a prompt the gateway
  * then delivered, and a retry sent it twice.
  */
-const AGENT_WRITE_TIMEOUT_MS = 45_000;
+const AGENT_WRITE_TIMEOUT_MS = 60_000;
 // An attachment is orders of magnitude larger than a control call, and the
 // gateway is usually reached over Wi-Fi or a tunnel, so it gets its own budget
 // rather than being cut off by the request timeout.

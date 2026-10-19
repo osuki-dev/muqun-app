@@ -4,7 +4,7 @@ import { StyleSheet } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useIsFocused } from 'expo-router';
-import { RefreshCw } from 'lucide-react-native';
+import { RefreshIcon } from '@/icons';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { AgentTranscriptList } from '@/components/agent-transcript-list';
 import { usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
@@ -72,7 +72,7 @@ export function DemoStreamingTranscript() {
             setRun((value) => value + 1);
             void list.current?.scrollToEnd({ animated: false });
           }}>
-          <RefreshCw size={17} color={colors.textMuted} />
+          <RefreshIcon size={17} color={colors.textMuted} />
         </SheetSceneQuietControl>
       }>
       <AgentTranscriptList

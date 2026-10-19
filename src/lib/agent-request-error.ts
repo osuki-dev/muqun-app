@@ -167,6 +167,12 @@ export function agentRequestErrorDetail(err: unknown): {
 export function classifyAgentRequestError(err: unknown): AgentRequestError {
   const { raw, match, status, code, message } = readAgentRequestError(err);
 
+  // No response before the deadline says nothing about the agent's readiness.
+  // Keep the timeout visible without switching the workbench to setup mode.
+  const errorCode = err && typeof err === 'object' && 'code' in err ? err.code : undefined;
+  if (!status && (/timed\s*out|timeout/i.test(raw) || errorCode === 'ETIMEDOUT'))
+    return { kind: 'other', message: oneLine(raw) };
+
   // Both are answers about the request, not about whether the agent is up:
   // checked first, so neither reads as "offline" or as a generic refusal.
   if (code === 'feature_unsupported' || (status === 501 && !code)) return { kind: 'unsupported' };

@@ -6,7 +6,7 @@ import { useNavigation, useRouter } from 'expo-router';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useWindowDimensions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { ChevronRight, MoreHorizontal, Trash2, X } from 'lucide-react-native';
+import { NextIcon, MoreIcon, DeleteIcon, CloseIcon } from '@/icons';
 
 import { CustomThemePreview } from '@/components/custom-theme-preview';
 import { SettingsSegmented } from '@/components/settings-segmented';
@@ -633,7 +633,7 @@ export function CustomThemeLibrary({
                 </Text>
               </View>
             </View>
-            <ChevronRight size={18} color={colors.textMuted} />
+            <NextIcon size={18} color={colors.textMuted} />
           </PressableScale>
           <TwoStepAction
             testID={`theme-remove-${installed.id}`}
@@ -642,7 +642,7 @@ export function CustomThemeLibrary({
             confirmLabel={t`Tap again to remove`}
             accessibilityLabel={t`Remove ${installed.manifest.name}`}
             confirmAccessibilityLabel={`${t`Tap again to remove`}: ${installed.manifest.name}`}
-            Icon={Trash2}
+            Icon={DeleteIcon}
             armed={pendingRemoval === installed.id}
             disabled={busy}
             onArmedChange={(armed) => {
@@ -796,7 +796,7 @@ export function CustomThemeLibrary({
                 disabled={busy}
                 onPress={closePreview}
                 style={{ padding: 12 }}>
-                <X size={20} color={colors.textMuted} />
+                <CloseIcon size={20} color={colors.textMuted} />
               </PressableScale>
             </View>
           ) : null}
@@ -812,6 +812,15 @@ export function CustomThemeLibrary({
                 width: wideDetail ? undefined : '100%',
                 minWidth: 0,
               }}>
+              {isRenderableThemeAsset(assets?.[candidate.manifest.preview ?? '']) ? (
+                <Image
+                  source={{ uri: assets![candidate.manifest.preview!] }}
+                  contentFit="contain"
+                  cachePolicy="memory"
+                  accessible={false}
+                  style={{ width: '100%', aspectRatio: 8 / 5, marginBottom: 12 }}
+                />
+              ) : null}
               <CustomThemePreview
                 manifest={appearance ? effectiveThemeManifest(appearance) : candidate.manifest}
                 assets={assets}
@@ -929,7 +938,7 @@ export function CustomThemeLibrary({
                 disabled={busy}
                 onPress={() => setActionsOpen(!actionsOpen)}
                 style={{ padding: 12, justifyContent: 'center' }}>
-                <MoreHorizontal size={24} color={colors.textMuted} />
+                <MoreIcon size={24} color={colors.textMuted} />
               </PressableScale>
             ) : null}
           </View>

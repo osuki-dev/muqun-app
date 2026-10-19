@@ -2,7 +2,7 @@ import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter, type Href } from 'expo-router';
-import { Check, Copy, Play } from 'lucide-react-native';
+import { DoneIcon, CopyIcon, StartIcon } from '@/icons';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
@@ -261,7 +261,7 @@ export function GuideCommand({
           {running ? (
             <ActivityIndicator size="small" color={theme.colors.onPrimary} />
           ) : (
-            <Play size={15} color={theme.colors.onPrimary} strokeWidth={2.2} />
+            <StartIcon size={15} color={theme.colors.onPrimary} />
           )}
           <Text variant="bodySmall" weight="bold" color={theme.colors.onPrimary}>
             {t`Run on ${computerLabel}`}
@@ -295,9 +295,9 @@ export function GuideCommand({
           {command}
         </Text>
         {copied ? (
-          <Check size={14} color={theme.colors.success} strokeWidth={2.5} />
+          <DoneIcon size={14} color={theme.colors.success} />
         ) : (
-          <Copy size={14} color={theme.colors.textSubtle} strokeWidth={2} />
+          <CopyIcon size={14} color={theme.colors.textSubtle} />
         )}
       </PressableScale>
       {error ? (

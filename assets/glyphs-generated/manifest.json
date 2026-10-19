@@ -1,0 +1,9 @@
+{
+  "inputHash": "53a12502b5169b93d1c6f6fba99ef442b84ecd97f75755a9dd87b2e485936fbd",
+  "files": {
+    "assets/glyphs-generated/muqun-53a12502.ttf": "f1e9df6b8700c516bf81f130a6996f9d805159b7f14ddde0b1a59d1093150ea9",
+    "assets/glyphs-generated/muqun.glyphmap.json": "c8bd07960ff51893877214f3a45290d6e1c920d143e46901c7898f298b64018e",
+    "src/icons/font.generated.ts": "df1076308087224c91f1c35f1cf94f2482f30b2edb9ccb9f414be1211561a5f3",
+    "src/icons/index.tsx": "2b5449dfc0aeb394254ea68e28a02c679af40f9e8eb0ee8f3858bb86b3a7124a"
+  }
+}

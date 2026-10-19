@@ -4,18 +4,18 @@ import {
   type DiagramExpandIconProps,
   type DiagramViewerIconProps,
 } from '@osuki-dev/skia-diagrams/react';
-import { Check, Copy, Maximize, X } from 'lucide-react-native';
+import { DoneIcon, CopyIcon, FullscreenIcon, CloseIcon } from '@/icons';
 import { Skia, type SkTypefaceFontProvider } from 'react-native-skia';
 import { useDiagramTheme } from '@/hooks/use-diagram-theme';
 import { useAppSettings } from '@/stores/app-settings';
 import { slotFontFamily, userFontUri, type FontSlot } from '@/theme/user-fonts';
 
 function renderDiagramExpandIcon({ color, size }: DiagramExpandIconProps) {
-  return createElement(Maximize, { color, size });
+  return createElement(FullscreenIcon, { color, size });
 }
 
 function renderDiagramViewerIcon({ action, color, size }: DiagramViewerIconProps) {
-  const Icon = { close: X, fit: Maximize, copy: Copy, success: Check }[action];
+  const Icon = { close: CloseIcon, fit: FullscreenIcon, copy: CopyIcon, success: DoneIcon }[action];
   return createElement(Icon, { color, size });
 }
 

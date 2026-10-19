@@ -3,15 +3,15 @@ import { View, StyleSheet, ScrollView, type ScrollViewInstance } from 'react-nat
 import { useThemeTokens, PressableScale, Text, TextField } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import {
-  ChevronRight,
-  CornerUpLeft,
-  FolderGit2,
-  GitBranch,
-  GitFork,
-  MoreHorizontal,
-  PencilLine,
-  Trash2,
-} from 'lucide-react-native';
+  NextIcon,
+  ReplyIcon,
+  RepositoryIcon,
+  BranchIcon,
+  ForkIcon,
+  MoreIcon,
+  EditIcon,
+  DeleteIcon,
+} from '@/icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import Animated from 'react-native-reanimated';
@@ -430,7 +430,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
       items.push({
         id: 'rename',
         label: t`Rename`,
-        Icon: PencilLine,
+        Icon: EditIcon,
         onPress: () => startRename(session),
         testID: `agent-session-rename-${session.asid}`,
       });
@@ -441,7 +441,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
       items.push({
         id: 'parent',
         label: t`Open parent`,
-        Icon: CornerUpLeft,
+        Icon: ReplyIcon,
         onPress: () => {
           setMenuAsid(null);
           onSelectSession(parent);
@@ -454,7 +454,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
       items.push({
         id: 'fork',
         label: t`Fork session`,
-        Icon: GitFork,
+        Icon: ForkIcon,
         onPress: () => {
           setMenuAsid(null);
           onForkSession(session);
@@ -471,7 +471,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
         // glyph takes a whole cell, so the label grew a gap and three dots that
         // the two items beside it do not have.
         label: t`Move to worktree`,
-        Icon: GitBranch,
+        Icon: BranchIcon,
         onPress: () => {
           setMenuAsid(null);
           // Selected first, then the sheet: the worktree sheet reads and moves
@@ -487,7 +487,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
       items.push({
         id: 'delete',
         label: t`Delete`,
-        Icon: Trash2,
+        Icon: DeleteIcon,
         tone: 'danger',
         // The one destructive thing on this sheet, asked in the row. A row that
         // deletes on one tap is a row that deletes by accident, and what goes
@@ -516,7 +516,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
         hitSlop={10}
         onPress={() => openMenu(session.asid)}
         style={styles.overflow}>
-        <MoreHorizontal size={16} color={theme.colors.textMuted} />
+        <MoreIcon size={16} color={theme.colors.textMuted} />
       </PressableScale>
     ) : null;
 
@@ -591,8 +591,8 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
               title={currentWorkspaceName}
               caption={activeDirectory ?? t`Switch project`}
               captionKind={activeDirectory ? 'path' : 'text'}
-              leading={<FolderGit2 size={17} color={theme.colors.primary} />}
-              meta={<ChevronRight size={16} color={theme.colors.textMuted} />}
+              leading={<RepositoryIcon size={17} color={theme.colors.primary} />}
+              meta={<NextIcon size={16} color={theme.colors.textMuted} />}
               accessibilityLabel={switchProjectLabel}
               onPress={onOpenProjects}
             />
@@ -687,7 +687,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
                     style={styles.subagentRow}
                     accessibilityLabel={rowLabel(sub)}
                     crossfadeTitle
-                    leading={<GitFork size={13} color={theme.colors.textSubtle} />}
+                    leading={<ForkIcon size={13} color={theme.colors.textSubtle} />}
                     onPress={() => {
                       onSelectSession(sub.asid);
                       onClose();

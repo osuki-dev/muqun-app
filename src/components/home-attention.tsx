@@ -1,7 +1,7 @@
 import { useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
-import { ChevronRight, CircleAlert } from 'lucide-react-native';
+import { NextIcon, NoticeIcon } from '@/icons';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { LayoutAnimationConfig } from 'react-native-reanimated';
 
@@ -233,12 +233,7 @@ function WaitingTaskRow({
         {opening ? (
           <ActivityIndicator size="small" color={theme.colors.textMuted} />
         ) : (
-          <ThemeIcon
-            name="home.arrow"
-            fallback={ChevronRight}
-            size={16}
-            color={theme.colors.primary}
-          />
+          <ThemeIcon name="home.arrow" fallback={NextIcon} size={16} color={theme.colors.primary} />
         )}
       </PressableScale>
     </View>
@@ -284,7 +279,7 @@ function AttentionRow({
           borderRadius: profile.chrome.noticeCard,
         },
       ]}>
-      <CircleAlert size={20} color={theme.colors.warning} />
+      <NoticeIcon size={20} color={theme.colors.warning} />
       <View style={styles.copy}>
         <Text weight="semibold" variant="bodySmall">
           {t`${count} requests last observed`}
@@ -299,7 +294,7 @@ function AttentionRow({
           {t`Open to check the current state`}
         </Text>
       </View>
-      <ThemeIcon name="home.arrow" fallback={ChevronRight} size={16} color={theme.colors.primary} />
+      <ThemeIcon name="home.arrow" fallback={NextIcon} size={16} color={theme.colors.primary} />
     </PressableScale>
   );
 }

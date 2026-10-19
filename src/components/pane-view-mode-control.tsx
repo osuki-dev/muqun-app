@@ -1,4 +1,4 @@
-import { MessagesSquare, SquareTerminal } from 'lucide-react-native';
+import { SessionsIcon, TerminalWindowIcon } from '@/icons';
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -56,7 +56,7 @@ export const PaneViewModeControl = memo(function PaneViewModeControl({
       )}
       onPress={onCycle}
       style={styles.button}>
-      <ModeIcon size={18} color={color} strokeWidth={2} />
+      <ModeIcon size={18} color={color} />
       {degraded ? (
         // The view the user asked for could not be read, and something else is
         // showing instead. Small, because nothing is broken.
@@ -71,9 +71,9 @@ export const PaneViewModeControl = memo(function PaneViewModeControl({
   );
 });
 
-const MODE_ICONS: Record<PaneViewMode, typeof SquareTerminal> = {
-  chat: MessagesSquare,
-  terminal: SquareTerminal,
+const MODE_ICONS: Record<PaneViewMode, typeof TerminalWindowIcon> = {
+  chat: SessionsIcon,
+  terminal: TerminalWindowIcon,
 };
 
 const styles = StyleSheet.create({

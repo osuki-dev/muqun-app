@@ -1,5 +1,5 @@
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
-import { ChevronLeft } from 'lucide-react-native';
+import { PreviousIcon } from '@/icons';
 
 import { ThemeIcon } from '@/components/theme-icon';
 import { type ReactNode } from 'react';
@@ -144,13 +144,7 @@ export function NavHeaderBackButton({
         accessibilityLabel={accessibilityLabel}
         onPress={onPress}
         style={styles.circleButton}>
-        <ThemeIcon
-          name="chrome.back"
-          fallback={ChevronLeft}
-          size={21}
-          color={theme.colors.text}
-          strokeWidth={2}
-        />
+        <ThemeIcon name="chrome.back" fallback={PreviousIcon} size={21} color={theme.colors.text} />
       </PressableScale>
     </NavHeaderCircle>
   );

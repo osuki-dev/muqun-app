@@ -1,6 +1,6 @@
 import { ThemeIcon } from '@/components/theme-icon';
 import { useThemeTokens, Text } from '@osuki-dev/ui';
-import { ChevronDown, FolderGit2, Plus } from 'lucide-react-native';
+import { DisclosureDownIcon, RepositoryIcon, CreateIcon } from '@/icons';
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
@@ -47,13 +47,7 @@ export function NewSessionIcon() {
   const theme = useThemeTokens();
   return (
     <View pointerEvents="none" style={styles.actionIconStack}>
-      <ThemeIcon
-        name="chrome.create"
-        fallback={Plus}
-        size={18}
-        color={theme.colors.text}
-        strokeWidth={2.2}
-      />
+      <ThemeIcon name="chrome.create" fallback={CreateIcon} size={18} color={theme.colors.text} />
     </View>
   );
 }
@@ -125,7 +119,7 @@ export function WorkspacePillContent({
   return (
     <View pointerEvents="none" style={styles.pillStackViewport}>
       <Animated.View style={[styles.pillStack, workspaceStyle]}>
-        <FolderGit2 size={15} color={theme.colors.primary} />
+        <RepositoryIcon size={15} color={theme.colors.primary} />
         <Text
           variant="bodySmall"
           weight="bold"
@@ -141,7 +135,7 @@ export function WorkspacePillContent({
           style={styles.workspacePillPath}>
           {workspacePath}
         </Text>
-        <ChevronDown size={13} color={theme.colors.textMuted} />
+        <DisclosureDownIcon size={13} color={theme.colors.textMuted} />
       </Animated.View>
       <Animated.View style={[styles.pillStack, sessionStyle]}>
         <StatusDot

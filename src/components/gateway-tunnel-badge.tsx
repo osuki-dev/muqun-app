@@ -1,7 +1,7 @@
 import { TerminalNotice, terminalNoticeStyles } from '@/components/terminal-notice';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
-import { Waypoints } from 'lucide-react-native';
+import { ConnectionGraphIcon } from '@/icons';
 import { StyleSheet, View } from 'react-native';
 
 import { StatusDot } from '@/components/status-dot';
@@ -94,7 +94,7 @@ export function GatewayTunnelBadge({
 
   return (
     <View accessibilityLabel={a11y} style={styles.badge}>
-      <Waypoints size={12} color={color} strokeWidth={2} />
+      <ConnectionGraphIcon size={12} color={color} />
       <Text variant="caption" color={color} numberOfLines={1} style={styles.badgeText}>
         {label}
       </Text>

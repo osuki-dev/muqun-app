@@ -7,7 +7,7 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, Text } from '@osuki-dev/ui';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { ArrowBigUp, Delete, Keyboard as KeyboardIcon } from 'lucide-react-native';
+import { ShiftIcon, BackspaceIcon, KeyboardIcon } from '@/icons';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   type GestureResponderEvent,
@@ -510,7 +510,9 @@ export function VirtualKeyboard({
                   { backgroundColor: keyFill },
                   refusedInput('backspace', 'key') && styles.muted,
                 ]}>
-                {({ pressed }) => <Delete size={18} color={pressed ? activeText : keyText} />}
+                {({ pressed }) => (
+                  <BackspaceIcon size={18} color={pressed ? activeText : keyText} />
+                )}
               </VirtualKey>
             ) : null}
             {lead > 0 ? <View style={{ flex: lead }} /> : null}
@@ -734,7 +736,7 @@ function WideKeyCap({
       ]}>
       {({ pressed }) =>
         item.value === 'backspace' ? (
-          <Delete size={18} color={pressed ? activeText : keyText} />
+          <BackspaceIcon size={18} color={pressed ? activeText : keyText} />
         ) : (
           <Text
             variant={item.kind === 'char' && item.value !== ' ' ? 'bodySmall' : 'caption'}
@@ -801,7 +803,7 @@ function ShiftKey({
               heldStyle,
             ]}
           />
-          {/* Both faces of the key, cross-faded: a Lucide icon's colour and fill are
+          {/* Both faces of the key, cross-faded: a App icon's colour and fill are
           props rather than styles, and the design system's `Text` resolves its
           own colour, so neither leaves the UI thread anything to drive. */}
           <Animated.View style={[StyleSheet.absoluteFill, styles.keyFace, restingStyle]}>
@@ -813,7 +815,7 @@ function ShiftKey({
                 #+=
               </Text>
             ) : (
-              <ArrowBigUp size={18} color={pressed ? activeText : keyText} fill="transparent" />
+              <ShiftIcon size={18} color={pressed ? activeText : keyText} fill="transparent" />
             )}
           </Animated.View>
           <Animated.View style={[StyleSheet.absoluteFill, styles.keyFace, heldStyle]}>
@@ -825,7 +827,7 @@ function ShiftKey({
                 123
               </Text>
             ) : (
-              <ArrowBigUp size={18} color={activeText} fill={activeText} />
+              <ShiftIcon size={18} color={activeText} fill={activeText} />
             )}
           </Animated.View>
         </>

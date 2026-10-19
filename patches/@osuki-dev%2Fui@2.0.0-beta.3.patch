@@ -1,0 +1,75 @@
+diff --git a/src/components/icon.tsx b/src/components/icon.tsx
+index 3e8a8555f277daa2ad38ec301372a62b5e6180a8..d108b08f4a2718e743083dc6e580b85e6c54193a 100644
+--- a/src/components/icon.tsx
++++ b/src/components/icon.tsx
+@@ -141,24 +141,6 @@ function combineTransforms(
+ 	return [...baseTransform, rotationTransform] as any;
+ }
+ 
+-// Lazy / safe Lucide loader
+-let lucideModule: Record<string, React.ComponentType<any>> | null = null;
+-let lucideAttempted = false;
+-
+-function getLucideModule(): Record<string, React.ComponentType<any>> | null {
+-	if (lucideAttempted) return lucideModule;
+-	lucideAttempted = true;
+-	try {
+-		if (typeof require === "function") {
+-			// eslint-disable-next-line @typescript-eslint/no-require-imports
+-			lucideModule = require("lucide-react-native");
+-		}
+-	} catch {
+-		lucideModule = null;
+-	}
+-	return lucideModule;
+-}
+-
+ // Lazy / safe Expo Image loader
+ let expoImageComponent: any = null;
+ let expoImageAttempted = false;
+@@ -517,7 +499,7 @@ export interface IconGlyphProps extends Omit<ViewProps, "children"> {
+ }
+ 
+ /**
+- * Resolves and renders an icon glyph by name through resolvers, theme packs, or Lucide.
++ * Resolves and renders an icon glyph through the host app resolver or icon map.
+  */
+ export const IconGlyph: React.FC<IconGlyphProps> = ({
+ 	name,
+@@ -608,27 +590,6 @@ export const IconGlyph: React.FC<IconGlyphProps> = ({
+ 		}
+ 	}
+ 
+-	// 4. Lucide lookup
+-	if (!renderedNode) {
+-		const lucide = getLucideModule();
+-		if (lucide) {
+-			const targetLookup = fallbackName ?? name;
+-			const pascalName = toPascalCase(targetLookup);
+-			const LucideIcon = lucide[targetLookup] || lucide[pascalName];
+-			if (LucideIcon) {
+-				renderedNode = (
+-					<LucideIcon
+-						width={size}
+-						height={size}
+-						size={size}
+-						color={resolvedColor}
+-						strokeWidth={strokeWidth}
+-					/>
+-				);
+-			}
+-		}
+-	}
+-
+ 	// 5. Fallback component if not resolved
+ 	if (!renderedNode) {
+ 		const FallbackComponent = fallback ?? context?.fallback;
+@@ -638,7 +599,7 @@ export const IconGlyph: React.FC<IconGlyphProps> = ({
+ 			if (isDev) {
+ 				console.warn(
+ 					`[@osuki-dev/ui] Unknown icon: "${String(name)}". ` +
+-						`Ensure it is registered in IconProvider, matches a Lucide PascalCase name (e.g. "Home", "Settings"), or is provided by an active icon resolver.`,
++						`Ensure it is registered in IconProvider, is provided by an active icon resolver.`,
+ 				);
+ 			}
+ 			return null;

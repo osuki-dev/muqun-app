@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import type { Href } from 'expo-router';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeMode, useThemeTokens, PressableScale } from '@osuki-dev/ui';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useIsFocused } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -73,7 +73,8 @@ export default function AgentScreen() {
    * would already have listed the wrong machine's sessions. Opened without a
    * server (the drawer, a deep link), the selected one is the one meant.
    */
-  const { record, selectRecord } = useGatewayRecord();
+  const { record, selectRecord, selectRecordNow } = useGatewayRecord();
+  const isFocused = useIsFocused();
   const demoStreaming = params.asid === DEMO_STREAMING_ASID && isDemoRecord(record);
   const wantedServer = typeof params.server === 'string' && params.server ? params.server : null;
   const serverReady = !wantedServer || record?.serverId === wantedServer;
@@ -83,21 +84,22 @@ export default function AgentScreen() {
   const connectionReady = serverReady && (!tunnel.tunnelled || tunnel.phase === 'open');
   const newSessionIntent = params.intent === 'new';
   useEffect(() => {
-    if (!newSessionIntent || !wantedServer) return;
+    if (!isFocused || !newSessionIntent || !wantedServer) return;
     consumeNewAgentIntent(wantedServer, params.directory);
-  }, [newSessionIntent, params.directory, wantedServer]);
+  }, [isFocused, newSessionIntent, params.directory, wantedServer]);
   useEffect(() => {
-    if (!wantedServer || serverReady) return;
-    void selectRecord(wantedServer);
-  }, [wantedServer, serverReady, selectRecord]);
+    // Retained background routes must never reclaim the global transport.
+    if (!isFocused || !wantedServer || serverReady) return;
+    if (!selectRecordNow(wantedServer)) void selectRecord(wantedServer);
+  }, [isFocused, wantedServer, serverReady, selectRecord, selectRecordNow]);
   const redirectServerId = padAgentRedirectParams(params).serverId ?? record?.serverId;
   useEffect(() => {
-    if (!isPad || !redirectServerId || demoStreaming) return;
+    if (!isFocused || !isPad || !redirectServerId || demoStreaming) return;
     router.replace({
       pathname: '/servers/[serverId]',
       params: { ...padAgentRedirectParams(params), serverId: redirectServerId },
     } as Href);
-  }, [isPad, params, redirectServerId, router, demoStreaming]);
+  }, [isFocused, isPad, params, redirectServerId, router, demoStreaming]);
   const sessionRunning = useAgentSessionState((s) => s.running);
   const sessionTitle = useAgentSessionState((s) => s.title);
   const activeDirectory = useAgentSessionState((s) => s.directory);

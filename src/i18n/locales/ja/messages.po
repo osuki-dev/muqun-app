@@ -143,6 +143,12 @@ msgstr "コンテキスト内のメッセージ {0} 件"
 msgid "{0} more models"
 msgstr "ほか {0} 件のモデル"
 
+#. placeholder {0}: filtered.length
+#. placeholder {1}: entries.length
+#: src/components/dev-icon-gallery.tsx
+msgid "{0} of {1} icons · development only"
+msgstr "{1} 個中 {0} 個のアイコン · 開発用"
+
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
 msgid "{0} of {limitLabel} tokens the model can hold"
@@ -312,10 +318,6 @@ msgstr "{count} 件のリクエストを最後に確認"
 msgid "{done} of {0} done"
 msgstr "{0} 件中 {done} 件完了"
 
-#: src/components/home-computer-deck.tsx
-msgid "{failed, plural, one {# failed} other {# failed}}"
-msgstr "{failed, plural, other {#件失敗}}"
-
 #: src/components/settings-fleet-peers.tsx
 msgid "{from} still lists an older {name}. Remove that entry on {from}."
 msgstr "{from} に古い {name} の項目が残っています。{from} でその項目を削除してください"
@@ -401,10 +403,6 @@ msgstr "残り {remaining}"
 msgid "{removeLabel}: {label}"
 msgstr "{removeLabel}：{label}"
 
-#: src/components/home-computer-deck.tsx
-msgid "{running, plural, one {# running} other {# running}}"
-msgstr "{running, plural, other {#件実行中}}"
-
 #. placeholder {0}: shells.length
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
@@ -423,10 +421,6 @@ msgstr "{total, plural, other {サブタスク # 件}}"
 #: src/components/task-row.tsx
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, other {サブタスク # 件}}（{waiting, plural, other {# 件が対応待ち}}）"
-
-#: src/components/home-computer-deck.tsx
-msgid "{waiting, plural, one {# needs you} other {# need you}}"
-msgstr "{waiting, plural, other {#件対応が必要}}"
 
 #: src/components/task-row.tsx
 msgid "→ {name}"
@@ -1050,6 +1044,10 @@ msgstr "ブランチまたはコミット（任意）"
 msgid "Branch to start from"
 msgstr "起点にするブランチ"
 
+#: src/components/dev-icon-gallery.tsx
+msgid "Brand marks and working indicator"
+msgstr "ブランドマークと処理中インジケーター"
+
 #. placeholder {0}: server.label
 #: src/components/home-computer-deck.tsx
 msgid "Bring {0} to the front"
@@ -1379,6 +1377,10 @@ msgstr "エフェクトを閉じる"
 #: src/components/asset-viewer.tsx
 msgid "Close file"
 msgstr "ファイルを閉じる"
+
+#: src/components/dev-icon-gallery.tsx
+msgid "Close icon preview"
+msgstr "アイコンプレビューを閉じる"
 
 #: src/components/home-recent-sessions.tsx
 #: src/components/task-row.tsx
@@ -2119,6 +2121,7 @@ msgstr "このPDFを開けませんでした"
 
 #: src/components/asset-viewer.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/components/theme-fence-preview.tsx
 msgid "Could not open this theme."
 msgstr "このテーマを開けませんでした"
 
@@ -3224,6 +3227,14 @@ msgstr "ホスト鍵は信頼済み"
 msgid "How to use Muqun"
 msgstr "Muqun の使い方"
 
+#: src/components/dev-icon-gallery.tsx
+msgid "Icon preview"
+msgstr "アイコンプレビュー"
+
+#: src/components/dev-icon-gallery.tsx
+msgid "Icons"
+msgstr "アイコン"
+
 #: src/components/agent-session-tree-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
@@ -3749,6 +3760,10 @@ msgstr "完了にする"
 msgid "Mark reviewed"
 msgstr "確認済みにする"
 
+#: src/components/dev-icon-gallery.tsx
+msgid "Marks keep their original geometry and stroke."
+msgstr "マークは元の形状と線幅を保ちます。"
+
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "マスコット"
@@ -4119,6 +4134,10 @@ msgstr "{computer} とのリンクは解除されました"
 #: src/app/commands.tsx
 msgid "No matching commands. Try another word."
 msgstr "一致するコマンドがありません。別の語句で検索してください"
+
+#: src/components/dev-icon-gallery.tsx
+msgid "No matching icons"
+msgstr "一致するアイコンはありません"
 
 #: src/components/home-recent-sessions.tsx
 msgid "No matching sessions"
@@ -4498,6 +4517,10 @@ msgstr "ファイル一覧を開く"
 #: src/components/git-diff-button.tsx
 msgid "Open Git"
 msgstr "Git を開く"
+
+#: src/components/dev-icon-gallery.tsx
+msgid "Open icon preview"
+msgstr "アイコンプレビューを開く"
 
 #: src/components/agent-tool-card.tsx
 msgid "Open image"
@@ -4913,6 +4936,18 @@ msgstr "プレビューして適用"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "まずプレビューします。現在のテーマは変更されません"
+
+#: src/components/agent-tool-card.tsx
+#: src/components/theme-fence-preview.tsx
+msgid "Preview theme"
+msgstr "テーマをプレビュー"
+
+#. placeholder {0}: basename(themeFile)
+#. placeholder {0}: manifest.name
+#: src/components/agent-tool-card.tsx
+#: src/components/theme-fence-preview.tsx
+msgid "Preview theme {0}"
+msgstr "テーマ {0} をプレビュー"
 
 #: src/components/home-computer-deck.tsx
 msgid "Previous computer"
@@ -5688,6 +5723,10 @@ msgstr "名前やタグで検索"
 msgid "Search files"
 msgstr "ファイルを検索"
 
+#: src/components/dev-icon-gallery.tsx
+msgid "Search icons"
+msgstr "アイコンを検索"
+
 #: src/components/agent-model-sheet.tsx
 msgid "Search models"
 msgstr "モデルを検索"
@@ -6073,6 +6112,7 @@ msgstr "シミュレータの操作"
 
 #: src/components/asset-viewer.tsx
 #: src/components/dev-home-ambient-controls.tsx
+#: src/components/dev-icon-gallery.tsx
 msgid "Size"
 msgstr "サイズ"
 
@@ -6342,6 +6382,10 @@ msgstr "ストレージ"
 msgid "Streams speech while you talk. Requires an OpenAI Realtime-compatible transcription endpoint."
 msgstr "話している間に音声をストリーミング送信します。OpenAI Realtime と互換性のある文字起こしエンドポイントが必要です"
 
+#: src/components/dev-icon-gallery.tsx
+msgid "Stroke width"
+msgstr "線幅"
+
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/demo-streaming-transcript.tsx
@@ -6509,6 +6553,7 @@ msgstr "タスク設定"
 #: src/components/agent-composer.tsx
 #: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-todo-block.tsx
+#: src/components/home-computer-cards.tsx
 #: src/components/server-tasks-sheet.tsx
 #: src/components/task-result-sheet.tsx
 msgid "Tasks"

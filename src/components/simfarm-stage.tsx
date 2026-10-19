@@ -3,19 +3,19 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
 import { Canvas, Fill, Group, Image as SkiaImage } from 'react-native-skia';
 import {
-  ArrowLeft,
-  ChevronDown,
-  ChevronUp,
-  House,
-  Keyboard as KeyboardIcon,
-  MonitorSmartphone,
-  Power,
-  RefreshCw,
-  SendHorizontal,
-  Smartphone,
-  SquareStack,
-  X,
-} from 'lucide-react-native';
+  BackIcon,
+  DisclosureDownIcon,
+  DisclosureUpIcon,
+  HomeIcon,
+  KeyboardIcon,
+  DevicesIcon,
+  PowerIcon,
+  RefreshIcon,
+  MessageSendIcon,
+  PhoneIcon,
+  SessionStackIcon,
+  CloseIcon,
+} from '@/icons';
 import { useCallback, useEffect, useEffectEvent, useMemo, useState } from 'react';
 import {
   BackHandler,
@@ -567,7 +567,7 @@ export function SimfarmStage({
                 testID="simfarm-close"
                 onPress={onClose}
                 style={styles.iconButtonHit}>
-                <X size={18} color={theme.colors.text} />
+                <CloseIcon size={18} color={theme.colors.text} />
               </PressableScale>
             </GlassChrome>
           </View>
@@ -583,7 +583,7 @@ export function SimfarmStage({
             styles.reconnect,
             { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
           ]}>
-          <RefreshCw size={16} color={theme.colors.text} strokeWidth={2} />
+          <RefreshIcon size={16} color={theme.colors.text} />
           <Text variant="bodySmall">{t`Look again`}</Text>
         </PressableScale>
       </View>
@@ -605,7 +605,7 @@ export function SimfarmStage({
             the theme's colour, before anything else is: the empty and booting
             states then sit on the same ground as every other screen, and the
             ground under a short picture is that ground rather than a hole. */}
-        <Canvas style={styles.fill} opaque>
+        <Canvas style={styles.fill} android={{ backingView: 'TextureView', opaque: true }}>
           <Fill color={theme.colors.background} />
           {/* The image, its rectangle and the turn's centre are all shared
               values: a frame, a pinch or a drag reaches this node on the UI
@@ -707,7 +707,7 @@ export function SimfarmStage({
               testID="simfarm-device"
               onPress={() => dispatch('header')}
               style={[styles.menuHeader, { borderBottomColor: theme.colors.border }]}>
-              <Smartphone size={16} color={theme.colors.textMuted} strokeWidth={2} />
+              <PhoneIcon size={16} color={theme.colors.textMuted} />
               <Text variant="bodySmall" numberOfLines={1} style={styles.menuTitle}>
                 {name}
               </Text>
@@ -717,9 +717,9 @@ export function SimfarmStage({
                 </Text>
               ) : null}
               {chrome.picking ? (
-                <ChevronUp size={14} color={theme.colors.textMuted} strokeWidth={2} />
+                <DisclosureUpIcon size={14} color={theme.colors.textMuted} />
               ) : (
-                <ChevronDown size={14} color={theme.colors.textMuted} strokeWidth={2} />
+                <DisclosureDownIcon size={14} color={theme.colors.textMuted} />
               )}
             </PressableScale>
 
@@ -789,7 +789,7 @@ export function SimfarmStage({
                                 styles.power,
                                 { backgroundColor: surfaceBackground(theme.colors.surface) },
                               ]}>
-                              <Power size={14} color={theme.colors.textMuted} strokeWidth={2} />
+                              <PowerIcon size={14} color={theme.colors.textMuted} />
                             </PressableScale>
                           ) : stopping ? (
                             <View style={styles.power}>
@@ -888,10 +888,9 @@ export function SimfarmStage({
               disabled={draft === ''}
               onPress={sendDraft}
               style={styles.composerButton}>
-              <SendHorizontal
+              <MessageSendIcon
                 size={18}
                 color={draft === '' ? theme.colors.textMuted : theme.colors.primary}
-                strokeWidth={2}
               />
             </PressableScale>
             <PressableScale
@@ -900,7 +899,7 @@ export function SimfarmStage({
               testID="simfarm-typing-close"
               onPress={() => dispatch('composed')}
               style={styles.composerButton}>
-              <X size={18} color={theme.colors.textMuted} strokeWidth={2} />
+              <CloseIcon size={18} color={theme.colors.textMuted} />
             </PressableScale>
           </GlassChrome>
         </KeyboardStickyView>
@@ -923,7 +922,7 @@ export function SimfarmStage({
         accessibilityState={{ expanded: chrome.menu }}
         moveLabel={t`Move the simulator controls`}
         testID="simfarm-handle">
-        <MonitorSmartphone size={20} color={theme.colors.text} strokeWidth={2} />
+        <DevicesIcon size={20} color={theme.colors.text} />
       </FloatingHandle>
     </View>
   );
@@ -931,12 +930,11 @@ export function SimfarmStage({
 
 function ItemGlyph({ item, color }: { item: SimfarmMenuItem; color: string }) {
   const size = 17;
-  const width = 2;
-  if (item === 'back') return <ArrowLeft size={size} color={color} strokeWidth={width} />;
-  if (item === 'app_switch') return <SquareStack size={size} color={color} strokeWidth={width} />;
-  if (item === 'keyboard') return <KeyboardIcon size={size} color={color} strokeWidth={width} />;
-  if (item === 'close') return <X size={size} color={color} strokeWidth={width} />;
-  return <House size={size} color={color} strokeWidth={width} />;
+  if (item === 'back') return <BackIcon size={size} color={color} />;
+  if (item === 'app_switch') return <SessionStackIcon size={size} color={color} />;
+  if (item === 'keyboard') return <KeyboardIcon size={size} color={color} />;
+  if (item === 'close') return <CloseIcon size={size} color={color} />;
+  return <HomeIcon size={size} color={color} />;
 }
 
 /** The menu's least clearance from the sides of the screen. */

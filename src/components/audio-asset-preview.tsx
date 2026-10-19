@@ -1,6 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
-import { Download, Pause, Play, RotateCcw } from 'lucide-react-native';
+import { DownloadIcon, PauseIcon, StartIcon, UndoIcon } from '@/icons';
 import { useFileActions } from '@/hooks/use-file-actions';
 import { saveSessionAsset } from '@/lib/save-file';
 import { useContext, useEffect, useMemo, useState } from 'react';
@@ -191,11 +191,11 @@ function AudioPlayer({
         { backgroundColor: theme.colors.primary, opacity: loading ? 0.45 : 1 },
       ]}>
       {playing ? (
-        <Pause size={18} color={theme.colors.onPrimary} />
+        <PauseIcon size={18} color={theme.colors.onPrimary} />
       ) : state.phase === 'ended' ? (
-        <RotateCcw size={18} color={theme.colors.onPrimary} />
+        <UndoIcon size={18} color={theme.colors.onPrimary} />
       ) : (
-        <Play size={18} color={theme.colors.onPrimary} />
+        <StartIcon size={18} color={theme.colors.onPrimary} />
       )}
     </PressableScale>
   );
@@ -221,7 +221,7 @@ function AudioPlayer({
         accessibilityLabel={t`Save file`}
         onPress={fileActions.show}
         style={styles.inlineAction}>
-        <Download size={18} color={theme.colors.textMuted} />
+        <DownloadIcon size={18} color={theme.colors.textMuted} />
       </PressableScale>
     </View>
   );

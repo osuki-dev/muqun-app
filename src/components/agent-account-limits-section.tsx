@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { PressableScale, Text, useThemeTokens } from '@osuki-dev/ui';
-import { ChevronDown, ChevronUp, RefreshCw } from 'lucide-react-native';
+import { DisclosureDownIcon, DisclosureUpIcon, RefreshIcon } from '@/icons';
 import { plural } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
 import { useAgentFeatures } from '@/hooks/use-agent-features';
@@ -106,7 +106,7 @@ function AccountLimits({ serverId, agentId }: { serverId: string; agentId: strin
               onPress={() => {
                 if (!loading) setRevision((value) => value + 1);
               }}>
-              <RefreshCw size={16} color={theme.colors.textMuted} />
+              <RefreshIcon size={16} color={theme.colors.textMuted} />
             </SheetSceneQuietControl>
           </View>
         }
@@ -151,9 +151,9 @@ function AccountLimits({ serverId, agentId }: { serverId: string; agentId: strin
             style={styles.detailsButton}>
             <Text variant="caption" color={theme.colors.textMuted}>{t`Details`}</Text>
             {details ? (
-              <ChevronUp size={14} color={theme.colors.textMuted} />
+              <DisclosureUpIcon size={14} color={theme.colors.textMuted} />
             ) : (
-              <ChevronDown size={14} color={theme.colors.textMuted} />
+              <DisclosureDownIcon size={14} color={theme.colors.textMuted} />
             )}
           </PressableScale>
           {details ? (

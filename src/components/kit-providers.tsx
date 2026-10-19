@@ -1,10 +1,11 @@
-import { HapticsProvider } from '@osuki-dev/ui';
+import { HapticsProvider, IconProvider } from '@osuki-dev/ui';
 import type { ReactNode } from 'react';
 
 import { GroundTextPlate } from '@/components/sheet-ground';
 import { AppSurfaceDecorator } from '@/components/surface-decorator';
 import { kitFeedback } from '@/lib/feedback';
 import { useAppSettings } from '@/stores/app-settings';
+import { resolveKitIcon } from '@/icons/kit-resolver';
 
 /**
  * What the kit's components read besides the theme: the reader's haptics, the
@@ -15,9 +16,11 @@ export function KitProviders({ children }: { children: ReactNode }) {
   const hapticsEnabled = useAppSettings((state) => state.hapticsEnabled);
   return (
     <HapticsProvider enabled={hapticsEnabled} feedback={kitFeedback}>
-      <AppSurfaceDecorator>
-        <GroundTextPlate>{children}</GroundTextPlate>
-      </AppSurfaceDecorator>
+      <IconProvider resolve={resolveKitIcon}>
+        <AppSurfaceDecorator>
+          <GroundTextPlate>{children}</GroundTextPlate>
+        </AppSurfaceDecorator>
+      </IconProvider>
     </HapticsProvider>
   );
 }

@@ -4,7 +4,7 @@ import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
-import { Check, ShieldAlert, ShieldCheck, XCircle } from 'lucide-react-native';
+import { DoneIcon, TrustWarningIcon, TrustedIcon, DismissIcon } from '@/icons';
 
 import { BoundedMarkdown } from '@/components/bounded-markdown';
 import { InlineDiffRows } from '@/components/diff-rows';
@@ -38,9 +38,9 @@ export interface AgentPermissionCardProps {
 }
 
 const DECISION_ICON = {
-  allow: Check,
-  allow_always: ShieldCheck,
-  deny: XCircle,
+  allow: DoneIcon,
+  allow_always: TrustedIcon,
+  deny: DismissIcon,
 } as const;
 
 /** A decision with nothing but its own order, for a payload that listed none. */
@@ -179,7 +179,7 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
             { borderRadius: profile.chrome.control },
             { backgroundColor: withAlpha(theme.colors.warning, 0.13) },
           ]}>
-          <ShieldAlert size={16} color={theme.colors.warning} />
+          <TrustWarningIcon size={16} color={theme.colors.warning} />
         </View>
         <View style={styles.headerText}>
           <Text

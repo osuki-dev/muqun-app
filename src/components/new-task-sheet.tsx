@@ -22,7 +22,7 @@ import {
   takePickTruncationNotice,
 } from '@/lib/attachments';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Bot, Check, FolderOpen } from 'lucide-react-native';
+import { AgentIcon, DoneIcon, OpenFolderIcon } from '@/icons';
 import { useEffect, useRef, useState } from 'react';
 import {
   Keyboard,
@@ -501,11 +501,7 @@ function AgentPill({
           borderColor: selected ? theme.colors.primary : 'transparent',
         },
       ]}>
-      <Bot
-        size={15}
-        color={selected ? theme.colors.primary : theme.colors.textMuted}
-        strokeWidth={2.2}
-      />
+      <AgentIcon size={15} color={selected ? theme.colors.primary : theme.colors.textMuted} />
       <Text
         variant="label"
         numberOfLines={1}
@@ -549,11 +545,7 @@ function RecentCwdRow({
           borderRadius: profile.chrome.control,
         },
       ]}>
-      <FolderOpen
-        size={16}
-        color={selected ? theme.colors.primary : theme.colors.textMuted}
-        strokeWidth={2}
-      />
+      <OpenFolderIcon size={16} color={selected ? theme.colors.primary : theme.colors.textMuted} />
       {/* The head is what gets dropped, so the end of the path always survives.
           Two checkouts under the same parent differ in their last segment, and
           `~/code/mu…` distinguishes nothing at all. */}
@@ -565,7 +557,7 @@ function RecentCwdRow({
         color={selected ? theme.colors.primary : theme.colors.text}>
         {path}
       </Text>
-      {selected ? <Check size={16} color={theme.colors.primary} strokeWidth={2.5} /> : null}
+      {selected ? <DoneIcon size={16} color={theme.colors.primary} /> : null}
     </PressableScale>
   );
 }

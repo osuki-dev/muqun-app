@@ -2,15 +2,15 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
 import {
-  ArrowRight,
-  Check,
-  CircleCheck,
-  ExternalLink,
-  SquareTerminal,
-  Trash2,
-  X,
-  XCircle,
-} from 'lucide-react-native';
+  ContinueIcon,
+  DoneIcon,
+  CompletedIcon,
+  OpenExternalIcon,
+  TerminalWindowIcon,
+  DeleteIcon,
+  CloseIcon,
+  DismissIcon,
+} from '@/icons';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
@@ -44,7 +44,7 @@ import {
   pendingUnconfirmed,
 } from '@/lib/home-computer-cards';
 import { fadeIn, fadeOut, listLayout, PULSE_ONCE_MS, pulseOnce, travelTiming } from '@/lib/motion';
-import Svg, { Path } from 'react-native-svg';
+import { AppIcon } from '@/icons/app-icon';
 import { isDemoRecord } from '@/lib/demo-gateway';
 import { peerServerIdOf } from '@/lib/fleet-peers';
 import { META_SEPARATOR } from '@/lib/home-continue-row';
@@ -89,15 +89,7 @@ function WorkingSpinner({ color }: { color: string }) {
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
       style={[styles.spinner, spinStyle]}>
-      <Svg width={SPINNER_SIZE} height={SPINNER_SIZE} viewBox="0 0 24 24">
-        <Path
-          d="M12 3.4a8.6 8.6 0 1 1-8.6 8.6"
-          fill="none"
-          stroke={color}
-          strokeWidth={2.6}
-          strokeLinecap="round"
-        />
-      </Svg>
+      <AppIcon name="working-spinner" size={SPINNER_SIZE} color={color} />
     </Animated.View>
   );
 }
@@ -178,9 +170,9 @@ function WhereMark({
     return <AgentMark kind={kind} size={12} color={theme.colors.primary} />;
   }
   if (binding.kind === 'peer') {
-    return <ArrowRight size={12} color={theme.colors.primary} strokeWidth={2.2} />;
+    return <ContinueIcon size={12} color={theme.colors.primary} />;
   }
-  return <SquareTerminal size={12} color={theme.colors.textMuted} strokeWidth={2} />;
+  return <TerminalWindowIcon size={12} color={theme.colors.textMuted} />;
 }
 
 /** A failed mirror's reason code in the reader's words; an unknown code is the general line. */
@@ -513,12 +505,12 @@ function useTaskRowModel({
     .map((action): AgentActionMenuItem => {
       switch (action) {
         case 'open':
-          return { id: 'open', label: t`Open`, Icon: ExternalLink, onPress: run(open) };
+          return { id: 'open', label: t`Open`, Icon: OpenExternalIcon, onPress: run(open) };
         case 'cancel':
           return {
             id: 'cancel',
             label: t`Cancel task`,
-            Icon: XCircle,
+            Icon: DismissIcon,
             tone: 'danger',
             // Armed until confirmed or dismissed: a confirm after a pause
             // still cancels, and one that fails says so in the menu.
@@ -539,7 +531,7 @@ function useTaskRowModel({
           return {
             id: 'mark-done',
             label: t`Mark done`,
-            Icon: CircleCheck,
+            Icon: CompletedIcon,
             testID: `task-row-mark-done-${task.taskId}`,
             onPress: run(() => {
               void act(task, 'complete').catch(fail(t`Could not mark the task done`));
@@ -549,7 +541,7 @@ function useTaskRowModel({
           return {
             id: 'acknowledge',
             label: t`Acknowledge`,
-            Icon: Check,
+            Icon: DoneIcon,
             testID: `task-row-acknowledge-${task.taskId}`,
             onPress: run(() => {
               acknowledge(serverId, task);
@@ -562,7 +554,7 @@ function useTaskRowModel({
     menuItems.push({
       id: 'remove-home',
       label: t`Remove from Home`,
-      Icon: Trash2,
+      Icon: DeleteIcon,
       tone: 'danger',
       confirm: {
         label: t`Confirm removal`,
@@ -575,7 +567,7 @@ function useTaskRowModel({
     menuItems.push({
       id: 'close-menu',
       label: t`Close menu`,
-      Icon: X,
+      Icon: CloseIcon,
       onPress: () => setMenuOpen(false),
       testID: `task-row-close-menu-${task.taskId}`,
     });
@@ -953,7 +945,7 @@ export function SentTaskRow({
           hitSlop={12}
           onPress={() => useHomeTaskCards.getState().settle(item.id)}
           style={styles.dismiss}>
-          <X size={16} color={theme.colors.textMuted} />
+          <CloseIcon size={16} color={theme.colors.textMuted} />
         </Pressable>
       ) : null}
     </Animated.View>

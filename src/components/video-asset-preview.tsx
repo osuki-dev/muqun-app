@@ -5,7 +5,7 @@ import { AppState, BackHandler, Platform, StyleSheet, View } from 'react-native'
 import { Image, type ImageSource } from 'expo-image';
 import Animated from 'react-native-reanimated';
 import { VideoView, type VideoPlayer, type VideoViewRef } from 'react-native-video';
-import { Download, Maximize2, Pause, Play } from 'lucide-react-native';
+import { DownloadIcon, FullscreenIcon, PauseIcon, StartIcon } from '@/icons';
 import { AudioProgress } from '@/components/audio-progress';
 import { useInlineMediaVisibility } from '@/hooks/use-inline-media-visibility';
 import { useFileActions } from '@/hooks/use-file-actions';
@@ -152,7 +152,7 @@ function VideoPlayerCard({
           style={styles.poster}>
           {poster && <VideoPoster key={poster.uri} source={poster} />}
           <View style={styles.posterAction}>
-            <Play size={32} color="white" />
+            <StartIcon size={32} color="white" />
           </View>
         </PressableScale>
       )}
@@ -169,9 +169,9 @@ function VideoPlayerCard({
           }}
           style={styles.action}>
           {playing ? (
-            <Pause size={20} color={theme.colors.primary} />
+            <PauseIcon size={20} color={theme.colors.primary} />
           ) : (
-            <Play size={20} color={theme.colors.primary} />
+            <StartIcon size={20} color={theme.colors.primary} />
           )}
         </PressableScale>
         <View style={styles.timeline}>
@@ -203,14 +203,14 @@ function VideoPlayerCard({
           disabled={!player || error}
           onPress={() => video.current?.enterFullscreen()}
           style={styles.action}>
-          <Maximize2 size={18} color={theme.colors.textMuted} />
+          <FullscreenIcon size={18} color={theme.colors.textMuted} />
         </PressableScale>
         <PressableScale
           accessibilityRole="button"
           accessibilityLabel={t`Save file`}
           onPress={fileActions.show}
           style={styles.action}>
-          <Download size={18} color={theme.colors.textMuted} />
+          <DownloadIcon size={18} color={theme.colors.textMuted} />
         </PressableScale>
       </View>
       {error && (

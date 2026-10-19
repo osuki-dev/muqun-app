@@ -8,23 +8,23 @@ import { useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { plural } from '@lingui/core/macro';
 import {
-  Bot,
-  Check,
-  ChevronDown,
-  Clock,
-  Copy,
-  Cpu,
-  Edit3,
-  FileDiff,
-  FileText,
-  CircleHelp,
-  FolderGit2,
-  Info,
-  Layers,
-  Sparkles,
-  Trash2,
-  Undo2,
-} from 'lucide-react-native';
+  AgentIcon,
+  DoneIcon,
+  DisclosureDownIcon,
+  TimeIcon,
+  CopyIcon,
+  ProcessorIcon,
+  EditIcon,
+  FileChangesIcon,
+  DocumentIcon,
+  HelpIcon,
+  RepositoryIcon,
+  InformationIcon,
+  StackIcon,
+  SuggestedIcon,
+  DeleteIcon,
+  RestoreIcon,
+} from '@/icons';
 import * as Haptics from 'expo-haptics';
 import * as Clipboard from 'expo-clipboard';
 import { type MarkdownStyle } from 'react-native-enriched-markdown';
@@ -56,6 +56,7 @@ import { BoundedMarkdown } from '@/components/bounded-markdown';
 import { TranscriptBlockImage } from '@/components/transcript-block-image';
 import { InlineVideoFile } from '@/components/video-asset-preview';
 import { InlineFileLink } from '@/components/inline-file-link';
+import { ThemeFencePreview } from '@/components/theme-fence-preview';
 import { InlineAudioFile } from '@/components/audio-asset-preview';
 import { splitAudioMarkdown } from '@/lib/audio-markdown';
 import { splitDiagramMarkdown } from '@/lib/diagram-markdown';
@@ -159,7 +160,7 @@ const MessageAttachments = memo(function MessageAttachments({
         }
         return (
           <View key={`${att}-${attIdx}`} style={[styles.attachmentChip, raised]}>
-            <FileText size={13} color={theme.colors.primary} />
+            <DocumentIcon size={13} color={theme.colors.primary} />
             <Text
               variant="caption"
               color={theme.colors.text}
@@ -189,12 +190,16 @@ const AgentNoticeRow = memo(function AgentNoticeRow({ part }: { part: AgentPart 
   const markdownStyle = useCompactMarkdownStyle('muted');
 
   const [expanded, setExpanded] = useState(false);
-  const notice = useMemo((): { Icon: typeof Cpu; text: string; label?: string } | null => {
+  const notice = useMemo((): {
+    Icon: typeof ProcessorIcon;
+    text: string;
+    label?: string;
+  } | null => {
     switch (part.type) {
       case 'model_switched': {
         const next = formatModelName(part.model, t`a default model`);
         return {
-          Icon: Cpu,
+          Icon: ProcessorIcon,
           text: part.previous
             ? t`Model · ${formatModelName(part.previous)} → ${next}`
             : t`Model · ${next}`,
@@ -202,15 +207,15 @@ const AgentNoticeRow = memo(function AgentNoticeRow({ part }: { part: AgentPart 
       }
       case 'agent_switched':
         return {
-          Icon: Bot,
+          Icon: AgentIcon,
           text: part.previous ? t`Mode · ${part.previous} → ${part.mode}` : t`Mode · ${part.mode}`,
         };
       case 'location_switched':
-        return { Icon: FolderGit2, text: t`Project · ${part.directory}` };
+        return { Icon: RepositoryIcon, text: t`Project · ${part.directory}` };
       case 'skill':
         // "Skill · report" reads as a label on a thing; what the row is
         // announcing is that the agent has just picked the skill up.
-        return { Icon: Sparkles, text: t`Skill loaded · ${part.name ?? part.skill}` };
+        return { Icon: SuggestedIcon, text: t`Skill loaded · ${part.name ?? part.skill}` };
       case 'synthetic':
       case 'system': {
         const text = part.text ?? part.description ?? '';
@@ -220,11 +225,11 @@ const AgentNoticeRow = memo(function AgentNoticeRow({ part }: { part: AgentPart 
         // the content, so it becomes a title and the angle brackets go.
         const tagged = untagNotice(text);
         return tagged
-          ? { Icon: Info, text: tagged.body, label: humaniseTag(tagged.tag) }
-          : { Icon: Info, text };
+          ? { Icon: InformationIcon, text: tagged.body, label: humaniseTag(tagged.tag) }
+          : { Icon: InformationIcon, text };
       }
       case 'unsupported':
-        return { Icon: CircleHelp, text: t`Unsupported item (${part.raw_type})` };
+        return { Icon: HelpIcon, text: t`Unsupported item (${part.raw_type})` };
       default:
         return null;
     }
@@ -273,7 +278,7 @@ const AgentNoticeRow = memo(function AgentNoticeRow({ part }: { part: AgentPart 
           )}
         </View>
         {foldable ? (
-          <ChevronDown
+          <DisclosureDownIcon
             size={12}
             color={theme.colors.textSubtle}
             style={expanded ? styles.chevronOpen : undefined}
@@ -432,13 +437,13 @@ export const AgentCompactionRow = memo(function AgentCompactionRow({
         style={styles.compactionRow}>
         <View style={[styles.compactionRule, { backgroundColor: colors.border }]} />
         <Animated.View style={[styles.compactionLabel, shimmerStyle]}>
-          <Layers size={11} color={tone} />
+          <StackIcon size={11} color={tone} />
           <Text variant="caption" color={tone} numberOfLines={1} style={styles.noticeText}>
             {label}
           </Text>
           {hasSummary ? (
             <Animated.View style={chevronStyle}>
-              <ChevronDown size={11} color={theme.colors.textSubtle} />
+              <DisclosureDownIcon size={11} color={theme.colors.textSubtle} />
             </Animated.View>
           ) : null}
         </Animated.View>
@@ -569,7 +574,7 @@ const AgentDiffBlock = memo(function AgentDiffBlock({
         accessibilityLabel={label}
         onPress={() => setExpanded((prev) => !prev)}
         style={styles.diffHeader}>
-        <FileDiff size={12} color={theme.colors.primary} />
+        <FileChangesIcon size={12} color={theme.colors.primary} />
         <Text
           variant="caption"
           weight="medium"
@@ -586,7 +591,7 @@ const AgentDiffBlock = memo(function AgentDiffBlock({
         </Text>
         <View style={styles.diffChevron}>
           <Animated.View style={chevronStyle}>
-            <ChevronDown size={12} color={theme.colors.textMuted} />
+            <DisclosureDownIcon size={12} color={theme.colors.textMuted} />
           </Animated.View>
         </View>
       </PressableScale>
@@ -825,6 +830,8 @@ const MessageTextPart = memo(function MessageTextPart({
               asid={audioSessionId}
               file={{ uri: part.uri, name: part.name }}
             />
+          ) : part.kind === 'theme' ? (
+            <ThemeFencePreview key={part.start} source={part.source} />
           ) : (
             renderText(`${key}:${part.start}`, part.text)
           )
@@ -1175,7 +1182,7 @@ const AgentToolGroup = memo(function AgentToolGroup({
         onPress={() => setExpanded((previous) => !previous)}
         style={[styles.toolGroupHeader, plate]}>
         <View style={styles.marker}>
-          <Layers size={13} color={theme.colors.textMuted} />
+          <StackIcon size={13} color={theme.colors.textMuted} />
         </View>
         <View style={styles.toolGroupCopy}>
           <Text variant="caption" weight="semibold" color={theme.colors.text}>
@@ -1189,9 +1196,9 @@ const AgentToolGroup = memo(function AgentToolGroup({
             {toolNames}
           </Text>
         </View>
-        <Check size={12} color={theme.colors.success} />
+        <DoneIcon size={12} color={theme.colors.success} />
         <Animated.View style={chevronStyle}>
-          <ChevronDown size={12} color={theme.colors.textMuted} />
+          <DisclosureDownIcon size={12} color={theme.colors.textMuted} />
         </Animated.View>
       </PressableScale>
       {expanded ? (
@@ -1328,7 +1335,7 @@ export const AgentUserMessage = memo(function AgentUserMessage({
       items.push({
         id: 'copy',
         label: t`Copy message`,
-        Icon: Copy,
+        Icon: CopyIcon,
         onPress: () => {
           setMenuOpen(false);
           void Clipboard.setStringAsync(text).then(() =>
@@ -1346,7 +1353,7 @@ export const AgentUserMessage = memo(function AgentUserMessage({
       items.push({
         id: 'undo',
         label: t`Undo to here`,
-        Icon: Undo2,
+        Icon: RestoreIcon,
         onPress: () => {
           setMenuOpen(false);
           onUndoToHere(messageId);
@@ -1398,7 +1405,7 @@ export const AgentUserMessage = memo(function AgentUserMessage({
           <>
             <View style={styles.roleSpacer} />
             <View style={styles.queuedPill}>
-              <Clock size={11} color={theme.colors.warning} />
+              <TimeIcon size={11} color={theme.colors.warning} />
               <Text
                 variant="caption"
                 weight="semibold"
@@ -1415,7 +1422,7 @@ export const AgentUserMessage = memo(function AgentUserMessage({
                   accessibilityLabel={t`Edit queued message`}
                   onPress={() => onEditQueued(queued.id, text)}
                   style={styles.queuedActionBtn}>
-                  <Edit3 size={13} color={theme.colors.primary} />
+                  <EditIcon size={13} color={theme.colors.primary} />
                 </PressableScale>
                 <PressableScale
                   testID={`queued-cancel-${queued.id}`}
@@ -1423,7 +1430,7 @@ export const AgentUserMessage = memo(function AgentUserMessage({
                   accessibilityLabel={t`Cancel queued message`}
                   onPress={() => onCancelQueued(queued.id)}
                   style={styles.queuedActionBtn}>
-                  <Trash2 size={13} color={theme.colors.danger} />
+                  <DeleteIcon size={13} color={theme.colors.danger} />
                 </PressableScale>
               </>
             ) : null}
@@ -1453,7 +1460,7 @@ export const AgentUserMessage = memo(function AgentUserMessage({
             </Text>
           </View>
           <View pointerEvents="none" style={styles.goalChevron}>
-            <ChevronDown
+            <DisclosureDownIcon
               size={14}
               color={colors.accent}
               style={{ transform: [{ rotate: goalExpanded ? '180deg' : '0deg' }] }}

@@ -2,7 +2,7 @@ import { t } from '@lingui/core/macro';
 import { I18nProvider as LinguiProvider } from '@lingui/react';
 import { Trans } from '@lingui/react/macro';
 import { useThemeTokens, Text } from '@osuki-dev/ui';
-import { RefreshCw, ShieldAlert } from 'lucide-react-native';
+import { RefreshIcon, TrustWarningIcon } from '@/icons';
 import { Component, useEffect, type ReactNode } from 'react';
 import { SplashScreen } from '@osuki-dev/react-native-splash';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -64,7 +64,7 @@ function ErrorRecovery({ onRetry }: { onRetry: () => void }) {
     <View style={[styles.shell, { backgroundColor: colors.background }]}>
       <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
         <View style={[styles.icon, { backgroundColor: colors.background }]}>
-          <ShieldAlert size={32} color={colors.text} accessible={false} />
+          <TrustWarningIcon size={32} color={colors.text} accessible={false} />
         </View>
         <Text variant="heading" style={[styles.text, { color: colors.text }]}>
           <Trans>Something went wrong</Trans>
@@ -77,7 +77,7 @@ function ErrorRecovery({ onRetry }: { onRetry: () => void }) {
           accessibilityLabel={t`Try again`}
           onPress={onRetry}
           style={styles.button}>
-          <RefreshCw size={18} color="#FFFFFF" accessible={false} />
+          <RefreshIcon size={18} color="#FFFFFF" accessible={false} />
           <Text variant="label" style={styles.buttonText}>
             <Trans>Try again</Trans>
           </Text>

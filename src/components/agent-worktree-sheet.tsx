@@ -2,14 +2,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import { useThemeTokens, PressableScale, Text, TextField } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
-import {
-  FolderGit2,
-  GitBranch,
-  MoreHorizontal,
-  Plus,
-  RefreshCw,
-  Trash2,
-} from 'lucide-react-native';
+import { RepositoryIcon, BranchIcon, MoreIcon, CreateIcon, RefreshIcon, DeleteIcon } from '@/icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import Animated from 'react-native-reanimated';
@@ -327,7 +320,7 @@ export const AgentWorktreeSheet = memo(function AgentWorktreeSheet({
     {
       id: 'remove',
       label: forceFor === directory ? t`Remove anyway` : t`Remove worktree`,
-      Icon: Trash2,
+      Icon: DeleteIcon,
       tone: 'danger',
       // Two taps either way. The first pass is a plain removal, which git
       // refuses when there is uncommitted work; the second says what that
@@ -358,7 +351,7 @@ export const AgentWorktreeSheet = memo(function AgentWorktreeSheet({
       hitSlop={10}
       onPress={() => openMenu(directory)}
       style={styles.overflow}>
-      <MoreHorizontal size={16} color={theme.colors.textMuted} />
+      <MoreIcon size={16} color={theme.colors.textMuted} />
     </PressableScale>
   );
 
@@ -395,7 +388,7 @@ export const AgentWorktreeSheet = memo(function AgentWorktreeSheet({
           accessibilityLabel={t`Refresh worktrees`}
           busy={refreshing}
           onPress={handleRefresh}>
-          <RefreshCw size={16} color={theme.colors.textMuted} />
+          <RefreshIcon size={16} color={theme.colors.textMuted} />
         </SheetSceneQuietControl>
       }>
       <ScrollView
@@ -415,7 +408,7 @@ export const AgentWorktreeSheet = memo(function AgentWorktreeSheet({
             selected={inProject}
             selectedTestID="agent-worktree-project-current"
             leading={
-              <FolderGit2
+              <RepositoryIcon
                 size={17}
                 color={inProject ? theme.colors.primary : theme.colors.textSubtle}
               />
@@ -463,7 +456,7 @@ export const AgentWorktreeSheet = memo(function AgentWorktreeSheet({
                     selected={current}
                     selectedTestID={`agent-worktree-current-${name}`}
                     leading={
-                      <GitBranch
+                      <BranchIcon
                         size={16}
                         color={current ? theme.colors.primary : theme.colors.textSubtle}
                       />
@@ -504,7 +497,7 @@ export const AgentWorktreeSheet = memo(function AgentWorktreeSheet({
             testID="agent-worktree-new-btn"
             title={t`New worktree…`}
             caption={creating ? undefined : t`A second checkout of this repository`}
-            leading={<Plus size={17} color={theme.colors.primary} />}
+            leading={<CreateIcon size={17} color={theme.colors.primary} />}
             onPress={() => {
               setMenuDirectory(null);
               setCreateError(null);
