@@ -49,7 +49,7 @@ export interface TwoStepActionProps {
   confirmLabel: string;
   /** One sentence on what is lost. Shown only while armed. */
   detail?: string;
-  /** A lucide glyph, sized and coloured here. */
+  /** A App glyph, sized and coloured here. */
   Icon?: ComponentType<{ size?: number; color?: string }>;
   onConfirm: () => void;
   /** Told when the row arms or disarms, so a parent can disarm its siblings. */

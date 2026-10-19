@@ -3,7 +3,7 @@ import { GuideCommand } from '@/components/guide-command';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Lock, MonitorSmartphone, X } from 'lucide-react-native';
+import { LockedIcon, DevicesIcon, CloseIcon } from '@/icons';
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
@@ -190,7 +190,7 @@ export function SimfarmPreview({
       <PreviewNotice
         embedded={embedded}
         onClose={onClose}
-        icon={<Lock size={40} color={theme.colors.textMuted} strokeWidth={1.5} />}
+        icon={<LockedIcon size={40} color={theme.colors.textMuted} />}
         title={t`No preview on this connection`}>
         <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.middle}>
           <Trans>
@@ -210,7 +210,7 @@ export function SimfarmPreview({
     <PreviewNotice
       embedded={embedded}
       onClose={onClose}
-      icon={<MonitorSmartphone size={40} color={theme.colors.textMuted} strokeWidth={1.5} />}
+      icon={<DevicesIcon size={40} color={theme.colors.textMuted} />}
       title={t`No simulator on port ${port}`}>
       <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.middle}>
         <Trans>
@@ -313,7 +313,7 @@ function PreviewNotice({
                 testID="simfarm-close"
                 onPress={onClose}
                 style={styles.iconButtonHit}>
-                <X size={18} color={theme.colors.text} />
+                <CloseIcon size={18} color={theme.colors.text} />
               </PressableScale>
             </GlassChrome>
           </View>

@@ -23,7 +23,7 @@ import {
 import { useThemeTokens, useToast, Button, PressableScale } from '@osuki-dev/ui';
 import { useHasThemeArtwork } from '@/components/theme-artwork';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { ChevronUp } from 'lucide-react-native';
+import { DisclosureUpIcon } from '@/icons';
 
 import { LogoLoader } from '@/components/logo-loader';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -3370,7 +3370,7 @@ export function SkiaTerminal({
           {loadingEarlier ? (
             <ActivityIndicator size={12} color={theme.colors.primary} />
           ) : (
-            <ChevronUp size={13} color={theme.colors.textMuted} />
+            <DisclosureUpIcon size={13} color={theme.colors.textMuted} />
           )}
         </Animated.View>
       ) : null}

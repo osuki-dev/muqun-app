@@ -38,7 +38,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { Spinner, useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { Directory, Paths } from 'expo-file-system';
 import { useFocusEffect } from 'expo-router';
-import { ChevronRight, FileClock, Images, Palette, Trash2 } from 'lucide-react-native';
+import { NextIcon, FileHistoryIcon, PhotosIcon, AppearanceIcon, DeleteIcon } from '@/icons';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -378,13 +378,13 @@ export function SettingsStorage() {
         />
       </SettingsBlock>
       <SettingsInfoRow
-        icon={Images}
+        icon={PhotosIcon}
         label={t`Images`}
         detail={images}
         testID="settings-storage-images-row"
       />
       <SettingsInfoRow
-        icon={FileClock}
+        icon={FileHistoryIcon}
         label={t`Temporary files`}
         detail={temporary}
         testID="settings-storage-temporary-row"
@@ -418,7 +418,7 @@ export function SettingsStorage() {
               {clearing ? (
                 <Spinner size="sm" color={theme.colors.onPrimary} />
               ) : (
-                <Trash2 size={15} color={theme.colors.onPrimary} strokeWidth={2.2} />
+                <DeleteIcon size={15} color={theme.colors.onPrimary} />
               )}
               {/* The weight is the kit's prop, not a `fontWeight: '700'` in the
                 stylesheet. `expo-font` registers a reader's interface face under
@@ -453,8 +453,8 @@ export function SettingsStorage() {
           </View>
         ) : (
           <SettingsNavRow
-            icon={Trash2}
-            trailing={ChevronRight}
+            icon={DeleteIcon}
+            trailing={NextIcon}
             label={t`Clear cache`}
             detail={clearDetail}
             disabled={!totals}
@@ -488,7 +488,7 @@ export function SettingsStorage() {
               {removing ? (
                 <Spinner size="sm" color={theme.colors.onPrimary} />
               ) : (
-                <Trash2 size={15} color={theme.colors.onPrimary} strokeWidth={2.2} />
+                <DeleteIcon size={15} color={theme.colors.onPrimary} />
               )}
               {/* Semibold through the prop, for the Android reason spelled out at
                 the Clear button above. */}
@@ -521,8 +521,8 @@ export function SettingsStorage() {
           // `Palette` is the glyph the theme drop already wears, so the two
           // places in the app that talk about themes carry the same mark.
           <SettingsNavRow
-            icon={Palette}
-            trailing={ChevronRight}
+            icon={AppearanceIcon}
+            trailing={NextIcon}
             label={t`Remove unused themes`}
             detail={themesDetail}
             disabled={!unused || unused.count === 0}

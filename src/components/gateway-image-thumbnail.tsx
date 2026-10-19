@@ -4,7 +4,7 @@ import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { Image } from 'expo-image';
 import { ContentImage } from '@/components/content-image';
 import { contentImageIdentity, type ContentImagePreviewState } from '@/lib/content-image-layout';
-import { FileImage } from 'lucide-react-native';
+import { PhotoFileIcon } from '@/icons';
 import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { ImagePreviewModal } from '@/components/image-preview-modal';
 import { configuredGatewayServerId, gatewayImageBinding } from '@/lib/gateway-client';
@@ -40,7 +40,7 @@ export function UnmappedImageThumbnail({
     serverId ? (state.byServer[serverId] ?? NO_CAPABILITIES) : NO_CAPABILITIES
   );
   if (!deferUnmappedImage(capabilities, unavailable)) return <>{children}</>;
-  const icon = <FileImage size={20} color={theme.colors.textMuted} />;
+  const icon = <PhotoFileIcon size={20} color={theme.colors.textMuted} />;
   if (uri.length <= 8192 && /^https?:\/\//.test(uri) && onPreviewImage)
     return (
       <PressableScale
@@ -156,7 +156,7 @@ export function GatewayImageThumbnail({
         onError={() => setFailed(nativeKey)}
       />
     ) : (
-      <FileImage size={20} color={theme.colors.textMuted} />
+      <PhotoFileIcon size={20} color={theme.colors.textMuted} />
     )
   ) : (
     <ContentImage
@@ -164,7 +164,7 @@ export function GatewayImageThumbnail({
       width={asset.width}
       height={asset.height}
       previewable={interactive && Boolean(binding)}
-      placeholder={<FileImage size={20} color={theme.colors.textMuted} />}
+      placeholder={<PhotoFileIcon size={20} color={theme.colors.textMuted} />}
       onError={() => setFailed(nativeKey)}
       onPreviewStateChange={setPreviewState}
     />

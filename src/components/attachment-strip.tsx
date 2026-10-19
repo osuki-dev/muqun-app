@@ -1,5 +1,6 @@
+import { AppIcon } from '@/icons/app-icon';
 import { useLingui } from '@lingui/react/macro';
-import { Icon, Spinner, useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
+import { Spinner, useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { Image } from 'expo-image';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -121,7 +122,7 @@ export function AttachmentStrip({
                 />
               ) : (
                 <View style={styles.fileTile}>
-                  <Icon name="FileText" size={17} color={theme.colors.textMuted} />
+                  <AppIcon name="document" size={17} color={theme.colors.textMuted} />
                   <Text
                     variant="caption"
                     color={textColor}
@@ -143,7 +144,7 @@ export function AttachmentStrip({
                   entering={fadeIn('micro')}
                   exiting={fadeOut('micro')}
                   style={[styles.overlay, styles.busyOverlay]}>
-                  <Icon name="Clock" size={16} color="#FFFFFF" />
+                  <AppIcon name="time" size={16} color="#FFFFFF" />
                 </Animated.View>
               ) : null}
               {attachment.status === 'uploading' ? (
@@ -159,7 +160,7 @@ export function AttachmentStrip({
                   entering={fadeIn('micro')}
                   exiting={fadeOut('micro')}
                   style={[styles.overlay, styles.failedOverlay]}>
-                  <Icon name={retryable ? 'RotateCcw' : 'Ban'} size={17} color="#FFFFFF" />
+                  <AppIcon name={retryable ? 'undo' : 'blocked'} size={17} color="#FFFFFF" />
                 </Animated.View>
               ) : null}
             </PressableScale>
@@ -190,7 +191,7 @@ export function AttachmentStrip({
                   styles.readyBadge,
                   { backgroundColor: surfaceBackground(theme.colors.success) },
                 ]}>
-                <Icon name="Check" size={9} color="#FFFFFF" strokeWidth={3} />
+                <AppIcon name="done" size={9} color="#FFFFFF" strokeWidth={3} />
               </Animated.View>
             ) : null}
             {!readOnly ? (
@@ -200,7 +201,7 @@ export function AttachmentStrip({
                 pressedScale={0.9}
                 onPress={() => onRemove(attachment.id)}
                 style={[styles.remove, { backgroundColor: surfaceBackground(theme.colors.text) }]}>
-                <Icon name="X" size={11} color={theme.colors.background} strokeWidth={3} />
+                <AppIcon name="close" size={11} color={theme.colors.background} strokeWidth={3} />
               </PressableScale>
             ) : null}
           </Animated.View>

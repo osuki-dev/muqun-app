@@ -1,7 +1,7 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
 import { Spinner, useThemeTokens, Button, PressableScale, Text } from '@osuki-dev/ui';
-import { ChevronDown, ChevronUp } from 'lucide-react-native';
+import { DisclosureDownIcon, DisclosureUpIcon } from '@/icons';
 import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { TerminalTranscript } from '@/components/terminal-transcript';
@@ -152,9 +152,9 @@ export function CollaborationNotice({
             </Text>
           </View>
           {expanded ? (
-            <ChevronUp size={16} color={theme.colors.textMuted} />
+            <DisclosureUpIcon size={16} color={theme.colors.textMuted} />
           ) : (
-            <ChevronDown size={16} color={theme.colors.textMuted} />
+            <DisclosureDownIcon size={16} color={theme.colors.textMuted} />
           )}
         </View>
         <Text variant="bodySmall" numberOfLines={1} style={{ fontWeight: '600' }}>

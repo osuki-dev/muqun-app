@@ -1,6 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, Button, PressableScale, Text } from '@osuki-dev/ui';
-import { CameraOff, ScanLine } from 'lucide-react-native';
+import { CameraDisabledIcon, PairScanIcon } from '@/icons';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -320,7 +320,7 @@ export default function PairingCamera({
     </View>
   ) : reading === 'permission' ? (
     <ApertureState
-      icon={<ScanLine size={26} color={theme.colors.textMuted} strokeWidth={1.8} />}
+      icon={<PairScanIcon size={26} color={theme.colors.textMuted} />}
       title={t`Camera access needed`}
       detail={t`Muqun reads the Gateway's QR code through the camera. Nothing is recorded.`}
       action={t`Allow camera`}
@@ -328,7 +328,7 @@ export default function PairingCamera({
     />
   ) : (
     <ApertureState
-      icon={<CameraOff size={26} color={theme.colors.textMuted} strokeWidth={1.8} />}
+      icon={<CameraDisabledIcon size={26} color={theme.colors.textMuted} />}
       title={
         fault === 'preview-never-started' ? t`The camera did not start` : t`No camera to scan with`
       }

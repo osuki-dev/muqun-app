@@ -1,7 +1,7 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
-import { ArrowUpRight, Monitor } from 'lucide-react-native';
+import { OpenIcon, ComputerIcon } from '@/icons';
 import { useEffect, useLayoutEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
@@ -456,7 +456,7 @@ function ComputerCardView({
       accessibilityActions={deckActions?.accessibilityActions}
       onAccessibilityAction={deckActions?.onAccessibilityAction}
       style={[styles.header, deckLayout ? styles.historyLink : null]}>
-      {deckLayout ? null : <Monitor size={18} color={theme.colors.primary} />}
+      {deckLayout ? null : <ComputerIcon size={18} color={theme.colors.primary} />}
       <View style={[styles.headerCopy, styles.fill]}>
         <Text variant="bodySmall" weight="medium" numberOfLines={1}>
           {deckLayout ? t`Tasks` : server.label}
@@ -479,7 +479,7 @@ function ComputerCardView({
           testID={`home-card-cached-${server.serverId}`}
         />
       ) : null}
-      {deckLayout ? <ArrowUpRight size={16} color={theme.colors.primary} /> : null}
+      {deckLayout ? <OpenIcon size={16} color={theme.colors.primary} /> : null}
     </PressableScale>
   );
   return (

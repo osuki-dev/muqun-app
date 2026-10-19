@@ -2,7 +2,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { Image } from 'expo-image';
 import * as ScreenCapture from 'expo-screen-capture';
-import { Fingerprint, LockKeyhole, ScanFace } from 'lucide-react-native';
+import { FingerprintIcon, LockedIcon, FaceScanIcon } from '@/icons';
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import {
   AppState,
@@ -311,7 +311,7 @@ export function AppLockGate({ children }: { children: ReactNode }) {
                   </Animated.View>
                 </View>
                 <View style={[styles.lockBadge, { backgroundColor: theme.colors.primary }]}>
-                  <LockKeyhole size={16} color={theme.colors.onPrimary} strokeWidth={2.4} />
+                  <LockedIcon size={16} color={theme.colors.onPrimary} />
                 </View>
               </View>
               <View style={styles.copy}>
@@ -341,11 +341,11 @@ export function AppLockGate({ children }: { children: ReactNode }) {
                 {authenticating ? (
                   <LogoLoader accessibilityLabel={t`Authenticating`} compact size={28} />
                 ) : authKind === 'face' ? (
-                  <ScanFace size={20} color="#FFFFFF" strokeWidth={2.3} />
+                  <FaceScanIcon size={20} color="#FFFFFF" />
                 ) : (
                   // Fingerprint covers fingerprint, iris, and the generic Android
                   // case (which prompts with a fingerprint glyph by default).
-                  <Fingerprint size={20} color="#FFFFFF" strokeWidth={2.3} />
+                  <FingerprintIcon size={20} color="#FFFFFF" />
                 )}
                 <Text variant="label" color="#FFFFFF">
                   {authenticating ? t`Authenticating…` : t`Unlock with ${authLabel}`}

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
-import { ChevronDown, ChevronUp, RefreshCw } from 'lucide-react-native';
+import { DisclosureDownIcon, DisclosureUpIcon, RefreshIcon } from '@/icons';
 import { SheetSceneQuietControl, SHEET_LADDER } from '@/components/sheet-scene';
 
 import { ChangesSheet } from '@/components/changes-sheet';
@@ -93,7 +93,7 @@ export function GitDiffView({
     [paneId, sessionId, vcsFiles, worktree]
   );
   const path = worktree ?? inventory?.current;
-  const WorktreeChevron = worktreesOpen ? ChevronUp : ChevronDown;
+  const WorktreeChevron = worktreesOpen ? DisclosureUpIcon : DisclosureDownIcon;
   const checkoutControl = worktreesSupported ? (
     <View style={styles.checkout}>
       <PressableScale
@@ -151,7 +151,7 @@ export function GitDiffView({
             accessibilityLabel={t`Refresh worktrees`}
             busy={inventoryLoading}
             onPress={() => setRevision((previous) => previous + 1)}>
-            <RefreshCw size={17} color={theme.colors.textMuted} />
+            <RefreshIcon size={17} color={theme.colors.textMuted} />
           </SheetSceneQuietControl>
         ) : undefined
       }

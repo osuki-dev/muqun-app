@@ -4,7 +4,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { LogoLoader } from '@/components/logo-loader';
 import { useRouter } from 'expo-router';
-import { Plus, SquareTerminal } from 'lucide-react-native';
+import { CreateIcon, TerminalWindowIcon } from '@/icons';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
@@ -85,7 +85,7 @@ export function SshHostList() {
               accessibilityLabel={t`Add an SSH host`}
               onPress={() => setEditing('new')}
               style={styles.headerButton}>
-              <Plus size={21} color={theme.colors.text} strokeWidth={2} />
+              <CreateIcon size={21} color={theme.colors.text} />
             </PressableScale>
           )
         }
@@ -125,7 +125,7 @@ export function SshHostList() {
             ))}
             {prompt === 'none' ? null : (
               <View style={styles.empty}>
-                <SquareTerminal size={40} color={theme.colors.textMuted} strokeWidth={1.5} />
+                <TerminalWindowIcon size={40} color={theme.colors.textMuted} />
                 <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.emptyText}>
                   {prompt === 'demoOnly' ? (
                     <Trans>

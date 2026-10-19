@@ -1,6 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
-import { ChevronDown, ChevronRight } from 'lucide-react-native';
+import { DisclosureDownIcon, NextIcon } from '@/icons';
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -158,9 +158,9 @@ export function HomeComposerOptions({
                 </Text>
                 {row.onPress ? (
                   row.id === 'mode' && showModes ? (
-                    <ChevronDown size={15} color={theme.colors.textMuted} />
+                    <DisclosureDownIcon size={15} color={theme.colors.textMuted} />
                   ) : (
-                    <ChevronRight size={15} color={theme.colors.textMuted} />
+                    <NextIcon size={15} color={theme.colors.textMuted} />
                   )
                 ) : null}
               </PressableScale>

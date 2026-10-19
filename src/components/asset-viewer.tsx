@@ -3,7 +3,7 @@ import { AudioPlaybackError } from '@/lib/audio-playback-session';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useThemeTokens, Skeleton, Button, PressableScale, Text } from '@osuki-dev/ui';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { Check, Copy, Download, X } from 'lucide-react-native';
+import { DoneIcon, CopyIcon, DownloadIcon, CloseIcon } from '@/icons';
 import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Modal, ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -138,7 +138,7 @@ function EncryptedImageViewer({ asset, onClose }: { asset: SessionAsset; onClose
             accessibilityLabel={t`Close preview`}
             onPress={onClose}
             style={[styles.encryptedLoadingClose, { top: insets.top + 10 }]}>
-            <X size={20} color="#FFFFFF" />
+            <CloseIcon size={20} color="#FFFFFF" />
           </PressableScale>
         </View>
       </Modal>
@@ -417,7 +417,7 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
                           styles.close,
                           { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
                         ]}>
-                        <Download size={18} color={theme.colors.text} />
+                        <DownloadIcon size={18} color={theme.colors.text} />
                       </PressableScale>
                       {content ? (
                         <PressableScale
@@ -428,9 +428,9 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
                             { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
                           ]}>
                           {copied ? (
-                            <Check size={18} color={theme.colors.success} />
+                            <DoneIcon size={18} color={theme.colors.success} />
                           ) : (
-                            <Copy size={18} color={theme.colors.text} />
+                            <CopyIcon size={18} color={theme.colors.text} />
                           )}
                         </PressableScale>
                       ) : null}
@@ -441,7 +441,7 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
                           styles.close,
                           { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
                         ]}>
-                        <X size={18} color={theme.colors.text} />
+                        <CloseIcon size={18} color={theme.colors.text} />
                       </PressableScale>
                     </View>
                   }

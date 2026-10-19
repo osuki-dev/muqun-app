@@ -4,7 +4,7 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
 import { useRouter } from 'expo-router';
-import { Keyboard as KeyboardIcon, PenLine, RefreshCw, Unplug, X } from 'lucide-react-native';
+import { KeyboardIcon, EditIcon, RefreshIcon, DisconnectIcon, CloseIcon } from '@/icons';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Keyboard,
@@ -1028,7 +1028,7 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
       pressedScale={0.9}
       onPress={() => setComposerRevealed(true)}
       style={[styles.keyRowToggle, { backgroundColor: surfaceBackground(chromeGlass) }]}>
-      <PenLine size={16} color={chromeText} />
+      <EditIcon size={16} color={chromeText} />
     </PressableScale>
   );
 
@@ -1264,11 +1264,11 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
               onPress={connecting ? cancelConnect : connected ? disconnect : reconnect}
               style={styles.headerButton}>
               {connecting ? (
-                <X size={19} color={theme.colors.text} strokeWidth={2} />
+                <CloseIcon size={19} color={theme.colors.text} />
               ) : connected ? (
-                <Unplug size={19} color={theme.colors.text} strokeWidth={2} />
+                <DisconnectIcon size={19} color={theme.colors.text} />
               ) : (
-                <RefreshCw size={19} color={theme.colors.text} strokeWidth={2} />
+                <RefreshIcon size={19} color={theme.colors.text} />
               )}
             </PressableScale>
           }

@@ -2,7 +2,7 @@ import { memo, useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Spinner, useThemeTokens } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
-import { Bot, Compass, FileText, Sparkles } from 'lucide-react-native';
+import { AgentIcon, ExploreIcon, DocumentIcon, SuggestedIcon } from '@/icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated from 'react-native-reanimated';
 
@@ -54,13 +54,13 @@ const BUILTIN_IDS = ['build', 'plan', 'explore', 'general'];
 function agentIcon(id: string, color: string) {
   switch (id) {
     case 'build':
-      return <Bot size={17} color={color} />;
+      return <AgentIcon size={17} color={color} />;
     case 'explore':
-      return <Compass size={17} color={color} />;
+      return <ExploreIcon size={17} color={color} />;
     case 'plan':
-      return <FileText size={17} color={color} />;
+      return <DocumentIcon size={17} color={color} />;
     default:
-      return <Sparkles size={17} color={color} />;
+      return <SuggestedIcon size={17} color={color} />;
   }
 }
 

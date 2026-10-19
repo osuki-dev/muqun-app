@@ -1,7 +1,7 @@
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { useIsFocused } from 'expo-router';
-import { RotateCcw, Square, X } from 'lucide-react-native';
+import { UndoIcon, StopIcon, CloseIcon } from '@/icons';
 import { useEffect, useRef, useState } from 'react';
 import {
   AppState,
@@ -191,7 +191,7 @@ function VoiceRecording({
         onClose();
       }}
       style={styles.action}>
-      <X size={18} color={theme.colors.textMuted} />
+      <CloseIcon size={18} color={theme.colors.textMuted} />
     </PressableScale>
   );
   const stop = (
@@ -208,11 +208,11 @@ function VoiceRecording({
       }}
       style={[styles.action, { opacity: busy && !error ? 0.45 : 1 }]}>
       {error ? (
-        <RotateCcw size={18} color={theme.colors.primary} />
+        <UndoIcon size={18} color={theme.colors.primary} />
       ) : (
         <>
           {realtime ? <VoiceLevelRing history={history} processing={!recording} /> : null}
-          <Square size={16} color={theme.colors.primary} />
+          <StopIcon size={16} color={theme.colors.primary} />
         </>
       )}
     </PressableScale>
@@ -315,7 +315,7 @@ function VoiceRecording({
               </Text>
             </View>
             <Animated.View entering={enter} testID="voice-visual-error" style={styles.readout}>
-              {!compact && <RotateCcw size={18} color={theme.colors.danger} />}
+              {!compact && <UndoIcon size={18} color={theme.colors.danger} />}
               <ScrollView style={styles.readoutText} nestedScrollEnabled>
                 <Text weight="regular" color={theme.colors.danger} style={styles.detail}>
                   {error}

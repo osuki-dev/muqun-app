@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
-import { FileImage, FileText } from 'lucide-react-native';
+import { PhotoFileIcon, DocumentIcon } from '@/icons';
 import { useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import { AssetViewer } from '@/components/asset-viewer';
@@ -158,9 +158,9 @@ function RawFileLink({ file, asid }: { file: { uri: string; name: string }; asid
           borderRadius: 12,
         }}>
         {isImage ? (
-          <FileImage size={14} color={theme.colors.primary} />
+          <PhotoFileIcon size={14} color={theme.colors.primary} />
         ) : (
-          <FileText size={14} color={theme.colors.primary} />
+          <DocumentIcon size={14} color={theme.colors.primary} />
         )}
         <Text variant="caption" style={{ flexShrink: 1 }}>
           {file.name}

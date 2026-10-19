@@ -13,16 +13,16 @@ import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { StatusBar } from 'expo-status-bar';
 import {
-  HardDrive,
-  Info,
-  Palette,
-  Bell,
-  Terminal,
-  ChevronRight,
-  Monitor,
-  Mic,
-  Settings2,
-} from 'lucide-react-native';
+  StorageIcon,
+  InformationIcon,
+  AppearanceIcon,
+  NotificationsIcon,
+  TerminalIcon,
+  NextIcon,
+  ComputerIcon,
+  MicrophoneIcon,
+  SettingsIcon,
+} from '@/icons';
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -61,13 +61,13 @@ const HEADER_INSET = NAV_HEADER_TOP_GAP + NAV_HEADER_CONTROL_SIZE + 8 + LADDER.s
 
 /** The entry list. Labels are translated in the component, with the hook's `t`. */
 const ROWS = [
-  { route: '/settings-appearance', icon: Palette },
-  { route: '/settings-terminal', icon: Terminal },
-  { route: '/settings-voice', icon: Mic },
-  { route: '/settings-alerts', icon: Bell },
-  { route: '/settings-servers', icon: Monitor },
-  { route: '/settings-storage', icon: HardDrive },
-  { route: '/settings-about', icon: Info },
+  { route: '/settings-appearance', icon: AppearanceIcon },
+  { route: '/settings-terminal', icon: TerminalIcon },
+  { route: '/settings-voice', icon: MicrophoneIcon },
+  { route: '/settings-alerts', icon: NotificationsIcon },
+  { route: '/settings-servers', icon: ComputerIcon },
+  { route: '/settings-storage', icon: StorageIcon },
+  { route: '/settings-about', icon: InformationIcon },
 ] as const;
 
 /** Security, then the footer line with the version block: what follows the rows. */
@@ -168,7 +168,7 @@ export default function SettingsScreen() {
               <SettingsNavRow
                 key={route}
                 icon={icon}
-                trailing={ChevronRight}
+                trailing={NextIcon}
                 label={labels[route]}
                 testID={route.slice(1) + '-row'}
                 onPress={() => router.push(route)}
@@ -194,7 +194,7 @@ export default function SettingsScreen() {
                 entering={entryRise(1, TAIL_COUNT, ROWS_SETTLED_MS)}
                 style={styles.tail}>
                 <View style={[styles.footer, plate ? { ...plate, alignSelf: 'flex-start' } : null]}>
-                  <Settings2 size={16} color={theme.colors.textMuted} strokeWidth={2} />
+                  <SettingsIcon size={16} color={theme.colors.textMuted} />
                   <Text variant="caption" color={theme.colors.textMuted} style={styles.footerText}>
                     <Trans>Muqun settings stay on this device.</Trans>
                   </Text>

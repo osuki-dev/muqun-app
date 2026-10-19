@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { plural } from '@lingui/core/macro';
-import { Check, FileText, Play, X } from 'lucide-react-native';
+import { DoneIcon, DocumentIcon, StartIcon, CloseIcon } from '@/icons';
 import { EnrichedMarkdownText, type MarkdownStyle } from 'react-native-enriched-markdown';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -395,7 +395,7 @@ const ToolFiles = memo(function ToolFiles({
             accessibilityLabel={t`Open ${file.name ?? basename(file.uri)}`}
             onPress={() => onOpenFile?.(file)}
             style={[styles.fileChip, raised]}>
-            <FileText size={13} color={theme.colors.primary} />
+            <DocumentIcon size={13} color={theme.colors.primary} />
             <Text
               variant="caption"
               color={theme.colors.text}
@@ -703,7 +703,7 @@ export const AgentToolCard = memo(function AgentToolCard({
           accessibilityLabel={t`Run in background`}
           onPress={onRunInBackground}
           style={styles.action}>
-          <Play size={11} color={colors.accent} />
+          <StartIcon size={11} color={colors.accent} />
           <Text variant="caption" color={colors.accent} style={styles.actionText}>
             <Trans>Run in background</Trans>
           </Text>
@@ -1048,7 +1048,7 @@ const ReadFileBody = memo(function ReadFileBody({
                     accessibilityLabel={t`Close preview`}
                     onPress={() => setOpen(false)}
                     style={readStyles.close}>
-                    <X size={20} color={theme.colors.text} />
+                    <CloseIcon size={20} color={theme.colors.text} />
                   </PressableScale>
                 </View>
                 <FileTextBody
@@ -1480,7 +1480,7 @@ const GlobFiles = memo(function GlobFiles({
                 disabled={!onOpenFile}
                 onPress={() => onOpenFile?.(toolFileForPath(path))}
                 style={styles.globRow}>
-                <FileText size={11} color={colors.subtle} />
+                <DocumentIcon size={11} color={colors.subtle} />
                 <Text
                   numberOfLines={1}
                   ellipsizeMode="middle"
@@ -1669,7 +1669,7 @@ const QuestionBody = memo(function QuestionBody({
                         backgroundColor: chosen ? withAlpha(colors.accent, 0.12) : 'transparent',
                       },
                     ]}>
-                    {chosen ? <Check size={11} color={colors.accent} /> : null}
+                    {chosen ? <DoneIcon size={11} color={colors.accent} /> : null}
                     <View style={styles.optionCopy}>
                       <Text
                         variant="caption"

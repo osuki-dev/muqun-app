@@ -1,7 +1,7 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
-import { Pencil, Trash2, X } from 'lucide-react-native';
+import { EditIcon, DeleteIcon, CloseIcon } from '@/icons';
 import { type ReactNode, useEffect, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -34,7 +34,7 @@ import { fadeIn, fadeOut, listLayout, timing } from '@/lib/motion';
  *  * its glyph, as two cross-faded copies.
  *
  * The last two are copies rather than an animated colour because neither a
- * Lucide icon's `color` prop nor the design system's `Text` leaves anything on
+ * App icon's `color` prop nor the design system's `Text` leaves anything on
  * the UI thread to drive -- both resolve before a style ever reaches React
  * Native. `interpolateColor` is not an option for the fill either: the resting
  * layer would have to start from `transparent`, which Reanimated reads as
@@ -94,7 +94,7 @@ export function RowActionMenu({
           styles.square,
           { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
         ]}>
-        <Pencil size={16} color={theme.colors.text} strokeWidth={2} />
+        <EditIcon size={16} color={theme.colors.text} />
       </PressableScale>
       {/* The wrapper, not the button, carries `layout`: `PressableScale` takes
           `PressableProps`, which has no room for a layout animation, and the
@@ -123,10 +123,10 @@ export function RowActionMenu({
           />
           <Animated.View style={styles.glyph}>
             <Animated.View style={[styles.glyphLayer, restingGlyphStyle]}>
-              <Trash2 size={16} color={theme.colors.danger} strokeWidth={2} />
+              <DeleteIcon size={16} color={theme.colors.danger} />
             </Animated.View>
             <Animated.View style={[styles.glyphLayer, armedGlyphStyle]}>
-              <Trash2 size={16} color={theme.colors.onPrimary} strokeWidth={2} />
+              <DeleteIcon size={16} color={theme.colors.onPrimary} />
             </Animated.View>
           </Animated.View>
           {/* The word arrives and leaves inside a button already on its way to
@@ -159,7 +159,7 @@ export function RowActionMenu({
           styles.square,
           { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
         ]}>
-        <X size={16} color={theme.colors.textMuted} strokeWidth={2} />
+        <CloseIcon size={16} color={theme.colors.textMuted} />
       </PressableScale>
     </Animated.View>
   );

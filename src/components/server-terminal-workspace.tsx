@@ -31,15 +31,15 @@ import { useScreenVisible } from '@/hooks/use-screen-visible';
 import { DeliveryOwnership, DeliverySelection } from '@/lib/bound-delivery';
 import { StatusBar } from 'expo-status-bar';
 import {
-  Bot,
-  CircleAlert,
-  History,
-  Keyboard as KeyboardIcon,
-  PenLine,
-  SquareTerminal,
-  X,
-  Zap,
-} from 'lucide-react-native';
+  AgentIcon,
+  NoticeIcon,
+  HistoryIcon,
+  KeyboardIcon,
+  EditIcon,
+  TerminalWindowIcon,
+  CloseIcon,
+  QuickActionIcon,
+} from '@/icons';
 import {
   useCallback,
   useEffect,
@@ -5339,7 +5339,7 @@ export function ServerTerminalWorkspace({
           ),
         },
       ]}>
-      <Bot size={16} color={theme.colors.primary} />
+      <AgentIcon size={16} color={theme.colors.primary} />
     </PressableScale>
   ) : null;
 
@@ -5355,7 +5355,7 @@ export function ServerTerminalWorkspace({
         { borderRadius: profile.chrome.control },
         { backgroundColor: surfaceBackground(chromeGlass) },
       ]}>
-      <PenLine size={16} color={chromeText} />
+      <EditIcon size={16} color={chromeText} />
     </PressableScale>
   );
 
@@ -5619,7 +5619,7 @@ export function ServerTerminalWorkspace({
           { borderRadius: profile.chrome.control },
           { backgroundColor: surfaceBackground(fill) },
         ]}>
-        <Zap size={isPadLayout ? 15 : 16} color={theme.colors.primary} />
+        <QuickActionIcon size={isPadLayout ? 15 : 16} color={theme.colors.primary} />
       </PressableScale>
       {/* Quick actions is what goes into the session; this is what came out of
           it. That pairing is why files live beside it rather than as a fifth
@@ -5721,7 +5721,13 @@ export function ServerTerminalWorkspace({
           selectedPaneId={padDetailIsPane ? selection.paneId || null : null}
           selectedAsid={padDetail.kind === 'agent' ? padDetail.asid : undefined}
           workbenchSelected={false}
-          commandOptions={{ embedded: true, routeBound, sourceRouteActive, openAgentInPlace }}
+          commandOptions={{
+            embedded: true,
+            routeBound,
+            sourceRouteActive,
+            openAgentInPlace,
+            workspaceServerId: serverId,
+          }}
           onBack={() => setOverviewVisible(true)}
           onSelectServer={selectPadServer}
           onPairServer={() => router.push('/explore')}
@@ -5795,7 +5801,7 @@ export function ServerTerminalWorkspace({
                   accessibilityLabel={t`Hide the simulator`}
                   onPress={() => toggleSimfarmSplit(serverId)}
                   style={navHeaderButtonStyle}>
-                  <X size={18} color={theme.colors.text} strokeWidth={2} />
+                  <CloseIcon size={18} color={theme.colors.text} />
                 </PressableScale>
               ) : null,
             ]
@@ -5951,7 +5957,7 @@ export function ServerTerminalWorkspace({
                             styles.missingTargetButton,
                             { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
                           ]}>
-                          <SquareTerminal size={16} color={theme.colors.primary} />
+                          <TerminalWindowIcon size={16} color={theme.colors.primary} />
                           <Text variant="label" color={theme.colors.primary}>
                             <Trans>Choose another terminal</Trans>
                           </Text>
@@ -6579,7 +6585,7 @@ export function ServerTerminalWorkspace({
  * primary-filled layer is the same journey with no detour through black.
  *
  * The glyph and the label are each two copies cross-faded rather than one copy
- * whose colour animates: a Lucide icon takes its colour as a prop, not as a
+ * whose colour animates: a App icon takes its colour as a prop, not as a
  * style, and the design system's `Text` resolves its own colour before the
  * style reaches React Native -- so in both cases there is nothing on the view
  * for the UI thread to drive. The resting copy is the one that lays out; the
@@ -6617,7 +6623,7 @@ function PaneChip({
   const restingStyle = useAnimatedStyle(() => ({ opacity: 1 - selected.value }));
   const selectedStyle = useAnimatedStyle(() => ({ opacity: selected.value }));
 
-  const Glyph = agentStatusColor ? Bot : SquareTerminal;
+  const Glyph = agentStatusColor ? AgentIcon : TerminalWindowIcon;
   const restGlyphColor = agentStatusColor ?? restColor;
 
   return (
@@ -6940,7 +6946,7 @@ function HistoryPullNoticeView({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const failed = notice.kind === 'failed';
-  const Icon = failed ? CircleAlert : History;
+  const Icon = failed ? NoticeIcon : HistoryIcon;
   return (
     <Animated.View
       pointerEvents="box-none"

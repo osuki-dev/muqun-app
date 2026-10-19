@@ -1,7 +1,7 @@
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Text, PressableScale } from '@osuki-dev/ui';
 import { Image } from 'expo-image';
-import { X } from 'lucide-react-native';
+import { CloseIcon } from '@/icons';
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import { useFileActions } from '@/hooks/use-file-actions';
 import { useStableHandler } from '@/hooks/use-render-refs';
@@ -618,7 +618,7 @@ function PreviewSurface({
         accessibilityLabel={t`Close preview`}
         onPress={onClose}
         style={[styles.close, { top: insets.top + 10 }]}>
-        <X size={20} color="#FFFFFF" />
+        <CloseIcon size={20} color="#FFFFFF" />
       </PressableScale>
       {canViewOriginal ? (
         <PressableScale

@@ -28,7 +28,7 @@ import { fadeInDown, fadeOutDown } from '@/lib/motion';
 export interface AgentActionMenuItem {
   id: string;
   label: string;
-  /** A lucide glyph, sized and coloured here. */
+  /** A App glyph, sized and coloured here. */
   Icon?: ComponentType<{ size?: number; color?: string }>;
   /** `danger` for the one that throws something away. */
   tone?: 'default' | 'danger';

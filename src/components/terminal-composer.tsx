@@ -10,7 +10,7 @@ import {
   TextField,
   type TextFieldProps,
 } from '@osuki-dev/ui';
-import { Mic, Send } from 'lucide-react-native';
+import { MicrophoneIcon, MessageSendIcon } from '@/icons';
 import { Canvas, Group, Path, Skia } from 'react-native-skia';
 import { scheduleOnRN } from 'react-native-worklets';
 import { useEffect, useRef, useState, type ComponentProps, type ReactNode, type Ref } from 'react';
@@ -503,17 +503,17 @@ export function ComposerSendButton({
         disabled && !onLongPress && !sending && composerStyles.disabledButton,
       ]}>
       <Animated.View style={[StyleSheet.absoluteFill, composerStyles.buttonGlyph, restGlyphStyle]}>
-        <ThemeIcon name="chrome.send" fallback={Send} size={18} color={restText} />
+        <ThemeIcon name="chrome.send" fallback={MessageSendIcon} size={18} color={restText} />
       </Animated.View>
       <Animated.View style={[StyleSheet.absoluteFill, composerStyles.buttonGlyph, armedGlyphStyle]}>
-        <ThemeIcon name="chrome.send" fallback={Send} size={18} color={activeText} />
+        <ThemeIcon name="chrome.send" fallback={MessageSendIcon} size={18} color={activeText} />
       </Animated.View>
       {onLongPress && (
         <>
           <Animated.View
             pointerEvents="none"
             style={[StyleSheet.absoluteFill, composerStyles.buttonGlyph, micStyle]}>
-            <Mic size={18} color={activeText} />
+            <MicrophoneIcon size={18} color={activeText} />
           </Animated.View>
           <Canvas pointerEvents="none" style={StyleSheet.absoluteFill}>
             <Group

@@ -3,7 +3,7 @@ import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, Text } from '@osuki-dev/ui';
-import { FileImage } from 'lucide-react-native';
+import { PhotoFileIcon } from '@/icons';
 import { useLatestReader } from '@/hooks/use-render-refs';
 import {
   contentImageIdentity,
@@ -67,7 +67,7 @@ export function ContentImage({
             }}
           />
         ) : (
-          (placeholder ?? <FileImage size={20} color={theme.colors.textMuted} />)
+          (placeholder ?? <PhotoFileIcon size={20} color={theme.colors.textMuted} />)
         )}
       </View>
       {cropped ? (

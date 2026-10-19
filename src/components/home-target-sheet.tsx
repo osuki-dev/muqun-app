@@ -1,7 +1,7 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
-import { Monitor } from 'lucide-react-native';
+import { ComputerIcon } from '@/icons';
 import { ScrollView, View } from 'react-native';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useIsFocused, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
@@ -116,7 +116,7 @@ export function HomeTargetSheet() {
         selected={requestIsActive && server.serverId === selectedServerId}
         accessibilityLabel={`${server.label}, ${_(reachabilityDescription[reachability])}`}
         leading={
-          <Monitor
+          <ComputerIcon
             size={20}
             color={reachability === 'live' ? theme.colors.success : theme.colors.textMuted}
           />

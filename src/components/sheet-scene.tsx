@@ -9,7 +9,7 @@ import {
   TextField,
 } from '@osuki-dev/ui';
 import { useRouter } from 'expo-router';
-import { Search, X } from 'lucide-react-native';
+import { SearchIcon, CloseIcon } from '@/icons';
 import { useEffect, useRef, type ReactNode } from 'react';
 import {
   ActivityIndicator,
@@ -298,7 +298,7 @@ function SheetSceneClose() {
       testID="sheet-close"
       accessibilityLabel={t`Close`}
       onPress={() => router.back()}>
-      <X size={20} color={colors.text} />
+      <CloseIcon size={20} color={colors.text} />
     </SheetSceneQuietControl>
   );
 }
@@ -424,7 +424,7 @@ export function SheetSceneSearch({
   const fieldFont = useSheetSceneFieldFont();
   return (
     <View style={[styles.searchRow, { borderBottomColor: colors.border }]}>
-      <Search size={16} color={colors.textSubtle} />
+      <SearchIcon size={16} color={colors.textSubtle} />
       <TextField
         testID={testID}
         accessibilityLabel={accessibilityLabel}
@@ -444,7 +444,7 @@ export function SheetSceneSearch({
           hitSlop={10}
           onPress={() => onChangeText('')}
           style={styles.searchClear}>
-          <X size={15} color={colors.textMuted} />
+          <CloseIcon size={15} color={colors.textMuted} />
         </PressableScale>
       ) : null}
     </View>

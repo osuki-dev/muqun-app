@@ -3,7 +3,7 @@ import type { MessageDescriptor } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
-import { Camera, FileUp, Images } from 'lucide-react-native';
+import { CameraIcon, UploadFileIcon, PhotosIcon } from '@/icons';
 import { StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -30,11 +30,11 @@ import { fadeInDown, fadeOutDown } from '@/lib/motion';
 const OPTIONS: {
   source: AttachmentSource;
   label: MessageDescriptor;
-  Icon: typeof Camera;
+  Icon: typeof CameraIcon;
 }[] = [
-  { source: 'camera', label: msg`Take photo`, Icon: Camera },
-  { source: 'library', label: msg`Photo library`, Icon: Images },
-  { source: 'file', label: msg`Choose files`, Icon: FileUp },
+  { source: 'camera', label: msg`Take photo`, Icon: CameraIcon },
+  { source: 'library', label: msg`Photo library`, Icon: PhotosIcon },
+  { source: 'file', label: msg`Choose files`, Icon: UploadFileIcon },
 ];
 
 /**

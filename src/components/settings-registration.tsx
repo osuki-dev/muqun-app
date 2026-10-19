@@ -2,7 +2,7 @@ import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
 import { useLocales } from 'expo-localization';
 import { openBrowserAsync, WebBrowserPresentationStyle } from 'expo-web-browser';
-import { ExternalLink } from 'lucide-react-native';
+import { OpenExternalIcon } from '@/icons';
 import { StyleSheet } from 'react-native';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -58,7 +58,7 @@ function RegistrationLink({ number }: { number: string }) {
       <Text variant="caption" color={theme.colors.textMuted} style={styles.label}>
         {number}
       </Text>
-      <ExternalLink size={12} color={theme.colors.textMuted} />
+      <OpenExternalIcon size={12} color={theme.colors.textMuted} />
     </PressableScale>
   );
 }

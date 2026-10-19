@@ -1,7 +1,7 @@
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
 import { useIsFocused, useRouter } from 'expo-router';
-import { SlidersHorizontal } from 'lucide-react-native';
+import { ControlsIcon } from '@/icons';
 import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { AppState, StyleSheet, View } from 'react-native';
 
@@ -1410,7 +1410,7 @@ export function HomeComposerDock({
       style={[composerStyles.button, { borderRadius: profile.chrome.roundControl }]}>
       <ThemeIcon
         name="chrome.parameters"
-        fallback={SlidersHorizontal}
+        fallback={ControlsIcon}
         size={18}
         color={optionsOpen ? theme.colors.primary : theme.colors.textMuted}
       />

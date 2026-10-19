@@ -1,7 +1,7 @@
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, Text } from '@osuki-dev/ui';
 import { useRouter } from 'expo-router';
-import { RefreshCw } from 'lucide-react-native';
+import { RefreshIcon } from '@/icons';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -250,7 +250,7 @@ export function AgentSubagentDetailSheet({
           onPress={() =>
             setAttempt((value) => ({ scopeKey, sequence: (value?.sequence ?? 0) + 1 }))
           }>
-          <RefreshCw size={17} color={colors.textMuted} />
+          <RefreshIcon size={17} color={colors.textMuted} />
         </SheetSceneQuietControl>
       }>
       {contentState === 'loading' ? (

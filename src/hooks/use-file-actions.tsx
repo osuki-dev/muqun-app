@@ -2,7 +2,7 @@ import { useLingui } from '@lingui/react/macro';
 import { Modal, Text, useToast } from '@osuki-dev/ui';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useState } from 'react';
-import { Download, X } from 'lucide-react-native';
+import { DownloadIcon, CloseIcon } from '@/icons';
 import { AgentActionMenu } from '@/components/agent-action-menu';
 import { AudioPlaybackError } from '@/lib/audio-playback-session';
 
@@ -55,11 +55,11 @@ export function useFileActions(name: string, save: () => Promise<void>, image = 
               {
                 id: 'save',
                 label: image ? t`Save image` : t`Save file`,
-                Icon: Download,
+                Icon: DownloadIcon,
                 onPress: run,
                 testID: 'file-actions-save',
               },
-              { id: 'cancel', label: t`Cancel`, Icon: X, onPress: () => setOpen(false) },
+              { id: 'cancel', label: t`Cancel`, Icon: CloseIcon, onPress: () => setOpen(false) },
             ]}
           />
         </Modal.Content>

@@ -5,15 +5,15 @@ import { useThemeTokens, Text } from '@osuki-dev/ui';
 import { Image } from 'expo-image';
 import { GatewayImageThumbnail } from '@/components/gateway-image-thumbnail';
 import {
-  File as FileIcon,
-  FileCode,
-  FileImage,
-  FileText,
-  FileType,
-  Film,
-  Headphones,
-  RefreshCw,
-} from 'lucide-react-native';
+  FileIcon,
+  SourceFileIcon,
+  PhotoFileIcon,
+  DocumentIcon,
+  DocumentTypeIcon,
+  VideoIcon,
+  AudioIcon,
+  RefreshIcon,
+} from '@/icons';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -542,7 +542,7 @@ export function SessionArtifacts({
             accessibilityLabel={t`Refresh files`}
             busy={loading}
             onPress={() => void load()}>
-            <RefreshCw size={17} color={theme.colors.textMuted} />
+            <RefreshIcon size={17} color={theme.colors.textMuted} />
           </SheetSceneQuietControl>
         }
         header={
@@ -857,12 +857,12 @@ const AssetRow = memo(function AssetRow({
 });
 
 function AssetKindIcon({ kind, color }: { kind: AssetKind; color: string }) {
-  if (kind === 'audio') return <Headphones size={18} color={color} />;
-  if (kind === 'video') return <Film size={18} color={color} />;
-  if (kind === 'image') return <FileImage size={18} color={color} />;
-  if (kind === 'markdown') return <FileText size={18} color={color} />;
-  if (kind === 'text') return <FileCode size={18} color={color} />;
-  if (kind === 'pdf') return <FileType size={18} color={color} />;
+  if (kind === 'audio') return <AudioIcon size={18} color={color} />;
+  if (kind === 'video') return <VideoIcon size={18} color={color} />;
+  if (kind === 'image') return <PhotoFileIcon size={18} color={color} />;
+  if (kind === 'markdown') return <DocumentIcon size={18} color={color} />;
+  if (kind === 'text') return <SourceFileIcon size={18} color={color} />;
+  if (kind === 'pdf') return <DocumentTypeIcon size={18} color={color} />;
   return <FileIcon size={18} color={color} />;
 }
 

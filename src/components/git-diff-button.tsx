@@ -3,7 +3,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { useRouter, type Href } from 'expo-router';
-import { GitCompare } from 'lucide-react-native';
+import { CompareIcon } from '@/icons';
 import { Keyboard, StyleSheet, View } from 'react-native';
 
 import { KEY_ROW_HEIGHT } from '@/constants/key-row';
@@ -113,7 +113,7 @@ export function GitDiffButton({
         { borderRadius: profile.chrome.control },
         { backgroundColor: surfaceBackground(background) },
       ]}>
-      <GitCompare
+      <CompareIcon
         size={compact ? 15 : 16}
         color={theme.colors.primary}
         style={repo.changedFiles > 0 ? styles.iconNudged : undefined}

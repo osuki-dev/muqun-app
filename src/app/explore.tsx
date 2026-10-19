@@ -4,13 +4,7 @@ import { useThemeTokens, PressableScale, Text, TextField } from '@osuki-dev/ui';
 import * as Clipboard from 'expo-clipboard';
 import * as Device from 'expo-device';
 import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
-import {
-  Check,
-  Copy as CopyIcon,
-  Keyboard as KeyboardIcon,
-  ScanLine,
-  Waypoints,
-} from 'lucide-react-native';
+import { DoneIcon, CopyIcon, KeyboardIcon, PairScanIcon, ConnectionGraphIcon } from '@/icons';
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import {
   AppState,
@@ -919,14 +913,13 @@ export default function PairModal() {
                     },
                   ]}>
                   {manualOpen ? (
-                    <ScanLine size={17} color={theme.colors.textMuted} strokeWidth={2} />
+                    <PairScanIcon size={17} color={theme.colors.textMuted} />
                   ) : (
                     <KeyboardIcon
                       size={17}
                       color={
                         scan.promotesManualEntry ? theme.colors.primary : theme.colors.textMuted
                       }
-                      strokeWidth={2}
                     />
                   )}
                   <Text
@@ -960,9 +953,9 @@ export default function PairModal() {
                     },
                   ]}>
                   {sshOpen ? (
-                    <ScanLine size={17} color={theme.colors.textMuted} strokeWidth={2} />
+                    <PairScanIcon size={17} color={theme.colors.textMuted} />
                   ) : (
-                    <Waypoints size={17} color={theme.colors.textMuted} strokeWidth={2} />
+                    <ConnectionGraphIcon size={17} color={theme.colors.textMuted} />
                   )}
                   <Text variant="bodySmall" color={theme.colors.textMuted}>
                     {sshOpen ? t`Scan a gateway QR` : t`Pair through an SSH host`}
@@ -1042,9 +1035,9 @@ export default function PairModal() {
                     {GATEWAY_INSTALL_COMMAND}
                   </Text>
                   {copiedInstall ? (
-                    <Check size={16} color={theme.colors.primary} strokeWidth={2} />
+                    <DoneIcon size={16} color={theme.colors.primary} />
                   ) : (
-                    <CopyIcon size={16} color={theme.colors.textMuted} strokeWidth={2} />
+                    <CopyIcon size={16} color={theme.colors.textMuted} />
                   )}
                 </PressableScale>
               </View>
@@ -1152,7 +1145,7 @@ export default function PairModal() {
                   styles.successIcon,
                   { backgroundColor: surfaceBackground(theme.colors.primary) },
                 ]}>
-                <Check size={30} strokeWidth={2.5} color={theme.colors.onPrimary} />
+                <DoneIcon size={30} color={theme.colors.onPrimary} />
               </Animated.View>
               <View style={styles.successCopy}>
                 <Text variant="heading" style={styles.successTitle} numberOfLines={1}>
@@ -1212,7 +1205,7 @@ export default function PairModal() {
  * worse.
  *
  * Two states, both drawn as a second set of corners cross-faded over the first
- * rather than as a colour animation: a Lucide-style border colour resolves in
+ * rather than as a colour animation: a glyph border colour resolves in
  * JS before the style reaches React Native, so there is nothing for the UI
  * thread to drive. Idle breathes, on the same period as a live status dot,
  * because both mean the same thing -- this is on and it is looking. Found

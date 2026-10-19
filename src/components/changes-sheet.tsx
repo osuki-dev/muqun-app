@@ -4,7 +4,7 @@ import { type LegendListRef } from '@legendapp/list/react-native';
 import { Dialog, useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
 import { plural } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Check, ChevronDown, ChevronUp, GitBranch, RefreshCw } from 'lucide-react-native';
+import { DoneIcon, DisclosureDownIcon, DisclosureUpIcon, BranchIcon, RefreshIcon } from '@/icons';
 
 import { AgentActionMenu } from '@/components/agent-action-menu';
 import type { ChangeTreeHandlers } from '@/components/change-tree-rows';
@@ -208,7 +208,7 @@ const ChangesRepoLine = memo(function ChangesRepoLine({ repo }: { repo: VcsRepoS
   }
   return (
     <View testID="changes-branch" accessible accessibilityLabel={label} style={styles.repoLine}>
-      <GitBranch size={12} color={color} />
+      <BranchIcon size={12} color={color} />
       {content}
     </View>
   );
@@ -793,7 +793,7 @@ export const ChangesSheet = memo(function ChangesSheet({
   const workingLabel = t`Uncommitted changes`;
   const branchLabel = base ? t`Compared with ${base}` : '';
   const scopeLabel = scope === 'branch' && base ? branchLabel : workingLabel;
-  const ScopeChevron = scopeMenuOpen ? ChevronUp : ChevronDown;
+  const ScopeChevron = scopeMenuOpen ? DisclosureUpIcon : DisclosureDownIcon;
 
   const discardName = discardTarget?.path.split('/').pop() ?? '';
   const discardUntracked = discardTarget?.status === 'untracked';
@@ -836,7 +836,7 @@ export const ChangesSheet = memo(function ChangesSheet({
                 accessibilityLabel={t`Refresh changes`}
                 busy={loading}
                 onPress={refresh}>
-                <RefreshCw size={17} color={theme.colors.textMuted} />
+                <RefreshIcon size={17} color={theme.colors.textMuted} />
               </SheetSceneQuietControl>
             </>
           ) : null}
@@ -853,14 +853,14 @@ export const ChangesSheet = memo(function ChangesSheet({
                 {
                   id: 'working',
                   label: workingLabel,
-                  Icon: scope === 'working' ? Check : UncheckedSlot,
+                  Icon: scope === 'working' ? DoneIcon : UncheckedSlot,
                   onPress: () => changeScope('working'),
                   testID: 'agent-changes-scope-working',
                 },
                 {
                   id: 'branch',
                   label: branchLabel,
-                  Icon: scope === 'branch' ? Check : UncheckedSlot,
+                  Icon: scope === 'branch' ? DoneIcon : UncheckedSlot,
                   onPress: () => changeScope('branch'),
                   testID: 'agent-changes-scope-branch',
                 },

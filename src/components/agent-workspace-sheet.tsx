@@ -3,7 +3,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Spinner, useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
-import { CornerDownRight, Folder, FolderGit2 } from 'lucide-react-native';
+import { IndentIcon, FolderIcon, RepositoryIcon } from '@/icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated from 'react-native-reanimated';
 
@@ -252,7 +252,7 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
                 testID="agent-workspace-custom-path-btn"
                 title={typedPath}
                 caption={t`Open as a project`}
-                leading={<FolderGit2 size={17} color={theme.colors.primary} />}
+                leading={<RepositoryIcon size={17} color={theme.colors.primary} />}
                 onPress={() => choose(typedPath)}
               />
             </Animated.View>
@@ -270,7 +270,7 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
                     title={folder}
                     caption={item.path}
                     captionKind="path"
-                    leading={<Folder size={16} color={theme.colors.textSubtle} />}
+                    leading={<FolderIcon size={16} color={theme.colors.textSubtle} />}
                     // The row opens the folder; this goes into it, so the
                     // folders under it are the next answer.
                     meta={
@@ -281,7 +281,7 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
                         hitSlop={10}
                         onPress={() => setSearchQuery(descendQuery(item.path, listing.home))}
                         style={styles.descend}>
-                        <CornerDownRight size={16} color={theme.colors.textSubtle} />
+                        <IndentIcon size={16} color={theme.colors.textSubtle} />
                       </PressableScale>
                     }
                     onPress={() => choose(item.path)}
@@ -312,7 +312,7 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
                 title={defaultRow.label}
                 selected={!activeDirectory}
                 leading={
-                  <Folder
+                  <FolderIcon
                     size={16}
                     color={activeDirectory ? theme.colors.textSubtle : theme.colors.primary}
                   />
@@ -366,7 +366,7 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
                       captionKind="path"
                       selected={activeDirectory === project.canonical}
                       leading={
-                        <FolderGit2
+                        <RepositoryIcon
                           size={17}
                           color={
                             activeDirectory === project.canonical

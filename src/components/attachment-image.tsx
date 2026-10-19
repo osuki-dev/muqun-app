@@ -1,7 +1,7 @@
 import { memo, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
-import { FileText } from 'lucide-react-native';
+import { DocumentIcon } from '@/icons';
 import { ContentImage } from '@/components/content-image';
 import { contentImageIdentity, type ContentImagePreviewState } from '@/lib/content-image-layout';
 import { useLingui } from '@lingui/react/macro';
@@ -61,7 +61,7 @@ export const AttachmentImage = memo(function AttachmentImage({
   if (failed || !source) {
     return (
       <View style={[styles.attachmentThumbnail, styles.attachmentPlaceholder]}>
-        <FileText size={16} color={theme.colors.textSubtle} />
+        <DocumentIcon size={16} color={theme.colors.textSubtle} />
       </View>
     );
   }

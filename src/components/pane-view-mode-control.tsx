@@ -1,4 +1,4 @@
-import { MessagesSquare, SquareTerminal } from 'lucide-react-native';
+import { SessionsIcon, TerminalWindowIcon } from '@/icons';
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -71,9 +71,9 @@ export const PaneViewModeControl = memo(function PaneViewModeControl({
   );
 });
 
-const MODE_ICONS: Record<PaneViewMode, typeof SquareTerminal> = {
-  chat: MessagesSquare,
-  terminal: SquareTerminal,
+const MODE_ICONS: Record<PaneViewMode, typeof TerminalWindowIcon> = {
+  chat: SessionsIcon,
+  terminal: TerminalWindowIcon,
 };
 
 const styles = StyleSheet.create({

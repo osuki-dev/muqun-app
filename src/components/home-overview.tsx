@@ -27,13 +27,13 @@ import {
   useRouter,
 } from 'expo-router';
 import {
-  ChevronRight,
-  Play,
-  ScanLine,
-  Monitor,
-  Settings,
-  SquareTerminal,
-} from 'lucide-react-native';
+  NextIcon,
+  StartIcon,
+  PairScanIcon,
+  ComputerIcon,
+  SettingsIcon,
+  TerminalWindowIcon,
+} from '@/icons';
 import {
   type ReactNode,
   useCallback,
@@ -187,6 +187,7 @@ import { isHomeArtworkAvailable, resolveHomeArtworkAsset } from '@/theme/home-ar
 import { homeArtworkPreference } from '@/theme/repository';
 import { ThemeArtwork, useHasThemeArtwork } from '@/components/theme-artwork';
 import { DevHomeAmbientControls } from '@/components/dev-home-ambient-controls';
+import { DevIconGalleryEntry } from '@/components/dev-icon-gallery';
 import { SkiaAmbientEffect } from '@/components/skia-ambient-effect';
 import type {
   ThemeAmbientEffect,
@@ -346,6 +347,7 @@ export function HomeOverview({
       colors={theme.colors}
     />
   ) : null;
+  const devIconGallery = __DEV__ ? <DevIconGalleryEntry /> : null;
   const devAmbientControls = __DEV__ ? (
     <DevHomeAmbientControls
       value={devEffect}
@@ -900,6 +902,7 @@ export function HomeOverview({
     routeBound,
     sourceRouteActive,
     openAgentInPlace: onOpenAgentInPlace,
+    workspaceServerId: embedded ? activeConnection?.serverId : undefined,
   });
   const launchController = useHomeLaunchController({
     servers: records,
@@ -1001,7 +1004,7 @@ export function HomeOverview({
           styles.embeddedReturnButton,
           { backgroundColor: background(theme.colors.surface) },
         ]}>
-        <SquareTerminal size={15} color={theme.colors.primary} strokeWidth={2} />
+        <TerminalWindowIcon size={15} color={theme.colors.primary} />
         <Text variant="caption" color={theme.colors.primary} style={styles.embeddedReturnLabel}>
           <Trans>Return to task</Trans>
         </Text>
@@ -1436,10 +1439,9 @@ export function HomeOverview({
                       onPress={() => void commands.pairGateway()}>
                       <ThemeIcon
                         name="chrome.scan"
-                        fallback={ScanLine}
+                        fallback={PairScanIcon}
                         size={HOME_TOOLBAR_ICON_SIZE}
                         color={theme.colors.text}
-                        strokeWidth={1.8}
                       />
                     </HeaderButton>
                     <HeaderButton
@@ -1447,11 +1449,7 @@ export function HomeOverview({
                       bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
                       label={t`SSH`}
                       onPress={() => void commands.openSsh()}>
-                      <SquareTerminal
-                        size={HOME_TOOLBAR_ICON_SIZE}
-                        color={theme.colors.text}
-                        strokeWidth={1.8}
-                      />
+                      <TerminalWindowIcon size={HOME_TOOLBAR_ICON_SIZE} color={theme.colors.text} />
                     </HeaderButton>
                     <HeaderButton
                       editorial
@@ -1460,10 +1458,9 @@ export function HomeOverview({
                       onPress={() => router.push('/settings')}>
                       <ThemeIcon
                         name="chrome.settings"
-                        fallback={Settings}
+                        fallback={SettingsIcon}
                         size={HOME_TOOLBAR_ICON_SIZE}
                         color={theme.colors.text}
-                        strokeWidth={1.8}
                       />
                     </HeaderButton>
                   </View>
@@ -1477,10 +1474,9 @@ export function HomeOverview({
                       onPress={() => void commands.pairGateway()}>
                       <ThemeIcon
                         name="chrome.scan"
-                        fallback={ScanLine}
+                        fallback={PairScanIcon}
                         size={HOME_TOOLBAR_ICON_SIZE}
                         color={theme.colors.text}
-                        strokeWidth={1.8}
                       />
                     </HeaderButton>
                     <HeaderButton
@@ -1490,10 +1486,9 @@ export function HomeOverview({
                       onPress={() => void commands.manageConnections()}>
                       <ThemeIcon
                         name="chrome.settings"
-                        fallback={Settings}
+                        fallback={SettingsIcon}
                         size={HOME_TOOLBAR_ICON_SIZE}
                         color={theme.colors.text}
-                        strokeWidth={1.8}
                       />
                     </HeaderButton>
                   </View>
@@ -1504,6 +1499,7 @@ export function HomeOverview({
         </HomeScrollViewport>
         {padLaunch ? null : dock}
         {devAmbientControls}
+        {devIconGallery}
       </View>
     );
     return embedded ? (
@@ -1678,7 +1674,7 @@ export function HomeOverview({
                     bare={classicBareToolbar}
                     label={t`SSH`}
                     onPress={() => void commands.openSsh()}>
-                    <SquareTerminal size={20} color={theme.colors.textMuted} strokeWidth={2} />
+                    <TerminalWindowIcon size={20} color={theme.colors.textMuted} />
                   </HeaderButton>
                   <HeaderButton
                     label={t`Scan a gateway QR`}
@@ -1690,10 +1686,9 @@ export function HomeOverview({
                 screen or a 20pt glyph in the corner of a full one. */}
                     <ThemeIcon
                       name="chrome.scan"
-                      fallback={ScanLine}
+                      fallback={PairScanIcon}
                       size={20}
                       color={theme.colors.textMuted}
-                      strokeWidth={2}
                     />
                   </HeaderButton>
                 </>
@@ -1704,10 +1699,9 @@ export function HomeOverview({
                 onPress={() => void commands.manageConnections()}>
                 <ThemeIcon
                   name="chrome.settings"
-                  fallback={Settings}
+                  fallback={SettingsIcon}
                   size={20}
                   color={theme.colors.textMuted}
-                  strokeWidth={2}
                 />
               </HeaderButton>
             </Animated.View>
@@ -2103,10 +2097,9 @@ export function HomeOverview({
                   </Text>
                   <ThemeIcon
                     name="home.arrow"
-                    fallback={ChevronRight}
+                    fallback={NextIcon}
                     size={14}
                     color={theme.colors.textMuted}
-                    strokeWidth={2}
                   />
                 </PressableScale>
               </View>
@@ -2128,6 +2121,7 @@ export function HomeOverview({
       </HomeScrollViewport>
       {dock}
       {devAmbientControls}
+      {devIconGallery}
     </View>
   );
   return embedded ? (
@@ -2265,13 +2259,13 @@ function ServerCard({
                 },
               ]}>
               {selected ? (
-                <SquareTerminal size={18} color={theme.colors.onPrimary} strokeWidth={2} />
+                <TerminalWindowIcon size={18} color={theme.colors.onPrimary} />
               ) : (
                 // The pack's primary, like every other glyph on this screen. The
                 // difference between the two tiles is the fill, not the ink: a
                 // grey glyph beside rows of accent-coloured ones read as a
                 // machine that was switched off, and this one is online.
-                <Monitor size={17} color={theme.colors.primary} strokeWidth={2} />
+                <ComputerIcon size={17} color={theme.colors.primary} />
               )}
             </View>
 
@@ -2391,7 +2385,7 @@ function EmptyState({
                 style={[styles.corner, corner.style, { borderColor: theme.colors.borderStrong }]}
               />
             ))}
-            <Monitor size={26} color={theme.colors.textMuted} strokeWidth={1.8} />
+            <ComputerIcon size={26} color={theme.colors.textMuted} />
           </View>
         )}
         <View style={[styles.emptyCopy, isPad && styles.padEmptyCopy]}>
@@ -2407,7 +2401,7 @@ function EmptyState({
         </View>
         <Button
           variant="primary"
-          leftIcon="ScanLine"
+          leftIcon="chrome.scan"
           accessibilityLabel={t`Pair a computer`}
           testID="home-pair-server"
           onPress={onPair}
@@ -2422,7 +2416,7 @@ function EmptyState({
           accessibilityLabel={t`Try the demo`}
           onPress={onDemo}
           style={styles.demoAction}>
-          <Play size={14} color={theme.colors.textMuted} strokeWidth={2.2} />
+          <StartIcon size={14} color={theme.colors.textMuted} />
           <Text variant="bodySmall" color={theme.colors.textMuted}>
             <Trans>Try the demo</Trans>
           </Text>

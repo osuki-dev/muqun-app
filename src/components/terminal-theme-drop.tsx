@@ -1,6 +1,6 @@
 import { useThemeTokens, Button, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
-import { Palette, X } from 'lucide-react-native';
+import { AppearanceIcon, CloseIcon } from '@/icons';
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
@@ -105,7 +105,7 @@ export function TerminalThemeDrop({
       <GlassChrome surface="actions" shape="noticeCard" style={styles.card}>
         <Animated.View style={[styles.body, liftStyle]}>
           <View style={styles.row}>
-            <Palette size={16} color={theme.colors.primary} />
+            <AppearanceIcon size={16} color={theme.colors.primary} />
             <Text variant="bodySmall" numberOfLines={1} style={styles.title}>
               {state.phase === 'ready' ? state.themeName : state.name}
             </Text>
@@ -115,7 +115,7 @@ export function TerminalThemeDrop({
               accessibilityLabel={t`Dismiss this theme`}
               hitSlop={8}
               onPress={onDismiss}>
-              <X size={15} color={theme.colors.textMuted} />
+              <CloseIcon size={15} color={theme.colors.textMuted} />
             </PressableScale>
           </View>
 

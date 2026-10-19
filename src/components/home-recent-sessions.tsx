@@ -1,7 +1,7 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, PressableScale, Text, TextField } from '@osuki-dev/ui';
-import { ChevronRight, Trash2, X } from 'lucide-react-native';
+import { NextIcon, DeleteIcon, CloseIcon } from '@/icons';
 import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   AppState,
@@ -172,7 +172,7 @@ export function HomeContinueSearch({
           accessibilityLabel={t`Clear session search`}
           onPress={() => onChange('')}
           style={styles.searchClear}>
-          <X size={16} color={theme.colors.textMuted} />
+          <CloseIcon size={16} color={theme.colors.textMuted} />
         </PressableScale>
       ) : null}
     </View>
@@ -790,7 +790,7 @@ function RecentSessionRow({
     menuItems.push({
       id: 'delete',
       label: deleting ? t`Deleting session…` : t`Delete session`,
-      Icon: Trash2,
+      Icon: DeleteIcon,
       tone: 'danger',
       disabled: deleting,
       confirm: {
@@ -805,7 +805,7 @@ function RecentSessionRow({
   menuItems.push({
     id: 'close-menu',
     label: t`Close menu`,
-    Icon: X,
+    Icon: CloseIcon,
     disabled: deleting,
     onPress: () => setMenu(null),
     testID: 'home-recent-close-menu',
@@ -887,12 +887,7 @@ function RecentSessionRow({
               ))}
             </Text>
           </View>
-          <ThemeIcon
-            name="home.arrow"
-            fallback={ChevronRight}
-            size={16}
-            color={theme.colors.primary}
-          />
+          <ThemeIcon name="home.arrow" fallback={NextIcon} size={16} color={theme.colors.primary} />
         </View>
       </PressableScale>
       {menu ? (

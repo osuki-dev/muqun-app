@@ -5,6 +5,8 @@
   "license": "SEE LICENSE IN LICENSE",
   "main": "index.ts",
   "scripts": {
+    "icons:generate": "bun scripts/generate-icons.ts",
+    "icons:check": "bun scripts/generate-icons.ts --check",
     "start": "expo start",
     "postinstall": "bun scripts/check-vendored-ratex.ts",
     "android": "expo run:android",
@@ -24,7 +26,7 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "mock:gateway": "bun scripts/mock-gateway.ts",
-    "lint": "oxlint --deny-warnings",
+    "lint": "bun run icons:check && oxlint --deny-warnings",
     "typecheck": "node node_modules/typescript/bin/tsc --noEmit",
     "format": "oxfmt --write",
     "format:check": "oxfmt --check",
@@ -84,7 +86,6 @@
     "expo-web-browser": "~58.0.6",
     "expo-widgets": "~58.0.20",
     "fflate": "0.8.3",
-    "lucide-react-native": "1.59.0",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "react-native": "0.88.0",
@@ -94,6 +95,7 @@
     "react-native-gesture-handler": "~3.4.0",
     "react-native-keyboard-controller": "1.22.7",
     "react-native-mmkv": "^4.3.2",
+    "react-native-nano-icons": "1.0.1",
     "react-native-nitro-fetch": "1.9.0",
     "react-native-nitro-image": "^0.15.2",
     "react-native-nitro-modules": "0.37.1",
@@ -106,7 +108,6 @@
     "react-native-safe-area-context": "~5.10.1",
     "react-native-screens": "4.30.0",
     "react-native-skia": "3.6.3",
-    "react-native-svg": "15.16.0",
     "react-native-video": "7.0.0-beta.12",
     "react-native-vision-camera": "^5.2.3",
     "react-native-vision-camera-barcode-scanner": "^5.2.3",
@@ -132,6 +133,7 @@
     "@types/react": "~19.3.0",
     "@types/three": "0.186.0",
     "eslint-plugin-lingui": "^0.16.0",
+    "fonteditor-core": "2.6.3",
     "hot-updater": "1.0.8",
     "oxc-parser": "^0.154.0",
     "oxfmt": "^0.73.0",
@@ -173,7 +175,8 @@
   },
   "patchedDependencies": {
     "react-native-enriched-markdown@1.1.1": "patches/react-native-enriched-markdown@1.1.1.patch",
-    "react-native-nitro-sound@0.2.20": "patches/react-native-nitro-sound@0.2.20.patch"
+    "react-native-nitro-sound@0.2.20": "patches/react-native-nitro-sound@0.2.20.patch",
+    "@osuki-dev/ui@2.0.0-beta.3": "patches/@osuki-dev%2Fui@2.0.0-beta.3.patch"
   },
   "trustedDependencies": [
     "react-native-skia",

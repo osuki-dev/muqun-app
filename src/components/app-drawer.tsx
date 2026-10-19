@@ -3,7 +3,7 @@ import { ThemeArtwork } from '@/components/theme-artwork';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { useRouter } from 'expo-router';
-import { PanelsTopLeft } from 'lucide-react-native';
+import { WorkspaceIcon } from '@/icons';
 import { isValidElement, useEffect, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -241,7 +241,7 @@ export default function AppDrawer({
                     backgroundColor: surfaceBackground(theme.colors.surface),
                   },
                 ]}>
-                <PanelsTopLeft size={18} color={theme.colors.textMuted} />
+                <WorkspaceIcon size={18} color={theme.colors.textMuted} />
               </PressableScale>
             </SafeAreaView>
           </Animated.View>
@@ -284,7 +284,7 @@ export default function AppDrawer({
                   accessibilityLabel={t`Show what is running`}
                   onPress={onDetailAction}
                   style={navHeaderButtonStyle}>
-                  <PanelsTopLeft size={18} color={theme.colors.text} strokeWidth={2} />
+                  <WorkspaceIcon size={18} color={theme.colors.text} />
                 </PressableScale>
               </NavHeaderCircle>
             ) : !expandsDetailTitle ? (

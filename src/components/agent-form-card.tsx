@@ -3,7 +3,7 @@ import { memo, useCallback, useMemo, useState } from 'react';
 import { Linking, View, StyleSheet, Switch, ActivityIndicator } from 'react-native';
 import { useThemeTokens, PressableScale, resolveFontStyle, Text, TextField } from '@osuki-dev/ui';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
-import { ExternalLink, FormInput, Send, Check } from 'lucide-react-native';
+import { OpenExternalIcon, TextInputIcon, MessageSendIcon, DoneIcon } from '@/icons';
 import { BoundedMarkdown } from '@/components/bounded-markdown';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useCompactMarkdownStyle } from '@/hooks/use-markdown-style';
@@ -248,7 +248,7 @@ export const AgentFormCard = memo(function AgentFormCard({
                           borderColor: selected ? theme.colors.primary : theme.colors.border,
                         },
                       ]}>
-                      {selected ? <Check size={12} color={theme.colors.primary} /> : null}
+                      {selected ? <DoneIcon size={12} color={theme.colors.primary} /> : null}
                       <View style={styles.optionCopy}>
                         <Text
                           variant="caption"
@@ -359,7 +359,7 @@ export const AgentFormCard = memo(function AgentFormCard({
                         borderColor: selected ? theme.colors.primary : theme.colors.border,
                       },
                     ]}>
-                    {selected ? <Check size={12} color={theme.colors.primary} /> : null}
+                    {selected ? <DoneIcon size={12} color={theme.colors.primary} /> : null}
                     <View style={styles.optionCopy}>
                       <Text
                         variant="caption"
@@ -402,7 +402,7 @@ export const AgentFormCard = memo(function AgentFormCard({
                   borderColor: theme.colors.info,
                 },
               ]}>
-              <ExternalLink size={13} color={theme.colors.info} />
+              <OpenExternalIcon size={13} color={theme.colors.info} />
               <Text variant="caption" numberOfLines={1} color={theme.colors.info}>
                 {field.url}
               </Text>
@@ -443,7 +443,7 @@ export const AgentFormCard = memo(function AgentFormCard({
             { borderRadius: profile.chrome.control },
             { backgroundColor: withAlpha(theme.colors.info, 0.13) },
           ]}>
-          <FormInput size={16} color={theme.colors.info} />
+          <TextInputIcon size={16} color={theme.colors.info} />
         </View>
         {/*
           What the card is, not what the engine called it. `request.title` is
@@ -472,7 +472,7 @@ export const AgentFormCard = memo(function AgentFormCard({
           <ActivityIndicator size="small" color={theme.colors.onPrimary} />
         ) : (
           <>
-            <Send size={14} color={theme.colors.onPrimary} />
+            <MessageSendIcon size={14} color={theme.colors.onPrimary} />
             <Text
               variant="caption"
               weight="semibold"

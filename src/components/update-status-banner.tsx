@@ -4,7 +4,7 @@ import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { formatAssetSize } from '@/lib/asset-display';
 import { measuredUpdateProgress } from '@/lib/update-progress-shader';
 import { deferAppUpdate, updateAppNow, useAppUpdateStore } from '@/lib/app-updates';
-import { Download, RotateCw } from 'lucide-react-native';
+import { DownloadIcon, RedoIcon } from '@/icons';
 import { Modal, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { UpdateDownloadProgress } from '@/components/update-download-progress';
@@ -104,9 +104,9 @@ export function UpdateStatusBanner() {
                   key={downloading ? 'downloading' : 'restarting'}
                   entering={fadeIn('short')}>
                   {downloading ? (
-                    <Download size={15} color={theme.colors.primary} strokeWidth={2.2} />
+                    <DownloadIcon size={15} color={theme.colors.primary} />
                   ) : (
-                    <RotateCw size={15} color={theme.colors.primary} strokeWidth={2.2} />
+                    <RedoIcon size={15} color={theme.colors.primary} />
                   )}
                 </Animated.View>
               </View>

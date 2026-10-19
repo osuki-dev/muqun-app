@@ -54,14 +54,14 @@ import { Dialog, useThemeTokens, useToast, PressableScale, Text } from '@osuki-d
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
-  Bot,
-  ChevronDown,
-  FolderGit2,
-  PlusCircle,
-  RefreshCw,
-  ShieldAlert,
-  X,
-} from 'lucide-react-native';
+  AgentIcon,
+  DisclosureDownIcon,
+  RepositoryIcon,
+  AddItemIcon,
+  RefreshIcon,
+  TrustWarningIcon,
+  CloseIcon,
+} from '@/icons';
 import { type LegendListRef } from '@legendapp/list/react-native';
 import { GlassChrome } from '@/components/glass-chrome';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -4947,7 +4947,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 accessibilityLabel={t`Dismiss`}
                 onPress={() => setRetryNoticeDismissed(true)}
                 style={[styles.statusNoticeDismiss, { borderRadius: profile.chrome.control }]}>
-                <X size={16} color={theme.colors.textMuted} />
+                <CloseIcon size={16} color={theme.colors.textMuted} />
               </PressableScale>
             ) : null}
           </PressableScale>
@@ -5498,7 +5498,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               ]}>
               {isOffline ? (
                 <>
-                  <Bot size={44} color={theme.colors.textMuted} />
+                  <AgentIcon size={44} color={theme.colors.textMuted} />
                   <Text
                     variant="subheading"
                     weight="semibold"
@@ -5535,7 +5535,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                     {checkingHealth ? (
                       <ActivityIndicator size="small" color={theme.colors.primary} />
                     ) : (
-                      <RefreshCw size={14} color={theme.colors.primary} />
+                      <RefreshIcon size={14} color={theme.colors.primary} />
                     )}
                     <Text
                       variant="caption"
@@ -5548,7 +5548,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 </>
               ) : (
                 <>
-                  <Bot size={44} color={theme.colors.primary} />
+                  <AgentIcon size={44} color={theme.colors.primary} />
                   <Text
                     variant="subheading"
                     weight="semibold"
@@ -5572,7 +5572,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                           backgroundColor: surfaceBackground(withAlpha(theme.colors.primary, 0.14)),
                         },
                       ]}>
-                      <PlusCircle size={14} color={theme.colors.primary} />
+                      <AddItemIcon size={14} color={theme.colors.primary} />
                       {/* Sentence case, like every other button on this
                         surface: `variant="label"` is the kit's 11pt all-caps
                         instrument style, and a sign is not a button. */}
@@ -5593,7 +5593,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                           backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
                         },
                       ]}>
-                      <FolderGit2 size={14} color={theme.colors.text} />
+                      <RepositoryIcon size={14} color={theme.colors.text} />
                       <Text
                         variant="caption"
                         weight="semibold"
@@ -5790,7 +5790,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                     {screenNotice.body}
                   </Text>
                 </View>
-                <X size={14} color={theme.colors.textMuted} />
+                <CloseIcon size={14} color={theme.colors.textMuted} />
               </PressableScale>
             </Animated.View>
           ) : null}
@@ -5828,7 +5828,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 borderColor: withAlpha(theme.colors.danger, 0.45),
               },
             ]}>
-            <ShieldAlert size={13} color={theme.colors.danger} />
+            <TrustWarningIcon size={13} color={theme.colors.danger} />
             <Text
               variant="caption"
               weight="bold"
@@ -6016,7 +6016,7 @@ const JumpToLatestPill = memo(function JumpToLatestPill({
           accessibilityLabel={t`Scroll to latest message`}
           onPress={onPress}
           style={styles.jumpToLatestInner}>
-          <ChevronDown size={15} color={theme.colors.text} strokeWidth={2.2} />
+          <DisclosureDownIcon size={15} color={theme.colors.text} />
           <Text variant="caption" weight="semibold" color={theme.colors.text}>
             <Trans>Latest</Trans>
           </Text>

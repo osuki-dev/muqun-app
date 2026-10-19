@@ -3,7 +3,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import type { DrawerContentComponentProps } from 'expo-router/drawer';
 import { type Href, usePathname, useRouter } from 'expo-router';
-import { Bot, ChevronRight, LayoutGrid, ScanLine, Settings } from 'lucide-react-native';
+import { AgentIcon, NextIcon, GridIcon, PairScanIcon, SettingsIcon } from '@/icons';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -50,7 +50,7 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
     key: string;
     label: string;
     detail: string;
-    icon: typeof LayoutGrid;
+    icon: typeof GridIcon;
     href: Href;
     active: boolean;
   }[] = [
@@ -58,7 +58,7 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
       key: 'servers',
       label: t`Computers`,
       detail: t`Your paired computers`,
-      icon: LayoutGrid,
+      icon: GridIcon,
       href: '/' as Href,
       active: pathname === '/' || pathname.startsWith('/servers'),
     },
@@ -66,7 +66,7 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
       key: 'agent',
       label: t`Agents`,
       detail: t`AI coding assistant`,
-      icon: Bot,
+      icon: AgentIcon,
       href: '/agent' as Href,
       active: pathname.startsWith('/agent'),
     },
@@ -74,7 +74,7 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
       key: 'pair',
       label: t`Pair a computer`,
       detail: t`Scan a gateway QR`,
-      icon: ScanLine,
+      icon: PairScanIcon,
       href: '/explore' as Href,
       active: pathname.startsWith('/explore'),
     },
@@ -82,7 +82,7 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
       key: 'settings',
       label: t`Settings`,
       detail: t`Appearance, terminal, security`,
-      icon: Settings,
+      icon: SettingsIcon,
       href: '/settings' as Href,
       active: pathname.startsWith('/settings'),
     },
@@ -140,7 +140,7 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
                   {item.detail}
                 </Text>
               </View>
-              <ChevronRight size={18} color={theme.colors.textMuted} />
+              <NextIcon size={18} color={theme.colors.textMuted} />
             </PressableScale>
           );
         })}

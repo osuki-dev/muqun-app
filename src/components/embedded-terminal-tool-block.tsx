@@ -11,24 +11,24 @@ import { View, StyleSheet, type ViewInstance } from 'react-native';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import {
-  AlertCircle,
-  Braces,
-  ChevronDown,
-  CircleHelp,
-  FileDiff,
-  FilePen,
-  FilePlus,
-  FileText,
-  Globe,
-  GitFork,
-  ListChecks,
-  MonitorSmartphone,
-  Regex,
-  Search,
-  Sparkles,
-  Terminal,
-  Wrench,
-} from 'lucide-react-native';
+  NoticeIcon,
+  JsonIcon,
+  DisclosureDownIcon,
+  HelpIcon,
+  FileChangesIcon,
+  EditFileIcon,
+  AddFileIcon,
+  DocumentIcon,
+  NetworkIcon,
+  ForkIcon,
+  TaskListIcon,
+  DevicesIcon,
+  RegularExpressionIcon,
+  SearchIcon,
+  SuggestedIcon,
+  TerminalIcon,
+  ToolIcon,
+} from '@/icons';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -57,22 +57,22 @@ import { withAlpha } from '@/lib/color';
 
 /** Static icon per tool family — component references resolve to fixed imports. */
 const TOOL_ICONS: Record<ToolKind, ComponentType<{ size?: number; color?: string }>> = {
-  shell: Terminal,
-  read: FileText,
-  edit: FilePen,
-  write: FilePlus,
-  patch: FileDiff,
-  glob: Search,
-  grep: Regex,
-  search: Search,
-  web: Globe,
-  subagent: GitFork,
-  skill: Sparkles,
-  todo: ListChecks,
-  question: CircleHelp,
-  execute: Braces,
-  browser: MonitorSmartphone,
-  mcp: Wrench,
+  shell: TerminalIcon,
+  read: DocumentIcon,
+  edit: EditFileIcon,
+  write: AddFileIcon,
+  patch: FileChangesIcon,
+  glob: SearchIcon,
+  grep: RegularExpressionIcon,
+  search: SearchIcon,
+  web: NetworkIcon,
+  subagent: ForkIcon,
+  skill: SuggestedIcon,
+  todo: TaskListIcon,
+  question: HelpIcon,
+  execute: JsonIcon,
+  browser: DevicesIcon,
+  mcp: ToolIcon,
 };
 
 export interface EmbeddedTerminalProps {
@@ -273,7 +273,7 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
           {taskSummary ? (
             <View style={styles.headerRow}>
               <View style={styles.headerIcon}>
-                <GitFork size={13} color={theme.colors.textMuted} />
+                <ForkIcon size={13} color={theme.colors.textMuted} />
               </View>
               <Text
                 variant="caption"
@@ -286,7 +286,7 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
               <View style={styles.taskStatus}>{taskSummary.status}</View>
               {hasBody ? (
                 <Animated.View style={chevronStyle}>
-                  <ChevronDown size={12} color={theme.colors.textMuted} />
+                  <DisclosureDownIcon size={12} color={theme.colors.textMuted} />
                 </Animated.View>
               ) : null}
             </View>
@@ -308,7 +308,7 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
               {pending ? (
                 <ThinkingIndicator size={12} color={statusColor} />
               ) : failed ? (
-                <AlertCircle size={12} color={statusColor} />
+                <NoticeIcon size={12} color={statusColor} />
               ) : null}
               {headerAccessory}
               {durationMs !== undefined ? (
@@ -323,7 +323,7 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
               ) : null}
               {hasBody ? (
                 <Animated.View style={chevronStyle}>
-                  <ChevronDown size={12} color={theme.colors.textMuted} />
+                  <DisclosureDownIcon size={12} color={theme.colors.textMuted} />
                 </Animated.View>
               ) : null}
             </View>

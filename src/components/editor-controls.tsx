@@ -1,6 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
-import { Keyboard as KeyboardIcon } from 'lucide-react-native';
+import { KeyboardIcon } from '@/icons';
 import { type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';

@@ -1,3 +1,4 @@
+import { AppIcon, type AppIconName } from '@/icons/app-icon';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 /**
  * The `@` file mention picker: a short list of workspace files floating over the
@@ -11,7 +12,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
  * looks like an `@` that has not offered anything yet, and typing carries on.
  */
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Icon, useThemeTokens, type IconName, PressableScale, Text } from '@osuki-dev/ui';
+import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -45,18 +46,18 @@ interface FileMentionPanelProps {
  * The gateway decides `kind` from the file name alone, so this is a five-way
  * map and not a lookup table that has to keep up with extensions.
  */
-function iconForKind(kind: string): IconName {
+function iconForKind(kind: string): AppIconName {
   switch (kind) {
     case 'image':
-      return 'Image';
+      return 'photo';
     case 'markdown':
-      return 'FileText';
+      return 'document';
     case 'pdf':
-      return 'FileType';
+      return 'document-type';
     case 'binary':
-      return 'Binary';
+      return 'binary-file';
     default:
-      return 'FileCode';
+      return 'source-file';
   }
 }
 
@@ -174,7 +175,7 @@ function ComputerMentionRow({
           borderRadius: profile.chrome.control,
         },
       ]}>
-      <Icon name="Monitor" size={18} color={tone} />
+      <AppIcon name="computer" size={18} color={tone} />
       <View style={styles.rowText}>
         <Text variant="bodySmall" color={tone} numberOfLines={1}>
           {computer.name}
@@ -193,7 +194,7 @@ function ComputerMentionRow({
  * One row: the name the user is thinking of, and under it the path that is
  * actually going into the message, in the case the gateway sent it.
  *
- * Assembled from the design system's `Icon` and `Text` rather than from its
+ * Assembled from the app's `AppIcon` and the design system's `Text` rather than from its
  * `ListItem`, which upper cases its subtitle and would turn `src/theme.ts` into
  * `SRC/THEME.TS` -- a path has to be shown exactly as it will be inserted.
  * `SheetListItem` keeps the case but labels itself with the title, which would
@@ -218,7 +219,7 @@ function FileMentionRow({
       testID={`file-mention-${hit.path}`}
       onPress={() => onSelect(hit)}
       style={styles.row}>
-      <Icon name={iconForKind(hit.kind)} size={18} color={theme.colors.textMuted} />
+      <AppIcon name={iconForKind(hit.kind)} size={18} color={theme.colors.textMuted} />
       <View style={styles.rowText}>
         <Text variant="bodySmall" color={theme.colors.text} numberOfLines={1}>
           {hit.name}

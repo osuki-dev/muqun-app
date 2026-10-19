@@ -29,7 +29,7 @@ export function ThemeIcon({
   direction,
 }: {
   name: ThemeIconName;
-  /** A chrome glyph (lucide's or the app's own): what is drawn without the pack's. */
+  /** An app glyph: what is drawn when the pack supplies no usable image. */
   fallback: ComponentType<{ size: number; color: string; strokeWidth?: number }>;
   size: number;
   color: string;

@@ -4,7 +4,7 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import { useThemeTokens, Surface, PressableScale, Text } from '@osuki-dev/ui';
-import { History, X } from 'lucide-react-native';
+import { HistoryIcon, CloseIcon } from '@/icons';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -89,7 +89,7 @@ export function AwayDigestCard({
           ]}
         />
         <View style={styles.header}>
-          <History size={14} color={theme.colors.textMuted} strokeWidth={2.2} />
+          <HistoryIcon size={14} color={theme.colors.textMuted} />
           <Text variant="label" colorKey="text" style={styles.title} numberOfLines={1}>
             <Trans>While you were away</Trans>
           </Text>
@@ -113,7 +113,7 @@ export function AwayDigestCard({
             pressedScale={0.9}
             onPress={dismiss}
             testID="away-digest-dismiss">
-            <X size={13} color={theme.colors.textSubtle} strokeWidth={2.2} />
+            <CloseIcon size={13} color={theme.colors.textSubtle} />
           </PressableScale>
         </View>
 
