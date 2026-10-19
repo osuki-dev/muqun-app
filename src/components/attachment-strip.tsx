@@ -191,7 +191,7 @@ export function AttachmentStrip({
                   styles.readyBadge,
                   { backgroundColor: surfaceBackground(theme.colors.success) },
                 ]}>
-                <AppIcon name="done" size={9} color="#FFFFFF" strokeWidth={3} />
+                <AppIcon name="done" size={9} color="#FFFFFF" />
               </Animated.View>
             ) : null}
             {!readOnly ? (
@@ -201,7 +201,7 @@ export function AttachmentStrip({
                 pressedScale={0.9}
                 onPress={() => onRemove(attachment.id)}
                 style={[styles.remove, { backgroundColor: surfaceBackground(theme.colors.text) }]}>
-                <AppIcon name="close" size={11} color={theme.colors.background} strokeWidth={3} />
+                <AppIcon name="close" size={11} color={theme.colors.background} />
               </PressableScale>
             ) : null}
           </Animated.View>

@@ -461,7 +461,7 @@ export function SettingsNavRow({
             { borderRadius: profile.chrome.control },
             { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
           ]}>
-          <Icon size={18} color={theme.colors.textMuted} strokeWidth={2} />
+          <Icon size={18} color={theme.colors.textMuted} />
         </View>
       ) : null}
       <View style={styles.rowCopy}>
@@ -479,7 +479,7 @@ export function SettingsNavRow({
         ) : null}
       </View>
       <Animated.View style={trailingStyle}>
-        <Trailing size={18} color={theme.colors.textMuted} strokeWidth={2} />
+        <Trailing size={18} color={theme.colors.textMuted} />
       </Animated.View>
     </PressableScale>
   );
@@ -612,7 +612,7 @@ export function SettingsInfoRow({
           { borderRadius: profile.chrome.control },
           { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
         ]}>
-        <Icon size={18} color={theme.colors.textMuted} strokeWidth={2} />
+        <Icon size={18} color={theme.colors.textMuted} />
       </View>
       <View style={styles.rowCopy}>
         <Text variant="bodySmall" style={styles.rowLabel}>

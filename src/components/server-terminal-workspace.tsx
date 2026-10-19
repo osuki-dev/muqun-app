@@ -6956,7 +6956,7 @@ function HistoryPullNoticeView({
         accessibilityLabel={notice.caption ? `${notice.title}. ${notice.caption}` : notice.title}>
         <Icon
           size={16}
-          strokeWidth={2}
+
           color={failed ? theme.colors.danger : theme.colors.textMuted}
         />
         <View style={styles.connectionPillLabel}>

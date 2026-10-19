@@ -385,7 +385,7 @@ function RailGlyphAction({
           ),
         },
       ]}>
-      <Icon size={18} color={theme.colors.textMuted} strokeWidth={2} />
+      <Icon size={18} color={theme.colors.textMuted} />
     </Pressable>
   );
 }
@@ -420,7 +420,7 @@ function RailAction({
           { backgroundColor: background(theme.colors.background) },
           { borderRadius: profile.rail.itemIconRadius },
         ]}>
-        <Icon size={18} color={theme.colors.textMuted} strokeWidth={2} />
+        <Icon size={18} color={theme.colors.textMuted} />
       </View>
       <View style={styles.actionCopy}>
         <Text variant="bodySmall" numberOfLines={1}>

@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { SettingsSegmented } from '@/components/settings-segmented';
 import { OpenCodeIcon } from '@/components/opencode-icon';
-import { AppIcon, type AppIconName } from '@/icons/app-icon';
+import { AppIcon, APP_ICON_STROKE_WIDTH, type AppIconName } from '@/icons/app-icon';
 import catalog from '@/icons/semantic-catalog.json';
 
 type GalleryEntry = { name: AppIconName | 'brand-opencode'; component: string };
@@ -103,7 +103,7 @@ function IconGalleryModal({ onClose }: { onClose: () => void }) {
   const { width } = useWindowDimensions();
   const [query, setQuery] = useState('');
   const [size, setSize] = useState('24');
-  const [stroke, setStroke] = useState('1');
+  const [stroke, setStroke] = useState(String(APP_ICON_STROKE_WIDTH));
   const needle = query.trim().toLowerCase();
   const matches = (entry: GalleryEntry) =>
     `${entry.name} ${entry.component}`.toLowerCase().includes(needle);

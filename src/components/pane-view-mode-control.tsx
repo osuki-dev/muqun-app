@@ -56,7 +56,7 @@ export const PaneViewModeControl = memo(function PaneViewModeControl({
       )}
       onPress={onCycle}
       style={styles.button}>
-      <ModeIcon size={18} color={color} strokeWidth={2} />
+      <ModeIcon size={18} color={color} />
       {degraded ? (
         // The view the user asked for could not be read, and something else is
         // showing instead. Small, because nothing is broken.

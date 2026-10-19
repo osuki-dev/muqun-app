@@ -930,13 +930,11 @@ export function SimfarmStage({
 
 function ItemGlyph({ item, color }: { item: SimfarmMenuItem; color: string }) {
   const size = 17;
-  const width = 2;
-  if (item === 'back') return <BackIcon size={size} color={color} strokeWidth={width} />;
-  if (item === 'app_switch')
-    return <SessionStackIcon size={size} color={color} strokeWidth={width} />;
-  if (item === 'keyboard') return <KeyboardIcon size={size} color={color} strokeWidth={width} />;
-  if (item === 'close') return <CloseIcon size={size} color={color} strokeWidth={width} />;
-  return <HomeIcon size={size} color={color} strokeWidth={width} />;
+  if (item === 'back') return <BackIcon size={size} color={color} />;
+  if (item === 'app_switch') return <SessionStackIcon size={size} color={color} />;
+  if (item === 'keyboard') return <KeyboardIcon size={size} color={color} />;
+  if (item === 'close') return <CloseIcon size={size} color={color} />;
+  return <HomeIcon size={size} color={color} />;
 }
 
 /** The menu's least clearance from the sides of the screen. */

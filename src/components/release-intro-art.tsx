@@ -141,7 +141,7 @@ export function ReleaseIntroArt({ scene, visible }: { scene: number; visible: bo
         <IntroParticles scene={scene} animate={motion === 'animate'} />
       ) : null}
       <View style={styles.emblem}>
-        <Icon size={36} color={theme.colors.primary} strokeWidth={1.4} />
+        <Icon size={36} color={theme.colors.primary} />
       </View>
     </View>
   );

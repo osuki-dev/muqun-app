@@ -1248,11 +1248,7 @@ function ActionTile({
         disabled={disabled || busy || !onPress}
         onPress={onPress}
         style={[styles.tileHit, disabled ? styles.tileDisabled : undefined]}>
-        {busy ? (
-          <Spinner size="sm" color={theme.colors.primary} />
-        ) : (
-          <Icon size={20} color={ink} strokeWidth={2} />
-        )}
+        {busy ? <Spinner size="sm" color={theme.colors.primary} /> : <Icon size={20} color={ink} />}
         {/* One word, one line: at a quarter of a 390-point phone a tile is 83
             points wide, which holds a single word in every locale and nothing
             longer. Centred, because a one-word label under a centred icon

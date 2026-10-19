@@ -297,7 +297,7 @@ export const PaneChatView = memo(function PaneChatView({
                     backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
                   },
                 ]}>
-                <FoldIcon size={14} color={theme.colors.textMuted} strokeWidth={2} />
+                <FoldIcon size={14} color={theme.colors.textMuted} />
                 <Text variant="caption" color={theme.colors.textMuted}>
                   {detail === 'simplified' ? t`Show every tool step` : t`Fold the tool steps away`}
                 </Text>

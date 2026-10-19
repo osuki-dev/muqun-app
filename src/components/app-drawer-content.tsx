@@ -129,7 +129,6 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
                 <Icon
                   size={18}
                   color={item.active ? theme.colors.onPrimary : theme.colors.textMuted}
-                  strokeWidth={2}
                 />
               </View>
               <View style={styles.flexOne}>

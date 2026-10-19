@@ -93,7 +93,7 @@ export function AppIconsReady({ children }: { children: ReactNode }) {
   return useAppIconsReady() ? children : null;
 }
 
-export const APP_ICON_STROKE_WIDTH = 1;
+export const APP_ICON_STROKE_WIDTH = 2;
 
 /** App-owned icon boundary; font family/weight never inherit UI typography. */
 export function AppIcon({
