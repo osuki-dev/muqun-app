@@ -41,7 +41,14 @@ export function HomeScrollViewport({
       onLayout={(event) => setHeight(event.nativeEvent.layout.height)}>
       <Animated.View style={[styles.clip, clipStyle]}>
         <View style={height > 0 ? { height } : styles.viewport}>
-          <KeyboardAwareScrollView {...scrollProps}>{children}</KeyboardAwareScrollView>
+          {/* No stretch overscroll on Android: from API 31 a ScrollView whose edge
+              effect has not finished claims every ACTION_DOWN as a drag, and React
+              Native then cancels the JS press. With the refresh control taking the
+              pull, that edge can stay unfinished, so the page still scrolls but no
+              row, tile or card takes a tap until it settles. */}
+          <KeyboardAwareScrollView overScrollMode="never" {...scrollProps}>
+            {children}
+          </KeyboardAwareScrollView>
         </View>
       </Animated.View>
     </View>
