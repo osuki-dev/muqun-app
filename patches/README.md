@@ -1,6 +1,10 @@
 # Dependency patch notes
 
-## @osuki-dev/ui 2.0.0-beta.3
+## @osuki-dev/ui 2.0.0-beta.4
+
+The patch file keeps its beta.3 name because its content is unchanged and
+`patches/*.patch` is an OTA fingerprint input: renaming it would move the
+fingerprint away from installed builds. Rename it with the next native build.
 
 The source-only icon patch removes the optional Lucide runtime loader and its
 fallback lookup. Muqun supplies semantic Nano glyphs through `IconProvider`;

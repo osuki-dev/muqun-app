@@ -7,6 +7,7 @@ import { InlineVideoFile } from '@/components/video-asset-preview';
 import { InlineAudioFile } from '@/components/audio-asset-preview';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { Modal, StyleSheet, View, type ViewInstance } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
@@ -1055,45 +1056,47 @@ const ReadFileBody = memo(function ReadFileBody({
           navigationBarTranslucent
           animationType="fade"
           onRequestClose={() => setOpen(false)}>
-          <View style={readStyles.fullscreen}>
-            <SheetFrame tint="background" frosted>
-              <View
-                style={[
-                  readStyles.fullscreen,
-                  { paddingTop: insets.top, paddingBottom: insets.bottom },
-                ]}>
-                <View style={readStyles.header}>
-                  <Text
-                    variant="bodySmall"
-                    weight="semibold"
-                    numberOfLines={2}
-                    style={readStyles.title}>
-                    {preview.file.name}
-                  </Text>
-                  {truncated ? (
-                    <Text variant="caption" color={theme.colors.warning}>
-                      {t`Truncated`}
+          <GestureHandlerRootView style={{ flex: 1 }}>
+            <View style={readStyles.fullscreen}>
+              <SheetFrame tint="background" frosted>
+                <View
+                  style={[
+                    readStyles.fullscreen,
+                    { paddingTop: insets.top, paddingBottom: insets.bottom },
+                  ]}>
+                  <View style={readStyles.header}>
+                    <Text
+                      variant="bodySmall"
+                      weight="semibold"
+                      numberOfLines={2}
+                      style={readStyles.title}>
+                      {preview.file.name}
                     </Text>
-                  ) : null}
-                  <PressableScale
-                    testID="agent-read-close-preview"
-                    accessibilityRole="button"
-                    accessibilityLabel={t`Close preview`}
-                    onPress={() => setOpen(false)}
-                    style={readStyles.close}>
-                    <CloseIcon size={20} color={theme.colors.text} />
-                  </PressableScale>
+                    {truncated ? (
+                      <Text variant="caption" color={theme.colors.warning}>
+                        {t`Truncated`}
+                      </Text>
+                    ) : null}
+                    <PressableScale
+                      testID="agent-read-close-preview"
+                      accessibilityRole="button"
+                      accessibilityLabel={t`Close preview`}
+                      onPress={() => setOpen(false)}
+                      style={readStyles.close}>
+                      <CloseIcon size={20} color={theme.colors.text} />
+                    </PressableScale>
+                  </View>
+                  <FileTextBody
+                    file={preview.file}
+                    content={preview.content}
+                    markdownStyle={markdownStyle}
+                    testID="agent-read-full"
+                    showsHorizontalScrollIndicator={false}
+                  />
                 </View>
-                <FileTextBody
-                  file={preview.file}
-                  content={preview.content}
-                  markdownStyle={markdownStyle}
-                  testID="agent-read-full"
-                  showsHorizontalScrollIndicator={false}
-                />
-              </View>
-            </SheetFrame>
-          </View>
+              </SheetFrame>
+            </View>
+          </GestureHandlerRootView>
         </Modal>
       ) : null}
     </View>

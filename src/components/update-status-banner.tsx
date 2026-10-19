@@ -6,6 +6,7 @@ import { measuredUpdateProgress } from '@/lib/update-progress-shader';
 import { deferAppUpdate, updateAppNow, useAppUpdateStore } from '@/lib/app-updates';
 import { DownloadIcon, RedoIcon } from '@/icons';
 import { Modal, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated from 'react-native-reanimated';
 import { UpdateDownloadProgress } from '@/components/update-download-progress';
 import { UpdateReleaseNotes } from '@/components/update-release-notes';
@@ -73,148 +74,150 @@ export function UpdateStatusBanner() {
       animationType="fade"
       statusBarTranslucent
       onRequestClose={deferAppUpdate}>
-      <View
-        style={[
-          styles.overlay,
-          { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16 },
-        ]}>
+      <GestureHandlerRootView style={{ flex: 1 }}>
         <View
-          testID="update-consent-prompt"
-          accessibilityViewIsModal
           style={[
-            styles.banner,
-            notificationSurfaceStyle,
-            {
-              backgroundColor: theme.colors.surface,
-              maxHeight: Math.max(0, height - insets.top - insets.bottom - 32),
-            },
+            styles.overlay,
+            { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16 },
           ]}>
-          <ScrollView
-            testID="update-prompt-scroll"
-            accessibilityLabel={t`What's new`}
-            style={styles.body}
-            contentContainerStyle={styles.bodyContent}>
-            <View style={styles.header}>
-              <View
-                style={[
-                  styles.icon,
-                  { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
-                ]}>
-                <Animated.View
-                  key={downloading ? 'downloading' : 'restarting'}
-                  entering={fadeIn('short')}>
-                  {downloading ? (
-                    <DownloadIcon size={15} color={theme.colors.primary} />
-                  ) : (
-                    <RedoIcon size={15} color={theme.colors.primary} />
-                  )}
-                </Animated.View>
-              </View>
-              <View style={styles.content}>
-                <Text variant="body" weight="medium" accessibilityLiveRegion="polite">
-                  {label}
-                </Text>
-                {downloading || restarting || restartFailed ? (
-                  <UpdateDownloadProgress value={downloadedProgress} downloading={downloading} />
-                ) : null}
-                {transferred || downloading || restarting ? (
-                  <View style={styles.progressRow}>
-                    {transferred ? (
-                      <Text
-                        testID="update-download-bytes"
-                        variant="caption"
-                        weight="regular"
-                        color={theme.colors.textMuted}
-                        style={styles.transfer}>
-                        {total ? `${transferred} / ${total}` : transferred}
-                      </Text>
-                    ) : null}
-                    {downloading || restarting ? (
-                      <Text variant="caption" weight="regular" color={theme.colors.textMuted}>
-                        {Math.floor(measuredUpdateProgress(downloadedProgress) * 100)}%
-                      </Text>
-                    ) : null}
-                  </View>
-                ) : null}
-              </View>
-            </View>
-            {releaseId ? (
-              <Text variant="caption" color={theme.colors.textMuted} style={styles.identifier}>
-                {t`Update`} · {releaseId.slice(0, 8)}
-              </Text>
-            ) : null}
-            {actionable &&
-            !restartFailed &&
-            transitionKind !== 'ADOPT_RELEASE' &&
-            transitionKind !== 'USE_BUILTIN' ? (
-              <View testID="update-download-size" style={styles.identifier}>
-                <Text variant="bodySmall" color={theme.colors.textMuted}>
-                  {downloadSizeStatus === 'checking'
-                    ? t`Checking download size…`
-                    : downloadSizeStatus === 'failed'
-                      ? t`Could not check download size. Try again.`
-                      : t`Full package size: ${fullPackage}`}
-                </Text>
-                {fullPackage ? (
-                  <Text variant="caption" color={theme.colors.textMuted}>
-                    {t`Full package size. File reuse may reduce the download.`}
+          <View
+            testID="update-consent-prompt"
+            accessibilityViewIsModal
+            style={[
+              styles.banner,
+              notificationSurfaceStyle,
+              {
+                backgroundColor: theme.colors.surface,
+                maxHeight: Math.max(0, height - insets.top - insets.bottom - 32),
+              },
+            ]}>
+            <ScrollView
+              testID="update-prompt-scroll"
+              accessibilityLabel={t`What's new`}
+              style={styles.body}
+              contentContainerStyle={styles.bodyContent}>
+              <View style={styles.header}>
+                <View
+                  style={[
+                    styles.icon,
+                    { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
+                  ]}>
+                  <Animated.View
+                    key={downloading ? 'downloading' : 'restarting'}
+                    entering={fadeIn('short')}>
+                    {downloading ? (
+                      <DownloadIcon size={15} color={theme.colors.primary} />
+                    ) : (
+                      <RedoIcon size={15} color={theme.colors.primary} />
+                    )}
+                  </Animated.View>
+                </View>
+                <View style={styles.content}>
+                  <Text variant="body" weight="medium" accessibilityLiveRegion="polite">
+                    {label}
                   </Text>
-                ) : null}
+                  {downloading || restarting || restartFailed ? (
+                    <UpdateDownloadProgress value={downloadedProgress} downloading={downloading} />
+                  ) : null}
+                  {transferred || downloading || restarting ? (
+                    <View style={styles.progressRow}>
+                      {transferred ? (
+                        <Text
+                          testID="update-download-bytes"
+                          variant="caption"
+                          weight="regular"
+                          color={theme.colors.textMuted}
+                          style={styles.transfer}>
+                          {total ? `${transferred} / ${total}` : transferred}
+                        </Text>
+                      ) : null}
+                      {downloading || restarting ? (
+                        <Text variant="caption" weight="regular" color={theme.colors.textMuted}>
+                          {Math.floor(measuredUpdateProgress(downloadedProgress) * 100)}%
+                        </Text>
+                      ) : null}
+                    </View>
+                  ) : null}
+                </View>
               </View>
-            ) : null}
-            {required ? (
-              <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.identifier}>
-                {t`This update is required to continue using Muqun. Read what's new, then update when you're ready.`}
-              </Text>
-            ) : null}
-            {releaseNotes ? (
-              <View testID="update-release-notes" style={styles.notes}>
-                <UpdateReleaseNotes notes={releaseNotes} bundled={false} />
-              </View>
-            ) : (
-              <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.identifier}>
-                {t`No changelog was provided for this update.`}
-              </Text>
-            )}
-          </ScrollView>
-          {actionable ? (
-            <View testID="update-prompt-actions" style={styles.actions}>
-              {!required ? (
-                <PressableScale
-                  testID="update-later"
-                  accessibilityRole="button"
-                  accessibilityLabel={t`Later`}
-                  onPress={deferAppUpdate}
-                  style={styles.action}>
-                  <Text variant="bodySmall" color={theme.colors.textMuted}>{t`Later`}</Text>
-                </PressableScale>
-              ) : null}
-              <PressableScale
-                testID="update-now"
-                accessibilityRole="button"
-                accessibilityLabel={
-                  downloadSizeStatus
-                    ? t`Retry size check`
-                    : downloadFailed || restartFailed
-                      ? t`Retry`
-                      : t`Update now`
-                }
-                onPress={() => {
-                  void updateAppNow();
-                }}
-                style={[styles.action, { backgroundColor: theme.colors.primarySubtle }]}>
-                <Text variant="bodySmall" color={theme.colors.primary}>
-                  {downloadSizeStatus
-                    ? t`Retry size check`
-                    : downloadFailed || restartFailed
-                      ? t`Retry`
-                      : t`Update now`}
+              {releaseId ? (
+                <Text variant="caption" color={theme.colors.textMuted} style={styles.identifier}>
+                  {t`Update`} · {releaseId.slice(0, 8)}
                 </Text>
-              </PressableScale>
-            </View>
-          ) : null}
+              ) : null}
+              {actionable &&
+              !restartFailed &&
+              transitionKind !== 'ADOPT_RELEASE' &&
+              transitionKind !== 'USE_BUILTIN' ? (
+                <View testID="update-download-size" style={styles.identifier}>
+                  <Text variant="bodySmall" color={theme.colors.textMuted}>
+                    {downloadSizeStatus === 'checking'
+                      ? t`Checking download size…`
+                      : downloadSizeStatus === 'failed'
+                        ? t`Could not check download size. Try again.`
+                        : t`Full package size: ${fullPackage}`}
+                  </Text>
+                  {fullPackage ? (
+                    <Text variant="caption" color={theme.colors.textMuted}>
+                      {t`Full package size. File reuse may reduce the download.`}
+                    </Text>
+                  ) : null}
+                </View>
+              ) : null}
+              {required ? (
+                <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.identifier}>
+                  {t`This update is required to continue using Muqun. Read what's new, then update when you're ready.`}
+                </Text>
+              ) : null}
+              {releaseNotes ? (
+                <View testID="update-release-notes" style={styles.notes}>
+                  <UpdateReleaseNotes notes={releaseNotes} bundled={false} />
+                </View>
+              ) : (
+                <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.identifier}>
+                  {t`No changelog was provided for this update.`}
+                </Text>
+              )}
+            </ScrollView>
+            {actionable ? (
+              <View testID="update-prompt-actions" style={styles.actions}>
+                {!required ? (
+                  <PressableScale
+                    testID="update-later"
+                    accessibilityRole="button"
+                    accessibilityLabel={t`Later`}
+                    onPress={deferAppUpdate}
+                    style={styles.action}>
+                    <Text variant="bodySmall" color={theme.colors.textMuted}>{t`Later`}</Text>
+                  </PressableScale>
+                ) : null}
+                <PressableScale
+                  testID="update-now"
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    downloadSizeStatus
+                      ? t`Retry size check`
+                      : downloadFailed || restartFailed
+                        ? t`Retry`
+                        : t`Update now`
+                  }
+                  onPress={() => {
+                    void updateAppNow();
+                  }}
+                  style={[styles.action, { backgroundColor: theme.colors.primarySubtle }]}>
+                  <Text variant="bodySmall" color={theme.colors.primary}>
+                    {downloadSizeStatus
+                      ? t`Retry size check`
+                      : downloadFailed || restartFailed
+                        ? t`Retry`
+                        : t`Update now`}
+                  </Text>
+                </PressableScale>
+              </View>
+            ) : null}
+          </View>
         </View>
-      </View>
+      </GestureHandlerRootView>
     </Modal>
   );
 }
