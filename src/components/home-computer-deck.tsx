@@ -828,8 +828,16 @@ function DeckSlotCard({
   // Whether a card is seen at all is React's, so it changes in the same
   // commit as the canvas over it.
   const fadeStyle = useAnimatedStyle(() => ({
-    opacity:
-      crossFrom.get() === serverId ? 1 - cross.get() : crossIn.get() === serverId ? cross.get() : 1,
+    // With motion off a card is never faded: a cross-fade whose reset frame
+    // never ran (Home hidden mid-fade) used to leave one computer's card at
+    // opacity 0 until the reader switched away and back.
+    opacity: DECK_MOTION_OFF
+      ? 1
+      : crossFrom.get() === serverId
+        ? 1 - cross.get()
+        : crossIn.get() === serverId
+          ? cross.get()
+          : 1,
   }));
   return (
     <Animated.View
