@@ -143,6 +143,12 @@ msgstr "{0} ข้อความในบริบท"
 msgid "{0} more models"
 msgstr "อีก {0} โมเดล"
 
+#. placeholder {0}: filtered.length
+#. placeholder {1}: entries.length
+#: src/components/dev-icon-gallery.tsx
+msgid "{0} of {1} icons · development only"
+msgstr "ไอคอน {0} จาก {1} · สำหรับการพัฒนาเท่านั้น"
+
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
 msgid "{0} of {limitLabel} tokens the model can hold"
@@ -312,10 +318,6 @@ msgstr "พบคำขอ {count} รายการในการตรวจ
 msgid "{done} of {0} done"
 msgstr "เสร็จ {done} จาก {0}"
 
-#: src/components/home-computer-deck.tsx
-msgid "{failed, plural, one {# failed} other {# failed}}"
-msgstr "{failed, plural, other {ล้มเหลว #}}"
-
 #: src/components/settings-fleet-peers.tsx
 msgid "{from} still lists an older {name}. Remove that entry on {from}."
 msgstr "{from} ยังมีรายการ {name} อันเก่าอยู่ ลบรายการนั้นบน {from}"
@@ -401,10 +403,6 @@ msgstr "เหลือ {remaining}"
 msgid "{removeLabel}: {label}"
 msgstr "{removeLabel}: {label}"
 
-#: src/components/home-computer-deck.tsx
-msgid "{running, plural, one {# running} other {# running}}"
-msgstr "{running, plural, other {กำลังทำงาน #}}"
-
 #. placeholder {0}: shells.length
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
@@ -423,10 +421,6 @@ msgstr "{total, plural, other {งานย่อย # งาน}}"
 #: src/components/task-row.tsx
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, other {งานย่อย # งาน}} ({waiting, plural, other {รอ # งาน}})"
-
-#: src/components/home-computer-deck.tsx
-msgid "{waiting, plural, one {# needs you} other {# need you}}"
-msgstr "{waiting, plural, other {รอคุณ #}}"
 
 #: src/components/task-row.tsx
 msgid "→ {name}"
@@ -1050,6 +1044,10 @@ msgstr "สาขาหรือคอมมิต (ไม่บังคับ)
 msgid "Branch to start from"
 msgstr "สาขาที่ใช้เป็นจุดเริ่ม"
 
+#: src/components/dev-icon-gallery.tsx
+msgid "Brand marks and working indicator"
+msgstr "เครื่องหมายแบรนด์และตัวบ่งชี้การทำงาน"
+
 #. placeholder {0}: server.label
 #: src/components/home-computer-deck.tsx
 msgid "Bring {0} to the front"
@@ -1379,6 +1377,10 @@ msgstr "ปิดเอฟเฟกต์"
 #: src/components/asset-viewer.tsx
 msgid "Close file"
 msgstr "ปิดไฟล์"
+
+#: src/components/dev-icon-gallery.tsx
+msgid "Close icon preview"
+msgstr "ปิดตัวอย่างไอคอน"
 
 #: src/components/home-recent-sessions.tsx
 #: src/components/task-row.tsx
@@ -2119,6 +2121,7 @@ msgstr "ไม่สามารถเปิด PDF นี้ได้"
 
 #: src/components/asset-viewer.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/components/theme-fence-preview.tsx
 msgid "Could not open this theme."
 msgstr "เปิดธีมนี้ไม่ได้"
 
@@ -3224,6 +3227,14 @@ msgstr "เชื่อถือคีย์โฮสต์แล้ว"
 msgid "How to use Muqun"
 msgstr "วิธีใช้ Muqun"
 
+#: src/components/dev-icon-gallery.tsx
+msgid "Icon preview"
+msgstr "ตัวอย่างไอคอน"
+
+#: src/components/dev-icon-gallery.tsx
+msgid "Icons"
+msgstr "ไอคอน"
+
 #: src/components/agent-session-tree-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
@@ -3749,6 +3760,10 @@ msgstr "ทำเครื่องหมายว่าเสร็จ"
 msgid "Mark reviewed"
 msgstr "ทำเครื่องหมายว่าตรวจแล้ว"
 
+#: src/components/dev-icon-gallery.tsx
+msgid "Marks keep their original geometry and stroke."
+msgstr "เครื่องหมายคงรูปทรงและเส้นเดิมไว้"
+
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "มาสคอต"
@@ -4119,6 +4134,10 @@ msgstr "ไม่ได้เชื่อมโยงกับ {computer} แล
 #: src/app/commands.tsx
 msgid "No matching commands. Try another word."
 msgstr "ไม่มีคำสั่งที่ตรงกัน ลองใช้คำอื่น"
+
+#: src/components/dev-icon-gallery.tsx
+msgid "No matching icons"
+msgstr "ไม่มีไอคอนที่ตรงกัน"
 
 #: src/components/home-recent-sessions.tsx
 msgid "No matching sessions"
@@ -4498,6 +4517,10 @@ msgstr "เปิดไฟล์"
 #: src/components/git-diff-button.tsx
 msgid "Open Git"
 msgstr "เปิด Git"
+
+#: src/components/dev-icon-gallery.tsx
+msgid "Open icon preview"
+msgstr "เปิดตัวอย่างไอคอน"
 
 #: src/components/agent-tool-card.tsx
 msgid "Open image"
@@ -4913,6 +4936,18 @@ msgstr "ดูตัวอย่างและใช้"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "ดูตัวอย่างก่อน ธีมปัจจุบันของคุณยังไม่เปลี่ยน"
+
+#: src/components/agent-tool-card.tsx
+#: src/components/theme-fence-preview.tsx
+msgid "Preview theme"
+msgstr "ดูตัวอย่างธีม"
+
+#. placeholder {0}: basename(themeFile)
+#. placeholder {0}: manifest.name
+#: src/components/agent-tool-card.tsx
+#: src/components/theme-fence-preview.tsx
+msgid "Preview theme {0}"
+msgstr "ดูตัวอย่างธีม {0}"
 
 #: src/components/home-computer-deck.tsx
 msgid "Previous computer"
@@ -5688,6 +5723,10 @@ msgstr "ค้นหาตามชื่อหรือแท็ก"
 msgid "Search files"
 msgstr "ค้นหาไฟล์"
 
+#: src/components/dev-icon-gallery.tsx
+msgid "Search icons"
+msgstr "ค้นหาไอคอน"
+
 #: src/components/agent-model-sheet.tsx
 msgid "Search models"
 msgstr "ค้นหาโมเดล"
@@ -6073,6 +6112,7 @@ msgstr "ตัวควบคุมเครื่องจำลอง"
 
 #: src/components/asset-viewer.tsx
 #: src/components/dev-home-ambient-controls.tsx
+#: src/components/dev-icon-gallery.tsx
 msgid "Size"
 msgstr "ขนาด"
 
@@ -6342,6 +6382,10 @@ msgstr "พื้นที่จัดเก็บ"
 msgid "Streams speech while you talk. Requires an OpenAI Realtime-compatible transcription endpoint."
 msgstr "สตรีมเสียงขณะที่คุณพูด ต้องใช้ปลายทางการถอดเสียงที่รองรับ OpenAI Realtime"
 
+#: src/components/dev-icon-gallery.tsx
+msgid "Stroke width"
+msgstr "ความหนาเส้น"
+
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/demo-streaming-transcript.tsx
@@ -6509,6 +6553,7 @@ msgstr "ตัวเลือกงาน"
 #: src/components/agent-composer.tsx
 #: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-todo-block.tsx
+#: src/components/home-computer-cards.tsx
 #: src/components/server-tasks-sheet.tsx
 #: src/components/task-result-sheet.tsx
 msgid "Tasks"

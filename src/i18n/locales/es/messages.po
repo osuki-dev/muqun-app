@@ -143,6 +143,12 @@ msgstr "{0} mensajes en el contexto"
 msgid "{0} more models"
 msgstr "{0} modelos más"
 
+#. placeholder {0}: filtered.length
+#. placeholder {1}: entries.length
+#: src/components/dev-icon-gallery.tsx
+msgid "{0} of {1} icons · development only"
+msgstr "{0} de {1} iconos · solo desarrollo"
+
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
 msgid "{0} of {limitLabel} tokens the model can hold"
@@ -312,10 +318,6 @@ msgstr "Última observación: {count} solicitudes"
 msgid "{done} of {0} done"
 msgstr "{done} de {0} hechas"
 
-#: src/components/home-computer-deck.tsx
-msgid "{failed, plural, one {# failed} other {# failed}}"
-msgstr "{failed, plural, one {# fallida} other {# fallidas}}"
-
 #: src/components/settings-fleet-peers.tsx
 msgid "{from} still lists an older {name}. Remove that entry on {from}."
 msgstr "{from} todavía tiene una entrada antigua de {name}. Elimina esa entrada en {from}"
@@ -401,10 +403,6 @@ msgstr "{remaining} restantes"
 msgid "{removeLabel}: {label}"
 msgstr "{removeLabel}: {label}"
 
-#: src/components/home-computer-deck.tsx
-msgid "{running, plural, one {# running} other {# running}}"
-msgstr "{running, plural, one {# en curso} other {# en curso}}"
-
 #. placeholder {0}: shells.length
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
@@ -423,10 +421,6 @@ msgstr "{total, plural, one {# subtarea} other {# subtareas}}"
 #: src/components/task-row.tsx
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, one {# subtarea} other {# subtareas}} ({waiting, plural, one {# en espera} other {# en espera}})"
-
-#: src/components/home-computer-deck.tsx
-msgid "{waiting, plural, one {# needs you} other {# need you}}"
-msgstr "{waiting, plural, one {# te necesita} other {# te necesitan}}"
 
 #: src/components/task-row.tsx
 msgid "→ {name}"
@@ -1050,6 +1044,10 @@ msgstr "Rama o commit (opcional)"
 msgid "Branch to start from"
 msgstr "Rama desde la que partir"
 
+#: src/components/dev-icon-gallery.tsx
+msgid "Brand marks and working indicator"
+msgstr "Marcas y indicador de actividad"
+
 #. placeholder {0}: server.label
 #: src/components/home-computer-deck.tsx
 msgid "Bring {0} to the front"
@@ -1379,6 +1377,10 @@ msgstr "Cerrar efectos"
 #: src/components/asset-viewer.tsx
 msgid "Close file"
 msgstr "Cerrar el archivo"
+
+#: src/components/dev-icon-gallery.tsx
+msgid "Close icon preview"
+msgstr "Cerrar vista previa de iconos"
 
 #: src/components/home-recent-sessions.tsx
 #: src/components/task-row.tsx
@@ -2119,6 +2121,7 @@ msgstr "No se pudo abrir este PDF"
 
 #: src/components/asset-viewer.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/components/theme-fence-preview.tsx
 msgid "Could not open this theme."
 msgstr "No se pudo abrir este tema"
 
@@ -3224,6 +3227,14 @@ msgstr "Clave de host de confianza"
 msgid "How to use Muqun"
 msgstr "Cómo usar Muqun"
 
+#: src/components/dev-icon-gallery.tsx
+msgid "Icon preview"
+msgstr "Vista previa de iconos"
+
+#: src/components/dev-icon-gallery.tsx
+msgid "Icons"
+msgstr "Iconos"
+
 #: src/components/agent-session-tree-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
@@ -3749,6 +3760,10 @@ msgstr "Marcar como hecha"
 msgid "Mark reviewed"
 msgstr "Marcar como revisado"
 
+#: src/components/dev-icon-gallery.tsx
+msgid "Marks keep their original geometry and stroke."
+msgstr "Las marcas conservan su geometría y trazo originales."
+
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "Mascota"
@@ -4119,6 +4134,10 @@ msgstr "Ya no está vinculado con {computer}"
 #: src/app/commands.tsx
 msgid "No matching commands. Try another word."
 msgstr "No hay comandos coincidentes. Prueba otra palabra"
+
+#: src/components/dev-icon-gallery.tsx
+msgid "No matching icons"
+msgstr "No hay iconos que coincidan"
 
 #: src/components/home-recent-sessions.tsx
 msgid "No matching sessions"
@@ -4498,6 +4517,10 @@ msgstr "Abrir la lista de archivos"
 #: src/components/git-diff-button.tsx
 msgid "Open Git"
 msgstr "Abrir Git"
+
+#: src/components/dev-icon-gallery.tsx
+msgid "Open icon preview"
+msgstr "Abrir vista previa de iconos"
 
 #: src/components/agent-tool-card.tsx
 msgid "Open image"
@@ -4913,6 +4936,18 @@ msgstr "Ver y aplicar"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "Revisa primero la vista previa. Tu tema actual no cambiará"
+
+#: src/components/agent-tool-card.tsx
+#: src/components/theme-fence-preview.tsx
+msgid "Preview theme"
+msgstr "Vista previa del tema"
+
+#. placeholder {0}: basename(themeFile)
+#. placeholder {0}: manifest.name
+#: src/components/agent-tool-card.tsx
+#: src/components/theme-fence-preview.tsx
+msgid "Preview theme {0}"
+msgstr "Vista previa del tema {0}"
 
 #: src/components/home-computer-deck.tsx
 msgid "Previous computer"
@@ -5688,6 +5723,10 @@ msgstr "Buscar por nombre o etiqueta"
 msgid "Search files"
 msgstr "Buscar archivos"
 
+#: src/components/dev-icon-gallery.tsx
+msgid "Search icons"
+msgstr "Buscar iconos"
+
 #: src/components/agent-model-sheet.tsx
 msgid "Search models"
 msgstr "Buscar modelos"
@@ -6073,6 +6112,7 @@ msgstr "Controles del simulador"
 
 #: src/components/asset-viewer.tsx
 #: src/components/dev-home-ambient-controls.tsx
+#: src/components/dev-icon-gallery.tsx
 msgid "Size"
 msgstr "Tamaño"
 
@@ -6342,6 +6382,10 @@ msgstr "Almacenamiento"
 msgid "Streams speech while you talk. Requires an OpenAI Realtime-compatible transcription endpoint."
 msgstr "Transmite el audio mientras hablas. Requiere un punto de conexión de transcripción compatible con OpenAI Realtime"
 
+#: src/components/dev-icon-gallery.tsx
+msgid "Stroke width"
+msgstr "Grosor del trazo"
+
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/demo-streaming-transcript.tsx
@@ -6509,6 +6553,7 @@ msgstr "Opciones de tarea"
 #: src/components/agent-composer.tsx
 #: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-todo-block.tsx
+#: src/components/home-computer-cards.tsx
 #: src/components/server-tasks-sheet.tsx
 #: src/components/task-result-sheet.tsx
 msgid "Tasks"

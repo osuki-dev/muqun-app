@@ -143,6 +143,12 @@ msgstr "上下文中有 {0} 条消息"
 msgid "{0} more models"
 msgstr "还有 {0} 个模型"
 
+#. placeholder {0}: filtered.length
+#. placeholder {1}: entries.length
+#: src/components/dev-icon-gallery.tsx
+msgid "{0} of {1} icons · development only"
+msgstr "{1} 个图标中的 {0} 个 · 仅开发用"
+
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
 msgid "{0} of {limitLabel} tokens the model can hold"
@@ -312,10 +318,6 @@ msgstr "最近观察到 {count} 个请求"
 msgid "{done} of {0} done"
 msgstr "已完成 {done}/{0}"
 
-#: src/components/home-computer-deck.tsx
-msgid "{failed, plural, one {# failed} other {# failed}}"
-msgstr "{failed, plural, other {# 个失败}}"
-
 #: src/components/settings-fleet-peers.tsx
 msgid "{from} still lists an older {name}. Remove that entry on {from}."
 msgstr "{from} 上仍有一条旧的 {name} 记录，请在 {from} 上删除这条记录"
@@ -401,10 +403,6 @@ msgstr "剩余 {remaining}"
 msgid "{removeLabel}: {label}"
 msgstr "{removeLabel}：{label}"
 
-#: src/components/home-computer-deck.tsx
-msgid "{running, plural, one {# running} other {# running}}"
-msgstr "{running, plural, other {# 个运行中}}"
-
 #. placeholder {0}: shells.length
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
@@ -423,10 +421,6 @@ msgstr "{total, plural, other {# 个子任务}}"
 #: src/components/task-row.tsx
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, other {# 个子任务}}（{waiting, plural, other {# 个等待中}}）"
-
-#: src/components/home-computer-deck.tsx
-msgid "{waiting, plural, one {# needs you} other {# need you}}"
-msgstr "{waiting, plural, other {# 个需要你处理}}"
 
 #: src/components/task-row.tsx
 msgid "→ {name}"
@@ -1050,6 +1044,10 @@ msgstr "分支或提交（可选）"
 msgid "Branch to start from"
 msgstr "作为起点的分支"
 
+#: src/components/dev-icon-gallery.tsx
+msgid "Brand marks and working indicator"
+msgstr "品牌标志与运行指示"
+
 #. placeholder {0}: server.label
 #: src/components/home-computer-deck.tsx
 msgid "Bring {0} to the front"
@@ -1379,6 +1377,10 @@ msgstr "关闭效果面板"
 #: src/components/asset-viewer.tsx
 msgid "Close file"
 msgstr "关闭文件"
+
+#: src/components/dev-icon-gallery.tsx
+msgid "Close icon preview"
+msgstr "关闭图标预览"
 
 #: src/components/home-recent-sessions.tsx
 #: src/components/task-row.tsx
@@ -2119,6 +2121,7 @@ msgstr "无法打开此 PDF"
 
 #: src/components/asset-viewer.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/components/theme-fence-preview.tsx
 msgid "Could not open this theme."
 msgstr "无法打开这个主题"
 
@@ -3224,6 +3227,14 @@ msgstr "主机密钥已信任"
 msgid "How to use Muqun"
 msgstr "如何使用 Muqun"
 
+#: src/components/dev-icon-gallery.tsx
+msgid "Icon preview"
+msgstr "图标预览"
+
+#: src/components/dev-icon-gallery.tsx
+msgid "Icons"
+msgstr "图标"
+
 #: src/components/agent-session-tree-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
@@ -3749,6 +3760,10 @@ msgstr "确认完成"
 msgid "Mark reviewed"
 msgstr "标记已查看"
 
+#: src/components/dev-icon-gallery.tsx
+msgid "Marks keep their original geometry and stroke."
+msgstr "标志保留原有的形状和线宽。"
+
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "吉祥物"
@@ -4119,6 +4134,10 @@ msgstr "已不再与 {computer} 关联"
 #: src/app/commands.tsx
 msgid "No matching commands. Try another word."
 msgstr "没有匹配的命令，换个关键词试试"
+
+#: src/components/dev-icon-gallery.tsx
+msgid "No matching icons"
+msgstr "没有匹配的图标"
 
 #: src/components/home-recent-sessions.tsx
 msgid "No matching sessions"
@@ -4498,6 +4517,10 @@ msgstr "打开文件列表"
 #: src/components/git-diff-button.tsx
 msgid "Open Git"
 msgstr "打开 Git"
+
+#: src/components/dev-icon-gallery.tsx
+msgid "Open icon preview"
+msgstr "打开图标预览"
 
 #: src/components/agent-tool-card.tsx
 msgid "Open image"
@@ -4913,6 +4936,18 @@ msgstr "预览并应用"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "先预览，当前主题保持不变"
+
+#: src/components/agent-tool-card.tsx
+#: src/components/theme-fence-preview.tsx
+msgid "Preview theme"
+msgstr "预览主题"
+
+#. placeholder {0}: basename(themeFile)
+#. placeholder {0}: manifest.name
+#: src/components/agent-tool-card.tsx
+#: src/components/theme-fence-preview.tsx
+msgid "Preview theme {0}"
+msgstr "预览主题 {0}"
 
 #: src/components/home-computer-deck.tsx
 msgid "Previous computer"
@@ -5688,6 +5723,10 @@ msgstr "按名称或标签搜索"
 msgid "Search files"
 msgstr "搜索文件"
 
+#: src/components/dev-icon-gallery.tsx
+msgid "Search icons"
+msgstr "搜索图标"
+
 #: src/components/agent-model-sheet.tsx
 msgid "Search models"
 msgstr "搜索模型"
@@ -6073,6 +6112,7 @@ msgstr "模拟器控件"
 
 #: src/components/asset-viewer.tsx
 #: src/components/dev-home-ambient-controls.tsx
+#: src/components/dev-icon-gallery.tsx
 msgid "Size"
 msgstr "大小"
 
@@ -6342,6 +6382,10 @@ msgstr "存储空间"
 msgid "Streams speech while you talk. Requires an OpenAI Realtime-compatible transcription endpoint."
 msgstr "边说边传输音频。需要兼容 OpenAI Realtime 的语音转文字接口"
 
+#: src/components/dev-icon-gallery.tsx
+msgid "Stroke width"
+msgstr "线宽"
+
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/demo-streaming-transcript.tsx
@@ -6509,6 +6553,7 @@ msgstr "任务参数"
 #: src/components/agent-composer.tsx
 #: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-todo-block.tsx
+#: src/components/home-computer-cards.tsx
 #: src/components/server-tasks-sheet.tsx
 #: src/components/task-result-sheet.tsx
 msgid "Tasks"
