@@ -2,7 +2,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { LegendList, type LegendListRenderItemProps } from '@legendapp/list/react-native';
 import { useThemeTokens, Skeleton, PressableScale, Text } from '@osuki-dev/ui';
-import { ChevronsDownUp, ChevronsUpDown } from 'lucide-react-native';
+import { CollapseIcon, ReorderIcon } from '@/icons';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { RefreshControl, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -121,7 +121,7 @@ export const PaneChatView = memo(function PaneChatView({
   // Which folded rows the reader opened. Kept here rather than per row so that
   // scrolling one out of the window does not close it.
   const [expandedIds, setExpandedIds] = useState<ReadonlySet<string>>(EMPTY_EXPANDED);
-  const FoldIcon = detail === 'simplified' ? ChevronsUpDown : ChevronsDownUp;
+  const FoldIcon = detail === 'simplified' ? ReorderIcon : CollapseIcon;
 
   // The previous rows, so an unchanged row keeps its object. Carried during
   // render on purpose: it is derived state, and the derivation is idempotent --
@@ -297,7 +297,7 @@ export const PaneChatView = memo(function PaneChatView({
                     backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
                   },
                 ]}>
-                <FoldIcon size={14} color={theme.colors.textMuted} strokeWidth={2} />
+                <FoldIcon size={14} color={theme.colors.textMuted} />
                 <Text variant="caption" color={theme.colors.textMuted}>
                   {detail === 'simplified' ? t`Show every tool step` : t`Fold the tool steps away`}
                 </Text>

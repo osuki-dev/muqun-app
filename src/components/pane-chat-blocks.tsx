@@ -3,7 +3,7 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
-import { ChevronDown, ChevronRight, FileText } from 'lucide-react-native';
+import { DisclosureDownIcon, NextIcon, DocumentIcon } from '@/icons';
 import { EnrichedMarkdownText, type MarkdownStyle } from 'react-native-enriched-markdown';
 import { memo, useMemo, useState } from 'react';
 import { ActivityIndicator, Linking, ScrollView, StyleSheet, View } from 'react-native';
@@ -207,7 +207,7 @@ export const PaneChatActivityRow = memo(function PaneChatActivityRow({
 }) {
   const { t } = useLingui();
   const profile = useAppearanceProfile();
-  const Chevron = expanded ? ChevronDown : ChevronRight;
+  const Chevron = expanded ? DisclosureDownIcon : NextIcon;
   return (
     <View style={styles.agentAlign}>
       <PressableScale
@@ -335,7 +335,7 @@ export const PaneChatPartRow = memo(function PaneChatPartRow({
             styles.agentAlign,
             { backgroundColor: surfaceBackground(colors.surfaceRaised) },
           ]}>
-          <FileText size={17} color={colors.accent} />
+          <DocumentIcon size={17} color={colors.accent} />
           <Text variant="bodySmall" color={colors.text} numberOfLines={2} style={styles.flexOne}>
             {part.fallback_text || part.asset_id}
           </Text>
@@ -377,7 +377,7 @@ const PaneChatToolCard = memo(function PaneChatToolCard({
   const { t } = useLingui();
   const mono = useMonoFontFamily();
   const summary = firstLine(block.input);
-  const Chevron = open ? ChevronDown : ChevronRight;
+  const Chevron = open ? DisclosureDownIcon : NextIcon;
 
   return (
     <View

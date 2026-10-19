@@ -1,4 +1,4 @@
-import { Bot } from 'lucide-react-native';
+import { AgentIcon } from '@/icons';
 
 import { CodexIcon } from '@/components/codex-icon';
 import { DeepSeekIcon } from '@/components/deepseek-icon';
@@ -23,6 +23,6 @@ export function AgentMark({ kind, size, color }: { kind: string; size: number; c
     case 't3':
       return <T3Icon size={size} color={color} />;
     default:
-      return <Bot size={size} color={color} strokeWidth={2} />;
+      return <AgentIcon size={size} color={color} />;
   }
 }

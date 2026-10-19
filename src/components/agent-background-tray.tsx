@@ -3,7 +3,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import { useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
-import { Square, Terminal } from 'lucide-react-native';
+import { StopIcon, TerminalIcon } from '@/icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated from 'react-native-reanimated';
 
@@ -215,7 +215,7 @@ export const AgentBackgroundTray = memo(function AgentBackgroundTray({
         </View>
       ) : shells.length === 0 ? (
         <View style={styles.centre}>
-          <Terminal size={32} color={theme.colors.textSubtle} />
+          <TerminalIcon size={32} color={theme.colors.textSubtle} />
           <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.emptyText}>
             {t`Nothing is running in the background — detach a long command from its tool card and it appears here`}
           </Text>
@@ -268,7 +268,7 @@ export const AgentBackgroundTray = memo(function AgentBackgroundTray({
                         {killing === shell.id ? (
                           <ActivityIndicator size="small" color={theme.colors.danger} />
                         ) : (
-                          <Square
+                          <StopIcon
                             size={11}
                             color={theme.colors.danger}
                             fill={theme.colors.danger}

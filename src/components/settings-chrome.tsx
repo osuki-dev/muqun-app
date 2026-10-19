@@ -17,7 +17,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
  * where a state changes under the finger.
  */
 import { useThemeTokens, Surface, PressableScale, Text } from '@osuki-dev/ui';
-import { ChevronRight, type LucideIcon } from 'lucide-react-native';
+import { NextIcon, type AppIconComponent } from '@/icons';
 import { Children, Fragment, isValidElement, type ReactNode } from 'react';
 import { StyleSheet, type TextStyle, View } from 'react-native';
 import Animated, {
@@ -405,10 +405,10 @@ export function SettingsNavRow({
   accessibilityRole = 'button',
   testID,
 }: {
-  icon?: LucideIcon;
+  icon?: AppIconComponent;
   label: string;
   detail?: string;
-  trailing: LucideIcon;
+  trailing: AppIconComponent;
   onPress: () => void;
   disabled?: boolean;
   busy?: boolean;
@@ -433,7 +433,7 @@ export function SettingsNavRow({
   // says "leaves Muqun" is not going rightwards, and nudging that glyph would
   // say it was. Off entirely under reduce motion, rather than a jump.
   const reduceMotion = useReducedMotion();
-  const leans = Trailing === ChevronRight && !disabled && !reduceMotion;
+  const leans = Trailing === NextIcon && !disabled && !reduceMotion;
   const nudge = useSharedValue(0);
   const trailingStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: nudge.get() }],
@@ -461,7 +461,7 @@ export function SettingsNavRow({
             { borderRadius: profile.chrome.control },
             { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
           ]}>
-          <Icon size={18} color={theme.colors.textMuted} strokeWidth={2} />
+          <Icon size={18} color={theme.colors.textMuted} />
         </View>
       ) : null}
       <View style={styles.rowCopy}>
@@ -479,7 +479,7 @@ export function SettingsNavRow({
         ) : null}
       </View>
       <Animated.View style={trailingStyle}>
-        <Trailing size={18} color={theme.colors.textMuted} strokeWidth={2} />
+        <Trailing size={18} color={theme.colors.textMuted} />
       </Animated.View>
     </PressableScale>
   );
@@ -572,7 +572,7 @@ export function SettingsChoiceRow({
           {value}
         </Text>
       ) : null}
-      <ChevronRight size={18} color={theme.colors.textMuted} strokeWidth={2} />
+      <NextIcon size={18} color={theme.colors.textMuted} />
     </PressableScale>
   );
 }
@@ -593,7 +593,7 @@ export function SettingsInfoRow({
   detail,
   testID,
 }: {
-  icon: LucideIcon;
+  icon: AppIconComponent;
   label: string;
   detail: ReactNode;
   testID?: string;
@@ -612,7 +612,7 @@ export function SettingsInfoRow({
           { borderRadius: profile.chrome.control },
           { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
         ]}>
-        <Icon size={18} color={theme.colors.textMuted} strokeWidth={2} />
+        <Icon size={18} color={theme.colors.textMuted} />
       </View>
       <View style={styles.rowCopy}>
         <Text variant="bodySmall" style={styles.rowLabel}>

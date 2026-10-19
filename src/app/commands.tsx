@@ -84,15 +84,15 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import {
-  Check,
-  GitBranch,
-  Globe,
-  MonitorSmartphone,
-  PanelsTopLeft,
-  Pencil,
-  SquareTerminal,
-  Trash2,
-} from 'lucide-react-native';
+  DoneIcon,
+  BranchIcon,
+  NetworkIcon,
+  DevicesIcon,
+  WorkspaceIcon,
+  EditIcon,
+  TerminalWindowIcon,
+  DeleteIcon,
+} from '@/icons';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { Keyboard, StyleSheet, useWindowDimensions, View, type TextStyle } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
@@ -659,9 +659,9 @@ export default function QuickCommandsScreen() {
                   onPress={() => setEditRequested((was) => !was)}
                   style={styles.headingControl}>
                   {editing ? (
-                    <Check size={19} color={theme.colors.primary} strokeWidth={2} />
+                    <DoneIcon size={19} color={theme.colors.primary} />
                   ) : (
-                    <Pencil size={18} color={theme.colors.textMuted} strokeWidth={2} />
+                    <EditIcon size={18} color={theme.colors.textMuted} />
                   )}
                 </PressableScale>
               )
@@ -682,7 +682,7 @@ export default function QuickCommandsScreen() {
             <View style={styles.tiles}>
               {lazygit.available ? (
                 <ActionTile
-                  icon={GitBranch}
+                  icon={BranchIcon}
                   label={t`Lazygit`}
                   accessibilityLabel={t`Open Lazygit`}
                   busy={lazygit.busy}
@@ -692,7 +692,7 @@ export default function QuickCommandsScreen() {
               ) : null}
               {available.canCreate ? (
                 <ActionTile
-                  icon={SquareTerminal}
+                  icon={TerminalWindowIcon}
                   label={t`Terminal`}
                   accessibilityLabel={t`New terminal`}
                   busy={creating === 'panel'}
@@ -702,7 +702,7 @@ export default function QuickCommandsScreen() {
               ) : null}
               {available.canCreate ? (
                 <ActionTile
-                  icon={PanelsTopLeft}
+                  icon={WorkspaceIcon}
                   label={t`Group`}
                   accessibilityLabel={t`New group`}
                   busy={creating === 'tab'}
@@ -712,7 +712,7 @@ export default function QuickCommandsScreen() {
               ) : null}
               {available.canPreviewSimulator ? (
                 <ActionTile
-                  icon={MonitorSmartphone}
+                  icon={DevicesIcon}
                   // One word on the tile and the whole verb in the label the
                   // screen reader hears. "Ouvrir dans le navigateur" is three
                   // lines in a quarter of a 390-point phone; "Navigateur" is
@@ -727,7 +727,7 @@ export default function QuickCommandsScreen() {
                 />
               ) : available.webServiceBlockedByTunnel ? (
                 <ActionTile
-                  icon={MonitorSmartphone}
+                  icon={DevicesIcon}
                   label={t`Simulator`}
                   accessibilityLabel={t`Preview a simulator, unavailable over the SSH tunnel`}
                   disabled
@@ -735,14 +735,14 @@ export default function QuickCommandsScreen() {
               ) : null}
               {available.canOpenWebService ? (
                 <ActionTile
-                  icon={Globe}
+                  icon={NetworkIcon}
                   label={t`Browser`}
                   accessibilityLabel={t`Open in your browser`}
                   onPress={openWebService}
                 />
               ) : available.webServiceBlockedByTunnel ? (
                 <ActionTile
-                  icon={Globe}
+                  icon={NetworkIcon}
                   label={t`Browser`}
                   accessibilityLabel={t`Open in your browser, unavailable over the SSH tunnel`}
                   disabled
@@ -935,7 +935,7 @@ export default function QuickCommandsScreen() {
                                 styles.deleteButton,
                                 { borderRadius: profile.chrome.control },
                               ]}>
-                              <Trash2 size={16} color={theme.colors.danger} />
+                              <DeleteIcon size={16} color={theme.colors.danger} />
                             </PressableScale>
                           ) : null
                         }
@@ -1214,7 +1214,7 @@ function ActionTile({
   selected = false,
   onPress,
 }: {
-  icon: typeof SquareTerminal;
+  icon: typeof TerminalWindowIcon;
   label: string;
   accessibilityLabel: string;
   busy?: boolean;
@@ -1248,11 +1248,7 @@ function ActionTile({
         disabled={disabled || busy || !onPress}
         onPress={onPress}
         style={[styles.tileHit, disabled ? styles.tileDisabled : undefined]}>
-        {busy ? (
-          <Spinner size="sm" color={theme.colors.primary} />
-        ) : (
-          <Icon size={20} color={ink} strokeWidth={2} />
-        )}
+        {busy ? <Spinner size="sm" color={theme.colors.primary} /> : <Icon size={20} color={ink} />}
         {/* One word, one line: at a quarter of a 390-point phone a tile is 83
             points wide, which holds a single word in every locale and nothing
             longer. Centred, because a one-word label under a centred icon

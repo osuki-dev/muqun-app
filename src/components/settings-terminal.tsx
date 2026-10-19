@@ -10,7 +10,7 @@ import { useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useThemeTokens, Text } from '@osuki-dev/ui';
 import { type Href, useRouter } from 'expo-router';
-import { ChevronRight } from 'lucide-react-native';
+import { NextIcon } from '@/icons';
 
 import {
   SettingsBlock,
@@ -95,7 +95,7 @@ export function SettingsTerminal() {
           control, and one chipped row among them puts a single label 52 points
           right of the rest. The rule is per card -- see `SettingsNavRow`. */}
       <SettingsNavRow
-        trailing={ChevronRight}
+        trailing={NextIcon}
         label={t`Quick actions`}
         detail={t`Add commands and custom key combinations.`}
         onPress={() => router.push('/commands?mode=terminal&manage=1' as Href)}

@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useThemeTokens, Text } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
-import { CheckCircle2, Circle, Clock } from 'lucide-react-native';
+import { CompletedIcon, PendingIcon, TimeIcon } from '@/icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated from 'react-native-reanimated';
 
@@ -61,11 +61,11 @@ export const AgentTasksSheet = memo(function AgentTasksSheet({
                 selected={running}
                 leading={
                   item.done ? (
-                    <CheckCircle2 size={16} color={theme.colors.success} strokeWidth={2.2} />
+                    <CompletedIcon size={16} color={theme.colors.success} />
                   ) : running ? (
-                    <Clock size={16} color={theme.colors.primary} strokeWidth={2.2} />
+                    <TimeIcon size={16} color={theme.colors.primary} />
                   ) : (
-                    <Circle size={15} color={theme.colors.textSubtle} strokeWidth={1.8} />
+                    <PendingIcon size={15} color={theme.colors.textSubtle} />
                   )
                 }
               />

@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
-import { ChevronRight } from 'lucide-react-native';
+import { NextIcon } from '@/icons';
 import { useNotificationSurfaceStyle } from '@/components/notification-surface';
 import { fadeIn, listLayout } from '@/lib/motion';
 import { noticeDeckPage } from '@/lib/notice-deck';
@@ -92,7 +92,7 @@ export function NoticeDeck({ children }: { children: ReactNode }) {
           <Text variant="caption" color={colors.textMuted}>
             {position + 1} / {visible.length}
           </Text>
-          <ChevronRight size={16} color={colors.text} />
+          <NextIcon size={16} color={colors.text} />
         </PressableScale>
       ) : null}
     </Animated.View>

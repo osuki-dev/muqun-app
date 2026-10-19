@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, memo } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { useThemeTokens, Text } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
-import { ChevronDown } from 'lucide-react-native';
+import { DisclosureDownIcon } from '@/icons';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { ThinkingIndicator } from '@/components/agent-thinking-indicator';
 import { BoundedMarkdown } from '@/components/bounded-markdown';
@@ -132,7 +132,7 @@ export const AgentReasoningBlock = memo(function AgentReasoningBlock({
             </Animated.View>
           ) : text ? (
             <Animated.View style={chevronStyle}>
-              <ChevronDown size={12} color={theme.colors.primary} style={styles.chevron} />
+              <DisclosureDownIcon size={12} color={theme.colors.primary} style={styles.chevron} />
             </Animated.View>
           ) : null}
         </View>

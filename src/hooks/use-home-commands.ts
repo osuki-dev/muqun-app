@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useLingui } from '@lingui/react/macro';
-import { useNavigation, useRouter, type Href } from 'expo-router';
+import { useNavigation, useRouter, useIsFocused, type Href } from 'expo-router';
 import { useToast } from '@osuki-dev/ui';
 import { useWindowDimensions } from 'react-native';
 
@@ -54,6 +54,8 @@ export type HomeCommandOptions = {
   embedded?: boolean;
   /** The embedded overview belongs to `/servers/[serverId]`, not Home's root owner. */
   routeBound?: boolean;
+  /** Immutable owner of the mounted workspace, not the global Gateway selection. */
+  workspaceServerId?: string;
   /** Stable Home route liveness, separate from an owner subtree's lifetime. */
   sourceRouteActive?: () => boolean;
   /**
@@ -108,6 +110,7 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
   const { t } = useLingui();
   const { showToast } = useToast();
   const navigation = useNavigation();
+  const isFocused = useIsFocused();
   const router = useRouter();
   const { record, records, selectRecordNow, selectRecord } = useGatewayRecord();
   // The same test `/agent` makes: on a Pad the workspace owns agent detail.
@@ -197,6 +200,7 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
           // Plain server cards have no controller selection step. Select here,
           // then publish through the stable store so a root owner replacement
           // cannot strand the target in the old Home component.
+          const workspaceServerId = latest.current.options.workspaceServerId;
           const selectedServerId = useGatewayConnectionStore.getState().record?.serverId;
           if (selectedServerId !== target.serverId) {
             const selected = await latest.current.selectRecord(target.serverId);
@@ -206,7 +210,7 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
           if (
             embeddedResumeRoute({
               routeBound: latest.current.options.routeBound === true,
-              workspaceServerId: selectedServerId,
+              workspaceServerId,
               targetServerId: target.serverId,
             }) === 'route'
           ) {
@@ -216,7 +220,7 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
           }
           // Recent targets arrive here only after controller validation; plain
           // cards are scoped by their server and use the same handoff channel.
-          const sourceServerId = selectedServerId ?? undefined;
+          const sourceServerId = workspaceServerId;
           return (
             homeWorkspaceHandoffStore.getState().publish(target, isCurrent, sourceServerId) !== null
           );
@@ -229,6 +233,11 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
   );
 
   useEffect(() => () => controller.current.dispose(), [controller]);
+  // A blurred route must not keep a pending command that blocks its next visit.
+  // Owner replacement while the route stays focused still preserves handoff.
+  useEffect(() => {
+    if (!isFocused) controller.current.cancel();
+  }, [controller, isFocused]);
 
   // Retry on the backend-down notice runs the same command again through this
   // hook, so its answer is reported the same way. A ref, because the notice is

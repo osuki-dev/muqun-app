@@ -6,7 +6,7 @@ import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { useStableHandler } from '@/hooks/use-render-refs';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { router, usePathname, type Href } from 'expo-router';
-import { Bell, ChevronRight } from 'lucide-react-native';
+import { NotificationsIcon, NextIcon } from '@/icons';
 import { useEffect, useMemo, useState } from 'react';
 import {
   AppState,
@@ -331,7 +331,7 @@ export function InAppNotificationHost() {
             accessibilityActions={dismissAction}
             onAccessibilityAction={onAccessibilityAction}>
             <View style={styles.heading}>
-              <Bell size={18} color={colors.primary} style={styles.glyph} />
+              <NotificationsIcon size={18} color={colors.primary} style={styles.glyph} />
               <Text
                 numberOfLines={expanded ? undefined : 2}
                 variant="bodySmall"
@@ -380,7 +380,7 @@ export function InAppNotificationHost() {
                 <Text variant="caption" color={colors.textMuted} style={styles.count}>
                   {position + 1} / {items.length}
                 </Text>
-                <ChevronRight size={12} color={colors.textMuted} />
+                <NextIcon size={12} color={colors.textMuted} />
               </PressableScale>
             ) : null}
             <PressableScale

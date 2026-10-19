@@ -2,15 +2,17 @@ import { InlineFileLink } from '@/components/inline-file-link';
 import { ContentImage } from '@/components/content-image';
 import { contentImageIdentity, type ContentImagePreviewState } from '@/lib/content-image-layout';
 import { isPdfFile } from '@/lib/session-assets';
+import { isThemeFilePath } from '@/lib/audio-markdown';
 import { InlineVideoFile } from '@/components/video-asset-preview';
 import { InlineAudioFile } from '@/components/audio-asset-preview';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { Modal, StyleSheet, View, type ViewInstance } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { plural } from '@lingui/core/macro';
-import { Check, FileText, Play, X } from 'lucide-react-native';
+import { AppearanceIcon, DoneIcon, DocumentIcon, StartIcon, CloseIcon } from '@/icons';
 import { EnrichedMarkdownText, type MarkdownStyle } from 'react-native-enriched-markdown';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -395,7 +397,7 @@ const ToolFiles = memo(function ToolFiles({
             accessibilityLabel={t`Open ${file.name ?? basename(file.uri)}`}
             onPress={() => onOpenFile?.(file)}
             style={[styles.fileChip, raised]}>
-            <FileText size={13} color={theme.colors.primary} />
+            <DocumentIcon size={13} color={theme.colors.primary} />
             <Text
               variant="caption"
               color={theme.colors.text}
@@ -605,6 +607,25 @@ export const AgentToolCard = memo(function AgentToolCard({
         ? input.new_string
         : undefined;
 
+  /**
+   * A theme the call wrote, previewed from the header in one tap.
+   *
+   * The skill has agents write `<slug>.muqun-theme.json` or a `.muqun-theme`
+   * package; the reader should not have to expand the card and find the file.
+   * The gateway resolves the path (relative ones against the session), exactly
+   * as a tapped link does.
+   */
+  const themeFile = useMemo(() => {
+    if (pending || part.error || !onOpenFile) return undefined;
+    if (kind !== 'write' && kind !== 'edit' && kind !== 'patch') return undefined;
+    const paths = [
+      target,
+      ...patchFiles.map((file) => file.path),
+      ...patchSections.map((section) => section.path),
+    ];
+    return paths.find((path) => path && isThemeFilePath(path));
+  }, [pending, part.error, onOpenFile, kind, target, patchFiles, patchSections]);
+
   // ---- chips -------------------------------------------------------------
 
   const chips = useMemo(() => {
@@ -703,7 +724,7 @@ export const AgentToolCard = memo(function AgentToolCard({
           accessibilityLabel={t`Run in background`}
           onPress={onRunInBackground}
           style={styles.action}>
-          <Play size={11} color={colors.accent} />
+          <StartIcon size={11} color={colors.accent} />
           <Text variant="caption" color={colors.accent} style={styles.actionText}>
             <Trans>Run in background</Trans>
           </Text>
@@ -927,6 +948,19 @@ export const AgentToolCard = memo(function AgentToolCard({
       headerAccessory={
         sleepDuration !== undefined && pending ? (
           <AgentSleepToolBody durationMs={sleepDuration} part={part} compact />
+        ) : themeFile && onOpenFile ? (
+          <PressableScale
+            testID="agent-tool-preview-theme"
+            accessibilityRole="button"
+            accessibilityLabel={t`Preview theme ${basename(themeFile)}`}
+            hitSlop={10}
+            onPress={() => onOpenFile(toolFileForPath(themeFile))}
+            style={[styles.themePreview, { backgroundColor: theme.colors.surfaceRaised }]}>
+            <AppearanceIcon size={11} color={colors.accent} />
+            <Text variant="caption" color={colors.accent} style={styles.actionText}>
+              <Trans>Preview theme</Trans>
+            </Text>
+          </PressableScale>
         ) : undefined
       }
       caption={headerCaption}
@@ -1022,45 +1056,47 @@ const ReadFileBody = memo(function ReadFileBody({
           navigationBarTranslucent
           animationType="fade"
           onRequestClose={() => setOpen(false)}>
-          <View style={readStyles.fullscreen}>
-            <SheetFrame tint="background" frosted>
-              <View
-                style={[
-                  readStyles.fullscreen,
-                  { paddingTop: insets.top, paddingBottom: insets.bottom },
-                ]}>
-                <View style={readStyles.header}>
-                  <Text
-                    variant="bodySmall"
-                    weight="semibold"
-                    numberOfLines={2}
-                    style={readStyles.title}>
-                    {preview.file.name}
-                  </Text>
-                  {truncated ? (
-                    <Text variant="caption" color={theme.colors.warning}>
-                      {t`Truncated`}
+          <GestureHandlerRootView style={{ flex: 1 }}>
+            <View style={readStyles.fullscreen}>
+              <SheetFrame tint="background" frosted>
+                <View
+                  style={[
+                    readStyles.fullscreen,
+                    { paddingTop: insets.top, paddingBottom: insets.bottom },
+                  ]}>
+                  <View style={readStyles.header}>
+                    <Text
+                      variant="bodySmall"
+                      weight="semibold"
+                      numberOfLines={2}
+                      style={readStyles.title}>
+                      {preview.file.name}
                     </Text>
-                  ) : null}
-                  <PressableScale
-                    testID="agent-read-close-preview"
-                    accessibilityRole="button"
-                    accessibilityLabel={t`Close preview`}
-                    onPress={() => setOpen(false)}
-                    style={readStyles.close}>
-                    <X size={20} color={theme.colors.text} />
-                  </PressableScale>
+                    {truncated ? (
+                      <Text variant="caption" color={theme.colors.warning}>
+                        {t`Truncated`}
+                      </Text>
+                    ) : null}
+                    <PressableScale
+                      testID="agent-read-close-preview"
+                      accessibilityRole="button"
+                      accessibilityLabel={t`Close preview`}
+                      onPress={() => setOpen(false)}
+                      style={readStyles.close}>
+                      <CloseIcon size={20} color={theme.colors.text} />
+                    </PressableScale>
+                  </View>
+                  <FileTextBody
+                    file={preview.file}
+                    content={preview.content}
+                    markdownStyle={markdownStyle}
+                    testID="agent-read-full"
+                    showsHorizontalScrollIndicator={false}
+                  />
                 </View>
-                <FileTextBody
-                  file={preview.file}
-                  content={preview.content}
-                  markdownStyle={markdownStyle}
-                  testID="agent-read-full"
-                  showsHorizontalScrollIndicator={false}
-                />
-              </View>
-            </SheetFrame>
-          </View>
+              </SheetFrame>
+            </View>
+          </GestureHandlerRootView>
         </Modal>
       ) : null}
     </View>
@@ -1480,7 +1516,7 @@ const GlobFiles = memo(function GlobFiles({
                 disabled={!onOpenFile}
                 onPress={() => onOpenFile?.(toolFileForPath(path))}
                 style={styles.globRow}>
-                <FileText size={11} color={colors.subtle} />
+                <DocumentIcon size={11} color={colors.subtle} />
                 <Text
                   numberOfLines={1}
                   ellipsizeMode="middle"
@@ -1669,7 +1705,7 @@ const QuestionBody = memo(function QuestionBody({
                         backgroundColor: chosen ? withAlpha(colors.accent, 0.12) : 'transparent',
                       },
                     ]}>
-                    {chosen ? <Check size={11} color={colors.accent} /> : null}
+                    {chosen ? <DoneIcon size={11} color={colors.accent} /> : null}
                     <View style={styles.optionCopy}>
                       <Text
                         variant="caption"
@@ -1899,6 +1935,15 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     paddingHorizontal: 4,
     justifyContent: 'center',
+  },
+  themePreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    minHeight: 24,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    borderCurve: 'continuous',
   },
   actionText: {
     fontSize: AGENT_TYPE.micro.size,

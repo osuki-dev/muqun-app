@@ -1,4 +1,4 @@
-import { Paperclip } from 'lucide-react-native';
+import { AttachmentIcon } from '@/icons';
 import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { ThemeIcon } from '@/components/theme-icon';
@@ -39,7 +39,7 @@ export function ComposerAttachmentButton({
         expanded && { backgroundColor: background(theme.colors.primarySubtle) },
         disabled && composerStyles.disabledButton,
       ]}>
-      <ThemeIcon name="chrome.attach" fallback={Paperclip} size={size} color={color} />
+      <ThemeIcon name="chrome.attach" fallback={AttachmentIcon} size={size} color={color} />
     </PressableScale>
   );
 }

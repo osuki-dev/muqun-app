@@ -23,7 +23,7 @@ import {
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import { Text, PressableScale } from '@osuki-dev/ui';
-import { ChevronDown, ChevronUp } from 'lucide-react-native';
+import { DisclosureDownIcon, DisclosureUpIcon } from '@/icons';
 
 // A type-only import, so this module never holds a runtime reference back to
 // `pane-chat-blocks` -- which imports `InlineDiffRows` from here.
@@ -456,7 +456,7 @@ const FileRow = memo(function FileRow({
   const { onGrid } = useContext(DiffLayoutContext);
   // Closed points down, open points up: the same chevron rule as the rest of
   // the transcript.
-  const Chevron = row.expanded ? ChevronUp : ChevronDown;
+  const Chevron = row.expanded ? DisclosureUpIcon : DisclosureDownIcon;
   const fileSide = sideOfFile(row.file);
   // Letters, not words: a phone's file row has room for "+1000 −1000" and one
   // more glyph, and S and U are read the same way in every catalog. The words

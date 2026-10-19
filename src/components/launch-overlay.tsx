@@ -2,7 +2,6 @@ import { SplashOverlay } from '@osuki-dev/react-native-splash';
 import { useState } from 'react';
 
 import { LaunchIntro } from '@/components/launch-intro';
-import { LaunchSceneIntro } from '@/components/launch-intro-scene';
 import { hasSeenLaunchIntro } from '@/lib/launch-intro-seen';
 import { useLaunchHandoff } from '@/stores/launch-handoff';
 
@@ -18,15 +17,10 @@ import { useLaunchHandoff } from '@/stores/launch-handoff';
  *    `ready` is the final button (or Skip), so the overlay stays for as long as the
  *    reader reads, and the safety cap is off (`timeout={0}`) because a cap
  *    would cut someone off mid-sentence.
- *  - **The opening**, every launch after. Nothing to wait for, so it runs
- *    the theme pack's own short opening -- the world arriving, the picture
- *    landing where Home keeps it -- and says when it is done.
- *
- * Both branches now end the same way: the child decides, `ready` is the
- * child's `onDone`, and `minimumDuration` is 0. The opening owns its own
- * clock (`launch-intro-timeline.ts`) rather than having it split between a
- * hold here and an animation there -- which is what lets a tap end it early,
- * something a `minimumDuration` the overlay is counting down cannot do.
+ *  - **Every launch after**, the splash's own mirror, faded out as soon as
+ *    the native screen has handed over. The themed opening scene (world,
+ *    hero landing, dust trail, snap exit) is not played: it held a
+ *    full-screen touch-capturing layer over Home at every start.
  *
  * Read from MMKV at render time rather than in an effect on purpose: the
  * decision has to exist on the frame the native splash hands over to, and
@@ -36,26 +30,21 @@ import { useLaunchHandoff } from '@/stores/launch-handoff';
 export function LaunchOverlay() {
   const [seen] = useState(() => hasSeenLaunchIntro());
   const [introDone, setIntroDone] = useState(false);
-  const [bootDone, setBootDone] = useState(false);
   const beginHomeReveal = useLaunchHandoff((state) => state.beginReveal);
   const settleLaunch = useLaunchHandoff((state) => state.settle);
 
   return (
     <SplashOverlay
-      ready={seen ? bootDone : introDone}
+      ready={seen || introDone}
       minimumDuration={0}
       timeout={seen ? undefined : 0}
       onPhaseChange={(phase) => {
         if (phase === 'exiting') beginHomeReveal();
       }}
       onHidden={settleLaunch}>
-      {(context) =>
-        seen ? (
-          <LaunchSceneIntro {...context} onDone={() => setBootDone(true)} />
-        ) : (
-          <LaunchIntro {...context} onDone={() => setIntroDone(true)} />
-        )
-      }
+      {seen
+        ? undefined
+        : (context) => <LaunchIntro {...context} onDone={() => setIntroDone(true)} />}
     </SplashOverlay>
   );
 }

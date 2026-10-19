@@ -143,6 +143,12 @@ msgstr "컨텍스트에 있는 메시지 {0}개"
 msgid "{0} more models"
 msgstr "모델 {0}개 더"
 
+#. placeholder {0}: filtered.length
+#. placeholder {1}: entries.length
+#: src/components/dev-icon-gallery.tsx
+msgid "{0} of {1} icons · development only"
+msgstr "아이콘 {1}개 중 {0}개 · 개발 전용"
+
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
 msgid "{0} of {limitLabel} tokens the model can hold"
@@ -312,10 +318,6 @@ msgstr "최근 확인된 요청 {count}개"
 msgid "{done} of {0} done"
 msgstr "{0}개 중 {done}개 완료"
 
-#: src/components/home-computer-deck.tsx
-msgid "{failed, plural, one {# failed} other {# failed}}"
-msgstr "{failed, plural, other {#개 실패}}"
-
 #: src/components/settings-fleet-peers.tsx
 msgid "{from} still lists an older {name}. Remove that entry on {from}."
 msgstr "{from}에 이전 {name} 항목이 아직 남아 있습니다. {from}에서 그 항목을 삭제하세요"
@@ -401,10 +403,6 @@ msgstr "{remaining} 남음"
 msgid "{removeLabel}: {label}"
 msgstr "{removeLabel}: {label}"
 
-#: src/components/home-computer-deck.tsx
-msgid "{running, plural, one {# running} other {# running}}"
-msgstr "{running, plural, other {#개 실행 중}}"
-
 #. placeholder {0}: shells.length
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
@@ -423,10 +421,6 @@ msgstr "{total, plural, other {하위 작업 #개}}"
 #: src/components/task-row.tsx
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, other {하위 작업 #개}} ({waiting, plural, other {#개 대기 중}})"
-
-#: src/components/home-computer-deck.tsx
-msgid "{waiting, plural, one {# needs you} other {# need you}}"
-msgstr "{waiting, plural, other {#개 확인 필요}}"
 
 #: src/components/task-row.tsx
 msgid "→ {name}"
@@ -1050,6 +1044,10 @@ msgstr "브랜치 또는 커밋 (선택 사항)"
 msgid "Branch to start from"
 msgstr "시작점으로 삼을 브랜치"
 
+#: src/components/dev-icon-gallery.tsx
+msgid "Brand marks and working indicator"
+msgstr "브랜드 마크와 작업 표시기"
+
 #. placeholder {0}: server.label
 #: src/components/home-computer-deck.tsx
 msgid "Bring {0} to the front"
@@ -1379,6 +1377,10 @@ msgstr "효과 닫기"
 #: src/components/asset-viewer.tsx
 msgid "Close file"
 msgstr "파일 닫기"
+
+#: src/components/dev-icon-gallery.tsx
+msgid "Close icon preview"
+msgstr "아이콘 미리보기 닫기"
 
 #: src/components/home-recent-sessions.tsx
 #: src/components/task-row.tsx
@@ -2119,6 +2121,7 @@ msgstr "이 PDF를 열 수 없습니다"
 
 #: src/components/asset-viewer.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/components/theme-fence-preview.tsx
 msgid "Could not open this theme."
 msgstr "이 테마를 열 수 없습니다"
 
@@ -3224,6 +3227,14 @@ msgstr "호스트 키 신뢰됨"
 msgid "How to use Muqun"
 msgstr "Muqun 사용법"
 
+#: src/components/dev-icon-gallery.tsx
+msgid "Icon preview"
+msgstr "아이콘 미리보기"
+
+#: src/components/dev-icon-gallery.tsx
+msgid "Icons"
+msgstr "아이콘"
+
 #: src/components/agent-session-tree-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
@@ -3749,6 +3760,10 @@ msgstr "완료로 표시"
 msgid "Mark reviewed"
 msgstr "확인 완료로 표시"
 
+#: src/components/dev-icon-gallery.tsx
+msgid "Marks keep their original geometry and stroke."
+msgstr "마크는 원래 형태와 선 굵기를 유지합니다."
+
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "마스코트"
@@ -4119,6 +4134,10 @@ msgstr "더 이상 {computer}와(과) 연결되어 있지 않습니다"
 #: src/app/commands.tsx
 msgid "No matching commands. Try another word."
 msgstr "일치하는 명령이 없습니다. 다른 단어로 검색하세요"
+
+#: src/components/dev-icon-gallery.tsx
+msgid "No matching icons"
+msgstr "일치하는 아이콘 없음"
 
 #: src/components/home-recent-sessions.tsx
 msgid "No matching sessions"
@@ -4498,6 +4517,10 @@ msgstr "파일 목록 열기"
 #: src/components/git-diff-button.tsx
 msgid "Open Git"
 msgstr "Git 열기"
+
+#: src/components/dev-icon-gallery.tsx
+msgid "Open icon preview"
+msgstr "아이콘 미리보기 열기"
 
 #: src/components/agent-tool-card.tsx
 msgid "Open image"
@@ -4913,6 +4936,18 @@ msgstr "미리 보고 적용"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "먼저 미리 보세요. 현재 테마는 변경되지 않습니다"
+
+#: src/components/agent-tool-card.tsx
+#: src/components/theme-fence-preview.tsx
+msgid "Preview theme"
+msgstr "테마 미리보기"
+
+#. placeholder {0}: basename(themeFile)
+#. placeholder {0}: manifest.name
+#: src/components/agent-tool-card.tsx
+#: src/components/theme-fence-preview.tsx
+msgid "Preview theme {0}"
+msgstr "{0} 테마 미리보기"
 
 #: src/components/home-computer-deck.tsx
 msgid "Previous computer"
@@ -5688,6 +5723,10 @@ msgstr "이름 또는 태그로 검색"
 msgid "Search files"
 msgstr "파일 검색"
 
+#: src/components/dev-icon-gallery.tsx
+msgid "Search icons"
+msgstr "아이콘 검색"
+
 #: src/components/agent-model-sheet.tsx
 msgid "Search models"
 msgstr "모델 검색"
@@ -6073,6 +6112,7 @@ msgstr "시뮬레이터 컨트롤"
 
 #: src/components/asset-viewer.tsx
 #: src/components/dev-home-ambient-controls.tsx
+#: src/components/dev-icon-gallery.tsx
 msgid "Size"
 msgstr "크기"
 
@@ -6342,6 +6382,10 @@ msgstr "저장 공간"
 msgid "Streams speech while you talk. Requires an OpenAI Realtime-compatible transcription endpoint."
 msgstr "말하는 동안 음성을 스트리밍합니다. OpenAI Realtime과 호환되는 음성 텍스트 변환 엔드포인트가 필요합니다"
 
+#: src/components/dev-icon-gallery.tsx
+msgid "Stroke width"
+msgstr "선 굵기"
+
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/demo-streaming-transcript.tsx
@@ -6509,6 +6553,7 @@ msgstr "작업 설정"
 #: src/components/agent-composer.tsx
 #: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-todo-block.tsx
+#: src/components/home-computer-cards.tsx
 #: src/components/server-tasks-sheet.tsx
 #: src/components/task-result-sheet.tsx
 msgid "Tasks"

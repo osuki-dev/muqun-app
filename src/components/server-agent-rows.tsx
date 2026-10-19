@@ -6,7 +6,7 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, Text } from '@osuki-dev/ui';
 import { ThemeIcon } from '@/components/theme-icon';
-import { Bot, ChevronRight, SquareTerminal } from 'lucide-react-native';
+import { AgentIcon, NextIcon, TerminalWindowIcon } from '@/icons';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useState } from 'react';
@@ -205,9 +205,9 @@ export function ServerAgentRows({
             onPress={() => onOpenAgent(agent)}>
             <View style={styles.kindIcon} accessible={false} pointerEvents="none">
               {agent.hasAgent ? (
-                <Bot size={16} color={theme.colors.primary} strokeWidth={2} />
+                <AgentIcon size={16} color={theme.colors.primary} />
               ) : (
-                <SquareTerminal size={16} color={theme.colors.textMuted} strokeWidth={2} />
+                <TerminalWindowIcon size={16} color={theme.colors.textMuted} />
               )}
             </View>
             <View style={styles.nameColumn}>
@@ -327,10 +327,9 @@ function AgentRow({
         <Animated.View style={chevronStyle}>
           <ThemeIcon
             name="home.arrow"
-            fallback={ChevronRight}
+            fallback={NextIcon}
             size={15}
             color={selected ? theme.colors.primary : theme.colors.textMuted}
-            strokeWidth={2}
           />
         </Animated.View>
       </Pressable>

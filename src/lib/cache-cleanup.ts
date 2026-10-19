@@ -1,5 +1,4 @@
 import { nativeImageCache } from './native-image-cache';
-import { Paths } from 'expo-file-system';
 import { cacheDirectory, deleteAsync, readDirectoryAsync } from 'expo-file-system/legacy';
 import { AppState } from 'react-native';
 import {
@@ -17,19 +16,21 @@ export const CACHE_PROCESS_STARTED_AT = Date.now();
 /** Recover media copies left behind when the previous process was killed. */
 export async function cleanupPreviousMediaCache(): Promise<void> {
   try {
-    const root = Paths.cache;
-    const items = root.list().filter((item) => temporaryMediaCreatedAt(item.name) !== null);
+    const root = cacheDirectory;
+    if (!root) return;
+    // Startup shares the asynchronous native IO path with manual cleanup.
+    // Wrapping Directory.list/delete in an async function still blocks JS.
+    const names = (await readDirectoryAsync(root)).filter(
+      (name) => temporaryMediaCreatedAt(name) !== null
+    );
     const plan = planCacheDeletions(
-      items.map((item) => ({ name: item.name, uri: item.uri, bytes: 0 })),
-      root.uri,
+      names.map((name) => ({ name, uri: root + name, bytes: 0 })),
+      root,
       CACHE_PROCESS_STARTED_AT
     );
-    const allowed = new Set(plan.map((item) => item.uri));
-    for (const item of items) {
-      if (!allowed.has(item.uri)) continue;
-      await new Promise<void>((resolve) => requestIdleCallback(() => resolve(), { timeout: 100 }));
+    for (const entry of plan) {
       try {
-        if (item.exists) item.delete();
+        await deleteAsync(entry.uri, { idempotent: true });
       } catch {
         // A locked file is retried by Clear cache or on the next launch.
       }

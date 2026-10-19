@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
-import { Bot, Check, Compass, Sparkles } from 'lucide-react-native';
+import { AgentIcon, DoneIcon, ExploreIcon, SuggestedIcon } from '@/icons';
 import Animated from 'react-native-reanimated';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -21,11 +21,11 @@ export interface AgentModeMenuProps {
 function renderAgentIcon(id: string, color: string) {
   switch (id) {
     case 'explore':
-      return <Compass size={17} color={color} />;
+      return <ExploreIcon size={17} color={color} />;
     case 'general':
-      return <Bot size={17} color={color} />;
+      return <AgentIcon size={17} color={color} />;
     default:
-      return <Sparkles size={17} color={color} />;
+      return <SuggestedIcon size={17} color={color} />;
   }
 }
 
@@ -80,7 +80,7 @@ export const AgentModeMenu = memo(function AgentModeMenu({
                 ) : null}
               </View>
             </View>
-            {isSelected ? <Check size={16} color={theme.colors.primary} strokeWidth={2.5} /> : null}
+            {isSelected ? <DoneIcon size={16} color={theme.colors.primary} /> : null}
           </PressableScale>
         );
       })}

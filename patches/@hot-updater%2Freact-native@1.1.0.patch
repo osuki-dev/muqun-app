@@ -1,0 +1,13 @@
+diff --git a/android/src/main/java/com/hotupdater/HotUpdaterRecoveryAttribution.kt b/android/src/main/java/com/hotupdater/HotUpdaterRecoveryAttribution.kt
+index 72c538c7d7e141287c3ce101f37367e049f6f2e4..79dc90839019681c8d8bb96a95bf4008aba7bdd1 100644
+--- a/android/src/main/java/com/hotupdater/HotUpdaterRecoveryAttribution.kt
++++ b/android/src/main/java/com/hotupdater/HotUpdaterRecoveryAttribution.kt
+@@ -60,7 +60,7 @@ internal class HotUpdaterRecoveryAttribution(
+             } else {
+                 rootViewsIn(decorView).map { rootView ->
+                     val runtime = runCatching { rootView.currentReactContext }.getOrNull()
+-                    HotUpdaterDecorRoots.Root(rootView.rootViewTag, runCatching { runtime?.sourceURL }.getOrNull(), runtime)
++                    HotUpdaterDecorRoots.Root(rootView.getRootViewTag(), runCatching { runtime?.sourceURL }.getOrNull(), runtime)
+                 }
+             }
+         }

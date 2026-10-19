@@ -4,13 +4,13 @@ import { View, StyleSheet, Pressable } from 'react-native';
 import { useThemeTokens, Text } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
-  CheckSquare,
-  CheckCircle2,
-  Circle,
-  Clock,
-  ChevronDown,
-  ChevronRight,
-} from 'lucide-react-native';
+  TaskIcon,
+  CompletedIcon,
+  PendingIcon,
+  TimeIcon,
+  DisclosureDownIcon,
+  NextIcon,
+} from '@/icons';
 import Animated from 'react-native-reanimated';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useCompactMarkdownStyle } from '@/hooks/use-markdown-style';
@@ -82,7 +82,7 @@ export const AgentTodoBlock = memo(function AgentTodoBlock({
         style={({ pressed }) => [styles.header, pressed && { opacity: 0.7 }]}>
         <View style={styles.headerLeft}>
           <View style={styles.marker}>
-            <CheckSquare
+            <TaskIcon
               size={14}
               color={allCompleted ? theme.colors.success : theme.colors.primary}
             />
@@ -112,9 +112,9 @@ export const AgentTodoBlock = memo(function AgentTodoBlock({
 
         <View style={styles.headerRight}>
           {expanded ? (
-            <ChevronDown size={14} color={theme.colors.textMuted} />
+            <DisclosureDownIcon size={14} color={theme.colors.textMuted} />
           ) : (
-            <ChevronRight size={14} color={theme.colors.textMuted} />
+            <NextIcon size={14} color={theme.colors.textMuted} />
           )}
         </View>
       </Pressable>
@@ -145,11 +145,11 @@ export const AgentTodoBlock = memo(function AgentTodoBlock({
               <View key={item.text} style={styles.itemRow}>
                 <View style={styles.itemIcon}>
                   {isCompleted ? (
-                    <CheckCircle2 size={14} color={theme.colors.success} strokeWidth={2.2} />
+                    <CompletedIcon size={14} color={theme.colors.success} />
                   ) : isInProgress ? (
-                    <Clock size={14} color={theme.colors.primary} strokeWidth={2.2} />
+                    <TimeIcon size={14} color={theme.colors.primary} />
                   ) : (
-                    <Circle size={13} color={theme.colors.textMuted} strokeWidth={1.8} />
+                    <PendingIcon size={13} color={theme.colors.textMuted} />
                   )}
                 </View>
 

@@ -10,7 +10,7 @@ import Animated, {
   withRepeat,
   withTiming,
 } from 'react-native-reanimated';
-import { AlertCircle, ChevronDown, Layers, Loader, X } from 'lucide-react-native';
+import { NoticeIcon, DisclosureDownIcon, StackIcon, LoadingIcon, CloseIcon } from '@/icons';
 import { useLingui } from '@lingui/react/macro';
 import * as Clipboard from 'expo-clipboard';
 import { useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
@@ -111,11 +111,11 @@ export function CompactionPill({
             style={styles.pill}>
             <Animated.View style={pulseStyle} accessible={false}>
               {failed ? (
-                <AlertCircle size={12} color={theme.colors.danger} />
+                <NoticeIcon size={12} color={theme.colors.danger} />
               ) : running ? (
-                <Loader size={12} color={theme.colors.primary} />
+                <LoadingIcon size={12} color={theme.colors.primary} />
               ) : (
-                <Layers size={12} color={theme.colors.textMuted} />
+                <StackIcon size={12} color={theme.colors.textMuted} />
               )}
             </Animated.View>
             <Text
@@ -126,7 +126,7 @@ export function CompactionPill({
               {label}
             </Text>
             {hasSummary ? (
-              <ChevronDown
+              <DisclosureDownIcon
                 size={12}
                 color={theme.colors.textMuted}
                 style={{ transform: [{ rotate: expanded ? '180deg' : '0deg' }] }}
@@ -141,7 +141,7 @@ export function CompactionPill({
               accessibilityLabel={t`Dismiss`}
               onPress={onDismiss}
               style={styles.action}>
-              <X size={14} color={theme.colors.textMuted} />
+              <CloseIcon size={14} color={theme.colors.textMuted} />
             </PressableScale>
           ) : null}
         </View>

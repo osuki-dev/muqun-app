@@ -1,7 +1,7 @@
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useThemeMode, useThemeTokens, SurfaceDecoration, Text } from '@osuki-dev/ui';
 import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
-import { ChevronLeft, ChevronRight, ScanLine, Settings, SquareTerminal } from 'lucide-react-native';
+import { PreviousIcon, NextIcon, PairScanIcon, SettingsIcon, TerminalWindowIcon } from '@/icons';
 import { useEffect, useState } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -197,11 +197,11 @@ export function PadServerRail({
               paddingTop: profile.rail.actionsPaddingTop,
             },
           ]}>
-          <RailGlyphAction label={t`Pair a computer`} icon={ScanLine} onPress={onPairServer} />
+          <RailGlyphAction label={t`Pair a computer`} icon={PairScanIcon} onPress={onPairServer} />
           {onOpenSsh ? (
-            <RailGlyphAction label={t`SSH`} icon={SquareTerminal} onPress={onOpenSsh} />
+            <RailGlyphAction label={t`SSH`} icon={TerminalWindowIcon} onPress={onOpenSsh} />
           ) : null}
-          <RailGlyphAction label={t`Settings`} icon={Settings} onPress={onOpenSettings} />
+          <RailGlyphAction label={t`Settings`} icon={SettingsIcon} onPress={onOpenSettings} />
         </View>
       ) : (
         <View
@@ -216,21 +216,21 @@ export function PadServerRail({
           <RailAction
             label={t`Pair a computer`}
             detail={t`Scan a gateway QR`}
-            icon={ScanLine}
+            icon={PairScanIcon}
             onPress={onPairServer}
           />
           {onOpenSsh ? (
             <RailAction
               label={t`SSH`}
               detail={t`A shell on any machine with sshd`}
-              icon={SquareTerminal}
+              icon={TerminalWindowIcon}
               onPress={onOpenSsh}
             />
           ) : null}
           <RailAction
             label={t`Settings`}
             detail={t`Appearance, terminal, security`}
-            icon={Settings}
+            icon={SettingsIcon}
             onPress={onOpenSettings}
           />
         </View>
@@ -343,7 +343,7 @@ function PadRailHeader({ onBack, testID }: { onBack: () => void; testID: string 
             ),
           },
         ]}>
-        <ChevronLeft size={20} color={theme.colors.text} strokeWidth={2} />
+        <PreviousIcon size={20} color={theme.colors.text} />
         <Text variant="bodySmall" color={theme.colors.text}>
           <Trans>Back</Trans>
         </Text>
@@ -365,7 +365,7 @@ function RailGlyphAction({
   onPress,
 }: {
   label: string;
-  icon: typeof ScanLine;
+  icon: typeof PairScanIcon;
   onPress: () => void;
 }) {
   const profile = useAppearanceProfile();
@@ -385,7 +385,7 @@ function RailGlyphAction({
           ),
         },
       ]}>
-      <Icon size={18} color={theme.colors.textMuted} strokeWidth={2} />
+      <Icon size={18} color={theme.colors.textMuted} />
     </Pressable>
   );
 }
@@ -398,7 +398,7 @@ function RailAction({
 }: {
   label: string;
   detail: string;
-  icon: typeof ScanLine;
+  icon: typeof PairScanIcon;
   onPress: () => void;
 }) {
   const profile = useAppearanceProfile();
@@ -420,7 +420,7 @@ function RailAction({
           { backgroundColor: background(theme.colors.background) },
           { borderRadius: profile.rail.itemIconRadius },
         ]}>
-        <Icon size={18} color={theme.colors.textMuted} strokeWidth={2} />
+        <Icon size={18} color={theme.colors.textMuted} />
       </View>
       <View style={styles.actionCopy}>
         <Text variant="bodySmall" numberOfLines={1}>
@@ -430,7 +430,7 @@ function RailAction({
           {detail}
         </Text>
       </View>
-      <ChevronRight size={16} color={theme.colors.textMuted} />
+      <NextIcon size={16} color={theme.colors.textMuted} />
     </Pressable>
   );
 }

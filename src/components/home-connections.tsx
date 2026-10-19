@@ -1,7 +1,7 @@
 import { useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
-import { ChevronRight, Monitor, SquareTerminal } from 'lucide-react-native';
+import { NextIcon, ComputerIcon, TerminalWindowIcon } from '@/icons';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -90,7 +90,7 @@ export function HomeConnections({
                   backgroundColor: background(theme.colors.surface),
                 },
               ]}>
-              <SquareTerminal size={21} color={theme.colors.primary} />
+              <TerminalWindowIcon size={21} color={theme.colors.primary} />
               <View style={styles.copy}>
                 <Text weight="semibold" variant="bodySmall" numberOfLines={2}>
                   {host.label}
@@ -101,7 +101,7 @@ export function HomeConnections({
               </View>
               <ThemeIcon
                 name="home.arrow"
-                fallback={ChevronRight}
+                fallback={NextIcon}
                 size={16}
                 color={theme.colors.textMuted}
               />
@@ -130,12 +130,7 @@ export function HomeConnections({
           <Text variant="bodySmall" color={theme.colors.primary}>
             {t`Manage connections`}
           </Text>
-          <ThemeIcon
-            name="home.arrow"
-            fallback={ChevronRight}
-            size={16}
-            color={theme.colors.primary}
-          />
+          <ThemeIcon name="home.arrow" fallback={NextIcon} size={16} color={theme.colors.primary} />
         </PressableScale>
       </View>
     </View>
@@ -213,7 +208,7 @@ function GatewayConnectionRow({
           backgroundColor: background(theme.colors.surface),
         },
       ]}>
-      <Monitor size={21} color={theme.colors.primary} />
+      <ComputerIcon size={21} color={theme.colors.primary} />
       <View style={styles.copy}>
         <Text weight="semibold" variant="bodySmall" numberOfLines={2}>
           {server.label}
@@ -228,12 +223,7 @@ function GatewayConnectionRow({
         ) : null}
         <GatewayTasksPill serverId={server.serverId} />
       </View>
-      <ThemeIcon
-        name="home.arrow"
-        fallback={ChevronRight}
-        size={16}
-        color={theme.colors.textMuted}
-      />
+      <ThemeIcon name="home.arrow" fallback={NextIcon} size={16} color={theme.colors.textMuted} />
     </PressableScale>
   );
 }

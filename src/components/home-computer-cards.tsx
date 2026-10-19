@@ -1,7 +1,7 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
-import { Monitor } from 'lucide-react-native';
+import { OpenIcon, ComputerIcon } from '@/icons';
 import { useEffect, useLayoutEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
@@ -23,6 +23,8 @@ import { StatusDot } from '@/components/status-dot';
 import { SentTaskRow, TaskRow } from '@/components/task-row';
 import { useFrozenValue } from '@/hooks/use-frozen-value';
 import { useServerTasks } from '@/hooks/use-server-tasks';
+import { useStableHandler } from '@/hooks/use-render-refs';
+import { useStructuralValue } from '@/hooks/use-structural-value';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { connectionStatusDescription, connectionStatusLabel } from '@/i18n/labels';
 import type { GatewayRecord } from '@/lib/gateway-storage';
@@ -288,9 +290,29 @@ export function HomeComputerCards({
     held,
     null
   );
-  const cards = heldCardOrder(shownIds, sorted);
+  // Kept by contents: a probe or a ledger ticking for something no card shows
+  // rebuilds these, and must not re-render the deck and its cards.
+  const cards = useStructuralValue(heldCardOrder(shownIds, sorted));
+  const followed = useStructuralValue(followedIds);
+  const signatures = useStructuralValue(
+    Object.fromEntries(
+      cards.map((card) => [
+        card.serverId,
+        cardSignature(
+          card,
+          followed.includes(card.serverId),
+          statuses[card.serverId] ?? 'unknown',
+          i18n.locale
+        ),
+      ])
+    )
+  );
+  // Called on a press, never while rendering: one identity, the newest handler.
+  const selectServer = useStableHandler(onSelectServer);
+  const openTask = useStableHandler(onOpenTask);
+  const openHistory = useStableHandler((serverId: string) => onOpenHistory?.(serverId));
+  const hasHistory = onOpenHistory !== undefined;
   const grid = gridWidth !== undefined && padCardColumns(gridWidth, cards.length) === 2;
-  const tickMs = nowMs;
   const renderCard = (
     card: ComputerCard,
     deckActions?: DeckCardActions,
@@ -302,16 +324,15 @@ export function HomeComputerCards({
       <ComputerCardView
         card={card}
         server={server}
-        followed={followedIds.includes(card.serverId)}
+        followed={followed.includes(card.serverId)}
         activeConnection={activeConnection}
-        nowMs={tickMs}
         deckActions={deckActions}
         deckLayout={deckLayout}
-        onSelect={() => onSelectServer(card.serverId)}
+        onSelect={() => selectServer(card.serverId)}
         onOpenTask={(task, tree) =>
-          onOpenTask({ serverId: card.serverId, task, ...(tree ? { tree } : {}) })
+          openTask({ serverId: card.serverId, task, ...(tree ? { tree } : {}) })
         }
-        onOpenHistory={onOpenHistory ? () => onOpenHistory(card.serverId) : undefined}
+        onOpenHistory={hasHistory ? () => openHistory(card.serverId) : undefined}
       />
     );
   };
@@ -323,19 +344,9 @@ export function HomeComputerCards({
             cards={cards}
             servers={servers}
             activeConnection={activeConnection}
-            onSelectServer={onSelectServer}
+            onSelectServer={selectServer}
             renderCard={renderCard}
-            signatures={Object.fromEntries(
-              cards.map((card) => [
-                card.serverId,
-                cardSignature(
-                  card,
-                  followedIds.includes(card.serverId),
-                  statuses[card.serverId] ?? 'unknown',
-                  i18n.locale
-                ),
-              ])
-            )}
+            signatures={signatures}
           />
         </View>
       </LayoutAnimationConfig>
@@ -366,7 +377,6 @@ function ComputerCardView({
   server,
   followed,
   activeConnection,
-  nowMs,
   deckActions,
   deckLayout,
   onSelect,
@@ -377,7 +387,6 @@ function ComputerCardView({
   server: GatewayRecord;
   followed: boolean;
   activeConnection?: ActiveServerConnection;
-  nowMs: number;
   /** In the sheaf, the header also moves to the next or previous computer. */
   deckActions?: DeckCardActions;
   /** In the sheaf, every card is as tall as the tallest; this one reports its own height. */
@@ -387,6 +396,9 @@ function ComputerCardView({
   onOpenHistory?: () => void;
 }) {
   const { t } = useLingui();
+  // Its own clock, the one the section reads: ages move in the card, not by
+  // re-rendering the deck around it.
+  const nowMs = useMinuteNow(useServerReachability((state) => state.freshnessNowMs));
   // Open work is shown up to the usual limit and finished work shows three
   // rows. There is no fold under the card: the rest of the computer's work is
   // one tap away in its tasks list, which the header opens.
@@ -446,6 +458,42 @@ function ComputerCardView({
       onOpenTree={(task) => onOpenTask(task, true)}
     />
   );
+  const cardHeader = (
+    <PressableScale
+      testID={`home-card-header-${server.serverId}`}
+      accessibilityRole="button"
+      accessibilityLabel={`${server.label}, ${_(connectionStatusDescription[status])}`}
+      accessibilityHint={onOpenHistory ? t`Opens its tasks.` : t`Sends your next goal here.`}
+      onPress={onOpenHistory ?? onSelect}
+      accessibilityActions={deckActions?.accessibilityActions}
+      onAccessibilityAction={deckActions?.onAccessibilityAction}
+      style={[styles.header, deckLayout ? styles.historyLink : null]}>
+      {deckLayout ? null : <ComputerIcon size={18} color={theme.colors.primary} />}
+      <View style={[styles.headerCopy, styles.fill]}>
+        <Text variant="bodySmall" weight="medium" numberOfLines={1}>
+          {deckLayout ? t`Tasks` : server.label}
+        </Text>
+        {statusColor ? (
+          <View style={styles.statusLine}>
+            {/* No ripple: every card rippling forever keeps Home's UI thread busy. */}
+            <StatusDot color={statusColor} filled pulse={false} />
+            <Text variant="caption" color={statusColor} numberOfLines={1}>
+              {_(connectionStatusLabel[status])}
+            </Text>
+          </View>
+        ) : null}
+      </View>
+      {/* The caption sits in the header's spare right half, so it never
+            takes a line of its own and nothing below it moves when it fades. */}
+      {cachedCaption !== 'none' ? (
+        <LastKnownActivityCaption
+          shown={cachedCaption === 'shown'}
+          testID={`home-card-cached-${server.serverId}`}
+        />
+      ) : null}
+      {deckLayout ? <OpenIcon size={16} color={theme.colors.primary} /> : null}
+    </PressableScale>
+  );
   return (
     <View
       testID={`home-card-${server.serverId}`}
@@ -455,6 +503,7 @@ function ComputerCardView({
         {
           backgroundColor: background(theme.colors.surface),
           borderRadius: profile.chrome.surface,
+          borderTopLeftRadius: deckLayout ? 0 : profile.chrome.surface,
           minHeight: deckLayout?.minHeight,
         },
       ]}>
@@ -465,39 +514,7 @@ function ComputerCardView({
                 deckLayout.onContentHeight(event.nativeEvent.layout.height + CARD_PADDING_TOP)
             : undefined
         }>
-        <PressableScale
-          testID={`home-card-header-${server.serverId}`}
-          accessibilityRole="button"
-          accessibilityLabel={`${server.label}, ${_(connectionStatusDescription[status])}`}
-          accessibilityHint={onOpenHistory ? t`Opens its tasks.` : t`Sends your next goal here.`}
-          onPress={onOpenHistory ?? onSelect}
-          accessibilityActions={deckActions?.accessibilityActions}
-          onAccessibilityAction={deckActions?.onAccessibilityAction}
-          style={styles.header}>
-          <Monitor size={18} color={theme.colors.primary} />
-          <View style={[styles.headerCopy, styles.fill]}>
-            <Text variant="bodySmall" weight="semibold" numberOfLines={1}>
-              {server.label}
-            </Text>
-            {statusColor ? (
-              <View style={styles.statusLine}>
-                {/* No ripple: every card rippling forever keeps Home's UI thread busy. */}
-                <StatusDot color={statusColor} filled pulse={false} />
-                <Text variant="caption" color={statusColor} numberOfLines={1}>
-                  {_(connectionStatusLabel[status])}
-                </Text>
-              </View>
-            ) : null}
-          </View>
-          {/* The caption sits in the header's spare right half, so it never
-            takes a line of its own and nothing below it moves when it fades. */}
-          {cachedCaption !== 'none' ? (
-            <LastKnownActivityCaption
-              shown={cachedCaption === 'shown'}
-              testID={`home-card-cached-${server.serverId}`}
-            />
-          ) : null}
-        </PressableScale>
+        {deckLayout ? null : cardHeader}
         <PairAgainNotice
           testID={`home-card-pair-again-${server.serverId}`}
           status={status}
@@ -541,6 +558,7 @@ function ComputerCardView({
             </Text>
           </View>
         )}
+        {deckLayout ? cardHeader : null}
       </View>
     </View>
   );
@@ -639,6 +657,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
+  historyLink: { paddingBottom: 4 },
   headerCopy: { flexShrink: 1, minWidth: 0, gap: 2 },
   statusLine: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   block: { gap: 4, paddingBottom: 8 },

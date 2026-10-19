@@ -20,21 +20,21 @@ import { Spinner, useThemeTokens, useToast, PressableScale, Text } from '@osuki-
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
-  ArrowLeft,
-  Check,
-  CheckSquare,
-  ChevronDown,
-  Cpu,
-  GitCompare,
-  GitFork,
-  Inbox,
-  Layers,
-  Terminal,
-  Square,
-  Trash2,
-  X,
-  Zap,
-} from 'lucide-react-native';
+  BackIcon,
+  DoneIcon,
+  TaskIcon,
+  DisclosureDownIcon,
+  ProcessorIcon,
+  CompareIcon,
+  ForkIcon,
+  InboxIcon,
+  StackIcon,
+  TerminalIcon,
+  StopIcon,
+  DeleteIcon,
+  CloseIcon,
+  QuickActionIcon,
+} from '@/icons';
 import * as Haptics from 'expo-haptics';
 import Animated, {
   useAnimatedStyle,
@@ -190,7 +190,7 @@ function TreeMark({
         : color;
   return (
     <Animated.View testID={testID} style={style}>
-      <GitFork size={13} color={tone} />
+      <ForkIcon size={13} color={tone} />
     </Animated.View>
   );
 }
@@ -1328,7 +1328,7 @@ export const AgentComposer = memo(function AgentComposer({
         items.push({
           id: 'steer',
           label: t`Send now`,
-          Icon: Zap,
+          Icon: QuickActionIcon,
           onPress: () => {
             setInboxMenuId(null);
             onSetInboxDelivery(item.id, 'steer');
@@ -1340,7 +1340,7 @@ export const AgentComposer = memo(function AgentComposer({
         items.push({
           id: 'queue',
           label: t`Queue`,
-          Icon: Inbox,
+          Icon: InboxIcon,
           onPress: () => {
             setInboxMenuId(null);
             onSetInboxDelivery(item.id, 'queue');
@@ -1352,7 +1352,7 @@ export const AgentComposer = memo(function AgentComposer({
         items.push({
           id: 'cancel',
           label: t`Cancel`,
-          Icon: Trash2,
+          Icon: DeleteIcon,
           tone: 'danger',
           onPress: () => {
             setInboxMenuId(null);
@@ -1651,7 +1651,7 @@ export const AgentComposer = memo(function AgentComposer({
                         backgroundColor: surfaceBackground(withAlpha(theme.colors.text, 0.05)),
                       },
                     ]}>
-                    <Inbox size={13} color={theme.colors.primary} />
+                    <InboxIcon size={13} color={theme.colors.primary} />
                     <Text
                       variant="caption"
                       numberOfLines={2}
@@ -1856,7 +1856,7 @@ export const AgentComposer = memo(function AgentComposer({
                         backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
                       },
                     ]}>
-                    <ArrowLeft size={13} color={theme.colors.primary} />
+                    <BackIcon size={13} color={theme.colors.primary} />
                   </PressableScale>
                 ) : null}
                 {sessionStrip.map((node) => (
@@ -1908,7 +1908,7 @@ export const AgentComposer = memo(function AgentComposer({
                       color={modeMenuOpen ? theme.colors.primary : theme.colors.textSubtle}>
                       {modeLabel(selectedAgent ?? 'build')}
                     </Text>
-                    <ChevronDown size={QUIET_CHEVRON} color={theme.colors.textSubtle} />
+                    <DisclosureDownIcon size={QUIET_CHEVRON} color={theme.colors.textSubtle} />
                   </TextSegment>
                 ) : null}
                 {segmentModel ? (
@@ -1921,7 +1921,7 @@ export const AgentComposer = memo(function AgentComposer({
                     <Text variant="caption" numberOfLines={1} color={theme.colors.textSubtle}>
                       {segmentMode ? `· ${modelDisplayName}` : modelDisplayName}
                     </Text>
-                    <ChevronDown size={QUIET_CHEVRON} color={theme.colors.textSubtle} />
+                    <DisclosureDownIcon size={QUIET_CHEVRON} color={theme.colors.textSubtle} />
                   </TextSegment>
                 ) : null}
               </View>
@@ -1944,7 +1944,7 @@ export const AgentComposer = memo(function AgentComposer({
                         { borderRadius: profile.chrome.roundControl },
                         { backgroundColor: surfaceBackground(chromeGlass) },
                       ]}>
-                      <Layers size={16} color={chromeText} />
+                      <StackIcon size={16} color={chromeText} />
                     </PressableScale>
                   ) : null}
 
@@ -1972,7 +1972,7 @@ export const AgentComposer = memo(function AgentComposer({
                         style={styles.actionBtnLabel}>
                         {modeLabel(selectedAgent ?? 'build')}
                       </Text>
-                      <ChevronDown size={12} color={theme.colors.textMuted} />
+                      <DisclosureDownIcon size={12} color={theme.colors.textMuted} />
                     </PressableScale>
                   ) : null}
 
@@ -1994,7 +1994,7 @@ export const AgentComposer = memo(function AgentComposer({
                         style={styles.actionBtnLabel}>
                         {modelDisplayName}
                       </Text>
-                      <ChevronDown size={12} color={theme.colors.textMuted} />
+                      <DisclosureDownIcon size={12} color={theme.colors.textMuted} />
                     </PressableScale>
                   ) : null}
 
@@ -2013,7 +2013,7 @@ export const AgentComposer = memo(function AgentComposer({
                           backgroundColor: surfaceBackground(withAlpha(theme.colors.primary, 0.18)),
                         },
                       ]}>
-                      <Inbox size={13} color={theme.colors.primary} />
+                      <InboxIcon size={13} color={theme.colors.primary} />
                       <Text
                         variant="caption"
                         weight="bold"
@@ -2038,7 +2038,7 @@ export const AgentComposer = memo(function AgentComposer({
                           backgroundColor: surfaceBackground(withAlpha(theme.colors.warning, 0.18)),
                         },
                       ]}>
-                      <Terminal size={13} color={theme.colors.warning} />
+                      <TerminalIcon size={13} color={theme.colors.warning} />
                       <Text
                         variant="caption"
                         weight="bold"
@@ -2061,7 +2061,7 @@ export const AgentComposer = memo(function AgentComposer({
                         { borderRadius: profile.chrome.roundControl },
                         { backgroundColor: surfaceBackground(chromeGlass) },
                       ]}>
-                      <CheckSquare
+                      <TaskIcon
                         size={14}
                         color={
                           tasks && tasks.length > 0 && tasks.every((t) => t.done)
@@ -2077,7 +2077,7 @@ export const AgentComposer = memo(function AgentComposer({
                           ? t`Tasks (${tasks.filter((t) => t.done).length}/${tasks.length})`
                           : t`Tasks`}
                       </Text>
-                      <ChevronDown size={12} color={theme.colors.textMuted} />
+                      <DisclosureDownIcon size={12} color={theme.colors.textMuted} />
                     </PressableScale>
                   ) : null}
 
@@ -2111,7 +2111,7 @@ export const AgentComposer = memo(function AgentComposer({
                       ]}>
                       {deliveryMode === 'steer' ? (
                         <>
-                          <Zap size={13} color={theme.colors.warning} />
+                          <QuickActionIcon size={13} color={theme.colors.warning} />
                           <Text
                             variant="caption"
                             weight="bold"
@@ -2122,7 +2122,7 @@ export const AgentComposer = memo(function AgentComposer({
                         </>
                       ) : (
                         <>
-                          <Inbox size={13} color={theme.colors.primary} />
+                          <InboxIcon size={13} color={theme.colors.primary} />
                           <Text
                             variant="caption"
                             weight="bold"
@@ -2161,7 +2161,7 @@ export const AgentComposer = memo(function AgentComposer({
                         { borderRadius: profile.chrome.roundControl },
                         { backgroundColor: surfaceBackground(chromeGlass) },
                       ]}>
-                      <Cpu size={13} color={chromeText} />
+                      <ProcessorIcon size={13} color={chromeText} />
                       <Text
                         variant="caption"
                         color={theme.colors.textMuted}
@@ -2191,7 +2191,7 @@ export const AgentComposer = memo(function AgentComposer({
                           />
                         </View>
                       ) : null}
-                      <ChevronDown size={12} color={theme.colors.textMuted} />
+                      <DisclosureDownIcon size={12} color={theme.colors.textMuted} />
                     </PressableScale>
                   ) : null}
 
@@ -2208,7 +2208,7 @@ export const AgentComposer = memo(function AgentComposer({
                           backgroundColor: withAlpha(theme.colors.primary, 0.18),
                         },
                       ]}>
-                      <GitCompare size={15} color={theme.colors.primary} />
+                      <CompareIcon size={15} color={theme.colors.primary} />
                       <View
                         style={[styles.diffIndicator, { backgroundColor: theme.colors.primary }]}
                       />
@@ -2226,7 +2226,7 @@ export const AgentComposer = memo(function AgentComposer({
                         styles.stopActionBtn,
                         { backgroundColor: theme.colors.danger },
                       ]}>
-                      <Square size={12} color={theme.colors.onPrimary} />
+                      <StopIcon size={12} color={theme.colors.onPrimary} />
                       <Text
                         variant="caption"
                         color={theme.colors.onPrimary}
@@ -2303,7 +2303,7 @@ export const AgentComposer = memo(function AgentComposer({
                     borderRadius: profile.chrome.noticeBanner,
                   },
                 ]}>
-                <Check size={16} color={theme.colors.textMuted} />
+                <DoneIcon size={16} color={theme.colors.textMuted} />
                 <Text variant="caption" color={theme.colors.textMuted} style={styles.noticeText}>
                   {pendingAttachmentSend.delivery === 'queue' ? (
                     <Trans>Submitted to queue</Trans>
@@ -2317,7 +2317,7 @@ export const AgentComposer = memo(function AgentComposer({
                   hitSlop={8}
                   style={styles.dismissSubmission}
                   onPress={() => setPendingAttachmentSend(null)}>
-                  <X size={16} color={theme.colors.textMuted} />
+                  <CloseIcon size={16} color={theme.colors.textMuted} />
                 </PressableScale>
               </View>
             ) : null}

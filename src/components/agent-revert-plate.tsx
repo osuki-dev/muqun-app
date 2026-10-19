@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { plural } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
-import { Undo2 } from 'lucide-react-native';
+import { RestoreIcon } from '@/icons';
 import Animated from 'react-native-reanimated';
 
 import { usePaneChatColors } from '@/components/pane-chat-blocks';
@@ -83,7 +83,7 @@ export const AgentRevertPlate = memo(function AgentRevertPlate({
           },
         ]}>
         <View style={styles.heading}>
-          <Undo2 size={13} color={theme.colors.warning} />
+          <RestoreIcon size={13} color={theme.colors.warning} />
           <Text
             variant="caption"
             weight="bold"

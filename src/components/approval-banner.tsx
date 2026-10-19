@@ -1,13 +1,12 @@
+import { AppIcon, type AppIconName } from '@/icons/app-icon';
 import { useLingui } from '@lingui/react/macro';
 import {
   Alert,
-  Icon,
   PressableCard,
   Spinner,
   Stack,
   Tag,
   useThemeTokens,
-  type IconName,
   Card,
   Text,
 } from '@osuki-dev/ui';
@@ -62,11 +61,11 @@ export interface ApprovalBannerProps {
   escapeSending?: boolean;
 }
 
-const DECISION_ICONS: Record<ApprovalDecision, IconName> = {
-  allow: 'Check',
-  allow_always: 'CheckCheck',
-  deny: 'X',
-  other: 'CircleDot',
+const DECISION_ICONS: Record<ApprovalDecision, AppIconName> = {
+  allow: 'done',
+  allow_always: 'approval-always',
+  deny: 'close',
+  other: 'choice',
 };
 
 export function ApprovalBanner({
@@ -124,7 +123,7 @@ export function ApprovalBanner({
         <Stack gap="sm">
           <Stack direction="horizontal" gap="sm" align="flex-start">
             <View style={{ paddingTop: 1 }}>
-              <Icon name="ShieldAlert" size={16} color={theme.colors.warning} />
+              <AppIcon name="trust-warning" size={16} color={theme.colors.warning} />
             </View>
             <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
               <Text variant="bodySmall" weight="bold" colorKey="text" numberOfLines={2}>
@@ -285,7 +284,7 @@ function ApprovalOptionRow({
       <Stack direction="horizontal" gap="sm" align="center">
         <View style={styles.decision}>
           <Animated.View style={[StyleSheet.absoluteFill, styles.centred, glyphStyle]}>
-            <Icon
+            <AppIcon
               name={DECISION_ICONS[option.decision]}
               size={16}
               color={option.decision === 'deny' ? theme.colors.danger : theme.colors.primary}

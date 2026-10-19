@@ -23,9 +23,9 @@ press "text=\"Open files\""
 wait stable 400 5000
 scroll down --pixels 350
 press "text=\"Open muqun.muqun-theme.json\""
-wait "id=asset-preview-theme" 15000
-press "id=asset-preview-theme"
 wait "id=custom-theme-preview" 15000
+# Opening a valid theme goes straight to preview; applying remains explicit.
+is visible "id=theme-apply"
 # The confirm sits under the appearance settings in the asset viewer.
 scroll down --pixels 900
 press "id=theme-apply"

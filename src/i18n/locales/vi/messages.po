@@ -143,6 +143,12 @@ msgstr "{0} tin nhắn trong ngữ cảnh"
 msgid "{0} more models"
 msgstr "Còn {0} mô hình nữa"
 
+#. placeholder {0}: filtered.length
+#. placeholder {1}: entries.length
+#: src/components/dev-icon-gallery.tsx
+msgid "{0} of {1} icons · development only"
+msgstr "{0} trên {1} biểu tượng · chỉ dành cho phát triển"
+
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
 msgid "{0} of {limitLabel} tokens the model can hold"
@@ -312,10 +318,6 @@ msgstr "Lần quan sát gần nhất: {count} yêu cầu"
 msgid "{done} of {0} done"
 msgstr "Xong {done} trên {0}"
 
-#: src/components/home-computer-deck.tsx
-msgid "{failed, plural, one {# failed} other {# failed}}"
-msgstr "{failed, plural, other {# thất bại}}"
-
 #: src/components/settings-fleet-peers.tsx
 msgid "{from} still lists an older {name}. Remove that entry on {from}."
 msgstr "{from} vẫn còn một mục {name} cũ. Hãy xóa mục đó trên {from}"
@@ -401,10 +403,6 @@ msgstr "Còn lại {remaining}"
 msgid "{removeLabel}: {label}"
 msgstr "{removeLabel}: {label}"
 
-#: src/components/home-computer-deck.tsx
-msgid "{running, plural, one {# running} other {# running}}"
-msgstr "{running, plural, other {# đang chạy}}"
-
 #. placeholder {0}: shells.length
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
@@ -423,10 +421,6 @@ msgstr "{total, plural, other {# nhiệm vụ con}}"
 #: src/components/task-row.tsx
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, other {# nhiệm vụ con}} ({waiting, plural, other {# đang chờ}})"
-
-#: src/components/home-computer-deck.tsx
-msgid "{waiting, plural, one {# needs you} other {# need you}}"
-msgstr "{waiting, plural, other {# cần bạn}}"
 
 #: src/components/task-row.tsx
 msgid "→ {name}"
@@ -1050,6 +1044,10 @@ msgstr "Nhánh hoặc commit (không bắt buộc)"
 msgid "Branch to start from"
 msgstr "Nhánh để bắt đầu"
 
+#: src/components/dev-icon-gallery.tsx
+msgid "Brand marks and working indicator"
+msgstr "Biểu tượng thương hiệu và chỉ báo đang chạy"
+
 #. placeholder {0}: server.label
 #: src/components/home-computer-deck.tsx
 msgid "Bring {0} to the front"
@@ -1379,6 +1377,10 @@ msgstr "Đóng hiệu ứng"
 #: src/components/asset-viewer.tsx
 msgid "Close file"
 msgstr "Đóng tệp"
+
+#: src/components/dev-icon-gallery.tsx
+msgid "Close icon preview"
+msgstr "Đóng xem trước biểu tượng"
 
 #: src/components/home-recent-sessions.tsx
 #: src/components/task-row.tsx
@@ -2119,6 +2121,7 @@ msgstr "Không thể mở tệp PDF này"
 
 #: src/components/asset-viewer.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/components/theme-fence-preview.tsx
 msgid "Could not open this theme."
 msgstr "Không mở được chủ đề này"
 
@@ -3224,6 +3227,14 @@ msgstr "Khóa host đã được tin cậy"
 msgid "How to use Muqun"
 msgstr "Cách dùng Muqun"
 
+#: src/components/dev-icon-gallery.tsx
+msgid "Icon preview"
+msgstr "Xem trước biểu tượng"
+
+#: src/components/dev-icon-gallery.tsx
+msgid "Icons"
+msgstr "Biểu tượng"
+
 #: src/components/agent-session-tree-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
@@ -3749,6 +3760,10 @@ msgstr "Đánh dấu đã xong"
 msgid "Mark reviewed"
 msgstr "Đánh dấu đã xem"
 
+#: src/components/dev-icon-gallery.tsx
+msgid "Marks keep their original geometry and stroke."
+msgstr "Biểu tượng giữ nguyên hình dạng và nét vẽ gốc."
+
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "Linh vật"
@@ -4119,6 +4134,10 @@ msgstr "Không còn liên kết với {computer}"
 #: src/app/commands.tsx
 msgid "No matching commands. Try another word."
 msgstr "Không tìm thấy lệnh phù hợp. Thử từ khác"
+
+#: src/components/dev-icon-gallery.tsx
+msgid "No matching icons"
+msgstr "Không có biểu tượng phù hợp"
 
 #: src/components/home-recent-sessions.tsx
 msgid "No matching sessions"
@@ -4498,6 +4517,10 @@ msgstr "Mở danh sách tệp"
 #: src/components/git-diff-button.tsx
 msgid "Open Git"
 msgstr "Mở Git"
+
+#: src/components/dev-icon-gallery.tsx
+msgid "Open icon preview"
+msgstr "Mở xem trước biểu tượng"
 
 #: src/components/agent-tool-card.tsx
 msgid "Open image"
@@ -4913,6 +4936,18 @@ msgstr "Xem trước và áp dụng"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "Xem trước đã. Giao diện hiện tại của bạn sẽ không thay đổi"
+
+#: src/components/agent-tool-card.tsx
+#: src/components/theme-fence-preview.tsx
+msgid "Preview theme"
+msgstr "Xem trước giao diện"
+
+#. placeholder {0}: basename(themeFile)
+#. placeholder {0}: manifest.name
+#: src/components/agent-tool-card.tsx
+#: src/components/theme-fence-preview.tsx
+msgid "Preview theme {0}"
+msgstr "Xem trước giao diện {0}"
 
 #: src/components/home-computer-deck.tsx
 msgid "Previous computer"
@@ -5688,6 +5723,10 @@ msgstr "Tìm kiếm theo tên hoặc thẻ"
 msgid "Search files"
 msgstr "Tìm tệp"
 
+#: src/components/dev-icon-gallery.tsx
+msgid "Search icons"
+msgstr "Tìm biểu tượng"
+
 #: src/components/agent-model-sheet.tsx
 msgid "Search models"
 msgstr "Tìm kiếm mô hình"
@@ -6073,6 +6112,7 @@ msgstr "Điều khiển trình giả lập"
 
 #: src/components/asset-viewer.tsx
 #: src/components/dev-home-ambient-controls.tsx
+#: src/components/dev-icon-gallery.tsx
 msgid "Size"
 msgstr "Kích thước"
 
@@ -6342,6 +6382,10 @@ msgstr "Bộ nhớ"
 msgid "Streams speech while you talk. Requires an OpenAI Realtime-compatible transcription endpoint."
 msgstr "Truyền âm thanh trong khi bạn nói. Cần điểm cuối phiên âm tương thích với OpenAI Realtime"
 
+#: src/components/dev-icon-gallery.tsx
+msgid "Stroke width"
+msgstr "Độ dày nét"
+
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/demo-streaming-transcript.tsx
@@ -6509,6 +6553,7 @@ msgstr "Tùy chọn tác vụ"
 #: src/components/agent-composer.tsx
 #: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-todo-block.tsx
+#: src/components/home-computer-cards.tsx
 #: src/components/server-tasks-sheet.tsx
 #: src/components/task-result-sheet.tsx
 msgid "Tasks"

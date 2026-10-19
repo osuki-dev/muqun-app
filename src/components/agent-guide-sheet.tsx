@@ -2,7 +2,7 @@ import { memo, useState, useCallback } from 'react';
 import { View, StyleSheet, ActivityIndicator, Linking } from 'react-native';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
-import { ExternalLink, RefreshCw, Terminal } from 'lucide-react-native';
+import { OpenExternalIcon, RefreshIcon, TerminalIcon } from '@/icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GuideCommand, useGuideCommandRuns } from '@/components/guide-command';
@@ -135,7 +135,7 @@ export const AgentGuideSheet = memo(function AgentGuideSheet({
             accessibilityLabel={t`Open the ${agentName} installation guide`}
             onPress={() => void Linking.openURL(installUrl)}
             style={styles.command}>
-            <ExternalLink size={15} color={theme.colors.primary} strokeWidth={2.2} />
+            <OpenExternalIcon size={15} color={theme.colors.primary} />
             <Text
               variant="bodySmall"
               weight="semibold"
@@ -151,7 +151,7 @@ export const AgentGuideSheet = memo(function AgentGuideSheet({
             <GuideCommand serverId={serverId} command={command} testID="agent-guide-cmd" />
 
             <View style={styles.tip}>
-              <Terminal size={13} color={theme.colors.textSubtle} />
+              <TerminalIcon size={13} color={theme.colors.textSubtle} />
               <Text variant="caption" color={theme.colors.textSubtle} style={styles.tipText}>
                 {t`Run it under systemd or tmux to keep it up after you log out.`}
               </Text>
@@ -176,7 +176,7 @@ export const AgentGuideSheet = memo(function AgentGuideSheet({
           {checking ? (
             <ActivityIndicator size="small" color={checkInk} />
           ) : (
-            <RefreshCw size={15} color={checkInk} strokeWidth={2.2} />
+            <RefreshIcon size={15} color={checkInk} />
           )}
           <Text variant="bodySmall" weight="bold" color={checkInk}>
             {t`Check again`}
