@@ -121,7 +121,9 @@ export function HomeComputerDeck({
 }) {
   const { t } = useLingui();
   const profile = useAppearanceProfile();
-  const reduced = useReducedMotion();
+  // Diagnosis: the ash dissolve is switched off so switching can be compared
+  // without it; every move takes the plain cross-fade path Reduce Motion uses.
+  const reduced = useReducedMotion() || DECK_DUST_OFF;
   const isFocused = useIsFocused();
   const remembered = useHomeTaskCards((state) => state.deckFront);
   const setDeckFront = useHomeTaskCards((state) => state.setDeckFront);
@@ -612,6 +614,9 @@ export function HomeComputerDeck({
     </View>
   );
 }
+
+/** Temporarily true: switch computers with a cross-fade instead of the ash dissolve. */
+const DECK_DUST_OFF = true;
 
 function disposeLater(shot: CardShot) {
   // A frame later: a draw already in flight may still be sampling it.
