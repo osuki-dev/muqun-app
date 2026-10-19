@@ -121,9 +121,7 @@ export function HomeComputerDeck({
 }) {
   const { t } = useLingui();
   const profile = useAppearanceProfile();
-  // Diagnosis: the ash dissolve is switched off so switching can be compared
-  // without it; every move takes the plain cross-fade path Reduce Motion uses.
-  const reduced = useReducedMotion() || DECK_DUST_OFF;
+  const reduced = useReducedMotion();
   const isFocused = useIsFocused();
   const remembered = useHomeTaskCards((state) => state.deckFront);
   const setDeckFront = useHomeTaskCards((state) => state.setDeckFront);
@@ -197,6 +195,12 @@ export function HomeComputerDeck({
   useEffect(() => {
     // The first height is set, not animated: the deck arrives at its size.
     // A new signature at the same height does not restart this animation.
+    // With motion off the deck always has a height: never 0 while the front
+    // card is still measuring, and it changes without animating.
+    if (DECK_MOTION_OFF) {
+      frontHeight.set(cardHeight);
+      return;
+    }
     if (!frontMeasured) return;
     frontHeight.set(frontHeight.get() === 0 ? cardHeight : withTiming(cardHeight, timing('short')));
   }, [cardHeight, frontHeight, frontMeasured]);
@@ -248,6 +252,13 @@ export function HomeComputerDeck({
   const committed = useStableHandler((front: string) => {
     setDeckFront(front);
     onSelectServer(front);
+  });
+  // Switch at once: no photographs, no dissolve, no cross-fade.
+  const snapTo = useStableHandler((next: DeckMove) => {
+    const nextOrder = deckMoved(order, next);
+    cancelled();
+    setHeld(nextOrder);
+    committed(nextOrder[0]!);
   });
 
   // The stand-in for the dust: the front card cross-fades into the incoming
@@ -374,7 +385,12 @@ export function HomeComputerDeck({
   }, [scrub, settled]);
 
   const startMove = useStableHandler((next: DeckMove, towards: number) => {
-    if (busy.get() === 1 || count < 2) return;
+    if (count < 2) return;
+    if (DECK_MOTION_OFF) {
+      snapTo(next);
+      return;
+    }
+    if (busy.get() === 1) return;
     busy.set(1);
     direction.set(towards);
     move.set(next);
@@ -456,6 +472,8 @@ export function HomeComputerDeck({
   }, [waitingToken, token, playing, ready, commitUnderAsh, crossFade]);
 
   const gesture = useComputerGesture({
+    instant: DECK_MOTION_OFF,
+    snapTo,
     beginMove,
     busy,
     cancelled,
@@ -548,7 +566,7 @@ export function HomeComputerDeck({
         onLayout={onDeckLayout}
         style={[styles.deck, deckStyle]}>
         <Animated.View
-          entering={riseIn()}
+          entering={DECK_MOTION_OFF ? undefined : riseIn()}
           pointerEvents="box-none"
           style={[styles.slot, slotStyle]}>
           <Animated.View
@@ -615,8 +633,12 @@ export function HomeComputerDeck({
   );
 }
 
-/** Temporarily true: switch computers with a cross-fade instead of the ash dissolve. */
-const DECK_DUST_OFF = true;
+/**
+ * True: a swipe or a tab tap switches computers at once, with no dissolve and
+ * no cross-fade. The transitions are off while Home's jank and a blank card
+ * after switching are investigated; flip back to bring them back.
+ */
+const DECK_MOTION_OFF = true;
 
 function disposeLater(shot: CardShot) {
   // A frame later: a draw already in flight may still be sampling it.
@@ -862,6 +884,8 @@ const styles = StyleSheet.create({
 });
 
 function useComputerGesture({
+  instant,
+  snapTo,
   beginMove,
   busy,
   cancelled,
@@ -891,6 +915,8 @@ function useComputerGesture({
   progress: SharedValue<number>;
   ready: SharedValue<number>;
   reduced: boolean;
+  instant: boolean;
+  snapTo: (move: DeckMove) => void;
   ring: SharedValue<string>;
   skip: SharedValue<number>;
 }) {
@@ -925,8 +951,9 @@ function useComputerGesture({
             const next = deckSwipeMove(towards, ring.get().split('\n').length);
             direction.set(towards);
             move.set(next);
-            scheduleOnRN(beginMove, next, towards, false);
+            if (!instant) scheduleOnRN(beginMove, next, towards, false);
           }
+          if (instant) return;
           progress.set(
             reduced ? 0 : deckScrub(event.translationX, deckWidth.get(), direction.get())
           );
@@ -939,6 +966,19 @@ function useComputerGesture({
           }
           if (direction.get() === 0) {
             busy.set(0);
+            return;
+          }
+          if (instant) {
+            const swiped = deckCommits(
+              event.translationX,
+              event.velocityX,
+              deckWidth.get(),
+              direction.get()
+            );
+            const next = move.get();
+            busy.set(0);
+            move.set(DECK_AT_REST);
+            if (swiped && next !== DECK_AT_REST) scheduleOnRN(snapTo, next);
             return;
           }
           // An interrupted active gesture also ends here, but must never
@@ -974,6 +1014,8 @@ function useComputerGesture({
           if (!success && skip.get() === 0 && busy.get() === 1) scheduleOnRN(cancelled);
         }),
     [
+      instant,
+      snapTo,
       beginMove,
       busy,
       cancelled,
