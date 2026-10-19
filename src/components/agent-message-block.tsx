@@ -56,6 +56,7 @@ import { BoundedMarkdown } from '@/components/bounded-markdown';
 import { TranscriptBlockImage } from '@/components/transcript-block-image';
 import { InlineVideoFile } from '@/components/video-asset-preview';
 import { InlineFileLink } from '@/components/inline-file-link';
+import { ThemeFencePreview } from '@/components/theme-fence-preview';
 import { InlineAudioFile } from '@/components/audio-asset-preview';
 import { splitAudioMarkdown } from '@/lib/audio-markdown';
 import { splitDiagramMarkdown } from '@/lib/diagram-markdown';
@@ -829,6 +830,8 @@ const MessageTextPart = memo(function MessageTextPart({
               asid={audioSessionId}
               file={{ uri: part.uri, name: part.name }}
             />
+          ) : part.kind === 'theme' ? (
+            <ThemeFencePreview key={part.start} source={part.source} />
           ) : (
             renderText(`${key}:${part.start}`, part.text)
           )
