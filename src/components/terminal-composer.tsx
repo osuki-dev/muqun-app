@@ -362,7 +362,9 @@ export function TerminalComposer({
                 },
                 expanded && composerStyles.expandedInput,
                 {
-                  height: measuredInputHeight,
+                  // Android measures multiline text natively. A fixed height fed
+                  // back from content-size events can lag behind native wrapping.
+                  height: process.env.EXPO_OS === 'android' ? undefined : measuredInputHeight,
                   minHeight: minimumInputHeight,
                   maxHeight: maximumInputHeight,
                 },

@@ -3,6 +3,7 @@ import { useLingui } from '@lingui/react/macro';
 import { PressableScale, Text, useThemeTokens } from '@osuki-dev/ui';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
+  AppState,
   ScrollView,
   StyleSheet,
   type ScrollViewInstance,
@@ -11,8 +12,10 @@ import {
   type LayoutChangeEvent,
   type ViewInstance,
 } from 'react-native';
+import { useIsFocused } from 'expo-router';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
+  cancelAnimation,
   Easing,
   ReduceMotion,
   useAnimatedStyle,
@@ -119,6 +122,7 @@ export function HomeComputerDeck({
   const { t } = useLingui();
   const profile = useAppearanceProfile();
   const reduced = useReducedMotion();
+  const isFocused = useIsFocused();
   const remembered = useHomeTaskCards((state) => state.deckFront);
   const setDeckFront = useHomeTaskCards((state) => state.setDeckFront);
   const [held, setHeld] = useState<string[] | null>(null);
@@ -211,11 +215,34 @@ export function HomeComputerDeck({
   });
   const cancelled = useStableHandler(() => {
     token.set(token.get() + 1);
+    cancelAnimation(progress);
+    cancelAnimation(cross);
+    progress.set(0);
+    cross.set(0);
+    crossFrom.set('');
+    crossIn.set('');
+    move.set(DECK_AT_REST);
+    settled.set(0);
+    incomingReady.set(0);
+    skip.set(0);
     busy.set(0);
     playing.set(0);
     ready.set(0);
     setScrub(null);
   });
+  // A retained Home can lose focus or enter a hidden Activity mid-transition.
+  // Restore live card hit targets even when native animation completion never runs.
+  useEffect(() => {
+    if (!isFocused) cancelled();
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') cancelled();
+    });
+    return () => {
+      subscription.remove();
+      cancelled();
+    };
+  }, [cancelled, isFocused]);
+
   const committed = useStableHandler((front: string) => {
     setDeckFront(front);
     onSelectServer(front);
@@ -870,6 +897,10 @@ function useComputerGesture({
         // photographing cards. Once this pan activates, it cannot yield back.
         .activeOffsetX([-12, 12])
         .failOffsetY([-8, 8])
+        .onBegin(() => {
+          // A pan that fails before activation does not own an existing transition.
+          skip.set(1);
+        })
         .onStart(() => {
           const count = ring.get().split('\n').length;
           if (busy.get() === 1 || count < 2) {
@@ -897,6 +928,10 @@ function useComputerGesture({
         })
         .onEnd((event, success) => {
           if (skip.get() === 1) return;
+          if (!success) {
+            scheduleOnRN(cancelled);
+            return;
+          }
           if (direction.get() === 0) {
             busy.set(0);
             return;
@@ -928,6 +963,10 @@ function useComputerGesture({
               scheduleOnRN(cancelled);
             })
           );
+        })
+        .onFinalize((_event, success) => {
+          // Cancellation can bypass onEnd when the native recognizer is interrupted.
+          if (!success && skip.get() === 0 && busy.get() === 1) scheduleOnRN(cancelled);
         }),
     [
       beginMove,
