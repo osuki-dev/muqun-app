@@ -136,6 +136,17 @@ export function HomeComputerDeck({
   // here, never from the closure of the last render (which, between a
   // handler's update and the next render, still holds a move that ended).
   const [cell] = useState(createDeckCell);
+  /**
+   * Retires every move before it: a new token, counted here because a shared
+   * value written on this thread reads back its old value until the UI
+   * thread has taken the write. Worklets read the mirror, `token`.
+   */
+  const nextToken = () => {
+    const next = cell.readToken() + 1;
+    cell.writeToken(next);
+    token.set(next);
+    return next;
+  };
   const changeScrub = (next: Scrub | null) => {
     cell.writeScrub(next);
     setScrub(next);
@@ -232,7 +243,7 @@ export function HomeComputerDeck({
   // The move is over: its token goes, so a timer, a photograph or a frame
   // still in flight for it finds nothing to act on.
   const moved = useStableHandler((next: string) => {
-    token.set(token.get() + 1);
+    nextToken();
     busy.set(0);
     playing.set(0);
     ready.set(0);
@@ -247,7 +258,7 @@ export function HomeComputerDeck({
     });
   });
   const cancelled = useStableHandler(() => {
-    token.set(token.get() + 1);
+    nextToken();
     cancelAnimation(progress);
     cancelAnimation(cross);
     progress.set(0);
@@ -295,14 +306,13 @@ export function HomeComputerDeck({
   // photographs were in, or no shader on this device). Under Reduce Motion
   // the sheets take their new levels without travelling.
   const faded = useStableHandler((next: string, forToken: number) => {
-    if (token.get() !== forToken) return;
-    token.set(forToken + 1);
-    const after = forToken + 1;
+    if (cell.readToken() !== forToken) return;
+    const after = nextToken();
     playing.set(0);
     setHeld(next.split('\n'));
     changeScrub(null);
     requestAnimationFrame(() => {
-      if (token.get() !== after) return;
+      if (cell.readToken() !== after) return;
       cross.set(0);
       crossFrom.set('');
       crossIn.set('');
@@ -316,8 +326,7 @@ export function HomeComputerDeck({
     if (playing.get() === 1) return;
     const current = cell.readScrub();
     if (forToken !== undefined && current?.token !== forToken) return;
-    token.set(token.get() + 1);
-    const at = token.get();
+    const at = nextToken();
     if (!commit || !current) {
       changeScrub(null);
       progress.set(
@@ -361,12 +370,11 @@ export function HomeComputerDeck({
       busy.set(0);
       return;
     }
-    const nextToken = token.get() + 1;
-    token.set(nextToken);
+    const moveToken = nextToken();
     incomingReady.set(0);
     const dust = CARD_DUST_EFFECT !== null && !reduced;
     changeScrub({
-      token: nextToken,
+      token: moveToken,
       move: next,
       order: base,
       incomingId: id,
@@ -380,7 +388,7 @@ export function HomeComputerDeck({
   });
 
   const shot = useStableHandler((serverId: string, forToken: number, image: CardShot | null) => {
-    if (token.get() !== forToken) {
+    if (cell.readToken() !== forToken) {
       if (image) disposeLater(image);
       return;
     }
@@ -398,7 +406,7 @@ export function HomeComputerDeck({
 
   // The canvas has its first frame: hide the real card under it.
   const drawn = useStableHandler((forToken: number) => {
-    if (token.get() !== forToken) return;
+    if (cell.readToken() !== forToken) return;
     if (patchScrub(forToken, { drawing: true })) ready.set(1);
   });
 
@@ -507,7 +515,7 @@ export function HomeComputerDeck({
   useEffect(() => {
     if (waitingToken === null) return;
     const timer = setTimeout(() => {
-      if (token.get() !== waitingToken || playing.get() === 1) return;
+      if (cell.readToken() !== waitingToken || playing.get() === 1) return;
       // The move it waited for has ended, even if React has not drawn that yet.
       if (cell.readScrub()?.token !== waitingToken) return;
       if (ready.get() === 1) commitUnderAsh();
@@ -521,7 +529,7 @@ export function HomeComputerDeck({
   // nothing moving for `DECK_STALL_MS`, it is reset so tabs and swipes work.
   const watchStep = useStableHandler(() => {
     const engaged = busy.get() === 1 || playing.get() === 1;
-    const sample = `${token.get()}|${progress.get().toFixed(3)}|${cross.get().toFixed(3)}`;
+    const sample = `${cell.readToken()}|${progress.get().toFixed(3)}|${cross.get().toFixed(3)}`;
     const { watch, stalled } = deckWatch(
       cell.readWatch(),
       { engaged, holding: holding.get() === 1, sample },
@@ -723,6 +731,7 @@ const DECK_MOTION_OFF = true;
  */
 function createDeckCell() {
   let scrub: Scrub | null = null;
+  let token = 0;
   let watch: DeckWatch | null = null;
   let timer: ReturnType<typeof setInterval> | null = null;
   const stopWatching = () => {
@@ -731,6 +740,10 @@ function createDeckCell() {
     watch = null;
   };
   return {
+    readToken: () => token,
+    writeToken: (next: number) => {
+      token = next;
+    },
     readScrub: () => scrub,
     writeScrub: (next: Scrub | null) => {
       scrub = next;
