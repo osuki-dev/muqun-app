@@ -652,7 +652,7 @@ msgstr "将二维码对准框内"
 
 #: src/components/home-recent-chips.tsx
 #: src/components/session-artifacts.tsx
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "All"
 msgstr "全部"
 
@@ -1218,7 +1218,7 @@ msgstr "请检查仓库链接、分支和主题文件"
 msgid "Check this computer's tasks. This request has not been sent again."
 msgstr "请查看这台电脑的任务。此请求没有再次发送"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Check your connection and try again."
 msgstr "请检查网络连接后重试"
 
@@ -1349,7 +1349,7 @@ msgid "Clear the conversation"
 msgstr "清空对话"
 
 #: src/components/agent-model-sheet.tsx
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Clear the search"
 msgstr "清除搜索内容"
 
@@ -2155,7 +2155,7 @@ msgstr "无法连接到电脑"
 msgid "Could not reach the computer. Make sure it is running, then refresh the QR and scan again."
 msgstr "无法连接到电脑。请确认它正在运行，然后刷新二维码再扫描一次"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Could not reach the theme catalogue"
 msgstr "无法连接主题目录"
 
@@ -2371,7 +2371,7 @@ msgstr "局部预览 · 查看完整图片"
 
 #: src/components/file-mention-panel.tsx
 #: src/components/settings-theme-sheet.tsx
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Current"
 msgstr "当前"
 
@@ -2483,7 +2483,7 @@ msgstr "发送未确认"
 msgid "Delivery not confirmed. Tap to check status"
 msgstr "投递未确认。点按检查状态"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Demo catalogue. Leave the demo to download themes."
 msgstr "演示主题目录。退出演示后即可下载主题"
 
@@ -2655,7 +2655,7 @@ msgstr "正在下载 · {0} / {1}"
 msgid "Downloading theme"
 msgstr "正在下载主题"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Downloading…"
 msgstr "正在下载…"
 
@@ -3386,7 +3386,7 @@ msgid "Install command copied"
 msgstr "已复制安装命令"
 
 #: src/components/settings-font-sheet.tsx
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Installed"
 msgstr "已安装"
 
@@ -3725,7 +3725,7 @@ msgstr "正在加载终端"
 msgid "Loading the transcript"
 msgstr "正在加载对话记录"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Loading themes…"
 msgstr "正在加载主题…"
 
@@ -4291,12 +4291,12 @@ msgstr "此电脑没有可用的终端会话"
 msgid "No textual change"
 msgstr "没有文本改动"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "No themes are published yet"
 msgstr "还没有已发布的主题"
 
-#. placeholder {0}: query.trim()
-#: src/components/theme-gallery-tab.tsx
+#. placeholder {0}: gallery.query.trim()
+#: src/components/theme-gallery.tsx
 msgid "No themes match “{0}”."
 msgstr "没有匹配“{0}”的主题"
 
@@ -4924,7 +4924,7 @@ msgstr "请重试或移除上传失败的附件"
 msgid "Port"
 msgstr "端口"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
 msgstr "正在准备图片"
@@ -5747,7 +5747,7 @@ msgstr "搜索"
 msgid "Search actions and commands"
 msgstr "搜索操作和命令"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Search by name or tag"
 msgstr "按名称或标签搜索"
 
@@ -7295,7 +7295,7 @@ msgstr "信任"
 #: src/components/changes-sheet.tsx
 #: src/components/inline-file-link.tsx
 #: src/components/pdf-asset-preview.tsx
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/video-asset-preview.tsx
 #: src/components/voice-input-button.tsx
 #: src/hooks/use-file-actions.tsx
@@ -7307,7 +7307,7 @@ msgstr "重试"
 msgid "Try again once the computer responds."
 msgstr "待电脑恢复响应后再试"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Try searching for another name or tag."
 msgstr "尝试搜索其他名称或标签"
 
@@ -7423,7 +7423,7 @@ msgstr "使用 {authLabel} 解锁"
 msgid "Unlock with {methodName}"
 msgstr "使用 {methodName} 解锁"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Unpacking…"
 msgstr "正在解压…"
 
@@ -7482,7 +7482,7 @@ msgstr "未跟踪"
 msgid "Up arrow"
 msgstr "向上键"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/update-status-banner.tsx
 msgid "Update"
 msgstr "更新"

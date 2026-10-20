@@ -652,7 +652,7 @@ msgstr "QR コードを枠に合わせてください"
 
 #: src/components/home-recent-chips.tsx
 #: src/components/session-artifacts.tsx
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "All"
 msgstr "すべて"
 
@@ -1218,7 +1218,7 @@ msgstr "リポジトリの URL、ブランチ、テーマファイルを確認�
 msgid "Check this computer's tasks. This request has not been sent again."
 msgstr "このコンピューターのタスクを確認してください。このリクエストは再送されていません"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Check your connection and try again."
 msgstr "接続を確認してもう一度お試しください"
 
@@ -1349,7 +1349,7 @@ msgid "Clear the conversation"
 msgstr "会話を消去"
 
 #: src/components/agent-model-sheet.tsx
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Clear the search"
 msgstr "検索をクリア"
 
@@ -2155,7 +2155,7 @@ msgstr "コンピュータに到達できませんでした"
 msgid "Could not reach the computer. Make sure it is running, then refresh the QR and scan again."
 msgstr "コンピュータに到達できませんでした。起動していることを確かめて、QR コードを更新してからもう一度スキャンしてください"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Could not reach the theme catalogue"
 msgstr "テーマカタログに接続できませんでした"
 
@@ -2371,7 +2371,7 @@ msgstr "一部のみのプレビュー · 画像全体を表示"
 
 #: src/components/file-mention-panel.tsx
 #: src/components/settings-theme-sheet.tsx
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Current"
 msgstr "使用中"
 
@@ -2483,7 +2483,7 @@ msgstr "配信は未確認です"
 msgid "Delivery not confirmed. Tap to check status"
 msgstr "配信は未確認です。タップして状態を確認"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Demo catalogue. Leave the demo to download themes."
 msgstr "デモ用カタログです。テーマをダウンロードするにはデモを終了してください"
 
@@ -2655,7 +2655,7 @@ msgstr "ダウンロード中 · {0} / {1}"
 msgid "Downloading theme"
 msgstr "テーマをダウンロード中"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Downloading…"
 msgstr "ダウンロードしています…"
 
@@ -3386,7 +3386,7 @@ msgid "Install command copied"
 msgstr "インストールコマンドをコピーしました"
 
 #: src/components/settings-font-sheet.tsx
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Installed"
 msgstr "インストール済み"
 
@@ -3725,7 +3725,7 @@ msgstr "ターミナルを読み込み中"
 msgid "Loading the transcript"
 msgstr "トランスクリプトを読み込み中"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Loading themes…"
 msgstr "テーマを読み込んでいます…"
 
@@ -4291,12 +4291,12 @@ msgstr "このコンピュータに利用できるターミナルセッション
 msgid "No textual change"
 msgstr "テキストの変更なし"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "No themes are published yet"
 msgstr "公開されているテーマはまだありません"
 
-#. placeholder {0}: query.trim()
-#: src/components/theme-gallery-tab.tsx
+#. placeholder {0}: gallery.query.trim()
+#: src/components/theme-gallery.tsx
 msgid "No themes match “{0}”."
 msgstr "「{0}」に一致するテーマはありません"
 
@@ -4924,7 +4924,7 @@ msgstr "失敗した添付ファイルを再試行または削除してくださ
 msgid "Port"
 msgstr "ポート"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
 msgstr "画像を準備中"
@@ -5747,7 +5747,7 @@ msgstr "検索"
 msgid "Search actions and commands"
 msgstr "操作とコマンドを検索"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Search by name or tag"
 msgstr "名前やタグで検索"
 
@@ -7295,7 +7295,7 @@ msgstr "信頼する"
 #: src/components/changes-sheet.tsx
 #: src/components/inline-file-link.tsx
 #: src/components/pdf-asset-preview.tsx
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/video-asset-preview.tsx
 #: src/components/voice-input-button.tsx
 #: src/hooks/use-file-actions.tsx
@@ -7307,7 +7307,7 @@ msgstr "もう一度試す"
 msgid "Try again once the computer responds."
 msgstr "コンピュータが応答するようになったら、もう一度お試しください"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Try searching for another name or tag."
 msgstr "別の名前やタグで検索してみてください"
 
@@ -7423,7 +7423,7 @@ msgstr "{authLabel} でロック解除"
 msgid "Unlock with {methodName}"
 msgstr "{methodName} でロック解除"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Unpacking…"
 msgstr "展開しています…"
 
@@ -7482,7 +7482,7 @@ msgstr "未追跡"
 msgid "Up arrow"
 msgstr "上矢印"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/update-status-banner.tsx
 msgid "Update"
 msgstr "更新"

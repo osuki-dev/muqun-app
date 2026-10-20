@@ -652,7 +652,7 @@ msgstr "จัด QR ให้อยู่ในกรอบ"
 
 #: src/components/home-recent-chips.tsx
 #: src/components/session-artifacts.tsx
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "All"
 msgstr "ทั้งหมด"
 
@@ -1218,7 +1218,7 @@ msgstr "ตรวจสอบ URL ที่เก็บโค้ด สาขา
 msgid "Check this computer's tasks. This request has not been sent again."
 msgstr "ตรวจสอบงานบนคอมพิวเตอร์เครื่องนี้ คำขอนี้ไม่ได้ถูกส่งซ้ำ"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Check your connection and try again."
 msgstr "ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง"
 
@@ -1349,7 +1349,7 @@ msgid "Clear the conversation"
 msgstr "ล้างบทสนทนา"
 
 #: src/components/agent-model-sheet.tsx
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Clear the search"
 msgstr "ล้างคำค้นหา"
 
@@ -2155,7 +2155,7 @@ msgstr "ติดต่อคอมพิวเตอร์ไม่ได้"
 msgid "Could not reach the computer. Make sure it is running, then refresh the QR and scan again."
 msgstr "ติดต่อคอมพิวเตอร์ไม่ได้ ตรวจสอบว่าเครื่องเปิดอยู่ จากนั้นรีเฟรช QR แล้วสแกนอีกครั้ง"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Could not reach the theme catalogue"
 msgstr "ติดต่อแค็ตตาล็อกธีมไม่ได้"
 
@@ -2371,7 +2371,7 @@ msgstr "ตัวอย่างบางส่วน · เปิดภาพ�
 
 #: src/components/file-mention-panel.tsx
 #: src/components/settings-theme-sheet.tsx
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Current"
 msgstr "ปัจจุบัน"
 
@@ -2483,7 +2483,7 @@ msgstr "ยังไม่ยืนยันการส่ง"
 msgid "Delivery not confirmed. Tap to check status"
 msgstr "ยังไม่ยืนยันการส่ง แตะเพื่อตรวจสอบสถานะ"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Demo catalogue. Leave the demo to download themes."
 msgstr "แค็ตตาล็อกสาธิต ออกจากการสาธิตเพื่อดาวน์โหลดธีม"
 
@@ -2655,7 +2655,7 @@ msgstr "กำลังดาวน์โหลด · {0} จาก {1}"
 msgid "Downloading theme"
 msgstr "กำลังดาวน์โหลดธีม"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Downloading…"
 msgstr "กำลังดาวน์โหลด…"
 
@@ -3386,7 +3386,7 @@ msgid "Install command copied"
 msgstr "คัดลอกคำสั่งติดตั้งแล้ว"
 
 #: src/components/settings-font-sheet.tsx
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Installed"
 msgstr "ติดตั้งแล้ว"
 
@@ -3725,7 +3725,7 @@ msgstr "กำลังโหลดเทอร์มินัล"
 msgid "Loading the transcript"
 msgstr "กำลังโหลดบันทึกการสนทนา"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Loading themes…"
 msgstr "กำลังโหลดธีม…"
 
@@ -4291,12 +4291,12 @@ msgstr "คอมพิวเตอร์นี้ไม่มีเซสชั
 msgid "No textual change"
 msgstr "ไม่มีข้อความเปลี่ยนแปลง"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "No themes are published yet"
 msgstr "ยังไม่มีธีมที่เผยแพร่"
 
-#. placeholder {0}: query.trim()
-#: src/components/theme-gallery-tab.tsx
+#. placeholder {0}: gallery.query.trim()
+#: src/components/theme-gallery.tsx
 msgid "No themes match “{0}”."
 msgstr "ไม่มีธีมที่ตรงกับ “{0}”"
 
@@ -4924,7 +4924,7 @@ msgstr "โปรดลองอีกครั้งหรือนำไฟล
 msgid "Port"
 msgstr "พอร์ต"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
 msgstr "กำลังเตรียมรูปภาพ"
@@ -5747,7 +5747,7 @@ msgstr "ค้นหา"
 msgid "Search actions and commands"
 msgstr "ค้นหาการทำงานและคำสั่ง"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Search by name or tag"
 msgstr "ค้นหาตามชื่อหรือแท็ก"
 
@@ -7295,7 +7295,7 @@ msgstr "เชื่อถือ"
 #: src/components/changes-sheet.tsx
 #: src/components/inline-file-link.tsx
 #: src/components/pdf-asset-preview.tsx
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/video-asset-preview.tsx
 #: src/components/voice-input-button.tsx
 #: src/hooks/use-file-actions.tsx
@@ -7307,7 +7307,7 @@ msgstr "ลองอีกครั้ง"
 msgid "Try again once the computer responds."
 msgstr "ลองอีกครั้งเมื่อคอมพิวเตอร์ตอบสนอง"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Try searching for another name or tag."
 msgstr "ลองค้นหาด้วยชื่อหรือแท็กอื่น"
 
@@ -7423,7 +7423,7 @@ msgstr "ปลดล็อกด้วย {authLabel}"
 msgid "Unlock with {methodName}"
 msgstr "ปลดล็อกด้วย {methodName}"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Unpacking…"
 msgstr "กำลังแตกไฟล์…"
 
@@ -7482,7 +7482,7 @@ msgstr "ยังไม่ติดตาม"
 msgid "Up arrow"
 msgstr "ลูกศรขึ้น"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/update-status-banner.tsx
 msgid "Update"
 msgstr "อัปเดต"

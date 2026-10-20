@@ -652,7 +652,7 @@ msgstr "Alinhe o código QR dentro da moldura"
 
 #: src/components/home-recent-chips.tsx
 #: src/components/session-artifacts.tsx
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "All"
 msgstr "Todos"
 
@@ -1218,7 +1218,7 @@ msgstr "Confira a URL do repositório, a branch e o arquivo do tema"
 msgid "Check this computer's tasks. This request has not been sent again."
 msgstr "Verifique as tarefas deste computador. Este pedido não foi reenviado"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Check your connection and try again."
 msgstr "Verifique sua conexão e tente novamente"
 
@@ -1349,7 +1349,7 @@ msgid "Clear the conversation"
 msgstr "Limpar a conversa"
 
 #: src/components/agent-model-sheet.tsx
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Clear the search"
 msgstr "Limpar a pesquisa"
 
@@ -2155,7 +2155,7 @@ msgstr "Não foi possível contactar o computador"
 msgid "Could not reach the computer. Make sure it is running, then refresh the QR and scan again."
 msgstr "Não foi possível contactar o computador. Verifique se está ligado, atualize o QR e digitalize novamente"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Could not reach the theme catalogue"
 msgstr "Não foi possível acessar o catálogo de temas"
 
@@ -2371,7 +2371,7 @@ msgstr "Pré-visualização recortada · Abrir imagem completa"
 
 #: src/components/file-mention-panel.tsx
 #: src/components/settings-theme-sheet.tsx
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Current"
 msgstr "Atual"
 
@@ -2483,7 +2483,7 @@ msgstr "Entrega não confirmada"
 msgid "Delivery not confirmed. Tap to check status"
 msgstr "Entrega não confirmada. Toque para verificar o estado"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Demo catalogue. Leave the demo to download themes."
 msgstr "Catálogo de demonstração. Saia da demonstração para baixar temas"
 
@@ -2655,7 +2655,7 @@ msgstr "Baixando · {0} de {1}"
 msgid "Downloading theme"
 msgstr "Baixando o tema"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Downloading…"
 msgstr "Baixando…"
 
@@ -3386,7 +3386,7 @@ msgid "Install command copied"
 msgstr "Comando de instalação copiado"
 
 #: src/components/settings-font-sheet.tsx
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Installed"
 msgstr "Instalado"
 
@@ -3725,7 +3725,7 @@ msgstr "A carregar o terminal"
 msgid "Loading the transcript"
 msgstr "A carregar a transcrição"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Loading themes…"
 msgstr "Carregando temas…"
 
@@ -4291,12 +4291,12 @@ msgstr "Não há nenhuma sessão de terminal disponível neste computador"
 msgid "No textual change"
 msgstr "Sem alteração de texto"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "No themes are published yet"
 msgstr "Ainda não há temas publicados"
 
-#. placeholder {0}: query.trim()
-#: src/components/theme-gallery-tab.tsx
+#. placeholder {0}: gallery.query.trim()
+#: src/components/theme-gallery.tsx
 msgid "No themes match “{0}”."
 msgstr "Nenhum tema corresponde a “{0}”"
 
@@ -4924,7 +4924,7 @@ msgstr "Tente novamente ou remova os anexos com falha"
 msgid "Port"
 msgstr "Porta"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
 msgstr "Preparando imagens"
@@ -5747,7 +5747,7 @@ msgstr "Pesquisar"
 msgid "Search actions and commands"
 msgstr "Buscar ações e comandos"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Search by name or tag"
 msgstr "Pesquisar por nome ou etiqueta"
 
@@ -7295,7 +7295,7 @@ msgstr "Confiar"
 #: src/components/changes-sheet.tsx
 #: src/components/inline-file-link.tsx
 #: src/components/pdf-asset-preview.tsx
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/video-asset-preview.tsx
 #: src/components/voice-input-button.tsx
 #: src/hooks/use-file-actions.tsx
@@ -7307,7 +7307,7 @@ msgstr "Tentar novamente"
 msgid "Try again once the computer responds."
 msgstr "Tente novamente quando o computador responder"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Try searching for another name or tag."
 msgstr "Tenta pesquisar por outro nome ou etiqueta"
 
@@ -7423,7 +7423,7 @@ msgstr "Desbloquear com {authLabel}"
 msgid "Unlock with {methodName}"
 msgstr "Desbloquear com {methodName}"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Unpacking…"
 msgstr "Descompactando…"
 
@@ -7482,7 +7482,7 @@ msgstr "Não rastreado"
 msgid "Up arrow"
 msgstr "Seta para cima"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/update-status-banner.tsx
 msgid "Update"
 msgstr "Atualizar"
