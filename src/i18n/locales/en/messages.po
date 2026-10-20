@@ -43,6 +43,11 @@ msgstr "[model]"
 msgid "[pr number]"
 msgstr "[pr number]"
 
+#. placeholder {0}: files.length
+#: src/components/agent-composer.tsx
+msgid "{0, plural, one {# attachment} other {# attachments}}"
+msgstr "{0, plural, one {# attachment} other {# attachments}}"
+
 #. placeholder {0}: capped.hidden
 #: src/components/bounded-markdown.tsx
 msgid "{0, plural, one {# character not shown} other {# characters not shown}}"
@@ -1106,7 +1111,6 @@ msgstr "Camera access needed"
 #: src/components/ssh-host-form.tsx
 #: src/components/ssh-host-key-dialog.tsx
 #: src/components/theme-link-import.tsx
-#: src/components/voice-input-button.tsx
 #: src/hooks/use-file-actions.tsx
 #: src/hooks/use-lazygit.ts
 #: src/lib/local-authentication.ts
@@ -2548,6 +2552,10 @@ msgstr "Discard changes"
 msgid "Discard changes to {discardName}?"
 msgstr "Discard changes to {discardName}?"
 
+#: src/components/voice-input-button.tsx
+msgid "Discard recording"
+msgstr "Discard recording"
+
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Disconnect from {0}"
@@ -2563,7 +2571,6 @@ msgid "Disconnected."
 msgstr "Disconnected"
 
 #: src/components/agent-compaction-pill.tsx
-#: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/task-row.tsx
@@ -3167,6 +3174,10 @@ msgstr "Hide the computer list"
 #: src/components/server-terminal-workspace.tsx
 msgid "Hide the simulator"
 msgstr "Hide the simulator"
+
+#: src/components/agent-composer.tsx
+msgid "Hides this notice"
+msgstr "Hides this notice"
 
 #: src/app/settings-voice.tsx
 msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
@@ -4032,6 +4043,7 @@ msgid "Newer"
 msgstr "Newer"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-message-block.tsx
 msgid "Next"
 msgstr "Next"
 
@@ -5040,10 +5052,9 @@ msgstr "Queued"
 msgid "queued to upload"
 msgstr "queued to upload"
 
-#. placeholder {0}: inboxItemText(item) || item.type
 #: src/components/agent-composer.tsx
-msgid "Queued: {0}"
-msgstr "Queued: {0}"
+msgid "Queued: {summary}"
+msgstr "Queued: {summary}"
 
 #: src/app/commands.tsx
 msgid "Quick action settings"
@@ -5834,10 +5845,9 @@ msgstr "Send to agent"
 msgid "Sending attachment message…"
 msgstr "Sending attachment message…"
 
-#. placeholder {0}: inboxItemText(item) || item.type
 #: src/components/agent-composer.tsx
-msgid "Sending next: {0}"
-msgstr "Sending next: {0}"
+msgid "Sending next: {summary}"
+msgstr "Sending next: {summary}"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Sending to"
@@ -6399,10 +6409,6 @@ msgstr "Submit"
 #: src/components/agent-composer.tsx
 msgid "Submitted"
 msgstr "Submitted"
-
-#: src/components/agent-composer.tsx
-msgid "Submitted to queue"
-msgstr "Submitted to queue"
 
 #: src/components/agent-composer.tsx
 msgid "Submitting follow-up…"

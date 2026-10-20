@@ -11,7 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { formatAssetSize } from '@/lib/asset-display';
+import { formatAssetProgress, formatAssetSize } from '@/lib/asset-display';
 import { fadeIn, fadeOut, timing, travelTiming } from '@/lib/motion';
 
 /**
@@ -50,6 +50,7 @@ export function ThemeImportProgress({
   receivedBytes,
   indeterminate = false,
   compact = false,
+  unit = 'items',
   testID,
 }: {
   label: string;
@@ -95,6 +96,8 @@ export function ThemeImportProgress({
    * when it reaches the bar.
    */
   compact?: boolean;
+  /** `bytes` counts a download, so the counter reads `1.2 / 9.3 MB` rather than raw bytes. */
+  unit?: 'items' | 'bytes';
   testID?: string;
 }) {
   const { colors } = useThemeTokens();
@@ -155,7 +158,7 @@ export function ThemeImportProgress({
             color={colors.textMuted}
             // Tabular, so the counter does not reflow while the bar moves.
             style={{ fontVariant: ['tabular-nums'] }}>
-            {completed}/{total}
+            {unit === 'bytes' ? formatAssetProgress(completed, total) : `${completed}/${total}`}
           </Text>
         ) : null}
       </View>

@@ -25,6 +25,7 @@ import { parseAgentSessionRuntime, type AgentSessionRuntime } from './agent-sess
 import { parseLedgerDelivery, type LedgerDelivery } from './task-ledger';
 import { parseKeyboardVocabulary, type KeyboardVocabulary } from './key-vocabulary';
 import { parseMessageImageAssets, type MessageImageAsset } from './message-images';
+import { messageImageForSource } from './gateway-image-previews';
 import { stripTaskInstruction } from './task-plumbing';
 import { asFiniteNumber, asRecord, asString } from './record';
 import type { UploadLimits } from './attachment-queue';
@@ -1250,6 +1251,13 @@ export interface TimelineItem {
   image_assets?: MessageImageAsset[];
   /** Client-side only: an optimistic row that has not been acknowledged. */
   queued?: boolean;
+  /** Client-side only: the inbox item a queued row stands for, and its delivery. */
+  inbox?: { id: string; delivery: 'steer' | 'queue' };
+  /**
+   * Client-side only, beside `attachments` on a queued row: each file's name,
+   * and whether it is drawn as an image. Anything else is a named file chip.
+   */
+  attachment_files?: { name: string; image: boolean }[];
   /**
    * Client-side only: where this row sorts, when its id cannot say.
    *
@@ -1382,6 +1390,10 @@ export interface InboxItem {
   type: 'user' | 'synthetic' | 'compaction' | 'move' | 'unknown';
   payload: unknown;
   delivery: 'steer' | 'queue';
+  /** The files' sources, as a transcript user row carries them (newer Gateway). */
+  attachments?: string[];
+  /** The images among `attachments`, resolved to Gateway assets. */
+  image_assets?: MessageImageAsset[];
 }
 
 const INBOX_TYPES: readonly InboxItem['type'][] = ['user', 'synthetic', 'compaction', 'move'];
@@ -1393,6 +1405,8 @@ export function parseInboxItem(value: unknown): InboxItem | null {
   if (!id) return null;
   const rawType = asString(rec.type) ?? '';
   const timeCreated = asFiniteNumber(rec.timeCreated ?? rec.time_created);
+  const attachments = asStringArray(rec.attachments);
+  const imageAssets = parseMessageImageAssets(rec.image_assets);
   return {
     id,
     sessionID: pickString(rec, ['sessionID', 'session_id', 'asid']) ?? '',
@@ -1402,6 +1416,8 @@ export function parseInboxItem(value: unknown): InboxItem | null {
       : 'unknown',
     payload: rec.payload,
     delivery: asString(rec.delivery) === 'queue' ? 'queue' : 'steer',
+    ...(attachments.length ? { attachments } : {}),
+    ...(imageAssets.length ? { image_assets: imageAssets } : {}),
   };
 }
 
@@ -1435,6 +1451,90 @@ function inboxPayloadText(item: InboxItem): string {
     }
   }
   return '';
+}
+
+/** One file a queued prompt carries, in a form the transcript can draw. */
+export interface InboxAttachment {
+  /** The source: a Gateway path, a host path (`file://` removed) or an image `data:` URI. */
+  uri: string;
+  name: string;
+  mime?: string;
+  /** The Gateway asset that serves it, when it is an authorized image. */
+  asset?: MessageImageAsset;
+  /** Whether it is drawn as an image; anything else is a file chip. */
+  image: boolean;
+}
+
+const IMAGE_NAME = /\.(png|jpe?g|gif|webp|heic|heif)$/i;
+const UPLOADS_SEGMENT = '/muqun-gateway/uploads/';
+
+/**
+ * The files of a queued prompt.
+ *
+ * A newer Gateway sends each item the two fields a transcript user row has,
+ * `attachments` and `image_assets`; those are drawn exactly as a delivered
+ * message's are, and an entry with no usable asset is a file chip -- never a
+ * guess at a URL. `payload.files` (`{uri, name?, mime?}`, or OpenCode's stored
+ * `{data, mime, source: {uri}}`) then only names the files.
+ *
+ * An older Gateway sends `payload.files` alone. Its fallback: an upload path
+ * (`file://` removed) loads through `/api/uploads` like a sent attachment,
+ * inline image bytes become a `data:` URI, and anything else is a chip.
+ */
+export function inboxItemAttachments(item: InboxItem): InboxAttachment[] {
+  const payload = asRecord(item.payload);
+  const files = (payload && Array.isArray(payload.files) ? payload.files : []).map((entry) => {
+    const rec = asRecord(entry) ?? {};
+    const source = asRecord(rec.source);
+    const raw = pickString(rec, ['uri', 'url', 'path']) ?? (source && asString(source.uri));
+    const path = raw ? hostPathFromUri(raw) : undefined;
+    return {
+      path,
+      name: asString(rec.name) || path?.split('/').filter(Boolean).pop(),
+      mime: asString(rec.mime),
+      data: asString(rec.data),
+    };
+  });
+  if (item.attachments?.length) {
+    return item.attachments.map((uri, index) => {
+      const file = files[index];
+      const asset = messageImageForSource(item.image_assets, uri);
+      return {
+        uri,
+        name: file?.name || uri.split('/').filter(Boolean).pop() || 'attachment',
+        ...(file?.mime ? { mime: file.mime } : {}),
+        ...(asset ? { asset } : {}),
+        image: Boolean(asset),
+      };
+    });
+  }
+  const out: InboxAttachment[] = [];
+  for (const { path, name = 'attachment', mime, data } of files) {
+    const typed = mime
+      ? mime.startsWith('image/')
+      : IMAGE_NAME.test(name) || IMAGE_NAME.test(path ?? '');
+    const uploaded = Boolean(path?.includes(UPLOADS_SEGMENT));
+    const inline = typed && mime && data ? `data:${mime};base64,${data}` : undefined;
+    const uri = uploaded ? path : (inline ?? path);
+    if (!uri) continue;
+    out.push({
+      uri,
+      name,
+      ...(mime ? { mime } : {}),
+      image: typed && (uploaded || Boolean(inline)),
+    });
+  }
+  return out;
+}
+
+function hostPathFromUri(uri: string): string {
+  if (!/^file:/i.test(uri)) return uri;
+  const path = uri.replace(/^file:(\/\/)?/i, '');
+  try {
+    return decodeURI(path);
+  } catch {
+    return path;
+  }
 }
 
 export interface AgentSessionSnapshot {

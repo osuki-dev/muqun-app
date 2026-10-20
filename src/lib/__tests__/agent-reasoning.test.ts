@@ -147,6 +147,11 @@ describe('formatThoughtDuration', () => {
     expect(formatThoughtDuration(3_600_000)).toBe('60m 00s');
   });
 
+  test('a duration that rounds up to the next minute carries into it', () => {
+    expect(formatThoughtDuration(59_600)).toBe('1m 00s');
+    expect(formatThoughtDuration(179_600)).toBe('3m 00s');
+  });
+
   test('zero is zero rather than blank', () => {
     expect(formatThoughtDuration(0)).toBe('0.0s');
   });

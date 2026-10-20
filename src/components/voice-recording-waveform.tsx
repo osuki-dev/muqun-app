@@ -13,6 +13,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { VOICE_METER_SAMPLES } from '@/lib/voice-meter-history';
 import { VOICE_WAVEFORM_SKSL } from '@/lib/voice-waveform-shader';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 
 function compileEffect() {
   try {
@@ -139,6 +140,10 @@ export function VoiceLevelRing({
   processing?: boolean;
 }) {
   const theme = useThemeTokens();
+  // Traced on the stop control, so it takes that control's corner: a circle
+  // under a round profile, a rounded square under an angular one.
+  const profile = useAppearanceProfile();
+  const corner = Math.min(LEVEL_RING_SIZE / 2, profile.chrome.roundControl);
   const reduced = useReducedMotion();
   const settled = useSharedValue(processing ? 1 : 0);
   useEffect(() => {
@@ -158,15 +163,31 @@ export function VoiceLevelRing({
     <Animated.View
       pointerEvents="none"
       accessible={false}
-      style={[styles.levelRing, { borderColor: theme.colors.primary }, motion]}
+      style={[
+        styles.levelRing,
+        { borderColor: theme.colors.primary, borderRadius: corner, borderCurve: 'continuous' },
+        motion,
+      ]}
     />
   );
 }
 
 function QuietProcessingIndicator() {
   const theme = useThemeTokens();
-  return <View style={[styles.quietRing, { borderColor: theme.colors.primary }]} />;
+  const profile = useAppearanceProfile();
+  const corner = Math.min(QUIET_RING_SIZE / 2, profile.chrome.roundControl);
+  return (
+    <View
+      style={[
+        styles.quietRing,
+        { borderColor: theme.colors.primary, borderRadius: corner, borderCurve: 'continuous' },
+      ]}
+    />
+  );
 }
+
+const LEVEL_RING_SIZE = 34;
+const QUIET_RING_SIZE = 16;
 
 const styles = StyleSheet.create({
   fill: { flex: 1, height: '100%' },
@@ -179,13 +200,12 @@ const styles = StyleSheet.create({
     gap: 3,
     overflow: 'hidden',
   },
-  quietRing: { width: 16, height: 16, borderWidth: 2, borderRadius: 8, opacity: 0.6 },
+  quietRing: { width: QUIET_RING_SIZE, height: QUIET_RING_SIZE, borderWidth: 2, opacity: 0.6 },
   levelRing: {
     position: 'absolute',
-    width: 34,
-    height: 34,
+    width: LEVEL_RING_SIZE,
+    height: LEVEL_RING_SIZE,
     borderWidth: 2,
-    borderRadius: 17,
   },
   bar: { flex: 1, maxWidth: 4, height: 20, borderRadius: 2 },
 });

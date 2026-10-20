@@ -5,10 +5,10 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { StatusDot } from '@/components/status-dot';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { sameTarget, type AssignmentTarget } from '@/hooks/use-composer-assignment';
 import { canAssignToAgent } from '@/lib/agent-collaboration';
-import { appChrome } from '@/constants/appearance';
 import { fadeInDown, fadeOutDown } from '@/lib/motion';
 
 export type AssignmentCandidate = {
@@ -72,11 +72,17 @@ export function AgentAssignmentBar({
   upgrade?: 'gateway' | 'herdr';
 }) {
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
   const surfaceBackground = useSurfaceBackground();
   const { t } = useLingui();
 
+  // The profile's control corner, the one the key row directly below draws its
+  // keys with: a fixed round-control radius made every chip a full pill even
+  // under an angular profile, beside square-cornered keys.
+  const controlShape = { borderRadius: profile.chrome.control, borderCurve: 'continuous' as const };
   const chipStyle = (selected: boolean) => [
     styles.chip,
+    controlShape,
     {
       backgroundColor: surfaceBackground(
         selected ? theme.colors.primarySubtle : theme.colors.surfaceRaised
@@ -110,8 +116,9 @@ export function AgentAssignmentBar({
           testID="assignment-bar-close"
           accessibilityRole="button"
           accessibilityLabel={t`Stop assigning a task`}
+          hitSlop={10}
           onPress={onClose}
-          style={styles.close}>
+          style={[styles.close, controlShape]}>
           <CloseIcon size={15} color={theme.colors.textMuted} />
         </PressableScale>
       </View>
@@ -204,9 +211,13 @@ export function AgentAssignmentBar({
 }
 
 const styles = StyleSheet.create({
-  bar: { gap: 6, paddingHorizontal: 12, paddingBottom: 6 },
+  // No inset of its own: the dock already pads the key row and the field, and
+  // a second 12 points left the chips indented from both and cut short on the
+  // right where the row scrolls.
+  bar: { gap: 6, paddingBottom: 6 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  close: { padding: 4 },
+  // The glyph's own 24 points, with `hitSlop` making up a 44-point target.
+  close: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
   title: { flexShrink: 1 },
   row: { flexDirection: 'row', gap: 8, paddingRight: 12 },
   chip: {
@@ -217,8 +228,6 @@ const styles = StyleSheet.create({
     maxWidth: 220,
     minHeight: 34,
     paddingHorizontal: 12,
-    borderRadius: appChrome.radius.roundControl,
-    borderCurve: 'continuous',
     borderWidth: 1,
   },
   chipLabel: { flexShrink: 1 },

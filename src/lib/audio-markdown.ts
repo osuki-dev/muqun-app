@@ -18,6 +18,12 @@ export function isThemeFilePath(path: string): boolean {
   return THEME_PATH.test(path) && isHostPathSource(path);
 }
 
+function mediaKind(path: string): 'audio' | 'video' | 'file' {
+  if (/\.(mp4|mov|m4v)$/i.test(path)) return 'video';
+  if (/\.(wav|mp3|m4a|aac|ogg|opus|flac|aiff?)$/i.test(path)) return 'audio';
+  return 'file';
+}
+
 function basename(path: string): string {
   return path.slice(path.replace(/\/+$/, '').lastIndexOf('/') + 1) || path;
 }
@@ -80,7 +86,7 @@ export function splitAudioMarkdown(text: string): AudioMarkdownPart[] {
         // A theme path printed in prose or in a code span keeps the sentence and
         // gets its chip below the line.
         const tokens =
-          /(`+)(.*?)\1|\[([^\]\n]+)\]\(\s*(?:<([^>\n]+)>|([^\s()]+))\s*(?:"[^"\n]*"\s*)?\)|(^|[\s(（"'“:：])((?:file:\/\/)?[^\s`'"<>()[\]:*]+?\.muqun-theme(?:\.json)?)(?![\w-]|\.\w)/gi;
+          /(`+)(.*?)\1|:codex-file-citation\{([^}\n]*)\}|\[([^\]\n]+)\]\(\s*(?:<([^>\n]+)>|([^\s()]+))\s*(?:"[^"\n]*"\s*)?\)|(^|[\s(（"'“:：])((?:file:\/\/)?[^\s`'"<>()[\]:*]+?\.muqun-theme(?:\.json)?)(?![\w-]|\.\w)/gi;
         const trailing: { uri: string; start: number }[] = [];
         for (const match of line.matchAll(tokens)) {
           if (match[1]) {
@@ -88,13 +94,27 @@ export function splitAudioMarkdown(text: string): AudioMarkdownPart[] {
             if (isThemeFilePath(code)) trailing.push({ uri: code, start: offset + match.index });
             continue;
           }
-          if (match[7]) {
-            if (isThemeFilePath(match[7]))
-              trailing.push({ uri: match[7], start: offset + match.index + match[6]!.length });
+          if (match[8]) {
+            if (isThemeFilePath(match[8]))
+              trailing.push({ uri: match[8], start: offset + match.index + match[7]!.length });
+            continue;
+          }
+          if (match[3] !== undefined) {
+            // Codex cites a file it wrote or read as a directive rather than a
+            // link: `:codex-file-citation{path="/abs/report.pdf" purpose="output"}`.
+            // Drawn raw it is markup the reader cannot use, so it becomes the
+            // same tappable file a markdown link to that path would be.
+            const path = /(?:^|\s)path="([^"\n]+)"/.exec(match[3])?.[1];
+            if (!path || !isHostPathSource(path)) continue;
+            const start = offset + match.index;
+            flushTo(start);
+            if (isThemeFilePath(path)) themePaths.add(path);
+            parts.push({ kind: mediaKind(path), uri: path, name: basename(path), start });
+            cursor = start + match[0].length;
             continue;
           }
           if (/[!\\]/.test(line[match.index - 1] ?? '')) continue;
-          const uri = match[4] ?? match[5];
+          const uri = match[5] ?? match[6];
           if (
             !uri ||
             !isHostPathSource(uri) ||
@@ -107,13 +127,9 @@ export function splitAudioMarkdown(text: string): AudioMarkdownPart[] {
           flushTo(start);
           if (isThemeFilePath(uri)) themePaths.add(uri);
           parts.push({
-            kind: /\.(mp4|mov|m4v)$/i.test(uri)
-              ? 'video'
-              : /\.(wav|mp3|m4a|aac|ogg|opus|flac|aiff?)$/i.test(uri)
-                ? 'audio'
-                : 'file',
+            kind: mediaKind(uri),
             uri,
-            name: match[3]!,
+            name: match[4]!,
             start,
           });
           cursor = start + match[0].length;
