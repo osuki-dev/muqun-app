@@ -1,4 +1,5 @@
 import * as Clipboard from 'expo-clipboard';
+import { useRouter } from 'expo-router';
 import { AudioPlaybackError } from '@/lib/audio-playback-session';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useThemeTokens, Skeleton, Button, PressableScale, Text } from '@osuki-dev/ui';
@@ -47,6 +48,8 @@ import { THEME_LIMITS } from '@/theme/schema';
 import type { ThemeEditorCandidate } from '@/theme/draft-session';
 import { themeFromDocument } from '@/theme/file-preview';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
+import { goHomeAndWait } from '@/lib/home-arrival';
+import { ReskinSurface, useReskinActivity } from '@/components/reskin-transition';
 
 /**
  * Read-only view of one artifact the agent produced.
@@ -162,6 +165,7 @@ const COPIED_FEEDBACK_MS = 1_600;
 /** Everything that is not an image: a document, some text, or a file we can only describe. */
 function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => void }) {
   const surfaceBackground = useSurfaceBackground();
+  const router = useRouter();
   const fileActions = useFileActions(asset.name, () => saveSessionAsset(asset));
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
   //
@@ -206,6 +210,23 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
    * itself changes; the same contract the detail route has used since #834.
    */
   const [primary, setPrimary] = useState<ThemePrimaryAction | null>(null);
+  /**
+   * A theme applied from this file goes home, as the editor does: home is the
+   * screen that shows all of it. The library calls this under the reskin
+   * cover, which is a photograph of this viewer handed to the root surface;
+   * the viewer and the files sheet it may sit on then close without a
+   * transition (`quiet` below), and the cover lifts once Home has arrived.
+   */
+  const leaveForHome = () => {
+    onClose();
+    return goHomeAndWait(router);
+  };
+  /**
+   * Set while an applied theme leaves for home under the reskin cover. The
+   * viewer has to vanish rather than fade then: the cover underneath is a
+   * picture of this very viewer, and a fade would show it fading into itself.
+   */
+  const quiet = useReskinActivity((state) => state.quiet);
   const themeDocumentIdentity = `${asset.id}:${asset.modified_unix_ms}`;
   const themeManifest = useMemo(
     () => themeFromDocument(asset.name, content),
@@ -367,7 +388,7 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
       transparent
       statusBarTranslucent
       navigationBarTranslucent
-      animationType="fade"
+      animationType={quiet ? 'none' : 'fade'}
       onRequestClose={onClose}>
       <GestureHandlerRootView style={{ flex: 1 }}>
         {/* Both insets are paid here rather than per body: the fill is on this
@@ -391,8 +412,14 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
             file's details -- and a full-cover pack made them unreadable. The
             veil follows the reader's opacity slider down to its floor, exactly
             as the files sheet this opened from does. A picture never lands here:
-            it opens in the lightbox, on its own black matte. */}
-        <View style={styles.sheet}>
+            it opens in the lightbox, on its own black matte.
+
+            A reskin surface of its own, because a `Modal` is a window the
+            root's cover cannot reach: an apply from a theme preview here is
+            covered from this surface, and its photograph is handed to the root
+            (`ReskinRunOptions.handoff`). The ground is opaque, so the
+            photograph is too. */}
+        <ReskinSurface id="asset-viewer">
           <SheetFrame tint="background" frosted>
             <View style={[styles.sheetColumn, { paddingBottom: insets.bottom }]}>
               {/* SafeAreaView reports zero insets inside a native Modal, so pad from
@@ -409,47 +436,46 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
                     two round controls are its trailing edge. Every body below
                     starts on the same left edge as this name. */}
                 <View style={styles.header}>
-                  <SheetSceneHeading
-                    title={asset.name}
-                    caption={subtitle}
-                    trailing={
-                      <View style={styles.headerControls}>
-                        <PressableScale
-                          accessibilityLabel={t`Save file`}
-                          onPress={fileActions.show}
-                          style={[
-                            styles.close,
-                            { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-                          ]}>
-                          <DownloadIcon size={18} color={theme.colors.text} />
-                        </PressableScale>
-                        {content ? (
-                          <PressableScale
-                            accessibilityLabel={t`Copy`}
-                            onPress={copy}
-                            style={[
-                              styles.close,
-                              { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-                            ]}>
-                            {copied ? (
-                              <DoneIcon size={18} color={theme.colors.success} />
-                            ) : (
-                              <CopyIcon size={18} color={theme.colors.text} />
-                            )}
-                          </PressableScale>
-                        ) : null}
-                        <PressableScale
-                          accessibilityLabel={t`Close file`}
-                          onPress={onClose}
-                          style={[
-                            styles.close,
-                            { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-                          ]}>
-                          <CloseIcon size={18} color={theme.colors.text} />
-                        </PressableScale>
-                      </View>
-                    }
-                  />
+                  {/* The controls get their own row above the name. Beside it they
+                      squeezed a long file name into wrapping mid-word
+                      (`…v1.0.3.muq` / `un-theme`); on its own line the name stays
+                      whole, clipped in the middle so the extension still shows. */}
+                  <View style={styles.headerControls}>
+                    <PressableScale
+                      accessibilityLabel={t`Save file`}
+                      onPress={fileActions.show}
+                      style={[
+                        styles.close,
+                        { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                      ]}>
+                      <DownloadIcon size={18} color={theme.colors.text} />
+                    </PressableScale>
+                    {content ? (
+                      <PressableScale
+                        accessibilityLabel={t`Copy`}
+                        onPress={copy}
+                        style={[
+                          styles.close,
+                          { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                        ]}>
+                        {copied ? (
+                          <DoneIcon size={18} color={theme.colors.success} />
+                        ) : (
+                          <CopyIcon size={18} color={theme.colors.text} />
+                        )}
+                      </PressableScale>
+                    ) : null}
+                    <PressableScale
+                      accessibilityLabel={t`Close file`}
+                      onPress={onClose}
+                      style={[
+                        styles.close,
+                        { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                      ]}>
+                      <CloseIcon size={18} color={theme.colors.text} />
+                    </PressableScale>
+                  </View>
+                  <SheetSceneHeading title={asset.name} titleLines={1} caption={subtitle} />
                 </View>
               </View>
 
@@ -463,7 +489,9 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
                     // The prepared artwork belongs to this screen, which disposes it
                     // when the reader closes the file.
                     ownsPreparedAssets={false}
-                    onClosePreview={() => setPack(null)}
+                    onClosePreview={(after) =>
+                      after === 'applied' ? leaveForHome() : setPack(null)
+                    }
                     onPrimaryActionChange={setPrimary}
                   />
                 </ScrollView>
@@ -473,7 +501,11 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
                     key={themeDocumentIdentity}
                     initialManifest={themeManifest}
                     detail
-                    onClosePreview={() => setClosedThemeDocument(themeDocumentIdentity)}
+                    onClosePreview={(after) =>
+                      after === 'applied'
+                        ? leaveForHome()
+                        : setClosedThemeDocument(themeDocumentIdentity)
+                    }
                     onPrimaryActionChange={setPrimary}
                   />
                 </ScrollView>
@@ -486,31 +518,54 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
                         onPress={() => setClosedThemeDocument(null)}>{t`Preview`}</Button>
                     </View>
                   ) : packaged ? (
+                    // A theme package is a preview on its way, not a file the
+                    // viewer cannot read: while it downloads the progress is the
+                    // whole screen, and the button returns only to retry or to
+                    // reopen a preview the reader closed.
                     <View style={styles.themeEntry}>
-                      <Button
-                        testID="asset-open-theme-package"
-                        disabled={Boolean(packProgress)}
-                        onPress={() => void openPackagedTheme()}>{t`Preview`}</Button>
                       {packProgress ? (
                         <ThemeImportProgress
                           label={t`Downloading theme`}
-                          receivedBytes={packProgress.done}
-                          completed={packProgress.done}
+                          unit="bytes"
+                          // The encrypted transport hands the file over whole, so
+                          // no byte arrives until all of them do: until one has,
+                          // the bar travels rather than sitting at zero.
+                          indeterminate={packProgress.done === 0}
+                          receivedBytes={packProgress.total ? undefined : packProgress.done}
+                          completed={packProgress.done > 0 ? packProgress.done : undefined}
                           total={packProgress.total ?? undefined}
                         />
-                      ) : null}
+                      ) : (
+                        <Animated.View entering={fadeIn('micro')} style={{ gap: 8 }}>
+                          {error ? (
+                            <Text
+                              variant="bodySmall"
+                              accessibilityRole="alert"
+                              color={theme.colors.danger}>
+                              {error}
+                            </Text>
+                          ) : null}
+                          <Button
+                            testID="asset-open-theme-package"
+                            onPress={() => void openPackagedTheme()}>
+                            {error ? t`Try again` : t`Preview`}
+                          </Button>
+                        </Animated.View>
+                      )}
                     </View>
                   ) : null}
-                  <AssetBody
-                    asset={asset}
-                    presentation={presentation}
-                    readable={readable}
-                    tooLarge={tooLarge}
-                    content={content}
-                    error={error}
-                    markdownStyle={markdownStyle}
-                    onRetry={() => setAttempt((previous) => previous + 1)}
-                  />
+                  {packaged ? null : (
+                    <AssetBody
+                      asset={asset}
+                      presentation={presentation}
+                      readable={readable}
+                      tooLarge={tooLarge}
+                      content={content}
+                      error={error}
+                      markdownStyle={markdownStyle}
+                      onRetry={() => setAttempt((previous) => previous + 1)}
+                    />
+                  )}
                 </>
               )}
 
@@ -539,7 +594,7 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
               ) : null}
             </View>
           </SheetFrame>
-        </View>
+        </ReskinSurface>
       </GestureHandlerRootView>
     </Modal>
   );
@@ -776,9 +831,6 @@ function AssetDetails({ asset }: { asset: SessionAsset }) {
 }
 
 const styles = StyleSheet.create({
-  sheet: {
-    flex: 1,
-  },
   // The ground fills the sheet; the column inside it pays the bottom inset, so
   // the wallpaper still reaches the gesture bar.
   sheetColumn: {
@@ -806,7 +858,9 @@ const styles = StyleSheet.create({
   headerControls: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-end',
     gap: 10,
+    marginBottom: SHEET_LADDER.snug,
   },
   // A theme previewed in place: the library's own column, on the gutter.
   themePreview: {

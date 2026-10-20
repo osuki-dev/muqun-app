@@ -314,12 +314,18 @@ function SheetSceneClose() {
  */
 export function SheetSceneHeading({
   title,
+  titleLines,
   caption,
   captionLines = 1,
   detail,
   trailing,
 }: {
   title: string;
+  /**
+   * Clip the title to this many lines, in the middle. For a file name, whose
+   * extension is the part worth keeping; unset, a title wraps as it needs.
+   */
+  titleLines?: number;
   caption?: string;
   /**
    * How many lines the caption may take, and one unless a sheet says so.
@@ -350,7 +356,11 @@ export function SheetSceneHeading({
   return (
     <View style={styles.heading}>
       <View style={styles.headingCopy}>
-        <Text variant="subheading" style={styles.headingTitle}>
+        <Text
+          variant="subheading"
+          style={styles.headingTitle}
+          numberOfLines={titleLines}
+          ellipsizeMode={titleLines ? 'middle' : undefined}>
           {title}
         </Text>
         {caption ? (

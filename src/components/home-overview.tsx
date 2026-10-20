@@ -410,7 +410,6 @@ export function HomeOverview({
   const overviewScroll = useRef<React.ComponentRef<typeof KeyboardAwareScrollView>>(null);
   const restoredScroll = useRef<React.ComponentRef<typeof KeyboardAwareScrollView>>(null);
   const savedScrollY = useRef(0);
-  const [composerPulse, setComposerPulse] = useState(0);
   const [composerRevealed, setComposerRevealed] = useState(hasHomeComposerRevealed);
   const [initialProbeSettled, setInitialProbeSettled] = useState(false);
   const [viewportReady, setViewportReady] = useState(false);
@@ -1058,7 +1057,6 @@ export function HomeOverview({
       revealed={composerRevealed}
       controller={launchController}
       reachabilityByServer={padReachabilityByServer}
-      targetPulse={composerPulse}
       bottomInset={padLaunch ? 0 : insets.bottom}
       topInset={insets.top}
       // Phone Home has a small gutter outside the field and its shadow.
@@ -1094,12 +1092,13 @@ export function HomeOverview({
       onOpenAgent={commands.openAgent}
     />
   ) : null;
-  // A computer row sets the dock's target; the bar flashes to say so.
+  // A computer row sets the dock's target. The bar does not flash for it: the
+  // deck is swiped through often, and a ring on the composer at every swipe
+  // read as a stuck highlight rather than as news.
   const targetComposer = (serverId: string) => {
     retryHomeRefresh(serverId);
     launchController.choose(serverId);
     void Haptics.selectionAsync();
-    setComposerPulse((pulse) => pulse + 1);
   };
   const attentionSection =
     !loading && !hydrationError ? (

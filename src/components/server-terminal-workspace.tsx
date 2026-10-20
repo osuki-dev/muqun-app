@@ -114,7 +114,7 @@ import { StatusDot } from '@/components/status-dot';
 import { SwitchIndicator } from '@/components/switch-indicator';
 import { TerminalBoundary } from '@/components/terminal-boundary';
 import { EditorControls } from '@/components/editor-controls';
-import { TerminalComposer } from '@/components/terminal-composer';
+import { TerminalComposer, type TerminalComposerProps } from '@/components/terminal-composer';
 import { TerminalPanel } from '@/components/terminal-output';
 import { VirtualKeyboard } from '@/components/virtual-keyboard';
 import { WorkspaceTitleSwitcher } from '@/components/workspace-title-switcher';
@@ -213,7 +213,14 @@ import {
   type SessionsResponse,
 } from '@/lib/gateway-client';
 import { ComposerPopup } from '@/components/composer-popup';
-import { useComposerPopup } from '@/hooks/use-composer-popup';
+import { useDraftStoreComposerPopup } from '@/hooks/use-composer-popup';
+import { useStoreSelector } from '@/hooks/use-store-selector';
+import { useStore } from 'zustand';
+import {
+  createComposerDraftStore,
+  type ComposerDraft,
+  type ComposerDraftStore,
+} from '@/lib/composer-draft-store';
 import { editorActionDescription, terminalKeyDescription } from '@/i18n/labels';
 import { composerBackdropBottom } from '@/lib/composer-popup';
 import { withAlpha } from '@/lib/color';
@@ -330,7 +337,13 @@ import {
   type TerminalBackendState,
 } from '@/lib/terminal-backend-state';
 import { terminalBackendCopy } from '@/lib/terminal-backend-copy';
-import { initialSelection, reconcileSelection, type Selection } from '@/lib/workspace-selection';
+import {
+  followLanding,
+  initialSelection,
+  reconcileSelection,
+  type HeldTarget,
+  type Selection,
+} from '@/lib/workspace-selection';
 import { useAppActive } from '@/hooks/use-app-active';
 import { useServerAgents } from '@/stores/server-agents';
 import { useHomeRecentsStore } from '@/stores/home-recents';
@@ -433,14 +446,7 @@ type ConnectionStatus = {
 
 type RefreshResult = { ok: true; data: ServerData } | { ok: false; failure: GatewayFailure } | null;
 
-type StrictHomeTarget = {
-  serverId: string;
-  sessionId?: string;
-  workspaceId?: string;
-  tabId?: string;
-  paneId?: string;
-  afterGeneration: number;
-};
+type StrictHomeTarget = HeldTarget;
 
 type MissingHomeTarget = Extract<
   HomeTargetAvailability,
@@ -1195,7 +1201,9 @@ export function ServerTerminalWorkspace({
   const [selection, publishSelection] = useState<Selection>(initialSelection);
   const setSelection = useCallback(
     (next: Selection | ((current: Selection) => Selection)) => {
-      publishSelection(selectionOwner.update(next));
+      const resolved = selectionOwner.update(next);
+      publishSelection(resolved);
+      return resolved;
     },
     [selectionOwner]
   );
@@ -1236,11 +1244,19 @@ export function ServerTerminalWorkspace({
   const setOutput = (value: string, capturedRows = 0) =>
     setOutputWindow({ output: value, capturedRows });
   const readOutputWindow = useLatestReader(outputWindow);
-  const [draft, setDraft] = useState('');
-  // Where the caret is in the draft, which is half of what decides whether an
-  // `@` mention is open. Tracked rather than assumed, so moving the caret back
-  // into an old `@word` reopens the picker the same as typing it fresh would.
-  const [caret, setCaret] = useState(0);
+  // The draft and its caret live in a store, not in this component's state:
+  // both change on every keystroke, and as state they re-rendered this whole
+  // screen -- terminal, key row, chips -- twice per character. Only the field
+  // subscribes to the text; this screen subscribes to the few answers it draws
+  // from it (`hasDraftText`, the slash popup, the `@` mention), and reads the
+  // text itself only when it acts on it. The caret is half of what decides
+  // whether an `@` mention is open, tracked rather than assumed so moving it
+  // back into an old `@word` reopens the picker the same as typing would.
+  const [draftStore] = useState(createComposerDraftStore);
+  const setDraft = useCallback(
+    (text: string, caret?: number) => draftStore.setState({ text, caret }),
+    [draftStore]
+  );
   // Set for exactly one render after a mention is inserted, to put the caret
   // past the path. `undefined` the rest of the time: a permanently controlled
   // selection fights the platform's own caret handling on Android.
@@ -1706,7 +1722,6 @@ export function ServerTerminalWorkspace({
     setSelection(initialSelection);
     setOutput('');
     setDraft('');
-    setCaret(0);
     setError(null);
     setMissingRequestedTarget(null);
     setLoadingData(true);
@@ -1745,6 +1760,7 @@ export function ServerTerminalWorkspace({
     clearAttachments,
     composerSendGuard,
     deliveryOwnership,
+    setDraft,
     setSelection,
     setData,
     setSnapshotGeneration,
@@ -2912,11 +2928,7 @@ export function ServerTerminalWorkspace({
     }));
   }, [partsForPane.composer, shortcuts]);
   const slashTrigger = useMemo(() => slashCommandTrigger(slashCatalog), [slashCatalog]);
-  const slashPopup = useComposerPopup({
-    draft,
-    onDraftChange: setDraft,
-    trigger: slashTrigger,
-  });
+  const slashPopup = useDraftStoreComposerPopup({ store: draftStore, trigger: slashTrigger });
 
   // -- @ file mentions ------------------------------------------------------
   //
@@ -2928,9 +2940,13 @@ export function ServerTerminalWorkspace({
   // gateway says this pane can use it.
   const fileMentionsEnabled =
     partsForPane.composer?.fileMentions === true && Boolean(agentPane) && !sending;
-  const mentionTrigger = useMemo<FileMentionTrigger | null>(
-    () => (fileMentionsEnabled ? findFileMentionTrigger(draft, caret) : null),
-    [caret, draft, fileMentionsEnabled]
+  const mentionTrigger = useStoreSelector<ComposerDraft, FileMentionTrigger | null>(
+    draftStore,
+    (draft) =>
+      fileMentionsEnabled
+        ? findFileMentionTrigger(draft.text, draft.caret ?? draft.text.length)
+        : null,
+    sameMentionTrigger
   );
   // The span itself is the dependency for the request, not the object, which is
   // rebuilt on every keystroke; the query and its position are what change.
@@ -2983,17 +2999,16 @@ export function ServerTerminalWorkspace({
   const chooseMention = useCallback(
     (hit: FileMentionHit) => {
       if (!mentionTrigger) return;
-      const next = insertFileMention(draft, mentionTrigger, hit.path);
-      setDraft(next.text);
-      // Both, in this order: the caret state is what closes the picker on the
-      // very next render, and the prop is what actually moves the platform
-      // caret. Leaving either out shows the panel for a frame after the pick.
-      setCaret(next.caret);
+      const next = insertFileMention(draftStore.getState().text, mentionTrigger, hit.path);
+      // Both: the stored caret is what closes the picker on the very next
+      // render, and the prop is what actually moves the platform caret.
+      // Leaving either out shows the panel for a frame after the pick.
+      setDraft(next.text, next.caret);
       setPendingCaret(next.caret);
       mentionSearchRef.current?.cancel();
       setMentionHits([]);
     },
-    [draft, mentionSearchRef, mentionTrigger]
+    [draftStore, mentionSearchRef, mentionTrigger, setDraft]
   );
 
   // `onScreen`, not `ready`: a sheet sliding up over the composer must not also
@@ -3012,7 +3027,8 @@ export function ServerTerminalWorkspace({
   const attachmentsAvailable = composerVisible && !demoMode;
   // A staged file is worth sending on its own; it started uploading the moment
   // it was picked, so Send is usually only collecting paths that already exist.
-  const hasSendableContent = Boolean(draft.trim()) || attachments.length > 0;
+  const hasDraftText = useStore(draftStore, (draft) => draft.text.trim().length > 0);
+  const hasSendableContent = hasDraftText || attachments.length > 0;
   /**
    * Whether the next send starts an assistant instead of typing into this pane.
    *
@@ -3532,10 +3548,9 @@ export function ServerTerminalWorkspace({
   // than as a sent message.
   useEffect(() => {
     if (prefilledDraft === null) return;
-    setDraft(prefilledDraft);
-    setCaret(prefilledDraft.length);
+    setDraft(prefilledDraft, prefilledDraft.length);
     clearPrefilledDraft();
-  }, [clearPrefilledDraft, prefilledDraft]);
+  }, [clearPrefilledDraft, prefilledDraft, setDraft]);
 
   // A shortcut or Quick actions asked for the assistant strip. Same shape as a
   // prefilled draft: consumed once, on the screen it was meant for, and never
@@ -3548,8 +3563,7 @@ export function ServerTerminalWorkspace({
     assignment.setCommand(assignmentRequest.command ?? null);
     if (assignmentRequest.kind) assignment.choose({ type: 'new', kind: assignmentRequest.kind });
     if (assignmentRequest.prompt !== undefined) {
-      setDraft(assignmentRequest.prompt);
-      setCaret(assignmentRequest.prompt.length);
+      setDraft(assignmentRequest.prompt, assignmentRequest.prompt.length);
     }
     void loadAssistantKinds();
     clearAssignmentRequest();
@@ -3560,6 +3574,7 @@ export function ServerTerminalWorkspace({
     loadAssistantKinds,
     selection.paneId,
     serverId,
+    setDraft,
   ]);
 
   // The shared tail of "new output for this pane arrived" -- whether it came
@@ -4389,6 +4404,22 @@ export function ServerTerminalWorkspace({
     tabPaneMemoryRef.current = rememberTabPane(tabPaneMemoryRef.current, selection);
   }, [selection]);
 
+  // A hand-made switch moves the screen's held target with it (see
+  // `followLanding`). The generation is read when the switch lands, not during
+  // render, so the target is checked against the snapshot already on screen.
+  const followSwitch = useCallback(
+    (landed: Selection) => {
+      const landing = {
+        serverId,
+        sessionId: data.sessionId,
+        selection: landed,
+        generation: snapshotGenerationRef.current,
+      };
+      setStrictTarget((held) => followLanding(held, landing));
+    },
+    [data.sessionId, serverId, setStrictTarget]
+  );
+
   /**
    * A swipe on the title has landed on a workspace.
    *
@@ -4401,9 +4432,13 @@ export function ServerTerminalWorkspace({
    * burst of swipes into one landing, and by then this screen's selection is a
    * step or more behind the finger. Applied through the updater form for the
    * same reason -- `selection` in this closure is whatever the last render saw.
+   *
+   * The held target follows the landing: a screen opened on a pane from Home
+   * holds that pane, and the next snapshot would otherwise put the selection
+   * straight back on it.
    */
   function selectWorkspace(nextWorkspaceId: string) {
-    setSelection((current) => {
+    const landed = setSelection((current) => {
       if (current.workspaceId === nextWorkspaceId) return current;
       if (!data.workspaces.some((item) => item.id === nextWorkspaceId)) return current;
       workspaceMemoryRef.current = rememberWorkspaceSelection(workspaceMemoryRef.current, current);
@@ -4411,6 +4446,7 @@ export function ServerTerminalWorkspace({
       const next = reconcileSelection(data, candidate);
       return sameSelection(current, next) ? current : next;
     });
+    followSwitch(landed);
     setError(null);
   }
 
@@ -4428,7 +4464,7 @@ export function ServerTerminalWorkspace({
    */
   const selectTab = useCallback(
     (target: TabCycleTarget, direction: TabCycleDirection) => {
-      setSelection((current) => {
+      const landed = setSelection((current) => {
         if (current.tabId === target.tabId) return current;
         if (!data.tabs.some((item) => item.id === target.tabId)) return current;
         tabPaneMemoryRef.current = rememberTabPane(tabPaneMemoryRef.current, current);
@@ -4440,9 +4476,10 @@ export function ServerTerminalWorkspace({
         if (sameSelection(current, next)) return current;
         return next;
       });
+      followSwitch(landed);
       setError(null);
     },
-    [data, setSelection]
+    [data, followSwitch, setSelection]
   );
 
   /**
@@ -4767,6 +4804,7 @@ export function ServerTerminalWorkspace({
     const requestServerId = serverId;
     const requestPaneId = selection.paneId;
     const hasAttachments = attachments.length > 0;
+    const draft = draftStore.getState().text;
     if (!targetReady || connection.phase !== 'connected' || !ready || !requestPaneId || sending)
       return;
     if (!draft.trim() && !hasAttachments) return;
@@ -4865,7 +4903,6 @@ export function ServerTerminalWorkspace({
             }
             if (!isCurrentSend()) return;
             setDraft('');
-            setCaret(0);
             clearAttachments();
             setStickBottomNonce((value) => value + 1);
             // Delivery is acknowledged. Painting its output must not keep the input
@@ -5393,8 +5430,8 @@ export function ServerTerminalWorkspace({
     It goes for an approval. It is the strongest of the "send the pane something
     else" surfaces, and a text field left under a standing permission menu
     invites typing into a program that is not reading typing. Nothing already
-    drafted is lost -- `draft` is the screen's state, not the field's, so the
-    words come back with the dock.
+    drafted is lost -- the draft lives in the screen's store, not the field, so
+    the words come back with the dock.
 
     It sits outside the keyboard's branch rather than inside its else, because
     the keyboard is no longer the end of it: an editor can summon this back over
@@ -5432,7 +5469,8 @@ export function ServerTerminalWorkspace({
     ) : null;
 
   const composerField = (
-    <TerminalComposer
+    <DraftStoreComposer
+      draftStore={draftStore}
       voiceContext={`${serverId}:${data.sessionId}:${selection.paneId}`}
       entering={fadeInDown('short')}
       exiting={fadeOutDown('short')}
@@ -5462,18 +5500,12 @@ export function ServerTerminalWorkspace({
       }
       inputProps={{
         testID: 'terminal-composer-input',
-        value: draft,
-        onChangeText: setDraft,
+        onChangeText: (text) => draftStore.setState({ text }),
         // The picker follows the caret, and takes Esc from a hardware
         // keyboard. Both are inert when no catalog is in hand.
         ...slashPopup.inputProps,
-        // Both popups read the caret: the slash picker through its own
-        // inputProps handler, the @ mention trigger through `caret`.
-        // The spread must not eat the second one.
-        onSelectionChange: (event) => {
-          slashPopup.inputProps.onSelectionChange(event);
-          setCaret(event.nativeEvent.selection.start);
-        },
+        // The slash picker's handler stores the caret, which is also what
+        // the @ mention trigger reads.
         editable:
           !paneHidden &&
           targetReady &&
@@ -6137,7 +6169,7 @@ export function ServerTerminalWorkspace({
                           // and the opacity floors, and a theme arriving from
                           // another machine is exactly as unreviewed as one picked
                           // by hand. The card's job was to get it here.
-                          openThemeEditor(candidate);
+                          openThemeEditor(candidate, 'conversation');
                           themeCandidateRef.current = null;
                           setThemeDrop(null);
                         }}
@@ -6567,6 +6599,24 @@ export function ServerTerminalWorkspace({
       </View>
     </AppDrawer>
   );
+}
+
+/**
+ * The terminal composer bound to a draft store: the one component that
+ * renders on every keystroke, so the screen around it does not.
+ */
+function DraftStoreComposer({
+  draftStore,
+  inputProps,
+  ...props
+}: TerminalComposerProps & { draftStore: ComposerDraftStore }) {
+  const value = useStore(draftStore, (draft) => draft.text);
+  return <TerminalComposer {...props} inputProps={{ ...inputProps, value }} />;
+}
+
+function sameMentionTrigger(a: FileMentionTrigger | null, b: FileMentionTrigger | null): boolean {
+  if (a === null || b === null) return a === b;
+  return a.start === b.start && a.end === b.end && a.query === b.query;
 }
 
 /**

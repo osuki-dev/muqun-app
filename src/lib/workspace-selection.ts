@@ -50,3 +50,48 @@ export function reconcileSelection(data: WarmWorkspace, current: Selection): Sel
     panes[0];
   return { workspaceId: workspace.id, tabId: tab.id, paneId: pane?.id ?? '' };
 }
+
+/**
+ * An explicit destination the workspace screen holds on to -- a Home row, a
+ * notification, a panel pick -- and re-asserts after every snapshot until the
+ * reader goes somewhere else.
+ */
+export type HeldTarget = {
+  serverId: string;
+  sessionId?: string;
+  workspaceId?: string;
+  tabId?: string;
+  paneId?: string;
+  /** The first snapshot generation the target may be checked against. */
+  afterGeneration: number;
+};
+
+/**
+ * The held target once the reader has switched somewhere by hand.
+ *
+ * A swipe of the title or of the pane moves the selection, but the held target
+ * still names where the screen was opened. Left as it was, the next snapshot
+ * -- and a switch always brings one, the new pane's stream opening is enough --
+ * puts the selection back on it, and the swipe snaps back a beat after it
+ * landed. So the target follows the landing: the screen keeps guarding an
+ * explicit destination, just the one the reader chose last. Checked from the
+ * snapshot already in hand, so it is satisfied the moment it is set.
+ *
+ * No held target stays no held target, and one held for another computer is
+ * not this landing's to move. A landing that resolved to nothing leaves the
+ * held target alone.
+ */
+export function followLanding(
+  held: HeldTarget | null,
+  landing: { serverId: string; sessionId: string; selection: Selection; generation: number }
+): HeldTarget | null {
+  if (!held || held.serverId !== landing.serverId || !landing.selection.workspaceId) return held;
+  return {
+    serverId: held.serverId,
+    sessionId: landing.sessionId,
+    workspaceId: landing.selection.workspaceId,
+    tabId: landing.selection.tabId || undefined,
+    paneId: landing.selection.paneId || undefined,
+    afterGeneration: landing.generation,
+  };
+}

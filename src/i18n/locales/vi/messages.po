@@ -43,6 +43,11 @@ msgstr "[mô hình]"
 msgid "[pr number]"
 msgstr "[số pr]"
 
+#. placeholder {0}: files.length
+#: src/components/agent-composer.tsx
+msgid "{0, plural, one {# attachment} other {# attachments}}"
+msgstr ""
+
 #. placeholder {0}: capped.hidden
 #: src/components/bounded-markdown.tsx
 msgid "{0, plural, one {# character not shown} other {# characters not shown}}"
@@ -1106,7 +1111,6 @@ msgstr "Cần quyền truy cập camera"
 #: src/components/ssh-host-form.tsx
 #: src/components/ssh-host-key-dialog.tsx
 #: src/components/theme-link-import.tsx
-#: src/components/voice-input-button.tsx
 #: src/hooks/use-file-actions.tsx
 #: src/hooks/use-lazygit.ts
 #: src/lib/local-authentication.ts
@@ -2548,6 +2552,10 @@ msgstr "Hủy thay đổi"
 msgid "Discard changes to {discardName}?"
 msgstr "Hủy thay đổi của {discardName}?"
 
+#: src/components/voice-input-button.tsx
+msgid "Discard recording"
+msgstr "Hủy bản ghi âm"
+
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Disconnect from {0}"
@@ -2563,7 +2571,6 @@ msgid "Disconnected."
 msgstr "Đã ngắt kết nối"
 
 #: src/components/agent-compaction-pill.tsx
-#: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/task-row.tsx
@@ -3168,6 +3175,10 @@ msgstr "Ẩn danh sách máy tính"
 msgid "Hide the simulator"
 msgstr "Ẩn trình giả lập"
 
+#: src/components/agent-composer.tsx
+msgid "Hides this notice"
+msgstr ""
+
 #: src/app/settings-voice.tsx
 msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
 msgstr "Nhấn giữ nút Gửi để nói. Dừng ghi âm để thêm văn bản vào bản nháp, sau đó chỉnh sửa và gửi"
@@ -3762,7 +3773,7 @@ msgstr "Đánh dấu đã xem"
 
 #: src/components/dev-icon-gallery.tsx
 msgid "Marks keep their original geometry and stroke."
-msgstr "Biểu tượng giữ nguyên hình dạng và nét vẽ gốc."
+msgstr "Biểu tượng giữ nguyên hình dạng và nét vẽ gốc"
 
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
@@ -4032,6 +4043,7 @@ msgid "Newer"
 msgstr "Mới hơn"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-message-block.tsx
 msgid "Next"
 msgstr "Tiếp theo"
 
@@ -5040,10 +5052,9 @@ msgstr "Đang chờ"
 msgid "queued to upload"
 msgstr "đang chờ tải lên"
 
-#. placeholder {0}: inboxItemText(item) || item.type
 #: src/components/agent-composer.tsx
-msgid "Queued: {0}"
-msgstr "Đang xếp hàng: {0}"
+msgid "Queued: {summary}"
+msgstr "Đang xếp hàng: {summary}"
 
 #: src/app/commands.tsx
 msgid "Quick action settings"
@@ -5834,10 +5845,9 @@ msgstr "Gửi cho tác tử"
 msgid "Sending attachment message…"
 msgstr "Đang gửi tin nhắn có tệp đính kèm…"
 
-#. placeholder {0}: inboxItemText(item) || item.type
 #: src/components/agent-composer.tsx
-msgid "Sending next: {0}"
-msgstr "Gửi tiếp theo: {0}"
+msgid "Sending next: {summary}"
+msgstr "Gửi tiếp theo: {summary}"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Sending to"
@@ -6399,10 +6409,6 @@ msgstr "Gửi"
 #: src/components/agent-composer.tsx
 msgid "Submitted"
 msgstr "Đã gửi"
-
-#: src/components/agent-composer.tsx
-msgid "Submitted to queue"
-msgstr "Đã gửi vào hàng đợi"
 
 #: src/components/agent-composer.tsx
 msgid "Submitting follow-up…"

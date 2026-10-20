@@ -81,7 +81,7 @@ test('a file from outside the app is previewed, never applied', () => {
   // replaces that placeholder first (`use-open-theme-editor`) -- and carries no
   // permission to write anything. What this test is really guarding is the two
   // negatives below: this path never applies and never saves.
-  expect(/openThemeEditor\(preview(, true)?\)/.test(hook)).toBe(true);
+  expect(/openThemeEditor\(preview(, 'handed')?\)/.test(hook)).toBe(true);
   expect(hook).not.toContain('apply(');
   expect(hook).not.toContain('save(');
 });

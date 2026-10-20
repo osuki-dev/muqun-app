@@ -24,6 +24,7 @@ import { ReskinSurface } from '@/components/reskin-transition';
 import { CandidateThemeProvider } from '@/components/theme-candidate';
 import { GroundTextPlate } from '@/components/sheet-ground';
 import { AppSurfaceDecorator } from '@/components/surface-decorator';
+import { goHomeAndWait } from '@/lib/home-arrival';
 import { themeDraftSessions, type ThemeEditorCandidate } from '@/theme/draft-session';
 import type { InstalledTheme } from '@/theme/repository';
 
@@ -118,12 +119,26 @@ function CustomThemeScene({
    *
    * `router.back()` put the reader back in the theme picker, which is not where
    * Done means to leave them: they came to look at one theme, and they are done
-   * with it. The picker is a sheet this screen was pushed over, so dismissing
-   * the stack lands back in Settings -- and when the editor was opened from a
-   * file handed to the app from outside, there is no sheet behind it and this
-   * simply closes the one modal.
+   * with it. `dismissAll` pops the root stack to its first screen, so from the
+   * picker it closes the editor, the picker and Settings and lands on Home --
+   * and when the editor was opened from a file handed to the app from outside,
+   * Home is the only screen behind it.
    */
   const close = () => (router.canDismiss() ? router.dismissAll() : router.back());
+  /**
+   * An applied theme always lands on Home, the one screen that shows the whole
+   * theme, wherever the editor was opened from. The library calls this under
+   * the reskin cover, with route transitions off, and the cover lifts once
+   * Home has arrived (`goHomeAndWait`) -- so the reader sees the editor turn
+   * into Home in one move instead of Settings or the session flashing past.
+   * `dismissTo` drops everything above Home, so Back does not bounce into it.
+   *
+   * A theme sent into a session closes back to that session, where the reader
+   * may still be asking for changes.
+   */
+  const { from } = useLocalSearchParams<{ from?: string }>();
+  const leave = (after: 'applied' | 'closed') =>
+    after === 'applied' ? goHomeAndWait(router) : from === 'conversation' ? router.back() : close();
   /**
    * The one button at the bottom is the one decision on this screen.
    *
@@ -170,7 +185,7 @@ function CustomThemeScene({
               onPreviewAppearanceChange={onPreviewAppearanceChange}
               detail
               ownsPreparedAssets={false}
-              onClosePreview={close}
+              onClosePreview={leave}
               onPrimaryActionChange={setPrimary}
               onStatusChange={setStatus}
             />

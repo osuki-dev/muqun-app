@@ -43,6 +43,11 @@ msgstr "[модель]"
 msgid "[pr number]"
 msgstr "[номер pr]"
 
+#. placeholder {0}: files.length
+#: src/components/agent-composer.tsx
+msgid "{0, plural, one {# attachment} other {# attachments}}"
+msgstr ""
+
 #. placeholder {0}: capped.hidden
 #: src/components/bounded-markdown.tsx
 msgid "{0, plural, one {# character not shown} other {# characters not shown}}"
@@ -1106,7 +1111,6 @@ msgstr "Нужен доступ к камере"
 #: src/components/ssh-host-form.tsx
 #: src/components/ssh-host-key-dialog.tsx
 #: src/components/theme-link-import.tsx
-#: src/components/voice-input-button.tsx
 #: src/hooks/use-file-actions.tsx
 #: src/hooks/use-lazygit.ts
 #: src/lib/local-authentication.ts
@@ -2548,6 +2552,10 @@ msgstr "Отменить изменения"
 msgid "Discard changes to {discardName}?"
 msgstr "Отменить изменения в {discardName}?"
 
+#: src/components/voice-input-button.tsx
+msgid "Discard recording"
+msgstr "Удалить запись"
+
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Disconnect from {0}"
@@ -2563,7 +2571,6 @@ msgid "Disconnected."
 msgstr "Отключено"
 
 #: src/components/agent-compaction-pill.tsx
-#: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/task-row.tsx
@@ -3168,6 +3175,10 @@ msgstr "Скрыть список компьютеров"
 msgid "Hide the simulator"
 msgstr "Скрыть симулятор"
 
+#: src/components/agent-composer.tsx
+msgid "Hides this notice"
+msgstr ""
+
 #: src/app/settings-voice.tsx
 msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
 msgstr "Удерживайте кнопку отправки, чтобы говорить. Остановите запись, чтобы добавить текст в черновик, затем отредактируйте и отправьте его"
@@ -3762,7 +3773,7 @@ msgstr "Отметить как проверенное"
 
 #: src/components/dev-icon-gallery.tsx
 msgid "Marks keep their original geometry and stroke."
-msgstr "Логотипы сохраняют исходную форму и толщину линий."
+msgstr "Логотипы сохраняют исходную форму и толщину линий"
 
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
@@ -4032,6 +4043,7 @@ msgid "Newer"
 msgstr "Позже"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-message-block.tsx
 msgid "Next"
 msgstr "Далее"
 
@@ -5040,10 +5052,9 @@ msgstr "В очереди"
 msgid "queued to upload"
 msgstr "в очереди на загрузку"
 
-#. placeholder {0}: inboxItemText(item) || item.type
 #: src/components/agent-composer.tsx
-msgid "Queued: {0}"
-msgstr "В очереди: {0}"
+msgid "Queued: {summary}"
+msgstr "В очереди: {summary}"
 
 #: src/app/commands.tsx
 msgid "Quick action settings"
@@ -5834,10 +5845,9 @@ msgstr "Отправить агенту"
 msgid "Sending attachment message…"
 msgstr "Отправляется сообщение с вложениями…"
 
-#. placeholder {0}: inboxItemText(item) || item.type
 #: src/components/agent-composer.tsx
-msgid "Sending next: {0}"
-msgstr "Отправится следующим: {0}"
+msgid "Sending next: {summary}"
+msgstr "Отправится следующим: {summary}"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Sending to"
@@ -6399,10 +6409,6 @@ msgstr "Отправить"
 #: src/components/agent-composer.tsx
 msgid "Submitted"
 msgstr "Отправлено"
-
-#: src/components/agent-composer.tsx
-msgid "Submitted to queue"
-msgstr "Отправлено в очередь"
 
 #: src/components/agent-composer.tsx
 msgid "Submitting follow-up…"

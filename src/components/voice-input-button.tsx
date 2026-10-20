@@ -2,7 +2,7 @@ import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { useIsFocused } from 'expo-router';
 import { UndoIcon, StopIcon, CloseIcon } from '@/icons';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ComponentProps } from 'react';
 import {
   AppState,
   BackHandler,
@@ -14,7 +14,15 @@ import {
   useWindowDimensions,
   type ScrollViewInstance,
 } from 'react-native';
-import Animated, { useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
+import { useStore } from 'zustand';
+import { createStore, type StoreApi } from 'zustand/vanilla';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useResolvedLocale } from '@/i18n/provider';
 import { useLatestReader } from '@/hooks/use-render-refs';
 import { fadeIn, fadeOut, timing } from '@/lib/motion';
@@ -39,13 +47,57 @@ const enter = fadeIn('short');
 const exit = fadeOut('short');
 const REALTIME_TOP_INSET = 28;
 const REALTIME_BOTTOM_INSET = 48;
+
+/**
+ * What a recording reports many times a second: the elapsed time and the
+ * words so far. Held in a store rather than in `VoiceRecording`'s state, so a
+ * clock tick or a new partial renders only the text that shows it -- not the
+ * panel, its controls and its waveform around it.
+ */
+type RecordingReadout = StoreApi<{ seconds: number; partial: string }>;
+
+function RecordingElapsed({
+  readout,
+  status,
+  compact,
+}: {
+  readout: RecordingReadout;
+  status: string;
+  compact: boolean;
+}) {
+  const theme = useThemeTokens();
+  const seconds = useStore(readout, (state) => state.seconds);
+  const elapsed = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+  return (
+    <Text
+      weight="regular"
+      color={theme.colors.textMuted}
+      style={[styles.elapsed, compact && styles.compactElapsed]}
+      accessibilityLabel={`${status} ${elapsed}`}>
+      {elapsed}
+    </Text>
+  );
+}
+
+function PartialText({
+  readout,
+  ...props
+}: Omit<ComponentProps<typeof Text>, 'children'> & { readout: RecordingReadout }) {
+  const partial = useStore(readout, (state) => state.partial);
+  return <Text {...props}>{partial}</Text>;
+}
+
 function LiveTranscript({
-  text,
+  readout,
+  fallback = '',
   onHeightChange,
 }: {
-  text: string;
+  readout: RecordingReadout;
+  /** Shown until the first words arrive. */
+  fallback?: string;
   onHeightChange?: (height: number) => void;
 }) {
+  const text = useStore(readout, (state) => state.partial) || fallback;
   const theme = useThemeTokens();
   const scroll = useRef<ScrollViewInstance>(null);
   const following = useRef(true);
@@ -103,10 +155,13 @@ function VoiceRecording({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const reduced = useReducedMotion();
+  const profile = useAppearanceProfile();
   const [state, setState] = useState<VoiceState>('starting');
-  const [seconds, setSeconds] = useState(0);
   const [error, setError] = useState('');
-  const [partial, setPartial] = useState('');
+  const [readout] = useState<RecordingReadout>(() =>
+    createStore(() => ({ seconds: 0, partial: '' }))
+  );
+  const hasPartial = useStore(readout, (current) => current.partial.length > 0);
   const { fontScale } = useWindowDimensions();
   const [height, setHeight] = useState(0);
   const compact = config.mode !== 'realtime' && height < 96 * fontScale;
@@ -122,7 +177,7 @@ function VoiceRecording({
         (value, duration) => {
           const samples = meter.push(value, duration);
           if (samples) history.set(reduced ? samples : withTiming(samples, timing('button')));
-          setSeconds(Math.floor(duration));
+          readout.setState({ seconds: Math.floor(duration) });
         },
         (text) => {
           if (text.trim()) latest().onText(text.trim());
@@ -142,7 +197,7 @@ function VoiceRecording({
                       : t`Transcription failed. Check your speech service and try again.`
               : t`Recording failed.`
           ),
-        setPartial,
+        (partial) => readout.setState({ partial }),
         {
           appState: () => AppState.currentState ?? 'unknown',
           onBackground: () => latest().onClose(),
@@ -179,18 +234,31 @@ function VoiceRecording({
   // transcript's and the level moves onto the stop control; after-recording
   // transcription has no words to show and keeps the full-width waveform.
   const realtime = config.mode === 'realtime';
-  const elapsed = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+  // The two controls take the profile's round-control corner, as Send beside
+  // them does, so an angular theme does not get round recorder buttons.
+  const actionShape = {
+    borderRadius: profile.chrome.roundControl,
+    borderCurve: 'continuous' as const,
+  };
+  // Stop waits out the starting and transcribing phases; it dims into that
+  // wait and back rather than switching opacity between two frames.
+  const stopDimmed = busy && !error;
+  const stopDim = useSharedValue(stopDimmed ? 1 : 0);
+  useEffect(() => {
+    stopDim.set(withTiming(stopDimmed ? 1 : 0, timing('button')));
+  }, [stopDimmed, stopDim]);
+  const stopDimStyle = useAnimatedStyle(() => ({ opacity: 1 - stopDim.get() * 0.55 }));
   const cancel = (
     <PressableScale
       accessibilityRole="button"
-      accessibilityLabel={t`Cancel`}
+      accessibilityLabel={t`Discard recording`}
       testID="voice-recording-cancel"
       hitSlop={4}
       onPress={() => {
         void session.cancel();
         onClose();
       }}
-      style={styles.action}>
+      style={[styles.action, actionShape]}>
       <CloseIcon size={18} color={theme.colors.textMuted} />
     </PressableScale>
   );
@@ -198,23 +266,25 @@ function VoiceRecording({
     <PressableScale
       accessibilityRole="button"
       accessibilityLabel={error ? t`Try again` : t`Stop and transcribe`}
-      accessibilityState={{ busy: busy && !error }}
+      accessibilityState={{ busy: stopDimmed, disabled: stopDimmed }}
       testID="voice-recording-stop"
       hitSlop={4}
-      disabled={busy && !error}
+      disabled={stopDimmed}
       onPress={() => {
         if (error) onRetry();
         else void session.finish();
       }}
-      style={[styles.action, { opacity: busy && !error ? 0.45 : 1 }]}>
-      {error ? (
-        <UndoIcon size={18} color={theme.colors.primary} />
-      ) : (
-        <>
-          {realtime ? <VoiceLevelRing history={history} processing={!recording} /> : null}
-          <StopIcon size={16} color={theme.colors.primary} />
-        </>
-      )}
+      style={[styles.action, actionShape]}>
+      <Animated.View style={[styles.actionGlyph, stopDimStyle]}>
+        {error ? (
+          <UndoIcon size={18} color={theme.colors.primary} />
+        ) : (
+          <>
+            {realtime ? <VoiceLevelRing history={history} processing={!recording} /> : null}
+            <StopIcon size={16} color={theme.colors.primary} />
+          </>
+        )}
+      </Animated.View>
     </PressableScale>
   );
   return (
@@ -227,13 +297,12 @@ function VoiceRecording({
       {!error ? (
         <>
           {recording && (
-            <Text
-              weight="regular"
-              color={theme.colors.textMuted}
-              style={[styles.elapsed, styles.timer, compact ? styles.compactTimer : {}]}
-              accessibilityLabel={`${status} ${elapsed}`}>
-              {elapsed}
-            </Text>
+            <Animated.View
+              entering={fadeIn('micro')}
+              exiting={fadeOut('micro')}
+              style={[styles.timer, compact && styles.compactTimer]}>
+              <RecordingElapsed readout={readout} status={status} compact={compact} />
+            </Animated.View>
           )}
           <View
             testID={`voice-visual-${state === 'starting' ? 'idle' : state}`}
@@ -250,12 +319,13 @@ function VoiceRecording({
               // fading in over the other: the field is never bare and never
               // cut from one to the other.
               <Animated.View
-                key={partial ? 'words' : 'status'}
+                key={hasPartial ? 'words' : 'status'}
                 entering={fadeIn('micro')}
                 exiting={fadeOut('micro')}
                 style={styles.realtimeField}>
                 <LiveTranscript
-                  text={partial || status}
+                  readout={readout}
+                  fallback={status}
                   onHeightChange={(textHeight) =>
                     onHeightChange?.(textHeight + REALTIME_TOP_INSET + REALTIME_BOTTOM_INSET)
                   }
@@ -264,32 +334,37 @@ function VoiceRecording({
             ) : (
               <VoiceRecordingWaveform history={history} processing={!recording} compact={compact} />
             )}
-            {!realtime && !recording && !compact && !!partial && (
-              <Text
-                testID="voice-processing-status"
-                weight="regular"
-                style={styles.pendingLabel}
-                numberOfLines={1}
-                color={theme.colors.textMuted}
-                accessibilityLiveRegion="polite">
-                {partial}
-              </Text>
+            {!realtime && !recording && !compact && hasPartial && (
+              <Animated.View
+                entering={fadeIn('micro')}
+                exiting={fadeOut('micro')}
+                style={styles.pendingLabel}>
+                <PartialText
+                  readout={readout}
+                  testID="voice-processing-status"
+                  weight="regular"
+                  style={styles.pendingLabelText}
+                  numberOfLines={1}
+                  color={theme.colors.textMuted}
+                  accessibilityLiveRegion="polite"
+                />
+              </Animated.View>
             )}
             {!realtime &&
               recording &&
-              !!partial &&
+              hasPartial &&
               (compact ? (
-                <Text
+                <PartialText
+                  readout={readout}
                   testID="voice-live-transcript"
                   numberOfLines={1}
                   weight="regular"
                   color={theme.colors.text}
-                  style={styles.pendingTranscript}>
-                  {partial}
-                </Text>
+                  style={styles.pendingTranscript}
+                />
               ) : (
                 <View style={styles.transcriptArea}>
-                  <LiveTranscript text={partial} />
+                  <LiveTranscript readout={readout} />
                 </View>
               ))}
           </View>
@@ -302,8 +377,8 @@ function VoiceRecording({
         </>
       ) : (
         <>
-          {compact && cancel}
-          <View style={styles.body}>
+          {compact && <Animated.View entering={enter}>{cancel}</Animated.View>}
+          <Animated.View entering={enter} style={styles.body}>
             <View style={styles.header}>
               <Text
                 numberOfLines={1}
@@ -314,22 +389,22 @@ function VoiceRecording({
                 {status}
               </Text>
             </View>
-            <Animated.View entering={enter} testID="voice-visual-error" style={styles.readout}>
+            <View testID="voice-visual-error" style={styles.readout}>
               {!compact && <UndoIcon size={18} color={theme.colors.danger} />}
               <ScrollView style={styles.readoutText} nestedScrollEnabled>
                 <Text weight="regular" color={theme.colors.danger} style={styles.detail}>
                   {error}
                 </Text>
               </ScrollView>
-            </Animated.View>
-          </View>
+            </View>
+          </Animated.View>
           {compact ? (
-            stop
+            <Animated.View entering={enter}>{stop}</Animated.View>
           ) : (
-            <View style={styles.actions}>
+            <Animated.View entering={enter} style={styles.actions}>
               {cancel}
               {stop}
-            </View>
+            </Animated.View>
           )}
         </>
       )}
@@ -449,10 +524,8 @@ const styles = StyleSheet.create({
     marginTop: 22,
     left: 48,
     right: 48,
-    fontSize: 12,
-    lineHeight: 17,
-    textAlign: 'center',
   },
+  pendingLabelText: { fontSize: 12, lineHeight: 17, textAlign: 'center' },
   pendingTranscript: { fontSize: 12, lineHeight: 17, textAlign: 'center', flexShrink: 1 },
   pendingActions: {
     position: 'absolute',
@@ -469,7 +542,8 @@ const styles = StyleSheet.create({
   status: { fontSize: 14, lineHeight: 20, flex: 1 },
   elapsed: { fontSize: 12, fontVariant: ['tabular-nums'] },
   timer: { position: 'absolute', top: 8, right: 16 },
-  compactTimer: { top: 0, right: 46, fontSize: 10 },
+  compactTimer: { top: 0, right: 46 },
+  compactElapsed: { fontSize: 10 },
   transcriptArea: { alignSelf: 'stretch', height: 36, flexShrink: 1 },
   readout: {
     flex: 1,
@@ -493,5 +567,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     paddingHorizontal: 4,
+  },
+  actionGlyph: {
+    ...StyleSheet.absoluteFill,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

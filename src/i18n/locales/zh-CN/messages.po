@@ -43,6 +43,11 @@ msgstr "[模型]"
 msgid "[pr number]"
 msgstr "[PR 编号]"
 
+#. placeholder {0}: files.length
+#: src/components/agent-composer.tsx
+msgid "{0, plural, one {# attachment} other {# attachments}}"
+msgstr "{0, plural, other {# 个附件}}"
+
 #. placeholder {0}: capped.hidden
 #: src/components/bounded-markdown.tsx
 msgid "{0, plural, one {# character not shown} other {# characters not shown}}"
@@ -1106,7 +1111,6 @@ msgstr "需要相机访问权限"
 #: src/components/ssh-host-form.tsx
 #: src/components/ssh-host-key-dialog.tsx
 #: src/components/theme-link-import.tsx
-#: src/components/voice-input-button.tsx
 #: src/hooks/use-file-actions.tsx
 #: src/hooks/use-lazygit.ts
 #: src/lib/local-authentication.ts
@@ -2548,6 +2552,10 @@ msgstr "放弃更改"
 msgid "Discard changes to {discardName}?"
 msgstr "放弃对 {discardName} 的更改？"
 
+#: src/components/voice-input-button.tsx
+msgid "Discard recording"
+msgstr "放弃录音"
+
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Disconnect from {0}"
@@ -2563,7 +2571,6 @@ msgid "Disconnected."
 msgstr "连接已断开"
 
 #: src/components/agent-compaction-pill.tsx
-#: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/task-row.tsx
@@ -3168,6 +3175,10 @@ msgstr "隐藏电脑列表"
 msgid "Hide the simulator"
 msgstr "隐藏模拟器"
 
+#: src/components/agent-composer.tsx
+msgid "Hides this notice"
+msgstr "隐藏此提示"
+
 #: src/app/settings-voice.tsx
 msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
 msgstr "长按发送按钮开始说话。停止录音后，文字会加入草稿，编辑后再发送"
@@ -3762,7 +3773,7 @@ msgstr "标记已查看"
 
 #: src/components/dev-icon-gallery.tsx
 msgid "Marks keep their original geometry and stroke."
-msgstr "标志保留原有的形状和线宽。"
+msgstr "标志保留原有的形状和线宽"
 
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
@@ -4032,6 +4043,7 @@ msgid "Newer"
 msgstr "较新"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-message-block.tsx
 msgid "Next"
 msgstr "下一步"
 
@@ -5040,10 +5052,9 @@ msgstr "排队中"
 msgid "queued to upload"
 msgstr "排队等待上传"
 
-#. placeholder {0}: inboxItemText(item) || item.type
 #: src/components/agent-composer.tsx
-msgid "Queued: {0}"
-msgstr "排队中：{0}"
+msgid "Queued: {summary}"
+msgstr "排队中：{summary}"
 
 #: src/app/commands.tsx
 msgid "Quick action settings"
@@ -5834,10 +5845,9 @@ msgstr "发送给代理"
 msgid "Sending attachment message…"
 msgstr "正在发送附件消息…"
 
-#. placeholder {0}: inboxItemText(item) || item.type
 #: src/components/agent-composer.tsx
-msgid "Sending next: {0}"
-msgstr "下一个发送：{0}"
+msgid "Sending next: {summary}"
+msgstr "下一个发送：{summary}"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Sending to"
@@ -6399,10 +6409,6 @@ msgstr "提交"
 #: src/components/agent-composer.tsx
 msgid "Submitted"
 msgstr "已提交"
-
-#: src/components/agent-composer.tsx
-msgid "Submitted to queue"
-msgstr "已提交到队列"
 
 #: src/components/agent-composer.tsx
 msgid "Submitting follow-up…"
