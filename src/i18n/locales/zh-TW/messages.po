@@ -1106,7 +1106,6 @@ msgstr "需要相機存取權"
 #: src/components/ssh-host-form.tsx
 #: src/components/ssh-host-key-dialog.tsx
 #: src/components/theme-link-import.tsx
-#: src/components/voice-input-button.tsx
 #: src/hooks/use-file-actions.tsx
 #: src/hooks/use-lazygit.ts
 #: src/lib/local-authentication.ts
@@ -2547,6 +2546,10 @@ msgstr "捨棄變更"
 #: src/components/changes-sheet.tsx
 msgid "Discard changes to {discardName}?"
 msgstr "捨棄對 {discardName} 的變更？"
+
+#: src/components/voice-input-button.tsx
+msgid "Discard recording"
+msgstr "放棄錄音"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
