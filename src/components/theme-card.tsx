@@ -89,12 +89,29 @@ export type ThemeCardAction = {
  * written from an effect: the render that decides whether to animate only
  * reads it.
  */
-export type CardRise = { revealed: Set<string>; key: string; delay: number; enabled: boolean };
+export type CardRise = {
+  revealed: Set<string>;
+  key: string;
+  delay: number;
+  enabled: boolean;
+  /**
+   * When the tab last changed. A card mounted just after a switch fades in,
+   * which is the tab's cross-fade; one mounted by scrolling later does not.
+   */
+  switchedAt?: number;
+};
+
+/** How long after a tab switch a mounting card still counts as part of it. */
+const TAB_FADE_WINDOW_MS = 400;
 
 function useCardRise(rise: CardRise | undefined) {
-  const [entering] = useState(() =>
-    rise && rise.enabled && !rise.revealed.has(rise.key) ? riseIn(rise.delay) : undefined
-  );
+  const [entering] = useState(() => {
+    if (!rise) return undefined;
+    if (rise.enabled && !rise.revealed.has(rise.key)) return riseIn(rise.delay);
+    return rise.switchedAt !== undefined && Date.now() - rise.switchedAt < TAB_FADE_WINDOW_MS
+      ? fadeIn('micro')
+      : undefined;
+  });
   const revealed = rise?.revealed;
   const key = rise?.key;
   useEffect(() => {

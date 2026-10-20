@@ -652,7 +652,7 @@ msgstr "Căn mã QR vào trong khung"
 
 #: src/components/home-recent-chips.tsx
 #: src/components/session-artifacts.tsx
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "All"
 msgstr "Tất cả"
 
@@ -1218,7 +1218,7 @@ msgstr "Kiểm tra URL kho mã, nhánh và tệp giao diện"
 msgid "Check this computer's tasks. This request has not been sent again."
 msgstr "Hãy kiểm tra các tác vụ trên máy tính này. Yêu cầu này chưa được gửi lại"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Check your connection and try again."
 msgstr "Kiểm tra kết nối và thử lại"
 
@@ -1349,7 +1349,7 @@ msgid "Clear the conversation"
 msgstr "Xoá cuộc trò chuyện"
 
 #: src/components/agent-model-sheet.tsx
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Clear the search"
 msgstr "Xoá nội dung tìm kiếm"
 
@@ -2155,7 +2155,7 @@ msgstr "Không thể kết nối đến máy tính"
 msgid "Could not reach the computer. Make sure it is running, then refresh the QR and scan again."
 msgstr "Không thể kết nối đến máy tính. Hãy chắc chắn máy đang chạy, rồi làm mới mã QR và quét lại"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Could not reach the theme catalogue"
 msgstr "Không thể kết nối tới danh mục giao diện"
 
@@ -2371,7 +2371,7 @@ msgstr "Xem trước một phần · Mở ảnh đầy đủ"
 
 #: src/components/file-mention-panel.tsx
 #: src/components/settings-theme-sheet.tsx
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Current"
 msgstr "Đang dùng"
 
@@ -2483,7 +2483,7 @@ msgstr "Chưa xác nhận được việc gửi"
 msgid "Delivery not confirmed. Tap to check status"
 msgstr "Chưa xác nhận đã gửi. Chạm để kiểm tra trạng thái"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Demo catalogue. Leave the demo to download themes."
 msgstr "Danh mục minh họa. Thoát chế độ minh họa để tải chủ đề"
 
@@ -2655,7 +2655,7 @@ msgstr "Đang tải · {0} trên {1}"
 msgid "Downloading theme"
 msgstr "Đang tải chủ đề"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Downloading…"
 msgstr "Đang tải xuống…"
 
@@ -3386,7 +3386,7 @@ msgid "Install command copied"
 msgstr "Đã sao chép lệnh cài đặt"
 
 #: src/components/settings-font-sheet.tsx
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Installed"
 msgstr "Đã cài đặt"
 
@@ -3725,7 +3725,7 @@ msgstr "Đang tải terminal"
 msgid "Loading the transcript"
 msgstr "Đang tải bản ghi"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Loading themes…"
 msgstr "Đang tải giao diện…"
 
@@ -4291,12 +4291,12 @@ msgstr "Máy tính này không có phiên terminal khả dụng"
 msgid "No textual change"
 msgstr "Không có thay đổi văn bản"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "No themes are published yet"
 msgstr "Chưa có giao diện nào được công bố"
 
-#. placeholder {0}: query.trim()
-#: src/components/theme-gallery-tab.tsx
+#. placeholder {0}: gallery.query.trim()
+#: src/components/theme-gallery.tsx
 msgid "No themes match “{0}”."
 msgstr "Không có chủ đề nào khớp “{0}”"
 
@@ -4924,7 +4924,7 @@ msgstr "Vui lòng thử lại hoặc xóa các tệp đính kèm bị lỗi"
 msgid "Port"
 msgstr "Cổng"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
 msgstr "Đang chuẩn bị hình ảnh"
@@ -5747,7 +5747,7 @@ msgstr "Tìm kiếm"
 msgid "Search actions and commands"
 msgstr "Tìm thao tác và lệnh"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Search by name or tag"
 msgstr "Tìm kiếm theo tên hoặc thẻ"
 
@@ -7295,7 +7295,7 @@ msgstr "Tin cậy"
 #: src/components/changes-sheet.tsx
 #: src/components/inline-file-link.tsx
 #: src/components/pdf-asset-preview.tsx
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/video-asset-preview.tsx
 #: src/components/voice-input-button.tsx
 #: src/hooks/use-file-actions.tsx
@@ -7307,7 +7307,7 @@ msgstr "Thử lại"
 msgid "Try again once the computer responds."
 msgstr "Hãy thử lại khi máy tính phản hồi"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Try searching for another name or tag."
 msgstr "Thử tìm kiếm tên hoặc thẻ khác"
 
@@ -7423,7 +7423,7 @@ msgstr "Mở khóa bằng {authLabel}"
 msgid "Unlock with {methodName}"
 msgstr "Mở khóa bằng {methodName}"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Unpacking…"
 msgstr "Đang giải nén…"
 
@@ -7482,7 +7482,7 @@ msgstr "Chưa theo dõi"
 msgid "Up arrow"
 msgstr "Mũi tên lên"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/update-status-banner.tsx
 msgid "Update"
 msgstr "Cập nhật"
