@@ -15,18 +15,21 @@ import { stageReadableInk } from '@/lib/home-stage-ink';
 import type { StagePanel } from '@/lib/home-stage-panels';
 import { STAGE_FACE_COLUMNS, STAGE_FACE_ROWS, stageTextureFromPixels } from './stage-scene';
 
-/** One face: the sketch's 640 x 400 at 0.7, about 1.6:1 like the screen. */
+/** One face: the sketch's 640 x 400 pane at 0.7, 1.6:1 like the pane. */
 const CELL_WIDTH = 448;
 const CELL_HEIGHT = 280;
-const PAD = 28;
+const PAD = 32;
 
 export type StageFaceColors = {
   text: string;
   primary: string;
   success: string;
   warning: string;
+  /** An offline computer's text. */
   offline: string;
-  /** The slab's glass tint in the light variant, which the face reads against. */
+  /** An offline computer's status dot, as its pane's edge. */
+  offlineDot: string;
+  /** The pane's glass tint, which the face reads against. */
   surface: string;
   light: boolean;
 };
@@ -83,31 +86,27 @@ function paintAtlas(faces: readonly Face[]): Texture | null {
   try {
     const canvas = surface.getCanvas();
     canvas.clear(Skia.Color('transparent'));
-    const scan = Skia.Paint();
-    scan.setColor(Skia.Color('rgba(255,255,255,0.035)'));
     const dot = Skia.Paint();
     faces.forEach((face, slot) => {
       const x = (slot % STAGE_FACE_COLUMNS) * CELL_WIDTH;
       const y = Math.floor(slot / STAGE_FACE_COLUMNS) * CELL_HEIGHT;
       canvas.save();
       canvas.clipRect(Skia.XYWHRect(x, y, CELL_WIDTH, CELL_HEIGHT), 1, true);
-      paragraph(canvas, face.name, x + PAD, y + 22, CELL_WIDTH - PAD * 2 - 40, {
+      paragraph(canvas, face.name, x + PAD, y + 26, CELL_WIDTH - PAD * 2 - 40, {
         color: face.ink,
-        size: 46,
-        weight: FontWeight.ExtraBold,
+        size: 45,
+        weight: FontWeight.Bold,
       });
       dot.setColor(Skia.Color(face.dot));
-      canvas.drawCircle(x + CELL_WIDTH - PAD - 10, y + 50, 10, dot);
+      canvas.drawCircle(x + CELL_WIDTH - 39, y + 55, 8, dot);
       face.lines.forEach((line, index) => {
-        paragraph(canvas, line.text, x + PAD, y + 98 + index * 38, CELL_WIDTH - PAD * 2, {
+        paragraph(canvas, line.text, x + PAD, y + 100 + index * 35, CELL_WIDTH - PAD * 2, {
           color: line.live ? face.liveInk : face.lineInk,
-          size: 23,
-          weight: FontWeight.SemiBold,
+          size: 21,
+          weight: FontWeight.Medium,
           mono: true,
         });
       });
-      for (let row = 0; row < CELL_HEIGHT; row += 4)
-        canvas.drawRect(Skia.XYWHRect(x, y + row, CELL_WIDTH, 1), scan);
       canvas.restore();
     });
     surface.flush();
@@ -131,8 +130,9 @@ function paintAtlas(faces: readonly Face[]): Texture | null {
 }
 
 /**
- * The screens' faces -- name, status dot and the latest agent and session
- * lines from existing Home state -- as one texture atlas. Repainted only when
+ * The panes' faces -- name, status dot and the latest agent and session
+ * lines from existing Home state -- as one texture atlas, drawn over the
+ * pane's glass by the scene. Repainted only when
  * what a face says changes, never per frame; the old atlas goes with it.
  */
 export function useStageFaces(
@@ -146,7 +146,7 @@ export function useStageFaces(
     if (!panel) return [];
     const offline = panel.tone === 'offline' || panel.tone === 'unknown';
     const dot = offline
-      ? colors.offline
+      ? colors.offlineDot
       : panel.tone === 'warning' || panel.attention
         ? colors.warning
         : panel.working
@@ -159,9 +159,9 @@ export function useStageFaces(
       })),
       ...panel.face.sessions.map((title) => ({ text: `$ ${title}`, live: false })),
     ];
-    // Night: light text glowing on dark glass, a running line in its status colour.
-    // Day: dark text printed on the surface-tinted glass, lines in the primary
-    // darkened to 4.5:1 against it.
+    // Night: light text on the dark frosted glass, a running line in its status
+    // colour. Day: dark text on the pale glass, lines in the primary darkened to
+    // 4.5:1 against it.
     const dayLines = stageReadableInk(offline ? colors.offline : colors.primary, colors.surface);
     const ink = offline
       ? colors.light

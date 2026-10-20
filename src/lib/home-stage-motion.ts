@@ -9,9 +9,6 @@ export type StageSpringConfig = { stiffness: number; damping: number; mass?: num
 
 /** The card move: about 420 ms to rest (design §11.3, spring per §7). */
 export const STAGE_CARD_SPRING: StageSpringConfig = { stiffness: 160, damping: 18 };
-/** Pitch and tilt settle a little softer. */
-export const STAGE_CAMERA_SPRING: StageSpringConfig = { stiffness: 120, damping: 16 };
-
 const SUBSTEP_S = 1 / 240;
 /** A frame that stalls (backgrounding, a GC) is stepped as at most this much time. */
 const MAX_STEP_S = 0.064;
@@ -46,23 +43,11 @@ export function stageSpringAtRest(spring: StageSpring, target: number): boolean 
   );
 }
 
-/** The glow's breath: 1.0 -> peak -> 1.0 over `periodMs` (§11.6: 4 s). */
-export function stageBreath(nowMs: number, periodMs = 4000, depth = 0.18): number {
-  const phase = ((nowMs % periodMs) + periodMs) % periodMs;
-  return 1 + depth * 0.5 * (1 - Math.cos((2 * Math.PI * phase) / periodMs));
-}
-
-/** The selection flash: 1.0 -> 1.4 -> 1.0 over 400 ms after a selection changes (§7). */
-export function stageSelectionGlow(sinceSelectMs: number): number {
-  if (!(sinceSelectMs >= 0) || sinceSelectMs >= 400) return 1;
-  return 1 + 0.4 * Math.sin((Math.PI * sinceSelectMs) / 400);
-}
-
 // -- Degrade policy ---------------------------------------------------------
 
 /**
  * The ladder the stage steps down when it cannot hold its frame rate:
- * particles go first, then the foil shimmer with a 30 fps cap, then the
+ * the motes go first, then the glass sheen with a 30 fps cap, then the
  * static 2.5D composition (§5, §11.7). It never climbs back within a visit:
  * a device that was too slow once will be again, and flapping costs more
  * than it saves.
@@ -112,14 +97,16 @@ export function recordStageFrame(
 export type StageEffects = {
   /** Whether the WebGPU scene runs at all; false draws the static 2.5D stage. */
   gpu: boolean;
+  /** The floating motes; still under Reduce Motion, but still drawn. */
   particles: boolean;
+  /** The sheen that tilt slides across the glass panes. */
   shimmer: boolean;
-  /** The working pulse and the 4 s breathing. Off under Reduce Motion (glow shown steady). */
+  /** The working pulse, the hero's bob and the motes' drift. Off under Reduce Motion. */
   pulse: boolean;
   tilt: boolean;
   /** Minimum milliseconds between frames while moving. */
   frameIntervalMs: number;
-  /** Idle breathing frame interval (20 fps), or null when nothing breathes. */
+  /** Idle frame interval (20 fps) for the pulse, bob and drift, or null when nothing moves. */
   idleIntervalMs: number | null;
 };
 
@@ -132,7 +119,7 @@ export function stageEffects(
   const calm = options.reducedMotion;
   return {
     gpu,
-    particles: gpu && !calm && quality === 'full',
+    particles: gpu && quality === 'full',
     shimmer: gpu && quality !== 'capped',
     pulse: !calm,
     tilt: !calm,

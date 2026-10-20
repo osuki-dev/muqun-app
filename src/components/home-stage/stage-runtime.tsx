@@ -5,13 +5,12 @@ import type { WebGPURenderer } from 'three/webgpu';
 import { useStableHandler } from '@/hooks/use-render-refs';
 import {
   stageCamera,
+  stageDiveCamera,
+  stageDragPosition,
   stageDrawnScreens,
-  stageRingRest,
-  stageRingTarget,
-  stageScreenPosition,
-  STAGE_FRONT_SCALE,
-  STAGE_SIDE_SCALE,
-  wrapStageIndex,
+  stagePane,
+  stagePaneAnchor,
+  STAGE_PANE_REACH,
 } from '@/lib/home-stage-geometry';
 import {
   initialStageDegrade,
@@ -23,20 +22,15 @@ import {
   type StageDegradeState,
   type StageSpring,
 } from '@/lib/home-stage-motion';
-import { createStageScene, type StageScreenFrame } from './stage-scene';
+import { createStageScene, type StagePaneFrame } from './stage-scene';
 import type { StageSceneProps } from './types';
 
 type Motion = {
-  selected: number;
-  ringTarget: number;
-  ring: StageSpring;
+  /** The cover-flow's fractional selection. */
+  flow: StageSpring;
   dive: StageSpring;
   look: [number, number];
-  scales: Map<number, number>;
-  beam: number;
   burst: number;
-  rise: number;
-  burstRise: number;
   lastFrameMs: number;
   wasMoving: boolean;
   degrade: StageDegradeState;
@@ -44,16 +38,14 @@ type Motion = {
   startMs: number;
 };
 
-/** How far a horizontal drag turns the ring, as a share of one step, before release. */
-const DRAG_TURN = 0.6;
 const DIVE_SPRING = { stiffness: 90, damping: 17 };
 
 /**
  * Lives inside the Fiber root. Owns the scene objects and the frame clock:
- * frames are drawn while something moves (the ring, a drag, the camera, a
- * dive, a burst), at the 20 fps idle rate for the breathing effects (grid
- * wave, sparks, pulse, beam head) otherwise, and not at all while Home is
- * paused or, under Reduce Motion, at rest.
+ * frames are drawn while something moves (the cover-flow, a drag, tilt, a
+ * dive, a completion's flare), at the 20 fps idle rate for the working
+ * pulse, the hero's bob and the motes' drift otherwise, and not at all while
+ * Home is paused or, under Reduce Motion, at rest.
  */
 export function StageRuntime(props: StageSceneProps) {
   const invalidate = useThree((state) => state.invalidate);
@@ -70,7 +62,8 @@ export function StageRuntime(props: StageSceneProps) {
     colors,
     mode,
     backdrop,
-    character,
+    hero,
+    frame,
     faces,
     quality,
     reducedMotion,
@@ -83,19 +76,11 @@ export function StageRuntime(props: StageSceneProps) {
 
   const motionState = () => {
     if (motion.current) return motion.current;
-    const count = Math.max(1, screens.length);
-    const rest = stageRingRest(selected, count);
     motion.current = {
-      selected,
-      ringTarget: rest,
-      ring: { value: rest, velocity: 0 },
+      flow: { value: selected, velocity: 0 },
       dive: { value: 0, velocity: 0 },
       look: [0, 0],
-      scales: new Map(),
-      beam: 1,
       burst: 0,
-      rise: 0,
-      burstRise: 0,
       lastFrameMs: 0,
       wasMoving: false,
       degrade: initialStageDegrade(quality),
@@ -126,13 +111,21 @@ export function StageRuntime(props: StageSceneProps) {
     invalidate();
   }, [world, colors, mode, scene, gl, invalidate]);
   useEffect(() => {
+    world.setViewport(aspect);
+    invalidate();
+  }, [world, aspect, invalidate]);
+  useEffect(() => {
     world.setBackdrop(backdrop);
     invalidate();
   }, [world, backdrop, invalidate]);
   useEffect(() => {
-    world.setCharacter(character);
+    world.setHero(hero);
     invalidate();
-  }, [world, character, invalidate]);
+  }, [world, hero, invalidate]);
+  useEffect(() => {
+    world.setFrame(frame);
+    invalidate();
+  }, [world, frame, invalidate]);
   useEffect(() => {
     world.setFaces(faces);
     invalidate();
@@ -142,16 +135,12 @@ export function StageRuntime(props: StageSceneProps) {
     motionState().degrade = initialStageDegrade(next);
   });
   useEffect(() => resetLadder(quality), [quality]);
-  // A selection change turns the ring the short way round.
-  const turnTo = useEffectEvent((next: number) => {
-    const state = motionState();
-    if (state.selected === next) return;
-    state.ringTarget = stageRingTarget(state.ringTarget, state.selected, next, screens.length);
-    state.selected = next;
-    state.beam = 1;
+  // The selection has caught up with a released drag: follow the selection again.
+  const selectionMoved = useEffectEvent(() => {
+    inputs.settle.set(-1);
     invalidate();
   });
-  useEffect(() => turnTo(selected), [selected]);
+  useEffect(() => selectionMoved(), [selected]);
   const bursted = useEffectEvent(() => {
     motionState().burst = 1;
     invalidate();
@@ -181,17 +170,25 @@ export function StageRuntime(props: StageSceneProps) {
     const effects = stageEffects(quality, { gpuAvailable: true, reducedMotion });
     const count = screens.length;
 
+    // A finger moves the panes directly; on release they spring to where the
+    // drag settled until the selection catches up, then follow the selection.
     const dragging = inputs.dragging.get() === 1;
-    const dragX = inputs.dragX.get();
-    const step = count > 1 ? (Math.PI * 2) / count : 0;
-    const ringGoal = state.ringTarget + (dragging ? dragX * step * DRAG_TURN : 0);
-    state.ring = stepStageSpring(state.ring, ringGoal, dt, STAGE_CARD_SPRING);
+    const settle = inputs.settle.get();
+    const flowGoal = dragging
+      ? stageDragPosition(selected, count, inputs.dragX.get())
+      : settle >= 0
+        ? settle
+        : selected;
+    state.flow =
+      dragging || reducedMotion
+        ? { value: flowGoal, velocity: 0 }
+        : stepStageSpring(state.flow, flowGoal, dt, STAGE_CARD_SPRING);
     state.dive = stepStageSpring(state.dive, dive ? 1 : 0, dt, DIVE_SPRING);
 
     // Tilt (when on) and a vertical drag both look around; the drag springs back.
     const lookGoal: [number, number] = [
       effects.tilt ? inputs.tiltY.get() : 0,
-      (effects.tilt ? inputs.tiltX.get() : 0) +
+      -(effects.tilt ? inputs.tiltX.get() : 0) -
         (dragging ? Math.max(-1, Math.min(1, inputs.dragY.get() * 3)) : 0),
     ];
     const ease = Math.min(1, dt * 4);
@@ -203,74 +200,49 @@ export function StageRuntime(props: StageSceneProps) {
     const looking =
       Math.abs(state.look[0] - lookGoal[0]) + Math.abs(state.look[1] - lookGoal[1]) > 0.003;
 
-    const chosen = count > 0 ? wrapStageIndex(state.selected, count) : -1;
-    const chosenAt = chosen >= 0 ? stageScreenPosition(chosen, count, state.ring.value) : null;
-    const view = stageCamera({
-      lookX: state.look[0],
-      lookY: state.look[1],
-      dive: state.dive.value,
-      diveTo: chosenAt ?? undefined,
-      aspect,
-    });
+    // The panes hang from the tilted camera; a dive then flies it to the front one.
+    const rest = stageCamera({ lookX: state.look[0], lookY: state.look[1] });
+    const anchor = stagePaneAnchor(rest, aspect);
+    const view = stageDiveCamera(rest, anchor, state.dive.value);
     camera.position.set(view.position[0], view.position[1], view.position[2]);
     camera.lookAt(view.target[0], view.target[1], view.target[2]);
     camera.updateMatrixWorld();
 
-    let scaling = false;
-    const frames: StageScreenFrame[] = [];
-    for (const index of stageDrawnScreens(chosen, count)) {
+    const panes: StagePaneFrame[] = [];
+    for (const index of stageDrawnScreens(selected, count)) {
       const look = screens[index];
-      if (!look) continue;
-      const position = stageScreenPosition(index, count, state.ring.value);
-      const front = index === chosen;
-      const goal = front ? STAGE_FRONT_SCALE : STAGE_SIDE_SCALE;
-      const current = state.scales.get(index) ?? goal;
-      const eased = current + (goal - current) * Math.min(1, dt * 6);
-      const settled = Math.abs(eased - goal) <= 0.002;
-      if (!settled) scaling = true;
-      state.scales.set(index, settled ? goal : eased);
-      frames.push({
-        position,
-        scale: settled ? goal : eased,
-        front,
+      const offset = index - state.flow.value;
+      if (!look || Math.abs(offset) >= STAGE_PANE_REACH) continue;
+      const pane = stagePane(offset, anchor, aspect);
+      panes.push({
+        position: pane.position,
+        width: pane.width,
+        yaw: pane.yaw,
+        side: pane.side,
+        offset,
         look,
-        depth: Math.hypot(
-          position[0] - view.position[0],
-          position[1] - view.position[1],
-          position[2] - view.position[2]
-        ),
       });
     }
 
-    const beamBefore = state.beam;
-    state.beam = Math.max(0.25, state.beam - dt * 0.6);
-    const sparks = effects.particles;
-    state.burst = Math.max(0, state.burst - dt * 0.45);
-    if (sparks) {
-      state.rise += dt;
-      state.burstRise += state.burst * 4 * dt;
-    }
+    // A completion flares the motes; Reduce Motion keeps them still.
+    state.burst = effects.pulse ? Math.max(0, state.burst - dt * 0.6) : 0;
     world.update({
       camera,
-      screens: frames,
-      beamTo: chosenAt,
-      beam: state.beam,
+      panes,
       timeS: effects.pulse ? (now - state.startMs) / 1000 : 0,
-      burst: sparks ? state.burst : 0,
-      rise: state.rise,
-      burstRise: state.burstRise,
-      sparks,
+      tilt: state.look[0],
+      burst: effects.particles && effects.pulse ? state.burst : 0,
+      motes: effects.particles,
+      shimmer: effects.shimmer,
       pulse: effects.pulse,
     });
 
     const moving =
-      !stageSpringAtRest(state.ring, ringGoal) ||
+      !stageSpringAtRest(state.flow, flowGoal) ||
       !stageSpringAtRest(state.dive, dive ? 1 : 0) ||
       dragging ||
       looking ||
-      scaling ||
-      state.burst > 0 ||
-      beamBefore > 0.25;
+      state.burst > 0;
     if (!reducedMotion) {
       const was = state.degrade.quality;
       state.degrade = recordStageFrame(state.degrade, {

@@ -8,9 +8,81 @@ import {
 } from 'react-native-skia';
 import { useEffect, useState } from 'react';
 
+import { stageClearFraction } from '@/lib/home-stage-layers';
 import { createRefCountedCache } from '@/lib/ref-counted-cache';
 import { useSharedSkiaImage } from '@/lib/skia-image-cache';
 import { stageTextureFromPixels, type StageTextureSource } from './stage-scene';
+
+/** The longest edge a picture is shrunk to before its clear pixels are counted. */
+const MEASURE_EDGE = 128;
+/** Clear shares already measured, per picture: a theme's pictures are measured once. */
+const clearShares = new Map<string, number>();
+
+/**
+ * The share of `image` that is (near-)transparent, counted on a small copy:
+ * the decoded picture is the shared one, drawn down once and read back as
+ * alpha only. An opaque picture is not read at all.
+ */
+function measureClear(image: SkImage): number {
+  if (image.getImageInfo().alphaType === AlphaType.Opaque) return 0;
+  const width = image.width();
+  const height = image.height();
+  if (width <= 0 || height <= 0) return 0;
+  const scale = Math.min(1, MEASURE_EDGE / Math.max(width, height));
+  const targetWidth = Math.max(1, Math.round(width * scale));
+  const targetHeight = Math.max(1, Math.round(height * scale));
+  const surface = Skia.Surface.MakeRaster(targetWidth, targetHeight);
+  if (!surface) return 0;
+  try {
+    const canvas = surface.getCanvas();
+    canvas.clear(Skia.Color('transparent'));
+    canvas.drawImageRectOptions(
+      image,
+      Skia.XYWHRect(0, 0, width, height),
+      Skia.XYWHRect(0, 0, targetWidth, targetHeight),
+      FilterMode.Linear,
+      MipmapMode.None
+    );
+    surface.flush();
+    const snapshot = surface.makeImageSnapshot();
+    try {
+      const alpha = snapshot.readPixels(0, 0, {
+        width: targetWidth,
+        height: targetHeight,
+        colorType: ColorType.Alpha_8,
+        alphaType: AlphaType.Unpremul,
+      });
+      return alpha instanceof Uint8Array ? stageClearFraction(alpha) : 0;
+    } finally {
+      snapshot.dispose();
+    }
+  } finally {
+    surface.dispose();
+  }
+}
+
+/**
+ * How much of the picture at `uri` is clear (0..1), which decides the layer
+ * it becomes: `null` while it loads, `undefined` for no picture or one that
+ * failed to load.
+ */
+export function useStageClearShare(uri: string | undefined): number | null | undefined {
+  const known = uri ? clearShares.get(uri) : undefined;
+  const [failed, setFailed] = useState<string | null>(null);
+  const image = useSharedSkiaImage(known === undefined ? uri : undefined, () =>
+    setFailed(uri ?? null)
+  );
+  const [measured, setMeasured] = useState<{ uri: string; clear: number } | null>(null);
+  useEffect(() => {
+    if (!uri || !image || clearShares.has(uri)) return;
+    const clear = measureClear(image);
+    clearShares.set(uri, clear);
+    setMeasured({ uri, clear });
+  }, [image, uri]);
+  if (!uri || failed === uri) return undefined;
+  if (known !== undefined) return known;
+  return measured?.uri === uri ? measured.clear : null;
+}
 
 /**
  * Theme pictures as Stage textures. The picture is decoded by the same shared

@@ -18,51 +18,51 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { MapErrorBoundary } from '@/components/computer-map/error-boundary';
-import { ThemeArtwork } from '@/components/theme-artwork';
 import { useStableHandler } from '@/hooks/use-render-refs';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useThemeRenderReady } from '@/hooks/use-theme-render-ready';
 import { connectionStatusDescription } from '@/i18n/labels';
 import {
   projectStagePoint,
-  stageBillboardRect,
   stageCamera,
   stageDrawnScreens,
-  stageRingRest,
-  stageScreenPosition,
-  stageSwipeStep,
-  STAGE_FRONT_SCALE,
-  STAGE_HOST_BASE_Y,
-  stageHostSize,
-  STAGE_PEDESTAL,
-  STAGE_SCREEN_HEIGHT,
-  STAGE_SCREEN_WIDTH,
-  STAGE_SIDE_SCALE,
+  stageHero,
+  stagePane,
+  stagePaneAnchor,
+  stageQuadRect,
+  stageSwipeTarget,
+  STAGE_PANE_REACH,
   type StageRect,
 } from '@/lib/home-stage-geometry';
 import { hasSeenStageHints, markStageHintsSeen } from '@/lib/home-stage-hints';
+import { stageLayers, type StageLayers } from '@/lib/home-stage-layers';
 import { stageEffects, type StageQuality } from '@/lib/home-stage-motion';
 import type { StagePanel } from '@/lib/home-stage-panels';
-import type { StageScreenLook } from './stage-scene';
+import type { StageScreenLook, StageTextureSource } from './stage-scene';
 import { useStageFaces } from './stage-faces';
-import { useStageTexture } from './stage-textures';
+import { useStageClearShare, useStageTexture, type StageTextureState } from './stage-textures';
 import { createStageBridge, type StageInputs } from './types';
 
 // An older binary, or web, keeps the static stage without evaluating the native module.
 const GpuStage = lazy(() => import('./gpu-stage'));
 
-/** Backdrop and art texture caps (§11.7). */
-const BACKDROP_MAX_EDGE = 2048;
-const ART_MAX_EDGE = 1536;
-/** The camera's flight into the front screen before its workspace opens. */
+/** Texture caps: the cover layers fill the screen; the hero stands at most half its height. */
+const COVER_MAX_EDGE = 2048;
+const HERO_MAX_EDGE = 1536;
+/** The camera's flight into the front pane before its workspace opens. */
 const DIVE_MS = 520;
+
+type Focal = { x: number; y: number };
 
 export type StageViewProps = {
   panels: readonly StagePanel[];
   selectedIndex: number;
-  backdropUri?: string;
-  backdropFocal?: { x: number; y: number };
+  /** `home.wallpaper` (else `shell.wallpaper`): the backdrop, or the frame when only edges. */
+  wallpaperUri?: string;
+  wallpaperFocal?: Focal;
+  /** `home.artwork`: the hero when a cut-out, else the backdrop. */
   artworkUri?: string;
+  artworkFocal?: Focal;
   /** Home is not on screen or the app is in the background: no frames. */
   paused: boolean;
   /** Bumped when a task completes. */
@@ -74,18 +74,20 @@ export type StageViewProps = {
 };
 
 /**
- * The full-screen world: the WebGPU scene when the device has it, otherwise
- * (and after a lost device or a slow device's last degrade step) the static
- * 2.5D composition. Above either sits one layer of 2D hit areas projected from
- * the same geometry, which carries every touch target, every accessibility
- * element and the first-visit hints -- the scene itself is never focusable.
+ * The full-screen depth window: the WebGPU scene when the device has it,
+ * otherwise (and after a lost device or a slow device's last degrade step)
+ * the static 2.5D composition. Above either sits one layer of 2D hit areas
+ * projected from the same geometry, which carries every touch target, every
+ * accessibility element and the first-visit hints -- the scene itself is
+ * never focusable.
  */
 export function StageView({
   panels,
   selectedIndex,
-  backdropUri,
-  backdropFocal,
+  wallpaperUri,
+  wallpaperFocal,
   artworkUri,
+  artworkFocal,
   paused,
   burst,
   onSelect,
@@ -113,29 +115,53 @@ export function StageView({
   const dragX = useSharedValue(0);
   const dragY = useSharedValue(0);
   const dragging = useSharedValue(0);
+  const settle = useSharedValue(-1);
   const tiltX = useSharedValue(0);
   const tiltY = useSharedValue(0);
   const inputs: StageInputs = useMemo(
-    () => ({ dragX, dragY, dragging, tiltX, tiltY }),
-    [dragX, dragY, dragging, tiltX, tiltY]
+    () => ({ dragX, dragY, dragging, settle, tiltX, tiltY }),
+    [dragX, dragY, dragging, settle, tiltX, tiltY]
   );
 
-  const dpr = Math.min(3, Math.max(1, window.scale));
-  const backdropEdge = Math.min(BACKDROP_MAX_EDGE, Math.round(window.height * dpr));
-  const artEdge = Math.min(ART_MAX_EDGE, Math.round(window.height * dpr * 0.6));
-  const backdropTexture = useStageTexture(effects.gpu ? backdropUri : undefined, backdropEdge);
-  const artTexture = useStageTexture(effects.gpu ? artworkUri : undefined, artEdge);
-  // A reskin holds its cover until the new pictures are textures (or failed).
-  useThemeRenderReady(backdropUri, !effects.gpu || backdropTexture.status !== 'loading');
-  useThemeRenderReady(artworkUri, !effects.gpu || artTexture.status !== 'loading');
-  const backdrop = useMemo(
-    () =>
-      backdropTexture.status === 'ready'
-        ? { ...backdropTexture.source, ...(backdropFocal ? { focal: backdropFocal } : {}) }
+  // Which picture becomes which layer is decided by the pictures' own alpha.
+  const artworkClear = useStageClearShare(artworkUri);
+  const wallpaperClear = useStageClearShare(wallpaperUri);
+  const layers = stageLayers({
+    artwork:
+      artworkUri && artworkClear !== undefined ? { uri: artworkUri, clear: artworkClear } : null,
+    wallpaper:
+      wallpaperUri && wallpaperClear !== undefined
+        ? { uri: wallpaperUri, clear: wallpaperClear }
         : null,
-    [backdropTexture, backdropFocal]
+  });
+  const focalOf = (uri: string | null) =>
+    uri === artworkUri ? artworkFocal : uri === wallpaperUri ? wallpaperFocal : undefined;
+  const dpr = Math.min(3, Math.max(1, window.scale));
+  const coverEdge = Math.min(COVER_MAX_EDGE, Math.round(window.height * dpr));
+  const heroEdge = Math.min(HERO_MAX_EDGE, Math.round(window.height * dpr * 0.6));
+  const backdropTexture = useStageTexture(
+    effects.gpu ? (layers.backdrop ?? undefined) : undefined,
+    coverEdge
   );
-  const character = artTexture.status === 'ready' ? artTexture.source : null;
+  const heroTexture = useStageTexture(
+    effects.gpu ? (layers.hero ?? undefined) : undefined,
+    heroEdge
+  );
+  const frameTexture = useStageTexture(
+    effects.gpu ? (layers.frame ?? undefined) : undefined,
+    coverEdge
+  );
+  // A reskin holds its cover until the layers are chosen and their textures are in (or failed).
+  const settled =
+    layers.ready &&
+    (!effects.gpu ||
+      [backdropTexture, heroTexture, frameTexture].every((state) => state.status !== 'loading'));
+  useThemeRenderReady(artworkUri, settled);
+  useThemeRenderReady(wallpaperUri, settled);
+  const backdropFocal = focalOf(layers.backdrop);
+  const backdrop = withFocal(readySource(backdropTexture), backdropFocal);
+  const frame = withFocal(readySource(frameTexture), focalOf(layers.frame));
+  const hero = readySource(heroTexture);
   const drawn = stageDrawnScreens(selectedIndex, panels.length);
   const faces = useStageFaces(panels, effects.gpu ? drawn : [], {
     text: theme.colors.text,
@@ -143,6 +169,7 @@ export function StageView({
     success: theme.colors.success,
     warning: theme.colors.warning,
     offline: theme.colors.textMuted,
+    offlineDot: theme.colors.textDisabled,
     surface: theme.colors.surface,
     light: resolvedMode === 'light',
   });
@@ -160,12 +187,12 @@ export function StageView({
       primary: theme.colors.primary,
       success: theme.colors.success,
       warning: theme.colors.warning,
-      muted: theme.colors.textMuted,
+      offline: theme.colors.textDisabled,
     }),
     [theme.colors]
   );
 
-  // Back on Home after a dive: the camera returns to the stage.
+  // Back on Home after a dive: the camera returns to the window.
   useEffect(() => {
     if (!paused) setDiving(false);
   }, [paused]);
@@ -184,11 +211,13 @@ export function StageView({
     setTimeout(() => onOpen(index), DIVE_MS);
   });
 
+  const count = panels.length;
   const gesture = useMemo(
     () =>
       Gesture.Pan()
         .minDistance(10)
         .onStart(() => {
+          settle.set(-1);
           dragging.set(1);
           scheduleOnRN(bridge.wake);
           scheduleOnRN(touched);
@@ -198,10 +227,17 @@ export function StageView({
           dragY.set(size.height > 0 ? event.translationY / size.height : 0);
         })
         .onEnd((event) => {
-          // Sideways turns the ring; up and down only looks around.
+          // Sideways moves the panes; up and down only looks around.
           if (Math.abs(event.translationX) < Math.abs(event.translationY)) return;
-          const step = stageSwipeStep(event.translationX, event.velocityX, size.width);
-          if (step !== 0) scheduleOnRN(onSelect, selectedIndex + step);
+          const target = stageSwipeTarget(
+            selectedIndex,
+            count,
+            event.translationX,
+            event.velocityX,
+            size.width
+          );
+          settle.set(target);
+          if (target !== selectedIndex) scheduleOnRN(onSelect, target);
         })
         .onFinalize(() => {
           dragging.set(0);
@@ -209,11 +245,28 @@ export function StageView({
           dragY.set(0);
           scheduleOnRN(bridge.wake);
         }),
-    [bridge, dragX, dragY, dragging, onSelect, selectedIndex, size.width, size.height, touched]
+    [
+      bridge,
+      count,
+      dragX,
+      dragY,
+      dragging,
+      onSelect,
+      selectedIndex,
+      settle,
+      size.width,
+      size.height,
+      touched,
+    ]
   );
 
-  const hostAspect = character?.aspect ?? (artworkUri ? 1.5 : 0.6);
-  const targets = useStageTargets(panels, selectedIndex, hostAspect, size.width, size.height);
+  const targets = useStageTargets(
+    panels.length,
+    selectedIndex,
+    hero?.aspect ?? (layers.hero ? 0.75 : null),
+    size.width,
+    size.height
+  );
 
   return (
     <GestureDetector gesture={gesture}>
@@ -235,7 +288,8 @@ export function StageView({
                 colors={colors}
                 mode={resolvedMode}
                 backdrop={backdrop}
-                character={character}
+                hero={hero}
+                frame={frame}
                 faces={faces.atlas}
                 quality={quality}
                 reducedMotion={reducedMotion}
@@ -253,7 +307,8 @@ export function StageView({
           <StaticStage
             panels={panels}
             targets={targets}
-            artworkUri={artworkUri}
+            layers={layers}
+            backdropFocal={backdropFocal}
             dragY={dragY}
             tiltX={tiltX}
             tiltY={tiltY}
@@ -319,7 +374,13 @@ function StageTilt({ tiltX, tiltY }: { tiltX: SharedValue<number>; tiltY: Shared
 }
 
 type StageTarget =
-  | { kind: 'host'; rect: StageRect; hint: { x: number; y: number } }
+  | {
+      kind: 'host';
+      rect: StageRect;
+      /** The whole picture, for the static stage to draw. */
+      art: StageRect;
+      hint: { x: number; y: number };
+    }
   | {
       kind: 'screen';
       index: number;
@@ -328,66 +389,72 @@ type StageTarget =
       hint: { x: number; y: number };
     };
 
-/** Every 3D target's resting box on screen, far to near (so the nearer one wins a tap). */
+function readySource(state: StageTextureState): StageTextureSource | null {
+  return state.status === 'ready' ? state.source : null;
+}
+
+/** A texture with the theme's focal point. */
+function withFocal(
+  source: StageTextureSource | null,
+  focal: Focal | undefined
+): StageTextureSource | null {
+  return source && focal ? { ...source, focal } : source;
+}
+
+/**
+ * Every 3D target's resting box on screen, far to near (so the nearer one
+ * wins a tap): the hero when there is one (`heroAspect`), and the panes the
+ * cover-flow shows around the selection.
+ */
 function useStageTargets(
-  panels: readonly StagePanel[],
+  count: number,
   selectedIndex: number,
-  hostAspect: number,
+  heroAspect: number | null,
   width: number,
   height: number
 ): StageTarget[] {
   return useMemo(() => {
     if (width <= 0 || height <= 0) return [];
-    const camera = stageCamera({ aspect: width / height });
-    const ring = stageRingRest(selectedIndex, panels.length);
-    const host = stageHostSize(hostAspect);
-    // Only the figure's middle takes taps, not the empty sides of a wide picture.
-    const hostCentre = [
-      STAGE_PEDESTAL[0],
-      STAGE_HOST_BASE_Y + host.height / 2,
-      STAGE_PEDESTAL[2],
-    ] as const;
-    // Just above the host's head, at whatever size her art stands.
-    const hostHint = projectStagePoint(
-      [STAGE_PEDESTAL[0], STAGE_HOST_BASE_Y + host.height + 0.35, STAGE_PEDESTAL[2]],
-      camera,
-      width,
-      height
-    );
-    const targets: StageTarget[] = [
-      {
+    const aspect = width / height;
+    const camera = stageCamera();
+    const targets: StageTarget[] = [];
+    if (heroAspect !== null) {
+      const hero = stageHero(heroAspect, aspect);
+      // Only the figure's middle takes taps, not its faded feet or a wide picture's sides.
+      const [x, y, z] = hero.position;
+      const hint = projectStagePoint([x, y + hero.height / 2 + 0.3, z], camera, width, height);
+      targets.push({
         kind: 'host',
-        rect: stageBillboardRect(
-          hostCentre,
-          Math.min(host.width, 1.6),
-          host.height,
+        rect: stageQuadRect(
+          [x, y + hero.height * 0.12, z],
+          Math.min(hero.width, hero.height * 0.6),
+          hero.height * 0.76,
+          0,
           camera,
           width,
           height
         ),
-        hint: { x: hostHint.x, y: hostHint.y },
-      },
-    ];
-    for (const index of stageDrawnScreens(selectedIndex, panels.length)) {
-      const front = index === selectedIndex;
-      const scale = front ? STAGE_FRONT_SCALE : STAGE_SIDE_SCALE;
-      const centre = stageScreenPosition(index, panels.length, ring);
-      // On this screen's own top rim, wherever the ring has put it: any higher
-      // and the leader lands on the screen behind it.
-      const hint = projectStagePoint(
-        [centre[0], centre[1] + (STAGE_SCREEN_HEIGHT / 2) * scale, centre[2]],
-        camera,
-        width,
-        height
-      );
+        art: stageQuadRect(hero.position, hero.width, hero.height, 0, camera, width, height),
+        hint: { x: hint.x, y: hint.y },
+      });
+    }
+    const anchor = stagePaneAnchor(camera, aspect);
+    for (const index of stageDrawnScreens(selectedIndex, count)) {
+      const offset = index - selectedIndex;
+      if (Math.abs(offset) >= STAGE_PANE_REACH) continue;
+      const pane = stagePane(offset, anchor, aspect);
+      const [x, y, z] = pane.position;
+      // On the pane's own top rim.
+      const hint = projectStagePoint([x, y + pane.height / 2, z], camera, width, height);
       targets.push({
         kind: 'screen',
         index,
-        front,
-        rect: stageBillboardRect(
-          centre,
-          STAGE_SCREEN_WIDTH * scale,
-          STAGE_SCREEN_HEIGHT * scale,
+        front: offset === 0,
+        rect: stageQuadRect(
+          pane.position,
+          pane.width,
+          pane.height,
+          pane.yaw,
           camera,
           width,
           height
@@ -396,7 +463,7 @@ function useStageTargets(
       });
     }
     return targets.sort((a, b) => b.rect.depth - a.rect.depth);
-  }, [panels.length, selectedIndex, hostAspect, width, height]);
+  }, [count, selectedIndex, heroAspect, width, height]);
 }
 
 /**
@@ -513,22 +580,24 @@ function StageHint({ text, at }: { text: string; at: { x: number; y: number } })
 }
 
 /**
- * The 2.5D stage: the same composition as flat layers -- wallpaper sky, the
- * host and the screens at their projected places -- with only parallax for
- * motion. Drawn without WebGPU, after a lost device, or as a slow device's
- * last degrade step.
+ * The 2.5D stage: the same layers flat -- backdrop, hero, the panes at their
+ * projected places, the frame -- with only parallax for motion. Drawn
+ * without WebGPU, after a lost device, or as a slow device's last degrade
+ * step.
  */
 function StaticStage({
   panels,
   targets,
-  artworkUri,
+  layers,
+  backdropFocal,
   dragY,
   tiltX,
   tiltY,
 }: {
   panels: readonly StagePanel[];
   targets: readonly StageTarget[];
-  artworkUri?: string;
+  layers: StageLayers;
+  backdropFocal?: Focal;
   dragY: SharedValue<number>;
   tiltX: SharedValue<number>;
   tiltY: SharedValue<number>;
@@ -549,8 +618,8 @@ function StaticStage({
   }));
   const toneColor = {
     online: theme.colors.success,
-    offline: theme.colors.textMuted,
-    unknown: theme.colors.textMuted,
+    offline: theme.colors.textDisabled,
+    unknown: theme.colors.textDisabled,
     warning: theme.colors.warning,
   } as const;
   return (
@@ -559,45 +628,43 @@ function StaticStage({
       pointerEvents="none"
       accessible={false}
       importantForAccessibility="no-hide-descendants">
-      <Animated.View style={[styles.bleed, far]}>
-        <ThemeArtwork slot="home.wallpaper" fallbackSlot="shell.wallpaper" opacityLimit={0.5} />
-      </Animated.View>
+      {layers.backdrop ? (
+        <Animated.View style={[styles.bleed, far]}>
+          <Image
+            source={{ uri: layers.backdrop }}
+            contentFit="cover"
+            contentPosition={
+              backdropFocal
+                ? { left: `${backdropFocal.x * 100}%`, top: `${backdropFocal.y * 100}%` }
+                : 'center'
+            }
+            cachePolicy="memory"
+            accessible={false}
+            style={StyleSheet.absoluteFill}
+          />
+        </Animated.View>
+      ) : null}
       <Animated.View style={[StyleSheet.absoluteFill, near]}>
         {targets.map((target) => {
           if (!target.rect.visible) return null;
           const { rect } = target;
           if (target.kind === 'host')
-            return artworkUri ? (
+            return layers.hero ? (
               <Image
                 key="host"
-                source={{ uri: artworkUri }}
+                source={{ uri: layers.hero }}
                 contentFit="contain"
-                contentPosition="bottom"
                 cachePolicy="memory"
                 accessible={false}
                 style={{
                   position: 'absolute',
-                  left: rect.x - rect.width,
-                  top: rect.y,
-                  width: rect.width * 3,
-                  height: rect.height,
+                  left: target.art.x,
+                  top: target.art.y,
+                  width: target.art.width,
+                  height: target.art.height,
                 }}
               />
-            ) : (
-              <View
-                key="host"
-                style={[
-                  styles.crystal,
-                  {
-                    left: rect.x + rect.width * 0.3,
-                    top: rect.y + rect.height * 0.2,
-                    width: rect.width * 0.4,
-                    height: rect.height * 0.5,
-                    backgroundColor: theme.colors.primary,
-                  },
-                ]}
-              />
-            );
+            ) : null;
           const panel = panels[target.index];
           if (!panel) return null;
           return (
@@ -610,8 +677,7 @@ function StaticStage({
                   top: rect.y,
                   width: rect.width,
                   height: rect.height,
-                  borderColor:
-                    panel.tone === 'offline' ? theme.colors.border : theme.colors.primary,
+                  borderColor: toneColor[panel.tone],
                   backgroundColor: background(theme.colors.surface),
                   opacity: target.front ? 1 : 0.7,
                 },
@@ -624,6 +690,15 @@ function StaticStage({
           );
         })}
       </Animated.View>
+      {layers.frame ? (
+        <Image
+          source={{ uri: layers.frame }}
+          contentFit="cover"
+          cachePolicy="memory"
+          accessible={false}
+          style={[StyleSheet.absoluteFill, styles.frame]}
+        />
+      ) : null}
     </View>
   );
 }
@@ -639,12 +714,7 @@ const styles = StyleSheet.create({
   },
   hintLeader: { width: 1, height: 14, opacity: 0.7 },
   bleed: { position: 'absolute', top: -12, bottom: -12, left: -12, right: -12 },
-  crystal: {
-    position: 'absolute',
-    borderRadius: 8,
-    transform: [{ rotate: '45deg' }],
-    opacity: 0.8,
-  },
+  frame: { opacity: 0.95 },
   flatScreen: {
     position: 'absolute',
     borderWidth: 1,
