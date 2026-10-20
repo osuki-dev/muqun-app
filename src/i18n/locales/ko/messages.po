@@ -43,6 +43,11 @@ msgstr "[모델]"
 msgid "[pr number]"
 msgstr "[PR 번호]"
 
+#. placeholder {0}: files.length
+#: src/components/agent-composer.tsx
+msgid "{0, plural, one {# attachment} other {# attachments}}"
+msgstr ""
+
 #. placeholder {0}: capped.hidden
 #: src/components/bounded-markdown.tsx
 msgid "{0, plural, one {# character not shown} other {# characters not shown}}"
@@ -2563,7 +2568,6 @@ msgid "Disconnected."
 msgstr "연결이 끊겼습니다"
 
 #: src/components/agent-compaction-pill.tsx
-#: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/task-row.tsx
@@ -3168,6 +3172,10 @@ msgstr "컴퓨터 목록 숨기기"
 msgid "Hide the simulator"
 msgstr "시뮬레이터 숨기기"
 
+#: src/components/agent-composer.tsx
+msgid "Hides this notice"
+msgstr ""
+
 #: src/app/settings-voice.tsx
 msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
 msgstr "전송 버튼을 길게 눌러 말하세요. 녹음을 중지하면 텍스트가 초안에 추가되며, 수정한 뒤 전송할 수 있습니다"
@@ -3762,7 +3770,7 @@ msgstr "확인 완료로 표시"
 
 #: src/components/dev-icon-gallery.tsx
 msgid "Marks keep their original geometry and stroke."
-msgstr "마크는 원래 형태와 선 굵기를 유지합니다."
+msgstr "마크는 원래 형태와 선 굵기를 유지합니다"
 
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
@@ -4032,6 +4040,7 @@ msgid "Newer"
 msgstr "이후 기록"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-message-block.tsx
 msgid "Next"
 msgstr "다음"
 
@@ -5040,10 +5049,9 @@ msgstr "대기 중"
 msgid "queued to upload"
 msgstr "업로드 대기 중"
 
-#. placeholder {0}: inboxItemText(item) || item.type
 #: src/components/agent-composer.tsx
-msgid "Queued: {0}"
-msgstr "대기 중: {0}"
+msgid "Queued: {summary}"
+msgstr "대기 중: {summary}"
 
 #: src/app/commands.tsx
 msgid "Quick action settings"
@@ -5834,10 +5842,9 @@ msgstr "에이전트에게 보내기"
 msgid "Sending attachment message…"
 msgstr "첨부 파일이 포함된 메시지를 보내는 중…"
 
-#. placeholder {0}: inboxItemText(item) || item.type
 #: src/components/agent-composer.tsx
-msgid "Sending next: {0}"
-msgstr "다음에 보냄: {0}"
+msgid "Sending next: {summary}"
+msgstr "다음에 보냄: {summary}"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Sending to"
@@ -6399,10 +6406,6 @@ msgstr "제출"
 #: src/components/agent-composer.tsx
 msgid "Submitted"
 msgstr "제출됨"
-
-#: src/components/agent-composer.tsx
-msgid "Submitted to queue"
-msgstr "대기열에 제출됨"
 
 #: src/components/agent-composer.tsx
 msgid "Submitting follow-up…"

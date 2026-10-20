@@ -43,6 +43,11 @@ msgstr "[モデル]"
 msgid "[pr number]"
 msgstr "[PR 番号]"
 
+#. placeholder {0}: files.length
+#: src/components/agent-composer.tsx
+msgid "{0, plural, one {# attachment} other {# attachments}}"
+msgstr ""
+
 #. placeholder {0}: capped.hidden
 #: src/components/bounded-markdown.tsx
 msgid "{0, plural, one {# character not shown} other {# characters not shown}}"
@@ -2563,7 +2568,6 @@ msgid "Disconnected."
 msgstr "切断しました"
 
 #: src/components/agent-compaction-pill.tsx
-#: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/task-row.tsx
@@ -3168,6 +3172,10 @@ msgstr "コンピュータ一覧を隠す"
 msgid "Hide the simulator"
 msgstr "シミュレータを隠す"
 
+#: src/components/agent-composer.tsx
+msgid "Hides this notice"
+msgstr ""
+
 #: src/app/settings-voice.tsx
 msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
 msgstr "送信ボタンを長押しして話します。録音を停止するとテキストが下書きに追加され、編集してから送信できます"
@@ -3762,7 +3770,7 @@ msgstr "確認済みにする"
 
 #: src/components/dev-icon-gallery.tsx
 msgid "Marks keep their original geometry and stroke."
-msgstr "マークは元の形状と線幅を保ちます。"
+msgstr "マークは元の形状と線幅を保ちます"
 
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
@@ -4032,6 +4040,7 @@ msgid "Newer"
 msgstr "新しい記録"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-message-block.tsx
 msgid "Next"
 msgstr "次へ"
 
@@ -5040,10 +5049,9 @@ msgstr "待機中"
 msgid "queued to upload"
 msgstr "アップロード待ち"
 
-#. placeholder {0}: inboxItemText(item) || item.type
 #: src/components/agent-composer.tsx
-msgid "Queued: {0}"
-msgstr "待機中: {0}"
+msgid "Queued: {summary}"
+msgstr "待機中: {summary}"
 
 #: src/app/commands.tsx
 msgid "Quick action settings"
@@ -5834,10 +5842,9 @@ msgstr "エージェントに送信"
 msgid "Sending attachment message…"
 msgstr "添付ファイル付きメッセージを送信しています…"
 
-#. placeholder {0}: inboxItemText(item) || item.type
 #: src/components/agent-composer.tsx
-msgid "Sending next: {0}"
-msgstr "次に送信: {0}"
+msgid "Sending next: {summary}"
+msgstr "次に送信: {summary}"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Sending to"
@@ -6399,10 +6406,6 @@ msgstr "送信"
 #: src/components/agent-composer.tsx
 msgid "Submitted"
 msgstr "送信済み"
-
-#: src/components/agent-composer.tsx
-msgid "Submitted to queue"
-msgstr "キューに送信済み"
 
 #: src/components/agent-composer.tsx
 msgid "Submitting follow-up…"

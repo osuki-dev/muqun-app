@@ -43,6 +43,11 @@ msgstr "[模型]"
 msgid "[pr number]"
 msgstr "[PR 編號]"
 
+#. placeholder {0}: files.length
+#: src/components/agent-composer.tsx
+msgid "{0, plural, one {# attachment} other {# attachments}}"
+msgstr "{0, plural, other {# 個附件}}"
+
 #. placeholder {0}: capped.hidden
 #: src/components/bounded-markdown.tsx
 msgid "{0, plural, one {# character not shown} other {# characters not shown}}"
@@ -2563,7 +2568,6 @@ msgid "Disconnected."
 msgstr "已中斷連線"
 
 #: src/components/agent-compaction-pill.tsx
-#: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/task-row.tsx
@@ -3168,6 +3172,10 @@ msgstr "隱藏電腦清單"
 msgid "Hide the simulator"
 msgstr "隱藏模擬器"
 
+#: src/components/agent-composer.tsx
+msgid "Hides this notice"
+msgstr "隱藏此提示"
+
 #: src/app/settings-voice.tsx
 msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
 msgstr "長按傳送按鈕開始說話。停止錄音後，文字會加入草稿，編輯後再傳送"
@@ -3762,7 +3770,7 @@ msgstr "標記已查看"
 
 #: src/components/dev-icon-gallery.tsx
 msgid "Marks keep their original geometry and stroke."
-msgstr "標誌保留原有的形狀和線寬。"
+msgstr "標誌保留原有的形狀和線寬"
 
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
@@ -4032,6 +4040,7 @@ msgid "Newer"
 msgstr "較新"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-message-block.tsx
 msgid "Next"
 msgstr "下一步"
 
@@ -5040,10 +5049,9 @@ msgstr "排隊中"
 msgid "queued to upload"
 msgstr "排隊等待上傳"
 
-#. placeholder {0}: inboxItemText(item) || item.type
 #: src/components/agent-composer.tsx
-msgid "Queued: {0}"
-msgstr "排隊中：{0}"
+msgid "Queued: {summary}"
+msgstr "排隊中：{summary}"
 
 #: src/app/commands.tsx
 msgid "Quick action settings"
@@ -5834,10 +5842,9 @@ msgstr "傳送給代理程式"
 msgid "Sending attachment message…"
 msgstr "正在傳送附件訊息…"
 
-#. placeholder {0}: inboxItemText(item) || item.type
 #: src/components/agent-composer.tsx
-msgid "Sending next: {0}"
-msgstr "下一個傳送：{0}"
+msgid "Sending next: {summary}"
+msgstr "下一個傳送：{summary}"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Sending to"
@@ -6399,10 +6406,6 @@ msgstr "提交"
 #: src/components/agent-composer.tsx
 msgid "Submitted"
 msgstr "已提交"
-
-#: src/components/agent-composer.tsx
-msgid "Submitted to queue"
-msgstr "已提交至佇列"
 
 #: src/components/agent-composer.tsx
 msgid "Submitting follow-up…"
