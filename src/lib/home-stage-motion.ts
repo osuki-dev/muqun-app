@@ -134,17 +134,13 @@ export function stageEffects(
  * How long the ambient motion (the motes' drift, the hero's bob, the working
  * pulse, a theme's ambient effect) keeps running at the idle rate after the
  * last interaction. Past it the scene holds its last frame and draws nothing
- * until something wakes it: a drag, a swipe, tilt, a dive, a completion's
- * flare or a change to what the scene shows. A phone left on Home then costs
- * the GPU nothing instead of 20 frames every second.
+ * until an interaction starts the window again: a drag, a swipe, tilt, a
+ * dive, a completion's flare, coming back to Home or a new theme. A change to
+ * what the scene shows (a pane's text, a status, a texture) draws one frame
+ * and leaves the window alone, so live agent status arriving every few
+ * seconds does not keep a phone left on Home animating.
  */
 export const STAGE_AMBIENT_IDLE_MS = 6000;
-
-/**
- * A gap between frames longer than this means the scene had stopped and
- * something woke it, which counts as activity: the ambient motion resumes.
- */
-export const STAGE_WAKE_GAP_MS = 250;
 
 /**
  * The smallest change in smoothed device tilt (-1..1 per axis) that is
