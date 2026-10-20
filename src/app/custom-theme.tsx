@@ -125,6 +125,16 @@ function CustomThemeScene({
    */
   const close = () => (router.canDismiss() ? router.dismissAll() : router.back());
   /**
+   * A theme sent into a session closes back to that session, where the reader
+   * may still be asking for changes. Once it is applied, the editor goes home
+   * instead: a session shows the chat surface only, and home shows the whole
+   * theme. `dismissTo` drops the session from under it too, so Back does not
+   * bounce into it.
+   */
+  const { from } = useLocalSearchParams<{ from?: string }>();
+  const leave = (after: 'applied' | 'closed') =>
+    after === 'applied' && from === 'conversation' ? router.dismissTo('/') : close();
+  /**
    * The one button at the bottom is the one decision on this screen.
    *
    * The library used to draw its own Apply between the settings card and the
@@ -170,7 +180,7 @@ function CustomThemeScene({
               onPreviewAppearanceChange={onPreviewAppearanceChange}
               detail
               ownsPreparedAssets={false}
-              onClosePreview={close}
+              onClosePreview={leave}
               onPrimaryActionChange={setPrimary}
               onStatusChange={setStatus}
             />

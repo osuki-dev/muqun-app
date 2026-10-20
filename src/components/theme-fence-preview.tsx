@@ -33,7 +33,7 @@ export function ThemeFencePreview({ source }: { source: string }) {
       accessibilityLabel={t`Preview theme ${manifest.name}`}
       onPress={() => {
         try {
-          openThemeEditor({ manifest });
+          openThemeEditor({ manifest }, 'conversation');
         } catch (failure) {
           showToast({
             variant: 'danger',

@@ -6137,7 +6137,7 @@ export function ServerTerminalWorkspace({
                           // and the opacity floors, and a theme arriving from
                           // another machine is exactly as unreviewed as one picked
                           // by hand. The card's job was to get it here.
-                          openThemeEditor(candidate);
+                          openThemeEditor(candidate, 'conversation');
                           themeCandidateRef.current = null;
                           setThemeDrop(null);
                         }}
