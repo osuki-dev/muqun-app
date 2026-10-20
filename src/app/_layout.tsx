@@ -347,21 +347,34 @@ export default function RootLayout() {
   );
 }
 
+/** Duration alone does not disable native Android transitions; `none` does. */
+const QUIET_ROUTE_OPTIONS = { animation: 'none', animationDuration: 0 } as const;
+
 function RootContent() {
   // Blurred screens thaw for the length of a theme change; see `freezeOnBlur` below.
   const reskinActive = useReskinActivity((state) => state.active);
+  // A theme applied from the editor or the file viewer goes home under the
+  // reskin cover, which is a picture of the screen being left: any route
+  // transition then would show that screen leaving itself, so every route
+  // changes without one until the run is over (`ReskinRunOptions.handoff`).
+  const reskinQuiet = useReskinActivity((state) => state.quiet);
   const reduceMotion = useReducedMotion();
   const profile = useAppearanceProfile();
   const notificationSurfaceStyle = useNotificationSurfaceStyle();
-  const pageOptions = profileNavigationOptions(profile, reduceMotion);
+  const pageOptions = {
+    ...profileNavigationOptions(profile, reduceMotion),
+    ...(reskinQuiet ? QUIET_ROUTE_OPTIONS : {}),
+  };
   // A Pad is a window width, not a device: the same test the workspace uses to
   // draw its rail. On a Pad the sheets that are work surfaces open full-screen
   // (`sheetRouteKinds`) with their native default transition; phones never
   // cross the threshold, so nothing changes there.
   const { width: windowWidth } = useWindowDimensions();
   const isPad = responsiveWorkspaceLayout(windowWidth).mode === 'pad';
-  const sheetRouteOptions = (route: string) =>
-    resolveSheetRouteOptions(route, profile, reduceMotion, isPad);
+  const sheetRouteOptions = (route: string) => ({
+    ...resolveSheetRouteOptions(route, profile, reduceMotion, isPad),
+    ...(reskinQuiet ? QUIET_ROUTE_OPTIONS : {}),
+  });
   const { resolvedMode } = useThemeMode();
   const { colors } = useThemeTokens();
   const { record } = useGatewayRecord();
