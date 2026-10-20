@@ -667,7 +667,7 @@ msgstr "จัด QR ให้อยู่ในกรอบ"
 
 #: src/components/home-recent-chips.tsx
 #: src/components/session-artifacts.tsx
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "All"
 msgstr "ทั้งหมด"
 
@@ -824,6 +824,7 @@ msgstr "ใช้แพตช์"
 #: src/app/custom-theme.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Apply theme"
 msgstr "ใช้ธีม"
 
@@ -1082,10 +1083,9 @@ msgstr "นำ {0} มาไว้ด้านหน้า"
 msgid "Brings this computer forward."
 msgstr "นำคอมพิวเตอร์เครื่องนี้มาไว้ด้านหน้า"
 
-#: src/components/custom-theme-library.tsx
-#: src/components/theme-browse-sheet.tsx
-msgid "Browse themes"
-msgstr "เลือกดูธีม"
+#: src/components/settings-theme-sheet.tsx
+msgid "Browse the gallery"
+msgstr "เรียกดูแกลเลอรี"
 
 #: src/app/commands.tsx
 msgid "Browser"
@@ -1095,7 +1095,7 @@ msgstr "เบราว์เซอร์"
 msgid "Build"
 msgstr "สร้าง (Build)"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Built-in"
 msgstr "มีมาให้ในแอป"
 
@@ -1131,6 +1131,7 @@ msgstr "ต้องเข้าถึงกล้อง"
 #: src/components/settings-font-sheet.tsx
 #: src/components/settings-servers.tsx
 #: src/components/settings-storage.tsx
+#: src/components/settings-theme-sheet.tsx
 #: src/components/skia-terminal.tsx
 #: src/components/ssh-host-form.tsx
 #: src/components/ssh-host-key-dialog.tsx
@@ -1241,7 +1242,7 @@ msgstr "ตรวจสอบ URL ที่เก็บโค้ด สาขา
 msgid "Check this computer's tasks. This request has not been sent again."
 msgstr "ตรวจสอบงานบนคอมพิวเตอร์เครื่องนี้ คำขอนี้ไม่ได้ถูกส่งซ้ำ"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Check your connection and try again."
 msgstr "ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง"
 
@@ -1372,7 +1373,7 @@ msgid "Clear the conversation"
 msgstr "ล้างบทสนทนา"
 
 #: src/components/agent-model-sheet.tsx
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Clear the search"
 msgstr "ล้างคำค้นหา"
 
@@ -1394,6 +1395,7 @@ msgstr "ล้างเฉพาะการแจ้งเตือน งา�
 
 #: src/app/diagram-viewer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
+#: src/components/settings-theme-sheet.tsx
 #: src/components/sheet-scene.tsx
 #: src/i18n/labels.ts
 msgid "Close"
@@ -2181,7 +2183,7 @@ msgstr "ติดต่อคอมพิวเตอร์ไม่ได้"
 msgid "Could not reach the computer. Make sure it is running, then refresh the QR and scan again."
 msgstr "ติดต่อคอมพิวเตอร์ไม่ได้ ตรวจสอบว่าเครื่องเปิดอยู่ จากนั้นรีเฟรช QR แล้วสแกนอีกครั้ง"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Could not reach the theme catalogue"
 msgstr "ติดต่อแค็ตตาล็อกธีมไม่ได้"
 
@@ -2395,8 +2397,9 @@ msgstr "เครดิตที่ใช้แล้ว"
 msgid "Cropped preview · Open full image"
 msgstr "ตัวอย่างบางส่วน · เปิดภาพเต็ม"
 
-#: src/components/custom-theme-library.tsx
 #: src/components/file-mention-panel.tsx
+#: src/components/settings-theme-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Current"
 msgstr "ปัจจุบัน"
 
@@ -2417,13 +2420,17 @@ msgstr "คอมพิวเตอร์ปัจจุบัน"
 msgid "Current path"
 msgstr "พาธปัจจุบัน"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Current theme"
 msgstr "ธีมปัจจุบัน"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Custom"
 msgstr "กำหนดเอง"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Customise"
+msgstr "ปรับแต่ง"
 
 #: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
@@ -2504,7 +2511,7 @@ msgstr "ยังไม่ยืนยันการส่ง"
 msgid "Delivery not confirmed. Tap to check status"
 msgstr "ยังไม่ยืนยันการส่ง แตะเพื่อตรวจสอบสถานะ"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Demo catalogue. Leave the demo to download themes."
 msgstr "แค็ตตาล็อกสาธิต ออกจากการสาธิตเพื่อดาวน์โหลดธีม"
 
@@ -2676,7 +2683,7 @@ msgstr "กำลังดาวน์โหลด · {0} จาก {1}"
 msgid "Downloading theme"
 msgstr "กำลังดาวน์โหลดธีม"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Downloading…"
 msgstr "กำลังดาวน์โหลด…"
 
@@ -2846,6 +2853,7 @@ msgid "Export colours"
 msgstr "ส่งออกสี"
 
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Export theme"
 msgstr "ส่งออกธีม"
 
@@ -3043,6 +3051,10 @@ msgstr "เต็มหน้าจอ"
 #: src/components/virtual-keyboard.tsx
 msgid "Function keys"
 msgstr "ปุ่มฟังก์ชัน"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Gallery"
+msgstr "แกลเลอรี"
 
 #: src/app/explore.tsx
 msgid "Gateway"
@@ -3321,21 +3333,25 @@ msgstr "รูปภาพ"
 msgid "Images download from"
 msgstr "ดาวน์โหลดรูปภาพจาก"
 
-#: src/components/custom-theme-library.tsx
-msgid "Import"
-msgstr "นำเข้า"
-
 #: src/components/settings-font-sheet.tsx
 msgid "Import a file…"
 msgstr "นำเข้าจากไฟล์…"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Import file"
 msgstr "นำเข้าไฟล์"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Import link"
 msgstr "นำเข้าลิงก์"
+
+#: src/components/theme-card.tsx
+msgid "Import theme"
+msgstr "นำเข้าธีม"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Imported"
+msgstr "นำเข้าแล้ว"
 
 #: src/components/server-tasks-sheet.tsx
 msgid "In progress"
@@ -3398,13 +3414,14 @@ msgid "Install command copied"
 msgstr "คัดลอกคำสั่งติดตั้งแล้ว"
 
 #: src/components/settings-font-sheet.tsx
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Installed"
 msgstr "ติดตั้งแล้ว"
 
 #: src/app/+not-found.tsx
 #: src/app/custom-theme.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Installing images"
 msgstr "กำลังติดตั้งรูปภาพ"
 
@@ -3736,7 +3753,7 @@ msgstr "กำลังโหลดเทอร์มินัล"
 msgid "Loading the transcript"
 msgstr "กำลังโหลดบันทึกการสนทนา"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Loading themes…"
 msgstr "กำลังโหลดธีม…"
 
@@ -3826,6 +3843,10 @@ msgstr "คัดลอกข้อความไปยังคลิปบอ
 msgid "Message not sent"
 msgstr "ยังไม่ได้ส่งข้อความ"
 
+#: src/components/settings-theme-sheet.tsx
+msgid "Mine"
+msgstr "ของฉัน"
+
 #: src/components/home-composer-options.tsx
 msgid "Mode"
 msgstr "โหมด"
@@ -3886,6 +3907,7 @@ msgid "Monthly credit limit"
 msgstr "ขีดจำกัดเครดิตรายเดือน"
 
 #: src/components/custom-theme-library.tsx
+#: src/components/theme-card.tsx
 msgid "More actions"
 msgstr "การทำงานเพิ่มเติม"
 
@@ -3958,10 +3980,6 @@ msgstr "Muqun ใช้ภาษานี้ไม่ว่าโทรศัพ
 #: src/components/settings-security.tsx
 msgid "Muqun will use {methodName} when the app opens."
 msgstr "Muqun จะใช้ {methodName} เมื่อเปิดแอป"
-
-#: src/components/custom-theme-library.tsx
-msgid "My themes"
-msgstr "ธีมของฉัน"
 
 #: src/app/commands.tsx
 #: src/components/agent-worktree-sheet.tsx
@@ -4223,7 +4241,7 @@ msgstr "ไม่มีรหัสผ่านหรือคีย์ที่
 msgid "No peer report available."
 msgstr "ไม่มีรายงานลิงก์ระหว่างคอมพิวเตอร์"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "No personal themes yet. Import one, or browse the published themes."
 msgstr "ยังไม่มีธีมส่วนตัว นำเข้าธีมหรือเลือกดูธีมที่เผยแพร่แล้ว"
 
@@ -4302,12 +4320,12 @@ msgstr "คอมพิวเตอร์นี้ไม่มีเซสชั
 msgid "No textual change"
 msgstr "ไม่มีข้อความเปลี่ยนแปลง"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "No themes are published yet"
 msgstr "ยังไม่มีธีมที่เผยแพร่"
 
-#. placeholder {0}: query.trim()
-#: src/components/theme-browse-sheet.tsx
+#. placeholder {0}: gallery.query.trim()
+#: src/components/theme-gallery.tsx
 msgid "No themes match “{0}”."
 msgstr "ไม่มีธีมที่ตรงกับ “{0}”"
 
@@ -4690,7 +4708,7 @@ msgid "Opening"
 msgstr "กำลังเปิด"
 
 #: src/app/+not-found.tsx
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Opening that file"
 msgstr "กำลังเปิดไฟล์นั้น"
 
@@ -4949,7 +4967,7 @@ msgstr "โปรดลองอีกครั้งหรือนำไฟล
 msgid "Port"
 msgstr "พอร์ต"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
 msgstr "กำลังเตรียมรูปภาพ"
@@ -5155,7 +5173,7 @@ msgid "Reading the rules on the host…"
 msgstr "กำลังอ่านกฎบนโฮสต์…"
 
 #: src/app/+not-found.tsx
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Reading the theme"
 msgstr "กำลังอ่านธีม"
 
@@ -5313,14 +5331,13 @@ msgstr "ไม่ทราบจำนวนคงเหลือ"
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-storage.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Remove"
 msgstr "ลบ"
 
 #. placeholder {0}: attachment.name
-#. placeholder {0}: installed.manifest.name
 #. placeholder {0}: record.label
 #: src/components/attachment-strip.tsx
-#: src/components/custom-theme-library.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Remove {0}"
 msgstr "ลบ {0}"
@@ -5464,6 +5481,10 @@ msgstr "เริ่ม Muqun ใหม่เพื่ออัปเดตใ�
 #: src/components/update-status-banner.tsx
 msgid "Restarting Muqun…"
 msgstr "กำลังเริ่ม Muqun ใหม่…"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Restore default"
+msgstr "คืนค่าเริ่มต้น"
 
 #: src/app/commands.tsx
 msgid "Restore hidden default commands"
@@ -5769,7 +5790,7 @@ msgstr "ค้นหา"
 msgid "Search actions and commands"
 msgstr "ค้นหาการทำงานและคำสั่ง"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Search by name or tag"
 msgstr "ค้นหาตามชื่อหรือแท็ก"
 
@@ -6207,6 +6228,7 @@ msgstr "สีบางสีของธีมต้องเพิ่มคว
 #: src/app/diagram-viewer.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 #: src/components/theme-link-import.tsx
 msgid "Something went wrong"
 msgstr "เกิดข้อผิดพลาด"
@@ -6575,7 +6597,7 @@ msgid "Tap again to delete"
 msgstr "แตะอีกครั้งเพื่อลบ"
 
 #: src/components/agent-worktree-sheet.tsx
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Tap again to remove"
 msgstr "แตะอีกครั้งเพื่อลบ"
@@ -6587,10 +6609,6 @@ msgstr "แตะอีกครั้งเพื่อลบอยู่ดี
 #: src/components/session-map.tsx
 msgid "Tap to connect"
 msgstr "แตะเพื่อเชื่อมต่อ"
-
-#: src/components/custom-theme-library.tsx
-msgid "Tap to preview and adjust"
-msgstr "แตะเพื่อดูตัวอย่างและปรับแต่ง"
 
 #: src/components/agent-workbench.tsx
 msgid "Tap to refresh this session."
@@ -6946,6 +6964,7 @@ msgid "The terminal, the opening and Home artwork draw with a new GPU renderer, 
 msgstr "เทอร์มินัล ฉากเปิด และภาพประกอบหน้าแรกวาดด้วยตัวเรนเดอร์ GPU ใหม่ และการเปลี่ยนธีมและฟอนต์ก็มีทรานซิชันของตัวเอง"
 
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "The theme will be removed from this device"
 msgstr "ธีมจะถูกลบจากอุปกรณ์นี้"
 
@@ -6961,7 +6980,6 @@ msgstr "รอบนี้ล้มเหลว"
 
 #: src/app/custom-theme.tsx
 #: src/components/settings-appearance.tsx
-#: src/components/settings-theme-sheet.tsx
 #: src/lib/demo-gateway.ts
 msgid "Theme"
 msgstr "ธีม"
@@ -6987,6 +7005,10 @@ msgstr "URL ของธีม"
 #: src/components/settings-appearance.tsx
 msgid "Theme, {0}"
 msgstr "ธีม {0}"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Themes"
+msgstr "ธีม"
 
 #: src/components/agent-workbench.tsx
 msgid "There is no rollback waiting to be applied."
@@ -7339,7 +7361,7 @@ msgstr "เชื่อถือ"
 #: src/components/changes-sheet.tsx
 #: src/components/inline-file-link.tsx
 #: src/components/pdf-asset-preview.tsx
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/video-asset-preview.tsx
 #: src/components/voice-input-button.tsx
 #: src/hooks/use-file-actions.tsx
@@ -7351,7 +7373,7 @@ msgstr "ลองอีกครั้ง"
 msgid "Try again once the computer responds."
 msgstr "ลองอีกครั้งเมื่อคอมพิวเตอร์ตอบสนอง"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Try searching for another name or tag."
 msgstr "ลองค้นหาด้วยชื่อหรือแท็กอื่น"
 
@@ -7415,7 +7437,6 @@ msgstr "การเปลี่ยนแปลงที่ยังไม่ค
 
 #: src/components/agent-revert-plate.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/custom-theme-library.tsx
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "เลิกทำ"
@@ -7468,7 +7489,7 @@ msgstr "ปลดล็อกด้วย {authLabel}"
 msgid "Unlock with {methodName}"
 msgstr "ปลดล็อกด้วย {methodName}"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Unpacking…"
 msgstr "กำลังแตกไฟล์…"
 
@@ -7527,7 +7548,7 @@ msgstr "ยังไม่ติดตาม"
 msgid "Up arrow"
 msgstr "ลูกศรขึ้น"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/update-status-banner.tsx
 msgid "Update"
 msgstr "อัปเดต"

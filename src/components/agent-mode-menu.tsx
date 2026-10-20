@@ -6,7 +6,7 @@ import Animated from 'react-native-reanimated';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { appChrome } from '@/constants/appearance';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useFloatingSurfaceBackground } from '@/hooks/use-surface-background';
 import { withAlpha } from '@/lib/color';
 import { fadeInDown, fadeOutDown } from '@/lib/motion';
 import type { ModeInfo } from '@/lib/agent-session';
@@ -37,7 +37,7 @@ export const AgentModeMenu = memo(function AgentModeMenu({
 }: AgentModeMenuProps) {
   const profile = useAppearanceProfile();
   const theme = useThemeTokens();
-  const surfaceBackground = useSurfaceBackground();
+  const floatingBackground = useFloatingSurfaceBackground();
 
   return (
     <Animated.View
@@ -48,7 +48,7 @@ export const AgentModeMenu = memo(function AgentModeMenu({
         styles.menu,
         { borderRadius: profile.chrome.popover },
         {
-          backgroundColor: surfaceBackground(theme.colors.surface),
+          backgroundColor: floatingBackground(theme.colors.surface),
         },
       ]}>
       {agents.map((ag) => {

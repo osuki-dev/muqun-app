@@ -667,7 +667,7 @@ msgstr "QR 코드를 테두리 안에 맞춰 주세요"
 
 #: src/components/home-recent-chips.tsx
 #: src/components/session-artifacts.tsx
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "All"
 msgstr "전체"
 
@@ -824,6 +824,7 @@ msgstr "패치 적용"
 #: src/app/custom-theme.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Apply theme"
 msgstr "테마 적용"
 
@@ -1082,10 +1083,9 @@ msgstr "{0}을(를) 앞으로 가져오기"
 msgid "Brings this computer forward."
 msgstr "이 컴퓨터를 앞으로 가져옵니다"
 
-#: src/components/custom-theme-library.tsx
-#: src/components/theme-browse-sheet.tsx
-msgid "Browse themes"
-msgstr "테마 둘러보기"
+#: src/components/settings-theme-sheet.tsx
+msgid "Browse the gallery"
+msgstr "갤러리 둘러보기"
 
 #: src/app/commands.tsx
 msgid "Browser"
@@ -1095,7 +1095,7 @@ msgstr "브라우저"
 msgid "Build"
 msgstr "빌드 (Build)"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Built-in"
 msgstr "기본 제공"
 
@@ -1131,6 +1131,7 @@ msgstr "카메라 접근 권한 필요"
 #: src/components/settings-font-sheet.tsx
 #: src/components/settings-servers.tsx
 #: src/components/settings-storage.tsx
+#: src/components/settings-theme-sheet.tsx
 #: src/components/skia-terminal.tsx
 #: src/components/ssh-host-form.tsx
 #: src/components/ssh-host-key-dialog.tsx
@@ -1241,7 +1242,7 @@ msgstr "저장소 URL, 브랜치와 테마 파일을 확인하세요"
 msgid "Check this computer's tasks. This request has not been sent again."
 msgstr "이 컴퓨터의 작업을 확인하세요. 이 요청은 다시 전송되지 않았습니다"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Check your connection and try again."
 msgstr "연결을 확인하고 다시 시도하세요"
 
@@ -1372,7 +1373,7 @@ msgid "Clear the conversation"
 msgstr "대화 비우기"
 
 #: src/components/agent-model-sheet.tsx
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Clear the search"
 msgstr "검색어 지우기"
 
@@ -1394,6 +1395,7 @@ msgstr "알림만 지웁니다. 대기 중인 작업은 여전히 확인이 필�
 
 #: src/app/diagram-viewer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
+#: src/components/settings-theme-sheet.tsx
 #: src/components/sheet-scene.tsx
 #: src/i18n/labels.ts
 msgid "Close"
@@ -2181,7 +2183,7 @@ msgstr "컴퓨터에 연결하지 못했습니다"
 msgid "Could not reach the computer. Make sure it is running, then refresh the QR and scan again."
 msgstr "컴퓨터에 연결하지 못했습니다. 컴퓨터가 켜져 있는지 확인하고 QR 코드를 새로 고친 뒤 다시 스캔하세요"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Could not reach the theme catalogue"
 msgstr "테마 카탈로그에 연결할 수 없습니다"
 
@@ -2395,8 +2397,9 @@ msgstr "사용한 크레딧"
 msgid "Cropped preview · Open full image"
 msgstr "일부 미리보기 · 전체 이미지 보기"
 
-#: src/components/custom-theme-library.tsx
 #: src/components/file-mention-panel.tsx
+#: src/components/settings-theme-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Current"
 msgstr "사용 중"
 
@@ -2417,12 +2420,16 @@ msgstr "현재 컴퓨터"
 msgid "Current path"
 msgstr "현재 경로"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Current theme"
 msgstr "현재 테마"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Custom"
+msgstr "사용자 지정"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Customise"
 msgstr "사용자 지정"
 
 #: src/components/custom-theme-preview.tsx
@@ -2504,7 +2511,7 @@ msgstr "전달이 확인되지 않음"
 msgid "Delivery not confirmed. Tap to check status"
 msgstr "전달이 확인되지 않았습니다. 탭하여 상태 확인"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Demo catalogue. Leave the demo to download themes."
 msgstr "데모 목록입니다. 테마를 다운로드하려면 데모를 종료하세요"
 
@@ -2676,7 +2683,7 @@ msgstr "다운로드 중 · {0} / {1}"
 msgid "Downloading theme"
 msgstr "테마 다운로드 중"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Downloading…"
 msgstr "다운로드 중…"
 
@@ -2846,6 +2853,7 @@ msgid "Export colours"
 msgstr "색상 내보내기"
 
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Export theme"
 msgstr "테마 내보내기"
 
@@ -3043,6 +3051,10 @@ msgstr "전체 화면"
 #: src/components/virtual-keyboard.tsx
 msgid "Function keys"
 msgstr "기능 키"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Gallery"
+msgstr "갤러리"
 
 #: src/app/explore.tsx
 msgid "Gateway"
@@ -3321,21 +3333,25 @@ msgstr "이미지"
 msgid "Images download from"
 msgstr "이미지 다운로드 출처"
 
-#: src/components/custom-theme-library.tsx
-msgid "Import"
-msgstr "가져오기"
-
 #: src/components/settings-font-sheet.tsx
 msgid "Import a file…"
 msgstr "파일에서 가져오기…"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Import file"
 msgstr "파일 가져오기"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Import link"
 msgstr "링크로 가져오기"
+
+#: src/components/theme-card.tsx
+msgid "Import theme"
+msgstr "테마 가져오기"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Imported"
+msgstr "가져옴"
 
 #: src/components/server-tasks-sheet.tsx
 msgid "In progress"
@@ -3398,13 +3414,14 @@ msgid "Install command copied"
 msgstr "설치 명령어를 복사했습니다"
 
 #: src/components/settings-font-sheet.tsx
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Installed"
 msgstr "설치됨"
 
 #: src/app/+not-found.tsx
 #: src/app/custom-theme.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Installing images"
 msgstr "이미지 설치 중"
 
@@ -3736,7 +3753,7 @@ msgstr "터미널 불러오는 중"
 msgid "Loading the transcript"
 msgstr "대화 기록 불러오는 중"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Loading themes…"
 msgstr "테마를 불러오는 중…"
 
@@ -3826,6 +3843,10 @@ msgstr "메시지가 클립보드에 복사되었습니다"
 msgid "Message not sent"
 msgstr "메시지를 보내지 못했습니다"
 
+#: src/components/settings-theme-sheet.tsx
+msgid "Mine"
+msgstr "내 테마"
+
 #: src/components/home-composer-options.tsx
 msgid "Mode"
 msgstr "모드"
@@ -3886,6 +3907,7 @@ msgid "Monthly credit limit"
 msgstr "월간 크레딧 한도"
 
 #: src/components/custom-theme-library.tsx
+#: src/components/theme-card.tsx
 msgid "More actions"
 msgstr "추가 작업"
 
@@ -3958,10 +3980,6 @@ msgstr "휴대폰 설정과 상관없이 Muqun은 이 언어를 유지합니다"
 #: src/components/settings-security.tsx
 msgid "Muqun will use {methodName} when the app opens."
 msgstr "앱을 열면 Muqun이 {methodName}을(를) 사용합니다"
-
-#: src/components/custom-theme-library.tsx
-msgid "My themes"
-msgstr "내 테마"
 
 #: src/app/commands.tsx
 #: src/components/agent-worktree-sheet.tsx
@@ -4223,7 +4241,7 @@ msgstr "이 호스트에 저장된 비밀번호나 키가 없습니다"
 msgid "No peer report available."
 msgstr "컴퓨터 간 연결 보고가 없습니다"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "No personal themes yet. Import one, or browse the published themes."
 msgstr "아직 내 테마가 없습니다. 하나 가져오거나 공개된 테마를 둘러보세요"
 
@@ -4302,12 +4320,12 @@ msgstr "이 컴퓨터에는 사용할 수 있는 터미널 세션이 없습니�
 msgid "No textual change"
 msgstr "텍스트 변경 없음"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "No themes are published yet"
 msgstr "아직 공개된 테마가 없습니다"
 
-#. placeholder {0}: query.trim()
-#: src/components/theme-browse-sheet.tsx
+#. placeholder {0}: gallery.query.trim()
+#: src/components/theme-gallery.tsx
 msgid "No themes match “{0}”."
 msgstr "“{0}”와 일치하는 테마가 없습니다"
 
@@ -4690,7 +4708,7 @@ msgid "Opening"
 msgstr "여는 중"
 
 #: src/app/+not-found.tsx
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Opening that file"
 msgstr "해당 파일을 여는 중"
 
@@ -4949,7 +4967,7 @@ msgstr "실패한 첨부파일을 다시 시도하거나 삭제하세요"
 msgid "Port"
 msgstr "포트"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
 msgstr "이미지 준비 중"
@@ -5155,7 +5173,7 @@ msgid "Reading the rules on the host…"
 msgstr "호스트의 규칙을 읽는 중…"
 
 #: src/app/+not-found.tsx
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Reading the theme"
 msgstr "테마를 읽는 중"
 
@@ -5313,14 +5331,13 @@ msgstr "남은 양 알 수 없음"
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-storage.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Remove"
 msgstr "제거"
 
 #. placeholder {0}: attachment.name
-#. placeholder {0}: installed.manifest.name
 #. placeholder {0}: record.label
 #: src/components/attachment-strip.tsx
-#: src/components/custom-theme-library.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Remove {0}"
 msgstr "{0} 제거"
@@ -5464,6 +5481,10 @@ msgstr "업데이트를 완료하려면 Muqun을 다시 시작하세요"
 #: src/components/update-status-banner.tsx
 msgid "Restarting Muqun…"
 msgstr "Muqun을 다시 시작하는 중…"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Restore default"
+msgstr "기본값으로 복원"
 
 #: src/app/commands.tsx
 msgid "Restore hidden default commands"
@@ -5769,7 +5790,7 @@ msgstr "검색"
 msgid "Search actions and commands"
 msgstr "작업 및 명령 검색"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Search by name or tag"
 msgstr "이름 또는 태그로 검색"
 
@@ -6207,6 +6228,7 @@ msgstr "일부 테마 색상은 대비를 높여야 합니다"
 #: src/app/diagram-viewer.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 #: src/components/theme-link-import.tsx
 msgid "Something went wrong"
 msgstr "문제가 발생했습니다"
@@ -6575,7 +6597,7 @@ msgid "Tap again to delete"
 msgstr "한 번 더 눌러 삭제"
 
 #: src/components/agent-worktree-sheet.tsx
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Tap again to remove"
 msgstr "한 번 더 탭하면 제거"
@@ -6587,10 +6609,6 @@ msgstr "한 번 더 눌러 강제로 제거"
 #: src/components/session-map.tsx
 msgid "Tap to connect"
 msgstr "눌러서 연결"
-
-#: src/components/custom-theme-library.tsx
-msgid "Tap to preview and adjust"
-msgstr "미리보기 및 조정하려면 탭하세요"
 
 #: src/components/agent-workbench.tsx
 msgid "Tap to refresh this session."
@@ -6946,6 +6964,7 @@ msgid "The terminal, the opening and Home artwork draw with a new GPU renderer, 
 msgstr "터미널, 오프닝, 홈 아트워크를 새 GPU 렌더러로 그리고, 테마와 글꼴 변경에도 각자의 전환 효과가 생겼습니다"
 
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "The theme will be removed from this device"
 msgstr "이 기기에서 테마가 삭제됩니다"
 
@@ -6961,7 +6980,6 @@ msgstr "이번 턴이 실패했습니다"
 
 #: src/app/custom-theme.tsx
 #: src/components/settings-appearance.tsx
-#: src/components/settings-theme-sheet.tsx
 #: src/lib/demo-gateway.ts
 msgid "Theme"
 msgstr "테마"
@@ -6987,6 +7005,10 @@ msgstr "테마 URL"
 #: src/components/settings-appearance.tsx
 msgid "Theme, {0}"
 msgstr "테마, {0}"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Themes"
+msgstr "테마"
 
 #: src/components/agent-workbench.tsx
 msgid "There is no rollback waiting to be applied."
@@ -7339,7 +7361,7 @@ msgstr "신뢰"
 #: src/components/changes-sheet.tsx
 #: src/components/inline-file-link.tsx
 #: src/components/pdf-asset-preview.tsx
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/video-asset-preview.tsx
 #: src/components/voice-input-button.tsx
 #: src/hooks/use-file-actions.tsx
@@ -7351,7 +7373,7 @@ msgstr "다시 시도"
 msgid "Try again once the computer responds."
 msgstr "컴퓨터가 응답하면 다시 시도하세요"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Try searching for another name or tag."
 msgstr "다른 이름이나 태그로 검색해 보세요"
 
@@ -7415,7 +7437,6 @@ msgstr "커밋되지 않은 변경 사항"
 
 #: src/components/agent-revert-plate.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/custom-theme-library.tsx
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "실행 취소"
@@ -7468,7 +7489,7 @@ msgstr "{authLabel}(으)로 잠금 해제"
 msgid "Unlock with {methodName}"
 msgstr "{methodName}(으)로 잠금 해제"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Unpacking…"
 msgstr "압축 푸는 중…"
 
@@ -7527,7 +7548,7 @@ msgstr "추적되지 않음"
 msgid "Up arrow"
 msgstr "위쪽 화살표"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/update-status-banner.tsx
 msgid "Update"
 msgstr "업데이트"

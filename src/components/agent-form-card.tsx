@@ -242,9 +242,11 @@ export const AgentFormCard = memo(function AgentFormCard({
                         opt.description ? styles.optionWithDescription : null,
                         { borderRadius: profile.chrome.control },
                         {
-                          backgroundColor: selected
-                            ? withAlpha(theme.colors.primary, 0.13)
-                            : theme.colors.surfaceRaised,
+                          backgroundColor: surfaceBackground(
+                            selected
+                              ? withAlpha(theme.colors.primary, 0.13)
+                              : theme.colors.surfaceRaised
+                          ),
                           borderColor: selected ? theme.colors.primary : theme.colors.border,
                         },
                       ]}>
@@ -353,9 +355,11 @@ export const AgentFormCard = memo(function AgentFormCard({
                       opt.description ? styles.optionWithDescription : null,
                       { borderRadius: profile.chrome.control },
                       {
-                        backgroundColor: selected
-                          ? withAlpha(theme.colors.primary, 0.13)
-                          : theme.colors.surfaceRaised,
+                        backgroundColor: surfaceBackground(
+                          selected
+                            ? withAlpha(theme.colors.primary, 0.13)
+                            : theme.colors.surfaceRaised
+                        ),
                         borderColor: selected ? theme.colors.primary : theme.colors.border,
                       },
                     ]}>
