@@ -148,6 +148,12 @@ msgstr "{0} mensagens no contexto"
 msgid "{0} more models"
 msgstr "Mais {0} modelos"
 
+#. placeholder {0}: index + 1
+#. placeholder {1}: panels.length
+#: src/components/home-stage/stage-view.tsx
+msgid "{0} of {1}"
+msgstr "{0} de {1}"
+
 #. placeholder {0}: filtered.length
 #. placeholder {1}: entries.length
 #: src/components/dev-icon-gallery.tsx
@@ -309,6 +315,10 @@ msgstr "{computer} já não tem esta tarefa"
 #: src/components/agent-tool-card.tsx
 msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, one {# resultado} other {# resultados}}"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "{count, plural, one {# session} other {# sessions}}"
+msgstr "{count, plural, one {# sessão} other {# sessões}}"
 
 #: src/components/home-connections.tsx
 msgid "{count} in progress"
@@ -543,6 +553,7 @@ msgid "Act on this terminal, or send its agent a prompt"
 msgstr "Age sobre este terminal, ou envia uma instrução ao seu agente"
 
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/stage-view.tsx
 #: src/components/task-row.tsx
 msgid "Actions"
 msgstr "Ações"
@@ -673,8 +684,13 @@ msgid "All projects"
 msgstr "Todos os projetos"
 
 #: src/components/agent-composer.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 msgid "All sessions"
 msgstr "Todas as sessões"
+
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "All sessions, needs you"
+msgstr "Todas as sessões, precisa de você"
 
 #: src/i18n/labels.ts
 msgid "Allow"
@@ -1058,6 +1074,10 @@ msgstr "Marcas e indicador de atividade"
 msgid "Bring {0} to the front"
 msgstr "Trazer {0} para a frente"
 
+#: src/components/home-stage/stage-view.tsx
+msgid "Brings this computer forward."
+msgstr "Traz este computador para a frente"
+
 #: src/components/custom-theme-library.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "Browse themes"
@@ -1369,6 +1389,7 @@ msgid "Clears notifications only. Pending tasks still need your attention."
 msgstr "Limpa apenas as notificações. As tarefas pendentes continuam a precisar da sua atenção"
 
 #: src/app/diagram-viewer.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/sheet-scene.tsx
 #: src/i18n/labels.ts
 msgid "Close"
@@ -1387,6 +1408,7 @@ msgid "Close icon preview"
 msgstr "Fechar pré-visualização de ícones"
 
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/task-row.tsx
 msgid "Close menu"
 msgstr "Fechar menu"
@@ -1540,6 +1562,7 @@ msgid "Computer"
 msgstr "Computador"
 
 #: src/components/computer-map/screen.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 msgid "Computer details"
 msgstr "Detalhes do computador"
 
@@ -3958,6 +3981,7 @@ msgstr "Requer configuração"
 msgid "Needs update"
 msgstr "Precisa de atualização"
 
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "Needs you"
 msgstr "Precisa de você"
@@ -4430,6 +4454,11 @@ msgstr "Offline"
 msgid "OFFLINE"
 msgstr "OFFLINE"
 
+#. placeholder {0}: age(seen, nowMs)
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Offline · last seen {0}"
+msgstr "Offline · visto {0}"
+
 #: src/i18n/labels.ts
 msgid "Offline, not answering"
 msgstr "Offline, sem resposta"
@@ -4468,6 +4497,7 @@ msgid "Only this Home row is hidden. The task and its history remain available. 
 msgstr "Apenas esta linha do Início é ocultada. A tarefa e o seu histórico continuam disponíveis. O trabalho em curso não é interrompido"
 
 #: src/components/home-connections.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/task-row.tsx
@@ -4687,6 +4717,10 @@ msgstr "Abre o menu do simulador: o dispositivo, os seus botões, o teclado e a 
 #: src/components/server-agent-rows.tsx
 msgid "Opens this agent's terminal"
 msgstr "Abre o terminal deste agente"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Opens this computer."
+msgstr "Abre este computador"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -5794,6 +5828,10 @@ msgstr "Selecionar tudo"
 msgid "Select model: {modelDisplayName}"
 msgstr "Selecionar modelo: {modelDisplayName}"
 
+#: src/components/home-stage/stage-view.tsx
+msgid "selected"
+msgstr "selecionado"
+
 #: src/components/computer-map/screen.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-servers.tsx
@@ -5888,6 +5926,7 @@ msgstr "Sessão indisponível"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/home-launch-actions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/session-map.tsx
 msgid "Sessions"
 msgstr "Sessões"
@@ -6202,6 +6241,11 @@ msgstr "Hosts SSH"
 #: src/components/gateway-tunnel-badge.tsx
 msgid "SSH tunnel through {host} is down"
 msgstr "O túnel SSH por {host} caiu"
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-home-layout-sheet.tsx
+msgid "Stage"
+msgstr "Palco"
 
 #: src/components/diff-rows.tsx
 msgid "Staged"
@@ -6560,6 +6604,7 @@ msgstr "Opções da tarefa"
 #: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-todo-block.tsx
 #: src/components/home-computer-cards.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/server-tasks-sheet.tsx
 #: src/components/task-result-sheet.tsx
 msgid "Tasks"
@@ -7704,6 +7749,7 @@ msgid "While you were away"
 msgstr "Enquanto você esteve fora"
 
 #: src/components/collaboration-notice.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "A trabalhar"
@@ -7809,6 +7855,10 @@ msgstr "Os seus computadores emparelhados"
 #: src/lib/network-error.ts
 msgid "Your phone's clock is off by {minutes} minutes. Fix the date and time, then try again."
 msgstr "O relógio do seu telefone está {minutes} minutos fora. Corrija a data e a hora e tente novamente"
+
+#: src/components/settings-home-layout-sheet.tsx
+msgid "Your theme as a 3D world, with your computers as holo-screens around its character."
+msgstr "Seu tema como um mundo 3D, com seus computadores como telas holográficas ao redor da personagem"
 
 #: src/components/image-preview-modal.tsx
 msgid "Zoom in"

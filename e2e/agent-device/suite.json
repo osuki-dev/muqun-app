@@ -4271,6 +4271,108 @@
       },
       {
         "target": {
+          "id": "settings-selection:off:home-layout-stage"
+        },
+        "mode": "press",
+        "run": "flows/settings-home-layout.ad#choose-stage"
+      },
+      {
+        "target": {
+          "text": "Home layout, Stage"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-home-layout.ad#stage-selected"
+      },
+      {
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
+      },
+      {
+        "target": {
+          "text": "Go back"
+        },
+        "mode": "press",
+        "run": "flows/settings-home-layout.ad#leave-stage-settings"
+      },
+      {
+        "when": {
+          "target": {
+            "id": "home-pad-toolbar-actions"
+          },
+          "absent": true
+        },
+        "steps": [
+          {
+            "target": {
+              "id": "home-stage-layout"
+            },
+            "mode": "visible",
+            "timeout": 8000,
+            "run": "flows/settings-home-layout.ad#stage-home"
+          }
+        ]
+      },
+      {
+        "when": {
+          "target": {
+            "id": "home-pad-toolbar-actions"
+          }
+        },
+        "steps": [
+          {
+            "target": {
+              "id": "home-editorial-layout"
+            },
+            "mode": "visible",
+            "run": "flows/settings-home-layout.ad#editorial-home"
+          }
+        ]
+      },
+      {
+        "target": {
+          "text": "(?i)settings"
+        },
+        "mode": "press",
+        "run": "flows/settings-home-layout.ad#reopen-settings"
+      },
+      {
+        "target": {
+          "id": "settings-servers-row"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-home-layout.ad#settings-again"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
+      },
+      {
+        "target": {
+          "id": "settings-home-layout-row"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": {
+          "id": "settings-home-layout-row"
+        },
+        "mode": "press",
+        "run": "flows/settings-home-layout.ad#open-row-again"
+      },
+      {
+        "target": {
           "id": "settings-selection:off:home-layout-classic"
         },
         "mode": "press",
