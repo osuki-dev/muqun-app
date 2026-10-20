@@ -33,6 +33,7 @@ export default function GpuStage(props: StageSceneProps) {
     )
   );
   const fail = useEffectEvent(() => props.onError());
+  const canDraw = useEffectEvent(() => !props.paused);
 
   useEffect(() => {
     if (!size.width || !size.height || !canvas.current) return;
@@ -52,7 +53,7 @@ export default function GpuStage(props: StageSceneProps) {
         try {
           await next.configure({
             size: { ...size, top: 0, left: 0 },
-            dpr: Math.min(PixelRatio.get(), 2),
+            dpr: Math.min(PixelRatio.get(), 1.5),
             frameloop: 'demand',
             // No real-time shadows. Fiber's boolean default asks for
             // PCFSoftShadowMap, which the WebGPU renderer warns it has removed.
@@ -73,7 +74,7 @@ export default function GpuStage(props: StageSceneProps) {
               }
               const draw = renderer.render.bind(renderer);
               renderer.render = (scene, camera) => {
-                if (!isLive()) return;
+                if (!isLive() || !canDraw()) return;
                 try {
                   draw(scene, camera);
                   context.present();

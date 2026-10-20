@@ -1,3 +1,4 @@
+import type { ThemeEffects } from '@/theme/schema';
 import type { SharedValue } from 'react-native-reanimated';
 import type { Texture } from 'three/webgpu';
 
@@ -39,6 +40,7 @@ export type StageSceneProps = {
   /** The selected computer; the ring turns whenever it changes. */
   selected: number;
   colors: StageSceneColors;
+  ambient?: ThemeEffects;
   mode: 'light' | 'dark';
   backdrop: StageTextureSource | null;
   character: StageTextureSource | null;

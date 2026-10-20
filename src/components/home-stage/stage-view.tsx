@@ -20,6 +20,9 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { MapErrorBoundary } from '@/components/computer-map/error-boundary';
 import { ThemeArtwork } from '@/components/theme-artwork';
 import { useStableHandler } from '@/hooks/use-render-refs';
+import { useFrozenValue } from '@/hooks/use-frozen-value';
+import { useEffectiveCustomTheme } from '@/components/theme-candidate';
+import { useAppSettings } from '@/stores/app-settings';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useThemeRenderReady } from '@/hooks/use-theme-render-ready';
 import { connectionStatusDescription } from '@/i18n/labels';
@@ -81,11 +84,11 @@ export type StageViewProps = {
  * element and the first-visit hints -- the scene itself is never focusable.
  */
 export function StageView({
-  panels,
-  selectedIndex,
-  backdropUri,
+  panels: livePanels,
+  selectedIndex: liveSelectedIndex,
+  backdropUri: liveBackdropUri,
   backdropFocal,
-  artworkUri,
+  artworkUri: liveArtworkUri,
   paused,
   burst,
   onSelect,
@@ -93,10 +96,21 @@ export function StageView({
   onActions,
   onNewTask,
 }: StageViewProps) {
+  const panels = useFrozenValue(livePanels, paused, null);
+  const selectedIndex = useFrozenValue(liveSelectedIndex, paused, null);
+  const backdropUri = useFrozenValue(liveBackdropUri, paused, null);
+  const artworkUri = useFrozenValue(liveArtworkUri, paused, null);
   const theme = useThemeTokens();
   const { resolvedMode } = useThemeMode();
   const reducedMotion = useReducedMotion();
-  const window = useWindowDimensions();
+  const customTheme = useEffectiveCustomTheme();
+  const themeEffectsEnabled = useAppSettings((state) => state.themeEffectsEnabled);
+  const ambient = themeEffectsEnabled
+    ? (customTheme.theme?.manifest.variants[resolvedMode]?.effects ??
+      customTheme.theme?.manifest.effects)
+    : undefined;
+  const measuredWindow = useWindowDimensions();
+  const window = useFrozenValue(measuredWindow, paused, null);
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [quality, setQuality] = useState<StageQuality>('full');
   const [failed, setFailed] = useState(false);
@@ -124,11 +138,12 @@ export function StageView({
   const backdropEdge = Math.min(BACKDROP_MAX_EDGE, Math.round(window.height * dpr));
   const artEdge = Math.min(ART_MAX_EDGE, Math.round(window.height * dpr * 0.6));
   const backdropTexture = useStageTexture(effects.gpu ? backdropUri : undefined, backdropEdge);
-  const artTexture = useStageTexture(effects.gpu ? artworkUri : undefined, artEdge);
+  // A tiny CPU copy classifies the artwork even on the static fallback.
+  const artTexture = useStageTexture(artworkUri, effects.gpu ? artEdge : 64);
   // A reskin holds its cover until the new pictures are textures (or failed).
   useThemeRenderReady(backdropUri, !effects.gpu || backdropTexture.status !== 'loading');
   useThemeRenderReady(artworkUri, !effects.gpu || artTexture.status !== 'loading');
-  const backdrop = useMemo(
+  const wallpaper = useMemo(
     () =>
       backdropTexture.status === 'ready'
         ? { ...backdropTexture.source, ...(backdropFocal ? { focal: backdropFocal } : {}) }
@@ -136,16 +151,23 @@ export function StageView({
     [backdropTexture, backdropFocal]
   );
   const character = artTexture.status === 'ready' ? artTexture.source : null;
+  const scenic = character?.kind === 'scene';
+  const backdrop = scenic ? character : wallpaper;
   const drawn = stageDrawnScreens(selectedIndex, panels.length);
-  const faces = useStageFaces(panels, effects.gpu ? drawn : [], {
-    text: theme.colors.text,
-    primary: theme.colors.primary,
-    success: theme.colors.success,
-    warning: theme.colors.warning,
-    offline: theme.colors.textMuted,
-    surface: theme.colors.surface,
-    light: resolvedMode === 'light',
-  });
+  const faces = useStageFaces(
+    panels,
+    effects.gpu ? drawn : [],
+    {
+      text: theme.colors.text,
+      primary: theme.colors.primary,
+      success: theme.colors.success,
+      warning: theme.colors.warning,
+      offline: theme.colors.textMuted,
+      surface: theme.colors.surface,
+      light: resolvedMode === 'light',
+    },
+    paused
+  );
   const screens: StageScreenLook[] = panels.map((panel) => ({
     tone: panel.tone,
     working: panel.working,
@@ -161,6 +183,7 @@ export function StageView({
       success: theme.colors.success,
       warning: theme.colors.warning,
       muted: theme.colors.textMuted,
+      info: theme.colors.info,
     }),
     [theme.colors]
   );
@@ -175,14 +198,20 @@ export function StageView({
     markStageHintsSeen();
   });
   const openFront = useStableHandler((index: number) => {
+    if (diving || paused) return;
     touched();
     if (!effects.gpu || reducedMotion) {
       onOpen(index);
       return;
     }
     setDiving(true);
-    setTimeout(() => onOpen(index), DIVE_MS);
   });
+  const finishDive = useStableHandler(() => onOpen(selectedIndex));
+  useEffect(() => {
+    if (!diving || paused) return;
+    const timer = setTimeout(finishDive, DIVE_MS);
+    return () => clearTimeout(timer);
+  }, [diving, paused, finishDive]);
 
   const gesture = useMemo(
     () =>
@@ -213,7 +242,8 @@ export function StageView({
   );
 
   const hostAspect = character?.aspect ?? (artworkUri ? 1.5 : 0.6);
-  const targets = useStageTargets(panels, selectedIndex, hostAspect, size.width, size.height);
+  const allTargets = useStageTargets(panels, selectedIndex, hostAspect, size.width, size.height);
+  const targets = scenic ? allTargets.filter((target) => target.kind !== 'host') : allTargets;
 
   return (
     <GestureDetector gesture={gesture}>
@@ -233,6 +263,7 @@ export function StageView({
                 screens={screens}
                 selected={selectedIndex}
                 colors={colors}
+                ambient={ambient}
                 mode={resolvedMode}
                 backdrop={backdrop}
                 character={character}
@@ -254,12 +285,15 @@ export function StageView({
             panels={panels}
             targets={targets}
             artworkUri={artworkUri}
+            scenic={scenic}
             dragY={dragY}
             tiltX={tiltX}
             tiltY={tiltY}
           />
         )}
-        {effects.tilt && !paused ? <StageTilt tiltX={tiltX} tiltY={tiltY} /> : null}
+        {effects.tilt && !paused ? (
+          <StageTilt tiltX={tiltX} tiltY={tiltY} wake={bridge.wake} />
+        ) : null}
         <StageHitAreas
           panels={panels}
           targets={targets}
@@ -289,7 +323,15 @@ export function StageView({
  * as level and only movement looks around. Uses Reanimated's sensor, already
  * in the binary: no new native module.
  */
-function StageTilt({ tiltX, tiltY }: { tiltX: SharedValue<number>; tiltY: SharedValue<number> }) {
+function StageTilt({
+  tiltX,
+  tiltY,
+  wake,
+}: {
+  tiltX: SharedValue<number>;
+  tiltY: SharedValue<number>;
+  wake: () => void;
+}) {
   const sensor = useAnimatedSensor(SensorType.GRAVITY, { interval: 33 });
   const baseX = useSharedValue<number | null>(null);
   const baseY = useSharedValue(0);
@@ -311,8 +353,11 @@ function StageTilt({ tiltX, tiltY }: { tiltX: SharedValue<number>; tiltY: Shared
       // worklet, which then runs as a JS-thread function on the UI runtime.
       const lookX = Math.max(-1, Math.min(1, (gravity.y - nextY) / 2.5));
       const lookY = Math.max(-1, Math.min(1, (gravity.x - nextX) / 2.5));
-      tiltX.set(tiltX.get() + (lookX - tiltX.get()) * 0.3);
-      tiltY.set(tiltY.get() + (lookY - tiltY.get()) * 0.3);
+      const deltaX = (lookX - tiltX.get()) * 0.3;
+      const deltaY = (lookY - tiltY.get()) * 0.3;
+      tiltX.set(tiltX.get() + deltaX);
+      tiltY.set(tiltY.get() + deltaY);
+      if (Math.abs(deltaX) + Math.abs(deltaY) > 0.008) scheduleOnRN(wake);
     }
   );
   return null;
@@ -521,6 +566,7 @@ function StaticStage({
   panels,
   targets,
   artworkUri,
+  scenic,
   dragY,
   tiltX,
   tiltY,
@@ -528,6 +574,7 @@ function StaticStage({
   panels: readonly StagePanel[];
   targets: readonly StageTarget[];
   artworkUri?: string;
+  scenic: boolean;
   dragY: SharedValue<number>;
   tiltX: SharedValue<number>;
   tiltY: SharedValue<number>;
@@ -559,7 +606,16 @@ function StaticStage({
       accessible={false}
       importantForAccessibility="no-hide-descendants">
       <Animated.View style={[styles.bleed, far]}>
-        <ThemeArtwork slot="home.wallpaper" fallbackSlot="shell.wallpaper" opacityLimit={0.5} />
+        {scenic && artworkUri ? (
+          <Image
+            source={{ uri: artworkUri }}
+            contentFit="cover"
+            style={StyleSheet.absoluteFill}
+            accessible={false}
+          />
+        ) : (
+          <ThemeArtwork slot="home.wallpaper" fallbackSlot="shell.wallpaper" opacityLimit={0.5} />
+        )}
       </Animated.View>
       <Animated.View style={[StyleSheet.absoluteFill, near]}>
         {targets.map((target) => {

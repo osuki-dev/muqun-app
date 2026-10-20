@@ -8,6 +8,7 @@ import {
 } from 'react-native-skia';
 import { useEffect, useState } from 'react';
 
+import { stageArtworkKind } from '@/lib/stage-artwork';
 import { createRefCountedCache } from '@/lib/ref-counted-cache';
 import { useSharedSkiaImage } from '@/lib/skia-image-cache';
 import { stageTextureFromPixels, type StageTextureSource } from './stage-scene';
@@ -64,6 +65,7 @@ function downsample(image: SkImage, maxEdge: number): StageTextureSource | null 
       return {
         texture: stageTextureFromPixels(pixels, targetWidth, targetHeight),
         aspect: width / height,
+        kind: stageArtworkKind(pixels, targetWidth, targetHeight),
       };
     } finally {
       snapshot.dispose();

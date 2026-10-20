@@ -1,3 +1,4 @@
+import { PixelRatio } from 'react-native';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import type { WebGPURenderer } from 'three/webgpu';
@@ -57,6 +58,8 @@ const DIVE_SPRING = { stiffness: 90, damping: 17 };
  */
 export function StageRuntime(props: StageSceneProps) {
   const invalidate = useThree((state) => state.invalidate);
+  const setFrameloop = useThree((state) => state.setFrameloop);
+  const setDpr = useThree((state) => state.setDpr);
   const camera = useThree((state) => state.camera);
   const scene = useThree((state) => state.scene);
   const gl = useThree((state) => state.gl);
@@ -68,6 +71,7 @@ export function StageRuntime(props: StageSceneProps) {
     screens,
     selected,
     colors,
+    ambient,
     mode,
     backdrop,
     character,
@@ -116,27 +120,45 @@ export function StageRuntime(props: StageSceneProps) {
   });
   useEffect(() => release, []);
   useEffect(() => {
+    if (!paused)
+      setDpr(
+        Math.min(PixelRatio.get(), quality === 'full' ? 1.5 : quality === 'capped' ? 1 : 1.25)
+      );
+  }, [paused, quality, setDpr]);
+  useEffect(() => {
+    setFrameloop(paused ? 'never' : 'demand');
+  }, [paused, setFrameloop]);
+  useEffect(() => {
     bridge.setWaker(() => {
       if (!paused) invalidate();
     });
     return () => bridge.setWaker(null);
   }, [bridge, invalidate, paused]);
   useEffect(() => {
+    if (paused) return;
     world.setTheme({ colors, mode }, scene, gl as unknown as WebGPURenderer);
     invalidate();
-  }, [world, colors, mode, scene, gl, invalidate]);
+  }, [world, colors, mode, scene, gl, invalidate, paused]);
   useEffect(() => {
+    if (paused) return;
     world.setBackdrop(backdrop);
     invalidate();
-  }, [world, backdrop, invalidate]);
+  }, [world, backdrop, invalidate, paused]);
   useEffect(() => {
+    if (paused) return;
     world.setCharacter(character);
     invalidate();
-  }, [world, character, invalidate]);
+  }, [world, character, invalidate, paused]);
   useEffect(() => {
+    if (paused) return;
     world.setFaces(faces);
     invalidate();
-  }, [world, faces, invalidate]);
+  }, [world, faces, invalidate, paused]);
+  useEffect(() => {
+    if (paused) return;
+    world.setAmbient(ambient, colors, reducedMotion, quality === 'full');
+    invalidate();
+  }, [world, ambient, colors, reducedMotion, quality, paused, invalidate]);
   // Only a new quality resets the ladder.
   const resetLadder = useEffectEvent((next: StageSceneProps['quality']) => {
     motionState().degrade = initialStageDegrade(next);
@@ -161,17 +183,23 @@ export function StageRuntime(props: StageSceneProps) {
   }, [burst]);
   // Pausing only stops or restarts the clock; a dive change only needs a frame.
   const wakeFor = useEffectEvent((isPaused: boolean) => {
-    if (isPaused) stopTimer();
-    else invalidate();
+    if (isPaused) {
+      stopTimer();
+      if (motion.current) {
+        motion.current.lastFrameMs = 0;
+        motion.current.wasMoving = false;
+      }
+    } else invalidate();
   });
   useEffect(() => wakeFor(paused), [paused]);
-  useEffect(() => wakeFor(false), [dive]);
+  useEffect(() => wakeFor(paused), [dive, paused]);
 
   const qualityDropped = useStableHandler((next: StageDegradeState['quality']) =>
     props.onQualityDrop(next)
   );
 
   useFrame(() => {
+    if (paused) return;
     const state = motionState();
     const now = performance.now();
     const elapsedMs = state.lastFrameMs ? now - state.lastFrameMs : 1000 / 60;
@@ -244,18 +272,20 @@ export function StageRuntime(props: StageSceneProps) {
 
     const beamBefore = state.beam;
     state.beam = Math.max(0.25, state.beam - dt * 0.6);
-    const sparks = effects.particles;
+    const sparks =
+      effects.particles &&
+      ambient?.ambient !== undefined &&
+      ambient.ambient !== 'none' &&
+      state.burst > 0;
     state.burst = Math.max(0, state.burst - dt * 0.45);
-    if (sparks) {
-      state.rise += dt;
-      state.burstRise += state.burst * 4 * dt;
-    }
+    if (!reducedMotion) state.rise += dt;
+    if (sparks) state.burstRise += state.burst * 4 * dt;
     world.update({
       camera,
       screens: frames,
       beamTo: chosenAt,
       beam: state.beam,
-      timeS: effects.pulse ? (now - state.startMs) / 1000 : 0,
+      timeS: effects.pulse ? state.rise : 0,
       burst: sparks ? state.burst : 0,
       rise: state.rise,
       burstRise: state.burstRise,
@@ -286,9 +316,15 @@ export function StageRuntime(props: StageSceneProps) {
     if (paused) return;
     if (moving) {
       if (effects.frameIntervalMs > 0)
-        state.timer = setTimeout(invalidate, Math.max(0, effects.frameIntervalMs - elapsedMs));
+        state.timer = setTimeout(
+          invalidate,
+          Math.max(0, effects.frameIntervalMs - (performance.now() - now))
+        );
       else invalidate();
-    } else if (effects.idleIntervalMs !== null) {
+    } else if (
+      effects.idleIntervalMs !== null &&
+      (world.ambientAnimated() || screens.some((screen) => screen.working))
+    ) {
       state.timer = setTimeout(invalidate, effects.idleIntervalMs);
     }
   });
