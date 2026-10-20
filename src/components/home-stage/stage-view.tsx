@@ -1,4 +1,3 @@
-import { plural } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { PressableScale, Text, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
@@ -47,7 +46,6 @@ import { hasSeenStageHints, markStageHintsSeen } from '@/lib/home-stage-hints';
 import { stageEffects, type StageQuality } from '@/lib/home-stage-motion';
 import type { StagePanel } from '@/lib/home-stage-panels';
 import type { StageScreenLook } from './stage-scene';
-import { useStageFaces } from './stage-faces';
 import { useStageTexture } from './stage-textures';
 import { createStageBridge, type StageInputs } from './types';
 
@@ -58,7 +56,6 @@ const GpuStage = lazy(() => import('./gpu-stage'));
 const BACKDROP_MAX_EDGE = 2048;
 const ART_MAX_EDGE = 1536;
 /** The camera's flight into the front screen before its workspace opens. */
-const DIVE_MS = 520;
 
 export type StageViewProps = {
   panels: readonly StagePanel[];
@@ -74,6 +71,8 @@ export type StageViewProps = {
   onOpen: (index: number) => void;
   onActions: (index: number) => void;
   onNewTask: () => void;
+  onOpenTasks: (index: number) => void;
+  onAttention: () => void;
 };
 
 /**
@@ -95,6 +94,8 @@ export function StageView({
   onOpen,
   onActions,
   onNewTask,
+  onOpenTasks,
+  onAttention,
 }: StageViewProps) {
   const panels = useFrozenValue(livePanels, paused, null);
   const selectedIndex = useFrozenValue(liveSelectedIndex, paused, null);
@@ -114,7 +115,7 @@ export function StageView({
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [quality, setQuality] = useState<StageQuality>('full');
   const [failed, setFailed] = useState(false);
-  const [diving, setDiving] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const [hints, setHints] = useState(() => !hasSeenStageHints());
   const [gpuAvailable] = useState(
     () => Platform.OS !== 'web' && TurboModuleRegistry.get('WebGPUModule') !== null
@@ -146,33 +147,21 @@ export function StageView({
   const wallpaper = useMemo(
     () =>
       backdropTexture.status === 'ready'
-        ? { ...backdropTexture.source, ...(backdropFocal ? { focal: backdropFocal } : {}) }
+        ? {
+            ...backdropTexture.source,
+            ...(backdropFocal ? { focal: backdropFocal } : {}),
+          }
         : null,
     [backdropTexture, backdropFocal]
   );
   const character = artTexture.status === 'ready' ? artTexture.source : null;
   const scenic = character?.kind === 'scene';
   const backdrop = scenic ? character : wallpaper;
-  const drawn = stageDrawnScreens(selectedIndex, panels.length);
-  const faces = useStageFaces(
-    panels,
-    effects.gpu ? drawn : [],
-    {
-      text: theme.colors.text,
-      primary: theme.colors.primary,
-      success: theme.colors.success,
-      warning: theme.colors.warning,
-      offline: theme.colors.textMuted,
-      surface: theme.colors.surface,
-      light: resolvedMode === 'light',
-    },
-    paused
-  );
   const screens: StageScreenLook[] = panels.map((panel) => ({
     tone: panel.tone,
     working: panel.working,
     attention: panel.attention,
-    faceSlot: faces.slots.get(panel.serverId) ?? -1,
+    faceSlot: -1,
   }));
   const colors = useMemo(
     () => ({
@@ -188,31 +177,19 @@ export function StageView({
     [theme.colors]
   );
 
-  // Back on Home after a dive: the camera returns to the stage.
   useEffect(() => {
-    if (!paused) setDiving(false);
-  }, [paused]);
+    setExpanded(false);
+  }, [selectedIndex, paused]);
   const touched = useStableHandler(() => {
     if (!hints) return;
     setHints(false);
     markStageHintsSeen();
   });
-  const openFront = useStableHandler((index: number) => {
-    if (diving || paused) return;
+  const openFront = useStableHandler(() => {
+    if (paused) return;
     touched();
-    if (!effects.gpu || reducedMotion) {
-      onOpen(index);
-      return;
-    }
-    setDiving(true);
+    setExpanded((value) => !value);
   });
-  const finishDive = useStableHandler(() => onOpen(selectedIndex));
-  useEffect(() => {
-    if (!diving || paused) return;
-    const timer = setTimeout(finishDive, DIVE_MS);
-    return () => clearTimeout(timer);
-  }, [diving, paused, finishDive]);
-
   const gesture = useMemo(
     () =>
       Gesture.Pan()
@@ -228,6 +205,7 @@ export function StageView({
         })
         .onEnd((event) => {
           // Sideways turns the ring; up and down only looks around.
+          if (expanded) return;
           if (Math.abs(event.translationX) < Math.abs(event.translationY)) return;
           const step = stageSwipeStep(event.translationX, event.velocityX, size.width);
           if (step !== 0) scheduleOnRN(onSelect, selectedIndex + step);
@@ -238,7 +216,18 @@ export function StageView({
           dragY.set(0);
           scheduleOnRN(bridge.wake);
         }),
-    [bridge, dragX, dragY, dragging, onSelect, selectedIndex, size.width, size.height, touched]
+    [
+      bridge,
+      dragX,
+      dragY,
+      dragging,
+      expanded,
+      onSelect,
+      selectedIndex,
+      size.width,
+      size.height,
+      touched,
+    ]
   );
 
   const hostAspect = character?.aspect ?? (artworkUri ? 1.5 : 0.6);
@@ -267,10 +256,9 @@ export function StageView({
                 mode={resolvedMode}
                 backdrop={backdrop}
                 character={character}
-                faces={faces.atlas}
                 quality={quality}
                 reducedMotion={reducedMotion}
-                dive={diving}
+                expanded={expanded}
                 burst={burst}
                 paused={paused}
                 inputs={inputs}
@@ -296,8 +284,11 @@ export function StageView({
         ) : null}
         <StageHitAreas
           panels={panels}
-          targets={targets}
-          hints={hints && !diving}
+          targets={targets.filter((target) => target.kind === 'screen')}
+          expanded={expanded}
+          onEnter={onOpen}
+          onOpenTasks={onOpenTasks}
+          onAttention={onAttention}
           onSelect={(index) => {
             touched();
             onSelect(index);
@@ -402,14 +393,7 @@ function useStageTargets(
     const targets: StageTarget[] = [
       {
         kind: 'host',
-        rect: stageBillboardRect(
-          hostCentre,
-          Math.min(host.width, 1.6),
-          host.height,
-          camera,
-          width,
-          height
-        ),
+        rect: stageBillboardRect(hostCentre, host.width, host.height, camera, width, height),
         hint: { x: hostHint.x, y: hostHint.y },
       },
     ];
@@ -451,117 +435,145 @@ function useStageTargets(
 function StageHitAreas({
   panels,
   targets,
-  hints,
+  expanded,
   onSelect,
   onOpen,
+  onEnter,
+  onOpenTasks,
+  onAttention,
   onActions,
-  onNewTask,
 }: {
   panels: readonly StagePanel[];
   targets: readonly StageTarget[];
-  hints: boolean;
+  expanded: boolean;
   onSelect: (index: number) => void;
   onOpen: (index: number) => void;
+  onEnter: (index: number) => void;
+  onOpenTasks: (index: number) => void;
+  onAttention: () => void;
   onActions: (index: number) => void;
   onNewTask: () => void;
 }) {
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
-  const front = targets.find((target) => target.kind === 'screen' && target.front);
-  const host = targets.find((target) => target.kind === 'host');
+  const theme = useThemeTokens();
+  const background = useSurfaceBackground();
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       {targets.map((target) => {
-        const { rect } = target;
-        if (!rect.visible) return null;
-        const box = { left: rect.x, top: rect.y, width: rect.width, height: rect.height };
-        if (target.kind === 'host')
-          return (
-            <PressableScale
-              key="host"
-              testID="home-stage-host"
-              accessibilityRole="button"
-              accessibilityLabel={t`Start a new task`}
-              onPress={onNewTask}
-              style={[styles.hit, box]}
-            />
-          );
+        if (target.kind !== 'screen' || !target.rect.visible) return null;
         const panel = panels[target.index];
         if (!panel) return null;
+        const { rect } = target;
         const status = _(connectionStatusDescription[panel.connection]);
-        const count = panel.sessionCount;
-        const sessions = t`${plural(count, { one: '# session', other: '# sessions' })}`;
-        const position = target.front ? t`selected` : t`${target.index + 1} of ${panels.length}`;
+        const box = { left: rect.x, top: rect.y, width: rect.width, height: rect.height };
         return (
-          <PressableScale
-            key={panel.serverId}
-            testID={`home-stage-panel-${panel.serverId}`}
-            accessibilityRole="button"
-            accessibilityLabel={`${panel.label}, ${status}, ${sessions}, ${position}`}
-            accessibilityHint={
-              target.front ? t`Opens this computer.` : t`Brings this computer forward.`
-            }
-            accessibilityState={{ selected: target.front }}
-            accessibilityActions={[{ name: 'longpress', label: t`Actions` }]}
-            onAccessibilityAction={(event) => {
-              if (event.nativeEvent.actionName === 'longpress') onActions(target.index);
-            }}
-            onPress={() => (target.front ? onOpen(target.index) : onSelect(target.index))}
-            onLongPress={() => onActions(target.index)}
-            style={[styles.hit, box]}
-          />
+          <View key={panel.serverId} pointerEvents="box-none" style={[styles.hit, box]}>
+            <PressableScale
+              testID={`home-stage-panel-${panel.serverId}`}
+              accessibilityRole="button"
+              accessibilityLabel={`${panel.label}, ${status}`}
+              accessibilityHint={
+                target.front ? t`Show computer controls` : t`Brings this computer forward.`
+              }
+              accessibilityState={{ selected: target.front, expanded: target.front && expanded }}
+              onPress={() => (target.front ? onOpen(target.index) : onSelect(target.index))}
+              onLongPress={() => onActions(target.index)}
+              style={StyleSheet.absoluteFill}
+            />
+            {!target.front ? (
+              <View
+                pointerEvents="none"
+                style={[styles.coreName, { backgroundColor: background(theme.colors.surface) }]}>
+                <View
+                  style={[
+                    styles.flatDot,
+                    {
+                      backgroundColor:
+                        panel.tone === 'online' ? theme.colors.success : theme.colors.textMuted,
+                    },
+                  ]}
+                />
+                <Text variant="caption" weight="semibold" numberOfLines={1}>
+                  {panel.label}
+                </Text>
+              </View>
+            ) : (
+              <View
+                pointerEvents="box-none"
+                style={[styles.coreControls, { top: rect.height * 0.74 }]}>
+                <View
+                  pointerEvents="none"
+                  style={[styles.coreTitle, { backgroundColor: background(theme.colors.surface) }]}>
+                  <Text variant="body" weight="bold" numberOfLines={1}>
+                    {panel.label}
+                  </Text>
+                  <Text variant="caption" color={theme.colors.textMuted}>
+                    {expanded ? t`Drag to rotate` : t`Tap to expand`}
+                  </Text>
+                </View>
+                {expanded ? (
+                  <View style={styles.coreButtons}>
+                    <PressableScale
+                      testID="home-core-tasks"
+                      accessibilityRole="button"
+                      accessibilityLabel={t`Tasks`}
+                      onPress={() => onOpenTasks(target.index)}
+                      style={[
+                        styles.coreButton,
+                        {
+                          backgroundColor: background(theme.colors.surface),
+                          borderColor: theme.colors.border,
+                        },
+                      ]}>
+                      <Text variant="caption" weight="semibold">{t`Tasks`}</Text>
+                    </PressableScale>
+                    {panel.attention ? (
+                      <PressableScale
+                        testID="home-core-attention"
+                        accessibilityRole="button"
+                        accessibilityLabel={t`Needs you`}
+                        onPress={onAttention}
+                        style={[
+                          styles.coreButton,
+                          {
+                            backgroundColor: background(theme.colors.surface),
+                            borderColor: theme.colors.warning,
+                          },
+                        ]}>
+                        <Text
+                          variant="caption"
+                          weight="semibold"
+                          color={theme.colors.warning}>{t`Needs you`}</Text>
+                      </PressableScale>
+                    ) : null}
+                    <PressableScale
+                      testID="home-core-enter"
+                      accessibilityRole="button"
+                      accessibilityLabel={t`Open computer`}
+                      onPress={() => onEnter(target.index)}
+                      style={[
+                        styles.coreButton,
+                        {
+                          backgroundColor: theme.colors.primary,
+                          borderColor: theme.colors.primary,
+                        },
+                      ]}>
+                      <Text variant="caption" weight="semibold" color={theme.colors.onPrimary}>
+                        {t`Open computer`} ↗
+                      </Text>
+                    </PressableScale>
+                  </View>
+                ) : null}
+              </View>
+            )}
+          </View>
         );
       })}
-      {hints && host ? <StageHint text={t`Tap · start a new task`} at={host.hint} /> : null}
-      {hints && front ? <StageHint text={t`Tap · open`} at={front.hint} /> : null}
     </View>
   );
 }
 
-/** A first-visit chip hung from a projected 3D point by a short leader line. */
-function StageHint({ text, at }: { text: string; at: { x: number; y: number } }) {
-  const theme = useThemeTokens();
-  const background = useSurfaceBackground();
-  // Hung by measured size: percentage transforms are not reliable on Android.
-  const [box, setBox] = useState({ width: 0, height: 0 });
-  return (
-    <Animated.View
-      pointerEvents="none"
-      accessible={false}
-      importantForAccessibility="no-hide-descendants"
-      onLayout={(event) => {
-        const { width, height } = event.nativeEvent.layout;
-        setBox((previous) =>
-          previous.width === width && previous.height === height ? previous : { width, height }
-        );
-      }}
-      style={[
-        styles.hint,
-        { left: at.x - box.width / 2, top: at.y - box.height, opacity: box.width > 0 ? 1 : 0 },
-      ]}>
-      <View
-        style={[
-          styles.hintChip,
-          {
-            backgroundColor: background(theme.colors.background),
-            borderColor: theme.colors.primary,
-          },
-        ]}>
-        <Text variant="caption" weight="semibold" numberOfLines={1}>
-          {text}
-        </Text>
-      </View>
-      <View style={[styles.hintLeader, { backgroundColor: theme.colors.primary }]} />
-    </Animated.View>
-  );
-}
-
-/**
- * The 2.5D stage: the same composition as flat layers -- wallpaper sky, the
- * host and the screens at their projected places -- with only parallax for
- * motion. Drawn without WebGPU, after a lost device, or as a slow device's
- * last degrade step.
- */
 function StaticStage({
   panels,
   targets,
@@ -632,27 +644,13 @@ function StaticStage({
                 accessible={false}
                 style={{
                   position: 'absolute',
-                  left: rect.x - rect.width,
+                  left: rect.x,
                   top: rect.y,
-                  width: rect.width * 3,
+                  width: rect.width,
                   height: rect.height,
                 }}
               />
-            ) : (
-              <View
-                key="host"
-                style={[
-                  styles.crystal,
-                  {
-                    left: rect.x + rect.width * 0.3,
-                    top: rect.y + rect.height * 0.2,
-                    width: rect.width * 0.4,
-                    height: rect.height * 0.5,
-                    backgroundColor: theme.colors.primary,
-                  },
-                ]}
-              />
-            );
+            ) : null;
           const panel = panels[target.index];
           if (!panel) return null;
           return (
@@ -684,6 +682,35 @@ function StaticStage({
 }
 
 const styles = StyleSheet.create({
+  coreName: {
+    position: 'absolute',
+    bottom: -20,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    maxWidth: 120,
+  },
+  coreControls: { position: 'absolute', left: -8, right: -8, alignItems: 'center', gap: 8 },
+  coreTitle: {
+    borderRadius: 14,
+    paddingHorizontal: 15,
+    paddingVertical: 7,
+    alignItems: 'center',
+    gap: 2,
+  },
+  coreButtons: { flexDirection: 'row', gap: 6, justifyContent: 'center' },
+  coreButton: {
+    minHeight: 42,
+    paddingHorizontal: 12,
+    borderRadius: 15,
+    borderWidth: StyleSheet.hairlineWidth,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   hit: { position: 'absolute' },
   hint: { position: 'absolute', alignItems: 'center' },
   hintChip: {

@@ -1,4 +1,3 @@
-import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useEffect, useState } from 'react';
 import {
   AlphaType,
@@ -10,7 +9,6 @@ import {
 } from 'react-native-skia';
 import type { Texture } from 'three/webgpu';
 
-import { agentStatusWord } from '@/i18n/labels';
 import { stageReadableInk } from '@/lib/home-stage-ink';
 import { useFrozenValue } from '@/hooks/use-frozen-value';
 import type { StagePanel } from '@/lib/home-stage-panels';
@@ -18,7 +16,7 @@ import { STAGE_FACE_COLUMNS, STAGE_FACE_ROWS, stageTextureFromPixels } from './s
 
 /** One face: the sketch's 640 x 400 at 0.7, about 1.6:1 like the screen. */
 const CELL_WIDTH = 448;
-const CELL_HEIGHT = 280;
+const CELL_HEIGHT = 240;
 const PAD = 28;
 
 export type StageFaceColors = {
@@ -32,19 +30,7 @@ export type StageFaceColors = {
   light: boolean;
 };
 
-type FaceLine = { text: string; live: boolean };
-
-type Face = {
-  serverId: string;
-  name: string;
-  dot: string;
-  /** The name. */
-  ink: string;
-  /** Ordinary lines, and a running agent's line. */
-  lineInk: string;
-  liveInk: string;
-  lines: FaceLine[];
-};
+type Face = { serverId: string; name: string; ink: string };
 
 function paragraph(
   canvas: SkCanvas,
@@ -57,7 +43,7 @@ function paragraph(
   const builder = Skia.ParagraphBuilder.Make({
     maxLines: 1,
     ellipsis: '…',
-    textAlign: TextAlign.Left,
+    textAlign: TextAlign.Center,
   });
   builder
     .pushStyle({
@@ -84,26 +70,15 @@ function paintAtlas(faces: readonly Face[]): Texture | null {
   try {
     const canvas = surface.getCanvas();
     canvas.clear(Skia.Color('transparent'));
-    const dot = Skia.Paint();
     faces.forEach((face, slot) => {
       const x = (slot % STAGE_FACE_COLUMNS) * CELL_WIDTH;
       const y = Math.floor(slot / STAGE_FACE_COLUMNS) * CELL_HEIGHT;
       canvas.save();
       canvas.clipRect(Skia.XYWHRect(x, y, CELL_WIDTH, CELL_HEIGHT), 1, true);
-      paragraph(canvas, face.name, x + PAD, y + 22, CELL_WIDTH - PAD * 2 - 40, {
+      paragraph(canvas, face.name, x + PAD, y + 85, CELL_WIDTH - PAD * 2, {
         color: face.ink,
-        size: 46,
-        weight: FontWeight.ExtraBold,
-      });
-      dot.setColor(Skia.Color(face.dot));
-      canvas.drawCircle(x + CELL_WIDTH - PAD - 10, y + 50, 10, dot);
-      face.lines.forEach((line, index) => {
-        paragraph(canvas, line.text, x + PAD, y + 98 + index * 38, CELL_WIDTH - PAD * 2, {
-          color: line.live ? face.liveInk : face.lineInk,
-          size: 23,
-          weight: FontWeight.SemiBold,
-          mono: true,
-        });
+        size: face.name.length > 8 ? 34 : 48,
+        weight: FontWeight.Bold,
       });
       canvas.restore();
     });
@@ -127,59 +102,29 @@ function paintAtlas(faces: readonly Face[]): Texture | null {
   }
 }
 
-/**
- * The screens' faces -- name, status dot and the latest agent and session
- * lines from existing Home state -- as one texture atlas. Repainted only when
- * what a face says changes, never per frame; the old atlas goes with it.
- */
+/** Computer names share one atlas, updated only when visible labels change. */
 export function useStageFaces(
   panels: readonly StagePanel[],
   drawn: readonly number[],
   colors: StageFaceColors,
   paused = false
 ): { atlas: Texture | null; slots: ReadonlyMap<string, number> } {
-  const { _ } = useLinguiRuntime();
   const faces: Face[] = drawn.flatMap((index) => {
     const panel = panels[index];
     if (!panel) return [];
-    const offline = panel.tone === 'offline' || panel.tone === 'unknown';
-    const dot = offline
-      ? colors.offline
-      : panel.tone === 'warning' || panel.attention
-        ? colors.warning
-        : panel.working
-          ? colors.primary
-          : colors.success;
-    const lines: FaceLine[] = [
-      ...panel.face.agents.map((agent) => ({
-        text: `${agent.status === 'working' ? '▸' : '·'} ${agent.name} · ${_(agentStatusWord[agent.status])}`,
-        live: agent.status === 'working' && !offline,
-      })),
-      ...panel.face.sessions.map((title) => ({ text: `$ ${title}`, live: false })),
-    ];
-    // Night: light text glowing on dark glass, a running line in its status colour.
-    // Day: dark text printed on the surface-tinted glass, lines in the primary
-    // darkened to 4.5:1 against it.
-    const dayLines = stageReadableInk(offline ? colors.offline : colors.primary, colors.surface);
-    const ink = offline
-      ? colors.light
-        ? stageReadableInk(colors.offline, colors.surface)
-        : colors.offline
-      : colors.text;
     return [
       {
         serverId: panel.serverId,
         name: panel.label,
-        dot,
-        ink,
-        lineInk: colors.light ? dayLines : ink,
-        liveInk: colors.light ? dayLines : dot,
-        lines,
+        ink: stageReadableInk(colors.text, colors.surface),
       },
     ];
   });
   const signature = useFrozenValue(JSON.stringify(faces), paused, null);
-  const [atlas, setAtlas] = useState<{ signature: string; texture: Texture | null } | null>(null);
+  const [atlas, setAtlas] = useState<{
+    signature: string;
+    texture: Texture | null;
+  } | null>(null);
   useEffect(() => {
     let texture: Texture | null = null;
     try {

@@ -75,10 +75,9 @@ export function StageRuntime(props: StageSceneProps) {
     mode,
     backdrop,
     character,
-    faces,
     quality,
     reducedMotion,
-    dive,
+    expanded,
     burst,
     paused,
     inputs,
@@ -151,11 +150,6 @@ export function StageRuntime(props: StageSceneProps) {
   }, [world, character, invalidate, paused]);
   useEffect(() => {
     if (paused) return;
-    world.setFaces(faces);
-    invalidate();
-  }, [world, faces, invalidate, paused]);
-  useEffect(() => {
-    if (paused) return;
     world.setAmbient(ambient, colors, reducedMotion, quality === 'full');
     invalidate();
   }, [world, ambient, colors, reducedMotion, quality, paused, invalidate]);
@@ -192,7 +186,7 @@ export function StageRuntime(props: StageSceneProps) {
     } else invalidate();
   });
   useEffect(() => wakeFor(paused), [paused]);
-  useEffect(() => wakeFor(paused), [dive, paused]);
+  useEffect(() => wakeFor(paused), [expanded, paused]);
 
   const qualityDropped = useStableHandler((next: StageDegradeState['quality']) =>
     props.onQualityDrop(next)
@@ -212,9 +206,9 @@ export function StageRuntime(props: StageSceneProps) {
     const dragging = inputs.dragging.get() === 1;
     const dragX = inputs.dragX.get();
     const step = count > 1 ? (Math.PI * 2) / count : 0;
-    const ringGoal = state.ringTarget + (dragging ? dragX * step * DRAG_TURN : 0);
+    const ringGoal = state.ringTarget + (dragging && !expanded ? dragX * step * DRAG_TURN : 0);
     state.ring = stepStageSpring(state.ring, ringGoal, dt, STAGE_CARD_SPRING);
-    state.dive = stepStageSpring(state.dive, dive ? 1 : 0, dt, DIVE_SPRING);
+    state.dive = stepStageSpring(state.dive, expanded ? 1 : 0, dt, DIVE_SPRING);
 
     // Tilt (when on) and a vertical drag both look around; the drag springs back.
     const lookGoal: [number, number] = [
@@ -236,7 +230,7 @@ export function StageRuntime(props: StageSceneProps) {
     const view = stageCamera({
       lookX: state.look[0],
       lookY: state.look[1],
-      dive: state.dive.value,
+      dive: 0,
       diveTo: chosenAt ?? undefined,
       aspect,
     });
@@ -270,7 +264,6 @@ export function StageRuntime(props: StageSceneProps) {
       });
     }
 
-    const beamBefore = state.beam;
     state.beam = Math.max(0.25, state.beam - dt * 0.6);
     const sparks =
       effects.particles &&
@@ -283,6 +276,8 @@ export function StageRuntime(props: StageSceneProps) {
     world.update({
       camera,
       screens: frames,
+      open: state.dive.value,
+      yaw: (expanded ? dragX * 2.5 : 0) + state.look[0] * 0.12,
       beamTo: chosenAt,
       beam: state.beam,
       timeS: effects.pulse ? state.rise : 0,
@@ -295,12 +290,10 @@ export function StageRuntime(props: StageSceneProps) {
 
     const moving =
       !stageSpringAtRest(state.ring, ringGoal) ||
-      !stageSpringAtRest(state.dive, dive ? 1 : 0) ||
+      !stageSpringAtRest(state.dive, expanded ? 1 : 0) ||
       dragging ||
       looking ||
-      scaling ||
-      state.burst > 0 ||
-      beamBefore > 0.25;
+      scaling;
     if (!reducedMotion) {
       const was = state.degrade.quality;
       state.degrade = recordStageFrame(state.degrade, {
@@ -321,10 +314,7 @@ export function StageRuntime(props: StageSceneProps) {
           Math.max(0, effects.frameIntervalMs - (performance.now() - now))
         );
       else invalidate();
-    } else if (
-      effects.idleIntervalMs !== null &&
-      (world.ambientAnimated() || screens.some((screen) => screen.working))
-    ) {
+    } else if (effects.idleIntervalMs !== null && (world.ambientAnimated() || screens.length > 0)) {
       state.timer = setTimeout(invalidate, effects.idleIntervalMs);
     }
   });

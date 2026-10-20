@@ -1,6 +1,5 @@
 import type { ThemeEffects } from '@/theme/schema';
 import type { SharedValue } from 'react-native-reanimated';
-import type { Texture } from 'three/webgpu';
 
 import type { StageQuality } from '@/lib/home-stage-motion';
 import type { StageSceneColors, StageScreenLook, StageTextureSource } from './stage-scene';
@@ -44,11 +43,10 @@ export type StageSceneProps = {
   mode: 'light' | 'dark';
   backdrop: StageTextureSource | null;
   character: StageTextureSource | null;
-  faces: Texture | null;
   quality: StageQuality;
   reducedMotion: boolean;
   /** Fly the camera to the selected screen (before opening it), or back. */
-  dive: boolean;
+  expanded: boolean;
   /** Bumped when a task completes: the sparks burst. */
   burst: number;
   /** Home is off screen or the app is in the background: no frames. */
