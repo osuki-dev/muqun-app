@@ -148,6 +148,12 @@ msgstr "{0} Nachrichten im Kontext"
 msgid "{0} more models"
 msgstr "{0} weitere Modelle"
 
+#. placeholder {0}: target.index + 1
+#. placeholder {1}: panels.length
+#: src/components/home-stage/stage-view.tsx
+msgid "{0} of {1}"
+msgstr "{0} von {1}"
+
 #. placeholder {0}: filtered.length
 #. placeholder {1}: entries.length
 #: src/components/dev-icon-gallery.tsx
@@ -309,6 +315,10 @@ msgstr "{computer} hat diese Aufgabe nicht mehr"
 #: src/components/agent-tool-card.tsx
 msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, one {# Ergebnis} other {# Ergebnisse}}"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "{count, plural, one {# session} other {# sessions}}"
+msgstr "{count, plural, one {# Sitzung} other {# Sitzungen}}"
 
 #: src/components/home-connections.tsx
 msgid "{count} in progress"
@@ -543,6 +553,7 @@ msgid "Act on this terminal, or send its agent a prompt"
 msgstr "Auf dieses Terminal wirken oder seinem Agenten etwas auftragen"
 
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/stage-view.tsx
 #: src/components/task-row.tsx
 msgid "Actions"
 msgstr "Aktionen"
@@ -626,6 +637,10 @@ msgstr "Agent nicht mehr vorhanden"
 msgid "Agent panes open in"
 msgstr "Standardansicht für Agent-Panels"
 
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Agent working"
+msgstr "Agent arbeitet"
+
 #: src/components/app-drawer-content.tsx
 #: src/components/new-task-action.tsx
 #: src/components/settings-server-capabilities.tsx
@@ -673,8 +688,13 @@ msgid "All projects"
 msgstr "Alle Projekte"
 
 #: src/components/agent-composer.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 msgid "All sessions"
 msgstr "Alle Sitzungen"
+
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "All sessions, needs you"
+msgstr "Alle Sitzungen, braucht dich"
 
 #: src/i18n/labels.ts
 msgid "Allow"
@@ -1059,6 +1079,10 @@ msgstr "Markenzeichen und Aktivitätsanzeige"
 msgid "Bring {0} to the front"
 msgstr "{0} nach vorne holen"
 
+#: src/components/home-stage/stage-view.tsx
+msgid "Brings this computer forward."
+msgstr "Holt diesen Computer nach vorn"
+
 #: src/components/settings-theme-sheet.tsx
 msgid "Browse the gallery"
 msgstr "Galerie durchsuchen"
@@ -1370,6 +1394,7 @@ msgid "Clears notifications only. Pending tasks still need your attention."
 msgstr "Entfernt nur Benachrichtigungen. Ausstehende Aufgaben benötigen weiterhin deine Aufmerksamkeit"
 
 #: src/app/diagram-viewer.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/settings-theme-sheet.tsx
 #: src/components/sheet-scene.tsx
 #: src/i18n/labels.ts
@@ -1389,6 +1414,7 @@ msgid "Close icon preview"
 msgstr "Symbolvorschau schließen"
 
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/task-row.tsx
 msgid "Close menu"
 msgstr "Menü schließen"
@@ -1537,11 +1563,13 @@ msgstr "Abgeschlossen"
 #: src/components/app-drawer.tsx
 #: src/components/home-composer-options.tsx
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer"
 msgstr "Computer"
 
 #: src/components/computer-map/screen.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 msgid "Computer details"
 msgstr "Computerdetails"
 
@@ -3976,6 +4004,7 @@ msgstr "Einrichtung nötig"
 msgid "Needs update"
 msgstr "Update nötig"
 
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "Needs you"
 msgstr "Braucht dich"
@@ -4448,6 +4477,11 @@ msgstr "Offline"
 msgid "OFFLINE"
 msgstr "OFFLINE"
 
+#. placeholder {0}: age(seen, nowMs)
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Offline · last seen {0}"
+msgstr "Offline · zuletzt gesehen {0}"
+
 #: src/i18n/labels.ts
 msgid "Offline, not answering"
 msgstr "Offline, antwortet nicht"
@@ -4477,6 +4511,10 @@ msgstr "Online"
 msgid "ONLINE"
 msgstr "ONLINE"
 
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Online · {count, plural, one {# session} other {# sessions}}"
+msgstr "Online · {count, plural, one {# Sitzung} other {# Sitzungen}}"
+
 #: src/lib/attachments.ts
 msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."
 msgstr "Nur die ersten {MAX_ATTACHMENTS_PER_PICK} Dateien wurden hinzugefügt; {dropped} ausgelassen"
@@ -4486,6 +4524,7 @@ msgid "Only this Home row is hidden. The task and its history remain available. 
 msgstr "Nur dieser Eintrag auf der Startseite wird ausgeblendet. Die Aufgabe und ihr Verlauf bleiben verfügbar. Laufende Arbeit wird nicht gestoppt"
 
 #: src/components/home-connections.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/task-row.tsx
@@ -4705,6 +4744,10 @@ msgstr "Öffnet das Simulator-Menü: Gerät, Tasten, Tastatur und Schließen. Zu
 #: src/components/server-agent-rows.tsx
 msgid "Opens this agent's terminal"
 msgstr "Öffnet das Terminal dieses Agenten"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Opens this computer."
+msgstr "Öffnet diesen Computer"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -5815,6 +5858,10 @@ msgstr "Alles auswählen"
 msgid "Select model: {modelDisplayName}"
 msgstr "Modell auswählen: {modelDisplayName}"
 
+#: src/components/home-stage/stage-view.tsx
+msgid "selected"
+msgstr "ausgewählt"
+
 #: src/components/computer-map/screen.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-servers.tsx
@@ -5909,6 +5956,7 @@ msgstr "Sitzung nicht verfügbar"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/home-launch-actions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/session-map.tsx
 msgid "Sessions"
 msgstr "Sitzungen"
@@ -6225,6 +6273,11 @@ msgstr "SSH-Hosts"
 msgid "SSH tunnel through {host} is down"
 msgstr "SSH-Tunnel über {host} ist unterbrochen"
 
+#: src/components/settings-appearance.tsx
+#: src/components/settings-home-layout-sheet.tsx
+msgid "Stage"
+msgstr "Bühne"
+
 #: src/components/diff-rows.tsx
 msgid "Staged"
 msgstr "Vorgemerkt"
@@ -6253,6 +6306,10 @@ msgstr "Neuen {0} starten"
 #: src/lib/demo-gateway.ts
 msgid "Start a new session with empty context"
 msgstr "Startet eine neue Session mit leerem Kontext"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Start a new task"
+msgstr "Neue Aufgabe starten"
 
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
@@ -6523,6 +6580,14 @@ msgstr "Tab"
 msgid "Take photo"
 msgstr "Foto aufnehmen"
 
+#: src/components/home-stage/stage-view.tsx
+msgid "Tap · open"
+msgstr "Tippen · öffnen"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Tap · start a new task"
+msgstr "Tippen · neue Aufgabe"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Tap again to clear"
 msgstr "Zum Leeren erneut tippen"
@@ -6578,6 +6643,7 @@ msgstr "Aufgabenoptionen"
 #: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-todo-block.tsx
 #: src/components/home-computer-cards.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/server-tasks-sheet.tsx
 #: src/components/task-result-sheet.tsx
 msgid "Tasks"
@@ -7830,6 +7896,10 @@ msgstr "Deine gekoppelten Computer"
 #: src/lib/network-error.ts
 msgid "Your phone's clock is off by {minutes} minutes. Fix the date and time, then try again."
 msgstr "Die Uhr dieses Telefons geht um {minutes} Minuten falsch. Datum und Uhrzeit korrigieren und erneut versuchen"
+
+#: src/components/settings-home-layout-sheet.tsx
+msgid "Your theme as a 3D world, with your computers as holo-screens around its character."
+msgstr "Dein Theme als 3D-Welt, deine Computer als Holo-Bildschirme rund um die Figur"
 
 #: src/components/image-preview-modal.tsx
 msgid "Zoom in"

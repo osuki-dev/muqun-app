@@ -148,6 +148,12 @@ msgstr "コンテキスト内のメッセージ {0} 件"
 msgid "{0} more models"
 msgstr "ほか {0} 件のモデル"
 
+#. placeholder {0}: target.index + 1
+#. placeholder {1}: panels.length
+#: src/components/home-stage/stage-view.tsx
+msgid "{0} of {1}"
+msgstr "{1} 台中 {0} 台目"
+
 #. placeholder {0}: filtered.length
 #. placeholder {1}: entries.length
 #: src/components/dev-icon-gallery.tsx
@@ -309,6 +315,10 @@ msgstr "{computer} にこのタスクはもうありません"
 #: src/components/agent-tool-card.tsx
 msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, other {# 件の結果}}"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "{count, plural, one {# session} other {# sessions}}"
+msgstr "{count, plural, other {# 件のセッション}}"
 
 #: src/components/home-connections.tsx
 msgid "{count} in progress"
@@ -543,6 +553,7 @@ msgid "Act on this terminal, or send its agent a prompt"
 msgstr "このターミナルを操作するか、エージェントに指示を送る"
 
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/stage-view.tsx
 #: src/components/task-row.tsx
 msgid "Actions"
 msgstr "操作"
@@ -626,6 +637,10 @@ msgstr "エージェントは終了しました"
 msgid "Agent panes open in"
 msgstr "エージェントのパネルの初期表示"
 
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Agent working"
+msgstr "エージェント作業中"
+
 #: src/components/app-drawer-content.tsx
 #: src/components/new-task-action.tsx
 #: src/components/settings-server-capabilities.tsx
@@ -673,8 +688,13 @@ msgid "All projects"
 msgstr "すべてのプロジェクト"
 
 #: src/components/agent-composer.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 msgid "All sessions"
 msgstr "すべてのセッション"
+
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "All sessions, needs you"
+msgstr "すべてのセッション、対応が必要です"
 
 #: src/i18n/labels.ts
 msgid "Allow"
@@ -1059,6 +1079,10 @@ msgstr "ブランドマークと処理中インジケーター"
 msgid "Bring {0} to the front"
 msgstr "{0}を前面に出す"
 
+#: src/components/home-stage/stage-view.tsx
+msgid "Brings this computer forward."
+msgstr "このコンピュータを手前に出します"
+
 #: src/components/settings-theme-sheet.tsx
 msgid "Browse the gallery"
 msgstr "ギャラリーを見る"
@@ -1370,6 +1394,7 @@ msgid "Clears notifications only. Pending tasks still need your attention."
 msgstr "通知のみを消去します。保留中のタスクには引き続き対応が必要です"
 
 #: src/app/diagram-viewer.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/settings-theme-sheet.tsx
 #: src/components/sheet-scene.tsx
 #: src/i18n/labels.ts
@@ -1389,6 +1414,7 @@ msgid "Close icon preview"
 msgstr "アイコンプレビューを閉じる"
 
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/task-row.tsx
 msgid "Close menu"
 msgstr "メニューを閉じる"
@@ -1537,11 +1563,13 @@ msgstr "完了"
 #: src/components/app-drawer.tsx
 #: src/components/home-composer-options.tsx
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer"
 msgstr "コンピュータ"
 
 #: src/components/computer-map/screen.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 msgid "Computer details"
 msgstr "コンピュータの詳細"
 
@@ -3976,6 +4004,7 @@ msgstr "要セットアップ"
 msgid "Needs update"
 msgstr "アップデートが必要"
 
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "Needs you"
 msgstr "対応が必要"
@@ -4448,6 +4477,11 @@ msgstr "オフライン"
 msgid "OFFLINE"
 msgstr "オフライン"
 
+#. placeholder {0}: age(seen, nowMs)
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Offline · last seen {0}"
+msgstr "オフライン · 最終確認 {0}"
+
 #: src/i18n/labels.ts
 msgid "Offline, not answering"
 msgstr "オフライン、応答がありません"
@@ -4477,6 +4511,10 @@ msgstr "オンラインです"
 msgid "ONLINE"
 msgstr "オンライン"
 
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Online · {count, plural, one {# session} other {# sessions}}"
+msgstr "オンライン · {count, plural, other {# 件のセッション}}"
+
 #: src/lib/attachments.ts
 msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."
 msgstr "最初の{MAX_ATTACHMENTS_PER_PICK}件のみ追加しました。{dropped}件は追加されていません"
@@ -4486,6 +4524,7 @@ msgid "Only this Home row is hidden. The task and its history remain available. 
 msgstr "ホームのこの行だけを非表示にします。タスクとその履歴は引き続き利用でき、実行中の作業は停止しません"
 
 #: src/components/home-connections.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/task-row.tsx
@@ -4705,6 +4744,10 @@ msgstr "シミュレータのメニュー（デバイス、ボタン、キーボ
 #: src/components/server-agent-rows.tsx
 msgid "Opens this agent's terminal"
 msgstr "このエージェントのターミナルを開きます"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Opens this computer."
+msgstr "このコンピュータを開きます"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -5815,6 +5858,10 @@ msgstr "すべて選択"
 msgid "Select model: {modelDisplayName}"
 msgstr "モデルを選択: {modelDisplayName}"
 
+#: src/components/home-stage/stage-view.tsx
+msgid "selected"
+msgstr "選択中"
+
 #: src/components/computer-map/screen.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-servers.tsx
@@ -5909,6 +5956,7 @@ msgstr "セッションを利用できません"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/home-launch-actions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/session-map.tsx
 msgid "Sessions"
 msgstr "セッション"
@@ -6225,6 +6273,11 @@ msgstr "SSH ホスト"
 msgid "SSH tunnel through {host} is down"
 msgstr "{host} 経由の SSH トンネルが切断されています"
 
+#: src/components/settings-appearance.tsx
+#: src/components/settings-home-layout-sheet.tsx
+msgid "Stage"
+msgstr "ステージ"
+
 #: src/components/diff-rows.tsx
 msgid "Staged"
 msgstr "ステージ済み"
@@ -6253,6 +6306,10 @@ msgstr "新しい {0} を起動"
 #: src/lib/demo-gateway.ts
 msgid "Start a new session with empty context"
 msgstr "空のコンテキストで新しいセッションを開始します"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Start a new task"
+msgstr "新しいタスクを開始"
 
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
@@ -6523,6 +6580,14 @@ msgstr "タブ"
 msgid "Take photo"
 msgstr "写真を撮る"
 
+#: src/components/home-stage/stage-view.tsx
+msgid "Tap · open"
+msgstr "タップ · 開く"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Tap · start a new task"
+msgstr "タップ · 新しいタスク"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Tap again to clear"
 msgstr "もう一度タップしてクリア"
@@ -6578,6 +6643,7 @@ msgstr "タスク設定"
 #: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-todo-block.tsx
 #: src/components/home-computer-cards.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/server-tasks-sheet.tsx
 #: src/components/task-result-sheet.tsx
 msgid "Tasks"
@@ -7830,6 +7896,10 @@ msgstr "ペアリング済みのコンピュータ"
 #: src/lib/network-error.ts
 msgid "Your phone's clock is off by {minutes} minutes. Fix the date and time, then try again."
 msgstr "この端末の時計が{minutes}分ずれています。日付と時刻を直してからやり直してください"
+
+#: src/components/settings-home-layout-sheet.tsx
+msgid "Your theme as a 3D world, with your computers as holo-screens around its character."
+msgstr "テーマを 3D の世界に。コンピュータはキャラクターを囲むホロスクリーンになります"
 
 #: src/components/image-preview-modal.tsx
 msgid "Zoom in"

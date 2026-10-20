@@ -148,6 +148,12 @@ msgstr "컨텍스트에 있는 메시지 {0}개"
 msgid "{0} more models"
 msgstr "모델 {0}개 더"
 
+#. placeholder {0}: target.index + 1
+#. placeholder {1}: panels.length
+#: src/components/home-stage/stage-view.tsx
+msgid "{0} of {1}"
+msgstr "{1}대 중 {0}번째"
+
 #. placeholder {0}: filtered.length
 #. placeholder {1}: entries.length
 #: src/components/dev-icon-gallery.tsx
@@ -309,6 +315,10 @@ msgstr "{computer}에 이 작업이 더 이상 없습니다"
 #: src/components/agent-tool-card.tsx
 msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, other {결과 #개}}"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "{count, plural, one {# session} other {# sessions}}"
+msgstr "{count, plural, other {세션 #개}}"
 
 #: src/components/home-connections.tsx
 msgid "{count} in progress"
@@ -543,6 +553,7 @@ msgid "Act on this terminal, or send its agent a prompt"
 msgstr "이 터미널을 조작하거나 에이전트에게 지시 보내기"
 
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/stage-view.tsx
 #: src/components/task-row.tsx
 msgid "Actions"
 msgstr "작업"
@@ -626,6 +637,10 @@ msgstr "에이전트가 종료됨"
 msgid "Agent panes open in"
 msgstr "에이전트 패널 기본 보기"
 
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Agent working"
+msgstr "에이전트 작업 중"
+
 #: src/components/app-drawer-content.tsx
 #: src/components/new-task-action.tsx
 #: src/components/settings-server-capabilities.tsx
@@ -673,8 +688,13 @@ msgid "All projects"
 msgstr "모든 프로젝트"
 
 #: src/components/agent-composer.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 msgid "All sessions"
 msgstr "모든 세션"
+
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "All sessions, needs you"
+msgstr "모든 세션, 확인이 필요합니다"
 
 #: src/i18n/labels.ts
 msgid "Allow"
@@ -1059,6 +1079,10 @@ msgstr "브랜드 마크와 작업 표시기"
 msgid "Bring {0} to the front"
 msgstr "{0}을(를) 앞으로 가져오기"
 
+#: src/components/home-stage/stage-view.tsx
+msgid "Brings this computer forward."
+msgstr "이 컴퓨터를 앞으로 가져옵니다"
+
 #: src/components/settings-theme-sheet.tsx
 msgid "Browse the gallery"
 msgstr "갤러리 둘러보기"
@@ -1370,6 +1394,7 @@ msgid "Clears notifications only. Pending tasks still need your attention."
 msgstr "알림만 지웁니다. 대기 중인 작업은 여전히 확인이 필요합니다"
 
 #: src/app/diagram-viewer.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/settings-theme-sheet.tsx
 #: src/components/sheet-scene.tsx
 #: src/i18n/labels.ts
@@ -1389,6 +1414,7 @@ msgid "Close icon preview"
 msgstr "아이콘 미리보기 닫기"
 
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/task-row.tsx
 msgid "Close menu"
 msgstr "메뉴 닫기"
@@ -1537,11 +1563,13 @@ msgstr "완료됨"
 #: src/components/app-drawer.tsx
 #: src/components/home-composer-options.tsx
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer"
 msgstr "컴퓨터"
 
 #: src/components/computer-map/screen.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 msgid "Computer details"
 msgstr "컴퓨터 상세 정보"
 
@@ -3976,6 +4004,7 @@ msgstr "설정 필요"
 msgid "Needs update"
 msgstr "업데이트 필요"
 
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "Needs you"
 msgstr "확인 필요"
@@ -4448,6 +4477,11 @@ msgstr "오프라인"
 msgid "OFFLINE"
 msgstr "오프라인"
 
+#. placeholder {0}: age(seen, nowMs)
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Offline · last seen {0}"
+msgstr "오프라인 · 마지막 확인 {0}"
+
 #: src/i18n/labels.ts
 msgid "Offline, not answering"
 msgstr "오프라인 상태, 응답 없음"
@@ -4477,6 +4511,10 @@ msgstr "온라인 상태"
 msgid "ONLINE"
 msgstr "온라인"
 
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Online · {count, plural, one {# session} other {# sessions}}"
+msgstr "온라인 · {count, plural, other {세션 #개}}"
+
 #: src/lib/attachments.ts
 msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."
 msgstr "처음 {MAX_ATTACHMENTS_PER_PICK}개 파일만 추가되었고 {dropped}개는 제외되었습니다"
@@ -4486,6 +4524,7 @@ msgid "Only this Home row is hidden. The task and its history remain available. 
 msgstr "홈의 이 항목만 숨깁니다. 작업과 해당 기록은 계속 사용할 수 있습니다. 실행 중인 작업은 중지되지 않습니다"
 
 #: src/components/home-connections.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/task-row.tsx
@@ -4705,6 +4744,10 @@ msgstr "시뮬레이터 메뉴(기기, 버튼, 키보드, 닫기)를 엽니다. 
 #: src/components/server-agent-rows.tsx
 msgid "Opens this agent's terminal"
 msgstr "이 에이전트의 터미널을 엽니다"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Opens this computer."
+msgstr "이 컴퓨터를 엽니다"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -5815,6 +5858,10 @@ msgstr "모두 선택"
 msgid "Select model: {modelDisplayName}"
 msgstr "모델 선택: {modelDisplayName}"
 
+#: src/components/home-stage/stage-view.tsx
+msgid "selected"
+msgstr "선택됨"
+
 #: src/components/computer-map/screen.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-servers.tsx
@@ -5909,6 +5956,7 @@ msgstr "세션을 사용할 수 없음"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/home-launch-actions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/session-map.tsx
 msgid "Sessions"
 msgstr "세션"
@@ -6225,6 +6273,11 @@ msgstr "SSH 호스트"
 msgid "SSH tunnel through {host} is down"
 msgstr "{host}을(를) 통한 SSH 터널이 끊어졌습니다"
 
+#: src/components/settings-appearance.tsx
+#: src/components/settings-home-layout-sheet.tsx
+msgid "Stage"
+msgstr "스테이지"
+
 #: src/components/diff-rows.tsx
 msgid "Staged"
 msgstr "스테이징됨"
@@ -6253,6 +6306,10 @@ msgstr "새 {0} 시작"
 #: src/lib/demo-gateway.ts
 msgid "Start a new session with empty context"
 msgstr "컨텍스트를 비우고 새 세션을 시작합니다"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Start a new task"
+msgstr "새 작업 시작"
 
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
@@ -6523,6 +6580,14 @@ msgstr "탭"
 msgid "Take photo"
 msgstr "사진 찍기"
 
+#: src/components/home-stage/stage-view.tsx
+msgid "Tap · open"
+msgstr "탭 · 열기"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Tap · start a new task"
+msgstr "탭 · 새 작업 시작"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Tap again to clear"
 msgstr "한 번 더 눌러 지우기"
@@ -6578,6 +6643,7 @@ msgstr "작업 설정"
 #: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-todo-block.tsx
 #: src/components/home-computer-cards.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/server-tasks-sheet.tsx
 #: src/components/task-result-sheet.tsx
 msgid "Tasks"
@@ -7830,6 +7896,10 @@ msgstr "페어링된 컴퓨터"
 #: src/lib/network-error.ts
 msgid "Your phone's clock is off by {minutes} minutes. Fix the date and time, then try again."
 msgstr "이 휴대폰의 시계가 {minutes}분 어긋나 있습니다. 날짜와 시간을 맞춘 뒤 다시 시도하세요"
+
+#: src/components/settings-home-layout-sheet.tsx
+msgid "Your theme as a 3D world, with your computers as holo-screens around its character."
+msgstr "테마를 3D 세계로 보여 주고, 컴퓨터는 캐릭터를 둘러싼 홀로 스크린이 됩니다"
 
 #: src/components/image-preview-modal.tsx
 msgid "Zoom in"

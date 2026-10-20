@@ -148,6 +148,12 @@ msgstr "{0} tin nhắn trong ngữ cảnh"
 msgid "{0} more models"
 msgstr "Còn {0} mô hình nữa"
 
+#. placeholder {0}: target.index + 1
+#. placeholder {1}: panels.length
+#: src/components/home-stage/stage-view.tsx
+msgid "{0} of {1}"
+msgstr "{0} trên {1}"
+
 #. placeholder {0}: filtered.length
 #. placeholder {1}: entries.length
 #: src/components/dev-icon-gallery.tsx
@@ -309,6 +315,10 @@ msgstr "{computer} không còn tác vụ này"
 #: src/components/agent-tool-card.tsx
 msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, other {# kết quả}}"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "{count, plural, one {# session} other {# sessions}}"
+msgstr "{count, plural, other {# phiên}}"
 
 #: src/components/home-connections.tsx
 msgid "{count} in progress"
@@ -543,6 +553,7 @@ msgid "Act on this terminal, or send its agent a prompt"
 msgstr "Tác động lên terminal này, hoặc gửi yêu cầu cho tác nhân của nó"
 
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/stage-view.tsx
 #: src/components/task-row.tsx
 msgid "Actions"
 msgstr "Thao tác"
@@ -626,6 +637,10 @@ msgstr "Tác nhân không còn hoạt động"
 msgid "Agent panes open in"
 msgstr "Ngăn tác tử mở ở"
 
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Agent working"
+msgstr "Tác tử đang chạy"
+
 #: src/components/app-drawer-content.tsx
 #: src/components/new-task-action.tsx
 #: src/components/settings-server-capabilities.tsx
@@ -673,8 +688,13 @@ msgid "All projects"
 msgstr "Mọi dự án"
 
 #: src/components/agent-composer.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 msgid "All sessions"
 msgstr "Tất cả các phiên"
+
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "All sessions, needs you"
+msgstr "Tất cả phiên, cần bạn xử lý"
 
 #: src/i18n/labels.ts
 msgid "Allow"
@@ -1059,6 +1079,10 @@ msgstr "Biểu tượng thương hiệu và chỉ báo đang chạy"
 msgid "Bring {0} to the front"
 msgstr "Đưa {0} lên trước"
 
+#: src/components/home-stage/stage-view.tsx
+msgid "Brings this computer forward."
+msgstr "Đưa máy tính này lên phía trước"
+
 #: src/components/settings-theme-sheet.tsx
 msgid "Browse the gallery"
 msgstr "Duyệt thư viện"
@@ -1370,6 +1394,7 @@ msgid "Clears notifications only. Pending tasks still need your attention."
 msgstr "Chỉ xóa thông báo. Các tác vụ đang chờ vẫn cần bạn xử lý"
 
 #: src/app/diagram-viewer.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/settings-theme-sheet.tsx
 #: src/components/sheet-scene.tsx
 #: src/i18n/labels.ts
@@ -1389,6 +1414,7 @@ msgid "Close icon preview"
 msgstr "Đóng xem trước biểu tượng"
 
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/task-row.tsx
 msgid "Close menu"
 msgstr "Đóng menu"
@@ -1537,11 +1563,13 @@ msgstr "Đã hoàn tất"
 #: src/components/app-drawer.tsx
 #: src/components/home-composer-options.tsx
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer"
 msgstr "Máy tính"
 
 #: src/components/computer-map/screen.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 msgid "Computer details"
 msgstr "Chi tiết máy tính"
 
@@ -3976,6 +4004,7 @@ msgstr "Cần thiết lập"
 msgid "Needs update"
 msgstr "Cần cập nhật"
 
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "Needs you"
 msgstr "Cần bạn"
@@ -4448,6 +4477,11 @@ msgstr "Ngoại tuyến"
 msgid "OFFLINE"
 msgstr "NGOẠI TUYẾN"
 
+#. placeholder {0}: age(seen, nowMs)
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Offline · last seen {0}"
+msgstr "Ngoại tuyến · thấy lần cuối {0}"
+
 #: src/i18n/labels.ts
 msgid "Offline, not answering"
 msgstr "Ngoại tuyến, không phản hồi"
@@ -4477,6 +4511,10 @@ msgstr "Trực tuyến"
 msgid "ONLINE"
 msgstr "TRỰC TUYẾN"
 
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Online · {count, plural, one {# session} other {# sessions}}"
+msgstr "Trực tuyến · {count, plural, other {# phiên}}"
+
 #: src/lib/attachments.ts
 msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."
 msgstr "Chỉ {MAX_ATTACHMENTS_PER_PICK} tệp đầu được thêm; {dropped} tệp bị bỏ lại"
@@ -4486,6 +4524,7 @@ msgid "Only this Home row is hidden. The task and its history remain available. 
 msgstr "Chỉ ẩn hàng này trên trang chủ. Tác vụ và lịch sử của nó vẫn còn. Công việc đang chạy sẽ không dừng"
 
 #: src/components/home-connections.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/task-row.tsx
@@ -4705,6 +4744,10 @@ msgstr "Mở menu của trình giả lập: thiết bị, các phím, bàn phím
 #: src/components/server-agent-rows.tsx
 msgid "Opens this agent's terminal"
 msgstr "Mở terminal của tác tử này"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Opens this computer."
+msgstr "Mở máy tính này"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -5815,6 +5858,10 @@ msgstr "Chọn tất cả"
 msgid "Select model: {modelDisplayName}"
 msgstr "Chọn mô hình: {modelDisplayName}"
 
+#: src/components/home-stage/stage-view.tsx
+msgid "selected"
+msgstr "đã chọn"
+
 #: src/components/computer-map/screen.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-servers.tsx
@@ -5909,6 +5956,7 @@ msgstr "Phiên không khả dụng"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/home-launch-actions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/session-map.tsx
 msgid "Sessions"
 msgstr "Phiên"
@@ -6225,6 +6273,11 @@ msgstr "Host SSH"
 msgid "SSH tunnel through {host} is down"
 msgstr "Đường hầm SSH qua {host} đã ngắt"
 
+#: src/components/settings-appearance.tsx
+#: src/components/settings-home-layout-sheet.tsx
+msgid "Stage"
+msgstr "Sân khấu"
+
 #: src/components/diff-rows.tsx
 msgid "Staged"
 msgstr "Đã staged"
@@ -6253,6 +6306,10 @@ msgstr "Khởi động {0} mới"
 #: src/lib/demo-gateway.ts
 msgid "Start a new session with empty context"
 msgstr "Bắt đầu phiên mới với ngữ cảnh trống"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Start a new task"
+msgstr "Bắt đầu tác vụ mới"
 
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
@@ -6523,6 +6580,14 @@ msgstr "Tab"
 msgid "Take photo"
 msgstr "Chụp ảnh"
 
+#: src/components/home-stage/stage-view.tsx
+msgid "Tap · open"
+msgstr "Chạm · mở"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Tap · start a new task"
+msgstr "Chạm · tác vụ mới"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Tap again to clear"
 msgstr "Chạm lần nữa để xóa sạch"
@@ -6578,6 +6643,7 @@ msgstr "Tùy chọn tác vụ"
 #: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-todo-block.tsx
 #: src/components/home-computer-cards.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/server-tasks-sheet.tsx
 #: src/components/task-result-sheet.tsx
 msgid "Tasks"
@@ -7830,6 +7896,10 @@ msgstr "Các máy tính đã ghép nối của bạn"
 #: src/lib/network-error.ts
 msgid "Your phone's clock is off by {minutes} minutes. Fix the date and time, then try again."
 msgstr "Đồng hồ của điện thoại lệch {minutes} phút. Chỉnh lại ngày giờ rồi thử lại"
+
+#: src/components/settings-home-layout-sheet.tsx
+msgid "Your theme as a 3D world, with your computers as holo-screens around its character."
+msgstr "Chủ đề của bạn thành thế giới 3D, máy tính là màn hình ba chiều quanh nhân vật"
 
 #: src/components/image-preview-modal.tsx
 msgid "Zoom in"
