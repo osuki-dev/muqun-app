@@ -20,24 +20,24 @@ import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-ac
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { EdgeFade } from '@/components/edge-fade';
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
-import { ThemeIcon } from '@/components/theme-icon';
 import { useMinuteNow } from '@/hooks/use-minute-now';
 import { useStableHandler } from '@/hooks/use-render-refs';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useTaskAge } from '@/hooks/use-task-age';
-import { CloseIcon, NextIcon, SettingsIcon, TaskListIcon, TerminalWindowIcon } from '@/icons';
+import { CloseIcon, SettingsIcon, TaskListIcon, TerminalWindowIcon } from '@/icons';
 import { connectionStatusDescription } from '@/i18n/labels';
 import { withAlpha } from '@/lib/color';
 import { filterHomeRecent, type HomeContinueEntry } from '@/lib/home-continue';
 import { wrapStageIndex } from '@/lib/home-stage-geometry';
 import { stagePanels, stageSelectedIndex, type StagePanel } from '@/lib/home-stage-panels';
-import { fadeIn, fadeOut, SETTLE } from '@/lib/motion';
+import { SETTLE } from '@/lib/motion';
 import type { ConnectionStatus } from '@/lib/server-reachability';
 import { useHomeAttention } from '@/stores/home-attention';
 import { useServerAgents } from '@/stores/server-agents';
 import { useServerTasksStore } from '@/stores/server-tasks';
 import { isRenderableThemeAsset } from '@/theme/renderable-asset';
 import { resolveThemeImage } from '@/theme/resolve';
+import { StageSessionStrip } from './stage-session-strip';
 import { StageView } from './stage-view';
 
 export type HomeStageLayoutProps = {
@@ -377,47 +377,14 @@ export function HomeStageLayout({
                   </Text>
                 ) : null}
               </PressableScale>
-              <Animated.View
-                key={selected?.serverId ?? 'none'}
-                entering={fadeIn('short')}
-                exiting={fadeOut('micro')}>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.strip}>
-                  {sessions.map((entry) => (
-                    <StageSessionCard
-                      key={entry.key}
-                      entry={entry}
-                      onPress={() => onOpenSession(entry)}
-                    />
-                  ))}
-                  <PressableScale
-                    testID="home-stage-all-sessions"
-                    accessibilityRole="button"
-                    accessibilityLabel={t`All sessions`}
-                    onPress={() => openList(true)}
-                    style={[
-                      styles.card,
-                      styles.moreCard,
-                      {
-                        backgroundColor: background(theme.colors.surface),
-                        borderColor: withAlpha(theme.colors.text, 0.1),
-                        borderRadius: profile.chrome.card,
-                      },
-                    ]}>
-                    <Text variant="bodySmall" weight="semibold" color={theme.colors.primary}>
-                      {t`All sessions`}
-                    </Text>
-                    <ThemeIcon
-                      name="home.arrow"
-                      fallback={NextIcon}
-                      size={16}
-                      color={theme.colors.primary}
-                    />
-                  </PressableScale>
-                </ScrollView>
-              </Animated.View>
+              <StageSessionStrip
+                serverId={selected?.serverId}
+                selectedIndex={selectedIndex}
+                panelCount={panels.length}
+                sessions={sessions}
+                onOpenSession={onOpenSession}
+                onOpenAll={() => openList(true)}
+              />
             </View>
           </GestureDetector>
         ) : null}
@@ -530,40 +497,6 @@ function StageStatusLine({ panel }: { panel: StagePanel }) {
   );
 }
 
-function StageSessionCard({ entry, onPress }: { entry: HomeContinueEntry; onPress: () => void }) {
-  const theme = useThemeTokens();
-  const background = useSurfaceBackground();
-  const profile = useAppearanceProfile();
-  const age = useTaskAge();
-  const nowMs = useMinuteNow();
-  const when = age(entry.atMs, nowMs);
-  const live = entry.observation?.status === 'working';
-  return (
-    <PressableScale
-      testID="home-stage-session"
-      accessibilityRole="button"
-      accessibilityLabel={`${entry.title}, ${when}`}
-      onPress={onPress}
-      style={[
-        styles.card,
-        {
-          backgroundColor: background(theme.colors.surface),
-          borderColor: live
-            ? withAlpha(theme.colors.primary, 0.6)
-            : withAlpha(theme.colors.text, 0.1),
-          borderRadius: profile.chrome.card,
-        },
-      ]}>
-      <Text variant="bodySmall" weight="semibold" numberOfLines={1}>
-        {entry.title}
-      </Text>
-      <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
-        {entry.agentLabel ? `${entry.agentLabel} · ${when}` : when}
-      </Text>
-    </PressableScale>
-  );
-}
-
 const styles = StyleSheet.create({
   root: { flex: 1, overflow: 'hidden' },
   topScrim: { position: 'absolute', left: 0, right: 0, top: 0 },
@@ -601,16 +534,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   handle: { width: 40, height: 4, borderRadius: 2 },
-  strip: { paddingHorizontal: 14, gap: 8 },
-  card: {
-    width: 176,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 3,
-    borderWidth: StyleSheet.hairlineWidth,
-    justifyContent: 'center',
-  },
-  moreCard: { width: 132, flexDirection: 'row', alignItems: 'center', gap: 6 },
   sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, overflow: 'hidden' },
   sheetHeader: {
     flexDirection: 'row',
