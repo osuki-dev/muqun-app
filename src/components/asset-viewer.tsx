@@ -1,4 +1,5 @@
 import * as Clipboard from 'expo-clipboard';
+import { useRouter } from 'expo-router';
 import { AudioPlaybackError } from '@/lib/audio-playback-session';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useThemeTokens, Skeleton, Button, PressableScale, Text } from '@osuki-dev/ui';
@@ -162,6 +163,7 @@ const COPIED_FEEDBACK_MS = 1_600;
 /** Everything that is not an image: a document, some text, or a file we can only describe. */
 function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => void }) {
   const surfaceBackground = useSurfaceBackground();
+  const router = useRouter();
   const fileActions = useFileActions(asset.name, () => saveSessionAsset(asset));
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
   //
@@ -462,7 +464,14 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
                     // The prepared artwork belongs to this screen, which disposes it
                     // when the reader closes the file.
                     ownsPreparedAssets={false}
-                    onClosePreview={() => setPack(null)}
+                    onClosePreview={(after) => {
+                      // A theme applied from a file in a session goes home, as the
+                      // editor does: home is the screen that shows all of it.
+                      if (after === 'applied') {
+                        onClose();
+                        router.dismissTo('/');
+                      } else setPack(null);
+                    }}
                     onPrimaryActionChange={setPrimary}
                   />
                 </ScrollView>
@@ -494,8 +503,12 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
                         <ThemeImportProgress
                           label={t`Downloading theme`}
                           unit="bytes"
+                          // The encrypted transport hands the file over whole, so
+                          // no byte arrives until all of them do: until one has,
+                          // the bar travels rather than sitting at zero.
+                          indeterminate={packProgress.done === 0}
                           receivedBytes={packProgress.total ? undefined : packProgress.done}
-                          completed={packProgress.done}
+                          completed={packProgress.done > 0 ? packProgress.done : undefined}
                           total={packProgress.total ?? undefined}
                         />
                       ) : (

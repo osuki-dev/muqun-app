@@ -2130,10 +2130,13 @@ export async function readAssetBytes(
       ? assetContentUrl(asset.id).replace(/\/content$/, '/download')
       : assetContentUrl(asset.id);
   const init = { headers: gatewayAuthHeaders(), signal: options.signal };
+  // Sized to the file: a 9 MB theme package over a phone's uplink outlasts a
+  // flat 15 seconds, and the encrypted transport delivers it whole.
+  const timeoutMs = assetTextTimeoutMs(asset.size);
   const response =
     currentTransport === GATEWAY_TRANSPORT
-      ? await encryptedGatewayFetch(url, init, ASSET_CONTENT_TIMEOUT_MS)
-      : await fetchWithin(ASSET_CONTENT_TIMEOUT_MS, 'Timed out reading the file.', url, init);
+      ? await encryptedGatewayFetch(url, init, timeoutMs)
+      : await fetchWithin(timeoutMs, 'Timed out reading the file.', url, init);
   assertFileGateway(serverId);
   if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
   const declared = Number(response.headers.get('content-length') ?? '0');
