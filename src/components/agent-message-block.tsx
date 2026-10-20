@@ -71,7 +71,7 @@ import { useRelativeTime } from '@/hooks/use-relative-time';
 import { useCompactMarkdownStyle } from '@/hooks/use-markdown-style';
 import { buildTimelineEntries, type ReasoningRun, type TimelineEntry } from '@/lib/agent-reasoning';
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
-import { fadeIn, timing } from '@/lib/motion';
+import { fadeIn, riseIn, timing } from '@/lib/motion';
 import { plainFromMarkdown } from '@/lib/markdown-text';
 import { hasSidewaysBlock } from '@/lib/markdown-blocks';
 import { normalizeAssistantMarkdown } from '@/lib/assistant-markdown';
@@ -98,6 +98,9 @@ import { groupRoutineToolEntries, type RoutineToolEntry } from '@/lib/agent-tool
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { TRANSCRIPT_GRID, TRANSCRIPT_HANG } from '@/constants/transcript-grid';
 
+/** How recent a message must be to fade in when its row mounts. */
+const FRESH_ROW_MS = 2000;
+
 const IMAGE_DATA_URI_PREFIX = 'data:image/';
 function isImageAttachment(uri: string): boolean {
   return uri.startsWith(IMAGE_DATA_URI_PREFIX) || /\.(png|jpg|jpeg|gif|webp)(\?.*)?$/i.test(uri);
@@ -106,11 +109,14 @@ function isImageAttachment(uri: string): boolean {
 const MessageAttachments = memo(function MessageAttachments({
   attachments,
   imageAssets,
+  files,
   onPreviewImage,
   asid,
 }: {
   attachments: readonly string[];
   imageAssets?: readonly MessageImageAsset[];
+  /** A queued row's names and image decisions, index for index; see `inboxItemAttachments`. */
+  files?: readonly { name: string; image: boolean }[];
   asid?: string;
   onPreviewImage: (uri: string) => void;
 }) {
@@ -130,7 +136,8 @@ const MessageAttachments = memo(function MessageAttachments({
               label={t`Open attachment`}
             />
           );
-        if (isImageAttachment(att)) {
+        const file = files?.[attIdx];
+        if (file ? file.image : isImageAttachment(att)) {
           return (
             <UnmappedImageThumbnail
               key={`${att}-${attIdx}`}
@@ -148,8 +155,8 @@ const MessageAttachments = memo(function MessageAttachments({
             </UnmappedImageThumbnail>
           );
         }
-        const fileName = att.split('/').filter(Boolean).pop() || t`Attachment`;
-        if (asid && isPdfFile({ uri: att })) {
+        const fileName = file?.name || att.split('/').filter(Boolean).pop() || t`Attachment`;
+        if (!file && asid && isPdfFile({ uri: att })) {
           return (
             <InlineFileLink
               key={`${att}-${attIdx}`}
@@ -1311,6 +1318,18 @@ export const AgentUserMessage = memo(function AgentUserMessage({
     [group.items]
   );
   const queued = group.items.find((item) => item.queued);
+  // A queued prompt rises in; a message that has only just arrived -- the
+  // delivered prompt taking its queued row's place -- fades in. History the
+  // list mounts while scrolling is older than that and is simply there.
+  const [arrival] = useState(() =>
+    readOnly
+      ? undefined
+      : queued
+        ? riseIn()
+        : first && Date.now() - first.updated_ms < FRESH_ROW_MS
+          ? fadeIn('short')
+          : undefined
+  );
   const goalSummary = useMemo(
     () =>
       group.items.every((item) => item.part.type === 'text') ? goalContinuationSummary(text) : null,
@@ -1374,139 +1393,146 @@ export const AgentUserMessage = memo(function AgentUserMessage({
   };
 
   return (
-    <MessageContainer
-      testID={`user-message-${first?.id ?? group.key}`}
-      accessibilityLabel={t`Your message`}
-      onLongPress={goalSummary ? undefined : openMessageMenu}
-      delayLongPress={260}
-      style={[
-        styles.messageBlock,
-        plate,
-        styles.userBlock,
-        goalSummary ? styles.goalMessage : null,
-        { borderLeftColor: colors.accent },
-        queued ? { borderLeftColor: theme.colors.warning } : null,
-      ]}>
-      <View style={styles.roleRow}>
-        <Text variant="caption" weight="semibold" color={colors.accent} style={styles.roleLabel}>
-          <Trans>You</Trans>
-        </Text>
-        {stamp ? (
-          <Text
-            variant="caption"
-            color={theme.colors.textSubtle}
-            numberOfLines={1}
-            textBreakStrategy="simple"
-            style={styles.roleStamp}>
-            {stamp}
+    <Animated.View entering={arrival}>
+      <MessageContainer
+        testID={`user-message-${first?.id ?? group.key}`}
+        accessibilityLabel={t`Your message`}
+        onLongPress={goalSummary ? undefined : openMessageMenu}
+        delayLongPress={260}
+        style={[
+          styles.messageBlock,
+          plate,
+          styles.userBlock,
+          goalSummary ? styles.goalMessage : null,
+          { borderLeftColor: colors.accent },
+          queued ? { borderLeftColor: theme.colors.warning } : null,
+        ]}>
+        <View style={styles.roleRow}>
+          <Text variant="caption" weight="semibold" color={colors.accent} style={styles.roleLabel}>
+            <Trans>You</Trans>
           </Text>
-        ) : null}
-        {queued ? (
-          <>
-            <View style={styles.roleSpacer} />
-            <View style={styles.queuedPill}>
-              <TimeIcon size={11} color={theme.colors.warning} />
+          {stamp ? (
+            <Text
+              variant="caption"
+              color={theme.colors.textSubtle}
+              numberOfLines={1}
+              textBreakStrategy="simple"
+              style={styles.roleStamp}>
+              {stamp}
+            </Text>
+          ) : null}
+          {queued ? (
+            <>
+              <View style={styles.roleSpacer} />
+              <View style={styles.queuedPill}>
+                <TimeIcon size={11} color={theme.colors.warning} />
+                <Text
+                  variant="caption"
+                  weight="semibold"
+                  color={theme.colors.warning}
+                  style={styles.queuedPillText}>
+                  {queued.inbox?.delivery === 'steer' ? <Trans>Next</Trans> : <Trans>Queued</Trans>}
+                </Text>
+              </View>
+              {!readOnly ? (
+                <>
+                  {/* Editing returns the text to the draft; files cannot follow
+                    it there, so a prompt that carries them is only cancelled. */}
+                  {attachments.length === 0 ? (
+                    <PressableScale
+                      testID={`queued-edit-${queued.id}`}
+                      accessibilityRole="button"
+                      accessibilityLabel={t`Edit queued message`}
+                      onPress={() => onEditQueued(queued.id, text)}
+                      style={styles.queuedActionBtn}>
+                      <EditIcon size={13} color={theme.colors.primary} />
+                    </PressableScale>
+                  ) : null}
+                  <PressableScale
+                    testID={`queued-cancel-${queued.id}`}
+                    accessibilityRole="button"
+                    accessibilityLabel={t`Cancel queued message`}
+                    onPress={() => onCancelQueued(queued.id)}
+                    style={styles.queuedActionBtn}>
+                    <DeleteIcon size={13} color={theme.colors.danger} />
+                  </PressableScale>
+                </>
+              ) : null}
+            </>
+          ) : null}
+        </View>
+
+        {goalSummary ? (
+          <Pressable
+            testID={`goal-message-toggle-${first?.id ?? group.key}`}
+            accessibilityRole="button"
+            accessibilityLabel={
+              goalExpanded ? t`Collapse goal continuation` : t`Expand goal continuation`
+            }
+            accessibilityState={{ expanded: goalExpanded }}
+            onPress={() => setGoalExpanded((open) => !open)}
+            onLongPress={openMessageMenu}
+            delayLongPress={260}
+            style={[styles.goalDisclosure, { borderRadius: profile.chrome.control }]}>
+            <View pointerEvents="none" style={styles.goalSummary}>
               <Text
                 variant="caption"
                 weight="semibold"
-                color={theme.colors.warning}
-                style={styles.queuedPillText}>
-                <Trans>Queued</Trans>
+                color={colors.accent}>{t`Goal continuation`}</Text>
+              <Text variant="bodySmall" color={theme.colors.text} numberOfLines={2}>
+                {goalSummary}
               </Text>
             </View>
-            {!readOnly ? (
-              <>
-                <PressableScale
-                  testID={`queued-edit-${queued.id}`}
-                  accessibilityRole="button"
-                  accessibilityLabel={t`Edit queued message`}
-                  onPress={() => onEditQueued(queued.id, text)}
-                  style={styles.queuedActionBtn}>
-                  <EditIcon size={13} color={theme.colors.primary} />
-                </PressableScale>
-                <PressableScale
-                  testID={`queued-cancel-${queued.id}`}
-                  accessibilityRole="button"
-                  accessibilityLabel={t`Cancel queued message`}
-                  onPress={() => onCancelQueued(queued.id)}
-                  style={styles.queuedActionBtn}>
-                  <DeleteIcon size={13} color={theme.colors.danger} />
-                </PressableScale>
-              </>
-            ) : null}
-          </>
+            <View pointerEvents="none" style={styles.goalChevron}>
+              <DisclosureDownIcon
+                size={14}
+                color={colors.accent}
+                style={{ transform: [{ rotate: goalExpanded ? '180deg' : '0deg' }] }}
+              />
+            </View>
+          </Pressable>
         ) : null}
-      </View>
+        {goalSummary && goalExpanded ? (
+          <Text selectable variant="body" color={theme.colors.text} style={styles.goalFullText}>
+            {text}
+          </Text>
+        ) : null}
+        {!goalSummary &&
+          entries.map((entry, index) =>
+            entry.kind === 'reasoning' ? (
+              showReasoning ? (
+                <ReasoningRunBlock key={entry.key} run={entry.run} />
+              ) : null
+            ) : (
+              renderTimelinePart(entry.item, {
+                showReasoning,
+                markdownStyle,
+                prevItem: previousItemAt(entries, index) ?? group.prevItem,
+                actions,
+                readOnly,
+              })
+            )
+          )}
 
-      {goalSummary ? (
-        <Pressable
-          testID={`goal-message-toggle-${first?.id ?? group.key}`}
-          accessibilityRole="button"
-          accessibilityLabel={
-            goalExpanded ? t`Collapse goal continuation` : t`Expand goal continuation`
-          }
-          accessibilityState={{ expanded: goalExpanded }}
-          onPress={() => setGoalExpanded((open) => !open)}
-          onLongPress={openMessageMenu}
-          delayLongPress={260}
-          style={[styles.goalDisclosure, { borderRadius: profile.chrome.control }]}>
-          <View pointerEvents="none" style={styles.goalSummary}>
-            <Text
-              variant="caption"
-              weight="semibold"
-              color={colors.accent}>{t`Goal continuation`}</Text>
-            <Text variant="bodySmall" color={theme.colors.text} numberOfLines={2}>
-              {goalSummary}
-            </Text>
-          </View>
-          <View pointerEvents="none" style={styles.goalChevron}>
-            <DisclosureDownIcon
-              size={14}
-              color={colors.accent}
-              style={{ transform: [{ rotate: goalExpanded ? '180deg' : '0deg' }] }}
-            />
-          </View>
-        </Pressable>
-      ) : null}
-      {goalSummary && goalExpanded ? (
-        <Text selectable variant="body" color={theme.colors.text} style={styles.goalFullText}>
-          {text}
-        </Text>
-      ) : null}
-      {!goalSummary &&
-        entries.map((entry, index) =>
-          entry.kind === 'reasoning' ? (
-            showReasoning ? (
-              <ReasoningRunBlock key={entry.key} run={entry.run} />
-            ) : null
-          ) : (
-            renderTimelinePart(entry.item, {
-              showReasoning,
-              markdownStyle,
-              prevItem: previousItemAt(entries, index) ?? group.prevItem,
-              actions,
-              readOnly,
-            })
-          )
-        )}
+        {attachments.length > 0 ? (
+          <MessageAttachments
+            attachments={attachments}
+            imageAssets={group.items.flatMap((item) => item.image_assets ?? [])}
+            files={queued?.attachment_files}
+            onPreviewImage={onPreviewImage}
+            asid={actions.audioSessionId}
+          />
+        ) : null}
 
-      {attachments.length > 0 ? (
-        <MessageAttachments
-          attachments={attachments}
-          imageAssets={group.items.flatMap((item) => item.image_assets ?? [])}
-          onPreviewImage={onPreviewImage}
-          asid={actions.audioSessionId}
-        />
-      ) : null}
-
-      {menuOpen ? (
-        <AgentActionMenu
-          testID={`user-message-menu-${first?.id ?? group.key}`}
-          surface="ground"
-          items={menuItems}
-        />
-      ) : null}
-    </MessageContainer>
+        {menuOpen ? (
+          <AgentActionMenu
+            testID={`user-message-menu-${first?.id ?? group.key}`}
+            surface="ground"
+            items={menuItems}
+          />
+        ) : null}
+      </MessageContainer>
+    </Animated.View>
   );
 });
 

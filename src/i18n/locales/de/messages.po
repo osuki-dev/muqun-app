@@ -43,6 +43,11 @@ msgstr "[Modell]"
 msgid "[pr number]"
 msgstr "[PR-Nummer]"
 
+#. placeholder {0}: files.length
+#: src/components/agent-composer.tsx
+msgid "{0, plural, one {# attachment} other {# attachments}}"
+msgstr ""
+
 #. placeholder {0}: capped.hidden
 #: src/components/bounded-markdown.tsx
 msgid "{0, plural, one {# character not shown} other {# characters not shown}}"
@@ -2563,7 +2568,6 @@ msgid "Disconnected."
 msgstr "Getrennt"
 
 #: src/components/agent-compaction-pill.tsx
-#: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/task-row.tsx
@@ -3168,6 +3172,10 @@ msgstr "Computerliste ausblenden"
 msgid "Hide the simulator"
 msgstr "Simulator ausblenden"
 
+#: src/components/agent-composer.tsx
+msgid "Hides this notice"
+msgstr ""
+
 #: src/app/settings-voice.tsx
 msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
 msgstr "Halte die Sendetaste gedrückt, um zu sprechen. Beende die Aufnahme, um den Text zum Entwurf hinzuzufügen. Danach kannst du ihn bearbeiten und senden"
@@ -3762,7 +3770,7 @@ msgstr "Als geprüft markieren"
 
 #: src/components/dev-icon-gallery.tsx
 msgid "Marks keep their original geometry and stroke."
-msgstr "Markenzeichen behalten ihre ursprüngliche Form und Strichstärke."
+msgstr "Markenzeichen behalten ihre ursprüngliche Form und Strichstärke"
 
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
@@ -4032,6 +4040,7 @@ msgid "Newer"
 msgstr "Neuer"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-message-block.tsx
 msgid "Next"
 msgstr "Weiter"
 
@@ -5040,10 +5049,9 @@ msgstr "In Warteschlange"
 msgid "queued to upload"
 msgstr "wartet auf Upload"
 
-#. placeholder {0}: inboxItemText(item) || item.type
 #: src/components/agent-composer.tsx
-msgid "Queued: {0}"
-msgstr "In der Warteschlange: {0}"
+msgid "Queued: {summary}"
+msgstr "In der Warteschlange: {summary}"
 
 #: src/app/commands.tsx
 msgid "Quick action settings"
@@ -5834,10 +5842,9 @@ msgstr "An den Agenten senden"
 msgid "Sending attachment message…"
 msgstr "Nachricht mit Anhängen wird gesendet…"
 
-#. placeholder {0}: inboxItemText(item) || item.type
 #: src/components/agent-composer.tsx
-msgid "Sending next: {0}"
-msgstr "Wird als Nächstes gesendet: {0}"
+msgid "Sending next: {summary}"
+msgstr "Wird als Nächstes gesendet: {summary}"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Sending to"
@@ -6399,10 +6406,6 @@ msgstr "Absenden"
 #: src/components/agent-composer.tsx
 msgid "Submitted"
 msgstr "Übermittelt"
-
-#: src/components/agent-composer.tsx
-msgid "Submitted to queue"
-msgstr "An die Warteschlange übermittelt"
 
 #: src/components/agent-composer.tsx
 msgid "Submitting follow-up…"

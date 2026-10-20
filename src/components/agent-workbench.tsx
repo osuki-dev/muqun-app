@@ -131,7 +131,6 @@ import {
   hasRealSessionTitle,
   sessionTitleOr,
   isBusyStatus,
-  inboxItemText,
   type WorkspaceMissing,
   type WorktreeDirectory,
   type AgentContextUsage,
@@ -1824,6 +1823,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     agentFeatures.extra.legacyVcsDiff,
   ]);
 
+  // Queued prompts are transcript rows too, drawn from the same queue.
+  useEffect(() => {
+    transcriptStore.getState().setInbox(agentFeatures.inbox ? inbox : NO_INBOX);
+  }, [transcriptStore, inbox, agentFeatures.inbox]);
+
   const refreshInbox = useCallback(async () => {
     if (!activeAsid || !agentFeatures.inbox) {
       setInbox([]);
@@ -2986,7 +2990,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       // queue and will correct this if the engine had already delivered it.
       setInbox((prev) => prev.filter((item) => item.id !== inboxId));
       cancelAgentInboxItem(activeAsid, inboxId).catch((err) => {
-        console.warn('Failed to cancel queued item:', err);
+        // Already delivered or gone: the refetched queue is the answer.
+        if (agentRequestErrorDetail(err).code !== 'inbox_item_not_found')
+          console.warn('Failed to cancel queued item:', err);
         void refreshInbox();
       });
     },
@@ -3007,8 +3013,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       setInbox((prev) => prev.map((item) => (item.id === inboxId ? { ...item, delivery } : item)));
       setAgentInboxDelivery(activeAsid, inboxId, delivery).catch((err) => {
-        console.warn('Failed to change delivery:', err);
         void refreshInbox();
+        // An item that was delivered or cancelled meanwhile is not a failure
+        // to report: the refetched queue shows where it went.
+        if (agentRequestErrorDetail(err).code === 'inbox_item_not_found') return;
+        console.warn('Failed to change delivery:', err);
         showScreenNotice(t`Could not change delivery`, agentErrorRef.current(err));
       });
     },
@@ -3190,7 +3199,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     // All attachments stay in the composer's explicit submission UI. Upload
     // paths are not message identities (images may export as data URIs), and
     // a submission ACK carries no canonical message ID. Do not guess a match.
-    const optimistic = agentPromptUsesOptimisticRow(attachments);
+    const optimistic = agentPromptUsesOptimisticRow(attachments, promptDelivery);
     if (optimistic) {
       setTimeline((prev) => [...prev, tempUserItem]);
       setScrollToSentRow(`grp_${tempKey}`);
@@ -3216,6 +3225,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           delivery: promptDelivery,
         });
         if (!ownsRoute() || activeAsidRef.current !== promptAsid) return false;
+        // The inbox item is the queued row. `agent.inbox.changed` normally
+        // brings it; a read covers an event that is late or was missed.
+        if (isQueued) void refreshInbox().catch(() => {});
         // Starting a new turn consumes staging; steering the current turn does not.
         // Session metadata confirms the resulting model and effort.
         if (stagedChoice && !running) {
@@ -4300,34 +4312,45 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     [clientCommandLatest]
   );
 
+  /**
+   * A queued row is an inbox item (`inboxTimelineRows`), and the row's id
+   * names it: `inbox_<id>`. Cancel and edit act on that item, never on
+   * whichever queued prompt happens to carry the same text. An older local
+   * optimistic row has no item and only leaves the transcript.
+   */
+  const queuedInboxId = useCallback(
+    (itemId: string) =>
+      Object.values(transcriptStore.getState().rows)
+        .flatMap((group) => group.items)
+        .find((it) => it.id === itemId)?.inbox?.id,
+    [transcriptStore]
+  );
+
+  /** Editing takes the prompt back into the draft, so the queued copy goes. */
   const handleEditQueuedItem = useCallback(
     (itemId: string, text: string) => {
-      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      const inboxId = queuedInboxId(itemId);
+      if (inboxId) handleCancelInboxItem(inboxId);
+      else void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       injectDraftRef.current?.(text);
       setTimeline((prev) => prev.filter((it) => it.id !== itemId));
     },
-    [setTimeline]
+    [setTimeline, queuedInboxId, handleCancelInboxItem]
   );
 
   /**
-   * Cancelling a queued message cancels it on the engine too.
-   *
-   * It used to drop the local row and nothing else: the prompt stayed in the
-   * engine's inbox and ran a minute later, having been told it was cancelled.
-   * The optimistic row carries no inbox id, so the item is matched on the text
-   * it is carrying -- and the row goes either way, because a cancel that
-   * leaves the message on screen has not cancelled anything the reader can see.
+   * Cancelling a queued message cancels it on the engine too: the row goes
+   * with the item, because a cancel that leaves the message on screen has not
+   * cancelled anything the reader can see.
    */
   const handleCancelQueuedItem = useCallback(
     (itemId: string) => {
-      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      const row = transcriptStore.getState().timeline.find((it) => it.id === itemId);
-      const text = row?.part.type === 'text' ? row.part.text.trim() : '';
-      const queued = text ? inbox.find((item) => inboxItemText(item).trim() === text) : undefined;
-      if (queued) handleCancelInboxItem(queued.id);
+      const inboxId = queuedInboxId(itemId);
+      if (inboxId) handleCancelInboxItem(inboxId);
+      else void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       setTimeline((prev) => prev.filter((it) => it.id !== itemId));
     },
-    [setTimeline, transcriptStore, inbox, handleCancelInboxItem]
+    [setTimeline, queuedInboxId, handleCancelInboxItem]
   );
 
   /**
