@@ -106,30 +106,35 @@ export function StageRuntime(props: StageSceneProps) {
     });
     return () => bridge.setWaker(null);
   }, [bridge, invalidate, paused]);
+  // Nothing is drawn while Home is off screen: a change that arrives then (a
+  // new theme, new textures, new faces) is drawn when Home comes back.
+  const wake = useEffectEvent(() => {
+    if (!paused) invalidate();
+  });
   useEffect(() => {
     world.setTheme({ colors, mode }, scene, gl as unknown as WebGPURenderer);
-    invalidate();
-  }, [world, colors, mode, scene, gl, invalidate]);
+    wake();
+  }, [world, colors, mode, scene, gl]);
   useEffect(() => {
     world.setViewport(aspect);
-    invalidate();
-  }, [world, aspect, invalidate]);
+    wake();
+  }, [world, aspect]);
   useEffect(() => {
     world.setBackdrop(backdrop);
-    invalidate();
-  }, [world, backdrop, invalidate]);
+    wake();
+  }, [world, backdrop]);
   useEffect(() => {
     world.setHero(hero);
-    invalidate();
-  }, [world, hero, invalidate]);
+    wake();
+  }, [world, hero]);
   useEffect(() => {
     world.setFrame(frame);
-    invalidate();
-  }, [world, frame, invalidate]);
+    wake();
+  }, [world, frame]);
   useEffect(() => {
     world.setFaces(faces);
-    invalidate();
-  }, [world, faces, invalidate]);
+    wake();
+  }, [world, faces]);
   // Only a new quality resets the ladder.
   const resetLadder = useEffectEvent((next: StageSceneProps['quality']) => {
     motionState().degrade = initialStageDegrade(next);
@@ -138,12 +143,12 @@ export function StageRuntime(props: StageSceneProps) {
   // The selection has caught up with a released drag: follow the selection again.
   const selectionMoved = useEffectEvent(() => {
     inputs.settle.set(-1);
-    invalidate();
+    wake();
   });
   useEffect(() => selectionMoved(), [selected]);
   const bursted = useEffectEvent(() => {
     motionState().burst = 1;
-    invalidate();
+    wake();
   });
   useEffect(() => {
     if (burst > 0) bursted();
