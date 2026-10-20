@@ -1106,7 +1106,6 @@ msgstr "Kamerazugriff erforderlich"
 #: src/components/ssh-host-form.tsx
 #: src/components/ssh-host-key-dialog.tsx
 #: src/components/theme-link-import.tsx
-#: src/components/voice-input-button.tsx
 #: src/hooks/use-file-actions.tsx
 #: src/hooks/use-lazygit.ts
 #: src/lib/local-authentication.ts
@@ -2547,6 +2546,10 @@ msgstr "Änderungen verwerfen"
 #: src/components/changes-sheet.tsx
 msgid "Discard changes to {discardName}?"
 msgstr "Änderungen an {discardName} verwerfen?"
+
+#: src/components/voice-input-button.tsx
+msgid "Discard recording"
+msgstr "Aufnahme verwerfen"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
