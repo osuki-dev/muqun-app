@@ -409,47 +409,46 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
                     two round controls are its trailing edge. Every body below
                     starts on the same left edge as this name. */}
                 <View style={styles.header}>
-                  <SheetSceneHeading
-                    title={asset.name}
-                    caption={subtitle}
-                    trailing={
-                      <View style={styles.headerControls}>
-                        <PressableScale
-                          accessibilityLabel={t`Save file`}
-                          onPress={fileActions.show}
-                          style={[
-                            styles.close,
-                            { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-                          ]}>
-                          <DownloadIcon size={18} color={theme.colors.text} />
-                        </PressableScale>
-                        {content ? (
-                          <PressableScale
-                            accessibilityLabel={t`Copy`}
-                            onPress={copy}
-                            style={[
-                              styles.close,
-                              { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-                            ]}>
-                            {copied ? (
-                              <DoneIcon size={18} color={theme.colors.success} />
-                            ) : (
-                              <CopyIcon size={18} color={theme.colors.text} />
-                            )}
-                          </PressableScale>
-                        ) : null}
-                        <PressableScale
-                          accessibilityLabel={t`Close file`}
-                          onPress={onClose}
-                          style={[
-                            styles.close,
-                            { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-                          ]}>
-                          <CloseIcon size={18} color={theme.colors.text} />
-                        </PressableScale>
-                      </View>
-                    }
-                  />
+                  {/* The controls get their own row above the name. Beside it they
+                      squeezed a long file name into wrapping mid-word
+                      (`…v1.0.3.muq` / `un-theme`); on its own line the name stays
+                      whole, clipped in the middle so the extension still shows. */}
+                  <View style={styles.headerControls}>
+                    <PressableScale
+                      accessibilityLabel={t`Save file`}
+                      onPress={fileActions.show}
+                      style={[
+                        styles.close,
+                        { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                      ]}>
+                      <DownloadIcon size={18} color={theme.colors.text} />
+                    </PressableScale>
+                    {content ? (
+                      <PressableScale
+                        accessibilityLabel={t`Copy`}
+                        onPress={copy}
+                        style={[
+                          styles.close,
+                          { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                        ]}>
+                        {copied ? (
+                          <DoneIcon size={18} color={theme.colors.success} />
+                        ) : (
+                          <CopyIcon size={18} color={theme.colors.text} />
+                        )}
+                      </PressableScale>
+                    ) : null}
+                    <PressableScale
+                      accessibilityLabel={t`Close file`}
+                      onPress={onClose}
+                      style={[
+                        styles.close,
+                        { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                      ]}>
+                      <CloseIcon size={18} color={theme.colors.text} />
+                    </PressableScale>
+                  </View>
+                  <SheetSceneHeading title={asset.name} titleLines={1} caption={subtitle} />
                 </View>
               </View>
 
@@ -825,7 +824,9 @@ const styles = StyleSheet.create({
   headerControls: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-end',
     gap: 10,
+    marginBottom: SHEET_LADDER.snug,
   },
   // A theme previewed in place: the library's own column, on the gutter.
   themePreview: {
