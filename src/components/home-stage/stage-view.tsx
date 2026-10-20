@@ -457,7 +457,9 @@ function useStageTargets(
       const hero = stageHero(heroAspect, aspect);
       // Only the figure's middle takes taps, not its faded feet or a wide picture's sides.
       const [x, y, z] = hero.position;
-      const hint = projectStagePoint([x, y + hero.height / 2 + 0.3, z], camera, width, height);
+      // On the figure's shoulders rather than above its head: the head reaches
+      // up to the HUD's header, and the hint must stay clear of it.
+      const hint = projectStagePoint([x, y + hero.height * 0.32, z], camera, width, height);
       targets.push({
         kind: 'host',
         rect: stageQuadRect(
