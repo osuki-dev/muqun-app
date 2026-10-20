@@ -154,9 +154,13 @@ const editorial: AppearanceProfile = {
   rowPaddingVertical: 10,
 };
 
+/** Stage shares Editorial's geometry and motion; only Home's composition differs. */
+const stage: AppearanceProfile = { ...editorial, id: 'stage' };
+
 export const appearanceProfiles: Readonly<Record<AppearanceProfileId, AppearanceProfile>> = {
   classic,
   editorial,
+  stage,
 };
 
 // Profile changes are rare. Stable, immutable objects can cross context/native

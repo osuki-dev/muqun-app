@@ -148,6 +148,12 @@ msgstr "上下文中有 {0} 条消息"
 msgid "{0} more models"
 msgstr "还有 {0} 个模型"
 
+#. placeholder {0}: index + 1
+#. placeholder {1}: panels.length
+#: src/components/home-stage/stage-view.tsx
+msgid "{0} of {1}"
+msgstr "第 {0} 台，共 {1} 台"
+
 #. placeholder {0}: filtered.length
 #. placeholder {1}: entries.length
 #: src/components/dev-icon-gallery.tsx
@@ -309,6 +315,10 @@ msgstr "{computer} 上已没有此任务"
 #: src/components/agent-tool-card.tsx
 msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, other {# 个结果}}"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "{count, plural, one {# session} other {# sessions}}"
+msgstr "{count, plural, other {# 个会话}}"
 
 #: src/components/home-connections.tsx
 msgid "{count} in progress"
@@ -543,6 +553,7 @@ msgid "Act on this terminal, or send its agent a prompt"
 msgstr "操作这个终端，或给它的 Agent 下一条指令"
 
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/stage-view.tsx
 #: src/components/task-row.tsx
 msgid "Actions"
 msgstr "操作"
@@ -673,8 +684,13 @@ msgid "All projects"
 msgstr "全部项目"
 
 #: src/components/agent-composer.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 msgid "All sessions"
 msgstr "全部会话"
+
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "All sessions, needs you"
+msgstr "所有会话，需要你处理"
 
 #: src/i18n/labels.ts
 msgid "Allow"
@@ -1058,6 +1074,10 @@ msgstr "品牌标志与运行指示"
 msgid "Bring {0} to the front"
 msgstr "将 {0} 移到最前"
 
+#: src/components/home-stage/stage-view.tsx
+msgid "Brings this computer forward."
+msgstr "把这台电脑移到前面"
+
 #: src/components/custom-theme-library.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "Browse themes"
@@ -1369,6 +1389,7 @@ msgid "Clears notifications only. Pending tasks still need your attention."
 msgstr "仅清除通知。待处理任务仍需你处理"
 
 #: src/app/diagram-viewer.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/sheet-scene.tsx
 #: src/i18n/labels.ts
 msgid "Close"
@@ -1387,6 +1408,7 @@ msgid "Close icon preview"
 msgstr "关闭图标预览"
 
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/task-row.tsx
 msgid "Close menu"
 msgstr "收起"
@@ -1540,6 +1562,7 @@ msgid "Computer"
 msgstr "电脑"
 
 #: src/components/computer-map/screen.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 msgid "Computer details"
 msgstr "电脑详情"
 
@@ -3958,6 +3981,7 @@ msgstr "需要设置"
 msgid "Needs update"
 msgstr "需要更新"
 
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "Needs you"
 msgstr "需要你处理"
@@ -4430,6 +4454,11 @@ msgstr "离线"
 msgid "OFFLINE"
 msgstr "离线"
 
+#. placeholder {0}: age(seen, nowMs)
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Offline · last seen {0}"
+msgstr "离线 · 最后在线 {0}"
+
 #: src/i18n/labels.ts
 msgid "Offline, not answering"
 msgstr "离线，没有响应"
@@ -4468,6 +4497,7 @@ msgid "Only this Home row is hidden. The task and its history remain available. 
 msgstr "仅隐藏此首页条目。任务及其历史记录仍然保留，正在运行的工作不会停止"
 
 #: src/components/home-connections.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/task-row.tsx
@@ -4687,6 +4717,10 @@ msgstr "打开模拟器菜单：设备、按键、键盘和退出。拖动即可
 #: src/components/server-agent-rows.tsx
 msgid "Opens this agent's terminal"
 msgstr "打开这个代理的终端"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Opens this computer."
+msgstr "打开这台电脑"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -5794,6 +5828,10 @@ msgstr "全选"
 msgid "Select model: {modelDisplayName}"
 msgstr "选择模型：{modelDisplayName}"
 
+#: src/components/home-stage/stage-view.tsx
+msgid "selected"
+msgstr "已选中"
+
 #: src/components/computer-map/screen.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-servers.tsx
@@ -5888,6 +5926,7 @@ msgstr "会话不可用"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/home-launch-actions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/session-map.tsx
 msgid "Sessions"
 msgstr "会话"
@@ -6202,6 +6241,11 @@ msgstr "SSH 主机"
 #: src/components/gateway-tunnel-badge.tsx
 msgid "SSH tunnel through {host} is down"
 msgstr "通过 {host} 的 SSH 隧道已断开"
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-home-layout-sheet.tsx
+msgid "Stage"
+msgstr "舞台"
 
 #: src/components/diff-rows.tsx
 msgid "Staged"
@@ -6560,6 +6604,7 @@ msgstr "任务参数"
 #: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-todo-block.tsx
 #: src/components/home-computer-cards.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/server-tasks-sheet.tsx
 #: src/components/task-result-sheet.tsx
 msgid "Tasks"
@@ -7704,6 +7749,7 @@ msgid "While you were away"
 msgstr "离开期间"
 
 #: src/components/collaboration-notice.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "工作中"
@@ -7809,6 +7855,10 @@ msgstr "你已配对的电脑"
 #: src/lib/network-error.ts
 msgid "Your phone's clock is off by {minutes} minutes. Fix the date and time, then try again."
 msgstr "手机时钟偏差了 {minutes} 分钟。请校正日期和时间后重试"
+
+#: src/components/settings-home-layout-sheet.tsx
+msgid "Your theme as a 3D world, with your computers as holo-screens around its character."
+msgstr "把主题变成 3D 世界，你的电脑化作环绕角色的全息屏"
 
 #: src/components/image-preview-modal.tsx
 msgid "Zoom in"
