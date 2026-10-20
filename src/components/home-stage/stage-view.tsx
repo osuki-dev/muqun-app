@@ -617,8 +617,8 @@ function StageHint({ text, at }: { text: string; at: { x: number; y: number } })
 }
 
 /**
- * The 2.5D stage: the same layers flat -- backdrop, hero, the panes at their
- * projected places, the frame -- with only parallax for motion. Drawn
+ * The 2.5D stage: the same layers flat -- backdrop, hero, the frame, the
+ * panes at their projected places -- with only parallax for motion. Drawn
  * without WebGPU, after a lost device, or as a slow device's last degrade
  * step.
  */
@@ -682,26 +682,39 @@ function StaticStage({
         </Animated.View>
       ) : null}
       <Animated.View style={[StyleSheet.absoluteFill, near]}>
+        {targets.map((target) =>
+          target.kind === 'host' && target.rect.visible && layers.hero ? (
+            <Image
+              key="host"
+              source={{ uri: layers.hero }}
+              contentFit="contain"
+              cachePolicy="memory"
+              accessible={false}
+              style={{
+                position: 'absolute',
+                left: target.art.x,
+                top: target.art.y,
+                width: target.art.width,
+                height: target.art.height,
+              }}
+            />
+          ) : null
+        )}
+      </Animated.View>
+      {/* The frame sits between the hero and the panes: it never covers a pane's text. */}
+      {layers.frame ? (
+        <Image
+          source={{ uri: layers.frame }}
+          contentFit="cover"
+          cachePolicy="memory"
+          accessible={false}
+          style={[StyleSheet.absoluteFill, styles.frame]}
+        />
+      ) : null}
+      <Animated.View style={[StyleSheet.absoluteFill, near]}>
         {targets.map((target) => {
-          if (!target.rect.visible) return null;
+          if (!target.rect.visible || target.kind === 'host') return null;
           const { rect } = target;
-          if (target.kind === 'host')
-            return layers.hero ? (
-              <Image
-                key="host"
-                source={{ uri: layers.hero }}
-                contentFit="contain"
-                cachePolicy="memory"
-                accessible={false}
-                style={{
-                  position: 'absolute',
-                  left: target.art.x,
-                  top: target.art.y,
-                  width: target.art.width,
-                  height: target.art.height,
-                }}
-              />
-            ) : null;
           const panel = panels[target.index];
           if (!panel) return null;
           return (
@@ -727,15 +740,6 @@ function StaticStage({
           );
         })}
       </Animated.View>
-      {layers.frame ? (
-        <Image
-          source={{ uri: layers.frame }}
-          contentFit="cover"
-          cachePolicy="memory"
-          accessible={false}
-          style={[StyleSheet.absoluteFill, styles.frame]}
-        />
-      ) : null}
     </View>
   );
 }
