@@ -27,6 +27,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { NextIcon } from '@/icons';
 import { withAlpha } from '@/lib/color';
 import type { HomeContinueEntry } from '@/lib/home-continue';
+import { HOME_DOCK_OUTER_INSET } from '@/lib/home-pad-geometry';
 import {
   stageFlipDelay,
   stageFlipDirection,
@@ -42,7 +43,8 @@ const CARD_MIN_WIDTH = 72;
 /** The widest card, as a share of the row; a longer title truncates. */
 const CARD_MAX_SHARE = 0.7;
 const STRIP_GAP = 8;
-const STRIP_PADDING = 14;
+/** The composer's own gutter, so the first card lines up with the composer below it. */
+const STRIP_PADDING = HOME_DOCK_OUTER_INSET;
 const HALF_TURN = Math.PI / 2;
 
 type Flip = {

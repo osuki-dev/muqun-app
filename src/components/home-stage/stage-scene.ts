@@ -9,11 +9,13 @@
  *                   clear through the middle, thick at the foot
  *   3. hero      -- a cut-out character with a soft glow behind it, its feet
  *                   dissolving into the haze
- *   4. motes     -- dust floating through every depth, one merged draw
- *   5. panes     -- one frosted glass pane per computer in a cover-flow, each
+ *   4. frame     -- an edge-only wallpaper, the nearest layer in depth (so it
+ *                   parallaxes most) but drawn before the panes: it frames
+ *                   the world and never covers a pane or its text
+ *   5. motes     -- dust floating through every depth, one merged draw
+ *   6. panes     -- one frosted glass pane per computer in a cover-flow, each
  *                   with a status glow behind and a faint reflection below
  *                   (glows one instanced draw; panes and reflections another)
- *   6. frame     -- an edge-only wallpaper as the nearest layer
  *
  * Every layer is an unlit, textured plane: no lights, no shadows, no
  * environment, at most eight draws. Pictures are Skia readbacks, top row
@@ -307,7 +309,7 @@ export function createStageScene(): StageSceneHandle {
   heroGlow.visible = false;
   hero.visible = false;
 
-  // -- 4. Motes ----------------------------------------------------------------
+  // -- 5. Motes ----------------------------------------------------------------
   // One merged geometry: each mote is a quad whose corners are `position`,
   // placed in the shader from `aMote` (x and y as shares of the view at its
   // depth, the depth) so the spread follows the view's aspect.
@@ -371,7 +373,7 @@ export function createStageScene(): StageSceneHandle {
   motes.frustumCulled = false;
   motes.renderOrder = 4;
 
-  // -- 5. Panes: status glows, then reflections and panes ----------------------
+  // -- 6. Panes: status glows, then reflections and panes ----------------------
   const glowGeometry = new PlaneGeometry(1.5, 1.2);
   // rgb + strength
   const glowTint = new InstancedBufferAttribute(new Float32Array(STAGE_MAX_SCREENS * 4), 4);
@@ -452,12 +454,14 @@ export function createStageScene(): StageSceneHandle {
   panes.count = 0;
   panes.renderOrder = 6;
 
-  // -- 6. Frame ----------------------------------------------------------------
+  // -- Frame (drawn 4th) -------------------------------------------------------
+  // Nearest in depth, but drawn after the hero and before the motes and the
+  // panes: foliage or rooftops at the edge must never sit over a pane's text.
   const frameSample = texture(blank, flippedUv());
   const frameMaterial = layerMaterial();
   frameMaterial.colorNode = vec4(frameSample.rgb, frameSample.a.mul(0.95));
   const frame = new Mesh(new PlaneGeometry(1, 1), frameMaterial);
-  frame.renderOrder = 10;
+  frame.renderOrder = 3.5;
   let frameSource: StageTextureSource | null = null;
   frame.visible = false;
 
