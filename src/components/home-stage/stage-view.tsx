@@ -32,8 +32,8 @@ import {
   stageScreenPosition,
   stageSwipeStep,
   STAGE_FRONT_SCALE,
-  STAGE_HOST_HEIGHT,
-  STAGE_HOST_HINT,
+  STAGE_HOST_BASE_Y,
+  stageHostSize,
   STAGE_PEDESTAL,
   STAGE_SCREEN_HEIGHT,
   STAGE_SCREEN_WIDTH,
@@ -143,6 +143,8 @@ export function StageView({
     success: theme.colors.success,
     warning: theme.colors.warning,
     offline: theme.colors.textMuted,
+    surface: theme.colors.surface,
+    light: resolvedMode === 'light',
   });
   const screens: StageScreenLook[] = panels.map((panel) => ({
     tone: panel.tone,
@@ -154,6 +156,7 @@ export function StageView({
     () => ({
       background: theme.colors.background,
       surface: theme.colors.surface,
+      text: theme.colors.text,
       primary: theme.colors.primary,
       success: theme.colors.success,
       warning: theme.colors.warning,
@@ -303,10 +306,13 @@ function StageTilt({ tiltX, tiltY }: { tiltX: SharedValue<number>; tiltY: Shared
       const nextY = baseY.get() + (gravity.y - baseY.get()) * 0.02;
       baseX.set(nextX);
       baseY.set(nextY);
-      const clamp = (value: number) => Math.max(-1, Math.min(1, value));
       // About 2.5 m/s^2 of change (roughly 15 degrees) reaches the full look.
-      tiltX.set(tiltX.get() + (clamp((gravity.y - nextY) / 2.5) - tiltX.get()) * 0.3);
-      tiltY.set(tiltY.get() + (clamp((gravity.x - nextX) / 2.5) - tiltY.get()) * 0.3);
+      // Clamped inline: React Compiler hoists a nested helper out of the
+      // worklet, which then runs as a JS-thread function on the UI runtime.
+      const lookX = Math.max(-1, Math.min(1, (gravity.y - nextY) / 2.5));
+      const lookY = Math.max(-1, Math.min(1, (gravity.x - nextX) / 2.5));
+      tiltX.set(tiltX.get() + (lookX - tiltX.get()) * 0.3);
+      tiltY.set(tiltY.get() + (lookY - tiltY.get()) * 0.3);
     }
   );
   return null;
@@ -334,22 +340,27 @@ function useStageTargets(
     if (width <= 0 || height <= 0) return [];
     const camera = stageCamera({ aspect: width / height });
     const ring = stageRingRest(selectedIndex, panels.length);
-    let hostHeight = STAGE_HOST_HEIGHT;
-    let hostWidth = hostHeight * hostAspect;
-    if (hostWidth > 4.2) {
-      hostWidth = 4.2;
-      hostHeight = hostWidth / hostAspect;
-    }
-    // Only the figure's middle third takes taps, not the empty sides of a wide picture.
-    const hostCentre = [STAGE_PEDESTAL[0], 0.215 + hostHeight / 2, STAGE_PEDESTAL[2]] as const;
-    const hostHint = projectStagePoint(STAGE_HOST_HINT, camera, width, height);
+    const host = stageHostSize(hostAspect);
+    // Only the figure's middle takes taps, not the empty sides of a wide picture.
+    const hostCentre = [
+      STAGE_PEDESTAL[0],
+      STAGE_HOST_BASE_Y + host.height / 2,
+      STAGE_PEDESTAL[2],
+    ] as const;
+    // Just above the host's head, at whatever size her art stands.
+    const hostHint = projectStagePoint(
+      [STAGE_PEDESTAL[0], STAGE_HOST_BASE_Y + host.height + 0.35, STAGE_PEDESTAL[2]],
+      camera,
+      width,
+      height
+    );
     const targets: StageTarget[] = [
       {
         kind: 'host',
         rect: stageBillboardRect(
           hostCentre,
-          Math.min(hostWidth, 1.6),
-          hostHeight,
+          Math.min(host.width, 1.6),
+          host.height,
           camera,
           width,
           height
@@ -361,8 +372,9 @@ function useStageTargets(
       const front = index === selectedIndex;
       const scale = front ? STAGE_FRONT_SCALE : STAGE_SIDE_SCALE;
       const centre = stageScreenPosition(index, panels.length, ring);
+      // Just above this screen's own top edge, wherever the ring has put it.
       const hint = projectStagePoint(
-        [centre[0], centre[1] + 0.85, centre[2]],
+        [centre[0], centre[1] + (STAGE_SCREEN_HEIGHT / 2) * scale + 0.25, centre[2]],
         camera,
         width,
         height
@@ -465,12 +477,23 @@ function StageHitAreas({
 function StageHint({ text, at }: { text: string; at: { x: number; y: number } }) {
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
+  // Hung by measured size: percentage transforms are not reliable on Android.
+  const [box, setBox] = useState({ width: 0, height: 0 });
   return (
     <Animated.View
       pointerEvents="none"
       accessible={false}
       importantForAccessibility="no-hide-descendants"
-      style={[styles.hint, { left: at.x, top: at.y }]}>
+      onLayout={(event) => {
+        const { width, height } = event.nativeEvent.layout;
+        setBox((previous) =>
+          previous.width === width && previous.height === height ? previous : { width, height }
+        );
+      }}
+      style={[
+        styles.hint,
+        { left: at.x - box.width / 2, top: at.y - box.height, opacity: box.width > 0 ? 1 : 0 },
+      ]}>
       <View
         style={[
           styles.hintChip,
@@ -606,11 +629,7 @@ function StaticStage({
 
 const styles = StyleSheet.create({
   hit: { position: 'absolute' },
-  hint: {
-    position: 'absolute',
-    alignItems: 'center',
-    transform: [{ translateX: '-50%' }, { translateY: '-100%' }],
-  },
+  hint: { position: 'absolute', alignItems: 'center' },
   hintChip: {
     paddingHorizontal: 10,
     paddingVertical: 6,

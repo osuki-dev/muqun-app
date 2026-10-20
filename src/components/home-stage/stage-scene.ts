@@ -46,6 +46,7 @@ import {
   InstancedBufferAttribute,
   InstancedMesh,
   LinearFilter,
+  LinearMipmapLinearFilter,
   Matrix4,
   Mesh,
   MeshBasicNodeMaterial,
@@ -71,7 +72,8 @@ import {
 
 import {
   STAGE_HOST_CHEST,
-  STAGE_HOST_HEIGHT,
+  STAGE_HOST_BASE_Y,
+  stageHostSize,
   STAGE_MAX_SCREENS,
   STAGE_PEDESTAL,
   STAGE_SCREEN_HEIGHT,
@@ -121,6 +123,7 @@ const FX_CAPACITY = STAGE_MAX_SCREENS * 2 + 4 + SPARK_COUNT;
 export type StageSceneColors = {
   background: string;
   surface: string;
+  text: string;
   primary: string;
   success: string;
   warning: string;
@@ -186,12 +189,18 @@ export type StageSceneHandle = {
 };
 
 /** A Skia RGBA readback (top row first) as an sRGB texture. */
-export function stageTextureFromPixels(pixels: Uint8Array, width: number, height: number) {
+export function stageTextureFromPixels(
+  pixels: Uint8Array,
+  width: number,
+  height: number,
+  { mipmaps = false }: { mipmaps?: boolean } = {}
+) {
   const result = new DataTexture(pixels, width, height, RGBAFormat);
   result.colorSpace = SRGBColorSpace;
   result.magFilter = LinearFilter;
-  result.minFilter = LinearFilter;
-  result.generateMipmaps = false;
+  // Text shrunk to a few pixels needs mips, or its thin strokes break up.
+  result.minFilter = mipmaps ? LinearMipmapLinearFilter : LinearFilter;
+  result.generateMipmaps = mipmaps;
   result.needsUpdate = true;
   return result;
 }
@@ -319,6 +328,7 @@ export function createStageScene(): StageSceneHandle {
   const root = new Group();
   const blank = blankTexture();
   let environment: DataTexture | null = null;
+  let day = false;
 
   // -- Shared uniforms --------------------------------------------------------
   const uPrimary = uniform(new Color('#9fe4ce'));
@@ -403,6 +413,9 @@ export function createStageScene(): StageSceneHandle {
   // bright floor, so the lines are inked into its colour instead.
   const uFloor = uniform(new Color('#0b0f12'));
   const uDay = uniform(0);
+  // By day a mirror-like floor would only reflect the pale sky: less metal, more matte.
+  floorMaterial.metalnessNode = mix(float(0.7), float(0.2), uDay);
+  floorMaterial.roughnessNode = mix(float(0.55), float(0.8), uDay);
   const grid = gridLines.mul(gridFade).mul(gridWave);
   floorMaterial.colorNode = mix(uFloor, uPrimary, grid.mul(uDay).mul(0.7));
   floorMaterial.emissiveNode = uPrimary
@@ -464,16 +477,10 @@ export function createStageScene(): StageSceneHandle {
   pedestal.add(crystal);
   let hostAspect = 1.5;
   const placeHost = () => {
-    let h = STAGE_HOST_HEIGHT;
-    let w = h * hostAspect;
-    // A wide picture keeps the sketch's 4-unit width and loses height instead.
-    if (w > 4.2) {
-      w = 4.2;
-      h = w / hostAspect;
-    }
-    host.scale.set(w, h, 1);
+    const { width, height } = stageHostSize(hostAspect);
+    host.scale.set(width, height, 1);
     // The cut bottom edge sinks into the pedestal's top.
-    host.position.set(0, 0.215 + h / 2, 0);
+    host.position.set(0, STAGE_HOST_BASE_Y + height / 2, 0);
   };
   placeHost();
   host.visible = false;
@@ -510,7 +517,19 @@ export function createStageScene(): StageSceneHandle {
   const edgeColor = attribute('aEdge', 'vec3');
   const isStem = part.greaterThan(0.5);
   const onFace = normalGeometry.z.greaterThan(0.9).and(isStem.not());
-  const onEdge = abs(normalGeometry.z).lessThan(0.9).and(isStem.not());
+
+  // The outline: the bevel and sides, plus a thin band just inside the front
+  // face's rounded rim (the bevel alone is too fine to read on a phone).
+  const rimOffset = abs(vec2(positionGeometry.x, positionGeometry.y)).sub(
+    vec2(STAGE_SCREEN_WIDTH / 2 - 0.14, STAGE_SCREEN_HEIGHT / 2 - 0.14)
+  );
+  const rimDistance = length(max(rimOffset, 0))
+    .add(TSL.min(max(rimOffset.x, rimOffset.y), 0))
+    .sub(0.14);
+  const onEdge = abs(normalGeometry.z)
+    .lessThan(0.9)
+    .or(rimDistance.greaterThan(-0.03))
+    .and(isStem.not());
   const slot = look.x;
   const cell = vec2(slot.mod(STAGE_FACE_COLUMNS), slot.div(STAGE_FACE_COLUMNS).floor());
   const faceLocal = vec2(
@@ -537,13 +556,26 @@ export function createStageScene(): StageSceneHandle {
   screenMaterial.envMapIntensity = 0.55;
   // The face is printed into the glass's colour (dark ink reads on a light
   // slab) and, at night, also glows like the sketch's unlit face layer.
-  screenMaterial.colorNode = select(isStem, uMetal, mix(uSlabTint, faceSample.rgb, faceAlpha));
+  const slabFace = mix(uSlabTint, faceSample.rgb, faceAlpha);
+  // By day the edge is painted in the primary at full strength: emission
+  // cannot brighten a pale slab, so it would vanish.
+  screenMaterial.colorNode = select(
+    isStem,
+    uMetal,
+    select(onEdge, mix(slabFace, edgeColor, look.w.mul(uDay)), slabFace)
+  );
   screenMaterial.metalnessNode = select(isStem, float(1), float(0.1));
-  screenMaterial.roughnessNode = select(isStem, float(0.28), float(0.18));
+  // By day the glass is satin: a mirror finish reflects the pale sky over the
+  // printed face and washes the text out.
+  screenMaterial.roughnessNode = select(isStem, float(0.28), mix(float(0.18), float(0.5), uDay));
+  // Printed ink is matte: no reflection over the letters by day.
+  const dayInk = faceAlpha.mul(uDay);
+  screenMaterial.clearcoatNode = mix(float(1), float(0.15), uDay).mul(float(1).sub(dayInk));
+  screenMaterial.specularIntensityNode = float(1).sub(dayInk);
   screenMaterial.emissiveNode = faceSample.rgb
     .mul(faceAlpha)
     .mul(float(1).sub(uDay.mul(0.85)))
-    .add(select(onEdge, edgeColor.mul(look.w).mul(1.6), vec3(0)));
+    .add(select(onEdge, edgeColor.mul(look.w).mul(1.6).mul(float(1).sub(uDay)), vec3(0)));
   screenMaterial.opacityNode = select(
     isStem,
     float(1),
@@ -692,7 +724,11 @@ export function createStageScene(): StageSceneHandle {
       colors.primary.set(palette.primary);
       colors.success.set(palette.success);
       colors.warning.set(palette.warning);
-      uFloor.value.copy(background).multiplyScalar(light ? 0.85 : 0.55);
+      // Day: a mid-tone floor (the ground pulled towards the ink) so the grid
+      // and the status rings read; night keeps the dark metal.
+      if (light) uFloor.value.copy(background).lerp(new Color(palette.text), 0.42);
+      else uFloor.value.copy(background).multiplyScalar(0.55);
+      day = light;
       uDay.value = light ? 1 : 0;
       metalMaterial.color.set(light ? '#d9d4cb' : '#8c99a4');
       const metal = metalMaterial.color;
@@ -705,7 +741,8 @@ export function createStageScene(): StageSceneHandle {
       key.intensity = light ? 1.3 : 0.9;
       rim.color.copy(colors.primary);
       scene.background = background;
-      scene.fog = new Fog(background, 10, 34);
+      // Day fog starts further out, so the mid-tone floor is not washed back to the ground.
+      scene.fog = light ? new Fog(background, 16, 44) : new Fog(background, 10, 34);
       const next = paintEnvironment(palette, light);
       scene.environment = next;
       environment?.dispose();
@@ -769,9 +806,11 @@ export function createStageScene(): StageSceneHandle {
         screenLook.setXYZW(
           drawn,
           screen.look.faceSlot,
-          offline ? 0.45 : screen.front ? 1 : 0.7,
-          screen.front ? 0.78 : 0.55,
-          (offline ? 0.25 : screen.front ? 0.9 : 0.45) * (working ? 0.6 + 0.4 * pulse : 1)
+          offline ? (day ? 0.7 : 0.45) : screen.front ? 1 : day ? 0.9 : 0.7,
+          // Day glass is the surface colour, nearly opaque, so dark text reads on it.
+          day ? (screen.front ? 0.94 : 0.84) : screen.front ? 0.78 : 0.55,
+          (offline ? (day ? 0.45 : 0.25) : day ? 1 : screen.front ? 0.9 : 0.45) *
+            (working ? 0.6 + 0.4 * pulse : 1)
         );
         const edge = offline ? colors.offline : colors.primary;
         screenEdge.setXYZ(drawn, edge.r, edge.g, edge.b);
