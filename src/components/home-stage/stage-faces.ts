@@ -11,6 +11,7 @@ import {
 import type { Texture } from 'three/webgpu';
 
 import { agentStatusWord } from '@/i18n/labels';
+import { stageReadableInk } from '@/lib/home-stage-ink';
 import type { StagePanel } from '@/lib/home-stage-panels';
 import { STAGE_FACE_COLUMNS, STAGE_FACE_ROWS, stageTextureFromPixels } from './stage-scene';
 
@@ -25,6 +26,9 @@ export type StageFaceColors = {
   success: string;
   warning: string;
   offline: string;
+  /** The slab's glass tint in the light variant, which the face reads against. */
+  surface: string;
+  light: boolean;
 };
 
 type FaceLine = { text: string; live: boolean };
@@ -33,7 +37,11 @@ type Face = {
   serverId: string;
   name: string;
   dot: string;
+  /** The name. */
   ink: string;
+  /** Ordinary lines, and a running agent's line. */
+  lineInk: string;
+  liveInk: string;
   lines: FaceLine[];
 };
 
@@ -92,9 +100,9 @@ function paintAtlas(faces: readonly Face[]): Texture | null {
       canvas.drawCircle(x + CELL_WIDTH - PAD - 10, y + 50, 10, dot);
       face.lines.forEach((line, index) => {
         paragraph(canvas, line.text, x + PAD, y + 98 + index * 38, CELL_WIDTH - PAD * 2, {
-          color: line.live ? face.dot : face.ink,
-          size: 22,
-          weight: FontWeight.Medium,
+          color: line.live ? face.liveInk : face.lineInk,
+          size: 23,
+          weight: FontWeight.SemiBold,
           mono: true,
         });
       });
@@ -111,7 +119,9 @@ function paintAtlas(faces: readonly Face[]): Texture | null {
         colorType: ColorType.RGBA_8888,
         alphaType: AlphaType.Unpremul,
       });
-      return pixels instanceof Uint8Array ? stageTextureFromPixels(pixels, width, height) : null;
+      return pixels instanceof Uint8Array
+        ? stageTextureFromPixels(pixels, width, height, { mipmaps: true })
+        : null;
     } finally {
       snapshot.dispose();
     }
@@ -149,12 +159,23 @@ export function useStageFaces(
       })),
       ...panel.face.sessions.map((title) => ({ text: `$ ${title}`, live: false })),
     ];
+    // Night: light text glowing on dark glass, a running line in its status colour.
+    // Day: dark text printed on the surface-tinted glass, lines in the primary
+    // darkened to 4.5:1 against it.
+    const dayLines = stageReadableInk(offline ? colors.offline : colors.primary, colors.surface);
+    const ink = offline
+      ? colors.light
+        ? stageReadableInk(colors.offline, colors.surface)
+        : colors.offline
+      : colors.text;
     return [
       {
         serverId: panel.serverId,
         name: panel.label,
         dot,
-        ink: offline ? colors.offline : colors.text,
+        ink,
+        lineInk: colors.light ? dayLines : ink,
+        liveInk: colors.light ? dayLines : dot,
         lines,
       },
     ];
