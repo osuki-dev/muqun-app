@@ -24,10 +24,10 @@
  * Which tab is open is remembered for the session. A reader with no themes of
  * their own starts on the gallery, where the themes are.
  */
-import { LegendList } from '@legendapp/list/react-native';
+import { LegendList, type LegendListRef } from '@legendapp/list/react-native';
 import { useLingui } from '@lingui/react/macro';
 import { Button, PressableScale, Text, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useEffectEvent, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -233,6 +233,9 @@ export function SettingsThemeSheet({
   const [readStage, setReadStage] = useState<ThemeFileStage | null>(null);
   const [busy, setBusy] = useState(false);
   const [listWidth, setListWidth] = useState(0);
+  const listRef = useRef<LegendListRef>(null);
+  // Where the grid starts: the list header's height, as the list measured it.
+  const gridStart = useRef(0);
 
   const gallery = useThemeGallery({ enabled: tab === 'gallery', onReady: openEditor });
 
@@ -658,6 +661,25 @@ export function SettingsThemeSheet({
     }
   }
 
+  /**
+   * A new search or tag is a new set of results, read from its first row: a
+   * reader who was down the old results is brought back to the top of the
+   * grid, with the bar stuck above it and the header left scrolled away. A
+   * short way glides; a long way jumps, rather than streaming every old row
+   * past. A reader still above the grid is not moved.
+   */
+  const revealGridStart = useEffectEvent(() => {
+    const list = listRef.current;
+    if (!list || tab !== 'gallery') return;
+    const { scroll, scrollLength } = list.getState();
+    const distance = scroll - gridStart.current;
+    if (distance <= 1) return;
+    void list.scrollToOffset({ offset: gridStart.current, animated: distance <= scrollLength });
+  });
+  useEffect(() => {
+    revealGridStart();
+  }, [gallery.needle]);
+
   const header = (
     <View
       style={[
@@ -760,6 +782,10 @@ export function SettingsThemeSheet({
         style={styles.sheet}
         onLayout={(event) => setListWidth(event.nativeEvent.layout.width)}>
         <LegendList
+          ref={listRef}
+          onMetricsChange={(metrics) => {
+            gridStart.current = metrics.headerSize;
+          }}
           testID={
             tab === 'gallery'
               ? 'theme-browse-list'
