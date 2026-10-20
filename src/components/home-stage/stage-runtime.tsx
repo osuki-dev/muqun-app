@@ -12,13 +12,16 @@ import {
   stagePaneAnchor,
   STAGE_PANE_REACH,
 } from '@/lib/home-stage-geometry';
+import { stageAmbient } from '@/lib/home-stage-ambient';
 import {
   initialStageDegrade,
   recordStageFrame,
   stageEffects,
+  stageIdleInterval,
   stageSpringAtRest,
   stepStageSpring,
   STAGE_CARD_SPRING,
+  STAGE_WAKE_GAP_MS,
   type StageDegradeState,
   type StageSpring,
 } from '@/lib/home-stage-motion';
@@ -35,7 +38,10 @@ type Motion = {
   wasMoving: boolean;
   degrade: StageDegradeState;
   timer: ReturnType<typeof setTimeout> | null;
-  startMs: number;
+  /** The ambient clock: advances only on drawn frames, so a stop and resume never jumps. */
+  ambientS: number;
+  /** The last frame that moved, or that a wake drew after the scene had stopped. */
+  activeMs: number;
 };
 
 const DIVE_SPRING = { stiffness: 90, damping: 17 };
@@ -43,9 +49,11 @@ const DIVE_SPRING = { stiffness: 90, damping: 17 };
 /**
  * Lives inside the Fiber root. Owns the scene objects and the frame clock:
  * frames are drawn while something moves (the cover-flow, a drag, tilt, a
- * dive, a completion's flare), at the 20 fps idle rate for the working
- * pulse, the hero's bob and the motes' drift otherwise, and not at all while
- * Home is paused or, under Reduce Motion, at rest.
+ * dive, a completion's flare); otherwise at the 20 fps idle rate for the
+ * working pulse, the hero's bob and the motes' drift, for
+ * `STAGE_AMBIENT_IDLE_MS` after the last activity, and then not at all until
+ * something wakes the scene. Never while Home is paused or, under Reduce
+ * Motion, at rest.
  */
 export function StageRuntime(props: StageSceneProps) {
   const invalidate = useThree((state) => state.invalidate);
@@ -65,6 +73,8 @@ export function StageRuntime(props: StageSceneProps) {
     hero,
     frame,
     faces,
+    ambientEffects,
+    ambientColors,
     quality,
     reducedMotion,
     dive,
@@ -85,7 +95,8 @@ export function StageRuntime(props: StageSceneProps) {
       wasMoving: false,
       degrade: initialStageDegrade(quality),
       timer: null,
-      startMs: performance.now(),
+      ambientS: 0,
+      activeMs: performance.now(),
     };
     return motion.current;
   };
@@ -135,6 +146,10 @@ export function StageRuntime(props: StageSceneProps) {
     world.setFaces(faces);
     wake();
   }, [world, faces]);
+  useEffect(() => {
+    world.setAmbient(stageAmbient(ambientEffects, ambientColors, mode, aspect));
+    wake();
+  }, [world, ambientEffects, ambientColors, mode, aspect]);
   // Only a new quality resets the ladder.
   const resetLadder = useEffectEvent((next: StageSceneProps['quality']) => {
     motionState().degrade = initialStageDegrade(next);
@@ -173,6 +188,9 @@ export function StageRuntime(props: StageSceneProps) {
     state.lastFrameMs = now;
     const dt = Math.min(0.05, elapsedMs / 1000);
     const effects = stageEffects(quality, { gpuAvailable: true, reducedMotion });
+    // Woken after a stop: whatever woke it is activity, so the ambient motion resumes.
+    if (elapsedMs > STAGE_WAKE_GAP_MS) state.activeMs = now;
+    if (effects.pulse) state.ambientS += dt;
     const count = screens.length;
 
     // A finger moves the panes directly; on release they spring to where the
@@ -234,7 +252,7 @@ export function StageRuntime(props: StageSceneProps) {
     world.update({
       camera,
       panes,
-      timeS: effects.pulse ? (now - state.startMs) / 1000 : 0,
+      timeS: effects.pulse ? state.ambientS : 0,
       tilt: state.look[0],
       burst: effects.particles && effects.pulse ? state.burst : 0,
       motes: effects.particles,
@@ -258,6 +276,7 @@ export function StageRuntime(props: StageSceneProps) {
       if (state.degrade.quality !== was) qualityDropped(state.degrade.quality);
     }
     state.wasMoving = moving;
+    if (moving) state.activeMs = now;
 
     stopTimer();
     if (paused) return;
@@ -265,8 +284,9 @@ export function StageRuntime(props: StageSceneProps) {
       if (effects.frameIntervalMs > 0)
         state.timer = setTimeout(invalidate, Math.max(0, effects.frameIntervalMs - elapsedMs));
       else invalidate();
-    } else if (effects.idleIntervalMs !== null) {
-      state.timer = setTimeout(invalidate, effects.idleIntervalMs);
+    } else {
+      const idle = stageIdleInterval(effects, now - state.activeMs);
+      if (idle !== null) state.timer = setTimeout(invalidate, idle);
     }
   });
 

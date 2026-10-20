@@ -54,7 +54,12 @@ export default function GpuStage(props: StageSceneProps) {
         try {
           await next.configure({
             size: { ...size, top: 0, left: 0 },
-            dpr: Math.min(PixelRatio.get(), 2),
+            // 1.5 rather than 2: about 44% fewer pixels to shade every frame.
+            // The panes' text is a 448 x 280 texture per face, and a resting
+            // pane (about 280 pt wide) covers about 420 px at 1.5x -- one
+            // texel per pixel, where 2x only magnified the same texels. The
+            // texture sets the text's sharpness; MSAA keeps the edges clean.
+            dpr: Math.min(PixelRatio.get(), 1.5),
             frameloop: 'demand',
             // No real-time shadows. Fiber's boolean default asks for
             // PCFSoftShadowMap, which the WebGPU renderer warns it has removed.

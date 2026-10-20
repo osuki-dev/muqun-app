@@ -20,6 +20,8 @@ import {
   initialStageDegrade,
   recordStageFrame,
   stageEffects,
+  stageIdleInterval,
+  STAGE_AMBIENT_IDLE_MS,
   stepStageSpring,
   STAGE_CARD_SPRING,
   type StageDegradeState,
@@ -100,9 +102,27 @@ describe('camera and projection', () => {
     const anchor = stagePaneAnchor(camera, aspect);
     const at = projectStagePoint(anchor, camera, 390, 844);
     expect(at.x).toBeCloseTo(195, 3);
-    // NDC -0.3 is 65 % of the way down.
-    expect(at.y).toBeCloseTo(844 * 0.65, 3);
+    // NDC -0.1 is 55 % of the way down.
+    expect(at.y).toBeCloseTo(844 * 0.55, 3);
     expect(at.depth).toBeLessThanOrEqual(STAGE_PANE_DEPTH);
+  });
+
+  test('the selected pane and its reflection stay above the bottom quarter on phones and tablets', () => {
+    for (const [width, height] of [
+      [393, 873],
+      [390, 844],
+      [834, 1194],
+      [1194, 834],
+    ] as const) {
+      const ratio = width / height;
+      const pane = stagePane(0, stagePaneAnchor(camera, ratio), ratio);
+      const [x, y, z] = pane.position;
+      // The reflection reaches 1.03 pane heights below the pane's centre.
+      const reflection = projectStagePoint([x, y - pane.height * 1.03, z], camera, width, height);
+      expect(height - reflection.y).toBeGreaterThan(height * 0.1);
+      const rect = stageQuadRect(pane.position, pane.width, pane.height, 0, camera, width, height);
+      expect(height - (rect.y + rect.height)).toBeGreaterThan(height * 0.25);
+    }
   });
 
   test('tilt moves the camera within its limits; behind the camera is never visible', () => {
@@ -287,6 +307,21 @@ describe('frame pacing', () => {
       tilt: false,
       idleIntervalMs: null,
     });
+  });
+});
+
+describe('idle policy', () => {
+  const effects = stageEffects('full', { gpuAvailable: true, reducedMotion: false });
+
+  test('ambient motion runs at the idle rate, then stops drawing', () => {
+    expect(stageIdleInterval(effects, 0)).toBe(effects.idleIntervalMs);
+    expect(stageIdleInterval(effects, STAGE_AMBIENT_IDLE_MS - 1)).toBe(effects.idleIntervalMs);
+    expect(stageIdleInterval(effects, STAGE_AMBIENT_IDLE_MS)).toBeNull();
+  });
+
+  test('a scene without ambient motion never idles on a timer', () => {
+    const calm = stageEffects('full', { gpuAvailable: true, reducedMotion: true });
+    expect(stageIdleInterval(calm, 0)).toBeNull();
   });
 });
 

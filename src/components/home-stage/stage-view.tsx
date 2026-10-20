@@ -18,6 +18,7 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { MapErrorBoundary } from '@/components/computer-map/error-boundary';
+import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import { useStableHandler } from '@/hooks/use-render-refs';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useThemeRenderReady } from '@/hooks/use-theme-render-ready';
@@ -36,7 +37,13 @@ import {
 } from '@/lib/home-stage-geometry';
 import { hasSeenStageHints, markStageHintsSeen } from '@/lib/home-stage-hints';
 import { stageLayers, type StageLayers } from '@/lib/home-stage-layers';
-import { stageEffects, type StageQuality } from '@/lib/home-stage-motion';
+import { useAppSettings } from '@/stores/app-settings';
+import {
+  stageEffects,
+  STAGE_TILT_DEADBAND,
+  STAGE_TILT_WAKE,
+  type StageQuality,
+} from '@/lib/home-stage-motion';
 import type { StagePanel } from '@/lib/home-stage-panels';
 import type { StageScreenLook, StageTextureSource } from './stage-scene';
 import { useStageFaces } from './stage-faces';
@@ -192,6 +199,27 @@ export function StageView({
     [theme.colors]
   );
 
+  // The theme's ambient effect for this variant, resolved as the 2D layer
+  // resolves it (`theme-artwork.tsx`): the variant's own, else the theme's.
+  const { theme: customTheme } = useEffectiveCustomTheme();
+  const effectsEnabled = useAppSettings((state) => state.themeEffectsEnabled);
+  const manifest = customTheme?.manifest;
+  const themeEffects = manifest
+    ? (manifest.variants[resolvedMode]?.effects ?? manifest.effects ?? null)
+    : null;
+  const ambientEffects = effectsEnabled ? themeEffects : null;
+  const ambientColors = useMemo(
+    () => ({
+      primary: theme.colors.primary,
+      text: theme.colors.text,
+      textMuted: theme.colors.textMuted,
+      info: theme.colors.info,
+      success: theme.colors.success,
+      warning: theme.colors.warning,
+    }),
+    [theme.colors]
+  );
+
   // Back on Home after a dive: the camera returns to the window.
   useEffect(() => {
     if (!paused) setDiving(false);
@@ -291,6 +319,8 @@ export function StageView({
                 hero={hero}
                 frame={frame}
                 faces={faces.atlas}
+                ambientEffects={ambientEffects}
+                ambientColors={ambientColors}
                 quality={quality}
                 reducedMotion={reducedMotion}
                 dive={diving}
@@ -314,7 +344,9 @@ export function StageView({
             tiltY={tiltY}
           />
         )}
-        {effects.tilt && !paused ? <StageTilt tiltX={tiltX} tiltY={tiltY} /> : null}
+        {effects.tilt && !paused ? (
+          <StageTilt tiltX={tiltX} tiltY={tiltY} onMoved={bridge.wake} />
+        ) : null}
         <StageHitAreas
           panels={panels}
           targets={targets}
@@ -343,11 +375,24 @@ export function StageView({
  * per axis. The baseline follows the hand slowly, so any holding angle reads
  * as level and only movement looks around. Uses Reanimated's sensor, already
  * in the binary: no new native module.
+ *
+ * Changes under `STAGE_TILT_DEADBAND` are not written, so a phone held still
+ * leaves the scene idle; a real movement wakes a scene that has stopped.
  */
-function StageTilt({ tiltX, tiltY }: { tiltX: SharedValue<number>; tiltY: SharedValue<number> }) {
+function StageTilt({
+  tiltX,
+  tiltY,
+  onMoved,
+}: {
+  tiltX: SharedValue<number>;
+  tiltY: SharedValue<number>;
+  onMoved: () => void;
+}) {
   const sensor = useAnimatedSensor(SensorType.GRAVITY, { interval: 33 });
   const baseX = useSharedValue<number | null>(null);
   const baseY = useSharedValue(0);
+  const wokeX = useSharedValue(0);
+  const wokeY = useSharedValue(0);
   useAnimatedReaction(
     () => sensor.sensor.get(),
     (gravity) => {
@@ -366,8 +411,23 @@ function StageTilt({ tiltX, tiltY }: { tiltX: SharedValue<number>; tiltY: Shared
       // worklet, which then runs as a JS-thread function on the UI runtime.
       const lookX = Math.max(-1, Math.min(1, (gravity.y - nextY) / 2.5));
       const lookY = Math.max(-1, Math.min(1, (gravity.x - nextX) / 2.5));
-      tiltX.set(tiltX.get() + (lookX - tiltX.get()) * 0.3);
-      tiltY.set(tiltY.get() + (lookY - tiltY.get()) * 0.3);
+      const nextTiltX = tiltX.get() + (lookX - tiltX.get()) * 0.3;
+      const nextTiltY = tiltY.get() + (lookY - tiltY.get()) * 0.3;
+      if (
+        Math.abs(nextTiltX - tiltX.get()) < STAGE_TILT_DEADBAND &&
+        Math.abs(nextTiltY - tiltY.get()) < STAGE_TILT_DEADBAND
+      )
+        return;
+      tiltX.set(nextTiltX);
+      tiltY.set(nextTiltY);
+      if (
+        Math.abs(nextTiltX - wokeX.get()) + Math.abs(nextTiltY - wokeY.get()) >=
+        STAGE_TILT_WAKE
+      ) {
+        wokeX.set(nextTiltX);
+        wokeY.set(nextTiltY);
+        scheduleOnRN(onMoved);
+      }
     }
   );
   return null;
@@ -422,7 +482,9 @@ function useStageTargets(
       const hero = stageHero(heroAspect, aspect);
       // Only the figure's middle takes taps, not its faded feet or a wide picture's sides.
       const [x, y, z] = hero.position;
-      const hint = projectStagePoint([x, y + hero.height / 2 + 0.3, z], camera, width, height);
+      // On the figure's shoulders rather than above its head: the head reaches
+      // up to the HUD's header, and the hint must stay clear of it.
+      const hint = projectStagePoint([x, y + hero.height * 0.32, z], camera, width, height);
       targets.push({
         kind: 'host',
         rect: stageQuadRect(
@@ -580,8 +642,8 @@ function StageHint({ text, at }: { text: string; at: { x: number; y: number } })
 }
 
 /**
- * The 2.5D stage: the same layers flat -- backdrop, hero, the panes at their
- * projected places, the frame -- with only parallax for motion. Drawn
+ * The 2.5D stage: the same layers flat -- backdrop, hero, the frame, the
+ * panes at their projected places -- with only parallax for motion. Drawn
  * without WebGPU, after a lost device, or as a slow device's last degrade
  * step.
  */
@@ -645,26 +707,39 @@ function StaticStage({
         </Animated.View>
       ) : null}
       <Animated.View style={[StyleSheet.absoluteFill, near]}>
+        {targets.map((target) =>
+          target.kind === 'host' && target.rect.visible && layers.hero ? (
+            <Image
+              key="host"
+              source={{ uri: layers.hero }}
+              contentFit="contain"
+              cachePolicy="memory"
+              accessible={false}
+              style={{
+                position: 'absolute',
+                left: target.art.x,
+                top: target.art.y,
+                width: target.art.width,
+                height: target.art.height,
+              }}
+            />
+          ) : null
+        )}
+      </Animated.View>
+      {/* The frame sits between the hero and the panes: it never covers a pane's text. */}
+      {layers.frame ? (
+        <Image
+          source={{ uri: layers.frame }}
+          contentFit="cover"
+          cachePolicy="memory"
+          accessible={false}
+          style={[StyleSheet.absoluteFill, styles.frame]}
+        />
+      ) : null}
+      <Animated.View style={[StyleSheet.absoluteFill, near]}>
         {targets.map((target) => {
-          if (!target.rect.visible) return null;
+          if (!target.rect.visible || target.kind === 'host') return null;
           const { rect } = target;
-          if (target.kind === 'host')
-            return layers.hero ? (
-              <Image
-                key="host"
-                source={{ uri: layers.hero }}
-                contentFit="contain"
-                cachePolicy="memory"
-                accessible={false}
-                style={{
-                  position: 'absolute',
-                  left: target.art.x,
-                  top: target.art.y,
-                  width: target.art.width,
-                  height: target.art.height,
-                }}
-              />
-            ) : null;
           const panel = panels[target.index];
           if (!panel) return null;
           return (
@@ -690,15 +765,6 @@ function StaticStage({
           );
         })}
       </Animated.View>
-      {layers.frame ? (
-        <Image
-          source={{ uri: layers.frame }}
-          contentFit="cover"
-          cachePolicy="memory"
-          accessible={false}
-          style={[StyleSheet.absoluteFill, styles.frame]}
-        />
-      ) : null}
     </View>
   );
 }

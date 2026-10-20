@@ -127,3 +127,40 @@ export function stageEffects(
     idleIntervalMs: gpu && !calm ? 50 : null,
   };
 }
+
+// -- Idle policy ------------------------------------------------------------
+
+/**
+ * How long the ambient motion (the motes' drift, the hero's bob, the working
+ * pulse, a theme's ambient effect) keeps running at the idle rate after the
+ * last interaction. Past it the scene holds its last frame and draws nothing
+ * until something wakes it: a drag, a swipe, tilt, a dive, a completion's
+ * flare or a change to what the scene shows. A phone left on Home then costs
+ * the GPU nothing instead of 20 frames every second.
+ */
+export const STAGE_AMBIENT_IDLE_MS = 6000;
+
+/**
+ * A gap between frames longer than this means the scene had stopped and
+ * something woke it, which counts as activity: the ambient motion resumes.
+ */
+export const STAGE_WAKE_GAP_MS = 250;
+
+/**
+ * The smallest change in smoothed device tilt (-1..1 per axis) that is
+ * written to the scene. Hand tremor and sensor noise stay under it, so a
+ * phone held still does not keep the camera easing at the full frame rate.
+ */
+export const STAGE_TILT_DEADBAND = 0.004;
+/** Accumulated tilt change that wakes a scene which has stopped drawing. */
+export const STAGE_TILT_WAKE = 0.03;
+
+/**
+ * When the next frame is due while nothing moves: the idle interval while the
+ * ambient motion is still running, null once the scene has been idle for
+ * `STAGE_AMBIENT_IDLE_MS` (or has no ambient motion at all).
+ */
+export function stageIdleInterval(effects: StageEffects, idleForMs: number): number | null {
+  if (effects.idleIntervalMs === null) return null;
+  return idleForMs < STAGE_AMBIENT_IDLE_MS ? effects.idleIntervalMs : null;
+}
