@@ -151,7 +151,7 @@ export function SettingsThemeSheet({
       .run({
         kind: 'theme',
         accent: themeVariant(options.pack, resolvedMode).colors.primary,
-        ...(options.prepare ? { prepare: options.prepare } : {}),
+        prepare: options.prepare,
         apply: options.apply,
         settle: onClose,
       })

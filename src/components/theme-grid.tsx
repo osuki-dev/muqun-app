@@ -71,7 +71,6 @@ export function ThemeGrid<T>({
         // picture to another for a frame.
         recycleItems={false}
         getFixedItemSize={() => layout.itemHeight}
-        estimatedItemSize={layout.itemHeight}
         onEndReached={onEndReached}
         onEndReachedThreshold={0.4}
         renderItem={({ item, index }: { item: T; index: number }) => (
