@@ -3,7 +3,7 @@ import { useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { PressableScale, Text, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
 import { Image } from 'expo-image';
-import { lazy, Suspense, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { Platform, StyleSheet, TurboModuleRegistry, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -19,21 +19,32 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 import { MapErrorBoundary } from '@/components/computer-map/error-boundary';
 import { ThemeArtwork } from '@/components/theme-artwork';
-import { useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
+import { useStableHandler } from '@/hooks/use-render-refs';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useThemeRenderReady } from '@/hooks/use-theme-render-ready';
 import { connectionStatusDescription } from '@/i18n/labels';
 import {
-  stageCamera,
-  stageLabelAnchor,
-  stagePanelRect,
-  stageRingOffset,
-  stageSlotPose,
-  stageSwipeStep,
   projectStagePoint,
+  stageBillboardRect,
+  stageCamera,
+  stageDrawnScreens,
+  stageRingRest,
+  stageScreenPosition,
+  stageSwipeStep,
+  STAGE_FRONT_SCALE,
+  STAGE_HOST_HEIGHT,
+  STAGE_HOST_HINT,
+  STAGE_PEDESTAL,
+  STAGE_SCREEN_HEIGHT,
+  STAGE_SCREEN_WIDTH,
+  STAGE_SIDE_SCALE,
+  type StageRect,
 } from '@/lib/home-stage-geometry';
+import { hasSeenStageHints, markStageHintsSeen } from '@/lib/home-stage-hints';
 import { stageEffects, type StageQuality } from '@/lib/home-stage-motion';
 import type { StagePanel } from '@/lib/home-stage-panels';
-import type { StagePanelLook } from './stage-scene';
+import type { StageScreenLook } from './stage-scene';
+import { useStageFaces } from './stage-faces';
 import { useStageTexture } from './stage-textures';
 import { createStageBridge, type StageInputs } from './types';
 
@@ -43,6 +54,8 @@ const GpuStage = lazy(() => import('./gpu-stage'));
 /** Backdrop and art texture caps (§11.7). */
 const BACKDROP_MAX_EDGE = 2048;
 const ART_MAX_EDGE = 1536;
+/** The camera's flight into the front screen before its workspace opens. */
+const DIVE_MS = 520;
 
 export type StageViewProps = {
   panels: readonly StagePanel[];
@@ -52,17 +65,20 @@ export type StageViewProps = {
   artworkUri?: string;
   /** Home is not on screen or the app is in the background: no frames. */
   paused: boolean;
+  /** Bumped when a task completes. */
+  burst: number;
   onSelect: (index: number) => void;
   onOpen: (index: number) => void;
   onActions: (index: number) => void;
+  onNewTask: () => void;
 };
 
 /**
- * The full-screen stage: the WebGPU scene when the device has it, otherwise
+ * The full-screen world: the WebGPU scene when the device has it, otherwise
  * (and after a lost device or a slow device's last degrade step) the static
- * 2.5D composition. Above either sits one layer of 2D hit areas, projected
- * from the same geometry, which carries every touch target and every
- * accessibility element -- the scene itself is never focusable.
+ * 2.5D composition. Above either sits one layer of 2D hit areas projected from
+ * the same geometry, which carries every touch target, every accessibility
+ * element and the first-visit hints -- the scene itself is never focusable.
  */
 export function StageView({
   panels,
@@ -71,18 +87,21 @@ export function StageView({
   backdropFocal,
   artworkUri,
   paused,
+  burst,
   onSelect,
   onOpen,
   onActions,
+  onNewTask,
 }: StageViewProps) {
   const theme = useThemeTokens();
   const { resolvedMode } = useThemeMode();
   const reducedMotion = useReducedMotion();
-  const surfaceOpacity = useSurfaceBackgroundOpacity();
   const window = useWindowDimensions();
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [quality, setQuality] = useState<StageQuality>('full');
   const [failed, setFailed] = useState(false);
+  const [diving, setDiving] = useState(false);
+  const [hints, setHints] = useState(() => !hasSeenStageHints());
   const [gpuAvailable] = useState(
     () => Platform.OS !== 'web' && TurboModuleRegistry.get('WebGPUModule') !== null
   );
@@ -102,7 +121,7 @@ export function StageView({
   );
 
   const dpr = Math.min(3, Math.max(1, window.scale));
-  const backdropEdge = Math.min(BACKDROP_MAX_EDGE, Math.round(window.height * dpr * 0.9));
+  const backdropEdge = Math.min(BACKDROP_MAX_EDGE, Math.round(window.height * dpr));
   const artEdge = Math.min(ART_MAX_EDGE, Math.round(window.height * dpr * 0.6));
   const backdropTexture = useStageTexture(effects.gpu ? backdropUri : undefined, backdropEdge);
   const artTexture = useStageTexture(effects.gpu ? artworkUri : undefined, artEdge);
@@ -117,15 +136,20 @@ export function StageView({
     [backdropTexture, backdropFocal]
   );
   const character = artTexture.status === 'ready' ? artTexture.source : null;
-  const looks: StagePanelLook[] = useMemo(
-    () =>
-      panels.map((panel) => ({
-        tone: panel.tone,
-        working: panel.working,
-        attention: panel.attention,
-      })),
-    [panels]
-  );
+  const drawn = stageDrawnScreens(selectedIndex, panels.length);
+  const faces = useStageFaces(panels, effects.gpu ? drawn : [], {
+    text: theme.colors.text,
+    primary: theme.colors.primary,
+    success: theme.colors.success,
+    warning: theme.colors.warning,
+    offline: theme.colors.textMuted,
+  });
+  const screens: StageScreenLook[] = panels.map((panel) => ({
+    tone: panel.tone,
+    working: panel.working,
+    attention: panel.attention,
+    faceSlot: faces.slots.get(panel.serverId) ?? -1,
+  }));
   const colors = useMemo(
     () => ({
       background: theme.colors.background,
@@ -133,11 +157,29 @@ export function StageView({
       primary: theme.colors.primary,
       success: theme.colors.success,
       warning: theme.colors.warning,
-      danger: theme.colors.danger,
       muted: theme.colors.textMuted,
     }),
     [theme.colors]
   );
+
+  // Back on Home after a dive: the camera returns to the stage.
+  useEffect(() => {
+    if (!paused) setDiving(false);
+  }, [paused]);
+  const touched = useStableHandler(() => {
+    if (!hints) return;
+    setHints(false);
+    markStageHintsSeen();
+  });
+  const openFront = useStableHandler((index: number) => {
+    touched();
+    if (!effects.gpu || reducedMotion) {
+      onOpen(index);
+      return;
+    }
+    setDiving(true);
+    setTimeout(() => onOpen(index), DIVE_MS);
+  });
 
   const gesture = useMemo(
     () =>
@@ -146,13 +188,14 @@ export function StageView({
         .onStart(() => {
           dragging.set(1);
           scheduleOnRN(bridge.wake);
+          scheduleOnRN(touched);
         })
         .onUpdate((event) => {
           dragX.set(size.width > 0 ? event.translationX / size.width : 0);
           dragY.set(size.height > 0 ? event.translationY / size.height : 0);
         })
         .onEnd((event) => {
-          // Sideways moves the ring; up and down only pitches the camera.
+          // Sideways turns the ring; up and down only looks around.
           if (Math.abs(event.translationX) < Math.abs(event.translationY)) return;
           const step = stageSwipeStep(event.translationX, event.velocityX, size.width);
           if (step !== 0) scheduleOnRN(onSelect, selectedIndex + step);
@@ -163,8 +206,11 @@ export function StageView({
           dragY.set(0);
           scheduleOnRN(bridge.wake);
         }),
-    [bridge, dragX, dragY, dragging, onSelect, selectedIndex, size.width, size.height]
+    [bridge, dragX, dragY, dragging, onSelect, selectedIndex, size.width, size.height, touched]
   );
+
+  const hostAspect = character?.aspect ?? (artworkUri ? 1.5 : 0.6);
+  const targets = useStageTargets(panels, selectedIndex, hostAspect, size.width, size.height);
 
   return (
     <GestureDetector gesture={gesture}>
@@ -181,15 +227,17 @@ export function StageView({
           <MapErrorBoundary onError={() => setFailed(true)}>
             <Suspense fallback={null}>
               <GpuStage
-                looks={looks}
+                screens={screens}
                 selected={selectedIndex}
                 colors={colors}
                 mode={resolvedMode}
-                surfaceOpacity={surfaceOpacity}
                 backdrop={backdrop}
                 character={character}
+                faces={faces.atlas}
                 quality={quality}
                 reducedMotion={reducedMotion}
+                dive={diving}
+                burst={burst}
                 paused={paused}
                 inputs={inputs}
                 bridge={bridge}
@@ -201,10 +249,8 @@ export function StageView({
         ) : (
           <StaticStage
             panels={panels}
-            selectedIndex={selectedIndex}
+            targets={targets}
             artworkUri={artworkUri}
-            width={size.width}
-            height={size.height}
             dragY={dragY}
             tiltX={tiltX}
             tiltY={tiltY}
@@ -213,12 +259,21 @@ export function StageView({
         {effects.tilt && !paused ? <StageTilt tiltX={tiltX} tiltY={tiltY} /> : null}
         <StageHitAreas
           panels={panels}
-          selectedIndex={selectedIndex}
-          width={size.width}
-          height={size.height}
-          onSelect={onSelect}
-          onOpen={onOpen}
-          onActions={onActions}
+          targets={targets}
+          hints={hints && !diving}
+          onSelect={(index) => {
+            touched();
+            onSelect(index);
+          }}
+          onOpen={openFront}
+          onActions={(index) => {
+            touched();
+            onActions(index);
+          }}
+          onNewTask={() => {
+            touched();
+            onNewTask();
+          }}
         />
       </View>
     </GestureDetector>
@@ -227,9 +282,9 @@ export function StageView({
 
 /**
  * Device tilt as a smoothed offset from how the phone is being held, -1..1
- * per axis. The baseline follows the hand slowly, so holding the phone at
- * any angle reads as level and only movement parallaxes. Uses Reanimated's
- * sensor, already in the binary: no new native module.
+ * per axis. The baseline follows the hand slowly, so any holding angle reads
+ * as level and only movement looks around. Uses Reanimated's sensor, already
+ * in the binary: no new native module.
  */
 function StageTilt({ tiltX, tiltY }: { tiltX: SharedValue<number>; tiltY: SharedValue<number> }) {
   const sensor = useAnimatedSensor(SensorType.GRAVITY, { interval: 33 });
@@ -249,7 +304,7 @@ function StageTilt({ tiltX, tiltY }: { tiltX: SharedValue<number>; tiltY: Shared
       baseX.set(nextX);
       baseY.set(nextY);
       const clamp = (value: number) => Math.max(-1, Math.min(1, value));
-      // About 2.5 m/s^2 of change (roughly 15 degrees) reaches the ±3 degree limit.
+      // About 2.5 m/s^2 of change (roughly 15 degrees) reaches the full look.
       tiltX.set(tiltX.get() + (clamp((gravity.y - nextY) / 2.5) - tiltX.get()) * 0.3);
       tiltY.set(tiltY.get() + (clamp((gravity.x - nextX) / 2.5) - tiltY.get()) * 0.3);
     }
@@ -257,118 +312,205 @@ function StageTilt({ tiltX, tiltY }: { tiltX: SharedValue<number>; tiltY: Shared
   return null;
 }
 
-function useRestingRects(
+type StageTarget =
+  | { kind: 'host'; rect: StageRect; hint: { x: number; y: number } }
+  | {
+      kind: 'screen';
+      index: number;
+      front: boolean;
+      rect: StageRect;
+      hint: { x: number; y: number };
+    };
+
+/** Every 3D target's resting box on screen, far to near (so the nearer one wins a tap). */
+function useStageTargets(
   panels: readonly StagePanel[],
   selectedIndex: number,
+  hostAspect: number,
   width: number,
   height: number
-) {
+): StageTarget[] {
   return useMemo(() => {
     if (width <= 0 || height <= 0) return [];
-    const camera = stageCamera(0, 0, 0, width / height);
-    return panels.map((panel, index) => {
-      const pose = stageSlotPose(stageRingOffset(index, selectedIndex, panels.length));
-      const rect = stagePanelRect(pose, camera, width, height);
-      const label = projectStagePoint(stageLabelAnchor(pose), camera, width, height);
-      return { panel, index, rect, label, front: index === selectedIndex };
-    });
-  }, [panels, selectedIndex, width, height]);
+    const camera = stageCamera({ aspect: width / height });
+    const ring = stageRingRest(selectedIndex, panels.length);
+    let hostHeight = STAGE_HOST_HEIGHT;
+    let hostWidth = hostHeight * hostAspect;
+    if (hostWidth > 4.2) {
+      hostWidth = 4.2;
+      hostHeight = hostWidth / hostAspect;
+    }
+    // Only the figure's middle third takes taps, not the empty sides of a wide picture.
+    const hostCentre = [STAGE_PEDESTAL[0], 0.215 + hostHeight / 2, STAGE_PEDESTAL[2]] as const;
+    const hostHint = projectStagePoint(STAGE_HOST_HINT, camera, width, height);
+    const targets: StageTarget[] = [
+      {
+        kind: 'host',
+        rect: stageBillboardRect(
+          hostCentre,
+          Math.min(hostWidth, 1.6),
+          hostHeight,
+          camera,
+          width,
+          height
+        ),
+        hint: { x: hostHint.x, y: hostHint.y },
+      },
+    ];
+    for (const index of stageDrawnScreens(selectedIndex, panels.length)) {
+      const front = index === selectedIndex;
+      const scale = front ? STAGE_FRONT_SCALE : STAGE_SIDE_SCALE;
+      const centre = stageScreenPosition(index, panels.length, ring);
+      const hint = projectStagePoint(
+        [centre[0], centre[1] + 0.85, centre[2]],
+        camera,
+        width,
+        height
+      );
+      targets.push({
+        kind: 'screen',
+        index,
+        front,
+        rect: stageBillboardRect(
+          centre,
+          STAGE_SCREEN_WIDTH * scale,
+          STAGE_SCREEN_HEIGHT * scale,
+          camera,
+          width,
+          height
+        ),
+        hint: { x: hint.x, y: hint.y },
+      });
+    }
+    return targets.sort((a, b) => b.rect.depth - a.rect.depth);
+  }, [panels.length, selectedIndex, hostAspect, width, height]);
 }
 
-/** Every card's 2D target: tap the front to open, a side card to select; long press for actions. */
+/**
+ * The 2D layer over the world: the host starts a new task; the front screen
+ * opens its computer, a side screen comes forward, a long press offers the
+ * computer's actions. The screen reader reads these, never the scene.
+ */
 function StageHitAreas({
   panels,
-  selectedIndex,
-  width,
-  height,
+  targets,
+  hints,
   onSelect,
   onOpen,
   onActions,
+  onNewTask,
 }: {
   panels: readonly StagePanel[];
-  selectedIndex: number;
-  width: number;
-  height: number;
+  targets: readonly StageTarget[];
+  hints: boolean;
   onSelect: (index: number) => void;
   onOpen: (index: number) => void;
   onActions: (index: number) => void;
+  onNewTask: () => void;
 }) {
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
-  const theme = useThemeTokens();
-  const rects = useRestingRects(panels, selectedIndex, width, height);
+  const front = targets.find((target) => target.kind === 'screen' && target.front);
+  const host = targets.find((target) => target.kind === 'host');
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-      {rects.map(({ panel, index, rect, label, front }) => {
+      {targets.map((target) => {
+        const { rect } = target;
         if (!rect.visible) return null;
+        const box = { left: rect.x, top: rect.y, width: rect.width, height: rect.height };
+        if (target.kind === 'host')
+          return (
+            <PressableScale
+              key="host"
+              testID="home-stage-host"
+              accessibilityRole="button"
+              accessibilityLabel={t`Start a new task`}
+              onPress={onNewTask}
+              style={[styles.hit, box]}
+            />
+          );
+        const panel = panels[target.index];
+        if (!panel) return null;
         const status = _(connectionStatusDescription[panel.connection]);
         const count = panel.sessionCount;
         const sessions = t`${plural(count, { one: '# session', other: '# sessions' })}`;
-        const position = front ? t`selected` : t`${index + 1} of ${panels.length}`;
+        const position = target.front ? t`selected` : t`${target.index + 1} of ${panels.length}`;
         return (
           <PressableScale
             key={panel.serverId}
             testID={`home-stage-panel-${panel.serverId}`}
             accessibilityRole="button"
             accessibilityLabel={`${panel.label}, ${status}, ${sessions}, ${position}`}
-            accessibilityHint={front ? t`Opens this computer.` : t`Brings this computer forward.`}
-            accessibilityState={{ selected: front }}
+            accessibilityHint={
+              target.front ? t`Opens this computer.` : t`Brings this computer forward.`
+            }
+            accessibilityState={{ selected: target.front }}
             accessibilityActions={[{ name: 'longpress', label: t`Actions` }]}
             onAccessibilityAction={(event) => {
-              if (event.nativeEvent.actionName === 'longpress') onActions(index);
+              if (event.nativeEvent.actionName === 'longpress') onActions(target.index);
             }}
-            onPress={() => (front ? onOpen(index) : onSelect(index))}
-            onLongPress={() => onActions(index)}
-            style={[
-              styles.hit,
-              { left: rect.x, top: rect.y, width: rect.width, height: rect.height },
-            ]}>
-            {front ? null : (
-              <View
-                pointerEvents="none"
-                style={[
-                  styles.tag,
-                  { top: Math.max(0, label.y - rect.y) + 2, maxWidth: Math.max(64, rect.width) },
-                ]}>
-                <Text variant="caption" numberOfLines={1} color={theme.colors.textMuted}>
-                  {panel.label}
-                </Text>
-              </View>
-            )}
-          </PressableScale>
+            onPress={() => (target.front ? onOpen(target.index) : onSelect(target.index))}
+            onLongPress={() => onActions(target.index)}
+            style={[styles.hit, box]}
+          />
         );
       })}
+      {hints && host ? <StageHint text={t`Tap · start a new task`} at={host.hint} /> : null}
+      {hints && front ? <StageHint text={t`Tap · open`} at={front.hint} /> : null}
     </View>
   );
 }
 
+/** A first-visit chip hung from a projected 3D point by a short leader line. */
+function StageHint({ text, at }: { text: string; at: { x: number; y: number } }) {
+  const theme = useThemeTokens();
+  const background = useSurfaceBackground();
+  return (
+    <Animated.View
+      pointerEvents="none"
+      accessible={false}
+      importantForAccessibility="no-hide-descendants"
+      style={[styles.hint, { left: at.x, top: at.y }]}>
+      <View
+        style={[
+          styles.hintChip,
+          {
+            backgroundColor: background(theme.colors.background),
+            borderColor: theme.colors.primary,
+          },
+        ]}>
+        <Text variant="caption" weight="semibold" numberOfLines={1}>
+          {text}
+        </Text>
+      </View>
+      <View style={[styles.hintLeader, { backgroundColor: theme.colors.primary }]} />
+    </Animated.View>
+  );
+}
+
 /**
- * The 2.5D stage: the same composition as flat layers -- wallpaper, art and
- * the cards at their projected places -- with only parallax for motion. Drawn
- * without WebGPU, after a lost device, or as a slow device's last step.
+ * The 2.5D stage: the same composition as flat layers -- wallpaper sky, the
+ * host and the screens at their projected places -- with only parallax for
+ * motion. Drawn without WebGPU, after a lost device, or as a slow device's
+ * last degrade step.
  */
 function StaticStage({
   panels,
-  selectedIndex,
+  targets,
   artworkUri,
-  width,
-  height,
   dragY,
   tiltX,
   tiltY,
 }: {
   panels: readonly StagePanel[];
-  selectedIndex: number;
+  targets: readonly StageTarget[];
   artworkUri?: string;
-  width: number;
-  height: number;
   dragY: SharedValue<number>;
   tiltX: SharedValue<number>;
   tiltY: SharedValue<number>;
 }) {
   const theme = useThemeTokens();
-  const surfaceOpacity = useSurfaceBackgroundOpacity();
-  const rects = useRestingRects(panels, selectedIndex, width, height);
+  const background = useSurfaceBackground();
   const far = useAnimatedStyle(() => ({
     transform: [
       { translateX: tiltY.get() * 6 },
@@ -394,56 +536,103 @@ function StaticStage({
       accessible={false}
       importantForAccessibility="no-hide-descendants">
       <Animated.View style={[styles.bleed, far]}>
-        <ThemeArtwork slot="home.wallpaper" fallbackSlot="shell.wallpaper" />
+        <ThemeArtwork slot="home.wallpaper" fallbackSlot="shell.wallpaper" opacityLimit={0.5} />
       </Animated.View>
-      {artworkUri ? (
-        <Image
-          source={{ uri: artworkUri }}
-          contentFit="contain"
-          contentPosition="bottom"
-          cachePolicy="memory"
-          accessible={false}
-          style={[styles.art, { top: height * 0.16, height: height * 0.5 }]}
-        />
-      ) : null}
       <Animated.View style={[StyleSheet.absoluteFill, near]}>
-        {rects.map(({ panel, rect, front }) =>
-          rect.visible ? (
+        {targets.map((target) => {
+          if (!target.rect.visible) return null;
+          const { rect } = target;
+          if (target.kind === 'host')
+            return artworkUri ? (
+              <Image
+                key="host"
+                source={{ uri: artworkUri }}
+                contentFit="contain"
+                contentPosition="bottom"
+                cachePolicy="memory"
+                accessible={false}
+                style={{
+                  position: 'absolute',
+                  left: rect.x - rect.width,
+                  top: rect.y,
+                  width: rect.width * 3,
+                  height: rect.height,
+                }}
+              />
+            ) : (
+              <View
+                key="host"
+                style={[
+                  styles.crystal,
+                  {
+                    left: rect.x + rect.width * 0.3,
+                    top: rect.y + rect.height * 0.2,
+                    width: rect.width * 0.4,
+                    height: rect.height * 0.5,
+                    backgroundColor: theme.colors.primary,
+                  },
+                ]}
+              />
+            );
+          const panel = panels[target.index];
+          if (!panel) return null;
+          return (
             <View
               key={panel.serverId}
               style={[
-                styles.flatPanel,
+                styles.flatScreen,
                 {
                   left: rect.x,
                   top: rect.y,
                   width: rect.width,
                   height: rect.height,
-                  borderColor: front ? theme.colors.primary : theme.colors.border,
-                  shadowColor: toneColor[panel.tone],
-                  backgroundColor: theme.colors.surface,
-                  opacity: (front ? 1 : 0.6) * (0.55 + surfaceOpacity * 0.4),
+                  borderColor:
+                    panel.tone === 'offline' ? theme.colors.border : theme.colors.primary,
+                  backgroundColor: background(theme.colors.surface),
+                  opacity: target.front ? 1 : 0.7,
                 },
-              ]}
-            />
-          ) : null
-        )}
+              ]}>
+              <Text variant="bodySmall" weight="semibold" numberOfLines={1}>
+                {panel.label}
+              </Text>
+              <View style={[styles.flatDot, { backgroundColor: toneColor[panel.tone] }]} />
+            </View>
+          );
+        })}
       </Animated.View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  hit: { position: 'absolute', alignItems: 'center' },
-  tag: { position: 'absolute', alignSelf: 'center' },
+  hit: { position: 'absolute' },
+  hint: {
+    position: 'absolute',
+    alignItems: 'center',
+    transform: [{ translateX: '-50%' }, { translateY: '-100%' }],
+  },
+  hintChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  hintLeader: { width: 1, height: 14, opacity: 0.7 },
   bleed: { position: 'absolute', top: -12, bottom: -12, left: -12, right: -12 },
-  art: { position: 'absolute', left: 0, right: 0 },
-  flatPanel: {
+  crystal: {
+    position: 'absolute',
+    borderRadius: 8,
+    transform: [{ rotate: '45deg' }],
+    opacity: 0.8,
+  },
+  flatScreen: {
     position: 'absolute',
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: 12,
     borderCurve: 'continuous',
-    shadowOpacity: 0.6,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
+    padding: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
+  flatDot: { width: 8, height: 8, borderRadius: 4, marginTop: 6 },
 });

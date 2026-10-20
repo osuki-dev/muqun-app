@@ -148,7 +148,7 @@ msgstr "上下文中有 {0} 条消息"
 msgid "{0} more models"
 msgstr "还有 {0} 个模型"
 
-#. placeholder {0}: index + 1
+#. placeholder {0}: target.index + 1
 #. placeholder {1}: panels.length
 #: src/components/home-stage/stage-view.tsx
 msgid "{0} of {1}"
@@ -636,6 +636,10 @@ msgstr "代理已退出"
 #: src/components/settings-terminal.tsx
 msgid "Agent panes open in"
 msgstr "代理面板的默认视图"
+
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Agent working"
+msgstr "智能体运行中"
 
 #: src/components/app-drawer-content.tsx
 #: src/components/new-task-action.tsx
@@ -1557,6 +1561,7 @@ msgstr "已完成"
 #: src/components/app-drawer.tsx
 #: src/components/home-composer-options.tsx
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer"
 msgstr "电脑"
@@ -4488,6 +4493,10 @@ msgstr "在线"
 msgid "ONLINE"
 msgstr "在线"
 
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Online · {count, plural, one {# session} other {# sessions}}"
+msgstr "在线 · {count, plural, other {# 个会话}}"
+
 #: src/lib/attachments.ts
 msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."
 msgstr "仅添加了前 {MAX_ATTACHMENTS_PER_PICK} 个文件，{dropped} 个未添加"
@@ -6276,6 +6285,10 @@ msgstr "启动新的 {0}"
 msgid "Start a new session with empty context"
 msgstr "以空白上下文开始新会话"
 
+#: src/components/home-stage/stage-view.tsx
+msgid "Start a new task"
+msgstr "开始新任务"
+
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
 msgid "Start a session with a clean context"
@@ -6544,6 +6557,14 @@ msgstr "Tab 键"
 #: src/components/attachment-menu.tsx
 msgid "Take photo"
 msgstr "拍照"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Tap · open"
+msgstr "轻点 · 打开"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Tap · start a new task"
+msgstr "轻点 · 开始新任务"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Tap again to clear"
@@ -7749,7 +7770,6 @@ msgid "While you were away"
 msgstr "离开期间"
 
 #: src/components/collaboration-notice.tsx
-#: src/components/home-stage/home-stage-layout.tsx
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "工作中"

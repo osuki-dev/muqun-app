@@ -148,7 +148,7 @@ msgstr "Сообщений в контексте: {0}"
 msgid "{0} more models"
 msgstr "Ещё моделей: {0}"
 
-#. placeholder {0}: index + 1
+#. placeholder {0}: target.index + 1
 #. placeholder {1}: panels.length
 #: src/components/home-stage/stage-view.tsx
 msgid "{0} of {1}"
@@ -636,6 +636,10 @@ msgstr "Агент больше не запущен"
 #: src/components/settings-terminal.tsx
 msgid "Agent panes open in"
 msgstr "Панели агентов открываются в"
+
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Agent working"
+msgstr "Агент работает"
 
 #: src/components/app-drawer-content.tsx
 #: src/components/new-task-action.tsx
@@ -1557,6 +1561,7 @@ msgstr "Выполнено"
 #: src/components/app-drawer.tsx
 #: src/components/home-composer-options.tsx
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer"
 msgstr "Компьютер"
@@ -4488,6 +4493,10 @@ msgstr "В сети"
 msgid "ONLINE"
 msgstr "В СЕТИ"
 
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Online · {count, plural, one {# session} other {# sessions}}"
+msgstr "В сети · {count, plural, one {# сеанс} few {# сеанса} many {# сеансов} other {# сеанса}}"
+
 #: src/lib/attachments.ts
 msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."
 msgstr "Добавлены только первые {MAX_ATTACHMENTS_PER_PICK} файлов; {dropped} пропущено"
@@ -6276,6 +6285,10 @@ msgstr "Запустить новый {0}"
 msgid "Start a new session with empty context"
 msgstr "Начать новый сеанс с пустым контекстом"
 
+#: src/components/home-stage/stage-view.tsx
+msgid "Start a new task"
+msgstr "Начать новую задачу"
+
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
 msgid "Start a session with a clean context"
@@ -6544,6 +6557,14 @@ msgstr "Tab"
 #: src/components/attachment-menu.tsx
 msgid "Take photo"
 msgstr "Сделать фото"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Tap · open"
+msgstr "Нажмите · открыть"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Tap · start a new task"
+msgstr "Нажмите · новая задача"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Tap again to clear"
@@ -7749,7 +7770,6 @@ msgid "While you were away"
 msgstr "Пока вас не было"
 
 #: src/components/collaboration-notice.tsx
-#: src/components/home-stage/home-stage-layout.tsx
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "Работает"

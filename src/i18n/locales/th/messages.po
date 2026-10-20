@@ -148,7 +148,7 @@ msgstr "{0} ข้อความในบริบท"
 msgid "{0} more models"
 msgstr "อีก {0} โมเดล"
 
-#. placeholder {0}: index + 1
+#. placeholder {0}: target.index + 1
 #. placeholder {1}: panels.length
 #: src/components/home-stage/stage-view.tsx
 msgid "{0} of {1}"
@@ -636,6 +636,10 @@ msgstr "เอเจนต์ไม่อยู่แล้ว"
 #: src/components/settings-terminal.tsx
 msgid "Agent panes open in"
 msgstr "เปิดพาเนลเอเจนต์ใน"
+
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Agent working"
+msgstr "เอเจนต์กำลังทำงาน"
 
 #: src/components/app-drawer-content.tsx
 #: src/components/new-task-action.tsx
@@ -1557,6 +1561,7 @@ msgstr "เสร็จสิ้น"
 #: src/components/app-drawer.tsx
 #: src/components/home-composer-options.tsx
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer"
 msgstr "คอมพิวเตอร์"
@@ -4488,6 +4493,10 @@ msgstr "ออนไลน์"
 msgid "ONLINE"
 msgstr "ออนไลน์"
 
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Online · {count, plural, one {# session} other {# sessions}}"
+msgstr "ออนไลน์ · {count, plural, other {# เซสชัน}}"
+
 #: src/lib/attachments.ts
 msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."
 msgstr "เพิ่มเฉพาะ {MAX_ATTACHMENTS_PER_PICK} ไฟล์แรก อีก {dropped} ไฟล์ไม่ได้เพิ่ม"
@@ -6276,6 +6285,10 @@ msgstr "เริ่ม {0} ใหม่"
 msgid "Start a new session with empty context"
 msgstr "เริ่มเซสชันใหม่ด้วยบริบทว่าง"
 
+#: src/components/home-stage/stage-view.tsx
+msgid "Start a new task"
+msgstr "เริ่มงานใหม่"
+
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
 msgid "Start a session with a clean context"
@@ -6544,6 +6557,14 @@ msgstr "Tab"
 #: src/components/attachment-menu.tsx
 msgid "Take photo"
 msgstr "ถ่ายรูป"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Tap · open"
+msgstr "แตะ · เปิด"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Tap · start a new task"
+msgstr "แตะ · เริ่มงานใหม่"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Tap again to clear"
@@ -7749,7 +7770,6 @@ msgid "While you were away"
 msgstr "ขณะที่คุณไม่อยู่"
 
 #: src/components/collaboration-notice.tsx
-#: src/components/home-stage/home-stage-layout.tsx
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "กำลังทำงาน"

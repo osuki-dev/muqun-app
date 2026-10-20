@@ -1,12 +1,19 @@
 import { describe, expect, test } from 'bun:test';
 import {
   projectStagePoint,
+  stageBillboardRect,
   stageCamera,
-  stageMovePose,
-  stageRingOffset,
-  stageSlotPose,
+  stageDrawnScreens,
+  stageFacingYaw,
+  stageRingRest,
+  stageRingTarget,
+  stageScreenPosition,
   stageSwipeStep,
   wrapStageIndex,
+  STAGE_FRONT_OFFSET,
+  STAGE_HOST_HINT,
+  STAGE_MAX_SCREENS,
+  STAGE_RING_RADIUS,
 } from '../home-stage-geometry';
 import {
   initialStageDegrade,
@@ -26,53 +33,33 @@ describe('stage ring', () => {
     expect(wrapStageIndex(Number.NaN, 3)).toBe(0);
   });
 
-  test('places every card once around the front, nearest first', () => {
-    expect([0, 1, 2, 3].map((index) => stageRingOffset(index, 0, 4))).toEqual([0, 1, 2, -1]);
-    expect([0, 1, 2, 3, 4].map((index) => stageRingOffset(index, 3, 5))).toEqual([2, -2, -1, 0, 1]);
-    // Two computers: the other is always on the same side.
-    expect(stageRingOffset(1, 0, 2)).toBe(1);
-    expect(stageRingOffset(0, 1, 2)).toBe(1);
-    expect(stageRingOffset(0, 0, 1)).toBe(0);
+  test('turns the short way round and accumulates instead of spinning back', () => {
+    const step = (Math.PI * 2) / 5;
+    expect(stageRingTarget(0, 0, 1, 5)).toBeCloseTo(-step);
+    // From the last back to the first is one step forward, not four back.
+    expect(stageRingTarget(-4 * step, 4, 0, 5)).toBeCloseTo(-5 * step);
+    expect(stageRingTarget(0, 0, 4, 5)).toBeCloseTo(step);
+    expect(stageRingTarget(1.5, 0, 0, 1)).toBe(1.5);
   });
 
-  test('the front card is nearest the reader; the arc recedes and hides past two', () => {
-    const front = stageSlotPose(0);
-    const near = stageSlotPose(1);
-    const far = stageSlotPose(2);
-    expect(front.position[2]).toBeGreaterThan(near.position[2]);
-    expect(near.position[2]).toBeGreaterThan(far.position[2]);
-    expect(stageSlotPose(-1).position[0]).toBeCloseTo(-near.position[0]);
-    expect(near.scale).toBeLessThan(front.scale);
-    expect(far.dim).toBeGreaterThan(near.dim);
-    expect(stageSlotPose(3).presence).toBe(0);
-    expect(far.presence).toBe(1);
-  });
-});
-
-describe('card move', () => {
-  test('starts and ends exactly on the resting slots', () => {
-    for (let index = 0; index < 5; index += 1) {
-      const start = stageMovePose(index, 0, 1, 5, 0);
-      const end = stageMovePose(index, 0, 1, 5, 1);
-      expect(start.position).toEqual(stageSlotPose(stageRingOffset(index, 0, 5)).position);
-      expect(end.position[0]).toBeCloseTo(stageSlotPose(stageRingOffset(index, 1, 5)).position[0]);
+  test('the selected screen stands at the front offset, on the ring', () => {
+    for (const count of [1, 2, 5]) {
+      for (let selected = 0; selected < count; selected += 1) {
+        const [x, , z] = stageScreenPosition(selected, count, stageRingRest(selected, count));
+        expect(Math.atan2(x, z)).toBeCloseTo(STAGE_FRONT_OFFSET);
+        expect(Math.hypot(x, z)).toBeCloseTo(STAGE_RING_RADIUS);
+      }
     }
   });
 
-  test('the incoming card turns a half turn; the outgoing one lifts over a hump', () => {
-    const incoming = stageMovePose(1, 0, 1, 4, 1);
-    expect(Math.abs(incoming.rotationY)).toBeCloseTo(Math.PI);
-    const leaving = stageMovePose(0, 0, 1, 4, 0.5);
-    const straight =
-      (stageSlotPose(0).position[1] + stageSlotPose(stageRingOffset(0, 1, 4)).position[1]) / 2;
-    expect(leaving.position[1]).toBeGreaterThan(straight);
-  });
-
-  test('a spring overshoot never pushes dim or presence out of range', () => {
-    const pose = stageMovePose(2, 0, 1, 5, 1.15);
-    expect(pose.dim).toBeLessThanOrEqual(1);
-    expect(pose.presence).toBeLessThanOrEqual(1);
-    expect(Number.isFinite(stageMovePose(1, 0, 1, 3, Number.NaN).scale)).toBe(true);
+  test('with many computers, draws the selection and its nearest neighbours', () => {
+    expect(stageDrawnScreens(0, 3)).toEqual([0, 1, 2]);
+    const drawn = stageDrawnScreens(0, 20);
+    expect(drawn).toHaveLength(STAGE_MAX_SCREENS);
+    expect(drawn).toContain(0);
+    expect(drawn).toContain(1);
+    expect(drawn).toContain(19);
+    expect(drawn).not.toContain(10);
   });
 
   test('a short slow drag stays; a long or fast one moves towards the pull', () => {
@@ -83,33 +70,51 @@ describe('card move', () => {
   });
 });
 
-describe('label projection', () => {
-  const camera = stageCamera(0, 0, 0, 390 / 440);
+describe('camera and projection', () => {
+  const camera = stageCamera({});
 
   test('the camera target lands at the centre; up is up and right is right', () => {
-    const centre = projectStagePoint(camera.target, camera, 390, 440);
+    const centre = projectStagePoint(camera.target, camera, 390, 844);
     expect(centre.x).toBeCloseTo(195, 3);
-    expect(centre.y).toBeCloseTo(220, 3);
-    const above = projectStagePoint([0, 1, 0], camera, 390, 440);
-    const right = projectStagePoint([1, 0.18, 0], camera, 390, 440);
+    expect(centre.y).toBeCloseTo(422, 3);
+    const above = projectStagePoint([0.55, 2.3, 0], camera, 390, 844);
+    const right = projectStagePoint([1.55, 1.3, 0], camera, 390, 844);
     expect(above.y).toBeLessThan(centre.y);
     expect(right.x).toBeGreaterThan(centre.x);
   });
 
-  test('points behind the camera are never placed on screen', () => {
-    const behind = projectStagePoint([0, 0, 50], camera, 390, 440);
-    expect(behind.visible).toBe(false);
+  test('the front screen and the host hint are on screen; behind the camera is not', () => {
+    const front = stageScreenPosition(0, 4, stageRingRest(0, 4));
+    expect(projectStagePoint(front, camera, 390, 844).visible).toBe(true);
+    expect(projectStagePoint(STAGE_HOST_HINT, camera, 390, 844).visible).toBe(true);
+    expect(projectStagePoint([0, 0, 50], camera, 390, 844).visible).toBe(false);
   });
 
-  test('every resting card of a full arc is inside a phone stage', () => {
-    for (const offset of [-2, -1, 0, 1, 2]) {
-      const pose = stageSlotPose(offset);
-      expect(projectStagePoint(pose.position, camera, 390, 440).visible).toBe(true);
-    }
+  test('a dive ends in front of the screen, looking at it', () => {
+    const front = stageScreenPosition(0, 4, stageRingRest(0, 4));
+    const dived = stageCamera({ dive: 1, diveTo: front });
+    expect(dived.target).toEqual(front);
+    const distance = Math.hypot(
+      dived.position[0] - front[0],
+      dived.position[1] - front[1],
+      dived.position[2] - front[2]
+    );
+    expect(distance).toBeLessThan(2);
+    expect(projectStagePoint(front, dived, 390, 844).visible).toBe(true);
   });
 
-  test('pitch is clamped to its limit', () => {
-    expect(stageCamera(1, 0, 0, 1).position).toEqual(stageCamera(0.5, 0, 0, 1).position);
+  test('look offsets are clamped; billboards face the camera', () => {
+    expect(stageCamera({ lookX: 4 }).position).toEqual(stageCamera({ lookX: 1 }).position);
+    expect(stageFacingYaw([0, 0, 0], [0, 0, 5])).toBeCloseTo(0);
+    expect(stageFacingYaw([0, 0, 0], [5, 0, 0])).toBeCloseTo(Math.PI / 2);
+  });
+
+  test('a screen hit box keeps its aspect and shrinks with distance', () => {
+    const near = stageBillboardRect([0, 1, 3], 1.9, 1.2, camera, 390, 844);
+    const far = stageBillboardRect([0, 1, -3], 1.9, 1.2, camera, 390, 844);
+    expect(near.width / near.height).toBeCloseTo(1.9 / 1.2);
+    expect(far.height).toBeLessThan(near.height);
+    expect(far.depth).toBeGreaterThan(near.depth);
   });
 });
 
@@ -229,6 +234,32 @@ describe('stage panels', () => {
       },
     });
     expect(panels.map((panel) => panel.attention)).toEqual([false, true]);
+  });
+
+  test('a screen face lists working agents first, then the latest sessions', () => {
+    const [panel] = stagePanels({
+      ...base,
+      agentsByServer: {
+        a: {
+          serverId: 'a',
+          checkedAtMs: now,
+          agents: [
+            { id: '1', name: 'pane', status: 'idle', hasAgent: false },
+            { id: '2', name: 'x', agentLabel: 'Codex', status: 'idle', hasAgent: true },
+            { id: '3', name: 'y', agentLabel: 'Claude', status: 'working', hasAgent: true },
+          ],
+        },
+      },
+      recentEntries: ['one', 'two', 'three'].map((title, index) => ({
+        key: title,
+        title,
+        atMs: now - index,
+        destination: { type: 'pane', serverId: 'a', paneId: title },
+      })) as never,
+    });
+    expect(panel!.face.agents.map((agent) => agent.name)).toEqual(['Claude', 'Codex']);
+    expect(panel!.face.sessions).toEqual(['one', 'two']);
+    expect(panel!.sessionCount).toBe(3);
   });
 
   test('selection falls back to the first card when the target is gone', () => {

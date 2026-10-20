@@ -1,7 +1,8 @@
 import type { SharedValue } from 'react-native-reanimated';
+import type { Texture } from 'three/webgpu';
 
 import type { StageQuality } from '@/lib/home-stage-motion';
-import type { StagePanelLook, StageSceneColors, StageTextureSource } from './stage-scene';
+import type { StageSceneColors, StageScreenLook, StageTextureSource } from './stage-scene';
 
 /** Drag and tilt, written on the UI thread and read by the scene each frame. */
 export type StageInputs = {
@@ -11,7 +12,7 @@ export type StageInputs = {
   dragY: SharedValue<number>;
   /** 1 while a finger is on the stage. */
   dragging: SharedValue<number>;
-  /** Smoothed device tilt, -1..1 per axis ([pitch, roll]); 0 when off. */
+  /** Smoothed device tilt, -1..1 per axis; 0 when off. */
   tiltX: SharedValue<number>;
   tiltY: SharedValue<number>;
 };
@@ -33,17 +34,22 @@ export function createStageBridge(): StageBridge {
 }
 
 export type StageSceneProps = {
-  looks: readonly StagePanelLook[];
-  /** Selected card index; the scene plays a card move whenever it changes. */
+  /** One per computer, in ring order. */
+  screens: readonly StageScreenLook[];
+  /** The selected computer; the ring turns whenever it changes. */
   selected: number;
   colors: StageSceneColors;
   mode: 'light' | 'dark';
-  surfaceOpacity: number;
   backdrop: StageTextureSource | null;
   character: StageTextureSource | null;
+  faces: Texture | null;
   quality: StageQuality;
   reducedMotion: boolean;
-  /** Home is off screen, under a sheet's route or the app is in the background. */
+  /** Fly the camera to the selected screen (before opening it), or back. */
+  dive: boolean;
+  /** Bumped when a task completes: the sparks burst. */
+  burst: number;
+  /** Home is off screen or the app is in the background: no frames. */
   paused: boolean;
   inputs: StageInputs;
   bridge: StageBridge;
