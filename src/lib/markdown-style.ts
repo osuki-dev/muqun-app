@@ -17,6 +17,7 @@ import { appAppearanceConfig } from '@/constants/appearance';
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { TRANSCRIPT_GRID } from '@/constants/transcript-grid';
 import { withAlpha } from '@/lib/color';
+import { surfaceBackgroundFill } from '@/theme/surface-background';
 
 /**
  * The two faces a markdown block can be set in, where the reader supplied them.
@@ -106,9 +107,10 @@ function syntaxColors(colors: Colors): NonNullable<MarkdownStyle['codeBlock']>['
 export function createCompactMarkdownStyle(
   colors: Colors,
   ink: string,
-  fonts?: MarkdownFonts
+  fonts?: MarkdownFonts,
+  surfaceOpacity = 1
 ): MarkdownStyle {
-  const base = createMarkdownStyle(colors, fonts);
+  const base = createMarkdownStyle(colors, fonts, surfaceOpacity);
   const size = AGENT_TYPE.meta.size;
   const lineHeight = AGENT_TYPE.mono.lineHeight;
   const quiet = { color: ink, fontSize: size, lineHeight, marginBottom: 6 };
@@ -179,15 +181,22 @@ export function createThoughtMarkdownStyle(colors: Colors, fonts?: MarkdownFonts
   return createCompactMarkdownStyle(colors, colors.textMuted, fonts);
 }
 
-export function createMarkdownStyle(colors: Colors, fonts?: MarkdownFonts): MarkdownStyle {
+/**
+ * `surfaceOpacity` is the theme's interface opacity (1 when it has none): code
+ * and quote wells and the table header follow it like every other surface, so
+ * a low-opacity theme does not leave opaque blocks floating over its wallpaper.
+ */
+export function createMarkdownStyle(
+  colors: Colors,
+  fonts?: MarkdownFonts,
+  surfaceOpacity = 1
+): MarkdownStyle {
+  const fill = (color: string) => surfaceBackgroundFill(color, surfaceOpacity);
   const text = colors.text;
   const muted = colors.textMuted;
   const border = colors.border;
-  // Opacity audit: content -- code and quote wells are part of the text they
-  // hold (the file viewer reads documents with this same style), so they keep
-  // their authored fill; monospace runs and gutters stay legible over a scene.
-  const codeBackground = colors.surfaceRaised;
-  const quoteBackground = colors.primarySubtle;
+  const codeBackground = fill(colors.surfaceRaised);
+  const quoteBackground = fill(colors.primarySubtle);
   const link = colors.primary;
   const mono = codeFamily(fonts);
   /**
@@ -263,7 +272,7 @@ export function createMarkdownStyle(colors: Colors, fonts?: MarkdownFonts): Mark
         tip: { color: colors.success, backgroundColor: quoteBackground },
         important: { color: colors.primary, backgroundColor: quoteBackground },
         warning: { color: colors.warning, backgroundColor: quoteBackground },
-        caution: { color: colors.danger, backgroundColor: colors.dangerSubtle },
+        caution: { color: colors.danger, backgroundColor: fill(colors.dangerSubtle) },
       },
     },
     // Inline code is the body ink in the monospace face and nothing more: no
@@ -309,7 +318,7 @@ export function createMarkdownStyle(colors: Colors, fonts?: MarkdownFonts): Mark
       borderWidth: StyleSheet.hairlineWidth,
       borderRadius: appAppearanceConfig.radius.sm,
       // Headers carry the theme accent; body rows keep neutral reading surfaces.
-      headerBackgroundColor: colors.primarySubtle,
+      headerBackgroundColor: fill(colors.primarySubtle),
       headerTextColor: colors.primary,
       rowEvenBackgroundColor: colors.surface,
       rowOddBackgroundColor: codeBackground,
