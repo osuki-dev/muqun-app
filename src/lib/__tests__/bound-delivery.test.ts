@@ -14,6 +14,7 @@ import {
 } from '../bound-delivery';
 import { recallWorkspaceSelection, rememberWorkspaceSelection } from '../workspace-cycle';
 import { recallTabPane, rememberTabPane } from '../tab-swipe';
+import { followLanding, type HeldTarget } from '../workspace-selection';
 import type { GatewayRecord } from '../gateway-storage';
 import { GatewayTransportRefusalError, retryReplayedRead } from '../gateway-refusal';
 import * as queue from '../attachment-queue';
@@ -512,7 +513,7 @@ function selectionPaths() {
       if (
         node.type === 'VariableDeclarator' &&
         node.id.type === 'Identifier' &&
-        ['setSelection', 'selectTab'].includes(node.id.name)
+        ['setSelection', 'selectTab', 'followSwitch'].includes(node.id.name)
       )
         found[node.id.name] = `const ${parsed.code(node)};`;
       if (node.type === 'CallExpression' && node.arguments[0]?.type === 'ArrowFunctionExpression') {
@@ -527,7 +528,7 @@ function selectionPaths() {
       }
     });
   }
-  if (!route || !readiness || Object.keys(found).length !== 6)
+  if (!route || !readiness || Object.keys(found).length !== 7)
     throw new Error('Production selection paths missing');
   const owner = new DeliveryOwnership();
   const initial = { workspaceId: 'wa', tabId: 'ta', paneId: 'pa' };
@@ -541,6 +542,20 @@ function selectionPaths() {
       expect(typeof value).toBe('object');
     },
     setError: () => {},
+    // The held target as the screen keeps it: opened on pane `pa` from Home.
+    held: {
+      serverId: 'a',
+      sessionId: 's',
+      workspaceId: 'wa',
+      tabId: 'ta',
+      paneId: 'pa',
+      afterGeneration: 1,
+    } as HeldTarget | null,
+    setStrictTarget(update: (held: HeldTarget | null) => HeldTarget | null) {
+      context.held = update(context.held);
+    },
+    followLanding,
+    snapshotGenerationRef: { current: 3 },
     field: (entry: { raw: Record<string, unknown> }, key: string) => String(entry.raw[key] ?? ''),
     rememberWorkspaceSelection,
     recallWorkspaceSelection,
@@ -667,4 +682,36 @@ test('actual readiness layout cleanup prevents tunnel reconnect or session chang
     await expect(pending).rejects.toThrow('no longer active');
     expect(enters).toBe(0);
   }
+});
+
+test('a swipe moves the held Home target with it, so the next snapshot keeps the landing', () => {
+  for (const path of ['workspace', 'tab'] as const) {
+    const p = selectionPaths();
+    if (path === 'workspace') p.selectWorkspace('wb');
+    else p.selectTab({ tabId: 'ta2' }, 'next');
+    const landed =
+      path === 'workspace'
+        ? { workspaceId: 'wb', tabId: 'tb', paneId: 'pb' }
+        : { workspaceId: 'wa', tabId: 'ta2', paneId: 'pa2' };
+    // Whatever re-asserts the held target after a snapshot now names the pane
+    // the swipe landed on, checked against the snapshot already in hand.
+    expect(p.context.held).toEqual({
+      serverId: 'a',
+      sessionId: 's',
+      ...landed,
+      afterGeneration: 3,
+    });
+  }
+});
+
+test('a swipe never invents a held target or moves one held for another computer', () => {
+  const landed = { workspaceId: 'wb', tabId: 'tb', paneId: 'pb' };
+  const landing = { serverId: 'a', sessionId: 's', selection: landed, generation: 3 };
+  expect(followLanding(null, landing)).toBeNull();
+  const elsewhere: HeldTarget = { serverId: 'b', paneId: 'px', afterGeneration: 1 };
+  expect(followLanding(elsewhere, landing)).toBe(elsewhere);
+  const held: HeldTarget = { serverId: 'a', paneId: 'pa', afterGeneration: 1 };
+  expect(
+    followLanding(held, { ...landing, selection: { workspaceId: '', tabId: '', paneId: '' } })
+  ).toBe(held);
 });
