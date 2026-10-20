@@ -45,3 +45,19 @@ test('only a closed muqun-theme fence offers its body for preview', () => {
   expect(files('```json\n{"id":"x"}\n```')).toEqual([]);
   expect(files('```muqun-theme\n{"id":"x"')).toEqual([]);
 });
+
+test('a Codex file citation becomes the file it cites, not raw markup', () => {
+  const reply =
+    'Done.\n:codex-file-citation{path="/home/me/output/report.pdf" purpose="output"}\n' +
+    'See :codex-file-citation{path="/home/me/clip.mp4"} too.';
+  const parts = splitAudioMarkdown(reply);
+  expect(parts.filter((part) => part.kind !== 'markdown')).toEqual([
+    { kind: 'file', uri: '/home/me/output/report.pdf', name: 'report.pdf', start: 6 },
+    { kind: 'video', uri: '/home/me/clip.mp4', name: 'clip.mp4', start: 83 },
+  ]);
+  expect(parts.some((part) => part.kind === 'markdown' && part.text.includes('codex-file'))).toBe(
+    false
+  );
+  // A citation with no usable path is left as it was written.
+  expect(files(':codex-file-citation{purpose="output"}')).toEqual([]);
+});
