@@ -1,5 +1,5 @@
 /**
- * What each computer's holo-card on the Stage says, read from the same Home
+ * What each computer's glass pane on the Stage says, read from the same Home
  * state Classic and Editorial read: the launch controller's computers, their
  * connection statuses, the mirrored agents, the attention observations and
  * the Recent entries. A presentation adapter only -- it reshapes nothing it
@@ -107,7 +107,7 @@ function faceOf(
   return { agents: running, sessions: titles.slice(0, STAGE_FACE_LINES - running.length) };
 }
 
-/** Where the selected computer stands in the panel ring; 0 when it is not there. */
+/** Where the selected computer stands among the panes; 0 when it is not there. */
 export function stageSelectedIndex(
   panels: readonly { serverId: string }[],
   serverId: string | undefined

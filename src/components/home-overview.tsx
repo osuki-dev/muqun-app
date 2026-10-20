@@ -1244,6 +1244,9 @@ export function HomeOverview({
           connectionStatuses={connectionStatuses}
           recentEntries={recentEntries}
           artworkUri={hasEditorialArtwork ? editorialArtworkResolution?.source : undefined}
+          artworkFocal={
+            hasEditorialArtwork ? editorialArtworkResolution?.resolved.image.focalPoint : undefined
+          }
           paused={!isFocused || !appActive}
           topInset={insets.top}
           dockHeight={dock && composerRevealed ? dockHeight : insets.bottom}

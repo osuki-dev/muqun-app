@@ -1,21 +1,21 @@
 import { describe, expect, test } from 'bun:test';
 import {
   projectStagePoint,
-  stageBillboardRect,
   stageCamera,
+  stageCoverPlane,
+  stageDiveCamera,
+  stageDragPosition,
   stageDrawnScreens,
-  stageFacingYaw,
-  stageHostSize,
-  stageRingRest,
-  stageRingTarget,
-  stageScreenPosition,
-  stageSwipeStep,
+  stagePane,
+  stagePaneAnchor,
+  stageQuadRect,
+  stageSwipeTarget,
+  stageViewSize,
   wrapStageIndex,
-  STAGE_FRONT_OFFSET,
-  STAGE_HOST_HINT,
   STAGE_MAX_SCREENS,
-  STAGE_RING_RADIUS,
+  STAGE_PANE_DEPTH,
 } from '../home-stage-geometry';
+import { stageClearFraction, stageLayers } from '../home-stage-layers';
 import {
   initialStageDegrade,
   recordStageFrame,
@@ -28,105 +28,198 @@ import { stagePanels, stageSelectedIndex } from '../home-stage-panels';
 import { stageReadableInk } from '../home-stage-ink';
 import { contrastRatio } from '../../theme/contrast';
 
-describe('stage ring', () => {
-  test('wraps selection in both directions and survives an empty ring', () => {
+describe('cover-flow', () => {
+  test('wraps an index in both directions and survives an empty list', () => {
     expect(wrapStageIndex(-1, 4)).toBe(3);
     expect(wrapStageIndex(9, 4)).toBe(1);
     expect(wrapStageIndex(3, 0)).toBe(0);
     expect(wrapStageIndex(Number.NaN, 3)).toBe(0);
   });
 
-  test('turns the short way round and accumulates instead of spinning back', () => {
-    const step = (Math.PI * 2) / 5;
-    expect(stageRingTarget(0, 0, 1, 5)).toBeCloseTo(-step);
-    // From the last back to the first is one step forward, not four back.
-    expect(stageRingTarget(-4 * step, 4, 0, 5)).toBeCloseTo(-5 * step);
-    expect(stageRingTarget(0, 0, 4, 5)).toBeCloseTo(step);
-    expect(stageRingTarget(1.5, 0, 0, 1)).toBe(1.5);
-  });
-
-  test('the selected screen stands at the front offset, on the ring', () => {
-    for (const count of [1, 2, 5]) {
-      for (let selected = 0; selected < count; selected += 1) {
-        const [x, , z] = stageScreenPosition(selected, count, stageRingRest(selected, count));
-        expect(Math.atan2(x, z)).toBeCloseTo(STAGE_FRONT_OFFSET);
-        expect(Math.hypot(x, z)).toBeCloseTo(STAGE_RING_RADIUS);
-      }
-    }
-  });
-
-  test('with many computers, draws the selection and its nearest neighbours', () => {
+  test('with many computers, draws a run around the selection that stays in range', () => {
     expect(stageDrawnScreens(0, 3)).toEqual([0, 1, 2]);
-    const drawn = stageDrawnScreens(0, 20);
-    expect(drawn).toHaveLength(STAGE_MAX_SCREENS);
-    expect(drawn).toContain(0);
-    expect(drawn).toContain(1);
-    expect(drawn).toContain(19);
-    expect(drawn).not.toContain(10);
+    expect(stageDrawnScreens(0, 0)).toEqual([]);
+    const middle = stageDrawnScreens(10, 20);
+    expect(middle).toHaveLength(STAGE_MAX_SCREENS);
+    expect(middle).toContain(9);
+    expect(middle).toContain(10);
+    expect(middle).toContain(11);
+    expect(stageDrawnScreens(0, 20)[0]).toBe(0);
+    expect(stageDrawnScreens(19, 20).at(-1)).toBe(19);
   });
 
-  test('a short slow drag stays; a long or fast one moves towards the pull', () => {
-    expect(stageSwipeStep(-20, -50, 400)).toBe(0);
-    expect(stageSwipeStep(-120, 0, 400)).toBe(1);
-    expect(stageSwipeStep(120, 0, 400)).toBe(-1);
-    expect(stageSwipeStep(10, -900, 400)).toBe(1);
+  test('a swipe settles on the nearest pane, at least one step when long or fast, never past an end', () => {
+    // Short and slow: stays.
+    expect(stageSwipeTarget(1, 4, -20, -50, 400)).toBe(1);
+    // Long enough for a step but not for the next pane to be nearest.
+    expect(stageSwipeTarget(1, 4, -60, 0, 400)).toBe(2);
+    expect(stageSwipeTarget(1, 4, 60, 0, 400)).toBe(0);
+    // A fast flick steps too.
+    expect(stageSwipeTarget(1, 4, -10, -900, 400)).toBe(2);
+    // Dragged across two panes' worth.
+    expect(stageSwipeTarget(0, 4, -400, 0, 400)).toBe(2);
+    expect(stageSwipeTarget(3, 4, -400, -900, 400)).toBe(3);
+    expect(stageSwipeTarget(0, 4, 300, 900, 400)).toBe(0);
+    expect(stageSwipeTarget(0, 0, -300, 0, 400)).toBe(0);
+  });
+
+  test('a drag gives a little past either end and no more', () => {
+    expect(stageDragPosition(0, 3, 0.1)).toBeCloseTo(-0.1 * (390 / 220));
+    expect(stageDragPosition(0, 3, 5)).toBe(-0.35);
+    expect(stageDragPosition(2, 3, -5)).toBe(2.35);
+  });
+
+  test('the selected pane faces the camera; neighbours stand aside, back and turned inwards', () => {
+    const aspect = 390 / 844;
+    const anchor = stagePaneAnchor(stageCamera(), aspect);
+    const viewWidth = stageViewSize(STAGE_PANE_DEPTH, aspect).width;
+    const front = stagePane(0, anchor, aspect);
+    expect(front.position).toEqual(anchor);
+    expect(front.yaw).toBeCloseTo(0);
+    expect(front.width).toBeCloseTo(viewWidth * 0.72);
+    const next = stagePane(1, anchor, aspect);
+    const previous = stagePane(-1, anchor, aspect);
+    expect(next.position[0] - anchor[0]).toBeCloseTo(viewWidth * 0.66);
+    expect(previous.position[0] - anchor[0]).toBeCloseTo(-viewWidth * 0.66);
+    expect(next.position[2]).toBeCloseTo(anchor[2] - 2.2);
+    expect(next.yaw).toBeCloseTo((-48 * Math.PI) / 180);
+    expect(previous.yaw).toBeCloseTo((48 * Math.PI) / 180);
+    expect(next.width).toBeCloseTo(viewWidth * 0.62);
+    // Halfway through a drag, halfway between.
+    const half = stagePane(0.5, anchor, aspect);
+    expect(half.width).toBeCloseTo(viewWidth * 0.67);
+    expect(stagePane(2, anchor, aspect).width).toBeCloseTo(next.width);
   });
 });
 
 describe('camera and projection', () => {
-  const camera = stageCamera({});
+  const aspect = 390 / 844;
+  const camera = stageCamera();
 
-  test('the camera target lands at the centre; up is up and right is right', () => {
-    const centre = projectStagePoint(camera.target, camera, 390, 844);
-    expect(centre.x).toBeCloseTo(195, 3);
-    expect(centre.y).toBeCloseTo(422, 3);
-    const above = projectStagePoint([0.55, 2.3, 0], camera, 390, 844);
-    const right = projectStagePoint([1.55, 1.3, 0], camera, 390, 844);
-    expect(above.y).toBeLessThan(centre.y);
-    expect(right.x).toBeGreaterThan(centre.x);
+  test('the selected pane sits below the middle of the screen, where the anchor was cast', () => {
+    const anchor = stagePaneAnchor(camera, aspect);
+    const at = projectStagePoint(anchor, camera, 390, 844);
+    expect(at.x).toBeCloseTo(195, 3);
+    // NDC -0.3 is 65 % of the way down.
+    expect(at.y).toBeCloseTo(844 * 0.65, 3);
+    expect(at.depth).toBeLessThanOrEqual(STAGE_PANE_DEPTH);
   });
 
-  test('the front screen and the host hint are on screen; behind the camera is not', () => {
-    const front = stageScreenPosition(0, 4, stageRingRest(0, 4));
-    expect(projectStagePoint(front, camera, 390, 844).visible).toBe(true);
-    expect(projectStagePoint(STAGE_HOST_HINT, camera, 390, 844).visible).toBe(true);
+  test('tilt moves the camera within its limits; behind the camera is never visible', () => {
+    expect(stageCamera({ lookX: 4 }).position).toEqual(stageCamera({ lookX: 1 }).position);
+    expect(stageCamera({ lookX: 1 }).position[0]).toBeCloseTo(Math.sin((5 * Math.PI) / 180) * 4);
+    expect(stageCamera({ lookY: -1 }).position[1]).toBeLessThan(camera.position[1]);
     expect(projectStagePoint([0, 0, 50], camera, 390, 844).visible).toBe(false);
   });
 
-  test('a dive ends in front of the screen, looking at it', () => {
-    const front = stageScreenPosition(0, 4, stageRingRest(0, 4));
-    const dived = stageCamera({ dive: 1, diveTo: front });
-    expect(dived.target).toEqual(front);
+  test('a dive ends in front of the pane, looking at it, with the pane still on screen', () => {
+    const anchor = stagePaneAnchor(camera, aspect);
+    expect(stageDiveCamera(camera, anchor, 0)).toBe(camera);
+    const dived = stageDiveCamera(camera, anchor, 1);
+    expect(dived.target).toEqual(anchor);
     const distance = Math.hypot(
-      dived.position[0] - front[0],
-      dived.position[1] - front[1],
-      dived.position[2] - front[2]
+      dived.position[0] - anchor[0],
+      dived.position[1] - anchor[1],
+      dived.position[2] - anchor[2]
     );
-    expect(distance).toBeLessThan(2);
-    expect(projectStagePoint(front, dived, 390, 844).visible).toBe(true);
+    expect(distance).toBeLessThan(STAGE_PANE_DEPTH);
+    expect(projectStagePoint(anchor, dived, 390, 844).visible).toBe(true);
   });
 
-  test('wide art fits the pedestal; portrait art keeps the full host height', () => {
-    expect(stageHostSize(0.6)).toEqual({ width: 2.67 * 0.6, height: 2.67 });
-    const group = stageHostSize(2.4);
-    expect(group.width).toBeLessThanOrEqual(2.36 * 1.25 + 1e-9);
-    expect(group.height).toBeLessThanOrEqual(2.6);
-    expect(group.width / group.height).toBeCloseTo(2.4);
-    expect(stageHostSize(Number.NaN).height).toBe(2.67);
+  test('a side pane box is clipped to the screen; a pane entirely off screen is not visible', () => {
+    const anchor = stagePaneAnchor(camera, aspect);
+    const front = stagePane(0, anchor, aspect);
+    const frontRect = stageQuadRect(front.position, front.width, front.height, 0, camera, 390, 844);
+    expect(frontRect.visible).toBe(true);
+    expect(frontRect.width / frontRect.height).toBeCloseTo(1 / 0.625, 1);
+    const side = stagePane(1, anchor, aspect);
+    const sideRect = stageQuadRect(
+      side.position,
+      side.width,
+      side.height,
+      side.yaw,
+      camera,
+      390,
+      844
+    );
+    expect(sideRect.visible).toBe(true);
+    expect(sideRect.x + sideRect.width).toBeLessThanOrEqual(390);
+    expect(sideRect.depth).toBeGreaterThan(frontRect.depth);
+    const gone = stageQuadRect([40, 0, -12], 2, 1, 0, camera, 390, 844);
+    expect(gone.visible).toBe(false);
   });
 
-  test('look offsets are clamped; billboards face the camera', () => {
-    expect(stageCamera({ lookX: 4 }).position).toEqual(stageCamera({ lookX: 1 }).position);
-    expect(stageFacingYaw([0, 0, 0], [0, 0, 5])).toBeCloseTo(0);
-    expect(stageFacingYaw([0, 0, 0], [5, 0, 0])).toBeCloseTo(Math.PI / 2);
+  test('a cover layer covers its overscan whatever the picture, and its focal shift keeps it', () => {
+    for (const ratio of [0.4, 1, 2.5]) {
+      const plane = stageCoverPlane(ratio, 60, 1.22, aspect, { x: 0, y: 1 });
+      const view = stageViewSize(60, aspect);
+      expect(plane.width / plane.height).toBeCloseTo(ratio);
+      expect(plane.width / 2 - Math.abs(plane.shiftX)).toBeGreaterThanOrEqual(
+        (view.width * 1.22) / 2 - 1e-9
+      );
+      expect(plane.height / 2 - Math.abs(plane.shiftY)).toBeGreaterThanOrEqual(
+        (view.height * 1.22) / 2 - 1e-9
+      );
+    }
+    expect(stageCoverPlane(2.5, 60, 1.22, aspect, { x: 0, y: 0.5 }).shiftX).toBeGreaterThan(0);
+    expect(stageCoverPlane(2.5, 60, 1.22, aspect).shiftX).toBe(0);
+  });
+});
+
+describe('layers', () => {
+  test('counts near-transparent pixels as clear', () => {
+    expect(stageClearFraction(new Uint8Array([0, 13, 14, 255]))).toBe(0.5);
+    expect(stageClearFraction(new Uint8Array([]))).toBe(0);
   });
 
-  test('a screen hit box keeps its aspect and shrinks with distance', () => {
-    const near = stageBillboardRect([0, 1, 3], 1.9, 1.2, camera, 390, 844);
-    const far = stageBillboardRect([0, 1, -3], 1.9, 1.2, camera, 390, 844);
-    expect(near.width / near.height).toBeCloseTo(1.9 / 1.2);
-    expect(far.height).toBeLessThan(near.height);
-    expect(far.depth).toBeGreaterThan(near.depth);
+  const art = (clear: number | null) => ({ uri: 'art', clear });
+  const wall = (clear: number | null) => ({ uri: 'wall', clear });
+
+  test('a cut-out is the hero in front of a full-scene wallpaper', () => {
+    expect(stageLayers({ artwork: art(0.6), wallpaper: wall(0) })).toEqual({
+      ready: true,
+      backdrop: 'wall',
+      hero: 'art',
+      frame: null,
+    });
+  });
+
+  test('a full painting is the backdrop, whatever the wallpaper; an edge-only wallpaper frames it', () => {
+    expect(stageLayers({ artwork: art(0.1), wallpaper: wall(0) })).toMatchObject({
+      backdrop: 'art',
+      hero: null,
+      frame: null,
+    });
+    expect(stageLayers({ artwork: art(0), wallpaper: wall(0.4) })).toMatchObject({
+      backdrop: 'art',
+      frame: 'wall',
+    });
+  });
+
+  test('an edge-only wallpaper is never the backdrop; with nothing else the colours are', () => {
+    expect(stageLayers({ artwork: art(0.5), wallpaper: wall(0.3) })).toEqual({
+      ready: true,
+      backdrop: null,
+      hero: 'art',
+      frame: 'wall',
+    });
+    expect(stageLayers({})).toEqual({ ready: true, backdrop: null, hero: null, frame: null });
+    // The thresholds are exclusive.
+    expect(stageLayers({ artwork: art(0.15), wallpaper: wall(0.25) })).toMatchObject({
+      backdrop: 'art',
+      frame: null,
+    });
+  });
+
+  test('waits while a picture that might be used is still being measured', () => {
+    expect(stageLayers({ artwork: art(null), wallpaper: wall(0) }).ready).toBe(false);
+    expect(stageLayers({ artwork: art(0.5), wallpaper: wall(null) })).toEqual({
+      ready: false,
+      backdrop: null,
+      hero: null,
+      frame: null,
+    });
+    expect(stageLayers({ wallpaper: wall(0) })).toMatchObject({ ready: true, backdrop: 'wall' });
   });
 });
 
@@ -179,7 +272,7 @@ describe('frame pacing', () => {
     expect(run(initialStageDegrade('static'), 200, 6000).quality).toBe('static');
   });
 
-  test('effects drop particles first, then shimmer; Reduce Motion stills everything', () => {
+  test('effects drop the motes first, then the sheen; Reduce Motion stills everything', () => {
     const gpu = { gpuAvailable: true, reducedMotion: false };
     expect(stageEffects('full', gpu)).toMatchObject({ particles: true, shimmer: true });
     expect(stageEffects('no-particles', gpu)).toMatchObject({ particles: false, shimmer: true });
@@ -189,7 +282,7 @@ describe('frame pacing', () => {
     });
     expect(stageEffects('full', { gpuAvailable: false, reducedMotion: false }).gpu).toBe(false);
     expect(stageEffects('full', { gpuAvailable: true, reducedMotion: true })).toMatchObject({
-      particles: false,
+      particles: true,
       pulse: false,
       tilt: false,
       idleIntervalMs: null,

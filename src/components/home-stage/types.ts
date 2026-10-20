@@ -12,6 +12,8 @@ export type StageInputs = {
   dragY: SharedValue<number>;
   /** 1 while a finger is on the stage. */
   dragging: SharedValue<number>;
+  /** Where a released drag settles until the selection catches up; -1 otherwise. */
+  settle: SharedValue<number>;
   /** Smoothed device tilt, -1..1 per axis; 0 when off. */
   tiltX: SharedValue<number>;
   tiltY: SharedValue<number>;
@@ -34,20 +36,24 @@ export function createStageBridge(): StageBridge {
 }
 
 export type StageSceneProps = {
-  /** One per computer, in ring order. */
+  /** One per computer, in pager order. */
   screens: readonly StageScreenLook[];
-  /** The selected computer; the ring turns whenever it changes. */
+  /** The selected computer; the cover-flow brings it forward whenever it changes. */
   selected: number;
   colors: StageSceneColors;
   mode: 'light' | 'dark';
+  /** The deepest layer: a full painting or a full-scene wallpaper. */
   backdrop: StageTextureSource | null;
-  character: StageTextureSource | null;
+  /** A cut-out character floating in the middle. */
+  hero: StageTextureSource | null;
+  /** An edge-only wallpaper as the nearest layer. */
+  frame: StageTextureSource | null;
   faces: Texture | null;
   quality: StageQuality;
   reducedMotion: boolean;
-  /** Fly the camera to the selected screen (before opening it), or back. */
+  /** Fly the camera to the selected pane (before opening it), or back. */
   dive: boolean;
-  /** Bumped when a task completes: the sparks burst. */
+  /** Bumped when a task completes: the motes flare. */
   burst: number;
   /** Home is off screen or the app is in the background: no frames. */
   paused: boolean;

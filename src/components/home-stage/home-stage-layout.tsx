@@ -44,9 +44,11 @@ export type HomeStageLayoutProps = {
   panels: readonly StagePanel[];
   selectedIndex: number;
   artworkUri?: string;
+  /** The artwork's focal point, for when it is a full painting behind everything. */
+  artworkFocal?: { x: number; y: number };
   /** Home is not on screen or the app is in the background. */
   paused: boolean;
-  /** Bumped when a task completes: the sparks burst. */
+  /** Bumped when a task completes: the motes flare. */
   burst: number;
   topInset: number;
   /** The floating composer's height; the session strip stands above it. */
@@ -186,6 +188,7 @@ export function HomeStageLayout({
   panels,
   selectedIndex,
   artworkUri,
+  artworkFocal,
   paused,
   burst,
   topInset,
@@ -212,7 +215,7 @@ export function HomeStageLayout({
   const background = useSurfaceBackground();
   const profile = useAppearanceProfile();
   const { height: windowHeight } = useWindowDimensions();
-  const backdrop = useStageBackdrop();
+  const wallpaper = useStageWallpaper();
   const [actionsFor, setActionsFor] = useState<string | null>(null);
   const [listOpen, setListOpen] = useState(false);
   const selected = panels[selectedIndex];
@@ -277,9 +280,10 @@ export function HomeStageLayout({
       <StageView
         panels={panels}
         selectedIndex={selectedIndex}
-        backdropUri={backdrop?.uri}
-        backdropFocal={backdrop?.focal}
+        wallpaperUri={wallpaper?.uri}
+        wallpaperFocal={wallpaper?.focal}
         artworkUri={artworkUri}
+        artworkFocal={artworkFocal}
         paused={paused || listOpen}
         burst={burst}
         onSelect={onSelect}
@@ -466,8 +470,8 @@ export function HomeStageLayout({
   );
 }
 
-/** The theme's far sky: `home.wallpaper`, else `shell.wallpaper`, for the current mode. */
-function useStageBackdrop() {
+/** The theme's wallpaper: `home.wallpaper`, else `shell.wallpaper`, for the current mode. */
+function useStageWallpaper() {
   const { resolvedMode } = useThemeMode();
   const { width } = useWindowDimensions();
   const { theme, assets } = useEffectiveCustomTheme();
