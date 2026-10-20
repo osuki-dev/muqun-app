@@ -125,7 +125,9 @@ export function HomeComputerDeck({
   renderCard: (card: ComputerCard, actions?: DeckCardActions, layout?: DeckCardLayout) => ReactNode;
 }) {
   const { t } = useLingui();
+  const theme = useThemeTokens();
   const profile = useAppearanceProfile();
+  const background = useSurfaceBackground();
   const reduced = useReducedMotion();
   const isFocused = useIsFocused();
   const remembered = useHomeTaskCards((state) => state.deckFront);
@@ -636,7 +638,18 @@ export function HomeComputerDeck({
   const canvasHeight = Math.max(scrub?.outgoing?.height ?? 0, scrub?.incoming?.height ?? 0);
 
   return (
-    <View style={styles.computers}>
+    // One surface: this view alone owns the fill and the corners, and the tab
+    // row and the cards inside it are clear. Two fills, one per part, met in a
+    // seam, and their own corners left a notch where the tab row ended. It
+    // does not clip, so the ash may still blow past its edges.
+    <View
+      style={[
+        styles.computers,
+        {
+          backgroundColor: background(theme.colors.surface),
+          borderRadius: profile.chrome.surface,
+        },
+      ]}>
       <ComputerTabs
         servers={servers.filter((server) => ids.includes(server.serverId))}
         selectedId={frontId}
@@ -659,11 +672,7 @@ export function HomeComputerDeck({
             style={[styles.plate, { borderRadius: profile.chrome.surface }, plateStyle]}
           />
           <GestureDetector gesture={gesture}>
-            <View
-              style={[
-                styles.slotCards,
-                { borderRadius: profile.chrome.surface, borderTopLeftRadius: 0 },
-              ]}>
+            <View style={styles.slotCards}>
               {[frontCard, incomingCard]
                 .filter((card): card is ComputerCard => Boolean(card))
                 .map((card) => (
@@ -783,8 +792,6 @@ function ComputerTabs({
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
-  const profile = useAppearanceProfile();
-  const background = useSurfaceBackground();
   const currentId = useGatewayConnectionStore((state) => state.record?.serverId);
   const statuses = useConnectionStatuses(
     servers.map((server) => server.serverId),
@@ -825,14 +832,7 @@ function ComputerTabs({
       ref={scroll}
       testID="home-computer-tabs"
       horizontal
-      style={[
-        styles.tabViewport,
-        {
-          backgroundColor: background(theme.colors.surface),
-          borderTopLeftRadius: profile.chrome.surface,
-          borderTopRightRadius: profile.chrome.surface,
-        },
-      ]}
+      style={styles.tabViewport}
       showsHorizontalScrollIndicator={false}
       bounces={false}
       keyboardShouldPersistTaps="handled"

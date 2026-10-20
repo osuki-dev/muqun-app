@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useWindowDimensions } from 'react-native';
+import { useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
 import { useMarkdownFonts } from '@/hooks/use-user-fonts';
 import { useThemeTokens } from '@osuki-dev/ui';
 import type { MarkdownStyle } from 'react-native-enriched-markdown';
@@ -16,15 +17,16 @@ export function useMarkdownStyle(): MarkdownStyle {
   const theme = useThemeTokens();
   const fonts = useMarkdownFonts();
   const { height } = useWindowDimensions();
+  const surfaceOpacity = useSurfaceBackgroundOpacity();
   return useMemo(() => {
-    const base = createMarkdownStyle(theme.colors, fonts);
+    const base = createMarkdownStyle(theme.colors, fonts, surfaceOpacity);
     return {
       ...base,
       codeBlock: { ...base.codeBlock, borderRadius: theme.radius.sm },
       table: { ...base.table, borderRadius: theme.radius.sm },
       image: markdownImageStyle(height, theme.radius.sm),
     };
-  }, [theme.colors, theme.radius.sm, fonts, height]);
+  }, [theme.colors, theme.radius.sm, fonts, height, surfaceOpacity]);
 }
 
 /**
@@ -49,17 +51,18 @@ export type MarkdownTone = 'body' | 'muted' | 'danger';
 export function useCompactMarkdownStyle(tone: MarkdownTone = 'muted'): MarkdownStyle {
   const theme = useThemeTokens();
   const fonts = useMarkdownFonts();
+  const surfaceOpacity = useSurfaceBackgroundOpacity();
   return useMemo(() => {
     const colors = theme.colors;
     const ink =
       tone === 'body' ? colors.text : tone === 'danger' ? colors.danger : colors.textMuted;
-    const base = createCompactMarkdownStyle(colors, ink, fonts);
+    const base = createCompactMarkdownStyle(colors, ink, fonts, surfaceOpacity);
     return {
       ...base,
       codeBlock: { ...base.codeBlock, borderRadius: theme.radius.sm },
       table: { ...base.table, borderRadius: theme.radius.sm },
     };
-  }, [theme.colors, tone, theme.radius.sm, fonts]);
+  }, [theme.colors, tone, theme.radius.sm, fonts, surfaceOpacity]);
 }
 
 /** A task row's title or second line, in `ink` (a theme token's colour). */

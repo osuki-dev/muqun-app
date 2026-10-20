@@ -142,12 +142,14 @@ export function HomeContinueSearch({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
+  const background = useSurfaceBackground();
   return (
     <View
       style={[
         styles.search,
         {
-          backgroundColor: theme.colors.surface,
+          // The same fill as the sessions card and filter chips around it.
+          backgroundColor: background(theme.colors.surface),
           borderColor: theme.colors.border,
           borderRadius: profile.chrome.surface,
         },

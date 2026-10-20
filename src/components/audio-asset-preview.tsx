@@ -2,6 +2,7 @@ import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { DownloadIcon, PauseIcon, StartIcon, UndoIcon } from '@/icons';
 import { useFileActions } from '@/hooks/use-file-actions';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { saveSessionAsset } from '@/lib/save-file';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { useStore } from 'zustand';
@@ -110,6 +111,7 @@ function AudioPlayer({
 }: { asset: SessionAsset; onRetry: () => void } & AudioOptions) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   const fileActions = useFileActions(asset.name, async () => {
     const resolved = resolve ? await resolve(new AbortController().signal) : asset;
     await saveSessionAsset(resolved, false);
@@ -201,7 +203,10 @@ function AudioPlayer({
   );
   return (
     <View
-      style={[styles.inlinePlayer, { backgroundColor: theme.colors.surfaceRaised }]}
+      style={[
+        styles.inlinePlayer,
+        { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+      ]}
       testID="audio-asset-preview">
       {button}
       <View style={styles.inlineBody}>

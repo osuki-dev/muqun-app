@@ -9,6 +9,7 @@ import { DownloadIcon, FullscreenIcon, PauseIcon, StartIcon } from '@/icons';
 import { AudioProgress } from '@/components/audio-progress';
 import { useInlineMediaVisibility } from '@/hooks/use-inline-media-visibility';
 import { useFileActions } from '@/hooks/use-file-actions';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { saveSessionAsset } from '@/lib/save-file';
 import { resolveAgentFileAsset } from '@/lib/gateway-client';
 import type { SessionAsset } from '@/lib/session-assets';
@@ -84,6 +85,7 @@ function VideoPlayerCard({
 }: VideoOptions & { onRetry: () => void }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   const video = useRef<VideoViewRef>(null);
   const [player, setPlayer] = useState<VideoPlayer | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
@@ -127,7 +129,7 @@ function VideoPlayerCard({
   const label = error ? t`Try again` : playing ? t`Pause` : t`Play`;
   return (
     <View
-      style={[styles.card, { backgroundColor: theme.colors.surfaceRaised }]}
+      style={[styles.card, { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) }]}
       testID="video-asset-preview">
       {player && !error ? (
         <VideoView

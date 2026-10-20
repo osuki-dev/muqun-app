@@ -1,5 +1,5 @@
 import { AppIcon, type AppIconName } from '@/icons/app-icon';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useFloatingSurfaceBackground, useSurfaceBackground } from '@/hooks/use-surface-background';
 /**
  * The `@` file mention picker: a short list of workspace files floating over the
  * composer, close enough to the caret that picking one reads as finishing the
@@ -73,7 +73,7 @@ export function FileMentionPanel({
   const { t } = useLingui();
   const profile = useAppearanceProfile();
   const theme = useThemeTokens();
-  const surfaceBackground = useSurfaceBackground();
+  const floatingBackground = useFloatingSurfaceBackground();
   if (hits.length === 0 && computers.length === 0) return null;
 
   return (
@@ -83,7 +83,7 @@ export function FileMentionPanel({
         styles.panel,
         { borderRadius: profile.chrome.popover },
         {
-          backgroundColor: surfaceBackground(theme.colors.surface),
+          backgroundColor: floatingBackground(theme.colors.surface),
         },
       ]}>
       <ScrollView

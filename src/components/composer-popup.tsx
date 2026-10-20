@@ -5,6 +5,7 @@ import { memo, useCallback, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
+import { useFloatingSurfaceBackground } from '@/hooks/use-surface-background';
 import type { ComposerPopupRow } from '@/lib/composer-popup';
 import { fadeInDown, fadeOutDown } from '@/lib/motion';
 
@@ -58,6 +59,8 @@ export function ComposerPopup({
   maxHeight,
   testIDPrefix = 'composer-popup',
 }: ComposerPopupProps) {
+  const theme = useThemeTokens();
+  const floatingBackground = useFloatingSurfaceBackground();
   /**
    * A row's real height, measured rather than assumed.
    *
@@ -89,7 +92,15 @@ export function ComposerPopup({
       entering={fadeInDown('dropdown')}
       exiting={fadeOutDown('micro')}
       testID={testIDPrefix}>
-      <Card slot="cards.plain" variant="raised" radius="md" padding="xs">
+      {/* `cards.floating`: the kit leaves this fill as given, so the popup
+          keeps the floating floor over the terminal or transcript under it
+          instead of thinning to the bare slider like a `cards.plain` card. */}
+      <Card
+        slot="cards.floating"
+        variant="raised"
+        radius="md"
+        padding="xs"
+        style={{ backgroundColor: floatingBackground(theme.colors.surface) }}>
         <LegendList
           data={rows}
           dataKey={testIDPrefix}

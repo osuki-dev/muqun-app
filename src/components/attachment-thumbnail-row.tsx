@@ -5,6 +5,7 @@ import { Image } from 'expo-image';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { DocumentIcon, PhotoFileIcon } from '@/icons';
 import { GatewayImageThumbnail } from '@/components/gateway-image-thumbnail';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import type { MessageImageAsset } from '@/lib/message-images';
 import { DURATION, fadeIn } from '@/lib/motion';
 import {
@@ -37,6 +38,8 @@ const SIZE = 36;
  */
 export function AttachmentThumbnailRow({ entries }: { entries: readonly ThumbnailEntry[] }) {
   const theme = useThemeTokens();
+  // The same raised fill as the composer's attachment strip, through the slider.
+  const surfaceBackground = useSurfaceBackground();
   if (entries.length === 0) return null;
   return (
     <View style={styles.row}>
@@ -47,7 +50,10 @@ export function AttachmentThumbnailRow({ entries }: { entries: readonly Thumbnai
             asset={entry.asset}
             label={entry.name}
             compact
-            style={[styles.tile, { backgroundColor: theme.colors.surfaceRaised }]}
+            style={[
+              styles.tile,
+              { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+            ]}
           />
         ) : entry.image ? (
           <ThumbnailImage key={entry.key} entry={entry} />
@@ -68,6 +74,7 @@ function directSource(uri: string): AssetImageSource | null {
 
 function ThumbnailImage({ entry }: { entry: ThumbnailEntry }) {
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   const upload = /^[a-z][a-z0-9+.-]*:/i.test(entry.uri) ? null : uploadNameFromPath(entry.uri);
   const [source, setSource] = useState<AssetImageSource | null>(() => directSource(entry.uri));
   const [failed, setFailed] = useState(false);
@@ -85,7 +92,7 @@ function ThumbnailImage({ entry }: { entry: ThumbnailEntry }) {
       accessible
       accessibilityRole="image"
       accessibilityLabel={entry.name}
-      style={[styles.tile, { backgroundColor: theme.colors.surfaceRaised }]}>
+      style={[styles.tile, { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) }]}>
       {source && !failed ? (
         <Image
           source={source}
@@ -105,8 +112,9 @@ function ThumbnailImage({ entry }: { entry: ThumbnailEntry }) {
 
 function FileChip({ name }: { name: string }) {
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   return (
-    <View style={[styles.chip, { backgroundColor: theme.colors.surfaceRaised }]}>
+    <View style={[styles.chip, { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) }]}>
       <DocumentIcon size={12} color={theme.colors.primary} />
       <Text variant="caption" color={theme.colors.text} numberOfLines={1} style={styles.chipName}>
         {name}

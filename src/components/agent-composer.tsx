@@ -52,6 +52,7 @@ import { AgentRevertPlate } from '@/components/agent-revert-plate';
 import { AgentUnreadDot } from '@/components/agent-unread-dot';
 import { TerminalComposer } from '@/components/terminal-composer';
 import { AttachmentMenu } from '@/components/attachment-menu';
+import { FLOATING_MENU_GUTTER, FloatingMenu } from '@/components/floating-menu';
 import { AgentModeMenu } from '@/components/agent-mode-menu';
 import { AttachmentStrip } from '@/components/attachment-strip';
 import { AttachmentThumbnailRow } from '@/components/attachment-thumbnail-row';
@@ -288,6 +289,8 @@ const SessionChip = memo(function SessionChip({
         style={[
           styles.sessionChip,
           { borderRadius: profile.chrome.navigationPill },
+          // Opacity audit: selection -- the lit chip stays solid primary, the
+          // one fill its `onPrimary` ink is proven against; idle chips thin.
           active
             ? { backgroundColor: theme.colors.primary }
             : {
@@ -528,10 +531,19 @@ export interface AgentComposerProps {
    * is about to go, before there is a session to say so -- is the one caller.
    */
   accessory?: React.ReactNode;
-  /** Keep accessory animation frames out of the parent's scroll layout; report the settled size. */
-  accessoryHeightAnimating?: boolean;
   /** Home consolidates its choices in one control beside the attachment button. */
   toolbarLeading?: React.ReactNode;
+  /**
+   * The floating card `toolbarLeading`'s button opens. It takes the attachment
+   * menu's anchor, card and tap-outside catcher; opening either closes the
+   * other, so one menu is up at a time. The caller owns `open` and its button.
+   */
+  toolbarMenu?: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    content: React.ReactNode;
+    testID?: string;
+  };
   /** Optional decoration inside the draft field, behind text and controls. */
   fieldBackground?: React.ReactNode;
   fieldBackgroundColor?: string;
@@ -657,8 +669,8 @@ export const AgentComposer = memo(function AgentComposer({
   holdStagedAttachments,
   onDockHeight,
   accessory,
-  accessoryHeightAnimating = false,
   toolbarLeading,
+  toolbarMenu,
   fieldBackground,
   fieldBackgroundColor,
   fieldBackgroundOutset,
@@ -739,6 +751,17 @@ export const AgentComposer = memo(function AgentComposer({
   const [requestedDeliveryMode, setDeliveryMode] = useState<'steer' | 'queue'>('steer');
   const deliveryMode = canQueueWhileRunning ? requestedDeliveryMode : 'steer';
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
+  const toolbarMenuOpen = toolbarMenu?.open ?? false;
+  // The toolbar menu's button belongs to the caller, so its opening is seen
+  // here as a prop change; it closes the attachment menu in the same render.
+  const [seenToolbarMenuOpen, setSeenToolbarMenuOpen] = useState(toolbarMenuOpen);
+  if (seenToolbarMenuOpen !== toolbarMenuOpen) {
+    setSeenToolbarMenuOpen(toolbarMenuOpen);
+    if (toolbarMenuOpen) setAttachmentMenuOpen(false);
+  }
+  const closeToolbarMenu = () => {
+    if (toolbarMenuOpen) toolbarMenu?.onOpenChange(false);
+  };
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
   const [inboxOpen, setInboxOpen] = useState(false);
   /** Which queued prompt has its actions open, if any. */
@@ -1477,13 +1500,8 @@ export const AgentComposer = memo(function AgentComposer({
   const safeAreaFoot = flushField && keyboardHeight === 0 ? bottomInset : 0;
   const dockFoot = safeAreaFoot + (outerInsets?.bottom ?? 0);
   const [surfaceHeight, setSurfaceHeight] = useState(0);
-  const latestSurfaceHeight = useRef(0);
+  const [surfaceWidth, setSurfaceWidth] = useState(0);
   const [inputRowHeight, setInputRowHeight] = useState(0);
-  // Yoga still reports every accessory animation frame. Keep its latest
-  // measurement without re-rendering the whole composer for every frame.
-  useEffect(() => {
-    if (!accessoryHeightAnimating) setSurfaceHeight(latestSurfaceHeight.current);
-  }, [accessoryHeightAnimating]);
   const [compactionRowHeight, setCompactionRowHeight] = useState(0);
   const compactionClearance = compaction ? compactionRowHeight : 0;
   const [voiceActive, setVoiceActive] = useState(false);
@@ -1491,6 +1509,7 @@ export const AgentComposer = memo(function AgentComposer({
     hideFieldDecoration ||
     attachmentUploads.attachments.length > 0 ||
     attachmentMenuOpen ||
+    toolbarMenuOpen ||
     modeMenuOpen ||
     inboxOpen ||
     slashPopup.open ||
@@ -1506,24 +1525,9 @@ export const AgentComposer = memo(function AgentComposer({
   const reportDockHeight = useEffectEvent((height: number, clipHeight: number) =>
     onDockHeight?.(height + compactionClearance, clipHeight)
   );
-  // Local height still bounds popups. Forwarding each animated accessory frame
-  // to Home also changes its scroll padding and clipping, feeding the reveal
-  // through another React/layout pass. Publish the latest height once it lands.
   useEffect(() => {
-    if (
-      surfaceHeight > 0 &&
-      !accessoryHeightAnimating &&
-      surfaceHeight === latestSurfaceHeight.current
-    )
-      reportDockHeight(dockHeight + decorationClearance, dockClipHeight);
-  }, [
-    surfaceHeight,
-    dockHeight,
-    dockClipHeight,
-    decorationClearance,
-    compactionClearance,
-    accessoryHeightAnimating,
-  ]);
+    if (surfaceHeight > 0) reportDockHeight(dockHeight + decorationClearance, dockClipHeight);
+  }, [surfaceHeight, dockHeight, dockClipHeight, decorationClearance, compactionClearance]);
   const popupMaxHeight = Math.max(
     POPUP_MIN_HEIGHT,
     windowHeight - keyboardHeight - dockHeight - compactionClearance - topInset - POPUP_HEADER_GAP
@@ -1588,20 +1592,17 @@ export const AgentComposer = memo(function AgentComposer({
         It used to be `absoluteFill` inside the dock, which is a strip at the
         bottom of the screen -- so a tap anywhere above the composer went
         straight through to the transcript and the menu stayed open. It reaches
-        the top of the window now, and while the attachment menu is up it
-        carries a scrim, because that menu is a decision and everything behind
-        it is not.
+        the top of the window now. It is a touch catcher and nothing else: no
+        fill, no dim. The floating card is the menu; a panel drawn around it
+        read as a block pasted over the page.
       */}
-      {attachmentMenuOpen || modeMenuOpen || inboxOpen ? (
+      {attachmentMenuOpen || toolbarMenuOpen || modeMenuOpen || inboxOpen ? (
         <Pressable
           testID="agent-composer-popup-scrim"
-          style={[
-            styles.backdrop,
-            { top: -windowHeight },
-            attachmentMenuOpen ? { backgroundColor: withAlpha('#000000', 0.28) } : null,
-          ]}
+          style={[styles.backdrop, { top: -windowHeight }]}
           onPress={() => {
             setAttachmentMenuOpen(false);
+            closeToolbarMenu();
             setModeMenuOpen(false);
             setInboxOpen(false);
             setInboxMenuId(null);
@@ -1625,6 +1626,30 @@ export const AgentComposer = memo(function AgentComposer({
             { bottom: inputRowHeight + dockBottomPadding + ATTACHMENT_MENU_GAP },
           ]}>
           <AttachmentMenu onSelect={chooseAttachmentSource} textColor={chromeText} />
+        </View>
+      ) : null}
+
+      {/* The toolbar's other menu (Home's task options), in the same place
+          and card. Wider, so a value such as a model and its effort fits on
+          its row, but never to the dock's edges; and bounded by the room
+          above the keyboard, scrolling inside rather than under the header. */}
+      {toolbarMenu && toolbarMenuOpen ? (
+        <View
+          pointerEvents="box-none"
+          style={[
+            styles.attachmentAnchor,
+            { bottom: inputRowHeight + dockBottomPadding + ATTACHMENT_MENU_GAP },
+          ]}>
+          <FloatingMenu
+            testID={toolbarMenu.testID}
+            width={
+              surfaceWidth > 0
+                ? Math.min(surfaceWidth - 2 * FLOATING_MENU_GUTTER, TOOLBAR_MENU_MAX_WIDTH)
+                : undefined
+            }
+            maxHeight={Math.max(POPUP_MIN_HEIGHT, popupMaxHeight - TOOLBAR_MENU_CLEARANCE)}>
+            {toolbarMenu.content}
+          </FloatingMenu>
         </View>
       ) : null}
 
@@ -1706,9 +1731,8 @@ export const AgentComposer = memo(function AgentComposer({
                         styles.queuedChip,
                         { borderRadius: profile.chrome.control },
                         {
-                          backgroundColor: withAlpha(
-                            steering ? theme.colors.warning : theme.colors.primary,
-                            0.16
+                          backgroundColor: surfaceBackground(
+                            withAlpha(steering ? theme.colors.warning : theme.colors.primary, 0.16)
                           ),
                         },
                       ]}>
@@ -1835,9 +1859,9 @@ export const AgentComposer = memo(function AgentComposer({
           takes no `onLayout` of its own. */}
       <View
         onLayout={(event) => {
-          const { height } = event.nativeEvent.layout;
-          latestSurfaceHeight.current = height;
-          if (!accessoryHeightAnimating) setSurfaceHeight(height);
+          const { height, width } = event.nativeEvent.layout;
+          setSurfaceWidth(width);
+          setSurfaceHeight(height);
         }}
         // Enclosing bars cast their shadow outside the clipped material.
         // Home's field owns its plate; leave the ornament above it transparent.
@@ -2137,10 +2161,11 @@ export const AgentComposer = memo(function AgentComposer({
                         styles.actionBtnWithLabel,
                         { borderRadius: profile.chrome.roundControl },
                         {
-                          backgroundColor:
+                          backgroundColor: surfaceBackground(
                             deliveryMode === 'steer'
                               ? withAlpha(theme.colors.warning, 0.2)
-                              : withAlpha(theme.colors.primary, 0.2),
+                              : withAlpha(theme.colors.primary, 0.2)
+                          ),
                           borderColor:
                             deliveryMode === 'steer'
                               ? withAlpha(theme.colors.warning, 0.5)
@@ -2244,7 +2269,7 @@ export const AgentComposer = memo(function AgentComposer({
                         styles.actionBtn,
                         { borderRadius: profile.chrome.roundControl },
                         {
-                          backgroundColor: withAlpha(theme.colors.primary, 0.18),
+                          backgroundColor: surfaceBackground(withAlpha(theme.colors.primary, 0.18)),
                         },
                       ]}>
                       <CompareIcon size={15} color={theme.colors.primary} />
@@ -2413,7 +2438,10 @@ export const AgentComposer = memo(function AgentComposer({
                             (attachmentTargetId !== undefined &&
                               record?.serverId !== attachmentTargetId)
                           }
-                          onPress={() => setAttachmentMenuOpen((open) => !open)}
+                          onPress={() => {
+                            closeToolbarMenu();
+                            setAttachmentMenuOpen((open) => !open);
+                          }}
                           size={16}
                           color={attachmentMenuOpen ? theme.colors.primary : chromeText}
                         />
@@ -2510,6 +2538,12 @@ const POPUP_HEADER_GAP = 16;
 
 /** Between the paperclip's row and the menu it opens. */
 const ATTACHMENT_MENU_GAP = 8;
+
+/** The toolbar menu's widest; narrower docks take their width less the gutters. */
+const TOOLBAR_MENU_MAX_WIDTH = 360;
+
+/** The card's own padding, margin and anchor gap, out of the popup room. */
+const TOOLBAR_MENU_CLEARANCE = 24;
 
 /** How wide the chips row's right-hand fade is, and its content's right padding. */
 

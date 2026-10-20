@@ -109,6 +109,8 @@ function PdfReader({ asset, onRetry }: { asset: SessionAsset; onRetry: () => voi
       ) : (
         <>
           {uri ? (
+            // Opacity audit: content -- the native viewer's page well, behind
+            // opaque PDF pages in the file viewer; not a surface over the wallpaper.
             <PdfView
               source={{ uri }}
               fitPolicy="width"
