@@ -21,11 +21,11 @@ import {
   stageSpringAtRest,
   stepStageSpring,
   STAGE_CARD_SPRING,
-  STAGE_WAKE_GAP_MS,
+  STAGE_AMBIENT_IDLE_MS,
   type StageDegradeState,
   type StageSpring,
 } from '@/lib/home-stage-motion';
-import { createStageScene, type StagePaneFrame } from './stage-scene';
+import { createStageScene, type StagePaneFrame, type StageTextureSource } from './stage-scene';
 import type { StageSceneProps } from './types';
 
 type Motion = {
@@ -40,7 +40,11 @@ type Motion = {
   timer: ReturnType<typeof setTimeout> | null;
   /** The ambient clock: advances only on drawn frames, so a stop and resume never jumps. */
   ambientS: number;
-  /** The last frame that moved, or that a wake drew after the scene had stopped. */
+  /**
+   * The last interaction (a drag, swipe, tilt, dive, flare, return to Home or
+   * new theme) or moving frame: the ambient motion runs for
+   * `STAGE_AMBIENT_IDLE_MS` after it. A content change does not count.
+   */
   activeMs: number;
 };
 
@@ -111,45 +115,65 @@ export function StageRuntime(props: StageSceneProps) {
     world.dispose();
   });
   useEffect(() => release, []);
+  // Interaction: draw, and (re)start the idle-throttled ambient window.
+  // A stable handler, since the gestures and tilt call it through the bridge.
+  const activate = useStableHandler(() => {
+    if (paused) return;
+    motionState().activeMs = performance.now();
+    invalidate();
+  });
   useEffect(() => {
-    bridge.setWaker(() => {
-      if (!paused) invalidate();
-    });
+    bridge.setWaker(activate);
     return () => bridge.setWaker(null);
-  }, [bridge, invalidate, paused]);
-  // Nothing is drawn while Home is off screen: a change that arrives then (a
-  // new theme, new textures, new faces) is drawn when Home comes back.
+  }, [bridge, activate]);
+  // Content (faces, textures, the viewport): exactly one frame, and the
+  // ambient window is left as it was -- live agent status arriving every few
+  // seconds must not keep the scene animating. Nothing is drawn while Home is
+  // off screen: a change that arrives then is drawn when Home comes back.
   const wake = useEffectEvent(() => {
     if (!paused) invalidate();
   });
-  useEffect(() => {
+  // The theme by value: the same colours after a parent re-render do nothing.
+  const themeKey = JSON.stringify([colors, mode]);
+  const applyTheme = useEffectEvent(() => {
     world.setTheme({ colors, mode }, scene, gl as unknown as WebGPURenderer);
-    wake();
-  }, [world, colors, mode, scene, gl]);
+    activate();
+  });
+  useEffect(() => applyTheme(), [world, themeKey, scene, gl]);
   useEffect(() => {
     world.setViewport(aspect);
     wake();
   }, [world, aspect]);
-  useEffect(() => {
+  const backdropKey = sourceKey(backdrop);
+  const applyBackdrop = useEffectEvent(() => {
     world.setBackdrop(backdrop);
     wake();
-  }, [world, backdrop]);
-  useEffect(() => {
+  });
+  useEffect(() => applyBackdrop(), [world, backdropKey]);
+  const heroKey = sourceKey(hero);
+  const applyHero = useEffectEvent(() => {
     world.setHero(hero);
     wake();
-  }, [world, hero]);
-  useEffect(() => {
+  });
+  useEffect(() => applyHero(), [world, heroKey]);
+  const frameKey = sourceKey(frame);
+  const applyFrame = useEffectEvent(() => {
     world.setFrame(frame);
     wake();
-  }, [world, frame]);
+  });
+  useEffect(() => applyFrame(), [world, frameKey]);
   useEffect(() => {
     world.setFaces(faces);
     wake();
   }, [world, faces]);
-  useEffect(() => {
+  // The theme's effect, by value: a new effect is a theme change and starts
+  // the ambient window; the same effect after a parent re-render does nothing.
+  const ambientKey = JSON.stringify([ambientEffects, ambientColors, mode, aspect]);
+  const applyAmbient = useEffectEvent(() => {
     world.setAmbient(stageAmbient(ambientEffects, ambientColors, mode, aspect));
-    wake();
-  }, [world, ambientEffects, ambientColors, mode, aspect]);
+    activate();
+  });
+  useEffect(() => applyAmbient(), [world, ambientKey]);
   // Only a new quality resets the ladder.
   const resetLadder = useEffectEvent((next: StageSceneProps['quality']) => {
     motionState().degrade = initialStageDegrade(next);
@@ -158,20 +182,20 @@ export function StageRuntime(props: StageSceneProps) {
   // The selection has caught up with a released drag: follow the selection again.
   const selectionMoved = useEffectEvent(() => {
     inputs.settle.set(-1);
-    wake();
+    activate();
   });
   useEffect(() => selectionMoved(), [selected]);
   const bursted = useEffectEvent(() => {
     motionState().burst = 1;
-    wake();
+    activate();
   });
   useEffect(() => {
     if (burst > 0) bursted();
   }, [burst]);
-  // Pausing only stops or restarts the clock; a dive change only needs a frame.
+  // Pausing stops the clock; coming back to Home or a dive is interaction.
   const wakeFor = useEffectEvent((isPaused: boolean) => {
     if (isPaused) stopTimer();
-    else invalidate();
+    else activate();
   });
   useEffect(() => wakeFor(paused), [paused]);
   useEffect(() => wakeFor(false), [dive]);
@@ -188,9 +212,11 @@ export function StageRuntime(props: StageSceneProps) {
     state.lastFrameMs = now;
     const dt = Math.min(0.05, elapsedMs / 1000);
     const effects = stageEffects(quality, { gpuAvailable: true, reducedMotion });
-    // Woken after a stop: whatever woke it is activity, so the ambient motion resumes.
-    if (elapsedMs > STAGE_WAKE_GAP_MS) state.activeMs = now;
-    if (effects.pulse) state.ambientS += dt;
+    // The ambient clock (motes, bob, pulse, a theme's effect) only runs inside
+    // the window after an interaction: a content frame drawn outside it shows
+    // the motion exactly where it stopped.
+    if (effects.pulse && (state.wasMoving || now - state.activeMs < STAGE_AMBIENT_IDLE_MS))
+      state.ambientS += dt;
     const count = screens.length;
 
     // A finger moves the panes directly; on release they spring to where the
@@ -292,4 +318,10 @@ export function StageRuntime(props: StageSceneProps) {
 
   // oxlint-disable-next-line react/no-unknown-property -- Fiber's intrinsic `primitive` takes `object`.
   return <primitive object={world.root} />;
+}
+
+/** A texture source by value: its texture, shape and focal point. */
+function sourceKey(source: StageTextureSource | null): string {
+  if (!source) return '';
+  return `${source.texture.uuid}:${source.aspect}:${source.focal?.x ?? ''}:${source.focal?.y ?? ''}`;
 }
