@@ -70,3 +70,15 @@ is visible "${TARGET}"
 
 # section seek-down
 scroll down 500
+
+# section choose-stage
+press "${TARGET}"
+
+# section stage-selected
+is visible "${TARGET}"
+
+# section leave-stage-settings
+press "${TARGET}"
+
+# section stage-home
+is visible "${TARGET}"

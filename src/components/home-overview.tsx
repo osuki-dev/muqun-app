@@ -92,7 +92,8 @@ import {
   hasComputerCardsAt,
 } from '@/components/home-computer-cards';
 import { HomeRecentChips } from '@/components/home-recent-chips';
-import { filterHomeRecent, homeRecentFilterIds } from '@/lib/home-continue';
+import { HomeStage } from '@/components/home-stage/home-stage-layout';
+import { filterHomeRecent, homeContinueCommand, homeRecentFilterIds } from '@/lib/home-continue';
 import {
   HOME_CARD_INSET,
   openTaskWork,
@@ -1202,6 +1203,111 @@ export function HomeOverview({
         }}
       />
     ) : undefined;
+  // The phone toolbar's two doors, shared by Editorial and Stage.
+  const phoneToolbar = (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: HOME_TOOLBAR_GAP }}>
+      <HeaderButton
+        editorial
+        bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
+        label={t`Scan a gateway QR`}
+        onPress={() => void commands.pairGateway()}>
+        <ThemeIcon
+          name="chrome.scan"
+          fallback={PairScanIcon}
+          size={HOME_TOOLBAR_ICON_SIZE}
+          color={theme.colors.text}
+        />
+      </HeaderButton>
+      <HeaderButton
+        editorial
+        bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
+        label={t`Settings`}
+        onPress={() => void commands.manageConnections()}>
+        <ThemeIcon
+          name="chrome.settings"
+          fallback={SettingsIcon}
+          size={HOME_TOOLBAR_ICON_SIZE}
+          color={theme.colors.text}
+        />
+      </HeaderButton>
+    </View>
+  );
+  if (homeLayout === 'stage' && !isPad) {
+    // Stage: the theme's world fills the screen under a thin HUD; the
+    // composer, Needs you and Recent are the same pieces every layout gets.
+    const stageContent = (
+      <View style={styles.page} {...sortHoldTouches}>
+        <HomeTaskSync serverIds={liveTaskServerIds} />
+        <HomeStage
+          servers={launchController.servers}
+          chosenServerId={launchController.chosen?.serverId}
+          connectionStatuses={connectionStatuses}
+          recentEntries={recentEntries}
+          artworkUri={hasEditorialArtwork ? editorialArtworkResolution?.source : undefined}
+          paused={!isFocused || !appActive}
+          topInset={insets.top}
+          dockHeight={dock && composerRevealed ? dockHeight : insets.bottom}
+          headerAction={phoneToolbar}
+          hasAttention={!loading && !hydrationError && hasAttention}
+          attention={attentionSection}
+          fullList={
+            <>
+              {recentSection}
+              {!loading && !hydrationError && !sshLoading ? (
+                <HomeConnections
+                  servers={records}
+                  hosts={sshRows}
+                  onOpenServer={openServer}
+                  onSelectServer={targetComposer}
+                  onOpenHost={(hostId) => {
+                    void commands.openSsh(hostId);
+                  }}
+                  onManage={() => {
+                    void commands.manageConnections();
+                  }}
+                  activeConnection={activeConnection}
+                />
+              ) : null}
+            </>
+          }
+          emptyState={emptyState}
+          storageError={
+            hydrationError ? (
+              <GatewayStorageError busy={loading} onRetry={retryHydration} />
+            ) : undefined
+          }
+          refreshing={refreshing}
+          onRefresh={() => void onRefresh()}
+          onSelectServer={targetComposer}
+          onOpenServer={openServer}
+          onOpenTasks={(serverId) =>
+            router.push({ pathname: '/server-tasks', params: { serverId } })
+          }
+          onOpenDetails={(serverId) =>
+            router.push({ pathname: '/settings-servers', params: { serverId } })
+          }
+          onOpenSession={(entry) => {
+            void commands.dispatch(homeContinueCommand(entry.destination));
+          }}
+          // The host starts a new task on the composer's computer, as Home's
+          // New session action does (an offline target opens the picker).
+          onNewTask={() => launchController.launchOnChosen(commands.newAgent)}
+          onViewport={(height) => {
+            pageDockHide.settle({ viewportHeight: height });
+            if (height > 0) setViewportReady(true);
+          }}
+        />
+        {dock}
+        {devIconGallery}
+      </View>
+    );
+    return embedded ? (
+      stageContent
+    ) : (
+      <AppDrawer wallpaperEffectsEnabled={false}>{stageContent}</AppDrawer>
+    );
+  }
+
   if (!classicLayout) {
     const editorialContent = (
       <View
@@ -1474,33 +1580,7 @@ export function HomeOverview({
                     </HeaderButton>
                   </View>
                 ) : (
-                  <View
-                    style={{ flexDirection: 'row', alignItems: 'center', gap: HOME_TOOLBAR_GAP }}>
-                    <HeaderButton
-                      editorial
-                      bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
-                      label={t`Scan a gateway QR`}
-                      onPress={() => void commands.pairGateway()}>
-                      <ThemeIcon
-                        name="chrome.scan"
-                        fallback={PairScanIcon}
-                        size={HOME_TOOLBAR_ICON_SIZE}
-                        color={theme.colors.text}
-                      />
-                    </HeaderButton>
-                    <HeaderButton
-                      editorial
-                      bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
-                      label={t`Settings`}
-                      onPress={() => void commands.manageConnections()}>
-                      <ThemeIcon
-                        name="chrome.settings"
-                        fallback={SettingsIcon}
-                        size={HOME_TOOLBAR_ICON_SIZE}
-                        color={theme.colors.text}
-                      />
-                    </HeaderButton>
-                  </View>
+                  phoneToolbar
                 )
               }
             />

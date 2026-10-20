@@ -37,6 +37,11 @@ export function SettingsHomeLayoutSheet({ onClose }: { onClose: () => void }) {
       title: t`Editorial`,
       detail: t`A magazine-style Home with attention and recent sessions.`,
     },
+    {
+      id: 'stage',
+      title: t`Stage`,
+      detail: t`Your theme as a 3D world, with your computers as holo-screens around its character.`,
+    },
   ];
 
   async function choose(next: HomeLayout) {
@@ -145,6 +150,8 @@ function HomeLayoutPreview({ layout }: { layout: HomeLayout }) {
           <View style={[styles.classicCard, { backgroundColor: colors.surface }]} />
           <View style={[styles.classicCard, { backgroundColor: colors.surface }]} />
         </View>
+      ) : layout === 'stage' ? (
+        <StageLayoutPreview />
       ) : (
         <View style={styles.editorialPreview}>
           <View style={[styles.editorialLead, { backgroundColor: colors.surface }]} />
@@ -158,7 +165,66 @@ function HomeLayoutPreview({ layout }: { layout: HomeLayout }) {
   );
 }
 
+/**
+ * A still of the Stage: a sky, the host on her pedestal, and a ring of
+ * screens. The design's looping flip preview waits for the final scene.
+ */
+function StageLayoutPreview() {
+  const { colors } = useThemeTokens();
+  return (
+    <View style={styles.stagePreview}>
+      <View style={[styles.stageSky, { backgroundColor: colors.primarySubtle }]} />
+      <View style={[styles.stageHost, { backgroundColor: colors.primary }]} />
+      <View style={[styles.stageFloor, { borderColor: colors.primary }]} />
+      <View
+        style={[
+          styles.stageScreen,
+          styles.stageLeft,
+          { borderColor: colors.border, backgroundColor: colors.surface },
+        ]}
+      />
+      <View
+        style={[
+          styles.stageScreen,
+          styles.stageRight,
+          { borderColor: colors.border, backgroundColor: colors.surface },
+        ]}
+      />
+      <View
+        style={[
+          styles.stageScreen,
+          styles.stageFront,
+          { borderColor: colors.primary, backgroundColor: colors.surfaceRaised },
+        ]}
+      />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  stagePreview: { flex: 1, borderRadius: 4, overflow: 'hidden' },
+  stageSky: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, opacity: 0.6 },
+  stageHost: {
+    position: 'absolute',
+    left: '44%',
+    width: '12%',
+    top: '12%',
+    height: '58%',
+    borderRadius: 6,
+  },
+  stageFloor: {
+    position: 'absolute',
+    left: '28%',
+    right: '28%',
+    top: '66%',
+    height: 8,
+    borderWidth: 1,
+    borderRadius: 8,
+  },
+  stageScreen: { position: 'absolute', borderWidth: 1, borderRadius: 2 },
+  stageLeft: { left: '8%', top: '30%', width: '22%', height: '22%' },
+  stageRight: { right: '8%', top: '30%', width: '22%', height: '22%' },
+  stageFront: { left: '56%', top: '50%', width: '30%', height: '30%' },
   option: {
     minHeight: 108,
     paddingVertical: 10,

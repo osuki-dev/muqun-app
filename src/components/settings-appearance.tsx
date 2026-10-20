@@ -43,7 +43,8 @@ export function SettingsAppearance() {
 
   const language = useAppSettings((state) => state.language);
   const homeLayout = useAppSettings((state) => state.homeLayout);
-  const homeLayoutLabel = homeLayout === 'editorial' ? t`Editorial` : t`Classic`;
+  const homeLayoutLabel =
+    homeLayout === 'editorial' ? t`Editorial` : homeLayout === 'stage' ? t`Stage` : t`Classic`;
   const pack = useThemePack();
 
   /**
