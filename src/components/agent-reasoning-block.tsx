@@ -147,9 +147,9 @@ export const AgentReasoningBlock = memo(function AgentReasoningBlock({
           only the paragraph it opens onto needs a surface to be read on. */}
       {expanded && text ? (
         <Animated.View entering={fadeIn('micro')} style={[styles.body, plate]}>
-          {/* The rule hangs in the marker column, under the chevron that
-              opened it, and runs from the first line's cap height to the last
-              line's baseline -- the text box, not the line boxes around it. */}
+          {/* The rule starts at the reply text's left edge and runs from the
+              first line's cap height to the last line's baseline -- the text
+              box, not the line boxes around it. */}
           <View
             testID="agent-reasoning-rule"
             style={[
