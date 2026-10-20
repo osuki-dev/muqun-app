@@ -2272,15 +2272,15 @@ function ServerCard({
                     : background(theme.colors.surfaceRaised),
                 },
               ]}>
-              {selected ? (
-                <TerminalWindowIcon size={18} color={theme.colors.onPrimary} />
-              ) : (
-                // The pack's primary, like every other glyph on this screen. The
-                // difference between the two tiles is the fill, not the ink: a
-                // grey glyph beside rows of accent-coloured ones read as a
-                // machine that was switched off, and this one is online.
-                <ComputerIcon size={17} color={theme.colors.primary} />
-              )}
+              {/* Every computer wears the computer glyph; the fill alone says
+                  which one the app is attached to. Swapping the attached one to
+                  a terminal glyph read as a different kind of device. The
+                  unselected ink is the pack's primary, like every other glyph
+                  here: a grey glyph read as a machine that was switched off. */}
+              <ComputerIcon
+                size={17}
+                color={selected ? theme.colors.onPrimary : theme.colors.primary}
+              />
             </View>
 
             <View style={styles.serverCopy}>
