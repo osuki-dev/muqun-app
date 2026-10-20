@@ -18,6 +18,7 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { MapErrorBoundary } from '@/components/computer-map/error-boundary';
+import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import { useStableHandler } from '@/hooks/use-render-refs';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useThemeRenderReady } from '@/hooks/use-theme-render-ready';
@@ -36,6 +37,7 @@ import {
 } from '@/lib/home-stage-geometry';
 import { hasSeenStageHints, markStageHintsSeen } from '@/lib/home-stage-hints';
 import { stageLayers, type StageLayers } from '@/lib/home-stage-layers';
+import { useAppSettings } from '@/stores/app-settings';
 import {
   stageEffects,
   STAGE_TILT_DEADBAND,
@@ -197,6 +199,27 @@ export function StageView({
     [theme.colors]
   );
 
+  // The theme's ambient effect for this variant, resolved as the 2D layer
+  // resolves it (`theme-artwork.tsx`): the variant's own, else the theme's.
+  const { theme: customTheme } = useEffectiveCustomTheme();
+  const effectsEnabled = useAppSettings((state) => state.themeEffectsEnabled);
+  const manifest = customTheme?.manifest;
+  const themeEffects = manifest
+    ? (manifest.variants[resolvedMode]?.effects ?? manifest.effects ?? null)
+    : null;
+  const ambientEffects = effectsEnabled ? themeEffects : null;
+  const ambientColors = useMemo(
+    () => ({
+      primary: theme.colors.primary,
+      text: theme.colors.text,
+      textMuted: theme.colors.textMuted,
+      info: theme.colors.info,
+      success: theme.colors.success,
+      warning: theme.colors.warning,
+    }),
+    [theme.colors]
+  );
+
   // Back on Home after a dive: the camera returns to the window.
   useEffect(() => {
     if (!paused) setDiving(false);
@@ -296,6 +319,8 @@ export function StageView({
                 hero={hero}
                 frame={frame}
                 faces={faces.atlas}
+                ambientEffects={ambientEffects}
+                ambientColors={ambientColors}
                 quality={quality}
                 reducedMotion={reducedMotion}
                 dive={diving}

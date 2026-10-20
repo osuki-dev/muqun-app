@@ -1,7 +1,9 @@
 import type { SharedValue } from 'react-native-reanimated';
 import type { Texture } from 'three/webgpu';
 
+import type { StageAmbientColors } from '@/lib/home-stage-ambient';
 import type { StageQuality } from '@/lib/home-stage-motion';
+import type { ThemeEffects } from '@/theme/schema';
 import type { StageSceneColors, StageScreenLook, StageTextureSource } from './stage-scene';
 
 /** Drag and tilt, written on the UI thread and read by the scene each frame. */
@@ -49,6 +51,12 @@ export type StageSceneProps = {
   /** An edge-only wallpaper as the nearest layer. */
   frame: StageTextureSource | null;
   faces: Texture | null;
+  /**
+   * The theme's ambient effect for the current light or dark variant, as the
+   * 2D layer resolves it; null when it has none or theme effects are off.
+   */
+  ambientEffects: ThemeEffects | null;
+  ambientColors: StageAmbientColors;
   quality: StageQuality;
   reducedMotion: boolean;
   /** Fly the camera to the selected pane (before opening it), or back. */
