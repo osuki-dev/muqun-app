@@ -1,5 +1,6 @@
 /**
- * The launch canvas erodes from its edges into fine, softly drifting ash.
+ * The launch canvas crumbles from one side into fine ash that the wind carries
+ * off up and to the right.
  * The snapshot stays exact ahead of the front; transparent gaps reveal the
  * real Home underneath. At most two texture samples and fixed noise work per
  * fragment, with no CPU particle objects, blur pass or additional surface.
@@ -73,8 +74,12 @@ half4 main(float2 pos) {
   if (progress >= 1.0) return half4(0.0);
 
   float2 uv = pos / max(size, float2(1.0));
-  float2 edge = min(uv, 1.0 - uv) * 2.0;
-  float depth = pow(clamp(min(edge.x, edge.y), 0.0, 1.0), 0.75);
+  // The wind blows up and to the right. The front starts at the downwind
+  // corner and sweeps against the wind, so the frame crumbles from one side
+  // and its ash streams off that way. Eroding from every edge at once read as
+  // the frame shrinking into a clump in the middle.
+  float2 wind = normalize(float2(1.0, -0.75));
+  float depth = clamp(0.5 - dot(uv - 0.5, wind) / (abs(wind.x) + abs(wind.y)), 0.0, 1.0);
   // Adjacent grains share a broad, irregular erosion front.
   float billow = noise(pos / 58.0);
   float start = depth * 0.54 + billow * 0.14;
@@ -82,13 +87,15 @@ half4 main(float2 pos) {
   if (q <= 0.0) return image.eval(pos);
 
   float loosen = smoothstep(0.0, 0.72, q);
-  float2 drift = float2(18.0 + 24.0 * billow, -24.0 - 30.0 * billow) * loosen;
-  drift += float2(sin(pos.y / 75.0 + q * 3.0), cos(pos.x / 89.0 + q * 2.0)) * 7.0 * loosen;
+  // Ash picks up speed as it leaves: a slow lift-off, then carried away.
+  float carry = loosen * loosen;
+  float2 drift = wind * (36.0 + 120.0 * billow) * carry;
+  drift += float2(sin(pos.y / 75.0 + q * 3.0), cos(pos.x / 89.0 + q * 2.0)) * 9.0 * loosen;
   float2 source = pos - drift;
   float cloud = noise(source / 24.0 + float2(q * 0.7, -q * 0.4));
   // Grains drift coherently. Using the erosion-dependent source coordinates
   // here would stretch their grid into streaks along the dissolving edge.
-  float2 grainFlow = float2(18.0, -28.0) * progress;
+  float2 grainFlow = wind * 48.0 * progress;
   grainFlow += float2(sin(pos.y / 90.0 + progress * 3.0), cos(pos.x / 80.0 + progress * 2.0)) * 2.0 * progress;
   float2 grid = (pos - grainFlow) / max(cell, 1.0);
   float grainHash = hash12(floor(grid));
