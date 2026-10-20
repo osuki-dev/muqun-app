@@ -1,6 +1,6 @@
 /**
- * The launch canvas crumbles from one side into fine ash that the wind carries
- * off up and to the right.
+ * The launch canvas turns to ash from the centre, where its art sits, and the
+ * ash billows outwards like mist.
  * The snapshot stays exact ahead of the front; transparent gaps reveal the
  * real Home underneath. At most two texture samples and fixed noise work per
  * fragment, with no CPU particle objects, blur pass or additional surface.
@@ -73,13 +73,16 @@ half4 main(float2 pos) {
   if (progress <= 0.0) return image.eval(pos);
   if (progress >= 1.0) return half4(0.0);
 
-  float2 uv = pos / max(size, float2(1.0));
-  // The wind blows up and to the right. The front starts at the downwind
-  // corner and sweeps against the wind, so the frame crumbles from one side
-  // and its ash streams off that way. Eroding from every edge at once read as
-  // the frame shrinking into a clump in the middle.
-  float2 wind = normalize(float2(1.0, -0.75));
-  float depth = clamp(0.5 - dot(uv - 0.5, wind) / (abs(wind.x) + abs(wind.y)), 0.0, 1.0);
+  // The launch art sits in the middle, so it is what turns to ash first: the
+  // front starts at the centre and spreads outwards, and the ash billows out
+  // from the centre like smoke, lifting a little as it goes. Eroding from every
+  // edge at once read as the frame shrinking into a clump in the middle.
+  float2 origin = size * float2(0.5, 0.45);
+  float2 away = pos - origin;
+  float reachMax = length(max(origin, size - origin));
+  float radius = length(away);
+  float2 outward = away / max(radius, 1.0);
+  float depth = pow(clamp(radius / max(reachMax, 1.0), 0.0, 1.0), 0.85);
   // Adjacent grains share a broad, irregular erosion front.
   float billow = noise(pos / 58.0);
   float start = depth * 0.54 + billow * 0.14;
@@ -89,13 +92,14 @@ half4 main(float2 pos) {
   float loosen = smoothstep(0.0, 0.72, q);
   // Ash picks up speed as it leaves: a slow lift-off, then carried away.
   float carry = loosen * loosen;
-  float2 drift = wind * (36.0 + 120.0 * billow) * carry;
-  drift += float2(sin(pos.y / 75.0 + q * 3.0), cos(pos.x / 89.0 + q * 2.0)) * 9.0 * loosen;
+  float2 drift = outward * (40.0 + 150.0 * billow) * carry + float2(0.0, -28.0) * carry;
+  // A curl of turbulence, so the ash rolls like mist rather than travelling straight.
+  drift += float2(sin(pos.y / 60.0 + q * 4.0), cos(pos.x / 70.0 + q * 3.0)) * 14.0 * loosen;
   float2 source = pos - drift;
-  float cloud = noise(source / 24.0 + float2(q * 0.7, -q * 0.4));
+  float cloud = noise(source / 36.0 + float2(q * 0.7, -q * 0.4));
   // Grains drift coherently. Using the erosion-dependent source coordinates
   // here would stretch their grid into streaks along the dissolving edge.
-  float2 grainFlow = wind * 48.0 * progress;
+  float2 grainFlow = outward * 36.0 * progress + float2(0.0, -12.0) * progress;
   grainFlow += float2(sin(pos.y / 90.0 + progress * 3.0), cos(pos.x / 80.0 + progress * 2.0)) * 2.0 * progress;
   float2 grid = (pos - grainFlow) / max(cell, 1.0);
   float grainHash = hash12(floor(grid));
@@ -106,7 +110,8 @@ half4 main(float2 pos) {
 
   float intact = 1.0 - smoothstep(0.01, 0.4, q);
   float life = 1.0 - smoothstep(0.12, 1.0, q);
-  float dust = (grain * 0.62 + cloud * cloud * 0.28) * life;
+  // More soft cloud than grain: the snap reads as mist dispersing, with grit in it.
+  float dust = (grain * 0.5 + cloud * cloud * 0.45) * life;
   half4 original = image.eval(pos);
   half4 sample = image.eval(source);
   // Keep some theme colour in neutral ash, with premultiplied channels even
