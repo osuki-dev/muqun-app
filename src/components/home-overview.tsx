@@ -17,6 +17,7 @@ import {
   Text,
 } from '@osuki-dev/ui';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useHomeScenePlate } from '@/hooks/use-home-scene-plate';
 import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import {
@@ -248,6 +249,15 @@ export function HomeOverview({
   const themeLibraryHydrated = useThemeLibrary((state) => state.hydrated);
   const identity = resolveHomeIdentity(customTheme?.manifest);
   const hasScene = useHasThemeArtwork('home.wallpaper', 'shell.wallpaper');
+  // Opacity audit: Home's section labels ("Computers", "Recent", ...) stand on
+  // the plate Home's other headings use, `surface` through the slider, rather
+  // than the settings page's opaque one -- an opaque pill beside translucent
+  // cards read as the one surface that ignored the setting. Only the fill is
+  // taken: where there is no scene there is no plate, and none is added.
+  const scenePlate = useHomeScenePlate();
+  const labelFill = scenePlate.backgroundColor
+    ? { backgroundColor: scenePlate.backgroundColor }
+    : null;
   const customAssets = useThemeLibrary((state) => state.activeAssets);
   const [failedLogo, setFailedLogo] = useState<string | null>(null);
   const brandMark = useBrandMark();
@@ -2010,7 +2020,7 @@ export function HomeOverview({
               <SectionLabel
                 title={<Trans>Computers</Trans>}
                 color={theme.colors.textMuted}
-                style={styles.classicLabel}
+                style={labelFill ? [styles.classicLabel, labelFill] : styles.classicLabel}
               />
               {progressSection}
             </View>
@@ -2022,7 +2032,7 @@ export function HomeOverview({
                   <SectionLabel
                     title={<Trans>Recent</Trans>}
                     color={theme.colors.textMuted}
-                    style={styles.classicLabel}
+                    style={labelFill ? [styles.classicLabel, labelFill] : styles.classicLabel}
                   />
                 )}
               </View>
@@ -2033,7 +2043,11 @@ export function HomeOverview({
             <SectionLabel
               title={<Trans>Connections</Trans>}
               color={theme.colors.textMuted}
-              style={[styles.classicLabel, { marginBottom: theme.spacing.sm }]}
+              style={[
+                styles.classicLabel,
+                { marginBottom: theme.spacing.sm },
+                ...(labelFill ? [labelFill] : []),
+              ]}
             />
           ) : null}
 
@@ -2074,14 +2088,14 @@ export function HomeOverview({
               style={[styles.sshSection, records.length > 0 && { marginTop: metrics.cardGap }]}
               testID="home-ssh-hosts">
               <View style={styles.sshHeading}>
-                {/* The same pill the settings page draws over TERMINAL. This
+                {/* The settings page's pill shape, with Home's plate fill. This
                     screen's whole point is the wallpaper behind it, so the one
                     heading it has is the one that most needs the plate. The row
                     keeps its `Manage` opposite; only the label hugs. */}
                 <SectionLabel
                   title={<Trans>SSH hosts</Trans>}
                   color={theme.colors.textMuted}
-                  style={styles.sshHeadingLabel}
+                  style={labelFill ? [styles.sshHeadingLabel, labelFill] : styles.sshHeadingLabel}
                 />
                 {/* The way to the list this section is a view of: adding,
                     editing and forgetting a host happen there, not here. */}
@@ -2247,8 +2261,9 @@ function ServerCard({
               style={[
                 styles.serverAvatar,
                 {
-                  // The selected tile is solid: `onPrimary` ink is proven
-                  // against the full primary, and running it through the
+                  // Opacity audit: selection -- the selected tile is solid:
+                  // `onPrimary` ink is proven against the full primary, and
+                  // running it through the
                   // artwork opacity left a faint tile with a glyph nobody
                   // could read on an image pack, next to an unselected tile
                   // whose muted ink still read fine.

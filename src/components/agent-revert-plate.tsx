@@ -10,7 +10,7 @@ import Animated from 'react-native-reanimated';
 
 import { usePaneChatColors } from '@/components/pane-chat-blocks';
 import { AGENT_TYPE } from '@/constants/agent-type';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useFloatingSurfaceBackground } from '@/hooks/use-surface-background';
 import { fadeInDown, fadeOutDown } from '@/lib/motion';
 import type { FileDiffItem } from '@/lib/agent-session';
 
@@ -51,7 +51,7 @@ export const AgentRevertPlate = memo(function AgentRevertPlate({
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
   const diffColors = usePaneChatColors();
-  const surfaceBackground = useSurfaceBackground();
+  const floatingBackground = useFloatingSurfaceBackground();
 
   const shown = files.slice(0, FILE_PREVIEW_LIMIT);
   const rest = files.length - shown.length;
@@ -78,7 +78,7 @@ export const AgentRevertPlate = memo(function AgentRevertPlate({
           styles.plate,
           { borderRadius: profile.chrome.popover },
           {
-            backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+            backgroundColor: floatingBackground(theme.colors.surfaceRaised),
             borderColor: theme.colors.border,
           },
         ]}>

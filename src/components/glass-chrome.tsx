@@ -17,7 +17,7 @@ import { appChrome } from '@/constants/appearance';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import type { AppearanceProfile } from '@/lib/appearance-profile';
 import { withAlpha } from '@/lib/color';
-import { surfaceBackgroundFill } from '@/theme/surface-background';
+import { sheetFrostAlpha, surfaceBackgroundFill } from '@/theme/surface-background';
 import { DURATION } from '@/lib/motion';
 import { resolveThemeImage } from '@/theme/resolve';
 import { resolveThemeMaterial, type ThemeSurface } from '@/theme/material';
@@ -236,10 +236,16 @@ export function GlassChrome({
     // so a solid pack draws it as they are drawn: `surface` at the reader's
     // surface opacity. Raised chrome (pills,
     // buttons) keeps `surfaceRaised` and a frosted floor under the slider.
+    // A composer-surface popover (the queued-prompt inbox) floats over the
+    // transcript instead, so it keeps the floating floor
+    // (`useFloatingSurfaceBackground`) rather than the bare slider.
     const plate =
       surface === 'composer'
         ? {
-            backgroundColor: surfaceBackgroundFill(theme.colors.surface, backgroundOpacity),
+            backgroundColor: surfaceBackgroundFill(
+              theme.colors.surface,
+              resolvedShape === 'popover' ? sheetFrostAlpha(backgroundOpacity) : backgroundOpacity
+            ),
             borderColor: borderless ? 'transparent' : theme.colors.border,
           }
         : {
