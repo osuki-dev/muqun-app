@@ -25,6 +25,27 @@ export const STAGE_HOST_CHEST: StageVec3 = [-0.25, 1.75, -0.25];
 /** Where the "start a new task" hint hangs. */
 export const STAGE_HOST_HINT: StageVec3 = [-0.25, 3.05, -0.35];
 export const STAGE_HOST_HEIGHT = 2.67;
+/** The pedestal's base diameter; wide art fits within 1.25x of it. */
+export const STAGE_PEDESTAL_DIAMETER = 2.36;
+const HOST_WIDE_ASPECT = 1.3;
+const HOST_MAX_WIDTH = STAGE_PEDESTAL_DIAMETER * 1.25;
+const HOST_MAX_HEIGHT = 2.6;
+/** How far the art's cut bottom edge sits above the floor: just inside the pedestal's top. */
+export const STAGE_HOST_BASE_Y = 0.215;
+
+/**
+ * The host billboard's size for art of `aspect` (width / height). Portrait
+ * and near-square art stand at the full host height; wide art -- a group, a
+ * landscape -- fits within 1.25x the pedestal's diameter and 2.6 units tall,
+ * so it never overflows the pedestal.
+ */
+export function stageHostSize(aspect: number): { width: number; height: number } {
+  const ratio = Number.isFinite(aspect) && aspect > 0 ? aspect : 1;
+  if (ratio <= HOST_WIDE_ASPECT)
+    return { width: STAGE_HOST_HEIGHT * ratio, height: STAGE_HOST_HEIGHT };
+  const height = Math.min(HOST_MAX_HEIGHT, HOST_MAX_WIDTH / ratio);
+  return { width: height * ratio, height };
+}
 
 /** `index` wrapped into `[0, count)`; 0 for an empty ring. */
 export function wrapStageIndex(index: number, count: number): number {
@@ -75,6 +96,7 @@ export function stageDrawnScreens(selected: number, count: number): number[] {
 
 /** The direction (+1 next, -1 previous) a swipe that ends at `translationX` moves the ring. */
 export function stageSwipeStep(translationX: number, velocityX: number, width: number): number {
+  'worklet';
   const distance = width > 0 ? Math.abs(translationX) / width : 0;
   const fast = Math.abs(velocityX) > 520;
   if (distance < 0.1 && !fast) return 0;
