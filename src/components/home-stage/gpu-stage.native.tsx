@@ -6,6 +6,7 @@ import { Skia } from 'react-native-skia';
 import { PCFShadowMap, WebGPURenderer } from 'three/webgpu';
 
 import { MapErrorBoundary } from '@/components/computer-map/error-boundary';
+import { useLatestReader } from '@/hooks/use-render-refs';
 import { createSceneLifetimes } from '@/lib/scene-lifetime';
 import { STAGE_CAMERA_FOV } from '@/lib/home-stage-geometry';
 import { StageRuntime } from './stage-runtime';
@@ -33,6 +34,7 @@ export default function GpuStage(props: StageSceneProps) {
     )
   );
   const fail = useEffectEvent(() => props.onError());
+  const isPaused = useLatestReader(props.paused);
 
   useEffect(() => {
     if (!size.width || !size.height || !canvas.current) return;
@@ -73,7 +75,10 @@ export default function GpuStage(props: StageSceneProps) {
               }
               const draw = renderer.render.bind(renderer);
               renderer.render = (scene, camera) => {
-                if (!isLive()) return;
+                // Never draw into the canvas while Home is off screen: its
+                // surface may be gone, and a frame presented then leaves the
+                // canvas blank for good. Home wakes the scene when it returns.
+                if (!isLive() || isPaused()) return;
                 try {
                   draw(scene, camera);
                   context.present();
@@ -96,7 +101,7 @@ export default function GpuStage(props: StageSceneProps) {
       },
       fail
     );
-  }, [size]);
+  }, [size, isPaused]);
   useEffect(() => {
     renderLatest();
   }, [props]);
