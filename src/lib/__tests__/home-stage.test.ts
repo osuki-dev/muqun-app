@@ -13,7 +13,6 @@ import {
   wrapStageIndex,
   STAGE_FRONT_OFFSET,
   STAGE_HOST_HINT,
-  STAGE_MAX_SCREENS,
   STAGE_RING_RADIUS,
 } from '../home-stage-geometry';
 import {
@@ -58,7 +57,7 @@ describe('stage ring', () => {
   test('with many computers, draws the selection and its nearest neighbours', () => {
     expect(stageDrawnScreens(0, 3)).toEqual([0, 1, 2]);
     const drawn = stageDrawnScreens(0, 20);
-    expect(drawn).toHaveLength(STAGE_MAX_SCREENS);
+    expect(drawn).toHaveLength(3);
     expect(drawn).toContain(0);
     expect(drawn).toContain(1);
     expect(drawn).toContain(19);
@@ -106,13 +105,14 @@ describe('camera and projection', () => {
     expect(projectStagePoint(front, dived, 390, 844).visible).toBe(true);
   });
 
-  test('wide art fits the pedestal; portrait art keeps the full host height', () => {
-    expect(stageHostSize(0.6)).toEqual({ width: 2.67 * 0.6, height: 2.67 });
+  test('art preserves its aspect and invalid dimensions use the square fallback', () => {
+    const portrait = stageHostSize(0.6);
+    expect(portrait.width / portrait.height).toBeCloseTo(0.6);
     const group = stageHostSize(2.4);
     expect(group.width).toBeLessThanOrEqual(2.36 * 1.25 + 1e-9);
     expect(group.height).toBeLessThanOrEqual(2.6);
     expect(group.width / group.height).toBeCloseTo(2.4);
-    expect(stageHostSize(Number.NaN).height).toBe(2.67);
+    expect(stageHostSize(Number.NaN)).toEqual(stageHostSize(1));
   });
 
   test('look offsets are clamped; billboards face the camera', () => {

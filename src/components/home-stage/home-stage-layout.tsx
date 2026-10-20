@@ -254,7 +254,12 @@ export function HomeStageLayout({
             onPress: act(onOpen),
             testID: 'home-stage-action-open',
           },
-          { id: 'tasks', label: t`Tasks`, Icon: TaskListIcon, onPress: act(onOpenTasks) },
+          {
+            id: 'tasks',
+            label: t`Tasks`,
+            Icon: TaskListIcon,
+            onPress: act(onOpenTasks),
+          },
           {
             id: 'details',
             label: t`Computer details`,
@@ -284,6 +289,8 @@ export function HomeStageLayout({
         burst={burst}
         onSelect={onSelect}
         onOpen={onOpen}
+        onOpenTasks={onOpenTasks}
+        onAttention={() => openList(true)}
         onNewTask={onNewTask}
         onActions={(index) => {
           const panel = panels[index];
@@ -563,7 +570,14 @@ function StageSessionCard({ entry, onPress }: { entry: HomeContinueEntry; onPres
 const styles = StyleSheet.create({
   root: { flex: 1, overflow: 'hidden' },
   topScrim: { position: 'absolute', left: 0, right: 0, top: 0 },
-  top: { position: 'absolute', left: 0, right: 0, top: 0, paddingHorizontal: 20, gap: 14 },
+  top: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    paddingHorizontal: 20,
+    gap: 14,
+  },
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -607,7 +621,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   moreCard: { width: 132, flexDirection: 'row', alignItems: 'center', gap: 6 },
-  sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, overflow: 'hidden' },
+  sheet: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    overflow: 'hidden',
+  },
   sheetHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',

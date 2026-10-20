@@ -1,7 +1,6 @@
 /**
- * Geometry of the Stage Home layout (design §13): the host on her pedestal at
- * the centre of the world, one screen per computer on a ring around her, the
- * chosen one turned to her front right, and the camera that looks at it all.
+ * Geometry of Home's workspace windows: a selected window in front, its
+ * neighbours receding to either side, and theme artwork on a separate plane.
  * Pure math shared by the GPU scene, the static 2.5D stage and the 2D HUD's
  * projected hit areas and hint chips, so all three always agree.
  */
@@ -10,40 +9,38 @@ export type StageVec3 = readonly [number, number, number];
 
 export const STAGE_RING_RADIUS = 2.65;
 export const STAGE_SCREEN_Y = 1.35;
-/** The ring turns this far past "straight ahead", so the chosen screen stands front right. */
-export const STAGE_FRONT_OFFSET = 0.27;
+/** The selected window rests straight ahead. */
+export const STAGE_FRONT_OFFSET = 0;
 /** Screens drawn at once; with more computers the ones nearest the front are drawn. */
 export const STAGE_MAX_SCREENS = 8;
-export const STAGE_SCREEN_WIDTH = 1.9;
-export const STAGE_SCREEN_HEIGHT = 1.2;
-export const STAGE_FRONT_SCALE = 0.82;
-export const STAGE_SIDE_SCALE = 0.68;
+export const STAGE_SCREEN_WIDTH = 2.15;
+export const STAGE_SCREEN_HEIGHT = 2.05;
+export const STAGE_FRONT_SCALE = 0.8;
+export const STAGE_SIDE_SCALE = 0.23;
 
-export const STAGE_PEDESTAL: StageVec3 = [-0.25, 0, -0.35];
+export const STAGE_PEDESTAL: StageVec3 = [0, 0, -1.1];
 /** Where the beam leaves the host. */
 export const STAGE_HOST_CHEST: StageVec3 = [-0.25, 1.75, -0.25];
 /** Where the "start a new task" hint hangs. */
 export const STAGE_HOST_HINT: StageVec3 = [-0.25, 3.05, -0.35];
-export const STAGE_HOST_HEIGHT = 2.67;
-/** The pedestal's base diameter; wide art fits within 1.25x of it. */
+export const STAGE_HOST_HEIGHT = 3.1;
+/** Legacy reference span used to bound theme artwork. */
 export const STAGE_PEDESTAL_DIAMETER = 2.36;
-const HOST_WIDE_ASPECT = 1.3;
 const HOST_MAX_WIDTH = STAGE_PEDESTAL_DIAMETER * 1.25;
 const HOST_MAX_HEIGHT = 2.6;
 /** How far the art's cut bottom edge sits above the floor: just inside the pedestal's top. */
-export const STAGE_HOST_BASE_Y = 0.215;
+export const STAGE_HOST_BASE_Y = 1.95;
 
-/**
- * The host billboard's size for art of `aspect` (width / height). Portrait
- * and near-square art stand at the full host height; wide art -- a group, a
- * landscape -- fits within 1.25x the pedestal's diameter and 2.6 units tall,
- * so it never overflows the pedestal.
- */
-export function stageHostSize(aspect: number): { width: number; height: number } {
+/** Fit theme artwork completely inside its composition bounds. */
+export function stageHostSize(aspect: number): {
+  width: number;
+  height: number;
+} {
   const ratio = Number.isFinite(aspect) && aspect > 0 ? aspect : 1;
-  if (ratio <= HOST_WIDE_ASPECT)
-    return { width: STAGE_HOST_HEIGHT * ratio, height: STAGE_HOST_HEIGHT };
-  const height = Math.min(HOST_MAX_HEIGHT, HOST_MAX_WIDTH / ratio);
+  const height = Math.min(
+    ratio > 1.3 ? HOST_MAX_HEIGHT : STAGE_HOST_HEIGHT,
+    HOST_MAX_WIDTH / ratio
+  );
   return { width: height * ratio, height };
 }
 
@@ -71,27 +68,29 @@ export function stageRingRest(selected: number, count: number): number {
   return count > 0 ? (-wrapStageIndex(selected, count) * Math.PI * 2) / count : 0;
 }
 
-/** A screen's centre for a ring angle. */
+/** A cyclic selection phase projected onto a shallow workspace arc. */
 export function stageScreenPosition(index: number, count: number, ringAngle: number): StageVec3 {
-  const angle =
-    (count > 0 ? (wrapStageIndex(index, count) / count) * Math.PI * 2 : 0) +
-    ringAngle +
-    STAGE_FRONT_OFFSET;
-  return [Math.sin(angle) * STAGE_RING_RADIUS, STAGE_SCREEN_Y, Math.cos(angle) * STAGE_RING_RADIUS];
+  const angle = (count > 0 ? (wrapStageIndex(index, count) / count) * Math.PI * 2 : 0) + ringAngle;
+  const wrapped = Math.atan2(Math.sin(angle), Math.cos(angle));
+  const step = count > 1 ? wrapped / ((Math.PI * 2) / count) : 0;
+  return [
+    step * 1.32 - 0.18,
+    STAGE_SCREEN_Y + Math.min(1, Math.abs(step)) * 2.0,
+    STAGE_RING_RADIUS - Math.abs(step) * 1.5,
+  ];
 }
 
 /**
- * Which computers get a screen: all of them up to `STAGE_MAX_SCREENS`, else
- * the selected one and its nearest neighbours round the ring.
+ * Only the current computer and its two neighbours are visible. A computer
+ * behind the selection must not show through the active window's surface.
  */
 export function stageDrawnScreens(selected: number, count: number): number[] {
-  if (count <= STAGE_MAX_SCREENS) return Array.from({ length: count }, (_, index) => index);
-  const drawn = [wrapStageIndex(selected, count)];
-  for (let step = 1; drawn.length < STAGE_MAX_SCREENS; step += 1) {
-    drawn.push(wrapStageIndex(selected + step, count));
-    if (drawn.length < STAGE_MAX_SCREENS) drawn.push(wrapStageIndex(selected - step, count));
-  }
-  return drawn.sort((a, b) => a - b);
+  if (count <= 3) return Array.from({ length: count }, (_, index) => index);
+  return [
+    wrapStageIndex(selected - 1, count),
+    wrapStageIndex(selected, count),
+    wrapStageIndex(selected + 1, count),
+  ].sort((a, b) => a - b);
 }
 
 /** The direction (+1 next, -1 previous) a swipe that ends at `translationX` moves the ring. */
@@ -115,8 +114,8 @@ export type StageCamera = {
 };
 
 export const STAGE_CAMERA_FOV = 42;
-const CAMERA_POSITION: StageVec3 = [0.6, 3, 11];
-const CAMERA_TARGET: StageVec3 = [0.35, 1.05, 0];
+const CAMERA_POSITION: StageVec3 = [0, 2.6, 11];
+const CAMERA_TARGET: StageVec3 = [0, 1.65, 0];
 /** How far the camera stops in front of a screen it dives to. */
 const DIVE_STANDOFF = 1.55;
 
