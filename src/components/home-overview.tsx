@@ -1279,6 +1279,9 @@ export function HomeOverview({
           onOpenSession={(entry) => {
             void commands.dispatch(homeContinueCommand(entry.destination));
           }}
+          // The host starts a new task on the composer's computer, as Home's
+          // New session action does (an offline target opens the picker).
+          onNewTask={() => launchController.launchOnChosen(commands.newAgent)}
           onViewport={(height) => {
             pageDockHide.settle({ viewportHeight: height });
             if (height > 0) setViewportReady(true);

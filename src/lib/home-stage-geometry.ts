@@ -1,48 +1,30 @@
 /**
- * Geometry of the Stage Home layout: where each computer's holo-card stands,
- * how a card move travels between two selections, and how a scene point lands
- * on the 2D overlay. Pure math, shared by the GPU scene, the static 2.5D
- * fallback and the overlay labels so the three always agree.
- *
- * Scene units: the character stands on the plane z = 0, its feet on the
- * floor at `STAGE_FLOOR_Y`. The selected card stands in front of it, lower
- * centre; the others arc behind and to the sides, dimmer and smaller.
+ * Geometry of the Stage Home layout (design §13): the host on her pedestal at
+ * the centre of the world, one screen per computer on a ring around her, the
+ * chosen one turned to her front right, and the camera that looks at it all.
+ * Pure math shared by the GPU scene, the static 2.5D stage and the 2D HUD's
+ * projected hit areas and hint chips, so all three always agree.
  */
 
 export type StageVec3 = readonly [number, number, number];
 
-export type StagePanelPose = {
-  position: StageVec3;
-  /** Yaw in radians; a card move adds a half turn to the incoming card. */
-  rotationY: number;
-  scale: number;
-  /** 0 = fully lit, 1 = fully dimmed. */
-  dim: number;
-  /** 0 = hidden (beyond the visible arc), 1 = shown. */
-  presence: number;
-};
+export const STAGE_RING_RADIUS = 3.4;
+export const STAGE_SCREEN_Y = 0.95;
+/** The ring turns this far past "straight ahead", so the chosen screen stands front right. */
+export const STAGE_FRONT_OFFSET = 0.42;
+/** Screens drawn at once; with more computers the ones nearest the front are drawn. */
+export const STAGE_MAX_SCREENS = 8;
+export const STAGE_SCREEN_WIDTH = 1.9;
+export const STAGE_SCREEN_HEIGHT = 1.2;
+export const STAGE_FRONT_SCALE = 0.92;
+export const STAGE_SIDE_SCALE = 0.74;
 
-/** The front card plus two on each side. */
-export const STAGE_MAX_VISIBLE = 5;
-export const STAGE_SIDE_SLOTS = 2;
-
-export const STAGE_PANEL_WIDTH = 1;
-export const STAGE_PANEL_HEIGHT = 0.62;
-export const STAGE_FLOOR_Y = -1.25;
-/** The character billboard's height, slightly larger than life against a card. */
-export const STAGE_CHARACTER_HEIGHT = 3.1;
-
-const FRONT_POSE: StagePanelPose = {
-  position: [0, -0.62, 1.55],
-  rotationY: 0,
-  scale: 1.22,
-  dim: 0,
-  presence: 1,
-};
-const ARC_RADIUS = 2;
-const ARC_FIRST = 0.8;
-const ARC_STEP = 0.4;
-const ARC_DEPTH = 2.6;
+export const STAGE_PEDESTAL: StageVec3 = [-0.25, 0, -0.35];
+/** Where the beam leaves the host. */
+export const STAGE_HOST_CHEST: StageVec3 = [-0.25, 1.75, -0.25];
+/** Where the "start a new task" hint hangs. */
+export const STAGE_HOST_HINT: StageVec3 = [-0.25, 3.05, -0.35];
+export const STAGE_HOST_HEIGHT = 2.67;
 
 /** `index` wrapped into `[0, count)`; 0 for an empty ring. */
 export function wrapStageIndex(index: number, count: number): number {
@@ -51,99 +33,55 @@ export function wrapStageIndex(index: number, count: number): number {
 }
 
 /**
- * Where `index` sits relative to the selected card on the ring: 0 is the
- * front, positive to the right, negative to the left, in `(-count/2, count/2]`.
- * With two computers the other one is always on the right.
+ * The ring angle that brings `to` to the front, turning the short way round
+ * from wherever `current` (the ring's present target) has it. Accumulates, so
+ * the ring never spins back through a full turn.
  */
-export function stageRingOffset(index: number, selected: number, count: number): number {
-  if (count <= 1) return 0;
-  const offset = wrapStageIndex(index - selected, count);
-  return offset > count / 2 ? offset - count : offset;
+export function stageRingTarget(current: number, from: number, to: number, count: number): number {
+  if (count <= 1) return current;
+  let delta = wrapStageIndex(to, count) - wrapStageIndex(from, count);
+  if (delta > count / 2) delta -= count;
+  if (delta < -count / 2) delta += count;
+  return current - (delta * Math.PI * 2) / count;
 }
 
-/** The resting pose for a ring offset. Offsets past the visible arc are hidden there. */
-export function stageSlotPose(offset: number): StagePanelPose {
-  if (offset === 0) return FRONT_POSE;
-  const side = Math.sign(offset);
-  const distance = Math.abs(offset);
-  const step = Math.min(distance, STAGE_SIDE_SLOTS + 1) - 1;
-  const angle = side * (ARC_FIRST + ARC_STEP * step);
-  return {
-    position: [
-      ARC_RADIUS * Math.sin(angle),
-      0.12 + 0.34 * step,
-      -0.35 - ARC_DEPTH * (1 - Math.cos(angle)),
-    ],
-    // Turned in towards the character, as if the arc were drawn around it.
-    rotationY: -angle * 0.6,
-    scale: 0.8 - 0.12 * step,
-    dim: Math.min(1, 0.35 + 0.25 * step),
-    presence: distance > STAGE_SIDE_SLOTS ? 0 : 1,
-  };
+/** The ring angle at rest with `selected` in front. */
+export function stageRingRest(selected: number, count: number): number {
+  return count > 0 ? (-wrapStageIndex(selected, count) * Math.PI * 2) / count : 0;
 }
 
-const lerp = (from: number, to: number, t: number) => from + (to - from) * t;
+/** A screen's centre for a ring angle. */
+export function stageScreenPosition(index: number, count: number, ringAngle: number): StageVec3 {
+  const angle =
+    (count > 0 ? (wrapStageIndex(index, count) / count) * Math.PI * 2 : 0) +
+    ringAngle +
+    STAGE_FRONT_OFFSET;
+  return [Math.sin(angle) * STAGE_RING_RADIUS, STAGE_SCREEN_Y, Math.cos(angle) * STAGE_RING_RADIUS];
+}
 
 /**
- * One card's pose part-way through a card move from selection `fromSelected`
- * to `toSelected`. `progress` follows a spring and may overshoot 1 a little.
- *
- * - The card leaving the front flies back onto the arc over a small hump.
- * - The card arriving at the front slides forward and turns a half turn to
- *   face the reader. Its rest yaw is then pi, which the panel shader draws
- *   exactly like 0 (the back face mirrors its UVs), so nothing jumps when
- *   the move hands over to the resting pose.
- * - Every other card glides between its two arc slots.
+ * Which computers get a screen: all of them up to `STAGE_MAX_SCREENS`, else
+ * the selected one and its nearest neighbours round the ring.
  */
-export function stageMovePose(
-  index: number,
-  fromSelected: number,
-  toSelected: number,
-  count: number,
-  progress: number
-): StagePanelPose {
-  const fromOffset = stageRingOffset(index, fromSelected, count);
-  const toOffset = stageRingOffset(index, toSelected, count);
-  const from = stageSlotPose(fromOffset);
-  const to = stageSlotPose(toOffset);
-  const p = Number.isFinite(progress) ? progress : 1;
-  const clamped = Math.min(1, Math.max(0, p));
-  const hump = Math.sin(Math.PI * clamped);
-  const position: [number, number, number] = [
-    lerp(from.position[0], to.position[0], p),
-    lerp(from.position[1], to.position[1], p),
-    lerp(from.position[2], to.position[2], p),
-  ];
-  let rotationY = lerp(from.rotationY, to.rotationY, p);
-  if (fromOffset === 0 && toOffset !== 0) {
-    position[1] += hump * 0.35;
-    position[2] -= hump * 0.45;
-  } else if (toOffset === 0 && fromOffset !== 0) {
-    // Turns towards the side it came from, so the flip reads as one motion.
-    rotationY += Math.PI * Math.sign(fromOffset || 1) * clamped;
-    position[2] += hump * 0.25;
+export function stageDrawnScreens(selected: number, count: number): number[] {
+  if (count <= STAGE_MAX_SCREENS) return Array.from({ length: count }, (_, index) => index);
+  const drawn = [wrapStageIndex(selected, count)];
+  for (let step = 1; drawn.length < STAGE_MAX_SCREENS; step += 1) {
+    drawn.push(wrapStageIndex(selected + step, count));
+    if (drawn.length < STAGE_MAX_SCREENS) drawn.push(wrapStageIndex(selected - step, count));
   }
-  return {
-    position,
-    rotationY,
-    scale: lerp(from.scale, to.scale, p),
-    dim: Math.min(1, Math.max(0, lerp(from.dim, to.dim, clamped))),
-    presence: lerp(from.presence, to.presence, clamped),
-  };
+  return drawn.sort((a, b) => a - b);
 }
 
-/** The direction (+1 right, -1 left) a swipe that ends at `translationX` moves the ring. */
+/** The direction (+1 next, -1 previous) a swipe that ends at `translationX` moves the ring. */
 export function stageSwipeStep(translationX: number, velocityX: number, width: number): number {
   const distance = width > 0 ? Math.abs(translationX) / width : 0;
   const fast = Math.abs(velocityX) > 520;
-  if (distance < 0.18 && !fast) return 0;
-  // Dragging left brings the right-hand card forward.
+  if (distance < 0.1 && !fast) return 0;
+  // Dragging left brings the next screen forward.
   const direction = fast && Math.sign(velocityX) !== 0 ? velocityX : translationX;
   return direction < 0 ? 1 : -1;
 }
-
-/** The character's head-plane turn towards the selected card, at most ~6 degrees. */
-export const STAGE_LOOK_YAW = (6 * Math.PI) / 180;
 
 // -- Camera -----------------------------------------------------------------
 
@@ -154,40 +92,64 @@ export type StageCamera = {
   fov: number;
 };
 
-export const STAGE_CAMERA_FOV = 38;
-const CAMERA_TARGET: StageVec3 = [0, 0.18, 0];
-const CAMERA_DISTANCE = 6.6;
-const CAMERA_BASE_PITCH = (5 * Math.PI) / 180;
-/** Drag pitch, ±6 degrees, and tilt parallax, ±3 degrees. */
-export const STAGE_DRAG_PITCH = (6 * Math.PI) / 180;
-export const STAGE_TILT_LIMIT = (3 * Math.PI) / 180;
+export const STAGE_CAMERA_FOV = 42;
+const CAMERA_POSITION: StageVec3 = [0.6, 3, 11];
+const CAMERA_TARGET: StageVec3 = [0.55, 1.3, 0];
+/** How far the camera stops in front of a screen it dives to. */
+const DIVE_STANDOFF = 1.55;
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, Number.isFinite(value) ? value : 0));
+const lerp = (from: number, to: number, t: number) => from + (to - from) * t;
 
-/** The camera for a drag pitch and a tilt offset (both radians, clamped to their limits). */
-export function stageCamera(
-  dragPitch: number,
-  tiltPitch: number,
-  tiltYaw: number,
-  aspect: number
-): StageCamera {
-  const pitch =
-    CAMERA_BASE_PITCH +
-    clamp(dragPitch, -STAGE_DRAG_PITCH, STAGE_DRAG_PITCH) +
-    clamp(tiltPitch, -STAGE_TILT_LIMIT, STAGE_TILT_LIMIT);
-  const yaw = clamp(tiltYaw, -STAGE_TILT_LIMIT, STAGE_TILT_LIMIT);
-  // A narrow stage steps back so the arc's outer cards stay in frame.
-  const distance = CAMERA_DISTANCE * Math.max(1, 0.86 / Math.max(0.3, aspect));
+/**
+ * The stage camera. `lookX`/`lookY` (-1..1, from tilt or a drag) move it like
+ * a window onto the world; `dive` (0..1) flies it to the screen at `diveTo`.
+ * A screen narrower than a phone in portrait steps back so the ring fits.
+ */
+export function stageCamera({
+  lookX = 0,
+  lookY = 0,
+  dive = 0,
+  diveTo,
+  aspect = 390 / 844,
+}: {
+  lookX?: number;
+  lookY?: number;
+  dive?: number;
+  diveTo?: StageVec3;
+  aspect?: number;
+}): StageCamera {
+  const x = clamp(lookX, -1, 1) * 0.5;
+  const y = clamp(lookY, -1, 1) * 0.5;
+  const back = Math.max(1, 390 / 844 / Math.max(0.2, aspect)) ** 0.5;
+  const stage: StageVec3 = [
+    CAMERA_POSITION[0] + x * 2.6,
+    CAMERA_POSITION[1] - y * 1.4,
+    CAMERA_POSITION[2] * back,
+  ];
+  const t = clamp(dive, 0, 1);
+  if (!diveTo || t === 0) return { position: stage, target: CAMERA_TARGET, fov: STAGE_CAMERA_FOV };
+  const flat = Math.hypot(diveTo[0], diveTo[2]) || 1;
+  const near: StageVec3 = [
+    diveTo[0] + (diveTo[0] / flat) * DIVE_STANDOFF,
+    diveTo[1] + 0.05,
+    diveTo[2] + (diveTo[2] / flat) * DIVE_STANDOFF,
+  ];
   return {
-    position: [
-      CAMERA_TARGET[0] + Math.sin(yaw) * Math.cos(pitch) * distance,
-      CAMERA_TARGET[1] + Math.sin(pitch) * distance,
-      CAMERA_TARGET[2] + Math.cos(yaw) * Math.cos(pitch) * distance,
+    position: [lerp(stage[0], near[0], t), lerp(stage[1], near[1], t), lerp(stage[2], near[2], t)],
+    target: [
+      lerp(CAMERA_TARGET[0], diveTo[0], t),
+      lerp(CAMERA_TARGET[1], diveTo[1], t),
+      lerp(CAMERA_TARGET[2], diveTo[2], t),
     ],
-    target: CAMERA_TARGET,
     fov: STAGE_CAMERA_FOV,
   };
+}
+
+/** Yaw that turns an object at `at` to face the camera about the Y axis (a Y-billboard). */
+export function stageFacingYaw(at: StageVec3, camera: StageVec3): number {
+  return Math.atan2(camera[0] - at[0], camera[2] - at[2]);
 }
 
 export type StageProjection = {
@@ -239,39 +201,48 @@ export function projectStagePoint(
   const aspect = width / height;
   const ndcX = (right / depth) * (focal / aspect);
   const ndcY = (up / depth) * focal;
-  const x = ((ndcX + 1) / 2) * width;
-  const y = ((1 - ndcY) / 2) * height;
-  return { x, y, depth, visible: Math.abs(ndcX) <= 1 && Math.abs(ndcY) <= 1 };
-}
-
-/** The point an overlay label hangs from: just under the card's bottom edge. */
-export function stageLabelAnchor(pose: StagePanelPose): StageVec3 {
-  return [
-    pose.position[0],
-    pose.position[1] - (STAGE_PANEL_HEIGHT / 2) * pose.scale - 0.04,
-    pose.position[2],
-  ];
-}
-
-/** The card's projected box, for its 2D hit area and accessibility frame. */
-export function stagePanelRect(
-  pose: StagePanelPose,
-  camera: StageCamera,
-  width: number,
-  height: number
-): { x: number; y: number; width: number; height: number; visible: boolean } {
-  const halfW = (STAGE_PANEL_WIDTH / 2) * pose.scale * Math.abs(Math.cos(pose.rotationY));
-  const halfH = (STAGE_PANEL_HEIGHT / 2) * pose.scale;
-  const [cx, cy, cz] = pose.position;
-  const a = projectStagePoint([cx - halfW, cy + halfH, cz], camera, width, height);
-  const b = projectStagePoint([cx + halfW, cy - halfH, cz], camera, width, height);
-  const left = Math.min(a.x, b.x);
-  const top = Math.min(a.y, b.y);
   return {
-    x: left,
-    y: top,
-    width: Math.abs(b.x - a.x),
-    height: Math.abs(b.y - a.y),
-    visible: pose.presence > 0.5 && (a.visible || b.visible),
+    x: ((ndcX + 1) / 2) * width,
+    y: ((1 - ndcY) / 2) * height,
+    depth,
+    visible: Math.abs(ndcX) <= 1 && Math.abs(ndcY) <= 1,
+  };
+}
+
+export type StageRect = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  depth: number;
+  visible: boolean;
+};
+
+/** A camera-facing box of `width` x `height` world units centred at `centre`, on screen. */
+export function stageBillboardRect(
+  centre: StageVec3,
+  width: number,
+  height: number,
+  camera: StageCamera,
+  viewportWidth: number,
+  viewportHeight: number
+): StageRect {
+  const middle = projectStagePoint(centre, camera, viewportWidth, viewportHeight);
+  const top = projectStagePoint(
+    [centre[0], centre[1] + height / 2, centre[2]],
+    camera,
+    viewportWidth,
+    viewportHeight
+  );
+  // Facing the camera, the box keeps its aspect on screen.
+  const h = Math.abs(middle.y - top.y) * 2;
+  const w = (h * width) / height;
+  return {
+    x: middle.x - w / 2,
+    y: middle.y - h / 2,
+    width: w,
+    height: h,
+    depth: middle.depth,
+    visible: middle.visible,
   };
 }

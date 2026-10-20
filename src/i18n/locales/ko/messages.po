@@ -148,7 +148,7 @@ msgstr "컨텍스트에 있는 메시지 {0}개"
 msgid "{0} more models"
 msgstr "모델 {0}개 더"
 
-#. placeholder {0}: index + 1
+#. placeholder {0}: target.index + 1
 #. placeholder {1}: panels.length
 #: src/components/home-stage/stage-view.tsx
 msgid "{0} of {1}"
@@ -636,6 +636,10 @@ msgstr "에이전트가 종료됨"
 #: src/components/settings-terminal.tsx
 msgid "Agent panes open in"
 msgstr "에이전트 패널 기본 보기"
+
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Agent working"
+msgstr "에이전트 작업 중"
 
 #: src/components/app-drawer-content.tsx
 #: src/components/new-task-action.tsx
@@ -1557,6 +1561,7 @@ msgstr "완료됨"
 #: src/components/app-drawer.tsx
 #: src/components/home-composer-options.tsx
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer"
 msgstr "컴퓨터"
@@ -4488,6 +4493,10 @@ msgstr "온라인 상태"
 msgid "ONLINE"
 msgstr "온라인"
 
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Online · {count, plural, one {# session} other {# sessions}}"
+msgstr "온라인 · {count, plural, other {세션 #개}}"
+
 #: src/lib/attachments.ts
 msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."
 msgstr "처음 {MAX_ATTACHMENTS_PER_PICK}개 파일만 추가되었고 {dropped}개는 제외되었습니다"
@@ -6276,6 +6285,10 @@ msgstr "새 {0} 시작"
 msgid "Start a new session with empty context"
 msgstr "컨텍스트를 비우고 새 세션을 시작합니다"
 
+#: src/components/home-stage/stage-view.tsx
+msgid "Start a new task"
+msgstr "새 작업 시작"
+
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
 msgid "Start a session with a clean context"
@@ -6544,6 +6557,14 @@ msgstr "탭"
 #: src/components/attachment-menu.tsx
 msgid "Take photo"
 msgstr "사진 찍기"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Tap · open"
+msgstr "탭 · 열기"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Tap · start a new task"
+msgstr "탭 · 새 작업 시작"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Tap again to clear"
@@ -7749,7 +7770,6 @@ msgid "While you were away"
 msgstr "자리를 비운 사이"
 
 #: src/components/collaboration-notice.tsx
-#: src/components/home-stage/home-stage-layout.tsx
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "작업 중"

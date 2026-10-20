@@ -148,7 +148,7 @@ msgstr "コンテキスト内のメッセージ {0} 件"
 msgid "{0} more models"
 msgstr "ほか {0} 件のモデル"
 
-#. placeholder {0}: index + 1
+#. placeholder {0}: target.index + 1
 #. placeholder {1}: panels.length
 #: src/components/home-stage/stage-view.tsx
 msgid "{0} of {1}"
@@ -636,6 +636,10 @@ msgstr "エージェントは終了しました"
 #: src/components/settings-terminal.tsx
 msgid "Agent panes open in"
 msgstr "エージェントのパネルの初期表示"
+
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Agent working"
+msgstr "エージェント作業中"
 
 #: src/components/app-drawer-content.tsx
 #: src/components/new-task-action.tsx
@@ -1557,6 +1561,7 @@ msgstr "完了"
 #: src/components/app-drawer.tsx
 #: src/components/home-composer-options.tsx
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer"
 msgstr "コンピュータ"
@@ -4488,6 +4493,10 @@ msgstr "オンラインです"
 msgid "ONLINE"
 msgstr "オンライン"
 
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Online · {count, plural, one {# session} other {# sessions}}"
+msgstr "オンライン · {count, plural, other {# 件のセッション}}"
+
 #: src/lib/attachments.ts
 msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."
 msgstr "最初の{MAX_ATTACHMENTS_PER_PICK}件のみ追加しました。{dropped}件は追加されていません"
@@ -6276,6 +6285,10 @@ msgstr "新しい {0} を起動"
 msgid "Start a new session with empty context"
 msgstr "空のコンテキストで新しいセッションを開始します"
 
+#: src/components/home-stage/stage-view.tsx
+msgid "Start a new task"
+msgstr "新しいタスクを開始"
+
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
 msgid "Start a session with a clean context"
@@ -6544,6 +6557,14 @@ msgstr "タブ"
 #: src/components/attachment-menu.tsx
 msgid "Take photo"
 msgstr "写真を撮る"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Tap · open"
+msgstr "タップ · 開く"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Tap · start a new task"
+msgstr "タップ · 新しいタスク"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Tap again to clear"
@@ -7749,7 +7770,6 @@ msgid "While you were away"
 msgstr "離席中の変化"
 
 #: src/components/collaboration-notice.tsx
-#: src/components/home-stage/home-stage-layout.tsx
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "作業中"

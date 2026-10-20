@@ -54,7 +54,7 @@ export default function GpuStage(props: StageSceneProps) {
             size: { ...size, top: 0, left: 0 },
             dpr: Math.min(PixelRatio.get(), 2),
             frameloop: 'demand',
-            camera: { fov: STAGE_CAMERA_FOV, near: 0.1, far: 60 },
+            camera: { fov: STAGE_CAMERA_FOV, near: 0.1, far: 200 },
             gl: async () => {
               const renderer = new WebGPURenderer({
                 canvas: surface,

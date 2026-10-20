@@ -7,6 +7,7 @@
  */
 import type { HomeAttentionSnapshot } from './home-attention';
 import { homeContinueServerId, type HomeContinueEntry } from './home-continue';
+import type { AgentStatus } from './herdr-entity';
 import { isServerAgentsStale, type ServerAgentsIndex } from './server-agents';
 import { reachabilityOfStatus, type ConnectionStatus } from './server-reachability';
 
@@ -25,7 +26,16 @@ export type StagePanel = {
   sessionCount: number;
   /** When the app last confirmed its agents with it, for "last seen". */
   lastSeenMs?: number;
+  /**
+   * What its screen shows: the agents the mirror last saw running on it, then
+   * its latest session titles. Terminal output is not mirrored on Home, so the
+   * face never claims to be live text.
+   */
+  face: { agents: { name: string; status: AgentStatus }[]; sessions: string[] };
 };
+
+/** Lines a screen has room for. */
+export const STAGE_FACE_LINES = 4;
 
 export function stagePanelTone(connection: ConnectionStatus): StagePanelTone {
   if (connection === 'repair' || connection === 'unauthorized' || connection === 'reconnecting')
@@ -50,9 +60,14 @@ export function stagePanels({
   nowMs: number;
 }): StagePanel[] {
   const sessions = new Map<string, number>();
+  const titles = new Map<string, string[]>();
   for (const entry of recentEntries) {
     const serverId = homeContinueServerId(entry);
-    if (serverId) sessions.set(serverId, (sessions.get(serverId) ?? 0) + 1);
+    if (!serverId) continue;
+    sessions.set(serverId, (sessions.get(serverId) ?? 0) + 1);
+    const list = titles.get(serverId) ?? [];
+    if (list.length < STAGE_FACE_LINES) list.push(entry.title);
+    titles.set(serverId, list);
   }
   const waiting = new Set<string>();
   for (const snapshot of Object.values(attention))
@@ -74,8 +89,22 @@ export function stagePanels({
         agents.some((agent) => agent.status === 'blocked' || agent.pendingUserInput === true),
       sessionCount: sessions.get(server.serverId) ?? 0,
       ...(snapshot ? { lastSeenMs: snapshot.checkedAtMs } : {}),
+      face: faceOf(agents, titles.get(server.serverId) ?? []),
     };
   });
+}
+
+function faceOf(
+  agents: readonly { name: string; agentLabel?: string; status: AgentStatus; hasAgent: boolean }[],
+  titles: readonly string[]
+): StagePanel['face'] {
+  const running = agents
+    .filter((agent) => agent.hasAgent)
+    // Working first: what is happening now heads the screen.
+    .sort((a, b) => Number(b.status === 'working') - Number(a.status === 'working'))
+    .slice(0, 2)
+    .map((agent) => ({ name: agent.agentLabel ?? agent.name, status: agent.status }));
+  return { agents: running, sessions: titles.slice(0, STAGE_FACE_LINES - running.length) };
 }
 
 /** Where the selected computer stands in the panel ring; 0 when it is not there. */

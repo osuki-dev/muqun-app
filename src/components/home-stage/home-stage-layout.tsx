@@ -1,7 +1,9 @@
+import { plural } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { PressableScale, Text, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
-import { type ReactNode, useMemo, useState } from 'react';
+import * as Haptics from 'expo-haptics';
+import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import {
   RefreshControl,
   ScrollView,
@@ -16,6 +18,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
+import { EdgeFade } from '@/components/edge-fade';
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useMinuteNow } from '@/hooks/use-minute-now';
@@ -24,14 +27,15 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useTaskAge } from '@/hooks/use-task-age';
 import { CloseIcon, NextIcon, SettingsIcon, TaskListIcon, TerminalWindowIcon } from '@/icons';
 import { connectionStatusDescription } from '@/i18n/labels';
+import { withAlpha } from '@/lib/color';
 import { filterHomeRecent, type HomeContinueEntry } from '@/lib/home-continue';
-import { stagePanels, stageSelectedIndex } from '@/lib/home-stage-panels';
 import { wrapStageIndex } from '@/lib/home-stage-geometry';
+import { stagePanels, stageSelectedIndex, type StagePanel } from '@/lib/home-stage-panels';
+import { fadeIn, fadeOut, SETTLE } from '@/lib/motion';
 import type { ConnectionStatus } from '@/lib/server-reachability';
 import { useHomeAttention } from '@/stores/home-attention';
 import { useServerAgents } from '@/stores/server-agents';
-import type { StagePanel } from '@/lib/home-stage-panels';
-import { fadeIn, fadeOut, SETTLE } from '@/lib/motion';
+import { useServerTasksStore } from '@/stores/server-tasks';
 import { isRenderableThemeAsset } from '@/theme/renderable-asset';
 import { resolveThemeImage } from '@/theme/resolve';
 import { StageView } from './stage-view';
@@ -42,6 +46,8 @@ export type HomeStageLayoutProps = {
   artworkUri?: string;
   /** Home is not on screen or the app is in the background. */
   paused: boolean;
+  /** Bumped when a task completes: the sparks burst. */
+  burst: number;
   topInset: number;
   /** The floating composer's height; the session strip stands above it. */
   dockHeight: number;
@@ -64,6 +70,7 @@ export type HomeStageLayoutProps = {
   onOpen: (index: number) => void;
   onOpenTasks: (index: number) => void;
   onOpenDetails: (index: number) => void;
+  onNewTask: () => void;
   onViewport: (height: number) => void;
 };
 
@@ -72,7 +79,14 @@ const STRIP_LIMIT = 6;
 
 export type HomeStageProps = Omit<
   HomeStageLayoutProps,
-  'panels' | 'selectedIndex' | 'sessions' | 'onSelect' | 'onOpen' | 'onOpenTasks' | 'onOpenDetails'
+  | 'panels'
+  | 'selectedIndex'
+  | 'sessions'
+  | 'burst'
+  | 'onSelect'
+  | 'onOpen'
+  | 'onOpenTasks'
+  | 'onOpenDetails'
 > & {
   servers: readonly { serverId: string; label: string }[];
   chosenServerId?: string;
@@ -86,8 +100,9 @@ export type HomeStageProps = Omit<
 
 /**
  * Reads the stage's per-computer facts from the stores Home already keeps
- * (mirrored agents, attention) here rather than in `HomeOverview`, so those
- * subscriptions re-render only the Stage.
+ * (mirrored agents, attention, the task ledgers) here rather than in
+ * `HomeOverview`, so those subscriptions re-render only the Stage. Nothing is
+ * fetched or written: every layout reads the same state.
  */
 export function HomeStage({
   servers,
@@ -103,6 +118,26 @@ export function HomeStage({
   const agentsByServer = useServerAgents((state) => state.byServer);
   const attention = useHomeAttention((state) => state.byTarget);
   const nowMs = useMinuteNow();
+  // The newest finished task across the ledgers Home keeps: a later one is a completion.
+  const latestDoneMs = useServerTasksStore((state) => {
+    let latest = 0;
+    for (const entry of Object.values(state.index))
+      for (const task of entry?.tasks ?? [])
+        if (task.state === 'done' && task.updatedMs > latest) latest = task.updatedMs;
+    return latest;
+  });
+  const seenDoneMs = useRef<number | null>(null);
+  const [burst, setBurst] = useState(0);
+  useEffect(() => {
+    if (seenDoneMs.current === null) {
+      seenDoneMs.current = latestDoneMs;
+      return;
+    }
+    if (latestDoneMs <= seenDoneMs.current) return;
+    seenDoneMs.current = latestDoneMs;
+    setBurst((count) => count + 1);
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  }, [latestDoneMs]);
   const panels = useMemo(
     () =>
       stagePanels({
@@ -132,6 +167,7 @@ export function HomeStage({
       panels={panels}
       selectedIndex={selectedIndex}
       sessions={sessions}
+      burst={burst}
       onSelect={run(onSelectServer)}
       onOpen={run(onOpenServer)}
       onOpenTasks={run(onOpenTasks)}
@@ -142,15 +178,16 @@ export function HomeStage({
 
 /**
  * Stage: the theme's world fills the screen, and a thin 2D glass HUD carries
- * everything to read or press -- the chosen computer's name and status with
- * page dots (top left), the tools (top right), a strip of its sessions above
- * the composer, and the full list one pull away. Text never renders in 3D.
+ * everything to read or press -- the chosen computer, its status and the page
+ * dots with the tools (top), its sessions above the composer (bottom), and the
+ * full list one pull away. Text never renders in 3D.
  */
 export function HomeStageLayout({
   panels,
   selectedIndex,
   artworkUri,
   paused,
+  burst,
   topInset,
   dockHeight,
   headerAction,
@@ -167,6 +204,7 @@ export function HomeStageLayout({
   onOpen,
   onOpenTasks,
   onOpenDetails,
+  onNewTask,
   onViewport,
 }: HomeStageLayoutProps) {
   const { t } = useLingui();
@@ -189,7 +227,7 @@ export function HomeStageLayout({
   const sheetStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: (1 - sheet.get()) * windowHeight }],
   }));
-  // A pull up on the strip's handle raises the full list.
+  // A pull up on the HUD's foot raises the full list.
   const pull = useMemo(
     () =>
       Gesture.Pan()
@@ -201,6 +239,10 @@ export function HomeStageLayout({
     [openList]
   );
 
+  const act = (run: (index: number) => void) => () => {
+    setActionsFor(null);
+    run(actionsIndex);
+  };
   const menuItems: AgentActionMenuItem[] =
     actionsIndex < 0
       ? []
@@ -209,29 +251,15 @@ export function HomeStageLayout({
             id: 'open',
             label: t`Open`,
             Icon: TerminalWindowIcon,
-            onPress: () => {
-              setActionsFor(null);
-              onOpen(actionsIndex);
-            },
+            onPress: act(onOpen),
             testID: 'home-stage-action-open',
           },
-          {
-            id: 'tasks',
-            label: t`Tasks`,
-            Icon: TaskListIcon,
-            onPress: () => {
-              setActionsFor(null);
-              onOpenTasks(actionsIndex);
-            },
-          },
+          { id: 'tasks', label: t`Tasks`, Icon: TaskListIcon, onPress: act(onOpenTasks) },
           {
             id: 'details',
             label: t`Computer details`,
             Icon: SettingsIcon,
-            onPress: () => {
-              setActionsFor(null);
-              onOpenDetails(actionsIndex);
-            },
+            onPress: act(onOpenDetails),
           },
           {
             id: 'close',
@@ -253,64 +281,79 @@ export function HomeStageLayout({
         backdropFocal={backdrop?.focal}
         artworkUri={artworkUri}
         paused={paused || listOpen}
+        burst={burst}
         onSelect={onSelect}
         onOpen={onOpen}
+        onNewTask={onNewTask}
         onActions={(index) => {
           const panel = panels[index];
           if (panel) setActionsFor(panel.serverId);
         }}
       />
 
-      {/* Top: the chosen computer (left) and the tools (right). */}
-      <View pointerEvents="box-none" style={[styles.top, { paddingTop: topInset + 8 }]}>
-        {selected ? (
-          <View
-            testID="home-stage-hud-computer"
-            style={[
-              styles.plate,
-              {
-                backgroundColor: background(theme.colors.surface),
-                borderRadius: profile.chrome.surface,
-              },
-            ]}>
-            <Text variant="bodySmall" weight="semibold" numberOfLines={1}>
-              {selected.label}
-            </Text>
-            <StageStatusLine panel={selected} />
-            {panels.length > 1 ? (
-              <View style={styles.dots} accessible={false}>
-                {panels.map((panel, index) => (
-                  <View
-                    key={panel.serverId}
-                    style={[
-                      styles.dot,
-                      {
-                        backgroundColor:
-                          index === selectedIndex ? theme.colors.primary : theme.colors.textMuted,
-                        opacity: index === selectedIndex ? 1 : 0.45,
-                      },
-                    ]}
-                  />
-                ))}
-              </View>
-            ) : null}
+      {/* Top: the chosen computer, its status and the dots; the tools on the right. */}
+      <EdgeFade
+        edge="top"
+        color={theme.colors.background}
+        style={[styles.topScrim, { height: topInset + 150 }]}
+      />
+      <View pointerEvents="box-none" style={[styles.top, { paddingTop: topInset + 10 }]}>
+        <View pointerEvents="box-none" style={styles.topRow}>
+          {selected ? (
+            <View
+              testID="home-stage-hud-computer"
+              accessible
+              accessibilityLabel={selected.label}
+              style={styles.who}>
+              <Text
+                variant="caption"
+                weight="semibold"
+                color={theme.colors.primary}
+                style={styles.kicker}>
+                {t`Computer`}
+              </Text>
+              <Text variant="heading" weight="bold" numberOfLines={1} style={styles.name}>
+                {selected.label}
+              </Text>
+              <StageStatusLine panel={selected} />
+            </View>
+          ) : (
+            <View />
+          )}
+          {headerAction}
+        </View>
+        {panels.length > 1 ? (
+          <View style={styles.dots} accessible={false}>
+            {panels.map((panel, index) => (
+              <View
+                key={panel.serverId}
+                style={[
+                  styles.dash,
+                  index === selectedIndex
+                    ? { width: 30, backgroundColor: theme.colors.primary }
+                    : { backgroundColor: withAlpha(theme.colors.text, 0.25) },
+                ]}
+              />
+            ))}
           </View>
-        ) : (
-          <View />
-        )}
-        {headerAction}
+        ) : null}
       </View>
       {actionsPanel ? (
-        <View style={[styles.menu, { top: topInset + 96 }]}>
+        <View style={[styles.menu, { top: topInset + 120 }]}>
           <AgentActionMenu testID="home-stage-actions" items={menuItems} />
         </View>
       ) : null}
       {storageError ? (
-        <View style={[styles.center, { top: topInset + 110 }]}>{storageError}</View>
+        <View style={[styles.center, { top: topInset + 130 }]}>{storageError}</View>
       ) : null}
 
-      {/* Bottom: the selected computer's sessions, above the composer. */}
-      <View pointerEvents="box-none" style={[styles.bottom, { bottom: dockHeight + 8 }]}>
+      {/* Bottom: a scrim, the handle and the selected computer's sessions, above the composer. */}
+      <EdgeFade
+        edge="bottom"
+        color={theme.colors.background}
+        style={[styles.bottomScrim, { height: dockHeight + 190 }]}
+      />
+      <View pointerEvents="box-none" style={[styles.bottom, { bottom: dockHeight + 6 }]}>
         {emptyState ? <View style={styles.empty}>{emptyState}</View> : null}
         {panels.length > 0 ? (
           <GestureDetector gesture={pull}>
@@ -321,7 +364,9 @@ export function HomeStageLayout({
                 accessibilityLabel={hasAttention ? t`All sessions, needs you` : t`All sessions`}
                 onPress={() => openList(true)}
                 style={styles.handleRow}>
-                <View style={[styles.handle, { backgroundColor: theme.colors.textMuted }]} />
+                <View
+                  style={[styles.handle, { backgroundColor: withAlpha(theme.colors.text, 0.3) }]}
+                />
                 {hasAttention ? (
                   <Text variant="caption" weight="semibold" color={theme.colors.warning}>
                     {t`Needs you`}
@@ -353,10 +398,11 @@ export function HomeStageLayout({
                       styles.moreCard,
                       {
                         backgroundColor: background(theme.colors.surface),
+                        borderColor: withAlpha(theme.colors.text, 0.1),
                         borderRadius: profile.chrome.card,
                       },
                     ]}>
-                    <Text variant="bodySmall" color={theme.colors.primary}>
+                    <Text variant="bodySmall" weight="semibold" color={theme.colors.primary}>
                       {t`All sessions`}
                     </Text>
                     <ThemeIcon
@@ -373,7 +419,7 @@ export function HomeStageLayout({
         ) : null}
       </View>
 
-      {/* The full list, pulled up over the stage. */}
+      {/* The full list, pulled up over the stage: the existing list UI. */}
       <Animated.View
         pointerEvents={listOpen ? 'auto' : 'none'}
         accessibilityElementsHidden={!listOpen}
@@ -446,24 +492,37 @@ function StageStatusLine({ panel }: { panel: StagePanel }) {
   const age = useTaskAge();
   const nowMs = useMinuteNow();
   const seen = panel.lastSeenMs;
+  const count = panel.sessionCount;
+  const offline = panel.tone === 'offline' || panel.tone === 'unknown';
   const text =
     panel.tone === 'offline' && seen !== undefined
       ? t`Offline · last seen ${age(seen, nowMs)}`
       : panel.attention
         ? t`Needs you`
         : panel.working
-          ? t`Working`
-          : _(connectionStatusDescription[panel.connection]);
+          ? t`Agent working`
+          : panel.tone === 'online'
+            ? t`Online · ${plural(count, { one: '# session', other: '# sessions' })}`
+            : _(connectionStatusDescription[panel.connection]);
   const color =
     panel.attention || panel.tone === 'warning'
       ? theme.colors.warning
-      : panel.tone === 'online'
-        ? theme.colors.success
-        : theme.colors.textMuted;
+      : panel.working
+        ? theme.colors.primary
+        : offline
+          ? theme.colors.textMuted
+          : theme.colors.success;
   return (
-    <Text testID="home-stage-hud-status" variant="caption" color={color} numberOfLines={1}>
-      {text}
-    </Text>
+    <View style={styles.statusRow}>
+      <View style={[styles.statusDot, { backgroundColor: color, shadowColor: color }]} />
+      <Text
+        testID="home-stage-hud-status"
+        variant="caption"
+        color={theme.colors.textMuted}
+        numberOfLines={1}>
+        {text}
+      </Text>
+    </View>
   );
 }
 
@@ -474,6 +533,7 @@ function StageSessionCard({ entry, onPress }: { entry: HomeContinueEntry; onPres
   const age = useTaskAge();
   const nowMs = useMinuteNow();
   const when = age(entry.atMs, nowMs);
+  const live = entry.observation?.status === 'working';
   return (
     <PressableScale
       testID="home-stage-session"
@@ -482,9 +542,15 @@ function StageSessionCard({ entry, onPress }: { entry: HomeContinueEntry; onPres
       onPress={onPress}
       style={[
         styles.card,
-        { backgroundColor: background(theme.colors.surface), borderRadius: profile.chrome.card },
+        {
+          backgroundColor: background(theme.colors.surface),
+          borderColor: live
+            ? withAlpha(theme.colors.primary, 0.6)
+            : withAlpha(theme.colors.text, 0.1),
+          borderRadius: profile.chrome.card,
+        },
       ]}>
-      <Text variant="bodySmall" weight="semibold" numberOfLines={2}>
+      <Text variant="bodySmall" weight="semibold" numberOfLines={1}>
         {entry.title}
       </Text>
       <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
@@ -496,22 +562,31 @@ function StageSessionCard({ entry, onPress }: { entry: HomeContinueEntry; onPres
 
 const styles = StyleSheet.create({
   root: { flex: 1, overflow: 'hidden' },
-  top: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    paddingHorizontal: 16,
+  topScrim: { position: 'absolute', left: 0, right: 0, top: 0 },
+  top: { position: 'absolute', left: 0, right: 0, top: 0, paddingHorizontal: 20, gap: 14 },
+  topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: 12,
   },
-  plate: { maxWidth: '58%', paddingHorizontal: 12, paddingVertical: 8, gap: 2 },
-  dots: { flexDirection: 'row', gap: 5, marginTop: 4 },
-  dot: { width: 6, height: 6, borderRadius: 3 },
+  who: { flexShrink: 1, gap: 3 },
+  kicker: { letterSpacing: 1.6, textTransform: 'uppercase', fontSize: 10 },
+  name: { fontSize: 32, lineHeight: 36, letterSpacing: -0.6 },
+  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  statusDot: {
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    shadowOpacity: 0.9,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  dots: { flexDirection: 'row', gap: 6 },
+  dash: { width: 18, height: 3, borderRadius: 2 },
   menu: { position: 'absolute', left: 16, right: 16 },
   center: { position: 'absolute', left: 16, right: 16 },
+  bottomScrim: { position: 'absolute', left: 0, right: 0, bottom: 0 },
   bottom: { position: 'absolute', left: 0, right: 0, gap: 8 },
   empty: { paddingHorizontal: 16 },
   handleRow: {
@@ -521,9 +596,16 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 24,
   },
-  handle: { width: 36, height: 4, borderRadius: 2, opacity: 0.6 },
-  strip: { paddingHorizontal: 16, gap: 10 },
-  card: { width: 180, minHeight: 64, padding: 12, gap: 4, justifyContent: 'center' },
+  handle: { width: 40, height: 4, borderRadius: 2 },
+  strip: { paddingHorizontal: 14, gap: 8 },
+  card: {
+    width: 176,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 3,
+    borderWidth: StyleSheet.hairlineWidth,
+    justifyContent: 'center',
+  },
   moreCard: { width: 132, flexDirection: 'row', alignItems: 'center', gap: 6 },
   sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, overflow: 'hidden' },
   sheetHeader: {

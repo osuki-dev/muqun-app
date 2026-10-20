@@ -148,7 +148,7 @@ msgstr "{0} messages dans le contexte"
 msgid "{0} more models"
 msgstr "{0} modèles de plus"
 
-#. placeholder {0}: index + 1
+#. placeholder {0}: target.index + 1
 #. placeholder {1}: panels.length
 #: src/components/home-stage/stage-view.tsx
 msgid "{0} of {1}"
@@ -636,6 +636,10 @@ msgstr "L’agent n’est plus présent"
 #: src/components/settings-terminal.tsx
 msgid "Agent panes open in"
 msgstr "Vue par défaut des panneaux d’agent"
+
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Agent working"
+msgstr "Agent au travail"
 
 #: src/components/app-drawer-content.tsx
 #: src/components/new-task-action.tsx
@@ -1557,6 +1561,7 @@ msgstr "Terminé"
 #: src/components/app-drawer.tsx
 #: src/components/home-composer-options.tsx
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer"
 msgstr "Ordinateur"
@@ -4488,6 +4493,10 @@ msgstr "En ligne"
 msgid "ONLINE"
 msgstr "EN LIGNE"
 
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Online · {count, plural, one {# session} other {# sessions}}"
+msgstr "En ligne · {count, plural, one {# session} other {# sessions}}"
+
 #: src/lib/attachments.ts
 msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."
 msgstr "Seuls les {MAX_ATTACHMENTS_PER_PICK} premiers fichiers ont été ajoutés ; {dropped} laissés de côté"
@@ -6276,6 +6285,10 @@ msgstr "Démarrer un nouvel {0}"
 msgid "Start a new session with empty context"
 msgstr "Démarre une nouvelle session avec un contexte vide"
 
+#: src/components/home-stage/stage-view.tsx
+msgid "Start a new task"
+msgstr "Démarrer une nouvelle tâche"
+
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
 msgid "Start a session with a clean context"
@@ -6544,6 +6557,14 @@ msgstr "Tab"
 #: src/components/attachment-menu.tsx
 msgid "Take photo"
 msgstr "Prendre une photo"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Tap · open"
+msgstr "Toucher · ouvrir"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Tap · start a new task"
+msgstr "Toucher · nouvelle tâche"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Tap again to clear"
@@ -7749,7 +7770,6 @@ msgid "While you were away"
 msgstr "Pendant votre absence"
 
 #: src/components/collaboration-notice.tsx
-#: src/components/home-stage/home-stage-layout.tsx
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "En cours"
