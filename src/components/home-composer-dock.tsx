@@ -141,7 +141,6 @@ export function HomeComposerDock({
   revealed,
   controller,
   reachabilityByServer,
-  targetPulse = 0,
   bottomInset = 0,
   topInset = 0,
   outerInsets,
@@ -155,11 +154,6 @@ export function HomeComposerDock({
   revealed: boolean;
   controller: HomeLaunchController;
   reachabilityByServer: Readonly<Record<string, ServerReachability | undefined>>;
-  /**
-   * Bumped when Home sets the target from outside the dock (a tap on a
-   * computer row); each bump plays the composer's choice transition.
-   */
-  targetPulse?: number;
   bottomInset?: number;
   topInset?: number;
   /** Phone-only space outside the field; Pad keeps its column geometry. */
@@ -210,12 +204,6 @@ export function HomeComposerDock({
     pendingId?: string;
   } | null>(null);
   const [checkingDelivery, setCheckingDelivery] = useState(false);
-
-  // The composer marks an externally selected target with its choice transition.
-  useEffect(() => {
-    if (targetPulse === 0) return;
-    playTransition('choice');
-  }, [targetPulse, playTransition]);
 
   const target = resolveHomeComposerTarget({ servers, chosen, reachabilityByServer });
   const targetServer = target.kind === 'none' ? undefined : target.server;
