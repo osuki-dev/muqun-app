@@ -4,6 +4,7 @@ import { PressableScale, Text, useThemeTokens, useToast } from '@osuki-dev/ui';
 
 import { AppearanceIcon } from '@/icons';
 import { useOpenThemeEditor } from '@/hooks/use-open-theme-editor';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { parseThemeManifest, type ThemeManifest } from '@/theme/schema';
 
 /**
@@ -16,6 +17,7 @@ import { parseThemeManifest, type ThemeManifest } from '@/theme/schema';
 export function ThemeFencePreview({ source }: { source: string }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   const { showToast } = useToast();
   const openThemeEditor = useOpenThemeEditor();
   const manifest = useMemo((): ThemeManifest | null => {
@@ -50,7 +52,7 @@ export function ThemeFencePreview({ source }: { source: string }) {
         gap: 6,
         paddingHorizontal: 10,
         paddingVertical: 6,
-        backgroundColor: theme.colors.surfaceRaised,
+        backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
         borderRadius: 12,
       }}>
       <AppearanceIcon size={14} color={theme.colors.primary} />

@@ -71,6 +71,7 @@ import { useRelativeTime } from '@/hooks/use-relative-time';
 import { useCompactMarkdownStyle } from '@/hooks/use-markdown-style';
 import { buildTimelineEntries, type ReasoningRun, type TimelineEntry } from '@/lib/agent-reasoning';
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { fadeIn, riseIn, timing } from '@/lib/motion';
 import { plainFromMarkdown } from '@/lib/markdown-text';
 import { hasSidewaysBlock } from '@/lib/markdown-blocks';
@@ -525,6 +526,7 @@ const InlinePatch = memo(function InlinePatch({
   onOpenFullDiff?: (path?: string) => void;
 }) {
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   const colors = usePaneChatColors();
   const rows = useMemo(() => diffRowsForFence(patch), [patch]);
   return (
@@ -536,7 +538,7 @@ const InlinePatch = memo(function InlinePatch({
       // The same fill as the plate the diff sits on, so the gutter and the hunk
       // header are not two lighter boxes inside the card.
       gutterFill={theme.colors.surface}
-      headerFill={theme.colors.surface}
+      headerFill={surfaceBackground(theme.colors.surface)}
     />
   );
 });

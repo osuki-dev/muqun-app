@@ -87,6 +87,8 @@ export function UpdateStatusBanner() {
               styles.banner,
               notificationSurfaceStyle,
               {
+                // Opacity audit: dialog -- a modal consent prompt over a dim
+                // scrim, opaque like the kit's dialogs; its contents sit on it.
                 backgroundColor: theme.colors.surface,
                 maxHeight: Math.max(0, height - insets.top - insets.bottom - 32),
               },

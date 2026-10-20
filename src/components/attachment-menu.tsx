@@ -1,4 +1,4 @@
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useFloatingSurfaceBackground } from '@/hooks/use-surface-background';
 import type { MessageDescriptor } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react';
@@ -61,7 +61,7 @@ export function AttachmentMenu({
 }) {
   const profile = useAppearanceProfile();
   const theme = useThemeTokens();
-  const surfaceBackground = useSurfaceBackground();
+  const floatingBackground = useFloatingSurfaceBackground();
   const { _ } = useLingui();
 
   return (
@@ -72,7 +72,7 @@ export function AttachmentMenu({
         styles.menu,
         { borderRadius: profile.chrome.popover },
         {
-          backgroundColor: surfaceBackground(theme.colors.surface),
+          backgroundColor: floatingBackground(theme.colors.surface),
         },
       ]}>
       {OPTIONS.map(({ source, label, Icon }) => {
