@@ -847,6 +847,11 @@ export interface InlineDiffRowsProps {
   /** File named by the source card when its patch text does not carry a header. */
   targetPath?: string;
   colors: PaneChatColors;
+  /**
+   * Opacity audit: legibility -- callers pass the gutter opaque, as the Changes
+   * sheet does: it is pinned over code panning under it. `headerFill` scrolls
+   * with the rows and goes through the slider.
+   */
   gutterFill: string;
   headerFill: string;
   /** How many rows to draw before offering more; the default is 60. */

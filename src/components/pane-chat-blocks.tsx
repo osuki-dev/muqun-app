@@ -531,7 +531,7 @@ const DiffRow = memo(function DiffRow({
         rows={rows}
         colors={colors}
         gutterFill={theme.colors.surface}
-        headerFill={theme.colors.surfaceRaised}
+        headerFill={surfaceBackground(theme.colors.surfaceRaised)}
       />
     </View>
   );

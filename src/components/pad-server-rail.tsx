@@ -326,6 +326,7 @@ function PadRailHeader({ onBack, testID }: { onBack: () => void; testID: string 
   const { t } = useLingui();
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
+  const background = useSurfaceBackground();
   return (
     <View style={styles.railHeader}>
       <Pressable
@@ -337,9 +338,8 @@ function PadRailHeader({ onBack, testID }: { onBack: () => void; testID: string 
           styles.backButton,
           { borderRadius: profile.chrome.railItem },
           {
-            backgroundColor: withAlpha(
-              pressed ? theme.colors.surfaceRaised : theme.colors.surface,
-              0.94
+            backgroundColor: background(
+              withAlpha(pressed ? theme.colors.surfaceRaised : theme.colors.surface, 0.94)
             ),
           },
         ]}>
