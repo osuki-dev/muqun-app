@@ -38,3 +38,11 @@ export function formatAssetSize(bytes: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
+
+/** `1.2 / 9.3 MB`: a download's progress in the unit of its total. */
+export function formatAssetProgress(done: number, total: number): string {
+  const [unit, scale] =
+    total >= 1024 * 1024 ? ['MB', 1024 * 1024] : total >= 1024 ? ['KB', 1024] : ['B', 1];
+  const digits = scale === 1 ? 0 : 1;
+  return `${(Math.max(0, done) / scale).toFixed(digits)} / ${(total / scale).toFixed(digits)} ${unit}`;
+}

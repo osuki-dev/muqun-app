@@ -486,31 +486,50 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
                         onPress={() => setClosedThemeDocument(null)}>{t`Preview`}</Button>
                     </View>
                   ) : packaged ? (
+                    // A theme package is a preview on its way, not a file the
+                    // viewer cannot read: while it downloads the progress is the
+                    // whole screen, and the button returns only to retry or to
+                    // reopen a preview the reader closed.
                     <View style={styles.themeEntry}>
-                      <Button
-                        testID="asset-open-theme-package"
-                        disabled={Boolean(packProgress)}
-                        onPress={() => void openPackagedTheme()}>{t`Preview`}</Button>
                       {packProgress ? (
                         <ThemeImportProgress
                           label={t`Downloading theme`}
-                          receivedBytes={packProgress.done}
+                          unit="bytes"
+                          receivedBytes={packProgress.total ? undefined : packProgress.done}
                           completed={packProgress.done}
                           total={packProgress.total ?? undefined}
                         />
-                      ) : null}
+                      ) : (
+                        <Animated.View entering={fadeIn('micro')} style={{ gap: 8 }}>
+                          {error ? (
+                            <Text
+                              variant="bodySmall"
+                              accessibilityRole="alert"
+                              color={theme.colors.danger}>
+                              {error}
+                            </Text>
+                          ) : null}
+                          <Button
+                            testID="asset-open-theme-package"
+                            onPress={() => void openPackagedTheme()}>
+                            {error ? t`Try again` : t`Preview`}
+                          </Button>
+                        </Animated.View>
+                      )}
                     </View>
                   ) : null}
-                  <AssetBody
-                    asset={asset}
-                    presentation={presentation}
-                    readable={readable}
-                    tooLarge={tooLarge}
-                    content={content}
-                    error={error}
-                    markdownStyle={markdownStyle}
-                    onRetry={() => setAttempt((previous) => previous + 1)}
-                  />
+                  {packaged ? null : (
+                    <AssetBody
+                      asset={asset}
+                      presentation={presentation}
+                      readable={readable}
+                      tooLarge={tooLarge}
+                      content={content}
+                      error={error}
+                      markdownStyle={markdownStyle}
+                      onRetry={() => setAttempt((previous) => previous + 1)}
+                    />
+                  )}
                 </>
               )}
 
