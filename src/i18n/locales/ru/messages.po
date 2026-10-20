@@ -652,7 +652,7 @@ msgstr "Наведите рамку на QR-код"
 
 #: src/components/home-recent-chips.tsx
 #: src/components/session-artifacts.tsx
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "All"
 msgstr "Все"
 
@@ -804,6 +804,7 @@ msgstr "Применить патч"
 #: src/app/custom-theme.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Apply theme"
 msgstr "Применить тему"
 
@@ -1058,10 +1059,9 @@ msgstr "Логотипы и индикатор работы"
 msgid "Bring {0} to the front"
 msgstr "Вывести {0} вперёд"
 
-#: src/components/custom-theme-library.tsx
-#: src/components/theme-browse-sheet.tsx
-msgid "Browse themes"
-msgstr "Обзор тем"
+#: src/components/settings-theme-sheet.tsx
+msgid "Browse the gallery"
+msgstr "Открыть галерею"
 
 #: src/app/commands.tsx
 msgid "Browser"
@@ -1071,7 +1071,7 @@ msgstr "Браузер"
 msgid "Build"
 msgstr "Сборка"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Built-in"
 msgstr "Встроенные"
 
@@ -1107,6 +1107,7 @@ msgstr "Нужен доступ к камере"
 #: src/components/settings-font-sheet.tsx
 #: src/components/settings-servers.tsx
 #: src/components/settings-storage.tsx
+#: src/components/settings-theme-sheet.tsx
 #: src/components/skia-terminal.tsx
 #: src/components/ssh-host-form.tsx
 #: src/components/ssh-host-key-dialog.tsx
@@ -1217,7 +1218,7 @@ msgstr "Проверьте URL репозитория, ветку и файл т
 msgid "Check this computer's tasks. This request has not been sent again."
 msgstr "Проверьте задачи на этом компьютере. Этот запрос не отправлялся повторно"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "Check your connection and try again."
 msgstr "Проверьте подключение и попробуйте ещё раз"
 
@@ -1348,7 +1349,7 @@ msgid "Clear the conversation"
 msgstr "Очистить переписку"
 
 #: src/components/agent-model-sheet.tsx
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "Clear the search"
 msgstr "Очистить поиск"
 
@@ -1369,6 +1370,7 @@ msgid "Clears notifications only. Pending tasks still need your attention."
 msgstr "Удаляются только уведомления. Ожидающие задачи по-прежнему требуют вашего внимания"
 
 #: src/app/diagram-viewer.tsx
+#: src/components/settings-theme-sheet.tsx
 #: src/components/sheet-scene.tsx
 #: src/i18n/labels.ts
 msgid "Close"
@@ -2153,7 +2155,7 @@ msgstr "Не удалось связаться с компьютером"
 msgid "Could not reach the computer. Make sure it is running, then refresh the QR and scan again."
 msgstr "Не удалось связаться с компьютером. Убедитесь, что он включён, затем обновите QR-код и отсканируйте снова"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "Could not reach the theme catalogue"
 msgstr "Не удалось связаться с каталогом тем"
 
@@ -2367,8 +2369,9 @@ msgstr "Использовано кредитов"
 msgid "Cropped preview · Open full image"
 msgstr "Обрезанный предпросмотр · Открыть полное изображение"
 
-#: src/components/custom-theme-library.tsx
 #: src/components/file-mention-panel.tsx
+#: src/components/settings-theme-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "Current"
 msgstr "Текущая"
 
@@ -2389,13 +2392,17 @@ msgstr "Текущий компьютер"
 msgid "Current path"
 msgstr "Текущий путь"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Current theme"
 msgstr "Текущая тема"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Custom"
 msgstr "Пользовательский"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Customise"
+msgstr "Настроить"
 
 #: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
@@ -2476,7 +2483,7 @@ msgstr "Доставка не подтверждена"
 msgid "Delivery not confirmed. Tap to check status"
 msgstr "Доставка не подтверждена. Нажмите, чтобы проверить состояние"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "Demo catalogue. Leave the demo to download themes."
 msgstr "Демонстрационный каталог. Выйдите из демо, чтобы скачать темы"
 
@@ -2648,7 +2655,7 @@ msgstr "Загрузка · {0} из {1}"
 msgid "Downloading theme"
 msgstr "Загрузка темы"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "Downloading…"
 msgstr "Загрузка…"
 
@@ -2818,6 +2825,7 @@ msgid "Export colours"
 msgstr "Экспортировать цвета"
 
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Export theme"
 msgstr "Экспортировать тему"
 
@@ -3015,6 +3023,10 @@ msgstr "Полный экран"
 #: src/components/virtual-keyboard.tsx
 msgid "Function keys"
 msgstr "Функциональные клавиши"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Gallery"
+msgstr "Галерея"
 
 #: src/app/explore.tsx
 msgid "Gateway"
@@ -3293,21 +3305,25 @@ msgstr "Изображения"
 msgid "Images download from"
 msgstr "Источники загрузки изображений"
 
-#: src/components/custom-theme-library.tsx
-msgid "Import"
-msgstr "Импорт"
-
 #: src/components/settings-font-sheet.tsx
 msgid "Import a file…"
 msgstr "Импортировать файл…"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Import file"
 msgstr "Импортировать файл"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Import link"
 msgstr "Импорт по ссылке"
+
+#: src/components/theme-card.tsx
+msgid "Import theme"
+msgstr "Импортировать тему"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Imported"
+msgstr "Импортирована"
 
 #: src/components/server-tasks-sheet.tsx
 msgid "In progress"
@@ -3370,13 +3386,14 @@ msgid "Install command copied"
 msgstr "Команда установки скопирована"
 
 #: src/components/settings-font-sheet.tsx
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "Installed"
 msgstr "Установлена"
 
 #: src/app/+not-found.tsx
 #: src/app/custom-theme.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Installing images"
 msgstr "Установка изображений"
 
@@ -3708,7 +3725,7 @@ msgstr "Загружаем терминал"
 msgid "Loading the transcript"
 msgstr "Загружаем транскрипт"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "Loading themes…"
 msgstr "Загрузка тем…"
 
@@ -3798,6 +3815,10 @@ msgstr "Сообщение скопировано в буфер обмена"
 msgid "Message not sent"
 msgstr "Сообщение не отправлено"
 
+#: src/components/settings-theme-sheet.tsx
+msgid "Mine"
+msgstr "Мои"
+
 #: src/components/home-composer-options.tsx
 msgid "Mode"
 msgstr "Режим"
@@ -3858,6 +3879,7 @@ msgid "Monthly credit limit"
 msgstr "Месячный лимит кредитов"
 
 #: src/components/custom-theme-library.tsx
+#: src/components/theme-card.tsx
 msgid "More actions"
 msgstr "Другие действия"
 
@@ -3930,10 +3952,6 @@ msgstr "Muqun остаётся на этом языке, что бы ни был
 #: src/components/settings-security.tsx
 msgid "Muqun will use {methodName} when the app opens."
 msgstr "Muqun будет использовать {methodName} при открытии приложения"
-
-#: src/components/custom-theme-library.tsx
-msgid "My themes"
-msgstr "Мои темы"
 
 #: src/app/commands.tsx
 #: src/components/agent-worktree-sheet.tsx
@@ -4194,7 +4212,7 @@ msgstr "Для этого хоста не сохранён ни пароль, н
 msgid "No peer report available."
 msgstr "Отчёт о связях компьютеров недоступен"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "No personal themes yet. Import one, or browse the published themes."
 msgstr "Своих тем пока нет. Импортируйте тему или посмотрите опубликованные"
 
@@ -4273,12 +4291,12 @@ msgstr "На этом компьютере нет доступного сеан�
 msgid "No textual change"
 msgstr "Текст не изменился"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "No themes are published yet"
 msgstr "Пока нет опубликованных тем"
 
 #. placeholder {0}: query.trim()
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "No themes match “{0}”."
 msgstr "Нет тем, подходящих под «{0}»"
 
@@ -4651,7 +4669,7 @@ msgid "Opening"
 msgstr "Открытие"
 
 #: src/app/+not-found.tsx
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Opening that file"
 msgstr "Открываем этот файл"
 
@@ -4906,7 +4924,7 @@ msgstr "Повторите попытку или удалите сбойные �
 msgid "Port"
 msgstr "Порт"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
 msgstr "Подготовка изображений"
@@ -5112,7 +5130,7 @@ msgid "Reading the rules on the host…"
 msgstr "Читаем правила на хосте…"
 
 #: src/app/+not-found.tsx
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Reading the theme"
 msgstr "Чтение темы"
 
@@ -5270,14 +5288,13 @@ msgstr "Остаток неизвестен"
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-storage.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Remove"
 msgstr "Удалить"
 
 #. placeholder {0}: attachment.name
-#. placeholder {0}: installed.manifest.name
 #. placeholder {0}: record.label
 #: src/components/attachment-strip.tsx
-#: src/components/custom-theme-library.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Remove {0}"
 msgstr "Удалить {0}"
@@ -5421,6 +5438,10 @@ msgstr "Перезапустите Muqun, чтобы завершить обно
 #: src/components/update-status-banner.tsx
 msgid "Restarting Muqun…"
 msgstr "Перезапуск Muqun…"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Restore default"
+msgstr "Вернуть по умолчанию"
 
 #: src/app/commands.tsx
 msgid "Restore hidden default commands"
@@ -5726,7 +5747,7 @@ msgstr "Поиск"
 msgid "Search actions and commands"
 msgstr "Поиск действий и команд"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "Search by name or tag"
 msgstr "Поиск по названию или тегу"
 
@@ -6159,6 +6180,7 @@ msgstr "Некоторым цветам темы требуется больше
 #: src/app/diagram-viewer.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 #: src/components/theme-link-import.tsx
 msgid "Something went wrong"
 msgstr "Что-то пошло не так"
@@ -6510,7 +6532,7 @@ msgid "Tap again to delete"
 msgstr "Нажмите ещё раз, чтобы удалить"
 
 #: src/components/agent-worktree-sheet.tsx
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Tap again to remove"
 msgstr "Коснитесь ещё раз, чтобы удалить"
@@ -6522,10 +6544,6 @@ msgstr "Нажмите ещё раз, чтобы всё равно удалит�
 #: src/components/session-map.tsx
 msgid "Tap to connect"
 msgstr "Нажмите для подключения"
-
-#: src/components/custom-theme-library.tsx
-msgid "Tap to preview and adjust"
-msgstr "Нажмите, чтобы посмотреть и настроить"
 
 #: src/components/agent-workbench.tsx
 msgid "Tap to refresh this session."
@@ -6880,6 +6898,7 @@ msgid "The terminal, the opening and Home artwork draw with a new GPU renderer, 
 msgstr "Терминал, заставка и иллюстрации главного экрана рисуются новым GPU-рендерером, а у смены темы и шрифта появились свои переходы"
 
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "The theme will be removed from this device"
 msgstr "Тема будет удалена с этого устройства"
 
@@ -6895,7 +6914,6 @@ msgstr "Ход завершился ошибкой"
 
 #: src/app/custom-theme.tsx
 #: src/components/settings-appearance.tsx
-#: src/components/settings-theme-sheet.tsx
 #: src/lib/demo-gateway.ts
 msgid "Theme"
 msgstr "Тема"
@@ -6921,6 +6939,10 @@ msgstr "URL темы"
 #: src/components/settings-appearance.tsx
 msgid "Theme, {0}"
 msgstr "Тема, {0}"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Themes"
+msgstr "Темы"
 
 #: src/components/agent-workbench.tsx
 msgid "There is no rollback waiting to be applied."
@@ -7273,7 +7295,7 @@ msgstr "Доверять"
 #: src/components/changes-sheet.tsx
 #: src/components/inline-file-link.tsx
 #: src/components/pdf-asset-preview.tsx
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 #: src/components/video-asset-preview.tsx
 #: src/components/voice-input-button.tsx
 #: src/hooks/use-file-actions.tsx
@@ -7285,7 +7307,7 @@ msgstr "Попробовать ещё раз"
 msgid "Try again once the computer responds."
 msgstr "Повторите попытку, когда компьютер ответит"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "Try searching for another name or tag."
 msgstr "Попробуйте найти другое название или тег"
 
@@ -7349,7 +7371,6 @@ msgstr "Незафиксированные изменения"
 
 #: src/components/agent-revert-plate.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/custom-theme-library.tsx
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "Отменить"
@@ -7402,7 +7423,7 @@ msgstr "Разблокировать через {authLabel}"
 msgid "Unlock with {methodName}"
 msgstr "Разблокировать через {methodName}"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "Unpacking…"
 msgstr "Распаковка…"
 
@@ -7461,7 +7482,7 @@ msgstr "Не отслеживается"
 msgid "Up arrow"
 msgstr "Стрелка вверх"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 #: src/components/update-status-banner.tsx
 msgid "Update"
 msgstr "Обновить"
