@@ -1,104 +1,28 @@
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useLingui } from '@lingui/react/macro';
-import { Tag, useThemeMode, useThemeTokens, Button, PressableScale, Text } from '@osuki-dev/ui';
+import { useThemeMode, useThemeTokens, Button, PressableScale, Text } from '@osuki-dev/ui';
 import { Image } from 'expo-image';
-import { useNavigation, useRouter } from 'expo-router';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useNavigation } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
 import { useWindowDimensions, View } from 'react-native';
-import Animated from 'react-native-reanimated';
-import { NextIcon, MoreIcon, DeleteIcon, CloseIcon } from '@/icons';
+import { MoreIcon, CloseIcon } from '@/icons';
 
 import { CustomThemePreview } from '@/components/custom-theme-preview';
-import { SettingsSegmented } from '@/components/settings-segmented';
-import { ThemeLinkImport } from '@/components/theme-link-import';
 import { ThemeImportProgress } from '@/components/theme-import-progress';
 import { ThemeAppearanceSettings } from '@/components/theme-appearance-settings';
-import { TwoStepAction } from '@/components/two-step-action';
-import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
-import {
-  DURATION,
-  fadeIn,
-  fadeInLeft,
-  fadeInRight,
-  fadeOutLeft,
-  fadeOutRight,
-  listLayout,
-} from '@/lib/motion';
-import { loadThemeTab, saveThemeTab, type ThemeTab } from '@/lib/theme-tab-preference';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { effectiveThemeManifest, type InstalledTheme } from '@/theme/repository';
-import { useSheetGroundPlate } from '@/components/sheet-ground';
-import { ThemePaletteStrip } from '@/components/theme-palette-strip';
-import { useThemePack } from '@/hooks/use-theme-pack';
 import { prepareThemeArtwork } from '@/theme/prepare-artwork';
 import { useReskinTransition } from '@/components/reskin-transition';
 import { afterNavigationSettles, type SettleNavigation } from '@/lib/navigation-settle';
 import { useThemeLibrary } from '@/stores/theme-library';
 import { auditThemeContrast } from '@/theme/contrast';
-import {
-  pickThemeManifest,
-  shareThemeColors,
-  shareThemeFile,
-  type ThemeFileStage,
-} from '@/theme/local-files';
+import { shareThemeColors, shareThemeFile } from '@/theme/local-files';
 import { exportInstalledTheme } from '@/theme/assets';
-import { useAppSettings } from '@/stores/app-settings';
-import type { ThemeAppearance } from '@/constants/theme-packs';
 import type { ThemeManifest } from '@/theme/schema';
 import type { ThemeEditorCandidate } from '@/theme/draft-session';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
 import { isRenderableThemeAsset } from '@/theme/renderable-asset';
-
-/**
- * One layer of paint per pixel: under a custom theme the kit's opaque chip
- * would be the one thing on a row that refused the reader's surface slider, so
- * it drops its fill and the row behind it shows through at its own alpha.
- */
-const transparentFill = { backgroundColor: 'transparent' } as const;
-
-/** The pack cover, as a row thumbnail and as the summary's larger one. Both 8:5. */
-export const ROW_COVER = { width: 56, height: 35 } as const;
-const SUMMARY_COVER = { width: 96, height: 60 } as const;
-
-/**
- * An installed theme's own cover, when it published one.
- *
- * The manifest's `preview` is an asset id naming a file *inside* the pack, so
- * an installed theme already has it on disk and `assets[preview]` is the
- * `file:///` it was written to. App-owned files only -- the same rule every
- * other artwork consumer applies, so a manifest cannot point this at an
- * arbitrary path or a remote URL.
- *
- * A pack without one falls back to the swatch pair, which is what every row
- * showed before: never a gap, and never a broken picture.
- */
-export function ThemeCover({
-  manifest,
-  assets,
-  pack,
-  size,
-}: {
-  manifest: ThemeManifest;
-  assets?: Record<string, string>;
-  pack: Pick<ThemeAppearance, 'light' | 'dark'>;
-  size: { width: number; height: number };
-}) {
-  const profile = useAppearanceProfile();
-  const uri = manifest.preview ? assets?.[manifest.preview] : undefined;
-  if (!isRenderableThemeAsset(uri)) return <ThemePaletteStrip pack={pack} />;
-  return (
-    <Image
-      source={{ uri }}
-      contentFit="cover"
-      // `memory` rather than `memory-disk`: the file is already on this
-      // device's disk, and a second copy of it in the image cache is the same
-      // bytes twice.
-      cachePolicy="memory"
-      transition={DURATION.medium}
-      accessible={false}
-      style={{ ...size, borderRadius: profile.chrome.card }}
-    />
-  );
-}
 
 /**
  * What the one primary button on a theme does, described rather than drawn.
@@ -127,7 +51,6 @@ type DraftAppearance = Pick<
 export function CustomThemeLibrary({
   initialManifest,
   initialCandidate,
-  onOpenCandidate,
   detail = false,
   ownsPreparedAssets = true,
   onClosePreview,
@@ -135,12 +58,9 @@ export function CustomThemeLibrary({
   onStatusChange,
   mode = 'manage',
   onPreviewAppearanceChange,
-  tabs = false,
-  children,
 }: {
   initialManifest?: ThemeManifest;
   initialCandidate?: ThemeEditorCandidate;
-  onOpenCandidate?: (candidate: ThemeEditorCandidate) => void;
   detail?: boolean;
   mode?: 'preview' | 'manage';
   onPreviewAppearanceChange?: (appearance: InstalledTheme) => void;
@@ -177,15 +97,6 @@ export function CustomThemeLibrary({
    * they take no room; this component then stops drawing them.
    */
   onStatusChange?: (status: ThemeStatus | null) => void;
-  /**
-   * Split `children` and the personal library into two tabs.
-   *
-   * Only the picker sheet passes this. The detail route and the file viewer see
-   * one theme at a time and have no second collection to switch to, so they get
-   * today's single column and this prop never reaches them.
-   */
-  tabs?: boolean;
-  children?: ReactNode;
 } = {}) {
   const profile = useAppearanceProfile();
   const { t } = useLingui();
@@ -193,32 +104,11 @@ export function CustomThemeLibrary({
   const reskin = useReskinTransition();
   const navigation = useNavigation();
   const { resolvedMode } = useThemeMode();
-  // The plate a label takes when the pack draws a wallpaper behind this sheet.
-  // Bare, because this component is always somebody else's child: inside the
-  // theme sheet it takes that sheet's `surface`, and on the full-screen editor
-  // it takes the screen's `background`. Both are the ground it is actually on.
-  const plate = useSheetGroundPlate();
   const background = useSurfaceBackground();
-  const surfaceOpacity = useSurfaceBackgroundOpacity();
   const { width } = useWindowDimensions();
   const wideActions = width >= 840;
   const wideDetail = detail && wideActions;
   const library = useThemeLibrary((state) => state.library);
-  const currentPack = useThemePack();
-  const router = useRouter();
-  /**
-   * Which half of the sheet is on screen, remembered across launches.
-   *
-   * The default is computed at mount and only at mount: a reader who removes
-   * their last theme while looking at the list should not have the tab move
-   * out from under them, and a reader who has installed nothing has nothing to
-   * look at on `mine`.
-   */
-  const [tab, setTab] = useState<ThemeTab>(
-    () => loadThemeTab() ?? (library.themes.length > 0 ? 'mine' : 'builtin')
-  );
-  const [importOpen, setImportOpen] = useState(false);
-  const [linkImportOpen, setLinkImportOpen] = useState(false);
   const [actionsOpen, setActionsOpen] = useState(detail);
   const [removing, setRemoving] = useState(false);
   const [candidate, setCandidate] = useState<ThemeEditorCandidate | null>(
@@ -230,26 +120,9 @@ export function CustomThemeLibrary({
   const [busy, setBusy] = useState(false);
   // Copying a dozen images into permanent storage reports nothing on its own.
   const [step, setStep] = useState<'installing' | null>(null);
-  /**
-   * What a file chosen from the picker is doing, while it does it.
-   *
-   * Reading a pack is the slowest thing on this screen -- a 4 MB archive is a
-   * read, a validated unpack, and every image decoded and written -- and until
-   * now the sheet showed nothing at all between the picker closing and the
-   * editor opening, which on a phone is about ten seconds of a screen that
-   * looks like it ignored the tap.
-   */
-  const [readStage, setReadStage] = useState<ThemeFileStage | null>(null);
-  // Removal reachable from the list, without opening the theme to find it.
-  const [pendingRemoval, setPendingRemoval] = useState<string | null>(null);
   const pending = useRef(false);
   const mounted = useRef(true);
   const leavingUnderCover = useRef(false);
-  const legacyTheme = useAppSettings((state) => state.themePack);
-  const canUndo =
-    Boolean(library.previous) ||
-    library.selection?.kind === 'custom' ||
-    (library.selection?.kind === 'builtin' && library.selection.id !== legacyTheme);
   useEffect(() => {
     mounted.current = true;
     return () => {
@@ -268,7 +141,6 @@ export function CustomThemeLibrary({
   const missingImages = Object.keys(assets).length !== imageCount;
   const candidateSelected =
     library.selection?.kind === 'custom' && library.selection.id === candidate?.id;
-  const browsing = !initialManifest && !initialCandidate && !candidate;
   const installedCandidate = library.themes.find((entry) => entry.id === candidate?.id);
   const appearance =
     installedCandidate ??
@@ -290,12 +162,6 @@ export function CustomThemeLibrary({
       });
     }
   }, [candidate, installedCandidate, draftAppearance, onPreviewAppearanceChange]);
-  // The applied theme, when it is one of the reader's rather than a built-in
-  // pack -- which is the only case that has a manifest, and so a cover.
-  const currentInstalled =
-    library.selection?.kind === 'custom'
-      ? library.themes.find((entry) => entry.id === library.selection?.id)
-      : undefined;
 
   async function perform(action: () => void | Promise<void>) {
     if (pending.current) return;
@@ -471,24 +337,6 @@ export function CustomThemeLibrary({
   }, [onStatusChange, error, step, notice]);
   useEffect(() => () => onStatusChange?.(null), [onStatusChange]);
 
-  function chooseTab(next: ThemeTab) {
-    setPendingRemoval(null);
-    setTab(next);
-    saveThemeTab(next);
-  }
-
-  /**
-   * Which way the strip slides.
-   *
-   * Two tabs, so the direction belongs to the panel rather than to the change:
-   * `builtin` is the higher index, so it always arrives from the right and
-   * always leaves back to the right, and `mine` always does the mirror. Which
-   * is also the only form that works -- a panel's `exiting` is read off the
-   * render before it was removed, and that render cannot know which tab was
-   * chosen next.
-   */
-  const forward = tab === 'builtin';
-
   /**
    * Whether the actions card has anything to put in itself.
    *
@@ -507,276 +355,10 @@ export function CustomThemeLibrary({
   const candidateHasActions =
     mode === 'manage' && (Boolean(candidate?.id) || !hostDrivesPrimaryAction);
 
-  const importPanel =
-    importOpen && !linkImportOpen ? (
-      <View
-        style={{
-          flexDirection: wideActions ? 'row' : 'column',
-          flexWrap: 'wrap',
-          gap: 8,
-          padding: 12,
-          borderRadius: profile.chrome.card,
-          backgroundColor: background(colors.surfaceRaised),
-        }}>
-        <Button
-          variant="secondary"
-          disabled={busy}
-          testID="theme-import-link"
-          onPress={() => setLinkImportOpen(true)}>{t`Import link`}</Button>
-        <Button
-          variant="secondary"
-          disabled={busy}
-          testID="theme-import-file"
-          onPress={() =>
-            void perform(async () => {
-              const value = await pickThemeManifest(setReadStage).finally(() => setReadStage(null));
-              if (value !== null) {
-                if (!mounted.current) {
-                  value.prepared?.dispose();
-                  return;
-                }
-                if (onOpenCandidate) onOpenCandidate(value);
-                else {
-                  setDraftAppearance({});
-                  setCandidate(value);
-                }
-                setImportOpen(false);
-                setActionsOpen(false);
-              }
-            })
-          }>{t`Import file`}</Button>
-      </View>
-    ) : null;
-
-  const linkPanel =
-    importOpen && linkImportOpen ? (
-      <ThemeLinkImport
-        onClose={() => setLinkImportOpen(false)}
-        onReady={(value) => {
-          if (onOpenCandidate) onOpenCandidate(value);
-          else {
-            setDraftAppearance({});
-            setCandidate(value);
-          }
-          setLinkImportOpen(false);
-          setImportOpen(false);
-          setActionsOpen(false);
-        }}
-      />
-    ) : null;
-
-  /**
-   * The personal library.
-   *
-   * Under a tab it loses its heading: the tab names the collection, and a
-   * heading under it that repeats the word is the word twice.
-   */
-  const mineList = (
-    <View style={{ gap: 8 }}>
-      {tabs ? null : <Text variant="bodySmall">{t`My themes`}</Text>}
-      {library.themes.map((installed) => (
-        <View key={installed.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <PressableScale
-            accessibilityRole="button"
-            accessibilityLabel={installed.manifest.name}
-            // The row and its remove button both carry the theme's name, so
-            // the name alone cannot name the row. The manifest id is the
-            // stable handle a test can hold.
-            testID={`theme-row-${installed.manifest.id}`}
-            disabled={busy}
-            onPress={() => {
-              const next = {
-                manifest: installed.manifest,
-                id: installed.id,
-                assets: installed.assets,
-              };
-              if (onOpenCandidate) onOpenCandidate(next);
-              else {
-                setDraftAppearance({});
-                setCandidate(next);
-              }
-              setError(null);
-              setNotice(null);
-              setPendingRemoval(null);
-              setActionsOpen(false);
-              setImportOpen(false);
-            }}
-            style={{
-              flex: 1,
-              minWidth: 0,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 12,
-              padding: 12,
-              borderRadius: profile.chrome.control,
-              backgroundColor: background(colors.surfaceRaised),
-            }}>
-            <ThemeCover
-              manifest={installed.manifest}
-              assets={installed.assets}
-              pack={installed.manifest.variants}
-              size={ROW_COVER}
-            />
-            <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-              {/* The name has the line to itself: a marker beside it cost the
-                  name a third of its width, and naming the theme is the row's
-                  one job. */}
-              <Text variant="bodySmall" numberOfLines={1}>
-                {installed.manifest.name}
-              </Text>
-              {/* A row that says only a name reads as a label. The second line
-                  is what the pack itself offers, and when it offers nothing it
-                  is what the row does -- which is the thing the chevron was
-                  failing to say on its own. The marker leads it: "this is the
-                  one you are wearing" belongs with who made it, not in front of
-                  what it is called.
-
-                  The applied theme used to swap its chevron for a check, which
-                  took the one affordance saying "this opens" off the row a
-                  reader is most likely to want to open. Every row keeps the
-                  chevron now. */}
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                {library.selection?.kind === 'custom' && library.selection.id === installed.id ? (
-                  <Animated.View entering={fadeIn('medium')}>
-                    <Tag
-                      style={surfaceOpacity === 1 ? undefined : transparentFill}>{t`Current`}</Tag>
-                  </Animated.View>
-                ) : null}
-                <Text
-                  variant="caption"
-                  color={colors.textMuted}
-                  numberOfLines={1}
-                  style={{ flex: 1, minWidth: 0 }}>
-                  {installed.manifest.author ?? t`Tap to preview and adjust`}
-                </Text>
-              </View>
-            </View>
-            <NextIcon size={18} color={colors.textMuted} />
-          </PressableScale>
-          <TwoStepAction
-            testID={`theme-remove-${installed.id}`}
-            presentation="compact"
-            label={t`Remove`}
-            confirmLabel={t`Tap again to remove`}
-            accessibilityLabel={t`Remove ${installed.manifest.name}`}
-            confirmAccessibilityLabel={`${t`Tap again to remove`}: ${installed.manifest.name}`}
-            Icon={DeleteIcon}
-            armed={pendingRemoval === installed.id}
-            disabled={busy}
-            onArmedChange={(armed) => {
-              setPendingRemoval((current) =>
-                armed ? installed.id : current === installed.id ? null : current
-              );
-              setError(null);
-              setNotice(null);
-            }}
-            onConfirm={() =>
-              void perform(() => {
-                useThemeLibrary.getState().remove(installed.id);
-              })
-            }
-          />
-        </View>
-      ))}
-    </View>
-  );
-
   return (
     <View testID="custom-theme-library" style={{ gap: 16 }}>
-      {browsing ? (
-        <View style={{ gap: 16 }}>
-          <View
-            testID="theme-current-summary"
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            {/* Which pack is on, drawn straight onto the sheet's ground -- the
-                one block here that is not a row on a card. Over a wallpaper it
-                takes the plate the settings page gives a section label. */}
-            <View style={[{ flex: 1, minWidth: 0, gap: 4 }, plate]}>
-              <Text variant="caption" color={colors.textMuted}>{t`Current theme`}</Text>
-              <Text numberOfLines={1}>{currentPack.label}</Text>
-            </View>
-            {/* The applied theme's own cover when it has one, at the size a
-                summary can carry: the same picture the row below shows, so the
-                two agree about which theme is on. A built-in pack has no
-                manifest and keeps the swatch pair. */}
-            {currentInstalled ? (
-              <ThemeCover
-                manifest={currentInstalled.manifest}
-                assets={currentInstalled.assets}
-                pack={currentPack}
-                size={SUMMARY_COVER}
-              />
-            ) : (
-              <ThemePaletteStrip pack={currentPack} />
-            )}
-          </View>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            <Button
-              variant="secondary"
-              disabled={busy}
-              testID="theme-browse"
-              onPress={() => {
-                setImportOpen(false);
-                router.push('/settings-theme-browse');
-              }}>{t`Browse themes`}</Button>
-            <Button
-              variant="secondary"
-              disabled={busy}
-              testID="theme-import"
-              onPress={() => {
-                // The panel a reader has just asked for must not open on the
-                // tab they are not looking at, so Import picks its tab first.
-                // It is also what keeps `theme-import` -> `theme-import-link`
-                // working whatever tab was persisted.
-                if (tabs) chooseTab('mine');
-                setImportOpen(!importOpen);
-              }}>{t`Import`}</Button>
-            {canUndo ? (
-              <Button
-                variant="ghost"
-                disabled={busy}
-                onPress={() =>
-                  void perform(() => useThemeLibrary.getState().undo())
-                }>{t`Undo`}</Button>
-            ) : null}
-          </View>
-          {tabs ? (
-            <SettingsSegmented
-              testID="theme-tab"
-              value={tab}
-              onChange={(value) => chooseTab(value as ThemeTab)}
-              options={[
-                { label: t`My themes`, value: 'mine' },
-                { label: t`Built-in`, value: 'builtin' },
-              ]}
-            />
-          ) : null}
-          {/* Under tabs these two live on `mine`, with the list they belong
-              to. Without tabs they stay exactly where they were. */}
-          {tabs ? null : (
-            <>
-              {importPanel}
-              {linkPanel}
-            </>
-          )}
-        </View>
-      ) : null}
       {step && !onStatusChange ? (
         <ThemeImportProgress testID="theme-install-progress" label={t`Installing images`} />
-      ) : null}
-      {readStage ? (
-        <ThemeImportProgress
-          testID="theme-read-progress"
-          label={
-            readStage.phase === 'staging'
-              ? t`Installing images`
-              : readStage.phase === 'unpacking'
-                ? t`Reading the theme`
-                : t`Opening that file`
-          }
-          completed={readStage.phase === 'staging' ? readStage.completed : undefined}
-          total={readStage.phase === 'staging' ? readStage.total : undefined}
-        />
       ) : null}
       {(error || notice) && !onStatusChange ? (
         <View
@@ -1047,50 +629,6 @@ export function CustomThemeLibrary({
           ) : null}
         </View>
       ) : null}
-      {browsing && tabs ? (
-        // One wrapper whose height settles, because going from a 24-tile grid
-        // to a three-row list is a large delta and the sheet's scroll position
-        // would otherwise land somewhere the reader did not put it.
-        <Animated.View layout={listLayout('short')}>
-          {/*
-            A conditional render with a key, never two panels toggling
-            `display`: React has to unmount one and mount the other for
-            Reanimated's entering/exiting to fire at all, and the other spelling
-            would also keep 24 tiles mounted behind a list.
-          */}
-          <Animated.View
-            key={tab}
-            entering={forward ? fadeInRight('short') : fadeInLeft('short')}
-            exiting={forward ? fadeOutRight('short') : fadeOutLeft('short')}
-            style={{ gap: 16 }}>
-            {tab === 'mine' ? (
-              <>
-                {importPanel}
-                {linkPanel}
-                {library.themes.length ? (
-                  mineList
-                ) : (
-                  // Under a tab the old "skip the whole block" would be a blank
-                  // screen, so it gets one muted line and nothing else.
-                  <Text
-                    testID="theme-mine-empty"
-                    variant="bodySmall"
-                    color={
-                      colors.textMuted
-                    }>{t`No personal themes yet. Import one, or browse the published themes.`}</Text>
-                )}
-              </>
-            ) : (
-              children
-            )}
-          </Animated.View>
-        </Animated.View>
-      ) : (
-        <>
-          {browsing && library.themes.length ? mineList : null}
-          {browsing ? children : null}
-        </>
-      )}
     </View>
   );
 }

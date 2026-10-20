@@ -489,6 +489,22 @@
       },
       {
         "target": {
+          "id": "settings-selection:(on|off):theme-tab-mine"
+        },
+        "mode": "press",
+        "run": "flows/custom-themes.ad#press"
+      },
+      {
+        "target": {
+          "id": "theme-import"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 10000,
+        "run": "flows/custom-themes.ad#scroll"
+      },
+      {
+        "target": {
           "id": "theme-import"
         },
         "mode": "press",
@@ -502,7 +518,7 @@
       },
       {
         "target": {
-          "id": "theme-browse"
+          "id": "settings-selection:(on|off):theme-tab-gallery"
         },
         "mode": "press",
         "run": "flows/custom-themes.ad#press"
@@ -540,16 +556,11 @@
         ]
       },
       {
-        "when": { "env": "DEVICE_KIND", "equals": "iphone" },
-        "steps": [{ "run": "flows/custom-themes.ad#browse-close-iphone" }]
-      },
-      {
-        "when": { "env": "DEVICE_KIND", "equals": "ipad" },
-        "steps": [{ "run": "flows/custom-themes.ad#browse-close-ipad" }]
-      },
-      {
-        "when": { "env": "PLATFORM", "equals": "android" },
-        "steps": [{ "run": "flows/custom-themes.ad#browse-close-android" }]
+        "target": {
+          "id": "settings-selection:(on|off):theme-tab-mine"
+        },
+        "mode": "press",
+        "run": "flows/custom-themes.ad#press"
       },
       {
         "run": "flows/custom-themes.ad#browse-closed"
