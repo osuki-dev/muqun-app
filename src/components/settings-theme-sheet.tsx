@@ -8,6 +8,13 @@
  * catalogue theme; it is a tab now, and a theme's detail is the only level
  * under this sheet.
  *
+ * The whole sheet is one virtualized list, and that list is the sheet's scroll
+ * view: the heading, the current-theme bar and the tabs are its header, the
+ * gallery's search is a sticky row, every card row has a known height, and the
+ * notes and the end of the catalogue are rows too. A fixed block above a
+ * nested list left the native form sheet nothing to hand a drag to on Android.
+ * Switching tabs keeps the header and swaps the rows.
+ *
  * The slim bar at the top is the current theme: its picture, its name, and
  * the two things a reader does to the theme they are wearing -- Customise,
  * which opens its detail, and Restore default, which only a custom theme has a
@@ -17,6 +24,7 @@
  * Which tab is open is remembered for the session. A reader with no themes of
  * their own starts on the gallery, where the themes are.
  */
+import { LegendList } from '@legendapp/list/react-native';
 import { useLingui } from '@lingui/react/macro';
 import { Button, PressableScale, Text, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
 import { useState, type ReactNode } from 'react';
@@ -28,15 +36,26 @@ import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-ac
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useReskinTransition } from '@/components/reskin-transition';
 import { SettingsSegmented } from '@/components/settings-segmented';
-import { SheetScene, SheetSceneQuietAction, SHEET_LADDER } from '@/components/sheet-scene';
+import { SheetFrame } from '@/components/sheet-ground';
+import { SheetHandle, useSheetIsFullscreen } from '@/components/sheet-route-frame';
 import {
+  SheetSceneClose,
+  SheetSceneFooter,
+  SheetSceneHeading,
+  SheetSceneQuietAction,
+  SHEET_LADDER,
+} from '@/components/sheet-scene';
+import {
+  THEME_GRID_GAP,
   ThemeCard,
   ThemeCardPreview,
+  ThemeCardSkeleton,
   ThemeImportCard,
+  themeGridLayout,
   type ThemeCardAction,
+  type ThemeGridLayout,
 } from '@/components/theme-card';
-import { ThemeGalleryTab } from '@/components/theme-gallery-tab';
-import { ThemeGrid } from '@/components/theme-grid';
+import { GalleryCard, GalleryFooter, GalleryNote, GallerySearch } from '@/components/theme-gallery';
 import { ThemeImportProgress } from '@/components/theme-import-progress';
 import { ThemeLinkImport } from '@/components/theme-link-import';
 import { appChrome } from '@/constants/appearance';
@@ -61,6 +80,7 @@ import { loadThemeTab, saveThemeTab, type ThemeTab } from '@/lib/theme-tab-prefe
 import { THEME_PICKER_MAX_CONTENT_WIDTH } from '@/lib/theme-picker-layout';
 import { useThemeLibrary } from '@/stores/theme-library';
 import { exportInstalledTheme } from '@/theme/assets';
+import type { ThemeIndexEntry } from '@/theme/gallery';
 import { pickThemeManifest, shareThemeFile, type ThemeFileStage } from '@/theme/local-files';
 import { prepareThemeArtwork } from '@/theme/prepare-artwork';
 import { isRenderableThemeAsset } from '@/theme/renderable-asset';
@@ -75,14 +95,66 @@ const STAGGER_CAP = 8;
 const CURRENT_PREVIEW_WIDTH = 56;
 const CURRENT_IDENTITY_GAP = 12;
 
-type MineItem = InstalledTheme | 'import';
-type BuiltinItem = 'default' | ThemePack;
+/** Placeholder rows while the catalogue is read. */
+const SKELETON_ROWS = 2;
+
+/** One cell of a card row. */
+type Cell =
+  | { kind: 'installed'; theme: InstalledTheme }
+  | { kind: 'import' }
+  | { kind: 'default' }
+  | { kind: 'pack'; pack: ThemePack }
+  | { kind: 'entry'; entry: ThemeIndexEntry }
+  | { kind: 'skeleton'; key: string };
+
+/** One row of the sheet's list. Only card rows have a fixed height. */
+type Row =
+  | { kind: 'search'; key: 'search' }
+  | { kind: 'cards'; key: string; start: number; cells: Cell[] }
+  | { kind: 'mine-empty'; key: 'mine-empty' }
+  | { kind: 'gallery-note'; key: string; note: 'failed' | 'no-match' | 'none' };
+
 type CardMenu = { title: string; actions: readonly ThemeCardAction[] };
 
 /** A theme's own published picture, when the files are on this device. */
 function coverOf(manifest: ThemeManifest, assets?: Record<string, string>): string | null {
   const uri = manifest.preview ? assets?.[manifest.preview] : undefined;
   return isRenderableThemeAsset(uri) ? (uri ?? null) : null;
+}
+
+function cellKey(cell: Cell): string {
+  switch (cell.kind) {
+    case 'installed':
+      return `mine:${cell.theme.id}`;
+    case 'import':
+      return 'mine:import';
+    case 'default':
+      return 'builtin:default';
+    case 'pack':
+      return `builtin:${cell.pack.id}`;
+    case 'entry':
+      return `gallery:${cell.entry.id}`;
+    case 'skeleton':
+      return `skeleton:${cell.key}`;
+  }
+}
+
+/** Cells into rows of `columns`, each row keyed by its first cell. */
+function chunk(cells: readonly Cell[], columns: number): Row[] {
+  const rows: Row[] = [];
+  for (let start = 0; start < cells.length; start += columns) {
+    const slice = cells.slice(start, start + columns);
+    rows.push({ kind: 'cards', key: cellKey(slice[0]!), start, cells: slice });
+  }
+  return rows;
+}
+
+function keyOfRow(row: Row): string {
+  return row.key;
+}
+
+function typeOfRow(row: Row): Row['kind'] {
+  return row.kind;
 }
 
 export function SettingsThemeSheet({
@@ -101,7 +173,10 @@ export function SettingsThemeSheet({
   const openEditor = useOpenThemeEditor();
   const reskin = useReskinTransition();
   const { resolvedMode } = useThemeMode();
-  const { width: artworkWidth } = useWindowDimensions();
+  const window = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const fullscreen = useSheetIsFullscreen();
+  const surfaceOpacity = useSurfaceBackgroundOpacity();
 
   const themes = useThemeLibrary((state) => state.library.themes);
   const selection = useThemeLibrary((state) => state.library.selection);
@@ -116,9 +191,10 @@ export function SettingsThemeSheet({
   const [tab, setTab] = useState<ThemeTab>(
     () => initialTab ?? loadThemeTab() ?? (themes.length > 0 ? 'mine' : 'gallery')
   );
-  // The tab the sheet opened on is the only one whose cards rise in: a tab
-  // switch is a cross-fade, never a second arrival.
+  // The tab the sheet opened on is the only one whose cards rise in; a tab
+  // switch cross-fades the cards that replace the old ones instead.
   const [openedOn] = useState(tab);
+  const [switchedAt, setSwitchedAt] = useState<number | undefined>(undefined);
   const [revealed] = useState(() => new Set<string>());
   const [error, setError] = useState<string | null>(null);
   const [menu, setMenu] = useState<CardMenu | null>(null);
@@ -126,11 +202,24 @@ export function SettingsThemeSheet({
   const [linkImportOpen, setLinkImportOpen] = useState(false);
   const [readStage, setReadStage] = useState<ThemeFileStage | null>(null);
   const [busy, setBusy] = useState(false);
+  const [listWidth, setListWidth] = useState(0);
 
   const gallery = useThemeGallery({ enabled: tab === 'gallery', onReady: openEditor });
 
+  // The column the content sits in: the sheet's gutter on both sides, and on a
+  // wide Pad no wider than the cap, centred. Cards, tabs and the bar share it.
+  const sheetWidth = listWidth || window.width;
+  const columnWidth = Math.min(
+    sheetWidth - SHEET_LADDER.gutter * 2,
+    THEME_PICKER_MAX_CONTENT_WIDTH
+  );
+  const layout = themeGridLayout(columnWidth, window.fontScale);
+  const column = { width: columnWidth, alignSelf: 'center' as const };
+
   function chooseTab(next: ThemeTab) {
+    if (next === tab) return;
     setMenu(null);
+    setSwitchedAt(Date.now());
     setTab(next);
     saveThemeTab(next);
   }
@@ -182,7 +271,7 @@ export function SettingsThemeSheet({
           builtin.manifest,
           useThemeLibrary.getState().defaultAssets,
           resolvedMode,
-          artworkWidth
+          window.width
         ),
       apply: () => useThemeLibrary.getState().resetToDefault(),
     });
@@ -191,7 +280,7 @@ export function SettingsThemeSheet({
   function chooseCustom(theme: InstalledTheme) {
     wear({
       pack: theme.manifest.variants,
-      prepare: () => prepareThemeArtwork(theme.manifest, theme.assets, resolvedMode, artworkWidth),
+      prepare: () => prepareThemeArtwork(theme.manifest, theme.assets, resolvedMode, window.width),
       apply: () => useThemeLibrary.getState().apply({ kind: 'custom', id: theme.id }),
     });
   }
@@ -275,9 +364,279 @@ export function SettingsThemeSheet({
   const currentInstalled = currentCustomId
     ? themes.find((theme) => theme.id === currentCustomId)
     : undefined;
+  const installedByManifest = new Map(themes.map((theme) => [theme.manifest.id, theme]));
+
+  // ---- The rows of the tab on screen ----
+  const rows: Row[] = [];
+  if (tab === 'mine') {
+    rows.push(
+      ...chunk(
+        [
+          ...themes.map((theme): Cell => ({ kind: 'installed', theme })),
+          { kind: 'import' } as const,
+        ],
+        layout.columns
+      )
+    );
+    if (themes.length === 0) rows.push({ kind: 'mine-empty', key: 'mine-empty' });
+  } else if (tab === 'builtin') {
+    rows.push(
+      ...chunk(
+        [
+          ...(defaultTheme ? [{ kind: 'default' } as const] : []),
+          ...THEME_PACKS.map((pack): Cell => ({ kind: 'pack', pack })),
+        ],
+        layout.columns
+      )
+    );
+  } else {
+    const loading = gallery.entries === null && !gallery.failed;
+    if (gallery.entries && gallery.entries.length > 0) rows.push({ kind: 'search', key: 'search' });
+    if (loading)
+      rows.push(
+        ...chunk(
+          Array.from({ length: SKELETON_ROWS * layout.columns }, (_, index): Cell => ({
+            kind: 'skeleton',
+            key: String(index),
+          })),
+          layout.columns
+        )
+      );
+    else {
+      rows.push(
+        ...chunk(
+          gallery.visible.map((entry): Cell => ({ kind: 'entry', entry })),
+          layout.columns
+        )
+      );
+      if (gallery.failed)
+        rows.push({ kind: 'gallery-note', key: 'gallery-failed', note: 'failed' });
+      else if (gallery.visible.length === 0)
+        rows.push({
+          kind: 'gallery-note',
+          key: 'gallery-empty',
+          note: gallery.needle ? 'no-match' : 'none',
+        });
+    }
+  }
+  const searchSticky = rows[0]?.kind === 'search';
+
+  /**
+   * Everything a row draws that is not its own cells, as one string the list
+   * compares cheaply: the list memoises a row on its item and this, so without
+   * it the pressed card would keep its old markup and its progress could
+   * never appear.
+   */
+  const rowState = [
+    tab,
+    currentCustomId ?? '',
+    defaultActive ? 1 : 0,
+    themePack.id,
+    busy ? 1 : 0,
+    importOpen ? 1 : 0,
+    gallery.pending ?? '',
+    gallery.progress?.phase ?? '',
+    gallery.progress && gallery.progress.phase !== 'downloading'
+      ? `${gallery.progress.completed}/${gallery.progress.total}`
+      : '',
+    gallery.brokenCount,
+    gallery.query,
+    themes.map((theme) => `${theme.id}:${theme.manifest.version}`).join(','),
+    layout.itemHeight,
+  ].join('|');
+
+  function riseFor(cell: Cell, index: number) {
+    const key = cellKey(cell);
+    const rises =
+      cell.kind === 'entry'
+        ? openedOn === 'gallery' || gallery.arrivedLive
+        : cell.kind !== 'skeleton' && openedOn === tab;
+    const offset = cell.kind === 'entry' ? Math.max(index - gallery.pageStart, 0) : index;
+    return {
+      revealed,
+      key,
+      delay: Math.min(offset, STAGGER_CAP) * STAGGER.row,
+      enabled: rises,
+      switchedAt,
+    };
+  }
+
+  function renderCell(cell: Cell, index: number, cardLayout: ThemeGridLayout) {
+    const rise = riseFor(cell, index);
+    switch (cell.kind) {
+      case 'skeleton':
+        return (
+          <ThemeCardSkeleton
+            layout={cardLayout}
+            accessibilityLabel={index === 0 ? t`Loading themes…` : undefined}
+          />
+        );
+      case 'import':
+        return (
+          <ThemeImportCard
+            layout={cardLayout}
+            rise={rise}
+            expanded={importOpen}
+            disabled={busy}
+            onPress={() => {
+              setLinkImportOpen(false);
+              setImportOpen(!importOpen);
+            }}
+          />
+        );
+      case 'installed': {
+        const { theme } = cell;
+        const current = theme.id === currentCustomId;
+        const actions = actionsFor(theme);
+        return (
+          <ThemeCard
+            testID={`theme-row-${theme.manifest.id}`}
+            name={theme.manifest.name}
+            caption={theme.manifest.author ?? t`Imported`}
+            layout={cardLayout}
+            current={current}
+            rise={rise}
+            disabled={busy}
+            accessibilityLabel={
+              current ? `${theme.manifest.name}, ${t`Current`}` : theme.manifest.name
+            }
+            actions={actions}
+            onPress={() => openInstalled(theme)}
+            onLongPress={() => openMenu(theme.manifest.name, actions)}
+            preview={
+              <ThemeCardPreview
+                image={coverOf(theme.manifest, theme.assets)}
+                pack={theme.manifest.variants}
+              />
+            }
+          />
+        );
+      }
+      case 'default':
+        if (!defaultTheme) return null;
+        return (
+          <ThemeCard
+            // The id carries the selection state, because the flows that drive
+            // this grid match on it: a role reads differently on the two
+            // runtimes.
+            testID={`settings-selection:${defaultActive ? 'on' : 'off'}:theme-builtin`}
+            name={defaultTheme.label}
+            caption={t`Default`}
+            layout={cardLayout}
+            current={defaultActive}
+            rise={rise}
+            accessibilityLabel={
+              defaultActive ? `${defaultTheme.label}, ${t`Current`}` : defaultTheme.label
+            }
+            onPress={chooseDefault}
+            preview={
+              <ThemeCardPreview
+                image={coverOf(defaultTheme.manifest, defaultAssets)}
+                pack={defaultTheme}
+              />
+            }
+          />
+        );
+      case 'pack': {
+        const { pack } = cell;
+        const current = pack.id === themePack.id;
+        return (
+          <ThemeCard
+            testID={`settings-selection:${current ? 'on' : 'off'}:theme-${pack.id}`}
+            name={pack.label}
+            caption={`${pack.lightName} · ${pack.darkName}`}
+            layout={cardLayout}
+            current={current}
+            rise={rise}
+            accessibilityLabel={current ? `${pack.label}, ${t`Current`}` : pack.label}
+            onPress={() => choosePack(pack.id)}
+            preview={<ThemeCardPreview pack={pack} />}
+          />
+        );
+      }
+      case 'entry': {
+        const mine = installedByManifest.get(cell.entry.id);
+        return (
+          <GalleryCard
+            entry={cell.entry}
+            gallery={gallery}
+            mine={mine}
+            currentCustomId={currentCustomId}
+            layout={cardLayout}
+            rise={rise}
+            actions={mine ? actionsFor(mine) : undefined}
+            onOpenInstalled={openInstalled}
+            onMenu={openMenu}
+          />
+        );
+      }
+    }
+  }
+
+  function renderRow(row: Row) {
+    switch (row.kind) {
+      case 'search':
+        return (
+          <View
+            style={{
+              backgroundColor: surfaceBackgroundFill(
+                colors.surface,
+                sheetFrostAlpha(surfaceOpacity)
+              ),
+            }}>
+            <View style={column}>
+              <GallerySearch gallery={gallery} />
+            </View>
+          </View>
+        );
+      case 'cards':
+        return (
+          <View style={[column, styles.cardRow, { height: layout.itemHeight }]}>
+            {Array.from({ length: layout.columns }, (_, slot) => {
+              const cell = row.cells[slot];
+              return (
+                <View key={cell ? cellKey(cell) : `empty:${slot}`} style={styles.cardCell}>
+                  {cell ? renderCell(cell, row.start + slot, layout) : null}
+                </View>
+              );
+            })}
+          </View>
+        );
+      case 'mine-empty':
+        return (
+          <View testID="theme-mine-empty" style={[column, styles.emptyMine]}>
+            <Text variant="bodySmall" color={colors.textMuted}>
+              {t`No personal themes yet. Import one, or browse the published themes.`}
+            </Text>
+            <SheetSceneQuietAction
+              testID="theme-browse-gallery"
+              label={t`Browse the gallery`}
+              onPress={() => chooseTab('gallery')}
+            />
+          </View>
+        );
+      case 'gallery-note':
+        return (
+          <View style={column}>
+            <GalleryNote kind={row.note} gallery={gallery} />
+          </View>
+        );
+    }
+  }
 
   const header = (
-    <View style={styles.header}>
+    <View
+      style={[
+        column,
+        styles.header,
+        { paddingTop: SHEET_LADDER.gap + (fullscreen ? insets.top : 0) },
+      ]}>
+      <SheetHandle />
+      <SheetSceneHeading
+        title={t`Themes`}
+        caption={t`Terminal colours follow the theme.`}
+        trailing={fullscreen ? <SheetSceneClose /> : undefined}
+      />
       <CurrentThemeBar
         key={currentKey}
         name={themePack.label}
@@ -355,163 +714,61 @@ export function SettingsThemeSheet({
     </View>
   );
 
-  const mineData: readonly MineItem[] = [...themes, 'import'];
-  const builtinData: readonly BuiltinItem[] = defaultTheme
-    ? ['default', ...THEME_PACKS]
-    : THEME_PACKS;
+  const showGalleryFooter = tab === 'gallery' && gallery.entries !== null && gallery.total > 0;
 
   return (
-    <SheetScene
-      testID="settings-theme-sheet"
-      title={t`Themes`}
-      caption={t`Terminal colours follow the theme.`}
-      header={header}>
-      <View style={styles.body}>
-        {/* Keyed on the tab, so switching unmounts one grid and mounts the
-            other and the two cross-fade; nothing slides. */}
-        <Animated.View
-          key={tab}
-          entering={fadeIn('micro')}
-          exiting={fadeOut('micro')}
-          style={styles.body}>
-          {tab === 'mine' ? (
-            <ThemeGrid<MineItem>
-              testID="theme-mine-grid"
-              data={mineData}
-              keyOf={(item) => (item === 'import' ? 'import' : item.id)}
-              extraData={`${currentCustomId ?? ''}|${importOpen ? 1 : 0}|${busy ? 1 : 0}`}
-              footer={
-                themes.length === 0 ? (
-                  <View testID="theme-mine-empty" style={styles.emptyMine}>
-                    <Text variant="bodySmall" color={colors.textMuted}>
-                      {t`No personal themes yet. Import one, or browse the published themes.`}
-                    </Text>
-                    <SheetSceneQuietAction
-                      testID="theme-browse-gallery"
-                      label={t`Browse the gallery`}
-                      onPress={() => chooseTab('gallery')}
-                    />
-                  </View>
-                ) : null
-              }
-              renderCard={(item, index, layout) => {
-                const rise = {
-                  revealed,
-                  key: `mine:${item === 'import' ? 'import' : item.id}`,
-                  delay: Math.min(index, STAGGER_CAP) * STAGGER.row,
-                  enabled: openedOn === 'mine',
-                };
-                if (item === 'import')
-                  return (
-                    <ThemeImportCard
-                      layout={layout}
-                      rise={rise}
-                      expanded={importOpen}
-                      disabled={busy}
-                      onPress={() => {
-                        setLinkImportOpen(false);
-                        setImportOpen(!importOpen);
-                      }}
-                    />
-                  );
-                const current = item.id === currentCustomId;
-                const actions = actionsFor(item);
-                return (
-                  <ThemeCard
-                    testID={`theme-row-${item.manifest.id}`}
-                    name={item.manifest.name}
-                    caption={item.manifest.author ?? t`Imported`}
-                    layout={layout}
-                    current={current}
-                    rise={rise}
-                    disabled={busy}
-                    accessibilityLabel={
-                      current ? `${item.manifest.name}, ${t`Current`}` : item.manifest.name
-                    }
-                    actions={actions}
-                    onPress={() => openInstalled(item)}
-                    onLongPress={() => openMenu(item.manifest.name, actions)}
-                    preview={
-                      <ThemeCardPreview
-                        image={coverOf(item.manifest, item.assets)}
-                        pack={item.manifest.variants}
-                      />
-                    }
-                  />
-                );
-              }}
-            />
-          ) : tab === 'builtin' ? (
-            <ThemeGrid<BuiltinItem>
-              testID="theme-picker-grid"
-              data={builtinData}
-              keyOf={(item) => (item === 'default' ? 'default' : item.id)}
-              extraData={`${defaultActive ? 1 : 0}|${themePack.id}`}
-              renderCard={(item, index, layout) => {
-                const rise = {
-                  revealed,
-                  key: `builtin:${item === 'default' ? 'default' : item.id}`,
-                  delay: Math.min(index, STAGGER_CAP) * STAGGER.row,
-                  enabled: openedOn === 'builtin',
-                };
-                if (item === 'default') {
-                  if (!defaultTheme) return null;
-                  return (
-                    <ThemeCard
-                      // The id carries the selection state, because the flows
-                      // that drive this grid match on it: a role reads
-                      // differently on the two runtimes.
-                      testID={`settings-selection:${defaultActive ? 'on' : 'off'}:theme-builtin`}
-                      name={defaultTheme.label}
-                      caption={t`Default`}
-                      layout={layout}
-                      current={defaultActive}
-                      rise={rise}
-                      accessibilityLabel={
-                        defaultActive ? `${defaultTheme.label}, ${t`Current`}` : defaultTheme.label
-                      }
-                      onPress={chooseDefault}
-                      preview={
-                        <ThemeCardPreview
-                          image={coverOf(defaultTheme.manifest, defaultAssets)}
-                          pack={defaultTheme}
-                        />
-                      }
-                    />
-                  );
-                }
-                const current = item.id === themePack.id;
-                return (
-                  <ThemeCard
-                    testID={`settings-selection:${current ? 'on' : 'off'}:theme-${item.id}`}
-                    name={item.label}
-                    caption={`${item.lightName} · ${item.darkName}`}
-                    layout={layout}
-                    current={current}
-                    rise={rise}
-                    accessibilityLabel={current ? `${item.label}, ${t`Current`}` : item.label}
-                    onPress={() => choosePack(item.id)}
-                    preview={<ThemeCardPreview pack={item} />}
-                  />
-                );
-              }}
-            />
-          ) : (
-            <ThemeGalleryTab
-              gallery={gallery}
-              installed={themes}
-              currentCustomId={currentCustomId}
-              rises={openedOn === 'gallery' || gallery.arrivedLive}
-              revealed={revealed}
-              onOpenInstalled={openInstalled}
-              actionsFor={actionsFor}
-              onMenu={openMenu}
-            />
-          )}
-        </Animated.View>
+    <SheetFrame testID="settings-theme-sheet" tint="surface" frosted>
+      {/* One column, one scroller: the list is the view the native sheet
+          hands its drags to, so it is a direct child of the frame's column
+          and sets `nestedScrollEnabled` for Android's sheet behaviour. */}
+      <View
+        collapsable={false}
+        style={styles.sheet}
+        onLayout={(event) => setListWidth(event.nativeEvent.layout.width)}>
+        <LegendList
+          testID={
+            tab === 'gallery'
+              ? 'theme-browse-list'
+              : tab === 'mine'
+                ? 'theme-mine-grid'
+                : 'theme-picker-grid'
+          }
+          nestedScrollEnabled
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          showsVerticalScrollIndicator={false}
+          data={rows}
+          // A tab, or a change of column count, is a different set of rows;
+          // the list is told so rather than left to reuse positions.
+          dataKey={`${tab}:${layout.columns}`}
+          keyExtractor={keyOfRow}
+          getItemType={typeOfRow}
+          extraData={rowState}
+          // Never: a card owns a picture, and recycling would hand one
+          // theme's picture to another for a frame.
+          recycleItems={false}
+          getFixedItemSize={(row: Row) => (row.kind === 'cards' ? layout.itemHeight : undefined)}
+          estimatedItemSize={layout.itemHeight}
+          stickyHeaderIndices={searchSticky ? [0] : undefined}
+          onEndReached={tab === 'gallery' ? gallery.appendPage : undefined}
+          onEndReachedThreshold={0.5}
+          renderItem={({ item }: { item: Row }) => renderRow(item)}
+          ListHeaderComponent={header}
+          ListFooterComponent={
+            <>
+              {showGalleryFooter ? (
+                <View style={column}>
+                  <GalleryFooter gallery={gallery} />
+                </View>
+              ) : null}
+              <SheetSceneFooter bottomInset={insets.bottom} />
+            </>
+          }
+          style={styles.sheet}
+        />
         {menu ? <CardMenuOverlay menu={menu} onClose={() => setMenu(null)} /> : null}
       </View>
-    </SheetScene>
+    </SheetFrame>
   );
 }
 
@@ -749,13 +1006,12 @@ function CardMenuOverlay({ menu, onClose }: { menu: CardMenu; onClose: () => voi
 }
 
 const styles = StyleSheet.create({
-  header: {
-    width: '100%',
-    maxWidth: THEME_PICKER_MAX_CONTENT_WIDTH,
-    alignSelf: 'center',
-    gap: SHEET_LADDER.gap,
-  },
-  body: { flex: 1, minHeight: 0 },
+  sheet: { flex: 1, minHeight: 0 },
+  header: { gap: SHEET_LADDER.gap, paddingBottom: SHEET_LADDER.gap },
+  // The gap under a row is part of it, so the fixed height the list is told is
+  // the whole of what the row occupies.
+  cardRow: { flexDirection: 'row', gap: THEME_GRID_GAP, paddingBottom: THEME_GRID_GAP },
+  cardCell: { flex: 1, minWidth: 0 },
   currentOneRow: { flexDirection: 'row', alignItems: 'center', gap: SHEET_LADDER.snug },
   currentTwoRows: { gap: SHEET_LADDER.gap },
   currentIdentity: {

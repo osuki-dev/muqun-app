@@ -42,7 +42,7 @@ import { collectPopularThemeTags, filterThemeEntries } from '@/theme/theme-searc
  */
 
 /** Reveal a bounded page near the end; the catalogue index is already cached. */
-const THEME_GALLERY_PAGE = 20;
+const THEME_GALLERY_PAGE = 24;
 
 /**
  * How long the pressed state stays up, however fast the work behind it was.
