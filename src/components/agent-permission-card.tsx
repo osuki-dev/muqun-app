@@ -253,7 +253,7 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
             rows={diffRows}
             colors={colors}
             gutterFill={theme.colors.surface}
-            headerFill={theme.colors.surface}
+            headerFill={surfaceBackground(theme.colors.surface)}
           />
         </View>
       ) : null}

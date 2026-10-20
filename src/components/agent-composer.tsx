@@ -288,6 +288,8 @@ const SessionChip = memo(function SessionChip({
         style={[
           styles.sessionChip,
           { borderRadius: profile.chrome.navigationPill },
+          // Opacity audit: selection -- the lit chip stays solid primary, the
+          // one fill its `onPrimary` ink is proven against; idle chips thin.
           active
             ? { backgroundColor: theme.colors.primary }
             : {
@@ -1706,9 +1708,8 @@ export const AgentComposer = memo(function AgentComposer({
                         styles.queuedChip,
                         { borderRadius: profile.chrome.control },
                         {
-                          backgroundColor: withAlpha(
-                            steering ? theme.colors.warning : theme.colors.primary,
-                            0.16
+                          backgroundColor: surfaceBackground(
+                            withAlpha(steering ? theme.colors.warning : theme.colors.primary, 0.16)
                           ),
                         },
                       ]}>
@@ -2137,10 +2138,11 @@ export const AgentComposer = memo(function AgentComposer({
                         styles.actionBtnWithLabel,
                         { borderRadius: profile.chrome.roundControl },
                         {
-                          backgroundColor:
+                          backgroundColor: surfaceBackground(
                             deliveryMode === 'steer'
                               ? withAlpha(theme.colors.warning, 0.2)
-                              : withAlpha(theme.colors.primary, 0.2),
+                              : withAlpha(theme.colors.primary, 0.2)
+                          ),
                           borderColor:
                             deliveryMode === 'steer'
                               ? withAlpha(theme.colors.warning, 0.5)
@@ -2244,7 +2246,7 @@ export const AgentComposer = memo(function AgentComposer({
                         styles.actionBtn,
                         { borderRadius: profile.chrome.roundControl },
                         {
-                          backgroundColor: withAlpha(theme.colors.primary, 0.18),
+                          backgroundColor: surfaceBackground(withAlpha(theme.colors.primary, 0.18)),
                         },
                       ]}>
                       <CompareIcon size={15} color={theme.colors.primary} />

@@ -183,6 +183,9 @@ export function createMarkdownStyle(colors: Colors, fonts?: MarkdownFonts): Mark
   const text = colors.text;
   const muted = colors.textMuted;
   const border = colors.border;
+  // Opacity audit: content -- code and quote wells are part of the text they
+  // hold (the file viewer reads documents with this same style), so they keep
+  // their authored fill; monospace runs and gutters stay legible over a scene.
   const codeBackground = colors.surfaceRaised;
   const quoteBackground = colors.primarySubtle;
   const link = colors.primary;

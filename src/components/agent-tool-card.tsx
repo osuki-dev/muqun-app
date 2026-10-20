@@ -42,6 +42,7 @@ import {
 import { InlineDiffRows } from '@/components/diff-rows';
 import { usePaneChatColors, usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useCompactMarkdownStyle } from '@/hooks/use-markdown-style';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { isDeclinedByUser } from '@/lib/agent-engine-text';
@@ -423,6 +424,7 @@ const PatchBody = memo(function PatchBody({
   onOpenFullDiff?: (path?: string) => void;
 }) {
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   const colors = usePaneChatColors();
   const rows = useMemo(() => diffRowsForFence(patch), [patch]);
   if (rows.length === 0) return null;
@@ -432,7 +434,7 @@ const PatchBody = memo(function PatchBody({
       targetPath={targetPath}
       colors={colors}
       gutterFill={theme.colors.surface}
-      headerFill={theme.colors.surface}
+      headerFill={surfaceBackground(theme.colors.surface)}
       onGrid
       {...(onOpenFullDiff ? { onOpenFullDiff } : {})}
     />
@@ -458,6 +460,7 @@ export const AgentToolCard = memo(function AgentToolCard({
 }: AgentToolCardProps) {
   const { t, i18n } = useLingui();
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   // Read from the theme here, not from a prop: the timeline's memoised cells
   // skip re-renders the list cannot see, and a style handed down through
   // render props would stay the palette the cell was born with. A hook
@@ -955,7 +958,10 @@ export const AgentToolCard = memo(function AgentToolCard({
             accessibilityLabel={t`Preview theme ${basename(themeFile)}`}
             hitSlop={10}
             onPress={() => onOpenFile(toolFileForPath(themeFile))}
-            style={[styles.themePreview, { backgroundColor: theme.colors.surfaceRaised }]}>
+            style={[
+              styles.themePreview,
+              { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+            ]}>
             <AppearanceIcon size={11} color={colors.accent} />
             <Text variant="caption" color={colors.accent} style={styles.actionText}>
               <Trans>Preview theme</Trans>
@@ -1440,6 +1446,7 @@ const EditDiffs = memo(function EditDiffs({
   onOpenFullDiff?: (path?: string) => void;
 }) {
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   const colors = usePaneChatColors();
   const [expandedOrder, setExpandedOrder] = useState<readonly string[]>(() =>
     files.length === 1 ? [files[0].path] : []
@@ -1457,7 +1464,7 @@ const EditDiffs = memo(function EditDiffs({
       rows={rows}
       colors={colors}
       gutterFill={theme.colors.surface}
-      headerFill={theme.colors.surface}
+      headerFill={surfaceBackground(theme.colors.surface)}
       onToggleFile={toggle}
       onGrid
       {...(onOpenFullDiff ? { onOpenFullDiff } : {})}
