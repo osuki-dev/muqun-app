@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { PhotoFileIcon, DocumentIcon } from '@/icons';
 import { useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
@@ -157,7 +157,11 @@ function RawFileLink({ file, asid }: { file: { uri: string; name: string }; asid
           backgroundColor: theme.colors.surfaceRaised,
           borderRadius: 12,
         }}>
-        {isImage ? (
+        {/* Finding the file on the computer can take seconds; the link says it
+            heard the tap rather than looking dead until the viewer opens. */}
+        {busy ? (
+          <ActivityIndicator size={14} color={theme.colors.primary} />
+        ) : isImage ? (
           <PhotoFileIcon size={14} color={theme.colors.primary} />
         ) : (
           <DocumentIcon size={14} color={theme.colors.primary} />
