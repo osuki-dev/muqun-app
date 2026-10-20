@@ -71,6 +71,10 @@ import { sheetFrostAlpha, surfaceBackgroundFill } from '@/theme/surface-backgrou
 /** How far into a grid the first arrival keeps counting. */
 const STAGGER_CAP = 8;
 
+/** The current bar's thumbnail, and the gap between it and the copy. */
+const CURRENT_PREVIEW_WIDTH = 56;
+const CURRENT_IDENTITY_GAP = 12;
+
 type MineItem = InstalledTheme | 'import';
 type BuiltinItem = 'default' | ThemePack;
 type CardMenu = { title: string; actions: readonly ThemeCardAction[] };
@@ -539,13 +543,78 @@ function CurrentThemeBar({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
+  // Whether everything fits on one line is measured, never guessed: the
+  // bar's width, the copy's natural width and the buttons' natural width,
+  // the last two from an invisible copy laid out without constraint. Until
+  // all three are known, and whenever they do not fit, the buttons take a
+  // second row -- the phone layout, where one row truncated both the label
+  // and the name.
+  const [barWidth, setBarWidth] = useState(0);
+  const [copyWidth, setCopyWidth] = useState(0);
+  const [actionsWidth, setActionsWidth] = useState(0);
+  const hasActions = Boolean(onCustomise || onRestore);
+  const oneRow =
+    hasActions &&
+    barWidth > 0 &&
+    copyWidth > 0 &&
+    actionsWidth > 0 &&
+    CURRENT_PREVIEW_WIDTH + CURRENT_IDENTITY_GAP + copyWidth + SHEET_LADDER.snug + actionsWidth <=
+      barWidth;
+
+  const caption = `${t`Current theme`} · ${source}`;
+  const buttons = (measuring: boolean) => (
+    <>
+      {onCustomise ? (
+        <Button
+          variant="secondary"
+          testID={measuring ? undefined : 'theme-customise'}
+          disabled={busy}
+          style={measuring || oneRow ? undefined : styles.currentButton}
+          onPress={onCustomise}>{t`Customise`}</Button>
+      ) : null}
+      {onRestore ? (
+        <Button
+          variant="ghost"
+          testID={measuring ? undefined : 'theme-restore-default'}
+          disabled={busy}
+          style={measuring || oneRow ? undefined : styles.currentButton}
+          onPress={onRestore}>{t`Restore default`}</Button>
+      ) : null}
+    </>
+  );
+
   return (
     <Animated.View
       testID="theme-current-summary"
       entering={animate ? fadeIn('short') : undefined}
       exiting={fadeOut('micro')}
-      style={styles.current}>
-      <View style={styles.currentIdentity}>
+      onLayout={(event) => setBarWidth(event.nativeEvent.layout.width)}
+      style={oneRow ? styles.currentOneRow : styles.currentTwoRows}>
+      {hasActions ? (
+        // The invisible measure: never seen, never announced, never pressed.
+        <View
+          pointerEvents="none"
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          style={styles.currentMeasure}>
+          <View
+            style={styles.currentMeasureItem}
+            onLayout={(event) => setCopyWidth(Math.ceil(event.nativeEvent.layout.width))}>
+            <Text variant="caption" numberOfLines={1}>
+              {caption}
+            </Text>
+            <Text weight="semibold" numberOfLines={1}>
+              {name}
+            </Text>
+          </View>
+          <View
+            style={[styles.currentMeasureItem, styles.currentActions]}
+            onLayout={(event) => setActionsWidth(Math.ceil(event.nativeEvent.layout.width))}>
+            {buttons(true)}
+          </View>
+        </View>
+      ) : null}
+      <View style={[styles.currentIdentity, oneRow ? styles.currentIdentityGrow : undefined]}>
         <View
           style={[
             styles.currentPreview,
@@ -555,31 +624,14 @@ function CurrentThemeBar({
         </View>
         <View style={styles.currentCopy}>
           <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
-            {t`Current theme`} · {source}
+            {caption}
           </Text>
-          <Text weight="semibold" numberOfLines={1}>
+          <Text weight="semibold" numberOfLines={2}>
             {name}
           </Text>
         </View>
       </View>
-      {onCustomise || onRestore ? (
-        <View style={styles.currentActions}>
-          {onCustomise ? (
-            <Button
-              variant="secondary"
-              testID="theme-customise"
-              disabled={busy}
-              onPress={onCustomise}>{t`Customise`}</Button>
-          ) : null}
-          {onRestore ? (
-            <Button
-              variant="ghost"
-              testID="theme-restore-default"
-              disabled={busy}
-              onPress={onRestore}>{t`Restore default`}</Button>
-          ) : null}
-        </View>
-      ) : null}
+      {hasActions ? <View style={styles.currentActions}>{buttons(false)}</View> : null}
     </Animated.View>
   );
 }
@@ -704,25 +756,23 @@ const styles = StyleSheet.create({
     gap: SHEET_LADDER.gap,
   },
   body: { flex: 1, minHeight: 0 },
-  current: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    columnGap: SHEET_LADDER.snug,
-    rowGap: SHEET_LADDER.gap,
-  },
+  currentOneRow: { flexDirection: 'row', alignItems: 'center', gap: SHEET_LADDER.snug },
+  currentTwoRows: { gap: SHEET_LADDER.gap },
   currentIdentity: {
-    flexGrow: 1,
     flexShrink: 1,
-    flexBasis: 200,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: CURRENT_IDENTITY_GAP,
     minWidth: 0,
   },
+  // The bar's own width, so a measured item is never wider than the bar it is for.
+  currentMeasure: { position: 'absolute', top: 0, left: 0, right: 0, opacity: 0 },
+  currentMeasureItem: { position: 'absolute', top: 0, left: 0, flexShrink: 0 },
+  currentButton: { flex: 1 },
+  currentIdentityGrow: { flex: 1 },
   // 4:3, the cards' own shape, at the size a bar can carry.
   currentPreview: {
-    width: 56,
+    width: CURRENT_PREVIEW_WIDTH,
     height: 42,
     overflow: 'hidden',
     borderCurve: 'continuous',
