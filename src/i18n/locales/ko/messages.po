@@ -652,7 +652,7 @@ msgstr "QR 코드를 테두리 안에 맞춰 주세요"
 
 #: src/components/home-recent-chips.tsx
 #: src/components/session-artifacts.tsx
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "All"
 msgstr "전체"
 
@@ -1218,7 +1218,7 @@ msgstr "저장소 URL, 브랜치와 테마 파일을 확인하세요"
 msgid "Check this computer's tasks. This request has not been sent again."
 msgstr "이 컴퓨터의 작업을 확인하세요. 이 요청은 다시 전송되지 않았습니다"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Check your connection and try again."
 msgstr "연결을 확인하고 다시 시도하세요"
 
@@ -1349,7 +1349,7 @@ msgid "Clear the conversation"
 msgstr "대화 비우기"
 
 #: src/components/agent-model-sheet.tsx
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Clear the search"
 msgstr "검색어 지우기"
 
@@ -2155,7 +2155,7 @@ msgstr "컴퓨터에 연결하지 못했습니다"
 msgid "Could not reach the computer. Make sure it is running, then refresh the QR and scan again."
 msgstr "컴퓨터에 연결하지 못했습니다. 컴퓨터가 켜져 있는지 확인하고 QR 코드를 새로 고친 뒤 다시 스캔하세요"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Could not reach the theme catalogue"
 msgstr "테마 카탈로그에 연결할 수 없습니다"
 
@@ -2371,7 +2371,7 @@ msgstr "일부 미리보기 · 전체 이미지 보기"
 
 #: src/components/file-mention-panel.tsx
 #: src/components/settings-theme-sheet.tsx
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Current"
 msgstr "사용 중"
 
@@ -2483,7 +2483,7 @@ msgstr "전달이 확인되지 않음"
 msgid "Delivery not confirmed. Tap to check status"
 msgstr "전달이 확인되지 않았습니다. 탭하여 상태 확인"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Demo catalogue. Leave the demo to download themes."
 msgstr "데모 목록입니다. 테마를 다운로드하려면 데모를 종료하세요"
 
@@ -2655,7 +2655,7 @@ msgstr "다운로드 중 · {0} / {1}"
 msgid "Downloading theme"
 msgstr "테마 다운로드 중"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Downloading…"
 msgstr "다운로드 중…"
 
@@ -3386,7 +3386,7 @@ msgid "Install command copied"
 msgstr "설치 명령어를 복사했습니다"
 
 #: src/components/settings-font-sheet.tsx
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Installed"
 msgstr "설치됨"
 
@@ -3725,7 +3725,7 @@ msgstr "터미널 불러오는 중"
 msgid "Loading the transcript"
 msgstr "대화 기록 불러오는 중"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Loading themes…"
 msgstr "테마를 불러오는 중…"
 
@@ -4291,12 +4291,12 @@ msgstr "이 컴퓨터에는 사용할 수 있는 터미널 세션이 없습니�
 msgid "No textual change"
 msgstr "텍스트 변경 없음"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "No themes are published yet"
 msgstr "아직 공개된 테마가 없습니다"
 
-#. placeholder {0}: query.trim()
-#: src/components/theme-gallery-tab.tsx
+#. placeholder {0}: gallery.query.trim()
+#: src/components/theme-gallery.tsx
 msgid "No themes match “{0}”."
 msgstr "“{0}”와 일치하는 테마가 없습니다"
 
@@ -4924,7 +4924,7 @@ msgstr "실패한 첨부파일을 다시 시도하거나 삭제하세요"
 msgid "Port"
 msgstr "포트"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
 msgstr "이미지 준비 중"
@@ -5747,7 +5747,7 @@ msgstr "검색"
 msgid "Search actions and commands"
 msgstr "작업 및 명령 검색"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Search by name or tag"
 msgstr "이름 또는 태그로 검색"
 
@@ -7295,7 +7295,7 @@ msgstr "신뢰"
 #: src/components/changes-sheet.tsx
 #: src/components/inline-file-link.tsx
 #: src/components/pdf-asset-preview.tsx
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/video-asset-preview.tsx
 #: src/components/voice-input-button.tsx
 #: src/hooks/use-file-actions.tsx
@@ -7307,7 +7307,7 @@ msgstr "다시 시도"
 msgid "Try again once the computer responds."
 msgstr "컴퓨터가 응답하면 다시 시도하세요"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Try searching for another name or tag."
 msgstr "다른 이름이나 태그로 검색해 보세요"
 
@@ -7423,7 +7423,7 @@ msgstr "{authLabel}(으)로 잠금 해제"
 msgid "Unlock with {methodName}"
 msgstr "{methodName}(으)로 잠금 해제"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 msgid "Unpacking…"
 msgstr "압축 푸는 중…"
 
@@ -7482,7 +7482,7 @@ msgstr "추적되지 않음"
 msgid "Up arrow"
 msgstr "위쪽 화살표"
 
-#: src/components/theme-gallery-tab.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/update-status-banner.tsx
 msgid "Update"
 msgstr "업데이트"

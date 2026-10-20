@@ -289,7 +289,7 @@ function SheetSceneFitColumn({ children }: { children: ReactNode }) {
  * as quiet as the refresh beside it, only when `useSheetIsFullscreen` says so.
  * It pops the route, which is what Android's back already does.
  */
-function SheetSceneClose() {
+export function SheetSceneClose() {
   const { t } = useLingui();
   const { colors } = useThemeTokens();
   const router = useRouter();
