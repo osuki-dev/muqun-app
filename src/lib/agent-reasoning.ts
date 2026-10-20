@@ -114,8 +114,8 @@ export function buildTimelineEntries(
 /** `3.1s`, `12s`, `1m 05s`: the label a Thought block carries. */
 export function formatThoughtDuration(ms: number): string {
   if (ms < 10_000) return `${(ms / 1000).toFixed(1)}s`;
-  if (ms < 60_000) return `${Math.round(ms / 1000)}s`;
-  const minutes = Math.floor(ms / 60_000);
-  const seconds = Math.round((ms % 60_000) / 1000);
-  return `${minutes}m ${String(seconds).padStart(2, '0')}s`;
+  // Round once, on the whole: rounding the remainder alone turned 179.6s into `2m 60s`.
+  const total = Math.round(ms / 1000);
+  if (total < 60) return `${total}s`;
+  return `${Math.floor(total / 60)}m ${String(total % 60).padStart(2, '0')}s`;
 }

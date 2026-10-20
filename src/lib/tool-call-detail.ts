@@ -79,10 +79,11 @@ export const LARGE_OUTPUT_CHARS = 200 * 1024;
 /** `15ms`, `3.2s`, `42s`, `2m 04s`: the short form a status line takes. */
 export function formatToolDuration(ms: number): string {
   if (ms < 1000) return `${Math.round(ms)}ms`;
-  if (ms < 60_000) return `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)}s`;
-  const minutes = Math.floor(ms / 60_000);
-  const seconds = Math.round((ms % 60_000) / 1000);
-  return `${minutes}m ${String(seconds).padStart(2, '0')}s`;
+  if (ms < 9_950) return `${(ms / 1000).toFixed(1)}s`;
+  // Round once, on the whole: rounding the remainder alone turned 179.6s into `2m 60s`.
+  const total = Math.round(ms / 1000);
+  if (total < 60) return `${total}s`;
+  return `${Math.floor(total / 60)}m ${String(total % 60).padStart(2, '0')}s`;
 }
 
 /**
