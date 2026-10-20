@@ -652,7 +652,7 @@ msgstr "Căn mã QR vào trong khung"
 
 #: src/components/home-recent-chips.tsx
 #: src/components/session-artifacts.tsx
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "All"
 msgstr "Tất cả"
 
@@ -804,6 +804,7 @@ msgstr "Áp dụng một bản vá"
 #: src/app/custom-theme.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Apply theme"
 msgstr "Áp dụng giao diện"
 
@@ -1058,10 +1059,9 @@ msgstr "Biểu tượng thương hiệu và chỉ báo đang chạy"
 msgid "Bring {0} to the front"
 msgstr "Đưa {0} lên trước"
 
-#: src/components/custom-theme-library.tsx
-#: src/components/theme-browse-sheet.tsx
-msgid "Browse themes"
-msgstr "Duyệt giao diện"
+#: src/components/settings-theme-sheet.tsx
+msgid "Browse the gallery"
+msgstr "Duyệt thư viện"
 
 #: src/app/commands.tsx
 msgid "Browser"
@@ -1071,7 +1071,7 @@ msgstr "Trình duyệt"
 msgid "Build"
 msgstr "Xây dựng"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Built-in"
 msgstr "Có sẵn"
 
@@ -1107,6 +1107,7 @@ msgstr "Cần quyền truy cập camera"
 #: src/components/settings-font-sheet.tsx
 #: src/components/settings-servers.tsx
 #: src/components/settings-storage.tsx
+#: src/components/settings-theme-sheet.tsx
 #: src/components/skia-terminal.tsx
 #: src/components/ssh-host-form.tsx
 #: src/components/ssh-host-key-dialog.tsx
@@ -1217,7 +1218,7 @@ msgstr "Kiểm tra URL kho mã, nhánh và tệp giao diện"
 msgid "Check this computer's tasks. This request has not been sent again."
 msgstr "Hãy kiểm tra các tác vụ trên máy tính này. Yêu cầu này chưa được gửi lại"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "Check your connection and try again."
 msgstr "Kiểm tra kết nối và thử lại"
 
@@ -1348,7 +1349,7 @@ msgid "Clear the conversation"
 msgstr "Xoá cuộc trò chuyện"
 
 #: src/components/agent-model-sheet.tsx
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "Clear the search"
 msgstr "Xoá nội dung tìm kiếm"
 
@@ -1369,6 +1370,7 @@ msgid "Clears notifications only. Pending tasks still need your attention."
 msgstr "Chỉ xóa thông báo. Các tác vụ đang chờ vẫn cần bạn xử lý"
 
 #: src/app/diagram-viewer.tsx
+#: src/components/settings-theme-sheet.tsx
 #: src/components/sheet-scene.tsx
 #: src/i18n/labels.ts
 msgid "Close"
@@ -2153,7 +2155,7 @@ msgstr "Không thể kết nối đến máy tính"
 msgid "Could not reach the computer. Make sure it is running, then refresh the QR and scan again."
 msgstr "Không thể kết nối đến máy tính. Hãy chắc chắn máy đang chạy, rồi làm mới mã QR và quét lại"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "Could not reach the theme catalogue"
 msgstr "Không thể kết nối tới danh mục giao diện"
 
@@ -2367,8 +2369,9 @@ msgstr "Tín dụng đã dùng"
 msgid "Cropped preview · Open full image"
 msgstr "Xem trước một phần · Mở ảnh đầy đủ"
 
-#: src/components/custom-theme-library.tsx
 #: src/components/file-mention-panel.tsx
+#: src/components/settings-theme-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "Current"
 msgstr "Đang dùng"
 
@@ -2389,12 +2392,16 @@ msgstr "Máy tính hiện tại"
 msgid "Current path"
 msgstr "Đường dẫn hiện tại"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Current theme"
 msgstr "Giao diện hiện tại"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Custom"
+msgstr "Tùy chỉnh"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Customise"
 msgstr "Tùy chỉnh"
 
 #: src/components/custom-theme-preview.tsx
@@ -2476,7 +2483,7 @@ msgstr "Chưa xác nhận được việc gửi"
 msgid "Delivery not confirmed. Tap to check status"
 msgstr "Chưa xác nhận đã gửi. Chạm để kiểm tra trạng thái"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "Demo catalogue. Leave the demo to download themes."
 msgstr "Danh mục minh họa. Thoát chế độ minh họa để tải chủ đề"
 
@@ -2648,7 +2655,7 @@ msgstr "Đang tải · {0} trên {1}"
 msgid "Downloading theme"
 msgstr "Đang tải chủ đề"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "Downloading…"
 msgstr "Đang tải xuống…"
 
@@ -2818,6 +2825,7 @@ msgid "Export colours"
 msgstr "Xuất màu sắc"
 
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Export theme"
 msgstr "Xuất giao diện"
 
@@ -3015,6 +3023,10 @@ msgstr "Toàn màn hình"
 #: src/components/virtual-keyboard.tsx
 msgid "Function keys"
 msgstr "Phím chức năng"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Gallery"
+msgstr "Thư viện"
 
 #: src/app/explore.tsx
 msgid "Gateway"
@@ -3293,21 +3305,25 @@ msgstr "Hình ảnh"
 msgid "Images download from"
 msgstr "Nguồn tải hình ảnh"
 
-#: src/components/custom-theme-library.tsx
-msgid "Import"
-msgstr "Nhập"
-
 #: src/components/settings-font-sheet.tsx
 msgid "Import a file…"
 msgstr "Nhập từ tệp…"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Import file"
 msgstr "Nhập tệp"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Import link"
 msgstr "Nhập từ liên kết"
+
+#: src/components/theme-card.tsx
+msgid "Import theme"
+msgstr "Nhập giao diện"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Imported"
+msgstr "Đã nhập"
 
 #: src/components/server-tasks-sheet.tsx
 msgid "In progress"
@@ -3370,13 +3386,14 @@ msgid "Install command copied"
 msgstr "Đã sao chép lệnh cài đặt"
 
 #: src/components/settings-font-sheet.tsx
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "Installed"
 msgstr "Đã cài đặt"
 
 #: src/app/+not-found.tsx
 #: src/app/custom-theme.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Installing images"
 msgstr "Đang cài đặt hình ảnh"
 
@@ -3708,7 +3725,7 @@ msgstr "Đang tải terminal"
 msgid "Loading the transcript"
 msgstr "Đang tải bản ghi"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "Loading themes…"
 msgstr "Đang tải giao diện…"
 
@@ -3798,6 +3815,10 @@ msgstr "Đã sao chép tin nhắn vào khay nhớ tạm"
 msgid "Message not sent"
 msgstr "Chưa gửi được tin nhắn"
 
+#: src/components/settings-theme-sheet.tsx
+msgid "Mine"
+msgstr "Của tôi"
+
 #: src/components/home-composer-options.tsx
 msgid "Mode"
 msgstr "Chế độ"
@@ -3858,6 +3879,7 @@ msgid "Monthly credit limit"
 msgstr "Giới hạn tín dụng hằng tháng"
 
 #: src/components/custom-theme-library.tsx
+#: src/components/theme-card.tsx
 msgid "More actions"
 msgstr "Thao tác khác"
 
@@ -3930,10 +3952,6 @@ msgstr "Muqun giữ nguyên ngôn ngữ này bất kể điện thoại đặt g
 #: src/components/settings-security.tsx
 msgid "Muqun will use {methodName} when the app opens."
 msgstr "Muqun sẽ dùng {methodName} khi mở ứng dụng"
-
-#: src/components/custom-theme-library.tsx
-msgid "My themes"
-msgstr "Giao diện của tôi"
 
 #: src/app/commands.tsx
 #: src/components/agent-worktree-sheet.tsx
@@ -4194,7 +4212,7 @@ msgstr "Chưa lưu mật khẩu hay khóa nào cho host này"
 msgid "No peer report available."
 msgstr "Chưa có báo cáo liên kết máy tính"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "No personal themes yet. Import one, or browse the published themes."
 msgstr "Chưa có giao diện riêng nào. Hãy nhập một giao diện hoặc duyệt các giao diện đã công bố"
 
@@ -4273,12 +4291,12 @@ msgstr "Máy tính này không có phiên terminal khả dụng"
 msgid "No textual change"
 msgstr "Không có thay đổi văn bản"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "No themes are published yet"
 msgstr "Chưa có giao diện nào được công bố"
 
 #. placeholder {0}: query.trim()
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "No themes match “{0}”."
 msgstr "Không có chủ đề nào khớp “{0}”"
 
@@ -4651,7 +4669,7 @@ msgid "Opening"
 msgstr "Đang mở"
 
 #: src/app/+not-found.tsx
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Opening that file"
 msgstr "Đang mở tệp đó"
 
@@ -4906,7 +4924,7 @@ msgstr "Vui lòng thử lại hoặc xóa các tệp đính kèm bị lỗi"
 msgid "Port"
 msgstr "Cổng"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
 msgstr "Đang chuẩn bị hình ảnh"
@@ -5112,7 +5130,7 @@ msgid "Reading the rules on the host…"
 msgstr "Đang đọc các quy tắc trên máy chủ…"
 
 #: src/app/+not-found.tsx
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Reading the theme"
 msgstr "Đang đọc giao diện"
 
@@ -5270,14 +5288,13 @@ msgstr "Chưa rõ số còn lại"
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-storage.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Remove"
 msgstr "Xóa"
 
 #. placeholder {0}: attachment.name
-#. placeholder {0}: installed.manifest.name
 #. placeholder {0}: record.label
 #: src/components/attachment-strip.tsx
-#: src/components/custom-theme-library.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Remove {0}"
 msgstr "Gỡ {0}"
@@ -5421,6 +5438,10 @@ msgstr "Khởi động lại Muqun để hoàn tất cập nhật"
 #: src/components/update-status-banner.tsx
 msgid "Restarting Muqun…"
 msgstr "Đang khởi động lại Muqun…"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Restore default"
+msgstr "Khôi phục mặc định"
 
 #: src/app/commands.tsx
 msgid "Restore hidden default commands"
@@ -5726,7 +5747,7 @@ msgstr "Tìm kiếm"
 msgid "Search actions and commands"
 msgstr "Tìm thao tác và lệnh"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "Search by name or tag"
 msgstr "Tìm kiếm theo tên hoặc thẻ"
 
@@ -6159,6 +6180,7 @@ msgstr "Một số màu giao diện cần độ tương phản cao hơn"
 #: src/app/diagram-viewer.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 #: src/components/theme-link-import.tsx
 msgid "Something went wrong"
 msgstr "Đã xảy ra lỗi"
@@ -6510,7 +6532,7 @@ msgid "Tap again to delete"
 msgstr "Chạm lần nữa để xóa"
 
 #: src/components/agent-worktree-sheet.tsx
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Tap again to remove"
 msgstr "Chạm lần nữa để gỡ"
@@ -6522,10 +6544,6 @@ msgstr "Chạm lần nữa để vẫn gỡ bỏ"
 #: src/components/session-map.tsx
 msgid "Tap to connect"
 msgstr "Nhấn để kết nối"
-
-#: src/components/custom-theme-library.tsx
-msgid "Tap to preview and adjust"
-msgstr "Chạm để xem trước và điều chỉnh"
 
 #: src/components/agent-workbench.tsx
 msgid "Tap to refresh this session."
@@ -6880,6 +6898,7 @@ msgid "The terminal, the opening and Home artwork draw with a new GPU renderer, 
 msgstr "Terminal, phần mở đầu và hình minh họa Trang chủ được vẽ bằng trình kết xuất GPU mới, và việc đổi chủ đề, phông chữ có hiệu ứng chuyển cảnh riêng"
 
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "The theme will be removed from this device"
 msgstr "Giao diện sẽ bị xóa khỏi thiết bị này"
 
@@ -6895,7 +6914,6 @@ msgstr "Lượt này đã thất bại"
 
 #: src/app/custom-theme.tsx
 #: src/components/settings-appearance.tsx
-#: src/components/settings-theme-sheet.tsx
 #: src/lib/demo-gateway.ts
 msgid "Theme"
 msgstr "Chủ đề"
@@ -6921,6 +6939,10 @@ msgstr "URL giao diện"
 #: src/components/settings-appearance.tsx
 msgid "Theme, {0}"
 msgstr "Chủ đề, {0}"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Themes"
+msgstr "Chủ đề"
 
 #: src/components/agent-workbench.tsx
 msgid "There is no rollback waiting to be applied."
@@ -7273,7 +7295,7 @@ msgstr "Tin cậy"
 #: src/components/changes-sheet.tsx
 #: src/components/inline-file-link.tsx
 #: src/components/pdf-asset-preview.tsx
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 #: src/components/video-asset-preview.tsx
 #: src/components/voice-input-button.tsx
 #: src/hooks/use-file-actions.tsx
@@ -7285,7 +7307,7 @@ msgstr "Thử lại"
 msgid "Try again once the computer responds."
 msgstr "Hãy thử lại khi máy tính phản hồi"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "Try searching for another name or tag."
 msgstr "Thử tìm kiếm tên hoặc thẻ khác"
 
@@ -7349,7 +7371,6 @@ msgstr "Thay đổi chưa commit"
 
 #: src/components/agent-revert-plate.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/custom-theme-library.tsx
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "Hoàn tác"
@@ -7402,7 +7423,7 @@ msgstr "Mở khóa bằng {authLabel}"
 msgid "Unlock with {methodName}"
 msgstr "Mở khóa bằng {methodName}"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "Unpacking…"
 msgstr "Đang giải nén…"
 
@@ -7461,7 +7482,7 @@ msgstr "Chưa theo dõi"
 msgid "Up arrow"
 msgstr "Mũi tên lên"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 #: src/components/update-status-banner.tsx
 msgid "Update"
 msgstr "Cập nhật"
