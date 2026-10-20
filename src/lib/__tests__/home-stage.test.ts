@@ -20,6 +20,8 @@ import {
   initialStageDegrade,
   recordStageFrame,
   stageEffects,
+  stageIdleInterval,
+  STAGE_AMBIENT_IDLE_MS,
   stepStageSpring,
   STAGE_CARD_SPRING,
   type StageDegradeState,
@@ -287,6 +289,21 @@ describe('frame pacing', () => {
       tilt: false,
       idleIntervalMs: null,
     });
+  });
+});
+
+describe('idle policy', () => {
+  const effects = stageEffects('full', { gpuAvailable: true, reducedMotion: false });
+
+  test('ambient motion runs at the idle rate, then stops drawing', () => {
+    expect(stageIdleInterval(effects, 0)).toBe(effects.idleIntervalMs);
+    expect(stageIdleInterval(effects, STAGE_AMBIENT_IDLE_MS - 1)).toBe(effects.idleIntervalMs);
+    expect(stageIdleInterval(effects, STAGE_AMBIENT_IDLE_MS)).toBeNull();
+  });
+
+  test('a scene without ambient motion never idles on a timer', () => {
+    const calm = stageEffects('full', { gpuAvailable: true, reducedMotion: true });
+    expect(stageIdleInterval(calm, 0)).toBeNull();
   });
 });
 
