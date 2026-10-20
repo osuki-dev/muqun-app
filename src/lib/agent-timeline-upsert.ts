@@ -48,7 +48,7 @@ export function inboxTimelineRows(
     if (item.type !== 'user') continue;
     let row = inboxRows.get(item);
     if (!row) {
-      const attachments = inboxItemAttachments(item).map((file) => file.uri);
+      const files = inboxItemAttachments(item);
       const key = `inbox_${item.id}`;
       row = {
         id: key,
@@ -59,7 +59,13 @@ export function inboxTimelineRows(
         updated_ms: item.timeCreated ?? 0,
         role: 'user',
         part: { type: 'text', text: inboxItemText(item) },
-        ...(attachments.length ? { attachments } : {}),
+        ...(files.length
+          ? {
+              attachments: files.map((file) => file.uri),
+              attachment_files: files.map(({ name, image }) => ({ name, image })),
+            }
+          : {}),
+        ...(item.image_assets ? { image_assets: item.image_assets } : {}),
         queued: true,
         inbox: { id: item.id, delivery: item.delivery },
       };

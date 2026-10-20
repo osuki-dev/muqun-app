@@ -4,6 +4,8 @@ import Animated from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { DocumentIcon, PhotoFileIcon } from '@/icons';
+import { GatewayImageThumbnail } from '@/components/gateway-image-thumbnail';
+import type { MessageImageAsset } from '@/lib/message-images';
 import { DURATION, fadeIn } from '@/lib/motion';
 import {
   readUploadImageSource,
@@ -19,23 +21,35 @@ export interface ThumbnailEntry {
   /** A device file, a URL, a `data:` URI, or a host path under the upload folder. */
   uri: string;
   image: boolean;
+  /** The Gateway asset that serves it; drawn as a delivered message's image is. */
+  asset?: MessageImageAsset;
 }
 
 const SIZE = 36;
 
 /**
- * Small, display-only thumbnails for a prompt that has left the composer: the
- * inbox card's rows and the acknowledgement of a direct send. Images load the
- * way a transcript attachment does -- a host upload path is read back through
- * `/api/uploads` with the device's credentials -- and anything else is a
- * compact file chip.
+ * Small thumbnails for a prompt that has left the composer: the inbox card's
+ * rows and the acknowledgement of a direct send. An image with a Gateway asset
+ * is the same `GatewayImageThumbnail` a delivered message draws; without one
+ * (an older Gateway, or this device's own picked files) an upload path is read
+ * back through `/api/uploads` and a local or `data:` URI is shown directly.
+ * Anything else is a compact file chip.
  */
 export function AttachmentThumbnailRow({ entries }: { entries: readonly ThumbnailEntry[] }) {
+  const theme = useThemeTokens();
   if (entries.length === 0) return null;
   return (
     <View style={styles.row}>
       {entries.map((entry) =>
-        entry.image ? (
+        entry.asset ? (
+          <GatewayImageThumbnail
+            key={entry.key}
+            asset={entry.asset}
+            label={entry.name}
+            compact
+            style={[styles.tile, { backgroundColor: theme.colors.surfaceRaised }]}
+          />
+        ) : entry.image ? (
           <ThumbnailImage key={entry.key} entry={entry} />
         ) : (
           <FileChip key={entry.key} name={entry.name} />

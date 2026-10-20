@@ -109,11 +109,14 @@ function isImageAttachment(uri: string): boolean {
 const MessageAttachments = memo(function MessageAttachments({
   attachments,
   imageAssets,
+  files,
   onPreviewImage,
   asid,
 }: {
   attachments: readonly string[];
   imageAssets?: readonly MessageImageAsset[];
+  /** A queued row's names and image decisions, index for index; see `inboxItemAttachments`. */
+  files?: readonly { name: string; image: boolean }[];
   asid?: string;
   onPreviewImage: (uri: string) => void;
 }) {
@@ -133,7 +136,8 @@ const MessageAttachments = memo(function MessageAttachments({
               label={t`Open attachment`}
             />
           );
-        if (isImageAttachment(att)) {
+        const file = files?.[attIdx];
+        if (file ? file.image : isImageAttachment(att)) {
           return (
             <UnmappedImageThumbnail
               key={`${att}-${attIdx}`}
@@ -151,8 +155,8 @@ const MessageAttachments = memo(function MessageAttachments({
             </UnmappedImageThumbnail>
           );
         }
-        const fileName = att.split('/').filter(Boolean).pop() || t`Attachment`;
-        if (asid && isPdfFile({ uri: att })) {
+        const fileName = file?.name || att.split('/').filter(Boolean).pop() || t`Attachment`;
+        if (!file && asid && isPdfFile({ uri: att })) {
           return (
             <InlineFileLink
               key={`${att}-${attIdx}`}
@@ -1514,6 +1518,7 @@ export const AgentUserMessage = memo(function AgentUserMessage({
           <MessageAttachments
             attachments={attachments}
             imageAssets={group.items.flatMap((item) => item.image_assets ?? [])}
+            files={queued?.attachment_files}
             onPreviewImage={onPreviewImage}
             asid={actions.audioSessionId}
           />
