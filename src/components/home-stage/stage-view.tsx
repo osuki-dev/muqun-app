@@ -372,9 +372,10 @@ function useStageTargets(
       const front = index === selectedIndex;
       const scale = front ? STAGE_FRONT_SCALE : STAGE_SIDE_SCALE;
       const centre = stageScreenPosition(index, panels.length, ring);
-      // Just above this screen's own top edge, wherever the ring has put it.
+      // On this screen's own top rim, wherever the ring has put it: any higher
+      // and the leader lands on the screen behind it.
       const hint = projectStagePoint(
-        [centre[0], centre[1] + (STAGE_SCREEN_HEIGHT / 2) * scale + 0.25, centre[2]],
+        [centre[0], centre[1] + (STAGE_SCREEN_HEIGHT / 2) * scale, centre[2]],
         camera,
         width,
         height
