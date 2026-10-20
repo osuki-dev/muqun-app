@@ -27,7 +27,7 @@
 import { LegendList } from '@legendapp/list/react-native';
 import { useLingui } from '@lingui/react/macro';
 import { Button, PressableScale, Text, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
-import { useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -73,10 +73,12 @@ import { useThemeGallery } from '@/hooks/use-theme-gallery';
 import { useThemePack } from '@/hooks/use-theme-pack';
 import { AppearanceIcon, DeleteIcon, UploadFileIcon } from '@/icons';
 import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
+import { carryBox, carryForward } from '@/lib/carry-forward';
 import { withAlpha } from '@/lib/color';
 import { fadeIn, fadeInDown, fadeOut, fadeOutDown, STAGGER } from '@/lib/motion';
 import { useRenderTally } from '@/lib/render-tally';
 import { loadThemeTab, saveThemeTab, type ThemeTab } from '@/lib/theme-tab-preference';
+import { chunkCardRows, type CardRow } from '@/lib/theme-grid-rows';
 import { THEME_PICKER_MAX_CONTENT_WIDTH } from '@/lib/theme-picker-layout';
 import { useThemeLibrary } from '@/stores/theme-library';
 import { exportInstalledTheme } from '@/theme/assets';
@@ -107,12 +109,31 @@ type Cell =
   | { kind: 'entry'; entry: ThemeIndexEntry }
   | { kind: 'skeleton'; key: string };
 
-/** One row of the sheet's list. Only card rows have a fixed height. */
+/**
+ * The sticky bar every tab's list starts with: the gallery's search and tags,
+ * or nothing, at no height, on the tabs that have no search.
+ *
+ * Always there, so the list's sticky index never changes. Toggling it handed
+ * the scroll view a different scroll handler on every tab switch and while the
+ * catalogue loaded, and the sticky row's offset stopped following the scroll
+ * while it was off -- coming back to the gallery drew the search over the
+ * cards until the next scroll event.
+ */
+type BarRow =
+  | { kind: 'bar'; key: 'bar:none'; search: null }
+  | { kind: 'bar'; key: 'search'; search: { query: string; tags: readonly string[] } };
+
+/** One row of the sheet's list. Card rows and the empty bar have fixed heights. */
 type Row =
-  | { kind: 'search'; key: 'search' }
-  | { kind: 'cards'; key: string; start: number; cells: Cell[] }
+  | BarRow
+  | CardRow<Cell>
   | { kind: 'mine-empty'; key: 'mine-empty' }
-  | { kind: 'gallery-note'; key: string; note: 'failed' | 'no-match' | 'none' };
+  | { kind: 'gallery-note'; key: string; note: 'failed' | 'no-match' | 'none'; query: string };
+
+const NO_BAR: BarRow = { kind: 'bar', key: 'bar:none', search: null };
+const MINE_EMPTY: Row = { kind: 'mine-empty', key: 'mine-empty' };
+/** The bar is the list's first row in every tab. */
+const STICKY_BAR = [0];
 
 type CardMenu = { title: string; actions: readonly ThemeCardAction[] };
 
@@ -139,14 +160,24 @@ function cellKey(cell: Cell): string {
   }
 }
 
-/** Cells into rows of `columns`, each row keyed by its first cell. */
-function chunk(cells: readonly Cell[], columns: number): Row[] {
-  const rows: Row[] = [];
-  for (let start = 0; start < cells.length; start += columns) {
-    const slice = cells.slice(start, start + columns);
-    rows.push({ kind: 'cards', key: cellKey(slice[0]!), start, cells: slice });
+/** Whether two cells draw the same theme: the cell objects are rebuilt every render. */
+function sameCell(a: Cell, b: Cell): boolean {
+  switch (a.kind) {
+    case 'installed':
+      return b.kind === 'installed' && a.theme === b.theme;
+    case 'pack':
+      return b.kind === 'pack' && a.pack === b.pack;
+    case 'entry':
+      return b.kind === 'entry' && a.entry === b.entry;
+    case 'skeleton':
+      return b.kind === 'skeleton' && a.key === b.key;
+    case 'import':
+      // Its state (open, busy) reaches it through the list's `extraData`.
+      return b.kind === 'import';
+    case 'default':
+      // Drawn from the library's default theme, which the cell does not carry.
+      return false;
   }
-  return rows;
 }
 
 function keyOfRow(row: Row): string {
@@ -176,7 +207,6 @@ export function SettingsThemeSheet({
   const window = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const fullscreen = useSheetIsFullscreen();
-  const surfaceOpacity = useSurfaceBackgroundOpacity();
 
   const themes = useThemeLibrary((state) => state.library.themes);
   const selection = useThemeLibrary((state) => state.library.selection);
@@ -367,59 +397,66 @@ export function SettingsThemeSheet({
   const installedByManifest = new Map(themes.map((theme) => [theme.manifest.id, theme]));
 
   // ---- The rows of the tab on screen ----
-  const rows: Row[] = [];
-  if (tab === 'mine') {
-    rows.push(
-      ...chunk(
-        [
-          ...themes.map((theme): Cell => ({ kind: 'installed', theme })),
-          { kind: 'import' } as const,
-        ],
-        layout.columns
-      )
-    );
-    if (themes.length === 0) rows.push({ kind: 'mine-empty', key: 'mine-empty' });
-  } else if (tab === 'builtin') {
-    rows.push(
-      ...chunk(
-        [
-          ...(defaultTheme ? [{ kind: 'default' } as const] : []),
-          ...THEME_PACKS.map((pack): Cell => ({ kind: 'pack', pack })),
-        ],
-        layout.columns
-      )
-    );
-  } else {
-    const loading = gallery.entries === null && !gallery.failed;
-    if (gallery.entries && gallery.entries.length > 0) rows.push({ kind: 'search', key: 'search' });
-    if (loading)
-      rows.push(
-        ...chunk(
-          Array.from({ length: SKELETON_ROWS * layout.columns }, (_, index): Cell => ({
-            kind: 'skeleton',
-            key: String(index),
-          })),
-          layout.columns
-        )
-      );
-    else {
-      rows.push(
-        ...chunk(
-          gallery.visible.map((entry): Cell => ({ kind: 'entry', entry })),
-          layout.columns
-        )
-      );
-      if (gallery.failed)
-        rows.push({ kind: 'gallery-note', key: 'gallery-failed', note: 'failed' });
-      else if (gallery.visible.length === 0)
-        rows.push({
-          kind: 'gallery-note',
-          key: 'gallery-empty',
-          note: gallery.needle ? 'no-match' : 'none',
-        });
-    }
-  }
-  const searchSticky = rows[0]?.kind === 'search';
+  const galleryLoading = gallery.entries === null && !gallery.failed;
+  const cells = useMemo((): Cell[] => {
+    if (tab === 'mine')
+      return [...themes.map((theme): Cell => ({ kind: 'installed', theme })), { kind: 'import' }];
+    if (tab === 'builtin')
+      return [
+        ...(defaultTheme ? [{ kind: 'default' } as const] : []),
+        ...THEME_PACKS.map((pack): Cell => ({ kind: 'pack', pack })),
+      ];
+    if (galleryLoading)
+      return Array.from({ length: SKELETON_ROWS * layout.columns }, (_, index): Cell => ({
+        kind: 'skeleton',
+        key: String(index),
+      }));
+    return gallery.visible.map((entry): Cell => ({ kind: 'entry', entry }));
+  }, [tab, themes, defaultTheme, galleryLoading, gallery.visible, layout.columns]);
+  // Carried from the last build so a row whose cards did not change keeps its
+  // identity, and the list leaves it alone; see `chunkCardRows`.
+  const [previousCardRows] = useState(() => carryBox<CardRow<Cell>[]>([]));
+  const cardRows = useMemo(
+    () =>
+      carryForward(previousCardRows, (previous) =>
+        chunkCardRows(cells, layout.columns, layout.itemHeight, cellKey, sameCell, previous)
+      ),
+    [cells, layout.columns, layout.itemHeight, previousCardRows]
+  );
+  const hasSearch = tab === 'gallery' && (gallery.entries?.length ?? 0) > 0;
+  const bar = useMemo(
+    (): BarRow =>
+      hasSearch
+        ? { kind: 'bar', key: 'search', search: { query: gallery.query, tags: gallery.tags } }
+        : NO_BAR,
+    [hasSearch, gallery.query, gallery.tags]
+  );
+  const galleryNote =
+    tab !== 'gallery' || galleryLoading
+      ? null
+      : gallery.failed
+        ? 'failed'
+        : gallery.visible.length === 0
+          ? gallery.needle
+            ? 'no-match'
+            : 'none'
+          : null;
+  const noteQuery = galleryNote === 'no-match' ? gallery.query : '';
+  const note = useMemo(
+    (): Row | null =>
+      galleryNote
+        ? {
+            kind: 'gallery-note',
+            key: galleryNote === 'failed' ? 'gallery-failed' : 'gallery-empty',
+            note: galleryNote,
+            query: noteQuery,
+          }
+        : null,
+    [galleryNote, noteQuery]
+  );
+  const rows: Row[] = [bar, ...cardRows];
+  if (tab === 'mine' && themes.length === 0) rows.push(MINE_EMPTY);
+  if (note) rows.push(note);
 
   /**
    * Everything a row draws that is not its own cells, as one string the list
@@ -440,7 +477,6 @@ export function SettingsThemeSheet({
       ? `${gallery.progress.completed}/${gallery.progress.total}`
       : '',
     gallery.brokenCount,
-    gallery.query,
     themes.map((theme) => `${theme.id}:${theme.manifest.version}`).join(','),
     layout.itemHeight,
   ].join('|');
@@ -575,15 +611,13 @@ export function SettingsThemeSheet({
 
   function renderRow(row: Row) {
     switch (row.kind) {
-      case 'search':
+      case 'bar':
+        if (!row.search) return null;
+        // Opaque, edge to edge: the cards scroll under the bar, never show
+        // through it. The frost's alpha let the reader's opacity thin it until
+        // the captions of the cards beneath read between the chips.
         return (
-          <View
-            style={{
-              backgroundColor: surfaceBackgroundFill(
-                colors.surface,
-                sheetFrostAlpha(surfaceOpacity)
-              ),
-            }}>
+          <View style={{ backgroundColor: withAlpha(colors.surface, 1) }}>
             <View style={column}>
               <GallerySearch gallery={gallery} />
             </View>
@@ -747,9 +781,15 @@ export function SettingsThemeSheet({
           // Never: a card owns a picture, and recycling would hand one
           // theme's picture to another for a frame.
           recycleItems={false}
-          getFixedItemSize={(row: Row) => (row.kind === 'cards' ? layout.itemHeight : undefined)}
+          getFixedItemSize={(row: Row) =>
+            row.kind === 'cards'
+              ? layout.itemHeight
+              : row.kind === 'bar' && !row.search
+                ? 0
+                : undefined
+          }
           estimatedItemSize={layout.itemHeight}
-          stickyHeaderIndices={searchSticky ? [0] : undefined}
+          stickyHeaderIndices={STICKY_BAR}
           onEndReached={tab === 'gallery' ? gallery.appendPage : undefined}
           onEndReachedThreshold={0.5}
           renderItem={({ item }: { item: Row }) => renderRow(item)}

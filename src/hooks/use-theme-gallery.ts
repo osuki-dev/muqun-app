@@ -44,6 +44,8 @@ import { collectPopularThemeTags, filterThemeEntries } from '@/theme/theme-searc
 /** Reveal a bounded page near the end; the catalogue index is already cached. */
 const THEME_GALLERY_PAGE = 24;
 
+const NO_ENTRIES: readonly ThemeIndexEntry[] = [];
+
 /**
  * How long the pressed state stays up, however fast the work behind it was.
  *
@@ -95,13 +97,26 @@ export function useThemeGallery({
   const [appending, setAppending] = useState(false);
   const appendInFlight = useRef(false);
 
-  // A new search starts from its first page.
-  useEffect(() => {
+  // A new search starts from its first page, in the same render that shows its
+  // results. Resetting in an effect let one commit slice the new results with
+  // the old page size and the next one cut them back, so every search and tag
+  // switch laid the grid out twice.
+  const pageScope = `${needle}\n${filtered?.length ?? -1}`;
+  const [scope, setScope] = useState(pageScope);
+  if (scope !== pageScope) {
+    setScope(pageScope);
     setShown(Math.min(THEME_GALLERY_PAGE, filtered?.length ?? THEME_GALLERY_PAGE));
     setPageStart(0);
-    appendInFlight.current = false;
     setAppending(false);
-  }, [needle, filtered?.length]);
+  }
+  useEffect(() => {
+    appendInFlight.current = false;
+  }, [pageScope]);
+  // One array per page, so the sheet's rows keep their identity between renders.
+  const visible = useMemo(
+    () => (filtered ? filtered.slice(0, shown) : NO_ENTRIES),
+    [filtered, shown]
+  );
 
   // Which entry is downloading. An entry, not a boolean: the progress belongs
   // on the card it is for, and a second press elsewhere must not look like it
@@ -266,7 +281,7 @@ export function useThemeGallery({
     setQuery,
     tags,
     filtered,
-    visible: filtered ? filtered.slice(0, shown) : [],
+    visible,
     shown,
     total,
     pageStart,
