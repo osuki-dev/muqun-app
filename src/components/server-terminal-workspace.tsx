@@ -337,7 +337,13 @@ import {
   type TerminalBackendState,
 } from '@/lib/terminal-backend-state';
 import { terminalBackendCopy } from '@/lib/terminal-backend-copy';
-import { initialSelection, reconcileSelection, type Selection } from '@/lib/workspace-selection';
+import {
+  followLanding,
+  initialSelection,
+  reconcileSelection,
+  type HeldTarget,
+  type Selection,
+} from '@/lib/workspace-selection';
 import { useAppActive } from '@/hooks/use-app-active';
 import { useServerAgents } from '@/stores/server-agents';
 import { useHomeRecentsStore } from '@/stores/home-recents';
@@ -440,14 +446,7 @@ type ConnectionStatus = {
 
 type RefreshResult = { ok: true; data: ServerData } | { ok: false; failure: GatewayFailure } | null;
 
-type StrictHomeTarget = {
-  serverId: string;
-  sessionId?: string;
-  workspaceId?: string;
-  tabId?: string;
-  paneId?: string;
-  afterGeneration: number;
-};
+type StrictHomeTarget = HeldTarget;
 
 type MissingHomeTarget = Extract<
   HomeTargetAvailability,
@@ -1202,7 +1201,9 @@ export function ServerTerminalWorkspace({
   const [selection, publishSelection] = useState<Selection>(initialSelection);
   const setSelection = useCallback(
     (next: Selection | ((current: Selection) => Selection)) => {
-      publishSelection(selectionOwner.update(next));
+      const resolved = selectionOwner.update(next);
+      publishSelection(resolved);
+      return resolved;
     },
     [selectionOwner]
   );
@@ -4403,6 +4404,22 @@ export function ServerTerminalWorkspace({
     tabPaneMemoryRef.current = rememberTabPane(tabPaneMemoryRef.current, selection);
   }, [selection]);
 
+  // A hand-made switch moves the screen's held target with it (see
+  // `followLanding`). The generation is read when the switch lands, not during
+  // render, so the target is checked against the snapshot already on screen.
+  const followSwitch = useCallback(
+    (landed: Selection) => {
+      const landing = {
+        serverId,
+        sessionId: data.sessionId,
+        selection: landed,
+        generation: snapshotGenerationRef.current,
+      };
+      setStrictTarget((held) => followLanding(held, landing));
+    },
+    [data.sessionId, serverId, setStrictTarget]
+  );
+
   /**
    * A swipe on the title has landed on a workspace.
    *
@@ -4415,9 +4432,13 @@ export function ServerTerminalWorkspace({
    * burst of swipes into one landing, and by then this screen's selection is a
    * step or more behind the finger. Applied through the updater form for the
    * same reason -- `selection` in this closure is whatever the last render saw.
+   *
+   * The held target follows the landing: a screen opened on a pane from Home
+   * holds that pane, and the next snapshot would otherwise put the selection
+   * straight back on it.
    */
   function selectWorkspace(nextWorkspaceId: string) {
-    setSelection((current) => {
+    const landed = setSelection((current) => {
       if (current.workspaceId === nextWorkspaceId) return current;
       if (!data.workspaces.some((item) => item.id === nextWorkspaceId)) return current;
       workspaceMemoryRef.current = rememberWorkspaceSelection(workspaceMemoryRef.current, current);
@@ -4425,6 +4446,7 @@ export function ServerTerminalWorkspace({
       const next = reconcileSelection(data, candidate);
       return sameSelection(current, next) ? current : next;
     });
+    followSwitch(landed);
     setError(null);
   }
 
@@ -4442,7 +4464,7 @@ export function ServerTerminalWorkspace({
    */
   const selectTab = useCallback(
     (target: TabCycleTarget, direction: TabCycleDirection) => {
-      setSelection((current) => {
+      const landed = setSelection((current) => {
         if (current.tabId === target.tabId) return current;
         if (!data.tabs.some((item) => item.id === target.tabId)) return current;
         tabPaneMemoryRef.current = rememberTabPane(tabPaneMemoryRef.current, current);
@@ -4454,9 +4476,10 @@ export function ServerTerminalWorkspace({
         if (sameSelection(current, next)) return current;
         return next;
       });
+      followSwitch(landed);
       setError(null);
     },
-    [data, setSelection]
+    [data, followSwitch, setSelection]
   );
 
   /**
