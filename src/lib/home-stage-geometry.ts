@@ -33,8 +33,16 @@ export const STAGE_DRAG_SPAN = 390 / 220;
 const YAW_MAX = (5 * Math.PI) / 180;
 const PITCH_MAX = (3.5 * Math.PI) / 180;
 const CAMERA_TARGET: StageVec3 = [0, -0.2, -20];
-/** Where the selected pane's centre sits on screen, in NDC. */
-const PANE_ANCHOR_NDC = [0, -0.3] as const;
+/**
+ * Where the selected pane's centre sits on screen, in NDC: 55% of the way
+ * down, so the pane and its reflection clear the session strip above the
+ * composer by about 24-32 pt on a 20:9 phone.
+ */
+const PANE_ANCHOR_NDC = [0, -0.1] as const;
+/** The selected pane's width as a share of the view's width... */
+const PANE_WIDTH_SHARE = 0.72;
+/** ...and at most this share of its height, so a wide view (a tablet held sideways) keeps the phone's proportions. */
+const PANE_HEIGHT_SHARE = 0.52;
 const PANE_SIDE_TURN = (48 * Math.PI) / 180;
 /** How close a dive brings the camera: the front pane just fills the view's width. */
 const DIVE_STANDOFF = STAGE_PANE_DEPTH * 0.72 * 0.95;
@@ -199,7 +207,7 @@ export function stageRayPoint(
   return [px + dx * scale, py + dy * scale, pz + dz * scale];
 }
 
-/** Where the selected pane's centre sits: below the screen's middle, between hero and HUD. */
+/** Where the selected pane's centre sits: just below the screen's middle, between hero and HUD. */
 export function stagePaneAnchor(camera: StageCamera, aspect: number): StageVec3 {
   return stageRayPoint(camera, PANE_ANCHOR_NDC, STAGE_PANE_DEPTH, aspect);
 }
@@ -222,19 +230,21 @@ export type StagePane = {
 
 /**
  * The cover-flow: the pane `offset` places from the (fractional) selection.
- * The selected pane faces the camera at 0.72 of the view's width; a neighbour
- * stands 0.66 of the width aside, 2.2 units further back, turned 48 degrees
- * inwards at 0.62 of the width. Everything in between is interpolated, so a
- * drag moves the panes continuously.
+ * The selected pane faces the camera at 0.72 of the view's width (at most
+ * 0.52 of its height); a neighbour stands 0.66 of the width aside, 2.2 units
+ * further back, turned 48 degrees inwards at 0.62 of the width (the same
+ * ratios of the selected pane when the height bounds it). Everything in
+ * between is interpolated, so a drag moves the panes continuously.
  */
 export function stagePane(offset: number, anchor: StageVec3, aspect: number): StagePane {
-  const viewWidth = stageViewSize(STAGE_PANE_DEPTH, aspect).width;
+  const view = stageViewSize(STAGE_PANE_DEPTH, aspect);
+  const unit = Math.min(view.width, (view.height * PANE_HEIGHT_SHARE) / PANE_WIDTH_SHARE);
   const side = Math.min(Math.abs(offset), 1);
-  const width = viewWidth * (0.72 - 0.1 * side);
+  const width = unit * (PANE_WIDTH_SHARE - 0.1 * side);
   const height = width * STAGE_PANE_RATIO;
   return {
     position: [
-      anchor[0] + offset * viewWidth * 0.66,
+      anchor[0] + offset * unit * 0.66,
       anchor[1] + height * 0.06 * side,
       anchor[2] - 2.2 * side,
     ],
@@ -250,14 +260,14 @@ export type StageHero = { position: StageVec3; width: number; height: number };
 /**
  * The cut-out hero for art of `artAspect` (width / height): half the view's
  * height at most, never wider than 0.92 of it, standing right of centre and
- * a little high so the panes sit below its waist.
+ * high enough that the raised panes still sit below its waist.
  */
 export function stageHero(artAspect: number, aspect: number): StageHero {
   const ratio = Number.isFinite(artAspect) && artAspect > 0 ? artAspect : 1;
   const view = stageViewSize(STAGE_HERO_DEPTH, aspect);
   const height = Math.min(view.height * 0.5, (view.width * 0.92) / ratio);
   return {
-    position: [view.width * 0.12, view.height * 0.06, -STAGE_HERO_DEPTH],
+    position: [view.width * 0.12, view.height * 0.08, -STAGE_HERO_DEPTH],
     width: height * ratio,
     height,
   };
