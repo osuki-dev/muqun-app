@@ -2990,7 +2990,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       // queue and will correct this if the engine had already delivered it.
       setInbox((prev) => prev.filter((item) => item.id !== inboxId));
       cancelAgentInboxItem(activeAsid, inboxId).catch((err) => {
-        console.warn('Failed to cancel queued item:', err);
+        // Already delivered or gone: the refetched queue is the answer.
+        if (agentRequestErrorDetail(err).code !== 'inbox_item_not_found')
+          console.warn('Failed to cancel queued item:', err);
         void refreshInbox();
       });
     },
@@ -3011,8 +3013,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       setInbox((prev) => prev.map((item) => (item.id === inboxId ? { ...item, delivery } : item)));
       setAgentInboxDelivery(activeAsid, inboxId, delivery).catch((err) => {
-        console.warn('Failed to change delivery:', err);
         void refreshInbox();
+        // An item that was delivered or cancelled meanwhile is not a failure
+        // to report: the refetched queue shows where it went.
+        if (agentRequestErrorDetail(err).code === 'inbox_item_not_found') return;
+        console.warn('Failed to change delivery:', err);
         showScreenNotice(t`Could not change delivery`, agentErrorRef.current(err));
       });
     },

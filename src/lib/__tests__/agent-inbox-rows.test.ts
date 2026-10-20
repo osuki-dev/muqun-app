@@ -9,6 +9,52 @@ const inbox = (id: string, payload: unknown, delivery = 'queue', type = 'user') 
   parseInboxItem({ id, sessionID: 'ses', type, payload, delivery })!;
 
 describe('inboxItemAttachments', () => {
+  test('a newer Gateway resolves files like a transcript row; the rest are named chips', () => {
+    const original = '/api/agent-images/ai_0a/original';
+    const item = parseInboxItem({
+      id: 'inbox_1',
+      sessionID: 'thr',
+      type: 'user',
+      delivery: 'queue',
+      payload: {
+        text: 'Look at this',
+        files: [
+          { uri: `file://${UPLOAD}`, name: 'x.png', mime: 'image/png' },
+          { uri: 'file:///home/me/.local/share/muqun-gateway/uploads/y.png', name: 'y.png' },
+        ],
+      },
+      attachments: [original, 'file:///home/me/.local/share/muqun-gateway/uploads/y.png'],
+      image_assets: [
+        {
+          src: original,
+          asset_id: 'ai_0a',
+          url: original,
+          mime: 'image/png',
+          thumbnail_url: '/api/agent-images/ai_0a/thumbnail',
+        },
+      ],
+    })!;
+    expect(item.attachments).toHaveLength(2);
+    expect(item.image_assets?.[0].thumbnail_url).toBe('/api/agent-images/ai_0a/thumbnail');
+    const files = inboxItemAttachments(item);
+    expect(files.map(({ uri, name, image }) => ({ uri, name, image }))).toEqual([
+      { uri: original, name: 'x.png', image: true },
+      {
+        uri: 'file:///home/me/.local/share/muqun-gateway/uploads/y.png',
+        name: 'y.png',
+        image: false,
+      },
+    ]);
+    expect(files[0].asset?.asset_id).toBe('ai_0a');
+    const [row] = inboxTimelineRows([item], []);
+    expect(row.attachments).toEqual(item.attachments!);
+    expect(row.image_assets).toBe(item.image_assets!);
+    expect(row.attachment_files).toEqual([
+      { name: 'x.png', image: true },
+      { name: 'y.png', image: false },
+    ]);
+  });
+
   test('reads OpenCode stored files: upload path first, inline image bytes as fallback', () => {
     const item = inbox('msg_1', {
       text: 'look',
