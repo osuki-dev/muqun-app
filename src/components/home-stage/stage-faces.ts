@@ -12,6 +12,7 @@ import type { Texture } from 'three/webgpu';
 
 import { agentStatusWord } from '@/i18n/labels';
 import { stageReadableInk } from '@/lib/home-stage-ink';
+import { useFrozenValue } from '@/hooks/use-frozen-value';
 import type { StagePanel } from '@/lib/home-stage-panels';
 import { STAGE_FACE_COLUMNS, STAGE_FACE_ROWS, stageTextureFromPixels } from './stage-scene';
 
@@ -83,8 +84,6 @@ function paintAtlas(faces: readonly Face[]): Texture | null {
   try {
     const canvas = surface.getCanvas();
     canvas.clear(Skia.Color('transparent'));
-    const scan = Skia.Paint();
-    scan.setColor(Skia.Color('rgba(255,255,255,0.035)'));
     const dot = Skia.Paint();
     faces.forEach((face, slot) => {
       const x = (slot % STAGE_FACE_COLUMNS) * CELL_WIDTH;
@@ -106,8 +105,6 @@ function paintAtlas(faces: readonly Face[]): Texture | null {
           mono: true,
         });
       });
-      for (let row = 0; row < CELL_HEIGHT; row += 4)
-        canvas.drawRect(Skia.XYWHRect(x, y + row, CELL_WIDTH, 1), scan);
       canvas.restore();
     });
     surface.flush();
@@ -138,7 +135,8 @@ function paintAtlas(faces: readonly Face[]): Texture | null {
 export function useStageFaces(
   panels: readonly StagePanel[],
   drawn: readonly number[],
-  colors: StageFaceColors
+  colors: StageFaceColors,
+  paused = false
 ): { atlas: Texture | null; slots: ReadonlyMap<string, number> } {
   const { _ } = useLinguiRuntime();
   const faces: Face[] = drawn.flatMap((index) => {
@@ -180,7 +178,7 @@ export function useStageFaces(
       },
     ];
   });
-  const signature = JSON.stringify(faces);
+  const signature = useFrozenValue(JSON.stringify(faces), paused, null);
   const [atlas, setAtlas] = useState<{ signature: string; texture: Texture | null } | null>(null);
   useEffect(() => {
     let texture: Texture | null = null;

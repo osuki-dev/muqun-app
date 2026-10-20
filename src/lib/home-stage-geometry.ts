@@ -8,16 +8,16 @@
 
 export type StageVec3 = readonly [number, number, number];
 
-export const STAGE_RING_RADIUS = 3.4;
-export const STAGE_SCREEN_Y = 0.95;
+export const STAGE_RING_RADIUS = 2.65;
+export const STAGE_SCREEN_Y = 1.35;
 /** The ring turns this far past "straight ahead", so the chosen screen stands front right. */
-export const STAGE_FRONT_OFFSET = 0.42;
+export const STAGE_FRONT_OFFSET = 0.27;
 /** Screens drawn at once; with more computers the ones nearest the front are drawn. */
 export const STAGE_MAX_SCREENS = 8;
 export const STAGE_SCREEN_WIDTH = 1.9;
 export const STAGE_SCREEN_HEIGHT = 1.2;
-export const STAGE_FRONT_SCALE = 0.92;
-export const STAGE_SIDE_SCALE = 0.74;
+export const STAGE_FRONT_SCALE = 0.82;
+export const STAGE_SIDE_SCALE = 0.68;
 
 export const STAGE_PEDESTAL: StageVec3 = [-0.25, 0, -0.35];
 /** Where the beam leaves the host. */
@@ -116,7 +116,7 @@ export type StageCamera = {
 
 export const STAGE_CAMERA_FOV = 42;
 const CAMERA_POSITION: StageVec3 = [0.6, 3, 11];
-const CAMERA_TARGET: StageVec3 = [0.55, 1.3, 0];
+const CAMERA_TARGET: StageVec3 = [0.35, 1.05, 0];
 /** How far the camera stops in front of a screen it dives to. */
 const DIVE_STANDOFF = 1.55;
 
@@ -146,8 +146,8 @@ export function stageCamera({
   const y = clamp(lookY, -1, 1) * 0.5;
   const back = Math.max(1, 390 / 844 / Math.max(0.2, aspect)) ** 0.5;
   const stage: StageVec3 = [
-    CAMERA_POSITION[0] + x * 2.6,
-    CAMERA_POSITION[1] - y * 1.4,
+    CAMERA_POSITION[0] + x * 0.6,
+    CAMERA_POSITION[1] - y * 0.6,
     CAMERA_POSITION[2] * back,
   ];
   const t = clamp(dive, 0, 1);

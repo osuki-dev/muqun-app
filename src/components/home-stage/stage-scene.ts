@@ -1,29 +1,13 @@
+import { createStageAmbient } from './stage-ambient';
+import type { ThemeEffects } from '@/theme/schema';
 /**
- * The Stage's world (design §13), built imperatively and handed to
- * react-three-fiber as one `<primitive>`: the theme's character on a glowing
- * pedestal at the centre, a glass screen per computer on a ring around her,
- * a glossy floor with a grid in the theme colour, the wallpaper as the far
- * sky, all lit by an environment painted from the palette.
- *
- * It is a port of the WebGL sketch to `three/webgpu` node materials, folded
- * into six draw calls (§11.7: <= 6 draws, <= 8k triangles):
- *   1. sky       -- gradient dome with the wallpaper mapped onto its far arc
- *   2. floor     -- glossy metal disc with the additive grid as its emission
- *   3. pedestal  -- metal cylinders and the glowing torus, one merged mesh
- *   4. host      -- the `home.artwork` cutout (or the crystal), Y-billboard
- *   5. screens   -- glass slab + face + edge + stem for every computer, one
- *                   instanced physical draw; faces come from one atlas
- *   6. light fx  -- glows, floor status rings, the beam and its head, and the
- *                   sparks: one instanced additive draw, no post-processing
- * Triangles: sky ~580, floor 64, pedestal ~1.3k, host 2-8, screens ~360 x <= 8,
- * fx 2 x <= 260: about 5.4k at the most.
- *
- * Where the sketch used something the WebGPU renderer handles differently,
- * the closest node equivalent is used: ShaderMaterials became TSL node
- * materials, Sprites became camera-facing instanced quads, Points became
- * instanced quads (WebGPU points are one pixel), and the PMREM environment is
- * the renderer's own (`scene.environment` is prefiltered by its PMREM node).
+ * Theme-aware Stage world. Cutout art stands on a thin satin plinth; complete
+ * illustrations become the environment. Floating computer screens use one
+ * atlas and one instanced draw. Soft ground contact and restrained practical
+ * lights give depth without real-time shadow maps or post-processing.
+ * At most seven scene draws, including the optional instanced atmosphere.
  */
+
 import {
   ACESFilmicToneMapping,
   AdditiveBlending,
@@ -112,11 +96,11 @@ const {
   vec4,
 } = TSL;
 
-export const STAGE_DRAW_CALLS = 6;
+export const STAGE_DRAW_CALLS = 7;
 /** Faces in the atlas: two columns of `STAGE_MAX_SCREENS / 2` rows. */
 export const STAGE_FACE_COLUMNS = 2;
 export const STAGE_FACE_ROWS = STAGE_MAX_SCREENS / STAGE_FACE_COLUMNS;
-const SPARK_COUNT = 220;
+const SPARK_COUNT = 32;
 /** Per screen: glow, ring; plus pedestal glow, host glow, beam, beam head. */
 const FX_CAPACITY = STAGE_MAX_SCREENS * 2 + 4 + SPARK_COUNT;
 
@@ -128,6 +112,7 @@ export type StageSceneColors = {
   success: string;
   warning: string;
   muted: string;
+  info: string;
 };
 
 export type StageTheme = {
@@ -138,6 +123,7 @@ export type StageTheme = {
 export type StageTextureSource = {
   texture: Texture;
   aspect: number;
+  kind?: 'cutout' | 'scene';
   /** The theme's focal point, 0..1 from the top-left; centre when absent. */
   focal?: { x: number; y: number };
 };
@@ -184,6 +170,13 @@ export type StageSceneHandle = {
   setBackdrop: (source: StageTextureSource | null) => void;
   setCharacter: (source: StageTextureSource | null) => void;
   setFaces: (atlas: Texture | null) => void;
+  setAmbient: (
+    effects: ThemeEffects | undefined,
+    colors: StageSceneColors,
+    calm: boolean,
+    particles: boolean
+  ) => void;
+  ambientAnimated: () => boolean;
   update: (frame: StageFrameInput) => void;
   dispose: () => void;
 };
@@ -351,6 +344,8 @@ export function createStageScene(): StageSceneHandle {
   const uSkyScale = uniform(new Vector2(1, 1));
   const uSkyOffset = uniform(new Vector2(0, 0));
   const uHasSky = uniform(0);
+  const uSceneArt = uniform(0);
+  const uSceneScale = uniform(new Vector2(1, 1));
   const skyDirection = positionWorld.normalize();
   const height = skyDirection.y;
   const dome = mix(uHorizon, uTop, smoothstep(-0.02, 0.5, height)).add(
@@ -365,15 +360,27 @@ export function createStageScene(): StageSceneHandle {
   const skyWindow = vec2(float(0.5).sub(theta.div(SKY_ARC)), cylinderY.add(4).div(26));
   const skyUv = skyWindow.sub(0.5).mul(uSkyScale).add(0.5).add(uSkyOffset);
   const skySample = texture(blank, vec2(skyUv.x, float(1).sub(skyUv.y)));
+  // Complete illustrations fill the view as an environment, rather than being
+  // alpha-tested onto the character's pedestal. UV crop follows the viewport.
+  const scenicUv = TSL.screenUV.sub(0.5).mul(uSceneScale).add(0.5);
+  const scenicSample = texture(blank, scenicUv);
   const inWindow = smoothstep(0, 0.12, skyWindow.x)
     .mul(smoothstep(1, 0.88, skyWindow.x))
     .mul(smoothstep(0, 0.1, skyWindow.y))
     .mul(smoothstep(1, 0.92, skyWindow.y));
   const skyMaterial = new MeshBasicNodeMaterial({ side: BackSide, depthWrite: false, fog: false });
-  skyMaterial.colorNode = mix(
+  const wallpaperColor = mix(
     dome,
-    skySample.rgb.mul(1.4),
-    inWindow.mul(skySample.a).mul(0.5).mul(uHasSky)
+    skySample.rgb,
+    inWindow
+      .mul(skySample.a)
+      .mul(mix(float(0.65), float(1), uSceneArt))
+      .mul(uHasSky)
+  );
+  skyMaterial.colorNode = mix(
+    wallpaperColor,
+    mix(dome, scenicSample.rgb, scenicSample.a),
+    uSceneArt
   );
   skyMaterial.toneMapped = false;
   const sky = new Mesh(new SphereGeometry(90, 24, 12), skyMaterial);
@@ -392,46 +399,36 @@ export function createStageScene(): StageSceneHandle {
     );
   };
 
-  // -- 2. Floor and grid --------------------------------------------------------
-  const floorMaterial = new MeshStandardNodeMaterial({ roughness: 0.55, metalness: 0.7 });
-  floorMaterial.envMapIntensity = 0.6;
-  const gridPoint = vec2(positionWorld.x, positionWorld.z).mul(0.8);
-  const gridLines = max(
-    smoothstep(0.47, 0.5, abs(fract(gridPoint.x).sub(0.5))),
-    smoothstep(0.47, 0.5, abs(fract(gridPoint.y).sub(0.5)))
-  );
+  // -- 2. A soft pool of ground colour, fading into the theme's sky ---------
+  // No opaque horizon or full-screen grid: both cut the wallpaper in half.
+  const uFloor = uniform(new Color('#24202a'));
+  const uDay = uniform(0);
   const fromPedestal = length(
     vec2(positionWorld.x.sub(STAGE_PEDESTAL[0]), positionWorld.z.sub(STAGE_PEDESTAL[2]))
   );
-  const gridFade = smoothstep(18, 2.5, fromPedestal).mul(smoothstep(1.4, 2.6, fromPedestal));
-  const gridWave = sin(uTime.mul(0.9).sub(fromPedestal.mul(0.9)))
-    .mul(0.5)
-    .add(0.5)
-    .mul(0.45)
-    .add(0.55);
-  // Night: the grid glows (additive emission). Day: light cannot add to a
-  // bright floor, so the lines are inked into its colour instead.
-  const uFloor = uniform(new Color('#0b0f12'));
-  const uDay = uniform(0);
-  // By day a mirror-like floor would only reflect the pale sky: less metal, more matte.
-  floorMaterial.metalnessNode = mix(float(0.7), float(0.2), uDay);
-  floorMaterial.roughnessNode = mix(float(0.55), float(0.8), uDay);
-  const grid = gridLines.mul(gridFade).mul(gridWave);
-  floorMaterial.colorNode = mix(uFloor, uPrimary, grid.mul(uDay).mul(0.7));
-  floorMaterial.emissiveNode = uPrimary
-    .mul(grid)
-    .mul(0.55)
-    .mul(float(1).sub(uDay.mul(0.7)));
-  const floor = new Mesh(new CircleGeometry(30, 64), floorMaterial);
+  const floorMaterial = new MeshBasicNodeMaterial({
+    transparent: true,
+    depthWrite: false,
+    fog: false,
+  });
+  const contact = exp(fromPedestal.mul(fromPedestal).mul(-2.5)).mul(0.45);
+  floorMaterial.colorNode = mix(uFloor, uHorizon, smoothstep(1, 12, fromPedestal)).mul(
+    float(1).sub(contact)
+  );
+  floorMaterial.opacityNode = float(1)
+    .sub(smoothstep(2, 18, fromPedestal))
+    .mul(0.72);
+  const floor = new Mesh(new CircleGeometry(20, 64), floorMaterial);
   floor.rotation.x = -Math.PI / 2;
+  floor.renderOrder = -1;
   root.add(floor);
 
   // -- 3. Pedestal --------------------------------------------------------------
-  const base = new CylinderGeometry(1.05, 1.18, 0.2, 48);
-  base.translate(0, 0.11, 0);
-  const top = new CylinderGeometry(0.92, 0.98, 0.08, 48);
-  top.translate(0, 0.26, 0);
-  const torus = new TorusGeometry(1, 0.02, 8, 72);
+  const base = new CylinderGeometry(1.08, 1.12, 0.06, 48);
+  base.translate(0, 0.185, 0);
+  const top = new CylinderGeometry(1.04, 1.08, 0.025, 48);
+  top.translate(0, 0.225, 0);
+  const torus = new TorusGeometry(1.08, 0.006, 6, 64);
   torus.rotateX(Math.PI / 2);
   torus.translate(0, 0.24, 0);
   const pedestalGeometry = mergeParts(
@@ -443,12 +440,12 @@ export function createStageScene(): StageSceneHandle {
     'aGlow'
   );
   const glowPart = attribute('aGlow', 'float');
-  const metalMaterial = new MeshStandardNodeMaterial({ roughness: 0.28, metalness: 1 });
-  metalMaterial.emissiveNode = uPrimary.mul(glowPart).mul(2.2);
+  const metalMaterial = new MeshStandardNodeMaterial({ roughness: 0.85, metalness: 0.08 });
+  metalMaterial.emissiveNode = uPrimary.mul(glowPart).mul(0.45);
   const pedestal = new Group();
   pedestal.position.set(STAGE_PEDESTAL[0], STAGE_PEDESTAL[1], STAGE_PEDESTAL[2]);
   pedestal.add(new Mesh(pedestalGeometry, metalMaterial));
-  const rim = new PointLight(0xffffff, 1.4, 6);
+  const rim = new PointLight(0xffffff, 0.4, 6);
   rim.position.set(0, 2.6, -1.6);
   pedestal.add(rim);
   root.add(pedestal);
@@ -489,21 +486,13 @@ export function createStageScene(): StageSceneHandle {
   const slab = new ExtrudeGeometry(roundedShape(STAGE_SCREEN_WIDTH, STAGE_SCREEN_HEIGHT, 0.14), {
     depth: 0.06,
     bevelEnabled: true,
-    bevelThickness: 0.025,
-    bevelSize: 0.025,
+    bevelThickness: 0.012,
+    bevelSize: 0.012,
     bevelSegments: 2,
     curveSegments: 6,
   });
   slab.translate(0, 0, -0.03);
-  const stem = new CylinderGeometry(0.02, 0.035, 0.9, 10, 1, true);
-  stem.translate(0, -0.9, 0);
-  const screenGeometry = mergeParts(
-    [
-      { geometry: slab, tag: 0 },
-      { geometry: stem, tag: 1 },
-    ],
-    'aPart'
-  );
+  const screenGeometry = mergeParts([{ geometry: slab, tag: 0 }], 'aPart');
   // faceSlot, faceOpacity, slabOpacity, edgeOpacity
   const screenLook = new InstancedBufferAttribute(new Float32Array(STAGE_MAX_SCREENS * 4), 4);
   screenLook.setUsage(DynamicDrawUsage);
@@ -528,7 +517,7 @@ export function createStageScene(): StageSceneHandle {
     .sub(0.14);
   const onEdge = abs(normalGeometry.z)
     .lessThan(0.9)
-    .or(rimDistance.greaterThan(-0.03))
+    .or(rimDistance.greaterThan(-0.009))
     .and(isStem.not());
   const slot = look.x;
   const cell = vec2(slot.mod(STAGE_FACE_COLUMNS), slot.div(STAGE_FACE_COLUMNS).floor());
@@ -553,7 +542,7 @@ export function createStageScene(): StageSceneHandle {
     clearcoatRoughness: 0.1,
     transparent: true,
   });
-  screenMaterial.envMapIntensity = 0.55;
+  screenMaterial.envMapIntensity = 0.12;
   // The face is printed into the glass's colour (dark ink reads on a light
   // slab) and, at night, also glows like the sketch's unlit face layer.
   const slabFace = mix(uSlabTint, faceSample.rgb, faceAlpha);
@@ -567,15 +556,15 @@ export function createStageScene(): StageSceneHandle {
   screenMaterial.metalnessNode = select(isStem, float(1), float(0.1));
   // By day the glass is satin: a mirror finish reflects the pale sky over the
   // printed face and washes the text out.
-  screenMaterial.roughnessNode = select(isStem, float(0.28), mix(float(0.18), float(0.5), uDay));
+  screenMaterial.roughnessNode = select(isStem, float(0.28), mix(float(0.7), float(0.8), uDay));
   // Printed ink is matte: no reflection over the letters by day.
   const dayInk = faceAlpha.mul(uDay);
-  screenMaterial.clearcoatNode = mix(float(1), float(0.15), uDay).mul(float(1).sub(dayInk));
+  screenMaterial.clearcoatNode = mix(float(0.08), float(0.04), uDay).mul(float(1).sub(dayInk));
   screenMaterial.specularIntensityNode = float(1).sub(dayInk);
   screenMaterial.emissiveNode = faceSample.rgb
     .mul(faceAlpha)
     .mul(float(1).sub(uDay.mul(0.85)))
-    .add(select(onEdge, edgeColor.mul(look.w).mul(1.6).mul(float(1).sub(uDay)), vec3(0)));
+    .add(select(onEdge, edgeColor.mul(look.w).mul(0.55).mul(float(1).sub(uDay)), vec3(0)));
   screenMaterial.opacityNode = select(
     isStem,
     float(1),
@@ -671,7 +660,6 @@ export function createStageScene(): StageSceneHandle {
   const position = new Vector3();
   const scale = new Vector3();
   const rotation = new Quaternion();
-  const flatRotation = new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), -Math.PI / 2);
   const yAxis = new Vector3(0, 1, 0);
   const from = new Vector3();
   const to = new Vector3();
@@ -712,8 +700,13 @@ export function createStageScene(): StageSceneHandle {
     pushFx(0, scratch.compose(position, camera.quaternion, scale), color, strength);
   };
 
+  const ambient = createStageAmbient();
+  root.add(ambient.mesh);
+
   return {
     root,
+    setAmbient: ambient.configure,
+    ambientAnimated: () => ambient.animated,
     setTheme({ colors: palette, mode }, scene, renderer) {
       const light = mode === 'light';
       const background = new Color(palette.background);
@@ -726,19 +719,21 @@ export function createStageScene(): StageSceneHandle {
       colors.warning.set(palette.warning);
       // Day: a mid-tone floor (the ground pulled towards the ink) so the grid
       // and the status rings read; night keeps the dark metal.
-      if (light) uFloor.value.copy(background).lerp(new Color(palette.text), 0.42);
-      else uFloor.value.copy(background).multiplyScalar(0.55);
+      uFloor.value.set(palette.surface).lerp(background, 0.45);
       day = light;
       uDay.value = light ? 1 : 0;
-      metalMaterial.color.set(light ? '#d9d4cb' : '#8c99a4');
+      metalMaterial.color.set(palette.surface).lerp(background, 0.3);
       const metal = metalMaterial.color;
       uMetal.value.set(metal.r, metal.g, metal.b);
       const tint = new Color(light ? palette.surface : palette.background).multiplyScalar(
         light ? 1 : 0.6
       );
       uSlabTint.value.set(tint.r, tint.g, tint.b);
-      key.color.set(light ? '#fff4e2' : '#cfe6ff');
-      key.intensity = light ? 1.3 : 0.9;
+      key.color.set(palette.text).lerp(new Color('#fff4e2'), 0.8);
+      key.intensity = light ? 1.5 : 1.2;
+      hemisphere.color.set(palette.surface).lerp(new Color('#ffffff'), 0.65);
+      hemisphere.groundColor.copy(background);
+      hemisphere.intensity = light ? 0.8 : 0.6;
       rim.color.copy(colors.primary);
       scene.background = background;
       // Day fog starts further out, so the mid-tone floor is not washed back to the ground.
@@ -754,6 +749,7 @@ export function createStageScene(): StageSceneHandle {
     },
     setBackdrop(source) {
       skySample.value = source?.texture ?? blank;
+      scenicSample.value = source?.texture ?? blank;
       uHasSky.value = source ? 1 : 0;
       skyAspect = source?.aspect ?? 1;
       skyFocal = source?.focal ?? { x: 0.5, y: 0.5 };
@@ -762,8 +758,12 @@ export function createStageScene(): StageSceneHandle {
     setCharacter(source) {
       hostSample.value = source?.texture ?? blank;
       hostAspect = source?.aspect ?? 1.5;
-      host.visible = Boolean(source);
+      const scenic = source?.kind === 'scene';
+      uSceneArt.value = scenic ? 1 : 0;
+      host.visible = Boolean(source) && !scenic;
       crystal.visible = !source;
+      pedestal.visible = !scenic;
+      floor.visible = !scenic;
       placeHost();
     },
     setFaces(atlas) {
@@ -772,7 +772,14 @@ export function createStageScene(): StageSceneHandle {
     update(frame) {
       const { camera } = frame;
       camera.getWorldPosition(cameraPosition);
+      const viewportAspect =
+        camera.projectionMatrix.elements[5]! / camera.projectionMatrix.elements[0]!;
+      uSceneScale.value.set(
+        skyAspect > viewportAspect ? viewportAspect / skyAspect : 1,
+        skyAspect > viewportAspect ? 1 : skyAspect / viewportAspect
+      );
       uTime.value = frame.timeS;
+      ambient.update(frame.timeS);
       uRise.value = frame.rise;
       uBurstRise.value = frame.burstRise;
       uBurst.value = frame.burst;
@@ -808,14 +815,14 @@ export function createStageScene(): StageSceneHandle {
           screen.look.faceSlot,
           offline ? (day ? 0.7 : 0.45) : screen.front ? 1 : day ? 0.9 : 0.7,
           // Day glass is the surface colour, nearly opaque, so dark text reads on it.
-          day ? (screen.front ? 0.94 : 0.84) : screen.front ? 0.78 : 0.55,
+          screen.front ? 0.97 : 0.86,
           (offline ? (day ? 0.45 : 0.25) : day ? 1 : screen.front ? 0.9 : 0.45) *
             (working ? 0.6 + 0.4 * pulse : 1)
         );
         const edge = offline ? colors.offline : colors.primary;
         screenEdge.setXYZ(drawn, edge.r, edge.g, edge.b);
 
-        // The floor ring under the stem, and its glow.
+        // A quiet contact glow under the floating screen, not a neon stand.
         const status = offline
           ? colors.offline
           : screen.look.tone === 'warning' || screen.look.attention
@@ -823,21 +830,17 @@ export function createStageScene(): StageSceneHandle {
             : working
               ? colors.primary
               : colors.success;
-        const ringStrength = offline ? 0.2 : 0.9 * pulse;
-        const floorY = y - 0.94 * screen.scale;
-        position.set(x, floorY + 0.01, z);
-        scale.set(0.84 * screen.scale, 0.84 * screen.scale, 1);
-        pushFx(2, scratch.compose(position, flatRotation, scale), status, ringStrength);
-        glowAt(
-          x,
-          floorY + 0.04,
-          z,
-          1.6 * screen.scale,
-          0.45 * screen.scale,
-          camera,
-          status,
-          offline ? 0 : 0.55 * pulse
-        );
+        if (screen.front && pedestal.visible)
+          glowAt(
+            x,
+            y - (STAGE_SCREEN_HEIGHT * screen.scale) / 2 - 0.06,
+            z,
+            1.25 * screen.scale,
+            0.16 * screen.scale,
+            camera,
+            status,
+            offline ? 0 : 0.12 * pulse
+          );
       });
       screens.count = order.length;
       screens.instanceMatrix.needsUpdate = true;
@@ -845,12 +848,13 @@ export function createStageScene(): StageSceneHandle {
       screenEdge.needsUpdate = true;
 
       // The pedestal's glow, and the host's heart when she is the crystal.
-      glowAt(STAGE_PEDESTAL[0], 0.3, STAGE_PEDESTAL[2], 3.4, 1, camera, colors.primary, 0.55);
+      if (pedestal.visible)
+        glowAt(STAGE_PEDESTAL[0], 0.3, STAGE_PEDESTAL[2], 2.6, 0.5, camera, colors.primary, 0.18);
       if (crystal.visible)
         glowAt(STAGE_PEDESTAL[0], 1.35, STAGE_PEDESTAL[2], 2.4, 2.4, camera, colors.primary, 0.25);
 
       // The beam: from her chest to the screen the composer sends to.
-      if (frame.beamTo) {
+      if (frame.beamTo && pedestal.visible) {
         from.set(STAGE_HOST_CHEST[0], STAGE_HOST_CHEST[1], STAGE_HOST_CHEST[2]);
         to.set(frame.beamTo[0], frame.beamTo[1], frame.beamTo[2]);
         axis.subVectors(to, from);
@@ -864,8 +868,8 @@ export function createStageScene(): StageSceneHandle {
           basis.makeBasis(side, axis, facing);
           rotation.setFromRotationMatrix(basis);
           position.addVectors(from, to).multiplyScalar(0.5);
-          scale.set(0.09, span, 1);
-          pushFx(3, scratch.compose(position, rotation, scale), colors.primary, frame.beam * 0.9);
+          scale.set(0.025, span, 1);
+          pushFx(3, scratch.compose(position, rotation, scale), colors.primary, frame.beam * 0.25);
           const travel = (frame.timeS * 0.6) % 1;
           position.copy(from).lerp(to, travel);
           glowAt(
@@ -902,6 +906,7 @@ export function createStageScene(): StageSceneHandle {
       fxMeta.needsUpdate = true;
     },
     dispose() {
+      ambient.dispose();
       for (const mesh of [sky, floor, host, crystal, screens, fx]) {
         mesh.geometry.dispose();
         (mesh.material as MeshBasicNodeMaterial).dispose();
