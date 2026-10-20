@@ -1,16 +1,12 @@
-import { useFloatingSurfaceBackground } from '@/hooks/use-surface-background';
 import type { MessageDescriptor } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { CameraIcon, UploadFileIcon, PhotosIcon } from '@/icons';
 import { StyleSheet } from 'react-native';
-import Animated from 'react-native-reanimated';
 
-import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { appChrome } from '@/constants/appearance';
+import { FloatingMenu } from '@/components/floating-menu';
 import type { AttachmentSource } from '@/lib/attachments';
-import { fadeInDown, fadeOutDown } from '@/lib/motion';
 
 /**
  * Descriptors rather than strings, because this table is at module scope.
@@ -48,9 +44,9 @@ const OPTIONS: {
  * which reads as a mis-render rather than as an answer to the tap that opened
  * it.
  *
- * The tap-outside backdrop behind it is deliberately not faded -- it carries no
- * colour at all, only a `Pressable` catching the tap, so there is nothing there
- * to cross-fade.
+ * The tap-outside catcher behind it carries no colour at all, only a
+ * `Pressable` taking the tap: the card is the menu, and the page around it
+ * stays as it was.
  */
 export function AttachmentMenu({
   onSelect,
@@ -59,22 +55,11 @@ export function AttachmentMenu({
   onSelect: (source: AttachmentSource) => void;
   textColor: string;
 }) {
-  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
-  const floatingBackground = useFloatingSurfaceBackground();
   const { _ } = useLingui();
 
   return (
-    <Animated.View
-      entering={fadeInDown('dropdown')}
-      exiting={fadeOutDown('micro')}
-      style={[
-        styles.menu,
-        { borderRadius: profile.chrome.popover },
-        {
-          backgroundColor: floatingBackground(theme.colors.surface),
-        },
-      ]}>
+    <FloatingMenu>
       {OPTIONS.map(({ source, label, Icon }) => {
         const name = _(label);
         return (
@@ -91,22 +76,11 @@ export function AttachmentMenu({
           </PressableScale>
         );
       })}
-    </Animated.View>
+    </FloatingMenu>
   );
 }
 
 const styles = StyleSheet.create({
-  menu: {
-    alignSelf: 'flex-start',
-    marginHorizontal: 12,
-    marginBottom: 7,
-    minWidth: 190,
-    borderRadius: appChrome.radius.popover,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-    paddingVertical: 4,
-    boxShadow: appChrome.shadow.popover,
-  },
   option: {
     minHeight: 42,
     flexDirection: 'row',

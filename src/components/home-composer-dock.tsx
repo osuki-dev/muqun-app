@@ -10,6 +10,7 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import type { HomeLaunchController } from '@/components/home-launch-actions';
 import type { DockAutoHide } from '@/hooks/use-dock-auto-hide';
 import { HomeComposerOptions } from '@/components/home-composer-options';
+import { ComposerMenuButton } from '@/components/composer-attachment-button';
 import {
   HomeComposerTransition,
   type HomeComposerPulse,
@@ -21,7 +22,6 @@ import {
   HomeComposerDecoration,
   useHomeComposerDecorationOverhang,
 } from '@/components/home-composer-background';
-import { composerStyles } from '@/components/terminal-composer';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useAgentFeatures, useAgentsDiscoveryRefresh } from '@/hooks/use-agent-features';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
@@ -184,8 +184,6 @@ export function HomeComposerDock({
   const decorationOverhang = useHomeComposerDecorationOverhang();
   const backgroundOutset = useHomeComposerBackgroundOutset();
   const [optionsOpen, setOptionsOpen] = useState(false);
-  const [optionsVisible, setOptionsVisible] = useState(false);
-  const [optionsHeightAnimating, setOptionsHeightAnimating] = useState(false);
   const [transitionPulse, setTransitionPulse] = useState<HomeComposerPulse | null>(null);
   const playTransition = useStableHandler((kind: HomeComposerTransitionKind) => {
     setTransitionPulse((previous) => ({ id: (previous?.id ?? 0) + 1, kind }));
@@ -1340,76 +1338,72 @@ export function HomeComposerDock({
           {error}
         </Text>
       ) : null}
-      <HomeComposerOptions
-        open={optionsOpen}
-        onVisibilityChange={setOptionsVisible}
-        onHeightAnimationChange={setOptionsHeightAnimating}
-        computer={targetServer ? computerLabel : t`No computer online`}
-        agent={agentName}
-        folder={folderLabel}
-        model={modelName}
-        mode={shown.mode ?? 'build'}
-        modes={modes}
-        offline={!ready}
-        onComputer={() => {
-          beginChoice();
-          openTargetPicker();
-        }}
-        onAgent={
-          targetServer
-            ? () => {
-                beginChoice();
-                router.push({
-                  pathname: '/home-agent',
-                  params: { serverId: targetServer.serverId },
-                });
-              }
-            : undefined
-        }
-        onFolder={
-          targetServer && ready && selected
-            ? () => {
-                beginChoice();
-                router.push({
-                  pathname: '/agent-workspace',
-                  params: {
-                    owner: 'home',
-                    serverId: targetServer.serverId,
-                    sessionId: HOME_AGENT_SESSION_ID,
-                    ...(agentId ? { agentId } : {}),
-                  },
-                });
-              }
-            : undefined
-        }
-        onModel={features.modelSelection && !terminalAgent ? openModelSheet : undefined}
-        onMode={canPickMode && !terminalAgent ? selectMode : undefined}
-      />
     </View>
   );
+  const options = (
+    <HomeComposerOptions
+      computer={targetServer ? computerLabel : t`No computer online`}
+      agent={agentName}
+      folder={folderLabel}
+      model={modelName}
+      mode={shown.mode ?? 'build'}
+      modes={modes}
+      offline={!ready}
+      onComputer={() => {
+        beginChoice();
+        openTargetPicker();
+      }}
+      onAgent={
+        targetServer
+          ? () => {
+              beginChoice();
+              router.push({
+                pathname: '/home-agent',
+                params: { serverId: targetServer.serverId },
+              });
+            }
+          : undefined
+      }
+      onFolder={
+        targetServer && ready && selected
+          ? () => {
+              beginChoice();
+              router.push({
+                pathname: '/agent-workspace',
+                params: {
+                  owner: 'home',
+                  serverId: targetServer.serverId,
+                  sessionId: HOME_AGENT_SESSION_ID,
+                  ...(agentId ? { agentId } : {}),
+                },
+              });
+            }
+          : undefined
+      }
+      onModel={features.modelSelection && !terminalAgent ? openModelSheet : undefined}
+      onMode={canPickMode && !terminalAgent ? selectMode : undefined}
+    />
+  );
   const parameterButton = (
-    <PressableScale
+    <ComposerMenuButton
       testID="home-composer-parameters"
-      accessibilityRole="button"
-      accessibilityLabel={t`Task options`}
-      accessibilityHint={t`Choose computer, agent, folder, mode and model`}
-      accessibilityState={{ expanded: optionsOpen }}
-      onPress={() => setOptionsOpen((open) => !open)}
-      style={[composerStyles.button, { borderRadius: profile.chrome.roundControl }]}>
+      label={t`Task options`}
+      hint={t`Choose computer, agent, folder, mode and model`}
+      expanded={optionsOpen}
+      onPress={() => setOptionsOpen((open) => !open)}>
       <ThemeIcon
         name="chrome.parameters"
         fallback={ControlsIcon}
         size={18}
         color={optionsOpen ? theme.colors.primary : theme.colors.textMuted}
       />
-    </PressableScale>
+    </ComposerMenuButton>
   );
 
   return (
     <AgentComposer
       revealed={revealed}
       accessory={bar}
-      accessoryHeightAnimating={optionsHeightAnimating || optionsOpen !== optionsVisible}
       fieldBackground={
         <>
           <HomeComposerBackground />
@@ -1435,14 +1429,18 @@ export function HomeComposerDock({
       fieldBackgroundColor={background(theme.colors.surface)}
       fieldDecoration={decorationOverhang > 0 ? <HomeComposerDecoration /> : undefined}
       fieldDecorationOverhang={decorationOverhang}
-      hideFieldDecoration={
-        optionsOpen || optionsVisible || Boolean(error) || Boolean(visibleUnknownDelivery)
-      }
+      hideFieldDecoration={Boolean(error) || Boolean(visibleUnknownDelivery)}
       fieldTextTopInset={6}
       // Home's field is the dock's only painted surface, on both the phone
       // bar and the Pad cover, so it casts the edge a dock's glass would.
       fieldShadow={appChrome.shadow.homeComposerField}
       toolbarLeading={parameterButton}
+      toolbarMenu={{
+        open: optionsOpen,
+        onOpenChange: setOptionsOpen,
+        content: options,
+        testID: 'home-composer-options-menu',
+      }}
       hideParameterRow
       flushField
       voiceContext={JSON.stringify([
