@@ -1,5 +1,10 @@
 import { useCallback, useMemo, useState } from 'react';
 import type { TextInputKeyPressEvent, TextInputSelectionChangeEvent } from 'react-native';
+import { useStore } from 'zustand';
+
+import type { ComposerDraftStore } from '@/lib/composer-draft-store';
+import { useLatestReader } from '@/hooks/use-render-refs';
+import { useStoreSelector } from '@/hooks/use-store-selector';
 
 import {
   dismissComposerPopup,
@@ -142,4 +147,113 @@ export function useComposerPopup<T>({
     pick,
     dismiss,
   };
+}
+
+/**
+ * `useComposerPopup` for a draft held in a `ComposerDraftStore`.
+ *
+ * Same machine, same rules; the difference is who renders. The draft and the
+ * caret are read from the store by a selector, and the caller re-renders only
+ * when the popup's answer changes -- opening, closing, or a different query --
+ * rather than on every keystroke. The caret this tracks is the store's, so
+ * every reader of the draft sees the same one.
+ */
+export function useDraftStoreComposerPopup<T>({
+  store,
+  trigger,
+  enabled = true,
+}: {
+  store: ComposerDraftStore;
+  trigger: ComposerTrigger<T>;
+  enabled?: boolean;
+}): ComposerPopupController<T> {
+  const [dismissedAt, setDismissedAt] = useState<number | null>(null);
+  const [pending, setPending] = useState<{ draft: string; caret: number } | null>(null);
+  const readPending = useLatestReader(pending);
+
+  const holdsPick = useStore(
+    store,
+    (draft) =>
+      pending !== null && pending.draft === draft.text && pending.caret !== draft.text.length
+  );
+  const controlled = holdsPick ? pending : null;
+
+  const state = useStoreSelector(
+    store,
+    (draft) =>
+      readComposerPopup({
+        draft: draft.text,
+        caret: controlled ? controlled.caret : draft.caret,
+        dismissedAt,
+        trigger,
+        enabled,
+      }),
+    samePopupState
+  );
+
+  if (dismissedAt !== null && !state.open && state.reason === 'no-query') {
+    setDismissedAt(null);
+  }
+
+  const onSelectionChange = useCallback(
+    (event: TextInputSelectionChangeEvent) => {
+      const next = event.nativeEvent.selection.start;
+      store.setState({ caret: next });
+      const current = readPending();
+      // Either the input reached the caret we asked for, or the draft moved on
+      // without us; both mean the input is back in charge.
+      if (current && !(current.draft === store.getState().text && current.caret !== next))
+        setPending(null);
+    },
+    [readPending, store]
+  );
+
+  const onKeyPress = useCallback(
+    (event: TextInputKeyPressEvent) => {
+      if (event.nativeEvent.key !== 'Escape') return;
+      setDismissedAt((current) => dismissComposerPopup(state) ?? current);
+    },
+    [state]
+  );
+
+  const pick = useCallback(
+    (row: ComposerPopupRow) => {
+      if (!state.open) return;
+      const next = insertComposerPick(store.getState().text, state.query, row);
+      store.setState({ text: next.draft, caret: next.caret });
+      setPending({ draft: next.draft, caret: next.caret });
+      setDismissedAt(null);
+    },
+    [state, store]
+  );
+
+  const dismiss = useCallback(() => {
+    setDismissedAt((current) => dismissComposerPopup(state) ?? current);
+  }, [state]);
+
+  return {
+    state,
+    open: state.open,
+    rows: state.rows,
+    inputProps: {
+      selection: controlled ? { start: controlled.caret, end: controlled.caret } : undefined,
+      onSelectionChange,
+      onKeyPress,
+    },
+    pick,
+    dismiss,
+  };
+}
+
+/**
+ * Two answers from the same trigger are the same answer when they agree on
+ * whether the popup is open, why not, and the exact query: the rows are a pure
+ * function of the query and the trigger.
+ */
+function samePopupState<T>(a: ComposerPopupState<T>, b: ComposerPopupState<T>): boolean {
+  if (a.open !== b.open || a.reason !== b.reason) return false;
+  if (a.query === null || b.query === null) return a.query === b.query;
+  return (
+    a.query.start === b.query.start && a.query.end === b.query.end && a.query.text === b.query.text
+  );
 }

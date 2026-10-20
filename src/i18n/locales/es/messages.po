@@ -1111,7 +1111,6 @@ msgstr "Se necesita acceso a la cámara"
 #: src/components/ssh-host-form.tsx
 #: src/components/ssh-host-key-dialog.tsx
 #: src/components/theme-link-import.tsx
-#: src/components/voice-input-button.tsx
 #: src/hooks/use-file-actions.tsx
 #: src/hooks/use-lazygit.ts
 #: src/lib/local-authentication.ts
@@ -2552,6 +2551,10 @@ msgstr "Descartar cambios"
 #: src/components/changes-sheet.tsx
 msgid "Discard changes to {discardName}?"
 msgstr "¿Descartar los cambios de {discardName}?"
+
+#: src/components/voice-input-button.tsx
+msgid "Discard recording"
+msgstr "Descartar grabación"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx

@@ -13,7 +13,7 @@ import {
 import { MicrophoneIcon, MessageSendIcon } from '@/icons';
 import { Canvas, Group, Path, Skia } from 'react-native-skia';
 import { scheduleOnRN } from 'react-native-worklets';
-import { useEffect, useRef, useState, type ComponentProps, type ReactNode, type Ref } from 'react';
+import { useEffect, useState, type ComponentProps, type ReactNode, type Ref } from 'react';
 import {
   StyleSheet,
   View,
@@ -60,6 +60,8 @@ import { composerLongPress } from '@/lib/composer-long-press';
 type AnimatedViewProps = ComponentProps<typeof Animated.View>;
 const VOICE_HOLD_MS = 500;
 const COMPOSER_ACTION_SIZE = 44;
+/** The recorder's field height: at least the room for its controls, at most five lines. */
+const clampVoiceHeight = (height: number) => Math.min(190, Math.max(96, height));
 const voiceHoldCenter = COMPOSER_ACTION_SIZE / 2;
 const voiceHoldRing = Skia.PathBuilder.Make()
   .addCircle(voiceHoldCenter, voiceHoldCenter, 17)
@@ -142,7 +144,10 @@ export function TerminalComposer({
   const [voiceHeight, setVoiceHeight] = useState(0);
   const voice = useVoiceInputTrigger({
     context: voiceContext,
-    onHeightChange: setVoiceHeight,
+    // Clamped here rather than only where it is drawn: the transcript reports
+    // its height on every layout, and past the cap a new line must not render
+    // the composer again for a height it will not use.
+    onHeightChange: (height) => setVoiceHeight(clampVoiceHeight(height)),
     disabled: send.sending || inputProps.editable === false,
     onText: (transcript) => {
       const current = readInput();
@@ -155,17 +160,14 @@ export function TerminalComposer({
     onVoiceActiveChange?.(voiceActive);
     if (!voiceActive) setVoiceHeight(0);
   }, [voiceActive, onVoiceActiveChange]);
+  // The draft and the recorder cross-fade over the same beat in both
+  // directions: the draft used to vanish on the frame the recorder started
+  // fading in, which flashed an empty field between the two.
   const contentReveal = useSharedValue(1);
-  const previousVoiceActive = useRef(voiceActive);
   useEffect(() => {
-    if (previousVoiceActive.current === voiceActive) return;
-    previousVoiceActive.current = voiceActive;
-    contentReveal.set(0);
-    contentReveal.set(withTiming(1, timing('short')));
+    contentReveal.set(withTiming(voiceActive ? 0 : 1, timing('short')));
   }, [voiceActive, contentReveal]);
-  const contentRevealStyle = useAnimatedStyle(() => ({
-    opacity: voiceActive ? 0 : contentReveal.get(),
-  }));
+  const contentRevealStyle = useAnimatedStyle(() => ({ opacity: contentReveal.get() }));
   const profile = useAppearanceProfile();
   const fieldRadius = squareBottom
     ? {
@@ -312,7 +314,7 @@ export function TerminalComposer({
           composerStyles.fieldShell,
           fieldRadius,
           { backgroundColor: outsideBackground ? 'transparent' : backgroundColor },
-          voiceActive && { minHeight: Math.min(190, Math.max(96, voiceHeight)) },
+          voiceActive && { minHeight: clampVoiceHeight(voiceHeight) },
         ]}>
         {!voiceActive && !outsideBackground ? fieldBackground : null}
         {/* Keep the draft mounted so recording inherits this exact field height. */}

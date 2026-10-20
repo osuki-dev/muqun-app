@@ -1111,7 +1111,6 @@ msgstr "カメラへのアクセスが必要です"
 #: src/components/ssh-host-form.tsx
 #: src/components/ssh-host-key-dialog.tsx
 #: src/components/theme-link-import.tsx
-#: src/components/voice-input-button.tsx
 #: src/hooks/use-file-actions.tsx
 #: src/hooks/use-lazygit.ts
 #: src/lib/local-authentication.ts
@@ -2552,6 +2551,10 @@ msgstr "変更を破棄"
 #: src/components/changes-sheet.tsx
 msgid "Discard changes to {discardName}?"
 msgstr "{discardName} の変更を破棄しますか？"
+
+#: src/components/voice-input-button.tsx
+msgid "Discard recording"
+msgstr "録音を破棄"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
