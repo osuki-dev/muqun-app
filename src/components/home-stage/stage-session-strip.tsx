@@ -17,7 +17,6 @@ import Animated, {
   useSharedValue,
   withDelay,
   withTiming,
-  type SharedValue,
 } from 'react-native-reanimated';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -125,15 +124,13 @@ export function StageSessionStrip({
 
   const visible = stageFlipVisibleSlots(width, CARD_ESTIMATE, STRIP_GAP, STRIP_PADDING);
   const bounds = { minWidth: CARD_MIN_WIDTH, maxWidth: Math.round(width * CARD_MAX_SHARE) };
-  // Each session's card width as last laid out, by session: a face turning
-  // away keeps its own width rather than taking the new card's.
-  const widths = useSharedValue<Record<string, number>>({});
+  // Each session's card width as last laid out, by session, so the commit
+  // that changes computer already gives every face turning away its own old
+  // width: never laid out at the new card's width and clipped. Set only when a
+  // width actually changes, so a change of computer adds at most one render.
+  const [widths, setWidths] = useState<Readonly<Record<string, number>>>({});
   const measured = useStableHandler((key: string, faceWidth: number) =>
-    widths.modify((all) => {
-      'worklet';
-      all[key] = faceWidth;
-      return all;
-    })
+    setWidths((all) => (all[key] === faceWidth ? all : { ...all, [key]: faceWidth }))
   );
   const surface = background(theme.colors.surface);
   const idleBorder = withAlpha(theme.colors.text, 0.1);
@@ -178,7 +175,7 @@ export function StageSessionStrip({
                 reduced={reduced}
                 faceStyle={[face(entry), bounds]}
                 fromStyle={from ? [face(from), bounds] : undefined}
-                widths={widths}
+                fromWidth={from ? widths[from.key] : undefined}
                 onMeasured={measured}
                 onPress={() => onOpenSession(entry)}
               />
@@ -234,7 +231,7 @@ function StageSessionSlot({
   reduced,
   faceStyle,
   fromStyle,
-  widths,
+  fromWidth,
   onMeasured,
   onPress,
 }: {
@@ -245,25 +242,67 @@ function StageSessionSlot({
   reduced: boolean;
   faceStyle: FaceStyle;
   fromStyle: FaceStyle | undefined;
-  widths: SharedValue<Record<string, number>>;
+  fromWidth: number | undefined;
   onMeasured: (key: string, width: number) => void;
   onPress: () => void;
 }) {
+  return (
+    <PressableScale
+      testID="home-stage-session"
+      accessibilityRole="button"
+      accessibilityLabel={entry.title}
+      onPress={onPress}
+      style={styles.slot}>
+      <StageSessionTurn
+        // A new turn for every change of computer: its progress is created at
+        // the turn's start (0: the old face flat, the new one edge-on and
+        // hidden), so the very commit that brings the new session in paints
+        // the old face untouched, before any animation has been armed.
+        key={flip.generation}
+        entry={entry}
+        from={from}
+        direction={flip.direction}
+        animate={flip.generation > 0}
+        delay={delay}
+        reduced={reduced}
+        faceStyle={faceStyle}
+        fromStyle={fromStyle}
+        fromWidth={fromWidth}
+        onMeasured={onMeasured}
+      />
+    </PressableScale>
+  );
+}
+
+function StageSessionTurn({
+  entry,
+  from,
+  direction,
+  animate,
+  delay,
+  reduced,
+  faceStyle,
+  fromStyle,
+  fromWidth,
+  onMeasured,
+}: {
+  entry: HomeContinueEntry;
+  from: HomeContinueEntry | undefined;
+  direction: StageFlipDirection;
+  animate: boolean;
+  delay: number;
+  reduced: boolean;
+  faceStyle: FaceStyle;
+  fromStyle: FaceStyle | undefined;
+  fromWidth: number | undefined;
+  onMeasured: (key: string, width: number) => void;
+}) {
   const entryKey = entry.key;
-  const fromKey = from?.key;
-  const progress = useSharedValue(1);
-  // The generation the running turn belongs to. Until the effect starts the
-  // turn for a new generation, the styles hold the old face (progress 0), so
-  // the new session is never painted ahead of its turn.
-  const started = useSharedValue(flip.generation);
-  const generation = flip.generation;
-  const direction = flip.direction;
-  const turns = from !== undefined;
+  const turns = animate && from !== undefined;
+  const progress = useSharedValue(turns ? 0 : 1);
 
   const start = useEffectEvent(() => {
-    started.set(generation);
     if (!turns) return;
-    progress.set(0);
     progress.set(
       reduced
         ? withTiming(1, timing(STAGE_FLIP_MOTION.fadeMs, { reduceMotion: ReduceMotion.Never }))
@@ -273,12 +312,10 @@ function StageSessionSlot({
           )
     );
   });
-  useEffect(() => {
-    if (generation > 0) start();
-  }, [generation]);
+  useEffect(() => start(), []);
 
   const newStyle = useAnimatedStyle(() => {
-    const p = turns && started.get() !== generation ? 0 : progress.get();
+    const p = progress.get();
     if (reduced) return { opacity: p, transform: [{ rotateX: '0deg' }] };
     // Second half of the turn: from edge-on (90 degrees) back to flat.
     const angle = (p - 1) * Math.PI * direction;
@@ -287,19 +324,17 @@ function StageSessionSlot({
       opacity: shown ? 1 - 0.35 * Math.sin(Math.abs(angle)) : 0,
       transform: [
         { perspective: STAGE_FLIP_MOTION.perspective },
-        { rotateX: `${shown ? angle : HALF_TURN * direction}rad` },
+        { rotateX: `${shown ? angle : -HALF_TURN * direction}rad` },
       ],
     };
   });
   const oldStyle = useAnimatedStyle(() => {
-    const p = turns && started.get() !== generation ? 0 : progress.get();
+    const p = progress.get();
     if (reduced) return { opacity: 1 - p, transform: [{ rotateX: '0deg' }] };
     // First half: flat to edge-on, away from the reader.
     const angle = p * Math.PI * direction;
     const shown = p < 0.5;
-    const fromWidth = fromKey === undefined ? undefined : widths.get()[fromKey];
     return {
-      ...(fromWidth === undefined ? null : { width: fromWidth }),
       opacity: shown ? 1 - 0.35 * Math.sin(Math.abs(angle)) : 0,
       transform: [
         { perspective: STAGE_FLIP_MOTION.perspective },
@@ -309,12 +344,7 @@ function StageSessionSlot({
   });
 
   return (
-    <PressableScale
-      testID="home-stage-session"
-      accessibilityRole="button"
-      accessibilityLabel={entry.title}
-      onPress={onPress}
-      style={styles.slot}>
+    <>
       <Animated.View
         onLayout={(event) => onMeasured(entryKey, event.nativeEvent.layout.width)}
         style={[styles.card, styles.face, faceStyle, newStyle]}>
@@ -322,18 +352,26 @@ function StageSessionSlot({
           {entry.title}
         </Text>
       </Animated.View>
-      {from && fromStyle ? (
+      {turns && from && fromStyle ? (
         <Animated.View
           pointerEvents="none"
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
-          style={[styles.card, styles.face, styles.back, fromStyle, oldStyle]}>
+          style={[
+            styles.card,
+            styles.face,
+            styles.back,
+            fromStyle,
+            // Its own width from before the change, never the new card's.
+            fromWidth === undefined ? null : { width: fromWidth },
+            oldStyle,
+          ]}>
           <Text variant="bodySmall" weight="semibold" numberOfLines={1}>
             {from.title}
           </Text>
         </Animated.View>
       ) : null}
-    </PressableScale>
+    </>
   );
 }
 
