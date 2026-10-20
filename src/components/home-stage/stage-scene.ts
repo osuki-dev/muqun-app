@@ -12,14 +12,18 @@
  *   4. frame     -- an edge-only wallpaper, the nearest layer in depth (so it
  *                   parallaxes most) but drawn before the panes: it frames
  *                   the world and never covers a pane or its text
- *   5. motes     -- dust floating through every depth, one merged draw
+ *   5. motes     -- dust floating through every depth, one merged draw; or
+ *                   the theme's own ambient effect (rain, snow, stars, ...)
+ *                   in its place, one instanced draw (bloom, stars and
+ *                   circuit traces are drawn behind the hero instead)
  *   6. panes     -- one frosted glass pane per computer in a cover-flow, each
  *                   with a status glow behind and a faint reflection below
  *                   (glows one instanced draw; panes and reflections another)
  *
  * Every layer is an unlit, textured plane: no lights, no shadows, no
- * environment, at most eight draws. Pictures are Skia readbacks, top row
- * first, so every image sample flips v.
+ * environment, at most eight draws (the motes or a theme's ambient effect,
+ * never both). Pictures are Skia readbacks, top row first, so every image
+ * sample flips v.
  */
 import {
   AdditiveBlending,
@@ -66,6 +70,8 @@ import {
   stageViewSize,
   type StageVec3,
 } from '@/lib/home-stage-geometry';
+import type { StageAmbient } from '@/lib/home-stage-ambient';
+import { createStageAmbient } from './stage-ambient';
 
 const {
   abs,
@@ -152,6 +158,7 @@ export type StageFrameInput = {
   tilt: number;
   /** 0..1, decaying after a task completes: the motes flare. */
   burst: number;
+  /** Particles are on at this quality: the motes, or a theme's travelling particles. */
   motes: boolean;
   shimmer: boolean;
   /** The working pulse, the hero's bob and the motes' drift. */
@@ -167,6 +174,8 @@ export type StageSceneHandle = {
   setHero: (source: StageTextureSource | null) => void;
   setFrame: (source: StageTextureSource | null) => void;
   setFaces: (atlas: Texture | null) => void;
+  /** The theme's ambient effect in place of the motes, or null for the motes. */
+  setAmbient: (ambient: StageAmbient | null) => void;
   update: (frame: StageFrameInput) => void;
   dispose: () => void;
 };
@@ -465,7 +474,9 @@ export function createStageScene(): StageSceneHandle {
   let frameSource: StageTextureSource | null = null;
   frame.visible = false;
 
-  root.add(backdrop, haze, heroGlow, hero, motes, glows, panes, frame);
+  const ambient = createStageAmbient();
+
+  root.add(backdrop, haze, heroGlow, hero, motes, ambient.mesh, glows, panes, frame);
 
   // -- Layout ------------------------------------------------------------------
   const cover = (
@@ -481,6 +492,7 @@ export function createStageScene(): StageSceneHandle {
   };
   const layout = () => {
     uAspect.value = aspect;
+    ambient.setAspect(aspect);
     cover(backdrop, backdropSource, STAGE_BACKDROP_DEPTH, STAGE_BACKDROP_OVERSCAN);
     const hazeView = stageViewSize(STAGE_HAZE_DEPTH, aspect);
     const hazeAt = stageLayerCentre(STAGE_HAZE_DEPTH);
@@ -585,6 +597,9 @@ export function createStageScene(): StageSceneHandle {
     setFaces(atlas) {
       faceSample.value = atlas ?? blank;
     },
+    setAmbient(next) {
+      ambient.configure(next);
+    },
     update(input) {
       const { timeS } = input;
       hero.position.set(
@@ -592,7 +607,10 @@ export function createStageScene(): StageSceneHandle {
         heroBase.y + (input.pulse ? Math.sin(timeS * 0.9) * 0.08 : 0),
         heroBase.z
       );
-      motes.visible = input.motes;
+      const effect = ambient.current;
+      motes.visible = input.motes && !effect;
+      ambient.mesh.visible = effect !== null && (!effect.particles || input.motes);
+      ambient.setTime(input.pulse ? timeS : 0);
       uDrift.value = input.pulse ? timeS * 0.05 : 0;
       uBurst.value = input.burst;
       uSheen.value = input.shimmer ? (light ? 0.2 : 0.1) : 0;
@@ -664,6 +682,7 @@ export function createStageScene(): StageSceneHandle {
         mesh.geometry.dispose();
         (mesh.material as MeshBasicNodeMaterial).dispose();
       }
+      ambient.dispose();
       hazeTexture.dispose();
       blank.dispose();
     },

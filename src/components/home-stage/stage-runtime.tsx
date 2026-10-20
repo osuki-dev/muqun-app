@@ -12,6 +12,7 @@ import {
   stagePaneAnchor,
   STAGE_PANE_REACH,
 } from '@/lib/home-stage-geometry';
+import { stageAmbient } from '@/lib/home-stage-ambient';
 import {
   initialStageDegrade,
   recordStageFrame,
@@ -72,6 +73,8 @@ export function StageRuntime(props: StageSceneProps) {
     hero,
     frame,
     faces,
+    ambientEffects,
+    ambientColors,
     quality,
     reducedMotion,
     dive,
@@ -143,6 +146,10 @@ export function StageRuntime(props: StageSceneProps) {
     world.setFaces(faces);
     wake();
   }, [world, faces]);
+  useEffect(() => {
+    world.setAmbient(stageAmbient(ambientEffects, ambientColors, mode, aspect));
+    wake();
+  }, [world, ambientEffects, ambientColors, mode, aspect]);
   // Only a new quality resets the ladder.
   const resetLadder = useEffectEvent((next: StageSceneProps['quality']) => {
     motionState().degrade = initialStageDegrade(next);
