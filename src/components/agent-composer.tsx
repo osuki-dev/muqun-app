@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import { Spinner, useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
+import { plural } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
   BackIcon,
@@ -32,7 +33,6 @@ import {
   TerminalIcon,
   StopIcon,
   DeleteIcon,
-  CloseIcon,
   QuickActionIcon,
 } from '@/icons';
 import * as Haptics from 'expo-haptics';
@@ -54,6 +54,7 @@ import { TerminalComposer } from '@/components/terminal-composer';
 import { AttachmentMenu } from '@/components/attachment-menu';
 import { AgentModeMenu } from '@/components/agent-mode-menu';
 import { AttachmentStrip } from '@/components/attachment-strip';
+import { AttachmentThumbnailRow } from '@/components/attachment-thumbnail-row';
 import { ImagePreviewModal, type PreviewImage } from '@/components/image-preview-modal';
 import { GlassChrome } from '@/components/glass-chrome';
 import { TextSegment, useSegmentHitSlop, useSegmentRowLead } from '@/components/text-segment';
@@ -102,6 +103,7 @@ import {
   fadeOut,
   fadeOutDown,
   listLayout,
+  riseIn,
   timing,
 } from '@/lib/motion';
 import { appChrome } from '@/constants/appearance';
@@ -124,6 +126,7 @@ import {
   isSessionUnread,
   isSlashSkill,
   listAgentFiles,
+  inboxItemAttachments,
   inboxItemText,
   type AgentContextUsage,
   type ModeInfo,
@@ -144,6 +147,9 @@ import {
   deliverAgentAttachmentPrompt,
   type AgentAttachmentSendRequest,
 } from '@/lib/agent-attachment-send';
+
+/** How long a direct send's receipt stays before it fades. */
+const SUBMITTED_NOTICE_MS = 5000;
 
 /** What a root's subtasks are doing; `blocked` ones are waiting on the reader. */
 export interface SubtaskActivity {
@@ -818,6 +824,19 @@ export const AgentComposer = memo(function AgentComposer({
     clearAttachments,
   ]);
   useEffect(() => () => attachmentSendGuard.reset(), [attachmentSendGuard]);
+  // The receipt of a direct send is a moment, not a fixture.
+  const acknowledgedFiles = pendingAttachmentSend?.submittedAttachments;
+  useEffect(() => {
+    if (!acknowledgedFiles) return;
+    const timer = setTimeout(
+      () =>
+        setPendingAttachmentSend((previous) =>
+          previous?.submittedAttachments === acknowledgedFiles ? null : previous
+        ),
+      SUBMITTED_NOTICE_MS
+    );
+    return () => clearTimeout(timer);
+  }, [acknowledgedFiles]);
 
   const removeStagedAttachment = (id: string) => {
     if (!attachmentSendGuard.isPending()) attachmentUploads.removeAttachment(id);
@@ -1201,12 +1220,15 @@ export const AgentComposer = memo(function AgentComposer({
             trimmed,
             attachmentUploads.awaitUploads,
             () => {
-              const submittedAttachments = readStagedAttachments().map((item) =>
-                item.status === 'done' ? item : { ...item, status: 'done' as const }
-              );
-              setPendingAttachmentSend((previous) =>
-                previous?.token === token ? { ...previous, submittedAttachments } : previous
-              );
+              // A queued send becomes an inbox row, which is its receipt.
+              if (delivery !== 'queue') {
+                const submittedAttachments = readStagedAttachments().map((item) =>
+                  item.status === 'done' ? item : { ...item, status: 'done' as const }
+                );
+                setPendingAttachmentSend((previous) =>
+                  previous?.token === token ? { ...previous, submittedAttachments } : previous
+                );
+              }
               setText((current) => (current.trim() === trimmed ? '' : current));
               attachmentUploads.clearAttachments();
             },
@@ -1627,8 +1649,22 @@ export const AgentComposer = memo(function AgentComposer({
             </View>
             {inbox.map((item) => {
               const steering = item.delivery === 'steer';
+              const files = inboxItemAttachments(item).map((file, index) => ({
+                ...file,
+                key: `${index}:${file.uri.slice(0, 256)}`,
+              }));
+              const text = inboxItemText(item);
+              const summary =
+                text ||
+                (files.length
+                  ? t`${plural(files.length, { one: '# attachment', other: '# attachments' })}`
+                  : item.type);
               return (
-                <Animated.View key={item.id} layout={listLayout('short')}>
+                <Animated.View
+                  key={item.id}
+                  entering={riseIn()}
+                  exiting={fadeOut('micro')}
+                  layout={listLayout('short')}>
                   {/* The row is the control: tapping a queued prompt is how its
                       actions are reached, which is the same gesture a session
                       row answers in the sessions sheet. */}
@@ -1637,9 +1673,7 @@ export const AgentComposer = memo(function AgentComposer({
                     accessibilityRole="button"
                     accessibilityState={{ expanded: inboxMenuId === item.id }}
                     accessibilityLabel={
-                      steering
-                        ? t`Sending next: ${inboxItemText(item) || item.type}`
-                        : t`Queued: ${inboxItemText(item) || item.type}`
+                      steering ? t`Sending next: ${summary}` : t`Queued: ${summary}`
                     }
                     onPress={() =>
                       setInboxMenuId((current) => (current === item.id ? null : item.id))
@@ -1652,13 +1686,18 @@ export const AgentComposer = memo(function AgentComposer({
                       },
                     ]}>
                     <InboxIcon size={13} color={theme.colors.primary} />
-                    <Text
-                      variant="caption"
-                      numberOfLines={2}
-                      color={theme.colors.textMuted}
-                      style={styles.inboxText}>
-                      {inboxItemText(item) || item.type}
-                    </Text>
+                    <View style={styles.inboxBody}>
+                      {text || files.length === 0 ? (
+                        <Text
+                          variant="caption"
+                          numberOfLines={2}
+                          color={theme.colors.textMuted}
+                          style={styles.inboxText}>
+                          {text || item.type}
+                        </Text>
+                      ) : null}
+                      <AttachmentThumbnailRow entries={files} />
+                    </View>
                     {/* Queued is not sent, and the two used to look identical.
                         Nor is queued the same as steering, which the chip said
                         it was: this is the item's own `delivery`. */}
@@ -2292,34 +2331,45 @@ export const AgentComposer = memo(function AgentComposer({
               </Animated.View>
             ) : null}
 
+            {/* A direct send's receipt: what went, with its files. It leaves on
+                its own; a tap only hides it sooner, and nothing here looks like
+                a way to take the message back. A queued send has none: its
+                inbox row is the receipt. */}
             {pendingAttachmentSend?.submittedAttachments ? (
-              <View
-                testID="agent-composer-attachment-acknowledged"
-                accessibilityLiveRegion="polite"
-                style={[
-                  styles.uploadWait,
-                  flushField && {
-                    backgroundColor: surfaceBackground(theme.colors.surface),
-                    borderRadius: profile.chrome.noticeBanner,
-                  },
-                ]}>
-                <DoneIcon size={16} color={theme.colors.textMuted} />
-                <Text variant="caption" color={theme.colors.textMuted} style={styles.noticeText}>
-                  {pendingAttachmentSend.delivery === 'queue' ? (
-                    <Trans>Submitted to queue</Trans>
-                  ) : (
-                    <Trans>Submitted</Trans>
-                  )}
-                </Text>
+              <Animated.View
+                key={pendingAttachmentSend.submittedAttachments.map((item) => item.id).join(',')}
+                entering={fadeIn('short')}
+                exiting={fadeOut('short')}>
                 <PressableScale
+                  testID="agent-composer-attachment-acknowledged"
                   accessibilityRole="button"
-                  accessibilityLabel={t`Dismiss`}
-                  hitSlop={8}
-                  style={styles.dismissSubmission}
-                  onPress={() => setPendingAttachmentSend(null)}>
-                  <CloseIcon size={16} color={theme.colors.textMuted} />
+                  accessibilityLiveRegion="polite"
+                  accessibilityLabel={t`Submitted`}
+                  accessibilityHint={t`Hides this notice`}
+                  onPress={() => setPendingAttachmentSend(null)}
+                  style={[
+                    styles.uploadWait,
+                    flushField && {
+                      backgroundColor: surfaceBackground(theme.colors.surface),
+                      borderRadius: profile.chrome.noticeBanner,
+                    },
+                  ]}>
+                  <DoneIcon size={16} color={theme.colors.textMuted} />
+                  <View style={styles.noticeText}>
+                    <Text variant="caption" color={theme.colors.textMuted}>
+                      <Trans>Submitted</Trans>
+                    </Text>
+                  </View>
+                  <AttachmentThumbnailRow
+                    entries={pendingAttachmentSend.submittedAttachments.map((item) => ({
+                      key: item.id,
+                      name: item.name,
+                      uri: item.localUri,
+                      image: isImageAttachment(item.mime),
+                    }))}
+                  />
                 </PressableScale>
-              </View>
+              </Animated.View>
             ) : null}
 
             {!promptAllowed ? (
@@ -2544,9 +2594,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     marginBottom: 4,
   },
-  dismissSubmission: {
-    padding: 6,
-  },
   noticeText: {
     flex: 1,
     minWidth: 0,
@@ -2693,9 +2740,12 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderCurve: 'continuous',
   },
-  inboxText: {
+  inboxBody: {
     flex: 1,
     minWidth: 0,
+    gap: 6,
+  },
+  inboxText: {
     fontSize: AGENT_TYPE.meta.size,
   },
   inboxCancel: {

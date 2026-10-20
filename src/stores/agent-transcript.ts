@@ -1,5 +1,6 @@
 import { createStore } from 'zustand/vanilla';
-import type { AgentRunStatus, TimelineItem } from '@/lib/agent-protocol';
+import type { AgentRunStatus, InboxItem, TimelineItem } from '@/lib/agent-protocol';
+import { inboxTimelineRows } from '@/lib/agent-timeline-upsert';
 import { reconcileShellParts, type TimelineRenderGroup } from '@/lib/agent-timeline-groups';
 import { classifyTool } from '@/lib/agent-tool-output';
 import { splitDiagramMarkdown } from '@/lib/diagram-markdown';
@@ -53,8 +54,9 @@ export function createAgentTranscriptStore() {
       markdownRows.set(canonical, rows);
       return rows;
     };
-    const rebuild = (timeline: TimelineItem[], config = get().config) => {
+    const rebuild = (timeline: TimelineItem[], config = get().config, inbox = get().inbox) => {
       const previous = get();
+      const inboxRows = inbox.length ? inboxTimelineRows(inbox, timeline) : [];
       const reconciled = reconcileShellParts(timeline);
       // windowStart indexes the canonical timeline, not the deduplicated list.
       // Shell copies can occupy the entire newest page; keep a real page visible
@@ -75,6 +77,12 @@ export function createAgentTranscriptStore() {
       }
       const streaming = config.status === 'busy' ? visible.at(-1) : undefined;
       visible = visible.flatMap((item) => renderItems(item, item === streaming));
+      const last = visible.at(-1);
+      const historyEnd = visible.length;
+      let lastHistoryKey: string | undefined;
+      // Prompts still waiting in the inbox follow the history, whatever page
+      // of it is shown: they are what the reader sent last.
+      if (inboxRows.length) visible = [...visible, ...inboxRows];
       const nextRows: Record<string, TimelineRenderGroup> = {};
       const keys: string[] = [];
       let preceding: TimelineItem | undefined;
@@ -102,17 +110,17 @@ export function createAgentTranscriptStore() {
           old.items.every((item, at) => item === items[at]);
         nextRows[key] = same ? old : { key, role: first.role, items, prevItem };
         keys.push(key);
+        if (end === historyEnd) lastHistoryKey = key;
         if (first.part.type !== 'reasoning') preceding = items.at(-1);
         i = end;
       }
-      const last = visible.at(-1);
       const reasoningKey =
         config.status === 'busy' && last?.role === 'assistant' && last.part.type === 'reasoning'
-          ? keys.at(-1)
+          ? lastHistoryKey
           : undefined;
       const streamingKey =
         config.status === 'busy' && last?.role === 'assistant' && last.part.type === 'text'
-          ? keys.at(-1)
+          ? lastHistoryKey
           : undefined;
       const toolIds = new Set<string>();
       let backgroundTools = 0;
@@ -132,6 +140,7 @@ export function createAgentTranscriptStore() {
       set({
         timeline,
         config,
+        inbox,
         rows: nextRows,
         reasoningKey,
         streamingKey,
@@ -158,12 +167,16 @@ export function createAgentTranscriptStore() {
       reasoningKey: undefined,
       streamingKey: undefined,
       config: { windowStart: 0, status: undefined },
+      inbox: [],
       setTimeline: (update, windowStart) => {
         const current = get().timeline;
         const next = typeof update === 'function' ? update(current) : update;
         const config = get().config;
         if (next !== current || (windowStart !== undefined && windowStart !== config.windowStart))
           rebuild(next, windowStart === undefined ? config : { ...config, windowStart });
+      },
+      setInbox: (inbox) => {
+        if (inbox !== get().inbox) rebuild(get().timeline, get().config, inbox);
       },
       configure: (config) => {
         const current = get().config;
@@ -186,6 +199,8 @@ export interface AgentTranscriptState {
   /** Only the live text row uses progressive native Markdown measurement. */
   streamingKey: string | undefined;
   config: TranscriptConfig;
+  /** The session's inbox; its prompts are drawn after the history (`inboxTimelineRows`). */
+  inbox: readonly InboxItem[];
   toolIds: ReadonlySet<string>;
   backgroundTools: number;
   todos: Extract<TimelineItem['part'], { type: 'todo' }>['items'] | undefined;
@@ -193,6 +208,7 @@ export interface AgentTranscriptState {
     update: TimelineItem[] | ((previous: TimelineItem[]) => TimelineItem[]),
     windowStart?: number
   ) => void;
+  setInbox: (inbox: readonly InboxItem[]) => void;
   configure: (config: TranscriptConfig) => void;
 }
 export type AgentTranscriptStore = ReturnType<typeof createAgentTranscriptStore>;

@@ -1250,6 +1250,8 @@ export interface TimelineItem {
   image_assets?: MessageImageAsset[];
   /** Client-side only: an optimistic row that has not been acknowledged. */
   queued?: boolean;
+  /** Client-side only: the inbox item a queued row stands for, and its delivery. */
+  inbox?: { id: string; delivery: 'steer' | 'queue' };
   /**
    * Client-side only: where this row sorts, when its id cannot say.
    *
@@ -1435,6 +1437,63 @@ function inboxPayloadText(item: InboxItem): string {
     }
   }
   return '';
+}
+
+/** One file a queued prompt carries, in a form the transcript can draw. */
+export interface InboxAttachment {
+  /** A host path (`file://` removed), a URL, or an image `data:` URI. */
+  uri: string;
+  name: string;
+  mime?: string;
+  image: boolean;
+}
+
+const IMAGE_NAME = /\.(png|jpe?g|gif|webp|heic|heif)$/i;
+
+/**
+ * The files of a queued prompt, from `payload.files`.
+ *
+ * Two shapes reach the App. OpenCode stores the prompt as its engine holds it:
+ * `{data, mime, source: {type: 'uri', uri} | {type: 'inline'}, name}`, with the
+ * file's bytes base64-encoded in `data`. The Gateway's own queue (Codex) keeps
+ * the prompt input shape: `{uri, name, mime?}`. A host path inside the upload
+ * folder is preferred over inline bytes because the transcript already loads
+ * those through `/api/uploads`; inline bytes are the fallback for an image whose
+ * path the phone cannot fetch.
+ */
+export function inboxItemAttachments(item: InboxItem): InboxAttachment[] {
+  const payload = asRecord(item.payload);
+  const files = payload && Array.isArray(payload.files) ? payload.files : [];
+  const out: InboxAttachment[] = [];
+  for (const entry of files) {
+    const rec = asRecord(entry);
+    if (!rec) continue;
+    const source = asRecord(rec.source);
+    const raw = pickString(rec, ['uri', 'url', 'path']) ?? (source && asString(source.uri));
+    const path = raw ? hostPathFromUri(raw) : undefined;
+    const mime = asString(rec.mime);
+    const data = asString(rec.data);
+    const name = asString(rec.name) || path?.split('/').filter(Boolean).pop() || 'attachment';
+    const image = mime
+      ? mime.startsWith('image/')
+      : IMAGE_NAME.test(name) || Boolean(path && IMAGE_NAME.test(path));
+    const uploaded = path?.includes('/muqun-gateway/uploads/');
+    const inline = image && mime && data ? `data:${mime};base64,${data}` : undefined;
+    const uri = (uploaded ? path : (inline ?? path)) || undefined;
+    if (!uri) continue;
+    out.push({ uri, name, ...(mime ? { mime } : {}), image });
+  }
+  return out;
+}
+
+function hostPathFromUri(uri: string): string {
+  if (!/^file:/i.test(uri)) return uri;
+  const path = uri.replace(/^file:(\/\/)?/i, '');
+  try {
+    return decodeURI(path);
+  } catch {
+    return path;
+  }
 }
 
 export interface AgentSessionSnapshot {
