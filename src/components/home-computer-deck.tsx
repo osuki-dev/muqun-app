@@ -720,10 +720,9 @@ export function HomeComputerDeck({
 
 /**
  * True: a swipe or a tab tap switches computers at once, with no dissolve and
- * no cross-fade. The transitions are off while Home's jank and a blank card
- * after switching are investigated; flip back to bring them back.
+ * no cross-fade. Keep it as the switch for isolating deck jank or a blank card.
  */
-const DECK_MOTION_OFF = true;
+const DECK_MOTION_OFF = false;
 
 /**
  * What the deck's handlers share outside React: the live move, and the

@@ -1130,9 +1130,7 @@ export function HomeOverview({
         activeConnection={activeConnection}
         skipEntering={cardsSkipEntering}
         gridWidth={cardGridWidth}
-        // The phone shows its computers as the vertical list again while Home's
-        // tap problem is isolated; the deck comes back by restoring `!isPad`.
-        deck={false}
+        deck={!isPad}
         onSelectServer={targetComposer}
         onOpenHistory={(serverId) =>
           router.push({ pathname: '/server-tasks', params: { serverId } })
