@@ -3,7 +3,7 @@ import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { PixelRatio, StyleSheet, View } from 'react-native';
 import { Canvas, importDevice, type CanvasRef } from 'react-native-webgpu';
 import { Skia } from 'react-native-skia';
-import { WebGPURenderer } from 'three/webgpu';
+import { PCFShadowMap, WebGPURenderer } from 'three/webgpu';
 
 import { MapErrorBoundary } from '@/components/computer-map/error-boundary';
 import { createSceneLifetimes } from '@/lib/scene-lifetime';
@@ -54,6 +54,9 @@ export default function GpuStage(props: StageSceneProps) {
             size: { ...size, top: 0, left: 0 },
             dpr: Math.min(PixelRatio.get(), 2),
             frameloop: 'demand',
+            // No real-time shadows. Fiber's boolean default asks for
+            // PCFSoftShadowMap, which the WebGPU renderer warns it has removed.
+            shadows: { enabled: false, type: PCFShadowMap },
             camera: { fov: STAGE_CAMERA_FOV, near: 0.1, far: 200 },
             gl: async () => {
               const renderer = new WebGPURenderer({

@@ -5,6 +5,7 @@ import {
   stageCamera,
   stageDrawnScreens,
   stageFacingYaw,
+  stageHostSize,
   stageRingRest,
   stageRingTarget,
   stageScreenPosition,
@@ -24,6 +25,8 @@ import {
   type StageDegradeState,
 } from '../home-stage-motion';
 import { stagePanels, stageSelectedIndex } from '../home-stage-panels';
+import { stageReadableInk } from '../home-stage-ink';
+import { contrastRatio } from '../../theme/contrast';
 
 describe('stage ring', () => {
   test('wraps selection in both directions and survives an empty ring', () => {
@@ -101,6 +104,15 @@ describe('camera and projection', () => {
     );
     expect(distance).toBeLessThan(2);
     expect(projectStagePoint(front, dived, 390, 844).visible).toBe(true);
+  });
+
+  test('wide art fits the pedestal; portrait art keeps the full host height', () => {
+    expect(stageHostSize(0.6)).toEqual({ width: 2.67 * 0.6, height: 2.67 });
+    const group = stageHostSize(2.4);
+    expect(group.width).toBeLessThanOrEqual(2.36 * 1.25 + 1e-9);
+    expect(group.height).toBeLessThanOrEqual(2.6);
+    expect(group.width / group.height).toBeCloseTo(2.4);
+    expect(stageHostSize(Number.NaN).height).toBe(2.67);
   });
 
   test('look offsets are clamped; billboards face the camera', () => {
@@ -182,6 +194,22 @@ describe('frame pacing', () => {
       tilt: false,
       idleIntervalMs: null,
     });
+  });
+});
+
+describe('stage ink', () => {
+  test('a pale primary is darkened until it reads at 4.5:1 on a light slab', () => {
+    const ink = stageReadableInk('#9FE4CE', '#FFFCF7');
+    expect(contrastRatio(ink, '#fffcf7')).toBeGreaterThanOrEqual(4.5);
+    expect(ink).not.toBe('#000000');
+  });
+
+  test('an ink that already reads is kept; a dark ground lightens; non-hex passes through', () => {
+    expect(stageReadableInk('#050B12', '#FFFCF7')).toBe('#050b12');
+    expect(contrastRatio(stageReadableInk('#404040', '#151C22'), '#151c22')).toBeGreaterThanOrEqual(
+      4.5
+    );
+    expect(stageReadableInk('rgba(0,0,0,0.5)', '#ffffff')).toBe('rgba(0,0,0,0.5)');
   });
 });
 
