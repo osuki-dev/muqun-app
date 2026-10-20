@@ -652,7 +652,7 @@ msgstr "将二维码对准框内"
 
 #: src/components/home-recent-chips.tsx
 #: src/components/session-artifacts.tsx
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "All"
 msgstr "全部"
 
@@ -804,6 +804,7 @@ msgstr "应用补丁"
 #: src/app/custom-theme.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Apply theme"
 msgstr "应用主题"
 
@@ -1058,10 +1059,9 @@ msgstr "品牌标志与运行指示"
 msgid "Bring {0} to the front"
 msgstr "将 {0} 移到最前"
 
-#: src/components/custom-theme-library.tsx
-#: src/components/theme-browse-sheet.tsx
-msgid "Browse themes"
-msgstr "浏览主题"
+#: src/components/settings-theme-sheet.tsx
+msgid "Browse the gallery"
+msgstr "浏览主题库"
 
 #: src/app/commands.tsx
 msgid "Browser"
@@ -1071,7 +1071,7 @@ msgstr "浏览器"
 msgid "Build"
 msgstr "构建 (Build)"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Built-in"
 msgstr "内置"
 
@@ -1107,6 +1107,7 @@ msgstr "需要相机访问权限"
 #: src/components/settings-font-sheet.tsx
 #: src/components/settings-servers.tsx
 #: src/components/settings-storage.tsx
+#: src/components/settings-theme-sheet.tsx
 #: src/components/skia-terminal.tsx
 #: src/components/ssh-host-form.tsx
 #: src/components/ssh-host-key-dialog.tsx
@@ -1217,7 +1218,7 @@ msgstr "请检查仓库链接、分支和主题文件"
 msgid "Check this computer's tasks. This request has not been sent again."
 msgstr "请查看这台电脑的任务。此请求没有再次发送"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "Check your connection and try again."
 msgstr "请检查网络连接后重试"
 
@@ -1348,7 +1349,7 @@ msgid "Clear the conversation"
 msgstr "清空对话"
 
 #: src/components/agent-model-sheet.tsx
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "Clear the search"
 msgstr "清除搜索内容"
 
@@ -1369,6 +1370,7 @@ msgid "Clears notifications only. Pending tasks still need your attention."
 msgstr "仅清除通知。待处理任务仍需你处理"
 
 #: src/app/diagram-viewer.tsx
+#: src/components/settings-theme-sheet.tsx
 #: src/components/sheet-scene.tsx
 #: src/i18n/labels.ts
 msgid "Close"
@@ -2153,7 +2155,7 @@ msgstr "无法连接到电脑"
 msgid "Could not reach the computer. Make sure it is running, then refresh the QR and scan again."
 msgstr "无法连接到电脑。请确认它正在运行，然后刷新二维码再扫描一次"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "Could not reach the theme catalogue"
 msgstr "无法连接主题目录"
 
@@ -2367,8 +2369,9 @@ msgstr "已用点数"
 msgid "Cropped preview · Open full image"
 msgstr "局部预览 · 查看完整图片"
 
-#: src/components/custom-theme-library.tsx
 #: src/components/file-mention-panel.tsx
+#: src/components/settings-theme-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "Current"
 msgstr "当前"
 
@@ -2389,12 +2392,16 @@ msgstr "当前电脑"
 msgid "Current path"
 msgstr "当前路径"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Current theme"
 msgstr "当前主题"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Custom"
+msgstr "自定义"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Customise"
 msgstr "自定义"
 
 #: src/components/custom-theme-preview.tsx
@@ -2476,7 +2483,7 @@ msgstr "发送未确认"
 msgid "Delivery not confirmed. Tap to check status"
 msgstr "投递未确认。点按检查状态"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "Demo catalogue. Leave the demo to download themes."
 msgstr "演示主题目录。退出演示后即可下载主题"
 
@@ -2648,7 +2655,7 @@ msgstr "正在下载 · {0} / {1}"
 msgid "Downloading theme"
 msgstr "正在下载主题"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "Downloading…"
 msgstr "正在下载…"
 
@@ -2818,6 +2825,7 @@ msgid "Export colours"
 msgstr "导出颜色"
 
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Export theme"
 msgstr "导出主题"
 
@@ -3015,6 +3023,10 @@ msgstr "全屏"
 #: src/components/virtual-keyboard.tsx
 msgid "Function keys"
 msgstr "功能键"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Gallery"
+msgstr "主题库"
 
 #: src/app/explore.tsx
 msgid "Gateway"
@@ -3293,21 +3305,25 @@ msgstr "图片"
 msgid "Images download from"
 msgstr "图片下载来源"
 
-#: src/components/custom-theme-library.tsx
-msgid "Import"
-msgstr "导入"
-
 #: src/components/settings-font-sheet.tsx
 msgid "Import a file…"
 msgstr "从文件导入…"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Import file"
 msgstr "导入文件"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Import link"
 msgstr "从链接导入"
+
+#: src/components/theme-card.tsx
+msgid "Import theme"
+msgstr "导入主题"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Imported"
+msgstr "已导入"
 
 #: src/components/server-tasks-sheet.tsx
 msgid "In progress"
@@ -3370,13 +3386,14 @@ msgid "Install command copied"
 msgstr "已复制安装命令"
 
 #: src/components/settings-font-sheet.tsx
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "Installed"
 msgstr "已安装"
 
 #: src/app/+not-found.tsx
 #: src/app/custom-theme.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Installing images"
 msgstr "正在安装图片"
 
@@ -3708,7 +3725,7 @@ msgstr "正在加载终端"
 msgid "Loading the transcript"
 msgstr "正在加载对话记录"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "Loading themes…"
 msgstr "正在加载主题…"
 
@@ -3798,6 +3815,10 @@ msgstr "消息已复制到剪贴板"
 msgid "Message not sent"
 msgstr "消息未发送"
 
+#: src/components/settings-theme-sheet.tsx
+msgid "Mine"
+msgstr "我的"
+
 #: src/components/home-composer-options.tsx
 msgid "Mode"
 msgstr "模式"
@@ -3858,6 +3879,7 @@ msgid "Monthly credit limit"
 msgstr "每月点数上限"
 
 #: src/components/custom-theme-library.tsx
+#: src/components/theme-card.tsx
 msgid "More actions"
 msgstr "更多操作"
 
@@ -3930,10 +3952,6 @@ msgstr "无论手机设置为何，牧群都保持这个语言"
 #: src/components/settings-security.tsx
 msgid "Muqun will use {methodName} when the app opens."
 msgstr "打开应用时，牧群会使用 {methodName}"
-
-#: src/components/custom-theme-library.tsx
-msgid "My themes"
-msgstr "我的主题"
 
 #: src/app/commands.tsx
 #: src/components/agent-worktree-sheet.tsx
@@ -4194,7 +4212,7 @@ msgstr "此主机没有保存密码或密钥"
 msgid "No peer report available."
 msgstr "暂无电脑间连接报告"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "No personal themes yet. Import one, or browse the published themes."
 msgstr "还没有自己的主题。可以导入一个，或浏览已发布的主题"
 
@@ -4273,12 +4291,12 @@ msgstr "此电脑没有可用的终端会话"
 msgid "No textual change"
 msgstr "没有文本改动"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "No themes are published yet"
 msgstr "还没有已发布的主题"
 
 #. placeholder {0}: query.trim()
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "No themes match “{0}”."
 msgstr "没有匹配“{0}”的主题"
 
@@ -4651,7 +4669,7 @@ msgid "Opening"
 msgstr "正在打开"
 
 #: src/app/+not-found.tsx
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Opening that file"
 msgstr "正在打开这个文件"
 
@@ -4906,7 +4924,7 @@ msgstr "请重试或移除上传失败的附件"
 msgid "Port"
 msgstr "端口"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
 msgstr "正在准备图片"
@@ -5112,7 +5130,7 @@ msgid "Reading the rules on the host…"
 msgstr "正在读取主机上的规则…"
 
 #: src/app/+not-found.tsx
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Reading the theme"
 msgstr "正在读取主题"
 
@@ -5270,14 +5288,13 @@ msgstr "剩余额度未知"
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-storage.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Remove"
 msgstr "移除"
 
 #. placeholder {0}: attachment.name
-#. placeholder {0}: installed.manifest.name
 #. placeholder {0}: record.label
 #: src/components/attachment-strip.tsx
-#: src/components/custom-theme-library.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Remove {0}"
 msgstr "移除 {0}"
@@ -5421,6 +5438,10 @@ msgstr "请重启 Muqun 以完成更新"
 #: src/components/update-status-banner.tsx
 msgid "Restarting Muqun…"
 msgstr "正在重启 Muqun…"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Restore default"
+msgstr "恢复默认"
 
 #: src/app/commands.tsx
 msgid "Restore hidden default commands"
@@ -5726,7 +5747,7 @@ msgstr "搜索"
 msgid "Search actions and commands"
 msgstr "搜索操作和命令"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "Search by name or tag"
 msgstr "按名称或标签搜索"
 
@@ -6159,6 +6180,7 @@ msgstr "部分主题颜色需要更高的对比度"
 #: src/app/diagram-viewer.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 #: src/components/theme-link-import.tsx
 msgid "Something went wrong"
 msgstr "出了点问题"
@@ -6510,7 +6532,7 @@ msgid "Tap again to delete"
 msgstr "再点一次即删除"
 
 #: src/components/agent-worktree-sheet.tsx
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Tap again to remove"
 msgstr "再点一次以移除"
@@ -6522,10 +6544,6 @@ msgstr "再点一次即强制移除"
 #: src/components/session-map.tsx
 msgid "Tap to connect"
 msgstr "点按连接"
-
-#: src/components/custom-theme-library.tsx
-msgid "Tap to preview and adjust"
-msgstr "点击预览并调整"
 
 #: src/components/agent-workbench.tsx
 msgid "Tap to refresh this session."
@@ -6880,6 +6898,7 @@ msgid "The terminal, the opening and Home artwork draw with a new GPU renderer, 
 msgstr "终端、开场动画和主页插画改用全新的 GPU 渲染器绘制，切换主题和字体也有了各自的过渡动画"
 
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "The theme will be removed from this device"
 msgstr "此主题将从当前设备移除"
 
@@ -6895,7 +6914,6 @@ msgstr "这一轮执行失败"
 
 #: src/app/custom-theme.tsx
 #: src/components/settings-appearance.tsx
-#: src/components/settings-theme-sheet.tsx
 #: src/lib/demo-gateway.ts
 msgid "Theme"
 msgstr "主题"
@@ -6921,6 +6939,10 @@ msgstr "主题链接"
 #: src/components/settings-appearance.tsx
 msgid "Theme, {0}"
 msgstr "主题，{0}"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Themes"
+msgstr "主题"
 
 #: src/components/agent-workbench.tsx
 msgid "There is no rollback waiting to be applied."
@@ -7273,7 +7295,7 @@ msgstr "信任"
 #: src/components/changes-sheet.tsx
 #: src/components/inline-file-link.tsx
 #: src/components/pdf-asset-preview.tsx
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 #: src/components/video-asset-preview.tsx
 #: src/components/voice-input-button.tsx
 #: src/hooks/use-file-actions.tsx
@@ -7285,7 +7307,7 @@ msgstr "重试"
 msgid "Try again once the computer responds."
 msgstr "待电脑恢复响应后再试"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "Try searching for another name or tag."
 msgstr "尝试搜索其他名称或标签"
 
@@ -7349,7 +7371,6 @@ msgstr "未提交的更改"
 
 #: src/components/agent-revert-plate.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/custom-theme-library.tsx
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "撤销"
@@ -7402,7 +7423,7 @@ msgstr "使用 {authLabel} 解锁"
 msgid "Unlock with {methodName}"
 msgstr "使用 {methodName} 解锁"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 msgid "Unpacking…"
 msgstr "正在解压…"
 
@@ -7461,7 +7482,7 @@ msgstr "未跟踪"
 msgid "Up arrow"
 msgstr "向上键"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery-tab.tsx
 #: src/components/update-status-banner.tsx
 msgid "Update"
 msgstr "更新"

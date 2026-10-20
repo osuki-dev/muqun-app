@@ -133,8 +133,9 @@ export const sheetRouteKinds: Readonly<Record<string, SheetKind>> = {
   'agent-subagent-detail': 'workSurface',
   // One tool call's input and output, numbered and panning like a diff.
   'agent-tool-detail': 'workSurface',
-  // The published catalogue: browsed, searched, paged.
-  'settings-theme-browse': 'workSurface',
+  // The catalogue's old address, which forwards to the themes sheet: it takes
+  // that sheet's window so the hand-over does not change size.
+  'settings-theme-browse': 'picker',
   // Pairing: a viewfinder, two ways in and the install command -- the one
   // screen a new reader has to get through, so it gets the whole window.
   explore: 'workSurface',
