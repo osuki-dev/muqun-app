@@ -125,8 +125,8 @@ export function GalleryCard({
  * The search field and the most used tags, stuck to the top of the list while
  * the cards scroll under them.
  *
- * The sheet gives it the frost's plate: the cards pass beneath it, so it keeps the
- * legibility floor a surface over moving content keeps. A tag is a search for
+ * The sheet gives it an opaque plate: the cards pass beneath it and must not
+ * read through it. A tag is a search for
  * that tag, so choosing a chip fills the field, and clearing the field returns
  * the selection to All.
  */
