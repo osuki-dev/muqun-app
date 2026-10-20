@@ -211,7 +211,10 @@ export function AgentAssignmentBar({
 }
 
 const styles = StyleSheet.create({
-  bar: { gap: 6, paddingHorizontal: 12, paddingBottom: 6 },
+  // No inset of its own: the dock already pads the key row and the field, and
+  // a second 12 points left the chips indented from both and cut short on the
+  // right where the row scrolls.
+  bar: { gap: 6, paddingBottom: 6 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   // The glyph's own 24 points, with `hitSlop` making up a 44-point target.
   close: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
