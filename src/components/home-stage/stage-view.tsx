@@ -36,7 +36,12 @@ import {
 } from '@/lib/home-stage-geometry';
 import { hasSeenStageHints, markStageHintsSeen } from '@/lib/home-stage-hints';
 import { stageLayers, type StageLayers } from '@/lib/home-stage-layers';
-import { stageEffects, type StageQuality } from '@/lib/home-stage-motion';
+import {
+  stageEffects,
+  STAGE_TILT_DEADBAND,
+  STAGE_TILT_WAKE,
+  type StageQuality,
+} from '@/lib/home-stage-motion';
 import type { StagePanel } from '@/lib/home-stage-panels';
 import type { StageScreenLook, StageTextureSource } from './stage-scene';
 import { useStageFaces } from './stage-faces';
@@ -314,7 +319,9 @@ export function StageView({
             tiltY={tiltY}
           />
         )}
-        {effects.tilt && !paused ? <StageTilt tiltX={tiltX} tiltY={tiltY} /> : null}
+        {effects.tilt && !paused ? (
+          <StageTilt tiltX={tiltX} tiltY={tiltY} onMoved={bridge.wake} />
+        ) : null}
         <StageHitAreas
           panels={panels}
           targets={targets}
@@ -343,11 +350,24 @@ export function StageView({
  * per axis. The baseline follows the hand slowly, so any holding angle reads
  * as level and only movement looks around. Uses Reanimated's sensor, already
  * in the binary: no new native module.
+ *
+ * Changes under `STAGE_TILT_DEADBAND` are not written, so a phone held still
+ * leaves the scene idle; a real movement wakes a scene that has stopped.
  */
-function StageTilt({ tiltX, tiltY }: { tiltX: SharedValue<number>; tiltY: SharedValue<number> }) {
+function StageTilt({
+  tiltX,
+  tiltY,
+  onMoved,
+}: {
+  tiltX: SharedValue<number>;
+  tiltY: SharedValue<number>;
+  onMoved: () => void;
+}) {
   const sensor = useAnimatedSensor(SensorType.GRAVITY, { interval: 33 });
   const baseX = useSharedValue<number | null>(null);
   const baseY = useSharedValue(0);
+  const wokeX = useSharedValue(0);
+  const wokeY = useSharedValue(0);
   useAnimatedReaction(
     () => sensor.sensor.get(),
     (gravity) => {
@@ -366,8 +386,23 @@ function StageTilt({ tiltX, tiltY }: { tiltX: SharedValue<number>; tiltY: Shared
       // worklet, which then runs as a JS-thread function on the UI runtime.
       const lookX = Math.max(-1, Math.min(1, (gravity.y - nextY) / 2.5));
       const lookY = Math.max(-1, Math.min(1, (gravity.x - nextX) / 2.5));
-      tiltX.set(tiltX.get() + (lookX - tiltX.get()) * 0.3);
-      tiltY.set(tiltY.get() + (lookY - tiltY.get()) * 0.3);
+      const nextTiltX = tiltX.get() + (lookX - tiltX.get()) * 0.3;
+      const nextTiltY = tiltY.get() + (lookY - tiltY.get()) * 0.3;
+      if (
+        Math.abs(nextTiltX - tiltX.get()) < STAGE_TILT_DEADBAND &&
+        Math.abs(nextTiltY - tiltY.get()) < STAGE_TILT_DEADBAND
+      )
+        return;
+      tiltX.set(nextTiltX);
+      tiltY.set(nextTiltY);
+      if (
+        Math.abs(nextTiltX - wokeX.get()) + Math.abs(nextTiltY - wokeY.get()) >=
+        STAGE_TILT_WAKE
+      ) {
+        wokeX.set(nextTiltX);
+        wokeY.set(nextTiltY);
+        scheduleOnRN(onMoved);
+      }
     }
   );
   return null;
