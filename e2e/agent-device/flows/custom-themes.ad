@@ -29,13 +29,9 @@ is visible "id=theme-apply"
 # The confirm sits under the appearance settings in the asset viewer.
 scroll down --pixels 900
 press "id=theme-apply"
-wait "label=\"Close file\"" 15000
-press "label=\"Close file\""
-# The files sheet has no X circle any more -- the grabber and the swipe are the
-# close -- so the header anchor is its refresh, and the dismissal is the
-# gesture a reader has.
-wait "label=\"Refresh files\"" 10000
-back --system
+# Applying from the file viewer goes home in one move under the reskin cover:
+# the viewer and the files sheet close with it, so nothing is left to dismiss.
+wait "text=\"Settings\"" 20000
 wait stable 400 5000
 
 # section install-back
