@@ -533,9 +533,12 @@ export interface AgentComposerProps {
    */
   accessory?: React.ReactNode;
   /**
-   * Drawn first inside the dock, under everything the dock draws: it rides the
-   * keyboard and the dock's auto-hide with it. Home's reply drawer, which
-   * rises from behind the field.
+   * Drawn under everything the dock draws, in a layer as tall as the dock's
+   * parent that rides the keyboard and the dock's auto-hide with it. Home's
+   * reply drawer, which rises from behind the field. The layer, not the dock
+   * strip, bounds it: Android only delivers touches to views inside their
+   * parents' bounds, so a drawer overflowing the strip let its scrolls fall
+   * through to the page behind.
    */
   dockUnderlay?: React.ReactNode;
   /** Keeps an auto-hiding dock shown, as a focused field does (Home's drawer open). */
@@ -1500,6 +1503,17 @@ export const AgentComposer = memo(function AgentComposer({
       },
     ],
   }));
+  const underlayStyle = useAnimatedStyle(() => ({
+    opacity: revealProgress.get(),
+    transform: [
+      {
+        translateY:
+          keyboardOffset.get() +
+          (autoHide?.offset.get() ?? 0) +
+          (1 - revealProgress.get()) * RISE_DISTANCE,
+      },
+    ],
+  }));
 
   /**
    * How much room a popup raised from the dock actually has.
@@ -1591,22 +1605,35 @@ export const AgentComposer = memo(function AgentComposer({
   const dockBottomPadding = innerBottomPadding + dockFoot;
 
   return (
-    <Animated.View
-      pointerEvents={revealed ? 'auto' : 'none'}
-      accessibilityElementsHidden={!revealed}
-      importantForAccessibility={revealed ? 'auto' : 'no-hide-descendants'}
-      style={[
-        styles.dockOuter,
-        composerKeyboardStyle,
-        outerInsets && { left: outerInsets.horizontal, right: outerInsets.horizontal },
-        { paddingBottom: dockFoot },
-      ]}>
-      {dockUnderlay}
-      {bar ? null : (
-        <EdgeFade edge="bottom" color={theme.colors.background} style={styles.composerFade} />
-      )}
+    <>
+      {dockUnderlay ? (
+        <Animated.View
+          pointerEvents={revealed ? 'box-none' : 'none'}
+          accessibilityElementsHidden={!revealed}
+          importantForAccessibility={revealed ? 'auto' : 'no-hide-descendants'}
+          style={[
+            styles.dockUnderlay,
+            underlayStyle,
+            outerInsets && { left: outerInsets.horizontal, right: outerInsets.horizontal },
+          ]}>
+          {dockUnderlay}
+        </Animated.View>
+      ) : null}
+      <Animated.View
+        pointerEvents={revealed ? 'auto' : 'none'}
+        accessibilityElementsHidden={!revealed}
+        importantForAccessibility={revealed ? 'auto' : 'no-hide-descendants'}
+        style={[
+          styles.dockOuter,
+          composerKeyboardStyle,
+          outerInsets && { left: outerInsets.horizontal, right: outerInsets.horizontal },
+          { paddingBottom: dockFoot },
+        ]}>
+        {bar ? null : (
+          <EdgeFade edge="bottom" color={theme.colors.background} style={styles.composerFade} />
+        )}
 
-      {/*
+        {/*
         Dismiss backdrop for popups.
 
         It used to be `absoluteFill` inside the dock, which is a strip at the
@@ -1616,21 +1643,21 @@ export const AgentComposer = memo(function AgentComposer({
         fill, no dim. The floating card is the menu; a panel drawn around it
         read as a block pasted over the page.
       */}
-      {attachmentMenuOpen || toolbarMenuOpen || modeMenuOpen || inboxOpen ? (
-        <Pressable
-          testID="agent-composer-popup-scrim"
-          style={[styles.backdrop, { top: -windowHeight }]}
-          onPress={() => {
-            setAttachmentMenuOpen(false);
-            closeToolbarMenu();
-            setModeMenuOpen(false);
-            setInboxOpen(false);
-            setInboxMenuId(null);
-          }}
-        />
-      ) : null}
+        {attachmentMenuOpen || toolbarMenuOpen || modeMenuOpen || inboxOpen ? (
+          <Pressable
+            testID="agent-composer-popup-scrim"
+            style={[styles.backdrop, { top: -windowHeight }]}
+            onPress={() => {
+              setAttachmentMenuOpen(false);
+              closeToolbarMenu();
+              setModeMenuOpen(false);
+              setInboxOpen(false);
+              setInboxMenuId(null);
+            }}
+          />
+        ) : null}
 
-      {/*
+        {/*
         Attachment source popup, over the paperclip that opened it.
 
         It used to sit above the whole dock -- session strip, chips row, input
@@ -1640,756 +1667,730 @@ export const AgentComposer = memo(function AgentComposer({
         field's whatever the dock's own inset (none on Home, a bar's inset or
         the sheet's gutter elsewhere).
       */}
-      {attachmentMenuOpen ? (
-        <View
-          pointerEvents="box-none"
-          style={[
-            styles.attachmentAnchor,
-            { left: fieldLeft, bottom: inputRowHeight + dockBottomPadding + ATTACHMENT_MENU_GAP },
-          ]}>
-          <AttachmentMenu onSelect={chooseAttachmentSource} textColor={chromeText} />
-        </View>
-      ) : null}
+        {attachmentMenuOpen ? (
+          <View
+            pointerEvents="box-none"
+            style={[
+              styles.attachmentAnchor,
+              { left: fieldLeft, bottom: inputRowHeight + dockBottomPadding + ATTACHMENT_MENU_GAP },
+            ]}>
+            <AttachmentMenu onSelect={chooseAttachmentSource} textColor={chromeText} />
+          </View>
+        ) : null}
 
-      {/* The toolbar's other menu (Home's task options), in the same place
+        {/* The toolbar's other menu (Home's task options), in the same place
           and card. Wider, so a value such as a model and its effort fits on
           its row, but never past the field's right edge; and bounded by the room
           above the keyboard, scrolling inside rather than under the header. */}
-      {toolbarMenu && toolbarMenuOpen ? (
-        <View
-          pointerEvents="box-none"
-          style={[
-            styles.attachmentAnchor,
-            { left: fieldLeft, bottom: inputRowHeight + dockBottomPadding + ATTACHMENT_MENU_GAP },
-          ]}>
-          <FloatingMenu
-            testID={toolbarMenu.testID}
-            width={inputRowWidth > 0 ? Math.min(inputRowWidth, TOOLBAR_MENU_MAX_WIDTH) : undefined}
-            maxHeight={Math.max(POPUP_MIN_HEIGHT, popupMaxHeight - TOOLBAR_MENU_CLEARANCE)}>
-            {toolbarMenu.content}
-          </FloatingMenu>
-        </View>
-      ) : null}
+        {toolbarMenu && toolbarMenuOpen ? (
+          <View
+            pointerEvents="box-none"
+            style={[
+              styles.attachmentAnchor,
+              { left: fieldLeft, bottom: inputRowHeight + dockBottomPadding + ATTACHMENT_MENU_GAP },
+            ]}>
+            <FloatingMenu
+              testID={toolbarMenu.testID}
+              width={
+                inputRowWidth > 0 ? Math.min(inputRowWidth, TOOLBAR_MENU_MAX_WIDTH) : undefined
+              }
+              maxHeight={Math.max(POPUP_MIN_HEIGHT, popupMaxHeight - TOOLBAR_MENU_CLEARANCE)}>
+              {toolbarMenu.content}
+            </FloatingMenu>
+          </View>
+        ) : null}
 
-      {/* What is queued behind the current turn, and a way to take it back */}
-      {inboxOpen && inbox.length > 0 ? (
-        <Animated.View
-          entering={fadeIn('micro')}
-          exiting={fadeOut('micro')}
-          style={styles.popupWrapper}>
-          <GlassChrome
-            surface="composer"
-            artworkEnabled={false}
-            shape="popover"
-            style={styles.inboxCard}>
-            {/* The strip said nothing about itself: three lines of text over
+        {/* What is queued behind the current turn, and a way to take it back */}
+        {inboxOpen && inbox.length > 0 ? (
+          <Animated.View
+            entering={fadeIn('micro')}
+            exiting={fadeOut('micro')}
+            style={styles.popupWrapper}>
+            <GlassChrome
+              surface="composer"
+              artworkEnabled={false}
+              shape="popover"
+              style={styles.inboxCard}>
+              {/* The strip said nothing about itself: three lines of text over
                 the transcript, in the same ink as a sent message, floating
                 across the thinking pill. It says what it is. */}
-            <View style={styles.inboxHeading}>
-              <Text variant="caption" weight="bold" color={theme.colors.textMuted}>
-                {t`Waiting to send`}
-              </Text>
-            </View>
-            {inbox.map((item) => {
-              const steering = item.delivery === 'steer';
-              const files = inboxItemAttachments(item).map((file, index) => ({
-                ...file,
-                key: `${index}:${file.uri.slice(0, 256)}`,
-              }));
-              const text = inboxItemText(item);
-              const summary =
-                text ||
-                (files.length
-                  ? t`${plural(files.length, { one: '# attachment', other: '# attachments' })}`
-                  : item.type);
-              return (
-                <Animated.View
-                  key={item.id}
-                  entering={riseIn()}
-                  exiting={fadeOut('micro')}
-                  layout={listLayout('short')}>
-                  {/* The row is the control: tapping a queued prompt is how its
+              <View style={styles.inboxHeading}>
+                <Text variant="caption" weight="bold" color={theme.colors.textMuted}>
+                  {t`Waiting to send`}
+                </Text>
+              </View>
+              {inbox.map((item) => {
+                const steering = item.delivery === 'steer';
+                const files = inboxItemAttachments(item).map((file, index) => ({
+                  ...file,
+                  key: `${index}:${file.uri.slice(0, 256)}`,
+                }));
+                const text = inboxItemText(item);
+                const summary =
+                  text ||
+                  (files.length
+                    ? t`${plural(files.length, { one: '# attachment', other: '# attachments' })}`
+                    : item.type);
+                return (
+                  <Animated.View
+                    key={item.id}
+                    entering={riseIn()}
+                    exiting={fadeOut('micro')}
+                    layout={listLayout('short')}>
+                    {/* The row is the control: tapping a queued prompt is how its
                       actions are reached, which is the same gesture a session
                       row answers in the sessions sheet. */}
-                  <PressableScale
-                    testID={`agent-composer-inbox-row-${item.id}`}
-                    accessibilityRole="button"
-                    accessibilityState={{ expanded: inboxMenuId === item.id }}
-                    accessibilityLabel={
-                      steering ? t`Sending next: ${summary}` : t`Queued: ${summary}`
-                    }
-                    onPress={() =>
-                      setInboxMenuId((current) => (current === item.id ? null : item.id))
-                    }
-                    style={[
-                      styles.inboxRow,
-                      {
-                        borderRadius: profile.chrome.control,
-                        backgroundColor: surfaceBackground(withAlpha(theme.colors.text, 0.05)),
-                      },
-                    ]}>
-                    <InboxIcon size={13} color={theme.colors.primary} />
-                    <View style={styles.inboxBody}>
-                      {text || files.length === 0 ? (
-                        <Text
-                          variant="caption"
-                          numberOfLines={2}
-                          color={theme.colors.textMuted}
-                          style={styles.inboxText}>
-                          {text || item.type}
-                        </Text>
-                      ) : null}
-                      <AttachmentThumbnailRow entries={files} />
-                    </View>
-                    {/* Queued is not sent, and the two used to look identical.
-                        Nor is queued the same as steering, which the chip said
-                        it was: this is the item's own `delivery`. */}
-                    <View
+                    <PressableScale
+                      testID={`agent-composer-inbox-row-${item.id}`}
+                      accessibilityRole="button"
+                      accessibilityState={{ expanded: inboxMenuId === item.id }}
+                      accessibilityLabel={
+                        steering ? t`Sending next: ${summary}` : t`Queued: ${summary}`
+                      }
+                      onPress={() =>
+                        setInboxMenuId((current) => (current === item.id ? null : item.id))
+                      }
                       style={[
-                        styles.queuedChip,
-                        { borderRadius: profile.chrome.control },
+                        styles.inboxRow,
                         {
-                          backgroundColor: surfaceBackground(
-                            withAlpha(steering ? theme.colors.warning : theme.colors.primary, 0.16)
-                          ),
+                          borderRadius: profile.chrome.control,
+                          backgroundColor: surfaceBackground(withAlpha(theme.colors.text, 0.05)),
                         },
                       ]}>
-                      <Text
-                        variant="caption"
-                        weight="bold"
-                        color={steering ? theme.colors.warning : theme.colors.primary}>
-                        {steering ? t`Next` : t`Queued`}
-                      </Text>
-                    </View>
-                    {onCancelInboxItem ? (
-                      <PressableScale
-                        testID={`agent-composer-inbox-cancel-${item.id}`}
-                        accessibilityRole="button"
-                        accessibilityLabel={t`Cancel this queued message`}
-                        hitSlop={8}
-                        onPress={() => onCancelInboxItem(item.id)}
-                        style={styles.inboxCancel}>
-                        <Text variant="caption" weight="bold" color={theme.colors.danger}>
-                          ×
+                      <InboxIcon size={13} color={theme.colors.primary} />
+                      <View style={styles.inboxBody}>
+                        {text || files.length === 0 ? (
+                          <Text
+                            variant="caption"
+                            numberOfLines={2}
+                            color={theme.colors.textMuted}
+                            style={styles.inboxText}>
+                            {text || item.type}
+                          </Text>
+                        ) : null}
+                        <AttachmentThumbnailRow entries={files} />
+                      </View>
+                      {/* Queued is not sent, and the two used to look identical.
+                        Nor is queued the same as steering, which the chip said
+                        it was: this is the item's own `delivery`. */}
+                      <View
+                        style={[
+                          styles.queuedChip,
+                          { borderRadius: profile.chrome.control },
+                          {
+                            backgroundColor: surfaceBackground(
+                              withAlpha(
+                                steering ? theme.colors.warning : theme.colors.primary,
+                                0.16
+                              )
+                            ),
+                          },
+                        ]}>
+                        <Text
+                          variant="caption"
+                          weight="bold"
+                          color={steering ? theme.colors.warning : theme.colors.primary}>
+                          {steering ? t`Next` : t`Queued`}
                         </Text>
-                      </PressableScale>
+                      </View>
+                      {onCancelInboxItem ? (
+                        <PressableScale
+                          testID={`agent-composer-inbox-cancel-${item.id}`}
+                          accessibilityRole="button"
+                          accessibilityLabel={t`Cancel this queued message`}
+                          hitSlop={8}
+                          onPress={() => onCancelInboxItem(item.id)}
+                          style={styles.inboxCancel}>
+                          <Text variant="caption" weight="bold" color={theme.colors.danger}>
+                            ×
+                          </Text>
+                        </PressableScale>
+                      ) : null}
+                    </PressableScale>
+                    {inboxMenuId === item.id ? (
+                      <AgentActionMenu
+                        testID={`agent-composer-inbox-menu-${item.id}`}
+                        surface="ground"
+                        items={inboxActions(item)}
+                      />
                     ) : null}
-                  </PressableScale>
-                  {inboxMenuId === item.id ? (
-                    <AgentActionMenu
-                      testID={`agent-composer-inbox-menu-${item.id}`}
-                      surface="ground"
-                      items={inboxActions(item)}
-                    />
-                  ) : null}
-                </Animated.View>
-              );
-            })}
-          </GlassChrome>
-        </Animated.View>
-      ) : null}
+                  </Animated.View>
+                );
+              })}
+            </GlassChrome>
+          </Animated.View>
+        ) : null}
 
-      {/* Agent mode popup */}
-      {modeMenuOpen ? (
-        <View style={styles.popupWrapper}>
-          <AgentModeMenu
-            agents={availableAgents}
-            selectedAgent={selectedAgent}
-            onSelectAgent={(agId) => {
-              setModeMenuOpen(false);
-              onSelectAgentMode?.(agId);
-            }}
-            textColor={chromeText}
-          />
-        </View>
-      ) : null}
+        {/* Agent mode popup */}
+        {modeMenuOpen ? (
+          <View style={styles.popupWrapper}>
+            <AgentModeMenu
+              agents={availableAgents}
+              selectedAgent={selectedAgent}
+              onSelectAgent={(agId) => {
+                setModeMenuOpen(false);
+                onSelectAgentMode?.(agId);
+              }}
+              textColor={chromeText}
+            />
+          </View>
+        ) : null}
 
-      {/* File mention (@) floating list */}
-      {mentionTrigger &&
-      (offeredComputers.length > 0 || (canMentionFiles && mentionHits.length > 0)) ? (
-        <View style={styles.composerFloatingContent}>
-          <FileMentionPanel
-            hits={canMentionFiles ? mentionHits : []}
-            computers={offeredComputers}
-            onSelectComputer={chooseComputer}
-            query={mentionTrigger.query}
-            onSelect={chooseMention}
-            scope="project"
-          />
-        </View>
-      ) : null}
+        {/* File mention (@) floating list */}
+        {mentionTrigger &&
+        (offeredComputers.length > 0 || (canMentionFiles && mentionHits.length > 0)) ? (
+          <View style={styles.composerFloatingContent}>
+            <FileMentionPanel
+              hits={canMentionFiles ? mentionHits : []}
+              computers={offeredComputers}
+              onSelectComputer={chooseComputer}
+              query={mentionTrigger.query}
+              onSelect={chooseMention}
+              scope="project"
+            />
+          </View>
+        ) : null}
 
-      {/* Slash command and skills (/) floating list */}
-      {slashPopup.open ? (
-        <View style={styles.composerPopup}>
-          <ComposerPopup
-            rows={slashPopup.rows}
-            onPick={slashPopup.pick}
-            maxHeight={popupMaxHeight}
-            testIDPrefix="slash-command"
-            scope="project"
-          />
-        </View>
-      ) : null}
+        {/* Slash command and skills (/) floating list */}
+        {slashPopup.open ? (
+          <View style={styles.composerPopup}>
+            <ComposerPopup
+              rows={slashPopup.rows}
+              onPick={slashPopup.pick}
+              maxHeight={popupMaxHeight}
+              testIDPrefix="slash-command"
+              scope="project"
+            />
+          </View>
+        ) : null}
 
-      {/* Skills ($) floating list. `#` can take this same slot later. */}
-      {skillPopup.open ? (
-        <View style={styles.composerPopup}>
-          <ComposerPopup
-            rows={skillPopup.rows}
-            onPick={skillPopup.pick}
-            maxHeight={popupMaxHeight}
-            testIDPrefix="skill"
-            scope="project"
-          />
-        </View>
-      ) : null}
+        {/* Skills ($) floating list. `#` can take this same slot later. */}
+        {skillPopup.open ? (
+          <View style={styles.composerPopup}>
+            <ComposerPopup
+              rows={skillPopup.rows}
+              onPick={skillPopup.pick}
+              maxHeight={popupMaxHeight}
+              testIDPrefix="skill"
+              scope="project"
+            />
+          </View>
+        ) : null}
 
-      {/* What a staged rollback would take, and the two words that decide it.
+        {/* What a staged rollback would take, and the two words that decide it.
           Above the dock, where the reader's hands already are. */}
-      {revert && onCommitRevert && onKeepRevert ? (
-        <AgentRevertPlate
-          messages={revert.messages}
-          files={revert.files}
-          onCommit={onCommitRevert}
-          onKeep={onKeepRevert}
-          busy={revertBusy}
-        />
-      ) : null}
-
-      {/* Real streamed details stay accessible until the completed summary
-          lands in the timeline, or the reader dismisses the terminal notice. */}
-      <View
-        onLayout={(event) => {
-          const { height } = event.nativeEvent.layout;
-          setCompactionRowHeight(height);
-        }}>
-        {compaction ? (
-          <CompactionPill
-            key={compaction.startedSeq}
-            activity={compaction}
-            {...(onDismissCompaction ? { onDismiss: onDismissCompaction } : {})}
+        {revert && onCommitRevert && onKeepRevert ? (
+          <AgentRevertPlate
+            messages={revert.messages}
+            files={revert.files}
+            onCommit={onCommitRevert}
+            onKeep={onKeepRevert}
+            busy={revertBusy}
           />
         ) : null}
-      </View>
 
-      {/* The wrapper is here to be measured: `GlassChrome` is a material and
+        {/* Real streamed details stay accessible until the completed summary
+          lands in the timeline, or the reader dismisses the terminal notice. */}
+        <View
+          onLayout={(event) => {
+            const { height } = event.nativeEvent.layout;
+            setCompactionRowHeight(height);
+          }}>
+          {compaction ? (
+            <CompactionPill
+              key={compaction.startedSeq}
+              activity={compaction}
+              {...(onDismissCompaction ? { onDismiss: onDismissCompaction } : {})}
+            />
+          ) : null}
+        </View>
+
+        {/* The wrapper is here to be measured: `GlassChrome` is a material and
           takes no `onLayout` of its own. */}
-      <View
-        onLayout={(event) => {
-          const { height, x } = event.nativeEvent.layout;
-          setSurfaceLeft(x);
-          setSurfaceHeight(height);
-        }}
-        // Enclosing bars cast their shadow outside the clipped material.
-        // Home's field owns its plate; leave the ornament above it transparent.
-        style={
-          bar &&
-          !flushField && {
-            borderTopLeftRadius: profile.chrome.surface,
-            borderTopRightRadius: profile.chrome.surface,
-            boxShadow: appChrome.shadow.composerDock,
-          }
-        }>
-        <ComposerSurface
-          flushField={flushField}
-          surface="composer"
-          artworkEnabled={false}
-          borderless
-          shape={flushField ? 'composerField' : bar ? 'none' : 'sheet'}
-          style={[
-            styles.composerDock,
+        <View
+          onLayout={(event) => {
+            const { height, x } = event.nativeEvent.layout;
+            setSurfaceLeft(x);
+            setSurfaceHeight(height);
+          }}
+          // Enclosing bars cast their shadow outside the clipped material.
+          // Home's field owns its plate; leave the ornament above it transparent.
+          style={
             bar &&
-              !flushField && {
-                borderTopLeftRadius: profile.chrome.surface,
-                borderTopRightRadius: profile.chrome.surface,
-              },
-          ]}>
-          <View
+            !flushField && {
+              borderTopLeftRadius: profile.chrome.surface,
+              borderTopRightRadius: profile.chrome.surface,
+              boxShadow: appChrome.shadow.composerDock,
+            }
+          }>
+          <ComposerSurface
+            flushField={flushField}
+            surface="composer"
+            artworkEnabled={false}
+            borderless
+            shape={flushField ? 'composerField' : bar ? 'none' : 'sheet'}
             style={[
-              styles.composerInner,
-              { paddingBottom: innerBottomPadding },
-              // Above row 1, the same step as under the field.
-              compact && { paddingTop: theme.spacing.sm },
-              bar && { paddingHorizontal: bar.inset },
-              flushField && { paddingHorizontal: 0, paddingTop: 0 },
+              styles.composerDock,
+              bar &&
+                !flushField && {
+                  borderTopLeftRadius: profile.chrome.surface,
+                  borderTopRightRadius: profile.chrome.surface,
+                },
             ]}>
-            {accessory}
-            {/* Row 1: roots only. Tapping the current root opens its tree. */}
-            {sessionStrip.length > 0 ? (
-              <ScrollView
-                ref={sessionStripRef}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.sessionStripContent}
-                style={styles.sessionStripViewport}>
-                {/* Keep the direct way back out of the selected subagent. */}
-                {parentSession ? (
-                  <PressableScale
-                    testID="agent-composer-session-back"
-                    onPress={() => onSelectSession?.(parentSession.asid)}
-                    accessibilityRole="button"
-                    accessibilityLabel={t`Back to the parent session`}
-                    style={[
-                      styles.backChip,
-                      { borderRadius: profile.chrome.navigationPill },
-                      {
-                        backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                      },
-                    ]}>
-                    <BackIcon size={13} color={theme.colors.primary} />
-                  </PressableScale>
-                ) : null}
-                {sessionStrip.map((node) => (
-                  <SessionChip
-                    key={node.session.asid}
-                    node={node}
-                    active={node.session.asid === selectedRootAsid}
-                    current={node.session.asid === activeAsid}
-                    lead={
-                      sessionLead
-                        ? sessionLead(node.session)
-                        : nameOfAgent(node.session.mode || selectedAgent || 'build')
-                    }
-                    onPress={handleSelectSession}
-                    onOpenTree={onOpenSessionTree}
-                    onMeasure={measureChip}
-                    subtaskActivity={
-                      node.session.asid === selectedRootAsid ? rootSubtaskActivity : undefined
-                    }
-                  />
-                ))}
-              </ScrollView>
-            ) : null}
+            <View
+              style={[
+                styles.composerInner,
+                { paddingBottom: innerBottomPadding },
+                // Above row 1, the same step as under the field.
+                compact && { paddingTop: theme.spacing.sm },
+                bar && { paddingHorizontal: bar.inset },
+                flushField && { paddingHorizontal: 0, paddingTop: 0 },
+              ]}>
+              {accessory}
+              {/* Row 1: roots only. Tapping the current root opens its tree. */}
+              {sessionStrip.length > 0 ? (
+                <ScrollView
+                  ref={sessionStripRef}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.sessionStripContent}
+                  style={styles.sessionStripViewport}>
+                  {/* Keep the direct way back out of the selected subagent. */}
+                  {parentSession ? (
+                    <PressableScale
+                      testID="agent-composer-session-back"
+                      onPress={() => onSelectSession?.(parentSession.asid)}
+                      accessibilityRole="button"
+                      accessibilityLabel={t`Back to the parent session`}
+                      style={[
+                        styles.backChip,
+                        { borderRadius: profile.chrome.navigationPill },
+                        {
+                          backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+                        },
+                      ]}>
+                      <BackIcon size={13} color={theme.colors.primary} />
+                    </PressableScale>
+                  ) : null}
+                  {sessionStrip.map((node) => (
+                    <SessionChip
+                      key={node.session.asid}
+                      node={node}
+                      active={node.session.asid === selectedRootAsid}
+                      current={node.session.asid === activeAsid}
+                      lead={
+                        sessionLead
+                          ? sessionLead(node.session)
+                          : nameOfAgent(node.session.mode || selectedAgent || 'build')
+                      }
+                      onPress={handleSelectSession}
+                      onOpenTree={onOpenSessionTree}
+                      onMeasure={measureChip}
+                      subtaskActivity={
+                        node.session.asid === selectedRootAsid ? rootSubtaskActivity : undefined
+                      }
+                    />
+                  ))}
+                </ScrollView>
+              ) : null}
 
-            {/* Row 2: Function Keyboard / Toolbar (功能键盘) */}
-            {/*
+              {/* Row 2: Function Keyboard / Toolbar (功能键盘) */}
+              {/*
             The row scrolls and always did; nothing said so. The last chip ran
             off the right-hand edge mid-glyph -- `$0.0` for a cost of $0.00 --
             which reads as a clipped layout rather than as more to come. The
             fade says there is more, and the content's own right padding keeps
             the last chip whole under it.
           */}
-            {hideParameterRow ? null : compact ? (
-              // The quiet line: caption type in the subtle tone, under row 1's
-              // body-size primary line, then the compact gap to the field.
-              // One step more to the field than between the two text rows:
-              // the field is a different thing.
-              <View style={[styles.segmentRow, segmentRowLead, { marginBottom: theme.spacing.sm }]}>
-                {segmentMode ? (
-                  <TextSegment
-                    testID="agent-composer-mode-btn"
-                    hitSlop={segmentHitSlop.next}
-                    onPress={toggleMode}
-                    accessibilityRole="button"
-                    accessibilityLabel={t`Select agent mode`}>
-                    <Text
-                      variant="caption"
-                      numberOfLines={1}
-                      color={modeMenuOpen ? theme.colors.primary : theme.colors.textSubtle}>
-                      {modeLabel(selectedAgent ?? 'build')}
-                    </Text>
-                    <DisclosureDownIcon size={QUIET_CHEVRON} color={theme.colors.textSubtle} />
-                  </TextSegment>
-                ) : null}
-                {segmentModel ? (
-                  <TextSegment
-                    testID="agent-composer-model-btn"
-                    hitSlop={segmentHitSlop.next}
-                    onPress={onOpenModelSheet}
-                    accessibilityRole="button"
-                    accessibilityLabel={t`Select model: ${modelDisplayName}`}>
-                    <Text variant="caption" numberOfLines={1} color={theme.colors.textSubtle}>
-                      {segmentMode ? `· ${modelDisplayName}` : modelDisplayName}
-                    </Text>
-                    <DisclosureDownIcon size={QUIET_CHEVRON} color={theme.colors.textSubtle} />
-                  </TextSegment>
-                ) : null}
-              </View>
-            ) : (
-              <View style={styles.actionRowViewport}>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.actionRowContent}
-                  style={styles.actionRowScroll}>
-                  {/* All-sessions button (icon only) */}
-                  {chipIds.has('sessions') ? (
-                    <PressableScale
-                      testID="agent-composer-sessions-btn"
-                      onPress={onOpenSessionsSheet}
-                      accessibilityRole="button"
-                      accessibilityLabel={t`All sessions`}
-                      style={[
-                        styles.actionBtn,
-                        { borderRadius: profile.chrome.roundControl },
-                        { backgroundColor: surfaceBackground(chromeGlass) },
-                      ]}>
-                      <StackIcon size={16} color={chromeText} />
-                    </PressableScale>
-                  ) : null}
-
-                  {/* Quick Agent Mode Popover Button */}
-                  {chipIds.has('mode') ? (
-                    <PressableScale
+              {hideParameterRow ? null : compact ? (
+                // The quiet line: caption type in the subtle tone, under row 1's
+                // body-size primary line, then the compact gap to the field.
+                // One step more to the field than between the two text rows:
+                // the field is a different thing.
+                <View
+                  style={[styles.segmentRow, segmentRowLead, { marginBottom: theme.spacing.sm }]}>
+                  {segmentMode ? (
+                    <TextSegment
                       testID="agent-composer-mode-btn"
+                      hitSlop={segmentHitSlop.next}
                       onPress={toggleMode}
                       accessibilityRole="button"
-                      accessibilityLabel={t`Select agent mode`}
-                      style={[
-                        styles.actionBtnWithLabel,
-                        { borderRadius: profile.chrome.roundControl },
-                        // Always one point of border, coloured only while open, so
-                        // opening the menu never widens the chip and moves the next.
-                        {
-                          borderWidth: 1,
-                          borderColor: modeMenuOpen ? theme.colors.primary : 'transparent',
-                        },
-                        { backgroundColor: surfaceBackground(chromeGlass) },
-                      ]}>
+                      accessibilityLabel={t`Select agent mode`}>
                       <Text
                         variant="caption"
-                        color={theme.colors.text}
-                        style={styles.actionBtnLabel}>
+                        numberOfLines={1}
+                        color={modeMenuOpen ? theme.colors.primary : theme.colors.textSubtle}>
                         {modeLabel(selectedAgent ?? 'build')}
                       </Text>
-                      <DisclosureDownIcon size={12} color={theme.colors.textMuted} />
-                    </PressableScale>
+                      <DisclosureDownIcon size={QUIET_CHEVRON} color={theme.colors.textSubtle} />
+                    </TextSegment>
                   ) : null}
-
-                  {/* Quick Model Selector Button */}
-                  {chipIds.has('model') ? (
-                    <PressableScale
+                  {segmentModel ? (
+                    <TextSegment
                       testID="agent-composer-model-btn"
+                      hitSlop={segmentHitSlop.next}
                       onPress={onOpenModelSheet}
                       accessibilityRole="button"
-                      accessibilityLabel={t`Select model: ${modelDisplayName}`}
-                      style={[
-                        styles.actionBtnWithLabel,
-                        { borderRadius: profile.chrome.roundControl },
-                        { backgroundColor: surfaceBackground(chromeGlass) },
-                      ]}>
-                      <Text
-                        variant="caption"
-                        color={theme.colors.text}
-                        style={styles.actionBtnLabel}>
-                        {modelDisplayName}
+                      accessibilityLabel={t`Select model: ${modelDisplayName}`}>
+                      <Text variant="caption" numberOfLines={1} color={theme.colors.textSubtle}>
+                        {segmentMode ? `· ${modelDisplayName}` : modelDisplayName}
                       </Text>
-                      <DisclosureDownIcon size={12} color={theme.colors.textMuted} />
-                    </PressableScale>
+                      <DisclosureDownIcon size={QUIET_CHEVRON} color={theme.colors.textSubtle} />
+                    </TextSegment>
                   ) : null}
+                </View>
+              ) : (
+                <View style={styles.actionRowViewport}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.actionRowContent}
+                    style={styles.actionRowScroll}>
+                    {/* All-sessions button (icon only) */}
+                    {chipIds.has('sessions') ? (
+                      <PressableScale
+                        testID="agent-composer-sessions-btn"
+                        onPress={onOpenSessionsSheet}
+                        accessibilityRole="button"
+                        accessibilityLabel={t`All sessions`}
+                        style={[
+                          styles.actionBtn,
+                          { borderRadius: profile.chrome.roundControl },
+                          { backgroundColor: surfaceBackground(chromeGlass) },
+                        ]}>
+                        <StackIcon size={16} color={chromeText} />
+                      </PressableScale>
+                    ) : null}
 
-                  {/* The queue, as the gateway last stated it */}
-                  {chipIds.has('inbox') ? (
-                    <PressableScale
-                      testID="agent-composer-inbox-pill"
-                      onPress={() => setInboxOpen((open) => !open)}
-                      accessibilityRole="button"
-                      accessibilityState={{ expanded: inboxOpen }}
-                      accessibilityLabel={t`${inbox.length} queued`}
-                      style={[
-                        styles.actionBtnWithLabel,
-                        { borderRadius: profile.chrome.roundControl },
-                        {
-                          backgroundColor: surfaceBackground(withAlpha(theme.colors.primary, 0.18)),
-                        },
-                      ]}>
-                      <InboxIcon size={13} color={theme.colors.primary} />
-                      <Text
-                        variant="caption"
-                        weight="bold"
-                        color={theme.colors.primary}
-                        style={styles.actionBtnLabel}>
-                        {inbox.length}
-                      </Text>
-                    </PressableScale>
-                  ) : null}
+                    {/* Quick Agent Mode Popover Button */}
+                    {chipIds.has('mode') ? (
+                      <PressableScale
+                        testID="agent-composer-mode-btn"
+                        onPress={toggleMode}
+                        accessibilityRole="button"
+                        accessibilityLabel={t`Select agent mode`}
+                        style={[
+                          styles.actionBtnWithLabel,
+                          { borderRadius: profile.chrome.roundControl },
+                          // Always one point of border, coloured only while open, so
+                          // opening the menu never widens the chip and moves the next.
+                          {
+                            borderWidth: 1,
+                            borderColor: modeMenuOpen ? theme.colors.primary : 'transparent',
+                          },
+                          { backgroundColor: surfaceBackground(chromeGlass) },
+                        ]}>
+                        <Text
+                          variant="caption"
+                          color={theme.colors.text}
+                          style={styles.actionBtnLabel}>
+                          {modeLabel(selectedAgent ?? 'build')}
+                        </Text>
+                        <DisclosureDownIcon size={12} color={theme.colors.textMuted} />
+                      </PressableScale>
+                    ) : null}
 
-                  {/* What is still running after the agent moved on */}
-                  {chipIds.has('background') ? (
-                    <PressableScale
-                      testID="agent-composer-background-pill"
-                      onPress={onOpenBackgroundTray}
-                      accessibilityRole="button"
-                      accessibilityLabel={t`${backgroundCount} running in the background`}
-                      style={[
-                        styles.actionBtnWithLabel,
-                        { borderRadius: profile.chrome.roundControl },
-                        {
-                          backgroundColor: surfaceBackground(withAlpha(theme.colors.warning, 0.18)),
-                        },
-                      ]}>
-                      <TerminalIcon size={13} color={theme.colors.warning} />
-                      <Text
-                        variant="caption"
-                        weight="bold"
-                        color={theme.colors.warning}
-                        style={styles.actionBtnLabel}>
-                        {backgroundCount}
-                      </Text>
-                    </PressableScale>
-                  ) : null}
+                    {/* Quick Model Selector Button */}
+                    {chipIds.has('model') ? (
+                      <PressableScale
+                        testID="agent-composer-model-btn"
+                        onPress={onOpenModelSheet}
+                        accessibilityRole="button"
+                        accessibilityLabel={t`Select model: ${modelDisplayName}`}
+                        style={[
+                          styles.actionBtnWithLabel,
+                          { borderRadius: profile.chrome.roundControl },
+                          { backgroundColor: surfaceBackground(chromeGlass) },
+                        ]}>
+                        <Text
+                          variant="caption"
+                          color={theme.colors.text}
+                          style={styles.actionBtnLabel}>
+                          {modelDisplayName}
+                        </Text>
+                        <DisclosureDownIcon size={12} color={theme.colors.textMuted} />
+                      </PressableScale>
+                    ) : null}
 
-                  {/* OpenCode Tasks Button */}
-                  {chipIds.has('tasks') ? (
-                    <PressableScale
-                      testID="agent-composer-tasks-btn"
-                      onPress={onOpenTasksSheet}
-                      accessibilityRole="button"
-                      accessibilityLabel={t`Tasks progress`}
-                      style={[
-                        styles.actionBtnWithLabel,
-                        { borderRadius: profile.chrome.roundControl },
-                        { backgroundColor: surfaceBackground(chromeGlass) },
-                      ]}>
-                      <TaskIcon
-                        size={14}
-                        color={
-                          tasks && tasks.length > 0 && tasks.every((t) => t.done)
-                            ? theme.colors.success
-                            : theme.colors.primary
+                    {/* The queue, as the gateway last stated it */}
+                    {chipIds.has('inbox') ? (
+                      <PressableScale
+                        testID="agent-composer-inbox-pill"
+                        onPress={() => setInboxOpen((open) => !open)}
+                        accessibilityRole="button"
+                        accessibilityState={{ expanded: inboxOpen }}
+                        accessibilityLabel={t`${inbox.length} queued`}
+                        style={[
+                          styles.actionBtnWithLabel,
+                          { borderRadius: profile.chrome.roundControl },
+                          {
+                            backgroundColor: surfaceBackground(
+                              withAlpha(theme.colors.primary, 0.18)
+                            ),
+                          },
+                        ]}>
+                        <InboxIcon size={13} color={theme.colors.primary} />
+                        <Text
+                          variant="caption"
+                          weight="bold"
+                          color={theme.colors.primary}
+                          style={styles.actionBtnLabel}>
+                          {inbox.length}
+                        </Text>
+                      </PressableScale>
+                    ) : null}
+
+                    {/* What is still running after the agent moved on */}
+                    {chipIds.has('background') ? (
+                      <PressableScale
+                        testID="agent-composer-background-pill"
+                        onPress={onOpenBackgroundTray}
+                        accessibilityRole="button"
+                        accessibilityLabel={t`${backgroundCount} running in the background`}
+                        style={[
+                          styles.actionBtnWithLabel,
+                          { borderRadius: profile.chrome.roundControl },
+                          {
+                            backgroundColor: surfaceBackground(
+                              withAlpha(theme.colors.warning, 0.18)
+                            ),
+                          },
+                        ]}>
+                        <TerminalIcon size={13} color={theme.colors.warning} />
+                        <Text
+                          variant="caption"
+                          weight="bold"
+                          color={theme.colors.warning}
+                          style={styles.actionBtnLabel}>
+                          {backgroundCount}
+                        </Text>
+                      </PressableScale>
+                    ) : null}
+
+                    {/* OpenCode Tasks Button */}
+                    {chipIds.has('tasks') ? (
+                      <PressableScale
+                        testID="agent-composer-tasks-btn"
+                        onPress={onOpenTasksSheet}
+                        accessibilityRole="button"
+                        accessibilityLabel={t`Tasks progress`}
+                        style={[
+                          styles.actionBtnWithLabel,
+                          { borderRadius: profile.chrome.roundControl },
+                          { backgroundColor: surfaceBackground(chromeGlass) },
+                        ]}>
+                        <TaskIcon
+                          size={14}
+                          color={
+                            tasks && tasks.length > 0 && tasks.every((t) => t.done)
+                              ? theme.colors.success
+                              : theme.colors.primary
+                          }
+                        />
+                        <Text
+                          variant="caption"
+                          color={theme.colors.text}
+                          style={styles.actionBtnLabel}>
+                          {tasks && tasks.length > 0
+                            ? t`Tasks (${tasks.filter((t) => t.done).length}/${tasks.length})`
+                            : t`Tasks`}
+                        </Text>
+                        <DisclosureDownIcon size={12} color={theme.colors.textMuted} />
+                      </PressableScale>
+                    ) : null}
+
+                    {chipIds.has('delivery') ? (
+                      <PressableScale
+                        testID="agent-composer-delivery-btn"
+                        onPress={() => {
+                          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          setDeliveryMode((prev) => (prev === 'steer' ? 'queue' : 'steer'));
+                        }}
+                        accessibilityRole="button"
+                        accessibilityLabel={
+                          deliveryMode === 'steer'
+                            ? t`Delivery mode: Steer (real-time). Tap to switch to Queue.`
+                            : t`Delivery mode: Queue. Tap to switch to Steer.`
                         }
-                      />
-                      <Text
-                        variant="caption"
-                        color={theme.colors.text}
-                        style={styles.actionBtnLabel}>
-                        {tasks && tasks.length > 0
-                          ? t`Tasks (${tasks.filter((t) => t.done).length}/${tasks.length})`
-                          : t`Tasks`}
-                      </Text>
-                      <DisclosureDownIcon size={12} color={theme.colors.textMuted} />
-                    </PressableScale>
-                  ) : null}
+                        style={[
+                          styles.actionBtnWithLabel,
+                          { borderRadius: profile.chrome.roundControl },
+                          {
+                            backgroundColor: surfaceBackground(
+                              deliveryMode === 'steer'
+                                ? withAlpha(theme.colors.warning, 0.2)
+                                : withAlpha(theme.colors.primary, 0.2)
+                            ),
+                            borderColor:
+                              deliveryMode === 'steer'
+                                ? withAlpha(theme.colors.warning, 0.5)
+                                : withAlpha(theme.colors.primary, 0.5),
+                            borderWidth: 1,
+                          },
+                        ]}>
+                        {deliveryMode === 'steer' ? (
+                          <>
+                            <QuickActionIcon size={13} color={theme.colors.warning} />
+                            <Text
+                              variant="caption"
+                              weight="bold"
+                              color={theme.colors.warning}
+                              style={styles.actionBtnLabel}>
+                              <Trans>Steer</Trans>
+                            </Text>
+                          </>
+                        ) : (
+                          <>
+                            <InboxIcon size={13} color={theme.colors.primary} />
+                            <Text
+                              variant="caption"
+                              weight="bold"
+                              color={theme.colors.primary}
+                              style={styles.actionBtnLabel}>
+                              <Trans>Queue</Trans>
+                            </Text>
+                          </>
+                        )}
+                      </PressableScale>
+                    ) : null}
 
-                  {chipIds.has('delivery') ? (
-                    <PressableScale
-                      testID="agent-composer-delivery-btn"
-                      onPress={() => {
-                        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        setDeliveryMode((prev) => (prev === 'steer' ? 'queue' : 'steer'));
-                      }}
-                      accessibilityRole="button"
-                      accessibilityLabel={
-                        deliveryMode === 'steer'
-                          ? t`Delivery mode: Steer (real-time). Tap to switch to Queue.`
-                          : t`Delivery mode: Queue. Tap to switch to Steer.`
-                      }
-                      style={[
-                        styles.actionBtnWithLabel,
-                        { borderRadius: profile.chrome.roundControl },
-                        {
-                          backgroundColor: surfaceBackground(
-                            deliveryMode === 'steer'
-                              ? withAlpha(theme.colors.warning, 0.2)
-                              : withAlpha(theme.colors.primary, 0.2)
-                          ),
-                          borderColor:
-                            deliveryMode === 'steer'
-                              ? withAlpha(theme.colors.warning, 0.5)
-                              : withAlpha(theme.colors.primary, 0.5),
-                          borderWidth: 1,
-                        },
-                      ]}>
-                      {deliveryMode === 'steer' ? (
-                        <>
-                          <QuickActionIcon size={13} color={theme.colors.warning} />
-                          <Text
-                            variant="caption"
-                            weight="bold"
-                            color={theme.colors.warning}
-                            style={styles.actionBtnLabel}>
-                            <Trans>Steer</Trans>
-                          </Text>
-                        </>
-                      ) : (
-                        <>
-                          <InboxIcon size={13} color={theme.colors.primary} />
-                          <Text
-                            variant="caption"
-                            weight="bold"
-                            color={theme.colors.primary}
-                            style={styles.actionBtnLabel}>
-                            <Trans>Queue</Trans>
-                          </Text>
-                        </>
-                      )}
-                    </PressableScale>
-                  ) : null}
-
-                  {/* Context window, token spend and cost, in one pill */}
-                  {chipIds.has('context') && contextPill ? (
-                    <PressableScale
-                      testID="agent-composer-tokens-pill"
-                      onPress={() => {
-                        if (onPressTokens) {
-                          onPressTokens();
-                        } else if (tokens) {
-                          showToast({
-                            variant: 'info',
-                            title: t`Session Tokens`,
-                            message: `Input: ${tokens.input.toLocaleString()} • Output: ${tokens.output.toLocaleString()}${tokens.reasoning ? ` • Reasoning: ${tokens.reasoning.toLocaleString()}` : ''}`,
-                          });
+                    {/* Context window, token spend and cost, in one pill */}
+                    {chipIds.has('context') && contextPill ? (
+                      <PressableScale
+                        testID="agent-composer-tokens-pill"
+                        onPress={() => {
+                          if (onPressTokens) {
+                            onPressTokens();
+                          } else if (tokens) {
+                            showToast({
+                              variant: 'info',
+                              title: t`Session Tokens`,
+                              message: `Input: ${tokens.input.toLocaleString()} • Output: ${tokens.output.toLocaleString()}${tokens.reasoning ? ` • Reasoning: ${tokens.reasoning.toLocaleString()}` : ''}`,
+                            });
+                          }
+                        }}
+                        accessibilityRole="button"
+                        accessibilityLabel={
+                          contextPill.ratio === null
+                            ? t`Tokens usage and cost`
+                            : t`Context ${Math.round(contextPill.ratio * 100)}% full`
                         }
-                      }}
-                      accessibilityRole="button"
-                      accessibilityLabel={
-                        contextPill.ratio === null
-                          ? t`Tokens usage and cost`
-                          : t`Context ${Math.round(contextPill.ratio * 100)}% full`
-                      }
-                      style={[
-                        styles.actionBtnWithLabel,
-                        { borderRadius: profile.chrome.roundControl },
-                        { backgroundColor: surfaceBackground(chromeGlass) },
-                      ]}>
-                      <ProcessorIcon size={13} color={chromeText} />
-                      <Text
-                        variant="caption"
-                        color={theme.colors.textMuted}
-                        style={styles.actionBtnLabel}>
-                        {contextPill.label}
-                      </Text>
-                      {/* A gauge only when the engine stated a window to measure. */}
-                      {contextPill.ratio !== null ? (
-                        <View
-                          style={[
-                            styles.contextTrack,
-                            { backgroundColor: withAlpha(theme.colors.text, 0.12) },
-                          ]}>
+                        style={[
+                          styles.actionBtnWithLabel,
+                          { borderRadius: profile.chrome.roundControl },
+                          { backgroundColor: surfaceBackground(chromeGlass) },
+                        ]}>
+                        <ProcessorIcon size={13} color={chromeText} />
+                        <Text
+                          variant="caption"
+                          color={theme.colors.textMuted}
+                          style={styles.actionBtnLabel}>
+                          {contextPill.label}
+                        </Text>
+                        {/* A gauge only when the engine stated a window to measure. */}
+                        {contextPill.ratio !== null ? (
                           <View
                             style={[
-                              styles.contextFill,
-                              {
-                                width: `${Math.max(3, Math.round(contextPill.ratio * 100))}%`,
-                                backgroundColor:
-                                  contextPill.ratio > 0.9
-                                    ? theme.colors.danger
-                                    : contextPill.ratio > 0.7
-                                      ? theme.colors.warning
-                                      : theme.colors.primary,
-                              },
-                            ]}
-                          />
-                        </View>
-                      ) : null}
-                      <DisclosureDownIcon size={12} color={theme.colors.textMuted} />
-                    </PressableScale>
-                  ) : null}
+                              styles.contextTrack,
+                              { backgroundColor: withAlpha(theme.colors.text, 0.12) },
+                            ]}>
+                            <View
+                              style={[
+                                styles.contextFill,
+                                {
+                                  width: `${Math.max(3, Math.round(contextPill.ratio * 100))}%`,
+                                  backgroundColor:
+                                    contextPill.ratio > 0.9
+                                      ? theme.colors.danger
+                                      : contextPill.ratio > 0.7
+                                        ? theme.colors.warning
+                                        : theme.colors.primary,
+                                },
+                              ]}
+                            />
+                          </View>
+                        ) : null}
+                        <DisclosureDownIcon size={12} color={theme.colors.textMuted} />
+                      </PressableScale>
+                    ) : null}
 
-                  {/* Changes stay independent of the context pill. */}
-                  {chipIds.has('diff') ? (
-                    <PressableScale
-                      onPress={onOpenDiffSheet}
-                      accessibilityRole="button"
-                      accessibilityLabel={t`View file changes`}
-                      style={[
-                        styles.actionBtn,
-                        { borderRadius: profile.chrome.roundControl },
-                        {
-                          backgroundColor: surfaceBackground(withAlpha(theme.colors.primary, 0.18)),
-                        },
-                      ]}>
-                      <CompareIcon size={15} color={theme.colors.primary} />
-                      <View
-                        style={[styles.diffIndicator, { backgroundColor: theme.colors.primary }]}
-                      />
-                    </PressableScale>
-                  ) : null}
+                    {/* Changes stay independent of the context pill. */}
+                    {chipIds.has('diff') ? (
+                      <PressableScale
+                        onPress={onOpenDiffSheet}
+                        accessibilityRole="button"
+                        accessibilityLabel={t`View file changes`}
+                        style={[
+                          styles.actionBtn,
+                          { borderRadius: profile.chrome.roundControl },
+                          {
+                            backgroundColor: surfaceBackground(
+                              withAlpha(theme.colors.primary, 0.18)
+                            ),
+                          },
+                        ]}>
+                        <CompareIcon size={15} color={theme.colors.primary} />
+                        <View
+                          style={[styles.diffIndicator, { backgroundColor: theme.colors.primary }]}
+                        />
+                      </PressableScale>
+                    ) : null}
 
-                  {chipIds.has('stop') ? (
-                    <PressableScale
-                      onPress={onAbort}
-                      accessibilityRole="button"
-                      accessibilityLabel={t`Stop agent execution`}
-                      style={[
-                        styles.actionBtnWithLabel,
-                        { borderRadius: profile.chrome.roundControl },
-                        styles.stopActionBtn,
-                        { backgroundColor: theme.colors.danger },
-                      ]}>
-                      <StopIcon size={12} color={theme.colors.onPrimary} />
-                      <Text
-                        variant="caption"
-                        color={theme.colors.onPrimary}
-                        style={styles.actionBtnLabel}>
-                        <Trans>Stop</Trans>
-                      </Text>
-                    </PressableScale>
-                  ) : null}
-                </ScrollView>
-              </View>
-            )}
+                    {chipIds.has('stop') ? (
+                      <PressableScale
+                        onPress={onAbort}
+                        accessibilityRole="button"
+                        accessibilityLabel={t`Stop agent execution`}
+                        style={[
+                          styles.actionBtnWithLabel,
+                          { borderRadius: profile.chrome.roundControl },
+                          styles.stopActionBtn,
+                          { backgroundColor: theme.colors.danger },
+                        ]}>
+                        <StopIcon size={12} color={theme.colors.onPrimary} />
+                        <Text
+                          variant="caption"
+                          color={theme.colors.onPrimary}
+                          style={styles.actionBtnLabel}>
+                          <Trans>Stop</Trans>
+                        </Text>
+                      </PressableScale>
+                    ) : null}
+                  </ScrollView>
+                </View>
+              )}
 
-            {/* Attachment staged preview strip */}
-            {visibleAttachments.length > 0 ? (
-              <Animated.View
-                entering={fadeIn('micro')}
-                // Home restores field artwork on removal; do not leave a native
-                // exit view painting across that field's newly raised position.
-                exiting={flushField ? undefined : fadeOutDown('short')}
-                style={[
-                  styles.stripWrapper,
-                  flushField && {
-                    backgroundColor: surfaceBackground(theme.colors.surface),
-                    borderRadius: profile.chrome.noticeBanner,
-                  },
-                ]}>
-                <AttachmentStrip
-                  attachments={visibleAttachments}
-                  onRemove={removeStagedAttachment}
-                  onRetry={retryStagedAttachment}
-                  onPreview={setPreviewAttachmentId}
-                  textColor={chromeText}
-                  readOnly={submittingAttachments}
-                />
-              </Animated.View>
-            ) : null}
+              {/* Attachment staged preview strip */}
+              {visibleAttachments.length > 0 ? (
+                <Animated.View
+                  entering={fadeIn('micro')}
+                  // Home restores field artwork on removal; do not leave a native
+                  // exit view painting across that field's newly raised position.
+                  exiting={flushField ? undefined : fadeOutDown('short')}
+                  style={[
+                    styles.stripWrapper,
+                    flushField && {
+                      backgroundColor: surfaceBackground(theme.colors.surface),
+                      borderRadius: profile.chrome.noticeBanner,
+                    },
+                  ]}>
+                  <AttachmentStrip
+                    attachments={visibleAttachments}
+                    onRemove={removeStagedAttachment}
+                    onRetry={retryStagedAttachment}
+                    onPreview={setPreviewAttachmentId}
+                    textColor={chromeText}
+                    readOnly={submittingAttachments}
+                  />
+                </Animated.View>
+              ) : null}
 
-            {/* Submission feedback stays outside the canonical transcript. */}
-            {(sending && attachmentUploads.uploading) || submittingAttachments ? (
-              <Animated.View
-                testID="agent-composer-attachment-submission"
-                entering={fadeIn('micro')}
-                exiting={fadeOut('micro')}
-                style={[
-                  styles.uploadWait,
-                  flushField && {
-                    backgroundColor: surfaceBackground(theme.colors.surface),
-                    borderRadius: profile.chrome.noticeBanner,
-                  },
-                ]}>
-                <Spinner size="sm" color={theme.colors.textMuted} />
-                <Text variant="caption" color={theme.colors.textMuted} style={styles.noticeText}>
-                  {attachmentUploads.uploading ? (
-                    <Trans>Waiting for uploads to finish…</Trans>
-                  ) : pendingAttachmentSend?.delivery === 'queue' ? (
-                    <Trans>Requesting queued delivery…</Trans>
-                  ) : pendingAttachmentSend?.delivery === 'steer' ? (
-                    <Trans>Submitting follow-up…</Trans>
-                  ) : (
-                    <Trans>Sending attachment message…</Trans>
-                  )}
-                </Text>
-              </Animated.View>
-            ) : null}
-
-            {/* A direct send's receipt: what went, with its files. It leaves on
-                its own; a tap only hides it sooner, and nothing here looks like
-                a way to take the message back. A queued send has none: its
-                inbox row is the receipt. */}
-            {pendingAttachmentSend?.submittedAttachments ? (
-              <Animated.View
-                key={pendingAttachmentSend.submittedAttachments.map((item) => item.id).join(',')}
-                entering={fadeIn('short')}
-                exiting={fadeOut('short')}>
-                <PressableScale
-                  testID="agent-composer-attachment-acknowledged"
-                  accessibilityRole="button"
-                  accessibilityLiveRegion="polite"
-                  accessibilityLabel={t`Submitted`}
-                  accessibilityHint={t`Hides this notice`}
-                  onPress={() => setPendingAttachmentSend(null)}
+              {/* Submission feedback stays outside the canonical transcript. */}
+              {(sending && attachmentUploads.uploading) || submittingAttachments ? (
+                <Animated.View
+                  testID="agent-composer-attachment-submission"
+                  entering={fadeIn('micro')}
+                  exiting={fadeOut('micro')}
                   style={[
                     styles.uploadWait,
                     flushField && {
@@ -2397,144 +2398,183 @@ export const AgentComposer = memo(function AgentComposer({
                       borderRadius: profile.chrome.noticeBanner,
                     },
                   ]}>
-                  <DoneIcon size={16} color={theme.colors.textMuted} />
-                  <View style={styles.noticeText}>
-                    <Text variant="caption" color={theme.colors.textMuted}>
-                      <Trans>Submitted</Trans>
-                    </Text>
-                  </View>
-                  <AttachmentThumbnailRow
-                    entries={pendingAttachmentSend.submittedAttachments.map((item) => ({
-                      key: item.id,
-                      name: item.name,
-                      uri: item.localUri,
-                      image: isImageAttachment(item.mime),
-                    }))}
-                  />
-                </PressableScale>
-              </Animated.View>
-            ) : null}
+                  <Spinner size="sm" color={theme.colors.textMuted} />
+                  <Text variant="caption" color={theme.colors.textMuted} style={styles.noticeText}>
+                    {attachmentUploads.uploading ? (
+                      <Trans>Waiting for uploads to finish…</Trans>
+                    ) : pendingAttachmentSend?.delivery === 'queue' ? (
+                      <Trans>Requesting queued delivery…</Trans>
+                    ) : pendingAttachmentSend?.delivery === 'steer' ? (
+                      <Trans>Submitting follow-up…</Trans>
+                    ) : (
+                      <Trans>Sending attachment message…</Trans>
+                    )}
+                  </Text>
+                </Animated.View>
+              ) : null}
 
-            {!promptAllowed ? (
-              <Text variant="caption" color={theme.colors.textMuted}>
-                {interactionBlockedReason ?? (
-                  <Trans>
-                    This agent accepts messages after its turn ends. Your draft stays here.
-                  </Trans>
-                )}
-              </Text>
-            ) : null}
+              {/* A direct send's receipt: what went, with its files. It leaves on
+                its own; a tap only hides it sooner, and nothing here looks like
+                a way to take the message back. A queued send has none: its
+                inbox row is the receipt. */}
+              {pendingAttachmentSend?.submittedAttachments ? (
+                <Animated.View
+                  key={pendingAttachmentSend.submittedAttachments.map((item) => item.id).join(',')}
+                  entering={fadeIn('short')}
+                  exiting={fadeOut('short')}>
+                  <PressableScale
+                    testID="agent-composer-attachment-acknowledged"
+                    accessibilityRole="button"
+                    accessibilityLiveRegion="polite"
+                    accessibilityLabel={t`Submitted`}
+                    accessibilityHint={t`Hides this notice`}
+                    onPress={() => setPendingAttachmentSend(null)}
+                    style={[
+                      styles.uploadWait,
+                      flushField && {
+                        backgroundColor: surfaceBackground(theme.colors.surface),
+                        borderRadius: profile.chrome.noticeBanner,
+                      },
+                    ]}>
+                    <DoneIcon size={16} color={theme.colors.textMuted} />
+                    <View style={styles.noticeText}>
+                      <Text variant="caption" color={theme.colors.textMuted}>
+                        <Trans>Submitted</Trans>
+                      </Text>
+                    </View>
+                    <AttachmentThumbnailRow
+                      entries={pendingAttachmentSend.submittedAttachments.map((item) => ({
+                        key: item.id,
+                        name: item.name,
+                        uri: item.localUri,
+                        image: isImageAttachment(item.mime),
+                      }))}
+                    />
+                  </PressableScale>
+                </Animated.View>
+              ) : null}
 
-            {/* TerminalComposer reused for agent prompt */}
-            <View
-              onLayout={(event) => {
-                const { height, width, x } = event.nativeEvent.layout;
-                setInputRowHeight(height);
-                setInputRowLeft(x);
-                setInputRowWidth(width);
-              }}>
-              <TerminalComposer
-                fieldBackground={fieldBackground}
-                fieldBackgroundColor={fieldBackgroundColor}
-                fieldBackgroundOutset={fieldBackgroundOutset}
-                fieldDecoration={decorationHidden ? undefined : fieldDecoration}
-                fieldTextTopInset={fieldTextTopInset}
-                fieldShadow={fieldShadow}
-                onVoiceActiveChange={setVoiceActive}
-                spans={spans}
-                compact={compact}
-                minLines={fieldLines}
-                voiceContext={voiceContext ?? `${sessionId}:${activeAsid ?? 'new'}`}
-                inputRef={inputRef}
-                leading={
-                  canAttach || toolbarLeading ? (
-                    <>
-                      {canAttach ? (
-                        <ComposerAttachmentButton
-                          testID="agent-composer-attach"
-                          label={
-                            attachmentMenuOpen ? t`Close the attachment menu` : t`Attach a file`
-                          }
-                          expanded={attachmentMenuOpen}
-                          disabled={
-                            sending ||
-                            disabled ||
-                            (attachmentTargetId !== undefined &&
-                              record?.serverId !== attachmentTargetId)
-                          }
-                          onPress={() => {
-                            closeToolbarMenu();
-                            setAttachmentMenuOpen((open) => !open);
-                          }}
-                          size={16}
-                          color={attachmentMenuOpen ? theme.colors.primary : chromeText}
-                        />
-                      ) : null}
-                      {toolbarLeading}
-                    </>
-                  ) : undefined
-                }
-                inputProps={{
-                  value: text,
-                  onChangeText: changeText,
-                  placeholder: disabled
-                    ? agentName
-                      ? t`${agentName} is offline`
-                      : t`The agent is offline`
-                    : (placeholder ??
-                      t`Send a message, type / for commands, $ for skills, @ for files…`),
-                  shortPlaceholder: t`Send a message…`,
-                  editable: !sending && !disabled,
-                  testID: inputTestID,
-                  selection,
-                  onSelectionChange: handleSelectionChange,
-                  onKeyPress: (event) => {
-                    slashPopup.inputProps.onKeyPress(event);
-                    skillPopup.inputProps.onKeyPress(event);
-                  },
-                  onSubmitEditing: handleSend,
-                  onFocus: () => setFocused(true),
-                  onBlur: () => setFocused(false),
-                  style: { fontFamily: interfaceFontFamily },
-                }}
-                send={{
-                  accessibilityLabel: !promptAllowed
-                    ? (interactionBlockedReason ?? t`Waiting for the current turn to end`)
-                    : running
-                      ? deliveryMode === 'steer'
-                        ? t`Steer running agent`
-                        : t`Queue message for agent`
-                      : t`Send message`,
-                  armed:
-                    (Boolean(text.trim()) || attachmentUploads.attachments.length > 0) &&
-                    !sending &&
-                    !disabled &&
-                    promptAllowed,
-                  sending,
-                  disabled:
-                    sending ||
-                    disabled ||
-                    !promptAllowed ||
-                    (!text.trim() && attachmentUploads.attachments.length === 0),
-                  onPress: handleSend,
-                  ...(sendTestID ? { testID: sendTestID } : {}),
-                }}
-              />
+              {!promptAllowed ? (
+                <Text variant="caption" color={theme.colors.textMuted}>
+                  {interactionBlockedReason ?? (
+                    <Trans>
+                      This agent accepts messages after its turn ends. Your draft stays here.
+                    </Trans>
+                  )}
+                </Text>
+              ) : null}
+
+              {/* TerminalComposer reused for agent prompt */}
+              <View
+                onLayout={(event) => {
+                  const { height, width, x } = event.nativeEvent.layout;
+                  setInputRowHeight(height);
+                  setInputRowLeft(x);
+                  setInputRowWidth(width);
+                }}>
+                <TerminalComposer
+                  fieldBackground={fieldBackground}
+                  fieldBackgroundColor={fieldBackgroundColor}
+                  fieldBackgroundOutset={fieldBackgroundOutset}
+                  fieldDecoration={decorationHidden ? undefined : fieldDecoration}
+                  fieldTextTopInset={fieldTextTopInset}
+                  fieldShadow={fieldShadow}
+                  onVoiceActiveChange={setVoiceActive}
+                  spans={spans}
+                  compact={compact}
+                  minLines={fieldLines}
+                  voiceContext={voiceContext ?? `${sessionId}:${activeAsid ?? 'new'}`}
+                  inputRef={inputRef}
+                  leading={
+                    canAttach || toolbarLeading ? (
+                      <>
+                        {canAttach ? (
+                          <ComposerAttachmentButton
+                            testID="agent-composer-attach"
+                            label={
+                              attachmentMenuOpen ? t`Close the attachment menu` : t`Attach a file`
+                            }
+                            expanded={attachmentMenuOpen}
+                            disabled={
+                              sending ||
+                              disabled ||
+                              (attachmentTargetId !== undefined &&
+                                record?.serverId !== attachmentTargetId)
+                            }
+                            onPress={() => {
+                              closeToolbarMenu();
+                              setAttachmentMenuOpen((open) => !open);
+                            }}
+                            size={16}
+                            color={attachmentMenuOpen ? theme.colors.primary : chromeText}
+                          />
+                        ) : null}
+                        {toolbarLeading}
+                      </>
+                    ) : undefined
+                  }
+                  inputProps={{
+                    value: text,
+                    onChangeText: changeText,
+                    placeholder: disabled
+                      ? agentName
+                        ? t`${agentName} is offline`
+                        : t`The agent is offline`
+                      : (placeholder ??
+                        t`Send a message, type / for commands, $ for skills, @ for files…`),
+                    shortPlaceholder: t`Send a message…`,
+                    editable: !sending && !disabled,
+                    testID: inputTestID,
+                    selection,
+                    onSelectionChange: handleSelectionChange,
+                    onKeyPress: (event) => {
+                      slashPopup.inputProps.onKeyPress(event);
+                      skillPopup.inputProps.onKeyPress(event);
+                    },
+                    onSubmitEditing: handleSend,
+                    onFocus: () => setFocused(true),
+                    onBlur: () => setFocused(false),
+                    style: { fontFamily: interfaceFontFamily },
+                  }}
+                  send={{
+                    accessibilityLabel: !promptAllowed
+                      ? (interactionBlockedReason ?? t`Waiting for the current turn to end`)
+                      : running
+                        ? deliveryMode === 'steer'
+                          ? t`Steer running agent`
+                          : t`Queue message for agent`
+                        : t`Send message`,
+                    armed:
+                      (Boolean(text.trim()) || attachmentUploads.attachments.length > 0) &&
+                      !sending &&
+                      !disabled &&
+                      promptAllowed,
+                    sending,
+                    disabled:
+                      sending ||
+                      disabled ||
+                      !promptAllowed ||
+                      (!text.trim() && attachmentUploads.attachments.length === 0),
+                    onPress: handleSend,
+                    ...(sendTestID ? { testID: sendTestID } : {}),
+                  }}
+                />
+              </View>
             </View>
-          </View>
-        </ComposerSurface>
-      </View>
-      {previewPdf ? (
-        <AssetViewer asset={previewPdf} onClose={() => setPreviewAttachmentId(null)} />
-      ) : null}
-      {previewIndex >= 0 ? (
-        <ImagePreviewModal
-          images={previewImages}
-          initialIndex={previewIndex}
-          onClose={() => setPreviewAttachmentId(null)}
-        />
-      ) : null}
-    </Animated.View>
+          </ComposerSurface>
+        </View>
+        {previewPdf ? (
+          <AssetViewer asset={previewPdf} onClose={() => setPreviewAttachmentId(null)} />
+        ) : null}
+        {previewIndex >= 0 ? (
+          <ImagePreviewModal
+            images={previewImages}
+            initialIndex={previewIndex}
+            onClose={() => setPreviewAttachmentId(null)}
+          />
+        ) : null}
+      </Animated.View>
+    </>
   );
 });
 
@@ -2591,6 +2631,14 @@ const styles = StyleSheet.create({
   },
   dockOuter: {
     position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 50,
+  },
+  dockUnderlay: {
+    position: 'absolute',
+    top: 0,
     left: 0,
     right: 0,
     bottom: 0,

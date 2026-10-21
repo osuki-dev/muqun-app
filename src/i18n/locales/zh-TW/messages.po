@@ -1877,6 +1877,7 @@ msgstr "Ctrl Z 鍵，暫停"
 msgid "Controls"
 msgstr "控制"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/home-reply-drawer.tsx
 msgid "Conversation"
 msgstr "對話"
@@ -4016,6 +4017,7 @@ msgstr "從未連接過"
 msgid "Never seen"
 msgstr "從未連線"
 
+#: src/components/home-composer-options.tsx
 #: src/components/home-reply-drawer.tsx
 msgid "New conversation"
 msgstr "新對話"
@@ -5416,9 +5418,17 @@ msgstr "重播音訊"
 msgid "Reply from Home"
 msgstr "在主畫面回覆"
 
+#: src/components/home-composer-options.tsx
+msgid "Reply to"
+msgstr "回覆給"
+
 #: src/components/home-composer-dock.tsx
 msgid "Reply to {threadAgentName}…"
 msgstr "回覆 {threadAgentName}…"
+
+#: src/components/home-composer-options.tsx
+msgid "Replying to {replyTitle}"
+msgstr "正在回覆 {replyTitle}"
 
 #: src/app/settings-about.tsx
 msgid "Report a bug or request a feature"

@@ -71,7 +71,11 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 
 import AppDrawer from '@/components/app-drawer';
-import { HOME_REPLY_PAD_MAX_WIDTH, HomeReplyRecede } from '@/components/home-reply-drawer';
+import {
+  HOME_REPLY_PAD_MAX_WIDTH,
+  HomeReplyRecede,
+  useHomeReplyDrawerActive,
+} from '@/components/home-reply-drawer';
 import { NewTaskAction } from '@/components/new-task-action';
 import { SectionLabel } from '@/components/settings-chrome';
 import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
@@ -388,6 +392,9 @@ export function HomeOverview({
   const scrollY = useSharedValue(0);
   // Save only at gesture boundaries, never once per frame on the JS thread.
   // A composition can replace the list chrome, not the reader's scroll intent.
+  // Home behind an open reply drawer holds still (`HomeReplyRecede` also
+  // takes its touches away).
+  const replyDrawerActive = useHomeReplyDrawerActive((state) => state.active);
   const overviewScroll = useRef<React.ComponentRef<typeof KeyboardAwareScrollView>>(null);
   const restoredScroll = useRef<React.ComponentRef<typeof KeyboardAwareScrollView>>(null);
   const savedScrollY = useRef(0);
@@ -1372,7 +1379,7 @@ export function HomeOverview({
         // Any finger on the page holds the cards' order (design §9).
         {...sortHoldTouches}
         style={[styles.page, { backgroundColor: background(theme.colors.background) }]}>
-        <HomeReplyRecede enabled={!isPad}>
+        <HomeReplyRecede enabled={!isPad} holdsDock={padLaunch}>
           <ThemeArtwork slot="home.wallpaper" waitForTransition fallbackSlot="shell.wallpaper" />
           <HomeTaskSync serverIds={liveTaskServerIds} />
           <ComputerCardsPresence
@@ -1384,6 +1391,7 @@ export function HomeOverview({
             dockHeight={dock && !padLaunch && composerRevealed ? dockClipHeight : 0}
             dockOffset={isPad ? undefined : pageDockHide.dock.offset}
             ref={overviewScroll}
+            scrollEnabled={!replyDrawerActive}
             keyboardShouldPersistTaps="handled"
             // The wide Pad cover holds the dock inside this page, and the dock
             // rides the keyboard by itself; this view must not move it twice.
@@ -1848,6 +1856,7 @@ export function HomeOverview({
           dockHeight={dock && composerRevealed ? dockClipHeight : 0}
           dockOffset={pageDockHide.dock.offset}
           ref={overviewScroll}
+          scrollEnabled={!replyDrawerActive}
           onContentSizeChange={restoreScroll}
           onLayout={(event) => {
             pageDockHide.settle({ viewportHeight: event.nativeEvent.layout.height });

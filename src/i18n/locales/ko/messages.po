@@ -1877,6 +1877,7 @@ msgstr "컨트롤 Z, 일시 중단"
 msgid "Controls"
 msgstr "제어"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/home-reply-drawer.tsx
 msgid "Conversation"
 msgstr "대화"
@@ -4016,6 +4017,7 @@ msgstr "연결된 적 없음"
 msgid "Never seen"
 msgstr "확인된 적 없음"
 
+#: src/components/home-composer-options.tsx
 #: src/components/home-reply-drawer.tsx
 msgid "New conversation"
 msgstr "새 대화"
@@ -5416,9 +5418,17 @@ msgstr "오디오 다시 재생"
 msgid "Reply from Home"
 msgstr "홈에서 답장"
 
+#: src/components/home-composer-options.tsx
+msgid "Reply to"
+msgstr "답장 대상"
+
 #: src/components/home-composer-dock.tsx
 msgid "Reply to {threadAgentName}…"
 msgstr "{threadAgentName}에게 답장…"
+
+#: src/components/home-composer-options.tsx
+msgid "Replying to {replyTitle}"
+msgstr "{replyTitle}에 답장 중"
 
 #: src/app/settings-about.tsx
 msgid "Report a bug or request a feature"

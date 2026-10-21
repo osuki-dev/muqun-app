@@ -26,6 +26,8 @@ export function HomeComposerOptions({
   onFolder,
   onModel,
   onMode,
+  replyTitle,
+  onNewConversation,
 }: {
   computer: string;
   agent: string;
@@ -39,6 +41,10 @@ export function HomeComposerOptions({
   onFolder?: () => void;
   onModel?: () => void;
   onMode?: (id: string) => void;
+  /** The conversation the next message replies to; no row without one. */
+  replyTitle?: string;
+  /** Lets the conversation go, as the drawer's header does, and closes the menu. */
+  onNewConversation?: () => void;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -72,6 +78,8 @@ export function HomeComposerOptions({
     },
     { id: 'model', label: t`Model`, value: model, onPress: onModel },
   ];
+  const replyLabel = t`Reply to`;
+  const labels = replyTitle !== undefined ? [{ id: 'reply', label: replyLabel }, ...rows] : rows;
   return (
     <View
       testID="home-composer-options"
@@ -83,7 +91,7 @@ export function HomeComposerOptions({
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
         style={styles.measure}>
-        {rows.map((row) => (
+        {labels.map((row) => (
           <Text
             key={row.id}
             variant="bodySmall"
@@ -99,6 +107,46 @@ export function HomeComposerOptions({
           </Text>
         ))}
       </View>
+      {replyTitle !== undefined ? (
+        <View style={styles.row}>
+          <View
+            testID="home-composer-option-reply"
+            accessible
+            accessibilityLabel={t`Replying to ${replyTitle}`}
+            style={styles.replyText}>
+            <Text
+              variant="bodySmall"
+              weight="regular"
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              color={theme.colors.textMuted}
+              style={[styles.label, labelWidth !== undefined && { width: labelWidth }]}>
+              {replyLabel}
+            </Text>
+            <Text
+              variant="bodySmall"
+              weight="regular"
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              color={theme.colors.text}
+              style={styles.value}>
+              {replyTitle}
+            </Text>
+          </View>
+          {onNewConversation ? (
+            <PressableScale
+              testID="home-composer-option-new-conversation"
+              accessibilityRole="button"
+              accessibilityLabel={t`New conversation`}
+              hitSlop={8}
+              onPress={onNewConversation}>
+              <Text variant="caption" weight="semibold" color={theme.colors.primary}>
+                {t`New conversation`}
+              </Text>
+            </PressableScale>
+          ) : null}
+        </View>
+      ) : null}
       {rows.map((row) => (
         <View key={row.id}>
           <PressableScale
@@ -182,5 +230,6 @@ const styles = StyleSheet.create({
   label: { flexShrink: 0 },
   measure: { position: 'absolute', top: 0, left: 0, opacity: 0, alignItems: 'flex-start' },
   value: { flex: 1, minWidth: 0 },
+  replyText: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 12 },
   mode: { minHeight: 44, paddingVertical: 10, paddingHorizontal: 26 },
 });
