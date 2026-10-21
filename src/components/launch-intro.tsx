@@ -30,6 +30,9 @@ import { DURATION, timing } from '@/lib/motion';
 
 const HEADER_MARK_SIZE = 40;
 const GUTTER = 24;
+/** The compact page's header, footer and copy, which the art leaves room for. */
+const COMPACT_COPY_BUDGET = 440;
+const ART_MIN_HEIGHT = 160;
 
 /**
  * The 4.0 release introduction. Home mounts underneath it as usual; only the
@@ -77,8 +80,19 @@ export function LaunchIntro({
   const count = pages.length;
   const last = position === count;
   const spread = width >= 768;
-  const pageWidth = Math.min(width - GUTTER * 2, spread ? 1040 : 560);
-  const pageLeft = (width - pageWidth) / 2;
+  // The page is measured inside the side safe area: iPhone Duo stacks its
+  // camera, clock and status icons down the right edge, so Skip and the copy
+  // must not reach under them. The splash ground stays full-bleed.
+  const safeWidth = width - insets.left - insets.right;
+  const pageWidth = Math.min(safeWidth - GUTTER * 2, spread ? 1040 : 560);
+  const pageInset = (safeWidth - pageWidth) / 2;
+  const pageLeft = insets.left + pageInset;
+  // A short window (the Duo's outer display) cannot hold the full-width art
+  // and the copy, so the art gives way first and the copy stays readable
+  // without scrolling. Taller phones keep the art at its natural size.
+  const artMaxHeight = spread
+    ? undefined
+    : Math.max(ART_MIN_HEIGHT, height - insets.top - insets.bottom - COMPACT_COPY_BUDGET);
   const logoHeight = mirror.logo.style.height;
   const markScale =
     typeof logoHeight === 'number' && logoHeight > 0 ? HEADER_MARK_SIZE / logoHeight : 1;
@@ -200,7 +214,9 @@ export function LaunchIntro({
       {spread ? actions : null}
     </View>
   );
-  const art = <ReleaseIntroArt scene={index} visible={phase === 'visible'} />;
+  const art = (
+    <ReleaseIntroArt scene={index} visible={phase === 'visible'} maxHeight={artMaxHeight} />
+  );
 
   return (
     <Animated.View
@@ -215,7 +231,12 @@ export function LaunchIntro({
         importantForAccessibility={phase === 'visible' ? 'auto' : 'no-hide-descendants'}
         style={[
           styles.page,
-          { paddingTop: insets.top + GUTTER, paddingBottom: insets.bottom },
+          {
+            paddingTop: insets.top + GUTTER,
+            paddingBottom: insets.bottom,
+            paddingLeft: insets.left,
+            paddingRight: insets.right,
+          },
           pageStyle,
         ]}>
         <View style={[styles.header, { width: pageWidth }]}>
@@ -231,7 +252,7 @@ export function LaunchIntro({
         <ScrollView
           ref={scroll}
           style={styles.scroller}
-          contentContainerStyle={[styles.scrollContent, { paddingHorizontal: pageLeft }]}
+          contentContainerStyle={[styles.scrollContent, { paddingHorizontal: pageInset }]}
           showsVerticalScrollIndicator={false}>
           {spread ? (
             <View style={styles.spread}>
