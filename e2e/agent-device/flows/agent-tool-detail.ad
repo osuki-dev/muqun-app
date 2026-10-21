@@ -29,7 +29,7 @@ screenshot "shots/tool-task-compact.png"
 wait "id=agent-tool-open-detail" 10000
 is visible "id=agent-tool-open-child"
 is visible "text=\"Demo researcher\""
-is visible "text=\"research · Nested investigation\""
+is visible "id=agent-tool-toggle label=\"research · Nested investigation · Idle · Collapse tool call\""
 snapshot
 screenshot "shots/tool-task-expanded.png"
 # Consecutive toggles must end expanded with the real child state and action intact.

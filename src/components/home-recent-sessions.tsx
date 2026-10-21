@@ -815,7 +815,7 @@ function RecentSessionRow({
   return (
     <View>
       <PressableScale
-        testID="home-recent-open"
+        testID={`home-recent-open-${entry.key}`}
         accessibilityRole="button"
         accessibilityLabel={[title, ...meta.map((part) => part.text)].join(', ')}
         accessibilityHint={cwd}
