@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
-import { PressableScale, Text, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { PressableScale, Text, useThemeTokens } from '@osuki-dev/ui';
 import * as Haptics from 'expo-haptics';
 import { type ReactNode, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import {
@@ -34,6 +34,7 @@ import { ComposerMenuButton } from '@/components/composer-attachment-button';
 import { SessionIcon } from '@/icons';
 import { AgentPermissionCard } from '@/components/agent-permission-card';
 import { AgentTranscriptList } from '@/components/agent-transcript-list';
+import { useHomeSessionReplies } from '@/components/home-session-replies';
 import { useAppSettings } from '@/stores/app-settings';
 import { noteGatewayGeneration } from '@/stores/gateway-connection-generation';
 import {
@@ -62,7 +63,6 @@ import { useGatewayTunnel } from '@/hooks/use-gateway-tunnel';
 import { usePaneEvents } from '@/hooks/use-pane-events';
 import { removeTimelineItems } from '@/lib/agent-revert';
 import { canReplyAgentForm } from '@/lib/agent-runtime-controls';
-import { replyAgentForm, replyAgentPermission, type PermissionDecision } from '@/lib/agent-session';
 import { replaceAgentTranscript, type AgentSessionRuntime } from '@/lib/agent-session-runtime';
 import { upsertTimelineItems } from '@/lib/agent-timeline-upsert';
 import { withAlpha } from '@/lib/color';
@@ -76,7 +76,6 @@ import {
 import { field, numberField, optionalNumberField } from '@/lib/herdr-entity';
 import { isFullScreenTuiPane } from '@/lib/terminal-keys';
 import { sameComputer } from '@/lib/home-composer';
-import { describeGatewayFailure } from '@/lib/network-error';
 import {
   REPLY_DRAWER_MIN_HEIGHT,
   replyDrawerHeights,
@@ -91,7 +90,6 @@ import { createTranscriptFollow } from '@/lib/transcript-follow';
 import { TRANSCRIPT_ESTIMATED_ITEM_SIZE } from '@/lib/transcript-sizing';
 import { createAgentTranscriptStore } from '@/stores/agent-transcript';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
-import { useHomeAttention } from '@/stores/home-attention';
 import { useHomeThreadLive } from '@/stores/home-thread';
 import { useServerAgents } from '@/stores/server-agents';
 
@@ -613,7 +611,6 @@ function visibleOver(height: number, keyboard: number, floor: number): number {
 function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: 'session' }> }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
-  const { showToast } = useToast();
   const reduced = useReducedMotion();
   const markdownStyle = usePaneChatMarkdownStyle();
   const [store] = useState(createAgentTranscriptStore);
@@ -705,36 +702,7 @@ function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: '
     state.key === key ? state.live.permissions : undefined
   );
   const forms = useHomeThreadLive((state) => (state.key === key ? state.live.forms : undefined));
-  const owns = () => useGatewayConnectionStore.getState().record?.serverId === serverId;
-  const decide = async (requestId: string, decision: PermissionDecision) => {
-    if (!owns()) return;
-    try {
-      await replyAgentPermission(sessionId, asid, requestId, decision);
-      useHomeAttention
-        .getState()
-        .resolve({ kind: 'agent-session', serverId, sessionId, directory: '', asid }, requestId);
-    } catch (failure) {
-      console.warn('Home could not reply to a permission:', failure);
-      showToast({
-        variant: 'danger',
-        title: t`Could not reply`,
-        message: describeGatewayFailure(failure, t`Could not reply`).message,
-      });
-    }
-  };
-  const answer = async (formId: string, answers: Record<string, unknown>) => {
-    if (!owns()) return;
-    try {
-      await replyAgentForm(sessionId, asid, formId, answers);
-    } catch (failure) {
-      console.warn('Home could not answer a question:', failure);
-      showToast({
-        variant: 'danger',
-        title: t`Could not reply`,
-        message: describeGatewayFailure(failure, t`Could not reply`).message,
-      });
-    }
-  };
+  const { decide, answer } = useHomeSessionReplies(target);
   const replyable = (forms ?? []).filter((form) => canReplyAgentForm(form, runtime));
   const requests =
     (permissions?.length ?? 0) > 0 || replyable.length > 0 ? (
