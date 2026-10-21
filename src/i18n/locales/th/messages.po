@@ -1853,6 +1853,7 @@ msgstr "Control Z พักกระบวนการ"
 msgid "Controls"
 msgstr "การควบคุม"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/home-reply-drawer.tsx
 msgid "Conversation"
 msgstr "บทสนทนา"
@@ -3989,6 +3990,7 @@ msgstr "ยังไม่เคยเชื่อมต่อ"
 msgid "Never seen"
 msgstr "ยังไม่เคยพบ"
 
+#: src/components/home-composer-options.tsx
 #: src/components/home-reply-drawer.tsx
 msgid "New conversation"
 msgstr "บทสนทนาใหม่"
@@ -5383,9 +5385,17 @@ msgstr "เล่นเสียงอีกครั้ง"
 msgid "Reply from Home"
 msgstr "ตอบจากหน้าแรก"
 
+#: src/components/home-composer-options.tsx
+msgid "Reply to"
+msgstr "ตอบกลับถึง"
+
 #: src/components/home-composer-dock.tsx
 msgid "Reply to {threadAgentName}…"
 msgstr "ตอบ {threadAgentName}…"
+
+#: src/components/home-composer-options.tsx
+msgid "Replying to {replyTitle}"
+msgstr "กำลังตอบกลับ {replyTitle}"
 
 #: src/app/settings-about.tsx
 msgid "Report a bug or request a feature"

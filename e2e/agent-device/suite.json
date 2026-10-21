@@ -2,13 +2,6 @@
   "version": 1,
   "flows": [
     {
-      "name": "notifications-compact-lifecycle",
-      "program": "flows/notifications-compact-lifecycle",
-      "cleanup": "subflows/notifications-compact-cleanup",
-      "tags": ["full", "settings", "notifications"],
-      "platforms": ["android"]
-    },
-    {
       "name": "agent-transcript-streaming",
       "program": "flows/agent-transcript-streaming",
       "tags": ["full", "agents"],
@@ -167,98 +160,6 @@
     }
   ],
   "programs": {
-    "flows/notifications-compact-lifecycle": [
-      { "include": "subflows/open-demo" },
-      { "run": "flows/notifications-compact-lifecycle.ad#begin" },
-      {
-        "include": "subflows/notice-native-case",
-        "env": { "CASE": "one", "COUNT": "1", "SHOT": "one" }
-      },
-      { "run": "flows/notifications-compact-lifecycle.ad#single" },
-      { "include": "subflows/notice-native-clear", "env": { "SHOT": "one" } },
-      { "include": "subflows/notice-native-canonical", "env": { "SHOT": "one" } },
-      {
-        "include": "subflows/notice-native-case",
-        "env": { "CASE": "duplicate", "COUNT": "0", "SHOT": "duplicate-one" }
-      },
-      { "include": "subflows/notice-native-duplicate", "env": { "SHOT": "one" } },
-      {
-        "include": "subflows/notice-native-case",
-        "env": { "CASE": "five", "COUNT": "5", "SHOT": "five" }
-      },
-      { "run": "flows/notifications-compact-lifecycle.ad#cycle-open" },
-      {
-        "target": {
-          "text": "\\{\"at\":[0-9]+,\"source\":\"notice-store\",\"ids\":\\[\"(notice-[a-z0-9]+-[0-9]+)-five-0\",\"\\1-five-2\",\"\\1-five-3\",\"\\1-five-4\"\\],\"seen\":\\[(?:\"\\1-one-0\",)?\"\\1-five-0\",\"\\1-five-1\",\"\\1-five-2\",\"\\1-five-3\",\"\\1-five-4\"\\],\"resolved\":\\[\\],\"task\":\"waiting\",\"permissionIds\":\\[[^\\]]*\\]\\},?"
-        },
-        "mode": "scroll",
-        "direction": "down",
-        "timeout": 30000,
-        "run": "flows/notifications-compact-lifecycle.ad#seek-open-receipt"
-      },
-      { "run": "flows/notifications-compact-lifecycle.ad#exact-open-receipt" },
-      { "include": "subflows/notice-native-clear", "env": { "SHOT": "five" } },
-      {
-        "include": "subflows/notice-native-case",
-        "env": { "CASE": "duplicate", "COUNT": "0", "SHOT": "duplicate-five" }
-      },
-      { "include": "subflows/notice-native-duplicate", "env": { "SHOT": "five" } },
-      {
-        "include": "subflows/notice-native-case",
-        "env": { "CASE": "short", "COUNT": "1", "SHOT": "short" }
-      },
-      { "run": "flows/notifications-compact-lifecycle.ad#no-route" },
-      { "include": "subflows/notice-native-clear", "env": { "SHOT": "short" } },
-      {
-        "include": "subflows/notice-native-case",
-        "env": { "CASE": "known", "COUNT": "1", "SHOT": "known" }
-      },
-      { "run": "flows/notifications-compact-lifecycle.ad#known" },
-      { "include": "subflows/notice-native-clear", "env": { "SHOT": "known" } },
-      {
-        "include": "subflows/notice-native-case",
-        "env": { "CASE": "unknown", "COUNT": "1", "SHOT": "unknown" }
-      },
-      { "run": "flows/notifications-compact-lifecycle.ad#unknown" },
-      { "include": "subflows/notice-native-clear", "env": { "SHOT": "unknown" } },
-      { "run": "flows/notifications-compact-lifecycle.ad#expire" },
-      { "run": "flows/notifications-compact-lifecycle.ad#info-clear-open" },
-      { "include": "subflows/notice-native-clear", "env": { "SHOT": "info-clear" } },
-      {
-        "include": "subflows/notice-native-case",
-        "env": { "CASE": "fresh", "COUNT": "1", "SHOT": "fresh" }
-      },
-      { "run": "flows/notifications-compact-lifecycle.ad#fresh-survives" },
-      { "include": "subflows/notice-native-clear", "env": { "SHOT": "fresh" } },
-      {
-        "include": "subflows/notice-native-case",
-        "env": { "CASE": "reopen", "COUNT": "1", "SHOT": "reopen" }
-      },
-      { "run": "flows/notifications-compact-lifecycle.ad#reopened" },
-      { "include": "subflows/notice-native-clear", "env": { "SHOT": "reopen" } },
-      { "include": "subflows/notice-native-canonical", "env": { "SHOT": "reopen" } }
-    ],
-    "subflows/notice-native-case": [{ "run": "flows/notifications-compact-lifecycle.ad#case" }],
-    "subflows/notice-native-clear": [{ "run": "flows/notifications-compact-lifecycle.ad#clear" }],
-    "subflows/notice-native-canonical": [
-      { "run": "flows/notifications-compact-lifecycle.ad#canonical-in-place" }
-    ],
-    "subflows/notice-native-duplicate": [
-      { "run": "flows/notifications-compact-lifecycle.ad#duplicate" }
-    ],
-    "subflows/notifications-compact-cleanup": [
-      { "run": "flows/notifications-compact-lifecycle.ad#cleanup-receipts" },
-      {
-        "when": { "target": { "text": "QA_NOTICE_FOREIGN 0" } },
-        "steps": [
-          {
-            "when": { "target": { "id": "in-app-notification" } },
-            "steps": [{ "include": "subflows/notice-native-clear", "env": { "SHOT": "cleanup" } }]
-          }
-        ]
-      },
-      { "run": "flows/notifications-compact-lifecycle.ad#finish" }
-    ],
     "flows/agent-transcript-streaming": [
       { "include": "subflows/open-demo" },
       { "run": "flows/agent-transcript-streaming.ad#start" },

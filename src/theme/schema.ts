@@ -204,6 +204,12 @@ export const THEME_ICONS = [
   'chrome.scan',
   'chrome.settings',
   'chrome.parameters',
+  /**
+   * The composer's Conversation button, which shows the reply drawer. A pack
+   * without it gets its `home.arrow` pointing up (when `iconDirections` says
+   * how that arrow is drawn), then the app's own glyph.
+   */
+  'chrome.conversation',
   'home.arrow',
 ] as const;
 export type ThemeIconName = (typeof THEME_ICONS)[number];

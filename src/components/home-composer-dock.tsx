@@ -423,6 +423,9 @@ export function HomeComposerDock({
   const drawerAllowed = Boolean(conversation) && focused && appActive;
   const closeDrawer = drawer.close;
   const drawerOpen = drawer.open;
+  const liveThreadTitle = useHomeThreadLive((state) =>
+    threadKey && state.key === threadKey ? state.live.title : undefined
+  );
   const drawerKey = useRef(threadKey);
   useEffect(() => {
     const changed = drawerKey.current !== threadKey;
@@ -1809,6 +1812,13 @@ export function HomeComposerDock({
       }
       onModel={features.modelSelection && !terminalAgent ? openModelSheet : undefined}
       onMode={canPickMode && !terminalAgent ? selectMode : undefined}
+      replyTitle={thread ? liveThreadTitle || thread.title || t`Conversation` : undefined}
+      onNewConversation={() => {
+        setOptionsOpen(false);
+        // As the drawer's header does: an open drawer settles shut first.
+        if (drawer.mounted) closeDrawer(clearThread);
+        else clearThread();
+      }}
     />
   );
   const parameterButton = (
