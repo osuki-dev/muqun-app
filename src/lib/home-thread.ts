@@ -424,6 +424,8 @@ export type HomeThreadLive = {
   rows: readonly TextRow[];
   permissions: readonly PermissionRequest[];
   forms: readonly FormRequest[];
+  /** A pane's agent: its last prose, as read off the pane (`paneAgentLine`). */
+  paneLine?: string;
 };
 
 /** Text parts kept: a couple of turns, never the transcript. */
