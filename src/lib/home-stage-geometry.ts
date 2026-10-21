@@ -1,11 +1,19 @@
 /**
  * Geometry of the Stage Home layout, the "depth window": the phone is a
  * window into the theme's world, built as layers at real depths -- the
- * backdrop far away, a haze in the theme's colour, the cut-out hero, one
- * glass pane per computer in a cover-flow, and an edge-only wallpaper as the
- * nearest frame. Pure math shared by the GPU scene, the static 2.5D stage and
+ * wallpaper far away, a painting's sky band, a haze in the theme's colour,
+ * the figure or inset picture, one glass pane per computer in a cover-flow,
+ * and an edge-only wallpaper as the nearest frame. Pure math shared by the GPU scene, the static 2.5D stage and
  * the 2D HUD's projected hit areas and hint chips, so all three agree.
  */
+import {
+  containedImageRect,
+  coveredImageRect,
+  editorialArtworkRect,
+  homeCoverSceneRect,
+  HOME_COVER_BOTTOM_FEATHER_START,
+  HOME_HERO_FEATHER,
+} from './hero-feather';
 
 export type StageVec3 = readonly [number, number, number];
 
@@ -255,50 +263,273 @@ export function stagePane(offset: number, anchor: StageVec3, aspect: number): St
   };
 }
 
-export type StageHero = { position: StageVec3; width: number; height: number };
+// -- Theme layers ------------------------------------------------------------
+//
+// The theme's pictures are laid out in points over the resting view, the way
+// the 2D Home lays them out on its page, then hung in the world at their
+// depth (`stageWorldRect`): what the author framed for the 2D Home is what
+// the window shows at rest, and tilt only slides the layers by their depth.
+
+/** The view in points, and the safe area's top inset the HUD starts below. */
+export type StageViewport = { width: number; height: number; inset: number };
+/** A box in points from the view's top-left corner. */
+export type StageBox = { x: number; y: number; width: number; height: number };
+/** A plane's window into its texture, 0..1 from the top left; may reach past either end. */
+export type StageUvWindow = { x: number; y: number; width: number; height: number };
+
+/** The sky role's painting hangs just in front of the backdrop... */
+export const STAGE_PAINTING_DEPTH = 56;
+/** ...with just enough overscan that tilt never shows its sides. */
+export const STAGE_PAINTING_OVERSCAN = 1.08;
+/** The painting's band starts this far above the view, so tilt never shows its top edge. */
+const PAINTING_BLEED_PT = 12;
+/**
+ * The HUD, in points below the safe area's top: the computer's name row ends
+ * at 63 (10 padding, the 17 pt kicker, the 36 pt name), its status line and
+ * page dots at about 96.
+ */
+const HUD_NAME_BOTTOM_PT = 63;
+const HUD_NAME_LINE_PT = 36;
+export const STAGE_HUD_BOTTOM_PT = 96;
+/** A hint chip and its leader are about this tall: a hint never rises into the HUD. */
+const HINT_CLEARANCE_PT = 44;
+/** The cover box tucks under the name as Editorial's cover art overlaps its title: by 35 %. */
+const COVER_BOX_TOP_PT = HUD_NAME_BOTTOM_PT - HUD_NAME_LINE_PT * 0.35;
+/** The standard band sits just below the HUD. */
+const INSET_BOX_TOP_PT = STAGE_HUD_BOTTOM_PT + 8;
+/** Classic's standard band fades its cut-out's foot from here. */
+const INSET_FADE_FROM = 0.72;
+
+/** The 2D cover box's height for a view `width` points wide (`homeCoverArtworkHeight`). */
+export function stageCoverBoxHeight(width: number): number {
+  return Math.min(640, Math.max(0, width) * 0.9);
+}
+
+/** The 2D standard band's height for a view `width` points wide (Editorial's). */
+export function stageInsetBoxHeight(width: number): number {
+  return Math.min(280, Math.max(0, width) / 2);
+}
+
+/** The world plane at `depth` that the resting camera sees as `box`. */
+export function stageWorldRect(
+  box: StageBox,
+  depth: number,
+  viewport: StageViewport
+): { position: StageVec3; width: number; height: number } {
+  const ratio = viewport.height > 0 ? viewport.width / viewport.height : 1;
+  const view = stageViewSize(depth, ratio);
+  const centre = stageLayerCentre(depth);
+  const sx = viewport.width > 0 ? view.width / viewport.width : 0;
+  const sy = viewport.height > 0 ? view.height / viewport.height : 0;
+  return {
+    position: [
+      centre[0] + (box.x + box.width / 2 - viewport.width / 2) * sx,
+      centre[1] - (box.y + box.height / 2 - viewport.height / 2) * sy,
+      centre[2],
+    ],
+    width: box.width * sx,
+    height: box.height * sy,
+  };
+}
+
+/** `plane`'s window into a picture drawn at `drawn`, both in the same units. */
+function stageUvWindow(plane: StageBox, drawn: StageBox): StageUvWindow {
+  if (!(drawn.width > 0) || !(drawn.height > 0)) return { x: 0, y: 0, width: 1, height: 1 };
+  return {
+    x: (plane.x - drawn.x) / drawn.width,
+    y: (plane.y - drawn.y) / drawn.height,
+    width: plane.width / drawn.width,
+    height: plane.height / drawn.height,
+  };
+}
+
+function intersect(a: StageBox, b: StageBox): StageBox {
+  const x = Math.max(a.x, b.x);
+  const y = Math.max(a.y, b.y);
+  return {
+    x,
+    y,
+    width: Math.max(0, Math.min(a.x + a.width, b.x + b.width) - x),
+    height: Math.max(0, Math.min(a.y + a.height, b.y + b.height) - y),
+  };
+}
+
+function within(rect: StageBox, box: StageBox): StageBox {
+  return { x: rect.x + box.x, y: rect.y + box.y, width: rect.width, height: rect.height };
+}
+
+function ratioOf(aspect: number): { width: number; height: number } {
+  return { width: Number.isFinite(aspect) && aspect > 0 ? aspect : 1, height: 1 };
+}
 
 /**
- * The cut-out hero for art of `artAspect` (width / height): half the view's
- * height at most, never wider than 0.92 of it, standing right of centre and
- * high enough that the raised panes still sit below its waist.
+ * A cover-depth layer (the backdrop, the frame): a plane the size of the view
+ * with `overscan`, and the picture fitted into it as CSS `object-fit` and
+ * `object-position` fit it -- `contain` keeps it whole with the slack placed
+ * by the focal point; anything else (a tile included) covers, cropping the
+ * slack by the focal point.
  */
-export function stageHero(artAspect: number, aspect: number): StageHero {
-  const ratio = Number.isFinite(artAspect) && artAspect > 0 ? artAspect : 1;
-  const view = stageViewSize(STAGE_HERO_DEPTH, aspect);
-  const height = Math.min(view.height * 0.5, (view.width * 0.92) / ratio);
+export function stageCoverLayer(
+  layer: { aspect: number; fit?: string; focal: { x: number; y: number } },
+  depth: number,
+  overscan: number,
+  aspect: number
+): { width: number; height: number; uv: StageUvWindow } {
+  const view = stageViewSize(depth, aspect);
+  const plane = { x: 0, y: 0, width: view.width * overscan, height: view.height * overscan };
+  const drawn = (layer.fit === 'contain' ? containedImageRect : coveredImageRect)(
+    plane,
+    ratioOf(layer.aspect),
+    layer.focal
+  );
+  return { width: plane.width, height: plane.height, uv: stageUvWindow(plane, drawn) };
+}
+
+/** An artwork laid out in its 2D box, in points. */
+export type StageArtPlacement = {
+  /** The 2D box the picture is fitted into. */
+  box: StageBox;
+  /** The whole picture as fitted, which may reach past the box. */
+  drawn: StageBox;
+  /** What shows: the picture clipped to its box. The plane hung in the world. */
+  plane: StageBox;
+  uv: StageUvWindow;
+  /** The bottom fade, as shares of the plane's height from its top; past 1 for none. */
+  fade: { from: number; to: number };
+  /** The fade at every edge, as shares of the plane's width and height; 0 for none. */
+  edges: { x: number; y: number };
+};
+
+function placeArt(
+  box: StageBox,
+  drawn: StageBox,
+  fadeFrom: number | null,
+  edges: { x: number; y: number }
+): StageArtPlacement {
+  const plane = intersect(drawn, box);
+  const share = (y: number) => (plane.height > 0 ? (y - plane.y) / plane.height : 1);
   return {
-    position: [view.width * 0.12, view.height * 0.08, -STAGE_HERO_DEPTH],
-    width: height * ratio,
-    height,
+    box,
+    drawn,
+    plane,
+    uv: stageUvWindow(plane, drawn),
+    fade:
+      fadeFrom === null
+        ? { from: 2, to: 3 }
+        : { from: share(box.y + box.height * fadeFrom), to: share(box.y + box.height) },
+    edges,
   };
 }
 
 /**
- * A layer of `textureAspect` covering the view at `depth` with `overscan`,
- * and how far it shifts to bring its focal point (0..1 from the top left)
- * towards the middle without giving up the overscan.
+ * The sky role's painting, framed as the 2D cover frames it
+ * (`homeCoverSceneRect`: the full width at its natural height, the top kept)
+ * in a band as wide as the view plus the painting's overscan and as tall as
+ * the 2D cover box at that width, bleeding a little past the view's top. Its
+ * foot fades from 68 % of the band into the wallpaper's base, as in 2D.
  */
-export function stageCoverPlane(
-  textureAspect: number,
-  depth: number,
-  overscan: number,
-  aspect: number,
-  focal: { x: number; y: number } = { x: 0.5, y: 0.5 }
-): { width: number; height: number; shiftX: number; shiftY: number } {
-  const view = stageViewSize(depth, aspect);
-  const ratio = Number.isFinite(textureAspect) && textureAspect > 0 ? textureAspect : 1;
-  let width = view.width * overscan;
-  let height = view.height * overscan;
-  if (width / height > ratio) height = width / ratio;
-  else width = height * ratio;
-  const roomX = (width - view.width * overscan) / 2;
-  const roomY = (height - view.height * overscan) / 2;
-  return {
+export function stagePaintingPlacement(
+  painting: { aspect: number; fit?: string; focal: { x: number; y: number } },
+  viewport: StageViewport
+): StageArtPlacement {
+  const width = viewport.width * STAGE_PAINTING_OVERSCAN;
+  const box = {
+    x: (viewport.width - width) / 2,
+    y: -PAINTING_BLEED_PT,
     width,
-    height,
-    shiftX: clamp((0.5 - focal.x) * width, -roomX, roomX),
-    shiftY: clamp((focal.y - 0.5) * height, -roomY, roomY),
+    height: (width * stageCoverBoxHeight(viewport.width)) / Math.max(1, viewport.width),
   };
+  const drawn = within(
+    homeCoverSceneRect(box, ratioOf(painting.aspect), painting.fit, painting.focal),
+    box
+  );
+  return placeArt(box, drawn, HOME_COVER_BOTTOM_FEATHER_START, { x: 0, y: 0 });
+}
+
+/**
+ * The figure (a cover header's cut-out) or the inset picture (a standard
+ * header's artwork), fitted into its 2D box as Editorial fits it
+ * (`editorialArtworkRect`: contained at the focal point, or covered keeping
+ * the top). The cover box is the view's width by the 2D cover's height,
+ * tucked under the computer's name; the standard band is the 2D standard
+ * band, just below the HUD.
+ */
+export function stageHeroPlacement(
+  hero: {
+    aspect: number;
+    fit?: string;
+    focal: { x: number; y: number };
+    box: 'cover' | 'standard';
+    feather: 'cover' | 'inset' | 'framed';
+  },
+  viewport: StageViewport
+): StageArtPlacement {
+  const cover = hero.box === 'cover';
+  const box = {
+    x: 0,
+    y: viewport.inset + (cover ? COVER_BOX_TOP_PT : INSET_BOX_TOP_PT),
+    width: viewport.width,
+    height: cover ? stageCoverBoxHeight(viewport.width) : stageInsetBoxHeight(viewport.width),
+  };
+  const drawn = within(editorialArtworkRect(box, ratioOf(hero.aspect), hero.fit, hero.focal), box);
+  if (hero.feather === 'framed')
+    return placeArt(box, drawn, null, {
+      x: HOME_HERO_FEATHER.horizontal,
+      y: HOME_HERO_FEATHER.vertical,
+    });
+  const from = hero.feather === 'cover' ? HOME_COVER_BOTTOM_FEATHER_START : INSET_FADE_FROM;
+  return placeArt(box, drawn, from, { x: 0, y: 0 });
+}
+
+/** Where a tap starts a new task, and where its first-visit hint hangs, in points. */
+export type StageHostTarget = { rect: StageBox; hint: { x: number; y: number } };
+
+/**
+ * The new-task target, in every role: the figure's or inset picture's middle
+ * (not its faded foot or a wide picture's sides); the painting's band below
+ * the HUD; or, with no artwork, the open band between the HUD and the panes.
+ * The panes are nearer, so where they overlap a target they take the tap.
+ */
+export function stageHostTarget(
+  art: { kind: 'hero' | 'painting'; placement: StageArtPlacement } | null,
+  viewport: StageViewport
+): StageHostTarget {
+  const hudBottom = viewport.inset + STAGE_HUD_BOTTOM_PT;
+  const hintAt = (rect: StageBox, share: number) => ({
+    x: rect.x + rect.width / 2,
+    y: Math.min(
+      rect.y + rect.height,
+      Math.max(rect.y + rect.height * share, hudBottom + HINT_CLEARANCE_PT)
+    ),
+  });
+  const plane = art?.placement.plane;
+  if (art?.kind === 'hero' && plane && plane.height > 0) {
+    const width = Math.min(plane.width, plane.height * 0.6);
+    const rect = {
+      x: plane.x + (plane.width - width) / 2,
+      y: plane.y,
+      width,
+      height: plane.height * Math.min(0.76, Math.max(0.3, art.placement.fade.from)),
+    };
+    // On the chest: the chip hangs above its point, and must not cover the face.
+    return { rect, hint: hintAt(rect, 0.8) };
+  }
+  if (art?.kind === 'painting' && plane && plane.y + plane.height - hudBottom > 48) {
+    const rect = {
+      x: viewport.width * 0.06,
+      y: hudBottom,
+      width: viewport.width * 0.88,
+      height: plane.y + plane.height - hudBottom,
+    };
+    return { rect, hint: hintAt(rect, 0.45) };
+  }
+  const rect = {
+    x: viewport.width * 0.1,
+    y: viewport.inset + INSET_BOX_TOP_PT,
+    width: viewport.width * 0.8,
+    height: stageInsetBoxHeight(viewport.width),
+  };
+  return { rect, hint: hintAt(rect, 0.5) };
 }
 
 // -- Projection -------------------------------------------------------------

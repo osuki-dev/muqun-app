@@ -2,15 +2,21 @@
  * The Stage's world, the "depth window", built imperatively and handed to
  * react-three-fiber as one `<primitive>`. Back to front:
  *
- *   1. backdrop  -- the theme's full painting or full-scene wallpaper, cover
- *                   fitted with room for tilt; a surface-to-background wash
- *                   when the theme has neither
- *   2. haze      -- the theme's background colour: a scrim under the header,
- *                   clear through the middle, thick at the foot
- *   3. hero      -- a cut-out character with a soft glow behind it, its feet
- *                   dissolving into the haze
- *   4. frame     -- an edge-only wallpaper, the nearest layer in depth (so it
- *                   parallaxes most) but drawn before the panes: it frames
+ *   1. backdrop  -- a surface-to-background wash, and over it the theme's
+ *                   full-scene wallpaper at its authored fit, focal point and
+ *                   opacity, with room for tilt
+ *   1b. painting -- the sky role's painting: a width-fit band across the
+ *                   top, as the 2D cover shows it, its foot fading into the
+ *                   wallpaper
+ *   2. haze      -- the theme's background colour: a scrim under the header
+ *                   (light over a cover's authored sky), clear through the
+ *                   middle, thick at the foot
+ *   3. hero      -- the figure or inset picture in its 2D box, at its focal
+ *                   point and opacity, a cut-out with a soft glow behind it;
+ *                   its foot (or a framed picture's every edge) dissolves
+ *   4. frame     -- an edge-only wallpaper at its authored opacity, the
+ *                   nearest layer in depth (so it parallaxes most) but
+ *                   drawn before the panes: it frames
  *                   the world and never covers a pane or its text
  *   5. motes     -- dust floating through every depth, one merged draw; or
  *                   the theme's own ambient effect (rain, snow, stars, ...)
@@ -22,8 +28,9 @@
  *
  * Every layer is an unlit, textured plane: no lights, no shadows, no
  * environment, at most eight draws (the motes or a theme's ambient effect,
- * never both). Pictures are Skia readbacks, top row first, so every image
- * sample flips v.
+ * never both; a painting and a hero never both). Pictures are Skia
+ * readbacks, top row first: each is sampled through its plane's window,
+ * measured from the picture's top left.
  */
 import {
   AdditiveBlending,
@@ -47,6 +54,7 @@ import {
   RGBAFormat,
   SRGBColorSpace,
   Vector3,
+  Vector4,
   type Camera,
   type Node,
   type Scene,
@@ -62,14 +70,22 @@ import {
   STAGE_FRAME_DEPTH,
   STAGE_FRAME_OVERSCAN,
   STAGE_HAZE_DEPTH,
+  STAGE_HERO_DEPTH,
   STAGE_MAX_SCREENS,
+  STAGE_PAINTING_DEPTH,
   STAGE_PANE_RATIO,
-  stageCoverPlane,
-  stageHero,
+  stageCoverLayer,
+  stageHeroPlacement,
   stageLayerCentre,
+  stagePaintingPlacement,
   stageViewSize,
+  stageWorldRect,
+  type StageArtPlacement,
+  type StageUvWindow,
   type StageVec3,
+  type StageViewport,
 } from '@/lib/home-stage-geometry';
+import type { StageHeroLayer, StageLayer, StageRole } from '@/lib/home-stage-layers';
 import type { StageAmbient } from '@/lib/home-stage-ambient';
 import { createStageAmbient } from './stage-ambient';
 
@@ -87,6 +103,7 @@ const {
   positionLocal,
   select,
   smoothstep,
+  step,
   texture,
   uniform,
   uv,
@@ -123,12 +140,11 @@ export type StageTheme = {
   mode: 'light' | 'dark';
 };
 
-export type StageTextureSource = {
-  texture: Texture;
-  aspect: number;
-  /** The theme's focal point, 0..1 from the top-left; centre when absent. */
-  focal?: { x: number; y: number };
-};
+/** A picture converted for the Stage: its texture, and its width over its height. */
+export type StageTextureSource = { texture: Texture; aspect: number };
+
+/** A layer's texture, and how the theme asks for the layer to be drawn. */
+export type StagePicture<L extends StageLayer = StageLayer> = { texture: Texture; layer: L };
 
 export type StageScreenLook = {
   tone: 'online' | 'offline' | 'unknown' | 'warning';
@@ -168,11 +184,14 @@ export type StageFrameInput = {
 export type StageSceneHandle = {
   root: Group;
   setTheme: (theme: StageTheme, scene: Scene, renderer: WebGPURenderer | null) => void;
-  /** The view's width over its height: the cover layers are fitted to it. */
-  setViewport: (aspect: number) => void;
-  setBackdrop: (source: StageTextureSource | null) => void;
-  setHero: (source: StageTextureSource | null) => void;
-  setFrame: (source: StageTextureSource | null) => void;
+  /** The view in points: the layers are laid out over it as the 2D Home lays them out. */
+  setViewport: (viewport: StageViewport) => void;
+  /** A cover's roles keep the authored sky: the haze's header scrim all but goes. */
+  setRole: (role: StageRole) => void;
+  setBackdrop: (picture: StagePicture | null) => void;
+  setPainting: (picture: StagePicture | null) => void;
+  setHero: (picture: StagePicture<StageHeroLayer> | null) => void;
+  setFrame: (picture: StagePicture | null) => void;
   setFaces: (atlas: Texture | null) => void;
   /** The theme's ambient effect in place of the motes, or null for the motes. */
   setAmbient: (ambient: StageAmbient | null) => void;
@@ -208,11 +227,15 @@ function deepened(hex: string): Color {
   return new Color(hex).convertSRGBToLinear();
 }
 
-/** The haze's alpha down the view (0 = top): header scrim, clear middle, thick foot. */
-function hazeAlpha(t: number, light: boolean): number {
+/**
+ * The haze's alpha down the view (0 = top): header scrim, clear middle, thick
+ * foot. Over a cover's authored sky (`open`) the scrim all but goes; the HUD
+ * plates its own text instead.
+ */
+function hazeAlpha(t: number, light: boolean, open: boolean): number {
   const stops: readonly (readonly [number, number])[] = [
-    [0, 0.8],
-    [0.2, light ? 0.12 : 0.3],
+    [0, open ? 0.12 : 0.8],
+    [0.2, open ? 0.04 : light ? 0.12 : 0.3],
     [0.45, light ? 0 : 0.15],
     [0.72, 0.6],
     [1, 0.96],
@@ -243,6 +266,47 @@ function layerMaterial(options: { blending?: typeof NormalBlending } = {}) {
 /** A plane's uv with v flipped, for pictures read back top row first. */
 const flippedUv = () => vec2(uv().x, float(1).sub(uv().y));
 
+/** x, y, width, height: a plane's window into its picture, or its fades. */
+const vec4Uniform = () => uniform(new Vector4(0, 0, 1, 1));
+type Vec4Uniform = ReturnType<typeof vec4Uniform>;
+
+/**
+ * A picture seen through its plane's window (a `StageUvWindow` as x, y,
+ * width, height): the plane's point `p`, 0..1 from its top left, samples the
+ * picture at `window.xy + p * window.zw`. Outside the picture -- a contained
+ * wallpaper's slack -- is clear.
+ */
+function windowed(blank: Texture, window: Vec4Uniform) {
+  const p = flippedUv();
+  const at = window.xy.add(p.mul(window.zw));
+  const sample = texture(blank, at);
+  const inside = step(0, at.x).mul(step(at.x, 1)).mul(step(0, at.y)).mul(step(at.y, 1));
+  return { p, sample, alpha: sample.a.mul(inside) };
+}
+
+function setWindow(target: Vector4, window: StageUvWindow) {
+  target.set(window.x, window.y, window.width, window.height);
+}
+
+/** A foot fading over `fade` (shares of the plane from its top) and every edge over `edges`. */
+function artAlpha(p: Node<'vec2'>, fade: Vec4Uniform): Node<'float'> {
+  const foot = float(1).sub(smoothstep(fade.x, fade.y, p.y));
+  const ex = max(fade.z, 0.0001);
+  const ey = max(fade.w, 0.0001);
+  const sides = smoothstep(0, ex, p.x).mul(smoothstep(0, ex, float(1).sub(p.x)));
+  const ends = smoothstep(0, ey, p.y).mul(smoothstep(0, ey, float(1).sub(p.y)));
+  return foot.mul(sides).mul(ends);
+}
+
+function setFade(target: Vector4, placement: StageArtPlacement) {
+  target.set(
+    placement.fade.from,
+    Math.max(placement.fade.to, placement.fade.from + 0.0001),
+    placement.edges.x,
+    placement.edges.y
+  );
+}
+
 /** A soft round glow over a quad's uv: 1 at the middle, 0 at the rim. */
 const radialGlow = () => clamp(float(1).sub(length(uv().sub(0.5).mul(2))), 0, 1);
 
@@ -268,8 +332,10 @@ function over(under: Layer, top: Layer): Layer {
 export function createStageScene(): StageSceneHandle {
   const root = new Group();
   const blank = blankTexture();
-  let aspect = 390 / 844;
+  let viewport: StageViewport = { width: 390, height: 844, inset: 0 };
+  let aspect = viewport.width / viewport.height;
   let light = false;
+  let open = false;
 
   const uBackground = uniform(new Color('#151c22'));
   const uSurface = uniform(new Color('#1e2831'));
@@ -277,17 +343,39 @@ export function createStageScene(): StageSceneHandle {
   const uGlass = uniform(new Vector3());
 
   // -- 1. Backdrop -------------------------------------------------------------
-  const uHasBackdrop = uniform(0);
-  const backdropSample = texture(blank, flippedUv());
+  // The wash, and over it the wallpaper at its authored opacity: what the 2D
+  // Home shows of a wallpaper drawn at that opacity over the theme's ground.
+  const uBackdropOpacity = uniform(0);
+  const uBackdropWindow = vec4Uniform();
+  const backdropPicture = windowed(blank, uBackdropWindow);
   const backdropMaterial = layerMaterial();
   backdropMaterial.transparent = false;
   backdropMaterial.colorNode = vec4(
-    mix(mix(uBackground, uSurface, uv().y), backdropSample.rgb, uHasBackdrop),
+    mix(
+      mix(uBackground, uSurface, uv().y),
+      backdropPicture.sample.rgb,
+      backdropPicture.alpha.mul(uBackdropOpacity)
+    ),
     1
   );
   const backdrop = new Mesh(new PlaneGeometry(1, 1), backdropMaterial);
   backdrop.renderOrder = 0;
-  let backdropSource: StageTextureSource | null = null;
+  let backdropLayer: StageLayer | null = null;
+
+  // -- 1b. Painting -------------------------------------------------------------
+  const uPaintingOpacity = uniform(1);
+  const uPaintingWindow = vec4Uniform();
+  const uPaintingFade = vec4Uniform();
+  const paintingPicture = windowed(blank, uPaintingWindow);
+  const paintingMaterial = layerMaterial();
+  paintingMaterial.colorNode = vec4(
+    paintingPicture.sample.rgb,
+    paintingPicture.alpha.mul(uPaintingOpacity).mul(artAlpha(paintingPicture.p, uPaintingFade))
+  );
+  const painting = new Mesh(new PlaneGeometry(1, 1), paintingMaterial);
+  painting.renderOrder = 0.5;
+  painting.visible = false;
+  let paintingLayer: StageLayer | null = null;
 
   // -- 2. Haze -----------------------------------------------------------------
   const hazePixels = new Uint8Array(HAZE_ROWS * 4);
@@ -307,13 +395,19 @@ export function createStageScene(): StageSceneHandle {
   heroGlowMaterial.colorNode = vec4(uHeroGlow, glowFalloff().mul(uHeroGlowAlpha));
   const heroGlow = new Mesh(new PlaneGeometry(1, 1), heroGlowMaterial);
   heroGlow.renderOrder = 2;
-  const heroSample = texture(blank, flippedUv());
+  const uHeroOpacity = uniform(1);
+  const uHeroWindow = vec4Uniform();
+  const uHeroFade = vec4Uniform();
+  const heroPicture = windowed(blank, uHeroWindow);
   const heroMaterial = layerMaterial();
-  // The feet dissolve into the haze over the bottom 28 %.
-  heroMaterial.colorNode = vec4(heroSample.rgb, heroSample.a.mul(smoothstep(0, 0.28, uv().y)));
+  // The foot (or a framed picture's every edge) dissolves as the 2D one does.
+  heroMaterial.colorNode = vec4(
+    heroPicture.sample.rgb,
+    heroPicture.alpha.mul(uHeroOpacity).mul(artAlpha(heroPicture.p, uHeroFade))
+  );
   const hero = new Mesh(new PlaneGeometry(1, 1), heroMaterial);
   hero.renderOrder = 3;
-  let heroAspect = 1;
+  let heroLayer: StageHeroLayer | null = null;
   const heroBase = new Vector3();
   heroGlow.visible = false;
   hero.visible = false;
@@ -466,47 +560,97 @@ export function createStageScene(): StageSceneHandle {
   // -- Frame (drawn 4th) -------------------------------------------------------
   // Nearest in depth, but drawn after the hero and before the motes and the
   // panes: foliage or rooftops at the edge must never sit over a pane's text.
-  const frameSample = texture(blank, flippedUv());
+  const uFrameOpacity = uniform(1);
+  const uFrameWindow = vec4Uniform();
+  const framePicture = windowed(blank, uFrameWindow);
   const frameMaterial = layerMaterial();
-  frameMaterial.colorNode = vec4(frameSample.rgb, frameSample.a.mul(0.95));
+  frameMaterial.colorNode = vec4(framePicture.sample.rgb, framePicture.alpha.mul(uFrameOpacity));
   const frame = new Mesh(new PlaneGeometry(1, 1), frameMaterial);
   frame.renderOrder = 3.5;
-  let frameSource: StageTextureSource | null = null;
+  let frameLayer: StageLayer | null = null;
   frame.visible = false;
 
   const ambient = createStageAmbient();
 
-  root.add(backdrop, haze, heroGlow, hero, motes, ambient.mesh, glows, panes, frame);
+  root.add(backdrop, painting, haze, heroGlow, hero, motes, ambient.mesh, glows, panes, frame);
 
   // -- Layout ------------------------------------------------------------------
   const cover = (
     mesh: Mesh,
-    source: StageTextureSource | null,
+    window: Vector4,
+    layer: StageLayer | null,
     depth: number,
     overscan: number
   ) => {
     const centre = stageLayerCentre(depth);
-    const plane = stageCoverPlane(source?.aspect ?? aspect, depth, overscan, aspect, source?.focal);
-    mesh.scale.set(plane.width, plane.height, 1);
-    mesh.position.set(centre[0] + plane.shiftX, centre[1] + plane.shiftY, centre[2]);
+    const placed = stageCoverLayer(
+      layer ?? { aspect, fit: 'cover', focal: { x: 0.5, y: 0.5 } },
+      depth,
+      overscan,
+      aspect
+    );
+    mesh.scale.set(placed.width, placed.height, 1);
+    mesh.position.set(centre[0], centre[1], centre[2]);
+    setWindow(window, placed.uv);
+  };
+  /** An artwork's plane, hung at `depth` where the resting camera sees it as laid out. */
+  const hang = (mesh: Mesh, placement: StageArtPlacement, depth: number) => {
+    const placed = stageWorldRect(placement.plane, depth, viewport);
+    mesh.scale.set(Math.max(placed.width, 1e-4), Math.max(placed.height, 1e-4), 1);
+    mesh.position.set(...placed.position);
+    return placed;
   };
   const layout = () => {
     uAspect.value = aspect;
     ambient.setAspect(aspect);
-    cover(backdrop, backdropSource, STAGE_BACKDROP_DEPTH, STAGE_BACKDROP_OVERSCAN);
+    cover(
+      backdrop,
+      uBackdropWindow.value,
+      backdropLayer,
+      STAGE_BACKDROP_DEPTH,
+      STAGE_BACKDROP_OVERSCAN
+    );
+    if (paintingLayer) {
+      const placement = stagePaintingPlacement(paintingLayer, viewport);
+      hang(painting, placement, STAGE_PAINTING_DEPTH);
+      setWindow(uPaintingWindow.value, placement.uv);
+      setFade(uPaintingFade.value, placement);
+    }
     const hazeView = stageViewSize(STAGE_HAZE_DEPTH, aspect);
     const hazeAt = stageLayerCentre(STAGE_HAZE_DEPTH);
     haze.scale.set(hazeView.width * 1.5, hazeView.height * 1.3, 1);
     haze.position.set(hazeAt[0], hazeAt[1], hazeAt[2]);
-    const placed = stageHero(heroAspect, aspect);
-    hero.scale.set(placed.width, placed.height, 1);
-    heroBase.set(...placed.position);
-    hero.position.copy(heroBase);
-    heroGlow.scale.set(placed.width * 1.5, placed.height * 1.1, 1);
-    heroGlow.position.set(heroBase.x, heroBase.y, heroBase.z - 0.5);
-    cover(frame, frameSource, STAGE_FRAME_DEPTH, STAGE_FRAME_OVERSCAN);
+    if (heroLayer) {
+      const placement = stageHeroPlacement(heroLayer, viewport);
+      const placed = hang(hero, placement, STAGE_HERO_DEPTH);
+      setWindow(uHeroWindow.value, placement.uv);
+      setFade(uHeroFade.value, placement);
+      heroBase.copy(hero.position);
+      // The glow sits behind the figure's body, not its faded foot.
+      const body = Math.min(1, placement.fade.from);
+      heroGlow.scale.set(placed.width * 1.5, placed.height * body * 1.1, 1);
+      heroGlow.position.set(
+        heroBase.x,
+        heroBase.y + (placed.height * (1 - body)) / 2,
+        heroBase.z - 0.5
+      );
+    }
+    cover(frame, uFrameWindow.value, frameLayer, STAGE_FRAME_DEPTH, STAGE_FRAME_OVERSCAN);
   };
   layout();
+
+  const paintHaze = () => {
+    const srgb = new Color();
+    uBackground.value.getRGB(srgb, SRGBColorSpace);
+    for (let row = 0; row < HAZE_ROWS; row += 1) {
+      const offset = row * 4;
+      hazePixels[offset] = Math.round(srgb.r * 255);
+      hazePixels[offset + 1] = Math.round(srgb.g * 255);
+      hazePixels[offset + 2] = Math.round(srgb.b * 255);
+      hazePixels[offset + 3] = Math.round(hazeAlpha(row / (HAZE_ROWS - 1), light, open) * 255);
+    }
+    hazeTexture.needsUpdate = true;
+  };
 
   // -- Per-frame state ---------------------------------------------------------
   type Status = 'primary' | 'success' | 'warning' | 'offline';
@@ -555,43 +699,56 @@ export function createStageScene(): StageSceneHandle {
       glowMaterial.blending = light ? NormalBlending : AdditiveBlending;
       glowMaterial.needsUpdate = true;
       // The haze is the true background colour, so it meets the HUD's scrims without a seam.
-      const srgb = new Color();
-      background.getRGB(srgb, SRGBColorSpace);
-      for (let row = 0; row < HAZE_ROWS; row += 1) {
-        const offset = row * 4;
-        hazePixels[offset] = Math.round(srgb.r * 255);
-        hazePixels[offset + 1] = Math.round(srgb.g * 255);
-        hazePixels[offset + 2] = Math.round(srgb.b * 255);
-        hazePixels[offset + 3] = Math.round(hazeAlpha(row / (HAZE_ROWS - 1), light) * 255);
-      }
-      hazeTexture.needsUpdate = true;
+      paintHaze();
       scene.background = background;
       scene.environment = null;
       scene.fog = null;
       if (renderer) renderer.toneMapping = NoToneMapping;
     },
     setViewport(next) {
-      if (!(next > 0) || next === aspect) return;
-      aspect = next;
+      if (!(next.width > 0) || !(next.height > 0)) return;
+      if (
+        next.width === viewport.width &&
+        next.height === viewport.height &&
+        next.inset === viewport.inset
+      )
+        return;
+      viewport = next;
+      aspect = next.width / next.height;
       layout();
     },
-    setBackdrop(source) {
-      backdropSource = source;
-      backdropSample.value = source?.texture ?? blank;
-      uHasBackdrop.value = source ? 1 : 0;
+    setRole(role) {
+      const next = role === 'sky' || role === 'figure';
+      if (next === open) return;
+      open = next;
+      paintHaze();
+    },
+    setBackdrop(picture) {
+      backdropLayer = picture?.layer ?? null;
+      backdropPicture.sample.value = picture?.texture ?? blank;
+      uBackdropOpacity.value = picture ? picture.layer.opacity : 0;
       layout();
     },
-    setHero(source) {
-      heroSample.value = source?.texture ?? blank;
-      heroAspect = source?.aspect ?? 1;
-      hero.visible = Boolean(source);
-      heroGlow.visible = Boolean(source);
+    setPainting(picture) {
+      paintingLayer = picture?.layer ?? null;
+      paintingPicture.sample.value = picture?.texture ?? blank;
+      uPaintingOpacity.value = picture?.layer.opacity ?? 1;
+      painting.visible = Boolean(picture);
       layout();
     },
-    setFrame(source) {
-      frameSource = source;
-      frameSample.value = source?.texture ?? blank;
-      frame.visible = Boolean(source);
+    setHero(picture) {
+      heroLayer = picture?.layer ?? null;
+      heroPicture.sample.value = picture?.texture ?? blank;
+      uHeroOpacity.value = picture?.layer.opacity ?? 1;
+      hero.visible = Boolean(picture);
+      heroGlow.visible = Boolean(picture?.layer.cutout);
+      layout();
+    },
+    setFrame(picture) {
+      frameLayer = picture?.layer ?? null;
+      framePicture.sample.value = picture?.texture ?? blank;
+      uFrameOpacity.value = picture?.layer.opacity ?? 1;
+      frame.visible = Boolean(picture);
       layout();
     },
     setFaces(atlas) {
@@ -678,7 +835,7 @@ export function createStageScene(): StageSceneHandle {
       glowTint.needsUpdate = true;
     },
     dispose() {
-      for (const mesh of [backdrop, haze, heroGlow, hero, motes, glows, panes, frame]) {
+      for (const mesh of [backdrop, painting, haze, heroGlow, hero, motes, glows, panes, frame]) {
         mesh.geometry.dispose();
         (mesh.material as MeshBasicNodeMaterial).dispose();
       }

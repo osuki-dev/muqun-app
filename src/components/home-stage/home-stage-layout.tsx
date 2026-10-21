@@ -37,15 +37,17 @@ import { useServerAgents } from '@/stores/server-agents';
 import { useServerTasksStore } from '@/stores/server-tasks';
 import { isRenderableThemeAsset } from '@/theme/renderable-asset';
 import { resolveThemeImage } from '@/theme/resolve';
+import { useStageComposition, type StageImageInput } from './stage-composition';
 import { StageSessionStrip } from './stage-session-strip';
 import { StageView } from './stage-view';
 
 export type HomeStageLayoutProps = {
   panels: readonly StagePanel[];
   selectedIndex: number;
-  artworkUri?: string;
-  /** The artwork's focal point, for when it is a full painting behind everything. */
-  artworkFocal?: { x: number; y: number };
+  /** `home.artwork` as Home resolved it (absent when hidden): its fit, focal point and opacity. */
+  artwork?: StageImageInput;
+  /** The theme's 2D Home has a cover header (`homePresentation.header`). */
+  coverHeader: boolean;
   /** Home is not on screen or the app is in the background. */
   paused: boolean;
   /** Bumped when a task completes: the motes flare. */
@@ -187,8 +189,8 @@ export function HomeStage({
 export function HomeStageLayout({
   panels,
   selectedIndex,
-  artworkUri,
-  artworkFocal,
+  artwork,
+  coverHeader,
   paused,
   burst,
   topInset,
@@ -216,6 +218,9 @@ export function HomeStageLayout({
   const profile = useAppearanceProfile();
   const { height: windowHeight } = useWindowDimensions();
   const wallpaper = useStageWallpaper();
+  const composition = useStageComposition({ coverHeader, artwork, wallpaper });
+  // A cover's authored sky stays open: a short scrim, and the name on its own plate.
+  const openSky = composition.role === 'sky' || composition.role === 'figure';
   const [actionsFor, setActionsFor] = useState<string | null>(null);
   const [listOpen, setListOpen] = useState(false);
   const selected = panels[selectedIndex];
@@ -280,10 +285,10 @@ export function HomeStageLayout({
       <StageView
         panels={panels}
         selectedIndex={selectedIndex}
+        composition={composition}
         wallpaperUri={wallpaper?.uri}
-        wallpaperFocal={wallpaper?.focal}
-        artworkUri={artworkUri}
-        artworkFocal={artworkFocal}
+        artworkUri={artwork?.uri}
+        inset={topInset}
         paused={paused || listOpen}
         burst={burst}
         onSelect={onSelect}
@@ -299,7 +304,7 @@ export function HomeStageLayout({
       <EdgeFade
         edge="top"
         color={theme.colors.background}
-        style={[styles.topScrim, { height: topInset + 150 }]}
+        style={[styles.topScrim, { height: topInset + (openSky ? 56 : 150) }]}
       />
       <View pointerEvents="box-none" style={[styles.top, { paddingTop: topInset + 10 }]}>
         <View pointerEvents="box-none" style={styles.topRow}>
@@ -308,7 +313,19 @@ export function HomeStageLayout({
               testID="home-stage-hud-computer"
               accessible
               accessibilityLabel={selected.label}
-              style={styles.who}>
+              style={[
+                styles.who,
+                openSky && {
+                  // `useHomeScenePlate`'s plate, a little roomier for the larger name.
+                  backgroundColor: background(theme.colors.surface),
+                  borderRadius: profile.chrome.control,
+                  borderCurve: 'continuous',
+                  paddingHorizontal: 10,
+                  paddingVertical: 6,
+                  marginLeft: -10,
+                  marginVertical: -6,
+                },
+              ]}>
               <Text
                 variant="caption"
                 weight="semibold"
@@ -453,7 +470,7 @@ function useStageWallpaper() {
   );
   const uri = image ? assets[image.asset] : undefined;
   if (!image || !uri || !isRenderableThemeAsset(uri)) return null;
-  return { uri, focal: image.focalPoint };
+  return { uri, fit: image.fit, focal: image.focalPoint, opacity: image.opacity };
 }
 
 function StageStatusLine({ panel }: { panel: StagePanel }) {
