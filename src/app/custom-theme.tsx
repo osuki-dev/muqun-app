@@ -114,24 +114,14 @@ function CustomThemeScene({
   const { width } = useWindowDimensions();
   const background = useSurfaceBackground();
   /**
-   * Done closes the editor and everything it was opened on top of.
-   *
-   * `router.back()` put the reader back in the theme picker, which is not where
-   * Done means to leave them: they came to look at one theme, and they are done
-   * with it. `dismissAll` pops the root stack to its first screen, so from the
-   * picker it closes the editor, the picker and Settings and lands on Home --
-   * and when the editor was opened from a file handed to the app from outside,
-   * Home is the only screen behind it.
+   * Done goes one step back, to where the reader came from: the themes sheet,
+   * or the session whose theme preview opened this. Applying never leaves --
+   * the theme lands in place under the reskin cover and the button turns into
+   * Done -- so Done after an apply returns there with the new theme on. A
+   * theme handed over by another app has Home behind it (`useOpenThemeEditor`);
+   * with no history at all, Home is where it goes.
    */
-  const close = () => (router.canDismiss() ? router.dismissAll() : router.back());
-  /**
-   * Applying never leaves: the theme lands in place under the reskin cover,
-   * the reader stays here to see it, and the button turns into Done. Done and
-   * the close control are the way out. A theme sent into a session closes
-   * back to that session, where the reader may still be asking for changes.
-   */
-  const { from } = useLocalSearchParams<{ from?: string }>();
-  const leave = () => (from === 'conversation' ? router.back() : close());
+  const close = () => (router.canGoBack() ? router.back() : router.replace('/'));
   /**
    * The one button at the bottom is the one decision on this screen.
    *
@@ -178,7 +168,7 @@ function CustomThemeScene({
               onPreviewAppearanceChange={onPreviewAppearanceChange}
               detail
               ownsPreparedAssets={false}
-              onClosePreview={leave}
+              onClosePreview={close}
               onPrimaryActionChange={setPrimary}
               onStatusChange={setStatus}
             />

@@ -103,7 +103,7 @@ export function useThemeFileOpen(): void {
               // Inside the try on purpose: the handoff can refuse when too many
               // previews are already open, and a refusal is not worth a crash on a
               // file the reader opened from another app.
-              openThemeEditor(preview, 'handed');
+              openThemeEditor(preview, true);
             },
             (failure) => {
               // Say so. This used to swallow, on the reasoning that the file came
