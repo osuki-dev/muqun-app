@@ -2413,6 +2413,7 @@ msgid "Cropped preview · Open full image"
 msgstr "ตัวอย่างบางส่วน · เปิดภาพเต็ม"
 
 #: src/components/file-mention-panel.tsx
+#: src/components/home-target-sheet.tsx
 #: src/components/settings-theme-sheet.tsx
 #: src/components/theme-gallery.tsx
 msgid "Current"
@@ -4475,9 +4476,11 @@ msgstr "ออฟไลน์"
 msgid "OFFLINE"
 msgstr "ออฟไลน์"
 
+#. placeholder {0}: age(row.lastSeenMs, nowMs)
 #. placeholder {0}: age(seen, nowMs)
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/home-stage/stage-agent-row.tsx
+#: src/components/home-target-sheet.tsx
 msgid "Offline · last seen {0}"
 msgstr "ออฟไลน์ · เห็นล่าสุด {0}"
 
@@ -6329,6 +6332,10 @@ msgstr "เริ่ม {0} ใหม่"
 #: src/lib/demo-gateway.ts
 msgid "Start a new session with empty context"
 msgstr "เริ่มเซสชันใหม่ด้วยบริบทว่าง"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Start a new task"
+msgstr "เริ่มงานใหม่"
 
 #: src/i18n/labels.ts
 msgctxt "agent slash command"

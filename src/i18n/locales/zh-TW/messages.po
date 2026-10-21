@@ -2413,6 +2413,7 @@ msgid "Cropped preview · Open full image"
 msgstr "局部預覽 · 查看完整圖片"
 
 #: src/components/file-mention-panel.tsx
+#: src/components/home-target-sheet.tsx
 #: src/components/settings-theme-sheet.tsx
 #: src/components/theme-gallery.tsx
 msgid "Current"
@@ -4475,9 +4476,11 @@ msgstr "離線"
 msgid "OFFLINE"
 msgstr "離線"
 
+#. placeholder {0}: age(row.lastSeenMs, nowMs)
 #. placeholder {0}: age(seen, nowMs)
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/home-stage/stage-agent-row.tsx
+#: src/components/home-target-sheet.tsx
 msgid "Offline · last seen {0}"
 msgstr "離線 · 最後上線 {0}"
 
@@ -6329,6 +6332,10 @@ msgstr "啟動新的 {0}"
 #: src/lib/demo-gateway.ts
 msgid "Start a new session with empty context"
 msgstr "以空白脈絡開始新的工作階段"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Start a new task"
+msgstr "開始新任務"
 
 #: src/i18n/labels.ts
 msgctxt "agent slash command"

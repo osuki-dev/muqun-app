@@ -2413,6 +2413,7 @@ msgid "Cropped preview · Open full image"
 msgstr "Vista previa recortada · Abrir imagen completa"
 
 #: src/components/file-mention-panel.tsx
+#: src/components/home-target-sheet.tsx
 #: src/components/settings-theme-sheet.tsx
 #: src/components/theme-gallery.tsx
 msgid "Current"
@@ -4475,9 +4476,11 @@ msgstr "Sin conexión"
 msgid "OFFLINE"
 msgstr "SIN CONEXIÓN"
 
+#. placeholder {0}: age(row.lastSeenMs, nowMs)
 #. placeholder {0}: age(seen, nowMs)
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/home-stage/stage-agent-row.tsx
+#: src/components/home-target-sheet.tsx
 msgid "Offline · last seen {0}"
 msgstr "Sin conexión · visto {0}"
 
@@ -6329,6 +6332,10 @@ msgstr "Iniciar un nuevo {0}"
 #: src/lib/demo-gateway.ts
 msgid "Start a new session with empty context"
 msgstr "Inicia una sesión nueva con el contexto vacío"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Start a new task"
+msgstr "Iniciar una tarea nueva"
 
 #: src/i18n/labels.ts
 msgctxt "agent slash command"

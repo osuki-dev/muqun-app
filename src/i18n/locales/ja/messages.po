@@ -2413,6 +2413,7 @@ msgid "Cropped preview · Open full image"
 msgstr "一部のみのプレビュー · 画像全体を表示"
 
 #: src/components/file-mention-panel.tsx
+#: src/components/home-target-sheet.tsx
 #: src/components/settings-theme-sheet.tsx
 #: src/components/theme-gallery.tsx
 msgid "Current"
@@ -4475,9 +4476,11 @@ msgstr "オフライン"
 msgid "OFFLINE"
 msgstr "オフライン"
 
+#. placeholder {0}: age(row.lastSeenMs, nowMs)
 #. placeholder {0}: age(seen, nowMs)
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/home-stage/stage-agent-row.tsx
+#: src/components/home-target-sheet.tsx
 msgid "Offline · last seen {0}"
 msgstr "オフライン · 最終確認 {0}"
 
@@ -6329,6 +6332,10 @@ msgstr "新しい {0} を起動"
 #: src/lib/demo-gateway.ts
 msgid "Start a new session with empty context"
 msgstr "空のコンテキストで新しいセッションを開始します"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Start a new task"
+msgstr "新しいタスクを開始"
 
 #: src/i18n/labels.ts
 msgctxt "agent slash command"

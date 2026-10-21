@@ -1,4 +1,6 @@
+import { useLingui } from '@lingui/react/macro';
 import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
+import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import {
   Blur,
@@ -106,6 +108,8 @@ export type StageViewProps = {
    * rows. Reported when the layout changes, never per frame.
    */
   onOverlayBand?: (band: StageOverlayBand) => void;
+  /** A double tap on the art: a new task on the composer's computer. */
+  onNewTask?: () => void;
 };
 
 /** How many fresh canvases a session tries after a GPU failure before staying static. */
@@ -115,7 +119,8 @@ const STAGE_GPU_RETRIES = 3;
  * The full-screen depth window: the theme's own pictures at their depths, in
  * the WebGPU scene when the device has it, otherwise (and after a lost
  * device) the same layout drawn flat. Everything to read or press is the
- * HUD's; a tap on the art itself does nothing. The scene is never focusable.
+ * HUD's; a single tap on the art does nothing, a double tap starts a new task
+ * (a screen reader offers that as the art's one action).
  */
 export function StageView({
   count,
@@ -130,7 +135,9 @@ export function StageView({
   opener,
   onSelect,
   onOverlayBand,
+  onNewTask,
 }: StageViewProps) {
+  const { t } = useLingui();
   const theme = useThemeTokens();
   const { resolvedMode } = useThemeMode();
   const reducedMotion = useReducedMotion();
@@ -267,51 +274,64 @@ export function StageView({
     return () => opener.setOpener(null);
   }, [opener, diveThen]);
 
-  const gesture = useMemo(
-    () =>
-      Gesture.Pan()
-        .minDistance(10)
-        .onStart(() => {
-          settle.set(-1);
-          dragging.set(1);
-          scheduleOnRN(bridge.wake);
-        })
-        .onUpdate((event) => {
-          dragX.set(size.width > 0 ? event.translationX / size.width : 0);
-          dragY.set(size.height > 0 ? event.translationY / size.height : 0);
-        })
-        .onEnd((event) => {
-          // Sideways moves between computers; up and down only looks around.
-          if (Math.abs(event.translationX) < Math.abs(event.translationY)) return;
-          const target = stageSwipeTarget(
-            selectedIndex,
-            count,
-            event.translationX,
-            event.velocityX,
-            size.width
-          );
-          settle.set(target);
-          if (target !== selectedIndex) scheduleOnRN(onSelect, target);
-        })
-        .onFinalize(() => {
-          dragging.set(0);
-          dragX.set(0);
-          dragY.set(0);
-          scheduleOnRN(bridge.wake);
-        }),
-    [
-      bridge,
-      count,
-      dragX,
-      dragY,
-      dragging,
-      onSelect,
-      selectedIndex,
-      settle,
-      size.width,
-      size.height,
-    ]
-  );
+  const newTask = useStableHandler(() => {
+    if (!onNewTask) return;
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onNewTask();
+  });
+  // A swipe moves between computers; a double tap starts a new task. The art
+  // has no single-tap target, so waiting for the second tap delays nothing.
+  const gesture = useMemo(() => {
+    const doubleTap = Gesture.Tap()
+      .numberOfTaps(2)
+      .maxDistance(16)
+      .onEnd((_event, success) => {
+        if (success) scheduleOnRN(newTask);
+      });
+    const pan = Gesture.Pan()
+      .minDistance(10)
+      .onStart(() => {
+        settle.set(-1);
+        dragging.set(1);
+        scheduleOnRN(bridge.wake);
+      })
+      .onUpdate((event) => {
+        dragX.set(size.width > 0 ? event.translationX / size.width : 0);
+        dragY.set(size.height > 0 ? event.translationY / size.height : 0);
+      })
+      .onEnd((event) => {
+        // Sideways moves between computers; up and down only looks around.
+        if (Math.abs(event.translationX) < Math.abs(event.translationY)) return;
+        const target = stageSwipeTarget(
+          selectedIndex,
+          count,
+          event.translationX,
+          event.velocityX,
+          size.width
+        );
+        settle.set(target);
+        if (target !== selectedIndex) scheduleOnRN(onSelect, target);
+      })
+      .onFinalize(() => {
+        dragging.set(0);
+        dragX.set(0);
+        dragY.set(0);
+        scheduleOnRN(bridge.wake);
+      });
+    return Gesture.Race(pan, doubleTap);
+  }, [
+    bridge,
+    count,
+    dragX,
+    dragY,
+    dragging,
+    onSelect,
+    selectedIndex,
+    settle,
+    size.width,
+    size.height,
+    newTask,
+  ]);
 
   const floor = foot > 0 ? Math.max(0, size.height - foot) : stageDefaultFloor(size.height);
   const viewport = useMemo(
@@ -331,6 +351,14 @@ export function StageView({
       <View
         testID="home-stage"
         style={StyleSheet.absoluteFill}
+        accessible={onNewTask !== undefined}
+        accessibilityLabel={onNewTask ? t`Start a new task` : undefined}
+        accessibilityActions={
+          onNewTask ? [{ name: 'activate', label: t`Start a new task` }] : undefined
+        }
+        onAccessibilityAction={(event) => {
+          if (event.nativeEvent.actionName === 'activate') newTask();
+        }}
         onLayout={(event) => {
           const { width, height } = event.nativeEvent.layout;
           setSize((previous) =>

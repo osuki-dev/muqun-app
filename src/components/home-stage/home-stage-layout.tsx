@@ -101,6 +101,8 @@ export type HomeStageLayoutProps = {
   onOpenRequest: (target: HomeTarget) => void;
   /** The needs-you card's View on a waiting ledger task, as Needs you opens it. */
   onOpenWaitingTask: (row: HomeTaskRow) => void;
+  /** A double tap on the art: a new task on the composer's computer. */
+  onNewTask?: () => void;
   onViewport: (height: number) => void;
 };
 
@@ -253,6 +255,7 @@ export function HomeStageLayout({
   onOpenDetails,
   onOpenRequest,
   onOpenWaitingTask,
+  onNewTask,
   onViewport,
 }: HomeStageLayoutProps) {
   const { t } = useLingui();
@@ -392,6 +395,7 @@ export function HomeStageLayout({
         opener={opener}
         onSelect={onSelect}
         onOverlayBand={setBand}
+        onNewTask={onNewTask}
       />
 
       {/* Top: the chosen computer, its status and the dots; the tools on the right. */}

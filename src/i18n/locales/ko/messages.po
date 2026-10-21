@@ -2413,6 +2413,7 @@ msgid "Cropped preview · Open full image"
 msgstr "일부 미리보기 · 전체 이미지 보기"
 
 #: src/components/file-mention-panel.tsx
+#: src/components/home-target-sheet.tsx
 #: src/components/settings-theme-sheet.tsx
 #: src/components/theme-gallery.tsx
 msgid "Current"
@@ -4475,9 +4476,11 @@ msgstr "오프라인"
 msgid "OFFLINE"
 msgstr "오프라인"
 
+#. placeholder {0}: age(row.lastSeenMs, nowMs)
 #. placeholder {0}: age(seen, nowMs)
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/home-stage/stage-agent-row.tsx
+#: src/components/home-target-sheet.tsx
 msgid "Offline · last seen {0}"
 msgstr "오프라인 · 마지막 확인 {0}"
 
@@ -6329,6 +6332,10 @@ msgstr "새 {0} 시작"
 #: src/lib/demo-gateway.ts
 msgid "Start a new session with empty context"
 msgstr "컨텍스트를 비우고 새 세션을 시작합니다"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Start a new task"
+msgstr "새 작업 시작"
 
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
