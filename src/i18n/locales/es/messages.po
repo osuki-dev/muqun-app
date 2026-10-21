@@ -317,7 +317,7 @@ msgstr "{count, plural, one {# resultado} other {# resultados}}"
 
 #: src/components/home-stage/home-stage-layout.tsx
 msgid "{count, plural, one {# session} other {# sessions}}"
-msgstr ""
+msgstr "{count, plural, one {# sesión} other {# sesiones}}"
 
 #: src/components/home-connections.tsx
 msgid "{count} in progress"
@@ -7960,8 +7960,8 @@ msgid "Your phone's clock is off by {minutes} minutes. Fix the date and time, th
 msgstr "El reloj de tu teléfono está desfasado {minutes} minutos. Corrige la fecha y la hora e inténtalo de nuevo"
 
 #: src/components/settings-home-layout-sheet.tsx
-msgid "Your theme as a 3D world, with your computers as holo-screens around its character."
-msgstr "Tu tema como un mundo 3D, con tus ordenadores como pantallas holográficas alrededor del personaje"
+msgid "Your theme's art as a 3D world that moves with your phone, with your agents' status below it."
+msgstr "El arte de tu tema como un mundo 3D que se mueve con tu teléfono, con el estado de tus agentes debajo"
 
 #: src/components/image-preview-modal.tsx
 msgid "Zoom in"

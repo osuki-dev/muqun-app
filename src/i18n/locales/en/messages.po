@@ -7960,8 +7960,8 @@ msgid "Your phone's clock is off by {minutes} minutes. Fix the date and time, th
 msgstr "Your phone's clock is off by {minutes} minutes. Fix the date and time, then try again"
 
 #: src/components/settings-home-layout-sheet.tsx
-msgid "Your theme as a 3D world, with your computers as holo-screens around its character."
-msgstr "Your theme as a 3D world, with your computers as holo-screens around its character"
+msgid "Your theme's art as a 3D world that moves with your phone, with your agents' status below it."
+msgstr "Your theme's art as a 3D world that moves with your phone, with your agents' status below it"
 
 #: src/components/image-preview-modal.tsx
 msgid "Zoom in"
