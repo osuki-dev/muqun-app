@@ -5,6 +5,7 @@ import {
   ScrollView,
   StyleSheet,
   useWindowDimensions,
+  View,
   type ScrollViewInstance,
   type StyleProp,
   type ViewInstance,
@@ -95,10 +96,10 @@ export type StageSessionStripProps = {
   selectedIndex: number;
   panelCount: number;
   sessions: readonly HomeContinueEntry[];
-  /** The session the dock is talking to: its card is outlined. */
+  /** The session the dock is talking to: its card's title is in the accent. */
   threadKey?: string;
   onOpenSession: (entry: HomeContinueEntry) => void;
-  /** Lets the dock's conversation go: the × on its outlined card. */
+  /** Lets the dock's conversation go: the × on its marked card. */
   onClearThread?: () => void;
   /** The card whose long-press menu is open: it shows as pressed. */
   menuKey?: string;
@@ -185,7 +186,7 @@ export function StageSessionStrip({
   const raised = background(theme.colors.surfaceRaised);
   const face = (entry: HomeContinueEntry) => ({
     backgroundColor: entry.key === menuKey ? raised : surface,
-    // The dock's conversation is outlined by the turn's own overlay, which
+    // The dock's conversation is marked by the turn's own accent title, which
     // fades: a border swapped here would jump in a frame.
     borderColor: entry.observation?.status === 'working' ? liveBorder : idleBorder,
     borderRadius: profile.chrome.card,
@@ -228,7 +229,6 @@ export function StageSessionStrip({
                 faceStyle={[face(entry), bounds]}
                 fromStyle={from ? [face(from), bounds] : undefined}
                 fromWidth={from ? widths[from.key] : undefined}
-                radius={profile.chrome.card}
                 keyboard={keyboard}
                 onMeasured={measured}
                 onPress={() => onOpenSession(entry)}
@@ -290,7 +290,6 @@ function StageSessionSlot({
   faceStyle,
   fromStyle,
   fromWidth,
-  radius,
   keyboard,
   onMeasured,
   onPress,
@@ -306,7 +305,6 @@ function StageSessionSlot({
   faceStyle: FaceStyle;
   fromStyle: FaceStyle | undefined;
   fromWidth: number | undefined;
-  radius: number;
   keyboard: SharedValue<number>;
   onMeasured: (key: string, width: number) => void;
   onPress: () => void;
@@ -347,7 +345,6 @@ function StageSessionSlot({
         faceStyle={faceStyle}
         fromStyle={fromStyle}
         fromWidth={fromWidth}
-        radius={radius}
         keyboard={keyboard}
         onMeasured={onMeasured}
         onClear={onClear}
@@ -366,7 +363,6 @@ function StageSessionTurn({
   faceStyle,
   fromStyle,
   fromWidth,
-  radius,
   keyboard,
   onMeasured,
   onClear,
@@ -380,8 +376,6 @@ function StageSessionTurn({
   faceStyle: FaceStyle;
   fromStyle: FaceStyle | undefined;
   fromWidth: number | undefined;
-  /** The card's corner radius, which its outline follows. */
-  radius: number;
   keyboard: SharedValue<number>;
   onMeasured: (key: string, width: number) => void;
   /** This card is the dock's conversation: its × lets it go. */
@@ -393,16 +387,16 @@ function StageSessionTurn({
   const title = entry.title;
   const turns = animate && from !== undefined;
   const progress = useSharedValue(turns ? 0 : 1);
-  // The outline of the dock's conversation fades in on the card it moves to
-  // and out on the one it leaves, over the reply bar's cross-fade.
+  // The dock's conversation is marked by its title in the accent, no border:
+  // the accent title fades in on the card it moves to and out on the one it
+  // leaves, over the reply bar's cross-fade.
   const targeted = onClear !== undefined;
-  const outline = useSharedValue(targeted ? 1 : 0);
+  const mark = useSharedValue(targeted ? 1 : 0);
   useEffect(() => {
-    outline.set(
-      withTiming(targeted ? 1 : 0, timing('short', { reduceMotion: ReduceMotion.Never }))
-    );
-  }, [targeted, outline]);
-  const outlineStyle = useAnimatedStyle(() => ({ opacity: outline.get() }));
+    mark.set(withTiming(targeted ? 1 : 0, timing('short', { reduceMotion: ReduceMotion.Never })));
+  }, [targeted, mark]);
+  const plainTitleStyle = useAnimatedStyle(() => ({ opacity: 1 - mark.get() }));
+  const markedTitleStyle = useAnimatedStyle(() => ({ opacity: mark.get() }));
   const compactStyle = useCompactCardStyle(keyboard);
   const backCompactStyle = useCompactCardStyle(keyboard);
 
@@ -460,17 +454,26 @@ function StageSessionTurn({
           newStyle,
           onClear && styles.targeted,
         ]}>
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            styles.outline,
-            { borderColor: theme.colors.primary, borderRadius: radius },
-            outlineStyle,
-          ]}
-        />
-        <Text variant="bodySmall" weight="semibold" numberOfLines={1} style={styles.title}>
-          {title}
-        </Text>
+        <View style={styles.title}>
+          <Animated.View style={plainTitleStyle}>
+            <Text variant="bodySmall" weight="semibold" numberOfLines={1}>
+              {title}
+            </Text>
+          </Animated.View>
+          <Animated.View
+            pointerEvents="none"
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            style={[styles.markedTitle, markedTitleStyle]}>
+            <Text
+              variant="bodySmall"
+              weight="semibold"
+              numberOfLines={1}
+              color={theme.colors.primary}>
+              {title}
+            </Text>
+          </Animated.View>
+        </View>
         {onClear ? (
           <Animated.View
             entering={reduced ? calmFadeIn() : markIn()}
@@ -522,15 +525,7 @@ const styles = StyleSheet.create({
   },
   face: { backfaceVisibility: 'hidden' },
   targeted: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  // Over the card's own hairline, which sits outside its absolute children.
-  outline: {
-    position: 'absolute',
-    top: -StyleSheet.hairlineWidth,
-    left: -StyleSheet.hairlineWidth,
-    right: -StyleSheet.hairlineWidth,
-    bottom: -StyleSheet.hairlineWidth,
-    borderWidth: 1.5,
-  },
+  markedTitle: { position: 'absolute', left: 0, right: 0, top: 0 },
   title: { flexShrink: 1 },
   // Pinned to the slot's left, top and bottom; its width is the old title's own.
   back: { position: 'absolute', left: 0, top: 0, bottom: 0 },
