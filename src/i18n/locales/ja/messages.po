@@ -703,7 +703,6 @@ msgid "Allow camera"
 msgstr "カメラを許可"
 
 #: src/components/agent-permission-card.tsx
-#: src/components/home-thread.tsx
 msgid "Allow for this turn"
 msgstr "このターンで許可"
 
@@ -712,7 +711,6 @@ msgid "Allow microphone access in system settings."
 msgstr "システム設定でマイクへのアクセスを許可してください"
 
 #: src/components/agent-permission-card.tsx
-#: src/components/home-thread.tsx
 msgid "Allow once"
 msgstr "今回のみ許可"
 
@@ -765,7 +763,6 @@ msgstr "ほか {rest} 件"
 msgid "another computer"
 msgstr "別のコンピュータ"
 
-#: src/components/home-thread.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
 msgstr "回答"
@@ -1383,7 +1380,8 @@ msgid "Clears notifications only. Pending tasks still need your attention."
 msgstr "通知のみを消去します。保留中のタスクには引き続き対応が必要です"
 
 #: src/app/diagram-viewer.tsx
-#: src/components/home-stage/home-stage-layout.tsx
+#: src/components/home-reply-drawer.tsx
+#: src/components/home-sheet.tsx
 #: src/components/settings-theme-sheet.tsx
 #: src/components/sheet-scene.tsx
 #: src/i18n/labels.ts
@@ -1855,7 +1853,7 @@ msgstr "コントロール Z、一時停止"
 msgid "Controls"
 msgstr "操作"
 
-#: src/components/home-thread.tsx
+#: src/components/home-reply-drawer.tsx
 msgid "Conversation"
 msgstr "会話"
 
@@ -2067,6 +2065,7 @@ msgstr "タスクを読み込めませんでした"
 
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-reply-drawer.tsx
 msgid "Could not load the session"
 msgstr "セッションを読み込めませんでした"
 
@@ -2193,6 +2192,7 @@ msgstr "保存済みのターミナル履歴を読み取れませんでした"
 msgid "Could not read the changes."
 msgstr "変更点を読み込めませんでした"
 
+#: src/components/home-reply-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-collaboration-output.ts
 msgid "Could not read the terminal."
@@ -2227,7 +2227,7 @@ msgid "Could not rename"
 msgstr "名前を変更できませんでした"
 
 #: src/components/agent-workbench.tsx
-#: src/components/home-thread.tsx
+#: src/components/home-reply-drawer.tsx
 msgid "Could not reply"
 msgstr "返信できませんでした"
 
@@ -2829,7 +2829,7 @@ msgid "Export theme"
 msgstr "テーマをエクスポート"
 
 #: src/components/agent-sleep-tool-body.tsx
-#: src/components/home-thread.tsx
+#: src/components/home-reply-drawer.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Failed"
@@ -3247,7 +3247,7 @@ msgid "How to use Muqun"
 msgstr "Muqun の使い方"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/home-thread.tsx
+#: src/components/home-reply-drawer.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "待機"
@@ -3572,7 +3572,7 @@ msgstr "最終確認: たった今"
 msgid "Later"
 msgstr "後で"
 
-#: src/components/agent-workbench.tsx
+#: src/components/jump-to-latest-pill.tsx
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "最新"
@@ -3719,6 +3719,10 @@ msgstr "読み込み中…"
 #: src/lib/demo-gateway.ts
 msgid "Logs"
 msgstr "ログ"
+
+#: src/components/home-reply-drawer.tsx
+msgid "Long press to open it in full"
+msgstr "長押しで全画面表示"
 
 #: src/components/simfarm-preview.tsx
 #: src/components/simfarm-stage.tsx
@@ -3953,9 +3957,9 @@ msgstr "要セットアップ"
 msgid "Needs update"
 msgstr "アップデートが必要"
 
+#: src/components/home-reply-drawer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/home-stage/stage-agent-row.tsx
-#: src/components/home-thread.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "Needs you"
 msgstr "対応が必要"
@@ -3984,6 +3988,10 @@ msgstr "一度も接続されていません"
 #: src/components/settings-servers.tsx
 msgid "Never seen"
 msgstr "一度も確認されていません"
+
+#: src/components/home-reply-drawer.tsx
+msgid "New conversation"
+msgstr "新しい会話"
 
 #: src/components/home-composer-dock.tsx
 msgid "New conversation with {agentLabel}…"
@@ -4177,6 +4185,7 @@ msgstr "出力なし"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/home-reply-drawer.tsx
 msgid "No output yet."
 msgstr "まだ出力はありません"
 
@@ -4360,7 +4369,7 @@ msgstr "未設定"
 msgid "Not signed in on the host"
 msgstr "ホストでサインインしていません"
 
-#: src/components/home-thread.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Not sure it was delivered"
 msgstr "届いたか不明です"
 
@@ -4423,7 +4432,7 @@ msgid "Off"
 msgstr "オフ"
 
 #: src/components/home-composer-options.tsx
-#: src/components/home-thread.tsx
+#: src/components/home-reply-drawer.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Offline"
@@ -4478,8 +4487,8 @@ msgid "Only this Home row is hidden. The task and its history remain available. 
 msgstr "ホームのこの行だけを非表示にします。タスクとその履歴は引き続き利用でき、実行中の作業は停止しません"
 
 #: src/components/home-connections.tsx
+#: src/components/home-reply-drawer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
-#: src/components/home-thread.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/task-row.tsx
@@ -4533,10 +4542,6 @@ msgstr "添付ファイルを開く"
 #: src/components/agent-tool-card.tsx
 msgid "Open background tasks"
 msgstr "バックグラウンドタスクを開く"
-
-#: src/components/home-thread.tsx
-msgid "Open conversation {title}, {word}"
-msgstr "会話「{title}」を開く、{word}"
 
 #: src/components/artifacts-button.tsx
 msgid "Open files"
@@ -4628,6 +4633,10 @@ msgstr "{agentName} のインストールガイドを開く"
 #: src/i18n/labels.ts
 msgid "Open the file explorer"
 msgstr "ファイルツリーを開く"
+
+#: src/components/home-reply-drawer.tsx
+msgid "Open the full conversation"
+msgstr "会話全体を開く"
 
 #: src/components/agent-tool-card.tsx
 msgid "Open the subagent's session"
@@ -4882,7 +4891,6 @@ msgid "Permission"
 msgstr "権限"
 
 #: src/components/agent-permission-card.tsx
-#: src/components/home-thread.tsx
 msgid "Permission required"
 msgstr "権限が必要です"
 
@@ -5466,7 +5474,7 @@ msgstr "再開"
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/gateway-storage-error.tsx
-#: src/components/home-thread.tsx
+#: src/components/home-composer-dock.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
@@ -5743,7 +5751,7 @@ msgstr "Gateway の QR コードをスキャンしてください"
 msgid "Scanning needs a camera, which this browser does not offer."
 msgstr "スキャンにはカメラが必要ですが、このブラウザでは使えません"
 
-#: src/components/agent-workbench.tsx
+#: src/components/jump-to-latest-pill.tsx
 msgid "Scroll to latest message"
 msgstr "最新のメッセージへスクロール"
 
@@ -5886,10 +5894,6 @@ msgstr "次の目標をここに送ります"
 msgid "Sends your next goal here. Long press to open it."
 msgstr "次の目標をここに送ります。長押しで開きます"
 
-#: src/components/home-thread.tsx
-msgid "Sent"
-msgstr "送信済み"
-
 #: src/components/task-row.tsx
 msgid "Sent · no reply yet"
 msgstr "送信済み · まだ返答なし"
@@ -6008,6 +6012,10 @@ msgstr "シフト タブ"
 msgid "Shift Tab, cycle mode"
 msgstr "シフト タブ、モードを切り替え"
 
+#: src/components/home-composer-dock.tsx
+msgid "Show"
+msgstr "表示"
+
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
 #: src/components/change-tree-rows.tsx
@@ -6027,6 +6035,15 @@ msgstr "ホームにアートワークを表示"
 #: src/components/pairing-camera.tsx
 msgid "Show camera details"
 msgstr "カメラの詳細を表示"
+
+#: src/components/home-composer-dock.tsx
+#: src/components/home-reply-drawer.tsx
+msgid "Show conversation"
+msgstr "会話を表示"
+
+#: src/components/home-reply-drawer.tsx
+msgid "Show conversation, needs you"
+msgstr "会話を表示、対応が必要"
 
 #: src/components/agent-compaction-pill.tsx
 #: src/components/in-app-notification-host.tsx
@@ -6341,7 +6358,7 @@ msgstr "{name} を起動しています"
 msgid "Starting the camera"
 msgstr "カメラを起動しています"
 
-#: src/components/home-thread.tsx
+#: src/components/home-reply-drawer.tsx
 #: src/components/new-task-sheet.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Starting…"
@@ -6404,7 +6421,7 @@ msgstr "停止して文字に変換"
 msgid "Stop assigning a task"
 msgstr "タスクの割り当てをやめる"
 
-#: src/components/home-thread.tsx
+#: src/components/home-reply-drawer.tsx
 msgid "Stop following this conversation"
 msgstr "この会話の追跡をやめる"
 
@@ -7758,7 +7775,7 @@ msgid "While you were away"
 msgstr "離席中の変化"
 
 #: src/components/collaboration-notice.tsx
-#: src/components/home-thread.tsx
+#: src/components/home-reply-drawer.tsx
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "作業中"

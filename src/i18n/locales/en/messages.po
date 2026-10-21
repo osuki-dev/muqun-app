@@ -703,7 +703,6 @@ msgid "Allow camera"
 msgstr "Allow camera"
 
 #: src/components/agent-permission-card.tsx
-#: src/components/home-thread.tsx
 msgid "Allow for this turn"
 msgstr "Allow for this turn"
 
@@ -712,7 +711,6 @@ msgid "Allow microphone access in system settings."
 msgstr "Allow microphone access in system settings"
 
 #: src/components/agent-permission-card.tsx
-#: src/components/home-thread.tsx
 msgid "Allow once"
 msgstr "Allow once"
 
@@ -765,7 +763,6 @@ msgstr "and {rest} more"
 msgid "another computer"
 msgstr "another computer"
 
-#: src/components/home-thread.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
 msgstr "Answer"
@@ -1383,7 +1380,8 @@ msgid "Clears notifications only. Pending tasks still need your attention."
 msgstr "Clears notifications only. Pending tasks still need your attention"
 
 #: src/app/diagram-viewer.tsx
-#: src/components/home-stage/home-stage-layout.tsx
+#: src/components/home-reply-drawer.tsx
+#: src/components/home-sheet.tsx
 #: src/components/settings-theme-sheet.tsx
 #: src/components/sheet-scene.tsx
 #: src/i18n/labels.ts
@@ -1855,7 +1853,7 @@ msgstr "Control Z, suspend"
 msgid "Controls"
 msgstr "Controls"
 
-#: src/components/home-thread.tsx
+#: src/components/home-reply-drawer.tsx
 msgid "Conversation"
 msgstr "Conversation"
 
@@ -2067,6 +2065,7 @@ msgstr "Could not load tasks"
 
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-reply-drawer.tsx
 msgid "Could not load the session"
 msgstr "Could not load the session"
 
@@ -2193,6 +2192,7 @@ msgstr "Could not read saved terminal history"
 msgid "Could not read the changes."
 msgstr "Could not read the changes"
 
+#: src/components/home-reply-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-collaboration-output.ts
 msgid "Could not read the terminal."
@@ -2227,7 +2227,7 @@ msgid "Could not rename"
 msgstr "Could not rename"
 
 #: src/components/agent-workbench.tsx
-#: src/components/home-thread.tsx
+#: src/components/home-reply-drawer.tsx
 msgid "Could not reply"
 msgstr "Could not reply"
 
@@ -2829,7 +2829,7 @@ msgid "Export theme"
 msgstr "Export theme"
 
 #: src/components/agent-sleep-tool-body.tsx
-#: src/components/home-thread.tsx
+#: src/components/home-reply-drawer.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Failed"
@@ -3247,7 +3247,7 @@ msgid "How to use Muqun"
 msgstr "How to use Muqun"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/home-thread.tsx
+#: src/components/home-reply-drawer.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "Idle"
@@ -3572,7 +3572,7 @@ msgstr "Last seen just now"
 msgid "Later"
 msgstr "Later"
 
-#: src/components/agent-workbench.tsx
+#: src/components/jump-to-latest-pill.tsx
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "Latest"
@@ -3719,6 +3719,10 @@ msgstr "Loading…"
 #: src/lib/demo-gateway.ts
 msgid "Logs"
 msgstr "Logs"
+
+#: src/components/home-reply-drawer.tsx
+msgid "Long press to open it in full"
+msgstr "Long press to open it in full"
 
 #: src/components/simfarm-preview.tsx
 #: src/components/simfarm-stage.tsx
@@ -3953,9 +3957,9 @@ msgstr "Needs setup"
 msgid "Needs update"
 msgstr "Needs update"
 
+#: src/components/home-reply-drawer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/home-stage/stage-agent-row.tsx
-#: src/components/home-thread.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "Needs you"
 msgstr "Needs you"
@@ -3984,6 +3988,10 @@ msgstr "Never connected"
 #: src/components/settings-servers.tsx
 msgid "Never seen"
 msgstr "Never seen"
+
+#: src/components/home-reply-drawer.tsx
+msgid "New conversation"
+msgstr "New conversation"
 
 #: src/components/home-composer-dock.tsx
 msgid "New conversation with {agentLabel}…"
@@ -4177,6 +4185,7 @@ msgstr "No output"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/home-reply-drawer.tsx
 msgid "No output yet."
 msgstr "No output yet"
 
@@ -4360,7 +4369,7 @@ msgstr "Not set"
 msgid "Not signed in on the host"
 msgstr "Not signed in on the host"
 
-#: src/components/home-thread.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Not sure it was delivered"
 msgstr "Not sure it was delivered"
 
@@ -4423,7 +4432,7 @@ msgid "Off"
 msgstr "Off"
 
 #: src/components/home-composer-options.tsx
-#: src/components/home-thread.tsx
+#: src/components/home-reply-drawer.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Offline"
@@ -4478,8 +4487,8 @@ msgid "Only this Home row is hidden. The task and its history remain available. 
 msgstr "Only this Home row is hidden. The task and its history remain available. Running work is not stopped"
 
 #: src/components/home-connections.tsx
+#: src/components/home-reply-drawer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
-#: src/components/home-thread.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/task-row.tsx
@@ -4533,10 +4542,6 @@ msgstr "Open attachment"
 #: src/components/agent-tool-card.tsx
 msgid "Open background tasks"
 msgstr "Open background tasks"
-
-#: src/components/home-thread.tsx
-msgid "Open conversation {title}, {word}"
-msgstr "Open conversation {title}, {word}"
 
 #: src/components/artifacts-button.tsx
 msgid "Open files"
@@ -4628,6 +4633,10 @@ msgstr "Open the {agentName} installation guide"
 #: src/i18n/labels.ts
 msgid "Open the file explorer"
 msgstr "Open the file explorer"
+
+#: src/components/home-reply-drawer.tsx
+msgid "Open the full conversation"
+msgstr "Open the full conversation"
 
 #: src/components/agent-tool-card.tsx
 msgid "Open the subagent's session"
@@ -4882,7 +4891,6 @@ msgid "Permission"
 msgstr "Permission"
 
 #: src/components/agent-permission-card.tsx
-#: src/components/home-thread.tsx
 msgid "Permission required"
 msgstr "Permission required"
 
@@ -5466,7 +5474,7 @@ msgstr "Resume"
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/gateway-storage-error.tsx
-#: src/components/home-thread.tsx
+#: src/components/home-composer-dock.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
@@ -5743,7 +5751,7 @@ msgstr "Scan the Gateway QR"
 msgid "Scanning needs a camera, which this browser does not offer."
 msgstr "Scanning needs a camera, which this browser does not offer"
 
-#: src/components/agent-workbench.tsx
+#: src/components/jump-to-latest-pill.tsx
 msgid "Scroll to latest message"
 msgstr "Scroll to latest message"
 
@@ -5886,10 +5894,6 @@ msgstr "Sends your next goal here"
 msgid "Sends your next goal here. Long press to open it."
 msgstr "Sends your next goal here. Long press to open it"
 
-#: src/components/home-thread.tsx
-msgid "Sent"
-msgstr "Sent"
-
 #: src/components/task-row.tsx
 msgid "Sent · no reply yet"
 msgstr "Sent · no reply yet"
@@ -6008,6 +6012,10 @@ msgstr "Shift Tab"
 msgid "Shift Tab, cycle mode"
 msgstr "Shift Tab, cycle mode"
 
+#: src/components/home-composer-dock.tsx
+msgid "Show"
+msgstr "Show"
+
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
 #: src/components/change-tree-rows.tsx
@@ -6027,6 +6035,15 @@ msgstr "Show artwork on Home"
 #: src/components/pairing-camera.tsx
 msgid "Show camera details"
 msgstr "Show camera details"
+
+#: src/components/home-composer-dock.tsx
+#: src/components/home-reply-drawer.tsx
+msgid "Show conversation"
+msgstr "Show conversation"
+
+#: src/components/home-reply-drawer.tsx
+msgid "Show conversation, needs you"
+msgstr "Show conversation, needs you"
 
 #: src/components/agent-compaction-pill.tsx
 #: src/components/in-app-notification-host.tsx
@@ -6341,7 +6358,7 @@ msgstr "Starting {name}"
 msgid "Starting the camera"
 msgstr "Starting the camera"
 
-#: src/components/home-thread.tsx
+#: src/components/home-reply-drawer.tsx
 #: src/components/new-task-sheet.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Starting…"
@@ -6404,7 +6421,7 @@ msgstr "Stop and transcribe"
 msgid "Stop assigning a task"
 msgstr "Stop assigning a task"
 
-#: src/components/home-thread.tsx
+#: src/components/home-reply-drawer.tsx
 msgid "Stop following this conversation"
 msgstr "Stop following this conversation"
 
@@ -7758,7 +7775,7 @@ msgid "While you were away"
 msgstr "While you were away"
 
 #: src/components/collaboration-notice.tsx
-#: src/components/home-thread.tsx
+#: src/components/home-reply-drawer.tsx
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "Working"

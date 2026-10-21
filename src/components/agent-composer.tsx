@@ -533,16 +533,27 @@ export interface AgentComposerProps {
    */
   accessory?: React.ReactNode;
   /**
-   * A bar joined to the top of the field, on its ground: Home's reply bar.
-   * The field's top corners square off under it, they share one shadow, and
-   * it counts as field for the dock's clip edge, so nothing scrolls behind it.
+   * A row drawn right above the field, in the field's own box: it counts as
+   * field for the dock's clip edge, so nothing scrolls behind it. Home's
+   * drawer grabber. When `fieldHeaderShown`, it is a bar joined to the field
+   * on its ground: the field's top corners square off under it and they
+   * share one shadow.
    */
   fieldHeader?: React.ReactNode;
   /**
-   * Whether `fieldHeader` is drawing its bar right now (a header that has
-   * nothing to show renders nothing): only then does the field join it.
+   * Whether `fieldHeader` is drawing a bar joined to the field right now (a
+   * header that has nothing to show renders nothing): only then does the
+   * field join it.
    */
   fieldHeaderShown?: boolean;
+  /**
+   * Drawn first inside the dock, under everything the dock draws: it rides the
+   * keyboard and the dock's auto-hide with it. Home's reply drawer, which
+   * rises from behind the field.
+   */
+  dockUnderlay?: React.ReactNode;
+  /** Keeps an auto-hiding dock shown, as a focused field does (Home's drawer open). */
+  pinDock?: boolean;
   /** Home consolidates its choices in one control beside the attachment button. */
   toolbarLeading?: React.ReactNode;
   /**
@@ -683,6 +694,8 @@ export const AgentComposer = memo(function AgentComposer({
   accessory,
   fieldHeader,
   fieldHeaderShown = true,
+  dockUnderlay,
+  pinDock = false,
   toolbarLeading,
   toolbarMenu,
   fieldBackground,
@@ -1565,8 +1578,8 @@ export const AgentComposer = memo(function AgentComposer({
   // A dock that goes while focused has lost its focus too.
   useEffect(() => () => reportFocus(false), []);
   useEffect(() => {
-    autoHide?.setPinned(focused || keyboardOpen || sending);
-  }, [autoHide, focused, keyboardOpen, sending]);
+    autoHide?.setPinned(focused || keyboardOpen || sending || pinDock);
+  }, [autoHide, focused, keyboardOpen, sending, pinDock]);
   const segmentRowLead = useSegmentRowLead();
   const segmentHitSlop = useSegmentHitSlop();
   const toggleMode = () => {
@@ -1601,6 +1614,7 @@ export const AgentComposer = memo(function AgentComposer({
         outerInsets && { left: outerInsets.horizontal, right: outerInsets.horizontal },
         { paddingBottom: dockFoot },
       ]}>
+      {dockUnderlay}
       {bar ? null : (
         <EdgeFade edge="bottom" color={theme.colors.background} style={styles.composerFade} />
       )}

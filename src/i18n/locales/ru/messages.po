@@ -703,7 +703,6 @@ msgid "Allow camera"
 msgstr "Разрешить камеру"
 
 #: src/components/agent-permission-card.tsx
-#: src/components/home-thread.tsx
 msgid "Allow for this turn"
 msgstr "Разрешить на этот ход"
 
@@ -712,7 +711,6 @@ msgid "Allow microphone access in system settings."
 msgstr "Разрешите доступ к микрофону в настройках системы"
 
 #: src/components/agent-permission-card.tsx
-#: src/components/home-thread.tsx
 msgid "Allow once"
 msgstr "Разрешить один раз"
 
@@ -765,7 +763,6 @@ msgstr "и ещё {rest}"
 msgid "another computer"
 msgstr "другой компьютер"
 
-#: src/components/home-thread.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
 msgstr "Ответ"
@@ -1383,7 +1380,8 @@ msgid "Clears notifications only. Pending tasks still need your attention."
 msgstr "Удаляются только уведомления. Ожидающие задачи по-прежнему требуют вашего внимания"
 
 #: src/app/diagram-viewer.tsx
-#: src/components/home-stage/home-stage-layout.tsx
+#: src/components/home-reply-drawer.tsx
+#: src/components/home-sheet.tsx
 #: src/components/settings-theme-sheet.tsx
 #: src/components/sheet-scene.tsx
 #: src/i18n/labels.ts
@@ -1855,7 +1853,7 @@ msgstr "Ctrl Z, приостановить"
 msgid "Controls"
 msgstr "Управление"
 
-#: src/components/home-thread.tsx
+#: src/components/home-reply-drawer.tsx
 msgid "Conversation"
 msgstr "Разговор"
 
@@ -2067,6 +2065,7 @@ msgstr "Не удалось загрузить задачи"
 
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-reply-drawer.tsx
 msgid "Could not load the session"
 msgstr "Не удалось загрузить сессию"
 
@@ -2193,6 +2192,7 @@ msgstr "Не удалось прочитать сохранённую истор
 msgid "Could not read the changes."
 msgstr "Не удалось прочитать изменения"
 
+#: src/components/home-reply-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-collaboration-output.ts
 msgid "Could not read the terminal."
@@ -2227,7 +2227,7 @@ msgid "Could not rename"
 msgstr "Не удалось переименовать"
 
 #: src/components/agent-workbench.tsx
-#: src/components/home-thread.tsx
+#: src/components/home-reply-drawer.tsx
 msgid "Could not reply"
 msgstr "Не удалось ответить"
 
@@ -2829,7 +2829,7 @@ msgid "Export theme"
 msgstr "Экспортировать тему"
 
 #: src/components/agent-sleep-tool-body.tsx
-#: src/components/home-thread.tsx
+#: src/components/home-reply-drawer.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Failed"
@@ -3247,7 +3247,7 @@ msgid "How to use Muqun"
 msgstr "Как пользоваться Muqun"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/home-thread.tsx
+#: src/components/home-reply-drawer.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "Простаивает"
@@ -3572,7 +3572,7 @@ msgstr "В сети только что"
 msgid "Later"
 msgstr "Позже"
 
-#: src/components/agent-workbench.tsx
+#: src/components/jump-to-latest-pill.tsx
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "Последнее"
@@ -3719,6 +3719,10 @@ msgstr "Загрузка…"
 #: src/lib/demo-gateway.ts
 msgid "Logs"
 msgstr "Логи"
+
+#: src/components/home-reply-drawer.tsx
+msgid "Long press to open it in full"
+msgstr "Нажмите и удерживайте, чтобы открыть полностью"
 
 #: src/components/simfarm-preview.tsx
 #: src/components/simfarm-stage.tsx
@@ -3953,9 +3957,9 @@ msgstr "Нужна настройка"
 msgid "Needs update"
 msgstr "Нужно обновление"
 
+#: src/components/home-reply-drawer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/home-stage/stage-agent-row.tsx
-#: src/components/home-thread.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "Needs you"
 msgstr "Нужны вы"
@@ -3984,6 +3988,10 @@ msgstr "Ни разу не подключался"
 #: src/components/settings-servers.tsx
 msgid "Never seen"
 msgstr "Ни разу не был в сети"
+
+#: src/components/home-reply-drawer.tsx
+msgid "New conversation"
+msgstr "Новый разговор"
 
 #: src/components/home-composer-dock.tsx
 msgid "New conversation with {agentLabel}…"
@@ -4177,6 +4185,7 @@ msgstr "Нет вывода"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/home-reply-drawer.tsx
 msgid "No output yet."
 msgstr "Вывода пока нет"
 
@@ -4360,7 +4369,7 @@ msgstr "Не задано"
 msgid "Not signed in on the host"
 msgstr "Вход на хосте не выполнен"
 
-#: src/components/home-thread.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Not sure it was delivered"
 msgstr "Неизвестно, доставлено ли"
 
@@ -4423,7 +4432,7 @@ msgid "Off"
 msgstr "Выключено"
 
 #: src/components/home-composer-options.tsx
-#: src/components/home-thread.tsx
+#: src/components/home-reply-drawer.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Offline"
@@ -4478,8 +4487,8 @@ msgid "Only this Home row is hidden. The task and its history remain available. 
 msgstr "Будет скрыта только эта строка на главном экране. Задача и её история останутся доступны. Выполняемая работа не остановится"
 
 #: src/components/home-connections.tsx
+#: src/components/home-reply-drawer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
-#: src/components/home-thread.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/task-row.tsx
@@ -4533,10 +4542,6 @@ msgstr "Открыть вложение"
 #: src/components/agent-tool-card.tsx
 msgid "Open background tasks"
 msgstr "Открыть фоновые задачи"
-
-#: src/components/home-thread.tsx
-msgid "Open conversation {title}, {word}"
-msgstr "Открыть разговор «{title}», {word}"
 
 #: src/components/artifacts-button.tsx
 msgid "Open files"
@@ -4628,6 +4633,10 @@ msgstr "Открыть руководство по установке {agentName
 #: src/i18n/labels.ts
 msgid "Open the file explorer"
 msgstr "Открыть обозреватель файлов"
+
+#: src/components/home-reply-drawer.tsx
+msgid "Open the full conversation"
+msgstr "Открыть весь разговор"
 
 #: src/components/agent-tool-card.tsx
 msgid "Open the subagent's session"
@@ -4882,7 +4891,6 @@ msgid "Permission"
 msgstr "Разрешение"
 
 #: src/components/agent-permission-card.tsx
-#: src/components/home-thread.tsx
 msgid "Permission required"
 msgstr "Требуется разрешение"
 
@@ -5466,7 +5474,7 @@ msgstr "Возобновить"
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/gateway-storage-error.tsx
-#: src/components/home-thread.tsx
+#: src/components/home-composer-dock.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
@@ -5743,7 +5751,7 @@ msgstr "Отсканируйте QR-код Gateway"
 msgid "Scanning needs a camera, which this browser does not offer."
 msgstr "Для сканирования нужна камера, а этот браузер её не даёт"
 
-#: src/components/agent-workbench.tsx
+#: src/components/jump-to-latest-pill.tsx
 msgid "Scroll to latest message"
 msgstr "Перейти к последнему сообщению"
 
@@ -5886,10 +5894,6 @@ msgstr "Следующая цель уйдёт сюда"
 msgid "Sends your next goal here. Long press to open it."
 msgstr "Следующая цель уйдёт сюда. Долгое нажатие — открыть"
 
-#: src/components/home-thread.tsx
-msgid "Sent"
-msgstr "Отправлено"
-
 #: src/components/task-row.tsx
 msgid "Sent · no reply yet"
 msgstr "Отправлено · ответа пока нет"
@@ -6008,6 +6012,10 @@ msgstr "Shift Tab"
 msgid "Shift Tab, cycle mode"
 msgstr "Shift Tab, переключить режим"
 
+#: src/components/home-composer-dock.tsx
+msgid "Show"
+msgstr "Показать"
+
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
 #: src/components/change-tree-rows.tsx
@@ -6027,6 +6035,15 @@ msgstr "Показывать оформление на главном экран
 #: src/components/pairing-camera.tsx
 msgid "Show camera details"
 msgstr "Показать сведения о камере"
+
+#: src/components/home-composer-dock.tsx
+#: src/components/home-reply-drawer.tsx
+msgid "Show conversation"
+msgstr "Показать разговор"
+
+#: src/components/home-reply-drawer.tsx
+msgid "Show conversation, needs you"
+msgstr "Показать разговор, нужен ваш ответ"
 
 #: src/components/agent-compaction-pill.tsx
 #: src/components/in-app-notification-host.tsx
@@ -6341,7 +6358,7 @@ msgstr "Запускаем {name}"
 msgid "Starting the camera"
 msgstr "Запускаем камеру"
 
-#: src/components/home-thread.tsx
+#: src/components/home-reply-drawer.tsx
 #: src/components/new-task-sheet.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Starting…"
@@ -6404,7 +6421,7 @@ msgstr "Остановить и расшифровать"
 msgid "Stop assigning a task"
 msgstr "Отменить назначение задачи"
 
-#: src/components/home-thread.tsx
+#: src/components/home-reply-drawer.tsx
 msgid "Stop following this conversation"
 msgstr "Не следить за этим разговором"
 
@@ -7758,7 +7775,7 @@ msgid "While you were away"
 msgstr "Пока вас не было"
 
 #: src/components/collaboration-notice.tsx
-#: src/components/home-thread.tsx
+#: src/components/home-reply-drawer.tsx
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "Работает"
