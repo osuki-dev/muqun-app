@@ -5478,7 +5478,6 @@ msgid "Replay audio"
 msgstr "重播音訊"
 
 #: src/components/home-recent-sessions.tsx
-#: src/components/home-stage/home-stage-layout.tsx
 msgid "Reply from Home"
 msgstr "在主畫面回覆"
 

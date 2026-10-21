@@ -5478,7 +5478,6 @@ msgid "Replay audio"
 msgstr "Воспроизвести аудио снова"
 
 #: src/components/home-recent-sessions.tsx
-#: src/components/home-stage/home-stage-layout.tsx
 msgid "Reply from Home"
 msgstr "Ответить с главной"
 

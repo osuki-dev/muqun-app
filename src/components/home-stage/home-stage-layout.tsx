@@ -5,15 +5,12 @@ import { PressableScale, Text, useThemeMode, useThemeTokens } from '@osuki-dev/u
 import * as Haptics from 'expo-haptics';
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  BackHandler,
-  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
   useWindowDimensions,
   View,
   type LayoutChangeEvent,
-  type ViewInstance,
 } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -27,19 +24,12 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { EdgeFade } from '@/components/edge-fade';
-import { FLOATING_MENU_GUTTER, FloatingMenu } from '@/components/floating-menu';
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import { useMinuteNow } from '@/hooks/use-minute-now';
 import { useStableHandler } from '@/hooks/use-render-refs';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useTaskAge } from '@/hooks/use-task-age';
-import {
-  CloseIcon,
-  MessageSendIcon,
-  SettingsIcon,
-  TaskListIcon,
-  TerminalWindowIcon,
-} from '@/icons';
+import { CloseIcon, SettingsIcon, TaskListIcon, TerminalWindowIcon } from '@/icons';
 import { connectionStatusDescription } from '@/i18n/labels';
 import { withAlpha } from '@/lib/color';
 import { filterHomeRecent, type HomeContinueEntry } from '@/lib/home-continue';
@@ -250,29 +240,13 @@ export function HomeStageLayout({
   const openSky = composition.role === 'sky' || composition.role === 'figure';
   const halo = useStageTextHalo();
   const [actionsFor, setActionsFor] = useState<string | null>(null);
-  // A Stage card's long-press menu, anchored over the card that opened it.
-  const [sessionMenu, setSessionMenu] = useState<StageSessionMenuAnchor | null>(null);
-  const rootRef = useRef<ViewInstance>(null);
-  const openSessionMenu = useStableHandler((entry: HomeContinueEntry, card: WindowRect) => {
+  // A long-press on a Stage card makes it the dock's conversation directly:
+  // it is the only thing a long-press does here, so it needs no menu.
+  const replyToCard = useStableHandler((entry: HomeContinueEntry) => {
     if (!canReply?.(entry)) return;
-    rootRef.current?.measureInWindow((x, y, width, height) =>
-      setSessionMenu({
-        entry,
-        card: { ...card, x: card.x - x, y: card.y - y },
-        root: { width, height },
-      })
-    );
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onReplySession?.(entry);
   });
-  // Back closes the menu before it leaves Home.
-  const menuOpen = sessionMenu !== null;
-  useEffect(() => {
-    if (!menuOpen) return;
-    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
-      setSessionMenu(null);
-      return true;
-    });
-    return () => subscription.remove();
-  }, [menuOpen]);
   const [listOpen, setListOpen] = useState(false);
   const selected = panels[selectedIndex];
   const actionsPanel = panels.find((panel) => panel.serverId === actionsFor);
@@ -340,7 +314,6 @@ export function HomeStageLayout({
 
   return (
     <View
-      ref={rootRef}
       testID="home-stage-layout"
       style={[styles.root, { backgroundColor: theme.colors.background }]}
       onLayout={(event: LayoutChangeEvent) => onViewport(event.nativeEvent.layout.height)}>
@@ -461,9 +434,8 @@ export function HomeStageLayout({
                 panelCount={panels.length}
                 sessions={sessions}
                 threadKey={threadKey}
-                menuKey={sessionMenu?.entry.key}
                 onOpenSession={onOpenSession}
-                onSessionActions={onReplySession ? openSessionMenu : undefined}
+                onSessionActions={onReplySession ? replyToCard : undefined}
                 onOpenAll={() => openList(true)}
               />
             </View>
@@ -514,81 +486,7 @@ export function HomeStageLayout({
           </ScrollView>
         ) : null}
       </Animated.View>
-      {sessionMenu ? (
-        <StageSessionMenu
-          anchor={sessionMenu}
-          onClose={() => setSessionMenu(null)}
-          onReply={() => {
-            const { entry } = sessionMenu;
-            setSessionMenu(null);
-            onReplySession?.(entry);
-          }}
-        />
-      ) : null}
     </View>
-  );
-}
-
-type WindowRect = { x: number; y: number; width: number; height: number };
-type StageSessionMenuAnchor = {
-  entry: HomeContinueEntry;
-  /** The pressed card, in the layout's own coordinates. */
-  card: WindowRect;
-  root: { width: number; height: number };
-};
-
-/** The gap between the card and the menu above it. */
-const SESSION_MENU_GAP = 6;
-/** The menu's width before it has laid out: `FloatingMenu`'s hugging minimum. */
-const SESSION_MENU_ESTIMATE = 190;
-
-/**
- * A Stage card's long-press menu: the composer's floating card, risen just
- * above the pressed card, left-aligned to it and kept inside the screen's
- * gutters. A tap anywhere else closes it; nothing dims the stage.
- */
-function StageSessionMenu({
-  anchor,
-  onClose,
-  onReply,
-}: {
-  anchor: StageSessionMenuAnchor;
-  onClose: () => void;
-  onReply: () => void;
-}) {
-  const { t } = useLingui();
-  const theme = useThemeTokens();
-  const [menuWidth, setMenuWidth] = useState(SESSION_MENU_ESTIMATE + 2 * FLOATING_MENU_GUTTER);
-  const { card, root } = anchor;
-  // `FloatingMenu` carries its own gutter: the card's edge minus it lines the two up.
-  const left = Math.max(0, Math.min(card.x - FLOATING_MENU_GUTTER, root.width - menuWidth));
-  const label = t`Reply from Home`;
-  return (
-    <>
-      <Pressable
-        testID="home-stage-session-menu-scrim"
-        accessibilityElementsHidden
-        importantForAccessibility="no"
-        style={StyleSheet.absoluteFill}
-        onPress={onClose}
-      />
-      <View
-        pointerEvents="box-none"
-        onLayout={(event) => setMenuWidth(event.nativeEvent.layout.width)}
-        style={[styles.sessionMenu, { left, bottom: root.height - card.y + SESSION_MENU_GAP }]}>
-        <FloatingMenu testID="home-stage-session-actions">
-          <PressableScale
-            testID="home-stage-session-reply"
-            accessibilityRole="button"
-            accessibilityLabel={label}
-            onPress={onReply}
-            style={styles.sessionMenuRow}>
-            <MessageSendIcon size={17} color={theme.colors.primary} />
-            <Text variant="bodySmall">{label}</Text>
-          </PressableScale>
-        </FloatingMenu>
-      </View>
-    </>
   );
 }
 
@@ -681,14 +579,6 @@ function StageStatusLine({
 
 const styles = StyleSheet.create({
   root: { flex: 1, overflow: 'hidden' },
-  sessionMenu: { position: 'absolute' },
-  sessionMenuRow: {
-    minHeight: 42,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 14,
-  },
   topScrim: { position: 'absolute', left: 0, right: 0, top: 0 },
   top: { position: 'absolute', left: 0, right: 0, top: 0, paddingHorizontal: 20, gap: 14 },
   topRow: {
