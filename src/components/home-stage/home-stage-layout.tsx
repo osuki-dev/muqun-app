@@ -13,6 +13,7 @@ import {
   type LayoutChangeEvent,
 } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { useKeyboardState, useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -38,7 +39,7 @@ import type { HomeTaskRow } from '@/lib/home-in-progress';
 import type { HomeTarget } from '@/lib/home-recents';
 import { wrapStageIndex, type StageOverlayBand } from '@/lib/home-stage-geometry';
 import { stagePanels, stageSelectedIndex, type StagePanel } from '@/lib/home-stage-panels';
-import { SETTLE, timing } from '@/lib/motion';
+import { fadeIn, fadeOut, SETTLE, timing } from '@/lib/motion';
 import type { ConnectionStatus } from '@/lib/server-reachability';
 import { useHomeAttention } from '@/stores/home-attention';
 import { useServerAgents } from '@/stores/server-agents';
@@ -301,8 +302,18 @@ export function HomeStageLayout({
   useEffect(() => {
     dockLift.set(withTiming(dockHeight, timing('short')));
   }, [dockHeight, dockLift]);
-  const footStyle = useAnimatedStyle(() => ({ bottom: dockLift.get() + 6 }));
-  const footScrimStyle = useAnimatedStyle(() => ({ height: dockLift.get() + 230 }));
+  // While typing, the strip rides up with the composer on the keyboard's own
+  // motion and sits right above it; the rows over it step aside.
+  const { height: keyboardOffset } = useReanimatedKeyboardAnimation();
+  const typing = useKeyboardState((state) => state.height > 0);
+  const footStyle = useAnimatedStyle(() => ({
+    bottom: dockLift.get() + 6,
+    transform: [{ translateY: keyboardOffset.get() }],
+  }));
+  const footScrimStyle = useAnimatedStyle(() => ({
+    height: dockLift.get() + 230,
+    transform: [{ translateY: keyboardOffset.get() }],
+  }));
 
   const sheet = useSharedValue(0);
   const openList = useStableHandler((open: boolean) => {
@@ -461,31 +472,41 @@ export function HomeStageLayout({
       <Animated.View
         pointerEvents="box-none"
         style={[styles.bottom, footStyle]}
-        onLayout={(event) => setFootStack(Math.round(event.nativeEvent.layout.height))}>
+        onLayout={(event) => {
+          // The art stands on the resting foot: the rows stepping aside
+          // while typing do not move it.
+          if (!typing) setFootStack(Math.round(event.nativeEvent.layout.height));
+        }}>
         {emptyState ? <View style={styles.empty}>{emptyState}</View> : null}
-        {panels.length > 0 ? (
-          <StageAgentRow
-            panel={selected}
-            paused={paused || listOpen}
-            onOpenAgent={(chip) => opener.open(() => onOpenAgent(selectedIndex, chip.paneId))}
-          />
+        {panels.length > 0 && !typing ? (
+          <Animated.View entering={fadeIn('short')} exiting={fadeOut('short')}>
+            <StageAgentRow
+              panel={selected}
+              paused={paused || listOpen}
+              onOpenAgent={(chip) => opener.open(() => onOpenAgent(selectedIndex, chip.paneId))}
+            />
+          </Animated.View>
         ) : null}
         {panels.length > 0 ? (
           <GestureDetector gesture={pull}>
             <View>
-              <PressableScale
-                testID="home-stage-pull"
-                accessibilityRole="button"
-                accessibilityLabel={hasAttention ? t`All sessions, needs you` : t`All sessions`}
-                onPress={() => openList(true)}
-                style={styles.handleRow}>
-                <HomeSheetGrabber />
-                {hasAttention ? (
-                  <Text variant="caption" weight="semibold" color={theme.colors.warning}>
-                    {t`Needs you`}
-                  </Text>
-                ) : null}
-              </PressableScale>
+              {typing ? null : (
+                <Animated.View entering={fadeIn('short')} exiting={fadeOut('short')}>
+                  <PressableScale
+                    testID="home-stage-pull"
+                    accessibilityRole="button"
+                    accessibilityLabel={hasAttention ? t`All sessions, needs you` : t`All sessions`}
+                    onPress={() => openList(true)}
+                    style={styles.handleRow}>
+                    <HomeSheetGrabber />
+                    {hasAttention ? (
+                      <Text variant="caption" weight="semibold" color={theme.colors.warning}>
+                        {t`Needs you`}
+                      </Text>
+                    ) : null}
+                  </PressableScale>
+                </Animated.View>
+              )}
               <StageSessionStrip
                 serverId={selected?.serverId}
                 selectedIndex={selectedIndex}
@@ -503,7 +524,7 @@ export function HomeStageLayout({
       </Animated.View>
 
       {/* Over the art, on the foot rows: what needs the reader, else what an agent reports. */}
-      {selected && band && !paused && !listOpen ? (
+      {selected && band && !paused && !listOpen && !typing ? (
         <StageOverlay serverId={selected.serverId} band={band} actions={overlayActions} />
       ) : null}
 

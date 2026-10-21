@@ -10,7 +10,9 @@ import {
   type ViewInstance,
   type ViewStyle,
 } from 'react-native';
+import { useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
 import Animated, {
+  interpolate,
   LayoutAnimationConfig,
   ReduceMotion,
   useAnimatedStyle,
@@ -18,6 +20,7 @@ import Animated, {
   useSharedValue,
   withDelay,
   withTiming,
+  type SharedValue,
 } from 'react-native-reanimated';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -57,6 +60,20 @@ const STRIP_GAP = 8;
 /** The composer's own gutter, so the first card lines up with the composer below it. */
 const STRIP_PADDING = HOME_DOCK_OUTER_INSET;
 const HALF_TURN = Math.PI / 2;
+/** A card's height and vertical padding, resting and while typing (compact). */
+const CARD_HEIGHT = [46, 38] as const;
+const CARD_PADDING = [12, 8] as const;
+
+/** A card's size, compact as far as the keyboard is up: on the keyboard's own motion. */
+function useCompactCardStyle(keyboard: SharedValue<number>) {
+  return useAnimatedStyle(() => {
+    const open = keyboard.get();
+    return {
+      minHeight: interpolate(open, [0, 1], CARD_HEIGHT),
+      paddingVertical: interpolate(open, [0, 1], CARD_PADDING),
+    };
+  });
+}
 
 type Flip = {
   /** Bumped each time the chosen computer changes; 0 until the first change. */
@@ -118,6 +135,9 @@ export function StageSessionStrip({
   const reduced = useReducedMotion();
   const { width } = useWindowDimensions();
   const scroll = useRef<ScrollViewInstance>(null);
+  // While typing the strip sits right above the composer, its cards a little shorter.
+  const { progress: keyboard } = useReanimatedKeyboardAnimation();
+  const moreCompact = useCompactCardStyle(keyboard);
 
   // What the strip last showed, carried forward so a computer change knows the
   // faces to turn away. Adjusted during render so the first frame of the new
@@ -175,6 +195,8 @@ export function StageSessionStrip({
     <ScrollView
       ref={scroll}
       horizontal
+      // A card pressed while typing keeps the keyboard, and the draft, up.
+      keyboardShouldPersistTaps="handled"
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.strip}>
       <LayoutAnimationConfig skipEntering>
@@ -207,6 +229,7 @@ export function StageSessionStrip({
                 fromStyle={from ? [face(from), bounds] : undefined}
                 fromWidth={from ? widths[from.key] : undefined}
                 radius={profile.chrome.card}
+                keyboard={keyboard}
                 onMeasured={measured}
                 onPress={() => onOpenSession(entry)}
                 selected={entry.key === menuKey}
@@ -223,27 +246,28 @@ export function StageSessionStrip({
             accessibilityLabel={t`All sessions`}
             onPress={onOpenAll}
             style={[
-              styles.card,
-              styles.moreCard,
+              styles.moreOuter,
               {
                 backgroundColor: surface,
                 borderColor: idleBorder,
                 borderRadius: profile.chrome.card,
               },
             ]}>
-            <Text
-              variant="bodySmall"
-              weight="semibold"
-              color={theme.colors.primary}
-              style={styles.moreLabel}>
-              {t`All sessions`}
-            </Text>
-            <ThemeIcon
-              name="home.arrow"
-              fallback={NextIcon}
-              size={16}
-              color={theme.colors.primary}
-            />
+            <Animated.View style={[styles.moreCard, moreCompact]}>
+              <Text
+                variant="bodySmall"
+                weight="semibold"
+                color={theme.colors.primary}
+                style={styles.moreLabel}>
+                {t`All sessions`}
+              </Text>
+              <ThemeIcon
+                name="home.arrow"
+                fallback={NextIcon}
+                size={16}
+                color={theme.colors.primary}
+              />
+            </Animated.View>
           </PressableScale>
         </Animated.View>
       </LayoutAnimationConfig>
@@ -267,6 +291,7 @@ function StageSessionSlot({
   fromStyle,
   fromWidth,
   radius,
+  keyboard,
   onMeasured,
   onPress,
   onLongPress,
@@ -282,6 +307,7 @@ function StageSessionSlot({
   fromStyle: FaceStyle | undefined;
   fromWidth: number | undefined;
   radius: number;
+  keyboard: SharedValue<number>;
   onMeasured: (key: string, width: number) => void;
   onPress: () => void;
   onLongPress?: (card: { x: number; y: number; width: number; height: number }) => void;
@@ -322,6 +348,7 @@ function StageSessionSlot({
         fromStyle={fromStyle}
         fromWidth={fromWidth}
         radius={radius}
+        keyboard={keyboard}
         onMeasured={onMeasured}
         onClear={onClear}
       />
@@ -340,6 +367,7 @@ function StageSessionTurn({
   fromStyle,
   fromWidth,
   radius,
+  keyboard,
   onMeasured,
   onClear,
 }: {
@@ -354,6 +382,7 @@ function StageSessionTurn({
   fromWidth: number | undefined;
   /** The card's corner radius, which its outline follows. */
   radius: number;
+  keyboard: SharedValue<number>;
   onMeasured: (key: string, width: number) => void;
   /** This card is the dock's conversation: its × lets it go. */
   onClear?: () => void;
@@ -374,6 +403,8 @@ function StageSessionTurn({
     );
   }, [targeted, outline]);
   const outlineStyle = useAnimatedStyle(() => ({ opacity: outline.get() }));
+  const compactStyle = useCompactCardStyle(keyboard);
+  const backCompactStyle = useCompactCardStyle(keyboard);
 
   const start = useEffectEvent(() => {
     if (!turns) return;
@@ -421,7 +452,14 @@ function StageSessionTurn({
     <>
       <Animated.View
         onLayout={(event) => onMeasured(entryKey, event.nativeEvent.layout.width)}
-        style={[styles.card, styles.face, faceStyle, newStyle, onClear && styles.targeted]}>
+        style={[
+          styles.card,
+          styles.face,
+          faceStyle,
+          compactStyle,
+          newStyle,
+          onClear && styles.targeted,
+        ]}>
         <Animated.View
           pointerEvents="none"
           style={[
@@ -460,6 +498,7 @@ function StageSessionTurn({
             fromStyle,
             // Its own width from before the change, never the new card's.
             fromWidth === undefined ? null : { width: fromWidth },
+            backCompactStyle,
             oldStyle,
           ]}>
           <Text variant="bodySmall" weight="semibold" numberOfLines={1}>
@@ -475,9 +514,9 @@ const styles = StyleSheet.create({
   strip: { paddingHorizontal: STRIP_PADDING, gap: STRIP_GAP },
   slot: { alignSelf: 'flex-start' },
   card: {
-    minHeight: 46,
+    minHeight: CARD_HEIGHT[0],
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: CARD_PADDING[0],
     borderWidth: StyleSheet.hairlineWidth,
     justifyContent: 'center',
   },
@@ -495,6 +534,17 @@ const styles = StyleSheet.create({
   title: { flexShrink: 1 },
   // Pinned to the slot's left, top and bottom; its width is the old title's own.
   back: { position: 'absolute', left: 0, top: 0, bottom: 0 },
-  moreCard: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  moreOuter: {
+    paddingHorizontal: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    justifyContent: 'center',
+  },
+  moreCard: {
+    minHeight: CARD_HEIGHT[0] - 2 * StyleSheet.hairlineWidth,
+    paddingVertical: CARD_PADDING[0],
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   moreLabel: { flexShrink: 0 },
 });
