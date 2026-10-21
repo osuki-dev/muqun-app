@@ -2857,7 +2857,6 @@ msgid "Export theme"
 msgstr "Exportar tema"
 
 #: src/components/agent-sleep-tool-body.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Failed"
@@ -3275,7 +3274,6 @@ msgid "How to use Muqun"
 msgstr "Cómo usar Muqun"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "Inactivo"
@@ -3985,7 +3983,6 @@ msgstr "Requiere configuración"
 msgid "Needs update"
 msgstr "Requiere actualización"
 
-#: src/components/home-reply-drawer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/home-stage/stage-agent-row.tsx
 #: src/components/server-tasks-sheet.tsx
@@ -4019,7 +4016,6 @@ msgid "Never seen"
 msgstr "Nunca visto"
 
 #: src/components/home-composer-options.tsx
-#: src/components/home-reply-drawer.tsx
 msgid "New conversation"
 msgstr "Nueva conversación"
 
@@ -4466,7 +4462,6 @@ msgid "Off"
 msgstr "Desactivado"
 
 #: src/components/home-composer-options.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Offline"
@@ -4523,7 +4518,6 @@ msgid "Only this Home row is hidden. The task and its history remain available. 
 msgstr "Solo se oculta esta fila de Inicio. La tarea y su historial siguen disponibles. El trabajo en curso no se detiene"
 
 #: src/components/home-connections.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/home-stage/stage-needs-card.tsx
 #: src/components/in-app-notification-host.tsx
@@ -6412,7 +6406,6 @@ msgstr "Iniciando {name}"
 msgid "Starting the camera"
 msgstr "Iniciando la cámara"
 
-#: src/components/home-reply-drawer.tsx
 #: src/components/new-task-sheet.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Starting…"
@@ -6474,10 +6467,6 @@ msgstr "Detener y transcribir"
 #: src/components/server-terminal-workspace.tsx
 msgid "Stop assigning a task"
 msgstr "Dejar de asignar la tarea"
-
-#: src/components/home-reply-drawer.tsx
-msgid "Stop following this conversation"
-msgstr "Dejar de seguir esta conversación"
 
 #: src/components/home-stage/stage-session-strip.tsx
 msgid "Stop replying to {title}"
@@ -7837,7 +7826,6 @@ msgid "While you were away"
 msgstr "Mientras no estabas"
 
 #: src/components/collaboration-notice.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "Trabajando"

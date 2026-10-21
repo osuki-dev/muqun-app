@@ -1679,11 +1679,9 @@ export function HomeComposerDock({
         target={conversation}
         controller={drawer}
         agentName={threadAgentName}
-        offline={target.kind !== 'ready'}
         bleed={outerInsets?.horizontal ?? 0}
         maxWidth={drawerMaxWidth}
         onOpenFull={openThread}
-        onNewConversation={clearThread}
       />
     ) : null;
   const bar = (

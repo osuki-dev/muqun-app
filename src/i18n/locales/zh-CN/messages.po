@@ -2857,7 +2857,6 @@ msgid "Export theme"
 msgstr "导出主题"
 
 #: src/components/agent-sleep-tool-body.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Failed"
@@ -3275,7 +3274,6 @@ msgid "How to use Muqun"
 msgstr "如何使用 Muqun"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "空闲"
@@ -3985,7 +3983,6 @@ msgstr "需要设置"
 msgid "Needs update"
 msgstr "需要更新"
 
-#: src/components/home-reply-drawer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/home-stage/stage-agent-row.tsx
 #: src/components/server-tasks-sheet.tsx
@@ -4019,7 +4016,6 @@ msgid "Never seen"
 msgstr "从未在线"
 
 #: src/components/home-composer-options.tsx
-#: src/components/home-reply-drawer.tsx
 msgid "New conversation"
 msgstr "新对话"
 
@@ -4466,7 +4462,6 @@ msgid "Off"
 msgstr "关闭"
 
 #: src/components/home-composer-options.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Offline"
@@ -4523,7 +4518,6 @@ msgid "Only this Home row is hidden. The task and its history remain available. 
 msgstr "仅隐藏此首页条目。任务及其历史记录仍然保留，正在运行的工作不会停止"
 
 #: src/components/home-connections.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/home-stage/stage-needs-card.tsx
 #: src/components/in-app-notification-host.tsx
@@ -6412,7 +6406,6 @@ msgstr "正在启动 {name}"
 msgid "Starting the camera"
 msgstr "正在启动相机"
 
-#: src/components/home-reply-drawer.tsx
 #: src/components/new-task-sheet.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Starting…"
@@ -6474,10 +6467,6 @@ msgstr "停止并转写"
 #: src/components/server-terminal-workspace.tsx
 msgid "Stop assigning a task"
 msgstr "取消分配任务"
-
-#: src/components/home-reply-drawer.tsx
-msgid "Stop following this conversation"
-msgstr "停止跟随此对话"
 
 #: src/components/home-stage/stage-session-strip.tsx
 msgid "Stop replying to {title}"
@@ -7837,7 +7826,6 @@ msgid "While you were away"
 msgstr "离开期间"
 
 #: src/components/collaboration-notice.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "工作中"

@@ -34,7 +34,7 @@ import { create } from 'zustand';
 
 import { AgentFormCard } from '@/components/agent-form-card';
 import { ComposerMenuButton } from '@/components/composer-attachment-button';
-import { SessionIcon } from '@/icons';
+import { OpenExternalIcon, SessionIcon } from '@/icons';
 import { AgentPermissionCard } from '@/components/agent-permission-card';
 import { AgentTranscriptList } from '@/components/agent-transcript-list';
 import { useHomeSessionReplies } from '@/components/home-session-replies';
@@ -69,7 +69,6 @@ import { removeTimelineItems } from '@/lib/agent-revert';
 import { canReplyAgentForm } from '@/lib/agent-runtime-controls';
 import { replaceAgentTranscript, type AgentSessionRuntime } from '@/lib/agent-session-runtime';
 import { upsertTimelineItems } from '@/lib/agent-timeline-upsert';
-import { withAlpha } from '@/lib/color';
 import {
   INITIAL_PANE_OUTPUT_LINES,
   loadPanes,
@@ -89,7 +88,7 @@ import {
   replyDrawerSnapHeight,
   type ReplyDrawerSnap,
 } from '@/lib/home-reply-drawer';
-import { homeThreadKey, type HomeThreadState, type HomeThreadTarget } from '@/lib/home-thread';
+import { homeThreadKey, type HomeThreadTarget } from '@/lib/home-thread';
 import { calmFadeIn, fadeIn, SETTLE, timing } from '@/lib/motion';
 import { createTranscriptFollow } from '@/lib/transcript-follow';
 import { TRANSCRIPT_ESTIMATED_ITEM_SIZE } from '@/lib/transcript-sizing';
@@ -392,30 +391,6 @@ export function HomeReplyRecede({
 /** A pack without its own Conversation glyph lends its Home arrow, pointing up. */
 const CONVERSATION_ICON_ALTERNATE = { name: 'home.arrow', direction: 'up' } as const;
 
-/** The target's state as one word and its tone, as the drawer's chip says it. */
-function useStateWord(state: HomeThreadState, offline: boolean) {
-  const { t } = useLingui();
-  const theme = useThemeTokens();
-  const word = offline
-    ? t`Offline`
-    : state === 'needs-you'
-      ? t`Needs you`
-      : state === 'working'
-        ? t`Working`
-        : state === 'failed'
-          ? t`Failed`
-          : state === 'starting'
-            ? t`Starting…`
-            : t`Idle`;
-  const tone =
-    !offline && (state === 'needs-you' || state === 'failed')
-      ? theme.colors.warning
-      : state === 'working' && !offline
-        ? theme.colors.primary
-        : theme.colors.textMuted;
-  return { word, tone };
-}
-
 /**
  * The dock's way into the conversation: a toolbar button beside the
  * attachment and options buttons, while there is a session or pane to show.
@@ -480,23 +455,18 @@ export function HomeReplyDrawer({
   target,
   controller,
   agentName,
-  offline,
   bleed,
   maxWidth,
   onOpenFull,
-  onNewConversation,
 }: {
   target: HomeThreadTarget;
   controller: HomeReplyDrawerController;
   agentName: string;
-  offline: boolean;
   /** How far the drawer reaches past the dock's own sides (the phone's gutter). */
   bleed: number;
   /** A Pad's drawer is a card of at most this width, centred on the dock. */
   maxWidth?: number;
   onOpenFull?: () => void;
-  /** Lets the conversation go: the next message starts a new one. */
-  onNewConversation: () => void;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -511,8 +481,6 @@ export function HomeReplyDrawer({
     state.key === key ? state.live.title : undefined
   );
   const title = liveTitle || target.title || t`Conversation`;
-  const state = useHomeThreadState(target);
-  const { word, tone } = useStateWord(state, offline);
 
   // Back closes the drawer before it leaves Home.
   useEffect(() => {
@@ -622,52 +590,25 @@ export function HomeReplyDrawer({
                 <HomeSheetHeader
                   title={title}
                   titleLines={1}
+                  titleVariant="subheading"
                   closeTestID="home-reply-close"
                   onClose={close}
                   caption={
-                    <View style={styles.captionRow}>
-                      <Text
-                        variant="caption"
-                        color={theme.colors.textMuted}
-                        numberOfLines={1}
-                        style={styles.captionName}>
-                        {agentName}
-                      </Text>
-                      <PressableScale
-                        testID="home-reply-new"
-                        accessibilityRole="button"
-                        accessibilityLabel={t`Stop following this conversation`}
-                        hitSlop={8}
-                        onPress={() => controller.close(onNewConversation)}>
-                        <Text variant="caption" weight="semibold" color={theme.colors.primary}>
-                          {t`New conversation`}
-                        </Text>
-                      </PressableScale>
-                    </View>
+                    <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
+                      {agentName}
+                    </Text>
                   }
                   trailing={
-                    <>
-                      <View
-                        testID="home-reply-state"
-                        style={[styles.chip, { backgroundColor: withAlpha(tone, 0.14) }]}>
-                        <Text variant="caption" weight="semibold" color={tone} numberOfLines={1}>
-                          {word}
-                        </Text>
-                      </View>
-                      {onOpenFull ? (
-                        <PressableScale
-                          testID="home-reply-open"
-                          accessibilityRole="button"
-                          accessibilityLabel={t`Open the full conversation`}
-                          hitSlop={8}
-                          onPress={onOpenFull}
-                          style={styles.openButton}>
-                          <Text variant="caption" weight="semibold" color={theme.colors.primary}>
-                            {`${t`Open`} ↗`}
-                          </Text>
-                        </PressableScale>
-                      ) : null}
-                    </>
+                    onOpenFull ? (
+                      <PressableScale
+                        testID="home-reply-open"
+                        accessibilityRole="button"
+                        accessibilityLabel={t`Open the full conversation`}
+                        hitSlop={12}
+                        onPress={onOpenFull}>
+                        <OpenExternalIcon size={18} color={theme.colors.textMuted} />
+                      </PressableScale>
+                    ) : null
                   }
                 />
               </View>
@@ -1117,10 +1058,6 @@ const styles = StyleSheet.create({
   clip: { position: 'absolute', overflow: 'hidden' },
   sheet: { position: 'absolute', bottom: -80, overflow: 'hidden' },
   sheetGrabber: { alignItems: 'center', paddingTop: 8 },
-  captionRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  captionName: { flexShrink: 1 },
-  chip: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 999 },
-  openButton: { paddingHorizontal: 2, paddingVertical: 4 },
   body: { flex: 1 },
   fill: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20 },
