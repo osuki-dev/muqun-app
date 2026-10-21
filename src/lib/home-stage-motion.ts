@@ -56,8 +56,14 @@ export function stageSpringAtRest(spring: StageSpring, target: number): boolean 
 export type StageQuality = 'full' | 'reduced' | 'low' | 'static';
 const LADDER: readonly StageQuality[] = ['full', 'reduced', 'low', 'static'];
 
+/**
+ * One rung down, never past `low`: a slow device keeps the 3D scene at its
+ * cheapest rather than losing it to the static stage for the session.
+ */
 function lowerStageQuality(quality: StageQuality): StageQuality {
-  return LADDER[Math.min(LADDER.length - 1, LADDER.indexOf(quality) + 1)]!;
+  const floor = LADDER.indexOf('low');
+  const at = LADDER.indexOf(quality);
+  return at >= floor ? quality : LADDER[at + 1]!;
 }
 
 /** The lower of two rungs. */
@@ -113,7 +119,7 @@ export function recordStageFrame(
   budget: StageFrameBudget,
   frame: { nowMs: number; frameMs: number }
 ): StageQuality {
-  if (budget.quality === 'static') return budget.quality;
+  if (budget.quality === 'static' || budget.quality === 'low') return budget.quality;
   if (!(frame.frameMs > 0) || frame.frameMs > STALL_MS) return budget.quality;
   if (budget.windowStartMs === null || frame.nowMs - budget.lastMs > GAP_MS) {
     budget.windowStartMs = frame.nowMs;

@@ -254,7 +254,6 @@ export function StageRuntime(props: StageSceneProps) {
     const state = motionState();
     const now = performance.now();
     const elapsedMs = state.lastFrameMs ? now - state.lastFrameMs : 1000 / 60;
-    const backToBack = state.wasTouch && elapsedMs < 120;
     state.lastFrameMs = now;
     const dt = Math.min(0.05, elapsedMs / 1000);
     const effects = stageEffects(quality, { gpuAvailable: true, reducedMotion });
@@ -351,7 +350,10 @@ export function StageRuntime(props: StageSceneProps) {
       const was = state.budget.quality;
       const next = recordStageFrame(state.budget, {
         nowMs: now,
-        frameMs: backToBack ? Math.max(workMs, elapsedMs) : workMs,
+        // Only the frame's own work: the gap to the next frame also measures
+        // how the system scheduled us, which on a phone stepped the stage
+        // down for nothing.
+        frameMs: workMs,
       });
       if (next !== was) qualityDropped(next);
     }
