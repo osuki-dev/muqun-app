@@ -867,10 +867,10 @@
       },
       {
         "target": {
-          "text": "Theme, Osuki"
+          "id": "settings-selection:on:theme-osuki"
         },
         "mode": "visible",
-        "timeout": 8000,
+        "timeout": 10000,
         "run": "flows/custom-themes.ad#visible"
       },
       { "run": "flows/custom-themes.ad#selected-builtin" },
@@ -3013,6 +3013,9 @@
         "run": "flows/settings.ad#reset-theme"
       },
       {
+        "include": "subflows/close-theme-sheet"
+      },
+      {
         "target": {
           "text": "Theme, Osuki"
         },
@@ -3081,6 +3084,9 @@
       },
       {
         "run": "flows/settings.ad#s14"
+      },
+      {
+        "include": "subflows/close-theme-sheet"
       },
       {
         "target": {
@@ -3860,6 +3866,9 @@
       },
       {
         "run": "flows/settings.ad#s82"
+      },
+      {
+        "include": "subflows/close-theme-sheet"
       },
       {
         "target": {
@@ -5825,6 +5834,9 @@
         "run": "flows/theme-shots.ad#s6"
       },
       {
+        "include": "subflows/close-theme-sheet"
+      },
+      {
         "target": {
           "text": "Theme, Osuki"
         },
@@ -6001,6 +6013,9 @@
       },
       {
         "run": "subflows/capture-theme.ad#s6"
+      },
+      {
+        "include": "subflows/close-theme-sheet"
       },
       {
         "target": {
@@ -7243,6 +7258,19 @@
       {
         "target": {
           "id": "settings-${SETTINGS_GROUP}-sheet"
+        },
+        "mode": "hidden",
+        "timeout": 15000,
+        "run": "flows/settings-sheets.ad#hidden"
+      }
+    ],
+    "subflows/close-theme-sheet": [
+      {
+        "run": "flows/settings-sheets.ad#close"
+      },
+      {
+        "target": {
+          "id": "settings-theme-sheet"
         },
         "mode": "hidden",
         "timeout": 15000,

@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { useWindowDimensions } from 'react-native';
-import { useFocusEffect, useIsFocused, useNavigation } from 'expo-router';
+import { useFocusEffect, useIsFocused } from 'expo-router';
 
 import { useAppSettings } from '@/stores/app-settings';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
@@ -11,7 +11,6 @@ import {
   reconcileHomeWorkspaceOwner,
   releaseHomeWorkspaceHost,
 } from '@/lib/home-workspace-owner';
-import { announceHomeArrival } from '@/lib/home-arrival';
 import { HomeOverview } from '@/components/home-overview';
 import { ServerTerminalWorkspace } from '@/components/server-terminal-workspace';
 
@@ -22,32 +21,7 @@ export default function HomeScreen() {
   const listPresentationKey = `${slotFontFamily(interfaceFont, 'interface') ?? 'system'}|${
     slotFontFamily(monoFont, 'mono') ?? 'system'
   }`;
-  useAnnounceHomeArrival();
   return <HomeScreenContent listPresentationKey={listPresentationKey} />;
-}
-
-/**
- * The native stack's `transitionEnd`, typed by shape: expo-router's
- * `useNavigation()` names its events from the root param map, where the
- * native stack's own events do not appear, though the stack emits them.
- */
-type TransitionNavigation = {
-  addListener: (
-    type: 'transitionEnd',
-    listener: (event: { data?: { closing?: boolean } }) => void
-  ) => () => void;
-};
-
-/** Home has finished appearing; a theme change landing here waits for this. */
-function useAnnounceHomeArrival() {
-  const navigation = useNavigation() as unknown as TransitionNavigation;
-  useEffect(
-    () =>
-      navigation.addListener('transitionEnd', (event) => {
-        if (!event.data?.closing) announceHomeArrival();
-      }),
-    [navigation]
-  );
 }
 
 function HomeScreenContent({ listPresentationKey }: { listPresentationKey: string }) {

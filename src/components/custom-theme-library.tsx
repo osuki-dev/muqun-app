@@ -2,7 +2,6 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeMode, useThemeTokens, Button, PressableScale, Text } from '@osuki-dev/ui';
 import { Image } from 'expo-image';
-import { useNavigation } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useWindowDimensions, View } from 'react-native';
 import { MoreIcon, CloseIcon } from '@/icons';
@@ -14,7 +13,6 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { effectiveThemeManifest, type InstalledTheme } from '@/theme/repository';
 import { prepareThemeArtwork } from '@/theme/prepare-artwork';
 import { useReskinTransition } from '@/components/reskin-transition';
-import { afterNavigationSettles, type SettleNavigation } from '@/lib/navigation-settle';
 import { useThemeLibrary } from '@/stores/theme-library';
 import { auditThemeContrast } from '@/theme/contrast';
 import { shareThemeColors, shareThemeFile } from '@/theme/local-files';
@@ -66,13 +64,11 @@ export function CustomThemeLibrary({
   onPreviewAppearanceChange?: (appearance: InstalledTheme) => void;
   ownsPreparedAssets?: boolean;
   /**
-   * `after` is `applied` when the theme was just applied, so the host can pick
-   * where to land. A host that passes this leaves its screen on an apply, so
-   * the apply hands the reskin cover to the root and calls this under it
-   * (`ReskinRunOptions.handoff`); the promise it returns is the landing, and
-   * the cover holds until it resolves.
+   * The reader closed the preview (Done or the close control). Applying never
+   * calls this: a theme is applied in place, and the reader stays on the
+   * screen they pressed Apply on to see the result.
    */
-  onClosePreview?: (after: 'applied' | 'closed') => void | Promise<void>;
+  onClosePreview?: () => void;
   /**
    * Hand the primary action to the host instead of drawing it here.
    *
@@ -102,7 +98,6 @@ export function CustomThemeLibrary({
   const { t } = useLingui();
   const { colors } = useThemeTokens();
   const reskin = useReskinTransition();
-  const navigation = useNavigation();
   const { resolvedMode } = useThemeMode();
   const background = useSurfaceBackground();
   const { width } = useWindowDimensions();
@@ -122,7 +117,6 @@ export function CustomThemeLibrary({
   const [step, setStep] = useState<'installing' | null>(null);
   const pending = useRef(false);
   const mounted = useRef(true);
-  const leavingUnderCover = useRef(false);
   useEffect(() => {
     mounted.current = true;
     return () => {
@@ -188,14 +182,14 @@ export function CustomThemeLibrary({
     );
   }
 
-  function closePreview(after: 'applied' | 'closed' = 'closed'): void | Promise<void> {
+  function closePreview() {
     setDraftAppearance({});
     setRemoving(false);
     setActionsOpen(false);
     setNotice(null);
     setError(null);
-    if (onClosePreview) return onClosePreview(after);
-    setCandidate(null);
+    if (onClosePreview) onClosePreview();
+    else setCandidate(null);
   }
 
   function confirmRemove() {
@@ -239,7 +233,7 @@ export function CustomThemeLibrary({
       await reskin.run({
         kind: 'theme',
         accent: colors.primary,
-        isCurrent: () => mounted.current || leavingUnderCover.current,
+        isCurrent: () => mounted.current,
         prepare: async () => {
           selectedId = await persist();
           const installed = useThemeLibrary
@@ -248,27 +242,12 @@ export function CustomThemeLibrary({
           if (installed)
             return prepareThemeArtwork(installed.manifest, installed.assets, resolvedMode, width);
         },
+        // In place: the reader stays on this screen to see the theme land,
+        // and the primary action turns into Done once it is the selected one.
         apply: () => {
           if (!selectedId) return;
           useThemeLibrary.getState().apply({ kind: 'custom', id: selectedId });
         },
-        ...(onClosePreview
-          ? {
-              // The host leaves this screen: the cover moves to the root first
-              // and holds until the host has landed.
-              handoff: () => {
-                leavingUnderCover.current = true;
-                return closePreview('applied');
-              },
-            }
-          : {
-              settle: () => {
-                leavingUnderCover.current = true;
-                closePreview('applied');
-                // The cover stays until this screen has finished leaving.
-                return afterNavigationSettles(navigation as unknown as SettleNavigation);
-              },
-            }),
       });
       return;
     }
@@ -290,7 +269,7 @@ export function CustomThemeLibrary({
   useEffect(() => {
     primaryRef.current = {
       apply: () => void perform(() => save(true)),
-      close: () => closePreview(),
+      close: closePreview,
     };
   });
   const hostDrivesPrimaryAction = Boolean(onPrimaryActionChange);
@@ -394,7 +373,7 @@ export function CustomThemeLibrary({
                 accessibilityLabel={t`Close preview`}
                 testID="theme-close-preview"
                 disabled={busy}
-                onPress={() => closePreview()}
+                onPress={closePreview}
                 style={{ padding: 12 }}>
                 <CloseIcon size={20} color={colors.textMuted} />
               </PressableScale>
@@ -527,7 +506,7 @@ export function CustomThemeLibrary({
                 disabled={busy || contrast.length > 0 || missingImages}
                 onPress={() => void perform(() => save(true))}>{t`Apply theme`}</Button>
             ) : detail ? null : (
-              <Button disabled={busy} onPress={() => closePreview()}>{t`Done`}</Button>
+              <Button disabled={busy} onPress={closePreview}>{t`Done`}</Button>
             )}
             {!detail && mode === 'manage' ? (
               <PressableScale
