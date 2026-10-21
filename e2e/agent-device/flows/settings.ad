@@ -31,6 +31,17 @@ press "${TARGET}"
 scroll up --pixels 160 --duration-ms 300
 wait stable 300 5000
 
+# section theme-scroll
+# The theme grid is an iPad form sheet, where the native scroll's
+# press-then-drag does not reliably move it; --in-sheet drags inside the sheet
+# there and is the ordinary viewport scroll elsewhere.
+scroll down 0.2 --in-sheet
+wait stable 300 5000
+
+# section theme-scroll-up
+scroll up 0.2 --in-sheet
+wait stable 300 5000
+
 # section reset-theme
 # Selected by testID, not by role. A pack used to be a tile declaring
 # `accessibilityRole="radio"`, and the two runtimes reported that differently:

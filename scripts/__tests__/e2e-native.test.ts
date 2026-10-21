@@ -1022,12 +1022,51 @@ describe('native end-to-end gate', () => {
       await rm(directory, { recursive: true, force: true });
     }
   });
+  test('a sheet dismissal drags the grabber control, not a container that inherited its label', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-grabber-'));
+    try {
+      await writeFile(path.join(directory, 'dismiss.ad'), 'back --system\n');
+      const calls: string[][] = [];
+      const runner = new NativeRunner(
+        suite,
+        directory,
+        directory,
+        async (args) => {
+          calls.push(args);
+          if (args[0] === 'snapshot')
+            return {
+              nodes: [
+                { ...node, type: 'Application', rect: { x: 0, y: 0, width: 834, height: 1210 } },
+                {
+                  ...node,
+                  type: 'Other',
+                  label: 'Sheet Grabber',
+                  rect: { x: 127, y: 240, width: 580, height: 950 },
+                },
+                {
+                  ...node,
+                  type: 'Button',
+                  label: 'Sheet Grabber',
+                  rect: { x: 367, y: 236, width: 100, height: 24 },
+                },
+              ],
+            };
+          return {};
+        },
+        {}
+      );
+      await runner.runSection('dismiss.ad', { PLATFORM: 'ios' });
+      expect(calls.find((args) => args[0] === 'gesture')?.slice(2, 4)).toEqual(['417', '248']);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
   test('iPad sheet scrolling starts inside the form sheet', async () => {
     const directory = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-sheet-scroll-'));
     try {
       await writeFile(
         path.join(directory, 'scroll.ad'),
-        '# section list\nscroll down 2 --in-sheet\n'
+        '# section list\nscroll down 2 --in-sheet\n# section back\nscroll up 0.2 --in-sheet\n'
       );
       const calls: string[][] = [];
       const runner = new NativeRunner(
@@ -1052,9 +1091,12 @@ describe('native end-to-end gate', () => {
         {}
       );
       await runner.runSection('scroll.ad#list', { DEVICE_KIND: 'ipad' });
+      await runner.runSection('scroll.ad#back', { DEVICE_KIND: 'ipad' });
       expect(calls.filter((args) => args[0] === 'gesture')).toEqual([
         ['gesture', 'pan', '605', '600', '0', '-305', '400'],
         ['gesture', 'pan', '605', '600', '0', '-305', '400'],
+        // A fractional amount is one pass, back down the same span.
+        ['gesture', 'pan', '605', '505', '0', '305', '400'],
       ]);
     } finally {
       await rm(directory, { recursive: true, force: true });

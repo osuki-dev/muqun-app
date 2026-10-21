@@ -321,18 +321,22 @@
       },
       { "run": "flows/home-continue-search.ad#hidden-match" },
       {
-        "target": { "id": "home-recent-open", "text": "Demo search hidden leaf,.*" },
+        "target": { "id": "home-recent-open-demo-continue-search-16" },
         "mode": "scroll",
         "direction": "down",
         "timeout": 15000,
         "run": "flows/settings-home-layout.ad#seek-down"
       },
       {
-        "target": { "id": "home-recent-open", "text": "Demo search hidden leaf,.*" },
+        "target": { "id": "home-recent-open-demo-continue-search-16" },
         "mode": "visible",
         "run": "flows/home-continue-search.ad#assert-visible"
       },
-      { "run": "flows/home-continue-search.ad#session-menu" },
+      {
+        "target": { "id": "home-recent-open-demo-continue-search-16" },
+        "mode": "press",
+        "run": "flows/home-continue-search.ad#session-menu"
+      },
       {
         "target": { "id": "home-recent-actions" },
         "mode": "visible",
@@ -362,14 +366,14 @@
         "run": "flows/home-continue-search.ad#assert-hidden"
       },
       {
-        "target": { "id": "home-recent-open", "text": "Demo search hidden leaf,.*" },
+        "target": { "id": "home-recent-open-demo-continue-search-16" },
         "mode": "scroll",
         "direction": "down",
         "timeout": 15000,
         "run": "flows/settings-home-layout.ad#seek-down"
       },
       {
-        "target": { "id": "home-recent-open", "text": "Demo search hidden leaf,.*" },
+        "target": { "id": "home-recent-open-demo-continue-search-16" },
         "mode": "visible",
         "run": "flows/home-continue-search.ad#assert-visible"
       },
@@ -393,32 +397,32 @@
         "run": "flows/home-continue-search.ad#assert-hidden"
       },
       {
-        "target": { "id": "home-recent-open", "text": "Demo search leaf 1,.*" },
+        "target": { "id": "home-recent-open-demo-continue-search-1" },
         "mode": "scroll",
         "direction": "down",
         "timeout": 15000,
         "run": "flows/settings-home-layout.ad#seek-down"
       },
       {
-        "target": { "id": "home-recent-open", "text": "Demo search leaf 1,.*" },
+        "target": { "id": "home-recent-open-demo-continue-search-1" },
         "mode": "visible",
         "run": "flows/home-continue-search.ad#assert-visible"
       },
       {
-        "target": { "id": "home-recent-open", "text": "Demo search hidden leaf,.*" },
+        "target": { "id": "home-recent-open-demo-continue-search-16" },
         "mode": "hidden",
         "run": "flows/home-continue-search.ad#assert-hidden"
       },
       { "run": "flows/home-continue-search.ad#hidden-match" },
       {
-        "target": { "id": "home-recent-open", "text": "Demo search hidden leaf.*" },
+        "target": { "id": "home-recent-open-demo-continue-search-16" },
         "mode": "scroll",
         "direction": "down",
         "timeout": 15000,
         "run": "flows/settings-home-layout.ad#seek-down"
       },
       {
-        "target": { "id": "home-recent-open", "text": "Demo search hidden leaf.*" },
+        "target": { "id": "home-recent-open-demo-continue-search-16" },
         "mode": "press",
         "run": "flows/home-continue-search.ad#open-hidden-match"
       },
@@ -1006,7 +1010,7 @@
       },
       {
         "target": {
-          "text": "Open Git"
+          "id": "terminal-open-git"
         },
         "mode": "press",
         "run": "flows/git-diff.ad#s1"
@@ -1027,7 +1031,7 @@
       },
       {
         "target": {
-          "text": "Show src/lib/demo-terminal-history.ts"
+          "id": "agent-changes-file-src/lib/demo-terminal-history.ts"
         },
         "mode": "press",
         "run": "flows/git-diff.ad#s6"
@@ -1046,7 +1050,7 @@
         "steps": [
           {
             "target": {
-              "text": "Show more"
+              "id": "git-diff-show-more-src/lib/demo-terminal-history.ts"
             },
             "mode": "scroll",
             "direction": "down",
@@ -1063,7 +1067,7 @@
         "steps": [
           {
             "target": {
-              "text": "Show more"
+              "id": "git-diff-show-more-src/lib/demo-terminal-history.ts"
             },
             "mode": "scroll",
             "direction": "down",
@@ -1080,7 +1084,7 @@
         "steps": [
           {
             "target": {
-              "text": "Show more"
+              "id": "git-diff-show-more-src/lib/demo-terminal-history.ts"
             },
             "mode": "scroll",
             "direction": "down",
@@ -1097,7 +1101,7 @@
         "steps": [
           {
             "target": {
-              "text": "Show more"
+              "id": "git-diff-show-more-src/lib/demo-terminal-history.ts"
             },
             "mode": "scroll",
             "direction": "down",
@@ -1108,7 +1112,7 @@
       },
       {
         "target": {
-          "text": "Show more"
+          "id": "git-diff-show-more-src/lib/demo-terminal-history.ts"
         },
         "mode": "press",
         "run": "flows/git-diff.ad#s13"
@@ -1139,7 +1143,7 @@
       },
       {
         "target": {
-          "text": "Open Git"
+          "id": "terminal-open-git"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -1157,7 +1161,7 @@
       },
       {
         "target": {
-          "text": "Open quick actions"
+          "id": "terminal-open-quick-actions"
         },
         "mode": "visible",
         "run": "flows/attachments-ui.ad#s2"
@@ -1192,14 +1196,14 @@
       },
       {
         "target": {
-          "text": "Show what is running"
+          "id": "workspace-show-running"
         },
         "mode": "press",
         "run": "flows/attachments-ui.ad#s7"
       },
       {
         "target": {
-          "text": "Open Claude Code\\. Long press to close"
+          "id": "session-map-pane-pane-1"
         },
         "mode": "press",
         "run": "flows/attachments-ui.ad#choose-agent"
@@ -1288,7 +1292,7 @@
       },
       {
         "target": {
-          "text": "Open quick actions"
+          "id": "terminal-open-quick-actions"
         },
         "mode": "press",
         "run": "flows/demo-tour.ad#s6"
@@ -1328,14 +1332,14 @@
       },
       {
         "target": {
-          "text": "Show what is running"
+          "id": "workspace-show-running"
         },
         "mode": "press",
         "run": "flows/demo-tour.ad#s12"
       },
       {
         "target": {
-          "text": "Refresh"
+          "id": "panels-refresh"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -1353,7 +1357,7 @@
       },
       {
         "target": {
-          "text": "Open workspace .*, 5 running\\. Long press to close"
+          "id": "session-map-workspace-ws-1"
         },
         "mode": "visible",
         "run": "flows/demo-tour.ad#s16"
@@ -1372,7 +1376,7 @@
       },
       {
         "target": {
-          "text": "Refresh"
+          "id": "panels-refresh"
         },
         "mode": "scroll",
         "direction": "up",
@@ -1390,7 +1394,7 @@
       },
       {
         "target": {
-          "text": "Open files"
+          "id": "terminal-open-files"
         },
         "mode": "press",
         "run": "flows/demo-tour.ad#s22"
@@ -1427,7 +1431,7 @@
       },
       {
         "target": {
-          "text": "Switch to nvim"
+          "id": "pane-chip-pane-2"
         },
         "mode": "press",
         "run": "flows/demo-tour.ad#s29"
@@ -1566,14 +1570,14 @@
       },
       {
         "target": {
-          "text": "Open quick actions"
+          "id": "terminal-open-quick-actions"
         },
         "mode": "visible",
         "run": "flows/demo-tour.ad#s45"
       },
       {
         "target": {
-          "text": "Open files"
+          "id": "terminal-open-files"
         },
         "mode": "visible",
         "run": "flows/demo-tour.ad#s46"
@@ -1583,7 +1587,7 @@
       },
       {
         "target": {
-          "text": "Open quick actions"
+          "id": "terminal-open-quick-actions"
         },
         "mode": "press",
         "run": "flows/demo-tour.ad#s48"
@@ -1763,7 +1767,7 @@
       },
       {
         "target": {
-          "text": "Switch to nvim"
+          "id": "pane-chip-pane-2"
         },
         "mode": "press",
         "run": "flows/file-mentions.ad#s27"
@@ -1988,7 +1992,7 @@
       },
       {
         "target": {
-          "text": "Show what is running"
+          "id": "workspace-show-running"
         },
         "mode": "press",
         "run": "flows/i18n-shots.ad#s20"
@@ -2490,7 +2494,7 @@
       },
       {
         "target": {
-          "text": "Show what is running"
+          "id": "workspace-show-running"
         },
         "mode": "press",
         "run": "flows/light-shots.ad#s29"
@@ -2516,7 +2520,7 @@
       },
       {
         "target": {
-          "text": "Open files"
+          "id": "terminal-open-files"
         },
         "mode": "press",
         "run": "flows/light-shots.ad#s34"
@@ -2564,7 +2568,7 @@
       },
       {
         "target": {
-          "text": "Switch to nvim"
+          "id": "pane-chip-pane-2"
         },
         "mode": "visible",
         "run": "flows/pad-workspace.ad#s5"
@@ -2635,7 +2639,7 @@
       },
       {
         "target": {
-          "text": "Switch to nvim"
+          "id": "pane-chip-pane-2"
         },
         "mode": "press",
         "run": "flows/pad-workspace.ad#s11"
@@ -2694,14 +2698,14 @@
       },
       {
         "target": {
-          "text": "Show what is running"
+          "id": "workspace-show-running"
         },
         "mode": "press",
         "run": "flows/pad-workspace.ad#open-editor-picker"
       },
       {
         "target": {
-          "text": "Open Claude Code\\. Long press to close"
+          "id": "session-map-pane-pane-1"
         },
         "mode": "press",
         "run": "flows/pad-workspace.ad#s18"
@@ -2978,7 +2982,7 @@
         "mode": "scroll",
         "direction": "down",
         "timeout": 20000,
-        "run": "flows/settings.ad#s7"
+        "run": "flows/settings.ad#theme-scroll"
       },
       {
         "target": {
@@ -3001,11 +3005,11 @@
         "mode": "scroll",
         "direction": "down",
         "timeout": 20000,
-        "run": "flows/settings.ad#s7"
+        "run": "flows/settings.ad#theme-scroll"
       },
       {
         "target": {
-          "text": "Ayu"
+          "id": "settings-selection:off:theme-ayu"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -3013,44 +3017,43 @@
       },
       {
         "target": {
-          "text": "Catppuccin"
+          "id": "settings-selection:off:theme-catppuccin"
         },
         "mode": "scroll",
         "direction": "down",
         "timeout": 20000,
-        "run": "flows/settings.ad#s7"
+        "run": "flows/settings.ad#theme-scroll"
       },
       {
         "target": {
-          "text": "Dracula"
+          "id": "settings-selection:off:theme-dracula"
         },
         "mode": "scroll",
         "direction": "down",
         "timeout": 20000,
-        "run": "flows/settings.ad#s7"
+        "run": "flows/settings.ad#theme-scroll"
       },
       {
         "target": {
-          "text": "Osuki",
-          "selected": true
+          "id": "settings-selection:on:theme-osuki"
         },
         "mode": "scroll",
         "direction": "up",
         "timeout": 20000,
-        "run": "flows/settings.ad#scroll-up"
+        "run": "flows/settings.ad#theme-scroll-up"
       },
       {
         "target": {
-          "text": "Catppuccin"
+          "id": "settings-selection:off:theme-catppuccin"
         },
         "mode": "scroll",
         "direction": "down",
         "timeout": 20000,
-        "run": "flows/settings.ad#s7"
+        "run": "flows/settings.ad#theme-scroll"
       },
       {
         "target": {
-          "text": "Catppuccin"
+          "id": "settings-selection:off:theme-catppuccin"
         },
         "mode": "press",
         "run": "flows/settings.ad#s13"
@@ -3799,11 +3802,11 @@
         "mode": "scroll",
         "direction": "down",
         "timeout": 20000,
-        "run": "flows/settings.ad#s7"
+        "run": "flows/settings.ad#theme-scroll"
       },
       {
         "target": {
-          "text": "Ayu"
+          "id": "settings-selection:off:theme-ayu"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -3811,13 +3814,12 @@
       },
       {
         "target": {
-          "text": "Catppuccin",
-          "selected": true
+          "id": "settings-selection:on:theme-catppuccin"
         },
         "mode": "scroll",
         "direction": "down",
         "timeout": 20000,
-        "run": "flows/settings.ad#s7"
+        "run": "flows/settings.ad#theme-scroll"
       },
       {
         "target": {
@@ -3826,11 +3828,11 @@
         "mode": "scroll",
         "direction": "up",
         "timeout": 20000,
-        "run": "flows/settings.ad#scroll-up"
+        "run": "flows/settings.ad#theme-scroll-up"
       },
       {
         "target": {
-          "text": "Osuki"
+          "id": "settings-selection:off:theme-osuki"
         },
         "mode": "press",
         "run": "flows/settings.ad#s81"
@@ -4474,7 +4476,7 @@
       },
       {
         "target": {
-          "text": "Open SSH host Demo shell"
+          "id": "ssh-host-open-demo-ssh"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -4498,14 +4500,14 @@
       },
       {
         "target": {
-          "text": "Open SSH host Demo shell"
+          "id": "ssh-host-open-demo-ssh"
         },
         "mode": "press",
         "run": "flows/ssh.ad#s6"
       },
       {
         "target": {
-          "text": "Disconnect from Demo shell"
+          "id": "ssh-disconnect"
         },
         "mode": "visible",
         "timeout": 10000,
@@ -4560,14 +4562,14 @@
       },
       {
         "target": {
-          "text": "Disconnect from Demo shell"
+          "id": "ssh-disconnect"
         },
         "mode": "visible",
         "run": "flows/ssh.ad#s16"
       },
       {
         "target": {
-          "text": "Open on-screen keyboard"
+          "id": "terminal-open-keyboard"
         },
         "mode": "press",
         "run": "flows/ssh.ad#s17"
@@ -4599,7 +4601,7 @@
       },
       {
         "target": {
-          "text": "Open on-screen keyboard"
+          "id": "terminal-open-keyboard"
         },
         "mode": "visible",
         "timeout": 4000,
@@ -4614,14 +4616,14 @@
       },
       {
         "target": {
-          "text": "Disconnect from Demo shell"
+          "id": "ssh-disconnect"
         },
         "mode": "press",
         "run": "flows/ssh.ad#s24"
       },
       {
         "target": {
-          "text": "Reconnect to Demo shell"
+          "id": "ssh-reconnect"
         },
         "mode": "visible",
         "timeout": 4000,
@@ -4668,7 +4670,7 @@
       },
       {
         "target": {
-          "text": "Disconnect from Demo shell"
+          "id": "ssh-disconnect"
         },
         "mode": "visible",
         "timeout": 10000,
@@ -4677,7 +4679,7 @@
       { "run": "flows/ssh.ad#s29" },
       {
         "target": {
-          "text": "Open SSH host Demo shell"
+          "id": "ssh-host-open-demo-ssh"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -5006,7 +5008,7 @@
       },
       {
         "target": {
-          "text": "Switch to nvim"
+          "id": "pane-chip-pane-2"
         },
         "mode": "press",
         "run": "flows/terminal-interactions.ad#s23"
@@ -5023,14 +5025,14 @@
       },
       {
         "target": {
-          "text": "Show what is running"
+          "id": "workspace-show-running"
         },
         "mode": "press",
         "run": "flows/terminal-interactions.ad#open-editor-picker"
       },
       {
         "target": {
-          "text": "Open zsh\\. Long press to close"
+          "id": "session-map-pane-pane-3"
         },
         "mode": "press",
         "run": "flows/terminal-interactions.ad#s26"
@@ -5047,7 +5049,7 @@
       },
       {
         "target": {
-          "text": "Switch to Claude Code"
+          "id": "pane-chip-pane-1"
         },
         "mode": "press",
         "run": "flows/terminal-interactions.ad#s29"
@@ -5785,7 +5787,7 @@
       },
       {
         "target": {
-          "text": "Osuki"
+          "id": "settings-selection:(on|off):theme-osuki"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -5793,7 +5795,7 @@
       },
       {
         "target": {
-          "text": "Osuki"
+          "id": "settings-selection:(on|off):theme-osuki"
         },
         "mode": "press",
         "run": "flows/theme-shots.ad#s5"
@@ -6230,7 +6232,7 @@
       },
       {
         "target": {
-          "text": "Open quick actions"
+          "id": "terminal-open-quick-actions"
         },
         "mode": "press",
         "run": "subflows/motion-618-close-capture.ad#s3"
@@ -6258,7 +6260,7 @@
       },
       {
         "target": {
-          "text": "Open quick actions"
+          "id": "terminal-open-quick-actions"
         },
         "mode": "press",
         "run": "subflows/motion-618-close-capture.ad#s8"
@@ -6286,7 +6288,7 @@
       },
       {
         "target": {
-          "text": "Show what is running"
+          "id": "workspace-show-running"
         },
         "mode": "press",
         "run": "subflows/motion-618-close-capture.ad#s13"
@@ -6333,7 +6335,7 @@
       { "include": "subflows/open-demo" },
       {
         "target": {
-          "text": "Show what is running"
+          "id": "workspace-show-running"
         },
         "mode": "visible",
         "timeout": 20000,
@@ -6353,7 +6355,7 @@
       },
       {
         "target": {
-          "text": "Switch to nvim"
+          "id": "pane-chip-pane-2"
         },
         "mode": "press",
         "optional": true,
@@ -6367,7 +6369,7 @@
       },
       {
         "target": {
-          "text": "Switch to Claude Code"
+          "id": "pane-chip-pane-1"
         },
         "mode": "press",
         "optional": true,
@@ -6403,7 +6405,7 @@
       },
       {
         "target": {
-          "text": "Open on-screen keyboard"
+          "id": "terminal-open-keyboard"
         },
         "mode": "press",
         "optional": true,
@@ -6442,7 +6444,7 @@
       },
       {
         "target": {
-          "text": "Open quick actions"
+          "id": "terminal-open-quick-actions"
         },
         "mode": "press",
         "optional": true,
@@ -6467,7 +6469,7 @@
       },
       {
         "target": {
-          "text": "Show what is running"
+          "id": "workspace-show-running"
         },
         "mode": "press",
         "optional": true,
@@ -6838,7 +6840,31 @@
         "mode": "hidden",
         "run": "flows/agent-session-tree.ad#closed"
       },
-      { "run": "flows/agent-session-tree.ad#context-ownership" }
+      { "run": "flows/agent-session-tree.ad#context-ownership" },
+      {
+        "target": { "id": "agent-context-used", "text": "1,300( .*)?" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/agent-session-tree.ad#visible"
+      },
+      {
+        "target": { "text": "GPT 5.4" },
+        "mode": "visible",
+        "run": "flows/agent-session-tree.ad#visible"
+      },
+      {
+        "target": { "text": "/demo/muqun" },
+        "mode": "visible",
+        "run": "flows/agent-session-tree.ad#visible"
+      },
+      { "run": "flows/agent-session-tree.ad#context-owner-retained" },
+      {
+        "target": { "id": "agent-context-used", "text": "1,300( .*)?" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/agent-session-tree.ad#visible"
+      },
+      { "run": "flows/agent-session-tree.ad#context-closed" }
     ],
     "flows/agent-tool-detail": [
       { "include": "subflows/open-demo" },
