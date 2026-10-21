@@ -26,7 +26,12 @@ import {
   STAGE_CARD_SPRING,
   type StageDegradeState,
 } from '../home-stage-motion';
-import { stagePanels, stageSelectedIndex } from '../home-stage-panels';
+import {
+  stagePanels,
+  stageSelectedIndex,
+  stageStreakLines,
+  type StageFace,
+} from '../home-stage-panels';
 import { stageReadableInk } from '../home-stage-ink';
 import { contrastRatio } from '../../theme/contrast';
 
@@ -392,30 +397,135 @@ describe('stage panels', () => {
     expect(panels.map((panel) => panel.attention)).toEqual([false, true]);
   });
 
-  test('a screen face lists working agents first, then the latest sessions', () => {
+  const agent = (
+    id: string,
+    status: 'working' | 'blocked' | 'idle' | 'done',
+    extra: Record<string, unknown> = {}
+  ) => ({ id, name: `pane ${id}`, agentLabel: `Agent ${id}`, status, hasAgent: true, ...extra });
+  const mirror = (agents: readonly ReturnType<typeof agent>[], checkedAtMs = now) => ({
+    a: { serverId: 'a', checkedAtMs, agents: [...agents] },
+  });
+
+  test('a busy face counts and orders: waiting first, then running, then the rest, overflow last', () => {
     const [panel] = stagePanels({
       ...base,
-      agentsByServer: {
+      agentsByServer: mirror([
+        agent('1', 'idle'),
+        agent('2', 'working'),
+        agent('3', 'idle', { pendingUserInput: true }),
+        agent('4', 'working'),
+        agent('5', 'done'),
+        { ...agent('6', 'working'), hasAgent: false },
+      ]),
+      recentEntries: [
+        { key: 's', title: 's', atMs: now, destination: { type: 'pane', serverId: 'a' } },
+      ] as never,
+    });
+    expect(panel!.workingCount).toBe(2);
+    expect(panel!.needsYouCount).toBe(1);
+    expect(panel!.working && panel!.attention).toBe(true);
+    expect(panel!.face).toMatchObject({ kind: 'busy', more: 2 });
+    const face = panel!.face as Extract<StageFace, { kind: 'busy' }>;
+    expect(face.agents.map((line) => [line.name, line.mark])).toEqual([
+      ['Agent 3', 'needs-you'],
+      ['Agent 2', 'working'],
+      ['Agent 4', 'working'],
+    ]);
+    // Session titles are the strip's: never on the face.
+    expect(JSON.stringify(panel!.face)).not.toContain('"s"');
+    expect(stageStreakLines(panel!.face)).toBe(0b110);
+  });
+
+  test('a native request and its blocked pane are one wait, not two', () => {
+    const [panel] = stagePanels({
+      ...base,
+      agentsByServer: mirror([agent('1', 'blocked')]),
+      attention: {
+        k: { target: { serverId: 'a' } as never, requestIds: ['r'], observedAt: now },
+      },
+    });
+    expect(panel!.needsYouCount).toBe(1);
+    expect(panel!.workingCount).toBe(0);
+    expect(stageStreakLines(panel!.face)).toBe(0);
+  });
+
+  test("activity comes from the agent's open task in its own shell, never for an idle agent", () => {
+    const task = (
+      taskId: string,
+      binding: Record<string, unknown>,
+      extra: Record<string, unknown>
+    ) => ({
+      taskId,
+      state: 'working',
+      kind: 'delegation',
+      goal: 'g',
+      binding: { kind: 'pane', sessionId: 'x', ...binding },
+      updatedMs: now,
+      ...extra,
+    });
+    const [panel] = stagePanels({
+      ...base,
+      agentsByServer: mirror([
+        agent('1', 'working', { paneId: 'p1', shellPid: 10 }),
+        agent('2', 'working', { paneId: 'p2', shellPid: 20 }),
+        agent('3', 'idle', { paneId: 'p3' }),
+        { ...agent('4', 'working'), name: 'Agent 4' },
+      ]),
+      tasks: {
         a: {
-          serverId: 'a',
-          checkedAtMs: now,
-          agents: [
-            { id: '1', name: 'pane', status: 'idle', hasAgent: false },
-            { id: '2', name: 'x', agentLabel: 'Codex', status: 'idle', hasAgent: true },
-            { id: '3', name: 'y', agentLabel: 'Claude', status: 'working', hasAgent: true },
+          fetchedAt: now,
+          tasks: [
+            task('t1', { paneId: 'p1', shellPid: 10 }, { progress: ' running tests ', title: 'T' }),
+            // A pane id reused by another shell is not this agent's task.
+            task('t2', { paneId: 'p2', shellPid: 99 }, { progress: 'stale shell' }),
+            task('t3', { paneId: 'p3' }, { progress: 'old' }),
+            task(
+              't4',
+              { paneId: 'p1' },
+              { progress: 'finished', state: 'done', updatedMs: now + 1 }
+            ),
           ],
         },
-      },
-      recentEntries: ['one', 'two', 'three'].map((title, index) => ({
-        key: title,
-        title,
-        atMs: now - index,
-        destination: { type: 'pane', serverId: 'a', paneId: title },
-      })) as never,
+      } as never,
     });
-    expect(panel!.face.agents.map((agent) => agent.name)).toEqual(['Claude', 'Codex']);
-    expect(panel!.face.sessions).toEqual(['one', 'two']);
-    expect(panel!.sessionCount).toBe(3);
+    const face = panel!.face as Extract<StageFace, { kind: 'busy' }>;
+    expect(face.agents.map((line) => line.activity)).toEqual([
+      'running tests',
+      // No task: the pane title, which is more than the agent's name.
+      'pane 2',
+      // Its title is its name: nothing to say.
+      undefined,
+      undefined,
+    ]);
+  });
+
+  test('quiet and offline faces say when only from a real time', () => {
+    const quiet = stagePanels({
+      ...base,
+      agentsByServer: mirror([agent('1', 'idle')]),
+      recentEntries: [
+        { key: 'x', title: 'x', atMs: now - 5000, destination: { type: 'pane', serverId: 'a' } },
+        { key: 'y', title: 'y', atMs: now - 9000, destination: { type: 'pane', serverId: 'a' } },
+      ] as never,
+    });
+    expect(quiet[0]!.face).toEqual({ kind: 'quiet', lastActivityMs: now - 5000 });
+    expect(quiet[1]!.face).toEqual({ kind: 'offline' });
+    const bare = stagePanels({
+      ...base,
+      agentsByServer: {
+        b: { serverId: 'b', checkedAtMs: now - 7000, agents: [agent('2', 'working')] },
+      },
+    });
+    expect(bare[0]!.face).toEqual({ kind: 'quiet' });
+    // Offline: what the mirror last saw running is not running now.
+    expect(bare[1]!.face).toEqual({ kind: 'offline', lastSeenMs: now - 7000 });
+    expect(bare[1]!.working).toBe(false);
+    const repair = stagePanels({
+      ...base,
+      connectionStatuses: { a: 'repair', b: 'offline' },
+      agentsByServer: {},
+    });
+    expect(repair[0]!.face).toEqual({ kind: 'status' });
   });
 
   test('selection falls back to the first card when the target is gone', () => {

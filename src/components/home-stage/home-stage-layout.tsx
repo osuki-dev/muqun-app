@@ -119,6 +119,7 @@ export function HomeStage({
 }: HomeStageProps) {
   const agentsByServer = useServerAgents((state) => state.byServer);
   const attention = useHomeAttention((state) => state.byTarget);
+  const tasks = useServerTasksStore((state) => state.index);
   const nowMs = useMinuteNow();
   // The newest finished task across the ledgers Home keeps: a later one is a completion.
   const latestDoneMs = useServerTasksStore((state) => {
@@ -147,10 +148,11 @@ export function HomeStage({
         connectionStatuses,
         agentsByServer,
         attention,
+        tasks,
         recentEntries,
         nowMs,
       }),
-    [servers, connectionStatuses, agentsByServer, attention, recentEntries, nowMs]
+    [servers, connectionStatuses, agentsByServer, attention, tasks, recentEntries, nowMs]
   );
   const selectedIndex = stageSelectedIndex(panels, chosenServerId);
   const sessions = useMemo(

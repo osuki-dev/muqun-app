@@ -1,4 +1,6 @@
+import { plural } from '@lingui/core/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
+import { useLingui } from '@lingui/react/macro';
 import { useEffect, useState } from 'react';
 import {
   AlphaType,
@@ -7,18 +9,25 @@ import {
   Skia,
   TextAlign,
   type SkCanvas,
+  type SkPaint,
 } from 'react-native-skia';
 import type { Texture } from 'three/webgpu';
 
-import { agentStatusWord } from '@/i18n/labels';
+import { useMinuteNow } from '@/hooks/use-minute-now';
+import { useTaskAge } from '@/hooks/use-task-age';
+import { agentStatusWord, connectionStatusDescription } from '@/i18n/labels';
 import { stageReadableInk } from '@/lib/home-stage-ink';
-import type { StagePanel } from '@/lib/home-stage-panels';
-import { STAGE_FACE_COLUMNS, STAGE_FACE_ROWS, stageTextureFromPixels } from './stage-scene';
-
-/** One face: the sketch's 640 x 400 pane at 0.7, 1.6:1 like the pane. */
-const CELL_WIDTH = 448;
-const CELL_HEIGHT = 280;
-const PAD = 32;
+import type { StageAgentLine, StagePanel } from '@/lib/home-stage-panels';
+import {
+  STAGE_FACE_CELL_HEIGHT as CELL_HEIGHT,
+  STAGE_FACE_CELL_WIDTH as CELL_WIDTH,
+  STAGE_FACE_COLUMNS,
+  STAGE_FACE_LINE_STEP,
+  STAGE_FACE_LINE_TOP,
+  STAGE_FACE_PAD as PAD,
+  STAGE_FACE_ROWS,
+  stageTextureFromPixels,
+} from './stage-scene';
 
 export type StageFaceColors = {
   text: string;
@@ -34,7 +43,8 @@ export type StageFaceColors = {
   light: boolean;
 };
 
-type FaceLine = { text: string; live: boolean };
+/** A run of text in one ink. */
+type Span = { text: string; ink: string };
 
 type Face = {
   serverId: string;
@@ -42,34 +52,37 @@ type Face = {
   dot: string;
   /** The name. */
   ink: string;
-  /** Ordinary lines, and a running agent's line. */
-  lineInk: string;
-  liveInk: string;
-  lines: FaceLine[];
+  /** "2 working · 1 needs you", or the one quiet or offline line. */
+  summary: Span[];
+  /** The front face's agent lines and its overflow line. */
+  lines: Span[][];
 };
+
+type TextStyle = { size: number; weight: FontWeight; mono?: boolean; maxLines?: number };
 
 function paragraph(
   canvas: SkCanvas,
-  text: string,
+  spans: readonly Span[],
   x: number,
   y: number,
   width: number,
-  style: { color: string; size: number; weight: FontWeight; mono?: boolean }
+  style: TextStyle
 ) {
   const builder = Skia.ParagraphBuilder.Make({
-    maxLines: 1,
+    maxLines: style.maxLines ?? 1,
     ellipsis: '…',
     textAlign: TextAlign.Left,
   });
-  builder
-    .pushStyle({
-      color: Skia.Color(style.color),
-      fontSize: style.size,
-      fontFamilies: style.mono ? ['Menlo', 'monospace'] : ['Helvetica Neue', 'sans-serif'],
-      fontStyle: { weight: style.weight },
-    })
-    .addText(text)
-    .pop();
+  for (const span of spans)
+    builder
+      .pushStyle({
+        color: Skia.Color(span.ink),
+        fontSize: style.size,
+        fontFamilies: style.mono ? ['Menlo', 'monospace'] : ['Helvetica Neue', 'sans-serif'],
+        fontStyle: { weight: style.weight },
+      })
+      .addText(span.text)
+      .pop();
   const built = builder.build();
   builder.dispose?.();
   built.layout(width);
@@ -77,9 +90,62 @@ function paragraph(
   built.dispose();
 }
 
-/** Every drawn face into one atlas, read back as RGBA for a texture. */
+/** The front face: name and dot, the summary, then one line per agent. */
+function paintFront(canvas: SkCanvas, face: Face, x: number, y: number, dot: SkPaint) {
+  paragraph(
+    canvas,
+    [{ text: face.name, ink: face.ink }],
+    x + PAD,
+    y + 22,
+    CELL_WIDTH - PAD * 2 - 40,
+    {
+      size: 42,
+      weight: FontWeight.Bold,
+    }
+  );
+  dot.setColor(Skia.Color(face.dot));
+  canvas.drawCircle(x + CELL_WIDTH - 39, y + 50, 8, dot);
+  paragraph(canvas, face.summary, x + PAD, y + 78, CELL_WIDTH - PAD * 2, {
+    size: 23,
+    weight: FontWeight.SemiBold,
+  });
+  face.lines.forEach((line, index) => {
+    paragraph(
+      canvas,
+      line,
+      x + PAD,
+      y + STAGE_FACE_LINE_TOP + index * STAGE_FACE_LINE_STEP,
+      CELL_WIDTH - PAD * 2,
+      { size: 21, weight: FontWeight.Medium, mono: true }
+    );
+  });
+}
+
+/** A neighbour's face, read from the side: name, dot and summary, larger. */
+function paintCompact(canvas: SkCanvas, face: Face, x: number, y: number, dot: SkPaint) {
+  paragraph(
+    canvas,
+    [{ text: face.name, ink: face.ink }],
+    x + PAD,
+    y + 34,
+    CELL_WIDTH - PAD * 2 - 48,
+    {
+      size: 54,
+      weight: FontWeight.Bold,
+    }
+  );
+  dot.setColor(Skia.Color(face.dot));
+  canvas.drawCircle(x + CELL_WIDTH - 44, y + 68, 12, dot);
+  paragraph(canvas, face.summary, x + PAD, y + 128, CELL_WIDTH - PAD * 2, {
+    size: 34,
+    weight: FontWeight.SemiBold,
+    maxLines: 3,
+  });
+}
+
+/** Every drawn face, front and compact, into one atlas read back as RGBA. */
 function paintAtlas(faces: readonly Face[]): Texture | null {
-  const width = CELL_WIDTH * STAGE_FACE_COLUMNS;
+  const width = CELL_WIDTH * STAGE_FACE_COLUMNS * 2;
   const height = CELL_HEIGHT * STAGE_FACE_ROWS;
   const surface = Skia.Surface.MakeRaster(width, height);
   if (!surface) return null;
@@ -88,26 +154,15 @@ function paintAtlas(faces: readonly Face[]): Texture | null {
     canvas.clear(Skia.Color('transparent'));
     const dot = Skia.Paint();
     faces.forEach((face, slot) => {
-      const x = (slot % STAGE_FACE_COLUMNS) * CELL_WIDTH;
       const y = Math.floor(slot / STAGE_FACE_COLUMNS) * CELL_HEIGHT;
-      canvas.save();
-      canvas.clipRect(Skia.XYWHRect(x, y, CELL_WIDTH, CELL_HEIGHT), 1, true);
-      paragraph(canvas, face.name, x + PAD, y + 26, CELL_WIDTH - PAD * 2 - 40, {
-        color: face.ink,
-        size: 45,
-        weight: FontWeight.Bold,
-      });
-      dot.setColor(Skia.Color(face.dot));
-      canvas.drawCircle(x + CELL_WIDTH - 39, y + 55, 8, dot);
-      face.lines.forEach((line, index) => {
-        paragraph(canvas, line.text, x + PAD, y + 100 + index * 35, CELL_WIDTH - PAD * 2, {
-          color: line.live ? face.liveInk : face.lineInk,
-          size: 21,
-          weight: FontWeight.Medium,
-          mono: true,
-        });
-      });
-      canvas.restore();
+      for (const compact of [false, true]) {
+        const x = ((slot % STAGE_FACE_COLUMNS) + (compact ? STAGE_FACE_COLUMNS : 0)) * CELL_WIDTH;
+        canvas.save();
+        canvas.clipRect(Skia.XYWHRect(x, y, CELL_WIDTH, CELL_HEIGHT), 1, true);
+        if (compact) paintCompact(canvas, face, x, y, dot);
+        else paintFront(canvas, face, x, y, dot);
+        canvas.restore();
+      }
     });
     surface.flush();
     const snapshot = surface.makeImageSnapshot();
@@ -129,18 +184,28 @@ function paintAtlas(faces: readonly Face[]): Texture | null {
   }
 }
 
+const MARKER: Record<StageAgentLine['mark'], string> = {
+  working: '▸',
+  'needs-you': '⚑',
+  idle: '·',
+};
+
 /**
- * The panes' faces -- name, status dot and the latest agent and session
- * lines from existing Home state -- as one texture atlas, drawn over the
- * pane's glass by the scene. Repainted only when
- * what a face says changes, never per frame; the old atlas goes with it.
+ * The panes' faces -- name, status dot, what the computer is doing and
+ * whether it needs the reader, from existing Home state -- as one texture
+ * atlas, drawn over the pane's glass by the scene. Repainted only when what
+ * a face says or its colours change, never per frame; the old atlas goes
+ * with it.
  */
 export function useStageFaces(
   panels: readonly StagePanel[],
   drawn: readonly number[],
   colors: StageFaceColors
 ): { atlas: Texture | null; slots: ReadonlyMap<string, number> } {
+  const { t } = useLingui();
   const { _ } = useLinguiRuntime();
+  const age = useTaskAge();
+  const nowMs = useMinuteNow();
   const faces: Face[] = drawn.flatMap((index) => {
     const panel = panels[index];
     if (!panel) return [];
@@ -152,33 +217,74 @@ export function useStageFaces(
         : panel.working
           ? colors.primary
           : colors.success;
-    const lines: FaceLine[] = [
-      ...panel.face.agents.map((agent) => ({
-        text: `${agent.status === 'working' ? '▸' : '·'} ${agent.name} · ${_(agentStatusWord[agent.status])}`,
-        live: agent.status === 'working' && !offline,
-      })),
-      ...panel.face.sessions.map((title) => ({ text: `$ ${title}`, live: false })),
-    ];
-    // Night: light text on the dark frosted glass, a running line in its status
-    // colour. Day: dark text on the pale glass, lines in the primary darkened to
-    // 4.5:1 against it.
-    const dayLines = stageReadableInk(offline ? colors.offline : colors.primary, colors.surface);
+    // Night: light text on the dark frosted glass, running work in the
+    // primary and a wait in the warning colour. Day: dark text on the pale
+    // glass, every colour darkened to 4.5:1 against it.
     const ink = offline
       ? colors.light
         ? stageReadableInk(colors.offline, colors.surface)
         : colors.offline
       : colors.text;
-    return [
-      {
-        serverId: panel.serverId,
-        name: panel.label,
-        dot,
-        ink,
-        lineInk: colors.light ? dayLines : ink,
-        liveInk: colors.light ? dayLines : dot,
-        lines,
-      },
-    ];
+    const lineInk = colors.light
+      ? stageReadableInk(offline ? colors.offline : colors.primary, colors.surface)
+      : ink;
+    const liveInk = colors.light ? lineInk : colors.primary;
+    const warnInk = colors.light
+      ? stageReadableInk(colors.warning, colors.surface)
+      : colors.warning;
+    const { face } = panel;
+    let summary: Span[];
+    if (face.kind === 'busy') {
+      const parts: Span[] = [];
+      if (panel.workingCount > 0)
+        parts.push({
+          text: plural(panel.workingCount, { one: '# working', other: '# working' }),
+          ink: liveInk,
+        });
+      if (panel.needsYouCount > 0)
+        parts.push({
+          text: plural(panel.needsYouCount, { one: '# needs you', other: '# need you' }),
+          ink: warnInk,
+        });
+      summary = parts.flatMap((part, at) =>
+        at > 0 ? [{ text: ' · ', ink: lineInk }, part] : [part]
+      );
+    } else {
+      const text =
+        face.kind === 'offline'
+          ? face.lastSeenMs !== undefined
+            ? t`Offline · last seen ${age(face.lastSeenMs, nowMs)}`
+            : t`Offline`
+          : face.kind === 'quiet'
+            ? face.lastActivityMs !== undefined
+              ? t`All quiet · last activity ${age(face.lastActivityMs, nowMs)}`
+              : t`All quiet`
+            : _(connectionStatusDescription[panel.connection]);
+      summary = [
+        { text, ink: face.kind === 'status' && panel.tone === 'warning' ? warnInk : lineInk },
+      ];
+    }
+    const lines: Span[][] =
+      face.kind === 'busy'
+        ? [
+            ...face.agents.map((agent): Span[] => {
+              const lead =
+                agent.mark === 'needs-you' ? warnInk : agent.mark === 'working' ? liveInk : lineInk;
+              const doing =
+                agent.activity ??
+                (agent.mark === 'needs-you' ? t`Needs you` : _(agentStatusWord[agent.status]));
+              return [
+                { text: `${MARKER[agent.mark]} `, ink: lead },
+                { text: agent.name, ink: agent.mark === 'idle' ? lineInk : ink },
+                { text: ` · ${doing}`, ink: lead },
+              ];
+            }),
+            ...(face.more > 0
+              ? [[{ text: plural(face.more, { one: '+# more', other: '+# more' }), ink: lineInk }]]
+              : []),
+          ]
+        : [];
+    return [{ serverId: panel.serverId, name: panel.label, dot, ink, summary, lines }];
   });
   const signature = JSON.stringify(faces);
   const [atlas, setAtlas] = useState<{ signature: string; texture: Texture | null } | null>(null);

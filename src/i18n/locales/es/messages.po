@@ -91,6 +91,11 @@ msgstr "{0, plural, one {# minuto} other {# minutos}}"
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, one {# línea más} other {# líneas más}}"
 
+#. placeholder {0}: panel.needsYouCount
+#: src/components/home-stage/stage-faces.ts
+msgid "{0, plural, one {# needs you} other {# need you}}"
+msgstr "{0, plural, one {# te necesita} other {# te necesitan}}"
+
 #. placeholder {0}: entries.length
 #: src/components/agent-message-block.tsx
 msgid "{0, plural, one {# operation} other {# operations}}"
@@ -106,6 +111,16 @@ msgstr "{0, plural, one {# tema} other {# temas}} · {1}"
 #: src/components/agent-account-limits-section.tsx
 msgid "{0, plural, one {# week} other {# weeks}}"
 msgstr "{0, plural, one {# semana} other {# semanas}}"
+
+#. placeholder {0}: panel.workingCount
+#: src/components/home-stage/stage-faces.ts
+msgid "{0, plural, one {# working} other {# working}}"
+msgstr "{0, plural, one {# trabajando} other {# trabajando}}"
+
+#. placeholder {0}: face.more
+#: src/components/home-stage/stage-faces.ts
+msgid "{0, plural, one {+# more} other {+# more}}"
+msgstr "{0, plural, other {+# más}}"
 
 #. placeholder {0}: digest.otherAgents
 #: src/components/away-digest-card.tsx
@@ -686,6 +701,15 @@ msgstr "Todos los paneles"
 #: src/components/agent-sessions-sheet.tsx
 msgid "All projects"
 msgstr "Todos los proyectos"
+
+#: src/components/home-stage/stage-faces.ts
+msgid "All quiet"
+msgstr "Todo tranquilo"
+
+#. placeholder {0}: age(face.lastActivityMs, nowMs)
+#: src/components/home-stage/stage-faces.ts
+msgid "All quiet · last activity {0}"
+msgstr "Todo tranquilo · última actividad {0}"
 
 #: src/components/agent-composer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
@@ -4006,6 +4030,7 @@ msgid "Needs update"
 msgstr "Requiere actualización"
 
 #: src/components/home-stage/home-stage-layout.tsx
+#: src/components/home-stage/stage-faces.ts
 #: src/components/server-tasks-sheet.tsx
 msgid "Needs you"
 msgstr "Te necesita"
@@ -4469,6 +4494,7 @@ msgid "Off"
 msgstr "Desactivado"
 
 #: src/components/home-composer-options.tsx
+#: src/components/home-stage/stage-faces.ts
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Offline"
@@ -4478,8 +4504,10 @@ msgstr "Sin conexión"
 msgid "OFFLINE"
 msgstr "SIN CONEXIÓN"
 
+#. placeholder {0}: age(face.lastSeenMs, nowMs)
 #. placeholder {0}: age(seen, nowMs)
 #: src/components/home-stage/home-stage-layout.tsx
+#: src/components/home-stage/stage-faces.ts
 msgid "Offline · last seen {0}"
 msgstr "Sin conexión · visto {0}"
 

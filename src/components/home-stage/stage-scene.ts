@@ -79,6 +79,7 @@ const {
   clamp,
   dot,
   exp,
+  exp2,
   float,
   length,
   max,
@@ -87,6 +88,7 @@ const {
   positionLocal,
   select,
   smoothstep,
+  step,
   texture,
   uniform,
   uv,
@@ -95,9 +97,26 @@ const {
   vec4,
 } = TSL;
 
-/** Faces in the atlas: two columns of `STAGE_MAX_SCREENS / 2` rows. */
+/** Faces in the atlas: two columns of `STAGE_MAX_SCREENS / 2` rows, each face twice. */
 export const STAGE_FACE_COLUMNS = 2;
 export const STAGE_FACE_ROWS = STAGE_MAX_SCREENS / STAGE_FACE_COLUMNS;
+/**
+ * One face cell, in atlas pixels: the sketch's 640 x 400 pane at 0.7. The
+ * atlas holds every face twice, the front face's cells in the first
+ * `STAGE_FACE_COLUMNS` columns and the compact side face's in the next.
+ */
+export const STAGE_FACE_CELL_WIDTH = 448;
+export const STAGE_FACE_CELL_HEIGHT = 280;
+export const STAGE_FACE_PAD = 32;
+/**
+ * The front face's agent lines, in cell pixels: the first line's top, the
+ * step between lines, and how far below a line's top its working streak runs.
+ */
+export const STAGE_FACE_LINE_TOP = 122;
+export const STAGE_FACE_LINE_STEP = 38;
+export const STAGE_FACE_STREAK_OFFSET = 31;
+/** Agent lines that can carry a streak. */
+const STREAK_LINES = 4;
 const MOTE_COUNT = 80;
 /** About the sketch's 0.09-unit points, which three sizes at half the canvas height per unit. */
 const MOTE_SIZE = 0.05;
@@ -136,6 +155,8 @@ export type StageScreenLook = {
   attention: boolean;
   /** The face's cell in the atlas, or -1 for a blank face. */
   faceSlot: number;
+  /** The front face's lines with a working streak, as bits from the first. */
+  streaks: number;
 };
 
 export type StagePaneFrame = {
@@ -406,14 +427,20 @@ export function createStageScene(): StageSceneHandle {
   const paneEdge = new InstancedBufferAttribute(new Float32Array(capacity * 4), 4);
   // sheen offset
   const paneSheen = new InstancedBufferAttribute(new Float32Array(capacity), 1);
-  for (const attributeValue of [paneInfo, paneEdge, paneSheen])
+  // working streak line bits
+  const paneStreaks = new InstancedBufferAttribute(new Float32Array(capacity), 1);
+  for (const attributeValue of [paneInfo, paneEdge, paneSheen, paneStreaks])
     attributeValue.setUsage(DynamicDrawUsage);
   paneGeometry.setAttribute('aPane', paneInfo);
   paneGeometry.setAttribute('aEdge', paneEdge);
   paneGeometry.setAttribute('aSheen', paneSheen);
+  paneGeometry.setAttribute('aStreak', paneStreaks);
   const info = attribute('aPane', 'vec4');
   const edge = attribute('aEdge', 'vec4');
   const sheenOffset = attribute('aSheen', 'float');
+  const streakBits = attribute('aStreak', 'float');
+  const uStreak = uniform(new Vector3(1, 1, 1));
+  const uStreakTime = uniform(0);
   const uFill = uniform(0.6);
   const uSheen = uniform(0.1);
   // A reflection is the pane upside down.
@@ -439,16 +466,57 @@ export function createStageScene(): StageSceneHandle {
     a: clamp(strokeHalf.add(1).sub(abs(distance)), 0, 1).mul(edge.w),
   };
   const slot = info.x;
+  const hasFace = select(slot.greaterThanEqual(0), float(1), float(0));
   const cell = vec2(slot.mod(STAGE_FACE_COLUMNS), slot.div(STAGE_FACE_COLUMNS).floor());
-  const faceUv = cell
-    .add(vec2(paneU, float(1).sub(paneV)))
-    .div(vec2(STAGE_FACE_COLUMNS, STAGE_FACE_ROWS));
-  const faceSample = texture(blank, faceUv);
+  const cellUv = cell.add(vec2(paneU, float(1).sub(paneV)));
+  const atlasCells = vec2(STAGE_FACE_COLUMNS * 2, STAGE_FACE_ROWS);
+  const faceSample = texture(blank, cellUv.div(atlasCells));
+  // The same face's compact cell, which a pane turns to as it steps aside.
+  const compactSample = texture(blank, cellUv.add(vec2(STAGE_FACE_COLUMNS, 0)).div(atlasCells));
+  const compact = smoothstep(0.25, 0.75, info.z);
+  const faceAlpha = mix(faceSample.a, compactSample.a, compact);
   const face = {
-    rgb: faceSample.rgb,
-    a: select(slot.greaterThanEqual(0), faceSample.a, float(0)).mul(inside),
+    // Blended premultiplied, so neither face's transparent texels darken the other.
+    rgb: mix(faceSample.rgb.mul(faceSample.a), compactSample.rgb.mul(compactSample.a), compact).div(
+      max(faceAlpha, 0.0001)
+    ),
+    a: faceAlpha.mul(hasFace).mul(inside),
   };
-  const composed = over(over(glass, stroke), face);
+  // A working agent's line: a faint rule with a band of light travelling
+  // along it on the ambient clock, so it holds still whenever that clock does.
+  const cellX = paneU.mul(STAGE_FACE_CELL_WIDTH);
+  const lineY = float(1).sub(paneV).mul(STAGE_FACE_CELL_HEIGHT).sub(STAGE_FACE_LINE_TOP);
+  const line = lineY.div(STAGE_FACE_LINE_STEP).floor();
+  const within = lineY.sub(line.mul(STAGE_FACE_LINE_STEP));
+  const lit = streakBits
+    .div(exp2(max(line, 0)))
+    .floor()
+    .mod(2);
+  const rule = clamp(float(1.5).sub(abs(within.sub(STAGE_FACE_STREAK_OFFSET))), 0, 1)
+    .mul(step(0, lineY))
+    .mul(step(line, STREAK_LINES - 0.5))
+    .mul(smoothstep(STAGE_FACE_PAD, STAGE_FACE_PAD + 12, cellX))
+    .mul(
+      float(1).sub(
+        smoothstep(
+          STAGE_FACE_CELL_WIDTH - STAGE_FACE_PAD - 12,
+          STAGE_FACE_CELL_WIDTH - STAGE_FACE_PAD,
+          cellX
+        )
+      )
+    );
+  const head = uStreakTime.mul(0.35).add(line.mul(0.27)).fract().mul(1.4).sub(0.2);
+  const travel = exp(paneU.sub(head).mul(7).pow(2).negate());
+  const streak = {
+    rgb: uStreak,
+    a: rule
+      .mul(lit)
+      .mul(travel.mul(0.8).add(0.2))
+      .mul(float(1).sub(compact))
+      .mul(hasFace)
+      .mul(inside),
+  };
+  const composed = over(over(over(glass, stroke), streak), face);
   // A narrow specular band that tilt slides across the glass.
   const band = paneU.mul(0.85).add(paneV.mul(0.45));
   const sheen = exp(band.sub(sheenOffset.add(0.62)).mul(11).pow(2).negate());
@@ -546,6 +614,7 @@ export function createStageScene(): StageSceneHandle {
         edges[status].set(palette[status]);
         glowColors[status].copy(deepened(palette[status]));
       }
+      uStreak.value.set(edges.primary.r, edges.primary.g, edges.primary.b);
       uHeroGlow.value.copy(deepened(light ? palette.surface : palette.primary));
       uHeroGlowAlpha.value = light ? 0.7 : 0.35;
       uMote.value.set(light ? palette.surface : palette.primary);
@@ -596,6 +665,7 @@ export function createStageScene(): StageSceneHandle {
     },
     setFaces(atlas) {
       faceSample.value = atlas ?? blank;
+      compactSample.value = atlas ?? blank;
     },
     setAmbient(next) {
       ambient.configure(next);
@@ -614,6 +684,8 @@ export function createStageScene(): StageSceneHandle {
       uDrift.value = input.pulse ? timeS * 0.05 : 0;
       uBurst.value = input.burst;
       uSheen.value = input.shimmer ? (light ? 0.2 : 0.1) : 0;
+      // The ambient clock: still outside the window and under Reduce Motion.
+      uStreakTime.value = timeS;
 
       // Furthest first, so the nearer glass blends over the further.
       order.length = 0;
@@ -649,6 +721,7 @@ export function createStageScene(): StageSceneHandle {
         paneInfo.setXYZW(drawn, look.faceSlot, reflection, pane.side, 1);
         paneEdge.setXYZW(drawn, status.r, status.g, status.b, offline ? 0.45 : 0.9);
         paneSheen.setX(drawn, sheenAt);
+        paneStreaks.setX(drawn, working ? look.streaks : 0);
 
         const slot = count + drawn;
         position.set(x, y, z);
@@ -657,6 +730,7 @@ export function createStageScene(): StageSceneHandle {
         paneInfo.setXYZW(slot, look.faceSlot, 1, pane.side, 0);
         paneEdge.setXYZW(slot, status.r, status.g, status.b, offline ? 0.45 : 0.9);
         paneSheen.setX(slot, sheenAt);
+        paneStreaks.setX(slot, working ? look.streaks : 0);
 
         position.set(x, y, z - 0.6);
         glows.setMatrixAt(drawn, scratch.compose(position, still, scale));
@@ -675,6 +749,7 @@ export function createStageScene(): StageSceneHandle {
       paneInfo.needsUpdate = true;
       paneEdge.needsUpdate = true;
       paneSheen.needsUpdate = true;
+      paneStreaks.needsUpdate = true;
       glowTint.needsUpdate = true;
     },
     dispose() {

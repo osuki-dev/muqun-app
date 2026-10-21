@@ -44,7 +44,7 @@ import {
   STAGE_TILT_WAKE,
   type StageQuality,
 } from '@/lib/home-stage-motion';
-import type { StagePanel } from '@/lib/home-stage-panels';
+import { stageStreakLines, type StagePanel } from '@/lib/home-stage-panels';
 import type { StageScreenLook, StageTextureSource } from './stage-scene';
 import { useStageFaces } from './stage-faces';
 import { useStageClearShare, useStageTexture, type StageTextureState } from './stage-textures';
@@ -185,6 +185,7 @@ export function StageView({
     working: panel.working,
     attention: panel.attention,
     faceSlot: faces.slots.get(panel.serverId) ?? -1,
+    streaks: stageStreakLines(panel.face),
   }));
   const colors = useMemo(
     () => ({
