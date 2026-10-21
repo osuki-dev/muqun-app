@@ -1,7 +1,7 @@
 # Shared task composer: one field, attachment choices, and keyboard-safe close.
 press "id=terminal-open-quick-actions"
-wait "label=\"New task\"" 10000
-press "label=\"New task\""
+wait "id=quick-actions-new-task" 10000
+press "id=quick-actions-new-task"
 # The sheet itself, not a close button: form sheets carry no X any more.
 wait "id=new-task-sheet" 10000
 wait "id=new-task-agents" 10000

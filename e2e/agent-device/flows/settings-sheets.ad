@@ -10,6 +10,9 @@ wait stable 400 5000
 scroll down --pixels 160 --duration-ms 300 --unless-visible id=settings-${SETTINGS_GROUP}-row
 
 # section press
+# Settings may still be sliding in when its row is already in the tree. A press
+# resolved mid-entrance can land on the next row (Voice to text on an iPad).
+wait stable 400 5000
 press "${TARGET}"
 
 # section visible
