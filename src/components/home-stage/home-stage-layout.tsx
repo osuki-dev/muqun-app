@@ -38,6 +38,7 @@ import { filterHomeRecent, type HomeContinueEntry } from '@/lib/home-continue';
 import type { HomeTaskRow } from '@/lib/home-in-progress';
 import type { HomeTarget } from '@/lib/home-recents';
 import { wrapStageIndex, type StageOverlayBand } from '@/lib/home-stage-geometry';
+import type { StageProgress } from '@/lib/stage-overlay';
 import { stagePanels, stageSelectedIndex, type StagePanel } from '@/lib/home-stage-panels';
 import { HOME_DOCK_OUTER_INSET } from '@/lib/home-pad-geometry';
 import { fadeIn, fadeOut, SETTLE, timing } from '@/lib/motion';
@@ -299,6 +300,18 @@ export function HomeStageLayout({
   const openPane = useStableHandler((paneId?: string) =>
     opener.open(() => onOpenAgent(selectedIndex, paneId))
   );
+  // The subtitle opens the agent it speaks for, as its chip would: a pane in
+  // the terminal, a session as its card does. Nothing else, and nothing new.
+  const openProgress = useStableHandler((line: StageProgress) => {
+    const at = line.key.indexOf(':');
+    const kind = line.key.slice(0, at);
+    const id = line.key.slice(at + 1);
+    if (kind === 'pane') openPane(id);
+    else if (kind === 'session') {
+      const entry = sessions.find((candidate) => sessionAsid(candidate) === id);
+      if (entry) onOpenSession(entry);
+    }
+  });
   const actionsPanel = panels.find((panel) => panel.serverId === actionsFor);
   const actionsIndex = actionsPanel ? panels.indexOf(actionsPanel) : -1;
 
@@ -490,7 +503,8 @@ export function HomeStageLayout({
           <Animated.View entering={fadeIn('short')} exiting={fadeOut('short')}>
             <StageFootLine
               serverId={selected?.serverId}
-              subtitle={!paused && !listOpen && !waiting}>
+              subtitle={!paused && !listOpen && !waiting}
+              onOpen={openProgress}>
               <StageAgentRow
                 panel={selected}
                 paused={paused || listOpen}
@@ -704,6 +718,15 @@ function StageStatusLine({ panel, halo }: { panel: StagePanel; halo: StageTextHa
   );
 }
 
+/** The agent session a strip card opens, if it opens one. */
+function sessionAsid(entry: HomeContinueEntry): string | undefined {
+  const { destination } = entry;
+  if (destination.type === 'agent-session') return destination.target.asid;
+  if (destination.type === 'recent' && destination.target.kind === 'agent-session')
+    return destination.target.asid;
+  return undefined;
+}
+
 /**
  * The agent chips' row, or in their place what a working agent last reported:
  * the subtitle already names who is working, so the chips step aside under it
@@ -713,10 +736,12 @@ function StageStatusLine({ panel, halo }: { panel: StagePanel; halo: StageTextHa
 function StageFootLine({
   serverId,
   subtitle,
+  onOpen,
   children,
 }: {
   serverId: string | undefined;
   subtitle: boolean;
+  onOpen: (line: StageProgress) => void;
   children: ReactNode;
 }) {
   const [shown, setShown] = useState(false);
@@ -734,8 +759,13 @@ function StageFootLine({
         {children}
       </Animated.View>
       {serverId && subtitle ? (
-        <View pointerEvents="none" style={styles.subtitle}>
-          <StageSubtitle key={serverId} serverId={serverId} onShownChange={setShown} />
+        <View pointerEvents="box-none" style={styles.subtitle}>
+          <StageSubtitle
+            key={serverId}
+            serverId={serverId}
+            onShownChange={setShown}
+            onOpen={onOpen}
+          />
         </View>
       ) : null}
     </View>

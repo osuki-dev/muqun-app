@@ -1,6 +1,6 @@
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { PressableScale, Text, useThemeTokens } from '@osuki-dev/ui';
 import { useEffect, useEffectEvent, useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -26,10 +26,13 @@ import { useStageProgress } from './use-stage-overlay';
 export function StageSubtitle({
   serverId,
   onShownChange,
+  onOpen,
 }: {
   serverId: string;
   /** Whether a line is up, so the agent chips it stands in for can step aside. */
   onShownChange?: (shown: boolean) => void;
+  /** A tap opens the agent the line is about, as its chip would. */
+  onOpen?: (line: StageProgress) => void;
 }) {
   const line = useStageProgress(serverId);
   const [shown, setShown] = useState<{ line: StageProgress | null; atMs: number }>({
@@ -66,7 +69,7 @@ export function StageSubtitle({
   // Keyed by its agent: a new agent's line fades in over the old one, and the
   // same agent's next words replace its own in place, with no fade to redo.
   return shown.line ? (
-    <SubtitleLine key={shown.line.key} serverId={serverId} line={shown.line} />
+    <SubtitleLine key={shown.line.key} serverId={serverId} line={shown.line} onOpen={onOpen} />
   ) : null;
 }
 
@@ -76,7 +79,15 @@ export function StageSubtitle({
  * agent's name leads in the accent, and the report's bold, emphasis and code
  * keep their marks.
  */
-function SubtitleLine({ serverId, line }: { serverId: string; line: StageProgress }) {
+function SubtitleLine({
+  serverId,
+  line,
+  onOpen,
+}: {
+  serverId: string;
+  line: StageProgress;
+  onOpen?: (line: StageProgress) => void;
+}) {
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
   const monoFontFamily = useMonoFontFamily();
@@ -86,11 +97,15 @@ function SubtitleLine({ serverId, line }: { serverId: string; line: StageProgres
   return (
     <Animated.View
       testID="home-stage-subtitle"
-      pointerEvents="none"
+      pointerEvents="box-none"
       entering={calmFadeIn()}
       exiting={calmFadeOut()}
       style={styles.line}>
-      <View
+      <PressableScale
+        accessibilityRole="button"
+        accessibilityLabel={`${who}, ${line.text}`}
+        disabled={!onOpen}
+        onPress={() => onOpen?.(line)}
         style={[
           styles.plate,
           {
@@ -131,7 +146,7 @@ function SubtitleLine({ serverId, line }: { serverId: string; line: StageProgres
             )
           )}
         </Text>
-      </View>
+      </PressableScale>
     </Animated.View>
   );
 }
