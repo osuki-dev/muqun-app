@@ -226,6 +226,43 @@ export function stageLayerCentre(depth: number): StageVec3 {
   return stageRayPoint(rest, [0, 0], depth, 1);
 }
 
+// -- Faces -------------------------------------------------------------------
+//
+// A pane's face is painted into a cell of the faces atlas at the sketch's
+// 640 x 400 pane times 0.7. A pane is only as tall as what its face says:
+// its glass shows the top of the cell, and the rest of the cell is unused.
+
+/** One face cell, in atlas pixels: the tallest a face can be. */
+export const STAGE_FACE_CELL_WIDTH = 448;
+export const STAGE_FACE_CELL_HEIGHT = 280;
+export const STAGE_FACE_PAD = 32;
+/**
+ * The front face's rows under the name, in cell pixels: the summary's top,
+ * the first line's top, the step between lines, and how far below a line's
+ * top its working streak runs.
+ */
+export const STAGE_FACE_SUMMARY_TOP = 78;
+export const STAGE_FACE_LINE_TOP = 122;
+export const STAGE_FACE_LINE_STEP = 38;
+export const STAGE_FACE_STREAK_OFFSET = 31;
+/** Rows under the name: the summary and one line at least, the summary and four lines at most. */
+export const STAGE_FACE_MIN_ROWS = 2;
+export const STAGE_FACE_MAX_ROWS = 5;
+/** Below the last row's top: its text and the glass's bottom margin. */
+const FACE_FOOT_PX = 44;
+/** A side pane's face is the name and its dots: this tall, in cell pixels. */
+export const STAGE_FACE_SIDE_HEIGHT = 150;
+
+/**
+ * How tall a front face with `rows` rows under its name (the summary counts
+ * as one) is, in cell pixels: never less than the name and two rows, the
+ * whole cell for the summary and four lines.
+ */
+export function stageFaceHeight(rows: number): number {
+  const count = clamp(Math.round(rows), STAGE_FACE_MIN_ROWS, STAGE_FACE_MAX_ROWS);
+  return STAGE_FACE_LINE_TOP + (count - 2) * STAGE_FACE_LINE_STEP + FACE_FOOT_PX;
+}
+
 export type StagePane = {
   position: StageVec3;
   width: number;
@@ -243,17 +280,29 @@ export type StagePane = {
  * further back, turned 48 degrees inwards at 0.62 of the width (the same
  * ratios of the selected pane when the height bounds it). Everything in
  * between is interpolated, so a drag moves the panes continuously.
+ *
+ * A pane is as tall as its face says (`faceHeight`, in cell pixels, from
+ * `stageFaceHeight`) at the front and as a side face at the side, and hangs
+ * from where the tallest pane's top would be: the name stays put while the
+ * height changes, and a pane never reaches lower than the tallest would.
  */
-export function stagePane(offset: number, anchor: StageVec3, aspect: number): StagePane {
+export function stagePane(
+  offset: number,
+  anchor: StageVec3,
+  aspect: number,
+  faceHeight: number = STAGE_FACE_CELL_HEIGHT
+): StagePane {
   const view = stageViewSize(STAGE_PANE_DEPTH, aspect);
   const unit = Math.min(view.width, (view.height * PANE_HEIGHT_SHARE) / PANE_WIDTH_SHARE);
   const side = Math.min(Math.abs(offset), 1);
   const width = unit * (PANE_WIDTH_SHARE - 0.1 * side);
-  const height = width * STAGE_PANE_RATIO;
+  const tallest = width * STAGE_PANE_RATIO;
+  const front = clamp(faceHeight, STAGE_FACE_SIDE_HEIGHT, STAGE_FACE_CELL_HEIGHT);
+  const height = (width * lerp(front, STAGE_FACE_SIDE_HEIGHT, side)) / STAGE_FACE_CELL_WIDTH;
   return {
     position: [
       anchor[0] + offset * unit * 0.66,
-      anchor[1] + height * 0.06 * side,
+      anchor[1] + tallest * 0.06 * side + (tallest - height) / 2,
       anchor[2] - 2.2 * side,
     ],
     width,

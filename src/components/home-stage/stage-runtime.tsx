@@ -11,6 +11,7 @@ import {
   stageDrawnScreens,
   stagePane,
   stagePaneAnchor,
+  STAGE_FACE_CELL_HEIGHT,
   STAGE_PANE_REACH,
 } from '@/lib/home-stage-geometry';
 import { stageAmbient } from '@/lib/home-stage-ambient';
@@ -45,9 +46,9 @@ const stagePerf =
 
 /**
  * Why a frame is drawn, which sets how soon the next may be: `touch` (a
- * finger, the cover-flow settling, a dive) at the full rate, `glide` (tilt
- * easing in, a completion's flare) at 30 fps, `idle` (the ambient motion) at
- * 20 fps, `content` once.
+ * finger, the cover-flow settling, a dive, a face resizing its pane) at the
+ * full rate, `glide` (tilt easing in, a completion's flare) at 30 fps, `idle`
+ * (the ambient motion) at 20 fps, `content` once.
  */
 type Pace = 'touch' | 'glide' | 'idle' | 'content';
 
@@ -55,6 +56,13 @@ type Motion = {
   /** The cover-flow's fractional selection. */
   flow: StageSpring;
   dive: StageSpring;
+  /**
+   * Each computer's face height as a share of the cell, springing to what
+   * its face says; `faced` is whether that pane had a painted face yet (the
+   * first one is taken as it is, never grown into).
+   */
+  heights: StageSpring[];
+  faced: boolean[];
   look: [number, number];
   burst: number;
   lastFrameMs: number;
@@ -126,6 +134,8 @@ export function StageRuntime(props: StageSceneProps) {
     motion.current = {
       flow: { value: selected, velocity: 0 },
       dive: { value: 0, velocity: 0 },
+      heights: [],
+      faced: [],
       look: [0, 0],
       burst: 0,
       lastFrameMs: 0,
@@ -280,6 +290,26 @@ export function StageRuntime(props: StageSceneProps) {
         : stepStageSpring(state.flow, flowGoal, dt, STAGE_CARD_SPRING);
     state.dive = stepStageSpring(state.dive, dive ? 1 : 0, dt, DIVE_SPRING);
 
+    // A face that gains or loses a row grows or shrinks its pane with the
+    // cover-flow's spring rather than jumping. A content change, not an
+    // interaction: it draws until the panes settle and starts no ambient motion.
+    let resizing = false;
+    state.heights.length = Math.min(state.heights.length, count);
+    state.faced.length = Math.min(state.faced.length, count);
+    for (let index = 0; index < count; index += 1) {
+      const look = screens[index];
+      const goal = (look?.faceHeight ?? STAGE_FACE_CELL_HEIGHT) / STAGE_FACE_CELL_HEIGHT;
+      const faced = (look?.faceSlot ?? -1) >= 0;
+      const current = state.heights[index];
+      if (!current || !state.faced[index] || reducedMotion || stageSpringAtRest(current, goal))
+        state.heights[index] = { value: goal, velocity: 0 };
+      else {
+        state.heights[index] = stepStageSpring(current, goal, dt, STAGE_CARD_SPRING);
+        resizing = true;
+      }
+      state.faced[index] = faced;
+    }
+
     // Tilt (when on) and a vertical drag both look around; the drag springs back.
     const lookGoal: [number, number] = [
       effects.tilt ? inputs.tiltY.get() : 0,
@@ -308,10 +338,12 @@ export function StageRuntime(props: StageSceneProps) {
       const look = screens[index];
       const offset = index - state.flow.value;
       if (!look || Math.abs(offset) >= STAGE_PANE_REACH) continue;
-      const pane = stagePane(offset, anchor, aspect);
+      const faceHeight = (state.heights[index]?.value ?? 1) * STAGE_FACE_CELL_HEIGHT;
+      const pane = stagePane(offset, anchor, aspect, faceHeight);
       panes.push({
         position: pane.position,
         width: pane.width,
+        height: pane.height,
         yaw: pane.yaw,
         side: pane.side,
         offset,
@@ -347,7 +379,7 @@ export function StageRuntime(props: StageSceneProps) {
     // What this frame measured: its own work, and at the full rate also how
     // long the device took to come back for it. Content frames drawn once
     // are evidence of nothing.
-    if (!reducedMotion && (state.wasMoving || moving || ambient)) {
+    if (!reducedMotion && (state.wasMoving || moving || resizing || ambient)) {
       const was = state.budget.quality;
       const next = recordStageFrame(state.budget, {
         nowMs: now,
@@ -365,7 +397,13 @@ export function StageRuntime(props: StageSceneProps) {
         triangles: render.triangles,
         quality: state.budget.quality,
         dpr: (gl as unknown as WebGPURenderer).getPixelRatio(),
-        pace: (touch ? 'touch' : moving ? 'glide' : ambient ? 'idle' : 'content') satisfies Pace,
+        pace: (touch || resizing
+          ? 'touch'
+          : moving
+            ? 'glide'
+            : ambient
+              ? 'idle'
+              : 'content') satisfies Pace,
       });
     }
     state.wasMoving = moving;
@@ -374,8 +412,8 @@ export function StageRuntime(props: StageSceneProps) {
 
     stopTimer();
     if (paused) return;
-    if (moving) {
-      const interval = touch ? effects.frameIntervalMs : effects.glideIntervalMs;
+    if (moving || resizing) {
+      const interval = touch || resizing ? effects.frameIntervalMs : effects.glideIntervalMs;
       if (interval > 0)
         state.timer = setTimeout(invalidate, Math.max(0, interval - (performance.now() - now)));
       else {

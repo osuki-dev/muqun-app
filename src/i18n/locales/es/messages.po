@@ -46,7 +46,7 @@ msgstr "[número de pr]"
 #. placeholder {0}: files.length
 #: src/components/agent-composer.tsx
 msgid "{0, plural, one {# attachment} other {# attachments}}"
-msgstr ""
+msgstr "{0, plural, one {# adjunto} other {# adjuntos}}"
 
 #. placeholder {0}: capped.hidden
 #: src/components/bounded-markdown.tsx
@@ -452,6 +452,10 @@ msgstr "{total, plural, one {# subtarea} other {# subtareas}}"
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, one {# subtarea} other {# subtareas}} ({waiting, plural, one {# en espera} other {# en espera}})"
 
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "{waiting, plural, one {# needs you} other {# need you}}"
+msgstr "{waiting, plural, one {# te necesita} other {# te necesitan}}"
+
 #: src/components/task-row.tsx
 msgid "→ {name}"
 msgstr "→ {name}"
@@ -705,11 +709,6 @@ msgstr "Todos los proyectos"
 #: src/components/home-stage/stage-faces.ts
 msgid "All quiet"
 msgstr "Todo tranquilo"
-
-#. placeholder {0}: age(face.lastActivityMs, nowMs)
-#: src/components/home-stage/stage-faces.ts
-msgid "All quiet · last activity {0}"
-msgstr "Todo tranquilo · última actividad {0}"
 
 #: src/components/agent-composer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
@@ -3242,7 +3241,7 @@ msgstr "Ocultar el simulador"
 
 #: src/components/agent-composer.tsx
 msgid "Hides this notice"
-msgstr ""
+msgstr "Oculta este aviso"
 
 #: src/app/settings-voice.tsx
 msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
@@ -3578,6 +3577,11 @@ msgstr "Idioma, {languageName}"
 #: src/components/settings-terminal.tsx
 msgid "Large"
 msgstr "Grande"
+
+#. placeholder {0}: age(face.lastActivityMs, nowMs)
+#: src/components/home-stage/stage-faces.ts
+msgid "Last activity {0}"
+msgstr "Última actividad {0}"
 
 #: src/components/agent-account-limits-section.tsx
 msgid "Last checked"
@@ -4531,6 +4535,7 @@ msgstr "En una tableta, Inicio es una doble página, las hojas de trabajo ocupan
 msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
 msgstr "Una sola hoja de Cambios para terminales y sesiones de agente: los archivos cambiados en árbol con el total de líneas, la rama bajo el título y Descartar en el menú de cada archivo"
 
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Online"
@@ -4539,10 +4544,6 @@ msgstr "En línea"
 #: src/i18n/labels.ts
 msgid "ONLINE"
 msgstr "EN LÍNEA"
-
-#: src/components/home-stage/home-stage-layout.tsx
-msgid "Online · {count, plural, one {# session} other {# sessions}}"
-msgstr "En línea · {count, plural, one {# sesión} other {# sesiones}}"
 
 #: src/lib/attachments.ts
 msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."
