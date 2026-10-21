@@ -2,9 +2,10 @@
  * Geometry of the Stage Home layout, the "depth window": the phone is a
  * window into the theme's world, built as layers at real depths -- the
  * wallpaper far away, a painting's sky band, a haze in the theme's colour,
- * the figure or inset picture, one glass pane per computer in a cover-flow,
- * and an edge-only wallpaper as the nearest frame. Pure math shared by the GPU scene, the static 2.5D stage and
- * the 2D HUD's projected hit areas and hint chips, so all three agree.
+ * the figure or inset picture, one glowing core per computer in a
+ * cover-flow (its agents orbiting it on a ring), and an edge-only wallpaper
+ * as the nearest frame. Pure math shared by the GPU scene, the static 2.5D
+ * stage and the 2D HUD's projected hit areas and chips, so all three agree.
  */
 import {
   containedImageRect,
@@ -14,46 +15,68 @@ import {
   HOME_COVER_BOTTOM_FEATHER_START,
   HOME_HERO_FEATHER,
 } from './hero-feather';
+import type { StageRole } from './home-stage-layers';
 
 export type StageVec3 = readonly [number, number, number];
 
 export const STAGE_CAMERA_FOV = 38;
-/** Screens drawn at once; with more computers the ones nearest the selection are drawn. */
+/** Cores drawn at once; with more computers the ones nearest the selection are drawn. */
 export const STAGE_MAX_SCREENS = 8;
 
 /** Layer depths, in world units in front of the camera. */
 export const STAGE_BACKDROP_DEPTH = 60;
 export const STAGE_HAZE_DEPTH = 30;
 export const STAGE_HERO_DEPTH = 16;
-export const STAGE_PANE_DEPTH = 12;
+export const STAGE_CORE_DEPTH = 12;
 export const STAGE_FRAME_DEPTH = 3.2;
 /** Cover layers are this much larger than the view, so tilt never shows their edges. */
 export const STAGE_BACKDROP_OVERSCAN = 1.22;
 export const STAGE_FRAME_OVERSCAN = 1.12;
 
-/** A pane is 640 x 400: height over width. */
-export const STAGE_PANE_RATIO = 0.625;
-/** Panes further than this from the selection (in panes) are not drawn. */
-export const STAGE_PANE_REACH = 1.7;
-/** A drag across the full stage width moves this many panes (the sketch's 220 pt of 390). */
+/** Cores further than this from the selection (in cores) are not drawn. */
+export const STAGE_CORE_REACH = 1.7;
+/** A drag across the full stage width moves this many cores (the sketch's 220 pt of 390). */
 export const STAGE_DRAG_SPAN = 390 / 220;
 
 const YAW_MAX = (5 * Math.PI) / 180;
 const PITCH_MAX = (3.5 * Math.PI) / 180;
 const CAMERA_TARGET: StageVec3 = [0, -0.2, -20];
 /**
- * Where the selected pane's centre sits on screen, in NDC: 55% of the way
- * down, so the pane and its reflection clear the session strip above the
- * composer by about 24-32 pt on a 20:9 phone.
+ * The cores' scale: the view's width at their depth, but never more than
+ * 0.72 of its height, so a wide view keeps a phone's proportions.
  */
-const PANE_ANCHOR_NDC = [0, -0.1] as const;
-/** The selected pane's width as a share of the view's width... */
-const PANE_WIDTH_SHARE = 0.72;
-/** ...and at most this share of its height, so a wide view (a tablet held sideways) keeps the phone's proportions. */
-const PANE_HEIGHT_SHARE = 0.52;
-const PANE_SIDE_TURN = (48 * Math.PI) / 180;
-/** How close a dive brings the camera: the front pane just fills the view's width. */
-const DIVE_STANDOFF = STAGE_PANE_DEPTH * 0.72 * 0.95;
+const CORE_UNIT_HEIGHT_SHARE = 0.72;
+/** The front core's radius as a share of that unit: about 44 pt on a phone... */
+const CORE_RADIUS_SHARE = 0.115;
+/** ...its orbit ring this many core radii out... */
+export const STAGE_RING_SCALE = 2.05;
+/** ...and an agent orb's bright dot this many core radii across. */
+export const STAGE_ORB_SCALE = 0.16;
+/**
+ * Where the front core's centre sits on screen, in NDC, and how large it is,
+ * by role: always below the art's body (a figure's face and torso, an inset
+ * picture, a painting's band) and above the session strip. With no art the
+ * core is the scene, a little larger and higher.
+ */
+const CORE_PLACE: Record<StageRole, { ndcY: number; scale: number }> = {
+  figure: { ndcY: -0.25, scale: 1 },
+  sky: { ndcY: -0.2, scale: 1 },
+  inset: { ndcY: -0.2, scale: 1 },
+  world: { ndcY: -0.1, scale: 1.2 },
+};
+/** A neighbour core stands this share of the unit aside, peeking in at the edge... */
+const CORE_SIDE_SPREAD = 0.62;
+/** ...this much further back, and this much smaller. */
+const CORE_SIDE_DEPTH = 2.2;
+const CORE_SIDE_SCALE = 0.62;
+/** How close a dive brings the camera to the front core, in core radii. */
+const DIVE_STANDOFF_RADII = 5;
+/**
+ * The ring's plane: level, its far side raised 15 degrees towards the camera
+ * and rolled 7 degrees, so it reads as an orbit seen from a little above.
+ */
+const RING_RAISE = (15 * Math.PI) / 180;
+const RING_ROLL = (-7 * Math.PI) / 180;
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, Number.isFinite(value) ? value : 0));
@@ -72,7 +95,7 @@ export function stageViewSize(distance: number, aspect: number): { width: number
 }
 
 /**
- * Which computers get a pane: all of them up to `STAGE_MAX_SCREENS`, else
+ * Which computers get a core: all of them up to `STAGE_MAX_SCREENS`, else
  * the contiguous run around the selection.
  */
 export function stageDrawnScreens(selected: number, count: number): number[] {
@@ -88,13 +111,13 @@ export function stageSwipeStep(translationX: number, velocityX: number, width: n
   const distance = width > 0 ? Math.abs(translationX) / width : 0;
   const fast = Math.abs(velocityX) > 520;
   if (distance < 0.1 && !fast) return 0;
-  // Dragging left brings the next pane forward.
+  // Dragging left brings the next core forward.
   const direction = fast && Math.sign(velocityX) !== 0 ? velocityX : translationX;
   return direction < 0 ? 1 : -1;
 }
 
 /**
- * Where a horizontal drag that ends at `translationX` settles: the pane the
+ * Where a horizontal drag that ends at `translationX` settles: the core the
  * drag has brought nearest the front, or at least one step towards the pull
  * when the drag was long or fast enough. Never past either end.
  */
@@ -113,7 +136,7 @@ export function stageSwipeTarget(
   return Math.max(0, Math.min(count - 1, target));
 }
 
-/** The fractional selection while a finger drags the panes, with a little give at both ends. */
+/** The fractional selection while a finger drags the cores, with a little give at both ends. */
 export function stageDragPosition(selected: number, count: number, dragX: number): number {
   'worklet';
   const position = selected - dragX * STAGE_DRAG_SPAN;
@@ -147,16 +170,24 @@ export function stageCamera({
   };
 }
 
-/** `camera` flown (`dive` 0..1) to just in front of the pane at `anchor`, looking at it. */
-export function stageDiveCamera(camera: StageCamera, anchor: StageVec3, dive: number): StageCamera {
+/**
+ * `camera` flown (`dive` 0..1) to just in front of `core`, looking at it:
+ * the core's glow fills the view as its computer opens.
+ */
+export function stageDiveCamera(
+  camera: StageCamera,
+  core: { position: StageVec3; radius: number },
+  dive: number
+): StageCamera {
   const t = clamp(dive, 0, 1);
   if (t === 0) return camera;
+  const anchor = core.position;
   const [px, py, pz] = camera.position;
   const dx = anchor[0] - px;
   const dy = anchor[1] - py;
   const dz = anchor[2] - pz;
   const length = Math.hypot(dx, dy, dz) || 1;
-  const back = DIVE_STANDOFF / length;
+  const back = Math.min(1, (core.radius * DIVE_STANDOFF_RADII) / length);
   const near: StageVec3 = [anchor[0] - dx * back, anchor[1] - dy * back, anchor[2] - dz * back];
   return {
     position: [lerp(px, near[0], t), lerp(py, near[1], t), lerp(pz, near[2], t)],
@@ -215,101 +246,130 @@ export function stageRayPoint(
   return [px + dx * scale, py + dy * scale, pz + dz * scale];
 }
 
-/** Where the selected pane's centre sits: just below the screen's middle, between hero and HUD. */
-export function stagePaneAnchor(camera: StageCamera, aspect: number): StageVec3 {
-  return stageRayPoint(camera, PANE_ANCHOR_NDC, STAGE_PANE_DEPTH, aspect);
-}
-
 /** The point on the camera's centre line at `depth` in front of it: where cover layers hang. */
 export function stageLayerCentre(depth: number): StageVec3 {
   const rest = stageCamera();
   return stageRayPoint(rest, [0, 0], depth, 1);
 }
 
-// -- Faces -------------------------------------------------------------------
+// -- Cores ------------------------------------------------------------------
 //
-// A pane's face is painted into a cell of the faces atlas at the sketch's
-// 640 x 400 pane times 0.7. A pane is only as tall as what its face says:
-// its glass shows the top of the cell, and the rest of the cell is unused.
+// One luminous core per computer, its agents orbiting it as orbs on a thin
+// ring. The front core sits below the art's body; its neighbours stand aside,
+// smaller and further back, peeking in at the view's edges.
 
-/** One face cell, in atlas pixels: the tallest a face can be. */
-export const STAGE_FACE_CELL_WIDTH = 448;
-export const STAGE_FACE_CELL_HEIGHT = 280;
-export const STAGE_FACE_PAD = 32;
-/**
- * The front face's rows under the name, in cell pixels: the summary's top,
- * the first line's top, the step between lines, and how far below a line's
- * top its working streak runs.
- */
-export const STAGE_FACE_SUMMARY_TOP = 78;
-export const STAGE_FACE_LINE_TOP = 122;
-export const STAGE_FACE_LINE_STEP = 38;
-export const STAGE_FACE_STREAK_OFFSET = 31;
-/** Rows under the name: the summary and one line at least, the summary and four lines at most. */
-export const STAGE_FACE_MIN_ROWS = 2;
-export const STAGE_FACE_MAX_ROWS = 5;
-/** Below the last row's top: its text and the glass's bottom margin. */
-const FACE_FOOT_PX = 44;
-/** A side pane's face is the name and its dots: this tall, in cell pixels. */
-export const STAGE_FACE_SIDE_HEIGHT = 150;
-
-/**
- * How tall a front face with `rows` rows under its name (the summary counts
- * as one) is, in cell pixels: never less than the name and two rows, the
- * whole cell for the summary and four lines.
- */
-export function stageFaceHeight(rows: number): number {
-  const count = clamp(Math.round(rows), STAGE_FACE_MIN_ROWS, STAGE_FACE_MAX_ROWS);
-  return STAGE_FACE_LINE_TOP + (count - 2) * STAGE_FACE_LINE_STEP + FACE_FOOT_PX;
+/** Where the selected core's centre sits for `role`: below the art, above the session strip. */
+export function stageCoreAnchor(camera: StageCamera, aspect: number, role: StageRole): StageVec3 {
+  return stageRayPoint(camera, [0, CORE_PLACE[role].ndcY], STAGE_CORE_DEPTH, aspect);
 }
 
-export type StagePane = {
+/** The cores' scale at their depth, in world units (`CORE_UNIT_HEIGHT_SHARE`). */
+function coreUnit(aspect: number): number {
+  const view = stageViewSize(STAGE_CORE_DEPTH, aspect);
+  return Math.min(view.width, view.height * CORE_UNIT_HEIGHT_SHARE);
+}
+
+export type StageCore = {
+  /** The core's centre, which is also its ring's. */
   position: StageVec3;
-  width: number;
-  height: number;
-  /** Turn about Y, radians; side panes face inwards. */
-  yaw: number;
-  /** 0 for the selected pane, 1 for a neighbour or further. */
+  radius: number;
+  ringRadius: number;
+  /** The bright dot of an agent orb on this core's ring. */
+  orbRadius: number;
+  /** 0 for the selected core, 1 for a neighbour or further. */
   side: number;
 };
 
 /**
- * The cover-flow: the pane `offset` places from the (fractional) selection.
- * The selected pane faces the camera at 0.72 of the view's width (at most
- * 0.52 of its height); a neighbour stands 0.66 of the width aside, 2.2 units
- * further back, turned 48 degrees inwards at 0.62 of the width (the same
- * ratios of the selected pane when the height bounds it). Everything in
- * between is interpolated, so a drag moves the panes continuously.
- *
- * A pane is as tall as its face says (`faceHeight`, in cell pixels, from
- * `stageFaceHeight`) at the front and as a side face at the side, and hangs
- * from where the tallest pane's top would be: the name stays put while the
- * height changes, and a pane never reaches lower than the tallest would.
+ * The cover-flow: the core `offset` places from the (fractional) selection.
+ * The selected core is about a ninth of the view's width across (at the
+ * role's size); a neighbour stands 0.62 of the width aside -- half off the
+ * screen -- 2.2 units further back at 0.62 of the size. Everything between
+ * is interpolated, so a drag moves the cores continuously.
  */
-export function stagePane(
+export function stageCore(
   offset: number,
   anchor: StageVec3,
   aspect: number,
-  faceHeight: number = STAGE_FACE_CELL_HEIGHT
-): StagePane {
-  const view = stageViewSize(STAGE_PANE_DEPTH, aspect);
-  const unit = Math.min(view.width, (view.height * PANE_HEIGHT_SHARE) / PANE_WIDTH_SHARE);
+  role: StageRole
+): StageCore {
+  const unit = coreUnit(aspect);
   const side = Math.min(Math.abs(offset), 1);
-  const width = unit * (PANE_WIDTH_SHARE - 0.1 * side);
-  const tallest = width * STAGE_PANE_RATIO;
-  const front = clamp(faceHeight, STAGE_FACE_SIDE_HEIGHT, STAGE_FACE_CELL_HEIGHT);
-  const height = (width * lerp(front, STAGE_FACE_SIDE_HEIGHT, side)) / STAGE_FACE_CELL_WIDTH;
+  const radius = unit * CORE_RADIUS_SHARE * CORE_PLACE[role].scale * lerp(1, CORE_SIDE_SCALE, side);
   return {
     position: [
-      anchor[0] + offset * unit * 0.66,
-      anchor[1] + tallest * 0.06 * side + (tallest - height) / 2,
-      anchor[2] - 2.2 * side,
+      anchor[0] + offset * unit * CORE_SIDE_SPREAD,
+      anchor[1],
+      anchor[2] - CORE_SIDE_DEPTH * side,
     ],
-    width,
-    height,
-    yaw: -Math.sign(offset) * side * PANE_SIDE_TURN,
+    radius,
+    ringRadius: radius * STAGE_RING_SCALE,
+    orbRadius: radius * STAGE_ORB_SCALE,
     side,
   };
+}
+
+/**
+ * The ring's plane as two unit axes: `across` (angle 0, to the right) and
+ * `far` (a quarter turn on, away from the camera and up). Angles increase
+ * from the right round the back, so the near side is at three quarters.
+ */
+export const STAGE_RING_AXES: { across: StageVec3; far: StageVec3 } = {
+  across: [Math.cos(RING_ROLL), Math.sin(RING_ROLL), 0],
+  far: [
+    -Math.sin(RING_RAISE) * Math.sin(RING_ROLL),
+    Math.sin(RING_RAISE) * Math.cos(RING_ROLL),
+    -Math.cos(RING_RAISE),
+  ],
+};
+
+/** The point at `angle` (radians) on `core`'s ring. */
+export function stageRingPoint(core: StageCore, angle: number): StageVec3 {
+  const { across, far } = STAGE_RING_AXES;
+  const c = Math.cos(angle) * core.ringRadius;
+  const s = Math.sin(angle) * core.ringRadius;
+  return [
+    core.position[0] + across[0] * c + far[0] * s,
+    core.position[1] + across[1] * c + far[1] * s,
+    core.position[2] + across[2] * c + far[2] * s,
+  ];
+}
+
+/**
+ * The on-screen box of a core with its ring and orbs, clipped to the view:
+ * what a tap on the computer covers. Not visible when none of it is on screen.
+ */
+export function stageCoreRect(
+  core: StageCore,
+  camera: StageCamera,
+  viewportWidth: number,
+  viewportHeight: number
+): StageRect {
+  let left = Infinity;
+  let top = Infinity;
+  let right = -Infinity;
+  let bottom = -Infinity;
+  const take = (point: StageVec3, pad: number) => {
+    const at = projectStagePoint(point, camera, viewportWidth, viewportHeight);
+    if (at.depth <= 1e-3) return;
+    const scale = pad * (viewportHeight / stageViewSize(at.depth, 1).height);
+    left = Math.min(left, at.x - scale);
+    right = Math.max(right, at.x + scale);
+    top = Math.min(top, at.y - scale);
+    bottom = Math.max(bottom, at.y + scale);
+  };
+  take(core.position, core.radius);
+  for (let step = 0; step < 16; step += 1)
+    take(stageRingPoint(core, (step / 16) * Math.PI * 2), core.orbRadius * 2);
+  const depth = projectStagePoint(core.position, camera, viewportWidth, viewportHeight).depth;
+  if (!Number.isFinite(left)) return { x: 0, y: 0, width: 0, height: 0, depth, visible: false };
+  const x = Math.max(0, left);
+  const y = Math.max(0, top);
+  const w = Math.min(viewportWidth, right) - x;
+  const h = Math.min(viewportHeight, bottom) - y;
+  return w > 0 && h > 0
+    ? { x, y, width: w, height: h, depth, visible: true }
+    : { x: 0, y: 0, width: 0, height: 0, depth, visible: false };
 }
 
 // -- Theme layers ------------------------------------------------------------
@@ -536,8 +596,8 @@ export type StageHostTarget = { rect: StageBox; hint: { x: number; y: number } }
 /**
  * The new-task target, in every role: the figure's or inset picture's middle
  * (not its faded foot or a wide picture's sides); the painting's band below
- * the HUD; or, with no artwork, the open band between the HUD and the panes.
- * The panes are nearer, so where they overlap a target they take the tap.
+ * the HUD; or, with no artwork, the open band between the HUD and the core.
+ * The cores are nearer, so where they overlap a target they take the tap.
  */
 export function stageHostTarget(
   art: { kind: 'hero' | 'painting'; placement: StageArtPlacement } | null,
@@ -630,52 +690,3 @@ export type StageRect = {
   depth: number;
   visible: boolean;
 };
-
-/**
- * The on-screen box of a `width` x `height` quad centred at `centre` and
- * turned `yaw` about Y, clipped to the viewport; not visible when none of it
- * is on screen.
- */
-export function stageQuadRect(
-  centre: StageVec3,
-  width: number,
-  height: number,
-  yaw: number,
-  camera: StageCamera,
-  viewportWidth: number,
-  viewportHeight: number
-): StageRect {
-  const cos = Math.cos(yaw);
-  const sin = Math.sin(yaw);
-  let left = Infinity;
-  let top = Infinity;
-  let right = -Infinity;
-  let bottom = -Infinity;
-  for (const [u, v] of [
-    [-0.5, -0.5],
-    [0.5, -0.5],
-    [0.5, 0.5],
-    [-0.5, 0.5],
-  ] as const) {
-    const point = projectStagePoint(
-      [centre[0] + u * width * cos, centre[1] + v * height, centre[2] - u * width * sin],
-      camera,
-      viewportWidth,
-      viewportHeight
-    );
-    if (point.depth <= 1e-3)
-      return { x: 0, y: 0, width: 0, height: 0, depth: point.depth, visible: false };
-    left = Math.min(left, point.x);
-    right = Math.max(right, point.x);
-    top = Math.min(top, point.y);
-    bottom = Math.max(bottom, point.y);
-  }
-  const x = Math.max(0, left);
-  const y = Math.max(0, top);
-  const w = Math.min(viewportWidth, right) - x;
-  const h = Math.min(viewportHeight, bottom) - y;
-  const depth = projectStagePoint(centre, camera, viewportWidth, viewportHeight).depth;
-  return w > 0 && h > 0
-    ? { x, y, width: w, height: h, depth, visible: true }
-    : { x: 0, y: 0, width: 0, height: 0, depth, visible: false };
-}

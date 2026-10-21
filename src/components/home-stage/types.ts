@@ -1,7 +1,7 @@
 import type { SharedValue } from 'react-native-reanimated';
-import type { Texture } from 'three/webgpu';
 
 import type { StageAmbientColors } from '@/lib/home-stage-ambient';
+import type { StageCore, StageVec3 } from '@/lib/home-stage-geometry';
 import type { StageHeroLayer, StageRole } from '@/lib/home-stage-layers';
 import type { StageQuality } from '@/lib/home-stage-motion';
 import type { ThemeEffects } from '@/theme/schema';
@@ -22,18 +22,39 @@ export type StageInputs = {
   tiltY: SharedValue<number>;
 };
 
-/** Lets the stage's gestures wake a scene that is idle (no frames scheduled). */
+/**
+ * The front core as the scene last drew it: the camera's look, the core and
+ * where its orbs were. A touch is resolved against it, so it lands on the
+ * orb the reader saw, wherever its orbit had taken it.
+ */
+export type StageProbe = {
+  look: readonly [number, number];
+  core: StageCore;
+  orbs: readonly { key: string; point: StageVec3 }[];
+};
+
+/**
+ * Between the stage's 2D layer and its scene: gestures wake a scene that is
+ * idle (no frames scheduled), and a touch asks where the front orbs are.
+ */
 export type StageBridge = {
   wake: () => void;
   setWaker: (waker: (() => void) | null) => void;
+  probe: () => StageProbe | null;
+  setProber: (prober: (() => StageProbe | null) | null) => void;
 };
 
 export function createStageBridge(): StageBridge {
   let waker: (() => void) | null = null;
+  let prober: (() => StageProbe | null) | null = null;
   return {
     wake: () => waker?.(),
     setWaker: (next) => {
       waker = next;
+    },
+    probe: () => prober?.() ?? null,
+    setProber: (next) => {
+      prober = next;
     },
   };
 }
@@ -43,6 +64,8 @@ export type StageSceneProps = {
   screens: readonly StageScreenLook[];
   /** The selected computer; the cover-flow brings it forward whenever it changes. */
   selected: number;
+  /** An orb's chip is showing: the orbits hold still, so the orb stays under its chip. */
+  held: boolean;
   colors: StageSceneColors;
   mode: 'light' | 'dark';
   /** How the theme is presented; see `stageComposition`. */
@@ -57,9 +80,6 @@ export type StageSceneProps = {
   hero: StagePicture<StageHeroLayer> | null;
   /** An edge-only wallpaper as the nearest layer. */
   frame: StagePicture | null;
-  faces: Texture | null;
-  /** Bumped each time the faces are repainted, in place or into a new atlas. */
-  facesVersion: number;
   /**
    * The theme's ambient effect for the current light or dark variant, as the
    * 2D layer resolves it; null when it has none or theme effects are off.
@@ -68,9 +88,9 @@ export type StageSceneProps = {
   ambientColors: StageAmbientColors;
   quality: StageQuality;
   reducedMotion: boolean;
-  /** Fly the camera to the selected pane (before opening it), or back. */
+  /** Fly the camera into the selected core (before opening it), or back. */
   dive: boolean;
-  /** Bumped when a task completes: the motes flare. */
+  /** Bumped when a task completes: the motes and the front core flare. */
   burst: number;
   /** Home is off screen or the app is in the background: no frames. */
   paused: boolean;

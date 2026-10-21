@@ -45,7 +45,7 @@ const VIEW_SPAN_PER_DEPTH = 2 * Math.tan((STAGE_CAMERA_FOV * Math.PI) / 360);
 const MOTION_CODE = { drift: 0, rain: 1, stars: 2, bloom: 3, still: 4 } as const;
 /** Drawn after the haze, behind the hero: lights and patterns in the far world. */
 export const STAGE_AMBIENT_BACK_ORDER = 1.5;
-/** Drawn with the motes: among the depths of the hero, the frame and the panes. */
+/** Drawn with the motes: among the depths of the hero, the frame and the cores. */
 export const STAGE_AMBIENT_MID_ORDER = 4;
 
 export type StageAmbientLayer = {

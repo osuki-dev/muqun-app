@@ -84,17 +84,17 @@ msgstr "{0, plural, other {# 時間}}"
 msgid "{0, plural, one {# minute} other {# minutes}}"
 msgstr "{0, plural, other {# 分}}"
 
+#. placeholder {0}: orb.more
+#: src/components/home-stage/stage-view.tsx
+msgid "{0, plural, one {# more agent} other {# more agents}}"
+msgstr "{0, plural, other {ほか # 件のエージェント}}"
+
 #. placeholder {0}: capped.hidden
 #. placeholder {0}: row.remaining
 #: src/components/agent-tool-card.tsx
 #: src/components/diff-rows.tsx
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, other {残り # 行}}"
-
-#. placeholder {0}: panel.needsYouCount
-#: src/components/home-stage/stage-faces.ts
-msgid "{0, plural, one {# needs you} other {# need you}}"
-msgstr "{0, plural, other {# 件対応が必要}}"
 
 #. placeholder {0}: entries.length
 #: src/components/agent-message-block.tsx
@@ -111,16 +111,6 @@ msgstr "{0, plural, other {# 件のテーマ}} · {1}"
 #: src/components/agent-account-limits-section.tsx
 msgid "{0, plural, one {# week} other {# weeks}}"
 msgstr "{0, plural, other {# 週間}}"
-
-#. placeholder {0}: panel.workingCount
-#: src/components/home-stage/stage-faces.ts
-msgid "{0, plural, one {# working} other {# working}}"
-msgstr "{0, plural, other {# 件作業中}}"
-
-#. placeholder {0}: face.more
-#: src/components/home-stage/stage-faces.ts
-msgid "{0, plural, one {+# more} other {+# more}}"
-msgstr "{0, plural, other {ほか # 件}}"
 
 #. placeholder {0}: digest.otherAgents
 #: src/components/away-digest-card.tsx
@@ -709,10 +699,6 @@ msgstr "すべてのパネル"
 #: src/components/agent-sessions-sheet.tsx
 msgid "All projects"
 msgstr "すべてのプロジェクト"
-
-#: src/components/home-stage/stage-faces.ts
-msgid "All quiet"
-msgstr "静かです"
 
 #: src/components/agent-composer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
@@ -3594,11 +3580,6 @@ msgstr "言語、{languageName}"
 msgid "Large"
 msgstr "大"
 
-#. placeholder {0}: age(face.lastActivityMs, nowMs)
-#: src/components/home-stage/stage-faces.ts
-msgid "Last activity {0}"
-msgstr "最終アクティビティ {0}"
-
 #: src/components/agent-account-limits-section.tsx
 msgid "Last checked"
 msgstr "最終確認"
@@ -4050,7 +4031,7 @@ msgid "Needs update"
 msgstr "アップデートが必要"
 
 #: src/components/home-stage/home-stage-layout.tsx
-#: src/components/home-stage/stage-faces.ts
+#: src/components/home-stage/stage-view.tsx
 #: src/components/home-thread.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "Needs you"
@@ -4523,7 +4504,6 @@ msgid "Off"
 msgstr "オフ"
 
 #: src/components/home-composer-options.tsx
-#: src/components/home-stage/stage-faces.ts
 #: src/components/home-thread.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
@@ -4534,10 +4514,8 @@ msgstr "オフライン"
 msgid "OFFLINE"
 msgstr "オフライン"
 
-#. placeholder {0}: age(face.lastSeenMs, nowMs)
 #. placeholder {0}: age(seen, nowMs)
 #: src/components/home-stage/home-stage-layout.tsx
-#: src/components/home-stage/stage-faces.ts
 msgid "Offline · last seen {0}"
 msgstr "オフライン · 最終確認 {0}"
 
@@ -4801,6 +4779,10 @@ msgstr "GitHub の牧群（ぼくぐん）イシュートラッカーを開き�
 #: src/components/simfarm-stage.tsx
 msgid "Opens the simulator's menu: the device, its keys, the keyboard and the way out. Drag to move."
 msgstr "シミュレータのメニュー（デバイス、ボタン、キーボード、閉じる）を開きます。ドラッグで移動できます"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Opens this agent."
+msgstr "このエージェントを開きます"
 
 #: src/components/server-agent-rows.tsx
 msgid "Opens this agent's terminal"

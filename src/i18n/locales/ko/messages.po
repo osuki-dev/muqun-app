@@ -84,17 +84,17 @@ msgstr "{0, plural, other {#시간}}"
 msgid "{0, plural, one {# minute} other {# minutes}}"
 msgstr "{0, plural, other {#분}}"
 
+#. placeholder {0}: orb.more
+#: src/components/home-stage/stage-view.tsx
+msgid "{0, plural, one {# more agent} other {# more agents}}"
+msgstr "{0, plural, other {에이전트 #개 더}}"
+
 #. placeholder {0}: capped.hidden
 #. placeholder {0}: row.remaining
 #: src/components/agent-tool-card.tsx
 #: src/components/diff-rows.tsx
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, other {#줄 더 있음}}"
-
-#. placeholder {0}: panel.needsYouCount
-#: src/components/home-stage/stage-faces.ts
-msgid "{0, plural, one {# needs you} other {# need you}}"
-msgstr "{0, plural, other {# 확인 필요}}"
 
 #. placeholder {0}: entries.length
 #: src/components/agent-message-block.tsx
@@ -111,16 +111,6 @@ msgstr "{0, plural, other {테마 #개}} · {1}"
 #: src/components/agent-account-limits-section.tsx
 msgid "{0, plural, one {# week} other {# weeks}}"
 msgstr "{0, plural, other {#주}}"
-
-#. placeholder {0}: panel.workingCount
-#: src/components/home-stage/stage-faces.ts
-msgid "{0, plural, one {# working} other {# working}}"
-msgstr "{0, plural, other {# 작업 중}}"
-
-#. placeholder {0}: face.more
-#: src/components/home-stage/stage-faces.ts
-msgid "{0, plural, one {+# more} other {+# more}}"
-msgstr "{0, plural, other {+# 더 보기}}"
 
 #. placeholder {0}: digest.otherAgents
 #: src/components/away-digest-card.tsx
@@ -709,10 +699,6 @@ msgstr "모든 패널"
 #: src/components/agent-sessions-sheet.tsx
 msgid "All projects"
 msgstr "모든 프로젝트"
-
-#: src/components/home-stage/stage-faces.ts
-msgid "All quiet"
-msgstr "모두 조용함"
 
 #: src/components/agent-composer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
@@ -3594,11 +3580,6 @@ msgstr "언어, {languageName}"
 msgid "Large"
 msgstr "크게"
 
-#. placeholder {0}: age(face.lastActivityMs, nowMs)
-#: src/components/home-stage/stage-faces.ts
-msgid "Last activity {0}"
-msgstr "마지막 활동 {0}"
-
 #: src/components/agent-account-limits-section.tsx
 msgid "Last checked"
 msgstr "마지막 확인"
@@ -4050,7 +4031,7 @@ msgid "Needs update"
 msgstr "업데이트 필요"
 
 #: src/components/home-stage/home-stage-layout.tsx
-#: src/components/home-stage/stage-faces.ts
+#: src/components/home-stage/stage-view.tsx
 #: src/components/home-thread.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "Needs you"
@@ -4523,7 +4504,6 @@ msgid "Off"
 msgstr "꺼짐"
 
 #: src/components/home-composer-options.tsx
-#: src/components/home-stage/stage-faces.ts
 #: src/components/home-thread.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
@@ -4534,10 +4514,8 @@ msgstr "오프라인"
 msgid "OFFLINE"
 msgstr "오프라인"
 
-#. placeholder {0}: age(face.lastSeenMs, nowMs)
 #. placeholder {0}: age(seen, nowMs)
 #: src/components/home-stage/home-stage-layout.tsx
-#: src/components/home-stage/stage-faces.ts
 msgid "Offline · last seen {0}"
 msgstr "오프라인 · 마지막 확인 {0}"
 
@@ -4801,6 +4779,10 @@ msgstr "GitHub의 Muqun 이슈 트래커를 엽니다"
 #: src/components/simfarm-stage.tsx
 msgid "Opens the simulator's menu: the device, its keys, the keyboard and the way out. Drag to move."
 msgstr "시뮬레이터 메뉴(기기, 버튼, 키보드, 닫기)를 엽니다. 끌어서 옮길 수 있습니다"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Opens this agent."
+msgstr "이 에이전트를 엽니다"
 
 #: src/components/server-agent-rows.tsx
 msgid "Opens this agent's terminal"

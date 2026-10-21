@@ -84,17 +84,17 @@ msgstr "{0, plural, other {# ชั่วโมง}}"
 msgid "{0, plural, one {# minute} other {# minutes}}"
 msgstr "{0, plural, other {# นาที}}"
 
+#. placeholder {0}: orb.more
+#: src/components/home-stage/stage-view.tsx
+msgid "{0, plural, one {# more agent} other {# more agents}}"
+msgstr "{0, plural, other {อีก # เอเจนต์}}"
+
 #. placeholder {0}: capped.hidden
 #. placeholder {0}: row.remaining
 #: src/components/agent-tool-card.tsx
 #: src/components/diff-rows.tsx
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, other {อีก # บรรทัด}}"
-
-#. placeholder {0}: panel.needsYouCount
-#: src/components/home-stage/stage-faces.ts
-msgid "{0, plural, one {# needs you} other {# need you}}"
-msgstr "{0, plural, other {รอคุณ #}}"
 
 #. placeholder {0}: entries.length
 #: src/components/agent-message-block.tsx
@@ -111,16 +111,6 @@ msgstr "{0, plural, other {# ธีม}} · {1}"
 #: src/components/agent-account-limits-section.tsx
 msgid "{0, plural, one {# week} other {# weeks}}"
 msgstr "{0, plural, other {# สัปดาห์}}"
-
-#. placeholder {0}: panel.workingCount
-#: src/components/home-stage/stage-faces.ts
-msgid "{0, plural, one {# working} other {# working}}"
-msgstr "{0, plural, other {กำลังทำงาน #}}"
-
-#. placeholder {0}: face.more
-#: src/components/home-stage/stage-faces.ts
-msgid "{0, plural, one {+# more} other {+# more}}"
-msgstr "{0, plural, other {+อีก #}}"
 
 #. placeholder {0}: digest.otherAgents
 #: src/components/away-digest-card.tsx
@@ -709,10 +699,6 @@ msgstr "พาเนลทั้งหมด"
 #: src/components/agent-sessions-sheet.tsx
 msgid "All projects"
 msgstr "ทุกโปรเจกต์"
-
-#: src/components/home-stage/stage-faces.ts
-msgid "All quiet"
-msgstr "ทุกอย่างเงียบสงบ"
 
 #: src/components/agent-composer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
@@ -3594,11 +3580,6 @@ msgstr "ภาษา {languageName}"
 msgid "Large"
 msgstr "ใหญ่"
 
-#. placeholder {0}: age(face.lastActivityMs, nowMs)
-#: src/components/home-stage/stage-faces.ts
-msgid "Last activity {0}"
-msgstr "กิจกรรมล่าสุด {0}"
-
 #: src/components/agent-account-limits-section.tsx
 msgid "Last checked"
 msgstr "ตรวจสอบล่าสุด"
@@ -4050,7 +4031,7 @@ msgid "Needs update"
 msgstr "ต้องอัปเดต"
 
 #: src/components/home-stage/home-stage-layout.tsx
-#: src/components/home-stage/stage-faces.ts
+#: src/components/home-stage/stage-view.tsx
 #: src/components/home-thread.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "Needs you"
@@ -4523,7 +4504,6 @@ msgid "Off"
 msgstr "ปิด"
 
 #: src/components/home-composer-options.tsx
-#: src/components/home-stage/stage-faces.ts
 #: src/components/home-thread.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
@@ -4534,10 +4514,8 @@ msgstr "ออฟไลน์"
 msgid "OFFLINE"
 msgstr "ออฟไลน์"
 
-#. placeholder {0}: age(face.lastSeenMs, nowMs)
 #. placeholder {0}: age(seen, nowMs)
 #: src/components/home-stage/home-stage-layout.tsx
-#: src/components/home-stage/stage-faces.ts
 msgid "Offline · last seen {0}"
 msgstr "ออฟไลน์ · เห็นล่าสุด {0}"
 
@@ -4801,6 +4779,10 @@ msgstr "เปิดหน้าติดตามปัญหาของ Muqun
 #: src/components/simfarm-stage.tsx
 msgid "Opens the simulator's menu: the device, its keys, the keyboard and the way out. Drag to move."
 msgstr "เปิดเมนูเครื่องจำลอง ได้แก่ อุปกรณ์ ปุ่ม แป้นพิมพ์ และทางออก ลากเพื่อย้าย"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Opens this agent."
+msgstr "เปิดเอเจนต์นี้"
 
 #: src/components/server-agent-rows.tsx
 msgid "Opens this agent's terminal"

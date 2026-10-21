@@ -55,7 +55,7 @@ export type HomeStageLayoutProps = {
   coverHeader: boolean;
   /** Home is not on screen or the app is in the background. */
   paused: boolean;
-  /** Bumped when a task completes: the motes flare. */
+  /** Bumped when a task completes: the motes and the front core flare. */
   burst: number;
   topInset: number;
   /** The floating composer's height; the session strip stands above it. */
@@ -85,6 +85,8 @@ export type HomeStageLayoutProps = {
   onRefresh: () => void;
   onSelect: (index: number) => void;
   onOpen: (index: number) => void;
+  /** An agent's orb: its computer, at the agent's pane when known. */
+  onOpenAgent: (index: number, paneId?: string) => void;
   onOpenTasks: (index: number) => void;
   onOpenDetails: (index: number) => void;
   onNewTask: () => void;
@@ -102,6 +104,7 @@ export type HomeStageProps = Omit<
   | 'burst'
   | 'onSelect'
   | 'onOpen'
+  | 'onOpenAgent'
   | 'onOpenTasks'
   | 'onOpenDetails'
 > & {
@@ -110,7 +113,8 @@ export type HomeStageProps = Omit<
   connectionStatuses: Readonly<Record<string, ConnectionStatus | undefined>>;
   recentEntries: readonly HomeContinueEntry[];
   onSelectServer: (serverId: string) => void;
-  onOpenServer: (serverId: string) => void;
+  /** Open a computer; at `paneId` when an agent's orb was tapped. */
+  onOpenServer: (serverId: string, paneId?: string) => void;
   onOpenTasks: (serverId: string) => void;
   onOpenDetails: (serverId: string) => void;
 };
@@ -191,6 +195,10 @@ export function HomeStage({
       burst={burst}
       onSelect={run(onSelectServer)}
       onOpen={run(onOpenServer)}
+      onOpenAgent={(index, paneId) => {
+        const serverId = at(index);
+        if (serverId) onOpenServer(serverId, paneId);
+      }}
       onOpenTasks={run(onOpenTasks)}
       onOpenDetails={run(onOpenDetails)}
     />
@@ -228,6 +236,7 @@ export function HomeStageLayout({
   onRefresh,
   onSelect,
   onOpen,
+  onOpenAgent,
   onOpenTasks,
   onOpenDetails,
   onNewTask,
@@ -333,6 +342,7 @@ export function HomeStageLayout({
         burst={burst}
         onSelect={onSelect}
         onOpen={onOpen}
+        onOpenAgent={onOpenAgent}
         onNewTask={onNewTask}
         onActions={(index) => {
           const panel = panels[index];

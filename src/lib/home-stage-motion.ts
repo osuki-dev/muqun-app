@@ -47,9 +47,10 @@ export function stageSpringAtRest(spring: StageSpring, target: number): boolean 
 
 /**
  * The ladder the stage steps down when it cannot hold its frame budget:
- * `reduced` halves the particles, drops the reflections and renders at a
- * lower pixel ratio; `low` drops the particles and the glass sheen, renders
- * at 1x and caps every frame at 30 fps; `static` is the 2.5D composition
+ * `reduced` halves the particles and renders at a lower pixel ratio; `low`
+ * drops the particles, stills the cores (no orbits, no breathing), draws
+ * their glow in fewer, smaller layers, renders at 1x and caps every frame at
+ * 30 fps; `static` is the 2.5D composition
  * (§5, §11.7). It never climbs back within a session: a device that ran hot
  * once will again, and flapping costs more than it saves.
  */
@@ -145,11 +146,11 @@ export type StageEffects = {
   particles: boolean;
   /** The share of the particles drawn. */
   particleShare: number;
-  /** The panes' faint reflections below them. */
-  reflections: boolean;
-  /** The sheen that tilt slides across the glass panes. */
-  shimmer: boolean;
-  /** The working pulse, the hero's bob and the motes' drift. Off under Reduce Motion. */
+  /** The agents' orbits and a working core's breathing glow; still at `low` and under Reduce Motion. */
+  orbit: boolean;
+  /** The cores' halos and the orbs' glows at full size, or fewer and smaller (`low`). */
+  fullGlow: boolean;
+  /** The hero's bob and the motes' drift. Off under Reduce Motion. */
   pulse: boolean;
   tilt: boolean;
   /** The highest pixel ratio the scene renders at. */
@@ -174,8 +175,8 @@ export function stageEffects(
     gpu,
     particles: gpu && !low,
     particleShare: quality === 'full' ? 1 : 0.5,
-    reflections: gpu && quality === 'full',
-    shimmer: gpu && !low,
+    orbit: gpu && !low && !calm,
+    fullGlow: !low,
     pulse: !calm,
     tilt: !calm,
     maxDpr: quality === 'full' ? 1.5 : quality === 'reduced' ? 1.25 : 1,
@@ -193,7 +194,7 @@ export function stageEffects(
  * last interaction. Past it the scene holds its last frame and draws nothing
  * until an interaction starts the window again: a drag, a swipe, tilt, a
  * dive, a completion's flare, coming back to Home or a new theme. A change to
- * what the scene shows (a pane's text, a status, a texture) draws one frame
+ * what the scene shows (an agent's state, a status, a texture) draws one frame
  * and leaves the window alone, so live agent status arriving every few
  * seconds does not keep a phone left on Home animating.
  */

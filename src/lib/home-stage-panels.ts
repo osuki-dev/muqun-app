@@ -1,13 +1,13 @@
 /**
- * What each computer's glass pane on the Stage says, read from the same Home
+ * What each computer's core on the Stage shows, read from the same Home
  * state Classic and Editorial read: the launch controller's computers, their
  * connection statuses, the mirrored agents, the attention observations, the
  * task ledgers and the Recent entries. A presentation adapter only -- it
  * reshapes nothing it is given and fetches nothing.
  *
- * The pane says what the computer is doing now and whether it needs the
- * reader; where to jump back in is the session strip's job, so no session
- * titles appear here.
+ * The core and its agent orbs say what the computer is doing now and
+ * whether it needs the reader; where to jump back in is the session strip's
+ * job, so no session titles appear here.
  */
 import type { HomeAttentionSnapshot } from './home-attention';
 import { homeContinueServerId, type HomeContinueEntry } from './home-continue';
@@ -19,10 +19,12 @@ import type { TaskView } from './task-ledger';
 
 export type StagePanelTone = 'online' | 'offline' | 'unknown' | 'warning';
 
-/** The marker an agent's line leads with. */
+/** What an agent's orb says: it waits on the reader, it runs, or neither. */
 export type StageAgentMark = 'working' | 'needs-you' | 'idle';
 
 export type StageAgentLine = {
+  /** The mirror's row id: stable while the agent lives, unique on its computer. */
+  key: string;
   name: string;
   mark: StageAgentMark;
   status: AgentStatus;
@@ -32,22 +34,9 @@ export type StageAgentLine = {
    * for an idle agent: an old task line is not what it is doing now.
    */
   activity?: string;
+  /** The pane it runs in, so a tap on its orb lands there; absent when unknown. */
+  paneId?: string;
 };
-
-/**
- * The pane's screen:
- * - `busy`: something runs or waits on the reader -- the summary, then one
- *   line per agent and how many did not fit;
- * - `quiet`: online, nothing running or waiting -- which agents are there,
- *   idle, in mirror order, and when the computer was last active;
- * - `offline`: the computer cannot be reached;
- * - `status`: neither, and its connection says why (repair, reconnecting...).
- */
-export type StageFace =
-  | { kind: 'busy'; agents: StageAgentLine[]; more: number }
-  | { kind: 'quiet'; idle: string[]; lastActivityMs?: number }
-  | { kind: 'offline'; lastSeenMs?: number }
-  | { kind: 'status' };
 
 export type StagePanel = {
   serverId: string;
@@ -66,11 +55,12 @@ export type StagePanel = {
   sessionCount: number;
   /** When the app last confirmed its agents with it, for "last seen". */
   lastSeenMs?: number;
-  face: StageFace;
+  /**
+   * Its agents, waiting on the reader first, then running, then the rest,
+   * each in mirror order; none on an offline computer.
+   */
+  agents: StageAgentLine[];
 };
-
-/** Agent lines the front face has room for, an overflow line included. */
-export const STAGE_FACE_AGENT_LINES = 4;
 
 export function stagePanelTone(connection: ConnectionStatus): StagePanelTone {
   if (connection === 'repair' || connection === 'unauthorized' || connection === 'reconnecting')
@@ -98,13 +88,9 @@ export function stagePanels({
   nowMs: number;
 }): StagePanel[] {
   const sessions = new Map<string, number>();
-  const lastActivity = new Map<string, number>();
   for (const entry of recentEntries) {
     const serverId = homeContinueServerId(entry);
-    if (!serverId) continue;
-    sessions.set(serverId, (sessions.get(serverId) ?? 0) + 1);
-    if (Number.isFinite(entry.atMs) && entry.atMs > (lastActivity.get(serverId) ?? 0))
-      lastActivity.set(serverId, entry.atMs);
+    if (serverId) sessions.set(serverId, (sessions.get(serverId) ?? 0) + 1);
   }
   const requests = new Map<string, number>();
   for (const snapshot of Object.values(attention)) {
@@ -132,23 +118,6 @@ export function stagePanels({
       requests.get(server.serverId) ?? 0,
       fresh.filter((agent) => agent.hasAgent && needsYou(agent)).length
     );
-    const lastActivityMs = lastActivity.get(server.serverId);
-    const face: StageFace = offline
-      ? { kind: 'offline', ...(snapshot ? { lastSeenMs: snapshot.checkedAtMs } : {}) }
-      : workingCount > 0 || needsYouCount > 0
-        ? {
-            kind: 'busy',
-            ...overflow(lines),
-          }
-        : tone === 'online'
-          ? {
-              kind: 'quiet',
-              idle: lines.map((line) => line.name),
-              ...(lastActivityMs !== undefined && lastActivityMs <= nowMs
-                ? { lastActivityMs }
-                : {}),
-            }
-          : { kind: 'status' };
     return {
       serverId: server.serverId,
       label: server.label,
@@ -160,7 +129,7 @@ export function stagePanels({
       needsYouCount,
       sessionCount: sessions.get(server.serverId) ?? 0,
       ...(snapshot ? { lastSeenMs: snapshot.checkedAtMs } : {}),
-      face,
+      agents: lines,
     };
   });
 }
@@ -182,7 +151,14 @@ function agentLines(agents: readonly ServerAgent[], tasks: readonly TaskView[]):
           : 'idle';
       const name = agent.agentLabel ?? agent.name;
       const activity = mark === 'idle' ? undefined : activityOf(agent, tasks);
-      return { name, mark, status: agent.status, ...(activity ? { activity } : {}) };
+      return {
+        key: agent.id,
+        name,
+        mark,
+        status: agent.status,
+        ...(activity ? { activity } : {}),
+        ...(agent.paneId ? { paneId: agent.paneId } : {}),
+      };
     })
     .map((line, index) => ({ line, index }))
     .sort((a, b) => MARK_ORDER[a.line.mark] - MARK_ORDER[b.line.mark] || a.index - b.index)
@@ -230,26 +206,7 @@ function withoutName(text: string, name: string | undefined): string | undefined
   return text;
 }
 
-function overflow(lines: readonly StageAgentLine[]): { agents: StageAgentLine[]; more: number } {
-  if (lines.length <= STAGE_FACE_AGENT_LINES) return { agents: [...lines], more: 0 };
-  const shown = STAGE_FACE_AGENT_LINES - 1;
-  return { agents: lines.slice(0, shown), more: lines.length - shown };
-}
-
-/**
- * Which of the front face's agent lines get a working streak, as bits from
- * the first line: only running agents, and only lines the face shows.
- */
-export function stageStreakLines(face: StageFace): number {
-  if (face.kind !== 'busy') return 0;
-  let bits = 0;
-  face.agents.forEach((line, index) => {
-    if (line.mark === 'working') bits |= 1 << index;
-  });
-  return bits;
-}
-
-/** Where the selected computer stands among the panes; 0 when it is not there. */
+/** Where the selected computer stands among the cores; 0 when it is not there. */
 export function stageSelectedIndex(
   panels: readonly { serverId: string }[],
   serverId: string | undefined

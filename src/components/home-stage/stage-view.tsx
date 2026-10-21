@@ -5,18 +5,31 @@ import { PressableScale, Text, useThemeMode, useThemeTokens } from '@osuki-dev/u
 import { Image } from 'expo-image';
 import {
   Blur,
+  BlurMask,
   Canvas,
+  Circle,
   Group,
   LinearGradient,
   Mask,
+  Path,
+  RadialGradient,
   Rect,
   RoundedRect,
+  Skia,
   Image as SkiaImage,
   rect,
   vec,
 } from 'react-native-skia';
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
-import { Platform, StyleSheet, TurboModuleRegistry, useWindowDimensions, View } from 'react-native';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Platform,
+  Pressable,
+  StyleSheet,
+  TurboModuleRegistry,
+  useWindowDimensions,
+  View,
+  type GestureResponderEvent,
+} from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   SensorType,
@@ -34,31 +47,44 @@ import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import { useStableHandler } from '@/hooks/use-render-refs';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useThemeRenderReady } from '@/hooks/use-theme-render-ready';
-import { connectionStatusDescription } from '@/i18n/labels';
+import { agentStatusWord, connectionStatusDescription } from '@/i18n/labels';
+import { withAlpha } from '@/lib/color';
 import {
   projectStagePoint,
   stageCamera,
+  stageCore,
+  stageCoreAnchor,
+  stageCoreRect,
   stageDrawnScreens,
-  stageFaceHeight,
   stageHeroPlacement,
   stageHostTarget,
   stagePaintingPlacement,
-  stagePane,
-  stagePaneAnchor,
-  stageQuadRect,
+  stageRingPoint,
   stageSwipeTarget,
-  STAGE_FACE_MIN_ROWS,
+  stageViewSize,
+  STAGE_CORE_REACH,
   STAGE_HERO_DEPTH,
+  STAGE_HUD_BOTTOM_PT,
   STAGE_PAINTING_DEPTH,
-  STAGE_PANE_REACH,
   type StageArtPlacement,
+  type StageCore,
   type StageRect,
+  type StageVec3,
   type StageViewport,
 } from '@/lib/home-stage-geometry';
 import { heroFeatherGeometry } from '@/lib/hero-feather';
 import { hasSeenStageHints, markStageHintsSeen } from '@/lib/home-stage-hints';
-import type { StageComposition, StageLayer } from '@/lib/home-stage-layers';
+import type { StageComposition, StageLayer, StageRole } from '@/lib/home-stage-layers';
+import {
+  stageBehindCore,
+  stageChipPlacement,
+  stageOrbAt,
+  stageOrbRestPoint,
+  stageOrbs,
+  type StageOrb,
+} from '@/lib/home-stage-orbs';
 import { useSharedSkiaImage } from '@/lib/skia-image-cache';
+import { calmFadeIn, calmFadeOut } from '@/lib/motion';
 import { useAppSettings } from '@/stores/app-settings';
 import {
   lowestStageQuality,
@@ -67,11 +93,10 @@ import {
   STAGE_TILT_WAKE,
   type StageQuality,
 } from '@/lib/home-stage-motion';
-import { stageStreakLines, type StagePanel } from '@/lib/home-stage-panels';
+import type { StageAgentLine, StagePanel } from '@/lib/home-stage-panels';
 import type { StagePicture, StageScreenLook } from './stage-scene';
-import { useStageFaces } from './stage-faces';
 import { useStageTexture, type StageTextureState } from './stage-textures';
-import { createStageBridge, type StageInputs } from './types';
+import { createStageBridge, type StageBridge, type StageInputs } from './types';
 
 // An older binary, or web, keeps the static stage without evaluating the native module.
 const GpuStage = lazy(() => import('./gpu-stage'));
@@ -81,11 +106,18 @@ const COVER_MAX_EDGE = 2048;
 const HERO_MAX_EDGE = 1536;
 /** Under a sky painting the wallpaper is only a faint base: a smaller texture does. */
 const BASE_MAX_EDGE = 1024;
-/** The camera's flight into the front pane before its workspace opens. */
+/** The camera's flight into the front core before its workspace opens. */
 const DIVE_MS = 520;
+/** How long an orb's chip stays after the finger lifts, or after a waiting agent first shows. */
+const CHIP_LINGER_MS = 1600;
+const CHIP_ARRIVAL_MS = 3200;
+/** A chip stays above this share of the view's height: the session strip and the composer are below. */
+const STAGE_CHIP_FLOOR = 0.76;
 
 /** The lowest quality rung the stage has stepped down to this session; never raised. */
 const session: { quality: StageQuality } = { quality: 'full' };
+/** Waiting agents whose chip has shown this session, by computer and agent: each shows once. */
+const announced = new Set<string>();
 
 export type StageViewProps = {
   panels: readonly StagePanel[];
@@ -103,8 +135,22 @@ export type StageViewProps = {
   burst: number;
   onSelect: (index: number) => void;
   onOpen: (index: number) => void;
+  /** An agent's orb: open its computer at the agent's pane, when known. */
+  onOpenAgent: (index: number, paneId?: string) => void;
   onActions: (index: number) => void;
   onNewTask: () => void;
+};
+
+/** How many fresh canvases a session tries after a GPU failure before staying static. */
+const STAGE_GPU_RETRIES = 3;
+
+/** An orb's chip: which agent, what it says, and the point it hangs from. */
+type StageChip = {
+  serverId: string;
+  key: string;
+  at: { x: number; y: number };
+  /** Lingers after the finger lifts, or goes on its own (a waiting agent's arrival). */
+  until: number | null;
 };
 
 /**
@@ -112,12 +158,9 @@ export type StageViewProps = {
  * otherwise (and after a lost device or a slow device's last degrade step)
  * the static 2.5D composition. Above either sits one layer of 2D hit areas
  * projected from the same geometry, which carries every touch target, every
- * accessibility element and the first-visit hints -- the scene itself is
- * never focusable.
+ * accessibility element, the orbs' chips and the first-visit hints -- the
+ * scene itself is never focusable.
  */
-/** How many fresh canvases a session tries after a GPU failure before staying static. */
-const STAGE_GPU_RETRIES = 3;
-
 export function StageView({
   panels,
   selectedIndex,
@@ -129,6 +172,7 @@ export function StageView({
   burst,
   onSelect,
   onOpen,
+  onOpenAgent,
   onActions,
   onNewTask,
 }: StageViewProps) {
@@ -200,25 +244,10 @@ export function StageView({
   const painting = usePicture(paintingTexture, composition.painting);
   const hero = usePicture(heroTexture, composition.hero);
   const frame = usePicture(frameTexture, composition.frame);
-  const drawn = stageDrawnScreens(selectedIndex, panels.length);
-  const faces = useStageFaces(
-    panels,
-    effects.gpu ? drawn : [],
-    {
-      text: theme.colors.text,
-      primary: theme.colors.primary,
-      success: theme.colors.success,
-      warning: theme.colors.warning,
-      offline: theme.colors.textMuted,
-      offlineDot: theme.colors.textDisabled,
-      surface: theme.colors.surface,
-      light: resolvedMode === 'light',
-    },
-    paused
-  );
+  const orbs = useMemo(() => panels.map((panel) => stageOrbs(panel.agents)), [panels]);
   // By value: live agent data re-renders this view every few seconds, and the
-  // scene re-renders only when what the panes show has changed.
-  const screens = useStageScreens(panels, faces.slots, faces.heights);
+  // scene re-renders only when what the cores show has changed.
+  const screens = useStageScreens(panels, orbs);
   const colors = useMemo(
     () => ({
       background: theme.colors.background,
@@ -262,15 +291,17 @@ export function StageView({
     setHints(false);
     markStageHintsSeen();
   });
-  const openFront = useStableHandler((index: number) => {
+  /** Fly into the front core, then run `open`; straight away without the scene or its motion. */
+  const diveThen = useStableHandler((open: () => void) => {
     touched();
     if (!effects.gpu || reducedMotion) {
-      onOpen(index);
+      open();
       return;
     }
     setDiving(true);
-    setTimeout(() => onOpen(index), DIVE_MS);
+    setTimeout(open, DIVE_MS);
   });
+  const openFront = useStableHandler((index: number) => diveThen(() => onOpen(index)));
 
   const count = panels.length;
   const gesture = useMemo(
@@ -288,7 +319,7 @@ export function StageView({
           dragY.set(size.height > 0 ? event.translationY / size.height : 0);
         })
         .onEnd((event) => {
-          // Sideways moves the panes; up and down only looks around.
+          // Sideways moves the cores; up and down only looks around.
           if (Math.abs(event.translationX) < Math.abs(event.translationY)) return;
           const target = stageSwipeTarget(
             selectedIndex,
@@ -326,7 +357,85 @@ export function StageView({
     [size.width, size.height, inset]
   );
   const art = useStageArt(composition, viewport);
-  const targets = useStageTargets(panels, faces.heights, selectedIndex, art, viewport);
+  const cores = useStageCores(panels, orbs, selectedIndex, role, viewport);
+  const targets = useStageTargets(cores, art, viewport);
+
+  // -- Orb chips -------------------------------------------------------------
+  const [chip, setChip] = useState<StageChip | null>(null);
+  const front = cores.find((core) => core.front) ?? null;
+  const frontPanel = front ? panels[front.index] : undefined;
+  /** The front orb under `touch`, where the scene last drew it (or at rest, without one). */
+  const orbAt = (touch: { x: number; y: number }) => {
+    if (!front || !frontPanel) return null;
+    const placed = frontOrbs(front, bridge);
+    const hit = stageOrbAt(
+      touch,
+      placed.points,
+      placed.core,
+      placed.camera,
+      viewport.width,
+      viewport.height
+    );
+    if (hit < 0) return null;
+    const at = projectStagePoint(
+      placed.points[hit]!,
+      placed.camera,
+      viewport.width,
+      viewport.height
+    );
+    return { key: placed.keys[hit]!, at: { x: at.x, y: at.y } };
+  };
+  const showChip = useStableHandler(
+    (key: string, at: { x: number; y: number }, until: number | null) => {
+      if (frontPanel) setChip({ serverId: frontPanel.serverId, key, at, until });
+    }
+  );
+  // A chip that lingers or arrived on its own goes when its time is up.
+  useEffect(() => {
+    if (!chip || chip.until === null) return;
+    const timer = setTimeout(() => setChip(null), Math.max(0, chip.until - Date.now()));
+    return () => clearTimeout(timer);
+  }, [chip]);
+  // A chip belongs to the front computer as it was: a swipe or leaving Home takes it away.
+  const frontId = frontPanel?.serverId;
+  useEffect(() => {
+    if (paused) setChip(null);
+  }, [paused]);
+  useEffect(() => {
+    setChip((current) => (current && current.serverId !== frontId ? null : current));
+  }, [frontId]);
+  // A waiting agent's orb, the first time it shows this session, names itself.
+  const waitingKey = frontPanel?.agents.find(
+    (agent) => agent.mark === 'needs-you' && !announced.has(`${frontPanel.serverId}:${agent.key}`)
+  )?.key;
+  const announce = useStableHandler((key: string) => {
+    if (!front || !frontPanel || chip) return;
+    announced.add(`${frontPanel.serverId}:${key}`);
+    const placed = frontOrbs(front, bridge);
+    const at = placed.keys.indexOf(key);
+    if (at < 0) return;
+    const point = projectStagePoint(
+      placed.points[at]!,
+      placed.camera,
+      viewport.width,
+      viewport.height
+    );
+    showChip(key, { x: point.x, y: point.y }, Date.now() + CHIP_ARRIVAL_MS);
+  });
+  // Never over another chip: it waits for the one showing to go.
+  const chipShown = chip !== null;
+  useEffect(() => {
+    if (!waitingKey || chipShown || paused || diving || viewport.width <= 0) return;
+    // After the frame that draws it, so the chip finds the orb where it is.
+    const timer = setTimeout(() => announce(waitingKey), 250);
+    return () => clearTimeout(timer);
+  }, [waitingKey, chipShown, paused, diving, viewport.width, announce]);
+
+  // The chip's orb as it is now: an agent that went away takes its chip with it.
+  const chipIndex = chip ? panels.findIndex((panel) => panel.serverId === chip.serverId) : -1;
+  const chipPanel = panels[chipIndex];
+  const chipOrb = chip ? orbs[chipIndex]?.find((orb) => orb.key === chip.key) : undefined;
+  const held = chipOrb !== undefined;
 
   return (
     <GestureDetector gesture={gesture}>
@@ -345,6 +454,7 @@ export function StageView({
               <GpuStage
                 screens={screens}
                 selected={selectedIndex}
+                held={held}
                 colors={colors}
                 mode={resolvedMode}
                 role={role}
@@ -353,8 +463,6 @@ export function StageView({
                 painting={painting}
                 hero={hero}
                 frame={frame}
-                faces={faces.atlas}
-                facesVersion={faces.version}
                 ambientEffects={ambientEffects}
                 ambientColors={ambientColors}
                 quality={quality}
@@ -372,7 +480,7 @@ export function StageView({
         ) : (
           <StaticStage
             panels={panels}
-            targets={targets}
+            cores={cores}
             composition={composition}
             art={art}
             dragY={dragY}
@@ -386,12 +494,16 @@ export function StageView({
         <StageHitAreas
           panels={panels}
           targets={targets}
+          front={front}
           hints={hints && !diving}
           onSelect={(index) => {
             touched();
             onSelect(index);
           }}
           onOpen={openFront}
+          onOpenAgent={(index, agent) =>
+            diveThen(() => onOpenAgent(index, panels[index]?.agents[agent]?.paneId))
+          }
           onActions={(index) => {
             touched();
             onActions(index);
@@ -400,10 +512,56 @@ export function StageView({
             touched();
             onNewTask();
           }}
+          orbAt={orbAt}
+          onOrbTouch={(orb) => {
+            // A touch is interaction: the scene wakes (the orbits hold while the chip shows).
+            touched();
+            bridge.wake();
+            showChip(orb.key, orb.at, null);
+          }}
+          onOrbRelease={() =>
+            setChip((current) =>
+              current && current.until === null
+                ? { ...current, until: Date.now() + CHIP_LINGER_MS }
+                : current
+            )
+          }
         />
+        {chip && chipPanel && chipOrb ? (
+          <StageOrbChip
+            key={`${chip.serverId}:${chip.key}`}
+            orb={chipOrb}
+            agent={chipOrb.agent >= 0 ? chipPanel.agents[chipOrb.agent] : undefined}
+            at={chip.at}
+            coreY={front?.centre.y ?? chip.at.y}
+            viewport={viewport}
+          />
+        ) : null}
       </View>
     </GestureDetector>
   );
+}
+
+/**
+ * The front core's orbs, as the scene last drew them (`StageBridge.probe`)
+ * or, without a scene, at rest: their points, keys, the core and the camera
+ * that saw them.
+ */
+function frontOrbs(front: StageCoreView, bridge: StageBridge) {
+  const probe = bridge.probe();
+  if (probe)
+    return {
+      core: probe.core,
+      camera: stageCamera({ lookX: probe.look[0], lookY: probe.look[1] }),
+      points: probe.orbs.map((orb) => orb.point),
+      keys: probe.orbs.map((orb) => orb.key),
+    };
+  return {
+    core: front.core,
+    camera: stageCamera(),
+    points: front.orbs.map((orb) => orb.point),
+    keys: front.orbs.map((orb) => orb.orb.key),
+  };
 }
 
 /**
@@ -469,19 +627,17 @@ function StageTilt({
   return null;
 }
 
-/** The panes' looks, the same array while nothing in them changes. */
+/** The cores' looks, the same array while nothing in them changes. */
 function useStageScreens(
   panels: readonly StagePanel[],
-  slots: ReadonlyMap<string, number>,
-  heights: ReadonlyMap<string, number>
+  orbs: readonly (readonly StageOrb[])[]
 ): readonly StageScreenLook[] {
-  const screens: StageScreenLook[] = panels.map((panel) => ({
+  const screens: StageScreenLook[] = panels.map((panel, index) => ({
+    key: panel.serverId,
     tone: panel.tone,
     working: panel.working,
     attention: panel.attention,
-    faceSlot: slots.get(panel.serverId) ?? -1,
-    streaks: stageStreakLines(panel.face),
-    faceHeight: heights.get(panel.serverId) ?? UNPAINTED_FACE_HEIGHT,
+    orbs: (orbs[index] ?? []).map((orb) => ({ key: orb.key, mark: orb.mark })),
   }));
   const key = JSON.stringify(screens);
   const [kept, setKept] = useState({ key, screens });
@@ -491,23 +647,6 @@ function useStageScreens(
   }
   return kept.screens;
 }
-
-/** A pane without a painted face (yet, or on the static stage) is as short as a face can be. */
-const UNPAINTED_FACE_HEIGHT = stageFaceHeight(STAGE_FACE_MIN_ROWS);
-
-type StageTarget =
-  | {
-      kind: 'host';
-      rect: StageRect;
-      hint: { x: number; y: number };
-    }
-  | {
-      kind: 'screen';
-      index: number;
-      front: boolean;
-      rect: StageRect;
-      hint: { x: number; y: number };
-    };
 
 /**
  * A layer's texture once it is in, with how the theme asks for it to be
@@ -553,24 +692,102 @@ function useStageArt(composition: StageComposition, viewport: StageViewport): St
   }, [hero, painting, viewport]);
 }
 
-/**
- * Every target's resting box on screen, far to near (so the nearer one wins
- * a tap): the new-task host -- the figure, the painting's band or, with no
- * artwork, the open band above the panes -- and the panes the cover-flow
- * shows around the selection, each as tall as its face.
- */
-function useStageTargets(
+/** A point on screen, in points, and how large a world length there is. */
+type Projected = { x: number; y: number; depth: number; scale: number };
+
+/** A drawn core at rest, projected: what the hit areas, the static stage and the chips use. */
+type StageCoreView = {
+  index: number;
+  front: boolean;
+  core: StageCore;
+  rect: StageRect;
+  centre: Projected;
+  /** The ring, projected, a full turn from its right-hand point. */
+  ring: { x: number; y: number; far: boolean }[];
+  orbs: { orb: StageOrb; point: StageVec3; at: Projected; hidden: boolean }[];
+};
+
+const RING_STEPS = 48;
+
+/** The cores the cover-flow shows around the selection, at rest, as the scene draws them. */
+function useStageCores(
   panels: readonly StagePanel[],
-  heights: ReadonlyMap<string, number>,
+  orbs: readonly (readonly StageOrb[])[],
   selectedIndex: number,
-  art: StageArt,
+  role: StageRole,
   viewport: StageViewport
-): StageTarget[] {
+): StageCoreView[] {
   return useMemo(() => {
     const { width, height } = viewport;
     if (width <= 0 || height <= 0) return [];
     const aspect = width / height;
     const camera = stageCamera();
+    const anchor = stageCoreAnchor(camera, aspect, role);
+    const project = (point: StageVec3): Projected => {
+      const at = projectStagePoint(point, camera, width, height);
+      return {
+        x: at.x,
+        y: at.y,
+        depth: at.depth,
+        scale: height / stageViewSize(at.depth, 1).height,
+      };
+    };
+    const views: StageCoreView[] = [];
+    for (const index of stageDrawnScreens(selectedIndex, panels.length)) {
+      const offset = index - selectedIndex;
+      if (!panels[index] || Math.abs(offset) >= STAGE_CORE_REACH) continue;
+      const core = stageCore(offset, anchor, aspect, role);
+      const ring = Array.from({ length: RING_STEPS }, (_, step) => {
+        const angle = (step / RING_STEPS) * Math.PI * 2;
+        const at = project(stageRingPoint(core, angle));
+        return { x: at.x, y: at.y, far: Math.sin(angle) > 0 };
+      });
+      const ringOrbs = orbs[index] ?? [];
+      views.push({
+        index,
+        front: offset === 0,
+        core,
+        rect: stageCoreRect(core, camera, width, height),
+        centre: project(core.position),
+        ring,
+        orbs: ringOrbs.map((orb, slot) => {
+          const point = stageOrbRestPoint(core, slot, ringOrbs.length);
+          return {
+            orb,
+            point,
+            at: project(point),
+            hidden: stageBehindCore(point, core, camera.position),
+          };
+        }),
+      });
+    }
+    return views;
+  }, [panels, orbs, selectedIndex, role, viewport]);
+}
+
+type StageTarget =
+  | { kind: 'host'; rect: StageRect; hint: { x: number; y: number } }
+  | {
+      kind: 'core';
+      index: number;
+      front: boolean;
+      rect: StageRect;
+      hint: { x: number; y: number };
+    };
+
+/**
+ * Every target's resting box on screen, far to near (so the nearer one wins
+ * a tap): the new-task host -- the figure, the painting's band or, with no
+ * artwork, the open band above the core -- and the cores the cover-flow
+ * shows around the selection, each with its ring.
+ */
+function useStageTargets(
+  cores: readonly StageCoreView[],
+  art: StageArt,
+  viewport: StageViewport
+): StageTarget[] {
+  return useMemo(() => {
+    if (viewport.width <= 0 || viewport.height <= 0) return [];
     const host = stageHostTarget(art, viewport);
     const targets: StageTarget[] = [
       {
@@ -583,66 +800,74 @@ function useStageTargets(
         hint: host.hint,
       },
     ];
-    const anchor = stagePaneAnchor(camera, aspect);
-    for (const index of stageDrawnScreens(selectedIndex, panels.length)) {
-      const offset = index - selectedIndex;
-      const serverId = panels[index]?.serverId;
-      if (!serverId || Math.abs(offset) >= STAGE_PANE_REACH) continue;
-      const pane = stagePane(
-        offset,
-        anchor,
-        aspect,
-        heights.get(serverId) ?? UNPAINTED_FACE_HEIGHT
-      );
-      const [x, y, z] = pane.position;
-      // On the pane's own top rim.
-      const hint = projectStagePoint([x, y + pane.height / 2, z], camera, width, height);
+    for (const view of cores)
       targets.push({
-        kind: 'screen',
-        index,
-        front: offset === 0,
-        rect: stageQuadRect(
-          pane.position,
-          pane.width,
-          pane.height,
-          pane.yaw,
-          camera,
-          width,
-          height
-        ),
-        hint: { x: hint.x, y: hint.y },
+        kind: 'core',
+        index: view.index,
+        front: view.front,
+        rect: view.rect,
+        // Just above the core's top.
+        hint: { x: view.centre.x, y: view.centre.y - view.core.radius * view.centre.scale - 6 },
       });
-    }
     return targets.sort((a, b) => b.rect.depth - a.rect.depth);
-  }, [panels, heights, selectedIndex, art, viewport]);
+  }, [cores, art, viewport]);
+}
+
+/** What an agent is doing, for its chip and its accessible name. */
+function useAgentState() {
+  const { t } = useLingui();
+  const { _ } = useLinguiRuntime();
+  return (agent: StageAgentLine) =>
+    agent.mark === 'needs-you'
+      ? (agent.activity ?? t`Needs you`)
+      : agent.mark === 'working'
+        ? (agent.activity ?? _(agentStatusWord.working))
+        : _(agentStatusWord.idle);
 }
 
 /**
- * The 2D layer over the world: the host starts a new task; the front screen
- * opens its computer, a side screen comes forward, a long press offers the
- * computer's actions. The screen reader reads these, never the scene.
+ * The 2D layer over the world: the host starts a new task; the front core
+ * opens its computer, or the agent whose orb is under the finger (its chip
+ * shows while the finger is down); a side core comes forward; a long press
+ * on a core offers the computer's actions. The screen reader reads these
+ * and an invisible list of the front computer's agents, never the scene.
  */
 function StageHitAreas({
   panels,
   targets,
+  front,
   hints,
   onSelect,
   onOpen,
+  onOpenAgent,
   onActions,
   onNewTask,
+  orbAt,
+  onOrbTouch,
+  onOrbRelease,
 }: {
   panels: readonly StagePanel[];
   targets: readonly StageTarget[];
+  front: StageCoreView | null;
   hints: boolean;
   onSelect: (index: number) => void;
   onOpen: (index: number) => void;
+  /** `agent` is the index in the computer's agents. */
+  onOpenAgent: (index: number, agent: number) => void;
   onActions: (index: number) => void;
   onNewTask: () => void;
+  orbAt: (touch: { x: number; y: number }) => { key: string; at: { x: number; y: number } } | null;
+  onOrbTouch: (orb: { key: string; at: { x: number; y: number } }) => void;
+  onOrbRelease: () => void;
 }) {
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
-  const front = targets.find((target) => target.kind === 'screen' && target.front);
+  const agentState = useAgentState();
+  // The orb under the finger since it went down, if any.
+  const pressed = useRef<string | null>(null);
+  const frontTarget = targets.find((target) => target.kind === 'core' && target.front);
   const host = targets.find((target) => target.kind === 'host');
+  const frontPanel = front ? panels[front.index] : undefined;
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       {targets.map((target) => {
@@ -666,33 +891,92 @@ function StageHitAreas({
         const count = panel.sessionCount;
         const sessions = t`${plural(count, { one: '# session', other: '# sessions' })}`;
         const position = target.front ? t`selected` : t`${target.index + 1} of ${panels.length}`;
+        const shared = {
+          testID: `home-stage-panel-${panel.serverId}`,
+          accessibilityRole: 'button' as const,
+          accessibilityLabel: `${panel.label}, ${status}, ${sessions}, ${position}`,
+          accessibilityHint: target.front
+            ? t`Opens this computer.`
+            : t`Brings this computer forward.`,
+          accessibilityState: { selected: target.front },
+          accessibilityActions: [{ name: 'longpress', label: t`Actions` }],
+          onAccessibilityAction: (event: { nativeEvent: { actionName: string } }) => {
+            if (event.nativeEvent.actionName === 'longpress') onActions(target.index);
+          },
+          style: [styles.hit, box],
+        };
+        if (!target.front)
+          return (
+            <PressableScale
+              key={panel.serverId}
+              {...shared}
+              onPress={() => onSelect(target.index)}
+              onLongPress={() => onActions(target.index)}
+            />
+          );
+        const locate = (event: GestureResponderEvent) =>
+          orbAt({
+            x: rect.x + event.nativeEvent.locationX,
+            y: rect.y + event.nativeEvent.locationY,
+          });
         return (
-          <PressableScale
+          <Pressable
             key={panel.serverId}
-            testID={`home-stage-panel-${panel.serverId}`}
-            accessibilityRole="button"
-            accessibilityLabel={`${panel.label}, ${status}, ${sessions}, ${position}`}
-            accessibilityHint={
-              target.front ? t`Opens this computer.` : t`Brings this computer forward.`
-            }
-            accessibilityState={{ selected: target.front }}
-            accessibilityActions={[{ name: 'longpress', label: t`Actions` }]}
-            onAccessibilityAction={(event) => {
-              if (event.nativeEvent.actionName === 'longpress') onActions(target.index);
+            {...shared}
+            onPressIn={(event) => {
+              const orb = locate(event);
+              pressed.current = orb?.key ?? null;
+              if (orb) onOrbTouch(orb);
             }}
-            onPress={() => (target.front ? onOpen(target.index) : onSelect(target.index))}
-            onLongPress={() => onActions(target.index)}
-            style={[styles.hit, box]}
+            onPressOut={() => {
+              if (pressed.current !== null) onOrbRelease();
+            }}
+            onPress={() => {
+              const key = pressed.current;
+              pressed.current = null;
+              const agent = key === null ? -1 : panel.agents.findIndex((line) => line.key === key);
+              if (agent >= 0) onOpenAgent(target.index, agent);
+              else onOpen(target.index);
+            }}
+            // A long press on an orb only names it; on the core, the computer's actions.
+            onLongPress={() => {
+              if (pressed.current === null) onActions(target.index);
+            }}
           />
         );
       })}
+      {front && frontPanel ? (
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          {frontPanel.agents.map((agent, index) => {
+            const placed =
+              front.orbs.find((orb) => orb.orb.agent === index) ??
+              front.orbs.find((orb) => orb.orb.mark === 'more');
+            const at = placed?.at ?? front.centre;
+            return (
+              <View
+                key={agent.key}
+                testID={`home-stage-agent-${agent.key}`}
+                accessible
+                accessibilityRole="button"
+                accessibilityLabel={`${agent.name}, ${agentState(agent)}`}
+                accessibilityHint={t`Opens this agent.`}
+                accessibilityActions={[{ name: 'activate' }]}
+                onAccessibilityAction={(event) => {
+                  if (event.nativeEvent.actionName === 'activate') onOpenAgent(front.index, index);
+                }}
+                style={[styles.agent, { left: at.x - 22, top: at.y - 22 }]}
+              />
+            );
+          })}
+        </View>
+      ) : null}
       {hints && host ? <StageHint text={t`Tap · start a new task`} at={host.hint} /> : null}
-      {hints && front ? <StageHint text={t`Tap · open`} at={front.hint} /> : null}
+      {hints && frontTarget ? <StageHint text={t`Tap · open`} at={frontTarget.hint} /> : null}
     </View>
   );
 }
 
-/** A first-visit chip hung from a projected 3D point by a short leader line. */
+/** A chip hung from a projected 3D point by a short leader line. */
 function StageHint({ text, at }: { text: string; at: { x: number; y: number } }) {
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
@@ -731,15 +1015,92 @@ function StageHint({ text, at }: { text: string; at: { x: number; y: number } })
 }
 
 /**
+ * An orb's chip: "claude · running tests", in the orb's colour, beside the
+ * orb on the side away from its core (`stageChipPlacement`), kept on screen
+ * and clear of the HUD and the session strip. The screen reader has the
+ * agents' list instead.
+ */
+function StageOrbChip({
+  orb,
+  agent,
+  at,
+  coreY,
+  viewport,
+}: {
+  orb: StageOrb;
+  agent: StageAgentLine | undefined;
+  at: { x: number; y: number };
+  /** The core's centre on screen: the chip goes on the orb's far side from it. */
+  coreY: number;
+  viewport: StageViewport;
+}) {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  const background = useSurfaceBackground();
+  const agentState = useAgentState();
+  const [box, setBox] = useState({ width: 0, height: 0 });
+  const tone =
+    orb.mark === 'needs-you'
+      ? theme.colors.warning
+      : orb.mark === 'working'
+        ? theme.colors.primary
+        : theme.colors.textMuted;
+  const place = stageChipPlacement(at, box, {
+    width: viewport.width,
+    ceiling: viewport.inset + STAGE_HUD_BOTTOM_PT,
+    floor: viewport.height * STAGE_CHIP_FLOOR,
+    coreY,
+  });
+  return (
+    <Animated.View
+      entering={calmFadeIn('micro')}
+      exiting={calmFadeOut('short')}
+      pointerEvents="none"
+      accessible={false}
+      importantForAccessibility="no-hide-descendants"
+      onLayout={(event) => {
+        const { width, height } = event.nativeEvent.layout;
+        setBox((previous) =>
+          previous.width === width && previous.height === height ? previous : { width, height }
+        );
+      }}
+      style={[
+        styles.orbChip,
+        {
+          left: place.left,
+          top: place.top,
+          opacity: box.width > 0 ? 1 : 0,
+          backgroundColor: background(theme.colors.background),
+          borderColor: withAlpha(tone, 0.7),
+        },
+      ]}>
+      <View style={[styles.orbDot, { backgroundColor: tone }]} />
+      {agent ? (
+        <Text variant="caption" numberOfLines={1} style={styles.orbText}>
+          <Text variant="caption" weight="semibold">
+            {agent.name}
+          </Text>
+          {` · ${agentState(agent)}`}
+        </Text>
+      ) : (
+        <Text variant="caption" weight="semibold" numberOfLines={1}>
+          {t`${plural(orb.more, { one: '# more agent', other: '# more agents' })}`}
+        </Text>
+      )}
+    </Animated.View>
+  );
+}
+
+/**
  * The 2.5D stage: the same roles flat -- the wallpaper at its authored fit,
  * focal point and opacity, the painting's band or the figure in its box with
- * the same fades, the frame, the panes at their projected places -- with
- * only parallax for motion. Drawn without WebGPU, after a lost device, or as
- * a slow device's last degrade step.
+ * the same fades, the frame, the cores at their projected places with their
+ * rings and orbs at rest -- with only parallax for motion. Drawn without
+ * WebGPU, after a lost device, or as a slow device's last degrade step.
  */
 function StaticStage({
   panels,
-  targets,
+  cores,
   composition,
   art,
   dragY,
@@ -747,7 +1108,7 @@ function StaticStage({
   tiltY,
 }: {
   panels: readonly StagePanel[];
-  targets: readonly StageTarget[];
+  cores: readonly StageCoreView[];
   composition: StageComposition;
   art: StageArt;
   dragY: SharedValue<number>;
@@ -755,7 +1116,6 @@ function StaticStage({
   tiltY: SharedValue<number>;
 }) {
   const theme = useThemeTokens();
-  const background = useSurfaceBackground();
   const far = useAnimatedStyle(() => ({
     transform: [
       { translateX: tiltY.get() * 6 },
@@ -768,12 +1128,6 @@ function StaticStage({
       { translateY: tiltX.get() * -10 + dragY.get() * -16 },
     ],
   }));
-  const toneColor = {
-    online: theme.colors.success,
-    offline: theme.colors.textDisabled,
-    unknown: theme.colors.textDisabled,
-    warning: theme.colors.warning,
-  } as const;
   const { backdrop, frame } = composition;
   return (
     <View
@@ -794,38 +1148,143 @@ function StaticStage({
           <StaticArt art={art} />
         </Animated.View>
       ) : null}
-      {/* The frame sits between the art and the panes: it never covers a pane's text. */}
+      {/* The frame sits between the art and the cores: it never covers a computer. */}
       {frame ? <StaticWallpaper layer={frame} /> : null}
       <Animated.View style={[StyleSheet.absoluteFill, near]}>
-        {targets.map((target) => {
-          if (!target.rect.visible || target.kind === 'host') return null;
-          const { rect } = target;
-          const panel = panels[target.index];
-          if (!panel) return null;
-          return (
-            <View
-              key={panel.serverId}
-              style={[
-                styles.flatScreen,
-                {
-                  left: rect.x,
-                  top: rect.y,
-                  width: rect.width,
-                  height: rect.height,
-                  borderColor: toneColor[panel.tone],
-                  backgroundColor: background(theme.colors.surface),
-                  opacity: target.front ? 1 : 0.7,
-                },
-              ]}>
-              <Text variant="bodySmall" weight="semibold" numberOfLines={1}>
-                {panel.label}
-              </Text>
-              <View style={[styles.flatDot, { backgroundColor: toneColor[panel.tone] }]} />
-            </View>
-          );
-        })}
+        <StaticCores panels={panels} cores={cores} />
       </Animated.View>
     </View>
+  );
+}
+
+/**
+ * The cores flat, as the scene draws them at rest: the halo, the ring's far
+ * half, the orbs behind, the sphere (a radial body with a bright heart and
+ * a highlight), the ring's near half and the orbs in front.
+ */
+function StaticCores({
+  panels,
+  cores,
+}: {
+  panels: readonly StagePanel[];
+  cores: readonly StageCoreView[];
+}) {
+  const theme = useThemeTokens();
+  const { resolvedMode } = useThemeMode();
+  const light = resolvedMode === 'light';
+  const { primary, warning, textDisabled: offlineColor, text } = theme.colors;
+  return (
+    <Canvas style={StyleSheet.absoluteFill}>
+      {[...cores]
+        .sort((a, b) => b.centre.depth - a.centre.depth)
+        .map((view) => {
+          const panel = panels[view.index];
+          if (!panel) return null;
+          const offline = panel.tone === 'offline' || panel.tone === 'unknown';
+          const warn = !offline && (panel.attention || panel.tone === 'warning');
+          const fade = view.front ? 1 : 0.6;
+          const tint = offline ? offlineColor : primary;
+          const r = view.core.radius * view.centre.scale;
+          const { x, y } = view.centre;
+          const halves = [true, false].map((far) => {
+            const path = Skia.PathBuilder.Make();
+            let open = false;
+            view.ring.forEach((point, step) => {
+              const next = view.ring[(step + 1) % view.ring.length]!;
+              if (point.far !== far || next.far !== far) {
+                open = false;
+                return;
+              }
+              if (!open) path.moveTo(point.x, point.y);
+              path.lineTo(next.x, next.y);
+              open = true;
+            });
+            return path.detach();
+          });
+          const orbDot = (entry: StageCoreView['orbs'][number]) => {
+            const color =
+              entry.orb.mark === 'needs-you'
+                ? warning
+                : entry.orb.mark === 'working'
+                  ? primary
+                  : entry.orb.mark === 'more'
+                    ? text
+                    : withAlpha(primary, 0.6);
+            const size =
+              view.core.orbRadius *
+              entry.at.scale *
+              (entry.orb.mark === 'needs-you' ? 1.2 : entry.orb.mark === 'idle' ? 0.85 : 1);
+            return (
+              <Group key={entry.orb.key} opacity={fade}>
+                {entry.orb.mark === 'more' ? null : (
+                  <Circle
+                    cx={entry.at.x}
+                    cy={entry.at.y}
+                    r={size * 2.4}
+                    color={withAlpha(color, light ? 0.25 : 0.35)}>
+                    <BlurMask blur={size * 1.2} style="normal" />
+                  </Circle>
+                )}
+                <Circle
+                  cx={entry.at.x}
+                  cy={entry.at.y}
+                  r={entry.orb.mark === 'more' ? size * 0.85 : size}
+                  color={color}
+                  style={entry.orb.mark === 'more' ? 'stroke' : 'fill'}
+                  strokeWidth={1.5}
+                />
+              </Group>
+            );
+          };
+          const behind = view.orbs.filter((entry) => entry.hidden || entry.at.y < y);
+          const before = view.orbs.filter((entry) => !(entry.hidden || entry.at.y < y));
+          return (
+            <Group key={panel.serverId} opacity={offline ? 0.7 : 1}>
+              {offline ? null : (
+                <Circle cx={x} cy={y} r={r * 2.8}>
+                  <RadialGradient
+                    c={vec(x, y)}
+                    r={r * 2.8}
+                    colors={[
+                      withAlpha(warn ? warning : primary, (light ? 0.35 : 0.45) * fade),
+                      withAlpha(warn ? warning : primary, 0),
+                    ]}
+                    positions={[0.3, 1]}
+                  />
+                </Circle>
+              )}
+              <Path
+                path={halves[0]!}
+                style="stroke"
+                strokeWidth={1}
+                color={withAlpha(tint, 0.45 * fade)}
+              />
+              {behind.map(orbDot)}
+              <Circle cx={x} cy={y} r={r} opacity={fade}>
+                <RadialGradient
+                  c={vec(x - r * 0.2, y - r * 0.25)}
+                  r={r * 1.25}
+                  colors={
+                    offline
+                      ? [withAlpha(offlineColor, 0.9), withAlpha(offlineColor, 0.55)]
+                      : light
+                        ? ['#ffffff', withAlpha(primary, 0.85), primary]
+                        : [withAlpha('#ffffff', 0.95), primary, withAlpha(primary, 0.45)]
+                  }
+                  positions={offline ? [0, 1] : [0, 0.45, 1]}
+                />
+              </Circle>
+              <Path
+                path={halves[1]!}
+                style="stroke"
+                strokeWidth={1.25}
+                color={withAlpha(tint, 0.8 * fade)}
+              />
+              {before.map(orbDot)}
+            </Group>
+          );
+        })}
+    </Canvas>
   );
 }
 
@@ -895,6 +1354,7 @@ function StaticArt({ art }: { art: NonNullable<StageArt> }) {
 
 const styles = StyleSheet.create({
   hit: { position: 'absolute' },
+  agent: { position: 'absolute', width: 44, height: 44 },
   hint: { position: 'absolute', alignItems: 'center' },
   hintChip: {
     paddingHorizontal: 10,
@@ -903,15 +1363,19 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   hintLeader: { width: 1, height: 14, opacity: 0.7 },
-  bleed: { position: 'absolute', top: -12, bottom: -12, left: -12, right: -12 },
-  flatScreen: {
+  orbChip: {
     position: 'absolute',
-    borderWidth: 1,
+    maxWidth: 260,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: 12,
     borderCurve: 'continuous',
-    padding: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    borderWidth: StyleSheet.hairlineWidth,
   },
-  flatDot: { width: 8, height: 8, borderRadius: 4, marginTop: 6 },
+  orbDot: { width: 6, height: 6, borderRadius: 3 },
+  orbText: { flexShrink: 1 },
+  bleed: { position: 'absolute', top: -12, bottom: -12, left: -12, right: -12 },
 });
