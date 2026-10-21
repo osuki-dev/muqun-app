@@ -460,10 +460,6 @@ msgstr "{total, plural, other {# nhiệm vụ con}} ({waiting, plural, other {# 
 msgid "→ {name}"
 msgstr "→ {name}"
 
-#: src/components/home-thread.tsx
-msgid "+ New conversation"
-msgstr "+ Cuộc trò chuyện mới"
-
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "+{overflow} nữa"
@@ -4081,13 +4077,9 @@ msgstr "Chưa từng kết nối"
 msgid "Never seen"
 msgstr "Chưa từng thấy"
 
-#: src/components/home-thread.tsx
-msgid "New conversation"
-msgstr "Cuộc trò chuyện mới"
-
-#: src/components/home-thread.tsx
-msgid "New conversation · {agentName}"
-msgstr "Cuộc trò chuyện mới · {agentName}"
+#: src/components/home-composer-dock.tsx
+msgid "New conversation with {agentLabel}…"
+msgstr "Cuộc trò chuyện mới với {agentLabel}…"
 
 #: src/app/commands.tsx
 msgid "New group"
@@ -4644,8 +4636,8 @@ msgid "Open background tasks"
 msgstr "Mở tác vụ nền"
 
 #: src/components/home-thread.tsx
-msgid "Open conversation"
-msgstr "Mở cuộc trò chuyện"
+msgid "Open conversation {title}, {word}"
+msgstr "Mở cuộc trò chuyện {title}, {word}"
 
 #: src/components/artifacts-button.tsx
 msgid "Open files"
@@ -5488,10 +5480,6 @@ msgstr "Phát lại âm thanh"
 #: src/components/home-composer-dock.tsx
 msgid "Reply to {threadAgentName}…"
 msgstr "Trả lời {threadAgentName}…"
-
-#: src/components/home-thread.tsx
-msgid "Replying to {title}"
-msgstr "Đang trả lời {title}"
 
 #: src/app/settings-about.tsx
 msgid "Report a bug or request a feature"

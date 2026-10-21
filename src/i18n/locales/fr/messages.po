@@ -460,10 +460,6 @@ msgstr "{total, plural, one {# sous-tâche} other {# sous-tâches}} ({waiting, p
 msgid "→ {name}"
 msgstr "→ {name}"
 
-#: src/components/home-thread.tsx
-msgid "+ New conversation"
-msgstr "+ Nouvelle conversation"
-
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "+{overflow} autres"
@@ -4081,13 +4077,9 @@ msgstr "Jamais connecté"
 msgid "Never seen"
 msgstr "Jamais vu"
 
-#: src/components/home-thread.tsx
-msgid "New conversation"
-msgstr "Nouvelle conversation"
-
-#: src/components/home-thread.tsx
-msgid "New conversation · {agentName}"
-msgstr "Nouvelle conversation · {agentName}"
+#: src/components/home-composer-dock.tsx
+msgid "New conversation with {agentLabel}…"
+msgstr "Nouvelle conversation avec {agentLabel}…"
 
 #: src/app/commands.tsx
 msgid "New group"
@@ -4644,8 +4636,8 @@ msgid "Open background tasks"
 msgstr "Ouvrir les tâches en arrière-plan"
 
 #: src/components/home-thread.tsx
-msgid "Open conversation"
-msgstr "Ouvrir la conversation"
+msgid "Open conversation {title}, {word}"
+msgstr "Ouvrir la conversation {title}, {word}"
 
 #: src/components/artifacts-button.tsx
 msgid "Open files"
@@ -5488,10 +5480,6 @@ msgstr "Relire l’audio"
 #: src/components/home-composer-dock.tsx
 msgid "Reply to {threadAgentName}…"
 msgstr "Répondre à {threadAgentName}…"
-
-#: src/components/home-thread.tsx
-msgid "Replying to {title}"
-msgstr "Réponse à {title}"
 
 #: src/app/settings-about.tsx
 msgid "Report a bug or request a feature"

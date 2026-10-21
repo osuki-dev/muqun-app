@@ -112,12 +112,7 @@ import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useHomeComposerSheet } from '@/stores/home-composer-sheet';
 import { markHomeComposerRevealed } from '@/lib/home-first-entry';
 import { appChrome } from '@/constants/appearance';
-import {
-  HomeThreadChip,
-  HomeThreadFeed,
-  HomeThreadStrip,
-  type HomeThreadUnsure,
-} from '@/components/home-thread';
+import { HomeThreadBar, HomeThreadFeed, type HomeThreadUnsure } from '@/components/home-thread';
 import { useAppActive } from '@/hooks/use-app-active';
 import { agentDisplayName } from '@/lib/home-launch-model';
 import {
@@ -1627,32 +1622,20 @@ export function HomeComposerDock({
   };
   const openThread =
     thread && onOpenThread && thread.kind !== 'task' ? () => onOpenThread(thread) : undefined;
-  // The conversation's rows hold their own space in the dock: the page is
-  // clipped at their top, so nothing scrolls behind them.
-  const threadRows = (
-    <View>
-      {thread ? (
-        <>
-          <HomeThreadFeed target={thread} enabled={focused && appActive && ready && selected} />
-          <HomeThreadStrip
-            target={thread}
-            offline={target.kind !== 'ready'}
-            unsure={visibleUnsure}
-            onOpen={openThread}
-            onRetry={retryUnsure}
-          />
-        </>
-      ) : null}
-      <HomeThreadChip
+  // The reply bar, joined to the field's top: where the next message goes.
+  const replyBar = thread ? (
+    <>
+      <HomeThreadFeed target={thread} enabled={focused && appActive && ready && selected} />
+      <HomeThreadBar
         target={thread}
-        agentName={agentLabel}
         offline={target.kind !== 'ready'}
-        // A theme's decoration stands where the quiet line would be.
-        quiet={decorationOverhang > 0}
+        unsure={visibleUnsure}
+        onOpen={openThread}
         onClear={clearThread}
+        onRetry={retryUnsure}
       />
-    </View>
-  );
+    </>
+  ) : undefined;
   const bar = (
     <View>
       {visibleUnknownDelivery ? (
@@ -1754,7 +1737,7 @@ export function HomeComposerDock({
     <AgentComposer
       revealed={revealed}
       accessory={bar}
-      solidAccessory={threadRows}
+      fieldHeader={replyBar}
       fieldBackground={
         <>
           <HomeComposerBackground />
@@ -1808,7 +1791,9 @@ export function HomeComposerDock({
       running={false}
       disabled={target.kind === 'none'}
       agentName={agentLabel}
-      placeholder={thread ? t`Reply to ${threadAgentName}…` : undefined}
+      placeholder={
+        thread ? t`Reply to ${threadAgentName}…` : t`New conversation with ${agentLabel}…`
+      }
       sessionId={HOME_AGENT_SESSION_ID}
       availableAgents={modes}
       skills={features.skills && !terminalAgent ? (catalog?.skills ?? NO_SKILLS) : NO_SKILLS}

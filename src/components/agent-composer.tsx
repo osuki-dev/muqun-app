@@ -532,12 +532,11 @@ export interface AgentComposerProps {
    */
   accessory?: React.ReactNode;
   /**
-   * Rows under `accessory` that hold their own space in the dock, such as
-   * Home's conversation strip: unlike a notice, what scrolls under the dock is
-   * clipped at their top edge, so nothing on the page shows through or behind
-   * them.
+   * A bar joined to the top of the field, on its ground: Home's reply bar.
+   * The field's top corners square off under it, they share one shadow, and
+   * it counts as field for the dock's clip edge, so nothing scrolls behind it.
    */
-  solidAccessory?: React.ReactNode;
+  fieldHeader?: React.ReactNode;
   /** Home consolidates its choices in one control beside the attachment button. */
   toolbarLeading?: React.ReactNode;
   /**
@@ -676,7 +675,7 @@ export const AgentComposer = memo(function AgentComposer({
   holdStagedAttachments,
   onDockHeight,
   accessory,
-  solidAccessory,
+  fieldHeader,
   toolbarLeading,
   toolbarMenu,
   fieldBackground,
@@ -1510,7 +1509,6 @@ export const AgentComposer = memo(function AgentComposer({
   const [surfaceHeight, setSurfaceHeight] = useState(0);
   const [surfaceWidth, setSurfaceWidth] = useState(0);
   const [inputRowHeight, setInputRowHeight] = useState(0);
-  const [solidAccessoryHeight, setSolidAccessoryHeight] = useState(0);
   const [compactionRowHeight, setCompactionRowHeight] = useState(0);
   const compactionClearance = compaction ? compactionRowHeight : 0;
   const [voiceActive, setVoiceActive] = useState(false);
@@ -1529,9 +1527,7 @@ export const AgentComposer = memo(function AgentComposer({
   const dockHeight = surfaceHeight + dockFoot;
   // Home paints only the input plate. Its options/notice overlays must not
   // erase the foreground behind their transparent or rounded edges.
-  const dockClipHeight = flushField
-    ? inputRowHeight + (solidAccessory ? solidAccessoryHeight : 0) + dockFoot
-    : dockHeight;
+  const dockClipHeight = flushField ? inputRowHeight + dockFoot : dockHeight;
   // The status row occupies transcript space, but does not move the material's clip edge.
   const reportDockHeight = useEffectEvent((height: number, clipHeight: number) =>
     onDockHeight?.(height + compactionClearance, clipHeight)
@@ -1908,11 +1904,6 @@ export const AgentComposer = memo(function AgentComposer({
               flushField && { paddingHorizontal: 0, paddingTop: 0 },
             ]}>
             {accessory}
-            {solidAccessory ? (
-              <View onLayout={(event) => setSolidAccessoryHeight(event.nativeEvent.layout.height)}>
-                {solidAccessory}
-              </View>
-            ) : null}
             {/* Row 1: roots only. Tapping the current root opens its tree. */}
             {sessionStrip.length > 0 ? (
               <ScrollView
@@ -2424,14 +2415,27 @@ export const AgentComposer = memo(function AgentComposer({
             ) : null}
 
             {/* TerminalComposer reused for agent prompt */}
-            <View onLayout={(event) => setInputRowHeight(event.nativeEvent.layout.height)}>
+            <View
+              onLayout={(event) => setInputRowHeight(event.nativeEvent.layout.height)}
+              // With a header the two are one plate, and the plate casts the shadow.
+              style={
+                fieldHeader && fieldShadow
+                  ? {
+                      boxShadow: fieldShadow,
+                      borderRadius: profile.chrome.composerField,
+                      borderCurve: 'continuous',
+                    }
+                  : undefined
+              }>
+              {fieldHeader}
               <TerminalComposer
                 fieldBackground={fieldBackground}
                 fieldBackgroundColor={fieldBackgroundColor}
                 fieldBackgroundOutset={fieldBackgroundOutset}
                 fieldDecoration={decorationHidden ? undefined : fieldDecoration}
                 fieldTextTopInset={fieldTextTopInset}
-                fieldShadow={fieldShadow}
+                fieldShadow={fieldHeader ? undefined : fieldShadow}
+                squareTop={Boolean(fieldHeader)}
                 onVoiceActiveChange={setVoiceActive}
                 spans={spans}
                 compact={compact}

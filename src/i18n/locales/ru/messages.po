@@ -460,10 +460,6 @@ msgstr "{total, plural, one {# подзадача} few {# подзадачи} ma
 msgid "→ {name}"
 msgstr "→ {name}"
 
-#: src/components/home-thread.tsx
-msgid "+ New conversation"
-msgstr "+ Новый разговор"
-
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "Ещё {overflow}"
@@ -4081,13 +4077,9 @@ msgstr "Ни разу не подключался"
 msgid "Never seen"
 msgstr "Ни разу не был в сети"
 
-#: src/components/home-thread.tsx
-msgid "New conversation"
-msgstr "Новый разговор"
-
-#: src/components/home-thread.tsx
-msgid "New conversation · {agentName}"
-msgstr "Новый разговор · {agentName}"
+#: src/components/home-composer-dock.tsx
+msgid "New conversation with {agentLabel}…"
+msgstr "Новый разговор с {agentLabel}…"
 
 #: src/app/commands.tsx
 msgid "New group"
@@ -4644,8 +4636,8 @@ msgid "Open background tasks"
 msgstr "Открыть фоновые задачи"
 
 #: src/components/home-thread.tsx
-msgid "Open conversation"
-msgstr "Открыть разговор"
+msgid "Open conversation {title}, {word}"
+msgstr "Открыть разговор «{title}», {word}"
 
 #: src/components/artifacts-button.tsx
 msgid "Open files"
@@ -5488,10 +5480,6 @@ msgstr "Воспроизвести аудио снова"
 #: src/components/home-composer-dock.tsx
 msgid "Reply to {threadAgentName}…"
 msgstr "Ответить {threadAgentName}…"
-
-#: src/components/home-thread.tsx
-msgid "Replying to {title}"
-msgstr "Ответ в «{title}»"
 
 #: src/app/settings-about.tsx
 msgid "Report a bug or request a feature"

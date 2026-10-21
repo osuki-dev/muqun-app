@@ -460,10 +460,6 @@ msgstr "{total, plural, other {งานย่อย # งาน}} ({waiting, pl
 msgid "→ {name}"
 msgstr "→ {name}"
 
-#: src/components/home-thread.tsx
-msgid "+ New conversation"
-msgstr "+ บทสนทนาใหม่"
-
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "อีก +{overflow} รายการ"
@@ -4081,13 +4077,9 @@ msgstr "ยังไม่เคยเชื่อมต่อ"
 msgid "Never seen"
 msgstr "ยังไม่เคยพบ"
 
-#: src/components/home-thread.tsx
-msgid "New conversation"
-msgstr "บทสนทนาใหม่"
-
-#: src/components/home-thread.tsx
-msgid "New conversation · {agentName}"
-msgstr "บทสนทนาใหม่ · {agentName}"
+#: src/components/home-composer-dock.tsx
+msgid "New conversation with {agentLabel}…"
+msgstr "บทสนทนาใหม่กับ {agentLabel}…"
 
 #: src/app/commands.tsx
 msgid "New group"
@@ -4644,8 +4636,8 @@ msgid "Open background tasks"
 msgstr "เปิดงานเบื้องหลัง"
 
 #: src/components/home-thread.tsx
-msgid "Open conversation"
-msgstr "เปิดบทสนทนา"
+msgid "Open conversation {title}, {word}"
+msgstr "เปิดบทสนทนา {title}, {word}"
 
 #: src/components/artifacts-button.tsx
 msgid "Open files"
@@ -5488,10 +5480,6 @@ msgstr "เล่นเสียงอีกครั้ง"
 #: src/components/home-composer-dock.tsx
 msgid "Reply to {threadAgentName}…"
 msgstr "ตอบ {threadAgentName}…"
-
-#: src/components/home-thread.tsx
-msgid "Replying to {title}"
-msgstr "กำลังตอบ {title}"
 
 #: src/app/settings-about.tsx
 msgid "Report a bug or request a feature"

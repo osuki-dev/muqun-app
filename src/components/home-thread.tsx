@@ -244,147 +244,33 @@ function useHomeThreadState(target: HomeThreadTarget): HomeThreadState {
   });
 }
 
-/**
- * Where the next message goes, above the field: `→ title ×` and "New
- * conversation" with a target, else a quiet line naming the agent a new
- * conversation starts with. Always one row, so the field never moves when the
- * target changes; the two faces cross-fade in place.
- */
-export function HomeThreadChip({
-  target,
-  agentName,
-  offline,
-  quiet = false,
-  onClear,
-}: {
-  target: HomeThreadTarget | undefined;
-  /** The agent a new conversation starts with. */
-  agentName: string;
-  offline: boolean;
-  /** No target: say nothing (the field's decoration has that space). */
-  quiet?: boolean;
-  onClear: () => void;
-}) {
-  const { t } = useLingui();
-  const theme = useThemeTokens();
-  const profile = useAppearanceProfile();
-  const background = useSurfaceBackground();
-  const reduced = useReducedMotion();
-  const enter = reduced ? calmFadeIn() : fadeIn('short');
-  const exit = reduced ? calmFadeOut('micro') : fadeOut('micro');
-  if (!target && quiet) return null;
-  return (
-    <Animated.View
-      layout={listLayout()}
-      // The composer's own ground, so the row reads over any page or wallpaper.
-      style={[
-        styles.chipRow,
-        {
-          backgroundColor: background(theme.colors.surface),
-          borderRadius: profile.chrome.composerField,
-          paddingHorizontal: theme.spacing.md,
-          marginBottom: theme.spacing.xs,
-        },
-      ]}>
-      {target ? (
-        <Animated.View
-          key={`thread:${homeThreadKey(target)}`}
-          entering={enter}
-          exiting={exit}
-          style={styles.chipFaces}>
-          <ThreadChip target={target} offline={offline} onClear={onClear} />
-          <PressableScale
-            testID="home-thread-new"
-            accessibilityRole="button"
-            accessibilityLabel={t`New conversation`}
-            hitSlop={8}
-            onPress={onClear}
-            style={styles.newButton}>
-            <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
-              {t`+ New conversation`}
-            </Text>
-          </PressableScale>
-        </Animated.View>
-      ) : (
-        <Animated.View key="new" entering={enter} exiting={exit} style={styles.chipFaces}>
-          <Text
-            testID="home-thread-new-line"
-            variant="caption"
-            color={theme.colors.textMuted}
-            numberOfLines={1}
-            style={styles.newLine}>
-            {agentName ? t`New conversation · ${agentName}` : t`New conversation`}
-          </Text>
-        </Animated.View>
-      )}
-    </Animated.View>
-  );
-}
-
-function ThreadChip({
-  target,
-  offline,
-  onClear,
-}: {
-  target: HomeThreadTarget;
-  offline: boolean;
-  onClear: () => void;
-}) {
-  const { t } = useLingui();
-  const theme = useThemeTokens();
-  const state = useHomeThreadState(target);
-  const tone = offline
-    ? theme.colors.textMuted
-    : state === 'needs-you'
-      ? theme.colors.warning
-      : theme.colors.primary;
-  const title = target.title || t`Conversation`;
-  return (
-    <View
-      testID="home-thread-chip"
-      accessible
-      accessibilityLabel={t`Replying to ${title}`}
-      style={styles.chip}>
-      <Text
-        variant="caption"
-        weight="semibold"
-        color={tone}
-        numberOfLines={1}
-        style={styles.chipTitle}>
-        {`→ ${title}`}
-      </Text>
-      <PressableScale
-        testID="home-thread-clear"
-        accessibilityRole="button"
-        accessibilityLabel={t`Stop following this conversation`}
-        hitSlop={10}
-        onPress={onClear}
-        style={styles.chipClose}>
-        <CloseIcon size={14} color={tone} />
-      </PressableScale>
-    </View>
-  );
-}
-
 /** A send whose delivery could not be confirmed: never resent without the reader. */
 export type HomeThreadUnsure = { key: string; text: string; attachments: string[] };
 
 /**
- * The target's last turns above the composer: the reader's message, the
- * agent's reply as it streams (two lines), and the progress line it reports
- * while working; a request waiting on the reader with its actions.
+ * Home's reply bar, joined to the top of the composer on its ground: where the
+ * next message goes and how it is doing, read at a glance.
+ *
+ * Row 1 is `↳ title · state` with × on the right, which lets the target go;
+ * the next message then starts a new conversation. Row 2, at most two lines,
+ * is the agent's latest reply, or while it works and has not replied the
+ * progress line it reports, or nothing. The reader's own message is never
+ * repeated. A request waiting on the reader tints the bar and puts its
+ * actions in row 2. The bar is one button that opens the conversation.
  */
-export function HomeThreadStrip({
+export function HomeThreadBar({
   target,
   offline,
   unsure,
   onOpen,
+  onClear,
   onRetry,
 }: {
   target: HomeThreadTarget;
   offline: boolean;
   unsure: HomeThreadUnsure | null;
   onOpen?: () => void;
+  onClear: () => void;
   onRetry: () => void;
 }) {
   const { t } = useLingui();
@@ -401,13 +287,18 @@ export function HomeThreadStrip({
   );
   const state = useHomeThreadState(target);
 
-  const turns = target.kind === 'session' ? homeThreadTurns(live) : {};
-  const mine = turns.mine?.text ?? target.lastSent;
   const replyText =
-    turns.reply?.text ?? (target.kind !== 'session' && task?.summary ? task.summary : undefined);
-  const reply = replyText ? plainFromMarkdown(replyText).trim() : undefined;
-  // Only what the gateway reports; the header's word is the session's own status.
-  const progress = state === 'working' ? task?.progress : undefined;
+    target.kind === 'session'
+      ? homeThreadTurns(live).reply?.text
+      : task?.summary && state !== 'working'
+        ? task.summary
+        : undefined;
+  // Only what was reported: the reply, else the task's progress while it works.
+  const line = replyText
+    ? plainFromMarkdown(replyText).trim()
+    : state === 'working'
+      ? task?.progress
+      : undefined;
   const word = offline
     ? t`Offline`
     : state === 'needs-you'
@@ -419,10 +310,11 @@ export function HomeThreadStrip({
           : state === 'starting'
             ? t`Starting…`
             : t`Idle`;
+  const needsYou = state === 'needs-you' && !offline;
   const tone =
-    state === 'needs-you' || state === 'failed'
+    needsYou || state === 'failed'
       ? theme.colors.warning
-      : state === 'working'
+      : state === 'working' && !offline
         ? theme.colors.primary
         : theme.colors.textMuted;
   const permission = target.kind === 'session' ? live.permissions[0] : undefined;
@@ -430,76 +322,90 @@ export function HomeThreadStrip({
     target.kind === 'session' && !permission
       ? live.forms.find((entry) => entry.nonblocking !== true)
       : undefined;
+  const title = live.title || target.title || t`Conversation`;
   const unsureHere = unsure?.key === key ? unsure : null;
   const enter = reduced ? calmFadeIn() : fadeIn('short');
   const exit = reduced ? calmFadeOut('micro') : fadeOut('micro');
 
   return (
     <Animated.View
-      testID="home-thread-strip"
+      testID="home-thread-bar-row"
       entering={reduced ? calmFadeIn() : riseIn()}
       exiting={reduced ? calmFadeOut() : fadeOut('short')}
       layout={listLayout()}
       style={[
+        styles.bar,
         {
           backgroundColor: background(theme.colors.surface),
-          borderRadius: profile.chrome.composerField,
+          borderTopLeftRadius: profile.chrome.composerField,
+          borderTopRightRadius: profile.chrome.composerField,
           paddingHorizontal: theme.spacing.md,
-          paddingVertical: theme.spacing.sm,
-          marginBottom: theme.spacing.xs,
+          paddingTop: theme.spacing.sm,
+          paddingBottom: theme.spacing.xs,
           gap: theme.spacing.xs,
         },
       ]}>
-      <View style={styles.stripHeader}>
-        <Text variant="caption" weight="semibold" numberOfLines={1} style={styles.stripTitle}>
-          {live.title || target.title || t`Conversation`}
-        </Text>
-        <Text
-          testID="home-thread-state"
-          variant="caption"
-          color={tone}
-          numberOfLines={1}
-          accessibilityLiveRegion="polite">
-          {word}
-        </Text>
-        {onOpen ? (
-          <PressableScale
-            testID="home-thread-open"
-            accessibilityRole="button"
-            accessibilityLabel={t`Open conversation`}
-            hitSlop={8}
-            onPress={onOpen}
-            style={styles.open}>
-            <Text variant="caption" weight="semibold" color={theme.colors.primary}>
-              {`${t`Open`} ↗`}
+      {needsYou ? (
+        <View
+          pointerEvents="none"
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: withAlpha(theme.colors.warning, 0.1) },
+          ]}
+        />
+      ) : null}
+      <View style={styles.barRow}>
+        <PressableScale
+          testID="home-thread-bar"
+          accessibilityRole="button"
+          accessibilityLabel={t`Open conversation ${title}, ${word}`}
+          accessibilityState={{ disabled: !onOpen }}
+          disabled={!onOpen}
+          onPress={onOpen}
+          style={styles.barOpen}>
+          <View style={styles.barHead}>
+            <Text
+              variant="caption"
+              weight="semibold"
+              color={needsYou ? theme.colors.warning : theme.colors.text}
+              numberOfLines={1}
+              style={styles.barTitle}>
+              {`↳ ${title}`}
             </Text>
-          </PressableScale>
-        ) : null}
+            <Text
+              testID="home-thread-state"
+              variant="caption"
+              color={tone}
+              numberOfLines={1}
+              style={styles.barState}>
+              {`· ${word}`}
+            </Text>
+          </View>
+          {line && !permission && !form ? (
+            <Animated.View
+              key={`line:${task?.taskId ?? ''}:${replyText ? 'reply' : 'progress'}`}
+              entering={enter}
+              exiting={exit}>
+              <Text
+                testID="home-thread-reply"
+                variant="caption"
+                color={theme.colors.textMuted}
+                numberOfLines={2}>
+                {line}
+              </Text>
+            </Animated.View>
+          ) : null}
+        </PressableScale>
+        <PressableScale
+          testID="home-thread-clear"
+          accessibilityRole="button"
+          accessibilityLabel={t`Stop following this conversation`}
+          hitSlop={10}
+          onPress={onClear}
+          style={styles.barClose}>
+          <CloseIcon size={14} color={theme.colors.textMuted} />
+        </PressableScale>
       </View>
-      {mine ? (
-        <Animated.View key={`mine:${turns.mine?.id ?? mine}`} entering={enter} exiting={exit}>
-          <Text variant="bodySmall" color={theme.colors.textMuted} numberOfLines={1}>
-            {`› ${mine}`}
-          </Text>
-        </Animated.View>
-      ) : null}
-      {reply ? (
-        <Animated.View
-          key={`reply:${turns.reply?.id ?? task?.taskId ?? ''}`}
-          entering={enter}
-          exiting={exit}>
-          <Text testID="home-thread-reply" variant="bodySmall" numberOfLines={2}>
-            {reply}
-          </Text>
-        </Animated.View>
-      ) : null}
-      {progress ? (
-        <Animated.View key={`progress:${progress}`} entering={enter} exiting={exit}>
-          <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
-            {progress}
-          </Text>
-        </Animated.View>
-      ) : null}
       {permission ? (
         <ThreadPermission target={target} request={permission} />
       ) : form ? (
@@ -626,7 +532,7 @@ function ThreadPermission({
   };
   return (
     <View style={styles.request} testID="home-thread-permission">
-      <Text variant="bodySmall" weight="semibold" color={theme.colors.warning} numberOfLines={2}>
+      <Text variant="caption" color={theme.colors.text} numberOfLines={1}>
         {permissionSubject(request) || t`Permission required`}
       </Text>
       <View style={styles.actions}>
@@ -690,7 +596,7 @@ function ThreadQuestion({
   };
   return (
     <View style={styles.request} testID="home-thread-question">
-      <Text variant="bodySmall" weight="semibold" color={theme.colors.warning} numberOfLines={3}>
+      <Text variant="caption" color={theme.colors.text} numberOfLines={2}>
         {field?.title || form.title}
       </Text>
       <View style={styles.actions}>
@@ -718,17 +624,14 @@ function ThreadQuestion({
 }
 
 const styles = StyleSheet.create({
-  chipRow: { flexDirection: 'row', minHeight: 32, alignItems: 'center' },
-  chipFaces: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  chip: { flexDirection: 'row', alignItems: 'center', flexShrink: 1, gap: 2 },
-  chipTitle: { flexShrink: 1 },
-  chipClose: { paddingHorizontal: 4, paddingVertical: 2 },
-  newButton: { flexShrink: 0, marginLeft: 'auto', paddingVertical: 4 },
-  newLine: { flexShrink: 1 },
-  stripHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  stripTitle: { flexShrink: 1 },
-  open: { marginLeft: 'auto', paddingHorizontal: 4, paddingVertical: 2 },
-  request: { gap: 6, paddingTop: 2 },
+  bar: { overflow: 'hidden' },
+  barRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  barOpen: { flex: 1, gap: 2 },
+  barHead: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  barTitle: { flexShrink: 1 },
+  barState: { flexShrink: 0 },
+  barClose: { paddingHorizontal: 4, paddingVertical: 2 },
+  request: { gap: 6 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   compactButton: { paddingHorizontal: 12, paddingVertical: 5 },
   unsure: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 },
