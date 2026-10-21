@@ -104,11 +104,7 @@ export function homeServerModel({
         agent.pendingUserInput === true
           ? { pendingUserInput: true }
           : {}),
-        key: JSON.stringify([
-          serverId,
-          agent.instanceId ? 'instance' : agent.paneId ? 'pane' : 'row',
-          agent.instanceId || agent.paneId || agent.id,
-        ]),
+        key: homeServerRowKey(serverId, agent),
         caption: blockedCaption ?? locationCaption,
         spokenCaption:
           agent.hasAgent && agentStatusesCurrent
@@ -117,4 +113,16 @@ export function homeServerModel({
       };
     }),
   };
+}
+
+/** A pane row's identity: its agent instance, else its pane, else the mirror's row id. */
+export function homeServerRowKey(
+  serverId: string,
+  agent: { instanceId?: string; paneId?: string; id?: string }
+): string {
+  return JSON.stringify([
+    serverId,
+    agent.instanceId ? 'instance' : agent.paneId ? 'pane' : 'row',
+    agent.instanceId || agent.paneId || agent.id,
+  ]);
 }

@@ -8,9 +8,11 @@ import {
 } from './home-recents';
 import {
   homeServerModel,
+  homeServerRowKey,
   type HomeServerModel,
   type HomeServerPaneMode,
 } from './home-server-model';
+import type { HomeThreadTarget } from './home-thread';
 import {
   MAX_SERVER_AGENTS,
   SERVER_AGENTS_STALE_AFTER_MS,
@@ -334,6 +336,7 @@ export function homeContinueEntries({
   paneMode,
   gatewaySessions,
   goneSessions,
+  threads,
   connectionShortcutsElsewhere = false,
 }: {
   serverIds: readonly string[];
@@ -346,6 +349,12 @@ export function homeContinueEntries({
   gatewaySessions?: GatewayAgentSessionsSnapshot;
   /** Sessions the gateway answered gone for (`goneSessionKey`); they are neither recents nor new rows. */
   goneSessions?: ReadonlySet<string>;
+  /**
+   * The conversations Home's dock is talking to, one per computer. Each is a
+   * row from the moment Home starts or targets it, before any listing or pane
+   * read has caught up: see {@link withHomeThreadRows}.
+   */
+  threads?: readonly HomeThreadTarget[];
   /** Suppress shortcuts represented elsewhere; Classic's entry-only cards keep this false. */
   connectionShortcutsElsewhere?: boolean;
 }): HomeContinueEntry[] {
@@ -492,6 +501,13 @@ export function homeContinueEntries({
       });
     }
   }
+  withHomeThreadRows(rows, threads ?? [], {
+    serverIds,
+    reachabilityByServer,
+    snapshots,
+    isGone,
+    panes: !connectionShortcutsElsewhere,
+  });
   // The panes the kept session rows run in, by the gateway's own account.
   const claimedPanes = new Set<string>();
   for (const row of rows) {
@@ -509,6 +525,101 @@ export function homeContinueEntries({
       return !pane || !claimedPanes.has(paneKey(pane.serverId, pane.paneId));
     })
     .sort((a, b) => b.atMs - a.atMs || continueKindRank(a) - continueKindRank(b));
+}
+
+/**
+ * Home's dock conversations, merged into the rows in place.
+ *
+ * A session or pane Home just started is the reply target at once, but the
+ * listing and the pane mirror only name it on their next read. Until then the
+ * target is its own row, under the key the listing (`goneSessionKey`) or the
+ * pane mirror (`homeServerRowKey`) will give it, so the read that catches up
+ * replaces it with the same card rather than adding a second one. A row that
+ * already stands for it is kept, ranked no older than the message Home sent
+ * it: what Home caused is activity, and the reader's own ranking of it does
+ * not drop back when the read lands. A pane is only stood in for while the
+ * mirror predates the target -- a newer one without it says it has gone.
+ */
+function withHomeThreadRows(
+  rows: HomeContinueEntry[],
+  threads: readonly HomeThreadTarget[],
+  {
+    serverIds,
+    reachabilityByServer,
+    snapshots,
+    isGone,
+    panes,
+  }: {
+    serverIds: readonly string[];
+    reachabilityByServer: Readonly<Record<string, ServerReachability | undefined>>;
+    snapshots: ServerAgentsIndex;
+    isGone: (serverId: string, asid: string, agentId: string) => boolean;
+    panes: boolean;
+  }
+): void {
+  for (const thread of threads) {
+    const { serverId } = thread;
+    if (!serverIds.includes(serverId) || reachabilityByServer[serverId] === 'offline') continue;
+    if (thread.kind === 'task') continue;
+    const index = rows.findIndex((row) => {
+      if (thread.kind === 'pane') {
+        const pane = continueRowPane(row);
+        return pane?.serverId === serverId && pane.paneId === thread.paneId;
+      }
+      const target = homeContinueTarget(row.destination);
+      return (
+        target?.kind === 'agent-session' &&
+        target.serverId === serverId &&
+        target.asid === thread.asid
+      );
+    });
+    const existing = rows[index];
+    if (existing) {
+      const atMs = Math.max(existing.atMs, thread.sentAtMs ?? 0);
+      const title = existing.title || thread.title;
+      if (atMs !== existing.atMs || title !== existing.title)
+        rows[index] = { ...existing, atMs, title };
+      continue;
+    }
+    const atMs = thread.sentAtMs ?? thread.setAtMs;
+    if (thread.kind === 'session') {
+      const agentId = thread.agentId;
+      if (isGone(serverId, thread.asid, agentId ?? '')) continue;
+      rows.push({
+        key: agentId
+          ? goneSessionKey(serverId, thread.asid, agentId)
+          : goneSessionKey(serverId, thread.asid),
+        title: thread.title,
+        atMs,
+        destination: {
+          type: 'agent-session',
+          target: {
+            kind: 'agent-session',
+            serverId,
+            sessionId: thread.sessionId,
+            directory: thread.directory ?? '',
+            asid: thread.asid,
+            ...(agentId ? { agentId } : {}),
+          },
+        },
+      });
+      continue;
+    }
+    if (!panes) continue;
+    const snapshot = snapshots[serverId];
+    const current =
+      snapshot?.serverId === serverId &&
+      snapshot.checkedAtMs >= thread.setAtMs &&
+      (!thread.sessionId || !snapshot.sessionId || snapshot.sessionId === thread.sessionId);
+    if (current) continue;
+    rows.push({
+      key: homeServerRowKey(serverId, { instanceId: thread.instanceId, paneId: thread.paneId }),
+      title: thread.title,
+      atMs,
+      ...(thread.agentLabel ? { agentLabel: thread.agentLabel } : {}),
+      destination: { type: 'pane', serverId, paneId: thread.paneId },
+    });
+  }
 }
 
 type GatewayTerminalTarget = Extract<HomeTarget, { kind: 'gateway-terminal' }>;
