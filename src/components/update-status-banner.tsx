@@ -172,9 +172,24 @@ export function UpdateStatusBanner() {
                 </Text>
               ) : null}
               {releaseNotes ? (
-                <View testID="update-release-notes" style={styles.notes}>
+                // The notes get a box of their own with a fixed ceiling and a
+                // visible scrollbar, so a long changelog scrolls inside it and
+                // the size line above and the actions below stay in view.
+                <ScrollView
+                  testID="update-release-notes"
+                  nestedScrollEnabled
+                  persistentScrollbar
+                  showsVerticalScrollIndicator
+                  style={[
+                    styles.notesBox,
+                    {
+                      maxHeight: Math.max(120, Math.round(height * 0.32)),
+                      borderColor: theme.colors.border,
+                    },
+                  ]}
+                  contentContainerStyle={styles.notes}>
                   <UpdateReleaseNotes notes={releaseNotes} bundled={false} />
-                </View>
+                </ScrollView>
               ) : (
                 <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.identifier}>
                   {t`No changelog was provided for this update.`}
@@ -266,7 +281,8 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingRight: 10,
   },
-  notes: { paddingHorizontal: 10, paddingBottom: 8 },
+  notesBox: { flexGrow: 0, borderWidth: StyleSheet.hairlineWidth, borderRadius: 12 },
+  notes: { paddingHorizontal: 10, paddingVertical: 8 },
   progressRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8 },
   transfer: { flex: 1 },
 });
