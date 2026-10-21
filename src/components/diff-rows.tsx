@@ -574,6 +574,7 @@ const ShowMoreRow = memo(function ShowMoreRow({
     // asking for the rest of a six-thousand-line file is a decision, not a
     // side effect of having scrolled.
     <PressableScale
+      testID={`git-diff-show-more-${row.path}`}
       accessibilityRole="button"
       accessibilityLabel={t`Show more`}
       accessibilityState={{ busy: row.loading }}

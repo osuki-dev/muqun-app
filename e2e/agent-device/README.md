@@ -76,6 +76,15 @@ and checked state remain assertions, not screenshots. Native selectors perform
 mutations and reject ambiguous controls. Prefer semantic controls; coordinates
 are reserved for canvas gestures and bounded drags within observed content.
 
+Target controls by `testID`, not by accessibility label. agent-device picks an
+iOS snapshot backend per capture: the XCTest tree backend often moves a
+control's label onto a wider container and leaves the control with only its
+id, while private AX keeps the label on the control and hides its children.
+Text targets are for static copy, or for asserting a label alongside an id.
+`scroll down|up <amount> --in-sheet` drags inside an iPad form sheet, where
+the native scroll does not reliably move the list; other devices scroll the
+viewport by the same amount.
+
 The full gate is the device acceptance and holds only core flows: a flow stays
 only if it proves a core user path or a contract that unit tests cannot. Its 20
 flows cover the demo tour, manual pairing, SSH, terminal interactions, the soft

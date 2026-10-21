@@ -19,7 +19,7 @@ scroll down --pixels 300
 #
 # Raw selectors rather than manifest targets: closing the viewer is addressed by
 # accessibility label, and the manifest's target vocabulary is text and id only.
-press "text=\"Open files\""
+press "id=terminal-open-files"
 wait stable 400 5000
 scroll down --pixels 350
 press "text=\"Open muqun.muqun-theme.json\""

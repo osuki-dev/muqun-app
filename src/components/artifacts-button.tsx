@@ -61,6 +61,7 @@ export function ArtifactsButton({
 
   return (
     <PressableScale
+      testID="terminal-open-files"
       accessibilityLabel={t`Open files`}
       feedback="selection"
       pressedScale={0.9}
