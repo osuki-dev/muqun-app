@@ -24,14 +24,15 @@ import {
 } from '../home-stage-geometry';
 import { stageClearFraction, stageComposition } from '../home-stage-layers';
 import {
-  initialStageDegrade,
+  createStageFrameBudget,
+  lowestStageQuality,
   recordStageFrame,
   stageEffects,
   stageIdleInterval,
   STAGE_AMBIENT_IDLE_MS,
   stepStageSpring,
   STAGE_CARD_SPRING,
-  type StageDegradeState,
+  type StageFrameBudget,
 } from '../home-stage-motion';
 import {
   stagePanels,
@@ -504,47 +505,82 @@ describe('frame pacing', () => {
     expect(Math.abs(spring.value)).toBeLessThan(2);
   });
 
-  const run = (state: StageDegradeState, frameMs: number, untilMs: number, continuous = true) => {
-    let now = 0;
-    let next = state;
-    while (now < untilMs) {
-      now += frameMs;
-      next = recordStageFrame(next, { nowMs: now, frameMs, continuous });
+  /** Frames of `frameMs` from `fromMs` until `untilMs`; returns the last quality. */
+  const run = (
+    budget: StageFrameBudget,
+    frameMs: number | ((index: number) => number),
+    untilMs: number,
+    fromMs = 0
+  ) => {
+    let now = fromMs;
+    let quality = budget.quality;
+    for (let index = 0; now < untilMs; index += 1) {
+      const ms = typeof frameMs === 'number' ? frameMs : frameMs(index);
+      now += ms;
+      quality = recordStageFrame(budget, { nowMs: now, frameMs: ms });
     }
-    return next;
+    return quality;
   };
 
-  test('steps down one rung after two seconds below 45 fps while moving', () => {
-    expect(run(initialStageDegrade(), 30, 1500).quality).toBe('full');
-    expect(run(initialStageDegrade(), 30, 2600).quality).toBe('no-particles');
-    expect(run(initialStageDegrade(), 16, 10_000).quality).toBe('full');
+  test('steps down one rung when a two-second window runs over budget', () => {
+    expect(run(createStageFrameBudget(), 30, 1900)).toBe('full');
+    expect(run(createStageFrameBudget(), 30, 2100)).toBe('reduced');
+    expect(run(createStageFrameBudget(), 1000 / 60, 20_000)).toBe('full');
   });
 
-  test('idle and paused frames are not evidence', () => {
-    expect(run(initialStageDegrade(), 50, 10_000, false).quality).toBe('full');
-    const pause = recordStageFrame(initialStageDegrade(), {
-      nowMs: 0,
-      frameMs: 900,
-      continuous: true,
-    });
-    expect(pause.slowSinceMs).toBeNull();
+  test('judges the 90th percentile, not the average', () => {
+    // One frame in five misses vsync: the average is fine, the reader sees stutter.
+    expect(run(createStageFrameBudget(), (i) => (i % 5 === 0 ? 34 : 16), 2100)).toBe('reduced');
+    // One in twenty is a hiccup, not a trend.
+    expect(run(createStageFrameBudget(), (i) => (i % 20 === 0 ? 40 : 16), 10_000)).toBe('full');
   });
 
-  test('the capped rung is judged against its own pace and ends static', () => {
-    const capped = initialStageDegrade('capped');
-    expect(run(capped, 33, 6000).quality).toBe('capped');
-    expect(run(capped, 45, 2600).quality).toBe('static');
-    expect(run(initialStageDegrade('static'), 200, 6000).quality).toBe('static');
+  test('stalls, pauses and sparse frames are not evidence', () => {
+    const budget = createStageFrameBudget();
+    expect(recordStageFrame(budget, { nowMs: 0, frameMs: 900 })).toBe('full');
+    // Slow frames in short bursts with pauses between never fill a window.
+    for (let burst = 0; burst < 10; burst += 1) run(budget, 30, burst * 3000 + 900, burst * 3000);
+    expect(budget.quality).toBe('full');
+    // Too few frames to judge.
+    expect(run(createStageFrameBudget(), 200, 5000)).toBe('full');
   });
 
-  test('effects drop the motes first, then the sheen; Reduce Motion stills everything', () => {
+  test('never climbs back, and ends static', () => {
+    const budget = createStageFrameBudget();
+    run(budget, 30, 2100);
+    expect(run(budget, 1000 / 60, 20_000, 2100)).toBe('reduced');
+    expect(run(budget, 30, 29_000, 20_000)).toBe('static');
+    expect(run(budget, 1000 / 60, 40_000, 29_000)).toBe('static');
+    expect(lowestStageQuality('reduced', 'full')).toBe('reduced');
+    expect(lowestStageQuality('reduced', 'low')).toBe('low');
+  });
+
+  test('each rung costs less; Reduce Motion stills everything', () => {
     const gpu = { gpuAvailable: true, reducedMotion: false };
-    expect(stageEffects('full', gpu)).toMatchObject({ particles: true, shimmer: true });
-    expect(stageEffects('no-particles', gpu)).toMatchObject({ particles: false, shimmer: true });
-    expect(stageEffects('capped', gpu)).toMatchObject({
+    expect(stageEffects('full', gpu)).toMatchObject({
+      particles: true,
+      particleShare: 1,
+      reflections: true,
+      shimmer: true,
+      maxDpr: 1.5,
+      frameIntervalMs: 0,
+    });
+    expect(stageEffects('reduced', gpu)).toMatchObject({
+      particles: true,
+      particleShare: 0.5,
+      reflections: false,
+      shimmer: true,
+      maxDpr: 1.25,
+      frameIntervalMs: 0,
+    });
+    expect(stageEffects('low', gpu)).toMatchObject({
+      particles: false,
+      reflections: false,
       shimmer: false,
+      maxDpr: 1,
       frameIntervalMs: 1000 / 30,
     });
+    expect(stageEffects('full', gpu).glideIntervalMs).toBe(1000 / 30);
     expect(stageEffects('full', { gpuAvailable: false, reducedMotion: false }).gpu).toBe(false);
     expect(stageEffects('full', { gpuAvailable: true, reducedMotion: true })).toMatchObject({
       particles: true,

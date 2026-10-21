@@ -24,7 +24,8 @@
  *                   circuit traces are drawn behind the hero instead)
  *   6. panes     -- one frosted glass pane per computer in a cover-flow, each
  *                   with a status glow behind and a faint reflection below
- *                   (glows one instanced draw; panes and reflections another)
+ *                   (glows one instanced draw; panes and reflections another;
+ *                   the reflections only at full quality)
  *
  * Every layer is an unlit, textured plane: no lights, no shadows, no
  * environment, no MSAA (every edge is soft in its shader already). Layers 1,
@@ -203,6 +204,10 @@ export type StageFrameInput = {
   burst: number;
   /** Particles are on at this quality: the motes, or a theme's travelling particles. */
   motes: boolean;
+  /** The share of the particles drawn, 0..1. */
+  particleShare: number;
+  /** The panes' reflections. */
+  reflections: boolean;
   shimmer: boolean;
   /** The working pulse, the hero's bob and the motes' drift. */
   pulse: boolean;
@@ -782,6 +787,7 @@ export function createStageScene(): StageSceneHandle {
   const still = new Quaternion();
   const yAxis = new Vector3(0, 1, 0);
   const order: number[] = [];
+  let particleShare = 1;
 
   return {
     root,
@@ -876,6 +882,11 @@ export function createStageScene(): StageSceneHandle {
         heroBase.z
       );
       const effect = ambient.current;
+      if (input.particleShare !== particleShare) {
+        particleShare = input.particleShare;
+        moteGeometry.setDrawRange(0, Math.round(MOTE_COUNT * particleShare) * 6);
+        ambient.setShare(particleShare);
+      }
       motes.visible = input.motes && !effect;
       ambient.mesh.visible = effect !== null && (!effect.particles || input.motes);
       ambient.setTime(input.pulse ? timeS : 0);
@@ -894,8 +905,9 @@ export function createStageScene(): StageSceneHandle {
       const reflection = light ? 0.16 : 0.1;
       // Every reflection lies under every pane: reflections take the first slots.
       const count = order.length;
-      order.forEach((source, drawn) => {
-        const pane = input.panes[source]!;
+      const reflected = input.reflections;
+      for (let drawn = 0; drawn < count; drawn += 1) {
+        const pane = input.panes[order[drawn]!]!;
         const { look } = pane;
         const offline = look.tone === 'offline' || look.tone === 'unknown';
         const working = look.working && !offline;
@@ -913,15 +925,17 @@ export function createStageScene(): StageSceneHandle {
         rotation.setFromAxisAngle(yAxis, pane.yaw);
         const [x, y, z] = pane.position;
 
-        position.set(x, y - height * 0.78, z);
-        scale.set(pane.width, pane.width * 0.5, 1);
-        panes.setMatrixAt(drawn, scratch.compose(position, rotation, scale));
-        paneInfo.setXYZW(drawn, look.faceSlot, reflection, pane.side, 1);
-        paneEdge.setXYZW(drawn, status.r, status.g, status.b, offline ? 0.45 : 0.9);
-        paneSheen.setX(drawn, sheenAt);
-        paneStreaks.setX(drawn, working ? look.streaks : 0);
+        if (reflected) {
+          position.set(x, y - height * 0.78, z);
+          scale.set(pane.width, pane.width * 0.5, 1);
+          panes.setMatrixAt(drawn, scratch.compose(position, rotation, scale));
+          paneInfo.setXYZW(drawn, look.faceSlot, reflection, pane.side, 1);
+          paneEdge.setXYZW(drawn, status.r, status.g, status.b, offline ? 0.45 : 0.9);
+          paneSheen.setX(drawn, sheenAt);
+          paneStreaks.setX(drawn, working ? look.streaks : 0);
+        }
 
-        const slot = count + drawn;
+        const slot = reflected ? count + drawn : drawn;
         position.set(x, y, z);
         scale.set(pane.width, pane.width, 1);
         panes.setMatrixAt(slot, scratch.compose(position, rotation, scale));
@@ -939,8 +953,8 @@ export function createStageScene(): StageSceneHandle {
           glowColor.b,
           (1 - pane.side * 0.6) * (working ? pulseNow : 1) * (offline ? 0.4 : 1)
         );
-      });
-      panes.count = count * 2;
+      }
+      panes.count = reflected ? count * 2 : count;
       glows.count = count;
       panes.instanceMatrix.needsUpdate = true;
       glows.instanceMatrix.needsUpdate = true;

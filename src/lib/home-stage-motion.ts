@@ -46,66 +46,112 @@ export function stageSpringAtRest(spring: StageSpring, target: number): boolean 
 // -- Degrade policy ---------------------------------------------------------
 
 /**
- * The ladder the stage steps down when it cannot hold its frame rate:
- * the motes go first, then the glass sheen with a 30 fps cap, then the
- * static 2.5D composition (§5, §11.7). It never climbs back within a visit:
- * a device that was too slow once will be again, and flapping costs more
- * than it saves.
+ * The ladder the stage steps down when it cannot hold its frame budget:
+ * `reduced` halves the particles, drops the reflections and renders at a
+ * lower pixel ratio; `low` drops the particles and the glass sheen, renders
+ * at 1x and caps every frame at 30 fps; `static` is the 2.5D composition
+ * (§5, §11.7). It never climbs back within a session: a device that ran hot
+ * once will again, and flapping costs more than it saves.
  */
-export type StageQuality = 'full' | 'no-particles' | 'capped' | 'static';
-const LADDER: readonly StageQuality[] = ['full', 'no-particles', 'capped', 'static'];
+export type StageQuality = 'full' | 'reduced' | 'low' | 'static';
+const LADDER: readonly StageQuality[] = ['full', 'reduced', 'low', 'static'];
 
-/** A frame slower than 45 fps counts against the stage. */
-export const STAGE_SLOW_FRAME_MS = 1000 / 45;
-/** ...when the average stays that slow for this long while moving. */
-export const STAGE_SLOW_WINDOW_MS = 2000;
+function lowerStageQuality(quality: StageQuality): StageQuality {
+  return LADDER[Math.min(LADDER.length - 1, LADDER.indexOf(quality) + 1)]!;
+}
 
-export type StageDegradeState = {
+/** The lower of two rungs. */
+export function lowestStageQuality(a: StageQuality, b: StageQuality): StageQuality {
+  return LADDER.indexOf(a) >= LADDER.indexOf(b) ? a : b;
+}
+
+/** A frame slower than this counts against the stage (about 45 fps). */
+export const STAGE_FRAME_BUDGET_MS = 22;
+/** ...when the 90th percentile of a window this long is over it. */
+export const STAGE_BUDGET_WINDOW_MS = 2000;
+/** A window needs this many frames to judge: a few slow frames are not a trend. */
+const MIN_SAMPLES = 20;
+/** A pause this long between measured frames starts a new window. */
+const GAP_MS = 1000;
+/** A frame this long measured a stall (a GC, backgrounding), not the device. */
+const STALL_MS = 250;
+const CAPACITY = 256;
+
+/**
+ * The current window's frame times, kept in place so that recording a frame
+ * never allocates. Owned by one scene and advanced by `recordStageFrame`.
+ */
+export type StageFrameBudget = {
   quality: StageQuality;
-  /** Smoothed frame time over moving frames, ms. */
-  averageMs: number;
-  /** When the average first went slow in the current run, or null. */
-  slowSinceMs: number | null;
+  samples: Float32Array;
+  count: number;
+  /** When the current window started, or null between windows. */
+  windowStartMs: number | null;
+  lastMs: number;
 };
 
-export function initialStageDegrade(quality: StageQuality = 'full'): StageDegradeState {
-  return { quality, averageMs: 1000 / 60, slowSinceMs: null };
+export function createStageFrameBudget(quality: StageQuality = 'full'): StageFrameBudget {
+  return { quality, samples: new Float32Array(CAPACITY), count: 0, windowStartMs: null, lastMs: 0 };
+}
+
+/** The 90th percentile of the first `count` values; sorts them in place. */
+export function stageP90(values: Float32Array, count: number): number {
+  if (count <= 0) return 0;
+  const sorted = values.subarray(0, count).sort();
+  return sorted[Math.min(count - 1, Math.floor(count * 0.9))]!;
 }
 
 /**
- * Record one frame. Only frames rendered back to back while something moves
- * are evidence: idle breathing runs at 20 fps on purpose, and the first frame
- * after a pause measures the pause, not the device.
+ * Record one measured frame and return the quality to draw at. Only frames
+ * that measure the device are passed in: a frame's own work, or the gap
+ * between frames drawn back to back at full rate. Idle frames run slowly on
+ * purpose and say nothing. When a window of `STAGE_BUDGET_WINDOW_MS` closes
+ * with its 90th percentile over `STAGE_FRAME_BUDGET_MS`, the stage drops one
+ * rung and starts measuring the new rung afresh.
  */
 export function recordStageFrame(
-  state: StageDegradeState,
-  frame: { nowMs: number; frameMs: number; continuous: boolean }
-): StageDegradeState {
-  if (state.quality === 'static') return state;
-  if (!frame.continuous || !(frame.frameMs > 0) || frame.frameMs > 250)
-    return state.slowSinceMs === null ? state : { ...state, slowSinceMs: null };
-  // A 30 fps cap paces frames at 33 ms by design; judge it against its own pace.
-  const budget = state.quality === 'capped' ? 1000 / 27 : STAGE_SLOW_FRAME_MS;
-  const averageMs = state.averageMs * 0.85 + frame.frameMs * 0.15;
-  if (averageMs <= budget) return { ...state, averageMs, slowSinceMs: null };
-  const slowSinceMs = state.slowSinceMs ?? frame.nowMs;
-  if (frame.nowMs - slowSinceMs < STAGE_SLOW_WINDOW_MS) return { ...state, averageMs, slowSinceMs };
-  const next = LADDER[Math.min(LADDER.length - 1, LADDER.indexOf(state.quality) + 1)]!;
-  return { quality: next, averageMs: 1000 / 60, slowSinceMs: null };
+  budget: StageFrameBudget,
+  frame: { nowMs: number; frameMs: number }
+): StageQuality {
+  if (budget.quality === 'static') return budget.quality;
+  if (!(frame.frameMs > 0) || frame.frameMs > STALL_MS) return budget.quality;
+  if (budget.windowStartMs === null || frame.nowMs - budget.lastMs > GAP_MS) {
+    budget.windowStartMs = frame.nowMs;
+    budget.count = 0;
+  }
+  budget.lastMs = frame.nowMs;
+  if (budget.count < CAPACITY) {
+    budget.samples[budget.count] = frame.frameMs;
+    budget.count += 1;
+  }
+  if (frame.nowMs - budget.windowStartMs < STAGE_BUDGET_WINDOW_MS) return budget.quality;
+  if (budget.count >= MIN_SAMPLES && stageP90(budget.samples, budget.count) > STAGE_FRAME_BUDGET_MS)
+    budget.quality = lowerStageQuality(budget.quality);
+  budget.windowStartMs = null;
+  budget.count = 0;
+  return budget.quality;
 }
 
 export type StageEffects = {
   /** Whether the WebGPU scene runs at all; false draws the static 2.5D stage. */
   gpu: boolean;
-  /** The floating motes; still under Reduce Motion, but still drawn. */
+  /** The motes or a theme's ambient particles; still under Reduce Motion, but still drawn. */
   particles: boolean;
+  /** The share of the particles drawn. */
+  particleShare: number;
+  /** The panes' faint reflections below them. */
+  reflections: boolean;
   /** The sheen that tilt slides across the glass panes. */
   shimmer: boolean;
   /** The working pulse, the hero's bob and the motes' drift. Off under Reduce Motion. */
   pulse: boolean;
   tilt: boolean;
-  /** Minimum milliseconds between frames while moving. */
+  /** The highest pixel ratio the scene renders at. */
+  maxDpr: number;
+  /** Minimum milliseconds between frames while a finger, the cover-flow or a dive moves it. */
   frameIntervalMs: number;
+  /** ...while only something indirect moves: tilt easing in, a completion's flare. */
+  glideIntervalMs: number;
   /** Idle frame interval (20 fps) for the pulse, bob and drift, or null when nothing moves. */
   idleIntervalMs: number | null;
 };
@@ -117,13 +163,18 @@ export function stageEffects(
 ): StageEffects {
   const gpu = options.gpuAvailable && quality !== 'static';
   const calm = options.reducedMotion;
+  const low = quality === 'low';
   return {
     gpu,
-    particles: gpu && quality === 'full',
-    shimmer: gpu && quality !== 'capped',
+    particles: gpu && !low,
+    particleShare: quality === 'full' ? 1 : 0.5,
+    reflections: gpu && quality === 'full',
+    shimmer: gpu && !low,
     pulse: !calm,
     tilt: !calm,
-    frameIntervalMs: quality === 'capped' ? 1000 / 30 : 0,
+    maxDpr: quality === 'full' ? 1.5 : quality === 'reduced' ? 1.25 : 1,
+    frameIntervalMs: low ? 1000 / 30 : 0,
+    glideIntervalMs: 1000 / 30,
     idleIntervalMs: gpu && !calm ? 50 : null,
   };
 }

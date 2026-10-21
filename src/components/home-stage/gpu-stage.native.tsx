@@ -9,6 +9,7 @@ import { MapErrorBoundary } from '@/components/computer-map/error-boundary';
 import { useLatestReader } from '@/hooks/use-render-refs';
 import { createSceneLifetimes } from '@/lib/scene-lifetime';
 import { STAGE_CAMERA_FOV } from '@/lib/home-stage-geometry';
+import { stageEffects } from '@/lib/home-stage-motion';
 import { StageRuntime } from './stage-runtime';
 import type { StageSceneProps } from './types';
 
@@ -35,6 +36,7 @@ export default function GpuStage(props: StageSceneProps) {
   );
   const fail = useEffectEvent(() => props.onError());
   const isPaused = useLatestReader(props.paused);
+  const currentQuality = useLatestReader(props.quality);
 
   useEffect(() => {
     if (!size.width || !size.height || !canvas.current) return;
@@ -54,12 +56,15 @@ export default function GpuStage(props: StageSceneProps) {
         try {
           await next.configure({
             size: { ...size, top: 0, left: 0 },
-            // 1.5 rather than 2: about 44% fewer pixels to shade every frame.
-            // The panes' text is a 448 x 280 texture per face, and a resting
-            // pane (about 280 pt wide) covers about 420 px at 1.5x -- one
-            // texel per pixel, where 2x only magnified the same texels. The
-            // texture sets the text's sharpness; MSAA keeps the edges clean.
-            dpr: Math.min(PixelRatio.get(), 1.5),
+            // At most 1.5 rather than 2: about 44% fewer pixels to shade every
+            // frame. The panes' text is a 448 x 280 texture per face, and a
+            // resting pane (about 280 pt wide) covers about 420 px at 1.5x --
+            // one texel per pixel, where 2x only magnified the same texels.
+            // A lower quality rung lowers it further (`StageRuntime`).
+            dpr: Math.min(
+              PixelRatio.get(),
+              stageEffects(currentQuality(), { gpuAvailable: true, reducedMotion: false }).maxDpr
+            ),
             frameloop: 'demand',
             // No real-time shadows. Fiber's boolean default asks for
             // PCFSoftShadowMap, which the WebGPU renderer warns it has removed.
@@ -113,7 +118,7 @@ export default function GpuStage(props: StageSceneProps) {
       },
       fail
     );
-  }, [size, isPaused]);
+  }, [size, isPaused, currentQuality]);
   useEffect(() => {
     renderLatest();
   }, [props]);

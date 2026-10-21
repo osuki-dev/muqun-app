@@ -55,6 +55,8 @@ export type StageAmbientLayer = {
   /** The effect's description, or null. */
   readonly current: StageAmbient | null;
   setAspect: (aspect: number) => void;
+  /** The share of the effect's instances drawn, 0..1: fewer on a lower quality rung. */
+  setShare: (share: number) => void;
   /** The ambient clock, in seconds; frozen by the caller under Reduce Motion. */
   setTime: (seconds: number) => void;
   dispose: () => void;
@@ -170,6 +172,12 @@ export function createStageAmbient(): StageAmbientLayer {
   mesh.count = 0;
   mesh.renderOrder = STAGE_AMBIENT_MID_ORDER;
   let current: StageAmbient | null = null;
+  let configured = 0;
+  let share = 1;
+  // Particles are spread at random, so any prefix of them is an even thinning.
+  // A composed effect (a bloom, traces) is drawn whole or not at all.
+  const drawnCount = () =>
+    current?.particles ? Math.max(1, Math.round(configured * share)) : configured;
 
   return {
     mesh,
@@ -178,6 +186,7 @@ export function createStageAmbient(): StageAmbientLayer {
       if (!ambient || ambient.instances.length === 0) {
         mesh.visible = false;
         mesh.count = 0;
+        configured = 0;
         return;
       }
       const count = Math.min(STAGE_AMBIENT_CAPACITY, ambient.instances.length);
@@ -202,13 +211,18 @@ export function createStageAmbient(): StageAmbientLayer {
       uCycles.value = ambient.cyclesPerSecond;
       uMotion.value = MOTION_CODE[ambient.motion];
       uDirection.value.set(ambient.direction.x, ambient.direction.y);
-      mesh.count = count;
+      configured = count;
+      mesh.count = drawnCount();
       mesh.renderOrder =
         ambient.layer === 'back' ? STAGE_AMBIENT_BACK_ORDER : STAGE_AMBIENT_MID_ORDER;
       mesh.visible = true;
     },
     get current() {
       return current;
+    },
+    setShare(next) {
+      share = next;
+      if (configured > 0) mesh.count = drawnCount();
     },
     setAspect(aspect) {
       uAspect.value = aspect;
