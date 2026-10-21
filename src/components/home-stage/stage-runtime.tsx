@@ -109,6 +109,7 @@ export function StageRuntime(props: StageSceneProps) {
     hero,
     frame,
     faces,
+    facesVersion,
     ambientEffects,
     ambientColors,
     quality,
@@ -208,7 +209,7 @@ export function StageRuntime(props: StageSceneProps) {
   useEffect(() => {
     world.setFaces(faces);
     wake();
-  }, [world, faces]);
+  }, [world, faces, facesVersion]);
   // The theme's effect, by value: a new effect is a theme change and starts
   // the ambient window; the same effect after a parent re-render does nothing.
   const ambientKey = JSON.stringify([ambientEffects, ambientColors, mode, aspect]);

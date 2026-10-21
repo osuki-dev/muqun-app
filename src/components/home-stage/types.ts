@@ -58,6 +58,8 @@ export type StageSceneProps = {
   /** An edge-only wallpaper as the nearest layer. */
   frame: StagePicture | null;
   faces: Texture | null;
+  /** Bumped each time the faces are repainted, in place or into a new atlas. */
+  facesVersion: number;
   /**
    * The theme's ambient effect for the current light or dark variant, as the
    * 2D layer resolves it; null when it has none or theme effects are off.
