@@ -43,6 +43,18 @@ export function HomeComposerOptions({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const [showModes, setShowModes] = useState(false);
+  // One label column, as wide as the widest label on one line, so values
+  // start in one column in every language; past the cap a label ellipsizes.
+  const [labelWidths, setLabelWidths] = useState<Record<string, number>>({});
+  const [menuWidth, setMenuWidth] = useState(0);
+  const widestLabel = Math.max(0, ...Object.values(labelWidths));
+  const labelWidth =
+    widestLabel > 0
+      ? Math.min(
+          Math.ceil(widestLabel) + LABEL_SLACK,
+          menuWidth > 0 ? menuWidth * LABEL_MAX_SHARE : Infinity
+        )
+      : undefined;
   const rows = [
     {
       id: 'target',
@@ -61,7 +73,32 @@ export function HomeComposerOptions({
     { id: 'model', label: t`Model`, value: model, onPress: onModel },
   ];
   return (
-    <View testID="home-composer-options">
+    <View
+      testID="home-composer-options"
+      onLayout={(event) => setMenuWidth(event.nativeEvent.layout.width)}>
+      {/* Each label at its natural one-line width, measured out of sight. */}
+      <View
+        pointerEvents="none"
+        accessible={false}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        style={styles.measure}>
+        {rows.map((row) => (
+          <Text
+            key={row.id}
+            variant="bodySmall"
+            weight="regular"
+            numberOfLines={1}
+            onLayout={(event) => {
+              const { width } = event.nativeEvent.layout;
+              setLabelWidths((prev) =>
+                prev[row.id] === width ? prev : { ...prev, [row.id]: width }
+              );
+            }}>
+            {row.label}
+          </Text>
+        ))}
+      </View>
       {rows.map((row) => (
         <View key={row.id}>
           <PressableScale
@@ -75,8 +112,10 @@ export function HomeComposerOptions({
             <Text
               variant="bodySmall"
               weight="regular"
+              numberOfLines={1}
+              ellipsizeMode="tail"
               color={theme.colors.textMuted}
-              style={styles.label}>
+              style={[styles.label, labelWidth !== undefined && { width: labelWidth }]}>
               {row.label}
             </Text>
             <Text
@@ -125,6 +164,12 @@ export function HomeComposerOptions({
   );
 }
 
+/** Rounding room, so a label measured at its exact width never ellipsizes. */
+const LABEL_SLACK = 1;
+
+/** The most of the menu's width the label column may take. */
+const LABEL_MAX_SHARE = 0.45;
+
 const styles = StyleSheet.create({
   row: {
     minHeight: 44,
@@ -134,7 +179,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  label: { width: 74 },
+  label: { flexShrink: 0 },
+  measure: { position: 'absolute', top: 0, left: 0, opacity: 0, alignItems: 'flex-start' },
   value: { flex: 1, minWidth: 0 },
   mode: { minHeight: 44, paddingVertical: 10, paddingHorizontal: 26 },
 });

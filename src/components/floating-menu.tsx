@@ -58,13 +58,9 @@ export function FloatingMenu({
   );
 }
 
-/** The menu's own inset from the dock edge; a width cap subtracts it on both sides. */
-export const FLOATING_MENU_GUTTER = 12;
-
 const styles = StyleSheet.create({
   menu: {
     alignSelf: 'flex-start',
-    marginHorizontal: FLOATING_MENU_GUTTER,
     marginBottom: 7,
     borderRadius: appChrome.radius.popover,
     borderCurve: 'continuous',

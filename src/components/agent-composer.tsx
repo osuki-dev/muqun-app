@@ -52,7 +52,7 @@ import { AgentRevertPlate } from '@/components/agent-revert-plate';
 import { AgentUnreadDot } from '@/components/agent-unread-dot';
 import { TerminalComposer } from '@/components/terminal-composer';
 import { AttachmentMenu } from '@/components/attachment-menu';
-import { FLOATING_MENU_GUTTER, FloatingMenu } from '@/components/floating-menu';
+import { FloatingMenu } from '@/components/floating-menu';
 import { AgentModeMenu } from '@/components/agent-mode-menu';
 import { AttachmentStrip } from '@/components/attachment-strip';
 import { AttachmentThumbnailRow } from '@/components/attachment-thumbnail-row';
@@ -1518,8 +1518,12 @@ export const AgentComposer = memo(function AgentComposer({
   const safeAreaFoot = flushField && keyboardHeight === 0 ? bottomInset : 0;
   const dockFoot = safeAreaFoot + (outerInsets?.bottom ?? 0);
   const [surfaceHeight, setSurfaceHeight] = useState(0);
-  const [surfaceWidth, setSurfaceWidth] = useState(0);
+  const [surfaceLeft, setSurfaceLeft] = useState(0);
   const [inputRowHeight, setInputRowHeight] = useState(0);
+  const [inputRowLeft, setInputRowLeft] = useState(0);
+  const [inputRowWidth, setInputRowWidth] = useState(0);
+  /** The field's left edge in the dock, where the toolbar menus start. */
+  const fieldLeft = surfaceLeft + inputRowLeft;
   const [compactionRowHeight, setCompactionRowHeight] = useState(0);
   const compactionClearance = compaction ? compactionRowHeight : 0;
   const [voiceActive, setVoiceActive] = useState(false);
@@ -1635,14 +1639,16 @@ export const AgentComposer = memo(function AgentComposer({
         It used to sit above the whole dock -- session strip, chips row, input
         -- which on a busy composer put it some five hundred points north of
         the control it belongs to, pointing at nothing. It is anchored to the
-        input row's left edge instead, one gap above it.
+        input row's left edge instead, one gap above it, its left edge on the
+        field's whatever the dock's own inset (none on Home, a bar's inset or
+        the sheet's gutter elsewhere).
       */}
       {attachmentMenuOpen ? (
         <View
           pointerEvents="box-none"
           style={[
             styles.attachmentAnchor,
-            { bottom: inputRowHeight + dockBottomPadding + ATTACHMENT_MENU_GAP },
+            { left: fieldLeft, bottom: inputRowHeight + dockBottomPadding + ATTACHMENT_MENU_GAP },
           ]}>
           <AttachmentMenu onSelect={chooseAttachmentSource} textColor={chromeText} />
         </View>
@@ -1650,22 +1656,18 @@ export const AgentComposer = memo(function AgentComposer({
 
       {/* The toolbar's other menu (Home's task options), in the same place
           and card. Wider, so a value such as a model and its effort fits on
-          its row, but never to the dock's edges; and bounded by the room
+          its row, but never past the field's right edge; and bounded by the room
           above the keyboard, scrolling inside rather than under the header. */}
       {toolbarMenu && toolbarMenuOpen ? (
         <View
           pointerEvents="box-none"
           style={[
             styles.attachmentAnchor,
-            { bottom: inputRowHeight + dockBottomPadding + ATTACHMENT_MENU_GAP },
+            { left: fieldLeft, bottom: inputRowHeight + dockBottomPadding + ATTACHMENT_MENU_GAP },
           ]}>
           <FloatingMenu
             testID={toolbarMenu.testID}
-            width={
-              surfaceWidth > 0
-                ? Math.min(surfaceWidth - 2 * FLOATING_MENU_GUTTER, TOOLBAR_MENU_MAX_WIDTH)
-                : undefined
-            }
+            width={inputRowWidth > 0 ? Math.min(inputRowWidth, TOOLBAR_MENU_MAX_WIDTH) : undefined}
             maxHeight={Math.max(POPUP_MIN_HEIGHT, popupMaxHeight - TOOLBAR_MENU_CLEARANCE)}>
             {toolbarMenu.content}
           </FloatingMenu>
@@ -1878,8 +1880,8 @@ export const AgentComposer = memo(function AgentComposer({
           takes no `onLayout` of its own. */}
       <View
         onLayout={(event) => {
-          const { height, width } = event.nativeEvent.layout;
-          setSurfaceWidth(width);
+          const { height, x } = event.nativeEvent.layout;
+          setSurfaceLeft(x);
           setSurfaceHeight(height);
         }}
         // Enclosing bars cast their shadow outside the clipped material.
@@ -2428,7 +2430,12 @@ export const AgentComposer = memo(function AgentComposer({
 
             {/* TerminalComposer reused for agent prompt */}
             <View
-              onLayout={(event) => setInputRowHeight(event.nativeEvent.layout.height)}
+              onLayout={(event) => {
+                const { height, width, x } = event.nativeEvent.layout;
+                setInputRowHeight(height);
+                setInputRowLeft(x);
+                setInputRowWidth(width);
+              }}
               // With a header the two are one plate, and the plate casts the shadow.
               style={
                 joinedHeader && fieldShadow
@@ -2629,10 +2636,9 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
-  // `left: 0` because the menu carries the dock's own 12pt gutter itself.
+  // `left` is the measured field edge, set at render time.
   attachmentAnchor: {
     position: 'absolute',
-    left: 0,
     zIndex: 2,
   },
   popupWrapper: {
