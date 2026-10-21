@@ -294,6 +294,30 @@ describe('the live strip', () => {
     expect(live.permissions).toEqual([]);
   });
 
+  test('timeline upserts keep the newest activity, never an older one', () => {
+    const upsert = (live: typeof EMPTY_HOME_THREAD_LIVE, updatedMs: number, text: string) =>
+      applyHomeThreadEvent(live, {
+        type: 'agent.timeline.upsert',
+        asid: 's',
+        seq: updatedMs,
+        items: [
+          {
+            id: `i${updatedMs}`,
+            message_id: 'm',
+            role: 'assistant',
+            ordinal: 0,
+            part: { type: 'text', text },
+            seq: updatedMs,
+            updated_ms: updatedMs,
+          },
+        ],
+      });
+    const live = upsert(EMPTY_HOME_THREAD_LIVE, 20, 'Fixing the parser.');
+    expect(live.activity).toEqual({ text: 'Fixing the parser.', atMs: 20 });
+    expect(upsert(live, 10, 'Reading.')).toBe(live);
+    expect(upsert(live, 30, 'Tests pass.').activity).toEqual({ text: 'Tests pass.', atMs: 30 });
+  });
+
   test('idle is never reported as done; a running task is working', () => {
     expect(homeThreadState({ live: { ...EMPTY_HOME_THREAD_LIVE, status: 'idle' } })).toBe('idle');
     expect(homeThreadState({ live: { ...EMPTY_HOME_THREAD_LIVE, status: 'busy' } })).toBe(

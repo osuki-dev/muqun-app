@@ -28,6 +28,7 @@ import {
 import type { AgentStatus } from '@/lib/herdr-entity';
 import type { ServerAgentsSnapshot } from '@/lib/server-agents';
 import type { TaskView } from '@/lib/task-ledger';
+import { sessionActivity } from '@/lib/stage-overlay';
 
 type ThreadBase = {
   serverId: string;
@@ -427,10 +428,10 @@ export type HomeThreadLive = {
   /** The pane's own screen shows the agent at work (a spinner, "esc to interrupt"). */
   paneBusy?: boolean;
   /**
-   * The agent's last words on that screen while it was at work
-   * (`paneAgentRead`), and when they were read; absent once it is not.
+   * A session's current activity, from its timeline (`sessionActivity`): its
+   * newest tool call or words, and when the engine last updated them.
    */
-  paneLine?: { text: string; atMs: number };
+  activity?: { text: string; atMs: number };
 };
 
 export const EMPTY_HOME_THREAD_LIVE: HomeThreadLive = { permissions: [], forms: [] };
@@ -444,7 +445,12 @@ export function homeThreadLiveFromSnapshot(snapshot: AgentSessionSnapshot): Home
     ...(info?.deleted ? { deleted: true } : {}),
     permissions: snapshot.permissions,
     forms: snapshot.forms,
+    ...withActivity(sessionActivity(snapshot.timeline)),
   };
+}
+
+function withActivity(activity: HomeThreadLive['activity']) {
+  return activity ? { activity } : {};
 }
 
 /** One event folded in, as the session screen folds it into its transcript. */
@@ -465,6 +471,12 @@ export function applyHomeThreadEvent(
     }
     case 'agent.status.changed':
       return { ...live, status: event.status };
+    case 'agent.timeline.upsert': {
+      const activity = sessionActivity(event.items);
+      if (!activity || (live.activity && activity.atMs < live.activity.atMs)) return live;
+      if (live.activity?.text === activity.text) return live;
+      return { ...live, activity };
+    }
     case 'agent.permission.pending':
       return live.permissions.some((request) => request.id === event.request.id)
         ? live

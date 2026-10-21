@@ -270,15 +270,9 @@ export function HomeThreadFeed({
           const seen = paneAgentRead(output);
           const store = useHomeThreadLive.getState();
           if (store.key === key) {
-            const { paneBusy, paneLine, ...rest } = store.live;
-            // What the agent says while at work is the Stage's progress line.
-            const line = seen.busy ? seen.line : undefined;
-            if ((paneBusy === true) !== seen.busy || paneLine?.text !== line)
-              store.publish(key, {
-                ...rest,
-                ...(seen.busy ? { paneBusy: true } : {}),
-                ...(line ? { paneLine: { text: line, atMs: Date.now() } } : {}),
-              });
+            const { paneBusy, ...rest } = store.live;
+            if ((paneBusy === true) !== seen.busy)
+              store.publish(key, { ...rest, ...(seen.busy ? { paneBusy: true } : {}) });
             else store.markLoaded(key);
           }
           followUp(seen);

@@ -1,9 +1,13 @@
 import { describe, expect, test } from 'bun:test';
 
-import type { FormRequest, PermissionRequest } from '../agent-protocol';
+import type { FormRequest, PermissionRequest, TimelineItem } from '../agent-protocol';
 import type { HomeAttentionSnapshot } from '../home-attention';
 import type { ServerAgent, ServerAgentsSnapshot } from '../server-agents';
+import type { GatewayAgentSessionsSnapshot } from '../home-continue';
 import {
+  sessionActivity,
+  STAGE_ACTIVITY_HOLD_MS,
+  stageActivitySubject,
   stageNeeds,
   stageProgress,
   stageSingleChoice,
@@ -238,14 +242,27 @@ describe('stageProgress', () => {
     ).toBeNull();
   });
 
-  test("the dock's pane line counts when it is newer", () => {
+  test("the followed agent's activity counts when it is newer, until its pane stops", () => {
+    const activity = { key: 'pane:p1', paneId: 'p1', text: 'Bash: bun test src', atMs: NOW - 100 };
     const line = stageProgress({
       tasks: [task('t1', { progress: 'running tests…', updatedMs: NOW - 4_000 })],
       panes: mirror([agent('p1')]),
-      paneLine: { paneId: 'p1', text: 'All 42 tests pass.', atMs: NOW - 100 },
+      activity,
       nowMs: NOW,
     });
-    expect(line).toMatchObject({ agentLabel: 'claude', text: 'All 42 tests pass.' });
+    expect(line).toMatchObject({
+      agentLabel: 'claude',
+      key: 'pane:p1',
+      text: 'Bash: bun test src',
+    });
+    expect(
+      stageProgress({
+        tasks: [],
+        panes: mirror([agent('p1', { status: 'idle' })]),
+        activity,
+        nowMs: NOW,
+      })
+    ).toBeNull();
   });
 });
 
@@ -281,5 +298,173 @@ describe('stageSubtitleStep', () => {
         nowMs: NOW,
       })
     ).toEqual({ kind: 'show' });
+  });
+});
+
+describe('stageActivitySubject', () => {
+  const listing = (
+    rows: { asid: string; status: 'busy' | 'idle'; updatedMs: number; paneId?: string }[]
+  ): GatewayAgentSessionsSnapshot => ({
+    serverId: SERVER,
+    sessionId: 'herdr',
+    observedAtMs: NOW - 2_000,
+    sessions: rows.map((row) => ({
+      asid: row.asid,
+      agentId: 'opencode',
+      title: row.asid,
+      directory: '/repo',
+      status: row.status,
+      updatedMs: row.updatedMs,
+      ...(row.paneId ? { terminal: { sessionId: 'herdr', paneId: row.paneId } } : {}),
+    })),
+  });
+
+  test('the most recently active working agent, not just the reply target', () => {
+    const subject = stageActivitySubject({
+      serverId: SERVER,
+      panes: mirror([agent('p1'), agent('p2', { status: 'idle' })], NOW - 30_000),
+      sessions: listing([
+        { asid: 's1', status: 'busy', updatedMs: NOW - 5_000 },
+        { asid: 's2', status: 'idle', updatedMs: NOW },
+      ]),
+      dock: { kind: 'pane', paneId: 'p1' },
+      activeAtMs: {},
+      nowMs: NOW,
+    });
+    expect(subject).toEqual({
+      kind: 'session',
+      key: 'session:s1',
+      sessionId: 'herdr',
+      asid: 's1',
+      agentId: 'opencode',
+      dock: false,
+    });
+  });
+
+  test('a pane whose screen this device saw change more recently wins', () => {
+    const subject = stageActivitySubject({
+      serverId: SERVER,
+      panes: mirror([agent('p1'), agent('p2')], NOW - 30_000),
+      sessions: listing([{ asid: 's1', status: 'busy', updatedMs: NOW - 5_000 }]),
+      activeAtMs: { 'pane:p2': NOW - 1_000 },
+      nowMs: NOW,
+    });
+    expect(subject).toMatchObject({ kind: 'pane', paneId: 'p2' });
+  });
+
+  test("between equals the dock's own goes first; a session in a pane is followed once", () => {
+    expect(
+      stageActivitySubject({
+        serverId: SERVER,
+        panes: mirror([agent('p1'), agent('p2')]),
+        dock: { kind: 'pane', paneId: 'p2' },
+        activeAtMs: {},
+        nowMs: NOW,
+      })
+    ).toMatchObject({ paneId: 'p2' });
+    expect(
+      stageActivitySubject({
+        serverId: SERVER,
+        panes: mirror([agent('p1')], NOW),
+        sessions: listing([{ asid: 's1', status: 'busy', updatedMs: NOW - 9_000, paneId: 'p1' }]),
+        activeAtMs: {},
+        nowMs: NOW,
+      })
+    ).toMatchObject({ kind: 'session', asid: 's1' });
+  });
+
+  test("the dock's live status outranks the listing; nothing working is nothing", () => {
+    const sessions = listing([{ asid: 's1', status: 'idle', updatedMs: NOW - 9_000 }]);
+    expect(
+      stageActivitySubject({
+        serverId: SERVER,
+        sessions,
+        dock: { kind: 'session', sessionId: 'herdr', asid: 's1', status: 'busy' },
+        activeAtMs: {},
+        nowMs: NOW,
+      })
+    ).toMatchObject({ asid: 's1', dock: true });
+    expect(
+      stageActivitySubject({
+        serverId: SERVER,
+        sessions: listing([{ asid: 's1', status: 'busy', updatedMs: NOW }]),
+        dock: { kind: 'session', sessionId: 'herdr', asid: 's1', status: 'idle' },
+        panes: mirror([agent('p1', { status: 'blocked' }), agent('p2', { hasAgent: false })]),
+        activeAtMs: {},
+        nowMs: NOW,
+      })
+    ).toBeNull();
+  });
+
+  test('the followed agent is held while its activity keeps changing, then let go', () => {
+    const input = {
+      serverId: SERVER,
+      panes: mirror([agent('p1'), agent('p2')], NOW - 30_000),
+      sessions: listing([{ asid: 's1', status: 'busy' as const, updatedMs: NOW - 1_000 }]),
+      current: 'pane:p1',
+      nowMs: NOW,
+    };
+    expect(
+      stageActivitySubject({ ...input, activeAtMs: { 'pane:p1': NOW - 10_000 } })
+    ).toMatchObject({ paneId: 'p1' });
+    expect(
+      stageActivitySubject({
+        ...input,
+        activeAtMs: { 'pane:p1': NOW - STAGE_ACTIVITY_HOLD_MS - 1 },
+      })
+    ).toMatchObject({ asid: 's1' });
+  });
+});
+
+describe('sessionActivity', () => {
+  const item = (id: string, updatedMs: number, part: TimelineItem['part'], role = 'assistant') =>
+    ({
+      id,
+      message_id: 'm1',
+      role,
+      ordinal: 0,
+      part,
+      seq: 1,
+      updated_ms: updatedMs,
+    }) as TimelineItem;
+  const tool = (name: string, extra: object) => ({
+    type: 'tool' as const,
+    id: name,
+    name,
+    input: {},
+    content: [],
+    metadata: {},
+    state: 'running' as const,
+    ...extra,
+  });
+
+  test('the newest assistant part: a tool call by its title or main input, or its last line', () => {
+    expect(
+      sessionActivity([
+        item('1', 1, { type: 'text', text: 'Looking at the parser.' }),
+        item('2', 2, tool('bash', { title: 'bun test src' })),
+      ])
+    ).toEqual({ text: 'Bash: bun test src', atMs: 2 });
+    expect(
+      sessionActivity([item('1', 3, tool('read', { input: { filePath: 'src/a.ts' } }))])
+    ).toEqual({ text: 'Read: src/a.ts', atMs: 3 });
+    expect(
+      sessionActivity([
+        item('1', 1, tool('bash', { title: 'bun test src' })),
+        item('2', 4, { type: 'text', text: 'Two tests fail.\n\nFixing the first now.\n' }),
+      ])
+    ).toEqual({ text: 'Fixing the first now.', atMs: 4 });
+  });
+
+  test("the reader's words, reasoning and empty parts are not its activity", () => {
+    expect(
+      sessionActivity([
+        item('1', 1, { type: 'text', text: 'Reading.' }),
+        item('2', 5, { type: 'text', text: 'please fix it' }, 'user'),
+        item('3', 6, { type: 'reasoning', text: 'hmm' }),
+        item('4', 7, { type: 'text', text: '   ' }),
+      ])
+    ).toEqual({ text: 'Reading.', atMs: 1 });
+    expect(sessionActivity([])).toBeUndefined();
   });
 });

@@ -7,10 +7,24 @@
  * up: no request without a source, no progress line nobody reported, and an
  * idle agent says nothing.
  */
-import type { FormRequest, PermissionRequest } from './agent-protocol';
+import type {
+  AgentRunStatus,
+  FormRequest,
+  PermissionRequest,
+  TimelineItem,
+  ToolPart,
+} from './agent-protocol';
+import { toolInputRecord } from './agent-tool-output';
+import type { GatewayAgentSessionsSnapshot } from './home-continue';
+import { isHiddenMuqunTool } from './internal-muqun-tools';
 import type { HomeAttentionSnapshot } from './home-attention';
 import { homeTargetAgentId } from './home-recents';
-import { isServerAgentsStale, type ServerAgent, type ServerAgentsSnapshot } from './server-agents';
+import {
+  isServerAgentsStale,
+  SERVER_AGENTS_STALE_AFTER_MS,
+  type ServerAgent,
+  type ServerAgentsSnapshot,
+} from './server-agents';
 import type { TaskView } from './task-ledger';
 
 type SessionTarget = HomeAttentionSnapshot['target'];
@@ -235,12 +249,16 @@ export type StageProgress = Asker & {
   atMs: number;
 };
 
-/** What the dock's pane conversation last showed of its agent at work. */
-export type StagePaneLineInput = {
-  paneId: string;
-  agentLabel?: string;
+/**
+ * What the followed agent is doing now (`stageActivitySubject`), as read off
+ * its screen or its session stream, and when it was read.
+ */
+export type StageActivityInput = Asker & {
+  key: string;
   text: string;
   atMs: number;
+  /** A pane agent's pane: the mirror can say it has stopped since. */
+  paneId?: string;
 };
 
 function clean(text: string | undefined): string | undefined {
@@ -250,15 +268,15 @@ function clean(text: string | undefined): string | undefined {
 
 /**
  * The most recently reported progress of an agent working on `serverId`:
- * a working ledger task's own progress line, or the dock's pane agent's last
- * words while its screen shows it at work. A task whose pane the fresh mirror
+ * a working ledger task's own progress line, or the followed agent's current
+ * activity (`activity`) while it works. A task whose pane the fresh mirror
  * shows idle or done is not working, whatever its last line said. Null when
  * nothing working reported anything.
  */
 export function stageProgress(input: {
   tasks: readonly TaskView[];
   panes?: ServerAgentsSnapshot;
-  paneLine?: StagePaneLineInput;
+  activity?: StageActivityInput;
   nowMs: number;
 }): StageProgress | null {
   const agents = freshAgents(input.panes, input.nowMs);
@@ -289,19 +307,213 @@ export function stageProgress(input: {
       atMs: task.updatedMs,
     });
   }
-  const paneLine = input.paneLine;
-  const paneText = clean(paneLine?.text);
-  if (paneLine && paneText) {
-    const pane = agents.find((agent) => agent.paneId === paneLine.paneId);
-    const label = pane?.agentLabel ?? paneLine.agentLabel;
+  const activity = input.activity;
+  const activityText = clean(activity?.text);
+  if (activity && activityText) {
+    const pane =
+      activity.paneId !== undefined
+        ? agents.find((agent) => agent.paneId === activity.paneId)
+        : undefined;
+    const label = pane?.agentLabel ?? activity.agentLabel;
     // The mirror has seen it stop since the screen was read.
     if (!pane || pane.status === 'working')
       consider({
         ...(label ? { agentLabel: label } : {}),
-        key: `pane:${paneLine.paneId}`,
-        text: paneText,
-        atMs: paneLine.atMs,
+        ...(activity.agentId ? { agentId: activity.agentId } : {}),
+        key: activity.key,
+        text: activityText,
+        atMs: activity.atMs,
       });
+  }
+  return best;
+}
+
+// -- Which agent the subtitle follows ----------------------------------------
+
+/** A working agent whose current activity the subtitle follows. */
+export type StageActivitySubject =
+  | { kind: 'pane'; key: string; paneId: string; agentLabel?: string }
+  | {
+      kind: 'session';
+      key: string;
+      sessionId: string;
+      asid: string;
+      agentId?: string;
+      /** The dock's own conversation: its live stream is already open. */
+      dock: boolean;
+    };
+
+/** The dock's conversation on this computer, with its stream's status when it is a session. */
+export type StageDockInput =
+  | { kind: 'session'; sessionId: string; asid: string; agentId?: string; status?: AgentRunStatus }
+  | { kind: 'pane'; paneId: string };
+
+/** The followed agent stays followed while its own activity changed this recently. */
+export const STAGE_ACTIVITY_HOLD_MS = 30_000;
+
+const RUNNING_SESSION: readonly AgentRunStatus[] = ['busy', 'retry'];
+
+/**
+ * The working agent on `serverId` the subtitle follows: the most recently
+ * active one, by what was reported of it -- a session's own update time, a
+ * pane's mirror check (or, sharper, when this device last saw its screen
+ * change, `activeAtMs`). Only working agents count: a pane the fresh mirror
+ * shows working with an agent and nothing asked, a session the gateway lists
+ * as running (the dock's own session by its live stream's status, which is
+ * newer). A session drawn in a pane is that pane's work, followed once, as a
+ * session. Between equals the dock's own conversation goes first.
+ *
+ * The agent already followed (`current`) is kept while it still works and its
+ * activity changed within `STAGE_ACTIVITY_HOLD_MS`, so two busy agents do not
+ * trade the line at every mirror refresh. Null when nothing works.
+ */
+export function stageActivitySubject(input: {
+  serverId: string;
+  panes?: ServerAgentsSnapshot;
+  sessions?: GatewayAgentSessionsSnapshot;
+  dock?: StageDockInput;
+  current?: string;
+  activeAtMs: Readonly<Record<string, number>>;
+  nowMs: number;
+}): StageActivitySubject | null {
+  const { serverId, dock, activeAtMs, nowMs } = input;
+  const ranked: { subject: StageActivitySubject; atMs: number; dock: boolean }[] = [];
+  const sessions =
+    input.sessions?.serverId === serverId &&
+    nowMs - input.sessions.observedAtMs <= SERVER_AGENTS_STALE_AFTER_MS
+      ? input.sessions
+      : undefined;
+  const sessionPanes = new Set<string>();
+  const dockSession = dock?.kind === 'session' ? dock : undefined;
+  const seenSessions = new Set<string>();
+  const addSession = (
+    session: { sessionId: string; asid: string; agentId?: string },
+    updatedMs: number
+  ) => {
+    const key = `session:${session.asid}`;
+    if (seenSessions.has(key)) return;
+    seenSessions.add(key);
+    const isDock = dockSession?.asid === session.asid;
+    ranked.push({
+      subject: {
+        kind: 'session',
+        key,
+        sessionId: session.sessionId,
+        asid: session.asid,
+        ...(session.agentId ? { agentId: session.agentId } : {}),
+        dock: isDock,
+      },
+      atMs: Math.max(updatedMs, activeAtMs[key] ?? 0),
+      dock: isDock,
+    });
+  };
+  // The dock's live stream says more recently than the listing whether it runs.
+  if (dockSession?.status !== undefined && RUNNING_SESSION.includes(dockSession.status))
+    addSession(
+      dockSession,
+      sessions?.sessions.find((row) => row.asid === dockSession.asid)?.updatedMs ?? 0
+    );
+  for (const session of sessions?.sessions ?? []) {
+    if (session.terminal) sessionPanes.add(session.terminal.paneId);
+    if (dockSession?.asid === session.asid && dockSession.status !== undefined) continue;
+    if (!RUNNING_SESSION.includes(session.status as AgentRunStatus)) continue;
+    addSession(
+      { sessionId: sessions!.sessionId, asid: session.asid, agentId: session.agentId },
+      session.updatedMs
+    );
+  }
+  const checkedAtMs = input.panes?.checkedAtMs ?? 0;
+  for (const agent of freshAgents(input.panes, nowMs)) {
+    if (!agent.hasAgent || agent.status !== 'working' || !agent.paneId) continue;
+    if (paneNeedsYou(agent) || sessionPanes.has(agent.paneId)) continue;
+    const key = `pane:${agent.paneId}`;
+    const isDock = dock?.kind === 'pane' && dock.paneId === agent.paneId;
+    ranked.push({
+      subject: {
+        kind: 'pane',
+        key,
+        paneId: agent.paneId,
+        ...(agent.agentLabel ? { agentLabel: agent.agentLabel } : {}),
+      },
+      atMs: Math.max(checkedAtMs, activeAtMs[key] ?? 0),
+      dock: isDock,
+    });
+  }
+  if (input.current) {
+    const held = ranked.find((row) => row.subject.key === input.current);
+    const changedAtMs = activeAtMs[input.current];
+    if (held && changedAtMs !== undefined && nowMs - changedAtMs <= STAGE_ACTIVITY_HOLD_MS)
+      return held.subject;
+  }
+  let best: (typeof ranked)[number] | undefined;
+  for (const row of ranked)
+    if (!best || row.atMs > best.atMs || (row.atMs === best.atMs && row.dock && !best.dock))
+      best = row;
+  return best?.subject ?? null;
+}
+
+// -- A session's activity, from its timeline ---------------------------------
+
+/** The longest activity line kept: the subtitle shows two lines of it. */
+const ACTIVITY_MAX = 280;
+
+function capitalized(name: string): string {
+  return name ? `${name[0]!.toUpperCase()}${name.slice(1)}` : name;
+}
+
+/** The argument a tool call reads as: its title, else its main input. */
+function toolArgument(part: ToolPart): string | undefined {
+  const title = clean(part.title);
+  if (title) return title;
+  const input = toolInputRecord(part.input);
+  for (const key of [
+    'command',
+    'filePath',
+    'file_path',
+    'path',
+    'pattern',
+    'url',
+    'query',
+    'description',
+  ]) {
+    const value = input?.[key];
+    if (typeof value === 'string' && clean(value)) return clean(value);
+  }
+  return undefined;
+}
+
+function capped(text: string): string {
+  return text.length > ACTIVITY_MAX ? `${text.slice(0, ACTIVITY_MAX - 1).trimEnd()}…` : text;
+}
+
+/**
+ * What a session agent is doing now, from its timeline: its newest assistant
+ * part -- a tool call as "Bash: bun test src", or its words as their last
+ * line. Reasoning, internal tools and empty parts say nothing; the newest
+ * part that says something wins (by update time, then order).
+ */
+export function sessionActivity(
+  items: readonly TimelineItem[]
+): { text: string; atMs: number } | undefined {
+  let best: { text: string; atMs: number } | undefined;
+  for (const item of items) {
+    if (item.role !== 'assistant') continue;
+    if (best && item.updated_ms < best.atMs) continue;
+    const { part } = item;
+    let text: string | undefined;
+    if (part.type === 'tool') {
+      if (isHiddenMuqunTool(part)) continue;
+      const argument = toolArgument(part);
+      text = argument ? `${capitalized(part.name)}: ${argument}` : capitalized(part.name);
+    } else if (part.type === 'text') {
+      text = part.text
+        .split('\n')
+        .map((line) => clean(line))
+        .filter((line): line is string => Boolean(line))
+        .at(-1);
+    }
+    if (!text) continue;
+    best = { text: capped(text), atMs: item.updated_ms };
   }
   return best;
 }
