@@ -148,12 +148,6 @@ msgstr "{0} ข้อความในบริบท"
 msgid "{0} more models"
 msgstr "อีก {0} โมเดล"
 
-#. placeholder {0}: filtered.length
-#. placeholder {1}: entries.length
-#: src/components/dev-icon-gallery.tsx
-msgid "{0} of {1} icons · development only"
-msgstr "ไอคอน {0} จาก {1} · สำหรับการพัฒนาเท่านั้น"
-
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
 msgid "{0} of {limitLabel} tokens the model can hold"
@@ -455,10 +449,6 @@ msgstr "อีก +{overflow} รายการ"
 #: src/hooks/use-task-age.ts
 msgid "<1m"
 msgstr "<1 นาที"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "0 speed pauses motion. Theme default restores the theme."
-msgstr "ความเร็ว 0 จะหยุดการเคลื่อนไหว ค่าเริ่มต้นของธีมจะคืนค่าเอฟเฟกต์"
 
 #: src/components/settings-storage.tsx
 msgid "10 days"
@@ -957,10 +947,6 @@ msgstr "อนุมัติทุกการกระทำอัตโนม
 msgid "Auto-detect"
 msgstr "ตรวจหาอัตโนมัติ"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Automatic"
-msgstr "อัตโนมัติ"
-
 #: src/components/settings-storage.tsx
 msgid "Automatic cache cleanup"
 msgstr "ล้างแคชอัตโนมัติ"
@@ -1080,10 +1066,6 @@ msgstr "สาขาหรือคอมมิต (ไม่บังคับ)
 #: src/components/agent-worktree-sheet.tsx
 msgid "Branch to start from"
 msgstr "สาขาที่ใช้เป็นจุดเริ่ม"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Brand marks and working indicator"
-msgstr "เครื่องหมายแบรนด์และตัวบ่งชี้การทำงาน"
 
 #. placeholder {0}: server.label
 #: src/components/home-computer-deck.tsx
@@ -1408,17 +1390,9 @@ msgstr "ล้างเฉพาะการแจ้งเตือน งา�
 msgid "Close"
 msgstr "ปิด"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Close effects"
-msgstr "ปิดเอฟเฟกต์"
-
 #: src/components/asset-viewer.tsx
 msgid "Close file"
 msgstr "ปิดไฟล์"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Close icon preview"
-msgstr "ปิดตัวอย่างไอคอน"
 
 #: src/components/home-recent-sessions.tsx
 #: src/components/home-stage/home-stage-layout.tsx
@@ -2451,10 +2425,6 @@ msgstr "ปรับแต่ง"
 msgid "Dark"
 msgstr "มืด"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Decrease {label}"
-msgstr "ลด {label}"
-
 #: src/components/agent-model-sheet.tsx
 msgid "default"
 msgstr "ค่าเริ่มต้น"
@@ -2546,10 +2516,6 @@ msgstr "พื้นที่ทำงานสาธิต"
 msgid "Denied by you"
 msgstr "คุณปฏิเสธแล้ว"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Density"
-msgstr "ความหนาแน่น"
-
 #: src/i18n/labels.ts
 msgid "Deny"
 msgstr "ปฏิเสธ"
@@ -2580,10 +2546,6 @@ msgstr "การยืนยันตัวตนของอุปกรณ์
 #: src/i18n/labels.ts
 msgid "Diff summary"
 msgstr "สรุปความแตกต่าง"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Direction"
-msgstr "ทิศทาง"
 
 #: src/components/new-task-sheet.tsx
 msgid "Directory"
@@ -2749,11 +2711,6 @@ msgstr "เปลี่ยนตัวแก้ไขแล้ว"
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Editorial"
 msgstr "บทบรรณาธิการ"
-
-#. placeholder {0}: props.value
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Effects · {0}"
-msgstr "เอฟเฟกต์ · {0}"
 
 #: src/i18n/labels.ts
 msgid "Encryption was turned on for this computer. Pair it again to keep using it."
@@ -3247,10 +3204,6 @@ msgstr "หน้าแรก"
 msgid "Home agent"
 msgstr "เอเจนต์ของหน้าแรก"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Home effects · development only"
-msgstr "เอฟเฟกต์หน้าหลัก · สำหรับการพัฒนาเท่านั้น"
-
 #: src/app/agent-workspace.tsx
 #: src/components/home-composer-dock.tsx
 msgid "Home folder"
@@ -3292,14 +3245,6 @@ msgstr "เชื่อถือคีย์โฮสต์แล้ว"
 #: src/app/settings-about.tsx
 msgid "How to use Muqun"
 msgstr "วิธีใช้ Muqun"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Icon preview"
-msgstr "ตัวอย่างไอคอน"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Icons"
-msgstr "ไอคอน"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/home-thread.tsx
@@ -3381,10 +3326,6 @@ msgstr "การใช้งานที่รวมอยู่ในแผน
 msgid "Included usage is restricted. Paid or alternative usage may still be available."
 msgstr "การใช้งานที่รวมอยู่ในแผนถูกจำกัด การใช้งานแบบชำระเงินหรือทางเลือกอื่นอาจยังใช้ได้"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Increase {label}"
-msgstr "เพิ่ม {label}"
-
 #: src/components/agent-context-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
 msgid "Input"
@@ -3444,10 +3385,6 @@ msgstr "กำลังติดตั้งรูปภาพ"
 #: src/components/settings-font-sheet.tsx
 msgid "Installing…"
 msgstr "กำลังติดตั้ง…"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Intensity"
-msgstr "ความเข้ม"
 
 #: src/i18n/labels.ts
 msgid "Interacted"
@@ -3832,10 +3769,6 @@ msgstr "ทำเครื่องหมายว่าเสร็จ"
 msgid "Mark reviewed"
 msgstr "ทำเครื่องหมายว่าตรวจแล้ว"
 
-#: src/components/dev-icon-gallery.tsx
-msgid "Marks keep their original geometry and stroke."
-msgstr "เครื่องหมายคงรูปทรงและเส้นเดิมไว้"
-
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "มาสคอต"
@@ -4215,10 +4148,6 @@ msgstr "ไม่ได้เชื่อมโยงกับ {computer} แล
 #: src/app/commands.tsx
 msgid "No matching commands. Try another word."
 msgstr "ไม่มีคำสั่งที่ตรงกัน ลองใช้คำอื่น"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "No matching icons"
-msgstr "ไม่มีไอคอนที่ตรงกัน"
 
 #: src/components/home-recent-sessions.tsx
 msgid "No matching sessions"
@@ -4617,10 +4546,6 @@ msgstr "เปิดไฟล์"
 msgid "Open Git"
 msgstr "เปิด Git"
 
-#: src/components/dev-icon-gallery.tsx
-msgid "Open icon preview"
-msgstr "เปิดตัวอย่างไอคอน"
-
 #: src/components/agent-tool-card.tsx
 msgid "Open image"
 msgstr "เปิดรูปภาพ"
@@ -4889,10 +4814,6 @@ msgstr "การจับคู่หมดอายุ"
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "จับคู่ไม่สำเร็จ"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Palette (up to 4)"
-msgstr "ชุดสี (สูงสุด 4 สี)"
 
 #: src/components/settings-servers.tsx
 msgid "Panes on computer cards"
@@ -5842,10 +5763,6 @@ msgstr "ค้นหาตามชื่อหรือแท็ก"
 msgid "Search files"
 msgstr "ค้นหาไฟล์"
 
-#: src/components/dev-icon-gallery.tsx
-msgid "Search icons"
-msgstr "ค้นหาไอคอน"
-
 #: src/components/agent-model-sheet.tsx
 msgid "Search models"
 msgstr "ค้นหาโมเดล"
@@ -6234,8 +6151,6 @@ msgid "Simulator controls"
 msgstr "ตัวควบคุมเครื่องจำลอง"
 
 #: src/components/asset-viewer.tsx
-#: src/components/dev-home-ambient-controls.tsx
-#: src/components/dev-icon-gallery.tsx
 msgid "Size"
 msgstr "ขนาด"
 
@@ -6284,10 +6199,6 @@ msgstr "ซอร์สโค้ด"
 #: src/components/virtual-keyboard.tsx
 msgid "Space"
 msgstr "Space"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Speed"
-msgstr "ความเร็ว"
 
 #: src/components/agent-account-limits-section.tsx
 msgid "Spend control"
@@ -6523,10 +6434,6 @@ msgstr "พื้นที่จัดเก็บ"
 #: src/app/settings-voice.tsx
 msgid "Streams speech while you talk. Requires an OpenAI Realtime-compatible transcription endpoint."
 msgstr "สตรีมเสียงขณะที่คุณพูด ต้องใช้ปลายทางการถอดเสียงที่รองรับ OpenAI Realtime"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Stroke width"
-msgstr "ความหนาเส้น"
 
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -7041,7 +6948,6 @@ msgstr "รอบนี้ล้มเหลว"
 msgid "Theme"
 msgstr "ธีม"
 
-#: src/components/dev-home-ambient-controls.tsx
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
 msgstr "ค่าเริ่มต้นของธีม"

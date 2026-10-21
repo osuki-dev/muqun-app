@@ -202,14 +202,7 @@ import { resolveHomeIdentity } from '@/theme/resolve';
 import { isHomeArtworkAvailable, resolveHomeArtworkAsset } from '@/theme/home-artwork';
 import { homeArtworkPreference } from '@/theme/repository';
 import { ThemeArtwork, useHasThemeArtwork } from '@/components/theme-artwork';
-import { DevHomeAmbientControls } from '@/components/dev-home-ambient-controls';
-import { DevIconGalleryEntry } from '@/components/dev-icon-gallery';
 import { SkiaAmbientEffect } from '@/components/skia-ambient-effect';
-import type {
-  ThemeAmbientEffect,
-  ThemeEffectColorRole,
-  ThemeEffectDirection,
-} from '@/theme/schema';
 import { useBrandMark } from '@/components/brand-mark';
 import { forgetWarmWorkspace } from '@/lib/server-warm-cache';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
@@ -351,46 +344,6 @@ export function HomeOverview({
     null
   );
   const { resolvedMode } = useThemeMode();
-  const [devEffect, setDevEffect] = useState<ThemeAmbientEffect | 'theme'>('theme');
-  const [devEffectIntensity, setDevEffectIntensity] = useState(0.5);
-  const [devEffectSpeed, setDevEffectSpeed] = useState(1);
-  const [devEffectDensity, setDevEffectDensity] = useState(1);
-  const [devEffectSize, setDevEffectSize] = useState(1);
-  const [devEffectPalette, setDevEffectPalette] = useState<ThemeEffectColorRole[] | undefined>();
-  const [devEffectDirection, setDevEffectDirection] = useState<ThemeEffectDirection | undefined>();
-  const hasDevEffectOverride = __DEV__ && devEffect !== 'theme';
-  const devAmbientLayer = hasDevEffectOverride ? (
-    <SkiaAmbientEffect
-      effect={devEffect}
-      intensity={devEffectIntensity}
-      speed={devEffectSpeed}
-      density={devEffectDensity}
-      size={devEffectSize}
-      palette={devEffectPalette}
-      direction={devEffectDirection}
-      mode={resolvedMode}
-      colors={theme.colors}
-    />
-  ) : null;
-  const devIconGallery = __DEV__ ? <DevIconGalleryEntry /> : null;
-  const devAmbientControls = __DEV__ ? (
-    <DevHomeAmbientControls
-      value={devEffect}
-      onChange={setDevEffect}
-      intensity={devEffectIntensity}
-      onIntensityChange={setDevEffectIntensity}
-      speed={devEffectSpeed}
-      onSpeedChange={setDevEffectSpeed}
-      density={devEffectDensity}
-      onDensityChange={setDevEffectDensity}
-      size={devEffectSize}
-      onSizeChange={setDevEffectSize}
-      palette={devEffectPalette}
-      onPaletteChange={setDevEffectPalette}
-      direction={devEffectDirection}
-      onDirectionChange={setDevEffectDirection}
-    />
-  ) : null;
   const homeArtworkPreferenceValue = useThemeLibrary((state) => {
     const installed = state.library.themes.find(
       (entry) => entry.id === customTheme?.installationId
@@ -1398,7 +1351,6 @@ export function HomeOverview({
           }}
         />
         {dock}
-        {devIconGallery}
       </View>
     );
     return embedded ? (
@@ -1416,13 +1368,7 @@ export function HomeOverview({
         // Any finger on the page holds the cards' order (design §9).
         {...sortHoldTouches}
         style={[styles.page, { backgroundColor: background(theme.colors.background) }]}>
-        <ThemeArtwork
-          slot="home.wallpaper"
-          waitForTransition
-          fallbackSlot="shell.wallpaper"
-          effectsEnabled={!hasDevEffectOverride}
-        />
-        {devAmbientLayer}
+        <ThemeArtwork slot="home.wallpaper" waitForTransition fallbackSlot="shell.wallpaper" />
         <HomeTaskSync serverIds={liveTaskServerIds} />
         <ComputerCardsPresence
           servers={cardServers}
@@ -1508,15 +1454,13 @@ export function HomeOverview({
                 // The default theme has no painting and no ambient effect of
                 // its own; the static circuit traces (no clock, so nothing to
                 // reduce under reduced motion) give the cover a quiet ground.
-                hasDevEffectOverride ? undefined : (
-                  <SkiaAmbientEffect
-                    effect="scanlines"
-                    intensity={0.6}
-                    palette={['textMuted']}
-                    mode={resolvedMode}
-                    colors={theme.colors}
-                  />
-                )
+                <SkiaAmbientEffect
+                  effect="scanlines"
+                  intensity={0.6}
+                  palette={['textMuted']}
+                  mode={resolvedMode}
+                  colors={theme.colors}
+                />
               }
               artworkTopInset={editorialArtworkTopCurrent ? editorialArtworkTop?.top : 0}
               artwork={
@@ -1687,16 +1631,12 @@ export function HomeOverview({
           </View>
         </HomeScrollViewport>
         {padLaunch ? null : dock}
-        {devAmbientControls}
-        {devIconGallery}
       </View>
     );
     return embedded ? (
       editorialContent
     ) : (
-      <AppDrawer wallpaperEffectsEnabled={!hasScene && !hasDevEffectOverride}>
-        {editorialContent}
-      </AppDrawer>
+      <AppDrawer wallpaperEffectsEnabled={!hasScene}>{editorialContent}</AppDrawer>
     );
   }
 
@@ -1747,13 +1687,7 @@ export function HomeOverview({
       // Any finger on the page holds the cards' order (design §9).
       {...sortHoldTouches}
       style={[styles.page, { backgroundColor: background(theme.colors.background) }]}>
-      <ThemeArtwork
-        slot="home.wallpaper"
-        waitForTransition
-        fallbackSlot="shell.wallpaper"
-        effectsEnabled={!hasDevEffectOverride}
-      />
-      {devAmbientLayer}
+      <ThemeArtwork slot="home.wallpaper" waitForTransition fallbackSlot="shell.wallpaper" />
       <HomeTaskSync serverIds={liveTaskServerIds} />
       <ComputerCardsPresence
         servers={cardServers}
@@ -2313,16 +2247,12 @@ export function HomeOverview({
         {!loading ? <View style={[styles.spacerBelow, isPad && styles.padSpacer]} /> : null}
       </HomeScrollViewport>
       {dock}
-      {devAmbientControls}
-      {devIconGallery}
     </View>
   );
   return embedded ? (
     classicContent
   ) : (
-    <AppDrawer wallpaperEffectsEnabled={!hasScene && !hasDevEffectOverride}>
-      {classicContent}
-    </AppDrawer>
+    <AppDrawer wallpaperEffectsEnabled={!hasScene}>{classicContent}</AppDrawer>
   );
 }
 

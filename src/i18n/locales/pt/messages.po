@@ -148,12 +148,6 @@ msgstr "{0} mensagens no contexto"
 msgid "{0} more models"
 msgstr "Mais {0} modelos"
 
-#. placeholder {0}: filtered.length
-#. placeholder {1}: entries.length
-#: src/components/dev-icon-gallery.tsx
-msgid "{0} of {1} icons · development only"
-msgstr "{0} de {1} ícones · apenas desenvolvimento"
-
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
 msgid "{0} of {limitLabel} tokens the model can hold"
@@ -455,10 +449,6 @@ msgstr "+{overflow} mais"
 #: src/hooks/use-task-age.ts
 msgid "<1m"
 msgstr "<1 min"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "0 speed pauses motion. Theme default restores the theme."
-msgstr "A velocidade 0 pausa o movimento. O padrão do tema restaura o tema"
 
 #: src/components/settings-storage.tsx
 msgid "10 days"
@@ -957,10 +947,6 @@ msgstr "Aprovar automaticamente todas as ações"
 msgid "Auto-detect"
 msgstr "Detecção automática"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Automatic"
-msgstr "Automático"
-
 #: src/components/settings-storage.tsx
 msgid "Automatic cache cleanup"
 msgstr "Limpeza automática de cache"
@@ -1080,10 +1066,6 @@ msgstr "Branch ou commit (opcional)"
 #: src/components/agent-worktree-sheet.tsx
 msgid "Branch to start from"
 msgstr "Ramo a partir do qual começar"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Brand marks and working indicator"
-msgstr "Marcas e indicador de atividade"
 
 #. placeholder {0}: server.label
 #: src/components/home-computer-deck.tsx
@@ -1408,17 +1390,9 @@ msgstr "Limpa apenas as notificações. As tarefas pendentes continuam a precisa
 msgid "Close"
 msgstr "Fechar"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Close effects"
-msgstr "Fechar efeitos"
-
 #: src/components/asset-viewer.tsx
 msgid "Close file"
 msgstr "Fechar o ficheiro"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Close icon preview"
-msgstr "Fechar pré-visualização de ícones"
 
 #: src/components/home-recent-sessions.tsx
 #: src/components/home-stage/home-stage-layout.tsx
@@ -2451,10 +2425,6 @@ msgstr "Personalizar"
 msgid "Dark"
 msgstr "Escuro"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Decrease {label}"
-msgstr "Diminuir {label}"
-
 #: src/components/agent-model-sheet.tsx
 msgid "default"
 msgstr "padrão"
@@ -2546,10 +2516,6 @@ msgstr "Espaço de trabalho de demo"
 msgid "Denied by you"
 msgstr "Recusado por ti"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Density"
-msgstr "Densidade"
-
 #: src/i18n/labels.ts
 msgid "Deny"
 msgstr "Recusar"
@@ -2580,10 +2546,6 @@ msgstr "autenticação do dispositivo"
 #: src/i18n/labels.ts
 msgid "Diff summary"
 msgstr "Resumo do diff"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Direction"
-msgstr "Direção"
 
 #: src/components/new-task-sheet.tsx
 msgid "Directory"
@@ -2749,11 +2711,6 @@ msgstr "Editor alterado"
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Editorial"
 msgstr "Revista"
-
-#. placeholder {0}: props.value
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Effects · {0}"
-msgstr "Efeitos · {0}"
 
 #: src/i18n/labels.ts
 msgid "Encryption was turned on for this computer. Pair it again to keep using it."
@@ -3247,10 +3204,6 @@ msgstr "Início"
 msgid "Home agent"
 msgstr "Agente do Início"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Home effects · development only"
-msgstr "Efeitos da página inicial · apenas desenvolvimento"
-
 #: src/app/agent-workspace.tsx
 #: src/components/home-composer-dock.tsx
 msgid "Home folder"
@@ -3292,14 +3245,6 @@ msgstr "Chave de host confiável"
 #: src/app/settings-about.tsx
 msgid "How to use Muqun"
 msgstr "Como usar o Muqun"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Icon preview"
-msgstr "Pré-visualização de ícones"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Icons"
-msgstr "Ícones"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/home-thread.tsx
@@ -3381,10 +3326,6 @@ msgstr "Uso incluído"
 msgid "Included usage is restricted. Paid or alternative usage may still be available."
 msgstr "O uso incluído está restrito. O uso pago ou outras alternativas podem continuar disponíveis"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Increase {label}"
-msgstr "Aumentar {label}"
-
 #: src/components/agent-context-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
 msgid "Input"
@@ -3444,10 +3385,6 @@ msgstr "Instalando imagens"
 #: src/components/settings-font-sheet.tsx
 msgid "Installing…"
 msgstr "A instalar…"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Intensity"
-msgstr "Intensidade"
 
 #: src/i18n/labels.ts
 msgid "Interacted"
@@ -3832,10 +3769,6 @@ msgstr "Marcar como concluída"
 msgid "Mark reviewed"
 msgstr "Marcar como revisado"
 
-#: src/components/dev-icon-gallery.tsx
-msgid "Marks keep their original geometry and stroke."
-msgstr "As marcas mantêm a geometria e o traço originais"
-
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "Mascote"
@@ -4215,10 +4148,6 @@ msgstr "Já não está ligado a {computer}"
 #: src/app/commands.tsx
 msgid "No matching commands. Try another word."
 msgstr "Nenhum comando encontrado. Tente outra palavra"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "No matching icons"
-msgstr "Nenhum ícone correspondente"
 
 #: src/components/home-recent-sessions.tsx
 msgid "No matching sessions"
@@ -4617,10 +4546,6 @@ msgstr "Abrir a lista de ficheiros"
 msgid "Open Git"
 msgstr "Abrir Git"
 
-#: src/components/dev-icon-gallery.tsx
-msgid "Open icon preview"
-msgstr "Abrir pré-visualização de ícones"
-
 #: src/components/agent-tool-card.tsx
 msgid "Open image"
 msgstr "Abrir imagem"
@@ -4889,10 +4814,6 @@ msgstr "EMPARELHAMENTO EXPIRADO"
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "O emparelhamento falhou"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Palette (up to 4)"
-msgstr "Paleta (até 4)"
 
 #: src/components/settings-servers.tsx
 msgid "Panes on computer cards"
@@ -5842,10 +5763,6 @@ msgstr "Pesquisar por nome ou etiqueta"
 msgid "Search files"
 msgstr "Pesquisar ficheiros"
 
-#: src/components/dev-icon-gallery.tsx
-msgid "Search icons"
-msgstr "Pesquisar ícones"
-
 #: src/components/agent-model-sheet.tsx
 msgid "Search models"
 msgstr "Pesquisar modelos"
@@ -6234,8 +6151,6 @@ msgid "Simulator controls"
 msgstr "Controlos do simulador"
 
 #: src/components/asset-viewer.tsx
-#: src/components/dev-home-ambient-controls.tsx
-#: src/components/dev-icon-gallery.tsx
 msgid "Size"
 msgstr "Tamanho"
 
@@ -6284,10 +6199,6 @@ msgstr "Código-fonte"
 #: src/components/virtual-keyboard.tsx
 msgid "Space"
 msgstr "Espaço"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Speed"
-msgstr "Velocidade"
 
 #: src/components/agent-account-limits-section.tsx
 msgid "Spend control"
@@ -6523,10 +6434,6 @@ msgstr "Armazenamento"
 #: src/app/settings-voice.tsx
 msgid "Streams speech while you talk. Requires an OpenAI Realtime-compatible transcription endpoint."
 msgstr "Transmite o áudio enquanto você fala. Requer um endpoint de transcrição compatível com OpenAI Realtime"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Stroke width"
-msgstr "Espessura do traço"
 
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -7041,7 +6948,6 @@ msgstr "A rodada falhou"
 msgid "Theme"
 msgstr "Tema"
 
-#: src/components/dev-home-ambient-controls.tsx
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
 msgstr "Predefinição do tema"
