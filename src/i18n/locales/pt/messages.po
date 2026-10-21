@@ -456,6 +456,10 @@ msgstr "{total, plural, one {# subtarefa} other {# subtarefas}}"
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, one {# subtarefa} other {# subtarefas}} ({waiting, plural, one {# à espera} other {# à espera}})"
 
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "{waiting, plural, one {# needs you} other {# need you}}"
+msgstr "{waiting, plural, one {# precisa de você} other {# precisam de você}}"
+
 #: src/components/task-row.tsx
 msgid "→ {name}"
 msgstr "→ {name}"
@@ -709,11 +713,6 @@ msgstr "Todos os projetos"
 #: src/components/home-stage/stage-faces.ts
 msgid "All quiet"
 msgstr "Tudo tranquilo"
-
-#. placeholder {0}: age(face.lastActivityMs, nowMs)
-#: src/components/home-stage/stage-faces.ts
-msgid "All quiet · last activity {0}"
-msgstr "Tudo tranquilo · última atividade {0}"
 
 #: src/components/agent-composer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
@@ -3595,6 +3594,11 @@ msgstr "Idioma, {languageName}"
 msgid "Large"
 msgstr "Grande"
 
+#. placeholder {0}: age(face.lastActivityMs, nowMs)
+#: src/components/home-stage/stage-faces.ts
+msgid "Last activity {0}"
+msgstr "Última atividade {0}"
+
 #: src/components/agent-account-limits-section.tsx
 msgid "Last checked"
 msgstr "Última verificação"
@@ -4557,6 +4561,7 @@ msgstr "Num tablet, o Início é uma página dupla, as folhas de trabalho ocupam
 msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
 msgstr "Uma só folha de Alterações para terminais e sessões de agente: os ficheiros alterados em árvore com o total de linhas, o ramo sob o título e Descartar no menu de cada ficheiro"
 
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Online"
@@ -4565,10 +4570,6 @@ msgstr "Online, a responder"
 #: src/i18n/labels.ts
 msgid "ONLINE"
 msgstr "ONLINE"
-
-#: src/components/home-stage/home-stage-layout.tsx
-msgid "Online · {count, plural, one {# session} other {# sessions}}"
-msgstr "Online · {count, plural, one {# sessão} other {# sessões}}"
 
 #: src/lib/attachments.ts
 msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."

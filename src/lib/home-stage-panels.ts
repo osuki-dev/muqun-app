@@ -38,13 +38,14 @@ export type StageAgentLine = {
  * The pane's screen:
  * - `busy`: something runs or waits on the reader -- the summary, then one
  *   line per agent and how many did not fit;
- * - `quiet`: online, nothing running or waiting;
+ * - `quiet`: online, nothing running or waiting -- which agents are there,
+ *   idle, in mirror order, and when the computer was last active;
  * - `offline`: the computer cannot be reached;
  * - `status`: neither, and its connection says why (repair, reconnecting...).
  */
 export type StageFace =
   | { kind: 'busy'; agents: StageAgentLine[]; more: number }
-  | { kind: 'quiet'; lastActivityMs?: number }
+  | { kind: 'quiet'; idle: string[]; lastActivityMs?: number }
   | { kind: 'offline'; lastSeenMs?: number }
   | { kind: 'status' };
 
@@ -142,6 +143,7 @@ export function stagePanels({
         : tone === 'online'
           ? {
               kind: 'quiet',
+              idle: lines.map((line) => line.name),
               ...(lastActivityMs !== undefined && lastActivityMs <= nowMs
                 ? { lastActivityMs }
                 : {}),

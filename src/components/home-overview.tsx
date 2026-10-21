@@ -17,6 +17,7 @@ import {
   Text,
 } from '@osuki-dev/ui';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { withAlpha } from '@/lib/color';
 import { useHomeScenePlate } from '@/hooks/use-home-scene-plate';
 import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
@@ -1276,12 +1277,15 @@ export function HomeOverview({
         }}
       />
     ) : undefined;
-  // The phone toolbar's two doors, shared by Editorial and Stage.
-  const phoneToolbar = (
+  // The phone toolbar's two doors, shared by Editorial and Stage; Stage's
+  // float over its world as small translucent rounds.
+  const toolbarBare = customTheme?.manifest.homePresentation?.toolbarBackground === false;
+  const phoneToolbarFor = (stage: boolean) => (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: HOME_TOOLBAR_GAP }}>
       <HeaderButton
-        editorial
-        bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
+        editorial={!stage}
+        stage={stage}
+        bare={toolbarBare}
         label={t`Scan a gateway QR`}
         onPress={() => void commands.pairGateway()}>
         <ThemeIcon
@@ -1292,8 +1296,9 @@ export function HomeOverview({
         />
       </HeaderButton>
       <HeaderButton
-        editorial
-        bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
+        editorial={!stage}
+        stage={stage}
+        bare={toolbarBare}
         label={t`Settings`}
         onPress={() => void commands.manageConnections()}>
         <ThemeIcon
@@ -1305,6 +1310,7 @@ export function HomeOverview({
       </HeaderButton>
     </View>
   );
+  const phoneToolbar = phoneToolbarFor(false);
   if (homeLayout === 'stage' && !isPad) {
     // Stage: the theme's world fills the screen under a thin HUD; the
     // composer, Needs you and Recent are the same pieces every layout gets.
@@ -1330,7 +1336,7 @@ export function HomeOverview({
           paused={!isFocused || !appActive}
           topInset={insets.top}
           dockHeight={dock && composerRevealed ? dockHeight : insets.bottom}
-          headerAction={phoneToolbar}
+          headerAction={phoneToolbarFor(true)}
           hasAttention={!loading && !hydrationError && hasAttention}
           attention={attentionSection}
           fullList={
@@ -2326,6 +2332,7 @@ function HeaderButton({
   onPress,
   children,
   editorial = false,
+  stage = false,
   bare = false,
 }: {
   testID?: string;
@@ -2333,6 +2340,8 @@ function HeaderButton({
   onPress: () => void;
   children: ReactNode;
   editorial?: boolean;
+  /** Stage's HUD: a small round of the theme's surface at low alpha over the world. */
+  stage?: boolean;
   bare?: boolean;
 }) {
   const profile = useAppearanceProfile();
@@ -2357,8 +2366,16 @@ function HeaderButton({
           height: HOME_TOOLBAR_BUTTON_SIZE,
           borderRadius: profile.chrome.control,
         },
+        stage && {
+          backgroundColor: bare ? 'transparent' : withAlpha(theme.colors.surface, 0.42),
+          width: STAGE_HEADER_BUTTON_SIZE,
+          height: STAGE_HEADER_BUTTON_SIZE,
+          borderRadius: STAGE_HEADER_BUTTON_SIZE / 2,
+        },
       ]}>
-      {!bare && <SurfaceDecoration slot="navigation.background" baseColor={theme.colors.surface} />}
+      {!bare && !stage && (
+        <SurfaceDecoration slot="navigation.background" baseColor={theme.colors.surface} />
+      )}
       {children}
     </PressableScale>
   );
@@ -2688,6 +2705,8 @@ const CONTENT_GUTTER = 18;
 const BRAND_BLOCK_INSET = 2;
 const HEADER_GUTTER = CONTENT_GUTTER;
 const HEADER_BUTTON_SIZE = 40;
+/** Stage's toolbar rounds: smaller, so the world shows; the hit slop keeps the target. */
+const STAGE_HEADER_BUTTON_SIZE = 36;
 const HEADER_BUTTON_GAP = 8;
 /** Breathing room inside the compact brand plate, only when a pack tints it. */
 const COMPACT_PLATE_INSET = 10;

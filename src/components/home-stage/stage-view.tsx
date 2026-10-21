@@ -39,6 +39,7 @@ import {
   projectStagePoint,
   stageCamera,
   stageDrawnScreens,
+  stageFaceHeight,
   stageHeroPlacement,
   stageHostTarget,
   stagePaintingPlacement,
@@ -46,6 +47,7 @@ import {
   stagePaneAnchor,
   stageQuadRect,
   stageSwipeTarget,
+  STAGE_FACE_MIN_ROWS,
   STAGE_HERO_DEPTH,
   STAGE_PAINTING_DEPTH,
   STAGE_PANE_REACH,
@@ -203,7 +205,7 @@ export function StageView({
   );
   // By value: live agent data re-renders this view every few seconds, and the
   // scene re-renders only when what the panes show has changed.
-  const screens = useStageScreens(panels, faces.slots);
+  const screens = useStageScreens(panels, faces.slots, faces.heights);
   const colors = useMemo(
     () => ({
       background: theme.colors.background,
@@ -311,7 +313,7 @@ export function StageView({
     [size.width, size.height, inset]
   );
   const art = useStageArt(composition, viewport);
-  const targets = useStageTargets(panels.length, selectedIndex, art, viewport);
+  const targets = useStageTargets(panels, faces.heights, selectedIndex, art, viewport);
 
   return (
     <GestureDetector gesture={gesture}>
@@ -457,7 +459,8 @@ function StageTilt({
 /** The panes' looks, the same array while nothing in them changes. */
 function useStageScreens(
   panels: readonly StagePanel[],
-  slots: ReadonlyMap<string, number>
+  slots: ReadonlyMap<string, number>,
+  heights: ReadonlyMap<string, number>
 ): readonly StageScreenLook[] {
   const screens: StageScreenLook[] = panels.map((panel) => ({
     tone: panel.tone,
@@ -465,6 +468,7 @@ function useStageScreens(
     attention: panel.attention,
     faceSlot: slots.get(panel.serverId) ?? -1,
     streaks: stageStreakLines(panel.face),
+    faceHeight: heights.get(panel.serverId) ?? UNPAINTED_FACE_HEIGHT,
   }));
   const key = JSON.stringify(screens);
   const [kept, setKept] = useState({ key, screens });
@@ -474,6 +478,9 @@ function useStageScreens(
   }
   return kept.screens;
 }
+
+/** A pane without a painted face (yet, or on the static stage) is as short as a face can be. */
+const UNPAINTED_FACE_HEIGHT = stageFaceHeight(STAGE_FACE_MIN_ROWS);
 
 type StageTarget =
   | {
@@ -537,10 +544,11 @@ function useStageArt(composition: StageComposition, viewport: StageViewport): St
  * Every target's resting box on screen, far to near (so the nearer one wins
  * a tap): the new-task host -- the figure, the painting's band or, with no
  * artwork, the open band above the panes -- and the panes the cover-flow
- * shows around the selection.
+ * shows around the selection, each as tall as its face.
  */
 function useStageTargets(
-  count: number,
+  panels: readonly StagePanel[],
+  heights: ReadonlyMap<string, number>,
   selectedIndex: number,
   art: StageArt,
   viewport: StageViewport
@@ -563,10 +571,16 @@ function useStageTargets(
       },
     ];
     const anchor = stagePaneAnchor(camera, aspect);
-    for (const index of stageDrawnScreens(selectedIndex, count)) {
+    for (const index of stageDrawnScreens(selectedIndex, panels.length)) {
       const offset = index - selectedIndex;
-      if (Math.abs(offset) >= STAGE_PANE_REACH) continue;
-      const pane = stagePane(offset, anchor, aspect);
+      const serverId = panels[index]?.serverId;
+      if (!serverId || Math.abs(offset) >= STAGE_PANE_REACH) continue;
+      const pane = stagePane(
+        offset,
+        anchor,
+        aspect,
+        heights.get(serverId) ?? UNPAINTED_FACE_HEIGHT
+      );
       const [x, y, z] = pane.position;
       // On the pane's own top rim.
       const hint = projectStagePoint([x, y + pane.height / 2, z], camera, width, height);
@@ -587,7 +601,7 @@ function useStageTargets(
       });
     }
     return targets.sort((a, b) => b.rect.depth - a.rect.depth);
-  }, [count, selectedIndex, art, viewport]);
+  }, [panels, heights, selectedIndex, art, viewport]);
 }
 
 /**
