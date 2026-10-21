@@ -115,8 +115,8 @@ import { markHomeComposerRevealed } from '@/lib/home-first-entry';
 import { appChrome } from '@/constants/appearance';
 import { HomeThreadFeed, type HomeThreadUnsure } from '@/components/home-thread';
 import {
+  HomeReplyButton,
   HomeReplyDrawer,
-  HomeReplyGrabber,
   useHomeReplyDrawer,
 } from '@/components/home-reply-drawer';
 import { useAppActive } from '@/hooks/use-app-active';
@@ -1667,16 +1667,11 @@ export function HomeComposerDock({
           onOpenThread(conversation);
         }
       : undefined;
-  // The target's feed, and on top of the field the grabber that shows its
-  // conversation: where the next message goes is the placeholder's to say.
-  const replyGrabber = thread ? (
-    <>
-      <HomeThreadFeed target={thread} enabled={focused && appActive && ready && selected} />
-      {conversation ? (
-        <HomeReplyGrabber target={conversation} controller={drawer} onOpenFull={openThread} />
-      ) : null}
-    </>
-  ) : undefined;
+  // Where the next message goes is the placeholder's to say; the toolbar's
+  // conversation button shows it.
+  const replyButton = conversation ? (
+    <HomeReplyButton target={conversation} controller={drawer} onOpenFull={openThread} />
+  ) : null;
   const replyDrawer =
     conversation && drawer.mounted ? (
       <HomeReplyDrawer
@@ -1692,6 +1687,9 @@ export function HomeComposerDock({
     ) : null;
   const bar = (
     <View>
+      {thread ? (
+        <HomeThreadFeed target={thread} enabled={focused && appActive && ready && selected} />
+      ) : null}
       {visibleUnsure ? (
         <View
           style={[
@@ -1833,8 +1831,6 @@ export function HomeComposerDock({
     <AgentComposer
       revealed={revealed}
       accessory={bar}
-      fieldHeader={replyGrabber}
-      fieldHeaderShown={false}
       dockUnderlay={replyDrawer}
       pinDock={drawer.open}
       fieldBackground={
@@ -1867,7 +1863,12 @@ export function HomeComposerDock({
       // Home's field is the dock's only painted surface, on both the phone
       // bar and the Pad cover, so it casts the edge a dock's glass would.
       fieldShadow={appChrome.shadow.homeComposerField}
-      toolbarLeading={parameterButton}
+      toolbarLeading={
+        <>
+          {parameterButton}
+          {replyButton}
+        </>
+      }
       toolbarMenu={{
         open: optionsOpen,
         onOpenChange: setOptionsOpen,

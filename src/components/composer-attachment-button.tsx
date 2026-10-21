@@ -18,6 +18,7 @@ export function ComposerMenuButton({
   expanded,
   disabled = false,
   onPress,
+  onLongPress,
   children,
 }: {
   testID: string;
@@ -26,6 +27,7 @@ export function ComposerMenuButton({
   expanded: boolean;
   disabled?: boolean;
   onPress: () => void;
+  onLongPress?: () => void;
   children: ReactNode;
 }) {
   const profile = useAppearanceProfile();
@@ -40,6 +42,7 @@ export function ComposerMenuButton({
       accessibilityState={{ expanded, disabled }}
       disabled={disabled}
       onPress={onPress}
+      onLongPress={onLongPress}
       style={[
         composerStyles.button,
         { borderRadius: profile.chrome.roundControl },
