@@ -798,8 +798,7 @@ export function HomeComposerDock({
             if (agentRequestErrorDetail(failure).status === 404) {
               // The conversation is gone: the next Send starts a new one.
               const latest = useHomeThreads.getState().byServer[serverId];
-              if (latest && homeThreadKey(latest) === key)
-                useHomeThreads.getState().clear(serverId, latest);
+              if (latest && homeThreadKey(latest) === key) useHomeThreads.getState().end(latest);
               setError(t`That conversation has ended. Send again to start a new one.`);
               return false;
             }
@@ -1625,7 +1624,15 @@ export function HomeComposerDock({
   // The reply bar, joined to the field's top: where the next message goes.
   const replyBar = thread ? (
     <>
-      <HomeThreadFeed target={thread} enabled={focused && appActive && ready && selected} />
+      <HomeThreadFeed
+        target={thread}
+        enabled={focused && appActive && ready && selected}
+        // Right after the tap, the card opens as it did before; later, the
+        // undo alone says it ended.
+        onUntapped={(ended) => {
+          if (Date.now() - ended.setAtMs < UNTAPPED_OPEN_MS) onOpenThread?.(ended);
+        }}
+      />
       <HomeThreadBar
         target={thread}
         offline={target.kind !== 'ready'}
@@ -1840,6 +1847,8 @@ export function HomeComposerDock({
   );
 }
 
+/** How soon after a tap a card that turned out to have ended still opens as tapped. */
+const UNTAPPED_OPEN_MS = 10_000;
 /** How often a row bound to its session reads that session, while it waits or works. */
 const BOUND_SESSION_READ_MS = 5_000;
 /** How long after a session's last event its snapshot is read, so a burst costs one read. */

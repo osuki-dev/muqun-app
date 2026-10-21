@@ -283,12 +283,14 @@ export type HomeThreadFacts = {
  * the reader keeps talking. A mirror older than the target says nothing.
  */
 export function homeThreadEnded(target: HomeThreadTarget, facts: HomeThreadFacts): boolean {
-  if (facts.task?.state === 'cancelled') return true;
+  // A cancelled task ends a task that never said where it runs; a session or
+  // pane it ran in is still there to talk to (talking reopens the task).
+  if (target.kind === 'task') return facts.task?.state === 'cancelled';
   if (target.kind === 'session') {
     if (facts.goneSession || facts.notFound) return true;
-    const agentId = target.agentId?.trim();
+    const agentId = target.agentId?.trim().toLowerCase();
     if (agentId && facts.agentIds && facts.agentIds.length > 0)
-      return !facts.agentIds.includes(agentId);
+      return !facts.agentIds.some((listed) => listed.toLowerCase() === agentId);
     return false;
   }
   if (target.kind === 'pane') {
@@ -301,6 +303,47 @@ export function homeThreadEnded(target: HomeThreadTarget, facts: HomeThreadFacts
     return Boolean(target.instanceId && row.instanceId && row.instanceId !== target.instanceId);
   }
   return false;
+}
+
+/**
+ * What a tap on a session card does: make it the target only when the dock
+ * can talk to it now; otherwise open it as before, leaving the current
+ * target alone. A tap never clears the target.
+ */
+export function homeThreadTap(
+  target: HomeThreadTarget | null,
+  facts: HomeThreadFacts
+): 'target' | 'open' {
+  return target && !homeThreadEnded(target, facts) ? 'target' : 'open';
+}
+
+/** A card tap and the target it replaced (`null`: there was none). */
+export type HomeThreadTap = { tapped: HomeThreadTarget; previous: HomeThreadTarget | null };
+
+/**
+ * The record a tap leaves. Taps in a row remember what was there before the
+ * first of them, so undoing the last does not land on another tapped card.
+ */
+export function homeThreadTapped(
+  current: HomeThreadTarget | undefined,
+  tap: HomeThreadTap | undefined,
+  tapped: HomeThreadTarget
+): HomeThreadTap {
+  const previous = current ?? null;
+  return { tapped, previous: tap && tap.tapped === previous ? tap.previous : previous };
+}
+
+/**
+ * What follows when the target's conversation ends. A tapped target the
+ * reader has not written to gives back the target it replaced (a tap never
+ * leaves the dock with less than it had); anything else just goes.
+ */
+export function homeThreadEndOutcome(
+  ended: HomeThreadTarget,
+  tap: HomeThreadTap | undefined
+): { next: HomeThreadTarget | null; untapped: boolean } {
+  if (tap && tap.tapped === ended && !ended.lastSent) return { next: tap.previous, untapped: true };
+  return { next: null, untapped: false };
 }
 
 /** The persisted `{ [serverId]: target }`, dropping anything malformed. */
