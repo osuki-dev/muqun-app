@@ -590,12 +590,12 @@ describe('frame pacing', () => {
     expect(run(createStageFrameBudget(), 200, 5000)).toBe('full');
   });
 
-  test('never climbs back, and ends static', () => {
+  test('never climbs back, and stops at low rather than going static', () => {
     const budget = createStageFrameBudget();
     run(budget, 30, 2100);
     expect(run(budget, 1000 / 60, 20_000, 2100)).toBe('reduced');
-    expect(run(budget, 30, 29_000, 20_000)).toBe('static');
-    expect(run(budget, 1000 / 60, 40_000, 29_000)).toBe('static');
+    expect(run(budget, 30, 29_000, 20_000)).toBe('low');
+    expect(run(budget, 1000 / 60, 40_000, 29_000)).toBe('low');
     expect(lowestStageQuality('reduced', 'full')).toBe('reduced');
     expect(lowestStageQuality('reduced', 'low')).toBe('low');
   });
