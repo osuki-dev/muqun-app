@@ -96,6 +96,11 @@ msgstr "{0, plural, other {还有 # 行}}"
 msgid "{0, plural, one {# operation} other {# operations}}"
 msgstr "{0, plural, other {# 项工具操作}}"
 
+#. placeholder {0}: need.count
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "{0, plural, one {# request waiting} other {# requests waiting}}"
+msgstr "{0, plural, other {# 个请求等待中}}"
+
 #. placeholder {0}: unused.count
 #. placeholder {1}: formatCacheSize(unused.reclaimableBytes)
 #: src/components/settings-storage.tsx
@@ -135,7 +140,7 @@ msgstr "{0} 未能上传。重试或移除后再发送"
 #. placeholder {0}: events.length
 #: src/app/settings-stage-diagnostics.tsx
 msgid "{0} events, newest first"
-msgstr ""
+msgstr "{0} 个事件，最新的在前"
 
 #. placeholder {0}: failed.name
 #. placeholder {1}: uploadLimitMb(attachmentLimitBytes(failed))
@@ -375,6 +380,10 @@ msgstr "{minutes, plural, other {# 分钟}}"
 msgid "{modifierKeys} combinations need the program in this terminal to enable extended keys"
 msgstr "{modifierKeys} 组合键需要此终端中的程序启用扩展按键"
 
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "{more, plural, one {# more needs you} other {# more need you}}"
+msgstr "{more, plural, other {还有 # 项需要你处理}}"
+
 #: src/components/home-agent-sheet.tsx
 msgid "{name} (terminal)"
 msgstr "{name}（终端）"
@@ -446,6 +455,10 @@ msgstr "{waiting, plural, other {# 个需要你处理}}"
 #: src/components/task-row.tsx
 msgid "→ {name}"
 msgstr "→ {name}"
+
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "+{more} more"
+msgstr "+{more} 项"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
@@ -723,6 +736,10 @@ msgstr "允许一次"
 msgid "Allow the camera, or enter the address instead."
 msgstr "允许使用相机，或改为输入地址"
 
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "Allow: {subject}"
+msgstr "允许：{subject}"
+
 #: src/components/settings-font-sheet.tsx
 msgid "Already on"
 msgstr "已在使用"
@@ -768,6 +785,7 @@ msgstr "还有 {rest} 个"
 msgid "another computer"
 msgstr "另一台电脑"
 
+#: src/components/home-stage/stage-needs-card.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
 msgstr "回答"
@@ -2235,7 +2253,7 @@ msgid "Could not rename"
 msgstr "无法重命名"
 
 #: src/components/agent-workbench.tsx
-#: src/components/home-reply-drawer.tsx
+#: src/components/home-session-replies.ts
 msgid "Could not reply"
 msgstr "无法回复"
 
@@ -3982,6 +4000,7 @@ msgid "Needs your attention"
 msgstr "需要你处理"
 
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/stage-needs-card.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/server-agent-rows.tsx
 #: src/lib/notifications.ts
@@ -4268,7 +4287,7 @@ msgstr "还没有 SSH 主机。添加一个，即可在任何能连上的机器�
 
 #: src/app/settings-stage-diagnostics.tsx
 msgid "No Stage art events recorded yet."
-msgstr ""
+msgstr "尚未记录舞台图像事件"
 
 #: src/components/simfarm-stage.tsx
 msgid "No still frames"
@@ -4501,6 +4520,7 @@ msgstr "仅隐藏此首页条目。任务及其历史记录仍然保留，正在
 #: src/components/home-connections.tsx
 #: src/components/home-reply-drawer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
+#: src/components/home-stage/stage-needs-card.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/task-row.tsx
@@ -4903,6 +4923,7 @@ msgid "Permission"
 msgstr "权限"
 
 #: src/components/agent-permission-card.tsx
+#: src/components/home-stage/stage-needs-card.tsx
 msgid "Permission required"
 msgstr "需要权限"
 
@@ -6264,11 +6285,11 @@ msgstr "舞台"
 
 #: src/app/settings-stage-diagnostics.tsx
 msgid "Stage diagnostics"
-msgstr ""
+msgstr "舞台诊断"
 
 #: src/app/settings-stage-diagnostics.tsx
 msgid "Stage log copied"
-msgstr ""
+msgstr "已复制舞台日志"
 
 #: src/components/diff-rows.tsx
 msgid "Staged"
@@ -7689,6 +7710,10 @@ msgstr "可变 · {0}"
 msgid "Version {version}{0}"
 msgstr "版本 {version}{0}"
 
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "View"
+msgstr "查看"
+
 #: src/components/agent-composer.tsx
 msgid "View file changes"
 msgstr "查看文件变更"
@@ -7757,9 +7782,17 @@ msgstr "正在等待这台电脑的模型列表，请稍后再发送"
 msgid "Waiting for uploads to finish…"
 msgstr "正在等待上传完成…"
 
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "Waiting for you in the terminal"
+msgstr "正在终端中等待你"
+
 #: src/components/agent-workbench.tsx
 msgid "Waiting for your answer"
 msgstr "正在等待你的回答"
+
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "Waiting for your input"
+msgstr "等待你的输入"
 
 #: src/components/agent-composer.tsx
 msgid "Waiting to send"

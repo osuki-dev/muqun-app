@@ -34,7 +34,9 @@ import { CloseIcon, SettingsIcon, TaskListIcon, TerminalWindowIcon } from '@/ico
 import { connectionStatusDescription } from '@/i18n/labels';
 import { withAlpha } from '@/lib/color';
 import { filterHomeRecent, type HomeContinueEntry } from '@/lib/home-continue';
-import { wrapStageIndex } from '@/lib/home-stage-geometry';
+import type { HomeTaskRow } from '@/lib/home-in-progress';
+import type { HomeTarget } from '@/lib/home-recents';
+import { wrapStageIndex, type StageOverlayBand } from '@/lib/home-stage-geometry';
 import { stagePanels, stageSelectedIndex, type StagePanel } from '@/lib/home-stage-panels';
 import { SETTLE, timing } from '@/lib/motion';
 import type { ConnectionStatus } from '@/lib/server-reachability';
@@ -44,8 +46,10 @@ import { useServerTasksStore } from '@/stores/server-tasks';
 import { isRenderableThemeAsset } from '@/theme/renderable-asset';
 import { resolveThemeImage } from '@/theme/resolve';
 import { StageAgentRow } from './stage-agent-row';
+import { StageOverlay } from './stage-overlay';
 import { useStageComposition, type StageImageInput } from './stage-composition';
 import { StageSessionStrip } from './stage-session-strip';
+import { useStageTextHalo, type StageTextHalo } from './stage-text-halo';
 import { StageView } from './stage-view';
 import { createStageOpener } from './types';
 
@@ -92,6 +96,10 @@ export type HomeStageLayoutProps = {
   onOpenAgent: (index: number, paneId?: string) => void;
   onOpenTasks: (index: number) => void;
   onOpenDetails: (index: number) => void;
+  /** The needs-you card's View: a session's conversation, as Needs you opens it. */
+  onOpenRequest: (target: HomeTarget) => void;
+  /** The needs-you card's View on a waiting ledger task, as Needs you opens it. */
+  onOpenWaitingTask: (row: HomeTaskRow) => void;
   onViewport: (height: number) => void;
 };
 
@@ -242,6 +250,8 @@ export function HomeStageLayout({
   onOpenAgent,
   onOpenTasks,
   onOpenDetails,
+  onOpenRequest,
+  onOpenWaitingTask,
   onViewport,
 }: HomeStageLayoutProps) {
   const { t } = useLingui();
@@ -270,6 +280,17 @@ export function HomeStageLayout({
   const [footStack, setFootStack] = useState(0);
   const foot = footStack > 0 ? dockHeight + 6 + footStack : 0;
   const openComputer = useStableHandler(() => opener.open(() => onOpen(selectedIndex)));
+  // Where the needs-you card and the progress subtitle stand, as the Stage measured it.
+  const [band, setBand] = useState<StageOverlayBand | null>(null);
+  const openRequest = useStableHandler((target: HomeTarget) =>
+    opener.open(() => onOpenRequest(target))
+  );
+  const openWaitingTask = useStableHandler((row: HomeTaskRow) =>
+    opener.open(() => onOpenWaitingTask(row))
+  );
+  const openPane = useStableHandler((paneId?: string) =>
+    opener.open(() => onOpenAgent(selectedIndex, paneId))
+  );
   const actionsPanel = panels.find((panel) => panel.serverId === actionsFor);
   const actionsIndex = actionsPanel ? panels.indexOf(actionsPanel) : -1;
 
@@ -288,6 +309,15 @@ export function HomeStageLayout({
     setListOpen(open);
     sheet.set(withSpring(open ? 1 : 0, SETTLE));
   });
+  const overlayActions = useMemo(
+    () => ({
+      onOpenRequest: openRequest,
+      onOpenTask: openWaitingTask,
+      onOpenPane: openPane,
+      onOpenList: () => openList(true),
+    }),
+    [openRequest, openWaitingTask, openPane, openList]
+  );
   const sheetStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: (1 - sheet.get()) * windowHeight }],
   }));
@@ -350,6 +380,7 @@ export function HomeStageLayout({
         burst={burst}
         opener={opener}
         onSelect={onSelect}
+        onOverlayBand={setBand}
       />
 
       {/* Top: the chosen computer, its status and the dots; the tools on the right. */}
@@ -471,6 +502,11 @@ export function HomeStageLayout({
         ) : null}
       </Animated.View>
 
+      {/* Over the art, on the foot rows: what needs the reader, else what an agent reports. */}
+      {selected && band && !paused && !listOpen ? (
+        <StageOverlay serverId={selected.serverId} band={band} actions={overlayActions} />
+      ) : null}
+
       {/* The full list, pulled up over the stage: the existing list UI. */}
       <Animated.View
         pointerEvents={listOpen ? 'auto' : 'none'}
@@ -527,20 +563,6 @@ function useStageWallpaper() {
   const uri = image ? assets[image.asset] : undefined;
   if (!image || !uri || !isRenderableThemeAsset(uri)) return null;
   return { uri, fit: image.fit, focal: image.focalPoint, opacity: image.opacity };
-}
-
-/**
- * A soft glow in the background colour behind the HUD's text, so it reads on
- * a bright sky by day and a dark one by night without a plate.
- */
-function useStageTextHalo() {
-  const theme = useThemeTokens();
-  const { resolvedMode } = useThemeMode();
-  return {
-    textShadowColor: withAlpha(theme.colors.background, resolvedMode === 'light' ? 0.9 : 0.75),
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 8,
-  };
 }
 
 /**
@@ -601,13 +623,7 @@ function StageHeaderButton({
  * when, an agent working, or how many things need the reader, in the warning
  * colour. Its sessions are the strip's to show.
  */
-function StageStatusLine({
-  panel,
-  halo,
-}: {
-  panel: StagePanel;
-  halo: ReturnType<typeof useStageTextHalo>;
-}) {
+function StageStatusLine({ panel, halo }: { panel: StagePanel; halo: StageTextHalo }) {
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();

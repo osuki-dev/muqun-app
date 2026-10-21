@@ -96,6 +96,11 @@ msgstr "{0, plural, other {อีก # บรรทัด}}"
 msgid "{0, plural, one {# operation} other {# operations}}"
 msgstr "{0, plural, other {การทำงาน # รายการ}}"
 
+#. placeholder {0}: need.count
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "{0, plural, one {# request waiting} other {# requests waiting}}"
+msgstr "{0, plural, other {มี # คำขอรออยู่}}"
+
 #. placeholder {0}: unused.count
 #. placeholder {1}: formatCacheSize(unused.reclaimableBytes)
 #: src/components/settings-storage.tsx
@@ -135,7 +140,7 @@ msgstr "อัปโหลด {0} ไม่สำเร็จ ลองอีก
 #. placeholder {0}: events.length
 #: src/app/settings-stage-diagnostics.tsx
 msgid "{0} events, newest first"
-msgstr ""
+msgstr "{0} เหตุการณ์ ล่าสุดก่อน"
 
 #. placeholder {0}: failed.name
 #. placeholder {1}: uploadLimitMb(attachmentLimitBytes(failed))
@@ -375,6 +380,10 @@ msgstr "{minutes, plural, other {# นาที}}"
 msgid "{modifierKeys} combinations need the program in this terminal to enable extended keys"
 msgstr "การกดร่วมกับ {modifierKeys} ต้องให้โปรแกรมในเทอร์มินัลนี้เปิดใช้คีย์แบบขยายก่อน"
 
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "{more, plural, one {# more needs you} other {# more need you}}"
+msgstr "{more, plural, other {อีก # รายการรอคุณ}}"
+
 #: src/components/home-agent-sheet.tsx
 msgid "{name} (terminal)"
 msgstr "{name} (เทอร์มินัล)"
@@ -446,6 +455,10 @@ msgstr "{waiting, plural, other {รอคุณ #}}"
 #: src/components/task-row.tsx
 msgid "→ {name}"
 msgstr "→ {name}"
+
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "+{more} more"
+msgstr "+{more} รายการ"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
@@ -723,6 +736,10 @@ msgstr "อนุญาตครั้งเดียว"
 msgid "Allow the camera, or enter the address instead."
 msgstr "อนุญาตให้ใช้กล้อง หรือป้อนที่อยู่แทน"
 
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "Allow: {subject}"
+msgstr "อนุญาต: {subject}"
+
 #: src/components/settings-font-sheet.tsx
 msgid "Already on"
 msgstr "ใช้อยู่แล้ว"
@@ -768,6 +785,7 @@ msgstr "และอีก {rest}"
 msgid "another computer"
 msgstr "คอมพิวเตอร์เครื่องอื่น"
 
+#: src/components/home-stage/stage-needs-card.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
 msgstr "คำตอบ"
@@ -2235,7 +2253,7 @@ msgid "Could not rename"
 msgstr "เปลี่ยนชื่อไม่ได้"
 
 #: src/components/agent-workbench.tsx
-#: src/components/home-reply-drawer.tsx
+#: src/components/home-session-replies.ts
 msgid "Could not reply"
 msgstr "ไม่สามารถตอบกลับได้"
 
@@ -3982,6 +4000,7 @@ msgid "Needs your attention"
 msgstr "ต้องการความสนใจจากคุณ"
 
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/stage-needs-card.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/server-agent-rows.tsx
 #: src/lib/notifications.ts
@@ -4268,7 +4287,7 @@ msgstr "ยังไม่มีโฮสต์ SSH เพิ่มโฮสต�
 
 #: src/app/settings-stage-diagnostics.tsx
 msgid "No Stage art events recorded yet."
-msgstr ""
+msgstr "ยังไม่มีเหตุการณ์ภาพของเวทีที่บันทึกไว้"
 
 #: src/components/simfarm-stage.tsx
 msgid "No still frames"
@@ -4501,6 +4520,7 @@ msgstr "ซ่อนเฉพาะรายการนี้จากหน้
 #: src/components/home-connections.tsx
 #: src/components/home-reply-drawer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
+#: src/components/home-stage/stage-needs-card.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/task-row.tsx
@@ -4903,6 +4923,7 @@ msgid "Permission"
 msgstr "สิทธิ์"
 
 #: src/components/agent-permission-card.tsx
+#: src/components/home-stage/stage-needs-card.tsx
 msgid "Permission required"
 msgstr "ต้องการสิทธิ์อนุญาต"
 
@@ -6264,11 +6285,11 @@ msgstr "เวที"
 
 #: src/app/settings-stage-diagnostics.tsx
 msgid "Stage diagnostics"
-msgstr ""
+msgstr "การวินิจฉัยเวที"
 
 #: src/app/settings-stage-diagnostics.tsx
 msgid "Stage log copied"
-msgstr ""
+msgstr "คัดลอกบันทึกเวทีแล้ว"
 
 #: src/components/diff-rows.tsx
 msgid "Staged"
@@ -7689,6 +7710,10 @@ msgstr "แปรผันได้ · {0}"
 msgid "Version {version}{0}"
 msgstr "เวอร์ชัน {version}{0}"
 
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "View"
+msgstr "ดู"
+
 #: src/components/agent-composer.tsx
 msgid "View file changes"
 msgstr "ดูการเปลี่ยนแปลงของไฟล์"
@@ -7757,9 +7782,17 @@ msgstr "กำลังรอรายการโมเดลของคอม
 msgid "Waiting for uploads to finish…"
 msgstr "กำลังรอให้อัปโหลดเสร็จ…"
 
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "Waiting for you in the terminal"
+msgstr "รอคุณอยู่ในเทอร์มินัล"
+
 #: src/components/agent-workbench.tsx
 msgid "Waiting for your answer"
 msgstr "กำลังรอคำตอบของคุณ"
+
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "Waiting for your input"
+msgstr "รอข้อมูลจากคุณ"
 
 #: src/components/agent-composer.tsx
 msgid "Waiting to send"

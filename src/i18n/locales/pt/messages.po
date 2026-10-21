@@ -96,6 +96,11 @@ msgstr "{0, plural, one {# linha a mais} other {# linhas a mais}}"
 msgid "{0, plural, one {# operation} other {# operations}}"
 msgstr "{0, plural, one {# operação} other {# operações}}"
 
+#. placeholder {0}: need.count
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "{0, plural, one {# request waiting} other {# requests waiting}}"
+msgstr "{0, plural, one {# solicitação aguardando} other {# solicitações aguardando}}"
+
 #. placeholder {0}: unused.count
 #. placeholder {1}: formatCacheSize(unused.reclaimableBytes)
 #: src/components/settings-storage.tsx
@@ -135,7 +140,7 @@ msgstr "{0} não foi enviado. Tente novamente ou remova-o para enviar"
 #. placeholder {0}: events.length
 #: src/app/settings-stage-diagnostics.tsx
 msgid "{0} events, newest first"
-msgstr ""
+msgstr "{0} eventos, mais recentes primeiro"
 
 #. placeholder {0}: failed.name
 #. placeholder {1}: uploadLimitMb(attachmentLimitBytes(failed))
@@ -375,6 +380,10 @@ msgstr "{minutes, plural, one {# minuto} other {# minutos}}"
 msgid "{modifierKeys} combinations need the program in this terminal to enable extended keys"
 msgstr "As combinações com {modifierKeys} exigem que o programa deste terminal ative as teclas estendidas"
 
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "{more, plural, one {# more needs you} other {# more need you}}"
+msgstr "{more, plural, one {mais # precisa de você} other {mais # precisam de você}}"
+
 #: src/components/home-agent-sheet.tsx
 msgid "{name} (terminal)"
 msgstr "{name} (no terminal)"
@@ -446,6 +455,10 @@ msgstr "{waiting, plural, one {# precisa de você} other {# precisam de você}}"
 #: src/components/task-row.tsx
 msgid "→ {name}"
 msgstr "→ {name}"
+
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "+{more} more"
+msgstr "+{more}"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
@@ -723,6 +736,10 @@ msgstr "Permitir uma vez"
 msgid "Allow the camera, or enter the address instead."
 msgstr "Permita a câmara ou introduza o endereço"
 
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "Allow: {subject}"
+msgstr "Permitir: {subject}"
+
 #: src/components/settings-font-sheet.tsx
 msgid "Already on"
 msgstr "Já ativo"
@@ -768,6 +785,7 @@ msgstr "e mais {rest}"
 msgid "another computer"
 msgstr "outro computador"
 
+#: src/components/home-stage/stage-needs-card.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
 msgstr "Resposta"
@@ -2235,7 +2253,7 @@ msgid "Could not rename"
 msgstr "Não foi possível renomear"
 
 #: src/components/agent-workbench.tsx
-#: src/components/home-reply-drawer.tsx
+#: src/components/home-session-replies.ts
 msgid "Could not reply"
 msgstr "Não foi possível responder"
 
@@ -3982,6 +4000,7 @@ msgid "Needs your attention"
 msgstr "Precisa da sua atenção"
 
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/stage-needs-card.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/server-agent-rows.tsx
 #: src/lib/notifications.ts
@@ -4268,7 +4287,7 @@ msgstr "Ainda não há hosts SSH. Adicione um para abrir um shell em qualquer m�
 
 #: src/app/settings-stage-diagnostics.tsx
 msgid "No Stage art events recorded yet."
-msgstr ""
+msgstr "Nenhum evento de arte do Palco registrado ainda"
 
 #: src/components/simfarm-stage.tsx
 msgid "No still frames"
@@ -4501,6 +4520,7 @@ msgstr "Apenas esta linha do Início é ocultada. A tarefa e o seu histórico co
 #: src/components/home-connections.tsx
 #: src/components/home-reply-drawer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
+#: src/components/home-stage/stage-needs-card.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/task-row.tsx
@@ -4903,6 +4923,7 @@ msgid "Permission"
 msgstr "Permissão"
 
 #: src/components/agent-permission-card.tsx
+#: src/components/home-stage/stage-needs-card.tsx
 msgid "Permission required"
 msgstr "Permissão necessária"
 
@@ -6264,11 +6285,11 @@ msgstr "Palco"
 
 #: src/app/settings-stage-diagnostics.tsx
 msgid "Stage diagnostics"
-msgstr ""
+msgstr "Diagnóstico do Palco"
 
 #: src/app/settings-stage-diagnostics.tsx
 msgid "Stage log copied"
-msgstr ""
+msgstr "Registro do Palco copiado"
 
 #: src/components/diff-rows.tsx
 msgid "Staged"
@@ -7689,6 +7710,10 @@ msgstr "Variável · {0}"
 msgid "Version {version}{0}"
 msgstr "Versão {version}{0}"
 
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "View"
+msgstr "Ver"
+
 #: src/components/agent-composer.tsx
 msgid "View file changes"
 msgstr "Ver alterações de arquivos"
@@ -7757,9 +7782,17 @@ msgstr "À espera da lista de modelos deste computador. Envie novamente daqui a 
 msgid "Waiting for uploads to finish…"
 msgstr "À espera de que os carregamentos terminem…"
 
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "Waiting for you in the terminal"
+msgstr "Aguardando você no terminal"
+
 #: src/components/agent-workbench.tsx
 msgid "Waiting for your answer"
 msgstr "À espera da tua resposta"
+
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "Waiting for your input"
+msgstr "Aguardando sua resposta"
 
 #: src/components/agent-composer.tsx
 msgid "Waiting to send"
