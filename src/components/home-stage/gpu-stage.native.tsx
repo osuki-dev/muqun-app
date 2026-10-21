@@ -57,9 +57,8 @@ export default function GpuStage(props: StageSceneProps) {
           await next.configure({
             size: { ...size, top: 0, left: 0 },
             // At most 1.5 rather than 2: about 44% fewer pixels to shade every
-            // frame. The panes' text is a 448 x 280 texture per face, and a
-            // resting pane (about 280 pt wide) covers about 420 px at 1.5x --
-            // one texel per pixel, where 2x only magnified the same texels.
+            // frame. Nothing in the scene is text or a hard edge: the pictures
+            // are soft-edged layers and the cores and orbs are shaded glows.
             // A lower quality rung lowers it further (`StageRuntime`).
             dpr: Math.min(
               PixelRatio.get(),
@@ -76,11 +75,11 @@ export default function GpuStage(props: StageSceneProps) {
                 context,
                 device: importDevice(Skia.getNativeDevice()),
                 // No MSAA and no depth buffer. Every layer is a blended plane
-                // whose edges are already soft in its shader (the panes' rounded
-                // rims, the glows, the motes) and the layers are ordered by
-                // hand, so 4x multisampling only quadrupled the half-float
-                // frame buffer every frame wrote, and depth was never tested.
-                // The text is a mipmapped texture, which MSAA never touched.
+                // whose edges are already soft in its shader (the cores' rims,
+                // the ring's hairline, the glows, the motes) and the layers
+                // are ordered by hand -- a ring or orb behind its core is
+                // hidden in its shader -- so 4x multisampling only quadrupled
+                // the half-float frame buffer every frame wrote.
                 antialias: false,
                 depth: false,
               });

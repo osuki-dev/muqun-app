@@ -84,17 +84,17 @@ msgstr "{0, plural, one {# hora} other {# horas}}"
 msgid "{0, plural, one {# minute} other {# minutes}}"
 msgstr "{0, plural, one {# minuto} other {# minutos}}"
 
+#. placeholder {0}: orb.more
+#: src/components/home-stage/stage-view.tsx
+msgid "{0, plural, one {# more agent} other {# more agents}}"
+msgstr "{0, plural, one {# agente más} other {# agentes más}}"
+
 #. placeholder {0}: capped.hidden
 #. placeholder {0}: row.remaining
 #: src/components/agent-tool-card.tsx
 #: src/components/diff-rows.tsx
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, one {# línea más} other {# líneas más}}"
-
-#. placeholder {0}: panel.needsYouCount
-#: src/components/home-stage/stage-faces.ts
-msgid "{0, plural, one {# needs you} other {# need you}}"
-msgstr "{0, plural, one {# te necesita} other {# te necesitan}}"
 
 #. placeholder {0}: entries.length
 #: src/components/agent-message-block.tsx
@@ -111,16 +111,6 @@ msgstr "{0, plural, one {# tema} other {# temas}} · {1}"
 #: src/components/agent-account-limits-section.tsx
 msgid "{0, plural, one {# week} other {# weeks}}"
 msgstr "{0, plural, one {# semana} other {# semanas}}"
-
-#. placeholder {0}: panel.workingCount
-#: src/components/home-stage/stage-faces.ts
-msgid "{0, plural, one {# working} other {# working}}"
-msgstr "{0, plural, one {# trabajando} other {# trabajando}}"
-
-#. placeholder {0}: face.more
-#: src/components/home-stage/stage-faces.ts
-msgid "{0, plural, one {+# more} other {+# more}}"
-msgstr "{0, plural, other {+# más}}"
 
 #. placeholder {0}: digest.otherAgents
 #: src/components/away-digest-card.tsx
@@ -709,10 +699,6 @@ msgstr "Todos los paneles"
 #: src/components/agent-sessions-sheet.tsx
 msgid "All projects"
 msgstr "Todos los proyectos"
-
-#: src/components/home-stage/stage-faces.ts
-msgid "All quiet"
-msgstr "Todo tranquilo"
 
 #: src/components/agent-composer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
@@ -3594,11 +3580,6 @@ msgstr "Idioma, {languageName}"
 msgid "Large"
 msgstr "Grande"
 
-#. placeholder {0}: age(face.lastActivityMs, nowMs)
-#: src/components/home-stage/stage-faces.ts
-msgid "Last activity {0}"
-msgstr "Última actividad {0}"
-
 #: src/components/agent-account-limits-section.tsx
 msgid "Last checked"
 msgstr "Última comprobación"
@@ -4050,7 +4031,7 @@ msgid "Needs update"
 msgstr "Requiere actualización"
 
 #: src/components/home-stage/home-stage-layout.tsx
-#: src/components/home-stage/stage-faces.ts
+#: src/components/home-stage/stage-view.tsx
 #: src/components/home-thread.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "Needs you"
@@ -4523,7 +4504,6 @@ msgid "Off"
 msgstr "Desactivado"
 
 #: src/components/home-composer-options.tsx
-#: src/components/home-stage/stage-faces.ts
 #: src/components/home-thread.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
@@ -4534,10 +4514,8 @@ msgstr "Sin conexión"
 msgid "OFFLINE"
 msgstr "SIN CONEXIÓN"
 
-#. placeholder {0}: age(face.lastSeenMs, nowMs)
 #. placeholder {0}: age(seen, nowMs)
 #: src/components/home-stage/home-stage-layout.tsx
-#: src/components/home-stage/stage-faces.ts
 msgid "Offline · last seen {0}"
 msgstr "Sin conexión · visto {0}"
 
@@ -4801,6 +4779,10 @@ msgstr "Abre los issues de Muqun en GitHub"
 #: src/components/simfarm-stage.tsx
 msgid "Opens the simulator's menu: the device, its keys, the keyboard and the way out. Drag to move."
 msgstr "Abre el menú del simulador: el dispositivo, sus botones, el teclado y la salida. Arrástralo para moverlo"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Opens this agent."
+msgstr "Abre este agente"
 
 #: src/components/server-agent-rows.tsx
 msgid "Opens this agent's terminal"

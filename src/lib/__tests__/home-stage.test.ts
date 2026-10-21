@@ -2,33 +2,29 @@ import { describe, expect, test } from 'bun:test';
 import {
   projectStagePoint,
   stageCamera,
+  stageCore,
+  stageCoreAnchor,
+  stageCoreRect,
   stageCoverLayer,
   stageDiveCamera,
   stageDragPosition,
   stageDrawnScreens,
-  stageFaceHeight,
   stageHeroPlacement,
   stageHostTarget,
   stagePaintingPlacement,
-  stagePane,
-  stagePaneAnchor,
-  stageQuadRect,
+  stageRingPoint,
   stageSwipeTarget,
   stageViewSize,
   stageWorldRect,
   wrapStageIndex,
-  STAGE_FACE_CELL_HEIGHT,
-  STAGE_FACE_CELL_WIDTH,
-  STAGE_FACE_LINE_STEP,
-  STAGE_FACE_MAX_ROWS,
-  STAGE_FACE_MIN_ROWS,
-  STAGE_FACE_SIDE_HEIGHT,
+  STAGE_CORE_DEPTH,
   STAGE_HERO_DEPTH,
   STAGE_HUD_BOTTOM_PT,
   STAGE_MAX_SCREENS,
   STAGE_PAINTING_OVERSCAN,
-  STAGE_PANE_DEPTH,
+  STAGE_RING_SCALE,
 } from '../home-stage-geometry';
+import type { StageRole } from '../home-stage-layers';
 import { stageClearFraction, stageComposition } from '../home-stage-layers';
 import {
   createStageFrameBudget,
@@ -41,14 +37,7 @@ import {
   STAGE_CARD_SPRING,
   type StageFrameBudget,
 } from '../home-stage-motion';
-import {
-  stagePanels,
-  stageSelectedIndex,
-  stageStreakLines,
-  type StageFace,
-} from '../home-stage-panels';
-import { stageReadableInk } from '../home-stage-ink';
-import { contrastRatio } from '../../theme/contrast';
+import { stagePanels, stageSelectedIndex } from '../home-stage-panels';
 
 describe('cover-flow', () => {
   test('wraps an index in both directions and survives an empty list', () => {
@@ -70,7 +59,7 @@ describe('cover-flow', () => {
     expect(stageDrawnScreens(19, 20).at(-1)).toBe(19);
   });
 
-  test('a swipe settles on the nearest pane, at least one step when long or fast, never past an end', () => {
+  test('a swipe settles on the nearest core, at least one step when long or fast, never past an end', () => {
     // Short and slow: stays.
     expect(stageSwipeTarget(1, 4, -20, -50, 400)).toBe(1);
     // Long enough for a step but not for the next pane to be nearest.
@@ -91,64 +80,61 @@ describe('cover-flow', () => {
     expect(stageDragPosition(2, 3, -5)).toBe(2.35);
   });
 
-  test('the selected pane faces the camera; neighbours stand aside, back and turned inwards', () => {
+  test("the selected core sits at its role's place; neighbours stand aside, back and smaller", () => {
     const aspect = 390 / 844;
-    const anchor = stagePaneAnchor(stageCamera(), aspect);
-    const viewWidth = stageViewSize(STAGE_PANE_DEPTH, aspect).width;
-    const front = stagePane(0, anchor, aspect);
+    const anchor = stageCoreAnchor(stageCamera(), aspect, 'figure');
+    const viewWidth = stageViewSize(STAGE_CORE_DEPTH, aspect).width;
+    const front = stageCore(0, anchor, aspect, 'figure');
     expect(front.position).toEqual(anchor);
-    expect(front.yaw).toBeCloseTo(0);
-    expect(front.width).toBeCloseTo(viewWidth * 0.72);
-    const next = stagePane(1, anchor, aspect);
-    const previous = stagePane(-1, anchor, aspect);
-    expect(next.position[0] - anchor[0]).toBeCloseTo(viewWidth * 0.66);
-    expect(previous.position[0] - anchor[0]).toBeCloseTo(-viewWidth * 0.66);
+    expect(front.side).toBe(0);
+    // About 44 pt across the radius on a phone, its ring twice that.
+    expect((front.radius / viewWidth) * 390).toBeCloseTo(44.9, 0);
+    expect(front.ringRadius).toBeCloseTo(front.radius * STAGE_RING_SCALE);
+    expect(front.orbRadius).toBeLessThan(front.radius / 4);
+    const next = stageCore(1, anchor, aspect, 'figure');
+    const previous = stageCore(-1, anchor, aspect, 'figure');
+    expect(next.position[0] - anchor[0]).toBeCloseTo(viewWidth * 0.62);
+    expect(previous.position[0] - anchor[0]).toBeCloseTo(-viewWidth * 0.62);
     expect(next.position[2]).toBeCloseTo(anchor[2] - 2.2);
-    expect(next.yaw).toBeCloseTo((-48 * Math.PI) / 180);
-    expect(previous.yaw).toBeCloseTo((48 * Math.PI) / 180);
-    expect(next.width).toBeCloseTo(viewWidth * 0.62);
-    // Halfway through a drag, halfway between.
-    const half = stagePane(0.5, anchor, aspect);
-    expect(half.width).toBeCloseTo(viewWidth * 0.67);
-    expect(stagePane(2, anchor, aspect).width).toBeCloseTo(next.width);
+    expect(next.radius).toBeCloseTo(front.radius * 0.62);
+    expect(next.side).toBe(1);
+    // A neighbour peeks in at the edge: its centre near or past the side of the view.
+    const camera = stageCamera();
+    expect(projectStagePoint(next.position, camera, 390, 844).x).toBeGreaterThan(390 * 0.9);
+    expect(projectStagePoint(previous.position, camera, 390, 844).x).toBeLessThan(390 * 0.1);
+    // Halfway through a drag, halfway between; further than one step is a neighbour's size.
+    expect(stageCore(0.5, anchor, aspect, 'figure').radius).toBeCloseTo(front.radius * 0.81);
+    expect(stageCore(2, anchor, aspect, 'figure').radius).toBeCloseTo(next.radius);
+    // With no art the core is the scene: larger.
+    const world = stageCore(0, stageCoreAnchor(camera, aspect, 'world'), aspect, 'world');
+    expect(world.radius).toBeGreaterThan(front.radius);
   });
 
-  test('a face is as tall as its rows: the name and two rows at least, the whole cell at most', () => {
-    expect(stageFaceHeight(0)).toBe(stageFaceHeight(STAGE_FACE_MIN_ROWS));
-    expect(stageFaceHeight(STAGE_FACE_MAX_ROWS)).toBe(STAGE_FACE_CELL_HEIGHT);
-    expect(stageFaceHeight(9)).toBe(STAGE_FACE_CELL_HEIGHT);
-    expect(stageFaceHeight(3) - stageFaceHeight(2)).toBe(STAGE_FACE_LINE_STEP);
-    // The shortest front face is still taller than a side face.
-    expect(stageFaceHeight(STAGE_FACE_MIN_ROWS)).toBeGreaterThan(STAGE_FACE_SIDE_HEIGHT);
-  });
-
-  test('a pane fits its face and hangs from the tallest pane top; a side pane fits its name', () => {
+  test('the ring lies around the core, its near side lower and nearer than its far side', () => {
     const aspect = 390 / 844;
-    const anchor = stagePaneAnchor(stageCamera(), aspect);
-    const top = (pane: ReturnType<typeof stagePane>) => pane.position[1] + pane.height / 2;
-    const tall = stagePane(0, anchor, aspect);
-    const short = stagePane(0, anchor, aspect, stageFaceHeight(2));
-    expect(tall.height).toBeCloseTo(tall.width * 0.625);
-    expect(short.width).toBeCloseTo(tall.width);
-    expect(short.height).toBeCloseTo((tall.width * stageFaceHeight(2)) / STAGE_FACE_CELL_WIDTH);
-    expect(top(short)).toBeCloseTo(top(tall));
-    // Never lower than the tallest pane reaches.
-    expect(short.position[1] - short.height / 2).toBeGreaterThan(
-      tall.position[1] - tall.height / 2
-    );
-    // At the side every pane is as tall as a side face, whatever its front says.
-    const sideTall = stagePane(1, anchor, aspect);
-    const sideShort = stagePane(1, anchor, aspect, stageFaceHeight(2));
-    expect(sideTall.height).toBeCloseTo(sideShort.height);
-    expect(sideTall.height).toBeCloseTo(
-      (sideTall.width * STAGE_FACE_SIDE_HEIGHT) / STAGE_FACE_CELL_WIDTH
-    );
-    expect(top(sideShort)).toBeCloseTo(top(stagePane(1, anchor, aspect, STAGE_FACE_SIDE_HEIGHT)));
-    // Halfway through a drag, halfway between the two heights.
-    const half = stagePane(0.5, anchor, aspect, STAGE_FACE_CELL_HEIGHT);
-    expect(half.height).toBeCloseTo(
-      (half.width * (STAGE_FACE_CELL_HEIGHT + STAGE_FACE_SIDE_HEIGHT)) / 2 / STAGE_FACE_CELL_WIDTH
-    );
+    const camera = stageCamera();
+    const core = stageCore(0, stageCoreAnchor(camera, aspect, 'inset'), aspect, 'inset');
+    for (const angle of [0, 1, 2.5, 4, 5.5]) {
+      const point = stageRingPoint(core, angle);
+      const distance = Math.hypot(
+        point[0] - core.position[0],
+        point[1] - core.position[1],
+        point[2] - core.position[2]
+      );
+      expect(distance).toBeCloseTo(core.ringRadius);
+    }
+    const far = projectStagePoint(stageRingPoint(core, Math.PI / 2), camera, 390, 844);
+    const near = projectStagePoint(stageRingPoint(core, (3 * Math.PI) / 2), camera, 390, 844);
+    const right = projectStagePoint(stageRingPoint(core, 0), camera, 390, 844);
+    const centre = projectStagePoint(core.position, camera, 390, 844);
+    expect(near.y).toBeGreaterThan(centre.y);
+    expect(far.y).toBeLessThan(centre.y);
+    expect(near.depth).toBeLessThan(far.depth);
+    // Seen from a little above: an ellipse about three times wider than tall.
+    const across = Math.abs(right.x - centre.x);
+    const tall = Math.abs(near.y - far.y) / 2;
+    expect(across / tall).toBeGreaterThan(2.5);
+    expect(across / tall).toBeLessThan(4.5);
   });
 });
 
@@ -156,30 +142,62 @@ describe('camera and projection', () => {
   const aspect = 390 / 844;
   const camera = stageCamera();
 
-  test('the selected pane sits below the middle of the screen, where the anchor was cast', () => {
-    const anchor = stagePaneAnchor(camera, aspect);
+  test('the selected core sits below the middle of the screen, where its anchor was cast', () => {
+    const anchor = stageCoreAnchor(camera, aspect, 'figure');
     const at = projectStagePoint(anchor, camera, 390, 844);
     expect(at.x).toBeCloseTo(195, 3);
-    // NDC -0.1 is 55 % of the way down.
-    expect(at.y).toBeCloseTo(844 * 0.55, 3);
-    expect(at.depth).toBeLessThanOrEqual(STAGE_PANE_DEPTH);
+    // NDC -0.25 is 62.5 % of the way down.
+    expect(at.y).toBeCloseTo(844 * 0.625, 3);
+    expect(at.depth).toBeLessThanOrEqual(STAGE_CORE_DEPTH);
   });
 
-  test('the selected pane and its reflection stay above the bottom quarter on phones and tablets', () => {
+  test('in every role the front core and its ring clear the art and the HUD and stay above the session strip', () => {
+    const roles: StageRole[] = ['figure', 'sky', 'inset', 'world'];
     for (const [width, height] of [
       [393, 873],
       [390, 844],
-      [834, 1194],
-      [1194, 834],
+      [360, 800],
+      [412, 915],
     ] as const) {
+      const viewport = { width, height, inset: 47 };
       const ratio = width / height;
-      const pane = stagePane(0, stagePaneAnchor(camera, ratio), ratio);
-      const [x, y, z] = pane.position;
-      // The reflection reaches 1.03 pane heights below the pane's centre.
-      const reflection = projectStagePoint([x, y - pane.height * 1.03, z], camera, width, height);
-      expect(height - reflection.y).toBeGreaterThan(height * 0.1);
-      const rect = stageQuadRect(pane.position, pane.width, pane.height, 0, camera, width, height);
-      expect(height - (rect.y + rect.height)).toBeGreaterThan(height * 0.25);
+      // Where each role's art body ends: a figure's and a painting's foot fade, an inset's box.
+      const figure = stageHeroPlacement(
+        { aspect: 0.6, fit: 'contain', focal: { x: 0.5, y: 0.5 }, box: 'cover', feather: 'cover' },
+        viewport
+      );
+      const inset = stageHeroPlacement(
+        {
+          aspect: 1.4,
+          fit: 'contain',
+          focal: { x: 0.5, y: 0.5 },
+          box: 'standard',
+          feather: 'inset',
+        },
+        viewport
+      );
+      const sky = stagePaintingPlacement(
+        { aspect: 0.9, fit: 'cover', focal: { x: 0.5, y: 0 } },
+        viewport
+      );
+      const body = (art: typeof figure) =>
+        art.plane.y + art.plane.height * Math.min(1, art.fade.from);
+      const artFoot: Record<StageRole, number> = {
+        figure: body(figure),
+        sky: body(sky),
+        inset: inset.box.y + inset.box.height,
+        world: 47 + STAGE_HUD_BOTTOM_PT,
+      };
+      for (const role of roles) {
+        const core = stageCore(0, stageCoreAnchor(camera, ratio, role), ratio, role);
+        const rect = stageCoreRect(core, camera, width, height);
+        expect(rect.visible).toBe(true);
+        expect(rect.y).toBeGreaterThan(artFoot[role]);
+        expect(rect.y + rect.height).toBeLessThan(height * 0.74);
+        // Centred, and wholly inside the view.
+        expect(rect.x + rect.width / 2).toBeCloseTo(width / 2, 0);
+        expect(rect.x).toBeGreaterThan(0);
+      }
     }
   });
 
@@ -190,40 +208,40 @@ describe('camera and projection', () => {
     expect(projectStagePoint([0, 0, 50], camera, 390, 844).visible).toBe(false);
   });
 
-  test('a dive ends in front of the pane, looking at it, with the pane still on screen', () => {
-    const anchor = stagePaneAnchor(camera, aspect);
-    expect(stageDiveCamera(camera, anchor, 0)).toBe(camera);
-    const dived = stageDiveCamera(camera, anchor, 1);
-    expect(dived.target).toEqual(anchor);
+  test('a dive ends a few core radii in front of the core, looking at it, with the core on screen', () => {
+    const core = stageCore(0, stageCoreAnchor(camera, aspect, 'figure'), aspect, 'figure');
+    expect(stageDiveCamera(camera, core, 0)).toBe(camera);
+    const dived = stageDiveCamera(camera, core, 1);
+    dived.target.forEach((value, axis) => expect(value).toBeCloseTo(core.position[axis]!));
     const distance = Math.hypot(
-      dived.position[0] - anchor[0],
-      dived.position[1] - anchor[1],
-      dived.position[2] - anchor[2]
+      dived.position[0] - core.position[0],
+      dived.position[1] - core.position[1],
+      dived.position[2] - core.position[2]
     );
-    expect(distance).toBeLessThan(STAGE_PANE_DEPTH);
-    expect(projectStagePoint(anchor, dived, 390, 844).visible).toBe(true);
+    expect(distance).toBeCloseTo(core.radius * 5);
+    expect(projectStagePoint(core.position, dived, 390, 844).visible).toBe(true);
   });
 
-  test('a side pane box is clipped to the screen; a pane entirely off screen is not visible', () => {
-    const anchor = stagePaneAnchor(camera, aspect);
-    const front = stagePane(0, anchor, aspect);
-    const frontRect = stageQuadRect(front.position, front.width, front.height, 0, camera, 390, 844);
-    expect(frontRect.visible).toBe(true);
-    expect(frontRect.width / frontRect.height).toBeCloseTo(1 / 0.625, 1);
-    const side = stagePane(1, anchor, aspect);
-    const sideRect = stageQuadRect(
-      side.position,
-      side.width,
-      side.height,
-      side.yaw,
-      camera,
-      390,
-      844
-    );
-    expect(sideRect.visible).toBe(true);
-    expect(sideRect.x + sideRect.width).toBeLessThanOrEqual(390);
-    expect(sideRect.depth).toBeGreaterThan(frontRect.depth);
-    const gone = stageQuadRect([40, 0, -12], 2, 1, 0, camera, 390, 844);
+  test("a core's box holds its sphere and ring, clipped to the screen; a core off screen is not visible", () => {
+    const anchor = stageCoreAnchor(camera, aspect, 'figure');
+    const front = stageCore(0, anchor, aspect, 'figure');
+    const box = stageCoreRect(front, camera, 390, 844);
+    for (const point of [
+      front.position,
+      stageRingPoint(front, 0),
+      stageRingPoint(front, Math.PI),
+    ]) {
+      const at = projectStagePoint(point, camera, 390, 844);
+      expect(at.x).toBeGreaterThan(box.x);
+      expect(at.x).toBeLessThan(box.x + box.width);
+      expect(at.y).toBeGreaterThanOrEqual(box.y);
+      expect(at.y).toBeLessThanOrEqual(box.y + box.height);
+    }
+    const side = stageCoreRect(stageCore(1, anchor, aspect, 'figure'), camera, 390, 844);
+    expect(side.visible).toBe(true);
+    expect(side.x + side.width).toBeLessThanOrEqual(390);
+    expect(side.depth).toBeGreaterThan(box.depth);
+    const gone = stageCoreRect(stageCore(4, anchor, aspect, 'figure'), camera, 390, 844);
     expect(gone.visible).toBe(false);
   });
 
@@ -231,12 +249,16 @@ describe('camera and projection', () => {
     const viewport = { width: 390, height: 844, inset: 47 };
     const box = { x: 40, y: 120, width: 300, height: 200 };
     const placed = stageWorldRect(box, STAGE_HERO_DEPTH, viewport);
-    const rect = stageQuadRect(placed.position, placed.width, placed.height, 0, camera, 390, 844);
+    const [x, y, z] = placed.position;
+    const corner = (u: number, v: number) =>
+      projectStagePoint([x + u * placed.width, y + v * placed.height, z], camera, 390, 844);
+    const topLeft = corner(-0.5, 0.5);
+    const bottomRight = corner(0.5, -0.5);
     // The camera looks a little down, so the plane leans: within a few points.
-    expect(Math.abs(rect.x - box.x)).toBeLessThan(3);
-    expect(Math.abs(rect.width - box.width)).toBeLessThan(4);
-    expect(Math.abs(rect.y - box.y)).toBeLessThan(3);
-    expect(Math.abs(rect.height - box.height)).toBeLessThan(3);
+    expect(Math.abs(topLeft.x - box.x)).toBeLessThan(3);
+    expect(Math.abs(bottomRight.x - topLeft.x - box.width)).toBeLessThan(4);
+    expect(Math.abs(topLeft.y - box.y)).toBeLessThan(3);
+    expect(Math.abs(bottomRight.y - topLeft.y - box.height)).toBeLessThan(3);
   });
 });
 
@@ -357,17 +379,14 @@ describe('theme layout', () => {
     expect(framed.edges).toEqual({ x: 0.22, y: 0.32 });
   });
 
-  test('every role has a new-task target below the HUD and above the panes', () => {
-    const pane = stagePane(0, stagePaneAnchor(stageCamera(), aspect), aspect);
-    const paneTop = stageQuadRect(
-      pane.position,
-      pane.width,
-      pane.height,
-      0,
-      stageCamera(),
-      390,
-      844
-    ).y;
+  test('every role has a new-task target below the HUD and above the core', () => {
+    const coreTop = (role: StageRole) =>
+      stageCoreRect(
+        stageCore(0, stageCoreAnchor(stageCamera(), aspect, role), aspect, role),
+        stageCamera(),
+        390,
+        844
+      ).y;
     const hud = 47 + STAGE_HUD_BOTTOM_PT;
     const targets = [
       stageHostTarget({ kind: 'hero', placement: stageHeroPlacement(hero(), viewport) }, viewport),
@@ -387,17 +406,18 @@ describe('theme layout', () => {
       ),
       stageHostTarget(null, viewport),
     ];
-    for (const { rect, hint } of targets) {
+    const roles: StageRole[] = ['figure', 'inset', 'sky', 'world'];
+    targets.forEach(({ rect, hint }, index) => {
       expect(rect.width).toBeGreaterThan(80);
       expect(rect.height).toBeGreaterThan(48);
       expect(rect.y + rect.height).toBeGreaterThan(hud + 48);
       // The hint chip hangs above its point: the point stays clear of the HUD.
       expect(hint.y).toBeGreaterThanOrEqual(hud + 44);
-      expect(hint.y).toBeLessThan(paneTop);
-    }
-    // The painting's target starts below the HUD, the synthetic one ends above the panes.
+      expect(hint.y).toBeLessThan(coreTop(roles[index]!));
+    });
+    // The painting's target starts below the HUD, the synthetic one ends above the core.
     expect(targets[2]!.rect.y).toBe(hud);
-    expect(targets[3]!.rect.y + targets[3]!.rect.height).toBeLessThan(paneTop);
+    expect(targets[3]!.rect.y + targets[3]!.rect.height).toBeLessThan(coreTop('world'));
   });
 });
 
@@ -605,23 +625,24 @@ describe('frame pacing', () => {
     expect(stageEffects('full', gpu)).toMatchObject({
       particles: true,
       particleShare: 1,
-      reflections: true,
-      shimmer: true,
+      orbit: true,
+      fullGlow: true,
       maxDpr: 1.5,
       frameIntervalMs: 0,
     });
     expect(stageEffects('reduced', gpu)).toMatchObject({
       particles: true,
       particleShare: 0.5,
-      reflections: false,
-      shimmer: true,
+      orbit: true,
+      fullGlow: true,
       maxDpr: 1.25,
       frameIntervalMs: 0,
     });
+    // The cheapest 3D rung: still cores in fewer glow layers.
     expect(stageEffects('low', gpu)).toMatchObject({
       particles: false,
-      reflections: false,
-      shimmer: false,
+      orbit: false,
+      fullGlow: false,
       maxDpr: 1,
       frameIntervalMs: 1000 / 30,
     });
@@ -630,6 +651,7 @@ describe('frame pacing', () => {
     expect(stageEffects('full', { gpuAvailable: true, reducedMotion: true })).toMatchObject({
       particles: true,
       pulse: false,
+      orbit: false,
       tilt: false,
       idleIntervalMs: null,
     });
@@ -648,22 +670,6 @@ describe('idle policy', () => {
   test('a scene without ambient motion never idles on a timer', () => {
     const calm = stageEffects('full', { gpuAvailable: true, reducedMotion: true });
     expect(stageIdleInterval(calm, 0)).toBeNull();
-  });
-});
-
-describe('stage ink', () => {
-  test('a pale primary is darkened until it reads at 4.5:1 on a light slab', () => {
-    const ink = stageReadableInk('#9FE4CE', '#FFFCF7');
-    expect(contrastRatio(ink, '#fffcf7')).toBeGreaterThanOrEqual(4.5);
-    expect(ink).not.toBe('#000000');
-  });
-
-  test('an ink that already reads is kept; a dark ground lightens; non-hex passes through', () => {
-    expect(stageReadableInk('#050B12', '#FFFCF7')).toBe('#050b12');
-    expect(contrastRatio(stageReadableInk('#404040', '#151C22'), '#151c22')).toBeGreaterThanOrEqual(
-      4.5
-    );
-    expect(stageReadableInk('rgba(0,0,0,0.5)', '#ffffff')).toBe('rgba(0,0,0,0.5)');
   });
 });
 
@@ -727,7 +733,7 @@ describe('stage panels', () => {
     a: { serverId: 'a', checkedAtMs, agents: [...agents] },
   });
 
-  test('a busy face counts and orders: waiting first, then running, then the rest, overflow last', () => {
+  test('agents count and order: waiting first, then running, then the rest; a plain pane is no agent', () => {
     const [panel] = stagePanels({
       ...base,
       agentsByServer: mirror([
@@ -735,7 +741,7 @@ describe('stage panels', () => {
         agent('2', 'working'),
         agent('3', 'idle', { pendingUserInput: true }),
         agent('4', 'working'),
-        agent('5', 'done'),
+        agent('5', 'done', { paneId: 'p5' }),
         { ...agent('6', 'working'), hasAgent: false },
       ]),
       recentEntries: [
@@ -745,16 +751,18 @@ describe('stage panels', () => {
     expect(panel!.workingCount).toBe(2);
     expect(panel!.needsYouCount).toBe(1);
     expect(panel!.working && panel!.attention).toBe(true);
-    expect(panel!.face).toMatchObject({ kind: 'busy', more: 2 });
-    const face = panel!.face as Extract<StageFace, { kind: 'busy' }>;
-    expect(face.agents.map((line) => [line.name, line.mark])).toEqual([
-      ['Agent 3', 'needs-you'],
-      ['Agent 2', 'working'],
-      ['Agent 4', 'working'],
+    expect(panel!.agents.map((line) => [line.key, line.name, line.mark])).toEqual([
+      ['3', 'Agent 3', 'needs-you'],
+      ['2', 'Agent 2', 'working'],
+      ['4', 'Agent 4', 'working'],
+      ['1', 'Agent 1', 'idle'],
+      ['5', 'Agent 5', 'idle'],
     ]);
-    // Session titles are the strip's: never on the face.
-    expect(JSON.stringify(panel!.face)).not.toContain('"s"');
-    expect(stageStreakLines(panel!.face)).toBe(0b110);
+    // A tap on an orb lands on its pane when the mirror knows it.
+    expect(panel!.agents.find((line) => line.key === '5')?.paneId).toBe('p5');
+    expect('paneId' in panel!.agents[0]!).toBe(false);
+    // Session titles are the strip's: never an agent's.
+    expect(JSON.stringify(panel!.agents)).not.toContain('"s"');
   });
 
   test('a native request and its blocked pane are one wait, not two', () => {
@@ -767,7 +775,7 @@ describe('stage panels', () => {
     });
     expect(panel!.needsYouCount).toBe(1);
     expect(panel!.workingCount).toBe(0);
-    expect(stageStreakLines(panel!.face)).toBe(0);
+    expect(panel!.agents.map((line) => line.mark)).toEqual(['needs-you']);
   });
 
   test("activity comes from the agent's open task in its own shell, never for an idle agent", () => {
@@ -809,8 +817,7 @@ describe('stage panels', () => {
         },
       } as never,
     });
-    const face = panel!.face as Extract<StageFace, { kind: 'busy' }>;
-    expect(face.agents.map((line) => line.activity)).toEqual([
+    expect(panel!.agents.map((line) => line.activity)).toEqual([
       'running tests',
       // No task: the pane title, which is more than the agent's name.
       'pane 2',
@@ -821,37 +828,16 @@ describe('stage panels', () => {
     ]);
   });
 
-  test('quiet and offline faces say when only from a real time', () => {
-    const quiet = stagePanels({
-      ...base,
-      agentsByServer: mirror([agent('1', 'idle')]),
-      recentEntries: [
-        { key: 'x', title: 'x', atMs: now - 5000, destination: { type: 'pane', serverId: 'a' } },
-        { key: 'y', title: 'y', atMs: now - 9000, destination: { type: 'pane', serverId: 'a' } },
-      ] as never,
-    });
-    expect(quiet[0]!.face).toEqual({
-      kind: 'quiet',
-      idle: ['Agent 1'],
-      lastActivityMs: now - 5000,
-    });
-    expect(quiet[1]!.face).toEqual({ kind: 'offline' });
-    const bare = stagePanels({
+  test('an offline computer has no agents and runs nothing, whatever its mirror last saw', () => {
+    const panels = stagePanels({
       ...base,
       agentsByServer: {
         b: { serverId: 'b', checkedAtMs: now - 7000, agents: [agent('2', 'working')] },
       },
     });
-    expect(bare[0]!.face).toEqual({ kind: 'quiet', idle: [] });
-    // Offline: what the mirror last saw running is not running now.
-    expect(bare[1]!.face).toEqual({ kind: 'offline', lastSeenMs: now - 7000 });
-    expect(bare[1]!.working).toBe(false);
-    const repair = stagePanels({
-      ...base,
-      connectionStatuses: { a: 'repair', b: 'offline' },
-      agentsByServer: {},
-    });
-    expect(repair[0]!.face).toEqual({ kind: 'status' });
+    expect(panels[1]!.agents).toEqual([]);
+    expect(panels[1]!.working).toBe(false);
+    expect(panels[1]!.lastSeenMs).toBe(now - 7000);
   });
 
   test('selection falls back to the first card when the target is gone', () => {

@@ -95,7 +95,7 @@ export type StageComposition = {
   /** The sky role's painting: a width-fit band across the top. */
   painting: StageLayer | null;
   hero: StageHeroLayer | null;
-  /** An edge-only wallpaper, nearest in depth, drawn behind the panes. */
+  /** An edge-only wallpaper, nearest in depth, drawn behind the cores. */
   frame: StageLayer | null;
 };
 

@@ -73,7 +73,7 @@ export type StageAmbientInstance = {
 export type StageAmbient = {
   effect: Exclude<ThemeAmbientEffect, 'none'>;
   motion: StageAmbientMotion;
-  /** Drawn behind the hero (bloom, traces, stars) or among the panes' depths. */
+  /** Drawn behind the hero (bloom, traces, stars) or among the cores' depths. */
   layer: 'back' | 'mid';
   /** Whether the quality ladder's "no particles" step removes it. */
   particles: boolean;
@@ -330,7 +330,7 @@ export function stageAmbient(
     instances.push({
       x: s.x,
       y: s.y,
-      // Stars far behind; everything else from just in front of the panes
+      // Stars far behind; everything else from just in front of the cores
       // back towards the backdrop, so tilt shows the depth.
       depth: stars ? 34 + s.depthShare * 20 : 5 + s.depthShare * 40,
       color: index % colors.length,
