@@ -1,7 +1,7 @@
 import { plural } from '@lingui/core/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   AlphaType,
   ColorType,
@@ -143,10 +143,16 @@ function paintCompact(canvas: SkCanvas, face: Face, x: number, y: number, dot: S
   });
 }
 
-/** Every drawn face, front and compact, into one atlas read back as RGBA. */
-function paintAtlas(faces: readonly Face[]): Texture | null {
+/**
+ * Every drawn face, front and compact, into one atlas read back as RGBA, only
+ * as many rows tall as the faces need. Painted into `reuse` when that is the
+ * same size, so the GPU updates the texture it has rather than allocating
+ * another; otherwise a new texture.
+ */
+function paintAtlas(faces: readonly Face[], reuse: Texture | null): Texture | null {
   const width = CELL_WIDTH * STAGE_FACE_COLUMNS * 2;
-  const height = CELL_HEIGHT * STAGE_FACE_ROWS;
+  const rows = Math.min(STAGE_FACE_ROWS, Math.max(1, Math.ceil(faces.length / STAGE_FACE_COLUMNS)));
+  const height = CELL_HEIGHT * rows;
   const surface = Skia.Surface.MakeRaster(width, height);
   if (!surface) return null;
   try {
@@ -173,9 +179,17 @@ function paintAtlas(faces: readonly Face[]): Texture | null {
         colorType: ColorType.RGBA_8888,
         alphaType: AlphaType.Unpremul,
       });
-      return pixels instanceof Uint8Array
-        ? stageTextureFromPixels(pixels, width, height, { mipmaps: true })
-        : null;
+      if (!(pixels instanceof Uint8Array)) return null;
+      const image = reuse?.image as { data: unknown; width: number; height: number } | undefined;
+      if (reuse && image && image.width === width && image.height === height) {
+        image.data = pixels;
+        reuse.needsUpdate = true;
+        return reuse;
+      }
+      const atlas = stageTextureFromPixels(pixels, width, height, { mipmaps: true });
+      // The side panes turn 48 degrees away: sharper text there for a few samples.
+      atlas.anisotropy = 4;
+      return atlas;
     } finally {
       snapshot.dispose();
     }
@@ -194,14 +208,18 @@ const MARKER: Record<StageAgentLine['mark'], string> = {
  * The panes' faces -- name, status dot, what the computer is doing and
  * whether it needs the reader, from existing Home state -- as one texture
  * atlas, drawn over the pane's glass by the scene. Repainted only when what
- * a face says or its colours change, never per frame; the old atlas goes
- * with it.
+ * a face says or its colours change, never per frame, and into the same
+ * texture while the number of faces stays the same (`version` counts the
+ * repaints). While Home is off screen (`paused`) nothing is repainted -- a
+ * status or the minute changing there costs nothing -- and the faces catch
+ * up when it returns.
  */
 export function useStageFaces(
   panels: readonly StagePanel[],
   drawn: readonly number[],
-  colors: StageFaceColors
-): { atlas: Texture | null; slots: ReadonlyMap<string, number> } {
+  colors: StageFaceColors,
+  paused: boolean
+): { atlas: Texture | null; version: number; slots: ReadonlyMap<string, number> } {
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
   const age = useTaskAge();
@@ -286,18 +304,47 @@ export function useStageFaces(
         : [];
     return [{ serverId: panel.serverId, name: panel.label, dot, ink, summary, lines }];
   });
-  const signature = JSON.stringify(faces);
-  const [atlas, setAtlas] = useState<{ signature: string; texture: Texture | null } | null>(null);
+  const current = JSON.stringify(faces);
+  const [atlas, setAtlas] = useState<Atlas | null>(null);
+  const signature = paused && atlas ? atlas.signature : current;
+  const owned = useRef<Texture | null>(null);
   useEffect(() => {
+    const painted = JSON.parse(signature) as Face[];
     let texture: Texture | null = null;
     try {
-      texture = paintAtlas(JSON.parse(signature) as Face[]);
+      texture = paintAtlas(painted, owned.current);
     } catch {
       texture = null;
     }
-    setAtlas({ signature, texture });
-    return () => texture?.dispose();
+    if (owned.current !== texture) owned.current?.dispose();
+    owned.current = texture;
+    setAtlas((previous) => ({
+      signature,
+      texture,
+      version: (previous?.version ?? 0) + 1,
+      slots: new Map(painted.map((face, slot) => [face.serverId, slot])),
+    }));
   }, [signature]);
-  const slots = new Map(faces.map((face, slot) => [face.serverId, slot]));
-  return { atlas: atlas?.texture ?? null, slots };
+  useEffect(
+    () => () => {
+      owned.current?.dispose();
+      owned.current = null;
+    },
+    []
+  );
+  return {
+    atlas: atlas?.texture ?? null,
+    version: atlas?.version ?? 0,
+    slots: atlas?.slots ?? NO_SLOTS,
+  };
 }
+
+type Atlas = {
+  signature: string;
+  texture: Texture | null;
+  version: number;
+  /** Each painted computer's cell in the atlas. */
+  slots: ReadonlyMap<string, number>;
+};
+
+const NO_SLOTS: ReadonlyMap<string, number> = new Map();

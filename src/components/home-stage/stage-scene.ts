@@ -121,7 +121,7 @@ const {
   vec4,
 } = TSL;
 
-/** Faces in the atlas: two columns of `STAGE_MAX_SCREENS / 2` rows, each face twice. */
+/** Faces in the atlas: two columns of at most `STAGE_MAX_SCREENS / 2` rows, each face twice. */
 export const STAGE_FACE_COLUMNS = 2;
 export const STAGE_FACE_ROWS = STAGE_MAX_SCREENS / STAGE_FACE_COLUMNS;
 /**
@@ -606,7 +606,8 @@ export function createStageScene(): StageSceneHandle {
   const hasFace = select(slot.greaterThanEqual(0), float(1), float(0));
   const cell = vec2(slot.mod(STAGE_FACE_COLUMNS), slot.div(STAGE_FACE_COLUMNS).floor());
   const cellUv = cell.add(vec2(paneU, float(1).sub(paneV)));
-  const atlasCells = vec2(STAGE_FACE_COLUMNS * 2, STAGE_FACE_ROWS);
+  const uFaceRows = uniform(STAGE_FACE_ROWS);
+  const atlasCells = vec2(STAGE_FACE_COLUMNS * 2, uFaceRows);
   const faceSample = texture(blank, cellUv.div(atlasCells));
   // The same face's compact cell, which a pane turns to as it steps aside.
   const compactSample = texture(blank, cellUv.add(vec2(STAGE_FACE_COLUMNS, 0)).div(atlasCells));
@@ -870,6 +871,9 @@ export function createStageScene(): StageSceneHandle {
     setFaces(atlas) {
       faceSample.value = atlas ?? blank;
       compactSample.value = atlas ?? blank;
+      // The atlas holds only the rows its faces need.
+      const height = (atlas?.image as { height?: number } | undefined)?.height ?? 0;
+      uFaceRows.value = Math.max(1, Math.round(height / STAGE_FACE_CELL_HEIGHT));
     },
     setAmbient(next) {
       ambient.configure(next);
