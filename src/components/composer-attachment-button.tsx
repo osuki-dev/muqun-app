@@ -4,12 +4,12 @@ import type { ReactNode } from 'react';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { ThemeIcon } from '@/components/theme-icon';
 import { composerStyles } from '@/components/terminal-composer';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
 
 /**
- * A composer toolbar button that opens a floating menu. While its menu is up
- * it wears the subtle primary fill and announces itself as expanded, so the
- * attachment and options buttons say the same thing about the card above them.
+ * A composer toolbar button that opens a floating menu. It never wears a
+ * fill: while its menu is up its icon takes the theme's primary tint (the
+ * caller's glyph colour) and it announces itself as expanded, so every
+ * toolbar button looks alike and says the same thing about the card above it.
  */
 export function ComposerMenuButton({
   testID,
@@ -31,8 +31,6 @@ export function ComposerMenuButton({
   children: ReactNode;
 }) {
   const profile = useAppearanceProfile();
-  const theme = useThemeTokens();
-  const background = useSurfaceBackground();
   return (
     <PressableScale
       testID={testID}
@@ -46,7 +44,6 @@ export function ComposerMenuButton({
       style={[
         composerStyles.button,
         { borderRadius: profile.chrome.roundControl },
-        expanded && { backgroundColor: background(theme.colors.primarySubtle) },
         disabled && composerStyles.disabledButton,
       ]}>
       {children}
@@ -67,9 +64,15 @@ export function ComposerAttachmentButton({
   color: string;
   size?: number;
 }) {
+  const theme = useThemeTokens();
   return (
     <ComposerMenuButton {...button}>
-      <ThemeIcon name="chrome.attach" fallback={AttachmentIcon} size={size} color={color} />
+      <ThemeIcon
+        name="chrome.attach"
+        fallback={AttachmentIcon}
+        size={size}
+        color={button.expanded ? theme.colors.primary : color}
+      />
     </ComposerMenuButton>
   );
 }
