@@ -4,10 +4,12 @@ import * as Haptics from 'expo-haptics';
 import { type ReactNode, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated as NativeAnimated,
   BackHandler,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   Pressable,
+  type ScrollViewProps,
   StyleSheet,
   useWindowDimensions,
   View,
@@ -28,6 +30,7 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
+import { create } from 'zustand';
 
 import { AgentFormCard } from '@/components/agent-form-card';
 import { ComposerMenuButton } from '@/components/composer-attachment-button';
@@ -126,6 +129,14 @@ const PAD_MAX_WIDTH = 760;
  */
 export const homeReplyDrawerProgress = makeMutable(0);
 
+/**
+ * The drawer is drawn: open, being dragged, or still settling shut. Home
+ * behind it is inert for exactly that long -- no scroll, no touches.
+ */
+export const useHomeReplyDrawerActive = create<{ active: boolean }>(() => ({ active: false }));
+/** How far the finger travels before the content decides between scrolling and dragging. */
+const CONTENT_DRAG_SLOP = 8;
+
 export type HomeReplyDrawerController = ReturnType<typeof useHomeReplyDrawer>;
 
 /**
@@ -156,6 +167,10 @@ export function useHomeReplyDrawer({
   const full = useSharedValue(heights.full);
   const dragFrom = useSharedValue(0);
   const dragging = useSharedValue(false);
+  /** The transcript is scrolled to its top: a pull down there drags the drawer. */
+  const contentAtTop = useSharedValue(false);
+  /** The content is dragging the drawer: the transcript holds still meanwhile. */
+  const contentDragging = useSharedValue(false);
   useEffect(() => {
     peek.set(heights.peek);
     full.set(heights.full);
@@ -220,16 +235,29 @@ export function useHomeReplyDrawer({
     (progress) => homeReplyDrawerProgress.set(progress)
   );
   useEffect(() => () => homeReplyDrawerProgress.set(0), []);
+  useEffect(() => {
+    useHomeReplyDrawerActive.setState({ active: mounted });
+  }, [mounted]);
+  useEffect(() => () => useHomeReplyDrawerActive.setState({ active: false }), []);
 
   const begin = useStableHandler(() => {
     setMounted(true);
     if (snap === 'closed') setSnap('peek');
   });
-  // The drawer's own grabber and header drag it.
-  const headerPan = useMemo(
-    () => createDrawerPan({ begin, settle, dragFrom, dragging, fade, full, height, peek }),
-    [begin, settle, dragFrom, dragging, fade, full, height, peek]
-  );
+  // The drawer's grabber and header always drag it. Its transcript scrolls
+  // first (`scroll`, the list's own native scroll); `content` drags the drawer
+  // only from a list at its top with the finger moving down, as a bottom sheet
+  // does. The two run simultaneously so the scroll never waits on the pull.
+  const gestures = useMemo(() => {
+    const input = { begin, settle, dragFrom, dragging, fade, full, height, peek };
+    const scroll = Gesture.Native();
+    const content = createContentPan({
+      ...input,
+      contentAtTop,
+      contentDragging,
+    }).simultaneousWithExternalGesture(scroll);
+    return { header: createDrawerPan(input), scroll, content };
+  }, [begin, settle, dragFrom, dragging, fade, full, height, peek, contentAtTop, contentDragging]);
 
   return {
     snap,
@@ -241,7 +269,9 @@ export function useHomeReplyDrawer({
     field: clipHeight,
     height,
     fade,
-    headerPan,
+    gestures,
+    contentAtTop,
+    contentDragging,
     show: () => settle('peek'),
     close: (after?: () => void) => {
       if (after) afterClose.current = after;
@@ -287,20 +317,74 @@ function createDrawerPan(input: DrawerPanInput) {
     });
 }
 
+/** A pan on the drawer's content: it activates only on a pull down from the list's top. */
+function createContentPan(
+  input: DrawerPanInput & {
+    contentAtTop: SharedValue<boolean>;
+    contentDragging: SharedValue<boolean>;
+  }
+) {
+  const { contentAtTop, contentDragging } = input;
+  const startX = makeMutable(0);
+  const startY = makeMutable(0);
+  return createDrawerPan(input)
+    .manualActivation(true)
+    .onTouchesDown((event) => {
+      const touch = event.allTouches[0];
+      if (!touch) return;
+      startX.set(touch.absoluteX);
+      startY.set(touch.absoluteY);
+    })
+    .onTouchesMove((event, manager) => {
+      const touch = event.allTouches[0];
+      if (!touch || event.numberOfTouches > 1) {
+        manager.fail();
+        return;
+      }
+      const dx = touch.absoluteX - startX.get();
+      const dy = touch.absoluteY - startY.get();
+      if (Math.abs(dx) < CONTENT_DRAG_SLOP && Math.abs(dy) < CONTENT_DRAG_SLOP) return;
+      // Sideways, upwards, or down a list with rows above: the list's own.
+      if (Math.abs(dx) >= Math.abs(dy) || dy < 0 || !contentAtTop.get()) {
+        manager.fail();
+        return;
+      }
+      contentDragging.set(true);
+      manager.activate();
+    })
+    .onFinalize(() => {
+      contentDragging.set(false);
+    });
+}
+
 /** Home behind the drawer: it recedes a little and dims as the drawer rises. */
 export function HomeReplyRecede({
   children,
   enabled = true,
+  holdsDock = false,
 }: {
   children: ReactNode;
   /** The Pad keeps its page still: the drawer is a card over it, and the dock can live in it. */
   enabled?: boolean;
+  /** The dock, and so the drawer, is inside this page (the wide Pad cover): it stays touchable. */
+  holdsDock?: boolean;
 }) {
+  // While the drawer is drawn, Home behind it takes no touch at all; the
+  // drawer's scrim closes it on a tap.
+  const inert = useHomeReplyDrawerActive((state) => state.active) && !holdsDock;
   const style = useAnimatedStyle(() => {
     const progress = enabled ? homeReplyDrawerProgress.get() : 0;
     return { transform: [{ scale: 1 - RECEDE_SCALE * progress }] };
   });
-  return <Animated.View style={[styles.recede, style]}>{children}</Animated.View>;
+  return (
+    <Animated.View
+      pointerEvents={inert ? 'none' : 'auto'}
+      importantForAccessibility={inert ? 'no-hide-descendants' : 'auto'}
+      accessibilityElementsHidden={inert}
+      style={[styles.recede, style]}>
+      {children}
+    </Animated.View>
+  );
 }
 
 /** The target's state as one word and its tone, as the drawer's chip says it. */
@@ -522,7 +606,7 @@ export function HomeReplyDrawer({
               nothing of Home reads through the transcript. */}
           <SheetGround tint="background" frosted />
           <Animated.View style={[{ height: bodyHeight }, bodyStyle]}>
-            <GestureDetector gesture={controller.headerPan}>
+            <GestureDetector gesture={controller.gestures.header}>
               <View collapsable={false}>
                 <View style={styles.sheetGrabber}>
                   <HomeSheetGrabber />
@@ -582,8 +666,19 @@ export function HomeReplyDrawer({
             </GestureDetector>
             <View style={[styles.body, { paddingBottom: controller.field + FIELD_CLEARANCE }]}>
               {target.kind === 'session' ? (
-                <DrawerSession target={target} />
+                <GestureDetector gesture={controller.gestures.content}>
+                  <View collapsable={false} style={styles.fill}>
+                    <DrawerSession
+                      target={target}
+                      scrollGesture={controller.gestures.scroll}
+                      atTop={controller.contentAtTop}
+                      dragging={controller.contentDragging}
+                    />
+                  </View>
+                </GestureDetector>
               ) : target.kind === 'pane' ? (
+                // The terminal's own gestures own its bounds: no drawer gesture
+                // wraps it, so its scrollback pans and pinches win there.
                 <DrawerPane target={target} />
               ) : null}
             </View>
@@ -610,7 +705,18 @@ function visibleOver(height: number, keyboard: number, floor: number): number {
  * where they are when output lands under them, with the session screen's
  * "Latest" to come back down; their own send takes them to the end.
  */
-function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: 'session' }> }) {
+function DrawerSession({
+  target,
+  scrollGesture,
+  atTop,
+  dragging,
+}: {
+  target: Extract<HomeThreadTarget, { kind: 'session' }>;
+  /** The list's native scroll, which the drawer's content pull runs alongside. */
+  scrollGesture: ReturnType<typeof Gesture.Native>;
+  atTop: SharedValue<boolean>;
+  dragging: SharedValue<boolean>;
+}) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   const { showToast } = useToast();
@@ -625,6 +731,24 @@ function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: '
   const { serverId, sessionId, asid } = target;
   const key = homeThreadKey(target);
   const readRuntime = useLatestReader(runtime);
+  // The list holds still while the finger drags the drawer from its top.
+  const [locked, setLocked] = useState(false);
+  useAnimatedReaction(
+    () => dragging.get(),
+    (next, previous) => {
+      if (next !== previous) scheduleOnRN(setLocked, next);
+    }
+  );
+  // It opens at its end, so it is not at its top until it says so.
+  useEffect(() => atTop.set(false), [atTop]);
+  const renderScroll = useMemo(
+    () => (props: ScrollViewProps) => (
+      <GestureDetector gesture={scrollGesture}>
+        <NativeAnimated.ScrollView {...props} />
+      </GestureDetector>
+    ),
+    [scrollGesture]
+  );
 
   useEffect(() => {
     let windowStart = 0;
@@ -771,6 +895,7 @@ function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: '
   const maintainEnd = useMemo(() => ({ animated: !reduced }), [reduced]);
   const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+    atTop.set(contentOffset.y <= 1);
     if (contentSize.height <= 0) return;
     follow.setGeometry({
       offset: contentOffset.y,
@@ -799,6 +924,10 @@ function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: '
         ref={listRef}
         keyboardAware={false}
         nestedScrollEnabled
+        renderScrollComponent={renderScroll}
+        scrollEnabled={!locked}
+        bounces={false}
+        overScrollMode="never"
         testID="home-reply-transcript"
         store={store}
         rowProps={rowProps}
