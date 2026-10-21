@@ -214,10 +214,19 @@ const styles = StyleSheet.create({
   // No inset of its own: the dock already pads the key row and the field, and
   // a second 12 points left the chips indented from both and cut short on the
   // right where the row scrolls.
-  bar: { gap: 6, paddingBottom: 6 },
+  // No vertical padding either: the dock's own gap sits above the title and
+  // below the chips, so the strip is spaced like the rows around it.
+  bar: { gap: 6 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  // The glyph's own 24 points, with `hitSlop` making up a 44-point target.
-  close: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
+  // The glyph's own 24 points, with `hitSlop` making up a 44-point target; the
+  // negative margin keeps it from making the title row taller than its text.
+  close: {
+    width: 24,
+    height: 24,
+    marginVertical: -4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   title: { flexShrink: 1 },
   row: { flexDirection: 'row', gap: 8, paddingRight: 12 },
   chip: {
