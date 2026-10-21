@@ -70,7 +70,14 @@ export default function GpuStage(props: StageSceneProps) {
                 canvas: surface,
                 context,
                 device: importDevice(Skia.getNativeDevice()),
-                antialias: true,
+                // No MSAA and no depth buffer. Every layer is a blended plane
+                // whose edges are already soft in its shader (the panes' rounded
+                // rims, the glows, the motes) and the layers are ordered by
+                // hand, so 4x multisampling only quadrupled the half-float
+                // frame buffer every frame wrote, and depth was never tested.
+                // The text is a mipmapped texture, which MSAA never touched.
+                antialias: false,
+                depth: false,
               });
               try {
                 await renderer.init();
