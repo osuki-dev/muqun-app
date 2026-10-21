@@ -21,6 +21,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EditorControls } from '@/components/editor-controls';
 import { GlassChrome } from '@/components/glass-chrome';
+import { sideInsetPadding } from '@/hooks/use-side-insets';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { LogoLoader } from '@/components/logo-loader';
 import { ScreenHeader } from '@/components/screen-header';
@@ -183,6 +184,8 @@ const KEY_ROW_HEIGHT = 36;
  * frames into one resize, at the size the keyboard settled at.
  */
 const VIEWPORT_SETTLE_MS = 100;
+/** The dock's side gutter, measured from the side safe-area insets. */
+const DOCK_GUTTER = 10;
 
 export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
   const { t } = useLingui();
@@ -484,11 +487,16 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
   const monoAdvanceRatio = slotAdvanceRatio(monoFontSlot, TERMINAL_ADVANCE_RATIO);
   // The canvas's own cell size, once it has measured its font. Until then the
   // advance ratio stands in; the first report re-sizes the grid once.
+  // The canvas keeps its grid inside the side safe-area insets (see
+  // `sideInsets` on `SkiaTerminal`), so the PTY is sized for that width.
+  // Read here rather than at measurement, so an inset that changes without
+  // the box changing still re-sizes the grid.
+  const gridWidth = viewport.width - insets.left - insets.right;
   const grid = useMemo(
     () =>
-      viewport.width > 0 && viewport.height > 0
+      gridWidth > 0 && viewport.height > 0
         ? terminalGridFor({
-            width: viewport.width,
+            width: gridWidth,
             height: Math.max(1, viewport.height - permanentChrome),
             fontSize,
             cellWidth: cellMetrics?.cellWidth,
@@ -504,7 +512,7 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
             advanceRatio: monoAdvanceRatio,
           })
         : TERMINAL_GRID_DEFAULT,
-    [permanentChrome, cellMetrics, fontSize, monoAdvanceRatio, viewport.height, viewport.width]
+    [permanentChrome, cellMetrics, fontSize, gridWidth, monoAdvanceRatio, viewport.height]
   );
   const gridRef = useLatestRef(grid);
 
@@ -948,7 +956,7 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
       <View style={[styles.screen, { backgroundColor: theme.colors.background }]}>
         <ThemeArtwork slot="shell.wallpaper" />
         <ScreenHeader title={t`SSH`} />
-        <View style={styles.missing}>
+        <View style={[styles.missing, sideInsetPadding(insets, 24)]}>
           {loading ? (
             <LogoLoader size={56} accessibilityLabel={t`Loading terminal`} />
           ) : (
@@ -1166,6 +1174,7 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
             // needs -- what the program has asked for, and how many rows of the
             // frame are its live screen rather than the scrollback above it.
             touchInput={touchInputChannel}
+            sideInsets={insets}
           />
         </TerminalBoundary>
         {/*
@@ -1188,6 +1197,7 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
             // for and the button's to clear -- the same inset the grid already
             // leaves nvim.
             bottomInset={insets.bottom}
+            sideInsets={insets}
             disabled={!connected}>
             {editorPanelBody}
           </EditorControls>
@@ -1225,6 +1235,9 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
               styles.dock,
               {
                 paddingBottom: Math.max(insets.bottom, 10),
+                // The glass spans the screen; its controls keep clear of the
+                // side insets.
+                ...sideInsetPadding(insets, DOCK_GUTTER),
               },
             ]}>
             {dock.virtualKeyboard ? virtualKeyboard : null}
@@ -1285,7 +1298,9 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
             demonstrating. It comes back the moment the connection stops being
             the boring case. */}
         {status.phase === 'connected' ? null : (
-          <StatusLine status={status} address={sshHostAddress(record)} onReconnect={reconnect} />
+          <View pointerEvents="box-none" style={sideInsetPadding(insets)}>
+            <StatusLine status={status} address={sshHostAddress(record)} onReconnect={reconnect} />
+          </View>
         )}
       </View>
 
@@ -1513,7 +1528,7 @@ const styles = StyleSheet.create({
   },
   dock: {
     paddingTop: 8,
-    paddingHorizontal: 10,
+    // The sides are `DOCK_GUTTER` plus the side insets, set where it renders.
     gap: 8,
     borderCurve: 'continuous',
   },

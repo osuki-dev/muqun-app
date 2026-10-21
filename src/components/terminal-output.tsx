@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { type SharedValue } from 'react-native-reanimated';
 
 import { SkiaTerminal } from '@/components/skia-terminal';
+import type { SideInsets } from '@/hooks/use-side-insets';
 import { zoomPane } from '@/lib/gateway-client';
 import type { TabCycleDirection } from '@/lib/tab-swipe';
 import type { TerminalTextSize } from '@/lib/terminal-text-size';
@@ -43,6 +44,7 @@ export function TerminalPanel({
   paneRows,
   paneCursorColumn,
   paneCursorRow,
+  sideInsets,
 }: {
   sessionId: string;
   paneId: string;
@@ -92,6 +94,8 @@ export function TerminalPanel({
   /** The program's cursor, when the gateway reports one. See `terminalOpenView`. */
   paneCursorColumn?: number;
   paneCursorRow?: number;
+  /** The screen's side safe-area insets; see `SkiaTerminal`. */
+  sideInsets?: SideInsets;
 }) {
   // Kept in a ref so a new callback identity (it changes whenever the parent's
   // connection/output deps do) does not re-run the effect and re-POST zoom on
@@ -146,6 +150,7 @@ export function TerminalPanel({
       paneRows={paneRows}
       paneCursorColumn={paneCursorColumn}
       paneCursorRow={paneCursorRow}
+      sideInsets={sideInsets}
     />
   );
 }

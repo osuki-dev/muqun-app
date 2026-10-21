@@ -91,6 +91,7 @@ import { DETAIL_HEADER_HEIGHT } from '@/components/detail-header';
 import { EdgeFade } from '@/components/edge-fade';
 import { FileMentionPanel } from '@/components/file-mention-panel';
 import { GlassChrome } from '@/components/glass-chrome';
+import { sideInsetPadding, type SideInsets } from '@/hooks/use-side-insets';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { ImagePreviewModal, type PreviewImage } from '@/components/image-preview-modal';
 import { navHeaderButtonStyle } from '@/components/nav-header';
@@ -426,6 +427,8 @@ type ConnectionPhase = 'connecting' | 'connected' | 'reconnecting' | 'offline';
  * up -- there is no indicator to clear when the keyboard covers it.
  */
 const DOCK_INDICATOR_CLEARANCE = 14;
+/** The dock's and its popup's side gutter, measured from the side safe-area insets. */
+const COMPOSER_GUTTER = 12;
 
 /** Output re-read cadence with the stream up: a safety net, not a heartbeat. */
 const OUTPUT_POLL_STREAMING_MS = 10_000;
@@ -5753,13 +5756,22 @@ export function ServerTerminalWorkspace({
     previewWidth: workspaceLayout.previewWidth,
     allowed: !demoMode && allowsWebServiceOpen(data.health?.transportSecurity?.protection),
   };
+  const padRailCollapsed = padDetailIsPane && workspaceLayout.previewWidth > 0;
+  // The pane's side insets, on the edges where it actually meets the glass: the
+  // Pad rail owns the left edge while it stands, and the simulator preview owns
+  // the right one while it is open. Controls and the grid stay inside these;
+  // the dock's glass and the terminal's fill still run to the edge.
+  const sideInsets = {
+    left: isPadLayout && !padRailCollapsed ? 0 : insets.left,
+    right: simfarmSplit.previewWidth > 0 ? 0 : insets.right,
+  };
 
   return (
     <AppDrawer
       // Not `previewOpen`: the layout is what decides, and it declines the
       // preview on a window too narrow to hold both. Reading its answer keeps
       // the rail from standing down for a preview that never opened.
-      padRailCollapsed={padDetailIsPane && workspaceLayout.previewWidth > 0}
+      padRailCollapsed={padRailCollapsed}
       padRail={
         <PadServerRail
           servers={railServers}
@@ -5897,7 +5909,14 @@ export function ServerTerminalWorkspace({
         */}
               <View
                 pointerEvents="box-none"
-                style={[styles.noticeStack, { top: insets.top + NAV_HEADER_TOP_GAP + 58 }]}>
+                style={[
+                  styles.noticeStack,
+                  {
+                    top: insets.top + NAV_HEADER_TOP_GAP + 58,
+                    left: sideInsets.left,
+                    right: sideInsets.right,
+                  },
+                ]}>
                 <NoticeDeck>
                   {/* A dead pairing outranks whatever action happened to fail first.
               Every request fails once this server has no record of this device,
@@ -5984,7 +6003,7 @@ export function ServerTerminalWorkspace({
                   {/* Keep the canvas mounted and stationary across pane changes. */}
                   <Animated.View style={styles.terminalSwipeArea}>
                     {targetUnavailable ? (
-                      <View style={styles.missingTargetState}>
+                      <View style={[styles.missingTargetState, sideInsetPadding(sideInsets, 24)]}>
                         <Text variant="heading" style={styles.unavailableText}>
                           <Trans>Terminal unavailable</Trans>
                         </Text>
@@ -6017,6 +6036,7 @@ export function ServerTerminalWorkspace({
                         state={backendState}
                         retrying={connection.phase === 'connecting'}
                         onRetry={retryBackend}
+                        sideInsets={sideInsets}
                         onBack={
                           isPadLayout
                             ? () => setOverviewVisible(true)
@@ -6027,7 +6047,7 @@ export function ServerTerminalWorkspace({
                         }
                       />
                     ) : targetPending ? (
-                      <View style={styles.missingTargetState}>
+                      <View style={[styles.missingTargetState, sideInsetPadding(sideInsets, 24)]}>
                         <Spinner size="sm" color={theme.colors.textMuted} />
                         <Text variant="bodySmall" color={theme.colors.textMuted}>
                           <Trans>Opening…</Trans>
@@ -6169,38 +6189,48 @@ export function ServerTerminalWorkspace({
                           paneRows={selectedPaneRows}
                           paneCursorColumn={selectedPaneCursorColumn}
                           paneCursorRow={selectedPaneCursorRow}
+                          sideInsets={sideInsets}
                         />
                       </TerminalBoundary>
                     )}
                     {themeDrop ? (
-                      <TerminalThemeDrop
-                        state={themeDrop}
-                        bottomInset={composerVisible ? composerHeight : 0}
-                        onApply={() => {
-                          const candidate = themeCandidateRef.current;
-                          if (!candidate || themeDrop.phase !== 'ready') return;
-                          setThemeDrop({ ...themeDrop, applying: true });
-                          // The editor owns the preview from here: it is the one
-                          // surface that shows both variants, the contrast verdict
-                          // and the opacity floors, and a theme arriving from
-                          // another machine is exactly as unreviewed as one picked
-                          // by hand. The card's job was to get it here.
-                          openThemeEditor(candidate, 'conversation');
-                          themeCandidateRef.current = null;
-                          setThemeDrop(null);
-                        }}
-                        onDismiss={() => {
-                          // Dismissing during the download has to stop it as well as
-                          // clear the card: the staging it would otherwise finish
-                          // has nowhere left to be shown, and would sit in the cache
-                          // directory until the screen itself went away.
-                          themeRequestRef.current?.cancel();
-                          themeRequestRef.current = null;
-                          themeCandidateRef.current?.prepared?.dispose();
-                          themeCandidateRef.current = null;
-                          setThemeDrop(null);
-                        }}
-                      />
+                      // Its card spans the pane between two gutters, so the layer it
+                      // is anchored in keeps out of the side insets.
+                      <View
+                        pointerEvents="box-none"
+                        style={[
+                          StyleSheet.absoluteFill,
+                          { left: sideInsets.left, right: sideInsets.right },
+                        ]}>
+                        <TerminalThemeDrop
+                          state={themeDrop}
+                          bottomInset={composerVisible ? composerHeight : 0}
+                          onApply={() => {
+                            const candidate = themeCandidateRef.current;
+                            if (!candidate || themeDrop.phase !== 'ready') return;
+                            setThemeDrop({ ...themeDrop, applying: true });
+                            // The editor owns the preview from here: it is the one
+                            // surface that shows both variants, the contrast verdict
+                            // and the opacity floors, and a theme arriving from
+                            // another machine is exactly as unreviewed as one picked
+                            // by hand. The card's job was to get it here.
+                            openThemeEditor(candidate, 'conversation');
+                            themeCandidateRef.current = null;
+                            setThemeDrop(null);
+                          }}
+                          onDismiss={() => {
+                            // Dismissing during the download has to stop it as well as
+                            // clear the card: the staging it would otherwise finish
+                            // has nowhere left to be shown, and would sit in the cache
+                            // directory until the screen itself went away.
+                            themeRequestRef.current?.cancel();
+                            themeRequestRef.current = null;
+                            themeCandidateRef.current?.prepared?.dispose();
+                            themeCandidateRef.current = null;
+                            setThemeDrop(null);
+                          }}
+                        />
+                      </View>
                     ) : null}
                   </Animated.View>
                 </View>
@@ -6258,7 +6288,7 @@ export function ServerTerminalWorkspace({
                   exiting={fadeOutDown('short')}
                   style={[
                     styles.floatingEntries,
-                    { bottom: composerHeight + 14 },
+                    { bottom: composerHeight + 14, left: 14 + sideInsets.left },
                     composerKeyboardStyle,
                   ]}>
                   <View
@@ -6291,6 +6321,7 @@ export function ServerTerminalWorkspace({
                   // behind: the same clearance the grid itself takes above.
                   topInset={insets.top + DETAIL_HEADER_HEIGHT}
                   bottomInset={insets.bottom}
+                  sideInsets={sideInsets}
                   disabled={!targetReady || connection.phase !== 'connected' || !selectedPane}>
                   {editorPanelBody}
                 </EditorControls>
@@ -6301,6 +6332,10 @@ export function ServerTerminalWorkspace({
                   style={[
                     styles.composerOverlay,
                     isPadLayout && styles.padComposerOverlay,
+                    isPadLayout && {
+                      paddingLeft: sideInsets.left,
+                      paddingRight: appChrome.layout.padWorkspaceGutter + sideInsets.right,
+                    },
                     composerKeyboardStyle,
                   ]}>
                   <EdgeFade edge="bottom" color={terminalBackground} style={styles.composerFade} />
@@ -6310,7 +6345,9 @@ export function ServerTerminalWorkspace({
                     <View
                       style={[
                         styles.composerFloatingContent,
-                        isPadLayout && styles.padComposerFloatingContent,
+                        isPadLayout
+                          ? styles.padComposerFloatingContent
+                          : sideInsetPadding(sideInsets),
                       ]}>
                       <FileMentionPanel
                         hits={mentionHits}
@@ -6325,7 +6362,13 @@ export function ServerTerminalWorkspace({
                 opens, what it shows and what a tap inserts lives in
                 `composer-popup.ts`; this is only where it is hung. */}
                   {dock.composer ? (
-                    <View style={[styles.composerPopup, isPadLayout && styles.padComposerPopup]}>
+                    <View
+                      style={[
+                        styles.composerPopup,
+                        isPadLayout
+                          ? styles.padComposerPopup
+                          : sideInsetPadding(sideInsets, COMPOSER_GUTTER),
+                      ]}>
                       <ComposerPopup
                         rows={slashPopup.rows}
                         onPick={slashPopup.pick}
@@ -6338,7 +6381,9 @@ export function ServerTerminalWorkspace({
                     <View
                       style={[
                         styles.composerFloatingContent,
-                        isPadLayout && styles.padComposerFloatingContent,
+                        isPadLayout
+                          ? styles.padComposerFloatingContent
+                          : sideInsetPadding(sideInsets),
                       ]}>
                       <AttachmentMenu onSelect={chooseAttachmentSource} textColor={chromeText} />
                     </View>
@@ -6379,7 +6424,9 @@ export function ServerTerminalWorkspace({
                       }}
                       style={[
                         styles.composerSafeArea,
-                        isPadLayout && styles.padComposerSafeArea,
+                        isPadLayout
+                          ? styles.padComposerSafeArea
+                          : sideInsetPadding(sideInsets, COMPOSER_GUTTER),
                         dockClearanceStyle,
                       ]}>
                       {/* Inside the dock rather than floating over the pane: the dock is
@@ -6587,7 +6634,11 @@ export function ServerTerminalWorkspace({
               <View
                 style={[
                   styles.previewColumn,
-                  { width: simfarmSplit.previewWidth, borderLeftColor: theme.colors.border },
+                  {
+                    width: simfarmSplit.previewWidth,
+                    paddingRight: insets.right,
+                    borderLeftColor: theme.colors.border,
+                  },
                 ]}>
                 <SimfarmPreview
                   embedded
@@ -6914,19 +6965,23 @@ function TerminalBackendDown({
   retrying,
   onRetry,
   onBack,
+  sideInsets,
 }: {
   serverId: string;
   state: Extract<TerminalBackendState, { kind: 'down' }>;
   retrying: boolean;
   onRetry: () => void;
   onBack?: () => void;
+  sideInsets: SideInsets;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   const copy = terminalBackendCopy(state.backend);
   return (
-    <View style={styles.missingTargetState} testID="terminal-backend-down">
+    <View
+      style={[styles.missingTargetState, sideInsetPadding(sideInsets, 24)]}
+      testID="terminal-backend-down">
       <Text variant="heading">
         <Trans>Terminal unavailable</Trans>
       </Text>
@@ -7434,7 +7489,7 @@ const styles = StyleSheet.create({
   composerSafeArea: {
     zIndex: 1,
     paddingTop: 8,
-    paddingHorizontal: 12,
+    // The sides are `COMPOSER_GUTTER` plus the side insets, set where it renders.
     gap: 7,
     // Bottom clearance is animated -- see `dockClearanceStyle`.
   },
@@ -7483,11 +7538,11 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 840,
     alignSelf: 'center',
-    paddingHorizontal: 12,
     marginBottom: 7,
   },
   padComposerPopup: {
     maxWidth: '100%',
+    paddingHorizontal: COMPOSER_GUTTER,
   },
   composerFloatingContent: {
     width: '100%',
