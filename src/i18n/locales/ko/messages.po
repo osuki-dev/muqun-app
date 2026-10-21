@@ -317,7 +317,7 @@ msgstr "{count, plural, other {결과 #개}}"
 
 #: src/components/home-stage/home-stage-layout.tsx
 msgid "{count, plural, one {# session} other {# sessions}}"
-msgstr ""
+msgstr "{count, plural, other {세션 #개}}"
 
 #: src/components/home-connections.tsx
 msgid "{count} in progress"
@@ -7960,8 +7960,8 @@ msgid "Your phone's clock is off by {minutes} minutes. Fix the date and time, th
 msgstr "이 휴대폰의 시계가 {minutes}분 어긋나 있습니다. 날짜와 시간을 맞춘 뒤 다시 시도하세요"
 
 #: src/components/settings-home-layout-sheet.tsx
-msgid "Your theme as a 3D world, with your computers as holo-screens around its character."
-msgstr "테마를 3D 세계로 보여 주고, 컴퓨터는 캐릭터를 둘러싼 홀로 스크린이 됩니다"
+msgid "Your theme's art as a 3D world that moves with your phone, with your agents' status below it."
+msgstr "테마 아트가 휴대폰 움직임에 따라 움직이는 3D 세계가 되고, 그 아래에 에이전트 상태가 표시됩니다"
 
 #: src/components/image-preview-modal.tsx
 msgid "Zoom in"

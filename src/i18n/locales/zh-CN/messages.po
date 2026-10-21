@@ -317,7 +317,7 @@ msgstr "{count, plural, other {# 个结果}}"
 
 #: src/components/home-stage/home-stage-layout.tsx
 msgid "{count, plural, one {# session} other {# sessions}}"
-msgstr ""
+msgstr "{count, plural, other {# 个会话}}"
 
 #: src/components/home-connections.tsx
 msgid "{count} in progress"
@@ -7960,8 +7960,8 @@ msgid "Your phone's clock is off by {minutes} minutes. Fix the date and time, th
 msgstr "手机时钟偏差了 {minutes} 分钟。请校正日期和时间后重试"
 
 #: src/components/settings-home-layout-sheet.tsx
-msgid "Your theme as a 3D world, with your computers as holo-screens around its character."
-msgstr "把主题变成 3D 世界，你的电脑化作环绕角色的全息屏"
+msgid "Your theme's art as a 3D world that moves with your phone, with your agents' status below it."
+msgstr "主题的插画化作随手机移动的 3D 世界，下方显示各个代理的状态"
 
 #: src/components/image-preview-modal.tsx
 msgid "Zoom in"
