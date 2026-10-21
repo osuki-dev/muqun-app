@@ -6299,10 +6299,6 @@ msgstr "Iniciar un nuevo {0}"
 msgid "Start a new session with empty context"
 msgstr "Inicia una sesión nueva con el contexto vacío"
 
-#: src/components/home-stage/stage-view.tsx
-msgid "Start a new task"
-msgstr "Iniciar una tarea nueva"
-
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
 msgid "Start a session with a clean context"
@@ -6576,10 +6572,6 @@ msgstr "Tab"
 #: src/components/attachment-menu.tsx
 msgid "Take photo"
 msgstr "Tomar foto"
-
-#: src/components/home-stage/stage-view.tsx
-msgid "Tap · start a new task"
-msgstr "Toca · nueva tarea"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Tap again to clear"

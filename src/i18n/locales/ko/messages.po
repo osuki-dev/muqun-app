@@ -6299,10 +6299,6 @@ msgstr "새 {0} 시작"
 msgid "Start a new session with empty context"
 msgstr "컨텍스트를 비우고 새 세션을 시작합니다"
 
-#: src/components/home-stage/stage-view.tsx
-msgid "Start a new task"
-msgstr "새 작업 시작"
-
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
 msgid "Start a session with a clean context"
@@ -6576,10 +6572,6 @@ msgstr "탭"
 #: src/components/attachment-menu.tsx
 msgid "Take photo"
 msgstr "사진 찍기"
-
-#: src/components/home-stage/stage-view.tsx
-msgid "Tap · start a new task"
-msgstr "탭 · 새 작업 시작"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Tap again to clear"
