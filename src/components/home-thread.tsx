@@ -1,32 +1,13 @@
-import { useLingui } from '@lingui/react/macro';
-import { useLingui as useLinguiRuntime } from '@lingui/react';
-import { PressableScale, Text, useThemeTokens } from '@osuki-dev/ui';
-import { useEffect, useEffectEvent, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import Animated, { LayoutAnimationConfig, useReducedMotion } from 'react-native-reanimated';
+import { useEffect, useRef } from 'react';
 
-import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { useMinuteNow } from '@/hooks/use-minute-now';
 import { useLatestReader } from '@/hooks/use-render-refs';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { CloseIcon } from '@/icons';
-import { permissionDecisionLabel } from '@/i18n/labels';
-import { permissionSubject } from '@/lib/agent-engine-text';
-import { permissionOptionLabel } from '@/lib/agent-permission-presentation';
 import { agentRequestErrorDetail } from '@/lib/agent-request-error';
 import {
-  DEFAULT_PERMISSION_DECISIONS,
   getAgentSessionSnapshot,
   openAgentSessionStream,
-  replyAgentForm,
-  replyAgentPermission,
   type AgentDomainEvent,
-  type FormRequest,
-  type PermissionDecision,
-  type PermissionRequest,
+  type AgentSessionSnapshot,
 } from '@/lib/agent-session';
-import { withAlpha } from '@/lib/color';
-import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
 import { readPaneOutput } from '@/lib/gateway-client';
 import { WS_EVENTS_CAPABILITY } from '@/lib/gateway-socket';
 import { gatewaySocketFor } from '@/lib/gateway-socket-runtime';
@@ -35,8 +16,6 @@ import { sameComputer } from '@/lib/home-composer';
 import {
   applyHomeThreadEvent,
   EMPTY_HOME_THREAD_LIVE,
-  HOME_THREAD_SWITCH_HOLD_MS,
-  homeThreadBarView,
   homeThreadEnded,
   homeThreadKey,
   homeThreadLiveFromSnapshot,
@@ -45,28 +24,23 @@ import {
   homeThreadResolved,
   homeThreadState,
   homeThreadTask,
-  homeThreadTurns,
-  homeThreadRow2,
   type HomeThreadFacts,
   type HomeThreadLive,
   type HomeThreadState,
   type HomeThreadTarget,
 } from '@/lib/home-thread';
-import { plainFromMarkdown } from '@/lib/markdown-text';
 import { paneAgentRead } from '@/lib/pane-agent-line';
-import { calmFadeIn, calmFadeOut, fadeIn, fadeOut, listLayout, riseIn } from '@/lib/motion';
 import { useAgents } from '@/stores/agents';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useGoneAgentSessions } from '@/stores/gone-agent-sessions';
-import { useHomeAttention } from '@/stores/home-attention';
 import { useHomeThreadLive, useHomeThreads } from '@/stores/home-thread';
 import { useServerAgents } from '@/stores/server-agents';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useServerTasksStore } from '@/stores/server-tasks';
 
 /**
- * At most four strip updates a second while a reply streams: the strip is
- * read at a glance, and every token re-rendering it is wasted work.
+ * At most four store updates a second while a reply streams: the dock reads
+ * the state at a glance, and every token re-rendering it is wasted work.
  */
 const HOME_THREAD_PUBLISH_MS = 250;
 /** How long a dropped event stream waits before it is opened again. */
@@ -79,19 +53,126 @@ const HOME_THREAD_PANE_READ_MS = 2_000;
 /** After a send, the first read of the pane: time for the agent to take the message. */
 const HOME_THREAD_PANE_FIRST_READ_MS = 1_500;
 /** Then, while its reply is awaited or its agent works, every few seconds. */
-const HOME_THREAD_PANE_POLL_MS = 3_000;
+export const HOME_THREAD_PANE_POLL_MS = 3_000;
 /** Rows of the pane's visible screen read: the agent's last message is near the bottom. */
 const HOME_THREAD_PANE_ROWS = 80;
-/** A pill's ends are fully round at any height. */
-const PILL_RADIUS = 999;
 
 /**
- * Keeps the strip's store fed for the target, and lets the target go when its
- * conversation ends. Renders nothing, so what it hears re-renders the strip
- * alone. A session is followed over the stream its own screen uses -- the
- * computer's socket where it has `ws_events`, else the session's event stream
- * -- with a snapshot read on subscribe, resync and reconnect; no polling. Only
- * while `enabled`: Home in front, its computer selected.
+ * Follows one agent session over the stream its own screen uses -- the
+ * computer's socket where it has `ws_events`, else the session's event stream,
+ * reopened after a drop -- with a snapshot read on subscribe, resync and
+ * reconnect; no polling. Reads and streams go through the selected computer:
+ * nothing starts unless it is `serverId`, and everything heard is dropped
+ * unless that is still the very connection this started on. Returns the stop.
+ */
+export function followHomeSession({
+  serverId,
+  sessionId,
+  asid,
+  onSnapshot,
+  onEvent,
+  onNotFound,
+}: {
+  serverId: string;
+  sessionId: string;
+  asid: string;
+  onSnapshot: (snapshot: AgentSessionSnapshot) => void;
+  /** Events about this session; `agent.resync` is answered with a read instead. */
+  onEvent: (event: AgentDomainEvent) => void;
+  onNotFound?: () => void;
+}): () => void {
+  const owner = useGatewayConnectionStore.getState().record;
+  if (owner?.serverId !== serverId) return () => {};
+  const owns = () => {
+    const now = useGatewayConnectionStore.getState().record;
+    return sameComputer(now, owner) && now?.deviceId === owner.deviceId;
+  };
+  let active = true;
+  let retryTimer: ReturnType<typeof setTimeout> | null = null;
+  let reading = false;
+  let readAgain = false;
+  let closeStream: (() => void) | null = null;
+  let releaseSocket: (() => void) | null = null;
+
+  const read = () => {
+    if (reading) {
+      readAgain = true;
+      return;
+    }
+    reading = true;
+    void getAgentSessionSnapshot(sessionId, asid)
+      .then(
+        (snapshot) => {
+          if (active && owns()) onSnapshot(snapshot);
+        },
+        (failure: unknown) => {
+          if (active && owns() && agentRequestErrorDetail(failure).status === 404) onNotFound?.();
+        }
+      )
+      .finally(() => {
+        reading = false;
+        if (readAgain && active) {
+          readAgain = false;
+          read();
+        }
+      });
+  };
+  const heard = (event: AgentDomainEvent) => {
+    if (!active || !owns() || (event.asid && event.asid !== asid)) return;
+    if (event.type === 'agent.resync') read();
+    else onEvent(event);
+  };
+  const connectStream = () => {
+    closeStream = openAgentSessionStream({
+      asid,
+      sessionId,
+      onEvent: heard,
+      onConnected: read,
+      onError: reconnect,
+      onClose: reconnect,
+    });
+  };
+  function reconnect() {
+    closeStream?.();
+    closeStream = null;
+    if (!active || retryTimer) return;
+    retryTimer = setTimeout(() => {
+      retryTimer = null;
+      if (active && owns()) connectStream();
+    }, HOME_THREAD_STREAM_RETRY_MS);
+  }
+  const wsEvents =
+    useServerCapabilities.getState().byServer[serverId]?.includes(WS_EVENTS_CAPABILITY) === true;
+  if (wsEvents) {
+    releaseSocket = gatewaySocketFor(serverId).watch(asid, {
+      onSubscribed: read,
+      onEvent: heard,
+      onResync: read,
+      // The socket cannot carry it: the session's own stream does, as on its screen.
+      onUnavailable: () =>
+        queueMicrotask(() => {
+          releaseSocket?.();
+          releaseSocket = null;
+          if (active && !closeStream) connectStream();
+        }),
+    });
+  } else {
+    connectStream();
+  }
+  read();
+  return () => {
+    active = false;
+    if (retryTimer) clearTimeout(retryTimer);
+    releaseSocket?.();
+    closeStream?.();
+  };
+}
+
+/**
+ * Keeps the target's live store fed, and lets the target go when its
+ * conversation ends. Renders nothing, so what it hears re-renders only what
+ * reads the store. A session is followed with `followHomeSession`. Only while
+ * `enabled`: Home in front, its computer selected.
  */
 export function HomeThreadFeed({
   target,
@@ -110,118 +191,40 @@ export function HomeThreadFeed({
   const asid = target.kind === 'session' ? target.asid : undefined;
   useEffect(() => {
     if (!enabled || !sessionId || !asid) return;
-    // Reads and streams go through the selected computer: everything heard is
-    // dropped unless that is still the very connection this started on.
-    const owner = useGatewayConnectionStore.getState().record;
-    if (owner?.serverId !== serverId) return;
-    const owns = () => {
-      const now = useGatewayConnectionStore.getState().record;
-      return sameComputer(now, owner) && now?.deviceId === owner.deviceId;
-    };
     const current = useHomeThreadLive.getState();
     let live: HomeThreadLive = current.key === key ? current.live : EMPTY_HOME_THREAD_LIVE;
     let active = true;
     let publishTimer: ReturnType<typeof setTimeout> | null = null;
-    let retryTimer: ReturnType<typeof setTimeout> | null = null;
-    let reading = false;
-    let readAgain = false;
-    let closeStream: (() => void) | null = null;
-    let releaseSocket: (() => void) | null = null;
-
     const publish = () => {
       publishTimer = null;
       if (active) useHomeThreadLive.getState().publish(key, live);
     };
-    const schedule = () => {
-      if (!publishTimer) publishTimer = setTimeout(publish, HOME_THREAD_PUBLISH_MS);
-    };
-    const read = () => {
-      if (reading) {
-        readAgain = true;
-        return;
-      }
-      reading = true;
-      void getAgentSessionSnapshot(sessionId, asid)
-        .then(
-          (snapshot) => {
-            if (!active || !owns()) return;
-            live = homeThreadLiveFromSnapshot(snapshot);
-            if (publishTimer) clearTimeout(publishTimer);
-            publish();
-          },
-          (failure: unknown) => {
-            if (active && owns() && agentRequestErrorDetail(failure).status === 404)
-              useHomeThreadLive.getState().markNotFound(key);
-          }
-        )
-        .finally(() => {
-          reading = false;
-          if (readAgain && active) {
-            readAgain = false;
-            read();
-          }
-        });
-    };
-    const onEvent = (event: AgentDomainEvent) => {
-      if (!active || (event.asid && event.asid !== asid)) return;
-      if (event.type === 'agent.resync') {
-        read();
-        return;
-      }
-      live = applyHomeThreadEvent(live, event);
-      schedule();
-    };
-    const connectStream = () => {
-      closeStream = openAgentSessionStream({
-        asid,
-        sessionId,
-        onEvent,
-        onConnected: read,
-        onError: reconnect,
-        onClose: reconnect,
-      });
-    };
-    function reconnect() {
-      closeStream?.();
-      closeStream = null;
-      if (!active || retryTimer) return;
-      retryTimer = setTimeout(() => {
-        retryTimer = null;
-        if (active && owns()) connectStream();
-      }, HOME_THREAD_STREAM_RETRY_MS);
-    }
-    const wsEvents =
-      useServerCapabilities.getState().byServer[serverId]?.includes(WS_EVENTS_CAPABILITY) === true;
-    if (wsEvents) {
-      releaseSocket = gatewaySocketFor(serverId).watch(asid, {
-        onSubscribed: read,
-        onEvent,
-        onResync: read,
-        // The socket cannot carry it: the session's own stream does, as on its screen.
-        onUnavailable: () =>
-          queueMicrotask(() => {
-            releaseSocket?.();
-            releaseSocket = null;
-            if (active && !closeStream) connectStream();
-          }),
-      });
-    } else {
-      connectStream();
-    }
-    read();
+    const release = followHomeSession({
+      serverId,
+      sessionId,
+      asid,
+      onSnapshot: (snapshot) => {
+        live = homeThreadLiveFromSnapshot(snapshot);
+        if (publishTimer) clearTimeout(publishTimer);
+        publish();
+      },
+      onEvent: (event) => {
+        live = applyHomeThreadEvent(live, event);
+        if (!publishTimer) publishTimer = setTimeout(publish, HOME_THREAD_PUBLISH_MS);
+      },
+      onNotFound: () => useHomeThreadLive.getState().markNotFound(key),
+    });
     return () => {
       active = false;
       if (publishTimer) clearTimeout(publishTimer);
-      if (retryTimer) clearTimeout(retryTimer);
-      releaseSocket?.();
-      closeStream?.();
+      release();
     };
   }, [enabled, key, serverId, sessionId, asid]);
 
-  // A pane has no transcript: its agent's last prose is read off its screen
-  // (the terminal screen's own read) when it becomes the target, when its
-  // status changes and when Home is back in front; and, after a send, again
-  // until the reply shows and the agent is done (bounded, see below).
+  // A pane has no transcript: whether its agent is at work is read off its
+  // screen (the terminal screen's own read) when it becomes the target, when
+  // its status changes and when Home is back in front; and, after a send,
+  // again until the reply shows and the agent is done (bounded, see below).
   const paneId = target.kind === 'pane' ? target.paneId : undefined;
   const paneSessionId = useServerAgents((state) =>
     target.kind === 'pane' ? (target.sessionId ?? state.byServer[serverId]?.sessionId) : undefined
@@ -267,18 +270,9 @@ export function HomeThreadFeed({
           const seen = paneAgentRead(output);
           const store = useHomeThreadLive.getState();
           if (store.key === key) {
-            const { paneLine, panePrompt, paneBusy, ...rest } = store.live;
-            if (
-              paneLine !== seen.line ||
-              panePrompt !== seen.prompt ||
-              (paneBusy === true) !== seen.busy
-            )
-              store.publish(key, {
-                ...rest,
-                ...(seen.line ? { paneLine: seen.line } : {}),
-                ...(seen.prompt ? { panePrompt: seen.prompt } : {}),
-                ...(seen.busy ? { paneBusy: true } : {}),
-              });
+            const { paneBusy, ...rest } = store.live;
+            if ((paneBusy === true) !== seen.busy)
+              store.publish(key, { ...rest, ...(seen.busy ? { paneBusy: true } : {}) });
             else store.markLoaded(key);
           }
           followUp(seen);
@@ -364,8 +358,8 @@ export function homeThreadFactsNow(target: HomeThreadTarget): HomeThreadFacts {
   };
 }
 
-/** What the strip's state word and the chip's tone read: the target's live state. */
-function useHomeThreadState(target: HomeThreadTarget): HomeThreadState {
+/** The target's live state: the dock's grabber tint and the drawer's state word. */
+export function useHomeThreadState(target: HomeThreadTarget): HomeThreadState {
   const key = homeThreadKey(target);
   const live = useHomeThreadLive((state) => (state.key === key ? state.live : undefined));
   const task = useServerTasksStore((state) =>
@@ -394,495 +388,3 @@ function useHomeThreadState(target: HomeThreadTarget): HomeThreadState {
 
 /** A send whose delivery could not be confirmed: never resent without the reader. */
 export type HomeThreadUnsure = { key: string; text: string; attachments: string[] };
-
-/**
- * Home's reply bar, joined to the top of the composer on its ground: where the
- * next message goes and how it is doing, read at a glance.
- *
- * Row 1 is `↳ title · state` with × on the right, which lets the target go;
- * the next message then starts a new conversation. Row 2, at most two lines,
- * is the agent's latest reply, or while it works and has not replied the
- * progress line it reports, or for a pane the agent's last prose as its
- * screen shows it, or nothing. The reader's own message is never
- * repeated. A request waiting on the reader tints the bar and puts its
- * actions in row 2. The bar is one button that opens the conversation.
- *
- * A change of target is one transition: the bar stays mounted, its content
- * cross-fades to the new target's and its height eases. While the new
- * target's first read is out, the slot the previous target was drawing holds
- * a neutral "…" (`homeThreadBarView`), so the bar never drops out and comes
- * back, nor shows the previous target's reply under the new one.
- */
-export function HomeThreadBar({
-  target,
-  offline,
-  unsure,
-  onOpen,
-  onClear,
-  onRetry,
-  named = false,
-  onShown,
-}: {
-  target: HomeThreadTarget;
-  offline: boolean;
-  unsure: HomeThreadUnsure | null;
-  onOpen?: () => void;
-  onClear: () => void;
-  onRetry: () => void;
-  /**
-   * The conversation is named, and cleared, on its own outlined card right
-   * above (Stage): the bar drops the title and ×, says only how it is doing
-   * and what it last said, and is not drawn when it has nothing to say.
-   */
-  named?: boolean;
-  /** Told whether the bar is drawn, so the field joins it only then. */
-  onShown?: (shown: boolean) => void;
-}) {
-  const { t } = useLingui();
-  const theme = useThemeTokens();
-  const profile = useAppearanceProfile();
-  const background = useSurfaceBackground();
-  const reduced = useReducedMotion();
-  const key = homeThreadKey(target);
-  const live = useHomeThreadLive((state) =>
-    state.key === key ? state.live : EMPTY_HOME_THREAD_LIVE
-  );
-  // The feed resets the store to a new key in an effect, after this render:
-  // a key the store does not hold yet is not loaded either.
-  const loaded = useHomeThreadLive((state) => state.key === key && state.loaded);
-  const task = useServerTasksStore((state) =>
-    homeThreadTask(target, state.index[target.serverId]?.tasks)
-  );
-  const state = useHomeThreadState(target);
-
-  // Only what was reported, and only what is newer than the last message
-  // sent from here (`homeThreadRow2`): right after a send it says "Sent".
-  const nowMs = useMinuteNow();
-  const turns = target.kind === 'session' ? homeThreadTurns(live) : undefined;
-  const row2 = homeThreadRow2({
-    target,
-    nowMs,
-    state,
-    ...(turns
-      ? {
-          turns: {
-            ...(turns.mine ? { mine: turns.mine.text } : {}),
-            ...(turns.reply ? { reply: turns.reply.text } : {}),
-          },
-        }
-      : {}),
-    live,
-    ...(task ? { task } : {}),
-  });
-  const line =
-    row2.kind === 'line'
-      ? row2.source === 'reply'
-        ? plainFromMarkdown(row2.text).trim()
-        : row2.text
-      : row2.kind === 'sent'
-        ? t`Sent`
-        : undefined;
-  const lineSource = row2.kind === 'line' ? row2.source : row2.kind;
-  const word = offline
-    ? t`Offline`
-    : state === 'needs-you'
-      ? t`Needs you`
-      : state === 'working'
-        ? t`Working`
-        : state === 'failed'
-          ? t`Failed`
-          : state === 'starting'
-            ? t`Starting…`
-            : t`Idle`;
-  const needsYou = state === 'needs-you' && !offline;
-  const tone =
-    needsYou || state === 'failed'
-      ? theme.colors.warning
-      : state === 'working' && !offline
-        ? theme.colors.primary
-        : theme.colors.textMuted;
-  const permission = target.kind === 'session' ? live.permissions[0] : undefined;
-  const form =
-    target.kind === 'session' && !permission
-      ? live.forms.find((entry) => entry.nonblocking !== true)
-      : undefined;
-  const title = live.title || target.title || t`Conversation`;
-  const unsureHere = unsure?.key === key ? unsure : null;
-  const enter = reduced ? calmFadeIn() : fadeIn('short');
-  const exit = reduced ? calmFadeOut('micro') : fadeOut('micro');
-
-  // Whether the previous target was drawing the slot a switch holds, carried
-  // into the next change of key; adjusted during render so the switch's own
-  // first frame already holds it.
-  const [carry, setCarry] = useState({ key, drawn: false, held: false });
-  const switched = carry.key !== key;
-  const held = switched ? carry.drawn : carry.held;
-  const view = homeThreadBarView({
-    named,
-    loading: !offline && target.kind !== 'task' && !loaded,
-    stateFromRead: target.kind === 'session' && !task,
-    line: Boolean(line) && !permission && !form,
-    notice: needsYou || Boolean(permission || form) || Boolean(unsureHere),
-    held,
-  });
-  if (switched || carry.drawn !== view.drawn) setCarry({ key, held, drawn: view.drawn });
-  // A read that never comes back lets the hold go.
-  useEffect(() => {
-    if (!held) return;
-    const timer = setTimeout(
-      () => setCarry((now) => (now.key === key ? { ...now, held: false } : now)),
-      HOME_THREAD_SWITCH_HOLD_MS
-    );
-    return () => clearTimeout(timer);
-  }, [key, held]);
-  const { shown, placeholder, pendingState } = view;
-  const shownWord = pendingState ? '…' : word;
-  const shownTone = pendingState ? theme.colors.textMuted : tone;
-  const shownLine = placeholder ? '…' : line && !permission && !form ? line : undefined;
-  // One key per target and per phase: a change of either cross-fades the
-  // content in place instead of swapping its text in a frame.
-  const contentKey = `${key}:${placeholder || pendingState ? 'pending' : 'ready'}`;
-  const reportShown = useEffectEvent((next: boolean) => onShown?.(next));
-  useEffect(() => {
-    reportShown(shown);
-  }, [shown]);
-  useEffect(() => () => reportShown(false), []);
-  if (!shown) return null;
-
-  return (
-    <Animated.View
-      testID="home-thread-bar-row"
-      entering={reduced ? calmFadeIn() : riseIn()}
-      exiting={reduced ? calmFadeOut() : fadeOut('short')}
-      layout={listLayout()}
-      style={[
-        styles.bar,
-        {
-          backgroundColor: background(theme.colors.surface),
-          borderTopLeftRadius: profile.chrome.composerField,
-          borderTopRightRadius: profile.chrome.composerField,
-          paddingHorizontal: theme.spacing.md,
-          paddingTop: theme.spacing.sm,
-          paddingBottom: theme.spacing.xs,
-          gap: theme.spacing.xs,
-        },
-      ]}>
-      {needsYou ? (
-        <Animated.View
-          entering={enter}
-          exiting={exit}
-          pointerEvents="none"
-          style={[
-            StyleSheet.absoluteFill,
-            { backgroundColor: withAlpha(theme.colors.warning, 0.1) },
-          ]}
-        />
-      ) : null}
-      <View style={styles.barRow}>
-        <PressableScale
-          testID="home-thread-bar"
-          accessibilityRole="button"
-          accessibilityLabel={t`Open conversation ${title}, ${word}`}
-          accessibilityState={{ disabled: !onOpen }}
-          disabled={!onOpen}
-          onPress={onOpen}
-          style={styles.barOpen}>
-          <Animated.View key={contentKey} entering={enter} exiting={exit} style={styles.barContent}>
-            <LayoutAnimationConfig skipEntering>
-              {named ? (
-                // The card above names it: the state leads, and the line follows on it.
-                <Text variant="caption" color={theme.colors.textMuted} numberOfLines={2}>
-                  <Text
-                    testID="home-thread-state"
-                    variant="caption"
-                    weight="semibold"
-                    color={shownTone}>
-                    {`↳ ${shownWord}`}
-                  </Text>
-                  {shownLine ? `  ${shownLine}` : null}
-                </Text>
-              ) : (
-                <View style={styles.barHead}>
-                  <Text
-                    variant="caption"
-                    weight="semibold"
-                    color={needsYou ? theme.colors.warning : theme.colors.text}
-                    numberOfLines={1}
-                    style={styles.barTitle}>
-                    {`↳ ${title}`}
-                  </Text>
-                  <Text
-                    testID="home-thread-state"
-                    variant="caption"
-                    color={shownTone}
-                    numberOfLines={1}
-                    style={styles.barState}>
-                    {`· ${shownWord}`}
-                  </Text>
-                </View>
-              )}
-              {!named && shownLine ? (
-                <Animated.View
-                  key={`line:${task?.taskId ?? ''}:${lineSource}`}
-                  entering={enter}
-                  exiting={exit}>
-                  <Text
-                    testID={placeholder ? 'home-thread-reply-pending' : 'home-thread-reply'}
-                    variant="caption"
-                    color={theme.colors.textMuted}
-                    numberOfLines={2}>
-                    {shownLine}
-                  </Text>
-                </Animated.View>
-              ) : null}
-            </LayoutAnimationConfig>
-          </Animated.View>
-        </PressableScale>
-        {named ? null : (
-          <PressableScale
-            testID="home-thread-clear"
-            accessibilityRole="button"
-            accessibilityLabel={t`Stop following this conversation`}
-            hitSlop={10}
-            onPress={onClear}
-            style={styles.barClose}>
-            <CloseIcon size={14} color={theme.colors.textMuted} />
-          </PressableScale>
-        )}
-      </View>
-      {permission ? (
-        <Animated.View key={`${key}:permission:${permission.id}`} entering={enter} exiting={exit}>
-          <ThreadPermission target={target} request={permission} />
-        </Animated.View>
-      ) : form ? (
-        <Animated.View key={`${key}:form:${form.id}`} entering={enter} exiting={exit}>
-          <ThreadQuestion target={target} form={form} onOpen={onOpen} />
-        </Animated.View>
-      ) : null}
-      {unsureHere ? (
-        <Animated.View entering={enter} exiting={exit} style={styles.unsure}>
-          <Text
-            testID="home-thread-unsure"
-            variant="caption"
-            color={theme.colors.warning}
-            style={styles.unsureText}>
-            {t`Not sure it was delivered`}
-          </Text>
-          <CompactButton testID="home-thread-retry" label={t`Retry`} onPress={onRetry} />
-          {onOpen ? (
-            <CompactButton testID="home-thread-unsure-open" label={t`Open`} onPress={onOpen} />
-          ) : null}
-        </Animated.View>
-      ) : null}
-    </Animated.View>
-  );
-}
-
-function CompactButton({
-  label,
-  onPress,
-  tone,
-  disabled,
-  testID,
-}: {
-  label: string;
-  onPress: () => void;
-  tone?: string;
-  disabled?: boolean;
-  testID?: string;
-}) {
-  const theme = useThemeTokens();
-  const color = tone ?? theme.colors.primary;
-  return (
-    <PressableScale
-      testID={testID}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityState={{ disabled: Boolean(disabled) }}
-      disabled={disabled}
-      hitSlop={4}
-      onPress={onPress}
-      style={[
-        styles.compactButton,
-        { backgroundColor: withAlpha(color, 0.14), borderRadius: PILL_RADIUS },
-      ]}>
-      <Text variant="caption" weight="semibold" color={color} numberOfLines={1}>
-        {label}
-      </Text>
-    </PressableScale>
-  );
-}
-
-/** Whether the selected computer is still the target's: replies use the shared client. */
-function ownsTarget(target: HomeThreadTarget): boolean {
-  return useGatewayConnectionStore.getState().record?.serverId === target.serverId;
-}
-
-/**
- * A permission, answered here: the session screen's own request
- * (`replyAgentPermission`) with its options as compact buttons. A failure is
- * said in place; nothing is retried.
- */
-function ThreadPermission({
-  target,
-  request,
-}: {
-  target: HomeThreadTarget;
-  request: PermissionRequest;
-}) {
-  const { t } = useLingui();
-  const { _ } = useLinguiRuntime();
-  const theme = useThemeTokens();
-  const [busy, setBusy] = useState(false);
-  const [failed, setFailed] = useState<string | null>(null);
-  const options = (
-    request.options.length > 0
-      ? request.options
-      : DEFAULT_PERMISSION_DECISIONS.map((decision, index) => ({
-          index,
-          label: decision,
-          decision,
-        }))
-  ).map((option) => ({
-    ...option,
-    label: permissionOptionLabel(option, {
-      allow: _(permissionDecisionLabel.allow),
-      allow_always: _(permissionDecisionLabel.allow_always),
-      deny: _(permissionDecisionLabel.deny),
-      once: t`Allow once`,
-      turn: t`Allow for this turn`,
-    }),
-  }));
-  const decide = (decision: PermissionDecision) => {
-    if (busy || target.kind !== 'session' || !ownsTarget(target)) return;
-    setBusy(true);
-    setFailed(null);
-    const { serverId, sessionId, asid } = target;
-    void settleAfter(
-      () =>
-        recoverWith(
-          async () => {
-            await replyAgentPermission(sessionId, asid, request.id, decision);
-            useHomeAttention
-              .getState()
-              .resolve(
-                { kind: 'agent-session', serverId, sessionId, directory: '', asid },
-                request.id
-              );
-          },
-          (failure: unknown) => {
-            console.warn('Home could not reply to a permission:', failure);
-            setFailed(t`Could not reply`);
-          }
-        ),
-      () => setBusy(false)
-    );
-  };
-  return (
-    <View style={styles.request} testID="home-thread-permission">
-      <Text variant="caption" color={theme.colors.text} numberOfLines={1}>
-        {permissionSubject(request) || t`Permission required`}
-      </Text>
-      <View style={styles.actions}>
-        {options.map((option) => (
-          <CompactButton
-            key={`${option.index}:${option.decision}`}
-            label={option.label}
-            tone={option.decision === 'deny' ? theme.colors.danger : theme.colors.warning}
-            disabled={busy}
-            onPress={() => decide(option.decision)}
-          />
-        ))}
-      </View>
-      {failed ? (
-        <Text variant="caption" color={theme.colors.danger}>
-          {failed}
-        </Text>
-      ) : null}
-    </View>
-  );
-}
-
-/**
- * A question: one with a single list of answers is answered here with them
- * (`replyAgentForm`, as its card does); anything richer opens the session,
- * where its full card is.
- */
-function ThreadQuestion({
-  target,
-  form,
-  onOpen,
-}: {
-  target: HomeThreadTarget;
-  form: FormRequest;
-  onOpen?: () => void;
-}) {
-  const { t } = useLingui();
-  const theme = useThemeTokens();
-  const [busy, setBusy] = useState(false);
-  const [failed, setFailed] = useState<string | null>(null);
-  const field = form.fields.length === 1 ? form.fields[0] : undefined;
-  const choices = field?.type === 'string' && field.options?.length ? field.options : undefined;
-  const answer = (value: string) => {
-    if (busy || !field || target.kind !== 'session' || !ownsTarget(target)) return;
-    setBusy(true);
-    setFailed(null);
-    const { sessionId, asid } = target;
-    void settleAfter(
-      () =>
-        recoverWith(
-          async () => {
-            await replyAgentForm(sessionId, asid, form.id, { [field.key]: value });
-          },
-          (failure: unknown) => {
-            console.warn('Home could not answer a question:', failure);
-            setFailed(t`Could not reply`);
-          }
-        ),
-      () => setBusy(false)
-    );
-  };
-  return (
-    <View style={styles.request} testID="home-thread-question">
-      <Text variant="caption" color={theme.colors.text} numberOfLines={2}>
-        {field?.title || form.title}
-      </Text>
-      <View style={styles.actions}>
-        {choices ? (
-          choices.map((choice) => (
-            <CompactButton
-              key={choice.value}
-              label={choice.label}
-              tone={theme.colors.warning}
-              disabled={busy}
-              onPress={() => answer(choice.value)}
-            />
-          ))
-        ) : onOpen ? (
-          <CompactButton label={t`Answer`} tone={theme.colors.warning} onPress={onOpen} />
-        ) : null}
-      </View>
-      {failed ? (
-        <Text variant="caption" color={theme.colors.danger}>
-          {failed}
-        </Text>
-      ) : null}
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  bar: { overflow: 'hidden' },
-  barRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
-  barOpen: { flex: 1 },
-  barContent: { gap: 2 },
-  barHead: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  barTitle: { flexShrink: 1 },
-  barState: { flexShrink: 0 },
-  barClose: { paddingHorizontal: 4, paddingVertical: 2 },
-  request: { gap: 6 },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  compactButton: { paddingHorizontal: 12, paddingVertical: 5 },
-  unsure: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 },
-  unsureText: { flexShrink: 1 },
-});

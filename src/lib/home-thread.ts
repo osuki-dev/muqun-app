@@ -17,7 +17,6 @@ import type {
   AgentSessionSnapshot,
   FormRequest,
   PermissionRequest,
-  TimelineItem,
 } from '@/lib/agent-protocol';
 import type { AgentSessionRuntime } from '@/lib/agent-session-runtime';
 import type { HomeContinueEntry } from '@/lib/home-continue';
@@ -32,7 +31,7 @@ import type { TaskView } from '@/lib/task-ledger';
 
 type ThreadBase = {
   serverId: string;
-  /** What the chip and the strip call it: the session's or the goal's title. */
+  /** What the card and the drawer call it: the session's or the goal's title. */
   title: string;
   /** The ledger task it runs as, when it is one: its progress line and binding. */
   taskId?: string;
@@ -417,73 +416,27 @@ function normalizePills(value: unknown): HomeSessionParams | undefined {
 // The live strip: what the session screen's own snapshot and events say.
 // ---------------------------------------------------------------------------
 
-type TextRow = {
-  id: string;
-  order: string;
-  ordinal: number;
-  role: 'user' | 'assistant';
-  text: string;
-};
-
 export type HomeThreadLive = {
   status?: AgentRunStatus;
   interaction?: AgentSessionRuntime['interaction'];
   title?: string;
   /** The session reported itself deleted. */
   deleted?: boolean;
-  /** The newest text parts only, oldest first: the strip shows the last two turns. */
-  rows: readonly TextRow[];
   permissions: readonly PermissionRequest[];
   forms: readonly FormRequest[];
-  /** A pane's agent: its last prose, as read off the pane (`paneAgentRead`). */
-  paneLine?: string;
-  /** The reader's message the pane shows `paneLine` answering. */
-  panePrompt?: string;
   /** The pane's own screen shows the agent at work (a spinner, "esc to interrupt"). */
   paneBusy?: boolean;
 };
 
-/** Text parts kept: a couple of turns, never the transcript. */
-const KEPT_ROWS = 8;
+export const EMPTY_HOME_THREAD_LIVE: HomeThreadLive = { permissions: [], forms: [] };
 
-export const EMPTY_HOME_THREAD_LIVE: HomeThreadLive = { rows: [], permissions: [], forms: [] };
-
-function textRow(item: TimelineItem): TextRow | null {
-  if (item.part.type !== 'text' || item.role === 'system') return null;
-  const body = item.part.text.trim();
-  if (!body) return null;
-  return {
-    id: item.id,
-    order: item.order ?? item.message_id,
-    ordinal: item.ordinal,
-    role: item.role,
-    text: body,
-  };
-}
-
-function byOrder(a: TextRow, b: TextRow): number {
-  if (a.order !== b.order) return a.order < b.order ? -1 : 1;
-  return a.ordinal - b.ordinal;
-}
-
-function keepRows(rows: TextRow[]): TextRow[] {
-  rows.sort(byOrder);
-  return rows.length > KEPT_ROWS ? rows.slice(rows.length - KEPT_ROWS) : rows;
-}
-
-/** The strip's state from a snapshot read (on subscribe, resync and reconnect). */
+/** The live state from a snapshot read (on subscribe, resync and reconnect). */
 export function homeThreadLiveFromSnapshot(snapshot: AgentSessionSnapshot): HomeThreadLive {
-  const rows: TextRow[] = [];
-  for (const item of snapshot.timeline) {
-    const row = textRow(item);
-    if (row) rows.push(row);
-  }
   const info = snapshot.info;
   return {
     ...(info ? { status: info.status, title: info.title } : {}),
     ...(info?.runtime ? { interaction: info.runtime.interaction } : {}),
     ...(info?.deleted ? { deleted: true } : {}),
-    rows: keepRows(rows),
     permissions: snapshot.permissions,
     forms: snapshot.forms,
   };
@@ -507,24 +460,6 @@ export function applyHomeThreadEvent(
     }
     case 'agent.status.changed':
       return { ...live, status: event.status };
-    case 'agent.timeline.upsert': {
-      let rows: TextRow[] | null = null;
-      for (const item of event.items) {
-        const row = textRow(item);
-        if (!row) continue;
-        rows ??= [...live.rows];
-        const at = rows.findIndex((existing) => existing.id === row.id);
-        if (at >= 0) rows[at] = row;
-        else rows.push(row);
-      }
-      return rows ? { ...live, rows: keepRows(rows) } : live;
-    }
-    case 'agent.timeline.removed': {
-      const gone = new Set(event.ids);
-      return live.rows.some((row) => gone.has(row.id))
-        ? { ...live, rows: live.rows.filter((row) => !gone.has(row.id)) }
-        : live;
-    }
     case 'agent.permission.pending':
       return live.permissions.some((request) => request.id === event.request.id)
         ? live
@@ -543,30 +478,6 @@ export function applyHomeThreadEvent(
     default:
       return live;
   }
-}
-
-export type HomeThreadLine = { id: string; text: string };
-
-/**
- * The reader's latest message and the agent's reply to it, if it has replied;
- * with nothing from the reader in view, the agent's last word.
- */
-export function homeThreadTurns(live: HomeThreadLive): {
-  mine?: HomeThreadLine;
-  reply?: HomeThreadLine;
-} {
-  const rows = live.rows;
-  let mine = -1;
-  for (let at = rows.length - 1; at >= 0 && mine < 0; at -= 1)
-    if (rows[at]!.role === 'user') mine = at;
-  let reply = -1;
-  for (let at = rows.length - 1; at > mine && reply < 0; at -= 1)
-    if (rows[at]!.role === 'assistant') reply = at;
-  const line = (at: number): HomeThreadLine => ({ id: rows[at]!.id, text: rows[at]!.text });
-  return {
-    ...(mine >= 0 ? { mine: line(mine) } : {}),
-    ...(reply >= 0 ? { reply: line(reply) } : {}),
-  };
 }
 
 /** The ledger task the target runs as: by id, else the newest one bound to its session or pane. */
@@ -629,7 +540,7 @@ export function homeThreadState(input: {
   return 'idle';
 }
 
-/** How long after a send the bar waits for something newer, and a pane is re-read. */
+/** How long after a send a pane is re-read for its reply. */
 export const HOME_THREAD_SENT_WINDOW_MS = 10 * 60_000;
 
 function normalized(text: string): string {
@@ -662,49 +573,6 @@ function awaitingReply(target: Pick<ThreadBase, 'lastSent' | 'sentAtMs'>, nowMs:
   );
 }
 
-export type HomeThreadRow2 =
-  | { kind: 'line'; text: string; source: 'reply' | 'progress' | 'pane' }
-  /** Accepted, and nothing newer has come back yet. */
-  | { kind: 'sent' }
-  | { kind: 'none' };
-
-/**
- * The bar's second row: only what is newer than the reader's last message
- * from Home. Right after a send the previous answer is never shown as if it
- * were current: until the reply (or the reported progress) arrives, it says
- * the message was sent. A session's reply counts once the transcript shows
- * the message sent; a pane's once its screen shows the reply under it.
- */
-export function homeThreadRow2(input: {
-  target: HomeThreadTarget;
-  nowMs: number;
-  state: HomeThreadState;
-  /** A session's latest turns (`homeThreadTurns`). */
-  turns?: { mine?: string; reply?: string };
-  live?: Pick<HomeThreadLive, 'paneLine' | 'panePrompt'>;
-  task?: Pick<TaskView, 'summary' | 'progress' | 'state'>;
-}): HomeThreadRow2 {
-  const { target, state, turns, live, task } = input;
-  const waiting = awaitingReply(target, input.nowMs);
-  const progress = state === 'working' ? task?.progress : undefined;
-  if (target.kind === 'session') {
-    const caughtUp =
-      !waiting ||
-      (turns?.mine !== undefined && normalized(turns.mine) === normalized(target.lastSent ?? ''));
-    if (caughtUp && turns?.reply) return { kind: 'line', text: turns.reply, source: 'reply' };
-    if (progress) return { kind: 'line', text: progress, source: 'progress' };
-    return caughtUp ? { kind: 'none' } : { kind: 'sent' };
-  }
-  // A task summary is the agent's last message as the task recorded it: only
-  // once the task has settled after the send.
-  if (task?.summary && state !== 'working' && !waiting)
-    return { kind: 'line', text: task.summary, source: 'reply' };
-  if (progress) return { kind: 'line', text: progress, source: 'progress' };
-  if (live?.paneLine && (!waiting || homeThreadPaneAnswers(live.panePrompt, target.lastSent)))
-    return { kind: 'line', text: live.paneLine, source: 'pane' };
-  return waiting ? { kind: 'sent' } : { kind: 'none' };
-}
-
 /**
  * Whether a pane target is read again after a send: within the window,
  * while its reply to the send has not appeared or its agent is still at
@@ -721,57 +589,4 @@ export function homeThreadPanePolls(input: {
     awaitingReply(input.target, input.nowMs) &&
     (!input.answered || input.working)
   );
-}
-
-/**
- * How long a change of target keeps the reply bar up while the new target's
- * first read is out. Past it, a target with nothing to say lets the bar go.
- */
-export const HOME_THREAD_SWITCH_HOLD_MS = 1_500;
-
-export type HomeThreadBarView = {
-  /** The bar is drawn. */
-  shown: boolean;
-  /** Row 2 is the muted "…" of a read still out, not a line of its own. */
-  placeholder: boolean;
-  /** The state word is not known yet: it is drawn as "…", never a guessed "Idle". */
-  pendingState: boolean;
-  /**
-   * What this target draws in the slot a switch would hold: the whole bar when
-   * `named`, else row 2. Carried into the next change of target as `held`.
-   */
-  drawn: boolean;
-};
-
-/**
- * What the reply bar draws for its target, above all across a change of
- * target: the bar, and the row the previous target was drawing, stay while
- * the new one's first read is out (`held`), as a neutral "…"; they never
- * collapse to nothing and come back, and never show the previous target's
- * reply under the new one. A slot that was empty is not filled with a
- * placeholder that would only go again.
- */
-export function homeThreadBarView(input: {
-  /** The card above names the target (Stage): the bar is drawn only when it has something to say. */
-  named: boolean;
-  /** The target's first read has not come back. */
-  loading: boolean;
-  /** The state word comes from that read alone (a session no task speaks for). */
-  stateFromRead: boolean;
-  /** Row 2 has a line: a reply, progress, a pane's prose, or "Sent". */
-  line: boolean;
-  /** Something else to say: a request, a target that needs the reader, an unsure send. */
-  notice: boolean;
-  /** The previous target was drawing the slot when it changed, within the hold. */
-  held: boolean;
-}): HomeThreadBarView {
-  const { named, loading, line, notice } = input;
-  const placeholder = loading && input.held && !line && !notice;
-  const shown = !named || line || notice || placeholder;
-  return {
-    shown,
-    placeholder,
-    pendingState: loading && input.stateFromRead,
-    drawn: named ? shown : line || placeholder,
-  };
 }

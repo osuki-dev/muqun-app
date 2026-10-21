@@ -71,6 +71,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 
 import AppDrawer from '@/components/app-drawer';
+import { HOME_REPLY_PAD_MAX_WIDTH, HomeReplyRecede } from '@/components/home-reply-drawer';
 import { NewTaskAction } from '@/components/new-task-action';
 import { SectionLabel } from '@/components/settings-chrome';
 import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
@@ -1085,7 +1086,7 @@ export function HomeOverview({
       autoHide={isPad ? undefined : pageDockHide.dock}
       onOpenAgent={commands.openAgent}
       onOpenThread={openThread}
-      threadOnCard={homeLayout === 'stage' && !isPad && stageThreadKey !== undefined}
+      drawerMaxWidth={isPad && !padLaunch ? HOME_REPLY_PAD_MAX_WIDTH : undefined}
     />
   ) : null;
   // A computer row sets the dock's target. The bar does not flash for it: the
@@ -1275,81 +1276,84 @@ export function HomeOverview({
     const stageContent = (
       <View style={styles.page} {...sortHoldTouches}>
         <HomeTaskSync serverIds={liveTaskServerIds} />
-        <HomeStage
-          servers={launchController.servers}
-          chosenServerId={launchController.chosen?.serverId}
-          connectionStatuses={connectionStatuses}
-          recentEntries={recentEntries}
-          artwork={
-            hasEditorialArtwork && editorialArtworkResolution
-              ? {
-                  uri: editorialArtworkResolution.source,
-                  fit: editorialArtworkResolution.resolved.image.fit,
-                  focal: editorialArtworkResolution.resolved.image.focalPoint,
-                  opacity: editorialArtworkResolution.resolved.image.opacity,
-                }
-              : undefined
-          }
-          coverHeader={coverHeader}
-          paused={!isFocused || !appActive}
-          topInset={insets.top}
-          dockHeight={dock && composerRevealed ? dockHeight : insets.bottom}
-          headerAction={phoneToolbarFor(true)}
-          hasAttention={!loading && !hydrationError && hasAttention}
-          attention={attentionSection}
-          fullList={
-            <>
-              {recentSection}
-              {!loading && !hydrationError && !sshLoading ? (
-                <HomeConnections
-                  servers={records}
-                  hosts={sshRows}
-                  onOpenServer={openServer}
-                  onSelectServer={targetComposer}
-                  onOpenHost={(hostId) => {
-                    void commands.openSsh(hostId);
-                  }}
-                  onManage={() => {
-                    void commands.manageConnections();
-                  }}
-                  activeConnection={activeConnection}
-                />
-              ) : null}
-            </>
-          }
-          emptyState={emptyState}
-          storageError={
-            hydrationError ? (
-              <GatewayStorageError busy={loading} onRetry={retryHydration} />
-            ) : undefined
-          }
-          refreshing={refreshing}
-          onRefresh={() => void onRefresh()}
-          onSelectServer={targetComposer}
-          onOpenServer={openServer}
-          onOpenTasks={(serverId) =>
-            router.push({ pathname: '/server-tasks', params: { serverId } })
-          }
-          onOpenDetails={(serverId) =>
-            router.push({ pathname: '/settings-servers', params: { serverId } })
-          }
-          threadKey={stageThreadKey}
-          onClearThread={() => {
-            if (chosenThread) useHomeThreads.getState().clear(chosenThread.serverId, chosenThread);
-          }}
-          canReply={canReply}
-          onReplySession={replyFromHome}
-          onOpenSession={(entry) => {
-            void commands.dispatch(homeContinueCommand(entry.destination));
-          }}
-          // The host starts a new task on the composer's computer, as Home's
-          // New session action does (an offline target opens the picker).
-          onNewTask={() => launchController.launchOnChosen(commands.newAgent)}
-          onViewport={(height) => {
-            pageDockHide.settle({ viewportHeight: height });
-            if (height > 0) setViewportReady(true);
-          }}
-        />
+        <HomeReplyRecede>
+          <HomeStage
+            servers={launchController.servers}
+            chosenServerId={launchController.chosen?.serverId}
+            connectionStatuses={connectionStatuses}
+            recentEntries={recentEntries}
+            artwork={
+              hasEditorialArtwork && editorialArtworkResolution
+                ? {
+                    uri: editorialArtworkResolution.source,
+                    fit: editorialArtworkResolution.resolved.image.fit,
+                    focal: editorialArtworkResolution.resolved.image.focalPoint,
+                    opacity: editorialArtworkResolution.resolved.image.opacity,
+                  }
+                : undefined
+            }
+            coverHeader={coverHeader}
+            paused={!isFocused || !appActive}
+            topInset={insets.top}
+            dockHeight={dock && composerRevealed ? dockHeight : insets.bottom}
+            headerAction={phoneToolbarFor(true)}
+            hasAttention={!loading && !hydrationError && hasAttention}
+            attention={attentionSection}
+            fullList={
+              <>
+                {recentSection}
+                {!loading && !hydrationError && !sshLoading ? (
+                  <HomeConnections
+                    servers={records}
+                    hosts={sshRows}
+                    onOpenServer={openServer}
+                    onSelectServer={targetComposer}
+                    onOpenHost={(hostId) => {
+                      void commands.openSsh(hostId);
+                    }}
+                    onManage={() => {
+                      void commands.manageConnections();
+                    }}
+                    activeConnection={activeConnection}
+                  />
+                ) : null}
+              </>
+            }
+            emptyState={emptyState}
+            storageError={
+              hydrationError ? (
+                <GatewayStorageError busy={loading} onRetry={retryHydration} />
+              ) : undefined
+            }
+            refreshing={refreshing}
+            onRefresh={() => void onRefresh()}
+            onSelectServer={targetComposer}
+            onOpenServer={openServer}
+            onOpenTasks={(serverId) =>
+              router.push({ pathname: '/server-tasks', params: { serverId } })
+            }
+            onOpenDetails={(serverId) =>
+              router.push({ pathname: '/settings-servers', params: { serverId } })
+            }
+            threadKey={stageThreadKey}
+            onClearThread={() => {
+              if (chosenThread)
+                useHomeThreads.getState().clear(chosenThread.serverId, chosenThread);
+            }}
+            canReply={canReply}
+            onReplySession={replyFromHome}
+            onOpenSession={(entry) => {
+              void commands.dispatch(homeContinueCommand(entry.destination));
+            }}
+            // The host starts a new task on the composer's computer, as Home's
+            // New session action does (an offline target opens the picker).
+            onNewTask={() => launchController.launchOnChosen(commands.newAgent)}
+            onViewport={(height) => {
+              pageDockHide.settle({ viewportHeight: height });
+              if (height > 0) setViewportReady(true);
+            }}
+          />
+        </HomeReplyRecede>
         {dock}
       </View>
     );
@@ -1368,268 +1372,275 @@ export function HomeOverview({
         // Any finger on the page holds the cards' order (design §9).
         {...sortHoldTouches}
         style={[styles.page, { backgroundColor: background(theme.colors.background) }]}>
-        <ThemeArtwork slot="home.wallpaper" waitForTransition fallbackSlot="shell.wallpaper" />
-        <HomeTaskSync serverIds={liveTaskServerIds} />
-        <ComputerCardsPresence
-          servers={cardServers}
-          reachabilityByServer={padReachabilityByServer}
-          onChange={setHasComputerCards}
-        />
-        <HomeScrollViewport
-          dockHeight={dock && !padLaunch && composerRevealed ? dockClipHeight : 0}
-          dockOffset={isPad ? undefined : pageDockHide.dock.offset}
-          ref={overviewScroll}
-          keyboardShouldPersistTaps="handled"
-          // The wide Pad cover holds the dock inside this page, and the dock
-          // rides the keyboard by itself; this view must not move it twice.
-          enabled={!padLaunch}
-          // Elsewhere the dock floats over the page's foot and rises with the
-          // keyboard: a field in the page is kept clear of it, not just of the
-          // keyboard.
-          bottomOffset={dock && !padLaunch ? dockHeight : undefined}
-          onContentSizeChange={restoreScroll}
-          onLayout={(event) => {
-            pageDockHide.settle({ viewportHeight: event.nativeEvent.layout.height });
-            if (event.nativeEvent.layout.height > 0 && event.nativeEvent.layout.width > 0)
-              setViewportReady(true);
-          }}
-          onScrollBeginDrag={() => {
-            sortHoldScroll.onScrollBeginDrag();
-            pageDockHide.beginDrag();
-          }}
-          onScrollEndDrag={(event) => {
-            rememberScroll(event);
-            sortHoldScroll.onScrollEndDrag();
-            pageDockHide.endDrag();
-          }}
-          onMomentumScrollBegin={sortHoldScroll.onMomentumScrollBegin}
-          onMomentumScrollEnd={(event) => {
-            rememberScroll(event);
-            sortHoldScroll.onMomentumScrollEnd();
-          }}
-          contentInsetAdjustmentBehavior="never"
-          style={styles.page}
-          contentContainerStyle={{
-            flexGrow: 1,
-            paddingTop: insets.top,
-            paddingBottom: (dock && !padLaunch ? dockHeight : insets.bottom) + 24,
-          }}
-          onScroll={onScroll}
-          scrollEventThrottle={16}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={() => void onRefresh()}
-              tintColor={theme.colors.primary}
-              progressViewOffset={insets.top}
-            />
-          }>
-          {!isPad && returnToTask ? (
-            <View style={styles.embeddedReturnRow}>{returnToTask}</View>
-          ) : null}
-          {hydrationError ? <GatewayStorageError busy={loading} onRetry={retryHydration} /> : null}
-          <View>
-            <HomeEditorialLayout
-              contentWidth={editorialWidth || width}
-              viewportHeight={editorialViewportHeight}
-              scrollY={scrollY}
-              cover={coverHeader}
-              artworkForeground={editorialArtworkForeground}
-              topInset={insets.top}
-              coverTitle={showsEditorialBrand ? (identity.name ?? undefined) : undefined}
-              pad={isPad}
-              typographicCover={themeLibraryHydrated && !customTheme}
-              coverMark={
-                identity.logo ? (
-                  <Image
-                    source={logoSource}
-                    contentFit="contain"
-                    style={{ width: 44, height: 44 }}
-                    onError={() => setFailedLogo(customLogo ?? null)}
-                  />
-                ) : undefined
-              }
-              coverBackdrop={
-                // The default theme has no painting and no ambient effect of
-                // its own; the static circuit traces (no clock, so nothing to
-                // reduce under reduced motion) give the cover a quiet ground.
-                <SkiaAmbientEffect
-                  effect="scanlines"
-                  intensity={0.6}
-                  palette={['textMuted']}
-                  mode={resolvedMode}
-                  colors={theme.colors}
-                />
-              }
-              artworkTopInset={editorialArtworkTopCurrent ? editorialArtworkTop?.top : 0}
-              artwork={
-                hasEditorialArtwork && editorialArtworkResolution ? (
-                  <HomeEditorialArtwork
-                    cover={coverHeader}
-                    fullBleed={coverHeader && (!isPad || padLaunch)}
-                    onForegroundChange={reportArtworkForeground}
-                    resolution={editorialArtworkResolution}
-                    onVisibleTopChange={reportEditorialArtworkTop}
-                    onAvailabilityChange={(available) => {
-                      if (!available)
-                        setFailedEditorialArtworkSource(editorialArtworkResolution.source);
-                    }}
-                  />
-                ) : null
-              }
-              identity={
-                showsEditorialBrand ? (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                    {identity.logo ? (
-                      <Image
-                        source={logoSource}
-                        contentFit="contain"
-                        style={{ width: 44, height: 44 }}
-                        onError={() => setFailedLogo(customLogo ?? null)}
-                      />
-                    ) : null}
-                    {identity.name ? (
-                      <Text
-                        variant="heading"
-                        numberOfLines={1}
-                        ellipsizeMode="tail"
-                        style={{ flexShrink: 1, minWidth: 0, fontSize: 28, lineHeight: 36 }}>
-                        {identity.name}
-                      </Text>
-                    ) : null}
-                  </View>
-                ) : undefined
-              }
-              headerLeading={
-                // The composer's assignment bar is where a computer is picked;
-                // a header dropdown beside it said the same thing twice (and
-                // truncated the name to fit). Only while no composer is drawn
-                // -- a storage error -- does the header keep the choice.
-                isPad || showDock || launchController.servers.length <= 1 ? undefined : (
-                  <HomeLaunchTarget
-                    wide={isPad}
-                    bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
-                    controller={launchController}
-                    loading={loading}
-                    onPair={commands.pairGateway}
-                  />
-                )
-              }
-              padComposer={padLaunch ? dock : undefined}
-              padWorkEmpty={padLaunch ? emptyState : undefined}
-              padComposerHeight={dockHeight}
-              coverPaneKeyboardAware={!dockFocused}
-              workScrollEvents={sortHoldScroll}
-              entering={entering}
-              launches={
-                hydrationError || loading ? undefined : launchController.servers.length === 0 ? (
-                  // On the Pad cover it heads the work column instead.
-                  padLaunch ? undefined : (
-                    emptyState
-                  )
-                ) : (
-                  <View style={{ gap: padLaunch ? 12 : 16 }}>
-                    {padLaunch ? null : isPad ? (
-                      <>
-                        {/* No computer picker here: the dock carries the
-                            assignment bar, the one place a target is chosen. */}
-                        <Text variant="heading" accessibilityRole="header">
-                          <Trans>New session</Trans>
-                        </Text>
-                      </>
-                    ) : null}
-                    <HomeLaunchActions
-                      controller={launchController}
-                      grid={isPad}
-                      newOnly={isPad}
-                      dock={padLaunch}
-                      onNewAgent={commands.newAgent}
-                      onOpenAgent={commands.openAgent}
-                      onNewTerminal={commands.newTerminal}
-                      onOpenTerminal={commands.openServer}
-                      onSsh={commands.openSsh}
-                      onDemo={
-                        !loading && !hydrationError && !hasPairedServer ? openDemo : undefined
-                      }
+        <HomeReplyRecede enabled={!isPad}>
+          <ThemeArtwork slot="home.wallpaper" waitForTransition fallbackSlot="shell.wallpaper" />
+          <HomeTaskSync serverIds={liveTaskServerIds} />
+          <ComputerCardsPresence
+            servers={cardServers}
+            reachabilityByServer={padReachabilityByServer}
+            onChange={setHasComputerCards}
+          />
+          <HomeScrollViewport
+            dockHeight={dock && !padLaunch && composerRevealed ? dockClipHeight : 0}
+            dockOffset={isPad ? undefined : pageDockHide.dock.offset}
+            ref={overviewScroll}
+            keyboardShouldPersistTaps="handled"
+            // The wide Pad cover holds the dock inside this page, and the dock
+            // rides the keyboard by itself; this view must not move it twice.
+            enabled={!padLaunch}
+            // Elsewhere the dock floats over the page's foot and rises with the
+            // keyboard: a field in the page is kept clear of it, not just of the
+            // keyboard.
+            bottomOffset={dock && !padLaunch ? dockHeight : undefined}
+            onContentSizeChange={restoreScroll}
+            onLayout={(event) => {
+              pageDockHide.settle({ viewportHeight: event.nativeEvent.layout.height });
+              if (event.nativeEvent.layout.height > 0 && event.nativeEvent.layout.width > 0)
+                setViewportReady(true);
+            }}
+            onScrollBeginDrag={() => {
+              sortHoldScroll.onScrollBeginDrag();
+              pageDockHide.beginDrag();
+            }}
+            onScrollEndDrag={(event) => {
+              rememberScroll(event);
+              sortHoldScroll.onScrollEndDrag();
+              pageDockHide.endDrag();
+            }}
+            onMomentumScrollBegin={sortHoldScroll.onMomentumScrollBegin}
+            onMomentumScrollEnd={(event) => {
+              rememberScroll(event);
+              sortHoldScroll.onMomentumScrollEnd();
+            }}
+            contentInsetAdjustmentBehavior="never"
+            style={styles.page}
+            contentContainerStyle={{
+              flexGrow: 1,
+              paddingTop: insets.top,
+              paddingBottom: (dock && !padLaunch ? dockHeight : insets.bottom) + 24,
+            }}
+            onScroll={onScroll}
+            scrollEventThrottle={16}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={() => void onRefresh()}
+                tintColor={theme.colors.primary}
+                progressViewOffset={insets.top}
+              />
+            }>
+            {!isPad && returnToTask ? (
+              <View style={styles.embeddedReturnRow}>{returnToTask}</View>
+            ) : null}
+            {hydrationError ? (
+              <GatewayStorageError busy={loading} onRetry={retryHydration} />
+            ) : null}
+            <View>
+              <HomeEditorialLayout
+                contentWidth={editorialWidth || width}
+                viewportHeight={editorialViewportHeight}
+                scrollY={scrollY}
+                cover={coverHeader}
+                artworkForeground={editorialArtworkForeground}
+                topInset={insets.top}
+                coverTitle={showsEditorialBrand ? (identity.name ?? undefined) : undefined}
+                pad={isPad}
+                typographicCover={themeLibraryHydrated && !customTheme}
+                coverMark={
+                  identity.logo ? (
+                    <Image
+                      source={logoSource}
+                      contentFit="contain"
+                      style={{ width: 44, height: 44 }}
+                      onError={() => setFailedLogo(customLogo ?? null)}
                     />
-                  </View>
-                )
-              }
-              recent={recentSection}
-              recentHeading={recentHeading}
-              hasAttention={!loading && !hydrationError && hasAttention}
-              attention={attentionSection}
-              progress={progressSection}
-              connections={
-                // The cards are the computers now; this keeps the SSH hosts
-                // and the way to manage connections.
-                !loading &&
-                !hydrationError &&
-                !sshLoading &&
-                (sshRows.length > 0 || (cardServers.length === 0 && records.length > 0)) ? (
-                  <HomeConnections
-                    servers={cardServers.length > 0 ? [] : records}
-                    hosts={sshRows}
-                    onOpenServer={openServer}
-                    onSelectServer={targetComposer}
-                    onOpenHost={(hostId) => {
-                      void commands.openSsh(hostId);
-                    }}
-                    onManage={() => {
-                      void commands.manageConnections();
-                    }}
-                    activeConnection={activeConnection}
-                    linkStyle={padLaunch ? PAD_WORK_LINK : undefined}
+                  ) : undefined
+                }
+                coverBackdrop={
+                  // The default theme has no painting and no ambient effect of
+                  // its own; the static circuit traces (no clock, so nothing to
+                  // reduce under reduced motion) give the cover a quiet ground.
+                  <SkiaAmbientEffect
+                    effect="scanlines"
+                    intensity={0.6}
+                    palette={['textMuted']}
+                    mode={resolvedMode}
+                    colors={theme.colors}
                   />
-                ) : undefined
-              }
-              headerAction={
-                isPad ? (
-                  // The rail no longer sits beside Home, so its three
-                  // destinations live here, under the rail's own labels.
-                  <View
-                    testID="home-pad-toolbar-actions"
-                    style={{ flexDirection: 'row', alignItems: 'center', gap: HOME_TOOLBAR_GAP }}>
-                    <HeaderButton
-                      editorial
+                }
+                artworkTopInset={editorialArtworkTopCurrent ? editorialArtworkTop?.top : 0}
+                artwork={
+                  hasEditorialArtwork && editorialArtworkResolution ? (
+                    <HomeEditorialArtwork
+                      cover={coverHeader}
+                      fullBleed={coverHeader && (!isPad || padLaunch)}
+                      onForegroundChange={reportArtworkForeground}
+                      resolution={editorialArtworkResolution}
+                      onVisibleTopChange={reportEditorialArtworkTop}
+                      onAvailabilityChange={(available) => {
+                        if (!available)
+                          setFailedEditorialArtworkSource(editorialArtworkResolution.source);
+                      }}
+                    />
+                  ) : null
+                }
+                identity={
+                  showsEditorialBrand ? (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                      {identity.logo ? (
+                        <Image
+                          source={logoSource}
+                          contentFit="contain"
+                          style={{ width: 44, height: 44 }}
+                          onError={() => setFailedLogo(customLogo ?? null)}
+                        />
+                      ) : null}
+                      {identity.name ? (
+                        <Text
+                          variant="heading"
+                          numberOfLines={1}
+                          ellipsizeMode="tail"
+                          style={{ flexShrink: 1, minWidth: 0, fontSize: 28, lineHeight: 36 }}>
+                          {identity.name}
+                        </Text>
+                      ) : null}
+                    </View>
+                  ) : undefined
+                }
+                headerLeading={
+                  // The composer's assignment bar is where a computer is picked;
+                  // a header dropdown beside it said the same thing twice (and
+                  // truncated the name to fit). Only while no composer is drawn
+                  // -- a storage error -- does the header keep the choice.
+                  isPad || showDock || launchController.servers.length <= 1 ? undefined : (
+                    <HomeLaunchTarget
+                      wide={isPad}
                       bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
-                      label={t`Pair a computer`}
-                      onPress={() => void commands.pairGateway()}>
-                      <ThemeIcon
-                        name="chrome.scan"
-                        fallback={PairScanIcon}
-                        size={HOME_TOOLBAR_ICON_SIZE}
-                        color={theme.colors.text}
+                      controller={launchController}
+                      loading={loading}
+                      onPair={commands.pairGateway}
+                    />
+                  )
+                }
+                padComposer={padLaunch ? dock : undefined}
+                padWorkEmpty={padLaunch ? emptyState : undefined}
+                padComposerHeight={dockHeight}
+                coverPaneKeyboardAware={!dockFocused}
+                workScrollEvents={sortHoldScroll}
+                entering={entering}
+                launches={
+                  hydrationError || loading ? undefined : launchController.servers.length === 0 ? (
+                    // On the Pad cover it heads the work column instead.
+                    padLaunch ? undefined : (
+                      emptyState
+                    )
+                  ) : (
+                    <View style={{ gap: padLaunch ? 12 : 16 }}>
+                      {padLaunch ? null : isPad ? (
+                        <>
+                          {/* No computer picker here: the dock carries the
+                            assignment bar, the one place a target is chosen. */}
+                          <Text variant="heading" accessibilityRole="header">
+                            <Trans>New session</Trans>
+                          </Text>
+                        </>
+                      ) : null}
+                      <HomeLaunchActions
+                        controller={launchController}
+                        grid={isPad}
+                        newOnly={isPad}
+                        dock={padLaunch}
+                        onNewAgent={commands.newAgent}
+                        onOpenAgent={commands.openAgent}
+                        onNewTerminal={commands.newTerminal}
+                        onOpenTerminal={commands.openServer}
+                        onSsh={commands.openSsh}
+                        onDemo={
+                          !loading && !hydrationError && !hasPairedServer ? openDemo : undefined
+                        }
                       />
-                    </HeaderButton>
-                    <HeaderButton
-                      editorial
-                      bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
-                      label={t`SSH`}
-                      onPress={() => void commands.openSsh()}>
-                      <TerminalWindowIcon size={HOME_TOOLBAR_ICON_SIZE} color={theme.colors.text} />
-                    </HeaderButton>
-                    <HeaderButton
-                      editorial
-                      bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
-                      label={t`Settings`}
-                      onPress={() => router.push('/settings')}>
-                      <ThemeIcon
-                        name="chrome.settings"
-                        fallback={SettingsIcon}
-                        size={HOME_TOOLBAR_ICON_SIZE}
-                        color={theme.colors.text}
-                      />
-                    </HeaderButton>
-                  </View>
-                ) : (
-                  phoneToolbar
-                )
-              }
-            />
-          </View>
-        </HomeScrollViewport>
+                    </View>
+                  )
+                }
+                recent={recentSection}
+                recentHeading={recentHeading}
+                hasAttention={!loading && !hydrationError && hasAttention}
+                attention={attentionSection}
+                progress={progressSection}
+                connections={
+                  // The cards are the computers now; this keeps the SSH hosts
+                  // and the way to manage connections.
+                  !loading &&
+                  !hydrationError &&
+                  !sshLoading &&
+                  (sshRows.length > 0 || (cardServers.length === 0 && records.length > 0)) ? (
+                    <HomeConnections
+                      servers={cardServers.length > 0 ? [] : records}
+                      hosts={sshRows}
+                      onOpenServer={openServer}
+                      onSelectServer={targetComposer}
+                      onOpenHost={(hostId) => {
+                        void commands.openSsh(hostId);
+                      }}
+                      onManage={() => {
+                        void commands.manageConnections();
+                      }}
+                      activeConnection={activeConnection}
+                      linkStyle={padLaunch ? PAD_WORK_LINK : undefined}
+                    />
+                  ) : undefined
+                }
+                headerAction={
+                  isPad ? (
+                    // The rail no longer sits beside Home, so its three
+                    // destinations live here, under the rail's own labels.
+                    <View
+                      testID="home-pad-toolbar-actions"
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: HOME_TOOLBAR_GAP }}>
+                      <HeaderButton
+                        editorial
+                        bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
+                        label={t`Pair a computer`}
+                        onPress={() => void commands.pairGateway()}>
+                        <ThemeIcon
+                          name="chrome.scan"
+                          fallback={PairScanIcon}
+                          size={HOME_TOOLBAR_ICON_SIZE}
+                          color={theme.colors.text}
+                        />
+                      </HeaderButton>
+                      <HeaderButton
+                        editorial
+                        bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
+                        label={t`SSH`}
+                        onPress={() => void commands.openSsh()}>
+                        <TerminalWindowIcon
+                          size={HOME_TOOLBAR_ICON_SIZE}
+                          color={theme.colors.text}
+                        />
+                      </HeaderButton>
+                      <HeaderButton
+                        editorial
+                        bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
+                        label={t`Settings`}
+                        onPress={() => router.push('/settings')}>
+                        <ThemeIcon
+                          name="chrome.settings"
+                          fallback={SettingsIcon}
+                          size={HOME_TOOLBAR_ICON_SIZE}
+                          color={theme.colors.text}
+                        />
+                      </HeaderButton>
+                    </View>
+                  ) : (
+                    phoneToolbar
+                  )
+                }
+              />
+            </View>
+          </HomeScrollViewport>
+        </HomeReplyRecede>
         {padLaunch ? null : dock}
       </View>
     );
@@ -1687,14 +1698,15 @@ export function HomeOverview({
       // Any finger on the page holds the cards' order (design §9).
       {...sortHoldTouches}
       style={[styles.page, { backgroundColor: background(theme.colors.background) }]}>
-      <ThemeArtwork slot="home.wallpaper" waitForTransition fallbackSlot="shell.wallpaper" />
-      <HomeTaskSync serverIds={liveTaskServerIds} />
-      <ComputerCardsPresence
-        servers={cardServers}
-        reachabilityByServer={padReachabilityByServer}
-        onChange={setHasComputerCards}
-      />
-      {/* The bar and the brand block below it are one header in two states, not
+      <HomeReplyRecede enabled={!isPad}>
+        <ThemeArtwork slot="home.wallpaper" waitForTransition fallbackSlot="shell.wallpaper" />
+        <HomeTaskSync serverIds={liveTaskServerIds} />
+        <ComputerCardsPresence
+          servers={cardServers}
+          reachabilityByServer={padReachabilityByServer}
+          onChange={setHasComputerCards}
+        />
+        {/* The bar and the brand block below it are one header in two states, not
           two rows. At rest the bar's left half is deliberately empty -- no
           hamburger, no title, no rule, no blur -- because the brand block ten
           points below *is* the title, and repeating it up here is what made the
@@ -1705,70 +1717,70 @@ export function HomeOverview({
           The bar has no surface of its own, so only its buttons take touches:
           the page scrolls under it, and a drag or tap on its empty half
           reaches the page that shows through it. */}
-      <Animated.View
-        pointerEvents="box-none"
-        style={[styles.topBar, barFoldStyle]}
-        onLayout={(event: LayoutChangeEvent) => {
-          const { height } = event.nativeEvent.layout;
-          barHeightValue.set(height);
-          setBarHeight(height);
-        }}>
-        <SafeAreaView edges={['top']} pointerEvents="box-none">
-          <View pointerEvents="box-none" style={styles.topBarRow}>
-            {identity.showBrand ? (
-              <Animated.View
-                testID="home-brand-compact"
-                pointerEvents="none"
-                style={[styles.compactTitle, compactTitleStyle]}>
-                {/* The plate hugs the name; the frame around it does not. That
+        <Animated.View
+          pointerEvents="box-none"
+          style={[styles.topBar, barFoldStyle]}
+          onLayout={(event: LayoutChangeEvent) => {
+            const { height } = event.nativeEvent.layout;
+            barHeightValue.set(height);
+            setBarHeight(height);
+          }}>
+          <SafeAreaView edges={['top']} pointerEvents="box-none">
+            <View pointerEvents="box-none" style={styles.topBarRow}>
+              {identity.showBrand ? (
+                <Animated.View
+                  testID="home-brand-compact"
+                  pointerEvents="none"
+                  style={[styles.compactTitle, compactTitleStyle]}>
+                  {/* The plate hugs the name; the frame around it does not. That
                 frame is positioned against the action buttons, so its width is
                 the gap they leave rather than the width of anything drawn in
                 it -- painting the tint on the frame itself draws a pill the
                 length of the bar with the name stranded at one end. The
                 expanded block below hugs for the same reason. */}
-                <View
-                  style={[
-                    styles.compactTitlePlate,
-                    hasScene && {
-                      backgroundColor: background(theme.colors.surface),
-                      borderRadius: 12,
-                      // The tint needs room around the name, and the name has
-                      // an x it travels to. Pay the padding back on the left so
-                      // the plate grows outwards and the mark still rises
-                      // straight out of the block it came from.
-                      paddingHorizontal: COMPACT_PLATE_INSET,
-                      marginLeft: -COMPACT_PLATE_INSET,
-                      overflow: 'hidden',
-                    },
-                  ]}>
-                  <SurfaceDecoration
-                    slot="navigation.background"
-                    baseColor={theme.colors.surface}
-                  />
-                  {identity.logo ? (
-                    <View
-                      style={[
-                        styles.compactIcon,
-                        { backgroundColor: background(theme.colors.surfaceRaised) },
-                      ]}>
-                      <Image
-                        source={logoSource}
-                        onError={() => setFailedLogo(customLogo ?? null)}
-                        contentFit="contain"
-                        style={styles.compactMark}
-                      />
-                    </View>
-                  ) : null}
-                  {identity.name ? (
-                    <Text variant="bodySmall" numberOfLines={1} style={styles.compactTitleText}>
-                      {identity.name}
-                    </Text>
-                  ) : null}
-                </View>
-              </Animated.View>
-            ) : null}
+                  <View
+                    style={[
+                      styles.compactTitlePlate,
+                      hasScene && {
+                        backgroundColor: background(theme.colors.surface),
+                        borderRadius: 12,
+                        // The tint needs room around the name, and the name has
+                        // an x it travels to. Pay the padding back on the left so
+                        // the plate grows outwards and the mark still rises
+                        // straight out of the block it came from.
+                        paddingHorizontal: COMPACT_PLATE_INSET,
+                        marginLeft: -COMPACT_PLATE_INSET,
+                        overflow: 'hidden',
+                      },
+                    ]}>
+                    <SurfaceDecoration
+                      slot="navigation.background"
+                      baseColor={theme.colors.surface}
+                    />
+                    {identity.logo ? (
+                      <View
+                        style={[
+                          styles.compactIcon,
+                          { backgroundColor: background(theme.colors.surfaceRaised) },
+                        ]}>
+                        <Image
+                          source={logoSource}
+                          onError={() => setFailedLogo(customLogo ?? null)}
+                          contentFit="contain"
+                          style={styles.compactMark}
+                        />
+                      </View>
+                    ) : null}
+                    {identity.name ? (
+                      <Text variant="bodySmall" numberOfLines={1} style={styles.compactTitleText}>
+                        {identity.name}
+                      </Text>
+                    ) : null}
+                  </View>
+                </Animated.View>
+              ) : null}
 
-            {/* Inboard to corner: scan, then gear. The gear is the fixed landmark --
+              {/* Inboard to corner: scan, then gear. The gear is the fixed landmark --
             the app's front door to everything that is not a server -- so it
             takes the corner. Pairing sits beside the list it adds to, and it
             already has a full-width button in the empty state, so the header
@@ -1779,144 +1791,144 @@ export function HomeOverview({
             selected server's avatar and loom (card #629) and to the empty
             state's one button; a coral control in the corner is exactly the
             batch4 `ADD` pill under a different icon. */}
-            <Animated.View
-              pointerEvents="box-none"
-              style={[styles.headerActions, headerActionsStyle]}>
-              {/* Two doors that are only here until the first server is
+              <Animated.View
+                pointerEvents="box-none"
+                style={[styles.headerActions, headerActionsStyle]}>
+                {/* Two doors that are only here until the first server is
               paired. After that they are things done once a month, standing in
               the most-used corner of the most-used screen; both live in
               Settings permanently, which is where a reader looks to add
               another machine. The demo server does not count as one. */}
-              {hasPairedServer ? null : (
-                <>
-                  {/* A plain shell on any machine with sshd, beside the gateway
+                {hasPairedServer ? null : (
+                  <>
+                    {/* A plain shell on any machine with sshd, beside the gateway
               entries rather than among them: it pairs nothing and needs no
               herdr, so it is the one door here that is not about a gateway. */}
-                  <HeaderButton
-                    testID="home-open-ssh"
-                    bare={classicBareToolbar}
-                    label={t`SSH`}
-                    onPress={() => void commands.openSsh()}>
-                    <TerminalWindowIcon size={20} color={theme.colors.textMuted} />
-                  </HeaderButton>
-                  <HeaderButton
-                    label={t`Scan a gateway QR`}
-                    bare={classicBareToolbar}
-                    onPress={() => void commands.pairGateway()}>
-                    {/* The same mark as the empty card's corner brackets, at a fifth of
+                    <HeaderButton
+                      testID="home-open-ssh"
+                      bare={classicBareToolbar}
+                      label={t`SSH`}
+                      onPress={() => void commands.openSsh()}>
+                      <TerminalWindowIcon size={20} color={theme.colors.textMuted} />
+                    </HeaderButton>
+                    <HeaderButton
+                      label={t`Scan a gateway QR`}
+                      bare={classicBareToolbar}
+                      onPress={() => void commands.pairGateway()}>
+                      {/* The same mark as the empty card's corner brackets, at a fifth of
                 the size: the one productive gesture on this screen looks the
                 same whether it is a 64pt viewfinder in the middle of an empty
                 screen or a 20pt glyph in the corner of a full one. */}
-                    <ThemeIcon
-                      name="chrome.scan"
-                      fallback={PairScanIcon}
-                      size={20}
-                      color={theme.colors.textMuted}
-                    />
-                  </HeaderButton>
-                </>
-              )}
-              <HeaderButton
-                bare={classicBareToolbar}
-                label={t`Settings`}
-                onPress={() => void commands.manageConnections()}>
-                <ThemeIcon
-                  name="chrome.settings"
-                  fallback={SettingsIcon}
-                  size={20}
-                  color={theme.colors.textMuted}
-                />
-              </HeaderButton>
-            </Animated.View>
-          </View>
-        </SafeAreaView>
-      </Animated.View>
+                      <ThemeIcon
+                        name="chrome.scan"
+                        fallback={PairScanIcon}
+                        size={20}
+                        color={theme.colors.textMuted}
+                      />
+                    </HeaderButton>
+                  </>
+                )}
+                <HeaderButton
+                  bare={classicBareToolbar}
+                  label={t`Settings`}
+                  onPress={() => void commands.manageConnections()}>
+                  <ThemeIcon
+                    name="chrome.settings"
+                    fallback={SettingsIcon}
+                    size={20}
+                    color={theme.colors.textMuted}
+                  />
+                </HeaderButton>
+              </Animated.View>
+            </View>
+          </SafeAreaView>
+        </Animated.View>
 
-      <HomeScrollViewport
-        dockHeight={dock && composerRevealed ? dockClipHeight : 0}
-        dockOffset={pageDockHide.dock.offset}
-        ref={overviewScroll}
-        onContentSizeChange={restoreScroll}
-        onLayout={(event) => {
-          pageDockHide.settle({ viewportHeight: event.nativeEvent.layout.height });
-          if (event.nativeEvent.layout.height > 0 && event.nativeEvent.layout.width > 0)
-            setViewportReady(true);
-        }}
-        onScrollBeginDrag={() => {
-          sortHoldScroll.onScrollBeginDrag();
-          pageDockHide.beginDrag();
-        }}
-        onScrollEndDrag={(event) => {
-          rememberScroll(event);
-          sortHoldScroll.onScrollEndDrag();
-          pageDockHide.endDrag();
-        }}
-        onMomentumScrollBegin={sortHoldScroll.onMomentumScrollBegin}
-        onMomentumScrollEnd={(event) => {
-          rememberScroll(event);
-          sortHoldScroll.onMomentumScrollEnd();
-        }}
-        // The dock floats over the page's foot: a field in the page is kept
-        // clear of it, not just of the keyboard.
-        bottomOffset={dock ? dockHeight : 24}
-        extraKeyboardSpace={12}
-        contentInsetAdjustmentBehavior="never"
-        scrollIndicatorInsets={{ top: barHeight }}
-        contentContainerStyle={[
-          styles.content,
-          isPad && styles.padContent,
-          {
-            paddingHorizontal: metrics.contentGutter,
-            maxWidth: metrics.contentMaxWidth,
-          },
-          { paddingTop: barHeight + styles.content.paddingTop },
-          // Room under the last card above the bar.
-          dock && { paddingBottom: dockHeight + theme.spacing.lg },
-        ]}
-        keyboardDismissMode={process.env.EXPO_OS === 'ios' ? 'interactive' : 'on-drag'}
-        keyboardShouldPersistTaps="handled"
-        onScroll={onScroll}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => void onRefresh()}
-            tintColor={theme.colors.textSubtle}
-            colors={[theme.colors.primary]}
-            progressBackgroundColor={theme.colors.surface}
-          />
-        }
-        scrollEventThrottle={16}
-        showsVerticalScrollIndicator={false}>
-        {returnToTask ? <View style={styles.embeddedReturnRow}>{returnToTask}</View> : null}
-        {classicCover && classicArtwork ? (
-          <View
-            pointerEvents="none"
-            style={{
-              position: 'absolute',
-              top: classicScene ? 0 : classicCoverTop,
-              left: 0,
-              right: 0,
-            }}>
-            <HomeArtwork
-              resolution={classicArtwork}
-              scrollY={scrollY}
-              cover
-              onForegroundChange={reportArtworkForeground}
-              maxHeight={classicCoverHeight}
-              onAvailabilityChange={(available) => {
-                if (!available) setFailedClassicArtworkSource(classicArtwork.source);
-              }}
+        <HomeScrollViewport
+          dockHeight={dock && composerRevealed ? dockClipHeight : 0}
+          dockOffset={pageDockHide.dock.offset}
+          ref={overviewScroll}
+          onContentSizeChange={restoreScroll}
+          onLayout={(event) => {
+            pageDockHide.settle({ viewportHeight: event.nativeEvent.layout.height });
+            if (event.nativeEvent.layout.height > 0 && event.nativeEvent.layout.width > 0)
+              setViewportReady(true);
+          }}
+          onScrollBeginDrag={() => {
+            sortHoldScroll.onScrollBeginDrag();
+            pageDockHide.beginDrag();
+          }}
+          onScrollEndDrag={(event) => {
+            rememberScroll(event);
+            sortHoldScroll.onScrollEndDrag();
+            pageDockHide.endDrag();
+          }}
+          onMomentumScrollBegin={sortHoldScroll.onMomentumScrollBegin}
+          onMomentumScrollEnd={(event) => {
+            rememberScroll(event);
+            sortHoldScroll.onMomentumScrollEnd();
+          }}
+          // The dock floats over the page's foot: a field in the page is kept
+          // clear of it, not just of the keyboard.
+          bottomOffset={dock ? dockHeight : 24}
+          extraKeyboardSpace={12}
+          contentInsetAdjustmentBehavior="never"
+          scrollIndicatorInsets={{ top: barHeight }}
+          contentContainerStyle={[
+            styles.content,
+            isPad && styles.padContent,
+            {
+              paddingHorizontal: metrics.contentGutter,
+              maxWidth: metrics.contentMaxWidth,
+            },
+            { paddingTop: barHeight + styles.content.paddingTop },
+            // Room under the last card above the bar.
+            dock && { paddingBottom: dockHeight + theme.spacing.lg },
+          ]}
+          keyboardDismissMode={process.env.EXPO_OS === 'ios' ? 'interactive' : 'on-drag'}
+          keyboardShouldPersistTaps="handled"
+          onScroll={onScroll}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => void onRefresh()}
+              tintColor={theme.colors.textSubtle}
+              colors={[theme.colors.primary]}
+              progressBackgroundColor={theme.colors.surface}
             />
-          </View>
-        ) : null}
-        {/* The app's name, at the weight the screen's own content leaves for
+          }
+          scrollEventThrottle={16}
+          showsVerticalScrollIndicator={false}>
+          {returnToTask ? <View style={styles.embeddedReturnRow}>{returnToTask}</View> : null}
+          {classicCover && classicArtwork ? (
+            <View
+              pointerEvents="none"
+              style={{
+                position: 'absolute',
+                top: classicScene ? 0 : classicCoverTop,
+                left: 0,
+                right: 0,
+              }}>
+              <HomeArtwork
+                resolution={classicArtwork}
+                scrollY={scrollY}
+                cover
+                onForegroundChange={reportArtworkForeground}
+                maxHeight={classicCoverHeight}
+                onAvailabilityChange={(available) => {
+                  if (!available) setFailedClassicArtworkSource(classicArtwork.source);
+                }}
+              />
+            </View>
+          ) : null}
+          {/* The app's name, at the weight the screen's own content leaves for
             it. On an empty screen this block *is* the content and is set as
             such; once a machine is paired the card below is what the reader
             came for, and the name steps back to being the top of the page.
             `listLayout` carries the one change between them, so pairing a first
             server folds the poster down rather than cutting to a smaller one. */}
-        {identity.showBrand ? (
-          /*
+          {identity.showBrand ? (
+            /*
               The scroll fade is a node inside the animated one, never the same
               node: `entering` and `layout` own this view's opacity while they
               run and the scroll position owns it the rest of the time, which
@@ -1924,61 +1936,61 @@ export function HomeOverview({
               change -- `Property "opacity" of AnimatedComponent(View) may be
               overwritten by a layout animation`.
             */
-          <Animated.View
-            testID="home-brand-expanded"
-            entering={riseIn()}
-            layout={listLayout('medium')}
-            onLayout={(event) => {
-              const height = event.nativeEvent.layout.height;
-              setClassicBrandHeight((current) => (current === height ? current : height));
-            }}>
             <Animated.View
-              style={[
-                styles.brandBlock,
-                expandedBrandStyle,
-                { minHeight: metrics.brand.minHeight, gap: metrics.brand.gap },
-                // Full-bleed scenes begin at the status bar. Keep their title
-                // in the toolbar's quiet left area rather than on the subject
-                // below it. The existing flow reservation still positions cards.
-                classicScene && {
-                  transform: [{ translateY: insets.top - barHeight }],
-                  paddingRight:
-                    (hasPairedServer ? 1 : 3) * (HEADER_BUTTON_SIZE + HEADER_BUTTON_GAP),
-                },
-              ]}>
-              {/* The mark alone, on the page. The rounded tile it used to sit in
+              testID="home-brand-expanded"
+              entering={riseIn()}
+              layout={listLayout('medium')}
+              onLayout={(event) => {
+                const height = event.nativeEvent.layout.height;
+                setClassicBrandHeight((current) => (current === height ? current : height));
+              }}>
+              <Animated.View
+                style={[
+                  styles.brandBlock,
+                  expandedBrandStyle,
+                  { minHeight: metrics.brand.minHeight, gap: metrics.brand.gap },
+                  // Full-bleed scenes begin at the status bar. Keep their title
+                  // in the toolbar's quiet left area rather than on the subject
+                  // below it. The existing flow reservation still positions cards.
+                  classicScene && {
+                    transform: [{ translateY: insets.top - barHeight }],
+                    paddingRight:
+                      (hasPairedServer ? 1 : 3) * (HEADER_BUTTON_SIZE + HEADER_BUTTON_GAP),
+                  },
+                ]}>
+                {/* The mark alone, on the page. The rounded tile it used to sit in
               gave a shape the mark already has, and cost it 30% of its own
               footprint to draw -- so the part meant to be read was the smaller
               half of the thing drawing attention to it. */}
-              {identity.logo ? (
-                <Image
-                  source={logoSource}
-                  onError={() => setFailedLogo(customLogo ?? null)}
-                  contentFit="contain"
-                  style={{ width: metrics.brand.markSize, height: metrics.brand.markSize }}
-                />
-              ) : null}
-              {identity.name ? (
-                <View
-                  style={[
-                    styles.titleCopy,
-                    hasScene &&
-                      !classicCover && {
-                        flex: 0,
-                        flexShrink: 1,
-                        backgroundColor: background(theme.colors.background),
-                        padding: 10,
-                        borderRadius: 14,
-                        overflow: 'hidden',
-                      },
-                  ]}>
-                  {hasScene && !classicCover ? (
-                    <SurfaceDecoration
-                      slot="navigation.background"
-                      baseColor={theme.colors.background}
-                    />
-                  ) : null}
-                  {/* The one place on the screen that spends type, with the tracking
+                {identity.logo ? (
+                  <Image
+                    source={logoSource}
+                    onError={() => setFailedLogo(customLogo ?? null)}
+                    contentFit="contain"
+                    style={{ width: metrics.brand.markSize, height: metrics.brand.markSize }}
+                  />
+                ) : null}
+                {identity.name ? (
+                  <View
+                    style={[
+                      styles.titleCopy,
+                      hasScene &&
+                        !classicCover && {
+                          flex: 0,
+                          flexShrink: 1,
+                          backgroundColor: background(theme.colors.background),
+                          padding: 10,
+                          borderRadius: 14,
+                          overflow: 'hidden',
+                        },
+                    ]}>
+                    {hasScene && !classicCover ? (
+                      <SurfaceDecoration
+                        slot="navigation.background"
+                        baseColor={theme.colors.background}
+                      />
+                    ) : null}
+                    {/* The one place on the screen that spends type, with the tracking
                         pulled in hard so the name reads as a mark rather than as a
                         heading. Size and tracking travel with `homeBrandWeight`; the
                         weight does not, because a wordmark that changes stroke weight
@@ -1994,32 +2006,32 @@ export function HomeOverview({
                         the prop at semibold, which stays under that threshold; a style
                         `fontWeight` is applied after the resolved family and would put
                         the wordmark straight back into the platform's face. */}
-                  <Text
-                    weight="semibold"
-                    style={{
-                      color: theme.colors.text,
-                      fontSize: metrics.brand.titleSize,
-                      lineHeight: metrics.brand.titleLineHeight,
-                      letterSpacing: metrics.brand.titleTracking,
-                    }}>
-                    {identity.name}
-                  </Text>
-                  {/* Only where it is the whole message. On a screen already showing
+                    <Text
+                      weight="semibold"
+                      style={{
+                        color: theme.colors.text,
+                        fontSize: metrics.brand.titleSize,
+                        lineHeight: metrics.brand.titleLineHeight,
+                        letterSpacing: metrics.brand.titleTracking,
+                      }}>
+                      {identity.name}
+                    </Text>
+                    {/* Only where it is the whole message. On a screen already showing
                 a machine and what is running on it, a line about what the app
                 is for is the product introducing itself to someone who has
                 been using it for months. */}
-                  {metrics.brand.showsTagline ? (
-                    <Text variant="bodySmall" color={theme.colors.textMuted}>
-                      <Trans>Your agents, anywhere.</Trans>
-                    </Text>
-                  ) : null}
-                </View>
-              ) : null}
+                    {metrics.brand.showsTagline ? (
+                      <Text variant="bodySmall" color={theme.colors.textMuted}>
+                        <Trans>Your agents, anywhere.</Trans>
+                      </Text>
+                    ) : null}
+                  </View>
+                ) : null}
+              </Animated.View>
             </Animated.View>
-          </Animated.View>
-        ) : null}
+          ) : null}
 
-        {/* The pack's own illustration, between the header and the machines.
+          {/* The pack's own illustration, between the header and the machines.
             Absent while the "Pair your first computer" card is up: that card
             already carries `emptyState.illustration`, and two pictures stacked
             on an otherwise empty screen is a gallery rather than an invitation.
@@ -2027,64 +2039,64 @@ export function HomeOverview({
             the mark and drop the picture, or the other way round -- because the
             two answer different questions: what the app is called, and what the
             theme looks like. */}
-        {classicArtwork ? (
-          <View
-            style={classicCover ? { height: classicCoverRemainder } : undefined}
-            onLayout={(event) => {
-              const height = event.nativeEvent.layout.height;
-              setClassicArtworkHeight((current) => (current === height ? current : height));
-            }}>
-            {classicCover ? null : (
-              <HomeArtwork
-                resolution={classicArtwork}
-                scrollY={scrollY}
-                onAvailabilityChange={(available) => {
-                  if (!available) setFailedClassicArtworkSource(classicArtwork.source);
-                }}
-              />
-            )}
-          </View>
-        ) : null}
+          {classicArtwork ? (
+            <View
+              style={classicCover ? { height: classicCoverRemainder } : undefined}
+              onLayout={(event) => {
+                const height = event.nativeEvent.layout.height;
+                setClassicArtworkHeight((current) => (current === height ? current : height));
+              }}>
+              {classicCover ? null : (
+                <HomeArtwork
+                  resolution={classicArtwork}
+                  scrollY={scrollY}
+                  onAvailabilityChange={(available) => {
+                    if (!available) setFailedClassicArtworkSource(classicArtwork.source);
+                  }}
+                />
+              )}
+            </View>
+          ) : null}
 
-        {hydrationError ? <GatewayStorageError busy={loading} onRetry={retryHydration} /> : null}
-        {loading && !hydrationError ? (
-          // The shape of the list that is coming, not a logo in the middle of
-          // an empty screen. Reading the paired servers out of SecureStore is
-          // fast but not free, and what the loader used to do was hold the
-          // screen blank and then hard-cut to a populated list -- so the first
-          // thing the app did on every cold start was flicker. The rows are
-          // built from the same shape the real ones use, and the block fades
-          // out from under them.
-          <Animated.View
-            exiting={fadeOut('short')}
-            style={[styles.serverList, { gap: metrics.cardGap }]}
-            accessibilityLabel={t`Loading computers`}>
-            {/* The same surface, padding and identity block as a real card, so
+          {hydrationError ? <GatewayStorageError busy={loading} onRetry={retryHydration} /> : null}
+          {loading && !hydrationError ? (
+            // The shape of the list that is coming, not a logo in the middle of
+            // an empty screen. Reading the paired servers out of SecureStore is
+            // fast but not free, and what the loader used to do was hold the
+            // screen blank and then hard-cut to a populated list -- so the first
+            // thing the app did on every cold start was flicker. The rows are
+            // built from the same shape the real ones use, and the block fades
+            // out from under them.
+            <Animated.View
+              exiting={fadeOut('short')}
+              style={[styles.serverList, { gap: metrics.cardGap }]}
+              accessibilityLabel={t`Loading computers`}>
+              {/* The same surface, padding and identity block as a real card, so
                 the skeleton previews the shape that is actually coming. */}
-            {[0, 1].map((index) => (
-              <View
-                key={index}
-                style={[
-                  styles.serverSection,
-                  {
-                    padding: metrics.cardPadding,
-                    borderRadius: metrics.cardRadius,
-                    backgroundColor: background(theme.colors.surface),
-                  },
-                ]}>
-                <View style={styles.identityRow}>
-                  <Skeleton variant="rect" width={AVATAR_SIZE} height={AVATAR_SIZE} />
-                  <View style={styles.serverCopy}>
-                    <Skeleton variant="text" width="52%" height={18} />
-                    <Skeleton variant="text" width="34%" height={12} />
+              {[0, 1].map((index) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.serverSection,
+                    {
+                      padding: metrics.cardPadding,
+                      borderRadius: metrics.cardRadius,
+                      backgroundColor: background(theme.colors.surface),
+                    },
+                  ]}>
+                  <View style={styles.identityRow}>
+                    <Skeleton variant="rect" width={AVATAR_SIZE} height={AVATAR_SIZE} />
+                    <View style={styles.serverCopy}>
+                      <Skeleton variant="text" width="52%" height={18} />
+                      <Skeleton variant="text" width="34%" height={12} />
+                    </View>
                   </View>
                 </View>
-              </View>
-            ))}
-          </Animated.View>
-        ) : null}
+              ))}
+            </Animated.View>
+          ) : null}
 
-        {/* Two spacers with different weights, so a short list settles a little
+          {/* Two spacers with different weights, so a short list settles a little
             below the middle of the space it has rather than either floating in
             the centre or being stranded under the header. They are flex, so a
             list long enough to fill the screen squeezes them to nothing and the
@@ -2093,101 +2105,103 @@ export function HomeOverview({
             only thing on the screen, so labelling it says nothing, and pairing
             -- which happens once per machine, ever -- belongs in the drawer,
             not in the corner furthest from a thumb. */}
-        {!loading && !artworkOverlap ? (
-          <View
-            style={[
-              styles.spacerAbove,
-              isPad && styles.padSpacer,
-              // An empty screen is one composition -- the mark, then the
-              // invitation -- and a composition sits in the space it has. A
-              // list does not: it starts where the reader is already looking
-              // and lets its slack collect underneath, because a single card
-              // marooned at mid-screen reads as a page still loading.
-              identity.showBrand && metrics.brand.weight === 'hero' && styles.spacerAboveEmpty,
-            ]}
-          />
-        ) : null}
-
-        {/* The work block. Under a pack's artwork it starts over the slot's
-            bottom third, so the figure's lower edge fades under the first
-            card instead of leaving a band of nothing above the heading. */}
-        {/* The overlap is measured, so it lands a frame after the artwork:
-            the shared layout transition carries the block up rather than
-            letting it jump (instant under reduce-motion). */}
-        <Animated.View
-          layout={listLayout()}
-          style={artworkOverlap ? { marginTop: -artworkOverlap } : undefined}>
-          {/* The shared work and session sections keep their actions in both
-              layouts. Classic's connection cards remain underneath them. */}
-          {/* Mounted while empty, as on the editorial page, so its first row
-              arrives with its pulse; spaced only with a row. */}
-          {attentionSection ? (
+          {!loading && !artworkOverlap ? (
             <View
-              style={
-                hasAttention ? { marginBottom: metrics.cardGap, gap: theme.spacing.sm } : undefined
-              }>
-              {attentionSection}
-            </View>
-          ) : null}
-          {progressSection ? (
-            <View style={[{ marginBottom: metrics.cardGap, gap: theme.spacing.sm }]}>
-              <SectionLabel
-                title={<Trans>Computers</Trans>}
-                color={theme.colors.textMuted}
-                style={labelFill ? [styles.classicLabel, labelFill] : styles.classicLabel}
-              />
-              {progressSection}
-            </View>
-          ) : null}
-          {recentSection ? (
-            <View style={{ marginBottom: metrics.cardGap }}>
-              <View style={{ marginBottom: theme.spacing.sm }}>
-                {recentHeading ?? (
-                  <SectionLabel
-                    title={<Trans>Recent</Trans>}
-                    color={theme.colors.textMuted}
-                    style={labelFill ? [styles.classicLabel, labelFill] : styles.classicLabel}
-                  />
-                )}
-              </View>
-              {recentSection}
-            </View>
-          ) : null}
-          {(progressSection || recentSection) && records.length > 0 ? (
-            <SectionLabel
-              title={<Trans>Connections</Trans>}
-              color={theme.colors.textMuted}
               style={[
-                styles.classicLabel,
-                { marginBottom: theme.spacing.sm },
-                ...(labelFill ? [labelFill] : []),
+                styles.spacerAbove,
+                isPad && styles.padSpacer,
+                // An empty screen is one composition -- the mark, then the
+                // invitation -- and a composition sits in the space it has. A
+                // list does not: it starts where the reader is already looking
+                // and lets its slack collect underneath, because a single card
+                // marooned at mid-screen reads as a page still loading.
+                identity.showBrand && metrics.brand.weight === 'hero' && styles.spacerAboveEmpty,
               ]}
             />
           ) : null}
 
-          {!loading && !hydrationError && records.length === 0 ? (
-            <EmptyState
-              isPad={isPad}
-              onPair={() => void commands.pairGateway()}
-              onDemo={openDemo}
-            />
-          ) : null}
-
-          <View style={[styles.serverList, { gap: metrics.cardGap }]}>
-            {records.map((server) => (
-              <ServerCard
-                key={server.serverId}
-                server={server}
-                metrics={metrics}
-                selected={server.serverId === record?.serverId}
-                showAddress={addressNeeded.has(server.serverId)}
-                reachability={padReachabilityByServer[server.serverId] ?? 'unknown'}
-                onOpen={() => openServer(server.serverId)}
+          {/* The work block. Under a pack's artwork it starts over the slot's
+            bottom third, so the figure's lower edge fades under the first
+            card instead of leaving a band of nothing above the heading. */}
+          {/* The overlap is measured, so it lands a frame after the artwork:
+            the shared layout transition carries the block up rather than
+            letting it jump (instant under reduce-motion). */}
+          <Animated.View
+            layout={listLayout()}
+            style={artworkOverlap ? { marginTop: -artworkOverlap } : undefined}>
+            {/* The shared work and session sections keep their actions in both
+              layouts. Classic's connection cards remain underneath them. */}
+            {/* Mounted while empty, as on the editorial page, so its first row
+              arrives with its pulse; spaced only with a row. */}
+            {attentionSection ? (
+              <View
+                style={
+                  hasAttention
+                    ? { marginBottom: metrics.cardGap, gap: theme.spacing.sm }
+                    : undefined
+                }>
+                {attentionSection}
+              </View>
+            ) : null}
+            {progressSection ? (
+              <View style={[{ marginBottom: metrics.cardGap, gap: theme.spacing.sm }]}>
+                <SectionLabel
+                  title={<Trans>Computers</Trans>}
+                  color={theme.colors.textMuted}
+                  style={labelFill ? [styles.classicLabel, labelFill] : styles.classicLabel}
+                />
+                {progressSection}
+              </View>
+            ) : null}
+            {recentSection ? (
+              <View style={{ marginBottom: metrics.cardGap }}>
+                <View style={{ marginBottom: theme.spacing.sm }}>
+                  {recentHeading ?? (
+                    <SectionLabel
+                      title={<Trans>Recent</Trans>}
+                      color={theme.colors.textMuted}
+                      style={labelFill ? [styles.classicLabel, labelFill] : styles.classicLabel}
+                    />
+                  )}
+                </View>
+                {recentSection}
+              </View>
+            ) : null}
+            {(progressSection || recentSection) && records.length > 0 ? (
+              <SectionLabel
+                title={<Trans>Connections</Trans>}
+                color={theme.colors.textMuted}
+                style={[
+                  styles.classicLabel,
+                  { marginBottom: theme.spacing.sm },
+                  ...(labelFill ? [labelFill] : []),
+                ]}
               />
-            ))}
-          </View>
+            ) : null}
 
-          {/* The saved SSH hosts, under the gateways and apart from them: a
+            {!loading && !hydrationError && records.length === 0 ? (
+              <EmptyState
+                isPad={isPad}
+                onPair={() => void commands.pairGateway()}
+                onDemo={openDemo}
+              />
+            ) : null}
+
+            <View style={[styles.serverList, { gap: metrics.cardGap }]}>
+              {records.map((server) => (
+                <ServerCard
+                  key={server.serverId}
+                  server={server}
+                  metrics={metrics}
+                  selected={server.serverId === record?.serverId}
+                  showAddress={addressNeeded.has(server.serverId)}
+                  reachability={padReachabilityByServer[server.serverId] ?? 'unknown'}
+                  onOpen={() => openServer(server.serverId)}
+                />
+              ))}
+            </View>
+
+            {/* The saved SSH hosts, under the gateways and apart from them: a
               gateway hands the app a workspace, an SSH host is a machine with
               sshd, and the two are added and trusted in different ways -- see
               `SshHostList` for why they are not one list. Absent entirely until
@@ -2195,57 +2209,58 @@ export function HomeOverview({
               told about the feature by an empty heading; the header's SSH
               button is the door to that. The eyebrow is the one place this
               screen labels a group, because here there are two. */}
-          {sshRows.length > 0 ? (
-            <Animated.View
-              entering={riseIn(records.length * STAGGER.card)}
-              layout={listLayout()}
-              style={[styles.sshSection, records.length > 0 && { marginTop: metrics.cardGap }]}
-              testID="home-ssh-hosts">
-              <View style={styles.sshHeading}>
-                {/* The settings page's pill shape, with Home's plate fill. This
+            {sshRows.length > 0 ? (
+              <Animated.View
+                entering={riseIn(records.length * STAGGER.card)}
+                layout={listLayout()}
+                style={[styles.sshSection, records.length > 0 && { marginTop: metrics.cardGap }]}
+                testID="home-ssh-hosts">
+                <View style={styles.sshHeading}>
+                  {/* The settings page's pill shape, with Home's plate fill. This
                     screen's whole point is the wallpaper behind it, so the one
                     heading it has is the one that most needs the plate. The row
                     keeps its `Manage` opposite; only the label hugs. */}
-                <SectionLabel
-                  title={<Trans>SSH hosts</Trans>}
-                  color={theme.colors.textMuted}
-                  style={labelFill ? [styles.sshHeadingLabel, labelFill] : styles.sshHeadingLabel}
-                />
-                {/* The way to the list this section is a view of: adding,
-                    editing and forgetting a host happen there, not here. */}
-                <PressableScale
-                  accessibilityRole="button"
-                  accessibilityLabel={t`Manage SSH hosts`}
-                  hitSlop={8}
-                  onPress={() => void commands.openSsh()}
-                  style={styles.sshManage}>
-                  <Text variant="caption" color={theme.colors.textMuted}>
-                    <Trans>Manage</Trans>
-                  </Text>
-                  <ThemeIcon
-                    name="home.arrow"
-                    fallback={NextIcon}
-                    size={14}
+                  <SectionLabel
+                    title={<Trans>SSH hosts</Trans>}
                     color={theme.colors.textMuted}
+                    style={labelFill ? [styles.sshHeadingLabel, labelFill] : styles.sshHeadingLabel}
                   />
-                </PressableScale>
-              </View>
-              <View style={styles.sshList}>
-                {sshRows.map((host) => (
-                  <SshHostRow
-                    key={host.id}
-                    record={host}
-                    showAddress={false}
-                    onOpen={() => openSshHost(host)}
-                  />
-                ))}
-              </View>
-            </Animated.View>
-          ) : null}
-        </Animated.View>
+                  {/* The way to the list this section is a view of: adding,
+                    editing and forgetting a host happen there, not here. */}
+                  <PressableScale
+                    accessibilityRole="button"
+                    accessibilityLabel={t`Manage SSH hosts`}
+                    hitSlop={8}
+                    onPress={() => void commands.openSsh()}
+                    style={styles.sshManage}>
+                    <Text variant="caption" color={theme.colors.textMuted}>
+                      <Trans>Manage</Trans>
+                    </Text>
+                    <ThemeIcon
+                      name="home.arrow"
+                      fallback={NextIcon}
+                      size={14}
+                      color={theme.colors.textMuted}
+                    />
+                  </PressableScale>
+                </View>
+                <View style={styles.sshList}>
+                  {sshRows.map((host) => (
+                    <SshHostRow
+                      key={host.id}
+                      record={host}
+                      showAddress={false}
+                      onOpen={() => openSshHost(host)}
+                    />
+                  ))}
+                </View>
+              </Animated.View>
+            ) : null}
+          </Animated.View>
 
-        {!loading ? <View style={[styles.spacerBelow, isPad && styles.padSpacer]} /> : null}
-      </HomeScrollViewport>
+          {!loading ? <View style={[styles.spacerBelow, isPad && styles.padSpacer]} /> : null}
+        </HomeScrollViewport>
+      </HomeReplyRecede>
       {dock}
     </View>
   );

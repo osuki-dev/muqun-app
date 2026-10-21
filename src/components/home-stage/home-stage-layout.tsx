@@ -24,6 +24,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { EdgeFade } from '@/components/edge-fade';
+import { HomeSheetGrabber, HomeSheetHeader, homeSheetStyles } from '@/components/home-sheet';
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import { useMinuteNow } from '@/hooks/use-minute-now';
 import { useStableHandler } from '@/hooks/use-render-refs';
@@ -450,9 +451,7 @@ export function HomeStageLayout({
                 accessibilityLabel={hasAttention ? t`All sessions, needs you` : t`All sessions`}
                 onPress={() => openList(true)}
                 style={styles.handleRow}>
-                <View
-                  style={[styles.handle, { backgroundColor: withAlpha(theme.colors.text, 0.3) }]}
-                />
+                <HomeSheetGrabber />
                 {hasAttention ? (
                   <Text variant="caption" weight="semibold" color={theme.colors.warning}>
                     {t`Needs you`}
@@ -490,22 +489,14 @@ export function HomeStageLayout({
           },
           sheetStyle,
         ]}>
-        <View style={styles.sheetHeader}>
-          <Text variant="heading" accessibilityRole="header">
-            {t`Sessions`}
-          </Text>
-          <PressableScale
-            testID="home-stage-list-close"
-            accessibilityRole="button"
-            accessibilityLabel={t`Close`}
-            hitSlop={12}
-            onPress={() => openList(false)}>
-            <CloseIcon size={20} color={theme.colors.textMuted} />
-          </PressableScale>
-        </View>
+        <HomeSheetHeader
+          title={t`Sessions`}
+          closeTestID="home-stage-list-close"
+          onClose={() => openList(false)}
+        />
         {listOpen ? (
           <ScrollView
-            contentContainerStyle={[styles.sheetContent, { paddingBottom: dockHeight + 24 }]}
+            contentContainerStyle={[homeSheetStyles.content, { paddingBottom: dockHeight + 24 }]}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
@@ -698,14 +689,5 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 24,
   },
-  handle: { width: 40, height: 4, borderRadius: 2 },
   sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, overflow: 'hidden' },
-  sheetHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-  },
-  sheetContent: { paddingHorizontal: 18, gap: 16 },
 });
