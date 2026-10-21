@@ -1,5 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
+import * as Haptics from 'expo-haptics';
 import { useIsFocused } from 'expo-router';
 import { UndoIcon, StopIcon, CloseIcon } from '@/icons';
 import { useEffect, useRef, useState, type ComponentProps } from 'react';
@@ -158,6 +159,9 @@ function VoiceRecording({
   const profile = useAppearanceProfile();
   const [state, setState] = useState<VoiceState>('starting');
   const [error, setError] = useState('');
+  // A press on Stop starts the hand-over to transcribing at once, rather than
+  // when the recorder reports it.
+  const [finishing, setFinishing] = useState(false);
   const [readout] = useState<RecordingReadout>(() =>
     createStore(() => ({ seconds: 0, partial: '' }))
   );
@@ -221,15 +225,16 @@ function VoiceRecording({
       void session.cancel();
     };
   }, [session, latest]);
+  const recording = !error && state === 'recording' && !finishing;
+  const busy = state !== 'recording' || finishing;
+  const transcribing = !error && (finishing || state === 'processing');
   const status = error
     ? t`Try again`
     : state === 'starting'
       ? t`Preparing microphone…`
-      : state === 'processing'
+      : transcribing
         ? t`Transcribing…`
         : t`Listening…`;
-  const recording = !error && state === 'recording';
-  const busy = state !== 'recording';
   // Realtime transcription shows its words as they come, so the field is the
   // transcript's and the level moves onto the stop control; after-recording
   // transcription has no words to show and keeps the full-width waveform.
@@ -241,13 +246,22 @@ function VoiceRecording({
     borderCurve: 'continuous' as const,
   };
   // Stop waits out the starting and transcribing phases; it dims into that
-  // wait and back rather than switching opacity between two frames.
+  // wait and back rather than switching opacity between two frames. Into
+  // transcribing, the square also cross-fades down under the turning arc.
   const stopDimmed = busy && !error;
   const stopDim = useSharedValue(stopDimmed ? 1 : 0);
+  const stopAway = useSharedValue(transcribing ? 1 : 0);
   useEffect(() => {
     stopDim.set(withTiming(stopDimmed ? 1 : 0, timing('button')));
   }, [stopDimmed, stopDim]);
+  useEffect(() => {
+    stopAway.set(withTiming(transcribing ? 1 : 0, timing('short')));
+  }, [transcribing, stopAway]);
   const stopDimStyle = useAnimatedStyle(() => ({ opacity: 1 - stopDim.get() * 0.55 }));
+  const stopSquareStyle = useAnimatedStyle(() => ({
+    opacity: 1 - stopAway.get() * 0.45,
+    transform: [{ scale: reduced ? 1 : 1 - stopAway.get() * 0.25 }],
+  }));
   const cancel = (
     <PressableScale
       accessibilityRole="button"
@@ -271,20 +285,31 @@ function VoiceRecording({
       hitSlop={4}
       disabled={stopDimmed}
       onPress={() => {
-        if (error) onRetry();
-        else void session.finish();
+        if (error) {
+          onRetry();
+          return;
+        }
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        setFinishing(true);
+        void session.finish();
       }}
       style={[styles.action, actionShape]}>
-      <Animated.View style={[styles.actionGlyph, stopDimStyle]}>
-        {error ? (
+      {error ? (
+        <Animated.View style={[styles.actionGlyph, stopDimStyle]}>
           <UndoIcon size={18} color={theme.colors.primary} />
-        ) : (
-          <>
-            {realtime ? <VoiceLevelRing history={history} processing={!recording} /> : null}
-            <StopIcon size={16} color={theme.colors.primary} />
-          </>
-        )}
-      </Animated.View>
+        </Animated.View>
+      ) : (
+        <>
+          <View pointerEvents="none" style={styles.actionGlyph}>
+            <VoiceLevelRing history={history} processing={transcribing} level={realtime} />
+          </View>
+          <Animated.View style={[styles.actionGlyph, stopDimStyle]}>
+            <Animated.View style={stopSquareStyle}>
+              <StopIcon size={16} color={theme.colors.primary} />
+            </Animated.View>
+          </Animated.View>
+        </>
+      )}
     </PressableScale>
   );
   return (
