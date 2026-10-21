@@ -1,14 +1,18 @@
 import { Text, useThemeTokens } from '@osuki-dev/ui';
-import { useEffect, useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useLatestReader } from '@/hooks/use-render-refs';
+import { useMonoFontFamily } from '@/hooks/use-user-fonts';
+import { withAlpha } from '@/lib/color';
 import { agentDisplayName } from '@/lib/home-launch-model';
+import { inlineMarkdownSpans } from '@/lib/markdown-text';
 import { calmFadeIn, calmFadeOut } from '@/lib/motion';
 import { stageSubtitleStep, type StageProgress } from '@/lib/stage-overlay';
 import { useAgents } from '@/stores/agents';
-import { useStageTextHalo } from './stage-text-halo';
+import { SHEET_FROST_ALPHA, surfaceBackgroundFill } from '@/theme/surface-background';
 import { useStageProgress } from './use-stage-overlay';
 
 /**
@@ -55,11 +59,18 @@ export function StageSubtitle({ serverId }: { serverId: string }) {
   ) : null;
 }
 
+/**
+ * The line sits on a small frosted plate in the theme's raised surface and
+ * control corner, so it reads over any art; the agent's name leads in the
+ * accent, and the report's bold, emphasis and code keep their marks.
+ */
 function SubtitleLine({ serverId, line }: { serverId: string; line: StageProgress }) {
   const theme = useThemeTokens();
-  const halo = useStageTextHalo();
+  const profile = useAppearanceProfile();
+  const monoFontFamily = useMonoFontFamily();
   const agents = useAgents((state) => state.index.servers[serverId]?.agents?.agents);
   const who = line.agentLabel ?? agentDisplayName(agents, line.agentId);
+  const spans = useMemo(() => inlineMarkdownSpans(line.text), [line.text]);
   return (
     <Animated.View
       testID="home-stage-subtitle"
@@ -67,19 +78,61 @@ function SubtitleLine({ serverId, line }: { serverId: string; line: StageProgres
       entering={calmFadeIn()}
       exiting={calmFadeOut()}
       style={styles.line}>
-      <Text
-        variant="caption"
-        numberOfLines={2}
-        ellipsizeMode="tail"
-        color={theme.colors.textMuted}
-        style={[styles.text, halo]}>
-        {`${who} · ${line.text}`}
-      </Text>
+      <View
+        style={[
+          styles.plate,
+          {
+            backgroundColor: surfaceBackgroundFill(theme.colors.surfaceRaised, SHEET_FROST_ALPHA),
+            borderColor: withAlpha(theme.colors.border, 0.6),
+            borderRadius: profile.chrome.control,
+          },
+        ]}>
+        <Text
+          variant="caption"
+          numberOfLines={2}
+          ellipsizeMode="tail"
+          color={theme.colors.textMuted}
+          style={styles.text}>
+          <Text variant="caption" weight="semibold" color={theme.colors.primary}>
+            {who}
+          </Text>
+          {'  '}
+          {spans.map((span, index) =>
+            span.mark === 'code' ? (
+              <Text
+                key={index}
+                variant="caption"
+                color={theme.colors.text}
+                style={{ fontFamily: monoFontFamily }}>
+                {span.text}
+              </Text>
+            ) : span.mark ? (
+              <Text
+                key={index}
+                variant="caption"
+                color={theme.colors.text}
+                weight={span.mark === 'strong' ? 'semibold' : undefined}
+                style={span.mark === 'emphasis' ? styles.emphasis : undefined}>
+                {span.text}
+              </Text>
+            ) : (
+              span.text
+            )
+          )}
+        </Text>
+      </View>
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  line: { position: 'absolute', left: 0, right: 0, bottom: 0 },
+  line: { position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'center' },
+  plate: {
+    maxWidth: '100%',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
   text: { textAlign: 'center' },
+  emphasis: { fontStyle: 'italic' },
 });
