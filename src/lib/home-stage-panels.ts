@@ -207,10 +207,25 @@ function activityOf(agent: ServerAgent, tasks: readonly TaskView[]): string | un
     const said = [newest?.progress, newest?.title, newest?.label]
       .map((text) => text?.trim())
       .find((text) => text);
-    if (said) return said;
+    if (said) return withoutName(said, agent.agentLabel);
   }
-  const title = agent.name.trim();
-  return agent.agentLabel && title && title !== agent.agentLabel ? title : undefined;
+  const title = agent.agentLabel ? withoutName(agent.name.trim(), agent.agentLabel) : undefined;
+  return title && title !== agent.agentLabel ? title : undefined;
+}
+
+/**
+ * The line already starts with the agent's name, so an activity that repeats
+ * it ("claude · review" for claude) keeps only what follows.
+ */
+function withoutName(text: string, name: string | undefined): string | undefined {
+  if (!name) return text;
+  for (const separator of [' · ', ' - ', ': ']) {
+    if (text.toLowerCase().startsWith((name + separator).toLowerCase())) {
+      const rest = text.slice(name.length + separator.length).trim();
+      return rest || undefined;
+    }
+  }
+  return text;
 }
 
 function overflow(lines: readonly StageAgentLine[]): { agents: StageAgentLine[]; more: number } {
