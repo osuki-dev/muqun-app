@@ -12,7 +12,7 @@ export type ReplyDrawerSnap = 'closed' | 'peek' | 'full';
 
 /** The peek's top edge, as a share of the window from its bottom. */
 export const REPLY_DRAWER_PEEK_SHARE = 0.65;
-/** The least the peek shows above the dock, on a short window with the keyboard up. */
+/** The least the drawer shows above the dock's field, on a short window or with the keyboard up. */
 export const REPLY_DRAWER_MIN_HEIGHT = 180;
 /** The room the full drawer leaves under the status bar. */
 export const REPLY_DRAWER_TOP_GAP = 8;
@@ -24,26 +24,22 @@ const PROJECTION_S = 0.12;
 export type ReplyDrawerHeights = { peek: number; full: number };
 
 /**
- * The drawer's visible heights above its own foot, which sits `foot` points
- * over the window's bottom edge (the dock's field, the keyboard). The peek
- * reaches `REPLY_DRAWER_PEEK_SHARE` of the window; full reaches just under
- * the status bar. Neither is ever below the minimum, and peek never above full.
+ * The drawer's heights from the window's bottom edge: it stands on the
+ * bottom, behind the dock, whose field covers its lowest `field` points. The
+ * peek reaches `REPLY_DRAWER_PEEK_SHARE` of the window; full reaches just
+ * under the status bar. Either always shows at least the minimum above the
+ * field, and peek is never above full.
  */
 export function replyDrawerHeights(input: {
   windowHeight: number;
   topInset: number;
-  foot: number;
+  field: number;
 }): ReplyDrawerHeights {
   'worklet';
-  const { windowHeight, topInset, foot } = input;
-  const full = Math.max(
-    REPLY_DRAWER_MIN_HEIGHT,
-    windowHeight - foot - topInset - REPLY_DRAWER_TOP_GAP
-  );
-  const peek = Math.min(
-    full,
-    Math.max(REPLY_DRAWER_MIN_HEIGHT, windowHeight * REPLY_DRAWER_PEEK_SHARE - foot)
-  );
+  const { windowHeight, topInset, field } = input;
+  const least = field + REPLY_DRAWER_MIN_HEIGHT;
+  const full = Math.max(least, windowHeight - topInset - REPLY_DRAWER_TOP_GAP);
+  const peek = Math.min(full, Math.max(least, windowHeight * REPLY_DRAWER_PEEK_SHARE));
   return { peek, full };
 }
 

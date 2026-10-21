@@ -9,18 +9,18 @@ import {
 const heights = { peek: 400, full: 700 };
 
 describe('replyDrawerHeights', () => {
-  test('peek reaches 65% of the window above the dock; full stops under the status bar', () => {
-    expect(replyDrawerHeights({ windowHeight: 800, topInset: 40, foot: 100 })).toEqual({
-      peek: 420,
-      full: 652,
+  test('peek reaches 65% of the window; full stops under the status bar', () => {
+    expect(replyDrawerHeights({ windowHeight: 800, topInset: 40, field: 100 })).toEqual({
+      peek: 520,
+      full: 752,
     });
   });
 
-  test('a short window keeps the minimum, and peek never exceeds full', () => {
-    const short = replyDrawerHeights({ windowHeight: 400, topInset: 40, foot: 300 });
-    expect(short.peek).toBe(REPLY_DRAWER_MIN_HEIGHT);
-    expect(short.full).toBe(REPLY_DRAWER_MIN_HEIGHT);
-    const tall = replyDrawerHeights({ windowHeight: 1000, topInset: 400, foot: 0 });
+  test('a short window keeps the minimum above the field, and peek never exceeds full', () => {
+    const short = replyDrawerHeights({ windowHeight: 400, topInset: 40, field: 300 });
+    expect(short.peek).toBe(300 + REPLY_DRAWER_MIN_HEIGHT);
+    expect(short.full).toBe(300 + REPLY_DRAWER_MIN_HEIGHT);
+    const tall = replyDrawerHeights({ windowHeight: 1000, topInset: 400, field: 0 });
     expect(tall.peek).toBeLessThanOrEqual(tall.full);
   });
 });

@@ -36,6 +36,7 @@ import { AgentPermissionCard } from '@/components/agent-permission-card';
 import { AgentTranscriptList } from '@/components/agent-transcript-list';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { HomeSheetGrabber, HomeSheetHeader } from '@/components/home-sheet';
+import { SheetGround } from '@/components/sheet-ground';
 import {
   followHomeSession,
   HOME_THREAD_PANE_POLL_MS,
@@ -46,7 +47,6 @@ import { usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
 import { TerminalTranscript } from '@/components/terminal-transcript';
 import { useTerminalTheme } from '@/hooks/use-theme-pack';
 import { useLatestReader, useStableHandler } from '@/hooks/use-render-refs';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { removeTimelineItems } from '@/lib/agent-revert';
 import { canReplyAgentForm } from '@/lib/agent-runtime-controls';
@@ -95,8 +95,8 @@ import { useServerAgents } from '@/stores/server-agents';
  * being dragged: closed, Home costs what it did without it.
  */
 
-/** How far the drawer's foot tucks under the field, past the grabber row. */
-const FIELD_OVERLAP = 22;
+/** Room between the drawer's last row and the field's top edge. */
+const FIELD_CLEARANCE = 8;
 /** The grabber row on top of the field: its height is part of the overlap. */
 const GRABBER_ROW_HEIGHT = 14;
 /** How far Home recedes behind an open drawer, and how much it dims. */
@@ -132,9 +132,8 @@ export function useHomeReplyDrawer({
 }) {
   const reduced = useReducedMotion();
   const { height: windowHeight } = useWindowDimensions();
-  /** The drawer's foot inside the dock: tucked under the field's top edge. */
-  const clipBottom = Math.max(0, clipHeight - FIELD_OVERLAP);
-  const heights = replyDrawerHeights({ windowHeight, topInset, foot: clipBottom });
+  /** It stands on the dock's foot, behind the whole field: its rows end above it. */
+  const heights = replyDrawerHeights({ windowHeight, topInset, field: clipHeight });
   const [snap, setSnap] = useState<ReplyDrawerSnap>('closed');
   /** Where it last rested open: its body keeps that height while it closes. */
   const [resting, setResting] = useState<Exclude<ReplyDrawerSnap, 'closed'>>('peek');
@@ -235,7 +234,7 @@ export function useHomeReplyDrawer({
     mounted,
     reduced,
     heights,
-    clipBottom,
+    field: clipHeight,
     height,
     fade,
     grabberPan,
@@ -380,7 +379,7 @@ export function HomeReplyGrabber({
 
 /**
  * The drawer itself, under everything the dock draws: a scrim over Home and
- * the sheet, clipped at the field so it seems to come out from behind it.
+ * the sheet, standing on the dock's foot behind the field, so it seems to come out from behind it.
  * Rendered only while `controller.mounted`.
  */
 export function HomeReplyDrawer({
@@ -408,7 +407,6 @@ export function HomeReplyDrawer({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
-  const background = useSurfaceBackground();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const { height: keyboardOffset } = useReanimatedKeyboardAnimation();
   const keyboardHeight = useKeyboardState((state) => state.height);
@@ -434,9 +432,11 @@ export function HomeReplyDrawer({
 
   // The body is laid out once per resting place, never per frame: the sheet
   // travels whole and its body is as tall as where it rests.
+  const floor = controller.field + REPLY_DRAWER_MIN_HEIGHT;
   const bodyHeight = visibleOver(
     replyDrawerSnapHeight(controller.resting, heights),
-    keyboardHeight
+    keyboardHeight,
+    floor
   );
 
   const scrimStyle = useAnimatedStyle(() => ({
@@ -450,7 +450,7 @@ export function HomeReplyDrawer({
     const keyboard = Math.max(0, -keyboardOffset.get());
     return {
       opacity: reduced ? fade.get() : 1,
-      transform: [{ translateY: heights.full - visibleOver(height.get(), keyboard) }],
+      transform: [{ translateY: heights.full - visibleOver(height.get(), keyboard, floor) }],
     };
   });
   // The content follows the sheet in, a beat after it starts to move.
@@ -495,7 +495,7 @@ export function HomeReplyDrawer({
           {
             left: -bleed,
             right: -bleed,
-            bottom: controller.clipBottom,
+            bottom: 0,
             height: heights.full + 160,
           },
         ]}>
@@ -511,12 +511,14 @@ export function HomeReplyDrawer({
               ...(maxWidth
                 ? { width: Math.min(maxWidth, windowWidth), alignSelf: 'center' }
                 : { left: 0, right: 0 }),
-              backgroundColor: background(theme.colors.background),
               borderTopLeftRadius: radius,
               borderTopRightRadius: radius,
             },
             sheetStyle,
           ]}>
+          {/* The sheet ground: an opaque floor under a frosted tint, so
+              nothing of Home reads through the transcript. */}
+          <SheetGround tint="background" frosted />
           <Animated.View style={[{ height: bodyHeight }, bodyStyle]}>
             <GestureDetector gesture={controller.headerPan}>
               <View collapsable={false}>
@@ -576,7 +578,7 @@ export function HomeReplyDrawer({
                 />
               </View>
             </GestureDetector>
-            <View style={[styles.body, { paddingBottom: FIELD_OVERLAP }]}>
+            <View style={[styles.body, { paddingBottom: controller.field + FIELD_CLEARANCE }]}>
               {target.kind === 'session' ? (
                 <DrawerSession target={target} />
               ) : target.kind === 'pane' ? (
@@ -590,11 +592,14 @@ export function HomeReplyDrawer({
   );
 }
 
-/** Of a drawer `height` tall, what shows above a keyboard `keyboard` tall: never less than a sliver. */
-function visibleOver(height: number, keyboard: number): number {
+/**
+ * Of a drawer `height` tall, what shows above a keyboard `keyboard` tall:
+ * never less than `floor` (the field and a few rows over it).
+ */
+function visibleOver(height: number, keyboard: number, floor: number): number {
   'worklet';
   if (keyboard <= 0) return height;
-  return Math.max(height - keyboard, Math.min(height, REPLY_DRAWER_MIN_HEIGHT));
+  return Math.max(height - keyboard, Math.min(height, floor));
 }
 
 /**
