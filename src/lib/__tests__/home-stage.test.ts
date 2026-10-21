@@ -469,7 +469,7 @@ describe('stage panels', () => {
         agent('1', 'working', { paneId: 'p1', shellPid: 10 }),
         agent('2', 'working', { paneId: 'p2', shellPid: 20 }),
         agent('3', 'idle', { paneId: 'p3' }),
-        { ...agent('4', 'working'), name: 'Agent 4' },
+        { ...agent('4', 'working'), name: 'Agent 4 · review' },
       ]),
       tasks: {
         a: {
@@ -493,8 +493,9 @@ describe('stage panels', () => {
       'running tests',
       // No task: the pane title, which is more than the agent's name.
       'pane 2',
-      // Its title is its name: nothing to say.
-      undefined,
+      // A title that repeats the agent's name keeps only what follows it.
+      'review',
+      // Idle: no activity.
       undefined,
     ]);
   });
