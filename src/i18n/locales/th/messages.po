@@ -5478,7 +5478,6 @@ msgid "Replay audio"
 msgstr "เล่นเสียงอีกครั้ง"
 
 #: src/components/home-recent-sessions.tsx
-#: src/components/home-stage/home-stage-layout.tsx
 msgid "Reply from Home"
 msgstr "ตอบจากหน้าแรก"
 
