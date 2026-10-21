@@ -30,7 +30,7 @@ const TOOL_OUTPUT = /^\s+(?:⎿|└|├)/;
 const SPINNER = /^(?:[✻✢✳✶✽✺✹✸✷✦*·◐◓◑◒⠁-⣿]\s*)?\S+(?:…|\.\.\.)(?:\s*\(.*\))?$/;
 /** Status and footer text, wherever it is drawn. */
 const STATUS =
-  /esc to (?:interrupt|cancel)|ctrl\+[a-z] to (?:interrupt|expand|cycle)|shift\+tab to cycle|\?\s*for shortcuts|context left|\btokens? used\b|[↑↓]\s*[\d.,]+\s*[km]?\s*tokens?|\b[\d.,]+\s*[km]?\s+tokens\b|accept edits|bypass permissions|plan mode on|auto-accept|IDE (?:dis)?connected|⏎ send|press ctrl-c again/i;
+  /esc to (?:interrupt|cancel)|ctrl\+[a-z] to (?:interrupt|expand|cycle)|shift\+tab to cycle|\?\s*for shortcuts|context left|\btokens? used\b|[↑↓]\s*[\d.,]+\s*[km]?\s*tokens?|\b[\d.,]+\s*[km]?\s+tokens\b|accept edits|bypass permissions|plan mode on|auto-accept|IDE (?:dis)?connected|⏎ send|press ctrl-c again|update available|auto-?updat|run:? [\w-]+ (?:upgrade|update|install)\b|new version (?:of|is) available/i;
 /** A Claude Code tool call (`Bash(git diff)`, `Read(src/a.ts)`, `Update Todos`). */
 const CLAUDE_TOOL = /^(?:[A-Z][\w-]*(?:\s[\w-]+)?\(.*\)?|Update Todos|Read \d+ files?.*)$/;
 /** A Codex tool call (`Ran git status`, `Explored`, `Edited src/a.ts (+3 -1)`). */
@@ -136,9 +136,14 @@ export function paneAgentRead(output: string): {
     return AT_WORK.test(text) || (text.length > 0 && SPINNER.test(text.replace(BULLET, '')));
   });
   const turn = { ...(prompt ? { prompt } : {}), busy };
+  // An agent that marks its messages with bullets (Claude Code, Codex) says
+  // everything it means to the reader in one: unbulleted text on its screen
+  // is the TUI's own -- notices, hints, banners -- and never its answer.
+  const bulletedAgent = lines.some((line) => BULLET.test(line.text));
   for (let at = blocks.length - 1; at >= 0; at -= 1) {
     const block = blocks[at]!;
     if (block.noise || isTool(block.head, block.body)) continue;
+    if (bulletedAgent && !block.bulleted) continue;
     // A bulleted message reads as one paragraph, its wrapped lines rejoined;
     // an agent drawn without bullets gives its last readable line.
     if (block.bulleted) {

@@ -194,4 +194,20 @@ describe('paneAgentRead: which message the reply answers, and whether the agent 
     expect(read.line).toBeUndefined();
     expect(read.busy).toBe(false);
   });
+
+  test('a TUI notice is never read as the answer', () => {
+    const screen = [
+      '⏺ The review is done: two nits, no blockers.',
+      '',
+      '  Update available! Run: mise upgrade claude',
+      '────────────────────────────────────────',
+      '> ',
+      '────────────────────────────────────────',
+      '  ? for shortcuts',
+    ].join('\n');
+    expect(paneAgentLine(screen)).toBe('The review is done: two nits, no blockers.');
+    expect(
+      paneAgentLine(['> hi', '', 'Update available! Run: mise upgrade claude', '> '].join('\n'))
+    ).toBeUndefined();
+  });
 });
