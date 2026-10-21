@@ -24,7 +24,7 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useStableHandler } from '@/hooks/use-render-refs';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { NextIcon } from '@/icons';
+import { CloseIcon, NextIcon } from '@/icons';
 import { withAlpha } from '@/lib/color';
 import type { HomeContinueEntry } from '@/lib/home-continue';
 import { HOME_DOCK_OUTER_INSET } from '@/lib/home-pad-geometry';
@@ -34,7 +34,16 @@ import {
   stageFlipVisibleSlots,
   type StageFlipDirection,
 } from '@/lib/home-stage-flip';
-import { cardIn, cardOut, listLayout, STAGE_FLIP_MOTION, STAGGER, timing } from '@/lib/motion';
+import {
+  calmFadeIn,
+  calmFadeOut,
+  cardIn,
+  cardOut,
+  listLayout,
+  STAGE_FLIP_MOTION,
+  STAGGER,
+  timing,
+} from '@/lib/motion';
 
 /** A typical card, for counting how many are on screen; cards size to their titles. */
 const CARD_ESTIMATE = 150;
@@ -70,6 +79,8 @@ export type StageSessionStripProps = {
   /** The session the dock is talking to: its card is outlined. */
   threadKey?: string;
   onOpenSession: (entry: HomeContinueEntry) => void;
+  /** Lets the dock's conversation go: the × on its outlined card. */
+  onClearThread?: () => void;
   /** The card whose long-press menu is open: it shows as pressed. */
   menuKey?: string;
   /** A long press: the card's actions, with where the card is on screen. */
@@ -92,6 +103,7 @@ export function StageSessionStrip({
   panelCount,
   sessions,
   threadKey,
+  onClearThread,
   menuKey,
   onOpenSession,
   onSessionActions,
@@ -199,6 +211,7 @@ export function StageSessionStrip({
                 onMeasured={measured}
                 onPress={() => onOpenSession(entry)}
                 selected={entry.key === menuKey}
+                onClear={entry.key === threadKey ? onClearThread : undefined}
                 onLongPress={onSessionActions ? (card) => onSessionActions(entry, card) : undefined}
               />
             </Animated.View>
@@ -258,6 +271,7 @@ function StageSessionSlot({
   onPress,
   onLongPress,
   selected,
+  onClear,
 }: {
   entry: HomeContinueEntry;
   from: HomeContinueEntry | undefined;
@@ -271,6 +285,7 @@ function StageSessionSlot({
   onPress: () => void;
   onLongPress?: (card: { x: number; y: number; width: number; height: number }) => void;
   selected: boolean;
+  onClear?: () => void;
 }) {
   const slot = useRef<ViewInstance>(null);
   return (
@@ -306,6 +321,7 @@ function StageSessionSlot({
         fromStyle={fromStyle}
         fromWidth={fromWidth}
         onMeasured={onMeasured}
+        onClear={onClear}
       />
     </PressableScale>
   );
@@ -322,6 +338,7 @@ function StageSessionTurn({
   fromStyle,
   fromWidth,
   onMeasured,
+  onClear,
 }: {
   entry: HomeContinueEntry;
   from: HomeContinueEntry | undefined;
@@ -333,8 +350,13 @@ function StageSessionTurn({
   fromStyle: FaceStyle | undefined;
   fromWidth: number | undefined;
   onMeasured: (key: string, width: number) => void;
+  /** This card is the dock's conversation: its × lets it go. */
+  onClear?: () => void;
 }) {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
   const entryKey = entry.key;
+  const title = entry.title;
   const turns = animate && from !== undefined;
   const progress = useSharedValue(turns ? 0 : 1);
 
@@ -384,10 +406,22 @@ function StageSessionTurn({
     <>
       <Animated.View
         onLayout={(event) => onMeasured(entryKey, event.nativeEvent.layout.width)}
-        style={[styles.card, styles.face, faceStyle, newStyle]}>
-        <Text variant="bodySmall" weight="semibold" numberOfLines={1}>
-          {entry.title}
+        style={[styles.card, styles.face, faceStyle, newStyle, onClear && styles.targeted]}>
+        <Text variant="bodySmall" weight="semibold" numberOfLines={1} style={styles.title}>
+          {title}
         </Text>
+        {onClear ? (
+          <Animated.View entering={calmFadeIn()} exiting={calmFadeOut('micro')}>
+            <PressableScale
+              testID="home-stage-thread-clear"
+              accessibilityRole="button"
+              accessibilityLabel={t`Stop replying to ${title}`}
+              hitSlop={10}
+              onPress={onClear}>
+              <CloseIcon size={14} color={theme.colors.textMuted} />
+            </PressableScale>
+          </Animated.View>
+        ) : null}
       </Animated.View>
       {turns && from && fromStyle ? (
         <Animated.View
@@ -423,6 +457,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   face: { backfaceVisibility: 'hidden' },
+  targeted: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  title: { flexShrink: 1 },
   // Pinned to the slot's left, top and bottom; its width is the old title's own.
   back: { position: 'absolute', left: 0, top: 0, bottom: 0 },
   moreCard: { flexDirection: 'row', alignItems: 'center', gap: 6 },

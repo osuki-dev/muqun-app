@@ -6524,6 +6524,10 @@ msgstr "หยุดมอบหมายงาน"
 msgid "Stop following this conversation"
 msgstr "เลิกติดตามบทสนทนานี้"
 
+#: src/components/home-stage/stage-session-strip.tsx
+msgid "Stop replying to {title}"
+msgstr "หยุดตอบ {title}"
+
 #: src/app/commands.tsx
 msgid "Stop this agent"
 msgstr "หยุดเอเจนต์นี้"

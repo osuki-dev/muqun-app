@@ -93,7 +93,7 @@ import {
   hasComputerCardsAt,
 } from '@/components/home-computer-cards';
 import { HomeRecentChips } from '@/components/home-recent-chips';
-import { HomeStage } from '@/components/home-stage/home-stage-layout';
+import { HomeStage, STAGE_STRIP_LIMIT } from '@/components/home-stage/home-stage-layout';
 import {
   filterHomeRecent,
   homeContinueCommand,
@@ -1078,6 +1078,21 @@ export function HomeOverview({
         onDemo={openDemo}
       />
     ) : undefined;
+  // The Stage strip outlines the card the dock is talking to, and that card
+  // names and clears it: only when the card is among the strip's own.
+  const chosenThread = useHomeThreads((state) =>
+    launchController.chosen ? state.byServer[launchController.chosen.serverId] : undefined
+  );
+  const chosenThreadKey = chosenThread ? homeThreadKey(chosenThread) : undefined;
+  const stageThreadKey =
+    chosenThreadKey && launchController.chosen
+      ? filterHomeRecent(recentEntries, launchController.chosen.serverId)
+          .slice(0, STAGE_STRIP_LIMIT)
+          .find((entry) => {
+            const target = homeThreadTargetFromEntry(entry, 0);
+            return target !== null && homeThreadKey(target) === chosenThreadKey;
+          })?.key
+      : undefined;
   const dock = showDock ? (
     <HomeComposerDock
       revealed={composerRevealed}
@@ -1117,6 +1132,7 @@ export function HomeOverview({
       autoHide={isPad ? undefined : pageDockHide.dock}
       onOpenAgent={commands.openAgent}
       onOpenThread={openThread}
+      threadOnCard={homeLayout === 'stage' && !isPad && stageThreadKey !== undefined}
     />
   ) : null;
   // A computer row sets the dock's target. The bar does not flash for it: the
@@ -1150,17 +1166,6 @@ export function HomeOverview({
     useHomeThreads.getState().reply(target);
     targetComposer(target.serverId);
   };
-  // The Stage strip marks the card the dock is talking to.
-  const chosenThread = useHomeThreads((state) =>
-    launchController.chosen ? state.byServer[launchController.chosen.serverId] : undefined
-  );
-  const chosenThreadKey = chosenThread ? homeThreadKey(chosenThread) : undefined;
-  const stageThreadKey = chosenThreadKey
-    ? recentEntries.find((entry) => {
-        const target = homeThreadTargetFromEntry(entry, 0);
-        return target !== null && homeThreadKey(target) === chosenThreadKey;
-      })?.key
-    : undefined;
   function openThread(target: HomeThreadTarget) {
     if (target.kind === 'pane') {
       openServer(target.serverId, target.paneId);
@@ -1376,6 +1381,9 @@ export function HomeOverview({
             router.push({ pathname: '/settings-servers', params: { serverId } })
           }
           threadKey={stageThreadKey}
+          onClearThread={() => {
+            if (chosenThread) useHomeThreads.getState().clear(chosenThread.serverId, chosenThread);
+          }}
           canReply={canReply}
           onReplySession={replyFromHome}
           onOpenSession={(entry) => {

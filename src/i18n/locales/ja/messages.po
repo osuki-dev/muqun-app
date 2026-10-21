@@ -6524,6 +6524,10 @@ msgstr "タスクの割り当てをやめる"
 msgid "Stop following this conversation"
 msgstr "この会話の追跡をやめる"
 
+#: src/components/home-stage/stage-session-strip.tsx
+msgid "Stop replying to {title}"
+msgstr "{title} への返信をやめる"
+
 #: src/app/commands.tsx
 msgid "Stop this agent"
 msgstr "このエージェントを停止"

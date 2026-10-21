@@ -6524,6 +6524,10 @@ msgstr "작업 할당 중지"
 msgid "Stop following this conversation"
 msgstr "이 대화 따라가기 중지"
 
+#: src/components/home-stage/stage-session-strip.tsx
+msgid "Stop replying to {title}"
+msgstr "{title}에 답장 그만하기"
+
 #: src/app/commands.tsx
 msgid "Stop this agent"
 msgstr "이 에이전트 중지"

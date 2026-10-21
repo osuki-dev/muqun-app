@@ -6524,6 +6524,10 @@ msgstr "Arrêter d'attribuer une tâche"
 msgid "Stop following this conversation"
 msgstr "Ne plus suivre cette conversation"
 
+#: src/components/home-stage/stage-session-strip.tsx
+msgid "Stop replying to {title}"
+msgstr "Ne plus répondre à {title}"
+
 #: src/app/commands.tsx
 msgid "Stop this agent"
 msgstr "Arrêter cet agent"

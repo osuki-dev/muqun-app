@@ -1,7 +1,7 @@
 import { useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { PressableScale, Text, useThemeTokens } from '@osuki-dev/ui';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useReducedMotion } from 'react-native-reanimated';
 
@@ -356,6 +356,8 @@ export function HomeThreadBar({
   onOpen,
   onClear,
   onRetry,
+  named = false,
+  onShown,
 }: {
   target: HomeThreadTarget;
   offline: boolean;
@@ -363,6 +365,14 @@ export function HomeThreadBar({
   onOpen?: () => void;
   onClear: () => void;
   onRetry: () => void;
+  /**
+   * The conversation is named, and cleared, on its own outlined card right
+   * above (Stage): the bar drops the title and ×, says only how it is doing
+   * and what it last said, and is not drawn when it has nothing to say.
+   */
+  named?: boolean;
+  /** Told whether the bar is drawn, so the field joins it only then. */
+  onShown?: (shown: boolean) => void;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -417,6 +427,14 @@ export function HomeThreadBar({
   const unsureHere = unsure?.key === key ? unsure : null;
   const enter = reduced ? calmFadeIn() : fadeIn('short');
   const exit = reduced ? calmFadeOut('micro') : fadeOut('micro');
+  const shown =
+    !named || Boolean(line) || needsYou || Boolean(permission || form) || Boolean(unsureHere);
+  const reportShown = useEffectEvent((next: boolean) => onShown?.(next));
+  useEffect(() => {
+    reportShown(shown);
+  }, [shown]);
+  useEffect(() => () => reportShown(false), []);
+  if (!shown) return null;
 
   return (
     <Animated.View
@@ -454,25 +472,35 @@ export function HomeThreadBar({
           disabled={!onOpen}
           onPress={onOpen}
           style={styles.barOpen}>
-          <View style={styles.barHead}>
-            <Text
-              variant="caption"
-              weight="semibold"
-              color={needsYou ? theme.colors.warning : theme.colors.text}
-              numberOfLines={1}
-              style={styles.barTitle}>
-              {`↳ ${title}`}
+          {named ? (
+            // The card above names it: the state leads, and the line follows on it.
+            <Text variant="caption" color={theme.colors.textMuted} numberOfLines={2}>
+              <Text testID="home-thread-state" variant="caption" weight="semibold" color={tone}>
+                {`↳ ${word}`}
+              </Text>
+              {line && !permission && !form ? `  ${line}` : null}
             </Text>
-            <Text
-              testID="home-thread-state"
-              variant="caption"
-              color={tone}
-              numberOfLines={1}
-              style={styles.barState}>
-              {`· ${word}`}
-            </Text>
-          </View>
-          {line && !permission && !form ? (
+          ) : (
+            <View style={styles.barHead}>
+              <Text
+                variant="caption"
+                weight="semibold"
+                color={needsYou ? theme.colors.warning : theme.colors.text}
+                numberOfLines={1}
+                style={styles.barTitle}>
+                {`↳ ${title}`}
+              </Text>
+              <Text
+                testID="home-thread-state"
+                variant="caption"
+                color={tone}
+                numberOfLines={1}
+                style={styles.barState}>
+                {`· ${word}`}
+              </Text>
+            </View>
+          )}
+          {!named && line && !permission && !form ? (
             <Animated.View
               key={`line:${task?.taskId ?? ''}:${lineSource}`}
               entering={enter}
@@ -487,15 +515,17 @@ export function HomeThreadBar({
             </Animated.View>
           ) : null}
         </PressableScale>
-        <PressableScale
-          testID="home-thread-clear"
-          accessibilityRole="button"
-          accessibilityLabel={t`Stop following this conversation`}
-          hitSlop={10}
-          onPress={onClear}
-          style={styles.barClose}>
-          <CloseIcon size={14} color={theme.colors.textMuted} />
-        </PressableScale>
+        {named ? null : (
+          <PressableScale
+            testID="home-thread-clear"
+            accessibilityRole="button"
+            accessibilityLabel={t`Stop following this conversation`}
+            hitSlop={10}
+            onPress={onClear}
+            style={styles.barClose}>
+            <CloseIcon size={14} color={theme.colors.textMuted} />
+          </PressableScale>
+        )}
       </View>
       {permission ? (
         <ThreadPermission target={target} request={permission} />

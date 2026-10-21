@@ -538,6 +538,11 @@ export interface AgentComposerProps {
    * it counts as field for the dock's clip edge, so nothing scrolls behind it.
    */
   fieldHeader?: React.ReactNode;
+  /**
+   * Whether `fieldHeader` is drawing its bar right now (a header that has
+   * nothing to show renders nothing): only then does the field join it.
+   */
+  fieldHeaderShown?: boolean;
   /** Home consolidates its choices in one control beside the attachment button. */
   toolbarLeading?: React.ReactNode;
   /**
@@ -677,6 +682,7 @@ export const AgentComposer = memo(function AgentComposer({
   onDockHeight,
   accessory,
   fieldHeader,
+  fieldHeaderShown = true,
   toolbarLeading,
   toolbarMenu,
   fieldBackground,
@@ -1533,6 +1539,7 @@ export const AgentComposer = memo(function AgentComposer({
   // Home paints only the input plate. Its options/notice overlays must not
   // erase the foreground behind their transparent or rounded edges.
   const dockClipHeight = flushField ? inputRowHeight + dockFoot : dockHeight;
+  const joinedHeader = Boolean(fieldHeader) && fieldHeaderShown;
   // The status row occupies transcript space, but does not move the material's clip edge.
   const reportDockHeight = useEffectEvent((height: number, clipHeight: number) =>
     onDockHeight?.(height + compactionClearance, clipHeight)
@@ -2424,7 +2431,7 @@ export const AgentComposer = memo(function AgentComposer({
               onLayout={(event) => setInputRowHeight(event.nativeEvent.layout.height)}
               // With a header the two are one plate, and the plate casts the shadow.
               style={
-                fieldHeader && fieldShadow
+                joinedHeader && fieldShadow
                   ? {
                       boxShadow: fieldShadow,
                       borderRadius: profile.chrome.composerField,
@@ -2439,8 +2446,8 @@ export const AgentComposer = memo(function AgentComposer({
                 fieldBackgroundOutset={fieldBackgroundOutset}
                 fieldDecoration={decorationHidden ? undefined : fieldDecoration}
                 fieldTextTopInset={fieldTextTopInset}
-                fieldShadow={fieldHeader ? undefined : fieldShadow}
-                squareTop={Boolean(fieldHeader)}
+                fieldShadow={joinedHeader ? undefined : fieldShadow}
+                squareTop={joinedHeader}
                 onVoiceActiveChange={setVoiceActive}
                 spans={spans}
                 compact={compact}
