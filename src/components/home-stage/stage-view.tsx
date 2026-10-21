@@ -30,7 +30,6 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { MapErrorBoundary } from '@/components/computer-map/error-boundary';
-import { useReskinActivity } from '@/components/reskin-transition';
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import { useStableHandler } from '@/hooks/use-render-refs';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
@@ -149,19 +148,6 @@ export function StageView({
     gpuAvailable: gpuAvailable && !failed,
     reducedMotion,
   });
-  // A theme or font change sets its cover up from native snapshots of the
-  // screen (`photographView`), which draw the view tree through a second
-  // HardwareRenderer, and it thaws Home while Home is off screen. A live GPU
-  // canvas that went through that kept presenting frames that never reached
-  // the screen until the app restarted. So the canvas is taken down for the
-  // whole run -- the static stage stands in, and is what a snapshot sees --
-  // and a fresh one (new key, new native view and surface) mounts once the
-  // run is over and Home is shown again. Its textures keep loading meanwhile.
-  const reskinning = useReskinActivity((state) => state.active);
-  const [hold, setHold] = useState({ on: false, canvas: 0 });
-  if (reskinning && !hold.on) setHold({ on: true, canvas: hold.canvas });
-  else if (hold.on && !reskinning && !paused) setHold({ on: false, canvas: hold.canvas + 1 });
-  const drawGpu = effects.gpu && !hold.on;
   const [bridge] = useState(createStageBridge);
   const dragX = useSharedValue(0);
   const dragY = useSharedValue(0);
@@ -338,11 +324,10 @@ export function StageView({
             previous.width === width && previous.height === height ? previous : { width, height }
           );
         }}>
-        {drawGpu ? (
+        {effects.gpu ? (
           <MapErrorBoundary onError={() => setFailed(true)}>
             <Suspense fallback={null}>
               <GpuStage
-                key={hold.canvas}
                 screens={screens}
                 selected={selectedIndex}
                 colors={colors}
