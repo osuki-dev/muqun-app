@@ -48,7 +48,7 @@
     "@osuki-dev/react-native-splash": "0.4.0",
     "@osuki-dev/react-native-ssh": "0.3.0",
     "@osuki-dev/skia-diagrams": "0.2.0",
-    "@osuki-dev/ui": "2.0.0-beta.4",
+    "@osuki-dev/ui": "2.0.0-beta.5",
     "@react-three/fiber": "9.8.2",
     "expo": "~58.0.16",
     "expo-alternate-app-icons": "^8.0.0",
@@ -178,7 +178,7 @@
   "patchedDependencies": {
     "react-native-enriched-markdown@1.1.1": "patches/react-native-enriched-markdown@1.1.1.patch",
     "react-native-nitro-sound@0.2.20": "patches/react-native-nitro-sound@0.2.20.patch",
-    "@osuki-dev/ui@2.0.0-beta.4": "patches/@osuki-dev%2Fui@2.0.0-beta.4.patch"
+    "@osuki-dev/ui@2.0.0-beta.5": "patches/@osuki-dev%2Fui@2.0.0-beta.5.patch"
   },
   "trustedDependencies": [
     "react-native-skia",
