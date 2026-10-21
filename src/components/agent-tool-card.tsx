@@ -1068,7 +1068,12 @@ const ReadFileBody = memo(function ReadFileBody({
                 <View
                   style={[
                     readStyles.fullscreen,
-                    { paddingTop: insets.top, paddingBottom: insets.bottom },
+                    {
+                      paddingTop: insets.top,
+                      paddingBottom: insets.bottom,
+                      paddingLeft: insets.left,
+                      paddingRight: insets.right,
+                    },
                   ]}>
                   <View style={readStyles.header}>
                     <Text
