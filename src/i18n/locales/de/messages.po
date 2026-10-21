@@ -1853,6 +1853,7 @@ msgstr "Ctrl Z, anhalten"
 msgid "Controls"
 msgstr "Steuerung"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/home-reply-drawer.tsx
 msgid "Conversation"
 msgstr "Gespräch"
@@ -3989,6 +3990,7 @@ msgstr "Nie verbunden"
 msgid "Never seen"
 msgstr "Nie gesehen"
 
+#: src/components/home-composer-options.tsx
 #: src/components/home-reply-drawer.tsx
 msgid "New conversation"
 msgstr "Neue Unterhaltung"
@@ -5383,9 +5385,17 @@ msgstr "Audio erneut abspielen"
 msgid "Reply from Home"
 msgstr "Von Home antworten"
 
+#: src/components/home-composer-options.tsx
+msgid "Reply to"
+msgstr "Antwort an"
+
 #: src/components/home-composer-dock.tsx
 msgid "Reply to {threadAgentName}…"
 msgstr "Antwort an {threadAgentName}…"
+
+#: src/components/home-composer-options.tsx
+msgid "Replying to {replyTitle}"
+msgstr "Antwort an {replyTitle}"
 
 #: src/app/settings-about.tsx
 msgid "Report a bug or request a feature"

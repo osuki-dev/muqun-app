@@ -1853,6 +1853,7 @@ msgstr "Control Z, suspender"
 msgid "Controls"
 msgstr "Controles"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/home-reply-drawer.tsx
 msgid "Conversation"
 msgstr "Conversación"
@@ -3989,6 +3990,7 @@ msgstr "Nunca conectado"
 msgid "Never seen"
 msgstr "Nunca visto"
 
+#: src/components/home-composer-options.tsx
 #: src/components/home-reply-drawer.tsx
 msgid "New conversation"
 msgstr "Nueva conversación"
@@ -5383,9 +5385,17 @@ msgstr "Volver a reproducir audio"
 msgid "Reply from Home"
 msgstr "Responder desde Inicio"
 
+#: src/components/home-composer-options.tsx
+msgid "Reply to"
+msgstr "Responder a"
+
 #: src/components/home-composer-dock.tsx
 msgid "Reply to {threadAgentName}…"
 msgstr "Responder a {threadAgentName}…"
+
+#: src/components/home-composer-options.tsx
+msgid "Replying to {replyTitle}"
+msgstr "Respondiendo a {replyTitle}"
 
 #: src/app/settings-about.tsx
 msgid "Report a bug or request a feature"

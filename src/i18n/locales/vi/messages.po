@@ -1853,6 +1853,7 @@ msgstr "Ctrl Z, tạm dừng"
 msgid "Controls"
 msgstr "Điều khiển"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/home-reply-drawer.tsx
 msgid "Conversation"
 msgstr "Cuộc trò chuyện"
@@ -3989,6 +3990,7 @@ msgstr "Chưa từng kết nối"
 msgid "Never seen"
 msgstr "Chưa từng thấy"
 
+#: src/components/home-composer-options.tsx
 #: src/components/home-reply-drawer.tsx
 msgid "New conversation"
 msgstr "Cuộc trò chuyện mới"
@@ -5383,9 +5385,17 @@ msgstr "Phát lại âm thanh"
 msgid "Reply from Home"
 msgstr "Trả lời từ Trang chủ"
 
+#: src/components/home-composer-options.tsx
+msgid "Reply to"
+msgstr "Trả lời"
+
 #: src/components/home-composer-dock.tsx
 msgid "Reply to {threadAgentName}…"
 msgstr "Trả lời {threadAgentName}…"
+
+#: src/components/home-composer-options.tsx
+msgid "Replying to {replyTitle}"
+msgstr "Đang trả lời {replyTitle}"
 
 #: src/app/settings-about.tsx
 msgid "Report a bug or request a feature"

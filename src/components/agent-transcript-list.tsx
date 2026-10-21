@@ -9,8 +9,9 @@ import {
   useState,
   useCallback,
   type ComponentProps,
+  type ReactElement,
 } from 'react';
-import { UIManager, type ViewInstance } from 'react-native';
+import { type ScrollViewProps, UIManager, type ViewInstance } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
 import { useStore } from 'zustand';
 import { createStore, type StoreApi } from 'zustand/vanilla';
@@ -131,6 +132,7 @@ export const AgentTranscriptList = memo(function AgentTranscriptList({
   keyboardAware = true,
   scrollToSentRow,
   toolScrollTopInset = 0,
+  renderScrollComponent,
   ref: forwardedRef,
   ...props
 }: ListProps & {
@@ -142,6 +144,8 @@ export const AgentTranscriptList = memo(function AgentTranscriptList({
   scrollToSentRow?: string;
   /** Overlay navigation in the main workbench; sheets already lay out below their header. */
   toolScrollTopInset?: number;
+  /** The plain list's scroll view, as a sheet's gesture wraps it; ignored when keyboard-aware. */
+  renderScrollComponent?: (props: ScrollViewProps) => ReactElement<ScrollViewProps>;
 }) {
   const keys = useStore(store, (state) => state.keys);
   const focused = useIsFocused();
@@ -437,6 +441,7 @@ export const AgentTranscriptList = memo(function AgentTranscriptList({
     <RowContext.Provider value={context}>
       <List
         {...props}
+        {...(keyboardAware || !renderScrollComponent ? null : { renderScrollComponent })}
         maintainScrollAtEnd={toolBrowsing ? false : props.maintainScrollAtEnd}
         onScroll={handleScroll}
         onItemSizeChanged={handleItemSizeChanged}
