@@ -29,14 +29,11 @@ export function TerminalTranscript({
   output,
   testID,
   maxLines = 200,
-  fontFamily,
 }: {
   output: string;
   testID?: string;
   /** A card is not a scrollback. The tail is what an answer ends with. */
   maxLines?: number;
-  /** The reader's terminal face, where the surface has one; else the platform monospace. */
-  fontFamily?: string;
 }) {
   const theme = useTerminalTheme();
   const lines = useMemo(() => {
@@ -50,10 +47,7 @@ export function TerminalTranscript({
   }, [output, theme, maxLines]);
 
   return (
-    <Text
-      testID={testID}
-      selectable
-      style={[styles.block, { color: theme.foreground }, fontFamily ? { fontFamily } : null]}>
+    <Text testID={testID} selectable style={[styles.block, { color: theme.foreground }]}>
       {lines.map((line, row) => (
         <Text key={`line-${row}`}>
           {line.runs.map((run, runIndex) => (
