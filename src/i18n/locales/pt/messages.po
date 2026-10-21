@@ -84,11 +84,6 @@ msgstr "{0, plural, one {# hora} other {# horas}}"
 msgid "{0, plural, one {# minute} other {# minutes}}"
 msgstr "{0, plural, one {# minuto} other {# minutos}}"
 
-#. placeholder {0}: orb.more
-#: src/components/home-stage/stage-view.tsx
-msgid "{0, plural, one {# more agent} other {# more agents}}"
-msgstr "{0, plural, one {mais # agente} other {mais # agentes}}"
-
 #. placeholder {0}: capped.hidden
 #. placeholder {0}: row.remaining
 #: src/components/agent-tool-card.tsx
@@ -153,12 +148,6 @@ msgstr "{0} mensagens no contexto"
 msgid "{0} more models"
 msgstr "Mais {0} modelos"
 
-#. placeholder {0}: target.index + 1
-#. placeholder {1}: panels.length
-#: src/components/home-stage/stage-view.tsx
-msgid "{0} of {1}"
-msgstr "{0} de {1}"
-
 #. placeholder {0}: filtered.length
 #. placeholder {1}: entries.length
 #: src/components/dev-icon-gallery.tsx
@@ -169,6 +158,11 @@ msgstr "{0} de {1} ícones · apenas desenvolvimento"
 #: src/components/agent-context-sheet.tsx
 msgid "{0} of {limitLabel} tokens the model can hold"
 msgstr "{0} de {limitLabel} tokens que o modelo consegue guardar"
+
+#. placeholder {0}: index + 1
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "{0} of {total}"
+msgstr "{0} de {total}"
 
 #. placeholder {0}: sessions.length
 #: src/components/agent-sessions-sheet.tsx
@@ -321,9 +315,9 @@ msgstr "{computer} já não tem esta tarefa"
 msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, one {# resultado} other {# resultados}}"
 
-#: src/components/home-stage/stage-view.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 msgid "{count, plural, one {# session} other {# sessions}}"
-msgstr "{count, plural, one {# sessão} other {# sessões}}"
+msgstr ""
 
 #: src/components/home-connections.tsx
 msgid "{count} in progress"
@@ -566,7 +560,7 @@ msgid "Act on this terminal, or send its agent a prompt"
 msgstr "Age sobre este terminal, ou envia uma instrução ao seu agente"
 
 #: src/components/home-recent-sessions.tsx
-#: src/components/home-stage/stage-view.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/task-row.tsx
 msgid "Actions"
 msgstr "Ações"
@@ -1095,10 +1089,6 @@ msgstr "Marcas e indicador de atividade"
 #: src/components/home-computer-deck.tsx
 msgid "Bring {0} to the front"
 msgstr "Trazer {0} para a frente"
-
-#: src/components/home-stage/stage-view.tsx
-msgid "Brings this computer forward."
-msgstr "Traz este computador para a frente"
 
 #: src/components/settings-theme-sheet.tsx
 msgid "Browse the gallery"
@@ -4031,7 +4021,7 @@ msgid "Needs update"
 msgstr "Precisa de atualização"
 
 #: src/components/home-stage/home-stage-layout.tsx
-#: src/components/home-stage/stage-view.tsx
+#: src/components/home-stage/stage-agent-row.tsx
 #: src/components/home-thread.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "Needs you"
@@ -4516,6 +4506,7 @@ msgstr "OFFLINE"
 
 #. placeholder {0}: age(seen, nowMs)
 #: src/components/home-stage/home-stage-layout.tsx
+#: src/components/home-stage/stage-agent-row.tsx
 msgid "Offline · last seen {0}"
 msgstr "Offline · visto {0}"
 
@@ -4780,7 +4771,7 @@ msgstr "Abre o rastreador de problemas do Muqun no GitHub"
 msgid "Opens the simulator's menu: the device, its keys, the keyboard and the way out. Drag to move."
 msgstr "Abre o menu do simulador: o dispositivo, os seus botões, o teclado e a saída. Arraste para mover"
 
-#: src/components/home-stage/stage-view.tsx
+#: src/components/home-stage/stage-agent-row.tsx
 msgid "Opens this agent."
 msgstr "Abre este agente"
 
@@ -4788,7 +4779,7 @@ msgstr "Abre este agente"
 msgid "Opens this agent's terminal"
 msgstr "Abre o terminal deste agente"
 
-#: src/components/home-stage/stage-view.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 msgid "Opens this computer."
 msgstr "Abre este computador"
 
@@ -5911,10 +5902,6 @@ msgstr "Selecionar tudo"
 msgid "Select model: {modelDisplayName}"
 msgstr "Selecionar modelo: {modelDisplayName}"
 
-#: src/components/home-stage/stage-view.tsx
-msgid "selected"
-msgstr "selecionado"
-
 #: src/components/computer-map/screen.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-servers.tsx
@@ -6645,10 +6632,6 @@ msgstr "Tab"
 #: src/components/attachment-menu.tsx
 msgid "Take photo"
 msgstr "Tirar foto"
-
-#: src/components/home-stage/stage-view.tsx
-msgid "Tap · open"
-msgstr "Toque · abrir"
 
 #: src/components/home-stage/stage-view.tsx
 msgid "Tap · start a new task"

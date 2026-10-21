@@ -1,36 +1,32 @@
 /**
  * The Stage's world, the "depth window", built imperatively and handed to
- * react-three-fiber as one `<primitive>`. Back to front:
+ * react-three-fiber as one `<primitive>`: only the theme's own pictures at
+ * their depths and its ambient effect -- no object of the Stage's own stands
+ * in the art. Back to front:
  *
  *   1. backdrop  -- a surface-to-background wash, and over it the theme's
  *                   full-scene wallpaper at its authored fit, focal point and
  *                   opacity, with room for tilt
- *   1b. painting -- the sky role's painting: a width-fit band across the
- *                   top, as the 2D cover shows it, its foot fading into the
- *                   wallpaper
+ *   1b. painting -- the sky role's painting: a band across the top down to
+ *                   the HUD's foot rows, its foot fading behind them
  *   2. haze      -- the theme's background colour: a scrim under the header
- *                   (light over a cover's authored sky), clear through the
- *                   middle, thick at the foot
- *   3. hero      -- the figure or inset picture in its 2D box, at its focal
+ *                   (light over a cover's authored sky), clear down to the
+ *                   HUD's foot rows, thick below them
+ *   3. hero      -- the figure or inset picture in its box, at its focal
  *                   point and opacity, a cut-out with a soft glow behind it;
  *                   its foot (or a framed picture's every edge) dissolves
  *   4. frame     -- an edge-only wallpaper at its authored opacity, the
- *                   nearest layer in depth (so it parallaxes most) but
- *                   drawn before the cores: it frames the world and never
- *                   covers a computer
+ *                   nearest layer in depth, so it parallaxes most
  *   5. motes     -- dust floating through every depth, one merged draw; or
  *                   the theme's own ambient effect (rain, snow, stars, ...)
  *                   in its place, one instanced draw (bloom, stars and
  *                   circuit traces are drawn behind the hero instead)
- *   6. cores     -- one luminous core per computer in a cover-flow, an orbit
- *                   ring around it and its agents as orbs on the ring
- *                   (`stage-cores.ts`: three instanced draws)
  *
  * Every layer is an unlit, textured plane: no lights, no shadows, no
  * environment, no MSAA (every edge is soft in its shader already). Layers 1,
  * 1b and 2 are one draw of the backdrop's plane, which composes the
  * painting's and the haze's planes along each view ray, so the screen is
- * filled once for all three. At most eight draws (the motes or a theme's
+ * filled once for all three. At most five draws (the motes or a theme's
  * ambient effect, never both; the hero and its glow only for a hero), and
  * the only other layer that covers the whole screen is a frame. Pictures are Skia
  * readbacks, top row first: each is sampled through its plane's window,
@@ -53,7 +49,6 @@ import {
   SRGBColorSpace,
   Vector3,
   Vector4,
-  type Camera,
   type Node,
   type Scene,
   type Texture,
@@ -82,9 +77,7 @@ import {
 } from '@/lib/home-stage-geometry';
 import type { StageHeroLayer, StageLayer, StageRole } from '@/lib/home-stage-layers';
 import type { StageAmbient } from '@/lib/home-stage-ambient';
-import type { StageOrbMark } from '@/lib/home-stage-orbs';
 import { createStageAmbient } from './stage-ambient';
-import { createStageCores, type StageCoreFrame, type StageCoreLook } from './stage-cores';
 
 const {
   attribute,
@@ -112,12 +105,7 @@ const MOTE_SIZE = 0.05;
 export type StageSceneColors = {
   background: string;
   surface: string;
-  text: string;
   primary: string;
-  success: string;
-  warning: string;
-  /** An offline computer's edge and glow. */
-  offline: string;
 };
 
 export type StageTheme = {
@@ -131,19 +119,10 @@ export type StageTextureSource = { texture: Texture; aspect: number };
 /** A layer's texture, and how the theme asks for the layer to be drawn. */
 export type StagePicture<L extends StageLayer = StageLayer> = { texture: Texture; layer: L };
 
-/** What a computer's core shows: its state, and its agents' orbs in ring order. */
-export type StageScreenLook = StageCoreLook & {
-  /** The computer's id: its orbs are tracked by it across frames. */
-  key: string;
-  orbs: readonly { key: string; mark: StageOrbMark }[];
-};
-
 export type StageFrameInput = {
-  camera: Camera;
-  cores: readonly StageCoreFrame[];
   /** Seconds since the stage started; frozen outside the ambient window and under Reduce Motion. */
   timeS: number;
-  /** 0..1, decaying after a task completes: the motes and the front core flare. */
+  /** 0..1, decaying after a task completes: the motes flare. */
   burst: number;
   /** Particles are on at this quality: the motes, or a theme's travelling particles. */
   motes: boolean;
@@ -151,10 +130,6 @@ export type StageFrameInput = {
   particleShare: number;
   /** The hero's bob and the motes' drift. */
   pulse: boolean;
-  /** A working core's breathing and a waiting orb's pulse. */
-  breathe: boolean;
-  /** The cores' halos and the orbs' glows at full size. */
-  fullGlow: boolean;
 };
 
 export type StageSceneHandle = {
@@ -197,16 +172,16 @@ function deepened(hex: string): Color {
 }
 
 /**
- * The haze's alpha down the view (0 = top): header scrim, clear middle, thick
- * foot. Over a cover's authored sky (`open`) the scrim all but goes; the HUD
+ * The haze's alpha down its plane (0 = top, a little above the view): header
+ * scrim, clear down to about the HUD's foot rows, thick below them. Over a cover's authored sky (`open`) the scrim all but goes; the HUD
  * plates its own text instead.
  */
 function hazeAlpha(t: number, light: boolean, open: boolean): number {
   const stops: readonly (readonly [number, number])[] = [
     [0, open ? 0.12 : 0.8],
     [0.2, open ? 0.04 : light ? 0.12 : 0.3],
-    [0.45, light ? 0 : 0.15],
-    [0.72, 0.6],
+    [0.66, light ? 0 : 0.1],
+    [0.86, 0.6],
     [1, 0.96],
   ];
   for (let index = 1; index < stops.length; index += 1) {
@@ -299,7 +274,7 @@ const glowFalloff = () => radialGlow().pow(1.6);
 export function createStageScene(): StageSceneHandle {
   const root = new Group();
   const blank = blankTexture();
-  let viewport: StageViewport = { width: 390, height: 844, inset: 0 };
+  let viewport: StageViewport = { width: 390, height: 844, inset: 0, floor: 624 };
   let aspect = viewport.width / viewport.height;
   let light = false;
   let open = false;
@@ -464,8 +439,8 @@ export function createStageScene(): StageSceneHandle {
   motes.renderOrder = 4;
 
   // -- Frame (drawn 4th) -------------------------------------------------------
-  // Nearest in depth, but drawn after the hero and before the motes and the
-  // cores: foliage or rooftops at the edge must never sit over a computer.
+  // Nearest in depth, drawn after the hero and before the motes: the nearest
+  // particles drift in front of the foliage or rooftops at the edge.
   const uFrameOpacity = uniform(1);
   const uFrameWindow = vec4Uniform();
   const framePicture = windowed(blank, uFrameWindow);
@@ -477,9 +452,8 @@ export function createStageScene(): StageSceneHandle {
   frame.visible = false;
 
   const ambient = createStageAmbient();
-  const cores = createStageCores();
 
-  root.add(backdrop, heroGlow, hero, motes, ambient.mesh, frame, ...cores.meshes);
+  root.add(backdrop, heroGlow, hero, motes, ambient.mesh, frame);
 
   // -- Layout ------------------------------------------------------------------
   const cover = (
@@ -571,7 +545,6 @@ export function createStageScene(): StageSceneHandle {
       const background = new Color(palette.background);
       uBackground.value.copy(background);
       uSurface.value.set(palette.surface);
-      cores.setTheme(palette, mode);
       uHeroGlow.value.copy(deepened(light ? palette.surface : palette.primary));
       uHeroGlowAlpha.value = light ? 0.7 : 0.35;
       uMote.value.set(light ? palette.surface : palette.primary);
@@ -587,7 +560,8 @@ export function createStageScene(): StageSceneHandle {
       if (
         next.width === viewport.width &&
         next.height === viewport.height &&
-        next.inset === viewport.inset
+        next.inset === viewport.inset &&
+        next.floor === viewport.floor
       )
         return;
       viewport = next;
@@ -649,14 +623,6 @@ export function createStageScene(): StageSceneHandle {
       ambient.setTime(input.pulse ? timeS : 0);
       uDrift.value = input.pulse ? timeS * 0.05 : 0;
       uBurst.value = input.burst;
-      cores.update({
-        camera: input.camera,
-        cores: input.cores,
-        timeS,
-        breathe: input.breathe,
-        fullGlow: input.fullGlow,
-        burst: input.burst,
-      });
     },
     dispose() {
       for (const mesh of [backdrop, heroGlow, hero, motes, frame]) {
@@ -664,7 +630,6 @@ export function createStageScene(): StageSceneHandle {
         (mesh.material as MeshBasicNodeMaterial).dispose();
       }
       ambient.dispose();
-      cores.dispose();
       hazeTexture.dispose();
       blank.dispose();
     },

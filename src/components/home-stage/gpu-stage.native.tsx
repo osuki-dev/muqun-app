@@ -58,7 +58,7 @@ export default function GpuStage(props: StageSceneProps) {
             size: { ...size, top: 0, left: 0 },
             // At most 1.5 rather than 2: about 44% fewer pixels to shade every
             // frame. Nothing in the scene is text or a hard edge: the pictures
-            // are soft-edged layers and the cores and orbs are shaded glows.
+            // are soft-edged layers and the particles are shaded glows.
             // A lower quality rung lowers it further (`StageRuntime`).
             dpr: Math.min(
               PixelRatio.get(),
@@ -75,11 +75,10 @@ export default function GpuStage(props: StageSceneProps) {
                 context,
                 device: importDevice(Skia.getNativeDevice()),
                 // No MSAA and no depth buffer. Every layer is a blended plane
-                // whose edges are already soft in its shader (the cores' rims,
-                // the ring's hairline, the glows, the motes) and the layers
-                // are ordered by hand -- a ring or orb behind its core is
-                // hidden in its shader -- so 4x multisampling only quadrupled
-                // the half-float frame buffer every frame wrote.
+                // whose edges are already soft in its shader (the art's
+                // fades, the glows, the motes) and the layers are ordered by
+                // hand, so 4x multisampling only quadrupled the half-float
+                // frame buffer every frame wrote.
                 antialias: false,
                 depth: false,
               });

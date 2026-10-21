@@ -6,15 +6,11 @@ import type { WebGPURenderer } from 'three/webgpu';
 import { useStableHandler } from '@/hooks/use-render-refs';
 import {
   stageCamera,
-  stageCore,
-  stageCoreAnchor,
   stageDiveCamera,
   stageDragPosition,
-  stageDrawnScreens,
-  stageRingPoint,
-  STAGE_CORE_REACH,
+  stageIdleDrift,
+  stageSwipePan,
 } from '@/lib/home-stage-geometry';
-import { stageOrbAngle, trackStageOrbs, type StageOrbTrack } from '@/lib/home-stage-orbs';
 import { stageAmbient } from '@/lib/home-stage-ambient';
 import {
   createStageFrameBudget,
@@ -29,9 +25,8 @@ import {
   type StageQuality,
   type StageSpring,
 } from '@/lib/home-stage-motion';
-import type { StageCoreFrame } from './stage-cores';
 import { createStageScene, type StagePicture } from './stage-scene';
-import type { StageProbe, StageSceneProps } from './types';
+import type { StageSceneProps } from './types';
 
 /**
  * The frame log (`stage-perf.ts`), in a Debug or Release profiling bundle
@@ -48,20 +43,16 @@ const stagePerf =
 
 /**
  * Why a frame is drawn, which sets how soon the next may be: `touch` (a
- * finger, the cover-flow settling, a dive, orbs making room) at the
- * full rate, `glide` (tilt easing in, a completion's flare) at 30 fps, `idle`
- * (the ambient motion) at 20 fps, `content` once.
+ * finger, the pan between computers settling, a dive) at the full rate,
+ * `glide` (tilt easing in, a completion's flare) at 30 fps, `idle` (the
+ * ambient motion and drift) at 20 fps, `content` once.
  */
 type Pace = 'touch' | 'glide' | 'idle' | 'content';
 
 type Motion = {
-  /** The cover-flow's fractional selection. */
+  /** The fractional selection the camera's pan follows. */
   flow: StageSpring;
   dive: StageSpring;
-  /** Each drawn computer's orbs, by its key: their slots, travel and presence. */
-  rings: Map<string, StageOrbTrack[]>;
-  /** The front core as last drawn, for touches (`StageBridge.probe`). */
-  probe: StageProbe | null;
   look: [number, number];
   burst: number;
   lastFrameMs: number;
@@ -85,12 +76,12 @@ const DIVE_SPRING = { stiffness: 90, damping: 17 };
 
 /**
  * Lives inside the Fiber root. Owns the scene objects and the frame clock:
- * frames are drawn at the full rate while a finger, the cover-flow, a dive or
- * orbs making room move the scene, at 30 fps while only tilt or a
- * completion's flare does; otherwise at the 20 fps idle rate for the orbits,
- * a working core's breathing, the hero's bob and the motes' drift, for
- * `STAGE_AMBIENT_IDLE_MS` after the last activity, and
- * then not at all until something wakes the scene. Never while Home is paused
+ * frames are drawn at the full rate while a finger, the pan between
+ * computers or a dive move the camera, at 30 fps while only tilt or a
+ * completion's flare does; otherwise at the 20 fps idle rate for the idle
+ * drift, the hero's bob, the motes and a theme's ambient effect, for
+ * `STAGE_AMBIENT_IDLE_MS` after the last activity, and then not at all until
+ * something wakes the scene. Never while Home is paused
  * or, under Reduce Motion, at rest. It draws each frame itself, so it can
  * time it: a device that runs over its frame budget steps down the quality
  * ladder (`recordStageFrame`).
@@ -106,13 +97,13 @@ export function StageRuntime(props: StageSceneProps) {
   const motion = useRef<Motion | null>(null);
   const aspect = size.height > 0 ? size.width / size.height : 390 / 844;
   const {
-    screens,
+    count,
     selected,
-    held,
     colors,
     mode,
     role,
     inset,
+    floor,
     backdrop,
     painting,
     hero,
@@ -133,8 +124,6 @@ export function StageRuntime(props: StageSceneProps) {
     motion.current = {
       flow: { value: selected, velocity: 0 },
       dive: { value: 0, velocity: 0 },
-      rings: new Map(),
-      probe: null,
       look: [0, 0],
       burst: 0,
       lastFrameMs: 0,
@@ -167,13 +156,9 @@ export function StageRuntime(props: StageSceneProps) {
   });
   useEffect(() => {
     bridge.setWaker(activate);
-    bridge.setProber(() => motion.current?.probe ?? null);
-    return () => {
-      bridge.setWaker(null);
-      bridge.setProber(null);
-    };
+    return () => bridge.setWaker(null);
   }, [bridge, activate]);
-  // Content (agents, textures, the viewport): exactly one frame, and the
+  // Content (textures, the viewport): exactly one frame, and the
   // ambient window is left as it was -- live agent status arriving every few
   // seconds must not keep the scene animating. Nothing is drawn while Home is
   // off screen: a change that arrives then is drawn when Home comes back.
@@ -188,9 +173,9 @@ export function StageRuntime(props: StageSceneProps) {
   });
   useEffect(() => applyTheme(), [world, themeKey, scene, gl]);
   useEffect(() => {
-    world.setViewport({ width: size.width, height: size.height, inset });
+    world.setViewport({ width: size.width, height: size.height, inset, floor });
     wake();
-  }, [world, size.width, size.height, inset]);
+  }, [world, size.width, size.height, inset, floor]);
   useEffect(() => {
     world.setRole(role);
     wake();
@@ -219,8 +204,8 @@ export function StageRuntime(props: StageSceneProps) {
     wake();
   });
   useEffect(() => applyFrame(), [world, frameKey]);
-  // A computer's state or its agents changed: one frame (more while its orbs make room).
-  useEffect(() => wake(), [screens]);
+  // A computer came or went: the pan's track changed.
+  useEffect(() => wake(), [count]);
   // The theme's effect, by value: a new effect is a theme change and starts
   // the ambient window; the same effect after a parent re-render does nothing.
   const ambientKey = JSON.stringify([ambientEffects, ambientColors, mode, aspect]);
@@ -237,7 +222,8 @@ export function StageRuntime(props: StageSceneProps) {
     wake();
   });
   useEffect(() => applyQuality(quality), [quality]);
-  // The selection has caught up with a released drag: follow the selection again.
+  // The selection has caught up with a released drag, or moved on its own:
+  // the camera pans to the computer's place.
   const selectionMoved = useEffectEvent(() => {
     inputs.settle.set(-1);
     activate();
@@ -268,17 +254,14 @@ export function StageRuntime(props: StageSceneProps) {
     state.lastFrameMs = now;
     const dt = Math.min(0.05, elapsedMs / 1000);
     const effects = stageEffects(quality, { gpuAvailable: true, reducedMotion });
-    // The ambient clock (orbits, breathing, motes, bob, a theme's effect) only
-    // runs inside the window after an interaction: a content frame drawn
-    // outside it shows the motion exactly where it stopped.
+    // The ambient clock (the drift, motes, bob, a theme's effect) only runs
+    // inside the window after an interaction: a content frame drawn outside
+    // it shows the motion exactly where it stopped.
     const ambientOn = state.wasMoving || now - state.activeMs < STAGE_AMBIENT_IDLE_MS;
     if (effects.pulse && ambientOn) state.ambientS += dt;
-    // The orbits also hold while a chip names one of their orbs.
-    const orbitDt = effects.orbit && ambientOn && !held ? dt : 0;
-    const count = screens.length;
 
-    // A finger moves the cores directly; on release they spring to where the
-    // drag settled until the selection catches up, then follow the selection.
+    // A finger pans the camera directly; on release it springs to where the
+    // drag settled until the selection catches up, then follows the selection.
     const dragging = inputs.dragging.get() === 1;
     const settle = inputs.settle.get();
     const flowGoal = dragging
@@ -296,7 +279,7 @@ export function StageRuntime(props: StageSceneProps) {
     const lookGoal: [number, number] = [
       effects.tilt ? inputs.tiltY.get() : 0,
       -(effects.tilt ? inputs.tiltX.get() : 0) -
-        (dragging ? Math.max(-1, Math.min(1, inputs.dragY.get() * 3)) : 0),
+        (dragging && !reducedMotion ? Math.max(-1, Math.min(1, inputs.dragY.get() * 3)) : 0),
     ];
     const ease = Math.min(1, dt * 4);
     const before = state.look;
@@ -307,64 +290,28 @@ export function StageRuntime(props: StageSceneProps) {
     const looking =
       Math.abs(state.look[0] - lookGoal[0]) + Math.abs(state.look[1] - lookGoal[1]) > 0.003;
 
-    // The cores hang from the tilted camera; a dive then flies it into the front one.
-    const rest = stageCamera({ lookX: state.look[0], lookY: state.look[1] });
-    const anchor = stageCoreAnchor(rest, aspect, role);
-    const view = stageDiveCamera(rest, stageCore(0, anchor, aspect, role), state.dive.value);
+    // Reduce Motion: the window holds still, wherever the computers are.
+    const drift = effects.pulse ? stageIdleDrift(state.ambientS) : [0, 0];
+    const rest = reducedMotion
+      ? stageCamera()
+      : stageCamera({
+          lookX: state.look[0] + drift[0]!,
+          lookY: state.look[1] + drift[1]!,
+          pan: stageSwipePan(state.flow.value, count),
+        });
+    const view = stageDiveCamera(rest, state.dive.value);
     camera.position.set(view.position[0], view.position[1], view.position[2]);
     camera.lookAt(view.target[0], view.target[1], view.target[2]);
     camera.updateMatrixWorld();
 
-    // Each drawn computer's orbs: evenly spaced, springing to make room when
-    // one comes or goes (a content change: it draws until they settle and
-    // starts no ambient motion), travelling only on the orbit clock.
-    let settling = false;
-    const cores: StageCoreFrame[] = [];
-    const rings = new Map<string, StageOrbTrack[]>();
-    state.probe = null;
-    for (const index of stageDrawnScreens(selected, count)) {
-      const look = screens[index];
-      if (!look) continue;
-      const known = state.rings.get(look.key);
-      // A ring seen for the first time is drawn as it is, not grown into.
-      const tracked = trackStageOrbs(known ?? [], look.orbs, dt, {
-        orbitDt,
-        still: reducedMotion || !known,
-      });
-      rings.set(look.key, tracked.tracks);
-      if (tracked.moving) settling = true;
-      const offset = index - state.flow.value;
-      if (Math.abs(offset) >= STAGE_CORE_REACH) continue;
-      const core = stageCore(offset, anchor, aspect, role);
-      const orbs = tracked.tracks.map((track) => ({
-        key: track.key,
-        mark: track.mark,
-        point: stageRingPoint(core, stageOrbAngle(track)),
-        presence: track.presence.value,
-        leaving: track.leaving,
-      }));
-      cores.push({ core, look, orbs });
-      if (index === selected)
-        state.probe = {
-          look: [state.look[0], state.look[1]],
-          core,
-          orbs: orbs.filter((orb) => !orb.leaving),
-        };
-    }
-    state.rings = rings;
-
     // A completion flares the motes; Reduce Motion keeps them still.
     state.burst = effects.pulse ? Math.max(0, state.burst - dt * 0.6) : 0;
     world.update({
-      camera,
-      cores,
       timeS: effects.pulse ? state.ambientS : 0,
       burst: effects.pulse ? state.burst : 0,
       motes: effects.particles,
       particleShare: effects.particleShare,
       pulse: effects.pulse,
-      breathe: effects.orbit,
-      fullGlow: effects.fullGlow,
     });
     // Fiber's loop never resets the renderer's counters: the log counts per frame.
     if (stagePerf) (gl as unknown as WebGPURenderer).info.reset();
@@ -380,7 +327,7 @@ export function StageRuntime(props: StageSceneProps) {
     // What this frame measured: its own work, and at the full rate also how
     // long the device took to come back for it. Content frames drawn once
     // are evidence of nothing.
-    if (!reducedMotion && (state.wasMoving || moving || settling || ambient)) {
+    if (!reducedMotion && (state.wasMoving || moving || ambient)) {
       const was = state.budget.quality;
       const next = recordStageFrame(state.budget, {
         nowMs: now,
@@ -401,13 +348,7 @@ export function StageRuntime(props: StageSceneProps) {
         triangles: render.triangles,
         quality: state.budget.quality,
         dpr: (gl as unknown as WebGPURenderer).getPixelRatio(),
-        pace: (touch || settling
-          ? 'touch'
-          : moving
-            ? 'glide'
-            : ambient
-              ? 'idle'
-              : 'content') satisfies Pace,
+        pace: (touch ? 'touch' : moving ? 'glide' : ambient ? 'idle' : 'content') satisfies Pace,
       });
     }
     state.wasMoving = moving;
@@ -416,8 +357,8 @@ export function StageRuntime(props: StageSceneProps) {
 
     stopTimer();
     if (paused) return;
-    if (moving || settling) {
-      const interval = touch || settling ? effects.frameIntervalMs : effects.glideIntervalMs;
+    if (moving) {
+      const interval = touch ? effects.frameIntervalMs : effects.glideIntervalMs;
       if (interval > 0)
         state.timer = setTimeout(invalidate, Math.max(0, interval - (performance.now() - now)));
       else {

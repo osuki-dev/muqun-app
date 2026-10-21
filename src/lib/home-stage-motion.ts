@@ -7,7 +7,7 @@
 export type StageSpring = { value: number; velocity: number };
 export type StageSpringConfig = { stiffness: number; damping: number; mass?: number };
 
-/** The card move: about 420 ms to rest (design §11.3, spring per §7). */
+/** The camera's pan between computers: about 420 ms to rest (design §11.3, spring per §7). */
 export const STAGE_CARD_SPRING: StageSpringConfig = { stiffness: 160, damping: 18 };
 const SUBSTEP_S = 1 / 240;
 /** A frame that stalls (backgrounding, a GC) is stepped as at most this much time. */
@@ -48,9 +48,8 @@ export function stageSpringAtRest(spring: StageSpring, target: number): boolean 
 /**
  * The ladder the stage steps down when it cannot hold its frame budget:
  * `reduced` halves the particles and renders at a lower pixel ratio; `low`
- * drops the particles, stills the cores (no orbits, no breathing), draws
- * their glow in fewer, smaller layers, renders at 1x and caps every frame at
- * 30 fps; `static` is the 2.5D composition
+ * drops the particles, renders at 1x and caps every frame at 30 fps;
+ * `static` is the same layout drawn flat, without parallax
  * (§5, §11.7). It never climbs back within a session: a device that ran hot
  * once will again, and flapping costs more than it saves.
  */
@@ -140,17 +139,13 @@ export function recordStageFrame(
 }
 
 export type StageEffects = {
-  /** Whether the WebGPU scene runs at all; false draws the static 2.5D stage. */
+  /** Whether the WebGPU scene runs at all; false draws the static stage. */
   gpu: boolean;
   /** The motes or a theme's ambient particles; still under Reduce Motion, but still drawn. */
   particles: boolean;
   /** The share of the particles drawn. */
   particleShare: number;
-  /** The agents' orbits and a working core's breathing glow; still at `low` and under Reduce Motion. */
-  orbit: boolean;
-  /** The cores' halos and the orbs' glows at full size, or fewer and smaller (`low`). */
-  fullGlow: boolean;
-  /** The hero's bob and the motes' drift. Off under Reduce Motion. */
+  /** The idle drift, the hero's bob and the motes' drift. Off under Reduce Motion. */
   pulse: boolean;
   tilt: boolean;
   /** The highest pixel ratio the scene renders at. */
@@ -159,7 +154,7 @@ export type StageEffects = {
   frameIntervalMs: number;
   /** ...while only something indirect moves: tilt easing in, a completion's flare. */
   glideIntervalMs: number;
-  /** Idle frame interval (20 fps) for the pulse, bob and drift, or null when nothing moves. */
+  /** Idle frame interval (20 fps) for the drift, bob and particles, or null when nothing moves. */
   idleIntervalMs: number | null;
 };
 
@@ -175,8 +170,6 @@ export function stageEffects(
     gpu,
     particles: gpu && !low,
     particleShare: quality === 'full' ? 1 : 0.5,
-    orbit: gpu && !low && !calm,
-    fullGlow: !low,
     pulse: !calm,
     tilt: !calm,
     maxDpr: quality === 'full' ? 1.5 : quality === 'reduced' ? 1.25 : 1,
@@ -189,14 +182,13 @@ export function stageEffects(
 // -- Idle policy ------------------------------------------------------------
 
 /**
- * How long the ambient motion (the motes' drift, the hero's bob, the working
- * pulse, a theme's ambient effect) keeps running at the idle rate after the
- * last interaction. Past it the scene holds its last frame and draws nothing
- * until an interaction starts the window again: a drag, a swipe, tilt, a
- * dive, a completion's flare, coming back to Home or a new theme. A change to
- * what the scene shows (an agent's state, a status, a texture) draws one frame
- * and leaves the window alone, so live agent status arriving every few
- * seconds does not keep a phone left on Home animating.
+ * How long the ambient motion (the camera's idle drift, the motes, the
+ * hero's bob, a theme's ambient effect) keeps running at the idle rate after
+ * the last interaction. Past it the scene holds its last frame and draws
+ * nothing until an interaction starts the window again: a drag, a swipe,
+ * tilt, a dive, a completion's flare, coming back to Home or a new theme. A
+ * change to what the scene shows (a texture, the layout) draws one frame and
+ * leaves the window alone.
  */
 export const STAGE_AMBIENT_IDLE_MS = 6000;
 

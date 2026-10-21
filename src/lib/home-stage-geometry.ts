@@ -1,82 +1,57 @@
 /**
  * Geometry of the Stage Home layout, the "depth window": the phone is a
- * window into the theme's world, built as layers at real depths -- the
- * wallpaper far away, a painting's sky band, a haze in the theme's colour,
- * the figure or inset picture, one glowing core per computer in a
- * cover-flow (its agents orbiting it on a ring), and an edge-only wallpaper
- * as the nearest frame. Pure math shared by the GPU scene, the static 2.5D
- * stage and the 2D HUD's projected hit areas and chips, so all three agree.
+ * window into the theme's own world, built from its pictures at real depths
+ * -- the wallpaper far away, a painting's sky band, a haze in the theme's
+ * colour, the figure or inset picture, and an edge-only wallpaper as the
+ * nearest frame. Nothing foreign stands in it: the depth is the art's. Tilt,
+ * a swipe between computers and a slow idle drift move the camera sideways,
+ * so each layer slides by its depth. Pure math shared by the GPU scene, the
+ * static stage and the 2D HUD's hit areas, so all three agree.
  */
 import {
   containedImageRect,
   coveredImageRect,
   editorialArtworkRect,
-  homeCoverSceneRect,
-  HOME_COVER_BOTTOM_FEATHER_START,
   HOME_HERO_FEATHER,
 } from './hero-feather';
-import type { StageRole } from './home-stage-layers';
 
 export type StageVec3 = readonly [number, number, number];
 
 export const STAGE_CAMERA_FOV = 38;
-/** Cores drawn at once; with more computers the ones nearest the selection are drawn. */
-export const STAGE_MAX_SCREENS = 8;
 
-/** Layer depths, in world units in front of the camera. */
-export const STAGE_BACKDROP_DEPTH = 60;
-export const STAGE_HAZE_DEPTH = 30;
+/**
+ * Layer depths, in world units in front of the camera. A sideways camera
+ * move slides a layer on screen by the inverse of its depth, so these set
+ * the parallax: the wallpaper least, the painting and the hero in between,
+ * the frame (and the nearest ambient particles) most.
+ */
+export const STAGE_BACKDROP_DEPTH = 48;
+export const STAGE_PAINTING_DEPTH = 28;
+export const STAGE_HAZE_DEPTH = 22;
 export const STAGE_HERO_DEPTH = 16;
-export const STAGE_CORE_DEPTH = 12;
-export const STAGE_FRAME_DEPTH = 3.2;
-/** Cover layers are this much larger than the view, so tilt never shows their edges. */
+export const STAGE_FRAME_DEPTH = 10;
+/** Cover layers are this much larger than the view, so the camera's moves never show their edges. */
 export const STAGE_BACKDROP_OVERSCAN = 1.22;
-export const STAGE_FRAME_OVERSCAN = 1.12;
+export const STAGE_FRAME_OVERSCAN = 1.2;
+/** The painting's band is this much wider than the view, for the same reason. */
+export const STAGE_PAINTING_OVERSCAN = 1.08;
 
-/** Cores further than this from the selection (in cores) are not drawn. */
-export const STAGE_CORE_REACH = 1.7;
-/** A drag across the full stage width moves this many cores (the sketch's 220 pt of 390). */
+/** A drag across the full stage width moves this many computers. */
 export const STAGE_DRAG_SPAN = 390 / 220;
 
-const YAW_MAX = (5 * Math.PI) / 180;
-const PITCH_MAX = (3.5 * Math.PI) / 180;
+/**
+ * How far the camera moves, in world units: at full tilt (on a phone about
+ * 12 pt of hero parallax, 4 pt of wallpaper and 20 pt of frame) and over the
+ * whole pan between computers (about 11 pt of hero, 17 pt of frame). The
+ * frame's overscan covers both at once.
+ */
+const LOOK_SHIFT_X = 0.16;
+const LOOK_SHIFT_Y = 0.1;
+const PAN_SHIFT = 0.14;
+/** A dive brings the camera this share of the way to the hero's plane. */
+const DIVE_SHARE = 0.38;
+const CAMERA_HEIGHT = 0.6;
 const CAMERA_TARGET: StageVec3 = [0, -0.2, -20];
-/**
- * The cores' scale: the view's width at their depth, but never more than
- * 0.72 of its height, so a wide view keeps a phone's proportions.
- */
-const CORE_UNIT_HEIGHT_SHARE = 0.72;
-/** The front core's radius as a share of that unit: about 44 pt on a phone... */
-const CORE_RADIUS_SHARE = 0.115;
-/** ...its orbit ring this many core radii out... */
-export const STAGE_RING_SCALE = 2.05;
-/** ...and an agent orb's bright dot this many core radii across. */
-export const STAGE_ORB_SCALE = 0.16;
-/**
- * Where the front core's centre sits on screen, in NDC, and how large it is,
- * by role: always below the art's body (a figure's face and torso, an inset
- * picture, a painting's band) and above the session strip. With no art the
- * core is the scene, a little larger and higher.
- */
-const CORE_PLACE: Record<StageRole, { ndcY: number; scale: number }> = {
-  figure: { ndcY: -0.25, scale: 1 },
-  sky: { ndcY: -0.2, scale: 1 },
-  inset: { ndcY: -0.2, scale: 1 },
-  world: { ndcY: -0.1, scale: 1.2 },
-};
-/** A neighbour core stands this share of the unit aside, peeking in at the edge... */
-const CORE_SIDE_SPREAD = 0.62;
-/** ...this much further back, and this much smaller. */
-const CORE_SIDE_DEPTH = 2.2;
-const CORE_SIDE_SCALE = 0.62;
-/** How close a dive brings the camera to the front core, in core radii. */
-const DIVE_STANDOFF_RADII = 5;
-/**
- * The ring's plane: level, its far side raised 15 degrees towards the camera
- * and rolled 7 degrees, so it reads as an orbit seen from a little above.
- */
-const RING_RAISE = (15 * Math.PI) / 180;
-const RING_ROLL = (-7 * Math.PI) / 180;
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, Number.isFinite(value) ? value : 0));
@@ -94,32 +69,21 @@ export function stageViewSize(distance: number, aspect: number): { width: number
   return { width: height * aspect, height };
 }
 
-/**
- * Which computers get a core: all of them up to `STAGE_MAX_SCREENS`, else
- * the contiguous run around the selection.
- */
-export function stageDrawnScreens(selected: number, count: number): number[] {
-  if (count <= 0) return [];
-  const size = Math.min(count, STAGE_MAX_SCREENS);
-  const first = clamp(Math.round(selected) - Math.floor(size / 2), 0, count - size);
-  return Array.from({ length: size }, (_, index) => first + index);
-}
-
 /** The direction (+1 next, -1 previous) a swipe that ends at `translationX` moves. */
 export function stageSwipeStep(translationX: number, velocityX: number, width: number): number {
   'worklet';
   const distance = width > 0 ? Math.abs(translationX) / width : 0;
   const fast = Math.abs(velocityX) > 520;
   if (distance < 0.1 && !fast) return 0;
-  // Dragging left brings the next core forward.
+  // Dragging left brings the next computer.
   const direction = fast && Math.sign(velocityX) !== 0 ? velocityX : translationX;
   return direction < 0 ? 1 : -1;
 }
 
 /**
- * Where a horizontal drag that ends at `translationX` settles: the core the
- * drag has brought nearest the front, or at least one step towards the pull
- * when the drag was long or fast enough. Never past either end.
+ * Where a horizontal drag that ends at `translationX` settles: the computer
+ * the drag has pulled nearest, or at least one step towards the pull when
+ * the drag was long or fast enough. Never past either end.
  */
 export function stageSwipeTarget(
   selected: number,
@@ -136,11 +100,35 @@ export function stageSwipeTarget(
   return Math.max(0, Math.min(count - 1, target));
 }
 
-/** The fractional selection while a finger drags the cores, with a little give at both ends. */
+/** The fractional selection while a finger drags between computers, with a little give at both ends. */
 export function stageDragPosition(selected: number, count: number, dragX: number): number {
   'worklet';
   const position = selected - dragX * STAGE_DRAG_SPAN;
   return Math.max(-0.35, Math.min(Math.max(0, count - 1) + 0.35, position));
+}
+
+/**
+ * The camera's pan (-1..1) for a fractional selection `flow`: each computer
+ * looks into the world from its own place along one sideways track, the
+ * first from the left and the last from the right, a step apart (a whole
+ * `PAN_SHIFT` when there are few, less when there are many), so a swipe
+ * travels the camera continuously across the layers. One computer: no pan.
+ */
+export function stageSwipePan(flow: number, count: number): number {
+  if (count <= 1 || !Number.isFinite(flow)) return 0;
+  const step = Math.min(1, 2 / (count - 1));
+  return clamp((flow - (count - 1) / 2) * step, -1, 1);
+}
+
+/**
+ * The idle drift: a slow figure of eight the camera traces while the
+ * ambient window runs, as a look (-1..1 per axis) added to the tilt.
+ * `timeS` is the ambient clock, so the drift holds where it is when the
+ * window closes and goes on from there when it opens again.
+ */
+export function stageIdleDrift(timeS: number): [number, number] {
+  const t = Number.isFinite(timeS) ? timeS : 0;
+  return [Math.sin(t * 0.23) * 0.22, Math.sin(t * 0.17 + 1.1) * 0.14];
 }
 
 // -- Camera -----------------------------------------------------------------
@@ -153,49 +141,38 @@ export type StageCamera = {
 };
 
 /**
- * The window's camera. `lookX`/`lookY` (-1..1, from device tilt) turn it up
- * to 5 degrees of yaw and 3.5 of pitch, which slides the layers against each
- * other by their depth.
+ * The window's camera. `lookX`/`lookY` (-1..1, from device tilt and the
+ * idle drift) and `pan` (-1..1, a swipe between computers) move it
+ * sideways and up without turning it, so every layer slides by the inverse
+ * of its depth: a head moving at a window.
  */
 export function stageCamera({
   lookX = 0,
   lookY = 0,
-}: { lookX?: number; lookY?: number } = {}): StageCamera {
-  const yaw = clamp(lookX, -1, 1) * YAW_MAX;
-  const pitch = clamp(lookY, -1, 1) * PITCH_MAX;
+  pan = 0,
+}: { lookX?: number; lookY?: number; pan?: number } = {}): StageCamera {
+  const dx = clamp(lookX, -1, 1) * LOOK_SHIFT_X + clamp(pan, -1, 1) * PAN_SHIFT;
+  const dy = clamp(lookY, -1, 1) * LOOK_SHIFT_Y;
   return {
-    position: [Math.sin(yaw) * 4, 0.6 + Math.sin(pitch) * 3, 0],
-    target: CAMERA_TARGET,
+    position: [dx, CAMERA_HEIGHT + dy, 0],
+    target: [CAMERA_TARGET[0] + dx, CAMERA_TARGET[1] + dy, CAMERA_TARGET[2]],
     fov: STAGE_CAMERA_FOV,
   };
 }
 
 /**
- * `camera` flown (`dive` 0..1) to just in front of `core`, looking at it:
- * the core's glow fills the view as its computer opens.
+ * `camera` pushed in (`dive` 0..1) towards the middle of the hero's plane:
+ * the art comes closer as a computer or an agent opens.
  */
-export function stageDiveCamera(
-  camera: StageCamera,
-  core: { position: StageVec3; radius: number },
-  dive: number
-): StageCamera {
+export function stageDiveCamera(camera: StageCamera, dive: number): StageCamera {
   const t = clamp(dive, 0, 1);
   if (t === 0) return camera;
-  const anchor = core.position;
+  const anchor = stageRayPoint(camera, [0, 0], STAGE_HERO_DEPTH, 1);
   const [px, py, pz] = camera.position;
-  const dx = anchor[0] - px;
-  const dy = anchor[1] - py;
-  const dz = anchor[2] - pz;
-  const length = Math.hypot(dx, dy, dz) || 1;
-  const back = Math.min(1, (core.radius * DIVE_STANDOFF_RADII) / length);
-  const near: StageVec3 = [anchor[0] - dx * back, anchor[1] - dy * back, anchor[2] - dz * back];
+  const share = DIVE_SHARE * t;
   return {
-    position: [lerp(px, near[0], t), lerp(py, near[1], t), lerp(pz, near[2], t)],
-    target: [
-      lerp(camera.target[0], anchor[0], t),
-      lerp(camera.target[1], anchor[1], t),
-      lerp(camera.target[2], anchor[2], t),
-    ],
+    position: [lerp(px, anchor[0], share), lerp(py, anchor[1], share), lerp(pz, anchor[2], share)],
+    target: camera.target,
     fov: camera.fov,
   };
 }
@@ -252,145 +229,27 @@ export function stageLayerCentre(depth: number): StageVec3 {
   return stageRayPoint(rest, [0, 0], depth, 1);
 }
 
-// -- Cores ------------------------------------------------------------------
-//
-// One luminous core per computer, its agents orbiting it as orbs on a thin
-// ring. The front core sits below the art's body; its neighbours stand aside,
-// smaller and further back, peeking in at the view's edges.
-
-/** Where the selected core's centre sits for `role`: below the art, above the session strip. */
-export function stageCoreAnchor(camera: StageCamera, aspect: number, role: StageRole): StageVec3 {
-  return stageRayPoint(camera, [0, CORE_PLACE[role].ndcY], STAGE_CORE_DEPTH, aspect);
-}
-
-/** The cores' scale at their depth, in world units (`CORE_UNIT_HEIGHT_SHARE`). */
-function coreUnit(aspect: number): number {
-  const view = stageViewSize(STAGE_CORE_DEPTH, aspect);
-  return Math.min(view.width, view.height * CORE_UNIT_HEIGHT_SHARE);
-}
-
-export type StageCore = {
-  /** The core's centre, which is also its ring's. */
-  position: StageVec3;
-  radius: number;
-  ringRadius: number;
-  /** The bright dot of an agent orb on this core's ring. */
-  orbRadius: number;
-  /** 0 for the selected core, 1 for a neighbour or further. */
-  side: number;
-};
-
-/**
- * The cover-flow: the core `offset` places from the (fractional) selection.
- * The selected core is about a ninth of the view's width across (at the
- * role's size); a neighbour stands 0.62 of the width aside -- half off the
- * screen -- 2.2 units further back at 0.62 of the size. Everything between
- * is interpolated, so a drag moves the cores continuously.
- */
-export function stageCore(
-  offset: number,
-  anchor: StageVec3,
-  aspect: number,
-  role: StageRole
-): StageCore {
-  const unit = coreUnit(aspect);
-  const side = Math.min(Math.abs(offset), 1);
-  const radius = unit * CORE_RADIUS_SHARE * CORE_PLACE[role].scale * lerp(1, CORE_SIDE_SCALE, side);
-  return {
-    position: [
-      anchor[0] + offset * unit * CORE_SIDE_SPREAD,
-      anchor[1],
-      anchor[2] - CORE_SIDE_DEPTH * side,
-    ],
-    radius,
-    ringRadius: radius * STAGE_RING_SCALE,
-    orbRadius: radius * STAGE_ORB_SCALE,
-    side,
-  };
-}
-
-/**
- * The ring's plane as two unit axes: `across` (angle 0, to the right) and
- * `far` (a quarter turn on, away from the camera and up). Angles increase
- * from the right round the back, so the near side is at three quarters.
- */
-export const STAGE_RING_AXES: { across: StageVec3; far: StageVec3 } = {
-  across: [Math.cos(RING_ROLL), Math.sin(RING_ROLL), 0],
-  far: [
-    -Math.sin(RING_RAISE) * Math.sin(RING_ROLL),
-    Math.sin(RING_RAISE) * Math.cos(RING_ROLL),
-    -Math.cos(RING_RAISE),
-  ],
-};
-
-/** The point at `angle` (radians) on `core`'s ring. */
-export function stageRingPoint(core: StageCore, angle: number): StageVec3 {
-  const { across, far } = STAGE_RING_AXES;
-  const c = Math.cos(angle) * core.ringRadius;
-  const s = Math.sin(angle) * core.ringRadius;
-  return [
-    core.position[0] + across[0] * c + far[0] * s,
-    core.position[1] + across[1] * c + far[1] * s,
-    core.position[2] + across[2] * c + far[2] * s,
-  ];
-}
-
-/**
- * The on-screen box of a core with its ring and orbs, clipped to the view:
- * what a tap on the computer covers. Not visible when none of it is on screen.
- */
-export function stageCoreRect(
-  core: StageCore,
-  camera: StageCamera,
-  viewportWidth: number,
-  viewportHeight: number
-): StageRect {
-  let left = Infinity;
-  let top = Infinity;
-  let right = -Infinity;
-  let bottom = -Infinity;
-  const take = (point: StageVec3, pad: number) => {
-    const at = projectStagePoint(point, camera, viewportWidth, viewportHeight);
-    if (at.depth <= 1e-3) return;
-    const scale = pad * (viewportHeight / stageViewSize(at.depth, 1).height);
-    left = Math.min(left, at.x - scale);
-    right = Math.max(right, at.x + scale);
-    top = Math.min(top, at.y - scale);
-    bottom = Math.max(bottom, at.y + scale);
-  };
-  take(core.position, core.radius);
-  for (let step = 0; step < 16; step += 1)
-    take(stageRingPoint(core, (step / 16) * Math.PI * 2), core.orbRadius * 2);
-  const depth = projectStagePoint(core.position, camera, viewportWidth, viewportHeight).depth;
-  if (!Number.isFinite(left)) return { x: 0, y: 0, width: 0, height: 0, depth, visible: false };
-  const x = Math.max(0, left);
-  const y = Math.max(0, top);
-  const w = Math.min(viewportWidth, right) - x;
-  const h = Math.min(viewportHeight, bottom) - y;
-  return w > 0 && h > 0
-    ? { x, y, width: w, height: h, depth, visible: true }
-    : { x: 0, y: 0, width: 0, height: 0, depth, visible: false };
-}
-
 // -- Theme layers ------------------------------------------------------------
 //
-// The theme's pictures are laid out in points over the resting view, the way
-// the 2D Home lays them out on its page, then hung in the world at their
-// depth (`stageWorldRect`): what the author framed for the 2D Home is what
-// the window shows at rest, and tilt only slides the layers by their depth.
+// The theme's pictures are laid out in points over the resting view -- the
+// art filling it from under the computer's name down to the HUD's foot rows
+// (the agents, the sessions, the composer) -- then hung in the world at
+// their depth (`stageWorldRect`): what is laid out here is what the window
+// shows at rest, and the camera's moves only slide the layers by depth.
 
-/** The view in points, and the safe area's top inset the HUD starts below. */
-export type StageViewport = { width: number; height: number; inset: number };
+/**
+ * The view in points: the safe area's top inset the HUD starts below, and
+ * the `floor`, where the HUD's foot rows start (the agents' row, then the
+ * sessions and the composer). The art reaches down to it and fades out
+ * behind them.
+ */
+export type StageViewport = { width: number; height: number; inset: number; floor: number };
 /** A box in points from the view's top-left corner. */
 export type StageBox = { x: number; y: number; width: number; height: number };
 /** A plane's window into its texture, 0..1 from the top left; may reach past either end. */
 export type StageUvWindow = { x: number; y: number; width: number; height: number };
 
-/** The sky role's painting hangs just in front of the backdrop... */
-export const STAGE_PAINTING_DEPTH = 56;
-/** ...with just enough overscan that tilt never shows its sides. */
-export const STAGE_PAINTING_OVERSCAN = 1.08;
-/** The painting's band starts this far above the view, so tilt never shows its top edge. */
+/** The painting's band starts this far above the view, so the camera never shows its top edge. */
 const PAINTING_BLEED_PT = 12;
 /**
  * The HUD, in points below the safe area's top: the computer's name row ends
@@ -402,21 +261,31 @@ const HUD_NAME_LINE_PT = 36;
 export const STAGE_HUD_BOTTOM_PT = 96;
 /** A hint chip and its leader are about this tall: a hint never rises into the HUD. */
 const HINT_CLEARANCE_PT = 44;
-/** The cover box tucks under the name as Editorial's cover art overlaps its title: by 35 %. */
+/** The figure's box tucks under the name as Editorial's cover art overlaps its title: by 35 %. */
 const COVER_BOX_TOP_PT = HUD_NAME_BOTTOM_PT - HUD_NAME_LINE_PT * 0.35;
-/** The standard band sits just below the HUD. */
-const INSET_BOX_TOP_PT = STAGE_HUD_BOTTOM_PT + 8;
-/** Classic's standard band fades its cut-out's foot from here. */
+/** An inset picture keeps this far from the HUD above it and the foot rows below it. */
+const INSET_GAP_PT = 8;
+/** An inset cut-out's foot fades from this share of its box. */
 const INSET_FADE_FROM = 0.72;
+/**
+ * The art runs this far past the floor, behind the foot rows, and fades out
+ * from about this far above it: it stands on the HUD's foot rather than
+ * ending in a line above it.
+ */
+const ART_FOOT_PT = 36;
+const ART_FADE_PT = 52;
+/**
+ * A picture fitted whole may grow this much past the view's width (cropping
+ * its sides at the focal point) when that fills more of the art's height: a
+ * wide figure or inset picture, a short sky painting.
+ */
+const FIGURE_ZOOM = 1.3;
+const INSET_ZOOM = 1.22;
+const SKY_ZOOM = 1.5;
 
-/** The 2D cover box's height for a view `width` points wide (`homeCoverArtworkHeight`). */
-export function stageCoverBoxHeight(width: number): number {
-  return Math.min(640, Math.max(0, width) * 0.9);
-}
-
-/** The 2D standard band's height for a view `width` points wide (Editorial's). */
-export function stageInsetBoxHeight(width: number): number {
-  return Math.min(280, Math.max(0, width) / 2);
+/** Where the HUD's foot rows start when the layout has not said: about a phone's. */
+export function stageDefaultFloor(height: number): number {
+  return Math.max(0, height) * 0.74;
 }
 
 /** The world plane at `depth` that the resting camera sees as `box`. */
@@ -471,6 +340,31 @@ function ratioOf(aspect: number): { width: number; height: number } {
   return { width: Number.isFinite(aspect) && aspect > 0 ? aspect : 1, height: 1 };
 }
 
+const unit = (value: number) => clamp(value, 0, 1);
+
+/**
+ * `aspect` fitted whole into `box` -- or, when it is wider than the box,
+ * grown up to `zoom` times the box's width while it fits the box's height,
+ * its sides cropped -- with the slack placed by `align` (0..1 per axis).
+ */
+function zoomedContain(
+  box: StageBox,
+  aspect: number,
+  zoom: number,
+  align: { x: number; y: number }
+): StageBox {
+  const ratio = Number.isFinite(aspect) && aspect > 0 ? aspect : 1;
+  const whole = Math.min(box.width, box.height * ratio);
+  const width = Math.max(whole, Math.min(box.width * zoom, box.height * ratio));
+  const height = width / ratio;
+  return {
+    x: box.x + (box.width - width) * unit(align.x),
+    y: box.y + (box.height - height) * unit(align.y),
+    width,
+    height,
+  };
+}
+
 /**
  * A cover-depth layer (the backdrop, the frame): a plane the size of the view
  * with `overscan`, and the picture fitted into it as CSS `object-fit` and
@@ -486,17 +380,16 @@ export function stageCoverLayer(
 ): { width: number; height: number; uv: StageUvWindow } {
   const view = stageViewSize(depth, aspect);
   const plane = { x: 0, y: 0, width: view.width * overscan, height: view.height * overscan };
-  const drawn = (layer.fit === 'contain' ? containedImageRect : coveredImageRect)(
-    plane,
-    ratioOf(layer.aspect),
-    layer.focal
-  );
+  const drawn =
+    layer.fit === 'contain'
+      ? containedImageRect(plane, ratioOf(layer.aspect), layer.focal)
+      : coveredImageRect(plane, ratioOf(layer.aspect), layer.focal);
   return { width: plane.width, height: plane.height, uv: stageUvWindow(plane, drawn) };
 }
 
-/** An artwork laid out in its 2D box, in points. */
+/** An artwork laid out in its box, in points. */
 export type StageArtPlacement = {
-  /** The 2D box the picture is fitted into. */
+  /** The box the picture is fitted into. */
   box: StageBox;
   /** The whole picture as fitted, which may reach past the box. */
   drawn: StageBox;
@@ -509,6 +402,10 @@ export type StageArtPlacement = {
   edges: { x: number; y: number };
 };
 
+/**
+ * `drawn` clipped to `box`, its foot fading from `fadeFrom` (in points) to
+ * the plane's foot, or not at all (null).
+ */
 function placeArt(
   box: StageBox,
   drawn: StageBox,
@@ -522,46 +419,73 @@ function placeArt(
     drawn,
     plane,
     uv: stageUvWindow(plane, drawn),
-    fade:
-      fadeFrom === null
-        ? { from: 2, to: 3 }
-        : { from: share(box.y + box.height * fadeFrom), to: share(box.y + box.height) },
+    fade: fadeFrom === null ? { from: 2, to: 3 } : { from: share(fadeFrom), to: 1 },
     edges,
   };
 }
 
 /**
- * The sky role's painting, framed as the 2D cover frames it
- * (`homeCoverSceneRect`: the full width at its natural height, the top kept)
- * in a band as wide as the view plus the painting's overscan and as tall as
- * the 2D cover box at that width, bleeding a little past the view's top. Its
- * foot fades from 68 % of the band into the wallpaper's base, as in 2D.
+ * Where a picture standing on the HUD's foot starts to fade: `ART_FADE_PT`
+ * above the floor when it reaches past it; one that ends short of it fades
+ * over as long a stretch above its own end (a short one over at most its
+ * last third).
+ */
+function footFadeFrom(drawn: StageBox, box: StageBox, floor: number): number {
+  const top = Math.max(drawn.y, box.y);
+  const bottom = Math.min(drawn.y + drawn.height, box.y + box.height);
+  const fade = Math.min(ART_FADE_PT + ART_FOOT_PT, (bottom - top) / 3);
+  return Math.max(top, Math.min(floor - ART_FADE_PT, bottom - fade));
+}
+
+/**
+ * The sky role's painting: a band across the top, as wide as the view plus
+ * the painting's overscan and bleeding a little past the view's top, that
+ * reaches down past the floor. The painting fills the band's width keeping
+ * its top; covered (or without a fit) it grows -- up to `SKY_ZOOM`, its
+ * sides cropped at the focal point -- until it reaches the floor, so the sky
+ * fills the window rather than leaving a band of wallpaper under it.
+ * Contained, it keeps its whole width. Its foot fades into the HUD's foot.
  */
 export function stagePaintingPlacement(
   painting: { aspect: number; fit?: string; focal: { x: number; y: number } },
   viewport: StageViewport
 ): StageArtPlacement {
   const width = viewport.width * STAGE_PAINTING_OVERSCAN;
+  const top = -PAINTING_BLEED_PT;
   const box = {
     x: (viewport.width - width) / 2,
-    y: -PAINTING_BLEED_PT,
+    y: top,
     width,
-    height: (width * stageCoverBoxHeight(viewport.width)) / Math.max(1, viewport.width),
+    height: Math.max(0, viewport.floor + ART_FOOT_PT - top),
   };
-  const drawn = within(
-    homeCoverSceneRect(box, ratioOf(painting.aspect), painting.fit, painting.focal),
-    box
-  );
-  return placeArt(box, drawn, HOME_COVER_BOTTOM_FEATHER_START, { x: 0, y: 0 });
+  const ratio = ratioOf(painting.aspect).width;
+  const natural = width / ratio;
+  const zoom =
+    painting.fit === 'contain' ? 1 : clamp(box.height / Math.max(1, natural), 1, SKY_ZOOM);
+  const drawnWidth = width * zoom;
+  const drawn = {
+    x: box.x + (width - drawnWidth) * unit(painting.focal.x),
+    y: top,
+    width: drawnWidth,
+    height: natural * zoom,
+  };
+  return placeArt(box, drawn, footFadeFrom(drawn, box, viewport.floor), { x: 0, y: 0 });
 }
 
 /**
  * The figure (a cover header's cut-out) or the inset picture (a standard
- * header's artwork), fitted into its 2D box as Editorial fits it
- * (`editorialArtworkRect`: contained at the focal point, or covered keeping
- * the top). The cover box is the view's width by the 2D cover's height,
- * tucked under the computer's name; the standard band is the 2D standard
- * band, just below the HUD.
+ * header's artwork).
+ *
+ * The figure's box is the view's width, from under the computer's name down
+ * past the floor. Contained, the figure stands on the box's foot at its
+ * focal x, as large as the box allows (a wide one up to `FIGURE_ZOOM` past
+ * the width); covered, it fills the box keeping its top, as Editorial's.
+ * Its feet fade into the HUD's foot.
+ *
+ * The inset picture is centred between the HUD and the floor, the view's
+ * width (a little more for a wide picture, `INSET_ZOOM`) unless that is
+ * taller than the room; a cut-out fades at its foot, a framed picture at
+ * every edge.
  */
 export function stageHeroPlacement(
   hero: {
@@ -573,21 +497,36 @@ export function stageHeroPlacement(
   },
   viewport: StageViewport
 ): StageArtPlacement {
-  const cover = hero.box === 'cover';
-  const box = {
-    x: 0,
-    y: viewport.inset + (cover ? COVER_BOX_TOP_PT : INSET_BOX_TOP_PT),
-    width: viewport.width,
-    height: cover ? stageCoverBoxHeight(viewport.width) : stageInsetBoxHeight(viewport.width),
-  };
-  const drawn = within(editorialArtworkRect(box, ratioOf(hero.aspect), hero.fit, hero.focal), box);
+  const ratio = ratioOf(hero.aspect).width;
+  if (hero.box === 'cover') {
+    const top = viewport.inset + COVER_BOX_TOP_PT;
+    const box = {
+      x: 0,
+      y: top,
+      width: viewport.width,
+      height: Math.max(0, viewport.floor + ART_FOOT_PT - top),
+    };
+    const drawn =
+      hero.fit === 'contain'
+        ? zoomedContain(box, ratio, FIGURE_ZOOM, { x: hero.focal.x, y: 1 })
+        : within(editorialArtworkRect(box, ratioOf(ratio), hero.fit, hero.focal), box);
+    return placeArt(box, drawn, footFadeFrom(drawn, box, viewport.floor), { x: 0, y: 0 });
+  }
+  const roomTop = viewport.inset + STAGE_HUD_BOTTOM_PT + INSET_GAP_PT;
+  const room = Math.max(0, viewport.floor - INSET_GAP_PT - roomTop);
+  const height = Math.min(room, (viewport.width / ratio) * INSET_ZOOM);
+  const box = { x: 0, y: roomTop + (room - height) / 2, width: viewport.width, height };
+  const drawn =
+    hero.fit === 'contain'
+      ? zoomedContain(box, ratio, INSET_ZOOM, { x: hero.focal.x, y: hero.focal.y })
+      : within(editorialArtworkRect(box, ratioOf(ratio), hero.fit, hero.focal), box);
   if (hero.feather === 'framed')
     return placeArt(box, drawn, null, {
       x: HOME_HERO_FEATHER.horizontal,
       y: HOME_HERO_FEATHER.vertical,
     });
-  const from = hero.feather === 'cover' ? HOME_COVER_BOTTOM_FEATHER_START : INSET_FADE_FROM;
-  return placeArt(box, drawn, from, { x: 0, y: 0 });
+  const plane = intersect(drawn, box);
+  return placeArt(box, drawn, plane.y + plane.height * INSET_FADE_FROM, { x: 0, y: 0 });
 }
 
 /** Where a tap starts a new task, and where its first-visit hint hangs, in points. */
@@ -596,8 +535,8 @@ export type StageHostTarget = { rect: StageBox; hint: { x: number; y: number } }
 /**
  * The new-task target, in every role: the figure's or inset picture's middle
  * (not its faded foot or a wide picture's sides); the painting's band below
- * the HUD; or, with no artwork, the open band between the HUD and the core.
- * The cores are nearer, so where they overlap a target they take the tap.
+ * the HUD down to where it fades; or, with no artwork, the world between the
+ * HUD and its foot rows.
  */
 export function stageHostTarget(
   art: { kind: 'hero' | 'painting'; placement: StageArtPlacement } | null,
@@ -614,29 +553,34 @@ export function stageHostTarget(
   const plane = art?.placement.plane;
   if (art?.kind === 'hero' && plane && plane.height > 0) {
     const width = Math.min(plane.width, plane.height * 0.6);
+    const top = Math.max(plane.y, hudBottom);
+    const body = plane.y + plane.height * Math.min(1, art.placement.fade.from);
     const rect = {
       x: plane.x + (plane.width - width) / 2,
-      y: plane.y,
+      y: top,
       width,
-      height: plane.height * Math.min(0.76, Math.max(0.3, art.placement.fade.from)),
+      height: Math.max(0, Math.min(body, viewport.floor) - top),
     };
     // On the chest: the chip hangs above its point, and must not cover the face.
-    return { rect, hint: hintAt(rect, 0.8) };
+    return { rect, hint: hintAt(rect, 0.6) };
   }
-  if (art?.kind === 'painting' && plane && plane.y + plane.height - hudBottom > 48) {
-    const rect = {
-      x: viewport.width * 0.06,
-      y: hudBottom,
-      width: viewport.width * 0.88,
-      height: plane.y + plane.height - hudBottom,
-    };
-    return { rect, hint: hintAt(rect, 0.45) };
+  if (art?.kind === 'painting' && plane) {
+    const body = plane.y + plane.height * Math.min(1, art.placement.fade.from);
+    if (body - hudBottom > 48) {
+      const rect = {
+        x: viewport.width * 0.06,
+        y: hudBottom,
+        width: viewport.width * 0.88,
+        height: body - hudBottom,
+      };
+      return { rect, hint: hintAt(rect, 0.45) };
+    }
   }
   const rect = {
     x: viewport.width * 0.1,
-    y: viewport.inset + INSET_BOX_TOP_PT,
+    y: hudBottom + INSET_GAP_PT,
     width: viewport.width * 0.8,
-    height: stageInsetBoxHeight(viewport.width),
+    height: Math.max(0, viewport.floor - INSET_GAP_PT - hudBottom - INSET_GAP_PT),
   };
   return { rect, hint: hintAt(rect, 0.5) };
 }
@@ -681,12 +625,3 @@ export function projectStagePoint(
     visible: Math.abs(ndcX) <= 1 && Math.abs(ndcY) <= 1,
   };
 }
-
-export type StageRect = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  depth: number;
-  visible: boolean;
-};
