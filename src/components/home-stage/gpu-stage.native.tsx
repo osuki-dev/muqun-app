@@ -10,6 +10,7 @@ import { useLatestReader } from '@/hooks/use-render-refs';
 import { createSceneLifetimes } from '@/lib/scene-lifetime';
 import { STAGE_CAMERA_FOV } from '@/lib/home-stage-geometry';
 import { stageEffects } from '@/lib/home-stage-motion';
+import { recordStageArtEvent } from '@/lib/stage-art-diagnostics';
 import { StageRuntime } from './stage-runtime';
 import type { StageSceneProps } from './types';
 
@@ -34,7 +35,7 @@ export default function GpuStage(props: StageSceneProps) {
       </MapErrorBoundary>
     )
   );
-  const fail = useEffectEvent(() => props.onError());
+  const fail = useEffectEvent((error?: unknown) => props.onError(error));
   const isPaused = useLatestReader(props.paused);
   const currentQuality = useLatestReader(props.quality);
 
@@ -82,6 +83,25 @@ export default function GpuStage(props: StageSceneProps) {
                 antialias: false,
                 depth: false,
               });
+              // three only logs these by default, and after a loss its render
+              // returns without drawing: the canvas would stay blank (or a
+              // layer whose upload ran out of memory missing) with nothing
+              // said. A loss falls back to the static stage; an out-of-memory
+              // error too, so the art is drawn while a fresh canvas waits for
+              // Home's next visit; anything else is logged.
+              renderer.onDeviceLost = (info: { message?: string; reason?: string | null }) =>
+                fail(new Error(`WebGPU device lost: ${info.reason ?? ''} ${info.message ?? ''}`));
+              // Typed as a message; three calls it with { api, type, message }.
+              renderer.onError = (info: unknown) => {
+                const { type, message } =
+                  typeof info === 'object' && info !== null
+                    ? (info as { type?: string; message?: string })
+                    : { type: undefined, message: String(info) };
+                const error = new Error(`${type ?? 'GPUError'}: ${message ?? ''}`);
+                if (type === 'GPUOutOfMemoryError') fail(error);
+                else
+                  recordStageArtEvent({ slot: 'stage', step: 'upload', status: 'failed', error });
+              };
               try {
                 await renderer.init();
               } catch (error) {
@@ -97,8 +117,8 @@ export default function GpuStage(props: StageSceneProps) {
                 try {
                   draw(scene, camera);
                   context.present();
-                } catch {
-                  fail();
+                } catch (error) {
+                  fail(error);
                 }
               };
               return renderer;

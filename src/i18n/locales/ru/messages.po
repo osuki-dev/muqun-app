@@ -132,6 +132,11 @@ msgstr "{0} (это устройство)"
 msgid "{0} did not upload. Retry it or remove it to send."
 msgstr "{0} не загружен. Повторите попытку или удалите его, чтобы отправить"
 
+#. placeholder {0}: events.length
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{0} events, newest first"
+msgstr ""
+
 #. placeholder {0}: failed.name
 #. placeholder {1}: uploadLimitMb(attachmentLimitBytes(failed))
 #: src/lib/attachments.ts
@@ -1321,6 +1326,7 @@ msgstr "Выбрать рабочее дерево"
 msgid "Classic"
 msgstr "Классический"
 
+#: src/app/settings-stage-diagnostics.tsx
 #: src/components/settings-storage.tsx
 msgid "Clear"
 msgstr "Очистить"
@@ -1861,6 +1867,7 @@ msgstr "Разговор"
 msgid "Conversational help and open-ended project questions."
 msgstr "Помощь в формате диалога и открытые вопросы о проекте"
 
+#: src/app/settings-stage-diagnostics.tsx
 #: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
@@ -1886,6 +1893,7 @@ msgid "Copies it, ready to paste into a terminal"
 msgstr "Копирует её, чтобы вставить в терминал"
 
 #: src/app/diagram-viewer.tsx
+#: src/app/settings-stage-diagnostics.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/settings-servers.tsx
 #: src/components/skia-terminal.tsx
@@ -4258,6 +4266,10 @@ msgstr "Пока нет сохранённых SSH-хостов"
 msgid "No SSH hosts yet. Add one to open a shell on any machine you can reach."
 msgstr "Пока нет SSH-хостов. Добавьте один, чтобы открыть shell на любой доступной машине"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "No Stage art events recorded yet."
+msgstr ""
+
 #: src/components/simfarm-stage.tsx
 msgid "No still frames"
 msgstr "Нет стоп-кадров"
@@ -6249,6 +6261,14 @@ msgstr "SSH-туннель через {host} разорван"
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Stage"
 msgstr "Сцена"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Stage diagnostics"
+msgstr ""
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Stage log copied"
+msgstr ""
 
 #: src/components/diff-rows.tsx
 msgid "Staged"

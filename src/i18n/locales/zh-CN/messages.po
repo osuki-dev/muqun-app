@@ -132,6 +132,11 @@ msgstr "{0}（本设备）"
 msgid "{0} did not upload. Retry it or remove it to send."
 msgstr "{0} 未能上传。重试或移除后再发送"
 
+#. placeholder {0}: events.length
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{0} events, newest first"
+msgstr ""
+
 #. placeholder {0}: failed.name
 #. placeholder {1}: uploadLimitMb(attachmentLimitBytes(failed))
 #: src/lib/attachments.ts
@@ -1321,6 +1326,7 @@ msgstr "选择工作树"
 msgid "Classic"
 msgstr "经典"
 
+#: src/app/settings-stage-diagnostics.tsx
 #: src/components/settings-storage.tsx
 msgid "Clear"
 msgstr "清除"
@@ -1861,6 +1867,7 @@ msgstr "对话"
 msgid "Conversational help and open-ended project questions."
 msgstr "对话式帮助，以及关于项目的开放式问题"
 
+#: src/app/settings-stage-diagnostics.tsx
 #: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
@@ -1886,6 +1893,7 @@ msgid "Copies it, ready to paste into a terminal"
 msgstr "复制命令，可直接粘贴到终端"
 
 #: src/app/diagram-viewer.tsx
+#: src/app/settings-stage-diagnostics.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/settings-servers.tsx
 #: src/components/skia-terminal.tsx
@@ -4258,6 +4266,10 @@ msgstr "尚未保存任何 SSH 主机"
 msgid "No SSH hosts yet. Add one to open a shell on any machine you can reach."
 msgstr "还没有 SSH 主机。添加一个，即可在任何能连上的机器上打开 shell"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "No Stage art events recorded yet."
+msgstr ""
+
 #: src/components/simfarm-stage.tsx
 msgid "No still frames"
 msgstr "不支持静态画面"
@@ -6249,6 +6261,14 @@ msgstr "通过 {host} 的 SSH 隧道已断开"
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Stage"
 msgstr "舞台"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Stage diagnostics"
+msgstr ""
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Stage log copied"
+msgstr ""
 
 #: src/components/diff-rows.tsx
 msgid "Staged"
