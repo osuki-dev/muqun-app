@@ -195,8 +195,6 @@ function blockProse(block: Block, bulletedAgent: boolean): string | undefined {
 const SPINNER_GLYPH = /^[✻✢✳✶✽✺✹✸✷✦*·◐◓◑◒⠁-⣿]\s*/;
 /** A status line: a short phrase, then its counters in parentheses. */
 const STATUS_PHRASE = /^(\p{L}[\p{L}'-]*(?:\s\p{L}[\p{L}'-]*){0,3}(?:…|\.\.\.)?)\s*(?:\((.*)\))?$/u;
-/** The elapsed time among a status line's counters (`12s`, `1m 5s`). */
-const ELAPSED = /\b(\d+h\s?\d+m|\d+m\s?\d+s|\d+[hms])\b/;
 /** A tool's own "still going" line under its call. */
 const STILL_RUNNING = /^(?:running|waiting|in progress)(?:…|\.\.\.)?$/i;
 /** A Claude Code call: its tool and argument, `Bash(bun test src)`. */
@@ -205,7 +203,9 @@ const CLAUDE_CALL = /^([A-Z][\w-]*(?:\s[\w-]+)?)\((.*?)\)?$/;
 /**
  * The agent's status line (`✻ Cogitating… (12s · ↑ 1.2k tokens · esc to
  * interrupt)`, Codex's `◦ Working (32s • esc to interrupt)`) as its phrase
- * and elapsed time: "Cogitating… 12s".
+ * alone: "Cogitating…". Its counters go: the screen is read every few
+ * seconds, so an elapsed time would stand still and then jump, and a line
+ * that changes every second is a redraw every read for nothing new.
  */
 function statusText(text: string): string | undefined {
   const line = text.trim().replace(BULLET, '').replace(SPINNER_GLYPH, '');
@@ -216,8 +216,7 @@ function statusText(text: string): string | undefined {
   // A gerund with an ellipsis is a spinner; anything else must say it can be interrupted.
   if (!/(?:…|\.\.\.)$/.test(phrase) && !AT_WORK.test(counters)) return undefined;
   if (STATUS.test(phrase)) return undefined;
-  const elapsed = ELAPSED.exec(counters)?.[1];
-  return elapsed ? `${phrase} ${elapsed}` : phrase;
+  return phrase;
 }
 
 /** A tool call block as one line: "Bash: bun test src", "Ran bun test src". */
@@ -259,7 +258,7 @@ function toolRunning(block: Block): boolean {
 /**
  * What the agent in a pane capture is doing right now, as one line: whichever
  * is newest on its screen in the current turn of its tool call ("Bash: bun
- * test src", "Ran bun test src"), its status line ("Cogitating… 12s") and its
+ * test src", "Ran bun test src"), its status line ("Cogitating…") and its
  * latest words. A call still running is what it is doing, even with the
  * status line drawn under it. Box chrome, footers and notices ("Update
  * available") are never it; `undefined` when the turn shows nothing.

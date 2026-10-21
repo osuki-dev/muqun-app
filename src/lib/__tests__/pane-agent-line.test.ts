@@ -246,7 +246,7 @@ describe('paneAgentActivity', () => {
       '✶ Pondering… (3m 4s · ↓ 2.1k tokens · esc to interrupt)',
       ...claudeComposer
     );
-    expect(paneAgentActivity(capture)).toBe('Pondering… 3m 4s');
+    expect(paneAgentActivity(capture)).toBe('Pondering…');
   });
 
   test('Claude Code: a finished call with no spinner is the newest thing', () => {
@@ -298,7 +298,7 @@ describe('paneAgentActivity', () => {
       '',
       '  100% context left · ? for shortcuts'
     );
-    expect(paneAgentActivity(capture)).toBe('Working 32s');
+    expect(paneAgentActivity(capture)).toBe('Working');
   });
 
   test('Codex: an edit with nothing after it, and a one-word group with its detail', () => {

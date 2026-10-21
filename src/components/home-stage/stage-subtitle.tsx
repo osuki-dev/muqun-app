@@ -19,7 +19,8 @@ import { useStageProgress } from './use-stage-overlay';
  * What a working agent on the selected computer last reported, as one or two
  * faint lines at the art's foot: "claude · running tests…". Nothing while no
  * agent reports anything. A new line replaces the old with a short
- * cross-fade, at most once every two seconds (`stageSubtitleStep`); the text
+ * cross-fade when the agent changes, and in place when the same agent says
+ * something new, at most once every two seconds (`stageSubtitleStep`); the text
  * is never animated otherwise, so an idle Stage runs nothing.
  */
 export function StageSubtitle({
@@ -62,13 +63,10 @@ export function StageSubtitle({
     report(visible);
   }, [visible]);
   useEffect(() => () => report(false), []);
-  // Keyed by its words: the old line fades out under the new one fading in.
+  // Keyed by its agent: a new agent's line fades in over the old one, and the
+  // same agent's next words replace its own in place, with no fade to redo.
   return shown.line ? (
-    <SubtitleLine
-      key={`${shown.line.key}\u0000${shown.line.text}`}
-      serverId={serverId}
-      line={shown.line}
-    />
+    <SubtitleLine key={shown.line.key} serverId={serverId} line={shown.line} />
   ) : null;
 }
 
