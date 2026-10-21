@@ -2,9 +2,10 @@ import type { SharedValue } from 'react-native-reanimated';
 import type { Texture } from 'three/webgpu';
 
 import type { StageAmbientColors } from '@/lib/home-stage-ambient';
+import type { StageHeroLayer, StageRole } from '@/lib/home-stage-layers';
 import type { StageQuality } from '@/lib/home-stage-motion';
 import type { ThemeEffects } from '@/theme/schema';
-import type { StageSceneColors, StageScreenLook, StageTextureSource } from './stage-scene';
+import type { StagePicture, StageSceneColors, StageScreenLook } from './stage-scene';
 
 /** Drag and tilt, written on the UI thread and read by the scene each frame. */
 export type StageInputs = {
@@ -44,12 +45,18 @@ export type StageSceneProps = {
   selected: number;
   colors: StageSceneColors;
   mode: 'light' | 'dark';
-  /** The deepest layer: a full painting or a full-scene wallpaper. */
-  backdrop: StageTextureSource | null;
-  /** A cut-out character floating in the middle. */
-  hero: StageTextureSource | null;
+  /** How the theme is presented; see `stageComposition`. */
+  role: StageRole;
+  /** The safe area's top inset, in points: the HUD, and the art tucked under it, start below it. */
+  inset: number;
+  /** The deepest layer: a full-scene wallpaper. */
+  backdrop: StagePicture | null;
+  /** The sky role's painting, a band across the top. */
+  painting: StagePicture | null;
+  /** The figure or the inset picture. */
+  hero: StagePicture<StageHeroLayer> | null;
   /** An edge-only wallpaper as the nearest layer. */
-  frame: StageTextureSource | null;
+  frame: StagePicture | null;
   faces: Texture | null;
   /**
    * The theme's ambient effect for the current light or dark variant, as the

@@ -15,8 +15,10 @@ import { stageTextureFromPixels, type StageTextureSource } from './stage-scene';
 
 /** The longest edge a picture is shrunk to before its clear pixels are counted. */
 const MEASURE_EDGE = 128;
-/** Clear shares already measured, per picture: a theme's pictures are measured once. */
-const clearShares = new Map<string, number>();
+/** What measuring a picture finds: its clear share (0..1) and its width over its height. */
+export type StagePictureFacts = { clear: number; aspect: number };
+/** Pictures already measured: a theme's pictures are measured once. */
+const measuredFacts = new Map<string, StagePictureFacts>();
 
 /**
  * The share of `image` that is (near-)transparent, counted on a small copy:
@@ -63,25 +65,31 @@ function measureClear(image: SkImage): number {
 
 /**
  * How much of the picture at `uri` is clear (0..1), which decides the layer
- * it becomes: `null` while it loads, `undefined` for no picture or one that
- * failed to load.
+ * it becomes, and its shape, which lays it out: `null` while it loads,
+ * `undefined` for no picture or one that failed to load.
  */
-export function useStageClearShare(uri: string | undefined): number | null | undefined {
-  const known = uri ? clearShares.get(uri) : undefined;
+export function useStagePictureFacts(
+  uri: string | undefined
+): StagePictureFacts | null | undefined {
+  const known = uri ? measuredFacts.get(uri) : undefined;
   const [failed, setFailed] = useState<string | null>(null);
   const image = useSharedSkiaImage(known === undefined ? uri : undefined, () =>
     setFailed(uri ?? null)
   );
-  const [measured, setMeasured] = useState<{ uri: string; clear: number } | null>(null);
+  const [measured, setMeasured] = useState<{ uri: string; facts: StagePictureFacts } | null>(null);
   useEffect(() => {
-    if (!uri || !image || clearShares.has(uri)) return;
-    const clear = measureClear(image);
-    clearShares.set(uri, clear);
-    setMeasured({ uri, clear });
+    if (!uri || !image || measuredFacts.has(uri)) return;
+    const height = image.height();
+    const facts = {
+      clear: measureClear(image),
+      aspect: height > 0 ? image.width() / height : 1,
+    };
+    measuredFacts.set(uri, facts);
+    setMeasured({ uri, facts });
   }, [image, uri]);
   if (!uri || failed === uri) return undefined;
   if (known !== undefined) return known;
-  return measured?.uri === uri ? measured.clear : null;
+  return measured?.uri === uri ? measured.facts : null;
 }
 
 /**

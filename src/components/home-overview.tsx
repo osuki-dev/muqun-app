@@ -1243,10 +1243,17 @@ export function HomeOverview({
           chosenServerId={launchController.chosen?.serverId}
           connectionStatuses={connectionStatuses}
           recentEntries={recentEntries}
-          artworkUri={hasEditorialArtwork ? editorialArtworkResolution?.source : undefined}
-          artworkFocal={
-            hasEditorialArtwork ? editorialArtworkResolution?.resolved.image.focalPoint : undefined
+          artwork={
+            hasEditorialArtwork && editorialArtworkResolution
+              ? {
+                  uri: editorialArtworkResolution.source,
+                  fit: editorialArtworkResolution.resolved.image.fit,
+                  focal: editorialArtworkResolution.resolved.image.focalPoint,
+                  opacity: editorialArtworkResolution.resolved.image.opacity,
+                }
+              : undefined
           }
+          coverHeader={coverHeader}
           paused={!isFocused || !appActive}
           topInset={insets.top}
           dockHeight={dock && composerRevealed ? dockHeight : insets.bottom}

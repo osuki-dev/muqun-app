@@ -25,7 +25,7 @@ import {
   type StageDegradeState,
   type StageSpring,
 } from '@/lib/home-stage-motion';
-import { createStageScene, type StagePaneFrame, type StageTextureSource } from './stage-scene';
+import { createStageScene, type StagePaneFrame, type StagePicture } from './stage-scene';
 import type { StageSceneProps } from './types';
 
 type Motion = {
@@ -73,7 +73,10 @@ export function StageRuntime(props: StageSceneProps) {
     selected,
     colors,
     mode,
+    role,
+    inset,
     backdrop,
+    painting,
     hero,
     frame,
     faces,
@@ -141,22 +144,32 @@ export function StageRuntime(props: StageSceneProps) {
   });
   useEffect(() => applyTheme(), [world, themeKey, scene, gl]);
   useEffect(() => {
-    world.setViewport(aspect);
+    world.setViewport({ width: size.width, height: size.height, inset });
     wake();
-  }, [world, aspect]);
-  const backdropKey = sourceKey(backdrop);
+  }, [world, size.width, size.height, inset]);
+  useEffect(() => {
+    world.setRole(role);
+    wake();
+  }, [world, role]);
+  const backdropKey = pictureKey(backdrop);
   const applyBackdrop = useEffectEvent(() => {
     world.setBackdrop(backdrop);
     wake();
   });
   useEffect(() => applyBackdrop(), [world, backdropKey]);
-  const heroKey = sourceKey(hero);
+  const paintingKey = pictureKey(painting);
+  const applyPainting = useEffectEvent(() => {
+    world.setPainting(painting);
+    wake();
+  });
+  useEffect(() => applyPainting(), [world, paintingKey]);
+  const heroKey = pictureKey(hero);
   const applyHero = useEffectEvent(() => {
     world.setHero(hero);
     wake();
   });
   useEffect(() => applyHero(), [world, heroKey]);
-  const frameKey = sourceKey(frame);
+  const frameKey = pictureKey(frame);
   const applyFrame = useEffectEvent(() => {
     world.setFrame(frame);
     wake();
@@ -320,8 +333,8 @@ export function StageRuntime(props: StageSceneProps) {
   return <primitive object={world.root} />;
 }
 
-/** A texture source by value: its texture, shape and focal point. */
-function sourceKey(source: StageTextureSource | null): string {
-  if (!source) return '';
-  return `${source.texture.uuid}:${source.aspect}:${source.focal?.x ?? ''}:${source.focal?.y ?? ''}`;
+/** A layer by value: its texture and how the theme asks for it to be drawn. */
+function pictureKey(picture: StagePicture | null): string {
+  if (!picture) return '';
+  return `${picture.texture.uuid}:${JSON.stringify(picture.layer)}`;
 }

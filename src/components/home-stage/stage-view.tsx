@@ -3,6 +3,18 @@ import { useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { PressableScale, Text, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
 import { Image } from 'expo-image';
+import {
+  Blur,
+  Canvas,
+  Group,
+  LinearGradient,
+  Mask,
+  Rect,
+  RoundedRect,
+  Image as SkiaImage,
+  rect,
+  vec,
+} from 'react-native-skia';
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { Platform, StyleSheet, TurboModuleRegistry, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -27,16 +39,24 @@ import {
   projectStagePoint,
   stageCamera,
   stageDrawnScreens,
-  stageHero,
+  stageHeroPlacement,
+  stageHostTarget,
+  stagePaintingPlacement,
   stagePane,
   stagePaneAnchor,
   stageQuadRect,
   stageSwipeTarget,
+  STAGE_HERO_DEPTH,
+  STAGE_PAINTING_DEPTH,
   STAGE_PANE_REACH,
+  type StageArtPlacement,
   type StageRect,
+  type StageViewport,
 } from '@/lib/home-stage-geometry';
+import { heroFeatherGeometry } from '@/lib/hero-feather';
 import { hasSeenStageHints, markStageHintsSeen } from '@/lib/home-stage-hints';
-import { stageLayers, type StageLayers } from '@/lib/home-stage-layers';
+import type { StageComposition, StageLayer } from '@/lib/home-stage-layers';
+import { useSharedSkiaImage } from '@/lib/skia-image-cache';
 import { useAppSettings } from '@/stores/app-settings';
 import {
   stageEffects,
@@ -45,31 +65,32 @@ import {
   type StageQuality,
 } from '@/lib/home-stage-motion';
 import { stageStreakLines, type StagePanel } from '@/lib/home-stage-panels';
-import type { StageScreenLook, StageTextureSource } from './stage-scene';
+import type { StagePicture, StageScreenLook } from './stage-scene';
 import { useStageFaces } from './stage-faces';
-import { useStageClearShare, useStageTexture, type StageTextureState } from './stage-textures';
+import { useStageTexture, type StageTextureState } from './stage-textures';
 import { createStageBridge, type StageInputs } from './types';
 
 // An older binary, or web, keeps the static stage without evaluating the native module.
 const GpuStage = lazy(() => import('./gpu-stage'));
 
-/** Texture caps: the cover layers fill the screen; the hero stands at most half its height. */
+/** Texture caps: the cover layers fill the screen; the art stands at most half its height. */
 const COVER_MAX_EDGE = 2048;
 const HERO_MAX_EDGE = 1536;
+/** Under a sky painting the wallpaper is only a faint base: a smaller texture does. */
+const BASE_MAX_EDGE = 1024;
 /** The camera's flight into the front pane before its workspace opens. */
 const DIVE_MS = 520;
-
-type Focal = { x: number; y: number };
 
 export type StageViewProps = {
   panels: readonly StagePanel[];
   selectedIndex: number;
-  /** `home.wallpaper` (else `shell.wallpaper`): the backdrop, or the frame when only edges. */
+  /** Which picture is which layer, and how each is drawn (`useStageComposition`). */
+  composition: StageComposition;
+  /** The pictures the theme's reskin waits for. */
   wallpaperUri?: string;
-  wallpaperFocal?: Focal;
-  /** `home.artwork`: the hero when a cut-out, else the backdrop. */
   artworkUri?: string;
-  artworkFocal?: Focal;
+  /** The safe area's top inset, in points: the HUD starts below it. */
+  inset: number;
   /** Home is not on screen or the app is in the background: no frames. */
   paused: boolean;
   /** Bumped when a task completes. */
@@ -91,10 +112,10 @@ export type StageViewProps = {
 export function StageView({
   panels,
   selectedIndex,
+  composition,
   wallpaperUri,
-  wallpaperFocal,
   artworkUri,
-  artworkFocal,
+  inset,
   paused,
   burst,
   onSelect,
@@ -130,45 +151,31 @@ export function StageView({
     [dragX, dragY, dragging, settle, tiltX, tiltY]
   );
 
-  // Which picture becomes which layer is decided by the pictures' own alpha.
-  const artworkClear = useStageClearShare(artworkUri);
-  const wallpaperClear = useStageClearShare(wallpaperUri);
-  const layers = stageLayers({
-    artwork:
-      artworkUri && artworkClear !== undefined ? { uri: artworkUri, clear: artworkClear } : null,
-    wallpaper:
-      wallpaperUri && wallpaperClear !== undefined
-        ? { uri: wallpaperUri, clear: wallpaperClear }
-        : null,
-  });
-  const focalOf = (uri: string | null) =>
-    uri === artworkUri ? artworkFocal : uri === wallpaperUri ? wallpaperFocal : undefined;
+  const { role } = composition;
   const dpr = Math.min(3, Math.max(1, window.scale));
   const coverEdge = Math.min(COVER_MAX_EDGE, Math.round(window.height * dpr));
   const heroEdge = Math.min(HERO_MAX_EDGE, Math.round(window.height * dpr * 0.6));
+  const gpuUri = (layer: StageLayer | null) => (effects.gpu ? layer?.uri : undefined);
   const backdropTexture = useStageTexture(
-    effects.gpu ? (layers.backdrop ?? undefined) : undefined,
-    coverEdge
+    gpuUri(composition.backdrop),
+    role === 'sky' ? Math.min(BASE_MAX_EDGE, coverEdge) : coverEdge
   );
-  const heroTexture = useStageTexture(
-    effects.gpu ? (layers.hero ?? undefined) : undefined,
-    heroEdge
-  );
-  const frameTexture = useStageTexture(
-    effects.gpu ? (layers.frame ?? undefined) : undefined,
-    coverEdge
-  );
+  const paintingTexture = useStageTexture(gpuUri(composition.painting), coverEdge);
+  const heroTexture = useStageTexture(gpuUri(composition.hero), heroEdge);
+  const frameTexture = useStageTexture(gpuUri(composition.frame), coverEdge);
   // A reskin holds its cover until the layers are chosen and their textures are in (or failed).
   const settled =
-    layers.ready &&
+    composition.ready &&
     (!effects.gpu ||
-      [backdropTexture, heroTexture, frameTexture].every((state) => state.status !== 'loading'));
+      [backdropTexture, paintingTexture, heroTexture, frameTexture].every(
+        (state) => state.status !== 'loading'
+      ));
   useThemeRenderReady(artworkUri, settled);
   useThemeRenderReady(wallpaperUri, settled);
-  const backdropFocal = focalOf(layers.backdrop);
-  const backdrop = withFocal(readySource(backdropTexture), backdropFocal);
-  const frame = withFocal(readySource(frameTexture), focalOf(layers.frame));
-  const hero = readySource(heroTexture);
+  const backdrop = pictureOf(backdropTexture, composition.backdrop);
+  const painting = pictureOf(paintingTexture, composition.painting);
+  const hero = pictureOf(heroTexture, composition.hero);
+  const frame = pictureOf(frameTexture, composition.frame);
   const drawn = stageDrawnScreens(selectedIndex, panels.length);
   const faces = useStageFaces(panels, effects.gpu ? drawn : [], {
     text: theme.colors.text,
@@ -289,13 +296,12 @@ export function StageView({
     ]
   );
 
-  const targets = useStageTargets(
-    panels.length,
-    selectedIndex,
-    hero?.aspect ?? (layers.hero ? 0.75 : null),
-    size.width,
-    size.height
+  const viewport = useMemo(
+    () => ({ width: size.width, height: size.height, inset }),
+    [size.width, size.height, inset]
   );
+  const art = useStageArt(composition, viewport);
+  const targets = useStageTargets(panels.length, selectedIndex, art, viewport);
 
   return (
     <GestureDetector gesture={gesture}>
@@ -316,7 +322,10 @@ export function StageView({
                 selected={selectedIndex}
                 colors={colors}
                 mode={resolvedMode}
+                role={role}
+                inset={inset}
                 backdrop={backdrop}
+                painting={painting}
                 hero={hero}
                 frame={frame}
                 faces={faces.atlas}
@@ -338,8 +347,8 @@ export function StageView({
           <StaticStage
             panels={panels}
             targets={targets}
-            layers={layers}
-            backdropFocal={backdropFocal}
+            composition={composition}
+            art={art}
             dragY={dragY}
             tiltX={tiltX}
             tiltY={tiltY}
@@ -438,8 +447,6 @@ type StageTarget =
   | {
       kind: 'host';
       rect: StageRect;
-      /** The whole picture, for the static stage to draw. */
-      art: StageRect;
       hint: { x: number; y: number };
     }
   | {
@@ -450,57 +457,74 @@ type StageTarget =
       hint: { x: number; y: number };
     };
 
-function readySource(state: StageTextureState): StageTextureSource | null {
-  return state.status === 'ready' ? state.source : null;
+/** A layer's texture once it is in, with how the theme asks for it to be drawn. */
+function pictureOf<L extends StageLayer>(
+  state: StageTextureState,
+  layer: L | null
+): StagePicture<L> | null {
+  return state.status === 'ready' && layer ? { texture: state.source.texture, layer } : null;
 }
 
-/** A texture with the theme's focal point. */
-function withFocal(
-  source: StageTextureSource | null,
-  focal: Focal | undefined
-): StageTextureSource | null {
-  return source && focal ? { ...source, focal } : source;
+/** The artwork laid out over the view, as the GPU scene lays it out; null for none. */
+type StageArt = {
+  kind: 'hero' | 'painting';
+  layer: StageLayer;
+  placement: StageArtPlacement;
+  /** A framed picture dissolves at every edge rather than at its foot. */
+  framed: boolean;
+} | null;
+
+function useStageArt(composition: StageComposition, viewport: StageViewport): StageArt {
+  const { hero, painting } = composition;
+  return useMemo(() => {
+    if (viewport.width <= 0 || viewport.height <= 0) return null;
+    if (hero)
+      return {
+        kind: 'hero',
+        layer: hero,
+        placement: stageHeroPlacement(hero, viewport),
+        framed: hero.feather === 'framed',
+      };
+    if (painting)
+      return {
+        kind: 'painting',
+        layer: painting,
+        placement: stagePaintingPlacement(painting, viewport),
+        framed: false,
+      };
+    return null;
+  }, [hero, painting, viewport]);
 }
 
 /**
- * Every 3D target's resting box on screen, far to near (so the nearer one
- * wins a tap): the hero when there is one (`heroAspect`), and the panes the
- * cover-flow shows around the selection.
+ * Every target's resting box on screen, far to near (so the nearer one wins
+ * a tap): the new-task host -- the figure, the painting's band or, with no
+ * artwork, the open band above the panes -- and the panes the cover-flow
+ * shows around the selection.
  */
 function useStageTargets(
   count: number,
   selectedIndex: number,
-  heroAspect: number | null,
-  width: number,
-  height: number
+  art: StageArt,
+  viewport: StageViewport
 ): StageTarget[] {
   return useMemo(() => {
+    const { width, height } = viewport;
     if (width <= 0 || height <= 0) return [];
     const aspect = width / height;
     const camera = stageCamera();
-    const targets: StageTarget[] = [];
-    if (heroAspect !== null) {
-      const hero = stageHero(heroAspect, aspect);
-      // Only the figure's middle takes taps, not its faded feet or a wide picture's sides.
-      const [x, y, z] = hero.position;
-      // On the figure's shoulders rather than above its head: the head reaches
-      // up to the HUD's header, and the hint must stay clear of it.
-      const hint = projectStagePoint([x, y + hero.height * 0.32, z], camera, width, height);
-      targets.push({
+    const host = stageHostTarget(art, viewport);
+    const targets: StageTarget[] = [
+      {
         kind: 'host',
-        rect: stageQuadRect(
-          [x, y + hero.height * 0.12, z],
-          Math.min(hero.width, hero.height * 0.6),
-          hero.height * 0.76,
-          0,
-          camera,
-          width,
-          height
-        ),
-        art: stageQuadRect(hero.position, hero.width, hero.height, 0, camera, width, height),
-        hint: { x: hint.x, y: hint.y },
-      });
-    }
+        rect: {
+          ...host.rect,
+          depth: art?.kind === 'painting' ? STAGE_PAINTING_DEPTH : STAGE_HERO_DEPTH,
+          visible: host.rect.width > 0 && host.rect.height > 0,
+        },
+        hint: host.hint,
+      },
+    ];
     const anchor = stagePaneAnchor(camera, aspect);
     for (const index of stageDrawnScreens(selectedIndex, count)) {
       const offset = index - selectedIndex;
@@ -526,7 +550,7 @@ function useStageTargets(
       });
     }
     return targets.sort((a, b) => b.rect.depth - a.rect.depth);
-  }, [count, selectedIndex, heroAspect, width, height]);
+  }, [count, selectedIndex, art, viewport]);
 }
 
 /**
@@ -643,24 +667,25 @@ function StageHint({ text, at }: { text: string; at: { x: number; y: number } })
 }
 
 /**
- * The 2.5D stage: the same layers flat -- backdrop, hero, the frame, the
- * panes at their projected places -- with only parallax for motion. Drawn
- * without WebGPU, after a lost device, or as a slow device's last degrade
- * step.
+ * The 2.5D stage: the same roles flat -- the wallpaper at its authored fit,
+ * focal point and opacity, the painting's band or the figure in its box with
+ * the same fades, the frame, the panes at their projected places -- with
+ * only parallax for motion. Drawn without WebGPU, after a lost device, or as
+ * a slow device's last degrade step.
  */
 function StaticStage({
   panels,
   targets,
-  layers,
-  backdropFocal,
+  composition,
+  art,
   dragY,
   tiltX,
   tiltY,
 }: {
   panels: readonly StagePanel[];
   targets: readonly StageTarget[];
-  layers: StageLayers;
-  backdropFocal?: Focal;
+  composition: StageComposition;
+  art: StageArt;
   dragY: SharedValue<number>;
   tiltX: SharedValue<number>;
   tiltY: SharedValue<number>;
@@ -685,58 +710,28 @@ function StaticStage({
     unknown: theme.colors.textDisabled,
     warning: theme.colors.warning,
   } as const;
+  const { backdrop, frame } = composition;
   return (
     <View
       style={[StyleSheet.absoluteFill, { backgroundColor: theme.colors.background }]}
       pointerEvents="none"
       accessible={false}
       importantForAccessibility="no-hide-descendants">
-      {layers.backdrop ? (
-        <Animated.View style={[styles.bleed, far]}>
-          <Image
-            source={{ uri: layers.backdrop }}
-            contentFit="cover"
-            contentPosition={
-              backdropFocal
-                ? { left: `${backdropFocal.x * 100}%`, top: `${backdropFocal.y * 100}%` }
-                : 'center'
-            }
-            cachePolicy="memory"
-            accessible={false}
-            style={StyleSheet.absoluteFill}
-          />
+      <Animated.View style={[styles.bleed, far]}>
+        {backdrop ? <StaticWallpaper layer={backdrop} /> : null}
+      </Animated.View>
+      {art?.kind === 'painting' ? (
+        <Animated.View style={[StyleSheet.absoluteFill, far]}>
+          <StaticArt art={art} />
         </Animated.View>
       ) : null}
-      <Animated.View style={[StyleSheet.absoluteFill, near]}>
-        {targets.map((target) =>
-          target.kind === 'host' && target.rect.visible && layers.hero ? (
-            <Image
-              key="host"
-              source={{ uri: layers.hero }}
-              contentFit="contain"
-              cachePolicy="memory"
-              accessible={false}
-              style={{
-                position: 'absolute',
-                left: target.art.x,
-                top: target.art.y,
-                width: target.art.width,
-                height: target.art.height,
-              }}
-            />
-          ) : null
-        )}
-      </Animated.View>
-      {/* The frame sits between the hero and the panes: it never covers a pane's text. */}
-      {layers.frame ? (
-        <Image
-          source={{ uri: layers.frame }}
-          contentFit="cover"
-          cachePolicy="memory"
-          accessible={false}
-          style={[StyleSheet.absoluteFill, styles.frame]}
-        />
+      {art?.kind === 'hero' ? (
+        <Animated.View style={[StyleSheet.absoluteFill, near]}>
+          <StaticArt art={art} />
+        </Animated.View>
       ) : null}
+      {/* The frame sits between the art and the panes: it never covers a pane's text. */}
+      {frame ? <StaticWallpaper layer={frame} /> : null}
       <Animated.View style={[StyleSheet.absoluteFill, near]}>
         {targets.map((target) => {
           if (!target.rect.visible || target.kind === 'host') return null;
@@ -770,6 +765,70 @@ function StaticStage({
   );
 }
 
+/** A wallpaper as the 2D Home draws it: its fit, focal point (CSS object-position) and opacity. */
+function StaticWallpaper({ layer }: { layer: StageLayer }) {
+  return (
+    <Image
+      source={{ uri: layer.uri }}
+      contentFit={layer.fit === 'contain' ? 'contain' : 'cover'}
+      contentPosition={{ left: `${layer.focal.x * 100}%`, top: `${layer.focal.y * 100}%` }}
+      cachePolicy="memory"
+      accessible={false}
+      style={[StyleSheet.absoluteFill, { opacity: layer.opacity }]}
+    />
+  );
+}
+
+/** The painting's band or the figure in its box, clipped and faded as the GPU scene draws it. */
+function StaticArt({ art }: { art: NonNullable<StageArt> }) {
+  const image = useSharedSkiaImage(art.layer.uri);
+  const { plane, drawn, fade } = art.placement;
+  if (!image || plane.width <= 0 || plane.height <= 0) return null;
+  const feather = art.framed
+    ? heroFeatherGeometry({ container: { width: plane.width, height: plane.height } })
+    : null;
+  return (
+    <Canvas style={StyleSheet.absoluteFill}>
+      <Group clip={rect(plane.x, plane.y, plane.width, plane.height)}>
+        <Mask
+          mode="alpha"
+          mask={
+            feather ? (
+              <RoundedRect
+                x={plane.x + feather.mask.x}
+                y={plane.y + feather.mask.y}
+                width={feather.mask.width}
+                height={feather.mask.height}
+                r={feather.radius}
+                color="white">
+                <Blur blur={feather.blur} mode="decal" />
+              </RoundedRect>
+            ) : (
+              <Rect x={plane.x} y={plane.y} width={plane.width} height={plane.height}>
+                <LinearGradient
+                  start={vec(0, plane.y)}
+                  end={vec(0, plane.y + plane.height)}
+                  colors={['white', 'white', 'transparent']}
+                  positions={[0, Math.min(1, fade.from), Math.min(1, Math.max(fade.from, fade.to))]}
+                />
+              </Rect>
+            )
+          }>
+          <SkiaImage
+            image={image}
+            x={drawn.x}
+            y={drawn.y}
+            width={drawn.width}
+            height={drawn.height}
+            fit="fill"
+            opacity={art.layer.opacity}
+          />
+        </Mask>
+      </Group>
+    </Canvas>
+  );
+}
+
 const styles = StyleSheet.create({
   hit: { position: 'absolute' },
   hint: { position: 'absolute', alignItems: 'center' },
@@ -781,7 +840,6 @@ const styles = StyleSheet.create({
   },
   hintLeader: { width: 1, height: 14, opacity: 0.7 },
   bleed: { position: 'absolute', top: -12, bottom: -12, left: -12, right: -12 },
-  frame: { opacity: 0.95 },
   flatScreen: {
     position: 'absolute',
     borderWidth: 1,
