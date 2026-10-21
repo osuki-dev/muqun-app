@@ -13,6 +13,7 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useMinuteNow } from '@/hooks/use-minute-now';
 import { useTaskAge } from '@/hooks/use-task-age';
 import { agentStatusWord, connectionStatusDescription } from '@/i18n/labels';
@@ -144,6 +145,7 @@ function StageAgentChipView({
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
   const { resolvedMode } = useThemeMode();
   const tone =
     chip.mark === 'needs-you'
@@ -162,6 +164,8 @@ function StageAgentChipView({
       style={[
         styles.chip,
         {
+          // The theme's control corner, as every other chip and button wears.
+          borderRadius: profile.chrome.control,
           backgroundColor: withAlpha(theme.colors.surface, resolvedMode === 'light' ? 0.78 : 0.66),
           borderColor:
             chip.mark === 'needs-you'
@@ -201,7 +205,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     paddingHorizontal: 10,
-    borderRadius: (ROW_HEIGHT - 2) / 2,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
   },
