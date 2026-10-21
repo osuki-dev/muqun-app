@@ -138,7 +138,7 @@ import { useHomeThreads } from '@/stores/home-thread';
 import { homeThreadFactsNow } from '@/components/home-thread';
 import {
   homeThreadKey,
-  homeThreadTap,
+  homeThreadEnded,
   homeThreadTargetFromEntry,
   type HomeThreadTarget,
 } from '@/lib/home-thread';
@@ -1126,32 +1126,28 @@ export function HomeOverview({
     launchController.choose(serverId);
     void Haptics.selectionAsync();
   };
-  // A session card's tap makes it the dock's conversation, on its computer:
-  // the strip shows it and the next message is a follow-up there. A card the
-  // dock cannot talk to (a shell, an SSH host) opens as it always did, and so
-  // does the strip's Open.
-  const threadFor = (entry: HomeContinueEntry, nowMs: number) => {
+  // "Reply from Home" (a card's long-press menu): the dock's next message
+  // goes to that conversation, on its computer. Offered only for one on a
+  // paired computer that the dock can talk to now; a tap still opens it.
+  const replyTarget = (entry: HomeContinueEntry, nowMs: number) => {
     const target = homeThreadTargetFromEntry(
       entry,
       nowMs,
       (serverId) => useServerAgents.getState().byServer[serverId]
     );
-    // Only a paired computer has a dock to talk to it from, and only a
-    // conversation that has not ended can be talked to: else the card opens.
     return showDock &&
       target &&
       launchController.servers.some((s) => s.serverId === target.serverId) &&
-      homeThreadTap(target, homeThreadFactsNow(target)) === 'target'
+      !homeThreadEnded(target, homeThreadFactsNow(target))
       ? target
       : null;
   };
-  const threadable = (entry: HomeContinueEntry) => threadFor(entry, 0) !== null;
-  const targetThread = (entry: HomeContinueEntry): boolean => {
-    const target = threadFor(entry, Date.now());
-    if (!target) return false;
-    useHomeThreads.getState().tap(target);
+  const canReply = (entry: HomeContinueEntry) => replyTarget(entry, 0) !== null;
+  const replyFromHome = (entry: HomeContinueEntry) => {
+    const target = replyTarget(entry, Date.now());
+    if (!target) return;
+    useHomeThreads.getState().reply(target);
     targetComposer(target.serverId);
-    return true;
   };
   // The Stage strip marks the card the dock is talking to.
   const chosenThread = useHomeThreads((state) =>
@@ -1264,8 +1260,8 @@ export function HomeOverview({
             />
           ) : undefined
         }
-        onTarget={targetThread}
-        targetable={threadable}
+        canReply={canReply}
+        onReply={replyFromHome}
         onOpen={(command) => {
           // QA-only leaves already have read-only snapshots in the demo
           // detail sheet; never send them to a live agent workbench.
@@ -1374,8 +1370,9 @@ export function HomeOverview({
             router.push({ pathname: '/settings-servers', params: { serverId } })
           }
           threadKey={stageThreadKey}
+          canReply={canReply}
+          onReplySession={replyFromHome}
           onOpenSession={(entry) => {
-            if (targetThread(entry)) return;
             void commands.dispatch(homeContinueCommand(entry.destination));
           }}
           // The host starts a new task on the composer's computer, as Home's

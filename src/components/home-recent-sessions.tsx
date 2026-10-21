@@ -1,7 +1,7 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, PressableScale, Text, TextField } from '@osuki-dev/ui';
-import { NextIcon, DeleteIcon, CloseIcon } from '@/icons';
+import { NextIcon, DeleteIcon, CloseIcon, MessageSendIcon } from '@/icons';
 import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   AppState,
@@ -365,8 +365,8 @@ export function HomeRecentSessions({
   linkStyle,
   selectedPaneId,
   selectedAsid,
-  onTarget,
-  targetable,
+  canReply,
+  onReply,
   onOpen,
   query = '',
   pad = false,
@@ -383,13 +383,10 @@ export function HomeRecentSessions({
   linkStyle?: StyleProp<ViewStyle>;
   selectedPaneId?: string;
   selectedAsid?: string;
-  /**
-   * A tap makes the row the dock's conversation; `false` when it cannot be
-   * one (a shell, an SSH host), and the row opens instead.
-   */
-  onTarget?: (entry: HomeContinueEntry) => boolean;
-  /** Whether a tap targets the row; its long-press menu then offers to open it. */
-  targetable?: (entry: HomeContinueEntry) => boolean;
+  /** Whether Home's dock can talk to the row's conversation ("Reply from Home"). */
+  canReply?: (entry: HomeContinueEntry) => boolean;
+  /** "Reply from Home": the dock's next message goes to the row's conversation. */
+  onReply?: (entry: HomeContinueEntry) => void;
   /** Runs the row's Home command; see `homeContinueCommand`. */
   onOpen: (command: HomeCommand) => void;
   query?: string;
@@ -447,13 +444,8 @@ export function HomeRecentSessions({
             servers={servers}
             pad={pad}
             metaChars={metaChars}
-            onOpen={() => {
-              if (onTarget?.(entry)) return;
-              onOpen(homeContinueCommand(entry.destination));
-            }}
-            onOpenSession={
-              targetable?.(entry) ? () => onOpen(homeContinueCommand(entry.destination)) : undefined
-            }
+            onOpen={() => onOpen(homeContinueCommand(entry.destination))}
+            onReply={onReply && canReply?.(entry) ? () => onReply(entry) : undefined}
           />
         ))}
       </View>
@@ -516,7 +508,7 @@ function RecentSessionRow({
   selectedPaneId,
   selectedAsid,
   onOpen,
-  onOpenSession,
+  onReply,
 }: {
   entry: HomeContinueEntry;
   number: number;
@@ -529,8 +521,8 @@ function RecentSessionRow({
   selectedPaneId?: string;
   selectedAsid?: string;
   onOpen: () => void;
-  /** Where a tap targets the row for the dock, the menu still opens it. */
-  onOpenSession?: () => void;
+  /** The menu's "Reply from Home", where the dock can talk to the row. */
+  onReply?: () => void;
 }) {
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
@@ -805,17 +797,17 @@ function RecentSessionRow({
     );
   });
   const menuItems: AgentActionMenuItem[] = [];
-  if (onOpenSession) {
+  if (onReply) {
     menuItems.push({
-      id: 'open-session',
-      label: t`Open session`,
-      Icon: NextIcon,
+      id: 'reply',
+      label: t`Reply from Home`,
+      Icon: MessageSendIcon,
       disabled: deleting,
       onPress: () => {
         setMenu(null);
-        onOpenSession();
+        onReply();
       },
-      testID: 'home-recent-open-session',
+      testID: 'home-recent-reply',
     });
   }
   if (menu?.canDelete) {

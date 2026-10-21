@@ -611,6 +611,14 @@ export function HomeComposerDock({
   const injectDraftRef = useRef<DraftInjector | null>(null);
   /** Empties the field if it still holds what a failed row just sent. */
   const clearDraftRef = useRef<((text: string) => void) | null>(null);
+  // "Reply from Home" on a card: the field takes focus to write the reply.
+  const focusRequest = useHomeThreads((state) => state.focusRequest);
+  const seenFocusRequest = useRef(focusRequest);
+  useEffect(() => {
+    if (focusRequest === seenFocusRequest.current) return;
+    seenFocusRequest.current = focusRequest;
+    injectDraftRef.current?.('', { focusOnly: true });
+  }, [focusRequest]);
 
   /**
    * Never a session without a model on an agent that takes one, whatever
@@ -798,7 +806,8 @@ export function HomeComposerDock({
             if (agentRequestErrorDetail(failure).status === 404) {
               // The conversation is gone: the next Send starts a new one.
               const latest = useHomeThreads.getState().byServer[serverId];
-              if (latest && homeThreadKey(latest) === key) useHomeThreads.getState().end(latest);
+              if (latest && homeThreadKey(latest) === key)
+                useHomeThreads.getState().clear(serverId, latest);
               setError(t`That conversation has ended. Send again to start a new one.`);
               return false;
             }
@@ -1624,15 +1633,7 @@ export function HomeComposerDock({
   // The reply bar, joined to the field's top: where the next message goes.
   const replyBar = thread ? (
     <>
-      <HomeThreadFeed
-        target={thread}
-        enabled={focused && appActive && ready && selected}
-        // Right after the tap, the card opens as it did before; later, the
-        // undo alone says it ended.
-        onUntapped={(ended) => {
-          if (Date.now() - ended.setAtMs < UNTAPPED_OPEN_MS) onOpenThread?.(ended);
-        }}
-      />
+      <HomeThreadFeed target={thread} enabled={focused && appActive && ready && selected} />
       <HomeThreadBar
         target={thread}
         offline={target.kind !== 'ready'}
@@ -1847,8 +1848,6 @@ export function HomeComposerDock({
   );
 }
 
-/** How soon after a tap a card that turned out to have ended still opens as tapped. */
-const UNTAPPED_OPEN_MS = 10_000;
 /** How often a row bound to its session reads that session, while it waits or works. */
 const BOUND_SESSION_READ_MS = 5_000;
 /** How long after a session's last event its snapshot is read, so a burst costs one read. */

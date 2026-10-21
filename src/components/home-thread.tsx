@@ -1,7 +1,7 @@
 import { useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { PressableScale, Text, useThemeTokens } from '@osuki-dev/ui';
-import { useEffect, useEffectEvent, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useReducedMotion } from 'react-native-reanimated';
 
@@ -28,6 +28,7 @@ import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
 import { WS_EVENTS_CAPABILITY } from '@/lib/gateway-socket';
 import { gatewaySocketFor } from '@/lib/gateway-socket-runtime';
 import { goneSessionKey } from '@/lib/home-continue';
+import { sameComputer } from '@/lib/home-composer';
 import {
   applyHomeThreadEvent,
   EMPTY_HOME_THREAD_LIVE,
@@ -75,12 +76,9 @@ const PILL_RADIUS = 999;
 export function HomeThreadFeed({
   target,
   enabled,
-  onUntapped,
 }: {
   target: HomeThreadTarget;
   enabled: boolean;
-  /** A tapped card turned out to have ended: the tap was undone; open it as before. */
-  onUntapped?: (target: HomeThreadTarget) => void;
 }) {
   const key = homeThreadKey(target);
   const { serverId } = target;
@@ -92,7 +90,14 @@ export function HomeThreadFeed({
   const asid = target.kind === 'session' ? target.asid : undefined;
   useEffect(() => {
     if (!enabled || !sessionId || !asid) return;
-    const owns = () => useGatewayConnectionStore.getState().record?.serverId === serverId;
+    // Reads and streams go through the selected computer: everything heard is
+    // dropped unless that is still the very connection this started on.
+    const owner = useGatewayConnectionStore.getState().record;
+    if (owner?.serverId !== serverId) return;
+    const owns = () => {
+      const now = useGatewayConnectionStore.getState().record;
+      return sameComputer(now, owner) && now?.deviceId === owner.deviceId;
+    };
     const current = useHomeThreadLive.getState();
     let live: HomeThreadLive = current.key === key ? current.live : EMPTY_HOME_THREAD_LIVE;
     let active = true;
@@ -220,19 +225,22 @@ export function HomeThreadFeed({
     ...(panes ? { panes } : {}),
     ...(task ? { task } : {}),
   });
-  const resolved = homeThreadResolved(target, task);
-  const untapped = useEffectEvent((ended: HomeThreadTarget) => onUntapped?.(ended));
   useEffect(() => {
     if (ended) {
-      if (useHomeThreads.getState().end(target) === 'untapped') untapped(target);
-    } else if (resolved !== target) useHomeThreads.getState().update(target, resolved);
-  }, [ended, resolved, target]);
+      useHomeThreads.getState().clear(target.serverId, target);
+      return;
+    }
+    // Store writes only on a real change: the resolved target replaces the
+    // stored one, so this does not run again for it.
+    const resolved = homeThreadResolved(target, task);
+    if (resolved !== target) useHomeThreads.getState().update(target, resolved);
+  }, [ended, target, task]);
   return null;
 }
 
 /**
  * What the stores say right now about whether `target` has ended, for a
- * decision taken outside render (a card tap).
+ * decision taken outside render ("Reply from Home" on a card).
  */
 export function homeThreadFactsNow(target: HomeThreadTarget): HomeThreadFacts {
   const { serverId } = target;

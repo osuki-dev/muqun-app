@@ -305,47 +305,6 @@ export function homeThreadEnded(target: HomeThreadTarget, facts: HomeThreadFacts
   return false;
 }
 
-/**
- * What a tap on a session card does: make it the target only when the dock
- * can talk to it now; otherwise open it as before, leaving the current
- * target alone. A tap never clears the target.
- */
-export function homeThreadTap(
-  target: HomeThreadTarget | null,
-  facts: HomeThreadFacts
-): 'target' | 'open' {
-  return target && !homeThreadEnded(target, facts) ? 'target' : 'open';
-}
-
-/** A card tap and the target it replaced (`null`: there was none). */
-export type HomeThreadTap = { tapped: HomeThreadTarget; previous: HomeThreadTarget | null };
-
-/**
- * The record a tap leaves. Taps in a row remember what was there before the
- * first of them, so undoing the last does not land on another tapped card.
- */
-export function homeThreadTapped(
-  current: HomeThreadTarget | undefined,
-  tap: HomeThreadTap | undefined,
-  tapped: HomeThreadTarget
-): HomeThreadTap {
-  const previous = current ?? null;
-  return { tapped, previous: tap && tap.tapped === previous ? tap.previous : previous };
-}
-
-/**
- * What follows when the target's conversation ends. A tapped target the
- * reader has not written to gives back the target it replaced (a tap never
- * leaves the dock with less than it had); anything else just goes.
- */
-export function homeThreadEndOutcome(
-  ended: HomeThreadTarget,
-  tap: HomeThreadTap | undefined
-): { next: HomeThreadTarget | null; untapped: boolean } {
-  if (tap && tap.tapped === ended && !ended.lastSent) return { next: tap.previous, untapped: true };
-  return { next: null, untapped: false };
-}
-
 /** The persisted `{ [serverId]: target }`, dropping anything malformed. */
 export function parseHomeThreads(
   value: string | null | undefined

@@ -4704,7 +4704,6 @@ msgid "Open quick actions"
 msgstr "빠른 동작 열기"
 
 #: src/components/agent-tool-card.tsx
-#: src/components/home-recent-sessions.tsx
 msgid "Open session"
 msgstr "세션 열기"
 
@@ -5476,6 +5475,11 @@ msgstr "키 교체"
 #: src/components/audio-asset-preview.tsx
 msgid "Replay audio"
 msgstr "오디오 다시 재생"
+
+#: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Reply from Home"
+msgstr "홈에서 답장"
 
 #: src/components/home-composer-dock.tsx
 msgid "Reply to {threadAgentName}…"

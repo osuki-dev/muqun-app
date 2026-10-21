@@ -4704,7 +4704,6 @@ msgid "Open quick actions"
 msgstr "開啟快速動作"
 
 #: src/components/agent-tool-card.tsx
-#: src/components/home-recent-sessions.tsx
 msgid "Open session"
 msgstr "開啟工作階段"
 
@@ -5476,6 +5475,11 @@ msgstr "取代金鑰"
 #: src/components/audio-asset-preview.tsx
 msgid "Replay audio"
 msgstr "重播音訊"
+
+#: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Reply from Home"
+msgstr "在主畫面回覆"
 
 #: src/components/home-composer-dock.tsx
 msgid "Reply to {threadAgentName}…"
