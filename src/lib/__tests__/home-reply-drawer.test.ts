@@ -26,6 +26,15 @@ describe('replyDrawerHeights', () => {
 });
 
 describe('replyDrawerSettle', () => {
+  test('from full, a partway drag down rests at the peek, further down closes', () => {
+    // Dragged down from full (700) and let go nearer the peek than full.
+    expect(replyDrawerSettle({ height: 500, velocityY: 0, heights })).toBe('peek');
+    // Past the midpoint between the peek and shut.
+    expect(replyDrawerSettle({ height: 180, velocityY: 0, heights })).toBe('closed');
+    // A flick down from full stops at the peek on the way, never past it.
+    expect(replyDrawerSettle({ height: 650, velocityY: 1500, heights })).toBe('peek');
+  });
+
   test('a slow release rests at the nearest snap', () => {
     expect(replyDrawerSettle({ height: 380, velocityY: 0, heights })).toBe('peek');
     expect(replyDrawerSettle({ height: 620, velocityY: 0, heights })).toBe('full');

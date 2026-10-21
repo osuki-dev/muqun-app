@@ -85,6 +85,7 @@ import {
   replyDrawerHeights,
   replyDrawerRubberBand,
   replyDrawerSettle,
+  REPLY_DRAWER_OPEN_SNAP,
   replyDrawerSnapHeight,
   type ReplyDrawerSnap,
 } from '@/lib/home-reply-drawer';
@@ -155,7 +156,8 @@ export function useHomeReplyDrawer({
   const heights = replyDrawerHeights({ windowHeight, topInset, field: clipHeight });
   const [snap, setSnap] = useState<ReplyDrawerSnap>('closed');
   /** Where it last rested open: its body keeps that height while it closes. */
-  const [resting, setResting] = useState<Exclude<ReplyDrawerSnap, 'closed'>>('peek');
+  const [resting, setResting] =
+    useState<Exclude<ReplyDrawerSnap, 'closed'>>(REPLY_DRAWER_OPEN_SNAP);
   /** The body is drawn: open, being dragged, or still settling shut. */
   const [mounted, setMounted] = useState(false);
   /** Visible height above the drawer's foot, keyboard aside. */
@@ -241,7 +243,7 @@ export function useHomeReplyDrawer({
 
   const begin = useStableHandler(() => {
     setMounted(true);
-    if (snap === 'closed') setSnap('peek');
+    if (snap === 'closed') setSnap(REPLY_DRAWER_OPEN_SNAP);
   });
   // The drawer's grabber and header always drag it. Its transcript scrolls
   // first (`scroll`, the list's own native scroll); `content` drags the drawer
@@ -271,7 +273,8 @@ export function useHomeReplyDrawer({
     gestures,
     contentAtTop,
     contentDragging,
-    show: () => settle('peek'),
+    /** Opens straight to full height; the peek is only a rest on a drag down. */
+    show: () => settle(REPLY_DRAWER_OPEN_SNAP),
     close: (after?: () => void) => {
       if (after) afterClose.current = after;
       settle('closed');
@@ -416,7 +419,7 @@ function useStateWord(state: HomeThreadState, offline: boolean) {
 /**
  * The dock's way into the conversation: a toolbar button beside the
  * attachment and options buttons, while there is a session or pane to show.
- * A tap raises the drawer to its peek, a long press opens the conversation in
+ * A tap raises the drawer to full height, a long press opens the conversation in
  * full. A small warm dot while it needs the reader.
  */
 export function HomeReplyButton({
