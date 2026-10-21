@@ -29,7 +29,6 @@ import { ThemeIcon } from '@/components/theme-icon';
 import { useStableHandler } from '@/hooks/use-render-refs';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { CloseIcon, NextIcon } from '@/icons';
-import { withAlpha } from '@/lib/color';
 import type { HomeContinueEntry } from '@/lib/home-continue';
 import { HOME_DOCK_OUTER_INSET } from '@/lib/home-pad-geometry';
 import {
@@ -181,14 +180,11 @@ export function StageSessionStrip({
     setWidths((all) => (all[key] === faceWidth ? all : { ...all, [key]: faceWidth }))
   );
   const surface = background(theme.colors.surface);
-  const idleBorder = withAlpha(theme.colors.text, 0.1);
-  const liveBorder = withAlpha(theme.colors.primary, 0.6);
   const raised = background(theme.colors.surfaceRaised);
   const face = (entry: HomeContinueEntry) => ({
+    // Borderless by design: the dock's conversation is marked by its accent
+    // title, and the Stage's chips and subtitle say who is working.
     backgroundColor: entry.key === menuKey ? raised : surface,
-    // The dock's conversation is marked by the turn's own accent title, which
-    // fades: a border swapped here would jump in a frame.
-    borderColor: entry.observation?.status === 'working' ? liveBorder : idleBorder,
     borderRadius: profile.chrome.card,
   });
 
@@ -249,7 +245,6 @@ export function StageSessionStrip({
               styles.moreOuter,
               {
                 backgroundColor: surface,
-                borderColor: idleBorder,
                 borderRadius: profile.chrome.card,
               },
             ]}>
@@ -520,7 +515,6 @@ const styles = StyleSheet.create({
     minHeight: CARD_HEIGHT[0],
     paddingHorizontal: 14,
     paddingVertical: CARD_PADDING[0],
-    borderWidth: StyleSheet.hairlineWidth,
     justifyContent: 'center',
   },
   face: { backfaceVisibility: 'hidden' },
@@ -531,11 +525,10 @@ const styles = StyleSheet.create({
   back: { position: 'absolute', left: 0, top: 0, bottom: 0 },
   moreOuter: {
     paddingHorizontal: 14,
-    borderWidth: StyleSheet.hairlineWidth,
     justifyContent: 'center',
   },
   moreCard: {
-    minHeight: CARD_HEIGHT[0] - 2 * StyleSheet.hairlineWidth,
+    minHeight: CARD_HEIGHT[0],
     paddingVertical: CARD_PADDING[0],
     flexDirection: 'row',
     alignItems: 'center',
