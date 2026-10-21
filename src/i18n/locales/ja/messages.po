@@ -4704,7 +4704,6 @@ msgid "Open quick actions"
 msgstr "クイックアクションを開く"
 
 #: src/components/agent-tool-card.tsx
-#: src/components/home-recent-sessions.tsx
 msgid "Open session"
 msgstr "セッションを開く"
 
@@ -5476,6 +5475,11 @@ msgstr "鍵を置き換える"
 #: src/components/audio-asset-preview.tsx
 msgid "Replay audio"
 msgstr "音声をもう一度再生"
+
+#: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Reply from Home"
+msgstr "ホームから返信"
 
 #: src/components/home-composer-dock.tsx
 msgid "Reply to {threadAgentName}…"

@@ -4704,7 +4704,6 @@ msgid "Open quick actions"
 msgstr "Mở thao tác nhanh"
 
 #: src/components/agent-tool-card.tsx
-#: src/components/home-recent-sessions.tsx
 msgid "Open session"
 msgstr "Mở phiên"
 
@@ -5476,6 +5475,11 @@ msgstr "Thay khóa"
 #: src/components/audio-asset-preview.tsx
 msgid "Replay audio"
 msgstr "Phát lại âm thanh"
+
+#: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Reply from Home"
+msgstr "Trả lời từ Trang chủ"
 
 #: src/components/home-composer-dock.tsx
 msgid "Reply to {threadAgentName}…"

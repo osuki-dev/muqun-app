@@ -6,10 +6,7 @@ import {
   applyHomeThreadEvent,
   EMPTY_HOME_THREAD_LIVE,
   homeThreadEnded,
-  homeThreadEndOutcome,
   homeThreadLiveFromSnapshot,
-  homeThreadTap,
-  homeThreadTapped,
   homeThreadResolved,
   homeThreadSendPlan,
   homeThreadState,
@@ -356,29 +353,5 @@ describe('the live strip', () => {
     expect(homeThreadState({ task: { state: 'waiting' } })).toBe('needs-you');
     expect(homeThreadState({ pane: { status: 'blocked' } })).toBe('needs-you');
     expect(homeThreadState({ unbound: true })).toBe('starting');
-  });
-});
-
-describe('a card tap never leaves the dock with less than it had', () => {
-  test('a card the dock cannot talk to opens instead of replacing the target', () => {
-    expect(homeThreadTap(null, {})).toBe('open');
-    expect(homeThreadTap(SESSION, { goneSession: true })).toBe('open');
-    expect(homeThreadTap(SESSION, { agentIds: ['codex'] })).toBe('open');
-    expect(homeThreadTap(SESSION, { agentIds: ['opencode'] })).toBe('target');
-  });
-
-  test('a tapped target found ended before anything was sent gives the old one back', () => {
-    const tapped = { ...SESSION, asid: 'ses_2', title: 'Other' };
-    const tap = homeThreadTapped(PANE, undefined, tapped);
-    expect(homeThreadEndOutcome(tapped, tap)).toEqual({ next: PANE, untapped: true });
-    // Taps in a row undo to what was there before the first of them.
-    const third = { ...SESSION, asid: 'ses_3' };
-    expect(homeThreadEndOutcome(third, homeThreadTapped(tapped, tap, third)).next).toBe(PANE);
-    // Written to, or not tapped: it just ends.
-    expect(homeThreadEndOutcome({ ...tapped, lastSent: 'hi' }, tap)).toEqual({
-      next: null,
-      untapped: false,
-    });
-    expect(homeThreadEndOutcome(SESSION, undefined)).toEqual({ next: null, untapped: false });
   });
 });

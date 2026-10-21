@@ -355,7 +355,8 @@ const SessionChip = memo(function SessionChip({
 /** See `AgentComposerProps.injectDraftRef`. */
 export type DraftInjector = (
   text: string,
-  options?: { ifEmpty?: boolean; expiredQuestionOwner?: string }
+  /** `focusOnly`: leave the draft as it is and only focus the field. */
+  options?: { ifEmpty?: boolean; expiredQuestionOwner?: string; focusOnly?: boolean }
 ) => boolean;
 
 export interface AgentComposerProps {
@@ -1174,6 +1175,10 @@ export const AgentComposer = memo(function AgentComposer({
   useEffect(() => {
     if (injectDraftRef) {
       injectDraftRef.current = (draftText, options) => {
+        if (options?.focusOnly) {
+          setTimeout(() => inputRef.current?.focus(), 50);
+          return true;
+        }
         if (options?.expiredQuestionOwner) {
           if (options.expiredQuestionOwner !== draftOwnerKey) return false;
           appendAnswer(draftText);

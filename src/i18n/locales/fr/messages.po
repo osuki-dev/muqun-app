@@ -4704,7 +4704,6 @@ msgid "Open quick actions"
 msgstr "Ouvrir les actions rapides"
 
 #: src/components/agent-tool-card.tsx
-#: src/components/home-recent-sessions.tsx
 msgid "Open session"
 msgstr "Ouvrir la session"
 
@@ -5476,6 +5475,11 @@ msgstr "Remplacer la clé"
 #: src/components/audio-asset-preview.tsx
 msgid "Replay audio"
 msgstr "Relire l’audio"
+
+#: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Reply from Home"
+msgstr "Répondre depuis l’Accueil"
 
 #: src/components/home-composer-dock.tsx
 msgid "Reply to {threadAgentName}…"

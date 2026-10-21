@@ -4704,7 +4704,6 @@ msgid "Open quick actions"
 msgstr "เปิดการทำงานด่วน"
 
 #: src/components/agent-tool-card.tsx
-#: src/components/home-recent-sessions.tsx
 msgid "Open session"
 msgstr "เปิดเซสชัน"
 
@@ -5476,6 +5475,11 @@ msgstr "แทนที่คีย์"
 #: src/components/audio-asset-preview.tsx
 msgid "Replay audio"
 msgstr "เล่นเสียงอีกครั้ง"
+
+#: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Reply from Home"
+msgstr "ตอบจากหน้าแรก"
 
 #: src/components/home-composer-dock.tsx
 msgid "Reply to {threadAgentName}…"

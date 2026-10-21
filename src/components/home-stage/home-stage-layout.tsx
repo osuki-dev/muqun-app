@@ -29,7 +29,13 @@ import { useMinuteNow } from '@/hooks/use-minute-now';
 import { useStableHandler } from '@/hooks/use-render-refs';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useTaskAge } from '@/hooks/use-task-age';
-import { CloseIcon, SettingsIcon, TaskListIcon, TerminalWindowIcon } from '@/icons';
+import {
+  CloseIcon,
+  MessageSendIcon,
+  SettingsIcon,
+  TaskListIcon,
+  TerminalWindowIcon,
+} from '@/icons';
 import { connectionStatusDescription } from '@/i18n/labels';
 import { withAlpha } from '@/lib/color';
 import { filterHomeRecent, type HomeContinueEntry } from '@/lib/home-continue';
@@ -66,8 +72,11 @@ export type HomeStageLayoutProps = {
   sessions: readonly HomeContinueEntry[];
   /** The session the dock is talking to, by `HomeContinueEntry.key`. */
   threadKey?: string;
-  /** Tapping a card makes it the dock's conversation (or opens one it cannot be). */
   onOpenSession: (entry: HomeContinueEntry) => void;
+  /** Whether Home's dock can talk to a card's conversation ("Reply from Home"). */
+  canReply?: (entry: HomeContinueEntry) => boolean;
+  /** "Reply from Home", from a card's long-press menu. */
+  onReplySession?: (entry: HomeContinueEntry) => void;
   /** Needs you, as Home builds it for every layout. */
   attention?: ReactNode;
   hasAttention: boolean;
@@ -209,6 +218,8 @@ export function HomeStageLayout({
   sessions,
   threadKey,
   onOpenSession,
+  canReply,
+  onReplySession,
   attention,
   hasAttention,
   fullList,
@@ -233,6 +244,7 @@ export function HomeStageLayout({
   // A cover's authored sky stays open: a short scrim, and the name on its own plate.
   const openSky = composition.role === 'sky' || composition.role === 'figure';
   const [actionsFor, setActionsFor] = useState<string | null>(null);
+  const [sessionActionsFor, setSessionActionsFor] = useState<HomeContinueEntry | null>(null);
   const [listOpen, setListOpen] = useState(false);
   const selected = panels[selectedIndex];
   const actionsPanel = panels.find((panel) => panel.serverId === actionsFor);
@@ -297,6 +309,27 @@ export function HomeStageLayout({
             onPress: () => setActionsFor(null),
           },
         ];
+
+  const sessionMenuItems: AgentActionMenuItem[] = sessionActionsFor
+    ? [
+        {
+          id: 'reply',
+          label: t`Reply from Home`,
+          Icon: MessageSendIcon,
+          onPress: () => {
+            setSessionActionsFor(null);
+            onReplySession?.(sessionActionsFor);
+          },
+          testID: 'home-stage-session-reply',
+        },
+        {
+          id: 'close',
+          label: t`Close menu`,
+          Icon: CloseIcon,
+          onPress: () => setSessionActionsFor(null),
+        },
+      ]
+    : [];
 
   return (
     <View
@@ -385,6 +418,11 @@ export function HomeStageLayout({
           <AgentActionMenu testID="home-stage-actions" items={menuItems} />
         </View>
       ) : null}
+      {sessionActionsFor ? (
+        <View style={[styles.menu, { top: topInset + 120 }]}>
+          <AgentActionMenu testID="home-stage-session-actions" items={sessionMenuItems} />
+        </View>
+      ) : null}
       {storageError ? (
         <View style={[styles.center, { top: topInset + 130 }]}>{storageError}</View>
       ) : null}
@@ -420,6 +458,13 @@ export function HomeStageLayout({
                 sessions={sessions}
                 threadKey={threadKey}
                 onOpenSession={onOpenSession}
+                onSessionActions={
+                  onReplySession
+                    ? (entry) => {
+                        if (canReply?.(entry)) setSessionActionsFor(entry);
+                      }
+                    : undefined
+                }
                 onOpenAll={() => openList(true)}
               />
             </View>

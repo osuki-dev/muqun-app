@@ -69,6 +69,8 @@ export type StageSessionStripProps = {
   /** The session the dock is talking to: its card is outlined. */
   threadKey?: string;
   onOpenSession: (entry: HomeContinueEntry) => void;
+  /** A long press: the card's actions. */
+  onSessionActions?: (entry: HomeContinueEntry) => void;
   onOpenAll: () => void;
 };
 
@@ -85,6 +87,7 @@ export function StageSessionStrip({
   sessions,
   threadKey,
   onOpenSession,
+  onSessionActions,
   onOpenAll,
 }: StageSessionStripProps) {
   const { t } = useLingui();
@@ -187,6 +190,7 @@ export function StageSessionStrip({
                 fromWidth={from ? widths[from.key] : undefined}
                 onMeasured={measured}
                 onPress={() => onOpenSession(entry)}
+                onLongPress={onSessionActions ? () => onSessionActions(entry) : undefined}
               />
             </Animated.View>
           );
@@ -243,6 +247,7 @@ function StageSessionSlot({
   fromWidth,
   onMeasured,
   onPress,
+  onLongPress,
 }: {
   entry: HomeContinueEntry;
   from: HomeContinueEntry | undefined;
@@ -254,6 +259,7 @@ function StageSessionSlot({
   fromWidth: number | undefined;
   onMeasured: (key: string, width: number) => void;
   onPress: () => void;
+  onLongPress?: () => void;
 }) {
   return (
     <PressableScale
@@ -261,6 +267,7 @@ function StageSessionSlot({
       accessibilityRole="button"
       accessibilityLabel={entry.title}
       onPress={onPress}
+      onLongPress={onLongPress}
       style={styles.slot}>
       <StageSessionTurn
         // A new turn for every change of computer: its progress is created at
