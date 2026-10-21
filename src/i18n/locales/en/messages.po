@@ -685,6 +685,7 @@ msgid "All projects"
 msgstr "All projects"
 
 #: src/components/agent-composer.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/home-stage/stage-session-strip.tsx
 msgid "All sessions"
 msgstr "All sessions"
