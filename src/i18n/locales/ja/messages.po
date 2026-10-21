@@ -46,7 +46,7 @@ msgstr "[PR 番号]"
 #. placeholder {0}: files.length
 #: src/components/agent-composer.tsx
 msgid "{0, plural, one {# attachment} other {# attachments}}"
-msgstr ""
+msgstr "{0, plural, other {# 件の添付ファイル}}"
 
 #. placeholder {0}: capped.hidden
 #: src/components/bounded-markdown.tsx
@@ -404,6 +404,10 @@ msgstr "{name} は他のコンピューターからの作業を受け付けま�
 msgid "{name} has the same name as {other}; rename one of them."
 msgstr "{name} は {other} と同じ名前です。どちらかの名前を変更してください"
 
+#: src/components/home-composer-dock.tsx
+msgid "{name} is still working and cannot take a message now. Your draft stays here."
+msgstr "{name} はまだ作業中で、今はメッセージを受け取れません。下書きはここに残ります"
+
 #: src/components/new-task-action.tsx
 msgid "{name} needs setup. Tap for setup instructions"
 msgstr "{name} のセットアップが必要です。タップしてセットアップ手順を表示"
@@ -455,6 +459,10 @@ msgstr "{total, plural, other {サブタスク # 件}}（{waiting, plural, other
 #: src/components/task-row.tsx
 msgid "→ {name}"
 msgstr "→ {name}"
+
+#: src/components/home-thread.tsx
+msgid "+ New conversation"
+msgstr "+ 新しい会話"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
@@ -730,6 +738,7 @@ msgid "Allow camera"
 msgstr "カメラを許可"
 
 #: src/components/agent-permission-card.tsx
+#: src/components/home-thread.tsx
 msgid "Allow for this turn"
 msgstr "このターンで許可"
 
@@ -738,6 +747,7 @@ msgid "Allow microphone access in system settings."
 msgstr "システム設定でマイクへのアクセスを許可してください"
 
 #: src/components/agent-permission-card.tsx
+#: src/components/home-thread.tsx
 msgid "Allow once"
 msgstr "今回のみ許可"
 
@@ -790,6 +800,7 @@ msgstr "ほか {rest} 件"
 msgid "another computer"
 msgstr "別のコンピュータ"
 
+#: src/components/home-thread.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
 msgstr "回答"
@@ -1771,6 +1782,7 @@ msgid "Continue"
 msgstr "続行"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Continue in the linked terminal. Your draft stays here."
 msgstr "リンク先のターミナルで続けてください。下書きはここに残ります"
 
@@ -1897,6 +1909,10 @@ msgstr "コントロール Z、一時停止"
 #: src/components/home-editorial-layout.tsx
 msgid "Controls"
 msgstr "操作"
+
+#: src/components/home-thread.tsx
+msgid "Conversation"
+msgstr "会話"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Conversational help and open-ended project questions."
@@ -2266,6 +2282,7 @@ msgid "Could not rename"
 msgstr "名前を変更できませんでした"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-thread.tsx
 msgid "Could not reply"
 msgstr "返信できませんでした"
 
@@ -2327,6 +2344,7 @@ msgstr "送信できませんでした"
 msgid "Could not send command."
 msgstr "コマンドを送信できませんでした"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not send input."
 msgstr "入力を送信できませんでした"
@@ -2883,6 +2901,7 @@ msgid "Export theme"
 msgstr "テーマをエクスポート"
 
 #: src/components/agent-sleep-tool-body.tsx
+#: src/components/home-thread.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Failed"
@@ -3242,7 +3261,7 @@ msgstr "シミュレータを隠す"
 
 #: src/components/agent-composer.tsx
 msgid "Hides this notice"
-msgstr ""
+msgstr "この通知を非表示にします"
 
 #: src/app/settings-voice.tsx
 msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
@@ -3312,6 +3331,7 @@ msgid "Icons"
 msgstr "アイコン"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/home-thread.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "待機"
@@ -4031,6 +4051,7 @@ msgstr "アップデートが必要"
 
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/home-stage/stage-faces.ts
+#: src/components/home-thread.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "Needs you"
 msgstr "対応が必要"
@@ -4059,6 +4080,14 @@ msgstr "一度も接続されていません"
 #: src/components/settings-servers.tsx
 msgid "Never seen"
 msgstr "一度も確認されていません"
+
+#: src/components/home-thread.tsx
+msgid "New conversation"
+msgstr "新しい会話"
+
+#: src/components/home-thread.tsx
+msgid "New conversation · {agentName}"
+msgstr "新しい会話 · {agentName}"
 
 #: src/app/commands.tsx
 msgid "New group"
@@ -4435,6 +4464,10 @@ msgstr "未設定"
 msgid "Not signed in on the host"
 msgstr "ホストでサインインしていません"
 
+#: src/components/home-thread.tsx
+msgid "Not sure it was delivered"
+msgstr "届いたか不明です"
+
 #: src/components/home-computer-cards.tsx
 msgid "Not updating from here. Open this computer to see its tasks."
 msgstr "ここからは更新されません。このコンピューターを開くとタスクを確認できます"
@@ -4495,6 +4528,7 @@ msgstr "オフ"
 
 #: src/components/home-composer-options.tsx
 #: src/components/home-stage/stage-faces.ts
+#: src/components/home-thread.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Offline"
@@ -4554,6 +4588,7 @@ msgstr "ホームのこの行だけを非表示にします。タスクとその
 
 #: src/components/home-connections.tsx
 #: src/components/home-stage/home-stage-layout.tsx
+#: src/components/home-thread.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/task-row.tsx
@@ -4607,6 +4642,10 @@ msgstr "添付ファイルを開く"
 #: src/components/agent-tool-card.tsx
 msgid "Open background tasks"
 msgstr "バックグラウンドタスクを開く"
+
+#: src/components/home-thread.tsx
+msgid "Open conversation"
+msgstr "会話を開く"
 
 #: src/components/artifacts-button.tsx
 msgid "Open files"
@@ -4673,6 +4712,7 @@ msgid "Open quick actions"
 msgstr "クイックアクションを開く"
 
 #: src/components/agent-tool-card.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Open session"
 msgstr "セッションを開く"
 
@@ -4956,6 +4996,7 @@ msgid "Permission"
 msgstr "権限"
 
 #: src/components/agent-permission-card.tsx
+#: src/components/home-thread.tsx
 msgid "Permission required"
 msgstr "権限が必要です"
 
@@ -5444,6 +5485,14 @@ msgstr "鍵を置き換える"
 msgid "Replay audio"
 msgstr "音声をもう一度再生"
 
+#: src/components/home-composer-dock.tsx
+msgid "Reply to {threadAgentName}…"
+msgstr "{threadAgentName} に返信…"
+
+#: src/components/home-thread.tsx
+msgid "Replying to {title}"
+msgstr "{title} に返信中"
+
 #: src/app/settings-about.tsx
 msgid "Report a bug or request a feature"
 msgstr "不具合の報告・機能のリクエスト"
@@ -5531,6 +5580,7 @@ msgstr "再開"
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/gateway-storage-error.tsx
+#: src/components/home-thread.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
@@ -6415,6 +6465,7 @@ msgstr "{name} を起動しています"
 msgid "Starting the camera"
 msgstr "カメラを起動しています"
 
+#: src/components/home-thread.tsx
 #: src/components/new-task-sheet.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Starting…"
@@ -6476,6 +6527,10 @@ msgstr "停止して文字に変換"
 #: src/components/server-terminal-workspace.tsx
 msgid "Stop assigning a task"
 msgstr "タスクの割り当てをやめる"
+
+#: src/components/home-thread.tsx
+msgid "Stop following this conversation"
+msgstr "この会話の追跡をやめる"
 
 #: src/app/commands.tsx
 msgid "Stop this agent"
@@ -6782,6 +6837,10 @@ msgstr "そのアシスタントはこのターミナルにはもういません
 msgid "That code was refused. Hold still for a new one."
 msgstr "そのコードは拒否されました。そのまま構えて新しいコードを読み取ってください"
 
+#: src/components/home-composer-dock.tsx
+msgid "That conversation has ended. Send again to start a new one."
+msgstr "その会話は終了しました。もう一度送信すると新しい会話が始まります"
+
 #: src/hooks/use-home-commands.ts
 msgid "That destination is no longer available."
 msgstr "その目的地は利用できなくなりました"
@@ -6975,6 +7034,10 @@ msgstr "音声サービスから無効な文字起こしが返されました"
 #: src/app/commands.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "SSH トンネルが運ぶのは Gateway のポートだけで、他のポートは通しません。そのためここからはシミュレータにもブラウザーにも届きません。ローカルネットワークか Tailscale で接続してください"
+
+#: src/components/home-composer-dock.tsx
+msgid "The task is still starting. Send again in a moment."
+msgstr "タスクはまだ開始中です。少ししてからもう一度送信してください"
 
 #: src/components/guide-command.tsx
 msgid "The terminal opened, but the command could not be typed."
@@ -7262,6 +7325,10 @@ msgstr "このセッションはもう存在しません"
 #: src/components/pane-history-sheet.tsx
 msgid "This snapshot can no longer be extended. Refresh to read the latest saved output; the current page is kept until then."
 msgstr "このスナップショットはこれ以上読み込めません。更新すると、最新の保存済み出力を読み込めます。それまでは現在のページが保持されます"
+
+#: src/components/home-composer-dock.tsx
+msgid "This task runs on another computer. Open it to reply."
+msgstr "このタスクは別のコンピューターで実行されています。返信するには開いてください"
 
 #: src/components/virtual-keyboard.tsx
 msgid "This terminal can't send {chord}"
@@ -7820,6 +7887,7 @@ msgid "While you were away"
 msgstr "離席中の変化"
 
 #: src/components/collaboration-notice.tsx
+#: src/components/home-thread.tsx
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "作業中"
