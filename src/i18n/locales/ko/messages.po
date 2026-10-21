@@ -148,12 +148,6 @@ msgstr "컨텍스트에 있는 메시지 {0}개"
 msgid "{0} more models"
 msgstr "모델 {0}개 더"
 
-#. placeholder {0}: filtered.length
-#. placeholder {1}: entries.length
-#: src/components/dev-icon-gallery.tsx
-msgid "{0} of {1} icons · development only"
-msgstr "아이콘 {1}개 중 {0}개 · 개발 전용"
-
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
 msgid "{0} of {limitLabel} tokens the model can hold"
@@ -317,7 +311,7 @@ msgstr "{count, plural, other {결과 #개}}"
 
 #: src/components/home-stage/home-stage-layout.tsx
 msgid "{count, plural, one {# session} other {# sessions}}"
-msgstr ""
+msgstr "{count, plural, other {세션 #개}}"
 
 #: src/components/home-connections.tsx
 msgid "{count} in progress"
@@ -455,10 +449,6 @@ msgstr "외 {overflow}개"
 #: src/hooks/use-task-age.ts
 msgid "<1m"
 msgstr "1분 미만"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "0 speed pauses motion. Theme default restores the theme."
-msgstr "속도 0은 움직임을 일시 중지합니다. 테마 기본값을 선택하면 복원됩니다"
 
 #: src/components/settings-storage.tsx
 msgid "10 days"
@@ -957,10 +947,6 @@ msgstr "모든 작업 자동 승인"
 msgid "Auto-detect"
 msgstr "자동 감지"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Automatic"
-msgstr "자동"
-
 #: src/components/settings-storage.tsx
 msgid "Automatic cache cleanup"
 msgstr "자동 캐시 정리"
@@ -1080,10 +1066,6 @@ msgstr "브랜치 또는 커밋 (선택 사항)"
 #: src/components/agent-worktree-sheet.tsx
 msgid "Branch to start from"
 msgstr "시작점으로 삼을 브랜치"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Brand marks and working indicator"
-msgstr "브랜드 마크와 작업 표시기"
 
 #. placeholder {0}: server.label
 #: src/components/home-computer-deck.tsx
@@ -1408,17 +1390,9 @@ msgstr "알림만 지웁니다. 대기 중인 작업은 여전히 확인이 필�
 msgid "Close"
 msgstr "닫기"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Close effects"
-msgstr "효과 닫기"
-
 #: src/components/asset-viewer.tsx
 msgid "Close file"
 msgstr "파일 닫기"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Close icon preview"
-msgstr "아이콘 미리보기 닫기"
 
 #: src/components/home-recent-sessions.tsx
 #: src/components/home-stage/home-stage-layout.tsx
@@ -2451,10 +2425,6 @@ msgstr "사용자 지정"
 msgid "Dark"
 msgstr "다크"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Decrease {label}"
-msgstr "{label} 낮추기"
-
 #: src/components/agent-model-sheet.tsx
 msgid "default"
 msgstr "기본값"
@@ -2546,10 +2516,6 @@ msgstr "데모 워크스페이스"
 msgid "Denied by you"
 msgstr "사용자가 거부함"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Density"
-msgstr "밀도"
-
 #: src/i18n/labels.ts
 msgid "Deny"
 msgstr "거부"
@@ -2580,10 +2546,6 @@ msgstr "기기 인증"
 #: src/i18n/labels.ts
 msgid "Diff summary"
 msgstr "변경 요약"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Direction"
-msgstr "방향"
 
 #: src/components/new-task-sheet.tsx
 msgid "Directory"
@@ -2749,11 +2711,6 @@ msgstr "편집기 변경"
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Editorial"
 msgstr "에디토리얼"
-
-#. placeholder {0}: props.value
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Effects · {0}"
-msgstr "효과 · {0}"
 
 #: src/i18n/labels.ts
 msgid "Encryption was turned on for this computer. Pair it again to keep using it."
@@ -3247,10 +3204,6 @@ msgstr "홈"
 msgid "Home agent"
 msgstr "홈 에이전트"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Home effects · development only"
-msgstr "홈 효과 · 개발 전용"
-
 #: src/app/agent-workspace.tsx
 #: src/components/home-composer-dock.tsx
 msgid "Home folder"
@@ -3292,14 +3245,6 @@ msgstr "호스트 키 신뢰됨"
 #: src/app/settings-about.tsx
 msgid "How to use Muqun"
 msgstr "Muqun 사용법"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Icon preview"
-msgstr "아이콘 미리보기"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Icons"
-msgstr "아이콘"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/home-thread.tsx
@@ -3381,10 +3326,6 @@ msgstr "포함된 사용량"
 msgid "Included usage is restricted. Paid or alternative usage may still be available."
 msgstr "포함된 사용량이 제한됩니다. 유료 또는 다른 이용 방법은 계속 사용할 수 있습니다"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Increase {label}"
-msgstr "{label} 높이기"
-
 #: src/components/agent-context-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
 msgid "Input"
@@ -3444,10 +3385,6 @@ msgstr "이미지 설치 중"
 #: src/components/settings-font-sheet.tsx
 msgid "Installing…"
 msgstr "설치 중…"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Intensity"
-msgstr "강도"
 
 #: src/i18n/labels.ts
 msgid "Interacted"
@@ -3832,10 +3769,6 @@ msgstr "완료로 표시"
 msgid "Mark reviewed"
 msgstr "확인 완료로 표시"
 
-#: src/components/dev-icon-gallery.tsx
-msgid "Marks keep their original geometry and stroke."
-msgstr "마크는 원래 형태와 선 굵기를 유지합니다"
-
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "마스코트"
@@ -4215,10 +4148,6 @@ msgstr "더 이상 {computer}와(과) 연결되어 있지 않습니다"
 #: src/app/commands.tsx
 msgid "No matching commands. Try another word."
 msgstr "일치하는 명령이 없습니다. 다른 단어로 검색하세요"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "No matching icons"
-msgstr "일치하는 아이콘 없음"
 
 #: src/components/home-recent-sessions.tsx
 msgid "No matching sessions"
@@ -4617,10 +4546,6 @@ msgstr "파일 목록 열기"
 msgid "Open Git"
 msgstr "Git 열기"
 
-#: src/components/dev-icon-gallery.tsx
-msgid "Open icon preview"
-msgstr "아이콘 미리보기 열기"
-
 #: src/components/agent-tool-card.tsx
 msgid "Open image"
 msgstr "이미지 열기"
@@ -4889,10 +4814,6 @@ msgstr "페어링 만료됨"
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "페어링에 실패했습니다"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Palette (up to 4)"
-msgstr "팔레트 (최대 4개)"
 
 #: src/components/settings-servers.tsx
 msgid "Panes on computer cards"
@@ -5842,10 +5763,6 @@ msgstr "이름 또는 태그로 검색"
 msgid "Search files"
 msgstr "파일 검색"
 
-#: src/components/dev-icon-gallery.tsx
-msgid "Search icons"
-msgstr "아이콘 검색"
-
 #: src/components/agent-model-sheet.tsx
 msgid "Search models"
 msgstr "모델 검색"
@@ -6234,8 +6151,6 @@ msgid "Simulator controls"
 msgstr "시뮬레이터 컨트롤"
 
 #: src/components/asset-viewer.tsx
-#: src/components/dev-home-ambient-controls.tsx
-#: src/components/dev-icon-gallery.tsx
 msgid "Size"
 msgstr "크기"
 
@@ -6284,10 +6199,6 @@ msgstr "소스 코드"
 #: src/components/virtual-keyboard.tsx
 msgid "Space"
 msgstr "스페이스"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Speed"
-msgstr "속도"
 
 #: src/components/agent-account-limits-section.tsx
 msgid "Spend control"
@@ -6523,10 +6434,6 @@ msgstr "저장 공간"
 #: src/app/settings-voice.tsx
 msgid "Streams speech while you talk. Requires an OpenAI Realtime-compatible transcription endpoint."
 msgstr "말하는 동안 음성을 스트리밍합니다. OpenAI Realtime과 호환되는 음성 텍스트 변환 엔드포인트가 필요합니다"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Stroke width"
-msgstr "선 굵기"
 
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -7041,7 +6948,6 @@ msgstr "이번 턴이 실패했습니다"
 msgid "Theme"
 msgstr "테마"
 
-#: src/components/dev-home-ambient-controls.tsx
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
 msgstr "테마 기본값"
@@ -7960,8 +7866,8 @@ msgid "Your phone's clock is off by {minutes} minutes. Fix the date and time, th
 msgstr "이 휴대폰의 시계가 {minutes}분 어긋나 있습니다. 날짜와 시간을 맞춘 뒤 다시 시도하세요"
 
 #: src/components/settings-home-layout-sheet.tsx
-msgid "Your theme as a 3D world, with your computers as holo-screens around its character."
-msgstr "테마를 3D 세계로 보여 주고, 컴퓨터는 캐릭터를 둘러싼 홀로 스크린이 됩니다"
+msgid "Your theme's art as a 3D world that moves with your phone, with your agents' status below it."
+msgstr "테마 아트가 휴대폰 움직임에 따라 움직이는 3D 세계가 되고, 그 아래에 에이전트 상태가 표시됩니다"
 
 #: src/components/image-preview-modal.tsx
 msgid "Zoom in"

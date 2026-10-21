@@ -279,7 +279,11 @@ export function TerminalComposer({
       entering={entering}
       exiting={exiting}
       layout={layout}
-      style={composerStyles.fieldOuter}>
+      // A joined bar and the field are one plate: the field is drawn one
+      // physical pixel over the bar's bottom edge, so a fractional boundary
+      // (layout rounding, a layout animation mid-flight) cannot open a
+      // hairline gap that shows the art behind the dock.
+      style={[composerStyles.fieldOuter, squareTop && composerStyles.joinedTop]}>
       {fieldShadow ? (
         <View
           testID="composer-field-shadow"
@@ -561,6 +565,7 @@ const ONE_LINE_FIELD = COMPOSER_ACTION_SIZE;
 /** Shared with the gateway's paperclip, which sits in the same row at the same size. */
 export const composerStyles = StyleSheet.create({
   fieldOuter: { overflow: 'visible' },
+  joinedTop: { marginTop: -StyleSheet.hairlineWidth },
   fieldShell: { borderCurve: 'continuous', overflow: 'hidden' },
   composer: {
     minHeight: 50,

@@ -148,12 +148,6 @@ msgstr "コンテキスト内のメッセージ {0} 件"
 msgid "{0} more models"
 msgstr "ほか {0} 件のモデル"
 
-#. placeholder {0}: filtered.length
-#. placeholder {1}: entries.length
-#: src/components/dev-icon-gallery.tsx
-msgid "{0} of {1} icons · development only"
-msgstr "{1} 個中 {0} 個のアイコン · 開発用"
-
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
 msgid "{0} of {limitLabel} tokens the model can hold"
@@ -317,7 +311,7 @@ msgstr "{count, plural, other {# 件の結果}}"
 
 #: src/components/home-stage/home-stage-layout.tsx
 msgid "{count, plural, one {# session} other {# sessions}}"
-msgstr ""
+msgstr "{count, plural, other {# 件のセッション}}"
 
 #: src/components/home-connections.tsx
 msgid "{count} in progress"
@@ -455,10 +449,6 @@ msgstr "ほか {overflow} 件"
 #: src/hooks/use-task-age.ts
 msgid "<1m"
 msgstr "1分未満"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "0 speed pauses motion. Theme default restores the theme."
-msgstr "速度0で動きを停止します。テーマの既定値を選ぶと元に戻ります"
 
 #: src/components/settings-storage.tsx
 msgid "10 days"
@@ -957,10 +947,6 @@ msgstr "すべての操作を自動承認する"
 msgid "Auto-detect"
 msgstr "自動検出"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Automatic"
-msgstr "自動"
-
 #: src/components/settings-storage.tsx
 msgid "Automatic cache cleanup"
 msgstr "キャッシュの自動削除"
@@ -1080,10 +1066,6 @@ msgstr "ブランチまたはコミット（任意）"
 #: src/components/agent-worktree-sheet.tsx
 msgid "Branch to start from"
 msgstr "起点にするブランチ"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Brand marks and working indicator"
-msgstr "ブランドマークと処理中インジケーター"
 
 #. placeholder {0}: server.label
 #: src/components/home-computer-deck.tsx
@@ -1408,17 +1390,9 @@ msgstr "通知のみを消去します。保留中のタスクには引き続き
 msgid "Close"
 msgstr "閉じる"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Close effects"
-msgstr "エフェクトを閉じる"
-
 #: src/components/asset-viewer.tsx
 msgid "Close file"
 msgstr "ファイルを閉じる"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Close icon preview"
-msgstr "アイコンプレビューを閉じる"
 
 #: src/components/home-recent-sessions.tsx
 #: src/components/home-stage/home-stage-layout.tsx
@@ -2451,10 +2425,6 @@ msgstr "カスタマイズ"
 msgid "Dark"
 msgstr "ダーク"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Decrease {label}"
-msgstr "{label}を下げる"
-
 #: src/components/agent-model-sheet.tsx
 msgid "default"
 msgstr "既定"
@@ -2546,10 +2516,6 @@ msgstr "デモワークスペース"
 msgid "Denied by you"
 msgstr "あなたが拒否しました"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Density"
-msgstr "密度"
-
 #: src/i18n/labels.ts
 msgid "Deny"
 msgstr "拒否"
@@ -2580,10 +2546,6 @@ msgstr "デバイス認証"
 #: src/i18n/labels.ts
 msgid "Diff summary"
 msgstr "差分の要約"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Direction"
-msgstr "方向"
 
 #: src/components/new-task-sheet.tsx
 msgid "Directory"
@@ -2749,11 +2711,6 @@ msgstr "エディタ切り替え"
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Editorial"
 msgstr "エディトリアル"
-
-#. placeholder {0}: props.value
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Effects · {0}"
-msgstr "エフェクト · {0}"
 
 #: src/i18n/labels.ts
 msgid "Encryption was turned on for this computer. Pair it again to keep using it."
@@ -3247,10 +3204,6 @@ msgstr "ホーム"
 msgid "Home agent"
 msgstr "ホームのエージェント"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Home effects · development only"
-msgstr "ホームのエフェクト · 開発用"
-
 #: src/app/agent-workspace.tsx
 #: src/components/home-composer-dock.tsx
 msgid "Home folder"
@@ -3292,14 +3245,6 @@ msgstr "ホスト鍵は信頼済み"
 #: src/app/settings-about.tsx
 msgid "How to use Muqun"
 msgstr "Muqun の使い方"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Icon preview"
-msgstr "アイコンプレビュー"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Icons"
-msgstr "アイコン"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/home-thread.tsx
@@ -3381,10 +3326,6 @@ msgstr "プランに含まれる利用枠"
 msgid "Included usage is restricted. Paid or alternative usage may still be available."
 msgstr "プランに含まれる利用枠は制限されています。有料または別の利用方法は引き続き利用できる場合があります"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Increase {label}"
-msgstr "{label}を上げる"
-
 #: src/components/agent-context-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
 msgid "Input"
@@ -3444,10 +3385,6 @@ msgstr "画像をインストールしています"
 #: src/components/settings-font-sheet.tsx
 msgid "Installing…"
 msgstr "インストール中…"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Intensity"
-msgstr "強度"
 
 #: src/i18n/labels.ts
 msgid "Interacted"
@@ -3832,10 +3769,6 @@ msgstr "完了にする"
 msgid "Mark reviewed"
 msgstr "確認済みにする"
 
-#: src/components/dev-icon-gallery.tsx
-msgid "Marks keep their original geometry and stroke."
-msgstr "マークは元の形状と線幅を保ちます"
-
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "マスコット"
@@ -4215,10 +4148,6 @@ msgstr "{computer} とのリンクは解除されました"
 #: src/app/commands.tsx
 msgid "No matching commands. Try another word."
 msgstr "一致するコマンドがありません。別の語句で検索してください"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "No matching icons"
-msgstr "一致するアイコンはありません"
 
 #: src/components/home-recent-sessions.tsx
 msgid "No matching sessions"
@@ -4617,10 +4546,6 @@ msgstr "ファイル一覧を開く"
 msgid "Open Git"
 msgstr "Git を開く"
 
-#: src/components/dev-icon-gallery.tsx
-msgid "Open icon preview"
-msgstr "アイコンプレビューを開く"
-
 #: src/components/agent-tool-card.tsx
 msgid "Open image"
 msgstr "画像を開く"
@@ -4889,10 +4814,6 @@ msgstr "ペアリング期限切れ"
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "ペアリングに失敗しました"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Palette (up to 4)"
-msgstr "パレット（最大4色）"
 
 #: src/components/settings-servers.tsx
 msgid "Panes on computer cards"
@@ -5842,10 +5763,6 @@ msgstr "名前やタグで検索"
 msgid "Search files"
 msgstr "ファイルを検索"
 
-#: src/components/dev-icon-gallery.tsx
-msgid "Search icons"
-msgstr "アイコンを検索"
-
 #: src/components/agent-model-sheet.tsx
 msgid "Search models"
 msgstr "モデルを検索"
@@ -6234,8 +6151,6 @@ msgid "Simulator controls"
 msgstr "シミュレータの操作"
 
 #: src/components/asset-viewer.tsx
-#: src/components/dev-home-ambient-controls.tsx
-#: src/components/dev-icon-gallery.tsx
 msgid "Size"
 msgstr "サイズ"
 
@@ -6284,10 +6199,6 @@ msgstr "ソースコード"
 #: src/components/virtual-keyboard.tsx
 msgid "Space"
 msgstr "スペース"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Speed"
-msgstr "速度"
 
 #: src/components/agent-account-limits-section.tsx
 msgid "Spend control"
@@ -6523,10 +6434,6 @@ msgstr "ストレージ"
 #: src/app/settings-voice.tsx
 msgid "Streams speech while you talk. Requires an OpenAI Realtime-compatible transcription endpoint."
 msgstr "話している間に音声をストリーミング送信します。OpenAI Realtime と互換性のある文字起こしエンドポイントが必要です"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Stroke width"
-msgstr "線幅"
 
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -7041,7 +6948,6 @@ msgstr "この処理は失敗しました"
 msgid "Theme"
 msgstr "テーマ"
 
-#: src/components/dev-home-ambient-controls.tsx
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
 msgstr "テーマの既定"
@@ -7960,8 +7866,8 @@ msgid "Your phone's clock is off by {minutes} minutes. Fix the date and time, th
 msgstr "この端末の時計が{minutes}分ずれています。日付と時刻を直してからやり直してください"
 
 #: src/components/settings-home-layout-sheet.tsx
-msgid "Your theme as a 3D world, with your computers as holo-screens around its character."
-msgstr "テーマを 3D の世界に。コンピュータはキャラクターを囲むホロスクリーンになります"
+msgid "Your theme's art as a 3D world that moves with your phone, with your agents' status below it."
+msgstr "テーマのアートが、スマホの動きに合わせて動く3Dの世界に。その下にエージェントの状態を表示します"
 
 #: src/components/image-preview-modal.tsx
 msgid "Zoom in"
