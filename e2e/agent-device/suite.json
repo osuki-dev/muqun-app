@@ -287,6 +287,24 @@
       },
       { "run": "flows/home-continue-search.ad#cleanup" }
     ],
+    "subflows/home-search-submit": [
+      {
+        "when": { "env": "DEVICE_KIND", "equals": "ipad" },
+        "steps": [{ "run": "flows/home-continue-search.ad#settle-typed" }]
+      },
+      {
+        "when": { "env": "DEVICE_KIND", "equals": "iphone" },
+        "steps": [{ "run": "flows/home-continue-search.ad#submit" }]
+      },
+      {
+        "when": { "env": "DEVICE_KIND", "equals": "android-phone" },
+        "steps": [{ "run": "flows/home-continue-search.ad#submit" }]
+      },
+      {
+        "when": { "env": "DEVICE_KIND", "equals": "android-tablet" },
+        "steps": [{ "run": "flows/home-continue-search.ad#submit" }]
+      }
+    ],
     "subflows/home-continue-search": [
       { "run": "flows/home-continue-search.ad#choose-layout" },
       {
@@ -320,6 +338,7 @@
         "run": "flows/home-continue-search.ad#assert-visible"
       },
       { "run": "flows/home-continue-search.ad#hidden-match" },
+      { "include": "subflows/home-search-submit" },
       {
         "target": { "id": "home-recent-open-demo-continue-search-16" },
         "mode": "scroll",
@@ -378,6 +397,7 @@
         "run": "flows/home-continue-search.ad#assert-visible"
       },
       { "run": "flows/home-continue-search.ad#no-match" },
+      { "include": "subflows/home-search-submit" },
       {
         "target": { "id": "home-continue-no-matches" },
         "mode": "scroll",
@@ -414,6 +434,7 @@
         "run": "flows/home-continue-search.ad#assert-hidden"
       },
       { "run": "flows/home-continue-search.ad#hidden-match" },
+      { "include": "subflows/home-search-submit" },
       {
         "target": { "id": "home-recent-open-demo-continue-search-16" },
         "mode": "scroll",
