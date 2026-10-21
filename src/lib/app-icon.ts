@@ -1,7 +1,7 @@
 /**
  * The launcher icons a reader can choose between.
  *
- * `default` is the compiled Classic icon. Every other entry is registered with
+ * `default` is the compiled Neon icon. Every other entry is registered with
  * `expo-alternate-app-icons` under the same `id` in `app.json`, so adding one
  * is a row here, an entry there, and its artwork under `assets/icons/<id>`.
  *
@@ -20,12 +20,12 @@ export type AppIconId =
 
 export const APP_ICONS: readonly AppIconId[] = [
   'default',
+  'Mint',
   'Classic',
   'Mascot',
   'Cyber',
   'Anime',
   'Arcade',
-  'Mint',
   'Sakura',
 ];
 
@@ -39,9 +39,12 @@ export function appIconFromNative(name: string | null | undefined): AppIconId {
   return name && APP_ICONS.includes(name as AppIconId) ? (name as AppIconId) : 'default';
 }
 
-/** Preserve the old native alias without showing two identical Classic tiles. */
-export const APP_ICON_CHOICES = APP_ICONS.filter((id) => id !== 'Classic');
+/**
+ * Neon is both the compiled icon and the older `Mint` alias. Keep the alias
+ * so installed selections stay valid, without showing two identical Neon tiles.
+ */
+export const APP_ICON_CHOICES = APP_ICONS.filter((id) => id !== 'Mint');
 
 export function appIconIsSelected(choice: AppIconId, active: AppIconId): boolean {
-  return choice === active || (choice === 'default' && active === 'Classic');
+  return choice === active || (choice === 'default' && active === 'Mint');
 }

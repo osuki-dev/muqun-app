@@ -170,8 +170,8 @@ export function SettingsAppearance() {
  */
 const ICON_ART: Record<AppIconId, { light: number; dark: number }> = {
   default: {
-    light: require('@/assets/icons/classic/preview-light.png'),
-    dark: require('@/assets/icons/classic/preview-dark.png'),
+    light: require('@/assets/icons/mint/preview-light.png'),
+    dark: require('@/assets/icons/mint/preview-light.png'),
   },
   Mascot: {
     light: require('@/assets/icons/mascot/preview-light.png'),
@@ -210,7 +210,7 @@ function AppIconPicker() {
   const { icon, choose, busy, supported } = useAppIcon();
   if (!supported) return null;
   const labels: Record<AppIconId, string> = {
-    default: t`Classic`,
+    default: 'Neon',
     Mascot: t`Mascot`,
     Classic: t`Classic`,
     Cyber: 'Cyber',
