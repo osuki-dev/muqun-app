@@ -17,7 +17,16 @@ export default function DiagramViewerScreen() {
   const source = typeof params.source === 'string' ? params.source : '';
   const insets = useSafeAreaInsets();
   return (
-    <View style={[styles.screen, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+    <View
+      style={[
+        styles.screen,
+        {
+          paddingTop: insets.top,
+          paddingBottom: insets.bottom,
+          paddingLeft: insets.left,
+          paddingRight: insets.right,
+        },
+      ]}>
       <DiagramViewer
         active={focused && appActive}
         source={source}

@@ -78,7 +78,12 @@ export function UpdateStatusBanner() {
         <View
           style={[
             styles.overlay,
-            { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16 },
+            {
+              paddingTop: insets.top + 16,
+              paddingBottom: insets.bottom + 16,
+              paddingLeft: 16 + insets.left,
+              paddingRight: 16 + insets.right,
+            },
           ]}>
           <View
             testID="update-consent-prompt"
