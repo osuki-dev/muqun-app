@@ -1,5 +1,6 @@
 # Use the unique picker entry: private AX may merge the dock chip into a wider ancestor.
-press "label=\"Show what is running\""
-wait "label=\"Open Claude Code. Long press to close\"" 10000
-press "label=\"Open Claude Code. Long press to close\""
+# IDs, not labels: the tree snapshot backend lifts labels onto wider containers.
+press "id=workspace-show-running"
+wait "id=session-map-pane-pane-1" 10000
+press "id=session-map-pane-pane-1"
 wait "id=\"terminal-composer-input\"" 10000

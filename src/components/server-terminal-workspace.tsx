@@ -5653,6 +5653,7 @@ export function ServerTerminalWorkspace({
   const paneEntries = (fill: string) => (
     <>
       <PressableScale
+        testID="terminal-open-quick-actions"
         accessibilityRole="button"
         accessibilityLabel={t`Open quick actions`}
         feedback="selection"
@@ -5705,6 +5706,7 @@ export function ServerTerminalWorkspace({
     return (
       <PaneChip
         key={pane.id}
+        testID={`pane-chip-${pane.id}`}
         label={panelTitle(pane, paneAgent)}
         accessibilityLabel={t`Switch to ${panelTitle(pane, paneAgent)}`}
         active={active}
@@ -6495,6 +6497,7 @@ export function ServerTerminalWorkspace({
                                 contentContainerStyle={styles.keyRowScroller}>
                                 {paneEntries(chromeGlass)}
                                 <PressableScale
+                                  testID="terminal-open-keyboard"
                                   accessibilityLabel={t`Open on-screen keyboard`}
                                   feedback="selection"
                                   pressedScale={0.9}
@@ -6657,6 +6660,7 @@ function sameMentionTrigger(a: FileMentionTrigger | null, b: FileMentionTrigger 
  * selected copy is drawn over it.
  */
 function PaneChip({
+  testID,
   label,
   accessibilityLabel,
   active,
@@ -6667,6 +6671,7 @@ function PaneChip({
   onLayout,
   onPress,
 }: {
+  testID: string;
   label: string;
   accessibilityLabel: string;
   active: boolean;
@@ -6693,6 +6698,7 @@ function PaneChip({
 
   return (
     <PressableScale
+      testID={testID}
       accessibilityLabel={accessibilityLabel}
       onLayout={onLayout}
       onPress={onPress}

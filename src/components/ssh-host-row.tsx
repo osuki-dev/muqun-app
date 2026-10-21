@@ -121,6 +121,7 @@ export function SshHostRow({
         },
       ]}>
       <PressableScale
+        testID={`ssh-host-open-${record.id}`}
         accessibilityRole="button"
         accessibilityLabel={t`Open SSH host ${record.label}`}
         accessibilityHint={hint}
