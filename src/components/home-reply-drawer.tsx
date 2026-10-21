@@ -8,8 +8,6 @@ import {
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   Pressable,
-  ScrollView,
-  type ScrollViewInstance,
   StyleSheet,
   useWindowDimensions,
   View,
@@ -34,6 +32,15 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { AgentFormCard } from '@/components/agent-form-card';
 import { AgentPermissionCard } from '@/components/agent-permission-card';
 import { AgentTranscriptList } from '@/components/agent-transcript-list';
+import { useAppSettings } from '@/stores/app-settings';
+import { noteGatewayGeneration } from '@/stores/gateway-connection-generation';
+import {
+  foldPaneWindow,
+  terminalOwnsScreen,
+  terminalViewportRows,
+  type PaneReadOrigin,
+  type PaneReadWindow,
+} from '@/terminal/history';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { HomeSheetGrabber, HomeSheetHeader } from '@/components/home-sheet';
 import { SheetGround } from '@/components/sheet-ground';
@@ -44,17 +51,28 @@ import {
 } from '@/components/home-thread';
 import { JumpToLatestPill } from '@/components/jump-to-latest-pill';
 import { usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
-import { TerminalTranscript } from '@/components/terminal-transcript';
+import { SkiaTerminal } from '@/components/skia-terminal';
+import { TerminalBoundary } from '@/components/terminal-boundary';
 import { useTerminalTheme } from '@/hooks/use-theme-pack';
 import { useLatestReader, useStableHandler } from '@/hooks/use-render-refs';
-import { useMonoFontFamily } from '@/hooks/use-user-fonts';
+import { useAppActive } from '@/hooks/use-app-active';
+import { useGatewayTunnel } from '@/hooks/use-gateway-tunnel';
+import { usePaneEvents } from '@/hooks/use-pane-events';
 import { removeTimelineItems } from '@/lib/agent-revert';
 import { canReplyAgentForm } from '@/lib/agent-runtime-controls';
 import { replyAgentForm, replyAgentPermission, type PermissionDecision } from '@/lib/agent-session';
 import { replaceAgentTranscript, type AgentSessionRuntime } from '@/lib/agent-session-runtime';
 import { upsertTimelineItems } from '@/lib/agent-timeline-upsert';
 import { withAlpha } from '@/lib/color';
-import { readPaneOutput } from '@/lib/gateway-client';
+import {
+  INITIAL_PANE_OUTPUT_LINES,
+  loadPanes,
+  readPaneOutput,
+  type HerdrEntity,
+  type PaneOutputSource,
+} from '@/lib/gateway-client';
+import { field, numberField, optionalNumberField } from '@/lib/herdr-entity';
+import { isFullScreenTuiPane } from '@/lib/terminal-keys';
 import { sameComputer } from '@/lib/home-composer';
 import { describeGatewayFailure } from '@/lib/network-error';
 import {
@@ -65,13 +83,8 @@ import {
   replyDrawerSnapHeight,
   type ReplyDrawerSnap,
 } from '@/lib/home-reply-drawer';
-import {
-  homeThreadKey,
-  homeThreadPanePolls,
-  type HomeThreadState,
-  type HomeThreadTarget,
-} from '@/lib/home-thread';
-import { calmFadeIn, fadeIn, fadeOut, SETTLE, timing } from '@/lib/motion';
+import { homeThreadKey, type HomeThreadState, type HomeThreadTarget } from '@/lib/home-thread';
+import { calmFadeIn, fadeIn, SETTLE, timing } from '@/lib/motion';
 import { createTranscriptFollow } from '@/lib/transcript-follow';
 import { TRANSCRIPT_ESTIMATED_ITEM_SIZE } from '@/lib/transcript-sizing';
 import { createAgentTranscriptStore } from '@/stores/agent-transcript';
@@ -102,10 +115,6 @@ const GRABBER_ROW_HEIGHT = 14;
 /** How far Home recedes behind an open drawer, and how much it dims. */
 const RECEDE_SCALE = 0.03;
 const SCRIM_OPACITY = 0.28;
-/** Rows of a pane's recent output the drawer shows: the screen and a little before it. */
-const PANE_ROWS = 200;
-/** After a send, the first read of the pane: time for the agent to take the message. */
-const PANE_FIRST_READ_MS = 1_500;
 /** History rows the transcript opens with, as the session screen's first page. */
 const HISTORY_PAGE_SIZE = 40;
 /** A Pad's drawer is a card, never wider than a comfortable transcript. */
@@ -839,108 +848,131 @@ const doNothing = () => {};
 const MAINTAIN_POSITION = { data: true, size: true } as const;
 
 /**
- * A terminal agent's pane, as its screen shows it: the recent output in the
- * terminal's face and colours. Read when the drawer opens, when the agent's
- * status changes and after the reader's send; again every few seconds only
- * while the agent works or a reply is awaited. A reader who has scrolled up
- * keeps what they are reading: newer output waits behind "Latest".
+ * A terminal agent's pane, drawn by the terminal screen's own renderer
+ * (`SkiaTerminal`): the same grid, theme, face, text size and "Latest" as the
+ * pane has when opened, read only (no touch input, no pane zoom). It is fed
+ * the way the terminal screen feeds it: a full read, then the session's event
+ * stream (`usePaneEvents`) with this pane's output inlined, folded into the
+ * held window by `foldPaneWindow`; a read again on reconnect and on a
+ * revision the stream did not inline, and a slow re-read only while the
+ * stream is down. The stream is opened when the drawer mounts and closed
+ * when it unmounts or the app goes to the background.
  */
 function DrawerPane({ target }: { target: Extract<HomeThreadTarget, { kind: 'pane' }> }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   const terminal = useTerminalTheme();
-  const mono = useMonoFontFamily();
-  const profile = useAppearanceProfile();
+  const textSize = useAppSettings((state) => state.terminalTextSize);
+  const appActive = useAppActive();
   const { serverId, paneId } = target;
-  const paneSessionId = useServerAgents(
-    (state) => target.sessionId ?? state.byServer[serverId]?.sessionId
+  const record = useGatewayConnectionStore((state) =>
+    state.record?.serverId === serverId ? state.record : null
   );
-  const status = useServerAgents((state) => {
-    const row = state.byServer[serverId]?.agents.find((agent) => agent.paneId === paneId);
-    return row ? `${row.status}:${row.pendingUserInput === true}` : undefined;
-  });
-  const [shown, setShown] = useState<string | null>(null);
-  const [waiting, setWaiting] = useState<string | null>(null);
+  const tunnel = useGatewayTunnel(record, Boolean(record));
+  const sessionId =
+    useServerAgents((state) => target.sessionId ?? state.byServer[serverId]?.sessionId) ?? '';
+  const [pane, setPane] = useState<HerdrEntity | undefined>(undefined);
+  const [held, setHeld] = useState<PaneReadWindow>({ output: '', capturedRows: 0 });
+  const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
-  const atEnd = useRef(true);
-  const scroller = useRef<ScrollViewInstance>(null);
-  const [follow] = useState(createTranscriptFollow);
-  const readTarget = useLatestReader(target);
-  const sentAtMs = target.sentAtMs;
+  const [streamUp, setStreamUp] = useState(false);
 
-  const receive = useStableHandler((output: string) => {
-    setFailed(false);
-    if (shown === null || atEnd.current) {
-      setShown(output);
-      setWaiting(null);
-    } else if (output !== shown) {
-      setWaiting(output);
-    }
+  // How the terminal screen reads this pane (`paneReading` there): an editor
+  // from its visible screen, anything else from its recent unwrapped lines.
+  const editor = isFullScreenTuiPane(
+    undefined,
+    field(pane, 'terminal_title_stripped'),
+    field(pane, 'foreground_command')
+  );
+  const ownsScreen = terminalOwnsScreen(pane?.raw.scroll) ?? editor;
+  const screenRows = terminalViewportRows(pane?.raw.scroll) ?? 0;
+  const source: PaneOutputSource = editor ? 'visible' : 'recent-unwrapped';
+  const readShape = useLatestReader({ ownsScreen, screenRows, source });
+
+  const loadPane = useStableHandler(() => {
+    if (!sessionId) return;
+    void loadPanes(sessionId).then(
+      (panes) => setPane(panes.find((item) => item.id === paneId)),
+      () => {}
+    );
   });
-  useEffect(() => {
-    if (!paneSessionId) return;
+  const fold = useStableHandler((text: string, origin: PaneReadOrigin) => {
+    const shape = readShape();
+    setHeld((current) =>
+      foldPaneWindow(
+        current,
+        text,
+        origin,
+        INITIAL_PANE_OUTPUT_LINES,
+        shape.ownsScreen,
+        shape.screenRows
+      )
+    );
+    setLoaded(true);
+    setFailed(false);
+  });
+  const reading = useRef(false);
+  const read = useStableHandler(() => {
+    if (!sessionId || reading.current) return;
     const owner = useGatewayConnectionStore.getState().record;
     if (owner?.serverId !== serverId) return;
-    let active = true;
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    const read = () => {
-      timer = null;
-      void readPaneOutput(paneSessionId, paneId, 'ansi', PANE_ROWS).then(
+    reading.current = true;
+    void readPaneOutput(sessionId, paneId, 'ansi', INITIAL_PANE_OUTPUT_LINES, readShape().source)
+      .then(
         (output) => {
           const now = useGatewayConnectionStore.getState().record;
-          if (!active || !sameComputer(now, owner) || now?.deviceId !== owner.deviceId) return;
-          receive(output);
-          again();
+          if (sameComputer(now, owner) && now?.deviceId === owner.deviceId) fold(output, 'refresh');
         },
         () => {
-          if (!active) return;
           setFailed(true);
-          again();
+          setLoaded(true);
         }
-      );
-    };
-    // Read again while the agent works or the reader's message waits for its reply.
-    const again = () => {
-      if (!active) return;
-      const mirror = useServerAgents
-        .getState()
-        .byServer[serverId]?.agents.find((agent) => agent.paneId === paneId);
-      const working = mirror?.status === 'working';
-      if (
-        working ||
-        homeThreadPanePolls({ target: readTarget(), nowMs: Date.now(), answered: false, working })
       )
-        timer = setTimeout(read, HOME_THREAD_PANE_POLL_MS);
-    };
-    const sinceSend = sentAtMs === undefined ? Infinity : Date.now() - sentAtMs;
-    if (sinceSend < PANE_FIRST_READ_MS) timer = setTimeout(read, PANE_FIRST_READ_MS - sinceSend);
-    else read();
-    return () => {
-      active = false;
-      if (timer) clearTimeout(timer);
-    };
-  }, [serverId, paneId, paneSessionId, status, sentAtMs, receive, readTarget]);
-
-  // The reader's own send takes them to the end.
-  const seenSend = useRef(sentAtMs);
+      .finally(() => {
+        reading.current = false;
+      });
+  });
   useEffect(() => {
-    if (sentAtMs === seenSend.current) return;
-    seenSend.current = sentAtMs;
-    atEnd.current = true;
-    follow.reset();
-  }, [sentAtMs, follow]);
+    loadPane();
+    read();
+  }, [sessionId, paneId, loadPane, read]);
+  // With the stream down, reads are the only way new output arrives.
+  useEffect(() => {
+    if (streamUp || !appActive) return;
+    const timer = setInterval(read, HOME_THREAD_PANE_POLL_MS);
+    return () => clearInterval(timer);
+  }, [streamUp, appActive, read]);
 
-  const showLatest = () => {
-    atEnd.current = true;
-    follow.reset();
-    if (waiting !== null) {
-      setShown(waiting);
-      setWaiting(null);
-    }
-    scroller.current?.scrollToEnd({ animated: false });
-  };
+  usePaneEvents(
+    tunnel.baseUrl,
+    record?.token ?? null,
+    sessionId,
+    paneId,
+    appActive && Boolean(record),
+    0,
+    useMemo(
+      () => ({
+        onPaneRevision: (revised: string) => {
+          if (revised === paneId) read();
+        },
+        onPaneOutput: (revised: string, _revision: number, text: string) => {
+          if (revised === paneId) fold(text, 'frame');
+        },
+        onStructureChanged: loadPane,
+        onLayoutChanged: loadPane,
+        onConnected: () => {
+          setStreamUp(true);
+          read();
+          loadPane();
+        },
+        onDisconnected: () => setStreamUp(false),
+        onOutputFrame: (payload: unknown) => noteGatewayGeneration(serverId, payload),
+      }),
+      [paneId, serverId, read, fold, loadPane]
+    )
+  );
 
-  if (shown === null)
+  if (!loaded || (failed && !held.output))
     return (
       <View testID="home-reply-loading" style={styles.center}>
         {failed ? (
@@ -953,46 +985,27 @@ function DrawerPane({ target }: { target: Extract<HomeThreadTarget, { kind: 'pan
       </View>
     );
   return (
-    <Animated.View entering={fadeIn('short')} exiting={fadeOut('micro')} style={styles.fill}>
-      <View
-        style={[
-          styles.pane,
-          { backgroundColor: terminal.background, borderRadius: profile.chrome.control },
-        ]}>
-        <ScrollView
-          ref={scroller}
-          testID="home-reply-pane"
-          nestedScrollEnabled
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.paneContent}
-          onContentSizeChange={() => {
-            if (atEnd.current) scroller.current?.scrollToEnd({ animated: false });
-          }}
-          scrollEventThrottle={32}
-          onScroll={(event) => {
-            const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
-            const geometry = {
-              offset: contentOffset.y,
-              viewport: layoutMeasurement.height,
-              content: contentSize.height,
-            };
-            follow.setGeometry(geometry);
-            atEnd.current = follow.getSnapshot().atBottom;
-            if (atEnd.current && waiting !== null) {
-              setShown(waiting);
-              setWaiting(null);
-            }
-          }}>
-          <TerminalTranscript output={shown} maxLines={PANE_ROWS} fontFamily={mono} />
-        </ScrollView>
-      </View>
-      <JumpToLatestPill
-        testID="home-reply-latest"
-        follow={follow}
-        enabled
-        bottom={12}
-        onPress={showLatest}
-      />
+    <Animated.View
+      testID="home-reply-pane"
+      entering={fadeIn('short')}
+      style={[styles.pane, { backgroundColor: terminal.background }]}>
+      <TerminalBoundary
+        resetKey={paneId}
+        background={terminal.background}
+        textColor={terminal.foreground}>
+        <SkiaTerminal
+          output={held.output}
+          terminalId={paneId}
+          textSize={textSize}
+          screenRows={screenRows}
+          ownsScreen={ownsScreen}
+          screenFocused
+          paneColumns={pane ? numberField(pane, 'width') || undefined : undefined}
+          paneRows={pane ? numberField(pane, 'height') || undefined : undefined}
+          paneCursorColumn={optionalNumberField(pane, 'cursor_x')}
+          paneCursorRow={optionalNumberField(pane, 'cursor_y')}
+        />
+      </TerminalBoundary>
     </Animated.View>
   );
 }
@@ -1020,8 +1033,7 @@ const styles = StyleSheet.create({
   empty: { paddingVertical: 24, alignItems: 'center' },
   transcriptContent: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 12 },
   requests: { gap: 10, paddingTop: 8 },
-  pane: { flex: 1, marginHorizontal: 12, marginBottom: 8, overflow: 'hidden' },
-  paneContent: { padding: 12 },
+  pane: { flex: 1, overflow: 'hidden' },
 });
 
 export { PAD_MAX_WIDTH as HOME_REPLY_PAD_MAX_WIDTH };

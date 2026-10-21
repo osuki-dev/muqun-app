@@ -24,7 +24,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { EdgeFade } from '@/components/edge-fade';
-import { HomeSheetGrabber, HomeSheetHeader, homeSheetStyles } from '@/components/home-sheet';
+import { HomeSheetHeader, homeSheetStyles } from '@/components/home-sheet';
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import { useMinuteNow } from '@/hooks/use-minute-now';
 import { useStableHandler } from '@/hooks/use-render-refs';
@@ -445,19 +445,21 @@ export function HomeStageLayout({
         {panels.length > 0 ? (
           <GestureDetector gesture={pull}>
             <View>
-              <PressableScale
-                testID="home-stage-pull"
-                accessibilityRole="button"
-                accessibilityLabel={hasAttention ? t`All sessions, needs you` : t`All sessions`}
-                onPress={() => openList(true)}
-                style={styles.handleRow}>
-                <HomeSheetGrabber />
-                {hasAttention ? (
+              {/* No grabber of its own: the dock's is the one handle on Home,
+                  and it raises the conversation. The list is the strip's
+                  "All sessions" card, or a pull up on the strip. */}
+              {hasAttention ? (
+                <PressableScale
+                  testID="home-stage-pull"
+                  accessibilityRole="button"
+                  accessibilityLabel={t`All sessions, needs you`}
+                  onPress={() => openList(true)}
+                  style={styles.handleRow}>
                   <Text variant="caption" weight="semibold" color={theme.colors.warning}>
                     {t`Needs you`}
                   </Text>
-                ) : null}
-              </PressableScale>
+                </PressableScale>
+              ) : null}
               <StageSessionStrip
                 serverId={selected?.serverId}
                 selectedIndex={selectedIndex}
