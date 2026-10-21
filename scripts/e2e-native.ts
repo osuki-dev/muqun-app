@@ -1050,7 +1050,7 @@ export class NativeRunner {
           await this.invoke(['press', selector(sheetClose)]);
           continue;
         }
-        // Android exposes controls behind the catalogue sheet in its tree.
+        // Android exposes controls behind the catalogue and context sheets in its tree.
         // Its underlying "Go back" must not steal the sheet's Back action.
         if (
           guardedNodes?.some(
@@ -1058,6 +1058,7 @@ export class NativeRunner {
               node.identifier === 'theme-browse-list' ||
               (env.PLATFORM === 'android' &&
                 (node.identifier === 'theme-tab' ||
+                  node.identifier === 'agent-context-sheet' ||
                   /^settings-(servers|appearance|terminal|alerts|storage|about)-sheet$/.test(
                     node.identifier ?? ''
                   ) ||
