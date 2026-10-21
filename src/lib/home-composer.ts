@@ -62,6 +62,38 @@ export function resolveHomeComposerTarget(input: {
   return { kind: 'ready', server: first };
 }
 
+/** A row of the composer's computer picker. */
+export type HomeTargetRow = {
+  /** Confirmed offline: listed so the reader sees it, never chosen from here. */
+  offline: boolean;
+  selectable: boolean;
+  /** The composer's computer now, highlighted even while it is offline. */
+  current: boolean;
+  /** When it was last seen, for an offline row that knows. */
+  lastSeenMs?: number;
+};
+
+/**
+ * How the computer picker shows `serverId`. Only a computer confirmed
+ * `offline` is dimmed and refused; one merely reconnecting or not yet checked
+ * (`unknown`) stays selectable. The current computer is marked current even
+ * when offline -- the picker says so rather than switching silently.
+ */
+export function homeTargetRow(input: {
+  serverId: string;
+  reachability: ServerReachability | undefined;
+  currentServerId?: string | null;
+  lastSeenMs?: number;
+}): HomeTargetRow {
+  const offline = input.reachability === 'offline';
+  return {
+    offline,
+    selectable: !offline,
+    current: input.serverId === input.currentServerId,
+    ...(offline && input.lastSeenMs !== undefined ? { lastSeenMs: input.lastSeenMs } : {}),
+  };
+}
+
 /**
  * The gateway session Home's new agent sessions are made under: the one the
  * `/agent` route and the Pad detail default to when a link names none, so the

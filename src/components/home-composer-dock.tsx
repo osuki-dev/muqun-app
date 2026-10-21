@@ -682,10 +682,8 @@ export function HomeComposerDock({
       setError(t`Computer unavailable.`);
       return null;
     }
-    if (target.kind === 'offline') {
-      openTargetPicker();
-      return null;
-    }
+    // An offline computer keeps the draft and says so (`offlineReason`); it
+    // is never swapped for another one behind the reader's back.
     if (target.kind !== 'ready') return null;
     const serverId = target.server.serverId;
     if (useGatewayConnectionStore.getState().record?.serverId === serverId) return serverId;
@@ -1770,6 +1768,15 @@ export function HomeComposerDock({
       ) : null}
     </View>
   );
+  // The chosen computer is confirmed offline: Send waits, with the reason, as
+  // a session observed elsewhere does. A reconnecting one is not offline.
+  const offlineComputer = target.kind === 'offline' ? target.server.label : undefined;
+  const offlineReason = offlineComputer
+    ? (() => {
+        const agentName = offlineComputer;
+        return t`${agentName} is offline`;
+      })()
+    : undefined;
   const options = (
     <HomeComposerOptions
       computer={targetServer ? computerLabel : t`No computer online`}
@@ -1900,6 +1907,7 @@ export function HomeComposerDock({
       sendTestID="home-composer-send"
       running={false}
       disabled={target.kind === 'none'}
+      interactionBlockedReason={offlineReason}
       agentName={agentLabel}
       placeholder={
         thread ? t`Reply to ${threadAgentName}…` : t`New conversation with ${agentLabel}…`
