@@ -66,6 +66,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { sideInsetPadding } from '@/hooks/use-side-insets';
 
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
@@ -788,6 +789,9 @@ export function HomeOverview({
   const travel = useSharedValue(0);
   const fold = useSharedValue(0);
   const insets = useSafeAreaInsets();
+  // iPhone Duo's status bar runs down the right edge: Home's controls, text
+  // and dock keep clear of it while its artwork still paints to the glass.
+  const sideInsets = { left: insets.left, right: insets.right };
   // The bottom inset with no keyboard up, which the Pad page is sized from
   // (`nextRestingInset`). Pad only: the phone reads `insets.bottom` and must
   // not re-render on a keyboard showing.
@@ -1061,6 +1065,8 @@ export function HomeOverview({
       reachabilityByServer={padReachabilityByServer}
       bottomInset={padLaunch ? 0 : insets.bottom}
       topInset={insets.top}
+      // The wide Pad cover's dock stands in its left column, clear of the edges.
+      sideInsets={padLaunch ? undefined : sideInsets}
       // Phone Home has a small gutter outside the field and its shadow.
       // On the Pad cover, the bar is capped at the phone dock's width and
       // centred in the cover column (`padDockOuterInset`), so the field and
@@ -1302,6 +1308,7 @@ export function HomeOverview({
             coverHeader={coverHeader}
             paused={!isFocused || !appActive}
             topInset={insets.top}
+            sideInsets={sideInsets}
             dockHeight={dock && composerRevealed ? dockHeight : insets.bottom}
             headerAction={phoneToolbarFor(true)}
             hasAttention={!loading && !hydrationError && hasAttention}
@@ -1452,6 +1459,7 @@ export function HomeOverview({
                 cover={coverHeader}
                 artworkForeground={editorialArtworkForeground}
                 topInset={insets.top}
+                sideInsets={sideInsets}
                 coverTitle={showsEditorialBrand ? (identity.name ?? undefined) : undefined}
                 pad={isPad}
                 typographicCover={themeLibraryHydrated && !customTheme}
@@ -1733,7 +1741,7 @@ export function HomeOverview({
             barHeightValue.set(height);
             setBarHeight(height);
           }}>
-          <SafeAreaView edges={['top']} pointerEvents="box-none">
+          <SafeAreaView edges={['top', 'left', 'right']} pointerEvents="box-none">
             <View pointerEvents="box-none" style={styles.topBarRow}>
               {identity.showBrand ? (
                 <Animated.View
@@ -1887,8 +1895,8 @@ export function HomeOverview({
             styles.content,
             isPad && styles.padContent,
             {
-              paddingHorizontal: metrics.contentGutter,
-              maxWidth: metrics.contentMaxWidth,
+              ...sideInsetPadding(sideInsets, metrics.contentGutter),
+              maxWidth: metrics.contentMaxWidth + sideInsets.left + sideInsets.right,
             },
             { paddingTop: barHeight + styles.content.paddingTop },
             // Room under the last card above the bar.

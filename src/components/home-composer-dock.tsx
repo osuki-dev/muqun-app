@@ -1,3 +1,4 @@
+import type { SideInsets } from '@/hooks/use-side-insets';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
 import { useIsFocused, useRouter } from 'expo-router';
@@ -163,6 +164,7 @@ export function HomeComposerDock({
   bottomInset = 0,
   topInset = 0,
   outerInsets,
+  sideInsets,
   edgeBar,
   fieldLines,
   autoHide,
@@ -179,6 +181,8 @@ export function HomeComposerDock({
   topInset?: number;
   /** Phone-only space outside the field; Pad keeps its column geometry. */
   outerInsets?: { horizontal: number; bottom: number };
+  /** See `AgentComposer`'s `sideInsets`: for a dock that spans the window. */
+  sideInsets?: SideInsets;
   /** See `AgentComposer`'s `bar`. */
   edgeBar?: { inset: number };
   /** See `AgentComposer`'s `fieldLines`. */
@@ -1926,6 +1930,7 @@ export function HomeComposerDock({
       bottomInset={bottomInset}
       topInset={topInset}
       outerInsets={outerInsets}
+      sideInsets={sideInsets}
       bar={edgeBar}
       fieldLines={Math.max(3, fieldLines ?? 3)}
       compact

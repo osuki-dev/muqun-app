@@ -1,3 +1,4 @@
+import { sideInsetPadding, type SideInsets } from '@/hooks/use-side-insets';
 import { plural } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
@@ -61,6 +62,12 @@ export type HomeStageLayoutProps = {
   /** Bumped when a task completes: the motes flare. */
   burst: number;
   topInset: number;
+  /**
+   * The side safe areas: the HUD, the foot rows and the pulled-up list keep
+   * clear of them (iPhone Duo's status bar runs down the right edge), while
+   * the world and its scrims still fill the window.
+   */
+  sideInsets?: SideInsets;
   /** The floating composer's height; the session strip stands above it. */
   dockHeight: number;
   /** The toolbar's buttons (top right). */
@@ -95,6 +102,10 @@ export type HomeStageLayoutProps = {
   onNewTask: () => void;
   onViewport: (height: number) => void;
 };
+
+const NO_SIDE_INSETS: SideInsets = { left: 0, right: 0 };
+/** The HUD's margin from the safe edges. */
+const HUD_GUTTER = 20;
 
 /** Sessions shown in the strip before "All sessions". */
 export const STAGE_STRIP_LIMIT = 6;
@@ -223,6 +234,7 @@ export function HomeStageLayout({
   paused,
   burst,
   topInset,
+  sideInsets = NO_SIDE_INSETS,
   dockHeight,
   headerAction,
   sessions,
@@ -374,7 +386,13 @@ export function HomeStageLayout({
           style={[styles.topScrim, { height: topInset + 150 }]}
         />
       )}
-      <View pointerEvents="box-none" style={[styles.top, { paddingTop: topInset + 10 }]}>
+      <View
+        pointerEvents="box-none"
+        style={[
+          styles.top,
+          { paddingTop: topInset + 10 },
+          sideInsetPadding(sideInsets, HUD_GUTTER),
+        ]}>
         <View pointerEvents="box-none" style={styles.topRow}>
           {selected ? (
             <StageHeaderButton
@@ -418,12 +436,22 @@ export function HomeStageLayout({
         ) : null}
       </View>
       {actionsPanel ? (
-        <View style={[styles.menu, { top: topInset + 120 }]}>
+        <View
+          style={[
+            styles.menu,
+            { top: topInset + 120, left: 16 + sideInsets.left, right: 16 + sideInsets.right },
+          ]}>
           <AgentActionMenu testID="home-stage-actions" items={menuItems} />
         </View>
       ) : null}
       {storageError ? (
-        <View style={[styles.center, { top: topInset + 130 }]}>{storageError}</View>
+        <View
+          style={[
+            styles.center,
+            { top: topInset + 130, left: 16 + sideInsets.left, right: 16 + sideInsets.right },
+          ]}>
+          {storageError}
+        </View>
       ) : null}
 
       {/* Bottom: a scrim, the handle and the selected computer's sessions, above the composer. */}
@@ -432,7 +460,7 @@ export function HomeStageLayout({
       </Animated.View>
       <Animated.View
         pointerEvents="box-none"
-        style={[styles.bottom, footStyle]}
+        style={[styles.bottom, sideInsetPadding(sideInsets), footStyle]}
         onLayout={(event) => setFootStack(Math.round(event.nativeEvent.layout.height))}>
         {emptyState ? <View style={styles.empty}>{emptyState}</View> : null}
         {panels.length > 0 ? (
@@ -483,6 +511,7 @@ export function HomeStageLayout({
           styles.sheet,
           {
             top: topInset + 48,
+            ...sideInsetPadding(sideInsets),
             backgroundColor: background(theme.colors.background),
             borderTopLeftRadius: profile.chrome.sheet,
             borderTopRightRadius: profile.chrome.sheet,
@@ -656,7 +685,7 @@ function StageStatusLine({
 const styles = StyleSheet.create({
   root: { flex: 1, overflow: 'hidden' },
   topScrim: { position: 'absolute', left: 0, right: 0, top: 0 },
-  top: { position: 'absolute', left: 0, right: 0, top: 0, paddingHorizontal: 20, gap: 14 },
+  top: { position: 'absolute', left: 0, right: 0, top: 0, gap: 14 },
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
