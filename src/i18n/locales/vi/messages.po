@@ -148,12 +148,6 @@ msgstr "{0} tin nhắn trong ngữ cảnh"
 msgid "{0} more models"
 msgstr "Còn {0} mô hình nữa"
 
-#. placeholder {0}: filtered.length
-#. placeholder {1}: entries.length
-#: src/components/dev-icon-gallery.tsx
-msgid "{0} of {1} icons · development only"
-msgstr "{0} trên {1} biểu tượng · chỉ dành cho phát triển"
-
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
 msgid "{0} of {limitLabel} tokens the model can hold"
@@ -317,7 +311,7 @@ msgstr "{count, plural, other {# kết quả}}"
 
 #: src/components/home-stage/home-stage-layout.tsx
 msgid "{count, plural, one {# session} other {# sessions}}"
-msgstr ""
+msgstr "{count, plural, other {# phiên}}"
 
 #: src/components/home-connections.tsx
 msgid "{count} in progress"
@@ -455,10 +449,6 @@ msgstr "+{overflow} nữa"
 #: src/hooks/use-task-age.ts
 msgid "<1m"
 msgstr "<1 phút"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "0 speed pauses motion. Theme default restores the theme."
-msgstr "Tốc độ 0 tạm dừng chuyển động. Mặc định chủ đề khôi phục hiệu ứng"
 
 #: src/components/settings-storage.tsx
 msgid "10 days"
@@ -957,10 +947,6 @@ msgstr "Tự động duyệt mọi hành động"
 msgid "Auto-detect"
 msgstr "Tự động nhận diện"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Automatic"
-msgstr "Tự động"
-
 #: src/components/settings-storage.tsx
 msgid "Automatic cache cleanup"
 msgstr "Tự động dọn bộ nhớ đệm"
@@ -1080,10 +1066,6 @@ msgstr "Nhánh hoặc commit (không bắt buộc)"
 #: src/components/agent-worktree-sheet.tsx
 msgid "Branch to start from"
 msgstr "Nhánh để bắt đầu"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Brand marks and working indicator"
-msgstr "Biểu tượng thương hiệu và chỉ báo đang chạy"
 
 #. placeholder {0}: server.label
 #: src/components/home-computer-deck.tsx
@@ -1408,17 +1390,9 @@ msgstr "Chỉ xóa thông báo. Các tác vụ đang chờ vẫn cần bạn x�
 msgid "Close"
 msgstr "Đóng"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Close effects"
-msgstr "Đóng hiệu ứng"
-
 #: src/components/asset-viewer.tsx
 msgid "Close file"
 msgstr "Đóng tệp"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Close icon preview"
-msgstr "Đóng xem trước biểu tượng"
 
 #: src/components/home-recent-sessions.tsx
 #: src/components/home-stage/home-stage-layout.tsx
@@ -2451,10 +2425,6 @@ msgstr "Tùy chỉnh"
 msgid "Dark"
 msgstr "Tối"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Decrease {label}"
-msgstr "Giảm {label}"
-
 #: src/components/agent-model-sheet.tsx
 msgid "default"
 msgstr "mặc định"
@@ -2546,10 +2516,6 @@ msgstr "Không gian làm việc demo"
 msgid "Denied by you"
 msgstr "Bạn đã từ chối"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Density"
-msgstr "Mật độ"
-
 #: src/i18n/labels.ts
 msgid "Deny"
 msgstr "Từ chối"
@@ -2580,10 +2546,6 @@ msgstr "xác thực thiết bị"
 #: src/i18n/labels.ts
 msgid "Diff summary"
 msgstr "Tóm tắt diff"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Direction"
-msgstr "Hướng"
 
 #: src/components/new-task-sheet.tsx
 msgid "Directory"
@@ -2749,11 +2711,6 @@ msgstr "Đã đổi trình soạn thảo"
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Editorial"
 msgstr "Biên tập"
-
-#. placeholder {0}: props.value
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Effects · {0}"
-msgstr "Hiệu ứng · {0}"
 
 #: src/i18n/labels.ts
 msgid "Encryption was turned on for this computer. Pair it again to keep using it."
@@ -3247,10 +3204,6 @@ msgstr "Trang chủ"
 msgid "Home agent"
 msgstr "Tác tử Trang chủ"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Home effects · development only"
-msgstr "Hiệu ứng trang chủ · chỉ dành cho phát triển"
-
 #: src/app/agent-workspace.tsx
 #: src/components/home-composer-dock.tsx
 msgid "Home folder"
@@ -3292,14 +3245,6 @@ msgstr "Khóa host đã được tin cậy"
 #: src/app/settings-about.tsx
 msgid "How to use Muqun"
 msgstr "Cách dùng Muqun"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Icon preview"
-msgstr "Xem trước biểu tượng"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Icons"
-msgstr "Biểu tượng"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/home-thread.tsx
@@ -3381,10 +3326,6 @@ msgstr "Mức sử dụng bao gồm trong gói"
 msgid "Included usage is restricted. Paid or alternative usage may still be available."
 msgstr "Mức sử dụng bao gồm trong gói bị hạn chế. Cách sử dụng trả phí hoặc thay thế có thể vẫn khả dụng"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Increase {label}"
-msgstr "Tăng {label}"
-
 #: src/components/agent-context-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
 msgid "Input"
@@ -3444,10 +3385,6 @@ msgstr "Đang cài đặt hình ảnh"
 #: src/components/settings-font-sheet.tsx
 msgid "Installing…"
 msgstr "Đang cài đặt…"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Intensity"
-msgstr "Cường độ"
 
 #: src/i18n/labels.ts
 msgid "Interacted"
@@ -3832,10 +3769,6 @@ msgstr "Đánh dấu đã xong"
 msgid "Mark reviewed"
 msgstr "Đánh dấu đã xem"
 
-#: src/components/dev-icon-gallery.tsx
-msgid "Marks keep their original geometry and stroke."
-msgstr "Biểu tượng giữ nguyên hình dạng và nét vẽ gốc"
-
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "Linh vật"
@@ -4215,10 +4148,6 @@ msgstr "Không còn liên kết với {computer}"
 #: src/app/commands.tsx
 msgid "No matching commands. Try another word."
 msgstr "Không tìm thấy lệnh phù hợp. Thử từ khác"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "No matching icons"
-msgstr "Không có biểu tượng phù hợp"
 
 #: src/components/home-recent-sessions.tsx
 msgid "No matching sessions"
@@ -4617,10 +4546,6 @@ msgstr "Mở danh sách tệp"
 msgid "Open Git"
 msgstr "Mở Git"
 
-#: src/components/dev-icon-gallery.tsx
-msgid "Open icon preview"
-msgstr "Mở xem trước biểu tượng"
-
 #: src/components/agent-tool-card.tsx
 msgid "Open image"
 msgstr "Mở ảnh"
@@ -4889,10 +4814,6 @@ msgstr "GHÉP NỐI ĐÃ HẾT HẠN"
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "Ghép nối thất bại"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Palette (up to 4)"
-msgstr "Bảng màu (tối đa 4)"
 
 #: src/components/settings-servers.tsx
 msgid "Panes on computer cards"
@@ -5842,10 +5763,6 @@ msgstr "Tìm kiếm theo tên hoặc thẻ"
 msgid "Search files"
 msgstr "Tìm tệp"
 
-#: src/components/dev-icon-gallery.tsx
-msgid "Search icons"
-msgstr "Tìm biểu tượng"
-
 #: src/components/agent-model-sheet.tsx
 msgid "Search models"
 msgstr "Tìm kiếm mô hình"
@@ -6234,8 +6151,6 @@ msgid "Simulator controls"
 msgstr "Điều khiển trình giả lập"
 
 #: src/components/asset-viewer.tsx
-#: src/components/dev-home-ambient-controls.tsx
-#: src/components/dev-icon-gallery.tsx
 msgid "Size"
 msgstr "Kích thước"
 
@@ -6284,10 +6199,6 @@ msgstr "Mã nguồn"
 #: src/components/virtual-keyboard.tsx
 msgid "Space"
 msgstr "Space"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Speed"
-msgstr "Tốc độ"
 
 #: src/components/agent-account-limits-section.tsx
 msgid "Spend control"
@@ -6523,10 +6434,6 @@ msgstr "Bộ nhớ"
 #: src/app/settings-voice.tsx
 msgid "Streams speech while you talk. Requires an OpenAI Realtime-compatible transcription endpoint."
 msgstr "Truyền âm thanh trong khi bạn nói. Cần điểm cuối phiên âm tương thích với OpenAI Realtime"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Stroke width"
-msgstr "Độ dày nét"
 
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -7041,7 +6948,6 @@ msgstr "Lượt này đã thất bại"
 msgid "Theme"
 msgstr "Chủ đề"
 
-#: src/components/dev-home-ambient-controls.tsx
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
 msgstr "Theo chủ đề"
@@ -7960,8 +7866,8 @@ msgid "Your phone's clock is off by {minutes} minutes. Fix the date and time, th
 msgstr "Đồng hồ của điện thoại lệch {minutes} phút. Chỉnh lại ngày giờ rồi thử lại"
 
 #: src/components/settings-home-layout-sheet.tsx
-msgid "Your theme as a 3D world, with your computers as holo-screens around its character."
-msgstr "Chủ đề của bạn thành thế giới 3D, máy tính là màn hình ba chiều quanh nhân vật"
+msgid "Your theme's art as a 3D world that moves with your phone, with your agents' status below it."
+msgstr "Hình minh họa của chủ đề thành một thế giới 3D chuyển động theo điện thoại, bên dưới là trạng thái các tác tử của bạn"
 
 #: src/components/image-preview-modal.tsx
 msgid "Zoom in"
