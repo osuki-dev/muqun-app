@@ -96,6 +96,11 @@ msgstr "{0, plural, one {ещё # строка} few {ещё # строки} many
 msgid "{0, plural, one {# operation} other {# operations}}"
 msgstr "{0, plural, one {# операция} few {# операции} many {# операций} other {# операции}}"
 
+#. placeholder {0}: need.count
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "{0, plural, one {# request waiting} other {# requests waiting}}"
+msgstr "{0, plural, one {# запрос ожидает} few {# запроса ожидают} many {# запросов ожидают} other {# запроса ожидают}}"
+
 #. placeholder {0}: unused.count
 #. placeholder {1}: formatCacheSize(unused.reclaimableBytes)
 #: src/components/settings-storage.tsx
@@ -135,7 +140,7 @@ msgstr "{0} не загружен. Повторите попытку или уд
 #. placeholder {0}: events.length
 #: src/app/settings-stage-diagnostics.tsx
 msgid "{0} events, newest first"
-msgstr ""
+msgstr "Событий: {0}, сначала новые"
 
 #. placeholder {0}: failed.name
 #. placeholder {1}: uploadLimitMb(attachmentLimitBytes(failed))
@@ -375,6 +380,10 @@ msgstr "{minutes, plural, one {# минута} few {# минуты} many {# ми
 msgid "{modifierKeys} combinations need the program in this terminal to enable extended keys"
 msgstr "Сочетания с {modifierKeys} работают, только если программа в этом терминале включила расширенные клавиши"
 
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "{more, plural, one {# more needs you} other {# more need you}}"
+msgstr "{more, plural, one {ещё # ждёт вас} few {ещё # ждут вас} many {ещё # ждут вас} other {ещё # ждут вас}}"
+
 #: src/components/home-agent-sheet.tsx
 msgid "{name} (terminal)"
 msgstr "{name} (терминал)"
@@ -446,6 +455,10 @@ msgstr "{waiting, plural, one {# ждёт вас} few {# ждут вас} many {
 #: src/components/task-row.tsx
 msgid "→ {name}"
 msgstr "→ {name}"
+
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "+{more} more"
+msgstr "+{more}"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
@@ -723,6 +736,10 @@ msgstr "Разрешить один раз"
 msgid "Allow the camera, or enter the address instead."
 msgstr "Разрешите камеру или введите адрес вручную"
 
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "Allow: {subject}"
+msgstr "Разрешить: {subject}"
+
 #: src/components/settings-font-sheet.tsx
 msgid "Already on"
 msgstr "Уже выбран"
@@ -768,6 +785,7 @@ msgstr "и ещё {rest}"
 msgid "another computer"
 msgstr "другой компьютер"
 
+#: src/components/home-stage/stage-needs-card.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
 msgstr "Ответ"
@@ -2235,7 +2253,7 @@ msgid "Could not rename"
 msgstr "Не удалось переименовать"
 
 #: src/components/agent-workbench.tsx
-#: src/components/home-reply-drawer.tsx
+#: src/components/home-session-replies.ts
 msgid "Could not reply"
 msgstr "Не удалось ответить"
 
@@ -3982,6 +4000,7 @@ msgid "Needs your attention"
 msgstr "Требуется ваше внимание"
 
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/stage-needs-card.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/server-agent-rows.tsx
 #: src/lib/notifications.ts
@@ -4268,7 +4287,7 @@ msgstr "Пока нет SSH-хостов. Добавьте один, чтобы 
 
 #: src/app/settings-stage-diagnostics.tsx
 msgid "No Stage art events recorded yet."
-msgstr ""
+msgstr "Событий оформления Сцены пока нет"
 
 #: src/components/simfarm-stage.tsx
 msgid "No still frames"
@@ -4501,6 +4520,7 @@ msgstr "Будет скрыта только эта строка на главн
 #: src/components/home-connections.tsx
 #: src/components/home-reply-drawer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
+#: src/components/home-stage/stage-needs-card.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/task-row.tsx
@@ -4903,6 +4923,7 @@ msgid "Permission"
 msgstr "Разрешение"
 
 #: src/components/agent-permission-card.tsx
+#: src/components/home-stage/stage-needs-card.tsx
 msgid "Permission required"
 msgstr "Требуется разрешение"
 
@@ -6264,11 +6285,11 @@ msgstr "Сцена"
 
 #: src/app/settings-stage-diagnostics.tsx
 msgid "Stage diagnostics"
-msgstr ""
+msgstr "Диагностика Сцены"
 
 #: src/app/settings-stage-diagnostics.tsx
 msgid "Stage log copied"
-msgstr ""
+msgstr "Журнал Сцены скопирован"
 
 #: src/components/diff-rows.tsx
 msgid "Staged"
@@ -7689,6 +7710,10 @@ msgstr "Вариативный · {0}"
 msgid "Version {version}{0}"
 msgstr "Версия {version}{0}"
 
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "View"
+msgstr "Открыть"
+
 #: src/components/agent-composer.tsx
 msgid "View file changes"
 msgstr "Просмотреть изменения файлов"
@@ -7757,9 +7782,17 @@ msgstr "Ожидаем список моделей этого компьютер
 msgid "Waiting for uploads to finish…"
 msgstr "Ждём завершения загрузок…"
 
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "Waiting for you in the terminal"
+msgstr "Ждёт вас в терминале"
+
 #: src/components/agent-workbench.tsx
 msgid "Waiting for your answer"
 msgstr "Ждём вашего ответа"
+
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "Waiting for your input"
+msgstr "Ждёт вашего ответа"
 
 #: src/components/agent-composer.tsx
 msgid "Waiting to send"

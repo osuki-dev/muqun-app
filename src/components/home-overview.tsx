@@ -116,6 +116,8 @@ import { homeContinueSearchEnabled } from '@/lib/home-continue-search';
 import { demoContinueSearchEntries } from '@/lib/demo-recents';
 import { useScreenVisible } from '@/hooks/use-screen-visible';
 import { claimHomeFirstEntry, hasHomeComposerRevealed } from '@/lib/home-first-entry';
+import type { HomeTaskRow } from '@/lib/home-in-progress';
+import type { HomeTarget } from '@/lib/home-recents';
 import { useThemePack } from '@/hooks/use-theme-pack';
 import { useLaunchHandoff } from '@/stores/launch-handoff';
 import {
@@ -1142,25 +1144,24 @@ export function HomeOverview({
       target.agentId
     );
   }
+  const openAttentionTarget = (target: HomeTarget) => {
+    void commands.resumeTarget(target);
+  };
+  // A request is answered where the task runs: its session or its pane, on
+  // its own computer.
+  const openWaitingTask = ({ serverId, task }: HomeTaskRow) => {
+    dismissTaskNotices(task);
+    // Opening work on another computer keeps the dock where it is.
+    launchController.pinTarget();
+    showOpeningWhile(taskOpeningKey(serverId, task.taskId), openTaskWork(commands, serverId, task));
+  };
   const attentionSection =
     !loading && !hydrationError ? (
       <HomeAttention
         servers={records}
         taskServerIds={taskServerIds}
-        onOpen={(target) => {
-          void commands.resumeTarget(target);
-        }}
-        // A request is answered where the task runs: its session
-        // or its pane, on its own computer.
-        onOpenTask={({ serverId, task }) => {
-          dismissTaskNotices(task);
-          // Opening work on another computer keeps the dock where it is.
-          launchController.pinTarget();
-          showOpeningWhile(
-            taskOpeningKey(serverId, task.taskId),
-            openTaskWork(commands, serverId, task)
-          );
-        }}
+        onOpen={openAttentionTarget}
+        onOpenTask={openWaitingTask}
       />
     ) : undefined;
   const progressSection =
@@ -1335,6 +1336,8 @@ export function HomeOverview({
             onOpenDetails={(serverId) =>
               router.push({ pathname: '/settings-servers', params: { serverId } })
             }
+            onOpenRequest={openAttentionTarget}
+            onOpenWaitingTask={openWaitingTask}
             threadKey={stageThreadKey}
             onClearThread={() => {
               if (chosenThread)

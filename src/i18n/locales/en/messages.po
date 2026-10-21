@@ -96,6 +96,11 @@ msgstr "{0, plural, one {# more line} other {# more lines}}"
 msgid "{0, plural, one {# operation} other {# operations}}"
 msgstr "{0, plural, one {# operation} other {# operations}}"
 
+#. placeholder {0}: need.count
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "{0, plural, one {# request waiting} other {# requests waiting}}"
+msgstr "{0, plural, one {# request waiting} other {# requests waiting}}"
+
 #. placeholder {0}: unused.count
 #. placeholder {1}: formatCacheSize(unused.reclaimableBytes)
 #: src/components/settings-storage.tsx
@@ -375,6 +380,10 @@ msgstr "{minutes, plural, one {# minute} other {# minutes}}"
 msgid "{modifierKeys} combinations need the program in this terminal to enable extended keys"
 msgstr "{modifierKeys} combinations need the program in this terminal to enable extended keys"
 
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "{more, plural, one {# more needs you} other {# more need you}}"
+msgstr "{more, plural, one {# more needs you} other {# more need you}}"
+
 #: src/components/home-agent-sheet.tsx
 msgid "{name} (terminal)"
 msgstr "{name} (terminal)"
@@ -446,6 +455,10 @@ msgstr "{waiting, plural, one {# needs you} other {# need you}}"
 #: src/components/task-row.tsx
 msgid "→ {name}"
 msgstr "→ {name}"
+
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "+{more} more"
+msgstr "+{more} more"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
@@ -723,6 +736,10 @@ msgstr "Allow once"
 msgid "Allow the camera, or enter the address instead."
 msgstr "Allow the camera, or enter the address instead"
 
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "Allow: {subject}"
+msgstr "Allow: {subject}"
+
 #: src/components/settings-font-sheet.tsx
 msgid "Already on"
 msgstr "Already on"
@@ -768,6 +785,7 @@ msgstr "and {rest} more"
 msgid "another computer"
 msgstr "another computer"
 
+#: src/components/home-stage/stage-needs-card.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
 msgstr "Answer"
@@ -2235,7 +2253,7 @@ msgid "Could not rename"
 msgstr "Could not rename"
 
 #: src/components/agent-workbench.tsx
-#: src/components/home-reply-drawer.tsx
+#: src/components/home-session-replies.ts
 msgid "Could not reply"
 msgstr "Could not reply"
 
@@ -3982,6 +4000,7 @@ msgid "Needs your attention"
 msgstr "Needs your attention"
 
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/stage-needs-card.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/server-agent-rows.tsx
 #: src/lib/notifications.ts
@@ -4501,6 +4520,7 @@ msgstr "Only this Home row is hidden. The task and its history remain available.
 #: src/components/home-connections.tsx
 #: src/components/home-reply-drawer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
+#: src/components/home-stage/stage-needs-card.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/task-row.tsx
@@ -4903,6 +4923,7 @@ msgid "Permission"
 msgstr "Permission"
 
 #: src/components/agent-permission-card.tsx
+#: src/components/home-stage/stage-needs-card.tsx
 msgid "Permission required"
 msgstr "Permission required"
 
@@ -7689,6 +7710,10 @@ msgstr "Variable · {0}"
 msgid "Version {version}{0}"
 msgstr "Version {version}{0}"
 
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "View"
+msgstr "View"
+
 #: src/components/agent-composer.tsx
 msgid "View file changes"
 msgstr "View file changes"
@@ -7757,9 +7782,17 @@ msgstr "Waiting for this computer's model list. Send again in a moment"
 msgid "Waiting for uploads to finish…"
 msgstr "Waiting for uploads to finish…"
 
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "Waiting for you in the terminal"
+msgstr "Waiting for you in the terminal"
+
 #: src/components/agent-workbench.tsx
 msgid "Waiting for your answer"
 msgstr "Waiting for your answer"
+
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "Waiting for your input"
+msgstr "Waiting for your input"
 
 #: src/components/agent-composer.tsx
 msgid "Waiting to send"

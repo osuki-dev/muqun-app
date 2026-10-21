@@ -426,6 +426,11 @@ export type HomeThreadLive = {
   forms: readonly FormRequest[];
   /** The pane's own screen shows the agent at work (a spinner, "esc to interrupt"). */
   paneBusy?: boolean;
+  /**
+   * The agent's last words on that screen while it was at work
+   * (`paneAgentRead`), and when they were read; absent once it is not.
+   */
+  paneLine?: { text: string; atMs: number };
 };
 
 export const EMPTY_HOME_THREAD_LIVE: HomeThreadLive = { permissions: [], forms: [] };

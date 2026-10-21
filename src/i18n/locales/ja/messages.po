@@ -96,6 +96,11 @@ msgstr "{0, plural, other {残り # 行}}"
 msgid "{0, plural, one {# operation} other {# operations}}"
 msgstr "{0, plural, other {# 件の操作}}"
 
+#. placeholder {0}: need.count
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "{0, plural, one {# request waiting} other {# requests waiting}}"
+msgstr "{0, plural, other {# 件のリクエストが待機中}}"
+
 #. placeholder {0}: unused.count
 #. placeholder {1}: formatCacheSize(unused.reclaimableBytes)
 #: src/components/settings-storage.tsx
@@ -135,7 +140,7 @@ msgstr "{0}をアップロードできませんでした。再試行するか削
 #. placeholder {0}: events.length
 #: src/app/settings-stage-diagnostics.tsx
 msgid "{0} events, newest first"
-msgstr ""
+msgstr "{0} 件のイベント（新しい順）"
 
 #. placeholder {0}: failed.name
 #. placeholder {1}: uploadLimitMb(attachmentLimitBytes(failed))
@@ -375,6 +380,10 @@ msgstr "{minutes, plural, other {# 分}}"
 msgid "{modifierKeys} combinations need the program in this terminal to enable extended keys"
 msgstr "{modifierKeys} の組み合わせを使うには、このターミナルのプログラムが拡張キーを有効にする必要があります"
 
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "{more, plural, one {# more needs you} other {# more need you}}"
+msgstr "{more, plural, other {ほかに # 件の対応待ち}}"
+
 #: src/components/home-agent-sheet.tsx
 msgid "{name} (terminal)"
 msgstr "{name}（ターミナル）"
@@ -446,6 +455,10 @@ msgstr "{waiting, plural, other {# 件対応が必要}}"
 #: src/components/task-row.tsx
 msgid "→ {name}"
 msgstr "→ {name}"
+
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "+{more} more"
+msgstr "+{more} 件"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
@@ -723,6 +736,10 @@ msgstr "今回のみ許可"
 msgid "Allow the camera, or enter the address instead."
 msgstr "カメラを許可するか、アドレスを入力してください"
 
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "Allow: {subject}"
+msgstr "許可: {subject}"
+
 #: src/components/settings-font-sheet.tsx
 msgid "Already on"
 msgstr "使用中"
@@ -768,6 +785,7 @@ msgstr "ほか {rest} 件"
 msgid "another computer"
 msgstr "別のコンピュータ"
 
+#: src/components/home-stage/stage-needs-card.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
 msgstr "回答"
@@ -2235,7 +2253,7 @@ msgid "Could not rename"
 msgstr "名前を変更できませんでした"
 
 #: src/components/agent-workbench.tsx
-#: src/components/home-reply-drawer.tsx
+#: src/components/home-session-replies.ts
 msgid "Could not reply"
 msgstr "返信できませんでした"
 
@@ -3982,6 +4000,7 @@ msgid "Needs your attention"
 msgstr "対応が必要です"
 
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/stage-needs-card.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/server-agent-rows.tsx
 #: src/lib/notifications.ts
@@ -4268,7 +4287,7 @@ msgstr "SSH ホストはまだありません。追加すると、届く範囲�
 
 #: src/app/settings-stage-diagnostics.tsx
 msgid "No Stage art events recorded yet."
-msgstr ""
+msgstr "ステージのアートイベントはまだ記録されていません"
 
 #: src/components/simfarm-stage.tsx
 msgid "No still frames"
@@ -4501,6 +4520,7 @@ msgstr "ホームのこの行だけを非表示にします。タスクとその
 #: src/components/home-connections.tsx
 #: src/components/home-reply-drawer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
+#: src/components/home-stage/stage-needs-card.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/task-row.tsx
@@ -4903,6 +4923,7 @@ msgid "Permission"
 msgstr "権限"
 
 #: src/components/agent-permission-card.tsx
+#: src/components/home-stage/stage-needs-card.tsx
 msgid "Permission required"
 msgstr "権限が必要です"
 
@@ -6264,11 +6285,11 @@ msgstr "ステージ"
 
 #: src/app/settings-stage-diagnostics.tsx
 msgid "Stage diagnostics"
-msgstr ""
+msgstr "ステージの診断"
 
 #: src/app/settings-stage-diagnostics.tsx
 msgid "Stage log copied"
-msgstr ""
+msgstr "ステージのログをコピーしました"
 
 #: src/components/diff-rows.tsx
 msgid "Staged"
@@ -7689,6 +7710,10 @@ msgstr "可変 · {0}"
 msgid "Version {version}{0}"
 msgstr "バージョン {version}{0}"
 
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "View"
+msgstr "表示"
+
 #: src/components/agent-composer.tsx
 msgid "View file changes"
 msgstr "ファイルの変更を表示"
@@ -7757,9 +7782,17 @@ msgstr "このコンピューターのモデル一覧を待っています。少
 msgid "Waiting for uploads to finish…"
 msgstr "アップロードの完了を待っています…"
 
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "Waiting for you in the terminal"
+msgstr "ターミナルで入力を待っています"
+
 #: src/components/agent-workbench.tsx
 msgid "Waiting for your answer"
 msgstr "回答を待っています"
+
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "Waiting for your input"
+msgstr "入力を待っています"
 
 #: src/components/agent-composer.tsx
 msgid "Waiting to send"
