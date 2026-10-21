@@ -531,6 +531,13 @@ export interface AgentComposerProps {
    * is about to go, before there is a session to say so -- is the one caller.
    */
   accessory?: React.ReactNode;
+  /**
+   * Rows under `accessory` that hold their own space in the dock, such as
+   * Home's conversation strip: unlike a notice, what scrolls under the dock is
+   * clipped at their top edge, so nothing on the page shows through or behind
+   * them.
+   */
+  solidAccessory?: React.ReactNode;
   /** Home consolidates its choices in one control beside the attachment button. */
   toolbarLeading?: React.ReactNode;
   /**
@@ -669,6 +676,7 @@ export const AgentComposer = memo(function AgentComposer({
   holdStagedAttachments,
   onDockHeight,
   accessory,
+  solidAccessory,
   toolbarLeading,
   toolbarMenu,
   fieldBackground,
@@ -1502,6 +1510,7 @@ export const AgentComposer = memo(function AgentComposer({
   const [surfaceHeight, setSurfaceHeight] = useState(0);
   const [surfaceWidth, setSurfaceWidth] = useState(0);
   const [inputRowHeight, setInputRowHeight] = useState(0);
+  const [solidAccessoryHeight, setSolidAccessoryHeight] = useState(0);
   const [compactionRowHeight, setCompactionRowHeight] = useState(0);
   const compactionClearance = compaction ? compactionRowHeight : 0;
   const [voiceActive, setVoiceActive] = useState(false);
@@ -1520,7 +1529,9 @@ export const AgentComposer = memo(function AgentComposer({
   const dockHeight = surfaceHeight + dockFoot;
   // Home paints only the input plate. Its options/notice overlays must not
   // erase the foreground behind their transparent or rounded edges.
-  const dockClipHeight = flushField ? inputRowHeight + dockFoot : dockHeight;
+  const dockClipHeight = flushField
+    ? inputRowHeight + (solidAccessory ? solidAccessoryHeight : 0) + dockFoot
+    : dockHeight;
   // The status row occupies transcript space, but does not move the material's clip edge.
   const reportDockHeight = useEffectEvent((height: number, clipHeight: number) =>
     onDockHeight?.(height + compactionClearance, clipHeight)
@@ -1897,6 +1908,11 @@ export const AgentComposer = memo(function AgentComposer({
               flushField && { paddingHorizontal: 0, paddingTop: 0 },
             ]}>
             {accessory}
+            {solidAccessory ? (
+              <View onLayout={(event) => setSolidAccessoryHeight(event.nativeEvent.layout.height)}>
+                {solidAccessory}
+              </View>
+            ) : null}
             {/* Row 1: roots only. Tapping the current root opens its tree. */}
             {sessionStrip.length > 0 ? (
               <ScrollView

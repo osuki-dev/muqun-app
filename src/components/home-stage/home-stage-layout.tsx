@@ -13,7 +13,12 @@ import {
   type LayoutChangeEvent,
 } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
@@ -30,7 +35,7 @@ import { withAlpha } from '@/lib/color';
 import { filterHomeRecent, type HomeContinueEntry } from '@/lib/home-continue';
 import { wrapStageIndex } from '@/lib/home-stage-geometry';
 import { stagePanels, stageSelectedIndex, type StagePanel } from '@/lib/home-stage-panels';
-import { SETTLE } from '@/lib/motion';
+import { SETTLE, timing } from '@/lib/motion';
 import type { ConnectionStatus } from '@/lib/server-reachability';
 import { useHomeAttention } from '@/stores/home-attention';
 import { useServerAgents } from '@/stores/server-agents';
@@ -233,6 +238,16 @@ export function HomeStageLayout({
   const actionsPanel = panels.find((panel) => panel.serverId === actionsFor);
   const actionsIndex = actionsPanel ? panels.indexOf(actionsPanel) : -1;
 
+  // The HUD's foot rides the dock: when the dock grows (Home's conversation
+  // strip arriving) or shrinks, the session strip moves with it rather than
+  // jumping a frame later.
+  const dockLift = useSharedValue(dockHeight);
+  useEffect(() => {
+    dockLift.set(withTiming(dockHeight, timing('short')));
+  }, [dockHeight, dockLift]);
+  const footStyle = useAnimatedStyle(() => ({ bottom: dockLift.get() + 6 }));
+  const footScrimStyle = useAnimatedStyle(() => ({ height: dockLift.get() + 190 }));
+
   const sheet = useSharedValue(0);
   const openList = useStableHandler((open: boolean) => {
     setListOpen(open);
@@ -375,12 +390,10 @@ export function HomeStageLayout({
       ) : null}
 
       {/* Bottom: a scrim, the handle and the selected computer's sessions, above the composer. */}
-      <EdgeFade
-        edge="bottom"
-        color={theme.colors.background}
-        style={[styles.bottomScrim, { height: dockHeight + 190 }]}
-      />
-      <View pointerEvents="box-none" style={[styles.bottom, { bottom: dockHeight + 6 }]}>
+      <Animated.View pointerEvents="none" style={[styles.bottomScrim, footScrimStyle]}>
+        <EdgeFade edge="bottom" color={theme.colors.background} style={StyleSheet.absoluteFill} />
+      </Animated.View>
+      <Animated.View pointerEvents="box-none" style={[styles.bottom, footStyle]}>
         {emptyState ? <View style={styles.empty}>{emptyState}</View> : null}
         {panels.length > 0 ? (
           <GestureDetector gesture={pull}>
@@ -412,7 +425,7 @@ export function HomeStageLayout({
             </View>
           </GestureDetector>
         ) : null}
-      </View>
+      </Animated.View>
 
       {/* The full list, pulled up over the stage: the existing list UI. */}
       <Animated.View
