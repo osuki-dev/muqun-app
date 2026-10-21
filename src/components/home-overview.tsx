@@ -135,7 +135,13 @@ import {
 } from '@/components/home-launch-actions';
 import { HomeComposerDock } from '@/components/home-composer-dock';
 import { useHomeThreads } from '@/stores/home-thread';
-import { homeThreadTargetFromEntry, homeThreadKey, type HomeThreadTarget } from '@/lib/home-thread';
+import { homeThreadFactsNow } from '@/components/home-thread';
+import {
+  homeThreadKey,
+  homeThreadTap,
+  homeThreadTargetFromEntry,
+  type HomeThreadTarget,
+} from '@/lib/home-thread';
 import { HomeScrollViewport } from '@/components/home-scroll-viewport';
 import { SshHostRow } from '@/components/ssh-host-row';
 import { StatusDot } from '@/components/status-dot';
@@ -1130,10 +1136,12 @@ export function HomeOverview({
       nowMs,
       (serverId) => useServerAgents.getState().byServer[serverId]
     );
-    // Only a paired computer has a dock to talk to it from.
+    // Only a paired computer has a dock to talk to it from, and only a
+    // conversation that has not ended can be talked to: else the card opens.
     return showDock &&
       target &&
-      launchController.servers.some((s) => s.serverId === target.serverId)
+      launchController.servers.some((s) => s.serverId === target.serverId) &&
+      homeThreadTap(target, homeThreadFactsNow(target)) === 'target'
       ? target
       : null;
   };
@@ -1141,7 +1149,7 @@ export function HomeOverview({
   const targetThread = (entry: HomeContinueEntry): boolean => {
     const target = threadFor(entry, Date.now());
     if (!target) return false;
-    useHomeThreads.getState().target(target);
+    useHomeThreads.getState().tap(target);
     targetComposer(target.serverId);
     return true;
   };

@@ -1,7 +1,7 @@
 import { useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { PressableScale, Text, useThemeTokens } from '@osuki-dev/ui';
-import { useEffect, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useReducedMotion } from 'react-native-reanimated';
 
@@ -38,6 +38,7 @@ import {
   homeThreadState,
   homeThreadTask,
   homeThreadTurns,
+  type HomeThreadFacts,
   type HomeThreadLive,
   type HomeThreadState,
   type HomeThreadTarget,
@@ -74,9 +75,12 @@ const PILL_RADIUS = 999;
 export function HomeThreadFeed({
   target,
   enabled,
+  onUntapped,
 }: {
   target: HomeThreadTarget;
   enabled: boolean;
+  /** A tapped card turned out to have ended: the tap was undone; open it as before. */
+  onUntapped?: (target: HomeThreadTarget) => void;
 }) {
   const key = homeThreadKey(target);
   const { serverId } = target;
@@ -217,11 +221,34 @@ export function HomeThreadFeed({
     ...(task ? { task } : {}),
   });
   const resolved = homeThreadResolved(target, task);
+  const untapped = useEffectEvent((ended: HomeThreadTarget) => onUntapped?.(ended));
   useEffect(() => {
-    if (ended) useHomeThreads.getState().clear(target.serverId, target);
-    else if (resolved !== target) useHomeThreads.getState().update(target, resolved);
+    if (ended) {
+      if (useHomeThreads.getState().end(target) === 'untapped') untapped(target);
+    } else if (resolved !== target) useHomeThreads.getState().update(target, resolved);
   }, [ended, resolved, target]);
   return null;
+}
+
+/**
+ * What the stores say right now about whether `target` has ended, for a
+ * decision taken outside render (a card tap).
+ */
+export function homeThreadFactsNow(target: HomeThreadTarget): HomeThreadFacts {
+  const { serverId } = target;
+  const task = homeThreadTask(target, useServerTasksStore.getState().index[serverId]?.tasks);
+  const gone = useGoneAgentSessions.getState().keys;
+  const agents = useAgents.getState().index.servers[serverId]?.agents?.agents;
+  const panes = useServerAgents.getState().byServer[serverId];
+  return {
+    goneSession:
+      target.kind === 'session' &&
+      (gone.has(goneSessionKey(serverId, target.asid, target.agentId)) ||
+        gone.has(goneSessionKey(serverId, target.asid))),
+    ...(agents ? { agentIds: agents.flatMap((agent) => [agent.id, agent.kind]) } : {}),
+    ...(panes ? { panes } : {}),
+    ...(task ? { task } : {}),
+  };
 }
 
 /** What the strip's state word and the chip's tone read: the target's live state. */
