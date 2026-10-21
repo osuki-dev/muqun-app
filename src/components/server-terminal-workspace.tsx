@@ -67,7 +67,7 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import { useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
+import { useKeyboardState, useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Two hooks of the same name and they are not interchangeable: the macro one
@@ -960,7 +960,7 @@ export function ServerTerminalWorkspace({
   const notificationId = providedNotificationId ?? routeParams.notificationId;
   const router = useRouter();
   const isFocused = useIsFocused();
-  const { width: windowWidth } = useWindowDimensions();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   /**
    * The three columns, and whether the middle one gives room to the third.
    *
@@ -1285,6 +1285,20 @@ export function ServerTerminalWorkspace({
   // The dock's measured height, throttled: the reason it cannot be written
   // straight out of `onLayout` is the whole of `useSettledHeight`.
   const [composerHeight, measureComposerHeight] = useSettledHeight(96);
+  /**
+   * The most the command popup may take: the room between the header and the
+   * dock with the keyboard up, and never more than 45% of the screen. Without
+   * it the panel grew to six two-line rows, ran up through the header and hid
+   * the terminal it was opened from. The rows past it scroll.
+   */
+  const keyboardHeight = useKeyboardState((state) => state.height);
+  const commandPopupMaxHeight = Math.max(
+    120,
+    Math.min(
+      windowHeight * 0.45,
+      windowHeight - insets.top - DETAIL_HEADER_HEIGHT - keyboardHeight - composerHeight - 24
+    )
+  );
   // The keyboard button swaps the compact key row for a full on-screen QWERTY
   // that types straight into the pane -- the way to drive a TUI like nvim from
   // a phone. Off by default so the output stays visible.
@@ -5639,6 +5653,7 @@ export function ServerTerminalWorkspace({
   const paneEntries = (fill: string) => (
     <>
       <PressableScale
+        testID="terminal-open-quick-actions"
         accessibilityRole="button"
         accessibilityLabel={t`Open quick actions`}
         feedback="selection"
@@ -5691,6 +5706,7 @@ export function ServerTerminalWorkspace({
     return (
       <PaneChip
         key={pane.id}
+        testID={`pane-chip-${pane.id}`}
         label={panelTitle(pane, paneAgent)}
         accessibilityLabel={t`Switch to ${panelTitle(pane, paneAgent)}`}
         active={active}
@@ -6313,6 +6329,7 @@ export function ServerTerminalWorkspace({
                       <ComposerPopup
                         rows={slashPopup.rows}
                         onPick={slashPopup.pick}
+                        maxHeight={commandPopupMaxHeight}
                         testIDPrefix="slash-command"
                       />
                     </View>
@@ -6480,6 +6497,7 @@ export function ServerTerminalWorkspace({
                                 contentContainerStyle={styles.keyRowScroller}>
                                 {paneEntries(chromeGlass)}
                                 <PressableScale
+                                  testID="terminal-open-keyboard"
                                   accessibilityLabel={t`Open on-screen keyboard`}
                                   feedback="selection"
                                   pressedScale={0.9}
@@ -6642,6 +6660,7 @@ function sameMentionTrigger(a: FileMentionTrigger | null, b: FileMentionTrigger 
  * selected copy is drawn over it.
  */
 function PaneChip({
+  testID,
   label,
   accessibilityLabel,
   active,
@@ -6652,6 +6671,7 @@ function PaneChip({
   onLayout,
   onPress,
 }: {
+  testID: string;
   label: string;
   accessibilityLabel: string;
   active: boolean;
@@ -6678,6 +6698,7 @@ function PaneChip({
 
   return (
     <PressableScale
+      testID={testID}
       accessibilityLabel={accessibilityLabel}
       onLayout={onLayout}
       onPress={onPress}

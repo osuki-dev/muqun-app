@@ -19,7 +19,7 @@ scroll down --pixels 300
 #
 # Raw selectors rather than manifest targets: closing the viewer is addressed by
 # accessibility label, and the manifest's target vocabulary is text and id only.
-press "text=\"Open files\""
+press "id=terminal-open-files"
 wait stable 400 5000
 scroll down --pixels 350
 press "text=\"Open muqun.muqun-theme.json\""
@@ -56,8 +56,9 @@ screenshot dist/theme-applied-status.png
 # install added, and nothing before it. The property under test is unchanged --
 # a theme that has just been applied is still reachable from the list it joined.
 #
-# By testID, because the row and its remove button both carry the theme's name,
-# so neither the name nor the name plus a role identifies the row.
+# By testID, because the card and the current-theme bar above the grid both
+# carry the theme's name, so neither the name nor the name plus a role
+# identifies the card.
 press "id=theme-row-my-theme"
 wait stable 400 5000
 is visible "id=\"custom-theme-preview\""
@@ -71,10 +72,10 @@ is hidden "id=theme-link-input"
 is visible "id=theme-import-file"
 
 # section browse-entry
-# Present, and deliberately not pressed *here*. The manifest drives the press
-# that follows, so this file never spells it -- see `browse-offline` below for
-# what the press is for.
-is visible "id=theme-browse"
+# The catalogue is the themes sheet's Gallery tab. Present, and deliberately
+# not pressed *here*: the manifest drives the press that follows, so this file
+# never spells it -- see `browse-offline` below for what the press is for.
+is visible "id=theme-tab"
 
 # section browse-offline
 # The demo catalogue can supply this card offline; on an unpaired home the
@@ -91,21 +92,12 @@ is visible "text=\"Could not reach the theme catalogue\""
 is visible "text=\"TRY AGAIN\""
 screenshot dist/theme-browse-network-offline.png
 
-# section browse-close-android
-back --system
-
-# section browse-close-iphone
-gesture pan 201 237 0 520 500
-
-# section browse-close-ipad
-# A Pad shows the catalogue full-screen: no grabber to drag, so the scene's
-# own close button is the way out.
-press "id=sheet-close"
-
 # section browse-closed
+# Leaving the Gallery tab is a tab press on every device: the catalogue is no
+# longer a sheet of its own, so there is nothing to dismiss.
 wait stable 400 5000
 is hidden "id=theme-browse-list"
-is visible "id=theme-browse"
+is visible "id=theme-tab"
 
 # section mine-tab
 # The tab persists, and the suite relaunches without erasing data -- so a flow

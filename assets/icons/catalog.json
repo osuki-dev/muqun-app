@@ -1,9 +1,10 @@
 [
   {
     "id": "default",
-    "directory": "classic",
-    "light": "#FCFBFA",
-    "dark": "#07121C"
+    "directory": "mint",
+    "light": "#0C101E",
+    "dark": "#0C101E",
+    "fullBleed": true
   },
   {
     "id": "Classic",

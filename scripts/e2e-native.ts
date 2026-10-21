@@ -347,6 +347,16 @@ export function withinScrollViewport(node: Node, nodes: Node[]): boolean {
   return true;
 }
 
+/**
+ * The sheet's grabber control. The tree snapshot backend also hands its label
+ * to the sheet's container, whose centre is in the middle of the sheet's
+ * content, so a drag from there scrolls the content instead of the sheet.
+ */
+export function sheetGrabber(nodes: Node[]): Node | undefined {
+  const grabbers = nodes.filter((node) => node.label === 'Sheet Grabber');
+  return grabbers.find((node) => nodeRole(node) === 'button') ?? grabbers[0];
+}
+
 function hasAlert(nodes: Node[]): boolean {
   return nodes.some(
     (node) =>
@@ -979,21 +989,26 @@ export class NativeRunner {
         continue;
       }
       if (args.includes('--in-sheet')) {
-        if (args[0] !== 'scroll' || args[1] !== 'down')
-          throw new Error('In-sheet scrolling requires scroll down');
+        if (args[0] !== 'scroll' || (args[1] !== 'down' && args[1] !== 'up'))
+          throw new Error('In-sheet scrolling requires scroll down or up');
         args.splice(args.indexOf('--in-sheet'), 1);
         if (env.DEVICE_KIND === 'ipad') {
+          // A drag from the grabber's column inside the sheet. The native
+          // scroll's press-then-drag does not reliably move a list in an iPad
+          // form sheet. A whole-number amount is a pass count; a viewport
+          // fraction (the amount other devices use) is one pass.
           const nodes = await this.readySnapshot(true);
-          const grabber = nodes.find((node) => node.label === 'Sheet Grabber');
+          const grabber = sheetGrabber(nodes);
           if (!grabber?.rect) throw new Error('Missing iPad sheet grabber for in-sheet scroll');
           const viewport = appViewport(nodes);
           const x = Math.round(grabber.rect.x + grabber.rect.width / 2);
-          const start = Math.round(
-            Math.min(viewport.y + viewport.height - 80, grabber.rect.y + 395)
-          );
-          const dy = Math.round(grabber.rect.y + 90 - start);
-          for (let pass = 0; pass < Number(args[2] ?? '1'); pass++)
-            await this.invoke(['gesture', 'pan', String(x), String(start), '0', String(dy), '400']);
+          const low = Math.round(Math.min(viewport.y + viewport.height - 80, grabber.rect.y + 395));
+          const high = Math.round(grabber.rect.y + 90);
+          const [from, dy] = args[1] === 'down' ? [low, high - low] : [high + 210, low - high];
+          const amount = Number(args[2] ?? '1');
+          const passes = Number.isInteger(amount) && amount >= 1 ? amount : 1;
+          for (let pass = 0; pass < passes; pass++)
+            await this.invoke(['gesture', 'pan', String(x), String(from), '0', String(dy), '400']);
           continue;
         }
       }
@@ -1035,7 +1050,7 @@ export class NativeRunner {
           await this.invoke(['press', selector(sheetClose)]);
           continue;
         }
-        // Android exposes controls behind the catalogue sheet in its tree.
+        // Android exposes controls behind the catalogue and context sheets in its tree.
         // Its underlying "Go back" must not steal the sheet's Back action.
         if (
           guardedNodes?.some(
@@ -1043,6 +1058,7 @@ export class NativeRunner {
               node.identifier === 'theme-browse-list' ||
               (env.PLATFORM === 'android' &&
                 (node.identifier === 'theme-tab' ||
+                  node.identifier === 'agent-context-sheet' ||
                   /^settings-(servers|appearance|terminal|alerts|storage|about)-sheet$/.test(
                     node.identifier ?? ''
                   ) ||
@@ -1069,7 +1085,7 @@ export class NativeRunner {
             continue;
           }
         }
-        const grabber = guardedNodes?.find((node) => node.label === 'Sheet Grabber');
+        const grabber = guardedNodes && sheetGrabber(guardedNodes);
         if (grabber?.rect && guardedNodes) {
           const x = Math.round(grabber.rect.x + grabber.rect.width / 2);
           const y = Math.round(grabber.rect.y + grabber.rect.height / 2);

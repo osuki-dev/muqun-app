@@ -824,6 +824,7 @@ export default function QuickCommandsScreen() {
           {available.canStartTask ? (
             <SettingsCard flush>
               <ActionRow
+                testID="quick-actions-new-task"
                 accessibilityLabel={t`New task`}
                 name={t`New task`}
                 detail={t`Start an agent and send it the first thing to do.`}
@@ -1295,6 +1296,7 @@ function useMonoFieldStyle(): TextStyle {
  * mistap here sends something to a live pane, so it does not go lower.
  */
 function ActionRow({
+  testID,
   accessibilityLabel,
   name,
   nameColor,
@@ -1311,6 +1313,7 @@ function ActionRow({
   onPress,
   trailing,
 }: {
+  testID?: string;
   accessibilityLabel: string;
   name: string;
   nameColor?: string;
@@ -1390,6 +1393,7 @@ function ActionRow({
   }
   return (
     <PressableScale
+      testID={testID}
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="button"
       disabled={disabled}

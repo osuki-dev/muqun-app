@@ -240,7 +240,7 @@ export const AgentContextSheet = memo(function AgentContextSheet({
           </View>
           {/* What the number is, said plainly: the last turn's input, cached
               input, reasoning and output -- which is what the model read. */}
-          <Text variant="caption" color={theme.colors.textMuted}>
+          <Text testID="agent-context-used" variant="caption" color={theme.colors.textMuted}>
             {!live
               ? t`Not available`
               : limitLabel === null
@@ -265,8 +265,11 @@ export const AgentContextSheet = memo(function AgentContextSheet({
             </Text>
           }
         />
+        {/* The row's label replaces its contents for a screen reader, so the
+            value it shows is also its accessibility value. */}
         <SheetSceneRow
           title={t`Project`}
+          accessibilityValue={{ text: session?.directory || '~' }}
           meta={
             <Text
               variant="caption"
@@ -279,6 +282,7 @@ export const AgentContextSheet = memo(function AgentContextSheet({
         />
         <SheetSceneRow
           title={t`Model`}
+          accessibilityValue={{ text: displayModelName || t`Not set` }}
           meta={
             <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
               {displayModelName || t`Not set`}

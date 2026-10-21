@@ -1,22 +1,19 @@
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { DisclosureDownIcon, NextIcon } from '@/icons';
-import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { scheduleOnRN } from 'react-native-worklets';
+import { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 
-import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { useLatestReader } from '@/hooks/use-render-refs';
-import { timing } from '@/lib/motion';
 import type { ModeInfo } from '@/lib/agent-session';
+import { fadeIn, fadeOut } from '@/lib/motion';
 
-/** The choices behind Home's single toolbar control; draft ownership stays in the composer. */
+/**
+ * The choices behind Home's single toolbar control; draft ownership stays in
+ * the composer. Only the rows: the composer's floating menu is their card,
+ * the same one the attachment button opens, and it mounts them while open.
+ */
 export function HomeComposerOptions({
-  open,
-  onVisibilityChange,
-  onHeightAnimationChange,
   computer,
   agent,
   folder,
@@ -30,9 +27,6 @@ export function HomeComposerOptions({
   onModel,
   onMode,
 }: {
-  open: boolean;
-  onVisibilityChange: (visible: boolean) => void;
-  onHeightAnimationChange?: (animating: boolean) => void;
   computer: string;
   agent: string;
   folder: string;
@@ -48,51 +42,19 @@ export function HomeComposerOptions({
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
-  const profile = useAppearanceProfile();
-  const background = useSurfaceBackground();
-  const { height } = useWindowDimensions();
   const [showModes, setShowModes] = useState(false);
-  const [contentHeight, setContentHeight] = useState(0);
-  const visibleHeight = useSharedValue(0);
-  const opacity = useSharedValue(0);
-  const readOpen = useLatestReader(open);
-  useEffect(() => {
-    let current = true;
-    const finishTransition = () => {
-      // UI completion can already be queued when a newer transition starts.
-      if (!current || readOpen() !== open) return;
-      onHeightAnimationChange?.(false);
-      if (!open) onVisibilityChange(false);
-    };
-    // Keep the content mounted inside its own shrinking viewport. An exiting
-    // child outlives its Yoga layout and can otherwise draw behind the field.
-    if (open) onVisibilityChange(true);
-    const targetHeight = open ? contentHeight : 0;
-    onHeightAnimationChange?.(visibleHeight.get() !== targetHeight);
-    visibleHeight.set(
-      withTiming(targetHeight, timing('dropdown'), (finished) => {
-        // A cancelled close must not reveal artwork beneath a reopened list.
-        if (finished) scheduleOnRN(finishTransition);
-      })
-    );
-    opacity.set(withTiming(open ? 1 : 0, timing('micro')));
-    if (!open) setShowModes(false);
-    return () => {
-      current = false;
-    };
-  }, [
-    open,
-    contentHeight,
-    visibleHeight,
-    opacity,
-    onVisibilityChange,
-    onHeightAnimationChange,
-    readOpen,
-  ]);
-  const revealStyle = useAnimatedStyle(() => ({
-    height: visibleHeight.get(),
-    opacity: opacity.get(),
-  }));
+  // One label column, as wide as the widest label on one line, so values
+  // start in one column in every language; past the cap a label ellipsizes.
+  const [labelWidths, setLabelWidths] = useState<Record<string, number>>({});
+  const [menuWidth, setMenuWidth] = useState(0);
+  const widestLabel = Math.max(0, ...Object.values(labelWidths));
+  const labelWidth =
+    widestLabel > 0
+      ? Math.min(
+          Math.ceil(widestLabel) + LABEL_SLACK,
+          menuWidth > 0 ? menuWidth * LABEL_MAX_SHARE : Infinity
+        )
+      : undefined;
   const rows = [
     {
       id: 'target',
@@ -111,101 +73,114 @@ export function HomeComposerOptions({
     { id: 'model', label: t`Model`, value: model, onPress: onModel },
   ];
   return (
-    <Animated.View
+    <View
       testID="home-composer-options"
-      pointerEvents={open ? 'auto' : 'none'}
-      accessibilityElementsHidden={!open}
-      importantForAccessibility={open ? 'auto' : 'no-hide-descendants'}
-      style={[
-        styles.viewport,
-        {
-          backgroundColor: background(theme.colors.surface),
-          borderRadius: profile.chrome.popover,
-        },
-        revealStyle,
-      ]}>
+      onLayout={(event) => setMenuWidth(event.nativeEvent.layout.width)}>
+      {/* Each label at its natural one-line width, measured out of sight. */}
       <View
-        style={styles.content}
-        onLayout={(event) => setContentHeight(event.nativeEvent.layout.height)}>
-        <ScrollView
-          keyboardShouldPersistTaps="handled"
-          style={{ maxHeight: Math.min(380, height * 0.45) }}>
-          {rows.map((row) => (
-            <View key={row.id}>
-              <PressableScale
-                testID={`home-composer-option-${row.id}`}
-                accessibilityRole="button"
-                accessibilityLabel={`${row.label}: ${row.value}`}
-                accessibilityState={{ disabled: !row.onPress }}
-                disabled={!row.onPress}
-                onPress={row.onPress}
-                style={[styles.row, { borderBottomColor: theme.colors.border }]}>
-                <Text
-                  variant="bodySmall"
-                  weight="regular"
-                  color={theme.colors.textMuted}
-                  style={styles.label}>
-                  {row.label}
-                </Text>
-                <Text
-                  variant="bodySmall"
-                  weight="regular"
-                  numberOfLines={2}
-                  ellipsizeMode="middle"
-                  color={theme.colors.text}
-                  style={styles.value}>
-                  {row.value || '—'}
-                </Text>
-                {row.onPress ? (
-                  row.id === 'mode' && showModes ? (
-                    <DisclosureDownIcon size={15} color={theme.colors.textMuted} />
-                  ) : (
-                    <NextIcon size={15} color={theme.colors.textMuted} />
-                  )
-                ) : null}
-              </PressableScale>
-              {row.id === 'mode' && showModes
-                ? modes.map((entry) => (
-                    <PressableScale
-                      key={entry.id}
-                      testID={`home-composer-mode-${entry.id}`}
-                      accessibilityRole="radio"
-                      accessibilityState={{ selected: entry.id === mode }}
-                      onPress={() => {
-                        onMode?.(entry.id);
-                        setShowModes(false);
-                      }}
-                      style={styles.mode}>
-                      <Text
-                        variant="bodySmall"
-                        weight="regular"
-                        color={entry.id === mode ? theme.colors.primary : theme.colors.text}>
-                        {entry.name || entry.id}
-                      </Text>
-                    </PressableScale>
-                  ))
-                : null}
-            </View>
-          ))}
-        </ScrollView>
+        pointerEvents="none"
+        accessible={false}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        style={styles.measure}>
+        {rows.map((row) => (
+          <Text
+            key={row.id}
+            variant="bodySmall"
+            weight="regular"
+            numberOfLines={1}
+            onLayout={(event) => {
+              const { width } = event.nativeEvent.layout;
+              setLabelWidths((prev) =>
+                prev[row.id] === width ? prev : { ...prev, [row.id]: width }
+              );
+            }}>
+            {row.label}
+          </Text>
+        ))}
       </View>
-    </Animated.View>
+      {rows.map((row) => (
+        <View key={row.id}>
+          <PressableScale
+            testID={`home-composer-option-${row.id}`}
+            accessibilityRole="button"
+            accessibilityLabel={`${row.label}: ${row.value}`}
+            accessibilityState={{ disabled: !row.onPress }}
+            disabled={!row.onPress}
+            onPress={row.onPress}
+            style={styles.row}>
+            <Text
+              variant="bodySmall"
+              weight="regular"
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              color={theme.colors.textMuted}
+              style={[styles.label, labelWidth !== undefined && { width: labelWidth }]}>
+              {row.label}
+            </Text>
+            <Text
+              variant="bodySmall"
+              weight="regular"
+              numberOfLines={2}
+              ellipsizeMode="middle"
+              color={theme.colors.text}
+              style={styles.value}>
+              {row.value || '—'}
+            </Text>
+            {row.onPress ? (
+              row.id === 'mode' && showModes ? (
+                <DisclosureDownIcon size={15} color={theme.colors.textMuted} />
+              ) : (
+                <NextIcon size={15} color={theme.colors.textMuted} />
+              )
+            ) : null}
+          </PressableScale>
+          {row.id === 'mode' && showModes ? (
+            <Animated.View entering={fadeIn('micro')} exiting={fadeOut('micro')}>
+              {modes.map((entry) => (
+                <PressableScale
+                  key={entry.id}
+                  testID={`home-composer-mode-${entry.id}`}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: entry.id === mode }}
+                  onPress={() => {
+                    onMode?.(entry.id);
+                    setShowModes(false);
+                  }}
+                  style={styles.mode}>
+                  <Text
+                    variant="bodySmall"
+                    weight="regular"
+                    color={entry.id === mode ? theme.colors.primary : theme.colors.text}>
+                    {entry.name || entry.id}
+                  </Text>
+                </PressableScale>
+              ))}
+            </Animated.View>
+          ) : null}
+        </View>
+      ))}
+    </View>
   );
 }
 
+/** Rounding room, so a label measured at its exact width never ellipsizes. */
+const LABEL_SLACK = 1;
+
+/** The most of the menu's width the label column may take. */
+const LABEL_MAX_SHARE = 0.45;
+
 const styles = StyleSheet.create({
-  viewport: { overflow: 'hidden' },
-  content: { position: 'absolute', top: 0, left: 0, right: 0 },
   row: {
-    minHeight: 48,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
+    minHeight: 44,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  label: { width: 74 },
+  label: { flexShrink: 0 },
+  measure: { position: 'absolute', top: 0, left: 0, opacity: 0, alignItems: 'flex-start' },
   value: { flex: 1, minWidth: 0 },
-  mode: { minHeight: 44, paddingVertical: 10, paddingHorizontal: 20 },
+  mode: { minHeight: 44, paddingVertical: 10, paddingHorizontal: 26 },
 });

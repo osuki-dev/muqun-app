@@ -574,6 +574,7 @@ const ShowMoreRow = memo(function ShowMoreRow({
     // asking for the rest of a six-thousand-line file is a decision, not a
     // side effect of having scrolled.
     <PressableScale
+      testID={`git-diff-show-more-${row.path}`}
       accessibilityRole="button"
       accessibilityLabel={t`Show more`}
       accessibilityState={{ busy: row.loading }}
@@ -847,6 +848,11 @@ export interface InlineDiffRowsProps {
   /** File named by the source card when its patch text does not carry a header. */
   targetPath?: string;
   colors: PaneChatColors;
+  /**
+   * Opacity audit: legibility -- callers pass the gutter opaque, as the Changes
+   * sheet does: it is pinned over code panning under it. `headerFill` scrolls
+   * with the rows and goes through the slider.
+   */
   gutterFill: string;
   headerFill: string;
   /** How many rows to draw before offering more; the default is 60. */

@@ -980,6 +980,7 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
 
   const keyboardToggle = (
     <PressableScale
+      testID="terminal-open-keyboard"
       accessibilityRole="button"
       accessibilityLabel={t`Open on-screen keyboard`}
       feedback="selection"
@@ -1253,6 +1254,9 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
           title={record.label}
           right={
             <PressableScale
+              testID={
+                connecting ? 'ssh-cancel-connect' : connected ? 'ssh-disconnect' : 'ssh-reconnect'
+              }
               accessibilityRole="button"
               accessibilityLabel={
                 connecting

@@ -13,6 +13,12 @@ export interface ViewPhotographOptions {
    * may still fall back internally when hardware rendering fails.
    */
   allowReadback?: boolean;
+  /**
+   * Whether to try the zero-copy import first. False goes straight to the
+   * copy: one CPU readback, but no hardware buffer imported into the device a
+   * live WebGPU canvas shares.
+   */
+  zeroCopy?: boolean;
 }
 
 /**
@@ -32,13 +38,13 @@ export async function photographView(
   ref: RefObject<ViewInstance | null>,
   width: number,
   height: number,
-  { allowReadback = true }: ViewPhotographOptions = {}
+  { allowReadback = true, zeroCopy = true }: ViewPhotographOptions = {}
 ): Promise<SkImage | null> {
   if (!ref.current || width <= 0 || height <= 0) return null;
   if (!allowReadback && (zeroCopyFailed || (Platform.OS === 'android' && Platform.Version < 33))) {
     return null;
   }
-  if (!zeroCopyFailed) {
+  if (zeroCopy && !zeroCopyFailed) {
     try {
       return await capture(ref, width, height, true);
     } catch (error) {

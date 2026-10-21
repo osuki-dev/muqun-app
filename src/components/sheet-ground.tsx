@@ -274,8 +274,10 @@ export function useSheetGroundPlate(tint?: SheetGroundTint): SheetGroundPlate {
     // Shrink-to-fit on the cross axis, so a plate beside a 44pt close button is
     // as tall as its own two lines rather than as tall as the button.
     alignSelf: 'flex-start',
-    // Text protection stays opaque even when the reader makes surrounding
-    // cards translucent. Wallpaper must never become the label's contrast base.
+    // Opacity audit: legibility -- text protection stays opaque even when the
+    // reader makes surrounding cards translucent. Wallpaper must never become
+    // the label's contrast base. (Home lays its own slider-following fill over
+    // this one; see `labelFill` in `home-overview.tsx`.)
     backgroundColor: sheetGroundTintColor(theme.colors, tint ?? ground),
     borderRadius: profile.chrome.surface,
     borderCurve: 'continuous',

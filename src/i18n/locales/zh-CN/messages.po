@@ -148,16 +148,15 @@ msgstr "上下文中有 {0} 条消息"
 msgid "{0} more models"
 msgstr "还有 {0} 个模型"
 
-#. placeholder {0}: filtered.length
-#. placeholder {1}: entries.length
-#: src/components/dev-icon-gallery.tsx
-msgid "{0} of {1} icons · development only"
-msgstr "{1} 个图标中的 {0} 个 · 仅开发用"
-
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
 msgid "{0} of {limitLabel} tokens the model can hold"
 msgstr "模型可容纳 {limitLabel} 个 token，已用 {0}"
+
+#. placeholder {0}: index + 1
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "{0} of {total}"
+msgstr "第 {0} 台，共 {total} 台"
 
 #. placeholder {0}: sessions.length
 #: src/components/agent-sessions-sheet.tsx
@@ -310,6 +309,10 @@ msgstr "{computer} 上已没有此任务"
 msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, other {# 个结果}}"
 
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "{count, plural, one {# session} other {# sessions}}"
+msgstr "{count, plural, other {# 个会话}}"
+
 #: src/components/home-connections.tsx
 msgid "{count} in progress"
 msgstr "{count} 个进行中"
@@ -379,6 +382,10 @@ msgstr "{name} 不接受其他电脑的任务"
 msgid "{name} has the same name as {other}; rename one of them."
 msgstr "{name} 与 {other} 同名，请重命名其中一台"
 
+#: src/components/home-composer-dock.tsx
+msgid "{name} is still working and cannot take a message now. Your draft stays here."
+msgstr "{name} 仍在工作，现在无法接收消息。草稿会保留在这里"
+
 #: src/components/new-task-action.tsx
 msgid "{name} needs setup. Tap for setup instructions"
 msgstr "{name} 需要设置。点按查看设置说明"
@@ -427,6 +434,10 @@ msgstr "{total, plural, other {# 个子任务}}"
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, other {# 个子任务}}（{waiting, plural, other {# 个等待中}}）"
 
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "{waiting, plural, one {# needs you} other {# need you}}"
+msgstr "{waiting, plural, other {# 个需要你处理}}"
+
 #: src/components/task-row.tsx
 msgid "→ {name}"
 msgstr "→ {name}"
@@ -438,10 +449,6 @@ msgstr "还有 {overflow} 个"
 #: src/hooks/use-task-age.ts
 msgid "<1m"
 msgstr "不到 1 分钟"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "0 speed pauses motion. Theme default restores the theme."
-msgstr "速度为 0 时暂停动画，选择主题默认可恢复主题效果"
 
 #: src/components/settings-storage.tsx
 msgid "10 days"
@@ -543,6 +550,7 @@ msgid "Act on this terminal, or send its agent a prompt"
 msgstr "操作这个终端，或给它的 Agent 下一条指令"
 
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/task-row.tsx
 msgid "Actions"
 msgstr "操作"
@@ -626,6 +634,10 @@ msgstr "代理已退出"
 msgid "Agent panes open in"
 msgstr "代理面板的默认视图"
 
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Agent working"
+msgstr "智能体运行中"
+
 #: src/components/app-drawer-content.tsx
 #: src/components/new-task-action.tsx
 #: src/components/settings-server-capabilities.tsx
@@ -652,7 +664,7 @@ msgstr "将二维码对准框内"
 
 #: src/components/home-recent-chips.tsx
 #: src/components/session-artifacts.tsx
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "All"
 msgstr "全部"
 
@@ -673,8 +685,14 @@ msgid "All projects"
 msgstr "全部项目"
 
 #: src/components/agent-composer.tsx
+#: src/components/home-stage/home-stage-layout.tsx
+#: src/components/home-stage/stage-session-strip.tsx
 msgid "All sessions"
 msgstr "全部会话"
+
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "All sessions, needs you"
+msgstr "所有会话，需要你处理"
 
 #: src/i18n/labels.ts
 msgid "Allow"
@@ -804,6 +822,7 @@ msgstr "应用补丁"
 #: src/app/custom-theme.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Apply theme"
 msgstr "应用主题"
 
@@ -925,10 +944,6 @@ msgstr "自动批准所有操作"
 msgid "Auto-detect"
 msgstr "自动检测"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Automatic"
-msgstr "自动"
-
 #: src/components/settings-storage.tsx
 msgid "Automatic cache cleanup"
 msgstr "自动清理缓存"
@@ -1049,19 +1064,14 @@ msgstr "分支或提交（可选）"
 msgid "Branch to start from"
 msgstr "作为起点的分支"
 
-#: src/components/dev-icon-gallery.tsx
-msgid "Brand marks and working indicator"
-msgstr "品牌标志与运行指示"
-
 #. placeholder {0}: server.label
 #: src/components/home-computer-deck.tsx
 msgid "Bring {0} to the front"
 msgstr "将 {0} 移到最前"
 
-#: src/components/custom-theme-library.tsx
-#: src/components/theme-browse-sheet.tsx
-msgid "Browse themes"
-msgstr "浏览主题"
+#: src/components/settings-theme-sheet.tsx
+msgid "Browse the gallery"
+msgstr "浏览主题库"
 
 #: src/app/commands.tsx
 msgid "Browser"
@@ -1071,7 +1081,7 @@ msgstr "浏览器"
 msgid "Build"
 msgstr "构建 (Build)"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Built-in"
 msgstr "内置"
 
@@ -1107,6 +1117,7 @@ msgstr "需要相机访问权限"
 #: src/components/settings-font-sheet.tsx
 #: src/components/settings-servers.tsx
 #: src/components/settings-storage.tsx
+#: src/components/settings-theme-sheet.tsx
 #: src/components/skia-terminal.tsx
 #: src/components/ssh-host-form.tsx
 #: src/components/ssh-host-key-dialog.tsx
@@ -1217,7 +1228,7 @@ msgstr "请检查仓库链接、分支和主题文件"
 msgid "Check this computer's tasks. This request has not been sent again."
 msgstr "请查看这台电脑的任务。此请求没有再次发送"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Check your connection and try again."
 msgstr "请检查网络连接后重试"
 
@@ -1348,7 +1359,7 @@ msgid "Clear the conversation"
 msgstr "清空对话"
 
 #: src/components/agent-model-sheet.tsx
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Clear the search"
 msgstr "清除搜索内容"
 
@@ -1369,24 +1380,20 @@ msgid "Clears notifications only. Pending tasks still need your attention."
 msgstr "仅清除通知。待处理任务仍需你处理"
 
 #: src/app/diagram-viewer.tsx
+#: src/components/home-reply-drawer.tsx
+#: src/components/home-sheet.tsx
+#: src/components/settings-theme-sheet.tsx
 #: src/components/sheet-scene.tsx
 #: src/i18n/labels.ts
 msgid "Close"
 msgstr "关闭"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Close effects"
-msgstr "关闭效果面板"
-
 #: src/components/asset-viewer.tsx
 msgid "Close file"
 msgstr "关闭文件"
 
-#: src/components/dev-icon-gallery.tsx
-msgid "Close icon preview"
-msgstr "关闭图标预览"
-
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/task-row.tsx
 msgid "Close menu"
 msgstr "收起"
@@ -1535,11 +1542,13 @@ msgstr "已完成"
 #: src/components/app-drawer.tsx
 #: src/components/home-composer-options.tsx
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer"
 msgstr "电脑"
 
 #: src/components/computer-map/screen.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 msgid "Computer details"
 msgstr "电脑详情"
 
@@ -1716,6 +1725,7 @@ msgid "Continue"
 msgstr "继续"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Continue in the linked terminal. Your draft stays here."
 msgstr "请在关联的终端中继续。草稿会保留在这里"
 
@@ -1842,6 +1852,10 @@ msgstr "Ctrl Z 键，挂起"
 #: src/components/home-editorial-layout.tsx
 msgid "Controls"
 msgstr "控制"
+
+#: src/components/home-reply-drawer.tsx
+msgid "Conversation"
+msgstr "对话"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Conversational help and open-ended project questions."
@@ -2051,6 +2065,7 @@ msgstr "无法加载任务"
 
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-reply-drawer.tsx
 msgid "Could not load the session"
 msgstr "无法加载会话"
 
@@ -2153,7 +2168,7 @@ msgstr "无法连接到电脑"
 msgid "Could not reach the computer. Make sure it is running, then refresh the QR and scan again."
 msgstr "无法连接到电脑。请确认它正在运行，然后刷新二维码再扫描一次"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Could not reach the theme catalogue"
 msgstr "无法连接主题目录"
 
@@ -2177,6 +2192,7 @@ msgstr "无法读取已保存的终端历史记录"
 msgid "Could not read the changes."
 msgstr "无法读取改动"
 
+#: src/components/home-reply-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-collaboration-output.ts
 msgid "Could not read the terminal."
@@ -2211,6 +2227,7 @@ msgid "Could not rename"
 msgstr "无法重命名"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-reply-drawer.tsx
 msgid "Could not reply"
 msgstr "无法回复"
 
@@ -2272,6 +2289,7 @@ msgstr "无法发送"
 msgid "Could not send command."
 msgstr "无法发送命令"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not send input."
 msgstr "无法发送输入"
@@ -2367,8 +2385,9 @@ msgstr "已用点数"
 msgid "Cropped preview · Open full image"
 msgstr "局部预览 · 查看完整图片"
 
-#: src/components/custom-theme-library.tsx
 #: src/components/file-mention-panel.tsx
+#: src/components/settings-theme-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Current"
 msgstr "当前"
 
@@ -2389,7 +2408,7 @@ msgstr "当前电脑"
 msgid "Current path"
 msgstr "当前路径"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Current theme"
 msgstr "当前主题"
 
@@ -2397,14 +2416,14 @@ msgstr "当前主题"
 msgid "Custom"
 msgstr "自定义"
 
+#: src/components/settings-theme-sheet.tsx
+msgid "Customise"
+msgstr "自定义"
+
 #: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
 msgid "Dark"
 msgstr "深色"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Decrease {label}"
-msgstr "降低{label}"
 
 #: src/components/agent-model-sheet.tsx
 msgid "default"
@@ -2476,7 +2495,7 @@ msgstr "发送未确认"
 msgid "Delivery not confirmed. Tap to check status"
 msgstr "投递未确认。点按检查状态"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Demo catalogue. Leave the demo to download themes."
 msgstr "演示主题目录。退出演示后即可下载主题"
 
@@ -2496,10 +2515,6 @@ msgstr "示例工作区"
 #: src/components/tool-call-code-rows.tsx
 msgid "Denied by you"
 msgstr "已被你拒绝"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Density"
-msgstr "疏密"
 
 #: src/i18n/labels.ts
 msgid "Deny"
@@ -2531,10 +2546,6 @@ msgstr "设备验证"
 #: src/i18n/labels.ts
 msgid "Diff summary"
 msgstr "Diff 摘要"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Direction"
-msgstr "方向"
 
 #: src/components/new-task-sheet.tsx
 msgid "Directory"
@@ -2648,7 +2659,7 @@ msgstr "正在下载 · {0} / {1}"
 msgid "Downloading theme"
 msgstr "正在下载主题"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Downloading…"
 msgstr "正在下载…"
 
@@ -2700,11 +2711,6 @@ msgstr "编辑器已切换"
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Editorial"
 msgstr "编辑部"
-
-#. placeholder {0}: props.value
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Effects · {0}"
-msgstr "效果 · {0}"
 
 #: src/i18n/labels.ts
 msgid "Encryption was turned on for this computer. Pair it again to keep using it."
@@ -2818,10 +2824,12 @@ msgid "Export colours"
 msgstr "导出颜色"
 
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Export theme"
 msgstr "导出主题"
 
 #: src/components/agent-sleep-tool-body.tsx
+#: src/components/home-reply-drawer.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Failed"
@@ -3016,6 +3024,10 @@ msgstr "全屏"
 msgid "Function keys"
 msgstr "功能键"
 
+#: src/components/settings-theme-sheet.tsx
+msgid "Gallery"
+msgstr "主题库"
+
 #: src/app/explore.tsx
 msgid "Gateway"
 msgstr "Gateway"
@@ -3192,10 +3204,6 @@ msgstr "主页"
 msgid "Home agent"
 msgstr "主页智能体"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Home effects · development only"
-msgstr "首页效果 · 仅开发模式"
-
 #: src/app/agent-workspace.tsx
 #: src/components/home-composer-dock.tsx
 msgid "Home folder"
@@ -3238,15 +3246,8 @@ msgstr "主机密钥已信任"
 msgid "How to use Muqun"
 msgstr "如何使用 Muqun"
 
-#: src/components/dev-icon-gallery.tsx
-msgid "Icon preview"
-msgstr "图标预览"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Icons"
-msgstr "图标"
-
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/home-reply-drawer.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "空闲"
@@ -3293,21 +3294,25 @@ msgstr "图片"
 msgid "Images download from"
 msgstr "图片下载来源"
 
-#: src/components/custom-theme-library.tsx
-msgid "Import"
-msgstr "导入"
-
 #: src/components/settings-font-sheet.tsx
 msgid "Import a file…"
 msgstr "从文件导入…"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Import file"
 msgstr "导入文件"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Import link"
 msgstr "从链接导入"
+
+#: src/components/theme-card.tsx
+msgid "Import theme"
+msgstr "导入主题"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Imported"
+msgstr "已导入"
 
 #: src/components/server-tasks-sheet.tsx
 msgid "In progress"
@@ -3320,10 +3325,6 @@ msgstr "套餐内用量"
 #: src/components/agent-account-limits-section.tsx
 msgid "Included usage is restricted. Paid or alternative usage may still be available."
 msgstr "套餐内用量受限，付费或其他使用方式可能仍可用"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Increase {label}"
-msgstr "提高{label}"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
@@ -3370,23 +3371,20 @@ msgid "Install command copied"
 msgstr "已复制安装命令"
 
 #: src/components/settings-font-sheet.tsx
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Installed"
 msgstr "已安装"
 
 #: src/app/+not-found.tsx
 #: src/app/custom-theme.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Installing images"
 msgstr "正在安装图片"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Installing…"
 msgstr "安装中…"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Intensity"
-msgstr "强度"
 
 #: src/i18n/labels.ts
 msgid "Interacted"
@@ -3574,7 +3572,7 @@ msgstr "刚刚在线"
 msgid "Later"
 msgstr "稍后"
 
-#: src/components/agent-workbench.tsx
+#: src/components/jump-to-latest-pill.tsx
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "最新"
@@ -3708,7 +3706,7 @@ msgstr "正在加载终端"
 msgid "Loading the transcript"
 msgstr "正在加载对话记录"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Loading themes…"
 msgstr "正在加载主题…"
 
@@ -3721,6 +3719,10 @@ msgstr "正在加载…"
 #: src/lib/demo-gateway.ts
 msgid "Logs"
 msgstr "日志"
+
+#: src/components/home-reply-drawer.tsx
+msgid "Long press to open it in full"
+msgstr "长按以完整打开"
 
 #: src/components/simfarm-preview.tsx
 #: src/components/simfarm-stage.tsx
@@ -3771,10 +3773,6 @@ msgstr "确认完成"
 msgid "Mark reviewed"
 msgstr "标记已查看"
 
-#: src/components/dev-icon-gallery.tsx
-msgid "Marks keep their original geometry and stroke."
-msgstr "标志保留原有的形状和线宽"
-
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "吉祥物"
@@ -3797,6 +3795,10 @@ msgstr "消息已复制到剪贴板"
 #: src/components/server-terminal-workspace.tsx
 msgid "Message not sent"
 msgstr "消息未发送"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Mine"
+msgstr "我的"
 
 #: src/components/home-composer-options.tsx
 msgid "Mode"
@@ -3858,6 +3860,7 @@ msgid "Monthly credit limit"
 msgstr "每月点数上限"
 
 #: src/components/custom-theme-library.tsx
+#: src/components/theme-card.tsx
 msgid "More actions"
 msgstr "更多操作"
 
@@ -3931,10 +3934,6 @@ msgstr "无论手机设置为何，牧群都保持这个语言"
 msgid "Muqun will use {methodName} when the app opens."
 msgstr "打开应用时，牧群会使用 {methodName}"
 
-#: src/components/custom-theme-library.tsx
-msgid "My themes"
-msgstr "我的主题"
-
 #: src/app/commands.tsx
 #: src/components/agent-worktree-sheet.tsx
 #: src/components/ssh-host-form.tsx
@@ -3958,6 +3957,9 @@ msgstr "需要设置"
 msgid "Needs update"
 msgstr "需要更新"
 
+#: src/components/home-reply-drawer.tsx
+#: src/components/home-stage/home-stage-layout.tsx
+#: src/components/home-stage/stage-agent-row.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "Needs you"
 msgstr "需要你处理"
@@ -3986,6 +3988,14 @@ msgstr "从未连接过"
 #: src/components/settings-servers.tsx
 msgid "Never seen"
 msgstr "从未在线"
+
+#: src/components/home-reply-drawer.tsx
+msgid "New conversation"
+msgstr "新对话"
+
+#: src/components/home-composer-dock.tsx
+msgid "New conversation with {agentLabel}…"
+msgstr "与 {agentLabel} 的新对话…"
 
 #: src/app/commands.tsx
 msgid "New group"
@@ -4147,10 +4157,6 @@ msgstr "已不再与 {computer} 关联"
 msgid "No matching commands. Try another word."
 msgstr "没有匹配的命令，换个关键词试试"
 
-#: src/components/dev-icon-gallery.tsx
-msgid "No matching icons"
-msgstr "没有匹配的图标"
-
 #: src/components/home-recent-sessions.tsx
 msgid "No matching sessions"
 msgstr "没有匹配的会话"
@@ -4179,6 +4185,7 @@ msgstr "无输出"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/home-reply-drawer.tsx
 msgid "No output yet."
 msgstr "还没有输出"
 
@@ -4194,7 +4201,7 @@ msgstr "此主机没有保存密码或密钥"
 msgid "No peer report available."
 msgstr "暂无电脑间连接报告"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "No personal themes yet. Import one, or browse the published themes."
 msgstr "还没有自己的主题。可以导入一个，或浏览已发布的主题"
 
@@ -4273,12 +4280,12 @@ msgstr "此电脑没有可用的终端会话"
 msgid "No textual change"
 msgstr "没有文本改动"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "No themes are published yet"
 msgstr "还没有已发布的主题"
 
-#. placeholder {0}: query.trim()
-#: src/components/theme-browse-sheet.tsx
+#. placeholder {0}: gallery.query.trim()
+#: src/components/theme-gallery.tsx
 msgid "No themes match “{0}”."
 msgstr "没有匹配“{0}”的主题"
 
@@ -4362,6 +4369,10 @@ msgstr "未设置"
 msgid "Not signed in on the host"
 msgstr "未在主机上登录"
 
+#: src/components/home-composer-dock.tsx
+msgid "Not sure it was delivered"
+msgstr "不确定是否已送达"
+
 #: src/components/home-computer-cards.tsx
 msgid "Not updating from here. Open this computer to see its tasks."
 msgstr "此处不再更新。打开这台电脑查看它的任务"
@@ -4421,6 +4432,7 @@ msgid "Off"
 msgstr "关闭"
 
 #: src/components/home-composer-options.tsx
+#: src/components/home-reply-drawer.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Offline"
@@ -4429,6 +4441,12 @@ msgstr "离线"
 #: src/i18n/labels.ts
 msgid "OFFLINE"
 msgstr "离线"
+
+#. placeholder {0}: age(seen, nowMs)
+#: src/components/home-stage/home-stage-layout.tsx
+#: src/components/home-stage/stage-agent-row.tsx
+msgid "Offline · last seen {0}"
+msgstr "离线 · 最后在线 {0}"
 
 #: src/i18n/labels.ts
 msgid "Offline, not answering"
@@ -4450,6 +4468,7 @@ msgstr "在平板上，主页以双页展开，工作面板铺满全屏，屏幕
 msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
 msgstr "终端和智能体会话共用同一个改动面板：改动的文件以目录树呈现并附带行数，标题下显示分支，文件菜单里可以放弃改动"
 
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Online"
@@ -4468,6 +4487,8 @@ msgid "Only this Home row is hidden. The task and its history remain available. 
 msgstr "仅隐藏此首页条目。任务及其历史记录仍然保留，正在运行的工作不会停止"
 
 #: src/components/home-connections.tsx
+#: src/components/home-reply-drawer.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/task-row.tsx
@@ -4529,10 +4550,6 @@ msgstr "打开文件列表"
 #: src/components/git-diff-button.tsx
 msgid "Open Git"
 msgstr "打开 Git"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Open icon preview"
-msgstr "打开图标预览"
 
 #: src/components/agent-tool-card.tsx
 msgid "Open image"
@@ -4617,6 +4634,10 @@ msgstr "打开 {agentName} 安装指南"
 msgid "Open the file explorer"
 msgstr "打开文件浏览器"
 
+#: src/components/home-reply-drawer.tsx
+msgid "Open the full conversation"
+msgstr "打开完整对话"
+
 #: src/components/agent-tool-card.tsx
 msgid "Open the subagent's session"
 msgstr "打开子智能体的会话"
@@ -4651,7 +4672,7 @@ msgid "Opening"
 msgstr "正在打开"
 
 #: src/app/+not-found.tsx
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Opening that file"
 msgstr "正在打开这个文件"
 
@@ -4684,9 +4705,17 @@ msgstr "打开 GitHub 上的牧群问题跟踪页"
 msgid "Opens the simulator's menu: the device, its keys, the keyboard and the way out. Drag to move."
 msgstr "打开模拟器菜单：设备、按键、键盘和退出。拖动即可移动"
 
+#: src/components/home-stage/stage-agent-row.tsx
+msgid "Opens this agent."
+msgstr "打开这个代理"
+
 #: src/components/server-agent-rows.tsx
 msgid "Opens this agent's terminal"
 msgstr "打开这个代理的终端"
+
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Opens this computer."
+msgstr "打开这台电脑"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -4795,10 +4824,6 @@ msgstr "配对已失效"
 msgid "Pairing failed."
 msgstr "配对失败"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Palette (up to 4)"
-msgstr "配色（最多 4 色）"
-
 #: src/components/settings-servers.tsx
 msgid "Panes on computer cards"
 msgstr "电脑卡片上的面板"
@@ -4906,7 +4931,7 @@ msgstr "请重试或移除上传失败的附件"
 msgid "Port"
 msgstr "端口"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
 msgstr "正在准备图片"
@@ -5112,7 +5137,7 @@ msgid "Reading the rules on the host…"
 msgstr "正在读取主机上的规则…"
 
 #: src/app/+not-found.tsx
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Reading the theme"
 msgstr "正在读取主题"
 
@@ -5270,14 +5295,13 @@ msgstr "剩余额度未知"
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-storage.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Remove"
 msgstr "移除"
 
 #. placeholder {0}: attachment.name
-#. placeholder {0}: installed.manifest.name
 #. placeholder {0}: record.label
 #: src/components/attachment-strip.tsx
-#: src/components/custom-theme-library.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Remove {0}"
 msgstr "移除 {0}"
@@ -5355,6 +5379,14 @@ msgstr "替换密钥"
 msgid "Replay audio"
 msgstr "重播音频"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Reply from Home"
+msgstr "在主页回复"
+
+#: src/components/home-composer-dock.tsx
+msgid "Reply to {threadAgentName}…"
+msgstr "回复 {threadAgentName}…"
+
 #: src/app/settings-about.tsx
 msgid "Report a bug or request a feature"
 msgstr "报告问题或提出功能建议"
@@ -5422,6 +5454,10 @@ msgstr "请重启 Muqun 以完成更新"
 msgid "Restarting Muqun…"
 msgstr "正在重启 Muqun…"
 
+#: src/components/settings-theme-sheet.tsx
+msgid "Restore default"
+msgstr "恢复默认"
+
 #: src/app/commands.tsx
 msgid "Restore hidden default commands"
 msgstr "恢复隐藏的默认命令"
@@ -5438,6 +5474,7 @@ msgstr "恢复"
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/gateway-storage-error.tsx
+#: src/components/home-composer-dock.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
@@ -5714,7 +5751,7 @@ msgstr "扫描 Gateway 的二维码"
 msgid "Scanning needs a camera, which this browser does not offer."
 msgstr "扫描需要相机，而这个浏览器没有提供"
 
-#: src/components/agent-workbench.tsx
+#: src/components/jump-to-latest-pill.tsx
 msgid "Scroll to latest message"
 msgstr "滚动到最新消息"
 
@@ -5726,17 +5763,13 @@ msgstr "搜索"
 msgid "Search actions and commands"
 msgstr "搜索操作和命令"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Search by name or tag"
 msgstr "按名称或标签搜索"
 
 #: src/components/session-artifacts.tsx
 msgid "Search files"
 msgstr "搜索文件"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Search icons"
-msgstr "搜索图标"
 
 #: src/components/agent-model-sheet.tsx
 msgid "Search models"
@@ -5888,6 +5921,7 @@ msgstr "会话不可用"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/home-launch-actions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/session-map.tsx
 msgid "Sessions"
 msgstr "会话"
@@ -5978,6 +6012,10 @@ msgstr "Shift Tab 键"
 msgid "Shift Tab, cycle mode"
 msgstr "Shift Tab 键，循环切换模式"
 
+#: src/components/home-composer-dock.tsx
+msgid "Show"
+msgstr "显示"
+
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
 #: src/components/change-tree-rows.tsx
@@ -5997,6 +6035,15 @@ msgstr "在首页显示图稿"
 #: src/components/pairing-camera.tsx
 msgid "Show camera details"
 msgstr "显示相机详细信息"
+
+#: src/components/home-composer-dock.tsx
+#: src/components/home-reply-drawer.tsx
+msgid "Show conversation"
+msgstr "显示对话"
+
+#: src/components/home-reply-drawer.tsx
+msgid "Show conversation, needs you"
+msgstr "显示对话，需要你处理"
 
 #: src/components/agent-compaction-pill.tsx
 #: src/components/in-app-notification-host.tsx
@@ -6121,8 +6168,6 @@ msgid "Simulator controls"
 msgstr "模拟器控件"
 
 #: src/components/asset-viewer.tsx
-#: src/components/dev-home-ambient-controls.tsx
-#: src/components/dev-icon-gallery.tsx
 msgid "Size"
 msgstr "大小"
 
@@ -6159,6 +6204,7 @@ msgstr "部分主题颜色需要更高的对比度"
 #: src/app/diagram-viewer.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 #: src/components/theme-link-import.tsx
 msgid "Something went wrong"
 msgstr "出了点问题"
@@ -6170,10 +6216,6 @@ msgstr "源代码"
 #: src/components/virtual-keyboard.tsx
 msgid "Space"
 msgstr "空格键"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Speed"
-msgstr "速度"
 
 #: src/components/agent-account-limits-section.tsx
 msgid "Spend control"
@@ -6203,6 +6245,11 @@ msgstr "SSH 主机"
 msgid "SSH tunnel through {host} is down"
 msgstr "通过 {host} 的 SSH 隧道已断开"
 
+#: src/components/settings-appearance.tsx
+#: src/components/settings-home-layout-sheet.tsx
+msgid "Stage"
+msgstr "舞台"
+
 #: src/components/diff-rows.tsx
 msgid "Staged"
 msgstr "已暂存"
@@ -6231,6 +6278,10 @@ msgstr "启动新的 {0}"
 #: src/lib/demo-gateway.ts
 msgid "Start a new session with empty context"
 msgstr "以空白上下文开始新会话"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Start a new task"
+msgstr "开始新任务"
 
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
@@ -6307,6 +6358,7 @@ msgstr "正在启动 {name}"
 msgid "Starting the camera"
 msgstr "正在启动相机"
 
+#: src/components/home-reply-drawer.tsx
 #: src/components/new-task-sheet.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Starting…"
@@ -6369,6 +6421,14 @@ msgstr "停止并转写"
 msgid "Stop assigning a task"
 msgstr "取消分配任务"
 
+#: src/components/home-reply-drawer.tsx
+msgid "Stop following this conversation"
+msgstr "停止跟随此对话"
+
+#: src/components/home-stage/stage-session-strip.tsx
+msgid "Stop replying to {title}"
+msgstr "停止回复 {title}"
+
 #: src/app/commands.tsx
 msgid "Stop this agent"
 msgstr "停止这个代理"
@@ -6391,10 +6451,6 @@ msgstr "存储空间"
 #: src/app/settings-voice.tsx
 msgid "Streams speech while you talk. Requires an OpenAI Realtime-compatible transcription endpoint."
 msgstr "边说边传输音频。需要兼容 OpenAI Realtime 的语音转文字接口"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Stroke width"
-msgstr "线宽"
 
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -6501,6 +6557,10 @@ msgstr "Tab 键"
 msgid "Take photo"
 msgstr "拍照"
 
+#: src/components/home-stage/stage-view.tsx
+msgid "Tap · start a new task"
+msgstr "轻点 · 开始新任务"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Tap again to clear"
 msgstr "再点一次即清除"
@@ -6510,7 +6570,7 @@ msgid "Tap again to delete"
 msgstr "再点一次即删除"
 
 #: src/components/agent-worktree-sheet.tsx
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Tap again to remove"
 msgstr "再点一次以移除"
@@ -6522,10 +6582,6 @@ msgstr "再点一次即强制移除"
 #: src/components/session-map.tsx
 msgid "Tap to connect"
 msgstr "点按连接"
-
-#: src/components/custom-theme-library.tsx
-msgid "Tap to preview and adjust"
-msgstr "点击预览并调整"
 
 #: src/components/agent-workbench.tsx
 msgid "Tap to refresh this session."
@@ -6560,6 +6616,7 @@ msgstr "任务参数"
 #: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-todo-block.tsx
 #: src/components/home-computer-cards.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/server-tasks-sheet.tsx
 #: src/components/task-result-sheet.tsx
 msgid "Tasks"
@@ -6668,6 +6725,10 @@ msgstr "那个助手已经不在这个终端里了。重新打开后再试"
 #: src/app/explore.tsx
 msgid "That code was refused. Hold still for a new one."
 msgstr "这个代码被拒绝了。请保持稳定以读取新的代码"
+
+#: src/components/home-composer-dock.tsx
+msgid "That conversation has ended. Send again to start a new one."
+msgstr "该对话已结束。再次发送即可开始新对话"
 
 #: src/hooks/use-home-commands.ts
 msgid "That destination is no longer available."
@@ -6863,6 +6924,10 @@ msgstr "语音服务返回了无效的转写结果"
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "SSH 隧道只承载 Gateway 这一个端口，不含其他，所以从这里无法访问模拟器和浏览器。请改用本地网络或 Tailscale 连接"
 
+#: src/components/home-composer-dock.tsx
+msgid "The task is still starting. Send again in a moment."
+msgstr "任务仍在启动中。请稍后再发送"
+
 #: src/components/guide-command.tsx
 msgid "The terminal opened, but the command could not be typed."
 msgstr "终端已打开，但无法输入命令"
@@ -6880,6 +6945,7 @@ msgid "The terminal, the opening and Home artwork draw with a new GPU renderer, 
 msgstr "终端、开场动画和主页插画改用全新的 GPU 渲染器绘制，切换主题和字体也有了各自的过渡动画"
 
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "The theme will be removed from this device"
 msgstr "此主题将从当前设备移除"
 
@@ -6895,12 +6961,10 @@ msgstr "这一轮执行失败"
 
 #: src/app/custom-theme.tsx
 #: src/components/settings-appearance.tsx
-#: src/components/settings-theme-sheet.tsx
 #: src/lib/demo-gateway.ts
 msgid "Theme"
 msgstr "主题"
 
-#: src/components/dev-home-ambient-controls.tsx
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
 msgstr "跟随主题"
@@ -6921,6 +6985,10 @@ msgstr "主题链接"
 #: src/components/settings-appearance.tsx
 msgid "Theme, {0}"
 msgstr "主题，{0}"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Themes"
+msgstr "主题"
 
 #: src/components/agent-workbench.tsx
 msgid "There is no rollback waiting to be applied."
@@ -7146,6 +7214,10 @@ msgstr "此会话已不存在"
 msgid "This snapshot can no longer be extended. Refresh to read the latest saved output; the current page is kept until then."
 msgstr "此快照已无法继续加载。请刷新以读取最新保存的输出；当前页面会保留到刷新为止"
 
+#: src/components/home-composer-dock.tsx
+msgid "This task runs on another computer. Open it to reply."
+msgstr "此任务在另一台电脑上运行。打开它以回复"
+
 #: src/components/virtual-keyboard.tsx
 msgid "This terminal can't send {chord}"
 msgstr "此终端无法发送 {chord}"
@@ -7273,7 +7345,7 @@ msgstr "信任"
 #: src/components/changes-sheet.tsx
 #: src/components/inline-file-link.tsx
 #: src/components/pdf-asset-preview.tsx
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/video-asset-preview.tsx
 #: src/components/voice-input-button.tsx
 #: src/hooks/use-file-actions.tsx
@@ -7285,7 +7357,7 @@ msgstr "重试"
 msgid "Try again once the computer responds."
 msgstr "待电脑恢复响应后再试"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Try searching for another name or tag."
 msgstr "尝试搜索其他名称或标签"
 
@@ -7349,7 +7421,6 @@ msgstr "未提交的更改"
 
 #: src/components/agent-revert-plate.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/custom-theme-library.tsx
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "撤销"
@@ -7402,7 +7473,7 @@ msgstr "使用 {authLabel} 解锁"
 msgid "Unlock with {methodName}"
 msgstr "使用 {methodName} 解锁"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Unpacking…"
 msgstr "正在解压…"
 
@@ -7461,7 +7532,7 @@ msgstr "未跟踪"
 msgid "Up arrow"
 msgstr "向上键"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/update-status-banner.tsx
 msgid "Update"
 msgstr "更新"
@@ -7704,6 +7775,7 @@ msgid "While you were away"
 msgstr "离开期间"
 
 #: src/components/collaboration-notice.tsx
+#: src/components/home-reply-drawer.tsx
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "工作中"
@@ -7809,6 +7881,10 @@ msgstr "你已配对的电脑"
 #: src/lib/network-error.ts
 msgid "Your phone's clock is off by {minutes} minutes. Fix the date and time, then try again."
 msgstr "手机时钟偏差了 {minutes} 分钟。请校正日期和时间后重试"
+
+#: src/components/settings-home-layout-sheet.tsx
+msgid "Your theme's art as a 3D world that moves with your phone, with your agents' status below it."
+msgstr "主题的插画化作随手机移动的 3D 世界，下方显示各个代理的状态"
 
 #: src/components/image-preview-modal.tsx
 msgid "Zoom in"

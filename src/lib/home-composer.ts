@@ -283,12 +283,21 @@ export function homeSessionReuse(
   | { kind: 'create' }
   | { kind: 'reuse'; started: HomeStartedSession; switchMode?: string; switchModel?: ModelRef } {
   if (!started || started.key !== key) return { kind: 'create' };
-  const switchMode = params.mode && params.mode !== started.params.mode ? params.mode : undefined;
-  const switchModel =
-    params.model && !sameModel(params.model, started.params.model) ? params.model : undefined;
+  return { kind: 'reuse', started, ...homeSessionSwitches(started.params, params) };
+}
+
+/**
+ * What a session that exists needs switched before the next prompt: the
+ * pills' mode and model where they differ from what it was created with, or
+ * last switched to. Nothing picked switches nothing.
+ */
+export function homeSessionSwitches(
+  before: HomeSessionParams,
+  now: HomeSessionParams
+): { switchMode?: string; switchModel?: ModelRef } {
+  const switchMode = now.mode && now.mode !== before.mode ? now.mode : undefined;
+  const switchModel = now.model && !sameModel(now.model, before.model) ? now.model : undefined;
   return {
-    kind: 'reuse',
-    started,
     ...(switchMode ? { switchMode } : {}),
     ...(switchModel ? { switchModel } : {}),
   };

@@ -4,7 +4,7 @@
     "slug": "muqun",
     "version": "4.0.0",
     "orientation": "default",
-    "icon": "./assets/icons/classic/icon.png",
+    "icon": "./assets/icons/mint/icon.png",
     "scheme": "muqun",
     "userInterfaceStyle": "automatic",
     "locales": {
@@ -25,11 +25,7 @@
       "bundleIdentifier": "dev.osuki.muqun",
       "supportsTablet": true,
       "requireFullScreen": false,
-      "icon": {
-        "light": "./assets/icons/classic/icon.png",
-        "dark": "./assets/icons/classic/icon-dark.png",
-        "tinted": "./assets/icons/classic/icon-tinted.png"
-      },
+      "icon": "./assets/icons/mint/icon.png",
       "infoPlist": {
         "NSCameraUsageDescription": "Muqun scans the Gateway's QR code to pair securely, and takes photos you attach to a terminal session.",
         "NSPhotoLibraryUsageDescription": "Muqun sends photos you pick to the paired Gateway so an agent can read them.",
@@ -96,8 +92,8 @@
         "android.permission.READ_MEDIA_VIDEO"
       ],
       "adaptiveIcon": {
-        "backgroundColor": "#FCFBFA",
-        "foregroundImage": "./assets/icons/classic/android-icon-foreground.png",
+        "backgroundColor": "#0C101E",
+        "foregroundImage": "./assets/icons/mint/android-foreground.png",
         "monochromeImage": "./assets/icons/monochrome.png"
       },
       "predictiveBackGestureEnabled": false,

@@ -7,7 +7,7 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { TwoStepAction } from '@/components/two-step-action';
 import { appChrome } from '@/constants/appearance';
 import { AGENT_TYPE } from '@/constants/agent-type';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useFloatingSurfaceBackground } from '@/hooks/use-surface-background';
 import { fadeInDown, fadeOutDown } from '@/lib/motion';
 
 /**
@@ -66,7 +66,7 @@ export const AgentActionMenu = memo(function AgentActionMenu({
 }) {
   const profile = useAppearanceProfile();
   const theme = useThemeTokens();
-  const surfaceBackground = useSurfaceBackground();
+  const floatingBackground = useFloatingSurfaceBackground();
   const popover = surface === 'popover';
 
   return (
@@ -80,7 +80,7 @@ export const AgentActionMenu = memo(function AgentActionMenu({
           ? [
               styles.popover,
               { borderRadius: profile.chrome.popover },
-              { backgroundColor: surfaceBackground(theme.colors.surface) },
+              { backgroundColor: floatingBackground(theme.colors.surface) },
             ]
           : styles.ground,
       ]}>

@@ -24,6 +24,7 @@ import {
 import { flattenStyle } from '@/lib/flatten-style';
 import Animated, {
   Easing,
+  ReduceMotion,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -107,6 +108,8 @@ export interface TerminalComposerProps {
   send: TerminalComposerSend;
   /** Home's field sits on the keyboard, so only its top corners stay rounded. */
   squareBottom?: boolean;
+  /** A bar is joined to the field's top (Home's reply bar): only its bottom corners round. */
+  squareTop?: boolean;
   entering?: AnimatedViewProps['entering'];
   exiting?: AnimatedViewProps['exiting'];
   layout?: AnimatedViewProps['layout'];
@@ -138,6 +141,7 @@ export function TerminalComposer({
   minLines,
   spans,
   squareBottom = false,
+  squareTop = false,
 }: TerminalComposerProps) {
   const readInput = useLatestReader(inputProps);
   const { t } = useLingui();
@@ -169,18 +173,30 @@ export function TerminalComposer({
   }, [voiceActive, contentReveal]);
   const contentRevealStyle = useAnimatedStyle(() => ({ opacity: contentReveal.get() }));
   const profile = useAppearanceProfile();
-  const fieldRadius = squareBottom
-    ? {
-        borderTopLeftRadius: profile.chrome.composerField,
-        borderTopRightRadius: profile.chrome.composerField,
-        borderBottomLeftRadius: 0,
-        borderBottomRightRadius: 0,
-        borderCurve: 'continuous' as const,
-      }
-    : {
-        borderRadius: profile.chrome.composerField,
-        borderCurve: 'continuous' as const,
-      };
+  const cornerRadius = profile.chrome.composerField;
+  // The top corners ease between round and square as a header joins the field
+  // or leaves it, over the beat the header itself fades in: never a jump.
+  // Reduce motion keeps it, since a corner easing is not travel.
+  const topRound = useSharedValue(squareTop ? 0 : 1);
+  useEffect(() => {
+    topRound.set(
+      withTiming(squareTop ? 0 : 1, timing('short', { reduceMotion: ReduceMotion.Never }))
+    );
+  }, [squareTop, topRound]);
+  const topRadiusStyle = useAnimatedStyle(() => {
+    const radius = cornerRadius * topRound.get();
+    return { borderTopLeftRadius: radius, borderTopRightRadius: radius };
+  });
+  const fieldRadius =
+    squareBottom && !squareTop
+      ? {
+          borderTopLeftRadius: profile.chrome.composerField,
+          borderTopRightRadius: profile.chrome.composerField,
+          borderBottomLeftRadius: 0,
+          borderBottomRightRadius: 0,
+          borderCurve: 'continuous' as const,
+        }
+      : [{ borderRadius: cornerRadius, borderCurve: 'continuous' as const }, topRadiusStyle];
   const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
   // The monospace slot is this component's *default*, not its rule, because
@@ -268,9 +284,13 @@ export function TerminalComposer({
       entering={entering}
       exiting={exiting}
       layout={layout}
-      style={composerStyles.fieldOuter}>
+      // A joined bar and the field are one plate: the field is drawn one
+      // physical pixel over the bar's bottom edge, so a fractional boundary
+      // (layout rounding, a layout animation mid-flight) cannot open a
+      // hairline gap that shows the art behind the dock.
+      style={[composerStyles.fieldOuter, squareTop && composerStyles.joinedTop]}>
       {fieldShadow ? (
-        <View
+        <Animated.View
           testID="composer-field-shadow"
           pointerEvents="none"
           accessible={false}
@@ -279,16 +299,10 @@ export function TerminalComposer({
       ) : null}
       {outsideBackground ? (
         <>
-          <View
+          <Animated.View
             pointerEvents="none"
             accessible={false}
-            style={[
-              StyleSheet.absoluteFill,
-              {
-                backgroundColor,
-                ...fieldRadius,
-              },
-            ]}
+            style={[StyleSheet.absoluteFill, { backgroundColor }, fieldRadius]}
           />
           <View
             testID="composer-field-background-outset"
@@ -308,7 +322,7 @@ export function TerminalComposer({
           </View>
         </>
       ) : null}
-      <View
+      <Animated.View
         testID="composer-field-shell"
         style={[
           composerStyles.fieldShell,
@@ -386,7 +400,7 @@ export function TerminalComposer({
             {voice.panel}
           </View>
         )}
-      </View>
+      </Animated.View>
       {!voiceActive && fieldDecoration ? (
         <View
           testID="composer-field-decoration"
@@ -550,6 +564,7 @@ const ONE_LINE_FIELD = COMPOSER_ACTION_SIZE;
 /** Shared with the gateway's paperclip, which sits in the same row at the same size. */
 export const composerStyles = StyleSheet.create({
   fieldOuter: { overflow: 'visible' },
+  joinedTop: { marginTop: -StyleSheet.hairlineWidth },
   fieldShell: { borderCurve: 'continuous', overflow: 'hidden' },
   composer: {
     minHeight: 50,

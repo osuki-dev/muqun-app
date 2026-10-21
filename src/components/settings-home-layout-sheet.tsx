@@ -37,6 +37,11 @@ export function SettingsHomeLayoutSheet({ onClose }: { onClose: () => void }) {
       title: t`Editorial`,
       detail: t`A magazine-style Home with attention and recent sessions.`,
     },
+    {
+      id: 'stage',
+      title: t`Stage`,
+      detail: t`Your theme's art as a 3D world that moves with your phone, with your agents' status below it.`,
+    },
   ];
 
   async function choose(next: HomeLayout) {
@@ -138,13 +143,17 @@ function HomeLayoutPreview({ layout }: { layout: HomeLayout }) {
           borderRadius: profile.chrome.surface,
         },
       ]}>
-      <View style={[styles.previewHeader, { backgroundColor: colors.surfaceRaised }]} />
+      {layout === 'stage' ? null : (
+        <View style={[styles.previewHeader, { backgroundColor: colors.surfaceRaised }]} />
+      )}
       {layout === 'classic' ? (
         <View style={styles.classicPreview}>
           <View style={[styles.classicCard, { backgroundColor: colors.surface }]} />
           <View style={[styles.classicCard, { backgroundColor: colors.surface }]} />
           <View style={[styles.classicCard, { backgroundColor: colors.surface }]} />
         </View>
+      ) : layout === 'stage' ? (
+        <StageLayoutPreview />
       ) : (
         <View style={styles.editorialPreview}>
           <View style={[styles.editorialLead, { backgroundColor: colors.surface }]} />
@@ -158,7 +167,59 @@ function HomeLayoutPreview({ layout }: { layout: HomeLayout }) {
   );
 }
 
+/**
+ * A still of the Stage: the theme's art as layered depth with the HUD header
+ * over it, the agent status chips beneath, and the composer at the bottom.
+ */
+function StageLayoutPreview() {
+  const { colors } = useThemeTokens();
+  return (
+    <View style={styles.stagePreview}>
+      <View style={[styles.stageArt, { backgroundColor: colors.primarySubtle }]}>
+        <View style={[styles.stageMid, { backgroundColor: colors.primary }]} />
+        <View style={[styles.stageFigure, { backgroundColor: colors.primary }]} />
+        <View style={[styles.stageHud, { backgroundColor: colors.surfaceRaised }]} />
+      </View>
+      <View style={styles.stageChips}>
+        <View style={[styles.stageChip, { backgroundColor: colors.surfaceRaised }]} />
+        <View style={[styles.stageChip, { backgroundColor: colors.surfaceRaised }]} />
+        <View style={[styles.stageChip, { backgroundColor: colors.surfaceRaised }]} />
+      </View>
+      <View
+        style={[
+          styles.stageComposer,
+          { backgroundColor: colors.surface, borderColor: colors.border },
+        ]}
+      />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  stagePreview: { flex: 1, gap: 4 },
+  stageArt: { flex: 1, borderRadius: 4, overflow: 'hidden' },
+  stageMid: {
+    position: 'absolute',
+    left: '-10%',
+    right: '38%',
+    top: '42%',
+    bottom: '-30%',
+    borderRadius: 14,
+    opacity: 0.22,
+  },
+  stageFigure: {
+    position: 'absolute',
+    left: '50%',
+    width: '18%',
+    top: '30%',
+    bottom: '-12%',
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+  },
+  stageHud: { position: 'absolute', left: 4, top: 4, width: '38%', height: 5, borderRadius: 2.5 },
+  stageChips: { flexDirection: 'row', gap: 3 },
+  stageChip: { width: 16, height: 4, borderRadius: 2 },
+  stageComposer: { height: 9, borderWidth: StyleSheet.hairlineWidth, borderRadius: 4.5 },
   option: {
     minHeight: 108,
     paddingVertical: 10,

@@ -28,11 +28,15 @@ import { THEME_SLOTS, type ThemeSlot } from '@/theme/schema';
 
 declare module '@osuki-dev/ui' {
   // The pack's own slots, painted on app surfaces through `Surface` and
-  // `SurfaceDecoration`, and `cards.plain`: a kit `Card` that thins with the
-  // slider but carries no pack artwork.
+  // `SurfaceDecoration`; `cards.plain`: a kit `Card` that thins with the
+  // slider but carries no pack artwork; and `cards.floating`: a kit `Card`
+  // whose caller has already applied the floating floor
+  // (`useFloatingSurfaceBackground`), so its fill passes through untouched.
   // oxlint-disable-next-line typescript/no-empty-object-type -- module augmentation; the members come from `extends`
-  interface SurfaceSlotRegistry extends Record<ThemeSlot | 'cards.plain', true> {}
+  interface SurfaceSlotRegistry extends Record<AppSurfaceSlot, true> {}
 }
+
+type AppSurfaceSlot = ThemeSlot | 'cards.plain' | 'cards.floating';
 
 /**
  * The kit fills that follow the reader's slider: exactly the ones the app has

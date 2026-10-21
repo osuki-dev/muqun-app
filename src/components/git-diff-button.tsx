@@ -80,6 +80,7 @@ export function GitDiffButton({
 
   return (
     <PressableScale
+      testID="terminal-open-git"
       accessibilityRole="button"
       accessibilityLabel={t`Open Git`}
       feedback="selection"

@@ -848,6 +848,7 @@ export function SessionMap({
               return (
                 <RailChip
                   key={workspace.id}
+                  testID={`session-map-workspace-${workspace.id}`}
                   title={workspace.title}
                   // The count is spelled into the label rather than left to the
                   // caption inside the chip. A Pressable that carries a label is
@@ -948,6 +949,7 @@ export function SessionMap({
               return (
                 <PanelRow
                   key={pane.id}
+                  testID={`session-map-pane-${pane.id}`}
                   accessibilityLabel={t`Open ${title}. Long press to close.`}
                   title={title}
                   detail={detail}
@@ -1286,6 +1288,7 @@ function SessionChip({
  * not as a colour that changes on one frame.
  */
 function PanelRow({
+  testID,
   accessibilityLabel,
   title,
   detail,
@@ -1296,6 +1299,7 @@ function PanelRow({
   onPress,
   onLongPress,
 }: {
+  testID: string;
   accessibilityLabel: string;
   title: string;
   detail: string;
@@ -1326,6 +1330,7 @@ function PanelRow({
       exiting={fadeOut('micro')}
       layout={listLayout('short')}>
       <SheetSceneRow
+        testID={testID}
         accessibilityLabel={accessibilityLabel}
         title={title}
         selected={selected}

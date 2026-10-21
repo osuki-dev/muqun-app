@@ -70,22 +70,29 @@ is hidden "${TARGET}"
 
 # section context-ownership
 # Use the ordinary workbench, not the standalone streaming transcript fixture.
+# The composer's context pill is addressed by id: the session title header
+# differs between phone and Pad, and the tree snapshot backend can lift labels.
 open "muqun://agent?asid=demo-compaction-layout&agentId=opencode"
-wait "label=\"Context 4% full\"" 15000
+wait "id=agent-composer-tokens-pill label=\"Context 4% full\"" 15000
 wait stable 600 5000
 # The development warning overlay can intercept the bottom composer controls.
 react-native dismiss-overlay
-press "label=\"Context 4% full\""
+press "id=agent-composer-tokens-pill"
 wait "id=agent-context-sheet" 10000
-wait "text=\"1,300\"" 10000
-is visible "text=\"GPT 5.4\""
-is visible "text=\"/demo/muqun\""
+
+# section context-owner-retained
+# The manifest checks the token count on agent-context-used by prefix, so the
+# sentence around it can change without breaking the ownership check, and the
+# model and project by text, which also matches the rows' accessibility values.
 screenshot "shots/context-owner-retained.png"
 back --system
-wait "label=\"Sessions: Compaction layout sample\"" 10000
-is visible "label=\"Context 4% full\""
+wait absent "id=agent-context-sheet" 10000
+is visible "id=agent-composer-tokens-pill label=\"Context 4% full\""
 wait stable 600 5000
-press "label=\"Context 4% full\""
-wait "text=\"1,300\"" 10000
+press "id=agent-composer-tokens-pill"
+wait "id=agent-context-sheet" 10000
+
+# section context-closed
 back --system
-wait "label=\"Sessions: Compaction layout sample\"" 10000
+wait absent "id=agent-context-sheet" 10000
+is visible "id=agent-composer-tokens-pill"
