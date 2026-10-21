@@ -30,6 +30,8 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { AgentFormCard } from '@/components/agent-form-card';
+import { ComposerMenuButton } from '@/components/composer-attachment-button';
+import { SessionIcon } from '@/icons';
 import { AgentPermissionCard } from '@/components/agent-permission-card';
 import { AgentTranscriptList } from '@/components/agent-transcript-list';
 import { useAppSettings } from '@/stores/app-settings';
@@ -98,8 +100,8 @@ import { useServerAgents } from '@/stores/server-agents';
  * that rises from behind the composer while the composer stays where it is
  * and keeps sending to it.
  *
- * Three pieces, all drawn by the dock: the grabber on top of the field
- * (`HomeReplyGrabber`), the drawer under the dock (`HomeReplyDrawer`, the
+ * Three pieces, all drawn by the dock: a toolbar button that shows it
+ * (`HomeReplyButton`), the drawer under the dock (`HomeReplyDrawer`, the
  * dock's underlay, so it rides the keyboard with the field) and, from Home,
  * the page receding behind it (`HomeReplyRecede`). One controller
  * (`useHomeReplyDrawer`) owns where it rests and the height the finger drags.
@@ -110,8 +112,6 @@ import { useServerAgents } from '@/stores/server-agents';
 
 /** Room between the drawer's last row and the field's top edge. */
 const FIELD_CLEARANCE = 8;
-/** The grabber row on top of the field: its height is part of the overlap. */
-const GRABBER_ROW_HEIGHT = 14;
 /** How far Home recedes behind an open drawer, and how much it dims. */
 const RECEDE_SCALE = 0.03;
 const SCRIM_OPACITY = 0.28;
@@ -225,12 +225,7 @@ export function useHomeReplyDrawer({
     setMounted(true);
     if (snap === 'closed') setSnap('peek');
   });
-  // One pan per handle (a gesture is attached to one detector): the grabber
-  // on the field and the drawer's own header drag the same height.
-  const grabberPan = useMemo(
-    () => createDrawerPan({ begin, settle, dragFrom, dragging, fade, full, height, peek }),
-    [begin, settle, dragFrom, dragging, fade, full, height, peek]
-  );
+  // The drawer's own grabber and header drag it.
   const headerPan = useMemo(
     () => createDrawerPan({ begin, settle, dragFrom, dragging, fade, full, height, peek }),
     [begin, settle, dragFrom, dragging, fade, full, height, peek]
@@ -246,7 +241,6 @@ export function useHomeReplyDrawer({
     field: clipHeight,
     height,
     fade,
-    grabberPan,
     headerPan,
     show: () => settle('peek'),
     close: (after?: () => void) => {
@@ -334,11 +328,12 @@ function useStateWord(state: HomeThreadState, offline: boolean) {
 }
 
 /**
- * The slim handle on top of the field while the dock has a conversation: a
- * tap or a swipe up shows it, a long press opens it in full. Warm while it
- * needs the reader; gone while the drawer is up (the drawer has its own).
+ * The dock's way into the conversation: a toolbar button beside the
+ * attachment and options buttons, while there is a session or pane to show.
+ * A tap raises the drawer to its peek, a long press opens the conversation in
+ * full. A small warm dot while it needs the reader.
  */
-export function HomeReplyGrabber({
+export function HomeReplyButton({
   target,
   controller,
   onOpenFull,
@@ -350,39 +345,37 @@ export function HomeReplyGrabber({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const needsYou = useHomeThreadState(target) === 'needs-you';
-  const style = useAnimatedStyle(() => ({
-    opacity: 1 - Math.min(1, controller.height.get() / 80),
-  }));
   return (
-    <GestureDetector gesture={controller.grabberPan}>
-      <Animated.View style={style}>
-        <PressableScale
-          testID="home-reply-grabber"
-          accessibilityRole="button"
-          accessibilityLabel={needsYou ? t`Show conversation, needs you` : t`Show conversation`}
-          accessibilityHint={onOpenFull ? t`Long press to open it in full` : undefined}
-          accessibilityState={{ expanded: controller.open }}
-          onPress={() => {
-            void Haptics.selectionAsync();
-            controller.show();
-          }}
-          onLongPress={
-            onOpenFull
-              ? () => {
-                  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  onOpenFull();
-                }
-              : undefined
-          }
-          hitSlop={{ top: 10, bottom: 4, left: 24, right: 24 }}
-          style={styles.grabberRow}>
-          <HomeSheetGrabber
-            tint={needsYou ? theme.colors.warning : undefined}
-            style={needsYou ? styles.grabberWarm : undefined}
-          />
-        </PressableScale>
-      </Animated.View>
-    </GestureDetector>
+    <ComposerMenuButton
+      testID="home-reply-button"
+      label={needsYou ? t`Show conversation, needs you` : t`Show conversation`}
+      hint={onOpenFull ? t`Long press to open it in full` : undefined}
+      expanded={controller.open}
+      onPress={() => {
+        void Haptics.selectionAsync();
+        if (controller.open) controller.close();
+        else controller.show();
+      }}
+      onLongPress={
+        onOpenFull
+          ? () => {
+              void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onOpenFull();
+            }
+          : undefined
+      }>
+      <SessionIcon
+        size={18}
+        color={controller.open ? theme.colors.primary : theme.colors.textMuted}
+      />
+      {needsYou ? (
+        <Animated.View
+          entering={fadeIn('short')}
+          pointerEvents="none"
+          style={[styles.dot, { backgroundColor: theme.colors.warning }]}
+        />
+      ) : null}
+    </ComposerMenuButton>
   );
 }
 
@@ -1012,13 +1005,7 @@ function DrawerPane({ target }: { target: Extract<HomeThreadTarget, { kind: 'pan
 
 const styles = StyleSheet.create({
   recede: { flex: 1 },
-  grabberRow: {
-    alignSelf: 'center',
-    height: GRABBER_ROW_HEIGHT,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-  },
-  grabberWarm: { width: 48 },
+  dot: { position: 'absolute', top: 6, right: 6, width: 7, height: 7, borderRadius: 4 },
   scrim: { position: 'absolute', backgroundColor: '#000' },
   clip: { position: 'absolute', overflow: 'hidden' },
   sheet: { position: 'absolute', bottom: -80, overflow: 'hidden' },

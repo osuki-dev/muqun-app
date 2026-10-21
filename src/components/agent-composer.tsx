@@ -533,20 +533,6 @@ export interface AgentComposerProps {
    */
   accessory?: React.ReactNode;
   /**
-   * A row drawn right above the field, in the field's own box: it counts as
-   * field for the dock's clip edge, so nothing scrolls behind it. Home's
-   * drawer grabber. When `fieldHeaderShown`, it is a bar joined to the field
-   * on its ground: the field's top corners square off under it and they
-   * share one shadow.
-   */
-  fieldHeader?: React.ReactNode;
-  /**
-   * Whether `fieldHeader` is drawing a bar joined to the field right now (a
-   * header that has nothing to show renders nothing): only then does the
-   * field join it.
-   */
-  fieldHeaderShown?: boolean;
-  /**
    * Drawn first inside the dock, under everything the dock draws: it rides the
    * keyboard and the dock's auto-hide with it. Home's reply drawer, which
    * rises from behind the field.
@@ -692,8 +678,6 @@ export const AgentComposer = memo(function AgentComposer({
   holdStagedAttachments,
   onDockHeight,
   accessory,
-  fieldHeader,
-  fieldHeaderShown = true,
   dockUnderlay,
   pinDock = false,
   toolbarLeading,
@@ -1556,7 +1540,6 @@ export const AgentComposer = memo(function AgentComposer({
   // Home paints only the input plate. Its options/notice overlays must not
   // erase the foreground behind their transparent or rounded edges.
   const dockClipHeight = flushField ? inputRowHeight + dockFoot : dockHeight;
-  const joinedHeader = Boolean(fieldHeader) && fieldHeaderShown;
   // The status row occupies transcript space, but does not move the material's clip edge.
   const reportDockHeight = useEffectEvent((height: number, clipHeight: number) =>
     onDockHeight?.(height + compactionClearance, clipHeight)
@@ -2449,26 +2432,14 @@ export const AgentComposer = memo(function AgentComposer({
                 setInputRowHeight(height);
                 setInputRowLeft(x);
                 setInputRowWidth(width);
-              }}
-              // With a header the two are one plate, and the plate casts the shadow.
-              style={
-                joinedHeader && fieldShadow
-                  ? {
-                      boxShadow: fieldShadow,
-                      borderRadius: profile.chrome.composerField,
-                      borderCurve: 'continuous',
-                    }
-                  : undefined
-              }>
-              {fieldHeader}
+              }}>
               <TerminalComposer
                 fieldBackground={fieldBackground}
                 fieldBackgroundColor={fieldBackgroundColor}
                 fieldBackgroundOutset={fieldBackgroundOutset}
                 fieldDecoration={decorationHidden ? undefined : fieldDecoration}
                 fieldTextTopInset={fieldTextTopInset}
-                fieldShadow={joinedHeader ? undefined : fieldShadow}
-                squareTop={joinedHeader}
+                fieldShadow={fieldShadow}
                 onVoiceActiveChange={setVoiceActive}
                 spans={spans}
                 compact={compact}
