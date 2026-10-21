@@ -1,5 +1,5 @@
 import { Text, useThemeTokens } from '@osuki-dev/ui';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useEffectEvent, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -22,7 +22,14 @@ import { useStageProgress } from './use-stage-overlay';
  * cross-fade, at most once every two seconds (`stageSubtitleStep`); the text
  * is never animated otherwise, so an idle Stage runs nothing.
  */
-export function StageSubtitle({ serverId }: { serverId: string }) {
+export function StageSubtitle({
+  serverId,
+  onShownChange,
+}: {
+  serverId: string;
+  /** Whether a line is up, so the agent chips it stands in for can step aside. */
+  onShownChange?: (shown: boolean) => void;
+}) {
   const line = useStageProgress(serverId);
   const [shown, setShown] = useState<{ line: StageProgress | null; atMs: number }>({
     line: null,
@@ -49,6 +56,12 @@ export function StageSubtitle({ serverId }: { serverId: string }) {
     const timer = setTimeout(show, step.waitMs);
     return () => clearTimeout(timer);
   }, [nextKey, nextText, shown, readLine]);
+  const visible = shown.line !== null;
+  const report = useEffectEvent((next: boolean) => onShownChange?.(next));
+  useEffect(() => {
+    report(visible);
+  }, [visible]);
+  useEffect(() => () => report(false), []);
   // Keyed by its words: the old line fades out under the new one fading in.
   return shown.line ? (
     <SubtitleLine
@@ -61,8 +74,9 @@ export function StageSubtitle({ serverId }: { serverId: string }) {
 
 /**
  * The line sits on a small frosted plate in the theme's raised surface and
- * control corner, so it reads over any art; the agent's name leads in the
- * accent, and the report's bold, emphasis and code keep their marks.
+ * control corner, in the agent chips' place, so it reads over any art; the
+ * agent's name leads in the accent, and the report's bold, emphasis and code
+ * keep their marks.
  */
 function SubtitleLine({ serverId, line }: { serverId: string; line: StageProgress }) {
   const theme = useThemeTokens();
@@ -91,8 +105,7 @@ function SubtitleLine({ serverId, line }: { serverId: string; line: StageProgres
           variant="caption"
           numberOfLines={2}
           ellipsizeMode="tail"
-          color={theme.colors.textMuted}
-          style={styles.text}>
+          color={theme.colors.textMuted}>
           <Text variant="caption" weight="semibold" color={theme.colors.primary}>
             {who}
           </Text>
@@ -126,13 +139,12 @@ function SubtitleLine({ serverId, line }: { serverId: string; line: StageProgres
 }
 
 const styles = StyleSheet.create({
-  line: { position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'center' },
+  line: { position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'flex-start' },
   plate: {
     maxWidth: '100%',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderWidth: StyleSheet.hairlineWidth,
   },
-  text: { textAlign: 'center' },
   emphasis: { fontStyle: 'italic' },
 });

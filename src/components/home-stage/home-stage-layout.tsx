@@ -39,6 +39,7 @@ import type { HomeTaskRow } from '@/lib/home-in-progress';
 import type { HomeTarget } from '@/lib/home-recents';
 import { wrapStageIndex, type StageOverlayBand } from '@/lib/home-stage-geometry';
 import { stagePanels, stageSelectedIndex, type StagePanel } from '@/lib/home-stage-panels';
+import { HOME_DOCK_OUTER_INSET } from '@/lib/home-pad-geometry';
 import { fadeIn, fadeOut, SETTLE, timing } from '@/lib/motion';
 import type { ConnectionStatus } from '@/lib/server-reachability';
 import { useHomeAttention } from '@/stores/home-attention';
@@ -48,6 +49,7 @@ import { isRenderableThemeAsset } from '@/theme/renderable-asset';
 import { resolveThemeImage } from '@/theme/resolve';
 import { StageAgentRow } from './stage-agent-row';
 import { StageOverlay } from './stage-overlay';
+import { StageSubtitle } from './stage-subtitle';
 import { useStageComposition, type StageImageInput } from './stage-composition';
 import { StageSessionStrip } from './stage-session-strip';
 import { useStageTextHalo, type StageTextHalo } from './stage-text-halo';
@@ -286,6 +288,8 @@ export function HomeStageLayout({
   const openComputer = useStableHandler(() => opener.open(() => onOpen(selectedIndex)));
   // Where the needs-you card and the progress subtitle stand, as the Stage measured it.
   const [band, setBand] = useState<StageOverlayBand | null>(null);
+  // A waiting request takes the art; only without one does the subtitle show.
+  const [waiting, setWaiting] = useState(false);
   const openRequest = useStableHandler((target: HomeTarget) =>
     opener.open(() => onOpenRequest(target))
   );
@@ -484,11 +488,15 @@ export function HomeStageLayout({
         {emptyState ? <View style={styles.empty}>{emptyState}</View> : null}
         {panels.length > 0 && !typing ? (
           <Animated.View entering={fadeIn('short')} exiting={fadeOut('short')}>
-            <StageAgentRow
-              panel={selected}
-              paused={paused || listOpen}
-              onOpenAgent={(chip) => opener.open(() => onOpenAgent(selectedIndex, chip.paneId))}
-            />
+            <StageFootLine
+              serverId={selected?.serverId}
+              subtitle={!paused && !listOpen && !waiting}>
+              <StageAgentRow
+                panel={selected}
+                paused={paused || listOpen}
+                onOpenAgent={(chip) => opener.open(() => onOpenAgent(selectedIndex, chip.paneId))}
+              />
+            </StageFootLine>
           </Animated.View>
         ) : null}
         {panels.length > 0 ? (
@@ -529,7 +537,12 @@ export function HomeStageLayout({
 
       {/* Over the art, on the foot rows: what needs the reader, else what an agent reports. */}
       {selected && band && !paused && !listOpen && !typing ? (
-        <StageOverlay serverId={selected.serverId} band={band} actions={overlayActions} />
+        <StageOverlay
+          serverId={selected.serverId}
+          band={band}
+          actions={overlayActions}
+          onWaitingChange={setWaiting}
+        />
       ) : null}
 
       {/* The full list, pulled up over the stage: the existing list UI. */}
@@ -691,6 +704,44 @@ function StageStatusLine({ panel, halo }: { panel: StagePanel; halo: StageTextHa
   );
 }
 
+/**
+ * The agent chips' row, or in their place what a working agent last reported:
+ * the subtitle already names who is working, so the chips step aside under it
+ * with a short fade and come back when it goes. The row keeps its height, so
+ * the art standing on it never moves.
+ */
+function StageFootLine({
+  serverId,
+  subtitle,
+  children,
+}: {
+  serverId: string | undefined;
+  subtitle: boolean;
+  children: ReactNode;
+}) {
+  const [shown, setShown] = useState(false);
+  const covered = subtitle && shown;
+  const chipsStyle = useAnimatedStyle(() => ({
+    opacity: withTiming(covered ? 0 : 1, timing('short')),
+  }));
+  return (
+    <View>
+      <Animated.View
+        pointerEvents={covered ? 'none' : 'auto'}
+        accessibilityElementsHidden={covered}
+        importantForAccessibility={covered ? 'no-hide-descendants' : 'auto'}
+        style={chipsStyle}>
+        {children}
+      </Animated.View>
+      {serverId && subtitle ? (
+        <View pointerEvents="none" style={styles.subtitle}>
+          <StageSubtitle key={serverId} serverId={serverId} onShownChange={setShown} />
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   root: { flex: 1, overflow: 'hidden' },
   topScrim: { position: 'absolute', left: 0, right: 0, top: 0 },
@@ -719,6 +770,13 @@ const styles = StyleSheet.create({
   center: { position: 'absolute', left: 16, right: 16 },
   bottomScrim: { position: 'absolute', left: 0, right: 0, bottom: 0 },
   bottom: { position: 'absolute', left: 0, right: 0, gap: 8 },
+  subtitle: {
+    position: 'absolute',
+    left: HOME_DOCK_OUTER_INSET,
+    right: HOME_DOCK_OUTER_INSET,
+    top: 0,
+    bottom: 0,
+  },
   empty: { paddingHorizontal: 16 },
   handleRow: {
     alignSelf: 'center',
