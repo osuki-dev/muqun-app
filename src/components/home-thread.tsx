@@ -1,7 +1,7 @@
 import { useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { PressableScale, Text, useThemeTokens } from '@osuki-dev/ui';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useReducedMotion } from 'react-native-reanimated';
 
@@ -25,6 +25,7 @@ import {
 } from '@/lib/agent-session';
 import { withAlpha } from '@/lib/color';
 import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
+import { readPaneOutput } from '@/lib/gateway-client';
 import { WS_EVENTS_CAPABILITY } from '@/lib/gateway-socket';
 import { gatewaySocketFor } from '@/lib/gateway-socket-runtime';
 import { goneSessionKey } from '@/lib/home-continue';
@@ -45,6 +46,7 @@ import {
   type HomeThreadTarget,
 } from '@/lib/home-thread';
 import { plainFromMarkdown } from '@/lib/markdown-text';
+import { paneAgentLine } from '@/lib/pane-agent-line';
 import { calmFadeIn, calmFadeOut, fadeIn, fadeOut, listLayout, riseIn } from '@/lib/motion';
 import { useAgents } from '@/stores/agents';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
@@ -62,6 +64,14 @@ import { useServerTasksStore } from '@/stores/server-tasks';
 const HOME_THREAD_PUBLISH_MS = 250;
 /** How long a dropped event stream waits before it is opened again. */
 const HOME_THREAD_STREAM_RETRY_MS = 5_000;
+/**
+ * At most one read of a pane's screen per two seconds: it is read on events
+ * (targeted, status changed, Home back in front), never on a timer, and a
+ * burst of them is one read.
+ */
+const HOME_THREAD_PANE_READ_MS = 2_000;
+/** Rows of the pane's visible screen read: the agent's last message is near the bottom. */
+const HOME_THREAD_PANE_ROWS = 80;
 /** A pill's ends are fully round at any height. */
 const PILL_RADIUS = 999;
 
@@ -198,6 +208,51 @@ export function HomeThreadFeed({
     };
   }, [enabled, key, serverId, sessionId, asid]);
 
+  // A pane has no transcript: its agent's last prose is read off its screen
+  // (the terminal screen's own read) when it becomes the target, when its
+  // status changes and when Home is back in front. No polling.
+  const paneId = target.kind === 'pane' ? target.paneId : undefined;
+  const paneSessionId = useServerAgents((state) =>
+    target.kind === 'pane' ? (target.sessionId ?? state.byServer[serverId]?.sessionId) : undefined
+  );
+  const paneStatus = useServerAgents((state) => {
+    if (target.kind !== 'pane') return undefined;
+    const row = state.byServer[serverId]?.agents.find((agent) => agent.paneId === target.paneId);
+    return row ? `${row.status}:${row.pendingUserInput === true}` : undefined;
+  });
+  const paneReadAtMs = useRef(0);
+  useEffect(() => {
+    if (!enabled || !paneId || !paneSessionId) return;
+    const owner = useGatewayConnectionStore.getState().record;
+    if (owner?.serverId !== serverId) return;
+    let active = true;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const read = () => {
+      timer = null;
+      paneReadAtMs.current = Date.now();
+      void readPaneOutput(paneSessionId, paneId, 'text', HOME_THREAD_PANE_ROWS, 'visible').then(
+        (output) => {
+          const now = useGatewayConnectionStore.getState().record;
+          if (!active || !sameComputer(now, owner) || now?.deviceId !== owner.deviceId) return;
+          const store = useHomeThreadLive.getState();
+          const paneLine = paneAgentLine(output);
+          if (store.key !== key || store.live.paneLine === paneLine) return;
+          const { paneLine: _previous, ...live } = store.live;
+          store.publish(key, paneLine ? { ...live, paneLine } : live);
+        },
+        // A pane that cannot be read says nothing; its mirror says whether it is gone.
+        () => undefined
+      );
+    };
+    const waitMs = paneReadAtMs.current + HOME_THREAD_PANE_READ_MS - Date.now();
+    if (waitMs > 0) timer = setTimeout(read, waitMs);
+    else read();
+    return () => {
+      active = false;
+      if (timer) clearTimeout(timer);
+    };
+  }, [enabled, key, serverId, paneId, paneSessionId, paneStatus]);
+
   // When the conversation has ended the target goes with it; a task the
   // gateway has bound since becomes the session or pane it runs in.
   const task = useServerTasksStore((state) => homeThreadTask(target, state.index[serverId]?.tasks));
@@ -289,7 +344,8 @@ export type HomeThreadUnsure = { key: string; text: string; attachments: string[
  * Row 1 is `↳ title · state` with × on the right, which lets the target go;
  * the next message then starts a new conversation. Row 2, at most two lines,
  * is the agent's latest reply, or while it works and has not replied the
- * progress line it reports, or nothing. The reader's own message is never
+ * progress line it reports, or for a pane the agent's last prose as its
+ * screen shows it, or nothing. The reader's own message is never
  * repeated. A request waiting on the reader tints the bar and puts its
  * actions in row 2. The bar is one button that opens the conversation.
  */
@@ -328,12 +384,12 @@ export function HomeThreadBar({
       : task?.summary && state !== 'working'
         ? task.summary
         : undefined;
-  // Only what was reported: the reply, else the task's progress while it works.
-  const line = replyText
-    ? plainFromMarkdown(replyText).trim()
-    : state === 'working'
-      ? task?.progress
-      : undefined;
+  const progress = state === 'working' ? task?.progress : undefined;
+  // Only what was reported: the reply, else the task's progress while it
+  // works, else for a pane its agent's last prose as its screen shows it.
+  const paneLine = target.kind === 'pane' && !replyText && !progress ? live.paneLine : undefined;
+  const line = replyText ? plainFromMarkdown(replyText).trim() : (progress ?? paneLine);
+  const lineSource = replyText ? 'reply' : paneLine ? 'pane' : 'progress';
   const word = offline
     ? t`Offline`
     : state === 'needs-you'
@@ -418,7 +474,7 @@ export function HomeThreadBar({
           </View>
           {line && !permission && !form ? (
             <Animated.View
-              key={`line:${task?.taskId ?? ''}:${replyText ? 'reply' : 'progress'}`}
+              key={`line:${task?.taskId ?? ''}:${lineSource}`}
               entering={enter}
               exiting={exit}>
               <Text
