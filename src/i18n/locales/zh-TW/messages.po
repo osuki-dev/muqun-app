@@ -148,12 +148,6 @@ msgstr "上下文中有 {0} 則訊息"
 msgid "{0} more models"
 msgstr "還有 {0} 個模型"
 
-#. placeholder {0}: filtered.length
-#. placeholder {1}: entries.length
-#: src/components/dev-icon-gallery.tsx
-msgid "{0} of {1} icons · development only"
-msgstr "{1} 個圖示中的 {0} 個 · 僅開發用"
-
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
 msgid "{0} of {limitLabel} tokens the model can hold"
@@ -455,10 +449,6 @@ msgstr "還有 {overflow} 個"
 #: src/hooks/use-task-age.ts
 msgid "<1m"
 msgstr "不到 1 分鐘"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "0 speed pauses motion. Theme default restores the theme."
-msgstr "速度為 0 時暫停動畫，選擇主題預設可恢復主題效果"
 
 #: src/components/settings-storage.tsx
 msgid "10 days"
@@ -957,10 +947,6 @@ msgstr "自動核准所有操作"
 msgid "Auto-detect"
 msgstr "自動偵測"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Automatic"
-msgstr "自動"
-
 #: src/components/settings-storage.tsx
 msgid "Automatic cache cleanup"
 msgstr "自動清理快取"
@@ -1080,10 +1066,6 @@ msgstr "分支或提交（選填）"
 #: src/components/agent-worktree-sheet.tsx
 msgid "Branch to start from"
 msgstr "作為起點的分支"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Brand marks and working indicator"
-msgstr "品牌標誌與執行指示"
 
 #. placeholder {0}: server.label
 #: src/components/home-computer-deck.tsx
@@ -1408,17 +1390,9 @@ msgstr "僅清除通知。待處理任務仍需你處理"
 msgid "Close"
 msgstr "關閉"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Close effects"
-msgstr "關閉效果面板"
-
 #: src/components/asset-viewer.tsx
 msgid "Close file"
 msgstr "關閉檔案"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Close icon preview"
-msgstr "關閉圖示預覽"
 
 #: src/components/home-recent-sessions.tsx
 #: src/components/home-stage/home-stage-layout.tsx
@@ -2451,10 +2425,6 @@ msgstr "自訂"
 msgid "Dark"
 msgstr "深色"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Decrease {label}"
-msgstr "降低{label}"
-
 #: src/components/agent-model-sheet.tsx
 msgid "default"
 msgstr "預設"
@@ -2546,10 +2516,6 @@ msgstr "示範工作區"
 msgid "Denied by you"
 msgstr "已被你拒絕"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Density"
-msgstr "疏密"
-
 #: src/i18n/labels.ts
 msgid "Deny"
 msgstr "拒絕"
@@ -2580,10 +2546,6 @@ msgstr "裝置驗證"
 #: src/i18n/labels.ts
 msgid "Diff summary"
 msgstr "Diff 摘要"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Direction"
-msgstr "方向"
 
 #: src/components/new-task-sheet.tsx
 msgid "Directory"
@@ -2749,11 +2711,6 @@ msgstr "編輯器已切換"
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Editorial"
 msgstr "編輯部"
-
-#. placeholder {0}: props.value
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Effects · {0}"
-msgstr "效果 · {0}"
 
 #: src/i18n/labels.ts
 msgid "Encryption was turned on for this computer. Pair it again to keep using it."
@@ -3247,10 +3204,6 @@ msgstr "主畫面"
 msgid "Home agent"
 msgstr "主畫面代理程式"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Home effects · development only"
-msgstr "首頁效果 · 僅開發模式"
-
 #: src/app/agent-workspace.tsx
 #: src/components/home-composer-dock.tsx
 msgid "Home folder"
@@ -3292,14 +3245,6 @@ msgstr "主機金鑰已信任"
 #: src/app/settings-about.tsx
 msgid "How to use Muqun"
 msgstr "如何使用 Muqun"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Icon preview"
-msgstr "圖示預覽"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Icons"
-msgstr "圖示"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/home-thread.tsx
@@ -3381,10 +3326,6 @@ msgstr "方案內用量"
 msgid "Included usage is restricted. Paid or alternative usage may still be available."
 msgstr "方案內用量受限，付費或其他使用方式可能仍可用"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Increase {label}"
-msgstr "提高{label}"
-
 #: src/components/agent-context-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
 msgid "Input"
@@ -3444,10 +3385,6 @@ msgstr "正在安裝圖片"
 #: src/components/settings-font-sheet.tsx
 msgid "Installing…"
 msgstr "安裝中…"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Intensity"
-msgstr "強度"
 
 #: src/i18n/labels.ts
 msgid "Interacted"
@@ -3832,10 +3769,6 @@ msgstr "確認完成"
 msgid "Mark reviewed"
 msgstr "標記已查看"
 
-#: src/components/dev-icon-gallery.tsx
-msgid "Marks keep their original geometry and stroke."
-msgstr "標誌保留原有的形狀和線寬"
-
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "吉祥物"
@@ -4215,10 +4148,6 @@ msgstr "已不再與 {computer} 連結"
 #: src/app/commands.tsx
 msgid "No matching commands. Try another word."
 msgstr "沒有符合的指令，換個關鍵字試試"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "No matching icons"
-msgstr "沒有符合的圖示"
 
 #: src/components/home-recent-sessions.tsx
 msgid "No matching sessions"
@@ -4617,10 +4546,6 @@ msgstr "開啟檔案"
 msgid "Open Git"
 msgstr "開啟 Git"
 
-#: src/components/dev-icon-gallery.tsx
-msgid "Open icon preview"
-msgstr "開啟圖示預覽"
-
 #: src/components/agent-tool-card.tsx
 msgid "Open image"
 msgstr "開啟圖片"
@@ -4889,10 +4814,6 @@ msgstr "配對已失效"
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "配對失敗"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Palette (up to 4)"
-msgstr "配色（最多 4 色）"
 
 #: src/components/settings-servers.tsx
 msgid "Panes on computer cards"
@@ -5842,10 +5763,6 @@ msgstr "按名稱或標籤搜尋"
 msgid "Search files"
 msgstr "搜尋檔案"
 
-#: src/components/dev-icon-gallery.tsx
-msgid "Search icons"
-msgstr "搜尋圖示"
-
 #: src/components/agent-model-sheet.tsx
 msgid "Search models"
 msgstr "搜尋模型"
@@ -6234,8 +6151,6 @@ msgid "Simulator controls"
 msgstr "模擬器控制項"
 
 #: src/components/asset-viewer.tsx
-#: src/components/dev-home-ambient-controls.tsx
-#: src/components/dev-icon-gallery.tsx
 msgid "Size"
 msgstr "大小"
 
@@ -6284,10 +6199,6 @@ msgstr "原始碼"
 #: src/components/virtual-keyboard.tsx
 msgid "Space"
 msgstr "空白鍵"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Speed"
-msgstr "速度"
 
 #: src/components/agent-account-limits-section.tsx
 msgid "Spend control"
@@ -6523,10 +6434,6 @@ msgstr "儲存空間"
 #: src/app/settings-voice.tsx
 msgid "Streams speech while you talk. Requires an OpenAI Realtime-compatible transcription endpoint."
 msgstr "邊說邊傳輸音訊。需要相容 OpenAI Realtime 的語音轉文字端點"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Stroke width"
-msgstr "線寬"
 
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -7041,7 +6948,6 @@ msgstr "這一輪執行失敗"
 msgid "Theme"
 msgstr "主題"
 
-#: src/components/dev-home-ambient-controls.tsx
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
 msgstr "依主題預設"
