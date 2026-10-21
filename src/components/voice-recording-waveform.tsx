@@ -226,17 +226,21 @@ export function VoiceLevelRing({
         pointerEvents="none"
         accessible={false}
         style={[styles.arc, arcStyle]}>
-        <Canvas style={StyleSheet.absoluteFill}>
-          <Path
-            path={arcPath}
-            color={theme.colors.primary}
-            style="stroke"
-            strokeWidth={LEVEL_RING_BORDER}
-            strokeCap="round"
-            start={arcStart}
-            end={arcEnd}
-          />
-        </Canvas>
+        {/* A Skia surface only while there is an arc to draw: none for the
+            whole of a recording, beside the waveform's own canvas. */}
+        {processing ? (
+          <Canvas style={StyleSheet.absoluteFill}>
+            <Path
+              path={arcPath}
+              color={theme.colors.primary}
+              style="stroke"
+              strokeWidth={LEVEL_RING_BORDER}
+              strokeCap="round"
+              start={arcStart}
+              end={arcEnd}
+            />
+          </Canvas>
+        ) : null}
       </Animated.View>
     </>
   );
