@@ -44,6 +44,8 @@ type ThreadBase = {
   pills?: HomeSessionParams;
   /** The reader's last message from Home: a pane has no transcript to show it from. */
   lastSent?: string;
+  /** This device's clock when `lastSent` was accepted: anything read before it is stale. */
+  sentAtMs?: number;
   /** When it became the target; mirrors older than this say nothing about it. */
   setAtMs: number;
 };
@@ -192,7 +194,13 @@ export function homeThreadResolved(
     target.setAtMs,
     target.pills
   );
-  return target.lastSent ? { ...resolved, lastSent: target.lastSent } : resolved;
+  return target.lastSent
+    ? {
+        ...resolved,
+        lastSent: target.lastSent,
+        ...(target.sentAtMs ? { sentAtMs: target.sentAtMs } : {}),
+      }
+    : resolved;
 }
 
 export type HomeThreadSendPlan =
@@ -338,6 +346,8 @@ function normalizeTarget(raw: unknown): HomeThreadTarget | null {
   if (!serverId) return null;
   const taskId = text(rec.taskId);
   const lastSent = text(rec.lastSent);
+  const sentAtMs =
+    typeof rec.sentAtMs === 'number' && Number.isFinite(rec.sentAtMs) ? rec.sentAtMs : undefined;
   const pills = normalizePills(rec.pills);
   const base = {
     serverId,
@@ -345,6 +355,7 @@ function normalizeTarget(raw: unknown): HomeThreadTarget | null {
     setAtMs,
     ...(taskId ? { taskId } : {}),
     ...(lastSent ? { lastSent } : {}),
+    ...(lastSent && sentAtMs ? { sentAtMs } : {}),
     ...(pills ? { pills } : {}),
   };
   if (rec.kind === 'session') {
@@ -424,8 +435,12 @@ export type HomeThreadLive = {
   rows: readonly TextRow[];
   permissions: readonly PermissionRequest[];
   forms: readonly FormRequest[];
-  /** A pane's agent: its last prose, as read off the pane (`paneAgentLine`). */
+  /** A pane's agent: its last prose, as read off the pane (`paneAgentRead`). */
   paneLine?: string;
+  /** The reader's message the pane shows `paneLine` answering. */
+  panePrompt?: string;
+  /** The pane's own screen shows the agent at work (a spinner, "esc to interrupt"). */
+  paneBusy?: boolean;
 };
 
 /** Text parts kept: a couple of turns, never the transcript. */
@@ -587,7 +602,7 @@ export type HomeThreadState = 'needs-you' | 'working' | 'idle' | 'failed' | 'sta
 export function homeThreadState(input: {
   live?: Pick<HomeThreadLive, 'status' | 'permissions' | 'forms'>;
   task?: Pick<TaskView, 'state'>;
-  pane?: { status: AgentStatus; pendingUserInput?: boolean };
+  pane?: { status?: AgentStatus; pendingUserInput?: boolean; busy?: boolean };
   /** A task target that has not said where it runs. */
   unbound?: boolean;
 }): HomeThreadState {
@@ -602,6 +617,8 @@ export function homeThreadState(input: {
   )
     return 'needs-you';
   if (input.unbound) return 'starting';
+  // The pane's own screen showing the agent at work is evidence ahead of the mirror.
+  if (pane?.busy) return 'working';
   if (live?.status && RUNNING.includes(live.status)) return 'working';
   if (live?.status === 'failed') return 'failed';
   if (live?.status === undefined) {
@@ -610,4 +627,98 @@ export function homeThreadState(input: {
     if (pane?.status === 'working') return 'working';
   }
   return 'idle';
+}
+
+/** How long after a send the bar waits for something newer, and a pane is re-read. */
+export const HOME_THREAD_SENT_WINDOW_MS = 10 * 60_000;
+
+function normalized(text: string): string {
+  return text.replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+/**
+ * Whether a pane's reply answers `lastSent`: the reader's message the pane
+ * shows above the reply starts as the one sent (a wrapped or cut prompt line
+ * is compared by its beginning). Nothing sent: whatever the pane shows.
+ */
+export function homeThreadPaneAnswers(
+  prompt: string | undefined,
+  lastSent: string | undefined
+): boolean {
+  if (!lastSent) return true;
+  if (!prompt) return false;
+  const shown = normalized(prompt);
+  const sent = normalized(lastSent);
+  const length = Math.min(shown.length, sent.length, 24);
+  return length >= Math.min(6, sent.length) && shown.slice(0, length) === sent.slice(0, length);
+}
+
+/** A send still waiting for anything newer to show. */
+function awaitingReply(target: Pick<ThreadBase, 'lastSent' | 'sentAtMs'>, nowMs: number): boolean {
+  return (
+    target.lastSent !== undefined &&
+    target.sentAtMs !== undefined &&
+    nowMs - target.sentAtMs < HOME_THREAD_SENT_WINDOW_MS
+  );
+}
+
+export type HomeThreadRow2 =
+  | { kind: 'line'; text: string; source: 'reply' | 'progress' | 'pane' }
+  /** Accepted, and nothing newer has come back yet. */
+  | { kind: 'sent' }
+  | { kind: 'none' };
+
+/**
+ * The bar's second row: only what is newer than the reader's last message
+ * from Home. Right after a send the previous answer is never shown as if it
+ * were current: until the reply (or the reported progress) arrives, it says
+ * the message was sent. A session's reply counts once the transcript shows
+ * the message sent; a pane's once its screen shows the reply under it.
+ */
+export function homeThreadRow2(input: {
+  target: HomeThreadTarget;
+  nowMs: number;
+  state: HomeThreadState;
+  /** A session's latest turns (`homeThreadTurns`). */
+  turns?: { mine?: string; reply?: string };
+  live?: Pick<HomeThreadLive, 'paneLine' | 'panePrompt'>;
+  task?: Pick<TaskView, 'summary' | 'progress' | 'state'>;
+}): HomeThreadRow2 {
+  const { target, state, turns, live, task } = input;
+  const waiting = awaitingReply(target, input.nowMs);
+  const progress = state === 'working' ? task?.progress : undefined;
+  if (target.kind === 'session') {
+    const caughtUp =
+      !waiting ||
+      (turns?.mine !== undefined && normalized(turns.mine) === normalized(target.lastSent ?? ''));
+    if (caughtUp && turns?.reply) return { kind: 'line', text: turns.reply, source: 'reply' };
+    if (progress) return { kind: 'line', text: progress, source: 'progress' };
+    return caughtUp ? { kind: 'none' } : { kind: 'sent' };
+  }
+  // A task summary is the agent's last message as the task recorded it: only
+  // once the task has settled after the send.
+  if (task?.summary && state !== 'working' && !waiting)
+    return { kind: 'line', text: task.summary, source: 'reply' };
+  if (progress) return { kind: 'line', text: progress, source: 'progress' };
+  if (live?.paneLine && (!waiting || homeThreadPaneAnswers(live.panePrompt, target.lastSent)))
+    return { kind: 'line', text: live.paneLine, source: 'pane' };
+  return waiting ? { kind: 'sent' } : { kind: 'none' };
+}
+
+/**
+ * Whether a pane target is read again after a send: within the window,
+ * while its reply to the send has not appeared or its agent is still at
+ * work. Idle with the reply shown, or the window over, stops it.
+ */
+export function homeThreadPanePolls(input: {
+  target: HomeThreadTarget;
+  nowMs: number;
+  answered: boolean;
+  working: boolean;
+}): boolean {
+  return (
+    input.target.kind === 'pane' &&
+    awaitingReply(input.target, input.nowMs) &&
+    (!input.answered || input.working)
+  );
 }

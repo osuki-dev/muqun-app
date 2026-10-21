@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { paneAgentLine } from '@/lib/pane-agent-line';
+import { paneAgentLine, paneAgentRead } from '@/lib/pane-agent-line';
 
 const screen = (...lines: string[]) => lines.join('\n');
 
@@ -165,5 +165,33 @@ describe('paneAgentLine: anything else', () => {
     const line = paneAgentLine(`⏺ ${'word '.repeat(200)}`);
     expect(line?.length).toBeLessThanOrEqual(280);
     expect(line?.endsWith('…')).toBe(true);
+  });
+});
+
+describe('paneAgentRead: which message the reply answers, and whether the agent is at work', () => {
+  test('the prompt above the reply and a working spinner below it', () => {
+    const capture = screen(
+      '> first question',
+      '⏺ First answer.',
+      '> second question',
+      '⏺ Looking into it now.',
+      '✻ Cogitating… (4s · esc to interrupt)',
+      '╭────────╮',
+      '│ >      │',
+      '╰────────╯'
+    );
+    expect(paneAgentRead(capture)).toEqual({
+      line: 'Looking into it now.',
+      prompt: 'second question',
+      busy: true,
+    });
+  });
+
+  test('just sent: the new message shows with nothing under it yet', () => {
+    const capture = screen('> first question', '⏺ First answer.', '> second question', '│ >   │');
+    const read = paneAgentRead(capture);
+    expect(read.prompt).toBe('second question');
+    expect(read.line).toBeUndefined();
+    expect(read.busy).toBe(false);
   });
 });

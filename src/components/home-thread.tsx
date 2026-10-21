@@ -6,6 +6,8 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { useReducedMotion } from 'react-native-reanimated';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
+import { useMinuteNow } from '@/hooks/use-minute-now';
+import { useLatestReader } from '@/hooks/use-render-refs';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { CloseIcon } from '@/icons';
 import { permissionDecisionLabel } from '@/i18n/labels';
@@ -36,17 +38,20 @@ import {
   homeThreadEnded,
   homeThreadKey,
   homeThreadLiveFromSnapshot,
+  homeThreadPaneAnswers,
+  homeThreadPanePolls,
   homeThreadResolved,
   homeThreadState,
   homeThreadTask,
   homeThreadTurns,
+  homeThreadRow2,
   type HomeThreadFacts,
   type HomeThreadLive,
   type HomeThreadState,
   type HomeThreadTarget,
 } from '@/lib/home-thread';
 import { plainFromMarkdown } from '@/lib/markdown-text';
-import { paneAgentLine } from '@/lib/pane-agent-line';
+import { paneAgentRead } from '@/lib/pane-agent-line';
 import { calmFadeIn, calmFadeOut, fadeIn, fadeOut, listLayout, riseIn } from '@/lib/motion';
 import { useAgents } from '@/stores/agents';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
@@ -65,11 +70,14 @@ const HOME_THREAD_PUBLISH_MS = 250;
 /** How long a dropped event stream waits before it is opened again. */
 const HOME_THREAD_STREAM_RETRY_MS = 5_000;
 /**
- * At most one read of a pane's screen per two seconds: it is read on events
- * (targeted, status changed, Home back in front), never on a timer, and a
- * burst of them is one read.
+ * At most one read of a pane's screen per two seconds on events (targeted,
+ * status changed, Home back in front): a burst of them is one read.
  */
 const HOME_THREAD_PANE_READ_MS = 2_000;
+/** After a send, the first read of the pane: time for the agent to take the message. */
+const HOME_THREAD_PANE_FIRST_READ_MS = 1_500;
+/** Then, while its reply is awaited or its agent works, every few seconds. */
+const HOME_THREAD_PANE_POLL_MS = 3_000;
 /** Rows of the pane's visible screen read: the agent's last message is near the bottom. */
 const HOME_THREAD_PANE_ROWS = 80;
 /** A pill's ends are fully round at any height. */
@@ -210,7 +218,8 @@ export function HomeThreadFeed({
 
   // A pane has no transcript: its agent's last prose is read off its screen
   // (the terminal screen's own read) when it becomes the target, when its
-  // status changes and when Home is back in front. No polling.
+  // status changes and when Home is back in front; and, after a send, again
+  // until the reply shows and the agent is done (bounded, see below).
   const paneId = target.kind === 'pane' ? target.paneId : undefined;
   const paneSessionId = useServerAgents((state) =>
     target.kind === 'pane' ? (target.sessionId ?? state.byServer[serverId]?.sessionId) : undefined
@@ -221,37 +230,72 @@ export function HomeThreadFeed({
     return row ? `${row.status}:${row.pendingUserInput === true}` : undefined;
   });
   const paneReadAtMs = useRef(0);
+  const sentAtMs = target.sentAtMs;
+  const readTarget = useLatestReader(target);
   useEffect(() => {
     if (!enabled || !paneId || !paneSessionId) return;
     const owner = useGatewayConnectionStore.getState().record;
     if (owner?.serverId !== serverId) return;
     let active = true;
     let timer: ReturnType<typeof setTimeout> | null = null;
-    const read = () => {
+    // After a send the pane is read again until its reply shows and its agent
+    // is done (`homeThreadPanePolls`), never past the window; otherwise once.
+    const followUp = (seen: ReturnType<typeof paneAgentRead> | undefined) => {
+      if (!active) return;
+      const stored = useHomeThreads.getState().byServer[serverId];
+      const latest = stored && homeThreadKey(stored) === key ? stored : readTarget();
+      const mirror = useServerAgents
+        .getState()
+        .byServer[serverId]?.agents.find((agent) => agent.paneId === paneId);
+      const polls = homeThreadPanePolls({
+        target: latest,
+        nowMs: Date.now(),
+        answered: Boolean(seen?.line) && homeThreadPaneAnswers(seen?.prompt, latest.lastSent),
+        working: seen?.busy === true || mirror?.status === 'working',
+      });
+      if (polls) timer = setTimeout(readPane, HOME_THREAD_PANE_POLL_MS);
+    };
+    const readPane = () => {
       timer = null;
       paneReadAtMs.current = Date.now();
       void readPaneOutput(paneSessionId, paneId, 'text', HOME_THREAD_PANE_ROWS, 'visible').then(
         (output) => {
           const now = useGatewayConnectionStore.getState().record;
           if (!active || !sameComputer(now, owner) || now?.deviceId !== owner.deviceId) return;
+          const seen = paneAgentRead(output);
           const store = useHomeThreadLive.getState();
-          const paneLine = paneAgentLine(output);
-          if (store.key !== key || store.live.paneLine === paneLine) return;
-          const { paneLine: _previous, ...live } = store.live;
-          store.publish(key, paneLine ? { ...live, paneLine } : live);
+          if (store.key === key) {
+            const { paneLine, panePrompt, paneBusy, ...rest } = store.live;
+            if (
+              paneLine !== seen.line ||
+              panePrompt !== seen.prompt ||
+              (paneBusy === true) !== seen.busy
+            )
+              store.publish(key, {
+                ...rest,
+                ...(seen.line ? { paneLine: seen.line } : {}),
+                ...(seen.prompt ? { panePrompt: seen.prompt } : {}),
+                ...(seen.busy ? { paneBusy: true } : {}),
+              });
+          }
+          followUp(seen);
         },
         // A pane that cannot be read says nothing; its mirror says whether it is gone.
-        () => undefined
+        () => followUp(undefined)
       );
     };
-    const waitMs = paneReadAtMs.current + HOME_THREAD_PANE_READ_MS - Date.now();
-    if (waitMs > 0) timer = setTimeout(read, waitMs);
-    else read();
+    const sinceSend = sentAtMs === undefined ? Infinity : Date.now() - sentAtMs;
+    const waitMs =
+      sinceSend < HOME_THREAD_PANE_FIRST_READ_MS
+        ? HOME_THREAD_PANE_FIRST_READ_MS - sinceSend
+        : paneReadAtMs.current + HOME_THREAD_PANE_READ_MS - Date.now();
+    if (waitMs > 0) timer = setTimeout(readPane, waitMs);
+    else readPane();
     return () => {
       active = false;
       if (timer) clearTimeout(timer);
     };
-  }, [enabled, key, serverId, paneId, paneSessionId, paneStatus]);
+  }, [enabled, key, serverId, paneId, paneSessionId, paneStatus, sentAtMs, readTarget]);
 
   // When the conversation has ended the target goes with it; a task the
   // gateway has bound since becomes the session or pane it runs in.
@@ -326,10 +370,18 @@ function useHomeThreadState(target: HomeThreadTarget): HomeThreadState {
       ? state.byServer[target.serverId]?.agents.find((agent) => agent.paneId === target.paneId)
       : undefined
   );
+  const paneBusy = target.kind === 'pane' && live?.paneBusy === true;
   return homeThreadState({
     ...(target.kind === 'session' && live ? { live } : {}),
     ...(task ? { task } : {}),
-    ...(pane ? { pane } : {}),
+    ...(pane || paneBusy
+      ? {
+          pane: {
+            ...(pane ? { status: pane.status, pendingUserInput: pane.pendingUserInput } : {}),
+            busy: paneBusy,
+          },
+        }
+      : {}),
     unbound: target.kind === 'task',
   });
 }
@@ -388,18 +440,34 @@ export function HomeThreadBar({
   );
   const state = useHomeThreadState(target);
 
-  const replyText =
-    target.kind === 'session'
-      ? homeThreadTurns(live).reply?.text
-      : task?.summary && state !== 'working'
-        ? task.summary
+  // Only what was reported, and only what is newer than the last message
+  // sent from here (`homeThreadRow2`): right after a send it says "Sent".
+  const nowMs = useMinuteNow();
+  const turns = target.kind === 'session' ? homeThreadTurns(live) : undefined;
+  const row2 = homeThreadRow2({
+    target,
+    nowMs,
+    state,
+    ...(turns
+      ? {
+          turns: {
+            ...(turns.mine ? { mine: turns.mine.text } : {}),
+            ...(turns.reply ? { reply: turns.reply.text } : {}),
+          },
+        }
+      : {}),
+    live,
+    ...(task ? { task } : {}),
+  });
+  const line =
+    row2.kind === 'line'
+      ? row2.source === 'reply'
+        ? plainFromMarkdown(row2.text).trim()
+        : row2.text
+      : row2.kind === 'sent'
+        ? t`Sent`
         : undefined;
-  const progress = state === 'working' ? task?.progress : undefined;
-  // Only what was reported: the reply, else the task's progress while it
-  // works, else for a pane its agent's last prose as its screen shows it.
-  const paneLine = target.kind === 'pane' && !replyText && !progress ? live.paneLine : undefined;
-  const line = replyText ? plainFromMarkdown(replyText).trim() : (progress ?? paneLine);
-  const lineSource = replyText ? 'reply' : paneLine ? 'pane' : 'progress';
+  const lineSource = row2.kind === 'line' ? row2.source : row2.kind;
   const word = offline
     ? t`Offline`
     : state === 'needs-you'

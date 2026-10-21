@@ -7,6 +7,9 @@ import {
   EMPTY_HOME_THREAD_LIVE,
   homeThreadEnded,
   homeThreadLiveFromSnapshot,
+  homeThreadPaneAnswers,
+  homeThreadPanePolls,
+  homeThreadRow2,
   homeThreadResolved,
   homeThreadSendPlan,
   homeThreadState,
@@ -353,5 +356,94 @@ describe('the live strip', () => {
     expect(homeThreadState({ task: { state: 'waiting' } })).toBe('needs-you');
     expect(homeThreadState({ pane: { status: 'blocked' } })).toBe('needs-you');
     expect(homeThreadState({ unbound: true })).toBe('starting');
+  });
+});
+
+describe('the reply bar after a send', () => {
+  const sent = { lastSent: 'Now reply PONG', sentAtMs: 1_000 };
+
+  test('a session shows "sent" until the transcript has the message, then only what came after', () => {
+    const target = { ...SESSION, ...sent };
+    const at = { target, nowMs: 2_000, state: 'idle' as const };
+    expect(homeThreadRow2({ ...at, turns: { mine: 'Reply PING', reply: 'PING' } })).toEqual({
+      kind: 'sent',
+    });
+    expect(homeThreadRow2({ ...at, turns: { mine: 'Now reply PONG' } })).toEqual({ kind: 'none' });
+    expect(homeThreadRow2({ ...at, turns: { mine: 'Now reply PONG', reply: 'PONG' } })).toEqual({
+      kind: 'line',
+      text: 'PONG',
+      source: 'reply',
+    });
+  });
+
+  test('a pane never shows the previous answer as current; the reply under the new message shows', () => {
+    const target = { ...PANE, ...sent };
+    const at = { target, nowMs: 2_000, state: 'idle' as const };
+    expect(homeThreadRow2({ ...at, live: { paneLine: 'PING', panePrompt: 'Reply PING' } })).toEqual(
+      { kind: 'sent' }
+    );
+    expect(
+      homeThreadRow2({ ...at, live: { paneLine: 'PONG', panePrompt: 'Now reply PONG' } })
+    ).toEqual({ kind: 'line', text: 'PONG', source: 'pane' });
+    // A settled task's summary is from before the send until the window passes.
+    expect(homeThreadRow2({ ...at, task: { state: 'done', summary: 'PING' } })).toEqual({
+      kind: 'sent',
+    });
+    // Long after, whatever the pane shows is what there is.
+    expect(
+      homeThreadRow2({ ...at, nowMs: 1_000 + 11 * 60_000, live: { paneLine: 'PING' } })
+    ).toEqual({ kind: 'line', text: 'PING', source: 'pane' });
+  });
+
+  test('reported progress shows while working; nothing sent shows the line as before', () => {
+    expect(
+      homeThreadRow2({
+        target: { ...PANE, ...sent },
+        nowMs: 2_000,
+        state: 'working',
+        task: { state: 'working', progress: 'editing 2 files' },
+      })
+    ).toEqual({ kind: 'line', text: 'editing 2 files', source: 'progress' });
+    expect(
+      homeThreadRow2({ target: PANE, nowMs: 2_000, state: 'idle', live: { paneLine: 'Hi' } })
+    ).toEqual({ kind: 'line', text: 'Hi', source: 'pane' });
+  });
+
+  test('the pane prompt is matched by its beginning, wrapped or cut', () => {
+    expect(homeThreadPaneAnswers('now reply  pong', 'Now reply PONG')).toBe(true);
+    expect(
+      homeThreadPaneAnswers(
+        'Explain the stage renderer in d',
+        'Explain the stage renderer in detail'
+      )
+    ).toBe(true);
+    expect(homeThreadPaneAnswers('Reply PING', 'Now reply PONG')).toBe(false);
+    expect(homeThreadPaneAnswers(undefined, 'Now reply PONG')).toBe(false);
+  });
+
+  test('a pane is read again until its reply shows and its agent is done, within the window', () => {
+    const target = { ...PANE, ...sent };
+    const at = { target, nowMs: 5_000 };
+    expect(homeThreadPanePolls({ ...at, answered: false, working: false })).toBe(true);
+    expect(homeThreadPanePolls({ ...at, answered: true, working: true })).toBe(true);
+    expect(homeThreadPanePolls({ ...at, answered: true, working: false })).toBe(false);
+    expect(
+      homeThreadPanePolls({ ...at, nowMs: 1_000 + 10 * 60_000, answered: false, working: true })
+    ).toBe(false);
+    expect(
+      homeThreadPanePolls({ target: PANE, nowMs: 5_000, answered: false, working: true })
+    ).toBe(false);
+    expect(
+      homeThreadPanePolls({
+        ...at,
+        target: { ...SESSION, ...sent },
+        answered: false,
+        working: true,
+      })
+    ).toBe(false);
+  });
+
+  test("the pane's own screen at work counts as working", () => {
+    expect(homeThreadState({ pane: { status: 'idle', busy: true } })).toBe('working');
   });
 });

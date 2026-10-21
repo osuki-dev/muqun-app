@@ -56,6 +56,7 @@ import {
   settleAfterAsync,
 } from '@/lib/compiler-safe-control-flow';
 import { checkAgentServer } from '@/lib/home-agent-readiness';
+import { refreshHomeNow } from '@/lib/home-refresh-schedule';
 import {
   HOME_AGENT_SESSION_ID,
   homeFolderName,
@@ -802,8 +803,12 @@ export function HomeComposerDock({
               useHomeThreads.getState().update(latest, {
                 ...latest,
                 lastSent: text,
+                sentAtMs: Date.now(),
                 ...(pills && plan.kind === 'session' ? { pills } : {}),
               });
+            // A pane's status comes from the computer's mirror: read it now,
+            // so the agent shows as working without waiting for the cadence.
+            if (plan.kind === 'pane') refreshHomeNow(serverId);
             return true;
           },
           (failure) => {
@@ -980,6 +985,7 @@ export function HomeComposerDock({
                 title: goalTitle(sent.goal),
                 pills: params,
                 lastSent: sent.goal,
+                sentAtMs: Date.now(),
                 setAtMs: Date.now(),
               });
               return true;
@@ -1200,6 +1206,7 @@ export function HomeComposerDock({
                 carried?.delivery === 'pane' ? undefined : params
               ),
               lastSent: text,
+              sentAtMs: Date.now(),
             });
             if (!asid) {
               // A queued accepted task can report its session in a later frame.
@@ -1340,6 +1347,7 @@ export function HomeComposerDock({
                   Date.now()
                 ),
                 lastSent: text,
+                sentAtMs: Date.now(),
               });
               return true;
             }
@@ -1376,6 +1384,7 @@ export function HomeComposerDock({
               ...(spawned.agentInstanceId ? { instanceId: spawned.agentInstanceId } : {}),
               title: goalTitle(text),
               lastSent: text,
+              sentAtMs: Date.now(),
               setAtMs: Date.now(),
             });
             return true;

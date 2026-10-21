@@ -6000,6 +6000,10 @@ msgstr "Gửi mục tiêu tiếp theo tới đây"
 msgid "Sends your next goal here. Long press to open it."
 msgstr "Gửi mục tiêu tiếp theo tới đây. Nhấn giữ để mở"
 
+#: src/components/home-thread.tsx
+msgid "Sent"
+msgstr "Đã gửi"
+
 #: src/components/task-row.tsx
 msgid "Sent · no reply yet"
 msgstr "Đã gửi · chưa có phản hồi"
