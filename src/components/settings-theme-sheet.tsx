@@ -189,10 +189,8 @@ function typeOfRow(row: Row): Row['kind'] {
 }
 
 export function SettingsThemeSheet({
-  onClose,
   initialTab,
 }: {
-  onClose: () => void | Promise<void>;
   /** A link that asked for a tab: the old Browse route asks for the gallery. */
   initialTab?: ThemeTab;
 }) {
@@ -258,13 +256,13 @@ export function SettingsThemeSheet({
   }
 
   /**
-   * Apply under the reskin cover, then leave once the new theme has painted.
+   * Apply under the reskin cover, in place.
    *
-   * Closing in the same turn as the write made the sheet dismissal and the
-   * ripple reveal fight, and Home showed through while it was still painting.
-   * The write stays in `apply`; the sheet leaves in `settle`, one frame before
-   * the cover lifts. The new theme's primary is what the wash's front is lit
-   * in: the one moment that tells the reader in colour what they just chose.
+   * The sheet stays open: the transition plays over it, the current-theme bar
+   * and the card's selection follow the new theme, and Home re-themes behind
+   * it unseen, ready for when the reader goes back. The new theme's primary is
+   * what the wash's front is lit in: the one moment that tells the reader in
+   * colour what they just chose.
    */
   function wear(options: {
     pack: Pick<ThemeAppearance, 'light' | 'dark'>;
@@ -279,10 +277,9 @@ export function SettingsThemeSheet({
         accent: themeVariant(options.pack, resolvedMode).colors.primary,
         prepare: options.prepare,
         apply: options.apply,
-        settle: onClose,
       })
       .catch(() => {
-        // A rejected apply skips settle; say so once the cover is gone.
+        // Say so once the cover is gone.
         setError(t`Could not save theme`);
       });
   }

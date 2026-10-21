@@ -119,28 +119,25 @@ import { colorVector } from '@/lib/ink-bloom-shader';
  * `zIndex` and no `elevation` reaches above either. A root overlay cannot
  * cover a form sheet, and a snapshot of a root ref does not photograph one.
  *
- * For the theme sheet that does not matter, because applying a theme closes
- * it. For the font sheet it matters a great deal: "Use system font" and a
- * finished install both leave the sheet open, and the sheet is most of the
- * screen and is itself set in the typeface that just changed. A root-only
- * overlay would hide the reflow everywhere except the one surface the reader
- * is actually looking at.
+ * Neither the theme sheet nor the font sheet closes on a change: a theme is
+ * applied in place, wherever Apply was pressed, and "Use system font" and a
+ * finished install leave the font sheet open. The sheet is most of the screen
+ * and is itself drawn in the theme or typeface that just changed, so a
+ * root-only overlay would hide the change everywhere except the one surface
+ * the reader is actually looking at.
  *
  * Hence {@link ReskinSurface}: a window gets an overlay by mounting one. The
- * root mounts one, the font sheet mounts one, and a run photographs and erases
- * every surface it can find. Origins cross between them as fractions rather
- * than as points, for the reason set out on `resolveOrigin`.
+ * root mounts one, each theme and font route mounts one, the file viewer's
+ * modal mounts one, and a run photographs and erases every surface it can
+ * find. Origins cross between them as fractions rather than as points, for the
+ * reason set out on `resolveOrigin`.
  *
  * Theme changes start the ripple on the live old surface, then prepare the
  * new artwork before activating it under a real photograph. An unavailable
  * photograph leaves the live screen visible; a blank paper veil is never a
  * substitute for a theme snapshot. Native theme routes register their own
- * surfaces so feedback starts where the reader tapped, before dismissal.
- *
- * A theme applied from the editor or the file viewer lands on Home, a screen
- * the run did not start on. Its cover is handed to the root surface before the
- * leaving screen unmounts, the routes change without transitions under it,
- * and the reveal plays on Home: see `ReskinRunOptions.handoff`.
+ * surfaces so feedback starts where the reader tapped, and the reader stays
+ * there to see the result.
  */
 
 /** What a caller asks for. */
@@ -168,32 +165,6 @@ export type ReskinRunOptions = {
   isCurrent?: () => boolean;
   /** The change itself, after preparation and only for the latest request. */
   apply: () => void | Promise<void>;
-  /**
-   * Navigation that should happen under the cover, after the new theme has
-   * painted and before the cover lifts. Closing a sheet in the same turn as
-   * `apply` makes the dismissal and the reveal fight -- and so does lifting
-   * the cover while the dismissal is still animating, so a settle that
-   * returns a promise (`afterNavigationSettles`) holds the cover until the
-   * navigation has come to rest, up to `SETTLE_CAP_MS`.
-   */
-  settle?: () => void | Promise<void>;
-  /**
-   * Leave the screen the run started on for good, under the cover, before the
-   * theme is applied. Used in place of `settle` when the change lands on
-   * another screen (an apply from the theme editor or the file viewer goes
-   * home), and resolves once that screen has arrived, bounded by
-   * `SETTLE_CAP_MS`.
-   *
-   * The cover is a photograph of the surface the reader was looking at, and
-   * that surface is about to unmount with its screen. So the run first hands
-   * the photograph to the root surface, waits until the root has drawn it,
-   * and only then navigates -- with every route transition switched off
-   * (`useReskinActivity().quiet`), because the cover is a picture of the
-   * leaving screen and a dismissal sliding it away would show it leaving
-   * itself. Home then wears the new theme under the root's copy of that
-   * picture, and the reveal is the one move the reader sees.
-   */
-  handoff?: () => void | Promise<void>;
 };
 
 type ActiveRun = {
@@ -489,35 +460,13 @@ function eraseTiming(play: Exclude<ReskinPlay, 'none'>) {
   }
 }
 
-/** The longest the cover waits on a settle's promise before lifting anyway. */
-const SETTLE_CAP_MS = 800;
-
-/** A settle's promise, or nothing, bounded so the cover always lifts. */
-async function settled(outcome: void | Promise<void>): Promise<void> {
-  if (!outcome) return;
-  await Promise.race([
-    outcome.catch(() => undefined),
-    new Promise<void>((resolve) => setTimeout(resolve, SETTLE_CAP_MS)),
-  ]);
-}
-
-/** The root surface: the one that outlives every screen, so a handed-off cover lives here. */
-const ROOT_SURFACE = 'root';
-
 /**
  * Whether a reskin is under way, for the navigator: blurred screens are
  * frozen the rest of the time, and a frozen Home would pay its whole
  * re-render under the new theme during the transition back to it. For the
  * length of a run they thaw and re-render under the cover instead.
- *
- * `quiet` is set while a handed-off run navigates under the root's cover (see
- * `ReskinRunOptions.handoff`): every route then changes without a transition,
- * since the picture on top already shows where the reader is coming from.
  */
-export const useReskinActivity = create<{ active: boolean; quiet: boolean }>(() => ({
-  active: false,
-  quiet: false,
-}));
+export const useReskinActivity = create<{ active: boolean }>(() => ({ active: false }));
 
 export function ReskinTransitionProvider({ children }: { children: ReactNode }) {
   const { colors, typography } = useThemeTokens();
@@ -534,9 +483,8 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
       const value = typeof next === 'function' ? next(activeRef.current) : next;
       activeRef.current = value;
       setActive(value);
-      const activity = useReskinActivity.getState();
-      if ((value !== null) !== activity.active || (value === null && activity.quiet))
-        useReskinActivity.setState({ active: value !== null, quiet: false });
+      if ((value !== null) !== useReskinActivity.getState().active)
+        useReskinActivity.setState({ active: value !== null });
     },
     []
   );
@@ -605,11 +553,7 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
         await runReskinSwap({
           prepare: options.prepare,
           cover: async () => {},
-          apply: async () => {
-            await settled(options.handoff?.());
-            await apply();
-            options.settle?.();
-          },
+          apply,
           painted: async () => {},
           reveal: () => {},
           current: () => id === nextId.current && options.isCurrent?.() !== false,
@@ -646,11 +590,7 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
         await runReskinSwap({
           prepare: options.prepare,
           cover: async () => {},
-          apply: async () => {
-            await settled(options.handoff?.());
-            await apply();
-            options.settle?.();
-          },
+          apply,
           painted: async () => {},
           reveal: () => {},
           current: () => id === nextId.current && options.isCurrent?.() !== false,
@@ -733,60 +673,6 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
         if (chosen === 'ripple')
           progress.set(withTiming(0.18, { duration: 180, easing: Easing.linear }));
         const painted = () => new Promise<void>((resolve) => afterNextPaint(resolve));
-        /**
-         * Move the cover to the root surface and leave under it; see
-         * `ReskinRunOptions.handoff`. The root draws the same photograph with
-         * `fit="cover"`, so a source surface of another size (a full-screen
-         * modal against the root window, an iPad's safe areas) still covers
-         * the root edge to edge rather than letterboxing.
-         */
-        const handOff = async (leave: () => void | Promise<void>) => {
-          const current = activeRef.current;
-          if (current?.id !== id) return;
-          const source = current.initiator;
-          const image = source ? current.shots.get(source) : undefined;
-          let covered = false;
-          if (image && source === ROOT_SURFACE) {
-            covered = true;
-          } else if (image) {
-            const root = createCoverReadiness([ROOT_SURFACE]);
-            updateActive((run) =>
-              run?.id === id
-                ? {
-                    ...run,
-                    // The root now owns the run: the leaving screen's surface
-                    // unregistering must not cancel it.
-                    initiator: ROOT_SURFACE,
-                    shots: new Map([...run.shots, [ROOT_SURFACE, image]]),
-                    coverReady: root.complete,
-                  }
-                : run
-            );
-            covered = await root.promise;
-            trace(`root cover handoff ${covered ? 'ready' : 'failed or timed out'}`);
-            // A late draw must not bring the old screen back over Home. The
-            // image stays with its source surface, which releases it.
-            if (!covered)
-              updateActive((run) => {
-                if (run?.id !== id) return run;
-                const shots = new Map(run.shots);
-                shots.delete(ROOT_SURFACE);
-                return { ...run, shots, coverReady: undefined };
-              });
-          } else {
-            updateActive((run) => (run?.id === id ? { ...run, initiator: ROOT_SURFACE } : run));
-          }
-          if (!stillWanted()) return;
-          // Without a drawn cover a transition-less navigation would be a hard
-          // cut, so the routes keep their own transitions.
-          if (covered) {
-            useReskinActivity.setState({ quiet: true });
-            // The options reach the native screens in the next commit.
-            await painted();
-            await painted();
-          }
-          if (stillWanted()) await settled(leave());
-        };
         await settleAfter(
           () =>
             recoverWith(
@@ -800,9 +686,11 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
                   cover: async () => {
                     // Capture before preparing assets. The old screen stays live
                     // until every cover has submitted its image to Skia.
-                    // Only the surface the reader is looking at. Photographing Home
-                    // underneath the sheet made the capture slower and showed
-                    // Home through the ripple while the sheet was still leaving.
+                    // Only the surface the reader is looking at: the topmost one,
+                    // where Apply was pressed. Home re-themes behind it unseen and
+                    // is never photographed, so the Stage's GPU canvas is not
+                    // captured while it is off screen; photographing the root
+                    // under a sheet also made the capture slower.
                     const taken = await photographSurfaces(
                       entries.slice(-1),
                       strikes,
@@ -837,8 +725,6 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
                     } else if (taken.shots) release(taken.shots.values());
                   },
                   apply: async () => {
-                    if (options.handoff) await handOff(options.handoff);
-                    if (!stillWanted()) return;
                     applied = true;
                     updateActive((current) =>
                       current?.id === id ? { ...current, preparing: false } : current
@@ -849,8 +735,6 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
                     await painted();
                     const ready = await waitForThemeRender();
                     trace(`theme renderers ${ready ? 'ready' : 'timed out'}`);
-                    await painted();
-                    if (stillWanted()) await settled(options.settle?.());
                     await painted();
                   },
                   reveal: () => {
@@ -1018,11 +902,7 @@ export function useReskinTransition(): { run: (options: ReskinRunOptions) => Pro
     await runReskinSwap({
       prepare: options.prepare,
       cover: async () => {},
-      apply: async () => {
-        await settled(options.handoff?.());
-        await options.apply();
-        options.settle?.();
-      },
+      apply: options.apply,
       painted: async () => {},
       reveal: () => {},
       current: () => options.isCurrent?.() !== false,

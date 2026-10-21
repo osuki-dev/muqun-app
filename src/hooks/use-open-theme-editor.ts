@@ -18,8 +18,10 @@ export function useOpenThemeEditor() {
    *   placeholder with home and leaves them there.
    * - `conversation`: an agent or a computer sent the theme into a session.
    *   Closing returns to that session, where the reader may still be asking for
-   *   changes. Applying goes home, the one screen that shows the whole theme
-   *   at once.
+   *   changes.
+   *
+   * Applying never navigates, whatever the origin: the theme lands in place
+   * and the reader stays on the editor to see it.
    */
   return (
     candidate: ThemeEditorCandidate,

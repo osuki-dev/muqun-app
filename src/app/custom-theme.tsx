@@ -24,7 +24,6 @@ import { ReskinSurface } from '@/components/reskin-transition';
 import { CandidateThemeProvider } from '@/components/theme-candidate';
 import { GroundTextPlate } from '@/components/sheet-ground';
 import { AppSurfaceDecorator } from '@/components/surface-decorator';
-import { goHomeAndWait } from '@/lib/home-arrival';
 import { themeDraftSessions, type ThemeEditorCandidate } from '@/theme/draft-session';
 import type { InstalledTheme } from '@/theme/repository';
 
@@ -126,19 +125,13 @@ function CustomThemeScene({
    */
   const close = () => (router.canDismiss() ? router.dismissAll() : router.back());
   /**
-   * An applied theme always lands on Home, the one screen that shows the whole
-   * theme, wherever the editor was opened from. The library calls this under
-   * the reskin cover, with route transitions off, and the cover lifts once
-   * Home has arrived (`goHomeAndWait`) -- so the reader sees the editor turn
-   * into Home in one move instead of Settings or the session flashing past.
-   * `dismissTo` drops everything above Home, so Back does not bounce into it.
-   *
-   * A theme sent into a session closes back to that session, where the reader
-   * may still be asking for changes.
+   * Applying never leaves: the theme lands in place under the reskin cover,
+   * the reader stays here to see it, and the button turns into Done. Done and
+   * the close control are the way out. A theme sent into a session closes
+   * back to that session, where the reader may still be asking for changes.
    */
   const { from } = useLocalSearchParams<{ from?: string }>();
-  const leave = (after: 'applied' | 'closed') =>
-    after === 'applied' ? goHomeAndWait(router) : from === 'conversation' ? router.back() : close();
+  const leave = () => (from === 'conversation' ? router.back() : close());
   /**
    * The one button at the bottom is the one decision on this screen.
    *
@@ -160,7 +153,7 @@ function CustomThemeScene({
    * What the apply is doing, shown over the screen just above the button
    * rather than above the theme: drawn in the scroll it pushed the preview and
    * the sliders down the moment Apply was tapped. It takes no room, so nothing
-   * on the screen moves; a successful apply closes the screen anyway.
+   * on the screen moves.
    */
   const [status, setStatus] = useState<ThemeStatus | null>(null);
   const [footerHeight, setFooterHeight] = useState(0);

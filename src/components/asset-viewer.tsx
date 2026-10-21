@@ -1,5 +1,4 @@
 import * as Clipboard from 'expo-clipboard';
-import { useRouter } from 'expo-router';
 import { AudioPlaybackError } from '@/lib/audio-playback-session';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useThemeTokens, Skeleton, Button, PressableScale, Text } from '@osuki-dev/ui';
@@ -48,8 +47,7 @@ import { THEME_LIMITS } from '@/theme/schema';
 import type { ThemeEditorCandidate } from '@/theme/draft-session';
 import { themeFromDocument } from '@/theme/file-preview';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
-import { goHomeAndWait } from '@/lib/home-arrival';
-import { ReskinSurface, useReskinActivity } from '@/components/reskin-transition';
+import { ReskinSurface } from '@/components/reskin-transition';
 
 /**
  * Read-only view of one artifact the agent produced.
@@ -165,7 +163,6 @@ const COPIED_FEEDBACK_MS = 1_600;
 /** Everything that is not an image: a document, some text, or a file we can only describe. */
 function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => void }) {
   const surfaceBackground = useSurfaceBackground();
-  const router = useRouter();
   const fileActions = useFileActions(asset.name, () => saveSessionAsset(asset));
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
   //
@@ -210,23 +207,6 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
    * itself changes; the same contract the detail route has used since #834.
    */
   const [primary, setPrimary] = useState<ThemePrimaryAction | null>(null);
-  /**
-   * A theme applied from this file goes home, as the editor does: home is the
-   * screen that shows all of it. The library calls this under the reskin
-   * cover, which is a photograph of this viewer handed to the root surface;
-   * the viewer and the files sheet it may sit on then close without a
-   * transition (`quiet` below), and the cover lifts once Home has arrived.
-   */
-  const leaveForHome = () => {
-    onClose();
-    return goHomeAndWait(router);
-  };
-  /**
-   * Set while an applied theme leaves for home under the reskin cover. The
-   * viewer has to vanish rather than fade then: the cover underneath is a
-   * picture of this very viewer, and a fade would show it fading into itself.
-   */
-  const quiet = useReskinActivity((state) => state.quiet);
   const themeDocumentIdentity = `${asset.id}:${asset.modified_unix_ms}`;
   const themeManifest = useMemo(
     () => themeFromDocument(asset.name, content),
@@ -388,7 +368,7 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
       transparent
       statusBarTranslucent
       navigationBarTranslucent
-      animationType={quiet ? 'none' : 'fade'}
+      animationType="fade"
       onRequestClose={onClose}>
       <GestureHandlerRootView style={{ flex: 1 }}>
         {/* Both insets are paid here rather than per body: the fill is on this
@@ -415,10 +395,9 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
             it opens in the lightbox, on its own black matte.
 
             A reskin surface of its own, because a `Modal` is a window the
-            root's cover cannot reach: an apply from a theme preview here is
-            covered from this surface, and its photograph is handed to the root
-            (`ReskinRunOptions.handoff`). The ground is opaque, so the
-            photograph is too. */}
+            root's cover cannot reach: a theme applied from a preview here is
+            applied in place, and the transition plays over this viewer, which
+            stays open. The ground is opaque, so the photograph is too. */}
         <ReskinSurface id="asset-viewer">
           <SheetFrame tint="background" frosted>
             <View style={[styles.sheetColumn, { paddingBottom: insets.bottom }]}>
@@ -489,9 +468,7 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
                     // The prepared artwork belongs to this screen, which disposes it
                     // when the reader closes the file.
                     ownsPreparedAssets={false}
-                    onClosePreview={(after) =>
-                      after === 'applied' ? leaveForHome() : setPack(null)
-                    }
+                    onClosePreview={() => setPack(null)}
                     onPrimaryActionChange={setPrimary}
                   />
                 </ScrollView>
@@ -501,11 +478,7 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
                     key={themeDocumentIdentity}
                     initialManifest={themeManifest}
                     detail
-                    onClosePreview={(after) =>
-                      after === 'applied'
-                        ? leaveForHome()
-                        : setClosedThemeDocument(themeDocumentIdentity)
-                    }
+                    onClosePreview={() => setClosedThemeDocument(themeDocumentIdentity)}
                     onPrimaryActionChange={setPrimary}
                   />
                 </ScrollView>

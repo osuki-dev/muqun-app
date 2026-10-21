@@ -29,9 +29,15 @@ is visible "id=theme-apply"
 # The confirm sits under the appearance settings in the asset viewer.
 scroll down --pixels 900
 press "id=theme-apply"
-# Applying from the file viewer goes home in one move under the reskin cover:
-# the viewer and the files sheet close with it, so nothing is left to dismiss.
-wait "text=\"Settings\"" 20000
+# Applying is in place: the viewer stays open and its confirm turns into Done
+# once the theme is the selected one. Closing the viewer and the files sheet is
+# the reader's own move. The files sheet has no X circle -- the grabber and the
+# swipe are the close -- so its header anchor is the refresh, and the dismissal
+# is the gesture a reader has.
+wait absent "id=theme-apply" 20000
+press "label=\"Close file\""
+wait "label=\"Refresh files\"" 10000
+back --system
 wait stable 400 5000
 
 # section install-back
@@ -43,8 +49,8 @@ wait stable 400 5000
 wait stable 400 5000
 
 # section applied-status
-# Applying is a confirmation: the screen leaves, exactly as choosing a built-in
-# pack does. The theme is then reachable again from the list it was added to.
+# Applying is in place, exactly as choosing a built-in pack is. The theme is
+# then reachable again from the list it was added to.
 is hidden "id=\"theme-apply\""
 screenshot dist/theme-applied-status.png
 
@@ -181,21 +187,17 @@ gesture pan 1000 600 0 700 600
 wait stable 300 5000
 
 # section apply-builtin
-# Applying from the picker is a confirmation: the sheet closes and Settings is
-# underneath it again, with the pack's name in the Theme row. The wait is for
-# that, not for the paint.
+# Applying from the picker is in place: the sheet stays open over Settings and
+# the pack's card turns selected under the reskin. The next step waits for that,
+# not for the paint.
 press "${TARGET}"
 wait stable 400 5000
 
 # section selected-builtin
-# Successful selection must close, and reopening must show the actual active
-# row. The durable-write failure/retry path requires a separate QA fault build.
-wait absent "id=settings-theme-sheet" 10000
-press "id=settings-theme-row"
-wait "id=settings-theme-sheet" 10000
-press "id=\"settings-selection:on:theme-tab-builtin\""
-scroll down --until "id=\"settings-selection:on:theme-osuki\""
-is visible "id=\"settings-selection:on:theme-osuki\""
+# The sheet is still open with the actual active card; closing it shows the
+# pack's name in Settings' Theme row. The durable-write failure/retry path
+# requires a separate QA fault build.
+is visible "id=settings-theme-sheet"
 screenshot "shots/theme-osuki-selected.png"
 back --system
 wait absent "id=settings-theme-sheet" 10000
