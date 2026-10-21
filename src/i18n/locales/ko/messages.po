@@ -460,10 +460,6 @@ msgstr "{total, plural, other {하위 작업 #개}} ({waiting, plural, other {#�
 msgid "→ {name}"
 msgstr "→ {name}"
 
-#: src/components/home-thread.tsx
-msgid "+ New conversation"
-msgstr "+ 새 대화"
-
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "외 {overflow}개"
@@ -4081,13 +4077,9 @@ msgstr "연결된 적 없음"
 msgid "Never seen"
 msgstr "확인된 적 없음"
 
-#: src/components/home-thread.tsx
-msgid "New conversation"
-msgstr "새 대화"
-
-#: src/components/home-thread.tsx
-msgid "New conversation · {agentName}"
-msgstr "새 대화 · {agentName}"
+#: src/components/home-composer-dock.tsx
+msgid "New conversation with {agentLabel}…"
+msgstr "{agentLabel}와(과) 새 대화…"
 
 #: src/app/commands.tsx
 msgid "New group"
@@ -4644,8 +4636,8 @@ msgid "Open background tasks"
 msgstr "백그라운드 작업 열기"
 
 #: src/components/home-thread.tsx
-msgid "Open conversation"
-msgstr "대화 열기"
+msgid "Open conversation {title}, {word}"
+msgstr "대화 {title} 열기, {word}"
 
 #: src/components/artifacts-button.tsx
 msgid "Open files"
@@ -5488,10 +5480,6 @@ msgstr "오디오 다시 재생"
 #: src/components/home-composer-dock.tsx
 msgid "Reply to {threadAgentName}…"
 msgstr "{threadAgentName}에게 답장…"
-
-#: src/components/home-thread.tsx
-msgid "Replying to {title}"
-msgstr "{title}에 답장 중"
 
 #: src/app/settings-about.tsx
 msgid "Report a bug or request a feature"

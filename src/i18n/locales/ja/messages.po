@@ -460,10 +460,6 @@ msgstr "{total, plural, other {サブタスク # 件}}（{waiting, plural, other
 msgid "→ {name}"
 msgstr "→ {name}"
 
-#: src/components/home-thread.tsx
-msgid "+ New conversation"
-msgstr "+ 新しい会話"
-
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "ほか {overflow} 件"
@@ -4081,13 +4077,9 @@ msgstr "一度も接続されていません"
 msgid "Never seen"
 msgstr "一度も確認されていません"
 
-#: src/components/home-thread.tsx
-msgid "New conversation"
-msgstr "新しい会話"
-
-#: src/components/home-thread.tsx
-msgid "New conversation · {agentName}"
-msgstr "新しい会話 · {agentName}"
+#: src/components/home-composer-dock.tsx
+msgid "New conversation with {agentLabel}…"
+msgstr "{agentLabel} との新しい会話…"
 
 #: src/app/commands.tsx
 msgid "New group"
@@ -4644,8 +4636,8 @@ msgid "Open background tasks"
 msgstr "バックグラウンドタスクを開く"
 
 #: src/components/home-thread.tsx
-msgid "Open conversation"
-msgstr "会話を開く"
+msgid "Open conversation {title}, {word}"
+msgstr "会話「{title}」を開く、{word}"
 
 #: src/components/artifacts-button.tsx
 msgid "Open files"
@@ -5488,10 +5480,6 @@ msgstr "音声をもう一度再生"
 #: src/components/home-composer-dock.tsx
 msgid "Reply to {threadAgentName}…"
 msgstr "{threadAgentName} に返信…"
-
-#: src/components/home-thread.tsx
-msgid "Replying to {title}"
-msgstr "{title} に返信中"
 
 #: src/app/settings-about.tsx
 msgid "Report a bug or request a feature"

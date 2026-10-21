@@ -107,6 +107,8 @@ export interface TerminalComposerProps {
   send: TerminalComposerSend;
   /** Home's field sits on the keyboard, so only its top corners stay rounded. */
   squareBottom?: boolean;
+  /** A bar is joined to the field's top (Home's reply bar): only its bottom corners round. */
+  squareTop?: boolean;
   entering?: AnimatedViewProps['entering'];
   exiting?: AnimatedViewProps['exiting'];
   layout?: AnimatedViewProps['layout'];
@@ -138,6 +140,7 @@ export function TerminalComposer({
   minLines,
   spans,
   squareBottom = false,
+  squareTop = false,
 }: TerminalComposerProps) {
   const readInput = useLatestReader(inputProps);
   const { t } = useLingui();
@@ -169,18 +172,26 @@ export function TerminalComposer({
   }, [voiceActive, contentReveal]);
   const contentRevealStyle = useAnimatedStyle(() => ({ opacity: contentReveal.get() }));
   const profile = useAppearanceProfile();
-  const fieldRadius = squareBottom
+  const fieldRadius = squareTop
     ? {
-        borderTopLeftRadius: profile.chrome.composerField,
-        borderTopRightRadius: profile.chrome.composerField,
-        borderBottomLeftRadius: 0,
-        borderBottomRightRadius: 0,
+        borderTopLeftRadius: 0,
+        borderTopRightRadius: 0,
+        borderBottomLeftRadius: profile.chrome.composerField,
+        borderBottomRightRadius: profile.chrome.composerField,
         borderCurve: 'continuous' as const,
       }
-    : {
-        borderRadius: profile.chrome.composerField,
-        borderCurve: 'continuous' as const,
-      };
+    : squareBottom
+      ? {
+          borderTopLeftRadius: profile.chrome.composerField,
+          borderTopRightRadius: profile.chrome.composerField,
+          borderBottomLeftRadius: 0,
+          borderBottomRightRadius: 0,
+          borderCurve: 'continuous' as const,
+        }
+      : {
+          borderRadius: profile.chrome.composerField,
+          borderCurve: 'continuous' as const,
+        };
   const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
   // The monospace slot is this component's *default*, not its rule, because
