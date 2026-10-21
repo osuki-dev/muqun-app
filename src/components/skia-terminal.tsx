@@ -192,6 +192,9 @@ import { graphemeWidth, splitGraphemes, substituteRenderedGrapheme } from '@/ter
 
 const horizontalPadding = TERMINAL_GRID_HORIZONTAL_PADDING;
 const verticalPadding = TERMINAL_GRID_VERTICAL_PADDING;
+/** How long a new canvas surface is given to draw its first frame before it is shown. */
+const CANVAS_FIRST_FRAME_MS = 50;
+
 const AXIS_UNDECIDED = 0;
 const AXIS_HORIZONTAL = 1;
 const AXIS_VERTICAL = 2;
@@ -818,6 +821,18 @@ export function SkiaTerminal({
     theme.colors.background,
     wallpaperBehind
   );
+  // A new native surface shows black until Skia's first frame lands, which on
+  // a light theme flashed a black box before the terminal. The canvas is held
+  // invisible over a container already painted in the terminal's own colour
+  // until that frame has had time to draw, then fades in (micro, instant
+  // under Reduce Motion). Once per mount: a pane switch that keeps the canvas
+  // keeps its surface and has nothing to hide.
+  const canvasReveal = useSharedValue(0);
+  const revealCanvas = () => {
+    if (canvasReveal.get() !== 0) return;
+    canvasReveal.set(withDelay(CANVAS_FIRST_FRAME_MS, withTiming(1, timing('micro'))));
+  };
+  const canvasRevealStyle = useAnimatedStyle(() => ({ opacity: canvasReveal.get() }));
 
   const links = useMemo(() => terminalFrameLinks(frame), [frame]);
   const cellWidth = useMemo(
@@ -3275,7 +3290,9 @@ export function SkiaTerminal({
   }
 
   return (
-    <View onLayout={handleLayout} style={styles.shell}>
+    <View
+      onLayout={handleLayout}
+      style={[styles.shell, canvasIsOpaque && { backgroundColor: canvasFill }]}>
       <GestureDetector gesture={gesture}>
         {/* A translucent canvas is not a cheaper canvas: react-native-skia swaps
             the native view outright, and the non-opaque one is a texture HWUI
@@ -3292,65 +3309,67 @@ export function SkiaTerminal({
             Keep the TextureView backing stable so parent clipping, transforms
             and sibling overlays remain correct. Skia applies opacity changes
             in place without replacing the native view. See `terminalCanvasPaint`. */}
-        <Canvas
-          android={{ backingView: 'TextureView', opaque: canvasIsOpaque }}
-          style={styles.canvas}>
-          <Fill color={canvasFill} />
-          <Group transform={contentTransform}>
-            {chunkDraws.map((chunk) => (
-              // A block records its rows from its own first row down and is
-              // placed by this transform, which is what lets a recording outlive
-              // the rows underneath it scrolling: a streaming pane re-draws the
-              // same display list one row higher instead of recording it again.
-              // The transform is a constant, not an animated value -- the one
-              // above it is the only thing moving, so there is no second live
-              // transform for this one to disagree with per frame.
-              //
-              // The key is positional on purpose: these are interchangeable
-              // siblings, and keying by content would collide the moment two
-              // blocks held the same rows.
-              <Group key={chunk.id} clip={chunk.clip} transform={chunk.transform}>
-                <Picture picture={chunk.picture} />
-              </Group>
-            ))}
-            {/*
+        <Animated.View style={[styles.canvas, canvasRevealStyle]} onLayout={revealCanvas}>
+          <Canvas
+            android={{ backingView: 'TextureView', opaque: canvasIsOpaque }}
+            style={StyleSheet.absoluteFill}>
+            <Fill color={canvasFill} />
+            <Group transform={contentTransform}>
+              {chunkDraws.map((chunk) => (
+                // A block records its rows from its own first row down and is
+                // placed by this transform, which is what lets a recording outlive
+                // the rows underneath it scrolling: a streaming pane re-draws the
+                // same display list one row higher instead of recording it again.
+                // The transform is a constant, not an animated value -- the one
+                // above it is the only thing moving, so there is no second live
+                // transform for this one to disagree with per frame.
+                //
+                // The key is positional on purpose: these are interchangeable
+                // siblings, and keying by content would collide the moment two
+                // blocks held the same rows.
+                <Group key={chunk.id} clip={chunk.clip} transform={chunk.transform}>
+                  <Picture picture={chunk.picture} />
+                </Group>
+              ))}
+              {/*
               Above the text, not behind it: a terminal's own background runs
               cell-to-cell and a highlight painted underneath would be invisible
               on every row an agent gave a background colour to. Translucent, so
               the text it is describing stays readable through it -- the reader
               is checking what they grabbed.
             */}
-            {highlightRects.map((highlight) => (
-              <Rect
-                key={`hl-${highlight.x}-${highlight.y}-${highlight.width}-${highlight.height}`}
-                x={highlight.x}
-                y={highlight.y}
-                width={highlight.width}
-                height={highlight.height}
-                color={selectionFill}
-              />
-            ))}
-            {frame.cursor.visible && hasOutput ? (
-              // A slim beam caret rather than a full-cell underline: the
-              // underline read as a stray horizontal bar sitting under the
-              // last line.
-              //
-              // `output` as well, because a pane that has not answered yet
-              // parses to one empty row with the cursor at its origin -- and
-              // the grid is anchored to the bottom, so that origin is the
-              // bottom-left corner of the screen. The caret for a screen that
-              // does not exist yet drew as a blue tick in the corner of the
-              // connecting spinner, under the logo, pointing at nothing.
-              <Rect
-                x={horizontalPadding + frame.cursor.column * cellWidth}
-                y={verticalPadding + frame.cursor.row * lineHeight + 2}
-                width={2}
-                height={lineHeight - 4}
-                color={paneTheme.cursor}
-              />
-            ) : null}
-          </Group>
-        </Canvas>
+              {highlightRects.map((highlight) => (
+                <Rect
+                  key={`hl-${highlight.x}-${highlight.y}-${highlight.width}-${highlight.height}`}
+                  x={highlight.x}
+                  y={highlight.y}
+                  width={highlight.width}
+                  height={highlight.height}
+                  color={selectionFill}
+                />
+              ))}
+              {frame.cursor.visible && hasOutput ? (
+                // A slim beam caret rather than a full-cell underline: the
+                // underline read as a stray horizontal bar sitting under the
+                // last line.
+                //
+                // `output` as well, because a pane that has not answered yet
+                // parses to one empty row with the cursor at its origin -- and
+                // the grid is anchored to the bottom, so that origin is the
+                // bottom-left corner of the screen. The caret for a screen that
+                // does not exist yet drew as a blue tick in the corner of the
+                // connecting spinner, under the logo, pointing at nothing.
+                <Rect
+                  x={horizontalPadding + frame.cursor.column * cellWidth}
+                  y={verticalPadding + frame.cursor.row * lineHeight + 2}
+                  width={2}
+                  height={lineHeight - 4}
+                  color={paneTheme.cursor}
+                />
+              ) : null}
+            </Group>
+          </Canvas>
+        </Animated.View>
       </GestureDetector>
       {canLoadEarlier || loadingEarlier ? (
         <Animated.View
