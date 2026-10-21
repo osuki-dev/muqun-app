@@ -219,6 +219,10 @@ export default function SettingsScreen() {
                   <Text
                     variant="caption"
                     color={theme.colors.textMuted}
+                    testID="settings-version"
+                    // Hidden on purpose: a long press opens the Stage's art
+                    // log, for a bug report about the 3D Home's pictures.
+                    onLongPress={() => router.push('/settings-stage-diagnostics')}
                     // Keep the version plate aligned with the mark.
                     style={
                       plate

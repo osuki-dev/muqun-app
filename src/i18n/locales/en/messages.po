@@ -132,6 +132,11 @@ msgstr "{0} (this device)"
 msgid "{0} did not upload. Retry it or remove it to send."
 msgstr "{0} did not upload. Retry it or remove it to send"
 
+#. placeholder {0}: events.length
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{0} events, newest first"
+msgstr "{0} events, newest first"
+
 #. placeholder {0}: failed.name
 #. placeholder {1}: uploadLimitMb(attachmentLimitBytes(failed))
 #: src/lib/attachments.ts
@@ -1321,6 +1326,7 @@ msgstr "Choose worktree"
 msgid "Classic"
 msgstr "Classic"
 
+#: src/app/settings-stage-diagnostics.tsx
 #: src/components/settings-storage.tsx
 msgid "Clear"
 msgstr "Clear"
@@ -1861,6 +1867,7 @@ msgstr "Conversation"
 msgid "Conversational help and open-ended project questions."
 msgstr "Conversational help and open-ended project questions"
 
+#: src/app/settings-stage-diagnostics.tsx
 #: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
@@ -1886,6 +1893,7 @@ msgid "Copies it, ready to paste into a terminal"
 msgstr "Copies it, ready to paste into a terminal"
 
 #: src/app/diagram-viewer.tsx
+#: src/app/settings-stage-diagnostics.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/settings-servers.tsx
 #: src/components/skia-terminal.tsx
@@ -4258,6 +4266,10 @@ msgstr "No SSH hosts saved yet"
 msgid "No SSH hosts yet. Add one to open a shell on any machine you can reach."
 msgstr "No SSH hosts yet. Add one to open a shell on any machine you can reach"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "No Stage art events recorded yet."
+msgstr "No Stage art events recorded yet"
+
 #: src/components/simfarm-stage.tsx
 msgid "No still frames"
 msgstr "No still frames"
@@ -6249,6 +6261,14 @@ msgstr "SSH tunnel through {host} is down"
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Stage"
 msgstr "Stage"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Stage diagnostics"
+msgstr "Stage diagnostics"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Stage log copied"
+msgstr "Stage log copied"
 
 #: src/components/diff-rows.tsx
 msgid "Staged"

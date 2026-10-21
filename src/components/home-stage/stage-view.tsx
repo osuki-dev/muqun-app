@@ -44,6 +44,14 @@ import { heroFeatherGeometry } from '@/lib/hero-feather';
 import { hasSeenStageHints, markStageHintsSeen } from '@/lib/home-stage-hints';
 import type { StageComposition, StageLayer } from '@/lib/home-stage-layers';
 import { useSharedSkiaImage } from '@/lib/skia-image-cache';
+import {
+  checkStageGpuLost,
+  isStageGpuLost,
+  noteStageGpuFailure,
+  recordStageArtEvent,
+  retryStageArt,
+  setStageArtContext,
+} from '@/lib/stage-art-diagnostics';
 import { useAppSettings } from '@/stores/app-settings';
 import {
   lowestStageQuality,
@@ -129,28 +137,49 @@ export function StageView({
   const [size, setSize] = useState({ width: 0, height: 0 });
   // A rung the stage stepped down to holds for the rest of the session.
   const [quality, setQuality] = useState<StageQuality>(() => session.quality);
+  const { theme: customTheme } = useEffectiveCustomTheme();
+  // What the Stage diagnostics stamp each event with.
+  const themeTag = customTheme
+    ? `${customTheme.manifest.id}@${customTheme.manifest.version}`
+    : undefined;
+  useEffect(() => {
+    setStageArtContext({ theme: themeTag, quality });
+  }, [themeTag, quality]);
   const lowered = useStableHandler((next: StageQuality) => {
     session.quality = lowestStageQuality(session.quality, next);
     setQuality(session.quality);
   });
   const [failed, setFailed] = useState(false);
-  // A GPU failure (a lost device, a surface the system took back while the
-  // app was away) falls back to the static stage, but only until Home is
-  // shown again: then a fresh canvas gets another try, a few times a session.
+  // A GPU failure (a surface the system took back while the app was away, an
+  // out-of-memory upload) falls back to the static stage, but only until Home
+  // is shown again: then a fresh canvas gets another try, a few times a
+  // session. A lost Skia device is different: nothing recovers it short of a
+  // restart, so the stage stays static and no canvas is tried again.
   const [attempt, setAttempt] = useState(0);
-  const fail = useStableHandler(() => setFailed(true));
+  const [gpuLost, setGpuLost] = useState(isStageGpuLost);
+  const fail = useStableHandler((error?: unknown) => {
+    if (noteStageGpuFailure(error)) setGpuLost(true);
+    setFailed(true);
+  });
   useEffect(() => {
-    if (paused || !failed || attempt >= STAGE_GPU_RETRIES) return;
+    if (paused || !failed || gpuLost || attempt >= STAGE_GPU_RETRIES) return;
     setFailed(false);
     setAttempt((tries) => tries + 1);
-  }, [paused, failed, attempt]);
+  }, [paused, failed, gpuLost, attempt]);
+  // Home is back: a lost device is noticed before a canvas is made on it,
+  // and pictures that failed get their next try.
+  useEffect(() => {
+    if (paused) return;
+    if (checkStageGpuLost()) setGpuLost(true);
+    retryStageArt();
+  }, [paused]);
   const [diving, setDiving] = useState(false);
   const [hints, setHints] = useState(() => !hasSeenStageHints());
   const [gpuAvailable] = useState(
     () => Platform.OS !== 'web' && TurboModuleRegistry.get('WebGPUModule') !== null
   );
   const effects = stageEffects(quality, {
-    gpuAvailable: gpuAvailable && !failed,
+    gpuAvailable: gpuAvailable && !failed && !gpuLost,
     reducedMotion,
   });
   const [bridge] = useState(createStageBridge);
@@ -172,11 +201,12 @@ export function StageView({
   const gpuUri = (layer: StageLayer | null) => (effects.gpu ? layer?.uri : undefined);
   const backdropTexture = useStageTexture(
     gpuUri(composition.backdrop),
-    role === 'sky' ? Math.min(BASE_MAX_EDGE, coverEdge) : coverEdge
+    role === 'sky' ? Math.min(BASE_MAX_EDGE, coverEdge) : coverEdge,
+    'backdrop'
   );
-  const paintingTexture = useStageTexture(gpuUri(composition.painting), coverEdge);
-  const heroTexture = useStageTexture(gpuUri(composition.hero), heroEdge);
-  const frameTexture = useStageTexture(gpuUri(composition.frame), coverEdge);
+  const paintingTexture = useStageTexture(gpuUri(composition.painting), coverEdge, 'painting');
+  const heroTexture = useStageTexture(gpuUri(composition.hero), heroEdge, 'hero');
+  const frameTexture = useStageTexture(gpuUri(composition.frame), coverEdge, 'frame');
   // A reskin holds its cover until the layers are chosen and their textures are in (or failed).
   const settled =
     composition.ready &&
@@ -201,7 +231,6 @@ export function StageView({
 
   // The theme's ambient effect for this variant, resolved as the 2D layer
   // resolves it (`theme-artwork.tsx`): the variant's own, else the theme's.
-  const { theme: customTheme } = useEffectiveCustomTheme();
   const effectsEnabled = useAppSettings((state) => state.themeEffectsEnabled);
   const manifest = customTheme?.manifest;
   const themeEffects = manifest
@@ -344,7 +373,7 @@ export function StageView({
             </Suspense>
           </MapErrorBoundary>
         ) : (
-          <StaticStage composition={composition} art={art} />
+          <StaticStage composition={composition} art={art} skia={!gpuLost} />
         )}
         {effects.gpu && effects.tilt && !paused ? (
           <StageTilt tiltX={tiltX} tiltY={tiltY} onMoved={bridge.wake} />
@@ -529,8 +558,22 @@ function StageHint({ text, at }: { text: string; at: { x: number; y: number } })
  * wallpaper at its authored fit, focal point and opacity, the painting's
  * band or the figure in its box with the same fades, the frame -- without
  * parallax. Drawn without WebGPU or after a lost device.
+ *
+ * The wallpapers are plain images; the art is a Skia canvas for its fades,
+ * except when Skia has no GPU device (`skia` false): then no Skia canvas
+ * appears on screen at all, and the art is a plain, unfaded image instead of
+ * nothing -- the wallpaper's frame showing over an empty Stage was the
+ * symptom.
  */
-function StaticStage({ composition, art }: { composition: StageComposition; art: StageArt }) {
+function StaticStage({
+  composition,
+  art,
+  skia,
+}: {
+  composition: StageComposition;
+  art: StageArt;
+  skia: boolean;
+}) {
   const theme = useThemeTokens();
   const { backdrop, frame } = composition;
   return (
@@ -540,7 +583,7 @@ function StaticStage({ composition, art }: { composition: StageComposition; art:
       accessible={false}
       importantForAccessibility="no-hide-descendants">
       {backdrop ? <StaticWallpaper layer={backdrop} /> : null}
-      {art ? <StaticArt art={art} /> : null}
+      {art ? <StaticArt art={art} skia={skia} /> : null}
       {frame ? <StaticWallpaper layer={frame} /> : null}
     </View>
   );
@@ -561,10 +604,24 @@ function StaticWallpaper({ layer }: { layer: StageLayer }) {
 }
 
 /** The painting's band or the figure in its box, clipped and faded as the GPU scene draws it. */
-function StaticArt({ art }: { art: NonNullable<StageArt> }) {
-  const image = useSharedSkiaImage(art.layer.uri);
+function StaticArt({ art, skia }: { art: NonNullable<StageArt>; skia: boolean }) {
+  // A picture Skia cannot decode is still drawn, as a plain image.
+  const [undecodable, setUndecodable] = useState<string | null>(null);
+  const viaSkia = skia && undecodable !== art.layer.uri;
+  const image = useSharedSkiaImage(viaSkia ? art.layer.uri : null, (error) => {
+    recordStageArtEvent({
+      slot: art.kind,
+      step: 'decode',
+      status: 'fallback',
+      uri: art.layer.uri,
+      error,
+    });
+    setUndecodable(art.layer.uri);
+  });
   const { plane, drawn, fade } = art.placement;
-  if (!image || plane.width <= 0 || plane.height <= 0) return null;
+  if (plane.width <= 0 || plane.height <= 0) return null;
+  if (!viaSkia) return <StaticArtImage art={art} />;
+  if (!image) return null;
   const feather = art.framed
     ? heroFeatherGeometry({ container: { width: plane.width, height: plane.height } })
     : null;
@@ -610,8 +667,36 @@ function StaticArt({ art }: { art: NonNullable<StageArt> }) {
   );
 }
 
+/** The art as a plain image in its box, for when Skia cannot draw it: no fades. */
+function StaticArtImage({ art }: { art: NonNullable<StageArt> }) {
+  const { plane, drawn } = art.placement;
+  return (
+    <View
+      style={[
+        styles.clip,
+        { left: plane.x, top: plane.y, width: plane.width, height: plane.height },
+      ]}>
+      <Image
+        source={{ uri: art.layer.uri }}
+        contentFit="fill"
+        cachePolicy="memory"
+        accessible={false}
+        style={{
+          position: 'absolute',
+          left: drawn.x - plane.x,
+          top: drawn.y - plane.y,
+          width: drawn.width,
+          height: drawn.height,
+          opacity: art.layer.opacity,
+        }}
+      />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   hit: { position: 'absolute' },
+  clip: { position: 'absolute', overflow: 'hidden' },
   hint: { position: 'absolute', alignItems: 'center' },
   hintChip: {
     paddingHorizontal: 10,

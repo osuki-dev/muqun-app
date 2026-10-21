@@ -132,6 +132,11 @@ msgstr "{0} (이 기기)"
 msgid "{0} did not upload. Retry it or remove it to send."
 msgstr "{0}을(를) 업로드하지 못했습니다. 다시 시도하거나 제거한 뒤 보내세요"
 
+#. placeholder {0}: events.length
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{0} events, newest first"
+msgstr ""
+
 #. placeholder {0}: failed.name
 #. placeholder {1}: uploadLimitMb(attachmentLimitBytes(failed))
 #: src/lib/attachments.ts
@@ -1321,6 +1326,7 @@ msgstr "작업 트리 선택"
 msgid "Classic"
 msgstr "클래식"
 
+#: src/app/settings-stage-diagnostics.tsx
 #: src/components/settings-storage.tsx
 msgid "Clear"
 msgstr "비우기"
@@ -1861,6 +1867,7 @@ msgstr "대화"
 msgid "Conversational help and open-ended project questions."
 msgstr "대화형 도움말과 프로젝트에 대한 자유로운 질문"
 
+#: src/app/settings-stage-diagnostics.tsx
 #: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
@@ -1886,6 +1893,7 @@ msgid "Copies it, ready to paste into a terminal"
 msgstr "복사합니다. 터미널에 바로 붙여넣을 수 있습니다"
 
 #: src/app/diagram-viewer.tsx
+#: src/app/settings-stage-diagnostics.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/settings-servers.tsx
 #: src/components/skia-terminal.tsx
@@ -4258,6 +4266,10 @@ msgstr "저장된 SSH 호스트가 아직 없습니다"
 msgid "No SSH hosts yet. Add one to open a shell on any machine you can reach."
 msgstr "아직 SSH 호스트가 없습니다. 하나 추가하면 닿을 수 있는 어떤 컴퓨터에서든 셸을 열 수 있습니다"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "No Stage art events recorded yet."
+msgstr ""
+
 #: src/components/simfarm-stage.tsx
 msgid "No still frames"
 msgstr "정지 화면 없음"
@@ -6249,6 +6261,14 @@ msgstr "{host}을(를) 통한 SSH 터널이 끊어졌습니다"
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Stage"
 msgstr "스테이지"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Stage diagnostics"
+msgstr ""
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Stage log copied"
+msgstr ""
 
 #: src/components/diff-rows.tsx
 msgid "Staged"

@@ -132,6 +132,11 @@ msgstr "{0}（このデバイス）"
 msgid "{0} did not upload. Retry it or remove it to send."
 msgstr "{0}をアップロードできませんでした。再試行するか削除してから送信してください"
 
+#. placeholder {0}: events.length
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{0} events, newest first"
+msgstr ""
+
 #. placeholder {0}: failed.name
 #. placeholder {1}: uploadLimitMb(attachmentLimitBytes(failed))
 #: src/lib/attachments.ts
@@ -1321,6 +1326,7 @@ msgstr "ワークツリーを選択"
 msgid "Classic"
 msgstr "クラシック"
 
+#: src/app/settings-stage-diagnostics.tsx
 #: src/components/settings-storage.tsx
 msgid "Clear"
 msgstr "削除"
@@ -1861,6 +1867,7 @@ msgstr "会話"
 msgid "Conversational help and open-ended project questions."
 msgstr "対話形式のヘルプと、プロジェクトに関する自由な質問"
 
+#: src/app/settings-stage-diagnostics.tsx
 #: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
@@ -1886,6 +1893,7 @@ msgid "Copies it, ready to paste into a terminal"
 msgstr "コピーします。ターミナルにそのまま貼り付けられます"
 
 #: src/app/diagram-viewer.tsx
+#: src/app/settings-stage-diagnostics.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/settings-servers.tsx
 #: src/components/skia-terminal.tsx
@@ -4258,6 +4266,10 @@ msgstr "保存された SSH ホストはまだありません"
 msgid "No SSH hosts yet. Add one to open a shell on any machine you can reach."
 msgstr "SSH ホストはまだありません。追加すると、届く範囲のどのマシンでもシェルを開けます"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "No Stage art events recorded yet."
+msgstr ""
+
 #: src/components/simfarm-stage.tsx
 msgid "No still frames"
 msgstr "静止画に非対応"
@@ -6249,6 +6261,14 @@ msgstr "{host} 経由の SSH トンネルが切断されています"
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Stage"
 msgstr "ステージ"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Stage diagnostics"
+msgstr ""
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Stage log copied"
+msgstr ""
 
 #: src/components/diff-rows.tsx
 msgid "Staged"

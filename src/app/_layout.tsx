@@ -541,6 +541,10 @@ function RootContent() {
                 />
                 <Stack.Screen name="settings-about" options={sheetRouteOptions('settings-about')} />
                 <Stack.Screen
+                  name="settings-stage-diagnostics"
+                  options={sheetRouteOptions('settings-stage-diagnostics')}
+                />
+                <Stack.Screen
                   name="settings-terminal"
                   options={sheetRouteOptions('settings-terminal')}
                 />

@@ -57,6 +57,7 @@ export const sheetRoutePresentations: Readonly<Record<string, SheetPresentation>
   'settings-alerts': 'sheet',
   'settings-storage': 'sheet',
   'settings-about': 'sheet',
+  'settings-stage-diagnostics': 'sheet',
   'settings-language': 'sheet',
   'settings-home-layout': 'sheet',
   'web-service': 'sheet',
@@ -158,6 +159,7 @@ export const sheetRouteKinds: Readonly<Record<string, SheetKind>> = {
   'settings-alerts': 'picker',
   'settings-storage': 'picker',
   'settings-about': 'picker',
+  'settings-stage-diagnostics': 'picker',
   'settings-font': 'picker',
   'settings-language': 'picker',
   'settings-home-layout': 'picker',
@@ -240,6 +242,7 @@ export const sheetRouteDetents: Readonly<Record<string, SheetDetents>> = {
   'settings-alerts': 'fitToContents',
   'settings-storage': 'fitToContents',
   'settings-about': 'fitToContents',
+  'settings-stage-diagnostics': 'fitToContents',
   // Two font groups, including a URL field that needs room above the keyboard.
   'settings-font': 'expandable',
   // One short list of languages: as tall as it is, and no taller.
@@ -399,6 +402,7 @@ export const sheetRouteContent: Readonly<Record<string, SheetContent>> = {
   'settings-alerts': 'short',
   'settings-storage': 'short',
   'settings-about': 'short',
+  'settings-stage-diagnostics': 'short',
 };
 
 /**

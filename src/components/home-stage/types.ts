@@ -95,6 +95,6 @@ export type StageSceneProps = {
   bridge: StageBridge;
   /** Frame times say the device cannot hold the stage at this quality. */
   onQualityDrop: (next: StageQuality) => void;
-  /** WebGPU failed to start, or the device was lost: draw the static stage. */
-  onError: () => void;
+  /** WebGPU failed to start or to draw, or the device was lost: draw the static stage. */
+  onError: (error?: unknown) => void;
 };

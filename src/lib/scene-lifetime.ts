@@ -4,7 +4,7 @@ export function createSceneLifetimes() {
   return function startScene(
     canvasId: number,
     start: (isLive: () => boolean) => Promise<() => Promise<void>>,
-    onError: () => void
+    onError: (error?: unknown) => void
   ): () => void {
     let live = true;
     let release = () => {};
@@ -18,8 +18,8 @@ export function createSceneLifetimes() {
         const dispose = await start(() => live);
         await released;
         await dispose();
-      } catch {
-        if (live) onError();
+      } catch (error) {
+        if (live) onError(error);
       }
     });
     tails.set(canvasId, task);
