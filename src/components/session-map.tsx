@@ -1,3 +1,4 @@
+import { SideBleedScrollView } from '@/components/side-bleed-scroll-view';
 import { plural } from '@lingui/core/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
@@ -12,7 +13,7 @@ import {
   useState,
   useSyncExternalStore,
 } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { RefreshControl, StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -33,6 +34,7 @@ import {
   SheetSceneQuietAction,
   SheetSceneQuietControl,
   SheetSceneRow,
+  SheetSceneScrollView,
   sheetSceneStyles,
 } from '@/components/sheet-scene';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
@@ -673,6 +675,9 @@ export function SessionMap({
   return (
     <SheetScene
       testID="session-map"
+      // The rails run under a side status bar (iPhone Duo) to the sheet's edge,
+      // which a scroller inside a padded column would clip.
+      sideInContent
       title={t`What is running`}
       caption={activeWorkspace ? `${label} \u00b7 ${activeWorkspace.title}` : label}
       headingTrailing={
@@ -684,8 +689,9 @@ export function SessionMap({
           <RefreshIcon size={17} color={theme.colors.textMuted} />
         </SheetSceneQuietControl>
       }>
-      <ScrollView
+      <SheetSceneScrollView
         nestedScrollEnabled
+        gutter={SHEET_LADDER.gutter}
         style={sheetSceneStyles.scroller}
         contentContainerStyle={sheetSceneStyles.scrollerContent}
         keyboardShouldPersistTaps="handled"
@@ -736,8 +742,9 @@ export function SessionMap({
         */}
         <SheetSceneGroupHeading title={t`Computers`} first />
         <View testID="machines-rail" style={styles.rail}>
-          <ScrollView
-            horizontal
+          <SideBleedScrollView
+            // Under a side status bar (iPhone Duo) to the sheet's edge.
+            trailing={styles.railList.paddingRight}
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.railList}>
             {rails.machines.map((machine) => {
@@ -768,7 +775,7 @@ export function SessionMap({
                 />
               );
             })}
-          </ScrollView>
+          </SideBleedScrollView>
           {/* The whole sentence, under the rail rather than clipped into a
               chip's caption: what went wrong with a machine is the one thing
               here a reader has to read rather than scan. */}
@@ -803,8 +810,9 @@ export function SessionMap({
               }
             />
             <View testID="sessions-rail" style={styles.rail}>
-              <ScrollView
-                horizontal
+              <SideBleedScrollView
+                // Under a side status bar (iPhone Duo) to the sheet's edge.
+                trailing={styles.railList.paddingRight}
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.railList}>
                 {rails.sessions.map((session) => {
@@ -825,7 +833,7 @@ export function SessionMap({
                     />
                   );
                 })}
-              </ScrollView>
+              </SideBleedScrollView>
             </View>
           </Animated.View>
         ) : null}
@@ -839,8 +847,9 @@ export function SessionMap({
         */}
         <SheetSceneGroupHeading title={t`Workspaces`} />
         <View testID="workspaces-rail" style={styles.rail}>
-          <ScrollView
-            horizontal
+          <SideBleedScrollView
+            // Under a side status bar (iPhone Duo) to the sheet's edge.
+            trailing={styles.railList.paddingRight}
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.railList}>
             {rails.workspaces.map((workspace) => {
@@ -889,7 +898,7 @@ export function SessionMap({
                 <Trans>Workspace</Trans>
               </Text>
             </PressableScale>
-          </ScrollView>
+          </SideBleedScrollView>
           {menuFor?.kind === 'workspace' ? (
             <Animated.View
               entering={fadeIn('micro')}
@@ -1023,7 +1032,7 @@ export function SessionMap({
         {/* The rename field can be anywhere in this column, so the keyboard's
             own strip goes at the end of the scroller rather than under it. */}
         <SheetSceneFooter bottomInset={insets.bottom} />
-      </ScrollView>
+      </SheetSceneScrollView>
     </SheetScene>
   );
 }

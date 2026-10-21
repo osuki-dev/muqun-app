@@ -40,7 +40,7 @@ import {
   getEditorialLayoutGeometry,
   editorialScenePlacement,
 } from '@/lib/home-editorial-layout';
-import { type SideInsets } from '@/hooks/use-side-insets';
+import { NO_SIDE_INSETS, type SideInsets } from '@/hooks/use-side-insets';
 import { LAUNCH_ENTRY_HEIGHT, LAUNCH_GRID_GAP } from '@/lib/home-launch-model';
 import { entryRise, listLayout, resolveDuration, riseIn } from '@/lib/motion';
 import {
@@ -62,8 +62,6 @@ export {
   type EditorialLayoutGeometry,
   type EditorialLayoutMode,
 } from '@/lib/home-editorial-layout';
-
-const NO_SIDE_INSETS: SideInsets = { left: 0, right: 0 };
 
 export type HomeEditorialLayoutProps = {
   /** Remaining content width after the parent has accounted for its rail. */

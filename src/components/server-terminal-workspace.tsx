@@ -91,7 +91,7 @@ import { DETAIL_HEADER_HEIGHT } from '@/components/detail-header';
 import { EdgeFade } from '@/components/edge-fade';
 import { FileMentionPanel } from '@/components/file-mention-panel';
 import { GlassChrome } from '@/components/glass-chrome';
-import { sideInsetPadding, type SideInsets } from '@/hooks/use-side-insets';
+import { NO_SIDE_INSETS, sideInsetPadding, type SideInsets } from '@/hooks/use-side-insets';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { ImagePreviewModal, type PreviewImage } from '@/components/image-preview-modal';
 import { navHeaderButtonStyle } from '@/components/nav-header';
@@ -1046,6 +1046,9 @@ export function ServerTerminalWorkspace({
   const surfaceBackground = useSurfaceBackground();
   const { resolvedMode } = useThemeMode();
   const insets = useSafeAreaInsets();
+  // The phone dock's horizontal rows run under a side status bar (iPhone Duo)
+  // to the glass and rest clear of it; the Pad dock stands off the edge.
+  const dockBleed = isPadLayout ? NO_SIDE_INSETS : { left: insets.left, right: insets.right };
   const { height: keyboardOffset } = useReanimatedKeyboardAnimation();
   const { record, records, loading, hydrationError, retryHydration, selectRecord, disconnect } =
     useGatewayRecord();
@@ -5626,7 +5629,12 @@ export function ServerTerminalWorkspace({
             horizontal
             keyboardShouldPersistTaps="always"
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.keyRowScroller}>
+            // Only the trailing edge: the keyboard toggle holds the leading one.
+            style={{ marginRight: -dockBleed.right }}
+            contentContainerStyle={[
+              styles.keyRowScroller,
+              { paddingRight: styles.keyRowScroller.paddingRight + dockBleed.right },
+            ]}>
             {assignmentToggle}
             {terminalKeyButtons}
           </ScrollView>
@@ -6473,8 +6481,17 @@ export function ServerTerminalWorkspace({
                           // entrance: it is what the dock's height travels behind.
                           entering={fadeIn('micro')}
                           exiting={fadeOutDown('short')}
-                          style={styles.phonePaneStripViewport}
-                          contentContainerStyle={styles.paneStrip}>
+                          style={[
+                            styles.phonePaneStripViewport,
+                            { marginLeft: -dockBleed.left, marginRight: -dockBleed.right },
+                          ]}
+                          contentContainerStyle={[
+                            styles.paneStrip,
+                            {
+                              paddingLeft: styles.paneStrip.paddingHorizontal + dockBleed.left,
+                              paddingRight: styles.paneStrip.paddingHorizontal + dockBleed.right,
+                            },
+                          ]}>
                           {paneChips}
                         </Animated.ScrollView>
                       ) : null}
@@ -6541,7 +6558,18 @@ export function ServerTerminalWorkspace({
                                 horizontal
                                 keyboardShouldPersistTaps="always"
                                 showsHorizontalScrollIndicator={false}
-                                contentContainerStyle={styles.keyRowScroller}>
+                                style={{
+                                  marginLeft: -dockBleed.left,
+                                  marginRight: -dockBleed.right,
+                                }}
+                                contentContainerStyle={[
+                                  styles.keyRowScroller,
+                                  {
+                                    paddingLeft: dockBleed.left,
+                                    paddingRight:
+                                      styles.keyRowScroller.paddingRight + dockBleed.right,
+                                  },
+                                ]}>
                                 {paneEntries(chromeGlass)}
                                 <PressableScale
                                   testID="terminal-open-keyboard"

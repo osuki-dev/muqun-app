@@ -65,7 +65,7 @@ import { FileMentionPanel } from '@/components/file-mention-panel';
 import { ComposerPopup } from '@/components/composer-popup';
 import { useComposerPopup } from '@/hooks/use-composer-popup';
 import { useLatestReader } from '@/hooks/use-render-refs';
-import type { SideInsets } from '@/hooks/use-side-insets';
+import { NO_SIDE_INSETS, type SideInsets } from '@/hooks/use-side-insets';
 import { composerChipIds } from '@/lib/agent-composer-chips';
 import { canSendAgentPrompt } from '@/lib/agent-runtime-controls';
 import { slashCommandTrigger, type PaneSlashCommand } from '@/lib/pane-composer';
@@ -1637,6 +1637,9 @@ export const AgentComposer = memo(function AgentComposer({
   const sideRight = sideInsets?.right ?? 0;
   const materialBleed = !flushField && (sideLeft > 0 || sideRight > 0);
   const innerGutter = bar ? bar.inset : COMPOSER_INNER_GUTTER;
+  // The session strip and the action row run under the side status bar to the
+  // material's edge and rest clear of it.
+  const rowBleed = materialBleed ? { left: sideLeft, right: sideRight } : NO_SIDE_INSETS;
 
   return (
     <>
@@ -1993,8 +1996,14 @@ export const AgentComposer = memo(function AgentComposer({
                   ref={sessionStripRef}
                   horizontal
                   showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.sessionStripContent}
-                  style={styles.sessionStripViewport}>
+                  contentContainerStyle={[
+                    styles.sessionStripContent,
+                    { paddingLeft: rowBleed.left, paddingRight: rowBleed.right },
+                  ]}
+                  style={[
+                    styles.sessionStripViewport,
+                    { marginLeft: -rowBleed.left, marginRight: -rowBleed.right },
+                  ]}>
                   {/* Keep the direct way back out of the selected subagent. */}
                   {parentSession ? (
                     <PressableScale
@@ -2080,11 +2089,21 @@ export const AgentComposer = memo(function AgentComposer({
                   ) : null}
                 </View>
               ) : (
-                <View style={styles.actionRowViewport}>
+                <View
+                  style={[
+                    styles.actionRowViewport,
+                    { marginLeft: -rowBleed.left, marginRight: -rowBleed.right },
+                  ]}>
                   <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.actionRowContent}
+                    contentContainerStyle={[
+                      styles.actionRowContent,
+                      {
+                        paddingLeft: rowBleed.left,
+                        paddingRight: styles.actionRowContent.paddingRight + rowBleed.right,
+                      },
+                    ]}
                     style={styles.actionRowScroll}>
                     {/* All-sessions button (icon only) */}
                     {chipIds.has('sessions') ? (

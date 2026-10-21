@@ -14,6 +14,7 @@
  *
  * Theme and colour mode stay together, followed by font, app icon, and language.
  */
+import { useSideBleed } from '@/hooks/use-side-insets';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeMode, useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { Image } from 'expo-image';
@@ -208,6 +209,8 @@ function AppIconPicker() {
   const theme = useThemeTokens();
   const { resolvedMode } = useThemeMode();
   const { icon, choose, busy, supported } = useAppIcon();
+  // Under a side status bar (iPhone Duo) the icons run on to the sheet's edge.
+  const bleed = useSideBleed();
   if (!supported) return null;
   const labels: Record<AppIconId, string> = {
     default: 'Neon',
@@ -236,7 +239,8 @@ function AppIconPicker() {
         horizontal
         testID="settings-app-icons-scroll"
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={iconStyles.row}
+        style={bleed.frame}
+        contentContainerStyle={[iconStyles.row, bleed.content]}
         keyboardShouldPersistTaps="handled">
         <View style={iconStyles.row} accessibilityRole="radiogroup">
           {APP_ICON_CHOICES.map((id) => {

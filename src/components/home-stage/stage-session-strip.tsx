@@ -1,3 +1,4 @@
+import { useSideBleed } from '@/hooks/use-side-insets';
 import { useLingui } from '@lingui/react/macro';
 import { PressableScale, Text, useThemeTokens } from '@osuki-dev/ui';
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
@@ -162,6 +163,8 @@ export function StageSessionStrip({
   const surface = background(theme.colors.surface);
   const idleBorder = withAlpha(theme.colors.text, 0.1);
   const liveBorder = withAlpha(theme.colors.primary, 0.6);
+  // The strip runs under a side status bar to the glass, resting clear of it.
+  const bleed = useSideBleed(STRIP_PADDING);
   const raised = background(theme.colors.surfaceRaised);
   const face = (entry: HomeContinueEntry) => ({
     backgroundColor: entry.key === menuKey ? raised : surface,
@@ -176,7 +179,8 @@ export function StageSessionStrip({
       ref={scroll}
       horizontal
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.strip}>
+      style={bleed.frame}
+      contentContainerStyle={[styles.strip, bleed.content]}>
       <LayoutAnimationConfig skipEntering>
         {sessions.map((entry, index) => {
           const from = flip.from[index];
@@ -472,7 +476,8 @@ function StageSessionTurn({
 }
 
 const styles = StyleSheet.create({
-  strip: { paddingHorizontal: STRIP_PADDING, gap: STRIP_GAP },
+  // Horizontal padding is `STRIP_PADDING` plus any side bleed.
+  strip: { gap: STRIP_GAP },
   slot: { alignSelf: 'flex-start' },
   card: {
     minHeight: 46,

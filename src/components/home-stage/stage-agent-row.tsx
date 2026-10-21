@@ -1,3 +1,4 @@
+import { useSideBleed } from '@/hooks/use-side-insets';
 import { useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { PressableScale, Text, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
@@ -60,6 +61,8 @@ export function StageAgentRow({
     PULSE_PERIOD / 2,
     0.5
   );
+  // The row runs under a side status bar to the glass, resting clear of it.
+  const bleed = useSideBleed(HOME_DOCK_OUTER_INSET);
   if (!panel || !row) return <View style={styles.row} />;
   if (row.kind === 'offline') {
     const seen = row.lastSeenMs;
@@ -81,8 +84,8 @@ export function StageAgentRow({
       testID="home-stage-agents"
       horizontal
       showsHorizontalScrollIndicator={false}
-      style={styles.row}
-      contentContainerStyle={styles.chips}>
+      style={[styles.row, bleed.frame]}
+      contentContainerStyle={[styles.chips, bleed.content]}>
       {chips.map((chip) => (
         <StageAgentChipView
           key={chip.key}
@@ -187,7 +190,8 @@ function StageAgentChipView({
 
 const styles = StyleSheet.create({
   row: { height: ROW_HEIGHT, flexGrow: 0 },
-  chips: { paddingHorizontal: HOME_DOCK_OUTER_INSET, gap: 6, alignItems: 'center' },
+  // Horizontal padding is `HOME_DOCK_OUTER_INSET` plus any side bleed.
+  chips: { gap: 6, alignItems: 'center' },
   offline: {
     flexDirection: 'row',
     alignItems: 'center',

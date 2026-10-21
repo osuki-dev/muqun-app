@@ -10,12 +10,14 @@ import {
 } from '@osuki-dev/ui';
 import { useRouter } from 'expo-router';
 import { SearchIcon, CloseIcon } from '@/icons';
-import { useEffect, useRef, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   Platform,
   StyleSheet,
   View,
+  ScrollView,
+  type ScrollViewProps,
   type AccessibilityProps,
   type LayoutChangeEvent,
   type StyleProp,
@@ -32,7 +34,12 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useMeasuredSideInsets } from '@/hooks/use-side-insets';
+import {
+  NO_SIDE_INSETS,
+  SideBleedProvider,
+  type SideInsets,
+  useMeasuredSideInsets,
+} from '@/hooks/use-side-insets';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 
 import { AGENT_TYPE } from '@/constants/agent-type';
@@ -183,6 +190,7 @@ export function SheetScene({
   header,
   contentSized = false,
   fitsContent = false,
+  sideInContent = false,
   children,
 }: {
   testID?: string;
@@ -215,6 +223,13 @@ export function SheetScene({
    * and the footer `contentSized`.
    */
   fitsContent?: boolean;
+  /**
+   * The scene's scroller pads its own content for the side safe areas (with
+   * `useSheetSceneSidePadding`) instead of the scene padding the column. For
+   * a sheet whose horizontal rows should run under a side status bar to the
+   * sheet's edge: a scroller inside a padded column would clip them.
+   */
+  sideInContent?: boolean;
   children: ReactNode;
 }) {
   const fullscreen = useSheetIsFullscreen();
@@ -229,10 +244,21 @@ export function SheetScene({
   // the frosted ground still reaches the sheet's edge. A centred Pad card
   // overlaps nothing and keeps its gutter.
   const side = useMeasuredSideInsets();
-  const sideStyle = { paddingLeft: side.left, paddingRight: side.right };
+  const sidePadding = { paddingLeft: side.left, paddingRight: side.right };
+  const sideStyle = sideInContent ? undefined : sidePadding;
+  // Its horizontal rows run back out under the status bar to the sheet's edge.
+  const sideBleed = { left: side.left, right: side.right };
   const scene = (
     <>
-      <View style={[styles.fixedTop, { paddingTop: SHEET_LADDER.gap + top }]}>
+      <View
+        style={[
+          styles.fixedTop,
+          { paddingTop: SHEET_LADDER.gap + top },
+          sideInContent && {
+            paddingLeft: SHEET_LADDER.gutter + side.left,
+            paddingRight: SHEET_LADDER.gutter + side.right,
+          },
+        ]}>
         <SheetHandle />
         <SheetSceneHeading
           title={title}
@@ -263,18 +289,48 @@ export function SheetScene({
       overdrawBottom={sized ? CONTENT_SIZED_OVERDRAW : 0}>
       {fitsContent ? (
         <SheetSceneFitColumn style={sideStyle} onLayout={side.onLayout}>
-          {scene}
+          <SheetSceneSideContext.Provider value={sideInContent ? sideBleed : NO_SIDE_INSETS}>
+            <SideBleedProvider value={sideBleed}>{scene}</SideBleedProvider>
+          </SheetSceneSideContext.Provider>
         </SheetSceneFitColumn>
       ) : (
         <View
           collapsable={false}
           onLayout={side.onLayout}
           style={[contentSized ? undefined : styles.scene, sideStyle]}>
-          {scene}
+          <SheetSceneSideContext.Provider value={sideInContent ? sideBleed : NO_SIDE_INSETS}>
+            <SideBleedProvider value={sideBleed}>{scene}</SideBleedProvider>
+          </SheetSceneSideContext.Provider>
         </View>
       )}
     </SheetFrame>
   );
+}
+
+const SheetSceneSideContext = createContext<SideInsets>(NO_SIDE_INSETS);
+
+/**
+ * For the scroller of a `sideInContent` scene: its content's horizontal
+ * padding, `gutter` from the side safe areas. Without `sideInContent` the
+ * scene already padded the column, and this is just the gutter.
+ */
+export function useSheetSceneSidePadding(gutter = 0) {
+  const side = useContext(SheetSceneSideContext);
+  return { paddingLeft: gutter + side.left, paddingRight: gutter + side.right };
+}
+
+/**
+ * The vertical scroller of a `sideInContent` scene: full width, so the rows in
+ * it can run to the sheet's edge, with its content padded `gutter` from the
+ * side safe areas. `gutter` replaces the content's own horizontal padding.
+ */
+export function SheetSceneScrollView({
+  contentContainerStyle,
+  gutter = 0,
+  ...props
+}: ScrollViewProps & { gutter?: number }) {
+  const padding = useSheetSceneSidePadding(gutter);
+  return <ScrollView {...props} contentContainerStyle={[contentContainerStyle, padding]} />;
 }
 
 /**

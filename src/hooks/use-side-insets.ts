@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { createContext, useContext, useState } from 'react';
 import { type LayoutChangeEvent, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export type SideInsets = { left: number; right: number };
+
+/** No side insets: every portrait iPhone but the Duo. */
+export const NO_SIDE_INSETS: SideInsets = Object.freeze({ left: 0, right: 0 });
 
 /**
  * The left and right safe-area insets, for content anchored to a screen edge.
@@ -59,5 +62,31 @@ export function sideOverlap(
   return {
     left: Math.max(0, insets.left - frame.x),
     right: Math.max(0, frame.x + frame.width - (windowWidth - insets.right)),
+  };
+}
+
+/**
+ * How far the column a horizontal row sits in has been padded in from the
+ * glass for the side safe areas. Set by the containers that pad for them
+ * (sheets, Home's pages, Stage's foot, the docks); zero everywhere else.
+ */
+const SideBleedContext = createContext<SideInsets>(NO_SIDE_INSETS);
+
+export const SideBleedProvider = SideBleedContext.Provider;
+
+/**
+ * For a horizontal row inside such a column: its frame reaches back out to the
+ * glass and its content pads back in, so the first and last items rest clear
+ * of a side status bar (iPhone Duo) while the rest slide under it and off the
+ * screen edge, the way a scroll view runs under the notch in landscape.
+ * `gutter` is the row's own horizontal content padding, which this replaces;
+ * with no side inset both come out exactly as the row had them.
+ */
+export function useSideBleed(gutter = 0) {
+  const bleed = useContext(SideBleedContext);
+  return {
+    active: bleed.left > 0 || bleed.right > 0,
+    frame: { marginLeft: -bleed.left, marginRight: -bleed.right },
+    content: { paddingLeft: gutter + bleed.left, paddingRight: gutter + bleed.right },
   };
 }

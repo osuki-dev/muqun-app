@@ -1,9 +1,8 @@
 import { useLingui } from '@lingui/react/macro';
-import { ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { SettingsAppearance } from '@/components/settings-appearance';
-import { SheetScene, SheetSceneFooter } from '@/components/sheet-scene';
+import { SheetScene, SheetSceneFooter, SheetSceneScrollView } from '@/components/sheet-scene';
 
 /** Appearance settings uses the same native sheet as the other settings panels. */
 export default function SettingsAppearanceScreen() {
@@ -11,15 +10,16 @@ export default function SettingsAppearanceScreen() {
   const insets = useSafeAreaInsets();
 
   return (
-    <SheetScene testID="settings-appearance-sheet" title={t`Appearance`}>
-      <ScrollView
+    // The app icons run under a side status bar (iPhone Duo) to the sheet's edge.
+    <SheetScene testID="settings-appearance-sheet" title={t`Appearance`} sideInContent>
+      <SheetSceneScrollView
         contentInsetAdjustmentBehavior="never"
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag">
         <SettingsAppearance />
         <SheetSceneFooter bottomInset={insets.bottom} />
-      </ScrollView>
+      </SheetSceneScrollView>
     </SheetScene>
   );
 }

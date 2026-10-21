@@ -1004,7 +1004,13 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
       horizontal
       keyboardShouldPersistTaps="always"
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.keyList}>
+      // Runs under a side status bar (iPhone Duo) to the glass, resting clear
+      // of it; the keyboard toggle holds the leading edge.
+      style={{ marginRight: -insets.right }}
+      contentContainerStyle={[
+        styles.keyList,
+        { paddingRight: styles.keyList.paddingHorizontal + insets.right },
+      ]}>
       {keys.map((item) => (
         <TerminalKeyChip
           key={item.key}

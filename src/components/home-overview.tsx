@@ -66,7 +66,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { sideInsetPadding } from '@/hooks/use-side-insets';
+import { NO_SIDE_INSETS, SideBleedProvider, sideInsetPadding } from '@/hooks/use-side-insets';
 
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
@@ -1660,10 +1660,17 @@ export function HomeOverview({
         {padLaunch ? null : dock}
       </View>
     );
+    // Horizontal rows on the page run under a side status bar to the glass.
+    // The wide Pad cover's rows stand in its columns and keep their edges.
+    const editorialPage = (
+      <SideBleedProvider value={padLaunch ? NO_SIDE_INSETS : sideInsets}>
+        {editorialContent}
+      </SideBleedProvider>
+    );
     return embedded ? (
-      editorialContent
+      editorialPage
     ) : (
-      <AppDrawer wallpaperEffectsEnabled={!hasScene}>{editorialContent}</AppDrawer>
+      <AppDrawer wallpaperEffectsEnabled={!hasScene}>{editorialPage}</AppDrawer>
     );
   }
 
@@ -2281,10 +2288,11 @@ export function HomeOverview({
       {dock}
     </View>
   );
+  const classicPage = <SideBleedProvider value={sideInsets}>{classicContent}</SideBleedProvider>;
   return embedded ? (
-    classicContent
+    classicPage
   ) : (
-    <AppDrawer wallpaperEffectsEnabled={!hasScene}>{classicContent}</AppDrawer>
+    <AppDrawer wallpaperEffectsEnabled={!hasScene}>{classicPage}</AppDrawer>
   );
 }
 

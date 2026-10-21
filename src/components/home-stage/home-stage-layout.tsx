@@ -1,4 +1,9 @@
-import { sideInsetPadding, type SideInsets } from '@/hooks/use-side-insets';
+import {
+  NO_SIDE_INSETS,
+  SideBleedProvider,
+  sideInsetPadding,
+  type SideInsets,
+} from '@/hooks/use-side-insets';
 import { plural } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
@@ -103,7 +108,6 @@ export type HomeStageLayoutProps = {
   onViewport: (height: number) => void;
 };
 
-const NO_SIDE_INSETS: SideInsets = { left: 0, right: 0 };
 /** The HUD's margin from the safe edges. */
 const HUD_GUTTER = 20;
 
@@ -462,44 +466,46 @@ export function HomeStageLayout({
         pointerEvents="box-none"
         style={[styles.bottom, sideInsetPadding(sideInsets), footStyle]}
         onLayout={(event) => setFootStack(Math.round(event.nativeEvent.layout.height))}>
-        {emptyState ? <View style={styles.empty}>{emptyState}</View> : null}
-        {panels.length > 0 ? (
-          <StageAgentRow
-            panel={selected}
-            paused={paused || listOpen}
-            onOpenAgent={(chip) => opener.open(() => onOpenAgent(selectedIndex, chip.paneId))}
-          />
-        ) : null}
-        {panels.length > 0 ? (
-          <GestureDetector gesture={pull}>
-            <View>
-              <PressableScale
-                testID="home-stage-pull"
-                accessibilityRole="button"
-                accessibilityLabel={hasAttention ? t`All sessions, needs you` : t`All sessions`}
-                onPress={() => openList(true)}
-                style={styles.handleRow}>
-                <HomeSheetGrabber />
-                {hasAttention ? (
-                  <Text variant="caption" weight="semibold" color={theme.colors.warning}>
-                    {t`Needs you`}
-                  </Text>
-                ) : null}
-              </PressableScale>
-              <StageSessionStrip
-                serverId={selected?.serverId}
-                selectedIndex={selectedIndex}
-                panelCount={panels.length}
-                sessions={sessions}
-                threadKey={threadKey}
-                onClearThread={onClearThread}
-                onOpenSession={onOpenSession}
-                onSessionActions={onReplySession ? replyToCard : undefined}
-                onOpenAll={() => openList(true)}
-              />
-            </View>
-          </GestureDetector>
-        ) : null}
+        <SideBleedProvider value={sideInsets}>
+          {emptyState ? <View style={styles.empty}>{emptyState}</View> : null}
+          {panels.length > 0 ? (
+            <StageAgentRow
+              panel={selected}
+              paused={paused || listOpen}
+              onOpenAgent={(chip) => opener.open(() => onOpenAgent(selectedIndex, chip.paneId))}
+            />
+          ) : null}
+          {panels.length > 0 ? (
+            <GestureDetector gesture={pull}>
+              <View>
+                <PressableScale
+                  testID="home-stage-pull"
+                  accessibilityRole="button"
+                  accessibilityLabel={hasAttention ? t`All sessions, needs you` : t`All sessions`}
+                  onPress={() => openList(true)}
+                  style={styles.handleRow}>
+                  <HomeSheetGrabber />
+                  {hasAttention ? (
+                    <Text variant="caption" weight="semibold" color={theme.colors.warning}>
+                      {t`Needs you`}
+                    </Text>
+                  ) : null}
+                </PressableScale>
+                <StageSessionStrip
+                  serverId={selected?.serverId}
+                  selectedIndex={selectedIndex}
+                  panelCount={panels.length}
+                  sessions={sessions}
+                  threadKey={threadKey}
+                  onClearThread={onClearThread}
+                  onOpenSession={onOpenSession}
+                  onSessionActions={onReplySession ? replyToCard : undefined}
+                  onOpenAll={() => openList(true)}
+                />
+              </View>
+            </GestureDetector>
+          ) : null}
+        </SideBleedProvider>
       </Animated.View>
 
       {/* The full list, pulled up over the stage: the existing list UI. */}
