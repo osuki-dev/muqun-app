@@ -59,6 +59,7 @@ import type { StageComposition, StageLayer } from '@/lib/home-stage-layers';
 import { useSharedSkiaImage } from '@/lib/skia-image-cache';
 import { useAppSettings } from '@/stores/app-settings';
 import {
+  lowestStageQuality,
   stageEffects,
   STAGE_TILT_DEADBAND,
   STAGE_TILT_WAKE,
@@ -80,6 +81,9 @@ const HERO_MAX_EDGE = 1536;
 const BASE_MAX_EDGE = 1024;
 /** The camera's flight into the front pane before its workspace opens. */
 const DIVE_MS = 520;
+
+/** The lowest quality rung the stage has stepped down to this session; never raised. */
+const session: { quality: StageQuality } = { quality: 'full' };
 
 export type StageViewProps = {
   panels: readonly StagePanel[];
@@ -128,7 +132,12 @@ export function StageView({
   const reducedMotion = useReducedMotion();
   const window = useWindowDimensions();
   const [size, setSize] = useState({ width: 0, height: 0 });
-  const [quality, setQuality] = useState<StageQuality>('full');
+  // A rung the stage stepped down to holds for the rest of the session.
+  const [quality, setQuality] = useState<StageQuality>(() => session.quality);
+  const lowered = useStableHandler((next: StageQuality) => {
+    session.quality = lowestStageQuality(session.quality, next);
+    setQuality(session.quality);
+  });
   const [failed, setFailed] = useState(false);
   const [diving, setDiving] = useState(false);
   const [hints, setHints] = useState(() => !hasSeenStageHints());
@@ -338,7 +347,7 @@ export function StageView({
                 paused={paused}
                 inputs={inputs}
                 bridge={bridge}
-                onQualityDrop={setQuality}
+                onQualityDrop={lowered}
                 onError={() => setFailed(true)}
               />
             </Suspense>
