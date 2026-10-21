@@ -6,7 +6,11 @@ import { ControlsIcon } from '@/icons';
 import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { AppState, StyleSheet, View } from 'react-native';
 
-import { AgentComposer, type DraftInjector } from '@/components/agent-composer';
+import {
+  AgentComposer,
+  type ComposerDraftMemory,
+  type DraftInjector,
+} from '@/components/agent-composer';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import type { HomeLaunchController } from '@/components/home-launch-actions';
 import type { DockAutoHide } from '@/hooks/use-dock-auto-hide';
@@ -156,6 +160,19 @@ const NO_SKILLS: AgentCatalog['skills'] = [];
 const REFUSAL_SESSIONS_READ = 30;
 /** How long Send waits on the target's links before sending without mentions. */
 const MENTIONS_READ_TIMEOUT_MS = 2_000;
+
+/**
+ * Home's unsent text, outside the dock. The phone page and the Pad page each
+ * mount their own dock, and unfolding iPhone Duo (or resizing a window across
+ * the Pad width) swaps one for the other mid-sentence.
+ */
+let homeDockDraft = '';
+const HOME_DOCK_DRAFT: ComposerDraftMemory = {
+  read: () => homeDockDraft,
+  write: (text) => {
+    homeDockDraft = text;
+  },
+};
 
 export function HomeComposerDock({
   revealed,
@@ -1952,6 +1969,7 @@ export function HomeComposerDock({
       onInvokeSkill={invokeSkill}
       onClientCommand={clientCommand}
       injectDraftRef={injectDraftRef}
+      draftMemory={HOME_DOCK_DRAFT}
       clearDraftRef={clearDraftRef}
       holdStagedAttachments={holdStagedFiles}
     />

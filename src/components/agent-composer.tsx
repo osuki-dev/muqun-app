@@ -353,6 +353,9 @@ const SessionChip = memo(function SessionChip({
   );
 });
 
+/** See `AgentComposerProps.draftMemory`. */
+export type ComposerDraftMemory = { read: () => string; write: (text: string) => void };
+
 /** See `AgentComposerProps.injectDraftRef`. */
 export type DraftInjector = (
   text: string,
@@ -509,6 +512,12 @@ export interface AgentComposerProps {
    */
   injectDraftRef?: React.MutableRefObject<DraftInjector | null>;
   draftOwnerKey?: string;
+  /**
+   * Keeps the typed text across a remount of this composer: read once when it
+   * mounts, written as it changes. Home passes one, because unfolding iPhone
+   * Duo swaps the phone page for the Pad one and with it the dock.
+   */
+  draftMemory?: ComposerDraftMemory;
   /**
    * Empties the field, files included, if it still holds `text` -- what a
    * send from elsewhere (Home's failed row) just delivered.
@@ -688,6 +697,7 @@ export const AgentComposer = memo(function AgentComposer({
   onPressTokens,
   injectDraftRef,
   draftOwnerKey,
+  draftMemory,
   clearDraftRef,
   holdStagedAttachments,
   onDockHeight,
@@ -747,7 +757,13 @@ export const AgentComposer = memo(function AgentComposer({
    * out would let the mono family underneath stand.
    */
   const interfaceFontFamily = useInterfaceFontFamily() ?? undefined;
-  const { text, setText, appendAnswer } = useQuestionComposerDraft(draftOwnerKey ?? 'shared');
+  const { text, setText, appendAnswer } = useQuestionComposerDraft(
+    draftOwnerKey ?? 'shared',
+    draftMemory?.read
+  );
+  useEffect(() => {
+    draftMemory?.write(text);
+  }, [draftMemory, text]);
   /**
    * One answer to "what is this agent called", for the chip strip and the
    * action row alike. The catalogue's name when the host publishes one, the id

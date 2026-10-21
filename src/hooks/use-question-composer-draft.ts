@@ -6,8 +6,11 @@ import {
   type QuestionComposerDraft,
 } from '@/lib/agent-question-drafts';
 
-export function useQuestionComposerDraft(owner: string) {
-  const [draft, setDraft] = useState<QuestionComposerDraft>({ text: '', original: '' });
+export function useQuestionComposerDraft(owner: string, initialText?: () => string) {
+  const [draft, setDraft] = useState<QuestionComposerDraft>(() => {
+    const text = initialText?.() ?? '';
+    return { text, original: text };
+  });
   const text = questionComposerText(draft, owner);
   useEffect(() => {
     setDraft((previous) =>
