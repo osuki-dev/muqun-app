@@ -1,23 +1,18 @@
 import { describe, expect, test } from 'bun:test';
 
-import type { AgentSessionSnapshot, TimelineItem } from '@/lib/agent-protocol';
 import type { HomeContinueEntry } from '@/lib/home-continue';
 import {
   applyHomeThreadEvent,
   EMPTY_HOME_THREAD_LIVE,
-  homeThreadBarView,
   homeThreadEnded,
-  homeThreadLiveFromSnapshot,
   homeThreadPaneAnswers,
   homeThreadPanePolls,
-  homeThreadRow2,
   homeThreadResolved,
   homeThreadSendPlan,
   homeThreadState,
   homeThreadTargetFromEntry,
   homeThreadTargetFromTask,
   homeThreadTask,
-  homeThreadTurns,
   parseHomeThreads,
   type HomeThreadPane,
   type HomeThreadSession,
@@ -56,22 +51,6 @@ function task(overrides: Partial<TaskView>): TaskView {
     updatedMs: 1,
     ...overrides,
   };
-}
-
-function text(id: string, role: 'user' | 'assistant', body: string, order = id): TimelineItem {
-  return {
-    id,
-    message_id: order,
-    role,
-    ordinal: 0,
-    part: { type: 'text', text: body },
-    seq: 1,
-    updated_ms: 1,
-  };
-}
-
-function snapshot(overrides: Partial<AgentSessionSnapshot>): AgentSessionSnapshot {
-  return { info: null, timeline: [], permissions: [], forms: [], inbox: [], seq: 0, ...overrides };
 }
 
 describe('what Send does', () => {
@@ -289,38 +268,6 @@ describe('when a conversation has ended', () => {
 });
 
 describe('the live strip', () => {
-  test('shows the reader’s last message and the reply after it, as it streams', () => {
-    let live = homeThreadLiveFromSnapshot(
-      snapshot({
-        timeline: [text('u1', 'user', 'first', 'm1'), text('a1', 'assistant', 'answer one', 'm2')],
-      })
-    );
-    expect(homeThreadTurns(live)).toEqual({
-      mine: { id: 'u1', text: 'first' },
-      reply: { id: 'a1', text: 'answer one' },
-    });
-    live = applyHomeThreadEvent(live, {
-      type: 'agent.timeline.upsert',
-      asid: 's',
-      seq: 2,
-      items: [text('u2', 'user', 'second', 'm3')],
-    });
-    expect(homeThreadTurns(live)).toEqual({ mine: { id: 'u2', text: 'second' } });
-    live = applyHomeThreadEvent(live, {
-      type: 'agent.timeline.upsert',
-      asid: 's',
-      seq: 3,
-      items: [text('a2', 'assistant', 'part', 'm4')],
-    });
-    live = applyHomeThreadEvent(live, {
-      type: 'agent.timeline.upsert',
-      asid: 's',
-      seq: 4,
-      items: [text('a2', 'assistant', 'partial reply', 'm4')],
-    });
-    expect(homeThreadTurns(live).reply).toEqual({ id: 'a2', text: 'partial reply' });
-  });
-
   test('requests come and go with their events', () => {
     const request = {
       id: 'perm',
@@ -360,55 +307,8 @@ describe('the live strip', () => {
   });
 });
 
-describe('the reply bar after a send', () => {
+describe('a pane after a send', () => {
   const sent = { lastSent: 'Now reply PONG', sentAtMs: 1_000 };
-
-  test('a session shows "sent" until the transcript has the message, then only what came after', () => {
-    const target = { ...SESSION, ...sent };
-    const at = { target, nowMs: 2_000, state: 'idle' as const };
-    expect(homeThreadRow2({ ...at, turns: { mine: 'Reply PING', reply: 'PING' } })).toEqual({
-      kind: 'sent',
-    });
-    expect(homeThreadRow2({ ...at, turns: { mine: 'Now reply PONG' } })).toEqual({ kind: 'none' });
-    expect(homeThreadRow2({ ...at, turns: { mine: 'Now reply PONG', reply: 'PONG' } })).toEqual({
-      kind: 'line',
-      text: 'PONG',
-      source: 'reply',
-    });
-  });
-
-  test('a pane never shows the previous answer as current; the reply under the new message shows', () => {
-    const target = { ...PANE, ...sent };
-    const at = { target, nowMs: 2_000, state: 'idle' as const };
-    expect(homeThreadRow2({ ...at, live: { paneLine: 'PING', panePrompt: 'Reply PING' } })).toEqual(
-      { kind: 'sent' }
-    );
-    expect(
-      homeThreadRow2({ ...at, live: { paneLine: 'PONG', panePrompt: 'Now reply PONG' } })
-    ).toEqual({ kind: 'line', text: 'PONG', source: 'pane' });
-    // A settled task's summary is from before the send until the window passes.
-    expect(homeThreadRow2({ ...at, task: { state: 'done', summary: 'PING' } })).toEqual({
-      kind: 'sent',
-    });
-    // Long after, whatever the pane shows is what there is.
-    expect(
-      homeThreadRow2({ ...at, nowMs: 1_000 + 11 * 60_000, live: { paneLine: 'PING' } })
-    ).toEqual({ kind: 'line', text: 'PING', source: 'pane' });
-  });
-
-  test('reported progress shows while working; nothing sent shows the line as before', () => {
-    expect(
-      homeThreadRow2({
-        target: { ...PANE, ...sent },
-        nowMs: 2_000,
-        state: 'working',
-        task: { state: 'working', progress: 'editing 2 files' },
-      })
-    ).toEqual({ kind: 'line', text: 'editing 2 files', source: 'progress' });
-    expect(
-      homeThreadRow2({ target: PANE, nowMs: 2_000, state: 'idle', live: { paneLine: 'Hi' } })
-    ).toEqual({ kind: 'line', text: 'Hi', source: 'pane' });
-  });
 
   test('the pane prompt is matched by its beginning, wrapped or cut', () => {
     expect(homeThreadPaneAnswers('now reply  pong', 'Now reply PONG')).toBe(true);
@@ -446,59 +346,5 @@ describe('the reply bar after a send', () => {
 
   test("the pane's own screen at work counts as working", () => {
     expect(homeThreadState({ pane: { status: 'idle', busy: true } })).toBe('working');
-  });
-});
-
-describe('homeThreadBarView', () => {
-  const at = {
-    named: true,
-    loading: false,
-    stateFromRead: true,
-    line: false,
-    notice: false,
-    held: false,
-  };
-
-  test('a switch keeps a drawn bar up with a placeholder until the read is back', () => {
-    const switching = homeThreadBarView({ ...at, loading: true, held: true });
-    expect(switching).toEqual({ shown: true, placeholder: true, pendingState: true, drawn: true });
-    // Back with nothing to say: the card above names it, so the bar goes.
-    expect(homeThreadBarView({ ...at, held: true }).shown).toBe(false);
-    // Back with a reply: the line replaces the placeholder.
-    expect(homeThreadBarView({ ...at, held: true, line: true })).toMatchObject({
-      shown: true,
-      placeholder: false,
-      pendingState: false,
-    });
-  });
-
-  test('a slot that was empty is not filled with a placeholder', () => {
-    expect(homeThreadBarView({ ...at, loading: true })).toMatchObject({
-      shown: false,
-      placeholder: false,
-      drawn: false,
-    });
-    const unnamed = homeThreadBarView({ ...at, named: false, loading: true });
-    expect(unnamed).toMatchObject({ shown: true, placeholder: false, drawn: false });
-  });
-
-  test('a notice shows at once and needs no placeholder', () => {
-    expect(homeThreadBarView({ ...at, loading: true, held: true, notice: true })).toMatchObject({
-      shown: true,
-      placeholder: false,
-    });
-  });
-
-  test('a state another source speaks for is not pending', () => {
-    expect(
-      homeThreadBarView({ ...at, loading: true, held: true, stateFromRead: false }).pendingState
-    ).toBe(false);
-  });
-
-  test('without the card the bar holds row 2, not itself', () => {
-    const unnamed = { ...at, named: false };
-    expect(homeThreadBarView({ ...unnamed, held: true }).drawn).toBe(false);
-    expect(homeThreadBarView({ ...unnamed, line: true }).drawn).toBe(true);
-    expect(homeThreadBarView({ ...unnamed, loading: true, held: true }).drawn).toBe(true);
   });
 });

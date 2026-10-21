@@ -113,7 +113,12 @@ import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useHomeComposerSheet } from '@/stores/home-composer-sheet';
 import { markHomeComposerRevealed } from '@/lib/home-first-entry';
 import { appChrome } from '@/constants/appearance';
-import { HomeThreadBar, HomeThreadFeed, type HomeThreadUnsure } from '@/components/home-thread';
+import { HomeThreadFeed, type HomeThreadUnsure } from '@/components/home-thread';
+import {
+  HomeReplyDrawer,
+  HomeReplyGrabber,
+  useHomeReplyDrawer,
+} from '@/components/home-reply-drawer';
 import { useAppActive } from '@/hooks/use-app-active';
 import { agentDisplayName } from '@/lib/home-launch-model';
 import {
@@ -165,7 +170,7 @@ export function HomeComposerDock({
   onDockHeight,
   onOpenAgent,
   onOpenThread,
-  threadOnCard = false,
+  drawerMaxWidth,
 }: {
   revealed: boolean;
   controller: HomeLaunchController;
@@ -192,8 +197,8 @@ export function HomeComposerDock({
   ) => Promise<HomeCommandResult>;
   /** Opens the dock's conversation in full: its session or its pane. */
   onOpenThread?: (target: HomeThreadTarget) => void;
-  /** Stage: the conversation is named and cleared on its card; the bar only reports. */
-  threadOnCard?: boolean;
+  /** A Pad's reply drawer is a card no wider than this, centred on the dock. */
+  drawerMaxWidth?: number;
 }) {
   const { t } = useLingui();
   useEffect(() => {
@@ -409,8 +414,21 @@ export function HomeComposerDock({
   /** A follow-up whose delivery could not be confirmed: kept, never resent by itself. */
   const [unsure, setUnsure] = useState<HomeThreadUnsure | null>(null);
   const visibleUnsure = unsure && unsure.key === threadKey ? unsure : null;
-  /** Whether the reply bar is drawn: on Stage it hides when it has nothing to say. */
-  const [replyBarShown, setReplyBarShown] = useState(true);
+  // The conversation's drawer, rising from behind the field: only for a
+  // session or a pane (a task that has not said where it runs has nothing to
+  // show yet), and only while Home is in front with the computer it is on.
+  const [dockClip, setDockClip] = useState(0);
+  const drawer = useHomeReplyDrawer({ clipHeight: dockClip, topInset });
+  const conversation = thread && thread.kind !== 'task' ? thread : undefined;
+  const drawerAllowed = Boolean(conversation) && focused && appActive;
+  const closeDrawer = drawer.close;
+  const drawerOpen = drawer.open;
+  const drawerKey = useRef(threadKey);
+  useEffect(() => {
+    const changed = drawerKey.current !== threadKey;
+    drawerKey.current = threadKey;
+    if (drawerOpen && (changed || !drawerAllowed)) closeDrawer();
+  }, [threadKey, drawerAllowed, drawerOpen, closeDrawer]);
   // A gateway that takes the delivery by name lets the reader's pick decide
   // how a goal is carried: the provider's session entry sends a session
   // task, its terminal entry a pane task, each only where that provider
@@ -1643,25 +1661,79 @@ export function HomeComposerDock({
     setError(null);
   };
   const openThread =
-    thread && onOpenThread && thread.kind !== 'task' ? () => onOpenThread(thread) : undefined;
-  // The reply bar, joined to the field's top: where the next message goes.
-  const replyBar = thread ? (
+    conversation && onOpenThread
+      ? () => {
+          closeDrawer();
+          onOpenThread(conversation);
+        }
+      : undefined;
+  // The target's feed, and on top of the field the grabber that shows its
+  // conversation: where the next message goes is the placeholder's to say.
+  const replyGrabber = thread ? (
     <>
       <HomeThreadFeed target={thread} enabled={focused && appActive && ready && selected} />
-      <HomeThreadBar
-        target={thread}
-        offline={target.kind !== 'ready'}
-        unsure={visibleUnsure}
-        onOpen={openThread}
-        onClear={clearThread}
-        onRetry={retryUnsure}
-        named={threadOnCard}
-        onShown={setReplyBarShown}
-      />
+      {conversation ? (
+        <HomeReplyGrabber target={conversation} controller={drawer} onOpenFull={openThread} />
+      ) : null}
     </>
   ) : undefined;
+  const replyDrawer =
+    conversation && drawer.mounted ? (
+      <HomeReplyDrawer
+        target={conversation}
+        controller={drawer}
+        agentName={threadAgentName}
+        offline={target.kind !== 'ready'}
+        bleed={outerInsets?.horizontal ?? 0}
+        maxWidth={drawerMaxWidth}
+        onOpenFull={openThread}
+        onNewConversation={clearThread}
+      />
+    ) : null;
   const bar = (
     <View>
+      {visibleUnsure ? (
+        <View
+          style={[
+            styles.error,
+            styles.unsure,
+            {
+              backgroundColor: background(theme.colors.surface),
+              borderRadius: profile.chrome.noticeBanner,
+            },
+          ]}>
+          <Text
+            testID="home-thread-unsure"
+            variant="caption"
+            color={theme.colors.warning}
+            accessibilityLiveRegion="polite"
+            style={styles.unsureText}>
+            {t`Not sure it was delivered`}
+          </Text>
+          <PressableScale
+            testID="home-thread-retry"
+            accessibilityRole="button"
+            accessibilityLabel={t`Retry`}
+            hitSlop={6}
+            onPress={retryUnsure}>
+            <Text variant="caption" weight="semibold" color={theme.colors.primary}>
+              {t`Retry`}
+            </Text>
+          </PressableScale>
+          {conversation ? (
+            <PressableScale
+              testID="home-thread-unsure-show"
+              accessibilityRole="button"
+              accessibilityLabel={t`Show conversation`}
+              hitSlop={6}
+              onPress={drawer.show}>
+              <Text variant="caption" weight="semibold" color={theme.colors.primary}>
+                {t`Show`}
+              </Text>
+            </PressableScale>
+          ) : null}
+        </View>
+      ) : null}
       {visibleUnknownDelivery ? (
         <PressableScale
           testID="home-composer-check-delivery"
@@ -1761,8 +1833,10 @@ export function HomeComposerDock({
     <AgentComposer
       revealed={revealed}
       accessory={bar}
-      fieldHeader={replyBar}
-      fieldHeaderShown={replyBarShown}
+      fieldHeader={replyGrabber}
+      fieldHeaderShown={false}
+      dockUnderlay={replyDrawer}
+      pinDock={drawer.open}
       fieldBackground={
         <>
           <HomeComposerBackground />
@@ -1849,7 +1923,10 @@ export function HomeComposerDock({
         if (focused) setOptionsOpen(false);
         onFieldFocus?.(focused);
       }}
-      onDockHeight={onDockHeight}
+      onDockHeight={(height, clipHeight) => {
+        setDockClip(clipHeight);
+        onDockHeight?.(height, clipHeight);
+      }}
       onSend={sendPrompt}
       onAbort={async () => {}}
       onSelectAgentMode={selectMode}
@@ -1894,4 +1971,6 @@ function holdStagedFiles(reason: 'blur' | 'switch'): boolean {
 
 const styles = StyleSheet.create({
   error: { padding: 8, marginBottom: 4, width: '100%' },
+  unsure: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 12 },
+  unsureText: { flexShrink: 1 },
 });
