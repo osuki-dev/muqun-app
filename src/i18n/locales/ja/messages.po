@@ -6299,10 +6299,6 @@ msgstr "新しい {0} を起動"
 msgid "Start a new session with empty context"
 msgstr "空のコンテキストで新しいセッションを開始します"
 
-#: src/components/home-stage/stage-view.tsx
-msgid "Start a new task"
-msgstr "新しいタスクを開始"
-
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
 msgid "Start a session with a clean context"
@@ -6576,10 +6572,6 @@ msgstr "タブ"
 #: src/components/attachment-menu.tsx
 msgid "Take photo"
 msgstr "写真を撮る"
-
-#: src/components/home-stage/stage-view.tsx
-msgid "Tap · start a new task"
-msgstr "タップ · 新しいタスク"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Tap again to clear"

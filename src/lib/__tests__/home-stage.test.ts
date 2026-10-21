@@ -6,9 +6,9 @@ import {
   stageDiveCamera,
   stageDragPosition,
   stageHeroPlacement,
-  stageHostTarget,
   stageIdleDrift,
   stageLayerCentre,
+  stageOverlayBand,
   stagePaintingPlacement,
   stageSwipePan,
   stageSwipeTarget,
@@ -353,37 +353,46 @@ describe('theme layout', () => {
     expect(framed.edges).toEqual({ x: 0.22, y: 0.32 });
   });
 
-  test('every role has a new-task target below the HUD and above the foot rows', () => {
+  test("the overlay band sits under the HUD and a figure's face, over the foot rows", () => {
     for (const viewport of PHONES) {
-      const targets = [
-        stageHostTarget(
-          { kind: 'hero', placement: stageHeroPlacement(hero(), viewport) },
-          viewport
-        ),
-        stageHostTarget(
-          {
-            kind: 'hero',
-            placement: stageHeroPlacement(hero({ box: 'standard', feather: 'inset' }), viewport),
-          },
-          viewport
-        ),
-        stageHostTarget(
-          {
-            kind: 'painting',
-            placement: stagePaintingPlacement({ aspect: 1, fit: 'cover', focal: centre }, viewport),
-          },
-          viewport
-        ),
-        stageHostTarget(null, viewport),
+      const figure = stageHeroPlacement(hero(), viewport);
+      const bands = [
+        { band: stageOverlayBand({ kind: 'hero', placement: figure }, viewport), plane: figure },
+        {
+          band: stageOverlayBand(
+            {
+              kind: 'hero',
+              placement: stageHeroPlacement(hero({ box: 'standard', feather: 'inset' }), viewport),
+            },
+            viewport
+          ),
+          plane: null,
+        },
+        {
+          band: stageOverlayBand(
+            {
+              kind: 'painting',
+              placement: stagePaintingPlacement(
+                { aspect: 1, fit: 'cover', focal: centre },
+                viewport
+              ),
+            },
+            viewport
+          ),
+          plane: null,
+        },
+        { band: stageOverlayBand(null, viewport), plane: null },
       ];
-      for (const { rect, hint } of targets) {
-        expect(rect.width).toBeGreaterThan(80);
-        expect(rect.height).toBeGreaterThan(120);
-        expect(rect.y).toBeGreaterThanOrEqual(hudBottom(viewport));
-        expect(rect.y + rect.height).toBeLessThanOrEqual(viewport.floor);
-        // The hint chip hangs above its point: the point stays clear of the HUD.
-        expect(hint.y).toBeGreaterThanOrEqual(hudBottom(viewport) + 44);
-        expect(hint.y).toBeLessThanOrEqual(rect.y + rect.height);
+      for (const { band, plane } of bands) {
+        expect(band.top).toBeGreaterThan(hudBottom(viewport));
+        expect(band.bottom).toBeLessThan(viewport.floor);
+        // Room for a two-line card with its actions.
+        expect(band.bottom - band.top).toBeGreaterThanOrEqual(120);
+        if (plane) {
+          // Clear of the head: well into the figure's visible body.
+          const shown = Math.max(plane.plane.y, hudBottom(viewport));
+          expect(band.top).toBeGreaterThan(shown + (viewport.floor - shown) * 0.3);
+        }
       }
     }
   });

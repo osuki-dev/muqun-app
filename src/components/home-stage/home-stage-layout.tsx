@@ -92,7 +92,6 @@ export type HomeStageLayoutProps = {
   onOpenAgent: (index: number, paneId?: string) => void;
   onOpenTasks: (index: number) => void;
   onOpenDetails: (index: number) => void;
-  onNewTask: () => void;
   onViewport: (height: number) => void;
 };
 
@@ -243,7 +242,6 @@ export function HomeStageLayout({
   onOpenAgent,
   onOpenTasks,
   onOpenDetails,
-  onNewTask,
   onViewport,
 }: HomeStageLayoutProps) {
   const { t } = useLingui();
@@ -352,7 +350,6 @@ export function HomeStageLayout({
         burst={burst}
         opener={opener}
         onSelect={onSelect}
-        onNewTask={onNewTask}
       />
 
       {/* Top: the chosen computer, its status and the dots; the tools on the right. */}

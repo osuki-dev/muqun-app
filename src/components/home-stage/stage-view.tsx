@@ -1,5 +1,4 @@
-import { useLingui } from '@lingui/react/macro';
-import { PressableScale, Text, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
 import { Image } from 'expo-image';
 import {
   Blur,
@@ -16,7 +15,7 @@ import {
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { Platform, StyleSheet, TurboModuleRegistry, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, {
+import {
   SensorType,
   useAnimatedReaction,
   useAnimatedSensor,
@@ -29,19 +28,18 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { MapErrorBoundary } from '@/components/computer-map/error-boundary';
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import { useStableHandler } from '@/hooks/use-render-refs';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useThemeRenderReady } from '@/hooks/use-theme-render-ready';
 import {
   stageDefaultFloor,
   stageHeroPlacement,
-  stageHostTarget,
+  stageOverlayBand,
   stagePaintingPlacement,
   stageSwipeTarget,
   type StageArtPlacement,
+  type StageOverlayBand,
   type StageViewport,
 } from '@/lib/home-stage-geometry';
 import { heroFeatherGeometry } from '@/lib/hero-feather';
-import { hasSeenStageHints, markStageHintsSeen } from '@/lib/home-stage-hints';
 import type { StageComposition, StageLayer } from '@/lib/home-stage-layers';
 import { useSharedSkiaImage } from '@/lib/skia-image-cache';
 import {
@@ -102,7 +100,12 @@ export type StageViewProps = {
   /** The HUD opens computers and agents through it, so the camera can push in first. */
   opener: StageOpener;
   onSelect: (index: number) => void;
-  onNewTask: () => void;
+  /**
+   * Where the HUD's floating overlays (the needs-you card, the progress
+   * subtitle) may stand: under the HUD and the figure's face, over the foot
+   * rows. Reported when the layout changes, never per frame.
+   */
+  onOverlayBand?: (band: StageOverlayBand) => void;
 };
 
 /** How many fresh canvases a session tries after a GPU failure before staying static. */
@@ -111,9 +114,8 @@ const STAGE_GPU_RETRIES = 3;
 /**
  * The full-screen depth window: the theme's own pictures at their depths, in
  * the WebGPU scene when the device has it, otherwise (and after a lost
- * device) the same layout drawn flat. Above either sits the new-task target
- * and its first-visit hint; everything else to read or press is the HUD's.
- * The scene itself is never focusable.
+ * device) the same layout drawn flat. Everything to read or press is the
+ * HUD's; a tap on the art itself does nothing. The scene is never focusable.
  */
 export function StageView({
   count,
@@ -127,9 +129,8 @@ export function StageView({
   burst,
   opener,
   onSelect,
-  onNewTask,
+  onOverlayBand,
 }: StageViewProps) {
-  const { t } = useLingui();
   const theme = useThemeTokens();
   const { resolvedMode } = useThemeMode();
   const reducedMotion = useReducedMotion();
@@ -174,7 +175,6 @@ export function StageView({
     retryStageArt();
   }, [paused]);
   const [diving, setDiving] = useState(false);
-  const [hints, setHints] = useState(() => !hasSeenStageHints());
   const [gpuAvailable] = useState(
     () => Platform.OS !== 'web' && TurboModuleRegistry.get('WebGPUModule') !== null
   );
@@ -253,14 +253,8 @@ export function StageView({
   useEffect(() => {
     if (!paused) setDiving(false);
   }, [paused]);
-  const touched = useStableHandler(() => {
-    if (!hints) return;
-    setHints(false);
-    markStageHintsSeen();
-  });
   /** Push into the art, then run `open`; straight away without the scene or its motion. */
   const diveThen = useStableHandler((open: () => void) => {
-    touched();
     if (!effects.gpu || reducedMotion) {
       open();
       return;
@@ -281,7 +275,6 @@ export function StageView({
           settle.set(-1);
           dragging.set(1);
           scheduleOnRN(bridge.wake);
-          scheduleOnRN(touched);
         })
         .onUpdate((event) => {
           dragX.set(size.width > 0 ? event.translationX / size.width : 0);
@@ -317,7 +310,6 @@ export function StageView({
       settle,
       size.width,
       size.height,
-      touched,
     ]
   );
 
@@ -327,10 +319,12 @@ export function StageView({
     [size.width, size.height, inset, floor]
   );
   const art = useStageArt(composition, viewport);
-  const host = useMemo(
-    () => (viewport.width > 0 && viewport.height > 0 ? stageHostTarget(art, viewport) : null),
-    [art, viewport]
-  );
+  const band = viewport.height > 0 ? stageOverlayBand(art, viewport) : null;
+  const bandTop = band?.top ?? 0;
+  const bandBottom = band?.bottom ?? 0;
+  useEffect(() => {
+    if (bandBottom > 0) onOverlayBand?.({ top: bandTop, bottom: bandBottom });
+  }, [bandTop, bandBottom, onOverlayBand]);
 
   return (
     <GestureDetector gesture={gesture}>
@@ -377,31 +371,6 @@ export function StageView({
         )}
         {effects.gpu && effects.tilt && !paused ? (
           <StageTilt tiltX={tiltX} tiltY={tiltY} onMoved={bridge.wake} />
-        ) : null}
-        {host && host.rect.width > 0 && host.rect.height > 0 ? (
-          <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-            <PressableScale
-              testID="home-stage-host"
-              accessibilityRole="button"
-              accessibilityLabel={t`Start a new task`}
-              onPress={() => {
-                touched();
-                onNewTask();
-              }}
-              style={[
-                styles.hit,
-                {
-                  left: host.rect.x,
-                  top: host.rect.y,
-                  width: host.rect.width,
-                  height: host.rect.height,
-                },
-              ]}
-            />
-            {hints && !diving ? (
-              <StageHint text={t`Tap · start a new task`} at={host.hint} />
-            ) : null}
-          </View>
         ) : null}
       </View>
     </GestureDetector>
@@ -513,44 +482,6 @@ function useStageArt(composition: StageComposition, viewport: StageViewport): St
       };
     return null;
   }, [hero, painting, viewport]);
-}
-
-/** A chip hung from a point by a short leader line. */
-function StageHint({ text, at }: { text: string; at: { x: number; y: number } }) {
-  const theme = useThemeTokens();
-  const background = useSurfaceBackground();
-  // Hung by measured size: percentage transforms are not reliable on Android.
-  const [box, setBox] = useState({ width: 0, height: 0 });
-  return (
-    <Animated.View
-      pointerEvents="none"
-      accessible={false}
-      importantForAccessibility="no-hide-descendants"
-      onLayout={(event) => {
-        const { width, height } = event.nativeEvent.layout;
-        setBox((previous) =>
-          previous.width === width && previous.height === height ? previous : { width, height }
-        );
-      }}
-      style={[
-        styles.hint,
-        { left: at.x - box.width / 2, top: at.y - box.height, opacity: box.width > 0 ? 1 : 0 },
-      ]}>
-      <View
-        style={[
-          styles.hintChip,
-          {
-            backgroundColor: background(theme.colors.background),
-            borderColor: theme.colors.primary,
-          },
-        ]}>
-        <Text variant="caption" weight="semibold" numberOfLines={1}>
-          {text}
-        </Text>
-      </View>
-      <View style={[styles.hintLeader, { backgroundColor: theme.colors.primary }]} />
-    </Animated.View>
-  );
 }
 
 /**
@@ -695,14 +626,5 @@ function StaticArtImage({ art }: { art: NonNullable<StageArt> }) {
 }
 
 const styles = StyleSheet.create({
-  hit: { position: 'absolute' },
   clip: { position: 'absolute', overflow: 'hidden' },
-  hint: { position: 'absolute', alignItems: 'center' },
-  hintChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 10,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  hintLeader: { width: 1, height: 14, opacity: 0.7 },
 });
