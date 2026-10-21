@@ -3,7 +3,7 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { PressableScale, Text, useThemeTokens } from '@osuki-dev/ui';
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { useReducedMotion } from 'react-native-reanimated';
+import Animated, { LayoutAnimationConfig, useReducedMotion } from 'react-native-reanimated';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useMinuteNow } from '@/hooks/use-minute-now';
@@ -35,6 +35,8 @@ import { sameComputer } from '@/lib/home-composer';
 import {
   applyHomeThreadEvent,
   EMPTY_HOME_THREAD_LIVE,
+  HOME_THREAD_SWITCH_HOLD_MS,
+  homeThreadBarView,
   homeThreadEnded,
   homeThreadKey,
   homeThreadLiveFromSnapshot,
@@ -277,11 +279,15 @@ export function HomeThreadFeed({
                 ...(seen.prompt ? { panePrompt: seen.prompt } : {}),
                 ...(seen.busy ? { paneBusy: true } : {}),
               });
+            else store.markLoaded(key);
           }
           followUp(seen);
         },
         // A pane that cannot be read says nothing; its mirror says whether it is gone.
-        () => followUp(undefined)
+        () => {
+          if (active) useHomeThreadLive.getState().markLoaded(key);
+          followUp(undefined);
+        }
       );
     };
     const sinceSend = sentAtMs === undefined ? Infinity : Date.now() - sentAtMs;
@@ -400,6 +406,12 @@ export type HomeThreadUnsure = { key: string; text: string; attachments: string[
  * screen shows it, or nothing. The reader's own message is never
  * repeated. A request waiting on the reader tints the bar and puts its
  * actions in row 2. The bar is one button that opens the conversation.
+ *
+ * A change of target is one transition: the bar stays mounted, its content
+ * cross-fades to the new target's and its height eases. While the new
+ * target's first read is out, the slot the previous target was drawing holds
+ * a neutral "…" (`homeThreadBarView`), so the bar never drops out and comes
+ * back, nor shows the previous target's reply under the new one.
  */
 export function HomeThreadBar({
   target,
@@ -435,6 +447,9 @@ export function HomeThreadBar({
   const live = useHomeThreadLive((state) =>
     state.key === key ? state.live : EMPTY_HOME_THREAD_LIVE
   );
+  // The feed resets the store to a new key in an effect, after this render:
+  // a key the store does not hold yet is not loaded either.
+  const loaded = useHomeThreadLive((state) => state.key === key && state.loaded);
   const task = useServerTasksStore((state) =>
     homeThreadTask(target, state.index[target.serverId]?.tasks)
   );
@@ -495,8 +510,38 @@ export function HomeThreadBar({
   const unsureHere = unsure?.key === key ? unsure : null;
   const enter = reduced ? calmFadeIn() : fadeIn('short');
   const exit = reduced ? calmFadeOut('micro') : fadeOut('micro');
-  const shown =
-    !named || Boolean(line) || needsYou || Boolean(permission || form) || Boolean(unsureHere);
+
+  // Whether the previous target was drawing the slot a switch holds, carried
+  // into the next change of key; adjusted during render so the switch's own
+  // first frame already holds it.
+  const [carry, setCarry] = useState({ key, drawn: false, held: false });
+  const switched = carry.key !== key;
+  const held = switched ? carry.drawn : carry.held;
+  const view = homeThreadBarView({
+    named,
+    loading: !offline && target.kind !== 'task' && !loaded,
+    stateFromRead: target.kind === 'session' && !task,
+    line: Boolean(line) && !permission && !form,
+    notice: needsYou || Boolean(permission || form) || Boolean(unsureHere),
+    held,
+  });
+  if (switched || carry.drawn !== view.drawn) setCarry({ key, held, drawn: view.drawn });
+  // A read that never comes back lets the hold go.
+  useEffect(() => {
+    if (!held) return;
+    const timer = setTimeout(
+      () => setCarry((now) => (now.key === key ? { ...now, held: false } : now)),
+      HOME_THREAD_SWITCH_HOLD_MS
+    );
+    return () => clearTimeout(timer);
+  }, [key, held]);
+  const { shown, placeholder, pendingState } = view;
+  const shownWord = pendingState ? '…' : word;
+  const shownTone = pendingState ? theme.colors.textMuted : tone;
+  const shownLine = placeholder ? '…' : line && !permission && !form ? line : undefined;
+  // One key per target and per phase: a change of either cross-fades the
+  // content in place instead of swapping its text in a frame.
+  const contentKey = `${key}:${placeholder || pendingState ? 'pending' : 'ready'}`;
   const reportShown = useEffectEvent((next: boolean) => onShown?.(next));
   useEffect(() => {
     reportShown(shown);
@@ -523,7 +568,9 @@ export function HomeThreadBar({
         },
       ]}>
       {needsYou ? (
-        <View
+        <Animated.View
+          entering={enter}
+          exiting={exit}
           pointerEvents="none"
           style={[
             StyleSheet.absoluteFill,
@@ -540,48 +587,56 @@ export function HomeThreadBar({
           disabled={!onOpen}
           onPress={onOpen}
           style={styles.barOpen}>
-          {named ? (
-            // The card above names it: the state leads, and the line follows on it.
-            <Text variant="caption" color={theme.colors.textMuted} numberOfLines={2}>
-              <Text testID="home-thread-state" variant="caption" weight="semibold" color={tone}>
-                {`↳ ${word}`}
-              </Text>
-              {line && !permission && !form ? `  ${line}` : null}
-            </Text>
-          ) : (
-            <View style={styles.barHead}>
-              <Text
-                variant="caption"
-                weight="semibold"
-                color={needsYou ? theme.colors.warning : theme.colors.text}
-                numberOfLines={1}
-                style={styles.barTitle}>
-                {`↳ ${title}`}
-              </Text>
-              <Text
-                testID="home-thread-state"
-                variant="caption"
-                color={tone}
-                numberOfLines={1}
-                style={styles.barState}>
-                {`· ${word}`}
-              </Text>
-            </View>
-          )}
-          {!named && line && !permission && !form ? (
-            <Animated.View
-              key={`line:${task?.taskId ?? ''}:${lineSource}`}
-              entering={enter}
-              exiting={exit}>
-              <Text
-                testID="home-thread-reply"
-                variant="caption"
-                color={theme.colors.textMuted}
-                numberOfLines={2}>
-                {line}
-              </Text>
-            </Animated.View>
-          ) : null}
+          <Animated.View key={contentKey} entering={enter} exiting={exit} style={styles.barContent}>
+            <LayoutAnimationConfig skipEntering>
+              {named ? (
+                // The card above names it: the state leads, and the line follows on it.
+                <Text variant="caption" color={theme.colors.textMuted} numberOfLines={2}>
+                  <Text
+                    testID="home-thread-state"
+                    variant="caption"
+                    weight="semibold"
+                    color={shownTone}>
+                    {`↳ ${shownWord}`}
+                  </Text>
+                  {shownLine ? `  ${shownLine}` : null}
+                </Text>
+              ) : (
+                <View style={styles.barHead}>
+                  <Text
+                    variant="caption"
+                    weight="semibold"
+                    color={needsYou ? theme.colors.warning : theme.colors.text}
+                    numberOfLines={1}
+                    style={styles.barTitle}>
+                    {`↳ ${title}`}
+                  </Text>
+                  <Text
+                    testID="home-thread-state"
+                    variant="caption"
+                    color={shownTone}
+                    numberOfLines={1}
+                    style={styles.barState}>
+                    {`· ${shownWord}`}
+                  </Text>
+                </View>
+              )}
+              {!named && shownLine ? (
+                <Animated.View
+                  key={`line:${task?.taskId ?? ''}:${lineSource}`}
+                  entering={enter}
+                  exiting={exit}>
+                  <Text
+                    testID={placeholder ? 'home-thread-reply-pending' : 'home-thread-reply'}
+                    variant="caption"
+                    color={theme.colors.textMuted}
+                    numberOfLines={2}>
+                    {shownLine}
+                  </Text>
+                </Animated.View>
+              ) : null}
+            </LayoutAnimationConfig>
+          </Animated.View>
         </PressableScale>
         {named ? null : (
           <PressableScale
@@ -596,9 +651,13 @@ export function HomeThreadBar({
         )}
       </View>
       {permission ? (
-        <ThreadPermission target={target} request={permission} />
+        <Animated.View key={`${key}:permission:${permission.id}`} entering={enter} exiting={exit}>
+          <ThreadPermission target={target} request={permission} />
+        </Animated.View>
       ) : form ? (
-        <ThreadQuestion target={target} form={form} onOpen={onOpen} />
+        <Animated.View key={`${key}:form:${form.id}`} entering={enter} exiting={exit}>
+          <ThreadQuestion target={target} form={form} onOpen={onOpen} />
+        </Animated.View>
       ) : null}
       {unsureHere ? (
         <Animated.View entering={enter} exiting={exit} style={styles.unsure}>
@@ -815,7 +874,8 @@ function ThreadQuestion({
 const styles = StyleSheet.create({
   bar: { overflow: 'hidden' },
   barRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
-  barOpen: { flex: 1, gap: 2 },
+  barOpen: { flex: 1 },
+  barContent: { gap: 2 },
   barHead: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   barTitle: { flexShrink: 1 },
   barState: { flexShrink: 0 },

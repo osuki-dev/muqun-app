@@ -569,3 +569,26 @@ export const cardOut = () =>
   })
     .duration(DURATION.short)
     .reduceMotion(ReduceMotion.System);
+
+/**
+ * A small mark arriving on a control that just took on a role -- the × on the
+ * Stage card the dock now replies to: a fade from a little under its size,
+ * over the beat the reply bar below cross-fades on. Skipped under reduce
+ * motion; callers use `calmFadeIn` there.
+ */
+export const markIn = () =>
+  new Keyframe({
+    0: { opacity: 0, transform: [{ scale: 0.6 }] },
+    100: { opacity: 1, transform: [{ scale: 1 }], easing: EASE_OUT },
+  })
+    .duration(DURATION.short)
+    .reduceMotion(ReduceMotion.System);
+
+/** The mark leaving with its role, as quickly as the bar's old content fades. */
+export const markOut = () =>
+  new Keyframe({
+    0: { opacity: 1, transform: [{ scale: 1 }] },
+    100: { opacity: 0, transform: [{ scale: 0.6 }], easing: EASE_OUT },
+  })
+    .duration(DURATION.micro)
+    .reduceMotion(ReduceMotion.System);
