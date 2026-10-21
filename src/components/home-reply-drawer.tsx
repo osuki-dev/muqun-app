@@ -49,6 +49,7 @@ import {
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { HomeSheetGrabber, HomeSheetHeader } from '@/components/home-sheet';
 import { SheetGround } from '@/components/sheet-ground';
+import { ThemeIcon } from '@/components/theme-icon';
 import {
   followHomeSession,
   HOME_THREAD_PANE_POLL_MS,
@@ -387,6 +388,9 @@ export function HomeReplyRecede({
   );
 }
 
+/** A pack without its own Conversation glyph lends its Home arrow, pointing up. */
+const CONVERSATION_ICON_ALTERNATE = { name: 'home.arrow', direction: 'up' } as const;
+
 /** The target's state as one word and its tone, as the drawer's chip says it. */
 function useStateWord(state: HomeThreadState, offline: boolean) {
   const { t } = useLingui();
@@ -448,7 +452,10 @@ export function HomeReplyButton({
             }
           : undefined
       }>
-      <SessionIcon
+      <ThemeIcon
+        name="chrome.conversation"
+        alternate={CONVERSATION_ICON_ALTERNATE}
+        fallback={SessionIcon}
         size={18}
         color={controller.open ? theme.colors.primary : theme.colors.textMuted}
       />
