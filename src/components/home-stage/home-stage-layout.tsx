@@ -221,8 +221,10 @@ export function HomeStageLayout({
   const { height: windowHeight } = useWindowDimensions();
   const wallpaper = useStageWallpaper();
   const composition = useStageComposition({ coverHeader, artwork, wallpaper });
-  // A cover's authored sky stays open: a short scrim, and the name on its own plate.
+  // A cover's authored sky stays open: a short, soft scrim, and the HUD's text
+  // reads on the art itself through a halo in the background colour.
   const openSky = composition.role === 'sky' || composition.role === 'figure';
+  const halo = useStageTextHalo();
   const [actionsFor, setActionsFor] = useState<string | null>(null);
   const [listOpen, setListOpen] = useState(false);
   const selected = panels[selectedIndex];
@@ -303,11 +305,24 @@ export function HomeStageLayout({
       />
 
       {/* Top: the chosen computer, its status and the dots; the tools on the right. */}
-      <EdgeFade
-        edge="top"
-        color={theme.colors.background}
-        style={[styles.topScrim, { height: topInset + (openSky ? 56 : 150) }]}
-      />
+      {openSky ? (
+        <View
+          pointerEvents="none"
+          style={[
+            styles.topScrim,
+            {
+              height: topInset + 112,
+              experimental_backgroundImage: `linear-gradient(to bottom, ${withAlpha(theme.colors.background, 0.5)} 0%, ${withAlpha(theme.colors.background, 0.3)} 50%, ${withAlpha(theme.colors.background, 0)} 100%)`,
+            },
+          ]}
+        />
+      ) : (
+        <EdgeFade
+          edge="top"
+          color={theme.colors.background}
+          style={[styles.topScrim, { height: topInset + 150 }]}
+        />
+      )}
       <View pointerEvents="box-none" style={[styles.top, { paddingTop: topInset + 10 }]}>
         <View pointerEvents="box-none" style={styles.topRow}>
           {selected ? (
@@ -315,30 +330,18 @@ export function HomeStageLayout({
               testID="home-stage-hud-computer"
               accessible
               accessibilityLabel={selected.label}
-              style={[
-                styles.who,
-                openSky && {
-                  // `useHomeScenePlate`'s plate, a little roomier for the larger name.
-                  backgroundColor: background(theme.colors.surface),
-                  borderRadius: profile.chrome.control,
-                  borderCurve: 'continuous',
-                  paddingHorizontal: 10,
-                  paddingVertical: 6,
-                  marginLeft: -10,
-                  marginVertical: -6,
-                },
-              ]}>
+              style={styles.who}>
               <Text
                 variant="caption"
                 weight="semibold"
                 color={theme.colors.primary}
-                style={styles.kicker}>
+                style={[styles.kicker, halo]}>
                 {t`Computer`}
               </Text>
-              <Text variant="heading" weight="bold" numberOfLines={1} style={styles.name}>
+              <Text variant="heading" weight="bold" numberOfLines={1} style={[styles.name, halo]}>
                 {selected.label}
               </Text>
-              <StageStatusLine panel={selected} />
+              <StageStatusLine panel={selected} halo={halo} />
             </View>
           ) : (
             <View />
@@ -354,7 +357,7 @@ export function HomeStageLayout({
                   styles.dash,
                   index === selectedIndex
                     ? { width: 30, backgroundColor: theme.colors.primary }
-                    : { backgroundColor: withAlpha(theme.colors.text, 0.25) },
+                    : { backgroundColor: withAlpha(theme.colors.text, 0.32) },
                 ]}
               />
             ))}
@@ -475,24 +478,49 @@ function useStageWallpaper() {
   return { uri, fit: image.fit, focal: image.focalPoint, opacity: image.opacity };
 }
 
-function StageStatusLine({ panel }: { panel: StagePanel }) {
+/**
+ * A soft glow in the background colour behind the HUD's text, so it reads on
+ * a bright sky by day and a dark one by night without a plate.
+ */
+function useStageTextHalo() {
+  const theme = useThemeTokens();
+  const { resolvedMode } = useThemeMode();
+  return {
+    textShadowColor: withAlpha(theme.colors.background, resolvedMode === 'light' ? 0.9 : 0.75),
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 8,
+  };
+}
+
+/**
+ * What the selected computer is doing, in one line: online, offline since
+ * when, an agent working, or how many things need the reader, in the warning
+ * colour. Its sessions are the strip's to show.
+ */
+function StageStatusLine({
+  panel,
+  halo,
+}: {
+  panel: StagePanel;
+  halo: ReturnType<typeof useStageTextHalo>;
+}) {
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
   const age = useTaskAge();
   const nowMs = useMinuteNow();
   const seen = panel.lastSeenMs;
-  const count = panel.sessionCount;
+  const waiting = Math.max(1, panel.needsYouCount);
   const offline = panel.tone === 'offline' || panel.tone === 'unknown';
   const text =
     panel.tone === 'offline' && seen !== undefined
       ? t`Offline · last seen ${age(seen, nowMs)}`
       : panel.attention
-        ? t`Needs you`
+        ? t`${plural(waiting, { one: '# needs you', other: '# need you' })}`
         : panel.working
           ? t`Agent working`
           : panel.tone === 'online'
-            ? t`Online · ${plural(count, { one: '# session', other: '# sessions' })}`
+            ? t`Online`
             : _(connectionStatusDescription[panel.connection]);
   const color =
     panel.attention || panel.tone === 'warning'
@@ -508,8 +536,10 @@ function StageStatusLine({ panel }: { panel: StagePanel }) {
       <Text
         testID="home-stage-hud-status"
         variant="caption"
-        color={theme.colors.textMuted}
-        numberOfLines={1}>
+        weight={panel.attention ? 'semibold' : undefined}
+        color={panel.attention ? theme.colors.warning : theme.colors.text}
+        numberOfLines={1}
+        style={halo}>
         {text}
       </Text>
     </View>

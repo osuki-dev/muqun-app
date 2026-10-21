@@ -46,7 +46,7 @@ msgstr "[PR-Nummer]"
 #. placeholder {0}: files.length
 #: src/components/agent-composer.tsx
 msgid "{0, plural, one {# attachment} other {# attachments}}"
-msgstr ""
+msgstr "{0, plural, one {# Anhang} other {# Anhänge}}"
 
 #. placeholder {0}: capped.hidden
 #: src/components/bounded-markdown.tsx
@@ -452,6 +452,10 @@ msgstr "{total, plural, one {# Unteraufgabe} other {# Unteraufgaben}}"
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, one {# Unteraufgabe} other {# Unteraufgaben}} ({waiting, plural, one {# wartet} other {# warten}})"
 
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "{waiting, plural, one {# needs you} other {# need you}}"
+msgstr "{waiting, plural, one {# braucht dich} other {# brauchen dich}}"
+
 #: src/components/task-row.tsx
 msgid "→ {name}"
 msgstr "→ {name}"
@@ -705,11 +709,6 @@ msgstr "Alle Projekte"
 #: src/components/home-stage/stage-faces.ts
 msgid "All quiet"
 msgstr "Alles ruhig"
-
-#. placeholder {0}: age(face.lastActivityMs, nowMs)
-#: src/components/home-stage/stage-faces.ts
-msgid "All quiet · last activity {0}"
-msgstr "Alles ruhig · zuletzt aktiv {0}"
 
 #: src/components/agent-composer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
@@ -3242,7 +3241,7 @@ msgstr "Simulator ausblenden"
 
 #: src/components/agent-composer.tsx
 msgid "Hides this notice"
-msgstr ""
+msgstr "Blendet diesen Hinweis aus"
 
 #: src/app/settings-voice.tsx
 msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
@@ -3578,6 +3577,11 @@ msgstr "Sprache, {languageName}"
 #: src/components/settings-terminal.tsx
 msgid "Large"
 msgstr "Groß"
+
+#. placeholder {0}: age(face.lastActivityMs, nowMs)
+#: src/components/home-stage/stage-faces.ts
+msgid "Last activity {0}"
+msgstr "Letzte Aktivität {0}"
 
 #: src/components/agent-account-limits-section.tsx
 msgid "Last checked"
@@ -4531,6 +4535,7 @@ msgstr "Auf dem Tablet ist Home eine Doppelseite, Arbeits-Sheets füllen den Bil
 msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
 msgstr "Ein Änderungen-Sheet für Terminals und Agentensitzungen: geänderte Dateien als Baum mit Zeilensummen, der Branch unter dem Titel und Verwerfen im Menü einer Datei"
 
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Online"
@@ -4539,10 +4544,6 @@ msgstr "Online"
 #: src/i18n/labels.ts
 msgid "ONLINE"
 msgstr "ONLINE"
-
-#: src/components/home-stage/home-stage-layout.tsx
-msgid "Online · {count, plural, one {# session} other {# sessions}}"
-msgstr "Online · {count, plural, one {# Sitzung} other {# Sitzungen}}"
 
 #: src/lib/attachments.ts
 msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."

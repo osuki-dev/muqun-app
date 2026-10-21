@@ -46,7 +46,7 @@ msgstr "[numéro de PR]"
 #. placeholder {0}: files.length
 #: src/components/agent-composer.tsx
 msgid "{0, plural, one {# attachment} other {# attachments}}"
-msgstr ""
+msgstr "{0, plural, one {# pièce jointe} other {# pièces jointes}}"
 
 #. placeholder {0}: capped.hidden
 #: src/components/bounded-markdown.tsx
@@ -452,6 +452,10 @@ msgstr "{total, plural, one {# sous-tâche} other {# sous-tâches}}"
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, one {# sous-tâche} other {# sous-tâches}} ({waiting, plural, one {# en attente} other {# en attente}})"
 
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "{waiting, plural, one {# needs you} other {# need you}}"
+msgstr "{waiting, plural, one {# vous attend} other {# vous attendent}}"
+
 #: src/components/task-row.tsx
 msgid "→ {name}"
 msgstr "→ {name}"
@@ -705,11 +709,6 @@ msgstr "Tous les projets"
 #: src/components/home-stage/stage-faces.ts
 msgid "All quiet"
 msgstr "Tout est calme"
-
-#. placeholder {0}: age(face.lastActivityMs, nowMs)
-#: src/components/home-stage/stage-faces.ts
-msgid "All quiet · last activity {0}"
-msgstr "Tout est calme · dernière activité {0}"
 
 #: src/components/agent-composer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
@@ -3242,7 +3241,7 @@ msgstr "Masquer le simulateur"
 
 #: src/components/agent-composer.tsx
 msgid "Hides this notice"
-msgstr ""
+msgstr "Masque cet avis"
 
 #: src/app/settings-voice.tsx
 msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
@@ -3578,6 +3577,11 @@ msgstr "Langue, {languageName}"
 #: src/components/settings-terminal.tsx
 msgid "Large"
 msgstr "Grand"
+
+#. placeholder {0}: age(face.lastActivityMs, nowMs)
+#: src/components/home-stage/stage-faces.ts
+msgid "Last activity {0}"
+msgstr "Dernière activité {0}"
 
 #: src/components/agent-account-limits-section.tsx
 msgid "Last checked"
@@ -4531,6 +4535,7 @@ msgstr "Sur tablette, l’accueil est une double page, les feuilles de travail o
 msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
 msgstr "Une seule feuille Modifications pour les terminaux et les sessions d’agent : les fichiers modifiés en arbre avec le total des lignes, la branche sous le titre et Rejeter dans le menu d’un fichier"
 
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Online"
@@ -4539,10 +4544,6 @@ msgstr "En ligne"
 #: src/i18n/labels.ts
 msgid "ONLINE"
 msgstr "EN LIGNE"
-
-#: src/components/home-stage/home-stage-layout.tsx
-msgid "Online · {count, plural, one {# session} other {# sessions}}"
-msgstr "En ligne · {count, plural, one {# session} other {# sessions}}"
 
 #: src/lib/attachments.ts
 msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."

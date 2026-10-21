@@ -46,7 +46,7 @@ msgstr "[номер pr]"
 #. placeholder {0}: files.length
 #: src/components/agent-composer.tsx
 msgid "{0, plural, one {# attachment} other {# attachments}}"
-msgstr ""
+msgstr "{0, plural, one {# вложение} few {# вложения} many {# вложений} other {# вложения}}"
 
 #. placeholder {0}: capped.hidden
 #: src/components/bounded-markdown.tsx
@@ -452,6 +452,10 @@ msgstr "{total, plural, one {# подзадача} few {# подзадачи} ma
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, one {# подзадача} few {# подзадачи} many {# подзадач} other {# подзадачи}} ({waiting, plural, one {# ждёт} few {# ждут} many {# ждут} other {# ждут}})"
 
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "{waiting, plural, one {# needs you} other {# need you}}"
+msgstr "{waiting, plural, one {# ждёт вас} few {# ждут вас} many {# ждут вас} other {# ждут вас}}"
+
 #: src/components/task-row.tsx
 msgid "→ {name}"
 msgstr "→ {name}"
@@ -705,11 +709,6 @@ msgstr "Все проекты"
 #: src/components/home-stage/stage-faces.ts
 msgid "All quiet"
 msgstr "Всё спокойно"
-
-#. placeholder {0}: age(face.lastActivityMs, nowMs)
-#: src/components/home-stage/stage-faces.ts
-msgid "All quiet · last activity {0}"
-msgstr "Всё спокойно · последняя активность {0}"
 
 #: src/components/agent-composer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
@@ -3242,7 +3241,7 @@ msgstr "Скрыть симулятор"
 
 #: src/components/agent-composer.tsx
 msgid "Hides this notice"
-msgstr ""
+msgstr "Скрывает это уведомление"
 
 #: src/app/settings-voice.tsx
 msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
@@ -3578,6 +3577,11 @@ msgstr "Язык, {languageName}"
 #: src/components/settings-terminal.tsx
 msgid "Large"
 msgstr "Крупный"
+
+#. placeholder {0}: age(face.lastActivityMs, nowMs)
+#: src/components/home-stage/stage-faces.ts
+msgid "Last activity {0}"
+msgstr "Последняя активность {0}"
 
 #: src/components/agent-account-limits-section.tsx
 msgid "Last checked"
@@ -4531,6 +4535,7 @@ msgstr "На планшете главный экран — разворот, р
 msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
 msgstr "Один лист изменений для терминалов и сессий агентов: изменённые файлы деревом с подсчётом строк, ветка под заголовком и «Отменить» в меню файла"
 
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Online"
@@ -4539,10 +4544,6 @@ msgstr "В сети"
 #: src/i18n/labels.ts
 msgid "ONLINE"
 msgstr "В СЕТИ"
-
-#: src/components/home-stage/home-stage-layout.tsx
-msgid "Online · {count, plural, one {# session} other {# sessions}}"
-msgstr "В сети · {count, plural, one {# сеанс} few {# сеанса} many {# сеансов} other {# сеанса}}"
 
 #: src/lib/attachments.ts
 msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."

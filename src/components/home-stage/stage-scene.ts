@@ -78,6 +78,12 @@ import {
   STAGE_HAZE_DEPTH,
   STAGE_HERO_DEPTH,
   STAGE_MAX_SCREENS,
+  STAGE_FACE_CELL_HEIGHT,
+  STAGE_FACE_CELL_WIDTH,
+  STAGE_FACE_LINE_STEP,
+  STAGE_FACE_LINE_TOP,
+  STAGE_FACE_PAD,
+  STAGE_FACE_STREAK_OFFSET,
   STAGE_PAINTING_DEPTH,
   STAGE_PANE_RATIO,
   stageCoverLayer,
@@ -121,30 +127,23 @@ const {
   vec4,
 } = TSL;
 
-/** Faces in the atlas: two columns of at most `STAGE_MAX_SCREENS / 2` rows, each face twice. */
+/**
+ * Faces in the atlas: two columns of at most `STAGE_MAX_SCREENS / 2` rows of
+ * `STAGE_FACE_CELL_WIDTH` x `STAGE_FACE_CELL_HEIGHT` cells. The atlas holds
+ * every face twice, the front face's cells in the first `STAGE_FACE_COLUMNS`
+ * columns and the compact side face's in the next.
+ */
 export const STAGE_FACE_COLUMNS = 2;
 export const STAGE_FACE_ROWS = STAGE_MAX_SCREENS / STAGE_FACE_COLUMNS;
-/**
- * One face cell, in atlas pixels: the sketch's 640 x 400 pane at 0.7. The
- * atlas holds every face twice, the front face's cells in the first
- * `STAGE_FACE_COLUMNS` columns and the compact side face's in the next.
- */
-export const STAGE_FACE_CELL_WIDTH = 448;
-export const STAGE_FACE_CELL_HEIGHT = 280;
-export const STAGE_FACE_PAD = 32;
-/**
- * The front face's agent lines, in cell pixels: the first line's top, the
- * step between lines, and how far below a line's top its working streak runs.
- */
-export const STAGE_FACE_LINE_TOP = 122;
-export const STAGE_FACE_LINE_STEP = 38;
-export const STAGE_FACE_STREAK_OFFSET = 31;
 /** Agent lines that can carry a streak. */
 const STREAK_LINES = 4;
 const MOTE_COUNT = 80;
 /** About the sketch's 0.09-unit points, which three sizes at half the canvas height per unit. */
 const MOTE_SIZE = 0.05;
-/** The pane face as the sketch drew it: 640 x 400 canvas pixels, a 6 px inset, 36 px corners. */
+/**
+ * The pane face as the sketch drew it: 640 canvas pixels wide (400 tall at
+ * most), a 6 px inset, 36 px corners.
+ */
 const FACE_W = 640;
 const FACE_H = 400;
 const FACE_INSET = 6;
@@ -180,11 +179,15 @@ export type StageScreenLook = {
   faceSlot: number;
   /** The front face's lines with a working streak, as bits from the first. */
   streaks: number;
+  /** How tall the front face is, in cell pixels (`stageFaceHeight`). */
+  faceHeight: number;
 };
 
 export type StagePaneFrame = {
   position: StageVec3;
   width: number;
+  /** As tall as the face says (`stagePane`). */
+  height: number;
   yaw: number;
   /** 0 for the selected pane, 1 for a neighbour or further. */
   side: number;
@@ -541,7 +544,8 @@ export function createStageScene(): StageSceneHandle {
   motes.renderOrder = 4;
 
   // -- 6. Panes: status glows, then reflections and panes ----------------------
-  const glowGeometry = glowDisc(1.5, 1.2);
+  // 1.5 x 1.2 pane widths behind the tallest pane, scaled by each pane's size.
+  const glowGeometry = glowDisc(1.5, 1.2 / STAGE_PANE_RATIO);
   // rgb + strength
   const glowTint = new InstancedBufferAttribute(new Float32Array(STAGE_MAX_SCREENS * 4), 4);
   glowTint.setUsage(DynamicDrawUsage);
@@ -556,7 +560,7 @@ export function createStageScene(): StageSceneHandle {
   glows.count = 0;
   glows.renderOrder = 5;
 
-  const paneGeometry = new PlaneGeometry(1, STAGE_PANE_RATIO);
+  const paneGeometry = new PlaneGeometry(1, 1);
   const capacity = STAGE_MAX_SCREENS * 2;
   // faceSlot, opacity, side (0 front .. 1 side), flip (1 for a reflection)
   const paneInfo = new InstancedBufferAttribute(new Float32Array(capacity * 4), 4);
@@ -566,16 +570,20 @@ export function createStageScene(): StageSceneHandle {
   const paneSheen = new InstancedBufferAttribute(new Float32Array(capacity), 1);
   // working streak line bits
   const paneStreaks = new InstancedBufferAttribute(new Float32Array(capacity), 1);
-  for (const attributeValue of [paneInfo, paneEdge, paneSheen, paneStreaks])
+  // height over width: a pane is as tall as its face
+  const paneShape = new InstancedBufferAttribute(new Float32Array(capacity), 1);
+  for (const attributeValue of [paneInfo, paneEdge, paneSheen, paneStreaks, paneShape])
     attributeValue.setUsage(DynamicDrawUsage);
   paneGeometry.setAttribute('aPane', paneInfo);
   paneGeometry.setAttribute('aEdge', paneEdge);
   paneGeometry.setAttribute('aSheen', paneSheen);
   paneGeometry.setAttribute('aStreak', paneStreaks);
+  paneGeometry.setAttribute('aShape', paneShape);
   const info = attribute('aPane', 'vec4');
   const edge = attribute('aEdge', 'vec4');
   const sheenOffset = attribute('aSheen', 'float');
   const streakBits = attribute('aStreak', 'float');
+  const shape = attribute('aShape', 'float');
   const uStreak = uniform(new Vector3(1, 1, 1));
   const uStreakTime = uniform(0);
   const uFill = uniform(0.6);
@@ -583,10 +591,12 @@ export function createStageScene(): StageSceneHandle {
   // A reflection is the pane upside down.
   const paneV = mix(uv().y, float(1).sub(uv().y), info.w);
   const paneU = uv().x;
-  // The sketch's canvas: pixels from the top left.
-  const pixel = vec2(paneU.mul(FACE_W), float(1).sub(paneV).mul(FACE_H));
-  const corner = abs(pixel.sub(vec2(FACE_W / 2, FACE_H / 2))).sub(
-    vec2(FACE_W / 2 - FACE_INSET - FACE_RADIUS, FACE_H / 2 - FACE_INSET - FACE_RADIUS)
+  // The sketch's canvas: pixels from the top left, as tall as this pane.
+  const faceHeight = shape.mul(FACE_W);
+  const down = float(1).sub(paneV);
+  const pixel = vec2(paneU.mul(FACE_W), down.mul(faceHeight));
+  const corner = abs(pixel.sub(vec2(FACE_W / 2, faceHeight.mul(0.5)))).sub(
+    vec2(FACE_W / 2 - FACE_INSET - FACE_RADIUS, faceHeight.mul(0.5).sub(FACE_INSET + FACE_RADIUS))
   );
   const distance = length(max(corner, 0))
     .add(min(max(corner.x, corner.y), 0))
@@ -605,7 +615,9 @@ export function createStageScene(): StageSceneHandle {
   const slot = info.x;
   const hasFace = select(slot.greaterThanEqual(0), float(1), float(0));
   const cell = vec2(slot.mod(STAGE_FACE_COLUMNS), slot.div(STAGE_FACE_COLUMNS).floor());
-  const cellUv = cell.add(vec2(paneU, float(1).sub(paneV)));
+  // The pane shows the top of its cell, as much of it as the pane is tall.
+  const cellDown = down.mul(shape).mul(STAGE_FACE_CELL_WIDTH);
+  const cellUv = cell.add(vec2(paneU, cellDown.div(STAGE_FACE_CELL_HEIGHT)));
   const uFaceRows = uniform(STAGE_FACE_ROWS);
   const atlasCells = vec2(STAGE_FACE_COLUMNS * 2, uFaceRows);
   const faceSample = texture(blank, cellUv.div(atlasCells));
@@ -623,7 +635,7 @@ export function createStageScene(): StageSceneHandle {
   // A working agent's line: a faint rule with a band of light travelling
   // along it on the ambient clock, so it holds still whenever that clock does.
   const cellX = paneU.mul(STAGE_FACE_CELL_WIDTH);
-  const lineY = float(1).sub(paneV).mul(STAGE_FACE_CELL_HEIGHT).sub(STAGE_FACE_LINE_TOP);
+  const lineY = cellDown.sub(STAGE_FACE_LINE_TOP);
   const line = lineY.div(STAGE_FACE_LINE_STEP).floor();
   const within = lineY.sub(line.mul(STAGE_FACE_LINE_STEP));
   const lit = streakBits
@@ -924,16 +936,18 @@ export function createStageScene(): StageSceneHandle {
               : 'success';
         const status = edges[tone];
         const glowColor = glowColors[tone];
-        const height = pane.width * STAGE_PANE_RATIO;
+        const { height } = pane;
+        const ratio = height / Math.max(pane.width, 1e-4);
         const sheenAt = input.tilt * 0.35 - pane.offset * 0.3;
         rotation.setFromAxisAngle(yAxis, pane.yaw);
         const [x, y, z] = pane.position;
 
         if (reflected) {
           position.set(x, y - height * 0.78, z);
-          scale.set(pane.width, pane.width * 0.5, 1);
+          scale.set(pane.width, height * 0.5, 1);
           panes.setMatrixAt(drawn, scratch.compose(position, rotation, scale));
           paneInfo.setXYZW(drawn, look.faceSlot, reflection, pane.side, 1);
+          paneShape.setX(drawn, ratio);
           paneEdge.setXYZW(drawn, status.r, status.g, status.b, offline ? 0.45 : 0.9);
           paneSheen.setX(drawn, sheenAt);
           paneStreaks.setX(drawn, working ? look.streaks : 0);
@@ -941,9 +955,10 @@ export function createStageScene(): StageSceneHandle {
 
         const slot = reflected ? count + drawn : drawn;
         position.set(x, y, z);
-        scale.set(pane.width, pane.width, 1);
+        scale.set(pane.width, height, 1);
         panes.setMatrixAt(slot, scratch.compose(position, rotation, scale));
         paneInfo.setXYZW(slot, look.faceSlot, 1, pane.side, 0);
+        paneShape.setX(slot, ratio);
         paneEdge.setXYZW(slot, status.r, status.g, status.b, offline ? 0.45 : 0.9);
         paneSheen.setX(slot, sheenAt);
         paneStreaks.setX(slot, working ? look.streaks : 0);
@@ -966,6 +981,7 @@ export function createStageScene(): StageSceneHandle {
       paneEdge.needsUpdate = true;
       paneSheen.needsUpdate = true;
       paneStreaks.needsUpdate = true;
+      paneShape.needsUpdate = true;
       glowTint.needsUpdate = true;
     },
     dispose() {

@@ -452,6 +452,10 @@ msgstr "{total, plural, other {# 个子任务}}"
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, other {# 个子任务}}（{waiting, plural, other {# 个等待中}}）"
 
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "{waiting, plural, one {# needs you} other {# need you}}"
+msgstr "{waiting, plural, other {# 个需要你处理}}"
+
 #: src/components/task-row.tsx
 msgid "→ {name}"
 msgstr "→ {name}"
@@ -705,11 +709,6 @@ msgstr "全部项目"
 #: src/components/home-stage/stage-faces.ts
 msgid "All quiet"
 msgstr "一切安静"
-
-#. placeholder {0}: age(face.lastActivityMs, nowMs)
-#: src/components/home-stage/stage-faces.ts
-msgid "All quiet · last activity {0}"
-msgstr "一切安静 · 最近活动 {0}"
 
 #: src/components/agent-composer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
@@ -3579,6 +3578,11 @@ msgstr "语言，{languageName}"
 msgid "Large"
 msgstr "大"
 
+#. placeholder {0}: age(face.lastActivityMs, nowMs)
+#: src/components/home-stage/stage-faces.ts
+msgid "Last activity {0}"
+msgstr "最近活动 {0}"
+
 #: src/components/agent-account-limits-section.tsx
 msgid "Last checked"
 msgstr "上次检查"
@@ -4531,6 +4535,7 @@ msgstr "在平板上，主页以双页展开，工作面板铺满全屏，屏幕
 msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
 msgstr "终端和智能体会话共用同一个改动面板：改动的文件以目录树呈现并附带行数，标题下显示分支，文件菜单里可以放弃改动"
 
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Online"
@@ -4539,10 +4544,6 @@ msgstr "在线"
 #: src/i18n/labels.ts
 msgid "ONLINE"
 msgstr "在线"
-
-#: src/components/home-stage/home-stage-layout.tsx
-msgid "Online · {count, plural, one {# session} other {# sessions}}"
-msgstr "在线 · {count, plural, other {# 个会话}}"
 
 #: src/lib/attachments.ts
 msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."
