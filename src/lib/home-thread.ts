@@ -722,3 +722,56 @@ export function homeThreadPanePolls(input: {
     (!input.answered || input.working)
   );
 }
+
+/**
+ * How long a change of target keeps the reply bar up while the new target's
+ * first read is out. Past it, a target with nothing to say lets the bar go.
+ */
+export const HOME_THREAD_SWITCH_HOLD_MS = 1_500;
+
+export type HomeThreadBarView = {
+  /** The bar is drawn. */
+  shown: boolean;
+  /** Row 2 is the muted "…" of a read still out, not a line of its own. */
+  placeholder: boolean;
+  /** The state word is not known yet: it is drawn as "…", never a guessed "Idle". */
+  pendingState: boolean;
+  /**
+   * What this target draws in the slot a switch would hold: the whole bar when
+   * `named`, else row 2. Carried into the next change of target as `held`.
+   */
+  drawn: boolean;
+};
+
+/**
+ * What the reply bar draws for its target, above all across a change of
+ * target: the bar, and the row the previous target was drawing, stay while
+ * the new one's first read is out (`held`), as a neutral "…"; they never
+ * collapse to nothing and come back, and never show the previous target's
+ * reply under the new one. A slot that was empty is not filled with a
+ * placeholder that would only go again.
+ */
+export function homeThreadBarView(input: {
+  /** The card above names the target (Stage): the bar is drawn only when it has something to say. */
+  named: boolean;
+  /** The target's first read has not come back. */
+  loading: boolean;
+  /** The state word comes from that read alone (a session no task speaks for). */
+  stateFromRead: boolean;
+  /** Row 2 has a line: a reply, progress, a pane's prose, or "Sent". */
+  line: boolean;
+  /** Something else to say: a request, a target that needs the reader, an unsure send. */
+  notice: boolean;
+  /** The previous target was drawing the slot when it changed, within the hold. */
+  held: boolean;
+}): HomeThreadBarView {
+  const { named, loading, line, notice } = input;
+  const placeholder = loading && input.held && !line && !notice;
+  const shown = !named || line || notice || placeholder;
+  return {
+    shown,
+    placeholder,
+    pendingState: loading && input.stateFromRead,
+    drawn: named ? shown : line || placeholder,
+  };
+}

@@ -5,6 +5,7 @@ import type { HomeContinueEntry } from '@/lib/home-continue';
 import {
   applyHomeThreadEvent,
   EMPTY_HOME_THREAD_LIVE,
+  homeThreadBarView,
   homeThreadEnded,
   homeThreadLiveFromSnapshot,
   homeThreadPaneAnswers,
@@ -445,5 +446,59 @@ describe('the reply bar after a send', () => {
 
   test("the pane's own screen at work counts as working", () => {
     expect(homeThreadState({ pane: { status: 'idle', busy: true } })).toBe('working');
+  });
+});
+
+describe('homeThreadBarView', () => {
+  const at = {
+    named: true,
+    loading: false,
+    stateFromRead: true,
+    line: false,
+    notice: false,
+    held: false,
+  };
+
+  test('a switch keeps a drawn bar up with a placeholder until the read is back', () => {
+    const switching = homeThreadBarView({ ...at, loading: true, held: true });
+    expect(switching).toEqual({ shown: true, placeholder: true, pendingState: true, drawn: true });
+    // Back with nothing to say: the card above names it, so the bar goes.
+    expect(homeThreadBarView({ ...at, held: true }).shown).toBe(false);
+    // Back with a reply: the line replaces the placeholder.
+    expect(homeThreadBarView({ ...at, held: true, line: true })).toMatchObject({
+      shown: true,
+      placeholder: false,
+      pendingState: false,
+    });
+  });
+
+  test('a slot that was empty is not filled with a placeholder', () => {
+    expect(homeThreadBarView({ ...at, loading: true })).toMatchObject({
+      shown: false,
+      placeholder: false,
+      drawn: false,
+    });
+    const unnamed = homeThreadBarView({ ...at, named: false, loading: true });
+    expect(unnamed).toMatchObject({ shown: true, placeholder: false, drawn: false });
+  });
+
+  test('a notice shows at once and needs no placeholder', () => {
+    expect(homeThreadBarView({ ...at, loading: true, held: true, notice: true })).toMatchObject({
+      shown: true,
+      placeholder: false,
+    });
+  });
+
+  test('a state another source speaks for is not pending', () => {
+    expect(
+      homeThreadBarView({ ...at, loading: true, held: true, stateFromRead: false }).pendingState
+    ).toBe(false);
+  });
+
+  test('without the card the bar holds row 2, not itself', () => {
+    const unnamed = { ...at, named: false };
+    expect(homeThreadBarView({ ...unnamed, held: true }).drawn).toBe(false);
+    expect(homeThreadBarView({ ...unnamed, line: true }).drawn).toBe(true);
+    expect(homeThreadBarView({ ...unnamed, loading: true, held: true }).drawn).toBe(true);
   });
 });

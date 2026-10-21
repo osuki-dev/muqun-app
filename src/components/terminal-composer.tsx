@@ -24,6 +24,7 @@ import {
 import { flattenStyle } from '@/lib/flatten-style';
 import Animated, {
   Easing,
+  ReduceMotion,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -172,15 +173,22 @@ export function TerminalComposer({
   }, [voiceActive, contentReveal]);
   const contentRevealStyle = useAnimatedStyle(() => ({ opacity: contentReveal.get() }));
   const profile = useAppearanceProfile();
-  const fieldRadius = squareTop
-    ? {
-        borderTopLeftRadius: 0,
-        borderTopRightRadius: 0,
-        borderBottomLeftRadius: profile.chrome.composerField,
-        borderBottomRightRadius: profile.chrome.composerField,
-        borderCurve: 'continuous' as const,
-      }
-    : squareBottom
+  const cornerRadius = profile.chrome.composerField;
+  // The top corners ease between round and square as a header joins the field
+  // or leaves it, over the beat the header itself fades in: never a jump.
+  // Reduce motion keeps it, since a corner easing is not travel.
+  const topRound = useSharedValue(squareTop ? 0 : 1);
+  useEffect(() => {
+    topRound.set(
+      withTiming(squareTop ? 0 : 1, timing('short', { reduceMotion: ReduceMotion.Never }))
+    );
+  }, [squareTop, topRound]);
+  const topRadiusStyle = useAnimatedStyle(() => {
+    const radius = cornerRadius * topRound.get();
+    return { borderTopLeftRadius: radius, borderTopRightRadius: radius };
+  });
+  const fieldRadius =
+    squareBottom && !squareTop
       ? {
           borderTopLeftRadius: profile.chrome.composerField,
           borderTopRightRadius: profile.chrome.composerField,
@@ -188,10 +196,7 @@ export function TerminalComposer({
           borderBottomRightRadius: 0,
           borderCurve: 'continuous' as const,
         }
-      : {
-          borderRadius: profile.chrome.composerField,
-          borderCurve: 'continuous' as const,
-        };
+      : [{ borderRadius: cornerRadius, borderCurve: 'continuous' as const }, topRadiusStyle];
   const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
   // The monospace slot is this component's *default*, not its rule, because
@@ -285,7 +290,7 @@ export function TerminalComposer({
       // hairline gap that shows the art behind the dock.
       style={[composerStyles.fieldOuter, squareTop && composerStyles.joinedTop]}>
       {fieldShadow ? (
-        <View
+        <Animated.View
           testID="composer-field-shadow"
           pointerEvents="none"
           accessible={false}
@@ -294,16 +299,10 @@ export function TerminalComposer({
       ) : null}
       {outsideBackground ? (
         <>
-          <View
+          <Animated.View
             pointerEvents="none"
             accessible={false}
-            style={[
-              StyleSheet.absoluteFill,
-              {
-                backgroundColor,
-                ...fieldRadius,
-              },
-            ]}
+            style={[StyleSheet.absoluteFill, { backgroundColor }, fieldRadius]}
           />
           <View
             testID="composer-field-background-outset"
@@ -323,7 +322,7 @@ export function TerminalComposer({
           </View>
         </>
       ) : null}
-      <View
+      <Animated.View
         testID="composer-field-shell"
         style={[
           composerStyles.fieldShell,
@@ -401,7 +400,7 @@ export function TerminalComposer({
             {voice.panel}
           </View>
         )}
-      </View>
+      </Animated.View>
       {!voiceActive && fieldDecoration ? (
         <View
           testID="composer-field-decoration"
