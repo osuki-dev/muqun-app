@@ -456,6 +456,10 @@ msgstr "{total, plural, other {งานย่อย # งาน}}"
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, other {งานย่อย # งาน}} ({waiting, plural, other {รอ # งาน}})"
 
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "{waiting, plural, one {# needs you} other {# need you}}"
+msgstr "{waiting, plural, other {รอคุณ #}}"
+
 #: src/components/task-row.tsx
 msgid "→ {name}"
 msgstr "→ {name}"
@@ -709,11 +713,6 @@ msgstr "ทุกโปรเจกต์"
 #: src/components/home-stage/stage-faces.ts
 msgid "All quiet"
 msgstr "ทุกอย่างเงียบสงบ"
-
-#. placeholder {0}: age(face.lastActivityMs, nowMs)
-#: src/components/home-stage/stage-faces.ts
-msgid "All quiet · last activity {0}"
-msgstr "ทุกอย่างเงียบสงบ · กิจกรรมล่าสุด {0}"
 
 #: src/components/agent-composer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
@@ -3595,6 +3594,11 @@ msgstr "ภาษา {languageName}"
 msgid "Large"
 msgstr "ใหญ่"
 
+#. placeholder {0}: age(face.lastActivityMs, nowMs)
+#: src/components/home-stage/stage-faces.ts
+msgid "Last activity {0}"
+msgstr "กิจกรรมล่าสุด {0}"
+
 #: src/components/agent-account-limits-section.tsx
 msgid "Last checked"
 msgstr "ตรวจสอบล่าสุด"
@@ -4557,6 +4561,7 @@ msgstr "บนแท็บเล็ต หน้าแรกเป็นหน�
 msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
 msgstr "ชีตการเปลี่ยนแปลงเดียวสำหรับเทอร์มินัลและเซสชันเอเจนต์: ไฟล์ที่เปลี่ยนแสดงเป็นต้นไม้พร้อมจำนวนบรรทัด สาขาอยู่ใต้ชื่อเรื่อง และมีละทิ้งในเมนูของไฟล์"
 
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Online"
@@ -4565,10 +4570,6 @@ msgstr "ออนไลน์"
 #: src/i18n/labels.ts
 msgid "ONLINE"
 msgstr "ออนไลน์"
-
-#: src/components/home-stage/home-stage-layout.tsx
-msgid "Online · {count, plural, one {# session} other {# sessions}}"
-msgstr "ออนไลน์ · {count, plural, other {# เซสชัน}}"
 
 #: src/lib/attachments.ts
 msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."

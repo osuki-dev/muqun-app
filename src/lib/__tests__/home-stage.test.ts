@@ -6,6 +6,7 @@ import {
   stageDiveCamera,
   stageDragPosition,
   stageDrawnScreens,
+  stageFaceHeight,
   stageHeroPlacement,
   stageHostTarget,
   stagePaintingPlacement,
@@ -16,6 +17,12 @@ import {
   stageViewSize,
   stageWorldRect,
   wrapStageIndex,
+  STAGE_FACE_CELL_HEIGHT,
+  STAGE_FACE_CELL_WIDTH,
+  STAGE_FACE_LINE_STEP,
+  STAGE_FACE_MAX_ROWS,
+  STAGE_FACE_MIN_ROWS,
+  STAGE_FACE_SIDE_HEIGHT,
   STAGE_HERO_DEPTH,
   STAGE_HUD_BOTTOM_PT,
   STAGE_MAX_SCREENS,
@@ -104,6 +111,44 @@ describe('cover-flow', () => {
     const half = stagePane(0.5, anchor, aspect);
     expect(half.width).toBeCloseTo(viewWidth * 0.67);
     expect(stagePane(2, anchor, aspect).width).toBeCloseTo(next.width);
+  });
+
+  test('a face is as tall as its rows: the name and two rows at least, the whole cell at most', () => {
+    expect(stageFaceHeight(0)).toBe(stageFaceHeight(STAGE_FACE_MIN_ROWS));
+    expect(stageFaceHeight(STAGE_FACE_MAX_ROWS)).toBe(STAGE_FACE_CELL_HEIGHT);
+    expect(stageFaceHeight(9)).toBe(STAGE_FACE_CELL_HEIGHT);
+    expect(stageFaceHeight(3) - stageFaceHeight(2)).toBe(STAGE_FACE_LINE_STEP);
+    // The shortest front face is still taller than a side face.
+    expect(stageFaceHeight(STAGE_FACE_MIN_ROWS)).toBeGreaterThan(STAGE_FACE_SIDE_HEIGHT);
+  });
+
+  test('a pane fits its face and hangs from the tallest pane top; a side pane fits its name', () => {
+    const aspect = 390 / 844;
+    const anchor = stagePaneAnchor(stageCamera(), aspect);
+    const top = (pane: ReturnType<typeof stagePane>) => pane.position[1] + pane.height / 2;
+    const tall = stagePane(0, anchor, aspect);
+    const short = stagePane(0, anchor, aspect, stageFaceHeight(2));
+    expect(tall.height).toBeCloseTo(tall.width * 0.625);
+    expect(short.width).toBeCloseTo(tall.width);
+    expect(short.height).toBeCloseTo((tall.width * stageFaceHeight(2)) / STAGE_FACE_CELL_WIDTH);
+    expect(top(short)).toBeCloseTo(top(tall));
+    // Never lower than the tallest pane reaches.
+    expect(short.position[1] - short.height / 2).toBeGreaterThan(
+      tall.position[1] - tall.height / 2
+    );
+    // At the side every pane is as tall as a side face, whatever its front says.
+    const sideTall = stagePane(1, anchor, aspect);
+    const sideShort = stagePane(1, anchor, aspect, stageFaceHeight(2));
+    expect(sideTall.height).toBeCloseTo(sideShort.height);
+    expect(sideTall.height).toBeCloseTo(
+      (sideTall.width * STAGE_FACE_SIDE_HEIGHT) / STAGE_FACE_CELL_WIDTH
+    );
+    expect(top(sideShort)).toBeCloseTo(top(stagePane(1, anchor, aspect, STAGE_FACE_SIDE_HEIGHT)));
+    // Halfway through a drag, halfway between the two heights.
+    const half = stagePane(0.5, anchor, aspect, STAGE_FACE_CELL_HEIGHT);
+    expect(half.height).toBeCloseTo(
+      (half.width * (STAGE_FACE_CELL_HEIGHT + STAGE_FACE_SIDE_HEIGHT)) / 2 / STAGE_FACE_CELL_WIDTH
+    );
   });
 });
 
@@ -785,7 +830,11 @@ describe('stage panels', () => {
         { key: 'y', title: 'y', atMs: now - 9000, destination: { type: 'pane', serverId: 'a' } },
       ] as never,
     });
-    expect(quiet[0]!.face).toEqual({ kind: 'quiet', lastActivityMs: now - 5000 });
+    expect(quiet[0]!.face).toEqual({
+      kind: 'quiet',
+      idle: ['Agent 1'],
+      lastActivityMs: now - 5000,
+    });
     expect(quiet[1]!.face).toEqual({ kind: 'offline' });
     const bare = stagePanels({
       ...base,
@@ -793,7 +842,7 @@ describe('stage panels', () => {
         b: { serverId: 'b', checkedAtMs: now - 7000, agents: [agent('2', 'working')] },
       },
     });
-    expect(bare[0]!.face).toEqual({ kind: 'quiet' });
+    expect(bare[0]!.face).toEqual({ kind: 'quiet', idle: [] });
     // Offline: what the mirror last saw running is not running now.
     expect(bare[1]!.face).toEqual({ kind: 'offline', lastSeenMs: now - 7000 });
     expect(bare[1]!.working).toBe(false);
