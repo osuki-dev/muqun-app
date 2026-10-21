@@ -7,6 +7,7 @@ import {
   useWindowDimensions,
   type ScrollViewInstance,
   type StyleProp,
+  type ViewInstance,
   type ViewStyle,
 } from 'react-native';
 import Animated, {
@@ -69,8 +70,13 @@ export type StageSessionStripProps = {
   /** The session the dock is talking to: its card is outlined. */
   threadKey?: string;
   onOpenSession: (entry: HomeContinueEntry) => void;
-  /** A long press: the card's actions. */
-  onSessionActions?: (entry: HomeContinueEntry) => void;
+  /** The card whose long-press menu is open: it shows as pressed. */
+  menuKey?: string;
+  /** A long press: the card's actions, with where the card is on screen. */
+  onSessionActions?: (
+    entry: HomeContinueEntry,
+    card: { x: number; y: number; width: number; height: number }
+  ) => void;
   onOpenAll: () => void;
 };
 
@@ -86,6 +92,7 @@ export function StageSessionStrip({
   panelCount,
   sessions,
   threadKey,
+  menuKey,
   onOpenSession,
   onSessionActions,
   onOpenAll,
@@ -141,8 +148,9 @@ export function StageSessionStrip({
   const surface = background(theme.colors.surface);
   const idleBorder = withAlpha(theme.colors.text, 0.1);
   const liveBorder = withAlpha(theme.colors.primary, 0.6);
+  const raised = background(theme.colors.surfaceRaised);
   const face = (entry: HomeContinueEntry) => ({
-    backgroundColor: surface,
+    backgroundColor: entry.key === menuKey ? raised : surface,
     borderColor:
       entry.key === threadKey
         ? theme.colors.primary
@@ -190,7 +198,8 @@ export function StageSessionStrip({
                 fromWidth={from ? widths[from.key] : undefined}
                 onMeasured={measured}
                 onPress={() => onOpenSession(entry)}
-                onLongPress={onSessionActions ? () => onSessionActions(entry) : undefined}
+                selected={entry.key === menuKey}
+                onLongPress={onSessionActions ? (card) => onSessionActions(entry, card) : undefined}
               />
             </Animated.View>
           );
@@ -248,6 +257,7 @@ function StageSessionSlot({
   onMeasured,
   onPress,
   onLongPress,
+  selected,
 }: {
   entry: HomeContinueEntry;
   from: HomeContinueEntry | undefined;
@@ -259,15 +269,26 @@ function StageSessionSlot({
   fromWidth: number | undefined;
   onMeasured: (key: string, width: number) => void;
   onPress: () => void;
-  onLongPress?: () => void;
+  onLongPress?: (card: { x: number; y: number; width: number; height: number }) => void;
+  selected: boolean;
 }) {
+  const slot = useRef<ViewInstance>(null);
   return (
     <PressableScale
+      ref={slot}
       testID="home-stage-session"
       accessibilityRole="button"
       accessibilityLabel={entry.title}
+      accessibilityState={{ selected }}
       onPress={onPress}
-      onLongPress={onLongPress}
+      onLongPress={
+        onLongPress
+          ? () =>
+              slot.current?.measureInWindow((x, y, width, height) =>
+                onLongPress({ x, y, width, height })
+              )
+          : undefined
+      }
       style={styles.slot}>
       <StageSessionTurn
         // A new turn for every change of computer: its progress is created at
