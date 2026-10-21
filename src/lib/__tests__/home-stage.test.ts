@@ -2,20 +2,27 @@ import { describe, expect, test } from 'bun:test';
 import {
   projectStagePoint,
   stageCamera,
-  stageCoverPlane,
+  stageCoverLayer,
   stageDiveCamera,
   stageDragPosition,
   stageDrawnScreens,
+  stageHeroPlacement,
+  stageHostTarget,
+  stagePaintingPlacement,
   stagePane,
   stagePaneAnchor,
   stageQuadRect,
   stageSwipeTarget,
   stageViewSize,
+  stageWorldRect,
   wrapStageIndex,
+  STAGE_HERO_DEPTH,
+  STAGE_HUD_BOTTOM_PT,
   STAGE_MAX_SCREENS,
+  STAGE_PAINTING_OVERSCAN,
   STAGE_PANE_DEPTH,
 } from '../home-stage-geometry';
-import { stageClearFraction, stageLayers } from '../home-stage-layers';
+import { stageClearFraction, stageComposition } from '../home-stage-layers';
 import {
   initialStageDegrade,
   recordStageFrame,
@@ -169,77 +176,310 @@ describe('camera and projection', () => {
     expect(gone.visible).toBe(false);
   });
 
-  test('a cover layer covers its overscan whatever the picture, and its focal shift keeps it', () => {
-    for (const ratio of [0.4, 1, 2.5]) {
-      const plane = stageCoverPlane(ratio, 60, 1.22, aspect, { x: 0, y: 1 });
-      const view = stageViewSize(60, aspect);
-      expect(plane.width / plane.height).toBeCloseTo(ratio);
-      expect(plane.width / 2 - Math.abs(plane.shiftX)).toBeGreaterThanOrEqual(
-        (view.width * 1.22) / 2 - 1e-9
-      );
-      expect(plane.height / 2 - Math.abs(plane.shiftY)).toBeGreaterThanOrEqual(
-        (view.height * 1.22) / 2 - 1e-9
-      );
-    }
-    expect(stageCoverPlane(2.5, 60, 1.22, aspect, { x: 0, y: 0.5 }).shiftX).toBeGreaterThan(0);
-    expect(stageCoverPlane(2.5, 60, 1.22, aspect).shiftX).toBe(0);
+  test('a theme plane hung in the world projects back onto its box at rest', () => {
+    const viewport = { width: 390, height: 844, inset: 47 };
+    const box = { x: 40, y: 120, width: 300, height: 200 };
+    const placed = stageWorldRect(box, STAGE_HERO_DEPTH, viewport);
+    const rect = stageQuadRect(placed.position, placed.width, placed.height, 0, camera, 390, 844);
+    // The camera looks a little down, so the plane leans: within a few points.
+    expect(Math.abs(rect.x - box.x)).toBeLessThan(3);
+    expect(Math.abs(rect.width - box.width)).toBeLessThan(4);
+    expect(Math.abs(rect.y - box.y)).toBeLessThan(3);
+    expect(Math.abs(rect.height - box.height)).toBeLessThan(3);
   });
 });
 
-describe('layers', () => {
+describe('theme layout', () => {
+  const viewport = { width: 390, height: 844, inset: 47 };
+  const aspect = 390 / 844;
+  const centre = { x: 0.5, y: 0.5 };
+
+  test('a cover layer fits its picture as CSS object-fit and object-position do', () => {
+    // A wide picture covering a tall view: the slack is cropped by the focal point.
+    const left = stageCoverLayer(
+      { aspect: 2, fit: 'cover', focal: { x: 0, y: 0.5 } },
+      60,
+      1.22,
+      aspect
+    );
+    expect(left.uv.x).toBeCloseTo(0);
+    expect(left.uv.height).toBeCloseTo(1);
+    const right = stageCoverLayer({ aspect: 2, focal: { x: 1, y: 0.5 } }, 60, 1.22, aspect);
+    expect(right.uv.x + right.uv.width).toBeCloseTo(1);
+    const middle = stageCoverLayer({ aspect: 2, fit: 'tile', focal: centre }, 60, 1.22, aspect);
+    expect(middle.uv.x + middle.uv.width / 2).toBeCloseTo(0.5);
+    // Contained: the whole picture, its slack placed by the focal point.
+    const top = stageCoverLayer(
+      { aspect: 2, fit: 'contain', focal: { x: 0.5, y: 0 } },
+      60,
+      1,
+      aspect
+    );
+    expect(top.uv.x).toBeCloseTo(0);
+    expect(top.uv.width).toBeCloseTo(1);
+    expect(top.uv.y).toBeCloseTo(0);
+    expect(top.uv.height).toBeGreaterThan(1);
+  });
+
+  test('a sky painting spans the band at full width, its top kept, fading from 68 % of the 2D cover box', () => {
+    const art = stagePaintingPlacement(
+      { aspect: 0.95, fit: 'cover', focal: { x: 0.5, y: 0 } },
+      viewport
+    );
+    // All of the painting's width shows; the band is the view plus the painting's overscan.
+    expect(art.uv.x).toBeCloseTo(0);
+    expect(art.uv.width).toBeCloseTo(1);
+    expect(art.uv.y).toBeCloseTo(0);
+    expect(art.plane.width).toBeCloseTo(390 * STAGE_PAINTING_OVERSCAN);
+    // The band is the 2D cover box (0.9 of the width) at the band's width.
+    expect(art.box.height / art.box.width).toBeCloseTo(0.9);
+    expect(art.plane.y + art.plane.height).toBeCloseTo(art.box.y + art.box.height);
+    const fadeAt = art.plane.y + art.plane.height * art.fade.from;
+    expect(fadeAt).toBeCloseTo(art.box.y + art.box.height * 0.68);
+    expect(art.fade.to).toBeCloseTo(1);
+    // A wide contain painting keeps its natural height: nothing cropped, the band ends where it does.
+    const wide = stagePaintingPlacement({ aspect: 2, fit: 'contain', focal: centre }, viewport);
+    expect(wide.uv).toEqual({ x: 0, y: 0, width: 1, height: 1 });
+  });
+
+  const hero = (
+    overrides: Partial<Parameters<typeof stageHeroPlacement>[0]> = {}
+  ): Parameters<typeof stageHeroPlacement>[0] => ({
+    aspect: 0.6,
+    fit: 'contain',
+    focal: centre,
+    box: 'cover',
+    feather: 'cover',
+    ...overrides,
+  });
+
+  test('a figure stands in the 2D cover box under the name, at its focal point', () => {
+    const art = stageHeroPlacement(hero({ focal: { x: 0.62, y: 0.35 } }), viewport);
+    expect(art.box.width).toBe(390);
+    expect(art.box.height).toBeCloseTo(351);
+    // Tucked 35 % into the name's 36 pt line, which ends 63 pt below the inset.
+    expect(art.box.y).toBeCloseTo(47 + 63 - 36 * 0.35);
+    // Contained: the whole figure, the side slack split 62:38 like object-position.
+    expect(art.uv.x).toBeCloseTo(0);
+    expect(art.uv.width).toBeCloseTo(1);
+    expect(art.uv.height).toBeCloseTo(1);
+    expect(art.drawn.height).toBeCloseTo(351);
+    const slack = 390 - art.drawn.width;
+    expect(art.drawn.x).toBeCloseTo(slack * 0.62);
+    expect(art.plane.y + art.plane.height * art.fade.from).toBeCloseTo(art.box.y + 351 * 0.68);
+    expect(art.edges).toEqual({ x: 0, y: 0 });
+  });
+
+  test("a covered figure is cropped at its focal x, keeping its top, as Editorial's", () => {
+    const art = stageHeroPlacement(hero({ fit: 'cover', focal: { x: 0.58, y: 0.35 } }), viewport);
+    expect(art.uv.y).toBeCloseTo(0);
+    expect(art.uv.height).toBeLessThan(1);
+    expect(art.uv.width).toBeCloseTo(1);
+    expect(art.plane).toEqual(art.box);
+    // A wide figure is cropped at the sides, around its focal x.
+    const wide = stageHeroPlacement(
+      hero({ aspect: 2, fit: 'cover', focal: { x: 0.25, y: 0 } }),
+      viewport
+    );
+    expect(wide.uv.width).toBeLessThan(1);
+    expect(wide.uv.x).toBeCloseTo((1 - wide.uv.width) * 0.25);
+    // Without a fit, Editorial covers too.
+    expect(stageHeroPlacement(hero({ fit: undefined }), viewport).uv.height).toBeLessThan(1);
+  });
+
+  test('an inset picture is smaller, below the HUD; a cut-out fades at 72 %, a painting at every edge', () => {
+    const cut = stageHeroPlacement(
+      hero({ box: 'standard', feather: 'inset', aspect: 1.4 }),
+      viewport
+    );
+    expect(cut.box.height).toBe(195);
+    expect(cut.box.y).toBeGreaterThan(47 + STAGE_HUD_BOTTOM_PT);
+    expect(cut.plane.height).toBeLessThan(
+      stageHeroPlacement(hero({ aspect: 1.4 }), viewport).plane.height
+    );
+    expect(cut.plane.y + cut.plane.height * cut.fade.from).toBeCloseTo(cut.box.y + 195 * 0.72);
+    const framed = stageHeroPlacement(
+      hero({ box: 'standard', feather: 'framed', aspect: 1.4 }),
+      viewport
+    );
+    expect(framed.fade.from).toBeGreaterThan(1);
+    expect(framed.edges).toEqual({ x: 0.22, y: 0.32 });
+  });
+
+  test('every role has a new-task target below the HUD and above the panes', () => {
+    const pane = stagePane(0, stagePaneAnchor(stageCamera(), aspect), aspect);
+    const paneTop = stageQuadRect(
+      pane.position,
+      pane.width,
+      pane.height,
+      0,
+      stageCamera(),
+      390,
+      844
+    ).y;
+    const hud = 47 + STAGE_HUD_BOTTOM_PT;
+    const targets = [
+      stageHostTarget({ kind: 'hero', placement: stageHeroPlacement(hero(), viewport) }, viewport),
+      stageHostTarget(
+        {
+          kind: 'hero',
+          placement: stageHeroPlacement(hero({ box: 'standard', feather: 'inset' }), viewport),
+        },
+        viewport
+      ),
+      stageHostTarget(
+        {
+          kind: 'painting',
+          placement: stagePaintingPlacement({ aspect: 1, fit: 'cover', focal: centre }, viewport),
+        },
+        viewport
+      ),
+      stageHostTarget(null, viewport),
+    ];
+    for (const { rect, hint } of targets) {
+      expect(rect.width).toBeGreaterThan(80);
+      expect(rect.height).toBeGreaterThan(48);
+      expect(rect.y + rect.height).toBeGreaterThan(hud + 48);
+      // The hint chip hangs above its point: the point stays clear of the HUD.
+      expect(hint.y).toBeGreaterThanOrEqual(hud + 44);
+      expect(hint.y).toBeLessThan(paneTop);
+    }
+    // The painting's target starts below the HUD, the synthetic one ends above the panes.
+    expect(targets[2]!.rect.y).toBe(hud);
+    expect(targets[3]!.rect.y + targets[3]!.rect.height).toBeLessThan(paneTop);
+  });
+});
+
+describe('composition', () => {
   test('counts near-transparent pixels as clear', () => {
     expect(stageClearFraction(new Uint8Array([0, 13, 14, 255]))).toBe(0.5);
     expect(stageClearFraction(new Uint8Array([]))).toBe(0);
   });
 
-  const art = (clear: number | null) => ({ uri: 'art', clear });
-  const wall = (clear: number | null) => ({ uri: 'wall', clear });
-
-  test('a cut-out is the hero in front of a full-scene wallpaper', () => {
-    expect(stageLayers({ artwork: art(0.6), wallpaper: wall(0) })).toEqual({
-      ready: true,
-      backdrop: 'wall',
-      hero: 'art',
-      frame: null,
-    });
+  const art = (clear: number | null, extra = {}) => ({ uri: 'art', clear, aspect: 0.9, ...extra });
+  const wall = (clear: number | null, extra = {}) => ({
+    uri: 'wall',
+    clear,
+    aspect: 0.5,
+    ...extra,
+  });
+  const pick = (composition: ReturnType<typeof stageComposition>) => ({
+    role: composition.role,
+    backdrop: composition.backdrop?.uri ?? null,
+    painting: composition.painting?.uri ?? null,
+    hero: composition.hero?.uri ?? null,
+    frame: composition.frame?.uri ?? null,
   });
 
-  test('a full painting is the backdrop, whatever the wallpaper; an edge-only wallpaper frames it', () => {
-    expect(stageLayers({ artwork: art(0.1), wallpaper: wall(0) })).toMatchObject({
-      backdrop: 'art',
+  test('a cover header over a painting is the sky: the painting a band, the wallpaper its base or frame', () => {
+    expect(
+      pick(stageComposition({ coverHeader: true, artwork: art(0), wallpaper: wall(0) }))
+    ).toEqual({
+      role: 'sky',
+      backdrop: 'wall',
+      painting: 'art',
       hero: null,
       frame: null,
     });
-    expect(stageLayers({ artwork: art(0), wallpaper: wall(0.4) })).toMatchObject({
-      backdrop: 'art',
+    // A painting never drops the wallpaper, and an edge-only one frames it.
+    expect(
+      pick(stageComposition({ coverHeader: true, artwork: art(0.1), wallpaper: wall(0.4) }))
+    ).toEqual({
+      role: 'sky',
+      backdrop: null,
+      painting: 'art',
+      hero: null,
       frame: 'wall',
     });
   });
 
-  test('an edge-only wallpaper is never the backdrop; with nothing else the colours are', () => {
-    expect(stageLayers({ artwork: art(0.5), wallpaper: wall(0.3) })).toEqual({
-      ready: true,
-      backdrop: null,
+  test('a cover header over a cut-out is the figure in the cover box', () => {
+    const figure = stageComposition({ coverHeader: true, artwork: art(0.6), wallpaper: wall(0) });
+    expect(pick(figure)).toEqual({
+      role: 'figure',
+      backdrop: 'wall',
+      painting: null,
       hero: 'art',
+      frame: null,
+    });
+    expect(figure.hero).toMatchObject({ box: 'cover', feather: 'cover', cutout: true });
+    expect(
+      pick(stageComposition({ coverHeader: true, artwork: art(0.6), wallpaper: wall(0.3) }))
+    ).toMatchObject({ role: 'figure', backdrop: null, frame: 'wall' });
+  });
+
+  test('a standard header insets its artwork; a painting there is framed, never the backdrop', () => {
+    const cut = stageComposition({ coverHeader: false, artwork: art(0.5), wallpaper: wall(0) });
+    expect(pick(cut)).toMatchObject({ role: 'inset', backdrop: 'wall', hero: 'art' });
+    expect(cut.hero).toMatchObject({ box: 'standard', feather: 'inset', cutout: true });
+    const opaque = stageComposition({ coverHeader: false, artwork: art(0) });
+    expect(pick(opaque)).toMatchObject({
+      role: 'inset',
+      backdrop: null,
+      painting: null,
+      hero: 'art',
+    });
+    expect(opaque.hero).toMatchObject({ feather: 'framed', cutout: false });
+  });
+
+  test('without artwork the wallpaper is the world, or its frame when only edges', () => {
+    expect(pick(stageComposition({ coverHeader: true, wallpaper: wall(0) }))).toEqual({
+      role: 'world',
+      backdrop: 'wall',
+      painting: null,
+      hero: null,
+      frame: null,
+    });
+    expect(pick(stageComposition({ coverHeader: false, wallpaper: wall(0.4) }))).toMatchObject({
+      role: 'world',
+      backdrop: null,
       frame: 'wall',
     });
-    expect(stageLayers({})).toEqual({ ready: true, backdrop: null, hero: null, frame: null });
+    expect(pick(stageComposition({ coverHeader: false }))).toMatchObject({
+      role: 'world',
+      backdrop: null,
+    });
     // The thresholds are exclusive.
-    expect(stageLayers({ artwork: art(0.15), wallpaper: wall(0.25) })).toMatchObject({
-      backdrop: 'art',
-      frame: null,
+    expect(
+      pick(stageComposition({ coverHeader: true, artwork: art(0.15), wallpaper: wall(0.25) }))
+    ).toMatchObject({ role: 'sky', backdrop: 'wall', frame: null });
+  });
+
+  test("keeps each slot's fit, focal point and opacity, clamped, with CSS defaults", () => {
+    const composed = stageComposition({
+      coverHeader: true,
+      artwork: art(0.6, { fit: 'cover', focal: { x: 0.58, y: 2 }, opacity: 0.8 }),
+      wallpaper: wall(0, { fit: 'cover', opacity: 0.45 }),
+    });
+    expect(composed.hero).toMatchObject({
+      fit: 'cover',
+      focal: { x: 0.58, y: 1 },
+      opacity: 0.8,
+      aspect: 0.9,
+    });
+    expect(composed.backdrop).toMatchObject({ focal: { x: 0.5, y: 0.5 }, opacity: 0.45 });
+    expect(
+      stageComposition({ coverHeader: false, wallpaper: { uri: 'w', clear: 0 } }).backdrop
+    ).toMatchObject({
+      aspect: 1,
+      opacity: 1,
+      fit: undefined,
     });
   });
 
   test('waits while a picture that might be used is still being measured', () => {
-    expect(stageLayers({ artwork: art(null), wallpaper: wall(0) }).ready).toBe(false);
-    expect(stageLayers({ artwork: art(0.5), wallpaper: wall(null) })).toEqual({
+    expect(
+      stageComposition({ coverHeader: true, artwork: art(null), wallpaper: wall(0) })
+    ).toMatchObject({
       ready: false,
       backdrop: null,
+      painting: null,
       hero: null,
-      frame: null,
     });
-    expect(stageLayers({ wallpaper: wall(0) })).toMatchObject({ ready: true, backdrop: 'wall' });
+    expect(
+      stageComposition({ coverHeader: true, artwork: art(0.5), wallpaper: wall(null) }).ready
+    ).toBe(false);
+    expect(stageComposition({ coverHeader: true, wallpaper: wall(0) }).ready).toBe(true);
   });
 });
 
