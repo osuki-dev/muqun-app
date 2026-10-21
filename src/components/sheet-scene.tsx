@@ -17,6 +17,7 @@ import {
   StyleSheet,
   View,
   type AccessibilityProps,
+  type LayoutChangeEvent,
   type StyleProp,
   type TextStyle,
   type ViewStyle,
@@ -31,6 +32,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useMeasuredSideInsets } from '@/hooks/use-side-insets';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 
 import { AGENT_TYPE } from '@/constants/agent-type';
@@ -222,6 +224,12 @@ export function SheetScene({
   // clearance (the catalogue) is not given it twice.
   const top = fullscreen ? Math.max(topInset, insets.top) : topInset;
   const sized = contentSized || fitsContent;
+  // A phone's form sheet is as wide as the window, so on iPhone Duo its top
+  // corner runs under the side status bar; the column keeps clear of it while
+  // the frosted ground still reaches the sheet's edge. A centred Pad card
+  // overlaps nothing and keeps its gutter.
+  const side = useMeasuredSideInsets();
+  const sideStyle = { paddingLeft: side.left, paddingRight: side.right };
   const scene = (
     <>
       <View style={[styles.fixedTop, { paddingTop: SHEET_LADDER.gap + top }]}>
@@ -254,9 +262,14 @@ export function SheetScene({
       frosted
       overdrawBottom={sized ? CONTENT_SIZED_OVERDRAW : 0}>
       {fitsContent ? (
-        <SheetSceneFitColumn>{scene}</SheetSceneFitColumn>
+        <SheetSceneFitColumn style={sideStyle} onLayout={side.onLayout}>
+          {scene}
+        </SheetSceneFitColumn>
       ) : (
-        <View collapsable={false} style={contentSized ? undefined : styles.scene}>
+        <View
+          collapsable={false}
+          onLayout={side.onLayout}
+          style={[contentSized ? undefined : styles.scene, sideStyle]}>
           {scene}
         </View>
       )}
@@ -269,11 +282,22 @@ export function SheetScene({
  * room the keyboard leaves, so a long group scrolls inside a sheet that still
  * fits on screen while the native sheet rides the keyboard up.
  */
-function SheetSceneFitColumn({ children }: { children: ReactNode }) {
+function SheetSceneFitColumn({
+  children,
+  style,
+  onLayout,
+}: {
+  children: ReactNode;
+  style?: StyleProp<ViewStyle>;
+  onLayout?: (event: LayoutChangeEvent) => void;
+}) {
   const { height } = useWindowDimensions();
   const keyboard = useKeyboardState((state) => state.height);
   return (
-    <View collapsable={false} style={{ maxHeight: (height - keyboard) * EXPANDABLE_DETENT }}>
+    <View
+      collapsable={false}
+      onLayout={onLayout}
+      style={[{ maxHeight: (height - keyboard) * EXPANDABLE_DETENT }, style]}>
       {children}
     </View>
   );

@@ -584,7 +584,11 @@ export default function PairModal() {
   const onCameraReading = useCallback((next: ScanReading) => setCameraReading(next), []);
   // The route's own gutters, taken off before the frame is squared, so the
   // aperture is square against the column it actually occupies.
-  const apertureSize = pairingApertureSize(Math.min(windowWidth, ROUTE_MEASURE) - ROUTE_GUTTER * 2);
+  // The sheet's column stands inside the side safe areas (iPhone Duo), so the
+  // aperture is sized from what is left between them.
+  const apertureSize = pairingApertureSize(
+    Math.min(windowWidth - insets.left - insets.right, ROUTE_MEASURE) - ROUTE_GUTTER * 2
+  );
 
   /**
    * The step transition, which is the most-hit one in the whole flow and used

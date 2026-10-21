@@ -154,6 +154,10 @@ export default function SettingsScreen() {
 
       <RenderTally id="settings">
         <ScrollView
+          // Inset from the sides, not padded: the column then centres in the
+          // safe area and keeps its measure beside a side status bar (iPhone
+          // Duo). The wallpaper above is a sibling and stays full-bleed.
+          style={{ marginLeft: insets.left, marginRight: insets.right }}
           contentContainerStyle={[styles.content, { paddingTop: insets.top + HEADER_INSET }]}
           contentInsetAdjustmentBehavior="never"
           onScroll={deep ? undefined : () => setDeep(true)}

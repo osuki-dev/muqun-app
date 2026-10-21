@@ -24,6 +24,7 @@
  * Which tab is open is remembered for the session. A reader with no themes of
  * their own starts on the gallery, where the themes are.
  */
+import { useMeasuredSideInsets } from '@/hooks/use-side-insets';
 import { LegendList, type LegendListRef } from '@legendapp/list/react-native';
 import { useLingui } from '@lingui/react/macro';
 import { Button, PressableScale, Text, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
@@ -241,7 +242,10 @@ export function SettingsThemeSheet({
 
   // The column the content sits in: the sheet's gutter on both sides, and on a
   // wide Pad no wider than the cap, centred. Cards, tabs and the bar share it.
-  const sheetWidth = listWidth || window.width;
+  // A phone's sheet is as wide as the window and its top corner runs under a
+  // side status bar (iPhone Duo): the column keeps clear of it.
+  const side = useMeasuredSideInsets();
+  const sheetWidth = (listWidth || window.width) - side.left - side.right;
   const columnWidth = Math.min(
     sheetWidth - SHEET_LADDER.gutter * 2,
     THEME_PICKER_MAX_CONTENT_WIDTH
@@ -779,8 +783,11 @@ export function SettingsThemeSheet({
           and sets `nestedScrollEnabled` for Android's sheet behaviour. */}
       <View
         collapsable={false}
-        style={styles.sheet}
-        onLayout={(event) => setListWidth(event.nativeEvent.layout.width)}>
+        style={[styles.sheet, { paddingLeft: side.left, paddingRight: side.right }]}
+        onLayout={(event) => {
+          side.onLayout(event);
+          setListWidth(event.nativeEvent.layout.width);
+        }}>
         <LegendList
           ref={listRef}
           onMetricsChange={(metrics) => {

@@ -19,6 +19,7 @@ import { appChrome } from '@/constants/appearance';
 import { fadeIn, fadeOut } from '@/lib/motion';
 import Animated from 'react-native-reanimated';
 import { ScreenHeader } from '@/components/screen-header';
+import { sideInsetPadding } from '@/hooks/use-side-insets';
 import { ThemeArtwork } from '@/components/theme-artwork';
 import { ReskinSurface } from '@/components/reskin-transition';
 import { CandidateThemeProvider } from '@/components/theme-candidate';
@@ -175,7 +176,10 @@ function CustomThemeScene({
       <ScrollView
         testID="custom-theme-editor"
         contentInsetAdjustmentBehavior="automatic"
-        style={{ flex: 1 }}
+        // Inset rather than padded, so the column centres between the side safe
+        // areas (iPhone Duo's status bar runs down the right edge) while the
+        // wallpaper behind it stays full-bleed.
+        style={{ flex: 1, marginLeft: insets.left, marginRight: insets.right }}
         contentContainerStyle={{ padding: 20, paddingBottom: 20 }}>
         <View style={{ width: '100%', maxWidth: 1120, alignSelf: 'center' }}>
           {candidate ? (
@@ -206,8 +210,8 @@ function CustomThemeScene({
           pointerEvents="box-none"
           style={{
             position: 'absolute',
-            left: 20,
-            right: 20,
+            left: 20 + insets.left,
+            right: 20 + insets.right,
             bottom: footerHeight + theme.spacing.sm,
           }}>
           <View style={{ width: '100%', maxWidth: 1120, alignSelf: 'center' }}>
@@ -250,7 +254,7 @@ function CustomThemeScene({
         <View
           onLayout={(event) => setFooterHeight(event.nativeEvent.layout.height)}
           style={{
-            paddingHorizontal: 20,
+            ...sideInsetPadding(insets, 20),
             paddingTop: 12,
             paddingBottom: Math.max(12, insets.bottom),
             backgroundColor: background(theme.colors.surface),
