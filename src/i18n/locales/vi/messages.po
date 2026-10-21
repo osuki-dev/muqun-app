@@ -91,6 +91,11 @@ msgstr "{0, plural, other {# phút}}"
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, other {còn # dòng nữa}}"
 
+#. placeholder {0}: panel.needsYouCount
+#: src/components/home-stage/stage-faces.ts
+msgid "{0, plural, one {# needs you} other {# need you}}"
+msgstr "{0, plural, other {# cần bạn}}"
+
 #. placeholder {0}: entries.length
 #: src/components/agent-message-block.tsx
 msgid "{0, plural, one {# operation} other {# operations}}"
@@ -106,6 +111,16 @@ msgstr "{0, plural, other {# giao diện}} · {1}"
 #: src/components/agent-account-limits-section.tsx
 msgid "{0, plural, one {# week} other {# weeks}}"
 msgstr "{0, plural, other {# tuần}}"
+
+#. placeholder {0}: panel.workingCount
+#: src/components/home-stage/stage-faces.ts
+msgid "{0, plural, one {# working} other {# working}}"
+msgstr "{0, plural, other {# đang làm việc}}"
+
+#. placeholder {0}: face.more
+#: src/components/home-stage/stage-faces.ts
+msgid "{0, plural, one {+# more} other {+# more}}"
+msgstr "{0, plural, other {+# nữa}}"
 
 #. placeholder {0}: digest.otherAgents
 #: src/components/away-digest-card.tsx
@@ -686,6 +701,15 @@ msgstr "Tất cả các ngăn"
 #: src/components/agent-sessions-sheet.tsx
 msgid "All projects"
 msgstr "Mọi dự án"
+
+#: src/components/home-stage/stage-faces.ts
+msgid "All quiet"
+msgstr "Mọi thứ yên ắng"
+
+#. placeholder {0}: age(face.lastActivityMs, nowMs)
+#: src/components/home-stage/stage-faces.ts
+msgid "All quiet · last activity {0}"
+msgstr "Mọi thứ yên ắng · hoạt động gần nhất {0}"
 
 #: src/components/agent-composer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
@@ -4006,6 +4030,7 @@ msgid "Needs update"
 msgstr "Cần cập nhật"
 
 #: src/components/home-stage/home-stage-layout.tsx
+#: src/components/home-stage/stage-faces.ts
 #: src/components/server-tasks-sheet.tsx
 msgid "Needs you"
 msgstr "Cần bạn"
@@ -4469,6 +4494,7 @@ msgid "Off"
 msgstr "Tắt"
 
 #: src/components/home-composer-options.tsx
+#: src/components/home-stage/stage-faces.ts
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Offline"
@@ -4478,8 +4504,10 @@ msgstr "Ngoại tuyến"
 msgid "OFFLINE"
 msgstr "NGOẠI TUYẾN"
 
+#. placeholder {0}: age(face.lastSeenMs, nowMs)
 #. placeholder {0}: age(seen, nowMs)
 #: src/components/home-stage/home-stage-layout.tsx
+#: src/components/home-stage/stage-faces.ts
 msgid "Offline · last seen {0}"
 msgstr "Ngoại tuyến · thấy lần cuối {0}"
 
