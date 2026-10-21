@@ -40,6 +40,8 @@ import {
   cardIn,
   cardOut,
   listLayout,
+  markIn,
+  markOut,
   STAGE_FLIP_MOTION,
   STAGGER,
   timing,
@@ -163,13 +165,9 @@ export function StageSessionStrip({
   const raised = background(theme.colors.surfaceRaised);
   const face = (entry: HomeContinueEntry) => ({
     backgroundColor: entry.key === menuKey ? raised : surface,
-    borderColor:
-      entry.key === threadKey
-        ? theme.colors.primary
-        : entry.observation?.status === 'working'
-          ? liveBorder
-          : idleBorder,
-    borderWidth: entry.key === threadKey ? 1.5 : StyleSheet.hairlineWidth,
+    // The dock's conversation is outlined by the turn's own overlay, which
+    // fades: a border swapped here would jump in a frame.
+    borderColor: entry.observation?.status === 'working' ? liveBorder : idleBorder,
     borderRadius: profile.chrome.card,
   });
 
@@ -208,6 +206,7 @@ export function StageSessionStrip({
                 faceStyle={[face(entry), bounds]}
                 fromStyle={from ? [face(from), bounds] : undefined}
                 fromWidth={from ? widths[from.key] : undefined}
+                radius={profile.chrome.card}
                 onMeasured={measured}
                 onPress={() => onOpenSession(entry)}
                 selected={entry.key === menuKey}
@@ -267,6 +266,7 @@ function StageSessionSlot({
   faceStyle,
   fromStyle,
   fromWidth,
+  radius,
   onMeasured,
   onPress,
   onLongPress,
@@ -281,6 +281,7 @@ function StageSessionSlot({
   faceStyle: FaceStyle;
   fromStyle: FaceStyle | undefined;
   fromWidth: number | undefined;
+  radius: number;
   onMeasured: (key: string, width: number) => void;
   onPress: () => void;
   onLongPress?: (card: { x: number; y: number; width: number; height: number }) => void;
@@ -320,6 +321,7 @@ function StageSessionSlot({
         faceStyle={faceStyle}
         fromStyle={fromStyle}
         fromWidth={fromWidth}
+        radius={radius}
         onMeasured={onMeasured}
         onClear={onClear}
       />
@@ -337,6 +339,7 @@ function StageSessionTurn({
   faceStyle,
   fromStyle,
   fromWidth,
+  radius,
   onMeasured,
   onClear,
 }: {
@@ -349,6 +352,8 @@ function StageSessionTurn({
   faceStyle: FaceStyle;
   fromStyle: FaceStyle | undefined;
   fromWidth: number | undefined;
+  /** The card's corner radius, which its outline follows. */
+  radius: number;
   onMeasured: (key: string, width: number) => void;
   /** This card is the dock's conversation: its × lets it go. */
   onClear?: () => void;
@@ -359,6 +364,16 @@ function StageSessionTurn({
   const title = entry.title;
   const turns = animate && from !== undefined;
   const progress = useSharedValue(turns ? 0 : 1);
+  // The outline of the dock's conversation fades in on the card it moves to
+  // and out on the one it leaves, over the reply bar's cross-fade.
+  const targeted = onClear !== undefined;
+  const outline = useSharedValue(targeted ? 1 : 0);
+  useEffect(() => {
+    outline.set(
+      withTiming(targeted ? 1 : 0, timing('short', { reduceMotion: ReduceMotion.Never }))
+    );
+  }, [targeted, outline]);
+  const outlineStyle = useAnimatedStyle(() => ({ opacity: outline.get() }));
 
   const start = useEffectEvent(() => {
     if (!turns) return;
@@ -407,11 +422,21 @@ function StageSessionTurn({
       <Animated.View
         onLayout={(event) => onMeasured(entryKey, event.nativeEvent.layout.width)}
         style={[styles.card, styles.face, faceStyle, newStyle, onClear && styles.targeted]}>
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.outline,
+            { borderColor: theme.colors.primary, borderRadius: radius },
+            outlineStyle,
+          ]}
+        />
         <Text variant="bodySmall" weight="semibold" numberOfLines={1} style={styles.title}>
           {title}
         </Text>
         {onClear ? (
-          <Animated.View entering={calmFadeIn()} exiting={calmFadeOut('micro')}>
+          <Animated.View
+            entering={reduced ? calmFadeIn() : markIn()}
+            exiting={reduced ? calmFadeOut('micro') : markOut()}>
             <PressableScale
               testID="home-stage-thread-clear"
               accessibilityRole="button"
@@ -458,6 +483,15 @@ const styles = StyleSheet.create({
   },
   face: { backfaceVisibility: 'hidden' },
   targeted: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  // Over the card's own hairline, which sits outside its absolute children.
+  outline: {
+    position: 'absolute',
+    top: -StyleSheet.hairlineWidth,
+    left: -StyleSheet.hairlineWidth,
+    right: -StyleSheet.hairlineWidth,
+    bottom: -StyleSheet.hairlineWidth,
+    borderWidth: 1.5,
+  },
   title: { flexShrink: 1 },
   // Pinned to the slot's left, top and bottom; its width is the old title's own.
   back: { position: 'absolute', left: 0, top: 0, bottom: 0 },
