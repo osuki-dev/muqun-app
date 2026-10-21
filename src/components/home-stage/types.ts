@@ -1,11 +1,10 @@
 import type { SharedValue } from 'react-native-reanimated';
 
 import type { StageAmbientColors } from '@/lib/home-stage-ambient';
-import type { StageCore, StageVec3 } from '@/lib/home-stage-geometry';
 import type { StageHeroLayer, StageRole } from '@/lib/home-stage-layers';
 import type { StageQuality } from '@/lib/home-stage-motion';
 import type { ThemeEffects } from '@/theme/schema';
-import type { StagePicture, StageSceneColors, StageScreenLook } from './stage-scene';
+import type { StagePicture, StageSceneColors } from './stage-scene';
 
 /** Drag and tilt, written on the UI thread and read by the scene each frame. */
 export type StageInputs = {
@@ -22,56 +21,54 @@ export type StageInputs = {
   tiltY: SharedValue<number>;
 };
 
-/**
- * The front core as the scene last drew it: the camera's look, the core and
- * where its orbs were. A touch is resolved against it, so it lands on the
- * orb the reader saw, wherever its orbit had taken it.
- */
-export type StageProbe = {
-  look: readonly [number, number];
-  core: StageCore;
-  orbs: readonly { key: string; point: StageVec3 }[];
-};
-
-/**
- * Between the stage's 2D layer and its scene: gestures wake a scene that is
- * idle (no frames scheduled), and a touch asks where the front orbs are.
- */
+/** Between the stage's 2D layer and its scene: gestures wake a scene that is idle (no frames scheduled). */
 export type StageBridge = {
   wake: () => void;
   setWaker: (waker: (() => void) | null) => void;
-  probe: () => StageProbe | null;
-  setProber: (prober: (() => StageProbe | null) | null) => void;
 };
 
 export function createStageBridge(): StageBridge {
   let waker: (() => void) | null = null;
-  let prober: (() => StageProbe | null) | null = null;
   return {
     wake: () => waker?.(),
     setWaker: (next) => {
       waker = next;
     },
-    probe: () => prober?.() ?? null,
-    setProber: (next) => {
-      prober = next;
+  };
+}
+
+/**
+ * Between the HUD and the stage: whatever opens a computer or an agent runs
+ * it through the stage, which pushes the camera into the art first when it
+ * can. Without a stage it runs straight away.
+ */
+export type StageOpener = {
+  open: (run: () => void) => void;
+  setOpener: (opener: ((run: () => void) => void) | null) => void;
+};
+
+export function createStageOpener(): StageOpener {
+  let opener: ((run: () => void) => void) | null = null;
+  return {
+    open: (run) => (opener ? opener(run) : run()),
+    setOpener: (next) => {
+      opener = next;
     },
   };
 }
 
 export type StageSceneProps = {
-  /** One per computer, in pager order. */
-  screens: readonly StageScreenLook[];
-  /** The selected computer; the cover-flow brings it forward whenever it changes. */
+  /** How many computers there are, and the selected one: the camera pans between them. */
+  count: number;
   selected: number;
-  /** An orb's chip is showing: the orbits hold still, so the orb stays under its chip. */
-  held: boolean;
   colors: StageSceneColors;
   mode: 'light' | 'dark';
   /** How the theme is presented; see `stageComposition`. */
   role: StageRole;
   /** The safe area's top inset, in points: the HUD, and the art tucked under it, start below it. */
   inset: number;
+  /** Where the HUD's foot rows start, in points from the top: the art stands on it. */
+  floor: number;
   /** The deepest layer: a full-scene wallpaper. */
   backdrop: StagePicture | null;
   /** The sky role's painting, a band across the top. */
@@ -88,9 +85,9 @@ export type StageSceneProps = {
   ambientColors: StageAmbientColors;
   quality: StageQuality;
   reducedMotion: boolean;
-  /** Fly the camera into the selected core (before opening it), or back. */
+  /** Push the camera into the art (before a computer or an agent opens), or back. */
   dive: boolean;
-  /** Bumped when a task completes: the motes and the front core flare. */
+  /** Bumped when a task completes: the motes flare. */
   burst: number;
   /** Home is off screen or the app is in the background: no frames. */
   paused: boolean;

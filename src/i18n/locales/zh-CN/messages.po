@@ -84,11 +84,6 @@ msgstr "{0, plural, other {# 小时}}"
 msgid "{0, plural, one {# minute} other {# minutes}}"
 msgstr "{0, plural, other {# 分钟}}"
 
-#. placeholder {0}: orb.more
-#: src/components/home-stage/stage-view.tsx
-msgid "{0, plural, one {# more agent} other {# more agents}}"
-msgstr "{0, plural, other {另有 # 个代理}}"
-
 #. placeholder {0}: capped.hidden
 #. placeholder {0}: row.remaining
 #: src/components/agent-tool-card.tsx
@@ -153,12 +148,6 @@ msgstr "上下文中有 {0} 条消息"
 msgid "{0} more models"
 msgstr "还有 {0} 个模型"
 
-#. placeholder {0}: target.index + 1
-#. placeholder {1}: panels.length
-#: src/components/home-stage/stage-view.tsx
-msgid "{0} of {1}"
-msgstr "第 {0} 台，共 {1} 台"
-
 #. placeholder {0}: filtered.length
 #. placeholder {1}: entries.length
 #: src/components/dev-icon-gallery.tsx
@@ -169,6 +158,11 @@ msgstr "{1} 个图标中的 {0} 个 · 仅开发用"
 #: src/components/agent-context-sheet.tsx
 msgid "{0} of {limitLabel} tokens the model can hold"
 msgstr "模型可容纳 {limitLabel} 个 token，已用 {0}"
+
+#. placeholder {0}: index + 1
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "{0} of {total}"
+msgstr "第 {0} 台，共 {total} 台"
 
 #. placeholder {0}: sessions.length
 #: src/components/agent-sessions-sheet.tsx
@@ -321,9 +315,9 @@ msgstr "{computer} 上已没有此任务"
 msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, other {# 个结果}}"
 
-#: src/components/home-stage/stage-view.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 msgid "{count, plural, one {# session} other {# sessions}}"
-msgstr "{count, plural, other {# 个会话}}"
+msgstr ""
 
 #: src/components/home-connections.tsx
 msgid "{count} in progress"
@@ -566,7 +560,7 @@ msgid "Act on this terminal, or send its agent a prompt"
 msgstr "操作这个终端，或给它的 Agent 下一条指令"
 
 #: src/components/home-recent-sessions.tsx
-#: src/components/home-stage/stage-view.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/task-row.tsx
 msgid "Actions"
 msgstr "操作"
@@ -1095,10 +1089,6 @@ msgstr "品牌标志与运行指示"
 #: src/components/home-computer-deck.tsx
 msgid "Bring {0} to the front"
 msgstr "将 {0} 移到最前"
-
-#: src/components/home-stage/stage-view.tsx
-msgid "Brings this computer forward."
-msgstr "把这台电脑移到前面"
 
 #: src/components/settings-theme-sheet.tsx
 msgid "Browse the gallery"
@@ -4031,7 +4021,7 @@ msgid "Needs update"
 msgstr "需要更新"
 
 #: src/components/home-stage/home-stage-layout.tsx
-#: src/components/home-stage/stage-view.tsx
+#: src/components/home-stage/stage-agent-row.tsx
 #: src/components/home-thread.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "Needs you"
@@ -4516,6 +4506,7 @@ msgstr "离线"
 
 #. placeholder {0}: age(seen, nowMs)
 #: src/components/home-stage/home-stage-layout.tsx
+#: src/components/home-stage/stage-agent-row.tsx
 msgid "Offline · last seen {0}"
 msgstr "离线 · 最后在线 {0}"
 
@@ -4780,7 +4771,7 @@ msgstr "打开 GitHub 上的牧群问题跟踪页"
 msgid "Opens the simulator's menu: the device, its keys, the keyboard and the way out. Drag to move."
 msgstr "打开模拟器菜单：设备、按键、键盘和退出。拖动即可移动"
 
-#: src/components/home-stage/stage-view.tsx
+#: src/components/home-stage/stage-agent-row.tsx
 msgid "Opens this agent."
 msgstr "打开这个代理"
 
@@ -4788,7 +4779,7 @@ msgstr "打开这个代理"
 msgid "Opens this agent's terminal"
 msgstr "打开这个代理的终端"
 
-#: src/components/home-stage/stage-view.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 msgid "Opens this computer."
 msgstr "打开这台电脑"
 
@@ -5911,10 +5902,6 @@ msgstr "全选"
 msgid "Select model: {modelDisplayName}"
 msgstr "选择模型：{modelDisplayName}"
 
-#: src/components/home-stage/stage-view.tsx
-msgid "selected"
-msgstr "已选中"
-
 #: src/components/computer-map/screen.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-servers.tsx
@@ -6645,10 +6632,6 @@ msgstr "Tab 键"
 #: src/components/attachment-menu.tsx
 msgid "Take photo"
 msgstr "拍照"
-
-#: src/components/home-stage/stage-view.tsx
-msgid "Tap · open"
-msgstr "轻点 · 打开"
 
 #: src/components/home-stage/stage-view.tsx
 msgid "Tap · start a new task"

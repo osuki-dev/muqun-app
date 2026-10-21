@@ -84,11 +84,6 @@ msgstr "{0, plural, other {# ชั่วโมง}}"
 msgid "{0, plural, one {# minute} other {# minutes}}"
 msgstr "{0, plural, other {# นาที}}"
 
-#. placeholder {0}: orb.more
-#: src/components/home-stage/stage-view.tsx
-msgid "{0, plural, one {# more agent} other {# more agents}}"
-msgstr "{0, plural, other {อีก # เอเจนต์}}"
-
 #. placeholder {0}: capped.hidden
 #. placeholder {0}: row.remaining
 #: src/components/agent-tool-card.tsx
@@ -153,12 +148,6 @@ msgstr "{0} ข้อความในบริบท"
 msgid "{0} more models"
 msgstr "อีก {0} โมเดล"
 
-#. placeholder {0}: target.index + 1
-#. placeholder {1}: panels.length
-#: src/components/home-stage/stage-view.tsx
-msgid "{0} of {1}"
-msgstr "{0} จาก {1}"
-
 #. placeholder {0}: filtered.length
 #. placeholder {1}: entries.length
 #: src/components/dev-icon-gallery.tsx
@@ -169,6 +158,11 @@ msgstr "ไอคอน {0} จาก {1} · สำหรับการพั�
 #: src/components/agent-context-sheet.tsx
 msgid "{0} of {limitLabel} tokens the model can hold"
 msgstr "{0} จาก {limitLabel} โทเค็นที่โมเดลรองรับ"
+
+#. placeholder {0}: index + 1
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "{0} of {total}"
+msgstr "{0} จาก {total}"
 
 #. placeholder {0}: sessions.length
 #: src/components/agent-sessions-sheet.tsx
@@ -321,9 +315,9 @@ msgstr "{computer} ไม่มีงานนี้แล้ว"
 msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, other {# รายการ}}"
 
-#: src/components/home-stage/stage-view.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 msgid "{count, plural, one {# session} other {# sessions}}"
-msgstr "{count, plural, other {# เซสชัน}}"
+msgstr ""
 
 #: src/components/home-connections.tsx
 msgid "{count} in progress"
@@ -566,7 +560,7 @@ msgid "Act on this terminal, or send its agent a prompt"
 msgstr "สั่งงานเทอร์มินัลนี้ หรือส่งคำสั่งให้เอเจนต์ของมัน"
 
 #: src/components/home-recent-sessions.tsx
-#: src/components/home-stage/stage-view.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/task-row.tsx
 msgid "Actions"
 msgstr "การทำงาน"
@@ -1095,10 +1089,6 @@ msgstr "เครื่องหมายแบรนด์และตัวบ
 #: src/components/home-computer-deck.tsx
 msgid "Bring {0} to the front"
 msgstr "นำ {0} มาไว้ด้านหน้า"
-
-#: src/components/home-stage/stage-view.tsx
-msgid "Brings this computer forward."
-msgstr "นำคอมพิวเตอร์เครื่องนี้มาไว้ด้านหน้า"
 
 #: src/components/settings-theme-sheet.tsx
 msgid "Browse the gallery"
@@ -4031,7 +4021,7 @@ msgid "Needs update"
 msgstr "ต้องอัปเดต"
 
 #: src/components/home-stage/home-stage-layout.tsx
-#: src/components/home-stage/stage-view.tsx
+#: src/components/home-stage/stage-agent-row.tsx
 #: src/components/home-thread.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "Needs you"
@@ -4516,6 +4506,7 @@ msgstr "ออฟไลน์"
 
 #. placeholder {0}: age(seen, nowMs)
 #: src/components/home-stage/home-stage-layout.tsx
+#: src/components/home-stage/stage-agent-row.tsx
 msgid "Offline · last seen {0}"
 msgstr "ออฟไลน์ · เห็นล่าสุด {0}"
 
@@ -4780,7 +4771,7 @@ msgstr "เปิดหน้าติดตามปัญหาของ Muqun
 msgid "Opens the simulator's menu: the device, its keys, the keyboard and the way out. Drag to move."
 msgstr "เปิดเมนูเครื่องจำลอง ได้แก่ อุปกรณ์ ปุ่ม แป้นพิมพ์ และทางออก ลากเพื่อย้าย"
 
-#: src/components/home-stage/stage-view.tsx
+#: src/components/home-stage/stage-agent-row.tsx
 msgid "Opens this agent."
 msgstr "เปิดเอเจนต์นี้"
 
@@ -4788,7 +4779,7 @@ msgstr "เปิดเอเจนต์นี้"
 msgid "Opens this agent's terminal"
 msgstr "เปิดเทอร์มินัลของเอเจนต์นี้"
 
-#: src/components/home-stage/stage-view.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 msgid "Opens this computer."
 msgstr "เปิดคอมพิวเตอร์เครื่องนี้"
 
@@ -5911,10 +5902,6 @@ msgstr "เลือกทั้งหมด"
 msgid "Select model: {modelDisplayName}"
 msgstr "เลือกโมเดล: {modelDisplayName}"
 
-#: src/components/home-stage/stage-view.tsx
-msgid "selected"
-msgstr "เลือกอยู่"
-
 #: src/components/computer-map/screen.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-servers.tsx
@@ -6645,10 +6632,6 @@ msgstr "Tab"
 #: src/components/attachment-menu.tsx
 msgid "Take photo"
 msgstr "ถ่ายรูป"
-
-#: src/components/home-stage/stage-view.tsx
-msgid "Tap · open"
-msgstr "แตะ · เปิด"
 
 #: src/components/home-stage/stage-view.tsx
 msgid "Tap · start a new task"

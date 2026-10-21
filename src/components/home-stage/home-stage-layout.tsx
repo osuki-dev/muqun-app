@@ -42,9 +42,11 @@ import { useServerAgents } from '@/stores/server-agents';
 import { useServerTasksStore } from '@/stores/server-tasks';
 import { isRenderableThemeAsset } from '@/theme/renderable-asset';
 import { resolveThemeImage } from '@/theme/resolve';
+import { StageAgentRow } from './stage-agent-row';
 import { useStageComposition, type StageImageInput } from './stage-composition';
 import { StageSessionStrip } from './stage-session-strip';
 import { StageView } from './stage-view';
+import { createStageOpener } from './types';
 
 export type HomeStageLayoutProps = {
   panels: readonly StagePanel[];
@@ -55,7 +57,7 @@ export type HomeStageLayoutProps = {
   coverHeader: boolean;
   /** Home is not on screen or the app is in the background. */
   paused: boolean;
-  /** Bumped when a task completes: the motes and the front core flare. */
+  /** Bumped when a task completes: the motes flare. */
   burst: number;
   topInset: number;
   /** The floating composer's height; the session strip stands above it. */
@@ -85,7 +87,7 @@ export type HomeStageLayoutProps = {
   onRefresh: () => void;
   onSelect: (index: number) => void;
   onOpen: (index: number) => void;
-  /** An agent's orb: its computer, at the agent's pane when known. */
+  /** An agent's chip: its computer, at the agent's pane when known. */
   onOpenAgent: (index: number, paneId?: string) => void;
   onOpenTasks: (index: number) => void;
   onOpenDetails: (index: number) => void;
@@ -113,7 +115,7 @@ export type HomeStageProps = Omit<
   connectionStatuses: Readonly<Record<string, ConnectionStatus | undefined>>;
   recentEntries: readonly HomeContinueEntry[];
   onSelectServer: (serverId: string) => void;
-  /** Open a computer; at `paneId` when an agent's orb was tapped. */
+  /** Open a computer; at `paneId` when an agent's chip was tapped. */
   onOpenServer: (serverId: string, paneId?: string) => void;
   onOpenTasks: (serverId: string) => void;
   onOpenDetails: (serverId: string) => void;
@@ -206,9 +208,10 @@ export function HomeStage({
 }
 
 /**
- * Stage: the theme's world fills the screen, and a thin 2D glass HUD carries
+ * Stage: the theme's world fills the screen, and a thin 2D HUD carries
  * everything to read or press -- the chosen computer, its status and the page
- * dots with the tools (top), its sessions above the composer (bottom), and the
+ * dots with the tools (top; a tap opens the computer, a long press offers its
+ * actions), its agents and its sessions above the composer (bottom), and the
  * full list one pull away. Text never renders in 3D.
  */
 export function HomeStageLayout({
@@ -262,7 +265,12 @@ export function HomeStageLayout({
     onReplySession?.(entry);
   });
   const [listOpen, setListOpen] = useState(false);
+  const [opener] = useState(createStageOpener);
   const selected = panels[selectedIndex];
+  // The foot rows' height above the dock, measured: the art stands on them.
+  const [footStack, setFootStack] = useState(0);
+  const foot = footStack > 0 ? dockHeight + 6 + footStack : 0;
+  const openComputer = useStableHandler(() => opener.open(() => onOpen(selectedIndex)));
   const actionsPanel = panels.find((panel) => panel.serverId === actionsFor);
   const actionsIndex = actionsPanel ? panels.indexOf(actionsPanel) : -1;
 
@@ -274,7 +282,7 @@ export function HomeStageLayout({
     dockLift.set(withTiming(dockHeight, timing('short')));
   }, [dockHeight, dockLift]);
   const footStyle = useAnimatedStyle(() => ({ bottom: dockLift.get() + 6 }));
-  const footScrimStyle = useAnimatedStyle(() => ({ height: dockLift.get() + 190 }));
+  const footScrimStyle = useAnimatedStyle(() => ({ height: dockLift.get() + 230 }));
 
   const sheet = useSharedValue(0);
   const openList = useStableHandler((open: boolean) => {
@@ -332,22 +340,18 @@ export function HomeStageLayout({
       style={[styles.root, { backgroundColor: theme.colors.background }]}
       onLayout={(event: LayoutChangeEvent) => onViewport(event.nativeEvent.layout.height)}>
       <StageView
-        panels={panels}
+        count={panels.length}
         selectedIndex={selectedIndex}
         composition={composition}
         wallpaperUri={wallpaper?.uri}
         artworkUri={artwork?.uri}
         inset={topInset}
+        foot={foot}
         paused={paused || listOpen}
         burst={burst}
+        opener={opener}
         onSelect={onSelect}
-        onOpen={onOpen}
-        onOpenAgent={onOpenAgent}
         onNewTask={onNewTask}
-        onActions={(index) => {
-          const panel = panels[index];
-          if (panel) setActionsFor(panel.serverId);
-        }}
       />
 
       {/* Top: the chosen computer, its status and the dots; the tools on the right. */}
@@ -372,11 +376,13 @@ export function HomeStageLayout({
       <View pointerEvents="box-none" style={[styles.top, { paddingTop: topInset + 10 }]}>
         <View pointerEvents="box-none" style={styles.topRow}>
           {selected ? (
-            <View
-              testID="home-stage-hud-computer"
-              accessible
-              accessibilityLabel={selected.label}
-              style={styles.who}>
+            <StageHeaderButton
+              panel={selected}
+              index={selectedIndex}
+              total={panels.length}
+              onOpen={openComputer}
+              onActions={() => setActionsFor(selected.serverId)}
+              onSelect={onSelect}>
               <Text
                 variant="caption"
                 weight="semibold"
@@ -388,7 +394,7 @@ export function HomeStageLayout({
                 {selected.label}
               </Text>
               <StageStatusLine panel={selected} halo={halo} />
-            </View>
+            </StageHeaderButton>
           ) : (
             <View />
           )}
@@ -423,8 +429,18 @@ export function HomeStageLayout({
       <Animated.View pointerEvents="none" style={[styles.bottomScrim, footScrimStyle]}>
         <EdgeFade edge="bottom" color={theme.colors.background} style={StyleSheet.absoluteFill} />
       </Animated.View>
-      <Animated.View pointerEvents="box-none" style={[styles.bottom, footStyle]}>
+      <Animated.View
+        pointerEvents="box-none"
+        style={[styles.bottom, footStyle]}
+        onLayout={(event) => setFootStack(Math.round(event.nativeEvent.layout.height))}>
         {emptyState ? <View style={styles.empty}>{emptyState}</View> : null}
+        {panels.length > 0 ? (
+          <StageAgentRow
+            panel={selected}
+            paused={paused || listOpen}
+            onOpenAgent={(chip) => opener.open(() => onOpenAgent(selectedIndex, chip.paneId))}
+          />
+        ) : null}
         {panels.length > 0 ? (
           <GestureDetector gesture={pull}>
             <View>
@@ -537,6 +553,59 @@ function useStageTextHalo() {
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 8,
   };
+}
+
+/**
+ * The computer's name and status as one control: a tap opens the computer, a
+ * long press offers its actions. The screen reader hears its name, status,
+ * sessions and place among the computers, and adjusts it to move between
+ * them.
+ */
+function StageHeaderButton({
+  panel,
+  index,
+  total,
+  onOpen,
+  onActions,
+  onSelect,
+  children,
+}: {
+  panel: StagePanel;
+  index: number;
+  total: number;
+  onOpen: () => void;
+  onActions: () => void;
+  onSelect: (index: number) => void;
+  children: ReactNode;
+}) {
+  const { t } = useLingui();
+  const { _ } = useLinguiRuntime();
+  const status = _(connectionStatusDescription[panel.connection]);
+  const count = panel.sessionCount;
+  const sessions = t`${plural(count, { one: '# session', other: '# sessions' })}`;
+  const position = total > 1 ? `, ${t`${index + 1} of ${total}`}` : '';
+  return (
+    <PressableScale
+      testID="home-stage-hud-computer"
+      accessibilityRole={total > 1 ? 'adjustable' : 'button'}
+      accessibilityLabel={`${panel.label}, ${status}, ${sessions}${position}`}
+      accessibilityHint={t`Opens this computer.`}
+      accessibilityActions={[
+        ...(total > 1 ? [{ name: 'increment' }, { name: 'decrement' }] : []),
+        { name: 'longpress', label: t`Actions` },
+      ]}
+      onAccessibilityAction={(event) => {
+        const action = event.nativeEvent.actionName;
+        if (action === 'longpress') onActions();
+        else if (action === 'increment' && index < total - 1) onSelect(index + 1);
+        else if (action === 'decrement' && index > 0) onSelect(index - 1);
+      }}
+      onPress={onOpen}
+      onLongPress={onActions}
+      style={styles.who}>
+      {children}
+    </PressableScale>
+  );
 }
 
 /**

@@ -1,11 +1,11 @@
 /**
- * What each computer's core on the Stage shows, read from the same Home
+ * What the Stage's HUD shows of each computer, read from the same Home
  * state Classic and Editorial read: the launch controller's computers, their
  * connection statuses, the mirrored agents, the attention observations, the
  * task ledgers and the Recent entries. A presentation adapter only -- it
  * reshapes nothing it is given and fetches nothing.
  *
- * The core and its agent orbs say what the computer is doing now and
+ * The header and the agents' row say what the computer is doing now and
  * whether it needs the reader; where to jump back in is the session strip's
  * job, so no session titles appear here.
  */
@@ -19,7 +19,7 @@ import type { TaskView } from './task-ledger';
 
 export type StagePanelTone = 'online' | 'offline' | 'unknown' | 'warning';
 
-/** What an agent's orb says: it waits on the reader, it runs, or neither. */
+/** What an agent's chip says: it waits on the reader, it runs, or neither. */
 export type StageAgentMark = 'working' | 'needs-you' | 'idle';
 
 export type StageAgentLine = {
@@ -34,7 +34,7 @@ export type StageAgentLine = {
    * for an idle agent: an old task line is not what it is doing now.
    */
   activity?: string;
-  /** The pane it runs in, so a tap on its orb lands there; absent when unknown. */
+  /** The pane it runs in, so a tap on its chip lands there; absent when unknown. */
   paneId?: string;
 };
 
@@ -206,11 +206,52 @@ function withoutName(text: string, name: string | undefined): string | undefined
   return text;
 }
 
-/** Where the selected computer stands among the cores; 0 when it is not there. */
+/** Where the selected computer stands among the computers; 0 when it is not there. */
 export function stageSelectedIndex(
   panels: readonly { serverId: string }[],
   serverId: string | undefined
 ): number {
   const index = serverId ? panels.findIndex((panel) => panel.serverId === serverId) : -1;
   return index < 0 ? 0 : index;
+}
+
+/** One agent in the HUD's agents' row. */
+export type StageAgentChip = {
+  key: string;
+  name: string;
+  mark: StageAgentMark;
+  /** The pane a tap opens; absent when unknown (the computer opens instead). */
+  paneId?: string;
+  /** The state named beside the name: never for an idle agent, whose dot says enough. */
+  word: Exclude<StageAgentMark, 'idle'> | null;
+};
+
+/**
+ * The HUD's agents' row for a computer: an offline computer's row is one
+ * muted "offline, last seen" line instead of chips (its agents are not what
+ * they were); otherwise one chip per agent, waiting on the reader first,
+ * then running, then idle, each in the order given.
+ */
+export type StageAgentRow =
+  | { kind: 'offline'; lastSeenMs?: number }
+  | { kind: 'agents'; chips: StageAgentChip[] };
+
+export function stageAgentRow(
+  panel: Pick<StagePanel, 'tone' | 'lastSeenMs' | 'agents'>
+): StageAgentRow {
+  if (panel.tone === 'offline')
+    return panel.lastSeenMs === undefined
+      ? { kind: 'offline' }
+      : { kind: 'offline', lastSeenMs: panel.lastSeenMs };
+  const chips = panel.agents
+    .map((agent, index) => ({ agent, index }))
+    .sort((a, b) => MARK_ORDER[a.agent.mark] - MARK_ORDER[b.agent.mark] || a.index - b.index)
+    .map(({ agent }): StageAgentChip => ({
+      key: agent.key,
+      name: agent.name,
+      mark: agent.mark,
+      ...(agent.paneId ? { paneId: agent.paneId } : {}),
+      word: agent.mark === 'idle' ? null : agent.mark,
+    }));
+  return { kind: 'agents', chips };
 }

@@ -2,29 +2,28 @@ import { describe, expect, test } from 'bun:test';
 import {
   projectStagePoint,
   stageCamera,
-  stageCore,
-  stageCoreAnchor,
-  stageCoreRect,
   stageCoverLayer,
   stageDiveCamera,
   stageDragPosition,
-  stageDrawnScreens,
   stageHeroPlacement,
   stageHostTarget,
+  stageIdleDrift,
+  stageLayerCentre,
   stagePaintingPlacement,
-  stageRingPoint,
+  stageSwipePan,
   stageSwipeTarget,
-  stageViewSize,
   stageWorldRect,
   wrapStageIndex,
-  STAGE_CORE_DEPTH,
+  STAGE_BACKDROP_DEPTH,
+  STAGE_FRAME_DEPTH,
+  STAGE_FRAME_OVERSCAN,
   STAGE_HERO_DEPTH,
   STAGE_HUD_BOTTOM_PT,
-  STAGE_MAX_SCREENS,
+  STAGE_PAINTING_DEPTH,
   STAGE_PAINTING_OVERSCAN,
-  STAGE_RING_SCALE,
+  type StageArtPlacement,
+  type StageViewport,
 } from '../home-stage-geometry';
-import type { StageRole } from '../home-stage-layers';
 import { stageClearFraction, stageComposition } from '../home-stage-layers';
 import {
   createStageFrameBudget,
@@ -37,9 +36,28 @@ import {
   STAGE_CARD_SPRING,
   type StageFrameBudget,
 } from '../home-stage-motion';
-import { stagePanels, stageSelectedIndex } from '../home-stage-panels';
+import {
+  stageAgentRow,
+  stagePanels,
+  stageSelectedIndex,
+  type StageAgentLine,
+} from '../home-stage-panels';
 
-describe('cover-flow', () => {
+/** A phone: the foot rows (agents, sessions, composer) start 224 pt above the bottom. */
+const PHONE: StageViewport = { width: 390, height: 844, inset: 47, floor: 620 };
+const PHONES: StageViewport[] = [
+  PHONE,
+  { width: 393, height: 873, inset: 54, floor: 640 },
+  { width: 360, height: 800, inset: 24, floor: 584 },
+  { width: 412, height: 915, inset: 48, floor: 690 },
+];
+const centre = { x: 0.5, y: 0.5 };
+
+/** Where a layer's point at `depth` lands on a phone, seen by `camera`. */
+const seen = (depth: number, camera = stageCamera()) =>
+  projectStagePoint(stageLayerCentre(depth), camera, PHONE.width, PHONE.height);
+
+describe('computers', () => {
   test('wraps an index in both directions and survives an empty list', () => {
     expect(wrapStageIndex(-1, 4)).toBe(3);
     expect(wrapStageIndex(9, 4)).toBe(1);
@@ -47,27 +65,15 @@ describe('cover-flow', () => {
     expect(wrapStageIndex(Number.NaN, 3)).toBe(0);
   });
 
-  test('with many computers, draws a run around the selection that stays in range', () => {
-    expect(stageDrawnScreens(0, 3)).toEqual([0, 1, 2]);
-    expect(stageDrawnScreens(0, 0)).toEqual([]);
-    const middle = stageDrawnScreens(10, 20);
-    expect(middle).toHaveLength(STAGE_MAX_SCREENS);
-    expect(middle).toContain(9);
-    expect(middle).toContain(10);
-    expect(middle).toContain(11);
-    expect(stageDrawnScreens(0, 20)[0]).toBe(0);
-    expect(stageDrawnScreens(19, 20).at(-1)).toBe(19);
-  });
-
-  test('a swipe settles on the nearest core, at least one step when long or fast, never past an end', () => {
+  test('a swipe settles on the nearest computer, at least one step when long or fast, never past an end', () => {
     // Short and slow: stays.
     expect(stageSwipeTarget(1, 4, -20, -50, 400)).toBe(1);
-    // Long enough for a step but not for the next pane to be nearest.
+    // Long enough for a step but not for the next to be nearest.
     expect(stageSwipeTarget(1, 4, -60, 0, 400)).toBe(2);
     expect(stageSwipeTarget(1, 4, 60, 0, 400)).toBe(0);
     // A fast flick steps too.
     expect(stageSwipeTarget(1, 4, -10, -900, 400)).toBe(2);
-    // Dragged across two panes' worth.
+    // Dragged across two computers' worth.
     expect(stageSwipeTarget(0, 4, -400, 0, 400)).toBe(2);
     expect(stageSwipeTarget(3, 4, -400, -900, 400)).toBe(3);
     expect(stageSwipeTarget(0, 4, 300, 900, 400)).toBe(0);
@@ -80,211 +86,143 @@ describe('cover-flow', () => {
     expect(stageDragPosition(2, 3, -5)).toBe(2.35);
   });
 
-  test("the selected core sits at its role's place; neighbours stand aside, back and smaller", () => {
-    const aspect = 390 / 844;
-    const anchor = stageCoreAnchor(stageCamera(), aspect, 'figure');
-    const viewWidth = stageViewSize(STAGE_CORE_DEPTH, aspect).width;
-    const front = stageCore(0, anchor, aspect, 'figure');
-    expect(front.position).toEqual(anchor);
-    expect(front.side).toBe(0);
-    // About 44 pt across the radius on a phone, its ring twice that.
-    expect((front.radius / viewWidth) * 390).toBeCloseTo(44.9, 0);
-    expect(front.ringRadius).toBeCloseTo(front.radius * STAGE_RING_SCALE);
-    expect(front.orbRadius).toBeLessThan(front.radius / 4);
-    const next = stageCore(1, anchor, aspect, 'figure');
-    const previous = stageCore(-1, anchor, aspect, 'figure');
-    expect(next.position[0] - anchor[0]).toBeCloseTo(viewWidth * 0.62);
-    expect(previous.position[0] - anchor[0]).toBeCloseTo(-viewWidth * 0.62);
-    expect(next.position[2]).toBeCloseTo(anchor[2] - 2.2);
-    expect(next.radius).toBeCloseTo(front.radius * 0.62);
-    expect(next.side).toBe(1);
-    // A neighbour peeks in at the edge: its centre near or past the side of the view.
-    const camera = stageCamera();
-    expect(projectStagePoint(next.position, camera, 390, 844).x).toBeGreaterThan(390 * 0.9);
-    expect(projectStagePoint(previous.position, camera, 390, 844).x).toBeLessThan(390 * 0.1);
-    // Halfway through a drag, halfway between; further than one step is a neighbour's size.
-    expect(stageCore(0.5, anchor, aspect, 'figure').radius).toBeCloseTo(front.radius * 0.81);
-    expect(stageCore(2, anchor, aspect, 'figure').radius).toBeCloseTo(next.radius);
-    // With no art the core is the scene: larger.
-    const world = stageCore(0, stageCoreAnchor(camera, aspect, 'world'), aspect, 'world');
-    expect(world.radius).toBeGreaterThan(front.radius);
-  });
-
-  test('the ring lies around the core, its near side lower and nearer than its far side', () => {
-    const aspect = 390 / 844;
-    const camera = stageCamera();
-    const core = stageCore(0, stageCoreAnchor(camera, aspect, 'inset'), aspect, 'inset');
-    for (const angle of [0, 1, 2.5, 4, 5.5]) {
-      const point = stageRingPoint(core, angle);
-      const distance = Math.hypot(
-        point[0] - core.position[0],
-        point[1] - core.position[1],
-        point[2] - core.position[2]
-      );
-      expect(distance).toBeCloseTo(core.ringRadius);
-    }
-    const far = projectStagePoint(stageRingPoint(core, Math.PI / 2), camera, 390, 844);
-    const near = projectStagePoint(stageRingPoint(core, (3 * Math.PI) / 2), camera, 390, 844);
-    const right = projectStagePoint(stageRingPoint(core, 0), camera, 390, 844);
-    const centre = projectStagePoint(core.position, camera, 390, 844);
-    expect(near.y).toBeGreaterThan(centre.y);
-    expect(far.y).toBeLessThan(centre.y);
-    expect(near.depth).toBeLessThan(far.depth);
-    // Seen from a little above: an ellipse about three times wider than tall.
-    const across = Math.abs(right.x - centre.x);
-    const tall = Math.abs(near.y - far.y) / 2;
-    expect(across / tall).toBeGreaterThan(2.5);
-    expect(across / tall).toBeLessThan(4.5);
+  test('each computer looks in from its own place on one track; a swipe travels it continuously', () => {
+    expect(stageSwipePan(0, 1)).toBe(0);
+    expect(stageSwipePan(0, 0)).toBe(0);
+    // Two: half a pan either side of the middle. Three: the whole track.
+    expect(stageSwipePan(0, 2)).toBeCloseTo(-0.5);
+    expect(stageSwipePan(1, 2)).toBeCloseTo(0.5);
+    expect([0, 1, 2].map((flow) => stageSwipePan(flow, 3))).toEqual([-1, 0, 1]);
+    // Many: smaller steps on the same track, never past it.
+    expect(stageSwipePan(1, 9) - stageSwipePan(0, 9)).toBeCloseTo(0.25);
+    expect(stageSwipePan(-0.35, 9)).toBe(-1);
+    expect(stageSwipePan(8.35, 9)).toBe(1);
+    // Halfway through a swipe, halfway between.
+    expect(stageSwipePan(0.5, 3)).toBeCloseTo(-0.5);
+    expect(stageSwipePan(Number.NaN, 3)).toBe(0);
   });
 });
 
-describe('camera and projection', () => {
-  const aspect = 390 / 844;
-  const camera = stageCamera();
-
-  test('the selected core sits below the middle of the screen, where its anchor was cast', () => {
-    const anchor = stageCoreAnchor(camera, aspect, 'figure');
-    const at = projectStagePoint(anchor, camera, 390, 844);
-    expect(at.x).toBeCloseTo(195, 3);
-    // NDC -0.25 is 62.5 % of the way down.
-    expect(at.y).toBeCloseTo(844 * 0.625, 3);
-    expect(at.depth).toBeLessThanOrEqual(STAGE_CORE_DEPTH);
-  });
-
-  test('in every role the front core and its ring clear the art and the HUD and stay above the session strip', () => {
-    const roles: StageRole[] = ['figure', 'sky', 'inset', 'world'];
-    for (const [width, height] of [
-      [393, 873],
-      [390, 844],
-      [360, 800],
-      [412, 915],
-    ] as const) {
-      const viewport = { width, height, inset: 47 };
-      const ratio = width / height;
-      // Where each role's art body ends: a figure's and a painting's foot fade, an inset's box.
-      const figure = stageHeroPlacement(
-        { aspect: 0.6, fit: 'contain', focal: { x: 0.5, y: 0.5 }, box: 'cover', feather: 'cover' },
-        viewport
-      );
-      const inset = stageHeroPlacement(
-        {
-          aspect: 1.4,
-          fit: 'contain',
-          focal: { x: 0.5, y: 0.5 },
-          box: 'standard',
-          feather: 'inset',
-        },
-        viewport
-      );
-      const sky = stagePaintingPlacement(
-        { aspect: 0.9, fit: 'cover', focal: { x: 0.5, y: 0 } },
-        viewport
-      );
-      const body = (art: typeof figure) =>
-        art.plane.y + art.plane.height * Math.min(1, art.fade.from);
-      const artFoot: Record<StageRole, number> = {
-        figure: body(figure),
-        sky: body(sky),
-        inset: inset.box.y + inset.box.height,
-        world: 47 + STAGE_HUD_BOTTOM_PT,
-      };
-      for (const role of roles) {
-        const core = stageCore(0, stageCoreAnchor(camera, ratio, role), ratio, role);
-        const rect = stageCoreRect(core, camera, width, height);
-        expect(rect.visible).toBe(true);
-        expect(rect.y).toBeGreaterThan(artFoot[role]);
-        expect(rect.y + rect.height).toBeLessThan(height * 0.74);
-        // Centred, and wholly inside the view.
-        expect(rect.x + rect.width / 2).toBeCloseTo(width / 2, 0);
-        expect(rect.x).toBeGreaterThan(0);
-      }
+describe('camera and parallax', () => {
+  test('at rest, a layer at any depth sits where it was laid out', () => {
+    for (const depth of [STAGE_BACKDROP_DEPTH, STAGE_HERO_DEPTH, STAGE_FRAME_DEPTH]) {
+      const at = seen(depth);
+      expect(at.x).toBeCloseTo(195, 3);
+      expect(at.y).toBeCloseTo(422, 3);
     }
   });
 
-  test('tilt moves the camera within its limits; behind the camera is never visible', () => {
-    expect(stageCamera({ lookX: 4 }).position).toEqual(stageCamera({ lookX: 1 }).position);
-    expect(stageCamera({ lookX: 1 }).position[0]).toBeCloseTo(Math.sin((5 * Math.PI) / 180) * 4);
-    expect(stageCamera({ lookY: -1 }).position[1]).toBeLessThan(camera.position[1]);
+  test('tilt and a pan slide every layer the same way, the nearer the further', () => {
+    for (const camera of [
+      stageCamera({ lookX: 1, lookY: 1 }),
+      stageCamera({ lookX: -1 }),
+      stageCamera({ pan: 1 }),
+    ]) {
+      const shift = (depth: number) => {
+        const moved = seen(depth, camera);
+        const rest = seen(depth);
+        return { x: moved.x - rest.x, y: moved.y - rest.y };
+      };
+      const order = [
+        STAGE_BACKDROP_DEPTH,
+        STAGE_PAINTING_DEPTH,
+        STAGE_HERO_DEPTH,
+        STAGE_FRAME_DEPTH,
+      ];
+      const shifts = order.map(shift);
+      for (let index = 1; index < shifts.length; index += 1) {
+        expect(Math.abs(shifts[index]!.x)).toBeGreaterThan(Math.abs(shifts[index - 1]!.x));
+        expect(Math.sign(shifts[index]!.x)).toBe(Math.sign(shifts[0]!.x));
+      }
+    }
+    // Soft: at full tilt the hero moves about 12 pt, the wallpaper a third of that.
+    const tilted = stageCamera({ lookX: 1 });
+    const hero = Math.abs(seen(STAGE_HERO_DEPTH, tilted).x - 195);
+    expect(hero).toBeGreaterThan(8);
+    expect(hero).toBeLessThan(16);
+    expect(Math.abs(seen(STAGE_BACKDROP_DEPTH, tilted).x - 195)).toBeLessThan(hero / 2.5);
+  });
+
+  test("the frame's overscan covers full tilt and the whole pan at once", () => {
+    const worst = stageCamera({ lookX: 1, lookY: 1, pan: 1 });
+    const shift = Math.abs(seen(STAGE_FRAME_DEPTH, worst).x - 195);
+    expect(shift).toBeLessThan((PHONE.width * (STAGE_FRAME_OVERSCAN - 1)) / 2);
+    // Inputs past their range are held at it.
+    expect(stageCamera({ lookX: 4, pan: 9 }).position).toEqual(
+      stageCamera({ lookX: 1, pan: 1 }).position
+    );
+  });
+
+  test('the idle drift is slow and small, and holds where the ambient clock holds', () => {
+    expect(stageIdleDrift(0)).toEqual(stageIdleDrift(0));
+    for (let t = 0; t < 60; t += 0.7) {
+      const [x, y] = stageIdleDrift(t);
+      expect(Math.abs(x)).toBeLessThanOrEqual(0.22);
+      expect(Math.abs(y)).toBeLessThanOrEqual(0.14);
+      // A 20 fps frame moves it by a sliver of a look.
+      const [nx, ny] = stageIdleDrift(t + 0.05);
+      expect(Math.abs(nx - x) + Math.abs(ny - y)).toBeLessThan(0.01);
+    }
+    expect(stageIdleDrift(Number.NaN)).toEqual(stageIdleDrift(0));
+  });
+
+  test('a dive pushes the camera straight in towards the art, which grows', () => {
+    const camera = stageCamera();
+    expect(stageDiveCamera(camera, 0)).toBe(camera);
+    const dived = stageDiveCamera(camera, 1);
+    expect(dived.target).toEqual(camera.target);
+    const near = projectStagePoint(stageLayerCentre(STAGE_HERO_DEPTH), dived, 390, 844);
+    expect(near.x).toBeCloseTo(195, 3);
+    expect(near.y).toBeCloseTo(422, 3);
+    expect(near.depth).toBeLessThan(STAGE_HERO_DEPTH * 0.7);
     expect(projectStagePoint([0, 0, 50], camera, 390, 844).visible).toBe(false);
   });
 
-  test('a dive ends a few core radii in front of the core, looking at it, with the core on screen', () => {
-    const core = stageCore(0, stageCoreAnchor(camera, aspect, 'figure'), aspect, 'figure');
-    expect(stageDiveCamera(camera, core, 0)).toBe(camera);
-    const dived = stageDiveCamera(camera, core, 1);
-    dived.target.forEach((value, axis) => expect(value).toBeCloseTo(core.position[axis]!));
-    const distance = Math.hypot(
-      dived.position[0] - core.position[0],
-      dived.position[1] - core.position[1],
-      dived.position[2] - core.position[2]
-    );
-    expect(distance).toBeCloseTo(core.radius * 5);
-    expect(projectStagePoint(core.position, dived, 390, 844).visible).toBe(true);
-  });
-
-  test("a core's box holds its sphere and ring, clipped to the screen; a core off screen is not visible", () => {
-    const anchor = stageCoreAnchor(camera, aspect, 'figure');
-    const front = stageCore(0, anchor, aspect, 'figure');
-    const box = stageCoreRect(front, camera, 390, 844);
-    for (const point of [
-      front.position,
-      stageRingPoint(front, 0),
-      stageRingPoint(front, Math.PI),
-    ]) {
-      const at = projectStagePoint(point, camera, 390, 844);
-      expect(at.x).toBeGreaterThan(box.x);
-      expect(at.x).toBeLessThan(box.x + box.width);
-      expect(at.y).toBeGreaterThanOrEqual(box.y);
-      expect(at.y).toBeLessThanOrEqual(box.y + box.height);
-    }
-    const side = stageCoreRect(stageCore(1, anchor, aspect, 'figure'), camera, 390, 844);
-    expect(side.visible).toBe(true);
-    expect(side.x + side.width).toBeLessThanOrEqual(390);
-    expect(side.depth).toBeGreaterThan(box.depth);
-    const gone = stageCoreRect(stageCore(4, anchor, aspect, 'figure'), camera, 390, 844);
-    expect(gone.visible).toBe(false);
-  });
-
   test('a theme plane hung in the world projects back onto its box at rest', () => {
-    const viewport = { width: 390, height: 844, inset: 47 };
     const box = { x: 40, y: 120, width: 300, height: 200 };
-    const placed = stageWorldRect(box, STAGE_HERO_DEPTH, viewport);
-    const [x, y, z] = placed.position;
-    const corner = (u: number, v: number) =>
-      projectStagePoint([x + u * placed.width, y + v * placed.height, z], camera, 390, 844);
-    const topLeft = corner(-0.5, 0.5);
-    const bottomRight = corner(0.5, -0.5);
-    // The camera looks a little down, so the plane leans: within a few points.
-    expect(Math.abs(topLeft.x - box.x)).toBeLessThan(3);
-    expect(Math.abs(bottomRight.x - topLeft.x - box.width)).toBeLessThan(4);
-    expect(Math.abs(topLeft.y - box.y)).toBeLessThan(3);
-    expect(Math.abs(bottomRight.y - topLeft.y - box.height)).toBeLessThan(3);
+    const camera = stageCamera();
+    for (const depth of [STAGE_HERO_DEPTH, STAGE_PAINTING_DEPTH]) {
+      const placed = stageWorldRect(box, depth, PHONE);
+      const [x, y, z] = placed.position;
+      const corner = (u: number, v: number) =>
+        projectStagePoint([x + u * placed.width, y + v * placed.height, z], camera, 390, 844);
+      const topLeft = corner(-0.5, 0.5);
+      const bottomRight = corner(0.5, -0.5);
+      // The camera looks a little down, so the plane leans: within a few points.
+      expect(Math.abs(topLeft.x - box.x)).toBeLessThan(3);
+      expect(Math.abs(bottomRight.x - topLeft.x - box.width)).toBeLessThan(4);
+      expect(Math.abs(topLeft.y - box.y)).toBeLessThan(3);
+      expect(Math.abs(bottomRight.y - topLeft.y - box.height)).toBeLessThan(3);
+    }
   });
 });
 
 describe('theme layout', () => {
-  const viewport = { width: 390, height: 844, inset: 47 };
-  const aspect = 390 / 844;
-  const centre = { x: 0.5, y: 0.5 };
+  const hudBottom = (viewport: StageViewport) => viewport.inset + STAGE_HUD_BOTTOM_PT;
+  /** Where the art is still whole: its plane down to where its foot starts to fade. */
+  const body = (art: StageArtPlacement) =>
+    art.plane.y + art.plane.height * Math.min(1, art.fade.from);
+  const foot = (art: StageArtPlacement) => art.plane.y + art.plane.height;
 
   test('a cover layer fits its picture as CSS object-fit and object-position do', () => {
+    const aspect = 390 / 844;
     // A wide picture covering a tall view: the slack is cropped by the focal point.
     const left = stageCoverLayer(
       { aspect: 2, fit: 'cover', focal: { x: 0, y: 0.5 } },
-      60,
+      48,
       1.22,
       aspect
     );
     expect(left.uv.x).toBeCloseTo(0);
     expect(left.uv.height).toBeCloseTo(1);
-    const right = stageCoverLayer({ aspect: 2, focal: { x: 1, y: 0.5 } }, 60, 1.22, aspect);
+    const right = stageCoverLayer({ aspect: 2, focal: { x: 1, y: 0.5 } }, 48, 1.22, aspect);
     expect(right.uv.x + right.uv.width).toBeCloseTo(1);
-    const middle = stageCoverLayer({ aspect: 2, fit: 'tile', focal: centre }, 60, 1.22, aspect);
+    const middle = stageCoverLayer({ aspect: 2, fit: 'tile', focal: centre }, 48, 1.22, aspect);
     expect(middle.uv.x + middle.uv.width / 2).toBeCloseTo(0.5);
     // Contained: the whole picture, its slack placed by the focal point.
     const top = stageCoverLayer(
       { aspect: 2, fit: 'contain', focal: { x: 0.5, y: 0 } },
-      60,
+      48,
       1,
       aspect
     );
@@ -294,25 +232,37 @@ describe('theme layout', () => {
     expect(top.uv.height).toBeGreaterThan(1);
   });
 
-  test('a sky painting spans the band at full width, its top kept, fading from 68 % of the 2D cover box', () => {
-    const art = stagePaintingPlacement(
-      { aspect: 0.95, fit: 'cover', focal: { x: 0.5, y: 0 } },
-      viewport
-    );
-    // All of the painting's width shows; the band is the view plus the painting's overscan.
-    expect(art.uv.x).toBeCloseTo(0);
-    expect(art.uv.width).toBeCloseTo(1);
-    expect(art.uv.y).toBeCloseTo(0);
-    expect(art.plane.width).toBeCloseTo(390 * STAGE_PAINTING_OVERSCAN);
-    // The band is the 2D cover box (0.9 of the width) at the band's width.
-    expect(art.box.height / art.box.width).toBeCloseTo(0.9);
-    expect(art.plane.y + art.plane.height).toBeCloseTo(art.box.y + art.box.height);
-    const fadeAt = art.plane.y + art.plane.height * art.fade.from;
-    expect(fadeAt).toBeCloseTo(art.box.y + art.box.height * 0.68);
-    expect(art.fade.to).toBeCloseTo(1);
-    // A wide contain painting keeps its natural height: nothing cropped, the band ends where it does.
-    const wide = stagePaintingPlacement({ aspect: 2, fit: 'contain', focal: centre }, viewport);
+  test('a sky painting fills the window from the top down to the foot rows, its top kept', () => {
+    for (const viewport of PHONES) {
+      const art = stagePaintingPlacement({ aspect: 0.9, fit: 'cover', focal: centre }, viewport);
+      // The band is the view plus the painting's overscan, bleeding past the top.
+      expect(art.box.width).toBeCloseTo(viewport.width * STAGE_PAINTING_OVERSCAN);
+      expect(art.plane.y).toBeLessThan(0);
+      expect(art.uv.y).toBeCloseTo(0);
+      // Grown to reach the foot rows: whole down to just above them, fading behind them.
+      expect(body(art)).toBeGreaterThan(viewport.floor - 60);
+      expect(body(art)).toBeLessThan(viewport.floor);
+      expect(foot(art)).toBeGreaterThan(viewport.floor);
+      expect(art.fade.to).toBe(1);
+      // Its sides cropped around the focal point, never more than the zoom allows.
+      expect(art.uv.width).toBeLessThan(1);
+      expect(art.uv.x).toBeCloseTo((1 - art.uv.width) / 2);
+      expect(art.uv.width).toBeGreaterThan(1 / 1.5);
+    }
+    // A focal point to the left keeps the left.
+    const left = stagePaintingPlacement({ aspect: 1, fit: 'cover', focal: { x: 0, y: 0 } }, PHONE);
+    expect(left.uv.x).toBeCloseTo(0);
+    // A wide one grows only so far, then ends short of the foot rows, fading over its end.
+    const wider = stagePaintingPlacement({ aspect: 1.6, fit: 'cover', focal: centre }, PHONE);
+    expect(wider.drawn.width).toBeCloseTo(390 * STAGE_PAINTING_OVERSCAN * 1.5);
+    expect(foot(wider)).toBeLessThan(PHONE.floor);
+    expect(foot(wider) - body(wider)).toBeGreaterThan(60);
+    // Contained: its whole width at its natural height, fading over its own last part.
+    const wide = stagePaintingPlacement({ aspect: 2, fit: 'contain', focal: centre }, PHONE);
     expect(wide.uv).toEqual({ x: 0, y: 0, width: 1, height: 1 });
+    expect(foot(wide)).toBeLessThan(PHONE.floor);
+    expect(wide.fade.from).toBeGreaterThan(0.6);
+    expect(wide.fade.from).toBeLessThan(0.75);
   });
 
   const hero = (
@@ -326,98 +276,116 @@ describe('theme layout', () => {
     ...overrides,
   });
 
-  test('a figure stands in the 2D cover box under the name, at its focal point', () => {
-    const art = stageHeroPlacement(hero({ focal: { x: 0.62, y: 0.35 } }), viewport);
-    expect(art.box.width).toBe(390);
-    expect(art.box.height).toBeCloseTo(351);
-    // Tucked 35 % into the name's 36 pt line, which ends 63 pt below the inset.
-    expect(art.box.y).toBeCloseTo(47 + 63 - 36 * 0.35);
-    // Contained: the whole figure, the side slack split 62:38 like object-position.
-    expect(art.uv.x).toBeCloseTo(0);
-    expect(art.uv.width).toBeCloseTo(1);
-    expect(art.uv.height).toBeCloseTo(1);
-    expect(art.drawn.height).toBeCloseTo(351);
-    const slack = 390 - art.drawn.width;
-    expect(art.drawn.x).toBeCloseTo(slack * 0.62);
-    expect(art.plane.y + art.plane.height * art.fade.from).toBeCloseTo(art.box.y + 351 * 0.68);
-    expect(art.edges).toEqual({ x: 0, y: 0 });
+  test('a figure stands large on the foot rows, tucked under the name, at its focal x', () => {
+    for (const viewport of PHONES) {
+      const art = stageHeroPlacement(hero({ focal: { x: 0.62, y: 0.2 } }), viewport);
+      // Tucked 35 % into the name's 36 pt line, which ends 63 pt below the inset.
+      expect(art.box.y).toBeCloseTo(viewport.inset + 63 - 36 * 0.35);
+      expect(art.box.width).toBe(viewport.width);
+      // A tall figure: as tall as the box, the whole picture, its feet behind the foot rows.
+      expect(art.uv).toEqual({ x: 0, y: 0, width: 1, height: 1 });
+      expect(art.drawn.height).toBeCloseTo(art.box.height);
+      expect(art.drawn.height).toBeGreaterThan(viewport.height * 0.6);
+      expect(foot(art)).toBeGreaterThan(viewport.floor);
+      expect(body(art)).toBeGreaterThan(viewport.floor - 60);
+      expect(body(art)).toBeLessThan(viewport.floor);
+      // The side slack split 62:38 like object-position.
+      const slack = viewport.width - art.drawn.width;
+      expect(art.drawn.x).toBeCloseTo(slack * 0.62);
+      expect(art.edges).toEqual({ x: 0, y: 0 });
+    }
   });
 
-  test("a covered figure is cropped at its focal x, keeping its top, as Editorial's", () => {
-    const art = stageHeroPlacement(hero({ fit: 'cover', focal: { x: 0.58, y: 0.35 } }), viewport);
+  test('a wide contained figure grows a little past the width and still stands on the foot rows', () => {
+    const art = stageHeroPlacement(hero({ aspect: 1.5, focal: { x: 0.3, y: 0.5 } }), PHONE);
+    expect(art.drawn.width).toBeGreaterThan(390);
+    expect(art.drawn.width).toBeLessThanOrEqual(390 * 1.3 + 1e-6);
+    expect(art.drawn.x).toBeCloseTo((390 - art.drawn.width) * 0.3);
+    expect(art.drawn.y + art.drawn.height).toBeCloseTo(art.box.y + art.box.height);
+    expect(foot(art)).toBeGreaterThan(PHONE.floor);
+  });
+
+  test("a covered figure fills its box, cropped at its focal x and keeping its top, as Editorial's", () => {
+    const art = stageHeroPlacement(hero({ fit: 'cover', focal: { x: 0.58, y: 0.35 } }), PHONE);
     expect(art.uv.y).toBeCloseTo(0);
-    expect(art.uv.height).toBeLessThan(1);
-    expect(art.uv.width).toBeCloseTo(1);
     expect(art.plane).toEqual(art.box);
-    // A wide figure is cropped at the sides, around its focal x.
     const wide = stageHeroPlacement(
       hero({ aspect: 2, fit: 'cover', focal: { x: 0.25, y: 0 } }),
-      viewport
+      PHONE
     );
     expect(wide.uv.width).toBeLessThan(1);
     expect(wide.uv.x).toBeCloseTo((1 - wide.uv.width) * 0.25);
     // Without a fit, Editorial covers too.
-    expect(stageHeroPlacement(hero({ fit: undefined }), viewport).uv.height).toBeLessThan(1);
+    expect(stageHeroPlacement(hero({ fit: undefined, aspect: 1 }), PHONE).plane).toEqual(
+      stageHeroPlacement(hero({ fit: undefined, aspect: 1 }), PHONE).box
+    );
   });
 
-  test('an inset picture is smaller, below the HUD; a cut-out fades at 72 %, a painting at every edge', () => {
-    const cut = stageHeroPlacement(
-      hero({ box: 'standard', feather: 'inset', aspect: 1.4 }),
-      viewport
-    );
-    expect(cut.box.height).toBe(195);
-    expect(cut.box.y).toBeGreaterThan(47 + STAGE_HUD_BOTTOM_PT);
-    expect(cut.plane.height).toBeLessThan(
-      stageHeroPlacement(hero({ aspect: 1.4 }), viewport).plane.height
-    );
-    expect(cut.plane.y + cut.plane.height * cut.fade.from).toBeCloseTo(cut.box.y + 195 * 0.72);
+  test('an inset picture is centred, larger, between the HUD and the foot rows', () => {
+    for (const viewport of PHONES) {
+      const room = { top: hudBottom(viewport), bottom: viewport.floor };
+      const cut = stageHeroPlacement(
+        hero({ box: 'standard', feather: 'inset', aspect: 1.5 }),
+        viewport
+      );
+      expect(cut.box.y).toBeGreaterThan(room.top);
+      expect(cut.box.y + cut.box.height).toBeLessThan(room.bottom);
+      // Centred in the room, and wider than the view (its sides cropped).
+      const middle = cut.box.y + cut.box.height / 2;
+      expect(middle).toBeCloseTo((room.top + 8 + room.bottom - 8) / 2);
+      expect(cut.drawn.width).toBeGreaterThan(viewport.width);
+      expect(cut.plane.y + cut.plane.height * cut.fade.from).toBeCloseTo(
+        cut.plane.y + cut.plane.height * 0.72
+      );
+      // A tall picture is limited by the room's height instead.
+      const tall = stageHeroPlacement(
+        hero({ box: 'standard', feather: 'inset', aspect: 0.6 }),
+        viewport
+      );
+      expect(tall.box.height).toBeCloseTo(room.bottom - 8 - (room.top + 8));
+      expect(tall.drawn.height).toBeCloseTo(tall.box.height);
+    }
     const framed = stageHeroPlacement(
       hero({ box: 'standard', feather: 'framed', aspect: 1.4 }),
-      viewport
+      PHONE
     );
     expect(framed.fade.from).toBeGreaterThan(1);
     expect(framed.edges).toEqual({ x: 0.22, y: 0.32 });
   });
 
-  test('every role has a new-task target below the HUD and above the core', () => {
-    const coreTop = (role: StageRole) =>
-      stageCoreRect(
-        stageCore(0, stageCoreAnchor(stageCamera(), aspect, role), aspect, role),
-        stageCamera(),
-        390,
-        844
-      ).y;
-    const hud = 47 + STAGE_HUD_BOTTOM_PT;
-    const targets = [
-      stageHostTarget({ kind: 'hero', placement: stageHeroPlacement(hero(), viewport) }, viewport),
-      stageHostTarget(
-        {
-          kind: 'hero',
-          placement: stageHeroPlacement(hero({ box: 'standard', feather: 'inset' }), viewport),
-        },
-        viewport
-      ),
-      stageHostTarget(
-        {
-          kind: 'painting',
-          placement: stagePaintingPlacement({ aspect: 1, fit: 'cover', focal: centre }, viewport),
-        },
-        viewport
-      ),
-      stageHostTarget(null, viewport),
-    ];
-    const roles: StageRole[] = ['figure', 'inset', 'sky', 'world'];
-    targets.forEach(({ rect, hint }, index) => {
-      expect(rect.width).toBeGreaterThan(80);
-      expect(rect.height).toBeGreaterThan(48);
-      expect(rect.y + rect.height).toBeGreaterThan(hud + 48);
-      // The hint chip hangs above its point: the point stays clear of the HUD.
-      expect(hint.y).toBeGreaterThanOrEqual(hud + 44);
-      expect(hint.y).toBeLessThan(coreTop(roles[index]!));
-    });
-    // The painting's target starts below the HUD, the synthetic one ends above the core.
-    expect(targets[2]!.rect.y).toBe(hud);
-    expect(targets[3]!.rect.y + targets[3]!.rect.height).toBeLessThan(coreTop('world'));
+  test('every role has a new-task target below the HUD and above the foot rows', () => {
+    for (const viewport of PHONES) {
+      const targets = [
+        stageHostTarget(
+          { kind: 'hero', placement: stageHeroPlacement(hero(), viewport) },
+          viewport
+        ),
+        stageHostTarget(
+          {
+            kind: 'hero',
+            placement: stageHeroPlacement(hero({ box: 'standard', feather: 'inset' }), viewport),
+          },
+          viewport
+        ),
+        stageHostTarget(
+          {
+            kind: 'painting',
+            placement: stagePaintingPlacement({ aspect: 1, fit: 'cover', focal: centre }, viewport),
+          },
+          viewport
+        ),
+        stageHostTarget(null, viewport),
+      ];
+      for (const { rect, hint } of targets) {
+        expect(rect.width).toBeGreaterThan(80);
+        expect(rect.height).toBeGreaterThan(120);
+        expect(rect.y).toBeGreaterThanOrEqual(hudBottom(viewport));
+        expect(rect.y + rect.height).toBeLessThanOrEqual(viewport.floor);
+        // The hint chip hangs above its point: the point stays clear of the HUD.
+        expect(hint.y).toBeGreaterThanOrEqual(hudBottom(viewport) + 44);
+        expect(hint.y).toBeLessThanOrEqual(rect.y + rect.height);
+      }
+    }
   });
 });
 
@@ -625,24 +593,18 @@ describe('frame pacing', () => {
     expect(stageEffects('full', gpu)).toMatchObject({
       particles: true,
       particleShare: 1,
-      orbit: true,
-      fullGlow: true,
       maxDpr: 1.5,
       frameIntervalMs: 0,
     });
     expect(stageEffects('reduced', gpu)).toMatchObject({
       particles: true,
       particleShare: 0.5,
-      orbit: true,
-      fullGlow: true,
       maxDpr: 1.25,
       frameIntervalMs: 0,
     });
-    // The cheapest 3D rung: still cores in fewer glow layers.
+    // The cheapest 3D rung: no particles, 1x, 30 fps.
     expect(stageEffects('low', gpu)).toMatchObject({
       particles: false,
-      orbit: false,
-      fullGlow: false,
       maxDpr: 1,
       frameIntervalMs: 1000 / 30,
     });
@@ -651,7 +613,6 @@ describe('frame pacing', () => {
     expect(stageEffects('full', { gpuAvailable: true, reducedMotion: true })).toMatchObject({
       particles: true,
       pulse: false,
-      orbit: false,
       tilt: false,
       idleIntervalMs: null,
     });
@@ -844,5 +805,58 @@ describe('stage panels', () => {
     expect(stageSelectedIndex(servers, 'b')).toBe(1);
     expect(stageSelectedIndex(servers, 'gone')).toBe(0);
     expect(stageSelectedIndex([], undefined)).toBe(0);
+  });
+});
+
+describe("the HUD's agents' row", () => {
+  const line = (key: string, mark: StageAgentLine['mark'], paneId?: string): StageAgentLine => ({
+    key,
+    name: `agent-${key}`,
+    mark,
+    status: mark === 'working' ? 'working' : mark === 'needs-you' ? 'blocked' : 'idle',
+    ...(paneId ? { paneId } : {}),
+  });
+
+  test('one chip per agent: waiting first, then working, then idle, each in the order given', () => {
+    const row = stageAgentRow({
+      tone: 'online',
+      agents: [
+        line('i1', 'idle'),
+        line('w1', 'working', 'p1'),
+        line('n1', 'needs-you'),
+        line('i2', 'idle'),
+        line('w2', 'working'),
+        line('n2', 'needs-you', 'p9'),
+      ],
+    });
+    expect(row.kind).toBe('agents');
+    if (row.kind !== 'agents') return;
+    expect(row.chips.map((chip) => chip.key)).toEqual(['n1', 'n2', 'w1', 'w2', 'i1', 'i2']);
+    // The pane a tap opens rides along; none when unknown.
+    expect(row.chips.find((chip) => chip.key === 'w1')?.paneId).toBe('p1');
+    expect(row.chips.find((chip) => chip.key === 'n1')?.paneId).toBeUndefined();
+  });
+
+  test('names a state only when it is not idle', () => {
+    const row = stageAgentRow({
+      tone: 'warning',
+      agents: [line('a', 'idle'), line('b', 'working'), line('c', 'needs-you')],
+    });
+    if (row.kind !== 'agents') throw new Error('expected chips');
+    expect(Object.fromEntries(row.chips.map((chip) => [chip.key, chip.word]))).toEqual({
+      a: null,
+      b: 'working',
+      c: 'needs-you',
+    });
+    expect(stageAgentRow({ tone: 'online', agents: [] })).toEqual({ kind: 'agents', chips: [] });
+  });
+
+  test('an offline computer is one "last seen" line, whatever its agents were', () => {
+    expect(
+      stageAgentRow({ tone: 'offline', lastSeenMs: 42, agents: [line('a', 'working')] })
+    ).toEqual({ kind: 'offline', lastSeenMs: 42 });
+    expect(stageAgentRow({ tone: 'offline', agents: [] })).toEqual({ kind: 'offline' });
+    // Unknown reachability is not offline: what is known shows.
+    expect(stageAgentRow({ tone: 'unknown', agents: [line('a', 'idle')] }).kind).toBe('agents');
   });
 });

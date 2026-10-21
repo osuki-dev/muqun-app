@@ -84,11 +84,6 @@ msgstr "{0, plural, other {# giờ}}"
 msgid "{0, plural, one {# minute} other {# minutes}}"
 msgstr "{0, plural, other {# phút}}"
 
-#. placeholder {0}: orb.more
-#: src/components/home-stage/stage-view.tsx
-msgid "{0, plural, one {# more agent} other {# more agents}}"
-msgstr "{0, plural, other {thêm # tác tử}}"
-
 #. placeholder {0}: capped.hidden
 #. placeholder {0}: row.remaining
 #: src/components/agent-tool-card.tsx
@@ -153,12 +148,6 @@ msgstr "{0} tin nhắn trong ngữ cảnh"
 msgid "{0} more models"
 msgstr "Còn {0} mô hình nữa"
 
-#. placeholder {0}: target.index + 1
-#. placeholder {1}: panels.length
-#: src/components/home-stage/stage-view.tsx
-msgid "{0} of {1}"
-msgstr "{0} trên {1}"
-
 #. placeholder {0}: filtered.length
 #. placeholder {1}: entries.length
 #: src/components/dev-icon-gallery.tsx
@@ -169,6 +158,11 @@ msgstr "{0} trên {1} biểu tượng · chỉ dành cho phát triển"
 #: src/components/agent-context-sheet.tsx
 msgid "{0} of {limitLabel} tokens the model can hold"
 msgstr "{0} trên {limitLabel} token mà mô hình có thể chứa"
+
+#. placeholder {0}: index + 1
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "{0} of {total}"
+msgstr "{0} trên {total}"
 
 #. placeholder {0}: sessions.length
 #: src/components/agent-sessions-sheet.tsx
@@ -321,9 +315,9 @@ msgstr "{computer} không còn tác vụ này"
 msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, other {# kết quả}}"
 
-#: src/components/home-stage/stage-view.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 msgid "{count, plural, one {# session} other {# sessions}}"
-msgstr "{count, plural, other {# phiên}}"
+msgstr ""
 
 #: src/components/home-connections.tsx
 msgid "{count} in progress"
@@ -566,7 +560,7 @@ msgid "Act on this terminal, or send its agent a prompt"
 msgstr "Tác động lên terminal này, hoặc gửi yêu cầu cho tác nhân của nó"
 
 #: src/components/home-recent-sessions.tsx
-#: src/components/home-stage/stage-view.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/task-row.tsx
 msgid "Actions"
 msgstr "Thao tác"
@@ -1095,10 +1089,6 @@ msgstr "Biểu tượng thương hiệu và chỉ báo đang chạy"
 #: src/components/home-computer-deck.tsx
 msgid "Bring {0} to the front"
 msgstr "Đưa {0} lên trước"
-
-#: src/components/home-stage/stage-view.tsx
-msgid "Brings this computer forward."
-msgstr "Đưa máy tính này lên phía trước"
 
 #: src/components/settings-theme-sheet.tsx
 msgid "Browse the gallery"
@@ -4031,7 +4021,7 @@ msgid "Needs update"
 msgstr "Cần cập nhật"
 
 #: src/components/home-stage/home-stage-layout.tsx
-#: src/components/home-stage/stage-view.tsx
+#: src/components/home-stage/stage-agent-row.tsx
 #: src/components/home-thread.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "Needs you"
@@ -4516,6 +4506,7 @@ msgstr "NGOẠI TUYẾN"
 
 #. placeholder {0}: age(seen, nowMs)
 #: src/components/home-stage/home-stage-layout.tsx
+#: src/components/home-stage/stage-agent-row.tsx
 msgid "Offline · last seen {0}"
 msgstr "Ngoại tuyến · thấy lần cuối {0}"
 
@@ -4780,7 +4771,7 @@ msgstr "Mở trang theo dõi vấn đề của Muqun trên GitHub"
 msgid "Opens the simulator's menu: the device, its keys, the keyboard and the way out. Drag to move."
 msgstr "Mở menu của trình giả lập: thiết bị, các phím, bàn phím và lối ra. Kéo để di chuyển"
 
-#: src/components/home-stage/stage-view.tsx
+#: src/components/home-stage/stage-agent-row.tsx
 msgid "Opens this agent."
 msgstr "Mở tác tử này"
 
@@ -4788,7 +4779,7 @@ msgstr "Mở tác tử này"
 msgid "Opens this agent's terminal"
 msgstr "Mở terminal của tác tử này"
 
-#: src/components/home-stage/stage-view.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 msgid "Opens this computer."
 msgstr "Mở máy tính này"
 
@@ -5911,10 +5902,6 @@ msgstr "Chọn tất cả"
 msgid "Select model: {modelDisplayName}"
 msgstr "Chọn mô hình: {modelDisplayName}"
 
-#: src/components/home-stage/stage-view.tsx
-msgid "selected"
-msgstr "đã chọn"
-
 #: src/components/computer-map/screen.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-servers.tsx
@@ -6645,10 +6632,6 @@ msgstr "Tab"
 #: src/components/attachment-menu.tsx
 msgid "Take photo"
 msgstr "Chụp ảnh"
-
-#: src/components/home-stage/stage-view.tsx
-msgid "Tap · open"
-msgstr "Chạm · mở"
 
 #: src/components/home-stage/stage-view.tsx
 msgid "Tap · start a new task"
