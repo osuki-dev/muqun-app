@@ -1853,6 +1853,7 @@ msgstr "Ctrl Z 键，挂起"
 msgid "Controls"
 msgstr "控制"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/home-reply-drawer.tsx
 msgid "Conversation"
 msgstr "对话"
@@ -3989,6 +3990,7 @@ msgstr "从未连接过"
 msgid "Never seen"
 msgstr "从未在线"
 
+#: src/components/home-composer-options.tsx
 #: src/components/home-reply-drawer.tsx
 msgid "New conversation"
 msgstr "新对话"
@@ -5383,9 +5385,17 @@ msgstr "重播音频"
 msgid "Reply from Home"
 msgstr "在主页回复"
 
+#: src/components/home-composer-options.tsx
+msgid "Reply to"
+msgstr "回复给"
+
 #: src/components/home-composer-dock.tsx
 msgid "Reply to {threadAgentName}…"
 msgstr "回复 {threadAgentName}…"
+
+#: src/components/home-composer-options.tsx
+msgid "Replying to {replyTitle}"
+msgstr "正在回复 {replyTitle}"
 
 #: src/app/settings-about.tsx
 msgid "Report a bug or request a feature"

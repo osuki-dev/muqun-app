@@ -1853,6 +1853,7 @@ msgstr "Ctrl Z, приостановить"
 msgid "Controls"
 msgstr "Управление"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/home-reply-drawer.tsx
 msgid "Conversation"
 msgstr "Разговор"
@@ -3989,6 +3990,7 @@ msgstr "Ни разу не подключался"
 msgid "Never seen"
 msgstr "Ни разу не был в сети"
 
+#: src/components/home-composer-options.tsx
 #: src/components/home-reply-drawer.tsx
 msgid "New conversation"
 msgstr "Новый разговор"
@@ -5383,9 +5385,17 @@ msgstr "Воспроизвести аудио снова"
 msgid "Reply from Home"
 msgstr "Ответить с главной"
 
+#: src/components/home-composer-options.tsx
+msgid "Reply to"
+msgstr "Ответ для"
+
 #: src/components/home-composer-dock.tsx
 msgid "Reply to {threadAgentName}…"
 msgstr "Ответить {threadAgentName}…"
+
+#: src/components/home-composer-options.tsx
+msgid "Replying to {replyTitle}"
+msgstr "Ответ для {replyTitle}"
 
 #: src/app/settings-about.tsx
 msgid "Report a bug or request a feature"
