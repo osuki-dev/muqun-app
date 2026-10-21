@@ -1,6 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
-import * as Haptics from 'expo-haptics';
 import { useIsFocused } from 'expo-router';
 import { UndoIcon, StopIcon, CloseIcon } from '@/icons';
 import { useEffect, useRef, useState, type ComponentProps } from 'react';
@@ -282,6 +281,9 @@ function VoiceRecording({
       accessibilityLabel={error ? t`Try again` : t`Stop and transcribe`}
       accessibilityState={{ busy: stopDimmed, disabled: stopDimmed }}
       testID="voice-recording-stop"
+      // One light tap through the app's haptics setting; the kit's default
+      // selection tick on top of it made Stop buzz twice.
+      feedback={error ? 'selection' : 'light'}
       hitSlop={4}
       disabled={stopDimmed}
       onPress={() => {
@@ -289,7 +291,6 @@ function VoiceRecording({
           onRetry();
           return;
         }
-        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         setFinishing(true);
         void session.finish();
       }}

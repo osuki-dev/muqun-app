@@ -1,7 +1,7 @@
 import { useThemeTokens } from '@osuki-dev/ui';
 import { useEffect } from 'react';
 import { AppState, StyleSheet, View } from 'react-native';
-import { Canvas, Fill, Shader, Skia } from 'react-native-skia';
+import { Canvas, Fill, Path, Shader, Skia } from 'react-native-skia';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -141,8 +141,10 @@ export function VoiceRecordingWaveform({
  * for a recorder whose waveform already shows the level.
  *
  * The arc cross-fades in over the level as `processing` turns on and stops
- * turning the moment it turns off. It never grows past the 44pt control.
- * Reduce Motion: no scaling and no rotation, only fades.
+ * turning the moment it turns off. It is a stroke along the ring's outline,
+ * not a rotated top border: under a squarer corner a rotated border is a
+ * straight bar swinging around the stop square. It never grows past the 44pt
+ * control. Reduce Motion: no scaling and no travel, only fades.
  */
 export function VoiceLevelRing({
   history,
@@ -196,10 +198,19 @@ export function VoiceLevelRing({
       ],
     };
   });
-  const arcStyle = useAnimatedStyle(() => ({
-    opacity: settled.get(),
-    transform: [{ rotate: `${turn.get() * 360}deg` }],
-  }));
+  const arcStyle = useAnimatedStyle(() => ({ opacity: settled.get() }));
+  // The arc is a stretch of the ring's own outline travelling around it. The
+  // outline is traced twice, so a stretch that runs past the end of one lap
+  // continues on the next instead of wrapping to a second path.
+  const arcStart = useDerivedValue(() => turn.get() / 2);
+  const arcEnd = useDerivedValue(() => (turn.get() + ARC_LENGTH) / 2);
+  const inset = LEVEL_RING_BORDER / 2;
+  const outline = Skia.RRectXY(
+    Skia.XYWHRect(inset, inset, LEVEL_RING_SIZE - inset * 2, LEVEL_RING_SIZE - inset * 2),
+    Math.max(0, corner - inset),
+    Math.max(0, corner - inset)
+  );
+  const arcPath = Skia.PathBuilder.Make().addRRect(outline).addRRect(outline).detach();
   const shape = { borderRadius: corner, borderCurve: 'continuous' as const };
   return (
     <>
@@ -214,13 +225,19 @@ export function VoiceLevelRing({
         testID={processing ? 'voice-transcribing-arc' : undefined}
         pointerEvents="none"
         accessible={false}
-        style={[
-          styles.levelRing,
-          shape,
-          { borderColor: 'transparent', borderTopColor: theme.colors.primary },
-          arcStyle,
-        ]}
-      />
+        style={[styles.arc, arcStyle]}>
+        <Canvas style={StyleSheet.absoluteFill}>
+          <Path
+            path={arcPath}
+            color={theme.colors.primary}
+            style="stroke"
+            strokeWidth={LEVEL_RING_BORDER}
+            strokeCap="round"
+            start={arcStart}
+            end={arcEnd}
+          />
+        </Canvas>
+      </Animated.View>
     </>
   );
 }
@@ -257,8 +274,9 @@ const LEVEL_RING_MAX_SCALE = (STOP_CONTROL_SIZE - LEVEL_RING_BORDER) / LEVEL_RIN
 /** Samples the level is the RMS of, and how far each update eases toward it. */
 const LEVEL_WINDOW = 4;
 const LEVEL_EASE = 0.3;
-/** One turn of the transcribing arc. */
+/** One lap of the transcribing arc, and how much of the outline it covers. */
 const ARC_PERIOD_MS = 1400;
+const ARC_LENGTH = 0.25;
 const QUIET_RING_SIZE = 16;
 
 const styles = StyleSheet.create({
@@ -279,5 +297,6 @@ const styles = StyleSheet.create({
     height: LEVEL_RING_SIZE,
     borderWidth: LEVEL_RING_BORDER,
   },
+  arc: { position: 'absolute', width: LEVEL_RING_SIZE, height: LEVEL_RING_SIZE },
   bar: { flex: 1, maxWidth: 4, height: 20, borderRadius: 2 },
 });
