@@ -46,7 +46,7 @@ msgstr "[หมายเลขพูลรีเควสต์]"
 #. placeholder {0}: files.length
 #: src/components/agent-composer.tsx
 msgid "{0, plural, one {# attachment} other {# attachments}}"
-msgstr ""
+msgstr "{0, plural, other {ไฟล์แนบ # รายการ}}"
 
 #. placeholder {0}: capped.hidden
 #: src/components/bounded-markdown.tsx
@@ -404,6 +404,10 @@ msgstr "{name} ไม่รับงานจากคอมพิวเตอ�
 msgid "{name} has the same name as {other}; rename one of them."
 msgstr "{name} มีชื่อเดียวกับ {other} โปรดเปลี่ยนชื่อเครื่องใดเครื่องหนึ่ง"
 
+#: src/components/home-composer-dock.tsx
+msgid "{name} is still working and cannot take a message now. Your draft stays here."
+msgstr "{name} ยังทำงานอยู่และรับข้อความตอนนี้ไม่ได้ ร่างของคุณยังอยู่ที่นี่"
+
 #: src/components/new-task-action.tsx
 msgid "{name} needs setup. Tap for setup instructions"
 msgstr "{name} ต้องตั้งค่าก่อน แตะเพื่อดูวิธีตั้งค่า"
@@ -455,6 +459,10 @@ msgstr "{total, plural, other {งานย่อย # งาน}} ({waiting, pl
 #: src/components/task-row.tsx
 msgid "→ {name}"
 msgstr "→ {name}"
+
+#: src/components/home-thread.tsx
+msgid "+ New conversation"
+msgstr "+ บทสนทนาใหม่"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
@@ -730,6 +738,7 @@ msgid "Allow camera"
 msgstr "อนุญาตกล้อง"
 
 #: src/components/agent-permission-card.tsx
+#: src/components/home-thread.tsx
 msgid "Allow for this turn"
 msgstr "อนุญาตสำหรับรอบนี้"
 
@@ -738,6 +747,7 @@ msgid "Allow microphone access in system settings."
 msgstr "อนุญาตการเข้าถึงไมโครโฟนในการตั้งค่าระบบ"
 
 #: src/components/agent-permission-card.tsx
+#: src/components/home-thread.tsx
 msgid "Allow once"
 msgstr "อนุญาตครั้งเดียว"
 
@@ -790,6 +800,7 @@ msgstr "และอีก {rest}"
 msgid "another computer"
 msgstr "คอมพิวเตอร์เครื่องอื่น"
 
+#: src/components/home-thread.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
 msgstr "คำตอบ"
@@ -1771,6 +1782,7 @@ msgid "Continue"
 msgstr "ดำเนินการต่อ"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Continue in the linked terminal. Your draft stays here."
 msgstr "ดำเนินการต่อในเทอร์มินัลที่เชื่อมโยงไว้ ร่างข้อความของคุณจะยังอยู่ที่นี่"
 
@@ -1897,6 +1909,10 @@ msgstr "Control Z พักกระบวนการ"
 #: src/components/home-editorial-layout.tsx
 msgid "Controls"
 msgstr "การควบคุม"
+
+#: src/components/home-thread.tsx
+msgid "Conversation"
+msgstr "บทสนทนา"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Conversational help and open-ended project questions."
@@ -2266,6 +2282,7 @@ msgid "Could not rename"
 msgstr "เปลี่ยนชื่อไม่ได้"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-thread.tsx
 msgid "Could not reply"
 msgstr "ไม่สามารถตอบกลับได้"
 
@@ -2327,6 +2344,7 @@ msgstr "ส่งไม่ได้"
 msgid "Could not send command."
 msgstr "ส่งคำสั่งไม่ได้"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not send input."
 msgstr "ส่งอินพุตไม่ได้"
@@ -2883,6 +2901,7 @@ msgid "Export theme"
 msgstr "ส่งออกธีม"
 
 #: src/components/agent-sleep-tool-body.tsx
+#: src/components/home-thread.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Failed"
@@ -3242,7 +3261,7 @@ msgstr "ซ่อนเครื่องจำลอง"
 
 #: src/components/agent-composer.tsx
 msgid "Hides this notice"
-msgstr ""
+msgstr "ซ่อนประกาศนี้"
 
 #: src/app/settings-voice.tsx
 msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
@@ -3312,6 +3331,7 @@ msgid "Icons"
 msgstr "ไอคอน"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/home-thread.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "ว่าง"
@@ -4031,6 +4051,7 @@ msgstr "ต้องอัปเดต"
 
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/home-stage/stage-faces.ts
+#: src/components/home-thread.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "Needs you"
 msgstr "รอคุณ"
@@ -4059,6 +4080,14 @@ msgstr "ยังไม่เคยเชื่อมต่อ"
 #: src/components/settings-servers.tsx
 msgid "Never seen"
 msgstr "ยังไม่เคยพบ"
+
+#: src/components/home-thread.tsx
+msgid "New conversation"
+msgstr "บทสนทนาใหม่"
+
+#: src/components/home-thread.tsx
+msgid "New conversation · {agentName}"
+msgstr "บทสนทนาใหม่ · {agentName}"
 
 #: src/app/commands.tsx
 msgid "New group"
@@ -4435,6 +4464,10 @@ msgstr "ยังไม่ได้ตั้ง"
 msgid "Not signed in on the host"
 msgstr "ยังไม่ได้ลงชื่อเข้าใช้บนโฮสต์"
 
+#: src/components/home-thread.tsx
+msgid "Not sure it was delivered"
+msgstr "ไม่แน่ใจว่าส่งถึงหรือไม่"
+
 #: src/components/home-computer-cards.tsx
 msgid "Not updating from here. Open this computer to see its tasks."
 msgstr "ไม่อัปเดตจากที่นี่ เปิดคอมพิวเตอร์เครื่องนี้เพื่อดูงานของมัน"
@@ -4495,6 +4528,7 @@ msgstr "ปิด"
 
 #: src/components/home-composer-options.tsx
 #: src/components/home-stage/stage-faces.ts
+#: src/components/home-thread.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Offline"
@@ -4554,6 +4588,7 @@ msgstr "ซ่อนเฉพาะรายการนี้จากหน้
 
 #: src/components/home-connections.tsx
 #: src/components/home-stage/home-stage-layout.tsx
+#: src/components/home-thread.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/task-row.tsx
@@ -4607,6 +4642,10 @@ msgstr "เปิดไฟล์แนบ"
 #: src/components/agent-tool-card.tsx
 msgid "Open background tasks"
 msgstr "เปิดงานเบื้องหลัง"
+
+#: src/components/home-thread.tsx
+msgid "Open conversation"
+msgstr "เปิดบทสนทนา"
 
 #: src/components/artifacts-button.tsx
 msgid "Open files"
@@ -4673,6 +4712,7 @@ msgid "Open quick actions"
 msgstr "เปิดการทำงานด่วน"
 
 #: src/components/agent-tool-card.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Open session"
 msgstr "เปิดเซสชัน"
 
@@ -4956,6 +4996,7 @@ msgid "Permission"
 msgstr "สิทธิ์"
 
 #: src/components/agent-permission-card.tsx
+#: src/components/home-thread.tsx
 msgid "Permission required"
 msgstr "ต้องการสิทธิ์อนุญาต"
 
@@ -5444,6 +5485,14 @@ msgstr "แทนที่คีย์"
 msgid "Replay audio"
 msgstr "เล่นเสียงอีกครั้ง"
 
+#: src/components/home-composer-dock.tsx
+msgid "Reply to {threadAgentName}…"
+msgstr "ตอบ {threadAgentName}…"
+
+#: src/components/home-thread.tsx
+msgid "Replying to {title}"
+msgstr "กำลังตอบ {title}"
+
 #: src/app/settings-about.tsx
 msgid "Report a bug or request a feature"
 msgstr "รายงานข้อผิดพลาดหรือเสนอฟีเจอร์"
@@ -5531,6 +5580,7 @@ msgstr "ดำเนินการต่อ"
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/gateway-storage-error.tsx
+#: src/components/home-thread.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
@@ -6415,6 +6465,7 @@ msgstr "กำลังเริ่ม {name}"
 msgid "Starting the camera"
 msgstr "กำลังเริ่มกล้อง"
 
+#: src/components/home-thread.tsx
 #: src/components/new-task-sheet.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Starting…"
@@ -6476,6 +6527,10 @@ msgstr "หยุดและถอดเสียง"
 #: src/components/server-terminal-workspace.tsx
 msgid "Stop assigning a task"
 msgstr "หยุดมอบหมายงาน"
+
+#: src/components/home-thread.tsx
+msgid "Stop following this conversation"
+msgstr "เลิกติดตามบทสนทนานี้"
 
 #: src/app/commands.tsx
 msgid "Stop this agent"
@@ -6782,6 +6837,10 @@ msgstr "ผู้ช่วยนั้นไม่อยู่ในเทอร
 msgid "That code was refused. Hold still for a new one."
 msgstr "รหัสนั้นถูกปฏิเสธ ถือให้นิ่งเพื่อรับรหัสใหม่"
 
+#: src/components/home-composer-dock.tsx
+msgid "That conversation has ended. Send again to start a new one."
+msgstr "บทสนทนานั้นจบแล้ว ส่งอีกครั้งเพื่อเริ่มบทสนทนาใหม่"
+
 #: src/hooks/use-home-commands.ts
 msgid "That destination is no longer available."
 msgstr "ปลายทางนี้ไม่พร้อมใช้งานอีกต่อไป"
@@ -6975,6 +7034,10 @@ msgstr "บริการเสียงส่งข้อความถอด
 #: src/app/commands.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "อุโมงค์ SSH ส่งผ่านเฉพาะพอร์ตของ Gateway จึงเข้าถึงเครื่องจำลองและเบราว์เซอร์จากที่นี่ไม่ได้ โปรดเชื่อมต่อผ่านเครือข่ายภายในหรือ Tailscale"
+
+#: src/components/home-composer-dock.tsx
+msgid "The task is still starting. Send again in a moment."
+msgstr "งานยังเริ่มไม่เสร็จ ส่งอีกครั้งในอีกสักครู่"
 
 #: src/components/guide-command.tsx
 msgid "The terminal opened, but the command could not be typed."
@@ -7262,6 +7325,10 @@ msgstr "เซสชันนี้ไม่มีอยู่อีกต่อ
 #: src/components/pane-history-sheet.tsx
 msgid "This snapshot can no longer be extended. Refresh to read the latest saved output; the current page is kept until then."
 msgstr "สแนปช็อตนี้โหลดเนื้อหาเพิ่มไม่ได้แล้ว รีเฟรชเพื่ออ่านเอาต์พุตที่บันทึกไว้ล่าสุด โดยจะเก็บหน้าปัจจุบันไว้จนกว่าจะรีเฟรช"
+
+#: src/components/home-composer-dock.tsx
+msgid "This task runs on another computer. Open it to reply."
+msgstr "งานนี้ทำงานบนคอมพิวเตอร์เครื่องอื่น เปิดเพื่อตอบกลับ"
 
 #: src/components/virtual-keyboard.tsx
 msgid "This terminal can't send {chord}"
@@ -7820,6 +7887,7 @@ msgid "While you were away"
 msgstr "ขณะที่คุณไม่อยู่"
 
 #: src/components/collaboration-notice.tsx
+#: src/components/home-thread.tsx
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "กำลังทำงาน"

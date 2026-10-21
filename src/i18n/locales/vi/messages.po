@@ -46,7 +46,7 @@ msgstr "[số pr]"
 #. placeholder {0}: files.length
 #: src/components/agent-composer.tsx
 msgid "{0, plural, one {# attachment} other {# attachments}}"
-msgstr ""
+msgstr "{0, plural, other {# tệp đính kèm}}"
 
 #. placeholder {0}: capped.hidden
 #: src/components/bounded-markdown.tsx
@@ -404,6 +404,10 @@ msgstr "{name} không nhận việc từ các máy tính khác"
 msgid "{name} has the same name as {other}; rename one of them."
 msgstr "{name} trùng tên với {other}; hãy đổi tên một trong hai"
 
+#: src/components/home-composer-dock.tsx
+msgid "{name} is still working and cannot take a message now. Your draft stays here."
+msgstr "{name} vẫn đang làm việc và chưa nhận tin nhắn lúc này. Bản nháp của bạn vẫn ở đây"
+
 #: src/components/new-task-action.tsx
 msgid "{name} needs setup. Tap for setup instructions"
 msgstr "{name} cần được thiết lập. Chạm để xem hướng dẫn thiết lập"
@@ -455,6 +459,10 @@ msgstr "{total, plural, other {# nhiệm vụ con}} ({waiting, plural, other {# 
 #: src/components/task-row.tsx
 msgid "→ {name}"
 msgstr "→ {name}"
+
+#: src/components/home-thread.tsx
+msgid "+ New conversation"
+msgstr "+ Cuộc trò chuyện mới"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
@@ -730,6 +738,7 @@ msgid "Allow camera"
 msgstr "Cho phép camera"
 
 #: src/components/agent-permission-card.tsx
+#: src/components/home-thread.tsx
 msgid "Allow for this turn"
 msgstr "Cho phép trong lượt này"
 
@@ -738,6 +747,7 @@ msgid "Allow microphone access in system settings."
 msgstr "Cho phép truy cập micrô trong cài đặt hệ thống"
 
 #: src/components/agent-permission-card.tsx
+#: src/components/home-thread.tsx
 msgid "Allow once"
 msgstr "Cho phép một lần"
 
@@ -790,6 +800,7 @@ msgstr "và {rest} nữa"
 msgid "another computer"
 msgstr "một máy tính khác"
 
+#: src/components/home-thread.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
 msgstr "Trả lời"
@@ -1771,6 +1782,7 @@ msgid "Continue"
 msgstr "Tiếp tục"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Continue in the linked terminal. Your draft stays here."
 msgstr "Tiếp tục trong terminal được liên kết. Bản nháp của bạn vẫn ở đây"
 
@@ -1897,6 +1909,10 @@ msgstr "Ctrl Z, tạm dừng"
 #: src/components/home-editorial-layout.tsx
 msgid "Controls"
 msgstr "Điều khiển"
+
+#: src/components/home-thread.tsx
+msgid "Conversation"
+msgstr "Cuộc trò chuyện"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Conversational help and open-ended project questions."
@@ -2266,6 +2282,7 @@ msgid "Could not rename"
 msgstr "Không thể đổi tên"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-thread.tsx
 msgid "Could not reply"
 msgstr "Không thể trả lời"
 
@@ -2327,6 +2344,7 @@ msgstr "Không thể gửi"
 msgid "Could not send command."
 msgstr "Không thể gửi lệnh"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not send input."
 msgstr "Không thể gửi dữ liệu nhập"
@@ -2883,6 +2901,7 @@ msgid "Export theme"
 msgstr "Xuất giao diện"
 
 #: src/components/agent-sleep-tool-body.tsx
+#: src/components/home-thread.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Failed"
@@ -3242,7 +3261,7 @@ msgstr "Ẩn trình giả lập"
 
 #: src/components/agent-composer.tsx
 msgid "Hides this notice"
-msgstr ""
+msgstr "Ẩn thông báo này"
 
 #: src/app/settings-voice.tsx
 msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
@@ -3312,6 +3331,7 @@ msgid "Icons"
 msgstr "Biểu tượng"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/home-thread.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "Rảnh"
@@ -4031,6 +4051,7 @@ msgstr "Cần cập nhật"
 
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/home-stage/stage-faces.ts
+#: src/components/home-thread.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "Needs you"
 msgstr "Cần bạn"
@@ -4059,6 +4080,14 @@ msgstr "Chưa từng kết nối"
 #: src/components/settings-servers.tsx
 msgid "Never seen"
 msgstr "Chưa từng thấy"
+
+#: src/components/home-thread.tsx
+msgid "New conversation"
+msgstr "Cuộc trò chuyện mới"
+
+#: src/components/home-thread.tsx
+msgid "New conversation · {agentName}"
+msgstr "Cuộc trò chuyện mới · {agentName}"
 
 #: src/app/commands.tsx
 msgid "New group"
@@ -4435,6 +4464,10 @@ msgstr "Chưa đặt"
 msgid "Not signed in on the host"
 msgstr "Chưa đăng nhập trên máy chủ"
 
+#: src/components/home-thread.tsx
+msgid "Not sure it was delivered"
+msgstr "Không chắc đã gửi tới"
+
 #: src/components/home-computer-cards.tsx
 msgid "Not updating from here. Open this computer to see its tasks."
 msgstr "Không cập nhật từ đây. Mở máy tính này để xem các tác vụ của nó"
@@ -4495,6 +4528,7 @@ msgstr "Tắt"
 
 #: src/components/home-composer-options.tsx
 #: src/components/home-stage/stage-faces.ts
+#: src/components/home-thread.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Offline"
@@ -4554,6 +4588,7 @@ msgstr "Chỉ ẩn hàng này trên trang chủ. Tác vụ và lịch sử của
 
 #: src/components/home-connections.tsx
 #: src/components/home-stage/home-stage-layout.tsx
+#: src/components/home-thread.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/task-row.tsx
@@ -4607,6 +4642,10 @@ msgstr "Mở tệp đính kèm"
 #: src/components/agent-tool-card.tsx
 msgid "Open background tasks"
 msgstr "Mở tác vụ nền"
+
+#: src/components/home-thread.tsx
+msgid "Open conversation"
+msgstr "Mở cuộc trò chuyện"
 
 #: src/components/artifacts-button.tsx
 msgid "Open files"
@@ -4673,6 +4712,7 @@ msgid "Open quick actions"
 msgstr "Mở thao tác nhanh"
 
 #: src/components/agent-tool-card.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Open session"
 msgstr "Mở phiên"
 
@@ -4956,6 +4996,7 @@ msgid "Permission"
 msgstr "Quyền"
 
 #: src/components/agent-permission-card.tsx
+#: src/components/home-thread.tsx
 msgid "Permission required"
 msgstr "Cần có quyền"
 
@@ -5444,6 +5485,14 @@ msgstr "Thay khóa"
 msgid "Replay audio"
 msgstr "Phát lại âm thanh"
 
+#: src/components/home-composer-dock.tsx
+msgid "Reply to {threadAgentName}…"
+msgstr "Trả lời {threadAgentName}…"
+
+#: src/components/home-thread.tsx
+msgid "Replying to {title}"
+msgstr "Đang trả lời {title}"
+
 #: src/app/settings-about.tsx
 msgid "Report a bug or request a feature"
 msgstr "Báo lỗi hoặc đề xuất tính năng"
@@ -5531,6 +5580,7 @@ msgstr "Tiếp tục"
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/gateway-storage-error.tsx
+#: src/components/home-thread.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
@@ -6415,6 +6465,7 @@ msgstr "Đang khởi động {name}"
 msgid "Starting the camera"
 msgstr "Đang khởi động camera"
 
+#: src/components/home-thread.tsx
 #: src/components/new-task-sheet.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Starting…"
@@ -6476,6 +6527,10 @@ msgstr "Dừng và chuyển thành văn bản"
 #: src/components/server-terminal-workspace.tsx
 msgid "Stop assigning a task"
 msgstr "Ngừng giao tác vụ"
+
+#: src/components/home-thread.tsx
+msgid "Stop following this conversation"
+msgstr "Ngừng theo dõi cuộc trò chuyện này"
 
 #: src/app/commands.tsx
 msgid "Stop this agent"
@@ -6782,6 +6837,10 @@ msgstr "Trợ lý đó không còn trong terminal này. Hãy mở lại và th�
 msgid "That code was refused. Hold still for a new one."
 msgstr "Mã đó bị từ chối. Hãy giữ yên để lấy mã mới"
 
+#: src/components/home-composer-dock.tsx
+msgid "That conversation has ended. Send again to start a new one."
+msgstr "Cuộc trò chuyện đó đã kết thúc. Gửi lại để bắt đầu cuộc mới"
+
 #: src/hooks/use-home-commands.ts
 msgid "That destination is no longer available."
 msgstr "Đích đến này không còn khả dụng"
@@ -6975,6 +7034,10 @@ msgstr "Dịch vụ giọng nói trả về bản phiên âm không hợp lệ"
 #: src/app/commands.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "Đường hầm SSH chỉ mang cổng của Gateway và không cổng nào khác, nên không thể kết nối đến trình giả lập và trình duyệt từ đây. Hãy kết nối qua mạng cục bộ hoặc Tailscale"
+
+#: src/components/home-composer-dock.tsx
+msgid "The task is still starting. Send again in a moment."
+msgstr "Tác vụ vẫn đang khởi động. Hãy gửi lại sau giây lát"
 
 #: src/components/guide-command.tsx
 msgid "The terminal opened, but the command could not be typed."
@@ -7262,6 +7325,10 @@ msgstr "Phiên này không còn tồn tại"
 #: src/components/pane-history-sheet.tsx
 msgid "This snapshot can no longer be extended. Refresh to read the latest saved output; the current page is kept until then."
 msgstr "Không thể tải thêm nội dung vào ảnh chụp này. Hãy làm mới để đọc đầu ra được lưu gần nhất; trang hiện tại vẫn được giữ lại cho đến lúc đó"
+
+#: src/components/home-composer-dock.tsx
+msgid "This task runs on another computer. Open it to reply."
+msgstr "Tác vụ này chạy trên máy tính khác. Mở nó để trả lời"
 
 #: src/components/virtual-keyboard.tsx
 msgid "This terminal can't send {chord}"
@@ -7820,6 +7887,7 @@ msgid "While you were away"
 msgstr "Khi bạn vắng mặt"
 
 #: src/components/collaboration-notice.tsx
+#: src/components/home-thread.tsx
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "Đang làm việc"

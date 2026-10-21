@@ -59,6 +59,9 @@ export type HomeStageLayoutProps = {
   headerAction: ReactNode;
   /** The selected computer's sessions, newest first. */
   sessions: readonly HomeContinueEntry[];
+  /** The session the dock is talking to, by `HomeContinueEntry.key`. */
+  threadKey?: string;
+  /** Tapping a card makes it the dock's conversation (or opens one it cannot be). */
   onOpenSession: (entry: HomeContinueEntry) => void;
   /** Needs you, as Home builds it for every layout. */
   attention?: ReactNode;
@@ -199,6 +202,7 @@ export function HomeStageLayout({
   dockHeight,
   headerAction,
   sessions,
+  threadKey,
   onOpenSession,
   attention,
   hasAttention,
@@ -401,6 +405,7 @@ export function HomeStageLayout({
                 selectedIndex={selectedIndex}
                 panelCount={panels.length}
                 sessions={sessions}
+                threadKey={threadKey}
                 onOpenSession={onOpenSession}
                 onOpenAll={() => openList(true)}
               />

@@ -460,6 +460,17 @@ export const zoomOut = (duration: DurationToken | PresetToken | number = 'micro'
   ZoomOut.duration(resolveDuration(duration)).easing(EASE_OUT).reduceMotion(ReduceMotion.System);
 
 /**
+ * A plain cross-fade that plays under reduce motion too: what a reveal that
+ * normally travels becomes there, so a change is still eased rather than
+ * swapped in a frame. No travel, nothing to reduce.
+ */
+export const calmFadeIn = (duration: DurationToken | PresetToken | number = 'short') =>
+  FadeIn.duration(resolveDuration(duration)).easing(EASE_OUT).reduceMotion(ReduceMotion.Never);
+
+export const calmFadeOut = (duration: DurationToken | PresetToken | number = 'short') =>
+  FadeOut.duration(resolveDuration(duration)).easing(EASE_OUT).reduceMotion(ReduceMotion.Never);
+
+/**
  * A reveal that rises into place, with a delay so a list of them can be one
  * sequence rather than a simultaneous flash.
  *

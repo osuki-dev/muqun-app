@@ -46,7 +46,7 @@ msgstr "[número do pr]"
 #. placeholder {0}: files.length
 #: src/components/agent-composer.tsx
 msgid "{0, plural, one {# attachment} other {# attachments}}"
-msgstr ""
+msgstr "{0, plural, one {# anexo} other {# anexos}}"
 
 #. placeholder {0}: capped.hidden
 #: src/components/bounded-markdown.tsx
@@ -404,6 +404,10 @@ msgstr "{name} não aceita trabalho de outros computadores"
 msgid "{name} has the same name as {other}; rename one of them."
 msgstr "{name} tem o mesmo nome que {other}; renomeie um deles"
 
+#: src/components/home-composer-dock.tsx
+msgid "{name} is still working and cannot take a message now. Your draft stays here."
+msgstr "{name} ainda está trabalhando e não pode receber uma mensagem agora. Seu rascunho fica aqui"
+
 #: src/components/new-task-action.tsx
 msgid "{name} needs setup. Tap for setup instructions"
 msgstr "{name} precisa de configuração. Toque para ver as instruções de configuração"
@@ -455,6 +459,10 @@ msgstr "{total, plural, one {# subtarefa} other {# subtarefas}} ({waiting, plura
 #: src/components/task-row.tsx
 msgid "→ {name}"
 msgstr "→ {name}"
+
+#: src/components/home-thread.tsx
+msgid "+ New conversation"
+msgstr "+ Nova conversa"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
@@ -730,6 +738,7 @@ msgid "Allow camera"
 msgstr "Permitir câmara"
 
 #: src/components/agent-permission-card.tsx
+#: src/components/home-thread.tsx
 msgid "Allow for this turn"
 msgstr "Permitir durante este turno"
 
@@ -738,6 +747,7 @@ msgid "Allow microphone access in system settings."
 msgstr "Permita o acesso ao microfone nos ajustes do sistema"
 
 #: src/components/agent-permission-card.tsx
+#: src/components/home-thread.tsx
 msgid "Allow once"
 msgstr "Permitir uma vez"
 
@@ -790,6 +800,7 @@ msgstr "e mais {rest}"
 msgid "another computer"
 msgstr "outro computador"
 
+#: src/components/home-thread.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
 msgstr "Resposta"
@@ -1771,6 +1782,7 @@ msgid "Continue"
 msgstr "Continuar"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Continue in the linked terminal. Your draft stays here."
 msgstr "Continue no terminal associado. O seu rascunho fica aqui"
 
@@ -1897,6 +1909,10 @@ msgstr "Control Z, suspender"
 #: src/components/home-editorial-layout.tsx
 msgid "Controls"
 msgstr "Controles"
+
+#: src/components/home-thread.tsx
+msgid "Conversation"
+msgstr "Conversa"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Conversational help and open-ended project questions."
@@ -2266,6 +2282,7 @@ msgid "Could not rename"
 msgstr "Não foi possível renomear"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-thread.tsx
 msgid "Could not reply"
 msgstr "Não foi possível responder"
 
@@ -2327,6 +2344,7 @@ msgstr "Não foi possível enviar"
 msgid "Could not send command."
 msgstr "Não foi possível enviar o comando"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not send input."
 msgstr "Não foi possível enviar o texto introduzido"
@@ -2883,6 +2901,7 @@ msgid "Export theme"
 msgstr "Exportar tema"
 
 #: src/components/agent-sleep-tool-body.tsx
+#: src/components/home-thread.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Failed"
@@ -3242,7 +3261,7 @@ msgstr "Ocultar o simulador"
 
 #: src/components/agent-composer.tsx
 msgid "Hides this notice"
-msgstr ""
+msgstr "Oculta este aviso"
 
 #: src/app/settings-voice.tsx
 msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
@@ -3312,6 +3331,7 @@ msgid "Icons"
 msgstr "Ícones"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/home-thread.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "Inativo"
@@ -4031,6 +4051,7 @@ msgstr "Precisa de atualização"
 
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/home-stage/stage-faces.ts
+#: src/components/home-thread.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "Needs you"
 msgstr "Precisa de você"
@@ -4059,6 +4080,14 @@ msgstr "Nunca conectado"
 #: src/components/settings-servers.tsx
 msgid "Never seen"
 msgstr "Nunca visto"
+
+#: src/components/home-thread.tsx
+msgid "New conversation"
+msgstr "Nova conversa"
+
+#: src/components/home-thread.tsx
+msgid "New conversation · {agentName}"
+msgstr "Nova conversa · {agentName}"
 
 #: src/app/commands.tsx
 msgid "New group"
@@ -4435,6 +4464,10 @@ msgstr "Não definido"
 msgid "Not signed in on the host"
 msgstr "Sem sessão iniciada no host"
 
+#: src/components/home-thread.tsx
+msgid "Not sure it was delivered"
+msgstr "Não se sabe se foi entregue"
+
 #: src/components/home-computer-cards.tsx
 msgid "Not updating from here. Open this computer to see its tasks."
 msgstr "Não é atualizado a partir daqui. Abra este computador para ver as tarefas dele"
@@ -4495,6 +4528,7 @@ msgstr "Desativado"
 
 #: src/components/home-composer-options.tsx
 #: src/components/home-stage/stage-faces.ts
+#: src/components/home-thread.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Offline"
@@ -4554,6 +4588,7 @@ msgstr "Apenas esta linha do Início é ocultada. A tarefa e o seu histórico co
 
 #: src/components/home-connections.tsx
 #: src/components/home-stage/home-stage-layout.tsx
+#: src/components/home-thread.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/task-row.tsx
@@ -4607,6 +4642,10 @@ msgstr "Abrir anexo"
 #: src/components/agent-tool-card.tsx
 msgid "Open background tasks"
 msgstr "Abrir tarefas em segundo plano"
+
+#: src/components/home-thread.tsx
+msgid "Open conversation"
+msgstr "Abrir conversa"
 
 #: src/components/artifacts-button.tsx
 msgid "Open files"
@@ -4673,6 +4712,7 @@ msgid "Open quick actions"
 msgstr "Abrir as ações rápidas"
 
 #: src/components/agent-tool-card.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Open session"
 msgstr "Abrir sessão"
 
@@ -4956,6 +4996,7 @@ msgid "Permission"
 msgstr "Permissão"
 
 #: src/components/agent-permission-card.tsx
+#: src/components/home-thread.tsx
 msgid "Permission required"
 msgstr "Permissão necessária"
 
@@ -5444,6 +5485,14 @@ msgstr "Substituir chave"
 msgid "Replay audio"
 msgstr "Reproduzir áudio novamente"
 
+#: src/components/home-composer-dock.tsx
+msgid "Reply to {threadAgentName}…"
+msgstr "Responder a {threadAgentName}…"
+
+#: src/components/home-thread.tsx
+msgid "Replying to {title}"
+msgstr "Respondendo a {title}"
+
 #: src/app/settings-about.tsx
 msgid "Report a bug or request a feature"
 msgstr "Comunicar um erro ou pedir uma funcionalidade"
@@ -5531,6 +5580,7 @@ msgstr "Retomar"
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/gateway-storage-error.tsx
+#: src/components/home-thread.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
@@ -6415,6 +6465,7 @@ msgstr "A iniciar {name}"
 msgid "Starting the camera"
 msgstr "A iniciar a câmara"
 
+#: src/components/home-thread.tsx
 #: src/components/new-task-sheet.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Starting…"
@@ -6476,6 +6527,10 @@ msgstr "Parar e transcrever"
 #: src/components/server-terminal-workspace.tsx
 msgid "Stop assigning a task"
 msgstr "Parar de atribuir uma tarefa"
+
+#: src/components/home-thread.tsx
+msgid "Stop following this conversation"
+msgstr "Deixar de seguir esta conversa"
 
 #: src/app/commands.tsx
 msgid "Stop this agent"
@@ -6782,6 +6837,10 @@ msgstr "Esse assistente não está mais neste terminal. Reabra-o e tente novamen
 msgid "That code was refused. Hold still for a new one."
 msgstr "Esse código foi recusado. Mantenha firme para ler outro"
 
+#: src/components/home-composer-dock.tsx
+msgid "That conversation has ended. Send again to start a new one."
+msgstr "Essa conversa terminou. Envie de novo para começar uma nova"
+
 #: src/hooks/use-home-commands.ts
 msgid "That destination is no longer available."
 msgstr "Esse destino já não está disponível"
@@ -6975,6 +7034,10 @@ msgstr "O serviço de voz retornou uma transcrição inválida"
 #: src/app/commands.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "O túnel SSH transporta a porta da Gateway e mais nenhuma, por isso daqui não se chega ao simulador nem ao navegador. Ligue-se pela rede local ou por Tailscale"
+
+#: src/components/home-composer-dock.tsx
+msgid "The task is still starting. Send again in a moment."
+msgstr "A tarefa ainda está iniciando. Envie de novo em instantes"
 
 #: src/components/guide-command.tsx
 msgid "The terminal opened, but the command could not be typed."
@@ -7262,6 +7325,10 @@ msgstr "Esta sessão já não existe"
 #: src/components/pane-history-sheet.tsx
 msgid "This snapshot can no longer be extended. Refresh to read the latest saved output; the current page is kept until then."
 msgstr "Este estado guardado já não permite carregar mais conteúdo. Atualize para ler a saída guardada mais recente; a página atual é mantida até lá"
+
+#: src/components/home-composer-dock.tsx
+msgid "This task runs on another computer. Open it to reply."
+msgstr "Esta tarefa roda em outro computador. Abra-a para responder"
 
 #: src/components/virtual-keyboard.tsx
 msgid "This terminal can't send {chord}"
@@ -7820,6 +7887,7 @@ msgid "While you were away"
 msgstr "Enquanto você esteve fora"
 
 #: src/components/collaboration-notice.tsx
+#: src/components/home-thread.tsx
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "A trabalhar"

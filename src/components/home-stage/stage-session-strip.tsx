@@ -66,6 +66,8 @@ export type StageSessionStripProps = {
   selectedIndex: number;
   panelCount: number;
   sessions: readonly HomeContinueEntry[];
+  /** The session the dock is talking to: its card is outlined. */
+  threadKey?: string;
   onOpenSession: (entry: HomeContinueEntry) => void;
   onOpenAll: () => void;
 };
@@ -81,6 +83,7 @@ export function StageSessionStrip({
   selectedIndex,
   panelCount,
   sessions,
+  threadKey,
   onOpenSession,
   onOpenAll,
 }: StageSessionStripProps) {
@@ -137,7 +140,13 @@ export function StageSessionStrip({
   const liveBorder = withAlpha(theme.colors.primary, 0.6);
   const face = (entry: HomeContinueEntry) => ({
     backgroundColor: surface,
-    borderColor: entry.observation?.status === 'working' ? liveBorder : idleBorder,
+    borderColor:
+      entry.key === threadKey
+        ? theme.colors.primary
+        : entry.observation?.status === 'working'
+          ? liveBorder
+          : idleBorder,
+    borderWidth: entry.key === threadKey ? 1.5 : StyleSheet.hairlineWidth,
     borderRadius: profile.chrome.card,
   });
 

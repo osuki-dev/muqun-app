@@ -365,6 +365,8 @@ export function HomeRecentSessions({
   linkStyle,
   selectedPaneId,
   selectedAsid,
+  onTarget,
+  targetable,
   onOpen,
   query = '',
   pad = false,
@@ -381,6 +383,13 @@ export function HomeRecentSessions({
   linkStyle?: StyleProp<ViewStyle>;
   selectedPaneId?: string;
   selectedAsid?: string;
+  /**
+   * A tap makes the row the dock's conversation; `false` when it cannot be
+   * one (a shell, an SSH host), and the row opens instead.
+   */
+  onTarget?: (entry: HomeContinueEntry) => boolean;
+  /** Whether a tap targets the row; its long-press menu then offers to open it. */
+  targetable?: (entry: HomeContinueEntry) => boolean;
   /** Runs the row's Home command; see `homeContinueCommand`. */
   onOpen: (command: HomeCommand) => void;
   query?: string;
@@ -438,7 +447,13 @@ export function HomeRecentSessions({
             servers={servers}
             pad={pad}
             metaChars={metaChars}
-            onOpen={() => onOpen(homeContinueCommand(entry.destination))}
+            onOpen={() => {
+              if (onTarget?.(entry)) return;
+              onOpen(homeContinueCommand(entry.destination));
+            }}
+            onOpenSession={
+              targetable?.(entry) ? () => onOpen(homeContinueCommand(entry.destination)) : undefined
+            }
           />
         ))}
       </View>
@@ -501,6 +516,7 @@ function RecentSessionRow({
   selectedPaneId,
   selectedAsid,
   onOpen,
+  onOpenSession,
 }: {
   entry: HomeContinueEntry;
   number: number;
@@ -513,6 +529,8 @@ function RecentSessionRow({
   selectedPaneId?: string;
   selectedAsid?: string;
   onOpen: () => void;
+  /** Where a tap targets the row for the dock, the menu still opens it. */
+  onOpenSession?: () => void;
 }) {
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
@@ -787,6 +805,19 @@ function RecentSessionRow({
     );
   });
   const menuItems: AgentActionMenuItem[] = [];
+  if (onOpenSession) {
+    menuItems.push({
+      id: 'open-session',
+      label: t`Open session`,
+      Icon: NextIcon,
+      disabled: deleting,
+      onPress: () => {
+        setMenu(null);
+        onOpenSession();
+      },
+      testID: 'home-recent-open-session',
+    });
+  }
   if (menu?.canDelete) {
     const { title, provider, computer } = menu;
     menuItems.push({
