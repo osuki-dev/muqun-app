@@ -383,7 +383,10 @@ async function photographSurfaces(
 /** A picture of one surface (`photographView`). */
 function photograph(entry: SurfaceEntry): Promise<SkImage | null> {
   const { width, height } = entry.size.current;
-  return photographView(entry.ref, width, height);
+  // Copied, never imported zero-copy: importing the capture's hardware buffer
+  // into the shared GPU device left a live WebGPU canvas (Stage) unable to
+  // show frames until the app restarted.
+  return photographView(entry.ref, width, height, { zeroCopy: false });
 }
 
 const disposeImage = disposeViewPhotograph;
