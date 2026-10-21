@@ -74,6 +74,23 @@ function readable(text: string): string | undefined {
  * screen), as one line; `undefined` when the capture has none.
  */
 export function paneAgentLine(output: string): string | undefined {
+  return paneAgentRead(output).line;
+}
+
+/** A spinner or an interrupt hint: the agent is at work on the screen itself. */
+const AT_WORK = /esc to interrupt|ctrl\+c to interrupt/i;
+
+/**
+ * What a pane capture says about its agent's current turn: its last prose
+ * (`line`), the reader's message that turn answers (`prompt`, as drawn), and
+ * whether the screen shows the agent still at work (`busy`: a spinner or an
+ * interrupt hint below that message).
+ */
+export function paneAgentRead(output: string): {
+  line?: string;
+  prompt?: string;
+  busy: boolean;
+} {
   const lines = output
     .replace(ANSI, '')
     .replace(/\r\n?/g, '\n')
@@ -113,6 +130,12 @@ export function paneAgentLine(output: string): string | undefined {
     else blocks[blocks.length - 1]!.body.push(line.text);
   }
 
+  const prompt = start > 0 ? lines[start - 1]!.text.replace(PROMPT, '').trim() : undefined;
+  const busy = lines.slice(start).some((line) => {
+    const text = line.text.trim();
+    return AT_WORK.test(text) || (text.length > 0 && SPINNER.test(text.replace(BULLET, '')));
+  });
+  const turn = { ...(prompt ? { prompt } : {}), busy };
   for (let at = blocks.length - 1; at >= 0; at -= 1) {
     const block = blocks[at]!;
     if (block.noise || isTool(block.head, block.body)) continue;
@@ -120,14 +143,14 @@ export function paneAgentLine(output: string): string | undefined {
     // an agent drawn without bullets gives its last readable line.
     if (block.bulleted) {
       const prose = readable([block.head, ...block.body].join(' '));
-      if (prose) return prose;
+      if (prose) return { ...turn, line: prose };
       continue;
     }
     const rows = [block.head, ...block.body];
     for (let row = rows.length - 1; row >= 0; row -= 1) {
       const text = readable(rows[row]!);
-      if (text) return text;
+      if (text) return { ...turn, line: text };
     }
   }
-  return undefined;
+  return turn;
 }

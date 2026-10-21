@@ -111,6 +111,15 @@ export function retryHomeRefresh(serverId?: string): void {
   for (const listener of [...retryListeners]) listener();
 }
 
+/**
+ * Ask any running loop to read `serverId` again now, whatever its cadence:
+ * something was just sent to it, and its statuses are about to change.
+ */
+export function refreshHomeNow(serverId: string): void {
+  attempts.delete(serverId);
+  for (const listener of [...retryListeners]) listener();
+}
+
 /** Called after {@link retryHomeRefresh} cleared a backoff. Returns the unsubscribe. */
 export function onHomeRefreshRetry(listener: () => void): () => void {
   retryListeners.add(listener);

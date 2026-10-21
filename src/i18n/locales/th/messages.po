@@ -6000,6 +6000,10 @@ msgstr "ส่งเป้าหมายถัดไปมาที่นี่
 msgid "Sends your next goal here. Long press to open it."
 msgstr "ส่งเป้าหมายถัดไปมาที่นี่ กดค้างเพื่อเปิด"
 
+#: src/components/home-thread.tsx
+msgid "Sent"
+msgstr "ส่งแล้ว"
+
 #: src/components/task-row.tsx
 msgid "Sent · no reply yet"
 msgstr "ส่งแล้ว · ยังไม่มีการตอบกลับ"
