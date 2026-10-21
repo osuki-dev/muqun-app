@@ -115,6 +115,9 @@ export type StageViewProps = {
  * accessibility element and the first-visit hints -- the scene itself is
  * never focusable.
  */
+/** How many fresh canvases a session tries after a GPU failure before staying static. */
+const STAGE_GPU_RETRIES = 3;
+
 export function StageView({
   panels,
   selectedIndex,
@@ -141,6 +144,16 @@ export function StageView({
     setQuality(session.quality);
   });
   const [failed, setFailed] = useState(false);
+  // A GPU failure (a lost device, a surface the system took back while the
+  // app was away) falls back to the static stage, but only until Home is
+  // shown again: then a fresh canvas gets another try, a few times a session.
+  const [attempt, setAttempt] = useState(0);
+  const fail = useStableHandler(() => setFailed(true));
+  useEffect(() => {
+    if (paused || !failed || attempt >= STAGE_GPU_RETRIES) return;
+    setFailed(false);
+    setAttempt((count) => count + 1);
+  }, [paused, failed, attempt]);
   const [diving, setDiving] = useState(false);
   const [hints, setHints] = useState(() => !hasSeenStageHints());
   const [gpuAvailable] = useState(
@@ -327,7 +340,7 @@ export function StageView({
           );
         }}>
         {effects.gpu ? (
-          <MapErrorBoundary onError={() => setFailed(true)}>
+          <MapErrorBoundary key={attempt} onError={fail}>
             <Suspense fallback={null}>
               <GpuStage
                 screens={screens}
@@ -352,7 +365,7 @@ export function StageView({
                 inputs={inputs}
                 bridge={bridge}
                 onQualityDrop={lowered}
-                onError={() => setFailed(true)}
+                onError={fail}
               />
             </Suspense>
           </MapErrorBoundary>
