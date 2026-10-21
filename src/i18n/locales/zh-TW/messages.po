@@ -6524,6 +6524,10 @@ msgstr "取消指派任務"
 msgid "Stop following this conversation"
 msgstr "停止跟隨此對話"
 
+#: src/components/home-stage/stage-session-strip.tsx
+msgid "Stop replying to {title}"
+msgstr "停止回覆 {title}"
+
 #: src/app/commands.tsx
 msgid "Stop this agent"
 msgstr "停止這個代理程式"

@@ -164,6 +164,7 @@ export function HomeComposerDock({
   onDockHeight,
   onOpenAgent,
   onOpenThread,
+  threadOnCard = false,
 }: {
   revealed: boolean;
   controller: HomeLaunchController;
@@ -190,6 +191,8 @@ export function HomeComposerDock({
   ) => Promise<HomeCommandResult>;
   /** Opens the dock's conversation in full: its session or its pane. */
   onOpenThread?: (target: HomeThreadTarget) => void;
+  /** Stage: the conversation is named and cleared on its card; the bar only reports. */
+  threadOnCard?: boolean;
 }) {
   const { t } = useLingui();
   useEffect(() => {
@@ -405,6 +408,8 @@ export function HomeComposerDock({
   /** A follow-up whose delivery could not be confirmed: kept, never resent by itself. */
   const [unsure, setUnsure] = useState<HomeThreadUnsure | null>(null);
   const visibleUnsure = unsure && unsure.key === threadKey ? unsure : null;
+  /** Whether the reply bar is drawn: on Stage it hides when it has nothing to say. */
+  const [replyBarShown, setReplyBarShown] = useState(true);
   // A gateway that takes the delivery by name lets the reader's pick decide
   // how a goal is carried: the provider's session entry sends a session
   // task, its terminal entry a pane task, each only where that provider
@@ -1641,6 +1646,8 @@ export function HomeComposerDock({
         onOpen={openThread}
         onClear={clearThread}
         onRetry={retryUnsure}
+        named={threadOnCard}
+        onShown={setReplyBarShown}
       />
     </>
   ) : undefined;
@@ -1746,6 +1753,7 @@ export function HomeComposerDock({
       revealed={revealed}
       accessory={bar}
       fieldHeader={replyBar}
+      fieldHeaderShown={replyBarShown}
       fieldBackground={
         <>
           <HomeComposerBackground />

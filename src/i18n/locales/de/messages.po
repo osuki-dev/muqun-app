@@ -6524,6 +6524,10 @@ msgstr "Aufgabe nicht mehr zuweisen"
 msgid "Stop following this conversation"
 msgstr "Diesem Gespräch nicht mehr folgen"
 
+#: src/components/home-stage/stage-session-strip.tsx
+msgid "Stop replying to {title}"
+msgstr "Nicht mehr an {title} antworten"
+
 #: src/app/commands.tsx
 msgid "Stop this agent"
 msgstr "Diesen Agent stoppen"

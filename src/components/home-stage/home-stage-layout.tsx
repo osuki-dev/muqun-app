@@ -66,6 +66,8 @@ export type HomeStageLayoutProps = {
   sessions: readonly HomeContinueEntry[];
   /** The session the dock is talking to, by `HomeContinueEntry.key`. */
   threadKey?: string;
+  /** The × on that session's card: the dock's next message starts a new conversation. */
+  onClearThread?: () => void;
   onOpenSession: (entry: HomeContinueEntry) => void;
   /** Whether Home's dock can talk to a card's conversation ("Reply from Home"). */
   canReply?: (entry: HomeContinueEntry) => boolean;
@@ -90,7 +92,7 @@ export type HomeStageLayoutProps = {
 };
 
 /** Sessions shown in the strip before "All sessions". */
-const STRIP_LIMIT = 6;
+export const STAGE_STRIP_LIMIT = 6;
 
 export type HomeStageProps = Omit<
   HomeStageLayoutProps,
@@ -170,7 +172,9 @@ export function HomeStage({
   const selectedIndex = stageSelectedIndex(panels, chosenServerId);
   const sessions = useMemo(
     () =>
-      chosenServerId ? filterHomeRecent(recentEntries, chosenServerId).slice(0, STRIP_LIMIT) : [],
+      chosenServerId
+        ? filterHomeRecent(recentEntries, chosenServerId).slice(0, STAGE_STRIP_LIMIT)
+        : [],
     [recentEntries, chosenServerId]
   );
   const at = (index: number) => panels[wrapStageIndex(index, panels.length)]?.serverId;
@@ -211,6 +215,7 @@ export function HomeStageLayout({
   headerAction,
   sessions,
   threadKey,
+  onClearThread,
   onOpenSession,
   canReply,
   onReplySession,
@@ -434,6 +439,7 @@ export function HomeStageLayout({
                 panelCount={panels.length}
                 sessions={sessions}
                 threadKey={threadKey}
+                onClearThread={onClearThread}
                 onOpenSession={onOpenSession}
                 onSessionActions={onReplySession ? replyToCard : undefined}
                 onOpenAll={() => openList(true)}
