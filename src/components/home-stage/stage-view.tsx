@@ -59,6 +59,7 @@ import type { StageComposition, StageLayer } from '@/lib/home-stage-layers';
 import { useSharedSkiaImage } from '@/lib/skia-image-cache';
 import { useAppSettings } from '@/stores/app-settings';
 import {
+  lowestStageQuality,
   stageEffects,
   STAGE_TILT_DEADBAND,
   STAGE_TILT_WAKE,
@@ -80,6 +81,9 @@ const HERO_MAX_EDGE = 1536;
 const BASE_MAX_EDGE = 1024;
 /** The camera's flight into the front pane before its workspace opens. */
 const DIVE_MS = 520;
+
+/** The lowest quality rung the stage has stepped down to this session; never raised. */
+const session: { quality: StageQuality } = { quality: 'full' };
 
 export type StageViewProps = {
   panels: readonly StagePanel[];
@@ -128,7 +132,12 @@ export function StageView({
   const reducedMotion = useReducedMotion();
   const window = useWindowDimensions();
   const [size, setSize] = useState({ width: 0, height: 0 });
-  const [quality, setQuality] = useState<StageQuality>('full');
+  // A rung the stage stepped down to holds for the rest of the session.
+  const [quality, setQuality] = useState<StageQuality>(() => session.quality);
+  const lowered = useStableHandler((next: StageQuality) => {
+    session.quality = lowestStageQuality(session.quality, next);
+    setQuality(session.quality);
+  });
   const [failed, setFailed] = useState(false);
   const [diving, setDiving] = useState(false);
   const [hints, setHints] = useState(() => !hasSeenStageHints());
@@ -172,28 +181,29 @@ export function StageView({
       ));
   useThemeRenderReady(artworkUri, settled);
   useThemeRenderReady(wallpaperUri, settled);
-  const backdrop = pictureOf(backdropTexture, composition.backdrop);
-  const painting = pictureOf(paintingTexture, composition.painting);
-  const hero = pictureOf(heroTexture, composition.hero);
-  const frame = pictureOf(frameTexture, composition.frame);
+  const backdrop = usePicture(backdropTexture, composition.backdrop);
+  const painting = usePicture(paintingTexture, composition.painting);
+  const hero = usePicture(heroTexture, composition.hero);
+  const frame = usePicture(frameTexture, composition.frame);
   const drawn = stageDrawnScreens(selectedIndex, panels.length);
-  const faces = useStageFaces(panels, effects.gpu ? drawn : [], {
-    text: theme.colors.text,
-    primary: theme.colors.primary,
-    success: theme.colors.success,
-    warning: theme.colors.warning,
-    offline: theme.colors.textMuted,
-    offlineDot: theme.colors.textDisabled,
-    surface: theme.colors.surface,
-    light: resolvedMode === 'light',
-  });
-  const screens: StageScreenLook[] = panels.map((panel) => ({
-    tone: panel.tone,
-    working: panel.working,
-    attention: panel.attention,
-    faceSlot: faces.slots.get(panel.serverId) ?? -1,
-    streaks: stageStreakLines(panel.face),
-  }));
+  const faces = useStageFaces(
+    panels,
+    effects.gpu ? drawn : [],
+    {
+      text: theme.colors.text,
+      primary: theme.colors.primary,
+      success: theme.colors.success,
+      warning: theme.colors.warning,
+      offline: theme.colors.textMuted,
+      offlineDot: theme.colors.textDisabled,
+      surface: theme.colors.surface,
+      light: resolvedMode === 'light',
+    },
+    paused
+  );
+  // By value: live agent data re-renders this view every few seconds, and the
+  // scene re-renders only when what the panes show has changed.
+  const screens = useStageScreens(panels, faces.slots);
   const colors = useMemo(
     () => ({
       background: theme.colors.background,
@@ -329,6 +339,7 @@ export function StageView({
                 hero={hero}
                 frame={frame}
                 faces={faces.atlas}
+                facesVersion={faces.version}
                 ambientEffects={ambientEffects}
                 ambientColors={ambientColors}
                 quality={quality}
@@ -338,7 +349,7 @@ export function StageView({
                 paused={paused}
                 inputs={inputs}
                 bridge={bridge}
-                onQualityDrop={setQuality}
+                onQualityDrop={lowered}
                 onError={() => setFailed(true)}
               />
             </Suspense>
@@ -443,6 +454,27 @@ function StageTilt({
   return null;
 }
 
+/** The panes' looks, the same array while nothing in them changes. */
+function useStageScreens(
+  panels: readonly StagePanel[],
+  slots: ReadonlyMap<string, number>
+): readonly StageScreenLook[] {
+  const screens: StageScreenLook[] = panels.map((panel) => ({
+    tone: panel.tone,
+    working: panel.working,
+    attention: panel.attention,
+    faceSlot: slots.get(panel.serverId) ?? -1,
+    streaks: stageStreakLines(panel.face),
+  }));
+  const key = JSON.stringify(screens);
+  const [kept, setKept] = useState({ key, screens });
+  if (kept.key !== key) {
+    setKept({ key, screens });
+    return screens;
+  }
+  return kept.screens;
+}
+
 type StageTarget =
   | {
       kind: 'host';
@@ -457,12 +489,17 @@ type StageTarget =
       hint: { x: number; y: number };
     };
 
-/** A layer's texture once it is in, with how the theme asks for it to be drawn. */
-function pictureOf<L extends StageLayer>(
+/**
+ * A layer's texture once it is in, with how the theme asks for it to be
+ * drawn; the same object while neither changes, so a re-render of this view
+ * does not re-render the scene.
+ */
+function usePicture<L extends StageLayer>(
   state: StageTextureState,
   layer: L | null
 ): StagePicture<L> | null {
-  return state.status === 'ready' && layer ? { texture: state.source.texture, layer } : null;
+  const texture = state.status === 'ready' ? state.source.texture : null;
+  return useMemo(() => (texture && layer ? { texture, layer } : null), [texture, layer]);
 }
 
 /** The artwork laid out over the view, as the GPU scene lays it out; null for none. */

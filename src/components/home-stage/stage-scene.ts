@@ -24,11 +24,16 @@
  *                   circuit traces are drawn behind the hero instead)
  *   6. panes     -- one frosted glass pane per computer in a cover-flow, each
  *                   with a status glow behind and a faint reflection below
- *                   (glows one instanced draw; panes and reflections another)
+ *                   (glows one instanced draw; panes and reflections another;
+ *                   the reflections only at full quality)
  *
  * Every layer is an unlit, textured plane: no lights, no shadows, no
- * environment, at most eight draws (the motes or a theme's ambient effect,
- * never both; a painting and a hero never both). Pictures are Skia
+ * environment, no MSAA (every edge is soft in its shader already). Layers 1,
+ * 1b and 2 are one draw of the backdrop's plane, which composes the
+ * painting's and the haze's planes along each view ray, so the screen is
+ * filled once for all three. At most seven draws (the motes or a theme's
+ * ambient effect, never both; the hero and its glow only for a hero), and
+ * the only other layer that covers the whole screen is a frame. Pictures are Skia
  * readbacks, top row first: each is sampled through its plane's window,
  * measured from the picture's top left.
  */
@@ -36,6 +41,7 @@ import {
   AdditiveBlending,
   BufferAttribute,
   BufferGeometry,
+  CircleGeometry,
   Color,
   DataTexture,
   DynamicDrawUsage,
@@ -92,6 +98,7 @@ import { createStageAmbient } from './stage-ambient';
 const {
   abs,
   attribute,
+  cameraPosition,
   clamp,
   dot,
   exp,
@@ -102,6 +109,7 @@ const {
   min,
   mix,
   positionLocal,
+  positionWorld,
   select,
   smoothstep,
   step,
@@ -113,7 +121,7 @@ const {
   vec4,
 } = TSL;
 
-/** Faces in the atlas: two columns of `STAGE_MAX_SCREENS / 2` rows, each face twice. */
+/** Faces in the atlas: two columns of at most `STAGE_MAX_SCREENS / 2` rows, each face twice. */
 export const STAGE_FACE_COLUMNS = 2;
 export const STAGE_FACE_ROWS = STAGE_MAX_SCREENS / STAGE_FACE_COLUMNS;
 /**
@@ -196,6 +204,10 @@ export type StageFrameInput = {
   burst: number;
   /** Particles are on at this quality: the motes, or a theme's travelling particles. */
   motes: boolean;
+  /** The share of the particles drawn, 0..1. */
+  particleShare: number;
+  /** The panes' reflections. */
+  reflections: boolean;
   shimmer: boolean;
   /** The working pulse, the hero's bob and the motes' drift. */
   pulse: boolean;
@@ -296,8 +308,7 @@ type Vec4Uniform = ReturnType<typeof vec4Uniform>;
  * picture at `window.xy + p * window.zw`. Outside the picture -- a contained
  * wallpaper's slack -- is clear.
  */
-function windowed(blank: Texture, window: Vec4Uniform) {
-  const p = flippedUv();
+function windowed(blank: Texture, window: Vec4Uniform, p: Node<'vec2'> = flippedUv()) {
   const at = window.xy.add(p.mul(window.zw));
   const sample = texture(blank, at);
   const inside = step(0, at.x).mul(step(at.x, 1)).mul(step(0, at.y)).mul(step(at.y, 1));
@@ -325,6 +336,17 @@ function setFade(target: Vector4, placement: StageArtPlacement) {
     placement.edges.x,
     placement.edges.y
   );
+}
+
+/**
+ * A `width` x `height` ellipse with a plane's uv: a radial glow is clear
+ * outside it, so its quad's corners -- a fifth of the quad -- were shaded
+ * for nothing.
+ */
+function glowDisc(width: number, height: number) {
+  const disc = new CircleGeometry(0.5, 32);
+  disc.scale(width, height, 1);
+  return disc;
 }
 
 /** A soft round glow over a quad's uv: 1 at the middle, 0 at the rim. */
@@ -362,58 +384,80 @@ export function createStageScene(): StageSceneHandle {
   // The same colour as a vector: a colour uniform does not mix with vec3s in the typings.
   const uGlass = uniform(new Vector3());
 
-  // -- 1. Backdrop -------------------------------------------------------------
+  // -- 1, 1b, 2. Backdrop, painting and haze: one full-screen pass -------------
+  // Three layers at three depths, all drawn by the backdrop's plane: each
+  // fragment follows its view ray on to the painting's plane and the haze's
+  // (planes of constant z, nearer the camera) and composes what those planes
+  // would have drawn there, back to front. Parallax, tilt and the dive see
+  // exactly the three layers, but the screen is filled once instead of three
+  // times, two of them blended -- most of a phone GPU's fill rate.
+  const ray = positionWorld.sub(cameraPosition);
+  /** Where the view ray meets the plane at `z` centred and sized by `rect`: 0..1 from its top left. */
+  const onPlane = (rect: Vec4Uniform, z: Node<'float'>) => {
+    const along = z.sub(cameraPosition.z).div(ray.z);
+    const hit = cameraPosition.xy.add(ray.xy.mul(along)).sub(rect.xy).div(rect.zw);
+    const p = vec2(hit.x.add(0.5), float(0.5).sub(hit.y));
+    return { p, inside: step(0, p.x).mul(step(p.x, 1)).mul(step(0, p.y)).mul(step(p.y, 1)) };
+  };
+
   // The wash, and over it the wallpaper at its authored opacity: what the 2D
   // Home shows of a wallpaper drawn at that opacity over the theme's ground.
   const uBackdropOpacity = uniform(0);
   const uBackdropWindow = vec4Uniform();
   const backdropPicture = windowed(blank, uBackdropWindow);
-  const backdropMaterial = layerMaterial();
-  backdropMaterial.transparent = false;
-  backdropMaterial.colorNode = vec4(
-    mix(
-      mix(uBackground, uSurface, uv().y),
-      backdropPicture.sample.rgb,
-      backdropPicture.alpha.mul(uBackdropOpacity)
-    ),
-    1
+  const ground = mix(
+    mix(uBackground, uSurface, uv().y),
+    backdropPicture.sample.rgb,
+    backdropPicture.alpha.mul(uBackdropOpacity)
   );
-  const backdrop = new Mesh(new PlaneGeometry(1, 1), backdropMaterial);
-  backdrop.renderOrder = 0;
   let backdropLayer: StageLayer | null = null;
 
-  // -- 1b. Painting -------------------------------------------------------------
+  // The sky role's painting: a width-fit band across the top, its foot fading.
+  const uPaintingShown = uniform(0);
   const uPaintingOpacity = uniform(1);
   const uPaintingWindow = vec4Uniform();
   const uPaintingFade = vec4Uniform();
-  const paintingPicture = windowed(blank, uPaintingWindow);
-  const paintingMaterial = layerMaterial();
-  paintingMaterial.colorNode = vec4(
-    paintingPicture.sample.rgb,
-    paintingPicture.alpha.mul(uPaintingOpacity).mul(artAlpha(paintingPicture.p, uPaintingFade))
-  );
-  const painting = new Mesh(new PlaneGeometry(1, 1), paintingMaterial);
-  painting.renderOrder = 0.5;
-  painting.visible = false;
+  const uPaintingRect = vec4Uniform();
+  const uPaintingZ = uniform(-STAGE_PAINTING_DEPTH);
+  const paintingPlane = onPlane(uPaintingRect, uPaintingZ);
+  const paintingPicture = windowed(blank, uPaintingWindow, paintingPlane.p);
+  const paintingAlpha = paintingPicture.alpha
+    .mul(uPaintingOpacity)
+    .mul(artAlpha(paintingPlane.p, uPaintingFade))
+    .mul(paintingPlane.inside)
+    .mul(uPaintingShown);
   let paintingLayer: StageLayer | null = null;
 
-  // -- 2. Haze -----------------------------------------------------------------
+  // The haze: the theme's background colour down the view.
   const hazePixels = new Uint8Array(HAZE_ROWS * 4);
   const hazeTexture = new DataTexture(hazePixels, 1, HAZE_ROWS, RGBAFormat);
   hazeTexture.colorSpace = SRGBColorSpace;
   hazeTexture.magFilter = LinearFilter;
   hazeTexture.minFilter = LinearFilter;
-  const hazeMaterial = layerMaterial();
-  hazeMaterial.colorNode = texture(hazeTexture, flippedUv());
-  const haze = new Mesh(new PlaneGeometry(1, 1), hazeMaterial);
-  haze.renderOrder = 1;
+  const uHazeRect = vec4Uniform();
+  const uHazeZ = uniform(-STAGE_HAZE_DEPTH);
+  const hazePlane = onPlane(uHazeRect, uHazeZ);
+  const hazeSample = texture(hazeTexture, hazePlane.p);
+
+  const backdropMaterial = layerMaterial();
+  backdropMaterial.transparent = false;
+  backdropMaterial.colorNode = vec4(
+    mix(
+      mix(ground, paintingPicture.sample.rgb, paintingAlpha),
+      hazeSample.rgb,
+      hazeSample.a.mul(hazePlane.inside)
+    ),
+    1
+  );
+  const backdrop = new Mesh(new PlaneGeometry(1, 1), backdropMaterial);
+  backdrop.renderOrder = 0;
 
   // -- 3. Hero and its glow ----------------------------------------------------
   const uHeroGlow = uniform(new Color('#ffffff'));
   const uHeroGlowAlpha = uniform(0.35);
   const heroGlowMaterial = layerMaterial();
   heroGlowMaterial.colorNode = vec4(uHeroGlow, glowFalloff().mul(uHeroGlowAlpha));
-  const heroGlow = new Mesh(new PlaneGeometry(1, 1), heroGlowMaterial);
+  const heroGlow = new Mesh(glowDisc(1, 1), heroGlowMaterial);
   heroGlow.renderOrder = 2;
   const uHeroOpacity = uniform(1);
   const uHeroWindow = vec4Uniform();
@@ -497,7 +541,7 @@ export function createStageScene(): StageSceneHandle {
   motes.renderOrder = 4;
 
   // -- 6. Panes: status glows, then reflections and panes ----------------------
-  const glowGeometry = new PlaneGeometry(1.5, 1.2);
+  const glowGeometry = glowDisc(1.5, 1.2);
   // rgb + strength
   const glowTint = new InstancedBufferAttribute(new Float32Array(STAGE_MAX_SCREENS * 4), 4);
   glowTint.setUsage(DynamicDrawUsage);
@@ -562,7 +606,8 @@ export function createStageScene(): StageSceneHandle {
   const hasFace = select(slot.greaterThanEqual(0), float(1), float(0));
   const cell = vec2(slot.mod(STAGE_FACE_COLUMNS), slot.div(STAGE_FACE_COLUMNS).floor());
   const cellUv = cell.add(vec2(paneU, float(1).sub(paneV)));
-  const atlasCells = vec2(STAGE_FACE_COLUMNS * 2, STAGE_FACE_ROWS);
+  const uFaceRows = uniform(STAGE_FACE_ROWS);
+  const atlasCells = vec2(STAGE_FACE_COLUMNS * 2, uFaceRows);
   const faceSample = texture(blank, cellUv.div(atlasCells));
   // The same face's compact cell, which a pane turns to as it steps aside.
   const compactSample = texture(blank, cellUv.add(vec2(STAGE_FACE_COLUMNS, 0)).div(atlasCells));
@@ -639,7 +684,7 @@ export function createStageScene(): StageSceneHandle {
 
   const ambient = createStageAmbient();
 
-  root.add(backdrop, painting, haze, heroGlow, hero, motes, ambient.mesh, glows, panes, frame);
+  root.add(backdrop, heroGlow, hero, motes, ambient.mesh, glows, panes, frame);
 
   // -- Layout ------------------------------------------------------------------
   const cover = (
@@ -679,14 +724,17 @@ export function createStageScene(): StageSceneHandle {
     );
     if (paintingLayer) {
       const placement = stagePaintingPlacement(paintingLayer, viewport);
-      hang(painting, placement, STAGE_PAINTING_DEPTH);
+      const placed = stageWorldRect(placement.plane, STAGE_PAINTING_DEPTH, viewport);
+      const [x, y, z] = placed.position;
+      uPaintingRect.value.set(x, y, Math.max(placed.width, 1e-4), Math.max(placed.height, 1e-4));
+      uPaintingZ.value = z;
       setWindow(uPaintingWindow.value, placement.uv);
       setFade(uPaintingFade.value, placement);
     }
     const hazeView = stageViewSize(STAGE_HAZE_DEPTH, aspect);
     const hazeAt = stageLayerCentre(STAGE_HAZE_DEPTH);
-    haze.scale.set(hazeView.width * 1.5, hazeView.height * 1.3, 1);
-    haze.position.set(hazeAt[0], hazeAt[1], hazeAt[2]);
+    uHazeRect.value.set(hazeAt[0], hazeAt[1], hazeView.width * 1.5, hazeView.height * 1.3);
+    uHazeZ.value = hazeAt[2];
     if (heroLayer) {
       const placement = stageHeroPlacement(heroLayer, viewport);
       const placed = hang(hero, placement, STAGE_HERO_DEPTH);
@@ -740,6 +788,7 @@ export function createStageScene(): StageSceneHandle {
   const still = new Quaternion();
   const yAxis = new Vector3(0, 1, 0);
   const order: number[] = [];
+  let particleShare = 1;
 
   return {
     root,
@@ -801,7 +850,7 @@ export function createStageScene(): StageSceneHandle {
       paintingLayer = picture?.layer ?? null;
       paintingPicture.sample.value = picture?.texture ?? blank;
       uPaintingOpacity.value = picture?.layer.opacity ?? 1;
-      painting.visible = Boolean(picture);
+      uPaintingShown.value = picture ? 1 : 0;
       layout();
     },
     setHero(picture) {
@@ -822,6 +871,9 @@ export function createStageScene(): StageSceneHandle {
     setFaces(atlas) {
       faceSample.value = atlas ?? blank;
       compactSample.value = atlas ?? blank;
+      // The atlas holds only the rows its faces need.
+      const height = (atlas?.image as { height?: number } | undefined)?.height ?? 0;
+      uFaceRows.value = Math.max(1, Math.round(height / STAGE_FACE_CELL_HEIGHT));
     },
     setAmbient(next) {
       ambient.configure(next);
@@ -834,6 +886,11 @@ export function createStageScene(): StageSceneHandle {
         heroBase.z
       );
       const effect = ambient.current;
+      if (input.particleShare !== particleShare) {
+        particleShare = input.particleShare;
+        moteGeometry.setDrawRange(0, Math.round(MOTE_COUNT * particleShare) * 6);
+        ambient.setShare(particleShare);
+      }
       motes.visible = input.motes && !effect;
       ambient.mesh.visible = effect !== null && (!effect.particles || input.motes);
       ambient.setTime(input.pulse ? timeS : 0);
@@ -852,8 +909,9 @@ export function createStageScene(): StageSceneHandle {
       const reflection = light ? 0.16 : 0.1;
       // Every reflection lies under every pane: reflections take the first slots.
       const count = order.length;
-      order.forEach((source, drawn) => {
-        const pane = input.panes[source]!;
+      const reflected = input.reflections;
+      for (let drawn = 0; drawn < count; drawn += 1) {
+        const pane = input.panes[order[drawn]!]!;
         const { look } = pane;
         const offline = look.tone === 'offline' || look.tone === 'unknown';
         const working = look.working && !offline;
@@ -871,15 +929,17 @@ export function createStageScene(): StageSceneHandle {
         rotation.setFromAxisAngle(yAxis, pane.yaw);
         const [x, y, z] = pane.position;
 
-        position.set(x, y - height * 0.78, z);
-        scale.set(pane.width, pane.width * 0.5, 1);
-        panes.setMatrixAt(drawn, scratch.compose(position, rotation, scale));
-        paneInfo.setXYZW(drawn, look.faceSlot, reflection, pane.side, 1);
-        paneEdge.setXYZW(drawn, status.r, status.g, status.b, offline ? 0.45 : 0.9);
-        paneSheen.setX(drawn, sheenAt);
-        paneStreaks.setX(drawn, working ? look.streaks : 0);
+        if (reflected) {
+          position.set(x, y - height * 0.78, z);
+          scale.set(pane.width, pane.width * 0.5, 1);
+          panes.setMatrixAt(drawn, scratch.compose(position, rotation, scale));
+          paneInfo.setXYZW(drawn, look.faceSlot, reflection, pane.side, 1);
+          paneEdge.setXYZW(drawn, status.r, status.g, status.b, offline ? 0.45 : 0.9);
+          paneSheen.setX(drawn, sheenAt);
+          paneStreaks.setX(drawn, working ? look.streaks : 0);
+        }
 
-        const slot = count + drawn;
+        const slot = reflected ? count + drawn : drawn;
         position.set(x, y, z);
         scale.set(pane.width, pane.width, 1);
         panes.setMatrixAt(slot, scratch.compose(position, rotation, scale));
@@ -897,8 +957,8 @@ export function createStageScene(): StageSceneHandle {
           glowColor.b,
           (1 - pane.side * 0.6) * (working ? pulseNow : 1) * (offline ? 0.4 : 1)
         );
-      });
-      panes.count = count * 2;
+      }
+      panes.count = reflected ? count * 2 : count;
       glows.count = count;
       panes.instanceMatrix.needsUpdate = true;
       glows.instanceMatrix.needsUpdate = true;
@@ -909,7 +969,7 @@ export function createStageScene(): StageSceneHandle {
       glowTint.needsUpdate = true;
     },
     dispose() {
-      for (const mesh of [backdrop, painting, haze, heroGlow, hero, motes, glows, panes, frame]) {
+      for (const mesh of [backdrop, heroGlow, hero, motes, glows, panes, frame]) {
         mesh.geometry.dispose();
         (mesh.material as MeshBasicNodeMaterial).dispose();
       }

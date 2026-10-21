@@ -1,5 +1,6 @@
 import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
+import { PixelRatio } from 'react-native';
 import type { WebGPURenderer } from 'three/webgpu';
 
 import { useStableHandler } from '@/hooks/use-render-refs';
@@ -14,7 +15,7 @@ import {
 } from '@/lib/home-stage-geometry';
 import { stageAmbient } from '@/lib/home-stage-ambient';
 import {
-  initialStageDegrade,
+  createStageFrameBudget,
   recordStageFrame,
   stageEffects,
   stageIdleInterval,
@@ -22,11 +23,33 @@ import {
   stepStageSpring,
   STAGE_CARD_SPRING,
   STAGE_AMBIENT_IDLE_MS,
-  type StageDegradeState,
+  type StageFrameBudget,
+  type StageQuality,
   type StageSpring,
 } from '@/lib/home-stage-motion';
 import { createStageScene, type StagePaneFrame, type StagePicture } from './stage-scene';
 import type { StageSceneProps } from './types';
+
+/**
+ * The frame log (`stage-perf.ts`), in a Debug or Release profiling bundle
+ * built with `EXPO_PUBLIC_STAGE_PERF=1` only. A `require` behind a condition
+ * Metro folds: a store bundle never contains it.
+ */
+type StagePerfModule = typeof import('./stage-perf');
+const stagePerf =
+  process.env.EXPO_PUBLIC_STAGE_PERF === '1' &&
+  (__DEV__ || process.env.EXPO_PUBLIC_RELEASE_PROFILER === '1')
+    ? // oxlint-disable-next-line typescript/no-require-imports
+      (require('./stage-perf') as StagePerfModule).createStagePerfLog()
+    : null;
+
+/**
+ * Why a frame is drawn, which sets how soon the next may be: `touch` (a
+ * finger, the cover-flow settling, a dive) at the full rate, `glide` (tilt
+ * easing in, a completion's flare) at 30 fps, `idle` (the ambient motion) at
+ * 20 fps, `content` once.
+ */
+type Pace = 'touch' | 'glide' | 'idle' | 'content';
 
 type Motion = {
   /** The cover-flow's fractional selection. */
@@ -35,8 +58,11 @@ type Motion = {
   look: [number, number];
   burst: number;
   lastFrameMs: number;
+  /** The last frame asked for the next at the full rate: the gap between them measures the device. */
+  wasTouch: boolean;
+  /** Whether the last frame moved anything; the ambient clock runs on through a move. */
   wasMoving: boolean;
-  degrade: StageDegradeState;
+  budget: StageFrameBudget;
   timer: ReturnType<typeof setTimeout> | null;
   /** The ambient clock: advances only on drawn frames, so a stop and resume never jumps. */
   ambientS: number;
@@ -52,12 +78,14 @@ const DIVE_SPRING = { stiffness: 90, damping: 17 };
 
 /**
  * Lives inside the Fiber root. Owns the scene objects and the frame clock:
- * frames are drawn while something moves (the cover-flow, a drag, tilt, a
- * dive, a completion's flare); otherwise at the 20 fps idle rate for the
- * working pulse, the hero's bob and the motes' drift, for
- * `STAGE_AMBIENT_IDLE_MS` after the last activity, and then not at all until
- * something wakes the scene. Never while Home is paused or, under Reduce
- * Motion, at rest.
+ * frames are drawn at the full rate while a finger, the cover-flow or a dive
+ * moves the scene, at 30 fps while only tilt or a completion's flare does;
+ * otherwise at the 20 fps idle rate for the working pulse, the hero's bob and
+ * the motes' drift, for `STAGE_AMBIENT_IDLE_MS` after the last activity, and
+ * then not at all until something wakes the scene. Never while Home is paused
+ * or, under Reduce Motion, at rest. It draws each frame itself, so it can
+ * time it: a device that runs over its frame budget steps down the quality
+ * ladder (`recordStageFrame`).
  */
 export function StageRuntime(props: StageSceneProps) {
   const invalidate = useThree((state) => state.invalidate);
@@ -65,6 +93,7 @@ export function StageRuntime(props: StageSceneProps) {
   const scene = useThree((state) => state.scene);
   const gl = useThree((state) => state.gl);
   const size = useThree((state) => state.size);
+  const setDpr = useThree((state) => state.setDpr);
   const [world] = useState(createStageScene);
   const motion = useRef<Motion | null>(null);
   const aspect = size.height > 0 ? size.width / size.height : 390 / 844;
@@ -80,6 +109,7 @@ export function StageRuntime(props: StageSceneProps) {
     hero,
     frame,
     faces,
+    facesVersion,
     ambientEffects,
     ambientColors,
     quality,
@@ -99,8 +129,9 @@ export function StageRuntime(props: StageSceneProps) {
       look: [0, 0],
       burst: 0,
       lastFrameMs: 0,
+      wasTouch: false,
       wasMoving: false,
-      degrade: initialStageDegrade(quality),
+      budget: createStageFrameBudget(quality),
       timer: null,
       ambientS: 0,
       activeMs: performance.now(),
@@ -178,7 +209,7 @@ export function StageRuntime(props: StageSceneProps) {
   useEffect(() => {
     world.setFaces(faces);
     wake();
-  }, [world, faces]);
+  }, [world, faces, facesVersion]);
   // The theme's effect, by value: a new effect is a theme change and starts
   // the ambient window; the same effect after a parent re-render does nothing.
   const ambientKey = JSON.stringify([ambientEffects, ambientColors, mode, aspect]);
@@ -187,11 +218,14 @@ export function StageRuntime(props: StageSceneProps) {
     activate();
   });
   useEffect(() => applyAmbient(), [world, ambientKey]);
-  // Only a new quality resets the ladder.
-  const resetLadder = useEffectEvent((next: StageSceneProps['quality']) => {
-    motionState().degrade = initialStageDegrade(next);
+  // Only a new quality resets the budget, and sets the pixel ratio its rung allows.
+  const applyQuality = useEffectEvent((next: StageQuality) => {
+    motionState().budget = createStageFrameBudget(next);
+    const { maxDpr } = stageEffects(next, { gpuAvailable: true, reducedMotion });
+    setDpr(Math.min(PixelRatio.get(), maxDpr));
+    wake();
   });
-  useEffect(() => resetLadder(quality), [quality]);
+  useEffect(() => applyQuality(quality), [quality]);
   // The selection has caught up with a released drag: follow the selection again.
   const selectionMoved = useEffectEvent(() => {
     inputs.settle.set(-1);
@@ -213,15 +247,14 @@ export function StageRuntime(props: StageSceneProps) {
   useEffect(() => wakeFor(paused), [paused]);
   useEffect(() => wakeFor(false), [dive]);
 
-  const qualityDropped = useStableHandler((next: StageDegradeState['quality']) =>
-    props.onQualityDrop(next)
-  );
+  const qualityDropped = useStableHandler((next: StageQuality) => props.onQualityDrop(next));
 
+  // Priority 1: this callback draws the frame itself, instead of Fiber.
   useFrame(() => {
     const state = motionState();
     const now = performance.now();
     const elapsedMs = state.lastFrameMs ? now - state.lastFrameMs : 1000 / 60;
-    const continuous = state.wasMoving && elapsedMs < 120;
+    const backToBack = state.wasTouch && elapsedMs < 120;
     state.lastFrameMs = now;
     const dt = Math.min(0.05, elapsedMs / 1000);
     const effects = stageEffects(quality, { gpuAvailable: true, reducedMotion });
@@ -295,39 +328,65 @@ export function StageRuntime(props: StageSceneProps) {
       tilt: state.look[0],
       burst: effects.particles && effects.pulse ? state.burst : 0,
       motes: effects.particles,
+      particleShare: effects.particleShare,
+      reflections: effects.reflections,
       shimmer: effects.shimmer,
       pulse: effects.pulse,
     });
+    // Fiber's loop never resets the renderer's counters: the log counts per frame.
+    if (stagePerf) (gl as unknown as WebGPURenderer).info.reset();
+    gl.render(scene, camera);
+    const workMs = performance.now() - now;
 
-    const moving =
+    const touch =
       !stageSpringAtRest(state.flow, flowGoal) ||
       !stageSpringAtRest(state.dive, dive ? 1 : 0) ||
-      dragging ||
-      looking ||
-      state.burst > 0;
-    if (!reducedMotion) {
-      const was = state.degrade.quality;
-      state.degrade = recordStageFrame(state.degrade, {
+      dragging;
+    const moving = touch || looking || state.burst > 0;
+    const ambient = !moving && stageIdleInterval(effects, now - state.activeMs) !== null;
+    // What this frame measured: its own work, and at the full rate also how
+    // long the device took to come back for it. Content frames drawn once
+    // are evidence of nothing.
+    if (!reducedMotion && (state.wasMoving || moving || ambient)) {
+      const was = state.budget.quality;
+      const next = recordStageFrame(state.budget, {
         nowMs: now,
-        frameMs: elapsedMs,
-        continuous,
+        frameMs: backToBack ? Math.max(workMs, elapsedMs) : workMs,
       });
-      if (state.degrade.quality !== was) qualityDropped(state.degrade.quality);
+      if (next !== was) qualityDropped(next);
+    }
+    if (stagePerf) {
+      const { render } = (gl as unknown as WebGPURenderer).info;
+      stagePerf.record({
+        nowMs: now,
+        workMs,
+        gapMs: elapsedMs,
+        drawCalls: render.drawCalls,
+        triangles: render.triangles,
+        quality: state.budget.quality,
+        dpr: (gl as unknown as WebGPURenderer).getPixelRatio(),
+        pace: (touch ? 'touch' : moving ? 'glide' : ambient ? 'idle' : 'content') satisfies Pace,
+      });
     }
     state.wasMoving = moving;
+    state.wasTouch = false;
     if (moving) state.activeMs = now;
 
     stopTimer();
     if (paused) return;
     if (moving) {
-      if (effects.frameIntervalMs > 0)
-        state.timer = setTimeout(invalidate, Math.max(0, effects.frameIntervalMs - elapsedMs));
-      else invalidate();
+      const interval = touch ? effects.frameIntervalMs : effects.glideIntervalMs;
+      if (interval > 0)
+        state.timer = setTimeout(invalidate, Math.max(0, interval - (performance.now() - now)));
+      else {
+        state.wasTouch = true;
+        invalidate();
+      }
     } else {
       const idle = stageIdleInterval(effects, now - state.activeMs);
       if (idle !== null) state.timer = setTimeout(invalidate, idle);
     }
-  });
+  }, 1);
 
   // oxlint-disable-next-line react/no-unknown-property -- Fiber's intrinsic `primitive` takes `object`.
   return <primitive object={world.root} />;
