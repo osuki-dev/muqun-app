@@ -460,6 +460,17 @@ export const zoomOut = (duration: DurationToken | PresetToken | number = 'micro'
   ZoomOut.duration(resolveDuration(duration)).easing(EASE_OUT).reduceMotion(ReduceMotion.System);
 
 /**
+ * A plain cross-fade that plays under reduce motion too: what a reveal that
+ * normally travels becomes there, so a change is still eased rather than
+ * swapped in a frame. No travel, nothing to reduce.
+ */
+export const calmFadeIn = (duration: DurationToken | PresetToken | number = 'short') =>
+  FadeIn.duration(resolveDuration(duration)).easing(EASE_OUT).reduceMotion(ReduceMotion.Never);
+
+export const calmFadeOut = (duration: DurationToken | PresetToken | number = 'short') =>
+  FadeOut.duration(resolveDuration(duration)).easing(EASE_OUT).reduceMotion(ReduceMotion.Never);
+
+/**
  * A reveal that rises into place, with a delay so a list of them can be one
  * sequence rather than a simultaneous flash.
  *
@@ -516,4 +527,68 @@ export const pulseOnce = () =>
 export const listLayout = (duration: DurationToken | PresetToken | number = 'short') =>
   LinearTransition.duration(resolveDuration(duration))
     .easing(EASE_OUT)
+    .reduceMotion(ReduceMotion.System);
+
+/**
+ * The Stage session strip's billboard flip when the chosen computer changes:
+ * every card is a slat that turns about its horizontal axis, the old computer's
+ * session going away and the new one's coming round from the other face.
+ *
+ * `cardMs` is one slat's whole turn -- a little over a page transition, since
+ * it is two halves of one -- and `stepMs` the beat between neighbours, left to
+ * right. `budgetMs` bounds the row: the beat compresses so the last slat on
+ * screen has landed inside it. Under reduce motion the slats do not turn; the
+ * faces cross-fade over `fadeMs`, all at once.
+ *
+ * See `src/components/home-stage/stage-session-strip.tsx`.
+ */
+export const STAGE_FLIP_MOTION = {
+  cardMs: DURATION.long + 40,
+  stepMs: 48,
+  budgetMs: 720,
+  fadeMs: DURATION.short,
+  /** The camera distance of the turn, in points: near enough to read as depth. */
+  perspective: 700,
+} as const;
+
+/** A strip card arriving with a new computer's longer list: a small swell from nothing. */
+export const cardIn = (delay = 0) =>
+  new Keyframe({
+    0: { opacity: 0, transform: [{ scale: 0.92 }] },
+    100: { opacity: 1, transform: [{ scale: 1 }], easing: EASE_OUT },
+  })
+    .duration(DURATION.medium)
+    .delay(delay)
+    .reduceMotion(ReduceMotion.System);
+
+/** A strip card the new computer's shorter list has no session for. */
+export const cardOut = () =>
+  new Keyframe({
+    0: { opacity: 1, transform: [{ scale: 1 }] },
+    100: { opacity: 0, transform: [{ scale: 0.92 }], easing: EASE_OUT },
+  })
+    .duration(DURATION.short)
+    .reduceMotion(ReduceMotion.System);
+
+/**
+ * A small mark arriving on a control that just took on a role -- the × on the
+ * Stage card the dock now replies to: a fade from a little under its size,
+ * over the beat the reply bar below cross-fades on. Skipped under reduce
+ * motion; callers use `calmFadeIn` there.
+ */
+export const markIn = () =>
+  new Keyframe({
+    0: { opacity: 0, transform: [{ scale: 0.6 }] },
+    100: { opacity: 1, transform: [{ scale: 1 }], easing: EASE_OUT },
+  })
+    .duration(DURATION.short)
+    .reduceMotion(ReduceMotion.System);
+
+/** The mark leaving with its role, as quickly as the bar's old content fades. */
+export const markOut = () =>
+  new Keyframe({
+    0: { opacity: 1, transform: [{ scale: 1 }] },
+    100: { opacity: 0, transform: [{ scale: 0.6 }], easing: EASE_OUT },
+  })
+    .duration(DURATION.micro)
     .reduceMotion(ReduceMotion.System);

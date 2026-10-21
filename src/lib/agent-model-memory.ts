@@ -20,7 +20,7 @@ import type { RememberedAgentChoice, RememberedAgentDefaults } from './agent-ses
  *
  * MMKV is a native module, and an over-the-air update can reach a binary built
  * before it was added, so creating the store there throws. The in-memory
- * fallback is `theme-tab-preference.ts`'s, for the same reason: the memory
+ * fallback is `shortcut-usage.ts`'s, for the same reason: the memory
  * stops surviving a launch until the native binary catches up, which is a
  * feature degrading rather than a crash.
  */

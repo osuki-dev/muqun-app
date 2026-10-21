@@ -1,6 +1,6 @@
 # Dependency patch notes
 
-## @osuki-dev/ui 2.0.0-beta.4
+## @osuki-dev/ui 2.0.0-beta.5
 
 The source-only icon patch removes the optional Lucide runtime loader and its
 fallback lookup. Muqun supplies semantic Nano glyphs through `IconProvider`;

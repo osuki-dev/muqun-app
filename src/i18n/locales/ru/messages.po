@@ -46,7 +46,7 @@ msgstr "[номер pr]"
 #. placeholder {0}: files.length
 #: src/components/agent-composer.tsx
 msgid "{0, plural, one {# attachment} other {# attachments}}"
-msgstr ""
+msgstr "{0, plural, one {# вложение} few {# вложения} many {# вложений} other {# вложения}}"
 
 #. placeholder {0}: capped.hidden
 #: src/components/bounded-markdown.tsx
@@ -148,16 +148,15 @@ msgstr "Сообщений в контексте: {0}"
 msgid "{0} more models"
 msgstr "Ещё моделей: {0}"
 
-#. placeholder {0}: filtered.length
-#. placeholder {1}: entries.length
-#: src/components/dev-icon-gallery.tsx
-msgid "{0} of {1} icons · development only"
-msgstr "{0} из {1} значков · только для разработки"
-
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
 msgid "{0} of {limitLabel} tokens the model can hold"
 msgstr "{0} из {limitLabel} токенов, которые вмещает модель"
+
+#. placeholder {0}: index + 1
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "{0} of {total}"
+msgstr "{0} из {total}"
 
 #. placeholder {0}: sessions.length
 #: src/components/agent-sessions-sheet.tsx
@@ -310,6 +309,10 @@ msgstr "У {computer} больше нет этой задачи"
 msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, one {# результат} few {# результата} many {# результатов} other {# результата}}"
 
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "{count, plural, one {# session} other {# sessions}}"
+msgstr "{count, plural, one {# сеанс} few {# сеанса} many {# сеансов} other {# сеанса}}"
+
 #: src/components/home-connections.tsx
 msgid "{count} in progress"
 msgstr "В работе: {count}"
@@ -379,6 +382,10 @@ msgstr "{name} не принимает работу от других компь
 msgid "{name} has the same name as {other}; rename one of them."
 msgstr "У {name} то же имя, что и у {other}; переименуйте один из них"
 
+#: src/components/home-composer-dock.tsx
+msgid "{name} is still working and cannot take a message now. Your draft stays here."
+msgstr "{name} ещё работает и сейчас не может принять сообщение. Черновик остаётся здесь"
+
 #: src/components/new-task-action.tsx
 msgid "{name} needs setup. Tap for setup instructions"
 msgstr "{name} требует настройки. Нажмите, чтобы открыть инструкции по настройке"
@@ -427,6 +434,10 @@ msgstr "{total, plural, one {# подзадача} few {# подзадачи} ma
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, one {# подзадача} few {# подзадачи} many {# подзадач} other {# подзадачи}} ({waiting, plural, one {# ждёт} few {# ждут} many {# ждут} other {# ждут}})"
 
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "{waiting, plural, one {# needs you} other {# need you}}"
+msgstr "{waiting, plural, one {# ждёт вас} few {# ждут вас} many {# ждут вас} other {# ждут вас}}"
+
 #: src/components/task-row.tsx
 msgid "→ {name}"
 msgstr "→ {name}"
@@ -438,10 +449,6 @@ msgstr "Ещё {overflow}"
 #: src/hooks/use-task-age.ts
 msgid "<1m"
 msgstr "<1 мин"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "0 speed pauses motion. Theme default restores the theme."
-msgstr "Скорость 0 останавливает движение. Настройка по умолчанию восстанавливает тему"
 
 #: src/components/settings-storage.tsx
 msgid "10 days"
@@ -543,6 +550,7 @@ msgid "Act on this terminal, or send its agent a prompt"
 msgstr "Действуйте в этом терминале или дайте задание его агенту"
 
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/task-row.tsx
 msgid "Actions"
 msgstr "Действия"
@@ -626,6 +634,10 @@ msgstr "Агент больше не запущен"
 msgid "Agent panes open in"
 msgstr "Панели агентов открываются в"
 
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Agent working"
+msgstr "Агент работает"
+
 #: src/components/app-drawer-content.tsx
 #: src/components/new-task-action.tsx
 #: src/components/settings-server-capabilities.tsx
@@ -652,7 +664,7 @@ msgstr "Наведите рамку на QR-код"
 
 #: src/components/home-recent-chips.tsx
 #: src/components/session-artifacts.tsx
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "All"
 msgstr "Все"
 
@@ -673,8 +685,14 @@ msgid "All projects"
 msgstr "Все проекты"
 
 #: src/components/agent-composer.tsx
+#: src/components/home-stage/home-stage-layout.tsx
+#: src/components/home-stage/stage-session-strip.tsx
 msgid "All sessions"
 msgstr "Все сессии"
+
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "All sessions, needs you"
+msgstr "Все сеансы, нужен ваш ответ"
 
 #: src/i18n/labels.ts
 msgid "Allow"
@@ -804,6 +822,7 @@ msgstr "Применить патч"
 #: src/app/custom-theme.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Apply theme"
 msgstr "Применить тему"
 
@@ -925,10 +944,6 @@ msgstr "Автоматически одобрять любое действие"
 msgid "Auto-detect"
 msgstr "Автоопределение"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Automatic"
-msgstr "Автоматически"
-
 #: src/components/settings-storage.tsx
 msgid "Automatic cache cleanup"
 msgstr "Автоматическая очистка кеша"
@@ -1049,19 +1064,14 @@ msgstr "Ветка или коммит (необязательно)"
 msgid "Branch to start from"
 msgstr "Ветка, от которой начать"
 
-#: src/components/dev-icon-gallery.tsx
-msgid "Brand marks and working indicator"
-msgstr "Логотипы и индикатор работы"
-
 #. placeholder {0}: server.label
 #: src/components/home-computer-deck.tsx
 msgid "Bring {0} to the front"
 msgstr "Вывести {0} вперёд"
 
-#: src/components/custom-theme-library.tsx
-#: src/components/theme-browse-sheet.tsx
-msgid "Browse themes"
-msgstr "Обзор тем"
+#: src/components/settings-theme-sheet.tsx
+msgid "Browse the gallery"
+msgstr "Открыть галерею"
 
 #: src/app/commands.tsx
 msgid "Browser"
@@ -1071,7 +1081,7 @@ msgstr "Браузер"
 msgid "Build"
 msgstr "Сборка"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Built-in"
 msgstr "Встроенные"
 
@@ -1107,6 +1117,7 @@ msgstr "Нужен доступ к камере"
 #: src/components/settings-font-sheet.tsx
 #: src/components/settings-servers.tsx
 #: src/components/settings-storage.tsx
+#: src/components/settings-theme-sheet.tsx
 #: src/components/skia-terminal.tsx
 #: src/components/ssh-host-form.tsx
 #: src/components/ssh-host-key-dialog.tsx
@@ -1217,7 +1228,7 @@ msgstr "Проверьте URL репозитория, ветку и файл т
 msgid "Check this computer's tasks. This request has not been sent again."
 msgstr "Проверьте задачи на этом компьютере. Этот запрос не отправлялся повторно"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Check your connection and try again."
 msgstr "Проверьте подключение и попробуйте ещё раз"
 
@@ -1348,7 +1359,7 @@ msgid "Clear the conversation"
 msgstr "Очистить переписку"
 
 #: src/components/agent-model-sheet.tsx
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Clear the search"
 msgstr "Очистить поиск"
 
@@ -1369,24 +1380,20 @@ msgid "Clears notifications only. Pending tasks still need your attention."
 msgstr "Удаляются только уведомления. Ожидающие задачи по-прежнему требуют вашего внимания"
 
 #: src/app/diagram-viewer.tsx
+#: src/components/home-reply-drawer.tsx
+#: src/components/home-sheet.tsx
+#: src/components/settings-theme-sheet.tsx
 #: src/components/sheet-scene.tsx
 #: src/i18n/labels.ts
 msgid "Close"
 msgstr "Закрыть"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Close effects"
-msgstr "Закрыть эффекты"
-
 #: src/components/asset-viewer.tsx
 msgid "Close file"
 msgstr "Закрыть файл"
 
-#: src/components/dev-icon-gallery.tsx
-msgid "Close icon preview"
-msgstr "Закрыть просмотр значков"
-
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/task-row.tsx
 msgid "Close menu"
 msgstr "Закрыть меню"
@@ -1535,11 +1542,13 @@ msgstr "Выполнено"
 #: src/components/app-drawer.tsx
 #: src/components/home-composer-options.tsx
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer"
 msgstr "Компьютер"
 
 #: src/components/computer-map/screen.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 msgid "Computer details"
 msgstr "Сведения о компьютере"
 
@@ -1716,6 +1725,7 @@ msgid "Continue"
 msgstr "Продолжить"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Continue in the linked terminal. Your draft stays here."
 msgstr "Продолжите в связанном терминале. Ваш черновик останется здесь"
 
@@ -1842,6 +1852,10 @@ msgstr "Ctrl Z, приостановить"
 #: src/components/home-editorial-layout.tsx
 msgid "Controls"
 msgstr "Управление"
+
+#: src/components/home-reply-drawer.tsx
+msgid "Conversation"
+msgstr "Разговор"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Conversational help and open-ended project questions."
@@ -2051,6 +2065,7 @@ msgstr "Не удалось загрузить задачи"
 
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-reply-drawer.tsx
 msgid "Could not load the session"
 msgstr "Не удалось загрузить сессию"
 
@@ -2153,7 +2168,7 @@ msgstr "Не удалось связаться с компьютером"
 msgid "Could not reach the computer. Make sure it is running, then refresh the QR and scan again."
 msgstr "Не удалось связаться с компьютером. Убедитесь, что он включён, затем обновите QR-код и отсканируйте снова"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Could not reach the theme catalogue"
 msgstr "Не удалось связаться с каталогом тем"
 
@@ -2177,6 +2192,7 @@ msgstr "Не удалось прочитать сохранённую истор
 msgid "Could not read the changes."
 msgstr "Не удалось прочитать изменения"
 
+#: src/components/home-reply-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-collaboration-output.ts
 msgid "Could not read the terminal."
@@ -2211,6 +2227,7 @@ msgid "Could not rename"
 msgstr "Не удалось переименовать"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-reply-drawer.tsx
 msgid "Could not reply"
 msgstr "Не удалось ответить"
 
@@ -2272,6 +2289,7 @@ msgstr "Не удалось отправить"
 msgid "Could not send command."
 msgstr "Не удалось отправить команду"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not send input."
 msgstr "Не удалось отправить ввод"
@@ -2367,8 +2385,9 @@ msgstr "Использовано кредитов"
 msgid "Cropped preview · Open full image"
 msgstr "Обрезанный предпросмотр · Открыть полное изображение"
 
-#: src/components/custom-theme-library.tsx
 #: src/components/file-mention-panel.tsx
+#: src/components/settings-theme-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Current"
 msgstr "Текущая"
 
@@ -2389,7 +2408,7 @@ msgstr "Текущий компьютер"
 msgid "Current path"
 msgstr "Текущий путь"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Current theme"
 msgstr "Текущая тема"
 
@@ -2397,14 +2416,14 @@ msgstr "Текущая тема"
 msgid "Custom"
 msgstr "Пользовательский"
 
+#: src/components/settings-theme-sheet.tsx
+msgid "Customise"
+msgstr "Настроить"
+
 #: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
 msgid "Dark"
 msgstr "Тёмная"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Decrease {label}"
-msgstr "Уменьшить {label}"
 
 #: src/components/agent-model-sheet.tsx
 msgid "default"
@@ -2476,7 +2495,7 @@ msgstr "Доставка не подтверждена"
 msgid "Delivery not confirmed. Tap to check status"
 msgstr "Доставка не подтверждена. Нажмите, чтобы проверить состояние"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Demo catalogue. Leave the demo to download themes."
 msgstr "Демонстрационный каталог. Выйдите из демо, чтобы скачать темы"
 
@@ -2496,10 +2515,6 @@ msgstr "Демо-пространство"
 #: src/components/tool-call-code-rows.tsx
 msgid "Denied by you"
 msgstr "Отклонено вами"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Density"
-msgstr "Плотность"
 
 #: src/i18n/labels.ts
 msgid "Deny"
@@ -2531,10 +2546,6 @@ msgstr "аутентификация устройства"
 #: src/i18n/labels.ts
 msgid "Diff summary"
 msgstr "Сводка diff"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Direction"
-msgstr "Направление"
 
 #: src/components/new-task-sheet.tsx
 msgid "Directory"
@@ -2648,7 +2659,7 @@ msgstr "Загрузка · {0} из {1}"
 msgid "Downloading theme"
 msgstr "Загрузка темы"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Downloading…"
 msgstr "Загрузка…"
 
@@ -2700,11 +2711,6 @@ msgstr "Редактор сменён"
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Editorial"
 msgstr "Журнальный"
-
-#. placeholder {0}: props.value
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Effects · {0}"
-msgstr "Эффекты · {0}"
 
 #: src/i18n/labels.ts
 msgid "Encryption was turned on for this computer. Pair it again to keep using it."
@@ -2818,10 +2824,12 @@ msgid "Export colours"
 msgstr "Экспортировать цвета"
 
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Export theme"
 msgstr "Экспортировать тему"
 
 #: src/components/agent-sleep-tool-body.tsx
+#: src/components/home-reply-drawer.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Failed"
@@ -3016,6 +3024,10 @@ msgstr "Полный экран"
 msgid "Function keys"
 msgstr "Функциональные клавиши"
 
+#: src/components/settings-theme-sheet.tsx
+msgid "Gallery"
+msgstr "Галерея"
+
 #: src/app/explore.tsx
 msgid "Gateway"
 msgstr "Gateway"
@@ -3177,7 +3189,7 @@ msgstr "Скрыть симулятор"
 
 #: src/components/agent-composer.tsx
 msgid "Hides this notice"
-msgstr ""
+msgstr "Скрывает это уведомление"
 
 #: src/app/settings-voice.tsx
 msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
@@ -3191,10 +3203,6 @@ msgstr "Главная"
 #: src/components/settings-servers.tsx
 msgid "Home agent"
 msgstr "Агент Главной"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Home effects · development only"
-msgstr "Эффекты главного экрана · для разработки"
 
 #: src/app/agent-workspace.tsx
 #: src/components/home-composer-dock.tsx
@@ -3238,15 +3246,8 @@ msgstr "Ключ хоста доверенный"
 msgid "How to use Muqun"
 msgstr "Как пользоваться Muqun"
 
-#: src/components/dev-icon-gallery.tsx
-msgid "Icon preview"
-msgstr "Просмотр значков"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Icons"
-msgstr "Значки"
-
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/home-reply-drawer.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "Простаивает"
@@ -3293,21 +3294,25 @@ msgstr "Изображения"
 msgid "Images download from"
 msgstr "Источники загрузки изображений"
 
-#: src/components/custom-theme-library.tsx
-msgid "Import"
-msgstr "Импорт"
-
 #: src/components/settings-font-sheet.tsx
 msgid "Import a file…"
 msgstr "Импортировать файл…"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Import file"
 msgstr "Импортировать файл"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Import link"
 msgstr "Импорт по ссылке"
+
+#: src/components/theme-card.tsx
+msgid "Import theme"
+msgstr "Импортировать тему"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Imported"
+msgstr "Импортирована"
 
 #: src/components/server-tasks-sheet.tsx
 msgid "In progress"
@@ -3320,10 +3325,6 @@ msgstr "Включённое использование"
 #: src/components/agent-account-limits-section.tsx
 msgid "Included usage is restricted. Paid or alternative usage may still be available."
 msgstr "Включённое использование ограничено. Платные или другие варианты могут оставаться доступными"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Increase {label}"
-msgstr "Увеличить {label}"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
@@ -3370,23 +3371,20 @@ msgid "Install command copied"
 msgstr "Команда установки скопирована"
 
 #: src/components/settings-font-sheet.tsx
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Installed"
 msgstr "Установлена"
 
 #: src/app/+not-found.tsx
 #: src/app/custom-theme.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Installing images"
 msgstr "Установка изображений"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Installing…"
 msgstr "Установка…"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Intensity"
-msgstr "Интенсивность"
 
 #: src/i18n/labels.ts
 msgid "Interacted"
@@ -3574,7 +3572,7 @@ msgstr "В сети только что"
 msgid "Later"
 msgstr "Позже"
 
-#: src/components/agent-workbench.tsx
+#: src/components/jump-to-latest-pill.tsx
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "Последнее"
@@ -3708,7 +3706,7 @@ msgstr "Загружаем терминал"
 msgid "Loading the transcript"
 msgstr "Загружаем транскрипт"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Loading themes…"
 msgstr "Загрузка тем…"
 
@@ -3721,6 +3719,10 @@ msgstr "Загрузка…"
 #: src/lib/demo-gateway.ts
 msgid "Logs"
 msgstr "Логи"
+
+#: src/components/home-reply-drawer.tsx
+msgid "Long press to open it in full"
+msgstr "Нажмите и удерживайте, чтобы открыть полностью"
 
 #: src/components/simfarm-preview.tsx
 #: src/components/simfarm-stage.tsx
@@ -3771,10 +3773,6 @@ msgstr "Отметить выполненной"
 msgid "Mark reviewed"
 msgstr "Отметить как проверенное"
 
-#: src/components/dev-icon-gallery.tsx
-msgid "Marks keep their original geometry and stroke."
-msgstr "Логотипы сохраняют исходную форму и толщину линий"
-
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "Талисман"
@@ -3797,6 +3795,10 @@ msgstr "Сообщение скопировано в буфер обмена"
 #: src/components/server-terminal-workspace.tsx
 msgid "Message not sent"
 msgstr "Сообщение не отправлено"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Mine"
+msgstr "Мои"
 
 #: src/components/home-composer-options.tsx
 msgid "Mode"
@@ -3858,6 +3860,7 @@ msgid "Monthly credit limit"
 msgstr "Месячный лимит кредитов"
 
 #: src/components/custom-theme-library.tsx
+#: src/components/theme-card.tsx
 msgid "More actions"
 msgstr "Другие действия"
 
@@ -3931,10 +3934,6 @@ msgstr "Muqun остаётся на этом языке, что бы ни был
 msgid "Muqun will use {methodName} when the app opens."
 msgstr "Muqun будет использовать {methodName} при открытии приложения"
 
-#: src/components/custom-theme-library.tsx
-msgid "My themes"
-msgstr "Мои темы"
-
 #: src/app/commands.tsx
 #: src/components/agent-worktree-sheet.tsx
 #: src/components/ssh-host-form.tsx
@@ -3958,6 +3957,9 @@ msgstr "Нужна настройка"
 msgid "Needs update"
 msgstr "Нужно обновление"
 
+#: src/components/home-reply-drawer.tsx
+#: src/components/home-stage/home-stage-layout.tsx
+#: src/components/home-stage/stage-agent-row.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "Needs you"
 msgstr "Нужны вы"
@@ -3986,6 +3988,14 @@ msgstr "Ни разу не подключался"
 #: src/components/settings-servers.tsx
 msgid "Never seen"
 msgstr "Ни разу не был в сети"
+
+#: src/components/home-reply-drawer.tsx
+msgid "New conversation"
+msgstr "Новый разговор"
+
+#: src/components/home-composer-dock.tsx
+msgid "New conversation with {agentLabel}…"
+msgstr "Новый разговор с {agentLabel}…"
 
 #: src/app/commands.tsx
 msgid "New group"
@@ -4147,10 +4157,6 @@ msgstr "Больше не связан с {computer}"
 msgid "No matching commands. Try another word."
 msgstr "Команды не найдены. Попробуйте другое слово"
 
-#: src/components/dev-icon-gallery.tsx
-msgid "No matching icons"
-msgstr "Нет подходящих значков"
-
 #: src/components/home-recent-sessions.tsx
 msgid "No matching sessions"
 msgstr "Нет подходящих сессий"
@@ -4179,6 +4185,7 @@ msgstr "Нет вывода"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/home-reply-drawer.tsx
 msgid "No output yet."
 msgstr "Вывода пока нет"
 
@@ -4194,7 +4201,7 @@ msgstr "Для этого хоста не сохранён ни пароль, н
 msgid "No peer report available."
 msgstr "Отчёт о связях компьютеров недоступен"
 
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "No personal themes yet. Import one, or browse the published themes."
 msgstr "Своих тем пока нет. Импортируйте тему или посмотрите опубликованные"
 
@@ -4273,12 +4280,12 @@ msgstr "На этом компьютере нет доступного сеан�
 msgid "No textual change"
 msgstr "Текст не изменился"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "No themes are published yet"
 msgstr "Пока нет опубликованных тем"
 
-#. placeholder {0}: query.trim()
-#: src/components/theme-browse-sheet.tsx
+#. placeholder {0}: gallery.query.trim()
+#: src/components/theme-gallery.tsx
 msgid "No themes match “{0}”."
 msgstr "Нет тем, подходящих под «{0}»"
 
@@ -4362,6 +4369,10 @@ msgstr "Не задано"
 msgid "Not signed in on the host"
 msgstr "Вход на хосте не выполнен"
 
+#: src/components/home-composer-dock.tsx
+msgid "Not sure it was delivered"
+msgstr "Неизвестно, доставлено ли"
+
 #: src/components/home-computer-cards.tsx
 msgid "Not updating from here. Open this computer to see its tasks."
 msgstr "Отсюда не обновляется. Откройте этот компьютер, чтобы увидеть его задачи"
@@ -4421,6 +4432,7 @@ msgid "Off"
 msgstr "Выключено"
 
 #: src/components/home-composer-options.tsx
+#: src/components/home-reply-drawer.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Offline"
@@ -4429,6 +4441,12 @@ msgstr "Не в сети"
 #: src/i18n/labels.ts
 msgid "OFFLINE"
 msgstr "НЕ В СЕТИ"
+
+#. placeholder {0}: age(seen, nowMs)
+#: src/components/home-stage/home-stage-layout.tsx
+#: src/components/home-stage/stage-agent-row.tsx
+msgid "Offline · last seen {0}"
+msgstr "Не в сети · был {0}"
 
 #: src/i18n/labels.ts
 msgid "Offline, not answering"
@@ -4450,6 +4468,7 @@ msgstr "На планшете главный экран — разворот, р
 msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
 msgstr "Один лист изменений для терминалов и сессий агентов: изменённые файлы деревом с подсчётом строк, ветка под заголовком и «Отменить» в меню файла"
 
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Online"
@@ -4468,6 +4487,8 @@ msgid "Only this Home row is hidden. The task and its history remain available. 
 msgstr "Будет скрыта только эта строка на главном экране. Задача и её история останутся доступны. Выполняемая работа не остановится"
 
 #: src/components/home-connections.tsx
+#: src/components/home-reply-drawer.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/task-row.tsx
@@ -4529,10 +4550,6 @@ msgstr "Открыть список файлов"
 #: src/components/git-diff-button.tsx
 msgid "Open Git"
 msgstr "Открыть Git"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Open icon preview"
-msgstr "Открыть просмотр значков"
 
 #: src/components/agent-tool-card.tsx
 msgid "Open image"
@@ -4617,6 +4634,10 @@ msgstr "Открыть руководство по установке {agentName
 msgid "Open the file explorer"
 msgstr "Открыть обозреватель файлов"
 
+#: src/components/home-reply-drawer.tsx
+msgid "Open the full conversation"
+msgstr "Открыть весь разговор"
+
 #: src/components/agent-tool-card.tsx
 msgid "Open the subagent's session"
 msgstr "Открыть сессию субагента"
@@ -4651,7 +4672,7 @@ msgid "Opening"
 msgstr "Открытие"
 
 #: src/app/+not-found.tsx
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Opening that file"
 msgstr "Открываем этот файл"
 
@@ -4684,9 +4705,17 @@ msgstr "Открывает трекер задач Muqun на GitHub"
 msgid "Opens the simulator's menu: the device, its keys, the keyboard and the way out. Drag to move."
 msgstr "Открывает меню симулятора: устройство, его кнопки, клавиатура и выход. Перетащите, чтобы переместить"
 
+#: src/components/home-stage/stage-agent-row.tsx
+msgid "Opens this agent."
+msgstr "Открывает этого агента"
+
 #: src/components/server-agent-rows.tsx
 msgid "Opens this agent's terminal"
 msgstr "Открывает терминал этого агента"
+
+#: src/components/home-stage/home-stage-layout.tsx
+msgid "Opens this computer."
+msgstr "Открывает этот компьютер"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -4795,10 +4824,6 @@ msgstr "ПРИВЯЗКА ИСТЕКЛА"
 msgid "Pairing failed."
 msgstr "Привязка не удалась"
 
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Palette (up to 4)"
-msgstr "Палитра (до 4)"
-
 #: src/components/settings-servers.tsx
 msgid "Panes on computer cards"
 msgstr "Панели на карточках компьютеров"
@@ -4906,7 +4931,7 @@ msgstr "Повторите попытку или удалите сбойные �
 msgid "Port"
 msgstr "Порт"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
 msgstr "Подготовка изображений"
@@ -5112,7 +5137,7 @@ msgid "Reading the rules on the host…"
 msgstr "Читаем правила на хосте…"
 
 #: src/app/+not-found.tsx
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Reading the theme"
 msgstr "Чтение темы"
 
@@ -5270,14 +5295,13 @@ msgstr "Остаток неизвестен"
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-storage.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Remove"
 msgstr "Удалить"
 
 #. placeholder {0}: attachment.name
-#. placeholder {0}: installed.manifest.name
 #. placeholder {0}: record.label
 #: src/components/attachment-strip.tsx
-#: src/components/custom-theme-library.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Remove {0}"
 msgstr "Удалить {0}"
@@ -5355,6 +5379,14 @@ msgstr "Заменить ключ"
 msgid "Replay audio"
 msgstr "Воспроизвести аудио снова"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Reply from Home"
+msgstr "Ответить с главной"
+
+#: src/components/home-composer-dock.tsx
+msgid "Reply to {threadAgentName}…"
+msgstr "Ответить {threadAgentName}…"
+
 #: src/app/settings-about.tsx
 msgid "Report a bug or request a feature"
 msgstr "Сообщить об ошибке или идее"
@@ -5422,6 +5454,10 @@ msgstr "Перезапустите Muqun, чтобы завершить обно
 msgid "Restarting Muqun…"
 msgstr "Перезапуск Muqun…"
 
+#: src/components/settings-theme-sheet.tsx
+msgid "Restore default"
+msgstr "Вернуть по умолчанию"
+
 #: src/app/commands.tsx
 msgid "Restore hidden default commands"
 msgstr "Восстановить скрытые команды по умолчанию"
@@ -5438,6 +5474,7 @@ msgstr "Возобновить"
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/gateway-storage-error.tsx
+#: src/components/home-composer-dock.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
@@ -5714,7 +5751,7 @@ msgstr "Отсканируйте QR-код Gateway"
 msgid "Scanning needs a camera, which this browser does not offer."
 msgstr "Для сканирования нужна камера, а этот браузер её не даёт"
 
-#: src/components/agent-workbench.tsx
+#: src/components/jump-to-latest-pill.tsx
 msgid "Scroll to latest message"
 msgstr "Перейти к последнему сообщению"
 
@@ -5726,17 +5763,13 @@ msgstr "Поиск"
 msgid "Search actions and commands"
 msgstr "Поиск действий и команд"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Search by name or tag"
 msgstr "Поиск по названию или тегу"
 
 #: src/components/session-artifacts.tsx
 msgid "Search files"
 msgstr "Поиск файлов"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Search icons"
-msgstr "Поиск значков"
 
 #: src/components/agent-model-sheet.tsx
 msgid "Search models"
@@ -5888,6 +5921,7 @@ msgstr "Сеанс недоступен"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/home-launch-actions.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/session-map.tsx
 msgid "Sessions"
 msgstr "Сессии"
@@ -5978,6 +6012,10 @@ msgstr "Shift Tab"
 msgid "Shift Tab, cycle mode"
 msgstr "Shift Tab, переключить режим"
 
+#: src/components/home-composer-dock.tsx
+msgid "Show"
+msgstr "Показать"
+
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
 #: src/components/change-tree-rows.tsx
@@ -5997,6 +6035,15 @@ msgstr "Показывать оформление на главном экран
 #: src/components/pairing-camera.tsx
 msgid "Show camera details"
 msgstr "Показать сведения о камере"
+
+#: src/components/home-composer-dock.tsx
+#: src/components/home-reply-drawer.tsx
+msgid "Show conversation"
+msgstr "Показать разговор"
+
+#: src/components/home-reply-drawer.tsx
+msgid "Show conversation, needs you"
+msgstr "Показать разговор, нужен ваш ответ"
 
 #: src/components/agent-compaction-pill.tsx
 #: src/components/in-app-notification-host.tsx
@@ -6121,8 +6168,6 @@ msgid "Simulator controls"
 msgstr "Кнопки симулятора"
 
 #: src/components/asset-viewer.tsx
-#: src/components/dev-home-ambient-controls.tsx
-#: src/components/dev-icon-gallery.tsx
 msgid "Size"
 msgstr "Размер"
 
@@ -6159,6 +6204,7 @@ msgstr "Некоторым цветам темы требуется больше
 #: src/app/diagram-viewer.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 #: src/components/theme-link-import.tsx
 msgid "Something went wrong"
 msgstr "Что-то пошло не так"
@@ -6170,10 +6216,6 @@ msgstr "Исходный код"
 #: src/components/virtual-keyboard.tsx
 msgid "Space"
 msgstr "Пробел"
-
-#: src/components/dev-home-ambient-controls.tsx
-msgid "Speed"
-msgstr "Скорость"
 
 #: src/components/agent-account-limits-section.tsx
 msgid "Spend control"
@@ -6203,6 +6245,11 @@ msgstr "SSH-хосты"
 msgid "SSH tunnel through {host} is down"
 msgstr "SSH-туннель через {host} разорван"
 
+#: src/components/settings-appearance.tsx
+#: src/components/settings-home-layout-sheet.tsx
+msgid "Stage"
+msgstr "Сцена"
+
 #: src/components/diff-rows.tsx
 msgid "Staged"
 msgstr "В индексе"
@@ -6231,6 +6278,10 @@ msgstr "Запустить новый {0}"
 #: src/lib/demo-gateway.ts
 msgid "Start a new session with empty context"
 msgstr "Начать новый сеанс с пустым контекстом"
+
+#: src/components/home-stage/stage-view.tsx
+msgid "Start a new task"
+msgstr "Начать новую задачу"
 
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
@@ -6307,6 +6358,7 @@ msgstr "Запускаем {name}"
 msgid "Starting the camera"
 msgstr "Запускаем камеру"
 
+#: src/components/home-reply-drawer.tsx
 #: src/components/new-task-sheet.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Starting…"
@@ -6369,6 +6421,14 @@ msgstr "Остановить и расшифровать"
 msgid "Stop assigning a task"
 msgstr "Отменить назначение задачи"
 
+#: src/components/home-reply-drawer.tsx
+msgid "Stop following this conversation"
+msgstr "Не следить за этим разговором"
+
+#: src/components/home-stage/stage-session-strip.tsx
+msgid "Stop replying to {title}"
+msgstr "Больше не отвечать в «{title}»"
+
 #: src/app/commands.tsx
 msgid "Stop this agent"
 msgstr "Остановить этого агента"
@@ -6391,10 +6451,6 @@ msgstr "Хранилище"
 #: src/app/settings-voice.tsx
 msgid "Streams speech while you talk. Requires an OpenAI Realtime-compatible transcription endpoint."
 msgstr "Передаёт аудио, пока вы говорите. Требуется эндпоинт транскрипции, совместимый с OpenAI Realtime"
-
-#: src/components/dev-icon-gallery.tsx
-msgid "Stroke width"
-msgstr "Толщина линии"
 
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -6501,6 +6557,10 @@ msgstr "Tab"
 msgid "Take photo"
 msgstr "Сделать фото"
 
+#: src/components/home-stage/stage-view.tsx
+msgid "Tap · start a new task"
+msgstr "Нажмите · новая задача"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Tap again to clear"
 msgstr "Нажмите ещё раз, чтобы очистить"
@@ -6510,7 +6570,7 @@ msgid "Tap again to delete"
 msgstr "Нажмите ещё раз, чтобы удалить"
 
 #: src/components/agent-worktree-sheet.tsx
-#: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Tap again to remove"
 msgstr "Коснитесь ещё раз, чтобы удалить"
@@ -6522,10 +6582,6 @@ msgstr "Нажмите ещё раз, чтобы всё равно удалит�
 #: src/components/session-map.tsx
 msgid "Tap to connect"
 msgstr "Нажмите для подключения"
-
-#: src/components/custom-theme-library.tsx
-msgid "Tap to preview and adjust"
-msgstr "Нажмите, чтобы посмотреть и настроить"
 
 #: src/components/agent-workbench.tsx
 msgid "Tap to refresh this session."
@@ -6560,6 +6616,7 @@ msgstr "Параметры задачи"
 #: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-todo-block.tsx
 #: src/components/home-computer-cards.tsx
+#: src/components/home-stage/home-stage-layout.tsx
 #: src/components/server-tasks-sheet.tsx
 #: src/components/task-result-sheet.tsx
 msgid "Tasks"
@@ -6668,6 +6725,10 @@ msgstr "Этого ассистента больше нет в этом терм
 #: src/app/explore.tsx
 msgid "That code was refused. Hold still for a new one."
 msgstr "Этот код отклонён. Не двигайтесь, пока не появится новый"
+
+#: src/components/home-composer-dock.tsx
+msgid "That conversation has ended. Send again to start a new one."
+msgstr "Этот разговор завершён. Отправьте снова, чтобы начать новый"
 
 #: src/hooks/use-home-commands.ts
 msgid "That destination is no longer available."
@@ -6863,6 +6924,10 @@ msgstr "Сервис распознавания вернул неверную р
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "SSH-туннель переносит только порт Gateway и никакой другой, поэтому симулятор и браузер отсюда недоступны. Подключитесь через локальную сеть или Tailscale"
 
+#: src/components/home-composer-dock.tsx
+msgid "The task is still starting. Send again in a moment."
+msgstr "Задача ещё запускается. Отправьте снова через минуту"
+
 #: src/components/guide-command.tsx
 msgid "The terminal opened, but the command could not be typed."
 msgstr "Терминал открылся, но команду не удалось ввести"
@@ -6880,6 +6945,7 @@ msgid "The terminal, the opening and Home artwork draw with a new GPU renderer, 
 msgstr "Терминал, заставка и иллюстрации главного экрана рисуются новым GPU-рендерером, а у смены темы и шрифта появились свои переходы"
 
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "The theme will be removed from this device"
 msgstr "Тема будет удалена с этого устройства"
 
@@ -6895,12 +6961,10 @@ msgstr "Ход завершился ошибкой"
 
 #: src/app/custom-theme.tsx
 #: src/components/settings-appearance.tsx
-#: src/components/settings-theme-sheet.tsx
 #: src/lib/demo-gateway.ts
 msgid "Theme"
 msgstr "Тема"
 
-#: src/components/dev-home-ambient-controls.tsx
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
 msgstr "Как в теме"
@@ -6921,6 +6985,10 @@ msgstr "URL темы"
 #: src/components/settings-appearance.tsx
 msgid "Theme, {0}"
 msgstr "Тема, {0}"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Themes"
+msgstr "Темы"
 
 #: src/components/agent-workbench.tsx
 msgid "There is no rollback waiting to be applied."
@@ -7146,6 +7214,10 @@ msgstr "Этой сессии больше не существует"
 msgid "This snapshot can no longer be extended. Refresh to read the latest saved output; the current page is kept until then."
 msgstr "В этот снимок больше нельзя подгрузить данные. Нажмите «Обновить», чтобы прочитать последний сохранённый вывод. До этого текущая страница будет сохранена"
 
+#: src/components/home-composer-dock.tsx
+msgid "This task runs on another computer. Open it to reply."
+msgstr "Эта задача выполняется на другом компьютере. Откройте её, чтобы ответить"
+
 #: src/components/virtual-keyboard.tsx
 msgid "This terminal can't send {chord}"
 msgstr "Этот терминал не может отправить {chord}"
@@ -7273,7 +7345,7 @@ msgstr "Доверять"
 #: src/components/changes-sheet.tsx
 #: src/components/inline-file-link.tsx
 #: src/components/pdf-asset-preview.tsx
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/video-asset-preview.tsx
 #: src/components/voice-input-button.tsx
 #: src/hooks/use-file-actions.tsx
@@ -7285,7 +7357,7 @@ msgstr "Попробовать ещё раз"
 msgid "Try again once the computer responds."
 msgstr "Повторите попытку, когда компьютер ответит"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Try searching for another name or tag."
 msgstr "Попробуйте найти другое название или тег"
 
@@ -7349,7 +7421,6 @@ msgstr "Незафиксированные изменения"
 
 #: src/components/agent-revert-plate.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/custom-theme-library.tsx
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "Отменить"
@@ -7402,7 +7473,7 @@ msgstr "Разблокировать через {authLabel}"
 msgid "Unlock with {methodName}"
 msgstr "Разблокировать через {methodName}"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 msgid "Unpacking…"
 msgstr "Распаковка…"
 
@@ -7461,7 +7532,7 @@ msgstr "Не отслеживается"
 msgid "Up arrow"
 msgstr "Стрелка вверх"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/update-status-banner.tsx
 msgid "Update"
 msgstr "Обновить"
@@ -7704,6 +7775,7 @@ msgid "While you were away"
 msgstr "Пока вас не было"
 
 #: src/components/collaboration-notice.tsx
+#: src/components/home-reply-drawer.tsx
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "Работает"
@@ -7809,6 +7881,10 @@ msgstr "Ваши привязанные компьютеры"
 #: src/lib/network-error.ts
 msgid "Your phone's clock is off by {minutes} minutes. Fix the date and time, then try again."
 msgstr "Часы этого телефона отстают или спешат на {minutes} мин. Исправьте дату и время и повторите попытку"
+
+#: src/components/settings-home-layout-sheet.tsx
+msgid "Your theme's art as a 3D world that moves with your phone, with your agents' status below it."
+msgstr "Арт вашей темы как 3D-мир, который движется вместе с телефоном, а под ним — статус ваших агентов"
 
 #: src/components/image-preview-modal.tsx
 msgid "Zoom in"

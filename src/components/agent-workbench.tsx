@@ -36,7 +36,6 @@ import {
   useMemo,
   useRef,
   useState,
-  useSyncExternalStore,
 } from 'react';
 import {
   View,
@@ -55,7 +54,6 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
   AgentIcon,
-  DisclosureDownIcon,
   RepositoryIcon,
   AddItemIcon,
   RefreshIcon,
@@ -63,7 +61,7 @@ import {
   CloseIcon,
 } from '@/icons';
 import { type LegendListRef } from '@legendapp/list/react-native';
-import { GlassChrome } from '@/components/glass-chrome';
+import { JumpToLatestPill } from '@/components/jump-to-latest-pill';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
@@ -269,7 +267,7 @@ import { AssetViewer } from '@/components/asset-viewer';
 import { assetFromToolFile, isPdfFile } from '@/lib/session-assets';
 import { isThemeFilePath } from '@/lib/audio-markdown';
 import { type AgentToolActions } from './agent-message-block';
-import { createTranscriptFollow, type TranscriptFollow } from '@/lib/transcript-follow';
+import { createTranscriptFollow } from '@/lib/transcript-follow';
 import { TRANSCRIPT_ESTIMATED_ITEM_SIZE } from '@/lib/transcript-sizing';
 
 import { AgentPermissionCard } from './agent-permission-card';
@@ -6006,52 +6004,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   );
 });
 
-/**
- * The way back to the newest row, and the only view that reads the scroll.
- *
- * Its own component so that a drag costs one render of a pill rather than one
- * render of the workbench. `useSyncExternalStore` is the right shape here
- * precisely because the store is written from an `onScroll` callback that is
- * not React's to schedule -- it subscribes, it does not poll, and it tears
- * nothing when the value changes mid-render.
- */
-const JumpToLatestPill = memo(function JumpToLatestPill({
-  follow,
-  enabled,
-  bottom,
-  onPress,
-}: {
-  follow: TranscriptFollow;
-  enabled: boolean;
-  bottom: number;
-  onPress: () => void;
-}) {
-  const theme = useThemeTokens();
-  const { t } = useLingui();
-  const { visible } = useSyncExternalStore(follow.subscribe, follow.getSnapshot);
-  if (!enabled || !visible) return null;
-  return (
-    <Animated.View
-      entering={fadeIn('micro')}
-      exiting={fadeOut('micro')}
-      style={[styles.jumpToLatestWrap, { bottom }]}>
-      <GlassChrome surface="navigation" shape="navigationPill" style={styles.jumpToLatestPill}>
-        <PressableScale
-          testID="agent-jump-to-latest-btn"
-          accessibilityRole="button"
-          accessibilityLabel={t`Scroll to latest message`}
-          onPress={onPress}
-          style={styles.jumpToLatestInner}>
-          <DisclosureDownIcon size={15} color={theme.colors.text} />
-          <Text variant="caption" weight="semibold" color={theme.colors.text}>
-            <Trans>Latest</Trans>
-          </Text>
-        </PressableScale>
-      </GlassChrome>
-    </Animated.View>
-  );
-});
-
 /** A status event, applied to whichever branch of the tree carries that id. */
 function applyChildStatus(
   previous: ChildrenByParent,
@@ -6296,25 +6248,6 @@ const styles = StyleSheet.create({
   screenNoticeAction: {
     paddingVertical: 2,
     paddingLeft: 4,
-  },
-  jumpToLatestWrap: {
-    position: 'absolute',
-    right: 14,
-    zIndex: 5,
-  },
-  jumpToLatestPill: {
-    height: 34,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  jumpToLatestInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    height: '100%',
-    paddingHorizontal: 12,
   },
   yoloBannerWrap: {
     position: 'absolute',

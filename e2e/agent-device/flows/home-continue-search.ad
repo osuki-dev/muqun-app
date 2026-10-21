@@ -26,18 +26,24 @@ wait stable 400 5000
 
 # section hidden-match
 fill id="home-continue-search" "  HIDDEN   LEAF  "
-keyboard enter
-wait stable 300 5000
 
 # section no-match
 fill id="home-continue-search" "no-such-demo-session"
+
+# section submit
 keyboard enter
+wait stable 300 5000
+
+# section settle-typed
+# The search filters as it is typed, and a Pad's results sit above its
+# keyboard. Any keyboard command there (Return or its hide key) can outlast
+# XCTest's main-thread watchdog over the animated Home, so leave it up.
 wait stable 300 5000
 
 # section session-menu
 # Search leaves exactly one demo row. The unsaved Demo computer has no recorded
 # delete capability, so its menu must offer dismissal without a destructive action.
-longpress id="home-recent-open" 700
+longpress "${TARGET}" 700
 wait stable 300 5000
 
 # section close-menu

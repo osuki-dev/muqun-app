@@ -8,6 +8,7 @@ import { GatewayImageThumbnail } from '@/components/gateway-image-thumbnail';
 import { configuredGatewayServerId, resolveAgentFileAsset } from '@/lib/gateway-client';
 import { savePreviewImage, saveSessionAsset } from '@/lib/save-file';
 import { useFileActions } from '@/hooks/use-file-actions';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import type { SessionAsset } from '@/lib/session-assets';
 import { AudioPlaybackError } from '@/lib/audio-playback-session';
 import type { MessageImageAsset } from '@/lib/message-images';
@@ -94,6 +95,7 @@ function MappedImageFileLink({
 }
 
 function RawFileLink({ file, asid }: { file: { uri: string; name: string }; asid: string }) {
+  const surfaceBackground = useSurfaceBackground();
   const { t } = useLingui();
   const theme = useThemeTokens();
   const { showToast } = useToast();
@@ -154,7 +156,7 @@ function RawFileLink({ file, asid }: { file: { uri: string; name: string }; asid
           gap: 6,
           paddingHorizontal: 8,
           paddingVertical: 6,
-          backgroundColor: theme.colors.surfaceRaised,
+          backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
           borderRadius: 12,
         }}>
         {/* Finding the file on the computer can take seconds; the link says it

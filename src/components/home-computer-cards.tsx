@@ -500,12 +500,14 @@ function ComputerCardView({
       style={[
         styles.card,
         styles.fill,
-        {
-          backgroundColor: background(theme.colors.surface),
-          borderRadius: profile.chrome.surface,
-          borderTopLeftRadius: deckLayout ? 0 : profile.chrome.surface,
-          minHeight: deckLayout?.minHeight,
-        },
+        // In the sheaf the deck owns the one fill and its corners, around the
+        // tab row and this card alike; the card itself is clear.
+        deckLayout
+          ? { minHeight: deckLayout.minHeight }
+          : {
+              backgroundColor: background(theme.colors.surface),
+              borderRadius: profile.chrome.surface,
+            },
       ]}>
       <View
         onLayout={

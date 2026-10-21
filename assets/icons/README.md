@@ -5,6 +5,9 @@ The Mecha design uses a coral robot companion with cyan accents on a dark violet
 Both opaque, full-bleed `mark.png` masters were created with the built-in imagegen tool.
 Their existing Mint and Sakura native identifiers are retained so installed selections
 remain valid; the picker displays Neon and Mecha respectively.
+Neon is also the compiled default icon on iOS and Android (the `default` catalog
+entry). Classic stays selectable through its `Classic` alternate, and the picker hides
+the `Mint` alias because it shows the same artwork as the default.
 
 Regenerate the other styles with:
 

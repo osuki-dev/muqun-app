@@ -281,6 +281,7 @@ export default function AppDrawer({
             {onDetailAction ? (
               <NavHeaderCircle>
                 <PressableScale
+                  testID="workspace-show-running"
                   accessibilityLabel={t`Show what is running`}
                   onPress={onDetailAction}
                   style={navHeaderButtonStyle}>

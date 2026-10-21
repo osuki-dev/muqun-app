@@ -10,6 +10,7 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import type { HomeLaunchController } from '@/components/home-launch-actions';
 import type { DockAutoHide } from '@/hooks/use-dock-auto-hide';
 import { HomeComposerOptions } from '@/components/home-composer-options';
+import { ComposerMenuButton } from '@/components/composer-attachment-button';
 import {
   HomeComposerTransition,
   type HomeComposerPulse,
@@ -21,7 +22,6 @@ import {
   HomeComposerDecoration,
   useHomeComposerDecorationOverhang,
 } from '@/components/home-composer-background';
-import { composerStyles } from '@/components/terminal-composer';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useAgentFeatures, useAgentsDiscoveryRefresh } from '@/hooks/use-agent-features';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
@@ -30,7 +30,7 @@ import { META_SEPARATOR } from '@/lib/home-continue-row';
 import { boundSessionState, goalTitle, type PendingDispatch } from '@/lib/home-computer-cards';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import type { AgentClientCommandId } from '@/lib/agent-commands';
-import { classifyAgentRequestError } from '@/lib/agent-request-error';
+import { agentRequestErrorDetail, classifyAgentRequestError } from '@/lib/agent-request-error';
 import { unsupportedModelRefs } from '@/lib/agent-session-defaults';
 import {
   createAgentSession,
@@ -56,6 +56,7 @@ import {
   settleAfterAsync,
 } from '@/lib/compiler-safe-control-flow';
 import { checkAgentServer } from '@/lib/home-agent-readiness';
+import { refreshHomeNow } from '@/lib/home-refresh-schedule';
 import {
   HOME_AGENT_SESSION_ID,
   homeFolderName,
@@ -75,7 +76,7 @@ import type { HomeCommandResult } from '@/lib/home-commands';
 import { markPromptedSession } from '@/lib/prompted-agent-sessions';
 import { loadTerminalCatalog, useTerminalAgentCatalog } from '@/hooks/use-terminal-agent-catalog';
 import { agentSpawnRequest, terminalPromptWithAttachments } from '@/lib/agent-spawn';
-import { loadSessions, spawnAgent } from '@/lib/gateway-client';
+import { loadSessions, sendAgentText, spawnAgent } from '@/lib/gateway-client';
 import {
   homeAgentNeedsTerminalLabel,
   homeAgentOptions,
@@ -112,6 +113,24 @@ import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useHomeComposerSheet } from '@/stores/home-composer-sheet';
 import { markHomeComposerRevealed } from '@/lib/home-first-entry';
 import { appChrome } from '@/constants/appearance';
+import { HomeThreadFeed, type HomeThreadUnsure } from '@/components/home-thread';
+import {
+  HomeReplyButton,
+  HomeReplyDrawer,
+  useHomeReplyDrawer,
+} from '@/components/home-reply-drawer';
+import { useAppActive } from '@/hooks/use-app-active';
+import { agentDisplayName } from '@/lib/home-launch-model';
+import {
+  homeThreadKey,
+  homeThreadSendPlan,
+  homeThreadTargetFromTask,
+  homeThreadTask,
+  type HomeThreadSendPlan,
+  type HomeThreadTarget,
+} from '@/lib/home-thread';
+import { useHomeThreadLive, useHomeThreads } from '@/stores/home-thread';
+import { useServerAgents } from '@/stores/server-agents';
 
 const NO_COMMANDS: AgentCatalog['commands'] = [];
 const NO_SKILLS: AgentCatalog['skills'] = [];
@@ -150,6 +169,8 @@ export function HomeComposerDock({
   onFieldFocus,
   onDockHeight,
   onOpenAgent,
+  onOpenThread,
+  drawerMaxWidth,
 }: {
   revealed: boolean;
   controller: HomeLaunchController;
@@ -174,6 +195,10 @@ export function HomeComposerDock({
     sessionId?: string,
     agentId?: string
   ) => Promise<HomeCommandResult>;
+  /** Opens the dock's conversation in full: its session or its pane. */
+  onOpenThread?: (target: HomeThreadTarget) => void;
+  /** A Pad's reply drawer is a card no wider than this, centred on the dock. */
+  drawerMaxWidth?: number;
 }) {
   const { t } = useLingui();
   useEffect(() => {
@@ -184,8 +209,6 @@ export function HomeComposerDock({
   const decorationOverhang = useHomeComposerDecorationOverhang();
   const backgroundOutset = useHomeComposerBackgroundOutset();
   const [optionsOpen, setOptionsOpen] = useState(false);
-  const [optionsVisible, setOptionsVisible] = useState(false);
-  const [optionsHeightAnimating, setOptionsHeightAnimating] = useState(false);
   const [transitionPulse, setTransitionPulse] = useState<HomeComposerPulse | null>(null);
   const playTransition = useStableHandler((kind: HomeComposerTransitionKind) => {
     setTransitionPulse((previous) => ({ id: (previous?.id ?? 0) + 1, kind }));
@@ -371,6 +394,41 @@ export function HomeComposerDock({
     ? t`${providerName} (terminal)`
     : providerName;
   const agentLabel = agentName || computerLabel;
+
+  // The conversation the next message goes to on this computer, if any
+  // (`lib/home-thread`): set by the first goal sent from here or by tapping a
+  // session card, cleared by the reader or when it ends.
+  const thread = useHomeThreads((state) => (targetId ? state.byServer[targetId] : undefined));
+  const threadKey = thread ? homeThreadKey(thread) : undefined;
+  const threadAgentId = thread?.kind === 'session' ? thread.agentId : undefined;
+  const threadFeatures = useAgentFeatures(targetId, threadAgentId ?? null);
+  const discoveredAgents = discovery?.agents?.agents;
+  const threadAgentName = !thread
+    ? agentLabel
+    : thread.kind === 'session'
+      ? agentDisplayName(discoveredAgents, thread.agentId)
+      : thread.kind === 'pane' && thread.agentLabel
+        ? agentDisplayName(discoveredAgents, thread.agentLabel)
+        : agentLabel;
+  const appActive = useAppActive();
+  /** A follow-up whose delivery could not be confirmed: kept, never resent by itself. */
+  const [unsure, setUnsure] = useState<HomeThreadUnsure | null>(null);
+  const visibleUnsure = unsure && unsure.key === threadKey ? unsure : null;
+  // The conversation's drawer, rising from behind the field: only for a
+  // session or a pane (a task that has not said where it runs has nothing to
+  // show yet), and only while Home is in front with the computer it is on.
+  const [dockClip, setDockClip] = useState(0);
+  const drawer = useHomeReplyDrawer({ clipHeight: dockClip, topInset });
+  const conversation = thread && thread.kind !== 'task' ? thread : undefined;
+  const drawerAllowed = Boolean(conversation) && focused && appActive;
+  const closeDrawer = drawer.close;
+  const drawerOpen = drawer.open;
+  const drawerKey = useRef(threadKey);
+  useEffect(() => {
+    const changed = drawerKey.current !== threadKey;
+    drawerKey.current = threadKey;
+    if (drawerOpen && (changed || !drawerAllowed)) closeDrawer();
+  }, [threadKey, drawerAllowed, drawerOpen, closeDrawer]);
   // A gateway that takes the delivery by name lets the reader's pick decide
   // how a goal is carried: the provider's session entry sends a session
   // task, its terminal entry a pane task, each only where that provider
@@ -494,6 +552,29 @@ export function HomeComposerDock({
       : t`Model`;
   const canPickMode = features.modes && modes.length > 0;
 
+  /**
+   * The pills a follow-up compares against: what they said when the session
+   * became the target. Only for the dock's own agent, whose catalog they
+   * name, and once that catalog has been read.
+   */
+  const threadPills = (current: HomeThreadTarget): HomeSessionParams | undefined => {
+    if (terminalAgent || catalog === undefined || current.kind !== 'session') return undefined;
+    if (current.agentId && agentId && normalizeAgentId(current.agentId) !== agentId)
+      return undefined;
+    return sessionParams;
+  };
+  const threadPillsMissing = thread?.kind === 'session' && !thread.pills;
+  const recordThreadPills = useEffectEvent(() => {
+    const current = targetId ? useHomeThreads.getState().byServer[targetId] : undefined;
+    if (!current || current.pills) return;
+    const pills = threadPills(current);
+    if (pills) useHomeThreads.getState().update(current, { ...current, pills });
+  });
+  const catalogReady = catalog !== undefined;
+  useEffect(() => {
+    if (threadPillsMissing && catalogReady) recordThreadPills();
+  }, [threadPillsMissing, catalogReady, threadKey]);
+
   const selectModel = useStableHandler((model: ModelRef) => {
     if (targetId) chooseModel(targetId, agentId, model);
   });
@@ -552,6 +633,16 @@ export function HomeComposerDock({
   const inFlightRef = useRef(false);
   /** The composer's own draft, for a command that failed after it was cleared. */
   const injectDraftRef = useRef<DraftInjector | null>(null);
+  /** Empties the field if it still holds what a failed row just sent. */
+  const clearDraftRef = useRef<((text: string) => void) | null>(null);
+  // "Reply from Home" on a card: the field takes focus to write the reply.
+  const focusRequest = useHomeThreads((state) => state.focusRequest);
+  const seenFocusRequest = useRef(focusRequest);
+  useEffect(() => {
+    if (focusRequest === seenFocusRequest.current) return;
+    seenFocusRequest.current = focusRequest;
+    injectDraftRef.current?.('', { focusOnly: true });
+  }, [focusRequest]);
 
   /**
    * Never a session without a model on an agent that takes one, whatever
@@ -601,6 +692,214 @@ export function HomeComposerDock({
       return null;
     }
     return serverId;
+  }
+
+  /**
+   * A conversation a send just started becomes the target -- unless the
+   * reader picked another one on this computer while it went out.
+   */
+  function startedThread(target: HomeThreadTarget) {
+    if (useHomeThreads.getState().byServer[target.serverId]) return;
+    useHomeThreads.getState().target(target);
+  }
+
+  /** What Send does with the dock's conversation now (`homeThreadSendPlan`). */
+  function threadPlan(current: HomeThreadTarget): HomeThreadSendPlan {
+    const key = homeThreadKey(current);
+    const liveState = useHomeThreadLive.getState();
+    const live = liveState.key === key ? liveState.live : undefined;
+    const pills = threadPills(current);
+    return homeThreadSendPlan({
+      target: current,
+      task: homeThreadTask(current, useServerTasksStore.getState().index[current.serverId]?.tasks),
+      ...(live
+        ? {
+            live: {
+              ...(live.status ? { status: live.status } : {}),
+              ...(live.interaction ? { interaction: live.interaction } : {}),
+            },
+          }
+        : {}),
+      features: {
+        inbox: threadFeatures.inbox,
+        steering: threadFeatures.extra.promptSteering === true,
+      },
+      ...(pills ? { pills } : {}),
+    });
+  }
+
+  /** Why a follow-up cannot go now; the draft stays. `null` when it can. */
+  function threadRefusal(plan: HomeThreadSendPlan): string | null {
+    const name = threadAgentName;
+    switch (plan.kind) {
+      case 'starting':
+        return t`The task is still starting. Send again in a moment.`;
+      case 'busy':
+        return t`${name} is still working and cannot take a message now. Your draft stays here.`;
+      case 'terminal':
+        return t`Continue in the linked terminal. Your draft stays here.`;
+      case 'elsewhere':
+        return t`This task runs on another computer. Open it to reply.`;
+      default:
+        return null;
+    }
+  }
+
+  /**
+   * A follow-up into the dock's conversation, over the path its own screen
+   * uses: `POST …/prompt` for an agent session (steered while it runs, after
+   * any pill switched on it), the pane's agent send for a terminal agent.
+   * Waits for the gateway's answer, so a refusal keeps the draft. A send that
+   * timed out may have landed: the draft stays and the strip asks the reader
+   * to retry or check, never sending it again by itself.
+   */
+  function followUp(
+    current: HomeThreadTarget,
+    text: string,
+    attachments: string[]
+  ): Promise<boolean> {
+    if (inFlightRef.current) return Promise.resolve(false);
+    const plan = threadPlan(current);
+    const refusal = threadRefusal(plan);
+    if (refusal || (plan.kind !== 'session' && plan.kind !== 'pane')) {
+      setError(refusal);
+      return Promise.resolve(false);
+    }
+    const key = homeThreadKey(current);
+    const pills = threadPills(current);
+    inFlightRef.current = true;
+    if (ready) playTransition('send');
+    return settleAfter(
+      async () => {
+        setError(null);
+        setUnsure(null);
+        const serverId = await sendTarget(current.serverId);
+        if (!serverId) return false;
+        const owner = useGatewayConnectionStore.getState().record;
+        const owns = () => {
+          const now = useGatewayConnectionStore.getState().record;
+          return (
+            owner?.serverId === serverId &&
+            sameComputer(now, owner) &&
+            now?.deviceId === owner.deviceId
+          );
+        };
+        return recoverWith(
+          async () => {
+            if (!owns()) {
+              setError(t`Computer unavailable.`);
+              return false;
+            }
+            if (plan.kind === 'session') {
+              if (plan.switchMode) await switchAgentMode(plan.asid, plan.switchMode);
+              if (plan.switchModel)
+                await switchAgentModel(plan.sessionId, plan.asid, plan.switchModel);
+              if (!owns()) throw new Error(t`Computer unavailable.`);
+              await sendAgentPrompt(plan.sessionId, plan.asid, {
+                text,
+                attachments,
+                ...(plan.delivery ? { delivery: plan.delivery } : {}),
+              });
+            } else {
+              const sessionId =
+                plan.sessionId ??
+                useServerAgents.getState().byServer[serverId]?.sessionId ??
+                (await loadSessions()).sessions?.[0]?.id;
+              if (!owns()) throw new Error(t`Computer unavailable.`);
+              if (!sessionId) {
+                setError(t`This computer has no session to start an agent in.`);
+                return false;
+              }
+              await sendAgentText(
+                sessionId,
+                plan.paneId,
+                terminalPromptWithAttachments(text, attachments)
+              );
+            }
+            const latest = useHomeThreads.getState().byServer[serverId];
+            if (latest && homeThreadKey(latest) === key)
+              useHomeThreads.getState().update(latest, {
+                ...latest,
+                lastSent: text,
+                sentAtMs: Date.now(),
+                ...(pills && plan.kind === 'session' ? { pills } : {}),
+              });
+            // A pane's status comes from the computer's mirror: read it now,
+            // so the agent shows as working without waiting for the cadence.
+            if (plan.kind === 'pane') refreshHomeNow(serverId);
+            return true;
+          },
+          (failure) => {
+            console.warn('Home could not send a follow-up:', failure);
+            if (agentRequestErrorDetail(failure).status === 404) {
+              // The conversation is gone: the next Send starts a new one.
+              const latest = useHomeThreads.getState().byServer[serverId];
+              if (latest && homeThreadKey(latest) === key)
+                useHomeThreads.getState().clear(serverId, latest);
+              setError(t`That conversation has ended. Send again to start a new one.`);
+              return false;
+            }
+            if (describeGatewayFailure(failure).kind === 'timeout') {
+              setUnsure({ key, text, attachments });
+              return false;
+            }
+            setError(
+              plan.kind === 'session'
+                ? describeFailure(failure)
+                : describeGatewayFailure(failure, t`Could not send input.`).message
+            );
+            return false;
+          }
+        );
+      },
+      () => {
+        inFlightRef.current = false;
+      }
+    );
+  }
+
+  /** The reader's Retry on a send that may not have landed: the same message, once. */
+  const retryUnsure = useStableHandler(() => {
+    const pending = unsure;
+    const current = targetId ? useHomeThreads.getState().byServer[targetId] : undefined;
+    if (!pending || !current || homeThreadKey(current) !== pending.key) return;
+    void followUp(current, pending.text, pending.attachments).then((sent) => {
+      if (sent) clearDraftRef.current?.(pending.text);
+    });
+  });
+
+  /**
+   * A command or a skill with a session as the target goes to that session,
+   * as its own screen would run it; `null` when there is no such target.
+   */
+  async function threadAct(
+    act: (sessionId: string, asid: string) => Promise<void>
+  ): Promise<boolean | null> {
+    const current = targetId ? useHomeThreads.getState().byServer[targetId] : undefined;
+    const plan = current ? threadPlan(current) : undefined;
+    if (!current || plan?.kind !== 'session' || inFlightRef.current) return null;
+    inFlightRef.current = true;
+    return settleAfter(
+      async () => {
+        setError(null);
+        const serverId = await sendTarget(current.serverId);
+        if (!serverId) return false;
+        return recoverWith(
+          async () => {
+            await act(plan.sessionId, plan.asid);
+            return true;
+          },
+          (failure) => {
+            console.warn('Home could not act on its conversation:', failure);
+            setError(describeFailure(failure));
+            return false;
+          }
+        );
+      },
+      () => {
+        inFlightRef.current = false;
+      }
+    );
   }
 
   /**
@@ -693,6 +992,20 @@ export function HomeComposerDock({
                 useHomeTaskCards.getState().bound(pendingId, started.asid);
                 keepRow = true;
               }
+              // The conversation it started is where the next message goes.
+              startedThread({
+                kind: 'session',
+                serverId,
+                sessionId: HOME_AGENT_SESSION_ID,
+                asid: started.asid,
+                ...(started.sessionAgentId ? { agentId: started.sessionAgentId } : {}),
+                ...(started.directory ? { directory: started.directory } : {}),
+                title: goalTitle(sent.goal),
+                pills: params,
+                lastSent: sent.goal,
+                sentAtMs: Date.now(),
+                setAtMs: Date.now(),
+              });
               return true;
             }
             void onOpenAgent(
@@ -900,6 +1213,19 @@ export function HomeComposerDock({
               setError(task.summary ?? t`Could not start the task.`);
               return true;
             }
+            // The task's conversation is where the next message goes, once
+            // the gateway says where it runs (a queued task says so later).
+            startedThread({
+              ...homeThreadTargetFromTask(
+                serverId,
+                task,
+                task.title ?? goalTitle(text),
+                Date.now(),
+                carried?.delivery === 'pane' ? undefined : params
+              ),
+              lastSent: text,
+              sentAtMs: Date.now(),
+            });
             if (!asid) {
               // A queued accepted task can report its session in a later frame.
               return true;
@@ -1025,12 +1351,22 @@ export function HomeComposerDock({
                 keepRow = true;
                 return true;
               }
-              const { task, paneId } = created;
+              const { task } = created;
               // The accepted task owns its failure or a still-pending binding.
-              if (task.state === 'failed' || !paneId) {
-                if (task.state === 'failed') setError(task.summary ?? t`Could not start the task.`);
+              if (task.state === 'failed') {
+                setError(task.summary ?? t`Could not start the task.`);
                 return true;
               }
+              startedThread({
+                ...homeThreadTargetFromTask(
+                  serverId,
+                  task,
+                  task.title ?? goalTitle(text),
+                  Date.now()
+                ),
+                lastSent: text,
+                sentAtMs: Date.now(),
+              });
               return true;
             }
             // One Herdr session per gateway today, and the first is the one
@@ -1057,6 +1393,18 @@ export function HomeComposerDock({
               setError(t`Could not start the task.`);
               return false;
             }
+            startedThread({
+              kind: 'pane',
+              serverId,
+              sessionId,
+              paneId: spawned.paneId,
+              agentLabel: kind,
+              ...(spawned.agentInstanceId ? { instanceId: spawned.agentInstanceId } : {}),
+              title: goalTitle(text),
+              lastSent: text,
+              sentAtMs: Date.now(),
+              setAtMs: Date.now(),
+            });
             return true;
           },
           (failure) => {
@@ -1102,6 +1450,9 @@ export function HomeComposerDock({
   }
 
   function sendPrompt(text: string, attachments?: string[]): Promise<boolean> {
+    // A conversation is targeted: the message is a follow-up there.
+    const current = targetId ? useHomeThreads.getState().byServer[targetId] : undefined;
+    if (current && ready) return followUp(current, text, attachments ?? []);
     if (terminalAgent) {
       if (!inFlightRef.current && ready) playTransition('send');
       // The terminal entry of a provider whose ledger carries goals into a
@@ -1157,17 +1508,18 @@ export function HomeComposerDock({
   // The composer empties the field as it hands a command over, so a command
   // that did not run puts its line back.
   function runCommand(name: string, args: string) {
-    void startSession((asid) =>
-      sendAgentCommand(asid, { name, ...(args ? { arguments: args } : {}) })
-    ).then((accepted) => {
-      if (!accepted)
-        injectDraftRef.current?.(`/${name.replace(/^\//, '')}${args ? ` ${args}` : ''}`);
-    });
+    const command = { name, ...(args ? { arguments: args } : {}) };
+    void threadAct((_sessionId, asid) => sendAgentCommand(asid, command))
+      .then((inThread) => inThread ?? startSession((asid) => sendAgentCommand(asid, command)))
+      .then((accepted) => {
+        if (!accepted)
+          injectDraftRef.current?.(`/${name.replace(/^\//, '')}${args ? ` ${args}` : ''}`);
+      });
   }
   async function invokeSkill(skill: string, args: string) {
-    const accepted = await startSession((asid) =>
-      invokeAgentSkill(HOME_AGENT_SESSION_ID, asid, { skill })
-    );
+    const accepted =
+      (await threadAct((sessionId, asid) => invokeAgentSkill(sessionId, asid, { skill }))) ??
+      (await startSession((asid) => invokeAgentSkill(HOME_AGENT_SESSION_ID, asid, { skill })));
     // A skill takes no arguments on the wire; what was typed after it is said
     // out loud rather than dropped in silence.
     if (accepted && args)
@@ -1178,8 +1530,6 @@ export function HomeComposerDock({
       });
     return accepted;
   }
-  /** Empties the field if it still holds what a failed row just sent. */
-  const clearDraftRef = useRef<((text: string) => void) | null>(null);
   // What a tap on a Sent row does: a failed send goes again exactly as it was,
   // to the computer it was for; one bound to its session opens it.
   const retryRow = useStableHandler((item: PendingDispatch) => {
@@ -1305,8 +1655,83 @@ export function HomeComposerDock({
 
   if (servers.length === 0) return null;
 
+  const clearThread = () => {
+    if (targetId) useHomeThreads.getState().clear(targetId);
+    setUnsure(null);
+    setError(null);
+  };
+  const openThread =
+    conversation && onOpenThread
+      ? () => {
+          closeDrawer();
+          onOpenThread(conversation);
+        }
+      : undefined;
+  // Where the next message goes is the placeholder's to say; the toolbar's
+  // conversation button shows it.
+  const replyButton = conversation ? (
+    <HomeReplyButton target={conversation} controller={drawer} onOpenFull={openThread} />
+  ) : null;
+  const replyDrawer =
+    conversation && drawer.mounted ? (
+      <HomeReplyDrawer
+        target={conversation}
+        controller={drawer}
+        agentName={threadAgentName}
+        offline={target.kind !== 'ready'}
+        bleed={outerInsets?.horizontal ?? 0}
+        maxWidth={drawerMaxWidth}
+        onOpenFull={openThread}
+        onNewConversation={clearThread}
+      />
+    ) : null;
   const bar = (
     <View>
+      {thread ? (
+        <HomeThreadFeed target={thread} enabled={focused && appActive && ready && selected} />
+      ) : null}
+      {visibleUnsure ? (
+        <View
+          style={[
+            styles.error,
+            styles.unsure,
+            {
+              backgroundColor: background(theme.colors.surface),
+              borderRadius: profile.chrome.noticeBanner,
+            },
+          ]}>
+          <Text
+            testID="home-thread-unsure"
+            variant="caption"
+            color={theme.colors.warning}
+            accessibilityLiveRegion="polite"
+            style={styles.unsureText}>
+            {t`Not sure it was delivered`}
+          </Text>
+          <PressableScale
+            testID="home-thread-retry"
+            accessibilityRole="button"
+            accessibilityLabel={t`Retry`}
+            hitSlop={6}
+            onPress={retryUnsure}>
+            <Text variant="caption" weight="semibold" color={theme.colors.primary}>
+              {t`Retry`}
+            </Text>
+          </PressableScale>
+          {conversation ? (
+            <PressableScale
+              testID="home-thread-unsure-show"
+              accessibilityRole="button"
+              accessibilityLabel={t`Show conversation`}
+              hitSlop={6}
+              onPress={drawer.show}>
+              <Text variant="caption" weight="semibold" color={theme.colors.primary}>
+                {t`Show`}
+              </Text>
+            </PressableScale>
+          ) : null}
+        </View>
+      ) : null}
       {visibleUnknownDelivery ? (
         <PressableScale
           testID="home-composer-check-delivery"
@@ -1340,76 +1765,74 @@ export function HomeComposerDock({
           {error}
         </Text>
       ) : null}
-      <HomeComposerOptions
-        open={optionsOpen}
-        onVisibilityChange={setOptionsVisible}
-        onHeightAnimationChange={setOptionsHeightAnimating}
-        computer={targetServer ? computerLabel : t`No computer online`}
-        agent={agentName}
-        folder={folderLabel}
-        model={modelName}
-        mode={shown.mode ?? 'build'}
-        modes={modes}
-        offline={!ready}
-        onComputer={() => {
-          beginChoice();
-          openTargetPicker();
-        }}
-        onAgent={
-          targetServer
-            ? () => {
-                beginChoice();
-                router.push({
-                  pathname: '/home-agent',
-                  params: { serverId: targetServer.serverId },
-                });
-              }
-            : undefined
-        }
-        onFolder={
-          targetServer && ready && selected
-            ? () => {
-                beginChoice();
-                router.push({
-                  pathname: '/agent-workspace',
-                  params: {
-                    owner: 'home',
-                    serverId: targetServer.serverId,
-                    sessionId: HOME_AGENT_SESSION_ID,
-                    ...(agentId ? { agentId } : {}),
-                  },
-                });
-              }
-            : undefined
-        }
-        onModel={features.modelSelection && !terminalAgent ? openModelSheet : undefined}
-        onMode={canPickMode && !terminalAgent ? selectMode : undefined}
-      />
     </View>
   );
+  const options = (
+    <HomeComposerOptions
+      computer={targetServer ? computerLabel : t`No computer online`}
+      agent={agentName}
+      folder={folderLabel}
+      model={modelName}
+      mode={shown.mode ?? 'build'}
+      modes={modes}
+      offline={!ready}
+      onComputer={() => {
+        beginChoice();
+        openTargetPicker();
+      }}
+      onAgent={
+        targetServer
+          ? () => {
+              beginChoice();
+              router.push({
+                pathname: '/home-agent',
+                params: { serverId: targetServer.serverId },
+              });
+            }
+          : undefined
+      }
+      onFolder={
+        targetServer && ready && selected
+          ? () => {
+              beginChoice();
+              router.push({
+                pathname: '/agent-workspace',
+                params: {
+                  owner: 'home',
+                  serverId: targetServer.serverId,
+                  sessionId: HOME_AGENT_SESSION_ID,
+                  ...(agentId ? { agentId } : {}),
+                },
+              });
+            }
+          : undefined
+      }
+      onModel={features.modelSelection && !terminalAgent ? openModelSheet : undefined}
+      onMode={canPickMode && !terminalAgent ? selectMode : undefined}
+    />
+  );
   const parameterButton = (
-    <PressableScale
+    <ComposerMenuButton
       testID="home-composer-parameters"
-      accessibilityRole="button"
-      accessibilityLabel={t`Task options`}
-      accessibilityHint={t`Choose computer, agent, folder, mode and model`}
-      accessibilityState={{ expanded: optionsOpen }}
-      onPress={() => setOptionsOpen((open) => !open)}
-      style={[composerStyles.button, { borderRadius: profile.chrome.roundControl }]}>
+      label={t`Task options`}
+      hint={t`Choose computer, agent, folder, mode and model`}
+      expanded={optionsOpen}
+      onPress={() => setOptionsOpen((open) => !open)}>
       <ThemeIcon
         name="chrome.parameters"
         fallback={ControlsIcon}
         size={18}
         color={optionsOpen ? theme.colors.primary : theme.colors.textMuted}
       />
-    </PressableScale>
+    </ComposerMenuButton>
   );
 
   return (
     <AgentComposer
       revealed={revealed}
       accessory={bar}
-      accessoryHeightAnimating={optionsHeightAnimating || optionsOpen !== optionsVisible}
+      dockUnderlay={replyDrawer}
+      pinDock={drawer.open}
       fieldBackground={
         <>
           <HomeComposerBackground />
@@ -1435,14 +1858,23 @@ export function HomeComposerDock({
       fieldBackgroundColor={background(theme.colors.surface)}
       fieldDecoration={decorationOverhang > 0 ? <HomeComposerDecoration /> : undefined}
       fieldDecorationOverhang={decorationOverhang}
-      hideFieldDecoration={
-        optionsOpen || optionsVisible || Boolean(error) || Boolean(visibleUnknownDelivery)
-      }
+      hideFieldDecoration={Boolean(error) || Boolean(visibleUnknownDelivery) || Boolean(thread)}
       fieldTextTopInset={6}
       // Home's field is the dock's only painted surface, on both the phone
       // bar and the Pad cover, so it casts the edge a dock's glass would.
       fieldShadow={appChrome.shadow.homeComposerField}
-      toolbarLeading={parameterButton}
+      toolbarLeading={
+        <>
+          {parameterButton}
+          {replyButton}
+        </>
+      }
+      toolbarMenu={{
+        open: optionsOpen,
+        onOpenChange: setOptionsOpen,
+        content: options,
+        testID: 'home-composer-options-menu',
+      }}
       hideParameterRow
       flushField
       voiceContext={JSON.stringify([
@@ -1459,6 +1891,9 @@ export function HomeComposerDock({
       running={false}
       disabled={target.kind === 'none'}
       agentName={agentLabel}
+      placeholder={
+        thread ? t`Reply to ${threadAgentName}…` : t`New conversation with ${agentLabel}…`
+      }
       sessionId={HOME_AGENT_SESSION_ID}
       availableAgents={modes}
       skills={features.skills && !terminalAgent ? (catalog?.skills ?? NO_SKILLS) : NO_SKILLS}
@@ -1470,7 +1905,13 @@ export function HomeComposerDock({
       selectedModel={selectedModel}
       modelName={modelName}
       canPickMode={canPickMode && !terminalAgent}
-      canAttach={Boolean(terminalAgent) || features.attachments}
+      // A follow-up takes files where its own conversation does: a session by
+      // its agent's `attachments`, a pane as paths in the line.
+      canAttach={
+        thread?.kind === 'session'
+          ? threadFeatures.attachments
+          : thread?.kind === 'pane' || Boolean(terminalAgent) || features.attachments
+      }
       attachmentTargetId={targetId}
       bottomInset={bottomInset}
       topInset={topInset}
@@ -1483,7 +1924,10 @@ export function HomeComposerDock({
         if (focused) setOptionsOpen(false);
         onFieldFocus?.(focused);
       }}
-      onDockHeight={onDockHeight}
+      onDockHeight={(height, clipHeight) => {
+        setDockClip(clipHeight);
+        onDockHeight?.(height, clipHeight);
+      }}
       onSend={sendPrompt}
       onAbort={async () => {}}
       onSelectAgentMode={selectMode}
@@ -1528,4 +1972,6 @@ function holdStagedFiles(reason: 'blur' | 'switch'): boolean {
 
 const styles = StyleSheet.create({
   error: { padding: 8, marginBottom: 4, width: '100%' },
+  unsure: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 12 },
+  unsureText: { flexShrink: 1 },
 });

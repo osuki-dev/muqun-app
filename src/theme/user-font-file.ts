@@ -108,11 +108,13 @@ export const USER_FONT_DIRECTORY = 'fonts';
  *
  * A full CJK face is 10-20 MB and there is no subsetting on a phone, so the cap
  * has to sit well above that or the readers who most need a custom font are the
- * ones it refuses. 48 MB is roughly twice the largest face anyone ships and
- * still small enough that a mistake -- a disk image, a video, an HTML error
- * page that happens to be enormous -- is caught before it is written.
+ * ones it refuses. 60 MB leaves room for the largest variable CJK faces and
+ * is still small enough that a mistake -- a disk image, a video, an HTML error
+ * page that happens to be enormous -- is caught before it is written. The file
+ * is streamed to disk and only its small tables are read, so the size costs
+ * storage, not memory.
  */
-export const USER_FONT_MAX_BYTES = 48 * 1024 * 1024;
+export const USER_FONT_MAX_BYTES = 60 * 1024 * 1024;
 
 /** Enough of the head to recognise an sfnt signature, and not one byte more. */
 export const USER_FONT_SNIFF_BYTES = 4;

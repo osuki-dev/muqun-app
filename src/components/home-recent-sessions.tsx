@@ -1,7 +1,7 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, PressableScale, Text, TextField } from '@osuki-dev/ui';
-import { NextIcon, DeleteIcon, CloseIcon } from '@/icons';
+import { NextIcon, DeleteIcon, CloseIcon, MessageSendIcon } from '@/icons';
 import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   AppState,
@@ -142,12 +142,14 @@ export function HomeContinueSearch({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
+  const background = useSurfaceBackground();
   return (
     <View
       style={[
         styles.search,
         {
-          backgroundColor: theme.colors.surface,
+          // The same fill as the sessions card and filter chips around it.
+          backgroundColor: background(theme.colors.surface),
           borderColor: theme.colors.border,
           borderRadius: profile.chrome.surface,
         },
@@ -363,6 +365,8 @@ export function HomeRecentSessions({
   linkStyle,
   selectedPaneId,
   selectedAsid,
+  canReply,
+  onReply,
   onOpen,
   query = '',
   pad = false,
@@ -379,6 +383,10 @@ export function HomeRecentSessions({
   linkStyle?: StyleProp<ViewStyle>;
   selectedPaneId?: string;
   selectedAsid?: string;
+  /** Whether Home's dock can talk to the row's conversation ("Reply from Home"). */
+  canReply?: (entry: HomeContinueEntry) => boolean;
+  /** "Reply from Home": the dock's next message goes to the row's conversation. */
+  onReply?: (entry: HomeContinueEntry) => void;
   /** Runs the row's Home command; see `homeContinueCommand`. */
   onOpen: (command: HomeCommand) => void;
   query?: string;
@@ -437,6 +445,7 @@ export function HomeRecentSessions({
             pad={pad}
             metaChars={metaChars}
             onOpen={() => onOpen(homeContinueCommand(entry.destination))}
+            onReply={onReply && canReply?.(entry) ? () => onReply(entry) : undefined}
           />
         ))}
       </View>
@@ -499,6 +508,7 @@ function RecentSessionRow({
   selectedPaneId,
   selectedAsid,
   onOpen,
+  onReply,
 }: {
   entry: HomeContinueEntry;
   number: number;
@@ -511,6 +521,8 @@ function RecentSessionRow({
   selectedPaneId?: string;
   selectedAsid?: string;
   onOpen: () => void;
+  /** The menu's "Reply from Home", where the dock can talk to the row. */
+  onReply?: () => void;
 }) {
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
@@ -785,6 +797,19 @@ function RecentSessionRow({
     );
   });
   const menuItems: AgentActionMenuItem[] = [];
+  if (onReply) {
+    menuItems.push({
+      id: 'reply',
+      label: t`Reply from Home`,
+      Icon: MessageSendIcon,
+      disabled: deleting,
+      onPress: () => {
+        setMenu(null);
+        onReply();
+      },
+      testID: 'home-recent-reply',
+    });
+  }
   if (menu?.canDelete) {
     const { title, provider, computer } = menu;
     menuItems.push({
@@ -813,7 +838,7 @@ function RecentSessionRow({
   return (
     <View>
       <PressableScale
-        testID="home-recent-open"
+        testID={`home-recent-open-${entry.key}`}
         accessibilityRole="button"
         accessibilityLabel={[title, ...meta.map((part) => part.text)].join(', ')}
         accessibilityHint={cwd}

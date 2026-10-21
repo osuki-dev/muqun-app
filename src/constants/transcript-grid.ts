@@ -13,8 +13,9 @@
  *   disclosure chevron or its thinking pulse, a notice's icon, a checklist
  *   tick. Markers are centred in it, so glyphs of different widths share one
  *   x-centre.
- * - A hanging rule -- the thought body's -- is centred in the same column, so
- *   the rule sits directly under the chevron that opened it.
+ * - A hanging rule -- the thought body's -- starts at `inset`, the edge reply
+ *   prose starts at, so the rule lines up with the reply text above and below
+ *   it, the way a markdown quote's rule does.
  * - `textOrigin` is where everything that hangs off a marker starts: a tool's
  *   name and the facts under it, the thought's label, its heading and its body,
  *   a notice's text, a checklist item.
@@ -44,9 +45,8 @@ export const TRANSCRIPT_GRID = {
   plateInsetY: 10,
 } as const;
 
-/** Where a hanging rule's left edge sits, from the plate's edge. */
-export const TRANSCRIPT_RULE_X =
-  TRANSCRIPT_GRID.inset + (TRANSCRIPT_GRID.markerWidth - TRANSCRIPT_GRID.ruleWidth) / 2;
+/** Where a hanging rule's left edge sits, from the plate's edge: the prose edge. */
+export const TRANSCRIPT_RULE_X = TRANSCRIPT_GRID.inset;
 
 /** How far hanging text is indented from the start of a plate's content. */
 export const TRANSCRIPT_HANG = TRANSCRIPT_GRID.markerWidth + TRANSCRIPT_GRID.markerGap;

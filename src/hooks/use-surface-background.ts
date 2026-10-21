@@ -2,7 +2,11 @@ import { useThemeMode, type TabsLayering } from '@osuki-dev/ui';
 import { useCallback } from 'react';
 
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
-import { surfaceBackgroundFill, surfaceBackgroundOpacity } from '@/theme/surface-background';
+import {
+  sheetFrostAlpha,
+  surfaceBackgroundFill,
+  surfaceBackgroundOpacity,
+} from '@/theme/surface-background';
 
 export function useSurfaceBackgroundOpacity() {
   const { resolvedMode } = useThemeMode();
@@ -22,7 +26,8 @@ export function useSurfaceBackgroundOpacity() {
  * toolbars, list rows with a fill, composer popups, Pad panels. A surface that
  * floats over live content may keep a legibility floor under the slider,
  * `Math.max(opacity, floor)`, as `GlassChrome`'s solid material and
- * `sheetFrostAlpha` do.
+ * `sheetFrostAlpha` do; popups and menus over the terminal or transcript use
+ * `useFloatingSurfaceBackground` below for exactly that.
  *
  * What deliberately bypasses it (each such site says so in an "Opacity audit"
  * comment):
@@ -39,6 +44,23 @@ export function useSurfaceBackgroundOpacity() {
 export function useSurfaceBackground() {
   const opacity = useSurfaceBackgroundOpacity();
   return useCallback((color: string) => surfaceBackgroundFill(color, opacity), [opacity]);
+}
+
+/**
+ * The fill for a panel that floats over live content: the composer's command
+ * and mention popups, its attachment and mode menus, the queued-prompt inbox,
+ * the revert plate, a popover action menu. These follow the slider like any
+ * surface but never thinner than `sheetFrostAlpha`'s legibility floor -- under
+ * them is a terminal or a transcript still moving, not a wallpaper, and rows
+ * of text over rows of text stop being readable long before a card over a
+ * picture does. Opaque at the default 1, like every other surface.
+ */
+export function useFloatingSurfaceBackground() {
+  const opacity = useSurfaceBackgroundOpacity();
+  return useCallback(
+    (color: string) => surfaceBackgroundFill(color, sheetFrostAlpha(opacity)),
+    [opacity]
+  );
 }
 
 /**
