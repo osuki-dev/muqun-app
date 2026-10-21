@@ -1627,7 +1627,9 @@ export function HomeComposerDock({
   };
   const openThread =
     thread && onOpenThread && thread.kind !== 'task' ? () => onOpenThread(thread) : undefined;
-  const bar = (
+  // The conversation's rows hold their own space in the dock: the page is
+  // clipped at their top, so nothing scrolls behind them.
+  const threadRows = (
     <View>
       {thread ? (
         <>
@@ -1641,6 +1643,18 @@ export function HomeComposerDock({
           />
         </>
       ) : null}
+      <HomeThreadChip
+        target={thread}
+        agentName={agentLabel}
+        offline={target.kind !== 'ready'}
+        // A theme's decoration stands where the quiet line would be.
+        quiet={decorationOverhang > 0}
+        onClear={clearThread}
+      />
+    </View>
+  );
+  const bar = (
+    <View>
       {visibleUnknownDelivery ? (
         <PressableScale
           testID="home-composer-check-delivery"
@@ -1674,14 +1688,6 @@ export function HomeComposerDock({
           {error}
         </Text>
       ) : null}
-      <HomeThreadChip
-        target={thread}
-        agentName={agentLabel}
-        offline={target.kind !== 'ready'}
-        // A theme's decoration stands where the quiet line would be.
-        quiet={decorationOverhang > 0}
-        onClear={clearThread}
-      />
     </View>
   );
   const options = (
@@ -1748,6 +1754,7 @@ export function HomeComposerDock({
     <AgentComposer
       revealed={revealed}
       accessory={bar}
+      solidAccessory={threadRows}
       fieldBackground={
         <>
           <HomeComposerBackground />

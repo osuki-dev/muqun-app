@@ -1,14 +1,8 @@
 import { useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { PressableScale, Text, useThemeTokens } from '@osuki-dev/ui';
-import { useEffect, useRef, useState } from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  useWindowDimensions,
-  View,
-  type ScrollViewInstance,
-} from 'react-native';
+import { useEffect, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import Animated, { useReducedMotion } from 'react-native-reanimated';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -66,10 +60,6 @@ import { useServerTasksStore } from '@/stores/server-tasks';
 const HOME_THREAD_PUBLISH_MS = 250;
 /** How long a dropped event stream waits before it is opened again. */
 const HOME_THREAD_STREAM_RETRY_MS = 5_000;
-/** The strip's messages: about three lines, then they scroll inside it. */
-const STRIP_LINES = 3;
-/** A long reply is cut from the front: the strip shows where it has got to. */
-const REPLY_TAIL_CHARS = 1_600;
 /** A pill's ends are fully round at any height. */
 const PILL_RADIUS = 999;
 
@@ -277,12 +267,25 @@ export function HomeThreadChip({
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
+  const background = useSurfaceBackground();
   const reduced = useReducedMotion();
   const enter = reduced ? calmFadeIn() : fadeIn('short');
   const exit = reduced ? calmFadeOut('micro') : fadeOut('micro');
   if (!target && quiet) return null;
   return (
-    <Animated.View layout={listLayout()} style={styles.chipRow}>
+    <Animated.View
+      layout={listLayout()}
+      // The composer's own ground, so the row reads over any page or wallpaper.
+      style={[
+        styles.chipRow,
+        {
+          backgroundColor: background(theme.colors.surface),
+          borderRadius: profile.chrome.composerField,
+          paddingHorizontal: theme.spacing.md,
+          marginBottom: theme.spacing.xs,
+        },
+      ]}>
       {target ? (
         <Animated.View
           key={`thread:${homeThreadKey(target)}`}
@@ -294,12 +297,9 @@ export function HomeThreadChip({
             testID="home-thread-new"
             accessibilityRole="button"
             accessibilityLabel={t`New conversation`}
-            hitSlop={6}
+            hitSlop={8}
             onPress={onClear}
-            style={[
-              styles.newButton,
-              { borderColor: theme.colors.border, borderRadius: PILL_RADIUS },
-            ]}>
+            style={styles.newButton}>
             <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
               {t`+ New conversation`}
             </Text>
@@ -344,7 +344,7 @@ function ThreadChip({
       testID="home-thread-chip"
       accessible
       accessibilityLabel={t`Replying to ${title}`}
-      style={[styles.chip, { backgroundColor: withAlpha(tone, 0.13), borderRadius: PILL_RADIUS }]}>
+      style={styles.chip}>
       <Text
         variant="caption"
         weight="semibold"
@@ -371,8 +371,8 @@ export type HomeThreadUnsure = { key: string; text: string; attachments: string[
 
 /**
  * The target's last turns above the composer: the reader's message, the
- * agent's reply as it streams, and the progress line it reports; a request
- * waiting on the reader with its actions. About three lines, scrolling inside.
+ * agent's reply as it streams (two lines), and the progress line it reports
+ * while working; a request waiting on the reader with its actions.
  */
 export function HomeThreadStrip({
   target,
@@ -392,7 +392,6 @@ export function HomeThreadStrip({
   const profile = useAppearanceProfile();
   const background = useSurfaceBackground();
   const reduced = useReducedMotion();
-  const { fontScale } = useWindowDimensions();
   const key = homeThreadKey(target);
   const live = useHomeThreadLive((state) =>
     state.key === key ? state.live : EMPTY_HOME_THREAD_LIVE
@@ -401,13 +400,12 @@ export function HomeThreadStrip({
     homeThreadTask(target, state.index[target.serverId]?.tasks)
   );
   const state = useHomeThreadState(target);
-  const scroll = useRef<ScrollViewInstance>(null);
 
   const turns = target.kind === 'session' ? homeThreadTurns(live) : {};
   const mine = turns.mine?.text ?? target.lastSent;
   const replyText =
     turns.reply?.text ?? (target.kind !== 'session' && task?.summary ? task.summary : undefined);
-  const reply = replyText ? tail(plainFromMarkdown(replyText)) : undefined;
+  const reply = replyText ? plainFromMarkdown(replyText).trim() : undefined;
   // Only what the gateway reports; the header's word is the session's own status.
   const progress = state === 'working' ? task?.progress : undefined;
   const word = offline
@@ -422,19 +420,16 @@ export function HomeThreadStrip({
             ? t`Starting…`
             : t`Idle`;
   const tone =
-    state === 'needs-you'
+    state === 'needs-you' || state === 'failed'
       ? theme.colors.warning
-      : state === 'failed'
-        ? theme.colors.danger
-        : state === 'working'
-          ? theme.colors.primary
-          : theme.colors.textMuted;
+      : state === 'working'
+        ? theme.colors.primary
+        : theme.colors.textMuted;
   const permission = target.kind === 'session' ? live.permissions[0] : undefined;
   const form =
     target.kind === 'session' && !permission
       ? live.forms.find((entry) => entry.nonblocking !== true)
       : undefined;
-  const lineHeight = Math.ceil(theme.typography.bodySmall.fontSize * 1.45);
   const unsureHere = unsure?.key === key ? unsure : null;
   const enter = reduced ? calmFadeIn() : fadeIn('short');
   const exit = reduced ? calmFadeOut('micro') : fadeOut('micro');
@@ -446,11 +441,13 @@ export function HomeThreadStrip({
       exiting={reduced ? calmFadeOut() : fadeOut('short')}
       layout={listLayout()}
       style={[
-        styles.strip,
         {
           backgroundColor: background(theme.colors.surface),
-          borderColor: state === 'needs-you' ? theme.colors.warning : theme.colors.border,
-          borderRadius: profile.chrome.noticeBanner,
+          borderRadius: profile.chrome.composerField,
+          paddingHorizontal: theme.spacing.md,
+          paddingVertical: theme.spacing.sm,
+          marginBottom: theme.spacing.xs,
+          gap: theme.spacing.xs,
         },
       ]}>
       <View style={styles.stripHeader}>
@@ -479,46 +476,35 @@ export function HomeThreadStrip({
           </PressableScale>
         ) : null}
       </View>
-      <ScrollView
-        ref={scroll}
-        nestedScrollEnabled
-        showsVerticalScrollIndicator={false}
-        style={{ maxHeight: lineHeight * STRIP_LINES * fontScale + 8 }}
-        contentContainerStyle={styles.messages}
-        onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: !reduced })}>
-        {mine ? (
-          <Animated.View key={`mine:${turns.mine?.id ?? mine}`} entering={enter} exiting={exit}>
-            <Text variant="bodySmall" color={theme.colors.textMuted}>
-              <Text variant="bodySmall" color={theme.colors.primary}>
-                {'› '}
-              </Text>
-              {mine}
-            </Text>
-          </Animated.View>
-        ) : null}
-        {reply ? (
-          <Animated.View
-            key={`reply:${turns.reply?.id ?? task?.taskId ?? ''}`}
-            entering={enter}
-            exiting={exit}>
-            <Text testID="home-thread-reply" variant="bodySmall">
-              {reply}
-            </Text>
-          </Animated.View>
-        ) : null}
-        {progress ? (
-          <Animated.View key={`progress:${progress}`} entering={enter} exiting={exit}>
-            <Text variant="caption" color={theme.colors.primary} numberOfLines={2}>
-              {`▸ ${progress}`}
-            </Text>
-          </Animated.View>
-        ) : null}
-        {permission ? (
-          <ThreadPermission target={target} request={permission} />
-        ) : form ? (
-          <ThreadQuestion target={target} form={form} onOpen={onOpen} />
-        ) : null}
-      </ScrollView>
+      {mine ? (
+        <Animated.View key={`mine:${turns.mine?.id ?? mine}`} entering={enter} exiting={exit}>
+          <Text variant="bodySmall" color={theme.colors.textMuted} numberOfLines={1}>
+            {`› ${mine}`}
+          </Text>
+        </Animated.View>
+      ) : null}
+      {reply ? (
+        <Animated.View
+          key={`reply:${turns.reply?.id ?? task?.taskId ?? ''}`}
+          entering={enter}
+          exiting={exit}>
+          <Text testID="home-thread-reply" variant="bodySmall" numberOfLines={2}>
+            {reply}
+          </Text>
+        </Animated.View>
+      ) : null}
+      {progress ? (
+        <Animated.View key={`progress:${progress}`} entering={enter} exiting={exit}>
+          <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
+            {progress}
+          </Text>
+        </Animated.View>
+      ) : null}
+      {permission ? (
+        <ThreadPermission target={target} request={permission} />
+      ) : form ? (
+        <ThreadQuestion target={target} form={form} onOpen={onOpen} />
+      ) : null}
       {unsureHere ? (
         <Animated.View entering={enter} exiting={exit} style={styles.unsure}>
           <Text
@@ -536,11 +522,6 @@ export function HomeThreadStrip({
       ) : null}
     </Animated.View>
   );
-}
-
-function tail(text: string): string {
-  const body = text.trim();
-  return body.length > REPLY_TAIL_CHARS ? `…${body.slice(body.length - REPLY_TAIL_CHARS)}` : body;
 }
 
 function CompactButton({
@@ -737,45 +718,16 @@ function ThreadQuestion({
 }
 
 const styles = StyleSheet.create({
-  chipRow: { flexDirection: 'row', minHeight: 28, alignItems: 'center', marginBottom: 6 },
-  chipFaces: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexShrink: 1,
-    maxWidth: '100%',
-    paddingLeft: 10,
-    paddingRight: 4,
-    paddingVertical: 4,
-    gap: 2,
-  },
+  chipRow: { flexDirection: 'row', minHeight: 32, alignItems: 'center' },
+  chipFaces: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  chip: { flexDirection: 'row', alignItems: 'center', flexShrink: 1, gap: 2 },
   chipTitle: { flexShrink: 1 },
   chipClose: { paddingHorizontal: 4, paddingVertical: 2 },
-  newButton: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderStyle: 'dashed',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  newLine: { flexShrink: 1, paddingHorizontal: 2 },
-  strip: {
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 12,
-    paddingTop: 8,
-    paddingBottom: 8,
-    marginBottom: 6,
-    gap: 4,
-  },
+  newButton: { flexShrink: 0, marginLeft: 'auto', paddingVertical: 4 },
+  newLine: { flexShrink: 1 },
   stripHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   stripTitle: { flexShrink: 1 },
   open: { marginLeft: 'auto', paddingHorizontal: 4, paddingVertical: 2 },
-  messages: { gap: 4 },
   request: { gap: 6, paddingTop: 2 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   compactButton: { paddingHorizontal: 12, paddingVertical: 5 },
