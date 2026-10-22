@@ -2249,6 +2249,10 @@ msgstr "保存済みのターミナル履歴を読み取れませんでした"
 msgid "Could not read the changes."
 msgstr "変更点を読み込めませんでした"
 
+#: src/components/agent-transcript-reader.tsx
+msgid "Could not read the conversation."
+msgstr "会話を読み込めませんでした"
+
 #: src/components/home-reply-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-collaboration-output.ts
@@ -4182,6 +4186,14 @@ msgstr "タスクを開始できるコンピュータがありません"
 #: src/components/settings-servers.tsx
 msgid "No computers paired yet"
 msgstr "ペアリング済みのコンピュータはまだありません"
+
+#: src/components/agent-transcript-reader.tsx
+msgid "No conversation has been recorded for this pane yet."
+msgstr "このペインにはまだ会話が記録されていません"
+
+#: src/components/agent-transcript-reader.tsx
+msgid "No conversation yet."
+msgstr "まだ会話はありません"
 
 #: src/components/session-artifacts.tsx
 msgid "No files match."
@@ -6706,6 +6718,7 @@ msgstr "一時ファイル"
 #: src/app/settings.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-reply-drawer.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/task-row.tsx
 #: src/i18n/labels.ts
@@ -7628,6 +7641,10 @@ msgstr "他のアシスタントにタスクを任せるには、コンピュー
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Muqun Gateway on the computer, then restart it, to assign a task to another assistant"
 msgstr "他のアシスタントにタスクを任せるには、コンピュータの Muqun Gateway を更新して再起動してください"
+
+#: src/components/home-reply-drawer.tsx
+msgid "Update Muqun Gateway on the computer, then restart it, to read this conversation here."
+msgstr "ここでこの会話を読むには、コンピュータの Muqun Gateway を更新して再起動してください"
 
 #: src/components/agent-guide-sheet.tsx
 #: src/components/new-task-action.tsx

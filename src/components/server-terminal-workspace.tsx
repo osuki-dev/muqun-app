@@ -168,6 +168,9 @@ import { useSettledHeight } from '@/hooks/use-settled-height';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { useTabSwipe } from '@/hooks/use-tab-swipe';
 import { usePaneViewMode } from '@/hooks/use-pane-view-mode';
+import { PaneViewModeControl } from '@/components/pane-view-mode-control';
+import { AgentTranscriptReader } from '@/components/agent-transcript-reader';
+import { agentSessionOf, transcriptAvailability } from '@/lib/agent-transcripts';
 import {
   describePickerFailure,
   isImageAttachment,
@@ -362,6 +365,7 @@ import {
   isHomeTargetReady,
   type HomeTargetAvailability,
 } from '@/lib/home-target-availability';
+import { healthCapabilityNames } from '@/lib/server-capabilities';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useAgents } from '@/stores/agents';
 import { refreshAgentsDiscovery, useAgentsDiscoveryRefresh } from '@/hooks/use-agent-features';
@@ -2343,6 +2347,17 @@ export function ServerTerminalWorkspace({
     ).toLowerCase();
   }, [selectedAgent]);
   const isOpenCodeAgent = agentKind.includes('opencode') || agentKind.includes('open-code');
+  // The agent's own session as Herdr reports it (`agent_session`), which is
+  // what the Gateway's transcript reader is keyed by. Held as strings rather
+  // than the entity, so a refresh that changed nothing here re-keys nothing.
+  const transcriptSession = agentSessionOf(selectedAgent?.raw);
+  const transcriptAgent = transcriptSession?.agent ?? '';
+  const transcriptSessionId = transcriptSession?.sessionId ?? '';
+  const transcriptReady = useServerCapabilities((state) =>
+    transcriptAgent
+      ? transcriptAvailability(state.byServer[serverId], transcriptAgent) === 'available'
+      : false
+  );
 
   // Which of the two readings of this pane is on screen: the conversation or
   // the raw grid. The hook owns the whole decision -- the setting, this pane's
@@ -2357,13 +2372,15 @@ export function ServerTerminalWorkspace({
     agent: agentPane,
     parts: partsForPane.supported,
     agentSessions: supportsAgentSessions && isOpenCodeAgent,
+    transcript: transcriptReady,
   });
   const chatViewChosen = paneView.mode === 'chat';
   // What the user asked for and what can actually be drawn are two different
   // things: a failed read falls back to the terminal without forgetting the
   // choice, so the view returns by itself once the gateway answers again.
   const chatViewShown =
-    chatViewChosen && ((supportsAgentSessions && isOpenCodeAgent) || !partsForPane.failed);
+    chatViewChosen &&
+    (transcriptReady || (supportsAgentSessions && isOpenCodeAgent) || !partsForPane.failed);
   const hideTerminalDock = chatViewShown && supportsAgentSessions && isOpenCodeAgent;
 
   const refreshParts = useCallback(
@@ -2520,7 +2537,8 @@ export function ServerTerminalWorkspace({
     // terminal never pays for a transcript nobody reads. A probe that keeps
     // throwing is retried on the next change a few times and then dropped.
     const settled = partsForPane.answered || partsForPane.failures >= MAX_PANE_PARTS_PROBES;
-    if (settled && !chatViewChosen) return;
+    // A transcript the gateway reads is the chat view: the parts are not asked for.
+    if (transcriptReady || (settled && !chatViewChosen)) return;
     // New content for this pane, however it was noticed (see
     // `panePartsRefreshKey` for why the revision alone is not enough), taken
     // straight from the output store: following it re-renders nothing here.
@@ -2537,6 +2555,7 @@ export function ServerTerminalWorkspace({
     partsForPane.answered,
     partsForPane.failures,
     refreshParts,
+    transcriptReady,
   ]);
 
   // The Lock Screen follows the panel the user is watching, so the card is
@@ -2628,7 +2647,7 @@ export function ServerTerminalWorkspace({
   );
   useEffect(() => {
     if (!selectedServer || !record || isDemoRecord(record) || !data.health) return;
-    void recordServerCapabilities(record.serverId, data.health.capabilities);
+    void recordServerCapabilities(record.serverId, healthCapabilityNames(data.health));
   }, [data.health, record, recordServerCapabilities, selectedServer]);
 
   // The pane's viewport height separates the served historical prefix from
@@ -5918,6 +5937,22 @@ export function ServerTerminalWorkspace({
         !padDetailIsPane
           ? [<PadAgentSessionAction key="agent-session" controls={padAgentControls} />]
           : [
+              // Back in its slot for a pane whose agent the gateway reads a
+              // transcript for: the one switch between that conversation and
+              // the terminal. Nothing is drawn for any other pane.
+              transcriptReady ? (
+                <PaneViewModeControl
+                  key="pane-view"
+                  mode={paneView.mode}
+                  available={paneView.available}
+                  canCycle={paneView.canCycle}
+                  color={theme.colors.text}
+                  warningColor={theme.colors.warning}
+                  warningBorderColor={theme.colors.background}
+                  degraded={chatViewChosen && !chatViewShown}
+                  onCycle={paneView.cycle}
+                />
+              ) : null,
               // No machine button beside the panels one. Two glyphs in this corner
               // were two halves of one question -- which machine, which backend,
               // which workspace, which panel -- and a reader had to know which half
@@ -6114,7 +6149,22 @@ export function ServerTerminalWorkspace({
                         </Text>
                       </View>
                     ) : chatViewShown ? (
-                      supportsAgentSessions && isOpenCodeAgent ? (
+                      transcriptReady ? (
+                        // The agent's own conversation, read from its
+                        // transcript on the computer: the session screen's
+                        // rows, read only. Replies still go to the pane.
+                        <AgentTranscriptReader
+                          key={`${selection.paneId}:${transcriptSessionId}`}
+                          serverId={serverId}
+                          agent={transcriptAgent}
+                          sessionId={transcriptSessionId}
+                          cwd={selectedAgent?.cwd}
+                          active={!overviewVisible}
+                          topInset={insets.top + DETAIL_HEADER_HEIGHT}
+                          bottomInset={composerVisible ? composerHeight : 0}
+                          testID="pane-transcript-reader"
+                        />
+                      ) : supportsAgentSessions && isOpenCodeAgent ? (
                         // One workbench at a time: under an agent detail the
                         // shell's own owns the agent session store.
                         !padDetailIsPane ? null : (
