@@ -23,7 +23,9 @@ import { stageAgentRow, type StageAgentChip, type StagePanel } from '@/lib/home-
 import { PULSE_PERIOD, timing } from '@/lib/motion';
 
 /** The row's height, kept while it is empty so the art above it never moves. */
-const ROW_HEIGHT = 30;
+/** The chips row's height; the Stage's foot folds it away while typing. */
+export const STAGE_AGENT_ROW_HEIGHT = 30;
+const ROW_HEIGHT = STAGE_AGENT_ROW_HEIGHT;
 
 /**
  * The selected computer's agents, one chip each under the art: a dot in the

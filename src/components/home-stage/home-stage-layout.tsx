@@ -51,7 +51,7 @@ import { useServerAgents } from '@/stores/server-agents';
 import { useServerTasksStore } from '@/stores/server-tasks';
 import { isRenderableThemeAsset } from '@/theme/renderable-asset';
 import { resolveThemeImage } from '@/theme/resolve';
-import { StageAgentRow } from './stage-agent-row';
+import { STAGE_AGENT_ROW_HEIGHT, StageAgentRow } from './stage-agent-row';
 import { StageOverlay } from './stage-overlay';
 import { StageSubtitle } from './stage-subtitle';
 import { useStageComposition, type StageImageInput } from './stage-composition';
@@ -784,27 +784,31 @@ function StageFootLine({
 }) {
   const [shown, setShown] = useState(false);
   const covered = subtitle && shown;
+  // Two fades on one row: the chips go under a subtitle, and the whole row
+  // folds to nothing while typing, its height easing so the strip glides up
+  // with the keyboard instead of jumping a row in one frame.
   const chips = useSharedValue(covered ? 0 : 1);
+  const fold = useSharedValue(compact ? 0 : 1);
   useEffect(() => {
     chips.set(withTiming(covered ? 0 : 1, timing('short')));
   }, [chips, covered]);
-  const chipsStyle = useAnimatedStyle(() => ({ opacity: chips.get() }));
+  useEffect(() => {
+    fold.set(withTiming(compact ? 0 : 1, timing('short')));
+  }, [fold, compact]);
+  const rowStyle = useAnimatedStyle(() => ({
+    height: STAGE_AGENT_ROW_HEIGHT * fold.get(),
+    opacity: chips.get() * fold.get(),
+  }));
+  const hidden = covered || compact;
   return (
     <View pointerEvents="box-none">
-      {compact ? null : (
-        <Animated.View
-          pointerEvents="box-none"
-          entering={fadeIn('short')}
-          exiting={fadeOut('short')}>
-          <Animated.View
-            pointerEvents={covered ? 'none' : 'auto'}
-            accessibilityElementsHidden={covered}
-            importantForAccessibility={covered ? 'no-hide-descendants' : 'auto'}
-            style={chipsStyle}>
-            {children}
-          </Animated.View>
-        </Animated.View>
-      )}
+      <Animated.View
+        pointerEvents={hidden ? 'none' : 'box-none'}
+        accessibilityElementsHidden={hidden}
+        importantForAccessibility={hidden ? 'no-hide-descendants' : 'auto'}
+        style={[styles.footRow, rowStyle]}>
+        {children}
+      </Animated.View>
       {serverId && subtitle && maxRows > 0 ? (
         <View pointerEvents="box-none" style={styles.footLine}>
           <StageSubtitle
@@ -849,6 +853,7 @@ const styles = StyleSheet.create({
   center: { position: 'absolute', left: 16, right: 16 },
   bottomScrim: { position: 'absolute', left: 0, right: 0, bottom: 0 },
   bottom: { position: 'absolute', left: 0, right: 0, gap: 8 },
+  footRow: { overflow: 'hidden' },
   footLine: {
     position: 'absolute',
     left: HOME_DOCK_OUTER_INSET,
