@@ -8,13 +8,20 @@ import {
   createCacheEntryDisposer,
 } from '@/lib/cache-cleanup-policy';
 import { useAppSettings } from '@/stores/app-settings';
-import { planCacheDeletions, temporaryMediaCreatedAt } from '@/lib/cache-storage';
+import {
+  LAUNCH_PURGE_DIRECTORIES,
+  TRASH_PREFIX,
+  planCacheDeletions,
+  temporaryMediaCreatedAt,
+} from '@/lib/cache-storage';
+import { requestLaunchCachePurge } from '@/lib/launch-cache-purge';
 
 // Imported by RootLayout before any user interaction can create a media copy.
 // Startup recovery only removes previous-process copies; normal cleanup uses live leases.
 export const CACHE_PROCESS_STARTED_AT = Date.now();
 
-/** Recover media copies left behind when the previous process was killed. */
+/** Recover media copies left behind when the previous process was killed, and
+ * delete library caches a launch purge moved aside. */
 export async function cleanupPreviousMediaCache(): Promise<void> {
   try {
     const root = cacheDirectory;
@@ -22,7 +29,7 @@ export async function cleanupPreviousMediaCache(): Promise<void> {
     // Startup shares the asynchronous native IO path with manual cleanup.
     // Wrapping Directory.list/delete in an async function still blocks JS.
     const names = (await readDirectoryAsync(root)).filter(
-      (name) => temporaryMediaCreatedAt(name) !== null
+      (name) => temporaryMediaCreatedAt(name) !== null || name.startsWith(TRASH_PREFIX)
     );
     const plan = planCacheDeletions(
       names.map((name) => ({ name, uri: root + name, bytes: 0 })),
@@ -66,13 +73,16 @@ export function clearCache(shouldContinue: () => boolean = () => true): Promise<
       const root = cacheDirectory;
       if (!root) return false;
       const names = await readDirectoryAsync(root);
+      // The Markdown image cache has no clear API and an open journal; the next
+      // launch removes it before anything opens it.
+      if (names.some((name) => (LAUNCH_PURGE_DIRECTORIES as readonly string[]).includes(name))) {
+        requestLaunchCachePurge();
+      }
       const entries = names.map((name) => ({ name, uri: root + name, bytes: 0 }));
       // Live producers hold leases; abandoned copies from this process are safe too.
       for (const entry of planCacheDeletions(entries, root, Number.MAX_SAFE_INTEGER)) {
         if (!shouldContinue()) return false;
         if (cleanupFlight.isProtected(entry.name)) continue;
-        // This downloader has no library-owned clear API or active-write guard.
-        if (entry.name === 'enrm_image_cache') continue;
         try {
           await deleteAsync(entry.uri, { idempotent: true });
         } catch {

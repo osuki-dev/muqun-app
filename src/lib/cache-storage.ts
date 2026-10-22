@@ -67,8 +67,6 @@ export type CacheTotals = {
  *   iOS. `ImageModule.swift` uses `SDImageCache.shared`, which takes the
  *   default location under `Library/Caches` -- the same directory
  *   `Paths.cache` points at.
- * - `enrm_image_cache` is `react-native-enriched-markdown`'s Android image
- *   cache, named in `ImageDownloader.kt`.
  *
  * - `image-originals` is Muqun's own folder of verified full-size originals,
  *   capped and trimmed by `original-image-cache.ts`.
@@ -83,7 +81,6 @@ export const ORIGINAL_IMAGE_CACHE_DIRECTORY = 'image-originals';
 export const IMAGE_CACHE_DIRECTORIES = [
   'image_manager_disk_cache',
   'com.hackemist.SDImageCache',
-  'enrm_image_cache',
   ORIGINAL_IMAGE_CACHE_DIRECTORY,
 ] as const;
 
@@ -106,14 +103,31 @@ export const TEMPORARY_CACHE_DIRECTORIES = [
 ] as const;
 
 /**
+ * Library caches that hold an open journal while the app runs and open it
+ * lazily, so they can only be removed at launch, before first use.
+ *
+ * `enrm_image_cache` is `react-native-enriched-markdown`'s Android image cache
+ * (an OkHttp cache named in `ImageDownloader.kt`), created on the first remote
+ * image a Markdown view loads. See `launch-cache-purge.ts`.
+ */
+export const LAUNCH_PURGE_DIRECTORIES = ['enrm_image_cache'] as const;
+
+/** The file Clear cache leaves for the next launch to find. */
+export const LAUNCH_PURGE_MARKER = 'muqun-purge-at-launch';
+
+/** What a launch purge renames a library cache to before deleting it. */
+export const TRASH_PREFIX = 'muqun-trash-';
+
+/**
  * Temporary directories whose names carry a random suffix, matched by prefix.
  *
  * `theme-stage-<random>` is where `theme/assets.native.ts` unpacks a theme's
  * images before installing them into `Paths.document/theme-assets-v1`. The
  * installed copy is the theme; the stage is scaffolding, and an import that
- * was interrupted leaves one behind.
+ * was interrupted leaves one behind. `muqun-trash-<time>-<name>` is a library
+ * cache a launch purge has already moved aside.
  */
-export const TEMPORARY_CACHE_PREFIXES = ['theme-stage-'] as const;
+export const TEMPORARY_CACHE_PREFIXES = ['theme-stage-', TRASH_PREFIX] as const;
 
 /**
  * The only names the clear action may remove by path, and the whole of the
@@ -126,10 +140,7 @@ export const TEMPORARY_CACHE_PREFIXES = ['theme-stage-'] as const;
  * `Image.clearDiskCache()`, which is their own API asking them to do it, so
  * the Images bucket is still cleared -- just not by this list.
  */
-export const DELETABLE_CACHE_DIRECTORIES = [
-  'enrm_image_cache',
-  ...TEMPORARY_CACHE_DIRECTORIES,
-] as const;
+export const DELETABLE_CACHE_DIRECTORIES = [...TEMPORARY_CACHE_DIRECTORIES] as const;
 
 /** Timestamped copies owned by Muqun, never the original attachment or export. */
 export function temporaryMediaCreatedAt(name: string): number | null {
@@ -198,7 +209,6 @@ export function clearableCacheBytes(
       entry.name === ORIGINAL_IMAGE_CACHE_DIRECTORY;
     return isInsideCacheRoot(entry.uri, rootUri) &&
       !isProtected(entry.name) &&
-      entry.name !== 'enrm_image_cache' &&
       (nativeImageCache || deletable.has(entry.uri)) &&
       Number.isFinite(entry.bytes) &&
       entry.bytes > 0

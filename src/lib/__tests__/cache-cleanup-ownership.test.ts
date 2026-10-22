@@ -118,6 +118,6 @@ test('clearable bytes exclude active copies and library-managed images without h
     entry('enrm_image_cache'),
     entry('unknown'),
   ];
-  expect(measureCache(entries)).toEqual({ images: 200, temporary: 200, other: 100, total: 500 });
+  expect(measureCache(entries)).toEqual({ images: 100, temporary: 200, other: 200, total: 500 });
   expect(clearableCacheBytes(entries, root, (name) => name === 'file-export-200-1')).toBe(200);
 });
