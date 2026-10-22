@@ -1,15 +1,20 @@
 import { useLingui } from '@lingui/react/macro';
 import { PressableScale, Text, useThemeTokens } from '@osuki-dev/ui';
-import { memo, useEffect, useEffectEvent, useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import { memo, useEffect, useEffectEvent, useMemo, useState, type ReactNode } from 'react';
+import { StyleSheet } from 'react-native';
+import Animated, {
+  LayoutAnimationConfig,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useLatestReader } from '@/hooks/use-render-refs';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { agentDisplayName } from '@/lib/home-launch-model';
 import { inlineMarkdownSpans } from '@/lib/markdown-text';
-import { calmFadeIn, calmFadeOut } from '@/lib/motion';
+import { calmFadeIn, calmFadeOut, timing } from '@/lib/motion';
 import { stageSubtitleStep, type StageProgress } from '@/lib/stage-overlay';
 import { useAgents } from '@/stores/agents';
 import { SHEET_FROST_ALPHA, surfaceBackgroundFill } from '@/theme/surface-background';
@@ -38,7 +43,7 @@ export function StageSubtitle({
   }, [visible]);
   useEffect(() => () => report(false), []);
   return visible ? (
-    <View testID="home-stage-subtitle" style={styles.stack}>
+    <SubtitleStack>
       {lines.slice(0, Math.min(maxRows, compact ? 2 : 5)).map((line) => (
         <HeldSubtitleLine
           key={line.key}
@@ -48,8 +53,29 @@ export function StageSubtitle({
           onOpen={onOpen}
         />
       ))}
-    </View>
+    </SubtitleStack>
   ) : null;
+}
+
+/**
+ * The lines there when the stack mounts arrive with it, faded in as one; only
+ * lines that join later run their own entering animation. Android misplaces
+ * views whose entering animation starts while Home slides back into view
+ * (returning from a conversation remounts the stack): they were drawn behind
+ * the session strip, outside the stack, and stayed out of the accessibility
+ * tree.
+ */
+function SubtitleStack({ children }: { children: ReactNode }) {
+  const opacity = useSharedValue(0);
+  useEffect(() => {
+    opacity.set(withTiming(1, timing('short')));
+  }, [opacity]);
+  const style = useAnimatedStyle(() => ({ opacity: opacity.get() }));
+  return (
+    <Animated.View testID="home-stage-subtitle" style={[styles.stack, style]}>
+      <LayoutAnimationConfig skipEntering>{children}</LayoutAnimationConfig>
+    </Animated.View>
+  );
 }
 
 function HeldSubtitleLine({
