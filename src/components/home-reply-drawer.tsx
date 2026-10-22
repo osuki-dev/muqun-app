@@ -51,6 +51,7 @@ import {
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { HomeSheetGrabber, HomeSheetHeader } from '@/components/home-sheet';
 import { SheetGround } from '@/components/sheet-ground';
+import { ThemeArtwork, SHELL_WALLPAPER_FALLBACK } from '@/components/theme-artwork';
 import { ThemeIcon } from '@/components/theme-icon';
 import {
   followHomeSession,
@@ -579,12 +580,30 @@ export function HomeReplyDrawer({
             },
             sheetStyle,
           ]}>
-          {/* The sheet ground: an opaque floor under a frosted tint, so
-              nothing of Home reads through the transcript. */}
-          <SheetGround tint="background" frosted />
+          {/* Conversations and terminal panes share their full page's wallpaper, over an
+              opaque floor. Keep it static while Home's Stage is behind it. */}
+          {target.kind !== 'task' ? (
+            <View
+              pointerEvents="none"
+              accessible={false}
+              importantForAccessibility="no-hide-descendants"
+              style={[StyleSheet.absoluteFill, { backgroundColor: theme.colors.background }]}>
+              <ThemeArtwork
+                slot="shell.wallpaper"
+                fallbackSlot={SHELL_WALLPAPER_FALLBACK}
+                effectsEnabled={false}
+              />
+            </View>
+          ) : (
+            <SheetGround tint="background" frosted />
+          )}
           <Animated.View style={[{ height: bodyHeight }, bodyStyle]}>
             <GestureDetector gesture={controller.gestures.header}>
-              <View collapsable={false}>
+              <View
+                collapsable={false}
+                style={
+                  target.kind !== 'task' ? { backgroundColor: theme.colors.background } : undefined
+                }>
                 <View style={styles.sheetGrabber}>
                   <HomeSheetGrabber />
                 </View>
@@ -1087,10 +1106,7 @@ function DrawerPane({ target }: { target: Extract<HomeThreadTarget, { kind: 'pan
       </View>
     );
   return (
-    <Animated.View
-      testID="home-reply-pane"
-      entering={fadeIn('short')}
-      style={[styles.pane, { backgroundColor: terminal.background }]}>
+    <Animated.View testID="home-reply-pane" entering={fadeIn('short')} style={styles.pane}>
       <TerminalBoundary
         resetKey={paneId}
         background={terminal.background}

@@ -467,6 +467,8 @@ export interface AgentComposerProps {
   attachmentTargetId?: string;
   /** Replaces the field's own invitation, e.g. to say why attaching is off. */
   placeholder?: string;
+  /** Persistent recipient context above the draft, including while typing. */
+  fieldHeader?: React.ReactNode;
   /** What a session chip leads with; see `lib/agent-session-chip.ts`. */
   sessionLead?: (session: AgentSessionInfo) => string | undefined;
   onOpenDiffSheet: () => void;
@@ -665,6 +667,7 @@ export const AgentComposer = memo(function AgentComposer({
   canAttach = true,
   attachmentTargetId,
   placeholder,
+  fieldHeader,
   sessionLead,
   onOpenDiffSheet,
   onOpenSessionsSheet,
@@ -2475,6 +2478,7 @@ export const AgentComposer = memo(function AgentComposer({
                   setInputRowWidth(width);
                 }}>
                 <TerminalComposer
+                  fieldHeader={fieldHeader}
                   fieldBackground={fieldBackground}
                   fieldBackgroundColor={fieldBackgroundColor}
                   fieldBackgroundOutset={fieldBackgroundOutset}

@@ -6164,7 +6164,7 @@ export function ServerTerminalWorkspace({
                           stickBottomNonce={stickBottomNonce}
                           onFileLink={openFileLink}
                           onTwoFingerSwipe={tabSwipe.onSwipe}
-                          screenFocused={isFocused}
+                          screenFocused={isFocused && !paneHidden}
                           paneColumns={selectedPaneColumns}
                           paneRows={selectedPaneRows}
                           paneCursorColumn={selectedPaneCursorColumn}

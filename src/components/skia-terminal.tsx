@@ -21,7 +21,7 @@ import {
   type SkTypefaceFontProvider,
 } from 'react-native-skia';
 import { useThemeTokens, useToast, Button, PressableScale } from '@osuki-dev/ui';
-import { useHasThemeArtwork } from '@/components/theme-artwork';
+import { useHasThemeArtwork, SHELL_WALLPAPER_FALLBACK } from '@/components/theme-artwork';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { DisclosureUpIcon } from '@/icons';
 
@@ -625,10 +625,9 @@ export function SkiaTerminal({
   // goes square with the rest of the app.
   const profile = useAppearanceProfile();
   const appActive = useAppActive();
-  // Whether anything patterned sits behind this canvas. `shell.background` is
-  // the only slot that reaches behind a terminal; Home's own wallpaper never
-  // has one over it.
-  const wallpaperBehind = useHasThemeArtwork('shell.wallpaper');
+  // Match the surrounding shell's artwork source so the opaque fast path
+  // never pre-blends over a flat color when a home-only wallpaper is behind it.
+  const wallpaperBehind = useHasThemeArtwork('shell.wallpaper', SHELL_WALLPAPER_FALLBACK);
   const surfaceBackground = useSurfaceBackground();
   const { t } = useLingui();
   const { showToast } = useToast();

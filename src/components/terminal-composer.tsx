@@ -85,6 +85,8 @@ export interface TerminalComposerProps {
   leading?: ReactNode;
   /** Noninteractive artwork; clipped by the field and hidden during dictation. */
   fieldBackground?: ReactNode;
+  /** Persistent context above the draft, inside the same input surface. */
+  fieldHeader?: ReactNode;
   /** An already resolved fill for a field without an enclosing material plate. */
   fieldBackgroundColor?: string;
   /** Optional bounded artwork overflow; the field and its controls remain clipped. */
@@ -125,6 +127,7 @@ export function TerminalComposer({
   voiceContext,
   leading,
   fieldBackground,
+  fieldHeader,
   fieldBackgroundColor,
   fieldBackgroundOutset,
   fieldDecoration,
@@ -331,6 +334,7 @@ export function TerminalComposer({
           voiceActive && { minHeight: clampVoiceHeight(voiceHeight) },
         ]}>
         {!voiceActive && !outsideBackground ? fieldBackground : null}
+        {fieldHeader}
         {/* Keep the draft mounted so recording inherits this exact field height. */}
         <Animated.View
           pointerEvents={voiceActive ? 'none' : 'auto'}

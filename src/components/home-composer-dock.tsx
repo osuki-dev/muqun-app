@@ -1670,8 +1670,30 @@ export function HomeComposerDock({
           onOpenThread(conversation);
         }
       : undefined;
-  // Where the next message goes is the placeholder's to say; the toolbar's
-  // conversation button shows it.
+  // This is the same server-scoped thread Send follows, never the agent picker.
+  // Live titles already passed the thread-key check above. Keep the recipient
+  // visible after typing has replaced the placeholder.
+  const replyTitle = thread
+    ? liveThreadTitle?.trim() ||
+      thread.title.trim() ||
+      (thread.kind === 'session'
+        ? thread.asid
+        : thread.kind === 'pane'
+          ? thread.paneId
+          : thread.taskId)
+    : undefined;
+  const replyAgentId =
+    thread?.kind === 'session'
+      ? thread.agentId
+      : thread?.kind === 'pane'
+        ? thread.agentLabel
+        : undefined;
+  const replyAgentName = replyAgentId
+    ? agentDisplayName(discoveredAgents, replyAgentId)
+    : undefined;
+  const replyContext = thread
+    ? `${t`Reply to`} ${replyTitle}${replyAgentName ? `${META_SEPARATOR}${replyAgentName}` : ''}`
+    : undefined;
   const replyButton = conversation ? (
     <HomeReplyButton target={conversation} controller={drawer} onOpenFull={openThread} />
   ) : null;
@@ -1819,7 +1841,7 @@ export function HomeComposerDock({
       }
       onModel={features.modelSelection && !terminalAgent ? openModelSheet : undefined}
       onMode={canPickMode && !terminalAgent ? selectMode : undefined}
-      replyTitle={thread ? liveThreadTitle || thread.title || t`Conversation` : undefined}
+      replyTitle={replyTitle}
       onNewConversation={() => {
         setOptionsOpen(false);
         // As the drawer's header does: an open drawer settles shut first.
@@ -1910,6 +1932,21 @@ export function HomeComposerDock({
       interactionBlockedReason={offlineReason}
       agentName={agentLabel}
       placeholder={thread ? t`Reply to ${threadAgentName}` : t`New conversation with ${agentLabel}`}
+      fieldHeader={
+        replyContext ? (
+          <Text
+            testID="home-composer-reply-target"
+            variant="caption"
+            color={theme.colors.textMuted}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            accessibilityLabel={replyContext}
+            accessibilityLiveRegion="polite"
+            style={styles.replyContext}>
+            {replyContext}
+          </Text>
+        ) : undefined
+      }
       sessionId={HOME_AGENT_SESSION_ID}
       availableAgents={modes}
       skills={features.skills && !terminalAgent ? (catalog?.skills ?? NO_SKILLS) : NO_SKILLS}
@@ -1987,6 +2024,7 @@ function holdStagedFiles(reason: 'blur' | 'switch'): boolean {
 }
 
 const styles = StyleSheet.create({
+  replyContext: { paddingHorizontal: 12, paddingTop: 10, paddingBottom: 2 },
   error: { padding: 8, marginBottom: 4, width: '100%' },
   unsure: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 12 },
   unsureText: { flexShrink: 1 },
