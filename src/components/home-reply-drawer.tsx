@@ -592,34 +592,42 @@ function createContentPan(
   const { contentAtTop, contentDragging } = input;
   const startX = makeMutable(0);
   const startY = makeMutable(0);
-  return createDrawerPan(input)
-    .manualActivation(true)
-    .onTouchesDown((event) => {
-      const touch = event.allTouches[0];
-      if (!touch) return;
-      startX.set(touch.absoluteX);
-      startY.set(touch.absoluteY);
-    })
-    .onTouchesMove((event, manager) => {
-      const touch = event.allTouches[0];
-      if (!touch || event.numberOfTouches > 1) {
-        manager.fail();
-        return;
-      }
-      const dx = touch.absoluteX - startX.get();
-      const dy = touch.absoluteY - startY.get();
-      if (Math.abs(dx) < CONTENT_DRAG_SLOP && Math.abs(dy) < CONTENT_DRAG_SLOP) return;
-      // Sideways, upwards, or down a list with rows above: the list's own.
-      if (Math.abs(dx) >= Math.abs(dy) || dy < 0 || !contentAtTop.get()) {
-        manager.fail();
-        return;
-      }
-      contentDragging.set(true);
-      manager.activate();
-    })
-    .onFinalize(() => {
-      contentDragging.set(false);
-    });
+  return (
+    createDrawerPan(input)
+      .manualActivation(true)
+      // Chained after `createDrawerPan`, these are out of the Reanimated
+      // plugin's sight, so they say they are worklets themselves; mixed
+      // callbacks make the handler run them all on the JS thread and warn.
+      .onTouchesDown((event) => {
+        'worklet';
+        const touch = event.allTouches[0];
+        if (!touch) return;
+        startX.set(touch.absoluteX);
+        startY.set(touch.absoluteY);
+      })
+      .onTouchesMove((event, manager) => {
+        'worklet';
+        const touch = event.allTouches[0];
+        if (!touch || event.numberOfTouches > 1) {
+          manager.fail();
+          return;
+        }
+        const dx = touch.absoluteX - startX.get();
+        const dy = touch.absoluteY - startY.get();
+        if (Math.abs(dx) < CONTENT_DRAG_SLOP && Math.abs(dy) < CONTENT_DRAG_SLOP) return;
+        // Sideways, upwards, or down a list with rows above: the list's own.
+        if (Math.abs(dx) >= Math.abs(dy) || dy < 0 || !contentAtTop.get()) {
+          manager.fail();
+          return;
+        }
+        contentDragging.set(true);
+        manager.activate();
+      })
+      .onFinalize(() => {
+        'worklet';
+        contentDragging.set(false);
+      })
+  );
 }
 
 /** Home behind the drawer: it recedes a little and dims as the drawer rises. */
@@ -1307,6 +1315,9 @@ function DrawerPane({
     undefined
   );
   useEffect(() => {
+    // A retargeted drawer asks again rather than reading the last pane's
+    // conversation; a pane without a session has no agent to ask for.
+    setAgent(readsTranscripts && sessionId ? undefined : null);
     if (!sessionId || !readsTranscripts) return;
     let alive = true;
     void loadAgents(sessionId).then(

@@ -140,7 +140,10 @@ export function AgentTranscriptReader({
   });
   const onScroll = useStableHandler((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
-    atTop?.set(contentOffset.y <= 1);
+    // The top of what is loaded is not the top of the conversation while
+    // older pages remain: a pull there asks for them, it does not close the
+    // drawer that holds the list.
+    atTop?.set(contentOffset.y <= 1 && !state.hasMore);
     if (contentSize.height <= 0) return;
     follow.setGeometry({
       offset: contentOffset.y,
