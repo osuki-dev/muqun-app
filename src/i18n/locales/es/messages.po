@@ -336,6 +336,10 @@ msgstr "Última observación: {count} solicitudes"
 msgid "{done} of {0} done"
 msgstr "{done} de {0} hechas"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{dpr} of the device's {device}"
+msgstr "{dpr} de {device} del dispositivo"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "{from} still lists an older {name}. Remove that entry on {from}."
 msgstr "{from} todavía tiene una entrada antigua de {name}. Elimina esa entrada en {from}"
@@ -420,6 +424,10 @@ msgstr "{panelCount, plural, one {# activo} other {# activos}}"
 msgid "{providerName} (terminal)"
 msgstr "{providerName} (en terminal)"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{quality}, trying one rung up"
+msgstr "{quality}, probando un nivel más"
+
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-sleep-tool-body.tsx
 msgid "{remaining} remaining"
@@ -433,6 +441,14 @@ msgstr "{removeLabel}: {label}"
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
 msgstr "{running} de {0} en ejecución"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{slot}: {size}, capped at {cap} px"
+msgstr "{slot}: {size}, limitado a {cap} px"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{slot}: not loaded, capped at {cap} px"
+msgstr "{slot}: sin cargar, limitado a {cap} px"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
@@ -4946,6 +4962,10 @@ msgstr "Galería de fotos"
 msgid "Pinned commit"
 msgstr "Commit fijado"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Pixel ratio"
+msgstr "Relación de píxeles"
+
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-mode-sheet.tsx
 msgid "Plan"
@@ -5098,6 +5118,10 @@ msgstr "Clave pública copiada"
 #: src/i18n/labels.ts
 msgid "Pull"
 msgstr "Pull"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Quality rung"
+msgstr "Nivel de calidad"
 
 #: src/components/agent-composer.tsx
 msgid "Queue"
@@ -6754,6 +6778,10 @@ msgstr "Tamaño del texto"
 #: src/components/simfarm-stage.tsx
 msgid "Text to type on the simulator"
 msgstr "Texto para escribir en el simulador"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Textures"
+msgstr "Texturas"
 
 #: src/hooks/use-pane-approval.ts
 msgid "That answer did not reach the agent."

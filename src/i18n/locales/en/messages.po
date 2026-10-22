@@ -336,6 +336,10 @@ msgstr "{count} requests last observed"
 msgid "{done} of {0} done"
 msgstr "{done} of {0} done"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{dpr} of the device's {device}"
+msgstr "{dpr} of the device's {device}"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "{from} still lists an older {name}. Remove that entry on {from}."
 msgstr "{from} still lists an older {name}. Remove that entry on {from}"
@@ -420,6 +424,10 @@ msgstr "{panelCount, plural, one {# running} other {# running}}"
 msgid "{providerName} (terminal)"
 msgstr "{providerName} (terminal)"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{quality}, trying one rung up"
+msgstr "{quality}, trying one rung up"
+
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-sleep-tool-body.tsx
 msgid "{remaining} remaining"
@@ -433,6 +441,14 @@ msgstr "{removeLabel}: {label}"
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
 msgstr "{running} running of {0}"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{slot}: {size}, capped at {cap} px"
+msgstr "{slot}: {size}, capped at {cap} px"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{slot}: not loaded, capped at {cap} px"
+msgstr "{slot}: not loaded, capped at {cap} px"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
@@ -4946,6 +4962,10 @@ msgstr "Photo library"
 msgid "Pinned commit"
 msgstr "Pinned commit"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Pixel ratio"
+msgstr "Pixel ratio"
+
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-mode-sheet.tsx
 msgid "Plan"
@@ -5098,6 +5118,10 @@ msgstr "Public key copied"
 #: src/i18n/labels.ts
 msgid "Pull"
 msgstr "Pull"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Quality rung"
+msgstr "Quality rung"
 
 #: src/components/agent-composer.tsx
 msgid "Queue"
@@ -6754,6 +6778,10 @@ msgstr "Text size"
 #: src/components/simfarm-stage.tsx
 msgid "Text to type on the simulator"
 msgstr "Text to type on the simulator"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Textures"
+msgstr "Textures"
 
 #: src/hooks/use-pane-approval.ts
 msgid "That answer did not reach the agent."

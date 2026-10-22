@@ -229,3 +229,41 @@ export function checkStageGpuLost(): boolean {
   recordStageArtEvent({ slot: 'stage', step: 'device', status: 'fallback', error: lost });
   return true;
 }
+
+// What the Stage renders at -----------------------------------------------------
+
+/** The Stage as it renders now, for the diagnostics sheet; null before Home has shown it. */
+export type StageRenderInfo = {
+  /** The rung drawn at, or `static` for the flat stage. */
+  quality: string;
+  /** Whether that rung is one being tried above the one held. */
+  trial: boolean;
+  /** The pixel ratio the scene renders at, and the device's own. */
+  dpr: number;
+  deviceScale: number;
+  /** Each layer's texture as uploaded, `WxH`, under its cap in px. */
+  textures: readonly { slot: string; size: string | null; cap: number }[];
+};
+
+let renderInfo: StageRenderInfo | null = null;
+let renderInfoKey = '';
+const renderListeners = new Set<() => void>();
+const subscribeRender = (listener: () => void) => {
+  renderListeners.add(listener);
+  return () => {
+    renderListeners.delete(listener);
+  };
+};
+const readRenderInfo = () => renderInfo;
+
+export function setStageRenderInfo(next: StageRenderInfo): void {
+  const key = JSON.stringify(next);
+  if (key === renderInfoKey) return;
+  renderInfoKey = key;
+  renderInfo = next;
+  renderListeners.forEach((listener) => listener());
+}
+
+export function useStageRenderInfo(): StageRenderInfo | null {
+  return useSyncExternalStore(subscribeRender, readRenderInfo, readRenderInfo);
+}

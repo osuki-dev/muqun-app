@@ -336,6 +336,10 @@ msgstr "Последняя проверка: запросов — {count}"
 msgid "{done} of {0} done"
 msgstr "{done} из {0} готово"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{dpr} of the device's {device}"
+msgstr "{dpr} из {device} у устройства"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "{from} still lists an older {name}. Remove that entry on {from}."
 msgstr "В {from} всё ещё есть старая запись {name}. Удалите эту запись на {from}"
@@ -420,6 +424,10 @@ msgstr "{panelCount, plural, one {# в работе} few {# в работе} man
 msgid "{providerName} (terminal)"
 msgstr "{providerName} (терминал)"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{quality}, trying one rung up"
+msgstr "{quality}, пробуется уровень выше"
+
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-sleep-tool-body.tsx
 msgid "{remaining} remaining"
@@ -433,6 +441,14 @@ msgstr "{removeLabel}: {label}"
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
 msgstr "{running} из {0} выполняется"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{slot}: {size}, capped at {cap} px"
+msgstr "{slot}: {size}, предел {cap} пкс"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{slot}: not loaded, capped at {cap} px"
+msgstr "{slot}: не загружено, предел {cap} пкс"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
@@ -4946,6 +4962,10 @@ msgstr "Медиатека"
 msgid "Pinned commit"
 msgstr "Зафиксированный коммит"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Pixel ratio"
+msgstr "Плотность пикселей"
+
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-mode-sheet.tsx
 msgid "Plan"
@@ -5098,6 +5118,10 @@ msgstr "Открытый ключ скопирован"
 #: src/i18n/labels.ts
 msgid "Pull"
 msgstr "Pull"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Quality rung"
+msgstr "Уровень качества"
 
 #: src/components/agent-composer.tsx
 msgid "Queue"
@@ -6754,6 +6778,10 @@ msgstr "Размер текста"
 #: src/components/simfarm-stage.tsx
 msgid "Text to type on the simulator"
 msgstr "Текст для ввода на симуляторе"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Textures"
+msgstr "Текстуры"
 
 #: src/hooks/use-pane-approval.ts
 msgid "That answer did not reach the agent."

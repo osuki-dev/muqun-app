@@ -336,6 +336,10 @@ msgstr "{count} 件のリクエストを最後に確認"
 msgid "{done} of {0} done"
 msgstr "{0} 件中 {done} 件完了"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{dpr} of the device's {device}"
+msgstr "{dpr}（端末は {device}）"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "{from} still lists an older {name}. Remove that entry on {from}."
 msgstr "{from} に古い {name} の項目が残っています。{from} でその項目を削除してください"
@@ -420,6 +424,10 @@ msgstr "{panelCount, plural, one {# 実行中} other {# 実行中}}"
 msgid "{providerName} (terminal)"
 msgstr "{providerName}（ターミナル）"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{quality}, trying one rung up"
+msgstr "{quality}、1段上を試行中"
+
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-sleep-tool-body.tsx
 msgid "{remaining} remaining"
@@ -433,6 +441,14 @@ msgstr "{removeLabel}：{label}"
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
 msgstr "{0} 件中 {running} 件が実行中"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{slot}: {size}, capped at {cap} px"
+msgstr "{slot}: {size}、上限 {cap} px"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{slot}: not loaded, capped at {cap} px"
+msgstr "{slot}: 未読み込み、上限 {cap} px"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
@@ -4946,6 +4962,10 @@ msgstr "フォトライブラリ"
 msgid "Pinned commit"
 msgstr "固定したコミット"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Pixel ratio"
+msgstr "ピクセル比"
+
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-mode-sheet.tsx
 msgid "Plan"
@@ -5098,6 +5118,10 @@ msgstr "公開鍵をコピーしました"
 #: src/i18n/labels.ts
 msgid "Pull"
 msgstr "プル"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Quality rung"
+msgstr "品質段階"
 
 #: src/components/agent-composer.tsx
 msgid "Queue"
@@ -6754,6 +6778,10 @@ msgstr "文字サイズ"
 #: src/components/simfarm-stage.tsx
 msgid "Text to type on the simulator"
 msgstr "シミュレータに入力する文字"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Textures"
+msgstr "テクスチャ"
 
 #: src/hooks/use-pane-approval.ts
 msgid "That answer did not reach the agent."

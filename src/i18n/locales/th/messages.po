@@ -336,6 +336,10 @@ msgstr "พบคำขอ {count} รายการในการตรวจ
 msgid "{done} of {0} done"
 msgstr "เสร็จ {done} จาก {0}"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{dpr} of the device's {device}"
+msgstr "{dpr} จาก {device} ของอุปกรณ์"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "{from} still lists an older {name}. Remove that entry on {from}."
 msgstr "{from} ยังมีรายการ {name} อันเก่าอยู่ ลบรายการนั้นบน {from}"
@@ -420,6 +424,10 @@ msgstr "{panelCount, plural, other {กำลังทำงาน # ราย�
 msgid "{providerName} (terminal)"
 msgstr "{providerName} (เทอร์มินัล)"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{quality}, trying one rung up"
+msgstr "{quality} กำลังลองระดับที่สูงขึ้นหนึ่งขั้น"
+
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-sleep-tool-body.tsx
 msgid "{remaining} remaining"
@@ -433,6 +441,14 @@ msgstr "{removeLabel}: {label}"
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
 msgstr "กำลังทำงาน {running} จาก {0}"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{slot}: {size}, capped at {cap} px"
+msgstr "{slot}: {size} จำกัดที่ {cap} px"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{slot}: not loaded, capped at {cap} px"
+msgstr "{slot}: ยังไม่โหลด จำกัดที่ {cap} px"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
@@ -4946,6 +4962,10 @@ msgstr "คลังรูปภาพ"
 msgid "Pinned commit"
 msgstr "คอมมิตที่ตรึงไว้"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Pixel ratio"
+msgstr "อัตราส่วนพิกเซล"
+
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-mode-sheet.tsx
 msgid "Plan"
@@ -5098,6 +5118,10 @@ msgstr "คัดลอกคีย์สาธารณะแล้ว"
 #: src/i18n/labels.ts
 msgid "Pull"
 msgstr "พูล"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Quality rung"
+msgstr "ระดับคุณภาพ"
 
 #: src/components/agent-composer.tsx
 msgid "Queue"
@@ -6754,6 +6778,10 @@ msgstr "ขนาดข้อความ"
 #: src/components/simfarm-stage.tsx
 msgid "Text to type on the simulator"
 msgstr "ข้อความที่จะพิมพ์บนเครื่องจำลอง"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Textures"
+msgstr "เท็กซ์เจอร์"
 
 #: src/hooks/use-pane-approval.ts
 msgid "That answer did not reach the agent."

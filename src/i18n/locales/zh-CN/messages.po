@@ -336,6 +336,10 @@ msgstr "最近观察到 {count} 个请求"
 msgid "{done} of {0} done"
 msgstr "已完成 {done}/{0}"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{dpr} of the device's {device}"
+msgstr "{dpr}（设备为 {device}）"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "{from} still lists an older {name}. Remove that entry on {from}."
 msgstr "{from} 上仍有一条旧的 {name} 记录，请在 {from} 上删除这条记录"
@@ -420,6 +424,10 @@ msgstr "{panelCount, plural, one {# 个运行中} other {# 个运行中}}"
 msgid "{providerName} (terminal)"
 msgstr "{providerName}（终端）"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{quality}, trying one rung up"
+msgstr "{quality}，正在尝试高一级"
+
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-sleep-tool-body.tsx
 msgid "{remaining} remaining"
@@ -433,6 +441,14 @@ msgstr "{removeLabel}：{label}"
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
 msgstr "{0} 个中有 {running} 个正在运行"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{slot}: {size}, capped at {cap} px"
+msgstr "{slot}：{size}，上限 {cap} px"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{slot}: not loaded, capped at {cap} px"
+msgstr "{slot}：未加载，上限 {cap} px"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
@@ -4946,6 +4962,10 @@ msgstr "照片图库"
 msgid "Pinned commit"
 msgstr "固定提交"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Pixel ratio"
+msgstr "像素比"
+
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-mode-sheet.tsx
 msgid "Plan"
@@ -5098,6 +5118,10 @@ msgstr "已复制公钥"
 #: src/i18n/labels.ts
 msgid "Pull"
 msgstr "Pull"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Quality rung"
+msgstr "画质档位"
 
 #: src/components/agent-composer.tsx
 msgid "Queue"
@@ -6754,6 +6778,10 @@ msgstr "文字大小"
 #: src/components/simfarm-stage.tsx
 msgid "Text to type on the simulator"
 msgstr "要输入到模拟器的文字"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Textures"
+msgstr "纹理"
 
 #: src/hooks/use-pane-approval.ts
 msgid "That answer did not reach the agent."

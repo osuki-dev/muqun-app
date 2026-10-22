@@ -17,7 +17,14 @@ import {
   type SkImage,
 } from 'react-native-skia';
 import { lazy, Suspense, useCallback, useEffect, useEffectEvent, useMemo, useState } from 'react';
-import { Platform, StyleSheet, TurboModuleRegistry, useWindowDimensions, View } from 'react-native';
+import {
+  PixelRatio,
+  Platform,
+  StyleSheet,
+  TurboModuleRegistry,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import {
   SensorType,
@@ -55,6 +62,7 @@ import {
   recordStageArtEvent,
   retryStageArt,
   setStageArtContext,
+  setStageRenderInfo,
 } from '@/lib/stage-art-diagnostics';
 import { useAppSettings } from '@/stores/app-settings';
 import {
@@ -285,11 +293,8 @@ export function StageView({
     textureShrink
   );
   const gpuUri = (layer: StageLayer | null) => (effects.gpu ? layer?.uri : undefined);
-  const backdropTexture = useStageTexture(
-    gpuUri(composition.backdrop),
-    role === 'sky' ? Math.min(BASE_MAX_EDGE, coverEdge) : coverEdge,
-    'backdrop'
-  );
+  const backdropEdge = role === 'sky' ? Math.min(BASE_MAX_EDGE, coverEdge) : coverEdge;
+  const backdropTexture = useStageTexture(gpuUri(composition.backdrop), backdropEdge, 'backdrop');
   const paintingTexture = useStageTexture(gpuUri(composition.painting), coverEdge, 'painting');
   const heroTexture = useStageTexture(gpuUri(composition.hero), heroEdge, 'hero');
   const frameTexture = useStageTexture(gpuUri(composition.frame), coverEdge, 'frame');
@@ -300,6 +305,39 @@ export function StageView({
     (state) => state.status === 'failed'
   );
   const renderGpu = effects.gpu && !textureFailed;
+  // What the diagnostics sheet shows: the rung, pixel ratio and textures drawn.
+  const backdropSize = textureSize(backdropTexture);
+  const paintingSize = textureSize(paintingTexture);
+  const heroSize = textureSize(heroTexture);
+  const frameSize = textureSize(frameTexture);
+  const trying = renderGpu && ladder.trial !== null && quality === ladder.trial;
+  useEffect(() => {
+    const deviceScale = PixelRatio.get();
+    setStageRenderInfo({
+      quality: renderGpu ? quality : 'static',
+      trial: trying,
+      dpr: renderGpu ? Math.min(deviceScale, effects.maxDpr) : deviceScale,
+      deviceScale,
+      textures: [
+        { slot: 'backdrop', size: backdropSize, cap: backdropEdge },
+        { slot: 'painting', size: paintingSize, cap: coverEdge },
+        { slot: 'hero', size: heroSize, cap: heroEdge },
+        { slot: 'frame', size: frameSize, cap: coverEdge },
+      ],
+    });
+  }, [
+    renderGpu,
+    quality,
+    trying,
+    effects.maxDpr,
+    backdropSize,
+    paintingSize,
+    heroSize,
+    frameSize,
+    backdropEdge,
+    coverEdge,
+    heroEdge,
+  ]);
   // A reskin holds its cover until the layers are chosen and their textures are in (or failed).
   const settled =
     composition.ready &&
@@ -617,6 +655,13 @@ function StageTilt({
     }
   );
   return null;
+}
+
+/** A texture's size as uploaded, `WxH`, or null when there is none. */
+function textureSize(state: StageTextureState): string | null {
+  if (state.status !== 'ready') return null;
+  const { width, height } = state.source.texture.image as { width: number; height: number };
+  return `${width}x${height}`;
 }
 
 /**

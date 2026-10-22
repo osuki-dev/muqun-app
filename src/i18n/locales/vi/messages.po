@@ -336,6 +336,10 @@ msgstr "Lần quan sát gần nhất: {count} yêu cầu"
 msgid "{done} of {0} done"
 msgstr "Xong {done} trên {0}"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{dpr} of the device's {device}"
+msgstr "{dpr} trên {device} của thiết bị"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "{from} still lists an older {name}. Remove that entry on {from}."
 msgstr "{from} vẫn còn một mục {name} cũ. Hãy xóa mục đó trên {from}"
@@ -420,6 +424,10 @@ msgstr "{panelCount, plural, other {# đang chạy}}"
 msgid "{providerName} (terminal)"
 msgstr "{providerName} (trong terminal)"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{quality}, trying one rung up"
+msgstr "{quality}, đang thử mức cao hơn một bậc"
+
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-sleep-tool-body.tsx
 msgid "{remaining} remaining"
@@ -433,6 +441,14 @@ msgstr "{removeLabel}: {label}"
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
 msgstr "{running} trong {0} đang chạy"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{slot}: {size}, capped at {cap} px"
+msgstr "{slot}: {size}, giới hạn {cap} px"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{slot}: not loaded, capped at {cap} px"
+msgstr "{slot}: chưa tải, giới hạn {cap} px"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
@@ -4946,6 +4962,10 @@ msgstr "Thư viện ảnh"
 msgid "Pinned commit"
 msgstr "Commit đã ghim"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Pixel ratio"
+msgstr "Tỷ lệ điểm ảnh"
+
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-mode-sheet.tsx
 msgid "Plan"
@@ -5098,6 +5118,10 @@ msgstr "Đã sao chép khóa công khai"
 #: src/i18n/labels.ts
 msgid "Pull"
 msgstr "Pull"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Quality rung"
+msgstr "Mức chất lượng"
 
 #: src/components/agent-composer.tsx
 msgid "Queue"
@@ -6754,6 +6778,10 @@ msgstr "Cỡ chữ"
 #: src/components/simfarm-stage.tsx
 msgid "Text to type on the simulator"
 msgstr "Văn bản để gõ trên trình giả lập"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Textures"
+msgstr "Kết cấu"
 
 #: src/hooks/use-pane-approval.ts
 msgid "That answer did not reach the agent."
