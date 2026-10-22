@@ -236,7 +236,7 @@ export const useAgentSheetBridge = create<AgentSheetBridge>((set, get) => ({
     let any = false;
     for (const key of Object.keys(patch) as (keyof AgentSheetSnapshot)[]) {
       const value = patch[key];
-      if (value === current[key] || sameData(value, current[key])) continue;
+      if (sameData(value, current[key])) continue;
       (changed as Record<string, unknown>)[key] = value;
       any = true;
     }

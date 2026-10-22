@@ -218,7 +218,10 @@ const SessionChip = memo(function SessionChip({
   onMeasure,
   subtaskActivity,
 }: {
-  /** Passed apart from its strip node, which is rebuilt on every read: a memoized chip keyed on the node re-rendered every chip each time. */
+  /**
+   * The session and its flag, not the strip node: nodes are rebuilt on every
+   * read, which defeated this chip's memo.
+   */
   session: AgentSessionInfo;
   hasChildren: boolean;
   active: boolean;

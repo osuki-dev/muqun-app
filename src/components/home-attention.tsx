@@ -108,7 +108,7 @@ export function useHasHomeAttention({
   const read = () => {
     const { pending, waiting } = attentionRows(
       useHomeAttention.getState().byTarget,
-      taskIndexOf(useServerTasksStore.getState().index, taskServerIds),
+      useServerTasksStore.getState().index,
       servers,
       taskServerIds,
       useServerAgents.getState().byServer,
@@ -120,16 +120,6 @@ export function useHasHomeAttention({
 }
 
 const NO_SERVER_IDS: readonly string[] = [];
-
-/** The ledger of just these computers, as `useTaskIndexFor` reads it. */
-function taskIndexOf(index: ServerTasksIndex, serverIds: readonly string[]): ServerTasksIndex {
-  const kept: ServerTasksIndex = {};
-  for (const serverId of serverIds) {
-    const entry = index[serverId];
-    if (entry) kept[serverId] = entry;
-  }
-  return kept;
-}
 
 /** Everything `useHasHomeAttention` reads: three stores and the minute clock. */
 function subscribeAttentionInputs(onChange: () => void): () => void {

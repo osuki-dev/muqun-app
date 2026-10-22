@@ -486,7 +486,7 @@ export function reuseUnchangedSessions(
   let same = previous.length === next.length;
   const kept = next.map((session, position) => {
     const held = known.get(session.asid);
-    const result = held && held !== session && sameData(held, session) ? held : session;
+    const result = held && sameData(held, session) ? held : session;
     if (result !== previous[position]) same = false;
     return result;
   });
