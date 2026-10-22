@@ -84,6 +84,7 @@ import {
   type TwoFingerFrame,
 } from '@/lib/tab-swipe';
 import { createMMKV } from 'react-native-mmkv';
+import { carryBox, carryForward } from '@/lib/carry-forward';
 import { terminalGridFor } from '@/lib/ssh-grid-metrics';
 import { keepNativeWidthRows } from '@/terminal/native-width';
 import {
@@ -162,6 +163,8 @@ import {
   historyHintOpacity,
   measureRowsDropped,
   measureRowsPrepended,
+  keepRowsAboveReader,
+  type TerminalKeptFrame,
   terminalBottomStop,
   terminalContentRows,
   terminalPullOvershoot,
@@ -792,7 +795,7 @@ export function SkiaTerminal({
   // rows that changed (see `SnapshotLineCache`). Content-keyed and add-only
   // while parsing, so a render React throws away cannot leave it wrong.
   const [lineCache] = useState(createSnapshotLineCache);
-  const frame = useMemo(() => {
+  const windowFrame = useMemo(() => {
     if (appliedFrame) return appliedFrame;
     // The pane's rows are handed to the parse only for a program that owns
     // the screen. An editor's frame IS its grid, so a read one line short of
@@ -813,6 +816,27 @@ export function SkiaTerminal({
     // the rest (see `keepNativeWidthRows`). A full-screen frame is its grid.
     return ownsScreen ? parsed : keepNativeWidthRows(parsed);
   }, [appliedFrame, coalescedOutput, terminalTheme, paneColumns, paneRows, ownsScreen, lineCache]);
+  // What is drawn: the window, with the rows it has dropped off its top kept
+  // above it so nothing on screen moves when it trims (`keepRowsAboveReader`).
+  // Per pane and per history revision: a switch, a pulled page or a program
+  // that owns the screen starts again from the window as it is.
+  const [keptBox] = useState(() => carryBox<{ key: string; kept: TerminalKeptFrame } | null>(null));
+  const keptKey = `${terminalId}:${coalescedRevision}`;
+  const frame = useMemo(
+    () =>
+      carryForward(keptBox, (previous) => ({
+        key: keptKey,
+        kept:
+          ownsScreen || appliedFrame
+            ? { frame: windowFrame, kept: 0 }
+            : keepRowsAboveReader(
+                previous?.key === keptKey ? previous.kept : null,
+                windowFrame,
+                following
+              ),
+      }))?.kept.frame ?? windowFrame,
+    [appliedFrame, following, keptBox, keptKey, ownsScreen, windowFrame]
+  );
   // The pane's own colours, which are the app's unless the frame says the
   // program owns the screen and is painting in colours we never named. The
   // whole argument is on `terminalPaneTheme`; what matters here is that this is
@@ -1570,12 +1594,15 @@ export function SkiaTerminal({
   // loses their place. The release after a freeze is where this stops being a
   // slow creep and becomes a jump, because it pays for the whole gesture at once.
   //
-  // A layout effect, in the commit that applies the frame: a passive effect
-  // runs after that commit has been painted, so a reader parked above a full
-  // window saw every new frame drawn once at the old offset -- the content
-  // climbing by the rows the window dropped -- and snapped back on the next
-  // frame. That one-frame jump was the flicker on every repaint of a streaming
-  // agent. Written here, the offset reaches the UI thread with the picture.
+  // A drop is now rare: the rows a full window trims are kept above the reader
+  // (`keepRowsAboveReader`), so the frame does not lose its top on every
+  // repaint. What is left -- the kept rows reaching their cap, a frame that
+  // cannot be aligned -- still moves the offset here, in a layout effect so it
+  // is written in the commit that applies the frame. That narrows, but cannot
+  // close, the gap to the picture: the offset reaches the UI thread through
+  // Reanimated and the picture through Skia, and measured on the emulator a
+  // correction made only here still drew a one-frame jump about every 1.5 s
+  // (19 in 10 s from a passive effect, 6 from this, 0 with the rows kept).
   useLayoutEffect(() => {
     const previous = historyAnchorRef.current;
     const anchor = captureScrollAnchor(frame.lines);
