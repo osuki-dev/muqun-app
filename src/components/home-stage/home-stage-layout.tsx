@@ -351,16 +351,9 @@ export function HomeStageLayout({
   const { height: keyboardOffset } = useReanimatedKeyboardAnimation();
   const keyboardHeight = useKeyboardState((state) => state.height);
   const typing = keyboardHeight > 0;
-  const subtitleRows = Math.max(
-    0,
-    Math.min(
-      5,
-      Math.floor(
-        (windowHeight - keyboardHeight - dockHeight - topInset - 240) /
-          Math.max(48, 36 * fontScale + 16)
-      )
-    )
-  );
+  // The art's free height above the foot: subtitles stack upward into it.
+  const subtitleRoom = Math.max(0, windowHeight - keyboardHeight - dockHeight - topInset - 240);
+  const subtitleRows = Math.min(5, Math.floor(subtitleRoom / Math.max(48, 36 * fontScale + 16)));
   const footStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: keyboardOffset.get() }],
   }));
@@ -529,9 +522,12 @@ export function HomeStageLayout({
         pointerEvents="box-none"
         style={[styles.bottom, { bottom: dockHeight + 6 }, footStyle]}
         onLayout={(event) => {
-          // The art stands on the resting foot: the rows stepping aside
-          // while typing do not move it.
-          if (!typing) setFootStack(Math.round(event.nativeEvent.layout.height));
+          // The art stands on the resting foot, not on the subtitles' room
+          // above it: the rows stepping aside while typing do not move it.
+          if (!typing)
+            setFootStack(
+              Math.round(event.nativeEvent.layout.height - (panels.length > 0 ? subtitleRoom : 0))
+            );
         }}>
         {emptyState ? <View style={styles.empty}>{emptyState}</View> : null}
         {panels.length > 0 ? (
@@ -543,6 +539,7 @@ export function HomeStageLayout({
               serverId={selected?.serverId}
               compact={typing}
               maxRows={subtitleRows}
+              room={subtitleRoom}
               subtitle={!paused && !listOpen && !waiting}
               onOpen={openProgress}>
               <StageAgentRow
@@ -772,6 +769,7 @@ function StageFootLine({
   subtitle,
   compact,
   maxRows,
+  room,
   onOpen,
   children,
 }: {
@@ -779,6 +777,8 @@ function StageFootLine({
   subtitle: boolean;
   compact: boolean;
   maxRows: number;
+  /** Height above the row the subtitles may grow into, held in layout whether or not they show. */
+  room: number;
   onOpen: (line: StageProgress) => void;
   children: ReactNode;
 }) {
@@ -800,8 +800,11 @@ function StageFootLine({
     opacity: chips.get() * fold.get(),
   }));
   const hidden = covered || compact;
+  // The row's box spans the room above it: Android drops views drawn outside
+  // their parent's bounds from accessibility and hit testing, so the floating
+  // lines must stay inside it.
   return (
-    <View pointerEvents="box-none">
+    <View pointerEvents="box-none" style={{ paddingTop: room }}>
       <Animated.View
         pointerEvents={hidden ? 'none' : 'box-none'}
         accessibilityElementsHidden={hidden}
@@ -858,6 +861,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: HOME_DOCK_OUTER_INSET,
     right: HOME_DOCK_OUTER_INSET,
+    top: 0,
     bottom: 0,
     justifyContent: 'flex-end',
   },
